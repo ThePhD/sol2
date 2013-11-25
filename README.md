@@ -57,8 +57,8 @@ Sol makes use of C++11 features. The features used are as follows:
 - rvalue references
 - move semantics
 - variadic templates
-- <tuple>
-- <type_traits>
+- `<tuple>`
+- `<type_traits>`
 - std::unique_ptr
 - enum classes
 - auto
@@ -67,3 +67,9 @@ Sol makes use of C++11 features. The features used are as follows:
 
 GCC 4.7 and Clang 3.3 or higher should be able to compile without problems. Visual Studio 2013 with the November CTP should
 be able to support this as well.
+
+## TODO
+
+- Support for functions
+- Support for `operator[]` based retrieval and modifying of tables.
+- Support for retrieval of tables through dot notation. e.g. `tab.retrieve<int>("resolution.width");`
