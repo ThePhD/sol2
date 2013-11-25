@@ -35,7 +35,7 @@ private:
         return luaL_ref(L, LUA_REGISTRYINDEX);
     }
 public:
-    constexpr reference() noexcept = default;
+    reference() noexcept = default;
 
     reference(lua_State* L, int index): L(L) {
         lua_pushvalue(L, index);

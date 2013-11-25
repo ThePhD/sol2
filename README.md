@@ -64,6 +64,8 @@ Sol makes use of C++11 features. The features used are as follows:
 - auto
 - uniform initialisation
 - noexcept
+- in class initialisation
+- default functions
 
 GCC 4.7 and Clang 3.3 or higher should be able to compile without problems. Visual Studio 2013 with the November CTP should
 be able to support this as well.

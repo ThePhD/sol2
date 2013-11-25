@@ -28,7 +28,7 @@
 
 namespace sol {
 struct nil_t {};
-constexpr nil_t nil{};
+const nil_t nil{};
 
 enum class type : int {
     none = LUA_TNONE,
