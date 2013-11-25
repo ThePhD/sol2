@@ -27,9 +27,31 @@
 #include <memory>
 
 namespace sol {
+namespace detail {
+template<class T, class...>
+struct are_same : std::true_type {};
+
+template<class T, class U, class... Args>
+struct are_same<T, U, Args...> : std::integral_constant<bool, std::is_same<T,U>{} && are_same<T, Args...>{}> {};
+
 int atpanic(lua_State* L) {
     throw sol_error(lua_tostring(L, -1));
 }
+} // detail
+
+enum class lib : char {
+    base,
+    package,
+    coroutine,
+    string,
+    os,
+    math,
+    table,
+    debug,
+    bit32,
+    io,
+    count
+};
 
 class state {
 private:
@@ -41,19 +63,63 @@ public:
     L(luaL_newstate(), lua_close),  
     reg(L.get(), LUA_REGISTRYINDEX), 
     global(reg.get<table>(LUA_RIDX_GLOBALS)) {
-        lua_atpanic(L.get(), atpanic);
+        lua_atpanic(L.get(), detail::atpanic);
     }
 
     state(const std::string& filename): 
     L(luaL_newstate(), lua_close), 
     reg(L.get(), LUA_REGISTRYINDEX), 
     global(reg.get<table>(LUA_RIDX_GLOBALS)) {
-        lua_atpanic(L.get(), atpanic);
+        lua_atpanic(L.get(), detail::atpanic);
         open_file(filename);
     }
+    
+    template<typename... Args>
+    void open_libraries(Args&&... args) {
+        static_assert(detail::are_same<lib, Args...>{}, "all types must be libraries");
+        if(sizeof...(args) == 0) {
+            luaL_openlibs(L.get());
+            return;
+        }
 
-    void open_libraries() {
-        luaL_openlibs(L.get());
+        lib libraries[1 + sizeof...(args)] = { lib::count, std::forward<Args>(args)... };
+
+        for(auto&& library : libraries) {
+            switch(library) {
+            case lib::base:
+                luaL_requiref(L.get(), "base", luaopen_base, 1);
+                break;
+            case lib::package:
+                luaL_requiref(L.get(), "package", luaopen_package, 1);
+                break;
+            case lib::coroutine:
+                luaL_requiref(L.get(), "coroutine", luaopen_base, 1);
+                break;
+            case lib::string:
+                luaL_requiref(L.get(), "string", luaopen_string, 1);
+                break;
+            case lib::table:
+                luaL_requiref(L.get(), "table", luaopen_table, 1);
+                break;
+            case lib::math:
+                luaL_requiref(L.get(), "math", luaopen_math, 1);
+                break;
+            case lib::bit32:
+                luaL_requiref(L.get(), "bit32", luaopen_bit32, 1);
+                break;
+            case lib::io:
+                luaL_requiref(L.get(), "io", luaopen_io, 1);
+                break;
+            case lib::os:
+                luaL_requiref(L.get(), "os", luaopen_os, 1);
+                break;
+            case lib::debug:
+                luaL_requiref(L.get(), "debug", luaopen_debug, 1);
+                break;
+            case lib::count:
+                break;
+            }
+        }
     }
 
     void script(const std::string& code) {
