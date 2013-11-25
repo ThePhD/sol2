@@ -1,0 +1,7 @@
+obj/*
+bin/*
+*.ninja*
+demacro.txt
+Shinobi2
+dev.*
+main.cpp
