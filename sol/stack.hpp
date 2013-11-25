@@ -95,7 +95,7 @@ inline T pop(lua_State* L) {
 
 template<>
 inline bool pop<bool>(lua_State* L) {
-    auto result = lua_toboolean(L, -1);
+    bool result = lua_toboolean(L, -1) != 0;
     lua_pop(L, 1);
     return result;
 }
