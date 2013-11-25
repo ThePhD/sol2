@@ -141,7 +141,8 @@ public:
 
     template<typename T, typename U>
     state& set(T&& key, U&& value) {
-        return global.set(std::forward<T>(key), std::forward<U>(value));
+        global.set(std::forward<T>(key), std::forward<U>(value));
+        return *this;
     }
 
     table global_table() const {
