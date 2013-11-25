@@ -5,8 +5,8 @@ At this time, the library is header-only for easy integration with projects.
 
 ## Caveats
 
-As a change of mechanism to the C API, the Lua Stack is completely abstracted away. Not only that, but all lua errors are 
-thrown as exceptions instead. This allows you to handle the errors gracefully without being forced to exit.
+Due to how this library is used compared to the C API, the Lua Stack is completely abstracted away. Not only that, but all 
+Lua errors are thrown as exceptions instead. This allows you to handle the errors gracefully without being forced to exit.
 
 It should be noted that the library itself depends on `lua.hpp` to be found by your compiler. It uses angle brackets, e.g.
 `#include <lua.hpp>`. 
