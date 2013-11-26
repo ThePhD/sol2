@@ -116,8 +116,12 @@ inline const char* pop<const char*>(lua_State* L) {
 }
 
 template<typename T>
-inline void push(lua_State* L, T arithmetic) {
+inline typename std::enable_if<std::is_arithmetic<T>::value>::type push(lua_State* L, T arithmetic) {
     detail::push_arithmetic(L, arithmetic, std::is_integral<T>{});
+}
+
+inline void push(lua_State*, reference ref) {
+    ref.push();
 }
 
 inline void push(lua_State* L, bool boolean) {
