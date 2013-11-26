@@ -93,7 +93,7 @@ public:
                 luaL_requiref(L.get(), "package", luaopen_package, 1);
                 break;
             case lib::coroutine:
-                luaL_requiref(L.get(), "coroutine", luaopen_base, 1);
+                luaL_requiref(L.get(), "coroutine", luaopen_coroutine, 1);
                 break;
             case lib::string:
                 luaL_requiref(L.get(), "string", luaopen_string, 1);
