@@ -84,18 +84,6 @@ inline void push_arithmetic(lua_State* L, T x, std::false_type) {
     // T is an floating point type
     lua_pushnumber(L, x);
 }
-
-template<typename T>
-inline void push_helper(lua_State* L, T& x, std::true_type) {
-    // T  is a reference type
-    x.push();
-}
-
-template<typename T>
-inline void push_helper(lua_State* L, T& x, std::false_type) {
-    // T  is a reference type
-    push_arithmetic<T>(L, x, std::is_integral<T>{});
-}
 } // detail
 
 template<typename T>
@@ -128,8 +116,8 @@ inline const char* pop<const char*>(lua_State* L) {
 }
 
 template<typename T>
-inline void push(lua_State* L, T& t) {
-    detail::push_helper(L, t, std::is_base_of<reference, T>{});
+inline void push(lua_State* L, T arithmetic) {
+    detail::push_arithmetic(L, arithmetic, std::is_integral<T>{});
 }
 
 inline void push(lua_State* L, bool boolean) {
