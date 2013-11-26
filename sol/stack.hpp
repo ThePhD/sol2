@@ -120,7 +120,7 @@ inline typename std::enable_if<std::is_arithmetic<T>::value>::type push(lua_Stat
     detail::push_arithmetic(L, arithmetic, std::is_integral<T>{});
 }
 
-inline void push(lua_State*, reference ref) {
+inline void push(lua_State*, reference& ref) {
     ref.push();
 }
 
