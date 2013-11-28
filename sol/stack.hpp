@@ -30,37 +30,37 @@ namespace sol {
 namespace stack {
 namespace detail {
 template<typename T>
-inline T pop_unsigned(lua_State* L, std::true_type) {
+inline T get_unsigned(lua_State* L, std::true_type) {
     return lua_tounsigned(L, -1);
 }
 
 template<typename T>
-inline T pop_unsigned(lua_State* L, std::false_type) {
+inline T get_unsigned(lua_State* L, std::false_type) {
     return lua_tointeger(L, -1);
 }
 
 template<typename T>
-inline T pop_arithmetic(lua_State* L, std::false_type) {
+inline T get_arithmetic(lua_State* L, std::false_type) {
     // T is a floating point
     return lua_tonumber(L, -1);
 }
 
 template<typename T>
-inline T pop_arithmetic(lua_State* L, std::true_type) {
+inline T get_arithmetic(lua_State* L, std::true_type) {
     // T is an integral
-    return pop_unsigned<T>(L, std::is_unsigned<T>{});
+    return get_unsigned<T>(L, std::is_unsigned<T>{});
 }
 
 template<typename T>
-inline T pop_helper(lua_State* L, std::true_type) {
+inline T get_helper(lua_State* L, std::true_type) {
     // T is a class type
     return T(L, -1);
 }
 
 template<typename T>
-inline T pop_helper(lua_State* L, std::false_type) {
+inline T get_helper(lua_State* L, std::false_type) {
     // T is a fundamental type
-    return pop_arithmetic<T>(L, std::is_integral<T>{});
+    return get_arithmetic<T>(L, std::is_integral<T>{});
 }
 
 template<typename T>
@@ -87,32 +87,32 @@ inline void push_arithmetic(lua_State* L, T x, std::false_type) {
 } // detail
 
 template<typename T>
-inline T pop(lua_State* L) {
-    auto result = detail::pop_helper<T>(L, std::is_class<T>{});
-    lua_pop(L, 1);
-    return result;
+inline T get(lua_State* L) {
+    return detail::get_helper<T>(L, std::is_class<T>{});
 }
 
 template<>
-inline bool pop<bool>(lua_State* L) {
-    bool result = lua_toboolean(L, -1) != 0;
-    lua_pop(L, 1);
-    return result;
+inline bool get<bool>(lua_State* L) {
+    return lua_toboolean(L, -1) != 0;
 }
 
 template<>
-inline std::string pop<std::string>(lua_State* L) {
+inline std::string get<std::string>(lua_State* L) {
     std::string::size_type len;
     auto str = lua_tolstring(L, -1, &len);
-    lua_pop(L, 1);
     return { str, len };
 }
 
 template<>
-inline const char* pop<const char*>(lua_State* L) {
-    auto result = lua_tostring(L, -1);
+inline const char* get<const char*>(lua_State* L) {
+    return lua_tostring(L, -1);
+}
+
+template<typename T>
+inline T pop(lua_State* L) {
+    auto r = get<T>(L);
     lua_pop(L, 1);
-    return result;
+    return r;
 }
 
 template<typename T>
