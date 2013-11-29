@@ -30,37 +30,37 @@ namespace sol {
 namespace stack {
 namespace detail {
 template<typename T>
-inline T get_unsigned(lua_State* L, std::true_type) {
-    return lua_tounsigned(L, -1);
+inline T get_unsigned(lua_State* L, std::true_type, int index = -1) {
+    return lua_tounsigned(L, index);
 }
 
 template<typename T>
-inline T get_unsigned(lua_State* L, std::false_type) {
-    return lua_tointeger(L, -1);
+inline T get_unsigned(lua_State* L, std::false_type, int index = -1) {
+    return lua_tointeger(L, index);
 }
 
 template<typename T>
-inline T get_arithmetic(lua_State* L, std::false_type) {
+inline T get_arithmetic(lua_State* L, std::false_type, int index = -1) {
     // T is a floating point
-    return lua_tonumber(L, -1);
+    return lua_tonumber(L, index);
 }
 
 template<typename T>
-inline T get_arithmetic(lua_State* L, std::true_type) {
+inline T get_arithmetic(lua_State* L, std::true_type, int index = -1) {
     // T is an integral
     return get_unsigned<T>(L, std::is_unsigned<T>{});
 }
 
 template<typename T>
-inline T get_helper(lua_State* L, std::true_type) {
+inline T get_helper(lua_State* L, std::true_type, int index = -1) {
     // T is a class type
-    return T(L, -1);
+    return T(L, index);
 }
 
 template<typename T>
-inline T get_helper(lua_State* L, std::false_type) {
+inline T get_helper(lua_State* L, std::false_type, int index = -1) {
     // T is a fundamental type
-    return get_arithmetic<T>(L, std::is_integral<T>{});
+    return get_arithmetic<T>(L, std::is_integral<T>{}, index);
 }
 
 template<typename T>
@@ -87,25 +87,25 @@ inline void push_arithmetic(lua_State* L, T x, std::false_type) {
 } // detail
 
 template<typename T>
-inline T get(lua_State* L) {
-    return detail::get_helper<T>(L, std::is_class<T>{});
+inline T get(lua_State* L, int index = -1) {
+    return detail::get_helper<T>(L, std::is_class<T>{}, index);
 }
 
 template<>
-inline bool get<bool>(lua_State* L) {
-    return lua_toboolean(L, -1) != 0;
+inline bool get<bool>(lua_State* L, int index) {
+    return lua_toboolean(L, index) != 0;
 }
 
 template<>
-inline std::string get<std::string>(lua_State* L) {
+inline std::string get<std::string>(lua_State* L, int index) {
     std::string::size_type len;
-    auto str = lua_tolstring(L, -1, &len);
+    auto str = lua_tolstring(L, index, &len);
     return { str, len };
 }
 
 template<>
-inline const char* get<const char*>(lua_State* L) {
-    return lua_tostring(L, -1);
+inline const char* get<const char*>(lua_State* L, int index) {
+    return lua_tostring(L, index);
 }
 
 template<typename T>
