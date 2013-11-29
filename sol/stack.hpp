@@ -27,6 +27,12 @@
 #include <type_traits>
 
 namespace sol {
+template<typename T, typename R = void>
+using EnableIf = typename std::enable_if<T::value, R>::type;
+
+template<typename T, typename R = void>
+using DisableIf = typename std::enable_if<!T::value, R>::type;
+
 namespace stack {
 namespace detail {
 template<typename T>
@@ -116,7 +122,7 @@ inline T pop(lua_State* L) {
 }
 
 template<typename T>
-inline typename std::enable_if<std::is_arithmetic<T>::value>::type push(lua_State* L, T arithmetic) {
+inline EnableIf<std::is_arithmetic<T>> push(lua_State* L, T arithmetic) {
     detail::push_arithmetic(L, arithmetic, std::is_integral<T>{});
 }
 
