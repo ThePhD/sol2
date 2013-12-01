@@ -52,6 +52,11 @@ public:
         lua_pop(state(), 1);
         return *this;
     }
+
+    size_t size() const {
+        push();
+        return lua_rawlen(state(), -1);
+    }
 };
 } // sol
 
