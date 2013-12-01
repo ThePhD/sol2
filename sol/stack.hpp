@@ -54,7 +54,7 @@ inline T get_arithmetic(lua_State* L, std::false_type, int index = -1) {
 template<typename T>
 inline T get_arithmetic(lua_State* L, std::true_type, int index = -1) {
     // T is an integral
-    return get_unsigned<T>(L, std::is_unsigned<T>{});
+    return get_unsigned<T>(L, std::is_unsigned<T>{}, index);
 }
 
 template<typename T>

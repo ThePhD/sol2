@@ -40,7 +40,9 @@ enum class type : int {
     function = LUA_TFUNCTION,
     userdata = LUA_TUSERDATA,
     lightuserdata = LUA_TLIGHTUSERDATA,
-    table = LUA_TTABLE
+    table = LUA_TTABLE,
+    poly = none | nil | string | number | thread | boolean | 
+           function | userdata | lightuserdata | table
 };
 
 inline void type_error(lua_State* L, int expected, int actual) {
@@ -49,13 +51,14 @@ inline void type_error(lua_State* L, int expected, int actual) {
 
 inline void type_assert(lua_State* L, int index, type expected) {
     int actual = lua_type(L, index);
-    if(static_cast<int>(expected) != actual) {
+    if(expected != type::poly && static_cast<int>(expected) != actual) {
         type_error(L, static_cast<int>(expected), actual);
     }
 }
 
 class table;
 class function;
+class object;
 
 namespace detail {
 template<typename T>
@@ -82,6 +85,11 @@ inline type type_of<table>() {
 template<>
 inline type type_of<function>() {
     return type::function;
+}
+
+template<>
+inline type type_of<object>() {
+    return type::poly;
 }
 
 template<>

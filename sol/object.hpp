@@ -19,10 +19,32 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_HPP
-#define SOL_HPP
+#ifndef SOL_OBJECT_HPP
+#define SOL_OBJECT_HPP
 
-#include "sol/state.hpp"
-#include "sol/object.hpp"
+#include "table.hpp"
 
-#endif // SOL_HPP
+namespace sol {
+class object : public table {
+public:
+    object(lua_State* L, int index = -1): reference(L, index) {}
+    object() = default;
+
+    template<typename T>
+    T as() {
+        push();
+        type_assert(state(), -1, type_of<T>());
+        return stack::get<T>(state());
+    }
+
+    template<typename T>
+    bool is() {
+        push();
+        auto expected = type_of<T>();
+        auto actual = lua_type(state(), -1);
+        return (static_cast<int>(expected) == actual) || (expected == type::poly);
+    }
+};
+} // sol
+
+#endif // SOL_OBJECT_HPP
