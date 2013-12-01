@@ -32,7 +32,7 @@ template<class T, class...>
 struct are_same : std::true_type {};
 
 template<class T, class U, class... Args>
-struct are_same<T, U, Args...> : std::integral_constant<bool, std::is_same<T,U>{} && are_same<T, Args...>{}> {};
+struct are_same<T, U, Args...> : std::integral_constant<bool, std::is_same<T,U>::value && are_same<T, Args...>::value> {};
 
 int atpanic(lua_State* L) {
     throw sol_error(lua_tostring(L, -1));
