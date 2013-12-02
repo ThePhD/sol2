@@ -26,28 +26,25 @@
 #include <cstddef>
 
 namespace sol {
-namespace detail {
+
 template<size_t... Ns>
-struct indices {};
+struct indices { };
 
 template<size_t N, size_t... Ns>
-struct build_indices : build_indices<N-1, N-1, Ns...> {};
+struct build_indices : build_indices<N - 1, N - 1, Ns...> { };
 
 template<size_t... Ns>
-struct build_indices<0, Ns...> : indices<Ns...> {};
+struct build_indices<0, Ns...> : indices<Ns...>{ };
 
-using std::get;
+template<typename... Args>
+struct types : build_indices<sizeof...( Args )> { };
 
-template<typename Function, typename Tuple, size_t... Indices>
-inline auto call(Function f, const Tuple& t, indices<Indices...>) -> decltype(f(get<Indices>(t)...)) {
-    return f(get<Indices>(t)...);
-}
-} // detail
+template<typename... Args>
+struct tuple_types : types<Args...>, std::false_type { };
 
-template<typename Function, typename... Args>
-inline auto call(Function f, const std::tuple<Args...>& t) -> decltype(detail::call(f, t, detail::build_indices<sizeof...(Args)>{})) {
-    return call(f, t, detail::build_indices<sizeof...(Args)>{});
-}
+template <typename... Args>
+struct tuple_types<std::tuple<Args...>> : types<Args...>, std::true_type{ };
+
 } // sol
 
 #endif // SOL_TUPLE_HPP
