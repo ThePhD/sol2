@@ -59,54 +59,54 @@ public:
     }
 
     template<typename T, typename TFx>
-    table& set_function( T&& key, TFx&& fx ) {
-	    typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type clean_fx;
-	    const static bool isfunction = std::is_function<clean_fx>::value;
-	    return set_function( std::integral_constant<bool, !isfunction>( ),
-		    std::forward<T>( key ), std::forward<TFx>( fx ) );
+    table& set_function(T&& key, TFx&& fx) {
+        typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type clean_fx;
+        const static bool isfunction = std::is_function<clean_fx>::value;
+        return set_function(std::integral_constant<bool, !isfunction>(),
+            std::forward<T>(key), std::forward<TFx>(fx));
     }
 
     template<typename T, typename TFx>
-    table& set_function( std::true_type, T&& key, TFx&& fx ) {
-	    typedef typename std::decay<TFx>::type clean_fx;
-	    std::string fkey( key );
-	    lua_CFunction freefunc = &detail::lua_cfun;
-	    auto hint = funcs.find( fkey );
-	    detail::lua_func* target = nullptr;
-	    if ( hint == funcs.end( ) ) {
-		    std::shared_ptr<detail::lua_func> sptr( new detail::lambda_lua_func<clean_fx>( std::forward<TFx>( fx ) ) );
-		    hint = funcs.emplace_hint( hint, fkey, std::move( sptr ) );
-	    }
-	    target = hint->second.get( );
-	    lua_pushlightuserdata( state( ), static_cast<void*>( target ) );
-	    lua_pushcclosure( state( ), freefunc, 1 );
-	    lua_setglobal( state( ), fkey.c_str( ) );
-	    return *this;
+    table& set_function(std::true_type, T&& key, TFx&& fx) {
+        typedef typename std::decay<TFx>::type clean_fx;
+        std::string fkey(key);
+        lua_CFunction freefunc = &detail::lua_cfun;
+        auto hint = funcs.find(fkey);
+        detail::lua_func* target = nullptr;
+        if (hint == funcs.end()) {
+            std::shared_ptr<detail::lua_func> sptr(new detail::lambda_lua_func<clean_fx>(std::forward<TFx>(fx)));
+            hint = funcs.emplace_hint(hint, fkey, std::move(sptr));
+        }
+        target = hint->second.get();
+        lua_pushlightuserdata(state(), static_cast<void*>(target));
+        lua_pushcclosure(state(), freefunc, 1);
+        lua_setglobal(state(), fkey.c_str());
+        return *this;
     }
 
-    template <typename T, typename TFx>
-    table& set_function( std::false_type, T&& key, TFx&& fx ) {
-	    typedef typename std::decay<TFx>::type clean_fx;
-	    std::string fkey( key );
-	    lua_CFunction freefunc = &detail::lua_cfun;
-	    auto hint = funcs.find( fkey );
-	    detail::lua_func* target = nullptr;
-	    if ( hint == funcs.end( ) ) {
-		    std::shared_ptr<detail::lua_func> sptr( new detail::explicit_lua_func<TFx>( std::forward<TFx>( fx ) ) );
-		    hint = funcs.emplace_hint( hint, fkey, std::move( sptr ) );
-	    }
-	    target = hint->second.get( );
-	    lua_pushlightuserdata( state( ), static_cast<void*>( target ) );
-	    lua_pushcclosure( state( ), freefunc, 1 );
-	    lua_setglobal( state( ), fkey.c_str( ) );
-	    return *this;
+    template<typename T, typename TFx>
+    table& set_function(std::false_type, T&& key, TFx&& fx) {
+        typedef typename std::decay<TFx>::type clean_fx;
+        std::string fkey(key);
+        lua_CFunction freefunc = &detail::lua_cfun;
+        auto hint = funcs.find(fkey);
+        detail::lua_func* target = nullptr;
+        if (hint == funcs.end()) {
+            std::shared_ptr<detail::lua_func> sptr(new detail::explicit_lua_func<TFx>(std::forward<TFx>(fx)));
+            hint = funcs.emplace_hint(hint, fkey, std::move(sptr));
+        }
+        target = hint->second.get();
+        lua_pushlightuserdata(state(), static_cast<void*>(target));
+        lua_pushcclosure(state(), freefunc, 1);
+        lua_setglobal(state(), fkey.c_str());
+        return *this;
     }
 
     size_t size() const {
         push();
         return lua_rawlen(state(), -1);
     }
-	
+    
 };
 } // sol
 

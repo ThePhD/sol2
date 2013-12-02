@@ -31,69 +31,69 @@ template<typename TFuncSignature>
 struct function_traits;
 
 template<typename T, typename R, typename... Tn>
-struct function_traits<R( T::* )( Tn... )> {
-	static const std::size_t arity = sizeof...( Tn );
-	static const bool is_member_function = true;
-	typedef std::tuple<Tn...> arg_tuple_t;
-	typedef types<Tn...> args_t;
-	typedef R( T::* func_t )( Tn... );
-	typedef R( T::* func_pointer_t )( Tn... );
-	typedef R return_t;
-	template <std::size_t i>
-	using arg_n = std::tuple_element<i, arg_tuple_t>;
+struct function_traits<R(T::*)(Tn...)> {
+    static const std::size_t arity = sizeof...(Tn);
+    static const bool is_member_function = true;
+    typedef std::tuple<Tn...> arg_tuple_t;
+    typedef types<Tn...> args_t;
+    typedef R(T::* func_t)(Tn...);
+    typedef R(T::* func_pointer_t)(Tn...);
+    typedef R return_t;
+    template<std::size_t i>
+    using arg_n = std::tuple_element<i, arg_tuple_t>;
 };
 
 template<typename T, typename R, typename... Tn>
-struct function_traits<R( T::* )( Tn... ) const> {
-	static const std::size_t arity = sizeof...( Tn );
-	static const bool is_member_function = true;
-	typedef std::tuple<Tn...> arg_tuple_t;
-	typedef types<Tn...> args_t;
-	typedef R( T::* func_t )( Tn... );
-	typedef R( T::* func_pointer_t )( Tn... );
-	typedef R return_t;
-	template <std::size_t i>
-	using arg_n = std::tuple_element<i, arg_tuple_t>;
+struct function_traits<R(T::*)(Tn...) const> {
+    static const std::size_t arity = sizeof...(Tn);
+    static const bool is_member_function = true;
+    typedef std::tuple<Tn...> arg_tuple_t;
+    typedef types<Tn...> args_t;
+    typedef R(T::* func_t)(Tn...);
+    typedef R(T::* func_pointer_t)(Tn...);
+    typedef R return_t;
+    template<std::size_t i>
+    using arg_n = std::tuple_element<i, arg_tuple_t>;
 };
 
 template<typename R, typename... Tn>
-struct function_traits<R( Tn... )> {
-	static const std::size_t arity = sizeof...( Tn );
-	static const bool is_member_function = false;
-	typedef std::tuple<Tn...> arg_tuple_t;
-	typedef types<Tn...> args_t;
-	typedef R( func_t )( Tn... );
-	typedef R( *func_pointer_t )( Tn... );
-	typedef R return_t;
-	template <std::size_t i>
-	using arg_n = std::tuple_element<i, arg_tuple_t>;
+struct function_traits<R(Tn...)> {
+    static const std::size_t arity = sizeof...(Tn);
+    static const bool is_member_function = false;
+    typedef std::tuple<Tn...> arg_tuple_t;
+    typedef types<Tn...> args_t;
+    typedef R(func_t)(Tn...);
+    typedef R(*func_pointer_t)(Tn...);
+    typedef R return_t;
+    template<std::size_t i>
+    using arg_n = std::tuple_element<i, arg_tuple_t>;
 };
 
 template<typename R, typename... Tn>
-struct function_traits<R( *)( Tn... )> {
-	static const std::size_t arity = sizeof...( Tn );
-	static const bool is_member_function = false;
-	typedef std::tuple<Tn...> arg_tuple_t;
-	typedef types<Tn...> args_t;
-	typedef R( func_t )( Tn... );
-	typedef R( *func_pointer_t )( Tn... );
-	typedef R return_t;
-	template <std::size_t i>
-	using arg_n = std::tuple_element<i, arg_tuple_t>;
+struct function_traits<R(*)(Tn...)> {
+    static const std::size_t arity = sizeof...(Tn);
+    static const bool is_member_function = false;
+    typedef std::tuple<Tn...> arg_tuple_t;
+    typedef types<Tn...> args_t;
+    typedef R(func_t)(Tn...);
+    typedef R(*func_pointer_t)(Tn...);
+    typedef R return_t;
+    template<std::size_t i>
+    using arg_n = std::tuple_element<i, arg_tuple_t>;
 };
 
 using std::get;
 
 template<typename Function, typename Tuple, size_t... Indices>
-inline auto call( Function f, const Tuple& t, indices<Indices...> ) -> decltype( f( get<Indices>( t )... ) ) {
-	return f( get<Indices>( t )... );
+inline auto call(Function f, const Tuple& t, indices<Indices...>) -> decltype(f(get<Indices>(t)...)) {
+    return f(get<Indices>(t)...);
 }
 
 } // detail
 
 template<typename Function, typename... Args>
-inline auto call( Function f, const std::tuple<Args...>& t ) -> decltype( detail::call( f, t, detail::build_indices<sizeof...( Args )>{} ) ) {
-	return call( f, t, detail::build_indices<sizeof...( Args )>{} );
+inline auto call(Function f, const std::tuple<Args...>& t) -> decltype(detail::call(f, t, detail::build_indices<sizeof...(Args)>{})) {
+    return call(f, t, detail::build_indices<sizeof...(Args)>{});
 }
 
 } // sol

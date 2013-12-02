@@ -148,9 +148,9 @@ public:
     }
 
     template<typename T, typename TFx>
-    state& set_function( T&& key, TFx&& fx ) {
-	    global.set_function( std::forward<T>( key ), std::forward<TFx>( fx ) );
-	    return *this;
+    state& set_function(T&& key, TFx&& fx) {
+        global.set_function(std::forward<T>(key), std::forward<TFx>(fx));
+        return *this;
     }
 
     template<typename T>

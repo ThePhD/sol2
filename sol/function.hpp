@@ -38,34 +38,34 @@ private:
 
     template<typename... Ret>
     struct invoker {
-	    template<typename... Args>
-	    static std::tuple<Ret...> call( const function& ref, Args&&... args ) {
-		    ref.push( );
-		    ref.push_args( std::forward<Args>( args )... );
-		    lua_pcall( ref.state( ), sizeof...( Args ), sizeof...( Ret ), 0 );
-		    return std::make_tuple( stack::pop<Ret>( ref.state( ) )... );
-	    }
+        template<typename... Args>
+        static std::tuple<Ret...> call(const function& ref, Args&&... args) {
+            ref.push();
+            ref.push_args(std::forward<Args>(args)...);
+            lua_pcall(ref.state(), sizeof...(Args), sizeof...(Ret), 0);
+            return std::make_tuple(stack::pop<Ret>(ref.state())...);
+        }
     };
 
     template<>
     struct invoker<> {
-	    template<typename... Args>
-	    static void call( const function& ref, Args&&... args ) {
-		    ref.push( );
-		    ref.push_args( std::forward<Args>( args )... );
-		    lua_pcall( ref.state( ), sizeof...( Args ), 0, 0 );
-	    }
+        template<typename... Args>
+        static void call(const function& ref, Args&&... args) {
+            ref.push();
+            ref.push_args(std::forward<Args>(args)...);
+            lua_pcall(ref.state(), sizeof...(Args), 0, 0);
+        }
     };
 
     template<typename T>
     struct invoker<T> {
-	    template<typename... Args>
-	    static T call( const function& ref, Args&&... args ) {
-		    ref.push( );
-		    ref.push_args( std::forward<Args>( args )... );
-		    lua_pcall( ref.state( ), sizeof...( Args ), 1, 0 );
-		    return stack::pop<T>( ref.state( ) );
-	    }
+        template<typename... Args>
+        static T call(const function& ref, Args&&... args) {
+            ref.push();
+            ref.push_args(std::forward<Args>(args)...);
+            lua_pcall(ref.state(), sizeof...(Args), 1, 0);
+            return stack::pop<T>(ref.state());
+        }
     };
 
 public:
@@ -75,8 +75,8 @@ public:
     }
 
     template<typename... Ret, typename... Args>
-    auto invoke( Args&&... args ) {
-	    return invoker<Ret...>::call( *this, std::forward<Args>( args )... );
+    auto invoke(Args&&... args) {
+        return invoker<Ret...>::call(*this, std::forward<Args>(args)...);
     }
 };
 } // sol
