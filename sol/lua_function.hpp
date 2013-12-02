@@ -42,23 +42,23 @@ struct lambda_lua_func : public lua_func {
     typedef function_traits<fx_t> fx_traits;
     TFx fx;
 
-    template<typename... TFxn>
-    lambda_lua_func(TFxn&&... fxn) : fx(std::forward<TFxn>(fxn)...) {
+    template<typename... FxArgs>
+    lambda_lua_func(FxArgs&&... fxargs) : fx(std::forward<FxArgs>(fxargs)...) {
 
     }
 
     virtual int operator () (lua_State* L) override {
-        return (*this)(tuple_types<fx_traits::return_t>(), fx_traits::args_t(), L);
+        return (*this)(tuple_types<fx_traits::return_type>(), fx_traits::args_type(), L);
     }
 
-    template<typename... Tn>
-    int operator()(types<void>, types<Tn...> t, lua_State* L) {
+    template<typename... Args>
+    int operator()(types<void>, types<Args...> t, lua_State* L) {
         stack::pop_call(L, fx, t);
         return 0;
     }
 
-    template<typename... TRn, typename... Tn>
-    int operator()(types<TRn...>, types<Tn...> t, lua_State* L) {
+    template<typename... TRn, typename... Args>
+    int operator()(types<TRn...>, types<Args...> t, lua_State* L) {
         auto r = stack::pop_call(L, fx, t);
         stack::push(L, r);
         return sizeof...(TRn);
@@ -71,23 +71,23 @@ struct explicit_lua_func : public lua_func {
     typedef function_traits<fx_t> fx_traits;
     TFx fx;
 
-    template<typename... TFxn>
-    explicit_lua_func(TFxn&&... fxn) : fx(std::forward<TFxn>(fxn)...) {
+    template<typename... FxArgs>
+    explicit_lua_func(FxArgs&&... fxargs) : fx(std::forward<FxArgs>(fxargs)...) {
 
     }
 
     virtual int operator () (lua_State* L) override {
-        return (*this)(tuple_types<fx_traits::return_t>(), fx_traits::args_t(), L);
+        return (*this)(tuple_types<fx_traits::return_type>(), fx_traits::args_type(), L);
     }
 
-    template<typename... Tn>
-    int operator () (types<void>, types<Tn...> t, lua_State* L) {
+    template<typename... Args>
+    int operator () (types<void>, types<Args...> t, lua_State* L) {
         stack::pop_call(L, fx, t);
         return 0;
     }
 
-    template<typename... TRn, typename... Tn>
-    int operator () (types<TRn...>, types<Tn...> t, lua_State* L) {
+    template<typename... TRn, typename... Args>
+    int operator () (types<TRn...>, types<Args...> t, lua_State* L) {
         auto r = stack::pop_call(L, fx, t);
         stack::push(L, r);
         return sizeof...(TRn);
@@ -98,26 +98,43 @@ template<typename TFx, typename T>
 struct explicit_lua_func<TFx, T, true> : public lua_func {
     typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type fx_t;
     typedef function_traits<fx_t> fx_traits;
-    T* member;
-    TFx fx;
-        
-    template<typename... TFxn>
-    explicit_lua_func(T* m, TFxn&&... fxn) : member(m), fx(std::forward<TFxn>(fxn)...) {
+    struct lambda {
+	    T* member;
+	    TFx invocation;
+
+	    template<typename... FxArgs>
+	    lambda(T* m, FxArgs&&... fxargs) : member(m), invocation(std::forward<FxArgs>(fxargs)...) {
+
+	    }
+
+	    template<typename... Args>
+	    typename fx_traits::return_type operator () (Args&&... args) {
+		   return ((*member).*invocation)(std::forward<Args>(args)...);
+	    }
+    } fx;
+
+    template<typename... FxArgs>
+    explicit_lua_func(T* m, FxArgs&&... fxargs) : fx(m, std::forward<FxArgs>(fxargs)...) {
+
+    }
+
+    template<typename... FxArgs>
+    explicit_lua_func(T& m, FxArgs&&... fxargs) : fx(std::addressof(m), std::forward<FxArgs>(fxargs)...) {
 
     }
 
     virtual int operator () (lua_State* L) override {
-        return (*this)(tuple_types<fx_traits::return_t>(), fx_traits::args_t(), L);
+        return (*this)(tuple_types<fx_traits::return_type>(), fx_traits::args_type(), L);
     }
 
-    template<typename... Tn>
-    int operator () (types<void>, types<Tn...>, lua_State* L) {
+    template<typename... Args>
+    int operator () (types<void>, types<Args...>, lua_State* L) {
         stack::pop_call(L, fx, t);
         return 0;
     }
 
-    template<typename... TRn, typename... Tn>
-    int operator () (types<TRn...>, types<Tn...> t, lua_State* L) {
+    template<typename... TRn, typename... Args>
+    int operator () (types<TRn...>, types<Args...> t, lua_State* L) {
         auto r = stack::pop_call(L, fx, t);
         stack::push(L, r);
         return sizeof...(TRn);

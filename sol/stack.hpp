@@ -45,8 +45,8 @@ auto ltr_pop(T&& extra, F f, types<>, Vs&&... vs)
 // take head, produce value from it, pass after other values
 template<class F, class Head, class... Tail, class... Vs>
 auto ltr_pop(lua_State* L, F f, types<Head, Tail...>, Vs&&... vs)
--> decltype(ltr_pop(L, f, types<Tail...>{}, std::forward<Vs>(vs)..., stack::pop<Head>(L))) {
-    return ltr_pop(L, f, types<Tail...>{}, std::forward<Vs>(vs)..., stack::pop<Head>(L));
+-> decltype(ltr_pop(L, f, types<Tail...>{}, std::forward<Vs>(vs)..., pop<Head>(L))) {
+    return ltr_pop(L, f, types<Tail...>{}, std::forward<Vs>(vs)..., pop<Head>(L));
 }
 
 template<typename T>
