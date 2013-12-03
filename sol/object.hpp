@@ -23,9 +23,10 @@
 #define SOL_OBJECT_HPP
 
 #include "table.hpp"
+#include "function.hpp"
 
 namespace sol {
-class object : public table {
+class object : public table, public function {
 public:
     object(lua_State* L, int index = -1): reference(L, index) {}
     object() = default;
