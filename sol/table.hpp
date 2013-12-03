@@ -76,9 +76,7 @@ public:
         push();
         return lua_rawlen(state(), -1);
     }
-
 private:
-
     template<typename T, typename TFx>
     table& set_fx(std::true_type, T&& key, TFx&& fx) {
         typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type clean_fx;

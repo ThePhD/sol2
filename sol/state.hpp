@@ -58,7 +58,6 @@ private:
     std::unique_ptr<lua_State, void(*)(lua_State*)> L;
     table reg;
     table global;
-    std::unordered_map<std::string, std::unique_ptr<detail::lua_func>> funcs;
 public:
     state(): 
     L(luaL_newstate(), lua_close),  
