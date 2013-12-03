@@ -23,6 +23,7 @@
 #define SOL_STACK_HPP
 
 #include "reference.hpp"
+#include "tuple.hpp"
 #include <utility>
 #include <type_traits>
 
@@ -150,6 +151,48 @@ inline void push(lua_State* L, const char (&str)[N]) {
 inline void push(lua_State* L, const std::string& str) {
     lua_pushlstring(L, str.c_str(), str.size());
 }
+
+namespace detail {
+template<typename T, std::size_t... I>
+inline void push(lua_State* L, indices<I...>, const T& tuplen) {
+    using swallow = char [];
+    void(swallow{ '\0', (sol::stack::push(L, std::get<I>(tuplen)), '\0')... });
+}
+
+template<typename F, typename... Vs>
+auto ltr_pop( lua_State*, F&& f, types<>, Vs&&... vs )
+-> decltype( f( std::forward<Vs>( vs )... ) ) {
+	return f( std::forward<Vs>( vs )... );
+}
+template<typename F, typename Head, typename... Vs>
+auto ltr_pop( lua_State* L, F&& f, types<Head>, Vs&&... vs )
+-> decltype( ltr_pop( L, std::forward<F>( f ), types<>( ), std::forward<Vs>( vs )..., pop<Head>( L ) ) ) {
+	return ltr_pop( L, std::forward<F>( f ), types<>( ), std::forward<Vs>( vs )..., pop<Head>( L ) );
+}
+template<typename F, typename Head, typename... Tail, typename... Vs>
+auto ltr_pop( lua_State* L, F&& f, types<Head, Tail...>, Vs&&... vs )
+-> decltype( ltr_pop( L, std::forward<F>( f ), types<Tail...>( ), std::forward<Vs>( vs )..., pop<Head>( L ) ) ) {
+	return ltr_pop( L, std::forward<F>( f ), types<Tail...>( ), std::forward<Vs>( vs )..., pop<Head>( L ) );
+}
+
+} // detail
+
+template<typename... Args>
+inline void push(lua_State* L, const std::tuple<Args...>& tuplen) {
+    detail::push(L, build_indices<sizeof...(Args)>(), tuplen);
+}
+
+template<typename... Args, typename TFx>
+inline auto pop_call( lua_State* L, TFx&& fx, types<Args...> )->decltype( detail::ltr_pop( L, std::forward<TFx>( fx ), types<Args...>() ) ) {
+    return detail::ltr_pop( L, std::forward<TFx>( fx ), types<Args...>());
+}
+
+template<typename... Args>
+void push_args( lua_State* L, Args&&... args ) {
+    using swallow = char [];
+    void( swallow{ '\0', ( stack::push( L, std::forward<Args>( args ) ), '\0' )... } );
+}
+
 } // stack
 } // sol
 

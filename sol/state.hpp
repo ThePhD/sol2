@@ -32,7 +32,7 @@ template<class T, class...>
 struct are_same : std::true_type {};
 
 template<class T, class U, class... Args>
-struct are_same<T, U, Args...> : std::integral_constant<bool, std::is_same<T,U>{} && are_same<T, Args...>{}> {};
+struct are_same<T, U, Args...> : std::integral_constant<bool, std::is_same<T,U>::value && are_same<T, Args...>::value> {};
 
 int atpanic(lua_State* L) {
     throw sol_error(lua_tostring(L, -1));
@@ -58,6 +58,8 @@ private:
     std::unique_ptr<lua_State, void(*)(lua_State*)> L;
     table reg;
     table global;
+    std::unordered_map<std::string, std::unique_ptr<detail::lua_func>> funcs;
+
 public:
     state(): 
     L(luaL_newstate(), lua_close),  
@@ -142,6 +144,18 @@ public:
     template<typename T, typename U>
     state& set(T&& key, U&& value) {
         global.set(std::forward<T>(key), std::forward<U>(value));
+        return *this;
+    }
+
+    template<typename T, typename TFx>
+    state& set_function(T&& key, TFx&& fx) {
+        global.set_function(std::forward<T>(key), std::forward<TFx>(fx));
+        return *this;
+    }
+
+    template<typename T, typename TFx, typename TM>
+    state& set_function(T&& key, TFx&& fx, TM& mem) {
+        global.set_function(std::forward<T>(key), std::forward<TFx>(fx), mem);
         return *this;
     }
 

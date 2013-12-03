@@ -24,5 +24,6 @@
 
 #include "sol/state.hpp"
 #include "sol/object.hpp"
+#include "sol/function.hpp"
 
 #endif // SOL_HPP

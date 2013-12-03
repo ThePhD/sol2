@@ -23,9 +23,14 @@
 #define SOL_TABLE_HPP
 
 #include "stack.hpp"
+#include "lua_function.hpp"
+#include <unordered_map>
+#include <memory>
 
 namespace sol {
 class table : virtual public reference {
+private:
+     std::unordered_map<std::string, std::shared_ptr<detail::lua_func>> funcs;
 public:
     table() noexcept: reference{} {}
     table(lua_State* L, int index = -1): reference(L, index) {
@@ -53,9 +58,59 @@ public:
         return *this;
     }
 
+    template<typename T, typename TFx>
+    table& set_function(T&& key, TFx&& fx) {
+        typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type clean_fx;
+        const static bool isfunction = std::is_function<clean_fx>::value;
+        return set_fx(std::integral_constant<bool, !isfunction>(),
+            std::forward<T>(key), std::forward<TFx>(fx));
+    }
+
+    template<typename T, typename TFx, typename TM>
+    table& set_function(T&& key, TFx&& fx, TM& mem) {
+        typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type clean_fx;
+        std::unique_ptr<detail::lua_func> sptr(new detail::explicit_lua_func<clean_fx, TM>(mem, std::forward<TFx>(fx)));
+        return set_fx(std::forward<T>(key), std::move(sptr));
+    }
+
     size_t size() const {
         push();
         return lua_rawlen(state(), -1);
+    }
+
+private:
+
+    template<typename T, typename TFx>
+    table& set_fx(std::true_type, T&& key, TFx&& fx) {
+        typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type clean_fx;
+        std::unique_ptr<detail::lua_func> sptr(new detail::lambda_lua_func<clean_fx>(std::forward<TFx>(fx)));
+        return set_fx(std::forward<T>(key), std::move(sptr));
+    }
+
+    template<typename T, typename TFx>
+    table& set_fx(std::false_type, T&& key, TFx&& fx) {
+        typedef typename std::decay<TFx>::type ptr_fx;
+        std::unique_ptr<detail::lua_func> sptr(new detail::explicit_lua_func<ptr_fx>(std::forward<TFx>(fx)));
+        return set_fx(std::forward<T>(key), std::move(sptr));
+    }
+
+    template<typename T>
+    table& set_fx(T&& key, std::unique_ptr<detail::lua_func> funcptr) {
+        std::string fkey(key);
+        auto hint = funcs.find(fkey);
+        if (hint == funcs.end()) {
+            std::shared_ptr<detail::lua_func> sptr(funcptr.release());
+            hint = funcs.emplace_hint(hint, fkey, std::move(sptr));
+        }
+        else {
+            hint->second.reset(funcptr.release());
+        }
+        detail::lua_func* target = hint->second.get();
+        lua_CFunction freefunc = &detail::lua_cfun;
+        lua_pushlightuserdata(state(), static_cast<void*>(target));
+        lua_pushcclosure(state(), freefunc, 1);
+        lua_setglobal(state(), fkey.c_str());
+        return *this;
     }
 };
 } // sol
