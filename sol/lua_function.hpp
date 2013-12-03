@@ -29,7 +29,7 @@ namespace sol {
 namespace detail {
 
 struct lua_func {
-    virtual int operator () (lua_State* L) {
+    virtual int operator () (lua_State*) {
         throw sol_error("Failure to call specialized wrapped C++ function from lua");
     }
 
@@ -48,7 +48,7 @@ struct lambda_lua_func : public lua_func {
     }
 
     virtual int operator () (lua_State* L) override {
-        return (*this)(tuple_types<fx_traits::return_type>(), fx_traits::args_type(), L);
+        return ( *this )( tuple_types<typename fx_traits::return_type>( ), typename fx_traits::args_type( ), L );
     }
 
     template<typename... Args>
@@ -77,7 +77,7 @@ struct explicit_lua_func : public lua_func {
     }
 
     virtual int operator () (lua_State* L) override {
-        return (*this)(tuple_types<fx_traits::return_type>(), fx_traits::args_type(), L);
+        return ( *this )( tuple_types<typename fx_traits::return_type>( ), typename fx_traits::args_type( ), L );
     }
 
     template<typename... Args>
@@ -99,18 +99,18 @@ struct explicit_lua_func<TFx, T, true> : public lua_func {
     typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type fx_t;
     typedef function_traits<fx_t> fx_traits;
     struct lambda {
-	    T* member;
-	    TFx invocation;
+        T* member;
+        TFx invocation;
 
-	    template<typename... FxArgs>
-	    lambda(T* m, FxArgs&&... fxargs) : member(m), invocation(std::forward<FxArgs>(fxargs)...) {
+        template<typename... FxArgs>
+        lambda(T* m, FxArgs&&... fxargs) : member(m), invocation(std::forward<FxArgs>(fxargs)...) {
 
-	    }
+        }
 
-	    template<typename... Args>
-	    typename fx_traits::return_type operator () (Args&&... args) {
-		   return ((*member).*invocation)(std::forward<Args>(args)...);
-	    }
+        template<typename... Args>
+        typename fx_traits::return_type operator () (Args&&... args) {
+           return ((*member).*invocation)(std::forward<Args>(args)...);
+        }
     } fx;
 
     template<typename... FxArgs>
@@ -124,7 +124,7 @@ struct explicit_lua_func<TFx, T, true> : public lua_func {
     }
 
     virtual int operator () (lua_State* L) override {
-        return (*this)(tuple_types<fx_traits::return_type>(), fx_traits::args_type(), L);
+        return ( *this )( tuple_types<typename fx_traits::return_type>( ), typename fx_traits::args_type( ), L );
     }
 
     template<typename... Args>

@@ -29,20 +29,12 @@
 namespace sol {
 class function : virtual public reference {
 private:
-    template<typename... Args>
-    void push_args(Args&&... args) const {
-        auto L = state();
-        using swallow = char[ ];
-        void(swallow{ (stack::push(L, std::forward<Args>(args)), '\0')... });
-    }
 
     template<typename... Ret>
     struct invoker {
         template<typename... Args>
         static std::tuple<Ret...> call(const function& ref, Args&&... args) {
-            ref.push();
-            ref.push_args(std::forward<Args>(args)...);
-            lua_pcall(ref.state(), sizeof...(Args), sizeof...(Ret), 0);
+            lua_pcall( ref.state( ), sizeof...( Args ), sizeof...( Ret ), 0 );
             return std::make_tuple(stack::pop<Ret>(ref.state())...);
         }
     };
@@ -51,9 +43,7 @@ private:
     struct invoker<> {
         template<typename... Args>
         static void call(const function& ref, Args&&... args) {
-            ref.push();
-            ref.push_args(std::forward<Args>(args)...);
-            lua_pcall(ref.state(), sizeof...(Args), 0, 0);
+            lua_pcall( ref.state( ), sizeof...( Args ), 0, 0 );
         }
     };
 
@@ -61,12 +51,31 @@ private:
     struct invoker<T> {
         template<typename... Args>
         static T call(const function& ref, Args&&... args) {
-            ref.push();
-            ref.push_args(std::forward<Args>(args)...);
-            lua_pcall(ref.state(), sizeof...(Args), 1, 0);
-            return stack::pop<T>(ref.state());
+           lua_pcall( ref.state( ), sizeof...( Args ), 1, 0 );
+           return stack::pop<T>( ref.state( ) );
+
         }
     };
+
+    template <typename... Ret>
+    std::tuple<Ret...> invoke( types<Ret...>, std::size_t n ) {
+        lua_pcall( state( ), n, sizeof...( Ret ), 0 );
+        return stack::pop_call( state( ), std::make_tuple<Ret...>, types<Ret...>() );
+    }
+
+    template <typename Ret>
+    Ret invoke( types<Ret>, std::size_t n ) {
+        lua_pcall( state( ), n, 1, 0 );
+        return stack::pop<Ret>( state( ) );
+    }
+
+    void invoke( types<void>, std::size_t n ) {
+        lua_pcall( state( ), n, 0, 0 );
+    }
+
+    void invoke( types<>, std::size_t n ) {
+        lua_pcall( state( ), n, 0, 0 );
+    }
 
 public:
     function() : reference() {}
@@ -75,8 +84,10 @@ public:
     }
 
     template<typename... Ret, typename... Args>
-    auto invoke(Args&&... args) {
-        return invoker<Ret...>::call(*this, std::forward<Args>(args)...);
+    auto invoke(Args&&... args) -> decltype(invoke( types<Ret...>( ), sizeof...( Args ) )) {
+        push( );
+        stack::push_args( state( ), std::forward<Args>( args )... );
+        return invoke( types<Ret...>( ), sizeof...( Args ) );
     }
 };
 } // sol

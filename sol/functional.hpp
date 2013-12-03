@@ -91,6 +91,26 @@ inline auto call(Function&& f, const Tuple& t, indices<Indices...>) -> decltype(
 
 } // detail
 
+template <typename... Ret>
+struct lua_return_type {
+    typedef std::tuple<Ret...> type;
+};
+
+template <typename Ret>
+struct lua_return_type<Ret> {
+    typedef Ret type;
+};
+
+template <>
+struct lua_return_type<> {
+    typedef void type;
+};
+
+template <>
+struct lua_return_type<void> {
+    typedef void type;
+};
+
 template<typename Function, typename... Args>
 inline auto call(Function&& f, const std::tuple<Args...>& t) -> decltype(detail::call(std::forward<Function>(f), t, build_indices<sizeof...(Args)>{})) {
     return call(std::forward<Function>(f), t, build_indices<sizeof...(Args)>{});
