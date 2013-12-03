@@ -32,10 +32,8 @@ private:
 
     template <typename... Ret>
     std::tuple<Ret...> call( types<Ret...>, std::size_t n ) {
-        typedef typename std::decay<decltype(std::make_tuple<Ret...>)>::type maketuple_t;
-        maketuple_t m = &std::make_tuple<Ret...>;
         lua_pcall( state( ), n, sizeof...( Ret ), 0 );
-        return stack::pop_call( state( ), m, types<Ret...>() );
+	   return stack::pop_call( state( ), std::make_tuple<Ret...>, types<Ret...>( ) );
     }
 
     template <typename Ret>
