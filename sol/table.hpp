@@ -62,8 +62,7 @@ public:
     table& set_function(T&& key, TFx&& fx) {
         typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type clean_fx;
         const static bool isfunction = std::is_function<clean_fx>::value;
-        return set_fx(std::integral_constant<bool, !isfunction>(),
-            std::forward<T>(key), std::forward<TFx>(fx));
+        return set_fx(std::integral_constant<bool, !isfunction>(), std::forward<T>(key), std::forward<TFx>(fx));
     }
 
     template<typename T, typename TFx, typename TM>

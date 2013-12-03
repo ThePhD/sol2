@@ -26,25 +26,23 @@
 #include <cstddef>
 
 namespace sol {
-
 template<size_t... Ns>
-struct indices { };
+struct indices {};
 
 template<size_t N, size_t... Ns>
-struct build_indices : build_indices<N - 1, N - 1, Ns...> { };
+struct build_indices : build_indices<N - 1, N - 1, Ns...> {};
 
 template<size_t... Ns>
-struct build_indices<0, Ns...> : indices<Ns...>{ };
+struct build_indices<0, Ns...> : indices<Ns...> {};
 
 template<typename... Args>
-struct types : build_indices<sizeof...(Args)> { };
+struct types : build_indices<sizeof...(Args)> {};
 
 template<typename... Args>
-struct tuple_types : types<Args...>, std::false_type { };
+struct tuple_types : types<Args...>, std::false_type {};
 
 template<typename... Args>
-struct tuple_types<std::tuple<Args...>> : types<Args...>, std::true_type{ };
-
+struct tuple_types<std::tuple<Args...>> : types<Args...>, std::true_type {};
 } // sol
 
 #endif // SOL_TUPLE_HPP

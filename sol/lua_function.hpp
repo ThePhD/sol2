@@ -29,7 +29,7 @@ namespace sol {
 namespace detail {
 
 struct lua_func {
-    virtual int operator () (lua_State*) {
+    virtual int operator()(lua_State*) {
         throw sol_error("Failure to call specialized wrapped C++ function from lua");
     }
 
@@ -43,12 +43,10 @@ struct lambda_lua_func : public lua_func {
     TFx fx;
 
     template<typename... FxArgs>
-    lambda_lua_func(FxArgs&&... fxargs) : fx(std::forward<FxArgs>(fxargs)...) {
+    lambda_lua_func(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
 
-    }
-
-    virtual int operator () (lua_State* L) override {
-        return ( *this )( tuple_types<typename fx_traits::return_type>( ), typename fx_traits::args_type( ), L );
+    virtual int operator()(lua_State* L) override {
+        return (*this)(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), L);
     }
 
     template<typename... Args>
@@ -72,22 +70,20 @@ struct explicit_lua_func : public lua_func {
     TFx fx;
 
     template<typename... FxArgs>
-    explicit_lua_func(FxArgs&&... fxargs) : fx(std::forward<FxArgs>(fxargs)...) {
+    explicit_lua_func(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
 
-    }
-
-    virtual int operator () (lua_State* L) override {
-        return ( *this )( tuple_types<typename fx_traits::return_type>( ), typename fx_traits::args_type( ), L );
+    virtual int operator()(lua_State* L) override {
+        return (*this)(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), L);
     }
 
     template<typename... Args>
-    int operator () (types<void>, types<Args...> t, lua_State* L) {
+    int operator()(types<void>, types<Args...> t, lua_State* L) {
         stack::pop_call(L, fx, t);
         return 0;
     }
 
     template<typename... TRn, typename... Args>
-    int operator () (types<TRn...>, types<Args...> t, lua_State* L) {
+    int operator()(types<TRn...>, types<Args...> t, lua_State* L) {
         auto r = stack::pop_call(L, fx, t);
         stack::push(L, r);
         return sizeof...(TRn);
@@ -103,38 +99,32 @@ struct explicit_lua_func<TFx, T, true> : public lua_func {
         TFx invocation;
 
         template<typename... FxArgs>
-        lambda(T* m, FxArgs&&... fxargs) : member(m), invocation(std::forward<FxArgs>(fxargs)...) {
-
-        }
+        lambda(T* m, FxArgs&&... fxargs): member(m), invocation(std::forward<FxArgs>(fxargs)...) {}
 
         template<typename... Args>
-        typename fx_traits::return_type operator () (Args&&... args) {
+        typename fx_traits::return_type operator()(Args&&... args) {
            return ((*member).*invocation)(std::forward<Args>(args)...);
         }
     } fx;
 
     template<typename... FxArgs>
-    explicit_lua_func(T* m, FxArgs&&... fxargs) : fx(m, std::forward<FxArgs>(fxargs)...) {
-
-    }
+    explicit_lua_func(T* m, FxArgs&&... fxargs): fx(m, std::forward<FxArgs>(fxargs)...) {}
 
     template<typename... FxArgs>
-    explicit_lua_func(T& m, FxArgs&&... fxargs) : fx(std::addressof(m), std::forward<FxArgs>(fxargs)...) {
+    explicit_lua_func(T& m, FxArgs&&... fxargs): fx(std::addressof(m), std::forward<FxArgs>(fxargs)...) {}
 
-    }
-
-    virtual int operator () (lua_State* L) override {
-        return ( *this )( tuple_types<typename fx_traits::return_type>( ), typename fx_traits::args_type( ), L );
+    virtual int operator()(lua_State* L) override {
+        return (*this)(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), L);
     }
 
     template<typename... Args>
-    int operator () (types<void>, types<Args...> t, lua_State* L) {
+    int operator()(types<void>, types<Args...> t, lua_State* L) {
         stack::pop_call(L, fx, t);
         return 0;
     }
 
     template<typename... TRn, typename... Args>
-    int operator () (types<TRn...>, types<Args...> t, lua_State* L) {
+    int operator()(types<TRn...>, types<Args...> t, lua_State* L) {
         auto r = stack::pop_call(L, fx, t);
         stack::push(L, r);
         return sizeof...(TRn);
@@ -148,7 +138,6 @@ int lua_cfun(lua_State* L) {
     int r = fx->operator()(L);
     return r;
 }
-
 } // detail
 } // sol
 

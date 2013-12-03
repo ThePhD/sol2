@@ -28,23 +28,23 @@
 
 namespace sol {
 struct nil_t {};
-const nil_t nil{ };
-struct Void_t { };
-const Void_t Void{};
+const nil_t nil {};
+struct void_type {};
+const void_type Void {};
 
 enum class type : int {
-    none = LUA_TNONE,
-    nil = LUA_TNIL,
-    string = LUA_TSTRING,
-    number = LUA_TNUMBER,
-    thread = LUA_TTHREAD,
-    boolean = LUA_TBOOLEAN,
-    function = LUA_TFUNCTION,
-    userdata = LUA_TUSERDATA,
+    none          = LUA_TNONE,
+    nil           = LUA_TNIL,
+    string        = LUA_TSTRING,
+    number        = LUA_TNUMBER,
+    thread        = LUA_TTHREAD,
+    boolean       = LUA_TBOOLEAN,
+    function      = LUA_TFUNCTION,
+    userdata      = LUA_TUSERDATA,
     lightuserdata = LUA_TLIGHTUSERDATA,
-    table = LUA_TTABLE,
-    poly = none | nil | string | number | thread | boolean | 
-           function | userdata | lightuserdata | table
+    table         = LUA_TTABLE,
+    poly          = none   | nil     | string   | number   | thread       |
+                    table  | boolean | function | userdata | lightuserdata
 };
 
 inline void type_error(lua_State* L, int expected, int actual) {

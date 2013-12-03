@@ -36,11 +36,11 @@ struct function_traits<R(T::*)(Args...)> {
     static const bool is_member_function = true;
     typedef std::tuple<Args...> arg_tuple_type;
     typedef types<Args...> args_type;
-    typedef R(T::* func_pointer_type)(Args...);
-    typedef typename std::remove_pointer<func_pointer_type>::type func_type;
+    typedef R(T::* function_pointer_type)(Args...);
+    typedef typename std::remove_pointer<function_pointer_type>::type function_type;
     typedef R return_type;
     template<std::size_t i>
-    using arg_n = std::tuple_element<i, arg_tuple_type>;
+    using arg = typename std::tuple_element<i, arg_tuple_type>::type;
 };
 
 template<typename T, typename R, typename... Args>
@@ -49,11 +49,11 @@ struct function_traits<R(T::*)(Args...) const> {
     static const bool is_member_function = true;
     typedef std::tuple<Args...> arg_tuple_type;
     typedef types<Args...> args_type;
-    typedef R(T::* func_type)(Args...);
-    typedef R(T::* func_pointer_type)(Args...);
+    typedef R(T::* function_type)(Args...);
+    typedef R(T::* function_pointer_type)(Args...);
     typedef R return_type;
     template<std::size_t i>
-    using arg_n = std::tuple_element<i, arg_tuple_type>;
+    using arg = typename std::tuple_element<i, arg_tuple_type>::type;
 };
 
 template<typename R, typename... Args>
@@ -62,11 +62,11 @@ struct function_traits<R(Args...)> {
     static const bool is_member_function = false;
     typedef std::tuple<Args...> arg_tuple_type;
     typedef types<Args...> args_type;
-    typedef R(func_type)(Args...);
-    typedef R(*func_pointer_type)(Args...);
+    typedef R(function_type)(Args...);
+    typedef R(*function_pointer_type)(Args...);
     typedef R return_type;
     template<std::size_t i>
-    using arg_n = std::tuple_element<i, arg_tuple_type>;
+    using arg = typename std::tuple_element<i, arg_tuple_type>::type;
 };
 
 template<typename R, typename... Args>
@@ -75,11 +75,11 @@ struct function_traits<R(*)(Args...)> {
     static const bool is_member_function = false;
     typedef std::tuple<Args...> arg_tuple_type;
     typedef types<Args...> args_type;
-    typedef R(func_type)(Args...);
-    typedef R(*func_pointer_type)(Args...);
+    typedef R(function_type)(Args...);
+    typedef R(*function_pointer_type)(Args...);
     typedef R return_type;
     template<std::size_t i>
-    using arg_n = std::tuple_element<i, arg_tuple_type>;
+    using arg = typename std::tuple_element<i, arg_tuple_type>::type;
 };
 
 using std::get;
@@ -88,7 +88,6 @@ template<typename Function, typename Tuple, size_t... Indices>
 inline auto call(Function&& f, const Tuple& t, indices<Indices...>) -> decltype(f(get<Indices>(t)...)) {
     return f(get<Indices>(t)...);
 }
-
 } // detail
 
 template <typename... Ret>

@@ -32,7 +32,7 @@ template<class T, class...>
 struct are_same : std::true_type {};
 
 template<class T, class U, class... Args>
-struct are_same<T, U, Args...> : std::integral_constant<bool, std::is_same<T,U>::value && are_same<T, Args...>::value> {};
+struct are_same<T, U, Args...> : std::integral_constant<bool, std::is_same<T, U>::value && are_same<T, Args...>::value> {};
 
 int atpanic(lua_State* L) {
     throw sol_error(lua_tostring(L, -1));
@@ -59,7 +59,6 @@ private:
     table reg;
     table global;
     std::unordered_map<std::string, std::unique_ptr<detail::lua_func>> funcs;
-
 public:
     state(): 
     L(luaL_newstate(), lua_close),  
