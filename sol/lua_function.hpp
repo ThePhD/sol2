@@ -128,7 +128,7 @@ struct explicit_lua_func<TFx, T, true> : public lua_func {
     }
 
     template<typename... Args>
-    int operator () (types<void>, types<Args...>, lua_State* L) {
+    int operator () (types<void>, types<Args...> t, lua_State* L) {
         stack::pop_call(L, fx, t);
         return 0;
     }

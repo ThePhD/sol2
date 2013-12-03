@@ -89,7 +89,6 @@ private:
 
     template<typename T, typename TFx>
     table& set_fx(std::false_type, T&& key, TFx&& fx) {
-        typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type clean_fx;
         typedef typename std::decay<TFx>::type ptr_fx;
         std::unique_ptr<detail::lua_func> sptr(new detail::explicit_lua_func<ptr_fx>(std::forward<TFx>(fx)));
         return set_fx(std::forward<T>(key), std::move(sptr));

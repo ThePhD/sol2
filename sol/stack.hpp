@@ -160,16 +160,16 @@ inline void push(lua_State* L, indices<I...>, const T& tuplen) {
 }
 
 template<class T, class F, class... Vs>
-auto ltr_pop(T&& extra, F f, types<>, Vs&&... vs)
+auto ltr_pop(T&&, F&& f, types<>, Vs&&... vs)
     -> decltype(f(std::forward<Vs>(vs)...)) {
     return f(std::forward<Vs>(vs)...);
 }
 
 // take head, produce value from it, pass after other values
 template<class F, class Head, class... Tail, class... Vs>
-auto ltr_pop(lua_State* L, F f, types<Head, Tail...>, Vs&&... vs)
--> decltype(ltr_pop(L, f, types<Tail...>{}, std::forward<Vs>(vs)..., pop<Head>(L))) {
-    return ltr_pop(L, f, types<Tail...>{}, std::forward<Vs>(vs)..., pop<Head>(L));
+auto ltr_pop(lua_State* L, F&& f, types<Head, Tail...>, Vs&&... vs)
+-> decltype(ltr_pop(L, std::forward<F>(f), types<Tail...>(), std::forward<Vs>(vs)..., pop<Head>(L))) {
+    return ltr_pop(L, std::forward<F>(f), types<Tail...>(), std::forward<Vs>(vs)..., pop<Head>(L));
 }
 
 } // detail
@@ -180,8 +180,8 @@ inline void push(lua_State* L, const std::tuple<Args...>& tuplen) {
 }
 
 template<typename... Args, typename TFx>
-inline auto pop_call(lua_State* L, TFx&& fx, types<Args...> t)->decltype(detail::ltr_pop(L, fx, t)) {
-    return detail::ltr_pop(L, fx, t);
+inline auto pop_call( lua_State* L, TFx&& fx, types<Args...> )->decltype( detail::ltr_pop( L, std::forward<TFx>( fx ), types<Args...>() ) ) {
+    return detail::ltr_pop( L, std::forward<TFx>( fx ), types<Args...>());
 }
 
 template<typename... Args>
