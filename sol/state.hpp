@@ -35,7 +35,8 @@ template<class T, class U, class... Args>
 struct are_same<T, U, Args...> : std::integral_constant<bool, std::is_same<T, U>::value && are_same<T, Args...>::value> {};
 
 int atpanic(lua_State* L) {
-    throw sol_error(lua_tostring(L, -1));
+    std::string err = lua_tostring( L, -1 );
+    throw sol_error( err );
 }
 } // detail
 
@@ -76,7 +77,7 @@ public:
     
     template<typename... Args>
     void open_libraries(Args&&... args) {
-        static_assert(detail::are_same<lib, Args...>{}, "all types must be libraries");
+        static_assert(detail::are_same<lib, Args...>::value, "all types must be libraries");
         if(sizeof...(args) == 0) {
             luaL_openlibs(L.get());
             return;

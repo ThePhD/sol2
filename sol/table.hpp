@@ -32,8 +32,8 @@ class table : virtual public reference {
 private:
      std::unordered_map<std::string, std::shared_ptr<detail::lua_func>> funcs;
 public:
-    table() noexcept: reference{} {}
-    table(lua_State* L, int index = -1): reference(L, index) {
+    table() noexcept: reference(), funcs() {}
+    table(lua_State* L, int index = -1): reference(L, index), funcs() {
         type_assert(L, index, type::table);
     }
 
@@ -92,22 +92,38 @@ private:
     }
 
     template<typename T>
-    table& set_fx(T&& key, std::unique_ptr<detail::lua_func> funcptr) {
+    table& set_fx(T&& key, std::unique_ptr<detail::lua_func> luafunc) {
         std::string fkey(key);
         auto hint = funcs.find(fkey);
         if (hint == funcs.end()) {
-            std::shared_ptr<detail::lua_func> sptr(funcptr.release());
+            std::shared_ptr<detail::lua_func> sptr(luafunc.release());
             hint = funcs.emplace_hint(hint, fkey, std::move(sptr));
         }
         else {
-            hint->second.reset(funcptr.release());
+            hint->second.reset(luafunc.release());
         }
         detail::lua_func* target = hint->second.get();
+	   void* userdata = static_cast<void*>( target );
         lua_CFunction freefunc = &detail::lua_cfun;
-        lua_pushlightuserdata(state(), static_cast<void*>(target));
-        lua_pushcclosure(state(), freefunc, 1);
-        lua_setglobal(state(), fkey.c_str());
-        return *this;
+	   const char* freefuncname = hint->first.c_str( );
+	   const luaL_Reg funcreg[ 2 ] = {
+		   { freefuncname, freefunc },
+		   { }
+	   };
+
+	   push( );
+	   
+	   /*//lua_pushlightuserdata( state(), userdata );
+	   lua_pushstring( state(), freefuncname );       // push key onto stack
+	   lua_pushcclosure( state(), freefunc, 1 ); // push value onto stack
+	   lua_settable( state(), -3 );
+	   */
+	   
+	   lua_pushlightuserdata( state( ), userdata );
+	   luaL_setfuncs( state( ), funcreg, 1 );
+	   
+	   lua_pop( state( ), 1 );
+	   return *this;
     }
 };
 } // sol

@@ -85,7 +85,7 @@ struct explicit_lua_func : public lua_func {
     template<typename... TRn, typename... Args>
     int operator()(types<TRn...>, types<Args...> t, lua_State* L) {
         auto r = stack::pop_call(L, fx, t);
-        stack::push(L, r);
+        stack::push(L, std::move( r ));
         return sizeof...(TRn);
     }
 };

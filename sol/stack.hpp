@@ -139,8 +139,16 @@ inline void push(lua_State* L, const nil_t&) {
     lua_pushnil(L);
 }
 
-inline void push(lua_State* L, lua_CFunction func) {
-    lua_pushcfunction(L, func);
+inline void push( lua_State* L, lua_CFunction func ) {
+	lua_pushcfunction( L, func );
+}
+
+inline void push( lua_State* L, lua_CFunction func, int n ) {
+	lua_pushcclosure( L, func, n );
+}
+
+inline void push( lua_State* L, void* userdata ) {
+	lua_pushlightuserdata( L, userdata );
 }
 
 template<size_t N>
