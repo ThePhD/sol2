@@ -17,3 +17,4 @@ x64/
 *.idb
 *.sln
 *.gitattributes
+liblua.a
