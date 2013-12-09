@@ -27,7 +27,7 @@
 #include <unordered_map>
 #include <array>
 #include <memory>
-
+#include <cstring>
 
 namespace sol {
 namespace detail {
@@ -121,10 +121,10 @@ private:
         return set_fx(std::true_type(), std::forward<T>(key), std::forward<TFx>(fx), std::forward<TObj>(obj));
     }
 
-    template<typename T, typename TFx, typename TM>
-    table& set_lvalue_fx(std::false_type, T&& key, TFx&& fx, TM& mem) {
+    template<typename T, typename TFx, typename TObj>
+    table& set_lvalue_fx(std::false_type, T&& key, TFx&& fx, TObj&& obj) {
         typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type clean_fx;
-        std::unique_ptr<lua_func> sptr(new explicit_lua_func<clean_fx, TM>(mem, std::forward<TFx>(fx)));
+        std::unique_ptr<lua_func> sptr(new explicit_lua_func<clean_fx, TObj>(std::forward<TObj>( obj ), std::forward<TFx>(fx)));
         return set_fx(std::forward<T>(key), std::move(sptr));
     }
 
@@ -170,17 +170,17 @@ private:
         typedef typename std::decay<TFx>::type ptr_fx;
        std::string fkey(key);
        ptr_fx target(std::forward<TFx>(fx));
-       void* userdata = static_cast<void*>(target);
+       void* userdata = reinterpret_cast<void*>(target);
        lua_CFunction freefunc = &static_lua_func<TFx>::call;
        const char* freefuncname = fkey.c_str();
        const luaL_Reg funcreg[ 2 ] = {
            { freefuncname, freefunc },
-           { }
+		 { nullptr, nullptr }
        };
 
        push();
 
-       stack::push(state(), target);
+       stack::push(state(), userdata);
        luaL_setfuncs(state(), funcreg, 1);
 
        lua_pop(state(), 1);
@@ -199,12 +199,12 @@ private:
             hint->second.reset(luafunc.release());
         }
         lua_func* target = hint->second.get();
-        void* userdata = static_cast<void*>(target);
+        void* userdata = reinterpret_cast<void*>(target);
         lua_CFunction freefunc = &lua_func::call;
         const char* freefuncname = hint->first.c_str();
         const luaL_Reg funcreg[ 2 ] = {
             { freefuncname, freefunc },
-            { }
+		  { nullptr, nullptr }
         };
 
         push();
