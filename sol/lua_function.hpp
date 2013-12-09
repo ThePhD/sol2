@@ -49,7 +49,7 @@ struct static_lua_func {
         void* functiondata = lua_touserdata(L, lua_upvalueindex(1));
         //if (functiondata == nullptr)
         //    throw sol_error("call from lua to c++ function has null function pointer data");
-        fx_t* fx = *static_cast<fx_t*>(functiondata);
+        fx_t* fx = reinterpret_cast<fx_t*>(functiondata);
         int r = typed_call(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), fx, L);
         return r;
     }

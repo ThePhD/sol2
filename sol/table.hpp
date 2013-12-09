@@ -151,7 +151,7 @@ private:
         const char* freefuncname = fkey.c_str();
         const luaL_Reg funcreg[ 2 ] = {
             { freefuncname, freefunc },
-            { }
+            { nullptr, nullptr }
         };
 
         
