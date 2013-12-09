@@ -24,9 +24,7 @@
 
 #include "stack.hpp"
 #include "lua_function.hpp"
-#include <unordered_map>
 #include <array>
-#include <memory>
 #include <cstring>
 
 namespace sol {
@@ -122,7 +120,7 @@ private:
     template<typename T, typename TFx, typename TObj>
     table& set_lvalue_fx(std::false_type, T&& key, TFx&& fx, TObj&& obj) {
         typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type clean_fx;
-        std::unique_ptr<lua_func> sptr(new explicit_lua_func<clean_fx, TObj>(std::forward<TObj>( obj ), std::forward<TFx>(fx)));
+        std::unique_ptr<lua_func> sptr(new explicit_lua_func<clean_fx, TObj>(std::forward<TObj>(obj), std::forward<TFx>(fx)));
         return set_fx(std::forward<T>(key), std::move(sptr));
     }
 
@@ -173,7 +171,7 @@ private:
        const char* freefuncname = fkey.c_str();
        const luaL_Reg funcreg[ 2 ] = {
            { freefuncname, freefunc },
-		 { nullptr, nullptr }
+         { nullptr, nullptr }
        };
 
        push();
@@ -188,32 +186,30 @@ private:
     template<typename T>
     table& set_fx(T&& key, std::unique_ptr<lua_func> luafunc) {
         std::string fkey(key);
-        
-	   lua_func* target = luafunc.release();
+       std::string metakey("sol.stateful.");
+       metakey += fkey;
+       metakey += ".meta";
+       lua_func* target = luafunc.release();
         void* userdata = reinterpret_cast<void*>(target);
         lua_CFunction freefunc = &lua_func::call;
         const char* freefuncname = fkey.c_str();
+       const char* metatablename = metakey.c_str();
         const luaL_Reg funcreg[2] = {
             { freefuncname, freefunc },
-		  { nullptr, nullptr }
-        };
-        
-	   push();
+          { nullptr, nullptr }
+       };
 
-	   // Actual function call we want
-	   stack::push( state(), userdata );
-	   luaL_setfuncs(state(), funcreg, 1);
-	   
+       int exists = luaL_newmetatable(state(), metatablename);
+       lua_pushstring(state(), "__gc");
+       lua_pushcclosure(state(), &lua_func::gc, 0);
+       lua_settable(state(), -3);
+       push();
+
+       stack::push_user(state(), userdata, metatablename);
+       luaL_setfuncs(state(), funcreg, 1);
+       
         lua_pop(state(), 1);
         return *this;
-    }
-
-    static int destroyfunc( lua_State* L ) {
-	    void* userdata = lua_touserdata( L, 1 );
-	    lua_func* ptr = static_cast<lua_func*>( userdata );
-	    std::default_delete<lua_func> dx{ };
-	    dx( ptr );
-	    return 0;
     }
 };
 } // sol

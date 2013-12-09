@@ -24,6 +24,7 @@
 
 #include "functional.hpp"
 #include "stack.hpp"
+#include <memory>
 
 namespace sol {
 
@@ -112,12 +113,23 @@ struct static_object_lua_func {
 
 struct lua_func {
     static int call(lua_State* L) {
-        void* inheritancedata = lua_touserdata(L, lua_upvalueindex(1));
+        void** pinheritancedata = static_cast<void**>(lua_touserdata(L, lua_upvalueindex(1)));
+        void* inheritancedata = *pinheritancedata;
         if (inheritancedata == nullptr)
             throw sol_error("call from lua to c++ function has null data");
-        lua_func& fx = *static_cast<lua_func*>(inheritancedata);
+        lua_func* pfx = static_cast<lua_func*>(inheritancedata);
+        lua_func& fx = *pfx;
         int r = fx(L);
         return r;
+    }
+
+    static int gc(lua_State* L) {
+        void** puserdata = static_cast<void**>(lua_touserdata(L, 1));
+        void* userdata = *puserdata;
+        lua_func* ptr = static_cast<lua_func*>(userdata);
+        std::default_delete<lua_func> dx{ };
+        dx(ptr);
+        return 0;
     }
     
     virtual int operator()(lua_State*) {
@@ -152,6 +164,10 @@ struct lambda_lua_func : public lua_func {
         stack::push(L, r);
         return sizeof...(TRn);
     }
+
+    ~lambda_lua_func() {
+        
+    }
 };
 
 template<typename TFx, typename T = TFx, bool is_member_pointer = std::is_member_function_pointer<TFx>::value>
@@ -179,6 +195,10 @@ struct explicit_lua_func : public lua_func {
         stack::push(L, std::move(r));
         return sizeof...(TRn);
     }
+
+    ~explicit_lua_func() {
+
+    }
 };
 
 template<typename TFx, typename T>
@@ -199,7 +219,7 @@ struct explicit_lua_func<TFx, T, true> : public lua_func {
     } fx;
 
     template<typename... FxArgs>
-    explicit_lua_func(T m, FxArgs&&... fxargs): fx(std::move( m ), std::forward<FxArgs>(fxargs)...) {}
+    explicit_lua_func(T m, FxArgs&&... fxargs): fx(std::move(m), std::forward<FxArgs>(fxargs)...) {}
 
     virtual int operator()(lua_State* L) override {
         return (*this)(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), L);
@@ -216,6 +236,10 @@ struct explicit_lua_func<TFx, T, true> : public lua_func {
         auto r = stack::pop_call(L, fx, t);
         stack::push(L, r);
         return sizeof...(TRn);
+    }
+
+    ~explicit_lua_func() {
+
     }
 };
 
