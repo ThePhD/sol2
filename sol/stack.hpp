@@ -165,6 +165,17 @@ inline void push(lua_State* L, const std::string& str) {
     lua_pushlstring(L, str.c_str(), str.size());
 }
 
+template<typename T>
+inline void push_user(lua_State* L, T& userdata, const char* metatablekey) {
+    T* pdatum = static_cast<T*>(lua_newuserdata(L, sizeof(T)));
+    T& datum = *pdatum;
+    datum = userdata;
+    if (metatablekey != nullptr) {
+        lua_getfield(L, LUA_REGISTRYINDEX, metatablekey);
+        lua_setmetatable(L, -2);
+    }
+}
+
 template<typename T, size_t N>
 inline void push(lua_State* L, const std::array<T, N>& data) {
     for (auto&& i : data) {
