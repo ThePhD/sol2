@@ -94,22 +94,22 @@ inline auto call(Function&& f, const Tuple& t, indices<Indices...>) -> decltype(
 }
 } // detail
 
-template <typename... Ret>
+template<typename... Ret>
 struct lua_return_type {
     typedef std::tuple<Ret...> type;
 };
 
-template <typename Ret>
+template<typename Ret>
 struct lua_return_type<Ret> {
     typedef Ret type;
 };
 
-template <>
+template<>
 struct lua_return_type<> {
     typedef void type;
 };
 
-template <>
+template<>
 struct lua_return_type<void> {
     typedef void type;
 };
