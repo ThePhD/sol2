@@ -27,6 +27,7 @@
 #include <utility>
 #include <type_traits>
 #include <array>
+#include <cstring>
 
 namespace sol {
 template<typename T, typename R = void>
@@ -181,6 +182,21 @@ inline void push(lua_State* L, const std::array<T, N>& data) {
     for (auto&& i : data) {
         push(L, i);
     }
+}
+
+template <typename T>
+inline int push_user( lua_State* L, T& item ) {
+	typedef typename std::decay<T>::type TValue;
+	const static std::size_t itemsize = sizeof( TValue );
+	const static std::size_t voidsize = sizeof( void* );
+	const static std::size_t voidsizem1 = voidsize - 1;
+	const static std::size_t data_t_count = (sizeof(TValue) + voidsizem1) / voidsize;
+	typedef std::array<void*, data_t_count> data_t;
+
+	data_t data{{}};
+	std::memcpy( std::addressof( data[ 0 ] ), std::addressof( item ), itemsize );
+	push( L, data );
+	return data_t_count;
 }
 
 namespace detail {
