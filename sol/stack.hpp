@@ -26,6 +26,7 @@
 #include "tuple.hpp"
 #include <utility>
 #include <type_traits>
+#include <array>
 
 namespace sol {
 template<typename T, typename R = void>
@@ -156,8 +157,19 @@ inline void push(lua_State* L, const char (&str)[N]) {
     lua_pushlstring(L, str, N - 1);
 }
 
+inline void push(lua_State* L, const char* str) {
+    lua_pushlstring(L, str, std::char_traits<char>::length( str ));
+}
+
 inline void push(lua_State* L, const std::string& str) {
     lua_pushlstring(L, str.c_str(), str.size());
+}
+
+template<typename T, size_t N>
+inline void push( lua_State* L, const std::array<T, N>& data ) {
+	for ( std::size_t i = 0; i < data.size( ); ++i ) {
+		push( L, data[ i ] );
+	}
 }
 
 namespace detail {
