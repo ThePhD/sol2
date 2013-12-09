@@ -167,8 +167,8 @@ inline void push(lua_State* L, const std::string& str) {
 
 template<typename T, size_t N>
 inline void push(lua_State* L, const std::array<T, N>& data) {
-    for (std::size_t i = 0; i < data.size(); ++i) {
-        push(L, data[ i ]);
+    for (auto&& i : data) {
+        push(L, i);
     }
 }
 
