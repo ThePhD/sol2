@@ -66,14 +66,6 @@ public:
     global(reg.get<table>(LUA_RIDX_GLOBALS)) {
         lua_atpanic(L.get(), detail::atpanic);
     }
-
-    state(const std::string& filename): 
-    L(luaL_newstate(), lua_close), 
-    reg(L.get(), LUA_REGISTRYINDEX), 
-    global(reg.get<table>(LUA_RIDX_GLOBALS)) {
-        lua_atpanic(L.get(), detail::atpanic);
-        open_file(filename);
-    }
     
     template<typename... Args>
     void open_libraries(Args&&... args) {
