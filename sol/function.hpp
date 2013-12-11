@@ -42,11 +42,11 @@ private:
     }
 
     void call(types<void>, std::size_t n) {
-        lua_pcall(state(), n, 0, 0);
+        lua_pcall(state(), static_cast<uint32_t>(n), 0, 0);
     }
 
     void call(types<>, std::size_t n) {
-        lua_pcall(state(), n, 0, 0);
+        lua_pcall(state(), static_cast<uint32_t>(n), 0, 0);
     }
 
 public:
