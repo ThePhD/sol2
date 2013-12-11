@@ -30,22 +30,22 @@ namespace sol {
 class function : virtual public reference {
 private:
     template<typename... Ret>
-    std::tuple<Ret...> call(types<Ret...>, std::size_t n) {
-        lua_pcall(state(), n, sizeof...(Ret), 0);
+    std::tuple<Ret...> invoke(types<Ret...>, std::size_t n) {
+        lua_pcall(state(), static_cast<int>(n), sizeof...(Ret), 0);
        return stack::pop_call(state(), std::make_tuple<Ret...>, types<Ret...>());
     }
 
     template<typename Ret>
-    Ret call(types<Ret>, std::size_t n) {
-        lua_pcall(state(), n, 1, 0);
+    Ret invoke(types<Ret>, std::size_t n) {
+        lua_pcall(state(), static_cast<int>(n),  1, 0);
         return stack::pop<Ret>(state());
     }
 
-    void call(types<void>, std::size_t n) {
+    void invoke(types<void>, std::size_t n) {
         lua_pcall(state(), static_cast<uint32_t>(n), 0, 0);
     }
 
-    void call(types<>, std::size_t n) {
+    void invoke(types<>, std::size_t n) {
         lua_pcall(state(), static_cast<uint32_t>(n), 0, 0);
     }
 
@@ -56,10 +56,10 @@ public:
     }
 
     template<typename... Ret, typename... Args>
-    auto invoke(Args&&... args) -> decltype(call(types<Ret...>(), sizeof...(Args))) {
+    auto call(Args&&... args) -> decltype(invoke(types<Ret...>(), sizeof...(Args))) {
         push();
         stack::push_args(state(), std::forward<Args>(args)...);
-        return call(types<Ret...>(), sizeof...(Args));
+        return invoke(types<Ret...>(), sizeof...(Args));
     }
 };
 } // sol

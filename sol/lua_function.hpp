@@ -29,32 +29,32 @@
 namespace sol {
 namespace detail {
 template<typename T, std::size_t n>
-void get_upvalue_ptr( lua_State* L, T*& data, std::size_t datasize, std::array<void*, n> voiddata, int& upvalue ) {
-	for ( std::size_t i = 0, d = 0; d < datasize; ++i, d += sizeof( void* ) ) {
-		voiddata[ i ] = lua_touserdata( L, lua_upvalueindex( upvalue++ ) );
-	}
-	data = reinterpret_cast<T*>( static_cast<void*>( voiddata.data( ) ) );
+void get_upvalue_ptr(lua_State* L, T*& data, std::size_t datasize, std::array<void*, n> voiddata, int& upvalue) {
+    for (std::size_t i = 0, d = 0; d < datasize; ++i, d += sizeof(void*)) {
+        voiddata[ i ] = lua_touserdata(L, lua_upvalueindex(upvalue++));
+    }
+    data = reinterpret_cast<T*>(static_cast<void*>(voiddata.data()));
 }
 template<typename T, std::size_t n>
-void get_upvalue_ptr( lua_State* L, T*& data, std::array<void*, n> voiddata, int& upvalue ) {
-	get_upvalue_ptr( L, data, sizeof( T ), voiddata, upvalue );
+void get_upvalue_ptr(lua_State* L, T*& data, std::array<void*, n> voiddata, int& upvalue) {
+    get_upvalue_ptr(L, data, sizeof(T), voiddata, upvalue);
 }
 template<typename T>
-void get_upvalue_ptr( lua_State* L, T*& data, int& upvalue ) {
-	const static std::size_t data_t_count = ( sizeof(T)+( sizeof(void*)-1 ) ) / sizeof( void* );
-	typedef std::array<void*, data_t_count> data_t;
-	data_t voiddata{{}};
-	return get_upvalue_ptr(L, data, voiddata, upvalue);
+void get_upvalue_ptr(lua_State* L, T*& data, int& upvalue) {
+    const static std::size_t data_t_count = (sizeof(T)+(sizeof(void*)-1)) / sizeof(void*);
+    typedef std::array<void*, data_t_count> data_t;
+    data_t voiddata{{}};
+    return get_upvalue_ptr(L, data, voiddata, upvalue);
 }
 template<typename T>
-void get_upvalue( lua_State* L, T& data, int& upvalue ) {
-	const static std::size_t data_t_count = ( sizeof(T)+( sizeof(void*)-1 ) ) / sizeof( void* );
-	typedef std::array<void*, data_t_count> data_t;
-	data_t voiddata{ { } };
-	for ( std::size_t i = 0, d = 0; d < sizeof(T); ++i, d += sizeof( void* ) ) {
-		voiddata[ i ] = lua_touserdata( L, lua_upvalueindex( upvalue++ ) );
-	}
-	data = *reinterpret_cast<T*>( static_cast<void*>( voiddata.data( ) ) );
+void get_upvalue(lua_State* L, T& data, int& upvalue) {
+    const static std::size_t data_t_count = (sizeof(T)+(sizeof(void*)-1)) / sizeof(void*);
+    typedef std::array<void*, data_t_count> data_t;
+    data_t voiddata{ { } };
+    for (std::size_t i = 0, d = 0; d < sizeof(T); ++i, d += sizeof(void*)) {
+        voiddata[ i ] = lua_touserdata(L, lua_upvalueindex(upvalue++));
+    }
+    data = *reinterpret_cast<T*>(static_cast<void*>(voiddata.data()));
 }
 } // detail
 
@@ -80,7 +80,7 @@ struct static_lua_func {
     static int call(lua_State* L) {
         int upvalue = 1;
         fx_t* fx;
-	   detail::get_upvalue( L, fx, upvalue );
+       detail::get_upvalue(L, fx, upvalue);
         int r = typed_call(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), fx, L);
         return r;
     }
@@ -105,8 +105,8 @@ struct static_object_lua_func {
     template<typename TR, typename... Args>
     static int typed_call(types<TR>, types<Args...>, T& item, fx_t& ifx, lua_State* L) {
         auto fx = [ &item, &ifx ] (Args&&... args) -> TR { 
-		   return (item.*ifx)(std::forward<Args>(args)...); 
-	   };
+           return (item.*ifx)(std::forward<Args>(args)...); 
+       };
         auto r = stack::pop_call(L, fx, types<Args...>());
         stack::push(L, std::move(r));
         return 1;
@@ -121,19 +121,19 @@ struct static_object_lua_func {
     }
 
     static int call(lua_State* L) {
-        const static std::size_t data_t_count = ( sizeof(fx_t)+( sizeof(void*)-1 ) ) / sizeof( void* );
-	   typedef std::array<void*, data_t_count> data_t;
-	   int upvalue = 1;
-	   data_t data = { { } };
-	   fx_t* fxptr;
-	   for ( std::size_t i = 0, d = 0; d < sizeof(fx_t*); ++i, d += sizeof( void* ) ) {
-		   data[ i ] = lua_touserdata( L, lua_upvalueindex( upvalue++ ) );
-	   }
-	   fxptr = reinterpret_cast<fx_t*>( static_cast<void*>( data.data( ) ) ); 
-	   fx_t& mem_ptr = *fxptr;
-	   void* objectdata = lua_touserdata( L, lua_upvalueindex( upvalue++ ) );
-	   T& obj = *static_cast<T*>( objectdata );
-	   int r = typed_call( tuple_types<typename fx_traits::return_type>( ), typename fx_traits::args_type( ), obj, mem_ptr, L );
+        const static std::size_t data_t_count = (sizeof(fx_t)+(sizeof(void*)-1)) / sizeof(void*);
+       typedef std::array<void*, data_t_count> data_t;
+       int upvalue = 1;
+       data_t data = { { } };
+       fx_t* fxptr;
+       for (std::size_t i = 0, d = 0; d < sizeof(fx_t*); ++i, d += sizeof(void*)) {
+           data[ i ] = lua_touserdata(L, lua_upvalueindex(upvalue++));
+       }
+       fxptr = reinterpret_cast<fx_t*>(static_cast<void*>(data.data())); 
+       fx_t& mem_ptr = *fxptr;
+       void* objectdata = lua_touserdata(L, lua_upvalueindex(upvalue++));
+       T& obj = *static_cast<T*>(objectdata);
+       int r = typed_call(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), obj, mem_ptr, L);
         return r;
     }
 

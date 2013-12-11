@@ -45,7 +45,7 @@ inline T get_unsigned(lua_State* L, std::true_type, int index = -1) {
 
 template<typename T>
 inline T get_unsigned(lua_State* L, std::false_type, int index = -1) {
-    return static_cast<T>( lua_tointeger(L, index) );
+    return static_cast<T>(lua_tointeger(L, index));
 }
 
 template<typename T>
@@ -68,7 +68,7 @@ inline T get_helper(lua_State* L, std::true_type, int index = -1) {
 template<typename T>
 inline T get_nil(lua_State* L, std::true_type, int index = -1) {
     if (lua_isnil(L, index) == 0)
-	    throw sol::sol_error("not nil");
+        throw sol::sol_error("not nil");
     return nil_t{};
 }
 
@@ -196,19 +196,19 @@ inline void push(lua_State* L, const std::array<T, N>& data) {
     }
 }
 
-template <typename T>
-inline int push_user( lua_State* L, T& item ) {
-	typedef typename std::decay<T>::type TValue;
-	const static std::size_t itemsize = sizeof( TValue );
-	const static std::size_t voidsize = sizeof( void* );
-	const static std::size_t voidsizem1 = voidsize - 1;
-	const static std::size_t data_t_count = (sizeof(TValue) + voidsizem1) / voidsize;
-	typedef std::array<void*, data_t_count> data_t;
+template<typename T>
+inline int push_user(lua_State* L, T& item) {
+    typedef typename std::decay<T>::type TValue;
+    const static std::size_t itemsize = sizeof(TValue);
+    const static std::size_t voidsize = sizeof(void*);
+    const static std::size_t voidsizem1 = voidsize - 1;
+    const static std::size_t data_t_count = (sizeof(TValue) + voidsizem1) / voidsize;
+    typedef std::array<void*, data_t_count> data_t;
 
-	data_t data{{}};
-	std::memcpy( std::addressof( data[ 0 ] ), std::addressof( item ), itemsize );
-	push( L, data );
-	return data_t_count;
+    data_t data{{}};
+    std::memcpy(std::addressof(data[ 0 ]), std::addressof(item), itemsize);
+    push(L, data);
+    return data_t_count;
 }
 
 namespace detail {

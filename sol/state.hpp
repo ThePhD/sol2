@@ -115,14 +115,22 @@ public:
         }
     }
 
+    void eval(const std::string& code) {
+        script(code);
+    }
+
     void script(const std::string& code) {
         if(luaL_dostring(L.get(), code.c_str())) {
             lua_error(L.get());
         }
     }
 
-    void open_file(const std::string& filename) {
-        if(luaL_dofile(L.get(), filename.c_str())) {
+    void eval_file(const std::string& filename) {
+        script_file(filename);
+    }
+
+    void script_file(const std::string& filename) {
+        if (luaL_dofile(L.get(), filename.c_str())) {
             lua_error(L.get());
         }
     }

@@ -1,6 +1,5 @@
 obj/*
 bin/*
-*.ninja*
 demacro.txt
 Shinobi2
 dev.*
@@ -16,3 +15,5 @@ x64/
 *.sln
 *.gitattributes
 liblua.a
+sol/include/
+.ninja*
