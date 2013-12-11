@@ -97,8 +97,10 @@ TEST_CASE("simple/callWithParameters", "Lua function is called with a few parame
 
     REQUIRE_NOTHROW(lua.script("function my_add(i, j, k) return i + j + k end"));
     auto f = lua.get<sol::function>("my_add");
-    REQUIRE_NOTHROW(f.call<int>(1, 2, 3));
-    REQUIRE_THROWS(f.call<int>(1, 2, "arf"));
+    int a;
+    REQUIRE_NOTHROW(a = f.call<int>(1, 2, 3));
+    REQUIRE(a == 6);
+    REQUIRE_THROWS(a = f.call<int>(1, 2, "arf"));
 }
 
 TEST_CASE("simple/callCppFunction", "C++ function is called from lua") {
@@ -164,7 +166,7 @@ TEST_CASE("negative/basicError", "Check if error handling works correctly") {
         std::cout << "stateless lambda()" << std::endl;
         return "test";
     }
-    );
+   );
     run_script(lua);
 
     lua.get<sol::table>("os").set_function("fun", &free_function);
@@ -183,7 +185,7 @@ TEST_CASE("negative/basicError", "Check if error handling works correctly") {
         std::cout << "stateless lambda()" << std::endl;
         return "test";
     }
-    );
+   );
     run_script(lua);
 
     // r-value, cannot optomize

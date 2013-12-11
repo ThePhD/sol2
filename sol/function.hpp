@@ -29,24 +29,28 @@
 namespace sol {
 class function : virtual public reference {
 private:
+    void luacall (std::size_t argcount, std::size_t resultcount) {
+        lua_call(state(), static_cast<uint32_t>(argcount), static_cast<uint32_t>(resultcount));
+    }
+
     template<typename... Ret>
     std::tuple<Ret...> invoke(types<Ret...>, std::size_t n) {
-        lua_pcall(state(), static_cast<int>(n), sizeof...(Ret), 0);
-       return stack::pop_call(state(), std::make_tuple<Ret...>, types<Ret...>());
+        luacall(n, sizeof...(Ret));
+        return stack::pop_call(state(), std::make_tuple<Ret...>, types<Ret...>());
     }
 
     template<typename Ret>
     Ret invoke(types<Ret>, std::size_t n) {
-        lua_pcall(state(), static_cast<int>(n),  1, 0);
+        luacall(n, 1);
         return stack::pop<Ret>(state());
     }
 
     void invoke(types<void>, std::size_t n) {
-        lua_pcall(state(), static_cast<uint32_t>(n), 0, 0);
+        luacall(n, 0);
     }
 
     void invoke(types<>, std::size_t n) {
-        lua_pcall(state(), static_cast<uint32_t>(n), 0, 0);
+        luacall(n, 0);
     }
 
 public:

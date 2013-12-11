@@ -222,16 +222,12 @@ template<typename F, typename... Vs>
 auto ltr_pop(lua_State*, F&& f, types<>, Vs&&... vs) -> decltype(f(std::forward<Vs>(vs)...)) {
     return f(std::forward<Vs>(vs)...);
 }
-template<typename F, typename... Vs>
-auto ltr_pop(lua_State*, F&& f, types<void>, Vs&&... vs) -> decltype(f(std::forward<Vs>(vs)...)) {
-    return f(std::forward<Vs>(vs)...);
-}
 template<typename F, typename Head, typename... Vs>
 auto ltr_pop(lua_State* L, F&& f, types<Head>, Vs&&... vs) -> decltype(ltr_pop(L, std::forward<F>(f), types<>(), std::forward<Vs>(vs)..., pop<Head>(L))) {
     return ltr_pop(L, std::forward<F>(f), types<>(), std::forward<Vs>(vs)..., pop<Head>(L));
 }
 template<typename F, typename Head, typename... Tail, typename... Vs>
-auto ltr_pop(lua_State* L, F&& f, types<Head, Tail...>, Vs&&... vs) -> decltype(ltr_pop(L, std::forward<F>(f), types<Tail...>(), std::forward<Vs>(vs)..., pop<Head>(L))) {
+auto ltr_pop(lua_State* L, F&& f, types<Head, Tail...>, Vs&&... vs) -> decltype(f(std::forward<Vs>(vs)..., std::declval<Head>(), std::declval<Tail>()...)) {
     return ltr_pop(L, std::forward<F>(f), types<Tail...>(), std::forward<Vs>(vs)..., pop<Head>(L));
 }
 } // detail
