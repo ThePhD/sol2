@@ -4,8 +4,6 @@ bin/*
 demacro.txt
 Shinobi2
 dev.*
-main.cpp
-sol.scratch.cpp
 lua-5.2.2/
 Debug/
 Release/
