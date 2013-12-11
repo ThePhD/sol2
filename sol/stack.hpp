@@ -45,7 +45,7 @@ inline T get_unsigned(lua_State* L, std::true_type, int index = -1) {
 
 template<typename T>
 inline T get_unsigned(lua_State* L, std::false_type, int index = -1) {
-    return lua_tointeger(L, index);
+    return static_cast<T>( lua_tointeger(L, index) );
 }
 
 template<typename T>
@@ -62,6 +62,18 @@ inline T get_arithmetic(lua_State* L, std::true_type, int index = -1) {
 
 template<typename T>
 inline T get_helper(lua_State* L, std::true_type, int index = -1) {
+    return get_nil<T>(L, std::is_same<nil_t, T>(), index);
+}
+
+template<typename T>
+inline T get_nil(lua_State* L, std::true_type, int index = -1) {
+    if (lua_isnil(L, index) == 0)
+	    throw sol::sol_error("not nil");
+    return nil_t{};
+}
+
+template<typename T>
+inline T get_nil(lua_State* L, std::false_type, int index = -1) {
     // T is a class type
     return T(L, index);
 }
