@@ -21,11 +21,6 @@ int plop_xyz(int x, int y, std::string z) {
     return 11;
 }
 
-void run_script(sol::state& lua) {
-    lua.script("assert(os.fun() == \"test\")\n"
-        "assert(os.name == \"windows\")");
-}
-
 TEST_CASE("simple/set_global", "Check if the set_global works properly.") {
     sol::state lua;
 
@@ -79,17 +74,6 @@ TEST_CASE("simple/if", "") {
     auto f = lua.get<double>("f");
 
     REQUIRE(f == 0.1);
-}
-
-TEST_CASE("simple/evalStream", "The VM evaluates a stream's contents using a reader") {
-    sol::state lua;
-
-    std::stringstream sscript;
-    int g = 9;
-    sscript << "g = " << g << ";";
-
-    REQUIRE_NOTHROW(lua.script(sscript.str()));
-    REQUIRE(lua.get<double>("g") == 9.0);
 }
 
 TEST_CASE("simple/callWithParameters", "Lua function is called with a few parameters from C++") {
@@ -157,27 +141,41 @@ TEST_CASE("negative/basicError", "Check if error handling works correctly") {
     REQUIRE_THROWS(lua.script("nil[5]"));
 }
 
-/*
-    lua.get<sol::table>("os").set("name", "windows");
+TEST_CASE("libraries", "Check if we can open libraries through sol") {
+    sol::state lua;
+    REQUIRE_NOTHROW(lua.open_libraries(sol::lib::base, sol::lib::os));
+}
 
-    SECTION("")
+TEST_CASE("tables/variables", "Check if tables and variables work as intended") {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base, sol::lib::os);
+    lua.get<sol::table>("os").set("name", "windows");
+    REQUIRE_NOTHROW(lua.script("assert(os.name == \"windows\")"));    
+}
+
+TEST_CASE("tables/functions_variables", "Check if tables and function calls work as intended") {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base, sol::lib::os);
+    auto run_script = [ ] (sol::state& lua) -> void {
+        lua.script("assert(os.fun() == \"test\")");
+    };
+
     lua.get<sol::table>("os").set_function("fun",
         [ ] () {
-        std::cout << "stateless lambda()" << std::endl;
-        return "test";
-    }
-   );
-    run_script(lua);
+            std::cout << "stateless lambda()" << std::endl;
+            return "test";
+        }
+    );
+    REQUIRE_NOTHROW(run_script(lua));
 
     lua.get<sol::table>("os").set_function("fun", &free_function);
-    run_script(lua);
+    REQUIRE_NOTHROW(run_script(lua));
 
     // l-value, can optomize
     auto lval = object();
     lua.get<sol::table>("os").set_function("fun", &object::operator(), lval);
-    run_script(lua);
+    REQUIRE_NOTHROW((lua));
 
-    // Tests will begin failing here
     // stateful lambda: non-convertible, unoptomizable
     int breakit = 50;
     lua.get<sol::table>("os").set_function("fun",
@@ -185,17 +183,15 @@ TEST_CASE("negative/basicError", "Check if error handling works correctly") {
         std::cout << "stateless lambda()" << std::endl;
         return "test";
     }
-   );
-    run_script(lua);
+    );
+    REQUIRE_NOTHROW(run_script(lua));
 
     // r-value, cannot optomize
     lua.get<sol::table>("os").set_function("fun", &object::operator(), object());
-    run_script(lua);
+    REQUIRE_NOTHROW(run_script(lua));
 
     // r-value, cannot optomize
     auto rval = object();
     lua.get<sol::table>("os").set_function("fun", &object::operator(), std::move(rval));
-    run_script(lua);
-
+    REQUIRE_NOTHROW(run_script(lua));
 }
-*/
