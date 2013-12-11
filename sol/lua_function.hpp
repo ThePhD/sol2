@@ -80,7 +80,7 @@ struct static_lua_func {
     static int call(lua_State* L) {
         int upvalue = 1;
         fx_t* fx;
-       detail::get_upvalue(L, fx, upvalue);
+        detail::get_upvalue(L, fx, upvalue);
         int r = typed_call(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), fx, L);
         return r;
     }
@@ -106,7 +106,7 @@ struct static_object_lua_func {
     static int typed_call(types<TR>, types<Args...>, T& item, fx_t& ifx, lua_State* L) {
         auto fx = [ &item, &ifx ] (Args&&... args) -> TR { 
            return (item.*ifx)(std::forward<Args>(args)...); 
-       };
+        };
         auto r = stack::pop_call(L, fx, types<Args...>());
         stack::push(L, std::move(r));
         return 1;
@@ -121,7 +121,7 @@ struct static_object_lua_func {
     }
 
     static int call(lua_State* L) {
-        const static std::size_t data_t_count = (sizeof(fx_t)+(sizeof(void*)-1)) / sizeof(void*);
+       const static std::size_t data_t_count = (sizeof(fx_t)+(sizeof(void*)-1)) / sizeof(void*);
        typedef std::array<void*, data_t_count> data_t;
        int upvalue = 1;
        data_t data = { { } };

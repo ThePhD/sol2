@@ -50,7 +50,7 @@ TEST_CASE("simple/get", "Tests if the get function works properly.") {
     REQUIRE(a == 9.0);
 
     lua.script("b = nil");
-    REQUIRE_NOTHROW(auto b = lua.get<sol::nil_t>("b"));
+    REQUIRE_NOTHROW(lua.get<sol::nil_t>("b"));
     
     lua.script("d = 'hello'");
     auto d = lua.get<std::string>("d");

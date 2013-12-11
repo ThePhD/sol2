@@ -61,11 +61,6 @@ inline T get_arithmetic(lua_State* L, std::true_type, int index = -1) {
 }
 
 template<typename T>
-inline T get_helper(lua_State* L, std::true_type, int index = -1) {
-    return get_nil<T>(L, std::is_same<nil_t, T>(), index);
-}
-
-template<typename T>
 inline T get_nil(lua_State* L, std::true_type, int index = -1) {
     if (lua_isnil(L, index) == 0)
         throw sol::sol_error("not nil");
@@ -76,6 +71,11 @@ template<typename T>
 inline T get_nil(lua_State* L, std::false_type, int index = -1) {
     // T is a class type
     return T(L, index);
+}
+
+template<typename T>
+inline T get_helper(lua_State* L, std::true_type, int index = -1) {
+    return get_nil<T>(L, std::is_same<nil_t, T>(), index);
 }
 
 template<typename T>
@@ -220,6 +220,10 @@ inline void push(lua_State* L, indices<I...>, const T& tuplen) {
 
 template<typename F, typename... Vs>
 auto ltr_pop(lua_State*, F&& f, types<>, Vs&&... vs) -> decltype(f(std::forward<Vs>(vs)...)) {
+    return f(std::forward<Vs>(vs)...);
+}
+template<typename F, typename... Vs>
+auto ltr_pop(lua_State*, F&& f, types<void>, Vs&&... vs) -> decltype(f(std::forward<Vs>(vs)...)) {
     return f(std::forward<Vs>(vs)...);
 }
 template<typename F, typename Head, typename... Vs>
