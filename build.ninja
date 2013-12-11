@@ -6,7 +6,7 @@ objdir = obj
 cxx = g++
 cxxflags = -std=c++11 -pedantic -pedantic-errors -Wextra -Wall -O2 -DNDEBUG
 incflags = -I"." -I"./include" -I"." -I"/usr/include/lua5.2" -I"./lua-5.2.2/src/" -I"./Catch/include/"
-linkflags = -static -L"./lib" -llua
+linkflags = -static -L"./lib" -L"/usr/lib/lua5.2" -llua
 
 rule compile
     command = $cxx -MMD -MF $out.d $cxxflags -c $in -o $out $incflags
