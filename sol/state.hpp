@@ -152,13 +152,7 @@ public:
 
     template<typename T>
     table create_table(T&& key, int narr = 0, int nrec = 0) {
-        if(narr == 0 && nrec == 0) {
-            lua_newtable(L.get());
-        }
-        else {
-            lua_createtable(L.get(), narr, nrec);
-        }
-
+        lua_createtable(L.get(), narr, nrec);
         table result(L.get());
         lua_pop(L.get(), 1);
         global.set(std::forward<T>(key), result);
@@ -166,13 +160,7 @@ public:
     }
 
     table create_table(int narr = 0, int nrec = 0) {
-        if(narr == 0 && nrec == 0) {
-            lua_newtable(L.get());
-        }
-        else {
-            lua_createtable(L.get(), narr, nrec);
-        }
-
+        lua_createtable(L.get(), narr, nrec);
         table result(L.get());
         lua_pop(L.get(), 1);
         return result;
