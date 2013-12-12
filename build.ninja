@@ -18,10 +18,10 @@ rule link
     command = $cxx $in -o $out $linkflags
     description = Creating $out
 
-build $objdir/sol.scratch.o: compile sol.scratch.cpp
+build $objdir/tests.o: compile tests.cpp
 
-build $builddir/sol.scratch: link $objdir/sol.scratch.o
+build $builddir/tests: link $objdir/tests.o
 
-build install: phony $builddir/sol.scratch
+build install: phony $builddir/tests
 
 default install
