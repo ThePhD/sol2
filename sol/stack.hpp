@@ -45,7 +45,7 @@ inline T get_unsigned(lua_State* L, std::true_type, int index = -1) {
 
 template<typename T>
 inline T get_unsigned(lua_State* L, std::false_type, int index = -1) {
-    return lua_tointeger(L, index);
+    return static_cast<T>(lua_tointeger(L, index));
 }
 
 template<typename T>
@@ -61,9 +61,21 @@ inline T get_arithmetic(lua_State* L, std::true_type, int index = -1) {
 }
 
 template<typename T>
-inline T get_helper(lua_State* L, std::true_type, int index = -1) {
+inline T get_nil(lua_State* L, std::true_type, int index = -1) {
+    if (lua_isnil(L, index) == 0)
+        throw sol::sol_error("not nil");
+    return nil_t{};
+}
+
+template<typename T>
+inline T get_nil(lua_State* L, std::false_type, int index = -1) {
     // T is a class type
     return T(L, index);
+}
+
+template<typename T>
+inline T get_helper(lua_State* L, std::true_type, int index = -1) {
+    return get_nil<T>(L, std::is_same<nil_t, T>(), index);
 }
 
 template<typename T>
@@ -184,19 +196,19 @@ inline void push(lua_State* L, const std::array<T, N>& data) {
     }
 }
 
-template <typename T>
-inline int push_user( lua_State* L, T& item ) {
-	typedef typename std::decay<T>::type TValue;
-	const static std::size_t itemsize = sizeof( TValue );
-	const static std::size_t voidsize = sizeof( void* );
-	const static std::size_t voidsizem1 = voidsize - 1;
-	const static std::size_t data_t_count = (sizeof(TValue) + voidsizem1) / voidsize;
-	typedef std::array<void*, data_t_count> data_t;
+template<typename T>
+inline int push_user(lua_State* L, T& item) {
+    typedef typename std::decay<T>::type TValue;
+    const static std::size_t itemsize = sizeof(TValue);
+    const static std::size_t voidsize = sizeof(void*);
+    const static std::size_t voidsizem1 = voidsize - 1;
+    const static std::size_t data_t_count = (sizeof(TValue) + voidsizem1) / voidsize;
+    typedef std::array<void*, data_t_count> data_t;
 
-	data_t data{{}};
-	std::memcpy( std::addressof( data[ 0 ] ), std::addressof( item ), itemsize );
-	push( L, data );
-	return data_t_count;
+    data_t data{{}};
+    std::memcpy(std::addressof(data[ 0 ]), std::addressof(item), itemsize);
+    push(L, data);
+    return data_t_count;
 }
 
 namespace detail {
@@ -215,7 +227,7 @@ auto ltr_pop(lua_State* L, F&& f, types<Head>, Vs&&... vs) -> decltype(ltr_pop(L
     return ltr_pop(L, std::forward<F>(f), types<>(), std::forward<Vs>(vs)..., pop<Head>(L));
 }
 template<typename F, typename Head, typename... Tail, typename... Vs>
-auto ltr_pop(lua_State* L, F&& f, types<Head, Tail...>, Vs&&... vs) -> decltype(ltr_pop(L, std::forward<F>(f), types<Tail...>(), std::forward<Vs>(vs)..., pop<Head>(L))) {
+auto ltr_pop(lua_State* L, F&& f, types<Head, Tail...>, Vs&&... vs) -> decltype(f(std::forward<Vs>(vs)..., std::declval<Head>(), std::declval<Tail>()...)) {
     return ltr_pop(L, std::forward<F>(f), types<Tail...>(), std::forward<Vs>(vs)..., pop<Head>(L));
 }
 } // detail

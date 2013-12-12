@@ -170,7 +170,7 @@ private:
 
         push();
 
-	   int upvalues = stack::push_user( state( ), target );
+       int upvalues = stack::push_user(state(), target);
         luaL_setfuncs(state(), funcreg, upvalues);
 
         lua_pop(state(), 1);
@@ -199,7 +199,7 @@ private:
             lua_settable(state(), -3);
         }
 
-	   push();
+       push();
         stack::push_user(state(), userdata, metatablename);
         luaL_setfuncs(state(), funcreg, 1);
 
