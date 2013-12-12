@@ -52,26 +52,11 @@ Sol is distributed with an MIT License. You can see LICENSE.txt for more info.
 
 ## Supported Compilers
 
-Sol makes use of C++11 features. The features used are as follows:
-
-- rvalue references
-- move semantics
-- variadic templates
-- `<tuple>`
-- `<type_traits>`
-- std::unique_ptr
-- enum classes
-- auto
-- uniform initialisation
-- noexcept
-- in class initialisation
-- default functions
-
-GCC 4.7 and Clang 3.3 or higher should be able to compile without problems. Visual Studio 2013 with the November CTP should
-be able to support this as well.
+Sol makes use of C++11 features. GCC 4.7 and Clang 3.3 or higher should be able to compile without problems. Visual Studio 
+2013 with the November CTP should be able to support this as well.
 
 ## TODO
 
-- Support for functions
 - Support for `operator[]` based retrieval and modifying of tables.
-- Support for retrieval of tables through dot notation. e.g. `tab.retrieve<int>("resolution.width");`
+- Possibly document functions and classes via doxygen.
+- Provide more examples to showcase uses.
