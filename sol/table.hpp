@@ -29,15 +29,15 @@
 
 namespace sol {
 namespace detail {
-    template<typename T>
-    T* get_ptr(T& val) {
-        return std::addressof(val);
-    }
+template<typename T>
+T* get_ptr(T& val) {
+    return std::addressof(val);
+}
 
-    template<typename T>
-    T* get_ptr(T* val) {
-        return val;
-    }
+template<typename T>
+T* get_ptr(T* val) {
+    return val;
+}
 } // detail
 
 class table : virtual public reference {
@@ -71,13 +71,13 @@ public:
 
     template<typename T, typename TFx>
     table& set_function(T&& key, TFx&& fx) {
-        typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type clean_fx;
+        typedef typename std::remove_pointer<Decay<TFx>>::type clean_fx;
         return set_isfunction_fx(std::is_function<clean_fx>(), std::forward<T>(key), std::forward<TFx>(fx));
     }
 
     template<typename T, typename TFx, typename TObj>
     table& set_function(T&& key, TFx&& fx, TObj&& obj) {
-        return set_lvalue_fx(std::integral_constant<bool, std::is_lvalue_reference<TObj>::value || std::is_pointer<TObj>::value>(),
+        return set_lvalue_fx(Bool<std::is_lvalue_reference<TObj>::value || std::is_pointer<TObj>::value>(),
             std::forward<T>(key), std::forward<TFx>(fx), std::forward<TObj>(obj));
     }
 
@@ -98,7 +98,7 @@ private:
 
     template<typename T, typename TFx>
     table& set_isfunction_fx(std::false_type, T&& key, TFx&& fx) {
-        typedef typename std::decay<TFx>::type clean_lambda;
+        typedef Decay<TFx> clean_lambda;
         typedef typename detail::function_traits<decltype(&clean_lambda::operator())>::free_function_pointer_type raw_func_t;
         typedef std::is_convertible<clean_lambda, raw_func_t> isconvertible;
         return set_isconvertible_fx(isconvertible(), std::forward<T>(key), std::forward<TFx>(fx));
@@ -106,14 +106,14 @@ private:
 
     template<typename T, typename TFx>
     table& set_isconvertible_fx(std::true_type, T&& key, TFx&& fx) {
-        typedef typename std::decay<TFx>::type clean_lambda;
+        typedef Decay<TFx> clean_lambda;
         typedef typename detail::function_traits<decltype(&clean_lambda::operator())>::free_function_pointer_type raw_func_t;
         return set_isfunction_fx(std::true_type(), std::forward<T>(key), raw_func_t(std::forward<TFx>(fx)));
     }
 
     template<typename T, typename TFx>
     table& set_isconvertible_fx(std::false_type, T&& key, TFx&& fx) {
-        typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type clean_fx;
+        typedef typename std::remove_pointer<Decay<TFx>>::type clean_fx;
         std::unique_ptr<lua_func> sptr(new lambda_lua_func<clean_fx>(std::forward<TFx>(fx)));
         return set_fx(std::forward<T>(key), std::move(sptr));
     }
@@ -125,16 +125,13 @@ private:
 
     template<typename T, typename TFx, typename TObj>
     table& set_lvalue_fx(std::false_type, T&& key, TFx&& fx, TObj&& obj) {
-        typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type clean_fx;
+        typedef typename std::remove_pointer<Decay<TFx>>::type clean_fx;
         std::unique_ptr<lua_func> sptr(new explicit_lua_func<clean_fx, TObj>(std::forward<TObj>(obj), std::forward<TFx>(fx)));
         return set_fx(std::forward<T>(key), std::move(sptr));
     }
 
     template<typename T, typename TFx, typename TObj>
     table& set_fx(std::true_type, T&& key, TFx&& fx, TObj&& obj) {
-        typedef typename std::decay<TObj>::type decay_of_to;
-        typedef typename std::decay<TFx>::type decay_of_tfx;
-        
         std::string fkey(key);
 
         // Layout: 
@@ -142,9 +139,9 @@ private:
         // idx n + 1: is the object's void pointer
         // We don't need to store the size, because the other side is templated
         // with the same member function pointer type
-        decay_of_tfx fxptr(std::forward<TFx>(fx));
+        Decay<TFx> fxptr(std::forward<TFx>(fx));
         void* userobjdata = static_cast<void*>(detail::get_ptr(obj));
-        lua_CFunction freefunc = &static_object_lua_func<decay_of_to, TFx>::call;
+        lua_CFunction freefunc = &static_object_lua_func<Decay<TObj>, TFx>::call;
         const char* freefuncname = fkey.c_str();
         const luaL_Reg funcreg[ 2 ] = {
             { freefuncname, freefunc },
@@ -164,9 +161,8 @@ private:
 
     template<typename T, typename TFx>
     table& set_fx(std::false_type, T&& key, TFx&& fx) {
-        typedef typename std::decay<TFx>::type ptr_fx;
         std::string fkey(key);
-        ptr_fx target(std::forward<TFx>(fx));
+        Decay<TFx> target(std::forward<TFx>(fx));
         lua_CFunction freefunc = &static_lua_func<TFx>::call;
         const char* freefuncname = fkey.c_str();
         const luaL_Reg funcreg[ 2 ] = {
@@ -176,7 +172,7 @@ private:
 
         push();
 
-       int upvalues = stack::push_user(state(), target);
+        int upvalues = stack::push_user(state(), target);
         luaL_setfuncs(state(), funcreg, upvalues);
 
         lua_pop(state(), 1);
@@ -205,10 +201,9 @@ private:
             lua_settable(state(), -3);
         }
 
-       push();
+        push();
         stack::push_user(state(), userdata, metatablename);
         luaL_setfuncs(state(), funcreg, 1);
-
         lua_pop(state(), 1);
         return *this;
     }

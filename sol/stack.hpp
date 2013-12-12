@@ -24,18 +24,12 @@
 
 #include "reference.hpp"
 #include "tuple.hpp"
+#include "traits.hpp"
 #include <utility>
-#include <type_traits>
 #include <array>
 #include <cstring>
 
 namespace sol {
-template<typename T, typename R = void>
-using EnableIf = typename std::enable_if<T::value, R>::type;
-
-template<typename T, typename R = void>
-using DisableIf = typename std::enable_if<!T::value, R>::type;
-
 namespace stack {
 namespace detail {
 template<typename T>
