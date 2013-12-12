@@ -38,8 +38,10 @@ namespace detail {
     T* get_ptr(T* val) {
         return val;
     }
-}
+} // detail
+
 class table : virtual public reference {
+    template<typename T> struct proxy;
 public:
     table() noexcept : reference() {}
     table(lua_State* L, int index = -1) : reference(L, index) {
@@ -79,12 +81,16 @@ public:
             std::forward<T>(key), std::forward<TFx>(fx), std::forward<TObj>(obj));
     }
 
+    template<typename T>
+    proxy<T> operator[](T&& key) {
+        return proxy<T>(*this, std::forward<T>(key));
+    }
+
     size_t size() const {
         push();
         return lua_rawlen(state(), -1);
     }
 private:
-
     template<typename T, typename TFx>
     table& set_isfunction_fx(std::true_type, T&& key, TFx&& fx) {
         return set_fx(std::false_type(), std::forward<T>(key), std::forward<TFx>(fx));
@@ -206,6 +212,25 @@ private:
         lua_pop(state(), 1);
         return *this;
     }
+
+    template<typename T>
+    struct proxy {
+    private:
+        table& t;
+        T& key;
+    public:
+        proxy(table& t, T& key): t(t), key(key) {}
+
+        template<typename U>
+        void operator=(U&& other) {
+            t.set(key, std::forward<U>(other));
+        }
+
+        template<typename U>
+        operator U() const {
+            return t.get<U>(key);
+        }
+    };
 };
 } // sol
 

@@ -151,6 +151,11 @@ public:
     }
 
     template<typename T>
+    auto operator[](T&& key) -> decltype(global[std::forward<T>(key)]) {
+        return global[std::forward<T>(key)];
+    }
+
+    template<typename T>
     table create_table(T&& key, int narr = 0, int nrec = 0) {
         lua_createtable(L.get(), narr, nrec);
         table result(L.get());
