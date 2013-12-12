@@ -206,7 +206,7 @@ inline int push_user(lua_State* L, T& item) {
     typedef std::array<void*, data_t_count> data_t;
 
     data_t data{{}};
-    std::memcpy(std::addressof(data[ 0 ]), std::addressof(item), itemsize);
+    std::memcpy(std::addressof(data[0]), std::addressof(item), itemsize);
     push(L, data);
     return data_t_count;
 }
@@ -215,7 +215,7 @@ namespace detail {
 template<typename T, std::size_t... I>
 inline void push(lua_State* L, indices<I...>, const T& tuplen) {
     using swallow = char[];
-    void(swallow{ '\0', (sol::stack::push(L, std::get<I>(tuplen)), '\0')... });
+    void(swallow{'\0', (sol::stack::push(L, std::get<I>(tuplen)), '\0')... });
 }
 
 template<typename F, typename... Vs>
@@ -245,7 +245,7 @@ inline auto pop_call(lua_State* L, TFx&& fx, types<Args...>) -> decltype(detail:
 template<typename... Args>
 void push_args(lua_State* L, Args&&... args) {
     using swallow = char[];
-    void(swallow{ '\0', (stack::push(L, std::forward<Args>(args)), '\0')... });
+    void(swallow{'\0', (stack::push(L, std::forward<Args>(args)), '\0')... });
 }
 } // stack
 } // sol
