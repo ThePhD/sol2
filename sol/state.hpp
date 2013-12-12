@@ -121,7 +121,7 @@ public:
         }
     }
 
-    void script_file(const std::string& filename) {
+    void open_file(const std::string& filename) {
         if (luaL_dofile(L.get(), filename.c_str())) {
             lua_error(L.get());
         }
