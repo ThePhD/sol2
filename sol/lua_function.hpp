@@ -195,8 +195,6 @@ struct lambda_lua_func : public lua_func {
         stack::push(L, r);
         return sizeof...(TRn);
     }
-
-    ~lambda_lua_func() {}
 };
 
 template<typename TFx, typename T = TFx, bool is_member_pointer = std::is_member_function_pointer<TFx>::value>
@@ -224,8 +222,6 @@ struct explicit_lua_func : public lua_func {
         stack::push(L, std::move(r));
         return sizeof...(TRn);
     }
-
-    ~explicit_lua_func() {}
 };
 
 template<typename TFx, typename T>
@@ -264,8 +260,6 @@ struct explicit_lua_func<TFx, T, true> : public lua_func {
         stack::push(L, r);
         return sizeof...(TRn);
     }
-
-    ~explicit_lua_func() {}
 };
 
 } // sol
