@@ -24,7 +24,6 @@
 
 #include "stack.hpp"
 #include "lua_function.hpp"
-#include "function.hpp"
 #include <array>
 #include <cstring>
 
@@ -95,34 +94,27 @@ private:
     template<typename T>
     struct proxy {
     private:
-	    table& t;
-	    T& key;
+        table& t;
+        T& key;
     public:
-	    proxy(table& t, T& key) : t(t), key(key) {}
+        proxy(table& t, T& key) : t(t), key(key) {}
 
-	    template<typename U>
-	    void operator=(U&& other) {
-		    typedef Function<Unqualified<U>> isfunction;
-		    assign(std::forward<U>(other), isfunction());
-	    }
+        template<typename U>
+        EnableIf<Function<Unqualified<U>>> operator=(U&& other) {
+            t.set_function(key, std::forward<U>(other));
+        }
+    
+        template<typename U>
+        DisableIf<Function<Unqualified<U>>> operator=(U&& other) {
+            t.set(key, std::forward<U>(other));
+        }
 
-	    template<typename U>
-	    operator U() const {
-		    return t.get<U>(key);
-	    }
-
-    private:
-	    template<typename U>
-	    void assign(U&& other, std::true_type) {
-		    t.set_function(key, std::forward<U>(other));
-	    }
-
-	    template<typename U>
-	    void assign(U&& other, std::false_type) {
-		    t.set(key, std::forward<U>(other));
-	    }
+        template<typename U>
+        operator U() const {
+            return t.get<U>(key);
+        }
     };
-private:
+
     template<typename T, typename TFx>
     table& set_isfunction_fx(std::true_type, T&& key, TFx&& fx) {
         return set_fx(std::false_type(), std::forward<T>(key), std::forward<TFx>(fx));
@@ -131,7 +123,7 @@ private:
     template<typename T, typename TFx>
     table& set_isfunction_fx(std::false_type, T&& key, TFx&& fx) {
         typedef Decay<TFx> clean_lambda;
-        typedef typename detail::function_traits<decltype(&clean_lambda::operator())>::free_function_pointer_type raw_func_t;
+        typedef typename function_traits<decltype(&clean_lambda::operator())>::free_function_pointer_type raw_func_t;
         typedef std::is_convertible<clean_lambda, raw_func_t> isconvertible;
         return set_isconvertible_fx(isconvertible(), std::forward<T>(key), std::forward<TFx>(fx));
     }
@@ -139,7 +131,7 @@ private:
     template<typename T, typename TFx>
     table& set_isconvertible_fx(std::true_type, T&& key, TFx&& fx) {
         typedef Decay<TFx> clean_lambda;
-        typedef typename detail::function_traits<decltype(&clean_lambda::operator())>::free_function_pointer_type raw_func_t;
+        typedef typename function_traits<decltype(&clean_lambda::operator())>::free_function_pointer_type raw_func_t;
         return set_isfunction_fx(std::true_type(), std::forward<T>(key), raw_func_t(std::forward<TFx>(fx)));
     }
 

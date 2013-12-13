@@ -22,7 +22,6 @@
 #ifndef SOL_LUA_FUNC_HPP
 #define SOL_LUA_FUNC_HPP
 
-#include "functional.hpp"
 #include "stack.hpp"
 #include <memory>
 
@@ -62,7 +61,7 @@ void get_upvalue(lua_State* L, T& data, int& upvalue) {
 template<typename TFx>
 struct static_lua_func {
     typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type fx_t;
-    typedef detail::function_traits<fx_t> fx_traits;
+    typedef function_traits<fx_t> fx_traits;
 
     template<typename... Args>
     static int typed_call(types<void>, types<Args...> t, fx_t* fx, lua_State* L) {
@@ -93,7 +92,7 @@ struct static_lua_func {
 template<typename T, typename TFx>
 struct static_object_lua_func {
     typedef typename std::decay<TFx>::type fx_t;
-    typedef detail::function_traits<fx_t> fx_traits;
+    typedef function_traits<fx_t> fx_traits;
 
     template<typename... Args>
     static int typed_call(types<void>, types<Args...>, T& item, fx_t& ifx, lua_State* L) {
@@ -173,7 +172,7 @@ struct lua_func {
 template<typename TFx>
 struct lambda_lua_func : public lua_func {
     typedef decltype(&TFx::operator()) fx_t;
-    typedef detail::function_traits<fx_t> fx_traits;
+    typedef function_traits<fx_t> fx_traits;
     TFx fx;
 
     template<typename... FxArgs>
@@ -200,7 +199,7 @@ struct lambda_lua_func : public lua_func {
 template<typename TFx, typename T = TFx, bool is_member_pointer = std::is_member_function_pointer<TFx>::value>
 struct explicit_lua_func : public lua_func {
     typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type fx_t;
-    typedef detail::function_traits<fx_t> fx_traits;
+    typedef function_traits<fx_t> fx_traits;
     TFx fx;
 
     template<typename... FxArgs>
@@ -227,7 +226,7 @@ struct explicit_lua_func : public lua_func {
 template<typename TFx, typename T>
 struct explicit_lua_func<TFx, T, true> : public lua_func {
     typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type fx_t;
-    typedef detail::function_traits<fx_t> fx_traits;
+    typedef function_traits<fx_t> fx_traits;
     struct lambda {
         T member;
         TFx invocation;
