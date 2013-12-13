@@ -58,6 +58,8 @@ public:
     function(lua_State* L, int index = -1): reference(L, index) {
         type_assert(L, index, type::function);
     }
+    function(const function&) = default;
+    function& operator=(const function&) = default;
 
     template<typename... Ret, typename... Args>
     auto call(Args&&... args) -> decltype(invoke(types<Ret...>(), sizeof...(Args))) {

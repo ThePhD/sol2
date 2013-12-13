@@ -40,11 +40,11 @@ using Decay = typename std::decay<T>::type;
 namespace detail {
 // code borrowed from Gears 
 // https://github.com/Rapptz/Gears/
-template<typename T, typename = void>
+template<typename T, bool isclass = std::is_class<Unqualified<T>>::value>
 struct is_function_impl : std::is_function<typename std::remove_pointer<T>::type> {};
 
 template<typename T>
-struct is_function_impl<T, EnableIf<std::is_class<Unqualified<T>>>> {
+struct is_function_impl<T, true> {
     using yes = char;
     using no = struct { char s[2]; };
 

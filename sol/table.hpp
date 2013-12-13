@@ -24,6 +24,7 @@
 
 #include "stack.hpp"
 #include "lua_function.hpp"
+#include "function.hpp"
 #include <array>
 #include <cstring>
 
@@ -90,6 +91,37 @@ public:
         push();
         return lua_rawlen(state(), -1);
     }
+
+    template<typename T>
+    struct proxy {
+    private:
+	    table& t;
+	    T& key;
+    public:
+	    proxy(table& t, T& key) : t(t), key(key) {}
+
+	    template<typename U>
+	    void operator=(U&& other) {
+		    typedef Function<Unqualified<U>> isfunction;
+		    assign(std::forward<U>(other), isfunction());
+	    }
+
+	    template<typename U>
+	    operator U() const {
+		    return t.get<U>(key);
+	    }
+
+    private:
+	    template<typename U>
+	    void assign(U&& other, std::true_type) {
+		    t.set_function(key, std::forward<U>(other));
+	    }
+
+	    template<typename U>
+	    void assign(U&& other, std::false_type) {
+		    t.set(key, std::forward<U>(other));
+	    }
+    };
 private:
     template<typename T, typename TFx>
     table& set_isfunction_fx(std::true_type, T&& key, TFx&& fx) {
@@ -207,30 +239,6 @@ private:
         lua_pop(state(), 1);
         return *this;
     }
-
-    template<typename T>
-    struct proxy {
-    private:
-        table& t;
-        T& key;
-    public:
-        proxy(table& t, T& key): t(t), key(key) {}
-
-        template<typename U>
-        DisableIf<Function<Unqualified<U>>> operator=(U&& other) {
-            t.set(key, std::forward<U>(other));
-        }
-
-        template<typename U>
-        EnableIf<Function<Unqualified<U>>> operator=(U&& other) {
-            t.set_function(key, std::forward<U>(other));
-        }
-
-        template<typename U>
-        operator U() const {
-            return t.get<U>(key);
-        }
-    };
 };
 } // sol
 
