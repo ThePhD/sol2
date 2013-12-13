@@ -195,3 +195,42 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
     lua.get<sol::table>("os").set_function("fun", &object::operator(), std::move(rval));
     REQUIRE_NOTHROW(run_script(lua));
 }
+
+TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works properly") {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+
+    lua.script("foo = 20\nbar = \"hello world\"");
+    // basic retrieval 
+    std::string bar = lua["bar"];
+    int foo = lua["foo"];
+    REQUIRE(bar == "hello world");
+    REQUIRE(foo == 20);
+
+    // basic setting
+    lua["bar"] = 20.4;
+    lua["foo"] = "goodbye";
+
+    // doesn't modify the actual values obviously.
+    REQUIRE(bar == "hello world");
+    REQUIRE(foo == 20);
+
+    // function setting
+    lua["test"] = plop_xyz;
+    REQUIRE_NOTHROW(lua.script("assert(test(10, 11, \"hello\") == 11)"));
+
+    // function retrieval
+    sol::function test = lua["test"];
+    REQUIRE(test.call<int>(10, 11, "hello") == 11);
+
+    // setting a lambda
+    lua["lamb"] = [](int x) {
+        return x * 2;
+    };
+
+    REQUIRE_NOTHROW(lua.script("assert(lamb(220) == 440)"));
+
+    // function retrieval of a lambda
+    sol::function lamb = lua["lamb"];
+    REQUIRE(lamb.call<int>(220) == 440);
+}
