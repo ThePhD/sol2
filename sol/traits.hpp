@@ -40,11 +40,11 @@ using Decay = typename std::decay<T>::type;
 namespace detail {
 // code borrowed from Gears 
 // https://github.com/Rapptz/Gears/
-template<typename T, typename = void>
+template<typename T, bool isclass = std::is_class<Unqualified<T>>::value>
 struct is_function_impl : std::is_function<typename std::remove_pointer<T>::type> {};
 
 template<typename T>
-struct is_function_impl<T, EnableIf<std::is_class<Unqualified<T>>>> {
+struct is_function_impl<T, true> {
     using yes = char;
     using no = struct { char s[2]; };
 
@@ -67,6 +67,65 @@ using Bool = std::integral_constant<bool, B>;
 
 template<typename T>
 struct Function : Bool<detail::is_function_impl<T>::value> {};
+
+template<typename TFuncSignature>
+struct function_traits;
+
+template<typename T, typename R, typename... Args>
+struct function_traits<R( T::* )( Args... )> {
+	static const std::size_t arity = sizeof...( Args );
+	static const bool is_member_function = true;
+	typedef std::tuple<Args...> arg_tuple_type;
+	typedef types<Args...> args_type;
+	typedef R( T::* function_pointer_type )( Args... );
+	typedef typename std::remove_pointer<function_pointer_type>::type function_type;
+	typedef R( *free_function_pointer_type )( Args... );
+	typedef R return_type;
+	template<std::size_t i>
+	using arg = typename std::tuple_element<i, arg_tuple_type>::type;
+};
+
+template<typename T, typename R, typename... Args>
+struct function_traits<R( T::* )( Args... ) const> {
+	static const std::size_t arity = sizeof...( Args );
+	static const bool is_member_function = true;
+	typedef std::tuple<Args...> arg_tuple_type;
+	typedef types<Args...> args_type;
+	typedef R( T::* function_pointer_type )( Args... );
+	typedef typename std::remove_pointer<function_pointer_type>::type function_type;
+	typedef R( *free_function_pointer_type )( Args... );
+	typedef R return_type;
+	template<std::size_t i>
+	using arg = typename std::tuple_element<i, arg_tuple_type>::type;
+};
+
+template<typename R, typename... Args>
+struct function_traits<R( Args... )> {
+	static const std::size_t arity = sizeof...( Args );
+	static const bool is_member_function = false;
+	typedef std::tuple<Args...> arg_tuple_type;
+	typedef types<Args...> args_type;
+	typedef R( function_type )( Args... );
+	typedef R( *function_pointer_type )( Args... );
+	typedef R( *free_function_pointer_type )( Args... );
+	typedef R return_type;
+	template<std::size_t i>
+	using arg = typename std::tuple_element<i, arg_tuple_type>::type;
+};
+
+template<typename R, typename... Args>
+struct function_traits<R( *)( Args... )> {
+	static const std::size_t arity = sizeof...( Args );
+	static const bool is_member_function = false;
+	typedef std::tuple<Args...> arg_tuple_type;
+	typedef types<Args...> args_type;
+	typedef R( function_type )( Args... );
+	typedef R( *function_pointer_type )( Args... );
+	typedef R( *free_function_pointer_type )( Args... );
+	typedef R return_type;
+	template<std::size_t i>
+	using arg = typename std::tuple_element<i, arg_tuple_type>::type;
+};
 } // sol
 
 #endif // SOL_TRAITS_HPP

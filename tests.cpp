@@ -165,7 +165,7 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
             std::cout << "stateless lambda()" << std::endl;
             return "test";
         }
-    );
+   );
     REQUIRE_NOTHROW(run_script(lua));
 
     lua.get<sol::table>("os").set_function("fun", &free_function);
@@ -183,7 +183,7 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
         std::cout << "stateless lambda()" << std::endl;
         return "test";
     }
-    );
+   );
     REQUIRE_NOTHROW(run_script(lua));
 
     // r-value, cannot optomize
