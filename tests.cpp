@@ -233,4 +233,13 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
     // function retrieval of a lambda
     sol::function lamb = lua["lamb"];
     REQUIRE(lamb.call<int>(220) == 440);
+
+    // test const table retrieval
+    auto assert1 = [](const sol::table& t) {
+        std::string a = t["foo"];
+        int b = t["bar"];
+        std::cout << a << ',' << b << '\n';
+    };
+
+    REQUIRE_NOTHROW(assert1(lua.global_table()));
 }

@@ -41,7 +41,7 @@ T* get_ptr(T* val) {
 } // detail
 
 class table : virtual public reference {
-    template<typename T> struct proxy;
+    template<typename T, typename U> struct proxy;
 public:
     table() noexcept : reference() {}
     table(lua_State* L, int index = -1) : reference(L, index) {
@@ -82,8 +82,13 @@ public:
     }
 
     template<typename T>
-    proxy<T> operator[](T&& key) {
-        return proxy<T>(*this, std::forward<T>(key));
+    auto operator[](T&& key) -> decltype(proxy<decltype(*this), T>(*this, std::forward<T>(key))) {
+        return proxy<decltype(*this), T>(*this, std::forward<T>(key));
+    }
+
+    template<typename T>
+    auto operator[](T&& key) const -> decltype(proxy<decltype(*this), T>(*this, std::forward<T>(key))) {
+        return proxy<decltype(*this), T>(*this, std::forward<T>(key));
     }
 
     size_t size() const {
@@ -91,13 +96,13 @@ public:
         return lua_rawlen(state(), -1);
     }
 private:
-    template<typename T>
+    template<typename Table, typename T>
     struct proxy {
     private:
-        table& t;
+        Table t;
         T& key;
     public:
-        proxy(table& t, T& key) : t(t), key(key) {}
+        proxy(Table t, T& key) : t(t), key(key) {}
 
         template<typename U>
         EnableIf<Function<Unqualified<U>>> operator=(U&& other) {
