@@ -120,6 +120,7 @@ TEST_CASE("advanced/callLambdaReturns", "Checks for lambdas returning values") {
     lua.set_function("g", [ ] { return std::string("str"); });
     lua.set_function("h", [ ] { });
     lua.set_function("i", [ ] { return sol::nil; });
+    //lua.set_function("i", [ ] { return std::make_tuple(1, 6.28f, 3.14, std::string("heh")); });
 }
 
 TEST_CASE("advanced/callLambda2", "A C++ lambda is exposed to lua and called") {

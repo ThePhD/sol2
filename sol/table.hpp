@@ -82,13 +82,13 @@ public:
     }
 
     template<typename T>
-    auto operator[](T&& key) -> decltype(proxy<decltype(*this), T>(*this, std::forward<T>(key))) {
-        return proxy<decltype(*this), T>(*this, std::forward<T>(key));
+    proxy<table, T> operator[](T&& key) {
+        return proxy<table, T>(*this, std::forward<T>(key));
     }
 
     template<typename T>
-    auto operator[](T&& key) const -> decltype(proxy<decltype(*this), T>(*this, std::forward<T>(key))) {
-        return proxy<decltype(*this), T>(*this, std::forward<T>(key));
+    proxy<const table, T> operator[](T&& key) const {
+        return proxy<const table, T>(*this, std::forward<T>(key));
     }
 
     size_t size() const {

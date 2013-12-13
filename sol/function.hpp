@@ -61,6 +61,16 @@ public:
     function(const function&) = default;
     function& operator=(const function&) = default;
 
+    template<typename... Args>
+    void operator()( Args&&... args ) {
+	    call<>(std::forward<Args>(args)... );
+    }
+
+    template<typename... Ret, typename... Args>
+    auto operator()( types<Ret...>, Args&&... args ) {
+	    return call<Ret...>(std::forward<Args>(args)... );
+    }
+    
     template<typename... Ret, typename... Args>
     auto call(Args&&... args) -> decltype(invoke(types<Ret...>(), sizeof...(Args))) {
         push();
