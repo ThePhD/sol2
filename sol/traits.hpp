@@ -34,11 +34,14 @@ using DisableIf = typename std::enable_if<!T::value, R>::type;
 template<typename T>
 using Unqualified = typename std::remove_reference<typename std::remove_cv<T>::type>::type;
 
+template<typename T>
+using Decay = typename std::decay<T>::type;
+
 namespace detail {
 // code borrowed from Gears 
 // https://github.com/Rapptz/Gears/
 template<typename T, typename = void>
-struct is_function_impl : std::is_function<T> {};
+struct is_function_impl : std::is_function<typename std::remove_pointer<T>::type> {};
 
 template<typename T>
 struct is_function_impl<T, EnableIf<std::is_class<Unqualified<T>>>> {
@@ -64,9 +67,6 @@ using Bool = std::integral_constant<bool, B>;
 
 template<typename T>
 struct Function : Bool<detail::is_function_impl<T>::value> {};
-
-template<typename T>
-using Decay = typename std::decay<T>::type;
 } // sol
 
 #endif // SOL_TRAITS_HPP

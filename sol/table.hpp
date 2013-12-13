@@ -217,8 +217,13 @@ private:
         proxy(table& t, T& key): t(t), key(key) {}
 
         template<typename U>
-        void operator=(U&& other) {
+        DisableIf<Function<Unqualified<U>>> operator=(U&& other) {
             t.set(key, std::forward<U>(other));
+        }
+
+        template<typename U>
+        EnableIf<Function<Unqualified<U>>> operator=(U&& other) {
+            t.set_function(key, std::forward<U>(other));
         }
 
         template<typename U>
