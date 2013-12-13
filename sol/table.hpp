@@ -91,7 +91,7 @@ public:
         push();
         return lua_rawlen(state(), -1);
     }
-
+private:
     template<typename T>
     struct proxy {
     private:
