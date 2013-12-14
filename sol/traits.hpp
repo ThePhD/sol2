@@ -22,6 +22,7 @@
 #ifndef SOL_TRAITS_HPP
 #define SOL_TRAITS_HPP
 
+#include "tuple.hpp"
 #include <type_traits>
 
 namespace sol {
@@ -61,6 +62,21 @@ struct is_function_impl<T, true> {
     static const bool value = sizeof(test<Derived>(0)) == sizeof(yes);
 };
 } // detail
+
+template <typename... Args>
+struct multi_return {
+    typedef std::tuple<Args...> type;
+};
+
+template <typename T>
+struct multi_return<T> {
+    typedef T type;
+};
+
+template <>
+struct multi_return<> : types<>{
+    typedef void type;
+};
 
 template<bool B>
 using Bool = std::integral_constant<bool, B>;

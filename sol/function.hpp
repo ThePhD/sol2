@@ -65,9 +65,14 @@ public:
     void operator()(Args&&... args) {
 	    call<>(std::forward<Args>(args)...);
     }
+
+    template<typename... Ret, typename... Args>
+    typename multi_return<Ret...>::type operator()(types<Ret...>, Args&&... args) {
+	    return call<Ret...>(std::forward<Args>(args)...);
+    }
     
     template<typename... Ret, typename... Args>
-    auto call(Args&&... args) -> decltype(invoke(types<Ret...>(), sizeof...(Args))) {
+    typename multi_return<Ret...>::type call(Args&&... args) {
         push();
         stack::push_args(state(), std::forward<Args>(args)...);
         return invoke(types<Ret...>(), sizeof...(Args));
