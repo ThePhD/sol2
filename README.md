@@ -11,6 +11,10 @@ Lua errors are thrown as exceptions instead. This allows you to handle the error
 It should be noted that the library itself depends on `lua.hpp` to be found by your compiler. It uses angle brackets, e.g.
 `#include <lua.hpp>`. 
 
+## Contributing
+
+If you want to contribute, please check CONTRIBUTING.md for details. Thank you!
+
 ## Example
 
 Here's an example on how to load a basic configuration struct with a Lua script.
