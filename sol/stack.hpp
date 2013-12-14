@@ -45,7 +45,7 @@ inline T get_unsigned(lua_State* L, std::false_type, int index = -1) {
 template<typename T>
 inline T get_arithmetic(lua_State* L, std::false_type, int index = -1) {
     // T is a floating point
-    return lua_tonumber(L, index);
+    return static_cast<T>(lua_tonumber(L, index));
 }
 
 template<typename T>
