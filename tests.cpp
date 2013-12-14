@@ -199,7 +199,7 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
     // l-value, can optomize
     auto lval = object();
     lua.get<sol::table>("os").set_function("fun", &object::operator(), lval);
-    REQUIRE_NOTHROW((lua));
+    REQUIRE_NOTHROW(run_script(lua));
 
     // stateful lambda: non-convertible, unoptomizable
     int breakit = 50;
