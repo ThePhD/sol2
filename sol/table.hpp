@@ -41,7 +41,7 @@ T* get_ptr(T* val) {
 } // detail
 
 class table : virtual public reference {
-    template<typename T, typename U> struct proxy;
+    template<typename Table, typename T> struct proxy;
 public:
     table() noexcept : reference() {}
     table(lua_State* L, int index = -1) : reference(L, index) {

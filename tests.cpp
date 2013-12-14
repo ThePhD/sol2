@@ -81,7 +81,10 @@ TEST_CASE("simple/callWithParameters", "Lua function is called with a few parame
 
     REQUIRE_NOTHROW(lua.script("function my_add(i, j, k) return i + j + k end"));
     auto f = lua.get<sol::function>("my_add");
+    REQUIRE_NOTHROW(lua.script("function my_nothing(i, j, k) end"));
+    auto fvoid = lua.get<sol::function>("my_nothing");
     int a;
+    REQUIRE_NOTHROW(fvoid(1, 2, 3));
     REQUIRE_NOTHROW(a = f.call<int>(1, 2, 3));
     REQUIRE(a == 6);
     REQUIRE_THROWS(a = f.call<int>(1, 2, "arf"));
@@ -166,7 +169,7 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
             std::cout << "stateless lambda()" << std::endl;
             return "test";
         }
-   );
+    );
     REQUIRE_NOTHROW(run_script(lua));
 
     lua.get<sol::table>("os").set_function("fun", &free_function);
@@ -184,7 +187,7 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
         std::cout << "stateless lambda()" << std::endl;
         return "test";
     }
-   );
+    );
     REQUIRE_NOTHROW(run_script(lua));
 
     // r-value, cannot optomize

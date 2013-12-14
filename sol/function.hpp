@@ -62,13 +62,13 @@ public:
     function& operator=(const function&) = default;
 
     template<typename... Args>
-    void operator()( Args&&... args ) {
-	    call<>(std::forward<Args>(args)... );
+    void operator()(Args&&... args) {
+	    call<>(std::forward<Args>(args)...);
     }
 
     template<typename... Ret, typename... Args>
-    auto operator()( types<Ret...>, Args&&... args ) {
-	    return call<Ret...>(std::forward<Args>(args)... );
+    auto operator()(types<Ret...>, Args&&... args) {
+	    return call<Ret...>(std::forward<Args>(args)...);
     }
     
     template<typename... Ret, typename... Args>
