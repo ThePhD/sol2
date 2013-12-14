@@ -40,7 +40,7 @@ T* get_ptr(T* val) {
 }
 } // detail
 
-class table : virtual public reference {
+class table : public reference {
     template<typename Table, typename T> struct proxy;
 public:
     table() noexcept : reference() {}

@@ -27,7 +27,7 @@
 #include "stack.hpp"
 
 namespace sol {
-class function : virtual public reference {
+class function : public reference {
 private:
     void luacall (std::size_t argcount, std::size_t resultcount) {
         lua_call(state(), static_cast<uint32_t>(argcount), static_cast<uint32_t>(resultcount));

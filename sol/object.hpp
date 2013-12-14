@@ -22,11 +22,11 @@
 #ifndef SOL_OBJECT_HPP
 #define SOL_OBJECT_HPP
 
-#include "table.hpp"
-#include "function.hpp"
+#include "reference.hpp"
+#include "stack.hpp"
 
 namespace sol {
-class object : public table, public function {
+class object : public reference {
 public:
     object(lua_State* L, int index = -1): reference(L, index) {}
     object() = default;
