@@ -139,7 +139,6 @@ TEST_CASE("advanced/callLambdaReturns", "Checks for lambdas returning values") {
 
     REQUIRE_NOTHROW(lua.set_function("h", [ ] { }));
     REQUIRE_NOTHROW(lua["h"](sol::types<>()));
-    REQUIRE_THROWS(lua["h"](sol::types<int>()));
 
     REQUIRE_NOTHROW(lua.set_function("i", [ ] { return sol::nil; }));
     REQUIRE(lua["i"](sol::types<sol::nil_t>()) == sol::nil);
