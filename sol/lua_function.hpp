@@ -64,11 +64,6 @@ struct static_lua_func {
     typedef function_traits<fx_t> fx_traits;
     
     template<typename... Args>
-    static int typed_call(types<>, types<Args...> t, fx_t* fx, lua_State* L) {
-        return (*this)(types<void>(), t, fx, L);
-    }
-
-    template<typename... Args>
     static int typed_call(types<void>, types<Args...> t, fx_t* fx, lua_State* L) {
         stack::pop_call(L, fx, t);
         return 0;
@@ -79,6 +74,11 @@ struct static_lua_func {
         auto r = stack::pop_call(L, fx, t);
         stack::push_reverse(L, std::move(r));
         return sizeof...(Ret);
+    }
+
+    template<typename... Args>
+    static int typed_call(types<>, types<Args...> t, fx_t* fx, lua_State* L) {
+	    return typed_call(types<void>(), t, fx, L);
     }
 
     static int call(lua_State* L) {
@@ -99,6 +99,7 @@ struct static_object_lua_func {
     typedef typename std::decay<TFx>::type fx_t;
     typedef function_traits<fx_t> fx_traits;
 
+    
     template<typename... Args>
     static int typed_call(types<void>, types<Args...>, T& item, fx_t& ifx, lua_State* L) {
         auto fx = [&item, &ifx](Args&&... args) { (item.*ifx)(std::forward<Args>(args)...); };
@@ -122,6 +123,11 @@ struct static_object_lua_func {
         auto r = stack::pop_call(L, fx, types<Args...>());
         stack::push_reverse(L, std::move(r));
         return sizeof...(Ret);
+    }
+
+    template<typename... Args>
+    static int typed_call(types<>, types<Args...>, T& item, fx_t& ifx, lua_State* L) {
+        return typed_call(types<void>(), item, ifx, L);
     }
 
     static int call(lua_State* L) {
