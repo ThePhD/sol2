@@ -241,9 +241,14 @@ inline auto pop_call(lua_State* L, TFx&& fx, types<Args...>) -> decltype(detail:
     return detail::ltr_pop(L, std::forward<TFx>(fx), types<Args...>());
 }
 
-template<typename... Args>
-void push_args(lua_State* L, Args&&... args) {
+void push_args(lua_State*) {
+
+}
+
+template<typename Arg, typename... Args>
+void push_args(lua_State* L, Arg&& arg, Args&&... args) {
     using swallow = char[];
+    stack::push(L, std::forward<Arg>(arg));
     void(swallow{'\0', (stack::push(L, std::forward<Args>(args)), '\0')... });
 }
 } // stack
