@@ -207,7 +207,7 @@ inline int push_user(lua_State* L, T& item) {
 
 namespace detail {
 template<typename T, std::size_t... I>
-inline void push(lua_State* L, indices<I...>, const T& tuplen) {
+inline void push_tuple(lua_State* L, indices<I...>, T&& tuplen) {
     using swallow = char[ 1 + sizeof...(I) ];
     swallow {'\0', (sol::stack::push(L, std::get<I>(tuplen)), '\0')... };
 }
@@ -228,7 +228,12 @@ auto ltr_pop(lua_State* L, F&& f, types<Head, Tail...>, Vs&&... vs) -> decltype(
 
 template<typename... Args>
 inline void push(lua_State* L, const std::tuple<Args...>& tuplen) {
-    detail::push(L, build_indices<sizeof...(Args)>(), tuplen);
+    detail::push_tuple(L, build_reverse_indices<sizeof...(Args)>(), tuplen);
+}
+
+template<typename... Args>
+inline void push(lua_State* L, std::tuple<Args...>&& tuplen) {
+    detail::push_tuple(L, build_reverse_indices<sizeof...(Args)>(), std::move(tuplen));
 }
 
 template<typename... Args, typename TFx>

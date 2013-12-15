@@ -117,34 +117,33 @@ TEST_CASE("advanced/callLambdaReturns", "Checks for lambdas returning values") {
     sol::state lua;
 
     REQUIRE_NOTHROW(lua.set_function("a", [ ] { return 42; }));
-    REQUIRE(lua["a"]( sol::types<int>() ) == 42);
+    REQUIRE(lua["a"].call<int>() == 42);
     
     REQUIRE_NOTHROW(lua.set_function("b", [ ] { return 42u; }));
-    REQUIRE(lua["b"](sol::types<unsigned int>()) == 42u);
+    REQUIRE(lua["b"].call<unsigned int>() == 42u);
 
     REQUIRE_NOTHROW(lua.set_function("c", [ ] { return 3.14; }));
-    REQUIRE(lua["c"](sol::types<double>()) == 3.14);
+    REQUIRE(lua["c"].call<double>() == 3.14);
 
     REQUIRE_NOTHROW(lua.set_function("d", [ ] { return 6.28f; }));
-    REQUIRE(lua["d"](sol::types<float>()) == 6.28f);
+    REQUIRE(lua["d"].call<float>() == 6.28f);
 
     REQUIRE_NOTHROW(lua.set_function("e", [ ] { return "lol"; }));
-    REQUIRE(lua["e"](sol::types<std::string>()) == lol);
+    REQUIRE(lua["e"].call<std::string>() == lol);
 
     REQUIRE_NOTHROW(lua.set_function("f", [ ] { return true; }));
-    REQUIRE(lua["f"](sol::types<bool>()));
+    REQUIRE(lua["f"].call<bool>());
 
     REQUIRE_NOTHROW(lua.set_function("g", [ ] { return std::string("str"); }));
-    REQUIRE(lua["g"](sol::types<std::string>()) == str);
+    REQUIRE(lua["g"].call<std::string>() == str);
 
     REQUIRE_NOTHROW(lua.set_function("h", [ ] { }));
-    REQUIRE_NOTHROW(lua["h"](sol::types<>()));
+    REQUIRE_NOTHROW(lua["h"].call());
 
     REQUIRE_NOTHROW(lua.set_function("i", [ ] { return sol::nil; }));
-    REQUIRE(lua["i"](sol::types<sol::nil_t>()) == sol::nil);
-
-    REQUIRE_NOTHROW(lua.set_function("j", [ ] { return std::make_tuple(1, 6.28f, 3.14, std::string( "heh" )); } ));
-    REQUIRE(lua["j"](sol::types<int, float, double, std::string>()) == heh_tuple);
+    REQUIRE(lua["i"].call<sol::nil_t>() == sol::nil);
+    REQUIRE_NOTHROW(lua.set_function("j", [ ] { return std::make_tuple(1, 6.28f, 3.14, std::string("heh")); }));
+    REQUIRE((lua["j"].call<int, float, double, std::string>() == heh_tuple));
 }
 
 TEST_CASE("advanced/callLambda2", "A C++ lambda is exposed to lua and called") {

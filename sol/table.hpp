@@ -119,16 +119,6 @@ private:
             return t.get<U>(key);
         }
 
-        template<typename... Args>
-        void operator()( Args&&... args ) {
-            call<>( std::forward<Args>( args )... );
-	   }
-
-        template<typename... Ret, typename... Args>
-        typename multi_return<Ret...>::type operator()(types<Ret...>, Args&&... args) {
-            return call<Ret...>(std::forward<Args>(args)...);
-        }
-
         template<typename... Ret, typename... Args>
         typename multi_return<Ret...>::type call(Args&&... args) {
             return t.get<function>(key)(types<Ret...>(), std::forward<Args>(args)...);

@@ -63,17 +63,17 @@ struct is_function_impl<T, true> {
 };
 } // detail
 
-template <typename... Args>
+template<typename... Args>
 struct multi_return {
     typedef std::tuple<Args...> type;
 };
 
-template <typename T>
+template<typename T>
 struct multi_return<T> {
     typedef T type;
 };
 
-template <>
+template<>
 struct multi_return<> : types<>{
     typedef void type;
 };
