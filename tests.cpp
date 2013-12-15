@@ -112,18 +112,38 @@ TEST_CASE("simple/callLambda", "A C++ lambda is exposed to lua and called") {
 }
 
 TEST_CASE("advanced/callLambdaReturns", "Checks for lambdas returning values") {
+    const static std::string lol = "lol", str = "str";
+    const static std::tuple<int, float, double, std::string> heh_tuple = std::make_tuple(1, 6.28f, 3.14, std::string("heh"));
     sol::state lua;
 
     REQUIRE_NOTHROW(lua.set_function("a", [ ] { return 42; }));
+    REQUIRE(lua["a"].call<int>() == 42);
+    
     REQUIRE_NOTHROW(lua.set_function("b", [ ] { return 42u; }));
+    REQUIRE(lua["b"].call<unsigned int>() == 42u);
+
     REQUIRE_NOTHROW(lua.set_function("c", [ ] { return 3.14; }));
+    REQUIRE(lua["c"].call<double>() == 3.14);
+
     REQUIRE_NOTHROW(lua.set_function("d", [ ] { return 6.28f; }));
+    REQUIRE(lua["d"].call<float>() == 6.28f);
+
     REQUIRE_NOTHROW(lua.set_function("e", [ ] { return "lol"; }));
+    REQUIRE(lua["e"].call<std::string>() == lol);
+
     REQUIRE_NOTHROW(lua.set_function("f", [ ] { return true; }));
+    REQUIRE(lua["f"].call<bool>());
+
     REQUIRE_NOTHROW(lua.set_function("g", [ ] { return std::string("str"); }));
+    REQUIRE(lua["g"].call<std::string>() == str);
+
     REQUIRE_NOTHROW(lua.set_function("h", [ ] { }));
+    REQUIRE_NOTHROW(lua["h"].call());
+
     REQUIRE_NOTHROW(lua.set_function("i", [ ] { return sol::nil; }));
-    REQUIRE_NOTHROW(lua.set_function("j", [ ] { return std::make_tuple(1, 6.28f, 3.14, std::string( "heh" )); } ));
+    REQUIRE(lua["i"].call<sol::nil_t>() == sol::nil);
+    REQUIRE_NOTHROW(lua.set_function("j", [ ] { return std::make_tuple(1, 6.28f, 3.14, std::string("heh")); }));
+    REQUIRE((lua["j"].call<int, float, double, std::string>() == heh_tuple));
 }
 
 TEST_CASE("advanced/callLambda2", "A C++ lambda is exposed to lua and called") {
@@ -178,7 +198,7 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
     // l-value, can optomize
     auto lval = object();
     lua.get<sol::table>("os").set_function("fun", &object::operator(), lval);
-    REQUIRE_NOTHROW((lua));
+    REQUIRE_NOTHROW(run_script(lua));
 
     // stateful lambda: non-convertible, unoptomizable
     int breakit = 50;

@@ -113,6 +113,9 @@ template<>
 inline type type_of<bool>() {
     return type::boolean;
 }
+
+inline bool operator==(nil_t, nil_t) { return true; }
+inline bool operator!=(nil_t, nil_t) { return false; }
 } // sol
 
 #endif // SOL_TYPES_HPP

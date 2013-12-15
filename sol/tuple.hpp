@@ -26,14 +26,35 @@
 #include <cstddef>
 
 namespace sol {
+template<typename... Ts>
+struct reverse_tuple;
+
+template<>
+struct reverse_tuple<std::tuple<>> {
+    using type = std::tuple<>;
+};
+
+template<typename T, typename... Ts>
+struct reverse_tuple<std::tuple<T, Ts...>> {
+    using head = std::tuple<T>;
+    using tail = typename reverse_tuple<std::tuple<Ts...>>::type;
+    using type = decltype(std::tuple_cat(std::declval<tail>(), std::declval<head>()));
+};
+
 template<size_t... Ns>
-struct indices {};
+struct indices { typedef indices type; };
 
 template<size_t N, size_t... Ns>
 struct build_indices : build_indices<N - 1, N - 1, Ns...> {};
 
 template<size_t... Ns>
 struct build_indices<0, Ns...> : indices<Ns...> {};
+
+template<size_t N, size_t... Ns>
+struct build_reverse_indices : build_reverse_indices<N - 1, Ns..., N - 1> {};
+
+template<size_t... Ns>
+struct build_reverse_indices<0, Ns...> : indices<Ns...> {};
 
 template<typename... Args>
 struct types : build_indices<sizeof...(Args)> {};
