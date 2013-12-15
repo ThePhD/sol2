@@ -220,6 +220,21 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
     REQUIRE_NOTHROW(run_script(lua));
 }
 
+TEST_CASE("functions/return _order", "Check if return order is in the same reading order specified in Lua" ) {
+    const static std::tuple<int, int, int> triple = std::make_tuple(10, 11, 12);
+    sol::state lua;
+    lua.set_function( "f", [ ] { 
+	    return std::make_tuple( 10, 11, 12 ); 
+    } );
+    lua.script( "function g() return 10, 11, 12 end" );
+    auto tcpp = lua.get<sol::function>( "f" ).call<int, int, int>( );
+    auto tlua = lua.get<sol::function>( "g" ).call<int, int, int>( );
+    std::cout << std::get<0>( tcpp ) << ',' << std::get<1>( tcpp ) << ',' << std::get<2>( tcpp ) << std::endl;
+    std::cout << std::get<0>( tlua ) << ',' << std::get<1>( tlua ) << ',' << std::get<2>( tlua ) << std::endl;
+    REQUIRE( tcpp == triple );
+    REQUIRE( tlua == triple );
+}
+
 TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works properly") {
     sol::state lua;
     lua.open_libraries(sol::lib::base);

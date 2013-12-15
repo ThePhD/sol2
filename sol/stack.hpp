@@ -224,21 +224,54 @@ template<typename F, typename Head, typename... Tail, typename... Vs>
 auto ltr_pop(lua_State* L, F&& f, types<Head, Tail...>, Vs&&... vs) -> decltype(f(std::forward<Vs>(vs)..., std::declval<Head>(), std::declval<Tail>()...)) {
     return ltr_pop(L, std::forward<F>(f), types<Tail...>(), std::forward<Vs>(vs)..., pop<Head>(L));
 }
+
+template<typename F, typename... Vs>
+auto rtl_pop(lua_State*, F&& f, types<>, Vs&&... vs) -> decltype(f(std::forward<Vs>(vs)...)) {
+    return f(std::forward<Vs>(vs)...);
+}
+template<typename F, typename Head, typename... Vs>
+auto rtl_pop(lua_State* L, F&& f, types<Head>, Vs&&... vs) -> decltype(rtl_pop(L, std::forward<F>(f), types<>(), pop<Head>(L), std::forward<Vs>(vs)...)) {
+    return rtl_pop(L, std::forward<F>(f), types<>(), pop<Head>(L), std::forward<Vs>(vs)...);
+}
+template<typename F, typename Head, typename... Tail, typename... Vs>
+auto rtl_pop(lua_State* L, F&& f, types<Head, Tail...>, Vs&&... vs) -> decltype(rtl_pop(L, std::forward<F>(f), types<Tail...>(), pop<Head>(L), std::forward<Vs>(vs)...)) {
+	return rtl_pop(L, std::forward<F>(f), types<Tail...>(), pop<Head>(L), std::forward<Vs>(vs)...);
+}
 } // detail
 
 template<typename... Args>
 inline void push(lua_State* L, const std::tuple<Args...>& tuplen) {
-    detail::push_tuple(L, build_reverse_indices<sizeof...(Args)>(), tuplen);
+    detail::push_tuple(L, build_indices<sizeof...(Args)>(), tuplen);
 }
 
 template<typename... Args>
 inline void push(lua_State* L, std::tuple<Args...>&& tuplen) {
+    detail::push_tuple(L, build_indices<sizeof...(Args)>(), std::move(tuplen));
+}
+
+template<typename T>
+inline void push_reverse(lua_State* L, T&& item) {
+    push(L, std::forward<T>(item));
+}
+
+template<typename... Args>
+inline void push_reverse(lua_State* L, const std::tuple<Args...>& tuplen) {
+    detail::push_tuple(L, build_reverse_indices<sizeof...(Args)>(), tuplen);
+}
+
+template<typename... Args>
+inline void push_reverse(lua_State* L, std::tuple<Args...>&& tuplen) {
     detail::push_tuple(L, build_reverse_indices<sizeof...(Args)>(), std::move(tuplen));
 }
 
 template<typename... Args, typename TFx>
 inline auto pop_call(lua_State* L, TFx&& fx, types<Args...>) -> decltype(detail::ltr_pop(L, std::forward<TFx>(fx), types<Args...>())) {
     return detail::ltr_pop(L, std::forward<TFx>(fx), types<Args...>());
+}
+
+template<typename... Args, typename TFx>
+inline auto pop_reverse_call(lua_State* L, TFx&& fx, types<Args...>) -> decltype(detail::rtl_pop(L, std::forward<TFx>(fx), types<Args...>())) {
+    return detail::rtl_pop(L, std::forward<TFx>(fx), reversed<Args...>());
 }
 
 void push_args(lua_State*) {

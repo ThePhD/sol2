@@ -57,7 +57,16 @@ template<size_t... Ns>
 struct build_reverse_indices<0, Ns...> : indices<Ns...> {};
 
 template<typename... Args>
-struct types : build_indices<sizeof...(Args)> {};
+struct types : build_indices<sizeof...(Args)> { typedef types type; };
+
+template<class Acc, class... Args>
+struct reversed_ : Acc{};
+ 
+template<typename... RArgs, typename Arg, typename... Args>
+struct reversed_<types<RArgs...>, Arg, Args...> : reversed_<types<Arg, RArgs...>, Args...>{};
+ 
+template<typename... Args>
+struct reversed : reversed_<types<>, Args...>{};
 
 template<typename... Args>
 struct tuple_types : types<Args...>, std::false_type {};
