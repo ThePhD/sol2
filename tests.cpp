@@ -144,7 +144,7 @@ TEST_CASE("advanced/callLambdaReturns", "Checks for lambdas returning values") {
     REQUIRE(lua["i"](sol::types<sol::nil_t>()) == sol::nil);
 
     REQUIRE_NOTHROW(lua.set_function("j", [ ] { return std::make_tuple(1, 6.28f, 3.14, std::string( "heh" )); } ));
-    //REQUIRE(lua["j"](sol::types<int, float, double, std::string>()) == heh_tuple);
+    REQUIRE(lua["j"](sol::types<int, float, double, std::string>()) == heh_tuple);
 }
 
 TEST_CASE("advanced/callLambda2", "A C++ lambda is exposed to lua and called") {
