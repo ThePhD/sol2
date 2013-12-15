@@ -222,10 +222,6 @@ struct explicit_lua_func : public lua_func {
     template<typename... FxArgs>
     explicit_lua_func(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
 
-    virtual int operator()(lua_State* L) override {
-        return (*this)(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), L);
-    }
-
     template<typename... Args>
     int operator()(types<>, types<Args...> t, lua_State* L) {
         return (*this)(types<void>(), t, L);
@@ -242,6 +238,10 @@ struct explicit_lua_func : public lua_func {
         auto r = stack::pop_call(L, fx, t);
         stack::push_reverse(L, std::move(r));
         return sizeof...(Ret);
+    }
+
+    virtual int operator()(lua_State* L) override {
+        return (*this)(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), L);
     }
 };
 
@@ -265,8 +265,10 @@ struct explicit_lua_func<TFx, T, true> : public lua_func {
     template<typename... FxArgs>
     explicit_lua_func(T m, FxArgs&&... fxargs): fx(std::move(m), std::forward<FxArgs>(fxargs)...) {}
 
-    virtual int operator()(lua_State* L) override {
-        return (*this)(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), L);
+    template<typename... Args>
+    int operator()(types<void>, types<Args...> t, lua_State* L) {
+        stack::pop_call(L, fx, t);
+        return 0;
     }
 
     template<typename... Args>
@@ -274,17 +276,15 @@ struct explicit_lua_func<TFx, T, true> : public lua_func {
         return (*this)(types<void>(), t, L);
     }
 
-    template<typename... Args>
-    int operator()(types<void>, types<Args...> t, lua_State* L) {
-        stack::pop_call(L, fx, t);
-        return 0;
-    }
-
     template<typename... Ret, typename... Args>
     int operator()(types<Ret...>, types<Args...> t, lua_State* L) {
         auto r = stack::pop_call(L, fx, t);
-        stack::push_reverse(L, r);
+        stack::push_reverse(L, std::move(r));
         return sizeof...(Ret);
+    }
+
+    virtual int operator()(lua_State* L) override {
+        return (*this)(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), L);
     }
 };
 
