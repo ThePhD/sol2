@@ -61,6 +61,5 @@ Sol makes use of C++11 features. GCC 4.7 and Clang 3.3 or higher should be able 
 
 ## TODO
 
-- Support for `operator[]` based retrieval and modifying of tables (mostly finished).
 - Possibly document functions and classes via doxygen.
 - Provide more examples to showcase uses.
