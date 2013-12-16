@@ -127,9 +127,9 @@ public:
         }
     }
 
-    template<typename T, typename U>
-    T get(U&& key) const {
-        return global.get<T>(std::forward<U>(key));
+    template<typename... Args, typename... Keys>
+    typename multi_return<Args...>::type get(Keys&&... keys) const {
+       return global.get(types<Args...>(), std::forward<Keys>(keys)...);
     }
 
     template<typename T, typename U>

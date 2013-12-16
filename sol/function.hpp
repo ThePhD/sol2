@@ -35,8 +35,8 @@ private:
 
     template<typename... Ret>
     std::tuple<Ret...> invoke(types<Ret...>, std::size_t n) {
-        luacall(n, sizeof...(Ret));
-        return stack::pop_call(state(), std::make_tuple<Ret...>, types<Ret...>());
+        luacall(n, sizeof...(Ret));                                                                                                                                                                                                                                                                                                                                                                                                                     
+        return stack::pop_reverse_call(state(), std::make_tuple<Ret...>, types<Ret...>());
     }
 
     template<typename Ret>
