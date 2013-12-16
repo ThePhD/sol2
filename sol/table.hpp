@@ -41,15 +41,11 @@ T* get_ptr(T* val) {
 } // detail
 
 class table : public reference {
+    friend class state;
     template<typename Table, typename T> struct proxy;
-public:
-    table() noexcept : reference() {}
-    table(lua_State* L, int index = -1) : reference(L, index) {
-        type_assert(L, index, type::table);
-    }
 
     template<typename T, typename U>
-    T get(U&& key) const {
+    T single_get(U&& key) const {
         push();
         stack::push(state(), std::forward<U>(key));
         lua_gettable(state(), -2);
@@ -57,6 +53,45 @@ public:
         auto result = stack::pop<T>(state());
         lua_pop(state(), 1);
         return result;
+    }
+
+    template<std::size_t I, typename Tup, typename... Ret>
+    typename std::tuple_element<I, std::tuple<Ret...>>::type element_get(types<Ret...>, Tup&& key) const {
+        typedef typename std::tuple_element<I, std::tuple<Ret...>>::type T;
+        typedef typename std::tuple_element<I, Tup>::type U;
+        push();
+        stack::push(state(), std::get<I>(key));
+        lua_gettable(state(), -2);
+        type_assert(state(), -1, type_of<T>());
+        T result = stack::pop<T>(state());
+        lua_pop(state(), 1);
+        return result;
+    }
+
+    template<typename Tup, typename... Ret, std::size_t... I>
+    typename multi_return<Ret...>::type tuple_get(types<Ret...> t, indices<I...>, Tup&& tup) const {
+       return std::make_tuple(element_get<I>(t, std::forward<Tup>(tup))...);
+    }
+
+    template<typename Tup, typename Ret>
+    Ret tuple_get(types<Ret> t, indices<0>, Tup&& tup) const {
+        return element_get<0>(t, std::forward<Tup>(tup));
+    }
+
+    template<typename... Ret, typename... Keys>
+    typename multi_return<Ret...>::type get(types<Ret...> t, Keys&&... keys) const {
+        static_assert(sizeof...(Keys) == sizeof...(Ret), "Must have same number of keys as return values");
+        return tuple_get(t, t, std::make_tuple(std::forward<Keys>(keys)...));
+    }
+public:
+    table() noexcept : reference() {}
+    table(lua_State* L, int index = -1) : reference(L, index) {
+        type_assert(L, index, type::table);
+    }
+
+    template<typename... Ret, typename... Keys>
+    typename multi_return<Ret...>::type get(Keys&&... keys) const {
+       return get(types<Ret...>(), std::forward<Keys>(keys)...);
     }
 
     template<typename T, typename U>
