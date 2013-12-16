@@ -220,7 +220,7 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
     REQUIRE_NOTHROW(run_script(lua));
 }
 
-TEST_CASE("functions/return _order", "Check if return order is in the same reading order specified in Lua" ) {
+TEST_CASE("functions/return_order_and_multi_get", "Check if return order is in the same reading order specified in Lua" ) {
     const static std::tuple<int, int, int> triple = std::make_tuple(10, 11, 12);
     sol::state lua;
     lua.set_function( "f", [ ] { 

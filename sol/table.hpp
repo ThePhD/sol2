@@ -58,7 +58,6 @@ class table : public reference {
     template<std::size_t I, typename Tup, typename... Ret>
     typename std::tuple_element<I, std::tuple<Ret...>>::type element_get(types<Ret...>, Tup&& key) const {
         typedef typename std::tuple_element<I, std::tuple<Ret...>>::type T;
-        typedef typename std::tuple_element<I, Tup>::type U;
         push();
         stack::push(state(), std::get<I>(key));
         lua_gettable(state(), -2);
