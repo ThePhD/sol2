@@ -245,6 +245,11 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
     lua.script("foo = 20\nbar = \"hello world\"");
     // basic retrieval 
     std::string bar = lua["bar"];
+    REQUIRE(bar == "hello world");
+    // Ambiguity case on operator= for compilation testing
+    // Have to use cast, there's no other way...
+    bar = (std::string)lua["bar"];
+    REQUIRE(bar == "hello world");
     int foo = lua["foo"];
     REQUIRE(bar == "hello world");
     REQUIRE(foo == 20);
