@@ -42,8 +42,6 @@ T* get_ptr(T* val) {
 
 class table : public reference {
     friend class state;
-    template<typename Table, typename T> struct proxy;
-
     template<typename T, typename U>
     T single_get(U&& key) const {
         push();
@@ -115,50 +113,11 @@ public:
             std::forward<T>(key), std::forward<TFx>(fx), std::forward<TObj>(obj));
     }
 
-    template<typename T>
-    proxy<table&, T> operator[](T&& key) {
-        return proxy<table&, T>(*this, std::forward<T>(key));
-    }
-
-    template<typename T>
-    proxy<const table&, T> operator[](T&& key) const {
-        return proxy<const table&, T>(*this, std::forward<T>(key));
-    }
-
     size_t size() const {
         push();
         return lua_rawlen(state(), -1);
     }
 private:
-    template<typename Table, typename T>
-    struct proxy {
-    private:
-        Table t;
-        T& key;
-    public:
-        proxy(Table t, T& key) : t(t), key(key) {}
-
-        template<typename U>
-        EnableIf<Function<Unqualified<U>>> operator=(U&& other) {
-            t.set_function(key, std::forward<U>(other));
-        }
-    
-        template<typename U>
-        DisableIf<Function<Unqualified<U>>> operator=(U&& other) {
-            t.set(key, std::forward<U>(other));
-        }
-
-        template<typename U>
-        operator U() const {
-            return t.get<U>(key);
-        }
-
-        template<typename... Ret, typename... Args>
-        typename multi_return<Ret...>::type call(Args&&... args) {
-            return t.get<function>(key)(types<Ret...>(), std::forward<Args>(args)...);
-        }
-    };
-
     template<typename T, typename TFx>
     table& set_isfunction_fx(std::true_type, T&& key, TFx&& fx) {
         return set_fx(std::false_type(), std::forward<T>(key), std::forward<TFx>(fx));

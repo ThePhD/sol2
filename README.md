@@ -15,40 +15,9 @@ It should be noted that the library itself depends on `lua.hpp` to be found by y
 
 If you want to contribute, please check CONTRIBUTING.md for details. Thank you!
 
-## Example
+## Examples
 
-Here's an example on how to load a basic configuration struct with a Lua script.
-
-```cpp
-#include <sol.hpp>
-#include <iostream>
-#include <string>
-
-struct test {
-    int foo;
-    std::string bar;
-    double baz;
-};
-
-test load(const sol::table& t) {
-    return { t.get<int>("foo"), t.get<std::string>("bar"), t.get<double>("baz") };
-}
-
-int main() {
-    try {
-        sol::state lua;
-        lua.script("foo = 1234;\n"
-                   "bar = \"hello world\";\n"
-                   "baz = 1.4;");
-
-        test c = load(lua.global_table());
-        std::cout << '(' << c.foo << ", " << c.bar << ", " << c.baz << ")\n";
-    }
-    catch(const std::exception& e) {
-        std::cerr << e.what() << '\n';
-    }
-}
-```
+Examples are provided in the examples directory.
 
 ## License
 
@@ -61,6 +30,5 @@ Sol makes use of C++11 features. GCC 4.7 and Clang 3.3 or higher should be able 
 
 ## TODO
 
-- Support for `operator[]` based retrieval and modifying of tables (mostly finished).
 - Possibly document functions and classes via doxygen.
 - Provide more examples to showcase uses.
