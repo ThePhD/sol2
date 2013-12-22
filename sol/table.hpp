@@ -22,6 +22,7 @@
 #ifndef SOL_TABLE_HPP
 #define SOL_TABLE_HPP
 
+#include "proxy.hpp"
 #include "stack.hpp"
 #include "lua_function.hpp"
 #include <array>
@@ -117,6 +118,17 @@ public:
         push();
         return lua_rawlen(state(), -1);
     }
+
+    template <typename T>
+    proxy<table, T> operator[]( T&& key ) {
+	    return proxy<table, T>( *this, std::forward<T>( key ) );
+    }
+
+    template <typename T>
+    proxy<const table, T> operator[]( T&& key ) const {
+	    return proxy<const table, T>( *this, std::forward<T>( key ) );
+    }
+
 private:
     template<typename T, typename TFx>
     table& set_isfunction_fx(std::true_type, T&& key, TFx&& fx) {

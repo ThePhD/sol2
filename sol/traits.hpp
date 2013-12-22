@@ -26,6 +26,29 @@
 #include <type_traits>
 
 namespace sol {
+namespace detail {
+template<typename T, bool isclass = std::is_class<Unqualified<T>>::value>
+struct is_function_impl : std::is_function<typename std::remove_pointer<T>::type> { };
+
+template<typename T>
+struct is_function_impl<T, true> {
+	using yes = char;
+	using no = struct { char s[ 2 ]; };
+
+	struct F { void operator()( ); };
+	struct Derived : T, F { };
+	template<typename U, U> struct Check;
+
+	template<typename V>
+	static no test( Check<void ( F::* )( ), &V::operator()>* );
+
+	template<typename>
+	static yes test( ... );
+
+	static const bool value = sizeof( test<Derived>( 0 ) ) == sizeof( yes );
+};
+} // detail
+
 template<typename T, typename R = void>
 using EnableIf = typename std::enable_if<T::value, R>::type;
 
@@ -55,6 +78,8 @@ struct multi_return<> : types<>{
 
 template<bool B>
 using Bool = std::integral_constant<bool, B>;
+template<typename T>
+struct Function : Bool<detail::is_function_impl<T>::value> { };
 
 template<typename TFuncSignature>
 struct function_traits;
