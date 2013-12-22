@@ -312,7 +312,7 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
     REQUIRE_NOTHROW(lua.script("assert(lamb(220) == 440)"));
 
     // function retrieval of a lambda
-    sol::function lamb;// = lua[ "lamb" ];
+    sol::function lamb = lua[ "lamb" ];
     REQUIRE(lamb.call<int>(220) == 440);
 
     // test const table retrieval
