@@ -27,103 +27,103 @@ namespace sol {
 template <typename Table, typename Key>
 struct proxy {
 private:
-	Table& tbl;
-	Key& key;
+    Table& tbl;
+    Key& key;
 
 public:
 
-	template <typename T>
-	proxy( Table& table, T&& key ) : tbl( table ), key( std::forward<T>( key ) ) {
+    template <typename T>
+    proxy(Table& table, T&& key) : tbl(table), key(std::forward<T>(key)) {
 
-	}
+    }
 
-	template<typename T>
-	T get( ) const {
-		return tbl.get<T>( key );
-	}
+    template<typename T>
+    T get() const {
+        return tbl.get<T>(key);
+    }
 
-	template<typename T>
-	proxy& set( T&& item ) {
-		tbl.set( key, std::forward<T>( item ) );
-		return *this;
-	}
+    template<typename T>
+    proxy& set(T&& item) {
+        tbl.set(key, std::forward<T>(item));
+        return *this;
+    }
 
-	template<typename... Args>
-	proxy& set_function( Args&&... args ) {
-		tbl.set_function( key, std::forward<Args>( args )... );
-		return *this;
-	}
+    template<typename... Args>
+    proxy& set_function(Args&&... args) {
+        tbl.set_function(key, std::forward<Args>(args)...);
+        return *this;
+    }
 
-	template<typename U>
-	EnableIf<Function<Unqualified<U>>> operator=( U&& other ) {
-		tbl.set_function( key, std::forward<U>( other ) );
-	}
+    template<typename U>
+    EnableIf<Function<Unqualified<U>>> operator=(U&& other) {
+        tbl.set_function(key, std::forward<U>(other));
+    }
 
-	template<typename U>
-	DisableIf<Function<Unqualified<U>>> operator=( U&& other ) {
-		tbl.set( key, std::forward<U>( other ) );
-	}
+    template<typename U>
+    DisableIf<Function<Unqualified<U>>> operator=(U&& other) {
+        tbl.set(key, std::forward<U>(other));
+    }
 
-	operator nil_t ( ) const {
-		return get<nil_t>( );
-	}
+    operator nil_t () const {
+        return get<nil_t>();
+    }
 
-	operator object( ) const {
-		return get<object>( );
-	}
+    operator object() const {
+        return get<object>();
+    }
 
-	operator function( ) const {
-		return get<function>( );
-	}
+    operator function() const {
+        return get<function>();
+    }
 
-	operator std::string( ) const {
-		return get<std::string>( );
-	}
+    operator std::string() const {
+        return get<std::string>();
+    }
 
-	template <typename T = void>
-	operator bool( ) const {
-		return get<bool>( );
-	}
+    template <typename T = void>
+    operator bool() const {
+        return get<bool>();
+    }
 
-	template <typename T = void>
-	operator double( ) const {
-		return get<double>( );
-	}
+    template <typename T = void>
+    operator double() const {
+        return get<double>();
+    }
 
-	template <typename T = void>
-	operator float( ) const {
-		return get<float>( );
-	}
+    template <typename T = void>
+    operator float() const {
+        return get<float>();
+    }
 
-	template <typename T = void>
-	operator int( ) const {
-		return get<int>( );
-	}
+    template <typename T = void>
+    operator int() const {
+        return get<int>();
+    }
 
-	template<typename... Ret, typename... Args>
-	typename multi_return<Ret...>::type call( Args&&... args ) {
-		return tbl.get<function>(key)(types<Ret...>(), std::forward<Args>( args )...);
-	}
+    template<typename... Ret, typename... Args>
+    typename multi_return<Ret...>::type call(Args&&... args) {
+        return tbl.get<function>(key)(types<Ret...>(), std::forward<Args>(args)...);
+    }
 };
 
 template <typename Table, typename Key, typename T>
-inline bool operator== ( T&& left, const proxy<Table, Key>& right ) {
-	return left == right.template get<Decay<T>>( );
+inline bool operator== (T&& left, const proxy<Table, Key>& right) {
+    return left == right.template get<Decay<T>>();
 }
 
 template <typename Table, typename Key, typename T>
-inline bool operator== ( const proxy<Table, Key>& right, T&& left ) {
-	return right.template get<Decay<T>>( ) == left;
+inline bool operator== (const proxy<Table, Key>& right, T&& left) {
+    return right.template get<Decay<T>>() == left;
 }
 
 template <typename Table, typename Key, typename T>
-inline bool operator!= ( T&& left, const proxy<Table, Key>& right ) {
-	return right.template get<Decay<T>>( ) != left;
+inline bool operator!= (T&& left, const proxy<Table, Key>& right) {
+    return right.template get<Decay<T>>() != left;
 }
 
 template <typename Table, typename Key, typename T>
-inline bool operator!= ( const proxy<Table, Key>& right, T&& left ) {
-	return right.template get<Decay<T>>( ) != left;
+inline bool operator!= (const proxy<Table, Key>& right, T&& left) {
+    return right.template get<Decay<T>>() != left;
 }
 
 } // sol

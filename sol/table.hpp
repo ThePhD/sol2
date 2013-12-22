@@ -120,13 +120,13 @@ public:
     }
 
     template <typename T>
-    proxy<table, T> operator[]( T&& key ) {
-	    return proxy<table, T>( *this, std::forward<T>( key ) );
+    proxy<table, T> operator[](T&& key) {
+        return proxy<table, T>(*this, std::forward<T>(key));
     }
 
     template <typename T>
-    proxy<const table, T> operator[]( T&& key ) const {
-	    return proxy<const table, T>( *this, std::forward<T>( key ) );
+    proxy<const table, T> operator[](T&& key) const {
+        return proxy<const table, T>(*this, std::forward<T>(key));
     }
 
 private:
@@ -182,7 +182,7 @@ private:
         void* userobjdata = static_cast<void*>(detail::get_ptr(obj));
         lua_CFunction freefunc = &static_object_lua_func<Decay<TObj>, TFx>::call;
         const char* freefuncname = fkey.c_str();
-        const luaL_Reg funcreg[ 2 ] = {
+        const luaL_Reg funcreg[2] = {
             { freefuncname, freefunc },
             { nullptr, nullptr }
         };
@@ -204,7 +204,7 @@ private:
         Decay<TFx> target(std::forward<TFx>(fx));
         lua_CFunction freefunc = &static_lua_func<TFx>::call;
         const char* freefuncname = fkey.c_str();
-        const luaL_Reg funcreg[ 2 ] = {
+        const luaL_Reg funcreg[2] = {
             { freefuncname, freefunc },
             { nullptr, nullptr }
         };
@@ -229,7 +229,7 @@ private:
         lua_CFunction freefunc = &lua_func::call;
         const char* freefuncname = fkey.c_str();
         const char* metatablename = metakey.c_str();
-        const luaL_Reg funcreg[ 2 ] = {
+        const luaL_Reg funcreg[2] = {
             { freefuncname, freefunc },
             { nullptr, nullptr }
         };

@@ -208,7 +208,7 @@ inline int push_user(lua_State* L, T& item) {
 namespace detail {
 template<typename T, std::size_t... I>
 inline void push_tuple(lua_State* L, indices<I...>, T&& tuplen) {
-    using swallow = char[ 1 + sizeof...(I) ];
+    using swallow = char[1 + sizeof...(I)];
     swallow {'\0', (sol::stack::push(L, std::get<I>(tuplen)), '\0')... };
 }
 

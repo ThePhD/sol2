@@ -105,7 +105,7 @@ TEST_CASE("simple/call_lambda", "A C++ lambda is exposed to lua and called") {
 
     int x = 0;
 
-    lua.set_function("foo", [ &x ] { x = 1; });
+    lua.set_function("foo", [&x] { x = 1; });
 
     lua.script("foo()");
 
@@ -117,33 +117,33 @@ TEST_CASE("advanced/get_and_call", "Checks for lambdas returning values after a 
     const static std::tuple<int, float, double, std::string> heh_tuple = std::make_tuple(1, 6.28f, 3.14, std::string("heh"));
     sol::state lua;
 
-    REQUIRE_NOTHROW(lua.set_function("a", [ ] { return 42; }));
+    REQUIRE_NOTHROW(lua.set_function("a", [] { return 42; }));
     REQUIRE(lua.get<sol::function>("a").call<int>() == 42);
     
-    REQUIRE_NOTHROW(lua.set_function("b", [ ] { return 42u; }));
+    REQUIRE_NOTHROW(lua.set_function("b", [] { return 42u; }));
     REQUIRE(lua.get<sol::function>("b").call<unsigned int>() == 42u);
 
-    REQUIRE_NOTHROW(lua.set_function("c", [ ] { return 3.14; }));
+    REQUIRE_NOTHROW(lua.set_function("c", [] { return 3.14; }));
     REQUIRE(lua.get<sol::function>("c").call<double>() == 3.14);
 
-    REQUIRE_NOTHROW(lua.set_function("d", [ ] { return 6.28f; }));
+    REQUIRE_NOTHROW(lua.set_function("d", [] { return 6.28f; }));
     REQUIRE(lua.get<sol::function>("d").call<float>() == 6.28f);
 
-    REQUIRE_NOTHROW(lua.set_function("e", [ ] { return "lol"; }));
+    REQUIRE_NOTHROW(lua.set_function("e", [] { return "lol"; }));
     REQUIRE(lua.get<sol::function>("e").call<std::string>() == lol);
 
-    REQUIRE_NOTHROW(lua.set_function("f", [ ] { return true; }));
+    REQUIRE_NOTHROW(lua.set_function("f", [] { return true; }));
     REQUIRE(lua.get<sol::function>("f").call<bool>());
 
-    REQUIRE_NOTHROW(lua.set_function("g", [ ] { return std::string("str"); }));
+    REQUIRE_NOTHROW(lua.set_function("g", [] { return std::string("str"); }));
     REQUIRE(lua.get<sol::function>("g").call<std::string>() == str);
 
-    REQUIRE_NOTHROW(lua.set_function("h", [ ] { }));
+    REQUIRE_NOTHROW(lua.set_function("h", [] { }));
     REQUIRE_NOTHROW(lua.get<sol::function>("h").call());
 
-    REQUIRE_NOTHROW(lua.set_function("i", [ ] { return sol::nil; }));
+    REQUIRE_NOTHROW(lua.set_function("i", [] { return sol::nil; }));
     REQUIRE(lua.get<sol::function>("i").call<sol::nil_t>() == sol::nil);
-    REQUIRE_NOTHROW(lua.set_function("j", [ ] { return std::make_tuple(1, 6.28f, 3.14, std::string("heh")); }));
+    REQUIRE_NOTHROW(lua.set_function("j", [] { return std::make_tuple(1, 6.28f, 3.14, std::string("heh")); }));
     REQUIRE((lua.get<sol::function>("j").call<int, float, double, std::string>() == heh_tuple));
 }
 
@@ -152,33 +152,33 @@ TEST_CASE("advanced/operator[]_calls", "Checks for lambdas returning values usin
     const static std::tuple<int, float, double, std::string> heh_tuple = std::make_tuple(1, 6.28f, 3.14, std::string("heh"));
     sol::state lua;
 
-    REQUIRE_NOTHROW(lua.set_function("a", [ ] { return 42; }));
+    REQUIRE_NOTHROW(lua.set_function("a", [] { return 42; }));
     REQUIRE(lua["a"].call<int>() == 42);
     
-    REQUIRE_NOTHROW(lua.set_function("b", [ ] { return 42u; }));
+    REQUIRE_NOTHROW(lua.set_function("b", [] { return 42u; }));
     REQUIRE(lua["b"].call<unsigned int>() == 42u);
 
-    REQUIRE_NOTHROW(lua.set_function("c", [ ] { return 3.14; }));
+    REQUIRE_NOTHROW(lua.set_function("c", [] { return 3.14; }));
     REQUIRE(lua["c"].call<double>() == 3.14);
 
-    REQUIRE_NOTHROW(lua.set_function("d", [ ] { return 6.28f; }));
+    REQUIRE_NOTHROW(lua.set_function("d", [] { return 6.28f; }));
     REQUIRE(lua["d"].call<float>() == 6.28f);
 
-    REQUIRE_NOTHROW(lua.set_function("e", [ ] { return "lol"; }));
+    REQUIRE_NOTHROW(lua.set_function("e", [] { return "lol"; }));
     REQUIRE(lua["e"].call<std::string>() == lol);
 
-    REQUIRE_NOTHROW(lua.set_function("f", [ ] { return true; }));
+    REQUIRE_NOTHROW(lua.set_function("f", [] { return true; }));
     REQUIRE(lua["f"].call<bool>());
 
-    REQUIRE_NOTHROW(lua.set_function("g", [ ] { return std::string("str"); }));
+    REQUIRE_NOTHROW(lua.set_function("g", [] { return std::string("str"); }));
     REQUIRE(lua["g"].call<std::string>() == str);
 
-    REQUIRE_NOTHROW(lua.set_function("h", [ ] { }));
+    REQUIRE_NOTHROW(lua.set_function("h", [] { }));
     REQUIRE_NOTHROW(lua["h"].call());
 
-    REQUIRE_NOTHROW(lua.set_function("i", [ ] { return sol::nil; }));
+    REQUIRE_NOTHROW(lua.set_function("i", [] { return sol::nil; }));
     REQUIRE(lua["i"].call<sol::nil_t>() == sol::nil);
-    REQUIRE_NOTHROW(lua.set_function("j", [ ] { return std::make_tuple(1, 6.28f, 3.14, std::string("heh")); }));
+    REQUIRE_NOTHROW(lua.set_function("j", [] { return std::make_tuple(1, 6.28f, 3.14, std::string("heh")); }));
     REQUIRE((lua["j"].call<int, float, double, std::string>() == heh_tuple));
 }
 
@@ -186,7 +186,7 @@ TEST_CASE("advanced/call_lambdas", "A C++ lambda is exposed to lua and called") 
     sol::state lua;
 
     int x = 0;
-    lua.set_function("set_x", [ &] (int new_x) {
+    lua.set_function("set_x", [&] (int new_x) {
         x = new_x;
         return 0;
     });
@@ -216,16 +216,16 @@ TEST_CASE("tables/variables", "Check if tables and variables work as intended") 
 TEST_CASE("tables/functions_variables", "Check if tables and function calls work as intended") {
     sol::state lua;
     lua.open_libraries(sol::lib::base, sol::lib::os);
-    auto run_script = [ ] (sol::state& lua) -> void {
+    auto run_script = [] (sol::state& lua) -> void {
         lua.script("assert(os.fun() == \"test\")");
     };
 
     lua.get<sol::table>("os").set_function("fun",
-        [ ] () {
+        [] () {
             std::cout << "stateless lambda()" << std::endl;
             return "test";
         }
-    );
+   );
     REQUIRE_NOTHROW(run_script(lua));
 
     lua.get<sol::table>("os").set_function("fun", &free_function);
@@ -239,11 +239,11 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
     // stateful lambda: non-convertible, unoptomizable
     int breakit = 50;
     lua.get<sol::table>("os").set_function("fun",
-        [ &breakit ] () {
+        [&breakit] () {
         std::cout << "stateless lambda()" << std::endl;
         return "test";
     }
-    );
+   );
     REQUIRE_NOTHROW(run_script(lua));
 
     // r-value, cannot optomize
@@ -256,12 +256,12 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
     REQUIRE_NOTHROW(run_script(lua));
 }
 
-TEST_CASE("functions/return_order_and_multi_get", "Check if return order is in the same reading order specified in Lua" ) {
+TEST_CASE("functions/return_order_and_multi_get", "Check if return order is in the same reading order specified in Lua") {
     const static std::tuple<int, int, int> triple = std::make_tuple(10, 11, 12);
     sol::state lua;
-    lua.set_function( "f", [ ] { 
-        return std::make_tuple( 10, 11, 12 ); 
-    } );
+    lua.set_function("f", [] { 
+        return std::make_tuple(10, 11, 12); 
+    });
     lua.script("function g() return 10, 11, 12 end\nx,y,z = g()");
     auto tcpp = lua.get<sol::function>("f").call<int, int, int>();
     auto tlua = lua.get<sol::function>("g").call<int, int, int>();
@@ -301,7 +301,7 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
     REQUIRE_NOTHROW(lua.script("assert(test(10, 11, \"hello\") == 11)"));
 
     // function retrieval
-    sol::function test = lua[ "test" ];
+    sol::function test = lua["test"];
     REQUIRE(test.call<int>(10, 11, "hello") == 11);
 
     // setting a lambda
@@ -312,13 +312,13 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
     REQUIRE_NOTHROW(lua.script("assert(lamb(220) == 440)"));
 
     // function retrieval of a lambda
-    sol::function lamb = lua[ "lamb" ];
+    sol::function lamb = lua["lamb"];
     REQUIRE(lamb.call<int>(220) == 440);
 
     // test const table retrieval
     auto assert1 = [](const sol::table& t) {
         std::string a = t["foo"];
-	   int b = t["bar"];
+        int b = t["bar"];
         std::cout << a << ',' << b << '\n';
     };
 
