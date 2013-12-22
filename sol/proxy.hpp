@@ -50,7 +50,7 @@ public:
 
 	template<typename... Args>
 	proxy& set_function( Args&&... args ) {
-		tbl.set_function( key, std::forward<Args>( args ).. );
+		tbl.set_function( key, std::forward<Args>( args )... );
 		return *this;
 	}
 
