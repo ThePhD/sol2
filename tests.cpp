@@ -285,6 +285,7 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
     REQUIRE(bar == "hello world");
     REQUIRE(foo == 20);
     // test operator= for stringification
+    // errors due to ambiguous operators
     bar = lua["bar"];
 
     // basic setting
@@ -300,7 +301,7 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
     REQUIRE_NOTHROW(lua.script("assert(test(10, 11, \"hello\") == 11)"));
 
     // function retrieval
-    sol::function test = lua["test"];
+    sol::function test = lua[ "test" ];
     REQUIRE(test.call<int>(10, 11, "hello") == 11);
 
     // setting a lambda
@@ -311,13 +312,13 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
     REQUIRE_NOTHROW(lua.script("assert(lamb(220) == 440)"));
 
     // function retrieval of a lambda
-    sol::function lamb = lua["lamb"];
+    sol::function lamb;// = lua[ "lamb" ];
     REQUIRE(lamb.call<int>(220) == 440);
 
     // test const table retrieval
     auto assert1 = [](const sol::table& t) {
         std::string a = t["foo"];
-        int b = t["bar"];
+	   int b = t["bar"];
         std::cout << a << ',' << b << '\n';
     };
 

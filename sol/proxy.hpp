@@ -64,35 +64,39 @@ public:
 		tbl.set( key, std::forward<U>( other ) );
 	}
 
-	operator nil_t ( ) {
+	operator nil_t ( ) const {
 		return get<nil_t>( );
 	}
 
-	operator bool( ) {
-		return get<bool>( );
-	}
-
-	operator std::string( ) {
-		return get<std::string>( );
-	}
-
-	operator object( ) {
+	operator object( ) const {
 		return get<object>( );
 	}
 
-	operator function( ) {
+	operator function( ) const {
 		return get<function>( );
 	}
 
-	operator double( ) {
+	operator std::string( ) const {
+		return get<std::string>( );
+	}
+
+	template <typename T = void>
+	operator bool( ) const {
+		return get<bool>( );
+	}
+
+	template <typename T = void>
+	operator double( ) const {
 		return get<double>( );
 	}
 
-	operator float( ) {
+	template <typename T = void>
+	operator float( ) const {
 		return get<float>( );
 	}
 
-	operator int( ) {
+	template <typename T = void>
+	operator int( ) const {
 		return get<int>( );
 	}
 
@@ -103,23 +107,23 @@ public:
 };
 
 template <typename Table, typename Key, typename T>
-bool operator== ( T&& left, const proxy<Table, Key>& right ) {
-	return right.get<Decay<T>>( ) == left;
+inline bool operator== ( T&& left, const proxy<Table, Key>& right ) {
+	return left == right.template get<Decay<T>>( );
 }
 
 template <typename Table, typename Key, typename T>
-bool operator== ( const proxy<Table, Key>& right, T&& left ) {
-	return right.get<Decay<T>>( ) == left;
+inline bool operator== ( const proxy<Table, Key>& right, T&& left ) {
+	return right.template get<Decay<T>>( ) == left;
 }
 
 template <typename Table, typename Key, typename T>
-bool operator!= ( T&& left, const proxy<Table, Key>& right ) {
-	return right.get<Decay<T>>( ) != left;
+inline bool operator!= ( T&& left, const proxy<Table, Key>& right ) {
+	return right.template get<Decay<T>>( ) != left;
 }
 
 template <typename Table, typename Key, typename T>
-bool operator!= ( const proxy<Table, Key>& right, T&& left ) {
-	return right.get<Decay<T>>( ) != left;
+inline bool operator!= ( const proxy<Table, Key>& right, T&& left ) {
+	return right.template get<Decay<T>>( ) != left;
 }
 
 } // sol
