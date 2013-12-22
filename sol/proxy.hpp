@@ -104,26 +104,22 @@ public:
 
 template <typename Table, typename Key, typename T>
 bool operator== ( T&& left, const proxy<Table, Key>& right ) {
-	typedef Decay<T> TDk;
-	return right.get<TDk>( ) == left;
+	return right.get<Decay<T>>( ) == left;
 }
 
 template <typename Table, typename Key, typename T>
 bool operator== ( const proxy<Table, Key>& right, T&& left ) {
-	typedef Decay<T> TDk;
-	return right.get<TDk>( ) == left;
+	return right.get<Decay<T>>( ) == left;
 }
 
 template <typename Table, typename Key, typename T>
 bool operator!= ( T&& left, const proxy<Table, Key>& right ) {
-	typedef Decay<T> TDk;
-	return right.get<TDk>( ) != left;
+	return right.get<Decay<T>>( ) != left;
 }
 
 template <typename Table, typename Key, typename T>
 bool operator!= ( const proxy<Table, Key>& right, T&& left ) {
-	typedef Decay<T> TDk;
-	return right.get<TDk>( ) != left;
+	return right.get<Decay<T>>( ) != left;
 }
 
 } // sol
