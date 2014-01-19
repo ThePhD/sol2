@@ -231,12 +231,12 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
     lua.get<sol::table>("os").set_function("fun", &free_function);
     REQUIRE_NOTHROW(run_script(lua));
 
-    // l-value, can optomize
+    // l-value, can optimise
     auto lval = object();
     lua.get<sol::table>("os").set_function("fun", &object::operator(), lval);
     REQUIRE_NOTHROW(run_script(lua));
 
-    // stateful lambda: non-convertible, unoptomizable
+    // stateful lambda: non-convertible, cannot be optimised
     int breakit = 50;
     lua.get<sol::table>("os").set_function("fun",
         [&breakit] () {
@@ -246,11 +246,11 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
    );
     REQUIRE_NOTHROW(run_script(lua));
 
-    // r-value, cannot optomize
+    // r-value, cannot optimise
     lua.get<sol::table>("os").set_function("fun", &object::operator(), object());
     REQUIRE_NOTHROW(run_script(lua));
 
-    // r-value, cannot optomize
+    // r-value, cannot optimise
     auto rval = object();
     lua.get<sol::table>("os").set_function("fun", &object::operator(), std::move(rval));
     REQUIRE_NOTHROW(run_script(lua));
