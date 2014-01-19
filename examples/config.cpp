@@ -1,8 +1,8 @@
-// shows how to load basic data to a struct
-
 #include <sol.hpp>
 #include <string>
 #include <iostream>
+
+// shows how to load basic data to a struct
 
 struct config {
     std::string name;
