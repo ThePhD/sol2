@@ -22,6 +22,7 @@
 #ifndef SOL_STACK_HPP
 #define SOL_STACK_HPP
 
+#include "error.hpp"
 #include "reference.hpp"
 #include "tuple.hpp"
 #include "traits.hpp"
