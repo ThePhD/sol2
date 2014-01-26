@@ -183,6 +183,10 @@ public:
     proxy<const table, T> operator[](T&& key) const {
         return global[std::forward<T>(key)];
     }
+
+    lua_State* lua_state() const {
+        return L.get();
+    }
 };
 } // sol
 
