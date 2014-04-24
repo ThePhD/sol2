@@ -153,7 +153,7 @@ private:
     template<typename T, typename TFx>
     table& set_isconvertible_fx(std::false_type, T&& key, TFx&& fx) {
         typedef typename std::remove_pointer<Decay<TFx>>::type clean_fx;
-        std::unique_ptr<lua_func> sptr(new lambda_lua_func<clean_fx>(std::forward<TFx>(fx)));
+        std::unique_ptr<lua_func> sptr(new functor_lua_func<clean_fx>(std::forward<TFx>(fx)));
         return set_fx(std::forward<T>(key), std::move(sptr));
     }
 
@@ -165,7 +165,7 @@ private:
     template<typename T, typename TFx, typename TObj>
     table& set_lvalue_fx(std::false_type, T&& key, TFx&& fx, TObj&& obj) {
         typedef typename std::remove_pointer<Decay<TFx>>::type clean_fx;
-        std::unique_ptr<lua_func> sptr(new explicit_lua_func<clean_fx, TObj>(std::forward<TObj>(obj), std::forward<TFx>(fx)));
+        std::unique_ptr<lua_func> sptr(new function_lua_func<clean_fx, TObj>(std::forward<TObj>(obj), std::forward<TFx>(fx)));
         return set_fx(std::forward<T>(key), std::move(sptr));
     }
 

@@ -172,13 +172,13 @@ struct lua_func {
 };
 
 template<typename TFx>
-struct lambda_lua_func : public lua_func {
+struct functor_lua_func : public lua_func {
     typedef decltype(&TFx::operator()) fx_t;
     typedef function_traits<fx_t> fx_traits;
     TFx fx;
 
     template<typename... FxArgs>
-    lambda_lua_func(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
+    functor_lua_func(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
 
     virtual int operator()(lua_State* L) override {
         return (*this)(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), L);
@@ -205,13 +205,13 @@ struct lambda_lua_func : public lua_func {
 };
 
 template<typename TFx, typename T = TFx, bool is_member_pointer = std::is_member_function_pointer<TFx>::value>
-struct explicit_lua_func : public lua_func {
+struct function_lua_func : public lua_func {
     typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type fx_t;
     typedef function_traits<fx_t> fx_traits;
     TFx fx;
 
     template<typename... FxArgs>
-    explicit_lua_func(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
+    function_lua_func(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
 
     template<typename... Args>
     int operator()(types<void>, types<Args...> t, lua_State* L) {
@@ -238,7 +238,7 @@ struct explicit_lua_func : public lua_func {
 };
 
 template<typename TFx, typename T>
-struct explicit_lua_func<TFx, T, true> : public lua_func {
+struct function_lua_func<TFx, T, true> : public lua_func {
     typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type fx_t;
     typedef function_traits<fx_t> fx_traits;
     struct lambda {
@@ -255,7 +255,7 @@ struct explicit_lua_func<TFx, T, true> : public lua_func {
     } fx;
 
     template<typename... FxArgs>
-    explicit_lua_func(T m, FxArgs&&... fxargs): fx(std::move(m), std::forward<FxArgs>(fxargs)...) {}
+    function_lua_func(T m, FxArgs&&... fxargs): fx(std::move(m), std::forward<FxArgs>(fxargs)...) {}
 
     template<typename... Args>
     int operator()(types<void>, types<Args...> t, lua_State* L) {
