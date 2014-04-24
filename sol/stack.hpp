@@ -214,20 +214,20 @@ inline void push_tuple(lua_State* L, indices<I...>, T&& tuplen) {
 }
 
 template<typename F, typename... Vs, typename... Args>
-auto ltr_pop(lua_State*, F&& f, types<Args...>, types<>, Vs&&... vs) -> decltype(f(std::forward<Vs>(vs)...)) {
+inline auto ltr_pop(lua_State*, F&& f, types<Args...>, types<>, Vs&&... vs) -> decltype(f(std::forward<Vs>(vs)...)) {
     return f(std::forward<Vs>(vs)...);
 }
 template<typename F, typename Head, typename... Tail, typename... Vs, typename... Args>
-auto ltr_pop(lua_State* L, F&& f, types<Args...> t, types<Head, Tail...>, Vs&&... vs) -> decltype(f(std::declval<Args>()...)) {
+inline auto ltr_pop(lua_State* L, F&& f, types<Args...> t, types<Head, Tail...>, Vs&&... vs) -> decltype(f(std::declval<Args>()...)) {
     return ltr_pop(L, std::forward<F>(f), t, types<Tail...>(), std::forward<Vs>(vs)..., pop<Head>(L));
 }
 
 template<typename F, typename... Vs, typename... Args>
-auto rtl_pop(lua_State*, F&& f, types<Args...>, types<>, Vs&&... vs) -> decltype(f(std::forward<Vs>(vs)...)) {
+inline auto rtl_pop(lua_State*, F&& f, types<Args...>, types<>, Vs&&... vs) -> decltype(f(std::forward<Vs>(vs)...)) {
     return f(std::forward<Vs>(vs)...);
 }
 template<typename F, typename Head, typename... Tail, typename... Vs, typename... Args>
-auto rtl_pop(lua_State* L, F&& f, types<Args...> t, types<Head, Tail...>, Vs&&... vs) -> decltype(f(std::declval<Args>()...)) {
+inline auto rtl_pop(lua_State* L, F&& f, types<Args...> t, types<Head, Tail...>, Vs&&... vs) -> decltype(f(std::declval<Args>()...)) {
     return rtl_pop(L, std::forward<F>(f), t, types<Tail...>(), pop<Head>(L), std::forward<Vs>(vs)...);
 }
 } // detail
@@ -267,12 +267,12 @@ inline auto pop_reverse_call(lua_State* L, TFx&& fx, types<Args...> t) -> declty
     return detail::rtl_pop(L, std::forward<TFx>(fx), t, reversed<Args...>());
 }
 
-void push_args(lua_State*) {
+inline void push_args(lua_State*) {
 
 }
 
 template<typename Arg, typename... Args>
-void push_args(lua_State* L, Arg&& arg, Args&&... args) {
+inline void push_args(lua_State* L, Arg&& arg, Args&&... args) {
     using swallow = char[];
     stack::push(L, std::forward<Arg>(arg));
     void(swallow{'\0', (stack::push(L, std::forward<Args>(args)), '\0')... });

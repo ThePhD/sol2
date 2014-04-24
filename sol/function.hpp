@@ -25,6 +25,7 @@
 #include "reference.hpp"
 #include "tuple.hpp"
 #include "stack.hpp"
+#include <cstdint>
 
 namespace sol {
 class function : public reference {

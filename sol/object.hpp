@@ -47,19 +47,19 @@ public:
     }
 };
 
-bool operator==(const object& lhs, const nil_t&) {
+inline bool operator==(const object& lhs, const nil_t&) {
     return lhs.is<nil_t>();
 }
 
-bool operator==(const nil_t&, const object& rhs) {
+inline bool operator==(const nil_t&, const object& rhs) {
     return rhs.is<nil_t>();
 }
 
-bool operator!=(const object& lhs, const nil_t&) {
+inline bool operator!=(const object& lhs, const nil_t&) {
     return !lhs.is<nil_t>();
 }
 
-bool operator!=(const nil_t&, const object& rhs) {
+inline bool operator!=(const nil_t&, const object& rhs) {
     return !rhs.is<nil_t>();
 }
 } // sol
