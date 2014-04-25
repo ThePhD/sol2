@@ -25,19 +25,32 @@
 #include <string>
 
 #ifdef _MSC_VER
-#include <windows.h>
+/*#include <windows.h>
 #include <DbgHelp.h>
-
+*/
 namespace sol {
 namespace detail {
 
 
 	std::string demangle(const std::type_info& id) {
-		std::string realname(2048, '\0');
-		DWORD result = UnDecorateSymbolName(id.raw_name(), realname.data(), realname.size(), UNDNAME_32_BIT_DECODE);
+		/*std::string realname(2048, '\0');
+		DWORD result = UnDecorateSymbolName(id.raw_name(), &realname[0],
+			static_cast<DWORD>(realname.size()), UNDNAME_NAME_ONLY | UNDNAME_32_BIT_DECODE);
 		if (result == 0)
 			return "";
 		realname.resize(result);
+		*/
+		const static std::string removals[ 2 ] = {
+			"struct ",
+			"class "
+		};
+		std::string realname = id.name( );
+		for ( std::size_t r = 0; r < 2; ++r ) {
+			auto found = realname.find( removals[ r ] );
+			if ( found == std::string::npos )
+				continue;
+			realname.erase( found, removals[r].size() );
+		}
 		return realname;
 	}
 
