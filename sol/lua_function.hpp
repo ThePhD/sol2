@@ -97,12 +97,12 @@ struct static_lua_func {
 
 template<typename T, typename TFx>
 struct static_object_lua_func {
-    typedef typename std::decay<TFx>::type fx_t;
+    typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type fx_t;
     typedef function_traits<fx_t> fx_traits;
 
     template<typename... Args>
     static int typed_call(types<void>, types<Args...>, T& item, fx_t& ifx, lua_State* L) {
-        auto fx = [&item, &ifx](Args&&... args) { (item.*ifx)(std::forward<Args>(args)...); };
+        auto fx = [&item, &ifx](Args&&... args) -> void { (item.*ifx)(std::forward<Args>(args)...); };
         stack::pop_call(L, fx, types<Args...>());
         return 0;
     }
