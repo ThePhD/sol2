@@ -23,6 +23,7 @@
 #define SOL_DEMANGLE_HPP
 
 #include <string>
+#include <array>
 
 #if defined(__GNUC__) || defined(__clang__)
 #include <cxxabi.h>
@@ -32,16 +33,22 @@ namespace sol {
 namespace detail {
 #ifdef _MSC_VER
 std::string demangle(const std::type_info& id) {
-    const static std::string removals[2] = { "struct ", "class " };
-    std::string realname = id.name();
-    for(std::size_t r = 0; r < 2; ++r) {
+    const static std::array<std::string, 2> removals = { "struct ", "class " };
+    const static std::array<std::string, 2> replacements = { "::", "_" };
+    std::string realname = id.name( );
+    for(std::size_t r = 0; r < removals.size(); ++r) {
         auto found = realname.find(removals[r]);
-
-        if(found == std::string::npos) {
-            continue;
+	   while (found != std::string::npos) {
+            realname.erase(found, removals[r].size());
+            found = realname.find( removals[r] );
+	   }
+    }
+    for(std::size_t r = 0; r < replacements.size(); r+=2) {
+        auto found = realname.find(replacements[r]);
+	   while (found != std::string::npos) {
+            realname.replace(found, replacements[r].size(), replacements[r+1]);
+		  found = realname.find(replacements[r], found);
         }
-
-        realname.erase(found, removals[r].size());
     }
     return realname;
 }

@@ -47,14 +47,39 @@ private:
     std::vector<std::unique_ptr<lua_func>> functions;
     std::vector<luaL_Reg> functiontable;
     std::vector<luaL_Reg> metatable;
-
+    
+    template <typename... TTypes>
     struct constructor {
+        template <typename... Args>
+        static void do_constructor(lua_State* L, T* obj, int argcount, types<Args...> t) {
+            auto fx = [&obj] ( Args&&... args ) -> void {
+                std::allocator<T> alloc{}; 
+                alloc.construct(obj, std::forward<Args>(args)...);
+            };
+            stack::pop_call(L, fx, t);
+        }
+
+        static void match_constructor(lua_State* L, T* obj, int argcount) {
+            if (argcount != 0)
+                throw sol_error("No matching constructor for the arguments provided");
+        }
+	   
+	   template<typename ...CArgs, typename... Args>
+        static void match_constructor(lua_State* L, T* obj, int argcount, types<CArgs...> t, Args&&... args) {
+            if (argcount == sizeof...(CArgs)) {
+                do_constructor( L, obj, argcount, t );
+                return;
+            }
+		  match_constructor( L, obj, argcount, std::forward<Args>(args)...);
+        }
+
         static int construct(lua_State* L) {
+            int argcount = lua_gettop(L);
             // First argument is now a table that represent the class to instantiate
-            luaL_checktype(L, 1, LUA_TTABLE);
-
-            lua_createtable(L, 0, 0); // Create table to represent instance
-
+		  luaL_checktype( L, 1, LUA_TTABLE );
+		
+		  // Table represents the instance
+            lua_createtable(L, 0, 0);
             // Set first argument of new to metatable of instance
             lua_pushvalue(L, 1);
             lua_setmetatable(L, -2);
@@ -63,16 +88,17 @@ private:
             lua_pushvalue(L, 1);
             lua_setfield(L, 1, "__index");
 
-            void* userdata = lua_newuserdata(L, sizeof(T));
-            T* obj = static_cast<T*>(userdata);
-            std::allocator<T> alloc{};
-            alloc.construct(obj);
 
-            luaL_getmetatable(L, meta.c_str());
+		  void* udata = lua_newuserdata( L, sizeof( T ) );
+		  T* obj = static_cast<T*>( udata );
+		  match_constructor( L, obj, argcount - 1, std::common_type<TTypes>::type( )... );
+		  //match_constructor( L, obj, argcount - 1, types<int>( ) );
+		  
+		  luaL_getmetatable(L, meta.c_str());
             lua_setmetatable(L, -2);
             lua_setfield(L, -2, "__self");
 
-            return 1;
+		  return 1;
         }
     };
 
@@ -80,13 +106,14 @@ private:
     struct destructor {
         static int destruct(lua_State* L) {
             for(std::size_t i = 0; i < n; ++i) {
-                lightuserdata_t luserdata = stack::get<lightuserdata_t>(L, i);
-                // make warnings shut up
-                (void)luserdata;
+                lightuserdata_t ludata = stack::get<lightuserdata_t>(L, i);
+                lua_func* func = static_cast<lua_func*>(ludata.value);
+			 std::default_delete<lua_func> dx{};
+			 dx(func);
             }
 
-            userdata_t userdata = stack::get<userdata_t>(L, 0);
-            T* obj = static_cast<T*>(userdata.value);
+            userdata_t udata = stack::get<userdata_t>(L, 0);
+            T* obj = static_cast<T*>(udata.value);
             std::allocator<T> alloc{};
             alloc.destroy(obj);
 
@@ -127,7 +154,7 @@ public:
     userdata(Args&&... args) : userdata(classname, std::forward<Args>(args)...) {}
 
     template <typename... Args>
-    userdata(std::string name, Args&&... args) : userdata(name, constructors<>(), std::forward<Args>(args)...) {}
+    userdata(std::string name, Args&&... args) : userdata(name, constructors<types<>>(), std::forward<Args>(args)...) {}
 
     template <typename... Args, typename... CArgs>
     userdata(constructors<CArgs...> c, Args&&... args) : userdata(classname, std::move(c), std::forward<Args>(args)...) {}
@@ -141,7 +168,7 @@ public:
         build_function_tables<0>(std::forward<Args>(args)...);
 
         functionnames.push_back("new");
-        functiontable.push_back({ functionnames.back().c_str(), &constructor::construct });
+        functiontable.push_back({ functionnames.back().c_str(), &constructor<CArgs...>::construct });
         functiontable.push_back({ nullptr, nullptr });
 
         metatable.push_back({ "__gc", &destructor<sizeof...(Args) / 2>::destruct });
