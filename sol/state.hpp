@@ -144,9 +144,15 @@ public:
         return *this;
     }
 
-    template<typename T, typename TFx, typename TM>
-    state& set_function(T&& key, TFx&& fx, TM& mem) {
-        global.set_function(std::forward<T>(key), std::forward<TFx>(fx), mem);
+    template<typename T, typename TFx, typename TObj>
+    state& set_function(T&& key, TFx&& fx, TObj&& obj) {
+        global.set_function(std::forward<T>(key), std::forward<TFx>(fx), std::forward<TObj>(obj));
+        return *this;
+    }
+
+    template<typename T>
+    state& set_class(userdata<T>& user) {
+        global.set_class(user);
         return *this;
     }
 

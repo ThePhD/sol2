@@ -25,8 +25,7 @@
 #include "proxy.hpp"
 #include "stack.hpp"
 #include "lua_function.hpp"
-#include <array>
-#include <cstring>
+#include "userdata.hpp"
 
 namespace sol {
 namespace detail {
@@ -114,6 +113,46 @@ public:
             std::forward<T>(key), std::forward<TFx>(fx), std::forward<TObj>(obj));
     }
 
+    template <typename T>
+    table& set_class(userdata<T>& user) {
+        push();
+
+        lua_createtable(state(), 0, 0);
+        int classid = lua_gettop(state());
+
+        // Register metatable for user data in registry
+        // using the metaname key generated from the demangled name
+        luaL_newmetatable(state(), user.meta.c_str());
+        int metaid = lua_gettop(state());
+        // Meta functions: have no light up values
+        luaL_setfuncs(state(), user.metatable.data(), 0);
+
+        // Regular functions: each one references an upvalue at its own index,
+        // resulting in [function count] upvalues
+        //luaL_newlib(L, functiontable.data());
+        // the newlib macro doesn't have a form for when you need upvalues:
+        // we duplicate the work below
+        lua_createtable(state(), 0, user.functiontable.size() - 1);
+        for (std::size_t upvalues = 0; upvalues < user.functions.size(); ++upvalues) {
+            stack::push(state(), static_cast<void*>(user.functions[ upvalues ].get()));
+        }
+        luaL_setfuncs(state(), user.functiontable.data(), static_cast<uint32_t>(user.functions.size()));
+        lua_setfield(state(), metaid, "__index");
+
+        // Meta functions: no upvalues
+        lua_createtable(state(), 0, user.metatable.size() - 1);
+        luaL_setfuncs(state(), user.metatable.data(), 0); // 0, for no upvalues
+        lua_setfield(state(), metaid, "__metatable");
+
+        lua_setmetatable(state(), classid);
+
+        lua_setglobal(state(), user.luaname.c_str());
+
+        pop();
+
+        return *this;
+    }
+
     size_t size() const {
         push();
         return lua_rawlen(state(), -1);
@@ -194,7 +233,7 @@ private:
         stack::push(state(), userobjdata);
         luaL_setfuncs(state(), funcreg, upvalues + 1);
 
-        lua_pop(state(), 1);
+       pop();
         return *this;
     }
 
@@ -210,11 +249,10 @@ private:
         };
 
         push();
-
         int upvalues = stack::push_user(state(), target);
         luaL_setfuncs(state(), funcreg, upvalues);
+       pop();
 
-        lua_pop(state(), 1);
         return *this;
     }
 
@@ -243,7 +281,7 @@ private:
         push();
         stack::push_user(state(), userdata, metatablename);
         luaL_setfuncs(state(), funcreg, 1);
-        lua_pop(state(), 1);
+        pop();
         return *this;
     }
 };

@@ -58,7 +58,7 @@ using Bool = std::integral_constant<bool, B>;
 
 namespace detail {
 template<typename T, bool isclass = std::is_class<Unqualified<T>>::value>
-struct is_function_impl : std::is_function<typename std::remove_pointer<T>::type> { };
+struct is_function_impl : std::is_function<typename std::remove_pointer<T>::type> {};
 
 template<typename T>
 struct is_function_impl<T, true> {
@@ -66,7 +66,7 @@ struct is_function_impl<T, true> {
     using no = struct { char s[2]; };
 
     struct F { void operator()(); };
-    struct Derived : T, F { };
+    struct Derived : T, F {};
     template<typename U, U> struct Check;
 
     template<typename V>
@@ -80,7 +80,7 @@ struct is_function_impl<T, true> {
 } // detail
 
 template<typename T>
-struct Function : Bool<detail::is_function_impl<T>::value> { };
+struct Function : Bool<detail::is_function_impl<T>::value> {};
 
 template<typename TFuncSignature>
 struct function_traits;

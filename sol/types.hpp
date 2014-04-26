@@ -31,6 +31,17 @@ struct nil_t {};
 const nil_t nil {};
 struct void_type {};
 const void_type Void {};
+struct lightuserdata_t { 
+    void* value;
+    lightuserdata_t(void* data) : value(data) {} 
+    operator void* () const { return value; }
+};
+
+struct userdata_t { 
+    void* value;
+    userdata_t(void* data) : value(data) {} 
+    operator void* () const { return value; }
+};
 
 enum class type : int {
     none          = LUA_TNONE,
@@ -58,6 +69,8 @@ inline void type_assert(lua_State* L, int index, type expected) {
     }
 }
 
+template <typename T>
+class userdata;
 class table;
 class function;
 class object;
@@ -112,6 +125,16 @@ inline type type_of<nil_t>() {
 template<>
 inline type type_of<bool>() {
     return type::boolean;
+}
+
+template<>
+inline type type_of<lightuserdata_t>() {
+    return type::lightuserdata;
+}
+
+template<>
+inline type type_of<userdata_t>() {
+    return type::userdata;
 }
 
 inline bool operator==(nil_t, nil_t) { return true; }
