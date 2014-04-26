@@ -22,12 +22,18 @@
 #ifndef SOL_USERDATA_HPP
 #define SOL_USERDATA_HPP
 
-#include <sol/state.hpp>
-#include <sol/lua_function.hpp>
-#include <sol/demangle.hpp>
+#include "state.hpp"
+#include "lua_function.hpp"
+#include "demangle.hpp"
 #include <vector>
 
 namespace sol {
+namespace detail {
+template<typename T, typename... Args>
+inline std::unique_ptr<T> make_unique(Args&&... args) {
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+} // detail
 
 template <typename T>
 class userdata {
@@ -70,12 +76,15 @@ private:
         }
     };
 
-    template <std::size_t n>
+    template<std::size_t n>
     struct destructor {
         static int destruct(lua_State* L) {
-            for (std::size_t i = 0; i < n; ++i) {
+            for(std::size_t i = 0; i < n; ++i) {
                 lightuserdata_t luserdata = stack::get<lightuserdata_t>(L, i);
+                // make warnings shut up
+                (void)luserdata;
             }
+
             userdata_t userdata = stack::get<userdata_t>(L, 0);
             T* obj = static_cast<T*>(userdata.value);
             std::allocator<T> alloc{};
@@ -108,29 +117,23 @@ private:
     void build_function_tables(Ret(T::* func)(MArgs...), std::string name, Args&&... args) {
         typedef typename std::decay<decltype(func)>::type fx_t;
         functionnames.push_back(std::move(name));
-        functions.emplace_back(std::make_unique<class_lua_func<fx_t, T>>(std::move(func)));
+        functions.emplace_back(detail::make_unique<class_lua_func<fx_t, T>>(std::move(func)));
         functiontable.push_back({ functionnames.back().c_str(), &class_func<n>::call });
         build_function_tables<n + 1>(std::forward<Args>(args)...);
     }
 
 public:
     template <typename... Args>
-    userdata(Args&&... args) : userdata(classname, std::forward<Args>(args)...) {
-
-    }
+    userdata(Args&&... args) : userdata(classname, std::forward<Args>(args)...) {}
 
     template <typename... Args>
-    userdata(std::string name, Args&&... args) : userdata(name, constructors<>(), std::forward<Args>(args)...) {
-
-    }
+    userdata(std::string name, Args&&... args) : userdata(name, constructors<>(), std::forward<Args>(args)...) {}
 
     template <typename... Args, typename... CArgs>
-    userdata(constructors<CArgs...> c, Args&&... args) : userdata(classname, std::move(c), std::forward<Args>(args)...) {
-
-    }
+    userdata(constructors<CArgs...> c, Args&&... args) : userdata(classname, std::move(c), std::forward<Args>(args)...) {}
 
     template <typename... Args, typename... CArgs>
-    userdata(std::string name, constructors<CArgs...> c, Args&&... args) : luaname(std::move(name)) {
+    userdata(std::string name, constructors<CArgs...>, Args&&... args) : luaname(std::move(name)) {
         functionnames.reserve(sizeof...(args));
         functiontable.reserve(sizeof...(args));
         functions.reserve(sizeof...(args));
@@ -145,9 +148,7 @@ public:
         metatable.push_back({ nullptr, nullptr });
     }
 
-    void register_into(const table& s) {
-
-    }
+    void register_into(const table& s) { }
 };
 
 template <typename T>
@@ -158,4 +159,4 @@ const std::string userdata<T>::meta = std::string("sol.stateful.").append(classn
 
 }
 
-#endif SOL_USERDATA_HPP
+#endif // SOL_USERDATA_HPP
