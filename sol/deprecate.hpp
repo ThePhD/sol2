@@ -22,14 +22,14 @@
 #ifndef SOL_DEPRECATE_HPP
 #define SOL_DEPRECATE_HPP
 
-#ifndef DEPRECATE
-#ifdef _MSC_VER
-#define DEPRECATE __declspec(deprecated)
-#elif __GNUC__
-#define DEPRECATE __attribute__((deprecated)) 
-#else
-#define DEPRECATE [[deprecated]]
-#endif // VC++ || GCC || Others
-#endif // DEPRECATE
+#ifndef SOL_DEPRECATED
+    #ifdef _MSC_VER
+        #define SOL_DEPRECATED __declspec(deprecated)
+    #elif __GNUC__
+        #define SOL_DEPRECATED __attribute__((deprecated)) 
+    #else
+        #define SOL_DEPRECATED [[deprecated]]
+    #endif // compilers
+#endif // SOL_DEPRECATED
 
 #endif // SOL_DEPRECATE_HPP
