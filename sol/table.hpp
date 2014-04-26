@@ -24,7 +24,7 @@
 
 #include "proxy.hpp"
 #include "stack.hpp"
-#include "lua_function.hpp"
+#include "function_types.hpp"
 #include "userdata.hpp"
 
 namespace sol {
@@ -195,7 +195,7 @@ private:
     template<typename T, typename TFx>
     table& set_isconvertible_fx(std::false_type, T&& key, TFx&& fx) {
         typedef typename std::remove_pointer<Decay<TFx>>::type clean_fx;
-        std::unique_ptr<lua_func> sptr(new functor_lua_func<clean_fx>(std::forward<TFx>(fx)));
+        std::unique_ptr<base_function> sptr(new functor_function<clean_fx>(std::forward<TFx>(fx)));
         return set_fx(std::forward<T>(key), std::move(sptr));
     }
 
@@ -207,7 +207,7 @@ private:
     template<typename T, typename TFx, typename TObj>
     table& set_lvalue_fx(std::false_type, T&& key, TFx&& fx, TObj&& obj) {
         typedef typename std::remove_pointer<Decay<TFx>>::type clean_fx;
-        std::unique_ptr<lua_func> sptr(new function_lua_func<clean_fx, TObj>(std::forward<TObj>(obj), std::forward<TFx>(fx)));
+        std::unique_ptr<base_function> sptr(new member_function<clean_fx, TObj>(std::forward<TObj>(obj), std::forward<TFx>(fx)));
         return set_fx(std::forward<T>(key), std::move(sptr));
     }
 
@@ -222,7 +222,7 @@ private:
         // with the same member function pointer type
         Decay<TFx> fxptr(std::forward<TFx>(fx));
         void* userobjdata = static_cast<void*>(detail::get_ptr(obj));
-        lua_CFunction freefunc = &static_object_lua_func<Decay<TObj>, TFx>::call;
+        lua_CFunction freefunc = &static_member_function<Decay<TObj>, TFx>::call;
         const char* freefuncname = fkey.c_str();
         const luaL_Reg funcreg[2] = {
             { freefuncname, freefunc },
@@ -244,7 +244,7 @@ private:
     table& set_fx(std::false_type, T&& key, TFx&& fx) {
         std::string fkey(key);
         Decay<TFx> target(std::forward<TFx>(fx));
-        lua_CFunction freefunc = &static_lua_func<TFx>::call;
+        lua_CFunction freefunc = &static_function<TFx>::call;
         const char* freefuncname = fkey.c_str();
         const luaL_Reg funcreg[2] = {
             { freefuncname, freefunc },
@@ -260,14 +260,14 @@ private:
     }
 
     template<typename T>
-    table& set_fx(T&& key, std::unique_ptr<lua_func> luafunc) {
+    table& set_fx(T&& key, std::unique_ptr<base_function> luafunc) {
         std::string fkey(key);
         std::string metakey("sol.stateful.");
         metakey += fkey;
         metakey += ".meta";
-        lua_func* target = luafunc.release();
+        base_function* target = luafunc.release();
         void* userdata = reinterpret_cast<void*>(target);
-        lua_CFunction freefunc = &lua_func::call;
+        lua_CFunction freefunc = &base_function::call;
         const char* freefuncname = fkey.c_str();
         const char* metatablename = metakey.c_str();
         const luaL_Reg funcreg[2] = {
@@ -277,7 +277,7 @@ private:
 
         if (luaL_newmetatable(state(), metatablename) == 1) {
             lua_pushstring(state(), "__gc");
-            lua_pushcclosure(state(), &lua_func::gc, 0);
+            lua_pushcclosure(state(), &base_function::gc, 0);
             lua_settable(state(), -3);
         }
 
