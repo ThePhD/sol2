@@ -28,7 +28,7 @@
 namespace sol {
 
 template<typename Function>
-struct static_lua_func {
+struct static_function {
     typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
     typedef function_traits<function_type> traits_type;
     
@@ -64,7 +64,7 @@ struct static_lua_func {
 };
 
 template<typename T, typename Function>
-struct static_object_lua_func {
+struct static_member_function {
     typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
     typedef function_traits<function_type> traits_type;
 
@@ -103,15 +103,15 @@ struct static_object_lua_func {
     }
 };
 
-struct lua_func {
+struct base_function {
     static int call(lua_State* L) {
         void** pinheritancedata = static_cast<void**>(stack::get<lightuserdata_t>(L, 1).value);
         void* inheritancedata = *pinheritancedata;
         if (inheritancedata == nullptr) {
             throw sol_error("call from Lua to C++ function has null data");
         }
-        lua_func* pfx = static_cast<lua_func*>(inheritancedata);
-        lua_func& fx = *pfx;
+        base_function* pfx = static_cast<base_function*>(inheritancedata);
+        base_function& fx = *pfx;
         int r = fx(L);
         return r;
     }
@@ -119,8 +119,8 @@ struct lua_func {
     static int gc(lua_State* L) {
         void** puserdata = static_cast<void**>(stack::get<userdata_t>(L, 1).value);
         void* userdata = *puserdata;
-        lua_func* ptr = static_cast<lua_func*>(userdata);
-        std::default_delete<lua_func> dx{};
+        base_function* ptr = static_cast<base_function*>(userdata);
+        std::default_delete<base_function> dx{};
         dx(ptr);
         return 0;
     }
@@ -129,17 +129,17 @@ struct lua_func {
         throw sol_error("failure to call specialized wrapped C++ function from Lua");
     }
 
-    virtual ~lua_func() {}
+    virtual ~base_function() {}
 };
 
 template<typename Function>
-struct functor_lua_func : public lua_func {
+struct functor_function : public base_function {
     typedef decltype(&Function::operator()) function_type;
     typedef function_traits<function_type> traits_type;
     Function fx;
 
     template<typename... FxArgs>
-    functor_lua_func(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
+    functor_function(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
 
     template<typename... Args>
     int operator()(types<void>, types<Args...> t, lua_State* L) {
@@ -165,41 +165,8 @@ struct functor_lua_func : public lua_func {
     }
 };
 
-template<typename Function, typename T = Function, bool is_member_pointer = std::is_member_function_pointer<Function>::value>
-struct function_lua_func : public lua_func {
-    typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
-    typedef function_traits<function_type> traits_type;
-    function_type fx;
-
-    template<typename... FxArgs>
-    function_lua_func(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
-
-    template<typename... Args>
-    int operator()(types<void>, types<Args...> t, lua_State* L) {
-        stack::pop_call(L, fx, t);
-        return 0;
-    }
-
-    template<typename... Args>
-    int operator()(types<>, types<Args...> t, lua_State* L) {
-        return (*this)(types<void>(), t, L);
-    }
-
-    template<typename... Ret, typename... Args>
-    int operator()(types<Ret...>, types<Args...> t, lua_State* L) {
-        typedef typename multi_return<Ret...>::type return_type;
-        return_type r = stack::pop_call(L, fx, t);
-        stack::push(L, std::move(r));
-        return sizeof...(Ret);
-    }
-
-    virtual int operator()(lua_State* L) override {
-        return (*this)(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), L);
-    }
-};
-
 template<typename Function, typename T>
-struct function_lua_func<Function, T, true> : public lua_func {
+struct member_function : public base_function {
     typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
     typedef function_traits<function_type> traits_type;
     struct functor {
@@ -216,7 +183,7 @@ struct function_lua_func<Function, T, true> : public lua_func {
     } fx;
 
     template<typename... FxArgs>
-    function_lua_func(T m, FxArgs&&... fxargs): fx(std::move(m), std::forward<FxArgs>(fxargs)...) {}
+    member_function(T m, FxArgs&&... fxargs): fx(std::move(m), std::forward<FxArgs>(fxargs)...) {}
 
     template<typename... Args>
     int operator()(types<void>, types<Args...> t, lua_State* L) {
@@ -243,7 +210,7 @@ struct function_lua_func<Function, T, true> : public lua_func {
 };
 
 template<typename Function, typename T>
-struct class_lua_func : public lua_func {
+struct userdata_function : public base_function {
     typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
     typedef function_traits<function_type> traits_type;
     struct functor {
@@ -266,7 +233,7 @@ struct class_lua_func : public lua_func {
     } fx;
 
     template<typename... FxArgs>
-    class_lua_func(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
+    userdata_function(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
 
     template<typename... Args>
     int operator()(types<void>, types<Args...> t, lua_State* L) {

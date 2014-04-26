@@ -23,7 +23,7 @@
 #define SOL_USERDATA_HPP
 
 #include "state.hpp"
-#include "lua_function.hpp"
+#include "function_types.hpp"
 #include "demangle.hpp"
 #include <vector>
 
@@ -44,7 +44,7 @@ private:
 
     std::string luaname;
     std::vector<std::string> functionnames;
-    std::vector<std::unique_ptr<lua_func>> functions;
+    std::vector<std::unique_ptr<base_function>> functions;
     std::vector<luaL_Reg> functiontable;
     std::vector<luaL_Reg> metatable;
     
@@ -128,8 +128,8 @@ private:
             void* inheritancedata = stack::get<lightuserdata_t>(L, i + 1);
             if (inheritancedata == nullptr)
                 throw sol_error("call from Lua to C++ function has null data");
-            lua_func* pfx = static_cast<lua_func*>(inheritancedata);
-            lua_func& fx = *pfx;
+            base_function* pfx = static_cast<base_function*>(inheritancedata);
+            base_function& fx = *pfx;
             int r = fx(L);
             return r;
         }
@@ -144,7 +144,7 @@ private:
     void build_function_tables(Ret(T::* func)(MArgs...), std::string name, Args&&... args) {
         typedef typename std::decay<decltype(func)>::type fx_t;
         functionnames.push_back(std::move(name));
-        functions.emplace_back(detail::make_unique<class_lua_func<fx_t, T>>(std::move(func)));
+        functions.emplace_back(detail::make_unique<userdata_function<fx_t, T>>(std::move(func)));
         functiontable.push_back({ functionnames.back().c_str(), &class_func<n>::call });
         build_function_tables<n + 1>(std::forward<Args>(args)...);
     }

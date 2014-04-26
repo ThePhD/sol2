@@ -17,23 +17,23 @@ struct object {
 };
 
 struct fuser {
-	int x;
-	
-	fuser( ) : x( 0 ) {
-	
-	}
-	
-	fuser( int x ) : x( x ) {
-	
-	}
+    int x;
+    
+    fuser( ) : x( 0 ) {
+    
+    }
+    
+    fuser( int x ) : x( x ) {
+    
+    }
 
-	int add( int y ) {
-		return x + y;
-	}
-	
-	int add2( int y ) {
-		return x + y + 2;
-	}
+    int add( int y ) {
+       return x + y;
+    }
+    
+    int add2( int y ) {
+       return x + y + 2;
+    }
 };
 
 int plop_xyz(int x, int y, std::string z) {
@@ -345,30 +345,29 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
     REQUIRE_NOTHROW(assert1(lua.global_table()));
 }
 
-TEST_CASE( "tables/userdata", "Show that we can create classes from userdata and use them" ) {
+TEST_CASE("tables/userdata", "Show that we can create classes from userdata and use them") {
 
-	sol::state lua;
+    sol::state lua;
 
-	sol::userdata<fuser> lc{ &fuser::add, "add", &fuser::add2, "add2" };
-	lua.set_class( lc );
+    sol::userdata<fuser> lc{ &fuser::add, "add", &fuser::add2, "add2" };
+    lua.set_class( lc );
 
-	lua.script( "a = fuser:new()\n"
-		"b = a:add(1)\n"
-		"c = a:add2(1)\n"
-		"\n" );
+    lua.script("a = fuser:new()\n"
+              "b = a:add(1)\n"
+              "c = a:add2(1)\n");
 
-	sol::object a = lua.get<sol::object>( "a" );
-	sol::object b = lua.get<sol::object>( "b" );
-	sol::object c = lua.get<sol::object>( "c" );
-	REQUIRE( ( a.is<sol::table>( ) ) );
-	auto atype = a.get_type( );
-	auto btype = b.get_type( );
-	auto ctype = c.get_type( );
-	REQUIRE( ( atype == sol::type::table ) );
-	REQUIRE( ( btype == sol::type::number ) );
-	REQUIRE( ( ctype == sol::type::number ) );
-	int bresult = b.as<int>( );
-	int cresult = c.as<int>( );
-	REQUIRE( bresult == 1 );
-	REQUIRE( cresult == 3 );
+    sol::object a = lua.get<sol::object>("a");
+    sol::object b = lua.get<sol::object>("b");
+    sol::object c = lua.get<sol::object>("c");
+    REQUIRE((a.is<sol::table>()));
+    auto atype = a.get_type();
+    auto btype = b.get_type();
+    auto ctype = c.get_type();
+    REQUIRE((atype == sol::type::table));
+    REQUIRE((btype == sol::type::number));
+    REQUIRE((ctype == sol::type::number));
+    int bresult = b.as<int>();
+    int cresult = c.as<int>();
+    REQUIRE(bresult == 1);
+    REQUIRE(cresult == 3);
 }
