@@ -104,26 +104,41 @@ struct static_member_function {
 };
 
 struct base_function {
-    static int call(lua_State* L) {
-        void** pinheritancedata = static_cast<void**>(stack::get<lightuserdata_t>(L, 1).value);
-        void* inheritancedata = *pinheritancedata;
-        if (inheritancedata == nullptr) {
+    static int base_call(lua_State* L, void* inheritancedata) {
+        if (inheritancedata == nullptr)
             throw sol_error("call from Lua to C++ function has null data");
-        }
         base_function* pfx = static_cast<base_function*>(inheritancedata);
         base_function& fx = *pfx;
         int r = fx(L);
         return r;
     }
 
-    static int gc(lua_State* L) {
-        void** puserdata = static_cast<void**>(stack::get<userdata_t>(L, 1).value);
-        void* userdata = *puserdata;
-        base_function* ptr = static_cast<base_function*>(userdata);
+    static int base_gc(lua_State* L, void* udata) {
+        if (udata == nullptr)
+            throw sol_error("call from lua to C++ gc function with null data");
+        base_function* ptr = static_cast<base_function*>(udata);
         std::default_delete<base_function> dx{};
         dx(ptr);
         return 0;
     }
+
+    static int call(lua_State* L) {
+        void** pinheritancedata = static_cast<void**>(stack::get<lightuserdata_t>(L, 1).value);
+        return base_call(L, *pinheritancedata);
+    }
+
+    static int gc(lua_State* L) {
+        void** pudata = static_cast<void**>(stack::get<userdata_t>(L, 1).value);
+        return base_gc(L, *pudata);
+    }
+
+    template<std::size_t i>
+    struct userdata {
+        static int call(lua_State* L) {
+            // Zero-based template parameter, but upvalues start at 1
+            return base_call(L, stack::get<lightuserdata_t>(L, i + 1));
+        }
+    };
     
     virtual int operator()(lua_State*) {
         throw sol_error("failure to call specialized wrapped C++ function from Lua");
@@ -220,9 +235,11 @@ struct userdata_function : public base_function {
         template<typename... FxArgs>
         functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
 
-       void pre_call(lua_State* L) {
-            void* userdata = lua_touserdata(L, 0);
-            item = static_cast<T*>(userdata);
+       void prepare(lua_State* L) {
+            void* udata = stack::get<userdata_t>(L, 1);
+            if (udata == nullptr)
+                throw sol_error("must use the syntax [object]:[function] to call member functions bound to C++");
+            item = static_cast<T*>(udata);
        }
 
         template<typename... Args>
@@ -255,7 +272,7 @@ struct userdata_function : public base_function {
     }
 
     virtual int operator()(lua_State* L) override {
-        fx.pre_call(L);
+        fx.prepare(L);
         return (*this)(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), L);
     }
 };

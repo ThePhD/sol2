@@ -113,43 +113,19 @@ public:
             std::forward<T>(key), std::forward<TFx>(fx), std::forward<TObj>(obj));
     }
 
-    template <typename T>
+    template<typename T>
     table& set_class(userdata<T>& user) {
-        push();
-
-        lua_createtable(state(), 0, 0);
-        int classid = lua_gettop(state());
-
-        // Register metatable for user data in registry
-        // using the metaname key generated from the demangled name
         luaL_newmetatable(state(), user.meta.c_str());
-        int metaid = lua_gettop(state());
-        // Meta functions: have no light up values
-        luaL_setfuncs(state(), user.metatable.data(), 0);
-
-        // Regular functions: each one references an upvalue at its own index,
-        // resulting in [function count] upvalues
-        //luaL_newlib(L, functiontable.data());
-        // the newlib macro doesn't have a form for when you need upvalues:
-        // we duplicate the work below
-        lua_createtable(state(), 0, user.functiontable.size() - 1);
         for (std::size_t upvalues = 0; upvalues < user.functions.size(); ++upvalues) {
             stack::push(state(), static_cast<void*>(user.functions[ upvalues ].get()));
         }
         luaL_setfuncs(state(), user.functiontable.data(), static_cast<uint32_t>(user.functions.size()));
-        lua_setfield(state(), metaid, "__index");
-
-        // Meta functions: no upvalues
-        lua_createtable(state(), 0, user.metatable.size() - 1);
-        luaL_setfuncs(state(), user.metatable.data(), 0); // 0, for no upvalues
-        lua_setfield(state(), metaid, "__metatable");
-
-        lua_setmetatable(state(), classid);
-
+       
+        lua_pushvalue(state(), -1);
+        lua_setfield(state(), -1, "__index");
+       
         lua_setglobal(state(), user.luaname.c_str());
-
-        pop();
-
+       
         return *this;
     }
 
@@ -158,12 +134,12 @@ public:
         return lua_rawlen(state(), -1);
     }
 
-    template <typename T>
+    template<typename T>
     proxy<table, T> operator[](T&& key) {
         return proxy<table, T>(*this, std::forward<T>(key));
     }
 
-    template <typename T>
+    template<typename T>
     proxy<const table, T> operator[](T&& key) const {
         return proxy<const table, T>(*this, std::forward<T>(key));
     }

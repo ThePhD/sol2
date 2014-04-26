@@ -36,6 +36,24 @@ struct fuser {
     }
 };
 
+namespace crapola {
+	struct fuser {
+		int x;
+		fuser( ) : x( 0 ) {
+		}
+		fuser( int x ) : x( x ) {
+		}
+		fuser( int x, int x2 ) : x( x * x2 ) {
+		}
+		int add( int y ) {
+			return x + y;
+		}
+		int add2( int y ) {
+			return x + y + 2;
+		}
+	};
+}
+
 int plop_xyz(int x, int y, std::string z) {
     std::cout << x << " " << y << " " << z << std::endl;
     return 11;
@@ -359,15 +377,59 @@ TEST_CASE("tables/userdata", "Show that we can create classes from userdata and 
     sol::object a = lua.get<sol::object>("a");
     sol::object b = lua.get<sol::object>("b");
     sol::object c = lua.get<sol::object>("c");
-    REQUIRE((a.is<sol::table>()));
+    REQUIRE((a.is<sol::userdata_t>()));
     auto atype = a.get_type();
     auto btype = b.get_type();
     auto ctype = c.get_type();
-    REQUIRE((atype == sol::type::table));
+    REQUIRE((atype == sol::type::userdata));
     REQUIRE((btype == sol::type::number));
     REQUIRE((ctype == sol::type::number));
     int bresult = b.as<int>();
     int cresult = c.as<int>();
     REQUIRE(bresult == 1);
     REQUIRE(cresult == 3);
+}
+
+TEST_CASE("tables/userdata constructors", "Show that we can create classes from userdata and use them with multiple destructors") {
+
+    sol::state lua;
+
+    sol::constructors<sol::types<>, sol::types<int>, sol::types<int, int>> con;
+    sol::userdata<crapola::fuser> lc(con, &crapola::fuser::add, "add", &crapola::fuser::add2, "add2");
+    lua.set_class(lc);
+
+    lua.script(
+	    "a = crapola_fuser.new(2)\n"
+	    "u = a:add(1)\n"
+	    "v = a:add2(1)\n"
+	    "b = crapola_fuser:new()\n"
+	    "w = b:add(1)\n"
+	    "x = b:add2(1)\n"
+	   "c = crapola_fuser.new(2, 3)\n"
+	   "y = c:add(1)\n"
+	   "z = c:add2(1)\n"
+	   );
+    sol::object a = lua.get<sol::object>("a");
+    auto atype = a.get_type();
+    REQUIRE((atype == sol::type::userdata));
+    sol::object u = lua.get<sol::object>("u");
+    sol::object v = lua.get<sol::object>("v");
+    REQUIRE((u.as<int>() == 3));
+    REQUIRE((v.as<int>() == 5));
+    
+    sol::object b = lua.get<sol::object>("b");
+    auto btype = b.get_type();
+    REQUIRE((btype == sol::type::userdata));
+    sol::object w = lua.get<sol::object>("w");
+    sol::object x = lua.get<sol::object>("x");
+    REQUIRE((w.as<int>() == 1));
+    REQUIRE((x.as<int>() == 3));
+    
+    sol::object c = lua.get<sol::object>("c");
+    auto ctype = c.get_type();
+    REQUIRE((ctype == sol::type::userdata));
+    sol::object y = lua.get<sol::object>("y");
+    sol::object z = lua.get<sol::object>("z");
+    REQUIRE((y.as<int>() == 7));
+    REQUIRE((z.as<int>() == 9));
 }

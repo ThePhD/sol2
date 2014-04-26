@@ -74,8 +74,10 @@ struct tuple_types : types<Args...>, std::false_type {};
 template<typename... Args>
 struct tuple_types<std::tuple<Args...>> : types<Args...>, std::true_type {};
 
-template <typename... Tn>
+template<typename... Tn>
 struct constructors {};
+
+const auto default_constructor = constructors<types<>>{};
 
 } // sol
 

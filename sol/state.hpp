@@ -180,12 +180,12 @@ public:
         return reg;
     }
 
-    template <typename T>
+    template<typename T>
     proxy<table, T> operator[](T&& key) {
         return global[std::forward<T>(key)];
     }
 
-    template <typename T>
+    template<typename T>
     proxy<const table, T> operator[](T&& key) const {
         return global[std::forward<T>(key)];
     }

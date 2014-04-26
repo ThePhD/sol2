@@ -43,6 +43,11 @@ struct userdata_t {
     operator void* () const { return value; }
 };
 
+enum class call_syntax {
+    dot = 0,
+    colon = 1
+};
+
 enum class type : int {
     none          = LUA_TNONE,
     nil           = LUA_TNIL,
@@ -69,7 +74,11 @@ inline void type_assert(lua_State* L, int index, type expected) {
     }
 }
 
-template <typename T>
+inline std::string type_name(lua_State*L, type t) {
+    return lua_typename(L, static_cast<int>(t));
+}
+
+template<typename T>
 class userdata;
 class table;
 class function;

@@ -134,7 +134,12 @@ inline const char* get<const char*>(lua_State* L, int index) {
     return lua_tostring(L, index);
 }
 
-template <typename T>
+template<>
+inline type get<type>(lua_State* L, int index) {
+    return static_cast<type>(lua_type(L, index));
+}
+
+template<typename T>
 inline std::pair<T, int> get_user(lua_State* L, int index = 1) {
     const static std::size_t data_t_count = (sizeof(T)+(sizeof(void*)-1)) / sizeof(void*);
     typedef std::array<void*, data_t_count> data_t;
@@ -235,6 +240,15 @@ inline void push_tuple(lua_State* L, indices<I...>, T&& tuplen) {
 }
 
 template<typename F, typename... Vs, typename... Args>
+inline auto ltr_get(lua_State*, int index, F&& f, types<Args...>, types<>, Vs&&... vs) -> decltype(f(std::forward<Vs>(vs)...)) {
+    return f(std::forward<Vs>(vs)...);
+}
+template<typename F, typename Head, typename... Tail, typename... Vs, typename... Args>
+inline auto ltr_get(lua_State* L, int index, F&& f, types<Args...> t, types<Head, Tail...>, Vs&&... vs) -> decltype(f(std::declval<Args>()...)) {
+    return ltr_get(L, index + 1, std::forward<F>(f), t, types<Tail...>(), std::forward<Vs>(vs)..., get<Head>(L, index));
+}
+
+template<typename F, typename... Vs, typename... Args>
 inline auto ltr_pop(lua_State*, F&& f, types<Args...>, types<>, Vs&&... vs) -> decltype(f(std::forward<Vs>(vs)...)) {
     return f(std::forward<Vs>(vs)...);
 }
@@ -279,6 +293,11 @@ inline void push_reverse(lua_State* L, std::tuple<Args...>&& tuplen) {
 }
 
 template<typename... Args, typename TFx>
+inline auto get_call(lua_State* L, int index, TFx&& fx, types<Args...> t) -> decltype(detail::ltr_get(L, index, std::forward<TFx>(fx), t, t)) {
+    return detail::ltr_get(L, index, std::forward<TFx>(fx), t, t);
+}
+
+template<typename... Args, typename TFx>
 inline auto pop_call(lua_State* L, TFx&& fx, types<Args...> t) -> decltype(detail::ltr_pop(L, std::forward<TFx>(fx), t, t)) {
     return detail::ltr_pop(L, std::forward<TFx>(fx), t, t);
 }
@@ -297,6 +316,27 @@ inline void push_args(lua_State* L, Arg&& arg, Args&&... args) {
     using swallow = char[];
     stack::push(L, std::forward<Arg>(arg));
     void(swallow{'\0', (stack::push(L, std::forward<Args>(args)), '\0')... });
+}
+
+inline call_syntax get_call_syntax(lua_State* L, const std::string& meta) {
+    if (get<type>(L, 1) == type::table) {
+        if (luaL_newmetatable(L, meta.c_str()) == 0) {
+            lua_settop(L, -2);
+            return call_syntax::colon;
+        }
+    }
+    return call_syntax::dot;
+}
+
+inline std::string dump_types(lua_State* L) {
+    std::string visual;
+    std::size_t size = lua_gettop(L) + 1;
+    for (std::size_t i = 1; i < size; ++i) {
+        if (i != 1)
+            visual += " | ";
+        visual += type_name(L, stack::get<type>(L, i));
+    }
+    return visual;
 }
 } // stack
 } // sol

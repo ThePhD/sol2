@@ -35,19 +35,19 @@ namespace detail {
 std::string demangle(const std::type_info& id) {
     const static std::array<std::string, 2> removals = { "struct ", "class " };
     const static std::array<std::string, 2> replacements = { "::", "_" };
-    std::string realname = id.name( );
+    std::string realname = id.name();
     for(std::size_t r = 0; r < removals.size(); ++r) {
         auto found = realname.find(removals[r]);
-	   while (found != std::string::npos) {
+        while (found != std::string::npos) {
             realname.erase(found, removals[r].size());
-            found = realname.find( removals[r] );
-	   }
+            found = realname.find(removals[r]);
+       }
     }
     for(std::size_t r = 0; r < replacements.size(); r+=2) {
         auto found = realname.find(replacements[r]);
-	   while (found != std::string::npos) {
+        while (found != std::string::npos) {
             realname.replace(found, replacements[r].size(), replacements[r+1]);
-		  found = realname.find(replacements[r], found);
+          found = realname.find(replacements[r], found);
         }
     }
     return realname;

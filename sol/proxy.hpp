@@ -24,7 +24,7 @@
 #include "function.hpp"
 
 namespace sol {
-template <typename Table, typename Key>
+template<typename Table, typename Key>
 struct proxy {
 private:
     Table& tbl;
@@ -32,7 +32,7 @@ private:
 
 public:
 
-    template <typename T>
+    template<typename T>
     proxy(Table& table, T&& key) : tbl(table), key(std::forward<T>(key)) {
 
     }
@@ -80,22 +80,22 @@ public:
         return get<std::string>();
     }
 
-    template <typename T = void>
+    template<typename T = void>
     operator bool() const {
         return get<bool>();
     }
 
-    template <typename T = void>
+    template<typename T = void>
     operator double() const {
         return get<double>();
     }
 
-    template <typename T = void>
+    template<typename T = void>
     operator float() const {
         return get<float>();
     }
 
-    template <typename T = void>
+    template<typename T = void>
     operator int() const {
         return get<int>();
     }
@@ -106,22 +106,22 @@ public:
     }
 };
 
-template <typename Table, typename Key, typename T>
+template<typename Table, typename Key, typename T>
 inline bool operator== (T&& left, const proxy<Table, Key>& right) {
     return left == right.template get<Decay<T>>();
 }
 
-template <typename Table, typename Key, typename T>
+template<typename Table, typename Key, typename T>
 inline bool operator== (const proxy<Table, Key>& right, T&& left) {
     return right.template get<Decay<T>>() == left;
 }
 
-template <typename Table, typename Key, typename T>
+template<typename Table, typename Key, typename T>
 inline bool operator!= (T&& left, const proxy<Table, Key>& right) {
     return right.template get<Decay<T>>() != left;
 }
 
-template <typename Table, typename Key, typename T>
+template<typename Table, typename Key, typename T>
 inline bool operator!= (const proxy<Table, Key>& right, T&& left) {
     return right.template get<Decay<T>>() != left;
 }
