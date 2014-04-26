@@ -130,7 +130,7 @@ public:
     }
 
     template <typename... Args, typename... CArgs>
-    userdata(std::string name, constructors<CArgs...> c, Args&&... args) : luaname(std::move(name)) {
+    userdata(std::string name, constructors<CArgs...>, Args&&... args) : luaname(std::move(name)) {
         functionnames.reserve(sizeof...(args));
         functiontable.reserve(sizeof...(args));
         functions.reserve(sizeof...(args));
@@ -158,4 +158,4 @@ const std::string userdata<T>::meta = std::string("sol.stateful.").append(classn
 
 }
 
-#endif SOL_USERDATA_HPP
+#endif // SOL_USERDATA_HPP

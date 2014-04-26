@@ -27,24 +27,24 @@
 
 namespace sol {
 
-template<typename TFx>
+template<typename Function>
 struct static_lua_func {
-    typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type fx_t;
-    typedef function_traits<fx_t> fx_traits;
+    typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
+    typedef function_traits<function_type> traits_type;
     
     template<typename... Args>
-    static int typed_call(types<void>, types<Args...> t, fx_t* fx, lua_State* L) {
+    static int typed_call(types<void>, types<Args...> t, function_type* fx, lua_State* L) {
         stack::pop_call(L, fx, t);
         return 0;
     }
 
     template<typename... Args>
-    static int typed_call(types<>, types<Args...> t, fx_t* fx, lua_State* L) {
+    static int typed_call(types<>, types<Args...> t, function_type* fx, lua_State* L) {
         return typed_call(types<void>(), t, fx, L);
     }
 
     template<typename... Ret, typename... Args>
-    static int typed_call(types<Ret...>, types<Args...> t, fx_t* fx, lua_State* L) {
+    static int typed_call(types<Ret...>, types<Args...> t, function_type* fx, lua_State* L) {
         typedef typename multi_return<Ret...>::type return_type;
         return_type r = stack::pop_call(L, fx, t);
         stack::push(L, std::move(r));
@@ -52,9 +52,9 @@ struct static_lua_func {
     }
 
     static int call(lua_State* L) {
-       auto udata = stack::get_user<fx_t*>(L);
-       fx_t* fx = udata.first;
-       int r = typed_call(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), fx, L);
+        auto udata = stack::get_user<function_type*>(L);
+        function_type* fx = udata.first;
+        int r = typed_call(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L);
         return r;
     }
 
@@ -63,25 +63,25 @@ struct static_lua_func {
     }
 };
 
-template<typename T, typename TFx>
+template<typename T, typename Function>
 struct static_object_lua_func {
-    typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type fx_t;
-    typedef function_traits<fx_t> fx_traits;
+    typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
+    typedef function_traits<function_type> traits_type;
 
     template<typename... Args>
-    static int typed_call(types<void>, types<Args...>, T& item, fx_t& ifx, lua_State* L) {
+    static int typed_call(types<void>, types<Args...>, T& item, function_type& ifx, lua_State* L) {
         auto fx = [&item, &ifx](Args&&... args) -> void { (item.*ifx)(std::forward<Args>(args)...); };
         stack::pop_call(L, fx, types<Args...>());
         return 0;
     }
 
     template<typename... Args>
-    static int typed_call(types<>, types<Args...> t, T& item, fx_t& ifx, lua_State* L) {
+    static int typed_call(types<>, types<Args...> t, T& item, function_type& ifx, lua_State* L) {
         return typed_call(types<void>(), t, item, ifx, L);
     }
 
     template<typename... Ret, typename... Args>
-    static int typed_call(types<Ret...>, types<Args...>, T& item, fx_t& ifx, lua_State* L) {
+    static int typed_call(types<Ret...>, types<Args...>, T& item, function_type& ifx, lua_State* L) {
         typedef typename multi_return<Ret...>::type return_type;
         auto fx = [&item, &ifx](Args&&... args) -> return_type { return (item.*ifx)(std::forward<Args>(args)...); };
         return_type r = stack::pop_call(L, fx, types<Args...>());
@@ -90,11 +90,11 @@ struct static_object_lua_func {
     }
 
     static int call(lua_State* L) {
-        auto memberdata = stack::get_user<fx_t>(L, 1);
-       auto objdata = stack::get_user<T*>(L, memberdata.second);
-       fx_t& memfx = memberdata.first;
-       T& obj = *objdata.first;
-        int r = typed_call(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), obj, memfx, L);
+        auto memberdata = stack::get_user<function_type>(L, 1);
+        auto objdata = stack::get_user<T*>(L, memberdata.second);
+        function_type& memfx = memberdata.first;
+        T& obj = *objdata.first;
+        int r = typed_call(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), obj, memfx, L);
         return r;
     }
 
@@ -107,8 +107,9 @@ struct lua_func {
     static int call(lua_State* L) {
         void** pinheritancedata = static_cast<void**>(stack::get<lightuserdata_t>(L, 1).value);
         void* inheritancedata = *pinheritancedata;
-        if (inheritancedata == nullptr)
+        if (inheritancedata == nullptr) {
             throw sol_error("call from Lua to C++ function has null data");
+        }
         lua_func* pfx = static_cast<lua_func*>(inheritancedata);
         lua_func& fx = *pfx;
         int r = fx(L);
@@ -131,11 +132,11 @@ struct lua_func {
     virtual ~lua_func() {}
 };
 
-template<typename TFx>
+template<typename Function>
 struct functor_lua_func : public lua_func {
-    typedef decltype(&TFx::operator()) fx_t;
-    typedef function_traits<fx_t> fx_traits;
-    TFx fx;
+    typedef decltype(&Function::operator()) function_type;
+    typedef function_traits<function_type> traits_type;
+    Function fx;
 
     template<typename... FxArgs>
     functor_lua_func(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
@@ -160,15 +161,15 @@ struct functor_lua_func : public lua_func {
     }
 
     virtual int operator()(lua_State* L) override {
-        return (*this)(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), L);
+        return (*this)(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), L);
     }
 };
 
-template<typename TFx, typename T = TFx, bool is_member_pointer = std::is_member_function_pointer<TFx>::value>
+template<typename Function, typename T = Function, bool is_member_pointer = std::is_member_function_pointer<Function>::value>
 struct function_lua_func : public lua_func {
-    typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type fx_t;
-    typedef function_traits<fx_t> fx_traits;
-    fx_t fx;
+    typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
+    typedef function_traits<function_type> traits_type;
+    function_type fx;
 
     template<typename... FxArgs>
     function_lua_func(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
@@ -193,23 +194,23 @@ struct function_lua_func : public lua_func {
     }
 
     virtual int operator()(lua_State* L) override {
-        return (*this)(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), L);
+        return (*this)(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), L);
     }
 };
 
-template<typename TFx, typename T>
-struct function_lua_func<TFx, T, true> : public lua_func {
-    typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type fx_t;
-    typedef function_traits<fx_t> fx_traits;
+template<typename Function, typename T>
+struct function_lua_func<Function, T, true> : public lua_func {
+    typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
+    typedef function_traits<function_type> traits_type;
     struct functor {
         T member;
-        fx_t invocation;
+        function_type invocation;
 
         template<typename... FxArgs>
         functor(T m, FxArgs&&... fxargs): member(std::move(m)), invocation(std::forward<FxArgs>(fxargs)...) {}
 
         template<typename... Args>
-        typename fx_traits::return_type operator()(Args&&... args) {
+        typename traits_type::return_type operator()(Args&&... args) {
            return (member.*invocation)(std::forward<Args>(args)...);
         }
     } fx;
@@ -237,17 +238,17 @@ struct function_lua_func<TFx, T, true> : public lua_func {
     }
 
     virtual int operator()(lua_State* L) override {
-        return (*this)(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), L);
+        return (*this)(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), L);
     }
 };
 
-template<typename TFx, typename T>
+template<typename Function, typename T>
 struct class_lua_func : public lua_func {
-    typedef typename std::remove_pointer<typename std::decay<TFx>::type>::type fx_t;
-    typedef function_traits<fx_t> fx_traits;
+    typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
+    typedef function_traits<function_type> traits_type;
     struct functor {
         T* item;
-        fx_t invocation;
+        function_type invocation;
 
         template<typename... FxArgs>
         functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
@@ -258,7 +259,7 @@ struct class_lua_func : public lua_func {
        }
 
         template<typename... Args>
-        typename fx_traits::return_type operator()(Args&&... args) {
+        typename traits_type::return_type operator()(Args&&... args) {
             T& member = *item;
             return (member.*invocation)(std::forward<Args>(args)...);
         }
@@ -288,7 +289,7 @@ struct class_lua_func : public lua_func {
 
     virtual int operator()(lua_State* L) override {
         fx.pre_call(L);
-        return (*this)(tuple_types<typename fx_traits::return_type>(), typename fx_traits::args_type(), L);
+        return (*this)(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), L);
     }
 };
 
