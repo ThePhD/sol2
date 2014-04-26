@@ -168,6 +168,9 @@ public:
         return proxy<const table, T>(*this, std::forward<T>(key));
     }
 
+    void pop(int n = 1) const noexcept {
+        lua_pop(state(), n);
+    }
 private:
     template<typename T, typename TFx>
     table& set_isfunction_fx(std::true_type, T&& key, TFx&& fx) {

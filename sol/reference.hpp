@@ -50,10 +50,6 @@ public:
         lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
     }
 
-    void pop() const noexcept {
-        lua_pop(L, 1);
-    }
-
     reference(reference&& o) noexcept {
         L = o.L;
         ref = o.ref;
