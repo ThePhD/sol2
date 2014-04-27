@@ -8,50 +8,41 @@ std::string free_function() {
 }
 
 struct object {
-
     std::string operator() () {
         std::cout << "member_test()" << std::endl;
         return "test";
     }
-
 };
 
 struct fuser {
     int x;
-    
-    fuser( ) : x( 0 ) {
-    
-    }
-    
-    fuser( int x ) : x( x ) {
-    
-    }
+    fuser() : x(0) {}
 
-    int add( int y ) {
+    fuser(int x) : x(x) {}
+
+    int add(int y) {
        return x + y;
     }
-    
-    int add2( int y ) {
+
+    int add2(int y) {
        return x + y + 2;
     }
 };
 
 namespace crapola {
-	struct fuser {
-		int x;
-		fuser( ) : x( 0 ) {
-		}
-		fuser( int x ) : x( x ) {
-		}
-		fuser( int x, int x2 ) : x( x * x2 ) {
-		}
-		int add( int y ) {
-			return x + y;
-		}
-		int add2( int y ) {
-			return x + y + 2;
-		}
-	};
+struct fuser {
+    int x;
+    fuser() : x(0) {}
+    fuser(int x) : x(x) {}
+    fuser(int x, int x2) : x(x * x2) {}
+
+    int add(int y) {
+       return x + y;
+    }
+    int add2(int y) {
+       return x + y + 2;
+    }
+};
 }
 
 int plop_xyz(int x, int y, std::string z) {
@@ -84,7 +75,7 @@ TEST_CASE("simple/get", "Tests if the get function works properly.") {
 
     lua.script("b = nil");
     REQUIRE_NOTHROW(lua.get<sol::nil_t>("b"));
-    
+
     lua.script("d = 'hello'");
     auto d = lua.get<std::string>("d");
     REQUIRE(d == "hello");
@@ -134,7 +125,7 @@ TEST_CASE("simple/call_c++_function", "C++ function is called from lua") {
 
     lua.set_function("plop_xyz", plop_xyz);
     lua.script("x = plop_xyz(2, 6, 'hello')");
- 
+
     REQUIRE(lua.get<int>("x") == 11);
 }
 
@@ -157,7 +148,7 @@ TEST_CASE("advanced/get_and_call", "Checks for lambdas returning values after a 
 
     REQUIRE_NOTHROW(lua.set_function("a", [] { return 42; }));
     REQUIRE(lua.get<sol::function>("a").call<int>() == 42);
-    
+
     REQUIRE_NOTHROW(lua.set_function("b", [] { return 42u; }));
     REQUIRE(lua.get<sol::function>("b").call<unsigned int>() == 42u);
 
@@ -192,7 +183,7 @@ TEST_CASE("advanced/operator[]_calls", "Checks for lambdas returning values usin
 
     REQUIRE_NOTHROW(lua.set_function("a", [] { return 42; }));
     REQUIRE(lua["a"].call<int>() == 42);
-    
+
     REQUIRE_NOTHROW(lua.set_function("b", [] { return 42u; }));
     REQUIRE(lua["b"].call<unsigned int>() == 42u);
 
@@ -248,7 +239,7 @@ TEST_CASE("tables/variables", "Check if tables and variables work as intended") 
     sol::state lua;
     lua.open_libraries(sol::lib::base, sol::lib::os);
     lua.get<sol::table>("os").set("name", "windows");
-    REQUIRE_NOTHROW(lua.script("assert(os.name == \"windows\")"));    
+    REQUIRE_NOTHROW(lua.script("assert(os.name == \"windows\")"));
 }
 
 TEST_CASE("tables/functions_variables", "Check if tables and function calls work as intended") {
@@ -297,8 +288,8 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
 TEST_CASE("functions/return_order_and_multi_get", "Check if return order is in the same reading order specified in Lua") {
     const static std::tuple<int, int, int> triple = std::make_tuple(10, 11, 12);
     sol::state lua;
-    lua.set_function("f", [] { 
-        return std::make_tuple(10, 11, 12); 
+    lua.set_function("f", [] {
+        return std::make_tuple(10, 11, 12);
     });
     lua.script("function g() return 10, 11, 12 end\nx,y,z = g()");
     auto tcpp = lua.get<sol::function>("f").call<int, int, int>();
@@ -317,7 +308,7 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
     lua.open_libraries(sol::lib::base);
 
     lua.script("foo = 20\nbar = \"hello world\"");
-    // basic retrieval 
+    // basic retrieval
     std::string bar = lua["bar"];
     int foo = lua["foo"];
     REQUIRE(bar == "hello world");
@@ -368,11 +359,11 @@ TEST_CASE("tables/userdata", "Show that we can create classes from userdata and 
     sol::state lua;
 
     sol::userdata<fuser> lc{ &fuser::add, "add", &fuser::add2, "add2" };
-    lua.set_class( lc );
+    lua.set_class(lc);
 
     lua.script("a = fuser:new()\n"
-              "b = a:add(1)\n"
-              "c = a:add2(1)\n");
+               "b = a:add(1)\n"
+               "c = a:add2(1)\n");
 
     sol::object a = lua.get<sol::object>("a");
     sol::object b = lua.get<sol::object>("b");
@@ -399,16 +390,15 @@ TEST_CASE("tables/userdata constructors", "Show that we can create classes from 
     lua.set_class(lc);
 
     lua.script(
-	    "a = crapola_fuser.new(2)\n"
-	    "u = a:add(1)\n"
-	    "v = a:add2(1)\n"
-	    "b = crapola_fuser:new()\n"
-	    "w = b:add(1)\n"
-	    "x = b:add2(1)\n"
-	   "c = crapola_fuser.new(2, 3)\n"
-	   "y = c:add(1)\n"
-	   "z = c:add2(1)\n"
-	   );
+        "a = crapola_fuser.new(2)\n"
+        "u = a:add(1)\n"
+        "v = a:add2(1)\n"
+        "b = crapola_fuser:new()\n"
+        "w = b:add(1)\n"
+        "x = b:add2(1)\n"
+        "c = crapola_fuser.new(2, 3)\n"
+        "y = c:add(1)\n"
+        "z = c:add2(1)\n");
     sol::object a = lua.get<sol::object>("a");
     auto atype = a.get_type();
     REQUIRE((atype == sol::type::userdata));
@@ -416,7 +406,7 @@ TEST_CASE("tables/userdata constructors", "Show that we can create classes from 
     sol::object v = lua.get<sol::object>("v");
     REQUIRE((u.as<int>() == 3));
     REQUIRE((v.as<int>() == 5));
-    
+
     sol::object b = lua.get<sol::object>("b");
     auto btype = b.get_type();
     REQUIRE((btype == sol::type::userdata));
@@ -424,7 +414,7 @@ TEST_CASE("tables/userdata constructors", "Show that we can create classes from 
     sol::object x = lua.get<sol::object>("x");
     REQUIRE((w.as<int>() == 1));
     REQUIRE((x.as<int>() == 3));
-    
+
     sol::object c = lua.get<sol::object>("c");
     auto ctype = c.get_type();
     REQUIRE((ctype == sol::type::userdata));
