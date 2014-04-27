@@ -101,7 +101,7 @@ private:
     void build_function_tables() {}
 
     template<std::size_t n, typename... Args, typename Ret>
-    void build_function_tables(Ret T::* func, std::string name, Args&&... args) {
+    void build_function_tables(std::string name,Ret T::* func, Args&&... args) {
         typedef typename std::decay<decltype(func)>::type fx_t;
         functionnames.push_back(std::move(name));
         functions.emplace_back(detail::make_unique<userdata_function<fx_t, T>>(std::move(func)));

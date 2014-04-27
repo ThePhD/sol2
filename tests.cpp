@@ -358,7 +358,7 @@ TEST_CASE("tables/userdata", "Show that we can create classes from userdata and 
 
     sol::state lua;
 
-    sol::userdata<fuser> lc{ &fuser::add, "add", &fuser::add2, "add2" };
+    sol::userdata<fuser> lc{ "add", &fuser::add, "add2", &fuser::add2 };
     lua.set_class(lc);
 
     lua.script("a = fuser:new()\n"
@@ -386,7 +386,7 @@ TEST_CASE("tables/userdata constructors", "Show that we can create classes from 
     sol::state lua;
 
     sol::constructors<sol::types<>, sol::types<int>, sol::types<int, int>> con;
-    sol::userdata<crapola::fuser> lc("crapola_fuser", con, &crapola::fuser::add, "add", &crapola::fuser::add2, "add2");
+    sol::userdata<crapola::fuser> lc("crapola_fuser", con, "add", &crapola::fuser::add, "add2", &crapola::fuser::add2);
     lua.set_class(lc);
 
     lua.script(
