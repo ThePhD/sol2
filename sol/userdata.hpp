@@ -36,12 +36,21 @@ inline std::unique_ptr<T> make_unique(Args&&... args) {
 } // detail
 
 template<typename T>
+struct userdata_traits {
+    static const std::string name;
+    static const std::string metatable;
+};
+
+template<typename T>
+const std::string userdata_traits<T>::name = detail::demangle(typeid(T));
+
+template<typename T>
+const std::string userdata_traits<T>::metatable = std::string("sol.stateful.").append(name);
+
+template<typename T>
 class userdata {
 private:
     friend table;
-    static const std::string classname;
-    static const std::string meta;
-
     std::string luaname;
     std::vector<std::string> functionnames;
     std::vector<std::unique_ptr<base_function>> functions;
@@ -72,6 +81,7 @@ private:
         }
 
         static int construct(lua_State* L) {
+            auto&& meta = userdata_traits<T>::metatable;
             call_syntax syntax = stack::get_call_syntax(L, meta);
             int argcount = lua_gettop(L);
 
@@ -111,10 +121,10 @@ private:
 
 public:
     template<typename... Args>
-    userdata(Args&&... args): userdata(classname, default_constructor, std::forward<Args>(args)...) {}
+    userdata(Args&&... args): userdata(userdata_traits<T>::name, default_constructor, std::forward<Args>(args)...) {}
 
     template<typename... Args, typename... CArgs>
-    userdata(constructors<CArgs...> c, Args&&... args): userdata(classname, std::move(c), std::forward<Args>(args)...) {}
+    userdata(constructors<CArgs...> c, Args&&... args): userdata(userdata_traits<T>::name, std::move(c), std::forward<Args>(args)...) {}
 
     template<typename... Args, typename... CArgs>
     userdata(std::string name, constructors<CArgs...>, Args&&... args): luaname(std::move(name)) {
@@ -137,13 +147,6 @@ public:
 
     void register_into(const table& s) {}
 };
-
-template<typename T>
-const std::string userdata<T>::classname = detail::demangle(typeid(T));
-
-template<typename T>
-const std::string userdata<T>::meta = std::string("sol.stateful.").append(classname);
-
 } // sol
 
 #endif // SOL_USERDATA_HPP

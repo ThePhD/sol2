@@ -115,7 +115,8 @@ public:
 
     template<typename T>
     table& set_userdata(userdata<T>& user) {
-        luaL_newmetatable(state(), user.meta.c_str());
+        auto&& meta = userdata_traits<T>::metatable;
+        luaL_newmetatable(state(), meta.c_str());
         for (std::size_t upvalues = 0; upvalues < user.functions.size(); ++upvalues) {
             stack::push(state(), static_cast<void*>(user.functions[ upvalues ].get()));
         }

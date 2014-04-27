@@ -2,7 +2,7 @@ obj/*
 bin/*
 demacro.txt
 Shinobi2
-dev.*
+dev*
 lua-5.2.2/
 Debug/
 Release/
