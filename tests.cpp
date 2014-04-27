@@ -423,3 +423,28 @@ TEST_CASE("tables/userdata constructors", "Show that we can create classes from 
     REQUIRE((y.as<int>() == 7));
     REQUIRE((z.as<int>() == 9));
 }
+
+TEST_CASE("tables/userdata utility", "Show internal management of classes registered through new_userdata") {
+    sol::state lua;
+
+    lua.new_userdata<fuser>("fuser", "add", &fuser::add, "add2", &fuser::add2);
+
+    lua.script("a = fuser.new()\n"
+               "b = a:add(1)\n"
+               "c = a:add2(1)\n");
+
+    sol::object a = lua.get<sol::object>("a");
+    sol::object b = lua.get<sol::object>("b");
+    sol::object c = lua.get<sol::object>("c");
+    REQUIRE((a.is<sol::userdata_t>()));
+    auto atype = a.get_type();
+    auto btype = b.get_type();
+    auto ctype = c.get_type();
+    REQUIRE((atype == sol::type::userdata));
+    REQUIRE((btype == sol::type::number));
+    REQUIRE((ctype == sol::type::number));
+    int bresult = b.as<int>();
+    int cresult = c.as<int>();
+    REQUIRE(bresult == 1);
+    REQUIRE(cresult == 3);
+}
