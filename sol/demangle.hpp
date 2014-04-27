@@ -47,7 +47,7 @@ std::string demangle(const std::type_info& id) {
         auto found = realname.find(replacements[r]);
         while (found != std::string::npos) {
             realname.replace(found, replacements[r].size(), replacements[r+1]);
-          found = realname.find(replacements[r], found);
+            found = realname.find(replacements[r], found);
         }
     }
     return realname;
