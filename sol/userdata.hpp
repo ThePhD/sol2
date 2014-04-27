@@ -144,8 +144,6 @@ public:
     template<typename... Args, typename... CArgs>
     userdata(const char* name, constructors<CArgs...> c, Args&&... args) :
         userdata(std::string(name), std::move(c), std::forward<Args>(args)...) {}
-
-    void register_into(const table& s) {}
 };
 } // sol
 
