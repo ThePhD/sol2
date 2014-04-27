@@ -31,7 +31,7 @@ template<typename Function>
 struct static_function {
     typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
     typedef function_traits<function_type> traits_type;
-    
+
     template<typename... Args>
     static int typed_call(types<void>, types<Args...> t, function_type* fx, lua_State* L) {
         stack::pop_call(L, fx, t);
@@ -105,17 +105,21 @@ struct static_member_function {
 
 struct base_function {
     static int base_call(lua_State* L, void* inheritancedata) {
-        if (inheritancedata == nullptr)
+        if (inheritancedata == nullptr) {
             throw sol_error("call from Lua to C++ function has null data");
+        }
+
         base_function* pfx = static_cast<base_function*>(inheritancedata);
         base_function& fx = *pfx;
         int r = fx(L);
         return r;
     }
 
-    static int base_gc(lua_State* L, void* udata) {
-        if (udata == nullptr)
+    static int base_gc(lua_State*, void* udata) {
+        if (udata == nullptr) {
             throw sol_error("call from lua to C++ gc function with null data");
+        }
+
         base_function* ptr = static_cast<base_function*>(udata);
         std::default_delete<base_function> dx{};
         dx(ptr);
@@ -139,7 +143,7 @@ struct base_function {
             return base_call(L, stack::get<lightuserdata_t>(L, i + 1));
         }
     };
-    
+
     virtual int operator()(lua_State*) {
         throw sol_error("failure to call specialized wrapped C++ function from Lua");
     }

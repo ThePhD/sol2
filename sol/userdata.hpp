@@ -46,22 +46,22 @@ private:
     std::vector<std::string> functionnames;
     std::vector<std::unique_ptr<base_function>> functions;
     std::vector<luaL_Reg> functiontable;
-    
+
     template<typename... TTypes>
     struct constructor {
         template<typename... Args>
-        static void do_constructor(lua_State* L, T* obj, call_syntax syntax, int argcount, types<Args...>) {
+        static void do_constructor(lua_State* L, T* obj, call_syntax syntax, int, types<Args...>) {
             auto fx = [&obj] (Args&&... args) -> void {
-                std::allocator<T> alloc{}; 
+                std::allocator<T> alloc{};
                 alloc.construct(obj, std::forward<Args>(args)...);
             };
             stack::get_call(L, 1 + static_cast<int>(syntax), fx, types<Args...>());
        }
 
-        static void match_constructor(lua_State* L, T* obj, call_syntax, int argcount) {
+        static void match_constructor(lua_State*, T*, call_syntax, int) {
             throw sol_error("No matching constructor for the arguments provided");
         }
-       
+
         template<typename ...CArgs, typename... Args>
         static void match_constructor(lua_State* L, T* obj, call_syntax syntax, int argcount, types<CArgs...> t, Args&&... args) {
             if (argcount == sizeof...(CArgs)) {
@@ -74,16 +74,14 @@ private:
         static int construct(lua_State* L) {
             call_syntax syntax = stack::get_call_syntax(L, meta);
             int argcount = lua_gettop(L);
-          
+
             void* udata = lua_newuserdata(L, sizeof(T));
             T* obj = static_cast<T*>(udata);
-            match_constructor(L, obj, syntax,
-                argcount - static_cast<int>(syntax),
-                std::common_type<TTypes>::type()...);
-          
+            match_constructor(L, obj, syntax, argcount - static_cast<int>(syntax), typename std::common_type<TTypes>::type()...);
+
             luaL_getmetatable(L, meta.c_str());
             lua_setmetatable(L, -2);
-          
+
             return 1;
         }
     };
@@ -91,9 +89,6 @@ private:
     template<std::size_t n>
     struct destructor {
         static int destruct(lua_State* L) {
-            /*for(std::size_t i = 0; i < n; ++i) {
-                base_function::base_gc(L, stack::get<lightuserdata_t>(L, i + 1));
-            }*/
             userdata_t udata = stack::get<userdata_t>(L, 1);
             T* obj = static_cast<T*>(udata.value);
             std::allocator<T> alloc{};
@@ -103,9 +98,7 @@ private:
     };
 
     template<std::size_t n>
-    void build_function_tables() {
-
-    }
+    void build_function_tables() {}
 
     template<std::size_t n, typename... Args, typename Ret, typename... MArgs>
     void build_function_tables(Ret(T::* func)(MArgs...), std::string name, Args&&... args) {
@@ -134,11 +127,11 @@ public:
         functiontable.push_back({ functionnames.back().c_str(), &constructor<CArgs...>::construct });
         functionnames.push_back("__gc");
         functiontable.push_back({ functionnames.back().c_str(), &destructor<sizeof...(Args) / 2>::destruct });
-       
+
         functiontable.push_back({ nullptr, nullptr });
     }
 
-    void register_into(const table& s) { }
+    void register_into(const table& s) {}
 };
 
 template<typename T>

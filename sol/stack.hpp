@@ -240,7 +240,7 @@ inline void push_tuple(lua_State* L, indices<I...>, T&& tuplen) {
 }
 
 template<typename F, typename... Vs, typename... Args>
-inline auto ltr_get(lua_State*, int index, F&& f, types<Args...>, types<>, Vs&&... vs) -> decltype(f(std::forward<Vs>(vs)...)) {
+inline auto ltr_get(lua_State*, int, F&& f, types<Args...>, types<>, Vs&&... vs) -> decltype(f(std::forward<Vs>(vs)...)) {
     return f(std::forward<Vs>(vs)...);
 }
 template<typename F, typename Head, typename... Tail, typename... Vs, typename... Args>
