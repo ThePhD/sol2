@@ -43,7 +43,7 @@ struct fuser {
        return x + y + 2;
     }
 };
-}
+} // crapola
 
 int plop_xyz(int x, int y, std::string z) {
     std::cout << x << " " << y << " " << z << std::endl;
@@ -386,7 +386,7 @@ TEST_CASE("tables/userdata constructors", "Show that we can create classes from 
     sol::state lua;
 
     sol::constructors<sol::types<>, sol::types<int>, sol::types<int, int>> con;
-    sol::userdata<crapola::fuser> lc(con, &crapola::fuser::add, "add", &crapola::fuser::add2, "add2");
+    sol::userdata<crapola::fuser> lc("crapola_fuser", con, &crapola::fuser::add, "add", &crapola::fuser::add2, "add2");
     lua.set_class(lc);
 
     lua.script(

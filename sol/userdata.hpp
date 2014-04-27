@@ -111,13 +111,13 @@ private:
 
 public:
     template<typename... Args>
-    userdata(Args&&... args) : userdata(classname, default_constructor, std::forward<Args>(args)...) {}
+    userdata(Args&&... args): userdata(classname, default_constructor, std::forward<Args>(args)...) {}
 
     template<typename... Args, typename... CArgs>
-    userdata(constructors<CArgs...> c, Args&&... args) : userdata(classname, std::move(c), std::forward<Args>(args)...) {}
+    userdata(constructors<CArgs...> c, Args&&... args): userdata(classname, std::move(c), std::forward<Args>(args)...) {}
 
     template<typename... Args, typename... CArgs>
-    userdata(std::string name, constructors<CArgs...>, Args&&... args) : luaname(std::move(name)) {
+    userdata(std::string name, constructors<CArgs...>, Args&&... args): luaname(std::move(name)) {
         functionnames.reserve(sizeof...(args) + 2);
         functiontable.reserve(sizeof...(args) + 3);
         functions.reserve(sizeof...(args) + 2);
@@ -131,6 +131,10 @@ public:
         functiontable.push_back({ nullptr, nullptr });
     }
 
+    template<typename... Args, typename... CArgs>
+    userdata(const char* name, constructors<CArgs...> c, Args&&... args) :
+        userdata(std::string(name), std::move(c), std::forward<Args>(args)...) {}
+
     void register_into(const table& s) {}
 };
 
@@ -140,6 +144,6 @@ const std::string userdata<T>::classname = detail::demangle(typeid(T));
 template<typename T>
 const std::string userdata<T>::meta = std::string("sol.stateful.").append(classname);
 
-}
+} // sol
 
 #endif // SOL_USERDATA_HPP
