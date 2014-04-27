@@ -86,7 +86,7 @@ private:
         }
     };
 
-    template<std::size_t n>
+    template<std::size_t N>
     struct destructor {
         static int destruct(lua_State* L) {
             userdata_t udata = stack::get<userdata_t>(L, 1);
@@ -97,16 +97,16 @@ private:
         }
     };
 
-    template<std::size_t n>
+    template<std::size_t N>
     void build_function_tables() {}
 
-    template<std::size_t n, typename... Args, typename Ret>
-    void build_function_tables(std::string name,Ret T::* func, Args&&... args) {
-        typedef typename std::decay<decltype(func)>::type fx_t;
+    template<std::size_t N, typename... Args, typename Ret>
+    void build_function_tables(std::string name, Ret T::* func, Args&&... args) {
+        typedef typename std::decay<decltype(func)>::type function_type;
         functionnames.push_back(std::move(name));
-        functions.emplace_back(detail::make_unique<userdata_function<fx_t, T>>(std::move(func)));
-        functiontable.push_back({ functionnames.back().c_str(), &base_function::userdata<n>::call });
-        build_function_tables<n + 1>(std::forward<Args>(args)...);
+        functions.emplace_back(detail::make_unique<userdata_function<function_type, T>>(std::move(func)));
+        functiontable.push_back({ functionnames.back().c_str(), &base_function::userdata<N>::call });
+        build_function_tables<N + 1>(std::forward<Args>(args)...);
     }
 
 public:
