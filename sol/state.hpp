@@ -60,13 +60,13 @@ private:
     table reg;
     table global;
 public:
-    state(): 
-    L(luaL_newstate(), lua_close),  
-    reg(L.get(), LUA_REGISTRYINDEX), 
+    state():
+    L(luaL_newstate(), lua_close),
+    reg(L.get(), LUA_REGISTRYINDEX),
     global(reg.get<table>(LUA_RIDX_GLOBALS)) {
         lua_atpanic(L.get(), detail::atpanic);
     }
-    
+
     template<typename... Args>
     void open_libraries(Args&&... args) {
         static_assert(detail::are_same<lib, Args...>::value, "all types must be libraries");
@@ -151,8 +151,8 @@ public:
     }
 
     template<typename T>
-    state& set_class(userdata<T>& user) {
-        global.set_class(user);
+    state& set_userdata(userdata<T>& user) {
+        global.set_userdata(user);
         return *this;
     }
 

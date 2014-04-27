@@ -114,18 +114,18 @@ public:
     }
 
     template<typename T>
-    table& set_class(userdata<T>& user) {
+    table& set_userdata(userdata<T>& user) {
         luaL_newmetatable(state(), user.meta.c_str());
         for (std::size_t upvalues = 0; upvalues < user.functions.size(); ++upvalues) {
             stack::push(state(), static_cast<void*>(user.functions[ upvalues ].get()));
         }
         luaL_setfuncs(state(), user.functiontable.data(), static_cast<uint32_t>(user.functions.size()));
-       
+
         lua_pushvalue(state(), -1);
         lua_setfield(state(), -1, "__index");
-       
+
         lua_setglobal(state(), user.luaname.c_str());
-       
+
         return *this;
     }
 
@@ -191,7 +191,7 @@ private:
     table& set_fx(std::true_type, T&& key, TFx&& fx, TObj&& obj) {
         std::string fkey(key);
 
-        // Layout: 
+        // Layout:
         // idx 1...n: verbatim data of member function pointer
         // idx n + 1: is the object's void pointer
         // We don't need to store the size, because the other side is templated
