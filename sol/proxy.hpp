@@ -101,7 +101,7 @@ public:
     }
 
     template<typename... Ret, typename... Args>
-    typename multi_return<Ret...>::type call(Args&&... args) {
+    typename return_type<Ret...>::type call(Args&&... args) {
         return tbl.get<function>(key)(types<Ret...>(), std::forward<Args>(args)...);
     }
 };

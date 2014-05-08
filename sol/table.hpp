@@ -66,7 +66,7 @@ class table : public reference {
     }
 
     template<typename Tup, typename... Ret, std::size_t... I>
-    typename multi_return<Ret...>::type tuple_get(types<Ret...> t, indices<I...>, Tup&& tup) const {
+    typename return_type<Ret...>::type tuple_get(types<Ret...> t, indices<I...>, Tup&& tup) const {
        return std::make_tuple(element_get<I>(t, std::forward<Tup>(tup))...);
     }
 
@@ -76,7 +76,7 @@ class table : public reference {
     }
 
     template<typename... Ret, typename... Keys>
-    typename multi_return<Ret...>::type get(types<Ret...> t, Keys&&... keys) const {
+    typename return_type<Ret...>::type get(types<Ret...> t, Keys&&... keys) const {
         static_assert(sizeof...(Keys) == sizeof...(Ret), "Must have same number of keys as return values");
         return tuple_get(t, t, std::make_tuple(std::forward<Keys>(keys)...));
     }
@@ -87,7 +87,7 @@ public:
     }
 
     template<typename... Ret, typename... Keys>
-    typename multi_return<Ret...>::type get(Keys&&... keys) const {
+    typename return_type<Ret...>::type get(Keys&&... keys) const {
        return get(types<Ret...>(), std::forward<Keys>(keys)...);
     }
 

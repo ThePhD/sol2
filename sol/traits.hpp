@@ -39,17 +39,17 @@ template<typename T>
 using Decay = typename std::decay<T>::type;
 
 template<typename... Args>
-struct multi_return {
+struct return_type {
     typedef std::tuple<Args...> type;
 };
 
 template<typename T>
-struct multi_return<T> {
+struct return_type<T> {
     typedef T type;
 };
 
 template<>
-struct multi_return<> : types<>{
+struct return_type<> : types<>{
     typedef void type;
 };
 

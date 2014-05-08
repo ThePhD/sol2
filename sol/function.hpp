@@ -68,12 +68,12 @@ public:
     }
 
     template<typename... Ret, typename... Args>
-    typename multi_return<Ret...>::type operator()(types<Ret...>, Args&&... args) {
+    typename return_type<Ret...>::type operator()(types<Ret...>, Args&&... args) {
         return call<Ret...>(std::forward<Args>(args)...);
     }
     
     template<typename... Ret, typename... Args>
-    typename multi_return<Ret...>::type call(Args&&... args) {
+    typename return_type<Ret...>::type call(Args&&... args) {
         push();
         stack::push_args(state(), std::forward<Args>(args)...);
         return invoke(types<Ret...>(), sizeof...(Args));

@@ -129,7 +129,7 @@ public:
     }
 
     template<typename... Args, typename... Keys>
-    typename multi_return<Args...>::type get(Keys&&... keys) const {
+    typename return_type<Args...>::type get(Keys&&... keys) const {
        return global.get(types<Args...>(), std::forward<Keys>(keys)...);
     }
 
