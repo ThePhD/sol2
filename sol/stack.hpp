@@ -107,7 +107,8 @@ inline bool get_helper<bool>(std::true_type, lua_State* L, int index) {
 }
 
 template<typename T>
-inline auto get_helper(std::false_type, lua_State* L, int index = -1) {
+inline auto get_helper(std::false_type, lua_State* L, int index = -1)
+-> decltype(get(types<T>(), L, index)) {
     // T is a class
     return get(types<T>(), L, index);
 }
