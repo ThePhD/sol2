@@ -33,110 +33,112 @@
 namespace sol {
 namespace stack {
 namespace detail {
+inline nil_t get(types<nil_t>, lua_State* L, int index = -1) {
+    if (lua_isnil(L, index) == 0)
+        throw sol::sol_error("not nil");
+    return nil_t{ };
+}
+
+inline lightuserdata_t get(types<lightuserdata_t>, lua_State* L, int index = -1) {
+    return{ lua_touserdata(L, lua_upvalueindex(index)) };
+}
+
+inline userdata_t get(types<userdata_t>, lua_State* L, int index = -1) {
+    return{ lua_touserdata(L, index) };
+}
+
+inline std::string get(types<std::string>, lua_State* L, int index = -1) {
+    std::string::size_type len;
+    auto str = lua_tolstring(L, index, &len);
+    return{ str, len };
+}
+
+inline const char* get(types<const char*>, lua_State* L, int index = -1) {
+    return lua_tostring(L, index);
+}
+
+inline type get(types<type>, lua_State* L, int index = -1) {
+    return static_cast<type>(lua_type(L, index));
+}
+
+template <typename T>
+inline T& get(types<userdata<T>>, lua_State* L, int index = -1) {
+    userdata_t udata = get(types<userdata_t>{}, L, index);
+    T* obj = static_cast<T*>(udata.value);
+    return *obj;
+}
+
+template <typename T>
+inline T get(types<T>, lua_State* L, int index = -1) {
+    return T(L, index);
+}
+
 template<typename T>
-inline T get_unsigned(lua_State* L, std::true_type, int index = -1) {
+inline T get_unsigned(std::true_type, lua_State* L, int index = -1) {
     return lua_tounsigned(L, index);
 }
 
 template<typename T>
-inline T get_unsigned(lua_State* L, std::false_type, int index = -1) {
+inline T get_unsigned(std::false_type, lua_State* L, int index = -1) {
     return static_cast<T>(lua_tointeger(L, index));
 }
 
 template<typename T>
-inline T get_arithmetic(lua_State* L, std::false_type, int index = -1) {
+inline T get_arithmetic(std::false_type, lua_State* L, int index = -1) {
     // T is a floating point
     return static_cast<T>(lua_tonumber(L, index));
 }
 
 template<typename T>
-inline T get_arithmetic(lua_State* L, std::true_type, int index = -1) {
+inline T get_arithmetic(std::true_type, lua_State* L, int index = -1) {
     // T is an integral
-    return get_unsigned<T>(L, std::is_unsigned<T>{}, index);
+    return get_unsigned<T>(std::is_unsigned<T>{}, L, index);
 }
 
 template<typename T>
-inline T get_nil(lua_State* L, std::true_type, int index = -1) {
-    if (lua_isnil(L, index) == 0)
-        throw sol::sol_error("not nil");
-    return nil_t{};
-}
-
-template<typename T>
-inline T get_nil(lua_State* L, std::false_type, int index = -1) {
-    // T is a class type
-    return T(L, index);
-}
-
-template<typename T>
-inline T get_helper(lua_State* L, std::true_type, int index = -1) {
-    return get_nil<T>(L, std::is_same<nil_t, T>(), index);
-}
-
-template<typename T>
-inline T get_helper(lua_State* L, std::false_type, int index = -1) {
+inline T get_helper(std::true_type, lua_State* L, int index = -1) {
     // T is a fundamental type
-    return get_arithmetic<T>(L, std::is_integral<T>{}, index);
+    return get_arithmetic<T>(std::is_integral<T>{}, L, index);
+}
+
+template<>
+inline bool get_helper<bool>(std::true_type, lua_State* L, int index) {
+    return lua_toboolean(L, index) != 0;
 }
 
 template<typename T>
-inline void push_unsigned(lua_State* L, T x, std::true_type) {
+inline auto get_helper(std::false_type, lua_State* L, int index = -1) {
+    // T is a class
+    return get(types<T>(), L, index);
+}
+
+template<typename T>
+inline void push_unsigned(std::true_type, lua_State* L, T x) {
     lua_pushunsigned(L, x);
 }
 
 template<typename T>
-inline void push_unsigned(lua_State* L, T x, std::false_type) {
+inline void push_unsigned(std::false_type, lua_State* L, T x) {
     lua_pushinteger(L, x);
 }
 
 template<typename T>
-inline void push_arithmetic(lua_State* L, T x, std::true_type) {
+inline void push_arithmetic(std::true_type, lua_State* L, T x) {
     // T is an integral type
-    push_unsigned(L, x, std::is_unsigned<T>{});
+    push_unsigned(std::is_unsigned<T>{}, L, x);
 }
 
 template<typename T>
-inline void push_arithmetic(lua_State* L, T x, std::false_type) {
+inline void push_arithmetic(std::false_type, lua_State* L, T x) {
     // T is an floating point type
     lua_pushnumber(L, x);
 }
 } // detail
 
 template<typename T>
-inline T get(lua_State* L, int index = -1) {
-    return detail::get_helper<T>(L, std::is_class<T>{}, index);
-}
-
-template<>
-inline bool get<bool>(lua_State* L, int index) {
-    return lua_toboolean(L, index) != 0;
-}
-
-template<>
-inline lightuserdata_t get<lightuserdata_t>(lua_State* L, int index) {
-    return {lua_touserdata(L, lua_upvalueindex(index))};
-}
-
-template<>
-inline userdata_t get<userdata_t>(lua_State* L, int index) {
-    return {lua_touserdata(L, index)};
-}
-
-template<>
-inline std::string get<std::string>(lua_State* L, int index) {
-    std::string::size_type len;
-    auto str = lua_tolstring(L, index, &len);
-    return { str, len };
-}
-
-template<>
-inline const char* get<const char*>(lua_State* L, int index) {
-    return lua_tostring(L, index);
-}
-
-template<>
-inline type get<type>(lua_State* L, int index) {
-    return static_cast<type>(lua_type(L, index));
+inline auto get(lua_State* L, int index = -1)
+-> decltype(detail::get_helper<T>(std::is_arithmetic<T>{}, L, index)) {
+    return detail::get_helper<T>(std::is_arithmetic<T>{}, L, index);
 }
 
 template<typename T>
@@ -151,15 +153,16 @@ inline std::pair<T, int> get_user(lua_State* L, int index = 1) {
 }
 
 template<typename T>
-inline T pop(lua_State* L) {
-    auto r = get<T>(L);
+auto pop(lua_State* L)
+-> decltype(get<T>(L)) {
+    auto&& r = get<T>(L);
     lua_pop(L, 1);
     return r;
 }
 
 template<typename T>
 inline EnableIf<std::is_arithmetic<T>> push(lua_State* L, T arithmetic) {
-    detail::push_arithmetic(L, arithmetic, std::is_integral<T>{});
+    detail::push_arithmetic(std::is_integral<T>{}, L, arithmetic);
 }
 
 inline void push(lua_State*, reference& ref) {
@@ -245,7 +248,7 @@ inline auto ltr_get(lua_State*, int, F&& f, types<Args...>, types<>, Vs&&... vs)
 }
 template<typename F, typename Head, typename... Tail, typename... Vs, typename... Args>
 inline auto ltr_get(lua_State* L, int index, F&& f, types<Args...> t, types<Head, Tail...>, Vs&&... vs) -> decltype(f(std::declval<Args>()...)) {
-    return ltr_get(L, index + 1, std::forward<F>(f), t, types<Tail...>(), std::forward<Vs>(vs)..., get<Head>(L, index));
+    return ltr_get(L, index + 1, std::forward<F>(f), t, types<Tail...>(), std::forward<Vs>(vs)..., stack::get<Head>(L, index));
 }
 
 template<typename F, typename... Vs, typename... Args>
@@ -254,7 +257,7 @@ inline auto ltr_pop(lua_State*, F&& f, types<Args...>, types<>, Vs&&... vs) -> d
 }
 template<typename F, typename Head, typename... Tail, typename... Vs, typename... Args>
 inline auto ltr_pop(lua_State* L, F&& f, types<Args...> t, types<Head, Tail...>, Vs&&... vs) -> decltype(f(std::declval<Args>()...)) {
-    return ltr_pop(L, std::forward<F>(f), t, types<Tail...>(), std::forward<Vs>(vs)..., pop<Head>(L));
+    return ltr_pop(L, std::forward<F>(f), t, types<Tail...>(), std::forward<Vs>(vs)..., stack::pop<Head>(L));
 }
 
 template<typename F, typename... Vs, typename... Args>
@@ -263,7 +266,7 @@ inline auto rtl_pop(lua_State*, F&& f, types<Args...>, types<>, Vs&&... vs) -> d
 }
 template<typename F, typename Head, typename... Tail, typename... Vs, typename... Args>
 inline auto rtl_pop(lua_State* L, F&& f, types<Args...> t, types<Head, Tail...>, Vs&&... vs) -> decltype(f(std::declval<Args>()...)) {
-    return rtl_pop(L, std::forward<F>(f), t, types<Tail...>(), pop<Head>(L), std::forward<Vs>(vs)...);
+    return rtl_pop(L, std::forward<F>(f), t, types<Tail...>(), stack::pop<Head>(L), std::forward<Vs>(vs)...);
 }
 } // detail
 
@@ -338,6 +341,12 @@ inline std::string dump_types(lua_State* L) {
     }
     return visual;
 }
+
+template <typename T>
+struct get_return {
+    typedef decltype(get<T>(nullptr)) type;
+};
+
 } // stack
 } // sol
 

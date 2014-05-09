@@ -45,7 +45,7 @@ struct static_function {
 
     template<typename... Ret, typename... Args>
     static int typed_call(types<Ret...>, types<Args...> t, function_type* fx, lua_State* L) {
-        typedef typename multi_return<Ret...>::type return_type;
+        typedef typename return_type<Ret...>::type return_type;
         return_type r = stack::pop_call(L, fx, t);
         stack::push(L, std::move(r));
         return sizeof...(Ret);
@@ -82,7 +82,7 @@ struct static_member_function {
 
     template<typename... Ret, typename... Args>
     static int typed_call(types<Ret...>, types<Args...>, T& item, function_type& ifx, lua_State* L) {
-        typedef typename multi_return<Ret...>::type return_type;
+        typedef typename return_type<Ret...>::type return_type;
         auto fx = [&item, &ifx](Args&&... args) -> return_type { return (item.*ifx)(std::forward<Args>(args)...); };
         return_type r = stack::pop_call(L, fx, types<Args...>());
         stack::push(L, std::move(r));
@@ -173,7 +173,7 @@ struct functor_function : public base_function {
 
     template<typename... Ret, typename... Args>
     int operator()(types<Ret...>, types<Args...> t, lua_State* L) {
-        typedef typename multi_return<Ret...>::type return_type;
+        typedef typename return_type<Ret...>::type return_type;
         return_type r = stack::pop_call(L, fx, t);
         stack::push(L, r);
         return sizeof...(Ret);
@@ -217,7 +217,7 @@ struct member_function : public base_function {
 
     template<typename... Ret, typename... Args>
     int operator()(types<Ret...>, types<Args...> t, lua_State* L) {
-        typedef typename multi_return<Ret...>::type return_type;
+        typedef typename return_type<Ret...>::type return_type;
         return_type r = stack::pop_call(L, fx, t);
         stack::push(L, std::move(r));
         return sizeof...(Ret);
@@ -269,7 +269,7 @@ struct userdata_function : public base_function {
 
     template<typename... Ret, typename... Args>
     int operator()(types<Ret...>, types<Args...> t, lua_State* L) {
-        typedef typename multi_return<Ret...>::type return_type;
+        typedef typename return_type<Ret...>::type return_type;
         return_type r = stack::pop_call(L, fx, t);
         stack::push(L, std::move(r));
         return sizeof...(Ret);

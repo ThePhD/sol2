@@ -129,7 +129,8 @@ public:
     }
 
     template<typename... Args, typename... Keys>
-    typename multi_return<Args...>::type get(Keys&&... keys) const {
+    auto get(Keys&&... keys) const
+    -> decltype(global.get(types<Args...>(), std::forward<Keys>(keys)...)) {
        return global.get(types<Args...>(), std::forward<Keys>(keys)...);
     }
 
