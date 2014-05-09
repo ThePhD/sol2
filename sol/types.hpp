@@ -92,6 +92,16 @@ inline type arithmetic(std::true_type) {
 
 template<typename T>
 inline type arithmetic(std::false_type) {
+    return usertype<T>(is_specialization_of<T, userdata>{});
+}
+
+template<typename T>
+inline type usertype(std::true_type) {
+    return type::userdata;
+}
+
+template<typename T>
+inline type usertype(std::false_type) {
     return type::none;
 }
 } // detail

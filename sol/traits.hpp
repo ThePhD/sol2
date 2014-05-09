@@ -53,6 +53,11 @@ struct return_type<> : types<>{
     typedef void type;
 };
 
+template <typename T, template <typename...> class Templ>
+struct is_specialization_of : std::false_type { };
+template <typename... T, template <typename...> class Templ>
+struct is_specialization_of<Templ<T...>, Templ> : std::true_type { };
+
 template<bool B>
 using Bool = std::integral_constant<bool, B>;
 

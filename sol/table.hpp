@@ -43,40 +43,34 @@ T* get_ptr(T* val) {
 class table : public reference {
     friend class state;
     template<typename T, typename U>
-    T single_get(U&& key) const {
+    typename stack::get_return<T>::type single_get(U&& key) const {
         push();
         stack::push(state(), std::forward<U>(key));
         lua_gettable(state(), -2);
         type_assert(state(), -1, type_of<T>());
-        auto result = stack::pop<T>(state());
+        auto&& result = stack::pop<T>(state());
         lua_pop(state(), 1);
         return result;
     }
 
     template<std::size_t I, typename Tup, typename... Ret>
-    typename std::tuple_element<I, std::tuple<Ret...>>::type element_get(types<Ret...>, Tup&& key) const {
+    typename std::tuple_element<I, std::tuple<typename stack::get_return<Ret>::type...>>::type element_get(types<Ret...>, Tup&& key) const {
         typedef typename std::tuple_element<I, std::tuple<Ret...>>::type T;
-        push();
-        stack::push(state(), std::get<I>(key));
-        lua_gettable(state(), -2);
-        type_assert(state(), -1, type_of<T>());
-        T result = stack::pop<T>(state());
-        lua_pop(state(), 1);
-        return result;
+        return single_get<T>(std::get<I>(key));
     }
 
     template<typename Tup, typename... Ret, std::size_t... I>
-    typename return_type<Ret...>::type tuple_get(types<Ret...> t, indices<I...>, Tup&& tup) const {
+    typename return_type<typename stack::get_return<Ret>::type...>::type tuple_get(types<Ret...> t, indices<I...>, Tup&& tup) const {
        return std::make_tuple(element_get<I>(t, std::forward<Tup>(tup))...);
     }
 
     template<typename Tup, typename Ret>
-    Ret tuple_get(types<Ret> t, indices<0>, Tup&& tup) const {
+    typename stack::get_return<Ret>::type tuple_get(types<Ret> t, indices<0>, Tup&& tup) const {
         return element_get<0>(t, std::forward<Tup>(tup));
     }
 
     template<typename... Ret, typename... Keys>
-    typename return_type<Ret...>::type get(types<Ret...> t, Keys&&... keys) const {
+    typename return_type<typename stack::get_return<Ret>::type...>::type get(types<Ret...> t, Keys&&... keys) const {
         static_assert(sizeof...(Keys) == sizeof...(Ret), "Must have same number of keys as return values");
         return tuple_get(t, t, std::make_tuple(std::forward<Keys>(keys)...));
     }
@@ -87,7 +81,7 @@ public:
     }
 
     template<typename... Ret, typename... Keys>
-    typename return_type<Ret...>::type get(Keys&&... keys) const {
+    typename return_type<typename stack::get_return<Ret>::type...>::type get(Keys&&... keys) const {
        return get(types<Ret...>(), std::forward<Keys>(keys)...);
     }
 
