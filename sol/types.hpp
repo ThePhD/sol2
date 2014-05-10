@@ -86,16 +86,6 @@ class object;
 
 namespace detail {
 template<typename T>
-inline type arithmetic(std::true_type) {
-    return type::number;
-}
-
-template<typename T>
-inline type arithmetic(std::false_type) {
-    return usertype<T>(is_specialization_of<T, userdata>{});
-}
-
-template<typename T>
 inline type usertype(std::true_type) {
     return type::userdata;
 }
@@ -103,6 +93,16 @@ inline type usertype(std::true_type) {
 template<typename T>
 inline type usertype(std::false_type) {
     return type::none;
+}
+
+template<typename T>
+inline type arithmetic(std::true_type) {
+    return type::number;
+}
+
+template<typename T>
+inline type arithmetic(std::false_type) {
+    return usertype<T>(is_specialization_of<T, userdata>{});
 }
 } // detail
 
