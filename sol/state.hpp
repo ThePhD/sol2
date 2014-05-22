@@ -36,7 +36,7 @@ struct are_same<T, U, Args...> : std::integral_constant<bool, std::is_same<T, U>
 
 inline int atpanic(lua_State* L) {
     std::string err = lua_tostring(L, -1);
-    throw sol_error(err);
+    throw error(err);
 }
 } // detail
 

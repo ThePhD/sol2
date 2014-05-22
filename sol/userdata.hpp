@@ -68,7 +68,7 @@ private:
        }
 
         static void match_constructor(lua_State*, T*, call_syntax, int) {
-            throw sol_error("No matching constructor for the arguments provided");
+            throw error("No matching constructor for the arguments provided");
         }
 
         template<typename ...CArgs, typename... Args>

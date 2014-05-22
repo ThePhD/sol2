@@ -35,7 +35,7 @@ namespace stack {
 namespace detail {
 inline nil_t get(types<nil_t>, lua_State* L, int index = -1) {
     if (lua_isnil(L, index) == 0)
-        throw sol::sol_error("not nil");
+        throw sol::error("not nil");
     return nil_t{ };
 }
 

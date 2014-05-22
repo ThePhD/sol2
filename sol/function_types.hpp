@@ -106,7 +106,7 @@ struct static_member_function {
 struct base_function {
     static int base_call(lua_State* L, void* inheritancedata) {
         if (inheritancedata == nullptr) {
-            throw sol_error("call from Lua to C++ function has null data");
+            throw error("call from Lua to C++ function has null data");
         }
 
         base_function* pfx = static_cast<base_function*>(inheritancedata);
@@ -117,7 +117,7 @@ struct base_function {
 
     static int base_gc(lua_State*, void* udata) {
         if (udata == nullptr) {
-            throw sol_error("call from lua to C++ gc function with null data");
+            throw error("call from lua to C++ gc function with null data");
         }
 
         base_function* ptr = static_cast<base_function*>(udata);
@@ -145,7 +145,7 @@ struct base_function {
     };
 
     virtual int operator()(lua_State*) {
-        throw sol_error("failure to call specialized wrapped C++ function from Lua");
+        throw error("failure to call specialized wrapped C++ function from Lua");
     }
 
     virtual ~base_function() {}
@@ -242,7 +242,7 @@ struct userdata_function : public base_function {
        void prepare(lua_State* L) {
             void* udata = stack::get<userdata_t>(L, 1);
             if (udata == nullptr)
-                throw sol_error("must use the syntax [object]:[function] to call member functions bound to C++");
+                throw error("must use the syntax [object]:[function] to call member functions bound to C++");
             item = static_cast<T*>(udata);
        }
 
