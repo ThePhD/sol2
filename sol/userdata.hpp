@@ -110,8 +110,9 @@ private:
     template<std::size_t N>
     void build_function_tables() {}
 
-    template<std::size_t N, typename... Args, typename Ret>
-    void build_function_tables(std::string name, Ret T::* func, Args&&... args) {
+    template<std::size_t N, typename... Args, typename TBase, typename Ret>
+    void build_function_tables(std::string name, Ret TBase::* func, Args&&... args) {
+        static_assert(std::is_base_of<TBase, T>::value, "Any registered function must be part of the class");
         typedef typename std::decay<decltype(func)>::type function_type;
         functionnames.push_back(std::move(name));
         functions.emplace_back(detail::make_unique<userdata_function<function_type, T>>(std::move(func)));
