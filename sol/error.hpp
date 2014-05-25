@@ -19,8 +19,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef error_HPP
-#define error_HPP
+#ifndef SOL_ERROR_HPP
+#define SOL_ERROR_HPP
 
 #include <stdexcept>
 #include <string>
@@ -32,4 +32,4 @@ public:
 };
 } // sol
 
-#endif // error_HPP
+#endif // SOL_ERROR_HPP
