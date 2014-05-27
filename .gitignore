@@ -18,3 +18,9 @@ liblua.a
 sol/include/
 .ninja*
 include/
+lib/liblua5.2.a
+*.config
+*.creator
+*.files
+*.includes
+main.cpp
