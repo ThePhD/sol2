@@ -46,6 +46,10 @@ public:
         auto actual = lua_type(state(), -1);
         return (static_cast<int>(expected) == actual) || (expected == type::poly);
     }
+
+    explicit operator bool() const {
+        return is<nil_t>();
+    }
 };
 
 inline bool operator==(const object& lhs, const nil_t&) {

@@ -19,8 +19,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_LUA_FUNC_HPP
-#define SOL_LUA_FUNC_HPP
+#ifndef SOL_FUNCTION_TYPES_HPP
+#define SOL_FUNCTION_TYPES_HPP
 
 #include "stack.hpp"
 #include <memory>
@@ -283,4 +283,4 @@ struct userdata_function : public base_function {
 
 } // sol
 
-#endif // SOL_LUA_FUNC_HPP
+#endif // SOL_FUNCTION_TYPES_HPP
