@@ -267,11 +267,23 @@ struct userdata_function : public base_function {
         return (*this)(types<void>(), t, L);
     }
 
+
+    template<typename Return, typename Raw = Unqualified<Return>>
+    typename std::enable_if<std::is_same<T, Raw>::value, void>::type special_push(lua_State*, Return&&) {
+        // push nothing
+    }
+
+    template<typename Return, typename Raw = Unqualified<Return>>
+    typename std::enable_if<!std::is_same<T, Raw>::value, void>::type special_push(lua_State* L, Return&& r) {
+        stack::push(L, std::forward<Return>(r));
+    }
+
     template<typename... Ret, typename... Args>
     int operator()(types<Ret...>, types<Args...> t, lua_State* L) {
         typedef typename return_type<Ret...>::type return_type;
         return_type r = stack::pop_call(L, fx, t);
-        stack::push(L, std::move(r));
+        // stack::push(L, std::move(r));
+        special_push(L, r);
         return sizeof...(Ret);
     }
 
