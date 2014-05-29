@@ -33,7 +33,7 @@ template<typename T, typename R = void>
 using DisableIf = typename std::enable_if<!T::value, R>::type;
 
 template<typename T>
-using Unqualified = typename std::remove_reference<typename std::remove_cv<T>::type>::type;
+using Unqualified = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
 
 template<typename T>
 using Decay = typename std::decay<T>::type;

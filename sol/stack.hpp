@@ -136,10 +136,10 @@ inline void push_arithmetic(std::false_type, lua_State* L, T x) {
 }
 } // detail
 
-template<typename T>
+template<typename T, typename U = Unqualified<T>>
 inline auto get(lua_State* L, int index = -1)
--> decltype(detail::get_helper<T>(std::is_arithmetic<T>{}, L, index)) {
-    return detail::get_helper<T>(std::is_arithmetic<T>{}, L, index);
+-> decltype(detail::get_helper<U>(std::is_arithmetic<U>{}, L, index)) {
+    return detail::get_helper<U>(std::is_arithmetic<U>{}, L, index);
 }
 
 template<typename T>
