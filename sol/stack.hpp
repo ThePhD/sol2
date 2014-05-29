@@ -107,8 +107,7 @@ inline bool get_helper<bool>(std::true_type, lua_State* L, int index) {
 }
 
 template<typename T>
-inline auto get_helper(std::false_type, lua_State* L, int index = -1)
--> decltype(get(types<T>(), L, index)) {
+inline auto get_helper(std::false_type, lua_State* L, int index = -1) -> decltype(get(types<T>(), L, index)) {
     // T is a class
     return get(types<T>(), L, index);
 }
@@ -137,8 +136,7 @@ inline void push_arithmetic(std::false_type, lua_State* L, T x) {
 } // detail
 
 template<typename T, typename U = Unqualified<T>>
-inline auto get(lua_State* L, int index = -1)
--> decltype(detail::get_helper<U>(std::is_arithmetic<U>{}, L, index)) {
+inline auto get(lua_State* L, int index = -1) -> decltype(detail::get_helper<U>(std::is_arithmetic<U>{}, L, index)) {
     return detail::get_helper<U>(std::is_arithmetic<U>{}, L, index);
 }
 
@@ -154,8 +152,7 @@ inline std::pair<T, int> get_user(lua_State* L, int index = 1) {
 }
 
 template<typename T>
-auto pop(lua_State* L)
--> decltype(get<T>(L)) {
+auto pop(lua_State* L) -> decltype(get<T>(L)) {
     auto&& r = get<T>(L);
     lua_pop(L, 1);
     return r;

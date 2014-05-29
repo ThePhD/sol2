@@ -32,8 +32,7 @@ public:
     object() = default;
 
     template<typename T>
-    auto as() const
-    -> decltype(stack::get<T>(state())) {
+    auto as() const -> decltype(stack::get<T>(state())) {
         push();
         type_assert(state(), -1, type_of<T>());
         return stack::get<T>(state());
