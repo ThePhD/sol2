@@ -68,9 +68,9 @@ inline T& get(types<userdata<T>>, lua_State* L, int index = -1) {
     return *obj;
 }
 
-template <typename T>
-inline T get(types<T>, lua_State* L, int index = -1) {
-    return T(L, index);
+template <typename T, typename U = typename std::remove_reference<T>::type>
+inline U get(types<T>, lua_State* L, int index = -1) {
+    return U(L, index);
 }
 
 template<typename T>
