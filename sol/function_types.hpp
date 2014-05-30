@@ -270,20 +270,6 @@ struct userdata_function : public base_function {
     template<typename... FxArgs>
     userdata_function(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
 
-    template<typename... Args>
-    int operator()(types<void>, types<Args...> t, lua_State* L) {
-        stack::get_call(L, fx, t);
-        std::ptrdiff_t nargs = sizeof...(Args);
-        lua_pop(L, nargs);
-        return 0;
-    }
-
-    template<typename... Args>
-    int operator()(types<>, types<Args...> t, lua_State* L) {
-        return (*this)(types<void>(), t, L);
-    }
-
-
     template<typename Return, typename Raw = Unqualified<Return>>
     typename std::enable_if<std::is_same<T, Raw>::value, void>::type special_push(lua_State*, Return&&) {
         // push nothing
@@ -292,6 +278,14 @@ struct userdata_function : public base_function {
     template<typename Return, typename Raw = Unqualified<Return>>
     typename std::enable_if<!std::is_same<T, Raw>::value, void>::type special_push(lua_State* L, Return&& r) {
         stack::push(L, std::forward<Return>(r));
+    }
+
+    template<typename... Args>
+    int operator()(types<void>, types<Args...> t, lua_State* L) {
+        stack::get_call(L, 2, fx, t);
+        std::ptrdiff_t nargs = sizeof...(Args);
+        lua_pop(L, nargs);
+        return 0;
     }
 
     template<typename... Ret, typename... Args>
@@ -303,6 +297,11 @@ struct userdata_function : public base_function {
         // stack::push(L, std::move(r));
         special_push(L, r);
         return sizeof...(Ret);
+    }
+
+    template<typename... Args>
+    int operator()(types<>, types<Args...> t, lua_State* L) {
+        return (*this)(types<void>(), t, L);
     }
 
     virtual int operator()(lua_State* L) override {
