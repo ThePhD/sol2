@@ -34,8 +34,10 @@ struct static_function {
 
     template<typename... Args>
     static int typed_call(types<void>, types<Args...> t, function_type* fx, lua_State* L) {
-        stack::pop_call(L, fx, t);
-        return 0;
+        stack::get_call(L, fx, t);
+	   std::ptrdiff_t nargs = sizeof...(Args);
+        lua_pop(L, nargs);
+	   return 0;
     }
 
     template<typename... Args>
@@ -46,8 +48,10 @@ struct static_function {
     template<typename... Ret, typename... Args>
     static int typed_call(types<Ret...>, types<Args...> t, function_type* fx, lua_State* L) {
         typedef typename return_type<Ret...>::type return_type;
-        return_type r = stack::pop_call(L, fx, t);
-        stack::push(L, std::move(r));
+        return_type r = stack::get_call(L, fx, t);
+	   std::ptrdiff_t nargs = sizeof...(Args);
+        lua_pop(L, nargs);
+	   stack::push(L, std::move(r));
         return sizeof...(Ret);
     }
 
@@ -71,8 +75,10 @@ struct static_member_function {
     template<typename... Args>
     static int typed_call(types<void>, types<Args...>, T& item, function_type& ifx, lua_State* L) {
         auto fx = [&item, &ifx](Args&&... args) -> void { (item.*ifx)(std::forward<Args>(args)...); };
-        stack::pop_call(L, fx, types<Args...>());
-        return 0;
+        stack::get_call(L, fx, types<Args...>());
+	   std::ptrdiff_t nargs = sizeof...(Args);
+        lua_pop(L, nargs);
+	   return 0;
     }
 
     template<typename... Args>
@@ -84,8 +90,10 @@ struct static_member_function {
     static int typed_call(types<Ret...>, types<Args...>, T& item, function_type& ifx, lua_State* L) {
         typedef typename return_type<Ret...>::type return_type;
         auto fx = [&item, &ifx](Args&&... args) -> return_type { return (item.*ifx)(std::forward<Args>(args)...); };
-        return_type r = stack::pop_call(L, fx, types<Args...>());
-        stack::push(L, std::move(r));
+        return_type r = stack::get_call(L, fx, types<Args...>());
+	   std::ptrdiff_t nargs = sizeof...(Args);
+        lua_pop(L, nargs);
+	   stack::push(L, std::move(r));
         return sizeof...(Ret);
     }
 
@@ -162,8 +170,10 @@ struct functor_function : public base_function {
 
     template<typename... Args>
     int operator()(types<void>, types<Args...> t, lua_State* L) {
-        stack::pop_call(L, fx, t);
-        return 0;
+        stack::get_call(L, fx, t);
+	   std::ptrdiff_t nargs = sizeof...(Args);
+        lua_pop(L, nargs);
+	   return 0;
     }
 
     template<typename... Args>
@@ -174,8 +184,10 @@ struct functor_function : public base_function {
     template<typename... Ret, typename... Args>
     int operator()(types<Ret...>, types<Args...> t, lua_State* L) {
         typedef typename return_type<Ret...>::type return_type;
-        return_type r = stack::pop_call(L, fx, t);
-        stack::push(L, r);
+        return_type r = stack::get_call(L, fx, t);
+	   std::ptrdiff_t nargs = sizeof...(Args);
+        lua_pop(L, nargs);
+	   stack::push(L, r);
         return sizeof...(Ret);
     }
 
@@ -206,7 +218,7 @@ struct member_function : public base_function {
 
     template<typename... Args>
     int operator()(types<void>, types<Args...> t, lua_State* L) {
-        stack::pop_call(L, fx, t);
+        stack::get_call(L, fx, t);
         return 0;
     }
 
@@ -218,8 +230,10 @@ struct member_function : public base_function {
     template<typename... Ret, typename... Args>
     int operator()(types<Ret...>, types<Args...> t, lua_State* L) {
         typedef typename return_type<Ret...>::type return_type;
-        return_type r = stack::pop_call(L, fx, t);
-        stack::push(L, std::move(r));
+        return_type r = stack::get_call(L, fx, t);
+        std::ptrdiff_t nargs = sizeof...(Args);
+        lua_pop(L, nargs);
+	   stack::push(L, std::move(r));
         return sizeof...(Ret);
     }
 
@@ -258,8 +272,10 @@ struct userdata_function : public base_function {
 
     template<typename... Args>
     int operator()(types<void>, types<Args...> t, lua_State* L) {
-        stack::pop_call(L, fx, t);
-        return 0;
+        stack::get_call(L, fx, t);
+        std::ptrdiff_t nargs = sizeof...(Args);
+        lua_pop(L, nargs);
+	   return 0;
     }
 
     template<typename... Args>
@@ -281,8 +297,10 @@ struct userdata_function : public base_function {
     template<typename... Ret, typename... Args>
     int operator()(types<Ret...>, types<Args...> t, lua_State* L) {
         typedef typename return_type<Ret...>::type return_type;
-        return_type r = stack::pop_call(L, fx, t);
-        // stack::push(L, std::move(r));
+        return_type r = stack::get_call(L, fx, t);
+	   std::ptrdiff_t nargs = sizeof...(Args);
+        lua_pop(L, nargs);
+	   // stack::push(L, std::move(r));
         special_push(L, r);
         return sizeof...(Ret);
     }
