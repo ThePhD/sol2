@@ -26,6 +26,7 @@
 #include "tuple.hpp"
 #include "stack.hpp"
 #include <cstdint>
+#include <functional>
 
 namespace sol {
 class function : public reference {
@@ -79,6 +80,15 @@ public:
         return invoke(types<Ret...>(), sizeof...(Args));
     }
 };
+
+namespace stack {
+namespace detail {
+    template <typename Signature>
+    inline std::function<Signature> get(types<std::function<Signature>>, lua_State* L, int index = -1) {
+        return std::function<Signature>(sol::function(L, index));
+    }
+} // detail
+} // stack
 } // sol
 
 #endif // SOL_FUNCTION_HPP
