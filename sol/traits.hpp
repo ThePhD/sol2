@@ -26,6 +26,12 @@
 #include <type_traits>
 
 namespace sol {
+template<class T, class...>
+struct are_same : std::true_type { };
+
+template<class T, class U, class... Args>
+struct are_same<T, U, Args...> : std::integral_constant <bool, std::is_same<T, U>::value && are_same<T, Args...>::value> { };
+
 template<typename T, typename R = void>
 using EnableIf = typename std::enable_if<T::value, R>::type;
 
@@ -52,6 +58,12 @@ template<>
 struct return_type<> : types<>{
     typedef void type;
 };
+
+template<typename... Args>
+struct is_tuple : std::false_type{ };
+
+template<typename... Args>
+struct is_tuple<std::tuple<Args...>> : std::true_type{ };
 
 template <typename T, template <typename...> class Templ>
 struct is_specialization_of : std::false_type { };

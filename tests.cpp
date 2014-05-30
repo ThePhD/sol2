@@ -2,6 +2,15 @@
 #include <catch.hpp>
 #include <sol.hpp>
 
+void test_free_func( std::function<void( )> f ) {
+    f( );
+}
+
+void test_free_func2( std::function<int( int )> f, int arg1 ) {
+    int val = f( arg1 );
+    assert( arg1 == val );
+}
+
 std::string free_function() {
     std::cout << "free_function()" << std::endl;
     return "test";
@@ -322,6 +331,25 @@ TEST_CASE("functions/return_order_and_multi_get", "Check if return order is in t
     REQUIRE(tcpp == triple);
     REQUIRE(tlua == triple);
     REQUIRE(tluaget == triple);
+}
+
+TEST_CASE( "functions/sol::function to std::function", "check if conversion to std::function works properly and calls with correct arguments" ) {
+    sol::state lua;
+    lua.open_libraries( sol::lib::base );
+
+    lua.set_function( "testFunc", test_free_func );
+    lua.set_function( "testFunc2", test_free_func2 );
+    lua.script(
+        "testFunc(function() print(\"hello std::function\") end)"
+        );
+    lua.script(
+        "function m(a)\n"
+        "     print(\"hello std::function with arg \", a)\n"
+        "     return a\n"
+        "end\n"
+        "\n"
+        "testFunc2(m, 1)"
+        );
 }
 
 TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works properly") {
