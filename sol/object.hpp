@@ -47,7 +47,7 @@ public:
     }
 
     explicit operator bool() const {
-        return is<nil_t>();
+        return !is<nil_t>();
     }
 };
 
