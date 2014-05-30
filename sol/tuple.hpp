@@ -57,7 +57,7 @@ template<size_t... Ns>
 struct build_reverse_indices<0, Ns...> : indices<Ns...> {};
 
 template<typename... Args>
-struct types : build_indices<sizeof...(Args)> { typedef types type; };
+struct types : build_indices<sizeof...(Args)> { typedef types type; typedef types types_type; };
 
 template<class Acc, class... Args>
 struct reversed_ : Acc{};

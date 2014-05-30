@@ -299,6 +299,11 @@ inline auto get_call(lua_State* L, int index, TFx&& fx, types<Args...> t) -> dec
 }
 
 template<typename... Args, typename TFx>
+inline auto get_call(lua_State* L, TFx&& fx, types<Args...> t) -> decltype(detail::ltr_get(L, 1, std::forward<TFx>(fx), t, t)) {
+    return detail::ltr_get(L, 1, std::forward<TFx>(fx), t, t);
+}
+
+template<typename... Args, typename TFx>
 inline auto pop_call(lua_State* L, TFx&& fx, types<Args...> t) -> decltype(detail::ltr_pop(L, std::forward<TFx>(fx), t, t)) {
     return detail::ltr_pop(L, std::forward<TFx>(fx), t, t);
 }
