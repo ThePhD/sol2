@@ -32,12 +32,12 @@
 namespace sol {
 namespace detail {
 #ifdef _MSC_VER
-std::string demangle(const std::type_info& id) {
+std::string get_type_name(const std::type_info& id) {
     return id.name();
 }
 
 #elif defined(__GNUC__) || defined(__clang__)
-std::string demangle(const std::type_info& id) {
+std::string get_type_name(const std::type_info& id) {
     int status;
     char* unmangled = abi::__cxa_demangle(id.name(), 0, 0, &status);
     std::string realname = unmangled;
@@ -49,24 +49,26 @@ std::string demangle(const std::type_info& id) {
 #error Compiler not supported for demangling
 #endif // compilers
 
-std::string lua_demangle(const std::type_info& id) {
-    std::string realname = demangle(id);
-    const static std::array<std::string, 2> removals = { "struct ", "class " };
-    const static std::array<std::string, 2> replacements = { "::", "_" };
+std::string demangle(const std::type_info& id) {
+    std::string realname = get_type_name(id);
+    const static std::array<std::string, 2> removals = {{ "struct ", "class " }};
+    const static std::array<std::string, 2> replacements = {{ "::", "_" }};
     for(std::size_t r = 0; r < removals.size(); ++r) {
         auto found = realname.find(removals[r]);
-        while (found != std::string::npos) {
+        while(found != std::string::npos) {
             realname.erase(found, removals[r].size());
             found = realname.find(removals[r]);
        }
     }
+
     for(std::size_t r = 0; r < replacements.size(); r+=2) {
         auto found = realname.find(replacements[r]);
-        while (found != std::string::npos) {
-            realname.replace(found, replacements[r].size(), replacements[r+1]);
+        while(found != std::string::npos) {
+            realname.replace(found, replacements[r].size(), replacements[r + 1]);
             found = realname.find(replacements[r], found);
         }
     }
+
     return realname;
 }
 } // detail
