@@ -207,7 +207,7 @@ private:
         stack::push(state(), userobjdata);
         luaL_setfuncs(state(), funcreg, upvalues + 1);
 
-       pop();
+        pop();
         return *this;
     }
 
@@ -225,7 +225,7 @@ private:
         push();
         int upvalues = stack::push_user(state(), target);
         luaL_setfuncs(state(), funcreg, upvalues);
-       pop();
+        pop();
 
         return *this;
     }
