@@ -109,7 +109,7 @@ inline std::function<Signature> get_std_func(types<FxArgs...> t, types<>, lua_St
 
 template <typename Signature>
 inline std::function<Signature> get(types<std::function<Signature>>, lua_State* L, int index = -1) {
-    typedef typename function_traits<Signature> fx_t;
+    typedef function_traits<Signature> fx_t;
     typedef typename fx_t::args_type args_t;
     typedef typename tuple_types<typename fx_t::return_type>::type ret_t;
     return get_std_func<Signature>(args_t(), ret_t(), L, index);
