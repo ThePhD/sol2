@@ -29,6 +29,7 @@
 #include <utility>
 #include <array>
 #include <cstring>
+#include <functional>
 
 namespace sol {
 namespace stack {
@@ -77,6 +78,9 @@ template <typename T, typename U = Unqualified<T>>
 inline auto get(types<T> t, lua_State* L, int index = -1) -> decltype(get_sol_type(std::is_base_of<sol::reference, U>(), t, L, index)) {
     return get_sol_type(std::is_base_of<sol::reference, U>(), t, L, index);
 }
+
+template <typename Signature>
+inline std::function<Signature> get(types<std::function<Signature>>, lua_State* L, int index = -1);
 
 template<typename T>
 inline T get_unsigned(std::true_type, lua_State* L, int index = -1) {
