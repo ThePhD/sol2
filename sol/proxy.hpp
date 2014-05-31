@@ -19,6 +19,9 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+#ifndef SOL_PROXY_HPP
+#define SOL_PROXY_HPP
+
 #include "traits.hpp"
 #include "object.hpp"
 #include "function.hpp"
@@ -127,3 +130,5 @@ inline bool operator!= (const proxy<Table, Key>& right, T&& left) {
 }
 
 } // sol
+
+#endif // SOL_PROXY_HPP
