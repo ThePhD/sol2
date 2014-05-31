@@ -33,9 +33,26 @@ namespace sol {
 namespace detail {
 #ifdef _MSC_VER
 std::string demangle(const std::type_info& id) {
+    return id.name();
+}
+
+#elif defined(__GNUC__) || defined(__clang__)
+std::string demangle(const std::type_info& id) {
+    int status;
+    char* unmangled = abi::__cxa_demangle(id.name(), 0, 0, &status);
+    std::string realname = unmangled;
+    free(unmangled);
+    return realname;
+}
+
+#else
+#error Compiler not supported for demangling
+#endif // compilers
+
+std::string lua_demangle(const std::type_info& id) {
+    std::string realname = demangle(id);
     const static std::array<std::string, 2> removals = { "struct ", "class " };
     const static std::array<std::string, 2> replacements = { "::", "_" };
-    std::string realname = id.name();
     for(std::size_t r = 0; r < removals.size(); ++r) {
         auto found = realname.find(removals[r]);
         while (found != std::string::npos) {
@@ -52,19 +69,6 @@ std::string demangle(const std::type_info& id) {
     }
     return realname;
 }
-
-#elif defined(__GNUC__) || defined(__clang__)
-std::string demangle(const std::type_info& id) {
-    int status;
-    char* unmangled = abi::__cxa_demangle(id.name(), 0, 0, &status);
-    std::string realname = unmangled;
-    free(unmangled);
-    return realname;
-}
-
-#else
-#error Compiler not supported for demangling
-#endif // compilers
 } // detail
 } // sol
 

@@ -61,16 +61,21 @@ inline type get(types<type>, lua_State* L, int index = -1) {
     return static_cast<type>(lua_type(L, index));
 }
 
+template <typename T, typename U = typename std::remove_reference<T>::type>
+inline U get_sol_type(std::true_type, types<T>, lua_State* L, int index = -1) {
+    return U(L, index);
+}
+
 template <typename T>
-inline T& get(types<userdata<T>>, lua_State* L, int index = -1) {
+inline T& get_sol_type(std::false_type, types<T>, lua_State* L, int index = -1) {
     userdata_t udata = get(types<userdata_t>{}, L, index);
     T* obj = static_cast<T*>(udata.value);
     return *obj;
 }
 
-template <typename T, typename U = typename std::remove_reference<T>::type>
-inline U get(types<T>, lua_State* L, int index = -1) {
-    return U(L, index);
+template <typename T, typename U = Unqualified<T>>
+inline auto get(types<T> t, lua_State* L, int index = -1) -> decltype(get_sol_type(std::is_base_of<sol::reference, U>(), t, L, index)) {
+    return get_sol_type(std::is_base_of<sol::reference, U>(), t, L, index);
 }
 
 template<typename T>
@@ -296,6 +301,11 @@ inline void push_reverse(lua_State* L, std::tuple<Args...>&& tuplen) {
 template<typename... Args, typename TFx>
 inline auto get_call(lua_State* L, int index, TFx&& fx, types<Args...> t) -> decltype(detail::ltr_get(L, index, std::forward<TFx>(fx), t, t)) {
     return detail::ltr_get(L, index, std::forward<TFx>(fx), t, t);
+}
+
+template<typename... Args, typename TFx>
+inline auto get_call(lua_State* L, TFx&& fx, types<Args...> t) -> decltype(detail::ltr_get(L, 1, std::forward<TFx>(fx), t, t)) {
+    return detail::ltr_get(L, 1, std::forward<TFx>(fx), t, t);
 }
 
 template<typename... Args, typename TFx>

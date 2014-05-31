@@ -69,10 +69,10 @@ template<typename... Args>
 struct reversed : reversed_<types<>, Args...>{};
 
 template<typename... Args>
-struct tuple_types : types<Args...>, std::false_type {};
+struct tuple_types : types<Args...> {};
 
 template<typename... Args>
-struct tuple_types<std::tuple<Args...>> : types<Args...>, std::true_type {};
+struct tuple_types<std::tuple<Args...>> : types<Args...> {};
 
 template<typename... Tn>
 struct constructors {};
