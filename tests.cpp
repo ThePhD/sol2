@@ -8,7 +8,8 @@ void test_free_func(std::function<void()> f) {
 
 void test_free_func2(std::function<int(int)> f, int arg1) {
     int val = f(arg1);
-    assert(arg1 == val);
+    if(val != arg1)
+        throw sol::error("failed function call!");
 }
 
 std::string free_function() {
@@ -30,8 +31,10 @@ struct self_test {
 
     void f(const self_test& t) {
         std::cout << "got test" << '\n';
-        assert(t.bark == bark);
-        assert(&t == this);
+        if (t.bark != bark)
+            throw sol::error("bark values are not the same for self_test f function");
+        if (&t != this)
+            throw sol::error("call does not reference self for self_test f function");
     }
 };
 
