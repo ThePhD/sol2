@@ -157,6 +157,19 @@ struct function_traits<R(*)(Args...)> {
     template<std::size_t i>
     using arg = typename std::tuple_element<i, arg_tuple_type>::type;
 };
+
+struct has_begin_end_impl {
+    template<typename T, typename U = Unqualified<T>,
+                         typename B = decltype(std::declval<U&>().begin()),
+                         typename E = decltype(std::declval<U&>().end())>
+    static std::true_type test(int);
+
+    template<typename...>
+    static std::false_type test(...);
+};
+
+template<typename T>
+struct has_begin_end : decltype(has_begin_end_impl::test<T>(0)) {};
 } // sol
 
 #endif // SOL_TRAITS_HPP

@@ -167,9 +167,25 @@ auto pop(lua_State* L) -> decltype(get<T>(L)) {
     return r;
 }
 
-template<typename T>
-inline EnableIf<std::is_arithmetic<T>> push(lua_State* L, T arithmetic) {
+template<typename T, bool B = std::is_arithmetic<T>::value>
+inline typename std::enable_if<B, void>::type push(lua_State* L, T arithmetic) {
     detail::push_arithmetic(std::is_integral<T>{}, L, arithmetic);
+}
+
+template<typename T, bool B = !std::is_arithmetic<T>::value &&
+                              !std::is_same<Unqualified<T>, std::string>::value &&
+                              has_begin_end<T>::value>
+inline typename std::enable_if<B, void>::type push(lua_State* L, const T& cont) {
+    lua_createtable(L, cont.size(), 0);
+    unsigned index = 1;
+    for(auto&& i : cont) {
+        // push the index
+        push(L, index++);
+        // push the value
+        push(L, i);
+        // set the table
+        lua_settable(L, -3);
+    }
 }
 
 inline void push(lua_State*, reference& ref) {
