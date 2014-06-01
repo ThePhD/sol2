@@ -188,19 +188,17 @@ struct pusher {
             lua_settable(L, -3);
         }
     }
+
+    template<typename U = T, EnableIf<std::is_base_of<reference, U>> = 0>
+    static void push(lua_State*, T& ref) {
+        ref.push();
+    }
 };
 
 template<>
 struct pusher<bool> {
     static void push(lua_State* L, const bool& b) {
         lua_pushboolean(L, b);
-    }
-};
-
-template<>
-struct pusher<reference> {
-    static void push(lua_State*, reference& r) {
-        r.push();
     }
 };
 
