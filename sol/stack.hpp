@@ -120,28 +120,6 @@ inline auto get_helper(std::false_type, lua_State* L, int index = -1) -> decltyp
     // T is a class
     return get(types<T>(), L, index);
 }
-
-template<typename T>
-inline void push_unsigned(std::true_type, lua_State* L, T x) {
-    lua_pushunsigned(L, x);
-}
-
-template<typename T>
-inline void push_unsigned(std::false_type, lua_State* L, T x) {
-    lua_pushinteger(L, x);
-}
-
-template<typename T>
-inline void push_arithmetic(std::true_type, lua_State* L, T x) {
-    // T is an integral type
-    push_unsigned(std::is_unsigned<T>{}, L, x);
-}
-
-template<typename T>
-inline void push_arithmetic(std::false_type, lua_State* L, T x) {
-    // T is an floating point type
-    lua_pushnumber(L, x);
-}
 } // detail
 
 template<typename T, typename U = Unqualified<T>>
@@ -167,62 +145,100 @@ auto pop(lua_State* L) -> decltype(get<T>(L)) {
     return r;
 }
 
-template<typename T, bool B = std::is_arithmetic<T>::value>
-inline typename std::enable_if<B, void>::type push(lua_State* L, T arithmetic) {
-    detail::push_arithmetic(std::is_integral<T>{}, L, arithmetic);
-}
+template<typename T>
+struct pusher;
 
-template<typename T, bool B = !std::is_arithmetic<T>::value &&
-                              !std::is_same<Unqualified<T>, std::string>::value &&
-                              has_begin_end<T>::value>
-inline typename std::enable_if<B, void>::type push(lua_State* L, const T& cont) {
-    lua_createtable(L, cont.size(), 0);
-    unsigned index = 1;
-    for(auto&& i : cont) {
-        // push the index
-        push(L, index++);
-        // push the value
-        push(L, i);
-        // set the table
-        lua_settable(L, -3);
+template<typename T>
+struct pusher {
+    template<typename U = T, EnableIf<std::is_floating_point<U>> = 0>
+    static void push(lua_State* L, const T& value) {
+        lua_pushnumber(L, value);
     }
-}
 
-inline void push(lua_State*, reference& ref) {
-    ref.push();
-}
+    template<typename U = T, EnableIf<std::is_integral<U>, std::is_signed<U>> = 0>
+    static void push(lua_State* L, const T& value) {
+        lua_pushinteger(L, value);
+    }
 
-inline void push(lua_State* L, bool boolean) {
-    lua_pushboolean(L, boolean);
-}
+    template<typename U = T, EnableIf<std::is_integral<U>, std::is_unsigned<U>> = 0>
+    static void push(lua_State* L, const T& value) {
+        lua_pushunsigned(L, value);
+    }
 
-inline void push(lua_State* L, const nil_t&) {
-    lua_pushnil(L);
-}
+    template<typename U = T, EnableIf<has_begin_end<U>, Not<has_key_value_pair<U>>> = 0>
+    static void push(lua_State* L, const T& cont) {
+        lua_createtable(L, cont.size(), 0);
+        unsigned index = 1;
+        for(auto&& i : cont) {
+            // push the index
+            pusher<unsigned>::push(L, index++);
+            // push the value
+            pusher<Unqualified<decltype(i)>>::push(L, i);
+            // set the table
+            lua_settable(L, -3);
+        }
+    }
+};
 
-inline void push(lua_State* L, lua_CFunction func) {
-    lua_pushcfunction(L, func);
-}
+template<>
+struct pusher<bool> {
+    static void push(lua_State* L, const bool& b) {
+        lua_pushboolean(L, b);
+    }
+};
 
-inline void push(lua_State* L, lua_CFunction func, int n) {
-    lua_pushcclosure(L, func, n);
-}
+template<>
+struct pusher<reference> {
+    static void push(lua_State*, reference& r) {
+        r.push();
+    }
+};
 
-inline void push(lua_State* L, void* userdata) {
-    lua_pushlightuserdata(L, userdata);
-}
+template<>
+struct pusher<nil_t> {
+    static void push(lua_State* L, const nil_t&) {
+        lua_pushnil(L);
+    }
+};
+
+template<>
+struct pusher<lua_CFunction> {
+    static void push(lua_State* L, lua_CFunction func) {
+        lua_pushcfunction(L, func);
+    }
+};
+
+template<>
+struct pusher<void*> {
+    static void push(lua_State* L, void* userdata) {
+        lua_pushlightuserdata(L, userdata);
+    }
+};
+
+template<>
+struct pusher<const char*> {
+    static void push(lua_State* L, const char* str) {
+        lua_pushlstring(L, str, std::char_traits<char>::length(str));
+    }
+};
 
 template<size_t N>
-inline void push(lua_State* L, const char (&str)[N]) {
-    lua_pushlstring(L, str, N - 1);
-}
+struct pusher<char[N]> {
+    static void push(lua_State* L, const char (&str)[N]) {
+        lua_pushlstring(L, str, N - 1);
+    }
+};
 
-inline void push(lua_State* L, const char* str) {
-    lua_pushlstring(L, str, std::char_traits<char>::length(str));
-}
+template<>
+struct pusher<std::string> {
+    static void push(lua_State* L, const std::string& str) {
+        lua_pushlstring(L, str.c_str(), str.size());
+    }
+};
 
-inline void push(lua_State* L, const std::string& str) {
-    lua_pushlstring(L, str.c_str(), str.size());
+template<typename T>
+inline void push(lua_State* L, T&& t) {
+    pusher<Unqualified<T>>::push(L, std::forward<T>(t));
 }
 
 template<typename T>
@@ -237,8 +253,8 @@ inline void push_user(lua_State* L, T& userdata, const char* metatablekey) {
 }
 
 template<typename T, size_t N>
-inline void push(lua_State* L, const std::array<T, N>& data) {
-    for (auto&& i : data) {
+inline void push_as_upvalues(lua_State* L, const std::array<T, N>& data) {
+    for(auto&& i : data) {
         push(L, i);
     }
 }
@@ -254,7 +270,7 @@ inline int push_user(lua_State* L, T& item) {
 
     data_t data{{}};
     std::memcpy(std::addressof(data[0]), std::addressof(item), itemsize);
-    push(L, data);
+    push_as_upvalues(L, data);
     return data_t_count;
 }
 
@@ -294,14 +310,15 @@ inline auto rtl_pop(lua_State* L, F&& f, types<Args...> t, types<Head, Tail...>,
 } // detail
 
 template<typename... Args>
-inline void push(lua_State* L, const std::tuple<Args...>& tuplen) {
-    detail::push_tuple(L, build_indices<sizeof...(Args)>(), tuplen);
-}
+struct pusher<std::tuple<Args...>> {
+    static void push(lua_State* L, const std::tuple<Args...>& tuplen) {
+        detail::push_tuple(L, build_indices<sizeof...(Args)>(), tuplen);
+    }
 
-template<typename... Args>
-inline void push(lua_State* L, std::tuple<Args...>&& tuplen) {
-    detail::push_tuple(L, build_indices<sizeof...(Args)>(), std::move(tuplen));
-}
+    static void push(lua_State* L, std::tuple<Args...>&& tuplen) {
+        detail::push_tuple(L, build_indices<sizeof...(Args)>(), std::move(tuplen));
+    }
+};
 
 template<typename T>
 inline void push_reverse(lua_State* L, T&& item) {
@@ -374,7 +391,6 @@ template <typename T>
 struct get_return {
     typedef decltype(get<T>(nullptr)) type;
 };
-
 } // stack
 } // sol
 
