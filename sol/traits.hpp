@@ -32,11 +32,26 @@ struct are_same : std::true_type { };
 template<class T, class U, class... Args>
 struct are_same<T, U, Args...> : std::integral_constant <bool, std::is_same<T, U>::value && are_same<T, Args...>::value> { };
 
-template<typename T, typename R = void>
-using EnableIf = typename std::enable_if<T::value, R>::type;
+template<bool B>
+using Bool = std::integral_constant<bool, B>;
 
-template<typename T, typename R = void>
-using DisableIf = typename std::enable_if<!T::value, R>::type;
+template<typename T>
+using Not = Bool<!T::value>;
+
+template<typename Condition, typename Then, typename Else>
+using If = typename std::conditional<Condition::value, Then, Else>::type;
+
+template<typename... Args>
+struct And : Bool<true> {};
+
+template<typename T, typename... Args>
+struct And<T, Args...> : If<T, And<Args...>, Bool<false>> {};
+
+template<typename... Args>
+using EnableIf = typename std::enable_if<And<Args...>::value, int>::type;
+
+template<typename... Args>
+using DisableIf = typename std::enable_if<Not<And<Args...>>::value, int>::type;
 
 template<typename T>
 using Unqualified = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
@@ -69,9 +84,6 @@ template <typename T, template <typename...> class Templ>
 struct is_specialization_of : std::false_type { };
 template <typename... T, template <typename...> class Templ>
 struct is_specialization_of<Templ<T...>, Templ> : std::true_type { };
-
-template<bool B>
-using Bool = std::integral_constant<bool, B>;
 
 namespace detail {
 template<typename T, bool isclass = std::is_class<Unqualified<T>>::value>

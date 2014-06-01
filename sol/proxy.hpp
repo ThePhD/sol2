@@ -57,13 +57,13 @@ public:
         return *this;
     }
 
-    template<typename U>
-    EnableIf<Function<Unqualified<U>>> operator=(U&& other) {
+    template<typename U, EnableIf<Function<Unqualified<U>>> = 0>
+    void operator=(U&& other) {
         tbl.set_function(key, std::forward<U>(other));
     }
 
-    template<typename U>
-    DisableIf<Function<Unqualified<U>>> operator=(U&& other) {
+    template<typename U, DisableIf<Function<Unqualified<U>>> = 0>
+    void operator=(U&& other) {
         tbl.set(key, std::forward<U>(other));
     }
 
