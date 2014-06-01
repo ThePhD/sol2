@@ -178,6 +178,16 @@ struct pusher {
             lua_settable(L, -3);
         }
     }
+
+    template<typename U = T, EnableIf<has_begin_end<U>, has_key_value_pair<U>> = 0>
+    static void push(lua_State* L, const T& cont) {
+        lua_createtable(L, cont.size(), 0);
+        for(auto&& pair : cont) {
+            pusher<Unqualified<decltype(pair.first)>>::push(L, pair.first);
+            pusher<Unqualified<decltype(pair.second)>>::push(L, pair.second);
+            lua_settable(L, -3);
+        }
+    }
 };
 
 template<>
