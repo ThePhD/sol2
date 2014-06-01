@@ -1,6 +1,8 @@
 #define CATCH_CONFIG_MAIN
 #include <catch.hpp>
 #include <sol.hpp>
+#include <vector>
+#include <map>
 
 void test_free_func(std::function<void()> f) {
     f();
@@ -15,6 +17,18 @@ void test_free_func2(std::function<int(int)> f, int arg1) {
 std::string free_function() {
     std::cout << "free_function()" << std::endl;
     return "test";
+}
+
+std::vector<int> test_table_return_one() {
+    return { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+}
+
+std::vector<std::pair<std::string, int>> test_table_return_two() {
+    return {{ "one", 1 }, { "two", 2 }, { "three", 3 }};
+}
+
+std::map<std::string, std::string> test_table_return_three() {
+    return {{ "name", "Rapptz" }, { "friend", "ThePhD" }, { "project", "sol" }};
 }
 
 struct self_test {
@@ -556,4 +570,34 @@ TEST_CASE("tables/self-referential userdata", "userdata classes must play nice w
         "a:g(\"woof\")\n"
         "a:f(a)\n"
        );
+}
+
+TEST_CASE("tables/arbitrary-creation", "tables should be created from standard containers") {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+    lua.set_function("test_one", test_table_return_one);
+    lua.set_function("test_two", test_table_return_two);
+    lua.set_function("test_three", test_table_return_three);
+
+    REQUIRE_NOTHROW(lua.script("a = test_one()"));
+    REQUIRE_NOTHROW(lua.script("b = test_two()"));
+    REQUIRE_NOTHROW(lua.script("c = test_three()"));
+
+    REQUIRE_NOTHROW(lua.script("assert(#a == 10, 'error')"));
+    REQUIRE_NOTHROW(lua.script("assert(a[3] == 3, 'error')"));
+    REQUIRE_NOTHROW(lua.script("assert(b.one == 1, 'error')"));
+    REQUIRE_NOTHROW(lua.script("assert(b.three == 3, 'error')"));
+    REQUIRE_NOTHROW(lua.script("assert(c.name == 'Rapptz', 'error')"));
+    REQUIRE_NOTHROW(lua.script("assert(c.project == 'sol', 'error')"));
+
+    auto&& a = lua.get<sol::table>("a");
+    auto&& b = lua.get<sol::table>("b");
+    auto&& c = lua.get<sol::table>("c");
+
+    REQUIRE(a.size() == 10ULL);
+    REQUIRE(a.get<int>(3) == 3);
+    REQUIRE(b.get<int>("one") == 1);
+    REQUIRE(b.get<int>("three") == 3);
+    REQUIRE(c.get<std::string>("name") == "Rapptz");
+    REQUIRE(c.get<std::string>("project") == "sol");
 }
