@@ -170,6 +170,20 @@ struct has_begin_end_impl {
 
 template<typename T>
 struct has_begin_end : decltype(has_begin_end_impl::test<T>(0)) {};
+
+struct has_key_value_pair_impl {
+    template<typename T, typename U = Unqualified<T>,
+             typename V = typename U::value_type,
+             typename F = decltype(std::declval<V&>().first),
+             typename S = decltype(std::declval<V&>().second)>
+    static std::true_type test(int);
+
+    template<typename...>
+    static std::false_type test(...);
+};
+
+template<typename T>
+struct has_key_value_pair : decltype(has_key_value_pair_impl::test<T>(0)) {};
 } // sol
 
 #endif // SOL_TRAITS_HPP
