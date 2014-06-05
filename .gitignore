@@ -23,4 +23,5 @@ lib/liblua5.2.a
 *.creator
 *.files
 *.includes
+*.pyc
 main.cpp
