@@ -50,7 +50,7 @@ else:
 if args.ci:
     ldflags.extend(libraries(['lua5.2', 'dl']))
     ldflags.extend(library_includes(['lib']))
-    include.extend('/usr/include/lua5.2', './lua-5.2.2/src', './include')
+    include.extend(['/usr/include/lua5.2', './lua-5.2.2/src', './include'])
 else:
     ldflags.extend(libraries(['lua']))
 
