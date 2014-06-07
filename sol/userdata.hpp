@@ -24,7 +24,7 @@
 
 #include "state.hpp"
 #include "function_types.hpp"
-#include "demangle.hpp"
+#include "userdata_traits.hpp"
 #include <vector>
 
 namespace sol {
@@ -36,25 +36,14 @@ inline std::unique_ptr<T> make_unique(Args&&... args) {
 } // detail
 
 template<typename T>
-struct userdata_traits {
-    static const std::string name;
-    static const std::string metatable;
-};
-
-template<typename T>
-const std::string userdata_traits<T>::name = detail::demangle(typeid(T));
-
-template<typename T>
-const std::string userdata_traits<T>::metatable = std::string("sol.stateful.").append(name);
-
-template<typename T>
 class userdata {
 private:
-    friend table;
     std::string luaname;
     std::vector<std::string> functionnames;
-    std::vector<std::unique_ptr<base_function>> functions;
+    std::vector<std::unique_ptr<base_function>> funcs;
+    std::vector<std::unique_ptr<base_function>> ptrfuncs;
     std::vector<luaL_Reg> functiontable;
+    std::vector<luaL_Reg> ptrfunctiontable;
 
     template<typename... TTypes>
     struct constructor {
@@ -89,7 +78,7 @@ private:
             T* obj = static_cast<T*>(udata);
             match_constructor(L, obj, syntax, argcount - static_cast<int>(syntax), typename std::common_type<TTypes>::type()...);
 
-            luaL_getmetatable(L, meta.c_str());
+            luaL_getmetatable(L, std::addressof(meta[0]));
             lua_setmetatable(L, -2);
 
             return 1;
@@ -115,8 +104,10 @@ private:
         static_assert(std::is_base_of<TBase, T>::value, "Any registered function must be part of the class");
         typedef typename std::decay<decltype(func)>::type function_type;
         functionnames.push_back(std::move(name));
-        functions.emplace_back(detail::make_unique<userdata_function<function_type, T>>(std::move(func)));
+        funcs.emplace_back(detail::make_unique<userdata_function<function_type, T>>(std::move(func)));
+        ptrfuncs.emplace_back(detail::make_unique<userdata_function<function_type, typename std::add_pointer<T>::type>>(std::move(func)));
         functiontable.push_back({ functionnames.back().c_str(), &base_function::userdata<N>::call });
+        ptrfunctiontable.push_back({ functionnames.back().c_str(), &base_function::userdata<N>::call });
         build_function_tables<N + 1>(std::forward<Args>(args)...);
     }
 
@@ -130,22 +121,81 @@ public:
     template<typename... Args, typename... CArgs>
     userdata(std::string name, constructors<CArgs...>, Args&&... args): luaname(std::move(name)) {
         functionnames.reserve(sizeof...(args) + 2);
-        functiontable.reserve(sizeof...(args) + 3);
-        functions.reserve(sizeof...(args) + 2);
+        functiontable.reserve(sizeof...(args) + 2);
+        ptrfunctiontable.reserve(sizeof...(args) + 2);
+        funcs.reserve(sizeof...(args) + 2);
+        ptrfuncs.reserve(sizeof...(args) + 2);
         build_function_tables<0>(std::forward<Args>(args)...);
 
         functionnames.push_back("new");
         functiontable.push_back({ functionnames.back().c_str(), &constructor<CArgs...>::construct });
         functionnames.push_back("__gc");
         functiontable.push_back({ functionnames.back().c_str(), &destructor<sizeof...(Args) / 2>::destruct });
+        // ptr_functions does not participate in garbage collection/new,
+        // as all pointered types are considered
+        // to be references. This makes returns of
+        // `std::vector<int>&` and `std::vector<int>*` work
 
         functiontable.push_back({ nullptr, nullptr });
+        ptrfunctiontable.push_back({ nullptr, nullptr });
     }
 
     template<typename... Args, typename... CArgs>
     userdata(const char* name, constructors<CArgs...> c, Args&&... args) :
         userdata(std::string(name), std::move(c), std::forward<Args>(args)...) {}
+
+    const std::vector<std::string>& function_names () const {
+        return functionnames;
+    }
+
+    const std::vector<std::unique_ptr<base_function>>& functions () const {
+        return funcs;
+    }
+
+    const std::vector<std::unique_ptr<base_function>>& reference_functions () const {
+        return ptrfuncs;
+    }
+
+    const std::vector<luaL_Reg>& function_table () const {
+        return functiontable;
+    }
+
+    const std::vector<luaL_Reg>& reference_function_table () const {
+        return ptrfunctiontable;
+    }
+
+    const std::string& name () const {
+        return luaname;
+    }
 };
+
+namespace stack {
+template <typename T>
+struct pusher<userdata<T>> {
+    static void push ( lua_State* L, userdata<T>& user ) {
+        auto&& ptrmeta = userdata_traits<typename std::add_pointer<T>::type>::metatable;
+        luaL_newmetatable(L, ptrmeta.c_str());
+        for (std::size_t upvalues = 0; upvalues < user.reference_functions().size(); ++upvalues) {
+            stack::push(L, static_cast<void*>(user.reference_functions()[ upvalues ].get()));
+        }
+        luaL_setfuncs(L, user.reference_function_table().data(), static_cast<uint32_t>(user.reference_functions().size()));
+
+        lua_pushvalue(L, -1);
+        lua_setfield(L, -1, "__index");
+
+        auto&& meta = userdata_traits<T>::metatable;
+        luaL_newmetatable(L, meta.c_str());
+        for (std::size_t upvalues = 0; upvalues < user.functions().size(); ++upvalues) {
+            stack::push(L, static_cast<void*>(user.functions()[ upvalues ].get()));
+        }
+        luaL_setfuncs(L, user.function_table().data(), static_cast<uint32_t>(user.functions().size()));
+
+        lua_pushvalue(L, -1);
+        lua_setfield(L, -1, "__index");
+    }
+};
+} // stack
+
 } // sol
 
 #endif // SOL_USERDATA_HPP

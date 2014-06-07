@@ -48,6 +48,12 @@ template<typename T, typename... Args>
 struct And<T, Args...> : If<T, And<Args...>, Bool<false>> {};
 
 template<typename... Args>
+struct Or : Bool<true> {};
+
+template<typename T, typename... Args>
+struct Or<T, Args...> : If<Not<T>, Or<Args...>, Bool<true>> {};
+
+template<typename... Args>
 using EnableIf = typename std::enable_if<And<Args...>::value, int>::type;
 
 template<typename... Args>

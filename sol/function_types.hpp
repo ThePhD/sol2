@@ -26,6 +26,38 @@
 #include <memory>
 
 namespace sol {
+namespace detail {
+template <typename T, typename Func, typename R>
+struct functor {
+    T* item;
+    Func invocation;
+
+    template<typename... FxArgs>
+    functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
+
+    template<typename... Args>
+    R operator()(Args&&... args) {
+        T& member = *item;
+        return (member.*invocation)(std::forward<Args>(args)...);
+    }
+};
+
+template <typename T, typename Func>
+struct functor<T, Func, void> {
+    T* item;
+    Func invocation;
+
+    template<typename... FxArgs>
+    functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
+
+    template<typename... Args>
+    void operator()(Args&&... args) {
+        T& member = *item;
+        (member.*invocation)(std::forward<Args>(args)...);
+    }
+};
+} // detail
+
 
 template<typename Function>
 struct static_function {
@@ -56,7 +88,7 @@ struct static_function {
     }
 
     static int call(lua_State* L) {
-        auto udata = stack::get_user<function_type*>(L);
+        auto udata = stack::detail::get_as_upvalues<function_type*>(L);
         function_type* fx = udata.first;
         int r = typed_call(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L);
         return r;
@@ -98,8 +130,8 @@ struct static_member_function {
     }
 
     static int call(lua_State* L) {
-        auto memberdata = stack::get_user<function_type>(L, 1);
-        auto objdata = stack::get_user<T*>(L, memberdata.second);
+        auto memberdata = stack::detail::get_as_upvalues<function_type>(L, 1);
+        auto objdata = stack::detail::get_as_upvalues<T*>(L, memberdata.second);
         function_type& memfx = memberdata.first;
         T& obj = *objdata.first;
         int r = typed_call(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), obj, memfx, L);
@@ -242,41 +274,36 @@ struct member_function : public base_function {
     }
 };
 
-template<typename Function, typename T>
+template<typename Function, typename Tp>
 struct userdata_function : public base_function {
+    typedef typename std::remove_pointer<Tp>::type T;
     typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
     typedef function_traits<function_type> traits_type;
-    struct functor {
-        T* item;
-        function_type invocation;
+    typedef typename traits_type::return_type return_type;
 
-        template<typename... FxArgs>
-        functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
-
-       void prepare(lua_State* L) {
-            void* udata = stack::get<userdata_t>(L, 1);
-            if (udata == nullptr)
-                throw error("must use the syntax [object]:[function] to call member functions bound to C++");
-            item = static_cast<T*>(udata);
-       }
-
-        template<typename... Args>
-        typename traits_type::return_type operator()(Args&&... args) {
-            T& member = *item;
-            return (member.*invocation)(std::forward<Args>(args)...);
-        }
-    } fx;
+    detail::functor<T, function_type, return_type> fx;
 
     template<typename... FxArgs>
     userdata_function(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
 
     template<typename Return, typename Raw = Unqualified<Return>>
-    typename std::enable_if<std::is_same<T, Raw>::value, void>::type special_push(lua_State*, Return&&) {
-        // push nothing
+    typename std::enable_if<std::is_same<T, Raw>::value, void>::type push(lua_State* L, Return&& r) {
+        if ( detail::get_ptr(r) == fx.item ) {
+            // push nothing
+            // note that pushing nothing with the ':'
+            // syntax means we leave the instance of what
+            // was pushed onto the stack by lua to do the
+            // function call alone,
+            // and naturally lua returns that.
+            // It's an "easy" way to return *this,
+            // without allocating an extra userdata, apparently!
+            return;
+        }
+        stack::push(L, std::forward<Return>(r));
     }
 
     template<typename Return, typename Raw = Unqualified<Return>>
-    typename std::enable_if<!std::is_same<T, Raw>::value, void>::type special_push(lua_State* L, Return&& r) {
+    typename std::enable_if<!std::is_same<T, Raw>::value, void>::type push(lua_State* L, Return&& r) {
         stack::push(L, std::forward<Return>(r));
     }
 
@@ -290,12 +317,10 @@ struct userdata_function : public base_function {
 
     template<typename... Ret, typename... Args>
     int operator()(types<Ret...>, types<Args...> t, lua_State* L) {
-        typedef typename return_type<Ret...>::type return_type;
         return_type r = stack::get_call(L, 2, fx, t);
         std::ptrdiff_t nargs = sizeof...(Args);
         lua_pop(L, nargs);
-        // stack::push(L, std::move(r));
-        special_push(L, r);
+        push(L, std::forward<return_type>(r));
         return sizeof...(Ret);
     }
 
@@ -305,7 +330,7 @@ struct userdata_function : public base_function {
     }
 
     virtual int operator()(lua_State* L) override {
-        fx.prepare(L);
+        fx.item = detail::get_ptr(stack::get<Tp>(L, 1));
         return (*this)(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), L);
     }
 };

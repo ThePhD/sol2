@@ -28,18 +28,6 @@
 #include "userdata.hpp"
 
 namespace sol {
-namespace detail {
-template<typename T>
-T* get_ptr(T& val) {
-    return std::addressof(val);
-}
-
-template<typename T>
-T* get_ptr(T* val) {
-    return val;
-}
-} // detail
-
 class table : public reference {
     friend class state;
     template<typename T, typename U>
@@ -108,18 +96,9 @@ public:
     }
 
     template<typename T>
-    table& set_userdata(userdata<T>& user) {
-        auto&& meta = userdata_traits<T>::metatable;
-        luaL_newmetatable(state(), meta.c_str());
-        for (std::size_t upvalues = 0; upvalues < user.functions.size(); ++upvalues) {
-            stack::push(state(), static_cast<void*>(user.functions[ upvalues ].get()));
-        }
-        luaL_setfuncs(state(), user.functiontable.data(), static_cast<uint32_t>(user.functions.size()));
-
-        lua_pushvalue(state(), -1);
-        lua_setfield(state(), -1, "__index");
-
-        lua_setglobal(state(), user.luaname.c_str());
+    table& set_userdata(userdata<T>& user) {     
+        stack::push(state(), user);
+        lua_setglobal(state(), user.name().c_str());
 
         return *this;
     }
@@ -203,7 +182,7 @@ private:
 
         push();
 
-        int upvalues = stack::push_user(state(), fxptr);
+        int upvalues = stack::detail::push_as_upvalues(state(), fxptr);
         stack::push(state(), userobjdata);
         luaL_setfuncs(state(), funcreg, upvalues + 1);
 
@@ -223,7 +202,7 @@ private:
         };
 
         push();
-        int upvalues = stack::push_user(state(), target);
+        int upvalues = stack::detail::push_as_upvalues(state(), target);
         luaL_setfuncs(state(), funcreg, upvalues);
         pop();
 
@@ -253,7 +232,7 @@ private:
         }
 
         push();
-        stack::push_user(state(), userdata, metatablename);
+        stack::detail::push_userdata(state(), userdata, metatablename);
         luaL_setfuncs(state(), funcreg, 1);
         pop();
         return *this;

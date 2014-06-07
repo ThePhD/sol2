@@ -26,129 +26,141 @@
 #include "reference.hpp"
 #include "tuple.hpp"
 #include "traits.hpp"
+#include "userdata_traits.hpp"
 #include <utility>
 #include <array>
 #include <cstring>
 #include <functional>
 
 namespace sol {
-namespace stack {
 namespace detail {
-inline nil_t get(types<nil_t>, lua_State* L, int index = -1) {
-    if (lua_isnil(L, index) == 0)
-        throw sol::error("not nil");
-    return nil_t{ };
-}
-
-inline lightuserdata_t get(types<lightuserdata_t>, lua_State* L, int index = -1) {
-    return{ lua_touserdata(L, lua_upvalueindex(index)) };
-}
-
-inline userdata_t get(types<userdata_t>, lua_State* L, int index = -1) {
-    return{ lua_touserdata(L, index) };
-}
-
-inline std::string get(types<std::string>, lua_State* L, int index = -1) {
-    std::string::size_type len;
-    auto str = lua_tolstring(L, index, &len);
-    return{ str, len };
-}
-
-inline const char* get(types<const char*>, lua_State* L, int index = -1) {
-    return lua_tostring(L, index);
-}
-
-inline type get(types<type>, lua_State* L, int index = -1) {
-    return static_cast<type>(lua_type(L, index));
-}
-
-template <typename T, typename U = typename std::remove_reference<T>::type>
-inline U get_sol_type(std::true_type, types<T>, lua_State* L, int index = -1) {
-    return U(L, index);
-}
-
-template <typename T>
-inline T& get_sol_type(std::false_type, types<T>, lua_State* L, int index = -1) {
-    userdata_t udata = get(types<userdata_t>{}, L, index);
-    T* obj = static_cast<T*>(udata.value);
-    return *obj;
-}
-
-template <typename T, typename U = Unqualified<T>>
-inline auto get(types<T> t, lua_State* L, int index = -1) -> decltype(get_sol_type(std::is_base_of<sol::reference, U>(), t, L, index)) {
-    return get_sol_type(std::is_base_of<sol::reference, U>(), t, L, index);
-}
-
-template <typename Signature>
-inline std::function<Signature> get(types<std::function<Signature>>, lua_State* L, int index = -1);
-
 template<typename T>
-inline T get_unsigned(std::true_type, lua_State* L, int index = -1) {
-    return lua_tounsigned(L, index);
+T* get_ptr(T& val) {
+    return std::addressof(val);
 }
 
 template<typename T>
-inline T get_unsigned(std::false_type, lua_State* L, int index = -1) {
-    return static_cast<T>(lua_tointeger(L, index));
-}
-
-template<typename T>
-inline T get_arithmetic(std::false_type, lua_State* L, int index = -1) {
-    // T is a floating point
-    return static_cast<T>(lua_tonumber(L, index));
-}
-
-template<typename T>
-inline T get_arithmetic(std::true_type, lua_State* L, int index = -1) {
-    // T is an integral
-    return get_unsigned<T>(std::is_unsigned<T>{}, L, index);
-}
-
-template<typename T>
-inline T get_helper(std::true_type, lua_State* L, int index = -1) {
-    // T is a fundamental type
-    return get_arithmetic<T>(std::is_integral<T>{}, L, index);
-}
-
-template<>
-inline bool get_helper<bool>(std::true_type, lua_State* L, int index) {
-    return lua_toboolean(L, index) != 0;
-}
-
-template<typename T>
-inline auto get_helper(std::false_type, lua_State* L, int index = -1) -> decltype(get(types<T>(), L, index)) {
-    // T is a class
-    return get(types<T>(), L, index);
+T* get_ptr(T* val) {
+    return val;
 }
 } // detail
 
-template<typename T, typename U = Unqualified<T>>
-inline auto get(lua_State* L, int index = -1) -> decltype(detail::get_helper<U>(std::is_arithmetic<U>{}, L, index)) {
-    return detail::get_helper<U>(std::is_arithmetic<U>{}, L, index);
+namespace stack {
+namespace detail {
+template<typename T, typename Key>
+inline void push_userdata(lua_State* L, T&& userdata, Key&& metatablekey) {
+    T* pdatum = static_cast<T*>(lua_newuserdata(L, sizeof(T)));
+    T& datum = *pdatum;
+    datum = std::forward<T>(userdata);
+    luaL_getmetatable(L, std::addressof(metatablekey[0]));
+    lua_setmetatable(L, -2);
 }
-
-template<typename T>
-inline std::pair<T, int> get_user(lua_State* L, int index = 1) {
-    const static std::size_t data_t_count = (sizeof(T)+(sizeof(void*)-1)) / sizeof(void*);
-    typedef std::array<void*, data_t_count> data_t;
-    data_t voiddata{ {} };
-    for (std::size_t i = 0, d = 0; d < sizeof(T); ++i, d += sizeof(void*)) {
-        voiddata[ i ] = stack::get<lightuserdata_t>(L, index++);
-    }
-    return std::pair<T, int>(*reinterpret_cast<T*>(static_cast<void*>(voiddata.data())), index);
-}
-
-template<typename T>
-auto pop(lua_State* L) -> decltype(get<T>(L)) {
-    auto&& r = get<T>(L);
-    lua_pop(L, 1);
-    return r;
-}
-
-template<typename T>
+} // detail
+template <typename T, typename X = void>
+struct getter;
+template <typename T, typename X = void>
 struct pusher;
 
-template<typename T>
+template <typename T, typename>
+struct getter {
+    template<typename U = T, EnableIf<std::is_floating_point<U>> = 0>
+    static U get(lua_State* L, int index = -1) {
+        return lua_tonumber(L, index);
+    }
+
+    template<typename U = T, EnableIf<std::is_integral<U>, std::is_signed<U>> = 0>
+    static U get(lua_State* L, int index = -1) {
+        return lua_tounsigned(L, index);
+    }
+
+    template<typename U = T, EnableIf<std::is_integral<U>, std::is_unsigned<U>> = 0>
+    static U get(lua_State* L, int index = -1) {
+        return static_cast<T>(lua_tointeger(L, index));
+    }
+
+    template<typename U = T, EnableIf<std::is_base_of<reference, U>> = 0>
+    static U get(lua_State* L, int index = -1) {
+        return T(L, index);
+    }
+
+    template<typename U = T, EnableIf<Not<std::is_base_of<reference, U>>, Not<std::is_integral<U>>, Not<std::is_floating_point<U>>> = 0>
+    static U& get(lua_State* L, int index = -1) {
+        void* udata = lua_touserdata(L, index);
+        T* obj = static_cast<T*>(udata);
+        return *obj;
+    }
+};
+
+template <typename T>
+struct getter<T*> {
+    static T* get(lua_State* L, int index = -1) {
+        void* udata = lua_touserdata(L, index);
+        T** obj = static_cast<T**>(udata);
+        return *obj;
+    }
+};
+
+template <>
+struct getter<type> {
+    type get(lua_State *L, int index){
+        return static_cast<type>(lua_type(L, index));
+    }
+};
+
+template <>
+struct getter<bool> {
+    static bool get(lua_State* L, int index) {
+        return lua_toboolean(L, index) != 0;
+    }
+};
+
+template <>
+struct getter<std::string> {
+    static std::string get(lua_State* L, int index = -1) {
+        std::string::size_type len;
+        auto str = lua_tolstring(L, index, &len);
+        return{ str, len };
+    }
+};
+
+template <>
+struct getter<const char*> {
+    const char* get(lua_State* L, int index = -1) {
+        return lua_tostring(L, index);
+    }
+};
+
+template <>
+struct getter<nil_t> {
+    nil_t get(lua_State* L, int index = -1) {
+        if (lua_isnil(L, index) == 0)
+            throw sol::error("not nil");
+        return nil_t{ };
+    }
+};
+
+template <>
+struct getter<userdata_t> {
+    userdata_t get(lua_State* L, int index = -1) {
+        return{ lua_touserdata(L, index) };
+    }
+};
+
+template <>
+struct getter<lightuserdata_t> {
+    lightuserdata_t get(lua_State* L, int index = 1) {
+        return{ lua_touserdata(L, lua_upvalueindex(index)) };
+    }
+};
+
+template <>
+struct getter<void*> {
+    void* get(lua_State* L, int index = 1) {
+        return lua_touserdata(L, index);
+    }
+};
+
+template<typename T, typename>
 struct pusher {
     template<typename U = T, EnableIf<std::is_floating_point<U>> = 0>
     static void push(lua_State* L, const T& value) {
@@ -165,33 +177,26 @@ struct pusher {
         lua_pushunsigned(L, value);
     }
 
-    template<typename U = T, EnableIf<has_begin_end<U>, Not<has_key_value_pair<U>>> = 0>
-    static void push(lua_State* L, const T& cont) {
-        lua_createtable(L, cont.size(), 0);
-        unsigned index = 1;
-        for(auto&& i : cont) {
-            // push the index
-            pusher<unsigned>::push(L, index++);
-            // push the value
-            pusher<Unqualified<decltype(i)>>::push(L, i);
-            // set the table
-            lua_settable(L, -3);
-        }
-    }
-
-    template<typename U = T, EnableIf<has_begin_end<U>, has_key_value_pair<U>> = 0>
-    static void push(lua_State* L, const T& cont) {
-        lua_createtable(L, cont.size(), 0);
-        for(auto&& pair : cont) {
-            pusher<Unqualified<decltype(pair.first)>>::push(L, pair.first);
-            pusher<Unqualified<decltype(pair.second)>>::push(L, pair.second);
-            lua_settable(L, -3);
-        }
-    }
-
     template<typename U = T, EnableIf<std::is_base_of<reference, U>> = 0>
     static void push(lua_State*, T& ref) {
         ref.push();
+    }
+
+    template<typename U = T, EnableIf<Not<std::is_base_of<reference, U>>, Not<std::is_integral<U>>, Not<std::is_floating_point<U>>> = 0>
+    static void push(lua_State* L, T& t) {
+        pusher<T*>{}.push(L, std::addressof(t));
+    }
+
+    template<typename U = T, EnableIf<Not<std::is_base_of<reference, U>>, Not<std::is_integral<U>>, Not<std::is_floating_point<U>>> = 0>
+    static void push(lua_State* L, T&& t) {
+        detail::push_userdata(L, std::move(t), userdata_traits<T*>::metatable);
+    }
+};
+
+template<typename T>
+struct pusher<T*> {
+    static void push(lua_State* L, T* obj) {
+        detail::push_userdata(L, obj, userdata_traits<T*>::metatable);
     }
 };
 
@@ -224,6 +229,13 @@ struct pusher<void*> {
 };
 
 template<>
+struct pusher<lightuserdata_t> {
+    static void push(lua_State* L, lightuserdata_t userdata) {
+        lua_pushlightuserdata(L, userdata);
+    }
+};
+
+template<>
 struct pusher<const char*> {
     static void push(lua_State* L, const char* str) {
         lua_pushlstring(L, str, std::char_traits<char>::length(str));
@@ -244,31 +256,33 @@ struct pusher<std::string> {
     }
 };
 
-template<typename T>
-inline void push(lua_State* L, T&& t) {
-    pusher<Unqualified<T>>::push(L, std::forward<T>(t));
+inline void push(lua_State*) {
+
+}
+
+template<typename T, typename... Args>
+inline void push(lua_State* L, T&& t, Args&&... args) {
+    using swallow = char[];
+    pusher<Unqualified<T>>{}.push(L, std::forward<T>(t));
+    void(swallow{'\0', (pusher<Unqualified<T>>{}.push(L, std::forward<Args>(args)), '\0')... });
+}
+
+template<typename T, typename U = Unqualified<T>>
+inline auto get(lua_State* L, int index = -1) -> decltype(getter<U>{}.get(L, index)) {
+    return getter<U>{}.get(L, index);
 }
 
 template<typename T>
-inline void push_user(lua_State* L, T& userdata, const char* metatablekey) {
-    T* pdatum = static_cast<T*>(lua_newuserdata(L, sizeof(T)));
-    T& datum = *pdatum;
-    datum = userdata;
-    if (metatablekey != nullptr) {
-        lua_getfield(L, LUA_REGISTRYINDEX, metatablekey);
-        lua_setmetatable(L, -2);
-    }
+auto pop(lua_State* L) -> decltype(get<T>(L)) {
+    typedef decltype(get<T>(L)) ret_t;
+    ret_t r = get<T>(L);
+    lua_pop(L, 1);
+    return r;
 }
 
-template<typename T, size_t N>
-inline void push_as_upvalues(lua_State* L, const std::array<T, N>& data) {
-    for(auto&& i : data) {
-        push(L, i);
-    }
-}
-
+namespace detail {
 template<typename T>
-inline int push_user(lua_State* L, T& item) {
+inline int push_as_upvalues(lua_State* L, T& item) {
     typedef typename std::decay<T>::type TValue;
     const static std::size_t itemsize = sizeof(TValue);
     const static std::size_t voidsize = sizeof(void*);
@@ -278,11 +292,23 @@ inline int push_user(lua_State* L, T& item) {
 
     data_t data{{}};
     std::memcpy(std::addressof(data[0]), std::addressof(item), itemsize);
-    push_as_upvalues(L, data);
+    for (auto&& v : data) {
+        push(L, v);
+    }
     return data_t_count;
 }
 
-namespace detail {
+template<typename T>
+inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 1) {
+    const static std::size_t data_t_count = (sizeof(T)+(sizeof(void*)-1)) / sizeof(void*);
+    typedef std::array<void*, data_t_count> data_t;
+    data_t voiddata{ {} };
+    for (std::size_t i = 0, d = 0; d < sizeof(T); ++i, d += sizeof(void*)) {
+        voiddata[ i ] = get<lightuserdata_t>(L, index++);
+    }
+    return std::pair<T, int>(*reinterpret_cast<T*>(static_cast<void*>(voiddata.data())), index);
+}
+
 template<typename T, std::size_t... I>
 inline void push_tuple(lua_State* L, indices<I...>, T&& tuplen) {
     using swallow = char[1 + sizeof...(I)];
@@ -349,8 +375,8 @@ inline auto get_call(lua_State* L, int index, TFx&& fx, types<Args...> t) -> dec
 }
 
 template<typename... Args, typename TFx>
-inline auto get_call(lua_State* L, TFx&& fx, types<Args...> t) -> decltype(detail::ltr_get(L, 1, std::forward<TFx>(fx), t, t)) {
-    return detail::ltr_get(L, 1, std::forward<TFx>(fx), t, t);
+inline auto get_call(lua_State* L, TFx&& fx, types<Args...> t) -> decltype(get_call(L, 1, std::forward<TFx>(fx), t)) {
+    return get_call(L, 1, std::forward<TFx>(fx), t);
 }
 
 template<typename... Args, typename TFx>
@@ -361,17 +387,6 @@ inline auto pop_call(lua_State* L, TFx&& fx, types<Args...> t) -> decltype(detai
 template<typename... Args, typename TFx>
 inline auto pop_reverse_call(lua_State* L, TFx&& fx, types<Args...> t) -> decltype(detail::rtl_pop(L, std::forward<TFx>(fx), t, reversed<Args...>())) {
     return detail::rtl_pop(L, std::forward<TFx>(fx), t, reversed<Args...>());
-}
-
-inline void push_args(lua_State*) {
-
-}
-
-template<typename Arg, typename... Args>
-inline void push_args(lua_State* L, Arg&& arg, Args&&... args) {
-    using swallow = char[];
-    stack::push(L, std::forward<Arg>(arg));
-    void(swallow{'\0', (stack::push(L, std::forward<Args>(args)), '\0')... });
 }
 
 inline call_syntax get_call_syntax(lua_State* L, const std::string& meta) {
