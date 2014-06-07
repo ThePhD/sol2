@@ -167,7 +167,7 @@ struct base_function {
     }
 
     static int call(lua_State* L) {
-        void** pinheritancedata = static_cast<void**>(stack::get<lightuserdata_t>(L, 1).value);
+        void** pinheritancedata = static_cast<void**>(stack::get<upvalue_t>(L, 1).value);
         return base_call(L, *pinheritancedata);
     }
 

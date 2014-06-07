@@ -47,11 +47,10 @@ T* get_ptr(T* val) {
 
 namespace stack {
 namespace detail {
-template<typename T, typename Key>
+template<typename T, typename Key, typename U = Unqualified<T>>
 inline void push_userdata(lua_State* L, T&& userdata, Key&& metatablekey) {
-    T* pdatum = static_cast<T*>(lua_newuserdata(L, sizeof(T)));
-    T& datum = *pdatum;
-    datum = std::forward<T>(userdata);
+    U* pdatum = static_cast<U*>(lua_newuserdata(L, sizeof(U)));
+    new(pdatum)U(std::forward<T>(userdata));
     luaL_getmetatable(L, std::addressof(metatablekey[0]));
     lua_setmetatable(L, -2);
 }
@@ -149,6 +148,13 @@ struct getter<userdata_t> {
 template <>
 struct getter<lightuserdata_t> {
     lightuserdata_t get(lua_State* L, int index = 1) {
+        return{ lua_touserdata(L, index) };
+    }
+};
+
+template <>
+struct getter<upvalue_t> {
+    upvalue_t get(lua_State* L, int index = 1) {
         return{ lua_touserdata(L, lua_upvalueindex(index)) };
     }
 };
@@ -216,8 +222,8 @@ struct pusher<nil_t> {
 
 template<>
 struct pusher<lua_CFunction> {
-    static void push(lua_State* L, lua_CFunction func) {
-        lua_pushcfunction(L, func);
+    static void push(lua_State* L, lua_CFunction func, int n = 0) {
+        lua_pushcclosure(L, func, n);
     }
 };
 
@@ -229,9 +235,25 @@ struct pusher<void*> {
 };
 
 template<>
+struct pusher<upvalue_t> {
+    static void push(lua_State* L, upvalue_t upvalue) {
+        lua_pushlightuserdata(L, upvalue);
+    }
+};
+
+template<>
 struct pusher<lightuserdata_t> {
     static void push(lua_State* L, lightuserdata_t userdata) {
         lua_pushlightuserdata(L, userdata);
+    }
+};
+
+template<>
+struct pusher<userdata_t> {
+    template <typename T, typename U = Unqualified<T>>
+    static void push(lua_State* L, T&& data) {
+        U* userdata = static_cast<U*>(lua_newuserdata(L, sizeof(U)));
+        new(userdata)U(std::forward<T>(data));
     }
 };
 
@@ -293,7 +315,7 @@ inline int push_as_upvalues(lua_State* L, T& item) {
     data_t data{{}};
     std::memcpy(std::addressof(data[0]), std::addressof(item), itemsize);
     for (auto&& v : data) {
-        push(L, v);
+        push(L, upvalue_t(v));
     }
     return data_t_count;
 }
@@ -304,7 +326,7 @@ inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 1) {
     typedef std::array<void*, data_t_count> data_t;
     data_t voiddata{ {} };
     for (std::size_t i = 0, d = 0; d < sizeof(T); ++i, d += sizeof(void*)) {
-        voiddata[ i ] = get<lightuserdata_t>(L, index++);
+        voiddata[ i ] = get<upvalue_t>(L, index++);
     }
     return std::pair<T, int>(*reinterpret_cast<T*>(static_cast<void*>(voiddata.data())), index);
 }

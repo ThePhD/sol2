@@ -32,7 +32,13 @@ const nil_t nil {};
 struct void_type {};
 const void_type Void {};
 struct function_t {};
-struct lightuserdata_t { 
+struct upvalue_t {
+    void* value;
+    upvalue_t(void* data) : value(data) {}
+    operator void* () const { return value; }
+};
+
+struct lightuserdata_t {
     void* value;
     lightuserdata_t(void* data) : value(data) {} 
     operator void* () const { return value; }

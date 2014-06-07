@@ -25,8 +25,10 @@
 #include "reference.hpp"
 #include "tuple.hpp"
 #include "stack.hpp"
+#include "function_types.hpp"
 #include <cstdint>
 #include <functional>
+#include <memory>
 
 namespace sol {
 class function : public reference {
@@ -133,7 +135,7 @@ struct pusher<function_t> {
         // We don't need to store the size, because the other side is templated
         // with the same member function pointer type
         Decay<TFx> fxptr(std::forward<TFx>(fx));
-        void* userobjdata = static_cast<void*>(detail::get_ptr(obj));
+        void* userobjdata = static_cast<void*>(sol::detail::get_ptr(obj));
         lua_CFunction freefunc = &static_member_function<Decay<TObj>, TFx>::call;
         const char* freefuncname = fkey.c_str();
         const luaL_Reg funcreg[2] = {
@@ -210,7 +212,29 @@ struct pusher<function_t> {
 };
 template <typename Signature>
 struct pusher<std::function<Signature>> {
+    typedef std::function<Signature> fx_t;
 
+    static void push_fx(lua_State* L, std::unique_ptr<base_function> luafunc) {
+        auto&& metakey = userdata_traits<fx_t>::metatable;
+        const char* metatablename = std::addressof(metakey[0]);
+        base_function* target = luafunc.release();
+        void* userdata = reinterpret_cast<void*>(target);
+        lua_CFunction freefunc = &base_function::call;
+
+        if (luaL_newmetatable(L, metatablename) == 1) {
+            lua_pushstring(L, "__gc");
+            lua_pushcclosure(L, &base_function::gc, 0);
+            lua_settable(L, -3);
+        }
+
+        stack::detail::push_userdata(L, userdata, metatablename);
+        lua_pushcclosure(L, freefunc, 1);
+    }
+
+    static void push(lua_State* L, std::function<Signature> fx) {
+        std::unique_ptr<base_function> sptr(new functor_function<fx_t>(std::move(fx)));
+        push_fx(L, std::move(sptr));
+    }
 };
 
 template <typename Signature>
