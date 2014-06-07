@@ -288,7 +288,7 @@ struct userdata_function : public base_function {
 
     template<typename Return, typename Raw = Unqualified<Return>>
     typename std::enable_if<std::is_same<T, Raw>::value, void>::type push(lua_State* L, Return&& r) {
-        if ( detail::get_ptr(r) == fx.item ) {
+        if (detail::get_ptr(r) == fx.item) {
             // push nothing
             // note that pushing nothing with the ':'
             // syntax means we leave the instance of what
@@ -331,6 +331,8 @@ struct userdata_function : public base_function {
 
     virtual int operator()(lua_State* L) override {
         fx.item = detail::get_ptr(stack::get<Tp>(L, 1));
+        if (fx.item == nullptr)
+            throw error("userdata for function call is null: are you using wrong call syntax? (use item:function(...) synax)");
         return (*this)(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), L);
     }
 };

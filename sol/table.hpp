@@ -232,7 +232,7 @@ private:
         }
 
         push();
-        stack::detail::push_userdata(state(), userdata, metatablename);
+        stack::detail::push_userdata<void*>(state(), metatablename, userdata);
         luaL_setfuncs(state(), funcreg, 1);
         pop();
         return *this;

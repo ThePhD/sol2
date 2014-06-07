@@ -47,10 +47,11 @@ T* get_ptr(T* val) {
 
 namespace stack {
 namespace detail {
-template<typename T, typename Key, typename U = Unqualified<T>>
-inline void push_userdata(lua_State* L, T&& userdata, Key&& metatablekey) {
-    U* pdatum = static_cast<U*>(lua_newuserdata(L, sizeof(U)));
-    new(pdatum)U(std::forward<T>(userdata));
+template<typename T, typename Key, typename... Args>
+inline void push_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
+    T* pdatum = static_cast<T*>(lua_newuserdata(L, sizeof(T)));
+    std::allocator<T> alloc{};
+    alloc.construct(pdatum, std::forward<Args>(args)...);
     luaL_getmetatable(L, std::addressof(metatablekey[0]));
     lua_setmetatable(L, -2);
 }
@@ -193,16 +194,53 @@ struct pusher {
         pusher<T*>{}.push(L, std::addressof(t));
     }
 
-    template<typename U = T, EnableIf<Not<std::is_base_of<reference, U>>, Not<std::is_integral<U>>, Not<std::is_floating_point<U>>> = 0>
+    template<typename U = Unqualified<T>, EnableIf<Not<std::is_base_of<reference, U>>, Not<std::is_integral<U>>, Not<std::is_floating_point<U>>> = 0>
     static void push(lua_State* L, T&& t) {
-        detail::push_userdata(L, std::move(t), userdata_traits<T*>::metatable);
+        detail::push_userdata<U>(L, userdata_traits<T*>::metatable, std::move(t));
     }
 };
 
 template<typename T>
 struct pusher<T*> {
     static void push(lua_State* L, T* obj) {
-        detail::push_userdata(L, obj, userdata_traits<T*>::metatable);
+        detail::push_userdata<T*>(L, userdata_traits<T*>::metatable, obj);
+    }
+};
+
+template <>
+struct pusher<table> {
+    template<typename T, typename U = Unqualified<T>, EnableIf<std::is_base_of<reference, U>> = 0>
+    static void push_as(lua_State *L, T&& ref) {
+        ref.push();
+    }
+
+    template<typename T, typename U = Unqualified<T>, EnableIf<has_begin_end<U>, Not<has_key_value_pair<U>>> = 0>
+    static void push_as(lua_State* L, const T& cont) {
+        lua_createtable(L, cont.size(), 0);
+        unsigned index = 1;
+        for(auto&& i : cont) {
+            // push the index
+            pusher<unsigned>{}.push(L, index++);
+            // push the value
+            pusher<Unqualified<decltype(i)>>{}.push(L, i);
+            // set the table
+            lua_settable(L, -3);
+        }
+    }
+
+    template<typename T, typename U = Unqualified<T>, EnableIf<has_begin_end<U>, has_key_value_pair<U>> = 0>
+    static void push_as(lua_State* L, const T& cont) {
+        lua_createtable(L, cont.size(), 0);
+        for(auto&& pair : cont) {
+            pusher<Unqualified<decltype(pair.first)>>{}.push(L, pair.first);
+            pusher<Unqualified<decltype(pair.second)>>{}.push(L, pair.second);
+            lua_settable(L, -3);
+        }
+    }
+
+    template <typename T>
+    static void push(lua_State *L, T&& table) {
+        push_as(L, std::forward<T>(table));
     }
 };
 
@@ -284,8 +322,17 @@ inline void push(lua_State*) {
 
 template<typename T, typename... Args>
 inline void push(lua_State* L, T&& t, Args&&... args) {
-    using swallow = char[];
+    pusher<Unqualified<T>>{}.push(L, std::forward<T>(t), std::forward<Args>(args)...);
+}
+
+inline void push_args(lua_State*) {
+    // do nothing
+}
+
+template<typename T, typename... Args>
+inline void push_args(lua_State* L, T&& t, Args&&... args) {
     pusher<Unqualified<T>>{}.push(L, std::forward<T>(t));
+    using swallow = char[];
     void(swallow{'\0', (pusher<Unqualified<Args>>{}.push(L, std::forward<Args>(args)), '\0')... });
 }
 

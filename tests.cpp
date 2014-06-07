@@ -14,14 +14,14 @@ void test_free_func2(std::function<int(int)> f, int arg1) {
         throw sol::error("failed function call!");
 }
 
-std::function<int()> makefn () {
+std::function<int()> makefn() {
     auto fx = []() -> int {
         return 0x1456789;
     };
     return fx;
 }
 
-void takefn ( std::function<int()> purr ) {
+void takefn(std::function<int()> purr) {
     if (purr() != 0x1456789)
         throw 0;
 }
@@ -332,7 +332,7 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
             std::cout << "stateless lambda()" << std::endl;
             return "test";
         }
-    );
+   );
     REQUIRE_NOTHROW(run_script(lua));
 
     lua.get<sol::table>("os").set_function("fun", &free_function);
@@ -389,7 +389,7 @@ TEST_CASE("functions/sol::function to std::function", "check if conversion to st
     lua.set_function("testFunc2", test_free_func2);
     lua.script(
         "testFunc(function() print(\"hello std::function\") end)"
-       );
+      );
     lua.script(
         "function m(a)\n"
         "     print(\"hello std::function with arg \", a)\n"
@@ -397,18 +397,18 @@ TEST_CASE("functions/sol::function to std::function", "check if conversion to st
         "end\n"
         "\n"
         "testFunc2(m, 1)"
-       );
+      );
 }
 
 TEST_CASE("functions/returning functions from C++ and getting in lua", "check to see if returning a functor and getting a functor from lua is possible") {
     sol::state lua;
     lua.open_libraries(sol::lib::base);
 
-    lua.set_function( "makefn", makefn );
-    lua.set_function( "takefn", takefn );
-    lua.script( "afx = makefn()\n"
+    lua.set_function("makefn", makefn);
+    lua.set_function("takefn", takefn);
+    lua.script("afx = makefn()\n"
                 "print(afx())\n"
-                "takefn(afx)\n" );
+                "takefn(afx)\n");
 }
 
 TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works properly") {
@@ -591,7 +591,7 @@ TEST_CASE("tables/self-referential userdata", "userdata classes must play nice w
         "local a = test.new()\n"
         "a:g(\"woof\")\n"
         "a:f(a)\n"
-       );
+      );
 }
 
 TEST_CASE("tables/arbitrary-creation", "tables should be created from standard containers") {

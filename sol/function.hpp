@@ -79,7 +79,7 @@ public:
     template<typename... Ret, typename... Args>
     typename return_type<Ret...>::type call(Args&&... args) const {
         push();
-        stack::push(state(), std::forward<Args>(args)...);
+        stack::push_args(state(), std::forward<Args>(args)...);
         return invoke(types<Ret...>(), sizeof...(Args));
     }
 };
@@ -166,7 +166,7 @@ struct pusher<function_t> {
             lua_settable(L, -3);
         }
 
-        stack::detail::push_userdata(L, userdata, metatablename);
+        stack::detail::push_userdata<void*>(L, metatablename, userdata);
         stack::pusher<lua_CFunction>{}.push(L, freefunc, 1);
     }
 
