@@ -286,7 +286,7 @@ template<typename T, typename... Args>
 inline void push(lua_State* L, T&& t, Args&&... args) {
     using swallow = char[];
     pusher<Unqualified<T>>{}.push(L, std::forward<T>(t));
-    void(swallow{'\0', (pusher<Unqualified<T>>{}.push(L, std::forward<Args>(args)), '\0')... });
+    void(swallow{'\0', (pusher<Unqualified<Args>>{}.push(L, std::forward<Args>(args)), '\0')... });
 }
 
 template<typename T, typename U = Unqualified<T>>

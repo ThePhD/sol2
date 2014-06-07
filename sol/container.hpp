@@ -37,8 +37,8 @@ struct container {
 namespace stack {
 template<typename T>
 struct pusher<T, typename std::enable_if<has_begin_end<T>::value>::type> {
-    template <typename U>
-    static void push(lua_State *L, U&& t){
+    template<typename U = T, EnableIf<Not<has_key_value_pair<U>>> = 0>
+    static void push(lua_State* L, const T& cont) {
         typedef container<U> container_t;
         // todo: NEED to find a different way of handling this...
         static std::vector<std::shared_ptr<void>> classes{};
@@ -53,25 +53,11 @@ struct pusher<T, typename std::enable_if<has_begin_end<T>::value>::type> {
 
         container_t* c = static_cast<container_t*>(lua_newuserdata(L, sizeof(container_t)));
         std::allocator<container_t> alloc{};
-        alloc.construct(c, std::forward<U>(t));
+        alloc.construct(c, cont);
 
         auto&& meta = userdata_traits<T>::metatable;
         luaL_getmetatable(L, std::addressof(meta[0]));
         lua_setmetatable(L, -2);
-    }
-
-    template<typename U = T, EnableIf<Not<has_key_value_pair<U>>> = 0>
-    static void push(lua_State* L, const T& cont) {
-        lua_createtable(L, cont.size(), 0);
-        unsigned index = 1;
-        for(auto&& i : cont) {
-            // push the index
-            pusher<unsigned>::push(L, index++);
-            // push the value
-            pusher<Unqualified<decltype(i)>>::push(L, i);
-            // set the table
-            lua_settable(L, -3);
-        }
     }
 
     template<typename U = T, EnableIf<has_key_value_pair<U>> = 0>

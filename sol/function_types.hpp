@@ -180,7 +180,7 @@ struct base_function {
     struct userdata {
         static int call(lua_State* L) {
             // Zero-based template parameter, but upvalues start at 1
-            return base_call(L, stack::get<lightuserdata_t>(L, i + 1));
+            return base_call(L, stack::get<upvalue_t>(L, i + 1));
         }
     };
 

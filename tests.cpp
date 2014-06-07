@@ -14,6 +14,18 @@ void test_free_func2(std::function<int(int)> f, int arg1) {
         throw sol::error("failed function call!");
 }
 
+std::function<int()> makefn () {
+    auto fx = []() -> int {
+        return 0x1456789;
+    };
+    return fx;
+}
+
+void takefn ( std::function<int()> purr ) {
+    if (purr() != 0x1456789)
+        throw 0;
+}
+
 std::string free_function() {
     std::cout << "free_function()" << std::endl;
     return "test";
@@ -320,7 +332,7 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
             std::cout << "stateless lambda()" << std::endl;
             return "test";
         }
-);
+    );
     REQUIRE_NOTHROW(run_script(lua));
 
     lua.get<sol::table>("os").set_function("fun", &free_function);
@@ -386,6 +398,17 @@ TEST_CASE("functions/sol::function to std::function", "check if conversion to st
         "\n"
         "testFunc2(m, 1)"
        );
+}
+
+TEST_CASE("functions/returning functions from C++ and getting in lua", "check to see if returning a functor and getting a functor from lua is possible") {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+
+    lua.set_function( "makefn", makefn );
+    lua.set_function( "takefn", takefn );
+    lua.script( "afx = makefn()\n"
+                "print(afx())\n"
+                "takefn(afx)\n" );
 }
 
 TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works properly") {
@@ -557,7 +580,6 @@ TEST_CASE("tables/userdata utility derived", "userdata classes must play nice wh
     REQUIRE((lua.get<int>("dgn10") == 70));
     REQUIRE((lua.get<int>("dgn") == 7));
 }
-
 
 TEST_CASE("tables/self-referential userdata", "userdata classes must play nice when C++ object types are requested for C++ code") {
     sol::state lua;
