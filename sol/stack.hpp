@@ -35,12 +35,12 @@
 namespace sol {
 namespace detail {
 template<typename T>
-T* get_ptr(T& val) {
+inline T* get_ptr(T& val) {
     return std::addressof(val);
 }
 
 template<typename T>
-T* get_ptr(T* val) {
+inline T* get_ptr(T* val) {
     return val;
 }
 } // detail
@@ -102,7 +102,7 @@ struct getter<T*> {
 
 template <>
 struct getter<type> {
-    type get(lua_State *L, int index){
+    static type get(lua_State *L, int index){
         return static_cast<type>(lua_type(L, index));
     }
 };
@@ -125,14 +125,14 @@ struct getter<std::string> {
 
 template <>
 struct getter<const char*> {
-    const char* get(lua_State* L, int index = -1) {
+    static const char* get(lua_State* L, int index = -1) {
         return lua_tostring(L, index);
     }
 };
 
 template <>
 struct getter<nil_t> {
-    nil_t get(lua_State* L, int index = -1) {
+    static nil_t get(lua_State* L, int index = -1) {
         if (lua_isnil(L, index) == 0)
             throw sol::error("not nil");
         return nil_t{ };
@@ -141,28 +141,28 @@ struct getter<nil_t> {
 
 template <>
 struct getter<userdata_t> {
-    userdata_t get(lua_State* L, int index = -1) {
+    static userdata_t get(lua_State* L, int index = -1) {
         return{ lua_touserdata(L, index) };
     }
 };
 
 template <>
 struct getter<lightuserdata_t> {
-    lightuserdata_t get(lua_State* L, int index = 1) {
+    static lightuserdata_t get(lua_State* L, int index = 1) {
         return{ lua_touserdata(L, index) };
     }
 };
 
 template <>
 struct getter<upvalue_t> {
-    upvalue_t get(lua_State* L, int index = 1) {
+    static upvalue_t get(lua_State* L, int index = 1) {
         return{ lua_touserdata(L, lua_upvalueindex(index)) };
     }
 };
 
 template <>
 struct getter<void*> {
-    void* get(lua_State* L, int index = 1) {
+    static void* get(lua_State* L, int index = 1) {
         return lua_touserdata(L, index);
     }
 };
@@ -316,12 +316,14 @@ struct pusher<std::string> {
     }
 };
 
-inline void push(lua_State*) {
-
-}
-
 template<typename T, typename... Args>
 inline void push(lua_State* L, T&& t, Args&&... args) {
+    pusher<Unqualified<T>>{}.push(L, std::forward<T>(t), std::forward<Args>(args)...);
+}
+
+// overload allows to use a pusher of a specific type, but pass in any kind of args
+template<typename T, typename Arg, typename... Args>
+inline void push(lua_State* L, Arg&& t, Args&&... args) {
     pusher<Unqualified<T>>{}.push(L, std::forward<T>(t), std::forward<Args>(args)...);
 }
 

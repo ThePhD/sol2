@@ -7,7 +7,7 @@ namespace sol {
 
 template <typename Tc, typename = void>
 struct container {
-    typedef typename std::conditional<std::is_lvalue_reference<Tc>::value, Tc, Decay<Tc>>::type T;
+    typedef typename std::conditional<std::is_lvalue_reference<Tc>::value, Tc, Unqualified<Tc>>::type T;
     typedef Unqualified<decltype(*(std::declval<T>().begin()))> value_type;
     T cont;
 
