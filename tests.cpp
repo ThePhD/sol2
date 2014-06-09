@@ -623,3 +623,39 @@ TEST_CASE("tables/arbitrary-creation", "tables should be created from standard c
     REQUIRE(c.get<std::string>("name") == "Rapptz");
     REQUIRE(c.get<std::string>("project") == "sol");
 }
+
+TEST_CASE("tables/issue-number-twenty-five", "Using pointers and references from C++ classes in Lua") {
+    struct test {
+        int x = 0;
+        test& set() {
+            x = 10;
+            return *this;
+        }
+
+        int get() {
+            return x;
+        }
+
+        test* clone() {
+            return this;
+        }
+
+        int fun(int x) {
+            return x * 10;
+        }
+    };
+
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+    lua.new_userdata<test>("test", "set", &test::set, "get", &test::get, "clone", &test::clone, "fun", &test::fun);
+    REQUIRE_NOTHROW(lua.script("x = test.new()\n"
+                               "x:set():get()"));
+    REQUIRE_NOTHROW(lua.script("y = x:clone()"));
+    REQUIRE_NOTHROW(lua.script("y:set():get()"));
+    REQUIRE_NOTHROW(lua.script("y:fun(10)"));
+    REQUIRE_NOTHROW(lua.script("x:fun(10)"));
+    REQUIRE_NOTHROW(lua.script("assert(y:fun(10) == x:fun(10), '...')"));
+    REQUIRE_NOTHROW(lua.script("assert(y:fun(10) == 100, '...')"));
+    REQUIRE_NOTHROW(lua.script("assert(y:set():get() == y:set():get(), '...')"));
+    REQUIRE_NOTHROW(lua.script("assert(y:set():get() == 10, '...')"));
+}
