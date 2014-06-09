@@ -184,38 +184,8 @@ struct pusher {
         lua_pushunsigned(L, value);
     }
 
-    template<typename U = T, EnableIf<std::is_base_of<reference, U>> = 0>
-    static void push(lua_State*, T& ref) {
-        ref.push();
-    }
-
-    template<typename U = T, EnableIf<Not<std::is_base_of<reference, U>>, Not<std::is_integral<U>>, Not<std::is_floating_point<U>>> = 0>
-    static void push(lua_State* L, T& t) {
-        pusher<T*>{}.push(L, std::addressof(t));
-    }
-
-    template<typename U = Unqualified<T>, EnableIf<Not<std::is_base_of<reference, U>>, Not<std::is_integral<U>>, Not<std::is_floating_point<U>>> = 0>
-    static void push(lua_State* L, T&& t) {
-        detail::push_userdata<U>(L, userdata_traits<T*>::metatable, std::move(t));
-    }
-};
-
-template<typename T>
-struct pusher<T*> {
-    static void push(lua_State* L, T* obj) {
-        detail::push_userdata<T*>(L, userdata_traits<T*>::metatable, obj);
-    }
-};
-
-template <>
-struct pusher<table> {
-    template<typename T, typename U = Unqualified<T>, EnableIf<std::is_base_of<reference, U>> = 0>
-    static void push_as(lua_State *L, T&& ref) {
-        ref.push();
-    }
-
-    template<typename T, typename U = Unqualified<T>, EnableIf<has_begin_end<U>, Not<has_key_value_pair<U>>> = 0>
-    static void push_as(lua_State* L, const T& cont) {
+    template<typename U = T, EnableIf<has_begin_end<U>, Not<has_key_value_pair<U>>> = 0>
+    static void push(lua_State* L, const T& cont) {
         lua_createtable(L, cont.size(), 0);
         unsigned index = 1;
         for(auto&& i : cont) {
@@ -228,8 +198,8 @@ struct pusher<table> {
         }
     }
 
-    template<typename T, typename U = Unqualified<T>, EnableIf<has_begin_end<U>, has_key_value_pair<U>> = 0>
-    static void push_as(lua_State* L, const T& cont) {
+    template<typename U = T, EnableIf<has_begin_end<U>, has_key_value_pair<U>> = 0>
+    static void push(lua_State* L, const T& cont) {
         lua_createtable(L, cont.size(), 0);
         for(auto&& pair : cont) {
             pusher<Unqualified<decltype(pair.first)>>{}.push(L, pair.first);
@@ -238,9 +208,26 @@ struct pusher<table> {
         }
     }
 
-    template <typename T>
-    static void push(lua_State *L, T&& table) {
-        push_as(L, std::forward<T>(table));
+    template<typename U = T, EnableIf<std::is_base_of<reference, U>> = 0>
+    static void push(lua_State*, T& ref) {
+        ref.push();
+    }
+
+    template<typename U = Unqualified<T>, EnableIf<Not<has_begin_end<U>>, Not<std::is_base_of<reference, U>>, Not<std::is_integral<U>>, Not<std::is_floating_point<U>>> = 0>
+    static void push(lua_State* L, T& t) {
+        pusher<T*>{}.push(L, std::addressof(t));
+    }
+
+    template<typename U = Unqualified<T>, EnableIf<Not<has_begin_end<U>>, Not<std::is_base_of<reference, U>>, Not<std::is_integral<U>>, Not<std::is_floating_point<U>>> = 0>
+    static void push(lua_State* L, T&& t) {
+        detail::push_userdata<U>(L, userdata_traits<T*>::metatable, std::move(t));
+    }
+};
+
+template<typename T>
+struct pusher<T*> {
+    static void push(lua_State* L, T* obj) {
+        detail::push_userdata<T*>(L, userdata_traits<T*>::metatable, obj);
     }
 };
 
@@ -375,7 +362,7 @@ inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 1) {
     typedef std::array<void*, data_t_count> data_t;
     data_t voiddata{ {} };
     for (std::size_t i = 0, d = 0; d < sizeof(T); ++i, d += sizeof(void*)) {
-        voiddata[ i ] = get<upvalue_t>(L, index++);
+        voiddata[i] = get<upvalue_t>(L, index++);
     }
     return std::pair<T, int>(*reinterpret_cast<T*>(static_cast<void*>(voiddata.data())), index);
 }

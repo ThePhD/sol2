@@ -36,7 +36,7 @@ template<typename T>
 const std::string userdata_traits<T>::name = detail::demangle(typeid(T));
 
 template<typename T>
-const std::string userdata_traits<T>::metatable = std::string("sol.stateful.").append(detail::demangle(typeid(T)));
+const std::string userdata_traits<T>::metatable = std::string("sol.").append(detail::demangle(typeid(T)));
 
 }
 

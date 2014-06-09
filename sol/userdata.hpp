@@ -85,8 +85,15 @@ private:
             T* obj = static_cast<T*>(udata);
             match_constructor(L, obj, syntax, argcount - static_cast<int>(syntax), typename std::common_type<TTypes>::type()...);
 
-            luaL_getmetatable(L, std::addressof(meta[0]));
-            lua_setmetatable(L, -1);
+
+            if (luaL_newmetatable(L, std::addressof(meta[0])) == 1) {
+                lua_pop(L, 1);
+                std::string err = "Unable to get userdata metatable for ";
+                err += meta;
+                throw error(err);
+            }
+
+            lua_setmetatable(L, -2);
 
             return 1;
         }
@@ -103,10 +110,10 @@ private:
         }
     };
 
-    template<std::size_t N>
+    template<std::size_t N, std::size_t M>
     void build_function_tables() {}
 
-    template<std::size_t N, typename... Args, typename TBase, typename Ret>
+    template<std::size_t N, std::size_t M, typename... Args, typename TBase, typename Ret>
     void build_function_tables(std::string funcname, Ret TBase::* func, Args&&... args) {
         static_assert(std::is_base_of<TBase, T>::value, "Any registered function must be part of the class");
         typedef typename std::decay<decltype(func)>::type function_type;
@@ -118,14 +125,15 @@ private:
             ptrmetafuncs.emplace_back(detail::make_unique<userdata_function<function_type, typename std::add_pointer<T>::type>>(std::move(func)));
             metafunctiontable.push_back({ name.c_str(), &base_function::userdata<N>::call });
             ptrmetafunctiontable.push_back({ name.c_str(), &base_function::userdata<N>::call });
+            build_function_tables<N + 1, M>(std::forward<Args>(args)...);
         }
         else {
             funcs.emplace_back(detail::make_unique<userdata_function<function_type, T>>(std::move(func)));
             ptrfuncs.emplace_back(detail::make_unique<userdata_function<function_type, typename std::add_pointer<T>::type>>(std::move(func)));
-            functiontable.push_back({ name.c_str(), &base_function::userdata<N>::call });
-            ptrfunctiontable.push_back({ name.c_str(), &base_function::userdata<N>::call });
+            functiontable.push_back({ name.c_str(), &base_function::userdata<M>::call });
+            ptrfunctiontable.push_back({ name.c_str(), &base_function::userdata<M>::call });
+            build_function_tables<N, M + 1>(std::forward<Args>(args)...);
         }
-        build_function_tables<N + 1>(std::forward<Args>(args)...);
     }
 
 public:
@@ -146,7 +154,7 @@ public:
         ptrfuncs.reserve(sizeof...(args) + 2);
         metafuncs.reserve(sizeof...(args) + 2);
         ptrmetafuncs.reserve(sizeof...(args) + 2);
-        build_function_tables<0>(std::forward<Args>(args)...);
+        build_function_tables<0, 0>(std::forward<Args>(args)...);
 
         functionnames.push_back("new");
         functiontable.push_back({ functionnames.back().c_str(), &constructor<CArgs...>::construct });
@@ -238,22 +246,24 @@ struct pusher<userdata<T>> {
     static void push_metatable(lua_State* L, Meta&& meta, Funcs&& funcs, FuncTable&& functable, MetaFuncs&& metafuncs, MetaFuncTable&& metafunctable) {
         luaL_newmetatable(L, std::addressof(meta[0]));
         // regular functions accessed through __index semantics
-        lua_pushvalue(L, -1);
-        lua_setfield(L, -1, "__index");
         for (std::size_t u = 0; u < funcs.size(); ++u) {
-          stack::push<upvalue_t>(L, funcs[ u ].get());
+          stack::push<upvalue_t>(L, funcs[u].get());
         }
         luaL_setfuncs(L, functable.data(), static_cast<uint32_t>(funcs.size()));
         // meta functions
         for (std::size_t u = 0; u < metafuncs.size(); ++u) {
-          stack::push<upvalue_t>(L, metafuncs[ u ].get());
+          stack::push<upvalue_t>(L, metafuncs[u].get());
         }
         luaL_setfuncs(L, metafunctable.data(), static_cast<uint32_t>(metafuncs.size()));
+        lua_pushvalue(L, -1);
+        lua_setfield(L, -1, "__index");
     }
 
     static void push (lua_State* L, userdata<T>& user) {
-        push_metatable(L, userdata_traits<T>::metatable, user.functions(), user.function_table(), user.meta_functions(), user.meta_function_table());
+        // push pointer tables first,
+        // but leave the regular T table on last so it can be linked to a type for usage with `.new(...)`
         push_metatable(L, userdata_traits<T*>::metatable, user.reference_functions(), user.reference_function_table(), user.meta_reference_functions(), user.meta_reference_function_table());
+        push_metatable(L, userdata_traits<T>::metatable, user.functions(), user.function_table(), user.meta_functions(), user.meta_function_table());
     }
 };
 } // stack
