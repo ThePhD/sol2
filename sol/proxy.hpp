@@ -36,13 +36,11 @@ private:
 public:
 
     template<typename T>
-    proxy(Table& table, T&& key) : tbl(table), key(std::forward<T>(key)) {
-
-    }
+    proxy(Table& table, T&& key) : tbl(table), key(std::forward<T>(key)) {}
 
     template<typename T>
     T get() const {
-        return tbl.get<T>(key);
+        return tbl.template get<T>(key);
     }
 
     template<typename T>
@@ -105,30 +103,29 @@ public:
 
     template<typename... Ret, typename... Args>
     typename return_type<Ret...>::type call(Args&&... args) {
-        return tbl.get<function>(key)(types<Ret...>(), std::forward<Args>(args)...);
+        return tbl.template get<function>(key)(types<Ret...>(), std::forward<Args>(args)...);
     }
 };
 
 template<typename Table, typename Key, typename T>
-inline bool operator== (T&& left, const proxy<Table, Key>& right) {
+inline bool operator==(T&& left, const proxy<Table, Key>& right) {
     return left == right.template get<Decay<T>>();
 }
 
 template<typename Table, typename Key, typename T>
-inline bool operator== (const proxy<Table, Key>& right, T&& left) {
+inline bool operator==(const proxy<Table, Key>& right, T&& left) {
     return right.template get<Decay<T>>() == left;
 }
 
 template<typename Table, typename Key, typename T>
-inline bool operator!= (T&& left, const proxy<Table, Key>& right) {
+inline bool operator!=(T&& left, const proxy<Table, Key>& right) {
     return right.template get<Decay<T>>() != left;
 }
 
 template<typename Table, typename Key, typename T>
-inline bool operator!= (const proxy<Table, Key>& right, T&& left) {
+inline bool operator!=(const proxy<Table, Key>& right, T&& left) {
     return right.template get<Decay<T>>() != left;
 }
-
 } // sol
 
 #endif // SOL_PROXY_HPP
