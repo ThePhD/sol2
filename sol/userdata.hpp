@@ -25,6 +25,7 @@
 #include "state.hpp"
 #include "function_types.hpp"
 #include "userdata_traits.hpp"
+#include "default_construct.hpp"
 #include <vector>
 #include <array>
 #include <algorithm>
@@ -56,11 +57,8 @@ private:
     struct constructor {
         template<typename... Args>
         static void do_constructor(lua_State* L, T* obj, call_syntax syntax, int, types<Args...>) {
-            auto fx = [&obj] (Args&&... args) -> void {
-                std::allocator<T> alloc{};
-                alloc.construct(obj, std::forward<Args>(args)...);
-            };
-            stack::get_call(L, 1 + static_cast<int>(syntax), fx, types<Args...>());
+		  default_construct fx{};
+            stack::get_call(L, 1 + static_cast<int>(syntax), fx, types<Args...>(), obj);
        }
 
         static void match_constructor(lua_State*, T*, call_syntax, int) {
@@ -83,7 +81,7 @@ private:
 
             void* udata = lua_newuserdata(L, sizeof(T));
             T* obj = static_cast<T*>(udata);
-            match_constructor(L, obj, syntax, argcount - static_cast<int>(syntax), typename std::common_type<TTypes>::type()...);
+            match_constructor(L, obj, syntax, argcount - static_cast<int>(syntax), typename identity<TTypes>::type()...);
 
 
             if (luaL_newmetatable(L, std::addressof(meta[0])) == 1) {

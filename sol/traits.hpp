@@ -26,6 +26,9 @@
 #include <type_traits>
 
 namespace sol {
+template <typename T>
+struct identity { typedef T type; };
+
 template<class T, class...>
 struct are_same : std::true_type { };
 

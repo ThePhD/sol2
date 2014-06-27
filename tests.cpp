@@ -636,8 +636,12 @@ TEST_CASE("tables/issue-number-twenty-five", "Using pointers and references from
             return x;
         }
 
-        test* clone() {
+	   test* pget() {
             return this;
+        }
+
+	   test create_get() {
+            return *this;
         }
 
         int fun(int x) {
@@ -647,10 +651,10 @@ TEST_CASE("tables/issue-number-twenty-five", "Using pointers and references from
 
     sol::state lua;
     lua.open_libraries(sol::lib::base);
-    lua.new_userdata<test>("test", "set", &test::set, "get", &test::get, "clone", &test::clone, "fun", &test::fun);
+    lua.new_userdata<test>("test", "set", &test::set, "get", &test::get, "pointer_get", &test::pget, "fun", &test::fun, "create_get", &test::create_get);
     REQUIRE_NOTHROW(lua.script("x = test.new()\n"
                                "x:set():get()"));
-    REQUIRE_NOTHROW(lua.script("y = x:clone()"));
+    REQUIRE_NOTHROW(lua.script("y = x:pointer_get()"));
     REQUIRE_NOTHROW(lua.script("y:set():get()"));
     REQUIRE_NOTHROW(lua.script("y:fun(10)"));
     REQUIRE_NOTHROW(lua.script("x:fun(10)"));
@@ -658,4 +662,45 @@ TEST_CASE("tables/issue-number-twenty-five", "Using pointers and references from
     REQUIRE_NOTHROW(lua.script("assert(y:fun(10) == 100, '...')"));
     REQUIRE_NOTHROW(lua.script("assert(y:set():get() == y:set():get(), '...')"));
     REQUIRE_NOTHROW(lua.script("assert(y:set():get() == 10, '...')"));
+}
+
+TEST_CASE("userdata/issue-number-thirty-five", "using value types created from lua-called C++ code, fixing user-defined types with constructors") {
+	struct Vec {
+	  float x, y, z;
+	  Vec(float x, float y, float z) : x{x}, y{y}, z{z} {}
+	  float length() {
+	    return sqrtf(x*x + y*y + z*z);
+	  }
+	  Vec normalized() {
+	    float invS = 1 / length();
+	    return {x * invS, y * invS, z * invS};
+	  }
+	};
+
+	struct Line {
+	  Vec p1, p2;
+	  Line() : p1{0, 0, 0}, p2{0, 0, 0} {}
+	  Line(float x) : p1{x, x, x}, p2{x, x, x} {}
+	  Line(const Vec& p1) : p1{p1}, p2{p1} {}
+	  Line(Vec p1, Vec p2) : p1{p1}, p2{p2} {}
+	};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	sol::constructors<sol::types<>, sol::types<Vec>, sol::types<Vec, Vec>> lctor;
+	sol::userdata<Line> ludata("Line", lctor);
+	lua.set_userdata(ludata);
+
+	sol::constructors<sol::types<float, float, float>> ctor;
+	sol::userdata<Vec> udata("Vec", ctor,
+	  "normalized", &Vec::normalized,
+	  "length",     &Vec::length);
+
+	lua.set_userdata(udata);
+
+	REQUIRE_NOTHROW(lua.script("v = Vec.new(1, 2, 3)\n"
+	           "print(v:length())"));
+	REQUIRE_NOTHROW(lua.script("v = Vec.new(1, 2, 3)\n"
+	           "print(v:normalized():length())" ));
 }

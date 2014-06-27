@@ -25,3 +25,6 @@ lib/liblua5.2.a
 *.includes
 *.pyc
 main.cpp
+lua-5.2.3/
+build.ninja
+main.ninja

@@ -220,7 +220,7 @@ struct pusher {
 
     template<typename U = Unqualified<T>, EnableIf<Not<has_begin_end<U>>, Not<std::is_base_of<reference, U>>, Not<std::is_integral<U>>, Not<std::is_floating_point<U>>> = 0>
     static void push(lua_State* L, T&& t) {
-        detail::push_userdata<U>(L, userdata_traits<T*>::metatable, std::move(t));
+        detail::push_userdata<U>(L, userdata_traits<T>::metatable, std::move(t));
     }
 };
 
@@ -378,8 +378,8 @@ inline auto ltr_get(lua_State*, int, F&& f, types<Args...>, types<>, Vs&&... vs)
     return f(std::forward<Vs>(vs)...);
 }
 template<typename F, typename Head, typename... Tail, typename... Vs, typename... Args>
-inline auto ltr_get(lua_State* L, int index, F&& f, types<Args...> t, types<Head, Tail...>, Vs&&... vs) -> decltype(f(std::declval<Args>()...)) {
-    return ltr_get(L, index + 1, std::forward<F>(f), t, types<Tail...>(), std::forward<Vs>(vs)..., stack::get<Head>(L, index));
+inline auto ltr_get(lua_State* L, int index, F&& f, types<Args...>, types<Head, Tail...>, Vs&&... vs) -> decltype(f(std::declval<Args>()...)) {
+    return ltr_get(L, index + 1, std::forward<F>(f), types<Args...>(), types<Tail...>(), std::forward<Vs>(vs)..., stack::get<Head>(L, index));
 }
 
 template<typename F, typename... Vs, typename... Args>
@@ -427,14 +427,14 @@ inline void push_reverse(lua_State* L, std::tuple<Args...>&& tuplen) {
     detail::push_tuple(L, build_reverse_indices<sizeof...(Args)>(), std::move(tuplen));
 }
 
-template<typename... Args, typename TFx>
-inline auto get_call(lua_State* L, int index, TFx&& fx, types<Args...> t) -> decltype(detail::ltr_get(L, index, std::forward<TFx>(fx), t, t)) {
-    return detail::ltr_get(L, index, std::forward<TFx>(fx), t, t);
+template<typename... Args, typename TFx, typename... Vs>
+inline auto get_call(lua_State* L, int index, TFx&& fx, types<Args...> t, Vs&&... vs) -> decltype(detail::ltr_get(L, index, std::forward<TFx>(fx), t, t, std::forward<Vs>(vs)...)) {
+    return detail::ltr_get(L, index, std::forward<TFx>(fx), t, t, std::forward<Vs>(vs)...);
 }
 
-template<typename... Args, typename TFx>
-inline auto get_call(lua_State* L, TFx&& fx, types<Args...> t) -> decltype(get_call(L, 1, std::forward<TFx>(fx), t)) {
-    return get_call(L, 1, std::forward<TFx>(fx), t);
+template<typename TFx, typename... Args, typename... Vs>
+inline auto get_call(lua_State* L, TFx&& fx, types<Args...> t, Vs&&... vs) -> decltype(get_call(L, 1, std::forward<TFx>(fx), t, std::forward<Vs>(vs)...)) {
+    return get_call(L, 1, std::forward<TFx>(fx), t, std::forward<Vs>(vs)...);
 }
 
 template<typename... Args, typename TFx>
