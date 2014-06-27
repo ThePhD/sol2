@@ -636,11 +636,11 @@ TEST_CASE("tables/issue-number-twenty-five", "Using pointers and references from
             return x;
         }
 
-	   test* pget() {
+        test* pget() {
             return this;
         }
 
-	   test create_get() {
+        test create_get() {
             return *this;
         }
 
@@ -665,42 +665,41 @@ TEST_CASE("tables/issue-number-twenty-five", "Using pointers and references from
 }
 
 TEST_CASE("userdata/issue-number-thirty-five", "using value types created from lua-called C++ code, fixing user-defined types with constructors") {
-	struct Vec {
-	  float x, y, z;
-	  Vec(float x, float y, float z) : x{x}, y{y}, z{z} {}
-	  float length() {
-	    return sqrtf(x*x + y*y + z*z);
-	  }
-	  Vec normalized() {
-	    float invS = 1 / length();
-	    return {x * invS, y * invS, z * invS};
-	  }
-	};
+    struct Vec {
+        float x, y, z;
+        Vec(float x, float y, float z) : x{x}, y{y}, z{z} {}
+        float length() {
+            return sqrtf(x*x + y*y + z*z);
+        }
 
-	struct Line {
-	  Vec p1, p2;
-	  Line() : p1{0, 0, 0}, p2{0, 0, 0} {}
-	  Line(float x) : p1{x, x, x}, p2{x, x, x} {}
-	  Line(const Vec& p1) : p1{p1}, p2{p1} {}
-	  Line(Vec p1, Vec p2) : p1{p1}, p2{p2} {}
-	};
+	   Vec normalized() {
+            float invS = 1 / length();
+            return {x * invS, y * invS, z * invS};
+        }
+    };
 
-	sol::state lua;
-	lua.open_libraries(sol::lib::base);
+    struct Line {
+        Vec p1, p2;
+        Line() : p1{0, 0, 0}, p2{0, 0, 0} {}
+        Line(float x) : p1{x, x, x}, p2{x, x, x} {}
+        Line(const Vec& p1) : p1{p1}, p2{p1} {}
+        Line(Vec p1, Vec p2) : p1{p1}, p2{p2} {}
+    };
 
-	sol::constructors<sol::types<>, sol::types<Vec>, sol::types<Vec, Vec>> lctor;
-	sol::userdata<Line> ludata("Line", lctor);
-	lua.set_userdata(ludata);
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
 
-	sol::constructors<sol::types<float, float, float>> ctor;
-	sol::userdata<Vec> udata("Vec", ctor,
-	  "normalized", &Vec::normalized,
-	  "length",     &Vec::length);
+    sol::constructors<sol::types<>, sol::types<Vec>, sol::types<Vec, Vec>> lctor;
+    sol::userdata<Line> ludata("Line", lctor);
+    lua.set_userdata(ludata);
 
-	lua.set_userdata(udata);
+    sol::constructors<sol::types<float, float, float>> ctor;
+    sol::userdata<Vec> udata("Vec", ctor, "normalized", &Vec::normalized, "length", &Vec::length);
 
-	REQUIRE_NOTHROW(lua.script("v = Vec.new(1, 2, 3)\n"
-	           "print(v:length())"));
-	REQUIRE_NOTHROW(lua.script("v = Vec.new(1, 2, 3)\n"
-	           "print(v:normalized():length())" ));
+    lua.set_userdata(udata);
+
+    REQUIRE_NOTHROW(lua.script("v = Vec.new(1, 2, 3)\n"
+               "print(v:length())"));
+    REQUIRE_NOTHROW(lua.script("v = Vec.new(1, 2, 3)\n"
+               "print(v:normalized():length())" ));
 }
