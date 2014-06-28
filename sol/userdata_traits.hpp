@@ -40,7 +40,7 @@ template<typename T>
 const std::string userdata_traits<T>::metatable = std::string("sol.").append(detail::demangle(typeid(T)));
 
 template<typename T>
-const std::string userdata_traits<T>::metatable = std::string("sol.").append(detail::demangle(typeid(T))).append(".\xE2\x99\xBB");
+const std::string userdata_traits<T>::gctable = std::string("sol.").append(detail::demangle(typeid(T))).append(".\xE2\x99\xBB");
 
 }
 

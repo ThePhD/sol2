@@ -154,7 +154,7 @@ public:
     template<typename Class, typename... CTor, typename... Args>
     state& new_userdata(const std::string& name, Args&&... args) {
         constructors<types<CTor...>> ctor{};
-        return new_userdata(name, ctor, std::forward<Args>(args)...);
+        return new_userdata<Class>(name, ctor, std::forward<Args>(args)...);
     }
 
     template<typename Class, typename... CArgs, typename... Args>
