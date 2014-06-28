@@ -50,7 +50,6 @@ enum class lib : char {
 
 class state {
 private:
-    std::vector<std::shared_ptr<void>> classes;
     std::unique_ptr<lua_State, void(*)(lua_State*)> L;
     table reg;
     table global;
@@ -154,11 +153,14 @@ public:
 
     template<typename Class, typename... CTor, typename... Args>
     state& new_userdata(const std::string& name, Args&&... args) {
-        constructors<types<CTor...>> ctor;
-        classes.emplace_back(std::make_shared<userdata<Class>>(name, ctor, std::forward<Args>(args)...));
-        auto&& ptr = classes.back();
-        auto udata = std::static_pointer_cast<userdata<Class>>(ptr);
-        global.set_userdata(*udata);
+        constructors<types<CTor...>> ctor{};
+        return new_userdata(name, ctor, std::forward<Args>(args)...);
+    }
+
+    template<typename Class, typename... CArgs, typename... Args>
+    state& new_userdata(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
+        userdata<Class> udata(name, ctor, std::forward<Args>(args)...);
+        global.set_userdata(udata);
         return *this;
     }
 

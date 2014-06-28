@@ -52,6 +52,7 @@ private:
     std::vector<luaL_Reg> ptrfunctiontable;
     std::vector<luaL_Reg> metafunctiontable;
     std::vector<luaL_Reg> ptrmetafunctiontable;
+    lua_CFunction cleanup;
 
     template<typename... TTypes>
     struct constructor {
@@ -97,7 +98,6 @@ private:
         }
     };
 
-    template<std::size_t N>
     struct destructor {
         static int destruct(lua_State* L) {
             userdata_t udata = stack::get<userdata_t>(L, 1);
@@ -144,20 +144,24 @@ public:
     template<typename... Args, typename... CArgs>
     userdata(std::string name, constructors<CArgs...>, Args&&... args): luaname(std::move(name)) {
         functionnames.reserve(sizeof...(args) + 2);
-        functiontable.reserve(sizeof...(args) + 2);
-        ptrfunctiontable.reserve(sizeof...(args) + 2);
-        metafunctiontable.reserve(sizeof...(args) + 2);
-        ptrmetafunctiontable.reserve(sizeof...(args) + 2);
-        funcs.reserve(sizeof...(args) + 2);
-        ptrfuncs.reserve(sizeof...(args) + 2);
-        metafuncs.reserve(sizeof...(args) + 2);
-        ptrmetafuncs.reserve(sizeof...(args) + 2);
-        build_function_tables<0, 0>(std::forward<Args>(args)...);
 
+        functiontable.reserve(sizeof...(args));
+        ptrfunctiontable.reserve(sizeof...(args));
+        metafunctiontable.reserve(sizeof...(args));
+        ptrmetafunctiontable.reserve(sizeof...(args));
+
+        funcs.reserve(sizeof...(args));
+        ptrfuncs.reserve(sizeof...(args));
+        metafuncs.reserve(sizeof...(args));
+        ptrmetafuncs.reserve(sizeof...(args));
+
+        cleanup = &base_function::userdata_gc<sizeof...(Args)>::gc;
+
+        build_function_tables<0, 0>(std::forward<Args>(args)...);
         functionnames.push_back("new");
         functiontable.push_back({ functionnames.back().c_str(), &constructor<CArgs...>::construct });
         functionnames.push_back("__gc");
-        metafunctiontable.push_back({ functionnames.back().c_str(), &destructor<sizeof...(Args) / 2>::destruct });
+        metafunctiontable.push_back({ functionnames.back().c_str(), &destructor::destruct });
         // ptr_functions does not participate in garbage collection/new,
         // as all pointered types are considered
         // to be references. This makes returns of
@@ -173,40 +177,44 @@ public:
     userdata(const char* name, constructors<CArgs...> c, Args&&... args) :
         userdata(std::string(name), std::move(c), std::forward<Args>(args)...) {}
 
-    const std::vector<std::string>& function_names () const {
+    std::vector<std::string>& function_names () {
         return functionnames;
     }
 
-    const std::vector<std::unique_ptr<base_function>>& functions () const {
+    std::vector<std::unique_ptr<base_function>>& functions () {
         return funcs;
     }
 
-    const std::vector<std::unique_ptr<base_function>>& reference_functions () const {
+    std::vector<std::unique_ptr<base_function>>& reference_functions () {
         return ptrfuncs;
     }
 
-    const std::vector<std::unique_ptr<base_function>>& meta_functions () const {
+    std::vector<std::unique_ptr<base_function>>& meta_functions () {
         return metafuncs;
     }
 
-    const std::vector<std::unique_ptr<base_function>>& meta_reference_functions () const {
+    std::vector<std::unique_ptr<base_function>>& meta_reference_functions () {
         return ptrmetafuncs;
     }
 
-    const std::vector<luaL_Reg>& function_table () const {
+    std::vector<luaL_Reg>& function_table () {
         return functiontable;
     }
 
-    const std::vector<luaL_Reg>& reference_function_table () const {
+    std::vector<luaL_Reg>& reference_function_table () {
         return ptrfunctiontable;
     }
 
-    const std::vector<luaL_Reg>& meta_function_table () const {
+    std::vector<luaL_Reg>& meta_function_table () {
         return metafunctiontable;
     }
 
-    const std::vector<luaL_Reg>& meta_reference_function_table () const {
+    std::vector<luaL_Reg>& meta_reference_function_table () {
         return ptrmetafunctiontable;
+    }
+
+    lua_CFunction cleanup_function () {
+        return cleanup;
     }
 
     const std::string& name () const {
@@ -240,19 +248,32 @@ const std::array<std::string, 19> userdata<T>::metafunctionnames = {
 namespace stack {
 template <typename T>
 struct pusher<userdata<T>> {
+    template <bool release = false, typename TCont>
+    static int push_upvalues (lua_State* L, TCont&& cont) {
+        int n = 0;
+        for (auto& c : cont) {
+            if (release)
+               stack::push<upvalue_t>(L, c.release());
+            else
+                stack::push<upvalue_t>(L, c.get());
+            ++n;
+        }
+        return n;
+    }
+
     template <typename Meta, typename Funcs, typename FuncTable, typename MetaFuncs, typename MetaFuncTable>
     static void push_metatable(lua_State* L, Meta&& meta, Funcs&& funcs, FuncTable&& functable, MetaFuncs&& metafuncs, MetaFuncTable&& metafunctable) {
         luaL_newmetatable(L, std::addressof(meta[0]));
-        // regular functions accessed through __index semantics
-        for (std::size_t u = 0; u < funcs.size(); ++u) {
-          stack::push<upvalue_t>(L, funcs[u].get());
+        if (functable.size() > 1) {
+            // regular functions accessed through __index semantics
+            int up = push_upvalues(L, funcs);
+            luaL_setfuncs(L, functable.data(), up);
         }
-        luaL_setfuncs(L, functable.data(), static_cast<uint32_t>(funcs.size()));
-        // meta functions
-        for (std::size_t u = 0; u < metafuncs.size(); ++u) {
-          stack::push<upvalue_t>(L, metafuncs[u].get());
+        if (metafunctable.size() > 1) {
+            // meta functions
+            int up = push_upvalues(L, metafuncs);
+            luaL_setfuncs(L, metafunctable.data(), up);
         }
-        luaL_setfuncs(L, metafunctable.data(), static_cast<uint32_t>(metafuncs.size()));
         lua_pushvalue(L, -1);
         lua_setfield(L, -1, "__index");
     }
@@ -262,6 +283,21 @@ struct pusher<userdata<T>> {
         // but leave the regular T table on last so it can be linked to a type for usage with `.new(...)`
         push_metatable(L, userdata_traits<T*>::metatable, user.reference_functions(), user.reference_function_table(), user.meta_reference_functions(), user.meta_reference_function_table());
         push_metatable(L, userdata_traits<T>::metatable, user.functions(), user.function_table(), user.meta_functions(), user.meta_function_table());
+
+        // Automatic deleter table -- stays alive until lua VM dies
+        // even if the user calls collectgarbage()
+        auto cleanup = user.cleanup_function();
+        lua_createtable(L, 0, 0);
+        lua_createtable(L, 0, 1);
+        int up = push_upvalues<true>(L, user.functions());
+        up += push_upvalues<true>(L, user.reference_functions());
+        up += push_upvalues<true>(L, user.meta_functions());
+        up += push_upvalues<true>(L, user.meta_reference_functions());
+        lua_pushcclosure(L, cleanup, up);
+        lua_setfield(L, -2, "__gc");
+        lua_setmetatable(L, -2);
+        // gctable name by default has ♻ part of it
+        lua_setglobal(L, std::addressof(userdata_traits<T>::gctable[0]));
     }
 };
 } // stack

@@ -30,6 +30,7 @@ template<typename T>
 struct userdata_traits {
     static const std::string name;
     static const std::string metatable;
+    static const std::string gctable;
 };
 
 template<typename T>
@@ -37,6 +38,9 @@ const std::string userdata_traits<T>::name = detail::demangle(typeid(T));
 
 template<typename T>
 const std::string userdata_traits<T>::metatable = std::string("sol.").append(detail::demangle(typeid(T)));
+
+template<typename T>
+const std::string userdata_traits<T>::metatable = std::string("sol.").append(detail::demangle(typeid(T))).append(".\xE2\x99\xBB");
 
 }
 
