@@ -208,7 +208,8 @@ struct base_function {
 template<typename Function>
 struct functor_function : public base_function {
     typedef decltype(&Function::operator()) function_type;
-    typedef function_traits<function_type> traits_type;
+    typedef function_return_t<function_type> return_type;
+    typedef function_args_t<function_type> args_type;
     Function fx;
 
     template<typename... FxArgs>
@@ -229,7 +230,6 @@ struct functor_function : public base_function {
 
     template<typename... Ret, typename... Args>
     int operator()(types<Ret...>, types<Args...> t, lua_State* L) {
-        typedef typename return_type<Ret...>::type return_type;
         return_type r = stack::get_call(L, fx, t);
         std::ptrdiff_t nargs = sizeof...(Args);
         lua_pop(L, nargs);
@@ -238,29 +238,30 @@ struct functor_function : public base_function {
     }
 
     virtual int operator()(lua_State* L) override {
-        return (*this)(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), L);
+        return (*this)(tuple_types<return_type>(), args_type(), L);
     }
 };
 
 template<typename Function, typename T>
 struct member_function : public base_function {
-    typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
-    typedef function_traits<function_type> traits_type;
+    typedef typename std::remove_pointer<Decay<Function>>::type function_type;
+    typedef function_return_t<function_type> return_type;
+    typedef function_args_t<function_type> args_type;
     struct functor {
         T member;
         function_type invocation;
 
-        template<typename... FxArgs>
-        functor(T m, FxArgs&&... fxargs): member(std::move(m)), invocation(std::forward<FxArgs>(fxargs)...) {}
+        template<typename Tm, typename... FxArgs>
+        functor(Tm&& m, FxArgs&&... fxargs): member(std::forward<Tm>(m)), invocation(std::forward<FxArgs>(fxargs)...) {}
 
         template<typename... Args>
-        typename traits_type::return_type operator()(Args&&... args) {
+        return_type operator()(Args&&... args) {
            return (member.*invocation)(std::forward<Args>(args)...);
         }
     } fx;
 
-    template<typename... FxArgs>
-    member_function(T m, FxArgs&&... fxargs): fx(std::move(m), std::forward<FxArgs>(fxargs)...) {}
+    template<typename Tm, typename... FxArgs>
+    member_function(Tm&& m, FxArgs&&... fxargs): fx(std::forward<Tm>(m), std::forward<FxArgs>(fxargs)...) {}
 
     template<typename... Args>
     int operator()(types<void>, types<Args...> t, lua_State* L) {
@@ -275,7 +276,6 @@ struct member_function : public base_function {
 
     template<typename... Ret, typename... Args>
     int operator()(types<Ret...>, types<Args...> t, lua_State* L) {
-        typedef typename return_type<Ret...>::type return_type;
         return_type r = stack::get_call(L, fx, t);
         std::ptrdiff_t nargs = sizeof...(Args);
         lua_pop(L, nargs);
@@ -284,7 +284,7 @@ struct member_function : public base_function {
     }
 
     virtual int operator()(lua_State* L) override {
-        return (*this)(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), L);
+        return (*this)(tuple_types<return_type>(), args_type(), L);
     }
 };
 
@@ -292,8 +292,8 @@ template<typename Function, typename Tp>
 struct userdata_function : public base_function {
     typedef typename std::remove_pointer<Tp>::type T;
     typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
-    typedef function_traits<function_type> traits_type;
-    typedef typename traits_type::return_type return_type;
+    typedef function_args_t<function_type> args_type;
+    typedef function_return_t<function_type> return_type;
 
     detail::functor<T, function_type, return_type> fx;
 
@@ -347,7 +347,7 @@ struct userdata_function : public base_function {
         fx.item = detail::get_ptr(stack::get<Tp>(L, 1));
         if (fx.item == nullptr)
             throw error("userdata for function call is null: are you using wrong call syntax? (use item:function(...) synax)");
-        return (*this)(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), L);
+        return (*this)(tuple_types<return_type>(), args_type(), L);
     }
 };
 

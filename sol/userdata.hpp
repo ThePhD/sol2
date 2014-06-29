@@ -108,6 +108,36 @@ private:
         }
     };
 
+    template <bool release = false, typename TCont>
+    static int push_upvalues (lua_State* L, TCont&& cont) {
+        int n = 0;
+        for (auto& c : cont) {
+            if (release)
+               stack::push<upvalue_t>(L, c.release());
+            else
+                stack::push<upvalue_t>(L, c.get());
+            ++n;
+        }
+        return n;
+    }
+
+    template <typename Meta, typename Funcs, typename FuncTable, typename MetaFuncs, typename MetaFuncTable>
+    static void push_metatable(lua_State* L, Meta&& meta, Funcs&& funcs, FuncTable&& functable, MetaFuncs&& metafuncs, MetaFuncTable&& metafunctable) {
+        luaL_newmetatable(L, std::addressof(meta[0]));
+        if (functable.size() > 1) {
+            // regular functions accessed through __index semantics
+            int up = push_upvalues(L, funcs);
+            luaL_setfuncs(L, functable.data(), up);
+        }
+        if (metafunctable.size() > 1) {
+            // meta functions
+            int up = push_upvalues(L, metafuncs);
+            luaL_setfuncs(L, metafunctable.data(), up);
+        }
+        lua_pushvalue(L, -1);
+        lua_setfield(L, -1, "__index");
+    }
+
     template<std::size_t N, std::size_t M>
     void build_function_tables() {}
 
@@ -177,48 +207,32 @@ public:
     userdata(const char* name, constructors<CArgs...> c, Args&&... args) :
         userdata(std::string(name), std::move(c), std::forward<Args>(args)...) {}
 
-    std::vector<std::string>& function_names () {
-        return functionnames;
-    }
-
-    std::vector<std::unique_ptr<base_function>>& functions () {
-        return funcs;
-    }
-
-    std::vector<std::unique_ptr<base_function>>& reference_functions () {
-        return ptrfuncs;
-    }
-
-    std::vector<std::unique_ptr<base_function>>& meta_functions () {
-        return metafuncs;
-    }
-
-    std::vector<std::unique_ptr<base_function>>& meta_reference_functions () {
-        return ptrmetafuncs;
-    }
-
-    std::vector<luaL_Reg>& function_table () {
-        return functiontable;
-    }
-
-    std::vector<luaL_Reg>& reference_function_table () {
-        return ptrfunctiontable;
-    }
-
-    std::vector<luaL_Reg>& meta_function_table () {
-        return metafunctiontable;
-    }
-
-    std::vector<luaL_Reg>& meta_reference_function_table () {
-        return ptrmetafunctiontable;
-    }
-
-    lua_CFunction cleanup_function () {
-        return cleanup;
-    }
-
     const std::string& name () const {
         return luaname;
+    }
+
+    void push (lua_State* L) {
+        // push pointer tables first,
+        // but leave the regular T table on last so it can be linked to a type for usage with `.new(...)`
+        push_metatable(L, userdata_traits<T*>::metatable,
+                       ptrfuncs, ptrfunctiontable,
+                       ptrmetafuncs, ptrmetafunctiontable);
+        push_metatable(L, userdata_traits<T>::metatable,
+                       funcs, functiontable,
+                       metafuncs, metafunctiontable);
+        // Automatic deleter table -- stays alive until lua VM dies
+        // even if the user calls collectgarbage()
+        lua_createtable(L, 0, 0);
+        lua_createtable(L, 0, 1);
+        int up = push_upvalues<true>(L, funcs);
+        up += push_upvalues<true>(L, ptrfuncs);
+        up += push_upvalues<true>(L, metafuncs);
+        up += push_upvalues<true>(L, ptrmetafuncs);
+        lua_pushcclosure(L, cleanup, up);
+        lua_setfield(L, -2, "__gc");
+        lua_setmetatable(L, -2);
+        // gctable name by default has ♻ part of it
+        lua_setglobal(L, std::addressof(userdata_traits<T>::gctable[0]));
     }
 };
 
@@ -248,56 +262,8 @@ const std::array<std::string, 19> userdata<T>::metafunctionnames = {
 namespace stack {
 template <typename T>
 struct pusher<userdata<T>> {
-    template <bool release = false, typename TCont>
-    static int push_upvalues (lua_State* L, TCont&& cont) {
-        int n = 0;
-        for (auto& c : cont) {
-            if (release)
-               stack::push<upvalue_t>(L, c.release());
-            else
-                stack::push<upvalue_t>(L, c.get());
-            ++n;
-        }
-        return n;
-    }
-
-    template <typename Meta, typename Funcs, typename FuncTable, typename MetaFuncs, typename MetaFuncTable>
-    static void push_metatable(lua_State* L, Meta&& meta, Funcs&& funcs, FuncTable&& functable, MetaFuncs&& metafuncs, MetaFuncTable&& metafunctable) {
-        luaL_newmetatable(L, std::addressof(meta[0]));
-        if (functable.size() > 1) {
-            // regular functions accessed through __index semantics
-            int up = push_upvalues(L, funcs);
-            luaL_setfuncs(L, functable.data(), up);
-        }
-        if (metafunctable.size() > 1) {
-            // meta functions
-            int up = push_upvalues(L, metafuncs);
-            luaL_setfuncs(L, metafunctable.data(), up);
-        }
-        lua_pushvalue(L, -1);
-        lua_setfield(L, -1, "__index");
-    }
-
     static void push (lua_State* L, userdata<T>& user) {
-        // push pointer tables first,
-        // but leave the regular T table on last so it can be linked to a type for usage with `.new(...)`
-        push_metatable(L, userdata_traits<T*>::metatable, user.reference_functions(), user.reference_function_table(), user.meta_reference_functions(), user.meta_reference_function_table());
-        push_metatable(L, userdata_traits<T>::metatable, user.functions(), user.function_table(), user.meta_functions(), user.meta_function_table());
-
-        // Automatic deleter table -- stays alive until lua VM dies
-        // even if the user calls collectgarbage()
-        auto cleanup = user.cleanup_function();
-        lua_createtable(L, 0, 0);
-        lua_createtable(L, 0, 1);
-        int up = push_upvalues<true>(L, user.functions());
-        up += push_upvalues<true>(L, user.reference_functions());
-        up += push_upvalues<true>(L, user.meta_functions());
-        up += push_upvalues<true>(L, user.meta_reference_functions());
-        lua_pushcclosure(L, cleanup, up);
-        lua_setfield(L, -2, "__gc");
-        lua_setmetatable(L, -2);
-        // gctable name by default has ♻ part of it
-        lua_setglobal(L, std::addressof(userdata_traits<T>::gctable[0]));
+        user.push(L);
     }
 };
 } // stack

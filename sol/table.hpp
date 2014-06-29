@@ -83,23 +83,16 @@ public:
         return *this;
     }
 
-    template<typename T, typename TFx>
-    table& set_function(T&& key, TFx&& fx) {
-        typedef typename std::remove_pointer<Decay<TFx>>::type clean_fx;
-        return set_isfunction_fx(std::is_function<clean_fx>(), std::forward<T>(key), std::forward<TFx>(fx));
-    }
-
-    template<typename T, typename TFx, typename TObj>
-    table& set_function(T&& key, TFx&& fx, TObj&& obj) {
-        return set_lvalue_fx(Bool<std::is_lvalue_reference<TObj>::value || std::is_pointer<TObj>::value>(),
-            std::forward<T>(key), std::forward<TFx>(fx), std::forward<TObj>(obj));
-    }
-
     template<typename T>
-    table& set_userdata(userdata<T>& user) {     
-        stack::push(state(), user);
-        lua_setglobal(state(), user.name().c_str());
+    table& set_userdata(userdata<T>& user) {
+        return set_userdata(user.name(), user);
+    }
 
+    template<typename Key, typename T>
+    table& set_userdata(Key&& key, userdata<T>& user) {
+        std::string ukey(std::forward<Key>(key));
+        stack::push(state(), user);
+        lua_setglobal(state(), ukey.c_str());
         return *this;
     }
 
@@ -121,121 +114,63 @@ public:
     void pop(int n = 1) const noexcept {
         lua_pop(state(), n);
     }
+
+    template<typename... Args, typename R, typename Key>
+    table& set_function(Key&& key, R fun_ptr(Args...)){
+        set_resolved_function(std::forward<Key>(key), fun_ptr);
+        return *this;
+    }
+
+    template<typename Sig, typename Key>
+    table& set_function(Key&& key, Sig* fun_ptr){
+        set_resolved_function(std::forward<Key>(key), fun_ptr);
+        return *this;
+    }
+
+    template<typename... Args, typename R, typename C, typename T, typename Key>
+    table& set_function(Key&& key, R (C::*mem_ptr)(Args...), T&& obj) {
+        set_resolved_function(std::forward<Key>(key), mem_ptr, std::forward<T>(obj));
+        return *this;
+    }
+
+    template<typename Sig, typename C, typename T, typename Key>
+    table& set_function(Key&& key, Sig C::* mem_ptr, T&& obj) {
+        set_resolved_function(std::forward<Key>(key), mem_ptr, std::forward<T>(obj));
+        return *this;
+    }
+
+    template<typename... Sig, typename Fx, typename Key>
+    table& set_function(Key&& key, Fx&& fx) {
+        set_fx(types<Sig...>(), std::forward<Key>(key), std::forward<Fx>(fx));
+        return *this;
+    }
+
 private:
-    template<typename T, typename TFx>
-    table& set_isfunction_fx(std::true_type, T&& key, TFx&& fx) {
-        return set_fx(std::false_type(), std::forward<T>(key), std::forward<TFx>(fx));
+    template<typename R, typename... Args, typename Fx, typename Key, typename = typename std::result_of<Fx(Args...)>::type>
+    void set_fx(types<R(Args...)>, Key&& key, Fx&& fx) {
+        set_resolved_function<R(Args...)>(std::forward<Key>(key), std::forward<Fx>(fx));
     }
 
-    template<typename T, typename TFx>
-    table& set_isfunction_fx(std::false_type, T&& key, TFx&& fx) {
-        typedef Decay<TFx> clean_lambda;
-        typedef typename function_traits<decltype(&clean_lambda::operator())>::free_function_pointer_type raw_func_t;
-        typedef std::is_convertible<clean_lambda, raw_func_t> isconvertible;
-        return set_isconvertible_fx(isconvertible(), std::forward<T>(key), std::forward<TFx>(fx));
+    template<typename... Args, typename Fx, typename Key, typename R = typename std::result_of<Fx(Args...)>::type>
+    void set_fx(types<Args...>, Key&& key, Fx&& fx){
+        set_fx(types<R(Args...)>(), std::forward<Key>(key), std::forward<Fx>(fx));
     }
 
-    template<typename T, typename TFx>
-    table& set_isconvertible_fx(std::true_type, T&& key, TFx&& fx) {
-        typedef Decay<TFx> clean_lambda;
-        typedef typename function_traits<decltype(&clean_lambda::operator())>::free_function_pointer_type raw_func_t;
-        return set_isfunction_fx(std::true_type(), std::forward<T>(key), raw_func_t(std::forward<TFx>(fx)));
+    template<typename Fx, typename Key>
+    void set_fx(types<>, Key&& key, Fx&& fx) {
+        typedef Unqualified<Unwrap<Fx>> fx_t;
+        typedef decltype(&fx_t::operator()) Sig;
+        set_fx(types<function_signature_t<Sig>>(), std::forward<Key>(key), std::forward<Fx>(fx));
     }
 
-    template<typename T, typename TFx>
-    table& set_isconvertible_fx(std::false_type, T&& key, TFx&& fx) {
-        typedef typename std::remove_pointer<Decay<TFx>>::type clean_fx;
-        std::unique_ptr<base_function> sptr(new functor_function<clean_fx>(std::forward<TFx>(fx)));
-        return set_fx(std::forward<T>(key), std::move(sptr));
-    }
-
-    template<typename T, typename TFx, typename TObj>
-    table& set_lvalue_fx(std::true_type, T&& key, TFx&& fx, TObj&& obj) {
-        return set_fx(std::true_type(), std::forward<T>(key), std::forward<TFx>(fx), std::forward<TObj>(obj));
-    }
-
-    template<typename T, typename TFx, typename TObj>
-    table& set_lvalue_fx(std::false_type, T&& key, TFx&& fx, TObj&& obj) {
-        typedef typename std::remove_pointer<Decay<TFx>>::type clean_fx;
-        std::unique_ptr<base_function> sptr(new member_function<clean_fx, TObj>(std::forward<TObj>(obj), std::forward<TFx>(fx)));
-        return set_fx(std::forward<T>(key), std::move(sptr));
-    }
-
-    template<typename T, typename TFx, typename TObj>
-    table& set_fx(std::true_type, T&& key, TFx&& fx, TObj&& obj) {
-        std::string fkey(key);
-
-        // Layout:
-        // idx 1...n: verbatim data of member function pointer
-        // idx n + 1: is the object's void pointer
-        // We don't need to store the size, because the other side is templated
-        // with the same member function pointer type
-        Decay<TFx> fxptr(std::forward<TFx>(fx));
-        void* userobjdata = static_cast<void*>(detail::get_ptr(obj));
-        lua_CFunction freefunc = &static_member_function<Decay<TObj>, TFx>::call;
-        const char* freefuncname = fkey.c_str();
-        const luaL_Reg funcreg[2] = {
-            { freefuncname, freefunc },
-            { nullptr, nullptr }
-        };
-
-
+    template<typename... Sig, typename... Args, typename Key>
+    void set_resolved_function(Key&& key, Args&&... args) {
+        std::string fkey(std::forward<Key>(key));
         push();
-
-        int upvalues = stack::detail::push_as_upvalues(state(), fxptr);
-        stack::push(state(), userobjdata);
-        luaL_setfuncs(state(), funcreg, upvalues + 1);
-
+        int tabletarget = lua_gettop(state());
+        stack::push<function_sig_t<Sig...>>(state(), std::forward<Args>(args)...);
+        lua_setfield(state(), tabletarget, fkey.c_str());
         pop();
-        return *this;
-    }
-
-    template<typename T, typename TFx>
-    table& set_fx(std::false_type, T&& key, TFx&& fx) {
-        std::string fkey(key);
-        Decay<TFx> target(std::forward<TFx>(fx));
-        lua_CFunction freefunc = &static_function<TFx>::call;
-        const char* freefuncname = fkey.c_str();
-        const luaL_Reg funcreg[2] = {
-            { freefuncname, freefunc },
-            { nullptr, nullptr }
-        };
-
-        push();
-        int upvalues = stack::detail::push_as_upvalues(state(), target);
-        luaL_setfuncs(state(), funcreg, upvalues);
-        pop();
-
-        return *this;
-    }
-
-    template<typename T>
-    table& set_fx(T&& key, std::unique_ptr<base_function> luafunc) {
-        std::string fkey(key);
-        std::string metakey("sol.stateful.");
-        metakey += fkey;
-        metakey += ".meta";
-        base_function* target = luafunc.release();
-        void* userdata = reinterpret_cast<void*>(target);
-        lua_CFunction freefunc = &base_function::call;
-        const char* freefuncname = fkey.c_str();
-        const char* metatablename = metakey.c_str();
-        const luaL_Reg funcreg[2] = {
-            { freefuncname, freefunc },
-            { nullptr, nullptr }
-        };
-
-        if (luaL_newmetatable(state(), metatablename) == 1) {
-            lua_pushstring(state(), "__gc");
-            lua_pushcclosure(state(), &base_function::gc, 0);
-            lua_settable(state(), -3);
-        }
-
-        push();
-        stack::detail::push_userdata<void*>(state(), metatablename, userdata);
-        luaL_setfuncs(state(), funcreg, 1);
-        pop();
-        return *this;
     }
 };
 } // sol

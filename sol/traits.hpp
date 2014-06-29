@@ -24,10 +24,32 @@
 
 #include "tuple.hpp"
 #include <type_traits>
+#include <functional>
 
 namespace sol {
 template <typename T>
 struct identity { typedef T type; };
+
+template<typename... Args>
+struct is_tuple : std::false_type{ };
+
+template<typename... Args>
+struct is_tuple<std::tuple<Args...>> : std::true_type{ };
+
+template <typename T>
+struct unwrap {
+    typedef T type;
+};
+
+template <typename T>
+struct unwrap<std::reference_wrapper<T>> {
+    typedef typename std::add_lvalue_reference<T>::type type;
+};
+
+template <typename T, template <typename...> class Templ>
+struct is_specialization_of : std::false_type { };
+template <typename... T, template <typename...> class Templ>
+struct is_specialization_of<Templ<T...>, Templ> : std::true_type { };
 
 template<class T, class...>
 struct are_same : std::true_type { };
@@ -68,6 +90,9 @@ using Unqualified = typename std::remove_cv<typename std::remove_reference<T>::t
 template<typename T>
 using Decay = typename std::decay<T>::type;
 
+template <typename T>
+using Unwrap = typename unwrap<T>::type;
+
 template<typename... Args>
 struct return_type {
     typedef std::tuple<Args...> type;
@@ -82,17 +107,6 @@ template<>
 struct return_type<> : types<>{
     typedef void type;
 };
-
-template<typename... Args>
-struct is_tuple : std::false_type{ };
-
-template<typename... Args>
-struct is_tuple<std::tuple<Args...>> : std::true_type{ };
-
-template <typename T, template <typename...> class Templ>
-struct is_specialization_of : std::false_type { };
-template <typename... T, template <typename...> class Templ>
-struct is_specialization_of<Templ<T...>, Templ> : std::true_type { };
 
 namespace detail {
 template<typename T, bool isclass = std::is_class<Unqualified<T>>::value>
@@ -123,6 +137,15 @@ struct Function : Bool<detail::is_function_impl<T>::value> {};
 template<typename TFuncSignature>
 struct function_traits;
 
+template <typename TFuncSignature>
+using function_args_t = typename function_traits<TFuncSignature>::args_type;
+
+template <typename TFuncSignature>
+using function_signature_t = typename function_traits<TFuncSignature>::signature_type;
+
+template <typename TFuncSignature>
+using function_return_t = typename function_traits<TFuncSignature>::return_type;
+
 template<typename T, typename R, typename... Args>
 struct function_traits<R(T::*)(Args...)> {
     static const std::size_t arity = sizeof...(Args);
@@ -133,6 +156,7 @@ struct function_traits<R(T::*)(Args...)> {
     typedef typename std::remove_pointer<function_pointer_type>::type function_type;
     typedef R(*free_function_pointer_type)(Args...);
     typedef R return_type;
+    typedef typename std::remove_pointer<free_function_pointer_type>::type signature_type;
     template<std::size_t i>
     using arg = typename std::tuple_element<i, arg_tuple_type>::type;
 };
@@ -147,6 +171,7 @@ struct function_traits<R(T::*)(Args...) const> {
     typedef typename std::remove_pointer<function_pointer_type>::type function_type;
     typedef R(*free_function_pointer_type)(Args...);
     typedef R return_type;
+    typedef typename std::remove_pointer<free_function_pointer_type>::type signature_type;
     template<std::size_t i>
     using arg = typename std::tuple_element<i, arg_tuple_type>::type;
 };
@@ -161,6 +186,7 @@ struct function_traits<R(Args...)> {
     typedef R(*function_pointer_type)(Args...);
     typedef R(*free_function_pointer_type)(Args...);
     typedef R return_type;
+    typedef typename std::remove_pointer<free_function_pointer_type>::type signature_type;
     template<std::size_t i>
     using arg = typename std::tuple_element<i, arg_tuple_type>::type;
 };
@@ -175,6 +201,7 @@ struct function_traits<R(*)(Args...)> {
     typedef R(*function_pointer_type)(Args...);
     typedef R(*free_function_pointer_type)(Args...);
     typedef R return_type;
+    typedef typename std::remove_pointer<free_function_pointer_type>::type signature_type;
     template<std::size_t i>
     using arg = typename std::tuple_element<i, arg_tuple_type>::type;
 };
@@ -205,6 +232,16 @@ struct has_key_value_pair_impl {
 
 template<typename T>
 struct has_key_value_pair : decltype(has_key_value_pair_impl::test<T>(0)) {};
+
+template <typename T>
+auto unwrapper(T&& item) -> decltype(std::forward<T>(item)) {
+    return std::forward<T>(item);
+}
+
+template <typename Arg>
+Unwrap<Arg> unwrapper(std::reference_wrapper<Arg> arg) {
+    return arg.get();
+}
 } // sol
 
 #endif // SOL_TRAITS_HPP

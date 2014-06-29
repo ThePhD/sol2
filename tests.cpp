@@ -31,6 +31,26 @@ std::string free_function() {
     return "test";
 }
 
+int overloaded(int x) {
+    std::cout << x << std::endl;
+    return 3;
+}
+
+int overloaded(int x, int y) {
+    std::cout << x << " " << y << std::endl;
+    return 7;
+}
+
+int overloaded(int x, int y, int z) {
+    std::cout << x << " " << y << " " << z << std::endl;
+    return 11;
+}
+
+int non_overloaded(int x, int y, int z) {
+    std::cout << x << " " << y << " " << z << std::endl;
+    return 13;
+}
+
 std::vector<int> test_table_return_one() {
     return { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 }
@@ -332,25 +352,33 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
             std::cout << "stateless lambda()" << std::endl;
             return "test";
         }
-   );
+    );
     REQUIRE_NOTHROW(run_script(lua));
 
     lua.get<sol::table>("os").set_function("fun", &free_function);
     REQUIRE_NOTHROW(run_script(lua));
 
-    // l-value, can optimise
+    // l-value, canNOT optimise
+    // prefer value semantics unless wrapped with std::reference_wrapper
+    {
     auto lval = object();
     lua.get<sol::table>("os").set_function("fun", &object::operator(), lval);
+    }
     REQUIRE_NOTHROW(run_script(lua));
+
+    auto reflval = object();
+    lua.get<sol::table>("os").set_function("fun", &object::operator(), std::ref(reflval));
+    REQUIRE_NOTHROW(run_script(lua));
+
 
     // stateful lambda: non-convertible, cannot be optimised
     int breakit = 50;
     lua.get<sol::table>("os").set_function("fun",
         [&breakit] () {
-        std::cout << "stateless lambda()" << std::endl;
-        return "test";
-    }
-);
+            std::cout << "stateful lambda()" << std::endl;
+            return "test";
+        }
+    );
     REQUIRE_NOTHROW(run_script(lua));
 
     // r-value, cannot optimise
@@ -361,6 +389,26 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
     auto rval = object();
     lua.get<sol::table>("os").set_function("fun", &object::operator(), std::move(rval));
     REQUIRE_NOTHROW(run_script(lua));
+}
+
+TEST_CASE("functions/overloaded", "Check if overloaded function resolution templates compile/work") {
+    sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+    lua.set_function("non_overloaded", non_overloaded);
+    REQUIRE_NOTHROW(lua.script("x = non_overloaded(1)\nprint(x)"));
+
+    lua.set_function<int>("overloaded", overloaded);
+    REQUIRE_NOTHROW(lua.script("print(overloaded(1))"));
+
+    lua.set_function<int, int>("overloaded", overloaded);
+    REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2))"));
+
+    lua.set_function<int(int, int)>("overloaded", overloaded);
+    REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2))"));
+
+    lua.set_function<int, int, int>("overloaded", overloaded);
+    REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2, 3))"));
 }
 
 TEST_CASE("functions/return_order_and_multi_get", "Check if return order is in the same reading order specified in Lua") {
@@ -730,10 +778,10 @@ TEST_CASE("userdata/lua-stored-userdata", "ensure userdata values can be stored 
         // userdata dies, but still usable in lua!
     }
 
-	lua.script("collectgarbage()\n"
+	REQUIRE_NOTHROW(lua.script("collectgarbage()\n"
                 "v = Vec.new(1, 2, 3)\n"
-                "print(v:length())");
+                "print(v:length())"));
 
-	lua.script("v = Vec.new(1, 2, 3)\n"
-                "print(v:normalized():length())" );
+	REQUIRE_NOTHROW(lua.script("v = Vec.new(1, 2, 3)\n"
+                "print(v:normalized():length())" ));
 }

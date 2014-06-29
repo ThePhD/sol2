@@ -31,7 +31,11 @@ struct nil_t {};
 const nil_t nil {};
 struct void_type {};
 const void_type Void {};
-struct function_t {};
+
+template <typename... T>
+struct function_sig_t {};
+using function_t = function_sig_t<>;
+
 struct upvalue_t {
     void* value;
     upvalue_t(void* data) : value(data) {}

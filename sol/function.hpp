@@ -85,76 +85,112 @@ public:
 };
 
 namespace stack {
-template <>
-struct pusher<function_t> {
+template <typename... Sigs>
+struct pusher<function_sig_t<Sigs...>> {
 
-    template<typename TFx>
-    static void set_isfunction_fx(std::true_type, lua_State* L, TFx&& fx) {
-        set_fx(std::false_type(), L, std::forward<TFx>(fx));
+    template<typename R, typename... Args, typename Fx, typename = typename std::result_of<Fx(Args...)>::type>
+    static void set_memfx(types<R(Args...)> t, lua_State* L, Fx&& fx) {
+        typedef Decay<Unwrap<Fx>> raw_fx_t;
+        typedef R(* fx_ptr_t)(Args...);
+        typedef std::is_convertible<raw_fx_t, fx_ptr_t> is_convertible;
+        set_isconvertible_fx(is_convertible(), t, L, std::forward<Fx>(fx));
     }
 
-    template<typename TFx>
-    static void set_isfunction_fx(std::false_type, lua_State* L, TFx&& fx) {
-        typedef Decay<TFx> clean_lambda;
-        typedef typename function_traits<decltype(&clean_lambda::operator())>::free_function_pointer_type raw_func_t;
-        typedef std::is_convertible<clean_lambda, raw_func_t> is_convertible;
-        set_isconvertible_fx(is_convertible(), L, std::forward<TFx>(fx));
+    template<typename... Args, typename Fx, typename... Cx, typename R = typename std::result_of<Fx(Args...)>::type>
+    static void set_memfx(types<Args...>, lua_State* L, Fx&& fx){
+        set_memfx(types<R(Args...)>(), L, std::forward<Fx>(fx));
     }
 
-    template<typename TFx>
-    static void set_isconvertible_fx(std::true_type, lua_State* L, TFx&& fx) {
-        typedef Decay<TFx> clean_lambda;
-        typedef typename function_traits<decltype(&clean_lambda::operator())>::free_function_pointer_type raw_func_t;
-        set_isfunction_fx(std::true_type(), L, raw_func_t(std::forward<TFx>(fx)));
+    template<typename Fx>
+    static void set_memfx(types<>, lua_State* L, Fx&& fx) {
+        typedef Unqualified<Unwrap<Fx>> fx_t;
+        typedef decltype(&fx_t::operator()) Sig;
+        set_memfx(types<function_signature_t<Sig>>(), L, std::forward<Fx>(fx));
     }
 
-    template<typename TFx>
-    static void set_isconvertible_fx(std::false_type, lua_State* L, TFx&& fx) {
-        typedef typename std::remove_pointer<Decay<TFx>>::type clean_fx;
-        std::unique_ptr<base_function> sptr(new functor_function<clean_fx>(std::forward<TFx>(fx)));
-        set_fx<TFx>(L, std::move(sptr));
+    template<typename... Args, typename R>
+    static void set(lua_State* L, R fxptr(Args...)){
+        set_fx(std::false_type(), L, fxptr);
     }
 
-    template<typename TFx, typename TObj>
-    static void set_lvalue_fx(std::true_type, lua_State* L, TFx&& fx, TObj&& obj) {
-        set_fx(std::true_type(), L, std::forward<TFx>(fx), std::forward<TObj>(obj));
+    template<typename Sig>
+    static void set(lua_State* L, Sig* fxptr){
+       set_fx(std::false_type(), L, fxptr);
     }
 
-    template<typename TFx, typename TObj>
-    static void set_lvalue_fx(std::false_type, lua_State* L, TFx&& fx, TObj&& obj) {
-        typedef typename std::remove_pointer<Decay<TFx>>::type clean_fx;
-        std::unique_ptr<base_function> sptr(new member_function<clean_fx, TObj>(std::forward<TObj>(obj), std::forward<TFx>(fx)));
-        return set_fx<TFx>(L, std::move(sptr));
+    template<typename... Args, typename R, typename C, typename T>
+    static void set(lua_State* L, R (C::*memfxptr)(Args...), T&& obj) {
+        typedef Bool<is_specialization_of<T, std::reference_wrapper>::value || std::is_pointer<T>::value> is_reference;
+        set_reference_fx(is_reference(), L, memfxptr, std::forward<T>(obj));
     }
 
-    template<typename TFx, typename TObj>
-    static void set_fx(std::true_type, lua_State* L, TFx&& fx, TObj&& obj) {
+    template<typename Sig, typename C, typename T>
+    static void set(lua_State* L, Sig C::* memfxptr, T&& obj) {
+        typedef Bool<is_specialization_of<T, std::reference_wrapper>::value || std::is_pointer<T>::value> is_reference;
+        set_reference_fx(is_reference(), L, memfxptr, std::forward<T>(obj));
+    }
+
+    template<typename... Sig, typename Fx>
+    static void set(lua_State* L, Fx&& fx) {
+        set_memfx(types<Sig...>(), L, std::forward<Fx>(fx));
+    }
+
+    template<typename Fx, typename R, typename... Args>
+    static void set_isconvertible_fx(std::true_type, types<R(Args...)>, lua_State* L, Fx&& fx) {
+        typedef R(* fx_ptr_t)(Args...);
+        fx_ptr_t fxptr = unwrapper(std::forward<Fx>(fx));
+        set(L, fxptr);
+    }
+
+    template<typename Fx, typename R, typename... Args>
+    static void set_isconvertible_fx(std::false_type, types<R(Args...)>, lua_State* L, Fx&& fx) {
+        typedef Decay<Unwrap<Fx>> fx_t;
+        std::unique_ptr<base_function> sptr(new functor_function<fx_t>(std::forward<Fx>(fx)));
+        set_fx<Fx>(L, std::move(sptr));
+    }
+
+    template<typename Fx, typename T>
+    static void set_reference_fx(std::true_type, lua_State* L, Fx&& fx, T&& obj) {
+        set_fx(std::true_type(), L, std::forward<Fx>(fx), std::forward<T>(obj));
+    }
+
+    template<typename Fx, typename T>
+    static void set_reference_fx(std::false_type, lua_State* L, Fx&& fx, T&& obj) {
+        typedef typename std::remove_pointer<Decay<Fx>>::type clean_fx;
+        std::unique_ptr<base_function> sptr(new member_function<clean_fx, T>(std::forward<T>(obj), std::forward<Fx>(fx)));
+        return set_fx<Fx>(L, std::move(sptr));
+    }
+
+    template<typename Fx, typename T>
+    static void set_fx(std::true_type, lua_State* L, Fx&& fx, T&& obj) {
         // Layout:
         // idx 1...n: verbatim data of member function pointer
         // idx n + 1: is the object's void pointer
         // We don't need to store the size, because the other side is templated
         // with the same member function pointer type
-        Decay<TFx> fxptr(std::forward<TFx>(fx));
-        void* userobjdata = static_cast<void*>(sol::detail::get_ptr(obj));
-        lua_CFunction freefunc = &static_member_function<Decay<TObj>, TFx>::call;
+        Decay<Fx> memfxptr(std::forward<Fx>(fx));
+        auto userptr = sol::detail::get_ptr(obj);
+        void* userobjdata = static_cast<void*>(userptr);
+        lua_CFunction freefunc = &static_member_function<Decay<decltype(*userptr)>, Fx>::call;
 
-        int upvalues = stack::detail::push_as_upvalues(L, fxptr);
+        int upvalues = stack::detail::push_as_upvalues(L, memfxptr);
         stack::push(L, userobjdata);
-        stack::pusher<lua_CFunction>{}.push(L, freefunc, upvalues);
+        ++upvalues;
+        stack::push(L, freefunc, upvalues);
     }
 
-    template<typename TFx>
-    static void set_fx(lua_State* L, std::false_type, TFx&& fx) {
-        Decay<TFx> target(std::forward<TFx>(fx));
-        lua_CFunction freefunc = &static_function<TFx>::call;
+    template<typename Fx>
+    static void set_fx(std::false_type, lua_State* L, Fx&& fx) {
+        Decay<Fx> target(std::forward<Fx>(fx));
+        lua_CFunction freefunc = &static_function<Fx>::call;
 
         int upvalues = stack::detail::push_as_upvalues(L, target);
-        stack::pusher<lua_CFunction>{}.push(L, freefunc, upvalues);
+        stack::push(L, freefunc, upvalues);
     }
 
-    template<typename TFx>
+    template<typename Fx>
     static void set_fx(lua_State* L, std::unique_ptr<base_function> luafunc) {
-        auto&& metakey = userdata_traits<Unqualified<TFx>>::metatable;
+        auto&& metakey = userdata_traits<Unqualified<Fx>>::metatable;
         const char* metatablename = std::addressof(metakey[0]);
         base_function* target = luafunc.release();
         void* userdata = reinterpret_cast<void*>(target);
@@ -164,27 +200,16 @@ struct pusher<function_t> {
             lua_pushstring(L, "__gc");
             stack::push(L, &base_function::gc);
             lua_settable(L, -3);
+            lua_pop(L, 1);
         }
 
         stack::detail::push_userdata<void*>(L, metatablename, userdata);
-        stack::pusher<lua_CFunction>{}.push(L, freefunc, 1);
-    }
-
-    template<typename TFx>
-    static void set_function(lua_State* L, TFx&& fx) {
-        typedef typename std::remove_pointer<Decay<TFx>>::type clean_fx;
-        set_isfunction_fx(std::is_function<clean_fx>(), L, std::forward<TFx>(fx));
-    }
-
-    template<typename TFx, typename TObj>
-    static void set_function(lua_State* L, TFx&& fx, TObj&& obj) {
-        set_lvalue_fx(Bool<std::is_lvalue_reference<TObj>::value || std::is_pointer<TObj>::value>(),
-            L, std::forward<TFx>(fx), std::forward<TObj>(obj));
+        stack::push(L, freefunc, 1);
     }
 
     template <typename... Args>
     static void push(lua_State* L, Args&&... args) {
-        set_function(L, std::forward<Args>(args)...);
+        set(L, std::forward<Args>(args)...);
     }
 };
 

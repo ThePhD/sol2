@@ -61,6 +61,10 @@ public:
         lua_atpanic(L.get(), detail::atpanic);
     }
 
+    lua_State* lua_state() const {
+        return L.get();
+    }
+
     template<typename... Args>
     void open_libraries(Args&&... args) {
         static_assert(are_same<lib, Args...>::value, "all types must be libraries");
@@ -133,21 +137,14 @@ public:
         return *this;
     }
 
-    template<typename T, typename TFx>
-    state& set_function(T&& key, TFx&& fx) {
-        global.set_function(std::forward<T>(key), std::forward<TFx>(fx));
-        return *this;
-    }
-
-    template<typename T, typename TFx, typename TObj>
-    state& set_function(T&& key, TFx&& fx, TObj&& obj) {
-        global.set_function(std::forward<T>(key), std::forward<TFx>(fx), std::forward<TObj>(obj));
-        return *this;
-    }
-
     template<typename T>
     state& set_userdata(userdata<T>& user) {
-        global.set_userdata(user);
+        return set_userdata(user.name(), user);
+    }
+
+    template<typename Key, typename T>
+    state& set_userdata(Key&& key, userdata<T>& user) {
+        global.set_userdata(std::forward<Key>(key), user);
         return *this;
     }
 
@@ -198,8 +195,34 @@ public:
         return global[std::forward<T>(key)];
     }
 
-    lua_State* lua_state() const {
-        return L.get();
+    template<typename... Args, typename R, typename Key>
+    state& set_function(Key&& key, R fun_ptr(Args...)){
+        global.set_function(std::forward<Key>(key), fun_ptr);
+        return *this;
+    }
+
+    template<typename Sig, typename Key>
+    state& set_function(Key&& key, Sig* fun_ptr){
+        global.set_function(std::forward<Key>(key), fun_ptr);
+        return *this;
+    }
+
+    template<typename... Args, typename R, typename C, typename T, typename Key>
+    state& set_function(Key&& key, R (C::*mem_ptr)(Args...), T&& obj) {
+        global.set_function(std::forward<Key>(key), mem_ptr, std::forward<T>(obj));
+        return *this;
+    }
+
+    template<typename Sig, typename C, typename T, typename Key>
+    state& set_function(Key&& key, Sig C::* mem_ptr, T&& obj) {
+        global.set_function(std::forward<Key>(key), mem_ptr, std::forward<T>(obj));
+        return *this;
+    }
+
+    template<typename... Sig, typename Fx, typename Key>
+    state& set_function(Key&& key, Fx&& fx) {
+        global.set_function<Sig...>(std::forward<Key>(key), std::forward<Fx>(fx));
+        return *this;
     }
 };
 } // sol

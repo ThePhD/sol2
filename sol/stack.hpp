@@ -40,6 +40,11 @@ inline T* get_ptr(T& val) {
 }
 
 template<typename T>
+inline T* get_ptr(std::reference_wrapper<T> val) {
+    return std::addressof(val.get());
+}
+
+template<typename T>
 inline T* get_ptr(T* val) {
     return val;
 }
@@ -310,8 +315,8 @@ inline void push(lua_State* L, T&& t, Args&&... args) {
 
 // overload allows to use a pusher of a specific type, but pass in any kind of args
 template<typename T, typename Arg, typename... Args>
-inline void push(lua_State* L, Arg&& t, Args&&... args) {
-    pusher<Unqualified<T>>{}.push(L, std::forward<T>(t), std::forward<Args>(args)...);
+inline void push(lua_State* L, Arg&& arg, Args&&... args) {
+    pusher<Unqualified<T>>{}.push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 }
 
 inline void push_args(lua_State*) {
