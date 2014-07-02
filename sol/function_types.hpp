@@ -188,11 +188,11 @@ struct base_function {
     struct userdata_gc {
         static int gc(lua_State* L) {
             for (std::size_t i = 0; i < N; ++i) {
-              upvalue_t up = stack::get<upvalue_t>(L, i + 1);
-			  base_function* obj = static_cast<base_function*>(up.value);
-			  std::allocator<base_function> alloc{};
-			  alloc.destroy(obj);
-              alloc.deallocate(obj, 1);
+                upvalue_t up = stack::get<upvalue_t>(L, i + 1);
+                base_function* obj = static_cast<base_function*>(up.value);
+                std::allocator<base_function> alloc{};
+                alloc.destroy(obj);
+                alloc.deallocate(obj, 1);
             }
             return 0;
         }

@@ -393,7 +393,7 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
 
 TEST_CASE("functions/overloaded", "Check if overloaded function resolution templates compile/work") {
     sol::state lua;
-	lua.open_libraries(sol::lib::base);
+    lua.open_libraries(sol::lib::base);
 
     lua.set_function("non_overloaded", non_overloaded);
     REQUIRE_NOTHROW(lua.script("x = non_overloaded(1)\nprint(x)"));
@@ -720,7 +720,7 @@ TEST_CASE("userdata/issue-number-thirty-five", "using value types created from l
             return sqrtf(x*x + y*y + z*z);
         }
 
-	   Vec normalized() {
+        Vec normalized() {
             float invS = 1 / length();
             return {x * invS, y * invS, z * invS};
         }
@@ -766,7 +766,7 @@ TEST_CASE("userdata/lua-stored-userdata", "ensure userdata values can be stored 
     };
 
     sol::state lua;
-	lua.open_libraries(sol::lib::base);
+    lua.open_libraries(sol::lib::base);
 
     {
         sol::constructors<sol::types<float, float, float>> ctor;
@@ -778,10 +778,10 @@ TEST_CASE("userdata/lua-stored-userdata", "ensure userdata values can be stored 
         // userdata dies, but still usable in lua!
     }
 
-	REQUIRE_NOTHROW(lua.script("collectgarbage()\n"
+    REQUIRE_NOTHROW(lua.script("collectgarbage()\n"
                 "v = Vec.new(1, 2, 3)\n"
                 "print(v:length())"));
 
-	REQUIRE_NOTHROW(lua.script("v = Vec.new(1, 2, 3)\n"
+    REQUIRE_NOTHROW(lua.script("v = Vec.new(1, 2, 3)\n"
                 "print(v:normalized():length())" ));
 }
