@@ -148,6 +148,18 @@ public:
     }
 };
 
+struct Vec {
+  float x, y, z;
+  Vec(float x, float y, float z) : x{x}, y{y}, z{z} {}
+  float length() {
+    return sqrtf(x*x + y*y + z*z);
+  }
+  Vec normalized() {
+    float invS = 1 / length();
+    return {x * invS, y * invS, z * invS};
+  }
+};
+
 TEST_CASE("simple/set_global", "Check if the set_global works properly.") {
     sol::state lua;
 
@@ -713,19 +725,6 @@ TEST_CASE("tables/issue-number-twenty-five", "Using pointers and references from
 }
 
 TEST_CASE("userdata/issue-number-thirty-five", "using value types created from lua-called C++ code, fixing user-defined types with constructors") {
-    struct Vec {
-        float x, y, z;
-        Vec(float x, float y, float z) : x{x}, y{y}, z{z} {}
-        float length() {
-            return sqrtf(x*x + y*y + z*z);
-        }
-
-        Vec normalized() {
-            float invS = 1 / length();
-            return {x * invS, y * invS, z * invS};
-        }
-    };
-
     struct Line {
         Vec p1, p2;
         Line() : p1{0, 0, 0}, p2{0, 0, 0} {}
@@ -753,18 +752,6 @@ TEST_CASE("userdata/issue-number-thirty-five", "using value types created from l
 }
 
 TEST_CASE("userdata/lua-stored-userdata", "ensure userdata values can be stored without keeping userdata object alive") {
-    struct Vec {
-      float x, y, z;
-      Vec(float x, float y, float z) : x{x}, y{y}, z{z} {}
-      float length() {
-        return sqrtf(x*x + y*y + z*z);
-      }
-      Vec normalized() {
-        float invS = 1 / length();
-        return {x * invS, y * invS, z * invS};
-      }
-    };
-
     sol::state lua;
     lua.open_libraries(sol::lib::base);
 
@@ -784,4 +771,32 @@ TEST_CASE("userdata/lua-stored-userdata", "ensure userdata values can be stored 
 
     REQUIRE_NOTHROW(lua.script("v = Vec.new(1, 2, 3)\n"
                 "print(v:normalized():length())" ));
+}
+
+TEST_CASE("userdata/member-variables", "allow table-like accessors to behave as member variables for userdata") {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+    sol::constructors<sol::types<float, float, float>> ctor;
+    sol::userdata<Vec> udata("Vec", ctor,
+                             "x", &Vec::x,
+                             "y", &Vec::y,
+                             "z", &Vec::z,
+                             "normalized", &Vec::normalized,
+                             "length",     &Vec::length);
+    lua.set_userdata(udata);
+
+    REQUIRE_NOTHROW(lua.script("v = Vec.new(1, 2, 3)\n"
+               "v2 = Vec.new(0, 1, 0)\n"
+               "print(v:length())\n"
+               "v.x = 2\n"
+               "v2.y = 2\n"
+               "print(v.x, v.y, v.z)\n"
+               "print(v2.x, v2.y, v2.z)\n"
+               "assert(v.x == 2)\n"
+               "assert(v2.x == 0)\n"
+               "assert(v2.y == 2)\n"
+               "v.x = 3\n"
+               "local x = v.x\n"
+               "assert(x == 3)\n"
+               ));
 }

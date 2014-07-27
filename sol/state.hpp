@@ -79,33 +79,43 @@ public:
             switch(library) {
             case lib::base:
                 luaL_requiref(L.get(), "base", luaopen_base, 1);
+                lua_pop(L.get(), 1);
                 break;
             case lib::package:
                 luaL_requiref(L.get(), "package", luaopen_package, 1);
+                lua_pop(L.get(), 1);
                 break;
             case lib::coroutine:
                 luaL_requiref(L.get(), "coroutine", luaopen_coroutine, 1);
+                lua_pop(L.get(), 1);
                 break;
             case lib::string:
                 luaL_requiref(L.get(), "string", luaopen_string, 1);
+                lua_pop(L.get(), 1);
                 break;
             case lib::table:
                 luaL_requiref(L.get(), "table", luaopen_table, 1);
+                lua_pop(L.get(), 1);
                 break;
             case lib::math:
                 luaL_requiref(L.get(), "math", luaopen_math, 1);
+                lua_pop(L.get(), 1);
                 break;
             case lib::bit32:
                 luaL_requiref(L.get(), "bit32", luaopen_bit32, 1);
+                lua_pop(L.get(), 1);
                 break;
             case lib::io:
                 luaL_requiref(L.get(), "io", luaopen_io, 1);
+                lua_pop(L.get(), 1);
                 break;
             case lib::os:
                 luaL_requiref(L.get(), "os", luaopen_os, 1);
+                lua_pop(L.get(), 1);
                 break;
             case lib::debug:
                 luaL_requiref(L.get(), "debug", luaopen_debug, 1);
+                lua_pop(L.get(), 1);
                 break;
             case lib::count:
                 break;

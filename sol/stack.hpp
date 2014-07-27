@@ -462,17 +462,6 @@ inline call_syntax get_call_syntax(lua_State* L, const std::string& meta) {
     return call_syntax::dot;
 }
 
-inline std::string dump_types(lua_State* L) {
-    std::string visual;
-    std::size_t size = lua_gettop(L) + 1;
-    for (std::size_t i = 1; i < size; ++i) {
-        if (i != 1)
-            visual += " | ";
-        visual += type_name(L, stack::get<type>(L, i));
-    }
-    return visual;
-}
-
 template <typename T>
 struct get_return {
     typedef decltype(get<T>(nullptr)) type;

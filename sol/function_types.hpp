@@ -24,10 +24,14 @@
 
 #include "stack.hpp"
 #include <memory>
+#include <unordered_map>
 
 namespace sol {
 namespace detail {
-template <typename T, typename Func, typename R>
+struct ref_call_t {};
+const auto ref_call = ref_call_t{};
+
+template <typename T, typename Func, typename R, bool is_variable = std::is_member_object_pointer<Func>::value>
 struct functor {
     T* item;
     Func invocation;
@@ -43,7 +47,7 @@ struct functor {
 };
 
 template <typename T, typename Func>
-struct functor<T, Func, void> {
+struct functor<T, Func, void, false> {
     T* item;
     Func invocation;
 
@@ -54,6 +58,26 @@ struct functor<T, Func, void> {
     void operator()(Args&&... args) {
         T& member = *item;
         (member.*invocation)(std::forward<Args>(args)...);
+    }
+};
+
+template <typename T, typename Func, typename R>
+struct functor<T, Func, R, true> {
+    T* item;
+    Func invocation;
+
+    template<typename... FxArgs>
+    functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
+
+    template<typename Arg, typename... Args>
+    void operator()(Arg&& arg, Args&&... args) {
+        T& member = *item;
+        (member.*invocation) = std::forward<Arg>(arg);
+    }
+
+    R operator()() {
+        T& member = *item;
+        return (member.*invocation);
     }
 };
 } // detail
@@ -155,6 +179,17 @@ struct base_function {
         return r;
     }
 
+    static int ref_base_call(lua_State* L, void* inheritancedata) {
+        if (inheritancedata == nullptr) {
+            throw error("call from Lua to C++ function has null data");
+        }
+
+        base_function* pfx = static_cast<base_function*>(inheritancedata);
+        base_function& fx = *pfx;
+        int r = fx(L, detail::ref_call);
+        return r;
+    }
+
     static int base_gc(lua_State*, void* udata) {
         if (udata == nullptr) {
             throw error("call from lua to C++ gc function with null data");
@@ -176,18 +211,19 @@ struct base_function {
         return base_gc(L, *pudata);
     }
 
-    template<std::size_t i>
+    template<std::size_t I>
     struct userdata {
         static int call(lua_State* L) {
             // Zero-based template parameter, but upvalues start at 1
-            return base_call(L, stack::get<upvalue_t>(L, i + 1));
+            return base_call(L, stack::get<upvalue_t>(L, I + 1));
         }
-    };
 
-    template<std::size_t N>
-    struct userdata_gc {
+        static int ref_call(lua_State* L) {
+            return ref_base_call(L, stack::get<upvalue_t>(L, I + 1));
+        }
+
         static int gc(lua_State* L) {
-            for (std::size_t i = 0; i < N; ++i) {
+            for (std::size_t i = 0; i < I; ++i) {
                 upvalue_t up = stack::get<upvalue_t>(L, i + 1);
                 base_function* obj = static_cast<base_function*>(up.value);
                 std::allocator<base_function> alloc{};
@@ -200,6 +236,10 @@ struct base_function {
 
     virtual int operator()(lua_State*) {
         throw error("failure to call specialized wrapped C++ function from Lua");
+    }
+
+    virtual int operator()(lua_State*, detail::ref_call_t) {
+        throw error("failure to call reference specialized wrapped C++ function from Lua");
     }
 
     virtual ~base_function() {}
@@ -289,16 +329,17 @@ struct member_function : public base_function {
 };
 
 template<typename Function, typename Tp>
-struct userdata_function : public base_function {
+struct userdata_function_core : public base_function {
     typedef typename std::remove_pointer<Tp>::type T;
     typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
-    typedef function_args_t<function_type> args_type;
-    typedef function_return_t<function_type> return_type;
+    typedef member_traits<Function> traits_type;
+    typedef typename traits_type::args_type args_type;
+    typedef typename traits_type::return_type return_type;
 
     detail::functor<T, function_type, return_type> fx;
 
     template<typename... FxArgs>
-    userdata_function(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
+    userdata_function_core(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
 
     template<typename Return, typename Raw = Unqualified<Return>>
     typename std::enable_if<std::is_same<T, Raw>::value, void>::type push(lua_State* L, Return&& r) {
@@ -323,7 +364,8 @@ struct userdata_function : public base_function {
 
     template<typename... Args>
     int operator()(types<void>, types<Args...> t, lua_State* L) {
-        stack::get_call(L, 2, fx, t);
+        static const std::size_t skew = static_cast<std::size_t>(std::is_member_object_pointer<function_type>::value);
+        stack::get_call(L, 2 + skew, fx, t);
         std::ptrdiff_t nargs = sizeof...(Args);
         lua_pop(L, nargs);
         return 0;
@@ -342,12 +384,128 @@ struct userdata_function : public base_function {
     int operator()(types<>, types<Args...> t, lua_State* L) {
         return (*this)(types<void>(), t, L);
     }
+};
+
+template<typename Function, typename Tp>
+struct userdata_function : public userdata_function_core<Function, Tp> {
+    typedef userdata_function_core<Function, Tp> base_t;
+    typedef typename std::remove_pointer<Tp>::type T;
+    typedef member_traits<Function> traits_type;
+    typedef typename traits_type::args_type args_type;
+    typedef typename traits_type::return_type return_type;
+
+    template<typename... FxArgs>
+    userdata_function(FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...) {}
+
+    template <typename Tx>
+    int fx_call(lua_State* L) {
+        this->fx.item = detail::get_ptr(stack::get<Tx>(L, 1));
+        if (this->fx.item == nullptr)
+            throw error("userdata for function call is null: are you using the wrong syntax? (use item:function/variable(...) syntax)");
+        return static_cast<base_t&>(*this)(tuple_types<return_type>(), args_type(), L);
+    }
 
     virtual int operator()(lua_State* L) override {
-        fx.item = detail::get_ptr(stack::get<Tp>(L, 1));
-        if (fx.item == nullptr)
-            throw error("userdata for function call is null: are you using wrong call syntax? (use item:function(...) synax)");
-        return (*this)(tuple_types<return_type>(), args_type(), L);
+        return fx_call<T>(L);
+    }
+
+    virtual int operator()(lua_State* L, detail::ref_call_t) override {
+        return fx_call<T*>(L);
+    }
+};
+
+template<typename Function, typename Tp>
+struct userdata_variable_function : public userdata_function_core<Function, Tp> {
+    typedef userdata_function_core<Function, Tp> base_t;
+    typedef typename std::remove_pointer<Tp>::type T;
+    typedef member_traits<Function> traits_type;
+    typedef typename traits_type::args_type args_type;
+    typedef typename traits_type::return_type return_type;
+
+    template<typename... FxArgs>
+    userdata_variable_function(FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...) {}
+
+    template <typename Tx>
+    int fx_call (lua_State* L) {
+        type t = stack::get<type>(L, 1);
+        switch(t) {
+        case type::table:
+            lua_getfield(L, 1, "sol.userdatavalue");
+            this->fx.item = detail::get_ptr(stack::get<Tx>(L, -1));
+            lua_pop(L, 1);
+            break;
+        default:
+            this->fx.item = detail::get_ptr(stack::get<Tx>(L, 1));
+            break;
+        }
+        if (this->fx.item == nullptr)
+            throw error("userdata for member variable is null");
+        int argcount = lua_gettop(L);
+        switch (argcount) {
+        case 2:
+            return static_cast<base_t&>(*this)(tuple_types<return_type>(), types<>(), L);
+        case 3:
+            return static_cast<base_t&>(*this)(tuple_types<void>(), args_type(), L);
+        default:
+            throw error("cannot get/set userdata member variable with inappropriate number of arguments");
+        }
+
+    }
+
+    virtual int operator()(lua_State* L) override {
+        return fx_call<T>(L);
+    }
+
+    virtual int operator()(lua_State* L, detail::ref_call_t) override {
+        return fx_call<T*>(L);
+    }
+};
+
+template<typename Function, typename Tp>
+struct userdata_indexing_function : public userdata_function_core<Function, Tp> {
+    typedef userdata_function_core<Function, Tp> base_t;
+    typedef typename std::remove_pointer<Tp>::type T;
+    typedef member_traits<Function> traits_type;
+    typedef typename traits_type::args_type args_type;
+    typedef typename traits_type::return_type return_type;
+
+    std::string name;
+    std::unordered_map<std::string, std::pair<std::unique_ptr<base_function>, bool>> functions;
+
+    template<typename... FxArgs>
+    userdata_indexing_function(std::string name, FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...), name(std::move(name)) {}
+
+    template <typename Tx>
+    int fx_call (lua_State* L) {
+        std::string accessor = stack::get<std::string>(L, 1 - lua_gettop(L));
+        auto function = functions.find(accessor);
+        if (function != functions.end()) {
+            if (function->second.second) {
+                stack::push<upvalue_t>(L, function->second.first.get());
+                stack::push(L, &base_function::userdata<0>::call, 1);
+                return 1;
+            }
+            else {
+                return (*function->second.first)(L);
+            }
+        }
+        if (this->fx.invocation == nullptr) {
+            std::string err = "invalid indexing \"";
+            err += accessor;
+            err += "\" on type: ";
+            err += name;
+            throw error(err);
+        }
+        this->fx.item = detail::get_ptr(stack::get<Tx>(L, 1));
+        return static_cast<base_t&>(*this)(tuple_types<return_type>(), args_type(), L);
+    }
+
+    virtual int operator()(lua_State* L) override {
+        return fx_call<T>(L);
+    }
+
+    virtual int operator()(lua_State* L, detail::ref_call_t) override {
+        return fx_call<T*>(L);
     }
 };
 

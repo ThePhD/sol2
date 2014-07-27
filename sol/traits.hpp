@@ -46,6 +46,14 @@ struct unwrap<std::reference_wrapper<T>> {
     typedef typename std::add_lvalue_reference<T>::type type;
 };
 
+template <typename T>
+struct remove_member_pointer;
+
+template <typename R, typename T>
+struct remove_member_pointer<R T::*> {
+    typedef R type;
+};
+
 template <typename T, template <typename...> class Templ>
 struct is_specialization_of : std::false_type { };
 template <typename... T, template <typename...> class Templ>
@@ -57,6 +65,9 @@ struct are_same : std::true_type { };
 template<class T, class U, class... Args>
 struct are_same<T, U, Args...> : std::integral_constant <bool, std::is_same<T, U>::value && are_same<T, Args...>::value> { };
 
+template<typename T>
+using Type = typename T::type;
+
 template<bool B>
 using Bool = std::integral_constant<bool, B>;
 
@@ -65,6 +76,9 @@ using Not = Bool<!T::value>;
 
 template<typename Condition, typename Then, typename Else>
 using If = typename std::conditional<Condition::value, Then, Else>::type;
+
+template<typename Condition, typename Then, typename Else>
+using TypeIf = typename std::conditional<Condition::value, Type<Then>, Type<Else>>::type;
 
 template<typename... Args>
 struct And : Bool<true> {};
@@ -204,6 +218,35 @@ struct function_traits<R(*)(Args...)> {
     typedef typename std::remove_pointer<free_function_pointer_type>::type signature_type;
     template<std::size_t i>
     using arg = typename std::tuple_element<i, arg_tuple_type>::type;
+};
+
+namespace detail {
+template <typename Signature, bool b = std::is_member_object_pointer<Signature>::value>
+struct member_traits : function_traits<Signature> {
+
+};
+
+template <typename Signature>
+struct member_traits<Signature, true> {
+    typedef typename remove_member_pointer<Signature>::type Arg;
+    typedef typename remove_member_pointer<Signature>::type R;
+    typedef Signature signature_type;
+    static const bool is_member_function = false;
+    static const std::size_t arity = 1;
+    typedef std::tuple<Arg> arg_tuple_type;
+    typedef types<Arg> args_type;
+    typedef R return_type;
+    typedef R(function_type)(Arg);
+    typedef R(*function_pointer_type)(Arg);
+    typedef R(*free_function_pointer_type)(Arg);
+    template<std::size_t i>
+    using arg = typename std::tuple_element<i, arg_tuple_type>::type;
+};
+} // detail
+
+template <typename Signature>
+struct member_traits : detail::member_traits<Signature> {
+
 };
 
 struct has_begin_end_impl {
