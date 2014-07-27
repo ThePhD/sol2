@@ -18,6 +18,23 @@ int main() {
 }
 ```
 
+```cpp
+#include <sol.hpp>
+#include <cassert>
+
+struct vars {
+    int boop = 0;
+};
+
+int main() {
+    sol::state lua;
+    lua.new_userdata<vars>("vars", "boop", &vars::boop);
+    lua.script("local beep = vars.new()\n"
+               "beep.boop = 1");
+    assert(lua.get<vars>("beep").boop == 1);
+}
+```
+
 More examples are given in the examples directory.
 
 ## Features

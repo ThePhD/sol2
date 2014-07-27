@@ -32,6 +32,12 @@ public:
     }
 };
 
+struct variables {
+    bool low_gravity = false;
+    int boost_level = 0;
+
+};
+
 int main() {
     sol::state lua;
     lua.open_libraries(sol::lib::base, sol::lib::math);
@@ -60,26 +66,39 @@ int main() {
     // the way to do so is through set_userdata and creating
     // a userdata yourself with constructor types
 
-    // first, define the different types of constructors
-    sol::constructors<sol::types<>, sol::types<float>, sol::types<float, float>> ctor;
+    {
+        // Notice the brace: this means we're in a new scope
+        // first, define the different types of constructors
+        sol::constructors<sol::types<>, sol::types<float>, sol::types<float, float>> ctor;
 
-    // second, create a new userdata class
-    // note that you have to make sure the class is
-    // alive throughout the scope of the program.
+        // the only template parameter is the class type
+        // the first argument of construction is the name
+        // second is the constructor types
+        // then the rest are function name and member function pointer pairs
+        sol::userdata<vector> udata("vector", ctor, "is_unit", &vector::is_unit);
 
-    // the only template parameter is the class type
-    // the first argument of construction is the name
-    // second is the constructor types
-    // then the rest are function name and member function pointer pairs
-    sol::userdata<vector> udata("vector", ctor, "is_unit", &vector::is_unit);
-
-    // then you must register it
-    lua.set_userdata(udata);
-
+        // then you must register it
+        lua.set_userdata(udata);
+        // You can throw away the userdata after you set it: you do NOT
+        // have to keep it around
+        // cleanup happens automagically
+    }
     // calling it is the same as new_userdata
 
     lua.script("v = vector.new()\n"
                "v = vector.new(12)\n"
                "v = vector.new(10, 10)\n"
                "assert(not v:is_unit())\n");
+
+    // You can even have C++-like member-variable-access
+    // just pass is public member variables in the same style as functions
+    lua.new_userdata<variables>("variables", "low_gravity", &variables::low_gravity, "boost_level", &variables::boost_level);
+
+    // making the class from lua is simple
+    // same with calling member functions
+    lua.script("local vars = variables.new()\n"
+               "assert(not vars.low_gravity)\n"
+               "vars.low_gravity = true\n"
+               "local x = vars.low_gravity\n"
+               "assert(x)");
 }
