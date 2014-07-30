@@ -280,6 +280,10 @@ struct functor_function : public base_function {
     virtual int operator()(lua_State* L) override {
         return (*this)(tuple_types<return_type>(), args_type(), L);
     }
+
+    virtual int operator()(lua_State* L, detail::ref_call_t) override {
+        return (*this)(tuple_types<return_type>(), args_type(), L);
+    }
 };
 
 template<typename Function, typename T>
@@ -324,6 +328,10 @@ struct member_function : public base_function {
     }
 
     virtual int operator()(lua_State* L) override {
+        return (*this)(tuple_types<return_type>(), args_type(), L);
+    }
+
+    virtual int operator()(lua_State* L, detail::ref_call_t) override {
         return (*this)(tuple_types<return_type>(), args_type(), L);
     }
 };
@@ -427,17 +435,7 @@ struct userdata_variable_function : public userdata_function_core<Function, Tp> 
 
     template <typename Tx>
     int fx_call (lua_State* L) {
-        type t = stack::get<type>(L, 1);
-        switch(t) {
-        case type::table:
-            lua_getfield(L, 1, "sol.userdatavalue");
-            this->fx.item = detail::get_ptr(stack::get<Tx>(L, -1));
-            lua_pop(L, 1);
-            break;
-        default:
-            this->fx.item = detail::get_ptr(stack::get<Tx>(L, 1));
-            break;
-        }
+        this->fx.item = detail::get_ptr(stack::get<Tx>(L, 1));
         if (this->fx.item == nullptr)
             throw error("userdata for member variable is null");
         int argcount = lua_gettop(L);
@@ -482,11 +480,17 @@ struct userdata_indexing_function : public userdata_function_core<Function, Tp> 
         if (function != functions.end()) {
             if (function->second.second) {
                 stack::push<upvalue_t>(L, function->second.first.get());
-                stack::push(L, &base_function::userdata<0>::call, 1);
+                if (std::is_same<T*, Tx>::value)
+                    stack::push(L, &base_function::userdata<0>::ref_call, 1);
+                else
+                    stack::push(L, &base_function::userdata<0>::call, 1);
                 return 1;
             }
             else {
-                return (*function->second.first)(L);
+                if (std::is_same<T*, Tx>::value)
+                    return (*function->second.first)(L, detail::ref_call);
+                else
+                    return (*function->second.first)(L);
             }
         }
         if (this->fx.invocation == nullptr) {
