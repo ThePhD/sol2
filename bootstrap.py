@@ -29,12 +29,21 @@ def replace_extension(f, e):
     (root, ext) = os.path.splitext(f)
     return root + e
 
+# Default install dir
+install_dir = os.path.join('/usr', 'include') if 'linux' in sys.platform else 'include'
+
 # command line stuff
 parser = argparse.ArgumentParser()
 parser.add_argument('--debug', action='store_true', help='compile with debug flags')
 parser.add_argument('--cxx', metavar='<compiler>', help='compiler name to use (default: g++)', default='g++')
 parser.add_argument('--ci', action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('--lua-dir', metavar='<dir>', help='directory lua is in with include and lib subdirectories')
+parser.add_argument('--install-dir', metavar='<dir>', help='directory to install the headers to', default=install_dir);
+parser.epilog = """In order to install sol, administrative privileges might be required.
+Note that installation is done through the 'ninja install' command. To uninstall, the
+command used is 'ninja uninstall'. The default installation directory for this
+system is {}""".format(install_dir)
+
 args = parser.parse_args()
 
 # general variables
@@ -42,6 +51,15 @@ include = [ '.', os.path.join('Catch', 'include')]
 depends = []
 cxxflags = [ '-Wall', '-Wextra', '-pedantic', '-pedantic-errors', '-std=c++11' ]
 ldflags = []
+script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
+sol_dir = os.path.join(script_dir, 'sol')
+sol_file = os.path.join(script_dir, 'sol.hpp')
+copy_command = 'cp -rf {} $in && cp -f {} $in'.format(sol_dir, sol_file)
+remove_command = 'rm -rf {} && rm -f {}'.format(os.path.join(args.install_dir, 'sol'), os.path.join(args.install_dir, 'sol.hpp'))
+if sys.platform == 'win32':
+    copy_command = 'robocopy /COPYALL /E {} $in && robocopy /COPYALL {} $in'.format(sol_dir, sol_file)
+    remove_command = 'rmdir /S /Q {} && erase /F /S /Q /A {}'.format(os.path.join(args.install_dir, 'sol'),
+                                                                     os.path.join(args.install_dir, 'sol.hpp'))
 
 if args.debug:
     cxxflags.extend(['-g', '-O0'])
@@ -85,6 +103,8 @@ ninja.rule('compile', command = '$cxx -MMD -MF $out.d -c $cxxflags -Werror $in -
 ninja.rule('link', command = '$cxx $cxxflags $in -o $out $ldflags', description = 'Creating $out')
 ninja.rule('runner', command = tests)
 ninja.rule('example', command = '$cxx $cxxflags $in -o $out $ldflags')
+ninja.rule('installer', command = copy_command)
+ninja.rule('uninstaller', command = remove_command)
 ninja.newline()
 
 # builds
@@ -104,6 +124,8 @@ for f in glob.glob('examples/*.cpp'):
 
 ninja.build(tests, 'link', inputs = tests_object_files)
 ninja.build('tests', 'phony', inputs = tests)
+ninja.build('install', 'installer', inputs = args.install_dir)
+ninja.build('uninstall', 'uninstaller')
 ninja.build('examples', 'phony', inputs = examples)
 ninja.build('run', 'runner', implicit = 'tests')
 ninja.default('run')
