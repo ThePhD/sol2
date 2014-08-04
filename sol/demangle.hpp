@@ -24,6 +24,7 @@
 
 #include <string>
 #include <array>
+#include <cstdlib>
 
 #if defined(__GNUC__) || defined(__clang__)
 #include <cxxabi.h>
@@ -41,7 +42,7 @@ std::string get_type_name(const std::type_info& id) {
     int status;
     char* unmangled = abi::__cxa_demangle(id.name(), 0, 0, &status);
     std::string realname = unmangled;
-    free(unmangled);
+    std::free(unmangled);
     return realname;
 }
 
