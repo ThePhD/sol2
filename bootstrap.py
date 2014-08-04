@@ -33,26 +33,34 @@ def replace_extension(f, e):
 parser = argparse.ArgumentParser()
 parser.add_argument('--debug', action='store_true', help='compile with debug flags')
 parser.add_argument('--cxx', metavar='<compiler>', help='compiler name to use (default: g++)', default='g++')
-parser.add_argument('--ci', action='store_true', help='compile under TeamCity CI (internal use only)')
+parser.add_argument('--ci', action='store_true', help=argparse.SUPPRESS)
+parser.add_argument('--lua-dir', metavar='<dir>', help='directory lua is in with include and lib subdirectories')
 args = parser.parse_args()
 
 # general variables
 include = [ '.', os.path.join('Catch', 'include')]
 depends = []
 cxxflags = [ '-Wall', '-Wextra', '-pedantic', '-pedantic-errors', '-std=c++11' ]
-ldflags = [ '-static' ]
+ldflags = []
 
 if args.debug:
     cxxflags.extend(['-g', '-O0'])
 else:
     cxxflags.extend(['-DNDEBUG', '-O3'])
 
+if args.lua_dir:
+    include.extend([os.path.join(args.lua_dir, 'include')])
+    ldflags.extend(library_includes([os.path.join(args.lua_dir, 'lib')]))
+
 if args.ci:
-    ldflags.extend(libraries(['lua5.2', 'dl']))
+    ldflags.extend(libraries(['lua5.2']))
     ldflags.extend(library_includes(['lib']))
     include.extend(['/usr/include/lua5.2', './lua-5.2.2/src', './include'])
 else:
     ldflags.extend(libraries(['lua']))
+
+if 'linux' in sys.platform:
+    ldflags.extend(libraries(['dl']))
 
 builddir = 'bin'
 objdir = 'obj'
