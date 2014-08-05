@@ -314,13 +314,13 @@ private:
 };
 
 template <typename T>
-const std::array<std::string, 2> userdata<T>::metavariablenames = {
+const std::array<std::string, 2> userdata<T>::metavariablenames = {{
     "__index",
     "__newindex"
-};
+}};
 
 template <typename T>
-const std::array<std::string, 19> userdata<T>::metafunctionnames = {
+const std::array<std::string, 19> userdata<T>::metafunctionnames = {{
     "__index",
     "__newindex",
     "__mode",
@@ -340,7 +340,7 @@ const std::array<std::string, 19> userdata<T>::metafunctionnames = {
     "__eq",
     "__lt",
     "__le",
-};
+}};
 
 namespace stack {
 template <typename T>
