@@ -145,6 +145,24 @@ struct is_function_impl<T, true> {
 };
 } // detail
 
+namespace detail {
+template<class F>
+struct check_deducible_signature {
+    template<class G>
+    static auto test( int ) -> decltype( &G::operator(), void( ) );
+    template<class>
+    static auto test( ... ) -> struct nat;
+
+    using type = std::is_void < decltype( test<F>( 0 ) ) > ;
+};
+} // detail
+
+template<class F>
+struct has_deducible_signature : detail::check_deducible_signature<F>::type { };
+
+template <typename T>
+using has_deducible_signature_t = typename has_deducible_signature<T>::type;
+
 template<typename T>
 struct Function : Bool<detail::is_function_impl<T>::value> {};
 

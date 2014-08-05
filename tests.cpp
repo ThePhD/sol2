@@ -410,17 +410,26 @@ TEST_CASE("functions/overloaded", "Check if overloaded function resolution templ
     lua.set_function("non_overloaded", non_overloaded);
     REQUIRE_NOTHROW(lua.script("x = non_overloaded(1)\nprint(x)"));
 
+    /*
+    // Cannot reasonably support: clang++ refuses to try enough
+    // deductions to make this work
     lua.set_function<int>("overloaded", overloaded);
     REQUIRE_NOTHROW(lua.script("print(overloaded(1))"));
 
     lua.set_function<int, int>("overloaded", overloaded);
     REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2))"));
 
+    lua.set_function<int, int, int>("overloaded", overloaded);
+    REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2, 3))"));
+    */
+    lua.set_function<int(int)>("overloaded", overloaded);
+    REQUIRE_NOTHROW(lua.script("print(overloaded(1))"));
+
     lua.set_function<int(int, int)>("overloaded", overloaded);
     REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2))"));
 
-    lua.set_function<int, int, int>("overloaded", overloaded);
-    REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2, 3))"));
+    lua.set_function<int(int, int, int)>("overloaded", overloaded);
+    REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2))"));
 }
 
 TEST_CASE("functions/return_order_and_multi_get", "Check if return order is in the same reading order specified in Lua") {

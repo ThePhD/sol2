@@ -27,6 +27,7 @@
 #include "stack.hpp"
 #include "function_types.hpp"
 #include "userdata_traits.hpp"
+#include "resolve.hpp"
 #include <cstdint>
 #include <functional>
 #include <memory>
