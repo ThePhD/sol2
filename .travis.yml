@@ -18,4 +18,4 @@ before_install:
     - sudo apt-get --yes install ninja-build
     - sudo apt-get --yes install liblua5.2-dev
 
-script: ./bootstrap.py --cxx=$COMPILER && ninja
+script: ./bootstrap.py --ci --cxx=$COMPILER && ninja
