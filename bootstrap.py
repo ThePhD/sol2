@@ -66,6 +66,9 @@ if args.debug:
 else:
     cxxflags.extend(['-DNDEBUG', '-O3'])
 
+if args.cxx == 'clang++':
+    cxxflags.extend(['-Wno-unused-value', '-Wno-constexpr-not-const'])
+
 if args.lua_dir:
     include.extend([os.path.join(args.lua_dir, 'include')])
     ldflags.extend(library_includes([os.path.join(args.lua_dir, 'lib')]))
