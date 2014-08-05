@@ -48,6 +48,28 @@ template<typename T>
 inline T* get_ptr(T* val) {
     return val;
 }
+
+template <typename Decorated>
+struct return_forward {
+    typedef Unqualified<Decorated> T;
+
+    T& operator()(T& value) const {
+        return value;
+    }
+
+    T&& operator()(T&& value) const {
+        return std::move(value);
+    }
+
+    T operator()(const T& value) const {
+        return value;
+    }
+
+    // handle retarded libraries
+    T operator()(const T&& value) const {
+        return value;
+    }
+};
 } // detail
 
 namespace stack {

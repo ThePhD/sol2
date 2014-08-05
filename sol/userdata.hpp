@@ -38,12 +38,60 @@ inline std::unique_ptr<T> make_unique(Args&&... args) {
 }
 } // detail
 
+const std::array<std::string, 2> meta_variable_names = {
+    "__index",
+    "__newindex"
+};
+
+const std::array<std::string, 19> meta_function_names = {
+    "__index",
+    "__newindex",
+    "__mode",
+    "__call",
+    "__metatable",
+    "__tostring",
+    "__len",
+    "__unm",
+    "__add",
+    "__sub",
+    "__mul",
+    "__div",
+    "__mod",
+    "__pow",
+    "__concat",
+    "__eq",
+    "__lt",
+    "__le",
+    "__gc",
+};
+
+/* Too easy?
+enum class meta_function {
+    index,
+    new_index,
+    mode,
+    call,
+    metatable,
+    to_string,
+    length,
+    unary_minus,
+    addition,
+    subtraction,
+    multiplication,
+    division,
+    modulus,
+    power_of,
+    involution = power_of,
+    concatenation,
+    equal_to,
+    less_than,
+    less_than_or_equal_to,
+};*/
+
 template<typename T>
 class userdata {
 private:
     typedef std::unordered_map<std::string, std::pair<std::unique_ptr<base_function>, bool>> function_map_t;
-    const static std::array<std::string, 2> metavariablenames;
-    const static std::array<std::string, 19> metafunctionnames;
     function_map_t indexmetafunctions, newindexmetafunctions;
     std::vector<std::string> functionnames;
     std::vector<std::unique_ptr<base_function>> metafunctions;
@@ -177,15 +225,15 @@ private:
     bool build_function(std::false_type, function_map_t*& index, function_map_t*& newindex, std::string funcname, Ret TBase::* func) {
         static_assert(std::is_base_of<TBase, T>::value, "Any registered function must be part of the class");
         typedef typename std::decay<decltype(func)>::type function_type;
-        auto metamethod = std::find(metafunctionnames.begin(), metafunctionnames.end(), funcname);
-        if (metamethod != metafunctionnames.end()) {
+        auto metamethod = std::find(meta_function_names.begin(), meta_function_names.end(), funcname);
+        if (metamethod != meta_function_names.end()) {
             functionnames.push_back(std::move(funcname));
             std::string& name = functionnames.back();
-            auto indexmetamethod = std::find(metavariablenames.begin(), metavariablenames.end(), name);
+            auto indexmetamethod = std::find(meta_variable_names.begin(), meta_variable_names.end(), name);
             std::unique_ptr<base_function> ptr(nullptr);
-            if (indexmetamethod != metavariablenames.end()) {
+            if (indexmetamethod != meta_variable_names.end()) {
                 auto idxptr = detail::make_unique<userdata_indexing_function<function_type, T>>(name, func);
-                switch( std::distance(indexmetamethod, metavariablenames.end()) ) {
+                switch( std::distance(indexmetamethod, meta_variable_names.end()) ) {
                 case 0:
                     index = &(idxptr->functions);
                     break;
@@ -214,13 +262,21 @@ private:
     void build_function_tables(function_map_t*& index, function_map_t*& newindex, std::string funcname, Ret TBase::* func, Args&&... args) {
         typedef typename std::is_member_object_pointer<decltype(func)>::type is_variable;
         static const std::size_t V = static_cast<std::size_t>( !is_variable::value );
-        if (build_function<N>(is_variable(), index, newindex, std::move(funcname), func)) {
+        if (build_function<N>(is_variable(), index, newindex, std::move(funcname), std::move(func))) {
             build_function_tables<N + V>(index, newindex, std::forward<Args>(args)...);
         }
         else {
             build_function_tables<N>(index, newindex, std::forward<Args>(args)...);
         }
     }
+
+    /* Apparently there needs to be magic
+    template<std::size_t N, typename TBase, typename Ret, typename... Args>
+    void build_function_tables(function_map_t*& index, function_map_t*& newindex, meta_function metafunc, Ret TBase::* func, Args&&... args) {
+        std::size_t idx = static_cast<std::size_t>(metafunc);
+        const std::string& funcname = meta_function_names[idx];
+        build_function_tables<N>(index, newindex, funcname, std::move(func), std::forward<Args>(args)...);
+    }*/
 
 public:
     template<typename... Args>
@@ -311,35 +367,6 @@ private:
         }
         return n;
     }
-};
-
-template <typename T>
-const std::array<std::string, 2> userdata<T>::metavariablenames = {
-    "__index",
-    "__newindex"
-};
-
-template <typename T>
-const std::array<std::string, 19> userdata<T>::metafunctionnames = {
-    "__index",
-    "__newindex",
-    "__mode",
-    "__call",
-    "__metatable",
-    "__tostring",
-    "__len",
-    "__gc",
-    "__unm",
-    "__add",
-    "__sub",
-    "__mul",
-    "__div",
-    "__mod",
-    "__pow",
-    "__concat",
-    "__eq",
-    "__lt",
-    "__le",
 };
 
 namespace stack {

@@ -107,7 +107,7 @@ struct static_function {
         return_type r = stack::get_call(L, fx, t);
         std::ptrdiff_t nargs = sizeof...(Args);
         lua_pop(L, nargs);
-        stack::push(L, std::forward<return_type>(r));
+        stack::push(L, detail::return_forward<return_type>{}(r));
         return sizeof...(Ret);
     }
 
@@ -149,7 +149,7 @@ struct static_member_function {
         return_type r = stack::get_call(L, fx, types<Args...>());
         std::ptrdiff_t nargs = sizeof...(Args);
         lua_pop(L, nargs);
-        stack::push(L, std::move(r));
+        stack::push(L, detail::return_forward<return_type>{}(r));
         return sizeof...(Ret);
     }
 
@@ -384,7 +384,7 @@ struct userdata_function_core : public base_function {
         return_type r = stack::get_call(L, 2, fx, t);
         std::ptrdiff_t nargs = sizeof...(Args);
         lua_pop(L, nargs);
-        push(L, std::forward<return_type>(r));
+        push(L, detail::return_forward<return_type>{}(r));
         return sizeof...(Ret);
     }
 
