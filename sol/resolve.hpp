@@ -41,7 +41,7 @@ auto resolve_f( std::true_type, F&& f ) -> decltype( resolve_i( types<function_s
 }
 
 template<class F>
-void resolve_f( std::false_type, F&& f ) {
+void resolve_f( std::false_type, F&& ) {
     static_assert( has_deducible_signature<F>::value, "Cannot use no-template-parameter call with an overloaded functor: specify the signature" );
 }
 
