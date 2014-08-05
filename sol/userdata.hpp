@@ -38,12 +38,12 @@ inline std::unique_ptr<T> make_unique(Args&&... args) {
 }
 } // detail
 
-const std::array<std::string, 2> meta_variable_names = {
+const std::array<std::string, 2> meta_variable_names = {{
     "__index",
     "__newindex"
-};
+}};
 
-const std::array<std::string, 19> meta_function_names = {
+const std::array<std::string, 19> meta_function_names = {{
     "__index",
     "__newindex",
     "__mode",
@@ -63,7 +63,7 @@ const std::array<std::string, 19> meta_function_names = {
     "__lt",
     "__le",
     "__gc",
-};
+}};
 
 /* Too easy?
 enum class meta_function {

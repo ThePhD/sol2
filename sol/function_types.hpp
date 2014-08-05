@@ -70,7 +70,7 @@ struct functor<T, Func, R, true> {
     functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
 
     template<typename Arg, typename... Args>
-    void operator()(Arg&& arg, Args&&... args) {
+    void operator()(Arg&& arg, Args&&...) {
         T& member = *item;
         (member.*invocation) = std::forward<Arg>(arg);
     }
