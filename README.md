@@ -58,8 +58,8 @@ officially supported compilers are:
 - Clang 3.4
 
 Visual Studio 2013 with the November CTP could possibly compile it, despite not being explicitly supported. The last
-version that Visual Studio 2013 was supported was on tag v0.9.0. Anything after that is wishful hope. In order to retrieve
-that tagged version, just do `git checkout v0.9.0`.
+version that Visual Studio 2013 was supported was on tag v1.1.0. Anything after that is wishful thinking. In order to
+retrieve that tagged version, just do `git checkout v1.1.0`.
 
 ## Caveats
 
@@ -72,8 +72,3 @@ It should be noted that the library itself depends on `lua.hpp` to be found by y
 ## License
 
 Sol is distributed with an MIT License. You can see LICENSE.txt for more info.
-
-## TODO
-
-- Possibly document functions and classes via doxygen.
-- Provide more examples to showcase uses.
