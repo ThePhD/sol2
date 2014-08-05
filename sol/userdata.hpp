@@ -305,8 +305,8 @@ public:
         // to be references. This makes returns of
         // `std::vector<int>&` and `std::vector<int>*` work
 
-        metafunctiontable.push_back( { nullptr, nullptr } );
-        ptrmetafunctiontable.push_back( { nullptr, nullptr } );
+        metafunctiontable.push_back({ nullptr, nullptr });
+        ptrmetafunctiontable.push_back({ nullptr, nullptr });
     }
 
     template<typename... Args, typename... CArgs>
