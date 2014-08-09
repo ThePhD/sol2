@@ -169,7 +169,7 @@ template<typename Signature, bool b = has_deducible_signature<Signature>::value>
 struct fx_traits;
 
 template<typename Signature>
-struct fx_traits<Signature, true> : fx_traits<decltype(Signature::operator()), false> {
+struct fx_traits<Signature, true> : fx_traits<decltype(&Signature::operator()), false> {
 
 };
 
