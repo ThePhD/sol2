@@ -86,7 +86,7 @@ public:
 };
 
 namespace stack {
-template <typename... Sigs>
+template<typename... Sigs>
 struct pusher<function_sig_t<Sigs...>> {
 
     template<typename R, typename... Args, typename Fx, typename = typename std::result_of<Fx(Args...)>::type>
@@ -208,26 +208,26 @@ struct pusher<function_sig_t<Sigs...>> {
         stack::push(L, freefunc, 1);
     }
 
-    template <typename... Args>
+    template<typename... Args>
     static void push(lua_State* L, Args&&... args) {
         set(L, std::forward<Args>(args)...);
     }
 };
 
-template <typename Signature>
+template<typename Signature>
 struct pusher<std::function<Signature>> {
     static void push(lua_State* L, std::function<Signature> fx) {
         pusher<function_t>{}.push(L, std::move(fx));
     }
 };
 
-template <typename Signature>
+template<typename Signature>
 struct getter<std::function<Signature>> {
     typedef function_traits<Signature> fx_t;
     typedef typename fx_t::args_type args_t;
     typedef typename tuple_types<typename fx_t::return_type>::type ret_t;
 
-    template <typename... FxArgs, typename... Ret>
+    template<typename... FxArgs, typename... Ret>
     static std::function<Signature> get_std_func(types<FxArgs...>, types<Ret...>, lua_State* L, int index = -1) {
         typedef typename function_traits<Signature>::return_type return_t;
         sol::function f(L, index);
@@ -237,7 +237,7 @@ struct getter<std::function<Signature>> {
         return std::move(fx);
     }
 
-    template <typename... FxArgs>
+    template<typename... FxArgs>
     static std::function<Signature> get_std_func(types<FxArgs...>, types<void>, lua_State* L, int index = -1) {
         sol::function f(L, index);
         auto fx = [ f, L, index ] (FxArgs&&... args) -> void {
@@ -246,7 +246,7 @@ struct getter<std::function<Signature>> {
         return std::move(fx);
     }
 
-    template <typename... FxArgs>
+    template<typename... FxArgs>
     static std::function<Signature> get_std_func(types<FxArgs...> t, types<>, lua_State* L, int index = -1) {
         return get_std_func(std::move(t), types<void>(), L, index);
     }

@@ -58,21 +58,35 @@ struct build_reverse_indices<0, Ns...> : indices<Ns...> {};
 
 template<typename... Args>
 struct types : build_indices<sizeof...(Args)> { typedef types type; };
-
+ 
+namespace detail {
 template<class Acc, class... Args>
 struct reversed_ : Acc{};
- 
+
 template<typename... RArgs, typename Arg, typename... Args>
 struct reversed_<types<RArgs...>, Arg, Args...> : reversed_<types<Arg, RArgs...>, Args...>{};
- 
+
+template<typename Arg>
+struct chop_one : types<> {};
+
+template<typename Arg0, typename Arg1, typename... Args>
+struct chop_one<types<Arg0, Arg1, Args...>> : types<Arg1, Args...> {};
+
+template<typename Arg, typename... Args>
+struct chop_one<types<Arg, Args...>> : types<Args...> {};
+} // detail
+
 template<typename... Args>
-struct reversed : reversed_<types<>, Args...>{};
+struct reversed : detail::reversed_<types<>, Args...>{};
 
 template<typename... Args>
 struct tuple_types : types<Args...> {};
 
 template<typename... Args>
 struct tuple_types<std::tuple<Args...>> : types<Args...> {};
+
+template<typename Arg>
+struct remove_one_type : detail::chop_one<Arg> {};
 
 template<typename... Tn>
 struct constructors {};

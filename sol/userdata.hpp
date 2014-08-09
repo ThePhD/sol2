@@ -65,7 +65,6 @@ const std::array<std::string, 19> meta_function_names = {{
     "__gc",
 }};
 
-/* Too easy?
 enum class meta_function {
     index,
     new_index,
@@ -86,7 +85,7 @@ enum class meta_function {
     equal_to,
     less_than,
     less_than_or_equal_to,
-};*/
+};
 
 template<typename T>
 class userdata {
@@ -212,19 +211,56 @@ private:
         }
     }
 
-    template<std::size_t N, typename TBase, typename Ret>
-    bool build_function(std::true_type, function_map_t*&, function_map_t*&, std::string funcname, Ret TBase::* func) {
-        static_assert(std::is_base_of<TBase, T>::value, "Any registered function must be part of the class");
+    template<std::size_t N, typename Base, typename Ret>
+    bool build_function(std::true_type, function_map_t*&, function_map_t*&, std::string funcname, Ret Base::* func) {
+        static_assert(std::is_base_of<Base, T>::value, "Any registered function must be part of the class");
         typedef typename std::decay<decltype(func)>::type function_type;
         indexmetafunctions.emplace(funcname, std::make_pair(detail::make_unique<userdata_variable_function<function_type, T>>(func), false));
         newindexmetafunctions.emplace(funcname, std::make_pair(detail::make_unique<userdata_variable_function<function_type, T>>(func), false));
         return false;
     }
 
-    template<std::size_t N, typename TBase, typename Ret>
-    bool build_function(std::false_type, function_map_t*& index, function_map_t*& newindex, std::string funcname, Ret TBase::* func) {
-        static_assert(std::is_base_of<TBase, T>::value, "Any registered function must be part of the class");
+    template<typename Arg, typename... Args, typename Ret>
+    std::unique_ptr<base_function> make_function(const std::string&, Ret(*func)(Arg, Args...)) {
+        typedef Unqualified<Arg> Argu;
+        static_assert(std::is_base_of<Argu, T>::value, "Any non-member-function must have a first argument which is covariant with the desired userdata type.");
         typedef typename std::decay<decltype(func)>::type function_type;
+        return detail::make_unique<userdata_function<function_type, T>>(func);
+    }
+
+    template<typename Base, typename Ret>
+    std::unique_ptr<base_function> make_variable_function(std::true_type, const std::string&, Ret Base::* func) {
+        static_assert(std::is_base_of<Base, T>::value, "Any registered function must be part of the class");
+        typedef typename std::decay<decltype(func)>::type function_type;
+        return detail::make_unique<userdata_variable_function<function_type, T>>(func);
+    }
+
+    template<typename Base, typename Ret>
+    std::unique_ptr<base_function> make_variable_function(std::false_type, const std::string&, Ret Base::* func) {
+        static_assert(std::is_base_of<Base, T>::value, "Any registered function must be part of the class");
+        typedef typename std::decay<decltype(func)>::type function_type;
+        return detail::make_unique<userdata_function<function_type, T>>(func);
+    }
+
+    template<typename Base, typename Ret>
+    std::unique_ptr<base_function> make_function(const std::string& name, Ret Base::* func) {
+        typedef typename std::decay<decltype(func)>::type function_type;
+        return make_variable_function(std::is_member_object_pointer<function_type>(), name, func);
+    }
+
+    template<typename Fx>
+    std::unique_ptr<base_function> make_function(const std::string&, Fx&& func) {
+        typedef Unqualified<Fx> Fxu;
+        typedef typename std::tuple_element<0, typename function_traits<Fxu>::arg_tuple_type>::type TArg;
+        typedef Unqualified<TArg> TArgu;
+        static_assert(std::is_base_of<TArgu, T>::value, "Any non-member-function must have a first argument which is covariant with the desired userdata type.");
+        typedef typename std::decay<decltype(func)>::type function_type;
+        return detail::make_unique<userdata_function<function_type, T>>(func);
+    }
+
+    template<std::size_t N, typename Fx>
+    bool build_function(std::false_type, function_map_t*& index, function_map_t*& newindex, std::string funcname, Fx&& func) {
+        typedef typename std::decay<Fx>::type function_type;
         auto metamethod = std::find(meta_function_names.begin(), meta_function_names.end(), funcname);
         if (metamethod != meta_function_names.end()) {
             functionnames.push_back(std::move(funcname));
@@ -246,23 +282,22 @@ private:
                 ptr = std::move(idxptr);
             }
             else {
-                ptr = detail::make_unique<userdata_function<function_type, T>>(func);
+                ptr = make_function(funcname, std::forward<Fx>(func));
             }
             metafunctions.emplace_back(std::move(ptr));
             metafunctiontable.push_back( { name.c_str(), &base_function::userdata<N>::call } );
             ptrmetafunctiontable.push_back( { name.c_str(), &base_function::userdata<N>::ref_call } );
             return true;
         }
-        indexmetafunctions.emplace(funcname, std::make_pair(detail::make_unique<userdata_function<function_type, T>>(func), true ));
-        newindexmetafunctions.emplace(funcname, std::make_pair(detail::make_unique<userdata_function<function_type, T>>(func), true));
+        indexmetafunctions.emplace(funcname, std::make_pair(make_function(funcname, std::forward<Fx>(func)), true));
         return false;
     }
 
-    template<std::size_t N, typename TBase, typename Ret, typename... Args>
-    void build_function_tables(function_map_t*& index, function_map_t*& newindex, std::string funcname, Ret TBase::* func, Args&&... args) {
-        typedef typename std::is_member_object_pointer<decltype(func)>::type is_variable;
+    template<std::size_t N, typename Fx, typename... Args>
+    void build_function_tables(function_map_t*& index, function_map_t*& newindex, std::string funcname, Fx&& func, Args&&... args) {
+        typedef typename std::is_member_object_pointer<Unqualified<Fx>>::type is_variable;
         static const std::size_t V = static_cast<std::size_t>( !is_variable::value );
-        if (build_function<N>(is_variable(), index, newindex, std::move(funcname), std::move(func))) {
+        if (build_function<N>(is_variable(), index, newindex, std::move(funcname), std::forward<Fx>(func))) {
             build_function_tables<N + V>(index, newindex, std::forward<Args>(args)...);
         }
         else {
@@ -270,13 +305,12 @@ private:
         }
     }
 
-    /* Apparently there needs to be magic
-    template<std::size_t N, typename TBase, typename Ret, typename... Args>
-    void build_function_tables(function_map_t*& index, function_map_t*& newindex, meta_function metafunc, Ret TBase::* func, Args&&... args) {
+    template<std::size_t N, typename Base, typename Ret, typename... Args>
+    void build_function_tables(function_map_t*& index, function_map_t*& newindex, meta_function metafunc, Ret Base::* func, Args&&... args) {
         std::size_t idx = static_cast<std::size_t>(metafunc);
         const std::string& funcname = meta_function_names[idx];
         build_function_tables<N>(index, newindex, funcname, std::move(func), std::forward<Args>(args)...);
-    }*/
+    }
 
 public:
     template<typename... Args>
@@ -331,7 +365,7 @@ public:
     }
 private:
 
-    template <typename Meta, typename MetaFuncs, typename MetaFuncTable>
+    template<typename Meta, typename MetaFuncs, typename MetaFuncTable>
     static void push_metatable(lua_State* L, Meta&& metakey, MetaFuncs&& metafuncs, MetaFuncTable&& metafunctable) {
         luaL_newmetatable(L, std::addressof(metakey[0]));
         if (metafunctable.size() > 1) {
@@ -355,7 +389,7 @@ private:
         lua_setglobal(L, std::addressof(userdata_traits<T>::gctable[0]));
     }
 
-    template <bool release = false, typename TCont>
+    template<bool release = false, typename TCont>
     static int push_upvalues (lua_State* L, TCont&& cont) {
         int n = 0;
         for (auto& c : cont) {
@@ -370,7 +404,7 @@ private:
 };
 
 namespace stack {
-template <typename T>
+template<typename T>
 struct pusher<userdata<T>> {
     static void push (lua_State* L, userdata<T>& user) {
         user.push(L);

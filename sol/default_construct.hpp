@@ -28,7 +28,7 @@
 namespace sol {
 
 struct default_construct {
-    template <typename T, typename... Args>
+    template<typename T, typename... Args>
     void operator()(T&& obj, Args&&... args) const {
         std::allocator<Unqualified<T>> alloc{};
         alloc.construct(obj, std::forward<Args>(args)...);

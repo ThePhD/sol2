@@ -31,8 +31,12 @@ namespace detail {
 struct ref_call_t {};
 const auto ref_call = ref_call_t{};
 
-template <typename T, typename Func, typename R, bool is_variable = std::is_member_object_pointer<Func>::value>
+template<typename T, typename Func, typename = void>
 struct functor {
+    typedef member_traits<Func> traits_type;
+    typedef typename traits_type::args_type args_type;
+    typedef typename traits_type::return_type return_type;
+
     T* item;
     Func invocation;
 
@@ -40,44 +44,73 @@ struct functor {
     functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
 
     template<typename... Args>
-    R operator()(Args&&... args) {
-        T& member = *item;
-        return (member.*invocation)(std::forward<Args>(args)...);
-    }
-};
-
-template <typename T, typename Func>
-struct functor<T, Func, void, false> {
-    T* item;
-    Func invocation;
-
-    template<typename... FxArgs>
-    functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
-
-    template<typename... Args>
-    void operator()(Args&&... args) {
+    void call(types<void>, Args&&... args) {
         T& member = *item;
         (member.*invocation)(std::forward<Args>(args)...);
     }
+
+    template<typename Ret, typename... Args>
+    Ret call(types<Ret>, Args&&... args) {
+        T& member = *item;
+        return (member.*invocation)(std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    auto operator()(Args&&... args) -> decltype(this->call(types<return_type>{}, std::forward<Args>(args)...)) {
+        return this->call(types<return_type>{}, std::forward<Args>(args)...);
+    }
 };
 
-template <typename T, typename Func, typename R>
-struct functor<T, Func, R, true> {
+template<typename T, typename Func>
+struct functor<T, Func, typename std::enable_if<std::is_member_object_pointer<Func>::value>::type> {
+    typedef member_traits<Func> traits_type;
+    typedef typename traits_type::args_type args_type;
+    typedef typename traits_type::return_type return_type;
     T* item;
     Func invocation;
 
     template<typename... FxArgs>
     functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
 
-    template<typename Arg, typename... Args>
-    void operator()(Arg&& arg, Args&&...) {
+    template<typename Arg>
+    void operator()(Arg&& arg) {
         T& member = *item;
         (member.*invocation) = std::forward<Arg>(arg);
     }
 
-    R operator()() {
+    return_type operator()() {
         T& member = *item;
         return (member.*invocation);
+    }
+};
+
+template<typename T, typename Func>
+struct functor<T, Func, typename std::enable_if<std::is_function<Func>::value || std::is_class<Func>::value>::type> {
+    typedef member_traits<Func> traits_type;
+    typedef remove_one_type<typename traits_type::args_type> args_type;
+    typedef typename traits_type::return_type return_type;
+    typedef typename std::conditional<std::is_pointer<Func>::value || std::is_class<Func>::value, Func, typename std::add_pointer<Func>::type>::type function_type;
+    T* item;
+    function_type invocation;
+
+    template<typename... FxArgs>
+    functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
+
+    template<typename... Args>
+    void call(types<void>, Args&&... args) {
+        T& member = *item;
+        invocation(member, std::forward<Args>(args)...);
+    }
+
+    template<typename Ret, typename... Args>
+    Ret call(types<Ret>, Args&&... args) {
+        T& member = *item;
+        return invocation(member, std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    auto operator()(Args&&... args) -> decltype(this->call(types<return_type>{}, std::forward<Args>(args)...)) {
+        return this->call(types<return_type>{}, std::forward<Args>(args)...);
     }
 };
 } // detail
@@ -340,11 +373,12 @@ template<typename Function, typename Tp>
 struct userdata_function_core : public base_function {
     typedef typename std::remove_pointer<Tp>::type T;
     typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
-    typedef member_traits<Function> traits_type;
-    typedef typename traits_type::args_type args_type;
-    typedef typename traits_type::return_type return_type;
+    typedef detail::functor<T, function_type> fx_t;
+    typedef typename fx_t::traits_type traits_type;
+    typedef typename fx_t::args_type args_type;
+    typedef typename fx_t::return_type return_type;
 
-    detail::functor<T, function_type, return_type> fx;
+    fx_t fx;
 
     template<typename... FxArgs>
     userdata_function_core(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
@@ -398,14 +432,14 @@ template<typename Function, typename Tp>
 struct userdata_function : public userdata_function_core<Function, Tp> {
     typedef userdata_function_core<Function, Tp> base_t;
     typedef typename std::remove_pointer<Tp>::type T;
-    typedef member_traits<Function> traits_type;
-    typedef typename traits_type::args_type args_type;
-    typedef typename traits_type::return_type return_type;
+    typedef typename base_t::traits_type traits_type;
+    typedef typename base_t::args_type args_type;
+    typedef typename base_t::return_type return_type;
 
     template<typename... FxArgs>
     userdata_function(FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...) {}
 
-    template <typename Tx>
+    template<typename Tx>
     int fx_call(lua_State* L) {
         this->fx.item = detail::get_ptr(stack::get<Tx>(L, 1));
         if (this->fx.item == nullptr)
@@ -426,14 +460,14 @@ template<typename Function, typename Tp>
 struct userdata_variable_function : public userdata_function_core<Function, Tp> {
     typedef userdata_function_core<Function, Tp> base_t;
     typedef typename std::remove_pointer<Tp>::type T;
-    typedef member_traits<Function> traits_type;
-    typedef typename traits_type::args_type args_type;
-    typedef typename traits_type::return_type return_type;
+    typedef typename base_t::traits_type traits_type;
+    typedef typename base_t::args_type args_type;
+    typedef typename base_t::return_type return_type;
 
     template<typename... FxArgs>
     userdata_variable_function(FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...) {}
 
-    template <typename Tx>
+    template<typename Tx>
     int fx_call (lua_State* L) {
         this->fx.item = detail::get_ptr(stack::get<Tx>(L, 1));
         if (this->fx.item == nullptr)
@@ -463,9 +497,9 @@ template<typename Function, typename Tp>
 struct userdata_indexing_function : public userdata_function_core<Function, Tp> {
     typedef userdata_function_core<Function, Tp> base_t;
     typedef typename std::remove_pointer<Tp>::type T;
-    typedef member_traits<Function> traits_type;
-    typedef typename traits_type::args_type args_type;
-    typedef typename traits_type::return_type return_type;
+    typedef typename base_t::traits_type traits_type;
+    typedef typename base_t::args_type args_type;
+    typedef typename base_t::return_type return_type;
 
     std::string name;
     std::unordered_map<std::string, std::pair<std::unique_ptr<base_function>, bool>> functions;
@@ -473,7 +507,7 @@ struct userdata_indexing_function : public userdata_function_core<Function, Tp> 
     template<typename... FxArgs>
     userdata_indexing_function(std::string name, FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...), name(std::move(name)) {}
 
-    template <typename Tx>
+    template<typename Tx>
     int fx_call (lua_State* L) {
         std::string accessor = stack::get<std::string>(L, 1 - lua_gettop(L));
         auto function = functions.find(accessor);

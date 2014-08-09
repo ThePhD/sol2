@@ -24,7 +24,7 @@
 
 #include <lua.hpp>
 #include <string>
-#include <type_traits>
+#include "traits.hpp"
 
 namespace sol {
 struct nil_t {};
@@ -32,7 +32,7 @@ const nil_t nil {};
 struct void_type {};
 const void_type Void {};
 
-template <typename... T>
+template<typename... T>
 struct function_sig_t {};
 using function_t = function_sig_t<>;
 

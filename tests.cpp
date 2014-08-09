@@ -160,6 +160,31 @@ struct Vec {
   }
 };
 
+struct giver {
+    int a = 0;
+
+    giver () {
+
+    }
+
+    void gief () {
+        a = 1;
+    }
+
+    static void stuff () {
+
+    }
+
+    static void gief_stuff (giver& t, int a) {
+        t.a = a;
+    }
+
+    ~giver () {
+
+    }
+
+};
+
 TEST_CASE("simple/set_global", "Check if the set_global works properly.") {
     sol::state lua;
 
@@ -808,4 +833,25 @@ TEST_CASE("userdata/member-variables", "allow table-like accessors to behave as 
                "local x = v.x\n"
                "assert(x == 3)\n"
                ));
+}
+
+TEST_CASE("userdata/nonmember functions implement functionality", "let users set non-member functions that take unqualified T as first parameter to userdata") {
+    sol::state lua;
+    lua.open_libraries( sol::lib::base );
+
+    lua.new_userdata<giver>( "giver",
+                            "gief_stuff", giver::gief_stuff,
+                            "gief", &giver::gief,
+                            "__tostring", [](const giver& t) {
+                                                return std::to_string(t.a) + ": giving value";
+                                            }
+    ).get<sol::table>( "giver" )
+    .set_function( "stuff", giver::stuff );
+
+    REQUIRE_NOTHROW(lua.script("giver.stuff()"));
+    REQUIRE_NOTHROW(lua.script("t = giver.new()\n"
+            "print(tostring(t))\n"
+            "t:gief()\n"
+            "t:gief_stuff(20)\n"));
+    REQUIRE((lua.get<giver>("t").a == 20));
 }

@@ -90,9 +90,11 @@ public:
 
     template<typename Key, typename T>
     table& set_userdata(Key&& key, userdata<T>& user) {
-        std::string ukey(std::forward<Key>(key));
+        push();
+        stack::push(state(), std::forward<Key>(key));
         stack::push(state(), user);
-        lua_setglobal(state(), ukey.c_str());
+        lua_settable(state(), -3);
+        lua_pop(state(), 1);
         return *this;
     }
 

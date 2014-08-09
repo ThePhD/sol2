@@ -27,7 +27,7 @@
 #include <functional>
 
 namespace sol {
-template <typename T>
+template<typename T>
 struct identity { typedef T type; };
 
 template<typename... Args>
@@ -36,27 +36,27 @@ struct is_tuple : std::false_type{ };
 template<typename... Args>
 struct is_tuple<std::tuple<Args...>> : std::true_type{ };
 
-template <typename T>
+template<typename T>
 struct unwrap {
     typedef T type;
 };
 
-template <typename T>
+template<typename T>
 struct unwrap<std::reference_wrapper<T>> {
     typedef typename std::add_lvalue_reference<T>::type type;
 };
 
-template <typename T>
+template<typename T>
 struct remove_member_pointer;
 
-template <typename R, typename T>
+template<typename R, typename T>
 struct remove_member_pointer<R T::*> {
     typedef R type;
 };
 
-template <typename T, template <typename...> class Templ>
+template<typename T, template<typename...> class Templ>
 struct is_specialization_of : std::false_type { };
-template <typename... T, template <typename...> class Templ>
+template<typename... T, template<typename...> class Templ>
 struct is_specialization_of<Templ<T...>, Templ> : std::true_type { };
 
 template<class T, class...>
@@ -104,7 +104,7 @@ using Unqualified = typename std::remove_cv<typename std::remove_reference<T>::t
 template<typename T>
 using Decay = typename std::decay<T>::type;
 
-template <typename T>
+template<typename T>
 using Unwrap = typename unwrap<T>::type;
 
 template<typename... Args>
@@ -160,26 +160,23 @@ struct check_deducible_signature {
 template<class F>
 struct has_deducible_signature : detail::check_deducible_signature<F>::type { };
 
-template <typename T>
+template<typename T>
 using has_deducible_signature_t = typename has_deducible_signature<T>::type;
 
 template<typename T>
 struct Function : Bool<detail::is_function_impl<T>::value> {};
 
-template<typename TFuncSignature>
-struct function_traits;
+namespace detail {
+template<typename Signature, bool b = std::is_class<Signature>::value>
+struct fx_traits;
 
-template <typename TFuncSignature>
-using function_args_t = typename function_traits<TFuncSignature>::args_type;
+template<typename Signature>
+struct fx_traits<Signature, true> : fx_traits<decltype(Signature::operator()), false> {
 
-template <typename TFuncSignature>
-using function_signature_t = typename function_traits<TFuncSignature>::signature_type;
-
-template <typename TFuncSignature>
-using function_return_t = typename function_traits<TFuncSignature>::return_type;
+};
 
 template<typename T, typename R, typename... Args>
-struct function_traits<R(T::*)(Args...)> {
+struct fx_traits<R(T::*)(Args...), false> {
     static const std::size_t arity = sizeof...(Args);
     static const bool is_member_function = true;
     typedef std::tuple<Args...> arg_tuple_type;
@@ -194,7 +191,7 @@ struct function_traits<R(T::*)(Args...)> {
 };
 
 template<typename T, typename R, typename... Args>
-struct function_traits<R(T::*)(Args...) const> {
+struct fx_traits<R(T::*)(Args...) const, false> {
     static const std::size_t arity = sizeof...(Args);
     static const bool is_member_function = true;
     typedef std::tuple<Args...> arg_tuple_type;
@@ -209,7 +206,7 @@ struct function_traits<R(T::*)(Args...) const> {
 };
 
 template<typename R, typename... Args>
-struct function_traits<R(Args...)> {
+struct fx_traits<R(Args...), false> {
     static const std::size_t arity = sizeof...(Args);
     static const bool is_member_function = false;
     typedef std::tuple<Args...> arg_tuple_type;
@@ -224,7 +221,7 @@ struct function_traits<R(Args...)> {
 };
 
 template<typename R, typename... Args>
-struct function_traits<R(*)(Args...)> {
+struct fx_traits<R(*)(Args...), false> {
     static const std::size_t arity = sizeof...(Args);
     static const bool is_member_function = false;
     typedef std::tuple<Args...> arg_tuple_type;
@@ -237,14 +234,28 @@ struct function_traits<R(*)(Args...)> {
     template<std::size_t i>
     using arg = typename std::tuple_element<i, arg_tuple_type>::type;
 };
+
+} // detail
+
+template<typename Signature>
+struct function_traits : detail::fx_traits<Signature> {};
+
+template<typename Signature>
+using function_args_t = typename function_traits<Signature>::args_type;
+
+template<typename Signature>
+using function_signature_t = typename function_traits<Signature>::signature_type;
+
+template<typename Signature>
+using function_return_t = typename function_traits<Signature>::return_type;
 
 namespace detail {
-template <typename Signature, bool b = std::is_member_object_pointer<Signature>::value>
+template<typename Signature, bool b = std::is_member_object_pointer<Signature>::value>
 struct member_traits : function_traits<Signature> {
 
 };
 
-template <typename Signature>
+template<typename Signature>
 struct member_traits<Signature, true> {
     typedef typename remove_member_pointer<Signature>::type Arg;
     typedef typename remove_member_pointer<Signature>::type R;
@@ -262,7 +273,7 @@ struct member_traits<Signature, true> {
 };
 } // detail
 
-template <typename Signature>
+template<typename Signature>
 struct member_traits : detail::member_traits<Signature> {
 
 };
@@ -294,12 +305,12 @@ struct has_key_value_pair_impl {
 template<typename T>
 struct has_key_value_pair : decltype(has_key_value_pair_impl::test<T>(0)) {};
 
-template <typename T>
+template<typename T>
 auto unwrapper(T&& item) -> decltype(std::forward<T>(item)) {
     return std::forward<T>(item);
 }
 
-template <typename Arg>
+template<typename Arg>
 Unwrap<Arg> unwrapper(std::reference_wrapper<Arg> arg) {
     return arg.get();
 }
