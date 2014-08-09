@@ -28,3 +28,5 @@ main.cpp
 lua-5.2.3/
 build.ninja
 main.ninja
+*.user
+*.3cb9f6a
