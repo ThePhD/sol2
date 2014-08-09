@@ -143,9 +143,7 @@ struct is_function_impl<T, true> {
 
     static const bool value = sizeof(test<Derived>(0)) == sizeof(yes);
 };
-} // detail
 
-namespace detail {
 template<class F>
 struct check_deducible_signature {
     template<class G>
@@ -167,7 +165,7 @@ template<typename T>
 struct Function : Bool<detail::is_function_impl<T>::value> {};
 
 namespace detail {
-template<typename Signature, bool b = std::is_class<Signature>::value>
+template<typename Signature, bool b = has_deducible_signature<Signature>::value>
 struct fx_traits;
 
 template<typename Signature>
