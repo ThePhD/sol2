@@ -33,12 +33,12 @@
 namespace sol {
 namespace detail {
 #ifdef _MSC_VER
-std::string get_type_name(const std::type_info& id) {
+inline std::string get_type_name(const std::type_info& id) {
     return id.name();
 }
 
 #elif defined(__GNUC__) || defined(__clang__)
-std::string get_type_name(const std::type_info& id) {
+inline std::string get_type_name(const std::type_info& id) {
     int status;
     char* unmangled = abi::__cxa_demangle(id.name(), 0, 0, &status);
     std::string realname = unmangled;
@@ -50,7 +50,7 @@ std::string get_type_name(const std::type_info& id) {
 #error Compiler not supported for demangling
 #endif // compilers
 
-std::string demangle(const std::type_info& id) {
+inline std::string demangle(const std::type_info& id) {
     std::string realname = get_type_name(id);
     const static std::array<std::string, 2> removals = {{ "struct ", "class " }};
     const static std::array<std::string, 2> replacements = {{ "::", "_" }};

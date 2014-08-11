@@ -37,6 +37,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--debug', action='store_true', help='compile with debug flags')
 parser.add_argument('--cxx', metavar='<compiler>', help='compiler name to use (default: g++)', default='g++')
 parser.add_argument('--ci', action='store_true', help=argparse.SUPPRESS)
+parser.add_argument('--testing', action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('--lua-dir', metavar='<dir>', help='directory lua is in with include and lib subdirectories')
 parser.add_argument('--install-dir', metavar='<dir>', help='directory to install the headers to', default=install_dir);
 parser.epilog = """In order to install sol, administrative privileges might be required.
@@ -79,6 +80,9 @@ if args.ci:
     include.extend(['/usr/include/lua5.2', './lua-5.2.2/src', './include'])
 else:
     ldflags.extend(libraries(['lua']))
+
+if args.testing:
+    cxxflags.append('-Wmissing-declarations')
 
 if 'linux' in sys.platform:
     ldflags.extend(libraries(['dl']))

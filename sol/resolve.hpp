@@ -28,66 +28,67 @@
 namespace sol {
 namespace detail {
 template<typename R, typename... Args, typename F, typename = typename std::result_of<Unqualified<F>(Args...)>::type>
-auto resolve_i(types<R(Args...)>, F&&)->R(Unqualified<F>::*)(Args...) {
+inline auto resolve_i(types<R(Args...)>, F&&) -> R(Unqualified<F>::*)(Args...) {
     using Sig = R(Args...);
     typedef Unqualified<F> Fu;
     return static_cast<Sig Fu::*>(&Fu::operator());
 }
 
 template<typename F, typename U = Unqualified<F>>
-auto resolve_f(std::true_type, F&& f) -> decltype(resolve_i(types<function_signature_t<decltype(&U::operator())>>(), std::forward<F>(f))) {
+inline auto resolve_f(std::true_type, F&& f)
+-> decltype(resolve_i(types<function_signature_t<decltype(&U::operator())>>(), std::forward<F>(f))) {
     return resolve_i(types<function_signature_t<decltype(&U::operator())>>(), std::forward<F>(f));
 }
 
 template<typename F>
-void resolve_f(std::false_type, F&&) {
+inline void resolve_f(std::false_type, F&&) {
     static_assert(has_deducible_signature<F>::value,
                   "Cannot use no-template-parameter call with an overloaded functor: specify the signature");
 }
 
 template<typename F, typename U = Unqualified<F>>
-auto resolve_i(types<>, F&& f) -> decltype(resolve_f(has_deducible_signature<U> {}, std::forward<F>(f))) {
+inline auto resolve_i(types<>, F&& f) -> decltype(resolve_f(has_deducible_signature<U> {}, std::forward<F>(f))) {
     return resolve_f(has_deducible_signature<U> {}, std::forward<F>(f));
 }
 
 template<typename... Args, typename F, typename R = typename std::result_of<F&(Args...)>::type>
-auto resolve_i(types<Args...>, F&& f) -> decltype( resolve_i(types<R(Args...)>(), std::forward<F>(f))) {
+inline auto resolve_i(types<Args...>, F&& f) -> decltype( resolve_i(types<R(Args...)>(), std::forward<F>(f))) {
     return resolve_i(types<R(Args...)>(), std::forward<F>(f));
 }
 
 template<typename Sig, typename C>
-Sig C::* resolve_v(std::false_type, Sig C::* mem_func_ptr) {
+inline Sig C::* resolve_v(std::false_type, Sig C::* mem_func_ptr) {
     return mem_func_ptr;
 }
 
 template<typename Sig, typename C>
-Sig C::* resolve_v(std::true_type, Sig C::* mem_variable_ptr) {
+inline Sig C::* resolve_v(std::true_type, Sig C::* mem_variable_ptr) {
     return mem_variable_ptr;
 }
 } // detail
 
 template<typename... Args, typename R>
-auto resolve(R fun_ptr(Args...)) -> R(*)(Args...) {
+inline auto resolve(R fun_ptr(Args...)) -> R(*)(Args...) {
     return fun_ptr;
 }
 
 template<typename Sig>
-Sig* resolve(Sig* fun_ptr) {
+inline Sig* resolve(Sig* fun_ptr) {
     return fun_ptr;
 }
 
 template<typename... Args, typename R, typename C>
-auto resolve(R(C::*mem_ptr)(Args...)) -> R(C::*)(Args...) {
+inline auto resolve(R(C::*mem_ptr)(Args...)) -> R(C::*)(Args...) {
     return mem_ptr;
 }
 
 template<typename Sig, typename C>
-Sig C::* resolve(Sig C::* mem_ptr) {
+inline Sig C::* resolve(Sig C::* mem_ptr) {
     return detail::resolve_v(std::is_member_object_pointer<Sig C::*>(), mem_ptr);
 }
 
 template<typename... Sig, typename F>
-auto resolve(F&& f) -> decltype(detail::resolve_i(types<Sig...>(), std::forward<F>(f))) {
+inline auto resolve(F&& f) -> decltype(detail::resolve_i(types<Sig...>(), std::forward<F>(f))) {
     return detail::resolve_i(types<Sig...>(), std::forward<F>(f));
 }
 } // sol
