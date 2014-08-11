@@ -35,7 +35,7 @@
 namespace sol {
 class function : public reference {
 private:
-    void luacall (std::size_t argcount, std::size_t resultcount) const {
+    void luacall(std::size_t argcount, std::size_t resultcount) const {
         lua_call(state(), static_cast<uint32_t>(argcount), static_cast<uint32_t>(resultcount));
     }
 
@@ -60,7 +60,7 @@ private:
     }
 
 public:
-    function() : reference() {}
+    function() = default;
     function(lua_State* L, int index = -1): reference(L, index) {
         type_assert(L, index, type::function);
     }
@@ -197,7 +197,7 @@ struct pusher<function_sig_t<Sigs...>> {
         void* userdata = reinterpret_cast<void*>(target);
         lua_CFunction freefunc = &base_function::call;
 
-        if (luaL_newmetatable(L, metatablename) == 1) {
+        if(luaL_newmetatable(L, metatablename) == 1) {
             lua_pushstring(L, "__gc");
             stack::push(L, &base_function::gc);
             lua_settable(L, -3);
@@ -231,7 +231,7 @@ struct getter<std::function<Signature>> {
     static std::function<Signature> get_std_func(types<FxArgs...>, types<Ret...>, lua_State* L, int index = -1) {
         typedef typename function_traits<Signature>::return_type return_t;
         sol::function f(L, index);
-        auto fx = [ f, L, index ] (FxArgs&&... args) -> return_t {
+        auto fx = [f, L, index](FxArgs&&... args) -> return_t {
             return f(types<Ret...>(), std::forward<FxArgs>(args)...);
         };
         return std::move(fx);
@@ -240,7 +240,7 @@ struct getter<std::function<Signature>> {
     template<typename... FxArgs>
     static std::function<Signature> get_std_func(types<FxArgs...>, types<void>, lua_State* L, int index = -1) {
         sol::function f(L, index);
-        auto fx = [ f, L, index ] (FxArgs&&... args) -> void {
+        auto fx = [f, L, index](FxArgs&&... args) -> void {
             f(std::forward<FxArgs>(args)...);
         };
         return std::move(fx);

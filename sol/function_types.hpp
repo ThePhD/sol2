@@ -202,7 +202,7 @@ struct static_member_function {
 
 struct base_function {
     static int base_call(lua_State* L, void* inheritancedata) {
-        if (inheritancedata == nullptr) {
+        if(inheritancedata == nullptr) {
             throw error("call from Lua to C++ function has null data");
         }
 
@@ -213,7 +213,7 @@ struct base_function {
     }
 
     static int ref_base_call(lua_State* L, void* inheritancedata) {
-        if (inheritancedata == nullptr) {
+        if(inheritancedata == nullptr) {
             throw error("call from Lua to C++ function has null data");
         }
 
@@ -224,7 +224,7 @@ struct base_function {
     }
 
     static int base_gc(lua_State*, void* udata) {
-        if (udata == nullptr) {
+        if(udata == nullptr) {
             throw error("call from lua to C++ gc function with null data");
         }
 
@@ -256,7 +256,7 @@ struct base_function {
         }
 
         static int gc(lua_State* L) {
-            for (std::size_t i = 0; i < I; ++i) {
+            for(std::size_t i = 0; i < I; ++i) {
                 upvalue_t up = stack::get<upvalue_t>(L, i + 1);
                 base_function* obj = static_cast<base_function*>(up.value);
                 std::allocator<base_function> alloc{};
@@ -385,7 +385,7 @@ struct userdata_function_core : public base_function {
 
     template<typename Return, typename Raw = Unqualified<Return>>
     typename std::enable_if<std::is_same<T, Raw>::value, void>::type push(lua_State* L, Return&& r) {
-        if (detail::get_ptr(r) == fx.item) {
+        if(detail::get_ptr(r) == fx.item) {
             // push nothing
             // note that pushing nothing with the ':'
             // syntax means we leave the instance of what
@@ -442,8 +442,9 @@ struct userdata_function : public userdata_function_core<Function, Tp> {
     template<typename Tx>
     int fx_call(lua_State* L) {
         this->fx.item = detail::get_ptr(stack::get<Tx>(L, 1));
-        if (this->fx.item == nullptr)
+        if(this->fx.item == nullptr) {
             throw error("userdata for function call is null: are you using the wrong syntax? (use item:function/variable(...) syntax)");
+        }
         return static_cast<base_t&>(*this)(tuple_types<return_type>(), args_type(), L);
     }
 
@@ -468,12 +469,14 @@ struct userdata_variable_function : public userdata_function_core<Function, Tp> 
     userdata_variable_function(FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...) {}
 
     template<typename Tx>
-    int fx_call (lua_State* L) {
+    int fx_call(lua_State* L) {
         this->fx.item = detail::get_ptr(stack::get<Tx>(L, 1));
-        if (this->fx.item == nullptr)
+        if(this->fx.item == nullptr) {
             throw error("userdata for member variable is null");
+        }
+
         int argcount = lua_gettop(L);
-        switch (argcount) {
+        switch(argcount) {
         case 2:
             return static_cast<base_t&>(*this)(tuple_types<return_type>(), types<>(), L);
         case 3:
@@ -508,31 +511,29 @@ struct userdata_indexing_function : public userdata_function_core<Function, Tp> 
     userdata_indexing_function(std::string name, FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...), name(std::move(name)) {}
 
     template<typename Tx>
-    int fx_call (lua_State* L) {
+    int fx_call(lua_State* L) {
         std::string accessor = stack::get<std::string>(L, 1 - lua_gettop(L));
         auto function = functions.find(accessor);
-        if (function != functions.end()) {
-            if (function->second.second) {
+        if(function != functions.end()) {
+            if(function->second.second) {
                 stack::push<upvalue_t>(L, function->second.first.get());
-                if (std::is_same<T*, Tx>::value)
+                if(std::is_same<T*, Tx>::value) {
                     stack::push(L, &base_function::userdata<0>::ref_call, 1);
-                else
+                }
+                else {
                     stack::push(L, &base_function::userdata<0>::call, 1);
+                }
                 return 1;
             }
+            else if(std::is_same<T*, Tx>::value) {
+                return (*function->second.first)(L, detail::ref_call);
+            }
             else {
-                if (std::is_same<T*, Tx>::value)
-                    return (*function->second.first)(L, detail::ref_call);
-                else
-                    return (*function->second.first)(L);
+                return (*function->second.first)(L);
             }
         }
-        if (this->fx.invocation == nullptr) {
-            std::string err = "invalid indexing \"";
-            err += accessor;
-            err += "\" on type: ";
-            err += name;
-            throw error(err);
+        if(this->fx.invocation == nullptr) {
+            throw error("invalid indexing \"" + accessor + "\" on type: " + name);
         }
         this->fx.item = detail::get_ptr(stack::get<Tx>(L, 1));
         return static_cast<base_t&>(*this)(tuple_types<return_type>(), args_type(), L);

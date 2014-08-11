@@ -160,8 +160,9 @@ struct getter<const char*> {
 template<>
 struct getter<nil_t> {
     static nil_t get(lua_State* L, int index = -1) {
-        if (lua_isnil(L, index) == 0)
+        if(lua_isnil(L, index) == 0) {
             throw sol::error("not nil");
+        }
         return nil_t{ };
     }
 };
@@ -377,7 +378,7 @@ inline int push_as_upvalues(lua_State* L, T& item) {
 
     data_t data{{}};
     std::memcpy(std::addressof(data[0]), std::addressof(item), itemsize);
-    for (auto&& v : data) {
+    for(auto&& v : data) {
         push(L, upvalue_t(v));
     }
     return data_t_count;
@@ -388,7 +389,7 @@ inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 1) {
     const static std::size_t data_t_count = (sizeof(T)+(sizeof(void*)-1)) / sizeof(void*);
     typedef std::array<void*, data_t_count> data_t;
     data_t voiddata{ {} };
-    for (std::size_t i = 0, d = 0; d < sizeof(T); ++i, d += sizeof(void*)) {
+    for(std::size_t i = 0, d = 0; d < sizeof(T); ++i, d += sizeof(void*)) {
         voiddata[i] = get<upvalue_t>(L, index++);
     }
     return std::pair<T, int>(*reinterpret_cast<T*>(static_cast<void*>(voiddata.data())), index);
@@ -475,8 +476,8 @@ inline auto pop_reverse_call(lua_State* L, TFx&& fx, types<Args...> t) -> declty
 }
 
 inline call_syntax get_call_syntax(lua_State* L, const std::string& meta) {
-    if (get<type>(L, 1) == type::table) {
-        if (luaL_newmetatable(L, meta.c_str()) == 0) {
+    if(get<type>(L, 1) == type::table) {
+        if(luaL_newmetatable(L, meta.c_str()) == 0) {
             lua_settop(L, -2);
             return call_syntax::colon;
         }

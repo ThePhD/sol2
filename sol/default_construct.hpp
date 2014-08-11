@@ -26,7 +26,6 @@
 #include "traits.hpp"
 
 namespace sol {
-
 struct default_construct {
     template<typename T, typename... Args>
     void operator()(T&& obj, Args&&... args) const {
@@ -34,7 +33,6 @@ struct default_construct {
         alloc.construct(obj, std::forward<Args>(args)...);
     }
 };
-
 } // sol
 
 #endif // SOL_DEFAULT_CONSTRUCTOR_HPP

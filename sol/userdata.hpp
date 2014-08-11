@@ -113,7 +113,7 @@ private:
 
         template<typename ...CArgs, typename... Args>
         static void match_constructor(lua_State* L, T* obj, call_syntax syntax, int argcount, types<CArgs...> t, Args&&... args) {
-            if (argcount == sizeof...(CArgs)) {
+            if(argcount == sizeof...(CArgs)) {
                 do_constructor(L, obj, syntax, argcount, t);
                 return;
             }
@@ -129,7 +129,7 @@ private:
             T* obj = static_cast<T*>(udata);
             match_constructor(L, obj, syntax, argcount - static_cast<int>(syntax), typename identity<TTypes>::type()...);
 
-            if (luaL_newmetatable(L, std::addressof(meta[0])) == 1) {
+            if(luaL_newmetatable(L, std::addressof(meta[0])) == 1) {
                 lua_pop(L, 1);
                 std::string err = "Unable to get userdata metatable for ";
                 err += meta;
@@ -152,52 +152,52 @@ private:
     };
 
     template<std::size_t N>
-    void build_cleanup () {
+    void build_cleanup() {
         cleanup = &base_function::userdata<N>::gc;
     }
 
     template<std::size_t N>
     void build_function_tables(function_map_t*& index, function_map_t*& newindex) {
         int extracount = 0;
-        if (!indexmetafunctions.empty()) {
-            if (index == nullptr) {
+        if(!indexmetafunctions.empty()) {
+            if(index == nullptr) {
                 auto idxptr = detail::make_unique<userdata_indexing_function<void (T::*)(), T>>("__index", nullptr);
                 index = &(idxptr->functions);
                 functionnames.emplace_back("__index");
                 metafunctions.emplace_back(std::move(idxptr));
                 std::string& name = functionnames.back();
-                metafunctiontable.push_back( { name.c_str(), &base_function::userdata<N>::call } );
-                ptrmetafunctiontable.push_back( { name.c_str(), &base_function::userdata<N>::ref_call } );
+                metafunctiontable.push_back({ name.c_str(), &base_function::userdata<N>::call });
+                ptrmetafunctiontable.push_back({ name.c_str(), &base_function::userdata<N>::ref_call });
                 ++extracount;
             }
             auto& idx = *index;
-            for (auto&& namedfunc : indexmetafunctions ) {
+            for(auto&& namedfunc : indexmetafunctions) {
                 idx.emplace(std::move(namedfunc.first), std::move(namedfunc.second));
             }
         }
-        if (!newindexmetafunctions.empty()) {
-            if (newindex == nullptr) {
+        if(!newindexmetafunctions.empty()) {
+            if(newindex == nullptr) {
                 auto idxptr = detail::make_unique<userdata_indexing_function<void (T::*)(), T>>("__newindex", nullptr);
                 newindex = &(idxptr->functions);
                 functionnames.emplace_back("__newindex");
                 metafunctions.emplace_back(std::move(idxptr));
                 std::string& name = functionnames.back();
-                if (extracount > 0) {
-                    metafunctiontable.push_back( { name.c_str(), &base_function::userdata<N + 1>::call } );
-                    ptrmetafunctiontable.push_back( { name.c_str(), &base_function::userdata<N + 1>::ref_call } );
+                if(extracount > 0) {
+                    metafunctiontable.push_back({ name.c_str(), &base_function::userdata<N + 1>::call });
+                    ptrmetafunctiontable.push_back({ name.c_str(), &base_function::userdata<N + 1>::ref_call });
                 }
                 else {
-                    metafunctiontable.push_back( { name.c_str(), &base_function::userdata<N>::call } );
-                    ptrmetafunctiontable.push_back( { name.c_str(), &base_function::userdata<N>::ref_call } );
+                    metafunctiontable.push_back({ name.c_str(), &base_function::userdata<N>::call });
+                    ptrmetafunctiontable.push_back({ name.c_str(), &base_function::userdata<N>::ref_call });
                 }
                 ++extracount;
             }
             auto& idx = *newindex;
-            for (auto&& namedfunc : newindexmetafunctions ) {
+            for(auto&& namedfunc : newindexmetafunctions) {
                 idx.emplace(std::move(namedfunc.first), std::move(namedfunc.second));
             }
         }
-        switch (extracount) {
+        switch(extracount) {
         case 2:
             build_cleanup<N + 2>();
             break;
@@ -262,14 +262,14 @@ private:
     bool build_function(std::false_type, function_map_t*& index, function_map_t*& newindex, std::string funcname, Fx&& func) {
         typedef typename std::decay<Fx>::type function_type;
         auto metamethod = std::find(meta_function_names.begin(), meta_function_names.end(), funcname);
-        if (metamethod != meta_function_names.end()) {
+        if(metamethod != meta_function_names.end()) {
             functionnames.push_back(std::move(funcname));
             std::string& name = functionnames.back();
             auto indexmetamethod = std::find(meta_variable_names.begin(), meta_variable_names.end(), name);
             std::unique_ptr<base_function> ptr(nullptr);
-            if (indexmetamethod != meta_variable_names.end()) {
+            if(indexmetamethod != meta_variable_names.end()) {
                 auto idxptr = detail::make_unique<userdata_indexing_function<function_type, T>>(name, func);
-                switch( std::distance(indexmetamethod, meta_variable_names.end()) ) {
+                switch(std::distance(indexmetamethod, meta_variable_names.end())) {
                 case 0:
                     index = &(idxptr->functions);
                     break;
@@ -296,8 +296,8 @@ private:
     template<std::size_t N, typename Fx, typename... Args>
     void build_function_tables(function_map_t*& index, function_map_t*& newindex, std::string funcname, Fx&& func, Args&&... args) {
         typedef typename std::is_member_object_pointer<Unqualified<Fx>>::type is_variable;
-        static const std::size_t V = static_cast<std::size_t>( !is_variable::value );
-        if (build_function<N>(is_variable(), index, newindex, std::move(funcname), std::forward<Fx>(func))) {
+        static const std::size_t V = static_cast<std::size_t>(!is_variable::value);
+        if(build_function<N>(is_variable(), index, newindex, std::move(funcname), std::forward<Fx>(func))) {
             build_function_tables<N + V>(index, newindex, std::forward<Args>(args)...);
         }
         else {
@@ -347,11 +347,11 @@ public:
     userdata(const char* name, constructors<CArgs...> c, Args&&... args) :
         userdata(std::string(name), std::move(c), std::forward<Args>(args)...) {}
 
-    const std::string& name () const {
+    const std::string& name() const {
         return luaname;
     }
 
-    void push (lua_State* L) {
+    void push(lua_State* L) {
         // push pointer tables first,
         // but leave the regular T table on last
         // so it can be linked to a type for usage with `.new(...)` or `:new(...)`
@@ -368,7 +368,7 @@ private:
     template<typename Meta, typename MetaFuncs, typename MetaFuncTable>
     static void push_metatable(lua_State* L, Meta&& metakey, MetaFuncs&& metafuncs, MetaFuncTable&& metafunctable) {
         luaL_newmetatable(L, std::addressof(metakey[0]));
-        if (metafunctable.size() > 1) {
+        if(metafunctable.size() > 1) {
             // regular functions accessed through __index semantics
             int up = push_upvalues(L, metafuncs);
             luaL_setfuncs(L, metafunctable.data(), up);
@@ -376,7 +376,7 @@ private:
 
     }
 
-    void set_global_deleter (lua_State* L) {
+    void set_global_deleter(lua_State* L) {
         // Automatic deleter table -- stays alive until lua VM dies
         // even if the user calls collectgarbage()
         lua_createtable(L, 0, 0);
@@ -390,13 +390,15 @@ private:
     }
 
     template<bool release = false, typename TCont>
-    static int push_upvalues (lua_State* L, TCont&& cont) {
+    static int push_upvalues(lua_State* L, TCont&& cont) {
         int n = 0;
-        for (auto& c : cont) {
-            if (release)
+        for(auto& c : cont) {
+            if(release) {
                stack::push<upvalue_t>(L, c.release());
-            else
+            }
+            else {
                 stack::push<upvalue_t>(L, c.get());
+            }
             ++n;
         }
         return n;
@@ -406,12 +408,11 @@ private:
 namespace stack {
 template<typename T>
 struct pusher<userdata<T>> {
-    static void push (lua_State* L, userdata<T>& user) {
+    static void push(lua_State* L, userdata<T>& user) {
         user.push(L);
     }
 };
 } // stack
-
 } // sol
 
 #endif // SOL_USERDATA_HPP

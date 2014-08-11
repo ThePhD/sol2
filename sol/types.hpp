@@ -39,19 +39,19 @@ using function_t = function_sig_t<>;
 struct upvalue_t {
     void* value;
     upvalue_t(void* data) : value(data) {}
-    operator void* () const { return value; }
+    operator void*() const { return value; }
 };
 
 struct lightuserdata_t {
     void* value;
-    lightuserdata_t(void* data) : value(data) {} 
-    operator void* () const { return value; }
+    lightuserdata_t(void* data) : value(data) {}
+    operator void*() const { return value; }
 };
 
-struct userdata_t { 
+struct userdata_t {
     void* value;
-    userdata_t(void* data) : value(data) {} 
-    operator void* () const { return value; }
+    userdata_t(void* data) : value(data) {}
+    operator void*() const { return value; }
 };
 
 enum class call_syntax {

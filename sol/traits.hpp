@@ -147,11 +147,11 @@ struct is_function_impl<T, true> {
 template<class F>
 struct check_deducible_signature {
     template<class G>
-    static auto test( int ) -> decltype( &G::operator(), void( ) );
+    static auto test(int) -> decltype(&G::operator(), void());
     template<class>
-    static auto test( ... ) -> struct nat;
+    static auto test(...) -> struct nat;
 
-    using type = std::is_void < decltype( test<F>( 0 ) ) > ;
+    using type = std::is_void<decltype(test<F>(0))>;
 };
 } // detail
 

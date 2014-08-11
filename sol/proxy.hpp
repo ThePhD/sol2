@@ -65,7 +65,7 @@ public:
         tbl.set(key, std::forward<U>(other));
     }
 
-    operator nil_t () const {
+    operator nil_t() const {
         return get<nil_t>();
     }
 
