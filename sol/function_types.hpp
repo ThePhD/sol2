@@ -28,7 +28,10 @@
 
 namespace sol {
 namespace detail {
-struct ref_call_t {};
+struct ref_call_t {
+    ref_call_t() {}
+};
+
 const auto ref_call = ref_call_t{};
 
 template<typename T, typename Func, typename = void>
