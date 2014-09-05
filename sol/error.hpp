@@ -28,7 +28,7 @@
 namespace sol {
 class error : public std::runtime_error {
 public:
-    error(const std::string& str) noexcept: std::runtime_error("lua: error: " + str) {}
+    error(const std::string& str): std::runtime_error("lua: error: " + str) {}
 };
 } // sol
 
