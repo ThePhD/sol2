@@ -95,7 +95,7 @@ int main() {
     lua.new_userdata<variables>("variables", "low_gravity", &variables::low_gravity, "boost_level", &variables::boost_level);
 
     // making the class from lua is simple
-    // same with calling member functions
+    // same with calling member functions/variables
     lua.script("local vars = variables.new()\n"
                "assert(not vars.low_gravity)\n"
                "vars.low_gravity = true\n"
