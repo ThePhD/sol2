@@ -863,7 +863,7 @@ TEST_CASE("regressions/one", "issue number 48") {
 
     sol::state lua;
     lua.new_userdata<vars>("vars", "boop", &vars::boop);
-    REQUIRE_NOTHROW(lua.script("local beep = vars.new()\n"
+    REQUIRE_NOTHROW(lua.script("beep = vars.new()\n"
                                "beep.boop = 1"));
     // test for segfault
     auto my_var = lua.get<vars>("beep");
