@@ -93,6 +93,9 @@ struct constructors {};
 
 const auto default_constructor = constructors<types<>>{};
 
+template <typename T>
+using ref = std::reference_wrapper<T>;
+
 } // sol
 
 #endif // SOL_TUPLE_HPP

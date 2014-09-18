@@ -84,6 +84,18 @@ struct self_test {
     }
 };
 
+struct vars {
+    vars () {
+
+    }
+
+    int boop = 0;
+
+    ~vars () {
+
+    }
+};
+
 struct object {
     std::string operator() () {
         std::cout << "member_test()" << std::endl;
@@ -469,7 +481,7 @@ TEST_CASE("functions/return_order_and_multi_get", "Check if return order is in t
     auto tluaget = lua.get<int, int, int>("x", "y", "z");
     std::cout << "cpp: " << std::get<0>(tcpp) << ',' << std::get<1>(tcpp) << ',' << std::get<2>(tcpp) << std::endl;
     std::cout << "lua: " << std::get<0>(tlua) << ',' << std::get<1>(tlua) << ',' << std::get<2>(tlua) << std::endl;
-    std::cout << "lua.xyz: " << lua.get<int>("x") << ',' << lua.get<int>("y") << ',' << lua.get<int>("z") << std::endl;
+    std::cout << "lua xyz: " << lua.get<int>("x") << ',' << lua.get<int>("y") << ',' << lua.get<int>("z") << std::endl;
     REQUIRE(tcpp == triple);
     REQUIRE(tlua == triple);
     REQUIRE(tluaget == triple);
@@ -857,10 +869,6 @@ TEST_CASE("userdata/nonmember functions implement functionality", "let users set
 }
 
 TEST_CASE("regressions/one", "issue number 48") {
-    struct vars {
-        int boop = 0;
-    };
-
     sol::state lua;
     lua.new_userdata<vars>("vars", "boop", &vars::boop);
     REQUIRE_NOTHROW(lua.script("beep = vars.new()\n"
@@ -870,4 +878,26 @@ TEST_CASE("regressions/one", "issue number 48") {
     REQUIRE(my_var.boop == 1);
     auto* ptr = &my_var;
     REQUIRE(ptr->boop == 1);
+}
+
+TEST_CASE("references/get-set", "properly get and set with std::ref semantics. Note that to get, we must not use Unqualified<T> on the type...") {
+    sol::state lua;
+
+    lua.new_userdata<vars>("vars",
+                           "boop", &vars::boop);
+
+    vars var{};
+    vars rvar{};
+    lua.set("beep", var);
+    lua.set("rbeep", std::ref(rvar));
+    auto& my_var = lua.get<vars>("beep");
+    auto& ref_var = lua.get<sol::ref<vars>>("rbeep");
+
+    var.boop = 2;
+    rvar.boop = 5;
+
+    REQUIRE((my_var.boop == 0));
+    REQUIRE(var.boop != my_var.boop);
+    // Reference should point back to the same type.
+    REQUIRE(rvar.boop == ref_var.boop);
 }

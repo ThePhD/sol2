@@ -127,6 +127,22 @@ struct getter<T*> {
     }
 };
 
+template<typename T>
+struct getter<T&> {
+    static T& get(lua_State* L, int index = -1) {
+        void* udata = lua_touserdata(L, index);
+        T** obj = static_cast<T**>(udata);
+        return **obj;
+    }
+};
+
+template<typename T>
+struct getter<std::reference_wrapper<T>> {
+    static T& get(lua_State* L, int index = -1) {
+        return getter<T&>{}.get(L, index);
+    }
+};
+
 template<>
 struct getter<type> {
     static type get(lua_State *L, int index){
@@ -243,7 +259,7 @@ struct pusher {
 
     template<typename U = Unqualified<T>, EnableIf<Not<has_begin_end<U>>, Not<std::is_base_of<reference, U>>, Not<std::is_integral<U>>, Not<std::is_floating_point<U>>> = 0>
     static void push(lua_State* L, T& t) {
-        pusher<T*>{}.push(L, std::addressof(t));
+        detail::push_userdata<U>(L, userdata_traits<T>::metatable, t);
     }
 
     template<typename U = Unqualified<T>, EnableIf<Not<has_begin_end<U>>, Not<std::is_base_of<reference, U>>, Not<std::is_integral<U>>, Not<std::is_floating_point<U>>> = 0>
@@ -256,6 +272,13 @@ template<typename T>
 struct pusher<T*> {
     static void push(lua_State* L, T* obj) {
         detail::push_userdata<T*>(L, userdata_traits<T*>::metatable, obj);
+    }
+};
+
+template<typename T>
+struct pusher<std::reference_wrapper<T>> {
+    static void push(lua_State* L, const std::reference_wrapper<T>& t) {
+        pusher<T*>{}.push(L, std::addressof(t.get()));
     }
 };
 
