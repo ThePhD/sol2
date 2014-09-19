@@ -19,7 +19,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_USERDATA_HPP
+#ifndef SOL_USERTYPE_HPP
 #define SOL_USERTYPE_HPP
 
 #include "state.hpp"
@@ -351,8 +351,8 @@ public:
                        metafunctions, metafunctiontable);
         set_global_deleter(L);
     }
-private:
 
+private:
     template<typename Meta, typename MetaFuncs, typename MetaFuncTable>
     static void push_metatable(lua_State* L, Meta&& metakey, MetaFuncs&& metafuncs, MetaFuncTable&& metafunctable) {
         luaL_newmetatable(L, std::addressof(metakey[0]));
@@ -361,7 +361,6 @@ private:
             int up = push_upvalues(L, metafuncs);
             luaL_setfuncs(L, metafunctable.data(), up);
         }
-
     }
 
     void set_global_deleter(lua_State* L) {
