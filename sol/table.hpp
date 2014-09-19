@@ -25,7 +25,7 @@
 #include "proxy.hpp"
 #include "stack.hpp"
 #include "function_types.hpp"
-#include "userdata.hpp"
+#include "usertype.hpp"
 
 namespace sol {
 class table : public reference {
@@ -84,12 +84,12 @@ public:
     }
 
     template<typename T>
-    table& set_userdata(userdata<T>& user) {
-        return set_userdata(user.name(), user);
+    table& set_usertype(usertype<T>& user) {
+        return set_userdata(usertype_traits<T>::name, user);
     }
 
     template<typename Key, typename T>
-    table& set_userdata(Key&& key, userdata<T>& user) {
+    table& set_usertype(Key&& key, usertype<T>& user) {
         push();
         stack::push(state(), std::forward<Key>(key));
         stack::push(state(), user);

@@ -248,7 +248,7 @@ struct base_function {
     }
 
     template<std::size_t I>
-    struct userdata {
+    struct usertype {
         static int call(lua_State* L) {
             // Zero-based template parameter, but upvalues start at 1
             return base_call(L, stack::get<upvalue_t>(L, I + 1));
@@ -373,7 +373,7 @@ struct member_function : public base_function {
 };
 
 template<typename Function, typename Tp>
-struct userdata_function_core : public base_function {
+struct usertype_function_core : public base_function {
     typedef typename std::remove_pointer<Tp>::type T;
     typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
     typedef detail::functor<T, function_type> fx_t;
@@ -384,7 +384,7 @@ struct userdata_function_core : public base_function {
     fx_t fx;
 
     template<typename... FxArgs>
-    userdata_function_core(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
+    usertype_function_core(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
 
     template<typename Return, typename Raw = Unqualified<Return>>
     typename std::enable_if<std::is_same<T, Raw>::value, void>::type push(lua_State* L, Return&& r) {
@@ -432,15 +432,15 @@ struct userdata_function_core : public base_function {
 };
 
 template<typename Function, typename Tp>
-struct userdata_function : public userdata_function_core<Function, Tp> {
-    typedef userdata_function_core<Function, Tp> base_t;
+struct usertype_function : public usertype_function_core<Function, Tp> {
+    typedef usertype_function_core<Function, Tp> base_t;
     typedef typename std::remove_pointer<Tp>::type T;
     typedef typename base_t::traits_type traits_type;
     typedef typename base_t::args_type args_type;
     typedef typename base_t::return_type return_type;
 
     template<typename... FxArgs>
-    userdata_function(FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...) {}
+    usertype_function(FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...) {}
 
     template<typename Tx>
     int fx_call(lua_State* L) {
@@ -461,15 +461,15 @@ struct userdata_function : public userdata_function_core<Function, Tp> {
 };
 
 template<typename Function, typename Tp>
-struct userdata_variable_function : public userdata_function_core<Function, Tp> {
-    typedef userdata_function_core<Function, Tp> base_t;
+struct usertype_variable_function : public usertype_function_core<Function, Tp> {
+    typedef usertype_function_core<Function, Tp> base_t;
     typedef typename std::remove_pointer<Tp>::type T;
     typedef typename base_t::traits_type traits_type;
     typedef typename base_t::args_type args_type;
     typedef typename base_t::return_type return_type;
 
     template<typename... FxArgs>
-    userdata_variable_function(FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...) {}
+    usertype_variable_function(FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...) {}
 
     template<typename Tx>
     int fx_call(lua_State* L) {
@@ -500,8 +500,8 @@ struct userdata_variable_function : public userdata_function_core<Function, Tp> 
 };
 
 template<typename Function, typename Tp>
-struct userdata_indexing_function : public userdata_function_core<Function, Tp> {
-    typedef userdata_function_core<Function, Tp> base_t;
+struct usertype_indexing_function : public usertype_function_core<Function, Tp> {
+    typedef usertype_function_core<Function, Tp> base_t;
     typedef typename std::remove_pointer<Tp>::type T;
     typedef typename base_t::traits_type traits_type;
     typedef typename base_t::args_type args_type;
@@ -511,7 +511,7 @@ struct userdata_indexing_function : public userdata_function_core<Function, Tp> 
     std::unordered_map<std::string, std::pair<std::unique_ptr<base_function>, bool>> functions;
 
     template<typename... FxArgs>
-    userdata_indexing_function(std::string name, FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...), name(std::move(name)) {}
+    usertype_indexing_function(std::string name, FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...), name(std::move(name)) {}
 
     template<typename Tx>
     int fx_call(lua_State* L) {
@@ -521,10 +521,10 @@ struct userdata_indexing_function : public userdata_function_core<Function, Tp> 
             if(function->second.second) {
                 stack::push<upvalue_t>(L, function->second.first.get());
                 if(std::is_same<T*, Tx>::value) {
-                    stack::push(L, &base_function::userdata<0>::ref_call, 1);
+                    stack::push(L, &base_function::usertype<0>::ref_call, 1);
                 }
                 else {
-                    stack::push(L, &base_function::userdata<0>::call, 1);
+                    stack::push(L, &base_function::usertype<0>::call, 1);
                 }
                 return 1;
             }

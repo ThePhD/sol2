@@ -26,7 +26,7 @@
 #include "tuple.hpp"
 #include "stack.hpp"
 #include "function_types.hpp"
-#include "userdata_traits.hpp"
+#include "usertype_traits.hpp"
 #include "resolve.hpp"
 #include <cstdint>
 #include <functional>
@@ -191,7 +191,7 @@ struct pusher<function_sig_t<Sigs...>> {
 
     template<typename Fx>
     static void set_fx(lua_State* L, std::unique_ptr<base_function> luafunc) {
-        auto&& metakey = userdata_traits<Unqualified<Fx>>::metatable;
+        auto&& metakey = usertype_traits<Unqualified<Fx>>::metatable;
         const char* metatablename = std::addressof(metakey[0]);
         base_function* target = luafunc.release();
         void* userdata = reinterpret_cast<void*>(target);

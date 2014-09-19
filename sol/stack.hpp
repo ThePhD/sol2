@@ -26,7 +26,7 @@
 #include "reference.hpp"
 #include "tuple.hpp"
 #include "traits.hpp"
-#include "userdata_traits.hpp"
+#include "usertype_traits.hpp"
 #include <utility>
 #include <array>
 #include <cstring>
@@ -259,19 +259,19 @@ struct pusher {
 
     template<typename U = Unqualified<T>, EnableIf<Not<has_begin_end<U>>, Not<std::is_base_of<reference, U>>, Not<std::is_integral<U>>, Not<std::is_floating_point<U>>> = 0>
     static void push(lua_State* L, T& t) {
-        detail::push_userdata<U>(L, userdata_traits<T>::metatable, t);
+        detail::push_userdata<U>(L, usertype_traits<T>::metatable, t);
     }
 
     template<typename U = Unqualified<T>, EnableIf<Not<has_begin_end<U>>, Not<std::is_base_of<reference, U>>, Not<std::is_integral<U>>, Not<std::is_floating_point<U>>> = 0>
     static void push(lua_State* L, T&& t) {
-        detail::push_userdata<U>(L, userdata_traits<T>::metatable, std::move(t));
+        detail::push_userdata<U>(L, usertype_traits<T>::metatable, std::move(t));
     }
 };
 
 template<typename T>
 struct pusher<T*> {
     static void push(lua_State* L, T* obj) {
-        detail::push_userdata<T*>(L, userdata_traits<T*>::metatable, obj);
+        detail::push_userdata<T*>(L, usertype_traits<T*>::metatable, obj);
     }
 };
 
