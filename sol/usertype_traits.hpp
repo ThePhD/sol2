@@ -19,29 +19,29 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_USERDATA_TRAITS_HPP
-#define SOL_USERDATA_TRAITS_HPP
+#ifndef SOL_USERTYPE_TRAITS_HPP
+#define SOL_USERTYPE_TRAITS_HPP
 
 #include "demangle.hpp"
 
 namespace sol {
 
 template<typename T>
-struct userdata_traits {
+struct usertype_traits {
     static const std::string name;
     static const std::string metatable;
     static const std::string gctable;
 };
 
 template<typename T>
-const std::string userdata_traits<T>::name = detail::demangle(typeid(T));
+const std::string usertype_traits<T>::name = detail::demangle(typeid(T));
 
 template<typename T>
-const std::string userdata_traits<T>::metatable = std::string("sol.").append(detail::demangle(typeid(T)));
+const std::string usertype_traits<T>::metatable = std::string("sol.").append(detail::demangle(typeid(T)));
 
 template<typename T>
-const std::string userdata_traits<T>::gctable = std::string("sol.").append(detail::demangle(typeid(T))).append(".\xE2\x99\xBB");
+const std::string usertype_traits<T>::gctable = std::string("sol.").append(detail::demangle(typeid(T))).append(".\xE2\x99\xBB");
 
 }
 
-#endif // SOL_USERDATA_TRAITS_HPP
+#endif // SOL_USERTYPE_TRAITS_HPP

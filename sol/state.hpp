@@ -148,26 +148,26 @@ public:
     }
 
     template<typename T>
-    state& set_userdata(userdata<T>& user) {
-        return set_userdata(user.name(), user);
+    state& set_usertype(usertype<T>& user) {
+        return set_usertype(usertype_traits<T>::name, user);
     }
 
     template<typename Key, typename T>
-    state& set_userdata(Key&& key, userdata<T>& user) {
-        global.set_userdata(std::forward<Key>(key), user);
+    state& set_usertype(Key&& key, usertype<T>& user) {
+        global.set_usertype(std::forward<Key>(key), user);
         return *this;
     }
 
     template<typename Class, typename... CTor, typename... Args>
-    state& new_userdata(const std::string& name, Args&&... args) {
+    state& new_usertype(const std::string& name, Args&&... args) {
         constructors<types<CTor...>> ctor{};
-        return new_userdata<Class>(name, ctor, std::forward<Args>(args)...);
+        return new_usertype<Class>(name, ctor, std::forward<Args>(args)...);
     }
 
     template<typename Class, typename... CArgs, typename... Args>
-    state& new_userdata(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
-        userdata<Class> udata(name, ctor, std::forward<Args>(args)...);
-        global.set_userdata(udata);
+    state& new_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
+        usertype<Class> utype(ctor, std::forward<Args>(args)...);
+        set_usertype(name, utype);
         return *this;
     }
 
