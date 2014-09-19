@@ -26,6 +26,7 @@
 #include "function_types.hpp"
 #include "usertype_traits.hpp"
 #include "default_construct.hpp"
+#include "deprecate.hpp"
 #include <vector>
 #include <array>
 #include <algorithm>
@@ -315,6 +316,18 @@ public:
     template<typename... Args>
     usertype(Args&&... args): usertype(default_constructor, std::forward<Args>(args)...) {}
 
+    template<typename... Args>
+    SOL_DEPRECATED usertype(std::string, Args&&... args): usertype(default_constructor, std::forward<Args>(args)...) {}
+
+    template<typename... Args>
+    SOL_DEPRECATED usertype(const char*, Args&&... args): usertype(default_constructor, std::forward<Args>(args)...) {}
+
+    template<typename... Args, typename... CArgs>
+    SOL_DEPRECATED usertype(std::string, constructors<CArgs...> c, Args&&... args) : usertype(std::move(c), std::forward<Args>(args)...) {}
+
+    template<typename... Args, typename... CArgs>
+    SOL_DEPRECATED usertype(const char*, constructors<CArgs...> c, Args&&... args) : usertype(std::move(c), std::forward<Args>(args)...) {}
+
     template<typename... Args, typename... CArgs>
     usertype(constructors<CArgs...>, Args&&... args) {
         functionnames.reserve(sizeof...(args) + 2);
@@ -391,6 +404,9 @@ private:
         return n;
     }
 };
+
+template <typename T>
+using userdata = typename detail::deprecate_type<usertype<T>>::type;
 
 namespace stack {
 template<typename T>

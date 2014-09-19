@@ -148,6 +148,26 @@ public:
     }
 
     template<typename T>
+    SOL_DEPRECATED table& set_userdata(usertype<T>& user) {
+        return set_usertype(user);
+    }
+
+    template<typename Key, typename T>
+    SOL_DEPRECATED table& set_userdata(Key&& key, usertype<T>& user) {
+        return set_usertype(std::forward<Key>(key), user);
+    }
+
+    template<typename Class, typename... CTor, typename... Args>
+    SOL_DEPRECATED state& new_userdata(const std::string& name, Args&&... args) {
+        return new_usertype<Class>(name, std::forward<Args>(args)...);
+    }
+
+    template<typename Class, typename... CArgs, typename... Args>
+    SOL_DEPRECATED state& new_userdata(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
+        return new_usertype(name, std::move(ctor), std::forward<Args>(args)...);
+    }
+
+    template<typename T>
     state& set_usertype(usertype<T>& user) {
         return set_usertype(usertype_traits<T>::name, user);
     }

@@ -84,8 +84,18 @@ public:
     }
 
     template<typename T>
+    SOL_DEPRECATED table& set_userdata(usertype<T>& user) {
+        return set_usertype(user);
+    }
+
+    template<typename Key, typename T>
+    SOL_DEPRECATED table& set_userdata(Key&& key, usertype<T>& user) {
+        return set_usertype(std::forward<Key>(key), user);
+    }
+
+    template<typename T>
     table& set_usertype(usertype<T>& user) {
-        return set_userdata(usertype_traits<T>::name, user);
+        return set_usertype(usertype_traits<T>::name, user);
     }
 
     template<typename Key, typename T>
