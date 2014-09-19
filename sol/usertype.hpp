@@ -317,10 +317,10 @@ public:
     usertype(Args&&... args): usertype(default_constructor, std::forward<Args>(args)...) {}
 
     template<typename... Args>
-    SOL_DEPRECATED usertype(std::string, Args&&... args): usertype(default_constructor, std::forward<Args>(args)...) {}
+    SOL_DEPRECATED usertype(std::string, std::string, Args&&... args): usertype(default_constructor, std::forward<Args>(args)...) {}
 
     template<typename... Args>
-    SOL_DEPRECATED usertype(const char*, Args&&... args): usertype(default_constructor, std::forward<Args>(args)...) {}
+    SOL_DEPRECATED usertype(const char*, std::string, Args&&... args): usertype(default_constructor, std::forward<Args>(args)...) {}
 
     template<typename... Args, typename... CArgs>
     SOL_DEPRECATED usertype(std::string, constructors<CArgs...> c, Args&&... args) : usertype(std::move(c), std::forward<Args>(args)...) {}
