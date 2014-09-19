@@ -90,7 +90,7 @@ inline std::string type_name(lua_State*L, type t) {
 }
 
 template<typename T>
-class userdata;
+class usertype;
 class table;
 class function;
 class object;
