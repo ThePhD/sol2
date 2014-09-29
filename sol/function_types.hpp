@@ -247,7 +247,7 @@ struct base_function {
         return base_gc(L, *pudata);
     }
 
-    template<std::size_t I>
+    template<int I>
     struct userdata {
         static int call(lua_State* L) {
             // Zero-based template parameter, but upvalues start at 1
@@ -259,7 +259,7 @@ struct base_function {
         }
 
         static int gc(lua_State* L) {
-            for(std::size_t i = 0; i < I; ++i) {
+            for(int i = 0; i < I; ++i) {
                 upvalue_t up = stack::get<upvalue_t>(L, i + 1);
                 base_function* obj = static_cast<base_function*>(up.value);
                 std::allocator<base_function> alloc{};
