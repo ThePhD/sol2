@@ -92,12 +92,12 @@ template<typename T, typename>
 struct getter {
     template<typename U = T, EnableIf<std::is_floating_point<U>> = 0>
     static U get(lua_State* L, int index = -1) {
-        return lua_tonumber(L, index);
+        return static_cast<U>(lua_tonumber(L, index));
     }
 
     template<typename U = T, EnableIf<std::is_integral<U>, std::is_signed<U>> = 0>
     static U get(lua_State* L, int index = -1) {
-        return lua_tounsigned(L, index);
+        return static_cast<U>(lua_tounsigned(L, index));
     }
 
     template<typename U = T, EnableIf<std::is_integral<U>, std::is_unsigned<U>> = 0>
@@ -162,7 +162,7 @@ struct getter<std::string> {
     static std::string get(lua_State* L, int index = -1) {
         std::string::size_type len;
         auto str = lua_tolstring(L, index, &len);
-        return{ str, len };
+        return { str, len };
     }
 };
 
