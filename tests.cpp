@@ -568,12 +568,12 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
     REQUIRE_NOTHROW(assert1(lua.global_table()));
 }
 
-TEST_CASE("tables/userdata", "Show that we can create classes from userdata and use them") {
+TEST_CASE("tables/usertype", "Show that we can create classes from usertype and use them") {
 
     sol::state lua;
 
-    sol::userdata<fuser> lc{ "add", &fuser::add, "add2", &fuser::add2 };
-    lua.set_userdata(lc);
+    sol::usertype<fuser> lc{ "add", &fuser::add, "add2", &fuser::add2 };
+    lua.set_usertype(lc);
 
     lua.script("a = fuser:new()\n"
                "b = a:add(1)\n"
@@ -595,13 +595,13 @@ TEST_CASE("tables/userdata", "Show that we can create classes from userdata and 
     REQUIRE(cresult == 3);
 }
 
-TEST_CASE("tables/userdata constructors", "Show that we can create classes from userdata and use them with multiple destructors") {
+TEST_CASE("tables/usertype constructors", "Show that we can create classes from usertype and use them with multiple destructors") {
 
     sol::state lua;
 
     sol::constructors<sol::types<>, sol::types<int>, sol::types<int, int>> con;
-    sol::userdata<crapola::fuser> lc("crapola_fuser", con, "add", &crapola::fuser::add, "add2", &crapola::fuser::add2);
-    lua.set_userdata(lc);
+    sol::usertype<crapola::fuser> lc(con, "add", &crapola::fuser::add, "add2", &crapola::fuser::add2);
+    lua.set_usertype(lc);
 
     lua.script(
         "a = crapola_fuser.new(2)\n"
@@ -638,10 +638,10 @@ TEST_CASE("tables/userdata constructors", "Show that we can create classes from 
     REQUIRE((z.as<int>() == 9));
 }
 
-TEST_CASE("tables/userdata utility", "Show internal management of classes registered through new_userdata") {
+TEST_CASE("tables/usertype utility", "Show internal management of classes registered through new_usertype") {
     sol::state lua;
 
-    lua.new_userdata<fuser>("fuser", "add", &fuser::add, "add2", &fuser::add2);
+    lua.new_usertype<fuser>("fuser", "add", &fuser::add, "add2", &fuser::add2);
 
     lua.script("a = fuser.new()\n"
         "b = a:add(1)\n"
@@ -663,21 +663,21 @@ TEST_CASE("tables/userdata utility", "Show internal management of classes regist
     REQUIRE(cresult == 3);
 }
 
-TEST_CASE("tables/userdata utility derived", "userdata classes must play nice when a derived class does not overload a publically visible base function") {
+TEST_CASE("tables/usertype utility derived", "usertype classes must play nice when a derived class does not overload a publically visible base function") {
     sol::state lua;
     lua.open_libraries(sol::lib::base);
     sol::constructors<sol::types<int>> basector;
-    sol::userdata<Base> baseuserdata("Base", basector, "get_num", &Base::get_num);
+    sol::usertype<Base> baseusertype(basector, "get_num", &Base::get_num);
 
-    lua.set_userdata(baseuserdata);
+    lua.set_usertype(baseusertype);
 
     lua.script("base = Base.new(5)");
     lua.script("print(base:get_num())");
 
     sol::constructors<sol::types<int>> derivedctor;
-    sol::userdata<Derived> deriveduserdata("Derived", derivedctor, "get_num", &Derived::get_num, "get_num_10", &Derived::get_num_10);
+    sol::usertype<Derived> derivedusertype(derivedctor, "get_num", &Derived::get_num, "get_num_10", &Derived::get_num_10);
 
-    lua.set_userdata(deriveduserdata);
+    lua.set_usertype(derivedusertype);
 
     lua.script("derived = Derived.new(7)");
     lua.script("dgn10 = derived:get_num_10()\nprint(dgn10)");
@@ -687,11 +687,11 @@ TEST_CASE("tables/userdata utility derived", "userdata classes must play nice wh
     REQUIRE((lua.get<int>("dgn") == 7));
 }
 
-TEST_CASE("tables/self-referential userdata", "userdata classes must play nice when C++ object types are requested for C++ code") {
+TEST_CASE("tables/self-referential usertype", "usertype classes must play nice when C++ object types are requested for C++ code") {
     sol::state lua;
     lua.open_libraries(sol::lib::base);
 
-    lua.new_userdata<self_test>("test", "g", &self_test::g, "f", &self_test::f);
+    lua.new_usertype<self_test>("test", "g", &self_test::g, "f", &self_test::f);
 
     lua.script(
         "local a = test.new()\n"
@@ -757,7 +757,7 @@ TEST_CASE("tables/issue-number-twenty-five", "Using pointers and references from
 
     sol::state lua;
     lua.open_libraries(sol::lib::base);
-    lua.new_userdata<test>("test", "set", &test::set, "get", &test::get, "pointer_get", &test::pget, "fun", &test::fun, "create_get", &test::create_get);
+    lua.new_usertype<test>("test", "set", &test::set, "get", &test::get, "pointer_get", &test::pget, "fun", &test::fun, "create_get", &test::create_get);
     REQUIRE_NOTHROW(lua.script("x = test.new()\n"
                                "x:set():get()"));
     REQUIRE_NOTHROW(lua.script("y = x:pointer_get()"));
@@ -770,7 +770,7 @@ TEST_CASE("tables/issue-number-twenty-five", "Using pointers and references from
     REQUIRE_NOTHROW(lua.script("assert(y:set():get() == 10, '...')"));
 }
 
-TEST_CASE("userdata/issue-number-thirty-five", "using value types created from lua-called C++ code, fixing user-defined types with constructors") {
+TEST_CASE("usertype/issue-number-thirty-five", "using value types created from lua-called C++ code, fixing user-defined types with constructors") {
     struct Line {
         Vec p1, p2;
         Line() : p1{0, 0, 0}, p2{0, 0, 0} {}
@@ -783,13 +783,13 @@ TEST_CASE("userdata/issue-number-thirty-five", "using value types created from l
     lua.open_libraries(sol::lib::base);
 
     sol::constructors<sol::types<>, sol::types<Vec>, sol::types<Vec, Vec>> lctor;
-    sol::userdata<Line> ludata("Line", lctor);
-    lua.set_userdata(ludata);
+    sol::usertype<Line> ludata(lctor);
+    lua.set_usertype("Line", ludata);
 
     sol::constructors<sol::types<float, float, float>> ctor;
-    sol::userdata<Vec> udata("Vec", ctor, "normalized", &Vec::normalized, "length", &Vec::length);
+    sol::usertype<Vec> udata(ctor, "normalized", &Vec::normalized, "length", &Vec::length);
 
-    lua.set_userdata(udata);
+    lua.set_usertype(udata);
 
     REQUIRE_NOTHROW(lua.script("v = Vec.new(1, 2, 3)\n"
                "print(v:length())"));
@@ -797,18 +797,18 @@ TEST_CASE("userdata/issue-number-thirty-five", "using value types created from l
                "print(v:normalized():length())" ));
 }
 
-TEST_CASE("userdata/lua-stored-userdata", "ensure userdata values can be stored without keeping userdata object alive") {
+TEST_CASE("usertype/lua-stored-usertype", "ensure usertype values can be stored without keeping usertype object alive") {
     sol::state lua;
     lua.open_libraries(sol::lib::base);
 
     {
         sol::constructors<sol::types<float, float, float>> ctor;
-        sol::userdata<Vec> udata("Vec", ctor,
+        sol::usertype<Vec> udata(ctor,
           "normalized", &Vec::normalized,
           "length",     &Vec::length);
 
-        lua.set_userdata(udata);
-        // userdata dies, but still usable in lua!
+        lua.set_usertype(udata);
+        // usertype dies, but still usable in lua!
     }
 
     REQUIRE_NOTHROW(lua.script("collectgarbage()\n"
@@ -819,17 +819,17 @@ TEST_CASE("userdata/lua-stored-userdata", "ensure userdata values can be stored 
                 "print(v:normalized():length())" ));
 }
 
-TEST_CASE("userdata/member-variables", "allow table-like accessors to behave as member variables for userdata") {
+TEST_CASE("usertype/member-variables", "allow table-like accessors to behave as member variables for usertype") {
     sol::state lua;
     lua.open_libraries(sol::lib::base);
     sol::constructors<sol::types<float, float, float>> ctor;
-    sol::userdata<Vec> udata("Vec", ctor,
+    sol::usertype<Vec> udata(ctor,
                              "x", &Vec::x,
                              "y", &Vec::y,
                              "z", &Vec::z,
                              "normalized", &Vec::normalized,
                              "length",     &Vec::length);
-    lua.set_userdata(udata);
+    lua.set_usertype(udata);
 
     REQUIRE_NOTHROW(lua.script("v = Vec.new(1, 2, 3)\n"
                "v2 = Vec.new(0, 1, 0)\n"
@@ -847,16 +847,16 @@ TEST_CASE("userdata/member-variables", "allow table-like accessors to behave as 
                ));
 }
 
-TEST_CASE("userdata/nonmember functions implement functionality", "let users set non-member functions that take unqualified T as first parameter to userdata") {
+TEST_CASE("usertype/nonmember functions implement functionality", "let users set non-member functions that take unqualified T as first parameter to usertype") {
     sol::state lua;
     lua.open_libraries( sol::lib::base );
 
-    lua.new_userdata<giver>( "giver",
-                            "gief_stuff", giver::gief_stuff,
-                            "gief", &giver::gief,
-                            "__tostring", [](const giver& t) {
-                                                return std::to_string(t.a) + ": giving value";
-                                            }
+    lua.new_usertype<giver>( "giver",
+                "gief_stuff", giver::gief_stuff,
+                "gief", &giver::gief,
+                "__tostring", [](const giver& t) {
+                                    return std::to_string(t.a) + ": giving value";
+                                }
     ).get<sol::table>( "giver" )
     .set_function( "stuff", giver::stuff );
 
@@ -870,7 +870,8 @@ TEST_CASE("userdata/nonmember functions implement functionality", "let users set
 
 TEST_CASE("regressions/one", "issue number 48") {
     sol::state lua;
-    lua.new_userdata<vars>("vars", "boop", &vars::boop);
+    lua.new_usertype<vars>("vars",
+                           "boop", &vars::boop);
     REQUIRE_NOTHROW(lua.script("beep = vars.new()\n"
                                "beep.boop = 1"));
     // test for segfault
@@ -883,7 +884,7 @@ TEST_CASE("regressions/one", "issue number 48") {
 TEST_CASE("references/get-set", "properly get and set with std::ref semantics. Note that to get, we must not use Unqualified<T> on the type...") {
     sol::state lua;
 
-    lua.new_userdata<vars>("vars",
+    lua.new_usertype<vars>("vars",
                            "boop", &vars::boop);
 
     vars var{};
