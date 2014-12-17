@@ -259,7 +259,7 @@ struct base_function {
         }
 
         template <std::size_t limit>
-        static void func_gc (std::true_type, lua_State* L) {
+        static void func_gc (std::true_type, lua_State*) {
 
         }
 
