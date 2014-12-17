@@ -29,7 +29,8 @@
 namespace sol {
 namespace detail {
 inline int atpanic(lua_State* L) {
-    std::string err = lua_tostring(L, -1);
+    const char* message = lua_tostring(L, -1);
+    std::string err = message ? message : "An unexpected error occured and forced the lua state to call atpanic";
     throw error(err);
 }
 } // detail
