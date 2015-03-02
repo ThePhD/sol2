@@ -104,7 +104,7 @@ private:
         template<typename... Args>
         static void do_constructor(lua_State* L, T* obj, call_syntax syntax, int, types<Args...>) {
             default_construct fx{};
-            stack::get_call(L, 1 + static_cast<int>(syntax), fx, types<Args...>(), obj);
+            stack::call(L, -1 + static_cast<int>(syntax), types<void>(), types<Args...>(), fx, obj);
         }
 
         static void match_constructor(lua_State*, T*, call_syntax, int) {
@@ -143,7 +143,7 @@ private:
 
     struct destructor {
         static int destruct(lua_State* L) {
-            userdata_t udata = stack::get<userdata_t>(L, 1);
+            userdata udata = stack::get<userdata>(L, 1);
             T* obj = static_cast<T*>(udata.value);
             std::allocator<T> alloc{};
             alloc.destroy(obj);
@@ -352,7 +352,7 @@ public:
         ptrmetafunctiontable.push_back({ nullptr, nullptr });
     }
 
-    void push(lua_State* L) {
+    int push(lua_State* L) {
         // push pointer tables first,
         // but leave the regular T table on last
         // so it can be linked to a type for usage with `.new(...)` or `:new(...)`
@@ -363,6 +363,7 @@ public:
         push_metatable(L, usertype_traits<T>::metatable,
                        metafunctions, metafunctiontable);
         set_global_deleter(L);
+        return 1;
     }
 
 private:
@@ -394,10 +395,10 @@ private:
         int n = 0;
         for(auto& c : cont) {
             if(release) {
-               stack::push<upvalue_t>(L, c.release());
+               stack::push<upvalue>(L, c.release());
             }
             else {
-                stack::push<upvalue_t>(L, c.get());
+                stack::push<upvalue>(L, c.get());
             }
             ++n;
         }
@@ -405,14 +406,11 @@ private:
     }
 };
 
-template <typename T>
-using userdata = typename detail::deprecate_type<usertype<T>>::type;
-
 namespace stack {
 template<typename T>
 struct pusher<usertype<T>> {
-    static void push(lua_State* L, usertype<T>& user) {
-        user.push(L);
+    static int push(lua_State* L, usertype<T>& user) {
+        return user.push(L);
     }
 };
 } // stack

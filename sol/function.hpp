@@ -39,24 +39,31 @@ private:
         lua_call(state(), static_cast<uint32_t>(argcount), static_cast<uint32_t>(resultcount));
     }
 
-    template<typename... Ret>
-    std::tuple<Ret...> invoke(types<Ret...>, std::size_t n) const {
+    template<std::size_t... I, typename... Ret>
+    std::tuple<Ret...> invoke(indices<I...>, types<Ret...>, std::size_t n) const {
         luacall(n, sizeof...(Ret));
-        return stack::pop_reverse_call(state(), std::make_tuple<Ret...>, types<Ret...>());
+        const int nreturns = static_cast<int>(sizeof...(Ret));
+        const int stacksize = lua_gettop(state());
+        const int firstreturn = std::max(0, stacksize - nreturns) + 1;
+        auto r = std::make_tuple(stack::get<Ret>(state(), firstreturn + I)...);
+        lua_pop(state(), nreturns);
+        return r;
     }
 
-    template<typename Ret>
-    Ret invoke(types<Ret>, std::size_t n) const {
+    template<std::size_t I, typename Ret>
+    Ret invoke(indices<I>, types<Ret>, std::size_t n) const {
         luacall(n, 1);
         return stack::pop<Ret>(state());
     }
 
-    void invoke(types<void>, std::size_t n) const {
+    template <std::size_t I>
+    void invoke(indices<I>, types<void>, std::size_t n) const {
         luacall(n, 0);
     }
 
-    void invoke(types<>, std::size_t n) const {
-        luacall(n, 0);
+    void invoke(indices<>, types<>, std::size_t n) const {
+        auto tr = types<void>();
+        invoke(tr, tr, n);
     }
 
 public:
@@ -80,8 +87,9 @@ public:
     template<typename... Ret, typename... Args>
     typename return_type<Ret...>::type call(Args&&... args) const {
         push();
-        stack::push_args(state(), std::forward<Args>(args)...);
-        return invoke(types<Ret...>(), sizeof...(Args));
+        int pushcount = stack::push_args(state(), std::forward<Args>(args)...);
+        auto tr = types<Ret...>();
+        return invoke(tr, tr, pushcount);
     }
 };
 
@@ -175,8 +183,8 @@ struct pusher<function_sig_t<Sigs...>> {
         lua_CFunction freefunc = &static_member_function<Decay<decltype(*userptr)>, Fx>::call;
 
         int upvalues = stack::detail::push_as_upvalues(L, memfxptr);
-        stack::push(L, userobjdata);
-        ++upvalues;
+        upvalues += stack::push(L, userobjdata);
+        
         stack::push(L, freefunc, upvalues);
     }
 
@@ -209,15 +217,17 @@ struct pusher<function_sig_t<Sigs...>> {
     }
 
     template<typename... Args>
-    static void push(lua_State* L, Args&&... args) {
+    static int push(lua_State* L, Args&&... args) {
+        // Set will always place one thing (function) on the stack
         set(L, std::forward<Args>(args)...);
+        return 1;
     }
 };
 
 template<typename Signature>
 struct pusher<std::function<Signature>> {
-    static void push(lua_State* L, std::function<Signature> fx) {
-        pusher<function_t>{}.push(L, std::move(fx));
+    static int push(lua_State* L, std::function<Signature> fx) {
+        return pusher<function_t>{}.push(L, std::move(fx));
     }
 };
 

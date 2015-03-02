@@ -79,7 +79,7 @@ public:
         return *this;
     }
 
-    type get_type() {
+    type get_type() const {
         push();
         int result = lua_type(L, -1);
         lua_pop(L, 1);

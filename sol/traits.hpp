@@ -123,6 +123,7 @@ struct return_type<> : types<>{
 };
 
 namespace detail {
+
 template<typename T, bool isclass = std::is_class<Unqualified<T>>::value>
 struct is_function_impl : std::is_function<typename std::remove_pointer<T>::type> {};
 
@@ -146,10 +147,11 @@ struct is_function_impl<T, true> {
 
 template<class F>
 struct check_deducible_signature {
+    struct nat {};
     template<class G>
     static auto test(int) -> decltype(&G::operator(), void());
     template<class>
-    static auto test(...) -> struct nat;
+    static auto test(...) -> nat;
 
     using type = std::is_void<decltype(test<F>(0))>;
 };
@@ -312,6 +314,7 @@ template<typename Arg>
 Unwrap<Arg> unwrapper(std::reference_wrapper<Arg> arg) {
     return arg.get();
 }
+
 } // sol
 
 #endif // SOL_TRAITS_HPP

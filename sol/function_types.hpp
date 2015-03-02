@@ -46,6 +46,10 @@ struct functor {
     template<typename... FxArgs>
     functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
 
+    bool check () const {
+         return invocation != nullptr;
+    }
+
     template<typename... Args>
     void call(types<void>, Args&&... args) {
         T& member = *item;
@@ -59,7 +63,7 @@ struct functor {
     }
 
     template<typename... Args>
-    auto operator()(Args&&... args) -> decltype(this->call(types<return_type>{}, std::forward<Args>(args)...)) {
+    auto operator()(Args&&... args) -> decltype(std::declval<functor>().call(types<return_type>{}, std::forward<Args>(args)...)) {
         return this->call(types<return_type>{}, std::forward<Args>(args)...);
     }
 };
@@ -75,15 +79,24 @@ struct functor<T, Func, typename std::enable_if<std::is_member_object_pointer<Fu
     template<typename... FxArgs>
     functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
 
+    bool check () const {
+         return this->fx.invocation != nullptr;
+    }
+
     template<typename Arg>
-    void operator()(Arg&& arg) {
+    void call(types<return_type>, Arg&& arg) {
         T& member = *item;
         (member.*invocation) = std::forward<Arg>(arg);
     }
 
-    return_type operator()() {
-        T& member = *item;
-        return (member.*invocation);
+    return_type call(types<return_type>) {
+         T& member = *item;
+         return (member.*invocation);
+    }
+
+    template<typename... Args>
+    auto operator()(Args&&... args) -> decltype(std::declval<functor>().call(types<return_type>{}, std::forward<Args>(args)...)) {
+        return this->call(types<return_type>{}, std::forward<Args>(args)...);
     }
 };
 
@@ -96,8 +109,23 @@ struct functor<T, Func, typename std::enable_if<std::is_function<Func>::value ||
     T* item;
     function_type invocation;
 
+private:
+    bool check(std::false_type) const {
+        return true;
+    }
+
+    bool check(std::true_type) const {
+        return this->invocation != nullptr;
+    }
+
+public:
+
     template<typename... FxArgs>
     functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
+
+    bool check () const {
+         return this->check(std::is_function<Func>());
+    }
 
     template<typename... Args>
     void call(types<void>, Args&&... args) {
@@ -112,7 +140,7 @@ struct functor<T, Func, typename std::enable_if<std::is_function<Func>::value ||
     }
 
     template<typename... Args>
-    auto operator()(Args&&... args) -> decltype(this->call(types<return_type>{}, std::forward<Args>(args)...)) {
+    auto operator()(Args&&... args) -> decltype(std::declval<functor>().call(types<return_type>{}, std::forward<Args>(args)...)) {
         return this->call(types<return_type>{}, std::forward<Args>(args)...);
     }
 };
@@ -125,8 +153,8 @@ struct static_function {
     typedef function_traits<function_type> traits_type;
 
     template<typename... Args>
-    static int typed_call(types<void>, types<Args...> t, function_type* fx, lua_State* L) {
-        stack::get_call(L, fx, t);
+    static int typed_call(types<void> tr, types<Args...> ta, function_type* fx, lua_State* L) {
+        stack::call(L, 0, tr, ta, fx);
         std::ptrdiff_t nargs = sizeof...(Args);
         lua_pop(L, nargs);
         return 0;
@@ -138,13 +166,12 @@ struct static_function {
     }
 
     template<typename... Ret, typename... Args>
-    static int typed_call(types<Ret...>, types<Args...> t, function_type* fx, lua_State* L) {
+    static int typed_call(types<Ret...>, types<Args...> ta, function_type* fx, lua_State* L) {
         typedef typename return_type<Ret...>::type return_type;
-        return_type r = stack::get_call(L, fx, t);
-        std::ptrdiff_t nargs = sizeof...(Args);
+        return_type r = stack::call(L, 0, types<return_type>(), ta, fx);
+        int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
-        stack::push(L, detail::return_forward<return_type>{}(r));
-        return sizeof...(Ret);
+        return stack::push(L, detail::return_forward<return_type>{}(r));
     }
 
     static int call(lua_State* L) {
@@ -165,10 +192,10 @@ struct static_member_function {
     typedef function_traits<function_type> traits_type;
 
     template<typename... Args>
-    static int typed_call(types<void>, types<Args...>, T& item, function_type& ifx, lua_State* L) {
+    static int typed_call(types<void> tr, types<Args...> ta, T& item, function_type& ifx, lua_State* L) {
         auto fx = [&item, &ifx](Args&&... args) -> void { (item.*ifx)(std::forward<Args>(args)...); };
-        stack::get_call(L, fx, types<Args...>());
-        std::ptrdiff_t nargs = sizeof...(Args);
+        stack::call(L, 0, tr, ta, fx);
+        int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         return 0;
     }
@@ -179,14 +206,13 @@ struct static_member_function {
     }
 
     template<typename... Ret, typename... Args>
-    static int typed_call(types<Ret...>, types<Args...>, T& item, function_type& ifx, lua_State* L) {
+    static int typed_call(types<Ret...> tr, types<Args...> ta, T& item, function_type& ifx, lua_State* L) {
         typedef typename return_type<Ret...>::type return_type;
         auto fx = [&item, &ifx](Args&&... args) -> return_type { return (item.*ifx)(std::forward<Args>(args)...); };
-        return_type r = stack::get_call(L, fx, types<Args...>());
-        std::ptrdiff_t nargs = sizeof...(Args);
+        return_type r = stack::call(L, 0, tr, ta, fx);
+        int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
-        stack::push(L, detail::return_forward<return_type>{}(r));
-        return sizeof...(Ret);
+        return stack::push(L, detail::return_forward<return_type>{}(r));
     }
 
     static int call(lua_State* L) {
@@ -238,12 +264,12 @@ struct base_function {
     }
 
     static int call(lua_State* L) {
-        void** pinheritancedata = static_cast<void**>(stack::get<upvalue_t>(L, 1).value);
+        void** pinheritancedata = static_cast<void**>(stack::get<upvalue>(L, 1).value);
         return base_call(L, *pinheritancedata);
     }
 
     static int gc(lua_State* L) {
-        void** pudata = static_cast<void**>(stack::get<userdata_t>(L, 1).value);
+        void** pudata = static_cast<void**>(stack::get<userdata>(L, 1).value);
         return base_gc(L, *pudata);
     }
 
@@ -251,11 +277,11 @@ struct base_function {
     struct usertype {
         static int call(lua_State* L) {
             // Zero-based template parameter, but upvalues start at 1
-            return base_call(L, stack::get<upvalue_t>(L, I + 1));
+            return base_call(L, stack::get<upvalue>(L, I + 1));
         }
 
         static int ref_call(lua_State* L) {
-            return ref_base_call(L, stack::get<upvalue_t>(L, I + 1));
+            return ref_base_call(L, stack::get<upvalue>(L, I + 1));
         }
 
         template <std::size_t limit>
@@ -267,7 +293,7 @@ struct base_function {
         static void func_gc (std::false_type, lua_State* L) {
             // Shut up clang tautological error without throwing out std::size_t
             for(std::size_t i = 0; i < limit; ++i) {
-                upvalue_t up = stack::get<upvalue_t>(L, i + 1);
+                upvalue up = stack::get<upvalue>(L, i + 1);
                 base_function* obj = static_cast<base_function*>(up.value);
                 std::allocator<base_function> alloc{};
                 alloc.destroy(obj);
@@ -303,9 +329,9 @@ struct functor_function : public base_function {
     functor_function(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
 
     template<typename... Args>
-    int operator()(types<void>, types<Args...> t, lua_State* L) {
-        stack::get_call(L, fx, t);
-        std::ptrdiff_t nargs = sizeof...(Args);
+    int operator()(types<void> r, types<Args...> t, lua_State* L) {
+        stack::call(L, 0, r, t, fx);
+        int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         return 0;
     }
@@ -316,12 +342,11 @@ struct functor_function : public base_function {
     }
 
     template<typename... Ret, typename... Args>
-    int operator()(types<Ret...>, types<Args...> t, lua_State* L) {
-        return_type r = stack::get_call(L, fx, t);
-        std::ptrdiff_t nargs = sizeof...(Args);
+    int operator()(types<Ret...> tr, types<Args...> ta, lua_State* L) {
+        return_type r = stack::call(L, 0, tr, ta, fx);
+        int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
-        stack::push(L, r);
-        return sizeof...(Ret);
+        return stack::push(L, r);
     }
 
     virtual int operator()(lua_State* L) override {
@@ -355,8 +380,8 @@ struct member_function : public base_function {
     member_function(Tm&& m, FxArgs&&... fxargs): fx(std::forward<Tm>(m), std::forward<FxArgs>(fxargs)...) {}
 
     template<typename... Args>
-    int operator()(types<void>, types<Args...> t, lua_State* L) {
-        stack::get_call(L, fx, t);
+    int operator()(types<void> tr, types<Args...> ta, lua_State* L) {
+        stack::call(L, 0, tr, ta, fx);
         return 0;
     }
 
@@ -366,12 +391,11 @@ struct member_function : public base_function {
     }
 
     template<typename... Ret, typename... Args>
-    int operator()(types<Ret...>, types<Args...> t, lua_State* L) {
-        return_type r = stack::get_call(L, fx, t);
-        std::ptrdiff_t nargs = sizeof...(Args);
+    int operator()(types<Ret...> tr, types<Args...> ta, lua_State* L) {
+        return_type r = stack::call(L, 0, tr, ta, fx);
+        int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
-        stack::push(L, std::move(r));
-        return sizeof...(Ret);
+        return stack::push(L, detail::return_forward<return_type>{}(r));
     }
 
     virtual int operator()(lua_State* L) override {
@@ -398,7 +422,7 @@ struct usertype_function_core : public base_function {
     usertype_function_core(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
 
     template<typename Return, typename Raw = Unqualified<Return>>
-    typename std::enable_if<std::is_same<T, Raw>::value, void>::type push(lua_State* L, Return&& r) {
+    typename std::enable_if<std::is_same<T, Raw>::value, int>::type push(lua_State* L, Return&& r) {
         if(detail::get_ptr(r) == fx.item) {
             // push nothing
             // note that pushing nothing with the ':'
@@ -408,37 +432,42 @@ struct usertype_function_core : public base_function {
             // and naturally lua returns that.
             // It's an "easy" way to return *this,
             // without allocating an extra userdata, apparently!
-            return;
+            return 1;
         }
-        stack::push(L, std::forward<Return>(r));
+        return stack::push(L, std::forward<Return>(r));
     }
 
     template<typename Return, typename Raw = Unqualified<Return>>
-    typename std::enable_if<!std::is_same<T, Raw>::value, void>::type push(lua_State* L, Return&& r) {
-        stack::push(L, std::forward<Return>(r));
+    typename std::enable_if<!std::is_same<T, Raw>::value, int>::type push(lua_State* L, Return&& r) {
+        return stack::push(L, std::forward<Return>(r));
     }
 
     template<typename... Args>
-    int operator()(types<void>, types<Args...> t, lua_State* L) {
-        static const std::size_t skew = static_cast<std::size_t>(std::is_member_object_pointer<function_type>::value);
-        stack::get_call(L, 2 + skew, fx, t);
-        std::ptrdiff_t nargs = sizeof...(Args);
+    int call(types<void> r, types<Args...> t, lua_State* L) {
+        //static const std::size_t skew = static_cast<std::size_t>(std::is_member_object_pointer<function_type>::value);
+        stack::call(L, 0, r, t, fx);
+        int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         return 0;
     }
 
-    template<typename... Ret, typename... Args>
-    int operator()(types<Ret...>, types<Args...> t, lua_State* L) {
-        return_type r = stack::get_call(L, 2, fx, t);
-        std::ptrdiff_t nargs = sizeof...(Args);
-        lua_pop(L, nargs);
-        push(L, detail::return_forward<return_type>{}(r));
-        return sizeof...(Ret);
+    template<typename... Args>
+    int call(types<>, types<Args...> t, lua_State* L) {
+         return this->call(types<void>(), t, L);
     }
 
-    template<typename... Args>
-    int operator()(types<>, types<Args...> t, lua_State* L) {
-        return (*this)(types<void>(), t, L);
+    template<typename... Ret, typename... Args>
+    int call(types<Ret...> tr, types<Args...> ta, lua_State* L) {
+        return_type r = stack::call(L, 0, tr, ta, fx);
+        int nargs = static_cast<int>(sizeof...(Args));
+        lua_pop(L, nargs);
+        int pushcount = push(L, detail::return_forward<return_type>{}(r));
+        return pushcount;
+    }
+
+    template<typename... Ret, typename... Args>
+    int operator()(types<Ret...> r, types<Args...> t, lua_State* L) {
+         return this->call(r, t, L);
     }
 };
 
@@ -530,7 +559,7 @@ struct usertype_indexing_function : public usertype_function_core<Function, Tp> 
         auto function = functions.find(accessor);
         if(function != functions.end()) {
             if(function->second.second) {
-                stack::push<upvalue_t>(L, function->second.first.get());
+                stack::push<upvalue>(L, function->second.first.get());
                 if(std::is_same<T*, Tx>::value) {
                     stack::push(L, &base_function::usertype<0>::ref_call, 1);
                 }
@@ -546,7 +575,7 @@ struct usertype_indexing_function : public usertype_function_core<Function, Tp> 
                 return (*function->second.first)(L);
             }
         }
-        if(this->fx.invocation == nullptr) {
+        if (!this->fx.check()) {
             throw error("invalid indexing \"" + accessor + "\" on type: " + name);
         }
         this->fx.item = detail::get_ptr(stack::get<Tx>(L, 1));

@@ -33,6 +33,23 @@ struct default_construct {
         alloc.construct(obj, std::forward<Args>(args)...);
     }
 };
+
+template <typename T>
+struct placement_construct {
+    T obj;
+
+    template <typename... Args>
+    placement_construct( Args&&... args ) : obj(std::forward<Args>(args)...) {
+
+    }
+
+    template<typename... Args>
+    void operator()(Args&&... args) const {
+        std::allocator<Unqualified<T>> alloc{};
+        alloc.construct(obj, std::forward<Args>(args)...);
+    }
+};
+
 } // sol
 
 #endif // SOL_DEFAULT_CONSTRUCTOR_HPP

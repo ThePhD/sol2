@@ -29,28 +29,31 @@
 namespace sol {
 struct nil_t {};
 const nil_t nil {};
-struct void_type {};
+inline bool operator==(nil_t, nil_t) { return true; }
+inline bool operator!=(nil_t, nil_t) { return false; }
+
+struct void_type : types<void> {}; // This is important because it allows myobject.call( Void, ... ) to work
 const void_type Void {};
 
 template<typename... T>
 struct function_sig_t {};
 using function_t = function_sig_t<>;
 
-struct upvalue_t {
+struct upvalue {
     void* value;
-    upvalue_t(void* data) : value(data) {}
+    upvalue(void* data) : value(data) {}
     operator void*() const { return value; }
 };
 
-struct lightuserdata_t {
+struct light_userdata {
     void* value;
-    lightuserdata_t(void* data) : value(data) {}
+    light_userdata(void* data) : value(data) {}
     operator void*() const { return value; }
 };
 
-struct userdata_t {
+struct userdata {
     void* value;
-    userdata_t(void* data) : value(data) {}
+    userdata(void* data) : value(data) {}
     operator void*() const { return value; }
 };
 
@@ -74,8 +77,27 @@ enum class type : int {
                     table  | boolean | function | userdata | lightuserdata
 };
 
+inline int type_panic(lua_State* L, int index, type expected, type actual) {
+    return luaL_error(L, "stack index %d, expected %s, received %s", index, lua_typename(L, static_cast<int>(expected)), lua_typename(L, static_cast<int>(actual)));
+}
+
+// Specify this function as the handler for lua::check if you know there's nothing wrong
+inline int no_panic(lua_State*, int, type, type) {
+    return 0;
+}
+
 inline void type_error(lua_State* L, int expected, int actual) {
     luaL_error(L, "expected %s, received %s", lua_typename(L, expected), lua_typename(L, actual));
+}
+
+inline void type_error(lua_State* L, type expected, type actual) {
+    type_error(L, static_cast<int>(expected), static_cast<int>(actual));
+}
+
+inline void type_assert(lua_State* L, int index, type expected, type actual) {
+	if (expected != type::poly && expected != actual) {
+		type_panic(L, index, expected, actual);
+	}
 }
 
 inline void type_assert(lua_State* L, int index, type expected) {
@@ -95,70 +117,82 @@ class table;
 class function;
 class object;
 
-namespace detail {
-template<typename T>
-inline type arithmetic(std::true_type) {
-    return type::number;
-}
+template <typename T, typename = void>
+struct lua_type_of : std::integral_constant<type, type::userdata> {
 
-template<typename T>
-inline type arithmetic(std::false_type) {
-    return type::userdata;
-}
-} // detail
+};
+
+template <>
+struct lua_type_of<std::string> : std::integral_constant<type, type::string> {
+
+};
+
+template <std::size_t N>
+struct lua_type_of<char[N]> : std::integral_constant<type, type::string> {
+
+};
+
+template <>
+struct lua_type_of<const char*> : std::integral_constant<type, type::string> {
+
+};
+
+template <>
+struct lua_type_of<bool> : std::integral_constant<type, type::boolean> {
+
+};
+
+template <>
+struct lua_type_of<nil_t> : std::integral_constant<type, type::nil> {
+
+};
+
+template <>
+struct lua_type_of<table> : std::integral_constant<type, type::table> {
+
+};
+
+template <>
+struct lua_type_of<object> : std::integral_constant<type, type::poly> {
+
+};
+
+template <>
+struct lua_type_of<light_userdata> : std::integral_constant<type, type::lightuserdata> {
+
+};
+
+template <>
+struct lua_type_of<function> : std::integral_constant<type, type::function> {
+
+};
+
+template <typename T>
+struct lua_type_of<T*> : std::integral_constant<type, type::userdata> {
+
+};
+
+template <typename T>
+struct lua_type_of<T, typename std::enable_if<std::is_arithmetic<T>::value>::type> : std::integral_constant<type, type::number> {
+
+};
 
 template<typename T>
 inline type type_of() {
-    return detail::arithmetic<T>(std::is_arithmetic<T>{});
+    return lua_type_of<Unqualified<T>>::value;
 }
 
-template<>
-inline type type_of<table>() {
-    return type::table;
+inline type type_of(lua_State* L, int index) {
+    return static_cast<type>(lua_type(L, index));
 }
 
-template<>
-inline type type_of<function>() {
-    return type::function;
-}
+// All enumerations are given and taken from lua
+// as numbers as well
+template <typename T>
+struct lua_type_of<T, typename std::enable_if<std::is_enum<T>::value>::type> : std::integral_constant<type, type::number> {
 
-template<>
-inline type type_of<object>() {
-    return type::poly;
-}
+};
 
-template<>
-inline type type_of<const char*>() {
-    return type::string;
-}
-
-template<>
-inline type type_of<std::string>() {
-    return type::string;
-}
-
-template<>
-inline type type_of<nil_t>() {
-    return type::nil;
-}
-
-template<>
-inline type type_of<bool>() {
-    return type::boolean;
-}
-
-template<>
-inline type type_of<lightuserdata_t>() {
-    return type::lightuserdata;
-}
-
-template<>
-inline type type_of<userdata_t>() {
-    return type::userdata;
-}
-
-inline bool operator==(nil_t, nil_t) { return true; }
-inline bool operator!=(nil_t, nil_t) { return false; }
 } // sol
 
 #endif // SOL_TYPES_HPP

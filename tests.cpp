@@ -582,7 +582,7 @@ TEST_CASE("tables/usertype", "Show that we can create classes from usertype and 
     sol::object a = lua.get<sol::object>("a");
     sol::object b = lua.get<sol::object>("b");
     sol::object c = lua.get<sol::object>("c");
-    REQUIRE((a.is<sol::userdata_t>()));
+    REQUIRE((a.is<sol::userdata>()));
     auto atype = a.get_type();
     auto btype = b.get_type();
     auto ctype = c.get_type();
@@ -650,7 +650,7 @@ TEST_CASE("tables/usertype utility", "Show internal management of classes regist
     sol::object a = lua.get<sol::object>("a");
     sol::object b = lua.get<sol::object>("b");
     sol::object c = lua.get<sol::object>("c");
-    REQUIRE((a.is<sol::userdata_t>()));
+    REQUIRE((a.is<sol::userdata>()));
     auto atype = a.get_type();
     auto btype = b.get_type();
     auto ctype = c.get_type();
@@ -750,16 +750,16 @@ TEST_CASE("tables/issue-number-twenty-five", "Using pointers and references from
             return *this;
         }
 
-        int fun(int x) {
-            return x * 10;
+        int fun(int xa) {
+            return xa * 10;
         }
     };
 
     sol::state lua;
     lua.open_libraries(sol::lib::base);
     lua.new_usertype<test>("test", "set", &test::set, "get", &test::get, "pointer_get", &test::pget, "fun", &test::fun, "create_get", &test::create_get);
-    REQUIRE_NOTHROW(lua.script("x = test.new()\n"
-                               "x:set():get()"));
+    REQUIRE_NOTHROW(lua.script("x = test.new()"));
+    REQUIRE_NOTHROW(lua.script("assert(x:set():get() == 10)"));
     REQUIRE_NOTHROW(lua.script("y = x:pointer_get()"));
     REQUIRE_NOTHROW(lua.script("y:set():get()"));
     REQUIRE_NOTHROW(lua.script("y:fun(10)"));

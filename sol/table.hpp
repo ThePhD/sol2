@@ -41,27 +41,16 @@ class table : public reference {
         return result;
     }
 
-    template<std::size_t I, typename Tup, typename... Ret>
-    typename std::tuple_element<I, std::tuple<typename stack::get_return<Ret>::type...>>::type element_get(types<Ret...>, Tup&& key) const {
-        typedef typename std::tuple_element<I, std::tuple<Ret...>>::type T;
-        return single_get<T>(std::get<I>(key));
+    template<typename Keys, typename... Ret, std::size_t... I>
+    typename return_type<typename stack::get_return<Ret>::type...>::type tuple_get(types<Ret...>, indices<I...>, Keys&& keys) const {
+        return std::make_tuple(single_get<Ret>(std::get<I>(keys))...);
     }
 
-    template<typename Tup, typename... Ret, std::size_t... I>
-    typename return_type<typename stack::get_return<Ret>::type...>::type tuple_get(types<Ret...> t, indices<I...>, Tup&& tup) const {
-       return std::make_tuple(element_get<I>(t, std::forward<Tup>(tup))...);
+    template<typename Keys, typename Ret>
+    typename stack::get_return<Ret>::type tuple_get(types<Ret>, indices<0>, Keys&& keys) const {
+        return single_get<Ret>(std::get<0>(keys));
     }
 
-    template<typename Tup, typename Ret>
-    typename stack::get_return<Ret>::type tuple_get(types<Ret> t, indices<0>, Tup&& tup) const {
-        return element_get<0>(t, std::forward<Tup>(tup));
-    }
-
-    template<typename... Ret, typename... Keys>
-    typename return_type<typename stack::get_return<Ret>::type...>::type get(types<Ret...> t, Keys&&... keys) const {
-        static_assert(sizeof...(Keys) == sizeof...(Ret), "Must have same number of keys as return values");
-        return tuple_get(t, t, std::make_tuple(std::forward<Keys>(keys)...));
-    }
 public:
     table() noexcept : reference() {}
     table(lua_State* L, int index = -1) : reference(L, index) {
@@ -70,7 +59,8 @@ public:
 
     template<typename... Ret, typename... Keys>
     typename return_type<typename stack::get_return<Ret>::type...>::type get(Keys&&... keys) const {
-       return get(types<Ret...>(), std::forward<Keys>(keys)...);
+        types<Ret...> tr;
+        return tuple_get(tr, tr, std::make_tuple(std::forward<Keys>(keys)...));
     }
 
     template<typename T, typename U>

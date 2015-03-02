@@ -34,16 +34,16 @@ public:
     template<typename T>
     auto as() const -> decltype(stack::get<T>(state())) {
         push();
-        type_assert(state(), -1, type_of<T>());
-        return stack::get<T>(state());
+        type actual = stack::get<type>(state());
+        type_assert(state(), -1, type_of<T>(), actual);
+        return stack::pop<T>(state());
     }
 
     template<typename T>
     bool is() const {
-        push();
         auto expected = type_of<T>();
-        auto actual = lua_type(state(), -1);
-        return (static_cast<int>(expected) == actual) || (expected == type::poly);
+        auto actual = get_type();
+        return (expected == actual) || (expected == type::poly);
     }
 
     explicit operator bool() const {
