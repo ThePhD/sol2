@@ -98,6 +98,19 @@ public:
         return *this;
     }
 
+    template<typename Fx>
+    void for_each(Fx&& fx) const {
+        push();
+        stack::push(state(), nil);
+        while (lua_next(this->state(), -2)) {
+            sol::object key(state(), -2);
+            sol::object value(state(), -1);
+            fx(key, value);
+            lua_pop(state(), 1);
+        }
+        pop();
+    }
+
     size_t size() const {
         push();
         return lua_rawlen(state(), -1);
