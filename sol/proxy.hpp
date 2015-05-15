@@ -74,7 +74,7 @@ public:
     }
 
     operator function() const {
-	    return get<function>();
+        return get<function>();
     }
 
     operator std::string() const {
