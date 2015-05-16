@@ -77,6 +77,10 @@ public:
         return get<function>();
     }
 
+    operator Unqualified<Table>() const {
+        return get<Unqualified<Table>>();
+    }
+
     operator std::string() const {
         return get<std::string>();
     }

@@ -105,11 +105,6 @@ struct pusher<function_sig_t<Sigs...>> {
         set_isconvertible_fx(is_convertible(), t, L, std::forward<Fx>(fx));
     }
 
-    template<typename... Args, typename Fx, typename R = typename std::result_of<Fx(Args...)>::type>
-    static void set_memfx(types<Args...>, lua_State* L, Fx&& fx){
-        set_memfx(types<R(Args...)>(), L, std::forward<Fx>(fx));
-    }
-
     template<typename Fx>
     static void set_memfx(types<>, lua_State* L, Fx&& fx) {
         typedef Unqualified<Unwrap<Fx>> fx_t;

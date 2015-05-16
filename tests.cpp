@@ -730,6 +730,59 @@ TEST_CASE("tables/arbitrary-creation", "tables should be created from standard c
     REQUIRE(c.get<std::string>("project") == "sol");
 }
 
+TEST_CASE("tables/for_each", "Testing the use of for_each to get values from a lua table") {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+
+    lua.script("arr = {\n"
+        "[0] = \"Hi\",\n"
+        "[1] = 123.45,\n"
+        "[2] = \"String value\",\n"
+        // Does nothing
+        //"[3] = nil,\n"
+        //"[nil] = 3,\n"
+        "[\"WOOF\"] = 123,\n"
+        "}");
+    sol::table tbl = lua[ "arr" ];
+    std::size_t tablesize = 4;
+    std::size_t iterations = 0;
+    tbl.for_each(
+        [&iterations](sol::object key, sol::object value) {
+        ++iterations;
+        sol::type keytype = key.get_type();
+        switch (keytype) {
+        case sol::type::number:
+            switch (key.as<int>()) {
+            case 0:
+                REQUIRE((value.as<std::string>() == "Hi"));
+                break;
+            case 1:
+                REQUIRE((value.as<double>() == 123.45));
+                break;
+            case 2:
+                REQUIRE((value.as<std::string>() == "String value"));
+                break;
+            case 3:
+                REQUIRE((value.is<sol::nil_t>()));
+                break;
+            }
+            break;
+        case sol::type::string:
+            if (key.as<std::string>() == "WOOF") {
+                REQUIRE((value.as<double>() == 123));
+            }
+            break;
+        case sol::type::nil:
+            REQUIRE((value.as<double>() == 3));
+            break;
+        default:
+            break;
+        }
+    }
+    );
+    REQUIRE(iterations == tablesize);
+}
+
 TEST_CASE("tables/issue-number-twenty-five", "Using pointers and references from C++ classes in Lua") {
     struct test {
         int x = 0;
