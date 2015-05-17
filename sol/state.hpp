@@ -192,6 +192,11 @@ public:
         return *this;
     }
 
+    template <typename Fx>
+    void for_each(Fx&& fx) {
+        global.for_each(std::forward<Fx>(fx));
+    }
+
     template<typename T>
     table create_table(T&& key, int narr = 0, int nrec = 0) {
         lua_createtable(L.get(), narr, nrec);

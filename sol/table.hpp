@@ -98,9 +98,24 @@ public:
         return *this;
     }
 
+    template<typename Fx>
+    void for_each(Fx&& fx) const {
+        push();
+        stack::push(state(), nil);
+        while (lua_next(this->state(), -2)) {
+            sol::object key(state(), -2);
+            sol::object value(state(), -1);
+            fx(key, value);
+            lua_pop(state(), 1);
+        }
+        pop();
+    }
+
     size_t size() const {
         push();
-        return lua_rawlen(state(), -1);
+        size_t result = lua_rawlen(state(), -1);
+        pop();
+        return result;
     }
 
     template<typename T>
@@ -151,11 +166,6 @@ private:
     template<typename R, typename... Args, typename Fx, typename Key, typename = typename std::result_of<Fx(Args...)>::type>
     void set_fx(types<R(Args...)>, Key&& key, Fx&& fx) {
         set_resolved_function<R(Args...)>(std::forward<Key>(key), std::forward<Fx>(fx));
-    }
-
-    template<typename... Args, typename Fx, typename Key, typename R = typename std::result_of<Fx(Args...)>::type>
-    void set_fx(types<Args...>, Key&& key, Fx&& fx){
-        set_fx(types<R(Args...)>(), std::forward<Key>(key), std::forward<Fx>(fx));
     }
 
     template<typename Fx, typename Key>
