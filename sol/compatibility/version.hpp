@@ -19,11 +19,25 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_HPP
-#define SOL_HPP
+#ifndef SOL_VERSION_HPP
+#define SOL_VERSION_HPP
 
-#include "sol/state.hpp"
-#include "sol/object.hpp"
-#include "sol/function.hpp"
+#include <lua.hpp>
 
-#endif // SOL_HPP
+#ifdef LUAJIT_VERSION
+#define SOL_LUAJIT
+#endif // luajit
+
+#if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM >= 502
+#define SOL_LUA_VERSION LUA_VERSION_NUM
+#elif defined(LUA_VERSION_NUM) && LUA_VERSION_NUM == 501
+#define SOL_LUA_VERSION LUA_VERSION_NUM
+#elif !defined(LUA_VERSION_NUM)
+// Definitely 5.0
+#define SOL_LUA_VERSION 500
+#else
+// ??? Not sure, assume 502?
+#define SOL_LUA_VERSION 502
+#endif // Lua Version 502, 501 || luajit, 500 
+
+#endif // SOL_VERSION_HPP

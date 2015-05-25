@@ -19,11 +19,39 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_HPP
-#define SOL_HPP
+#ifndef SOL_5_X_X_H
+#define SOL_5_X_X_H
 
-#include "sol/state.hpp"
-#include "sol/object.hpp"
-#include "sol/function.hpp"
+#include "version.hpp"
 
-#endif // SOL_HPP
+#if SOL_LUA_VERSION < 520
+
+#define LUA_RIDX_GLOBALS LUA_GLOBALSINDEX
+
+#define LUA_OK 0
+
+#define lua_pushglobaltable(L) \
+  lua_pushvalue(L, LUA_GLOBALSINDEX)
+
+#define luaL_newlib(L, l) \
+  (lua_newtable((L)),luaL_setfuncs((L), (l), 0))
+
+void luaL_checkversion(lua_State *L);
+
+int lua_absindex(lua_State *L, int i);
+void lua_copy(lua_State *L, int from, int to);
+void lua_rawgetp(lua_State *L, int i, const void *p);
+void lua_rawsetp(lua_State *L, int i, const void *p);
+void *luaL_testudata(lua_State *L, int i, const char *tname);
+lua_Number lua_tonumberx(lua_State *L, int i, int *isnum);
+void lua_getuservalue(lua_State *L, int i);
+void lua_setuservalue(lua_State *L, int i);
+void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup);
+void luaL_setmetatable(lua_State *L, const char *tname);
+int luaL_getsubtable(lua_State *L, int i, const char *name);
+void luaL_traceback(lua_State *L, lua_State *L1, const char *msg, int level);
+int luaL_fileresult(lua_State *L, int stat, const char *fname);
+
+#endif // Lua 5.1 and below
+
+#endif // SOL_5_X_X_H

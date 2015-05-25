@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013 Danny Y., Rapptz
+// Copyright (c) 2013-2015 Danny Y., Rapptz
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -58,7 +58,13 @@ public:
     state():
     L(luaL_newstate(), lua_close),
     reg(L.get(), LUA_REGISTRYINDEX),
+#if SOL_LUA_VERSION < 520
+    // Global table is just a special index
+    global(L.get(), LUA_GLOBALSINDEX) {
+#else
+    // Global tables are stored in the environment/registry table
     global(reg.get<table>(LUA_RIDX_GLOBALS)) {
+#endif // Lua 5.2
         lua_atpanic(L.get(), detail::atpanic);
     }
 
@@ -78,7 +84,10 @@ public:
 
         for(auto&& library : libraries) {
             switch(library) {
-            case lib::base:
+#if SOL_LUA_VERSION <= 501 && defined(SOL_LUAJIT)
+		  case lib::coroutine:
+#endif // luajit opens coroutine base stuff
+		  case lib::base:
                 luaL_requiref(L.get(), "base", luaopen_base, 1);
                 lua_pop(L.get(), 1);
                 break;
@@ -86,10 +95,12 @@ public:
                 luaL_requiref(L.get(), "package", luaopen_package, 1);
                 lua_pop(L.get(), 1);
                 break;
+#if SOL_LUA_VERSION > 501
             case lib::coroutine:
                 luaL_requiref(L.get(), "coroutine", luaopen_coroutine, 1);
                 lua_pop(L.get(), 1);
                 break;
+#endif // Lua 5.2+ only
             case lib::string:
                 luaL_requiref(L.get(), "string", luaopen_string, 1);
                 lua_pop(L.get(), 1);
@@ -102,10 +113,12 @@ public:
                 luaL_requiref(L.get(), "math", luaopen_math, 1);
                 lua_pop(L.get(), 1);
                 break;
+#if SOL_LUA_VERSION > 510
             case lib::bit32:
                 luaL_requiref(L.get(), "bit32", luaopen_bit32, 1);
                 lua_pop(L.get(), 1);
                 break;
+#endif // Lua 5.2+ only
             case lib::io:
                 luaL_requiref(L.get(), "io", luaopen_io, 1);
                 lua_pop(L.get(), 1);

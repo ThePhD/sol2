@@ -19,11 +19,23 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_HPP
-#define SOL_HPP
+#ifndef SOL_COMPATIBILITY_HPP
+#define SOL_COMPATIBILITY_HPP
 
-#include "sol/state.hpp"
-#include "sol/object.hpp"
-#include "sol/function.hpp"
+// The various pieces of the compatibility layer
+// comes from https://github.com/keplerproject/lua-compat-5.2
+// but has been modified in many places for use with Sol and luajit,
+// though the core abstractions remain the same
+#include "compatibility/version.hpp"
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "compatibility/5.1.0.h"
+#include "compatibility/5.0.0.h"
+#include "compatibility/5.x.x.h"
+#include "compatibility/5.x.x.inl"
+#ifdef __cplusplus
+}
+#endif
 
-#endif // SOL_HPP
+#endif // SOL_COMPATIBILITY_HPP

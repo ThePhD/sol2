@@ -19,11 +19,26 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_HPP
-#define SOL_HPP
+#ifndef SOL_5_0_0_H
+#define SOL_5_0_0_H
 
-#include "sol/state.hpp"
-#include "sol/object.hpp"
-#include "sol/function.hpp"
+#include "version.hpp"
 
-#endif // SOL_HPP
+#if SOL_LUA_VERSION < 501
+/* Lua 5.0 */
+
+#define LUA_QL(x) "'" x "'"
+#define LUA_QS LUA_QL("%s")
+
+#define luaL_Reg luaL_reg
+
+#define luaL_opt(L, f, n, d) \
+  (lua_isnoneornil(L, n) ? (d) : f(L, n))
+
+#define luaL_addchar(B,c) \
+  ((void)((B)->p < ((B)->buffer+LUAL_BUFFERSIZE) || luaL_prepbuffer(B)), \
+   (*(B)->p++ = (char)(c)))
+
+#endif // Lua 5.0
+
+#endif // SOL_5_0_0_H
