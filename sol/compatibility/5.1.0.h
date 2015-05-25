@@ -60,14 +60,13 @@
 typedef LUAI_UINT32 lua_Unsigned;
 
 typedef struct luaL_Buffer_52 {
-	luaL_Buffer b; /* make incorrect code crash! */
-	char *ptr;
-	size_t nelems;
-	size_t capacity;
-	lua_State *L2;
+    luaL_Buffer b; /* make incorrect code crash! */
+    char *ptr;
+    size_t nelems;
+    size_t capacity;
+    lua_State *L2;
 } luaL_Buffer_52;
 #define luaL_Buffer luaL_Buffer_52
-
 
 #define lua_tounsigned(L, i) lua_tounsignedx(L, i, NULL)
 

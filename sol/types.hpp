@@ -95,9 +95,9 @@ inline void type_error(lua_State* L, type expected, type actual) {
 }
 
 inline void type_assert(lua_State* L, int index, type expected, type actual) {
-	if (expected != type::poly && expected != actual) {
-		type_panic(L, index, expected, actual);
-	}
+    if (expected != type::poly && expected != actual) {
+        type_panic(L, index, expected, actual);
+    }
 }
 
 inline void type_assert(lua_State* L, int index, type expected) {

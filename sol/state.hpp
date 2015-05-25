@@ -85,9 +85,9 @@ public:
         for(auto&& library : libraries) {
             switch(library) {
 #if SOL_LUA_VERSION <= 501 && defined(SOL_LUAJIT)
-		  case lib::coroutine:
+            case lib::coroutine:
 #endif // luajit opens coroutine base stuff
-		  case lib::base:
+            case lib::base:
                 luaL_requiref(L.get(), "base", luaopen_base, 1);
                 lua_pop(L.get(), 1);
                 break;
