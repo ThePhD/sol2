@@ -955,3 +955,18 @@ TEST_CASE("references/get-set", "properly get and set with std::ref semantics. N
     // Reference should point back to the same type.
     REQUIRE(rvar.boop == ref_var.boop);
 }
+
+TEST_CASE("interop/null-to-nil-and-back", "nil should be the given type when a pointer from C++ is returned as nullptr, and nil should result in nullptr in connected C++ code") {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+
+    lua.set_function("lol", []() -> int* {
+        return nullptr;
+    });
+    lua.set_function("rofl", [](int* x) {
+        std::cout << x << std::endl;
+    });
+    REQUIRE_NOTHROW(lua.script("x = lol()\n"
+        "rofl(x)\n"
+        "assert(x == nil)"));
+}
