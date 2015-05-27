@@ -74,6 +74,13 @@ struct return_forward {
 
 namespace stack {
 namespace detail {
+const bool default_check_arguments = 
+#ifdef SOL_CHECK_ARGUMENTS
+true;
+#else
+false;
+#endif
+
 template <typename T, typename Key>
 inline int push_userdata_pointer(lua_State* L, Key&& metatablekey) {
     return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey));
@@ -193,7 +200,7 @@ struct checker<T*, expected, C> {
     template <typename Handler>
     static bool check (lua_State* L, int index, const Handler& handler) {
         const type indextype = type_of(L, index);
-       // Allow nil to be transformed to nullptr
+        // Allow nil to be transformed to nullptr
         bool success = expected == indextype || indextype == type::nil;
         if (!success) {
             // expected type, actual type
@@ -560,7 +567,7 @@ struct check_arguments<false> {
     }
 };
 
-template <bool checkargs = false, std::size_t... I, typename R, typename... Args, typename Fx, typename... FxArgs, typename = typename std::enable_if<!std::is_void<R>::value>::type>
+template <bool checkargs = detail::default_check_arguments, std::size_t... I, typename R, typename... Args, typename Fx, typename... FxArgs, typename = typename std::enable_if<!std::is_void<R>::value>::type>
 inline R call(lua_State* L, int start, indices<I...>, types<R>, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
     const int stacksize = lua_gettop(L);
     const int firstargument = start + stacksize - std::max(sizeof...(Args)-1, static_cast<std::size_t>(0));
@@ -570,7 +577,7 @@ inline R call(lua_State* L, int start, indices<I...>, types<R>, types<Args...> t
     return fx(std::forward<FxArgs>(args)..., stack::get<Args>(L, firstargument + I)...);
 }
 
-template <bool checkargs = false, std::size_t... I, typename... Args, typename Fx, typename... FxArgs>
+template <bool checkargs = detail::default_check_arguments, std::size_t... I, typename... Args, typename Fx, typename... FxArgs>
 inline void call(lua_State* L, int start, indices<I...>, types<void>, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
     const int stacksize = lua_gettop(L);
     const int firstargument = start + stacksize - std::max(sizeof...(Args)-1, static_cast<std::size_t>(0));
@@ -583,22 +590,22 @@ inline void call(lua_State* L, int start, indices<I...>, types<void>, types<Args
 }
 } // detail
 
-template <bool checkargs = false, typename R, typename... Args, typename Fx, typename... FxArgs, typename = typename std::enable_if<!std::is_void<R>::value>::type>
+template <bool checkargs = detail::default_check_arguments, typename R, typename... Args, typename Fx, typename... FxArgs, typename = typename std::enable_if<!std::is_void<R>::value>::type>
 inline R call(lua_State* L, int start, types<R> tr, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
     return detail::call(L, start, ta, tr, ta, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 }
 
-template <bool checkargs = false, typename R, typename... Args, typename Fx, typename... FxArgs, typename = typename std::enable_if<!std::is_void<R>::value>::type>
+template <bool checkargs = detail::default_check_arguments, typename R, typename... Args, typename Fx, typename... FxArgs, typename = typename std::enable_if<!std::is_void<R>::value>::type>
 inline R call(lua_State* L, types<R> tr, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
     return call(L, 0, ta, tr, ta, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 }
 
-template <bool checkargs = false, typename... Args, typename Fx, typename... FxArgs>
+template <bool checkargs = detail::default_check_arguments, typename... Args, typename Fx, typename... FxArgs>
 inline void call(lua_State* L, int start, types<void> tr, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
     detail::call(L, start, ta, tr, ta, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 }
 
-template <bool checkargs = false, typename... Args, typename Fx, typename... FxArgs>
+template <bool checkargs = detail::default_check_arguments, typename... Args, typename Fx, typename... FxArgs>
 inline void call(lua_State* L, types<void> tr, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
     call(L, 0, ta, tr, ta, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 }
