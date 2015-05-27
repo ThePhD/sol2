@@ -78,14 +78,14 @@ template <typename T, typename Key>
 inline int push_userdata_pointer(lua_State* L, Key&& metatablekey) {
     return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey));
 }
-	
+
 template <typename T, typename Key, typename Arg, EnableIf<std::is_same<T, Unqualified<Arg>>> = 0>
 inline int push_userdata_pointer(lua_State* L, Key&& metatablekey, Arg&& arg) {
     if (arg == nullptr)
         return push(L, nil);
     return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Arg>(arg));
 }
-	
+
 template <typename T, typename Key, typename Arg, DisableIf<std::is_same<T, Unqualified<Arg>>> = 0>
 inline int push_userdata_pointer(lua_State* L, Key&& metatablekey, Arg&& arg) {
     return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Arg>(arg));
@@ -93,17 +93,17 @@ inline int push_userdata_pointer(lua_State* L, Key&& metatablekey, Arg&& arg) {
 
 template <typename T, typename Key, typename Arg0, typename Arg1, typename... Args>
 inline int push_userdata_pointer(lua_State* L, Key&& metatablekey, Arg0&& arg0, Arg1&& arg1, Args&&... args) {
-	return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...);
+    return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...);
 }
 
 template <typename T, typename Key, typename... Args>
 inline int push_confirmed_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
-	T* pdatum = static_cast<T*>(lua_newuserdata(L, sizeof(T)));
-	std::allocator<T> alloc{};
-	alloc.construct(pdatum, std::forward<Args>(args)...);
-	luaL_getmetatable(L, std::addressof(metatablekey[0]));
-	lua_setmetatable(L, -2);
-	return 1;
+    T* pdatum = static_cast<T*>(lua_newuserdata(L, sizeof(T)));
+    std::allocator<T> alloc{};
+    alloc.construct(pdatum, std::forward<Args>(args)...);
+    luaL_getmetatable(L, std::addressof(metatablekey[0]));
+    lua_setmetatable(L, -2);
+    return 1;
 }
 
 template<typename T, typename Key, typename... Args, DisableIf<std::is_pointer<T>> = 0>
@@ -193,7 +193,7 @@ struct checker<T*, expected, C> {
     template <typename Handler>
     static bool check (lua_State* L, int index, const Handler& handler) {
         const type indextype = type_of(L, index);
-	   // Allow nil to be transformed to nullptr
+       // Allow nil to be transformed to nullptr
         bool success = expected == indextype || indextype == type::nil;
         if (!success) {
             // expected type, actual type
@@ -255,7 +255,7 @@ struct getter<T*> {
             return nullptr;
         void* udata = lua_touserdata(L, index);
         T** obj = static_cast<T**>(udata);
-	   return *obj;
+       return *obj;
     }
 };
 

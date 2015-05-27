@@ -269,8 +269,8 @@ private:
             std::unique_ptr<base_function> ptr(nullptr);
             if(indexmetamethod != meta_variable_names.end()) {
                 auto idxptr = detail::make_unique<usertype_indexing_function<function_type, T>>(name, func);
-			 std::ptrdiff_t idxvalue = std::distance(meta_variable_names.begin(), indexmetamethod);
-			 switch(idxvalue) {
+                std::ptrdiff_t idxvalue = std::distance(meta_variable_names.begin(), indexmetamethod);
+                switch(idxvalue) {
                 case 0:
                     index = &(idxptr->functions);
                     break;
