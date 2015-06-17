@@ -24,7 +24,7 @@
 
 #include "version.hpp"
 
-#if SOL_LUA_VERSION < 520
+#if SOL_LUA_VERSION < 502
 
 #define LUA_RIDX_GLOBALS LUA_GLOBALSINDEX
 

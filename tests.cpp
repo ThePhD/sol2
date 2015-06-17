@@ -1,4 +1,5 @@
 #define CATCH_CONFIG_MAIN
+#define SOL_CHECK_ARGUMENTS
 #include <catch.hpp>
 #include <sol.hpp>
 #include <vector>

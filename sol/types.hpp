@@ -118,64 +118,43 @@ class function;
 class object;
 
 template <typename T, typename = void>
-struct lua_type_of : std::integral_constant<type, type::userdata> {
-
-};
+struct lua_type_of : std::integral_constant<type, type::userdata> {};
 
 template <>
-struct lua_type_of<std::string> : std::integral_constant<type, type::string> {
-
-};
+struct lua_type_of<std::string> : std::integral_constant<type, type::string> {};
 
 template <std::size_t N>
-struct lua_type_of<char[N]> : std::integral_constant<type, type::string> {
-
-};
+struct lua_type_of<char[N]> : std::integral_constant<type, type::string> {};
 
 template <>
-struct lua_type_of<const char*> : std::integral_constant<type, type::string> {
-
-};
+struct lua_type_of<const char*> : std::integral_constant<type, type::string> {};
 
 template <>
-struct lua_type_of<bool> : std::integral_constant<type, type::boolean> {
-
-};
+struct lua_type_of<bool> : std::integral_constant<type, type::boolean> {};
 
 template <>
-struct lua_type_of<nil_t> : std::integral_constant<type, type::nil> {
-
-};
+struct lua_type_of<nil_t> : std::integral_constant<type, type::nil> {};
 
 template <>
-struct lua_type_of<table> : std::integral_constant<type, type::table> {
-
-};
+struct lua_type_of<table> : std::integral_constant<type, type::table> {};
 
 template <>
-struct lua_type_of<object> : std::integral_constant<type, type::poly> {
-
-};
+struct lua_type_of<object> : std::integral_constant<type, type::poly> {};
 
 template <>
-struct lua_type_of<light_userdata> : std::integral_constant<type, type::lightuserdata> {
-
-};
+struct lua_type_of<light_userdata> : std::integral_constant<type, type::lightuserdata> {};
 
 template <>
-struct lua_type_of<function> : std::integral_constant<type, type::function> {
+struct lua_type_of<function> : std::integral_constant<type, type::function> {};
 
-};
+template <typename Signature>
+struct lua_type_of<std::function<Signature>> : std::integral_constant<type, type::function>{};
 
 template <typename T>
-struct lua_type_of<T*> : std::integral_constant<type, type::userdata> {
-
-};
+struct lua_type_of<T*> : std::integral_constant<type, type::userdata> {};
 
 template <typename T>
-struct lua_type_of<T, typename std::enable_if<std::is_arithmetic<T>::value>::type> : std::integral_constant<type, type::number> {
-
-};
+struct lua_type_of<T, typename std::enable_if<std::is_arithmetic<T>::value>::type> : std::integral_constant<type, type::number> {};
 
 template<typename T>
 inline type type_of() {

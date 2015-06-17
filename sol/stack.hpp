@@ -592,22 +592,22 @@ inline void call(lua_State* L, int start, indices<I...>, types<void>, types<Args
 
 template <bool checkargs = detail::default_check_arguments, typename R, typename... Args, typename Fx, typename... FxArgs, typename = typename std::enable_if<!std::is_void<R>::value>::type>
 inline R call(lua_State* L, int start, types<R> tr, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
-    return detail::call(L, start, ta, tr, ta, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
+    return detail::call<checkargs>(L, start, ta, tr, ta, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 }
 
 template <bool checkargs = detail::default_check_arguments, typename R, typename... Args, typename Fx, typename... FxArgs, typename = typename std::enable_if<!std::is_void<R>::value>::type>
 inline R call(lua_State* L, types<R> tr, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
-    return call(L, 0, ta, tr, ta, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
+    return call<checkargs>(L, 0, ta, tr, ta, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 }
 
 template <bool checkargs = detail::default_check_arguments, typename... Args, typename Fx, typename... FxArgs>
 inline void call(lua_State* L, int start, types<void> tr, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
-    detail::call(L, start, ta, tr, ta, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
+    detail::call<checkargs>(L, start, ta, tr, ta, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 }
 
 template <bool checkargs = detail::default_check_arguments, typename... Args, typename Fx, typename... FxArgs>
 inline void call(lua_State* L, types<void> tr, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
-    call(L, 0, ta, tr, ta, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
+    call<checkargs>(L, 0, ta, tr, ta, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 }
 
 inline call_syntax get_call_syntax(lua_State* L, const std::string& meta) {
