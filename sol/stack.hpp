@@ -262,7 +262,7 @@ struct getter<T*> {
             return nullptr;
         void* udata = lua_touserdata(L, index);
         T** obj = static_cast<T**>(udata);
-       return *obj;
+        return *obj;
     }
 };
 
