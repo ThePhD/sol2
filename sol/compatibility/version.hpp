@@ -25,7 +25,9 @@
 #include <lua.hpp>
 
 #ifdef LUAJIT_VERSION
+#ifndef SOL_LUAJIT
 #define SOL_LUAJIT
+#endif // sol luajit
 #endif // luajit
 
 #if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM >= 502

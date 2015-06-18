@@ -73,56 +73,6 @@ struct return_forward {
 } // detail
 
 namespace stack {
-namespace detail {
-const bool default_check_arguments = 
-#ifdef SOL_CHECK_ARGUMENTS
-true;
-#else
-false;
-#endif
-
-template <typename T, typename Key>
-inline int push_userdata_pointer(lua_State* L, Key&& metatablekey) {
-    return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey));
-}
-
-template <typename T, typename Key, typename Arg, EnableIf<std::is_same<T, Unqualified<Arg>>> = 0>
-inline int push_userdata_pointer(lua_State* L, Key&& metatablekey, Arg&& arg) {
-    if (arg == nullptr)
-        return push(L, nil);
-    return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Arg>(arg));
-}
-
-template <typename T, typename Key, typename Arg, DisableIf<std::is_same<T, Unqualified<Arg>>> = 0>
-inline int push_userdata_pointer(lua_State* L, Key&& metatablekey, Arg&& arg) {
-    return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Arg>(arg));
-}
-
-template <typename T, typename Key, typename Arg0, typename Arg1, typename... Args>
-inline int push_userdata_pointer(lua_State* L, Key&& metatablekey, Arg0&& arg0, Arg1&& arg1, Args&&... args) {
-    return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...);
-}
-
-template <typename T, typename Key, typename... Args>
-inline int push_confirmed_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
-    T* pdatum = static_cast<T*>(lua_newuserdata(L, sizeof(T)));
-    std::allocator<T> alloc{};
-    alloc.construct(pdatum, std::forward<Args>(args)...);
-    luaL_getmetatable(L, std::addressof(metatablekey[0]));
-    lua_setmetatable(L, -2);
-    return 1;
-}
-
-template<typename T, typename Key, typename... Args, DisableIf<std::is_pointer<T>> = 0>
-inline int push_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
-    return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Args>(args)...);
-}
-
-template<typename T, typename Key, typename... Args, EnableIf<std::is_pointer<T>> = 0>
-inline int push_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
-    return push_userdata_pointer<T>(L, std::forward<Key>(metatablekey), std::forward<Args>(args)...);
-}
-} // detail
 
 template<typename T, typename = void>
 struct getter;
@@ -159,7 +109,7 @@ template<typename T, typename... Args>
 inline int push_args(lua_State* L, T&& t, Args&&... args) {
     int pushcount = push(L, std::forward<T>(t));
     using swallow = char[];
-    void(swallow{'\0', (pushcount += push(L, std::forward<Args>(args)), '\0')... });
+    void(swallow{'\0', (pushcount += sol::stack::push(L, std::forward<Args>(args)), '\0')... });
     return pushcount;
 }
 
@@ -175,6 +125,70 @@ auto pop(lua_State* L) -> decltype(get<T>(L)) {
     lua_pop(L, 1);
     return r;
 }
+
+template <typename T, typename Handler>
+bool check(lua_State* L, int index, Handler&& handler) {
+    typedef Unqualified<T> Tu;
+    checker<Tu> c;
+    return c.check(L, index, std::forward<Handler>(handler));
+}
+
+template <typename T>
+bool check(lua_State* L, int index) {
+    auto handler = type_panic;
+    return check<T>(L, index, handler);
+}
+
+namespace detail {
+const bool default_check_arguments = 
+#ifdef SOL_CHECK_ARGUMENTS
+true;
+#else
+false;
+#endif
+
+template <typename T, typename Key, typename... Args>
+inline int push_confirmed_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
+    T* pdatum = static_cast<T*>(lua_newuserdata(L, sizeof(T)));
+    std::allocator<T> alloc{};
+    alloc.construct(pdatum, std::forward<Args>(args)...);
+    luaL_getmetatable(L, std::addressof(metatablekey[0]));
+    lua_setmetatable(L, -2);
+    return 1;
+}
+
+template <typename T, typename Key>
+inline int push_userdata_pointer(lua_State* L, Key&& metatablekey) {
+    return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey));
+}
+
+template <typename T, typename Key, typename Arg, EnableIf<std::is_same<T, Unqualified<Arg>>> = 0>
+inline int push_userdata_pointer(lua_State* L, Key&& metatablekey, Arg&& arg) {
+    if (arg == nullptr)
+        return push(L, nil);
+    return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Arg>(arg));
+}
+
+template <typename T, typename Key, typename Arg, DisableIf<std::is_same<T, Unqualified<Arg>>> = 0>
+inline int push_userdata_pointer(lua_State* L, Key&& metatablekey, Arg&& arg) {
+    return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Arg>(arg));
+}
+
+template <typename T, typename Key, typename Arg0, typename Arg1, typename... Args>
+inline int push_userdata_pointer(lua_State* L, Key&& metatablekey, Arg0&& arg0, Arg1&& arg1, Args&&... args) {
+    return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...);
+}
+
+template<typename T, typename Key, typename... Args, DisableIf<std::is_pointer<T>> = 0>
+inline int push_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
+    return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Args>(args)...);
+}
+
+template<typename T, typename Key, typename... Args, EnableIf<std::is_pointer<T>> = 0>
+inline int push_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
+    return push_userdata_pointer<T>(L, std::forward<Key>(metatablekey), std::forward<Args>(args)...);
+}
+} // detail
 
 template<typename T>
 struct get_return {
@@ -209,19 +223,6 @@ struct checker<T*, expected, C> {
         return success;
     }
 };
-
-template <typename T, typename Handler>
-bool check(lua_State* L, int index, Handler&& handler) {
-    typedef Unqualified<T> Tu;
-    checker<Tu> c;
-    return c.check(L, index, std::forward<Handler>(handler));
-}
-
-template <typename T>
-bool check(lua_State* L, int index) {
-    auto handler = type_panic;
-    return check<T>(L, index, handler);
-}
 
 template<typename T, typename>
 struct getter {
@@ -548,14 +549,19 @@ inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 1) {
 
 template <bool b>
 struct check_arguments {
-    template <std::size_t... I, typename... Args>
-    static bool check(lua_State* L, int firstargument, indices<I...>, types<Args...>) {
+    template <std::size_t I0, std::size_t... I, typename Arg0, typename... Args>
+    static bool check(lua_State* L, int firstargument, indices<I0, I...>, types<Arg0, Args...>) {
         bool checks = true;
+        stack::check<Arg0>(L, firstargument + I0);
         using swallow = int[sizeof...(Args)+2];
         (void)swallow {
             0, (checks &= stack::check<Args>(L, firstargument + I))..., 0
         };
         return checks;
+    }
+
+    static bool check(lua_State*, int, indices<>, types<>) {
+        return true;
     }
 };
 
