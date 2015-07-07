@@ -96,12 +96,12 @@ public:
                 lua_pop(L.get(), 1);
                 break;
 #if SOL_LUA_VERSION > 501
-		  case lib::coroutine:
+            case lib::coroutine:
                 luaL_requiref(L.get(), "coroutine", luaopen_coroutine, 1);
                 lua_pop(L.get(), 1);
                 break;
 #endif // Lua 5.2+ only
-		  case lib::string:
+            case lib::string:
                 luaL_requiref(L.get(), "string", luaopen_string, 1);
                 lua_pop(L.get(), 1);
                 break;
