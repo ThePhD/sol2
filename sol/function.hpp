@@ -80,12 +80,12 @@ public:
     }
 
     template<typename... Ret, typename... Args>
-    typename return_type<Ret...>::type operator()(types<Ret...>, Args&&... args) const {
+    ReturnType<Ret...> operator()(types<Ret...>, Args&&... args) const {
         return call<Ret...>(std::forward<Args>(args)...);
     }
 
     template<typename... Ret, typename... Args>
-    typename return_type<Ret...>::type call(Args&&... args) const {
+    ReturnType<Ret...> call(Args&&... args) const {
         push();
         int pushcount = stack::push_args(state(), std::forward<Args>(args)...);
         auto tr = types<Ret...>();

@@ -118,9 +118,12 @@ struct return_type<T> {
 };
 
 template<>
-struct return_type<> : types<>{
+struct return_type<> {
     typedef void type;
 };
+
+template <typename... Tn>
+using ReturnType = typename return_type<Tn...>::type;
 
 namespace detail {
 
