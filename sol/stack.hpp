@@ -130,6 +130,8 @@ template <typename T, typename Handler>
 bool check(lua_State* L, int index, Handler&& handler) {
     typedef Unqualified<T> Tu;
     checker<Tu> c;
+    // VC++ has a bad warning here: shut it up
+    (void)c;
     return c.check(L, index, std::forward<Handler>(handler));
 }
 
