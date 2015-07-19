@@ -37,3 +37,4 @@ lua-5.3.0/
 .vs/
 lua-5.1.5/
 luajit-2.0.4/
+*.creator.user.*

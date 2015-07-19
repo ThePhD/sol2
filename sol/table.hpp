@@ -31,7 +31,7 @@ namespace sol {
 class table : public reference {
     friend class state;
     template<typename T, typename U>
-    typename stack::get_return<T>::type single_get(U&& key) const {
+    auto single_get(U&& key) const -> decltype(stack::get<T>(nullptr, 0)) {
         push();
         stack::push(state(), std::forward<U>(key));
         lua_gettable(state(), -2);

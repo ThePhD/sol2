@@ -113,9 +113,9 @@ inline int push_args(lua_State* L, T&& t, Args&&... args) {
     return pushcount;
 }
 
-template<typename T, typename U = Unqualified<T>>
-inline auto get(lua_State* L, int index = -1) -> decltype(getter<U>{}.get(L, index)) {
-    return getter<U>{}.get(L, index);
+template<typename T>
+inline auto get(lua_State* L, int index = -1) -> decltype(getter<Unqualified<T>>{}.get(L, index)) {
+    return getter<Unqualified<T>>{}.get(L, index);
 }
 
 template<typename T>
@@ -619,7 +619,7 @@ inline void call(lua_State* L, types<void> tr, types<Args...> ta, Fx&& fx, FxArg
 }
 
 inline call_syntax get_call_syntax(lua_State* L, const std::string& meta) {
-    if (get<type>(L, 1) == type::table) {
+    if (sol::stack::get<type>(L, 1) == type::table) {
         if (luaL_newmetatable(L, meta.c_str()) == 0) {
             lua_settop(L, -2);
             return call_syntax::colon;

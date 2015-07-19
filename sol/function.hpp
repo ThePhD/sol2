@@ -33,14 +33,52 @@
 #include <memory>
 
 namespace sol {
+class function_result {
+private:
+    lua_State* L;
+    int index;
+    int returncount;
+
+    template <typename T, std::size_t I>
+    T get(types<T>, indices<I>) const {
+        return stack::get<T>(L, index);
+    }
+
+    template <typename... Ret, std::size_t... I>
+    std::tuple<Ret...> get(types<Ret...>, indices<I...>) const {
+        auto r = std::make_tuple(stack::get<Ret>(L, index + I)...);
+        return r;
+    }
+
+public:
+    function_result() = default;
+    function_result(lua_State* L, int index = -1, int returncount = 0): L(L), index(index), returncount(returncount) {
+        
+    }
+    function_result(const function_result&) = default;
+    function_result& operator=(const function_result&) = default;
+    function_result(function_result&&) = default;
+    function_result& operator=(function_result&&) = default;
+
+    template <typename T>
+    operator T () const {
+        auto tr = tuple_types<T>();
+        return get(tr, tr);
+    }
+
+    ~function_result() {
+        lua_pop(L, returncount);
+    }
+};
+
 class function : public reference {
 private:
-    void luacall(std::size_t argcount, std::size_t resultcount) const {
-        lua_call(state(), static_cast<uint32_t>(argcount), static_cast<uint32_t>(resultcount));
+    void luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount) const {
+        lua_call(state(), static_cast<int>(argcount), static_cast<int>(resultcount));
     }
 
     template<std::size_t... I, typename... Ret>
-    std::tuple<Ret...> invoke(indices<I...>, types<Ret...>, std::size_t n) const {
+    std::tuple<Ret...> invoke(indices<I...>, types<Ret...>, std::ptrdiff_t n) const {
         luacall(n, sizeof...(Ret));
         const int nreturns = static_cast<int>(sizeof...(Ret));
         const int stacksize = lua_gettop(state());
@@ -51,19 +89,23 @@ private:
     }
 
     template<std::size_t I, typename Ret>
-    Ret invoke(indices<I>, types<Ret>, std::size_t n) const {
+    Ret invoke(indices<I>, types<Ret>, std::ptrdiff_t n) const {
         luacall(n, 1);
         return stack::pop<Ret>(state());
     }
 
     template <std::size_t I>
-    void invoke(indices<I>, types<void>, std::size_t n) const {
+    void invoke(indices<I>, types<void>, std::ptrdiff_t n) const {
         luacall(n, 0);
     }
 
-    void invoke(indices<>, types<>, std::size_t n) const {
-        auto tr = types<void>();
-        invoke(tr, tr, n);
+    function_result invoke(indices<>, types<>, std::ptrdiff_t n) const {
+        const int stacksize = lua_gettop(state());
+	   const int firstreturn = std::max(0, stacksize - static_cast<int>(n) - 1);
+        luacall(n, LUA_MULTRET);
+        const int poststacksize = lua_gettop(state());
+        const int returncount = poststacksize - firstreturn;
+	   return function_result(state(), firstreturn + 1, returncount);
     }
 
 public:
@@ -75,8 +117,8 @@ public:
     function& operator=(const function&) = default;
 
     template<typename... Args>
-    void operator()(Args&&... args) const {
-        call<>(std::forward<Args>(args)...);
+    function_result operator()(Args&&... args) const {
+        return call<>(std::forward<Args>(args)...);
     }
 
     template<typename... Ret, typename... Args>
@@ -85,7 +127,7 @@ public:
     }
 
     template<typename... Ret, typename... Args>
-    ReturnType<Ret...> call(Args&&... args) const {
+    auto call(Args&&... args) const -> decltype(invoke(types<Ret...>(), types<Ret...>(), 0)) {
         push();
         int pushcount = stack::push_args(state(), std::forward<Args>(args)...);
         auto tr = types<Ret...>();
