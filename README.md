@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/Rapptz/sol.svg?branch=master)](https://travis-ci.org/Rapptz/sol)
 
-Sol is a C++ library binding to Lua. It currently supports Lua 5.2. Sol aims to be easy to use and easy to add to a project.
+Sol is a C++ library binding to Lua. It currently supports Lua 5.2+. Sol aims to be easy to use and easy to add to a project.
 At this time, the library is header-only for easy integration with projects.
 
 ## Sneak Peek
@@ -38,6 +38,10 @@ int main() {
 ```
 
 More examples are given in the examples directory.
+
+## Creating a single header
+
+For maximum ease of use, a script called `single.py` is provided. You can run this script to create a single file version of the library so you can only include that part of it. Check `single.py --help` for more info.
 
 ## Features
 
