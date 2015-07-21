@@ -192,11 +192,6 @@ inline int push_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
 }
 } // detail
 
-template<typename T>
-struct get_return {
-    typedef decltype(get<T>(nullptr)) type;
-};
-
 template <typename T, type expected, typename>
 struct checker {
     template <typename Handler>

@@ -42,13 +42,13 @@ class table : public reference {
     }
 
     template<typename Keys, typename... Ret, std::size_t... I>
-    typename return_type<typename stack::get_return<Ret>::type...>::type tuple_get(types<Ret...>, indices<I...>, Keys&& keys) const {
+    auto tuple_get(types<Ret...>, indices<I...>, Keys&& keys) const -> decltype(std::make_tuple(single_get<Ret>(std::get<I>(keys))...)) {
         return std::make_tuple(single_get<Ret>(std::get<I>(keys))...);
     }
 
-    template<typename Keys, typename Ret>
-    typename stack::get_return<Ret>::type tuple_get(types<Ret>, indices<0>, Keys&& keys) const {
-        return single_get<Ret>(std::get<0>(keys));
+    template<typename Keys, std::size_t I, typename Ret>
+    auto tuple_get(types<Ret>, indices<I>, Keys&& keys) const -> decltype(single_get<Ret>(std::get<I>(keys))) {
+        return single_get<Ret>(std::get<I>(keys));
     }
 
 public:
@@ -58,9 +58,9 @@ public:
     }
 
     template<typename... Ret, typename... Keys>
-    typename return_type<typename stack::get_return<Ret>::type...>::type get(Keys&&... keys) const {
+    auto get(Keys&&... keys) const -> decltype(tuple_get(types<Ret...>(), types<Ret...>(), std::tie(std::forward<Keys>(keys)...))) {
         types<Ret...> tr;
-        return tuple_get(tr, tr, std::make_tuple(std::forward<Keys>(keys)...));
+        return tuple_get(tr, tr, std::tie(std::forward<Keys>(keys)...));
     }
 
     template<typename T, typename U>
