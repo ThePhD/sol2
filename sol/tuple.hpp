@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013 Danny Y., Rapptz
+// Copyright (c) 2013-2015 Rapptz and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -58,7 +58,7 @@ struct build_reverse_indices<0, Ns...> : indices<Ns...> {};
 
 template<typename... Args>
 struct types : build_indices<sizeof...(Args)> { typedef types type; };
- 
+
 namespace detail {
 template<class Acc, class... Args>
 struct reversed_ : Acc{};

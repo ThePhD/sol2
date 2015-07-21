@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013 Danny Y., Rapptz
+// Copyright (c) 2013-2015 Rapptz and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -26,7 +26,7 @@
     #ifdef _MSC_VER
         #define SOL_DEPRECATED __declspec(deprecated)
     #elif __GNUC__
-        #define SOL_DEPRECATED __attribute__((deprecated)) 
+        #define SOL_DEPRECATED __attribute__((deprecated))
     #else
         #define SOL_DEPRECATED [[deprecated]]
     #endif // compilers
