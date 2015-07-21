@@ -30,7 +30,7 @@ struct vars {
 
 int main() {
     sol::state lua;
-    lua.new_userdata<vars>("vars", "boop", &vars::boop);
+    lua.new_usertype<vars>("vars", "boop", &vars::boop);
     lua.script("beep = vars.new()\n"
                "beep.boop = 1");
     assert(lua.get<vars>("beep").boop == 1);

@@ -50,7 +50,7 @@ args = parser.parse_args()
 # general variables
 include = [ '.', os.path.join('Catch', 'include')]
 depends = []
-cxxflags = [ '-Wall', '-Wextra', '-pedantic', '-pedantic-errors', '-std=c++11' ]
+cxxflags = [ '-Wall', '-Wextra', '-pedantic', '-pedantic-errors', '-std=c++11', '-Wno-unused-variable' ]
 ldflags = []
 script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 sol_dir = os.path.join(script_dir, 'sol')
