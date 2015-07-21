@@ -263,9 +263,7 @@ struct getter<T*> {
         type t = type_of(L, index);
         if (t == type::nil)
             return nullptr;
-        void* udata = lua_touserdata(L, index);
-        T** obj = static_cast<T**>(udata);
-        return *obj;
+        return getter<T&>{}.get(L, index);
     }
 };
 
