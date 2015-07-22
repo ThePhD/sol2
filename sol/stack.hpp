@@ -141,6 +141,12 @@ bool check(lua_State* L, int index) {
     return check<T>(L, index, handler);
 }
 
+template<typename... Ret>
+using get_return = ReturnType<decltype(stack::get<Ret>( nullptr, 0 ))...>;
+
+template<typename Empty, typename... Ret>
+using get_return_or = ReturnTypeOr<Empty, decltype(stack::get<Ret>( nullptr, 0 ))...>;
+
 namespace detail {
 const bool default_check_arguments = 
 #ifdef SOL_CHECK_ARGUMENTS
@@ -258,7 +264,7 @@ struct getter<T*> {
         type t = type_of(L, index);
         if (t == type::nil)
             return nullptr;
-        return getter<T&>{}.get(L, index);
+        return std::addressof(getter<T&>{}.get(L, index));
     }
 };
 

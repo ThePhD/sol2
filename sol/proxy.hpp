@@ -52,7 +52,7 @@ public:
     template<typename... Args>
     proxy& set_function(Args&&... args) {
         tbl.set_function(key, std::forward<Args>(args)...);
-        return *this;
+	   return *this;
     }
 
     template<typename U, EnableIf<Function<Unqualified<U>>> = 0>
@@ -65,49 +65,23 @@ public:
         tbl.set(key, std::forward<U>(other));
     }
 
-    operator nil_t() const {
-        return get<nil_t>();
+    operator const char* () const {
+        return get<const char*>();
     }
 
-    operator object() const {
-        return get<object>();
-    }
-
-    operator function() const {
-        return get<function>();
-    }
-
-    operator Unqualified<Table>() const {
-        return get<Unqualified<Table>>();
-    }
-
-    operator std::string() const {
-        return get<std::string>();
-    }
-
-    template<typename T = void>
-    operator bool() const {
-        return get<bool>();
-    }
-
-    template<typename T = void>
-    operator double() const {
-        return get<double>();
-    }
-
-    template<typename T = void>
-    operator float() const {
-        return get<float>();
-    }
-
-    template<typename T = void>
-    operator int() const {
-        return get<int>();
+    template<typename T, EnableIf<Not<std::is_same<Unqualified<T>, const char*>>, Not<std::is_same<Unqualified<T>, char>>, Not<std::is_same<Unqualified<T>, std::string>>, Not<std::is_same<Unqualified<T>, std::initializer_list<char>>>> = 0>
+    operator T () const {
+        return get<T>();
     }
 
     template<typename... Ret, typename... Args>
-    typename return_type<Ret...>::type call(Args&&... args) {
+    stack::get_return_or<function_result, Ret...> call(Args&&... args) {
         return tbl.template get<function>(key)(types<Ret...>(), std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    function_result operator()(Args&&... args) {
+        return tbl.template get<function>(key)(std::forward<Args>(args)...);
     }
 };
 

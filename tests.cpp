@@ -488,6 +488,33 @@ TEST_CASE("functions/return_order_and_multi_get", "Check if return order is in t
     REQUIRE(tluaget == triple);
 }
 
+TEST_CASE("functions/deducing_return_order_and_multi_get", "Check if return order is in the same reading order specified in Lua, with regular deducing calls") {
+    const static std::tuple<int, int, int> triple = std::make_tuple(10, 11, 12);
+    sol::state lua;
+    lua.set_function( "f_string", []() { return "this is a string!"; } );
+    sol::function f_string = lua[ "f_string" ];
+    
+    // Make sure there are no overload collisions / compiler errors for automatic string conversions
+    std::string f_string_result = f_string();
+    REQUIRE(f_string_result == "this is a string!");
+    f_string_result = f_string();
+    REQUIRE(f_string_result == "this is a string!");
+
+    lua.set_function("f", [] {
+        return std::make_tuple(10, 11, 12);
+    });
+    lua.script("function g() return 10, 11, 12 end\nx,y,z = g()");
+    std::tuple<int, int, int> tcpp = lua.get<sol::function>("f")();
+    std::tuple<int, int, int> tlua = lua.get<sol::function>("g")();
+    std::tuple<int, int, int> tluaget = lua.get<int, int, int>("x", "y", "z");
+    std::cout << "cpp: " << std::get<0>(tcpp) << ',' << std::get<1>(tcpp) << ',' << std::get<2>(tcpp) << std::endl;
+    std::cout << "lua: " << std::get<0>(tlua) << ',' << std::get<1>(tlua) << ',' << std::get<2>(tlua) << std::endl;
+    std::cout << "lua xyz: " << lua.get<int>("x") << ',' << lua.get<int>("y") << ',' << lua.get<int>("z") << std::endl;
+    REQUIRE(tcpp == triple);
+    REQUIRE(tlua == triple);
+    REQUIRE(tluaget == triple);
+}
+
 TEST_CASE("functions/sol::function to std::function", "check if conversion to std::function works properly and calls with correct arguments") {
     sol::state lua;
     lua.open_libraries(sol::lib::base);

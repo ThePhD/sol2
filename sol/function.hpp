@@ -40,12 +40,12 @@ private:
     int returncount;
 
     template <typename T, std::size_t I>
-    T get(types<T>, indices<I>) const {
+    stack::get_return<T> get(types<T>, indices<I>) const {
         return stack::get<T>(L, index);
     }
 
     template <typename... Ret, std::size_t... I>
-    std::tuple<Ret...> get(types<Ret...>, indices<I...>) const {
+    stack::get_return<Ret...> get(types<Ret...>, indices<I...>) const {
         auto r = std::make_tuple(stack::get<Ret>(L, index + I)...);
         return r;
     }
@@ -60,10 +60,19 @@ public:
     function_result(function_result&&) = default;
     function_result& operator=(function_result&&) = default;
 
-    template <typename T>
-    operator T () const {
-        auto tr = tuple_types<T>();
+    template<typename T>
+    T get() const {
+        tuple_types<Unqualified<T>> tr;
         return get(tr, tr);
+    }
+
+    operator const char* () const {
+        return get<const char*>();
+    }
+
+    template<typename T, EnableIf<Not<std::is_same<Unqualified<T>, const char*>>, Not<std::is_same<Unqualified<T>, char>>, Not<std::is_same<Unqualified<T>, std::string>>, Not<std::is_same<Unqualified<T>, std::initializer_list<char>>>> = 0>
+    operator T () const {
+        return get<T>();
     }
 
     ~function_result() {
@@ -122,12 +131,14 @@ public:
     }
 
     template<typename... Ret, typename... Args>
-    ReturnType<Ret...> operator()(types<Ret...>, Args&&... args) const {
+    auto operator()(types<Ret...>, Args&&... args) const 
+    -> decltype(call<Ret...>(std::forward<Args>(args)...)) {
         return call<Ret...>(std::forward<Args>(args)...);
     }
 
     template<typename... Ret, typename... Args>
-    auto call(Args&&... args) const -> decltype(invoke(types<Ret...>(), types<Ret...>(), 0)) {
+    auto call(Args&&... args) const
+    -> decltype(invoke(types<Ret...>(), types<Ret...>(), 0)) {
         push();
         int pushcount = stack::push_args(state(), std::forward<Args>(args)...);
         auto tr = types<Ret...>();

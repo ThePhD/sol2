@@ -122,8 +122,11 @@ struct return_type<> {
     typedef void type;
 };
 
+template <typename Empty, typename... Tn>
+using ReturnTypeOr = typename std::conditional<(sizeof...(Tn) < 1), Empty, typename return_type<Tn...>::type>::type;
+
 template <typename... Tn>
-using ReturnType = typename return_type<Tn...>::type;
+using ReturnType = ReturnTypeOr<void, Tn...>;
 
 namespace detail {
 

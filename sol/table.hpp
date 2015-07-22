@@ -30,24 +30,23 @@
 namespace sol {
 class table : public reference {
     friend class state;
-    template<typename T, typename U>
-    auto single_get(U&& key) const -> decltype(stack::get<T>(nullptr, 0)) {
+    template<typename T, typename Key>
+    stack::get_return<T> single_get(Key&& key) const {
         push();
-        stack::push(state(), std::forward<U>(key));
+        stack::push(state(), std::forward<Key>(key));
         lua_gettable(state(), -2);
-        type_assert(state(), -1, type_of<T>());
-        auto&& result = stack::pop<T>(state());
-        lua_pop(state(), 1);
+        stack::get_return<T> result = stack::pop<T>(state());
+        pop();
         return result;
     }
 
     template<typename Keys, typename... Ret, std::size_t... I>
-    auto tuple_get(types<Ret...>, indices<I...>, Keys&& keys) const -> decltype(std::make_tuple(single_get<Ret>(std::get<I>(keys))...)) {
-        return std::make_tuple(single_get<Ret>(std::get<I>(keys))...);
+    stack::get_return<Ret...> tuple_get(types<Ret...>, indices<I...>, Keys&& keys) const {
+        return stack::get_return<Ret...>(single_get<Ret>(std::get<I>(keys))...);
     }
 
-    template<typename Keys, std::size_t I, typename Ret>
-    auto tuple_get(types<Ret>, indices<I>, Keys&& keys) const -> decltype(single_get<Ret>(std::get<I>(keys))) {
+    template<typename Keys, typename Ret, std::size_t I>
+    stack::get_return<Ret> tuple_get(types<Ret>, indices<I>, Keys&& keys) const {
         return single_get<Ret>(std::get<I>(keys));
     }
 
@@ -58,9 +57,8 @@ public:
     }
 
     template<typename... Ret, typename... Keys>
-    auto get(Keys&&... keys) const -> decltype(tuple_get(types<Ret...>(), types<Ret...>(), std::tie(std::forward<Keys>(keys)...))) {
-        types<Ret...> tr;
-        return tuple_get(tr, tr, std::tie(std::forward<Keys>(keys)...));
+    stack::get_return<Ret...> get( Keys&&... keys ) const {
+	    return tuple_get(types<Ret...>(), build_indices<sizeof...(Ret)>(), std::tie(keys...));
     }
 
     template<typename T, typename U>
@@ -119,13 +117,13 @@ public:
     }
 
     template<typename T>
-    proxy<table, T> operator[](T&& key) {
-        return proxy<table, T>(*this, std::forward<T>(key));
+    proxy<table, T> operator[]( T&& key ) {
+	    return proxy<table, T>( *this, std::forward<T>( key ) );
     }
 
     template<typename T>
-    proxy<const table, T> operator[](T&& key) const {
-        return proxy<const table, T>(*this, std::forward<T>(key));
+    proxy<const table, T> operator[]( T&& key ) const {
+	    return proxy<const table, T>( *this, std::forward<T>( key ) );
     }
 
     void pop(int n = 1) const noexcept {
