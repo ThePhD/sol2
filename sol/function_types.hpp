@@ -155,7 +155,7 @@ struct static_function {
     template<typename... Args>
     static int typed_call(types<void> tr, types<Args...> ta, function_type* fx, lua_State* L) {
         stack::call(L, 0, tr, ta, fx);
-        std::ptrdiff_t nargs = sizeof...(Args);
+        int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         return 0;
     }
@@ -168,10 +168,10 @@ struct static_function {
     template<typename... Ret, typename... Args>
     static int typed_call(types<Ret...>, types<Args...> ta, function_type* fx, lua_State* L) {
         typedef typename return_type<Ret...>::type return_type;
-        return_type r = stack::call(L, 0, types<return_type>(), ta, fx);
+        decltype(auto) r = stack::call(L, 0, types<return_type>(), ta, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
-        return stack::push(L, detail::return_forward<return_type>{}(r));
+        return stack::push(L, std::forward<decltype(r)>(r));
     }
 
     static int call(lua_State* L) {
@@ -212,7 +212,7 @@ struct static_member_function {
         return_type r = stack::call(L, 0, tr, ta, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
-        return stack::push(L, detail::return_forward<return_type>{}(r));
+        return stack::push(L, std::forward<return_type>(r));
     }
 
     static int call(lua_State* L) {
@@ -293,7 +293,7 @@ struct base_function {
         static void func_gc (std::false_type, lua_State* L) {
             // Shut up clang tautological error without throwing out std::size_t
             for(std::size_t i = 0; i < limit; ++i) {
-                upvalue up = stack::get<upvalue>(L, i + 1);
+                upvalue up = stack::get<upvalue>(L, static_cast<int>(i + 1));
                 base_function* obj = static_cast<base_function*>(up.value);
                 std::allocator<base_function> alloc{};
                 alloc.destroy(obj);
@@ -392,10 +392,10 @@ struct member_function : public base_function {
 
     template<typename... Ret, typename... Args>
     int operator()(types<Ret...> tr, types<Args...> ta, lua_State* L) {
-        return_type r = stack::call(L, 0, tr, ta, fx);
+        decltype(auto) r = stack::call(L, 0, tr, ta, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
-        return stack::push(L, detail::return_forward<return_type>{}(r));
+        return stack::push(L, std::forward<decltype(r)>(r));
     }
 
     virtual int operator()(lua_State* L) override {
@@ -458,10 +458,10 @@ struct usertype_function_core : public base_function {
 
     template<typename... Ret, typename... Args>
     int call(types<Ret...> tr, types<Args...> ta, lua_State* L) {
-        return_type r = stack::call(L, 0, tr, ta, fx);
+        decltype(auto) r = stack::call(L, 0, tr, ta, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
-        int pushcount = push(L, detail::return_forward<return_type>{}(r));
+        int pushcount = push(L, std::forward<decltype(r)>(r));
         return pushcount;
     }
 

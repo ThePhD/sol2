@@ -48,28 +48,6 @@ template<typename T>
 inline T* get_ptr(T* val) {
     return val;
 }
-
-template<typename Decorated>
-struct return_forward {
-    typedef Unqualified<Decorated> T;
-
-    T& operator()(T& value) const {
-        return value;
-    }
-
-    T&& operator()(T&& value) const {
-        return std::move(value);
-    }
-
-    T operator()(const T& value) const {
-        return value;
-    }
-
-    // handle retarded libraries
-    T operator()(const T&& value) const {
-        return value;
-    }
-};
 } // detail
 
 namespace stack {
@@ -374,7 +352,7 @@ struct pusher {
 
     template<typename U = T, EnableIf<has_begin_end<U>, Not<has_key_value_pair<U>>> = 0>
     static int push(lua_State* L, const T& cont) {
-        lua_createtable(L, cont.size(), 0);
+        lua_createtable(L, static_cast<int>(cont.size()), 0);
         unsigned index = 1;
         for(auto&& i : cont) {
             // push the index
@@ -389,7 +367,7 @@ struct pusher {
 
     template<typename U = T, EnableIf<has_begin_end<U>, has_key_value_pair<U>> = 0>
     static int push(lua_State* L, const T& cont) {
-        lua_createtable(L, cont.size(), 0);
+        lua_createtable(L, static_cast<int>(cont.size()), 0);
         for(auto&& pair : cont) {
             pusher<Unqualified<decltype(pair.first)>>{}.push(L, pair.first);
             pusher<Unqualified<decltype(pair.second)>>{}.push(L, pair.second);
@@ -577,7 +555,7 @@ struct check_arguments<false> {
 template <bool checkargs = detail::default_check_arguments, std::size_t... I, typename R, typename... Args, typename Fx, typename... FxArgs, typename = typename std::enable_if<!std::is_void<R>::value>::type>
 inline R call(lua_State* L, int start, indices<I...>, types<R>, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
     const int stacksize = lua_gettop(L);
-    const int firstargument = start + stacksize - std::max(sizeof...(Args)-1, static_cast<std::size_t>(0));
+    const int firstargument = static_cast<int>(start + stacksize - std::max(sizeof...(Args)-1, static_cast<std::size_t>(0)));
 
     detail::check_arguments<checkargs>{}.check(L, firstargument, ta, ta);
 
@@ -587,7 +565,7 @@ inline R call(lua_State* L, int start, indices<I...>, types<R>, types<Args...> t
 template <bool checkargs = detail::default_check_arguments, std::size_t... I, typename... Args, typename Fx, typename... FxArgs>
 inline void call(lua_State* L, int start, indices<I...>, types<void>, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
     const int stacksize = lua_gettop(L);
-    const int firstargument = start + stacksize - std::max(sizeof...(Args)-1, static_cast<std::size_t>(0));
+    const int firstargument = static_cast<int>(start + stacksize - std::max(sizeof...(Args)-1, static_cast<std::size_t>(0)));
 
     bool checks = detail::check_arguments<checkargs>{}.check(L, firstargument, ta, ta);
     if ( !checks )
