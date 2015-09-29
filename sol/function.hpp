@@ -225,10 +225,12 @@ struct pusher<function_sig_t<Sigs...>> {
         // idx n + 1: is the object's void pointer
         // We don't need to store the size, because the other side is templated
         // with the same member function pointer type
-        Decay<Fx> memfxptr(std::forward<Fx>(fx));
+        typedef Decay<Fx> dFx;
+        typedef Unqualified<Fx> uFx;
+        dFx memfxptr(std::forward<Fx>(fx));
         auto userptr = sol::detail::get_ptr(obj);
         void* userobjdata = static_cast<void*>(userptr);
-        lua_CFunction freefunc = &static_member_function<Decay<decltype(*userptr)>, Fx>::call;
+        lua_CFunction freefunc = &static_member_function<Decay<decltype(*userptr)>, uFx>::call;
 
         int upvalues = stack::detail::push_as_upvalues(L, memfxptr);
         upvalues += stack::push(L, userobjdata);
@@ -252,8 +254,9 @@ struct pusher<function_sig_t<Sigs...>> {
         base_function* target = luafunc.release();
         void* userdata = reinterpret_cast<void*>(target);
         lua_CFunction freefunc = &base_function::call;
-
-        if(luaL_newmetatable(L, metatablename) == 1) {
+	   
+        int metapushed = luaL_newmetatable(L, metatablename);
+        if(metapushed == 1) {
             lua_pushstring(L, "__gc");
             stack::push(L, &base_function::gc);
             lua_settable(L, -3);
