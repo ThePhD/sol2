@@ -378,7 +378,7 @@ struct pusher {
 
     template<typename U = T, EnableIf<std::is_base_of<reference, U>> = 0>
     static int push(lua_State*, T& ref) {
-       return ref.push();
+        return ref.push();
     }
 
     template<typename U = Unqualified<T>, EnableIf<Not<has_begin_end<U>>, Not<std::is_base_of<reference, U>>, Not<std::is_integral<U>>, Not<std::is_floating_point<U>>> = 0>

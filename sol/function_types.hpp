@@ -47,7 +47,7 @@ struct functor {
     functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
 
     bool check () const {
-         return invocation != nullptr;
+        return invocation != nullptr;
     }
 
     template<typename... Args>

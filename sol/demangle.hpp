@@ -59,7 +59,7 @@ inline std::string demangle(const std::type_info& id) {
         while(found != std::string::npos) {
             realname.erase(found, removals[r].size());
             found = realname.find(removals[r]);
-       }
+        }
     }
 
     for(std::size_t r = 0; r < replacements.size(); r+=2) {

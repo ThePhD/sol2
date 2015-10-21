@@ -34,10 +34,10 @@
 
 namespace sol {
 namespace detail {
-   template <typename T>
-   struct SOL_DEPRECATED deprecate_type {
-       using type = T;
-   };
+    template <typename T>
+    struct SOL_DEPRECATED deprecate_type {
+        using type = T;
+    };
 } // detail
 } // sol
 

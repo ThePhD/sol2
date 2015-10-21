@@ -358,11 +358,11 @@ public:
         // but leave the regular T table on last
         // so it can be linked to a type for usage with `.new(...)` or `:new(...)`
         push_metatable(L, usertype_traits<T*>::metatable,
-                       metafunctions, ptrmetafunctiontable);
+            metafunctions, ptrmetafunctiontable);
         lua_pop(L, 1);
 
         push_metatable(L, usertype_traits<T>::metatable,
-                       metafunctions, metafunctiontable);
+            metafunctions, metafunctiontable);
         set_global_deleter(L);
         return 1;
     }

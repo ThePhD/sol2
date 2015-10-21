@@ -286,8 +286,8 @@ struct member_traits : detail::member_traits<Signature> {
 
 struct has_begin_end_impl {
     template<typename T, typename U = Unqualified<T>,
-                         typename B = decltype(std::declval<U&>().begin()),
-                         typename E = decltype(std::declval<U&>().end())>
+        typename B = decltype(std::declval<U&>().begin()),
+        typename E = decltype(std::declval<U&>().end())>
     static std::true_type test(int);
 
     template<typename...>
@@ -299,9 +299,9 @@ struct has_begin_end : decltype(has_begin_end_impl::test<T>(0)) {};
 
 struct has_key_value_pair_impl {
     template<typename T, typename U = Unqualified<T>,
-             typename V = typename U::value_type,
-             typename F = decltype(std::declval<V&>().first),
-             typename S = decltype(std::declval<V&>().second)>
+        typename V = typename U::value_type,
+        typename F = decltype(std::declval<V&>().first),
+        typename S = decltype(std::declval<V&>().second)>
     static std::true_type test(int);
 
     template<typename...>

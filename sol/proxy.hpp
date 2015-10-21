@@ -31,17 +31,12 @@ template<typename Table, typename Key>
 struct proxy {
 private:
     Table& tbl;
-    Key& key;
+    If<std::is_array<Unqualified<Key>>, Key&, Unqualified<Key>> key;
 
 public:
 
     template<typename T>
     proxy(Table& table, T&& key) : tbl(table), key(std::forward<T>(key)) {}
-
-    template<typename T>
-    T get() const {
-        return tbl.template get<T>(key);
-    }
 
     template<typename T>
     proxy& set(T&& item) {
@@ -56,13 +51,20 @@ public:
     }
 
     template<typename U, EnableIf<Function<Unqualified<U>>> = 0>
-    void operator=(U&& other) {
+    proxy& operator=(U&& other) {
         tbl.set_function(key, std::forward<U>(other));
+        return *this;
     }
 
     template<typename U, DisableIf<Function<Unqualified<U>>> = 0>
-    void operator=(U&& other) {
+    proxy& operator=(U&& other) {
         tbl.set(key, std::forward<U>(other));
+        return *this;
+    }
+
+    template<typename T>
+    T get() const {
+        return tbl.template get<T>( key );
     }
 
     operator const char* () const {

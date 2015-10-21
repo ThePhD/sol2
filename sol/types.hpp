@@ -73,7 +73,7 @@ enum class type : int {
     userdata      = LUA_TUSERDATA,
     lightuserdata = LUA_TLIGHTUSERDATA,
     table         = LUA_TTABLE,
-    poly          = none   | nil     | string   | number   | thread       |
+    poly          = none   | nil     | string   | number   | thread          |
                     table  | boolean | function | userdata | lightuserdata
 };
 
@@ -96,14 +96,14 @@ inline void type_error(lua_State* L, type expected, type actual) {
 
 inline void type_assert(lua_State* L, int index, type expected, type actual) {
     if (expected != type::poly && expected != actual) {
-        type_panic(L, index, expected, actual);
+           type_panic(L, index, expected, actual);
     }
 }
 
 inline void type_assert(lua_State* L, int index, type expected) {
     int actual = lua_type(L, index);
     if(expected != type::poly && static_cast<int>(expected) != actual) {
-        type_error(L, static_cast<int>(expected), actual);
+           type_error(L, static_cast<int>(expected), actual);
     }
 }
 

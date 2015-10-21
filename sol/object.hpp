@@ -24,6 +24,7 @@
 
 #include "reference.hpp"
 #include "stack.hpp"
+#include "function.hpp"
 
 namespace sol {
 class object : public reference {
@@ -32,10 +33,13 @@ public:
     object() = default;
 
     template<typename T>
-    auto as() const -> decltype(stack::get<T>(state())) {
+    auto as() const -> decltype(stack::get<T>(state())) const {
         push();
         type actual = stack::get<type>(state());
-        type_assert(state(), -1, type_of<T>(), actual);
+        // This code is actually present
+        // in almost all of the type-getters,
+        // and it thus insanely redundant
+        // type_assert(state(), -1, type_of<T>(), actual);
         return stack::pop<T>(state());
     }
 
@@ -46,25 +50,44 @@ public:
         return (expected == actual) || (expected == type::poly);
     }
 
-    explicit operator bool() const {
-        return !is<nil_t>();
+    bool valid() const {
+        return !this->is<nil_t>();
+    }
+
+    operator const char* () const {
+        return this->as<const char*>();
+    }
+
+    template<typename T, EnableIf<Not<std::is_same<Unqualified<T>, const char*>>, Not<std::is_same<Unqualified<T>, char>>, Not<std::is_same<Unqualified<T>, std::string>>, Not<std::is_same<Unqualified<T>, std::initializer_list<char>>>> = 0>
+    operator T () const {
+        return this->as<T>();
+    }
+
+    template<typename... Ret, typename... Args>
+    stack::get_return_or<function_result, Ret...> call( Args&&... args ) {
+        return this->as<function>()(types<Ret...>(), std::forward<Args>( args )...);
+    }
+
+    template<typename... Args>
+    function_result operator()( Args&&... args ) {
+        return this->as<function>()(std::forward<Args>( args )...);
     }
 };
 
 inline bool operator==(const object& lhs, const nil_t&) {
-    return lhs.is<nil_t>();
+    return !lhs.valid();
 }
 
 inline bool operator==(const nil_t&, const object& rhs) {
-    return rhs.is<nil_t>();
+    return !rhs.valid();
 }
 
 inline bool operator!=(const object& lhs, const nil_t&) {
-    return !lhs.is<nil_t>();
+    return lhs.valid();
 }
 
 inline bool operator!=(const nil_t&, const object& rhs) {
-    return !rhs.is<nil_t>();
+    return rhs.valid();
 }
 } // sol
 

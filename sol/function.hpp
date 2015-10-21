@@ -110,11 +110,11 @@ private:
 
     function_result invoke(indices<>, types<>, std::ptrdiff_t n) const {
         const int stacksize = lua_gettop(state());
-	   const int firstreturn = std::max(0, stacksize - static_cast<int>(n) - 1);
+        const int firstreturn = std::max(0, stacksize - static_cast<int>(n) - 1);
         luacall(n, LUA_MULTRET);
         const int poststacksize = lua_gettop(state());
         const int returncount = poststacksize - firstreturn;
-	   return function_result(state(), firstreturn + 1, returncount);
+        return function_result(state(), firstreturn + 1, returncount);
     }
 
 public:
@@ -172,7 +172,7 @@ struct pusher<function_sig_t<Sigs...>> {
 
     template<typename Sig>
     static void set(lua_State* L, Sig* fxptr){
-       set_fx(std::false_type(), L, fxptr);
+        set_fx(std::false_type(), L, fxptr);
     }
 
     template<typename... Args, typename R, typename C, typename T>

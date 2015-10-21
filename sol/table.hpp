@@ -58,7 +58,7 @@ public:
 
     template<typename... Ret, typename... Keys>
     stack::get_return<Ret...> get( Keys&&... keys ) const {
-	    return tuple_get(types<Ret...>(), build_indices<sizeof...(Ret)>(), std::tie(keys...));
+        return tuple_get(types<Ret...>(), build_indices<sizeof...(Ret)>(), std::tie(keys...));
     }
 
     template<typename T, typename U>
@@ -118,12 +118,12 @@ public:
 
     template<typename T>
     proxy<table, T> operator[]( T&& key ) {
-	    return proxy<table, T>( *this, std::forward<T>( key ) );
+        return proxy<table, T>( *this, std::forward<T>( key ) );
     }
 
     template<typename T>
     proxy<const table, T> operator[]( T&& key ) const {
-	    return proxy<const table, T>( *this, std::forward<T>( key ) );
+        return proxy<const table, T>( *this, std::forward<T>( key ) );
     }
 
     void pop(int n = 1) const noexcept {
