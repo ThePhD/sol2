@@ -62,6 +62,14 @@ enum class call_syntax {
     colon = 1
 };
 
+enum class call_error : int {
+	ok = LUA_OK,
+	runtime = LUA_ERRRUN,
+	memory = LUA_ERRMEM,
+	handler = LUA_ERRERR,
+	gc = LUA_ERRGCMM
+};
+
 enum class type : int {
     none          = LUA_TNONE,
     nil           = LUA_TNIL,

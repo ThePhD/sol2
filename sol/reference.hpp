@@ -31,6 +31,8 @@ private:
     int ref = LUA_NOREF;
 
     int copy() const {
+        if (ref == LUA_NOREF)
+            return LUA_NOREF;
         push();
         return luaL_ref(L, LUA_REGISTRYINDEX);
     }
@@ -44,11 +46,6 @@ public:
 
     virtual ~reference() {
         luaL_unref(L, LUA_REGISTRYINDEX, ref);
-    }
-
-    int push() const noexcept {
-        lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
-        return 1;
     }
 
     reference(reference&& o) noexcept {
@@ -78,6 +75,19 @@ public:
         L = o.L;
         ref = o.copy();
         return *this;
+    }
+
+    int push() const noexcept {
+        lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+        return 1;
+    }
+
+    int get_index() const {
+        return ref;
+    }
+
+    bool valid () const {
+        return !(ref == LUA_NOREF);
     }
 
     type get_type() const {

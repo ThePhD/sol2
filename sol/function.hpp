@@ -38,7 +38,7 @@ private:
     lua_State* L;
     int index;
     int returncount;
-    int error;
+    call_error error;
 
     template <typename T, std::size_t I>
     stack::get_return<T> get(types<T>, indices<I>) const {
@@ -53,16 +53,36 @@ private:
 
 public:
     function_result() = default;
-    function_result(lua_State* L, int index = -1, int returncount = 0, int code = LUA_OK): L(L), index(index), returncount(returncount), error(code) {
+    function_result(lua_State* L, int index = -1, int returncount = 0, call_error error = call_error::ok): L(L), index(index), returncount(returncount), error(error) {
         
     }
     function_result(const function_result&) = default;
     function_result& operator=(const function_result&) = default;
-    function_result(function_result&&) = default;
-    function_result& operator=(function_result&&) = default;
+    function_result(function_result&& o) : L(o.L), index(o.index), returncount(o.returncount), error(o.error) {
+        // Must be manual, otherwise destructor will screw us
+	   // return count being 0 is enough to keep things clean
+	   // but will be thorough
+	   o.L = nullptr;
+	   o.index = 0;
+	   o.returncount = 0;
+	   o.error = call_error::runtime;
+    }
+    function_result& operator=(function_result&& o) {
+	   L = o.L;
+	   index = o.index;
+	   returncount = o.returncount;
+	   error = o.error;
+	   // Must be manual, otherwise destructor will screw us
+	   // return count being 0 is enough to keep things clean
+	   // but will be thorough
+	   o.L = nullptr;
+	   o.index = 0;
+	   o.returncount = 0;
+	   o.error = call_error::runtime;
+    }
 
     bool valid() const {
-        return error == LUA_OK;
+        return error == call_error::ok;
     }
 
     template<typename T>
@@ -81,23 +101,42 @@ public:
     }
 
     ~function_result() {
-        lua_pop(L, returncount);
+        stack::remove(L, index, error == call_error::ok ? returncount : 1);
     }
 };
 
 class function : public reference {
+public:
+    static reference default_handler;
+
 private:
-    int luacodecall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount) const {
-        return lua_pcallk(state(), static_cast<int>(argcount), static_cast<int>(resultcount), 0, 0, nullptr);
+    struct handler {
+        const reference& target;
+        int stack;
+        handler(const reference& target) : target(target), stack(0) {
+            if (target.valid()) {
+                stack = lua_gettop(target.state()) + 1;
+                target.push();
+            }
+        }
+        ~handler() {
+            if (target.valid()) {
+                lua_remove(target.state(), stack);
+            }
+        }
+    };
+
+    int luacodecall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount, const handler& h) const {
+        return lua_pcallk(state(), static_cast<int>(argcount), static_cast<int>(resultcount), h.stack, 0, nullptr);
     }
 
-    void luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount) const {
+    void luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount, const handler& h) const {
         lua_callk(state(), static_cast<int>(argcount), static_cast<int>(resultcount), 0, nullptr);
     }
 
     template<std::size_t... I, typename... Ret>
-    std::tuple<Ret...> invoke(indices<I...>, types<Ret...>, std::ptrdiff_t n) const {
-        luacall(n, sizeof...(Ret));
+    std::tuple<Ret...> invoke(indices<I...>, types<Ret...>, std::ptrdiff_t n, const handler& h) const {
+        luacall(n, sizeof...(Ret), h);
         const int nreturns = static_cast<int>(sizeof...(Ret));
         const int stacksize = lua_gettop(state());
         const int firstreturn = std::max(0, stacksize - nreturns) + 1;
@@ -107,56 +146,60 @@ private:
     }
 
     template<std::size_t I, typename Ret>
-    Ret invoke(indices<I>, types<Ret>, std::ptrdiff_t n) const {
-        luacall(n, 1);
+    Ret invoke(indices<I>, types<Ret>, std::ptrdiff_t n, const handler& h) const {
+        luacall(n, 1, h);
         return stack::pop<Ret>(state());
     }
 
     template <std::size_t I>
-    void invoke(indices<I>, types<void>, std::ptrdiff_t n) const {
-        luacall(n, 0);
+    void invoke(indices<I>, types<void>, std::ptrdiff_t n, const handler& h) const {
+        luacall(n, 0, h);
     }
 
-    function_result invoke(indices<>, types<>, std::ptrdiff_t n) const {
+    function_result invoke(indices<>, types<>, std::ptrdiff_t n, const handler& h) const {
         const int stacksize = lua_gettop(state());
         const int firstreturn = std::max(0, stacksize - static_cast<int>(n) - 1);
         int code = LUA_OK;
         try {
-            code = luacodecall( n, LUA_MULTRET );
+            code = luacodecall(n, LUA_MULTRET, h);
         }
         // Handle C++ errors thrown from C++ functions bound inside of lua
-        catch ( const std::exception& error ) {
+        catch (const std::exception& error) {
             code = LUA_ERRRUN;
-            stack::push( state(), error.what() );
+            stack::push(state(), error.what());
         }
         // TODO: handle idiots?
-        /*catch ( const char* error ) {
+        /*catch (const char* error) {
             code = LUA_ERRRUN;
-            stack::push( state(), error );
+            stack::push(state(), error);
         }
-        catch ( const std::string& error ) {
+        catch (const std::string& error) {
             code = LUA_ERRRUN;
-            stack::push( state(), error );
+            stack::push(state(), error);
         }
-        catch ( ... ) {
+        catch (...) {
             code = LUA_ERRRUN;
             stack::push( state(), "[sol] an unknownable runtime exception occurred" );
         }*/
-        catch ( ... ) {
+        catch (...) {
             throw;
         }
         const int poststacksize = lua_gettop(state());
         const int returncount = poststacksize - firstreturn;
-        return function_result(state(), firstreturn + 1, returncount, code);
+        return function_result(state(), firstreturn + ( error_handler.valid() ? 0 : 1 ), returncount, static_cast<call_error>(code));
     }
 
 public:
+    sol::reference error_handler;
+
     function() = default;
     function(lua_State* L, int index = -1): reference(L, index) {
         type_assert(L, index, type::function);
     }
     function(const function&) = default;
     function& operator=(const function&) = default;
+    function( function&& ) = default;
+    function& operator=( function&& ) = default;
 
     template<typename... Args>
     function_result operator()(Args&&... args) const {
@@ -171,13 +214,16 @@ public:
 
     template<typename... Ret, typename... Args>
     auto call(Args&&... args) const
-    -> decltype(invoke(types<Ret...>(), types<Ret...>(), 0)) {
+    -> decltype(invoke(types<Ret...>(), types<Ret...>(), 0, std::declval<handler>())) {
+        handler h(error_handler);
         push();
         int pushcount = stack::push_args(state(), std::forward<Args>(args)...);
         auto tr = types<Ret...>();
-        return invoke(tr, tr, pushcount);
+        return invoke(tr, tr, pushcount, h);
     }
 };
+
+sol::reference function::default_handler;
 
 namespace stack {
 template<typename... Sigs>

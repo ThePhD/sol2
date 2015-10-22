@@ -575,6 +575,28 @@ inline void call(lua_State* L, int start, indices<I...>, types<void>, types<Args
 }
 } // detail
 
+void remove( lua_State* L, int index, int count ) {
+    if ( count < 1 )
+        return;
+    int top = lua_gettop( L );
+    if ( index == -1 || top == index ) {
+        // Slice them right off the top
+        lua_pop( L, static_cast<int>(count) );
+        return;
+    }
+
+    // Remove each item one at a time using stack operations
+    // Probably slower, maybe, haven't benchmarked,
+    // but necessary
+    if ( index < 0 ) {
+        index = lua_gettop( L ) + (index + 1);
+    }
+    int last = index + count;
+    for ( int i = index; i < last; ++i ) {
+        lua_remove( L, i );
+    }
+}
+
 template <bool checkargs = detail::default_check_arguments, typename R, typename... Args, typename Fx, typename... FxArgs, typename = typename std::enable_if<!std::is_void<R>::value>::type>
 inline R call(lua_State* L, int start, types<R> tr, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
     return detail::call<checkargs>(L, start, ta, tr, ta, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
