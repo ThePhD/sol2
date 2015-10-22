@@ -38,6 +38,7 @@ private:
     lua_State* L;
     int index;
     int returncount;
+    int error;
 
     template <typename T, std::size_t I>
     stack::get_return<T> get(types<T>, indices<I>) const {
@@ -52,13 +53,17 @@ private:
 
 public:
     function_result() = default;
-    function_result(lua_State* L, int index = -1, int returncount = 0): L(L), index(index), returncount(returncount) {
+    function_result(lua_State* L, int index = -1, int returncount = 0, int code = LUA_OK): L(L), index(index), returncount(returncount), error(code) {
         
     }
     function_result(const function_result&) = default;
     function_result& operator=(const function_result&) = default;
     function_result(function_result&&) = default;
     function_result& operator=(function_result&&) = default;
+
+    bool valid() const {
+        return error == LUA_OK;
+    }
 
     template<typename T>
     T get() const {
@@ -82,8 +87,12 @@ public:
 
 class function : public reference {
 private:
+    int luacodecall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount) const {
+        return lua_pcallk(state(), static_cast<int>(argcount), static_cast<int>(resultcount), 0, 0, nullptr);
+    }
+
     void luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount) const {
-        lua_call(state(), static_cast<int>(argcount), static_cast<int>(resultcount));
+        lua_callk(state(), static_cast<int>(argcount), static_cast<int>(resultcount), 0, nullptr);
     }
 
     template<std::size_t... I, typename... Ret>
@@ -111,10 +120,10 @@ private:
     function_result invoke(indices<>, types<>, std::ptrdiff_t n) const {
         const int stacksize = lua_gettop(state());
         const int firstreturn = std::max(0, stacksize - static_cast<int>(n) - 1);
-        luacall(n, LUA_MULTRET);
+        int code = luacodecall(n, LUA_MULTRET);
         const int poststacksize = lua_gettop(state());
         const int returncount = poststacksize - firstreturn;
-        return function_result(state(), firstreturn + 1, returncount);
+        return function_result(state(), firstreturn + 1, returncount, code);
     }
 
 public:
