@@ -120,7 +120,31 @@ private:
     function_result invoke(indices<>, types<>, std::ptrdiff_t n) const {
         const int stacksize = lua_gettop(state());
         const int firstreturn = std::max(0, stacksize - static_cast<int>(n) - 1);
-        int code = luacodecall(n, LUA_MULTRET);
+        int code = LUA_OK;
+        try {
+            code = luacodecall( n, LUA_MULTRET );
+        }
+        // Handle C++ errors thrown from C++ functions bound inside of lua
+        catch ( const std::exception& error ) {
+            code = LUA_ERRRUN;
+            stack::push( state(), error.what() );
+        }
+        // TODO: handle idiots?
+        /*catch ( const char* error ) {
+            code = LUA_ERRRUN;
+            stack::push( state(), error );
+        }
+        catch ( const std::string& error ) {
+            code = LUA_ERRRUN;
+            stack::push( state(), error );
+        }
+        catch ( ... ) {
+            code = LUA_ERRRUN;
+            stack::push( state(), "[sol] an unknownable runtime exception occurred" );
+        }*/
+        catch ( ... ) {
+            throw;
+        }
         const int poststacksize = lua_gettop(state());
         const int returncount = poststacksize - firstreturn;
         return function_result(state(), firstreturn + 1, returncount, code);
@@ -263,7 +287,7 @@ struct pusher<function_sig_t<Sigs...>> {
         base_function* target = luafunc.release();
         void* userdata = reinterpret_cast<void*>(target);
         lua_CFunction freefunc = &base_function::call;
-	   
+       
         int metapushed = luaL_newmetatable(L, metatablename);
         if(metapushed == 1) {
             lua_pushstring(L, "__gc");
