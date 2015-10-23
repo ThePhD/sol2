@@ -55,7 +55,7 @@ private:
     table reg;
     table global;
 public:
-    state():
+    state(lua_CFunction panic = detail::atpanic):
     L(luaL_newstate(), lua_close),
     reg(L.get(), LUA_REGISTRYINDEX),
 #if SOL_LUA_VERSION < 503
@@ -65,7 +65,7 @@ public:
     // Global tables are stored in the environment/registry table
     global(reg.get<table>(LUA_RIDX_GLOBALS)) {
 #endif // Lua 5.2
-        lua_atpanic(L.get(), detail::atpanic);
+        set_panic(panic);
     }
 
     lua_State* lua_state() const {
@@ -233,6 +233,10 @@ public:
 
     table registry() const {
         return reg;
+    }
+
+    void set_panic(lua_CFunction panic){
+        lua_atpanic(L.get(), panic);
     }
 
     template<typename T>
