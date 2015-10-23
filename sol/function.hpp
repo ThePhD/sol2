@@ -193,7 +193,7 @@ public:
     sol::reference error_handler;
 
     function() = default;
-    function(lua_State* L, int index = -1): reference(L, index) {
+    function(lua_State* L, int index = -1): reference(L, index), error_handler(default_handler) {
         type_assert(L, index, type::function);
     }
     function(const function&) = default;
