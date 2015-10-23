@@ -998,3 +998,52 @@ TEST_CASE("interop/null-to-nil-and-back", "nil should be the given type when a p
         "rofl(x)\n"
         "assert(x == nil)"));
 }
+
+TEST_CASE( "functions/sol::function_result", "Function result should be the beefy return type for sol::function that allows for error checking and error handlers" ) {
+    sol::state lua;
+    lua.open_libraries( sol::lib::base, sol::lib::debug );
+
+    static const char errormessage1[] = "true error message";
+    static const char errormessage2[] = "doodle";
+
+    // Some function; just using a lambda to be cheap
+    auto doom = []() {
+        // Bypasses handler function: puts information directly into lua error
+        throw std::exception( errormessage1 );
+    };
+    auto luadoom = [&lua]() {
+        // Does not bypass error function, will call it
+        luaL_error( lua.lua_state(), "BIG ERROR MESSAGES!" );
+    };
+    auto specialhandler = []( std::string message ) {
+        return errormessage2;
+    };
+
+    lua.set_function( "doom", doom );
+    lua.set_function( "luadoom", luadoom );
+    lua.set_function( "cpphandler", specialhandler );
+    lua.script(
+        std::string( "function handler ( message )" )
+        + "    return '" + errormessage2 + "'"
+        + "end"
+        );
+
+    sol::function func = lua[ "doom" ];
+    sol::function luafunc = lua[ "luadoom" ];
+    sol::function luahandler = lua[ "handler" ];
+    sol::function cpphandler = lua[ "cpphandler" ];
+    func.error_handler = luahandler;
+    luafunc.error_handler = cpphandler;
+
+    sol::function_result result1 = func();
+    int test = lua_gettop(lua.lua_state());
+    REQUIRE(!result1.valid());
+    std::string errorstring = result1;
+    REQUIRE(errorstring == errormessage1);
+    
+    sol::function_result result2 = luafunc();
+    REQUIRE(!result2.valid());
+    errorstring = result2;
+    REQUIRE(errorstring == errormessage2);
+
+}
