@@ -168,7 +168,8 @@ struct static_function {
     template<typename... Ret, typename... Args>
     static int typed_call(types<Ret...>, types<Args...> ta, function_type* fx, lua_State* L) {
         typedef typename return_type<Ret...>::type return_type;
-        decltype(auto) r = stack::call(L, 0, types<return_type>(), ta, fx);
+	   typedef decltype(stack::call(L, 0, types<return_type>(), ta, fx)) ret_t;
+        ret_t r = stack::call(L, 0, types<return_type>(), ta, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         return stack::push(L, std::forward<decltype(r)>(r));
@@ -392,7 +393,8 @@ struct member_function : public base_function {
 
     template<typename... Ret, typename... Args>
     int operator()(types<Ret...> tr, types<Args...> ta, lua_State* L) {
-        decltype(auto) r = stack::call(L, 0, tr, ta, fx);
+        typedef decltype(stack::call(L, 0, tr, ta, fx)) ret_t;
+        ret_t r = stack::call(L, 0, tr, ta, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         return stack::push(L, std::forward<decltype(r)>(r));
@@ -458,7 +460,8 @@ struct usertype_function_core : public base_function {
 
     template<typename... Ret, typename... Args>
     int call(types<Ret...> tr, types<Args...> ta, lua_State* L) {
-        decltype(auto) r = stack::call(L, 0, tr, ta, fx);
+        typedef decltype(stack::call(L, 0, tr, ta, fx)) ret_t;
+        ret_t r = stack::call(L, 0, tr, ta, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         int pushcount = push(L, std::forward<decltype(r)>(r));

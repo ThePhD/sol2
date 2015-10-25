@@ -67,8 +67,8 @@ public:
         return tbl.template get<T>( key );
     }
 
-    operator const char* () const {
-        return get<const char*>();
+    operator std::string() const {
+        return get<std::string>();
     }
 
     template<typename T, EnableIf<Not<std::is_same<Unqualified<T>, const char*>>, Not<std::is_same<Unqualified<T>, char>>, Not<std::is_same<Unqualified<T>, std::string>>, Not<std::is_same<Unqualified<T>, std::initializer_list<char>>>> = 0>

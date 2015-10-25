@@ -60,25 +60,25 @@ public:
     function_result& operator=(const function_result&) = default;
     function_result(function_result&& o) : L(o.L), index(o.index), returncount(o.returncount), error(o.error) {
         // Must be manual, otherwise destructor will screw us
-	   // return count being 0 is enough to keep things clean
-	   // but will be thorough
-	   o.L = nullptr;
-	   o.index = 0;
-	   o.returncount = 0;
-	   o.error = call_error::runtime;
+        // return count being 0 is enough to keep things clean
+        // but will be thorough
+        o.L = nullptr;
+        o.index = 0;
+        o.returncount = 0;
+        o.error = call_error::runtime;
     }
     function_result& operator=(function_result&& o) {
-	   L = o.L;
-	   index = o.index;
-	   returncount = o.returncount;
-	   error = o.error;
-	   // Must be manual, otherwise destructor will screw us
-	   // return count being 0 is enough to keep things clean
-	   // but will be thorough
-	   o.L = nullptr;
-	   o.index = 0;
-	   o.returncount = 0;
-	   o.error = call_error::runtime;
+        L = o.L;
+        index = o.index;
+        returncount = o.returncount;
+        error = o.error;
+        // Must be manual, otherwise destructor will screw us
+        // return count being 0 is enough to keep things clean
+        // but will be thorough
+        o.L = nullptr;
+        o.index = 0;
+        o.returncount = 0;
+        o.error = call_error::runtime;
     }
 
     bool valid() const {
@@ -91,8 +91,8 @@ public:
         return get(tr, tr);
     }
 
-    operator const char* () const {
-        return get<const char*>();
+    operator std::string() const {
+        return get<std::string>();
     }
 
     template<typename T, EnableIf<Not<std::is_same<Unqualified<T>, const char*>>, Not<std::is_same<Unqualified<T>, char>>, Not<std::is_same<Unqualified<T>, std::string>>, Not<std::is_same<Unqualified<T>, std::initializer_list<char>>>> = 0>
@@ -210,13 +210,13 @@ public:
 
     template<typename... Ret, typename... Args>
     auto operator()(types<Ret...>, Args&&... args) const 
-    -> decltype(call<Ret...>(std::forward<Args>(args)...)) {
+    -> decltype(invoke(types<Ret...>(), types<Ret...>(), 0, std::declval<handler&>())) {
         return call<Ret...>(std::forward<Args>(args)...);
     }
 
     template<typename... Ret, typename... Args>
     auto call(Args&&... args) const
-    -> decltype(invoke(types<Ret...>(), types<Ret...>(), 0, std::declval<handler>())) {
+    -> decltype(invoke(types<Ret...>(), types<Ret...>(), 0, std::declval<handler&>())) {
         handler h(error_handler);
         push();
         int pushcount = stack::push_args(state(), std::forward<Args>(args)...);

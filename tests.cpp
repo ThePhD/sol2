@@ -1009,7 +1009,7 @@ TEST_CASE( "functions/sol::function_result", "Function result should be the beef
     // Some function; just using a lambda to be cheap
     auto doom = []() {
         // Bypasses handler function: puts information directly into lua error
-        throw std::exception( errormessage1 );
+        throw std::runtime_error( errormessage1 );
     };
     auto luadoom = [&lua]() {
         // Does not bypass error function, will call it
