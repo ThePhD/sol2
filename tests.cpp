@@ -472,20 +472,24 @@ TEST_CASE("functions/overloaded", "Check if overloaded function resolution templ
 
 TEST_CASE("functions/return_order_and_multi_get", "Check if return order is in the same reading order specified in Lua") {
     const static std::tuple<int, int, int> triple = std::make_tuple(10, 11, 12);
+    const static std::tuple<int, float> paired = std::make_tuple(10, 10.f);
     sol::state lua;
     lua.set_function("f", [] {
         return std::make_tuple(10, 11, 12);
-    });
+    } );
+    int a = 0;
+    lua.set_function( "h", []() {
+        return std::make_tuple( 10, 10.0f );
+    } );
     lua.script("function g() return 10, 11, 12 end\nx,y,z = g()");
     auto tcpp = lua.get<sol::function>("f").call<int, int, int>();
-    auto tlua = lua.get<sol::function>("g").call<int, int, int>();
-    auto tluaget = lua.get<int, int, int>("x", "y", "z");
-    std::cout << "cpp: " << std::get<0>(tcpp) << ',' << std::get<1>(tcpp) << ',' << std::get<2>(tcpp) << std::endl;
-    std::cout << "lua: " << std::get<0>(tlua) << ',' << std::get<1>(tlua) << ',' << std::get<2>(tlua) << std::endl;
-    std::cout << "lua xyz: " << lua.get<int>("x") << ',' << lua.get<int>("y") << ',' << lua.get<int>("z") << std::endl;
+    auto tlua = lua.get<sol::function>( "g" ).call<int, int, int>();
+    auto tcpp2 = lua.get<sol::function>( "h" ).call<int, float>();
+    auto tluaget = lua.get<int, int, int>( "x", "y", "z" );
     REQUIRE(tcpp == triple);
     REQUIRE(tlua == triple);
     REQUIRE(tluaget == triple);
+    REQUIRE(tcpp2 == paired);
 }
 
 TEST_CASE("functions/deducing_return_order_and_multi_get", "Check if return order is in the same reading order specified in Lua, with regular deducing calls") {

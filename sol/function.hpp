@@ -108,7 +108,10 @@ public:
 
 class function : public reference {
 public:
-    static reference default_handler;
+    static reference& default_handler() {
+        static sol::reference h;
+	   return h;
+    }
 
 private:
     struct handler {
@@ -196,7 +199,7 @@ public:
     sol::reference error_handler;
 
     function() = default;
-    function(lua_State* L, int index = -1): reference(L, index), error_handler(default_handler) {
+    function(lua_State* L, int index = -1): reference(L, index), error_handler(default_handler()) {
         type_assert(L, index, type::function);
     }
     function(const function&) = default;
@@ -225,8 +228,6 @@ public:
         return invoke(tr, tr, pushcount, h);
     }
 };
-
-sol::reference function::default_handler;
 
 namespace stack {
 template<typename... Sigs>
