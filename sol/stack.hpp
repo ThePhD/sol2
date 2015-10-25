@@ -575,7 +575,7 @@ inline void call(lua_State* L, int start, indices<I...>, types<void>, types<Args
 }
 } // detail
 
-void remove( lua_State* L, int index, int count ) {
+inline void remove( lua_State* L, int index, int count ) {
     if ( count < 1 )
         return;
     int top = lua_gettop( L );

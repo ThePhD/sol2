@@ -79,6 +79,7 @@ public:
         o.index = 0;
         o.returncount = 0;
         o.error = call_error::runtime;
+        return *this;
     }
 
     bool valid() const {
