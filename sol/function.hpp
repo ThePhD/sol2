@@ -107,10 +107,19 @@ public:
 };
 
 class function : public reference {
+private:
+	static reference& handler_storage() {
+		static sol::reference h;
+		return h;
+	}
+
 public:
-    static reference& default_handler() {
-        static sol::reference h;
-	   return h;
+    static const reference& get_default_handler () {
+        return handler_storage();
+    }
+
+    static void set_default_handler( reference& ref ) {
+        handler_storage() = ref;
     }
 
 private:
@@ -199,7 +208,7 @@ public:
     sol::reference error_handler;
 
     function() = default;
-    function(lua_State* L, int index = -1): reference(L, index), error_handler(default_handler()) {
+    function(lua_State* L, int index = -1): reference(L, index), error_handler(get_default_handler()) {
         type_assert(L, index, type::function);
     }
     function(const function&) = default;

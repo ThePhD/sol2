@@ -39,3 +39,4 @@ lua-5.1.5/
 luajit-2.0.4/
 *.creator.user.*
 lua-5.3.1/
+main2.cpp
