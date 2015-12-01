@@ -58,7 +58,7 @@ public:
     state(lua_CFunction panic = detail::atpanic):
     L(luaL_newstate(), lua_close),
     reg(L.get(), LUA_REGISTRYINDEX),
-#if SOL_LUA_VERSION < 503
+#if SOL_LUA_VERSION < 502
     // Global table is just a special index
     global(L.get(), LUA_GLOBALSINDEX) {
 #else
