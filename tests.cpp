@@ -597,7 +597,7 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
         std::cout << a << ',' << b << '\n';
     };
 
-    REQUIRE_NOTHROW(assert1(lua.global_table()));
+    REQUIRE_NOTHROW(assert1(lua.global()));
 }
 
 TEST_CASE("tables/usertype", "Show that we can create classes from usertype and use them") {

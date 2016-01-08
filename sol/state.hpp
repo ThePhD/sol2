@@ -30,7 +30,7 @@ namespace sol {
 namespace detail {
 inline int atpanic(lua_State* L) {
     const char* message = lua_tostring(L, -1);
-    std::string err = message ? message : "An unexpected error occured and forced the lua state to call atpanic";
+    std::string err = message ? message : "An unexpected error occurred and forced the lua state to call atpanic";
     throw error(err);
 }
 } // detail
@@ -53,18 +53,12 @@ class state {
 private:
     std::unique_ptr<lua_State, void(*)(lua_State*)> L;
     table reg;
-    table global;
+    global_table globals;
 public:
     state(lua_CFunction panic = detail::atpanic):
     L(luaL_newstate(), lua_close),
     reg(L.get(), LUA_REGISTRYINDEX),
-#if SOL_LUA_VERSION < 502
-    // Global table is just a special index
-    global(L.get(), LUA_GLOBALSINDEX) {
-#else
-    // Global tables are stored in the environment/registry table
-    global(reg.get<table>(LUA_RIDX_GLOBALS)) {
-#endif // Lua 5.2
+    globals(detail::global_overload, reg) {
         set_panic(panic);
     }
 
@@ -152,13 +146,13 @@ public:
 
     template<typename... Args, typename... Keys>
     auto get(Keys&&... keys) const
-    -> decltype(global.get<Args...>(std::forward<Keys>(keys)...)) {
-        return global.get<Args...>(std::forward<Keys>(keys)...);
+    -> decltype(globals.get<Args...>(std::forward<Keys>(keys)...)) {
+        return globals.get<Args...>(std::forward<Keys>(keys)...);
     }
 
     template<typename T, typename U>
     state& set(T&& key, U&& value) {
-        global.set(std::forward<T>(key), std::forward<U>(value));
+        globals.set(std::forward<T>(key), std::forward<U>(value));
         return *this;
     }
 
@@ -189,7 +183,7 @@ public:
 
     template<typename Key, typename T>
     state& set_usertype(Key&& key, usertype<T>& user) {
-        global.set_usertype(std::forward<Key>(key), user);
+        globals.set_usertype(std::forward<Key>(key), user);
         return *this;
     }
 
@@ -208,7 +202,7 @@ public:
 
     template <typename Fx>
     void for_each(Fx&& fx) {
-        global.for_each(std::forward<Fx>(fx));
+        globals.for_each(std::forward<Fx>(fx));
     }
 
     template<typename T>
@@ -216,7 +210,7 @@ public:
         lua_createtable(L.get(), narr, nrec);
         table result(L.get());
         lua_pop(L.get(), 1);
-        global.set(std::forward<T>(key), result);
+        globals.set(std::forward<T>(key), result);
         return result;
     }
 
@@ -227,8 +221,8 @@ public:
         return result;
     }
 
-    table global_table() const {
-        return global;
+    global_table global() const {
+        return globals;
     }
 
     table registry() const {
@@ -240,42 +234,42 @@ public:
     }
 
     template<typename T>
-    proxy<table, T> operator[](T&& key) {
-        return global[std::forward<T>(key)];
+    proxy<global_table, T> operator[](T&& key) {
+        return globals[std::forward<T>(key)];
     }
 
     template<typename T>
-    proxy<const table, T> operator[](T&& key) const {
-        return global[std::forward<T>(key)];
+    proxy<const global_table, T> operator[](T&& key) const {
+        return globals[std::forward<T>(key)];
     }
 
     template<typename... Args, typename R, typename Key>
     state& set_function(Key&& key, R fun_ptr(Args...)){
-        global.set_function(std::forward<Key>(key), fun_ptr);
+        globals.set_function(std::forward<Key>(key), fun_ptr);
         return *this;
     }
 
     template<typename Sig, typename Key>
     state& set_function(Key&& key, Sig* fun_ptr){
-        global.set_function(std::forward<Key>(key), fun_ptr);
+        globals.set_function(std::forward<Key>(key), fun_ptr);
         return *this;
     }
 
     template<typename... Args, typename R, typename C, typename T, typename Key>
     state& set_function(Key&& key, R (C::*mem_ptr)(Args...), T&& obj) {
-        global.set_function(std::forward<Key>(key), mem_ptr, std::forward<T>(obj));
+        globals.set_function(std::forward<Key>(key), mem_ptr, std::forward<T>(obj));
         return *this;
     }
 
     template<typename Sig, typename C, typename T, typename Key>
     state& set_function(Key&& key, Sig C::* mem_ptr, T&& obj) {
-        global.set_function(std::forward<Key>(key), mem_ptr, std::forward<T>(obj));
+        globals.set_function(std::forward<Key>(key), mem_ptr, std::forward<T>(obj));
         return *this;
     }
 
     template<typename... Sig, typename Fx, typename Key>
     state& set_function(Key&& key, Fx&& fx) {
-        global.set_function<Sig...>(std::forward<Key>(key), std::forward<Fx>(fx));
+        globals.set_function<Sig...>(std::forward<Key>(key), std::forward<Fx>(fx));
         return *this;
     }
 };

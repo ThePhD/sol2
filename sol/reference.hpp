@@ -97,7 +97,7 @@ public:
         return static_cast<type>(result);
     }
 
-    lua_State* state() const noexcept {
+    lua_State* lua_state() const noexcept {
         return L;
     }
 };

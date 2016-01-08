@@ -121,7 +121,10 @@ inline std::string type_name(lua_State*L, type t) {
 
 template<typename T>
 class usertype;
-class table;
+template <bool>
+class table_core;
+typedef table_core<false> table;
+typedef table_core<true> global_table;
 class function;
 class object;
 

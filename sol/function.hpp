@@ -128,40 +128,40 @@ private:
         int stack;
         handler(const reference& target) : target(target), stack(0) {
             if (target.valid()) {
-                stack = lua_gettop(target.state()) + 1;
+                stack = lua_gettop(target.lua_state()) + 1;
                 target.push();
             }
         }
         ~handler() {
             if (stack > 0) {
-                lua_remove(target.state(), stack);
+                lua_remove(target.lua_state(), stack);
             }
         }
     };
 
     int luacodecall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount, handler& h) const {
-        return lua_pcallk(state(), static_cast<int>(argcount), static_cast<int>(resultcount), h.stack, 0, nullptr);
+        return lua_pcallk(lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount), h.stack, 0, nullptr);
     }
 
     void luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount, handler& h) const {
-        lua_callk(state(), static_cast<int>(argcount), static_cast<int>(resultcount), 0, nullptr);
+        lua_callk(lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount), 0, nullptr);
     }
 
     template<std::size_t... I, typename... Ret>
     std::tuple<Ret...> invoke(indices<I...>, types<Ret...>, std::ptrdiff_t n, handler& h) const {
         luacall(n, sizeof...(Ret), h);
         const int nreturns = static_cast<int>(sizeof...(Ret));
-        const int stacksize = lua_gettop(state());
+        const int stacksize = lua_gettop(lua_state());
         const int firstreturn = std::max(0, stacksize - nreturns) + 1;
-        auto r = std::make_tuple(stack::get<Ret>(state(), firstreturn + I)...);
-        lua_pop(state(), nreturns);
+        auto r = std::make_tuple(stack::get<Ret>(lua_state(), firstreturn + I)...);
+        lua_pop(lua_state(), nreturns);
         return r;
     }
 
     template<std::size_t I, typename Ret>
     Ret invoke(indices<I>, types<Ret>, std::ptrdiff_t n, handler& h) const {
         luacall(n, 1, h);
-        return stack::pop<Ret>(state());
+        return stack::pop<Ret>(lua_state());
     }
 
     template <std::size_t I>
@@ -171,7 +171,7 @@ private:
 
     function_result invoke(indices<>, types<>, std::ptrdiff_t n, handler& h) const {
         const bool handlerpushed = error_handler.valid();
-        const int stacksize = lua_gettop(state());
+        const int stacksize = lua_gettop(lua_state());
         const int firstreturn = std::max(0, stacksize - static_cast<int>(n) - 1);
         int code = LUA_OK;
         try {
@@ -181,27 +181,27 @@ private:
         catch (const std::exception& error) {
             code = LUA_ERRRUN;
 		  h.stack = 0;
-            stack::push(state(), error.what());
+            stack::push(lua_state(), error.what());
         }
         // TODO: handle idiots?
         /*catch (const char* error) {
             code = LUA_ERRRUN;
-            stack::push(state(), error);
+            stack::push(lua_state(), error);
         }
         catch (const std::string& error) {
             code = LUA_ERRRUN;
-            stack::push(state(), error);
+            stack::push(lua_state(), error);
         }
         catch (...) {
             code = LUA_ERRRUN;
-            stack::push( state(), "[sol] an unknownable runtime exception occurred" );
+            stack::push( lua_state(), "[sol] an unknownable runtime exception occurred" );
         }*/
         catch (...) {
             throw;
         }
-        const int poststacksize = lua_gettop(state());
+        const int poststacksize = lua_gettop(lua_state());
         const int returncount = poststacksize - firstreturn;
-        return function_result(state(), firstreturn + ( handlerpushed ? 0 : 1 ), returncount, static_cast<call_error>(code));
+        return function_result(lua_state(), firstreturn + ( handlerpushed ? 0 : 1 ), returncount, static_cast<call_error>(code));
     }
 
 public:
@@ -232,7 +232,7 @@ public:
     -> decltype(invoke(types<Ret...>(), types<Ret...>(), 0, std::declval<handler&>())) {
         handler h(error_handler);
         push();
-        int pushcount = stack::push_args(state(), std::forward<Args>(args)...);
+        int pushcount = stack::push_args(lua_state(), std::forward<Args>(args)...);
         auto tr = types<Ret...>();
         return invoke(tr, tr, pushcount, h);
     }
