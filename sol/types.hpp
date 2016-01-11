@@ -125,7 +125,9 @@ template <bool>
 class table_core;
 typedef table_core<false> table;
 typedef table_core<true> global_table;
-class function;
+class fast_function;
+class safe_function;
+typedef safe_function function;
 class object;
 
 template <typename T, typename = void>
