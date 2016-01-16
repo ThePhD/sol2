@@ -2,6 +2,7 @@
 #include "bench_lua_function.hpp"
 #include "bench_get.hpp"
 #include "bench_set.hpp"
+#include "bench_usertype.hpp"
 #include "nonius/nonius.h++"
 
 int main( int argc, char* argv[] ) {
@@ -12,4 +13,5 @@ int main( int argc, char* argv[] ) {
 	bench_cpp_function( "bench/", configurationname, platformname );
 	bench_get( "bench/", configurationname, platformname );
 	bench_set( "bench/", configurationname, platformname );
+	bench_usertype( "bench/", configurationname, platformname );
 }

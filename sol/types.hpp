@@ -32,9 +32,6 @@ const nil_t nil {};
 inline bool operator==(nil_t, nil_t) { return true; }
 inline bool operator!=(nil_t, nil_t) { return false; }
 
-struct void_type : types<void> {}; // This is important because it allows myobject.call( Void, ... ) to work
-const void_type Void {};
-
 template<typename... T>
 struct function_sig_t {};
 using function_t = function_sig_t<>;
@@ -146,10 +143,13 @@ template <>
 struct lua_type_of<bool> : std::integral_constant<type, type::boolean> {};
 
 template <>
-struct lua_type_of<nil_t> : std::integral_constant<type, type::nil> {};
+struct lua_type_of<nil_t> : std::integral_constant<type, type::nil> { };
 
 template <>
-struct lua_type_of<table> : std::integral_constant<type, type::table> {};
+struct lua_type_of<table> : std::integral_constant<type, type::table> { };
+
+template <>
+struct lua_type_of<global_table> : std::integral_constant<type, type::table> { };
 
 template <>
 struct lua_type_of<object> : std::integral_constant<type, type::poly> {};
@@ -159,6 +159,9 @@ struct lua_type_of<light_userdata> : std::integral_constant<type, type::lightuse
 
 template <>
 struct lua_type_of<function> : std::integral_constant<type, type::function> {};
+
+template <>
+struct lua_type_of<fast_function> : std::integral_constant<type, type::function> {};
 
 template <typename Signature>
 struct lua_type_of<std::function<Signature>> : std::integral_constant<type, type::function>{};
@@ -184,6 +187,9 @@ template <typename T>
 struct lua_type_of<T, typename std::enable_if<std::is_enum<T>::value>::type> : std::integral_constant<type, type::number> {
 
 };
+
+template <typename T>
+struct is_lua_primitive : std::integral_constant<bool, type::userdata != lua_type_of<Unqualified<T>>::value> { };
 
 } // sol
 

@@ -87,7 +87,7 @@ template<typename T, typename... Args>
 struct And<T, Args...> : If<T, And<Args...>, Bool<false>> {};
 
 template<typename... Args>
-struct Or : Bool<true> {};
+struct Or : Bool<false> {};
 
 template<typename T, typename... Args>
 struct Or<T, Args...> : If<T, Bool<true>, Or<Args...>> {};
@@ -310,6 +310,9 @@ struct has_key_value_pair_impl {
 
 template<typename T>
 struct has_key_value_pair : decltype(has_key_value_pair_impl::test<T>(0)) {};
+
+template <typename T>
+using is_string_constructible = Or<std::is_same<Unqualified<T>, const char*>, std::is_same<Unqualified<T>, char>, std::is_same<Unqualified<T>, std::string>, std::is_same<Unqualified<T>, std::initializer_list<char>>>;
 
 template<typename T>
 auto unwrapper(T&& item) -> decltype(std::forward<T>(item)) {

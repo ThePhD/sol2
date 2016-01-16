@@ -63,7 +63,7 @@ public:
     }
 
     template<typename T>
-    T get() const {
+    decltype(auto) get() const {
         return tbl.template get<T>( key );
     }
 
@@ -71,19 +71,19 @@ public:
         return get<std::string>();
     }
 
-    template<typename T, EnableIf<Not<std::is_same<Unqualified<T>, const char*>>, Not<std::is_same<Unqualified<T>, char>>, Not<std::is_same<Unqualified<T>, std::string>>, Not<std::is_same<Unqualified<T>, std::initializer_list<char>>>> = 0>
-    operator T () const {
-        return get<T>();
+    template<typename T, EnableIf<Not<is_string_constructible<T>>, is_lua_primitive<T>> = 0>
+    operator T ( ) const {
+	    return get<T>( );
+    }
+
+    template<typename T, EnableIf<Not<is_string_constructible<T>>, Not<is_lua_primitive<T>>> = 0>
+    operator T& ( ) const {
+	    return get<T&>( );
     }
 
     template<typename... Ret, typename... Args>
-    stack::get_return_or<function_result, Ret...> call(Args&&... args) {
-        return tbl.template get<function>(key)(types<Ret...>(), std::forward<Args>(args)...);
-    }
-
-    template<typename... Args>
-    function_result operator()(Args&&... args) {
-        return tbl.template get<function>(key)(std::forward<Args>(args)...);
+    decltype(auto) call(Args&&... args) {
+        return get<function>().call<Ret...>(std::forward<Args>(args)...);
     }
 };
 
