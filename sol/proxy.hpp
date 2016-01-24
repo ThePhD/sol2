@@ -81,9 +81,19 @@ public:
 	    return get<T&>( );
     }
 
+    template <typename K>
+    decltype(auto) operator[](K&& key) const {
+	    return get<table>()[std::forward<K>(key)];
+    }
+
     template<typename... Ret, typename... Args>
     decltype(auto) call(Args&&... args) {
         return get<function>().call<Ret...>(std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    decltype(auto) operator()(Args&&... args) {
+        return call<>(std::forward<Args>(args)...);
     }
 };
 

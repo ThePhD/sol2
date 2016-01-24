@@ -84,8 +84,8 @@ void bench_lua_function( const std::string& dir,  std::string& configurationname
 	nonius::benchmark benchmarks [] = {
 		nonius::benchmark( "fast_function - function_result", sol_fast_function_result_lua_bench( ) ),
 		nonius::benchmark( "fast_function - call<>", sol_fast_direct_lua_bench( ) ),
-		nonius::benchmark( "safe_function - function_result", sol_function_result_lua_bench( ) ),
-		nonius::benchmark( "safe_function - call<>", sol_direct_lua_bench( ) ),
+		nonius::benchmark( "function - function_result", sol_function_result_lua_bench( ) ),
+		nonius::benchmark( "function - call<>", sol_direct_lua_bench( ) ),
 		nonius::benchmark( "plain C", c_direct_lua_bench( ) ),
 	};
 	nonius::go( cfg, std::begin( benchmarks ), std::end( benchmarks ), nonius::html_reporter( ) );
