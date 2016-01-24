@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2015 Danny Y., Rapptz
+// Copyright (c) 2013-2015 Rapptz and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -47,7 +47,7 @@ struct functor {
     functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
 
     bool check () const {
-        return invocation != nullptr;
+         return invocation != nullptr;
     }
 
     template<typename... Args>

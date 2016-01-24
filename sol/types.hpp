@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2015 Danny Y., Rapptz
+// Copyright (c) 2013-2015 Rapptz and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -25,12 +25,16 @@
 #include "compatibility.hpp"
 #include "traits.hpp"
 #include <string>
+#include "traits.hpp"
 
 namespace sol {
 struct nil_t {};
 const nil_t nil {};
 inline bool operator==(nil_t, nil_t) { return true; }
 inline bool operator!=(nil_t, nil_t) { return false; }
+
+struct void_type : types<void> {}; // This is important because it allows myobject.call( Void, ... ) to work
+const void_type Void {};
 
 template<typename... T>
 struct function_sig_t {};

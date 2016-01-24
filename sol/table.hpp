@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2015 Danny Y., Rapptz
+// Copyright (c) 2013-2015 Rapptz and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,6 @@
 #include "table_core.hpp"
 
 namespace sol {
-	typedef table_core<false> table;
-} // sol
+	typedef table_core<false> } // sol
 
 #endif // SOL_TABLE_HPP

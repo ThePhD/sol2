@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2015 Danny Y., Rapptz
+// Copyright (c) 2013-2015 Rapptz and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -26,7 +26,7 @@
 #include <array>
 #include <cstdlib>
 
-#if (defined(__GNUC__) || defined(__clang__)) && !defined(_MSC_VER)
+#if defined(__GNUC__) || defined(__clang__)
 #include <cxxabi.h>
 #endif
 
@@ -59,7 +59,7 @@ inline std::string demangle(const std::type_info& id) {
         while(found != std::string::npos) {
             realname.erase(found, removals[r].size());
             found = realname.find(removals[r]);
-        }
+       }
     }
 
     for(std::size_t r = 0; r < replacements.size(); r+=2) {

@@ -43,15 +43,15 @@ int main() {
     lua.open_libraries(sol::lib::base, sol::lib::math);
 
     // the simplest way to create a class is through
-    // sol::state::new_usertype
+    // sol::state::new_userdata
     // the first template is the class type
     // the rest are the constructor parameters
-    // using new_usertype you can only have one constructor
+    // using new_userdata you can only have one constructor
 
 
     // you must make sure that the name of the function
     // goes before the member function pointer
-    lua.new_usertype<foo, std::string>("foo", "print", &foo::print, "test", &foo::test);
+    lua.new_userdata<foo, std::string>("foo", "print", &foo::print, "test", &foo::test);
 
     // making the class from lua is simple
     // same with calling member functions
@@ -63,8 +63,8 @@ int main() {
     assert(y == 14);
 
     // if you want a class to have more than one constructor
-    // the way to do so is through set_usertype and creating
-    // a usertype yourself with constructor types
+    // the way to do so is through set_userdata and creating
+    // a userdata yourself with constructor types
 
     {
         // Notice the brace: this means we're in a new scope
@@ -75,7 +75,7 @@ int main() {
         // the first argument of construction is the name
         // second is the constructor types
         // then the rest are function name and member function pointer pairs
-        sol::usertype<vector> udata(ctor, "is_unit", &vector::is_unit);
+        sol::userdata<vector> udata("vector", ctor, "is_unit", &vector::is_unit);
 
         // then you must register it
         lua.set_usertype("vector", udata);
@@ -83,7 +83,7 @@ int main() {
         // have to keep it around
         // cleanup happens automagically
     }
-    // calling it is the same as new_usertype
+    // calling it is the same as new_userdata
 
     lua.script("v = vector.new()\n"
                "v = vector.new(12)\n"
@@ -92,7 +92,7 @@ int main() {
 
     // You can even have C++-like member-variable-access
     // just pass is public member variables in the same style as functions
-    lua.new_usertype<variables>("variables", "low_gravity", &variables::low_gravity, "boost_level", &variables::boost_level);
+    lua.new_userdata<variables>("variables", "low_gravity", &variables::low_gravity, "boost_level", &variables::boost_level);
 
     // making the class from lua is simple
     // same with calling member functions/variables
