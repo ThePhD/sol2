@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2015 Danny Y., Rapptz
+// Copyright (c) 2013-2015 Rapptz and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -46,6 +46,18 @@
 #endif
 #endif
 
+/* LuaJIT does not have the updated error codes for thread status/function returns */
+#ifndef LUA_ERRGCMM
+#define LUA_ERRGCMM (LUA_ERRERR + 1)
+#endif // LUA_ERRGCMM
+
+/* LuaJIT does not support continuation contexts / return error codes? */
+#ifndef LUA_KCONTEXT
+#define LUA_KCONTEXT std::ptrdiff_t
+typedef LUA_KCONTEXT lua_KContext;
+typedef int(*lua_KFunction) (lua_State *L, int status, lua_KContext ctx);
+#endif // LUA_KCONTEXT
+
 #define LUA_OPADD 0
 #define LUA_OPSUB 1
 #define LUA_OPMUL 2
@@ -72,6 +84,14 @@ typedef struct luaL_Buffer_52 {
 
 #define lua_rawlen(L, i) lua_objlen(L, i)
 
+void lua_callk(lua_State *L, int nargs, int nresults, lua_KContext, lua_KFunction) {
+    // should probably warn the user of Lua 5.1 that continuation isn't supported...
+    lua_call(L, nargs, nresults);
+}
+int lua_pcallk(lua_State *L, int nargs, int nresults, int errfunc, lua_KContext, lua_KFunction) {
+    // should probably warn the user of Lua 5.1 that continuation isn't supported...
+    return lua_pcall(L, nargs, nresults, errfunc);
+}
 void lua_arith(lua_State *L, int op);
 int lua_compare(lua_State *L, int idx1, int idx2, int op);
 void lua_pushunsigned(lua_State *L, lua_Unsigned n);
