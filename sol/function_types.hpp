@@ -168,7 +168,7 @@ struct static_function {
     template<typename... Ret, typename... Args>
     static int typed_call(types<Ret...>, types<Args...> ta, function_type* fx, lua_State* L) {
         typedef typename return_type<Ret...>::type return_type;
-	   typedef decltype(stack::call(L, 0, types<return_type>(), ta, fx)) ret_t;
+        typedef decltype(stack::call(L, 0, types<return_type>(), ta, fx)) ret_t;
         ret_t r = stack::call(L, 0, types<return_type>(), ta, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
@@ -373,7 +373,8 @@ struct member_function : public base_function {
 
         template<typename... Args>
         return_type operator()(Args&&... args) {
-           return (member.*invocation)(std::forward<Args>(args)...);
+            auto& mem = unwrapper(unref(member));
+            return (mem.*invocation)(std::forward<Args>(args)...);
         }
     } fx;
 

@@ -64,11 +64,11 @@ enum class call_syntax {
 };
 
 enum class call_error : int {
-	ok = LUA_OK,
-	runtime = LUA_ERRRUN,
-	memory = LUA_ERRMEM,
-	handler = LUA_ERRERR,
-	gc = LUA_ERRGCMM
+    ok = LUA_OK,
+    runtime = LUA_ERRRUN,
+    memory = LUA_ERRMEM,
+    handler = LUA_ERRERR,
+    gc = LUA_ERRGCMM
 };
 
 enum class type : int {

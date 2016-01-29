@@ -24,6 +24,7 @@
 
 #include "tuple.hpp"
 #include <type_traits>
+#include <memory>
 #include <functional>
 
 namespace sol {
@@ -324,6 +325,35 @@ Unwrap<Arg> unwrapper(std::reference_wrapper<Arg> arg) {
     return arg.get();
 }
 
+template<typename T>
+T& unref(T& item) {
+    return item;
+}
+
+template<typename T>
+T& unref(T* item) {
+    return *item;
+}
+
+template<typename T>
+T& unref(std::unique_ptr<T>& item) {
+    return *item;
+}
+
+template<typename T>
+T& unref(std::shared_ptr<T>& item) {
+    return *item;
+}
+
+template<typename T>
+T& unref(const std::unique_ptr<T>& item) {
+    return *item;
+}
+
+template<typename T>
+T& unref(const std::shared_ptr<T>& item) {
+    return *item;
+}
 } // sol
 
 #endif // SOL_TRAITS_HPP

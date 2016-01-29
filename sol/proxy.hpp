@@ -47,7 +47,7 @@ public:
     template<typename... Args>
     proxy& set_function(Args&&... args) {
         tbl.set_function(key, std::forward<Args>(args)...);
-	   return *this;
+        return *this;
     }
 
     template<typename U, EnableIf<Function<Unqualified<U>>> = 0>
@@ -73,17 +73,17 @@ public:
 
     template<typename T, EnableIf<Not<is_string_constructible<T>>, is_lua_primitive<T>> = 0>
     operator T ( ) const {
-	    return get<T>( );
+        return get<T>( );
     }
 
     template<typename T, EnableIf<Not<is_string_constructible<T>>, Not<is_lua_primitive<T>>> = 0>
     operator T& ( ) const {
-	    return get<T&>( );
+        return get<T&>( );
     }
 
     template <typename K>
     decltype(auto) operator[](K&& key) const {
-	    return get<table>()[std::forward<K>(key)];
+        return get<table>()[std::forward<K>(key)];
     }
 
     template<typename... Ret, typename... Args>
