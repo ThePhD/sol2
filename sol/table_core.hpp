@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2015 Danny Y., Rapptz
+// Copyright (c) 2013-2015 Rapptz and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -29,27 +29,31 @@
 
 namespace sol {
 namespace detail {
-    struct global_overload_tag { } const global_overload;
+struct global_overload_tag { } const global_overload;
 } // detail
 
 template <bool top_level>
 class table_core : public reference {
     friend class state;
-    template<typename T, typename Key, EnableIf<Not<std::is_arithmetic<Unqualified<Key>>>, Bool<top_level>> = 0>
-    stack::get_return<T> single_get( Key&& key ) const {
-        lua_getglobal( lua_state( ), &key[ 0 ] );
-        stack::get_return<T> result = stack::pop<T>( lua_state( ) );
-        return result;
+    friend class state_view;
+
+    template<typename T, typename Key, EnableIf<Not<std::is_integral<Unqualified<Key>>>, Bool<top_level>> = 0>
+    decltype(auto) single_get( Key&& key ) const {
+        lua_getglobal(lua_state( ), &key[0]);
+        return stack::pop<T>(lua_state());
     }
 
-    template<typename T, typename Key, DisableIf<Not<std::is_arithmetic<Unqualified<Key>>>, Bool<top_level>> = 0>
-    stack::get_return<T> single_get( Key&& key ) const {
-        push( );
+    template<typename T, typename Key, EnableIf<std::is_integral<Unqualified<Key>>, Bool<top_level>> = 0>
+    decltype(auto) single_get(Key&& key) const {
+        stack::detail::lua_getglobali(lua_state(), &key[0]);
+        return stack::pop<T>(lua_state());
+    }
+
+    template<typename T, typename Key, DisableIf<Not<std::is_void<Key>>, Bool<top_level>> = 0>
+    decltype(auto) single_get( Key&& key ) const {
         stack::push( lua_state( ), std::forward<Key>( key ) );
         lua_gettable( lua_state( ), -2 );
-        stack::get_return<T> result = stack::pop<T>( lua_state( ) );
-        pop( );
-        return result;
+        return stack::pop<T>( lua_state( ) );
     }
 
     template<typename Keys, typename... Ret, std::size_t... I>
@@ -58,8 +62,33 @@ class table_core : public reference {
     }
 
     template<typename Keys, typename Ret, std::size_t I>
-    stack::get_return<Ret> tuple_get( types<Ret>, indices<I>, Keys&& keys ) const {
+    decltype(auto) tuple_get( types<Ret>, indices<I>, Keys&& keys ) const {
         return single_get<Ret>( std::get<I>( keys ) );
+    }
+
+    template<typename Key, typename U, EnableIf<std::is_integral<Unqualified<Key>>, Bool<top_level>> = 0>
+    void single_set( Key&& key, U&& value ) {
+        stack::push( lua_state( ), std::forward<Value>( value ) );
+        stack::detail::lua_setglobali( lua_state( ), std::forward<Key>(key) );
+    }
+
+    template<typename Key, typename Value, EnableIf<Not<std::is_integral<Unqualified<Key>>>, Bool<top_level>> = 0>
+    void single_set( Key&& key, Value&& value ) {
+        stack::push( lua_state( ), std::forward<Value>( value ) );
+        lua_setglobal( lua_state( ), &key[0] );
+    }
+
+    template<typename Key, typename Value, DisableIf<Not<std::is_void<Key>>, Bool<top_level>> = 0>
+    void single_set(Key&& key, Value&& value) {
+        stack::push(lua_state(), std::forward<Key>(key));
+        stack::push(lua_state(), std::forward<Value>(value));
+        lua_settable(lua_state(), -3);
+    }
+
+    template<typename Pairs, std::size_t... I>
+    void tuple_set( indices<I...>, Pairs&& pairs ) {
+	    using swallow = int[];
+	    swallow{ 0, ( single_set(std::get<I * 2>(pairs), std::get<I * 2 + 1>(pairs)) , 0)..., 0 };
     }
 
 #if SOL_LUA_VERSION < 502
@@ -75,24 +104,16 @@ public:
     }
 
     template<typename... Ret, typename... Keys>
-    stack::get_return<Ret...> get( Keys&&... keys ) const {
-        return tuple_get( types<Ret...>( ), build_indices<sizeof...( Ret )>( ), std::tie( keys... ) );
+    decltype(auto) get( Keys&&... keys ) const {
+        auto pp = detail::push_pop<const table_core&>(*this);
+        return tuple_get( types<Ret...>( ), build_indices<sizeof...( Ret )>( ), std::forward_as_tuple(std::forward<Keys>(keys)...));
     }
 
-    template<typename T, typename U>
-    table_core& set( T&& key, U&& value ) {
-        if ( top_level ) {
-            stack::push( lua_state( ), std::forward<U>( value ) );
-            lua_setglobal( lua_state( ), &key[0] );
-        }
-        else {
-            push( );
-            stack::push( lua_state( ), std::forward<T>( key ) );
-            stack::push( lua_state( ), std::forward<U>( value ) );
-            lua_settable( lua_state( ), -3 );
-            pop( );
-        }
-        return *this;
+    template<typename... Tn>
+    table_core& set( Tn&&... argn ) {
+        auto pp = detail::push_pop<const table_core&>(*this);
+	   tuple_set(build_indices<sizeof...(Tn) / 2>(), std::forward_as_tuple(std::forward<Tn>(argn)...));
+	   return *this;
     }
 
     template<typename T>
@@ -148,13 +169,18 @@ public:
     }
 
     template<typename T>
-    proxy<table_core, T> operator[]( T&& key ) {
-        return proxy<table_core, T>( *this, std::forward<T>( key ) );
+    proxy<table_core&, T> operator[]( T&& key ) & {
+        return proxy<table_core&, T>( *this, std::forward<T>( key ) );
     }
 
     template<typename T>
-    proxy<const table_core, T> operator[]( T&& key ) const {
-        return proxy<const table_core, T>( *this, std::forward<T>( key ) );
+    proxy<const table_core&, T> operator[]( T&& key ) const & {
+        return proxy<const table_core&, T>( *this, std::forward<T>( key ) );
+    }
+
+    template<typename T>
+    proxy<table_core, T> operator[]( T&& key ) && {
+        return proxy<table_core, T>( *this, std::forward<T>( key ) );
     }
 
     void pop( int n = 1 ) const noexcept {

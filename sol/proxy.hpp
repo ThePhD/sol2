@@ -30,13 +30,13 @@ namespace sol {
 template<typename Table, typename Key>
 struct proxy {
 private:
-    Table& tbl;
+    Table tbl;
     If<std::is_array<Unqualified<Key>>, Key&, Unqualified<Key>> key;
 
 public:
 
     template<typename T>
-    proxy(Table& table, T&& key) : tbl(table), key(std::forward<T>(key)) {}
+    proxy(Table table, T&& key) : tbl(table), key(std::forward<T>(key)) {}
 
     template<typename T>
     proxy& set(T&& item) {

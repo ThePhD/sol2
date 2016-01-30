@@ -133,6 +133,29 @@ true;
 false;
 #endif
 
+inline void lua_getglobali(lua_State* L, lua_Integer n) {
+#if SOL_LUA_VERSION >= 503
+    lua_geti(L, LUA_RIDX_GLOBALS, n);
+#else
+    lua_pushglobaltable(L);
+    lua_pushinteger(L, n);
+    lua_gettable(L, -2);
+    lua_remove(L, -2); // remove the global table, leave final value on the stack
+#endif
+}
+
+inline void lua_setglobali(lua_State* L, lua_Integer n) {
+#if SOL_LUA_VERSION >= 503
+    lua_seti(L, LUA_RIDX_GLOBALS, n);
+#else
+    lua_pushglobaltable(L);
+    lua_pushinteger(L, n);
+    lua_pushvalue(L, -3)
+    lua_settable(L, -3);
+    lua_pop(L, 2); // remove table, and the copy of the value
+#endif
+}
+
 template <typename T, typename Key, typename... Args>
 inline int push_confirmed_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
     T* pdatum = static_cast<T*>(lua_newuserdata(L, sizeof(T)));

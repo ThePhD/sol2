@@ -25,6 +25,15 @@
 #include "types.hpp"
 
 namespace sol {
+namespace detail {
+template <typename T>
+struct push_pop {
+    T t;
+    push_pop (T x) : t(x) { t.push(); }
+    ~push_pop() { t.pop(); }
+};
+} // detail
+
 class reference {
 private:
     lua_State* L = nullptr; // non-owning
