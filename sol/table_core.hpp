@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2015 Rapptz and contributors
+// Copyright (c) 2013-2016 Rapptz and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -49,8 +49,9 @@ class table_core : public reference {
         return stack::pop<T>(lua_state());
     }
 
-    template<typename T, typename Key, DisableIf<Not<std::is_void<Key>>, Bool<top_level>> = 0>
+    template<typename T, typename Key, DisableIf<Bool<top_level>, Not<std::is_void<Key>>> = 0>
     decltype(auto) single_get( Key&& key ) const {
+        auto pp = stack::push_popper(*this);
         stack::push( lua_state( ), std::forward<Key>( key ) );
         lua_gettable( lua_state( ), -2 );
         return stack::pop<T>( lua_state( ) );
@@ -78,8 +79,9 @@ class table_core : public reference {
         lua_setglobal( lua_state( ), &key[0] );
     }
 
-    template<typename Key, typename Value, DisableIf<Not<std::is_void<Key>>, Bool<top_level>> = 0>
+    template<typename Key, typename Value, DisableIf<Bool<top_level>, Not<std::is_void<Key>>> = 0>
     void single_set(Key&& key, Value&& value) {
+        auto pp = stack::push_popper(*this);
         stack::push(lua_state(), std::forward<Key>(key));
         stack::push(lua_state(), std::forward<Value>(value));
         lua_settable(lua_state(), -3);
@@ -87,8 +89,8 @@ class table_core : public reference {
 
     template<typename Pairs, std::size_t... I>
     void tuple_set( indices<I...>, Pairs&& pairs ) {
-	    using swallow = int[];
-	    swallow{ 0, ( single_set(std::get<I * 2>(pairs), std::get<I * 2 + 1>(pairs)) , 0)..., 0 };
+        using swallow = int[];
+        swallow{ 0, ( single_set(std::get<I * 2>(pairs), std::get<I * 2 + 1>(pairs)) , 0)..., 0 };
     }
 
 #if SOL_LUA_VERSION < 502
@@ -105,14 +107,12 @@ public:
 
     template<typename... Ret, typename... Keys>
     decltype(auto) get( Keys&&... keys ) const {
-        auto pp = detail::push_pop<const table_core&>(*this);
         return tuple_get( types<Ret...>( ), build_indices<sizeof...( Ret )>( ), std::forward_as_tuple(std::forward<Keys>(keys)...));
     }
 
     template<typename... Tn>
     table_core& set( Tn&&... argn ) {
-        auto pp = detail::push_pop<const table_core&>(*this);
-	   tuple_set(build_indices<sizeof...(Tn) / 2>(), std::forward_as_tuple(std::forward<Tn>(argn)...));
+        tuple_set(build_indices<sizeof...(Tn) / 2>(), std::forward_as_tuple(std::forward<Tn>(argn)...));
 	   return *this;
     }
 
@@ -136,21 +136,19 @@ public:
         if ( top_level ) {
             stack::push( lua_state( ), user );
             lua_setglobal( lua_state( ), &key[ 0 ] );
-            pop( );
         }
         else {
-            push( );
+            auto pp = stack::push_popper( *this );
             stack::push( lua_state( ), std::forward<Key>( key ) );
             stack::push( lua_state( ), user );
             lua_settable( lua_state( ), -3 );
-            pop( );
         }
         return *this;
     }
 
     template<typename Fx>
     void for_each( Fx&& fx ) const {
-        push( );
+        auto pp = stack::push_popper( *this );
         stack::push( lua_state( ), nil );
         while ( lua_next( this->lua_state( ), -2 ) ) {
             sol::object key( lua_state( ), -2 );
@@ -158,14 +156,11 @@ public:
             fx( key, value );
             lua_pop( lua_state( ), 1 );
         }
-        pop( );
     }
 
     size_t size( ) const {
-        push( );
-        size_t result = lua_rawlen( lua_state( ), -1 );
-        pop( );
-        return result;
+        auto pp = stack::push_popper( *this );
+        return lua_rawlen(lua_state(), -1);
     }
 
     template<typename T>
@@ -238,11 +233,10 @@ private:
 
     template<typename... Sig, typename... Args, typename Key, DisableIf<Not<std::is_arithmetic<Unqualified<Key>>>, Bool<top_level>> = 0>
     void set_resolved_function( Key&& key, Args&&... args ) {
-        push( );
+        auto pp = stack::push_popper( *this );
         int tabletarget = lua_gettop( lua_state( ) );
         stack::push<function_sig_t<Sig...>>( lua_state( ), std::forward<Args>( args )... );
         lua_setfield( lua_state( ), tabletarget, &key[ 0 ] );
-        pop( );
     }
 };
 } // sol

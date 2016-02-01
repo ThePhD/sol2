@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2015 Rapptz and contributors
+// Copyright (c) 2013-2016 Rapptz and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -150,7 +150,7 @@ inline void lua_setglobali(lua_State* L, lua_Integer n) {
 #else
     lua_pushglobaltable(L);
     lua_pushinteger(L, n);
-    lua_pushvalue(L, -3)
+    lua_pushvalue(L, -3);
     lua_settable(L, -3);
     lua_pop(L, 2); // remove table, and the copy of the value
 #endif

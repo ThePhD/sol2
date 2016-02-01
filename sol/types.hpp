@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2015 Rapptz and contributors
+// Copyright (c) 2013-2016 Rapptz and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -126,9 +126,8 @@ template <bool>
 class table_core;
 typedef table_core<false> table;
 typedef table_core<true> global_table;
-class fast_function;
-class safe_function;
-typedef safe_function function;
+class function;
+class protected_function;
 class object;
 
 template <typename T, typename = void>
@@ -165,7 +164,7 @@ template <>
 struct lua_type_of<function> : std::integral_constant<type, type::function> {};
 
 template <>
-struct lua_type_of<fast_function> : std::integral_constant<type, type::function> {};
+struct lua_type_of<protected_function> : std::integral_constant<type, type::function> {};
 
 template <typename Signature>
 struct lua_type_of<std::function<Signature>> : std::integral_constant<type, type::function>{};
@@ -195,6 +194,14 @@ struct lua_type_of<T, typename std::enable_if<std::is_enum<T>::value>::type> : s
 template <typename T>
 struct is_lua_primitive : std::integral_constant<bool, type::userdata != lua_type_of<Unqualified<T>>::value> { };
 
+template <typename T>
+struct is_proxy_primitive : is_lua_primitive<T> { };
+
+template <typename T>
+struct is_proxy_primitive<std::reference_wrapper<T>> : std::true_type { };
+
+template <typename... Tn>
+struct is_proxy_primitive<std::tuple<Tn...>> : std::true_type { };
 } // sol
 
 #endif // SOL_TYPES_HPP

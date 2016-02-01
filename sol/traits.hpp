@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2015 Rapptz and contributors
+// Copyright (c) 2013-2016 Rapptz and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -44,7 +44,7 @@ struct unwrap {
 
 template<typename T>
 struct unwrap<std::reference_wrapper<T>> {
-    typedef typename std::add_lvalue_reference<T>::type type;
+    typedef T type;
 };
 
 template<typename T>
@@ -321,7 +321,7 @@ auto unwrapper(T&& item) -> decltype(std::forward<T>(item)) {
 }
 
 template<typename Arg>
-Unwrap<Arg> unwrapper(std::reference_wrapper<Arg> arg) {
+Arg& unwrapper(std::reference_wrapper<Arg> arg) {
     return arg.get();
 }
 

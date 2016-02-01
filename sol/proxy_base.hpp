@@ -19,27 +19,33 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_VERSION_HPP
-#define SOL_VERSION_HPP
+#ifndef SOL_PROXY_BASE_HPP
+#define SOL_PROXY_BASE_HPP
 
-#include <lua.hpp>
+#include "reference.hpp"
+#include "tuple.hpp"
+#include "stack.hpp"
 
-#ifdef LUAJIT_VERSION
-#ifndef SOL_LUAJIT
-#define SOL_LUAJIT
-#endif // sol luajit
-#endif // luajit
+namespace sol {
+template <typename Super>
+struct proxy_base {
+    operator std::string() const {
+        const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
+        return super.template get<std::string>();
+    }
 
-#if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM >= 502
-#define SOL_LUA_VERSION LUA_VERSION_NUM
-#elif defined(LUA_VERSION_NUM) && LUA_VERSION_NUM == 501
-#define SOL_LUA_VERSION LUA_VERSION_NUM
-#elif !defined(LUA_VERSION_NUM)
-// Definitely 5.0
-#define SOL_LUA_VERSION 500
-#else
-// ??? Not sure, assume 502?
-#define SOL_LUA_VERSION 502
-#endif // Lua Version 502, 501 || luajit, 500 
+    template<typename T, EnableIf<Not<is_string_constructible<T>>, is_proxy_primitive<Unqualified<T>>> = 0>
+    operator T ( ) const {
+        const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
+        return super.template get<T>( );
+    }
 
-#endif // SOL_VERSION_HPP
+    template<typename T, EnableIf<Not<is_string_constructible<T>>, Not<is_proxy_primitive<Unqualified<T>>>> = 0>
+    operator T& ( ) const {
+        const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
+        return super.template get<T&>( );
+    }
+};
+} // sol
+
+#endif // SOL_PROXY_BASE_HPP

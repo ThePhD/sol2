@@ -13,30 +13,6 @@ end
 	return lua;
 }
 
-struct sol_fast_function_result_lua_bench {
-	void operator () ( nonius::chronometer meter ) const {
-		sol::state lua = prepare_lua_function_state( );
-		auto measurement = [ & ] ( int run_index ) {
-			sol::fast_function r = lua[ "r" ];
-			int value = r( );
-			return value;
-		};
-		meter.measure( measurement );
-	}
-};
-
-struct sol_fast_direct_lua_bench {
-	void operator () ( nonius::chronometer meter ) const {
-		sol::state lua = prepare_lua_function_state( );
-		auto measurement = [ & ] ( int run_index ) {
-			sol::fast_function r = lua[ "r" ];
-			int value = r.call<int>( );
-			return value;
-		};
-		meter.measure( measurement );
-	}
-};
-
 struct sol_function_result_lua_bench {
 	void operator () ( nonius::chronometer meter ) const {
 		sol::state lua = prepare_lua_function_state( );
@@ -49,11 +25,35 @@ struct sol_function_result_lua_bench {
 	}
 };
 
-struct sol_direct_lua_bench {
+struct sol_call_lua_bench {
 	void operator () ( nonius::chronometer meter ) const {
 		sol::state lua = prepare_lua_function_state( );
 		auto measurement = [ & ] ( int run_index ) {
 			sol::function r = lua[ "r" ];
+			int value = r.call<int>( );
+			return value;
+		};
+		meter.measure( measurement );
+	}
+};
+
+struct sol_protected_function_result_lua_bench {
+	void operator () ( nonius::chronometer meter ) const {
+		sol::state lua = prepare_lua_function_state( );
+		auto measurement = [ & ] ( int run_index ) {
+			sol::protected_function r = lua[ "r" ];
+			int value = r( );
+			return value;
+		};
+		meter.measure( measurement );
+	}
+};
+
+struct sol_protected_call_lua_bench {
+	void operator () ( nonius::chronometer meter ) const {
+		sol::state lua = prepare_lua_function_state( );
+		auto measurement = [ & ] ( int run_index ) {
+			sol::protected_function r = lua[ "r" ];
 			int value = r.call<int>( );
 			return value;
 		};
@@ -81,11 +81,11 @@ void bench_lua_function( const std::string& dir,  std::string& configurationname
 	cfg.output_file = dir + "sol.functions (lua source) - " + configurationname + " " + platformname + ".html";
 	cfg.title = "sol::function (lua source) (" + configurationname + " " + platformname + ")";
 	cfg.samples = 100;
-	nonius::benchmark benchmarks [] = {
-		nonius::benchmark( "fast_function - function_result", sol_fast_function_result_lua_bench( ) ),
-		nonius::benchmark( "fast_function - call<>", sol_fast_direct_lua_bench( ) ),
-		nonius::benchmark( "function - function_result", sol_function_result_lua_bench( ) ),
-		nonius::benchmark( "function - call<>", sol_direct_lua_bench( ) ),
+	nonius::benchmark benchmarks[] = {
+		nonius::benchmark("function - function_result", sol_function_result_lua_bench()),
+		nonius::benchmark("function - call<>", sol_call_lua_bench()),
+		nonius::benchmark("protected_function - function_result", sol_protected_function_result_lua_bench()),
+		nonius::benchmark("protected_function - call<>", sol_protected_call_lua_bench()),
 		nonius::benchmark( "plain C", c_direct_lua_bench( ) ),
 	};
 	nonius::go( cfg, std::begin( benchmarks ), std::end( benchmarks ), nonius::html_reporter( ) );

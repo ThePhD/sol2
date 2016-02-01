@@ -150,19 +150,19 @@ public:
         return globals.get<Args...>(std::forward<Keys>(keys)...);
     }
 
-    template<typename T, typename U>
-    state_view& set(T&& key, U&& value) {
-        globals.set(std::forward<T>(key), std::forward<U>(value));
+    template<typename... Tn>
+    state_view& set(Tn&&... argn) {
+        globals.set(std::forward<Tn>(argn)...);
         return *this;
     }
 
     template<typename T>
-    SOL_DEPRECATED table& set_userdata(usertype<T>& user) {
+    SOL_DEPRECATED state_view& set_userdata(usertype<T>& user) {
         return set_usertype(user);
     }
 
     template<typename Key, typename T>
-    SOL_DEPRECATED table& set_userdata(Key&& key, usertype<T>& user) {
+    SOL_DEPRECATED state_view& set_userdata(Key&& key, usertype<T>& user) {
         return set_usertype(std::forward<Key>(key), user);
     }
 

@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2015 Rapptz and contributors
+// Copyright (c) 2013-2016 Rapptz and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -28,88 +28,13 @@
 #include "function_types.hpp"
 #include "usertype_traits.hpp"
 #include "resolve.hpp"
+#include "function_result.hpp"
 #include <cstdint>
 #include <functional>
 #include <memory>
 
 namespace sol {
-class function_result {
-private:
-    lua_State* L;
-    int index;
-    int returncount;
-    int popcount;
-    call_error error;
-
-    template <typename T, std::size_t I>
-    stack::get_return<T> get(types<T>, indices<I>) const {
-        return stack::get<T>(L, index);
-    }
-
-    template <typename... Ret, std::size_t... I>
-    stack::get_return<Ret...> get(types<Ret...>, indices<I...>) const {
-        auto r = std::make_tuple(stack::get<Ret>(L, index + I)...);
-        return r;
-    }
-
-public:
-    function_result() = default;
-    function_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, call_error error = call_error::ok): L(L), index(index), returncount(returncount), popcount(popcount), error(error) {
-        
-    }
-    function_result(const function_result&) = default;
-    function_result& operator=(const function_result&) = default;
-    function_result(function_result&& o) : L(o.L), index(o.index), returncount(o.returncount), error(o.error) {
-        // Must be manual, otherwise destructor will screw us
-        // return count being 0 is enough to keep things clean
-        // but will be thorough
-        o.L = nullptr;
-        o.index = 0;
-        o.returncount = 0;
-        o.popcount = 0;
-        o.error = call_error::runtime;
-    }
-    function_result& operator=(function_result&& o) {
-        L = o.L;
-        index = o.index;
-        returncount = o.returncount;
-        error = o.error;
-        // Must be manual, otherwise destructor will screw us
-        // return count being 0 is enough to keep things clean
-        // but will be thorough
-        o.L = nullptr;
-        o.index = 0;
-        o.returncount = 0;
-        o.popcount = 0;
-        o.error = call_error::runtime;
-        return *this;
-    }
-
-    bool valid() const {
-        return error == call_error::ok;
-    }
-
-    template<typename T>
-    T get() const {
-        tuple_types<Unqualified<T>> tr;
-        return get(tr, tr);
-    }
-
-    operator std::string() const {
-        return get<std::string>();
-    }
-
-    template<typename T, EnableIf<Not<std::is_same<Unqualified<T>, const char*>>, Not<std::is_same<Unqualified<T>, char>>, Not<std::is_same<Unqualified<T>, std::string>>, Not<std::is_same<Unqualified<T>, std::initializer_list<char>>>> = 0>
-    operator T () const {
-        return get<T>();
-    }
-
-    ~function_result() {
-        stack::remove(L, index, popcount);
-    }
-};
-
-class fast_function : public reference {
+class function : public reference {
 private:
     void luacall( std::ptrdiff_t argcount, std::ptrdiff_t resultcount ) const {
         lua_callk( lua_state( ), static_cast<int>( argcount ), static_cast<int>( resultcount ), 0, nullptr );
@@ -117,7 +42,7 @@ private:
 
     template<std::size_t... I, typename... Ret>
     std::tuple<Ret...> invoke( indices<I...>, types<Ret...>, std::ptrdiff_t n ) const {
-        luacall( n, sizeof...( Ret ), h );
+        luacall( n, sizeof...( Ret ) );
         int nreturns = static_cast<int>( sizeof...( Ret ) );
         int stacksize = lua_gettop( lua_state( ) );
         int firstreturn = std::max( 0, stacksize - nreturns ) + 1;
@@ -139,35 +64,22 @@ private:
 
     function_result invoke( indices<>, types<>, std::ptrdiff_t n ) const {
         int stacksize = lua_gettop( lua_state( ) );
-        int firstreturn = std::max( 0, stacksize - static_cast<int>( n ) - 1 );
-        int poststacksize = 0;
-        int returncount = 0;
-        try {
-            luacall( n, LUA_MULTRET );
-            poststacksize = lua_gettop( lua_state( ) );
-            returncount = poststacksize - firstreturn;
-        }
-        // Handle C++ errors thrown from C++ functions bound inside of lua
-        catch ( const std::exception& error ) {
-            stack::push( lua_state( ), error.what( ) );
-            return function_result( lua_state( ), firstreturn, 0, 1, call_error::runtime );
-        }
-        catch ( ... ) {
-            throw;
-        }
-        
+        int firstreturn = std::max( 1, stacksize - static_cast<int>( n ) );
+        luacall( n, LUA_MULTRET );
+	   int poststacksize = lua_gettop( lua_state( ) );
+	   int returncount = poststacksize - firstreturn;
         return function_result( lua_state( ), firstreturn, returncount, returncount, call_error::ok );
     }
 
 public:
-    fast_function( ) = default;
-    fast_function( lua_State* L, int index = -1 ) : reference( L, index ) {
+    function( ) = default;
+    function( lua_State* L, int index = -1 ) : reference( L, index ) {
         type_assert( L, index, type::function );
     }
-    fast_function( const fast_function& ) = default;
-    fast_function& operator=( const fast_function& ) = default;
-    fast_function( fast_function&& ) = default;
-    fast_function& operator=( fast_function&& ) = default;
+    function( const function& ) = default;
+    function& operator=( const function& ) = default;
+    function( function&& ) = default;
+    function& operator=( function&& ) = default;
 
     template<typename... Args>
     function_result operator()( Args&&... args ) const {
@@ -176,7 +88,7 @@ public:
 
     template<typename... Ret, typename... Args>
     auto operator()( types<Ret...>, Args&&... args ) const
-        -> decltype( invoke( types<Ret...>( ), types<Ret...>( ), 0, std::declval<handler&>( ) ) ) {
+        -> decltype( invoke( types<Ret...>( ), types<Ret...>( ), 0 ) ) {
         return call<Ret...>( std::forward<Args>( args )... );
     }
 
@@ -190,7 +102,7 @@ public:
     }
 };
 
-class safe_function : public reference {
+class protected_function : public reference {
 private:
     static reference& handler_storage() {
         static sol::reference h;
@@ -252,21 +164,21 @@ private:
     function_result invoke(indices<>, types<>, std::ptrdiff_t n, handler& h) const {
         bool handlerpushed = error_handler.valid();
         int stacksize = lua_gettop(lua_state());
-        int firstreturn = std::max(0, stacksize - static_cast<int>(n) - 1);
+        int firstreturn = std::max(1, stacksize - static_cast<int>(n) - 1);
         int returncount = 0;
         call_error code = call_error::ok;
        
         try {
             code = static_cast<call_error>(luacall(n, LUA_MULTRET, h));
-            int poststacksize = lua_gettop( lua_state( ) );
+            int poststacksize = lua_gettop(lua_state());
             returncount = poststacksize - firstreturn;
         }
         // Handle C++ errors thrown from C++ functions bound inside of lua
         catch (const std::exception& error) {
-            code = call_error::runtime;
             h.stackindex = 0;
             stack::push(lua_state(), error.what());
-            return function_result( lua_state( ), firstreturn, 0, 1, call_error::runtime );
+            firstreturn = lua_gettop(lua_state());
+            return function_result(lua_state(), firstreturn, 0, 1, call_error::runtime);
         }
         catch (...) {
             throw;
@@ -277,14 +189,14 @@ private:
 public:
     sol::reference error_handler;
 
-    safe_function() = default;
-    safe_function(lua_State* L, int index = -1): reference(L, index), error_handler(get_default_handler()) {
+    protected_function() = default;
+    protected_function(lua_State* L, int index = -1): reference(L, index), error_handler(get_default_handler()) {
         type_assert(L, index, type::function);
     }
-    safe_function(const safe_function&) = default;
-    safe_function& operator=(const safe_function&) = default;
-    safe_function( safe_function&& ) = default;
-    safe_function& operator=( safe_function&& ) = default;
+    protected_function(const protected_function&) = default;
+    protected_function& operator=(const protected_function&) = default;
+    protected_function( protected_function&& ) = default;
+    protected_function& operator=( protected_function&& ) = default;
 
     template<typename... Args>
     function_result operator()(Args&&... args) const {

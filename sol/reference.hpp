@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2015 Rapptz and contributors
+// Copyright (c) 2013-2016 Rapptz and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -25,14 +25,18 @@
 #include "types.hpp"
 
 namespace sol {
-namespace detail {
+namespace stack {
 template <typename T>
 struct push_pop {
     T t;
     push_pop (T x) : t(x) { t.push(); }
     ~push_pop() { t.pop(); }
 };
-} // detail
+template <typename T>
+push_pop<T> push_popper(T&& x) {
+    return push_pop<T>(std::forward<T>(x));
+};
+} // stack
 
 class reference {
 private:

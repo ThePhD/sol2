@@ -13,11 +13,11 @@ static sol::state prepare_cpp_function_state( ) {
 	return lua;
 }
 
-struct sol_fast_function_result_cpp_bench {
+struct sol_protected_function_result_cpp_bench {
 	void operator () ( nonius::chronometer meter ) const {
 		sol::state lua = prepare_cpp_function_state( );
 		auto measurement = [ & ] ( int run_index ) {
-			sol::fast_function r = lua[ "r" ];
+			sol::protected_function r = lua[ "r" ];
 			int value = r( );
 			return value;
 		};
@@ -25,11 +25,11 @@ struct sol_fast_function_result_cpp_bench {
 	}
 };
 
-struct sol_fast_direct_cpp_bench {
+struct sol_protected_call_cpp_bench {
 	void operator () ( nonius::chronometer meter ) const {
 		sol::state lua = prepare_cpp_function_state( );
 		auto measurement = [ & ] ( int run_index ) {
-			sol::fast_function r = lua[ "r" ];
+			sol::protected_function r = lua[ "r" ];
 			int value = r.call<int>( );
 			return value;
 		};
@@ -49,7 +49,7 @@ struct sol_function_result_cpp_bench {
 	}
 };
 
-struct sol_direct_cpp_bench {
+struct sol_call_cpp_bench {
 	void operator () ( nonius::chronometer meter ) const {
 		sol::state lua = prepare_cpp_function_state( );
 		auto measurement = [ & ] ( int run_index ) {
@@ -61,7 +61,7 @@ struct sol_direct_cpp_bench {
 	}
 };
 
-struct c_direct_cpp_bench {
+struct c_call_cpp_bench {
 	void operator () ( nonius::chronometer meter ) const {
 		sol::state lua = prepare_cpp_function_state( );
 		lua_State* L = lua.lua_state( );
@@ -82,11 +82,11 @@ void bench_cpp_function( const std::string& dir, std::string& configurationname,
 	cfg.title = "sol::function (C++ source) (" + configurationname + " " + platformname + ")";
 	cfg.samples = 100;
 	nonius::benchmark benchmarks [] = {
-		nonius::benchmark( "fast_function - function_result", sol_fast_function_result_cpp_bench( ) ),
-		nonius::benchmark( "fast_function - call<>", sol_fast_direct_cpp_bench( ) ),
+		nonius::benchmark( "protected_function - function_result", sol_protected_function_result_cpp_bench( ) ),
+		nonius::benchmark( "protected_function - call<>", sol_protected_call_cpp_bench( ) ),
 		nonius::benchmark( "function - function_result", sol_function_result_cpp_bench( ) ),
-		nonius::benchmark( "function - call<>", sol_direct_cpp_bench( ) ),
-		nonius::benchmark( "plain C", c_direct_cpp_bench( ) ),
+		nonius::benchmark( "function - call<>", sol_call_cpp_bench( ) ),
+		nonius::benchmark( "plain C", c_call_cpp_bench( ) ),
 	};
 	nonius::go( cfg, std::begin( benchmarks ), std::end( benchmarks ), nonius::html_reporter( ) );
 }

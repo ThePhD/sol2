@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2015 Rapptz and contributors
+// Copyright (c) 2013-2016 Rapptz and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -25,10 +25,11 @@
 #include "traits.hpp"
 #include "object.hpp"
 #include "function.hpp"
+#include "proxy_base.hpp"
 
 namespace sol {
 template<typename Table, typename Key>
-struct proxy {
+struct proxy : public proxy_base<proxy<Table, Key>> {
 private:
     Table tbl;
     If<std::is_array<Unqualified<Key>>, Key&, Unqualified<Key>> key;
@@ -65,20 +66,6 @@ public:
     template<typename T>
     decltype(auto) get() const {
         return tbl.template get<T>( key );
-    }
-
-    operator std::string() const {
-        return get<std::string>();
-    }
-
-    template<typename T, EnableIf<Not<is_string_constructible<T>>, is_lua_primitive<T>> = 0>
-    operator T ( ) const {
-        return get<T>( );
-    }
-
-    template<typename T, EnableIf<Not<is_string_constructible<T>>, Not<is_lua_primitive<T>>> = 0>
-    operator T& ( ) const {
-        return get<T&>( );
     }
 
     template <typename K>

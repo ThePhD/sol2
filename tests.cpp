@@ -198,7 +198,7 @@ struct giver {
 
 };
 
-TEST_CASE("simple/set_global", "Check if the set_global works properly.") {
+TEST_CASE("simple/set", "Check if the set works properly.") {
     sol::state lua;
 
     lua.set("a", 9);
@@ -207,10 +207,8 @@ TEST_CASE("simple/set_global", "Check if the set_global works properly.") {
     lua.set("d", "hello");
     REQUIRE_NOTHROW(lua.script("if d ~= 'hello' then error('expected \\'hello\\', got '.. tostring(d)) end"));
 
-    lua.set("e", std::string("hello"));
+    lua.set("e", std::string("hello"), "f", true);
     REQUIRE_NOTHROW(lua.script("if d ~= 'hello' then error('expected \\'hello\\', got '.. tostring(d)) end"));
-
-    lua.set("f", true);
     REQUIRE_NOTHROW(lua.script("if f ~= true then error('wrong value') end"));
 }
 
@@ -225,11 +223,11 @@ TEST_CASE("simple/get", "Tests if the get function works properly.") {
     REQUIRE_NOTHROW(lua.get<sol::nil_t>("b"));
 
     lua.script("d = 'hello'");
-    auto d = lua.get<std::string>("d");
-    REQUIRE(d == "hello");
-
     lua.script("e = true");
-    auto e = lua.get<bool>("e");
+    std::string d;
+    bool e;
+    std::tie( d, e ) = lua.get<std::string, bool>("d", "e");
+    REQUIRE(d == "hello");
     REQUIRE(e == true);
 }
 
@@ -265,7 +263,7 @@ TEST_CASE("simple/call_with_parameters", "Lua function is called with a few para
     REQUIRE_NOTHROW(fvoid(1, 2, 3));
     REQUIRE_NOTHROW(a = f.call<int>(1, 2, 3));
     REQUIRE(a == 6);
-    REQUIRE_THROWS(a = f.call<int>(1, 2, "arf"));
+    REQUIRE_THROWS(a = f(1, 2, "arf"));
 }
 
 TEST_CASE("simple/call_c++_function", "C++ function is called from lua") {
@@ -627,7 +625,7 @@ TEST_CASE("tables/usertype", "Show that we can create classes from usertype and 
     REQUIRE(cresult == 3);
 }
 
-TEST_CASE("tables/usertype constructors", "Show that we can create classes from usertype and use them with multiple destructors") {
+TEST_CASE("tables/usertype constructors", "Show that we can create classes from usertype and use them with multiple constructors") {
 
     sol::state lua;
 
@@ -704,19 +702,25 @@ TEST_CASE("tables/usertype utility derived", "usertype classes must play nice wh
     lua.set_usertype(baseusertype);
 
     lua.script("base = Base.new(5)");
-    lua.script("print(base:get_num())");
+    REQUIRE_NOTHROW(lua.script("print(base:get_num())"));
 
-    sol::constructors<sol::types<int>> derivedctor;
-    sol::usertype<Derived> derivedusertype(derivedctor, "get_num", &Derived::get_num, "get_num_10", &Derived::get_num_10);
+    /*sol::constructors<sol::types<int>> derivedctor;
+    sol::usertype<Derived> derivedusertype(derivedctor, 
+        "get_num_10", &Derived::get_num_10, 
+        "get_num", &Derived::get_num
+    );
 
     lua.set_usertype(derivedusertype);
 
     lua.script("derived = Derived.new(7)");
-    lua.script("dgn10 = derived:get_num_10()\nprint(dgn10)");
-    lua.script("dgn = derived:get_num()\nprint(dgn)");
+    Derived& derived = lua["derived"];
+    lua.script("dgn = derived:get_num()\n"
+        "print(dgn)");
+    lua.script("dgn10 = derived:get_num_10()\n"
+        "print(dgn10)");
 
     REQUIRE((lua.get<int>("dgn10") == 70));
-    REQUIRE((lua.get<int>("dgn") == 7));
+    REQUIRE((lua.get<int>("dgn") == 7));*/
 }
 
 TEST_CASE("tables/self-referential usertype", "usertype classes must play nice when C++ object types are requested for C++ code") {
@@ -856,24 +860,11 @@ TEST_CASE("tables/issue-number-twenty-five", "Using pointers and references from
 }
 
 TEST_CASE("usertype/issue-number-thirty-five", "using value types created from lua-called C++ code, fixing user-defined types with constructors") {
-    struct Line {
-        Vec p1, p2;
-        Line() : p1{0, 0, 0}, p2{0, 0, 0} {}
-        Line(float x) : p1{x, x, x}, p2{x, x, x} {}
-        Line(const Vec& p1) : p1{p1}, p2{p1} {}
-        Line(Vec p1, Vec p2) : p1{p1}, p2{p2} {}
-    };
-
     sol::state lua;
     lua.open_libraries(sol::lib::base);
 
-    sol::constructors<sol::types<>, sol::types<Vec>, sol::types<Vec, Vec>> lctor;
-    sol::usertype<Line> ludata(lctor);
-    lua.set_usertype("Line", ludata);
-
     sol::constructors<sol::types<float, float, float>> ctor;
     sol::usertype<Vec> udata(ctor, "normalized", &Vec::normalized, "length", &Vec::length);
-
     lua.set_usertype(udata);
 
     REQUIRE_NOTHROW(lua.script("v = Vec.new(1, 2, 3)\n"
@@ -971,20 +962,26 @@ TEST_CASE("references/get-set", "properly get and set with std::ref semantics. N
 
     lua.new_usertype<vars>("vars",
                            "boop", &vars::boop);
-
     vars var{};
     vars rvar{};
     lua.set("beep", var);
     lua.set("rbeep", std::ref(rvar));
     auto& my_var = lua.get<vars>("beep");
-    auto& ref_var = lua.get<sol::ref<vars>>("rbeep");
-
+    auto& ref_var = lua.get<std::reference_wrapper<vars>>("rbeep");
+    vars& proxy_my_var = lua["beep"];
+    std::reference_wrapper<vars> proxy_ref_var = lua["rbeep"];
     var.boop = 2;
     rvar.boop = 5;
 
+    // Was return as a value: var must be diferent from "beep"
+    REQUIRE_FALSE(std::addressof(var) == std::addressof(my_var));
+    REQUIRE_FALSE(std::addressof(proxy_my_var) == std::addressof(var));
     REQUIRE((my_var.boop == 0));
     REQUIRE(var.boop != my_var.boop);
-    // Reference should point back to the same type.
+    
+    REQUIRE(std::addressof(ref_var) == std::addressof(rvar));
+    //REQUIRE(std::addressof(proxy_ref_var.get()) == std::addressof(rvar));
+    REQUIRE(rvar.boop == 5);
     REQUIRE(rvar.boop == ref_var.boop);
 }
 
@@ -1003,7 +1000,7 @@ TEST_CASE("interop/null-to-nil-and-back", "nil should be the given type when a p
         "assert(x == nil)"));
 }
 
-TEST_CASE( "functions/sol::function_result", "Function result should be the beefy return type for sol::function that allows for error checking and error handlers" ) {
+TEST_CASE( "functions/function_result-protected_function", "Function result should be the beefy return type for sol::function that allows for error checking and error handlers" ) {
     sol::state lua;
     lua.open_libraries( sol::lib::base, sol::lib::debug );
 
@@ -1032,8 +1029,8 @@ TEST_CASE( "functions/sol::function_result", "Function result should be the beef
         + "end"
         );
 
-    sol::function func = lua[ "doom" ];
-    sol::function luafunc = lua[ "luadoom" ];
+    sol::protected_function func = lua[ "doom" ];
+    sol::protected_function luafunc = lua[ "luadoom" ];
     sol::function luahandler = lua[ "handler" ];
     sol::function cpphandler = lua[ "cpphandler" ];
     func.error_handler = luahandler;
@@ -1049,5 +1046,110 @@ TEST_CASE( "functions/sol::function_result", "Function result should be the beef
     REQUIRE(!result2.valid());
     errorstring = result2;
     REQUIRE(errorstring == errormessage2);
+}
 
+TEST_CASE("functions/destructor-tests", "Show that proper copies / destruction happens") {
+    static int created = 0;
+    static int destroyed = 0;
+    static void* last_call = nullptr;
+    static void* static_call = reinterpret_cast<void*>(0x01);
+    typedef void(* fptr)();
+    struct x { 
+        x() {++created;}
+        x(const x&) {++created;}
+        x(x&&) {++created;}
+        x& operator=(const x&) {++created; return *this;}
+        x& operator=(x&&) {++created; return *this;}
+        void func() {last_call = static_cast<void*>(this);};
+       ~x () {++destroyed;} 
+    };
+    struct y { 
+        y() {++created;}
+        y(const x&) {++created;}
+        y(x&&) {++created;}
+        y& operator=(const x&) {return *this;}
+        y& operator=(x&&) {return *this;}
+        static void func() {last_call = static_call;};
+       void operator()() {func();}
+       operator fptr () { return func; }
+        ~y () {++destroyed;} 
+    };
+
+    // stateful functors/member functions should always copy unless specified
+    {
+        created = 0;
+        destroyed = 0;
+        last_call = nullptr;
+        {
+            sol::state lua;
+            x x1;
+            lua.set_function("x1copy", &x::func, x1);
+            lua.script("x1copy()");
+            REQUIRE(created == 2);
+            REQUIRE(destroyed == 0);
+            REQUIRE_FALSE(last_call == &x1);
+
+            lua.set_function("x1ref", &x::func, std::ref(x1));
+            lua.script("x1ref()");
+            REQUIRE(created == 2);
+            REQUIRE(destroyed == 0);
+            REQUIRE(last_call == &x1);
+        }
+        REQUIRE(created == 2);
+        REQUIRE(destroyed == 2);
+        REQUIRE(created == destroyed);
+    }
+
+    // things convertible to a static function should _never_ be forced to make copies
+    // therefore, pass through untouched
+    {
+        created = 0;
+        destroyed = 0;
+        last_call = nullptr;
+        {
+            sol::state lua;
+            y y1;
+            lua.set_function("y1copy", y1);
+            lua.script("y1copy()");
+            REQUIRE(created == 1);
+            REQUIRE(destroyed == 0);
+            REQUIRE(last_call == static_call);
+            
+            last_call = nullptr;
+            lua.set_function("y1ref", std::ref(y1));
+            lua.script("y1ref()");
+            REQUIRE(created == 1);
+            REQUIRE(destroyed == 0);
+            REQUIRE(last_call == static_call);
+        }
+        REQUIRE(created == 1);
+        REQUIRE(destroyed == 1);
+        REQUIRE(created == destroyed);
+    }
+}
+
+TEST_CASE("usertype/destructor-tests", "Show that proper copies / destruction happens") {
+    static int created = 0;
+    static int destroyed = 0;
+    static void* last_call = nullptr;
+    struct x { 
+        x() {++created;}
+        ~x () {++destroyed;} 
+    };
+    {
+        sol::state lua;
+        x x1;
+        x x2;
+        lua.set("x1copy", x1, "x2copy", x2, "x1ref", std::ref(x1));
+        x& x1copyref = lua["x1copy"];
+        x& x2copyref = lua["x2copy"];
+        x& x1ref = lua["x1ref"];
+        REQUIRE(created == 4);
+        REQUIRE(destroyed == 0);
+        REQUIRE_FALSE(last_call == &x1);
+        REQUIRE(std::addressof(x1) == std::addressof(x1ref));
+    }
+    REQUIRE(created == 4);
+    REQUIRE(destroyed == 4);
+    REQUIRE(created == destroyed);
 }
