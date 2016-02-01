@@ -125,8 +125,10 @@ private:
             call_syntax syntax = stack::get_call_syntax(L, meta);
             int argcount = lua_gettop(L);
 
-            void* udata = lua_newuserdata(L, sizeof(T));
-            T* obj = static_cast<T*>(udata);
+            T** referencepointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
+            T*& referencereference = *referencepointer;
+            T* obj = reinterpret_cast<T*>(referencepointer + 1);
+            referencereference = obj;
             match_constructor(L, obj, syntax, argcount - static_cast<int>(syntax), typename identity<TTypes>::type()...);
 
             if(luaL_newmetatable(L, std::addressof(meta[0])) == 1) {
@@ -144,7 +146,9 @@ private:
     struct destructor {
         static int destruct(lua_State* L) {
             userdata udata = stack::get<userdata>(L, 1);
-            T* obj = static_cast<T*>(udata.value);
+            // The first sizeof(T*) bytes are the reference: the rest is
+            // the actual data itself
+            T* obj = static_cast<T*>(static_cast<void*>(reinterpret_cast<char*>(udata.value) + sizeof(T*)));
             std::allocator<T> alloc{};
             alloc.destroy(obj);
             return 0;

@@ -133,36 +133,42 @@ true;
 false;
 #endif
 
-inline void lua_getglobali(lua_State* L, lua_Integer n) {
-#if SOL_LUA_VERSION >= 503
-    lua_geti(L, LUA_RIDX_GLOBALS, n);
-#else
-    lua_pushglobaltable(L);
-    lua_pushinteger(L, n);
-    lua_gettable(L, -2);
-    lua_remove(L, -2); // remove the global table, leave final value on the stack
-#endif
-}
+template <typename T>
+struct userdata_pusher {
+    template <typename Key, typename... Args>
+    static void push (lua_State* L, Key&& metatablekey, Args&&... args) {
+        // Basically, we store all data like this:
+        // If it's a new value (no std::ref(x)), then we store the pointer to the new
+        // data in the first sizeof(T*) bytes, and then however many bytes it takes to
+        // do the actual object. Things that are just references/pointers are stored as 
+        // just the sizeof(T*), and nothing else.
+        T** pdatum = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
+        T** referencepointer = pdatum;
+        T*& referencereference = *pdatum;
+        T* allocationtarget = reinterpret_cast<T*>(pdatum + 1);
+        referencereference = allocationtarget;
+        std::allocator<T> alloc{};
+        alloc.construct(allocationtarget, std::forward<Args>(args)...);
+        luaL_getmetatable(L, std::addressof(metatablekey[0]));
+        lua_setmetatable(L, -2);
+    }
+};
 
-inline void lua_setglobali(lua_State* L, lua_Integer n) {
-#if SOL_LUA_VERSION >= 503
-    lua_seti(L, LUA_RIDX_GLOBALS, n);
-#else
-    lua_pushglobaltable(L);
-    lua_pushinteger(L, n);
-    lua_pushvalue(L, -3);
-    lua_settable(L, -3);
-    lua_pop(L, 2); // remove table, and the copy of the value
-#endif
-}
+template <typename T>
+struct userdata_pusher<T*> {
+    template <typename Key, typename... Args>
+    static void push (lua_State* L, Key&& metatablekey, Args&&... args) {
+        T** pdatum = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
+        std::allocator<T*> alloc{};
+        alloc.construct(pdatum, std::forward<Args>(args)...);
+        luaL_getmetatable(L, std::addressof(metatablekey[0]));
+        lua_setmetatable(L, -2);
+    }
+};
 
 template <typename T, typename Key, typename... Args>
 inline int push_confirmed_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
-    T* pdatum = static_cast<T*>(lua_newuserdata(L, sizeof(T)));
-    std::allocator<T> alloc{};
-    alloc.construct(pdatum, std::forward<Args>(args)...);
-    luaL_getmetatable(L, std::addressof(metatablekey[0]));
-    lua_setmetatable(L, -2);
+    userdata_pusher<T>{}.push(L, std::forward<Key>(metatablekey), std::forward<Args>(args)...);
     return 1;
 }
 
@@ -253,9 +259,7 @@ struct getter {
 
     template<typename U = T, EnableIf<Not<std::is_base_of<reference, U>>, Not<std::is_integral<U>>, Not<std::is_floating_point<U>>> = 0>
     static U& get(lua_State* L, int index = -1) {
-        void* udata = lua_touserdata(L, index);
-        T* obj = static_cast<T*>(udata);
-        return *obj;
+        return getter<T&>{}.get(L, index);
     }
 };
 

@@ -278,7 +278,7 @@ struct base_function {
     struct usertype {
         static int call(lua_State* L) {
             // Zero-based template parameter, but upvalues start at 1
-            return base_call(L, stack::get<upvalue>(L, I + 1));
+            return ref_base_call(L, stack::get<upvalue>(L, I + 1));
         }
 
         static int ref_call(lua_State* L) {

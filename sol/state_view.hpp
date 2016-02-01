@@ -218,8 +218,8 @@ public:
     table create_table(int narr = 0, int nrec = sizeof...(Tn), Tn&&... argn) {
         lua_createtable(L, narr, nrec);
         table result(L);
-	   result.set(std::forward<Tn>(argn)...);
-	   lua_pop(L, 1);
+        result.set(std::forward<Tn>(argn)...);
+        lua_pop(L, 1);
         return result;
     }
 

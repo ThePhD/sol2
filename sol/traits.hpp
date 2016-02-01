@@ -315,6 +315,9 @@ struct has_key_value_pair : decltype(has_key_value_pair_impl::test<T>(0)) {};
 template <typename T>
 using is_string_constructible = Or<std::is_same<Unqualified<T>, const char*>, std::is_same<Unqualified<T>, char>, std::is_same<Unqualified<T>, std::string>, std::is_same<Unqualified<T>, std::initializer_list<char>>>;
 
+template <typename T>
+using is_c_str = Or<std::is_same<std::decay_t<Unqualified<T>>, const char*>, std::is_same<Unqualified<T>, std::string>>;
+
 template<typename T>
 auto unwrapper(T&& item) -> decltype(std::forward<T>(item)) {
     return std::forward<T>(item);

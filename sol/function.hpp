@@ -66,8 +66,8 @@ private:
         int stacksize = lua_gettop( lua_state( ) );
         int firstreturn = std::max( 1, stacksize - static_cast<int>( n ) );
         luacall( n, LUA_MULTRET );
-	   int poststacksize = lua_gettop( lua_state( ) );
-	   int returncount = poststacksize - firstreturn;
+        int poststacksize = lua_gettop( lua_state( ) );
+        int returncount = poststacksize - firstreturn;
         return function_result( lua_state( ), firstreturn, returncount, returncount, call_error::ok );
     }
 

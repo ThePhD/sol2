@@ -231,6 +231,16 @@ TEST_CASE("simple/get", "Tests if the get function works properly.") {
     REQUIRE(e == true);
 }
 
+TEST_CASE("simple/set-get-global-integer", "Tests if the get function works properly with global integers") {
+    sol::state lua;
+    lua[1] = 25.4;
+    lua.script("b = 1");
+    double a = lua.get<double>(1);
+    double b = lua.get<double>("b");
+    REQUIRE(a == 25.4);
+    REQUIRE(b == 1);
+}
+
 TEST_CASE("simple/addition", "check if addition works and can be gotten through lua.get and lua.set") {
     sol::state lua;
 
@@ -704,7 +714,7 @@ TEST_CASE("tables/usertype utility derived", "usertype classes must play nice wh
     lua.script("base = Base.new(5)");
     REQUIRE_NOTHROW(lua.script("print(base:get_num())"));
 
-    /*sol::constructors<sol::types<int>> derivedctor;
+    sol::constructors<sol::types<int>> derivedctor;
     sol::usertype<Derived> derivedusertype(derivedctor, 
         "get_num_10", &Derived::get_num_10, 
         "get_num", &Derived::get_num
@@ -720,7 +730,7 @@ TEST_CASE("tables/usertype utility derived", "usertype classes must play nice wh
         "print(dgn10)");
 
     REQUIRE((lua.get<int>("dgn10") == 70));
-    REQUIRE((lua.get<int>("dgn") == 7));*/
+    REQUIRE((lua.get<int>("dgn") == 7));
 }
 
 TEST_CASE("tables/self-referential usertype", "usertype classes must play nice when C++ object types are requested for C++ code") {
@@ -1058,10 +1068,10 @@ TEST_CASE("functions/destructor-tests", "Show that proper copies / destruction h
         x() {++created;}
         x(const x&) {++created;}
         x(x&&) {++created;}
-        x& operator=(const x&) {++created; return *this;}
-        x& operator=(x&&) {++created; return *this;}
+        x& operator=(const x&) {return *this;}
+        x& operator=(x&&) {return *this;}
         void func() {last_call = static_cast<void*>(this);};
-       ~x () {++destroyed;} 
+        ~x () {++destroyed;} 
     };
     struct y { 
         y() {++created;}
@@ -1070,8 +1080,8 @@ TEST_CASE("functions/destructor-tests", "Show that proper copies / destruction h
         y& operator=(const x&) {return *this;}
         y& operator=(x&&) {return *this;}
         static void func() {last_call = static_call;};
-       void operator()() {func();}
-       operator fptr () { return func; }
+        void operator()() {func();}
+        operator fptr () { return func; }
         ~y () {++destroyed;} 
     };
 
@@ -1134,10 +1144,15 @@ TEST_CASE("usertype/destructor-tests", "Show that proper copies / destruction ha
     static void* last_call = nullptr;
     struct x { 
         x() {++created;}
+        x(const x&) {++created;}
+        x(x&&) {++created;}
+        x& operator=(const x&) {return *this;}
+        x& operator=(x&&) {return *this;}
         ~x () {++destroyed;} 
     };
     {
         sol::state lua;
+        lua.new_usertype<x>("x");
         x x1;
         x x2;
         lua.set("x1copy", x1, "x2copy", x2, "x1ref", std::ref(x1));
@@ -1146,7 +1161,6 @@ TEST_CASE("usertype/destructor-tests", "Show that proper copies / destruction ha
         x& x1ref = lua["x1ref"];
         REQUIRE(created == 4);
         REQUIRE(destroyed == 0);
-        REQUIRE_FALSE(last_call == &x1);
         REQUIRE(std::addressof(x1) == std::addressof(x1ref));
     }
     REQUIRE(created == 4);

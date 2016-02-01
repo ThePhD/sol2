@@ -37,24 +37,46 @@ class table_core : public reference {
     friend class state;
     friend class state_view;
 
-    template<typename T, typename Key, EnableIf<Not<std::is_integral<Unqualified<Key>>>, Bool<top_level>> = 0>
+    template<typename T, typename Key, EnableIf<Bool<top_level>, is_c_str<Key>> = 0>
     decltype(auto) single_get( Key&& key ) const {
         lua_getglobal(lua_state( ), &key[0]);
         return stack::pop<T>(lua_state());
     }
 
-    template<typename T, typename Key, EnableIf<std::is_integral<Unqualified<Key>>, Bool<top_level>> = 0>
-    decltype(auto) single_get(Key&& key) const {
-        stack::detail::lua_getglobali(lua_state(), &key[0]);
-        return stack::pop<T>(lua_state());
+    template<typename T, typename Key, EnableIf<Not<Bool<top_level>>, is_c_str<Key>> = 0>
+    decltype(auto) single_get( Key&& key ) const {
+        auto pp = stack::push_popper(*this);
+        lua_getfield( lua_state( ), -2, &key[0] );
+        return stack::pop<T>( lua_state( ) );
     }
 
-    template<typename T, typename Key, DisableIf<Bool<top_level>, Not<std::is_void<Key>>> = 0>
+    template<typename T, typename Key, EnableIf<Not<is_c_str<Key>>> = 0>
     decltype(auto) single_get( Key&& key ) const {
         auto pp = stack::push_popper(*this);
         stack::push( lua_state( ), std::forward<Key>( key ) );
         lua_gettable( lua_state( ), -2 );
         return stack::pop<T>( lua_state( ) );
+    }
+
+    template<typename Key, typename Value, EnableIf<Bool<top_level>, is_c_str<Key>> = 0>
+    void single_set( Key&& key, Value&& value ) {
+        stack::push( lua_state( ), std::forward<Value>( value ) );
+        lua_setglobal( lua_state( ), &key[0] );
+    }
+
+    template<typename Key, typename Value, EnableIf<Not<Bool<top_level>>, is_c_str<Key>> = 0>
+    void single_set(Key&& key, Value&& value) {
+        auto pp = stack::push_popper(*this);
+        stack::push(lua_state(), std::forward<Value>(value));
+        lua_setfield(lua_state(), -3, &key[0]);
+    }
+
+    template<typename Key, typename Value, EnableIf<Not<is_c_str<Key>>> = 0>
+    void single_set(Key&& key, Value&& value) {
+        auto pp = stack::push_popper(*this);
+        stack::push(lua_state(), std::forward<Key>(key));
+        stack::push(lua_state(), std::forward<Value>(value));
+        lua_settable(lua_state(), -3);
     }
 
     template<typename Keys, typename... Ret, std::size_t... I>
@@ -65,26 +87,6 @@ class table_core : public reference {
     template<typename Keys, typename Ret, std::size_t I>
     decltype(auto) tuple_get( types<Ret>, indices<I>, Keys&& keys ) const {
         return single_get<Ret>( std::get<I>( keys ) );
-    }
-
-    template<typename Key, typename U, EnableIf<std::is_integral<Unqualified<Key>>, Bool<top_level>> = 0>
-    void single_set( Key&& key, U&& value ) {
-        stack::push( lua_state( ), std::forward<Value>( value ) );
-        stack::detail::lua_setglobali( lua_state( ), std::forward<Key>(key) );
-    }
-
-    template<typename Key, typename Value, EnableIf<Not<std::is_integral<Unqualified<Key>>>, Bool<top_level>> = 0>
-    void single_set( Key&& key, Value&& value ) {
-        stack::push( lua_state( ), std::forward<Value>( value ) );
-        lua_setglobal( lua_state( ), &key[0] );
-    }
-
-    template<typename Key, typename Value, DisableIf<Bool<top_level>, Not<std::is_void<Key>>> = 0>
-    void single_set(Key&& key, Value&& value) {
-        auto pp = stack::push_popper(*this);
-        stack::push(lua_state(), std::forward<Key>(key));
-        stack::push(lua_state(), std::forward<Value>(value));
-        lua_settable(lua_state(), -3);
     }
 
     template<typename Pairs, std::size_t... I>
@@ -113,7 +115,7 @@ public:
     template<typename... Tn>
     table_core& set( Tn&&... argn ) {
         tuple_set(build_indices<sizeof...(Tn) / 2>(), std::forward_as_tuple(std::forward<Tn>(argn)...));
-	   return *this;
+        return *this;
     }
 
     template<typename T>
@@ -225,18 +227,27 @@ private:
         set_fx( types<function_signature_t<Sig>>( ), std::forward<Key>( key ), std::forward<Fx>( fx ) );
     }
 
-    template<typename... Sig, typename... Args, typename Key, EnableIf<Not<std::is_arithmetic<Unqualified<Key>>>, Bool<top_level>> = 0>
+    template<typename... Sig, typename... Args, typename Key, EnableIf<Bool<top_level>, is_c_str<Key>> = 0>
     void set_resolved_function( Key&& key, Args&&... args ) {
         stack::push<function_sig_t<Sig...>>( lua_state( ), std::forward<Args>( args )... );
         lua_setglobal( lua_state( ), &key[ 0 ] );
     }
 
-    template<typename... Sig, typename... Args, typename Key, DisableIf<Not<std::is_arithmetic<Unqualified<Key>>>, Bool<top_level>> = 0>
+    template<typename... Sig, typename... Args, typename Key, EnableIf<Not<Bool<top_level>>, is_c_str<Key>> = 0>
     void set_resolved_function( Key&& key, Args&&... args ) {
         auto pp = stack::push_popper( *this );
         int tabletarget = lua_gettop( lua_state( ) );
         stack::push<function_sig_t<Sig...>>( lua_state( ), std::forward<Args>( args )... );
         lua_setfield( lua_state( ), tabletarget, &key[ 0 ] );
+    }
+
+    template<typename... Sig, typename... Args, typename Key, EnableIf<Not<is_c_str<Key>>> = 0>
+    void set_resolved_function( Key&& key, Args&&... args ) {
+        auto pp = stack::push_popper( *this );
+        int tabletarget = lua_gettop( lua_state( ) );
+        stack::push(lua_state(), std::forward<Key>(key));
+        stack::push<function_sig_t<Sig...>>( lua_state( ), std::forward<Args>( args )... );
+        lua_settable( lua_state( ), tabletarget );
     }
 };
 } // sol
