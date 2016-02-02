@@ -26,15 +26,20 @@
 
 namespace sol {
 namespace stack {
-template <typename T>
+template <bool top_level, typename T>
 struct push_pop {
     T t;
     push_pop (T x) : t(x) { t.push(); }
     ~push_pop() { t.pop(); }
 };
 template <typename T>
-push_pop<T> push_popper(T&& x) {
-    return push_pop<T>(std::forward<T>(x));
+struct push_pop<true, T> {
+    push_pop (T x) {}
+    ~push_pop() {}
+};
+template <bool top_level = false, typename T>
+push_pop<top_level, T> push_popper(T&& x) {
+    return push_pop<top_level, T>(std::forward<T>(x));
 };
 } // stack
 

@@ -222,11 +222,11 @@ public:
 
 namespace stack {
 template<typename... Sigs>
-struct pusher<function_sig_t<Sigs...>> {
+struct pusher<function_sig<Sigs...>> {
 
     template<typename R, typename... Args, typename Fx, typename = typename std::result_of<Fx(Args...)>::type>
     static void set_memfx(types<R(Args...)> t, lua_State* L, Fx&& fx) {
-        typedef Decay<Unwrap<Fx>> raw_fx_t;
+        typedef Decay<Unwrap<Unqualified<Fx>>> raw_fx_t;
         typedef R(* fx_ptr_t)(Args...);
         typedef std::is_convertible<raw_fx_t, fx_ptr_t> is_convertible;
         set_isconvertible_fx(is_convertible(), t, L, std::forward<Fx>(fx));
@@ -234,7 +234,7 @@ struct pusher<function_sig_t<Sigs...>> {
 
     template<typename Fx>
     static void set_memfx(types<>, lua_State* L, Fx&& fx) {
-        typedef Unqualified<Unwrap<Fx>> fx_t;
+        typedef Unwrap<Unqualified<Fx>> fx_t;
         typedef decltype(&fx_t::operator()) Sig;
         set_memfx(types<function_signature_t<Sig>>(), L, std::forward<Fx>(fx));
     }
@@ -275,7 +275,7 @@ struct pusher<function_sig_t<Sigs...>> {
 
     template<typename Fx, typename R, typename... Args>
     static void set_isconvertible_fx(std::false_type, types<R(Args...)>, lua_State* L, Fx&& fx) {
-        typedef Decay<Unwrap<Fx>> fx_t;
+        typedef Unwrap<Decay<Fx>> fx_t;
         std::unique_ptr<base_function> sptr(new functor_function<fx_t>(std::forward<Fx>(fx)));
         set_fx<Fx>(L, std::move(sptr));
     }
@@ -349,10 +349,23 @@ struct pusher<function_sig_t<Sigs...>> {
     }
 };
 
+template<typename T, typename... Args>
+struct pusher<sol::detail::function_packer<T, Args...>> {
+    template <std::size_t... I, typename FP>
+    static int push_func(indices<I...>, lua_State* L, FP&& fp) {
+        return stack::push<T>(L, std::get<I>(fp)...);
+    }
+
+    template <typename FP>
+    static int push(lua_State* L, FP&& fp) {
+        return push_func(build_indices<sizeof...(Args)>(), L, std::forward<FP>(fp));
+    }
+};
+
 template<typename Signature>
 struct pusher<std::function<Signature>> {
     static int push(lua_State* L, std::function<Signature> fx) {
-        return pusher<function_t>{}.push(L, std::move(fx));
+        return pusher<function_sig<>>{}.push(L, std::move(fx));
     }
 };
 

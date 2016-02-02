@@ -46,7 +46,7 @@ class table_core : public reference {
     template<typename T, typename Key, EnableIf<Not<Bool<top_level>>, is_c_str<Key>> = 0>
     decltype(auto) single_get( Key&& key ) const {
         auto pp = stack::push_popper(*this);
-        lua_getfield( lua_state( ), -2, &key[0] );
+        lua_getfield( lua_state( ), -1, &key[0] );
         return stack::pop<T>( lua_state( ) );
     }
 
@@ -66,17 +66,19 @@ class table_core : public reference {
 
     template<typename Key, typename Value, EnableIf<Not<Bool<top_level>>, is_c_str<Key>> = 0>
     void single_set(Key&& key, Value&& value) {
-        auto pp = stack::push_popper(*this);
+        push();
         stack::push(lua_state(), std::forward<Value>(value));
-        lua_setfield(lua_state(), -3, &key[0]);
+        lua_setfield(lua_state(), -2, &key[0]);
+        pop();
     }
 
     template<typename Key, typename Value, EnableIf<Not<is_c_str<Key>>> = 0>
     void single_set(Key&& key, Value&& value) {
-        auto pp = stack::push_popper(*this);
+        push();
         stack::push(lua_state(), std::forward<Key>(key));
         stack::push(lua_state(), std::forward<Value>(value));
         lua_settable(lua_state(), -3);
+        pop();
     }
 
     template<typename Keys, typename... Ret, std::size_t... I>
@@ -125,27 +127,17 @@ public:
 
     template<typename Key, typename T>
     SOL_DEPRECATED table_core& set_userdata( Key&& key, usertype<T>& user ) {
-        return set_usertype( std::forward<Key>( key ), user );
+        return set_usertype(std::forward<Key>(key), user);
     }
 
     template<typename T>
     table_core& set_usertype( usertype<T>& user ) {
-        return set_usertype( usertype_traits<T>::name, user );
+        return set_usertype(usertype_traits<T>::name, user);
     }
 
     template<typename Key, typename T>
     table_core& set_usertype( Key&& key, usertype<T>& user ) {
-        if ( top_level ) {
-            stack::push( lua_state( ), user );
-            lua_setglobal( lua_state( ), &key[ 0 ] );
-        }
-        else {
-            auto pp = stack::push_popper( *this );
-            stack::push( lua_state( ), std::forward<Key>( key ) );
-            stack::push( lua_state( ), user );
-            lua_settable( lua_state( ), -3 );
-        }
-        return *this;
+        return set(std::forward<Key>(key), user);
     }
 
     template<typename Fx>
@@ -227,27 +219,9 @@ private:
         set_fx( types<function_signature_t<Sig>>( ), std::forward<Key>( key ), std::forward<Fx>( fx ) );
     }
 
-    template<typename... Sig, typename... Args, typename Key, EnableIf<Bool<top_level>, is_c_str<Key>> = 0>
+    template<typename... Sig, typename... Args, typename Key>
     void set_resolved_function( Key&& key, Args&&... args ) {
-        stack::push<function_sig_t<Sig...>>( lua_state( ), std::forward<Args>( args )... );
-        lua_setglobal( lua_state( ), &key[ 0 ] );
-    }
-
-    template<typename... Sig, typename... Args, typename Key, EnableIf<Not<Bool<top_level>>, is_c_str<Key>> = 0>
-    void set_resolved_function( Key&& key, Args&&... args ) {
-        auto pp = stack::push_popper( *this );
-        int tabletarget = lua_gettop( lua_state( ) );
-        stack::push<function_sig_t<Sig...>>( lua_state( ), std::forward<Args>( args )... );
-        lua_setfield( lua_state( ), tabletarget, &key[ 0 ] );
-    }
-
-    template<typename... Sig, typename... Args, typename Key, EnableIf<Not<is_c_str<Key>>> = 0>
-    void set_resolved_function( Key&& key, Args&&... args ) {
-        auto pp = stack::push_popper( *this );
-        int tabletarget = lua_gettop( lua_state( ) );
-        stack::push(lua_state(), std::forward<Key>(key));
-        stack::push<function_sig_t<Sig...>>( lua_state( ), std::forward<Args>( args )... );
-        lua_settable( lua_state( ), tabletarget );
+        set(std::forward<Key>(key), detail::function_pack<function_sig<Sig...>>(std::forward<Args>(args)...));
     }
 };
 } // sol

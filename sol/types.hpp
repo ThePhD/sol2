@@ -36,9 +36,8 @@ inline bool operator!=(nil_t, nil_t) { return false; }
 struct void_type : types<void> {}; // This is important because it allows myobject.call( Void, ... ) to work
 const void_type Void {};
 
-template<typename... T>
-struct function_sig_t {};
-using function_t = function_sig_t<>;
+template<typename... Args>
+struct function_sig {};
 
 struct upvalue {
     void* value;

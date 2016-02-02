@@ -34,6 +34,14 @@ struct ref_call_t {
 
 const auto ref_call = ref_call_t{};
 
+template <typename Sig, typename... Args>
+struct function_packer : std::tuple<Args...> { using std::tuple<Args...>::tuple; };
+
+template <typename Sig, typename... Args>
+function_packer<Sig, Args...> function_pack( Args&&... args ) { 
+    return function_packer<Sig, Args...>(std::forward<Args>(args)...);
+}
+
 template<typename T, typename Func, typename = void>
 struct functor {
     typedef member_traits<Func> traits_type;
