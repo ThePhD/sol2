@@ -248,7 +248,7 @@ struct getter {
 
     template<typename U = T, EnableIf<std::is_integral<U>, std::is_unsigned<U>> = 0>
     static U get(lua_State* L, int index = -1) {
-        typedef typename std::make_signed<U>::type signed_int;
+        typedef std::make_signed_t<U> signed_int;
         return static_cast<U>(stack::get<signed_int>(L, index));
     }
 
@@ -373,7 +373,7 @@ struct pusher {
 
     template<typename U = T, EnableIf<std::is_integral<U>, std::is_unsigned<U>> = 0>
     static int push(lua_State* L, const T& value) {
-         typedef typename std::make_signed<T>::type signed_int;
+         typedef std::make_signed_t<T> signed_int;
          return stack::push(L, static_cast<signed_int>(value));
     }
 
@@ -526,7 +526,7 @@ struct pusher<std::tuple<Args...>> {
 namespace detail {
 template<typename T>
 inline int push_as_upvalues(lua_State* L, T& item) {
-    typedef typename std::decay<T>::type TValue;
+    typedef std::decay_t<T> TValue;
     const static std::size_t itemsize = sizeof(TValue);
     const static std::size_t voidsize = sizeof(void*);
     const static std::size_t voidsizem1 = voidsize - 1;
@@ -579,7 +579,7 @@ struct check_arguments<false> {
     }
 };
 
-template <bool checkargs = detail::default_check_arguments, std::size_t... I, typename R, typename... Args, typename Fx, typename... FxArgs, typename = typename std::enable_if<!std::is_void<R>::value>::type>
+template <bool checkargs = detail::default_check_arguments, std::size_t... I, typename R, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<!std::is_void<R>::value>>
 inline R call(lua_State* L, int start, indices<I...>, types<R>, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
     const int stacksize = lua_gettop(L);
     const int firstargument = static_cast<int>(start + stacksize - std::max(sizeof...(Args)-1, static_cast<std::size_t>(0)));

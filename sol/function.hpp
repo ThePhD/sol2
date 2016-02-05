@@ -224,7 +224,7 @@ namespace stack {
 template<typename... Sigs>
 struct pusher<function_sig<Sigs...>> {
 
-    template<typename R, typename... Args, typename Fx, typename = typename std::result_of<Fx(Args...)>::type>
+    template<typename R, typename... Args, typename Fx, typename = std::result_of_t<Fx(Args...)>>
     static void set_memfx(types<R(Args...)> t, lua_State* L, Fx&& fx) {
         typedef Decay<Unwrap<Unqualified<Fx>>> raw_fx_t;
         typedef R(* fx_ptr_t)(Args...);
@@ -287,7 +287,7 @@ struct pusher<function_sig<Sigs...>> {
 
     template<typename Fx, typename T>
     static void set_reference_fx(std::false_type, lua_State* L, Fx&& fx, T&& obj) {
-        typedef typename std::remove_pointer<Decay<Fx>>::type clean_fx;
+        typedef std::remove_pointer_t<Decay<Fx>> clean_fx;
         std::unique_ptr<base_function> sptr(new member_function<clean_fx, Unqualified<T>>(std::forward<T>(obj), std::forward<Fx>(fx)));
         return set_fx<Fx>(L, std::move(sptr));
     }
@@ -373,7 +373,7 @@ template<typename Signature>
 struct getter<std::function<Signature>> {
     typedef function_traits<Signature> fx_t;
     typedef typename fx_t::args_type args_t;
-    typedef typename tuple_types<typename fx_t::return_type>::type ret_t;
+    typedef typename tuple_types_t<typename fx_t::return_type> ret_t;
 
     template<typename... FxArgs, typename... Ret>
     static std::function<Signature> get_std_func(types<FxArgs...>, types<Ret...>, lua_State* L, int index = -1) {

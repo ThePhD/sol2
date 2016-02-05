@@ -77,7 +77,7 @@ struct functor {
 };
 
 template<typename T, typename Func>
-struct functor<T, Func, typename std::enable_if<std::is_member_object_pointer<Func>::value>::type> {
+struct functor<T, Func, std::enable_if_t<std::is_member_object_pointer<Func>::value>> {
     typedef member_traits<Func> traits_type;
     typedef typename traits_type::args_type args_type;
     typedef typename traits_type::return_type return_type;
@@ -109,11 +109,11 @@ struct functor<T, Func, typename std::enable_if<std::is_member_object_pointer<Fu
 };
 
 template<typename T, typename Func>
-struct functor<T, Func, typename std::enable_if<std::is_function<Func>::value || std::is_class<Func>::value>::type> {
+struct functor<T, Func, std::enable_if_t<std::is_function<Func>::value || std::is_class<Func>::value>> {
     typedef member_traits<Func> traits_type;
     typedef remove_one_type<typename traits_type::args_type> args_type;
     typedef typename traits_type::return_type return_type;
-    typedef typename std::conditional<std::is_pointer<Func>::value || std::is_class<Func>::value, Func, typename std::add_pointer<Func>::type>::type function_type;
+    typedef std::conditional_t<std::is_pointer<Func>::value || std::is_class<Func>::value, Func, std::add_pointer_t<Func>> function_type;
     T* item;
     function_type invocation;
 
@@ -157,7 +157,7 @@ public:
 
 template<typename Function>
 struct static_function {
-    typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
+    typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
     typedef function_traits<function_type> traits_type;
 
     template<typename... Args>
@@ -175,7 +175,7 @@ struct static_function {
 
     template<typename... Ret, typename... Args>
     static int typed_call(types<Ret...>, types<Args...> ta, function_type* fx, lua_State* L) {
-        typedef typename return_type<Ret...>::type return_type;
+        typedef return_type_t<Ret...> return_type;
         typedef decltype(stack::call(L, 0, types<return_type>(), ta, fx)) ret_t;
         ret_t r = stack::call(L, 0, types<return_type>(), ta, fx);
         int nargs = static_cast<int>(sizeof...(Args));
@@ -197,7 +197,7 @@ struct static_function {
 
 template<typename T, typename Function>
 struct static_member_function {
-    typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
+    typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
     typedef function_traits<function_type> traits_type;
 
     template<typename... Args>
@@ -216,7 +216,7 @@ struct static_member_function {
 
     template<typename... Ret, typename... Args>
     static int typed_call(types<Ret...> tr, types<Args...> ta, T& item, function_type& ifx, lua_State* L) {
-        typedef typename return_type<Ret...>::type return_type;
+        typedef return_type_t<Ret...> return_type;
         auto fx = [&item, &ifx](Args&&... args) -> return_type { return (item.*ifx)(std::forward<Args>(args)...); };
         return_type r = stack::call(L, 0, tr, ta, fx);
         int nargs = static_cast<int>(sizeof...(Args));
@@ -369,7 +369,7 @@ struct functor_function : public base_function {
 
 template<typename Function, typename T>
 struct member_function : public base_function {
-    typedef typename std::remove_pointer<Decay<Function>>::type function_type;
+    typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
     typedef function_return_t<function_type> return_type;
     typedef function_args_t<function_type> args_type;
     struct functor {
@@ -420,8 +420,8 @@ struct member_function : public base_function {
 
 template<typename Function, typename Tp>
 struct usertype_function_core : public base_function {
-    typedef typename std::remove_pointer<Tp>::type T;
-    typedef typename std::remove_pointer<typename std::decay<Function>::type>::type function_type;
+    typedef std::remove_pointer_t<Tp> T;
+    typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
     typedef detail::functor<T, function_type> fx_t;
     typedef typename fx_t::traits_type traits_type;
     typedef typename fx_t::args_type args_type;
@@ -433,7 +433,7 @@ struct usertype_function_core : public base_function {
     usertype_function_core(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
 
     template<typename Return, typename Raw = Unqualified<Return>>
-    typename std::enable_if<std::is_same<T, Raw>::value, int>::type push(lua_State* L, Return&& r) {
+    std::enable_if_t<std::is_same<T, Raw>::value, int> push(lua_State* L, Return&& r) {
         if(detail::get_ptr(r) == fx.item) {
             // push nothing
             // note that pushing nothing with the ':'
@@ -449,7 +449,7 @@ struct usertype_function_core : public base_function {
     }
 
     template<typename Return, typename Raw = Unqualified<Return>>
-    typename std::enable_if<!std::is_same<T, Raw>::value, int>::type push(lua_State* L, Return&& r) {
+    std::enable_if_t<!std::is_same<T, Raw>::value, int> push(lua_State* L, Return&& r) {
         return stack::push(L, std::forward<Return>(r));
     }
 
@@ -486,7 +486,7 @@ struct usertype_function_core : public base_function {
 template<typename Function, typename Tp>
 struct usertype_function : public usertype_function_core<Function, Tp> {
     typedef usertype_function_core<Function, Tp> base_t;
-    typedef typename std::remove_pointer<Tp>::type T;
+    typedef std::remove_pointer_t<Tp> T;
     typedef typename base_t::traits_type traits_type;
     typedef typename base_t::args_type args_type;
     typedef typename base_t::return_type return_type;
@@ -515,7 +515,7 @@ struct usertype_function : public usertype_function_core<Function, Tp> {
 template<typename Function, typename Tp>
 struct usertype_variable_function : public usertype_function_core<Function, Tp> {
     typedef usertype_function_core<Function, Tp> base_t;
-    typedef typename std::remove_pointer<Tp>::type T;
+    typedef std::remove_pointer_t<Tp> T;
     typedef typename base_t::traits_type traits_type;
     typedef typename base_t::args_type args_type;
     typedef typename base_t::return_type return_type;
@@ -554,7 +554,7 @@ struct usertype_variable_function : public usertype_function_core<Function, Tp> 
 template<typename Function, typename Tp>
 struct usertype_indexing_function : public usertype_function_core<Function, Tp> {
     typedef usertype_function_core<Function, Tp> base_t;
-    typedef typename std::remove_pointer<Tp>::type T;
+    typedef std::remove_pointer_t<Tp> T;
     typedef typename base_t::traits_type traits_type;
     typedef typename base_t::args_type args_type;
     typedef typename base_t::return_type return_type;

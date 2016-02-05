@@ -27,7 +27,7 @@
 
 namespace sol {
 namespace detail {
-template<typename R, typename... Args, typename F, typename = typename std::result_of<Unqualified<F>(Args...)>::type>
+template<typename R, typename... Args, typename F, typename = std::result_of_t<Unqualified<F>(Args...)>>
 inline auto resolve_i(types<R(Args...)>, F&&) -> R(Unqualified<F>::*)(Args...) {
     using Sig = R(Args...);
     typedef Unqualified<F> Fu;
@@ -51,7 +51,7 @@ inline auto resolve_i(types<>, F&& f) -> decltype(resolve_f(has_deducible_signat
     return resolve_f(has_deducible_signature<U> {}, std::forward<F>(f));
 }
 
-template<typename... Args, typename F, typename R = typename std::result_of<F&(Args...)>::type>
+template<typename... Args, typename F, typename R = std::result_of_t<F&(Args...)>>
 inline auto resolve_i(types<Args...>, F&& f) -> decltype( resolve_i(types<R(Args...)>(), std::forward<F>(f))) {
     return resolve_i(types<R(Args...)>(), std::forward<F>(f));
 }

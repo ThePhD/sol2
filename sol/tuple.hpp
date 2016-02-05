@@ -85,6 +85,9 @@ struct tuple_types : types<Args...> {};
 template<typename... Args>
 struct tuple_types<std::tuple<Args...>> : types<Args...> {};
 
+template<typename... Args>
+using tuple_types_t = typename tuple_types<Args...>::type;
+
 template<typename Arg>
 struct remove_one_type : detail::chop_one<Arg> {};
 

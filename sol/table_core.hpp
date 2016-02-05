@@ -207,7 +207,7 @@ public:
     }
 
 private:
-    template<typename R, typename... Args, typename Fx, typename Key, typename = typename std::result_of<Fx( Args... )>::type>
+    template<typename R, typename... Args, typename Fx, typename Key, typename = std::result_of_t<Fx( Args... )>>
     void set_fx( types<R( Args... )>, Key&& key, Fx&& fx ) {
         set_resolved_function<R( Args... )>( std::forward<Key>( key ), std::forward<Fx>( fx ) );
     }

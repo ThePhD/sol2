@@ -123,6 +123,9 @@ struct return_type<> {
     typedef void type;
 };
 
+template <typename... Args>
+using return_type_t = typename return_type<Args...>::type;
+
 template <typename Empty, typename... Tn>
 using ReturnTypeOr = typename std::conditional<(sizeof...(Tn) < 1), Empty, typename return_type<Tn...>::type>::type;
 
