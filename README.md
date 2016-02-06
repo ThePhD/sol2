@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/Rapptz/sol.svg?branch=master)](https://travis-ci.org/Rapptz/sol)
 
-Sol is a C++ library binding to Lua. It currently supports Lua 5.2+. Sol aims to be easy to use and easy to add to a project.
+Sol is a C++ library binding to Lua. It currently supports all Lua versions 5.1+ (LuaJIT 2.x included). Sol aims to be easy to use and easy to add to a project.
 At this time, the library is header-only for easy integration with projects.
 
 ## Sneak Peek
@@ -49,21 +49,18 @@ For maximum ease of use, a script called `single.py` is provided. You can run th
 - Lambda, function, and member function bindings are supported.
 - Intermediate type for checking if a variable exists.
 - Simple API that completely abstracts away the C stack API.
-- `operator[]`-style manipulation of tables is provided.
+- `operator[]`-style manipulation of tables
+- C++ type representations in lua userdata as `usertype`s with guaranteed cleanup
 - Support for tables.
 
 ## Supported Compilers
 
-Sol makes use of C++11 features. GCC 4.7 and Clang 3.3 or higher should be able to compile without problems. However, the
+Sol makes use of C++11/14 features. GCC 4.7 and Clang 3.3 or higher should be able to compile without problems. However, the
 officially supported compilers are:
 
-- GCC 4.8.0
-- GCC 4.9.0
+- GCC 4.8.0, 4.9.0+
 - Clang 3.4
-
-Visual Studio 2013 with the November CTP could possibly compile it, despite not being explicitly supported. The last
-version that Visual Studio 2013 was supported was on tag v1.1.0. Anything after that is wishful thinking. In order to
-retrieve that tagged version, just do `git checkout v1.1.0`.
+- Visual Studio 2015 Community (Visual C++ 14.0)
 
 ## Caveats
 
