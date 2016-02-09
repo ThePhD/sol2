@@ -43,3 +43,4 @@ main2.cpp
 lua-5.3.2/
 lua-5.2.4/
 bench/
+*.props

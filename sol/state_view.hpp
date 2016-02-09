@@ -150,9 +150,9 @@ public:
         return globals.get<Args...>(std::forward<Keys>(keys)...);
     }
 
-    template<typename... Tn>
-    state_view& set(Tn&&... argn) {
-        globals.set(std::forward<Tn>(argn)...);
+    template<typename... Args>
+    state_view& set(Args&&... args) {
+        globals.set(std::forward<Args>(args)...);
         return *this;
     }
 
@@ -214,11 +214,11 @@ public:
         return result;
     }
 
-    template <typename... Tn>
-    table create_table(int narr = 0, int nrec = sizeof...(Tn), Tn&&... argn) {
+    template <typename... Args>
+    table create_table(int narr = 0, int nrec = sizeof...(Args), Args&&... args) {
         lua_createtable(L, narr, nrec);
         table result(L);
-        result.set(std::forward<Tn>(argn)...);
+        result.set(std::forward<Args>(args)...);
         lua_pop(L, 1);
         return result;
     }

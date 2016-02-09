@@ -25,7 +25,6 @@
 #include "compatibility.hpp"
 #include "traits.hpp"
 #include <string>
-#include "traits.hpp"
 
 namespace sol {
 struct nil_t {};
@@ -172,7 +171,7 @@ template <typename T>
 struct lua_type_of<T*> : std::integral_constant<type, type::userdata> {};
 
 template <typename T>
-struct lua_type_of<T, typename std::enable_if<std::is_arithmetic<T>::value>::type> : std::integral_constant<type, type::number> {};
+struct lua_type_of<T, std::enable_if_t<std::is_arithmetic<T>::value>> : std::integral_constant<type, type::number> {};
 
 template<typename T>
 inline type type_of() {
@@ -186,7 +185,7 @@ inline type type_of(lua_State* L, int index) {
 // All enumerations are given and taken from lua
 // as numbers as well
 template <typename T>
-struct lua_type_of<T, typename std::enable_if<std::is_enum<T>::value>::type> : std::integral_constant<type, type::number> {
+struct lua_type_of<T, std::enable_if_t<std::is_enum<T>::value>> : std::integral_constant<type, type::number> {
 
 };
 
@@ -199,8 +198,8 @@ struct is_proxy_primitive : is_lua_primitive<T> { };
 template <typename T>
 struct is_proxy_primitive<std::reference_wrapper<T>> : std::true_type { };
 
-template <typename... Tn>
-struct is_proxy_primitive<std::tuple<Tn...>> : std::true_type { };
+template <typename... Args>
+struct is_proxy_primitive<std::tuple<Args...>> : std::true_type { };
 } // sol
 
 #endif // SOL_TYPES_HPP

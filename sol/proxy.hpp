@@ -86,22 +86,22 @@ public:
 
 template<typename Table, typename Key, typename T>
 inline bool operator==(T&& left, const proxy<Table, Key>& right) {
-    return left == right.template get<Decay<T>>();
+    return left == right.template get<std::decay_t<T>>();
 }
 
 template<typename Table, typename Key, typename T>
 inline bool operator==(const proxy<Table, Key>& right, T&& left) {
-    return right.template get<Decay<T>>() == left;
+    return right.template get<std::decay_t<T>>() == left;
 }
 
 template<typename Table, typename Key, typename T>
 inline bool operator!=(T&& left, const proxy<Table, Key>& right) {
-    return right.template get<Decay<T>>() != left;
+    return right.template get<std::decay_t<T>>() != left;
 }
 
 template<typename Table, typename Key, typename T>
 inline bool operator!=(const proxy<Table, Key>& right, T&& left) {
-    return right.template get<Decay<T>>() != left;
+    return right.template get<std::decay_t<T>>() != left;
 }
 } // sol
 

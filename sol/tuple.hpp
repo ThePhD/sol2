@@ -29,6 +29,9 @@ namespace sol {
 template<typename... Ts>
 struct reverse_tuple;
 
+template<typename... Ts>
+using reverse_tuple_t = typename reverse_tuple<Ts...>::type;
+
 template<>
 struct reverse_tuple<std::tuple<>> {
     using type = std::tuple<>;
@@ -57,7 +60,7 @@ template<size_t... Ns>
 struct build_reverse_indices<0, Ns...> : indices<Ns...> {};
 
 template<typename... Args>
-struct types : build_indices<sizeof...(Args)> { typedef types type; };
+struct types : build_indices<sizeof...(Args)> { typedef types type; static constexpr std::size_t size() { return sizeof...(Args); } };
  
 namespace detail {
 template<class Acc, class... Args>
@@ -91,8 +94,8 @@ using tuple_types_t = typename tuple_types<Args...>::type;
 template<typename Arg>
 struct remove_one_type : detail::chop_one<Arg> {};
 
-template<typename... Tn>
-struct constructors {};
+template<typename... Args>
+using constructors = sol::types<Args...>;
 
 const auto default_constructor = constructors<types<>>{};
 

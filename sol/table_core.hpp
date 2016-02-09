@@ -114,9 +114,9 @@ public:
         return tuple_get( types<Ret...>( ), build_indices<sizeof...( Ret )>( ), std::forward_as_tuple(std::forward<Keys>(keys)...));
     }
 
-    template<typename... Tn>
-    table_core& set( Tn&&... argn ) {
-        tuple_set(build_indices<sizeof...(Tn) / 2>(), std::forward_as_tuple(std::forward<Tn>(argn)...));
+    template<typename... Args>
+    table_core& set( Args&&... args ) {
+        tuple_set(build_indices<sizeof...(Args) / 2>(), std::forward_as_tuple(std::forward<Args>(args)...));
         return *this;
     }
 
@@ -214,7 +214,7 @@ private:
 
     template<typename Fx, typename Key>
     void set_fx( types<>, Key&& key, Fx&& fx ) {
-        typedef Unqualified<Unwrap<Fx>> fx_t;
+        typedef Unwrapped<Unqualified<Fx>> fx_t;
         typedef decltype( &fx_t::operator() ) Sig;
         set_fx( types<function_signature_t<Sig>>( ), std::forward<Key>( key ), std::forward<Fx>( fx ) );
     }

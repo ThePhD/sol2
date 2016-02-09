@@ -226,7 +226,7 @@ struct pusher<function_sig<Sigs...>> {
 
     template<typename R, typename... Args, typename Fx, typename = std::result_of_t<Fx(Args...)>>
     static void set_memfx(types<R(Args...)> t, lua_State* L, Fx&& fx) {
-        typedef Decay<Unwrap<Unqualified<Fx>>> raw_fx_t;
+        typedef std::decay_t<Unwrapped<Unqualified<Fx>>> raw_fx_t;
         typedef R(* fx_ptr_t)(Args...);
         typedef std::is_convertible<raw_fx_t, fx_ptr_t> is_convertible;
         set_isconvertible_fx(is_convertible(), t, L, std::forward<Fx>(fx));
@@ -234,7 +234,7 @@ struct pusher<function_sig<Sigs...>> {
 
     template<typename Fx>
     static void set_memfx(types<>, lua_State* L, Fx&& fx) {
-        typedef Unwrap<Unqualified<Fx>> fx_t;
+        typedef Unwrapped<Unqualified<Fx>> fx_t;
         typedef decltype(&fx_t::operator()) Sig;
         set_memfx(types<function_signature_t<Sig>>(), L, std::forward<Fx>(fx));
     }
@@ -269,13 +269,13 @@ struct pusher<function_sig<Sigs...>> {
     template<typename Fx, typename R, typename... Args>
     static void set_isconvertible_fx(std::true_type, types<R(Args...)>, lua_State* L, Fx&& fx) {
         typedef R(* fx_ptr_t)(Args...);
-        fx_ptr_t fxptr = unwrapper(std::forward<Fx>(fx));
+        fx_ptr_t fxptr = unwrap(std::forward<Fx>(fx));
         set(L, fxptr);
     }
 
     template<typename Fx, typename R, typename... Args>
     static void set_isconvertible_fx(std::false_type, types<R(Args...)>, lua_State* L, Fx&& fx) {
-        typedef Unwrap<Decay<Fx>> fx_t;
+        typedef Unwrapped<std::decay_t<Fx>> fx_t;
         std::unique_ptr<base_function> sptr(new functor_function<fx_t>(std::forward<Fx>(fx)));
         set_fx<Fx>(L, std::move(sptr));
     }
@@ -287,7 +287,7 @@ struct pusher<function_sig<Sigs...>> {
 
     template<typename Fx, typename T>
     static void set_reference_fx(std::false_type, lua_State* L, Fx&& fx, T&& obj) {
-        typedef std::remove_pointer_t<Decay<Fx>> clean_fx;
+        typedef std::remove_pointer_t<std::decay_t<Fx>> clean_fx;
         std::unique_ptr<base_function> sptr(new member_function<clean_fx, Unqualified<T>>(std::forward<T>(obj), std::forward<Fx>(fx)));
         return set_fx<Fx>(L, std::move(sptr));
     }
@@ -299,12 +299,12 @@ struct pusher<function_sig<Sigs...>> {
         // idx n + 1: is the object's void pointer
         // We don't need to store the size, because the other side is templated
         // with the same member function pointer type
-        typedef Decay<Fx> dFx;
+        typedef std::decay_t<Fx> dFx;
         typedef Unqualified<Fx> uFx;
         dFx memfxptr(std::forward<Fx>(fx));
         auto userptr = sol::detail::get_ptr(obj);
         void* userobjdata = static_cast<void*>(userptr);
-        lua_CFunction freefunc = &static_member_function<Decay<decltype(*userptr)>, uFx>::call;
+        lua_CFunction freefunc = &static_member_function<std::decay_t<decltype(*userptr)>, uFx>::call;
 
         int upvalues = stack::detail::push_as_upvalues(L, memfxptr);
         upvalues += stack::push(L, userobjdata);
@@ -314,7 +314,7 @@ struct pusher<function_sig<Sigs...>> {
 
     template<typename Fx>
     static void set_fx(std::false_type, lua_State* L, Fx&& fx) {
-        Decay<Fx> target(std::forward<Fx>(fx));
+        std::decay_t<Fx> target(std::forward<Fx>(fx));
         lua_CFunction freefunc = &static_function<Fx>::call;
 
         int upvalues = stack::detail::push_as_upvalues(L, target);

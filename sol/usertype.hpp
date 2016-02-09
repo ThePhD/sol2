@@ -129,7 +129,7 @@ private:
             T*& referencereference = *referencepointer;
             T* obj = reinterpret_cast<T*>(referencepointer + 1);
             referencereference = obj;
-            match_constructor(L, obj, syntax, argcount - static_cast<int>(syntax), typename identity<TTypes>::type()...);
+            match_constructor(L, obj, syntax, argcount - static_cast<int>(syntax), identity_t<TTypes>()...);
 
             if(luaL_newmetatable(L, std::addressof(meta[0])) == 1) {
                 lua_pop(L, 1);
@@ -143,17 +143,16 @@ private:
         }
     };
 
-    struct destructor {
-        static int destruct(lua_State* L) {
-            userdata udata = stack::get<userdata>(L, 1);
-            // The first sizeof(T*) bytes are the reference: the rest is
-            // the actual data itself
-            T* obj = static_cast<T*>(static_cast<void*>(reinterpret_cast<char*>(udata.value) + sizeof(T*)));
-            std::allocator<T> alloc{};
-            alloc.destroy(obj);
-            return 0;
-        }
-    };
+    static int destruct(lua_State* L) {
+        userdata udata = stack::get<userdata>(L, 1);
+        // The first sizeof(T*) bytes are the reference: the rest is
+        // the actual data itself (if there is a reference at all)
+        T** pobj = reinterpret_cast<T**>(udata.value);
+	   T*& obj = *pobj;
+	   std::allocator<T> alloc{};
+        alloc.destroy(obj);
+        return 0;
+    }
 
     template<std::size_t N>
     void build_cleanup() {
@@ -218,7 +217,7 @@ private:
     template<std::size_t N, typename Base, typename Ret>
     bool build_function(std::true_type, function_map_t*&, function_map_t*&, std::string funcname, Ret Base::* func) {
         static_assert(std::is_base_of<Base, T>::value, "Any registered function must be part of the class");
-        typedef typename std::decay<decltype(func)>::type function_type;
+        typedef std::decay_t<decltype(func)> function_type;
         indexmetafunctions.emplace(funcname, std::make_pair(detail::make_unique<usertype_variable_function<function_type, T>>(func), false));
         newindexmetafunctions.emplace(funcname, std::make_pair(detail::make_unique<usertype_variable_function<function_type, T>>(func), false));
         return false;
@@ -228,43 +227,43 @@ private:
     std::unique_ptr<base_function> make_function(const std::string&, Ret(*func)(Arg, Args...)) {
         typedef Unqualified<Arg> Argu;
         static_assert(std::is_base_of<Argu, T>::value, "Any non-member-function must have a first argument which is covariant with the desired userdata type.");
-        typedef typename std::decay<decltype(func)>::type function_type;
-        return detail::make_unique<usertype_function<function_type, T>>(func);
+        typedef std::decay_t<decltype(func)> function_type;
+        return std::make_unique<usertype_function<function_type, T>>(func);
     }
 
     template<typename Base, typename Ret>
     std::unique_ptr<base_function> make_variable_function(std::true_type, const std::string&, Ret Base::* func) {
         static_assert(std::is_base_of<Base, T>::value, "Any registered function must be part of the class");
-        typedef typename std::decay<decltype(func)>::type function_type;
-        return detail::make_unique<usertype_variable_function<function_type, T>>(func);
+        typedef std::decay_t<decltype(func)> function_type;
+        return std::make_unique<usertype_variable_function<function_type, T>>(func);
     }
 
     template<typename Base, typename Ret>
     std::unique_ptr<base_function> make_variable_function(std::false_type, const std::string&, Ret Base::* func) {
         static_assert(std::is_base_of<Base, T>::value, "Any registered function must be part of the class");
-        typedef typename std::decay<decltype(func)>::type function_type;
-        return detail::make_unique<usertype_function<function_type, T>>(func);
+        typedef std::decay_t<decltype(func)> function_type;
+        return std::make_unique<usertype_function<function_type, T>>(func);
     }
 
     template<typename Base, typename Ret>
     std::unique_ptr<base_function> make_function(const std::string& name, Ret Base::* func) {
-        typedef typename std::decay<decltype(func)>::type function_type;
+        typedef std::decay_t<decltype(func)> function_type;
         return make_variable_function(std::is_member_object_pointer<function_type>(), name, func);
     }
 
     template<typename Fx>
     std::unique_ptr<base_function> make_function(const std::string&, Fx&& func) {
         typedef Unqualified<Fx> Fxu;
-        typedef typename std::tuple_element<0, typename function_traits<Fxu>::arg_tuple_type>::type TArg;
-        typedef Unqualified<TArg> TArgu;
-        static_assert(std::is_base_of<TArgu, T>::value, "Any non-member-function must have a first argument which is covariant with the desired userdata type.");
-        typedef typename std::decay<decltype(func)>::type function_type;
-        return detail::make_unique<usertype_function<function_type, T>>(func);
+        typedef std::tuple_element_t<0, typename function_traits<Fxu>::arg_tuple_type> Arg;
+        typedef Unqualified<Arg> Argu;
+        static_assert(std::is_base_of<Argu, T>::value, "Any non-member-function must have a first argument which is covariant with the desired usertype.");
+        typedef std::decay_t<Fxu> function_type;
+        return std::make_unique<usertype_function<function_type, T>>(func);
     }
 
     template<std::size_t N, typename Fx>
     bool build_function(std::false_type, function_map_t*& index, function_map_t*& newindex, std::string funcname, Fx&& func) {
-        typedef typename std::decay<Fx>::type function_type;
+        typedef std::decay_t<Fx> function_type;
         auto metamethod = std::find(meta_function_names.begin(), meta_function_names.end(), funcname);
         if(metamethod != meta_function_names.end()) {
             functionnames.push_back(std::move(funcname));
@@ -300,7 +299,7 @@ private:
 
     template<std::size_t N, typename Fx, typename... Args>
     void build_function_tables(function_map_t*& index, function_map_t*& newindex, std::string funcname, Fx&& func, Args&&... args) {
-        typedef typename std::is_member_object_pointer<Unqualified<Fx>>::type is_variable;
+        typedef std::is_member_object_pointer<Unqualified<Fx>> is_variable;
         static const std::size_t V = static_cast<std::size_t>(!is_variable::value);
         if(build_function<N>(is_variable(), index, newindex, std::move(funcname), std::forward<Fx>(func))) {
             build_function_tables<N + V>(index, newindex, std::forward<Args>(args)...);
@@ -347,7 +346,7 @@ public:
         functionnames.push_back("new");
         metafunctiontable.push_back({ functionnames.back().c_str(), &constructor<CArgs...>::construct });
         functionnames.push_back("__gc");
-        metafunctiontable.push_back({ functionnames.back().c_str(), &destructor::destruct });
+        metafunctiontable.push_back({ functionnames.back().c_str(), destruct });
         // ptr_functions does not participate in garbage collection/new,
         // as all pointered types are considered
         // to be references. This makes returns of
@@ -384,7 +383,7 @@ private:
 
     void set_global_deleter(lua_State* L) {
         // Automatic deleter table -- stays alive until lua VM dies
-        // even if the user calls collectgarbage()
+        // even if the user calls collectgarbage(), weirdly enough
         lua_createtable(L, 0, 0);
         lua_createtable(L, 0, 1);
         int up = push_upvalues<true>(L, metafunctions);

@@ -28,11 +28,18 @@
 
 namespace sol {
 namespace detail {
-struct ref_call_t {
-    ref_call_t() {}
+struct ref_call_t {} const ref_call = ref_call_t{};
+template <typename T>
+struct implicit_wrapper {
+    T& item;
+    implicit_wrapper(T& item) : item(item) {}
+    operator T& () {
+        return item;
+    }
+    operator T* () {
+        return std::addressof(item);
+    }
 };
-
-const auto ref_call = ref_call_t{};
 
 template <typename Sig, typename... Args>
 struct function_packer : std::tuple<Args...> { using std::tuple<Args...>::tuple; };
@@ -51,8 +58,8 @@ struct functor {
     T* item;
     Func invocation;
 
-    template<typename... FxArgs>
-    functor(FxArgs&&... fxargs): item(nullptr), invocation(std::forward<FxArgs>(fxargs)...) {}
+    template<typename... Args>
+    functor(Args&&... args): item(nullptr), invocation(std::forward<Args>(args)...) {}
 
     bool check () const {
          return invocation != nullptr;
@@ -71,7 +78,7 @@ struct functor {
     }
 
     template<typename... Args>
-    auto operator()(Args&&... args) -> decltype(std::declval<functor>().call(types<return_type>{}, std::forward<Args>(args)...)) {
+    decltype(auto) operator()(Args&&... args) {
         return this->call(types<return_type>{}, std::forward<Args>(args)...);
     }
 };
@@ -138,13 +145,13 @@ public:
     template<typename... Args>
     void call(types<void>, Args&&... args) {
         T& member = *item;
-        invocation(member, std::forward<Args>(args)...);
+        invocation(implicit_wrapper<T>(member), std::forward<Args>(args)...);
     }
 
     template<typename Ret, typename... Args>
     Ret call(types<Ret>, Args&&... args) {
         T& member = *item;
-        return invocation(member, std::forward<Args>(args)...);
+        return invocation(implicit_wrapper<T>(member), std::forward<Args>(args)...);
     }
 
     template<typename... Args>
@@ -153,7 +160,6 @@ public:
     }
 };
 } // detail
-
 
 template<typename Function>
 struct static_function {
@@ -168,16 +174,10 @@ struct static_function {
         return 0;
     }
 
-    template<typename... Args>
-    static int typed_call(types<>, types<Args...> t, function_type* fx, lua_State* L) {
-        return typed_call(types<void>(), t, fx, L);
-    }
-
     template<typename... Ret, typename... Args>
     static int typed_call(types<Ret...>, types<Args...> ta, function_type* fx, lua_State* L) {
         typedef return_type_t<Ret...> return_type;
-        typedef decltype(stack::call(L, 0, types<return_type>(), ta, fx)) ret_t;
-        ret_t r = stack::call(L, 0, types<return_type>(), ta, fx);
+        decltype(auto) r = stack::call(L, 0, types<return_type>(), ta, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         return stack::push(L, std::forward<decltype(r)>(r));
@@ -209,19 +209,13 @@ struct static_member_function {
         return 0;
     }
 
-    template<typename... Args>
-    static int typed_call(types<>, types<Args...> t, T& item, function_type& ifx, lua_State* L) {
-        return typed_call(types<void>(), t, item, ifx, L);
-    }
-
     template<typename... Ret, typename... Args>
     static int typed_call(types<Ret...> tr, types<Args...> ta, T& item, function_type& ifx, lua_State* L) {
-        typedef return_type_t<Ret...> return_type;
         auto fx = [&item, &ifx](Args&&... args) -> return_type { return (item.*ifx)(std::forward<Args>(args)...); };
-        return_type r = stack::call(L, 0, tr, ta, fx);
+        decltype(auto) r = stack::call(L, 0, tr, ta, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
-        return stack::push(L, std::forward<return_type>(r));
+        return stack::push(L, std::forward<decltype(r)>(r));
     }
 
     static int call(lua_State* L) {
@@ -311,7 +305,7 @@ struct base_function {
         }
 
         static int gc(lua_State* L) {
-            func_gc<I>(std::integral_constant<bool, (I < 1)>(), L);
+            func_gc<I>(Bool<(I < 1)>(), L);
             return 0;
         }
     };
@@ -334,8 +328,8 @@ struct functor_function : public base_function {
     typedef function_args_t<function_type> args_type;
     Function fx;
 
-    template<typename... FxArgs>
-    functor_function(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
+    template<typename... Args>
+    functor_function(Args&&... args): fx(std::forward<Args>(args)...) {}
 
     template<typename... Args>
     int operator()(types<void> r, types<Args...> t, lua_State* L) {
@@ -343,11 +337,6 @@ struct functor_function : public base_function {
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         return 0;
-    }
-
-    template<typename... Args>
-    int operator()(types<>, types<Args...> t, lua_State* L) {
-        return (*this)(types<void>(), t, L);
     }
 
     template<typename... Ret, typename... Args>
@@ -376,18 +365,18 @@ struct member_function : public base_function {
         T member;
         function_type invocation;
 
-        template<typename Tm, typename... FxArgs>
-        functor(Tm&& m, FxArgs&&... fxargs): member(std::forward<Tm>(m)), invocation(std::forward<FxArgs>(fxargs)...) {}
+        template<typename Tm, typename... Args>
+        functor(Tm&& m, Args&&... args): member(std::forward<Tm>(m)), invocation(std::forward<Args>(args)...) {}
 
         template<typename... Args>
         return_type operator()(Args&&... args) {
-            auto& mem = unwrapper(unref(member));
+            auto& mem = unwrap(deref(member));
             return (mem.*invocation)(std::forward<Args>(args)...);
         }
     } fx;
 
-    template<typename Tm, typename... FxArgs>
-    member_function(Tm&& m, FxArgs&&... fxargs): fx(std::forward<Tm>(m), std::forward<FxArgs>(fxargs)...) {}
+    template<typename Tm, typename... Args>
+    member_function(Tm&& m, Args&&... args): fx(std::forward<Tm>(m), std::forward<Args>(args)...) {}
 
     template<typename... Args>
     int operator()(types<void> tr, types<Args...> ta, lua_State* L) {
@@ -395,15 +384,9 @@ struct member_function : public base_function {
         return 0;
     }
 
-    template<typename... Args>
-    int operator()(types<>, types<Args...> t, lua_State* L) {
-        return (*this)(types<void>(), t, L);
-    }
-
     template<typename... Ret, typename... Args>
     int operator()(types<Ret...> tr, types<Args...> ta, lua_State* L) {
-        typedef decltype(stack::call(L, 0, tr, ta, fx)) ret_t;
-        ret_t r = stack::call(L, 0, tr, ta, fx);
+        decltype(auto) r = stack::call(L, 0, tr, ta, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         return stack::push(L, std::forward<decltype(r)>(r));
@@ -429,12 +412,12 @@ struct usertype_function_core : public base_function {
 
     fx_t fx;
 
-    template<typename... FxArgs>
-    usertype_function_core(FxArgs&&... fxargs): fx(std::forward<FxArgs>(fxargs)...) {}
+    template<typename... Args>
+    usertype_function_core(Args&&... args): fx(std::forward<Args>(args)...) {}
 
     template<typename Return, typename Raw = Unqualified<Return>>
     std::enable_if_t<std::is_same<T, Raw>::value, int> push(lua_State* L, Return&& r) {
-        if(detail::get_ptr(r) == fx.item) {
+        if(ptr(unwrap(r)) == fx.item) {
             // push nothing
             // note that pushing nothing with the ':'
             // syntax means we leave the instance of what
@@ -454,32 +437,21 @@ struct usertype_function_core : public base_function {
     }
 
     template<typename... Args>
-    int call(types<void> r, types<Args...> t, lua_State* L) {
+    int operator()(types<void> tr, types<Args...> ta, lua_State* L) {
         //static const std::size_t skew = static_cast<std::size_t>(std::is_member_object_pointer<function_type>::value);
-        stack::call(L, 0, r, t, fx);
+        stack::call(L, 0, tr, ta, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         return 0;
     }
 
-    template<typename... Args>
-    int call(types<>, types<Args...> t, lua_State* L) {
-         return this->call(types<void>(), t, L);
-    }
-
     template<typename... Ret, typename... Args>
-    int call(types<Ret...> tr, types<Args...> ta, lua_State* L) {
-        typedef decltype(stack::call(L, 0, tr, ta, fx)) ret_t;
-        ret_t r = stack::call(L, 0, tr, ta, fx);
+    int operator()(types<Ret...> tr, types<Args...> ta, lua_State* L) {
+        decltype(auto) r = stack::call(L, 0, tr, ta, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         int pushcount = push(L, std::forward<decltype(r)>(r));
         return pushcount;
-    }
-
-    template<typename... Ret, typename... Args>
-    int operator()(types<Ret...> r, types<Args...> t, lua_State* L) {
-         return this->call(r, t, L);
     }
 };
 
@@ -494,9 +466,8 @@ struct usertype_function : public usertype_function_core<Function, Tp> {
     template<typename... FxArgs>
     usertype_function(FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...) {}
 
-    template<typename Tx>
-    int fx_call(lua_State* L) {
-        this->fx.item = detail::get_ptr(stack::get<Tx>(L, 1));
+    int prelude(lua_State* L) {
+        this->fx.item = ptr(stack::get<T>(L, 1));
         if(this->fx.item == nullptr) {
             throw error("userdata for function call is null: are you using the wrong syntax? (use item:function/variable(...) syntax)");
         }
@@ -504,11 +475,11 @@ struct usertype_function : public usertype_function_core<Function, Tp> {
     }
 
     virtual int operator()(lua_State* L) override {
-        return fx_call<T>(L);
+        return prelude(L);
     }
 
     virtual int operator()(lua_State* L, detail::ref_call_t) override {
-        return fx_call<T*>(L);
+        return prelude(L);
     }
 };
 
@@ -523,9 +494,8 @@ struct usertype_variable_function : public usertype_function_core<Function, Tp> 
     template<typename... FxArgs>
     usertype_variable_function(FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...) {}
 
-    template<typename Tx>
-    int fx_call(lua_State* L) {
-        this->fx.item = detail::get_ptr(stack::get<Tx>(L, 1));
+    int prelude(lua_State* L) {
+        this->fx.item = ptr(stack::get<T>(L, 1));
         if(this->fx.item == nullptr) {
             throw error("userdata for member variable is null");
         }
@@ -543,11 +513,11 @@ struct usertype_variable_function : public usertype_function_core<Function, Tp> 
     }
 
     virtual int operator()(lua_State* L) override {
-        return fx_call<T>(L);
+        return prelude(L);
     }
 
     virtual int operator()(lua_State* L, detail::ref_call_t) override {
-        return fx_call<T*>(L);
+        return prelude(L);
     }
 };
 
@@ -565,41 +535,30 @@ struct usertype_indexing_function : public usertype_function_core<Function, Tp> 
     template<typename... FxArgs>
     usertype_indexing_function(std::string name, FxArgs&&... fxargs): base_t(std::forward<FxArgs>(fxargs)...), name(std::move(name)) {}
 
-    template<typename Tx>
-    int fx_call(lua_State* L) {
+    int prelude(lua_State* L) {
         std::string accessor = stack::get<std::string>(L, 1 - lua_gettop(L));
         auto function = functions.find(accessor);
         if(function != functions.end()) {
             if(function->second.second) {
                 stack::push<upvalue>(L, function->second.first.get());
-                if(std::is_same<T*, Tx>::value) {
-                    stack::push(L, &base_function::usertype<0>::ref_call, 1);
-                }
-                else {
-                    stack::push(L, &base_function::usertype<0>::call, 1);
-                }
+                stack::push(L, &base_function::usertype<0>::ref_call, 1);
                 return 1;
             }
-            else if(std::is_same<T*, Tx>::value) {
-                return (*function->second.first)(L, detail::ref_call);
-            }
-            else {
-                return (*function->second.first)(L);
-            }
+            return (*function->second.first)(L, detail::ref_call);
         }
         if (!this->fx.check()) {
             throw error("invalid indexing \"" + accessor + "\" on type: " + name);
         }
-        this->fx.item = detail::get_ptr(stack::get<Tx>(L, 1));
+        this->fx.item = ptr(stack::get<T>(L, 1));
         return static_cast<base_t&>(*this)(tuple_types<return_type>(), args_type(), L);
     }
 
     virtual int operator()(lua_State* L) override {
-        return fx_call<T>(L);
+        return prelude(L);
     }
 
     virtual int operator()(lua_State* L, detail::ref_call_t) override {
-        return fx_call<T*>(L);
+        return prelude(L);
     }
 };
 

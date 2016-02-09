@@ -33,23 +33,6 @@
 #include <functional>
 
 namespace sol {
-namespace detail {
-template<typename T>
-inline T* get_ptr(T& val) {
-    return std::addressof(val);
-}
-
-template<typename T>
-inline T* get_ptr(std::reference_wrapper<T> val) {
-    return std::addressof(val.get());
-}
-
-template<typename T>
-inline T* get_ptr(T* val) {
-    return val;
-}
-} // detail
-
 namespace stack {
 
 template<typename T, typename = void>
@@ -137,10 +120,10 @@ template <typename T>
 struct userdata_pusher {
     template <typename Key, typename... Args>
     static void push (lua_State* L, Key&& metatablekey, Args&&... args) {
-        // Basically, we store all data like this:
-        // If it's a new value (no std::ref(x)), then we store the pointer to the new
+        // Basically, we store all user0data like this:
+        // If it's a movable/copyable value (no std::ref(x)), then we store the pointer to the new
         // data in the first sizeof(T*) bytes, and then however many bytes it takes to
-        // do the actual object. Things that are just references/pointers are stored as 
+        // do the actual object. Things that are std::ref or plain T* are stored as 
         // just the sizeof(T*), and nothing else.
         T** pdatum = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
         T** referencepointer = pdatum;
@@ -624,12 +607,12 @@ inline void remove( lua_State* L, int index, int count ) {
     }
 }
 
-template <bool checkargs = detail::default_check_arguments, typename R, typename... Args, typename Fx, typename... FxArgs, typename = typename std::enable_if<!std::is_void<R>::value>::type>
+template <bool checkargs = detail::default_check_arguments, typename R, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<!std::is_void<R>::value>>
 inline R call(lua_State* L, int start, types<R> tr, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
     return detail::call<checkargs>(L, start, ta, tr, ta, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 }
 
-template <bool checkargs = detail::default_check_arguments, typename R, typename... Args, typename Fx, typename... FxArgs, typename = typename std::enable_if<!std::is_void<R>::value>::type>
+template <bool checkargs = detail::default_check_arguments, typename R, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<!std::is_void<R>::value>>
 inline R call(lua_State* L, types<R> tr, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
     return call<checkargs>(L, 0, ta, tr, ta, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 }

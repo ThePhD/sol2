@@ -31,6 +31,9 @@ namespace sol {
 template<typename T>
 struct identity { typedef T type; };
 
+template<typename T>
+using identity_t = typename identity<T>::type;
+
 template<typename... Args>
 struct is_tuple : std::false_type{ };
 
@@ -38,12 +41,12 @@ template<typename... Args>
 struct is_tuple<std::tuple<Args...>> : std::true_type{ };
 
 template<typename T>
-struct unwrap {
+struct unwrapped {
     typedef T type;
 };
 
 template<typename T>
-struct unwrap<std::reference_wrapper<T>> {
+struct unwrapped<std::reference_wrapper<T>> {
     typedef T type;
 };
 
@@ -54,6 +57,14 @@ template<typename R, typename T>
 struct remove_member_pointer<R T::*> {
     typedef R type;
 };
+
+template<typename R, typename T>
+struct remove_member_pointer<R T::* const> {
+	typedef R type;
+};
+
+template<typename T>
+using remove_member_pointer_t = remove_member_pointer<T>;
 
 template<typename T, template<typename...> class Templ>
 struct is_specialization_of : std::false_type { };
@@ -100,13 +111,10 @@ template<typename... Args>
 using DisableIf = typename std::enable_if<Not<And<Args...>>::value, int>::type;
 
 template<typename T>
-using Unqualified = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+using Unqualified = std::remove_cv_t<std::remove_reference_t<T>>;
 
 template<typename T>
-using Decay = typename std::decay<T>::type;
-
-template<typename T>
-using Unwrap = typename unwrap<T>::type;
+using Unwrapped = typename unwrapped<T>::type;
 
 template<typename... Args>
 struct return_type {
@@ -126,16 +134,16 @@ struct return_type<> {
 template <typename... Args>
 using return_type_t = typename return_type<Args...>::type;
 
-template <typename Empty, typename... Tn>
-using ReturnTypeOr = typename std::conditional<(sizeof...(Tn) < 1), Empty, typename return_type<Tn...>::type>::type;
+template <typename Empty, typename... Args>
+using ReturnTypeOr = typename std::conditional<(sizeof...(Args) < 1), Empty, typename return_type<Args...>::type>::type;
 
-template <typename... Tn>
-using ReturnType = ReturnTypeOr<void, Tn...>;
+template <typename... Args>
+using ReturnType = ReturnTypeOr<void, Args...>;
 
 namespace detail {
 
 template<typename T, bool isclass = std::is_class<Unqualified<T>>::value>
-struct is_function_impl : std::is_function<typename std::remove_pointer<T>::type> {};
+struct is_function_impl : std::is_function<std::remove_pointer_t<T>> {};
 
 template<typename T>
 struct is_function_impl<T, true> {
@@ -192,12 +200,12 @@ struct fx_traits<R(T::*)(Args...), false> {
     typedef std::tuple<Args...> arg_tuple_type;
     typedef types<Args...> args_type;
     typedef R(T::* function_pointer_type)(Args...);
-    typedef typename std::remove_pointer<function_pointer_type>::type function_type;
+    typedef std::remove_pointer_t<function_pointer_type> function_type;
     typedef R(*free_function_pointer_type)(Args...);
     typedef R return_type;
-    typedef typename std::remove_pointer<free_function_pointer_type>::type signature_type;
+    typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
     template<std::size_t i>
-    using arg = typename std::tuple_element<i, arg_tuple_type>::type;
+    using arg = std::tuple_element_t<i, arg_tuple_type>;
 };
 
 template<typename T, typename R, typename... Args>
@@ -207,12 +215,12 @@ struct fx_traits<R(T::*)(Args...) const, false> {
     typedef std::tuple<Args...> arg_tuple_type;
     typedef types<Args...> args_type;
     typedef R(T::* function_pointer_type)(Args...);
-    typedef typename std::remove_pointer<function_pointer_type>::type function_type;
+    typedef std::remove_pointer_t<function_pointer_type> function_type;
     typedef R(*free_function_pointer_type)(Args...);
     typedef R return_type;
-    typedef typename std::remove_pointer<free_function_pointer_type>::type signature_type;
+    typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
     template<std::size_t i>
-    using arg = typename std::tuple_element<i, arg_tuple_type>::type;
+    using arg = std::tuple_element_t<i, arg_tuple_type>;
 };
 
 template<typename R, typename... Args>
@@ -225,9 +233,9 @@ struct fx_traits<R(Args...), false> {
     typedef R(*function_pointer_type)(Args...);
     typedef R(*free_function_pointer_type)(Args...);
     typedef R return_type;
-    typedef typename std::remove_pointer<free_function_pointer_type>::type signature_type;
+    typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
     template<std::size_t i>
-    using arg = typename std::tuple_element<i, arg_tuple_type>::type;
+    using arg = std::tuple_element_t<i, arg_tuple_type>;
 };
 
 template<typename R, typename... Args>
@@ -240,9 +248,9 @@ struct fx_traits<R(*)(Args...), false> {
     typedef R(*function_pointer_type)(Args...);
     typedef R(*free_function_pointer_type)(Args...);
     typedef R return_type;
-    typedef typename std::remove_pointer<free_function_pointer_type>::type signature_type;
+    typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
     template<std::size_t i>
-    using arg = typename std::tuple_element<i, arg_tuple_type>::type;
+    using arg = std::tuple_element_t<i, arg_tuple_type>;
 };
 
 } // detail
@@ -279,7 +287,7 @@ struct member_traits<Signature, true> {
     typedef R(*function_pointer_type)(Arg);
     typedef R(*free_function_pointer_type)(Arg);
     template<std::size_t i>
-    using arg = typename std::tuple_element<i, arg_tuple_type>::type;
+    using arg = std::tuple_element_t<i, arg_tuple_type>;
 };
 } // detail
 
@@ -322,43 +330,58 @@ template <typename T>
 using is_c_str = Or<std::is_same<std::decay_t<Unqualified<T>>, char*>, std::is_same<Unqualified<T>, std::string>>;
 
 template<typename T>
-auto unwrapper(T&& item) -> decltype(std::forward<T>(item)) {
+auto unwrap(T&& item) -> decltype(std::forward<T>(item)) {
     return std::forward<T>(item);
 }
 
-template<typename Arg>
-Arg& unwrapper(std::reference_wrapper<Arg> arg) {
+template<typename T>
+T& unwrap(std::reference_wrapper<T> arg) {
     return arg.get();
 }
 
 template<typename T>
-T& unref(T& item) {
+T& deref(T& item) {
     return item;
 }
 
 template<typename T>
-T& unref(T* item) {
+T& deref(T* item) {
+    return *item;
+}
+
+template<typename T, typename Dx>
+decltype(auto) deref(std::unique_ptr<T, Dx>& item) {
     return *item;
 }
 
 template<typename T>
-T& unref(std::unique_ptr<T>& item) {
+T& deref(std::shared_ptr<T>& item) {
+    return *item;
+}
+
+template<typename T, typename Dx>
+decltype(auto) deref(const std::unique_ptr<T, Dx>& item) {
     return *item;
 }
 
 template<typename T>
-T& unref(std::shared_ptr<T>& item) {
+T& deref(const std::shared_ptr<T>& item) {
     return *item;
 }
 
 template<typename T>
-T& unref(const std::unique_ptr<T>& item) {
-    return *item;
+inline T* ptr(T& val) {
+	return std::addressof(val);
 }
 
 template<typename T>
-T& unref(const std::shared_ptr<T>& item) {
-    return *item;
+inline T* ptr(std::reference_wrapper<T> val) {
+	return std::addressof(val.get());
+}
+
+template<typename T>
+inline T* ptr(T* val) {
+	return val;
 }
 } // sol
 
