@@ -85,6 +85,22 @@ struct self_test {
     }
 };
 
+int func_1(int a) {
+    return 1;
+}
+
+std::string func_1s(std::string a) {
+    return "string: " + a;
+}
+
+int func_2(int a, int b) {
+    return 2;
+}
+
+void func_3(int a, int b, int c) {
+
+}
+
 struct vars {
     vars () {
 
@@ -1166,4 +1182,66 @@ TEST_CASE("usertype/destructor-tests", "Show that proper copies / destruction ha
     REQUIRE(created == 4);
     REQUIRE(destroyed == 4);
     REQUIRE(created == destroyed);
+}
+
+TEST_CASE("functions/overloading", "Check if overloading works properly for regular set function syntax") {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+
+    lua.set_function("func_1", func_1);
+    lua.set_function("func", sol::overload(func_1, func_1s, func_2, func_3));
+
+    const std::string string_bark = "string: bark";
+
+    REQUIRE_NOTHROW(lua.script(R"(
+a = func(1)
+b = func("bark")
+c = func(1,2)
+func(1,2,3)
+)"));
+
+    REQUIRE((lua["a"] == 1));
+    REQUIRE((lua["b"] == string_bark));
+    REQUIRE((lua["c"] == 2));
+
+    REQUIRE_THROWS(lua.script("func(1,2,'meow')"));
+}
+
+TEST_CASE("usertype/overloading", "Check if overloading works properly for usertypes") {
+    struct woof {
+        int var;
+
+        int func(int x) {
+            return var + x;
+        }
+
+        double func2(int x, int y) {
+            return var + x + y + 0.5;
+        }
+
+        std::string func2s(int x, std::string y) {
+            return y + " " + std::to_string(x);
+        }
+    };
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+
+    lua.new_usertype<woof>("woof",
+        "var", &woof::var,
+        "func", sol::overload(&woof::func, &woof::func2, &woof::func2s)
+    );
+    
+    const std::string bark_58 = "bark 58";
+    
+    REQUIRE_NOTHROW(lua.script(R"(
+r = woof:new()
+a = r:func(1)
+b = r:func(1, 2)
+c = r:func(58, "bark")
+)"));
+    REQUIRE((lua["a"] == 1));
+    REQUIRE((lua["b"] == 3.5));
+    REQUIRE((lua["c"] == bark_58));
+
+    REQUIRE_THROWS(lua.script("r:func(1,2,'meow')"));
 }

@@ -212,7 +212,12 @@ private:
         set_resolved_function<R( Args... )>( std::forward<Key>( key ), std::forward<Fx>( fx ) );
     }
 
-    template<typename Fx, typename Key>
+    template<typename Fx, typename Key, EnableIf<is_specialization_of<Unqualified<Fx>, overload_set>> = 0>
+    void set_fx( types<>, Key&& key, Fx&& fx ) {
+        set(std::forward<Key>(key), std::forward<Fx>(fx));
+    }
+
+    template<typename Fx, typename Key, DisableIf<is_specialization_of<Unqualified<Fx>, overload_set>> = 0>
     void set_fx( types<>, Key&& key, Fx&& fx ) {
         typedef Unwrapped<Unqualified<Fx>> fx_t;
         typedef decltype( &fx_t::operator() ) Sig;

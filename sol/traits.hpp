@@ -197,7 +197,7 @@ template<typename T, typename R, typename... Args>
 struct fx_traits<R(T::*)(Args...), false> {
     static const std::size_t arity = sizeof...(Args);
     static const bool is_member_function = true;
-    typedef std::tuple<Args...> arg_tuple_type;
+    typedef std::tuple<Args...> args_tuple_type;
     typedef types<Args...> args_type;
     typedef R(T::* function_pointer_type)(Args...);
     typedef std::remove_pointer_t<function_pointer_type> function_type;
@@ -205,14 +205,14 @@ struct fx_traits<R(T::*)(Args...), false> {
     typedef R return_type;
     typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
     template<std::size_t i>
-    using arg = std::tuple_element_t<i, arg_tuple_type>;
+    using arg = std::tuple_element_t<i, args_tuple_type>;
 };
 
 template<typename T, typename R, typename... Args>
 struct fx_traits<R(T::*)(Args...) const, false> {
     static const std::size_t arity = sizeof...(Args);
     static const bool is_member_function = true;
-    typedef std::tuple<Args...> arg_tuple_type;
+    typedef std::tuple<Args...> args_tuple_type;
     typedef types<Args...> args_type;
     typedef R(T::* function_pointer_type)(Args...);
     typedef std::remove_pointer_t<function_pointer_type> function_type;
@@ -220,14 +220,14 @@ struct fx_traits<R(T::*)(Args...) const, false> {
     typedef R return_type;
     typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
     template<std::size_t i>
-    using arg = std::tuple_element_t<i, arg_tuple_type>;
+    using arg = std::tuple_element_t<i, args_tuple_type>;
 };
 
 template<typename R, typename... Args>
 struct fx_traits<R(Args...), false> {
     static const std::size_t arity = sizeof...(Args);
     static const bool is_member_function = false;
-    typedef std::tuple<Args...> arg_tuple_type;
+    typedef std::tuple<Args...> args_tuple_type;
     typedef types<Args...> args_type;
     typedef R(function_type)(Args...);
     typedef R(*function_pointer_type)(Args...);
@@ -235,14 +235,14 @@ struct fx_traits<R(Args...), false> {
     typedef R return_type;
     typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
     template<std::size_t i>
-    using arg = std::tuple_element_t<i, arg_tuple_type>;
+    using arg = std::tuple_element_t<i, args_tuple_type>;
 };
 
 template<typename R, typename... Args>
 struct fx_traits<R(*)(Args...), false> {
     static const std::size_t arity = sizeof...(Args);
     static const bool is_member_function = false;
-    typedef std::tuple<Args...> arg_tuple_type;
+    typedef std::tuple<Args...> args_tuple_type;
     typedef types<Args...> args_type;
     typedef R(function_type)(Args...);
     typedef R(*function_pointer_type)(Args...);
@@ -250,7 +250,7 @@ struct fx_traits<R(*)(Args...), false> {
     typedef R return_type;
     typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
     template<std::size_t i>
-    using arg = std::tuple_element_t<i, arg_tuple_type>;
+    using arg = std::tuple_element_t<i, args_tuple_type>;
 };
 
 } // detail
@@ -280,14 +280,14 @@ struct member_traits<Signature, true> {
     typedef Signature signature_type;
     static const bool is_member_function = false;
     static const std::size_t arity = 1;
-    typedef std::tuple<Arg> arg_tuple_type;
+    typedef std::tuple<Arg> args_tuple_type;
     typedef types<Arg> args_type;
     typedef R return_type;
     typedef R(function_type)(Arg);
     typedef R(*function_pointer_type)(Arg);
     typedef R(*free_function_pointer_type)(Arg);
     template<std::size_t i>
-    using arg = std::tuple_element_t<i, arg_tuple_type>;
+    using arg = std::tuple_element_t<i, args_tuple_type>;
 };
 } // detail
 

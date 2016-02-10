@@ -302,7 +302,7 @@ struct pusher<function_sig<Sigs...>> {
         typedef std::decay_t<Fx> dFx;
         typedef Unqualified<Fx> uFx;
         dFx memfxptr(std::forward<Fx>(fx));
-        auto userptr = sol::detail::get_ptr(obj);
+        auto userptr = ptr(obj);
         void* userobjdata = static_cast<void*>(userptr);
         lua_CFunction freefunc = &static_member_function<std::decay_t<decltype(*userptr)>, uFx>::call;
 
@@ -366,6 +366,20 @@ template<typename Signature>
 struct pusher<std::function<Signature>> {
     static int push(lua_State* L, std::function<Signature> fx) {
         return pusher<function_sig<>>{}.push(L, std::move(fx));
+    }
+};
+
+template<typename... Functions>
+struct pusher<overload_set<Functions...>> {
+    template<std::size_t... I, typename Set>
+    static int push(indices<I...>, lua_State* L, Set&& set) {
+        pusher<function_sig<>>{}.set_fx<Set>(L, std::make_unique<overloaded_function<Functions...>>(std::get<I>(set)...));
+	   return 1;
+    }
+
+    template<typename Set>
+    static int push(lua_State* L, Set&& set) {
+        return push(build_indices<sizeof...(Functions)>(), L, std::forward<Set>(set));
     }
 };
 

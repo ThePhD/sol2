@@ -32,13 +32,6 @@
 #include <algorithm>
 
 namespace sol {
-namespace detail {
-template<typename T, typename... Args>
-inline std::unique_ptr<T> make_unique(Args&&... args) {
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
-} // detail
-
 const std::array<std::string, 2> meta_variable_names = {{
     "__index",
     "__newindex"
@@ -121,7 +114,7 @@ private:
         }
 
         static int construct(lua_State* L) {
-            auto&& meta = usertype_traits<T>::metatable;
+            const auto& meta = usertype_traits<T>::metatable;
             call_syntax syntax = stack::get_call_syntax(L, meta);
             int argcount = lua_gettop(L);
 
@@ -164,7 +157,7 @@ private:
         int extracount = 0;
         if(!indexmetafunctions.empty()) {
             if(index == nullptr) {
-                auto idxptr = detail::make_unique<usertype_indexing_function<void (T::*)(), T>>("__index", nullptr);
+                auto idxptr = std::make_unique<usertype_indexing_function<void (T::*)(), T>>("__index", nullptr);
                 index = &(idxptr->functions);
                 functionnames.emplace_back("__index");
                 metafunctions.emplace_back(std::move(idxptr));
@@ -180,7 +173,7 @@ private:
         }
         if(!newindexmetafunctions.empty()) {
             if(newindex == nullptr) {
-                auto idxptr = detail::make_unique<usertype_indexing_function<void (T::*)(), T>>("__newindex", nullptr);
+                auto idxptr = std::make_unique<usertype_indexing_function<void (T::*)(), T>>("__newindex", nullptr);
                 newindex = &(idxptr->functions);
                 functionnames.emplace_back("__newindex");
                 metafunctions.emplace_back(std::move(idxptr));
@@ -218,14 +211,19 @@ private:
     bool build_function(std::true_type, function_map_t*&, function_map_t*&, std::string funcname, Ret Base::* func) {
         static_assert(std::is_base_of<Base, T>::value, "Any registered function must be part of the class");
         typedef std::decay_t<decltype(func)> function_type;
-        indexmetafunctions.emplace(funcname, std::make_pair(detail::make_unique<usertype_variable_function<function_type, T>>(func), false));
-        newindexmetafunctions.emplace(funcname, std::make_pair(detail::make_unique<usertype_variable_function<function_type, T>>(func), false));
+        indexmetafunctions.emplace(funcname, std::make_pair(std::make_unique<usertype_variable_function<function_type, T>>(func), false));
+        newindexmetafunctions.emplace(funcname, std::make_pair(std::make_unique<usertype_variable_function<function_type, T>>(func), false));
         return false;
+    }
+
+    template<typename... Functions>
+    std::unique_ptr<base_function> make_function(const std::string&, overload_set<Functions...> func) {
+        return std::make_unique<usertype_overloaded_function<T, Functions...>>(func);
     }
 
     template<typename Arg, typename... Args, typename Ret>
     std::unique_ptr<base_function> make_function(const std::string&, Ret(*func)(Arg, Args...)) {
-        typedef Unqualified<Arg> Argu;
+        typedef Unqualified<std::remove_pointer_t<Arg>> Argu;
         static_assert(std::is_base_of<Argu, T>::value, "Any non-member-function must have a first argument which is covariant with the desired userdata type.");
         typedef std::decay_t<decltype(func)> function_type;
         return std::make_unique<usertype_function<function_type, T>>(func);
@@ -254,8 +252,7 @@ private:
     template<typename Fx>
     std::unique_ptr<base_function> make_function(const std::string&, Fx&& func) {
         typedef Unqualified<Fx> Fxu;
-        typedef std::tuple_element_t<0, typename function_traits<Fxu>::arg_tuple_type> Arg;
-        typedef Unqualified<Arg> Argu;
+        typedef Unqualified<std::remove_pointer_t<function_traits<Fxu>::arg<0>>> Argu;
         static_assert(std::is_base_of<Argu, T>::value, "Any non-member-function must have a first argument which is covariant with the desired usertype.");
         typedef std::decay_t<Fxu> function_type;
         return std::make_unique<usertype_function<function_type, T>>(func);
@@ -269,9 +266,9 @@ private:
             functionnames.push_back(std::move(funcname));
             std::string& name = functionnames.back();
             auto indexmetamethod = std::find(meta_variable_names.begin(), meta_variable_names.end(), name);
-            std::unique_ptr<base_function> ptr(nullptr);
+            std::unique_ptr<base_function> baseptr(nullptr);
             if(indexmetamethod != meta_variable_names.end()) {
-                auto idxptr = detail::make_unique<usertype_indexing_function<function_type, T>>(name, func);
+                auto idxptr = std::make_unique<usertype_indexing_function<function_type, T>>(name, func);
                 std::ptrdiff_t idxvalue = std::distance(meta_variable_names.begin(), indexmetamethod);
                 switch(idxvalue) {
                 case 0:
@@ -283,12 +280,12 @@ private:
                 default:
                     break;
                 }
-                ptr = std::move(idxptr);
+                baseptr = std::move(idxptr);
             }
             else {
-                ptr = make_function(funcname, std::forward<Fx>(func));
+                baseptr = make_function(funcname, std::forward<Fx>(func));
             }
-            metafunctions.emplace_back(std::move(ptr));
+            metafunctions.emplace_back(std::move(baseptr));
             metafunctiontable.push_back( { name.c_str(), &base_function::usertype<N>::call } );
             ptrmetafunctiontable.push_back( { name.c_str(), &base_function::usertype<N>::ref_call } );
             return true;

@@ -27,6 +27,7 @@
 #include "tuple.hpp"
 #include "traits.hpp"
 #include "usertype_traits.hpp"
+#include "overload.hpp"
 #include <utility>
 #include <array>
 #include <cstring>
@@ -625,6 +626,22 @@ inline void call(lua_State* L, int start, types<void> tr, types<Args...> ta, Fx&
 template <bool checkargs = detail::default_check_arguments, typename... Args, typename Fx, typename... FxArgs>
 inline void call(lua_State* L, types<void> tr, types<Args...> ta, Fx&& fx, FxArgs&&... args) {
     call<checkargs>(L, 0, ta, tr, ta, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
+}
+
+template<typename... Args, typename Fx>
+inline int typed_call(types<void> tr, types<Args...> ta, Fx&& fx, lua_State* L) {
+    stack::call(L, 0, tr, ta, fx);
+    int nargs = static_cast<int>(sizeof...(Args));
+    lua_pop(L, nargs);
+    return 0;
+}
+
+template<typename... Ret, typename... Args, typename Fx>
+inline int typed_call(types<Ret...> tr, types<Args...> ta, Fx&& fx, lua_State* L) {
+    decltype(auto) r = stack::call(L, 0, tr, ta, fx);
+    int nargs = static_cast<int>(sizeof...(Args));
+    lua_pop(L, nargs);
+    return stack::push(L, std::forward<decltype(r)>(r));
 }
 
 inline call_syntax get_call_syntax(lua_State* L, const std::string& meta) {
