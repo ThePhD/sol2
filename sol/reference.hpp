@@ -40,7 +40,7 @@ struct push_pop<true, T> {
 template <bool top_level = false, typename T>
 push_pop<top_level, T> push_popper(T&& x) {
     return push_pop<top_level, T>(std::forward<T>(x));
-};
+}
 } // stack
 
 class reference {

@@ -85,7 +85,7 @@ struct self_test {
     }
 };
 
-int func_1(int a) {
+int func_1(int) {
     return 1;
 }
 
@@ -93,11 +93,11 @@ std::string func_1s(std::string a) {
     return "string: " + a;
 }
 
-int func_2(int a, int b) {
+int func_2(int, int) {
     return 2;
 }
 
-void func_3(int a, int b, int c) {
+void func_3(int, int, int) {
 
 }
 
@@ -1006,7 +1006,7 @@ TEST_CASE("references/get-set", "properly get and set with std::ref semantics. N
     REQUIRE(var.boop != my_var.boop);
     
     REQUIRE(std::addressof(ref_var) == std::addressof(rvar));
-    //REQUIRE(std::addressof(proxy_ref_var.get()) == std::addressof(rvar));
+    REQUIRE(std::addressof(proxy_ref_var.get()) == std::addressof(rvar));
     REQUIRE(rvar.boop == 5);
     REQUIRE(rvar.boop == ref_var.boop);
 }
@@ -1042,7 +1042,7 @@ TEST_CASE( "functions/function_result-protected_function", "Function result shou
         // Does not bypass error function, will call it
         luaL_error( lua.lua_state(), "BIG ERROR MESSAGES!" );
     };
-    auto specialhandler = []( std::string message ) {
+    auto specialhandler = []( std::string ) {
         return errormessage2;
     };
 

@@ -37,7 +37,7 @@ struct overloaded_function : base_function {
 
     }
 
-    int match_arity(lua_State* L, std::ptrdiff_t x, indices<>) {
+    int match_arity(lua_State*, std::ptrdiff_t, indices<>) {
         throw error("no matching function call takes this number of arguments");
     }
 
@@ -99,7 +99,7 @@ struct usertype_overloaded_function : base_function {
 
     }
 
-    int match_arity(lua_State* L, std::ptrdiff_t x, indices<>) {
+    int match_arity(lua_State*, std::ptrdiff_t, indices<>) {
         throw error("no matching function call takes this number of arguments");
     }
 
@@ -154,7 +154,7 @@ struct usertype_indexing_function<overload_set<Functions...>, T> : base_function
     usertype_indexing_function(std::string name, Functions... fxs)
     : overloads({function_traits<Functions>::arity, fxs}...), name(std::move(name)) {}
 
-    int match_arity(lua_State* L, std::ptrdiff_t x, indices<>) {
+    int match_arity(lua_State*, std::ptrdiff_t, indices<>) {
         throw error("no matching function call takes this number of arguments");
     }
 

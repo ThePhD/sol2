@@ -75,7 +75,7 @@ struct static_member_function {
 
     template<typename... Ret, typename... Args>
     static int typed_call(types<Ret...> tr, types<Args...> ta, T& item, function_type& ifx, lua_State* L) {
-        auto fx = [&item, &ifx](Args&&... args) -> return_type { return (item.*ifx)(std::forward<Args>(args)...); };
+        auto fx = [&item, &ifx](Args&&... args) -> return_type_t<Ret...> { return (item.*ifx)(std::forward<Args>(args)...); };
         decltype(auto) r = stack::call(L, 0, tr, ta, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);

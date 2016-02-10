@@ -15,55 +15,76 @@ struct multiplier {
     }
 };
 
+inline std::string make_string( std::string input ) { 
+	return "string: " + input;
+}
+
 int main() {
-    sol::state lua;
-    lua.open_libraries(sol::lib::base);
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
 
-    // setting a function is simple
-    lua.set_function("my_add", my_add);
+	// setting a function is simple
+	lua.set_function("my_add", my_add);
 
-    // you could even use a lambda
-    lua.set_function("my_mul", [](double x, double y) { return x * y; });
+	// you could even use a lambda
+	lua.set_function("my_mul", [](double x, double y) { return x * y; });
 
-    // member function pointers and functors as well
-    lua.set_function("mult_by_ten", multiplier{});
-    lua.set_function("mult_by_five", &multiplier::by_five);
+	// member function pointers and functors as well
+	lua.set_function("mult_by_ten", multiplier{});
+	lua.set_function("mult_by_five", &multiplier::by_five);
 
-    // assert that the functions work
-    lua.script("assert(my_add(10, 11) == 21)");
-    lua.script("assert(my_mul(4.5, 10) == 45)");
-    lua.script("assert(mult_by_ten(50) == 500)");
-    lua.script("assert(mult_by_five(10) == 50)");
+	// assert that the functions work
+	lua.script("assert(my_add(10, 11) == 21)");
+	lua.script("assert(my_mul(4.5, 10) == 45)");
+	lua.script("assert(mult_by_ten(50) == 500)");
+	lua.script("assert(mult_by_five(10) == 50)");
 
-    // using lambdas, functions could have state.
-    int x = 0;
-    lua.set_function("inc", [&x]() { x += 10; });
+	// using lambdas, functions could have state.
+	int x = 0;
+	lua.set_function("inc", [&x]() { x += 10; });
 
-    // calling a stateful lambda modifies the value
-    lua.script("inc()");
-    assert(x == 10);
+	// calling a stateful lambda modifies the value
+	lua.script("inc()");
+	assert(x == 10);
 
-    // this can be done as many times as you want
-    lua.script("inc()\ninc()\ninc()");
-    assert(x == 40);
+	// this can be done as many times as you want
+	lua.script("inc()\ninc()\ninc()");
+	assert(x == 40);
 
-    // retrieval of a function is done similarly
-    // to other variables, using sol::function
-    sol::function add = lua["my_add"];
-    assert(add.call<int>(10, 11) == 21);
+	// retrieval of a function is done similarly
+	// to other variables, using sol::function
+	sol::function add = lua["my_add"];
+	int value = add(10, 11);
+	assert(add.call<int>(10, 11) == 21);
+	assert(value == 21);
 
-    // multi-return functions are supported using
-    // std::tuple as the interface.
-    lua.set_function("multi", []{ return std::make_tuple(10, "goodbye"); });
-    lua.script("x, y = multi()");
-    lua.script("assert(x == 10 and y == 'goodbye')");
+	// multi-return functions are supported using
+	// std::tuple as the interface.
+	lua.set_function("multi", [] { return std::make_tuple(10, "goodbye"); });
+	lua.script("x, y = multi()");
+	lua.script("assert(x == 10 and y == 'goodbye')");
 
-    auto multi = lua.get<sol::function>("multi");
-    int first;
-    std::string second;
-    std::tie(first, second) = multi.call<int, std::string>();
+	auto multi = lua.get<sol::function>("multi");
+	int first;
+	std::string second;
+	std::tie(first, second) = multi.call<int, std::string>();
 
-    // assert the values
-    assert(first == 10);
-    assert(second == "goodbye");
+	// use the values
+	assert(first == 10);
+	assert(second == "goodbye");
+
+	// you can even overload functions
+	// just pass in the different functions
+	// you want to pack into a single name:
+	// make SURE they take different number of
+	// arguments/different types!
+	
+	lua.set_function("func", sol::overload([](int x) { return x; }, make_string, my_add));
+
+	// All these functions are now overloaded through "func"
+	lua.script(R"(
+print(func(1))
+print(func("bark"))
+print(func(1,2))
+)");
 }

@@ -89,11 +89,6 @@ public:
         return get(tr, tr);
     }
 
-    template <typename K>
-    decltype(auto) operator[](K&& key) const {
-        return get<table>()[std::forward<K>(key)];
-    }
-
     ~function_result() {
         stack::remove(L, index, popcount);
     }

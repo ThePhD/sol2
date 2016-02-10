@@ -252,7 +252,8 @@ private:
     template<typename Fx>
     std::unique_ptr<base_function> make_function(const std::string&, Fx&& func) {
         typedef Unqualified<Fx> Fxu;
-        typedef Unqualified<std::remove_pointer_t<function_traits<Fxu>::arg<0>>> Argu;
+	   typedef std::tuple_element_t<0, typename function_traits<Fxu>::args_tuple_type> Arg0;
+        typedef Unqualified<std::remove_pointer_t<Arg0>> Argu;
         static_assert(std::is_base_of<Argu, T>::value, "Any non-member-function must have a first argument which is covariant with the desired usertype.");
         typedef std::decay_t<Fxu> function_type;
         return std::make_unique<usertype_function<function_type, T>>(func);

@@ -386,14 +386,13 @@ struct pusher<overload_set<Functions...>> {
 template<typename Signature>
 struct getter<std::function<Signature>> {
     typedef function_traits<Signature> fx_t;
-    typedef typename fx_t::args_type args_t;
-    typedef typename tuple_types_t<typename fx_t::return_type> ret_t;
+    typedef typename fx_t::args_type args_type;
+    typedef tuple_types_t<typename fx_t::return_type> return_type;
 
     template<typename... FxArgs, typename... Ret>
     static std::function<Signature> get_std_func(types<FxArgs...>, types<Ret...>, lua_State* L, int index = -1) {
-        typedef typename function_traits<Signature>::return_type return_t;
         sol::function f(L, index);
-        auto fx = [f, L, index](FxArgs&&... args) -> return_t {
+        auto fx = [f, L, index](FxArgs&&... args) -> return_type_t<Ret...> {
             return f(types<Ret...>(), std::forward<FxArgs>(args)...);
         };
         return std::move(fx);
@@ -414,7 +413,7 @@ struct getter<std::function<Signature>> {
     }
 
     static std::function<Signature> get(lua_State* L, int index) {
-        return get_std_func(args_t(), ret_t(), L, index);
+        return get_std_func(args_type(), return_type(), L, index);
     }
 };
 } // stack

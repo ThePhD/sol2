@@ -49,7 +49,7 @@ function_packer<Sig, Args...> function_pack( Args&&... args ) {
     return function_packer<Sig, Args...>(std::forward<Args>(args)...);
 }
 
-inline bool check_types(types<>, indices<>, lua_State* L, int) {
+inline bool check_types(types<>, indices<>, lua_State*, int) {
 	return true;
 }
 
