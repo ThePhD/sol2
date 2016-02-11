@@ -64,7 +64,7 @@ struct overloaded_function : base_function {
         if (!detail::check_types(args_type(), args_type(), L)) {
             return match_arity(L, x, indices<In...>());
         }
-        return stack::typed_call(return_type(), args_type(), func, L);
+        return stack::typed_call<false>(return_type(), args_type(), func, L);
     }
 
     int match_arity(lua_State* L) {
@@ -120,7 +120,7 @@ struct usertype_overloaded_function : base_function {
             return match_arity(L, x, indices<In...>());
         }
         func.item = ptr(stack::get<T>(L, 1));
-        return stack::typed_call(return_type(), args_type(), func, L);
+        return stack::typed_call<false>(return_type(), args_type(), func, L);
     }
 
     int match_arity(lua_State* L) {
@@ -175,7 +175,7 @@ struct usertype_indexing_function<overload_set<Functions...>, T> : base_function
             return match_arity(L, x, indices<In...>());
         }
         func.item = ptr(stack::get<T>(L, 1));
-        return stack::typed_call(return_type(), args_type(), func, L);
+        return stack::typed_call<false>(return_type(), args_type(), func, L);
     }
 
     int match_arity(lua_State* L) {
