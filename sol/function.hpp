@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 
 // Copyright (c) 2013-2016 Rapptz and contributors
 
@@ -41,33 +41,32 @@ private:
     }
 
     template<std::size_t... I, typename... Ret>
-    std::tuple<Ret...> invoke( indices<I...>, types<Ret...>, std::ptrdiff_t n ) const {
+    auto invoke( types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n ) const {
         luacall( n, sizeof...( Ret ) );
-        int nreturns = static_cast<int>( sizeof...( Ret ) );
         int stacksize = lua_gettop( lua_state( ) );
-        int firstreturn = std::max( 0, stacksize - nreturns ) + 1;
-        auto r = std::make_tuple( stack::get<Ret>( lua_state( ), firstreturn + I )... );
-        lua_pop( lua_state( ), nreturns );
+	   int firstreturn = std::max(1, stacksize - static_cast<int>(sizeof...(Ret)) + 1);
+        auto r = stack::get<std::tuple<Ret...>>( lua_state( ), firstreturn );
+	   lua_pop(lua_state(), static_cast<int>(sizeof...(Ret)));
         return r;
     }
 
     template<std::size_t I, typename Ret>
-    Ret invoke( indices<I>, types<Ret>, std::ptrdiff_t n ) const {
+    Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n ) const {
         luacall( n, 1 );
         return stack::pop<Ret>( lua_state( ) );
     }
 
     template <std::size_t I>
-    void invoke( indices<I>, types<void>, std::ptrdiff_t n ) const {
+    void invoke(types<void>, std::index_sequence<I>, std::ptrdiff_t n) const {
         luacall( n, 0 );
     }
 
-    function_result invoke( indices<>, types<>, std::ptrdiff_t n ) const {
+    function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n ) const {
         int stacksize = lua_gettop( lua_state( ) );
         int firstreturn = std::max( 1, stacksize - static_cast<int>( n ) );
-        luacall( n, LUA_MULTRET );
+        luacall(n, LUA_MULTRET);
         int poststacksize = lua_gettop( lua_state( ) );
-        int returncount = poststacksize - firstreturn;
+        int returncount = poststacksize - (firstreturn - 1);
         return function_result( lua_state( ), firstreturn, returncount, returncount, call_error::ok );
     }
 
@@ -87,18 +86,15 @@ public:
     }
 
     template<typename... Ret, typename... Args>
-    auto operator()( types<Ret...>, Args&&... args ) const
-        -> decltype( invoke( types<Ret...>( ), types<Ret...>( ), 0 ) ) {
+    decltype(auto) operator()( types<Ret...>, Args&&... args ) const {
         return call<Ret...>( std::forward<Args>( args )... );
     }
 
     template<typename... Ret, typename... Args>
-    auto call( Args&&... args ) const
-    -> decltype( invoke( types<Ret...>( ), types<Ret...>( ), 0 ) ) {
+    decltype(auto) call( Args&&... args ) const {
         push( );
         int pushcount = stack::push_args( lua_state( ), std::forward<Args>( args )... );
-        auto tr = types<Ret...>( );
-        return invoke( tr, tr, pushcount );
+        return invoke( types<Ret...>( ), std::index_sequence_for<Ret...>(), pushcount );
     }
 };
 
@@ -140,28 +136,27 @@ private:
     }
 
     template<std::size_t... I, typename... Ret>
-    std::tuple<Ret...> invoke(indices<I...>, types<Ret...>, std::ptrdiff_t n, handler& h) const {
+    auto invoke(types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n, handler& h) const {
         luacall(n, sizeof...(Ret), h);
-        int nreturns = static_cast<int>(sizeof...(Ret));
         int stacksize = lua_gettop(lua_state());
-        int firstreturn = std::max(0, stacksize - nreturns) + 1;
-        auto r = std::make_tuple(stack::get<Ret>(lua_state(), firstreturn + I)...);
-        lua_pop(lua_state(), nreturns);
+        int firstreturn = std::max(0, stacksize - static_cast<int>(sizeof...(Ret)) + 1);
+	   auto r = stack::get<std::tuple<Ret...>>(lua_state(), firstreturn);
+	   lua_pop(lua_state(), static_cast<int>(sizeof...(Ret)));
         return r;
     }
 
     template<std::size_t I, typename Ret>
-    Ret invoke(indices<I>, types<Ret>, std::ptrdiff_t n, handler& h) const {
+    Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n, handler& h) const {
         luacall(n, 1, h);
         return stack::pop<Ret>(lua_state());
     }
 
     template <std::size_t I>
-    void invoke(indices<I>, types<void>, std::ptrdiff_t n, handler& h) const {
+    void invoke(types<void>, std::index_sequence<I>, std::ptrdiff_t n, handler& h) const {
         luacall(n, 0, h);
     }
 
-    function_result invoke(indices<>, types<>, std::ptrdiff_t n, handler& h) const {
+    function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n, handler& h) const {
         bool handlerpushed = error_handler.valid();
         int stacksize = lua_gettop(lua_state());
         int firstreturn = std::max(1, stacksize - static_cast<int>(n) - 1);
@@ -204,19 +199,16 @@ public:
     }
 
     template<typename... Ret, typename... Args>
-    auto operator()(types<Ret...>, Args&&... args) const 
-    -> decltype(invoke(types<Ret...>(), types<Ret...>(), 0, std::declval<handler&>())) {
+    decltype(auto) operator()(types<Ret...>, Args&&... args) const {
         return call<Ret...>(std::forward<Args>(args)...);
     }
 
     template<typename... Ret, typename... Args>
-    auto call(Args&&... args) const
-    -> decltype(invoke(types<Ret...>(), types<Ret...>(), 0, std::declval<handler&>())) {
+    decltype(auto) call(Args&&... args) const {
         handler h(error_handler);
         push();
         int pushcount = stack::push_args(lua_state(), std::forward<Args>(args)...);
-        auto tr = types<Ret...>();
-        return invoke( tr, tr, pushcount, h );
+        return invoke(types<Ret...>(), std::index_sequence_for<Ret...>(), pushcount, h);
     }
 };
 
@@ -235,8 +227,7 @@ struct pusher<function_sig<Sigs...>> {
     template<typename Fx>
     static void set_memfx(types<>, lua_State* L, Fx&& fx) {
         typedef Unwrapped<Unqualified<Fx>> fx_t;
-        typedef decltype(&fx_t::operator()) Sig;
-        set_memfx(types<function_signature_t<Sig>>(), L, std::forward<Fx>(fx));
+        set(L, &fx_t::operator(), std::forward<Fx>(fx));
     }
 
     template<typename... Args, typename R>
@@ -251,13 +242,13 @@ struct pusher<function_sig<Sigs...>> {
 
     template<typename... Args, typename R, typename C, typename T>
     static void set(lua_State* L, R (C::*memfxptr)(Args...), T&& obj) {
-        typedef Bool<is_specialization_of<T, std::reference_wrapper>::value || std::is_pointer<T>::value> is_reference;
+        typedef Bool<is_specialization_of<Unqualified<T>, std::reference_wrapper>::value || std::is_pointer<T>::value> is_reference;
         set_reference_fx(is_reference(), L, memfxptr, std::forward<T>(obj));
     }
 
     template<typename Sig, typename C, typename T>
     static void set(lua_State* L, Sig C::* memfxptr, T&& obj) {
-        typedef Bool<is_specialization_of<T, std::reference_wrapper>::value || std::is_pointer<T>::value> is_reference;
+        typedef Bool<is_specialization_of<Unqualified<T>, std::reference_wrapper>::value || std::is_pointer<T>::value> is_reference;
         set_reference_fx(is_reference(), L, memfxptr, std::forward<T>(obj));
     }
 
@@ -323,8 +314,8 @@ struct pusher<function_sig<Sigs...>> {
 
     template<typename Fx>
     static void set_fx(lua_State* L, std::unique_ptr<base_function> luafunc) {
-        const auto& metakey = usertype_traits<Unqualified<Fx>>::metatable;
-        const char* metatablename = std::addressof(metakey[0]);
+        const static auto& metakey = u8"sol.ƒ.♲.🗑.(/¯◡ ‿ ◡)/¯ ~ ┻━┻ (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧";
+        const static char* metatablename = &metakey[0];
         base_function* target = luafunc.release();
         void* userdata = reinterpret_cast<void*>(target);
         lua_CFunction freefunc = &base_function::call;
@@ -352,13 +343,13 @@ struct pusher<function_sig<Sigs...>> {
 template<typename T, typename... Args>
 struct pusher<sol::detail::function_packer<T, Args...>> {
     template <std::size_t... I, typename FP>
-    static int push_func(indices<I...>, lua_State* L, FP&& fp) {
+    static int push_func(std::index_sequence<I...>, lua_State* L, FP&& fp) {
         return stack::push<T>(L, std::get<I>(fp)...);
     }
 
     template <typename FP>
     static int push(lua_State* L, FP&& fp) {
-        return push_func(build_indices<sizeof...(Args)>(), L, std::forward<FP>(fp));
+        return push_func(std::index_sequence_for<Args...>(), L, std::forward<FP>(fp));
     }
 };
 
@@ -372,28 +363,28 @@ struct pusher<std::function<Signature>> {
 template<typename... Functions>
 struct pusher<overload_set<Functions...>> {
     template<std::size_t... I, typename Set>
-    static int push(indices<I...>, lua_State* L, Set&& set) {
+    static int push(std::index_sequence<I...>, lua_State* L, Set&& set) {
         pusher<function_sig<>>{}.set_fx<Set>(L, std::make_unique<overloaded_function<Functions...>>(std::get<I>(set)...));
 	   return 1;
     }
 
     template<typename Set>
     static int push(lua_State* L, Set&& set) {
-        return push(build_indices<sizeof...(Functions)>(), L, std::forward<Set>(set));
+        return push(std::index_sequence_for<Functions...>(), L, std::forward<Set>(set));
     }
 };
 
 template<typename Signature>
 struct getter<std::function<Signature>> {
     typedef function_traits<Signature> fx_t;
-    typedef typename fx_t::args_type args_type;
-    typedef tuple_types_t<typename fx_t::return_type> return_type;
+    typedef typename fx_t::args_type args_types;
+    typedef tuple_types<typename fx_t::return_type> return_types;
 
-    template<typename... FxArgs, typename... Ret>
-    static std::function<Signature> get_std_func(types<FxArgs...>, types<Ret...>, lua_State* L, int index = -1) {
+    template<typename... Args, typename... Ret>
+    static std::function<Signature> get_std_func(types<Args...>, types<Ret...>, lua_State* L, int index = -1) {
         sol::function f(L, index);
-        auto fx = [f, L, index](FxArgs&&... args) -> return_type_t<Ret...> {
-            return f(types<Ret...>(), std::forward<FxArgs>(args)...);
+        auto fx = [f, L, index](Args&&... args) -> return_type_t<Ret...> {
+            return f.call<Ret...>(std::forward<Args>(args)...);
         };
         return std::move(fx);
     }
@@ -413,7 +404,7 @@ struct getter<std::function<Signature>> {
     }
 
     static std::function<Signature> get(lua_State* L, int index) {
-        return get_std_func(args_type(), return_type(), L, index);
+        return get_std_func(args_types(), return_types(), L, index);
     }
 };
 } // stack

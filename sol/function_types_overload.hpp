@@ -37,39 +37,40 @@ struct overloaded_function : base_function {
 
     }
 
-    int match_arity(lua_State*, std::ptrdiff_t, indices<>) {
+    int match_arity(std::index_sequence<>, lua_State*, std::ptrdiff_t) {
         throw error("no matching function call takes this number of arguments");
     }
 
     template <std::size_t I, std::size_t... In>
-    int match_arity(lua_State* L, std::ptrdiff_t x, indices<I, In...>) {
+    int match_arity(std::index_sequence<I, In...>, lua_State* L, std::ptrdiff_t x) {
         // TODO:
         // when we get proper constexpr, search functions only within the specific
         // arity range, instead of all of them by using
         // std::tuple<
-        //    std::pair<1 - arity, std::tuple<func_arity_of_1_a, func_arity_of_1_b>>,
-        //    std::pair<3 - arity, std::tuple<func_arity_of_3>>,
-        //    std::pair<n - arity, std::tuple<func_arity_of_n, ...>>,
+        //    std::pair<1-arity, std::tuple<func_arity_of_1_a, func_arity_of_1_b>>,
+        //    std::pair<3-arity, std::tuple<func_arity_of_3>>,
+        //    std::pair<n-arity, std::tuple<func_arity_of_n, ...>>,
         //    ...
         //>
         auto& package = std::get<I>(overloads);
         auto arity = package.first;
         if (arity != x) {
-            return match_arity(L, x, indices<In...>());
+            return match_arity(std::index_sequence<In...>(), L, x);
         }
         auto& func = package.second;
         typedef Unqualified<decltype(func)> fx_t;
-        typedef tuple_types<typename function_traits<fx_t>::return_type> return_type;
+        typedef tuple_types<typename function_traits<fx_t>::return_type> return_types;
         typedef typename function_traits<fx_t>::args_type args_type;
-        if (!detail::check_types(args_type(), args_type(), L)) {
-            return match_arity(L, x, indices<In...>());
+	   typedef typename args_type::indices args_indices;
+        if (!detail::check_types(args_type(), args_indices(), L)) {
+            return match_arity(std::index_sequence<In...>(), L, x);
         }
-        return stack::typed_call<false>(return_type(), args_type(), func, L);
+        return stack::typed_call<false>(return_types(), args_type(), func, L);
     }
 
     int match_arity(lua_State* L) {
         std::ptrdiff_t x = lua_gettop(L);
-        return match_arity(L, x, build_indices<std::tuple_size<overloads_t>::value>());
+        return match_arity(std::make_index_sequence<std::tuple_size<overloads_t>::value>(), L, x);
     }
 
     virtual int operator()(lua_State* L) override {
@@ -87,10 +88,10 @@ struct usertype_overloaded_function : base_function {
     overloads_t overloads;
 
     usertype_overloaded_function(overload_set<Functions...> set) 
-    : usertype_overloaded_function(build_indices<sizeof...(Functions)>(), set) {}
+    : usertype_overloaded_function(std::make_index_sequence<sizeof...(Functions)>(), set) {}
 
     template<std::size_t... In>
-    usertype_overloaded_function(indices<In...>, overload_set<Functions...> set)
+    usertype_overloaded_function(std::index_sequence<In...>, overload_set<Functions...> set)
     : usertype_overloaded_function(std::get<In>(set)...) {}
 
 
@@ -99,33 +100,34 @@ struct usertype_overloaded_function : base_function {
 
     }
 
-    int match_arity(lua_State*, std::ptrdiff_t, indices<>) {
+    int match_arity(std::index_sequence<>, lua_State*, std::ptrdiff_t) {
         throw error("no matching function call takes this number of arguments");
     }
 
     template <std::size_t I, std::size_t... In>
-    int match_arity(lua_State* L, std::ptrdiff_t x, indices<I, In...>) {
+    int match_arity(std::index_sequence<I, In...>, lua_State* L, std::ptrdiff_t x) {
         // TODO:
         // propogate changes from above down here too when they get figured out
         auto& package = std::get<I>(overloads);
         auto arity = package.first;
         if (arity != x) {
-            return match_arity(L, x, indices<In...>());
+            return match_arity(std::index_sequence<In...>(), L, x);
         }
         auto& func = package.second;
         typedef Unqualified<decltype(func)> fx_t;
-        typedef tuple_types<typename fx_t::return_type> return_type;
-        typedef typename fx_t::args_type args_type;
-        if (!detail::check_types(args_type(), args_type(), L, 2)) {
-            return match_arity(L, x, indices<In...>());
+        typedef tuple_types<typename fx_t::return_type> return_types;
+	   typedef typename fx_t::args_type args_type;
+	   typedef typename args_type::indices args_indices;
+	   if (!detail::check_types(args_type(), args_indices(), L, 2)) {
+            return match_arity(std::index_sequence<In...>(), L, x);
         }
         func.item = ptr(stack::get<T>(L, 1));
-        return stack::typed_call<false>(return_type(), args_type(), func, L);
+        return stack::typed_call<false>(return_types(), args_type(), func, L);
     }
 
     int match_arity(lua_State* L) {
         std::ptrdiff_t x = lua_gettop(L) - 1;
-        return match_arity(L, x, build_indices<std::tuple_size<overloads_t>::value>());
+        return match_arity(std::make_index_sequence<std::tuple_size<overloads_t>::value>(), L, x);
     }
 
     virtual int operator()(lua_State* L) override {
@@ -145,34 +147,35 @@ struct usertype_indexing_function<overload_set<Functions...>, T> : base_function
     std::unordered_map<std::string, std::pair<std::unique_ptr<base_function>, bool>> functions;
     
     usertype_indexing_function(std::string name, overload_set<Functions...> set) 
-    : usertype_indexing_function(build_indices<sizeof...(Functions)>(), std::move(name), set) {}
+    : usertype_indexing_function(std::index_sequence_for<Functions...>(), std::move(name), set) {}
 
     template <std::size_t... In>
-    usertype_indexing_function(indices<In...>, std::string name, overload_set<Functions...> set)
+    usertype_indexing_function(std::index_sequence<In...>, std::string name, overload_set<Functions...> set)
     : usertype_indexing_function(std::move(name), std::get<In>(set)...) {}
 
     usertype_indexing_function(std::string name, Functions... fxs)
     : overloads({function_traits<Functions>::arity, fxs}...), name(std::move(name)) {}
 
-    int match_arity(lua_State*, std::ptrdiff_t, indices<>) {
+    int match_arity(std::index_sequence<>, lua_State*, std::ptrdiff_t) {
         throw error("no matching function call takes this number of arguments");
     }
 
     template <std::size_t I, std::size_t... In>
-    int match_arity(lua_State* L, std::ptrdiff_t x, indices<I, In...>) {
+    int match_arity(std::index_sequence<I, In...>, lua_State* L, std::ptrdiff_t x ) {
         // TODO:
         // propogate changes from above down here too when they get figured out
         auto& package = std::get<I>(overloads);
         auto arity = package.first;
         if (arity != x) {
-            return match_arity(L, x, indices<In...>());
+            return match_arity(std::index_sequence<In...>(), L, x);
         }
         auto& func = package.second;
         typedef Unqualified<decltype(func)> fx_t;
         typedef tuple_types<typename fx_t::return_type> return_type;
         typedef typename fx_t::args_type args_type;
-        if (!detail::check_types(args_type(), args_type(), L, 2)) {
-            return match_arity(L, x, indices<In...>());
+	   typedef typename args_type::indices args_indices;
+        if (!detail::check_types(args_type(), args_indices(), L, 2)) {
+            return match_arity(std::index_sequence<In...>(), L, x);
         }
         func.item = ptr(stack::get<T>(L, 1));
         return stack::typed_call<false>(return_type(), args_type(), func, L);
@@ -180,7 +183,7 @@ struct usertype_indexing_function<overload_set<Functions...>, T> : base_function
 
     int match_arity(lua_State* L) {
         std::ptrdiff_t x = lua_gettop(L) - 1;
-        return match_arity(L, x, build_indices<std::tuple_size<overloads_t>::value>());
+        return match_arity(std::make_index_sequence<std::tuple_size<overloads_t>::value>(), L, x);
     }
 
     int prelude(lua_State* L) {

@@ -33,13 +33,10 @@ public:
     object() = default;
 
     template<typename T>
-    auto as() const -> decltype(stack::get<T>(lua_state())) const {
+    decltype(auto) as() const {
         push();
         type actual = stack::get<type>(lua_state());
-        // This code is actually present
-        // in almost all of the type-getters,
-        // and it thus insanely redundant
-        // type_assert(lua_state(), -1, type_of<T>(), actual);
+        type_assert(lua_state(), -1, type_of<T>(), actual);
         return stack::pop<T>(lua_state());
     }
 
@@ -64,7 +61,7 @@ public:
     }
 
     template<typename... Ret, typename... Args>
-    stack::get_return_or<function_result, Ret...> call( Args&&... args ) {
+    decltype(auto) call( Args&&... args ) {
         return this->as<function>()(types<Ret...>(), std::forward<Args>( args )...);
     }
 

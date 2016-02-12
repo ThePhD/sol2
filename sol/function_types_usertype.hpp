@@ -64,7 +64,7 @@ struct usertype_function_core : public base_function {
     template<typename... Args>
     int operator()(types<void> tr, types<Args...> ta, lua_State* L) {
         //static const std::size_t skew = static_cast<std::size_t>(std::is_member_object_pointer<function_type>::value);
-        stack::call(L, 0, tr, ta, fx);
+        stack::call(tr, ta, L, 0, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         return 0;
@@ -72,7 +72,7 @@ struct usertype_function_core : public base_function {
 
     template<typename... Ret, typename... Args>
     int operator()(types<Ret...> tr, types<Args...> ta, lua_State* L) {
-        decltype(auto) r = stack::call(L, 0, tr, ta, fx);
+        decltype(auto) r = stack::call(tr, ta, L, 0, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         int pushcount = push(L, std::forward<decltype(r)>(r));

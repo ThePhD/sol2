@@ -82,17 +82,18 @@ class table_core : public reference {
     }
 
     template<typename Keys, typename... Ret, std::size_t... I>
-    stack::get_return<Ret...> tuple_get( types<Ret...>, indices<I...>, Keys&& keys ) const {
-        return stack::get_return<Ret...>( single_get<Ret>( std::get<I>( keys ) )... );
+    std::tuple<decltype(stack::get<Ret>(nullptr, 0))...> tuple_get( types<Ret...>, std::index_sequence<I...>, Keys&& keys ) const {
+        typedef std::tuple<decltype(single_get<Ret>(0))...> tup;
+        return tup( single_get<Ret>( std::get<I>( keys ) )... );
     }
 
     template<typename Keys, typename Ret, std::size_t I>
-    decltype(auto) tuple_get( types<Ret>, indices<I>, Keys&& keys ) const {
+    decltype(auto) tuple_get( types<Ret>, std::index_sequence<I>, Keys&& keys ) const {
         return single_get<Ret>( std::get<I>( keys ) );
     }
 
     template<typename Pairs, std::size_t... I>
-    void tuple_set( indices<I...>, Pairs&& pairs ) {
+    void tuple_set( std::index_sequence<I...>, Pairs&& pairs ) {
         using swallow = int[];
         swallow{ 0, ( single_set(std::get<I * 2>(pairs), std::get<I * 2 + 1>(pairs)) , 0)..., 0 };
     }
@@ -111,12 +112,12 @@ public:
 
     template<typename... Ret, typename... Keys>
     decltype(auto) get( Keys&&... keys ) const {
-        return tuple_get( types<Ret...>( ), build_indices<sizeof...( Ret )>( ), std::forward_as_tuple(std::forward<Keys>(keys)...));
+        return tuple_get( types<Ret...>( ), std::index_sequence_for<Ret...>( ), std::forward_as_tuple(std::forward<Keys>(keys)...));
     }
 
     template<typename... Args>
     table_core& set( Args&&... args ) {
-        tuple_set(build_indices<sizeof...(Args) / 2>(), std::forward_as_tuple(std::forward<Args>(args)...));
+        tuple_set(std::make_index_sequence<sizeof...(Args) / 2>(), std::forward_as_tuple(std::forward<Args>(args)...));
         return *this;
     }
 

@@ -135,7 +135,7 @@ template <typename... Args>
 using return_type_t = typename return_type<Args...>::type;
 
 template <typename Empty, typename... Args>
-using ReturnTypeOr = typename std::conditional<(sizeof...(Args) < 1), Empty, typename return_type<Args...>::type>::type;
+using ReturnTypeOr = typename std::conditional<(sizeof...(Args) < 1), Empty, return_type_t<Args...>>::type;
 
 template <typename... Args>
 using ReturnType = ReturnTypeOr<void, Args...>;
@@ -177,9 +177,6 @@ struct check_deducible_signature {
 
 template<class F>
 struct has_deducible_signature : detail::check_deducible_signature<F>::type { };
-
-template<typename T>
-using has_deducible_signature_t = typename has_deducible_signature<T>::type;
 
 template<typename T>
 struct Function : Bool<detail::is_function_impl<T>::value> {};
@@ -256,7 +253,7 @@ struct fx_traits<R(*)(Args...), false> {
 } // detail
 
 template<typename Signature>
-struct function_traits : detail::fx_traits<Signature> {};
+struct function_traits : detail::fx_traits<std::remove_volatile_t<Signature>> {};
 
 template<typename Signature>
 using function_args_t = typename function_traits<Signature>::args_type;
@@ -269,12 +266,12 @@ using function_return_t = typename function_traits<Signature>::return_type;
 
 namespace detail {
 template<typename Signature, bool b = std::is_member_object_pointer<Signature>::value>
-struct member_traits : function_traits<Signature> {
+struct callable_traits : function_traits<Signature> {
 
 };
 
 template<typename Signature>
-struct member_traits<Signature, true> {
+struct callable_traits<Signature, true> {
     typedef typename remove_member_pointer<Signature>::type Arg;
     typedef typename remove_member_pointer<Signature>::type R;
     typedef Signature signature_type;
@@ -292,7 +289,7 @@ struct member_traits<Signature, true> {
 } // detail
 
 template<typename Signature>
-struct member_traits : detail::member_traits<Signature> {
+struct callable_traits : detail::callable_traits<std::remove_volatile_t<Signature>> {
 
 };
 

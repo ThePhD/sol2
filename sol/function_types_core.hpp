@@ -49,21 +49,21 @@ function_packer<Sig, Args...> function_pack( Args&&... args ) {
     return function_packer<Sig, Args...>(std::forward<Args>(args)...);
 }
 
-inline bool check_types(types<>, indices<>, lua_State*, int) {
+inline bool check_types(types<>, std::index_sequence<>, lua_State*, int) {
 	return true;
 }
 
 template <typename Arg, typename... Args, std::size_t I, std::size_t... In>
-inline bool check_types(types<Arg, Args...>, indices<I, In...>, lua_State* L, int start = 1) {
+inline bool check_types(types<Arg, Args...>, std::index_sequence<I, In...>, lua_State* L, int start = 1) {
     if (!stack::check<Arg>(L, start + I, no_panic))
 	    return false;
     
-    return check_types(types<Args...>(), indices<In...>(), L, start);
+    return check_types(types<Args...>(), std::index_sequence<In...>(), L, start);
 }
 
 template<typename T, typename Func, typename = void>
 struct functor {
-    typedef member_traits<Func> traits_type;
+    typedef callable_traits<Func> traits_type;
     typedef typename traits_type::args_type args_type;
     typedef typename traits_type::return_type return_type;
 
@@ -97,7 +97,7 @@ struct functor {
 
 template<typename T, typename Func>
 struct functor<T, Func, std::enable_if_t<std::is_member_object_pointer<Func>::value>> {
-    typedef member_traits<Func> traits_type;
+    typedef callable_traits<Func> traits_type;
     typedef typename traits_type::args_type args_type;
     typedef typename traits_type::return_type return_type;
     T* item;
@@ -129,7 +129,7 @@ struct functor<T, Func, std::enable_if_t<std::is_member_object_pointer<Func>::va
 
 template<typename T, typename Func>
 struct functor<T, Func, std::enable_if_t<std::is_function<Func>::value || std::is_class<Func>::value>> {
-    typedef member_traits<Func> traits_type;
+    typedef callable_traits<Func> traits_type;
     typedef remove_one_type<typename traits_type::args_type> args_type;
     typedef typename traits_type::return_type return_type;
     typedef std::tuple_element_t<0, typename traits_type::args_tuple_type> Arg0;

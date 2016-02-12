@@ -30,27 +30,10 @@ struct static_function {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
     typedef function_traits<function_type> traits_type;
 
-    template<typename... Args>
-    static int typed_call(types<void> tr, types<Args...> ta, function_type* fx, lua_State* L) {
-        stack::call(L, 0, tr, ta, fx);
-        int nargs = static_cast<int>(sizeof...(Args));
-        lua_pop(L, nargs);
-        return 0;
-    }
-
-    template<typename... Ret, typename... Args>
-    static int typed_call(types<Ret...>, types<Args...> ta, function_type* fx, lua_State* L) {
-        typedef return_type_t<Ret...> return_type;
-        decltype(auto) r = stack::call(L, 0, types<return_type>(), ta, fx);
-        int nargs = static_cast<int>(sizeof...(Args));
-        lua_pop(L, nargs);
-        return stack::push(L, std::forward<decltype(r)>(r));
-    }
-
     static int call(lua_State* L) {
         auto udata = stack::detail::get_as_upvalues<function_type*>(L);
         function_type* fx = udata.first;
-        int r = typed_call(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L);
+        int r = stack::typed_call(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L);
         return r;
     }
 
@@ -64,31 +47,13 @@ struct static_member_function {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
     typedef function_traits<function_type> traits_type;
 
-    template<typename... Args>
-    static int typed_call(types<void> tr, types<Args...> ta, T& item, function_type& ifx, lua_State* L) {
-        auto fx = [&item, &ifx](Args&&... args) -> void { (item.*ifx)(std::forward<Args>(args)...); };
-        stack::call(L, 0, tr, ta, fx);
-        int nargs = static_cast<int>(sizeof...(Args));
-        lua_pop(L, nargs);
-        return 0;
-    }
-
-    template<typename... Ret, typename... Args>
-    static int typed_call(types<Ret...> tr, types<Args...> ta, T& item, function_type& ifx, lua_State* L) {
-        auto fx = [&item, &ifx](Args&&... args) -> return_type_t<Ret...> { return (item.*ifx)(std::forward<Args>(args)...); };
-        decltype(auto) r = stack::call(L, 0, tr, ta, fx);
-        int nargs = static_cast<int>(sizeof...(Args));
-        lua_pop(L, nargs);
-        return stack::push(L, std::forward<decltype(r)>(r));
-    }
-
     static int call(lua_State* L) {
         auto memberdata = stack::detail::get_as_upvalues<function_type>(L, 1);
         auto objdata = stack::detail::get_as_upvalues<T*>(L, memberdata.second);
         function_type& memfx = memberdata.first;
-        T& obj = *objdata.first;
-        int r = typed_call(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), obj, memfx, L);
-        return r;
+        T& item = *objdata.first;
+        auto fx = [&item, &memfx](auto&&... args) -> typename traits_type::return_type { return (item.*memfx)(std::forward<decltype(args)>(args)...); };
+        return stack::typed_call(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L);
     }
 
     int operator()(lua_State* L) {

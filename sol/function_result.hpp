@@ -36,16 +36,6 @@ private:
     int popcount;
     call_error error;
 
-    template <typename T, std::size_t I>
-    stack::get_return<T> get(types<T>, indices<I>) const {
-        return stack::get<T>(L, index);
-    }
-
-    template <typename... Ret, std::size_t... I>
-    stack::get_return<Ret...> get(types<Ret...>, indices<I...>) const {
-        return stack::get_return<Ret...>(stack::get<Ret>(L, index + I)...);
-    }
-
 public:
     function_result() = default;
     function_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, call_error error = call_error::ok): L(L), index(index), returncount(returncount), popcount(popcount), error(error) {
@@ -85,8 +75,7 @@ public:
 
     template<typename T>
     T get() const {
-        tuple_types<Unqualified<T>> tr;
-        return get(tr, tr);
+        return stack::get<T>(L, index);
     }
 
     ~function_result() {

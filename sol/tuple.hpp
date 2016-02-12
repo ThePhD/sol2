@@ -26,49 +26,10 @@
 #include <cstddef>
 
 namespace sol {
-template<typename... Ts>
-struct reverse_tuple;
-
-template<typename... Ts>
-using reverse_tuple_t = typename reverse_tuple<Ts...>::type;
-
-template<>
-struct reverse_tuple<std::tuple<>> {
-    using type = std::tuple<>;
-};
-
-template<typename T, typename... Ts>
-struct reverse_tuple<std::tuple<T, Ts...>> {
-    using head = std::tuple<T>;
-    using tail = typename reverse_tuple<std::tuple<Ts...>>::type;
-    using type = decltype(std::tuple_cat(std::declval<tail>(), std::declval<head>()));
-};
-
-template<size_t... Ns>
-struct indices { typedef indices type; };
-
-template<size_t N, size_t... Ns>
-struct build_indices : build_indices<N - 1, N - 1, Ns...> {};
-
-template<size_t... Ns>
-struct build_indices<0, Ns...> : indices<Ns...> {};
-
-template<size_t N, size_t... Ns>
-struct build_reverse_indices : build_reverse_indices<N - 1, Ns..., N - 1> {};
-
-template<size_t... Ns>
-struct build_reverse_indices<0, Ns...> : indices<Ns...> {};
-
 template<typename... Args>
-struct types : build_indices<sizeof...(Args)> { typedef types type; static constexpr std::size_t size() { return sizeof...(Args); } };
+struct types { typedef std::index_sequence_for<Args...> indices; static constexpr std::size_t size() { return sizeof...(Args); } };
  
 namespace detail {
-template<class Acc, class... Args>
-struct reversed_ : Acc{};
-
-template<typename... RArgs, typename Arg, typename... Args>
-struct reversed_<types<RArgs...>, Arg, Args...> : reversed_<types<Arg, RArgs...>, Args...>{};
-
 template<typename Arg>
 struct chop_one : types<> {};
 
@@ -77,19 +38,17 @@ struct chop_one<types<Arg0, Arg1, Args...>> : types<Arg1, Args...> {};
 
 template<typename Arg, typename... Args>
 struct chop_one<types<Arg, Args...>> : types<Args...> {};
+
+template<typename... Args>
+struct tuple_types_ { typedef types<Args...> type; };
+
+template<typename... Args>
+struct tuple_types_<std::tuple<Args...>> { typedef types<Args...> type; };
+
 } // detail
 
 template<typename... Args>
-struct reversed : detail::reversed_<types<>, Args...>{};
-
-template<typename... Args>
-struct tuple_types : types<Args...> {};
-
-template<typename... Args>
-struct tuple_types<std::tuple<Args...>> : types<Args...> {};
-
-template<typename... Args>
-using tuple_types_t = typename tuple_types<Args...>::type;
+using tuple_types = typename detail::tuple_types_<Args...>::type;
 
 template<typename Arg>
 struct remove_one_type : detail::chop_one<Arg> {};

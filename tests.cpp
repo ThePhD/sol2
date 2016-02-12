@@ -396,6 +396,30 @@ TEST_CASE("advanced/call_lambdas", "A C++ lambda is exposed to lua and called") 
     REQUIRE(x == 9);
 }
 
+
+TEST_CASE("advanced/call_referenced_obj", "A C++ object is passed by pointer/reference_wrapper to lua and invoked") {
+    sol::state lua;
+
+    int x = 0;
+    auto objx = [&](int new_x) {
+	    x = new_x;
+	    return 0;
+    };
+    lua.set_function("set_x", std::ref(objx));
+
+    int y = 0;
+    auto objy = [&](int new_y) {
+	    y = new_y;
+	    return std::tuple<int, int>(0, 0);
+    };
+    lua.set_function("set_y", &decltype(objy)::operator(), std::ref(objy));
+
+    lua.script("set_x(9)");
+    lua.script("set_y(9)");
+    REQUIRE(x == 9);
+    REQUIRE(y == 9);
+}
+
 TEST_CASE("negative/basic_errors", "Check if error handling works correctly") {
     sol::state lua;
 
@@ -465,7 +489,7 @@ TEST_CASE("tables/functions_variables", "Check if tables and function calls work
     REQUIRE_NOTHROW(run_script(lua));
 }
 
-TEST_CASE("functions/overloaded", "Check if overloaded function resolution templates compile/work") {
+TEST_CASE("functions/overload-resolution", "Check if overloaded function resolution templates compile/work") {
     sol::state lua;
     lua.open_libraries(sol::lib::base);
 
@@ -1149,8 +1173,7 @@ TEST_CASE("functions/destructor-tests", "Show that proper copies / destruction h
             REQUIRE(last_call == static_call);
         }
         REQUIRE(created == 1);
-        REQUIRE(destroyed == 1);
-        REQUIRE(created == destroyed);
+        REQUIRE(destroyed == 2);
     }
 }
 

@@ -97,7 +97,7 @@ private:
         template<typename... Args>
         static void do_constructor(lua_State* L, T* obj, call_syntax syntax, int, types<Args...>) {
             default_construct fx{};
-            stack::call(L, -1 + static_cast<int>(syntax), types<void>(), types<Args...>(), fx, obj);
+            stack::call(types<void>(), types<Args...>(), L, -1 + static_cast<int>(syntax), fx, obj);
         }
 
         static void match_constructor(lua_State*, T*, call_syntax, int) {

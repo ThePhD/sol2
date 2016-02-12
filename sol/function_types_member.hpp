@@ -36,8 +36,8 @@ struct functor_function : public base_function {
     functor_function(Args&&... args): fx(std::forward<Args>(args)...) {}
 
     template<typename... Args>
-    int operator()(types<void> r, types<Args...> t, lua_State* L) {
-        stack::call(L, 0, r, t, fx);
+    int operator()(types<void> tr, types<Args...> ta, lua_State* L) {
+        stack::call(tr, ta, L, 0,fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         return 0;
@@ -45,7 +45,7 @@ struct functor_function : public base_function {
 
     template<typename... Ret, typename... Args>
     int operator()(types<Ret...> tr, types<Args...> ta, lua_State* L) {
-        return_type r = stack::call(L, 0, tr, ta, fx);
+        return_type r = stack::call(tr, ta, L, 0, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         return stack::push(L, r);
@@ -64,7 +64,7 @@ template<typename Function, typename T>
 struct member_function : public base_function {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
     typedef function_return_t<function_type> return_type;
-    typedef function_args_t<function_type> args_type;
+    typedef function_args_t<function_type> args_types;
     struct functor {
         T member;
         function_type invocation;
@@ -82,26 +82,12 @@ struct member_function : public base_function {
     template<typename Tm, typename... Args>
     member_function(Tm&& m, Args&&... args): fx(std::forward<Tm>(m), std::forward<Args>(args)...) {}
 
-    template<typename... Args>
-    int operator()(types<void> tr, types<Args...> ta, lua_State* L) {
-        stack::call(L, 0, tr, ta, fx);
-        return 0;
-    }
-
-    template<typename... Ret, typename... Args>
-    int operator()(types<Ret...> tr, types<Args...> ta, lua_State* L) {
-        decltype(auto) r = stack::call(L, 0, tr, ta, fx);
-        int nargs = static_cast<int>(sizeof...(Args));
-        lua_pop(L, nargs);
-        return stack::push(L, std::forward<decltype(r)>(r));
-    }
-
     virtual int operator()(lua_State* L) override {
-        return (*this)(tuple_types<return_type>(), args_type(), L);
+        return stack::typed_call(tuple_types<return_type>(), args_types(), fx, L);
     }
 
     virtual int operator()(lua_State* L, detail::ref_call_t) override {
-        return (*this)(tuple_types<return_type>(), args_type(), L);
+        return (*this)(L);
     }
 };
 } // sol
