@@ -33,17 +33,61 @@ private:
     lua_State* L;
     int index;
     int returncount;
-    int popcount;
-    call_error error;
 
 public:
     function_result() = default;
-    function_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, call_error error = call_error::ok): L(L), index(index), returncount(returncount), popcount(popcount), error(error) {
+    function_result(lua_State* L, int index = -1, int returncount = 0): L(L), index(index), returncount(returncount) {
         
     }
     function_result(const function_result&) = default;
     function_result& operator=(const function_result&) = default;
-    function_result(function_result&& o) : L(o.L), index(o.index), returncount(o.returncount), error(o.error) {
+    function_result(function_result&& o) : L(o.L), index(o.index), returncount(o.returncount) {
+        // Must be manual, otherwise destructor will screw us
+        // return count being 0 is enough to keep things clean
+        // but will be thorough
+        o.L = nullptr;
+        o.index = 0;
+        o.returncount = 0;
+    }
+    function_result& operator=(function_result&& o) {
+        L = o.L;
+        index = o.index;
+        returncount = o.returncount;
+        // Must be manual, otherwise destructor will screw us
+        // return count being 0 is enough to keep things clean
+        // but will be thorough
+        o.L = nullptr;
+        o.index = 0;
+        o.returncount = 0;
+        return *this;
+    }
+
+    template<typename T>
+    T get() const {
+        return stack::get<T>(L, index);
+    }
+
+    ~function_result() {
+	   lua_pop(L, returncount);
+    }
+};
+
+struct protected_function_result : public proxy_base<function_result> {
+private:
+    lua_State* L;
+    int index;
+    int returncount;
+    int popcount;
+    call_error error;
+
+public:
+    protected_function_result() = default;
+    protected_function_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, call_error error = call_error::ok): L(L), index(index), returncount(returncount), popcount(popcount), error(error) {
+        
+    }
+    protected_function_result(const protected_function_result&) = default;
+    protected_function_result& operator=(const protected_function_result&) = default;
+    protected_function_result(protected_function_result&& o) : L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), error(o.error) {
         // Must be manual, otherwise destructor will screw us
         // return count being 0 is enough to keep things clean
         // but will be thorough
@@ -53,10 +97,11 @@ public:
         o.popcount = 0;
         o.error = call_error::runtime;
     }
-    function_result& operator=(function_result&& o) {
+    protected_function_result& operator=(protected_function_result&& o) {
         L = o.L;
         index = o.index;
         returncount = o.returncount;
+	   popcount = o.popcount;
         error = o.error;
         // Must be manual, otherwise destructor will screw us
         // return count being 0 is enough to keep things clean
@@ -78,7 +123,7 @@ public:
         return stack::get<T>(L, index);
     }
 
-    ~function_result() {
+    ~protected_function_result() {
         stack::remove(L, index, popcount);
     }
 };

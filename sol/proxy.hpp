@@ -31,8 +31,19 @@ namespace sol {
 template<typename Table, typename Key>
 struct proxy : public proxy_base<proxy<Table, Key>> {
 private:
+    typedef If<is_specialization_of<Key, std::tuple>, Key, std::tuple<If<std::is_array<Unqualified<Key>>, Key&, Unqualified<Key>>>> key_type;
     Table tbl;
-    If<std::is_array<Unqualified<Key>>, Key&, Unqualified<Key>> key;
+    key_type key;
+
+    template<typename T, std::size_t... I>
+    decltype(auto) tuple_get(std::index_sequence<I...>) const {
+        return tbl.template traverse_get<T>( std::get<I>(key)... );
+    }
+
+    template<std::size_t... I, typename T>
+    void tuple_set(std::index_sequence<I...>, T&& value) const {
+        tbl.traverse_set( std::get<I>(key)..., std::forward<T>(value) );
+    }
 
 public:
 
@@ -41,7 +52,7 @@ public:
 
     template<typename T>
     proxy& set(T&& item) {
-        tbl.set(key, std::forward<T>(item));
+        tuple_set( std::make_index_sequence<std::tuple_size<Unqualified<key_type>>::value>(), std::forward<T>(item) );
         return *this;
     }
 
@@ -53,24 +64,23 @@ public:
 
     template<typename U, EnableIf<Function<Unqualified<U>>> = 0>
     proxy& operator=(U&& other) {
-        tbl.set_function(key, std::forward<U>(other));
-        return *this;
+        return set_function(std::forward<U>(other));
     }
 
     template<typename U, DisableIf<Function<Unqualified<U>>> = 0>
     proxy& operator=(U&& other) {
-        tbl.set(key, std::forward<U>(other));
-        return *this;
+        return set(std::forward<U>(other));
     }
 
     template<typename T>
     decltype(auto) get() const {
-        return tbl.template get<T>( key );
+        return tuple_get<T>( std::make_index_sequence<std::tuple_size<Unqualified<key_type>>::value>() );
     }
 
     template <typename K>
-    decltype(auto) operator[](K&& key) const {
-        return get<table>()[std::forward<K>(key)];
+    decltype(auto) operator[](K&& k) const {
+        auto keys = tuplefy(key, std::forward<K>(k));
+        return proxy<Table, decltype(keys)>(tbl, std::move(keys));
     }
 
     template<typename... Ret, typename... Args>

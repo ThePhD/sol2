@@ -37,65 +37,52 @@ class table_core : public reference {
     friend class state;
     friend class state_view;
 
-    template<typename T, typename Key, EnableIf<Bool<top_level>, is_c_str<Key>> = 0>
-    decltype(auto) single_get( Key&& key ) const {
-        lua_getglobal(lua_state( ), &key[0]);
-        return stack::pop<T>(lua_state());
+    template <typename... Args>
+    using is_global = And<Bool<top_level>, is_c_str<Args>...>;
+
+    template<typename... Ret, std::size_t... I, typename Keys>
+    auto tuple_get( types<Ret...>, std::index_sequence<I...>, Keys&& keys ) const
+    -> decltype(stack::pop<std::tuple<Ret...>>(nullptr)){
+        auto pp = stack::push_popper<is_global<decltype(std::get<I>(keys))...>::value>(*this);
+	   int tableindex = lua_gettop(lua_state());
+	   detail::swallow{ ( stack::get_field<top_level>(lua_state(), std::get<I>(keys), tableindex), 0)... };
+        return stack::pop<std::tuple<Ret...>>( lua_state() );
     }
 
-    template<typename T, typename Key, EnableIf<Not<Bool<top_level>>, is_c_str<Key>> = 0>
-    decltype(auto) single_get( Key&& key ) const {
-        auto pp = stack::push_popper(*this);
-        lua_getfield( lua_state( ), -1, &key[0] );
-        return stack::pop<T>( lua_state( ) );
-    }
-
-    template<typename T, typename Key, EnableIf<Not<is_c_str<Key>>> = 0>
-    decltype(auto) single_get( Key&& key ) const {
-        auto pp = stack::push_popper(*this);
-        stack::push( lua_state( ), std::forward<Key>( key ) );
-        lua_gettable( lua_state( ), -2 );
-        return stack::pop<T>( lua_state( ) );
-    }
-
-    template<typename Key, typename Value, EnableIf<Bool<top_level>, is_c_str<Key>> = 0>
-    void single_set( Key&& key, Value&& value ) {
-        stack::push( lua_state( ), std::forward<Value>( value ) );
-        lua_setglobal( lua_state( ), &key[0] );
-    }
-
-    template<typename Key, typename Value, EnableIf<Not<Bool<top_level>>, is_c_str<Key>> = 0>
-    void single_set(Key&& key, Value&& value) {
-        push();
-        stack::push(lua_state(), std::forward<Value>(value));
-        lua_setfield(lua_state(), -2, &key[0]);
-        pop();
-    }
-
-    template<typename Key, typename Value, EnableIf<Not<is_c_str<Key>>> = 0>
-    void single_set(Key&& key, Value&& value) {
-        push();
-        stack::push(lua_state(), std::forward<Key>(key));
-        stack::push(lua_state(), std::forward<Value>(value));
-        lua_settable(lua_state(), -3);
-        pop();
-    }
-
-    template<typename Keys, typename... Ret, std::size_t... I>
-    std::tuple<decltype(stack::get<Ret>(nullptr, 0))...> tuple_get( types<Ret...>, std::index_sequence<I...>, Keys&& keys ) const {
-        typedef std::tuple<decltype(single_get<Ret>(0))...> tup;
-        return tup( single_get<Ret>( std::get<I>( keys ) )... );
-    }
-
-    template<typename Keys, typename Ret, std::size_t I>
+    template<typename Ret, std::size_t I, typename Keys>
     decltype(auto) tuple_get( types<Ret>, std::index_sequence<I>, Keys&& keys ) const {
-        return single_get<Ret>( std::get<I>( keys ) );
+        auto pp = stack::push_popper<is_global<decltype(std::get<I>(keys))>::value>(*this);
+        stack::get_field<top_level>( lua_state( ), std::get<I>( keys ) );
+        return stack::pop<Ret>( lua_state( ) );
     }
 
     template<typename Pairs, std::size_t... I>
     void tuple_set( std::index_sequence<I...>, Pairs&& pairs ) {
-        using swallow = int[];
-        swallow{ 0, ( single_set(std::get<I * 2>(pairs), std::get<I * 2 + 1>(pairs)) , 0)..., 0 };
+        auto pp = stack::push_popper<is_global<decltype(std::get<I * 2>(pairs))...>::value>(*this);
+        detail::swallow{ (stack::set_field<top_level>(lua_state(), std::get<I * 2>(pairs), std::get<I * 2 + 1>(pairs)), 0)... };
+    }
+
+    template <bool global, typename T, typename Key>
+    decltype(auto) traverse_get_deep( Key&& key ) const {
+        stack::get_field<global>( lua_state( ), std::forward<Key>( key ) );
+        return stack::get<T>( lua_state( ) );
+    }
+
+    template <bool global, typename T, typename Key, typename... Keys>
+    decltype(auto) traverse_get_deep( Key&& key, Keys&&... keys ) const {
+        stack::get_field<global>( lua_state( ), std::forward<Key>( key ) );
+	   return traverse_get_deep<false, T>(std::forward<Keys>(keys)...);
+    }
+
+    template <bool global, typename Key, typename Value>
+    void traverse_set_deep( Key&& key, Value&& value ) const {
+        stack::set_field<global>( lua_state( ), std::forward<Key>( key ), std::forward<Value>(value) );
+    }
+
+    template <bool global, typename Key, typename... Keys>
+    void traverse_set_deep( Key&& key, Keys&&... keys ) const {
+        stack::get_field<global>( lua_state( ), std::forward<Key>( key ) );
+        traverse_set_deep<false>(std::forward<Keys>(keys)...);
     }
 
 #if SOL_LUA_VERSION < 502
@@ -115,20 +102,25 @@ public:
         return tuple_get( types<Ret...>( ), std::index_sequence_for<Ret...>( ), std::forward_as_tuple(std::forward<Keys>(keys)...));
     }
 
+    template <typename T, typename... Keys>
+    decltype(auto) traverse_get( Keys&&... keys ) const {
+        auto pp = stack::push_popper<is_global<Keys...>::value>(*this);
+	   struct clean { lua_State* L; clean(lua_State* L) : L(L) {} ~clean() { lua_pop(L, static_cast<int>(sizeof...(Keys))); } } c(lua_state());
+	   return traverse_get_deep<top_level, T>(std::forward<Keys>(keys)...);
+    }
+
+    template <typename... Keys>
+    table_core& traverse_set( Keys&&... keys ) {
+        auto pp = stack::push_popper<is_global<Keys...>::value>(*this);
+	   traverse_set_deep<top_level>(std::forward<Keys>(keys)...);
+	   lua_pop(lua_state(), static_cast<int>(sizeof...(Keys)-2));
+	   return *this;
+    }
+
     template<typename... Args>
     table_core& set( Args&&... args ) {
         tuple_set(std::make_index_sequence<sizeof...(Args) / 2>(), std::forward_as_tuple(std::forward<Args>(args)...));
         return *this;
-    }
-
-    template<typename T>
-    SOL_DEPRECATED table_core& set_userdata( usertype<T>& user ) {
-        return set_usertype( user );
-    }
-
-    template<typename Key, typename T>
-    SOL_DEPRECATED table_core& set_userdata( Key&& key, usertype<T>& user ) {
-        return set_usertype(std::forward<Key>(key), user);
     }
 
     template<typename T>

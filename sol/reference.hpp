@@ -34,7 +34,7 @@ struct push_pop {
 };
 template <typename T>
 struct push_pop<true, T> {
-    push_pop (T x) {}
+    push_pop (T) {}
     ~push_pop() {}
 };
 template <bool top_level = false, typename T>

@@ -145,8 +145,7 @@ public:
     }
 
     template<typename... Args, typename... Keys>
-    auto get(Keys&&... keys) const
-    -> decltype(globals.get<Args...>(std::forward<Keys>(keys)...)) {
+    decltype(auto) get(Keys&&... keys) const {
         return globals.get<Args...>(std::forward<Keys>(keys)...);
     }
 
@@ -156,24 +155,15 @@ public:
         return *this;
     }
 
-    template<typename T>
-    SOL_DEPRECATED state_view& set_userdata(usertype<T>& user) {
-        return set_usertype(user);
+    template<typename T, typename... Keys>
+    decltype(auto) traverse_get(Keys&&... keys) const {
+        return globals.traverse_get<T>(std::forward<Keys>(keys)...);
     }
 
-    template<typename Key, typename T>
-    SOL_DEPRECATED state_view& set_userdata(Key&& key, usertype<T>& user) {
-        return set_usertype(std::forward<Key>(key), user);
-    }
-
-    template<typename Class, typename... CTor, typename... Args>
-    SOL_DEPRECATED state_view& new_userdata(const std::string& name, Args&&... args) {
-        return new_usertype<Class>(name, std::forward<Args>(args)...);
-    }
-
-    template<typename Class, typename... CArgs, typename... Args>
-    SOL_DEPRECATED state_view& new_userdata(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
-        return new_usertype(name, std::move(ctor), std::forward<Args>(args)...);
+    template<typename... Args>
+    state_view& traverse_set(Args&&... args) {
+        globals.traverse_set(std::forward<Args>(args)...);
+        return *this;
     }
 
     template<typename T>

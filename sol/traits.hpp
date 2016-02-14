@@ -380,6 +380,23 @@ template<typename T>
 inline T* ptr(T* val) {
 	return val;
 }
+
+namespace detail {
+template <typename T, DisableIf<is_specialization_of<Unqualified<T>, std::tuple>> = 0>
+decltype(auto) force_tuple(T&& x) {
+    return std::forward_as_tuple(x);
+}
+
+template <typename T, EnableIf<is_specialization_of<Unqualified<T>, std::tuple>> = 0>
+decltype(auto) force_tuple(T&& x) {
+    return std::forward<T>(x);
+}
+} // detail
+
+template <typename... X>
+decltype(auto) tuplefy(X&&... x ) {
+    return std::tuple_cat(detail::force_tuple(x)...);
+}
 } // sol
 
 #endif // SOL_TRAITS_HPP

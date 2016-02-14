@@ -5,6 +5,16 @@
 #include <vector>
 #include <map>
 
+struct stack_guard {
+    lua_State* L;
+    int& begintop;
+    int& endtop;
+    stack_guard(lua_State* L, int& begintop, int& endtop) : L(L), begintop(begintop), endtop(endtop) { 
+        begintop = lua_gettop(L);
+    }
+    ~stack_guard() { endtop = lua_gettop(L); }
+};
+
 void test_free_func(std::function<void()> f) {
     f();
 }
@@ -214,37 +224,100 @@ struct giver {
 
 };
 
+TEST_CASE("table/traversal", "ensure that we can chain requests and tunnel down into a value if we desire") {
+
+	sol::state lua;
+	int begintop = 0, endtop = 0;
+
+	lua.script("t1 = {t2 = {t3 = 24}};");
+	{
+		stack_guard g(lua.lua_state(), begintop, endtop);
+		int traversex24 = lua.traverse_get<int>("t1", "t2", "t3");
+		REQUIRE(traversex24 == 24);
+	} REQUIRE(begintop == endtop);
+
+	{
+		stack_guard g(lua.lua_state(), begintop, endtop);
+		int x24 = lua["t1"]["t2"]["t3"];
+		REQUIRE(x24 == 24);
+	} REQUIRE(begintop == endtop);
+
+	{
+		stack_guard g(lua.lua_state(), begintop, endtop);
+		lua["t1"]["t2"]["t3"] = 64;
+		int traversex64 = lua.traverse_get<int>("t1", "t2", "t3");
+		REQUIRE(traversex64 == 64);
+	} REQUIRE(begintop == endtop);
+
+	{
+		stack_guard g(lua.lua_state(), begintop, endtop);
+		int x64 = lua["t1"]["t2"]["t3"];
+		REQUIRE(x64 == 64);
+	} REQUIRE(begintop == endtop);
+
+	{
+		stack_guard g(lua.lua_state(), begintop, endtop);
+		lua.traverse_set("t1", "t2", "t3", 13);
+		int traversex13 = lua.traverse_get<int>("t1", "t2", "t3");
+		REQUIRE(traversex13 == 13);
+	} REQUIRE(begintop == endtop);
+
+	{
+		stack_guard g(lua.lua_state(), begintop, endtop);
+		int x13 = lua["t1"]["t2"]["t3"];
+		REQUIRE(x13 == 13);
+	} REQUIRE(begintop == endtop);
+}
+
 TEST_CASE("simple/set", "Check if the set works properly.") {
     sol::state lua;
-
-    lua.set("a", 9);
+    int begintop = 0, endtop = 0;
+    {
+        stack_guard g(lua.lua_state(), begintop, endtop);
+        lua.set("a", 9);
+    } REQUIRE(begintop == endtop);
     REQUIRE_NOTHROW(lua.script("if a ~= 9 then error('wrong value') end"));
-
-    lua.set("d", "hello");
+    {
+        stack_guard g(lua.lua_state(), begintop, endtop);
+        lua.set("d", "hello");
+    } REQUIRE(begintop == endtop);
     REQUIRE_NOTHROW(lua.script("if d ~= 'hello' then error('expected \\'hello\\', got '.. tostring(d)) end"));
 
-    lua.set("e", std::string("hello"), "f", true);
+    {
+        stack_guard g(lua.lua_state(), begintop, endtop);
+        lua.set("e", std::string("hello"), "f", true);
+    } REQUIRE(begintop == endtop);
     REQUIRE_NOTHROW(lua.script("if d ~= 'hello' then error('expected \\'hello\\', got '.. tostring(d)) end"));
     REQUIRE_NOTHROW(lua.script("if f ~= true then error('wrong value') end"));
 }
 
 TEST_CASE("simple/get", "Tests if the get function works properly.") {
     sol::state lua;
+    int begintop = 0, endtop = 0;
 
     lua.script("a = 9");
-    auto a = lua.get<int>("a");
-    REQUIRE(a == 9.0);
+    {
+        stack_guard g(lua.lua_state(), begintop, endtop);
+        auto a = lua.get<int>("a");
+        REQUIRE(a == 9.0);
+    } REQUIRE(begintop == endtop);
 
     lua.script("b = nil");
-    REQUIRE_NOTHROW(lua.get<sol::nil_t>("b"));
+    {
+        stack_guard g(lua.lua_state(), begintop, endtop);
+        REQUIRE_NOTHROW(lua.get<sol::nil_t>("b"));
+    } REQUIRE(begintop == endtop);
 
     lua.script("d = 'hello'");
     lua.script("e = true");
-    std::string d;
-    bool e;
-    std::tie( d, e ) = lua.get<std::string, bool>("d", "e");
-    REQUIRE(d == "hello");
-    REQUIRE(e == true);
+    {
+        stack_guard g(lua.lua_state(), begintop, endtop);
+        std::string d;
+        bool e;
+        std::tie( d, e ) = lua.get<std::string, bool>("d", "e");
+        REQUIRE(d == "hello");
+        REQUIRE(e == true);
+    } REQUIRE(begintop == endtop);
 }
 
 TEST_CASE("simple/set-get-global-integer", "Tests if the get function works properly with global integers") {
@@ -641,8 +714,9 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
     // test const table retrieval
     auto assert1 = [](const sol::table& t) {
         std::string a = t["foo"];
-        int b = t["bar"];
-        std::cout << a << ',' << b << '\n';
+        double b = t["bar"];
+	   REQUIRE(a == "goodbye");
+	   REQUIRE(b == 20.4);
     };
 
     REQUIRE_NOTHROW(assert1(lua.global()));
@@ -1086,13 +1160,13 @@ TEST_CASE( "functions/function_result-protected_function", "Function result shou
     func.error_handler = luahandler;
     luafunc.error_handler = cpphandler;
 
-    sol::function_result result1 = func();
+    sol::protected_function_result result1 = func();
     int test = lua_gettop(lua.lua_state());
     REQUIRE(!result1.valid());
     std::string errorstring = result1;
     REQUIRE(errorstring == errormessage1);
     
-    sol::function_result result2 = luafunc();
+    sol::protected_function_result result2 = luafunc();
     REQUIRE(!result2.valid());
     errorstring = result2;
     REQUIRE(errorstring == errormessage2);

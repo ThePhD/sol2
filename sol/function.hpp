@@ -67,7 +67,7 @@ private:
         luacall(n, LUA_MULTRET);
         int poststacksize = lua_gettop( lua_state( ) );
         int returncount = poststacksize - (firstreturn - 1);
-        return function_result( lua_state( ), firstreturn, returncount, returncount, call_error::ok );
+        return function_result( lua_state( ), firstreturn, returncount );
     }
 
 public:
@@ -156,7 +156,7 @@ private:
         luacall(n, 0, h);
     }
 
-    function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n, handler& h) const {
+    protected_function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n, handler& h) const {
         bool handlerpushed = error_handler.valid();
         int stacksize = lua_gettop(lua_state());
         int firstreturn = std::max(1, stacksize - static_cast<int>(n) - 1);
@@ -173,12 +173,12 @@ private:
             h.stackindex = 0;
             stack::push(lua_state(), error.what());
             firstreturn = lua_gettop(lua_state());
-            return function_result(lua_state(), firstreturn, 0, 1, call_error::runtime);
+            return protected_function_result(lua_state(), firstreturn, 0, 1, call_error::runtime);
         }
         catch (...) {
             throw;
         }
-        return function_result(lua_state(), firstreturn + ( handlerpushed ? 0 : 1 ), returncount, returncount, code);
+        return protected_function_result(lua_state(), firstreturn + ( handlerpushed ? 0 : 1 ), returncount, returncount, code);
     }
 
 public:
@@ -194,7 +194,7 @@ public:
     protected_function& operator=( protected_function&& ) = default;
 
     template<typename... Args>
-    function_result operator()(Args&&... args) const {
+    protected_function_result operator()(Args&&... args) const {
         return call<>(std::forward<Args>(args)...);
     }
 
@@ -297,7 +297,7 @@ struct pusher<function_sig<Sigs...>> {
         void* userobjdata = static_cast<void*>(userptr);
         lua_CFunction freefunc = &static_member_function<std::decay_t<decltype(*userptr)>, uFx>::call;
 
-        int upvalues = stack::detail::push_as_upvalues(L, memfxptr);
+        int upvalues = stack::stack_detail::push_as_upvalues(L, memfxptr);
         upvalues += stack::push(L, userobjdata);
         
         stack::push(L, freefunc, upvalues);
@@ -308,7 +308,7 @@ struct pusher<function_sig<Sigs...>> {
         std::decay_t<Fx> target(std::forward<Fx>(fx));
         lua_CFunction freefunc = &static_function<Fx>::call;
 
-        int upvalues = stack::detail::push_as_upvalues(L, target);
+        int upvalues = stack::stack_detail::push_as_upvalues(L, target);
         stack::push(L, freefunc, upvalues);
     }
 
@@ -328,7 +328,7 @@ struct pusher<function_sig<Sigs...>> {
             lua_pop(L, 1);
         }
 
-        stack::detail::push_userdata<void*>(L, metatablename, userdata);
+        stack::stack_detail::push_userdata<void*>(L, metatablename, userdata);
         stack::push(L, freefunc, 1);
     }
 

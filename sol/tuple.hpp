@@ -45,6 +45,8 @@ struct tuple_types_ { typedef types<Args...> type; };
 template<typename... Args>
 struct tuple_types_<std::tuple<Args...>> { typedef types<Args...> type; };
 
+using swallow = std::initializer_list<int>;
+
 } // detail
 
 template<typename... Args>

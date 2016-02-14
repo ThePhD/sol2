@@ -35,6 +35,10 @@
 
 namespace sol {
 namespace stack {
+template<typename T, bool global = false, typename = void>
+struct field_getter;
+template<typename T, bool global = false, typename = void>
+struct field_setter;
 template<typename T, typename = void>
 struct getter;
 template<typename T, typename = void>
@@ -63,8 +67,7 @@ inline int push_args(lua_State*) {
 template<typename T, typename... Args>
 inline int push_args(lua_State* L, T&& t, Args&&... args) {
     int pushcount = push(L, std::forward<T>(t));
-    using swallow = char[];
-    void(swallow{'\0', (pushcount += sol::stack::push(L, std::forward<Args>(args)), '\0')... });
+    void(sol::detail::swallow{(pushcount += sol::stack::push(L, std::forward<Args>(args)), 0)... });
     return pushcount;
 }
 
@@ -93,7 +96,27 @@ bool check(lua_State* L, int index) {
     return check<T>(L, index, handler);
 }
 
-namespace detail {
+template <bool global = false, typename Key>
+void get_field(lua_State* L, Key&& key) {
+    field_getter<Unqualified<Key>, global>{}.get(L, std::forward<Key>(key));
+}
+
+template <bool global = false, typename Key>
+void get_field(lua_State* L, Key&& key, int tableindex) {
+    field_getter<Unqualified<Key>, global>{}.get(L, std::forward<Key>(key), tableindex);
+}
+
+template <bool global = false, typename Key, typename Value>
+void set_field(lua_State* L, Key&& key, Value&& value) {
+    field_setter<Unqualified<Key>, global>{}.set(L, std::forward<Key>(key), std::forward<Value>(value));
+}
+
+template <bool global = false, typename Key, typename Value>
+void set_field(lua_State* L, Key&& key, Value&& value, int tableindex) {
+    field_setter<Unqualified<Key>, global>{}.set(L, std::forward<Key>(key), std::forward<Value>(value), tableindex);
+}
+
+namespace stack_detail {
 const bool default_check_arguments = 
 #ifdef SOL_CHECK_ARGUMENTS
 true;
@@ -136,9 +159,8 @@ struct userdata_pusher<T*> {
 
 template<typename T, std::size_t... I>
 inline int push_tuple(std::index_sequence<I...>, lua_State* L, T&& tuplen) {
-    using swallow = char[1 + sizeof...(I)];
     int pushcount = 0;
-    swallow {'\0', (pushcount += sol::stack::push(L, std::get<I>(tuplen)), '\0')... };
+    detail::swallow{(pushcount += sol::stack::push(L, std::get<I>(tuplen)), '\0')... };
     return pushcount;
 }
 
@@ -179,7 +201,7 @@ template<typename T, typename Key, typename... Args, EnableIf<std::is_pointer<T>
 inline int push_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
     return push_userdata_pointer<T>(L, std::forward<Key>(metatablekey), std::forward<Args>(args)...);
 }
-} // detail
+} // stack_detail
 
 template <typename T, type expected, typename>
 struct checker {
@@ -391,8 +413,8 @@ struct popper {
 template <typename... Args>
 struct popper<std::tuple<Args...>> {
     inline decltype(auto) pop(lua_State* L) {
-        decltype(auto) r = get<std::tuple<Args...>>(L, lua_gettop(L) - sizeof...(Args));
-        lua_pop(L, sizeof...(Args));
+        decltype(auto) r = get<std::tuple<Args...>>(L, lua_gettop(L) - sizeof...(Args) + 1);
+        lua_pop(L, static_cast<int>(sizeof...(Args)));
         return r;
     }
 };
@@ -400,11 +422,11 @@ struct popper<std::tuple<Args...>> {
 template<typename T, typename>
 struct pusher {
     static int push(lua_State* L, T& t) {
-        return detail::push_userdata<T>(L, usertype_traits<T>::metatable, t);
+        return stack_detail::push_userdata<T>(L, usertype_traits<T>::metatable, t);
     }
 
     static int push(lua_State* L, T&& t) {
-        return detail::push_userdata<T>(L, usertype_traits<T>::metatable, std::move(t));
+        return stack_detail::push_userdata<T>(L, usertype_traits<T>::metatable, std::move(t));
     }
 };
 
@@ -472,7 +494,7 @@ struct pusher<T, std::enable_if_t<std::is_base_of<reference, T>::value>> {
 template<typename T>
 struct pusher<T*> {
     static int push(lua_State* L, T* obj) {
-        return detail::push_userdata<T*>(L, usertype_traits<T*>::metatable, obj);
+        return stack_detail::push_userdata<T*>(L, usertype_traits<T*>::metatable, obj);
     }
 };
 
@@ -568,11 +590,81 @@ template<typename... Args>
 struct pusher<std::tuple<Args...>> {
     template <typename Tuple>
     static int push(lua_State* L, Tuple&& tuplen) {
-        return detail::push_tuple(std::index_sequence_for<Args...>(), L, std::forward<Tuple>(tuplen));
+        return stack_detail::push_tuple(std::index_sequence_for<Args...>(), L, std::forward<Tuple>(tuplen));
     }
 };
 
-namespace detail {
+template <typename T, bool, typename>
+struct field_getter {
+    template <typename Key>
+    void get(lua_State* L, Key&& key, int tableindex = -2) {
+        push( L, std::forward<Key>( key ) );
+        lua_gettable( L, tableindex );
+    }
+};
+
+template <typename... Args, bool b, typename C>
+struct field_getter<std::tuple<Args...>, b, C> {
+    template <std::size_t I0, std::size_t... I, typename Key>
+    void apply(std::index_sequence<I0, I...>, lua_State* L, Key&& key, int tableindex) {
+        get_field<b>(L, std::get<I0>(key), tableindex);
+	   detail::swallow{ (get_field(L, std::get<I>(key)), 0)... };
+        reference saved(L, -1);
+	   lua_pop(L, static_cast<int>(sizeof...(I) + 1));
+	   saved.push();
+    }
+
+    template <typename Key>
+    void get(lua_State* L, Key&& key, int tableindex = -2) {
+        apply(std::index_sequence_for<Args...>(), L, std::forward<Key>(key), tableindex);
+    }
+};
+
+template <typename T>
+struct field_getter<T, true, std::enable_if_t<is_c_str<T>::value>> {
+    template <typename Key>
+    void get(lua_State* L, Key&& key, int = -1) {
+        lua_getglobal(L, &key[0]);
+    }
+};
+
+template <typename T>
+struct field_getter<T, false, std::enable_if_t<is_c_str<T>::value>> {
+    template <typename Key>
+    void get(lua_State* L, Key&& key, int tableindex = -1) {
+        lua_getfield(L, tableindex, &key[0]);
+    }
+};
+
+template <typename T, bool, typename>
+struct field_setter {
+    template <typename Key, typename Value>
+    void set(lua_State* L, Key&& key, Value&& value, int tableindex = -3) {
+        push(L, std::forward<Key>(key));
+        push(L, std::forward<Value>(value));
+        lua_settable(L, tableindex);
+    }
+};
+
+template <typename T>
+struct field_setter<T, true, std::enable_if_t<is_c_str<T>::value>> {
+    template <typename Key, typename Value>
+    void set(lua_State* L, Key&& key, Value&& value, int = -2) {
+        push(L, std::forward<Value>(value));
+	   lua_setglobal(L, &key[0]);
+    }
+};
+
+template <typename T>
+struct field_setter<T, false, std::enable_if_t<is_c_str<T>::value>> {
+    template <typename Key, typename Value>
+    void set(lua_State* L, Key&& key, Value&& value, int tableindex = -2) {
+        push(L, std::forward<Value>(value));
+        lua_setfield(L, tableindex, &key[0]);
+    }
+};
+
+namespace stack_detail {
 template<typename T>
 inline int push_as_upvalues(lua_State* L, T& item) {
     typedef std::decay_t<T> TValue;
@@ -608,10 +700,7 @@ struct check_arguments {
     static bool check(types<Arg0, Args...>, std::index_sequence<I0, I...>, lua_State* L, int firstargument) {
         bool checks = true;
         stack::check<Arg0>(L, firstargument + I0);
-        using swallow = int[sizeof...(Args)+2];
-        (void)swallow {
-            0, (checks &= stack::check<Args>(L, firstargument + I))..., 0
-        };
+        (void)detail::swallow{(checks &= stack::check<Args>(L, firstargument + I))...};
         return checks;
     }
 
@@ -628,28 +717,28 @@ struct check_arguments<false> {
     }
 };
 
-template <bool checkargs = detail::default_check_arguments, std::size_t... I, typename R, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<!std::is_void<R>::value>>
+template <bool checkargs = default_check_arguments, std::size_t... I, typename R, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<!std::is_void<R>::value>>
 inline R call(types<R>, types<Args...> ta, std::index_sequence<I...> tai, lua_State* L, int start, Fx&& fx, FxArgs&&... args) {
     const int stacksize = lua_gettop(L);
     const int firstargument = static_cast<int>(start + stacksize - std::max(sizeof...(Args)-1, static_cast<std::size_t>(0)));
 
-    detail::check_arguments<checkargs>{}.check(ta, tai, L, firstargument);
+    check_arguments<checkargs>{}.check(ta, tai, L, firstargument);
 
     return fx(std::forward<FxArgs>(args)..., stack::get<Args>(L, firstargument + I)...);
 }
 
-template <bool checkargs = detail::default_check_arguments, std::size_t... I, typename... Args, typename Fx, typename... FxArgs>
+template <bool checkargs = default_check_arguments, std::size_t... I, typename... Args, typename Fx, typename... FxArgs>
 inline void call(types<void>, types<Args...> ta, std::index_sequence<I...> tai, lua_State* L, int start, Fx&& fx, FxArgs&&... args) {
     const int stacksize = lua_gettop(L);
     const int firstargument = static_cast<int>(start + stacksize - std::max(sizeof...(Args)-1, static_cast<std::size_t>(0)));
 
-    bool checks = detail::check_arguments<checkargs>{}.check(ta, tai, L, firstargument);
+    bool checks = check_arguments<checkargs>{}.check(ta, tai, L, firstargument);
     if ( !checks )
         throw error("Arguments not of the proper types for this function call");
 
     fx(std::forward<FxArgs>(args)..., stack::get<Args>(L, firstargument + I)...);
 }
-} // detail
+} // stack_detail
 
 inline void remove( lua_State* L, int index, int count ) {
     if ( count < 1 )
@@ -673,29 +762,29 @@ inline void remove( lua_State* L, int index, int count ) {
     }
 }
 
-template <bool check_args = detail::default_check_arguments, typename R, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<!std::is_void<R>::value>>
+template <bool check_args = stack_detail::default_check_arguments, typename R, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<!std::is_void<R>::value>>
 inline R call(types<R> tr, types<Args...> ta, lua_State* L, int start, Fx&& fx, FxArgs&&... args) {
     typedef typename types<Args...>::indices args_indices;
-    return detail::call<check_args>(tr, ta, args_indices(), L, start, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
+    return stack_detail::call<check_args>(tr, ta, args_indices(), L, start, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 }
 
-template <bool check_args = detail::default_check_arguments, typename R, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<!std::is_void<R>::value>>
+template <bool check_args = stack_detail::default_check_arguments, typename R, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<!std::is_void<R>::value>>
 inline R call(types<R> tr, types<Args...> ta, lua_State* L, Fx&& fx, FxArgs&&... args) {
     return call<check_args>(tr, ta, L, 0, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 }
 
-template <bool check_args = detail::default_check_arguments, typename... Args, typename Fx, typename... FxArgs>
+template <bool check_args = stack_detail::default_check_arguments, typename... Args, typename Fx, typename... FxArgs>
 inline void call(types<void> tr, types<Args...> ta, lua_State* L, int start, Fx&& fx, FxArgs&&... args) {
     typedef typename types<Args...>::indices args_indices;
-    detail::call<check_args>(tr, ta, args_indices(), L, start, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
+    stack_detail::call<check_args>(tr, ta, args_indices(), L, start, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 }
 
-template <bool check_args = detail::default_check_arguments, typename... Args, typename Fx, typename... FxArgs>
+template <bool check_args = stack_detail::default_check_arguments, typename... Args, typename Fx, typename... FxArgs>
 inline void call(types<void> tr, types<Args...> ta, lua_State* L, Fx&& fx, FxArgs&&... args) {
     call<check_args>(tr, ta, L, 0, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 }
 
-template<bool check_args = detail::default_check_arguments, typename... Args, typename Fx>
+template<bool check_args = stack_detail::default_check_arguments, typename... Args, typename Fx>
 inline int typed_call(types<void> tr, types<Args...> ta, Fx&& fx, lua_State* L, int start = 0) {
     call<check_args>(tr, ta, L, start, fx);
     int nargs = static_cast<int>(sizeof...(Args));
@@ -703,7 +792,7 @@ inline int typed_call(types<void> tr, types<Args...> ta, Fx&& fx, lua_State* L, 
     return 0;
 }
 
-template<bool check_args = detail::default_check_arguments, typename... Ret, typename... Args, typename Fx>
+template<bool check_args = stack_detail::default_check_arguments, typename... Ret, typename... Args, typename Fx>
 inline int typed_call(types<Ret...>, types<Args...> ta, Fx&& fx, lua_State* L, int start = 0) {
     decltype(auto) r = call<check_args>(types<ReturnType<Ret...>>(), ta, L, start, fx);
     int nargs = static_cast<int>(sizeof...(Args));

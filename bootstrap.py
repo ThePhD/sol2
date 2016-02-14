@@ -50,7 +50,7 @@ args = parser.parse_args()
 # general variables
 include = [ '.', os.path.join('Catch', 'include')]
 depends = []
-cxxflags = [ '-Wall', '-Wextra', '-pedantic', '-pedantic-errors', '-std=c++14', '-Wno-unused-variable' ]
+cxxflags = [ '-Wall', '-Wextra', '-pedantic', '-pedantic-errors', '-std=c++14' ]
 ldflags = []
 script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 sol_dir = os.path.join(script_dir, 'sol')
@@ -67,8 +67,8 @@ if args.debug:
 else:
     cxxflags.extend(['-DNDEBUG', '-O3'])
 
-if args.cxx == 'clang++':
-    cxxflags.extend(['-Wno-unused-value', '-Wno-constexpr-not-const'])
+#if args.cxx == 'clang++':
+#    cxxflags.extend(['-Wno-unused-value', '-Wno-constexpr-not-const'])
 
 if args.lua_dir:
     include.extend([os.path.join(args.lua_dir, 'include')])
