@@ -33,7 +33,7 @@ struct overloaded_function : base_function {
     overloads_t overloads;
 
     overloaded_function(Functions... fxs)
-        : overloads({ function_traits<Unqualified<Functions>>::arity, fxs }...) {
+        : overloads({ static_cast<int>(function_traits<Unqualified<Functions>>::arity), fxs }...) {
 
     }
 
@@ -96,7 +96,7 @@ struct usertype_overloaded_function : base_function {
 
 
     usertype_overloaded_function(Functions... fxs)
-    : overloads({function_traits<Functions>::arity, fxs}...) {
+    : overloads({static_cast<int>(function_traits<Functions>::arity), fxs}...) {
 
     }
 
@@ -154,7 +154,7 @@ struct usertype_indexing_function<overload_set<Functions...>, T> : base_function
     : usertype_indexing_function(std::move(name), std::get<In>(set)...) {}
 
     usertype_indexing_function(std::string name, Functions... fxs)
-    : overloads({function_traits<Functions>::arity, fxs}...), name(std::move(name)) {}
+    : overloads({static_cast<int>(function_traits<Functions>::arity), fxs}...), name(std::move(name)) {}
 
     int match_arity(std::index_sequence<>, lua_State*, std::ptrdiff_t) {
         throw error("no matching function call takes this number of arguments");

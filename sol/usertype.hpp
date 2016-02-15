@@ -148,11 +148,6 @@ private:
     }
 
     template<std::size_t N>
-    void build_cleanup() {
-        cleanup = &base_function::usertype<N>::gc;
-    }
-
-    template<std::size_t N>
     void build_function_tables(function_map_t*& index, function_map_t*& newindex) {
         int extracount = 0;
         if(!indexmetafunctions.empty()) {
@@ -195,14 +190,14 @@ private:
         }
         switch(extracount) {
         case 2:
-            build_cleanup<N + 2>();
+            cleanup = &base_function::usertype<N + 2>::gc;
             break;
         case 1:
-            build_cleanup<N + 1>();
+            cleanup = &base_function::usertype<N + 1>::gc;
             break;
         case 0:
         default:
-            build_cleanup<N + 0>();
+            cleanup = &base_function::usertype<N + 0>::gc;
             break;
         }
     }
@@ -317,18 +312,6 @@ private:
 public:
     template<typename... Args>
     usertype(Args&&... args): usertype(default_constructor, std::forward<Args>(args)...) {}
-
-    template<typename... Args>
-    SOL_DEPRECATED usertype(std::string, std::string, Args&&... args): usertype(default_constructor, std::forward<Args>(args)...) {}
-
-    template<typename... Args>
-    SOL_DEPRECATED usertype(const char*, std::string, Args&&... args): usertype(default_constructor, std::forward<Args>(args)...) {}
-
-    template<typename... Args, typename... CArgs>
-    SOL_DEPRECATED usertype(std::string, constructors<CArgs...> c, Args&&... args) : usertype(std::move(c), std::forward<Args>(args)...) {}
-
-    template<typename... Args, typename... CArgs>
-    SOL_DEPRECATED usertype(const char*, constructors<CArgs...> c, Args&&... args) : usertype(std::move(c), std::forward<Args>(args)...) {}
 
     template<typename... Args, typename... CArgs>
     usertype(constructors<CArgs...>, Args&&... args) {
