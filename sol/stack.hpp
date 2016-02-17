@@ -124,6 +124,21 @@ true;
 false;
 #endif
 
+template<bool releasemem = false, typename TCont>
+static int push_upvalues(lua_State* L, TCont&& cont) {
+    int n = 0;
+    for(auto& c : cont) {
+        if(releasemem) {
+            stack::push<upvalue>(L, c.release());
+        }
+        else {
+            stack::push<upvalue>(L, c.get());
+        }
+        ++n;
+    }
+    return n;
+}
+
 template <typename T>
 struct userdata_pusher {
     template <typename Key, typename... Args>
@@ -140,7 +155,7 @@ struct userdata_pusher {
         referencereference = allocationtarget;
         std::allocator<T> alloc{};
         alloc.construct(allocationtarget, std::forward<Args>(args)...);
-        luaL_getmetatable(L, std::addressof(metatablekey[0]));
+        luaL_getmetatable(L, &metatablekey[0]);
         lua_setmetatable(L, -2);
     }
 };
@@ -152,7 +167,7 @@ struct userdata_pusher<T*> {
         T** pdatum = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
         std::allocator<T*> alloc{};
         alloc.construct(pdatum, std::forward<Args>(args)...);
-        luaL_getmetatable(L, std::addressof(metatablekey[0]));
+        luaL_getmetatable(L, &metatablekey[0]);
         lua_setmetatable(L, -2);
     }
 };
@@ -362,6 +377,20 @@ struct getter<nil_t> {
 };
 
 template<>
+struct getter<lua_CFunction> {
+    static lua_CFunction get(lua_State* L,  int index = -1) {
+        return lua_tocfunction(L, index);
+    }
+};
+
+template<>
+struct getter<c_closure> {
+    static c_closure get(lua_State* L,  int index = -1) {
+        return c_closure(lua_tocfunction(L, index), -1);
+    }
+};
+
+template<>
 struct getter<userdata> {
     static userdata get(lua_State* L, int index = -1) {
         return{ lua_touserdata(L, index) };
@@ -530,6 +559,14 @@ struct pusher<lua_CFunction> {
 };
 
 template<>
+struct pusher<c_closure> {
+    static int push(lua_State* L, c_closure closure) {
+        lua_pushcclosure(L, closure.c_function, closure.upvalues);
+        return 1;
+    }
+};
+
+template<>
 struct pusher<void*> {
     static int push(lua_State* L, void* userdata) {
         lua_pushlightuserdata(L, userdata);
@@ -636,6 +673,16 @@ struct field_getter<T, false, std::enable_if_t<is_c_str<T>::value>> {
     }
 };
 
+#if SOL_LUA_VERSION >= 503
+template <typename T>
+struct field_getter<T, false, std::enable_if_t<std::is_integral<T>::value>> {
+    template <typename Key>
+    void get(lua_State* L, Key&& key, int tableindex = -1) {
+        lua_geti(L, tableindex, static_cast<lua_Integer>(key));
+    }
+};
+#endif // Lua 5.3.x
+
 template <typename T, bool, typename>
 struct field_setter {
     template <typename Key, typename Value>
@@ -664,6 +711,17 @@ struct field_setter<T, false, std::enable_if_t<is_c_str<T>::value>> {
     }
 };
 
+#if SOL_LUA_VERSION >= 503
+template <typename T>
+struct field_setter<T, false, std::enable_if_t<std::is_integral<T>::value>> {
+    template <typename Key, typename Value>
+    void set(lua_State* L, Key&& key, Value&& value, int tableindex = -2) {
+        push(L, std::forward<Value>(value));
+        lua_seti(L, tableindex, static_cast<lua_Integer>(key));
+    }
+};
+#endif // Lua 5.3.x
+
 namespace stack_detail {
 template<typename T>
 inline int push_as_upvalues(lua_State* L, T& item) {
@@ -675,7 +733,7 @@ inline int push_as_upvalues(lua_State* L, T& item) {
     typedef std::array<void*, data_t_count> data_t;
 
     data_t data{{}};
-    std::memcpy(std::addressof(data[0]), std::addressof(item), itemsize);
+    std::memcpy(&data[0], std::addressof(item), itemsize);
     int pushcount = 0;
     for(auto&& v : data) {
         pushcount += push(L, upvalue(v));
@@ -699,9 +757,9 @@ struct check_arguments {
     template <std::size_t I0, std::size_t... I, typename Arg0, typename... Args>
     static bool check(types<Arg0, Args...>, std::index_sequence<I0, I...>, lua_State* L, int firstargument) {
         bool checks = true;
-        stack::check<Arg0>(L, firstargument + I0);
-        (void)detail::swallow{(checks &= stack::check<Args>(L, firstargument + I))...};
-        return checks;
+	   if (!stack::check<Arg0>(L, firstargument + I0))
+		   return false;
+	   return check(types<Args...>(), std::index_sequence<I...>(), L, firstargument);
     }
 
     static bool check(types<>, std::index_sequence<>, lua_State*, int) {

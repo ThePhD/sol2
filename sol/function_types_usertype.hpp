@@ -24,6 +24,7 @@
 
 #include "overload.hpp"
 #include "function_types_core.hpp"
+#include <map>
 
 namespace sol {
 template<typename Function, typename Tp>
@@ -102,10 +103,6 @@ struct usertype_function : public usertype_function_core<Function, Tp> {
     virtual int operator()(lua_State* L) override {
         return prelude(L);
     }
-
-    virtual int operator()(lua_State* L, detail::ref_call_t) override {
-        return prelude(L);
-    }
 };
 
 template<typename Function, typename Tp>
@@ -124,7 +121,6 @@ struct usertype_variable_function : public usertype_function_core<Function, Tp> 
         if(this->fx.item == nullptr) {
             throw error("userdata for member variable is null");
         }
-
         int argcount = lua_gettop(L);
         switch(argcount) {
         case 2:
@@ -134,55 +130,32 @@ struct usertype_variable_function : public usertype_function_core<Function, Tp> 
         default:
             throw error("cannot get/set userdata member variable with inappropriate number of arguments");
         }
-
     }
 
     virtual int operator()(lua_State* L) override {
-        return prelude(L);
-    }
-
-    virtual int operator()(lua_State* L, detail::ref_call_t) override {
         return prelude(L);
     }
 };
 
-template<typename Function, typename Tp>
-struct usertype_indexing_function : public usertype_function_core<Function, Tp> {
-    typedef usertype_function_core<Function, Tp> base_t;
-    typedef std::remove_pointer_t<Tp> T;
-    typedef typename base_t::traits_type traits_type;
-    typedef typename base_t::args_type args_type;
-    typedef typename base_t::return_type return_type;
-
+struct usertype_indexing_function : base_function {
     std::string name;
-    std::unordered_map<std::string, std::pair<std::unique_ptr<base_function>, bool>> functions;
+    base_function* original;
+    std::map<std::string, base_function*> functions;
 
     template<typename... Args>
-    usertype_indexing_function(std::string name, Args&&... args): base_t(std::forward<Args>(args)...), name(std::move(name)) {}
+    usertype_indexing_function(std::string name, base_function* original, Args&&... args): name(std::move(name)), original(original), functions(std::forward<Args>(args)...) {}
 
     int prelude(lua_State* L) {
-        std::string accessor = stack::get<std::string>(L, 1 - lua_gettop(L));
+        const char* accessor = stack::get<const char*>(L, 1 - lua_gettop(L));
         auto function = functions.find(accessor);
-        if(function != functions.end()) {
-            if(function->second.second) {
-                stack::push<upvalue>(L, function->second.first.get());
-                stack::push(L, &base_function::usertype<0>::ref_call, 1);
-                return 1;
-            }
-            return (*function->second.first)(L);
+        if (function != functions.end()) {
+            return (*function->second)(L);
         }
-        if (!this->fx.check()) {
-            throw error("invalid indexing \"" + accessor + "\" on type: " + name);
-        }
-        this->fx.item = ptr(stack::get<T>(L, 1));
-        return static_cast<base_t&>(*this)(tuple_types<return_type>(), args_type(), L);
+	   base_function& core = *original;
+	   return core(L);
     }
 
     virtual int operator()(lua_State* L) override {
-        return prelude(L);
-    }
-
-    virtual int operator()(lua_State* L, detail::ref_call_t) override {
         return prelude(L);
     }
 };

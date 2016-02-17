@@ -56,6 +56,12 @@ struct userdata {
     operator void*() const { return value; }
 };
 
+struct c_closure {
+	lua_CFunction c_function;
+	int upvalues;
+	c_closure(lua_CFunction f, int upvalues = 0) : c_function(f), upvalues(upvalues) {}
+};
+
 enum class call_syntax {
     dot = 0,
     colon = 1
@@ -159,6 +165,9 @@ template <>
 struct lua_type_of<light_userdata> : std::integral_constant<type, type::lightuserdata> {};
 
 template <>
+struct lua_type_of<lua_CFunction> : std::integral_constant<type, type::function> {};
+
+template <>
 struct lua_type_of<function> : std::integral_constant<type, type::function> {};
 
 template <>
@@ -173,21 +182,8 @@ struct lua_type_of<T*> : std::integral_constant<type, type::userdata> {};
 template <typename T>
 struct lua_type_of<T, std::enable_if_t<std::is_arithmetic<T>::value>> : std::integral_constant<type, type::number> {};
 
-template<typename T>
-inline type type_of() {
-    return lua_type_of<Unqualified<T>>::value;
-}
-
-inline type type_of(lua_State* L, int index) {
-    return static_cast<type>(lua_type(L, index));
-}
-
-// All enumerations are given and taken from lua
-// as numbers as well
 template <typename T>
-struct lua_type_of<T, std::enable_if_t<std::is_enum<T>::value>> : std::integral_constant<type, type::number> {
-
-};
+struct lua_type_of<T, std::enable_if_t<std::is_enum<T>::value>> : std::integral_constant<type, type::number> {};
 
 template <typename T>
 struct is_lua_primitive : std::integral_constant<bool, type::userdata != lua_type_of<Unqualified<T>>::value> { };
@@ -200,6 +196,15 @@ struct is_proxy_primitive<std::reference_wrapper<T>> : std::true_type { };
 
 template <typename... Args>
 struct is_proxy_primitive<std::tuple<Args...>> : std::true_type { };
+
+template<typename T>
+inline type type_of() {
+    return lua_type_of<Unqualified<T>>::value;
+}
+
+inline type type_of(lua_State* L, int index) {
+    return static_cast<type>(lua_type(L, index));
+}
 } // sol
 
 #endif // SOL_TYPES_HPP

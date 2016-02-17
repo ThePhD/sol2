@@ -54,10 +54,6 @@ struct functor_function : public base_function {
     virtual int operator()(lua_State* L) override {
         return (*this)(types<return_type>(), args_type(), L);
     }
-
-    virtual int operator()(lua_State* L, detail::ref_call_t) override {
-        return (*this)(types<return_type>(), args_type(), L);
-    }
 };
 
 template<typename Function, typename T>
@@ -84,10 +80,6 @@ struct member_function : public base_function {
 
     virtual int operator()(lua_State* L) override {
         return stack::typed_call(tuple_types<return_type>(), args_types(), fx, L);
-    }
-
-    virtual int operator()(lua_State* L, detail::ref_call_t) override {
-        return (*this)(L);
     }
 };
 } // sol

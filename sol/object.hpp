@@ -42,32 +42,21 @@ public:
 
     template<typename T>
     bool is() const {
+        if (!reference::valid())
+		   return false;
         auto expected = type_of<T>();
         auto actual = get_type();
         return (expected == actual) || (expected == type::poly);
     }
 
     bool valid() const {
+        if (!reference::valid())
+            return false;
         return !this->is<nil_t>();
     }
 
-    operator const char* () const {
-        return this->as<const char*>();
-    }
-
-    template<typename T, EnableIf<Not<std::is_same<Unqualified<T>, const char*>>, Not<std::is_same<Unqualified<T>, char>>, Not<std::is_same<Unqualified<T>, std::string>>, Not<std::is_same<Unqualified<T>, std::initializer_list<char>>>> = 0>
-    operator T () const {
-        return this->as<T>();
-    }
-
-    template<typename... Ret, typename... Args>
-    decltype(auto) call( Args&&... args ) {
-        return this->as<function>()(types<Ret...>(), std::forward<Args>( args )...);
-    }
-
-    template<typename... Args>
-    function_result operator()( Args&&... args ) {
-        return this->as<function>()(std::forward<Args>( args )...);
+    explicit operator bool() {
+        return valid();
     }
 };
 

@@ -100,6 +100,10 @@ public:
         return 1;
     }
 
+    void pop(int n = 1) const noexcept {
+        lua_pop(lua_state( ), n);
+    }
+
     int get_index() const {
         return ref;
     }

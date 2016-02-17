@@ -165,10 +165,6 @@ public:
         return proxy<table_core, T>( *this, std::forward<T>( key ) );
     }
 
-    void pop( int n = 1 ) const noexcept {
-        lua_pop( lua_state( ), n );
-    }
-
     template<typename... Args, typename R, typename Key>
     table_core& set_function( Key&& key, R fun_ptr( Args... ) ) {
         set_resolved_function( std::forward<Key>( key ), fun_ptr );

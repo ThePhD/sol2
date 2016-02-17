@@ -24,7 +24,6 @@
 
 #include "stack.hpp"
 #include <memory>
-#include <unordered_map>
 
 namespace sol {
 namespace detail {
@@ -187,17 +186,6 @@ struct base_function {
         return r;
     }
 
-    static int ref_base_call(lua_State* L, void* inheritancedata) {
-        if(inheritancedata == nullptr) {
-            throw error("call from Lua to C++ function has null data");
-        }
-
-        base_function* pfx = static_cast<base_function*>(inheritancedata);
-        base_function& fx = *pfx;
-        int r = fx(L, detail::ref_call);
-        return r;
-    }
-
     static int base_gc(lua_State*, void* udata) {
         if(udata == nullptr) {
             throw error("call from lua to C++ gc function with null data");
@@ -223,11 +211,7 @@ struct base_function {
     struct usertype {
         static int call(lua_State* L) {
             // Zero-based template parameter, but upvalues start at 1
-            return ref_base_call(L, stack::get<upvalue>(L, I + 1));
-        }
-
-        static int ref_call(lua_State* L) {
-            return ref_base_call(L, stack::get<upvalue>(L, I + 1));
+            return base_call(L, stack::get<upvalue>(L, I + 1));
         }
 
         template <std::size_t limit>
@@ -255,10 +239,6 @@ struct base_function {
 
     virtual int operator()(lua_State*) {
         throw error("failure to call specialized wrapped C++ function from Lua");
-    }
-
-    virtual int operator()(lua_State*, detail::ref_call_t) {
-        throw error("failure to call reference specialized wrapped C++ function from Lua");
     }
 
     virtual ~base_function() {}
