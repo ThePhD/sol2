@@ -83,6 +83,9 @@ using Type = typename T::type;
 template<bool B>
 using Bool = std::integral_constant<bool, B>;
 
+template<std::size_t I>
+using Index = std::integral_constant<std::size_t, I>;
+
 template<typename T>
 using Not = Bool<!T::value>;
 
@@ -115,6 +118,12 @@ using Unqualified = std::remove_cv_t<std::remove_reference_t<T>>;
 
 template<typename T>
 using Unwrapped = typename unwrapped<T>::type;
+
+template<typename V, typename... Vs>
+struct find_in_pack_v : Bool<false> { };
+
+template<typename V, typename Vs1, typename... Vs>
+struct find_in_pack_v<V, Vs1, Vs...> : Or<Bool<(V::value == Vs1::value)>, find_in_pack_v<V, Vs...>> { };
 
 template<typename... Args>
 struct return_type {
@@ -253,7 +262,7 @@ struct fx_traits<R(*)(Args...), false> {
 } // detail
 
 template<typename Signature>
-struct function_traits : detail::fx_traits<std::remove_volatile_t<Signature>> {};
+struct function_traits : detail::fx_traits<std::decay_t<Signature>> {};
 
 template<typename Signature>
 using function_args_t = typename function_traits<Signature>::args_type;

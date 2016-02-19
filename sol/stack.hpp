@@ -257,7 +257,8 @@ struct checker<T, type::userdata, C> {
 		   handler(L, index, type::userdata, indextype);
 		   return false;
 	   }
-	   const type expectedmetatabletype = static_cast<type>(luaL_getmetatable(L, &usertype_traits<T>::metatable[0]));
+	   luaL_getmetatable(L, &usertype_traits<T>::metatable[0]);
+        const type expectedmetatabletype = get<type>(L);
 	   if (expectedmetatabletype == type::nil) {
 		   lua_pop(L, 2);
 		   handler(L, index, type::userdata, indextype);
@@ -316,7 +317,9 @@ struct getter<T*> {
         type t = type_of(L, index);
         if (t == type::nil)
             return nullptr;
-        return std::addressof(getter<T&>{}.get(L, index));
+	   void* udata = lua_touserdata(L, index);
+	   T** obj = static_cast<T**>(udata);
+	   return *obj;
     }
 };
 
@@ -470,7 +473,7 @@ struct pusher<T, std::enable_if_t<std::is_floating_point<T>::value>> {
 template<typename T>
 struct pusher<T, std::enable_if_t<And<std::is_integral<T>, std::is_signed<T>>::value>> {
     static int push(lua_State* L, const T& value) {
-        lua_pushinteger(L, value);
+        lua_pushinteger(L, static_cast<lua_Integer>(value));
         return 1;
     }
 };
@@ -859,12 +862,13 @@ inline int typed_call(types<Ret...>, types<Args...> ta, Fx&& fx, lua_State* L, i
 }
 
 inline call_syntax get_call_syntax(lua_State* L, const std::string& meta) {
-    if (get<type>(L, 1) == type::table) {
-        if (luaL_newmetatable(L, meta.c_str()) == 0) {
-            lua_settop(L, -2);
-            return call_syntax::colon;
-        }
+    type metatype = stack::get<type>(L);
+    luaL_getmetatable(L, meta.c_str());
+    if (lua_compare(L, -1, -2, LUA_OPEQ) == 1) {
+        lua_pop(L, 1);
+        return call_syntax::colon;
     }
+    lua_pop(L, 1);
     return call_syntax::dot;
 }
 } // stack

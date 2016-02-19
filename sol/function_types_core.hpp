@@ -175,74 +175,75 @@ public:
 } // detail
 
 struct base_function {
-    static int base_call(lua_State* L, void* inheritancedata) {
-        if(inheritancedata == nullptr) {
-            throw error("call from Lua to C++ function has null data");
-        }
-
-        base_function* pfx = static_cast<base_function*>(inheritancedata);
-        base_function& fx = *pfx;
-        int r = fx(L);
-        return r;
-    }
-
-    static int base_gc(lua_State*, void* udata) {
-        if(udata == nullptr) {
-            throw error("call from lua to C++ gc function with null data");
-        }
-
-        base_function* ptr = static_cast<base_function*>(udata);
-        std::default_delete<base_function> dx{};
-        dx(ptr);
-        return 0;
-    }
-
-    static int call(lua_State* L) {
-        void** pinheritancedata = static_cast<void**>(stack::get<upvalue>(L, 1).value);
-        return base_call(L, *pinheritancedata);
-    }
-
-    static int gc(lua_State* L) {
-        void** pudata = static_cast<void**>(stack::get<userdata>(L, 1).value);
-        return base_gc(L, *pudata);
-    }
-
-    template<std::size_t I>
-    struct usertype {
-        static int call(lua_State* L) {
-            // Zero-based template parameter, but upvalues start at 1
-            return base_call(L, stack::get<upvalue>(L, I + 1));
-        }
-
-        template <std::size_t limit>
-        static void func_gc (std::true_type, lua_State*) {
-
-        }
-
-        template <std::size_t limit>
-        static void func_gc (std::false_type, lua_State* L) {
-            // Shut up clang tautological error without throwing out std::size_t
-            for(std::size_t i = 0; i < limit; ++i) {
-                upvalue up = stack::get<upvalue>(L, static_cast<int>(i + 1));
-                base_function* obj = static_cast<base_function*>(up.value);
-                std::allocator<base_function> alloc{};
-                alloc.destroy(obj);
-                alloc.deallocate(obj, 1);
-            }
-        }
-
-        static int gc(lua_State* L) {
-            func_gc<I>(Bool<(I < 1)>(), L);
-            return 0;
-        }
-    };
-
     virtual int operator()(lua_State*) {
         throw error("failure to call specialized wrapped C++ function from Lua");
     }
 
     virtual ~base_function() {}
 };
+
+namespace detail {
+	static int base_call(lua_State* L, void* inheritancedata) {
+		if (inheritancedata == nullptr) {
+			throw error("call from Lua to C++ function has null data");
+		}
+
+		base_function* pfx = static_cast<base_function*>(inheritancedata);
+		base_function& fx = *pfx;
+		int r = fx(L);
+		return r;
+	}
+
+	static int base_gc(lua_State*, void* udata) {
+		if (udata == nullptr) {
+			throw error("call from lua to C++ gc function with null data");
+		}
+
+		base_function* ptr = static_cast<base_function*>(udata);
+		std::default_delete<base_function> dx{};
+		dx(ptr);
+		return 0;
+	}
+
+	template <std::size_t limit>
+	static void func_gc(std::true_type, lua_State*) {
+
+	}
+
+	template <std::size_t limit>
+	static void func_gc(std::false_type, lua_State* L) {
+		// Shut up clang tautological error without throwing out std::size_t
+		for (std::size_t i = 0; i < limit; ++i) {
+			upvalue up = stack::get<upvalue>(L, static_cast<int>(i + 1));
+			base_function* obj = static_cast<base_function*>(up.value);
+			std::allocator<base_function> alloc{};
+			alloc.destroy(obj);
+			alloc.deallocate(obj, 1);
+		}
+	}
+
+	inline int call(lua_State* L) {
+		void** pinheritancedata = static_cast<void**>(stack::get<upvalue>(L, 1).value);
+		return base_call(L, *pinheritancedata);
+	}
+
+	inline int gc(lua_State* L) {
+		void** pudata = static_cast<void**>(stack::get<userdata>(L, 1).value);
+		return base_gc(L, *pudata);
+	}
+
+	template<std::size_t I>
+	inline int usertype_call(lua_State* L) {
+		// Zero-based template parameter, but upvalues start at 1
+		return base_call(L, stack::get<upvalue>(L, I + 1));
+	}
+
+	template<std::size_t I>
+	inline int usertype_gc(lua_State* L) {
+		func_gc<I>(Bool<(I < 1)>(), L);
+		return 0;
+	}
+}
 
 } // sol
 

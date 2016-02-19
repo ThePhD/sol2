@@ -1034,14 +1034,17 @@ TEST_CASE("usertype/member-variables", "allow table-like accessors to behave as 
     REQUIRE_NOTHROW(lua.script("v = Vec.new(1, 2, 3)\n"
                "v2 = Vec.new(0, 1, 0)\n"
                "print(v:length())\n"
-               "v.x = 2\n"
+               ));
+    REQUIRE_NOTHROW(lua.script("v.x = 2\n"
                "v2.y = 2\n"
                "print(v.x, v.y, v.z)\n"
                "print(v2.x, v2.y, v2.z)\n"
-               "assert(v.x == 2)\n"
+               ));
+    REQUIRE_NOTHROW(lua.script("assert(v.x == 2)\n"
                "assert(v2.x == 0)\n"
                "assert(v2.y == 2)\n"
-               "v.x = 3\n"
+               ));
+    REQUIRE_NOTHROW(lua.script("v.x = 3\n"
                "local x = v.x\n"
                "assert(x == 3)\n"
                ));

@@ -88,11 +88,11 @@ namespace sol {
 	};
 
 	namespace usertype_detail {
-		template<typename T, typename Funcs, typename FuncTable, typename MetaFuncTable, typename VarFuncTable>
-		inline void push_metatable(lua_State* L, Funcs&& funcs, FuncTable&& functable, MetaFuncTable&& metafunctable, VarFuncTable&& varfunctable) {
+		template<typename T, typename Funcs, typename FuncTable, typename MetaFuncTable>
+		inline void push_metatable(lua_State* L, Funcs&& funcs, FuncTable&&, MetaFuncTable&& metafunctable) {
 			luaL_newmetatable(L, &usertype_traits<T>::metatable[0]);
 			int metatableindex = lua_gettop(L);
-			if (funcs.size() < 1 || metafunctable.size() < 2) {
+			if (funcs.size() < 1 && metafunctable.size() < 2) {
 				return;
 			}
 			// Metamethods directly on the metatable itself
@@ -102,28 +102,13 @@ namespace sol {
 				// prevents calling new/GC on pointer-based tables.
 				luaL_Reg& oldref = metafunctable[metafunctable.size() - 3];
 				luaL_Reg old = oldref;
-				luaL_Reg cutoff = { nullptr, nullptr };
-				oldref = cutoff;
+				oldref = { nullptr, nullptr };
 				luaL_setfuncs(L, metafunctable.data(), metaup);
 				oldref = old;
 			}
 			else {
 				luaL_setfuncs(L, metafunctable.data(), metaup);
 			}
-			// Functions accessed by regular calls are put into a table
-			// that get put into the metatable.__index metamethod
-			lua_createtable(L, 0, functable.size());
-			int functableindex = lua_gettop(L);
-			int up = stack::stack_detail::push_upvalues(L, funcs);
-			luaL_setfuncs(L, functable.data(), up);
-			
-			// Also, set the variable indexer that's inside of the metatable's index
-			luaL_newmetatable(L, &usertype_traits<T>::variable_metatable[0]);
-			int varup = stack::stack_detail::push_upvalues(L, funcs);
-			luaL_setfuncs(L, varfunctable.data(), varup);
-			lua_setmetatable(L, functableindex);
-			
-			lua_setfield(L, metatableindex, "__index");
 		}
 
 		template <typename T, typename Functions>
@@ -139,44 +124,45 @@ namespace sol {
 			// gctable name by default has ♻ part of it
 			lua_setglobal(L, &usertype_traits<T>::gc_table[0]);
 		}
+
+		template<typename T, typename... Args>
+		static void do_constructor(lua_State* L, T* obj, call_syntax syntax, int, types<Args...>) {
+			default_construct fx{};
+			stack::call(types<void>(), types<Args...>(), L, -1 + static_cast<int>(syntax), fx, obj);
+		}
+
+		template <typename T>
+		static void match_constructor(lua_State*, T*, call_syntax, int) {
+			throw error("No matching constructor for the arguments provided");
+		}
+
+		template<typename T, typename ...CArgs, typename... Args>
+		static void match_constructor(lua_State* L, T* obj, call_syntax syntax, int argcount, types<CArgs...> t, Args&&... args) {
+			if (argcount == sizeof...(CArgs)) {
+				do_constructor<T>(L, obj, syntax, argcount, t);
+				return;
+			}
+			match_constructor<T>(L, obj, syntax, argcount, std::forward<Args>(args)...);
+		}
 	}
 
 	template<typename T>
 	class usertype {
 	private:
-		typedef std::map<std::string, base_function*> function_map_t;
+		typedef std::map<std::string, std::pair<bool, base_function*>> function_map_t;
 		std::vector<std::string> functionnames;
 		std::vector<std::unique_ptr<base_function>> functions;
 		std::vector<luaL_Reg> functiontable;
 		std::vector<luaL_Reg> metafunctiontable;
-		std::array<luaL_Reg, 3> variablefunctiontable;
 		base_function* indexfunc;
 		base_function* newindexfunc;
 		function_map_t indexwrapper, newindexwrapper;
-		lua_CFunction constructfunc;
-		lua_CFunction destructfunc;
+		base_function* constructfunc;
+		base_function* destructfunc;
+		lua_CFunction functiongc;
 
 		template<typename... TTypes>
 		struct constructor {
-			template<typename... Args>
-			static void do_constructor(lua_State* L, T* obj, call_syntax syntax, int, types<Args...>) {
-				default_construct fx{};
-				stack::call(types<void>(), types<Args...>(), L, -1 + static_cast<int>(syntax), fx, obj);
-			}
-
-			static void match_constructor(lua_State*, T*, call_syntax, int) {
-				throw error("No matching constructor for the arguments provided");
-			}
-
-			template<typename ...CArgs, typename... Args>
-			static void match_constructor(lua_State* L, T* obj, call_syntax syntax, int argcount, types<CArgs...> t, Args&&... args) {
-				if (argcount == sizeof...(CArgs)) {
-					do_constructor(L, obj, syntax, argcount, t);
-					return;
-				}
-				match_constructor(L, obj, syntax, argcount, std::forward<Args>(args)...);
-			}
-
 			static int construct(lua_State* L) {
 				const auto& meta = usertype_traits<T>::metatable;
 				call_syntax syntax = stack::get_call_syntax(L, meta);
@@ -186,15 +172,16 @@ namespace sol {
 				T*& referencepointer = *pointerpointer;
 				T* obj = reinterpret_cast<T*>(pointerpointer + 1);
 				referencepointer = obj;
-				match_constructor(L, obj, syntax, argcount - static_cast<int>(syntax), identity_t<TTypes>()...);
+				int userdataindex = lua_gettop(L);
+				usertype_detail::match_constructor(L, obj, syntax, argcount - static_cast<int>(syntax), identity_t<TTypes>()...);
 
 				if (luaL_newmetatable(L, &meta[0]) == 1) {
 					lua_pop(L, 1);
-					std::string err = "Unable to get usertype metatable for ";
+					std::string err = "unable to get usertype metatable for ";
 					err += meta;
 					throw error(err);
 				}
-				lua_setmetatable(L, -2);
+				lua_setmetatable(L, userdataindex);
 
 				return 1;
 			}
@@ -263,8 +250,8 @@ namespace sol {
 			auto baseptr = make_function(name, std::forward<Fx>(func));
 			functions.emplace_back(std::move(baseptr));
 			if (is_variable::value) {
-				indexwrapper.insert({ name, functions.back().get() });
-				newindexwrapper.insert({ name, functions.back().get() });
+				indexwrapper.insert({ name, { false, functions.back().get() } });
+				newindexwrapper.insert({ name, { false, functions.back().get() } });
 				return;
 			}
 			auto metamethodfind = std::find(meta_function_names.begin(), meta_function_names.end(), name);
@@ -280,10 +267,11 @@ namespace sol {
 				default:
 					break;
 				}
-				metafunctiontable.push_back({ name.c_str(), &base_function::usertype<N>::call });
+				metafunctiontable.push_back({ name.c_str(), detail::usertype_call<N> });
 				return;
 			}
-			functiontable.push_back({ name.c_str(), &base_function::usertype<N>::call });
+			indexwrapper.insert({ name, { true, functions.back().get() } });
+			functiontable.push_back({ name.c_str(), detail::usertype_call<N> });
 		}
 
 		template<std::size_t N, typename Fx, typename... Args>
@@ -304,24 +292,23 @@ namespace sol {
 			int variableend = 0;
 			if (!indexwrapper.empty()) {
 				functions.push_back(std::make_unique<usertype_indexing_function>("__index", indexfunc, std::move(indexwrapper)));
-				variablefunctiontable[0] = { "__index", &base_function::usertype<N>::call };
+				metafunctiontable.push_back({ "__index", detail::usertype_call<N> });
 				++variableend;
 			}
 			if (!newindexwrapper.empty()) {
 				functions.push_back(std::make_unique<usertype_indexing_function>("__newindex", newindexfunc, std::move(newindexwrapper)));
-				variablefunctiontable[variableend] = { "__newindex", indexwrapper.empty() ? &base_function::usertype<N>::call : &base_function::usertype<N + 1>::call };
+				metafunctiontable.push_back({ "__newindex", indexwrapper.empty() ? detail::usertype_call<N> : detail::usertype_call<N + 1> });
 				++variableend;
 			}
-			variablefunctiontable[variableend] = { nullptr, nullptr };
 			switch (variableend) {
 			case 2:
-				destructfunc = &base_function::usertype<N + 2>::gc;
+				functiongc = detail::usertype_gc<N + 2>;
 				break;
 			case 1:
-				destructfunc = &base_function::usertype<N + 1>::gc;
+				functiongc = detail::usertype_gc<N + 1>;
 				break;
 			case 0:
-				destructfunc = &base_function::usertype<N + 0>::gc;
+				functiongc = detail::usertype_gc<N + 0>;
 				break;
 			}
 		}
@@ -332,10 +319,10 @@ namespace sol {
 
 		template<typename... Args, typename... CArgs>
 		usertype(constructors<CArgs...>, Args&&... args) 
-		: indexfunc(nullptr), newindexfunc(nullptr), constructfunc(nullptr), destructfunc(nullptr) {
-			functionnames.reserve(sizeof...(args)+2);
-			functiontable.reserve(sizeof...(args));
-			metafunctiontable.reserve(sizeof...(args));
+		: indexfunc(nullptr), newindexfunc(nullptr), constructfunc(nullptr), destructfunc(nullptr), functiongc(nullptr) {
+			functionnames.reserve(sizeof...(args)+3);
+			functiontable.reserve(sizeof...(args)+3);
+			metafunctiontable.reserve(sizeof...(args)+3);
 
 			build_function_tables<0>(std::forward<Args>(args)...);
 		
@@ -348,20 +335,20 @@ namespace sol {
 			// as all pointered types are considered
 			// to be references. This makes returns of
 			// `std::vector<int>&` and `std::vector<int>*` work
-			functiontable.push_back({ nullptr, nullptr });
 			metafunctiontable.push_back({ nullptr, nullptr });
+			functiontable.push_back({ nullptr, nullptr });
 		}
 
 		int push(lua_State* L) {
 			// push pointer tables first,
-			usertype_detail::push_metatable<T*>(L, functions, functiontable, metafunctiontable, variablefunctiontable);
+			usertype_detail::push_metatable<T*>(L, functions, functiontable, metafunctiontable);
 			lua_pop(L, 1);
 			// but leave the regular T table on last
 			// so it can be linked to a type for usage with `.new(...)` or `:new(...)`
-			usertype_detail::push_metatable<T>(L, functions, functiontable, metafunctiontable, variablefunctiontable);
+			usertype_detail::push_metatable<T>(L, functions, functiontable, metafunctiontable);
 			// Make sure to drop a table in the global namespace to properly destroy the pushed functions
 			// at some later point in life
-			usertype_detail::set_global_deleter<T>(L, destructfunc, functions);
+			usertype_detail::set_global_deleter<T>(L, functiongc, functions);
 			return 1;
 		}
 	};

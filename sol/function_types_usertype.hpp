@@ -117,11 +117,11 @@ struct usertype_variable_function : public usertype_function_core<Function, Tp> 
     usertype_variable_function(Args&&... args): base_t(std::forward<Args>(args)...) {}
 
     int prelude(lua_State* L) {
-        this->fx.item = ptr(stack::get<T>(L, 1));
+        int argcount = lua_gettop(L);
+	   this->fx.item = stack::get<T*>(L, 1);
         if(this->fx.item == nullptr) {
             throw error("userdata for member variable is null");
         }
-        int argcount = lua_gettop(L);
         switch(argcount) {
         case 2:
             return static_cast<base_t&>(*this)(tuple_types<return_type>(), types<>(), L);
@@ -140,17 +140,23 @@ struct usertype_variable_function : public usertype_function_core<Function, Tp> 
 struct usertype_indexing_function : base_function {
     std::string name;
     base_function* original;
-    std::map<std::string, base_function*> functions;
+    std::map<std::string, std::pair<bool, base_function*>> functions;
 
     template<typename... Args>
     usertype_indexing_function(std::string name, base_function* original, Args&&... args): name(std::move(name)), original(original), functions(std::forward<Args>(args)...) {}
 
     int prelude(lua_State* L) {
         const char* accessor = stack::get<const char*>(L, 1 - lua_gettop(L));
-        auto function = functions.find(accessor);
-        if (function != functions.end()) {
-            return (*function->second)(L);
-        }
+        auto functionpair = functions.find(accessor);
+        if (functionpair != functions.end()) {
+            std::pair<bool, base_function*>& target = functionpair->second;
+		  if (target.first) {
+                stack::push<upvalue>(L, target.second);
+                stack::push(L, c_closure(detail::usertype_call<0>, 1));
+			 return 1;
+		  }
+            return (*target.second)(L);
+	   }
 	   base_function& core = *original;
 	   return core(L);
     }

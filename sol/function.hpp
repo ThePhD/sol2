@@ -318,12 +318,12 @@ struct pusher<function_sig<Sigs...>> {
         const static char* metatablename = &metakey[0];
         base_function* target = luafunc.release();
         void* userdata = reinterpret_cast<void*>(target);
-        lua_CFunction freefunc = &base_function::call;
+        lua_CFunction freefunc = detail::call;
        
         int metapushed = luaL_newmetatable(L, metatablename);
         if(metapushed == 1) {
             lua_pushstring(L, "__gc");
-            stack::push(L, &base_function::gc);
+            stack::push<lua_CFunction>(L, detail::gc);
             lua_settable(L, -3);
             lua_pop(L, 1);
         }
