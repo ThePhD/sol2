@@ -28,6 +28,16 @@
 
 namespace sol {
 namespace detail {
+template <typename T>
+struct overload_traits : function_traits<T> {};
+
+template <typename T, typename Func, typename X>
+struct overload_traits<functor<T, Func, X>> {
+    typedef typename functor<T, Func, X>::args_type args_type;
+    typedef typename functor<T, Func, X>::return_type return_type;
+    static const std::size_t arity = functor<T, Func, X>::arity;
+};
+
 template <std::size_t... M, typename Match, typename... Args>
 inline int overload_match_arity(types<>, std::index_sequence<>, std::index_sequence<M...>, Match&&, lua_State*, int, int, Args&&...) {
     throw error("no matching function call takes this number of arguments and the specified types");
@@ -35,9 +45,9 @@ inline int overload_match_arity(types<>, std::index_sequence<>, std::index_seque
 
 template <typename Fx, typename... Fxs, std::size_t I, std::size_t... In, std::size_t... M, typename Match, typename... Args>
 inline int overload_match_arity(types<Fx, Fxs...>, std::index_sequence<I, In...>, std::index_sequence<M...>, Match&& matchfx, lua_State* L, int fxarity, int start, Args&&... args) {
-    typedef function_traits<Fx> traits;
-    typedef tuple_types<typename function_traits<Fx>::return_type> return_types;
-    typedef typename function_traits<Fx>::args_type args_type;
+    typedef overload_traits<Unqualified<Fx>> traits;
+    typedef tuple_types<typename traits::return_type> return_types;
+    typedef typename traits::args_type args_type;
     typedef typename args_type::indices args_indices;
     // compile-time eliminate any functions that we know ahead of time are of improper arity
     if (find_in_pack_v<Index<traits::arity>, Index<M>...>::value) {
@@ -96,7 +106,7 @@ struct overloaded_function : base_function {
 
 template <typename T, typename... Functions>
 struct usertype_overloaded_function : base_function {
-    typedef std::tuple<detail::functor<T, Functions>...> overload_list;
+    typedef std::tuple<detail::functor<T, std::remove_pointer_t<std::decay_t<Functions>>>...> overload_list;
     typedef std::index_sequence_for<Functions...> indices;
     overload_list overloads;
 
@@ -116,7 +126,7 @@ struct usertype_overloaded_function : base_function {
 
     virtual int operator()(lua_State* L) override {
         auto mfx = [&](auto&&... args){ return this->call(std::forward<decltype(args)>(args)...); };
-        return overload_match<Functions...>(mfx, L, 2);
+        return overload_match<detail::functor<T, std::remove_pointer_t<std::decay_t<Functions>>>...>(mfx, L, 2);
     }
 
 };

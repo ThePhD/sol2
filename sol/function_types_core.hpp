@@ -66,6 +66,7 @@ struct functor {
     typedef callable_traits<Func> traits_type;
     typedef typename traits_type::args_type args_type;
     typedef typename traits_type::return_type return_type;
+    static const std::size_t arity = traits_type::arity;
 
     T* item;
     Func invocation;
@@ -100,6 +101,7 @@ struct functor<T, Func, std::enable_if_t<std::is_member_object_pointer<Func>::va
     typedef callable_traits<Func> traits_type;
     typedef typename traits_type::args_type args_type;
     typedef typename traits_type::return_type return_type;
+    static const std::size_t arity = traits_type::arity;
     T* item;
     Func invocation;
 
@@ -132,6 +134,7 @@ struct functor<T, Func, std::enable_if_t<std::is_function<Func>::value || std::i
     typedef callable_traits<Func> traits_type;
     typedef pop_front_type_t<typename traits_type::args_type> args_type;
     typedef typename traits_type::return_type return_type;
+    static const std::size_t arity = traits_type::arity;
     typedef std::tuple_element_t<0, typename traits_type::args_tuple_type> Arg0;
     typedef std::conditional_t<std::is_pointer<Func>::value || std::is_class<Func>::value, Func, std::add_pointer_t<Func>> function_type;
     static_assert(std::is_base_of<Unqualified<std::remove_pointer_t<Arg0>>, T>::value, "Any non-member-function must have a first argument which is covariant with the desired userdata type.");
