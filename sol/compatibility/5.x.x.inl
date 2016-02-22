@@ -307,11 +307,13 @@ inline int luaL_fileresult(lua_State *L, int stat, const char *fname) {
         return 1;
     }
     else {
+        char buf[1024];
+        strerror_s(buf, 1024, en);
         lua_pushnil(L);
         if (fname)
-            lua_pushfstring(L, "%s: %s", fname, strerror(en));
+            lua_pushfstring(L, "%s: %s", fname, buf);
         else
-            lua_pushstring(L, strerror(en));
+            lua_pushstring(L, buf);
         lua_pushnumber(L, (lua_Number)en);
         return 3;
     }

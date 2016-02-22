@@ -504,7 +504,6 @@ TEST_CASE("advanced/call_lambdas", "A C++ lambda is exposed to lua and called") 
     REQUIRE(x == 9);
 }
 
-
 TEST_CASE("advanced/call_referenced_obj", "A C++ object is passed by pointer/reference_wrapper to lua and invoked") {
     sol::state lua;
 
