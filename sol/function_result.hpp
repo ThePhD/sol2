@@ -68,7 +68,7 @@ public:
     }
 
     ~function_result() {
-	   lua_pop(L, returncount);
+        lua_pop(L, returncount);
     }
 };
 
@@ -101,7 +101,7 @@ public:
         L = o.L;
         index = o.index;
         returncount = o.returncount;
-	   popcount = o.popcount;
+        popcount = o.popcount;
         error = o.error;
         // Must be manual, otherwise destructor will screw us
         // return count being 0 is enough to keep things clean

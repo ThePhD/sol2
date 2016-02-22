@@ -43,7 +43,7 @@ public:
     template<typename T>
     bool is() const {
         if (!reference::valid())
-		   return false;
+            return false;
         auto expected = type_of<T>();
         auto actual = get_type();
         return (expected == actual) || (expected == type::poly);

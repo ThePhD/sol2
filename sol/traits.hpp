@@ -60,7 +60,7 @@ struct remove_member_pointer<R T::*> {
 
 template<typename R, typename T>
 struct remove_member_pointer<R T::* const> {
-	typedef R type;
+    typedef R type;
 };
 
 template<typename T>
@@ -125,6 +125,15 @@ struct find_in_pack_v : Bool<false> { };
 template<typename V, typename Vs1, typename... Vs>
 struct find_in_pack_v<V, Vs1, Vs...> : Or<Bool<(V::value == Vs1::value)>, find_in_pack_v<V, Vs...>> { };
 
+template<std::size_t I, typename... Args>
+struct at_in_pack {};
+
+template<std::size_t I, typename... Args>
+using at_in_pack_t = typename at_in_pack<I, Args...>::type;
+
+template<std::size_t I, typename Arg, typename... Args>
+struct at_in_pack<I, Arg, Args...> : std::conditional<I == 0, Arg, at_in_pack_t<I - 1, Args...>> {};
+
 template<typename... Args>
 struct return_type {
     typedef std::tuple<Args...> type;
@@ -142,12 +151,6 @@ struct return_type<> {
 
 template <typename... Args>
 using return_type_t = typename return_type<Args...>::type;
-
-template <typename Empty, typename... Args>
-using ReturnTypeOr = typename std::conditional<(sizeof...(Args) < 1), Empty, return_type_t<Args...>>::type;
-
-template <typename... Args>
-using ReturnType = ReturnTypeOr<void, Args...>;
 
 namespace detail {
 
@@ -377,17 +380,17 @@ T& deref(const std::shared_ptr<T>& item) {
 
 template<typename T>
 inline T* ptr(T& val) {
-	return std::addressof(val);
+    return std::addressof(val);
 }
 
 template<typename T>
 inline T* ptr(std::reference_wrapper<T> val) {
-	return std::addressof(val.get());
+    return std::addressof(val.get());
 }
 
 template<typename T>
 inline T* ptr(T* val) {
-	return val;
+    return val;
 }
 
 namespace detail {

@@ -177,9 +177,16 @@ public:
         return *this;
     }
 
-    template<typename Class, typename... CTor, typename... Args>
+    template<typename Class, typename... Args>
     state_view& new_usertype(const std::string& name, Args&&... args) {
-        constructors<types<CTor...>> ctor{};
+        usertype<Class> utype(std::forward<Args>(args)...);
+        set_usertype(name, utype);
+        return *this;
+    }
+
+    template<typename Class, typename CTor0, typename... CTor, typename... Args>
+    state_view& new_usertype(const std::string& name, Args&&... args) {
+        constructors<types<CTor0, CTor...>> ctor{};
         return new_usertype<Class>(name, ctor, std::forward<Args>(args)...);
     }
 

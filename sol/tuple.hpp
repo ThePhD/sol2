@@ -30,15 +30,6 @@ template<typename... Args>
 struct types { typedef std::index_sequence_for<Args...> indices; static constexpr std::size_t size() { return sizeof...(Args); } };
  
 namespace detail {
-template<typename Arg>
-struct chop_one : types<> {};
-
-template<typename Arg0, typename Arg1, typename... Args>
-struct chop_one<types<Arg0, Arg1, Args...>> : types<Arg1, Args...> {};
-
-template<typename Arg, typename... Args>
-struct chop_one<types<Arg, Args...>> : types<Args...> {};
-
 template<typename... Args>
 struct tuple_types_ { typedef types<Args...> type; };
 
@@ -53,12 +44,15 @@ template<typename... Args>
 using tuple_types = typename detail::tuple_types_<Args...>::type;
 
 template<typename Arg>
-struct remove_one_type : detail::chop_one<Arg> {};
+struct pop_front_type;
 
-template<typename... Args>
-using constructors = sol::types<Args...>;
+template<typename Arg>
+using pop_front_type_t = typename pop_front_type<Arg>::type;
 
-const auto default_constructor = constructors<types<>>{};
+template<typename Arg, typename... Args>
+struct pop_front_type<types<Arg, Args...>> { typedef types<Args...> type; };
+
+
 
 } // sol
 

@@ -44,8 +44,8 @@ class table_core : public reference {
     auto tuple_get( types<Ret...>, std::index_sequence<I...>, Keys&& keys ) const
     -> decltype(stack::pop<std::tuple<Ret...>>(nullptr)){
         auto pp = stack::push_popper<is_global<decltype(std::get<I>(keys))...>::value>(*this);
-	   int tableindex = lua_gettop(lua_state());
-	   detail::swallow{ ( stack::get_field<top_level>(lua_state(), std::get<I>(keys), tableindex), 0)... };
+        int tableindex = lua_gettop(lua_state());
+        detail::swallow{ ( stack::get_field<top_level>(lua_state(), std::get<I>(keys), tableindex), 0)... };
         return stack::pop<std::tuple<Ret...>>( lua_state() );
     }
 
@@ -71,7 +71,7 @@ class table_core : public reference {
     template <bool global, typename T, typename Key, typename... Keys>
     decltype(auto) traverse_get_deep( Key&& key, Keys&&... keys ) const {
         stack::get_field<global>( lua_state( ), std::forward<Key>( key ) );
-	   return traverse_get_deep<false, T>(std::forward<Keys>(keys)...);
+        return traverse_get_deep<false, T>(std::forward<Keys>(keys)...);
     }
 
     template <bool global, typename Key, typename Value>
@@ -105,16 +105,16 @@ public:
     template <typename T, typename... Keys>
     decltype(auto) traverse_get( Keys&&... keys ) const {
         auto pp = stack::push_popper<is_global<Keys...>::value>(*this);
-	   struct clean { lua_State* L; clean(lua_State* L) : L(L) {} ~clean() { lua_pop(L, static_cast<int>(sizeof...(Keys))); } } c(lua_state());
-	   return traverse_get_deep<top_level, T>(std::forward<Keys>(keys)...);
+        struct clean { lua_State* L; clean(lua_State* L) : L(L) {} ~clean() { lua_pop(L, static_cast<int>(sizeof...(Keys))); } } c(lua_state());
+        return traverse_get_deep<top_level, T>(std::forward<Keys>(keys)...);
     }
 
     template <typename... Keys>
     table_core& traverse_set( Keys&&... keys ) {
         auto pp = stack::push_popper<is_global<Keys...>::value>(*this);
-	   traverse_set_deep<top_level>(std::forward<Keys>(keys)...);
-	   lua_pop(lua_state(), static_cast<int>(sizeof...(Keys)-2));
-	   return *this;
+        traverse_set_deep<top_level>(std::forward<Keys>(keys)...);
+        lua_pop(lua_state(), static_cast<int>(sizeof...(Keys)-2));
+        return *this;
     }
 
     template<typename... Args>

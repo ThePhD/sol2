@@ -25,15 +25,15 @@
 #include <utility>
 
 namespace sol {
-	template <typename... Functions>
-	struct overload_set : std::tuple<Functions...> {
-		using std::tuple<Functions...>::tuple;
-	};
+    template <typename... Functions>
+    struct overload_set : std::tuple<Functions...> {
+        using std::tuple<Functions...>::tuple;
+    };
 
-	template <typename... Args>
-	decltype(auto) overload(Args&&... args) {
-		return overload_set<Args...>(std::forward<Args>(args)...);
-	}
+    template <typename... Args>
+    decltype(auto) overload(Args&&... args) {
+        return overload_set<Args...>(std::forward<Args>(args)...);
+    }
 }
 
 #endif // SOL_OVERLOAD_HPP

@@ -44,9 +44,9 @@ private:
     auto invoke( types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n ) const {
         luacall( n, sizeof...( Ret ) );
         int stacksize = lua_gettop( lua_state( ) );
-	   int firstreturn = std::max(1, stacksize - static_cast<int>(sizeof...(Ret)) + 1);
+        int firstreturn = std::max(1, stacksize - static_cast<int>(sizeof...(Ret)) + 1);
         auto r = stack::get<std::tuple<Ret...>>( lua_state( ), firstreturn );
-	   lua_pop(lua_state(), static_cast<int>(sizeof...(Ret)));
+        lua_pop(lua_state(), static_cast<int>(sizeof...(Ret)));
         return r;
     }
 
@@ -140,8 +140,8 @@ private:
         luacall(n, sizeof...(Ret), h);
         int stacksize = lua_gettop(lua_state());
         int firstreturn = std::max(0, stacksize - static_cast<int>(sizeof...(Ret)) + 1);
-	   auto r = stack::get<std::tuple<Ret...>>(lua_state(), firstreturn);
-	   lua_pop(lua_state(), static_cast<int>(sizeof...(Ret)));
+        auto r = stack::get<std::tuple<Ret...>>(lua_state(), firstreturn);
+        lua_pop(lua_state(), static_cast<int>(sizeof...(Ret)));
         return r;
     }
 
@@ -323,7 +323,7 @@ struct pusher<function_sig<Sigs...>> {
         int metapushed = luaL_newmetatable(L, metatablename);
         if(metapushed == 1) {
             lua_pushstring(L, "__gc");
-            stack::push<lua_CFunction>(L, detail::gc);
+            stack::push(L, detail::gc);
             lua_settable(L, -3);
             lua_pop(L, 1);
         }
@@ -365,7 +365,7 @@ struct pusher<overload_set<Functions...>> {
     template<std::size_t... I, typename Set>
     static int push(std::index_sequence<I...>, lua_State* L, Set&& set) {
         pusher<function_sig<>>{}.set_fx<Set>(L, std::make_unique<overloaded_function<Functions...>>(std::get<I>(set)...));
-	   return 1;
+        return 1;
     }
 
     template<typename Set>

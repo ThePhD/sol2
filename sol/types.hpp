@@ -57,9 +57,9 @@ struct userdata {
 };
 
 struct c_closure {
-	lua_CFunction c_function;
-	int upvalues;
-	c_closure(lua_CFunction f, int upvalues = 0) : c_function(f), upvalues(upvalues) {}
+    lua_CFunction c_function;
+    int upvalues;
+    c_closure(lua_CFunction f, int upvalues = 0) : c_function(f), upvalues(upvalues) {}
 };
 
 enum class call_syntax {

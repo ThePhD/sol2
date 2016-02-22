@@ -62,18 +62,17 @@ struct usertype_function_core : public base_function {
         return stack::push(L, std::forward<Return>(r));
     }
 
-    template<typename... Args>
-    int operator()(types<void> tr, types<Args...> ta, lua_State* L) {
-        //static const std::size_t skew = static_cast<std::size_t>(std::is_member_object_pointer<function_type>::value);
-        stack::call(tr, ta, L, 0, fx);
+    template<typename... Args, std::size_t Start>
+    int operator()(types<void> tr, types<Args...> ta, Index<Start>, lua_State* L) {
+        stack::call(tr, ta, L, static_cast<int>(Start), fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         return 0;
     }
 
-    template<typename... Ret, typename... Args>
-    int operator()(types<Ret...> tr, types<Args...> ta, lua_State* L) {
-        decltype(auto) r = stack::call(tr, ta, L, 0, fx);
+    template<typename... Ret, typename... Args, std::size_t Start>
+    int operator()(types<Ret...> tr, types<Args...> ta, Index<Start>, lua_State* L) {
+        decltype(auto) r = stack::call(tr, ta, L, static_cast<int>(Start), fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         int pushcount = push(L, std::forward<decltype(r)>(r));
@@ -97,7 +96,7 @@ struct usertype_function : public usertype_function_core<Function, Tp> {
         if(this->fx.item == nullptr) {
             throw error("userdata for function call is null: are you using the wrong syntax? (use item:function/variable(...) syntax)");
         }
-        return static_cast<base_t&>(*this)(tuple_types<return_type>(), args_type(), L);
+        return static_cast<base_t&>(*this)(tuple_types<return_type>(), args_type(), Index<2>(), L);
     }
 
     virtual int operator()(lua_State* L) override {
@@ -118,15 +117,15 @@ struct usertype_variable_function : public usertype_function_core<Function, Tp> 
 
     int prelude(lua_State* L) {
         int argcount = lua_gettop(L);
-	   this->fx.item = stack::get<T*>(L, 1);
+        this->fx.item = stack::get<T*>(L, 1);
         if(this->fx.item == nullptr) {
             throw error("userdata for member variable is null");
         }
         switch(argcount) {
         case 2:
-            return static_cast<base_t&>(*this)(tuple_types<return_type>(), types<>(), L);
+            return static_cast<base_t&>(*this)(tuple_types<return_type>(), types<>(), Index<2>(), L);
         case 3:
-            return static_cast<base_t&>(*this)(tuple_types<void>(), args_type(), L);
+            return static_cast<base_t&>(*this)(tuple_types<void>(), args_type(), Index<3>(), L);
         default:
             throw error("cannot get/set userdata member variable with inappropriate number of arguments");
         }
@@ -150,15 +149,15 @@ struct usertype_indexing_function : base_function {
         auto functionpair = functions.find(accessor);
         if (functionpair != functions.end()) {
             std::pair<bool, base_function*>& target = functionpair->second;
-		  if (target.first) {
+            if (target.first) {
                 stack::push<upvalue>(L, target.second);
                 stack::push(L, c_closure(detail::usertype_call<0>, 1));
-			 return 1;
-		  }
+                return 1;
+            }
             return (*target.second)(L);
-	   }
-	   base_function& core = *original;
-	   return core(L);
+       }
+       base_function& core = *original;
+       return core(L);
     }
 
     virtual int operator()(lua_State* L) override {

@@ -224,49 +224,84 @@ struct giver {
 
 };
 
+struct factory_test {
+private:
+    factory_test() { a = true_a; }
+    ~factory_test() { a = 0; }
+public:
+    static int num_saved;
+    static int num_killed;
+
+    struct deleter {
+        void operator()(factory_test* f) {
+            f->~factory_test();
+        }
+    };
+
+    static const int true_a = 156;
+    int a;
+
+    static std::unique_ptr<factory_test, deleter> make() {
+        return std::unique_ptr<factory_test, deleter>( new factory_test(), deleter());
+    }
+
+    static void save(factory_test& f) {
+        new(&f)factory_test();
+        ++num_saved;
+    }
+
+    static void kill(factory_test& f) {
+        f.~factory_test();
+        ++num_killed;
+    }
+};
+
+int factory_test::num_saved = 0;
+int factory_test::num_killed = 0;
+
 TEST_CASE("table/traversal", "ensure that we can chain requests and tunnel down into a value if we desire") {
 
-	sol::state lua;
-	int begintop = 0, endtop = 0;
+    sol::state lua;
+    int begintop = 0, endtop = 0;
 
-	lua.script("t1 = {t2 = {t3 = 24}};");
-	{
-		stack_guard g(lua.lua_state(), begintop, endtop);
-		int traversex24 = lua.traverse_get<int>("t1", "t2", "t3");
-		REQUIRE(traversex24 == 24);
-	} REQUIRE(begintop == endtop);
+    lua.script("t1 = {t2 = {t3 = 24}};");
+    {
+        stack_guard g(lua.lua_state(), begintop, endtop);
+        int traversex24 = lua.traverse_get<int>("t1", "t2", "t3");
+        REQUIRE(traversex24 == 24);
+    } REQUIRE(begintop == endtop);
 
-	{
-		stack_guard g(lua.lua_state(), begintop, endtop);
-		int x24 = lua["t1"]["t2"]["t3"];
-		REQUIRE(x24 == 24);
-	} REQUIRE(begintop == endtop);
+    {
+        stack_guard g(lua.lua_state(), begintop, endtop);
+        int x24 = lua["t1"]["t2"]["t3"];
+        REQUIRE(x24 == 24);
+    } REQUIRE(begintop == endtop);
 
-	{
-		stack_guard g(lua.lua_state(), begintop, endtop);
-		lua["t1"]["t2"]["t3"] = 64;
-		int traversex64 = lua.traverse_get<int>("t1", "t2", "t3");
-		REQUIRE(traversex64 == 64);
-	} REQUIRE(begintop == endtop);
+    {
+        stack_guard g(lua.lua_state(), begintop, endtop);
+        lua["t1"]["t2"]["t3"] = 64;
+        int traversex64 = lua.traverse_get<int>("t1", "t2", "t3");
+        REQUIRE(traversex64 == 64);
+    } REQUIRE(begintop == endtop);
 
-	{
-		stack_guard g(lua.lua_state(), begintop, endtop);
-		int x64 = lua["t1"]["t2"]["t3"];
-		REQUIRE(x64 == 64);
-	} REQUIRE(begintop == endtop);
+    {
+        stack_guard g(lua.lua_state(), begintop, endtop);
+        int x64 = lua["t1"]["t2"]["t3"];
+        REQUIRE(x64 == 64);
+    } REQUIRE(begintop == endtop);
 
-	{
-		stack_guard g(lua.lua_state(), begintop, endtop);
-		lua.traverse_set("t1", "t2", "t3", 13);
-		int traversex13 = lua.traverse_get<int>("t1", "t2", "t3");
-		REQUIRE(traversex13 == 13);
-	} REQUIRE(begintop == endtop);
+    {
+        stack_guard g(lua.lua_state(), begintop, endtop);
+        lua.traverse_set("t1", "t2", "t3", 13);
+        int traversex13 = lua.traverse_get<int>("t1", "t2", "t3");
+        REQUIRE(traversex13 == 13);
+    } REQUIRE(begintop == endtop);
 
-	{
-		stack_guard g(lua.lua_state(), begintop, endtop);
-		int x13 = lua["t1"]["t2"]["t3"];
-		REQUIRE(x13 == 13);
-	} REQUIRE(begintop == endtop);
+    {
+        stack_guard g(lua.lua_state(), begintop, endtop);
+        int x13 = lua["t1"]["t2"]["t3"];
+        REQUIRE(x13 == 13);
+    } REQUIRE(begintop == endtop);
 }
 
 TEST_CASE("simple/set", "Check if the set works properly.") {
@@ -475,15 +510,15 @@ TEST_CASE("advanced/call_referenced_obj", "A C++ object is passed by pointer/ref
 
     int x = 0;
     auto objx = [&](int new_x) {
-	    x = new_x;
-	    return 0;
+        x = new_x;
+        return 0;
     };
     lua.set_function("set_x", std::ref(objx));
 
     int y = 0;
     auto objy = [&](int new_y) {
-	    y = new_y;
-	    return std::tuple<int, int>(0, 0);
+        y = new_y;
+        return std::tuple<int, int>(0, 0);
     };
     lua.set_function("set_y", &decltype(objy)::operator(), std::ref(objy));
 
@@ -715,8 +750,8 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
     auto assert1 = [](const sol::table& t) {
         std::string a = t["foo"];
         double b = t["bar"];
-	   REQUIRE(a == "goodbye");
-	   REQUIRE(b == 20.4);
+       REQUIRE(a == "goodbye");
+       REQUIRE(b == 20.4);
     };
 
     REQUIRE_NOTHROW(assert1(lua.global()));
@@ -1307,6 +1342,36 @@ func(1,2,3)
     REQUIRE_THROWS(lua.script("func(1,2,'meow')"));
 }
 
+TEST_CASE("usertype/private constructible", "Check to make sure special snowflake types from Enterprise thingamahjongs work properly.") {
+    int numsaved = factory_test::num_saved;
+    int numkilled = factory_test::num_killed;
+    {
+        sol::state lua;
+        lua.open_libraries(sol::lib::base);
+
+        lua.new_usertype<factory_test>("factory_test",
+           "new", sol::constructor(factory_test::save),
+           "__gc", sol::destructor(factory_test::kill),
+          "a", &factory_test::a
+        );
+    
+        std::unique_ptr<factory_test, factory_test::deleter> f = factory_test::make();
+        lua.set("true_a", factory_test::true_a, "f", f.get());
+        REQUIRE_NOTHROW(lua.script(R"(
+assert(f.a == true_a)
+)"));
+
+        REQUIRE_NOTHROW(lua.script(R"(
+local fresh_f = factory_test:new()
+assert(fresh_f.a == true_a)
+)"));
+    }
+    int expectednumsaved = numsaved + 1;
+    int expectednumkilled = numkilled + 1;
+    REQUIRE(expectednumsaved == factory_test::num_saved);
+    REQUIRE(expectednumkilled == factory_test::num_killed);
+}
+
 TEST_CASE("usertype/overloading", "Check if overloading works properly for usertypes") {
     struct woof {
         int var;
@@ -1364,7 +1429,7 @@ TEST_CASE("issues/stack-overflow", "make sure various operations repeated don't 
     REQUIRE_NOTHROW(
     for (int i = 0; i < 1000000; ++i) {
         int result = t[0];
-	   t.size();
+       t.size();
         if (result != expected)
             throw std::logic_error("RIP");
     }

@@ -28,5 +28,6 @@
 #include "function_types_member.hpp"
 #include "function_types_usertype.hpp"
 #include "function_types_overload.hpp"
+#include "function_types_allocator.hpp"
 
 #endif // SOL_FUNCTION_TYPES_HPP
