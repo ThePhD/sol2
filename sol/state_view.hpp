@@ -58,7 +58,7 @@ public:
     state_view(lua_State* L):
     L(L),
     reg(L, LUA_REGISTRYINDEX),
-    globals(detail::global_overload, reg) {
+    globals(L, detail::global_) {
 
     }
 

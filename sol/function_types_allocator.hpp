@@ -32,7 +32,7 @@ struct void_call;
 
 template <typename T, typename... Args>
 struct void_call<T, types<Args...>> {
-    static void call(Args... args) {}
+    static void call(Args...) {}
 };
 
 template <typename T>

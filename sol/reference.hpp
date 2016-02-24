@@ -43,6 +43,10 @@ push_pop<top_level, T> push_popper(T&& x) {
 }
 } // stack
 
+namespace detail {
+struct global_tag { } const global_{};
+} // detail
+
 class reference {
 private:
     lua_State* L = nullptr; // non-owning
@@ -53,6 +57,12 @@ private:
             return LUA_NOREF;
         push();
         return luaL_ref(L, LUA_REGISTRYINDEX);
+    }
+
+protected:
+    reference(lua_State* L, detail::global_tag) : L(L) {
+	    lua_pushglobaltable(L);
+	    ref = luaL_ref(L, LUA_REGISTRYINDEX);
     }
 public:
     reference() noexcept = default;

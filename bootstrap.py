@@ -32,8 +32,8 @@ def replace_extension(f, e):
 # Default install dir
 install_dir = os.path.join('/usr', 'include') if 'linux' in sys.platform else 'include'
 
-# Compiler: Read from environment
-cxx = os.environ['CXX'] 
+# Compiler: Read from environment or defaulted
+cxx = os.environ.get('CXX', "g++") 
 
 # command line stuff
 parser = argparse.ArgumentParser()
@@ -78,9 +78,9 @@ if args.lua_dir:
     ldflags.extend(library_includes([os.path.join(args.lua_dir, 'lib')]))
 
 if args.ci:
-    ldflags.extend(libraries(['lua5.2']))
+    ldflags.extend(libraries(['lua5.3']))
     ldflags.extend(library_includes(['lib']))
-    include.extend(['/usr/include/lua5.2', './lua-5.2.2/src', './include'])
+    include.extend(['/usr/include/lua5.3', './lua-5.3.2/src', './include'])
 else:
     ldflags.extend(libraries(['lua']))
 

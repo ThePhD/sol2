@@ -85,7 +85,7 @@ public:
 
     template<typename... Ret, typename... Args>
     decltype(auto) call(Args&&... args) {
-        return get<function>().call<Ret...>(std::forward<Args>(args)...);
+        return get<function>().template call<Ret...>(std::forward<Args>(args)...);
     }
 
     template<typename... Args>

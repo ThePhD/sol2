@@ -175,7 +175,7 @@ struct userdata_pusher<T*> {
 template<typename T, std::size_t... I>
 inline int push_tuple(std::index_sequence<I...>, lua_State* L, T&& tuplen) {
     int pushcount = 0;
-    detail::swallow{(pushcount += sol::stack::push(L, std::get<I>(tuplen)), '\0')... };
+    void(detail::swallow{(pushcount += sol::stack::push(L, std::get<I>(tuplen)), '\0')... });
     return pushcount;
 }
 
@@ -217,64 +217,6 @@ inline int push_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
     return push_userdata_pointer<T>(L, std::forward<Key>(metatablekey), std::forward<Args>(args)...);
 }
 } // stack_detail
-
-template <typename T, type expected, typename>
-struct checker {
-    template <typename Handler>
-    static bool check (lua_State* L, int index, const Handler& handler) {
-        const type indextype = type_of(L, index);
-        bool success = expected == indextype;
-        if (!success) {
-            // expected type, actual type
-            handler(L, index, expected, indextype);
-        }
-        return success;
-    }
-};
-
-template <typename T, typename C>
-struct checker<T*, type::userdata, C> {
-    template <typename Handler>
-    static bool check (lua_State* L, int index, const Handler& handler) {
-        const type indextype = type_of(L, index);
-        // Allow nil to be transformed to nullptr
-        if (indextype == type::nil) {
-            return true;
-        }
-        return checker<T, type::userdata, C>{}.check(L, indextype, index, handler);
-    }
-};
-
-template <typename T,typename C>
-struct checker<T, type::userdata, C> {
-    template <typename Handler>
-    static bool check (lua_State* L, type indextype, int index, const Handler& handler) {
-        if (indextype != type::userdata) {
-            handler(L, index, type::userdata, indextype);
-            return false;
-        }
-        if (lua_getmetatable(L, index) == 0) {
-             handler(L, index, type::userdata, indextype);
-             return false;
-        }
-        luaL_getmetatable(L, &usertype_traits<T>::metatable[0]);
-        const type expectedmetatabletype = get<type>(L);
-        if (expectedmetatabletype == type::nil) {
-             lua_pop(L, 2);
-             handler(L, index, type::userdata, indextype);
-             return false;
-        }
-        bool success = lua_rawequal(L, -1, -2) == 1;
-        lua_pop(L, 2);
-        return success;
-    }
-
-    template <typename Handler>
-    static bool check (lua_State* L, int index, const Handler& handler) {
-        const type indextype = type_of(L, index);
-        return check(L, indextype, index, handler);
-    }
-};
 
 template<typename T, typename>
 struct getter {
@@ -430,6 +372,64 @@ struct getter<std::tuple<Args...>> {
 
     static decltype(auto) get(lua_State* L, int index = -1) {
         return apply(std::index_sequence_for<Args...>(), L, index);
+    }
+};
+
+template <typename T, type expected, typename>
+struct checker {
+    template <typename Handler>
+    static bool check (lua_State* L, int index, const Handler& handler) {
+        const type indextype = type_of(L, index);
+        bool success = expected == indextype;
+        if (!success) {
+            // expected type, actual type
+            handler(L, index, expected, indextype);
+        }
+        return success;
+    }
+};
+
+template <typename T, typename C>
+struct checker<T*, type::userdata, C> {
+    template <typename Handler>
+    static bool check (lua_State* L, int index, const Handler& handler) {
+        const type indextype = type_of(L, index);
+        // Allow nil to be transformed to nullptr
+        if (indextype == type::nil) {
+            return true;
+        }
+        return checker<T, type::userdata, C>{}.check(L, indextype, index, handler);
+    }
+};
+
+template <typename T,typename C>
+struct checker<T, type::userdata, C> {
+    template <typename Handler>
+    static bool check (lua_State* L, type indextype, int index, const Handler& handler) {
+        if (indextype != type::userdata) {
+            handler(L, index, type::userdata, indextype);
+            return false;
+        }
+        if (lua_getmetatable(L, index) == 0) {
+             handler(L, index, type::userdata, indextype);
+             return false;
+        }
+        luaL_getmetatable(L, &usertype_traits<T>::metatable[0]);
+        const type expectedmetatabletype = get<type>(L);
+        if (expectedmetatabletype == type::nil) {
+             lua_pop(L, 2);
+             handler(L, index, type::userdata, indextype);
+             return false;
+        }
+        bool success = lua_rawequal(L, -1, -2) == 1;
+        lua_pop(L, 2);
+        return success;
+    }
+
+    template <typename Handler>
+    static bool check (lua_State* L, int index, const Handler& handler) {
+        const type indextype = type_of(L, index);
+        return check(L, indextype, index, handler);
     }
 };
 
@@ -656,7 +656,7 @@ struct field_getter<std::tuple<Args...>, b, C> {
     template <std::size_t I0, std::size_t... I, typename Key>
     void apply(std::index_sequence<I0, I...>, lua_State* L, Key&& key, int tableindex) {
         get_field<b>(L, std::get<I0>(key), tableindex);
-        detail::swallow{ (get_field(L, std::get<I>(key)), 0)... };
+        void(detail::swallow{ (get_field(L, std::get<I>(key)), 0)... });
         reference saved(L, -1);
         lua_pop(L, static_cast<int>(sizeof...(I) + 1));
         saved.push();
@@ -853,7 +853,7 @@ inline void top_call(types<void> tr, types<Args...> ta, lua_State* L, Fx&& fx, F
 }
 
 template<bool check_args = stack_detail::default_check_arguments, typename... Args, typename Fx, typename... FxArgs>
-inline int typed_call(types<void> tr, types<Args...> ta, Fx&& fx, lua_State* L, int start = 1, FxArgs&&... fxargs) {
+inline int typed_call(types<void> tr, types<Args...> ta, Fx&& fx, lua_State* L, int start, FxArgs&&... fxargs) {
     call<check_args>(tr, ta, L, start, fx, std::forward<FxArgs>(fxargs)...);
     int nargs = static_cast<int>(sizeof...(Args));
     lua_pop(L, nargs);
@@ -861,7 +861,7 @@ inline int typed_call(types<void> tr, types<Args...> ta, Fx&& fx, lua_State* L, 
 }
 
 template<bool check_args = stack_detail::default_check_arguments, typename Ret0, typename... Ret, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<meta::Not<std::is_void<Ret0>>::value>>
-inline int typed_call(types<Ret0, Ret...>, types<Args...> ta, Fx&& fx, lua_State* L, int start = 1, FxArgs&&... fxargs) {
+inline int typed_call(types<Ret0, Ret...>, types<Args...> ta, Fx&& fx, lua_State* L, int start, FxArgs&&... fxargs) {
     decltype(auto) r = call<check_args>(types<meta::return_type_t<Ret0, Ret...>>(), ta, L, start, fx, std::forward<FxArgs>(fxargs)...);
     int nargs = static_cast<int>(sizeof...(Args));
     lua_pop(L, nargs);

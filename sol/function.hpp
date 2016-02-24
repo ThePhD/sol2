@@ -275,7 +275,7 @@ struct pusher<function_sig<Sigs...>> {
     template<typename Fx, typename R, typename... Args>
     static void set_isconvertible_fx(std::false_type, types<R(Args...)>, lua_State* L, Fx&& fx) {
         typedef meta::Unwrapped<std::decay_t<Fx>> fx_t;
-        std::unique_ptr<base_function> sptr = std::make_unique<function_detail::functor_function<fx_t>>(std::forward<Fx>(fx));
+        std::unique_ptr<function_detail::base_function> sptr = std::make_unique<function_detail::functor_function<fx_t>>(std::forward<Fx>(fx));
         set_fx<Fx>(L, std::move(sptr));
     }
 

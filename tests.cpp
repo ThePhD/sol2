@@ -238,7 +238,7 @@ public:
         }
     };
 
-    static const int true_a = 156;
+    static const int true_a;
     int a;
 
     static std::unique_ptr<factory_test, deleter> make() {
@@ -258,6 +258,7 @@ public:
 
 int factory_test::num_saved = 0;
 int factory_test::num_killed = 0;
+const int factory_test::true_a = 156;
 
 TEST_CASE("table/traversal", "ensure that we can chain requests and tunnel down into a value if we desire") {
 

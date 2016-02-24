@@ -73,7 +73,7 @@ using remove_member_pointer_t = remove_member_pointer<T>;
 template<typename T, template<typename...> class Templ>
 struct is_specialization_of : std::false_type { };
 template<typename... T, template<typename...> class Templ>
-struct meta::is_specialization_of<Templ<T...>, Templ> : std::true_type { };
+struct is_specialization_of<Templ<T...>, Templ> : std::true_type { };
 
 template<class T, class...>
 struct are_same : std::true_type { };

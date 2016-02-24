@@ -28,10 +28,6 @@
 #include "usertype.hpp"
 
 namespace sol {
-namespace detail {
-struct global_overload_tag { } const global_overload;
-} // detail
-
 template <bool top_level>
 class table_core : public reference {
     friend class state;
@@ -45,7 +41,7 @@ class table_core : public reference {
     -> decltype(stack::pop<std::tuple<Ret...>>(nullptr)){
         auto pp = stack::push_popper<is_global<decltype(std::get<I>(keys))...>::value>(*this);
         int tableindex = lua_gettop(lua_state());
-        detail::swallow{ ( stack::get_field<top_level>(lua_state(), std::get<I>(keys), tableindex), 0)... };
+	   void(detail::swallow{ ( stack::get_field<top_level>(lua_state(), std::get<I>(keys), tableindex), 0)... });
         return stack::pop<std::tuple<Ret...>>( lua_state() );
     }
 
@@ -59,7 +55,7 @@ class table_core : public reference {
     template<typename Pairs, std::size_t... I>
     void tuple_set( std::index_sequence<I...>, Pairs&& pairs ) {
         auto pp = stack::push_popper<is_global<decltype(std::get<I * 2>(pairs))...>::value>(*this);
-        detail::swallow{ (stack::set_field<top_level>(lua_state(), std::get<I * 2>(pairs), std::get<I * 2 + 1>(pairs)), 0)... };
+	   void(detail::swallow{ (stack::set_field<top_level>(lua_state(), std::get<I * 2>(pairs), std::get<I * 2 + 1>(pairs)), 0)... });
     }
 
     template <bool global, typename T, typename Key>
@@ -85,11 +81,8 @@ class table_core : public reference {
         traverse_set_deep<false>(std::forward<Keys>(keys)...);
     }
 
-#if SOL_LUA_VERSION < 502
-    table_core( detail::global_overload_tag, const table_core<false>& reg ) noexcept : reference( reg.lua_state(), LUA_GLOBALSINDEX ) { }
-#else
-    table_core( detail::global_overload_tag, const table& reg ) noexcept : reference( reg.get<table>( LUA_RIDX_GLOBALS ) ) { }
-#endif
+    table_core(lua_State* L, detail::global_tag t) noexcept : reference(L, t) { }
+
 public:
     table_core( ) noexcept : reference( ) { }
     table_core( const table_core<true>& global ) : reference( global ) { }

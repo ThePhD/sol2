@@ -38,7 +38,7 @@ struct functor_function : public base_function {
 
     template<typename... Args>
     int operator()(types<void> tr, types<Args...> ta, lua_State* L) {
-        stack::call(tr, ta, L, 0,fx);
+        stack::call(tr, ta, L, 0, fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
         return 0;
@@ -80,7 +80,7 @@ struct member_function : public base_function {
     member_function(Tm&& m, Args&&... args): fx(std::forward<Tm>(m), std::forward<Args>(args)...) {}
 
     virtual int operator()(lua_State* L) override {
-        return stack::typed_call(meta::tuple_types<return_type>(), args_types(), fx, L);
+        return stack::typed_call(meta::tuple_types<return_type>(), args_types(), fx, L, 1);
     }
 };
 } // function_detail
