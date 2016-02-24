@@ -32,10 +32,13 @@ def replace_extension(f, e):
 # Default install dir
 install_dir = os.path.join('/usr', 'include') if 'linux' in sys.platform else 'include'
 
+# Compiler: Read from environment
+cxx = os.environ['CXX'] 
+
 # command line stuff
 parser = argparse.ArgumentParser()
 parser.add_argument('--debug', action='store_true', help='compile with debug flags')
-parser.add_argument('--cxx', metavar='<compiler>', help='compiler name to use (default: g++)', default='g++')
+parser.add_argument('--cxx', metavar='<compiler>', help='compiler name to use (default: env.CXX=%s)' % cxx, default=cxx)
 parser.add_argument('--ci', action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('--testing', action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('--lua-dir', metavar='<dir>', help='directory lua is in with include and lib subdirectories')
