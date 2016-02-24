@@ -1429,7 +1429,7 @@ TEST_CASE("issues/stack-overflow", "make sure various operations repeated don't 
     REQUIRE_NOTHROW(
     for (int i = 0; i < 1000000; ++i) {
         int result = t[0];
-       t.size();
+        t.size();
         if (result != expected)
             throw std::logic_error("RIP");
     }
