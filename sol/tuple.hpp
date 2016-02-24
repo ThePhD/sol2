@@ -26,18 +26,19 @@
 #include <cstddef>
 
 namespace sol {
+namespace detail {
+using swallow = std::initializer_list<int>;
+} // detail
+
 template<typename... Args>
-struct types { typedef std::index_sequence_for<Args...> indices; static constexpr std::size_t size() { return sizeof...(Args); } };
- 
+struct types { typedef std::index_sequence_for<Args...> indices; static constexpr std::size_t size() { return sizeof...(Args); } }; 
+namespace meta {
 namespace detail {
 template<typename... Args>
 struct tuple_types_ { typedef types<Args...> type; };
 
 template<typename... Args>
 struct tuple_types_<std::tuple<Args...>> { typedef types<Args...> type; };
-
-using swallow = std::initializer_list<int>;
-
 } // detail
 
 template<typename... Args>
@@ -51,9 +52,7 @@ using pop_front_type_t = typename pop_front_type<Arg>::type;
 
 template<typename Arg, typename... Args>
 struct pop_front_type<types<Arg, Args...>> { typedef types<Args...> type; };
-
-
-
+} // meta
 } // sol
 
 #endif // SOL_TUPLE_HPP

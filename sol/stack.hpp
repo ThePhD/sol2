@@ -50,13 +50,13 @@ struct checker;
 
 template<typename T, typename... Args>
 inline int push(lua_State* L, T&& t, Args&&... args) {
-    return pusher<Unqualified<T>>{}.push(L, std::forward<T>(t), std::forward<Args>(args)...);
+    return pusher<meta::Unqualified<T>>{}.push(L, std::forward<T>(t), std::forward<Args>(args)...);
 }
 
 // overload allows to use a pusher of a specific type, but pass in any kind of args
 template<typename T, typename Arg, typename... Args>
 inline int push(lua_State* L, Arg&& arg, Args&&... args) {
-    return pusher<Unqualified<T>>{}.push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
+    return pusher<meta::Unqualified<T>>{}.push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 }
 
 inline int push_args(lua_State*) {
@@ -73,17 +73,17 @@ inline int push_args(lua_State* L, T&& t, Args&&... args) {
 
 template<typename T>
 inline decltype(auto) get(lua_State* L, int index = -1) {
-    return getter<Unqualified<T>>{}.get(L, index);
+    return getter<meta::Unqualified<T>>{}.get(L, index);
 }
 
 template<typename T>
 inline decltype(auto) pop(lua_State* L) {
-    return popper<Unqualified<T>>{}.pop(L);
+    return popper<meta::Unqualified<T>>{}.pop(L);
 }
 
 template <typename T, typename Handler>
 bool check(lua_State* L, int index, Handler&& handler) {
-    typedef Unqualified<T> Tu;
+    typedef meta::Unqualified<T> Tu;
     checker<Tu> c;
     // VC++ has a bad warning here: shut it up
     (void)c;
@@ -98,22 +98,22 @@ bool check(lua_State* L, int index) {
 
 template <bool global = false, typename Key>
 void get_field(lua_State* L, Key&& key) {
-    field_getter<Unqualified<Key>, global>{}.get(L, std::forward<Key>(key));
+    field_getter<meta::Unqualified<Key>, global>{}.get(L, std::forward<Key>(key));
 }
 
 template <bool global = false, typename Key>
 void get_field(lua_State* L, Key&& key, int tableindex) {
-    field_getter<Unqualified<Key>, global>{}.get(L, std::forward<Key>(key), tableindex);
+    field_getter<meta::Unqualified<Key>, global>{}.get(L, std::forward<Key>(key), tableindex);
 }
 
 template <bool global = false, typename Key, typename Value>
 void set_field(lua_State* L, Key&& key, Value&& value) {
-    field_setter<Unqualified<Key>, global>{}.set(L, std::forward<Key>(key), std::forward<Value>(value));
+    field_setter<meta::Unqualified<Key>, global>{}.set(L, std::forward<Key>(key), std::forward<Value>(value));
 }
 
 template <bool global = false, typename Key, typename Value>
 void set_field(lua_State* L, Key&& key, Value&& value, int tableindex) {
-    field_setter<Unqualified<Key>, global>{}.set(L, std::forward<Key>(key), std::forward<Value>(value), tableindex);
+    field_setter<meta::Unqualified<Key>, global>{}.set(L, std::forward<Key>(key), std::forward<Value>(value), tableindex);
 }
 
 namespace stack_detail {
@@ -190,14 +190,14 @@ inline int push_userdata_pointer(lua_State* L, Key&& metatablekey) {
     return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey));
 }
 
-template <typename T, typename Key, typename Arg, EnableIf<std::is_same<T, Unqualified<Arg>>> = 0>
+template <typename T, typename Key, typename Arg, meta::EnableIf<std::is_same<T, meta::Unqualified<Arg>>> = 0>
 inline int push_userdata_pointer(lua_State* L, Key&& metatablekey, Arg&& arg) {
     if (arg == nullptr)
         return push(L, nil);
     return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Arg>(arg));
 }
 
-template <typename T, typename Key, typename Arg, DisableIf<std::is_same<T, Unqualified<Arg>>> = 0>
+template <typename T, typename Key, typename Arg, meta::DisableIf<std::is_same<T, meta::Unqualified<Arg>>> = 0>
 inline int push_userdata_pointer(lua_State* L, Key&& metatablekey, Arg&& arg) {
     return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Arg>(arg));
 }
@@ -207,12 +207,12 @@ inline int push_userdata_pointer(lua_State* L, Key&& metatablekey, Arg0&& arg0, 
     return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...);
 }
 
-template<typename T, typename Key, typename... Args, DisableIf<std::is_pointer<T>> = 0>
+template<typename T, typename Key, typename... Args, meta::DisableIf<std::is_pointer<T>> = 0>
 inline int push_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
     return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Args>(args)...);
 }
 
-template<typename T, typename Key, typename... Args, EnableIf<std::is_pointer<T>> = 0>
+template<typename T, typename Key, typename... Args, meta::EnableIf<std::is_pointer<T>> = 0>
 inline int push_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
     return push_userdata_pointer<T>(L, std::forward<Key>(metatablekey), std::forward<Args>(args)...);
 }
@@ -291,14 +291,14 @@ struct getter<T, std::enable_if_t<std::is_floating_point<T>::value>> {
 };
 
 template<typename T>
-struct getter<T, std::enable_if_t<And<std::is_integral<T>, std::is_signed<T>>::value>> {
+struct getter<T, std::enable_if_t<meta::And<std::is_integral<T>, std::is_signed<T>>::value>> {
     static T get(lua_State* L, int index = -1) {
         return static_cast<T>(lua_tointeger(L, index));
     }
 };
 
 template<typename T>
-struct getter<T, std::enable_if_t<And<std::is_integral<T>, std::is_unsigned<T>>::value>> {
+struct getter<T, std::enable_if_t<meta::And<std::is_integral<T>, std::is_unsigned<T>>::value>> {
     static T get(lua_State* L, int index = -1) {
         return static_cast<T>(lua_tointeger(L, index));
     }
@@ -471,7 +471,7 @@ struct pusher<T, std::enable_if_t<std::is_floating_point<T>::value>> {
 };
 
 template<typename T>
-struct pusher<T, std::enable_if_t<And<std::is_integral<T>, std::is_signed<T>>::value>> {
+struct pusher<T, std::enable_if_t<meta::And<std::is_integral<T>, std::is_signed<T>>::value>> {
     static int push(lua_State* L, const T& value) {
         lua_pushinteger(L, static_cast<lua_Integer>(value));
         return 1;
@@ -479,7 +479,7 @@ struct pusher<T, std::enable_if_t<And<std::is_integral<T>, std::is_signed<T>>::v
 };
 
 template<typename T>
-struct pusher<T, std::enable_if_t<And<std::is_integral<T>, std::is_unsigned<T>>::value>> {
+struct pusher<T, std::enable_if_t<meta::And<std::is_integral<T>, std::is_unsigned<T>>::value>> {
     static int push(lua_State* L, const T& value) {
          typedef std::make_signed_t<T> signed_int;
          return stack::push(L, static_cast<signed_int>(value));
@@ -487,7 +487,7 @@ struct pusher<T, std::enable_if_t<And<std::is_integral<T>, std::is_unsigned<T>>:
 };
 
 template<typename T>
-struct pusher<T, std::enable_if_t<And<has_begin_end<T>, Not<has_key_value_pair<T>>>::value>> {
+struct pusher<T, std::enable_if_t<meta::And<meta::has_begin_end<T>, meta::Not<meta::has_key_value_pair<T>>>::value>> {
     static int push(lua_State* L, const T& cont) {
         lua_createtable(L, static_cast<int>(cont.size()), 0);
         unsigned index = 1;
@@ -495,7 +495,7 @@ struct pusher<T, std::enable_if_t<And<has_begin_end<T>, Not<has_key_value_pair<T
             // push the index
             pusher<unsigned>{}.push(L, index++);
             // push the value
-            pusher<Unqualified<decltype(i)>>{}.push(L, i);
+            pusher<meta::Unqualified<decltype(i)>>{}.push(L, i);
             // set the table
             lua_settable(L, -3);
         }
@@ -504,12 +504,12 @@ struct pusher<T, std::enable_if_t<And<has_begin_end<T>, Not<has_key_value_pair<T
 };
 
 template<typename T>
-struct pusher<T, std::enable_if_t<And<has_begin_end<T>, has_key_value_pair<T>>::value>> {
+struct pusher<T, std::enable_if_t<meta::And<meta::has_begin_end<T>, meta::has_key_value_pair<T>>::value>> {
     static int push(lua_State* L, const T& cont) {
         lua_createtable(L, static_cast<int>(cont.size()), 0);
         for(auto&& pair : cont) {
-            pusher<Unqualified<decltype(pair.first)>>{}.push(L, pair.first);
-            pusher<Unqualified<decltype(pair.second)>>{}.push(L, pair.second);
+            pusher<meta::Unqualified<decltype(pair.first)>>{}.push(L, pair.first);
+            pusher<meta::Unqualified<decltype(pair.second)>>{}.push(L, pair.second);
             lua_settable(L, -3);
         }
         return 1;
@@ -669,7 +669,7 @@ struct field_getter<std::tuple<Args...>, b, C> {
 };
 
 template <typename T>
-struct field_getter<T, true, std::enable_if_t<is_c_str<T>::value>> {
+struct field_getter<T, true, std::enable_if_t<meta::is_c_str<T>::value>> {
     template <typename Key>
     void get(lua_State* L, Key&& key, int = -1) {
         lua_getglobal(L, &key[0]);
@@ -677,7 +677,7 @@ struct field_getter<T, true, std::enable_if_t<is_c_str<T>::value>> {
 };
 
 template <typename T>
-struct field_getter<T, false, std::enable_if_t<is_c_str<T>::value>> {
+struct field_getter<T, false, std::enable_if_t<meta::is_c_str<T>::value>> {
     template <typename Key>
     void get(lua_State* L, Key&& key, int tableindex = -1) {
         lua_getfield(L, tableindex, &key[0]);
@@ -705,7 +705,7 @@ struct field_setter {
 };
 
 template <typename T>
-struct field_setter<T, true, std::enable_if_t<is_c_str<T>::value>> {
+struct field_setter<T, true, std::enable_if_t<meta::is_c_str<T>::value>> {
     template <typename Key, typename Value>
     void set(lua_State* L, Key&& key, Value&& value, int = -2) {
         push(L, std::forward<Value>(value));
@@ -714,7 +714,7 @@ struct field_setter<T, true, std::enable_if_t<is_c_str<T>::value>> {
 };
 
 template <typename T>
-struct field_setter<T, false, std::enable_if_t<is_c_str<T>::value>> {
+struct field_setter<T, false, std::enable_if_t<meta::is_c_str<T>::value>> {
     template <typename Key, typename Value>
     void set(lua_State* L, Key&& key, Value&& value, int tableindex = -2) {
         push(L, std::forward<Value>(value));
@@ -860,9 +860,9 @@ inline int typed_call(types<void> tr, types<Args...> ta, Fx&& fx, lua_State* L, 
     return 0;
 }
 
-template<bool check_args = stack_detail::default_check_arguments, typename Ret0, typename... Ret, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<Not<std::is_void<Ret0>>::value>>
+template<bool check_args = stack_detail::default_check_arguments, typename Ret0, typename... Ret, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<meta::Not<std::is_void<Ret0>>::value>>
 inline int typed_call(types<Ret0, Ret...>, types<Args...> ta, Fx&& fx, lua_State* L, int start = 1, FxArgs&&... fxargs) {
-    decltype(auto) r = call<check_args>(types<return_type_t<Ret0, Ret...>>(), ta, L, start, fx, std::forward<FxArgs>(fxargs)...);
+    decltype(auto) r = call<check_args>(types<meta::return_type_t<Ret0, Ret...>>(), ta, L, start, fx, std::forward<FxArgs>(fxargs)...);
     int nargs = static_cast<int>(sizeof...(Args));
     lua_pop(L, nargs);
     return push(L, std::forward<decltype(r)>(r));

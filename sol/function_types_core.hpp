@@ -26,8 +26,7 @@
 #include <memory>
 
 namespace sol {
-namespace detail {
-struct ref_call_t {} const ref_call = ref_call_t{};
+namespace function_detail {
 template <typename T>
 struct implicit_wrapper {
     T& item;
@@ -40,14 +39,6 @@ struct implicit_wrapper {
         return std::addressof(item);
     }
 };
-
-template <typename Sig, typename... Args>
-struct function_packer : std::tuple<Args...> { using std::tuple<Args...>::tuple; };
-
-template <typename Sig, typename... Args>
-function_packer<Sig, Args...> function_pack( Args&&... args ) { 
-    return function_packer<Sig, Args...>(std::forward<Args>(args)...);
-}
 
 inline bool check_types(types<>, std::index_sequence<>, lua_State*, int) {
     return true;
@@ -63,7 +54,7 @@ inline bool check_types(types<Arg, Args...>, std::index_sequence<I, In...>, lua_
 
 template<typename T, typename Func, typename = void>
 struct functor {
-    typedef callable_traits<Func> traits_type;
+    typedef meta::callable_traits<Func> traits_type;
     typedef typename traits_type::args_type args_type;
     typedef typename traits_type::return_type return_type;
     static const std::size_t arity = traits_type::arity;
@@ -98,7 +89,7 @@ struct functor {
 
 template<typename T, typename Func>
 struct functor<T, Func, std::enable_if_t<std::is_member_object_pointer<Func>::value>> {
-    typedef callable_traits<Func> traits_type;
+    typedef meta::callable_traits<Func> traits_type;
     typedef typename traits_type::args_type args_type;
     typedef typename traits_type::return_type return_type;
     static const std::size_t arity = traits_type::arity;
@@ -131,13 +122,13 @@ struct functor<T, Func, std::enable_if_t<std::is_member_object_pointer<Func>::va
 
 template<typename T, typename Func>
 struct functor<T, Func, std::enable_if_t<std::is_function<Func>::value || std::is_class<Func>::value>> {
-    typedef callable_traits<Func> traits_type;
-    typedef pop_front_type_t<typename traits_type::args_type> args_type;
+    typedef meta::callable_traits<Func> traits_type;
+    typedef meta::pop_front_type_t<typename traits_type::args_type> args_type;
     typedef typename traits_type::return_type return_type;
     static const std::size_t arity = traits_type::arity;
     typedef std::tuple_element_t<0, typename traits_type::args_tuple_type> Arg0;
     typedef std::conditional_t<std::is_pointer<Func>::value || std::is_class<Func>::value, Func, std::add_pointer_t<Func>> function_type;
-    static_assert(std::is_base_of<Unqualified<std::remove_pointer_t<Arg0>>, T>::value, "Any non-member-function must have a first argument which is covariant with the desired userdata type.");
+    static_assert(std::is_base_of<meta::Unqualified<std::remove_pointer_t<Arg0>>, T>::value, "Any non-member-function must have a first argument which is covariant with the desired userdata type.");
     T* item;
     function_type invocation;
 
@@ -176,7 +167,6 @@ public:
         return this->call(types<return_type>(), std::forward<Args>(args)...);
     }
 };
-} // detail
 
 struct base_function {
     virtual int operator()(lua_State*) {
@@ -186,7 +176,6 @@ struct base_function {
     virtual ~base_function() {}
 };
 
-namespace detail {
 static int base_call(lua_State* L, void* inheritancedata) {
     if (inheritancedata == nullptr) {
         throw error("call from Lua to C++ function has null data");
@@ -245,10 +234,10 @@ inline int usertype_call(lua_State* L) {
 
 template<std::size_t I>
 inline int usertype_gc(lua_State* L) {
-    func_gc<I>(Bool<(I < 1)>(), L);
+    func_gc<I>(meta::Bool<(I < 1)>(), L);
     return 0;
 }
-} // detail
+} // function_detail
 } // sol
 
 #endif // SOL_FUNCTION_TYPES_CORE_HPP

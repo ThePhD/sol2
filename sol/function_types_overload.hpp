@@ -27,9 +27,10 @@
 #include "function_types_usertype.hpp"
 
 namespace sol {
-namespace detail {
+namespace function_detail {
+namespace internals {
 template <typename T>
-struct overload_traits : function_traits<T> {};
+struct overload_traits : meta::function_traits<T> {};
 
 template <typename T, typename Func, typename X>
 struct overload_traits<functor<T, Func, X>> {
@@ -45,27 +46,27 @@ inline int overload_match_arity(types<>, std::index_sequence<>, std::index_seque
 
 template <typename Fx, typename... Fxs, std::size_t I, std::size_t... In, std::size_t... M, typename Match, typename... Args>
 inline int overload_match_arity(types<Fx, Fxs...>, std::index_sequence<I, In...>, std::index_sequence<M...>, Match&& matchfx, lua_State* L, int fxarity, int start, Args&&... args) {
-    typedef overload_traits<Unqualified<Fx>> traits;
-    typedef tuple_types<typename traits::return_type> return_types;
+    typedef overload_traits<meta::Unqualified<Fx>> traits;
+    typedef meta::tuple_types<typename traits::return_type> return_types;
     typedef typename traits::args_type args_type;
     typedef typename args_type::indices args_indices;
     // compile-time eliminate any functions that we know ahead of time are of improper arity
-    if (find_in_pack_v<Index<traits::arity>, Index<M>...>::value) {
+    if (meta::find_in_pack_v<Index<traits::arity>, Index<M>...>::value) {
         return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
     }
     if (traits::arity != fxarity) {
         return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<traits::arity, M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
     }
-    if (sizeof...(Fxs) != 0 && !detail::check_types(args_type(), args_indices(), L, start)) {
+    if (sizeof...(Fxs) != 0 && function_detail::check_types(args_type(), args_indices(), L, start)) {
         return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
     }
-    return matchfx(Bool<sizeof...(Fxs) != 0>(), types<Fx>(), Index<I>(), return_types(), args_type(), L, fxarity, start, std::forward<Args>(args)...);
+    return matchfx(meta::Bool<sizeof...(Fxs) != 0>(), types<Fx>(), Index<I>(), return_types(), args_type(), L, fxarity, start, std::forward<Args>(args)...);
 }
-} // detail
+} // internals
 
 template <typename... Functions, typename Match, typename... Args>
 inline int overload_match_arity(Match&& matchfx, lua_State* L, int fxarity, int start = 1, Args&&... args) {
-    return detail::overload_match_arity(types<Functions...>(), std::index_sequence_for<Functions...>(), std::index_sequence<>(), std::forward<Match>(matchfx), L, fxarity,  start, std::forward<Args>(args)...);
+    return internals::overload_match_arity(types<Functions...>(), std::index_sequence_for<Functions...>(), std::index_sequence<>(), std::forward<Match>(matchfx), L, fxarity,  start, std::forward<Args>(args)...);
 }
 
 template <typename... Functions, typename Match, typename... Args>
@@ -93,7 +94,7 @@ struct overloaded_function : base_function {
     }
 
     template <bool b, typename Fx, std::size_t I, typename... R, typename... Args>
-    int call(Bool<b>, types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
+    int call(meta::Bool<b>, types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
         auto& func = std::get<I>(overloads);
         return stack::typed_call<b ? false : stack::stack_detail::default_check_arguments>(r, a, func, L, start);
     }
@@ -106,7 +107,7 @@ struct overloaded_function : base_function {
 
 template <typename T, typename... Functions>
 struct usertype_overloaded_function : base_function {
-    typedef std::tuple<detail::functor<T, std::remove_pointer_t<std::decay_t<Functions>>>...> overload_list;
+    typedef std::tuple<functor<T, std::remove_pointer_t<std::decay_t<Functions>>>...> overload_list;
     typedef std::index_sequence_for<Functions...> indices;
     overload_list overloads;
 
@@ -118,18 +119,19 @@ struct usertype_overloaded_function : base_function {
     usertype_overloaded_function(Functions... fxs) : overloads(fxs...) {}
 
     template <bool b,typename Fx, std::size_t I, typename... R, typename... Args>
-    int call(Bool<b>, types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
+    int call(meta::Bool<b>, types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
         auto& func = std::get<I>(overloads);
-        func.item = ptr(stack::get<T>(L, 1));
+        func.item = detail::ptr(stack::get<T>(L, 1));
         return stack::typed_call<b ? false : stack::stack_detail::default_check_arguments>(r, a, func, L, start);
     }
 
     virtual int operator()(lua_State* L) override {
         auto mfx = [&](auto&&... args){ return this->call(std::forward<decltype(args)>(args)...); };
-        return overload_match<detail::functor<T, std::remove_pointer_t<std::decay_t<Functions>>>...>(mfx, L, 2);
+        return overload_match<functor<T, std::remove_pointer_t<std::decay_t<Functions>>>...>(mfx, L, 2);
     }
 
 };
+} // function_detail
 } // sol
 
 #endif // SOL_FUNCTION_TYPES_OVERLOAD_HPP

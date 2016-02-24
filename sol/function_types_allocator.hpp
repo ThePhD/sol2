@@ -42,13 +42,14 @@ struct constructor_match {
     constructor_match(T* obj) : obj(obj) {}
 
     template <bool b, typename Fx, std::size_t I, typename... R, typename... Args>
-    int operator()(Bool<b>, types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) const {
+    int operator()(meta::Bool<b>, types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) const {
         default_construct func{};
         return stack::typed_call<b ? false : stack::stack_detail::default_check_arguments>(r, a, func, L, start, obj);
     }
 };
 } // detail
 
+namespace function_detail {
 template <typename T, typename... TypeLists, typename Match>
 inline int construct(Match&& matchfx, lua_State* L, int fxarity, int start) {
     // use same overload resolution matching as all other parts of the framework
@@ -109,7 +110,7 @@ struct usertype_constructor_function : base_function {
     usertype_constructor_function(Functions... fxs) : overloads(fxs...) {}
 
     template <bool b, typename Fx, std::size_t I, typename... R, typename... Args>
-    int call(Bool<b>, types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
+    int call(meta::Bool<b>, types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
         static const auto& meta = usertype_traits<T>::metatable;
         T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
         T*& referencepointer = *pointerpointer;
@@ -119,7 +120,7 @@ struct usertype_constructor_function : base_function {
         userdataref.pop();
 
         auto& func = std::get<I>(overloads);
-        stack::typed_call<b ? false : stack::stack_detail::default_check_arguments>(r, a, func, L, start, detail::implicit_wrapper<T>(obj));
+        stack::typed_call<b ? false : stack::stack_detail::default_check_arguments>(r, a, func, L, start, function_detail::implicit_wrapper<T>(obj));
 
         userdataref.push();
         luaL_getmetatable(L, &meta[0]);
@@ -139,9 +140,10 @@ struct usertype_constructor_function : base_function {
         call_syntax syntax = stack::get_call_syntax(L, meta);
         int argcount = lua_gettop(L) - static_cast<int>(syntax);
         auto mfx = [&](auto&&... args) { return this->call(std::forward<decltype(args)>(args)...); };
-        return construct<T, pop_front_type_t<function_args_t<Functions>>...>(mfx, L, argcount, 1 + static_cast<int>(syntax));
+        return construct<T, meta::pop_front_type_t<meta::function_args_t<Functions>>...>(mfx, L, argcount, 1 + static_cast<int>(syntax));
     }
 };
+} // function_detail
 } // sol
 
 #endif // SOL_FUNCTION_TYPES_ALLOCATOR_HPP

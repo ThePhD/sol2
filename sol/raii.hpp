@@ -26,26 +26,15 @@
 #include "traits.hpp"
 
 namespace sol {
+namespace detail {
 struct default_construct {
     template<typename T, typename... Args>
     void operator()(T&& obj, Args&&... args) const {
-        std::allocator<Unqualified<T>> alloc{};
+        std::allocator<meta::Unqualified<T>> alloc{};
         alloc.construct(obj, std::forward<Args>(args)...);
     }
 };
-
-template <typename T>
-struct placement_construct {
-    T obj;
-
-    template <typename... Args>
-    placement_construct( Args&&... args ) : obj(std::forward<Args>(args)...) {}
-
-    template<typename... Args>
-    void operator()(Args&&... args) const {
-        default_construct{}(obj, std::forward<Args>(args)...);
-    }
-};
+} // detail
 
 template<typename... Args>
 using constructors = sol::types<Args...>;

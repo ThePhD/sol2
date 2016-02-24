@@ -31,7 +31,7 @@ namespace sol {
 template<typename Table, typename Key>
 struct proxy : public proxy_base<proxy<Table, Key>> {
 private:
-    typedef If<is_specialization_of<Key, std::tuple>, Key, std::tuple<If<std::is_array<Unqualified<Key>>, Key&, Unqualified<Key>>>> key_type;
+    typedef meta::If<meta::is_specialization_of<Key, std::tuple>, Key, std::tuple<meta::If<std::is_array<meta::Unqualified<Key>>, Key&, meta::Unqualified<Key>>>> key_type;
     Table tbl;
     key_type key;
 
@@ -52,7 +52,7 @@ public:
 
     template<typename T>
     proxy& set(T&& item) {
-        tuple_set( std::make_index_sequence<std::tuple_size<Unqualified<key_type>>::value>(), std::forward<T>(item) );
+        tuple_set( std::make_index_sequence<std::tuple_size<meta::Unqualified<key_type>>::value>(), std::forward<T>(item) );
         return *this;
     }
 
@@ -62,24 +62,24 @@ public:
         return *this;
     }
 
-    template<typename U, EnableIf<Function<Unqualified<U>>> = 0>
+    template<typename U, meta::EnableIf<meta::Function<meta::Unqualified<U>>> = 0>
     proxy& operator=(U&& other) {
         return set_function(std::forward<U>(other));
     }
 
-    template<typename U, DisableIf<Function<Unqualified<U>>> = 0>
+    template<typename U, meta::DisableIf<meta::Function<meta::Unqualified<U>>> = 0>
     proxy& operator=(U&& other) {
         return set(std::forward<U>(other));
     }
 
     template<typename T>
     decltype(auto) get() const {
-        return tuple_get<T>( std::make_index_sequence<std::tuple_size<Unqualified<key_type>>::value>() );
+        return tuple_get<T>( std::make_index_sequence<std::tuple_size<meta::Unqualified<key_type>>::value>() );
     }
 
     template <typename K>
     decltype(auto) operator[](K&& k) const {
-        auto keys = tuplefy(key, std::forward<K>(k));
+        auto keys = meta::tuplefy(key, std::forward<K>(k));
         return proxy<Table, decltype(keys)>(tbl, std::move(keys));
     }
 

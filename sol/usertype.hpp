@@ -102,7 +102,7 @@ template <typename... Args>
 struct is_constructor<constructor_wrapper<Args...>> : std::true_type {};
 
 template <typename... Args>
-using has_constructor = Or<is_constructor<Unqualified<Args>>...>;
+using has_constructor = meta::Or<is_constructor<meta::Unqualified<Args>>...>;
 
 template <typename T>
 struct is_destructor : std::false_type {};
@@ -111,7 +111,7 @@ template <typename Fx>
 struct is_destructor<destructor_wrapper<Fx>> : std::true_type {};
 
 template <typename... Args>
-using has_destructor = Or<is_destructor<Unqualified<Args>>...>;
+using has_destructor = meta::Or<is_destructor<meta::Unqualified<Args>>...>;
 
 template<typename T, bool refmeta, typename Funcs, typename FuncTable, typename MetaFuncTable>
 inline void push_metatable(lua_State* L, bool needsindexfunction, Funcs&& funcs, FuncTable&& functable, MetaFuncTable&& metafunctable) {
@@ -168,13 +168,13 @@ inline void set_global_deleter(lua_State* L, lua_CFunction cleanup, Functions&& 
 template<typename T>
 class usertype {
 private:
-    typedef std::map<std::string, std::pair<bool, base_function*>> function_map_t;
+    typedef std::map<std::string, std::pair<bool, function_detail::base_function*>> function_map_t;
     std::vector<std::string> functionnames;
-    std::vector<std::unique_ptr<base_function>> functions;
+    std::vector<std::unique_ptr<function_detail::base_function>> functions;
     std::vector<luaL_Reg> functiontable;
     std::vector<luaL_Reg> metafunctiontable;
-    base_function* indexfunc;
-    base_function* newindexfunc;
+    function_detail::base_function* indexfunc;
+    function_detail::base_function* newindexfunc;
     function_map_t indexwrapper, newindexwrapper;
     lua_CFunction constructfunc;
     const char* destructfuncname;
@@ -183,51 +183,51 @@ private:
     bool needsindexfunction;
 
     template<typename... Functions>
-    std::unique_ptr<base_function> make_function(const std::string&, overload_set<Functions...> func) {
-        return std::make_unique<usertype_overloaded_function<T, Functions...>>(std::move(func));
+    std::unique_ptr<function_detail::base_function> make_function(const std::string&, overload_set<Functions...> func) {
+        return std::make_unique<function_detail::usertype_overloaded_function<T, Functions...>>(std::move(func));
     }
 
     template<typename... Functions>
-    std::unique_ptr<base_function> make_function(const std::string&, constructor_wrapper<Functions...> func) {
-        return std::make_unique<usertype_constructor_function<T, Functions...>>(std::move(func));
+    std::unique_ptr<function_detail::base_function> make_function(const std::string&, constructor_wrapper<Functions...> func) {
+        return std::make_unique<function_detail::usertype_constructor_function<T, Functions...>>(std::move(func));
     }
 
     template<typename Arg, typename... Args, typename Ret>
-    std::unique_ptr<base_function> make_function(const std::string&, Ret(*func)(Arg, Args...)) {
-        typedef Unqualified<std::remove_pointer_t<Arg>> Argu;
+    std::unique_ptr<function_detail::base_function> make_function(const std::string&, Ret(*func)(Arg, Args...)) {
+        typedef meta::Unqualified<std::remove_pointer_t<Arg>> Argu;
         static_assert(std::is_base_of<Argu, T>::value, "Any non-member-function must have a first argument which is covariant with the desired userdata type.");
         typedef std::decay_t<decltype(func)> function_type;
-        return std::make_unique<usertype_function<function_type, T>>(func);
+        return std::make_unique<function_detail::usertype_function<function_type, T>>(func);
     }
 
     template<typename Base, typename Ret>
-    std::unique_ptr<base_function> make_variable_function(std::true_type, const std::string&, Ret Base::* func) {
+    std::unique_ptr<function_detail::base_function> make_variable_function(std::true_type, const std::string&, Ret Base::* func) {
         static_assert(std::is_base_of<Base, T>::value, "Any registered function must be part of the class");
         typedef std::decay_t<decltype(func)> function_type;
-        return std::make_unique<usertype_variable_function<function_type, T>>(func);
+        return std::make_unique<function_detail::usertype_variable_function<function_type, T>>(func);
     }
 
     template<typename Base, typename Ret>
-    std::unique_ptr<base_function> make_variable_function(std::false_type, const std::string&, Ret Base::* func) {
+    std::unique_ptr<function_detail::base_function> make_variable_function(std::false_type, const std::string&, Ret Base::* func) {
         static_assert(std::is_base_of<Base, T>::value, "Any registered function must be part of the class");
         typedef std::decay_t<decltype(func)> function_type;
-        return std::make_unique<usertype_function<function_type, T>>(func);
+        return std::make_unique<function_detail::usertype_function<function_type, T>>(func);
     }
 
     template<typename Base, typename Ret>
-    std::unique_ptr<base_function> make_function(const std::string& name, Ret Base::* func) {
+    std::unique_ptr<function_detail::base_function> make_function(const std::string& name, Ret Base::* func) {
         typedef std::decay_t<decltype(func)> function_type;
         return make_variable_function(std::is_member_object_pointer<function_type>(), name, func);
     }
 
     template<typename Fx>
-    std::unique_ptr<base_function> make_function(const std::string&, Fx&& func) {
-        typedef Unqualified<Fx> Fxu;
-        typedef std::tuple_element_t<0, typename function_traits<Fxu>::args_tuple_type> Arg0;
-        typedef Unqualified<std::remove_pointer_t<Arg0>> Argu;
+    std::unique_ptr<function_detail::base_function> make_function(const std::string&, Fx&& func) {
+        typedef meta::Unqualified<Fx> Fxu;
+        typedef std::tuple_element_t<0, typename meta::function_traits<Fxu>::args_tuple_type> Arg0;
+        typedef meta::Unqualified<std::remove_pointer_t<Arg0>> Argu;
         static_assert(std::is_base_of<Argu, T>::value, "Any non-member-function must have a first argument which is covariant with the desired usertype.");
         typedef std::decay_t<Fxu> function_type;
-        return std::make_unique<usertype_function<function_type, T>>(func);
+        return std::make_unique<function_detail::usertype_function<function_type, T>>(func);
     }
 
     template<std::size_t N, typename... Args>
@@ -236,7 +236,7 @@ private:
         std::string& name = functionnames.back();
         // Insert bubble to keep with compile-time argument count (simpler and cheaper to do)
         functions.push_back(nullptr);
-        constructfunc = construct<T, Args...>;
+        constructfunc = function_detail::construct<T, Args...>;
         metafunctiontable.push_back({ functionnames.back().c_str(), constructfunc });
     }
 
@@ -251,7 +251,7 @@ private:
             
         functionnames.push_back(std::move(funcname));
         std::string& name = functionnames.back();
-        destructfunc = destruct<T>;
+        destructfunc = function_detail::destruct<T>;
         destructfuncname = name.c_str();
         // Insert bubble to stay with the compile-time count
         functions.push_back(nullptr);    
@@ -270,25 +270,25 @@ private:
         std::string& name = functionnames.back();
         auto baseptr = make_function(name, std::move(dx.fx));
         functions.emplace_back(std::move(baseptr));
-        destructfunc = detail::usertype_call<N>;
+        destructfunc = function_detail::usertype_call<N>;
         destructfuncname = name.c_str();
     }
 
     template<std::size_t N, typename Fx>
     void build_function(std::string funcname, Fx&& func) {
-        typedef std::is_member_object_pointer<Unqualified<Fx>> is_variable;
+        typedef std::is_member_object_pointer<meta::Unqualified<Fx>> is_variable;
         functionnames.push_back(std::move(funcname));
         std::string& name = functionnames.back();
         auto baseptr = make_function(name, std::forward<Fx>(func));
         functions.emplace_back(std::move(baseptr));
         auto metamethodfind = std::find(meta_function_names.begin(), meta_function_names.end(), name);
         if (metamethodfind != meta_function_names.end()) {
-            metafunctiontable.push_back({ name.c_str(), detail::usertype_call<N> });
+            metafunctiontable.push_back({ name.c_str(), function_detail::usertype_call<N> });
             meta_function metafunction = static_cast<meta_function>(metamethodfind - meta_function_names.begin());
             switch (metafunction) {
             case meta_function::garbage_collect:
                 destructfuncname = name.c_str();
-                destructfunc = detail::usertype_call<N>;
+                destructfunc = function_detail::usertype_call<N>;
                 return;
             case meta_function::index:
                 indexfunc = functions.back().get();
@@ -298,7 +298,7 @@ private:
                 newindexfunc = functions.back().get();
                 break;
             case meta_function::construct:
-                constructfunc = detail::usertype_call<N>;
+                constructfunc = function_detail::usertype_call<N>;
                 break;
             default:
                 break;
@@ -312,7 +312,7 @@ private:
             return;
         }
         indexwrapper.insert({ name, { true, functions.back().get() } });
-        functiontable.push_back({ name.c_str(), detail::usertype_call<N> });
+        functiontable.push_back({ name.c_str(), function_detail::usertype_call<N> });
     }
 
     template<std::size_t N, typename Fx, typename... Args>
@@ -332,13 +332,13 @@ private:
     void build_function_tables() {
         int variableend = 0;
         if (!indexwrapper.empty()) {
-            functions.push_back(std::make_unique<usertype_indexing_function>("__index", indexfunc, std::move(indexwrapper)));
-            metafunctiontable.push_back({ "__index", detail::usertype_call<N> });
+            functions.push_back(std::make_unique<function_detail::usertype_indexing_function>("__index", indexfunc, std::move(indexwrapper)));
+            metafunctiontable.push_back({ "__index", function_detail::usertype_call<N> });
             ++variableend;
         }
         if (!newindexwrapper.empty()) {
-            functions.push_back(std::make_unique<usertype_indexing_function>("__newindex", newindexfunc, std::move(newindexwrapper)));
-            metafunctiontable.push_back({ "__newindex", indexwrapper.empty() ? detail::usertype_call<N> : detail::usertype_call<N + 1> });
+            functions.push_back(std::make_unique<function_detail::usertype_indexing_function>("__newindex", newindexfunc, std::move(newindexwrapper)));
+            metafunctiontable.push_back({ "__newindex", indexwrapper.empty() ? function_detail::usertype_call<N> : function_detail::usertype_call<N + 1> });
             ++variableend;
         }
         if (destructfunc != nullptr) {
@@ -346,13 +346,13 @@ private:
         }
         switch (variableend) {
         case 2:
-            functiongcfunc = detail::usertype_gc<N + 2>;
+            functiongcfunc = function_detail::usertype_gc<N + 2>;
             break;
         case 1:
-            functiongcfunc = detail::usertype_gc<N + 1>;
+            functiongcfunc = function_detail::usertype_gc<N + 1>;
             break;
         case 0:
-            functiongcfunc = detail::usertype_gc<N + 0>;
+            functiongcfunc = function_detail::usertype_gc<N + 0>;
             break;
         }
     }
@@ -372,12 +372,12 @@ private:
     usertype(usertype_detail::add_destructor_tag, Args&&... args) : usertype(usertype_detail::verified, "__gc", default_destructor, std::forward<Args>(args)...) {}
 
     template<typename... Args>
-    usertype(usertype_detail::check_destructor_tag, Args&&... args) : usertype(If<And<std::is_destructible<T>, Not<usertype_detail::has_destructor<Args...>>>, usertype_detail::add_destructor_tag, usertype_detail::verified_tag>(), std::forward<Args>(args)...) {}
+    usertype(usertype_detail::check_destructor_tag, Args&&... args) : usertype(meta::If<meta::And<std::is_destructible<T>, meta::Not<usertype_detail::has_destructor<Args...>>>, usertype_detail::add_destructor_tag, usertype_detail::verified_tag>(), std::forward<Args>(args)...) {}
 
 public:
 
     template<typename... Args>
-    usertype(Args&&... args) : usertype(If<And<std::is_default_constructible<T>, Not<usertype_detail::has_constructor<Args...>>>, decltype(default_constructor), usertype_detail::check_destructor_tag>(), std::forward<Args>(args)...) {}
+    usertype(Args&&... args) : usertype(meta::If<meta::And<std::is_default_constructible<T>, meta::Not<usertype_detail::has_constructor<Args...>>>, decltype(default_constructor), usertype_detail::check_destructor_tag>(), std::forward<Args>(args)...) {}
 
     template<typename... Args, typename... CArgs>
     usertype(constructors<CArgs...> constructorlist, Args&&... args) : usertype(usertype_detail::verified, "new", constructorlist, "__gc", default_destructor, std::forward<Args>(args)...) {

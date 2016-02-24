@@ -25,11 +25,12 @@
 #include "function_types_core.hpp"
 
 namespace sol {
+namespace function_detail {
 template<typename Function>
 struct functor_function : public base_function {
     typedef decltype(&Function::operator()) function_type;
-    typedef function_return_t<function_type> return_type;
-    typedef function_args_t<function_type> args_type;
+    typedef meta::function_return_t<function_type> return_type;
+    typedef meta::function_args_t<function_type> args_type;
     Function fx;
 
     template<typename... Args>
@@ -59,8 +60,8 @@ struct functor_function : public base_function {
 template<typename Function, typename T>
 struct member_function : public base_function {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-    typedef function_return_t<function_type> return_type;
-    typedef function_args_t<function_type> args_types;
+    typedef meta::function_return_t<function_type> return_type;
+    typedef meta::function_args_t<function_type> args_types;
     struct functor {
         T member;
         function_type invocation;
@@ -70,7 +71,7 @@ struct member_function : public base_function {
 
         template<typename... Args>
         return_type operator()(Args&&... args) {
-            auto& mem = unwrap(deref(member));
+            auto& mem = detail::unwrap(detail::deref(member));
             return (mem.*invocation)(std::forward<Args>(args)...);
         }
     } fx;
@@ -79,9 +80,10 @@ struct member_function : public base_function {
     member_function(Tm&& m, Args&&... args): fx(std::forward<Tm>(m), std::forward<Args>(args)...) {}
 
     virtual int operator()(lua_State* L) override {
-        return stack::typed_call(tuple_types<return_type>(), args_types(), fx, L);
+        return stack::typed_call(meta::tuple_types<return_type>(), args_types(), fx, L);
     }
 };
+} // function_detail
 } // sol
 
 #endif // SOL_FUNCTION_TYPES_MEMBER_HPP

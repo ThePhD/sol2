@@ -28,6 +28,10 @@
 #include <functional>
 
 namespace sol {
+template<std::size_t I>
+using Index = std::integral_constant<std::size_t, I>;
+
+namespace meta {
 template<typename T>
 struct identity { typedef T type; };
 
@@ -69,7 +73,7 @@ using remove_member_pointer_t = remove_member_pointer<T>;
 template<typename T, template<typename...> class Templ>
 struct is_specialization_of : std::false_type { };
 template<typename... T, template<typename...> class Templ>
-struct is_specialization_of<Templ<T...>, Templ> : std::true_type { };
+struct meta::is_specialization_of<Templ<T...>, Templ> : std::true_type { };
 
 template<class T, class...>
 struct are_same : std::true_type { };
@@ -82,9 +86,6 @@ using Type = typename T::type;
 
 template<bool B>
 using Bool = std::integral_constant<bool, B>;
-
-template<std::size_t I>
-using Index = std::integral_constant<std::size_t, I>;
 
 template<typename T>
 using Not = Bool<!T::value>;
@@ -338,6 +339,24 @@ using is_string_constructible = Or<std::is_same<Unqualified<T>, const char*>, st
 template <typename T>
 using is_c_str = Or<std::is_same<std::decay_t<Unqualified<T>>, char*>, std::is_same<Unqualified<T>, std::string>>;
 
+namespace detail {
+template <typename T, meta::DisableIf<meta::is_specialization_of<meta::Unqualified<T>, std::tuple>> = 0>
+decltype(auto) force_tuple(T&& x) {
+    return std::forward_as_tuple(x);
+}
+
+template <typename T, meta::EnableIf<meta::is_specialization_of<meta::Unqualified<T>, std::tuple>> = 0>
+decltype(auto) force_tuple(T&& x) {
+    return std::forward<T>(x);
+}
+} // detail
+
+template <typename... X>
+decltype(auto) tuplefy(X&&... x ) {
+    return std::tuple_cat(detail::force_tuple(x)...);
+}
+} // meta
+namespace detail {
 template<typename T>
 auto unwrap(T&& item) -> decltype(std::forward<T>(item)) {
     return std::forward<T>(item);
@@ -349,7 +368,7 @@ T& unwrap(std::reference_wrapper<T> arg) {
 }
 
 template<typename T>
-T& deref(T& item) {
+decltype(auto) deref(T&& item) {
     return item;
 }
 
@@ -392,23 +411,7 @@ template<typename T>
 inline T* ptr(T* val) {
     return val;
 }
-
-namespace detail {
-template <typename T, DisableIf<is_specialization_of<Unqualified<T>, std::tuple>> = 0>
-decltype(auto) force_tuple(T&& x) {
-    return std::forward_as_tuple(x);
-}
-
-template <typename T, EnableIf<is_specialization_of<Unqualified<T>, std::tuple>> = 0>
-decltype(auto) force_tuple(T&& x) {
-    return std::forward<T>(x);
-}
 } // detail
-
-template <typename... X>
-decltype(auto) tuplefy(X&&... x ) {
-    return std::tuple_cat(detail::force_tuple(x)...);
-}
 } // sol
 
 #endif // SOL_TRAITS_HPP

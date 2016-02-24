@@ -38,7 +38,7 @@ class table_core : public reference {
     friend class state_view;
 
     template <typename... Args>
-    using is_global = And<Bool<top_level>, is_c_str<Args>...>;
+    using is_global = meta::And<meta::Bool<top_level>, meta::is_c_str<Args>...>;
 
     template<typename... Ret, std::size_t... I, typename Keys>
     auto tuple_get( types<Ret...>, std::index_sequence<I...>, Keys&& keys ) const
@@ -201,21 +201,21 @@ private:
         set_resolved_function<R( Args... )>( std::forward<Key>( key ), std::forward<Fx>( fx ) );
     }
 
-    template<typename Fx, typename Key, EnableIf<is_specialization_of<Unqualified<Fx>, overload_set>> = 0>
+    template<typename Fx, typename Key, meta::EnableIf<meta::is_specialization_of<meta::Unqualified<Fx>, overload_set>> = 0>
     void set_fx( types<>, Key&& key, Fx&& fx ) {
         set(std::forward<Key>(key), std::forward<Fx>(fx));
     }
 
-    template<typename Fx, typename Key, DisableIf<is_specialization_of<Unqualified<Fx>, overload_set>> = 0>
+    template<typename Fx, typename Key, meta::DisableIf<meta::is_specialization_of<meta::Unqualified<Fx>, overload_set>> = 0>
     void set_fx( types<>, Key&& key, Fx&& fx ) {
-        typedef Unwrapped<Unqualified<Fx>> fx_t;
+        typedef meta::Unwrapped<meta::Unqualified<Fx>> fx_t;
         typedef decltype( &fx_t::operator() ) Sig;
-        set_fx( types<function_signature_t<Sig>>( ), std::forward<Key>( key ), std::forward<Fx>( fx ) );
+        set_fx( types<meta::function_signature_t<Sig>>( ), std::forward<Key>( key ), std::forward<Fx>( fx ) );
     }
 
     template<typename... Sig, typename... Args, typename Key>
     void set_resolved_function( Key&& key, Args&&... args ) {
-        set(std::forward<Key>(key), detail::function_pack<function_sig<Sig...>>(std::forward<Args>(args)...));
+        set(std::forward<Key>(key), function_pack<function_sig<Sig...>>(std::forward<Args>(args)...));
     }
 };
 } // sol

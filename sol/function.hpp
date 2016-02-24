@@ -34,6 +34,14 @@
 #include <memory>
 
 namespace sol {
+template <typename Sig, typename... Args>
+struct function_packer : std::tuple<Args...> { using std::tuple<Args...>::tuple; };
+
+template <typename Sig, typename... Args>
+function_packer<Sig, Args...> function_pack( Args&&... args ) { 
+    return function_packer<Sig, Args...>(std::forward<Args>(args)...);
+}
+
 class function : public reference {
 private:
     void luacall( std::ptrdiff_t argcount, std::ptrdiff_t resultcount ) const {
@@ -218,7 +226,7 @@ struct pusher<function_sig<Sigs...>> {
 
     template<typename R, typename... Args, typename Fx, typename = std::result_of_t<Fx(Args...)>>
     static void set_memfx(types<R(Args...)> t, lua_State* L, Fx&& fx) {
-        typedef std::decay_t<Unwrapped<Unqualified<Fx>>> raw_fx_t;
+        typedef std::decay_t<meta::Unwrapped<meta::Unqualified<Fx>>> raw_fx_t;
         typedef R(* fx_ptr_t)(Args...);
         typedef std::is_convertible<raw_fx_t, fx_ptr_t> is_convertible;
         set_isconvertible_fx(is_convertible(), t, L, std::forward<Fx>(fx));
@@ -226,7 +234,7 @@ struct pusher<function_sig<Sigs...>> {
 
     template<typename Fx>
     static void set_memfx(types<>, lua_State* L, Fx&& fx) {
-        typedef Unwrapped<Unqualified<Fx>> fx_t;
+        typedef meta::Unwrapped<meta::Unqualified<Fx>> fx_t;
         set(L, &fx_t::operator(), std::forward<Fx>(fx));
     }
 
@@ -242,13 +250,13 @@ struct pusher<function_sig<Sigs...>> {
 
     template<typename... Args, typename R, typename C, typename T>
     static void set(lua_State* L, R (C::*memfxptr)(Args...), T&& obj) {
-        typedef Bool<is_specialization_of<Unqualified<T>, std::reference_wrapper>::value || std::is_pointer<T>::value> is_reference;
+        typedef meta::Bool<meta::is_specialization_of<meta::Unqualified<T>, std::reference_wrapper>::value || std::is_pointer<T>::value> is_reference;
         set_reference_fx(is_reference(), L, memfxptr, std::forward<T>(obj));
     }
 
     template<typename Sig, typename C, typename T>
     static void set(lua_State* L, Sig C::* memfxptr, T&& obj) {
-        typedef Bool<is_specialization_of<Unqualified<T>, std::reference_wrapper>::value || std::is_pointer<T>::value> is_reference;
+        typedef meta::Bool<meta::is_specialization_of<meta::Unqualified<T>, std::reference_wrapper>::value || std::is_pointer<T>::value> is_reference;
         set_reference_fx(is_reference(), L, memfxptr, std::forward<T>(obj));
     }
 
@@ -260,14 +268,14 @@ struct pusher<function_sig<Sigs...>> {
     template<typename Fx, typename R, typename... Args>
     static void set_isconvertible_fx(std::true_type, types<R(Args...)>, lua_State* L, Fx&& fx) {
         typedef R(* fx_ptr_t)(Args...);
-        fx_ptr_t fxptr = unwrap(std::forward<Fx>(fx));
+        fx_ptr_t fxptr = detail::unwrap(std::forward<Fx>(fx));
         set(L, fxptr);
     }
 
     template<typename Fx, typename R, typename... Args>
     static void set_isconvertible_fx(std::false_type, types<R(Args...)>, lua_State* L, Fx&& fx) {
-        typedef Unwrapped<std::decay_t<Fx>> fx_t;
-        std::unique_ptr<base_function> sptr(new functor_function<fx_t>(std::forward<Fx>(fx)));
+        typedef meta::Unwrapped<std::decay_t<Fx>> fx_t;
+        std::unique_ptr<base_function> sptr = std::make_unique<function_detail::functor_function<fx_t>>(std::forward<Fx>(fx));
         set_fx<Fx>(L, std::move(sptr));
     }
 
@@ -279,7 +287,7 @@ struct pusher<function_sig<Sigs...>> {
     template<typename Fx, typename T>
     static void set_reference_fx(std::false_type, lua_State* L, Fx&& fx, T&& obj) {
         typedef std::remove_pointer_t<std::decay_t<Fx>> clean_fx;
-        std::unique_ptr<base_function> sptr(new member_function<clean_fx, Unqualified<T>>(std::forward<T>(obj), std::forward<Fx>(fx)));
+        std::unique_ptr<function_detail::base_function> sptr = std::make_unique<function_detail::member_function<clean_fx, meta::Unqualified<T>>>(std::forward<T>(obj), std::forward<Fx>(fx));
         return set_fx<Fx>(L, std::move(sptr));
     }
 
@@ -291,11 +299,11 @@ struct pusher<function_sig<Sigs...>> {
         // We don't need to store the size, because the other side is templated
         // with the same member function pointer type
         typedef std::decay_t<Fx> dFx;
-        typedef Unqualified<Fx> uFx;
+        typedef meta::Unqualified<Fx> uFx;
         dFx memfxptr(std::forward<Fx>(fx));
-        auto userptr = ptr(obj);
+        auto userptr = detail::ptr(obj);
         void* userobjdata = static_cast<void*>(userptr);
-        lua_CFunction freefunc = &static_member_function<std::decay_t<decltype(*userptr)>, uFx>::call;
+        lua_CFunction freefunc = &function_detail::static_member_function<std::decay_t<decltype(*userptr)>, uFx>::call;
 
         int upvalues = stack::stack_detail::push_as_upvalues(L, memfxptr);
         upvalues += stack::push(L, userobjdata);
@@ -306,24 +314,24 @@ struct pusher<function_sig<Sigs...>> {
     template<typename Fx>
     static void set_fx(std::false_type, lua_State* L, Fx&& fx) {
         std::decay_t<Fx> target(std::forward<Fx>(fx));
-        lua_CFunction freefunc = &static_function<Fx>::call;
+        lua_CFunction freefunc = &function_detail::static_function<Fx>::call;
 
         int upvalues = stack::stack_detail::push_as_upvalues(L, target);
         stack::push(L, freefunc, upvalues);
     }
 
     template<typename Fx>
-    static void set_fx(lua_State* L, std::unique_ptr<base_function> luafunc) {
+    static void set_fx(lua_State* L, std::unique_ptr<function_detail::base_function> luafunc) {
         const static auto& metakey = u8"sol.ƒ.♲.🗑.(/¯◡ ‿ ◡)/¯ ~ ┻━┻ (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧";
         const static char* metatablename = &metakey[0];
-        base_function* target = luafunc.release();
+        function_detail::base_function* target = luafunc.release();
         void* userdata = reinterpret_cast<void*>(target);
-        lua_CFunction freefunc = detail::call;
+        lua_CFunction freefunc = function_detail::call;
        
         int metapushed = luaL_newmetatable(L, metatablename);
         if(metapushed == 1) {
             lua_pushstring(L, "__gc");
-            stack::push(L, detail::gc);
+            stack::push(L, function_detail::gc);
             lua_settable(L, -3);
             lua_pop(L, 1);
         }
@@ -341,7 +349,7 @@ struct pusher<function_sig<Sigs...>> {
 };
 
 template<typename T, typename... Args>
-struct pusher<sol::detail::function_packer<T, Args...>> {
+struct pusher<function_packer<T, Args...>> {
     template <std::size_t... I, typename FP>
     static int push_func(std::index_sequence<I...>, lua_State* L, FP&& fp) {
         return stack::push<T>(L, std::get<I>(fp)...);
@@ -364,7 +372,7 @@ template<typename... Functions>
 struct pusher<overload_set<Functions...>> {
     template<std::size_t... I, typename Set>
     static int push(std::index_sequence<I...>, lua_State* L, Set&& set) {
-        pusher<function_sig<>>{}.set_fx<Set>(L, std::make_unique<overloaded_function<Functions...>>(std::get<I>(set)...));
+        pusher<function_sig<>>{}.set_fx<Set>(L, std::make_unique<function_detail::overloaded_function<Functions...>>(std::get<I>(set)...));
         return 1;
     }
 
@@ -376,21 +384,21 @@ struct pusher<overload_set<Functions...>> {
 
 template<typename Signature>
 struct getter<std::function<Signature>> {
-    typedef function_traits<Signature> fx_t;
+    typedef meta::function_traits<Signature> fx_t;
     typedef typename fx_t::args_type args_types;
-    typedef tuple_types<typename fx_t::return_type> return_types;
+    typedef meta::tuple_types<typename fx_t::return_type> return_types;
 
     template<typename... Args, typename... Ret>
-    static std::function<Signature> get_std_func(types<Args...>, types<Ret...>, lua_State* L, int index = -1) {
+    static std::function<Signature> get_std_func(types<Ret...>, types<Args...>, lua_State* L, int index = -1) {
         sol::function f(L, index);
-        auto fx = [f, L, index](Args&&... args) -> return_type_t<Ret...> {
+        auto fx = [f, L, index](Args&&... args) -> meta::return_type_t<Ret...> {
             return f.call<Ret...>(std::forward<Args>(args)...);
         };
         return std::move(fx);
     }
 
     template<typename... FxArgs>
-    static std::function<Signature> get_std_func(types<FxArgs...>, types<void>, lua_State* L, int index = -1) {
+    static std::function<Signature> get_std_func(types<void>, types<FxArgs...>, lua_State* L, int index = -1) {
         sol::function f(L, index);
         auto fx = [f, L, index](FxArgs&&... args) -> void {
             f(std::forward<FxArgs>(args)...);
@@ -399,12 +407,12 @@ struct getter<std::function<Signature>> {
     }
 
     template<typename... FxArgs>
-    static std::function<Signature> get_std_func(types<FxArgs...> t, types<>, lua_State* L, int index = -1) {
-        return get_std_func(std::move(t), types<void>(), L, index);
+    static std::function<Signature> get_std_func(types<>, types<FxArgs...> t, lua_State* L, int index = -1) {
+        return get_std_func(types<void>(), t, L, index);
     }
 
     static std::function<Signature> get(lua_State* L, int index) {
-        return get_std_func(args_types(), return_types(), L, index);
+        return get_std_func(return_types(), args_types(), L, index);
     }
 };
 } // stack

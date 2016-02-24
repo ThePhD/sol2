@@ -27,11 +27,12 @@
 #include <map>
 
 namespace sol {
+namespace function_detail {
 template<typename Function, typename Tp>
 struct usertype_function_core : public base_function {
     typedef std::remove_pointer_t<Tp> T;
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-    typedef detail::functor<T, function_type> fx_t;
+    typedef functor<T, function_type> fx_t;
     typedef typename fx_t::traits_type traits_type;
     typedef typename fx_t::args_type args_type;
     typedef typename fx_t::return_type return_type;
@@ -41,9 +42,9 @@ struct usertype_function_core : public base_function {
     template<typename... Args>
     usertype_function_core(Args&&... args): fx(std::forward<Args>(args)...) {}
 
-    template<typename Return, typename Raw = Unqualified<Return>>
+    template<typename Return, typename Raw = meta::Unqualified<Return>>
     std::enable_if_t<std::is_same<T, Raw>::value, int> push(lua_State* L, Return&& r) {
-        if(ptr(unwrap(r)) == fx.item) {
+        if(detail::ptr(detail::unwrap(r)) == fx.item) {
             // push nothing
             // note that pushing nothing with the ':'
             // syntax means we leave the instance of what
@@ -57,7 +58,7 @@ struct usertype_function_core : public base_function {
         return stack::push(L, std::forward<Return>(r));
     }
 
-    template<typename Return, typename Raw = Unqualified<Return>>
+    template<typename Return, typename Raw = meta::Unqualified<Return>>
     std::enable_if_t<!std::is_same<T, Raw>::value, int> push(lua_State* L, Return&& r) {
         return stack::push(L, std::forward<Return>(r));
     }
@@ -92,11 +93,11 @@ struct usertype_function : public usertype_function_core<Function, Tp> {
     usertype_function(Args&&... args): base_t(std::forward<Args>(args)...) {}
 
     int prelude(lua_State* L) {
-        this->fx.item = ptr(stack::get<T>(L, 1));
+        this->fx.item = detail::ptr(stack::get<T>(L, 1));
         if(this->fx.item == nullptr) {
             throw error("userdata for function call is null: are you using the wrong syntax? (use item:function/variable(...) syntax)");
         }
-        return static_cast<base_t&>(*this)(tuple_types<return_type>(), args_type(), Index<2>(), L);
+        return static_cast<base_t&>(*this)(meta::tuple_types<return_type>(), args_type(), Index<2>(), L);
     }
 
     virtual int operator()(lua_State* L) override {
@@ -123,9 +124,9 @@ struct usertype_variable_function : public usertype_function_core<Function, Tp> 
         }
         switch(argcount) {
         case 2:
-            return static_cast<base_t&>(*this)(tuple_types<return_type>(), types<>(), Index<2>(), L);
+            return static_cast<base_t&>(*this)(meta::tuple_types<return_type>(), types<>(), Index<2>(), L);
         case 3:
-            return static_cast<base_t&>(*this)(tuple_types<void>(), args_type(), Index<3>(), L);
+            return static_cast<base_t&>(*this)(meta::tuple_types<void>(), args_type(), Index<3>(), L);
         default:
             throw error("cannot get/set userdata member variable with inappropriate number of arguments");
         }
@@ -151,7 +152,7 @@ struct usertype_indexing_function : base_function {
             std::pair<bool, base_function*>& target = functionpair->second;
             if (target.first) {
                 stack::push<upvalue>(L, target.second);
-                stack::push(L, c_closure(detail::usertype_call<0>, 1));
+                stack::push(L, c_closure(usertype_call<0>, 1));
                 return 1;
             }
             return (*target.second)(L);
@@ -164,6 +165,7 @@ struct usertype_indexing_function : base_function {
         return prelude(L);
     }
 };
+} // function_detail
 } // sol
 
 #endif // SOL_FUNCTION_TYPES_USERTYPE_HPP

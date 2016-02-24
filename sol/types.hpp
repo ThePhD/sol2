@@ -186,7 +186,7 @@ template <typename T>
 struct lua_type_of<T, std::enable_if_t<std::is_enum<T>::value>> : std::integral_constant<type, type::number> {};
 
 template <typename T>
-struct is_lua_primitive : std::integral_constant<bool, type::userdata != lua_type_of<Unqualified<T>>::value> { };
+struct is_lua_primitive : std::integral_constant<bool, type::userdata != lua_type_of<meta::Unqualified<T>>::value> { };
 
 template <typename T>
 struct is_proxy_primitive : is_lua_primitive<T> { };
@@ -199,7 +199,7 @@ struct is_proxy_primitive<std::tuple<Args...>> : std::true_type { };
 
 template<typename T>
 inline type type_of() {
-    return lua_type_of<Unqualified<T>>::value;
+    return lua_type_of<meta::Unqualified<T>>::value;
 }
 
 inline type type_of(lua_State* L, int index) {

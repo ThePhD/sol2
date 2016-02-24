@@ -25,15 +25,16 @@
 #include "stack.hpp"
 
 namespace sol {
+namespace function_detail {
 template<typename Function>
 struct static_function {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-    typedef function_traits<function_type> traits_type;
+    typedef meta::function_traits<function_type> traits_type;
 
     static int call(lua_State* L) {
         auto udata = stack::stack_detail::get_as_upvalues<function_type*>(L);
         function_type* fx = udata.first;
-        int r = stack::typed_call(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L);
+        int r = stack::typed_call(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L);
         return r;
     }
 
@@ -45,7 +46,7 @@ struct static_function {
 template<typename T, typename Function>
 struct static_member_function {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-    typedef function_traits<function_type> traits_type;
+    typedef meta::function_traits<function_type> traits_type;
 
     static int call(lua_State* L) {
         auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L, 1);
@@ -53,13 +54,14 @@ struct static_member_function {
         function_type& memfx = memberdata.first;
         T& item = *objdata.first;
         auto fx = [&item, &memfx](auto&&... args) -> typename traits_type::return_type { return (item.*memfx)(std::forward<decltype(args)>(args)...); };
-        return stack::typed_call(tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L);
+        return stack::typed_call(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L);
     }
 
     int operator()(lua_State* L) {
         return call(L);
     }
 };
+} // function_detail
 } // sol
 
 #endif // SOL_FUNCTION_TYPES_STATIC_HPP

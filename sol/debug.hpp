@@ -26,6 +26,7 @@
 #include <iostream>
 
 namespace sol {
+namespace detail {
 namespace debug {
 inline std::string dump_types(lua_State* L) {
     std::string visual;
@@ -46,6 +47,7 @@ inline void print_stack(lua_State* L) {
 inline void print_section(const std::string& message, lua_State* L) {
     std::cout << "-- " << message << " -- [ "  << dump_types(L) << " ]" << std::endl;
 }
+} // detail
 } // debug
 } // sol
 
