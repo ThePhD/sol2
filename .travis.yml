@@ -1,19 +1,126 @@
 language: cpp
-compiler:
-    - gcc
-    - clang
 
-branches:
-    only:
-        - master
+git:
+    depth: 5
+
+matrix:
+  include: 
+    - os: linux
+      env: COMPILER=g++-4.9 LUA=lua52
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test 
+          packages:
+          - gcc-4.9
+          - g++-4.9  
+          - ninja-build
+          - liblua5.2-dev
+
+    # gcc-5
+    - os: linux
+      env: COMPILER=g++-4.9 LUA=luajit
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test 
+          packages:
+          - gcc-4.9
+          - g++-4.9
+          - ninja-build  
+          - libluajit-5.1-dev 
+
+    # gcc-5
+    - os: linux
+      env: COMPILER=g++-5 LUA=lua52
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test 
+          packages:
+          - gcc-5
+          - g++-5
+          - ninja-build  
+          - liblua5.2-dev  
+
+    # gcc-5
+    - os: linux
+      env: COMPILER=g++-5 LUA=luajit
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test 
+          packages:
+          - gcc-5
+          - g++-5
+          - ninja-build  
+          - libluajit-5.1-dev  
+
+    - os: linux
+      env: COMPILER=clang++-3.6 lua=lua52
+      compiler: clang
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test 
+          - llvm-toolchain-precise-3.6
+          packages:
+          - clang-3.6
+          - ninja-build   
+          - liblua5.2-dev  
+
+    - os: linux
+      env: COMPILER=clang++-3.6 lua=luajit
+      compiler: clang
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test 
+          - llvm-toolchain-precise-3.6
+          packages:
+          - clang-3.6
+          - ninja-build   
+          - libluajit-5.1-dev  
+
+    # Mac OSX
+    - os: osx
+      osx_image: xcode7
+      compiler: clang
+      env: COMPILER=appleclang 
+
+    - os: osx
+      osx_image: xcode6
+      compiler: clang
+      env: COMPILER=appleclang 
+
+    # Test using gcc
+    - os: osx
+      osx_image: xcode7
+      compiler: gcc
+      env: COMPILER=g++-4.9 
+
+    - os: osx
+      compiler: gcc
+      env: COMPILER=g++-5
 
 before_install:
-    - sudo add-apt-repository --yes ppa:ubuntu-toolchain-r/test
-    - sudo add-apt-repository -y ppa:saiarcot895/chromium-beta
-    - sudo apt-get --yes update
-    - sudo apt-get --yes install g++-4.8
-    - if [ "$CXX" == "g++" ]; then export CXX=g++-4.8; fi
-    - sudo apt-get --yes install ninja-build
-    - sudo apt-get --yes install liblua5.2-dev
+- source ./install.deps.sh
 
-script: ./bootstrap.py --ci --cxx=$CXX && ninja
+install:
+- install_os_deps
+
+script:
+- echo "Configuration info:"
+- export_compiler_vars
+- ninja --version
+- ./bootstrap.py --ci && ninja
+
+notifications:
+    email:
+        on_success: change
+        on_failure: change
+
