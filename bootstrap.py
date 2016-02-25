@@ -54,7 +54,7 @@ args = parser.parse_args()
 # general variables
 include = [ '.', os.path.join('Catch', 'include')]
 depends = []
-cxxflags = [ '-Wall', '-Wextra', '-pedantic', '-pedantic-errors' ]
+cxxflags = [ '-Wall', '-Wextra', '-pedantic', '-pedantic-errors', '-std=c++14' ]
 ldflags = []
 script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 sol_dir = os.path.join(script_dir, 'sol')
@@ -91,9 +91,6 @@ if args.ci:
         include.extend(['/usr/include/' + args.lua_lib])
     else:
         include.extend(['/usr/include/lua-5.3', '/usr/include/lua-5.2', '/usr/include/lua-5.1'])
-    cxxflags.extend(['-std=c++1y'])
-else:
-    cxxflags.extend(['-std=c++14'])
 
 if args.testing:
     cxxflags.append('-Wmissing-declarations')
