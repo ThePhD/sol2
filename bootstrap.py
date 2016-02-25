@@ -41,8 +41,8 @@ parser.add_argument('--debug', action='store_true', help='compile with debug fla
 parser.add_argument('--cxx', metavar='<compiler>', help='compiler name to use (default: env.CXX=%s)' % cxx, default=cxx)
 parser.add_argument('--ci', action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('--testing', action='store_true', help=argparse.SUPPRESS)
-parser.add_argument('--lua-lib', help='lua library name (without the lib on *nix)', default='lua')
-parser.add_argument('--lua-dir', metavar='<dir>', help='directory lua is in with include and lib subdirectories')
+parser.add_argument('--lua-lib', help='lua library name (without the lib on *nix).', default='lua')
+parser.add_argument('--lua-dir', metavar='<dir>', help='directory lua is in with include and lib subdirectories', default='./lua-5.3.2')
 parser.add_argument('--install-dir', metavar='<dir>', help='directory to install the headers to', default=install_dir);
 parser.epilog = """In order to install sol, administrative privileges might be required.
 Note that installation is done through the 'ninja install' command. To uninstall, the
@@ -52,7 +52,7 @@ system is {}""".format(install_dir)
 args = parser.parse_args()
 
 # general variables
-include = [ '.', os.path.join('Catch', 'include')]
+include = [ '.', './include', os.path.join('Catch', 'include')]
 depends = []
 cxxflags = [ '-Wall', '-Wextra', '-pedantic', '-pedantic-errors', '-std=c++14' ]
 ldflags = []
@@ -88,9 +88,13 @@ if args.ci:
     ldflags.extend(library_includes(['lib']))
     include.extend(['./include'])
     if args.lua_lib:
-        include.extend(['/usr/include/' + args.lua_lib])
+        if args.lualib == 'luajit':
+            include.extend(['/usr/include/luajit-2.0'])
+            ldflags.extend(libraries(['luajit-5.1']))
+        else:
+            include.extend(['/usr/include/' + args.lua_lib])
     else:
-        include.extend(['/usr/include/lua-5.3', '/usr/include/lua-5.2', '/usr/include/lua-5.1'])
+        include.extend(['/usr/include/lua-5.3', '/usr/include/lua-5.2', '/usr/include/lua-5.1', '/usr/include/luajit-2.0'])
 
 if args.testing:
     cxxflags.append('-Wmissing-declarations')

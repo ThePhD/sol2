@@ -22,4 +22,4 @@ before_install:
 
 script: 
     - ./bootstrap.py --ci --lua-lib=lua5.2 --cxx=$CXX && ninja
-    - ./bootstrap.py --ci --lua-lib=lua5.1 --cxx=$CXX && ninja
+    - ./bootstrap.py --ci --lua-lib=luajit --cxx=$CXX && ninja

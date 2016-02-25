@@ -57,12 +57,12 @@ For maximum ease of use, a script called `single.py` is provided. You can run th
 
 ## Supported Compilers
 
-Sol makes use of C++11/14 features. GCC 4.7 and Clang 3.3 or higher should be able to compile without problems. However, the
-officially supported compilers are:
+Sol makes use of C++11/14 features. GCC 4.9 and Clang 3.4 or higher should be able to compile without problems. However, the
+officially supported and CI-tested compilers are:
 
-- GCC 4.8.0+
-- Clang 3.4+
-- Visual Studio 2015 Community (Visual C++ 14.0) and above
+- GCC 4.9.0+
+- Clang 3.5+
+- Visual Studio 2015 Community (Visual C++ 14.0) and above (tested manually)
 
 ## Caveats
 
