@@ -45,7 +45,7 @@ For maximum ease of use, a script called `single.py` is provided. You can run th
 
 ## Features
 
-- [Fast](http://satoren.github.io/lua_binding_benchmark/).
+- [Fastest in the land](http://satoren.github.io/lua_binding_benchmark/) (see: sol2 graph and table entries).
 - Supports retrieval and setting of multiple types including `std::string` and `std::map/unordered_map`.
 - Lambda, function, and member function bindings are supported.
 - Intermediate type for checking if a variable exists.
