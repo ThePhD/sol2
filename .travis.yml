@@ -69,8 +69,8 @@ matrix:
           - ubuntu-toolchain-r-test
           - llvm-toolchain-precise-3.5
           packages:
-		- gcc-4.9
-		- g++-4.9
+          - gcc-4.9
+          - g++-4.9
           - clang-3.5
           - ninja-build
           - liblua5.2-dev
