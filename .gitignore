@@ -1,9 +1,25 @@
-obj/*
-bin/*
-demacro.txt
-Shinobi2
+obj/
+bin/
 dev*
-lua-5.2.2/
+lib/
+
+sol/include/
+
+# Ninja
+*.ninja
+
+# Benchmarking
+bench/
+
+# Lua
+lua-*/
+luajit-*/
+liblua.*
+
+# Python
+*.pyc
+
+# Visual Studio
 Debug/
 Release/
 x64/
@@ -14,33 +30,16 @@ x64/
 *.idb
 *.sln
 *.gitattributes
-liblua.a
-sol/include/
-.ninja*
+desktop.ini
+.vs/
+
 include/
-lib/liblua5.2.a
 *.config
 *.creator
 *.files
 *.includes
-*.pyc
-main.cpp
-lua-5.2.3/
-build.ninja
-main.ninja
+*.ninja
 *.user
-*.3cb9f6a
-luajit-2.0.3/
 .dropbox*
-desktop.ini
-lua-5.3.0/
-.vs/
-lua-5.1.5/
-luajit-2.0.4/
 *.creator.user.*
-lua-5.3.1/
-main2.cpp
-lua-5.3.2/
-lua-5.2.4/
-bench/
 *.props
