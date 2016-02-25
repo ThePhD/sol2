@@ -18,4 +18,6 @@ before_install:
     - sudo apt-get --yes install liblua5.2-dev
     - sudo apt-get --yes install libluajit-5.1-dev
 
-script: ./bootstrap.py --ci --cxx=$CXX && ninja
+script: 
+    - ./bootstrap.py --ci --lua-lib=lua5.2 --cxx=$CXX && ninja
+    - ./bootstrap.py --ci --lua-lib=lua5.1 --cxx=$CXX && ninja

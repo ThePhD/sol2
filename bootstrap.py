@@ -41,6 +41,7 @@ parser.add_argument('--debug', action='store_true', help='compile with debug fla
 parser.add_argument('--cxx', metavar='<compiler>', help='compiler name to use (default: env.CXX=%s)' % cxx, default=cxx)
 parser.add_argument('--ci', action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('--testing', action='store_true', help=argparse.SUPPRESS)
+parser.add_argument('--lua-lib', help='lua library name (without the lib on *nix)', default='lua')
 parser.add_argument('--lua-dir', metavar='<dir>', help='directory lua is in with include and lib subdirectories')
 parser.add_argument('--install-dir', metavar='<dir>', help='directory to install the headers to', default=install_dir);
 parser.epilog = """In order to install sol, administrative privileges might be required.
@@ -77,14 +78,17 @@ if args.lua_dir:
     include.extend([os.path.join(args.lua_dir, 'include')])
     ldflags.extend(library_includes([os.path.join(args.lua_dir, 'lib')]))
 
+if args.lua_lib:
+    include.extend([os.path.join(args.lua_dir, 'include')])
+    ldflags.extend(library_includes([os.path.join(args.lua_dir, 'lib')]))
+
+ldflags.extend(libraries([args.lua_lib]))
 if args.ci:
-    ldflags.extend(libraries(['lua5.3']))
     ldflags.extend(library_includes(['lib']))
-    include.extend(['/usr/include/lua5.3', './lua-5.3.2/src', './include'])
+    include.extend(['/usr/include/' + args.lua_lib, './include'])
     cxxflags.extend(['-std=c++1y'])
 else:
     cxxflags.extend(['-std=c++14'])
-    ldflags.extend(libraries(['lua']))
 
 if args.testing:
     cxxflags.append('-Wmissing-declarations')
