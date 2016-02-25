@@ -1162,6 +1162,7 @@ TEST_CASE("interop/null-to-nil-and-back", "nil should be the given type when a p
         "assert(x == nil)"));
 }
 
+#ifdef SOL_LUAJIT // LuaJIT does not have error message handling support for lua_pcall, and thus this test will always fail
 TEST_CASE( "functions/function_result-protected_function", "Function result should be the beefy return type for sol::function that allows for error checking and error handlers" ) {
     sol::state lua;
     lua.open_libraries( sol::lib::base, sol::lib::debug );
@@ -1209,6 +1210,7 @@ TEST_CASE( "functions/function_result-protected_function", "Function result shou
     errorstring = result2;
     REQUIRE(errorstring == errormessage2);
 }
+#endif // LuaJIT Issues
 
 TEST_CASE("functions/destructor-tests", "Show that proper copies / destruction happens") {
     static int created = 0;

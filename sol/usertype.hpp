@@ -144,7 +144,7 @@ inline void push_metatable(lua_State* L, bool needsindexfunction, Funcs&& funcs,
     }
     // Otherwise, we use quick, fast table indexing for methods
     // gives us performance boost in calling them
-    lua_createtable(L, 0, functable.size());
+    lua_createtable(L, 0, static_cast<int>(functable.size()));
     int up = stack::stack_detail::push_upvalues(L, funcs);
     luaL_setfuncs(L, functable.data(), up);
     lua_setfield(L, metatableindex, "__index");
