@@ -15,7 +15,6 @@ before_install:
     - if [ "$CXX" == "g++" ]; then sudo apt-get --yes install g++-4.8; fi
     - if [ "$CXX" == "g++" ]; then export CXX=g++-4.8; fi
     - sudo apt-get --yes install ninja-build
-    - sudo apt-get --yes install liblua5.3-dev
     - sudo apt-get --yes install liblua5.2-dev
     - sudo apt-get --yes install libluajit-5.1-dev
 
