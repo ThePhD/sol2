@@ -98,19 +98,8 @@ matrix:
           - llvm-toolchain-precise-3.6
           packages:
           - clang-3.6
-          - ninja-build   
-          - libluajit-5.1-dev  
-
-    # Mac OSX
-    - os: osx
-      osx_image: xcode7
-      compiler: clang
-      env: COMPILER=appleclang LUA_VERSION=lua53
-
-    - os: osx
-      osx_image: xcode7
-      compiler: clang
-      env: COMPILER=appleclang LUA_VERSION=luajit52
+          - ninja-build
+          - libluajit-5.1-dev
 
     - os: osx
       osx_image: xcode7
