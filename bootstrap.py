@@ -66,6 +66,9 @@ if sys.platform == 'win32':
     remove_command = 'rmdir /S /Q {} && erase /F /S /Q /A {}'.format(os.path.join(args.install_dir, 'sol'),
                                                                      os.path.join(args.install_dir, 'sol.hpp'))
 
+if not args.lua_lib:
+     args.lua_lib = 'lua'
+
 if args.debug:
     cxxflags.extend(['-g', '-O0'])
 else:
@@ -79,13 +82,13 @@ if args.lua_dir:
     ldflags.extend(library_includes([os.path.join(args.lua_dir, 'lib')]))
 
 if args.lua_lib:
-    include.extend([os.path.join(args.lua_dir, 'include')])
-    ldflags.extend(library_includes([os.path.join(args.lua_dir, 'lib')]))
+    ldflags.extend(libraries([args.lua_lib]))
 
-ldflags.extend(libraries([args.lua_lib]))
 if args.ci:
     ldflags.extend(library_includes(['lib']))
-    include.extend(['/usr/include/' + args.lua_lib, './include'])
+    include.extend(['./include'])
+    if args.lua_lib:
+         include.extend(['/usr/include/' + args.lua_lib, './include'])
     cxxflags.extend(['-std=c++1y'])
 else:
     cxxflags.extend(['-std=c++14'])
