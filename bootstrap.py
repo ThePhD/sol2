@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import ninja_syntax
-import os, sys, glob
+import os, sys, glob, re
 import itertools
 import argparse
 
@@ -19,7 +19,7 @@ def libraries(l):
     return ['-l{}'.format(x) for x in l]
 
 def dependencies(l):
-    return ['-isystem "{}"'.format(x) for x in l]
+    return ['-isystem"{}"'.format(x) for x in l]
 
 def object_file(f):
     (root, ext) = os.path.splitext(f)
@@ -42,7 +42,7 @@ parser.add_argument('--cxx', metavar='<compiler>', help='compiler name to use (d
 parser.add_argument('--ci', action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('--testing', action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('--lua-lib', help='lua library name (without the lib on *nix).', default='lua')
-parser.add_argument('--lua-dir', metavar='<dir>', help='directory lua is in with include and lib subdirectories', default='./lua-5.3.2')
+parser.add_argument('--lua-dir', metavar='<dir>', help='directory lua is in with include and lib subdirectories')
 parser.add_argument('--install-dir', metavar='<dir>', help='directory to install the headers to', default=install_dir);
 parser.epilog = """In order to install sol, administrative privileges might be required.
 Note that installation is done through the 'ninja install' command. To uninstall, the
@@ -52,13 +52,14 @@ system is {}""".format(install_dir)
 args = parser.parse_args()
 
 # general variables
-include = [ '.', './include', os.path.join('Catch', 'include')]
-depends = []
+include = [ '.', './include' ]
+depends = [os.path.join('Catch', 'include')]
 cxxflags = [ '-Wall', '-Wextra', '-pedantic', '-pedantic-errors', '-std=c++14' ]
 ldflags = []
 script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 sol_dir = os.path.join(script_dir, 'sol')
 sol_file = os.path.join(script_dir, 'sol.hpp')
+
 copy_command = 'cp -rf {} $in && cp -f {} $in'.format(sol_dir, sol_file)
 remove_command = 'rm -rf {} && rm -f {}'.format(os.path.join(args.install_dir, 'sol'), os.path.join(args.install_dir, 'sol.hpp'))
 if sys.platform == 'win32':
@@ -81,15 +82,41 @@ if args.lua_dir:
     include.extend([os.path.join(args.lua_dir, 'include')])
     ldflags.extend(library_includes([os.path.join(args.lua_dir, 'lib')]))
 
-if args.ci:
-    ldflags.extend(library_includes(['lib']))
-    include.extend(['./include'])
-    if args.lua_lib == 'luajit':
-        include.extend(['/usr/include/luajit-2.0'])
-        ldflags.extend(libraries(['luajit-5.1']))
+if 'linux' in sys.platform:
+    lua_version = os.environ.get('LUA_VERSION', 'lua53')
+    if re.match(r'lua5[1-3]', lua_version):
+        # Using normal lua
+        lua_lib = lua_version[:-1] + '.' + lua_version[-1]
+        lua_incl = lua_lib
+    elif re.match(r'luajit5[1-3]', lua_version):
+        # luajit
+        lua_incl = 'luajit-2.0' # I don't get this..
+        lua_lib = lua_version[:-2] + '-' + lua_version[-2] + '.' + lua_version[-1]
+        include.extend(['/usr/include/luajit-2.0/', '/usr/local/include/luajit-2.0/'])
     else:
-        include.extend(['/usr/include/' + args.lua_lib])
-        ldflags.extend(libraries([args.lua_lib]))
+        raise Exception('Unknown lua_version={}' % lua_version)
+
+
+    include.extend(['/usr/include/' + lua_incl, '/usr/local/include/' + lua_incl])
+    ldflags.extend(library_includes(['/usr/local/lib']))
+    ldflags.extend(libraries([lua_lib]))
+elif 'darwin' in sys.platform:
+    # OSX 
+    lua_version = os.environ.get('LUA_VERSION', 'lua53')
+    if re.match(r'lua5[1-3]', lua_version):
+        # Using normal lua
+        lua_incl = lua_version[:-1] + '.' + lua_version[-1]
+        lua_lib = lua_version[:-2] + '.' +  lua_version[-2] + '.' + lua_version[-1]
+    elif re.match(r'luajit5[1-3]', lua_version):
+        # luajit
+        lua_incl = 'luajit-2.0'
+        lua_lib = lua_version[:-2] + '-' + lua_version[-2] + '.' + lua_version[-1]
+    else:
+        raise Exception('Unknown lua_version={}' % lua_version)
+
+    depends.extend(['/usr/include/' + lua_incl, '/usr/local/include/' + lua_incl])
+    ldflags.extend(library_includes(['/usr/local/lib']))
+    ldflags.extend(libraries([lua_lib]))
 else:
     ldflags.extend(libraries([args.lua_lib]))
 
