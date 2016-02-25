@@ -81,9 +81,6 @@ if args.lua_dir:
     include.extend([os.path.join(args.lua_dir, 'include')])
     ldflags.extend(library_includes([os.path.join(args.lua_dir, 'lib')]))
 
-if args.lua_lib:
-    ldflags.extend(libraries([args.lua_lib]))
-
 if args.ci:
     ldflags.extend(library_includes(['lib']))
     include.extend(['./include'])
@@ -95,6 +92,9 @@ if args.ci:
             include.extend(['/usr/include/' + args.lua_lib])
     else:
         include.extend(['/usr/include/lua-5.3', '/usr/include/lua-5.2', '/usr/include/lua-5.1', '/usr/include/luajit-2.0'])
+else:
+    if args.lua_lib:
+        ldflags.extend(libraries([args.lua_lib]))
 
 if args.testing:
     cxxflags.append('-Wmissing-declarations')
