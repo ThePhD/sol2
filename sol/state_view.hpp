@@ -211,15 +211,6 @@ public:
         return result;
     }
 
-    template <typename... Args>
-    table create_table(int narr = 0, int nrec = sizeof...(Args), Args&&... args) {
-        lua_createtable(L, narr, nrec);
-        table result(L);
-        result.set(std::forward<Args>(args)...);
-        lua_pop(L, 1);
-        return result;
-    }
-
     global_table global() const {
         return globals;
     }

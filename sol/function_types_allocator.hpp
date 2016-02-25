@@ -44,7 +44,7 @@ struct constructor_match {
     template <bool b, typename Fx, std::size_t I, typename... R, typename... Args>
     int operator()(meta::Bool<b>, types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) const {
         default_construct func{};
-        return stack::typed_call<b ? false : stack::stack_detail::default_check_arguments>(r, a, func, L, start, obj);
+        return stack::call_into_lua<b ? false : stack::stack_detail::default_check_arguments>(r, a, func, L, start, obj);
     }
 };
 } // detail
@@ -120,7 +120,7 @@ struct usertype_constructor_function : base_function {
         userdataref.pop();
 
         auto& func = std::get<I>(overloads);
-        stack::typed_call<b ? false : stack::stack_detail::default_check_arguments>(r, a, func, L, start, function_detail::implicit_wrapper<T>(obj));
+        stack::call_into_lua<b ? false : stack::stack_detail::default_check_arguments>(r, a, func, L, start, function_detail::implicit_wrapper<T>(obj));
 
         userdataref.push();
         luaL_getmetatable(L, &meta[0]);

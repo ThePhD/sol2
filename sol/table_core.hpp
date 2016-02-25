@@ -39,7 +39,7 @@ class table_core : public reference {
     template<typename... Ret, std::size_t... I, typename Keys>
     auto tuple_get( types<Ret...>, std::index_sequence<I...>, Keys&& keys ) const
     -> decltype(stack::pop<std::tuple<Ret...>>(nullptr)){
-        auto pp = stack::push_popper<is_global<decltype(std::get<I>(keys))...>::value>(*this);
+        auto pp = stack::push_pop<is_global<decltype(std::get<I>(keys))...>::value>(*this);
         int tableindex = lua_gettop(lua_state());
 	   void(detail::swallow{ ( stack::get_field<top_level>(lua_state(), std::get<I>(keys), tableindex), 0)... });
         return stack::pop<std::tuple<Ret...>>( lua_state() );
@@ -47,14 +47,14 @@ class table_core : public reference {
 
     template<typename Ret, std::size_t I, typename Keys>
     decltype(auto) tuple_get( types<Ret>, std::index_sequence<I>, Keys&& keys ) const {
-        auto pp = stack::push_popper<is_global<decltype(std::get<I>(keys))>::value>(*this);
+        auto pp = stack::push_pop<is_global<decltype(std::get<I>(keys))>::value>(*this);
         stack::get_field<top_level>( lua_state( ), std::get<I>( keys ) );
         return stack::pop<Ret>( lua_state( ) );
     }
 
     template<typename Pairs, std::size_t... I>
     void tuple_set( std::index_sequence<I...>, Pairs&& pairs ) {
-        auto pp = stack::push_popper<is_global<decltype(std::get<I * 2>(pairs))...>::value>(*this);
+        auto pp = stack::push_pop<is_global<decltype(std::get<I * 2>(pairs))...>::value>(*this);
 	   void(detail::swallow{ (stack::set_field<top_level>(lua_state(), std::get<I * 2>(pairs), std::get<I * 2 + 1>(pairs)), 0)... });
     }
 
@@ -97,14 +97,14 @@ public:
 
     template <typename T, typename... Keys>
     decltype(auto) traverse_get( Keys&&... keys ) const {
-        auto pp = stack::push_popper<is_global<Keys...>::value>(*this);
+        auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
         struct clean { lua_State* L; clean(lua_State* L) : L(L) {} ~clean() { lua_pop(L, static_cast<int>(sizeof...(Keys))); } } c(lua_state());
         return traverse_get_deep<top_level, T>(std::forward<Keys>(keys)...);
     }
 
     template <typename... Keys>
     table_core& traverse_set( Keys&&... keys ) {
-        auto pp = stack::push_popper<is_global<Keys...>::value>(*this);
+        auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
         traverse_set_deep<top_level>(std::forward<Keys>(keys)...);
         lua_pop(lua_state(), static_cast<int>(sizeof...(Keys)-2));
         return *this;
@@ -128,7 +128,7 @@ public:
 
     template<typename Fx>
     void for_each( Fx&& fx ) const {
-        auto pp = stack::push_popper( *this );
+        auto pp = stack::push_pop( *this );
         stack::push( lua_state( ), nil );
         while ( lua_next( this->lua_state( ), -2 ) ) {
             sol::object key( lua_state( ), -2 );
@@ -139,7 +139,7 @@ public:
     }
 
     size_t size( ) const {
-        auto pp = stack::push_popper( *this );
+        auto pp = stack::push_pop( *this );
         return lua_rawlen(lua_state(), -1);
     }
 
@@ -211,6 +211,23 @@ private:
         set(std::forward<Key>(key), function_pack<function_sig<Sig...>>(std::forward<Args>(args)...));
     }
 };
+namespace stack {
+inline table create_table(lua_State* L, int narr = 0, int nrec = 0) {
+    lua_createtable(L, narr, nrec);
+    table result(L);
+    lua_pop(L, 1);
+    return result;
+}
+
+template <typename Key, typename Value, typename... Args>
+inline table create_table(lua_State* L, int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
+    lua_createtable(L, narr, nrec);
+    table result(L);
+    result.set(std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
+    lua_pop(L, 1);
+    return result;
+}
+} // stack
 } // sol
 
 #endif // SOL_TABLE_CORE_HPP

@@ -34,7 +34,7 @@ struct static_function {
     static int call(lua_State* L) {
         auto udata = stack::stack_detail::get_as_upvalues<function_type*>(L);
         function_type* fx = udata.first;
-        int r = stack::typed_call(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L, 1);
+        int r = stack::call_into_lua(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L, 1);
         return r;
     }
 
@@ -54,7 +54,7 @@ struct static_member_function {
         function_type& memfx = memberdata.first;
         T& item = *objdata.first;
         auto fx = [&item, &memfx](auto&&... args) -> typename traits_type::return_type { return (item.*memfx)(std::forward<decltype(args)>(args)...); };
-        return stack::typed_call(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L, 1);
+        return stack::call_into_lua(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L, 1);
     }
 
     int operator()(lua_State* L) {

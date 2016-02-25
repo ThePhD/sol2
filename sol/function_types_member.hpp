@@ -80,7 +80,7 @@ struct member_function : public base_function {
     member_function(Tm&& m, Args&&... args): fx(std::forward<Tm>(m), std::forward<Args>(args)...) {}
 
     virtual int operator()(lua_State* L) override {
-        return stack::typed_call(meta::tuple_types<return_type>(), args_types(), fx, L, 1);
+        return stack::call_into_lua(meta::tuple_types<return_type>(), args_types(), fx, L, 1);
     }
 };
 } // function_detail
