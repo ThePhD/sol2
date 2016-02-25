@@ -1328,12 +1328,12 @@ TEST_CASE("functions/overloading", "Check if overloading works properly for regu
 
     const std::string string_bark = "string: bark";
 
-    REQUIRE_NOTHROW(lua.script(R"(
-a = func(1)
-b = func("bark")
-c = func(1,2)
-func(1,2,3)
-)"));
+    REQUIRE_NOTHROW(lua.script(
+"a = func(1)\n"
+"b = func('bark')\n"
+"c = func(1,2)\n"
+"func(1,2,3)\n"
+));
 
     REQUIRE((lua["a"] == 1));
     REQUIRE((lua["b"] == string_bark));
@@ -1357,14 +1357,11 @@ TEST_CASE("usertype/private constructible", "Check to make sure special snowflak
     
         std::unique_ptr<factory_test, factory_test::deleter> f = factory_test::make();
         lua.set("true_a", factory_test::true_a, "f", f.get());
-        REQUIRE_NOTHROW(lua.script(R"(
-assert(f.a == true_a)
-)"));
+        REQUIRE_NOTHROW(lua.script("assert(f.a == true_a)"));
 
-        REQUIRE_NOTHROW(lua.script(R"(
-local fresh_f = factory_test:new()
-assert(fresh_f.a == true_a)
-)"));
+        REQUIRE_NOTHROW(lua.script(
+"local fresh_f = factory_test:new()\n"
+"assert(fresh_f.a == true_a)\n"));
     }
     int expectednumsaved = numsaved + 1;
     int expectednumkilled = numkilled + 1;
@@ -1398,12 +1395,12 @@ TEST_CASE("usertype/overloading", "Check if overloading works properly for usert
     
     const std::string bark_58 = "bark 58";
     
-    REQUIRE_NOTHROW(lua.script(R"(
-r = woof:new()
-a = r:func(1)
-b = r:func(1, 2)
-c = r:func(58, "bark")
-)"));
+    REQUIRE_NOTHROW(lua.script(
+"r = woof:new()\n"
+"a = r:func(1)\n"
+"b = r:func(1, 2)\n"
+"c = r:func(58, 'bark')\n"
+));
     REQUIRE((lua["a"] == 1));
     REQUIRE((lua["b"] == 3.5));
     REQUIRE((lua["c"] == bark_58));
