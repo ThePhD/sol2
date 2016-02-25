@@ -88,7 +88,9 @@ if args.ci:
     ldflags.extend(library_includes(['lib']))
     include.extend(['./include'])
     if args.lua_lib:
-         include.extend(['/usr/include/' + args.lua_lib, './include'])
+        include.extend(['/usr/include/' + args.lua_lib])
+    else:
+        include.extend(['/usr/include/lua-5.3', '/usr/include/lua-5.2', '/usr/include/lua-5.1'])
     cxxflags.extend(['-std=c++1y'])
 else:
     cxxflags.extend(['-std=c++14'])
