@@ -87,11 +87,8 @@ if args.lua_lib:
 if args.ci:
     ldflags.extend(library_includes(['lib']))
     include.extend(['./include'])
-    if 'clang++' in args.cxx:
-         cxxflags.remove('-std=c++14')
-         cxxflags.append('-std=c++1y')
     if args.lua_lib:
-        if args.lualib == 'luajit':
+        if args.lua_lib == 'luajit':
             include.extend(['/usr/include/luajit-2.0'])
             ldflags.extend(libraries(['luajit-5.1']))
         else:
