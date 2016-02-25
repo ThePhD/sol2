@@ -1,46 +1,21 @@
 language: cpp
-
-git:
-    depth: 5
+compiler:
+    - gcc
+    - clang
 
 branches:
-  only:
-    - master
-    - develop
-
-matrix:
-  include: 
-    - os: linux
-      env: COMPILER=g++-4.8 LUA=lua52
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-          - ubuntu-toolchain-r-test 
-          packages:
-          - gcc-4.8
-          - g++-4.8  
-          - ninja-build
-          - liblua5.3-dev
-    
-    - os: linux
-      env: COMPILER=clang++-3.4 LUA=lua53
-      compiler: clang
-      addons:
-        apt:
-          sources:
-          - ubuntu-toolchain-r-test 
-          packages:
-          - clang++-3.4
-          - ninja-build
-          - liblua5.3-dev
+    only:
+        - master
+        - develop
 
 before_install:
-	- sudo apt-get update -qq
-	- sudo apt-get install -qq 
+    - sudo add-apt-repository --yes ppa:ubuntu-toolchain-r/test
+    - sudo add-apt-repository -y ppa:saiarcot895/chromium-beta
+    - sudo apt-get --yes update
+    - if [ "$CXX" == "g++" ]; then sudo apt-get --yes install g++-4.8; fi
+    - if [ "$CXX" == "g++" ]; then export CXX=g++-4.8; fi
+    - sudo apt-get --yes install ninja-build
+    - sudo apt-get --yes install liblua5.2-dev
+    - sudo apt-get --yes install libluajit-5.1-dev
 
-script:
-- echo "Configuration info:"
-- export_compiler_vars
-- ninja --version
-- ./bootstrap.py --ci && ninja
+script: ./bootstrap.py --ci --cxx=$CXX && ninja
