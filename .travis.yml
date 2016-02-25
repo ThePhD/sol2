@@ -3,124 +3,44 @@ language: cpp
 git:
     depth: 5
 
+branches:
+  only:
+    - master
+    - develop
+ 	
 matrix:
   include: 
     - os: linux
-      env: COMPILER=g++-4.9 LUA=lua52
+      env: COMPILER=g++-4.8 LUA=lua52
       compiler: gcc
       addons:
         apt:
           sources:
           - ubuntu-toolchain-r-test 
           packages:
-          - gcc-4.9
-          - g++-4.9  
+          - gcc-4.8
+          - g++-4.8  
           - ninja-build
-          - liblua5.2-dev
-
-    # gcc-5
+          - liblua5.3-dev
+    
     - os: linux
-      env: COMPILER=g++-4.9 LUA=luajit
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-          - ubuntu-toolchain-r-test 
-          packages:
-          - gcc-4.9
-          - g++-4.9
-          - ninja-build  
-          - libluajit-5.1-dev 
-
-    # gcc-5
-    - os: linux
-      env: COMPILER=g++-5 LUA=lua52
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-          - ubuntu-toolchain-r-test 
-          packages:
-          - gcc-5
-          - g++-5
-          - ninja-build  
-          - liblua5.2-dev  
-
-    # gcc-5
-    - os: linux
-      env: COMPILER=g++-5 LUA=luajit
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-          - ubuntu-toolchain-r-test 
-          packages:
-          - gcc-5
-          - g++-5
-          - ninja-build  
-          - libluajit-5.1-dev  
-
-    - os: linux
-      env: COMPILER=clang++-3.6 lua=lua52
+      env: COMPILER=clang++-3.4 LUA=lua53
       compiler: clang
       addons:
         apt:
           sources:
           - ubuntu-toolchain-r-test 
-          - llvm-toolchain-precise-3.6
           packages:
-          - clang-3.6
-          - ninja-build   
-          - liblua5.2-dev  
-
-    - os: linux
-      env: COMPILER=clang++-3.6 lua=luajit
-      compiler: clang
-      addons:
-        apt:
-          sources:
-          - ubuntu-toolchain-r-test 
-          - llvm-toolchain-precise-3.6
-          packages:
-          - clang-3.6
-          - ninja-build   
-          - libluajit-5.1-dev  
-
-    # Mac OSX
-    - os: osx
-      osx_image: xcode7
-      compiler: clang
-      env: COMPILER=appleclang 
-
-    - os: osx
-      osx_image: xcode6
-      compiler: clang
-      env: COMPILER=appleclang 
-
-    # Test using gcc
-    - os: osx
-      osx_image: xcode7
-      compiler: gcc
-      env: COMPILER=g++-4.9 
-
-    - os: osx
-      compiler: gcc
-      env: COMPILER=g++-5
+          - clang++-3.4
+          - ninja-build
+          - liblua5.3-dev
 
 before_install:
-- source ./install.deps.sh
-
-install:
-- install_os_deps
+	- sudo apt-get update -qq
+	- sudo apt-get install -qq 
 
 script:
 - echo "Configuration info:"
 - export_compiler_vars
 - ninja --version
 - ./bootstrap.py --ci && ninja
-
-notifications:
-    email:
-        on_success: change
-        on_failure: change
-
