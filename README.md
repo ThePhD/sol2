@@ -1,4 +1,4 @@
-## Sol
+## Sol 2
 
 [![Build Status](https://travis-ci.org/Rapptz/sol.svg?branch=master)](https://travis-ci.org/Rapptz/sol)
 
@@ -45,27 +45,30 @@ For maximum ease of use, a script called `single.py` is provided. You can run th
 
 ## Features
 
-- Supports retrieval and setting of multiple types including `std::string`.
+- [Fast](http://satoren.github.io/lua_binding_benchmark/).
+- Supports retrieval and setting of multiple types including `std::string` and `std::map/unordered_map`.
 - Lambda, function, and member function bindings are supported.
 - Intermediate type for checking if a variable exists.
-- Simple API that completely abstracts away the C stack API.
+- Simple API that completely abstracts away the C stack API, including `protected_function` with the ability to use an error-handling function.
 - `operator[]`-style manipulation of tables
 - C++ type representations in lua userdata as `usertype`s with guaranteed cleanup
-- Support for tables.
+- Overloaded function calls: `my_function(1); my_function("Hello")` in the same lua script route to different function calls based on parameters
+- Support for tables, nested tables, table iteration with `table.for_each`.
 
 ## Supported Compilers
 
 Sol makes use of C++11/14 features. GCC 4.7 and Clang 3.3 or higher should be able to compile without problems. However, the
 officially supported compilers are:
 
-- GCC 4.9.0+
-- Clang 3.6+
-- Visual Studio 2015 Community (Visual C++ 14.0)
+- GCC 4.8.0+
+- Clang 3.4+
+- Visual Studio 2015 Community (Visual C++ 14.0) and above
 
 ## Caveats
 
 Due to how this library is used compared to the C API, the Lua Stack is completely abstracted away. Not only that, but all
-Lua errors are thrown as exceptions instead. This allows you to handle the errors gracefully without being forced to exit.
+Lua errors are thrown as exceptions instead: if you don't want to deal with errors thrown by at_panic, you can set your own panic function
+or use the `protected_function` API. This allows you to handle the errors gracefully without being forced to exit.
 
 It should be noted that the library itself depends on `lua.hpp` to be found by your compiler. It uses angle brackets, e.g.
 `#include <lua.hpp>`.

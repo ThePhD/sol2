@@ -7,7 +7,7 @@ branches:
   only:
     - master
     - develop
- 	
+
 matrix:
   include: 
     - os: linux
