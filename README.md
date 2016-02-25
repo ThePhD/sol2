@@ -57,7 +57,7 @@ For maximum ease of use, a script called `single.py` is provided. You can run th
 
 ## Supported Compilers
 
-Sol makes use of C++11/14 features. GCC 4.9 and Clang 3.4 or higher should be able to compile without problems. However, the
+Sol makes use of C++11/14 features. GCC 4.9 and Clang 3.4 (with std=c++1z and appropriate standard library) or higher should be able to compile without problems. However, the
 officially supported and CI-tested compilers are:
 
 - GCC 4.9.0+

@@ -11,10 +11,10 @@ matrix:
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test 
+          - ubuntu-toolchain-r-test
           packages:
           - gcc-4.9
-          - g++-4.9  
+          - g++-4.9
           - ninja-build
           - liblua5.2-dev
 
@@ -25,12 +25,12 @@ matrix:
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test 
+          - ubuntu-toolchain-r-test
           packages:
           - gcc-4.9
           - g++-4.9
-          - ninja-build  
-          - libluajit-5.1-dev 
+          - ninja-build
+          - libluajit-5.1-dev
 
     # gcc-5
     - os: linux
@@ -39,12 +39,12 @@ matrix:
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test 
+          - ubuntu-toolchain-r-test
           packages:
           - gcc-5
           - g++-5
-          - ninja-build  
-          - liblua5.2-dev  
+          - ninja-build
+          - liblua5.2-dev
 
     # gcc-5
     - os: linux
@@ -53,12 +53,27 @@ matrix:
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test 
+          - ubuntu-toolchain-r-test
           packages:
           - gcc-5
           - g++-5
-          - ninja-build  
-          - libluajit-5.1-dev  
+          - ninja-build
+          - libluajit-5.1-dev
+
+    - os: linux
+      env: COMPILER=clang++-3.5 LUA_VERSION=lua52
+      compiler: clang
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-precise-3.5
+          packages:
+		- gcc-4.9
+		- g++-4.9
+          - clang-3.5
+          - ninja-build
+          - liblua5.2-dev
 
     - os: linux
       env: COMPILER=clang++-3.6 LUA_VERSION=lua52
@@ -66,12 +81,12 @@ matrix:
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test 
+          - ubuntu-toolchain-r-test
           - llvm-toolchain-precise-3.6
           packages:
           - clang-3.6
-          - ninja-build   
-          - liblua5.2-dev  
+          - ninja-build
+          - liblua5.2-dev
 
     - os: linux
       env: COMPILER=clang++-3.6 LUA_VERSION=luajit51
@@ -79,7 +94,7 @@ matrix:
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test 
+          - ubuntu-toolchain-r-test
           - llvm-toolchain-precise-3.6
           packages:
           - clang-3.6
@@ -90,12 +105,12 @@ matrix:
     - os: osx
       osx_image: xcode7
       compiler: clang
-      env: COMPILER=appleclang LUA_VERSION=lua53  
+      env: COMPILER=appleclang LUA_VERSION=lua53
 
     - os: osx
       osx_image: xcode7
       compiler: clang
-      env: COMPILER=appleclang LUA_VERSION=luajit51  
+      env: COMPILER=appleclang LUA_VERSION=luajit51
 
     # Test using gcc
     - os: osx
@@ -106,7 +121,7 @@ matrix:
     - os: osx
       osx_image: xcode7
       compiler: gcc
-      env: COMPILER=g++-4.9 LUA_VERSION=luajit51  
+      env: COMPILER=g++-4.9 LUA_VERSION=luajit51
 
     - os: osx
       osx_image: xcode7
