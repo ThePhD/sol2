@@ -77,13 +77,13 @@ enum class call_status : int {
 };
 
 enum class thread_status : int {
-	normal        = LUA_OK,
-	yielded       = LUA_YIELD,
-	error_runtime = LUA_ERRRUN,
-	error_memory  = LUA_ERRMEM,
-	error_gc      = LUA_ERRGCMM,
-	error_handler = LUA_ERRERR,
-	dead,
+    normal        = LUA_OK,
+    yielded       = LUA_YIELD,
+    error_runtime = LUA_ERRRUN,
+    error_memory  = LUA_ERRMEM,
+    error_gc      = LUA_ERRGCMM,
+    error_handler = LUA_ERRERR,
+    dead,
 };
 
 enum class type : int {

@@ -32,21 +32,21 @@ class coroutine : public reference {
 private:
     call_status stats = call_status::yielded;
 
-    void luacall( std::ptrdiff_t argcount, std::ptrdiff_t ) {
-#if SOL_LUA_VERSION < 503
+    void luacall(std::ptrdiff_t argcount, std::ptrdiff_t) {
+#if SOL_LUA_VERSION < 502
         stats = static_cast<call_status>(lua_resume(lua_state(), static_cast<int>(argcount)));
 #else
         stats = static_cast<call_status>(lua_resume(lua_state(), nullptr, static_cast<int>(argcount)));
-#endif // Lua 5.3
+#endif // Lua 5.1 compat
     }
 
     template<std::size_t... I, typename... Ret>
     auto invoke( types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n ) {
         luacall(n, sizeof...(Ret));
-	   int stacksize = lua_gettop(lua_state());
-	   int firstreturn = std::max(1, stacksize - static_cast<int>(sizeof...(Ret)) + 1);
-	   auto r = stack::get<std::tuple<Ret...>>(lua_state(), firstreturn);
-	   lua_pop(lua_state(), static_cast<int>(sizeof...(Ret)));
+        int stacksize = lua_gettop(lua_state());
+        int firstreturn = std::max(1, stacksize - static_cast<int>(sizeof...(Ret)) + 1);
+        auto r = stack::get<std::tuple<Ret...>>(lua_state(), firstreturn);
+        lua_pop(lua_state(), static_cast<int>(sizeof...(Ret)));
         return r;
     }
 
@@ -106,7 +106,7 @@ public:
 
     template<typename... Ret, typename... Args>
     decltype(auto) call( Args&&... args ) {
-	   push();
+        push();
         int pushcount = stack::push_args( lua_state(), std::forward<Args>( args )... );
         return invoke( lua_state(), types<Ret...>( ), std::index_sequence_for<Ret...>(), pushcount );
     }

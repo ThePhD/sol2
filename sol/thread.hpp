@@ -37,17 +37,17 @@ public:
     lua_State* thread_state () const {
         auto pp = stack::push_pop(*this);
         lua_State* lthread = lua_tothread(lua_state(), -1);
-	   return lthread;
+        return lthread;
     }
 
     thread_status status () const {
         lua_State* lthread = thread_state();
         thread_status lstat = static_cast<thread_status>(lua_status(lthread));
-	   if (lstat != thread_status::normal && lua_gettop(lthread) == 0) {
+        if (lstat != thread_status::normal && lua_gettop(lthread) == 0) {
             // No thing on the thread's stack means its dead
-		  return thread_status::dead;
-	   }
-	   return lstat;
+            return thread_status::dead;
+        }
+        return lstat;
     }
 
     static thread create (lua_State* L) {

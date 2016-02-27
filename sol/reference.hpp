@@ -61,8 +61,8 @@ private:
 
 protected:
     reference(lua_State* L, detail::global_tag) : L(L) {
-	    lua_pushglobaltable(L);
-	    ref = luaL_ref(L, LUA_REGISTRYINDEX);
+        lua_pushglobaltable(L);
+        ref = luaL_ref(L, LUA_REGISTRYINDEX);
     }
 
 public:
@@ -124,7 +124,7 @@ public:
     }
 
     explicit operator bool () const {
-	    return valid();
+        return valid();
     }
 
     type get_type() const {
