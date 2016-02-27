@@ -315,7 +315,7 @@ template<>
 struct getter<nil_t> {
     static nil_t get(lua_State* L, int index = -1) {
         if(lua_isnil(L, index) == 0) {
-            throw sol::error("not nil");
+            throw error("not nil");
         }
         return nil_t{ };
     }
@@ -796,22 +796,6 @@ inline void call(types<void>, types<Args...> ta, std::index_sequence<I...> tai, 
     check_arguments<checkargs>{}.check(ta, tai, L, start);
     fx(std::forward<FxArgs>(args)..., stack::get<Args>(L, start + I)...);
 }
-
-inline int luajit_exception_jump (lua_State* L, lua_CFunction func) {
-    try {
-        return func(L);
-    }
-    catch (const char *s) {  // Catch and convert exceptions.
-        lua_pushstring(L, s);
-    }
-    catch (const std::exception& e) {
-        lua_pushstring(L, e.what());
-    }
-    catch (...) {
-        lua_pushstring(L, "caught (...)");
-    }
-    return lua_error(L);  // Rethrow as a Lua error.
-}
 } // stack_detail
 
 inline void remove( lua_State* L, int index, int count ) {
@@ -895,7 +879,7 @@ inline call_syntax get_call_syntax(lua_State* L, const std::string& meta) {
     return call_syntax::dot;
 }
 
-inline void luajit_exception_handler(lua_State* L, int(*handler)(lua_State*, lua_CFunction) = stack_detail::luajit_exception_jump) {
+inline void luajit_exception_handler(lua_State* L, int(*handler)(lua_State*, lua_CFunction) = detail::c_trampoline) {
 #ifdef SOL_LUAJIT
     lua_pushlightuserdata(L, (void*)handler);
     luaJIT_setmode(L, -1, LUAJIT_MODE_WRAPCFUNC | LUAJIT_MODE_ON);

@@ -75,9 +75,9 @@ inline int construct(lua_State* L) {
     luaL_getmetatable(L, &meta[0]);
     if (stack::get<type>(L) == type::nil) {
         lua_pop(L, 1);
-        std::string err = "unable to get usertype metatable for ";
-        err += meta;
-        throw error(err);
+        std::string err = "sol: unable to get usertype metatable for ";
+        err += usertype_traits<T>::name;
+        return luaL_error(L, err.c_str());
     }
 
     lua_setmetatable(L, -2);
@@ -126,9 +126,9 @@ struct usertype_constructor_function : base_function {
         luaL_getmetatable(L, &meta[0]);
         if (stack::get<type>(L) == type::nil) {
             lua_pop(L, 1);
-            std::string err = "unable to get usertype metatable for ";
-            err += meta;
-            throw error(err);
+            std::string err = "sol: unable to get usertype metatable for ";
+            err += usertype_traits<T>::name;
+            return luaL_error(L, err.c_str());
         }
         lua_setmetatable(L, -2);
             

@@ -1165,48 +1165,53 @@ TEST_CASE("interop/null-to-nil-and-back", "nil should be the given type when a p
 TEST_CASE( "functions/function_result-protected_function_result", "Function result should be the beefy return type for sol::function that allows for error checking and error handlers" ) {
     sol::state lua;
     lua.open_libraries( sol::lib::base, sol::lib::debug );
-    static const char errormessage1[] = "true error message";
-    static const char errormessage2[] = "doodle";
+    static const char unhandlederrormessage[] = "true error message";
+    static const char handlederrormessage[] = "doodle";
 
     // Some function; just using a lambda to be cheap
-    auto doom = []() {
-        // Bypasses handler function: puts information directly into lua error
-        throw std::runtime_error( errormessage1 );
+    auto doomfx = []() {
+        std::cout << "doomfx called" << std::endl;
+        throw std::runtime_error( unhandlederrormessage );
     };
-    auto luadoom = [&lua]() {
+    auto luadoomfx = [&lua]() {
+        std::cout << "luadoomfx called" << std::endl;
         // Does not bypass error function, will call it
-        luaL_error( lua.lua_state(), "BIG ERROR MESSAGES!" );
+        luaL_error( lua.lua_state(), unhandlederrormessage );
     };
-    auto specialhandler = []( std::string ) {
-        return errormessage2;
-    };
+    lua.set_function("doom", doomfx);
+    lua.set_function("luadoom", luadoomfx);
 
-    lua.set_function( "doom", doom );
-    lua.set_function( "luadoom", luadoom );
-    lua.set_function( "cpphandler", specialhandler );
+    auto cpphandlerfx = []( std::string x ) {
+        std::cout << "c++ handler called with: " << x << std::endl;
+        return handlederrormessage;
+    };
+    lua.set_function( "cpphandler", cpphandlerfx );
     lua.script(
-        std::string( "function handler ( message )" )
-        + "    return '" + errormessage2 + "'"
+        std::string( "function luahandler ( message )" )
+        + "    print('lua handler called with: ' .. message)"
+        + "    return '" + handlederrormessage + "'"
         + "end"
         );
 
-    sol::protected_function func = lua[ "doom" ];
-    sol::protected_function luafunc = lua[ "luadoom" ];
-    sol::function luahandler = lua[ "handler" ];
+    sol::protected_function doom = lua[ "doom" ];
+    sol::protected_function luadoom = lua[ "luadoom" ];
+    sol::function luahandler = lua[ "luahandler" ];
     sol::function cpphandler = lua[ "cpphandler" ];
-    func.error_handler = luahandler;
-    luafunc.error_handler = cpphandler;
-
-    sol::protected_function_result result1 = func();
-    int test = lua_gettop(lua.lua_state());
-    REQUIRE(!result1.valid());
-    std::string errorstring = result1;
-    REQUIRE(errorstring == errormessage1);
+    doom.error_handler = luahandler;
+    luadoom.error_handler = cpphandler;
     
-    sol::protected_function_result result2 = luafunc();
-    REQUIRE(!result2.valid());
-    errorstring = result2;
-    REQUIRE(errorstring == errormessage2);
+    {
+	    sol::protected_function_result result = doom();
+	    REQUIRE(!result.valid());
+	    std::string errorstring = result;
+	    REQUIRE(errorstring == handlederrormessage);
+    }
+    {
+	    sol::protected_function_result result = luadoom();
+	    REQUIRE(!result.valid());
+	    std::string errorstring = result;
+	    REQUIRE(errorstring == handlederrormessage);
+    }
 }
 
 TEST_CASE("functions/destructor-tests", "Show that proper copies / destruction happens") {
@@ -1413,11 +1418,9 @@ TEST_CASE("threading/coroutines", "ensure calling a coroutine works") {
 function loop()
     while counter ~= 30
     do
-        print("Sending " .. counter);
         coroutine.yield(counter);
         counter = counter + 1;
     end
-    print("Sending " .. counter);
     return counter
 end
 )";
@@ -1429,8 +1432,8 @@ end
 
     int counter;
     for (counter = 20; counter < 31 && cr; ++counter) {
-        int x = cr();
-        if (counter != x) {
+        int value = cr();
+        if (counter != value) {
             throw std::logic_error("fuck");
         }
     }
@@ -1438,17 +1441,15 @@ end
     REQUIRE(counter == 30);
 }
 
-TEST_CASE("threading/new-thread-coroutines", "ensure calling a coroutine works") {
+TEST_CASE("threading/new-thread-coroutines", "ensure calling a coroutine works when the work is put on a different thread") {
     const auto& script = R"(counter = 20
  
 function loop()
     while counter ~= 30
     do
-        print("Sending " .. counter);
         coroutine.yield(counter);
         counter = counter + 1;
     end
-    print("Sending " .. counter);
     return counter
 end
 )";
@@ -1462,8 +1463,8 @@ end
 
     int counter;
     for (counter = 20; counter < 31 && cr; ++counter) {
-        int x = cr();
-        if (counter != x) {
+        int value = cr();
+        if (counter != value) {
             throw std::logic_error("fuck");
         }
     }

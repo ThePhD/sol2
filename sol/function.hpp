@@ -170,6 +170,12 @@ private:
             returncount = poststacksize - firstreturn;
         }
         // Handle C++ errors thrown from C++ functions bound inside of lua
+	   catch (const char* error) {
+            h.stackindex = 0;
+            stack::push(lua_state(), error);
+            firstreturn = lua_gettop(lua_state());
+            return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
+        }
         catch (const std::exception& error) {
             h.stackindex = 0;
             stack::push(lua_state(), error.what());
@@ -296,7 +302,7 @@ struct pusher<function_sig<Sigs...>> {
         dFx memfxptr(std::forward<Fx>(fx));
         auto userptr = detail::ptr(obj);
         void* userobjdata = static_cast<void*>(userptr);
-        lua_CFunction freefunc = &function_detail::static_member_function<std::decay_t<decltype(*userptr)>, uFx>::call;
+        lua_CFunction freefunc = &function_detail::upvalue_member_function<std::decay_t<decltype(*userptr)>, uFx>::call;
 
         int upvalues = stack::stack_detail::push_as_upvalues(L, memfxptr);
         upvalues += stack::push(L, userobjdata);
@@ -307,7 +313,7 @@ struct pusher<function_sig<Sigs...>> {
     template<typename Fx>
     static void set_fx(std::false_type, lua_State* L, Fx&& fx) {
         std::decay_t<Fx> target(std::forward<Fx>(fx));
-        lua_CFunction freefunc = &function_detail::static_function<Fx>::call;
+        lua_CFunction freefunc = &function_detail::upvalue_free_function<Fx>::call;
 
         int upvalues = stack::stack_detail::push_as_upvalues(L, target);
         stack::push(L, freefunc, upvalues);

@@ -125,7 +125,10 @@ if 'linux' in sys.platform:
 
 builddir = 'bin'
 objdir = 'obj'
-tests = os.path.join(builddir, 'tests')
+if 'win32' in sys.platform:
+     tests = os.path.join(builddir, 'tests.exe')
+else:
+     tests = os.path.join(builddir, 'tests')
 
 # ninja file
 ninja = ninja_syntax.Writer(open('build.ninja', 'w'))

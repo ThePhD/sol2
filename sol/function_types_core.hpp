@@ -169,8 +169,8 @@ public:
 };
 
 struct base_function {
-    virtual int operator()(lua_State*) {
-        throw error("failure to call specialized wrapped C++ function from Lua");
+    virtual int operator()(lua_State* L) {
+        return luaL_error(L, "sol: failure to call specialized wrapped C++ function from Lua");
     }
 
     virtual ~base_function() {}
@@ -178,18 +178,17 @@ struct base_function {
 
 static int base_call(lua_State* L, void* inheritancedata) {
     if (inheritancedata == nullptr) {
-        throw error("call from Lua to C++ function has null data");
+        return luaL_error(L, "sol: call from Lua to C++ function has null data");
     }
 
     base_function* pfx = static_cast<base_function*>(inheritancedata);
     base_function& fx = *pfx;
-    int r = fx(L);
-    return r;
+    return detail::trampoline(L, fx);
 }
 
-static int base_gc(lua_State*, void* udata) {
+static int base_gc(lua_State* L, void* udata) {
     if (udata == nullptr) {
-        throw error("call from lua to C++ gc function with null data");
+        return luaL_error(L, "sol: call from lua to C++ gc function with null data");
     }
 
     base_function* ptr = static_cast<base_function*>(udata);

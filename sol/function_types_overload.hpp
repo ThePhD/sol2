@@ -40,8 +40,8 @@ struct overload_traits<functor<T, Func, X>> {
 };
 
 template <std::size_t... M, typename Match, typename... Args>
-inline int overload_match_arity(types<>, std::index_sequence<>, std::index_sequence<M...>, Match&&, lua_State*, int, int, Args&&...) {
-    throw error("no matching function call takes this number of arguments and the specified types");
+inline int overload_match_arity(types<>, std::index_sequence<>, std::index_sequence<M...>, Match&&, lua_State* L, int, int, Args&&...) {
+    return luaL_error(L, "sol: no matching function call takes this number of arguments and the specified types");
 }
 
 template <typename Fx, typename... Fxs, std::size_t I, std::size_t... In, std::size_t... M, typename Match, typename... Args>
@@ -124,7 +124,6 @@ struct usertype_overloaded_function : base_function {
         auto mfx = [&](auto&&... args){ return this->call(std::forward<decltype(args)>(args)...); };
         return overload_match<functor<T, std::remove_pointer_t<std::decay_t<Functions>>>...>(mfx, L, 2);
     }
-
 };
 } // function_detail
 } // sol

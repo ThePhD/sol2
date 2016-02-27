@@ -95,7 +95,7 @@ struct usertype_function : public usertype_function_core<Function, Tp> {
     int prelude(lua_State* L) {
         this->fx.item = detail::ptr(stack::get<T>(L, 1));
         if(this->fx.item == nullptr) {
-            throw error("userdata for function call is null: are you using the wrong syntax? (use item:function/variable(...) syntax)");
+            return luaL_error(L, "sol: userdata for function call is null: are you using the wrong syntax? (use item:function/variable(...) syntax)");
         }
         return static_cast<base_t&>(*this)(meta::tuple_types<return_type>(), args_type(), Index<2>(), L);
     }
@@ -120,7 +120,7 @@ struct usertype_variable_function : public usertype_function_core<Function, Tp> 
         int argcount = lua_gettop(L);
         this->fx.item = stack::get<T*>(L, 1);
         if(this->fx.item == nullptr) {
-            throw error("userdata for member variable is null");
+            return luaL_error(L, "sol: userdata for member variable is null");
         }
         switch(argcount) {
         case 2:
@@ -128,7 +128,7 @@ struct usertype_variable_function : public usertype_function_core<Function, Tp> 
         case 3:
             return static_cast<base_t&>(*this)(meta::tuple_types<void>(), args_type(), Index<3>(), L);
         default:
-            throw error("cannot get/set userdata member variable with inappropriate number of arguments");
+            return luaL_error(L, "sol: cannot get/set userdata member variable with inappropriate number of arguments");
         }
     }
 

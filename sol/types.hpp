@@ -27,6 +27,46 @@
 #include <string>
 
 namespace sol {
+namespace detail {
+
+template <lua_CFunction f>
+inline int static_trampoline (lua_State* L) {
+    try {
+        return f(L);
+    }
+    catch (const char *s) {  // Catch and convert exceptions.
+        lua_pushstring(L, s);
+    }
+    catch (const std::exception& e) {
+        lua_pushstring(L, e.what());
+    }
+    catch (...) {
+        lua_pushstring(L, "caught (...) exception");
+    }
+    return lua_error(L);
+}
+
+template <typename Fx>
+inline int trampoline(lua_State* L, Fx&& f) {
+	try {
+		return f(L);
+	}
+	catch (const char *s) {  // Catch and convert exceptions.
+		lua_pushstring(L, s);
+	}
+	catch (const std::exception& e) {
+		lua_pushstring(L, e.what());
+	}
+	catch (...) {
+		lua_pushstring(L, "caught (...) exception");
+	}
+	return lua_error(L);
+}
+
+inline int c_trampoline(lua_State* L, lua_CFunction f) {
+    return trampoline(L, f);
+}
+}
 struct nil_t {};
 const nil_t nil {};
 inline bool operator==(nil_t, nil_t) { return true; }
