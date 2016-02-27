@@ -170,7 +170,7 @@ private:
             returncount = poststacksize - firstreturn;
         }
         // Handle C++ errors thrown from C++ functions bound inside of lua
-	   catch (const char* error) {
+        catch (const char* error) {
             h.stackindex = 0;
             stack::push(lua_state(), error);
             firstreturn = lua_gettop(lua_state());

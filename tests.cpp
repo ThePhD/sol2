@@ -1201,16 +1201,16 @@ TEST_CASE( "functions/function_result-protected_function_result", "Function resu
     luadoom.error_handler = cpphandler;
     
     {
-	    sol::protected_function_result result = doom();
-	    REQUIRE(!result.valid());
-	    std::string errorstring = result;
-	    REQUIRE(errorstring == handlederrormessage);
+        sol::protected_function_result result = doom();
+        REQUIRE(!result.valid());
+        std::string errorstring = result;
+        REQUIRE(errorstring == handlederrormessage);
     }
     {
-	    sol::protected_function_result result = luadoom();
-	    REQUIRE(!result.valid());
-	    std::string errorstring = result;
-	    REQUIRE(errorstring == handlederrormessage);
+        sol::protected_function_result result = luadoom();
+        REQUIRE(!result.valid());
+        std::string errorstring = result;
+        REQUIRE(errorstring == handlederrormessage);
     }
 }
 
