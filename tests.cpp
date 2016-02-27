@@ -387,7 +387,7 @@ TEST_CASE("simple/if", "check if if statements work through lua") {
     REQUIRE((f == lua["f"]));
 }
 
-TEST_CASE("simple/call_with_parameters", "Lua function is called with a few parameters from C++") {
+TEST_CASE("simple/call-with-parameters", "Lua function is called with a few parameters from C++") {
     sol::state lua;
 
     REQUIRE_NOTHROW(lua.script("function my_add(i, j, k) return i + j + k end"));
@@ -401,7 +401,7 @@ TEST_CASE("simple/call_with_parameters", "Lua function is called with a few para
     REQUIRE_THROWS(a = f(1, 2, "arf"));
 }
 
-TEST_CASE("simple/call_c++_function", "C++ function is called from lua") {
+TEST_CASE("simple/call-c++-function", "C++ function is called from lua") {
     sol::state lua;
 
     lua.set_function("plop_xyz", plop_xyz);
@@ -410,7 +410,7 @@ TEST_CASE("simple/call_c++_function", "C++ function is called from lua") {
     REQUIRE(lua.get<int>("x") == 11);
 }
 
-TEST_CASE("simple/call_lambda", "A C++ lambda is exposed to lua and called") {
+TEST_CASE("simple/call-lambda", "A C++ lambda is exposed to lua and called") {
     sol::state lua;
 
     int x = 0;
@@ -422,7 +422,7 @@ TEST_CASE("simple/call_lambda", "A C++ lambda is exposed to lua and called") {
     REQUIRE(x == 1);
 }
 
-TEST_CASE("advanced/get_and_call", "Checks for lambdas returning values after a get operation") {
+TEST_CASE("advanced/get-and-call", "Checks for lambdas returning values after a get operation") {
     const static std::string lol = "lol", str = "str";
     const static std::tuple<int, float, double, std::string> heh_tuple = std::make_tuple(1, 6.28f, 3.14, std::string("heh"));
     sol::state lua;
@@ -457,7 +457,7 @@ TEST_CASE("advanced/get_and_call", "Checks for lambdas returning values after a 
     REQUIRE((lua.get<sol::function>("j").call<int, float, double, std::string>() == heh_tuple));
 }
 
-TEST_CASE("advanced/operator[]_calls", "Checks for lambdas returning values using operator[]") {
+TEST_CASE("advanced/operator[]-call", "Checks for lambdas returning values using operator[]") {
     const static std::string lol = "lol", str = "str";
     const static std::tuple<int, float, double, std::string> heh_tuple = std::make_tuple(1, 6.28f, 3.14, std::string("heh"));
     sol::state lua;
@@ -492,7 +492,7 @@ TEST_CASE("advanced/operator[]_calls", "Checks for lambdas returning values usin
     REQUIRE((lua["j"].call<int, float, double, std::string>() == heh_tuple));
 }
 
-TEST_CASE("advanced/call_lambdas", "A C++ lambda is exposed to lua and called") {
+TEST_CASE("advanced/call-lambdas", "A C++ lambda is exposed to lua and called") {
     sol::state lua;
 
     int x = 0;
@@ -505,7 +505,7 @@ TEST_CASE("advanced/call_lambdas", "A C++ lambda is exposed to lua and called") 
     REQUIRE(x == 9);
 }
 
-TEST_CASE("advanced/call_referenced_obj", "A C++ object is passed by pointer/reference_wrapper to lua and invoked") {
+TEST_CASE("advanced/call-referenced_obj", "A C++ object is passed by pointer/reference_wrapper to lua and invoked") {
     sol::state lua;
 
     int x = 0;
@@ -546,7 +546,7 @@ TEST_CASE("tables/variables", "Check if tables and variables work as intended") 
     REQUIRE_NOTHROW(lua.script("assert(os.name == \"windows\")"));
 }
 
-TEST_CASE("tables/functions_variables", "Check if tables and function calls work as intended") {
+TEST_CASE("tables/functions-variables", "Check if tables and function calls work as intended") {
     sol::state lua;
     lua.open_libraries(sol::lib::base, sol::lib::os);
     auto run_script = [] (sol::state& lua) -> void {
@@ -626,7 +626,7 @@ TEST_CASE("functions/overload-resolution", "Check if overloaded function resolut
     REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2, 3))"));
 }
 
-TEST_CASE("functions/return_order_and_multi_get", "Check if return order is in the same reading order specified in Lua") {
+TEST_CASE("functions/return-order-and-multi-get", "Check if return order is in the same reading order specified in Lua") {
     const static std::tuple<int, int, int> triple = std::make_tuple(10, 11, 12);
     const static std::tuple<int, float> paired = std::make_tuple(10, 10.f);
     sol::state lua;
@@ -648,7 +648,7 @@ TEST_CASE("functions/return_order_and_multi_get", "Check if return order is in t
     REQUIRE(tcpp2 == paired);
 }
 
-TEST_CASE("functions/deducing_return_order_and_multi_get", "Check if return order is in the same reading order specified in Lua, with regular deducing calls") {
+TEST_CASE("functions/deducing-return-order-and-multi-get", "Check if return order is in the same reading order specified in Lua, with regular deducing calls") {
     const static std::tuple<int, int, int> triple = std::make_tuple(10, 11, 12);
     sol::state lua;
     lua.set_function( "f_string", []() { return "this is a string!"; } );
@@ -675,7 +675,7 @@ TEST_CASE("functions/deducing_return_order_and_multi_get", "Check if return orde
     REQUIRE(tluaget == triple);
 }
 
-TEST_CASE("functions/sol::function to std::function", "check if conversion to std::function works properly and calls with correct arguments") {
+TEST_CASE("functions/sol::function-to-std::function", "check if conversion to std::function works properly and calls with correct arguments") {
     sol::state lua;
     lua.open_libraries(sol::lib::base);
 
@@ -694,7 +694,7 @@ TEST_CASE("functions/sol::function to std::function", "check if conversion to st
       );
 }
 
-TEST_CASE("functions/returning functions from C++ and getting in lua", "check to see if returning a functor and getting a functor from lua is possible") {
+TEST_CASE("functions/returning-functions-from-C++-and-gettin-in-lua", "check to see if returning a functor and getting a functor from lua is possible") {
     sol::state lua;
     lua.open_libraries(sol::lib::base);
 
@@ -784,7 +784,7 @@ TEST_CASE("tables/usertype", "Show that we can create classes from usertype and 
     REQUIRE(cresult == 3);
 }
 
-TEST_CASE("tables/usertype constructors", "Show that we can create classes from usertype and use them with multiple constructors") {
+TEST_CASE("tables/usertype-constructors", "Show that we can create classes from usertype and use them with multiple constructors") {
 
     sol::state lua;
 
@@ -827,7 +827,7 @@ TEST_CASE("tables/usertype constructors", "Show that we can create classes from 
     REQUIRE((z.as<int>() == 9));
 }
 
-TEST_CASE("tables/usertype utility", "Show internal management of classes registered through new_usertype") {
+TEST_CASE("tables/usertype-utility", "Show internal management of classes registered through new_usertype") {
     sol::state lua;
 
     lua.new_usertype<fuser>("fuser", "add", &fuser::add, "add2", &fuser::add2);
@@ -852,7 +852,7 @@ TEST_CASE("tables/usertype utility", "Show internal management of classes regist
     REQUIRE(cresult == 3);
 }
 
-TEST_CASE("tables/usertype utility derived", "usertype classes must play nice when a derived class does not overload a publically visible base function") {
+TEST_CASE("tables/usertype-utility-derived", "usertype classes must play nice when a derived class does not overload a publically visible base function") {
     sol::state lua;
     lua.open_libraries(sol::lib::base);
     sol::constructors<sol::types<int>> basector;
@@ -925,7 +925,7 @@ TEST_CASE("tables/arbitrary-creation", "tables should be created from standard c
     REQUIRE(c.get<std::string>("project") == "sol");
 }
 
-TEST_CASE("tables/for_each", "Testing the use of for_each to get values from a lua table") {
+TEST_CASE("tables/for-each", "Testing the use of for_each to get values from a lua table") {
     sol::state lua;
     lua.open_libraries(sol::lib::base);
 
@@ -1085,7 +1085,7 @@ TEST_CASE("usertype/member-variables", "allow table-like accessors to behave as 
                ));
 }
 
-TEST_CASE("usertype/nonmember functions implement functionality", "let users set non-member functions that take unqualified T as first parameter to usertype") {
+TEST_CASE("usertype/nonmember-functions", "let users set non-member functions that take unqualified T as first parameter to usertype") {
     sol::state lua;
     lua.open_libraries( sol::lib::base );
 
@@ -1162,11 +1162,9 @@ TEST_CASE("interop/null-to-nil-and-back", "nil should be the given type when a p
         "assert(x == nil)"));
 }
 
-#ifndef SOL_LUAJIT // LuaJIT does not have error message handling support for lua_pcall, and thus this test will always fail
-TEST_CASE( "functions/function_result-protected_function", "Function result should be the beefy return type for sol::function that allows for error checking and error handlers" ) {
+TEST_CASE( "functions/function_result-protected_function_result", "Function result should be the beefy return type for sol::function that allows for error checking and error handlers" ) {
     sol::state lua;
     lua.open_libraries( sol::lib::base, sol::lib::debug );
-
     static const char errormessage1[] = "true error message";
     static const char errormessage2[] = "doodle";
 
@@ -1210,7 +1208,6 @@ TEST_CASE( "functions/function_result-protected_function", "Function result shou
     errorstring = result2;
     REQUIRE(errorstring == errormessage2);
 }
-#endif // LuaJIT Issues
 
 TEST_CASE("functions/destructor-tests", "Show that proper copies / destruction happens") {
     static int created = 0;
@@ -1344,7 +1341,7 @@ TEST_CASE("functions/overloading", "Check if overloading works properly for regu
     REQUIRE_THROWS(lua.script("func(1,2,'meow')"));
 }
 
-TEST_CASE("usertype/private constructible", "Check to make sure special snowflake types from Enterprise thingamahjongs work properly.") {
+TEST_CASE("usertype/private-constructible", "Check to make sure special snowflake types from Enterprise thingamahjongs work properly.") {
     int numsaved = factory_test::num_saved;
     int numkilled = factory_test::num_killed;
     {
@@ -1408,6 +1405,70 @@ TEST_CASE("usertype/overloading", "Check if overloading works properly for usert
     REQUIRE((lua["c"] == bark_58));
 
     REQUIRE_THROWS(lua.script("r:func(1,2,'meow')"));
+}
+
+TEST_CASE("threading/coroutines", "ensure calling a coroutine works") {
+    const auto& script = R"(counter = 20
+ 
+function loop()
+    while counter ~= 30
+    do
+        print("Sending " .. counter);
+        coroutine.yield(counter);
+        counter = counter + 1;
+    end
+    print("Sending " .. counter);
+    return counter
+end
+)";
+
+    sol::state lua;
+    lua.open_libraries(sol::lib::base, sol::lib::coroutine);
+    lua.script(script);
+    sol::coroutine cr = lua["loop"];
+
+    int counter;
+    for (counter = 20; counter < 31 && cr; ++counter) {
+        int x = cr();
+        if (counter != x) {
+            throw std::logic_error("fuck");
+        }
+    }
+    counter -= 1;
+    REQUIRE(counter == 30);
+}
+
+TEST_CASE("threading/new-thread-coroutines", "ensure calling a coroutine works") {
+    const auto& script = R"(counter = 20
+ 
+function loop()
+    while counter ~= 30
+    do
+        print("Sending " .. counter);
+        coroutine.yield(counter);
+        counter = counter + 1;
+    end
+    print("Sending " .. counter);
+    return counter
+end
+)";
+
+    sol::state lua;
+    lua.open_libraries(sol::lib::base, sol::lib::coroutine);
+    lua.script(script);
+    sol::thread runner = sol::thread::create(lua.lua_state());
+    sol::state_view runnerstate = runner.state();
+    sol::coroutine cr = lua["loop"];
+
+    int counter;
+    for (counter = 20; counter < 31 && cr; ++counter) {
+        int x = cr();
+        if (counter != x) {
+            throw std::logic_error("fuck");
+        }
+    }
+    counter -= 1;
+    REQUIRE(counter == 30);
 }
 
 TEST_CASE("issues/stack-overflow", "make sure various operations repeated don't trigger stack overflow") {

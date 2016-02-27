@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2016 Rapptz and contributors
+// Copyright (c) 2013-2016 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -29,12 +29,13 @@ class state : private std::unique_ptr<lua_State, void(*)(lua_State*)>, public st
 private:
     typedef std::unique_ptr<lua_State, void(*)(lua_State*)> unique_base;
 public:
-    using state_view::get;
-    state(lua_CFunction panic = detail::atpanic):
-    unique_base(luaL_newstate(), lua_close),
+    state(lua_CFunction panic = detail::atpanic) : unique_base(luaL_newstate(), lua_close),
     state_view(unique_base::get()) {
         set_panic(panic);
+	   sol::stack::luajit_exception_handler(unique_base::get());
     }
+
+    using state_view::get;
 };
 } // sol
 

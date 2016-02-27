@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2016 Rapptz and contributors
+// Copyright (c) 2013-2016 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -72,17 +72,17 @@ public:
     }
 };
 
-struct protected_function_result : public proxy_base<function_result> {
+struct protected_function_result : public proxy_base<protected_function_result> {
 private:
     lua_State* L;
     int index;
     int returncount;
     int popcount;
-    call_error error;
+    call_status error;
 
 public:
     protected_function_result() = default;
-    protected_function_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, call_error error = call_error::ok): L(L), index(index), returncount(returncount), popcount(popcount), error(error) {
+    protected_function_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, call_status error = call_status::ok): L(L), index(index), returncount(returncount), popcount(popcount), error(error) {
         
     }
     protected_function_result(const protected_function_result&) = default;
@@ -95,7 +95,7 @@ public:
         o.index = 0;
         o.returncount = 0;
         o.popcount = 0;
-        o.error = call_error::runtime;
+        o.error = call_status::runtime;
     }
     protected_function_result& operator=(protected_function_result&& o) {
         L = o.L;
@@ -110,12 +110,12 @@ public:
         o.index = 0;
         o.returncount = 0;
         o.popcount = 0;
-        o.error = call_error::runtime;
+        o.error = call_status::runtime;
         return *this;
     }
 
     bool valid() const {
-        return error == call_error::ok;
+        return error == call_status::ok;
     }
 
     template<typename T>

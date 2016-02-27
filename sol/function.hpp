@@ -1,6 +1,6 @@
 ﻿// The MIT License (MIT)
 
-// Copyright (c) 2013-2016 Rapptz and contributors
+// Copyright (c) 2013-2016 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -79,15 +79,8 @@ private:
     }
 
 public:
-    function( ) = default;
-    function( lua_State* L, int index = -1 ) : reference( L, index ) {
-        type_assert( L, index, type::function );
-    }
-    function( const function& ) = default;
-    function& operator=( const function& ) = default;
-    function( function&& ) = default;
-    function& operator=( function&& ) = default;
-
+    using reference::reference;
+    
     template<typename... Args>
     function_result operator()( Args&&... args ) const {
         return call<>( std::forward<Args>( args )... );
@@ -169,10 +162,10 @@ private:
         int stacksize = lua_gettop(lua_state());
         int firstreturn = std::max(1, stacksize - static_cast<int>(n) - 1);
         int returncount = 0;
-        call_error code = call_error::ok;
+        call_status code = call_status::ok;
        
         try {
-            code = static_cast<call_error>(luacall(n, LUA_MULTRET, h));
+            code = static_cast<call_status>(luacall(n, LUA_MULTRET, h));
             int poststacksize = lua_gettop(lua_state());
             returncount = poststacksize - firstreturn;
         }
@@ -181,7 +174,7 @@ private:
             h.stackindex = 0;
             stack::push(lua_state(), error.what());
             firstreturn = lua_gettop(lua_state());
-            return protected_function_result(lua_state(), firstreturn, 0, 1, call_error::runtime);
+            return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
         }
         catch (...) {
             throw;

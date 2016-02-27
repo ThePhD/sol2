@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2016 Rapptz and contributors
+// Copyright (c) 2013-2016 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -210,24 +210,24 @@ private:
     void set_resolved_function( Key&& key, Args&&... args ) {
         set(std::forward<Key>(key), function_pack<function_sig<Sig...>>(std::forward<Args>(args)...));
     }
-};
-namespace stack {
-inline table create_table(lua_State* L, int narr = 0, int nrec = 0) {
-    lua_createtable(L, narr, nrec);
-    table result(L);
-    lua_pop(L, 1);
-    return result;
-}
 
-template <typename Key, typename Value, typename... Args>
-inline table create_table(lua_State* L, int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
-    lua_createtable(L, narr, nrec);
-    table result(L);
-    result.set(std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
-    lua_pop(L, 1);
-    return result;
-}
-} // stack
+public:
+    static inline table create(lua_State* L, int narr = 0, int nrec = 0) {
+        lua_createtable(L, narr, nrec);
+        table result(L);
+        lua_pop(L, 1);
+        return result;
+    }
+
+    template <typename Key, typename Value, typename... Args>
+    static inline table create(lua_State* L, int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
+        lua_createtable(L, narr, nrec);
+        table result(L);
+        result.set(std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
+        lua_pop(L, 1);
+        return result;
+    }
+};
 } // sol
 
 #endif // SOL_TABLE_CORE_HPP

@@ -1,0 +1,115 @@
+// The MIT License (MIT)
+
+// Copyright (c) 2013-2016 Rapptz, ThePhD and contributors
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy of
+// this software and associated documentation files (the "Software"), to deal in
+// the Software without restriction, including without limitation the rights to
+// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+// the Software, and to permit persons to whom the Software is furnished to do so,
+// subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+// FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+// COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+// CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+#ifndef SOL_COROUTINE_HPP
+#define SOL_COROUTINE_HPP
+
+#include "reference.hpp"
+#include "stack.hpp"
+#include "function_result.hpp"
+#include "thread.hpp"
+
+namespace sol {
+class coroutine : public reference {
+private:
+    call_status stats = call_status::yielded;
+
+    void luacall( std::ptrdiff_t argcount, std::ptrdiff_t ) {
+#if SOL_LUA_VERSION < 503
+        stats = static_cast<call_status>(lua_resume(lua_state(), static_cast<int>(argcount)));
+#else
+        stats = static_cast<call_status>(lua_resume(lua_state(), nullptr, static_cast<int>(argcount)));
+#endif // Lua 5.3
+    }
+
+    template<std::size_t... I, typename... Ret>
+    auto invoke( types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n ) {
+        luacall(n, sizeof...(Ret));
+	   int stacksize = lua_gettop(lua_state());
+	   int firstreturn = std::max(1, stacksize - static_cast<int>(sizeof...(Ret)) + 1);
+	   auto r = stack::get<std::tuple<Ret...>>(lua_state(), firstreturn);
+	   lua_pop(lua_state(), static_cast<int>(sizeof...(Ret)));
+        return r;
+    }
+
+    template<std::size_t I, typename Ret>
+    Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n) {
+        luacall(n, 1);
+        return stack::pop<Ret>(lua_state());
+    }
+
+    template <std::size_t I>
+    void invoke(lua_State* Lthread, types<void>, std::index_sequence<I>, std::ptrdiff_t n) {
+        luacall(n, 0);
+    }
+
+    protected_function_result invoke(lua_State* Lthread, types<>, std::index_sequence<>, std::ptrdiff_t n) {
+        int stacksize = lua_gettop( Lthread );
+        int firstreturn = std::max( 1, stacksize - static_cast<int>( n ) );
+        luacall(n, LUA_MULTRET);
+        int poststacksize = lua_gettop( Lthread );
+        int returncount = poststacksize - (firstreturn - 1);
+        return protected_function_result( lua_state( ), firstreturn, returncount, returncount, status() );
+    }
+
+public:
+    coroutine(lua_State* L, int index = -1) : reference(L, index) {}
+    coroutine() = default;
+    coroutine(const coroutine&) = default;
+    coroutine& operator=(const coroutine&) = default;
+
+    call_status status() const {
+        return stats;
+    }
+
+    bool error() const {
+        call_status cs = status();
+        return cs != call_status::ok && cs != call_status::yielded;
+    }
+
+    bool runnable () const {
+        return valid() 
+            && (status() == call_status::yielded);
+    }
+
+    explicit operator bool() const {
+        return runnable();
+    }
+
+    template<typename... Args>
+    protected_function_result operator()( Args&&... args ) {
+        return call<>( std::forward<Args>( args )... );
+    }
+
+    template<typename... Ret, typename... Args>
+    decltype(auto) operator()( types<Ret...>, Args&&... args ) {
+        return call<Ret...>( std::forward<Args>( args )... );
+    }
+
+    template<typename... Ret, typename... Args>
+    decltype(auto) call( Args&&... args ) {
+	   push();
+        int pushcount = stack::push_args( lua_state(), std::forward<Args>( args )... );
+        return invoke( lua_state(), types<Ret...>( ), std::index_sequence_for<Ret...>(), pushcount );
+    }
+};
+}
+#endif // SOL_COUROUTINE_HPP

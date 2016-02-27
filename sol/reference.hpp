@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2016 Rapptz and contributors
+// Copyright (c) 2013-2016 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -64,10 +64,11 @@ protected:
 	    lua_pushglobaltable(L);
 	    ref = luaL_ref(L, LUA_REGISTRYINDEX);
     }
+
 public:
     reference() noexcept = default;
 
-    reference(lua_State* L, int index): L(L) {
+    reference(lua_State* L, int index = -1): L(L) {
         lua_pushvalue(L, index);
         ref = luaL_ref(L, LUA_REGISTRYINDEX);
     }
@@ -120,6 +121,10 @@ public:
 
     bool valid () const {
         return !(ref == LUA_NOREF);
+    }
+
+    explicit operator bool () const {
+	    return valid();
     }
 
     type get_type() const {

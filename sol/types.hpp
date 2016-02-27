@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2016 Rapptz and contributors
+// Copyright (c) 2013-2016 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -67,12 +67,23 @@ enum class call_syntax {
     colon = 1
 };
 
-enum class call_error : int {
-    ok = LUA_OK,
+enum class call_status : int {
+    ok      = LUA_OK,
+    yielded = LUA_YIELD,
     runtime = LUA_ERRRUN,
-    memory = LUA_ERRMEM,
+    memory  = LUA_ERRMEM,
     handler = LUA_ERRERR,
-    gc = LUA_ERRGCMM
+    gc      = LUA_ERRGCMM
+};
+
+enum class thread_status : int {
+	normal        = LUA_OK,
+	yielded       = LUA_YIELD,
+	error_runtime = LUA_ERRRUN,
+	error_memory  = LUA_ERRMEM,
+	error_gc      = LUA_ERRGCMM,
+	error_handler = LUA_ERRERR,
+	dead,
 };
 
 enum class type : int {
@@ -124,6 +135,7 @@ inline std::string type_name(lua_State*L, type t) {
     return lua_typename(L, static_cast<int>(t));
 }
 
+class reference;
 template<typename T>
 class usertype;
 template <bool>
@@ -132,6 +144,8 @@ typedef table_core<false> table;
 typedef table_core<true> global_table;
 class function;
 class protected_function;
+class coroutine;
+class thread;
 class object;
 
 template <typename T, typename = void>
@@ -171,6 +185,12 @@ template <>
 struct lua_type_of<function> : std::integral_constant<type, type::function> {};
 
 template <>
+struct lua_type_of<coroutine> : std::integral_constant<type, type::function> {};
+
+template <>
+struct lua_type_of<thread> : std::integral_constant<type, type::thread> {};
+
+template <>
 struct lua_type_of<protected_function> : std::integral_constant<type, type::function> {};
 
 template <typename Signature>
@@ -186,7 +206,7 @@ template <typename T>
 struct lua_type_of<T, std::enable_if_t<std::is_enum<T>::value>> : std::integral_constant<type, type::number> {};
 
 template <typename T>
-struct is_lua_primitive : std::integral_constant<bool, type::userdata != lua_type_of<meta::Unqualified<T>>::value> { };
+struct is_lua_primitive : std::integral_constant<bool, type::userdata != lua_type_of<meta::Unqualified<T>>::value || std::is_base_of<reference, meta::Unqualified<T>>::value> { };
 
 template <typename T>
 struct is_proxy_primitive : is_lua_primitive<T> { };

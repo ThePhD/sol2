@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2016 Rapptz and contributors
+// Copyright (c) 2013-2016 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -796,6 +796,22 @@ inline void call(types<void>, types<Args...> ta, std::index_sequence<I...> tai, 
     check_arguments<checkargs>{}.check(ta, tai, L, start);
     fx(std::forward<FxArgs>(args)..., stack::get<Args>(L, start + I)...);
 }
+
+inline int luajit_exception_jump (lua_State* L, lua_CFunction func) {
+    try {
+        return func(L);
+    }
+    catch (const char *s) {  // Catch and convert exceptions.
+        lua_pushstring(L, s);
+    }
+    catch (const std::exception& e) {
+        lua_pushstring(L, e.what());
+    }
+    catch (...) {
+        lua_pushstring(L, "caught (...)");
+    }
+    return lua_error(L);  // Rethrow as a Lua error.
+}
 } // stack_detail
 
 inline void remove( lua_State* L, int index, int count ) {
@@ -877,6 +893,20 @@ inline call_syntax get_call_syntax(lua_State* L, const std::string& meta) {
     }
     lua_pop(L, 1);
     return call_syntax::dot;
+}
+
+inline void luajit_exception_handler(lua_State* L, int(*handler)(lua_State*, lua_CFunction) = stack_detail::luajit_exception_jump) {
+#ifdef SOL_LUAJIT
+    lua_pushlightuserdata(L, (void*)handler);
+    luaJIT_setmode(L, -1, LUAJIT_MODE_WRAPCFUNC | LUAJIT_MODE_ON);
+    lua_pop(L, 1);
+#endif
+}
+
+inline void luajit_exception_off(lua_State* L) {
+#ifdef SOL_LUAJIT
+    luaJIT_setmode(L, -1, LUAJIT_MODE_WRAPCFUNC | LUAJIT_MODE_OFF);
+#endif
 }
 } // stack
 } // sol

@@ -19,12 +19,44 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_HPP
-#define SOL_HPP
+#ifndef SOL_THREAD_HPP
+#define SOL_THREAD_HPP
 
-#include "sol/state.hpp"
-#include "sol/object.hpp"
-#include "sol/function.hpp"
-#include "sol/coroutine.hpp"
+#include "reference.hpp"
+#include "stack.hpp"
 
-#endif // SOL_HPP
+namespace sol {
+class thread : public reference {
+public:
+    using reference::reference;
+
+    state_view state() const {
+        return state_view(this->thread_state());
+    }
+
+    lua_State* thread_state () const {
+        auto pp = stack::push_pop(*this);
+        lua_State* lthread = lua_tothread(lua_state(), -1);
+	   return lthread;
+    }
+
+    thread_status status () const {
+        lua_State* lthread = thread_state();
+        thread_status lstat = static_cast<thread_status>(lua_status(lthread));
+	   if (lstat != thread_status::normal && lua_gettop(lthread) == 0) {
+            // No thing on the thread's stack means its dead
+		  return thread_status::dead;
+	   }
+	   return lstat;
+    }
+
+    static thread create (lua_State* L) {
+        lua_newthread(L);
+        thread result(L);
+        lua_pop(L, 1);
+        return result;
+    }
+};
+} // sol
+
+#endif // SOL_THREAD_HPP
