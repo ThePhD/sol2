@@ -39,7 +39,7 @@ struct upvalue_free_function {
     }
 
     static int call (lua_State* L) {
-        return detail::static_trampoline<&real_call>(L);
+        return detail::static_trampoline<(&real_call)>(L);
     }
 
     int operator()(lua_State* L) {
@@ -62,7 +62,7 @@ struct upvalue_member_function {
     }
 
     static int call (lua_State* L) {
-        return detail::static_trampoline<&real_call>(L);
+        return detail::static_trampoline<(&real_call)>(L);
     }
 
     int operator()(lua_State* L) {
