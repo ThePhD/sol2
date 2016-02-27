@@ -57,15 +57,15 @@ private:
     }
 
     template <std::size_t I>
-    void invoke(lua_State* Lthread, types<void>, std::index_sequence<I>, std::ptrdiff_t n) {
+    void invoke(types<void>, std::index_sequence<I>, std::ptrdiff_t n) {
         luacall(n, 0);
     }
 
-    protected_function_result invoke(lua_State* Lthread, types<>, std::index_sequence<>, std::ptrdiff_t n) {
-        int stacksize = lua_gettop( Lthread );
+    protected_function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n) {
+        int stacksize = lua_gettop( lua_state() );
         int firstreturn = std::max( 1, stacksize - static_cast<int>( n ) );
         luacall(n, LUA_MULTRET);
-        int poststacksize = lua_gettop( Lthread );
+        int poststacksize = lua_gettop(lua_state());
         int returncount = poststacksize - (firstreturn - 1);
         return protected_function_result( lua_state( ), firstreturn, returncount, returncount, status() );
     }
@@ -108,7 +108,7 @@ public:
     decltype(auto) call( Args&&... args ) {
         push();
         int pushcount = stack::push_args( lua_state(), std::forward<Args>( args )... );
-        return invoke( lua_state(), types<Ret...>( ), std::index_sequence_for<Ret...>(), pushcount );
+        return invoke( types<Ret...>( ), std::index_sequence_for<Ret...>(), pushcount );
     }
 };
 }

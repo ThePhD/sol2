@@ -900,12 +900,17 @@ inline void luajit_exception_handler(lua_State* L, int(*handler)(lua_State*, lua
     lua_pushlightuserdata(L, (void*)handler);
     luaJIT_setmode(L, -1, LUAJIT_MODE_WRAPCFUNC | LUAJIT_MODE_ON);
     lua_pop(L, 1);
+#else
+    (void)L;
+    (void)handler;
 #endif
 }
 
 inline void luajit_exception_off(lua_State* L) {
 #ifdef SOL_LUAJIT
     luaJIT_setmode(L, -1, LUAJIT_MODE_WRAPCFUNC | LUAJIT_MODE_OFF);
+#else
+    (void)L;
 #endif
 }
 } // stack
