@@ -163,16 +163,19 @@ private:
         int firstreturn = std::max(1, stacksize - static_cast<int>(n) - 1);
         int returncount = 0;
         call_status code = call_status::ok;
-#ifdef SOL_NO_EXCEPTIONS       
+#ifdef SOL_NO_EXCEPTIONS
+        code = static_cast<call_status>(luacall(n, LUA_MULTRET, h));
+        int poststacksize = lua_gettop(lua_state());
+        returncount = poststacksize - firstreturn;
+#else
         try {
-#endif // No Exceptions
             code = static_cast<call_status>(luacall(n, LUA_MULTRET, h));
             int poststacksize = lua_gettop(lua_state());
             returncount = poststacksize - firstreturn;
-#ifdef SOL_NO_EXCEPTIONS       
         }
         // Handle C++ errors thrown from C++ functions bound inside of lua
         catch (const char* error) {
+            h.stackindex = 0;
             stack::push(lua_state(), error);
             firstreturn = lua_gettop(lua_state());
             return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);

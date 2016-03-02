@@ -31,36 +31,12 @@ namespace detail {
 #ifdef SOL_NO_EXCEPTIONS
 template <lua_CFunction f>
 inline int static_trampoline (lua_State* L) {
-    try {
-        return f(L);
-    }
-    catch (const char *s) {  // Catch and convert exceptions.
-        lua_pushstring(L, s);
-    }
-    catch (const std::exception& e) {
-        lua_pushstring(L, e.what());
-    }
-    catch (...) {
-        lua_pushstring(L, "caught (...) exception");
-    }
-    return lua_error(L);
+    return f(L);
 }
 
 template <typename Fx>
 inline int trampoline(lua_State* L, Fx&& f) {
-    try {
-        return f(L);
-    }
-    catch (const char *s) {  // Catch and convert exceptions.
-        lua_pushstring(L, s);
-    }
-    catch (const std::exception& e) {
-        lua_pushstring(L, e.what());
-    }
-    catch (...) {
-        lua_pushstring(L, "caught (...) exception");
-    }
-    return lua_error(L);
+    return f(L);
 }
 
 inline int c_trampoline(lua_State* L, lua_CFunction f) {
@@ -69,12 +45,36 @@ inline int c_trampoline(lua_State* L, lua_CFunction f) {
 #else
 template <lua_CFunction f>
 inline int static_trampoline (lua_State* L) {
-    return f(L);
+    try {
+        return f(L);
+    }
+    catch (const char *s) {  // Catch and convert exceptions.
+        lua_pushstring(L, s);
+    }
+    catch (const std::exception& e) {
+        lua_pushstring(L, e.what());
+    }
+    catch (...) {
+        lua_pushstring(L, "caught (...) exception");
+    }
+    return lua_error(L);
 }
 
 template <typename Fx>
 inline int trampoline(lua_State* L, Fx&& f) {
-    return f(L);
+    try {
+        return f(L);
+    }
+    catch (const char *s) {  // Catch and convert exceptions.
+        lua_pushstring(L, s);
+    }
+    catch (const std::exception& e) {
+        lua_pushstring(L, e.what());
+    }
+    catch (...) {
+        lua_pushstring(L, "caught (...) exception");
+    }
+    return lua_error(L);
 }
 
 inline int c_trampoline(lua_State* L, lua_CFunction f) {
