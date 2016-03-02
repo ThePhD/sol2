@@ -84,11 +84,11 @@ typedef struct luaL_Buffer_52 {
 
 #define lua_rawlen(L, i) lua_objlen(L, i)
 
-void lua_callk(lua_State *L, int nargs, int nresults, lua_KContext, lua_KFunction) {
+inline void lua_callk(lua_State *L, int nargs, int nresults, lua_KContext, lua_KFunction) {
     // should probably warn the user of Lua 5.1 that continuation isn't supported...
     lua_call(L, nargs, nresults);
 }
-int lua_pcallk(lua_State *L, int nargs, int nresults, int errfunc, lua_KContext, lua_KFunction) {
+inline int lua_pcallk(lua_State *L, int nargs, int nresults, int errfunc, lua_KContext, lua_KFunction) {
     // should probably warn the user of Lua 5.1 that continuation isn't supported...
     return lua_pcall(L, nargs, nresults, errfunc);
 }
