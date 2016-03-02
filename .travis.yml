@@ -141,7 +141,9 @@ script:
 - export_compiler_vars
 - ninja --version
 - mkdir build; cd build;
-- cmake .. -DSOL2_LUA_VERSION=${LUA_VERSION} -G Ninja && ninja check # This should also do examples..
+- cmake .. -DSOL2_LUA_VERSION=${LUA_VERSION} -G Ninja 
+- ninja check 
+- ninja examples
 
 notifications:
     email:
