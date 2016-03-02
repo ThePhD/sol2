@@ -61,7 +61,7 @@ Sol makes use of C++11/14 features. GCC 4.9 and Clang 3.4 (with std=c++1z and ap
 officially supported and CI-tested compilers are:
 
 - GCC 4.9.0+
-- Clang 3.5+
+- Clang 3.6+
 - Visual Studio 2015 Community (Visual C++ 14.0) and above (tested manually)
 
 ## Caveats

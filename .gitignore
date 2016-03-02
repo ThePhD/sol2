@@ -10,6 +10,7 @@
 .vs/
 Debug/
 Release/
+Testing/
 x64/
 *.vcxproj
 *.vcxproj.filters
@@ -17,11 +18,22 @@ x64/
 *.lastbuildstate
 *.idb
 *.sln
+*.sdf
 *.gitattributes
+*.VC.opendb
+
+# CMake
+CMakeCache.txt
+CTestTestfile.cmake
+DartConfiguration.tcl
+cmake_install.cmake
+CMakeFiles/
+vendor/
 
 # Compiler outputs
 obj/*
 bin/*
+build*
 
 # Dropbox interference
 .dropbox*
@@ -38,18 +50,14 @@ main2.cpp
 main.cpp
 
 # Local Lua Testbeds
-lua-5.3.2/
-lua-5.3.1/
-lua-5.3.0/
-lua-5.2.4/
-lua-5.2.2/
-lua-5.2.3/
-lua-5.1.5/
-luajit-2.0.4/
-luajit-2.0.3/
+lua-*/
+luajit-*/
 include/
-liblua.a
-lib/liblua5.2.a
+lib*
+lib/
 
-# Windows Crap
+# Windows
 desktop.ini
+
+# OSX
+.DS_Store
