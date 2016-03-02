@@ -42,4 +42,11 @@
 #define SOL_LUA_VERSION 502
 #endif // Lua Version 502, 501 || luajit, 500 
 
+#ifdef _MSC_VER
+#if _HAS_EXCEPTIONS == 0
+// This means VC++ has no exceptions
+// Maybe: automatically define SOL_NO_EXCEPTIONS ?
+#endif // Automatic Exception Detection
+#endif // VC++ Exception Mechanism
+
 #endif // SOL_VERSION_HPP

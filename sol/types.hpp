@@ -28,7 +28,7 @@
 
 namespace sol {
 namespace detail {
-
+#ifdef SOL_NO_EXCEPTIONS
 template <lua_CFunction f>
 inline int static_trampoline (lua_State* L) {
     try {
@@ -66,6 +66,21 @@ inline int trampoline(lua_State* L, Fx&& f) {
 inline int c_trampoline(lua_State* L, lua_CFunction f) {
     return trampoline(L, f);
 }
+#else
+template <lua_CFunction f>
+inline int static_trampoline (lua_State* L) {
+    return f(L);
+}
+
+template <typename Fx>
+inline int trampoline(lua_State* L, Fx&& f) {
+    return f(L);
+}
+
+inline int c_trampoline(lua_State* L, lua_CFunction f) {
+    return trampoline(L, f);
+}
+#endif // Exceptions vs. No Exceptions
 }
 struct nil_t {};
 const nil_t nil {};
