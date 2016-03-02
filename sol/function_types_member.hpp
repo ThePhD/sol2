@@ -36,8 +36,12 @@ struct functor_function : public base_function {
     template<typename... Args>
     functor_function(Args&&... args): fx(std::forward<Args>(args)...) {}
 
+    int call(lua_State* L) {
+        return stack::call_into_lua(meta::tuple_types<return_type>(), args_types(), fx, L, 1);
+    }
+
     virtual int operator()(lua_State* L) override {
-        auto f = [&](lua_State* L) -> int { return stack::call_into_lua(meta::tuple_types<return_type>(), args_types(), fx, L, 1);};
+        auto f = [&](lua_State* L) -> int { return this->call(L);};
         return detail::trampoline(L, f);
     }
 };
@@ -64,8 +68,12 @@ struct member_function : public base_function {
     template<typename Tm, typename... Args>
     member_function(Tm&& m, Args&&... args): fx(std::forward<Tm>(m), std::forward<Args>(args)...) {}
 
+    int call(lua_State* L) {
+        return stack::call_into_lua(meta::tuple_types<return_type>(), args_types(), fx, L, 1);
+    }
+
     virtual int operator()(lua_State* L) override {
-        auto f = [&](lua_State* L) -> int { return stack::call_into_lua(meta::tuple_types<return_type>(), args_types(), fx, L, 1);};
+        auto f = [&](lua_State* L) -> int { return this->call(L);};
         return detail::trampoline(L, f);
     }
 };
