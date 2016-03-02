@@ -30,7 +30,7 @@ template<typename Function>
 struct functor_function : public base_function {
     typedef decltype(&Function::operator()) function_type;
     typedef meta::function_return_t<function_type> return_type;
-    typedef meta::function_args_t<function_type> args_type;
+    typedef meta::function_args_t<function_type> args_types;
     Function fx;
 
     template<typename... Args>
