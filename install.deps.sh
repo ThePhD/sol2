@@ -70,7 +70,8 @@ install_os_deps() {
                 *) echo "Invalid compiler version" ; exit 2 ;;
             esac
 
-            brew install ninja
+            brew unlink cmake
+            brew install cmake ninja
 
             local lua_pkg
             case ${LUA_VERSION} in

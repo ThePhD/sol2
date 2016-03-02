@@ -3,6 +3,36 @@ language: cpp
 git:
     depth: 5
 
+addons: 
+  apt:
+    sources: &sources
+    - ubuntu-toolchain-r-test # cmake requirement
+    - llvm-toolchain-precise-3.5
+    - llvm-toolchain-precise-3.6
+    - george-edison55-precise-backports
+    
+    packages: &core-pkgs
+    - [cmake, cmake-data]
+    - ninja-build
+    
+    packages: &gcc-49
+    - *core-pkgs
+    - [gcc-4.9, g++-4.9]
+
+    packages: &gcc-5
+    - *core-pkgs
+    - [gcc-5, g++-5]
+
+    packages: &clang-36
+    - *core-pkgs
+    - clang-3.6
+
+    packages: &luajit 
+    - libluajit-5.1-dev
+
+    packages: &lua52 
+    - liblua5.2-dev
+
 matrix:
   include: 
     - os: linux
@@ -11,12 +41,10 @@ matrix:
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test
+          - *sources
           packages:
-          - gcc-4.9
-          - g++-4.9
-          - ninja-build
-          - liblua5.2-dev
+          - *gcc-49
+          - *lua52
 
     # gcc-5
     - os: linux
@@ -25,12 +53,10 @@ matrix:
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test
+          - *sources
           packages:
-          - gcc-4.9
-          - g++-4.9
-          - ninja-build
-          - libluajit-5.1-dev
+          - *gcc-49
+          - *luajit
 
     # gcc-5
     - os: linux
@@ -39,12 +65,10 @@ matrix:
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test
+          - *sources
           packages:
-          - gcc-5
-          - g++-5
-          - ninja-build
-          - liblua5.2-dev
+          - *gcc-5
+          - *lua52
 
     # gcc-5
     - os: linux
@@ -53,41 +77,22 @@ matrix:
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test
+          - *sources
           packages:
-          - gcc-5
-          - g++-5
-          - ninja-build
-          - libluajit-5.1-dev
+          - *gcc-5
+          - *luajit
 
     # clang
-    - os: linux
-      env: COMPILER=clang++-3.5 LUA_VERSION=lua52
-      compiler: clang
-      addons:
-        apt:
-          sources:
-          - ubuntu-toolchain-r-test
-          - llvm-toolchain-precise-3.5
-          packages:
-          - gcc-4.9
-          - g++-4.9
-          - clang-3.5
-          - ninja-build
-          - liblua5.2-dev
-
     - os: linux
       env: COMPILER=clang++-3.6 LUA_VERSION=lua52
       compiler: clang
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test
-          - llvm-toolchain-precise-3.6
+          - *sources
           packages:
-          - clang-3.6
-          - ninja-build
-          - liblua5.2-dev
+          - *clang-36
+          - *lua52
 
     - os: linux
       env: COMPILER=clang++-3.6 LUA_VERSION=luajit51
@@ -95,12 +100,10 @@ matrix:
       addons:
         apt:
           sources:
-          - ubuntu-toolchain-r-test
-          - llvm-toolchain-precise-3.6
+          - *sources
           packages:
-          - clang-3.6
-          - ninja-build
-          - libluajit-5.1-dev
+          - *clang-36
+          - *luajit
 
     - os: osx
       osx_image: xcode7
