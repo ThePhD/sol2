@@ -124,6 +124,12 @@ matrix:
     - os: osx
       compiler: clang 
 
+    # Due to https://github.com/ThePhD/sol2/issues/24
+    - os: osx
+      osx_image: xcode7
+      compiler: gcc
+      env: COMPILER=g++-5 LUA_VERSION=luajit51
+
 before_install:
 - source ./install.deps.sh
 
