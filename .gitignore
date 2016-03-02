@@ -10,6 +10,7 @@
 .vs/
 Debug/
 Release/
+Testing/
 x64/
 *.vcxproj
 *.vcxproj.filters
@@ -17,7 +18,17 @@ x64/
 *.lastbuildstate
 *.idb
 *.sln
+*.sdf
 *.gitattributes
+*.VC.opendb
+
+# CMake
+CMakeCache.txt
+CTestTestfile.cmake
+DartConfiguration.tcl
+cmake_install.cmake
+CMakeFiles/
+vendor/
 
 # Compiler outputs
 obj/*
