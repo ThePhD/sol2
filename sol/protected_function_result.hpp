@@ -19,8 +19,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_FUNCTION_RESULT_HPP
-#define SOL_FUNCTION_RESULT_HPP
+#ifndef SOL_PROTECTED_FUNCTION_RESULT_HPP
+#define SOL_PROTECTED_FUNCTION_RESULT_HPP
 
 #include "reference.hpp"
 #include "tuple.hpp"
@@ -28,38 +28,50 @@
 #include "proxy_base.hpp"
 
 namespace sol {
-struct function_result : public proxy_base<function_result> {
+struct protected_function_result : public proxy_base<protected_function_result> {
 private:
     lua_State* L;
     int index;
     int returncount;
+    int popcount;
+    call_status error;
 
 public:
-    function_result() = default;
-    function_result(lua_State* L, int index = -1, int returncount = 0): L(L), index(index), returncount(returncount) {
+    protected_function_result() = default;
+    protected_function_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, call_status error = call_status::ok): L(L), index(index), returncount(returncount), popcount(popcount), error(error) {
         
     }
-    function_result(const function_result&) = default;
-    function_result& operator=(const function_result&) = default;
-    function_result(function_result&& o) : L(o.L), index(o.index), returncount(o.returncount) {
+    protected_function_result(const protected_function_result&) = default;
+    protected_function_result& operator=(const protected_function_result&) = default;
+    protected_function_result(protected_function_result&& o) : L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), error(o.error) {
         // Must be manual, otherwise destructor will screw us
         // return count being 0 is enough to keep things clean
         // but will be thorough
         o.L = nullptr;
         o.index = 0;
         o.returncount = 0;
+        o.popcount = 0;
+        o.error = call_status::runtime;
     }
-    function_result& operator=(function_result&& o) {
+    protected_function_result& operator=(protected_function_result&& o) {
         L = o.L;
         index = o.index;
         returncount = o.returncount;
+        popcount = o.popcount;
+        error = o.error;
         // Must be manual, otherwise destructor will screw us
         // return count being 0 is enough to keep things clean
         // but will be thorough
         o.L = nullptr;
         o.index = 0;
         o.returncount = 0;
+        o.popcount = 0;
+        o.error = call_status::runtime;
         return *this;
+    }
+
+    bool valid() const {
+        return error == call_status::ok;
     }
 
     template<typename T>
@@ -67,8 +79,8 @@ public:
         return stack::get<T>(L, index);
     }
 
-    ~function_result() {
-        lua_pop(L, returncount);
+    ~protected_function_result() {
+        stack::remove(L, index, popcount);
     }
 };
 } // sol

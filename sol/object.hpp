@@ -25,6 +25,7 @@
 #include "reference.hpp"
 #include "stack.hpp"
 #include "function.hpp"
+#include "protected_function.hpp"
 
 namespace sol {
 class object : public reference {

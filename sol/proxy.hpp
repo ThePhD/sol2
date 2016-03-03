@@ -25,6 +25,7 @@
 #include "traits.hpp"
 #include "object.hpp"
 #include "function.hpp"
+#include "protected_function.hpp"
 #include "proxy_base.hpp"
 
 namespace sol {
