@@ -1,5 +1,6 @@
 #include <sol.hpp>
 #include <cassert>
+#include <iostream>
 
 inline int my_add(int x, int y) {
     return x + y;
@@ -46,17 +47,27 @@ int main() {
 	// calling a stateful lambda modifies the value
 	lua.script("inc()");
 	assert(x == 10);
+	if (x == 10) {
+		// Do something based on this information
+		std::cout << "Yahoo!" << std::endl;
+	}
 
 	// this can be done as many times as you want
 	lua.script("inc()\ninc()\ninc()");
 	assert(x == 40);
-
+	if (x == 40) {
+		// Do something based on this information
+		std::cout << "Yahoo!" << std::endl;
+	}
 	// retrieval of a function is done similarly
 	// to other variables, using sol::function
 	sol::function add = lua["my_add"];
 	int value = add(10, 11);
 	assert(add.call<int>(10, 11) == 21);
 	assert(value == 21);
+	if (value == 21) {
+		std::cout << "Woo, it's 21!" << std::endl;
+	}
 
 	// multi-return functions are supported using
 	// std::tuple as the interface.
@@ -76,8 +87,7 @@ int main() {
 	// you can even overload functions
 	// just pass in the different functions
 	// you want to pack into a single name:
-	// make SURE they take different number of
-	// arguments/different types!
+	// make SURE they take different types!
 	
 	lua.set_function("func", sol::overload([](int x) { return x; }, make_string, my_add));
 

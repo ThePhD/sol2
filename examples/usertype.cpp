@@ -60,7 +60,7 @@ int main() {
                "y = x:test(10)");
 
     auto y = lua.get<int>("y");
-    assert(y == 14);
+    std::cout << y << std::endl; // show 14
 
     // if you want a class to have more than one constructor
     // the way to do so is through set_userdata and creating

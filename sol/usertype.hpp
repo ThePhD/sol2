@@ -237,7 +237,7 @@ private:
         // Insert bubble to keep with compile-time argument count (simpler and cheaper to do)
         functions.push_back(nullptr);
         constructfunc = function_detail::construct<T, Args...>;
-        metafunctiontable.push_back({ functionnames.back().c_str(), constructfunc });
+        metafunctiontable.push_back({ name.c_str(), constructfunc });
     }
 
     template<std::size_t N>

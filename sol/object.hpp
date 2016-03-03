@@ -35,8 +35,6 @@ public:
     template<typename T>
     decltype(auto) as() const {
         push();
-        type actual = stack::get<type>(lua_state());
-        type_assert(lua_state(), -1, type_of<T>(), actual);
         return stack::pop<T>(lua_state());
     }
 

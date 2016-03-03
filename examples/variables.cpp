@@ -1,5 +1,5 @@
 #include <sol.hpp>
-#include <cassert>
+#include <iostream>
 
 int main() {
     sol::state lua;
@@ -26,9 +26,9 @@ int main() {
     std::string y2;
     std::tie(x2, y2) = lua.get<int, std::string>("x", "y");
 
-    // assert the values
-    assert(x == 10);
-    assert(y == "hello");
-    assert(x2 == 10);
-    assert(y2 == "hello");
+    // show the values
+    std::cout << x << std::endl;
+    std::cout << y << std::endl;
+    std::cout << x2 << std::endl;
+    std::cout << y2 << std::endl;
 }

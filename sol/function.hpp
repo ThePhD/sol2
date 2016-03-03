@@ -163,26 +163,33 @@ private:
         int firstreturn = std::max(1, stacksize - static_cast<int>(n) - 1);
         int returncount = 0;
         call_status code = call_status::ok;
-#ifdef SOL_NO_EXCEPTIONS
-        code = static_cast<call_status>(luacall(n, LUA_MULTRET, h));
-        int poststacksize = lua_gettop(lua_state());
-        returncount = poststacksize - firstreturn;
-#else
+#ifndef SOL_NO_EXCEPTIONS
+	   auto onexcept = [&](const char* error) {
+            h.stackindex = 0;
+            if (h.target.valid()) {
+                h.target.push();
+                stack::push(lua_state(), error);
+                lua_call(lua_state(), 1, 1);
+            }
+		  else {
+                stack::push(lua_state(), error);
+		  }
+	   };
         try {
+#endif // No Exceptions
             code = static_cast<call_status>(luacall(n, LUA_MULTRET, h));
             int poststacksize = lua_gettop(lua_state());
             returncount = poststacksize - firstreturn;
+#ifndef SOL_NO_EXCEPTIONS
         }
         // Handle C++ errors thrown from C++ functions bound inside of lua
         catch (const char* error) {
-            h.stackindex = 0;
-            stack::push(lua_state(), error);
+            onexcept(error);
             firstreturn = lua_gettop(lua_state());
             return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
         }
         catch (const std::exception& error) {
-            h.stackindex = 0;
-            stack::push(lua_state(), error.what());
+            onexcept(error.what());
             firstreturn = lua_gettop(lua_state());
             return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
         }
@@ -347,7 +354,7 @@ struct pusher<function_sig<Sigs...>> {
     template<typename... Args>
     static int push(lua_State* L, Args&&... args) {
         // Set will always place one thing (function) on the stack
-        set(L, std::forward<Args>(args)...);
+        set<Sigs...>(L, std::forward<Args>(args)...);
         return 1;
     }
 };

@@ -18,9 +18,6 @@ int main() {
                 "}");
 
 
-    auto t2 = lua.get<sol::table>("table2");
-    auto nestedTable = t2.get<sol::table>("nestedTable");
-
     /* Shorter Syntax: */
     // using the values stored in table1
     /*std::cout << (std::string)lua["table1"][1] << " "
@@ -29,18 +26,19 @@ int main() {
     // some retrieval of values from the nested table
     // the cleaner way of doing things
     // chain off the the get<>() / [] results
+    auto t2 = lua.get<sol::table>("table2");
+    auto nestedTable = t2.get<sol::table>("nestedTable");
+    // Alternatively:
+    //sol::table t2 = lua["table2"];
+    //sol::table nestedTable = t2["nestedTable"];
+    
     std::string x = lua["table2"]["nestedTable"]["key2"];
     std::cout << "nested table: key1 : " << nestedTable.get<std::string>("key1") << ", key2: "
         << x
         << '\n';
     std::cout << "name of t2: " << t2.get<std::string>("name") << '\n';
-#ifndef _MSC_VER
-    // VC++ has a bug in its implementation and 
-    // I've filed a bug against the compiler at Microsoft, 
-    // but the following
-    // works on g++ and clang++
-    std::cout << "name of t2: " << (std::string)t2["name"] << '\n';
-#endif // VC++ being a dumb
+    std::string t2name = t2["name"];
+    std::cout << "name of t2: " << t2name << '\n';
 
     /* Longer Syntax: */
     // using the values stored in table1

@@ -313,10 +313,7 @@ struct getter<const char*> {
 
 template<>
 struct getter<nil_t> {
-    static nil_t get(lua_State* L, int index = -1) {
-        if(lua_isnil(L, index) == 0) {
-            throw error("not nil");
-        }
+    static nil_t get(lua_State*, int = -1) {
         return nil_t{ };
     }
 };
@@ -869,7 +866,6 @@ inline int call_into_lua(types<Ret0, Ret...>, types<Args...> ta, Fx&& fx, lua_St
 }
 
 inline call_syntax get_call_syntax(lua_State* L, const std::string& meta) {
-    type metatype = stack::get<type>(L);
     luaL_getmetatable(L, meta.c_str());
     if (lua_compare(L, -1, -2, LUA_OPEQ) == 1) {
         lua_pop(L, 1);

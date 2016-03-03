@@ -131,7 +131,7 @@ script:
 - echo "Configuration info:"
 - export_compiler_vars
 - ninja --version
-- ./bootstrap.py --ci && ninja
+- ./bootstrap.py --ci && ninja && ninja examples
 
 notifications:
     email:

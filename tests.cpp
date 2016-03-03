@@ -1193,12 +1193,16 @@ TEST_CASE( "functions/function_result-protected_function_result", "Function resu
         + "end"
         );
 
+    lua.set("nontrampoline", (lua_CFunction)[](lua_State*) -> int { throw "x";});
+
     sol::protected_function doom = lua[ "doom" ];
-    sol::protected_function luadoom = lua[ "luadoom" ];
-    sol::function luahandler = lua[ "luahandler" ];
+    sol::protected_function luadoom = lua["luadoom"];
+    sol::protected_function nontrampoline = lua["nontrampoline"];
+    sol::function luahandler = lua["luahandler"];
     sol::function cpphandler = lua[ "cpphandler" ];
     doom.error_handler = luahandler;
     luadoom.error_handler = cpphandler;
+    nontrampoline.error_handler = cpphandler;
     
     {
         sol::protected_function_result result = doom();
@@ -1208,6 +1212,12 @@ TEST_CASE( "functions/function_result-protected_function_result", "Function resu
     }
     {
         sol::protected_function_result result = luadoom();
+        REQUIRE(!result.valid());
+        std::string errorstring = result;
+        REQUIRE(errorstring == handlederrormessage);
+    }
+    {
+        sol::protected_function_result result = nontrampoline();
         REQUIRE(!result.valid());
         std::string errorstring = result;
         REQUIRE(errorstring == handlederrormessage);
@@ -1289,7 +1299,7 @@ TEST_CASE("functions/destructor-tests", "Show that proper copies / destruction h
             REQUIRE(last_call == static_call);
         }
         REQUIRE(created == 1);
-        REQUIRE(destroyed == 2);
+        REQUIRE(destroyed == 1);
     }
 }
 
