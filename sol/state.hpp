@@ -32,6 +32,7 @@ public:
     state(lua_CFunction panic = detail::atpanic) : unique_base(luaL_newstate(), lua_close),
     state_view(unique_base::get()) {
         set_panic(panic);
+	   stack::luajit_exception_handler(unique_base::get());
     }
 
     using state_view::get;
