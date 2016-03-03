@@ -1192,8 +1192,9 @@ TEST_CASE( "functions/function_result-protected_function_result", "Function resu
         + "    return '" + handlederrormessage + "'"
         + "end"
         );
-
-    lua.set("nontrampoline", (lua_CFunction)[](lua_State*) -> int { throw "x";});
+    auto nontrampolinefx = [](lua_State*) -> int { throw "x";};
+    lua_CFunction c_nontrampolinefx = nontrampolinefx;
+    lua.set("nontrampoline", nontrampolinefx);
 
     sol::protected_function doom = lua[ "doom" ];
     sol::protected_function luadoom = lua["luadoom"];
