@@ -123,7 +123,9 @@ private:
             return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
         }
         catch (...) {
-            throw;
+            onexcept("caught (...) unknown error during protected_function call");
+            firstreturn = lua_gettop(lua_state());
+            return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
         }
 #endif // No Exceptions
         return protected_function_result(lua_state(), firstreturn + ( handlerpushed ? 0 : 1 ), returncount, returncount, code);
