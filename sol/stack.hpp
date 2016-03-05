@@ -254,6 +254,34 @@ struct getter<T, std::enable_if_t<std::is_base_of<reference, T>::value>> {
     }
 };
 
+template<>
+struct getter<userdata> {
+    static userdata get(lua_State* L, int index = -1) {
+        return{ lua_touserdata(L, index) };
+    }
+};
+
+template<>
+struct getter<light_userdata> {
+    static light_userdata get(lua_State* L, int index = -1) {
+        return{ lua_touserdata(L, index) };
+    }
+};
+
+template<>
+struct getter<upvalue> {
+    static upvalue get(lua_State* L, int index = 1) {
+        return{ lua_touserdata(L, lua_upvalueindex(index)) };
+    }
+};
+
+template<>
+struct getter<void*> {
+    static void* get(lua_State* L, int index = -1) {
+        return lua_touserdata(L, index);
+    }
+};
+
 template<typename T>
 struct getter<T*> {
     static T* get_no_nil(lua_State* L, int index = -1) {
@@ -351,34 +379,6 @@ template<>
 struct getter<c_closure> {
     static c_closure get(lua_State* L,  int index = -1) {
         return c_closure(lua_tocfunction(L, index), -1);
-    }
-};
-
-template<>
-struct getter<userdata> {
-    static userdata get(lua_State* L, int index = -1) {
-        return{ lua_touserdata(L, index) };
-    }
-};
-
-template<>
-struct getter<light_userdata> {
-    static light_userdata get(lua_State* L, int index = -1) {
-        return{ lua_touserdata(L, index) };
-    }
-};
-
-template<>
-struct getter<upvalue> {
-    static upvalue get(lua_State* L, int index = 1) {
-        return{ lua_touserdata(L, lua_upvalueindex(index)) };
-    }
-};
-
-template<>
-struct getter<void*> {
-    static void* get(lua_State* L, int index = -1) {
-        return lua_touserdata(L, index);
     }
 };
 
