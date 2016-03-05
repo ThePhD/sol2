@@ -27,6 +27,7 @@
 #include "tuple.hpp"
 #include "traits.hpp"
 #include "usertype_traits.hpp"
+#include "inheritance.hpp"
 #include "overload.hpp"
 #include <utility>
 #include <array>
@@ -255,22 +256,43 @@ struct getter<T, std::enable_if_t<std::is_base_of<reference, T>::value>> {
 
 template<typename T>
 struct getter<T*> {
+    static T* get_no_nil(lua_State* L, int index = -1) {
+        void** pudata = static_cast<void**>(lua_touserdata(L, index));
+	   void* udata = *pudata;
+#ifndef SOL_NO_EXCEPTIONS
+        if (luaL_getmetafield(L, -1, &detail::base_class_check_key[0]) != 0) {
+            void* basecastdata = stack::get<light_userdata>(L);
+		  detail::throw_cast basecast = (detail::throw_cast)basecastdata;
+            // use the casting function to properly adjust the pointer for the desired T
+            udata = detail::catch_cast<T>( udata, basecast );
+		  lua_pop(L, 1);
+	   }
+#elif !defined(SOL_NO_RTTI)
+        if (luaL_getmetafield(L, -1, &detail::base_class_check_key[0]) != 0) {
+            detail::inheritance_cast_function ic = (detail::inheritance_cast_function)stack::get<light_userdata>(L);
+            // use the casting function to properly adjust the pointer for the desired T
+            udata = ic(udata, typeid(T));
+		  lua_pop(L, 1);
+	   }
+#else
+        // Lol, inheritance could never work like this
+#endif // No Runtime Type Information || Exceptions
+        T* obj = static_cast<T*>(udata);
+        return obj;
+    }
+
     static T* get(lua_State* L, int index = -1) {
         type t = type_of(L, index);
         if (t == type::nil)
             return nullptr;
-        void* udata = lua_touserdata(L, index);
-        T** obj = static_cast<T**>(udata);
-        return *obj;
+	   return get_no_nil(L, index);
     }
 };
 
 template<typename T>
 struct getter<T&> {
     static T& get(lua_State* L, int index = -1) {
-        void* udata = lua_touserdata(L, index);
-        T** obj = static_cast<T**>(udata);
-        return **obj;
+        return *getter<T*>::get_no_nil(L, index);
     }
 };
 
@@ -419,6 +441,22 @@ struct checker<T, type::userdata, C> {
              return false;
         }
         bool success = lua_rawequal(L, -1, -2) == 1;
+#ifndef SOL_NO_EXCEPTIONS
+	   if (!success) {
+            lua_getfield(L, -2, &detail::base_class_check_key[0]);
+		  void* basecastdata = stack::get<light_userdata>(L);
+		  detail::throw_cast basecast = (detail::throw_cast)basecastdata;
+		  success |= detail::catch_check<T>(basecast);
+		  lua_pop(L, 1);
+	   }
+#elif !defined(SOL_NO_RTTI)
+	   if (!success) {
+            lua_getfield(L, -2, &detail::base_class_check_key[0]);
+            detail::inheritance_check_function ic = (detail::inheritance_check_function)stack::get<light_userdata>(L);
+		  success |= ic(typeid(T));
+		  lua_pop(L, 1);
+	   }
+#endif // No Runtime Type Information || Exceptions
         lua_pop(L, 2);
         return success;
     }

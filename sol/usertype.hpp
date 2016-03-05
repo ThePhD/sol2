@@ -25,6 +25,7 @@
 #include "state.hpp"
 #include "function_types.hpp"
 #include "usertype_traits.hpp"
+#include "inheritance.hpp"
 #include "raii.hpp"
 #include "deprecate.hpp"
 #include <vector>
@@ -114,10 +115,20 @@ template <typename... Args>
 using has_destructor = meta::Or<is_destructor<meta::Unqualified<Args>>...>;
 
 template<typename T, bool refmeta, typename Funcs, typename FuncTable, typename MetaFuncTable>
-inline void push_metatable(lua_State* L, bool needsindexfunction, Funcs&& funcs, FuncTable&& functable, MetaFuncTable&& metafunctable) {
+inline void push_metatable(lua_State* L, bool needsindexfunction, Funcs&& funcs, FuncTable&& functable, MetaFuncTable&& metafunctable, void* baseclasscheck, void* baseclasscast) {
     static const auto& gcname = meta_function_names[static_cast<int>(meta_function::garbage_collect)];
     luaL_newmetatable(L, &usertype_traits<T>::metatable[0]);
     int metatableindex = lua_gettop(L);
+#if !defined(SOL_NO_EXCEPTIONS) || !defined(SOL_NO_RTTI)
+    if (baseclasscheck != nullptr) {
+        stack::push(L, light_userdata(baseclasscheck));
+	   lua_setfield(L, metatableindex, &detail::base_class_check_key[0]);
+    }
+    if (baseclasscast != nullptr) {
+        stack::push(L, light_userdata(baseclasscast));
+	   lua_setfield(L, metatableindex, &detail::base_class_cast_key[0]);
+    }
+#endif // No Exceptions || RTTI
     if (funcs.size() < 1 && metafunctable.size() < 2) {
         return;
     }
@@ -181,6 +192,8 @@ private:
     lua_CFunction destructfunc;
     lua_CFunction functiongcfunc;
     bool needsindexfunction;
+    void* baseclasscheck;
+    void* baseclasscast;
 
     template<typename... Functions>
     std::unique_ptr<function_detail::base_function> make_function(const std::string&, overload_set<Functions...> func) {
@@ -328,6 +341,20 @@ private:
         build_function_tables<N>(funcname, std::forward<Fx>(func), std::forward<Args>(args)...);
     }
 
+    template<std::size_t N, typename... Bases, typename... Args>
+    void build_function_tables(bases<>, bases<Bases...>, Args&&... args) {
+#ifndef SOL_NO_EXCEPTIONS
+	    static_assert(sizeof(void*) <= sizeof(detail::throw_cast), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
+	    baseclasscast = (void*)&detail::throw_as<T>;
+#elif !defined(SOL_NO_RTTI)
+	    static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
+	    static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
+	    baseclasscheck = (void*)&detail::userdata_check<T, Bases...>::check;
+	    baseclasscast = (void*)&detail::userdata_check<T, Bases...>::cast;
+#endif // No Runtime Type Information vs. Throw-Style Inheritance
+	    build_function_tables<N>(std::forward<Args>(args)...);
+    }
+
     template<std::size_t N>
     void build_function_tables() {
         int variableend = 0;
@@ -358,7 +385,8 @@ private:
     }
 
     template<typename... Args>
-    usertype(usertype_detail::verified_tag, Args&&... args) : indexfunc(nullptr), newindexfunc(nullptr), constructfunc(nullptr), destructfunc(nullptr), functiongcfunc(nullptr), needsindexfunction(false) {
+    usertype(usertype_detail::verified_tag, Args&&... args) : indexfunc(nullptr), newindexfunc(nullptr), constructfunc(nullptr), 
+    destructfunc(nullptr), functiongcfunc(nullptr), needsindexfunction(false), baseclasscheck(nullptr), baseclasscast(nullptr) {
         functionnames.reserve(sizeof...(args)+3);
         functiontable.reserve(sizeof...(args)+3);
         metafunctiontable.reserve(sizeof...(args)+3);
@@ -386,11 +414,11 @@ public:
 
     int push(lua_State* L) {
         // push pointer tables first,
-        usertype_detail::push_metatable<T*, true>(L, needsindexfunction, functions, functiontable, metafunctiontable);
+        usertype_detail::push_metatable<T*, true>(L, needsindexfunction, functions, functiontable, metafunctiontable, baseclasscheck, baseclasscast);
         lua_pop(L, 1);
         // but leave the regular T table on last
         // so it can be linked to a type for usage with `.new(...)` or `:new(...)`
-        usertype_detail::push_metatable<T, false>(L, needsindexfunction, functions, functiontable, metafunctiontable);
+        usertype_detail::push_metatable<T, false>(L, needsindexfunction, functions, functiontable, metafunctiontable, baseclasscheck, baseclasscast);
         // Make sure to drop a table in the global namespace to properly destroy the pushed functions
         // at some later point in life
         usertype_detail::set_global_deleter<T>(L, functiongcfunc, functions);

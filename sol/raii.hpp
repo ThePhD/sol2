@@ -36,8 +36,11 @@ struct default_construct {
 };
 } // detail
 
+template <typename... Args>
+struct constructor_list {};
+
 template<typename... Args>
-using constructors = sol::types<Args...>;
+using constructors = constructor_list<Args...>;
 
 const auto default_constructor = constructors<types<>>{};
 
