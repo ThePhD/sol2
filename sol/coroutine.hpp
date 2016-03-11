@@ -71,26 +71,26 @@ private:
     }
 
 public:
-    coroutine(lua_State* L, int index = -1) : reference(L, index) {}
-    coroutine() = default;
-    coroutine(const coroutine&) = default;
-    coroutine& operator=(const coroutine&) = default;
+    coroutine(lua_State* L, int index = -1) noexcept : reference(L, index) {}
+    coroutine() noexcept = default;
+    coroutine(const coroutine&) noexcept = default;
+    coroutine& operator=(const coroutine&) noexcept = default;
 
-    call_status status() const {
+    call_status status() const noexcept {
         return stats;
     }
 
-    bool error() const {
+    bool error() const noexcept {
         call_status cs = status();
         return cs != call_status::ok && cs != call_status::yielded;
     }
 
-    bool runnable () const {
+    bool runnable () const noexcept {
         return valid() 
             && (status() == call_status::yielded);
     }
 
-    explicit operator bool() const {
+    explicit operator bool() const noexcept {
         return runnable();
     }
 
@@ -107,7 +107,7 @@ public:
     template<typename... Ret, typename... Args>
     decltype(auto) call( Args&&... args ) {
         push();
-        int pushcount = stack::push_args( lua_state(), std::forward<Args>( args )... );
+        int pushcount = stack::multi_push( lua_state(), std::forward<Args>( args )... );
         return invoke( types<Ret...>( ), std::index_sequence_for<Ret...>(), pushcount );
     }
 };

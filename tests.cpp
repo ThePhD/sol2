@@ -1,5 +1,6 @@
 #define CATCH_CONFIG_MAIN
 #define SOL_CHECK_ARGUMENTS
+
 #include <catch.hpp>
 #include <sol.hpp>
 #include <vector>
@@ -546,6 +547,17 @@ TEST_CASE("tables/variables", "Check if tables and variables work as intended") 
     REQUIRE_NOTHROW(lua.script("assert(os.name == \"windows\")"));
 }
 
+TEST_CASE("tables/create", "Check if creating a table is kosher") {
+    sol::state lua;
+    lua["testtable"] = sol::table::create(lua.lua_state(), 0, 0, "Woof", "Bark", 1, 2, 3, 4);
+    sol::object testobj = lua["testtable"];
+    REQUIRE(testobj.is<sol::table>());
+    sol::table testtable = testobj.as<sol::table>();
+    REQUIRE((testtable["Woof"] == std::string("Bark")));
+    REQUIRE((testtable[1] == 2));
+    REQUIRE((testtable[3] == 4));
+}
+
 TEST_CASE("tables/functions-variables", "Check if tables and function calls work as intended") {
     sol::state lua;
     lua.open_libraries(sol::lib::base, sol::lib::os);
@@ -754,7 +766,7 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
        REQUIRE(b == 20.4);
     };
 
-    REQUIRE_NOTHROW(assert1(lua.global()));
+    REQUIRE_NOTHROW(assert1(lua.globals()));
 }
 
 TEST_CASE("tables/usertype", "Show that we can create classes from usertype and use them") {
@@ -771,7 +783,7 @@ TEST_CASE("tables/usertype", "Show that we can create classes from usertype and 
     sol::object a = lua.get<sol::object>("a");
     sol::object b = lua.get<sol::object>("b");
     sol::object c = lua.get<sol::object>("c");
-    REQUIRE((a.is<sol::userdata>()));
+    REQUIRE((a.is<sol::userdata_value>()));
     auto atype = a.get_type();
     auto btype = b.get_type();
     auto ctype = c.get_type();
@@ -839,7 +851,7 @@ TEST_CASE("tables/usertype-utility", "Show internal management of classes regist
     sol::object a = lua.get<sol::object>("a");
     sol::object b = lua.get<sol::object>("b");
     sol::object c = lua.get<sol::object>("c");
-    REQUIRE((a.is<sol::userdata>()));
+    REQUIRE((a.is<sol::userdata_value>()));
     auto atype = a.get_type();
     auto btype = b.get_type();
     auto ctype = c.get_type();
@@ -941,8 +953,7 @@ TEST_CASE("tables/for-each", "Testing the use of for_each to get values from a l
     sol::table tbl = lua[ "arr" ];
     std::size_t tablesize = 4;
     std::size_t iterations = 0;
-    tbl.for_each(
-        [&iterations](sol::object key, sol::object value) {
+    auto fx = [&iterations](sol::object key, sol::object value) {
         ++iterations;
         sol::type keytype = key.get_type();
         switch (keytype) {
@@ -973,8 +984,72 @@ TEST_CASE("tables/for-each", "Testing the use of for_each to get values from a l
         default:
             break;
         }
-    }
-    );
+    };
+    auto fxpair = [&fx](std::pair<sol::object, sol::object> kvp) { fx(kvp.first, kvp.second); };
+    tbl.for_each( fx );
+    REQUIRE(iterations == tablesize);
+    
+    iterations = 0;
+    tbl.for_each( fxpair );
+    REQUIRE(iterations == tablesize);
+}
+
+TEST_CASE("tables/iterators", "Testing the use of iteratrs to get values from a lua table") {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+
+    lua.script("arr = {\n"
+        "[0] = \"Hi\",\n"
+        "[1] = 123.45,\n"
+        "[2] = \"String value\",\n"
+        // Does nothing
+        //"[3] = nil,\n"
+        //"[nil] = 3,\n"
+        "[\"WOOF\"] = 123,\n"
+        "}");
+    sol::table tbl = lua[ "arr" ];
+    std::size_t tablesize = 4;
+    std::size_t iterations = 0;
+
+    int begintop = 0;
+    int endtop = 0;
+    {
+        stack_guard s(lua.lua_state(), begintop, endtop);
+        for (auto& kvp : tbl) {
+            [&iterations](sol::object key, sol::object value) {
+            ++iterations;
+            sol::type keytype = key.get_type();
+            switch (keytype) {
+            case sol::type::number:
+                switch (key.as<int>()) {
+                case 0:
+                    REQUIRE((value.as<std::string>() == "Hi"));
+                    break;
+                case 1:
+                    REQUIRE((value.as<double>() == 123.45));
+                    break;
+                case 2:
+                    REQUIRE((value.as<std::string>() == "String value"));
+                    break;
+                case 3:
+                    REQUIRE((value.is<sol::nil_t>()));
+                    break;
+                }
+                break;
+            case sol::type::string:
+                if (key.as<std::string>() == "WOOF") {
+                    REQUIRE((value.as<double>() == 123));
+                }
+                break;
+            case sol::type::nil:
+                REQUIRE((value.as<double>() == 3));
+                break;
+            default:
+                break;
+            }
+            }(kvp.first, kvp.second);
+        }
+    } REQUIRE(begintop == endtop);
     REQUIRE(iterations == tablesize);
 }
 
@@ -1365,7 +1440,7 @@ TEST_CASE("usertype/private-constructible", "Check to make sure special snowflak
         lua.open_libraries(sol::lib::base);
 
         lua.new_usertype<factory_test>("factory_test",
-           "new", sol::constructor(factory_test::save),
+           "new", sol::initializers(factory_test::save),
            "__gc", sol::destructor(factory_test::kill),
           "a", &factory_test::a
         );
@@ -1470,7 +1545,7 @@ end
     lua.script(script);
     sol::thread runner = sol::thread::create(lua.lua_state());
     sol::state_view runnerstate = runner.state();
-    sol::coroutine cr = lua["loop"];
+    sol::coroutine cr = runnerstate["loop"];
 
     int counter;
     for (counter = 20; counter < 31 && cr; ++counter) {

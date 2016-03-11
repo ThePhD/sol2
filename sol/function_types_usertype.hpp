@@ -151,7 +151,7 @@ struct usertype_indexing_function : base_function {
         if (functionpair != functions.end()) {
             std::pair<bool, base_function*>& target = functionpair->second;
             if (target.first) {
-                stack::push<upvalue>(L, target.second);
+                stack::push<light_userdata_value>(L, target.second);
                 stack::push(L, c_closure(usertype_call<0>, 1));
                 return 1;
             }

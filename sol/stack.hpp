@@ -24,6 +24,7 @@
 
 #include "error.hpp"
 #include "reference.hpp"
+#include "userdata.hpp"
 #include "tuple.hpp"
 #include "traits.hpp"
 #include "usertype_traits.hpp"
@@ -60,13 +61,13 @@ inline int push(lua_State* L, Arg&& arg, Args&&... args) {
     return pusher<meta::Unqualified<T>>{}.push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 }
 
-inline int push_args(lua_State*) {
+inline int multi_push(lua_State*) {
     // do nothing
     return 0;
 }
 
 template<typename T, typename... Args>
-inline int push_args(lua_State* L, T&& t, Args&&... args) {
+inline int multi_push(lua_State* L, T&& t, Args&&... args) {
     int pushcount = push(L, std::forward<T>(t));
     void(sol::detail::swallow{(pushcount += sol::stack::push(L, std::forward<Args>(args)), 0)... });
     return pushcount;
@@ -92,8 +93,8 @@ bool check(lua_State* L, int index, Handler&& handler) {
 }
 
 template <typename T>
-bool check(lua_State* L, int index) {
-    auto handler = type_panic;
+bool check(lua_State* L, int index = -1) {
+    auto handler = no_panic;
     return check<T>(L, index, handler);
 }
 
@@ -130,10 +131,10 @@ static int push_upvalues(lua_State* L, TCont&& cont) {
     int n = 0;
     for(auto& c : cont) {
         if(releasemem) {
-            stack::push<upvalue>(L, c.release());
+            stack::push<light_userdata_value>(L, c.release());
         }
         else {
-            stack::push<upvalue>(L, c.get());
+            stack::push<light_userdata_value>(L, c.get());
         }
         ++n;
     }
@@ -144,7 +145,7 @@ template <typename T>
 struct userdata_pusher {
     template <typename Key, typename... Args>
     static void push (lua_State* L, Key&& metatablekey, Args&&... args) {
-        // Basically, we store all user0data like this:
+        // Basically, we store all user-data like this:
         // If it's a movable/copyable value (no std::ref(x)), then we store the pointer to the new
         // data in the first sizeof(T*) bytes, and then however many bytes it takes to
         // do the actual object. Things that are std::ref or plain T* are stored as 
@@ -255,23 +256,16 @@ struct getter<T, std::enable_if_t<std::is_base_of<reference, T>::value>> {
 };
 
 template<>
-struct getter<userdata> {
-    static userdata get(lua_State* L, int index = -1) {
+struct getter<userdata_value> {
+    static userdata_value get(lua_State* L, int index = -1) {
         return{ lua_touserdata(L, index) };
     }
 };
 
 template<>
-struct getter<light_userdata> {
-    static light_userdata get(lua_State* L, int index = -1) {
+struct getter<light_userdata_value> {
+    static light_userdata_value get(lua_State* L, int index = -1) {
         return{ lua_touserdata(L, index) };
-    }
-};
-
-template<>
-struct getter<upvalue> {
-    static upvalue get(lua_State* L, int index = 1) {
-        return{ lua_touserdata(L, lua_upvalueindex(index)) };
     }
 };
 
@@ -286,24 +280,36 @@ template<typename T>
 struct getter<T*> {
     static T* get_no_nil(lua_State* L, int index = -1) {
         void** pudata = static_cast<void**>(lua_touserdata(L, index));
-	   void* udata = *pudata;
+        void* udata = *pudata;
+        return get_no_nil_from(L, udata, index);
+    }
+
+    static T* get_no_nil_from(lua_State* L, void* udata, int index = -1) {
 #ifndef SOL_NO_EXCEPTIONS
-        if (luaL_getmetafield(L, -1, &detail::base_class_check_key[0]) != 0) {
-            void* basecastdata = stack::get<light_userdata>(L);
-		  detail::throw_cast basecast = (detail::throw_cast)basecastdata;
+        if (luaL_getmetafield(L, index, &detail::base_class_check_key[0]) != 0) {
+            void* basecastdata = stack::get<light_userdata_value>(L);
+            detail::throw_cast basecast = (detail::throw_cast)basecastdata;
             // use the casting function to properly adjust the pointer for the desired T
-            udata = detail::catch_cast<T>( udata, basecast );
-		  lua_pop(L, 1);
-	   }
+            udata = detail::catch_cast<T>(udata, basecast);
+            lua_pop(L, 1);
+        }
 #elif !defined(SOL_NO_RTTI)
-        if (luaL_getmetafield(L, -1, &detail::base_class_check_key[0]) != 0) {
-            detail::inheritance_cast_function ic = (detail::inheritance_cast_function)stack::get<light_userdata>(L);
+        if (luaL_getmetafield(L, index, &detail::base_class_cast_key[0]) != 0) {
+            void* basecastdata = stack::get<light_userdata_value>(L);
+            detail::inheritance_cast_function ic = (detail::inheritance_cast_function)basecastdata;
             // use the casting function to properly adjust the pointer for the desired T
             udata = ic(udata, typeid(T));
-		  lua_pop(L, 1);
-	   }
+            lua_pop(L, 1);
+        }
 #else
-        // Lol, inheritance could never work like this
+        // Lol, you motherfucker
+        if (luaL_getmetafield(L, index, &detail::base_class_cast_key[0]) != 0) {
+            void* basecastdata = stack::get<light_userdata_value>(L);
+            detail::inheritance_cast_function ic = (detail::inheritance_cast_function)basecastdata;
+            // use the casting function to properly adjust the pointer for the desired T
+            udata = ic(udata, detail::id_for<T>::value);
+            lua_pop(L, 1);
+        }
 #endif // No Runtime Type Information || Exceptions
         T* obj = static_cast<T*>(udata);
         return obj;
@@ -313,7 +319,14 @@ struct getter<T*> {
         type t = type_of(L, index);
         if (t == type::nil)
             return nullptr;
-	   return get_no_nil(L, index);
+        return get_no_nil(L, index);
+    }
+};
+
+template<typename T>
+struct getter<non_null<T*>> {
+    static T* get(lua_State* L, int index = -1) {
+        return getter<T*>::get_no_nil(L, index);
     }
 };
 
@@ -421,7 +434,7 @@ struct checker<T*, type::userdata, C> {
     }
 };
 
-template <typename T,typename C>
+template <typename T, typename C>
 struct checker<T, type::userdata, C> {
     template <typename Handler>
     static bool check (lua_State* L, type indextype, int index, const Handler& handler) {
@@ -429,6 +442,8 @@ struct checker<T, type::userdata, C> {
             handler(L, index, type::userdata, indextype);
             return false;
         }
+        if (meta::Or<std::is_same<T, light_userdata_value>, std::is_same<T, userdata_value>>::value)
+            return true;
         if (lua_getmetatable(L, index) == 0) {
              handler(L, index, type::userdata, indextype);
              return false;
@@ -442,20 +457,34 @@ struct checker<T, type::userdata, C> {
         }
         bool success = lua_rawequal(L, -1, -2) == 1;
 #ifndef SOL_NO_EXCEPTIONS
-	   if (!success) {
+        if (!success) {
             lua_getfield(L, -2, &detail::base_class_check_key[0]);
-		  void* basecastdata = stack::get<light_userdata>(L);
-		  detail::throw_cast basecast = (detail::throw_cast)basecastdata;
-		  success |= detail::catch_check<T>(basecast);
-		  lua_pop(L, 1);
-	   }
+            void* basecastdata = stack::get<light_userdata_value>(L);
+            detail::throw_cast basecast = (detail::throw_cast)basecastdata;
+            success |= detail::catch_check<T>(basecast);
+            lua_pop(L, 1);
+        }
 #elif !defined(SOL_NO_RTTI)
-	   if (!success) {
+        if (!success) {
             lua_getfield(L, -2, &detail::base_class_check_key[0]);
-            detail::inheritance_check_function ic = (detail::inheritance_check_function)stack::get<light_userdata>(L);
-		  success |= ic(typeid(T));
-		  lua_pop(L, 1);
-	   }
+            if (stack::get<type>(L) != type::nil) {
+                void* basecastdata = stack::get<light_userdata_value>(L);
+                detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
+                success |= ic(typeid(T));
+            }
+            lua_pop(L, 1);
+        }
+#else
+        // Topkek
+        if (!success) {
+            lua_getfield(L, -2, &detail::base_class_check_key[0]);
+            if (stack::get<type>(L) != type::nil) {
+                void* basecastdata = stack::get<light_userdata_value>(L);
+                detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
+                success |= ic(detail::id_for<T>::value);
+            }
+            lua_pop(L, 1);
+        }
 #endif // No Runtime Type Information || Exceptions
         lua_pop(L, 2);
         return success;
@@ -522,30 +551,25 @@ struct pusher<T, std::enable_if_t<meta::And<std::is_integral<T>, std::is_unsigne
 };
 
 template<typename T>
-struct pusher<T, std::enable_if_t<meta::And<meta::has_begin_end<T>, meta::Not<meta::has_key_value_pair<T>>>::value>> {
+struct pusher<T, std::enable_if_t<meta::And<meta::has_begin_end<T>, meta::Not<meta::has_key_value_pair<T>>, meta::Not<std::is_base_of<reference, T>>>::value>> {
     static int push(lua_State* L, const T& cont) {
         lua_createtable(L, static_cast<int>(cont.size()), 0);
+        int tableindex = lua_gettop(L);
         unsigned index = 1;
         for(auto&& i : cont) {
-            // push the index
-            pusher<unsigned>{}.push(L, index++);
-            // push the value
-            pusher<meta::Unqualified<decltype(i)>>{}.push(L, i);
-            // set the table
-            lua_settable(L, -3);
+            set_field(L, index++, i, tableindex);
         }
         return 1;
     }
 };
 
 template<typename T>
-struct pusher<T, std::enable_if_t<meta::And<meta::has_begin_end<T>, meta::has_key_value_pair<T>>::value>> {
+struct pusher<T, std::enable_if_t<meta::And<meta::has_begin_end<T>, meta::has_key_value_pair<T>, meta::Not<std::is_base_of<reference, T>>>::value>> {
     static int push(lua_State* L, const T& cont) {
         lua_createtable(L, static_cast<int>(cont.size()), 0);
+        int tableindex = lua_gettop(L);
         for(auto&& pair : cont) {
-            pusher<meta::Unqualified<decltype(pair.first)>>{}.push(L, pair.first);
-            pusher<meta::Unqualified<decltype(pair.second)>>{}.push(L, pair.second);
-            lua_settable(L, -3);
+            set_field(L, pair.first, pair.second, tableindex);
         }
         return 1;
     }
@@ -554,6 +578,10 @@ struct pusher<T, std::enable_if_t<meta::And<meta::has_begin_end<T>, meta::has_ke
 template<typename T>
 struct pusher<T, std::enable_if_t<std::is_base_of<reference, T>::value>> {
     static int push(lua_State*, T& ref) {
+        return ref.push();
+    }
+
+    static int push(lua_State*, T&& ref) {
         return ref.push();
     }
 };
@@ -621,24 +649,16 @@ struct pusher<void*> {
 };
 
 template<>
-struct pusher<upvalue> {
-    static int push(lua_State* L, upvalue upv) {
-        lua_pushlightuserdata(L, upv);
-        return 1;
-    }
-};
-
-template<>
-struct pusher<light_userdata> {
-    static int push(lua_State* L, light_userdata userdata) {
+struct pusher<light_userdata_value> {
+    static int push(lua_State* L, light_userdata_value userdata) {
         lua_pushlightuserdata(L, userdata);
         return 1;
     }
 };
 
 template<>
-struct pusher<userdata> {
-    static int push(lua_State* L, userdata data) {
+struct pusher<userdata_value> {
+    static int push(lua_State* L, userdata_value data) {
         void** ud = static_cast<void**>(lua_newuserdata(L, sizeof(void*)));
         *ud = data.value;
         return 1;
@@ -782,7 +802,7 @@ inline int push_as_upvalues(lua_State* L, T& item) {
     std::memcpy(&data[0], std::addressof(item), itemsize);
     int pushcount = 0;
     for(auto&& v : data) {
-        pushcount += push(L, upvalue(v));
+        pushcount += push(L, light_userdata_value(v));
     }
     return pushcount;
 }
@@ -793,7 +813,7 @@ inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 1) {
     typedef std::array<void*, data_t_count> data_t;
     data_t voiddata{ {} };
     for(std::size_t i = 0, d = 0; d < sizeof(T); ++i, d += sizeof(void*)) {
-        voiddata[i] = get<upvalue>(L, index++);
+        voiddata[i] = get<light_userdata_value>(L, up_value_index(index++));
     }
     return std::pair<T, int>(*reinterpret_cast<T*>(static_cast<void*>(voiddata.data())), index);
 }

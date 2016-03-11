@@ -30,8 +30,7 @@
 namespace sol {
 class object : public reference {
 public:
-    object(lua_State* L, int index = -1): reference(L, index) {}
-    object() = default;
+    using reference::reference;
 
     template<typename T>
     decltype(auto) as() const {
@@ -41,21 +40,10 @@ public:
 
     template<typename T>
     bool is() const {
-        if (!reference::valid())
+        if (!valid())
             return false;
-        auto expected = type_of<T>();
-        auto actual = get_type();
-        return (expected == actual) || (expected == type::poly);
-    }
-
-    bool valid() const {
-        if (!reference::valid())
-            return false;
-        return !this->is<nil_t>();
-    }
-
-    explicit operator bool() {
-        return valid();
+        auto pp = stack::push_pop(*this);
+        return stack::check<T>(lua_state(), -1, no_panic);
     }
 };
 

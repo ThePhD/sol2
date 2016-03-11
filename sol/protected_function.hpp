@@ -93,17 +93,17 @@ private:
         int returncount = 0;
         call_status code = call_status::ok;
 #ifndef SOL_NO_EXCEPTIONS
-	   auto onexcept = [&](const char* error) {
+        auto onexcept = [&](const char* error) {
             h.stackindex = 0;
             if (h.target.valid()) {
                 h.target.push();
                 stack::push(lua_state(), error);
                 lua_call(lua_state(), 1, 1);
             }
-		  else {
+            else {
                 stack::push(lua_state(), error);
-		  }
-	   };
+            }
+        };
         try {
 #endif // No Exceptions
             code = static_cast<call_status>(luacall(n, LUA_MULTRET, h));
@@ -132,7 +132,7 @@ private:
     }
 
 public:
-    sol::reference error_handler;
+    reference error_handler;
 
     protected_function() = default;
     protected_function(lua_State* L, int index = -1): reference(L, index), error_handler(get_default_handler()) {
@@ -157,7 +157,7 @@ public:
     decltype(auto) call(Args&&... args) const {
         handler h(error_handler);
         push();
-        int pushcount = stack::push_args(lua_state(), std::forward<Args>(args)...);
+        int pushcount = stack::multi_push(lua_state(), std::forward<Args>(args)...);
         return invoke(types<Ret...>(), std::index_sequence_for<Ret...>(), pushcount, h);
     }
 };

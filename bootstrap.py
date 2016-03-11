@@ -39,6 +39,7 @@ cxx = os.environ.get('CXX', "g++")
 parser = argparse.ArgumentParser()
 parser.add_argument('--debug', action='store_true', help='compile with debug flags')
 parser.add_argument('--cxx', metavar='<compiler>', help='compiler name to use (default: env.CXX=%s)' % cxx, default=cxx)
+parser.add_argument('--cxx-flags', help='additional flags passed to the compiler', default='')
 parser.add_argument('--ci', action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('--testing', action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('--lua-lib', help='lua library name (without the lib on *nix).', default='lua')
@@ -55,6 +56,7 @@ args = parser.parse_args()
 include = [ '.', './include' ]
 depends = [os.path.join('Catch', 'include')]
 cxxflags = [ '-Wall', '-Wextra', '-pedantic', '-pedantic-errors', '-std=c++14' ]
+cxxflags.extend([p for p in re.split("( |\\\".*?\\\"|'.*?')", args.cxx_flags) if p.strip()])
 ldflags = []
 script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 sol_dir = os.path.join(script_dir, 'sol')

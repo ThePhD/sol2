@@ -57,10 +57,10 @@ inline int overload_match_arity(types<Fx, Fxs...>, std::index_sequence<I, In...>
     if (traits::arity != fxarity) {
         return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<traits::arity, M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
     }
-    if (sizeof...(Fxs) != 0 && !function_detail::check_types(args_type(), args_indices(), L, start)) {
+    if (!function_detail::check_types(args_type(), args_indices(), L, start)) {
         return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
     }
-    return matchfx(meta::Bool<sizeof...(Fxs) != 0>(), types<Fx>(), Index<I>(), return_types(), args_type(), L, fxarity, start, std::forward<Args>(args)...);
+    return matchfx(types<Fx>(), Index<I>(), return_types(), args_type(), L, fxarity, start, std::forward<Args>(args)...);
 }
 } // internals
 
@@ -93,10 +93,10 @@ struct overloaded_function : base_function {
 
     }
 
-    template <bool b, typename Fx, std::size_t I, typename... R, typename... Args>
-    int call(meta::Bool<b>, types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
+    template <typename Fx, std::size_t I, typename... R, typename... Args>
+    int call(types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
         auto& func = std::get<I>(overloads);
-        return stack::call_into_lua<b ? false : stack::stack_detail::default_check_arguments>(r, a, func, L, start);
+        return stack::call_into_lua<false>(r, a, func, L, start);
     }
 
     virtual int operator()(lua_State* L) override {
@@ -113,11 +113,11 @@ struct usertype_overloaded_function : base_function {
     
     usertype_overloaded_function(std::tuple<Functions...> set) : overloads(std::move(set)) {}
 
-    template <bool b,typename Fx, std::size_t I, typename... R, typename... Args>
-    int call(meta::Bool<b>, types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
+    template <typename Fx, std::size_t I, typename... R, typename... Args>
+    int call(types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
         auto& func = std::get<I>(overloads);
         func.item = detail::ptr(stack::get<T>(L, 1));
-        return stack::call_into_lua<b ? false : stack::stack_detail::default_check_arguments>(r, a, func, L, start);
+        return stack::call_into_lua<false>(r, a, func, L, start);
     }
 
     virtual int operator()(lua_State* L) override {

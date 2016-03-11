@@ -135,6 +135,16 @@ using at_in_pack_t = typename at_in_pack<I, Args...>::type;
 template<std::size_t I, typename Arg, typename... Args>
 struct at_in_pack<I, Arg, Args...> : std::conditional<I == 0, Arg, at_in_pack_t<I - 1, Args...>> {};
 
+namespace meta_detail {
+    template<std::size_t I, template<typename...> class Pred, typename... Ts>
+    struct count_if_pack {};
+    template<std::size_t I, template<typename...> class Pred, typename T, typename... Ts>
+    struct count_if_pack<I, Pred, T, Ts...> : std::conditional_t<sizeof...(Ts) == 0, std::integral_constant<std::size_t, I>, count_if_pack<I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>> { };
+} // meta_detail
+
+template<template<typename...> class Pred, typename... Ts>
+struct count_if_pack : meta_detail::count_if_pack<0, Pred, Ts...> { };
+
 template<typename... Args>
 struct return_type {
     typedef std::tuple<Args...> type;
@@ -153,7 +163,22 @@ struct return_type<> {
 template <typename... Args>
 using return_type_t = typename return_type<Args...>::type;
 
-namespace detail {
+namespace meta_detail {
+template <typename> struct always_true : std::true_type {};
+struct is_callable_tester {
+    template <typename Fun, typename... Args>
+    always_true<decltype(std::declval<Fun>()(std::declval<Args>()...))> static test(int);
+    template <typename...>
+    std::false_type static test(...);
+};
+} // meta_detail
+
+template <typename T>
+struct is_callable;
+template <typename Fun, typename... Args>
+struct is_callable<Fun(Args...)> : decltype(meta_detail::is_callable_tester::test<Fun, Args...>(0)) {};
+
+namespace meta_detail {
 
 template<typename T, bool isclass = std::is_class<Unqualified<T>>::value>
 struct is_function_impl : std::is_function<std::remove_pointer_t<T>> {};
@@ -186,15 +211,15 @@ struct check_deducible_signature {
 
     using type = std::is_void<decltype(test<F>(0))>;
 };
-} // detail
+} // meta_detail
 
 template<class F>
-struct has_deducible_signature : detail::check_deducible_signature<F>::type { };
+struct has_deducible_signature : meta_detail::check_deducible_signature<F>::type { };
 
 template<typename T>
-struct Function : Bool<detail::is_function_impl<T>::value> {};
+struct Function : Bool<meta_detail::is_function_impl<T>::value> {};
 
-namespace detail {
+namespace meta_detail {
 template<typename Signature, bool b = has_deducible_signature<Signature>::value>
 struct fx_traits;
 
@@ -263,10 +288,10 @@ struct fx_traits<R(*)(Args...), false> {
     using arg = std::tuple_element_t<i, args_tuple_type>;
 };
 
-} // detail
+} // meta_detail
 
 template<typename Signature>
-struct function_traits : detail::fx_traits<std::decay_t<Signature>> {};
+struct function_traits : meta_detail::fx_traits<std::decay_t<Signature>> {};
 
 template<typename Signature>
 using function_args_t = typename function_traits<Signature>::args_type;
@@ -277,7 +302,7 @@ using function_signature_t = typename function_traits<Signature>::signature_type
 template<typename Signature>
 using function_return_t = typename function_traits<Signature>::return_type;
 
-namespace detail {
+namespace meta_detail {
 template<typename Signature, bool b = std::is_member_object_pointer<Signature>::value>
 struct callable_traits : function_traits<Signature> {
 
@@ -299,10 +324,10 @@ struct callable_traits<Signature, true> {
     template<std::size_t i>
     using arg = std::tuple_element_t<i, args_tuple_type>;
 };
-} // detail
+} // meta_detail
 
 template<typename Signature>
-struct callable_traits : detail::callable_traits<std::remove_volatile_t<Signature>> {
+struct callable_traits : meta_detail::callable_traits<std::remove_volatile_t<Signature>> {
 
 };
 
@@ -339,7 +364,7 @@ using is_string_constructible = Or<std::is_same<Unqualified<T>, const char*>, st
 template <typename T>
 using is_c_str = Or<std::is_same<std::decay_t<Unqualified<T>>, char*>, std::is_same<Unqualified<T>, std::string>>;
 
-namespace detail {
+namespace meta_detail {
 template <typename T, meta::DisableIf<meta::is_specialization_of<meta::Unqualified<T>, std::tuple>> = 0>
 decltype(auto) force_tuple(T&& x) {
     return std::forward_as_tuple(x);
@@ -349,11 +374,11 @@ template <typename T, meta::EnableIf<meta::is_specialization_of<meta::Unqualifie
 decltype(auto) force_tuple(T&& x) {
     return std::forward<T>(x);
 }
-} // detail
+} // meta_detail
 
 template <typename... X>
 decltype(auto) tuplefy(X&&... x ) {
-    return std::tuple_cat(detail::force_tuple(x)...);
+    return std::tuple_cat(meta_detail::force_tuple(x)...);
 }
 } // meta
 namespace detail {
@@ -411,7 +436,7 @@ template<typename T>
 inline T* ptr(T* val) {
     return val;
 }
-} // detail
+} // meta_detail
 } // sol
 
 #endif // SOL_TRAITS_HPP

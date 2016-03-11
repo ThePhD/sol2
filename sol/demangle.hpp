@@ -32,6 +32,7 @@
 
 namespace sol {
 namespace detail {
+#ifndef SOL_NO_RTTI
 #ifdef _MSC_VER
 inline std::string get_type_name(const std::type_info& id) {
     return id.name();
@@ -49,9 +50,66 @@ inline std::string get_type_name(const std::type_info& id) {
 #else
 #error Compiler not supported for demangling
 #endif // compilers
+#else
+#ifdef _MSC_VER
+template <typename T>
+inline std::string get_type_name() {
+    std::string name = __FUNCSIG__;
+    std::size_t start = name.find_last_of('<');
+    std::size_t end = name.find_last_of('>');
+    if (end == std::string::npos)
+        end = name.size();
+    if (start == std::string::npos)
+        start = 0;
+    if (start < name.size() - 1)
+        start += 1;
+    name = name.substr(start, end - start);
+    return name;
+}
 
-inline std::string demangle(const std::type_info& id) {
-    std::string realname = get_type_name(id);
+#elif defined(__GNUC__)
+template <typename T>
+inline std::string get_type_name() {
+    std::string name = __PRETTY_FUNCTION__;
+    std::size_t start = name.find_first_of('=');
+    std::size_t end = name.find_last_of(';');
+    if (end == std::string::npos)
+        end = name.size();
+    if (start == std::string::npos)
+        start = 0;
+    if (start < name.size() - 1)
+        start += 2;
+    name = name.substr(start, end - start);
+    return name;
+}
+#elif defined(__clang__)
+template <typename T>
+inline std::string get_type_name() {
+    std::string name = __PRETTY_FUNCTION__;
+    std::size_t start = name.find_last_of('[');
+    start = name.find_first_of('=', start);
+    std::size_t end = name.find_last_of(']');
+    if (end == std::string::npos)
+        end = name.size();
+    if (start == std::string::npos)
+        start = 0;
+    if (start < name.size() - 1)
+        start += 1;
+    name = name.substr(start, end - start);
+    return name;
+}
+#else
+#error Compiler not supported for demangling
+#endif // compilers
+#endif // No Runtime Type information
+
+template <typename T>
+inline std::string demangle() {
+#ifndef SOL_NO_RTTI
+    std::string realname = get_type_name(typeid(T));
+#else
+    std::string realname = get_type_name<T>();
+#endif // No Runtime Type Information
     const static std::array<std::string, 2> removals = {{ "struct ", "class " }};
     const static std::array<std::string, 2> replacements = {{ "::", "_" }};
     for(std::size_t r = 0; r < removals.size(); ++r) {

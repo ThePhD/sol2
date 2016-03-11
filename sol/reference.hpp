@@ -52,7 +52,7 @@ private:
     lua_State* L = nullptr; // non-owning
     int ref = LUA_NOREF;
 
-    int copy() const {
+    int copy() const noexcept {
         if (ref == LUA_NOREF)
             return LUA_NOREF;
         push();
@@ -60,7 +60,7 @@ private:
     }
 
 protected:
-    reference(lua_State* L, detail::global_tag) : L(L) {
+    reference(lua_State* L, detail::global_tag) noexcept : L(L) {
         lua_pushglobaltable(L);
         ref = luaL_ref(L, LUA_REGISTRYINDEX);
     }
@@ -68,12 +68,12 @@ protected:
 public:
     reference() noexcept = default;
 
-    reference(lua_State* L, int index = -1): L(L) {
+    reference(lua_State* L, int index = -1) noexcept : L(L) {
         lua_pushvalue(L, index);
         ref = luaL_ref(L, LUA_REGISTRYINDEX);
     }
 
-    virtual ~reference() {
+    virtual ~reference() noexcept {
         luaL_unref(L, LUA_REGISTRYINDEX, ref);
     }
 
@@ -115,19 +115,19 @@ public:
         lua_pop(lua_state( ), n);
     }
 
-    int get_index() const {
+    int registry_index() const noexcept {
         return ref;
     }
 
-    bool valid () const {
-        return !(ref == LUA_NOREF);
+    bool valid () const noexcept {
+        return !(ref == LUA_NOREF || ref == LUA_REFNIL);
     }
 
-    explicit operator bool () const {
+    explicit operator bool () const noexcept {
         return valid();
     }
 
-    type get_type() const {
+    type get_type() const noexcept {
         push();
         int result = lua_type(L, -1);
         lua_pop(L, 1);

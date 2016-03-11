@@ -31,6 +31,7 @@ namespace detail {
 inline int atpanic(lua_State* L) {
 #ifdef SOL_NO_EXCEPTIONS
     (void)L;
+    return -1;
 #else
     const char* message = lua_tostring(L, -1);
     std::string err = message ? message : "An unexpected error occurred and forced the lua state to call atpanic";
@@ -57,12 +58,12 @@ class state_view {
 private:
     lua_State* L;
     table reg;
-    global_table globals;
+    global_table global;
 public:
     state_view(lua_State* L):
     L(L),
     reg(L, LUA_REGISTRYINDEX),
-    globals(L, detail::global_) {
+    global(L, detail::global_) {
 
     }
 
@@ -142,81 +143,30 @@ public:
         }
     }
 
-    void open_file(const std::string& filename) {
+    void script_file(const std::string& filename) {
         if(luaL_dofile(L, filename.c_str())) {
             lua_error(L);
         }
     }
 
-    template<typename... Args, typename... Keys>
-    decltype(auto) get(Keys&&... keys) const {
-        return globals.get<Args...>(std::forward<Keys>(keys)...);
+    table_iterator begin () const {
+        return global.begin();
     }
 
-    template<typename... Args>
-    state_view& set(Args&&... args) {
-        globals.set(std::forward<Args>(args)...);
-        return *this;
+    table_iterator end() const {
+        return global.end();
     }
 
-    template<typename T, typename... Keys>
-    decltype(auto) traverse_get(Keys&&... keys) const {
-        return globals.traverse_get<T>(std::forward<Keys>(keys)...);
+    table_iterator cbegin() const {
+        return global.cbegin();
     }
 
-    template<typename... Args>
-    state_view& traverse_set(Args&&... args) {
-        globals.traverse_set(std::forward<Args>(args)...);
-        return *this;
+    table_iterator cend() const {
+        return global.cend();
     }
 
-    template<typename T>
-    state_view& set_usertype(usertype<T>& user) {
-        return set_usertype(usertype_traits<T>::name, user);
-    }
-
-    template<typename Key, typename T>
-    state_view& set_usertype(Key&& key, usertype<T>& user) {
-        globals.set_usertype(std::forward<Key>(key), user);
-        return *this;
-    }
-
-    template<typename Class, typename... Args>
-    state_view& new_usertype(const std::string& name, Args&&... args) {
-        usertype<Class> utype(std::forward<Args>(args)...);
-        set_usertype(name, utype);
-        return *this;
-    }
-
-    template<typename Class, typename CTor0, typename... CTor, typename... Args>
-    state_view& new_usertype(const std::string& name, Args&&... args) {
-        constructors<types<CTor0, CTor...>> ctor{};
-        return new_usertype<Class>(name, ctor, std::forward<Args>(args)...);
-    }
-
-    template<typename Class, typename... CArgs, typename... Args>
-    state_view& new_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
-        usertype<Class> utype(ctor, std::forward<Args>(args)...);
-        set_usertype(name, utype);
-        return *this;
-    }
-
-    template <typename Fx>
-    void for_each(Fx&& fx) {
-        globals.for_each(std::forward<Fx>(fx));
-    }
-
-    template<typename T>
-    table create_table(T&& key, int narr = 0, int nrec = 0) {
-        lua_createtable(L, narr, nrec);
-        table result(L);
-        lua_pop(L, 1);
-        globals.set(std::forward<T>(key), result);
-        return result;
-    }
-
-    global_table global() const {
-        return globals;
+    global_table globals() const {
+        return global;
     }
 
     table registry() const {
@@ -227,44 +177,109 @@ public:
         lua_atpanic(L, panic);
     }
 
-    template<typename T>
-    proxy<global_table&, T> operator[](T&& key) {
-        return globals[std::forward<T>(key)];
+    template<typename... Args, typename... Keys>
+    decltype(auto) get(Keys&&... keys) const {
+        return global.get<Args...>(std::forward<Keys>(keys)...);
+    }
+
+    template<typename... Args>
+    state_view& set(Args&&... args) {
+        global.set(std::forward<Args>(args)...);
+        return *this;
+    }
+
+    template<typename T, typename... Keys>
+    decltype(auto) traverse_get(Keys&&... keys) const {
+        return global.traverse_get<T>(std::forward<Keys>(keys)...);
+    }
+
+    template<typename... Args>
+    state_view& traverse_set(Args&&... args) {
+        global.traverse_set(std::forward<Args>(args)...);
+        return *this;
     }
 
     template<typename T>
-    proxy<const global_table, T> operator[](T&& key) const {
-        return globals[std::forward<T>(key)];
+    state_view& set_usertype(usertype<T>& user) {
+        return set_usertype(usertype_traits<T>::name, user);
+    }
+
+    template<typename Key, typename T>
+    state_view& set_usertype(Key&& key, usertype<T>& user) {
+        global.set_usertype(std::forward<Key>(key), user);
+        return *this;
+    }
+
+    template<typename Class, typename... Args>
+    state_view& new_usertype(const std::string& name, Args&&... args) {
+        global.new_usertype<Class>(name, std::forward<Args>(args)...);
+        return *this;
+    }
+
+    template<typename Class, typename CTor0, typename... CTor, typename... Args>
+    state_view& new_usertype(const std::string& name, Args&&... args) {
+        global.new_usertype<Class, CTor0, CTor...>(name, std::forward<Args>(args)...);
+        return *this;
+    }
+
+    template<typename Class, typename... CArgs, typename... Args>
+    state_view& new_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
+        global.new_usertype<Class>(name, ctor, std::forward<Args>(args)...);
+        return *this;
+    }
+
+    template <typename Fx>
+    void for_each(Fx&& fx) {
+        global.for_each(std::forward<Fx>(fx));
+    }
+
+    template<typename T>
+    proxy<global_table&, T> operator[](T&& key) {
+        return global[std::forward<T>(key)];
+    }
+
+    template<typename T>
+    proxy<const global_table&, T> operator[](T&& key) const {
+        return global[std::forward<T>(key)];
     }
 
     template<typename... Args, typename R, typename Key>
     state_view& set_function(Key&& key, R fun_ptr(Args...)){
-        globals.set_function(std::forward<Key>(key), fun_ptr);
+        global.set_function(std::forward<Key>(key), fun_ptr);
         return *this;
     }
 
     template<typename Sig, typename Key>
     state_view& set_function(Key&& key, Sig* fun_ptr){
-        globals.set_function(std::forward<Key>(key), fun_ptr);
+        global.set_function(std::forward<Key>(key), fun_ptr);
         return *this;
     }
 
     template<typename... Args, typename R, typename C, typename T, typename Key>
     state_view& set_function(Key&& key, R (C::*mem_ptr)(Args...), T&& obj) {
-        globals.set_function(std::forward<Key>(key), mem_ptr, std::forward<T>(obj));
+        global.set_function(std::forward<Key>(key), mem_ptr, std::forward<T>(obj));
         return *this;
     }
 
     template<typename Sig, typename C, typename T, typename Key>
     state_view& set_function(Key&& key, Sig C::* mem_ptr, T&& obj) {
-        globals.set_function(std::forward<Key>(key), mem_ptr, std::forward<T>(obj));
+        global.set_function(std::forward<Key>(key), mem_ptr, std::forward<T>(obj));
         return *this;
     }
 
     template<typename... Sig, typename Fx, typename Key>
     state_view& set_function(Key&& key, Fx&& fx) {
-        globals.set_function<Sig...>(std::forward<Key>(key), std::forward<Fx>(fx));
+        global.set_function<Sig...>(std::forward<Key>(key), std::forward<Fx>(fx));
         return *this;
+    }
+
+    static inline table create_table(lua_State* L, int narr = 0, int nrec = 0) {
+        return global_table::create(L, narr, nrec);
+    }
+
+    template <typename Key, typename Value, typename... Args>
+    static inline table create_table(lua_State* L, int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
+        return global_table::create(L, narr, nrec, std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
     }
 };
 } // sol

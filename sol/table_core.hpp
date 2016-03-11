@@ -26,6 +26,7 @@
 #include "stack.hpp"
 #include "function_types.hpp"
 #include "usertype.hpp"
+#include "table_iterator.hpp"
 
 namespace sol {
 template <bool top_level>
@@ -35,6 +36,31 @@ class table_core : public reference {
 
     template <typename... Args>
     using is_global = meta::And<meta::Bool<top_level>, meta::is_c_str<Args>...>;
+
+    template<typename Fx>
+    void for_each(std::true_type, Fx&& fx) const {
+        auto pp = stack::push_pop( *this );
+        stack::push( lua_state( ), nil );
+        while ( lua_next( this->lua_state( ), -2 ) ) {
+            sol::object key( lua_state( ), -2 );
+            sol::object value( lua_state( ), -1 );
+            std::pair<sol::object&, sol::object&> keyvalue(key, value);
+            fx( keyvalue );
+            lua_pop( lua_state( ), 1 );
+        }
+    }
+
+    template<typename Fx>
+    void for_each(std::false_type, Fx&& fx) const {
+        auto pp = stack::push_pop( *this );
+        stack::push( lua_state( ), nil );
+        while ( lua_next( this->lua_state( ), -2 ) ) {
+            sol::object key( lua_state( ), -2 );
+            sol::object value( lua_state( ), -1 );
+            fx( key, value );
+            lua_pop( lua_state( ), 1 );
+        }
+    }
 
     template<typename... Ret, std::size_t... I, typename Keys>
     auto tuple_get( types<Ret...>, std::index_sequence<I...>, Keys&& keys ) const
@@ -85,9 +111,25 @@ class table_core : public reference {
 
 public:
     table_core( ) noexcept : reference( ) { }
-    table_core( const table_core<true>& global ) : reference( global ) { }
+    table_core( const table_core<true>& global ) noexcept : reference( global ) { }
     table_core( lua_State* L, int index = -1 ) : reference( L, index ) {
         type_assert( L, index, type::table );
+    }
+
+    table_iterator begin () const {
+        return table_iterator(*this);
+    }
+
+    table_iterator end() const {
+        return table_iterator();
+    }
+
+    table_iterator cbegin() const {
+        return begin();
+    }
+
+    table_iterator cend() const {
+        return end();
     }
 
     template<typename... Ret, typename... Keys>
@@ -126,16 +168,30 @@ public:
         return set(std::forward<Key>(key), user);
     }
 
+    template<typename Class, typename... Args>
+    table_core& new_usertype(const std::string& name, Args&&... args) {
+        usertype<Class> utype(std::forward<Args>(args)...);
+        set_usertype(name, utype);
+        return *this;
+    }
+
+    template<typename Class, typename CTor0, typename... CTor, typename... Args>
+    table_core& new_usertype(const std::string& name, Args&&... args) {
+        constructors<types<CTor0, CTor...>> ctor{};
+        return new_usertype<Class>(name, ctor, std::forward<Args>(args)...);
+    }
+
+    template<typename Class, typename... CArgs, typename... Args>
+    table_core& new_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
+        usertype<Class> utype(ctor, std::forward<Args>(args)...);
+        set_usertype(name, utype);
+        return *this;
+    }
+
     template<typename Fx>
     void for_each( Fx&& fx ) const {
-        auto pp = stack::push_pop( *this );
-        stack::push( lua_state( ), nil );
-        while ( lua_next( this->lua_state( ), -2 ) ) {
-            sol::object key( lua_state( ), -2 );
-            sol::object value( lua_state( ), -1 );
-            fx( key, value );
-            lua_pop( lua_state( ), 1 );
-        }
+        typedef meta::is_callable<Fx( std::pair<sol::object, sol::object> )> is_paired;
+        for_each(is_paired(), std::forward<Fx>(fx));
     }
 
     size_t size( ) const {
@@ -221,6 +277,8 @@ public:
 
     template <typename Key, typename Value, typename... Args>
     static inline table create(lua_State* L, int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
+        if (narr == 0) narr = static_cast<int>(meta::count_if_pack<std::is_integral, Key, Value, Args...>::value);
+        if (nrec == 0) nrec = static_cast<int>(( sizeof...(Args) + 2 ) - narr);
         lua_createtable(L, narr, nrec);
         table result(L);
         result.set(std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);

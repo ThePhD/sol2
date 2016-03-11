@@ -121,12 +121,12 @@ inline void push_metatable(lua_State* L, bool needsindexfunction, Funcs&& funcs,
     int metatableindex = lua_gettop(L);
 #if !defined(SOL_NO_EXCEPTIONS) || !defined(SOL_NO_RTTI)
     if (baseclasscheck != nullptr) {
-        stack::push(L, light_userdata(baseclasscheck));
-	   lua_setfield(L, metatableindex, &detail::base_class_check_key[0]);
+        stack::push(L, light_userdata_value(baseclasscheck));
+        lua_setfield(L, metatableindex, &detail::base_class_check_key[0]);
     }
     if (baseclasscast != nullptr) {
-        stack::push(L, light_userdata(baseclasscast));
-	   lua_setfield(L, metatableindex, &detail::base_class_cast_key[0]);
+        stack::push(L, light_userdata_value(baseclasscast));
+        lua_setfield(L, metatableindex, &detail::base_class_cast_key[0]);
     }
 #endif // No Exceptions || RTTI
     if (funcs.size() < 1 && metafunctable.size() < 2) {
@@ -342,17 +342,24 @@ private:
     }
 
     template<std::size_t N, typename... Bases, typename... Args>
-    void build_function_tables(bases<>, bases<Bases...>, Args&&... args) {
+    void build_function_tables(base_classes_tag, bases<Bases...>, Args&&... args) {
+        build_function_tables<N>(std::forward<Args>(args)...);
+        if (sizeof...(Bases) < 1)
+            return;
 #ifndef SOL_NO_EXCEPTIONS
-	    static_assert(sizeof(void*) <= sizeof(detail::throw_cast), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
-	    baseclasscast = (void*)&detail::throw_as<T>;
+        static_assert(sizeof(void*) <= sizeof(detail::throw_cast), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
+        baseclasscast = (void*)&detail::throw_as<T>;
 #elif !defined(SOL_NO_RTTI)
-	    static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
-	    static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
-	    baseclasscheck = (void*)&detail::userdata_check<T, Bases...>::check;
-	    baseclasscast = (void*)&detail::userdata_check<T, Bases...>::cast;
+        static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
+        static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
+        baseclasscheck = (void*)&detail::inheritance<T, Bases...>::check;
+        baseclasscast = (void*)&detail::inheritance<T, Bases...>::cast;
+#else
+        static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
+        static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
+        baseclasscheck = (void*)&detail::inheritance<T, Bases...>::check;
+        baseclasscast = (void*)&detail::inheritance<T, Bases...>::cast;
 #endif // No Runtime Type Information vs. Throw-Style Inheritance
-	    build_function_tables<N>(std::forward<Args>(args)...);
     }
 
     template<std::size_t N>

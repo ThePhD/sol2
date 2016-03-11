@@ -92,7 +92,7 @@ public:
     template<typename... Ret, typename... Args>
     decltype(auto) call( Args&&... args ) const {
         push( );
-        int pushcount = stack::push_args( lua_state( ), std::forward<Args>( args )... );
+        int pushcount = stack::multi_push( lua_state( ), std::forward<Args>( args )... );
         return invoke( types<Ret...>( ), std::index_sequence_for<Ret...>(), pushcount );
     }
 };

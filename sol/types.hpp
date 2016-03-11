@@ -87,27 +87,27 @@ const nil_t nil {};
 inline bool operator==(nil_t, nil_t) { return true; }
 inline bool operator!=(nil_t, nil_t) { return false; }
 
-struct void_type : types<void> {}; // This is important because it allows myobject.call( Void, ... ) to work
-const void_type Void {};
+template <typename T>
+struct non_null {};
 
 template<typename... Args>
 struct function_sig {};
 
-struct upvalue {
+struct up_value_index {
+    int index;
+    up_value_index(int idx) : index(lua_upvalueindex(idx)) {}
+    operator int() const { return index; }
+};
+
+struct light_userdata_value {
     void* value;
-    upvalue(void* data) : value(data) {}
+    light_userdata_value(void* data) : value(data) {}
     operator void*() const { return value; }
 };
 
-struct light_userdata {
+struct userdata_value {
     void* value;
-    light_userdata(void* data) : value(data) {}
-    operator void*() const { return value; }
-};
-
-struct userdata {
-    void* value;
-    userdata(void* data) : value(data) {}
+    userdata_value(void* data) : value(data) {}
     operator void*() const { return value; }
 };
 
@@ -161,7 +161,7 @@ inline int type_panic(lua_State* L, int index, type expected, type actual) {
 }
 
 // Specify this function as the handler for lua::check if you know there's nothing wrong
-inline int no_panic(lua_State*, int, type, type) {
+inline int no_panic(lua_State*, int, type, type) noexcept {
     return 0;
 }
 
@@ -202,6 +202,8 @@ class protected_function;
 class coroutine;
 class thread;
 class object;
+class userdata;
+class light_userdata;
 
 template <typename T, typename = void>
 struct lua_type_of : std::integral_constant<type, type::userdata> {};
@@ -231,7 +233,16 @@ template <>
 struct lua_type_of<object> : std::integral_constant<type, type::poly> {};
 
 template <>
+struct lua_type_of<light_userdata_value> : std::integral_constant<type, type::lightuserdata> {};
+
+template <>
+struct lua_type_of<userdata_value> : std::integral_constant<type, type::userdata> {};
+
+template <>
 struct lua_type_of<light_userdata> : std::integral_constant<type, type::lightuserdata> {};
+
+template <>
+struct lua_type_of<userdata> : std::integral_constant<type, type::userdata> {};
 
 template <>
 struct lua_type_of<lua_CFunction> : std::integral_constant<type, type::function> {};

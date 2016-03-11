@@ -35,16 +35,16 @@ struct usertype_traits {
 };
 
 template<typename T>
-const std::string usertype_traits<T>::name = detail::demangle(typeid(T));
+const std::string usertype_traits<T>::name = detail::demangle<T>();
 
 template<typename T>
-const std::string usertype_traits<T>::metatable = std::string("sol.").append(detail::demangle(typeid(T)));
+const std::string usertype_traits<T>::metatable = std::string("sol.").append(detail::demangle<T>());
 
 template<typename T>
-const std::string usertype_traits<T>::variable_metatable = std::string("sol.").append(detail::demangle(typeid(T))).append(".variables");
+const std::string usertype_traits<T>::variable_metatable = std::string("sol.").append(detail::demangle<T>()).append(".variables");
 
 template<typename T>
-const std::string usertype_traits<T>::gc_table = std::string("sol.").append(detail::demangle(typeid(T))).append(".\xE2\x99\xBB");
+const std::string usertype_traits<T>::gc_table = std::string("sol.").append(detail::demangle<T>().append(".\xE2\x99\xBB"));
 
 }
 

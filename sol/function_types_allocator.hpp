@@ -41,10 +41,10 @@ struct constructor_match {
 
     constructor_match(T* obj) : obj(obj) {}
 
-    template <bool b, typename Fx, std::size_t I, typename... R, typename... Args>
-    int operator()(meta::Bool<b>, types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) const {
+    template <typename Fx, std::size_t I, typename... R, typename... Args>
+    int operator()(types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) const {
         default_construct func{};
-        return stack::call_into_lua<b ? false : stack::stack_detail::default_check_arguments>(r, a, func, L, start, obj);
+        return stack::call_into_lua<false>(r, a, func, L, start, obj);
     }
 };
 } // detail
@@ -86,11 +86,7 @@ inline int construct(lua_State* L) {
 
 template <typename T>
 inline int destruct(lua_State* L) {
-    userdata udata = stack::get<userdata>(L, 1);
-    // The first sizeof(T*) bytes are the reference: the rest is
-    // the actual data itself (if there is a reference at all)
-    T** pobj = reinterpret_cast<T**>(udata.value);
-    T*& obj = *pobj;
+    T* obj = stack::get<non_null<T*>>(L, 1);
     std::allocator<T> alloc{};
     alloc.destroy(obj);
     return 0;
@@ -109,8 +105,8 @@ struct usertype_constructor_function : base_function {
 
     usertype_constructor_function(Functions... fxs) : overloads(fxs...) {}
 
-    template <bool b, typename Fx, std::size_t I, typename... R, typename... Args>
-    int call(meta::Bool<b>, types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
+    template <typename Fx, std::size_t I, typename... R, typename... Args>
+    int call(types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
         static const auto& meta = usertype_traits<T>::metatable;
         T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
         T*& referencepointer = *pointerpointer;
@@ -120,7 +116,7 @@ struct usertype_constructor_function : base_function {
         userdataref.pop();
 
         auto& func = std::get<I>(overloads);
-        stack::call_into_lua<b ? false : stack::stack_detail::default_check_arguments>(r, a, func, L, start, function_detail::implicit_wrapper<T>(obj));
+        stack::call_into_lua<false>(r, a, func, L, start, function_detail::implicit_wrapper<T>(obj));
 
         userdataref.push();
         luaL_getmetatable(L, &meta[0]);

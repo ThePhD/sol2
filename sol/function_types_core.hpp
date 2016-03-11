@@ -205,10 +205,10 @@ static void func_gc(std::true_type, lua_State*) {
 template <std::size_t limit>
 static void func_gc(std::false_type, lua_State* L) {
     for (std::size_t i = 0; i < limit; ++i) {
-        upvalue up = stack::get<upvalue>(L, static_cast<int>(i + 1));
-        if (up.value == nullptr)
+        void* value = stack::get<light_userdata_value>(L, up_value_index(static_cast<int>(i + 1)));
+        if (value == nullptr)
             continue;
-        base_function* obj = static_cast<base_function*>(up.value);
+        base_function* obj = static_cast<base_function*>(value);
         std::allocator<base_function> alloc{};
         alloc.destroy(obj);
         alloc.deallocate(obj, 1);
@@ -216,19 +216,21 @@ static void func_gc(std::false_type, lua_State* L) {
 }
 
 inline int call(lua_State* L) {
-    void** pinheritancedata = static_cast<void**>(stack::get<upvalue>(L, 1).value);
+    void* ludata = stack::get<light_userdata_value>(L, up_value_index(1));
+    void** pinheritancedata = static_cast<void**>(ludata);
     return base_call(L, *pinheritancedata);
 }
 
 inline int gc(lua_State* L) {
-    void** pudata = static_cast<void**>(stack::get<userdata>(L, 1).value);
+    void* udata = stack::get<userdata_value>(L, 1);
+    void** pudata = static_cast<void**>(udata);
     return base_gc(L, *pudata);
 }
 
 template<std::size_t I>
 inline int usertype_call(lua_State* L) {
     // Zero-based template parameter, but upvalues start at 1
-    return base_call(L, stack::get<upvalue>(L, I + 1));
+    return base_call(L, stack::get<light_userdata_value>(L, up_value_index(static_cast<int>(I + 1))));
 }
 
 template<std::size_t I>

@@ -50,7 +50,7 @@ struct constructor_wrapper : std::tuple<Functions...> {
 };
 
 template <typename... Functions>
-constructor_wrapper<Functions...> constructor(Functions&&... functions) {
+constructor_wrapper<Functions...> initializers(Functions&&... functions) {
     return constructor_wrapper<Functions...>(std::forward<Functions>(functions)...);
 }
 
