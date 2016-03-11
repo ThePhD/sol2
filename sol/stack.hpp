@@ -430,14 +430,14 @@ struct checker<T*, type::userdata, C> {
         if (indextype == type::nil) {
             return true;
         }
-        return checker<T, type::userdata, C>{}.check<T*>(L, indextype, index, handler);
+        return checker<T, type::userdata, C>{}.check(types<T*>(), L, indextype, index, handler);
     }
 };
 
 template <typename T, typename C>
 struct checker<T, type::userdata, C> {
-    template <typename U = T, typename Handler>
-    static bool check (lua_State* L, type indextype, int index, const Handler& handler) {
+    template <typename U, typename Handler>
+    static bool check (types<U>, lua_State* L, type indextype, int index, const Handler& handler) {
         if (indextype != type::userdata) {
             handler(L, index, type::userdata, indextype);
             return false;
@@ -493,7 +493,7 @@ struct checker<T, type::userdata, C> {
     template <typename Handler>
     static bool check (lua_State* L, int index, const Handler& handler) {
         const type indextype = type_of(L, index);
-        return check(L, indextype, index, handler);
+        return check(types<T>(), L, indextype, index, handler);
     }
 };
 
