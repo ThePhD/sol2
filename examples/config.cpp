@@ -19,7 +19,7 @@ struct config {
 int main() {
     sol::state lua;
     config screen;
-    lua.open_file("config.lua");
+    lua.script_file("config.lua");
     screen.name = lua.get<std::string>("name");
     screen.width = lua.get<int>("width");
     screen.height = lua.get<int>("height");
