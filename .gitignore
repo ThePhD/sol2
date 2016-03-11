@@ -54,3 +54,6 @@ lib/liblua5.2.a
 # Windows Crap
 desktop.ini
 *.sublime-workspace
+docs/build/
+*.sublime-project
+m.lua
