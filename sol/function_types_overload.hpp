@@ -57,7 +57,7 @@ inline int overload_match_arity(types<Fx, Fxs...>, std::index_sequence<I, In...>
     if (traits::arity != fxarity) {
         return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<traits::arity, M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
     }
-    if (!function_detail::check_types(args_type(), args_indices(), L, start)) {
+    if (!stack::stack_detail::check_types<true>().check(args_type(), args_indices(), L, start, no_panic)) {
         return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
     }
     return matchfx(types<Fx>(), Index<I>(), return_types(), args_type(), L, fxarity, start, std::forward<Args>(args)...);

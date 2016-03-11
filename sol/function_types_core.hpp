@@ -40,18 +40,6 @@ struct implicit_wrapper {
     }
 };
 
-inline bool check_types(types<>, std::index_sequence<>, lua_State*, int) {
-    return true;
-}
-
-template <typename Arg, typename... Args, std::size_t I, std::size_t... In>
-inline bool check_types(types<Arg, Args...>, std::index_sequence<I, In...>, lua_State* L, int start = 1) {
-    if (!stack::check<Arg>(L, start + I, no_panic))
-        return false;
-    
-    return check_types(types<Args...>(), std::index_sequence<In...>(), L, start);
-}
-
 template<typename T, typename Func, typename = void>
 struct functor {
     typedef meta::callable_traits<Func> traits_type;

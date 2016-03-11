@@ -119,7 +119,6 @@ inline void push_metatable(lua_State* L, bool needsindexfunction, Funcs&& funcs,
     static const auto& gcname = meta_function_names[static_cast<int>(meta_function::garbage_collect)];
     luaL_newmetatable(L, &usertype_traits<T>::metatable[0]);
     int metatableindex = lua_gettop(L);
-#if !defined(SOL_NO_EXCEPTIONS) || !defined(SOL_NO_RTTI)
     if (baseclasscheck != nullptr) {
         stack::push(L, light_userdata_value(baseclasscheck));
         lua_setfield(L, metatableindex, &detail::base_class_check_key[0]);
@@ -128,7 +127,6 @@ inline void push_metatable(lua_State* L, bool needsindexfunction, Funcs&& funcs,
         stack::push(L, light_userdata_value(baseclasscast));
         lua_setfield(L, metatableindex, &detail::base_class_cast_key[0]);
     }
-#endif // No Exceptions || RTTI
     if (funcs.size() < 1 && metafunctable.size() < 2) {
         return;
     }

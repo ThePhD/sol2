@@ -1,0 +1,15 @@
+error
+=====
+the single exception type
+-------------------------
+
+.. code-block:: cpp
+
+	class error : public std::runtime_error {
+	public:
+		error(const std::string& str): std::runtime_error("Lua: error: " + str) {}
+	};
+
+If an eror is thrown by Sol, it is going to be of this type. We use this in a single place: the default ``at_panic`` function we bind on construction of a :doc:`sol::state<state>`. If you turn :doc:`off exceptions<../exceptions>`, the chances of you seeing this error are :doc:`nil<types>`.
+
+As it derives from ``std::runtime_error``, which derives from ``std::exception``, you can catch it with a ``catch (const std::exception& )`` clause in your try/catch blocks.

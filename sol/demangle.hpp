@@ -25,6 +25,7 @@
 #include <string>
 #include <array>
 #include <cstdlib>
+#include <cctype>
 
 #if defined(__GNUC__) || defined(__clang__)
 #include <cxxabi.h>
@@ -64,6 +65,12 @@ inline std::string get_type_name() {
     if (start < name.size() - 1)
         start += 1;
     name = name.substr(start, end - start);
+    if (name.find("struct", 0) == 0)
+        name.replace(0, 6, "", 0);
+    if (name.find("class", 0) == 0)
+        name.replace(0, 5, "", 0);
+    while (name.size() > 0 && std::isblank(name.front())) name.erase(name.begin(), ++name.begin());
+    while (name.size() > 0 && std::isblank(name.back())) name.erase(--name.end(), name.end());
     return name;
 }
 

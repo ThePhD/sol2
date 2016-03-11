@@ -430,13 +430,13 @@ struct checker<T*, type::userdata, C> {
         if (indextype == type::nil) {
             return true;
         }
-        return checker<T, type::userdata, C>{}.check(L, indextype, index, handler);
+        return checker<T, type::userdata, C>{}.check<T*>(L, indextype, index, handler);
     }
 };
 
 template <typename T, typename C>
 struct checker<T, type::userdata, C> {
-    template <typename Handler>
+    template <typename U = T, typename Handler>
     static bool check (lua_State* L, type indextype, int index, const Handler& handler) {
         if (indextype != type::userdata) {
             handler(L, index, type::userdata, indextype);
@@ -448,46 +448,46 @@ struct checker<T, type::userdata, C> {
              handler(L, index, type::userdata, indextype);
              return false;
         }
-        luaL_getmetatable(L, &usertype_traits<T>::metatable[0]);
+        luaL_getmetatable(L, &usertype_traits<U>::metatable[0]);
         const type expectedmetatabletype = get<type>(L);
-        if (expectedmetatabletype == type::nil) {
-             lua_pop(L, 2);
-             handler(L, index, type::userdata, indextype);
-             return false;
-        }
-        bool success = lua_rawequal(L, -1, -2) == 1;
-#ifndef SOL_NO_EXCEPTIONS
-        if (!success) {
-            lua_getfield(L, -2, &detail::base_class_check_key[0]);
-            void* basecastdata = stack::get<light_userdata_value>(L);
-            detail::throw_cast basecast = (detail::throw_cast)basecastdata;
-            success |= detail::catch_check<T>(basecast);
-            lua_pop(L, 1);
-        }
-#elif !defined(SOL_NO_RTTI)
-        if (!success) {
-            lua_getfield(L, -2, &detail::base_class_check_key[0]);
-            if (stack::get<type>(L) != type::nil) {
-                void* basecastdata = stack::get<light_userdata_value>(L);
-                detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
-                success |= ic(typeid(T));
+        if (expectedmetatabletype != type::nil) {
+            if (lua_rawequal(L, -1, -2) == 1) {
+                lua_pop(L, 2);
+                return true;
             }
-            lua_pop(L, 1);
+	   }
+	   lua_pop(L, 1);
+#ifndef SOL_NO_EXCEPTIONS
+        lua_getfield(L, -1, &detail::base_class_check_key[0]);
+        void* basecastdata = stack::get<light_userdata_value>(L);
+        detail::throw_cast basecast = (detail::throw_cast)basecastdata;
+        bool success = detail::catch_check<T>(basecast);
+#elif !defined(SOL_NO_RTTI)
+        lua_getfield(L, -1, &detail::base_class_check_key[0]);
+        if (stack::get<type>(L) == type::nil) {
+            lua_pop(L, 2);
+            return false;
         }
+        void* basecastdata = stack::get<light_userdata_value>(L);
+        detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
+        bool success = ic(typeid(T));
 #else
         // Topkek
-        if (!success) {
-            lua_getfield(L, -2, &detail::base_class_check_key[0]);
-            if (stack::get<type>(L) != type::nil) {
-                void* basecastdata = stack::get<light_userdata_value>(L);
-                detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
-                success |= ic(detail::id_for<T>::value);
-            }
-            lua_pop(L, 1);
+        lua_getfield(L, -1, &detail::base_class_check_key[0]);
+        if (stack::get<type>(L) == type::nil) {
+            lua_pop(L, 2);
+            return false;
         }
+        void* basecastdata = stack::get<light_userdata_value>(L);
+        detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
+        bool success = ic(detail::id_for<T>::value);
 #endif // No Runtime Type Information || Exceptions
         lua_pop(L, 2);
-        return success;
+	   if (!success) {
+            handler(L, index, type::userdata, indextype);
+            return false;
+        }
+        return true;
     }
 
     template <typename Handler>
@@ -819,36 +819,37 @@ inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 1) {
 }
 
 template <bool b>
-struct check_arguments {
-    template <std::size_t I0, std::size_t... I, typename Arg0, typename... Args>
-    static bool check(types<Arg0, Args...>, std::index_sequence<I0, I...>, lua_State* L, int firstargument) {
-        if (!stack::check<Arg0>(L, firstargument + I0))
+struct check_types {
+    template <std::size_t I0, std::size_t... I, typename Arg0, typename... Args, typename Handler>
+    static bool check(types<Arg0, Args...>, std::index_sequence<I0, I...>, lua_State* L, int firstargument, Handler&& handler) {
+        if (!stack::check<Arg0>(L, firstargument + I0, handler))
             return false;
-        return check(types<Args...>(), std::index_sequence<I...>(), L, firstargument);
+        return check(types<Args...>(), std::index_sequence<I...>(), L, firstargument, std::forward<Handler>(handler));
     }
 
-    static bool check(types<>, std::index_sequence<>, lua_State*, int) {
+    template <typename Handler>
+    static bool check(types<>, std::index_sequence<>, lua_State*, int, Handler&&) {
         return true;
     }
 };
 
 template <>
-struct check_arguments<false> {
-    template <std::size_t... I, typename... Args>
-    static bool check(types<Args...>, std::index_sequence<I...>, lua_State*, int) {
+struct check_types<false> {
+    template <std::size_t... I, typename... Args, typename Handler>
+    static bool check(types<Args...>, std::index_sequence<I...>, lua_State*, int, Handler&&) {
         return true;
     }
 };
 
 template <bool checkargs = default_check_arguments, std::size_t... I, typename R, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<!std::is_void<R>::value>>
 inline R call(types<R>, types<Args...> ta, std::index_sequence<I...> tai, lua_State* L, int start, Fx&& fx, FxArgs&&... args) {
-    check_arguments<checkargs>{}.check(ta, tai, L, start);
+    check_types<checkargs>{}.check(ta, tai, L, start, type_panic);
     return fx(std::forward<FxArgs>(args)..., stack::get<Args>(L, start + I)...);
 }
 
 template <bool checkargs = default_check_arguments, std::size_t... I, typename... Args, typename Fx, typename... FxArgs>
 inline void call(types<void>, types<Args...> ta, std::index_sequence<I...> tai, lua_State* L, int start, Fx&& fx, FxArgs&&... args) {
-    check_arguments<checkargs>{}.check(ta, tai, L, start);
+    check_types<checkargs>{}.check(ta, tai, L, start, type_panic);
     fx(std::forward<FxArgs>(args)..., stack::get<Args>(L, start + I)...);
 }
 } // stack_detail
