@@ -18,8 +18,6 @@ proxy, (protected\_)function_result - proxy_base derivatives
 These classes provide implicit ``operator=`` (``set``) and ``operator T`` (``get``) support for items retrieved from the underlying Lua implementation in Sol, specifically :doc:`sol::table<table>` and the results of function calls on :doc:`sol::function<function>` and :doc:`sol::protected_function<protected_function>`.
 
 
-.. _proxy:
-
 proxy
 -----
 
@@ -78,7 +76,8 @@ members
 -------
 
 .. code-block:: c++
-	:caption: [overloaded] implicit conversion get
+	:caption: functions: [overloaded] implicit conversion get
+	:name: implicit-get
 
 	requires( sol::is_primitive_type<T>::value == true )
 	template <typename T>
@@ -91,7 +90,8 @@ members
 Gets the value associated with the keys the proxy was generated and convers it to the type ``T``. Note that this function will always return ``T&``, a non-const reference, to types which are not based on :doc:`sol::reference<reference>` and not a :doc:`primitive lua type<types>`
 
 .. code-block:: c++
-	:caption: [overloaded] implicit set
+	:caption: functions: [overloaded] implicit set
+	:name: implicit-set
 
 	requires( sol::detail::Function<Fx> == false )
 	template <typename T>
@@ -104,6 +104,7 @@ Gets the value associated with the keys the proxy was generated and convers it t
 Sets the value associated with the keys the proxy was generated with to ``value``. If this is a function, calls ``set_function``. If it is not, just calls ``set``. See :ref:`note<note 1>`
 
 .. code-block:: c++
+	:caption: function: set a callable
 
 	template <typename Fx>
 	proxy& set_function( Fx&& fx );
@@ -111,6 +112,7 @@ Sets the value associated with the keys the proxy was generated with to ``value`
 Sets the value associated with the keys the proxy was generated with to a function ``fx``.
 
 .. code-block:: c++
+	:caption: function: get a value
 
 	template <typename T>
 	T get( ) const;
@@ -139,18 +141,19 @@ Consider the following:
 
 	sol::state lua;
 	lua["object"] = doge{}; // bind constructed doge to "object"
+	// but it binds as a function
 
 When you use the ``lua["object"] = doge{};`` from above, keep in mind that Sol detects if this is a function *callable with any kind of arguments*. If ``doge`` has overriden ``return_type operator()( argument_types... )`` on itself, it may result in satisfying the ``requires`` constraint from above. This means that if you have a user-defined type you want to bind as a :doc:`userdata with usertype semantics<usertype>` with this syntax, it might get bound as a function and not as a user-defined type. use ``lua["object"].set(doge)`` directly to avoid this, or ``lua["object"].set_function(doge{})`` to perform this explicitly.
 
 
-.. _function_result:
+.. _function-result:
 
 function_result
 ---------------
 
 ``function_result`` is a temporary-only, intermediate-only implicit conversion worker for when :doc:`function<function>` is called. It is *NOT* meant to be stored or captured with ``auto``. It provides fast access to the desired underlying value. It does not implement ``set`` / templated ``operator=``.
 
-.. _protected_function_result:
+.. _protected-function-result:
 
 protected_function_result
 -------------------------

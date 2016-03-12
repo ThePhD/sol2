@@ -6,7 +6,7 @@ owning and non-owning state holders for registry and globals
 .. code-block:: cpp
 
 	class state_view;
-	class state : state_view, std::unique_ptr<lua_State*>;
+	class state : state_view, std::unique_ptr<lua_State*, deleter>;
 
 The most important class here is ``state_view``. This structure takes a ``lua_State*`` that was already created and gives you simple, easy access to Lua's interfaces without taking ownership. ``state`` derives from ``state_view``, inheriting all of this functionality, but has the additional purpose of creating a fresh ``lua_State*`` and managing its lifetime for you in the default constructor.
 
@@ -15,10 +15,9 @@ The majority of the members between ``state_view`` and :doc:`sol::table<table>` 
 enumerations
 ------------
 
-.. _libenum:
-
 .. code-block:: cpp
 	:caption: in-lua libraries
+	:name: lib-enum
 
 	enum class lib : char {
 	    base,
@@ -42,11 +41,12 @@ members
 
 .. code-block:: cpp
 	:caption: function: open standard libraries/modules
+	:name: open-libraries
 
 	template<typename... Args>
 	void open_libraries(Args&&... args);
 
-This function takes a number of :ref:`sol::lib<libenum>` as arguments and opens up the associated Lua core libraries. 
+This function takes a number of :ref:`sol::lib<lib-enum>` as arguments and opens up the associated Lua core libraries. 
 
 .. code-block:: cpp
 	:caption: function: script / script_file
@@ -67,6 +67,7 @@ Get either the global table or the Lua registry as a :doc:`sol::table<table>`, w
 
 .. code-block:: cpp
 	:caption: function: Lua set_panic
+	:name: set-panic
 
 	void set_panic(lua_CFunction panic);
 

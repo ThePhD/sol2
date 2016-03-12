@@ -5,7 +5,7 @@ resumable/yielding functions from Lua
 
 A ``coroutine`` is a :doc:`reference<reference>` to a function in Lua that can be called multiple times to yield a specific result. It is run on the :doc:`lua_State<state>` that was used to create it (see :doc:`thread<thread>` for an example on how to get a coroutine that runs on a thread separate from your usual "main" :doc:`lua_State<state>`).
 
-The ``coroutine`` object is entirely similar to the :doc:`protected_function<protected_function>` object, with additional member functions to check if a coroutine has yielded (:doc:`call_status::yielded<types>`) and is thus runnable again, whether it has completed (:doc:`call_status::ok<types>`) and thus cannot yield anymore values, or whether it has suffered an error (see `status()` and :doc:`call_status<types>`'s error codes).
+The ``coroutine`` object is entirely similar to the :doc:`protected_function<protected_function>` object, with additional member functions to check if a coroutine has yielded (:doc:`call_status::yielded<types>`) and is thus runnable again, whether it has completed (:ref:`call_status::ok<call-status>`) and thus cannot yield anymore values, or whether it has suffered an error (see :ref:`status()<status>` and :ref:`call_status<call-status>`'s error codes).
 
 For example, you can work with a coroutine like this:
 
@@ -61,10 +61,9 @@ The following are the members of ``sol::coroutine``:
 members
 -------
 
-.. _status:
-
 .. code-block:: cpp
 	:caption: returning the coroutine's status
+	:name: status
 
 	call_status status() const noexcept;
 
@@ -100,4 +99,4 @@ These functions allow you to check if a coroutine can still be called (has more 
 	template<typename... Ret, typename... Args>
 	decltype(auto) operator()( types<Ret...>, Args&&... args );
 
-Calls the coroutine. The second ``operator()`` lets you specify the templated return types using the ``my_co(sol::types<int, std::string>, ...)`` syntax. Check :ref:`status()<status>` afterwards for more information about the success of the run or just check the coroutine object in an ifs tatement, as shown :ref:`above<runnable>`.
+Calls the coroutine. The second ``operator()`` lets you specify the templated return types using the ``my_co(sol::types<int, std::string>, ...)`` syntax. Check ``status()`` afterwards for more information about the success of the run or just check the coroutine object in an ifs tatement, as shown :ref:`above<runnable>`.
