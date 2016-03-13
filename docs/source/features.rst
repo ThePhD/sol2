@@ -40,7 +40,7 @@ what Sol supports
 		``my_class a = table["a"];``
 
 * Thread/Coroutine support
-	- Use, resume, and play with :doc:`<coroutines<api/coroutine>` like regular functions
+	- Use, resume, and play with :doc:`coroutines<api/coroutine>` like regular functions
 	- Get and use them even on a separate Lua :doc:`thread<api/thread>` 
 	- Monitor status and get check errors
 

@@ -69,6 +69,7 @@ Sets a previously created usertype with the specified ``key`` into the table. No
 
 .. code-block:: cpp
 	:caption: function: begin / end for iteration
+	:name: table-iterators
 
 	table_iterator begin () const;
 	table_iterator end() const;
@@ -79,6 +80,7 @@ Provides `input iterators`_ for a table. This allows tables to work with single-
 
 .. code-block:: cpp
 	:caption: function: iteration with a function
+	:name: table-for-each
 
 	template <typename Fx>
 	void for_each(Fx&& fx);

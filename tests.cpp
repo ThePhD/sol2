@@ -1181,6 +1181,31 @@ TEST_CASE("usertype/nonmember-functions", "let users set non-member functions th
     REQUIRE((lua.get<giver>("t").a == 20));
 }
 
+TEST_CASE("usertype/unique-shared-ptr", "manage the conversion and use of unique and shared pointers ('unique usertypes')") {
+    const int64_t unique_value = 0x7125679355635963;
+    auto uniqueint = std::make_unique<int64_t>(unique_value);
+    auto sharedint = std::make_shared<int64_t>(unique_value);
+    long preusecount = sharedint.use_count();
+    { sol::state lua;
+    lua.open_libraries(sol::lib::base);
+    lua.set("uniqueint", std::move(uniqueint));
+    lua.set("sharedint", sharedint);
+    std::unique_ptr<int64_t>& uniqueintref = lua["uniqueint"];
+    std::shared_ptr<int64_t>& sharedintref = lua["sharedint"];
+    int siusecount = sharedintref.use_count();
+    REQUIRE(uniqueintref != nullptr);
+    REQUIRE(sharedintref != nullptr);
+    REQUIRE(unique_value == *uniqueintref.get());
+    REQUIRE(unique_value == *sharedintref.get());
+    REQUIRE(siusecount == sharedint.use_count());
+    std::shared_ptr<int64_t> moreref = sharedint;
+    REQUIRE(unique_value == *moreref.get());
+    REQUIRE(moreref.use_count() == sharedint.use_count());
+    REQUIRE(moreref.use_count() == sharedintref.use_count());
+    }
+    REQUIRE(preusecount == sharedint.use_count());
+}
+
 TEST_CASE("regressions/one", "issue number 48") {
     sol::state lua;
     lua.new_usertype<vars>("vars",
@@ -1349,7 +1374,6 @@ TEST_CASE("functions/destructor-tests", "Show that proper copies / destruction h
         }
         REQUIRE(created == 2);
         REQUIRE(destroyed == 2);
-        REQUIRE(created == destroyed);
     }
 
     // things convertible to a static function should _never_ be forced to make copies
@@ -1406,7 +1430,6 @@ TEST_CASE("usertype/destructor-tests", "Show that proper copies / destruction ha
     }
     REQUIRE(created == 4);
     REQUIRE(destroyed == 4);
-    REQUIRE(created == destroyed);
 }
 
 TEST_CASE("functions/overloading", "Check if overloading works properly for regular set function syntax") {

@@ -87,6 +87,9 @@ const nil_t nil {};
 inline bool operator==(nil_t, nil_t) { return true; }
 inline bool operator!=(nil_t, nil_t) { return false; }
 
+template <typename T, typename = void>
+struct unique_usertype {};
+
 template <typename T>
 struct non_null {};
 

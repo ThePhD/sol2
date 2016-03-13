@@ -26,8 +26,10 @@
 
 namespace sol {
     template <typename... Functions>
-    struct overload_set : std::tuple<Functions...> {
-        using std::tuple<Functions...>::tuple;
+    struct overload_set {
+        std::tuple<Functions...> set;
+        template <typename... Args>
+        overload_set (Args&&... args) : set(std::forward<Args>(args)...) {}
     };
 
     template <typename... Args>

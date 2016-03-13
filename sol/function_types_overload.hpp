@@ -81,12 +81,8 @@ struct overloaded_function : base_function {
     typedef std::index_sequence_for<Functions...> indices;
     overload_list overloads;
 
-    overloaded_function(overload_set<Functions...> set)
-    : overloaded_function(indices(), set) {}
-
-    template <std::size_t... I>
-    overloaded_function(std::index_sequence<I...>, overload_set<Functions...> set)
-    : overloaded_function(std::get<I>(set)...) {}
+    overloaded_function(overload_list set)
+    : overloads(std::move(set)) {}
 
     overloaded_function(Functions... fxs)
     : overloads(fxs...) {

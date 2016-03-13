@@ -131,7 +131,8 @@ members
 -------
 
 .. code-block:: cpp
-	:caption: usertype<T> constructor
+	:caption: function: usertype<T> constructor
+	:name: usertype-constructor
 
 	template<typename... Args>
 	usertype<T>(Args&&... args);
@@ -160,16 +161,16 @@ The constructor of usertype takes a variable number of arguments. It takes an ev
 * ``"{name}", &type::function_name`` or ``"{name}", &type::member_variable`` 
     - Binds a typical member function or variable to ``"{name}"``. In the case of a member variable or member function, ``type`` must be ``T`` or a base of ``T``.
 * ``sol::base_classes, sol::bases<Bases...>``
-    - Tells a usertype what its base classes are. If you have exceptions turned on, this need not be necessary: if you do not then you need this to have derived-to-base conversions work properly. See :ref:`inheritance<usertype_inheritance>`.
+    - Tells a usertype what its base classes are. If you have exceptions turned on, this need not be necessary: if you do not then you need this to have derived-to-base conversions work properly. See :ref:`inheritance<usertype-inheritance>`.
 
 
 overloading
 -----------
 
-Functions set here support overloading. See :doc:`here<overload>` for an example.
+Functions set on a usertype support overloading. See :doc:`here<overload>` for an example.
 
 
-.. _usertype_inheritance:
+.. _usertype-inheritance:
 
 inheritance
 -----------
@@ -231,6 +232,7 @@ traits
 .. code-block:: cpp
 	:caption: usertype_traits<T>
 	:linenos:
+	:name: usertype-traits
 
 	template<typename T>
 	struct usertype_traits {

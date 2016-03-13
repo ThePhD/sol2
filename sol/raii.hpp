@@ -29,9 +29,27 @@ namespace sol {
 namespace detail {
 struct default_construct {
     template<typename T, typename... Args>
-    void operator()(T&& obj, Args&&... args) const {
+    static void construct(T&& obj, Args&&... args) {
         std::allocator<meta::Unqualified<T>> alloc{};
         alloc.construct(obj, std::forward<Args>(args)...);
+    }
+
+    template<typename T, typename... Args>
+    void operator()(T&& obj, Args&&... args) const {
+        construct(std::forward<T>(obj), std::forward<Args>(args)...);
+    }
+};
+
+struct default_destruct {
+    template<typename T>
+    static void destroy(T&& obj) {
+        std::allocator<meta::Unqualified<T>> alloc{};
+        alloc.destroy(obj);
+    }
+
+    template<typename T>
+    void operator()(T&& obj) const {
+        destroy(std::forward<T>(obj));
     }
 };
 } // detail
@@ -45,8 +63,10 @@ using constructors = constructor_list<Args...>;
 const auto default_constructor = constructors<types<>>{};
 
 template <typename... Functions>
-struct constructor_wrapper : std::tuple<Functions...> {
-    using std::tuple<Functions...>::tuple;
+struct constructor_wrapper {
+    std::tuple<Functions...> set;
+    template <typename... Args>
+    constructor_wrapper(Args&&... args) : set(std::forward<Args>(args)...) {}
 };
 
 template <typename... Functions>

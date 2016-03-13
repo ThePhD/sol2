@@ -18,6 +18,22 @@ proxy, (protected\_)function_result - proxy_base derivatives
 These classes provide implicit ``operator=`` (``set``) and ``operator T`` (``get``) support for items retrieved from the underlying Lua implementation in Sol, specifically :doc:`sol::table<table>` and the results of function calls on :doc:`sol::function<function>` and :doc:`sol::protected_function<protected_function>`.
 
 
+.. _function-result:
+
+function_result
+---------------
+
+``function_result`` is a temporary-only, intermediate-only implicit conversion worker for when :doc:`function<function>` is called. It is *NOT* meant to be stored or captured with ``auto``. It provides fast access to the desired underlying value. It does not implement ``set`` / ``set_function`` / templated ``operator=``, as show below.
+
+
+.. _protected-function-result:
+
+protected_function_result
+-------------------------
+
+``protected_function_result`` is a nicer version of ``function_result`` that can be used to detect errors. Its gives safe access to the desired underlying value. It does not implement ``set`` / ``set_function`` / templated ``operator=``, as shown below.
+
+
 proxy
 -----
 
@@ -43,7 +59,6 @@ After loading that file in or putting it in a string and reading the string dire
 
 	// produces proxy, implicitly converts to std::string, quietly destroys proxy
 	std::string x = lua["bark"]["woof"][2];
-
 
 
 ``proxy`` lazy evaluation:
@@ -90,6 +105,18 @@ members
 Gets the value associated with the keys the proxy was generated and convers it to the type ``T``. Note that this function will always return ``T&``, a non-const reference, to types which are not based on :doc:`sol::reference<reference>` and not a :doc:`primitive lua type<types>`
 
 .. code-block:: c++
+	:caption: function: get a value
+	:name: regular-get
+
+	template <typename T>
+	T get( ) const;
+
+Gets the value associated with the keys the proxy was generated and convers it to the type ``T``.
+
+proxy-only members
+------------------
+
+.. code-block:: c++
 	:caption: functions: [overloaded] implicit set
 	:name: implicit-set
 
@@ -101,28 +128,31 @@ Gets the value associated with the keys the proxy was generated and convers it t
 	template <typename Fx>
 	proxy& operator=( Fx&& function );
 
-Sets the value associated with the keys the proxy was generated with to ``value``. If this is a function, calls ``set_function``. If it is not, just calls ``set``. See :ref:`note<note 1>`
+Sets the value associated with the keys the proxy was generated with to ``value``. If this is a function, calls ``set_function``. If it is not, just calls ``set``. Does not exist on :ref:`function_result<function-result>` or :ref:`protected_function_result<protected-function-result>`. See :ref:`note<note 1>` for caveats.
 
 .. code-block:: c++
 	:caption: function: set a callable
+	:name: regular-set-function
 
 	template <typename Fx>
 	proxy& set_function( Fx&& fx );
 
-Sets the value associated with the keys the proxy was generated with to a function ``fx``.
+Sets the value associated with the keys the proxy was generated with to a function ``fx``. Does not exist on :ref:`function_result<function-result>` or :ref:`protected_function_result<protected-function-result>`.
+
 
 .. code-block:: c++
-	:caption: function: get a value
+	:caption: function: set a value
+	:name: regular-set
 
 	template <typename T>
-	T get( ) const;
+	proxy& set( T&& value );
 
-Gets the value associated with the keys the proxy was generated and convers it to the type ``T``.
+Sets the value associated with the keys the proxy was generated with to ``value``. Does not exist on :ref:`function_result<function-result>` or :ref:`protected_function_result<protected-function-result>`.
 
 
 .. _note 1:
 
-Note: Function Objects and proxies
+On Function Objects and proxies
 ----------------------------------
 
 Consider the following:
@@ -144,18 +174,3 @@ Consider the following:
 	// but it binds as a function
 
 When you use the ``lua["object"] = doge{};`` from above, keep in mind that Sol detects if this is a function *callable with any kind of arguments*. If ``doge`` has overriden ``return_type operator()( argument_types... )`` on itself, it may result in satisfying the ``requires`` constraint from above. This means that if you have a user-defined type you want to bind as a :doc:`userdata with usertype semantics<usertype>` with this syntax, it might get bound as a function and not as a user-defined type. use ``lua["object"].set(doge)`` directly to avoid this, or ``lua["object"].set_function(doge{})`` to perform this explicitly.
-
-
-.. _function-result:
-
-function_result
----------------
-
-``function_result`` is a temporary-only, intermediate-only implicit conversion worker for when :doc:`function<function>` is called. It is *NOT* meant to be stored or captured with ``auto``. It provides fast access to the desired underlying value. It does not implement ``set`` / templated ``operator=``.
-
-.. _protected-function-result:
-
-protected_function_result
--------------------------
-
-``protected_function_result`` is a nicer version of ``function_result`` that can be used to detect errors. It sag\fe access to the desired underlying value. It does not implement ``set`` / templated ``operator=``.

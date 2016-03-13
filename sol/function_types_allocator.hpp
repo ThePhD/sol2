@@ -75,9 +75,7 @@ inline int construct(lua_State* L) {
     luaL_getmetatable(L, &meta[0]);
     if (stack::get<type>(L) == type::nil) {
         lua_pop(L, 1);
-        std::string err = "sol: unable to get usertype metatable for ";
-        err += usertype_traits<T>::name;
-        return luaL_error(L, err.c_str());
+        return luaL_error(L, "sol: unable to get usertype metatable");
     }
 
     lua_setmetatable(L, -2);
@@ -98,10 +96,10 @@ struct usertype_constructor_function : base_function {
     typedef std::index_sequence_for<Functions...> indices;
     overload_list overloads;
 
-    usertype_constructor_function(constructor_wrapper<Functions...> set) : usertype_constructor_function(indices(), set) {}
+    usertype_constructor_function(overload_list set) : overloads(std::move(set)) {}
 
     template <std::size_t... I>
-    usertype_constructor_function(std::index_sequence<I...>, constructor_wrapper<Functions...> set) : usertype_constructor_function(std::get<I>(set)...) {}
+    usertype_constructor_function(std::index_sequence<I...>, constructor_wrapper<Functions...> set) : usertype_constructor_function(detail::forward_get<I>(set.set)...) {}
 
     usertype_constructor_function(Functions... fxs) : overloads(fxs...) {}
 

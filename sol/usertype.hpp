@@ -114,8 +114,14 @@ struct is_destructor<destructor_wrapper<Fx>> : std::true_type {};
 template <typename... Args>
 using has_destructor = meta::Or<is_destructor<meta::Unqualified<Args>>...>;
 
-template<typename T, bool refmeta, typename Funcs, typename FuncTable, typename MetaFuncTable>
-inline void push_metatable(lua_State* L, bool needsindexfunction, Funcs&& funcs, FuncTable&& functable, MetaFuncTable&& metafunctable, void* baseclasscheck, void* baseclasscast) {
+enum class stage {
+	normalmeta,
+	refmeta,
+	uniquemeta,
+};
+
+template<typename T, stage metastage>
+inline void push_metatable(lua_State* L, bool needsindexfunction, std::vector<std::unique_ptr<function_detail::base_function>>& funcs, std::vector<luaL_Reg>& functable, std::vector<luaL_Reg>& metafunctable, void* baseclasscheck, void* baseclasscast) {
     static const auto& gcname = meta_function_names[static_cast<int>(meta_function::garbage_collect)];
     luaL_newmetatable(L, &usertype_traits<T>::metatable[0]);
     int metatableindex = lua_gettop(L);
@@ -132,18 +138,36 @@ inline void push_metatable(lua_State* L, bool needsindexfunction, Funcs&& funcs,
     }
     // Metamethods directly on the metatable itself
     int metaup = stack::stack_detail::push_upvalues(L, funcs);
-    if (refmeta && gcname == metafunctable[metafunctable.size()-2].name) {
-        // We can just "clip" out the __gc function,
-        // which we always put as the last entry in the meta function table.
-        luaL_Reg& target = metafunctable[metafunctable.size() - 2];
-        luaL_Reg old = target;
-        target = { nullptr, nullptr };
-        luaL_setfuncs(L, metafunctable.data(), metaup);
-        target = old;
-    }
-    else {
-        // Otherwise, just slap it in there.
-        luaL_setfuncs(L, metafunctable.data(), metaup);
+    switch (metastage) {
+        case stage::uniquemeta: {
+            if (gcname != metafunctable.back().name) {
+                metafunctable.push_back({ "__gc", nullptr });
+            }
+            luaL_Reg& target = metafunctable.back();
+            luaL_Reg old = target;
+            target.func = detail::unique_destruct<T>;
+            metafunctable.push_back({nullptr, nullptr});
+            luaL_setfuncs(L, metafunctable.data(), metaup);
+            metafunctable.pop_back();
+            target = old;
+            break; }
+        case stage::refmeta:
+            if (gcname == metafunctable.back().name) {
+                // We can just "clip" out the __gc function,
+                // which we always put as the last entry in the meta function table.
+                luaL_Reg& target = metafunctable.back();
+                luaL_Reg old = target;
+                target = { nullptr, nullptr };
+                luaL_setfuncs(L, metafunctable.data(), metaup);
+                target = old;
+            }
+            break;
+        case stage::normalmeta:
+        default:
+            metafunctable.push_back({nullptr, nullptr});
+            luaL_setfuncs(L, metafunctable.data(), metaup);
+            metafunctable.pop_back();
+            break;
     }
     if (needsindexfunction) {
         // We don't need to do anything more
@@ -155,7 +179,9 @@ inline void push_metatable(lua_State* L, bool needsindexfunction, Funcs&& funcs,
     // gives us performance boost in calling them
     lua_createtable(L, 0, static_cast<int>(functable.size()));
     int up = stack::stack_detail::push_upvalues(L, funcs);
+    functable.push_back({nullptr, nullptr});
     luaL_setfuncs(L, functable.data(), up);
+    functable.pop_back();
     lua_setfield(L, metatableindex, "__index");
     return;
 }
@@ -172,7 +198,7 @@ inline void set_global_deleter(lua_State* L, lua_CFunction cleanup, Functions&& 
     // gctable name by default has ♻ part of it
     lua_setglobal(L, &usertype_traits<T>::gc_table[0]);
 }
-}
+} // usertype_detail
 
 template<typename T>
 class usertype {
@@ -195,12 +221,12 @@ private:
 
     template<typename... Functions>
     std::unique_ptr<function_detail::base_function> make_function(const std::string&, overload_set<Functions...> func) {
-        return std::make_unique<function_detail::usertype_overloaded_function<T, Functions...>>(std::move(func));
+        return std::make_unique<function_detail::usertype_overloaded_function<T, Functions...>>(std::move(func.set));
     }
 
     template<typename... Functions>
     std::unique_ptr<function_detail::base_function> make_function(const std::string&, constructor_wrapper<Functions...> func) {
-        return std::make_unique<function_detail::usertype_constructor_function<T, Functions...>>(std::move(func));
+        return std::make_unique<function_detail::usertype_constructor_function<T, Functions...>>(std::move(func.set));
     }
 
     template<typename Arg, typename... Args, typename Ret>
@@ -234,7 +260,7 @@ private:
     template<typename Fx>
     std::unique_ptr<function_detail::base_function> make_function(const std::string&, Fx&& func) {
         typedef meta::Unqualified<Fx> Fxu;
-        typedef std::tuple_element_t<0, typename meta::function_traits<Fxu>::args_tuple_type> Arg0;
+        typedef meta::tuple_element_t<0, typename meta::function_traits<Fxu>::args_tuple_type> Arg0;
         typedef meta::Unqualified<std::remove_pointer_t<Arg0>> Argu;
         static_assert(std::is_base_of<Argu, T>::value, "Any non-member-function must have a first argument which is covariant with the desired usertype.");
         typedef std::decay_t<Fxu> function_type;
@@ -397,8 +423,6 @@ private:
         metafunctiontable.reserve(sizeof...(args)+3);
 
         build_function_tables<0>(std::forward<Args>(args)...);
-        metafunctiontable.push_back({ nullptr, nullptr });
-        functiontable.push_back({ nullptr, nullptr });
     }
 
     template<typename... Args>
@@ -419,11 +443,13 @@ public:
 
     int push(lua_State* L) {
         // push pointer tables first,
-        usertype_detail::push_metatable<T*, true>(L, needsindexfunction, functions, functiontable, metafunctiontable, baseclasscheck, baseclasscast);
+        usertype_detail::push_metatable<T*, usertype_detail::stage::refmeta>(L, needsindexfunction, functions, functiontable, metafunctiontable, baseclasscheck, baseclasscast);
+        lua_pop(L, 1);
+        usertype_detail::push_metatable<unique_usertype<T>, usertype_detail::stage::uniquemeta>(L, needsindexfunction, functions, functiontable, metafunctiontable, baseclasscheck, baseclasscast);
         lua_pop(L, 1);
         // but leave the regular T table on last
         // so it can be linked to a type for usage with `.new(...)` or `:new(...)`
-        usertype_detail::push_metatable<T, false>(L, needsindexfunction, functions, functiontable, metafunctiontable, baseclasscheck, baseclasscast);
+        usertype_detail::push_metatable<T, usertype_detail::stage::normalmeta>(L, needsindexfunction, functions, functiontable, metafunctiontable, baseclasscheck, baseclasscast);
         // Make sure to drop a table in the global namespace to properly destroy the pushed functions
         // at some later point in life
         usertype_detail::set_global_deleter<T>(L, functiongcfunc, functions);

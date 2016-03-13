@@ -32,8 +32,12 @@
 #include <memory>
 
 namespace sol {
-template <typename Sig, typename... Args>
-struct function_packer : std::tuple<Args...> { using std::tuple<Args...>::tuple; };
+template <typename Sig, typename... Functions>
+struct function_packer { 
+    std::tuple<Functions...> set;
+    template <typename... Args>
+    function_packer(Args&&... args) : set(std::forward<Args>(args)...) {}
+};
 
 template <typename Sig, typename... Args>
 function_packer<Sig, Args...> function_pack( Args&&... args ) { 
@@ -153,7 +157,7 @@ struct pusher<function_sig<Sigs...>> {
     static void set_isconvertible_fx(std::false_type, types<R(Args...)>, lua_State* L, Fx&& fx) {
         typedef meta::Unwrapped<std::decay_t<Fx>> fx_t;
         std::unique_ptr<function_detail::base_function> sptr = std::make_unique<function_detail::functor_function<fx_t>>(std::forward<Fx>(fx));
-        set_fx<Fx>(L, std::move(sptr));
+        set_fx(L, std::move(sptr));
     }
 
     template<typename Fx, typename T>
@@ -165,7 +169,7 @@ struct pusher<function_sig<Sigs...>> {
     static void set_reference_fx(std::false_type, lua_State* L, Fx&& fx, T&& obj) {
         typedef std::remove_pointer_t<std::decay_t<Fx>> clean_fx;
         std::unique_ptr<function_detail::base_function> sptr = std::make_unique<function_detail::member_function<clean_fx, meta::Unqualified<T>>>(std::forward<T>(obj), std::forward<Fx>(fx));
-        return set_fx<Fx>(L, std::move(sptr));
+        return set_fx(L, std::move(sptr));
     }
 
     template<typename Fx, typename T>
@@ -197,24 +201,15 @@ struct pusher<function_sig<Sigs...>> {
         stack::push(L, freefunc, upvalues);
     }
 
-    template<typename Fx>
     static void set_fx(lua_State* L, std::unique_ptr<function_detail::base_function> luafunc) {
-        const static auto& metakey = u8"sol.ƒ.♲.🗑.(/¯◡ ‿ ◡)/¯ ~ ┻━┻ (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧";
-        const static char* metatablename = &metakey[0];
         function_detail::base_function* target = luafunc.release();
-        void* userdata = reinterpret_cast<void*>(target);
+        void* targetdata = reinterpret_cast<void*>(target);
         lua_CFunction freefunc = function_detail::call;
-       
-        int metapushed = luaL_newmetatable(L, metatablename);
-        if(metapushed == 1) {
-            lua_pushstring(L, "__gc");
-            stack::push(L, function_detail::gc);
-            lua_settable(L, -3);
-            lua_pop(L, 1);
-        }
 
-        stack::stack_detail::push_userdata<void*>(L, metatablename, userdata);
-        stack::push(L, freefunc, 1);
+        stack::push(L, userdata_value(targetdata));
+	   function_detail::free_function_cleanup(L);
+	   lua_setmetatable(L, -2);
+	   stack::push(L, freefunc, 1);
     }
 
     template<typename... Args>
@@ -229,7 +224,7 @@ template<typename T, typename... Args>
 struct pusher<function_packer<T, Args...>> {
     template <std::size_t... I, typename FP>
     static int push_func(std::index_sequence<I...>, lua_State* L, FP&& fp) {
-        return stack::push<T>(L, std::get<I>(fp)...);
+        return stack::push<T>(L, detail::forward_get<I>(fp.set)...);
     }
 
     template <typename FP>
@@ -247,15 +242,14 @@ struct pusher<std::function<Signature>> {
 
 template<typename... Functions>
 struct pusher<overload_set<Functions...>> {
-    template<std::size_t... I, typename Set>
-    static int push(std::index_sequence<I...>, lua_State* L, Set&& set) {
-        pusher<function_sig<>>{}.set_fx<Set>(L, std::make_unique<function_detail::overloaded_function<Functions...>>(std::get<I>(set)...));
+    static int push(lua_State* L, overload_set<Functions...>&& set) {
+        pusher<function_sig<>>{}.set_fx(L, std::make_unique<function_detail::overloaded_function<Functions...>>(std::move(set.set)));
         return 1;
     }
 
-    template<typename Set>
-    static int push(lua_State* L, Set&& set) {
-        return push(std::index_sequence_for<Functions...>(), L, std::forward<Set>(set));
+    static int push(lua_State* L, const overload_set<Functions...>& set) {
+        pusher<function_sig<>>{}.set_fx(L, std::make_unique<function_detail::overloaded_function<Functions...>>(set.set));
+        return 1;
     }
 };
 

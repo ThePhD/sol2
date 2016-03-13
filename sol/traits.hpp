@@ -120,6 +120,9 @@ using Unqualified = std::remove_cv_t<std::remove_reference_t<T>>;
 template<typename T>
 using Unwrapped = typename unwrapped<T>::type;
 
+template <std::size_t N, typename Tuple>
+using tuple_element_t = std::tuple_element_t<N, Unqualified<Tuple>>;
+
 template<typename V, typename... Vs>
 struct find_in_pack_v : Bool<false> { };
 
@@ -240,7 +243,7 @@ struct fx_traits<R(T::*)(Args...), false> {
     typedef R return_type;
     typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
     template<std::size_t i>
-    using arg = std::tuple_element_t<i, args_tuple_type>;
+    using arg = meta::tuple_element_t<i, args_tuple_type>;
 };
 
 template<typename T, typename R, typename... Args>
@@ -255,7 +258,7 @@ struct fx_traits<R(T::*)(Args...) const, false> {
     typedef R return_type;
     typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
     template<std::size_t i>
-    using arg = std::tuple_element_t<i, args_tuple_type>;
+    using arg = meta::tuple_element_t<i, args_tuple_type>;
 };
 
 template<typename R, typename... Args>
@@ -270,7 +273,7 @@ struct fx_traits<R(Args...), false> {
     typedef R return_type;
     typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
     template<std::size_t i>
-    using arg = std::tuple_element_t<i, args_tuple_type>;
+    using arg = meta::tuple_element_t<i, args_tuple_type>;
 };
 
 template<typename R, typename... Args>
@@ -285,7 +288,7 @@ struct fx_traits<R(*)(Args...), false> {
     typedef R return_type;
     typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
     template<std::size_t i>
-    using arg = std::tuple_element_t<i, args_tuple_type>;
+    using arg = meta::tuple_element_t<i, args_tuple_type>;
 };
 
 } // meta_detail
@@ -322,7 +325,7 @@ struct callable_traits<Signature, true> {
     typedef R(*function_pointer_type)(Arg);
     typedef R(*free_function_pointer_type)(Arg);
     template<std::size_t i>
-    using arg = std::tuple_element_t<i, args_tuple_type>;
+    using arg = meta::tuple_element_t<i, args_tuple_type>;
 };
 } // meta_detail
 
@@ -382,6 +385,11 @@ decltype(auto) tuplefy(X&&... x ) {
 }
 } // meta
 namespace detail {
+template <std::size_t I, typename Tuple>
+decltype(auto) forward_get( Tuple&& tuple ) {
+    return std::forward<meta::tuple_element_t<I, Tuple>>(std::get<I>(tuple));
+}
+
 template<typename T>
 auto unwrap(T&& item) -> decltype(std::forward<T>(item)) {
     return std::forward<T>(item);
@@ -394,7 +402,7 @@ T& unwrap(std::reference_wrapper<T> arg) {
 
 template<typename T>
 decltype(auto) deref(T&& item) {
-    return item;
+    return std::forward<T>(item);
 }
 
 template<typename T>
@@ -436,7 +444,7 @@ template<typename T>
 inline T* ptr(T* val) {
     return val;
 }
-} // meta_detail
+} // detail
 } // sol
 
 #endif // SOL_TRAITS_HPP

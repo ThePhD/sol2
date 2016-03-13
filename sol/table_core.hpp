@@ -65,23 +65,26 @@ class table_core : public reference {
     template<typename... Ret, std::size_t... I, typename Keys>
     auto tuple_get( types<Ret...>, std::index_sequence<I...>, Keys&& keys ) const
     -> decltype(stack::pop<std::tuple<Ret...>>(nullptr)){
-        auto pp = stack::push_pop<is_global<decltype(std::get<I>(keys))...>::value>(*this);
+        auto pp = stack::push_pop<is_global<meta::tuple_element_t<I, Keys>...>::value>(*this);
         int tableindex = lua_gettop(lua_state());
-        void(detail::swallow{ ( stack::get_field<top_level>(lua_state(), std::get<I>(keys), tableindex), 0)... });
+        void(detail::swallow{ ( stack::get_field<top_level>(lua_state(), detail::forward_get<I>(keys), tableindex), 0)... });
         return stack::pop<std::tuple<Ret...>>( lua_state() );
     }
 
     template<typename Ret, std::size_t I, typename Keys>
     decltype(auto) tuple_get( types<Ret>, std::index_sequence<I>, Keys&& keys ) const {
-        auto pp = stack::push_pop<is_global<decltype(std::get<I>(keys))>::value>(*this);
-        stack::get_field<top_level>( lua_state( ), std::get<I>( keys ) );
+        auto pp = stack::push_pop<is_global<meta::tuple_element_t<I, Keys>>::value>(*this);
+        stack::get_field<top_level>( lua_state( ), detail::forward_get<I>(keys));
         return stack::pop<Ret>( lua_state( ) );
     }
 
     template<typename Pairs, std::size_t... I>
     void tuple_set( std::index_sequence<I...>, Pairs&& pairs ) {
-        auto pp = stack::push_pop<is_global<decltype(std::get<I * 2>(pairs))...>::value>(*this);
-        void(detail::swallow{ (stack::set_field<top_level>(lua_state(), std::get<I * 2>(pairs), std::get<I * 2 + 1>(pairs)), 0)... });
+        auto pp = stack::push_pop<is_global<decltype(detail::forward_get<I>(pairs))...>::value>(*this);
+        void(detail::swallow{ (stack::set_field<top_level>(lua_state(), 
+		   detail::forward_get<I * 2>(pairs),
+            detail::forward_get<I * 2 + 1>(pairs)
+        ), 0)... });
     }
 
     template <bool global, typename T, typename Key>

@@ -8,7 +8,7 @@ general-purpose safety reference to an existing object
 	class object : reference;
 
 
-``object``'s goal is to allow someone to pass around the most generic form of a reference to something in Lua (or propogate a ``nil``). It is the logical extension of :doc:`sol::reference<reference>`, and is used in :doc:`sol::table<table>`'s iterators.
+``object``'s goal is to allow someone to pass around the most generic form of a reference to something in Lua (or propogate a ``nil``). It is the logical extension of :doc:`sol::reference<reference>`, and is used in :ref:`sol::table's iterators<table-iterators>`.
 
 
 members
@@ -28,7 +28,7 @@ Performs a cast of the item this reference refers to into the type ``T`` and ret
 	template<typename T>
 	bool is() const;
 
-Performs a type check using the :doc:`sol::stack::check<stack>` api, after checking if the reference is valid.
+Performs a type check using the :ref:`sol::stack::check<checker>` api, after checking if the reference is valid.
 
 
 non-members
@@ -42,4 +42,4 @@ non-members
 	bool operator!=(const object& lhs, const nil_t&);
 	bool operator!=(const nil_t&, const object& rhs);
 
-These allow a person to compare an ``sol::object`` against ``nil``, which essentially checks if an object references a non-nil value, like so:
+These allow a person to compare an ``sol::object`` against :ref:`nil<nil>`, which essentially checks if an object references a non-nil value, like so:

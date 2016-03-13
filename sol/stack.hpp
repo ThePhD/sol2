@@ -30,6 +30,7 @@
 #include "usertype_traits.hpp"
 #include "inheritance.hpp"
 #include "overload.hpp"
+#include "raii.hpp"
 #include <utility>
 #include <array>
 #include <cstring>
@@ -117,7 +118,28 @@ template <bool global = false, typename Key, typename Value>
 void set_field(lua_State* L, Key&& key, Value&& value, int tableindex) {
     field_setter<meta::Unqualified<Key>, global>{}.set(L, std::forward<Key>(key), std::forward<Value>(value), tableindex);
 }
+} // stack
+namespace detail {
+using special_destruct_func = void(*)(void*);
 
+template <typename T, typename Real>
+inline void special_destruct(void* memory) {
+    T** pointerpointer = static_cast<T**>(memory);
+    special_destruct_func* dx = static_cast<special_destruct_func*>(static_cast<void*>(pointerpointer + 1));
+    Real* target = static_cast<Real*>(static_cast<void*>(dx + 1));
+    target->~Real();
+}
+
+template <typename T>
+inline int unique_destruct(lua_State* L) {
+    void* memory = stack::get<userdata_value>(L, 1);
+    T** pointerpointer = static_cast<T**>(memory);
+    special_destruct_func& dx = *static_cast<special_destruct_func*>( static_cast<void*>( pointerpointer + 1 ) );
+    (dx)(memory);
+    return 0;
+}
+} // detail
+namespace stack {
 namespace stack_detail {
 const bool default_check_arguments = 
 #ifdef SOL_CHECK_ARGUMENTS
@@ -139,84 +161,6 @@ static int push_upvalues(lua_State* L, TCont&& cont) {
         ++n;
     }
     return n;
-}
-
-template <typename T>
-struct userdata_pusher {
-    template <typename Key, typename... Args>
-    static void push (lua_State* L, Key&& metatablekey, Args&&... args) {
-        // Basically, we store all user-data like this:
-        // If it's a movable/copyable value (no std::ref(x)), then we store the pointer to the new
-        // data in the first sizeof(T*) bytes, and then however many bytes it takes to
-        // do the actual object. Things that are std::ref or plain T* are stored as 
-        // just the sizeof(T*), and nothing else.
-        T** pdatum = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
-        T** referencepointer = pdatum;
-        T*& referencereference = *pdatum;
-        T* allocationtarget = reinterpret_cast<T*>(pdatum + 1);
-        referencereference = allocationtarget;
-        std::allocator<T> alloc{};
-        alloc.construct(allocationtarget, std::forward<Args>(args)...);
-        luaL_getmetatable(L, &metatablekey[0]);
-        lua_setmetatable(L, -2);
-    }
-};
-
-template <typename T>
-struct userdata_pusher<T*> {
-    template <typename Key, typename... Args>
-    static void push (lua_State* L, Key&& metatablekey, Args&&... args) {
-        T** pdatum = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
-        std::allocator<T*> alloc{};
-        alloc.construct(pdatum, std::forward<Args>(args)...);
-        luaL_getmetatable(L, &metatablekey[0]);
-        lua_setmetatable(L, -2);
-    }
-};
-
-template<typename T, std::size_t... I>
-inline int push_tuple(std::index_sequence<I...>, lua_State* L, T&& tuplen) {
-    int pushcount = 0;
-    void(detail::swallow{(pushcount += sol::stack::push(L, std::get<I>(tuplen)), '\0')... });
-    return pushcount;
-}
-
-template <typename T, typename Key, typename... Args>
-inline int push_confirmed_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
-    userdata_pusher<T>{}.push(L, std::forward<Key>(metatablekey), std::forward<Args>(args)...);
-    return 1;
-}
-
-template <typename T, typename Key>
-inline int push_userdata_pointer(lua_State* L, Key&& metatablekey) {
-    return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey));
-}
-
-template <typename T, typename Key, typename Arg, meta::EnableIf<std::is_same<T, meta::Unqualified<Arg>>> = 0>
-inline int push_userdata_pointer(lua_State* L, Key&& metatablekey, Arg&& arg) {
-    if (arg == nullptr)
-        return push(L, nil);
-    return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Arg>(arg));
-}
-
-template <typename T, typename Key, typename Arg, meta::DisableIf<std::is_same<T, meta::Unqualified<Arg>>> = 0>
-inline int push_userdata_pointer(lua_State* L, Key&& metatablekey, Arg&& arg) {
-    return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Arg>(arg));
-}
-
-template <typename T, typename Key, typename Arg0, typename Arg1, typename... Args>
-inline int push_userdata_pointer(lua_State* L, Key&& metatablekey, Arg0&& arg0, Arg1&& arg1, Args&&... args) {
-    return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...);
-}
-
-template<typename T, typename Key, typename... Args, meta::DisableIf<std::is_pointer<T>> = 0>
-inline int push_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
-    return push_confirmed_userdata<T>(L, std::forward<Key>(metatablekey), std::forward<Args>(args)...);
-}
-
-template<typename T, typename Key, typename... Args, meta::EnableIf<std::is_pointer<T>> = 0>
-inline int push_userdata(lua_State* L, Key&& metatablekey, Args&&... args) {
-    return push_userdata_pointer<T>(L, std::forward<Key>(metatablekey), std::forward<Args>(args)...);
 }
 } // stack_detail
 
@@ -323,6 +267,16 @@ struct getter<T*> {
     }
 };
 
+template<typename T, typename Real>
+struct getter<unique_usertype<T, Real>> {
+    static Real& get(lua_State* L, int index = -1) {
+        T** pref = static_cast<T**>(lua_touserdata(L, index));
+        detail::special_destruct_func* fx = static_cast<detail::special_destruct_func*>(static_cast<void*>(pref + 1));
+        Real* mem = static_cast<Real*>(static_cast<void*>(fx + 1));
+        return *mem;
+    }
+};
+
 template<typename T>
 struct getter<non_null<T*>> {
     static T* get(lua_State* L, int index = -1) {
@@ -334,6 +288,20 @@ template<typename T>
 struct getter<T&> {
     static T& get(lua_State* L, int index = -1) {
         return *getter<T*>::get_no_nil(L, index);
+    }
+};
+
+template<typename T>
+struct getter<std::shared_ptr<T>> {
+    static std::shared_ptr<T>& get(lua_State* L, int index = -1) {
+        return getter<unique_usertype<T, std::shared_ptr<T>>>::get(L, index);
+    }
+};
+
+template<typename T, typename D>
+struct getter<std::unique_ptr<T, D>> {
+    static std::unique_ptr<T, D>& get(lua_State* L, int index = -1) {
+        return getter<unique_usertype<T, std::unique_ptr<T, D>>>::get(L, index);
     }
 };
 
@@ -455,8 +423,8 @@ struct checker<T, type::userdata, C> {
                 lua_pop(L, 2);
                 return true;
             }
-	   }
-	   lua_pop(L, 1);
+        }
+        lua_pop(L, 1);
 #ifndef SOL_NO_EXCEPTIONS
         lua_getfield(L, -1, &detail::base_class_check_key[0]);
         void* basecastdata = stack::get<light_userdata_value>(L);
@@ -483,7 +451,7 @@ struct checker<T, type::userdata, C> {
         bool success = ic(detail::id_for<T>::value);
 #endif // No Runtime Type Information || Exceptions
         lua_pop(L, 2);
-	   if (!success) {
+        if (!success) {
             handler(L, index, type::userdata, indextype);
             return false;
         }
@@ -517,12 +485,81 @@ struct popper<std::tuple<Args...>> {
 
 template<typename T, typename>
 struct pusher {
-    static int push(lua_State* L, T& t) {
-        return stack_detail::push_userdata<T>(L, usertype_traits<T>::metatable, t);
+    template <typename... Args>
+    static int push(lua_State* L, Args&&... args) {
+        // Basically, we store all user-data like this:
+        // If it's a movable/copyable value (no std::ref(x)), then we store the pointer to the new
+        // data in the first sizeof(T*) bytes, and then however many bytes it takes to
+        // do the actual object. Things that are std::ref or plain T* are stored as 
+        // just the sizeof(T*), and nothing else.
+        T** pointerpointer = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
+        T*& referencereference = *pointerpointer;
+        T* allocationtarget = reinterpret_cast<T*>(pointerpointer + 1);
+        referencereference = allocationtarget;
+        std::allocator<T> alloc{};
+        alloc.construct(allocationtarget, std::forward<Args>(args)...);
+        luaL_getmetatable(L, &usertype_traits<T>::metatable[0]);
+        lua_setmetatable(L, -2);
+        return 1;
     }
+};
 
-    static int push(lua_State* L, T&& t) {
-        return stack_detail::push_userdata<T>(L, usertype_traits<T>::metatable, std::move(t));
+template<typename T>
+struct pusher<T*> {
+    static int push(lua_State* L, T* obj) {
+        if (obj == nullptr)
+            return stack::push(L, nil);
+        T** pref = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
+        *pref = obj;
+        luaL_getmetatable(L, &usertype_traits<T*>::metatable[0]);
+        lua_setmetatable(L, -2);
+        return 1;
+    }
+};
+
+template<typename T, typename Real>
+struct pusher<unique_usertype<T, Real>> {
+    template <typename... Args>
+    static int push(lua_State* L, Args&&... args) {
+        T** pref = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(detail::special_destruct_func) + sizeof(Real)));
+        detail::special_destruct_func* fx = static_cast<detail::special_destruct_func*>(static_cast<void*>(pref + 1));
+        Real* mem = static_cast<Real*>(static_cast<void*>(fx + 1));
+        *fx = detail::special_destruct<T, Real>;
+        detail::default_construct::construct(mem, std::forward<Args>(args)...);
+        *pref = mem->get();
+        if (luaL_newmetatable(L, &usertype_traits<unique_usertype<T>>::metatable[0]) == 1) {
+            set_field(L, "__gc", detail::unique_destruct<T>);
+        }
+        lua_setmetatable(L, -2);
+        return 1;
+    }
+};
+
+template<typename T, typename D>
+struct pusher<std::unique_ptr<T, D>> {
+    static int push(lua_State* L, std::unique_ptr<T, D> obj) {
+        typedef std::unique_ptr<T, D> ptr_t;
+        if (obj == nullptr)
+            return stack::push(L, nil);
+        return stack::push<unique_usertype<T, ptr_t>>(L, std::move(obj));
+    }
+};
+
+template<typename T>
+struct pusher<std::shared_ptr<T>> {
+    template <typename S>
+    static int push(lua_State* L, S&& s) {
+        if (s == nullptr)
+            return stack::push(L, nil);
+        return stack::push<unique_usertype<T, std::shared_ptr<T>>>(L, std::forward<S>(s));
+    }
+};
+
+
+template<typename T>
+struct pusher<std::reference_wrapper<T>> {
+    static int push(lua_State* L, const std::reference_wrapper<T>& t) {
+        return stack::push(L, std::addressof(detail::deref(t.get())));
     }
 };
 
@@ -583,20 +620,6 @@ struct pusher<T, std::enable_if_t<std::is_base_of<reference, T>::value>> {
 
     static int push(lua_State*, T&& ref) {
         return ref.push();
-    }
-};
-
-template<typename T>
-struct pusher<T*> {
-    static int push(lua_State* L, T* obj) {
-        return stack_detail::push_userdata<T*>(L, usertype_traits<T*>::metatable, obj);
-    }
-};
-
-template<typename T>
-struct pusher<std::reference_wrapper<T>> {
-    static int push(lua_State* L, const std::reference_wrapper<T>& t) {
-        return stack::push(L, std::addressof(t.get()));
     }
 };
 
@@ -691,9 +714,18 @@ struct pusher<std::string> {
 
 template<typename... Args>
 struct pusher<std::tuple<Args...>> {
-    template <typename Tuple>
-    static int push(lua_State* L, Tuple&& tuplen) {
-        return stack_detail::push_tuple(std::index_sequence_for<Args...>(), L, std::forward<Tuple>(tuplen));
+    template <std::size_t... I, typename T>
+    static int push(std::index_sequence<I...>, lua_State* L, T&& t) {
+        int pushcount = 0;
+        (void)detail::swallow{ 0, (pushcount += stack::push(L, 
+              detail::forward_get<I>(t)
+        ), 0)... };
+        return pushcount;
+    }
+
+    template <typename T>
+    static int push(lua_State* L, T&& t) {
+        return push(std::index_sequence_for<Args...>(), L, std::forward<T>(t));
     }
 };
 
@@ -708,18 +740,17 @@ struct field_getter {
 
 template <typename... Args, bool b, typename C>
 struct field_getter<std::tuple<Args...>, b, C> {
-    template <std::size_t I0, std::size_t... I, typename Key>
-    void apply(std::index_sequence<I0, I...>, lua_State* L, Key&& key, int tableindex) {
-        get_field<b>(L, std::get<I0>(key), tableindex);
-        void(detail::swallow{ (get_field(L, std::get<I>(key)), 0)... });
+    template <std::size_t... I, typename Keys>
+    void apply(std::index_sequence<I...>, lua_State* L, Keys&& keys, int tableindex) {
+        void(detail::swallow{ (get_field<I < 1 && b>(L, detail::forward_get<I>(keys), tableindex), 0)... });
         reference saved(L, -1);
         lua_pop(L, static_cast<int>(sizeof...(I) + 1));
         saved.push();
     }
 
-    template <typename Key>
-    void get(lua_State* L, Key&& key, int tableindex = -2) {
-        apply(std::index_sequence_for<Args...>(), L, std::forward<Key>(key), tableindex);
+    template <typename Keys>
+    void get(lua_State* L, Keys&& keys, int tableindex = -2) {
+        apply(std::index_sequence_for<Args...>(), L, std::forward<Keys>(keys), tableindex);
     }
 };
 

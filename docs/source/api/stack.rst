@@ -79,10 +79,9 @@ objects (extension points)
 
 The structs below are already overriden for a handful of types. If you try to mess with them for the types ``sol`` has already overriden them for, you're in for a world of thick template error traces and headaches. Overriding them for your own user defined types should be just fine, however.
 
-.. _getter:
-
 .. code-block:: cpp
 	:caption: struct: getter
+	:name: getter
 
 	template <typename T, typename = void>
 	struct getter {
@@ -94,10 +93,9 @@ The structs below are already overriden for a handful of types. If you try to me
 
 This is an SFINAE-friendly struct that is meant to expose static function ``get`` that returns a ``T``, or something convertible to it. The default implementation assumes ``T`` is a usertype and pulls out a userdata from Lua before attempting to cast it to the desired ``T``. There are implementations for getting numbers (``std::is_floating``, ``std::is_integral``-matching types), getting ``std::string`` and ``const char*``, getting raw userdata with :doc:`userdata_value<types>` and anything as upvalues with :doc:`upvalue_index<types>`, getting raw `lua_CFunction`_ s, and finally pulling out Lua functions into ``std::function<R(Args...)>``. It is also defined for anything that derives from :doc:`sol::reference<reference>`.
 
-.. _pusher:
-
 .. code-block:: cpp
 	:caption: struct: pusher
+	:name: pusher
 
 	template <typename X, typename = void>
 	struct pusher {
@@ -109,10 +107,11 @@ This is an SFINAE-friendly struct that is meant to expose static function ``get`
 		}
 	};
 
-This is an SFINAE-friendly struct that is meant to expose static function ``push`` that returns the number of things pushed onto the stack. The default implementation assumes ``T`` is a usertype and pushes a userdata into Lua with a :doc:`usertype_traits\<T><usertype>` metatable associated with it. There are implementations for pushing numbers (``std::is_floating``, ``std::is_integral``-matching types), getting ``std::string`` and ``const char*``, getting raw userdata with :doc:`userdata<types>` and raw upvalues with :doc:`upvalue<types>`, getting raw `lua_CFunction`_ s, and finally pulling out Lua functions into ``sol::function``. It is also defined for anything that derives from :doc:`sol::reference<reference>`.
+This is an SFINAE-friendly struct that is meant to expose static function ``push`` that returns the number of things pushed onto the stack. The default implementation assumes ``T`` is a usertype and pushes a userdata into Lua with a :ref:`usertype_traits\<T><usertype-traits>` metatable associated with it. There are implementations for pushing numbers (``std::is_floating``, ``std::is_integral``-matching types), getting ``std::string`` and ``const char*``, getting raw userdata with :doc:`userdata<types>` and raw upvalues with :doc:`upvalue<types>`, getting raw `lua_CFunction`_ s, and finally pulling out Lua functions into ``sol::function``. It is also defined for anything that derives from :doc:`sol::reference<reference>`.
 
 .. code-block:: cpp
 	:caption: struct: checker
+	:name: checker
 
 	template <typename T, type expected = lua_type_of<T>, typename = void>
 	struct checker {
@@ -127,6 +126,6 @@ This is an SFINAE-friendly struct that is meant to expose static function ``push
 		}
 	};
 
-This is an SFINAE-friendly struct that is meant to expose static function ``check`` that returns the number of things pushed onto the stack. The default implementation simply checks whether the expected type passed in through the template is equal to the type of the object at the specified index in the Lua stack. The default implementation for types which are considered ``userdata`` go through a myriad of checks to support checking if a type is *actually* of type ``T`` or if its the base class of what it actually stored as a userdata in that index.
+This is an SFINAE-friendly struct that is meant to expose static function ``check`` that returns the number of things pushed onto the stack. The default implementation simply checks whether the expected type passed in through the template is equal to the type of the object at the specified index in the Lua stack. The default implementation for types which are considered ``userdata`` go through a myriad of checks to support checking if a type is *actually* of type ``T`` or if its the base class of what it actually stored as a userdata in that index. Down-casting from a base class to a mroe derived type is, unfortunately, impossible to do.
 
 .. _lua_CFunction: http://www.Lua.org/manual/5.3/manual.html#lua_CFunction

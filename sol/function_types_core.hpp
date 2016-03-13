@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 
 // Copyright (c) 2013-2016 Rapptz, ThePhD and contributors
 
@@ -39,6 +39,8 @@ struct implicit_wrapper {
         return std::addressof(item);
     }
 };
+
+const static auto& cleanup_key = u8"sol.ƒ.♲.🗑.(/¯◡ ‿ ◡)/¯ ~ ┻━┻ (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧";
 
 template<typename T, typename Func, typename = void>
 struct functor {
@@ -114,7 +116,7 @@ struct functor<T, Func, std::enable_if_t<std::is_function<Func>::value || std::i
     typedef meta::pop_front_type_t<typename traits_type::args_type> args_type;
     typedef typename traits_type::return_type return_type;
     static const std::size_t arity = traits_type::arity;
-    typedef std::tuple_element_t<0, typename traits_type::args_tuple_type> Arg0;
+    typedef meta::tuple_element_t<0, typename traits_type::args_tuple_type> Arg0;
     typedef std::conditional_t<std::is_pointer<Func>::value || std::is_class<Func>::value, Func, std::add_pointer_t<Func>> function_type;
     static_assert(std::is_base_of<meta::Unqualified<std::remove_pointer_t<Arg0>>, T>::value, "Any non-member-function must have a first argument which is covariant with the desired userdata type.");
     T* item;
@@ -225,6 +227,14 @@ template<std::size_t I>
 inline int usertype_gc(lua_State* L) {
     func_gc<I>(meta::Bool<(I < 1)>(), L);
     return 0;
+}
+
+void free_function_cleanup(lua_State* L) {
+    const static char* metatablename = &cleanup_key[0];
+    int metapushed = luaL_newmetatable(L, metatablename);
+    if (metapushed == 1) {
+        stack::set_field(L, "__gc", function_detail::gc);
+    }
 }
 } // function_detail
 } // sol

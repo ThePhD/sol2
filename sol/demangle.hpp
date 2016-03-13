@@ -56,14 +56,16 @@ inline std::string get_type_name(const std::type_info& id) {
 template <typename T>
 inline std::string get_type_name() {
     std::string name = __FUNCSIG__;
-    std::size_t start = name.find_last_of('<');
+    std::size_t start = name.find("get_type_name");
+    if (start == std::string::npos)
+	    start = 0;
+    else
+	    start += 13;
+    if (start < name.size() - 1)
+        start += 1;
     std::size_t end = name.find_last_of('>');
     if (end == std::string::npos)
         end = name.size();
-    if (start == std::string::npos)
-        start = 0;
-    if (start < name.size() - 1)
-        start += 1;
     name = name.substr(start, end - start);
     if (name.find("struct", 0) == 0)
         name.replace(0, 6, "", 0);
