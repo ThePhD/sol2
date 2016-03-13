@@ -24,7 +24,6 @@
 
 #include "sol/state.hpp"
 #include "sol/object.hpp"
-#include "sol/userdata.hpp"
 #include "sol/function.hpp"
 #include "sol/coroutine.hpp"
 

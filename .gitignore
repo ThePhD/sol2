@@ -57,3 +57,4 @@ desktop.ini
 docs/build/
 *.sublime-project
 m.lua
+single/sol.hpp

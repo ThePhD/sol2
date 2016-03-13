@@ -23,9 +23,8 @@
 #define SOL_OBJECT_HPP
 
 #include "reference.hpp"
+#include "userdata.hpp"
 #include "stack.hpp"
-#include "function.hpp"
-#include "protected_function.hpp"
 
 namespace sol {
 class object : public reference {

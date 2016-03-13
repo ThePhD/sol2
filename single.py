@@ -9,7 +9,7 @@ import datetime as dt
 try:
     import cStringIO as sstream
 except ImportError:
-    import io.StringIO as sstream
+    from io import StringIO
 
 description = "Converts sol to a single file for convenience."
 
@@ -85,6 +85,7 @@ def get_version():
 def process_file(filename, out):
     global includes
     filename = os.path.normpath(filename)
+    relativefilename = filename.replace(script_path, "")
 
     if filename in includes:
         return
@@ -93,11 +94,11 @@ def process_file(filename, out):
 
     if not args.quiet:
         print('processing {}'.format(filename))
-
-    out.write('// beginning of {}\n\n'.format(filename))
+    
+    out.write('// beginning of {}\n\n'.format(relativefilename))
     empty_line_state = True
 
-    with open(filename, 'r') as f:
+    with open(filename, 'r', encoding='utf-8') as f:
         for line in f:
             # skip comments
             if line.startswith('//'):
@@ -135,7 +136,7 @@ def process_file(filename, out):
             # line is fine
             out.write(line)
 
-    out.write('// end of {}\n\n'.format(filename))
+    out.write('// end of {}\n\n'.format(relativefilename))
 
 
 version = get_version()
@@ -147,10 +148,10 @@ if not args.quiet:
     print('Current version: {version} (revision {revision})\n'.format(version = version, revision = revision))
 
 
-processed_files = [os.path.join(script_path, 'sol', x) for x in ('state.hpp', 'object.hpp', 'function.hpp')]
+processed_files = [os.path.join(script_path, 'sol', x) for x in ('state.hpp', 'object.hpp', 'function.hpp', 'coroutine.hpp')]
 result = ''
 
-ss = sstream.StringIO()
+ss = StringIO()
 ss.write(intro.format(time=dt.datetime.utcnow(), revision=revision, version=version, guard=include_guard))
 for processed_file in processed_files:
     process_file(processed_file, ss)
@@ -159,6 +160,6 @@ ss.write('#endif // {}\n'.format(include_guard))
 result = ss.getvalue()
 ss.close()
 
-with open(args.output, 'w') as f:
+with open(args.output, 'w', encoding='utf-8') as f:
     f.write(result)
 
