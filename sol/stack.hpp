@@ -118,28 +118,7 @@ template <bool global = false, typename Key, typename Value>
 void set_field(lua_State* L, Key&& key, Value&& value, int tableindex) {
     field_setter<meta::Unqualified<Key>, global>{}.set(L, std::forward<Key>(key), std::forward<Value>(value), tableindex);
 }
-} // stack
-namespace detail {
-using special_destruct_func = void(*)(void*);
 
-template <typename T, typename Real>
-inline void special_destruct(void* memory) {
-    T** pointerpointer = static_cast<T**>(memory);
-    special_destruct_func* dx = static_cast<special_destruct_func*>(static_cast<void*>(pointerpointer + 1));
-    Real* target = static_cast<Real*>(static_cast<void*>(dx + 1));
-    target->~Real();
-}
-
-template <typename T>
-inline int unique_destruct(lua_State* L) {
-    void* memory = stack::get<userdata_value>(L, 1);
-    T** pointerpointer = static_cast<T**>(memory);
-    special_destruct_func& dx = *static_cast<special_destruct_func*>( static_cast<void*>( pointerpointer + 1 ) );
-    (dx)(memory);
-    return 0;
-}
-} // detail
-namespace stack {
 namespace stack_detail {
 const bool default_check_arguments = 
 #ifdef SOL_CHECK_ARGUMENTS
@@ -219,6 +198,31 @@ struct getter<void*> {
         return lua_touserdata(L, index);
     }
 };
+} // stack
+
+namespace detail {
+// This needs to be here, specifically, so that it can use get<userdata_value>
+using special_destruct_func = void(*)(void*);
+
+template <typename T, typename Real>
+inline void special_destruct(void* memory) {
+    T** pointerpointer = static_cast<T**>(memory);
+    special_destruct_func* dx = static_cast<special_destruct_func*>(static_cast<void*>(pointerpointer + 1));
+    Real* target = static_cast<Real*>(static_cast<void*>(dx + 1));
+    target->~Real();
+}
+
+template <typename T>
+inline int unique_destruct(lua_State* L) {
+    void* memory = stack::get<userdata_value>(L, 1);
+    T** pointerpointer = static_cast<T**>(memory);
+    special_destruct_func& dx = *static_cast<special_destruct_func*>( static_cast<void*>( pointerpointer + 1 ) );
+    (dx)(memory);
+    return 0;
+}
+} // detail
+
+namespace stack {
 
 template<typename T>
 struct getter<T*> {
