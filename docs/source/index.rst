@@ -3,12 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Sol 2.0.0
-=========
+Sol 2.0
+=======
 a fast, simple C++ and Lua Binding
 ----------------------------------
 
 When you need to hit the ground running with Lua and C++, `Sol`_ is the go-to framework for high-performance binding with an easy to use API.
+
+.. image:: https://travis-ci.org/ThePhD/sol2.svg?branch=develop
+    :target: https://travis-ci.org/ThePhD/sol2
+    :alt: build status
 
 get going:
 ----------

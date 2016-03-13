@@ -1,6 +1,7 @@
-## Sol 2
+## Sol 2.0
 
 [![Build Status](https://travis-ci.org/ThePhD/sol2.svg?branch=develop)](https://travis-ci.org/ThePhD/sol2)
+[![Documentation Status](https://readthedocs.org/projects/sol2/badge/?version=latest)](http://sol2.readthedocs.org/en/latest/?badge=latest)
 
 Sol is a C++ library binding to Lua. It currently supports all Lua versions 5.1+ (LuaJIT 2.x included). Sol aims to be easy to use and easy to add to a project.
 The library is header-only for easy integration with projects.
