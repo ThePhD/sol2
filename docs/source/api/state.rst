@@ -74,14 +74,6 @@ Get either the global table or the Lua registry as a :doc:`sol::table<table>`, w
 Overrides the panic function Lua calls when something unrecoverable or unexpected happens in the Lua VM. Must be a function of the that matches the ``int(*)(lua_State*)`` function signature.
 
 .. code-block:: cpp
-	:caption: function: make a thread
-
-	thread create();
-	static thread create (lua_State* L);
-
-Creates a thread. Forwards its arguments to :ref:`thread::create<thread-create>`.
-
-.. code-block:: cpp
 	:caption: function: make a table
 
 	table create_table(int narr = 0, int nrec = 0);
