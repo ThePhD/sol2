@@ -58,9 +58,9 @@ inline std::string get_type_name() {
     std::string name = __FUNCSIG__;
     std::size_t start = name.find("get_type_name");
     if (start == std::string::npos)
-	    start = 0;
+        start = 0;
     else
-	    start += 13;
+        start += 13;
     if (start < name.size() - 1)
         start += 1;
     std::size_t end = name.find_last_of('>');

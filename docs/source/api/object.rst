@@ -20,7 +20,7 @@ members
 	template<typename T>
 	decltype(auto) as() const;
 
-Performs a cast of the item this reference refers to into the type ``T`` and returns it. It obeys the same rules as :doc:`sol::stack::get\<T><stack>`.
+Performs a cast of the item this reference refers to into the type ``T`` and returns it. It obeys the same rules as :ref:`sol::stack::get\<T><getter>`.
 
 .. code-block:: cpp
 	:caption: function: type check

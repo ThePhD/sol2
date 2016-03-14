@@ -115,9 +115,9 @@ template <typename... Args>
 using has_destructor = meta::Or<is_destructor<meta::Unqualified<Args>>...>;
 
 enum class stage {
-	normalmeta,
-	refmeta,
-	uniquemeta,
+    normalmeta,
+    refmeta,
+    uniquemeta,
 };
 
 template<typename T, stage metastage>
@@ -127,11 +127,11 @@ inline void push_metatable(lua_State* L, bool needsindexfunction, std::vector<st
     int metatableindex = lua_gettop(L);
     if (baseclasscheck != nullptr) {
         stack::push(L, light_userdata_value(baseclasscheck));
-        lua_setfield(L, metatableindex, &detail::base_class_check_key[0]);
+        lua_setfield(L, metatableindex, &detail::base_class_check_key()[0]);
     }
     if (baseclasscast != nullptr) {
         stack::push(L, light_userdata_value(baseclasscast));
-        lua_setfield(L, metatableindex, &detail::base_class_cast_key[0]);
+        lua_setfield(L, metatableindex, &detail::base_class_cast_key()[0]);
     }
     if (funcs.size() < 1 && metafunctable.size() < 2) {
         return;

@@ -231,7 +231,6 @@ traits
 
 .. code-block:: cpp
 	:caption: usertype_traits<T>
-	:linenos:
 	:name: usertype-traits
 
 	template<typename T>
@@ -245,10 +244,9 @@ traits
 
 This trait is used to provide names for the various metatables and global tables used to perform cleanup and lookup. They are automatically generated at runtime. In the case of RTTI being present, Sol will attempt to demangle the name from ``std::type_info`` to produce a valid name. If RTTI is disabled, Sol attempts to parse the output of ``__PRETTY_FUCNTION__`` (``g++``/``clang++``) or ``_FUNCDSIG`` (``vc++``) to get the proper type name. If you have a special need you can override the names for your specific type.
 
-
 performance note
 ----------------
 
 .. note::
 
-	Note that performance for member function calls goes down by a fixed overhead if you also bind variables as well as member functions. This is purely a limitation of the lua implementation and there's, unfortunately, nothing that can be done about it. If you bind only functions and no variables, however, Sol will automatically optimize the lua runtime and give you the maximum performance possible. *Please consider ease of use and maintenance of code before you make everything into functions.*
+	Note that performance for member function calls goes down by a fixed overhead if you also bind variables as well as member functions. This is purely a limitation of the lua implementation and there's, unfortunately, nothing that can be done about it. If you bind only functions and no variables, however, Sol will automatically optimize the Lua runtime and give you the maximum performance possible. *Please consider ease of use and maintenance of code before you make everything into functions.*

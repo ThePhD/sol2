@@ -87,13 +87,13 @@ The below feature table checks for the presence of something. It, however, does 
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+
 | overloading               |      ~      |     ✗      |     ✗    |    ✗    |     ✗    |     ✔     |     ✗     |        ✗       |     ✗    |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+
-| thread                    |      ✔      |     ✗      |     ✗    |    ✗    |     ✗    |     ✔     |     ✗     |        ✗       |     ✔    |
+| thread                    |      ✔      |     ✗      |     ✗    |    ✗    |     ✗    |     ✔     |     ✔     |        ✗       |     ✔    |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+
 | coroutines                |      ✔      |     ✗      |     ✗    |    ✔    |     ✔    |     ✔     |     ✗     |        ✗       |     ✔    |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+
-| no-rtti support           |      ✔      |     ✗      |     ~    |    ✗    |     ✗    |     ✔     |     ✗     |        ✗       |     ✔    |
+| no-rtti support           |      ✔      |     ✗      |     ~    |    ✗    |     ✗    |     ✔     |     ✔     |        ✗       |     ✔    |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+
-| no-exception support      |      ✔      |     ✗      |     ~    |    ~    |     ✗    |     ✔     |     ✗     |        ✗       |     ✔    |
+| no-exception support      |      ✔      |     ✗      |     ~    |    ~    |     ✗    |     ✔     |     ✔     |        ✗       |     ✔    |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+
 | Lua 5.1                   |      ✔      |     ✔      |     ~    |    ✔    |     ✗    |     ✔     |     ✔     |        ✔       |     ✔    |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+
@@ -140,7 +140,7 @@ luabind -
 Selene -
 
 * member variables are automatically turned into ``obj:set_x( value )`` to set and ``obj:x()`` to get
-* Registering classes/"modules" in using C++ code is extremely verbose
+* Registering classes/"modules" using C++ code is extremely verbose
 
 Sol -
 
@@ -151,6 +151,7 @@ Sol -
 oolua -
 
 * The syntax for this library is thicker than a brick. No, seriously. `Go read the docs.`_ 
+* Supports not having exceptions or rtti turned on (shiny!)
 
 .. _ fn1:
 
@@ -166,6 +167,11 @@ kaguya -
 * Inspired coroutine support for Sol
 * Library author (satoren) is a nice guy!
 * C++11/14, or boostified (which makes it C++03 compatible)
+
+TODO:
+* SWIG - http://www.swig.org/Doc1.3/Lua.html#Lua_nn2
+* SLB3 - https://code.google.com/archive/p/slb/
+* Luwra - https://github.com/vapourismo/luwra
 
 
 .. _Go read the docs.: https://oolua.org/docs/index.html

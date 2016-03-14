@@ -25,6 +25,7 @@ Retrieves the value of the object at ``index`` in the stack. The return type var
 
 .. code-block:: cpp
 	:caption: function: check
+	:name: stack-check
 
 	template <typename T>
 	bool check( lua_State* L, int index = -1 )
@@ -32,10 +33,11 @@ Retrieves the value of the object at ``index`` in the stack. The return type var
 	template <typename T, typename Handler>
 	bool check( lua_State* L, int index, Handler&& handler )
 
-Checks if the object at ``index`` is of type ``T``. If it is not, it will call the ``handler`` function with the index, expected, and actual types.
+Checks if the object at ``index`` is of type ``T``. If it is not, it will call the ``handler`` function with ``lua_State*``, ``int index``, ``type`` expected, and ``type`` actual as arguments.
 
 .. code-block:: cpp
 	:caption: function: push
+	:name: stack-push
 
 	// push T inferred from call site, pass args... through to extension point
 	template <typename T, typename... Args>
@@ -91,7 +93,7 @@ The structs below are already overriden for a handful of types. If you try to me
 		}
 	};
 
-This is an SFINAE-friendly struct that is meant to expose static function ``get`` that returns a ``T``, or something convertible to it. The default implementation assumes ``T`` is a usertype and pulls out a userdata from Lua before attempting to cast it to the desired ``T``. There are implementations for getting numbers (``std::is_floating``, ``std::is_integral``-matching types), getting ``std::string`` and ``const char*``, getting raw userdata with :doc:`userdata_value<types>` and anything as upvalues with :doc:`upvalue_index<types>`, getting raw `lua_CFunction`_ s, and finally pulling out Lua functions into ``std::function<R(Args...)>``. It is also defined for anything that derives from :doc:`sol::reference<reference>`.
+This is an SFINAE-friendly struct that is meant to expose static function ``get`` that returns a ``T``, or something convertible to it. The default implementation assumes ``T`` is a usertype and pulls out a userdata from Lua before attempting to cast it to the desired ``T``. There are implementations for getting numbers (``std::is_floating``, ``std::is_integral``-matching types), getting ``std::string`` and ``const char*``, getting raw userdata with :doc:`userdata_value<types>` and anything as upvalues with :doc:`upvalue_index<types>`, getting raw `lua_CFunction`_ s, and finally pulling out Lua functions into ``std::function<R(Args...)>``. It is also defined for anything that derives from :doc:`sol::reference<reference>`. It also has a special implementation for the 2 standard library smart pointers (see :doc:`usertype memory<usertype_memory>`).
 
 .. code-block:: cpp
 	:caption: struct: pusher
@@ -99,7 +101,7 @@ This is an SFINAE-friendly struct that is meant to expose static function ``get`
 
 	template <typename X, typename = void>
 	struct pusher {
-		template <typename T> 
+		template <typename T>
 		static int push ( lua_State* L, T&&, ... ) {
 			// can optionally take more than just 1 argument
 			// ...
@@ -107,7 +109,7 @@ This is an SFINAE-friendly struct that is meant to expose static function ``get`
 		}
 	};
 
-This is an SFINAE-friendly struct that is meant to expose static function ``push`` that returns the number of things pushed onto the stack. The default implementation assumes ``T`` is a usertype and pushes a userdata into Lua with a :ref:`usertype_traits\<T><usertype-traits>` metatable associated with it. There are implementations for pushing numbers (``std::is_floating``, ``std::is_integral``-matching types), getting ``std::string`` and ``const char*``, getting raw userdata with :doc:`userdata<types>` and raw upvalues with :doc:`upvalue<types>`, getting raw `lua_CFunction`_ s, and finally pulling out Lua functions into ``sol::function``. It is also defined for anything that derives from :doc:`sol::reference<reference>`.
+This is an SFINAE-friendly struct that is meant to expose static function ``push`` that returns the number of things pushed onto the stack. The default implementation assumes ``T`` is a usertype and pushes a userdata into Lua with a :ref:`usertype_traits\<T><usertype-traits>` metatable associated with it. There are implementations for pushing numbers (``std::is_floating``, ``std::is_integral``-matching types), getting ``std::string`` and ``const char*``, getting raw userdata with :doc:`userdata<types>` and raw upvalues with :doc:`upvalue<types>`, getting raw `lua_CFunction`_ s, and finally pulling out Lua functions into ``sol::function``. It is also defined for anything that derives from :doc:`sol::reference<reference>`. It also has a special implementation for the 2 standard library smart pointers (see :doc:`usertype memory<usertype_memory>`).
 
 .. code-block:: cpp
 	:caption: struct: checker

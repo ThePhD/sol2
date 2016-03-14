@@ -40,7 +40,10 @@ struct implicit_wrapper {
     }
 };
 
-const static auto& cleanup_key = u8"sol.ƒ.♲.🗑.(/¯◡ ‿ ◡)/¯ ~ ┻━┻ (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧";
+inline decltype(auto) cleanup_key() {
+    const auto& name = u8"sol.ƒ.♲.🗑.(/¯◡ ‿ ◡)/¯ ~ ┻━┻ (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧";
+    return name;
+}
 
 template<typename T, typename Func, typename = void>
 struct functor {
@@ -229,8 +232,8 @@ inline int usertype_gc(lua_State* L) {
     return 0;
 }
 
-void free_function_cleanup(lua_State* L) {
-    const static char* metatablename = &cleanup_key[0];
+inline void free_function_cleanup(lua_State* L) {
+    const static char* metatablename = &cleanup_key()[0];
     int metapushed = luaL_newmetatable(L, metatablename);
     if (metapushed == 1) {
         stack::set_field(L, "__gc", function_detail::gc);

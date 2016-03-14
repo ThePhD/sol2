@@ -50,3 +50,9 @@ The call ``woof(20)`` generates a :ref:`function_result<function-result>`, which
 	decltype(auto) operator()( types<Ret...>, Args&&... args );
 
 Calls the function. The second ``operator()`` lets you specify the templated return types using the ``my_func(sol::types<int, std::string>, ...)`` syntax. Function assumes there are no runtime errors, and thusly will call the ``atpanic`` function if an error does occur.
+
+
+safety
+------
+
+You can have functions here and on usertypes check to definitely make sure that the types passed to C++ functions are what they're supposed to be by adding a ``#define SOL_CHECK_ARGUMENTS`` before including Sol, or passing it on the command line. Otherwise, for speed reasons, these checks are only used where absolutely necessary (like discriminating between :doc:`overloads<overload>`)

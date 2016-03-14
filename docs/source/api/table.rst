@@ -45,6 +45,7 @@ These functions set items into the table. The first one (``set``) can set  *mult
 
 .. code-block:: cpp
 	:caption: function: setting a usertype
+	:name: new-usertype
 
 	template<typename Class, typename... Args>
 	table& new_usertype(const std::string& name, Args&&... args);
@@ -59,6 +60,7 @@ This class of functions creates a new :doc:`usertype<usertype>` with the specifi
 
 .. code-block:: cpp
 	:caption: function: setting a pre-created usertype
+	:name: set-usertype
 
 	template<typename T>
 	table& set_usertype(usertype<T>& user);

@@ -52,8 +52,15 @@ template <typename T>
 const std::size_t id_for<T>::value = unique_id();
 #endif // No Runtime Type Information / No Exceptions
 
-const auto& base_class_check_key = u8"♡o｡.(✿ฺ｡ ✿ฺ)";
-const auto& base_class_cast_key = u8"(◕‿◕✿)";
+inline decltype(auto) base_class_check_key() {
+    static const auto& key = u8"♡o｡.(✿ฺ｡ ✿ฺ)";
+    return key;
+}
+
+inline decltype(auto) base_class_cast_key() {
+    static const auto& key = u8"(◕‿◕✿)";
+    return key;
+}
 
 #ifndef SOL_NO_EXCEPTIONS
 

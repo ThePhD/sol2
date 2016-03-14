@@ -83,7 +83,7 @@ the basics:
 	    	"bop", &vars::bop);
 	    lua.script("beep = vars.new()\n"
 	               "beep.boop = 1\n"
-	               "bopvalue = beep.bop()");
+	               "bopvalue = beep:bop()");
 
 	    vars& beep = lua["beep"];
 	    int bopvalue = lua["bopvalue"];

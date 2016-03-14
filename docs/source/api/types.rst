@@ -124,6 +124,16 @@ A tag type that, when used with :doc:`stack::get\<non_null\<T*>><stack>`, does n
 
 
 .. code-block:: cpp
+	:caption: unique_usertype
+	:name: unique-usertype
+
+	template <typename T, typename Real>
+	struct unique_usertype {};
+
+A tag type for alerting the framewok that a certain type is to be pushed as a special userdata with special deletion semantics. Is automatically applied to ``std::unique_ptr<T, D>`` and ``std::shared_ptr<T>``.
+
+
+.. code-block:: cpp
 	:caption: type list
 	:name: type-list
 

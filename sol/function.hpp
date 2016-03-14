@@ -207,9 +207,9 @@ struct pusher<function_sig<Sigs...>> {
         lua_CFunction freefunc = function_detail::call;
 
         stack::push(L, userdata_value(targetdata));
-	   function_detail::free_function_cleanup(L);
-	   lua_setmetatable(L, -2);
-	   stack::push(L, freefunc, 1);
+        function_detail::free_function_cleanup(L);
+        lua_setmetatable(L, -2);
+        stack::push(L, freefunc, 1);
     }
 
     template<typename... Args>

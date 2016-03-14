@@ -62,10 +62,10 @@ Thusly, doing the following in Lua:
 	:linenos:
 
 	local barker = pup.new()
-	pup.bark() -- calls member function pup::bark
-	pup.bark(20) -- calls ultra_bark
-	pup.bark("meow") -- picky_bark, no bark
-	pup.bark("bark") -- picky_bark, bark
+	pup:bark() -- calls member function pup::bark
+	pup:bark(20) -- calls ultra_bark
+	pup:bark("meow") -- picky_bark, no bark
+	pup:bark("bark") -- picky_bark, bark
 
 	bark(pup, 20) -- calls ultra_bark
 	local nowherebark = bark() -- calls lambda which returns that string
