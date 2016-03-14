@@ -379,6 +379,13 @@ struct getter<std::tuple<Args...>> {
     }
 };
 
+template<typename A, typename B>
+struct getter<std::pair<A, B>> {
+    static decltype(auto) get(lua_State* L, int index = -1) {
+        return std::pair<decltype(stack::get<A>(L, index)), decltype(stack::get<B>(L, index))>(stack::get<A>(L, index), stack::get<B>(L, index + 1));
+    }
+};
+
 template <typename T, type expected, typename>
 struct checker {
     template <typename Handler>
@@ -483,6 +490,15 @@ struct popper<std::tuple<Args...>> {
     inline decltype(auto) pop(lua_State* L) {
         decltype(auto) r = get<std::tuple<Args...>>(L, lua_gettop(L) - sizeof...(Args) + 1);
         lua_pop(L, static_cast<int>(sizeof...(Args)));
+        return r;
+    }
+};
+
+template <typename A, typename B>
+struct popper<std::pair<A, B>> {
+    inline decltype(auto) pop(lua_State* L) {
+        decltype(auto) r = get<std::pair<A, B>>(L, lua_gettop(L) - 2 + 1);
+        lua_pop(L, 2);
         return r;
     }
 };
@@ -741,6 +757,16 @@ struct pusher<std::tuple<Args...>> {
     }
 };
 
+template<typename A, typename B>
+struct pusher<std::pair<A, B>> {
+    template <typename T>
+    static int push(lua_State* L, T&& t) {
+        int pushcount = stack::push(L, detail::forward_get<0>(t));
+        pushcount += stack::push(L, detail::forward_get<1>(t));
+        return pushcount;
+    }
+};
+
 template <typename T, bool, typename>
 struct field_getter {
     template <typename Key>
@@ -763,6 +789,18 @@ struct field_getter<std::tuple<Args...>, b, C> {
     template <typename Keys>
     void get(lua_State* L, Keys&& keys, int tableindex = -2) {
         apply(std::index_sequence_for<Args...>(), L, std::forward<Keys>(keys), tableindex);
+    }
+};
+
+template <typename A, typename B, bool b, typename C>
+struct field_getter<std::pair<A, B>, b, C> {
+    template <typename Keys>
+    void apply(lua_State* L, Keys&& keys, int tableindex) {
+        get_field<b>(L, detail::forward_get<0>(keys), tableindex);
+        get_field<false>(L, detail::forward_get<1>(keys), tableindex);
+        reference saved(L, -1);
+        lua_pop(L, static_cast<int>(2 + 1));
+        saved.push();
     }
 };
 

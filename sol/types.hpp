@@ -286,6 +286,9 @@ struct is_proxy_primitive<std::reference_wrapper<T>> : std::true_type { };
 template <typename... Args>
 struct is_proxy_primitive<std::tuple<Args...>> : std::true_type { };
 
+template <typename A, typename B>
+struct is_proxy_primitive<std::pair<A, B>> : std::true_type { };
+
 template <typename T>
 struct is_unique_usertype : std::false_type {};
 

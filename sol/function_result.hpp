@@ -63,7 +63,7 @@ public:
     }
 
     template<typename T>
-    T get() const {
+    decltype(auto) get() const {
         return stack::get<T>(L, index);
     }
 
