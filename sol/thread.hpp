@@ -50,6 +50,10 @@ public:
         return lstat;
     }
 
+    thread create () {
+        return create(lua_state());
+    }
+
     static thread create (lua_State* L) {
         lua_newthread(L);
         thread result(L);

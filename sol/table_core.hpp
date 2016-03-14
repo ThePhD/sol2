@@ -271,6 +271,15 @@ private:
     }
 
 public:
+    table create(int narr = 0, int nrec = 0) {
+        return create(lua_state(), narr, nrec);
+    }
+
+    template <typename Key, typename Value, typename... Args>
+    table create(int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
+        return create(lua_state(), narr, nrec, std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
+    }
+
     static inline table create(lua_State* L, int narr = 0, int nrec = 0) {
         lua_createtable(L, narr, nrec);
         table result(L);

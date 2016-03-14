@@ -273,6 +273,15 @@ public:
         return *this;
     }
 
+    table create_table(int narr = 0, int nrec = 0) {
+        return create_table(lua_state(), narr, nrec);
+    }
+
+    template <typename Key, typename Value, typename... Args>
+    table create_table(int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
+        return create_table(lua_state(), narr, nrec, std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
+    }
+
     static inline table create_table(lua_State* L, int narr = 0, int nrec = 0) {
         return global_table::create(L, narr, nrec);
     }
@@ -280,6 +289,14 @@ public:
     template <typename Key, typename Value, typename... Args>
     static inline table create_table(lua_State* L, int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
         return global_table::create(L, narr, nrec, std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
+    }
+
+    thread create_thread() {
+        return create_thread(lua_state());
+    }
+
+    static inline thread create_thread(lua_State* L, int narr = 0, int nrec = 0) {
+        return thread::create(L);
     }
 };
 } // sol

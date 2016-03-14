@@ -286,6 +286,9 @@ struct is_proxy_primitive<std::reference_wrapper<T>> : std::true_type { };
 template <typename... Args>
 struct is_proxy_primitive<std::tuple<Args...>> : std::true_type { };
 
+template <typename T>
+struct is_unique_usertype : std::false_type {};
+
 template<typename T>
 inline type type_of() {
     return lua_type_of<meta::Unqualified<T>>::value;

@@ -530,7 +530,7 @@ struct pusher<unique_usertype<T, Real>> {
         Real* mem = static_cast<Real*>(static_cast<void*>(fx + 1));
         *fx = detail::special_destruct<T, Real>;
         detail::default_construct::construct(mem, std::forward<Args>(args)...);
-        *pref = mem->get();
+	   *pref = std::addressof(detail::deref(*mem));
         if (luaL_newmetatable(L, &usertype_traits<unique_usertype<T>>::metatable[0]) == 1) {
             set_field(L, "__gc", detail::unique_destruct<T>);
         }
@@ -539,13 +539,21 @@ struct pusher<unique_usertype<T, Real>> {
     }
 };
 
+template<typename T>
+struct pusher<T, std::enable_if_t<is_unique_usertype<T>::value>> {
+    template <typename... Args>
+    static int push(lua_State* L, Args&&... args) {
+        typedef typename is_unique_usertype<T>::metatable_type meta_type;
+        return stack::push<unique_usertype<meta_type, T>>(L, std::forward<Args>(args)...);
+    }
+};
+
 template<typename T, typename D>
 struct pusher<std::unique_ptr<T, D>> {
     static int push(lua_State* L, std::unique_ptr<T, D> obj) {
-        typedef std::unique_ptr<T, D> ptr_t;
         if (obj == nullptr)
             return stack::push(L, nil);
-        return stack::push<unique_usertype<T, ptr_t>>(L, std::move(obj));
+        return stack::push<unique_usertype<T, std::unique_ptr<T, D>>>(L, std::move(obj));
     }
 };
 
