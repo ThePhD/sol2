@@ -25,3 +25,4 @@ Sol means sun. The moon (Lua) needs a sun, because without it only the bleak nig
 .. _here: https://github.com/Rapptz/sol
 .. _ThePhD: https://github.com/ThePhD
 .. _Danny Y., Rapptz: https://github.com/Rapptz
+.. _Rapptz: https://github.com/Rapptz
