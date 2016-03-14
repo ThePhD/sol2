@@ -109,7 +109,12 @@ Sets the desired function to the specified key value. Note that it also allows f
 
 .. code-block:: cpp
 	:caption: function: create a table with defaults
+	:name: table-create
 
+	table create(int narr = 0, int nrec = 0);
+	template <typename Key, typename Value, typename... Args>
+	table create(int narr, int nrec, Key&& key, Value&& value, Args&&... args);
+	
 	static table create(lua_State* L, int narr = 0, int nrec = 0);
 	template <typename Key, typename Value, typename... Args>
 	static table create(lua_State* L, int narr, int nrec, Key&& key, Value&& value, Args&&... args);

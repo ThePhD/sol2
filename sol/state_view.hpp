@@ -24,6 +24,7 @@
 
 #include "error.hpp"
 #include "table.hpp"
+#include "thread.hpp"
 #include <memory>
 
 namespace sol {

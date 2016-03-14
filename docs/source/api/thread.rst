@@ -36,8 +36,10 @@ This function retrieves the ``lua_State*`` that represents the thread.
 Retrieves the :doc:`thread status<types>` that describes the current state of the thread.
 
 .. code-block:: cpp
-	:caption: thread creation
+	:caption: function: thread creation
+	:name: thread-create
 
+	thread create();
 	static thread create (lua_State* L);
 
 Creates a new thread from the given a ``lua_State*``.
