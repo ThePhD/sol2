@@ -371,6 +371,7 @@ template<typename... Args>
 struct getter<std::tuple<Args...>> {
     template <std::size_t... I>
     static decltype(auto) apply(std::index_sequence<I...>, lua_State* L, int index = -1) {
+        index = lua_absindex(L, index);
         return std::tuple<decltype(stack::get<Args>(L, index + I))...>(stack::get<Args>(L, index + I)...);
     }
 
@@ -382,6 +383,7 @@ struct getter<std::tuple<Args...>> {
 template<typename A, typename B>
 struct getter<std::pair<A, B>> {
     static decltype(auto) get(lua_State* L, int index = -1) {
+        index = lua_absindex(L, index);
         return std::pair<decltype(stack::get<A>(L, index)), decltype(stack::get<B>(L, index))>(stack::get<A>(L, index), stack::get<B>(L, index + 1));
     }
 };
@@ -780,6 +782,7 @@ template <typename... Args, bool b, typename C>
 struct field_getter<std::tuple<Args...>, b, C> {
     template <std::size_t... I, typename Keys>
     void apply(std::index_sequence<I...>, lua_State* L, Keys&& keys, int tableindex) {
+        tableindex = lua_absindex(L, tableindex);
         void(detail::swallow{ (get_field<I < 1 && b>(L, detail::forward_get<I>(keys), tableindex), 0)... });
         reference saved(L, -1);
         lua_pop(L, static_cast<int>(sizeof...(I) + 1));
@@ -796,8 +799,9 @@ template <typename A, typename B, bool b, typename C>
 struct field_getter<std::pair<A, B>, b, C> {
     template <typename Keys>
     void apply(lua_State* L, Keys&& keys, int tableindex) {
+        tableindex = lua_absindex(L, tableindex);
         get_field<b>(L, detail::forward_get<0>(keys), tableindex);
-        get_field<false>(L, detail::forward_get<1>(keys), tableindex);
+        get_field<false>(L, detail::forward_get<1>(keys), tableindex + 1);
         reference saved(L, -1);
         lua_pop(L, static_cast<int>(2 + 1));
         saved.push();

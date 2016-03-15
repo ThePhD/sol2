@@ -33,8 +33,6 @@ template<typename Table, typename Key>
 struct proxy : public proxy_base<proxy<Table, Key>> {
 private:
     typedef meta::If<meta::is_specialization_of<Key, std::tuple>, Key, std::tuple<meta::If<std::is_array<meta::Unqualified<Key>>, Key&, meta::Unqualified<Key>>>> key_type;
-    Table tbl;
-    key_type key;
 
     template<typename T, std::size_t... I>
     decltype(auto) tuple_get(std::index_sequence<I...>) const {
@@ -47,6 +45,8 @@ private:
     }
 
 public:
+    Table tbl;
+    key_type key;
 
     template<typename T>
     proxy(Table table, T&& key) : tbl(table), key(std::forward<T>(key)) {}
@@ -114,6 +114,17 @@ template<typename Table, typename Key, typename T>
 inline bool operator!=(const proxy<Table, Key>& right, T&& left) {
     return right.template get<std::decay_t<T>>() != left;
 }
+namespace stack {
+template <typename Table, typename Key>
+struct pusher<proxy<Table, Key>> {
+    static int push (lua_State* L, const proxy<Table, Key>& p) {
+	   stack::push(L, p.tbl);
+	   int tblindex = lua_gettop(L);
+        stack::get_field<std::is_same<meta::Unqualified<Table>, global_table>::value>(L, p.key, tblindex);
+        return 1;
+    }
+};
+} // stack
 } // sol
 
 #endif // SOL_PROXY_HPP
