@@ -130,7 +130,7 @@ false;
 template <typename T>
 inline bool check_metatable(lua_State* L, int index = -2) {
     luaL_getmetatable(L, &usertype_traits<T>::metatable[0]);
-    const type expectedmetatabletype = get<type>(L);
+    const type expectedmetatabletype = static_cast<type>(lua_type(L, -1));
     if (expectedmetatabletype != type::nil) {
         if (lua_rawequal(L, -1, index) == 1) {
             lua_pop(L, 2);
