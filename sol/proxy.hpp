@@ -117,10 +117,9 @@ inline bool operator!=(const proxy<Table, Key>& right, T&& left) {
 namespace stack {
 template <typename Table, typename Key>
 struct pusher<proxy<Table, Key>> {
-    static int push (lua_State* L, const proxy<Table, Key>& p) {
-	   stack::push(L, p.tbl);
-	   int tblindex = lua_gettop(L);
-        stack::get_field<std::is_same<meta::Unqualified<Table>, global_table>::value>(L, p.key, tblindex);
+    static int push (lua_State*, const proxy<Table, Key>& p) {
+	   sol::reference r = p;
+	   r.push();
         return 1;
     }
 };

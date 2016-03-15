@@ -127,8 +127,22 @@ true;
 false;
 #endif
 
+template <typename T>
+inline bool check_metatable(lua_State* L, int index = -2) {
+    luaL_getmetatable(L, &usertype_traits<T>::metatable[0]);
+    const type expectedmetatabletype = get<type>(L);
+    if (expectedmetatabletype != type::nil) {
+        if (lua_rawequal(L, -1, index) == 1) {
+            lua_pop(L, 2);
+            return true;
+        }
+    }
+    lua_pop(L, 1);
+    return false;
+}
+
 template<bool releasemem = false, typename TCont>
-static int push_upvalues(lua_State* L, TCont&& cont) {
+inline int push_upvalues(lua_State* L, TCont&& cont) {
     int n = 0;
     for(auto& c : cont) {
         if(releasemem) {
@@ -411,7 +425,7 @@ struct checker<T*, type::userdata, C> {
         if (indextype == type::nil) {
             return true;
         }
-        return checker<T, type::userdata, C>{}.check(types<T*>(), L, indextype, index, handler);
+        return checker<T, type::userdata, C>{}.check(types<T>(), L, indextype, index, handler);
     }
 };
 
@@ -428,16 +442,13 @@ struct checker<T, type::userdata, C> {
         if (lua_getmetatable(L, index) == 0) {
              handler(L, index, type::userdata, indextype);
              return false;
-        }
-        luaL_getmetatable(L, &usertype_traits<U>::metatable[0]);
-        const type expectedmetatabletype = get<type>(L);
-        if (expectedmetatabletype != type::nil) {
-            if (lua_rawequal(L, -1, -2) == 1) {
-                lua_pop(L, 2);
-                return true;
-            }
-        }
-        lua_pop(L, 1);
+	   }
+	   if (stack_detail::check_metatable<U>(L))
+            return true;
+	   if (stack_detail::check_metatable<U*>(L))
+            return true;
+	   if (stack_detail::check_metatable<unique_usertype<U>>(L))
+            return true;
 #ifndef SOL_NO_EXCEPTIONS
         lua_getfield(L, -1, &detail::base_class_check_key()[0]);
         void* basecastdata = stack::get<light_userdata_value>(L);
