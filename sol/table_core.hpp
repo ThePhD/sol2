@@ -271,6 +271,20 @@ private:
     }
 
 public:
+    template <typename Name>
+    table create(Name&& name, int narr = 0, int nrec = 0) {
+        table x = create(lua_state(), narr, nrec);
+        this->set(std::forward<Name>(name), x);
+        return x;
+    }
+
+    template <typename Name, typename Key, typename Value, typename... Args>
+    table create(Name&& name, int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
+        table x = create(lua_state(), narr, nrec, std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
+        this->set(std::forward<Name>(name), x);
+        return x;
+    }
+
     table create(int narr = 0, int nrec = 0) {
         return create(lua_state(), narr, nrec);
     }

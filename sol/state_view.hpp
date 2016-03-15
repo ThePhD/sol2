@@ -273,6 +273,16 @@ public:
         return *this;
     }
 
+    template <typename Name>
+    table create_table(Name&& name, int narr = 0, int nrec = 0) {
+        return global.create(std::forward<Name>(name), narr, nrec);
+    }
+
+    template <typename Name, typename Key, typename Value, typename... Args>
+    table create_table(Name&& name, int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
+        return global.create(std::forward<Name>(name), narr, nrec, std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
+    }
+
     table create_table(int narr = 0, int nrec = 0) {
         return create_table(lua_state(), narr, nrec);
     }

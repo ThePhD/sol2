@@ -516,6 +516,27 @@ TEST_CASE("tables/create", "Check if creating a table is kosher") {
     REQUIRE((testtable[3] == 4));
 }
 
+TEST_CASE("tables/create-local", "Check if creating a table is kosher") {
+    sol::state lua;
+    lua["testtable"] = lua.create_table(0, 0, "Woof", "Bark", 1, 2, 3, 4);
+    sol::object testobj = lua["testtable"];
+    REQUIRE(testobj.is<sol::table>());
+    sol::table testtable = testobj.as<sol::table>();
+    REQUIRE((testtable["Woof"] == std::string("Bark")));
+    REQUIRE((testtable[1] == 2));
+    REQUIRE((testtable[3] == 4));
+}
+
+TEST_CASE("tables/create-local-named", "Check if creating a table is kosher") {
+    sol::state lua;
+    sol::table testtable = lua.create_table("testtable", 0, 0, "Woof", "Bark", 1, 2, 3, 4);
+    sol::object testobj = lua["testtable"];
+    REQUIRE(testobj.is<sol::table>());
+    REQUIRE((testtable["Woof"] == std::string("Bark")));
+    REQUIRE((testtable[1] == 2));
+    REQUIRE((testtable[3] == 4));
+}
+
 TEST_CASE("tables/functions-variables", "Check if tables and function calls work as intended") {
     sol::state lua;
     lua.open_libraries(sol::lib::base, sol::lib::os);
