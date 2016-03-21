@@ -72,7 +72,7 @@ officially supported and CI-tested compilers are:
 ## Caveats
 
 Due to how this library is used compared to the C API, the Lua Stack is completely abstracted away. Not only that, but all
-Lua errors are thrown as exceptions instead: if you don't want to deal with errors thrown by at_panic, you can set your own panic function or use the `protected_function` API. This allows you to handle the errors gracefully without being forced to exit. If you don't want to deal with exceptions, then define `SOL_NO_EXCEPTIONS`. If you also don't like RTTI, you can also turn on `SOL_NO_RTTI` as well. These flags are automatically defined if the code detects certain compiler-specific macros being turned on or off.
+Lua errors are thrown as exceptions instead: if you don't want to deal with errors thrown by at_panic, you can set your own panic function or use the `protected_function` API. This allows you to handle the errors gracefully without being forced to exit. If you don't want to deal with exceptions, then define `SOL_NO_EXCEPTIONS`. If you also don't like RTTI, you can also define `SOL_NO_RTTI` as well. These macros are automatically defined if the code detects certain compiler-specific macros being turned on or off based on flags like `-fno-rtti` and `-fno-exceptions`
 
 It should be noted that the library itself depends on `lua.hpp` to be found by your compiler. It uses angle brackets, e.g.
 `#include <lua.hpp>`.
