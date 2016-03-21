@@ -6,6 +6,10 @@
 Sol is a C++ library binding to Lua. It currently supports all Lua versions 5.1+ (LuaJIT 2.x included). Sol aims to be easy to use and easy to add to a project.
 The library is header-only for easy integration with projects.
 
+## Documentation
+
+Find it [here](http://sol2.rtfd.org/). A run-through kind of tutorial is in the works: check back soon! The API documentation goes over most cases (particularly, the "api/usertype" and "api/proxy" and "api/function" sections) that should still get you off your feet and going, and there's an examples directory [here](https://github.com/ThePhD/sol2/tree/develop/examples) as well.
+
 ## Sneak Peek
 
 ```cpp
