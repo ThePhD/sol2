@@ -46,7 +46,7 @@ More examples are given in the examples directory.
 
 ## Creating a single header
 
-For maximum ease of use, a script called `single.py` is provided. You can run this script to create a single file version of the library so you can only include that part of it. Check `single.py --help` for more info.
+Check the releases tab on github for a provided single header file for maximum ease of use. A script called `single.py` is provided in the repository if there's some bleeding edge change that hasn't been published on the releases page. You can run this script to create a single file version of the library so you can only include that part of it. Check `single.py --help` for more info.
 
 ## Features
 
@@ -67,13 +67,12 @@ officially supported and CI-tested compilers are:
 
 - GCC 4.9.0+
 - Clang 3.5+
-- Visual Studio 2015 Community (Visual C++ 14.0) and above (tested manually)
+- Visual Studio 2015 Community (Visual C++ 14.0)+
 
 ## Caveats
 
 Due to how this library is used compared to the C API, the Lua Stack is completely abstracted away. Not only that, but all
-Lua errors are thrown as exceptions instead: if you don't want to deal with errors thrown by at_panic, you can set your own panic function
-or use the `protected_function` API. This allows you to handle the errors gracefully without being forced to exit.
+Lua errors are thrown as exceptions instead: if you don't want to deal with errors thrown by at_panic, you can set your own panic function or use the `protected_function` API. This allows you to handle the errors gracefully without being forced to exit. If you don't want to deal with exceptions, then define `SOL_NO_EXCEPTIONS`. If you also don't like RTTI, you can also turn on `SOL_NO_RTTI` as well. These flags are automatically defined if the code detects certain compiler-specific macros being turned on or off.
 
 It should be noted that the library itself depends on `lua.hpp` to be found by your compiler. It uses angle brackets, e.g.
 `#include <lua.hpp>`.
