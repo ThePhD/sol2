@@ -255,6 +255,18 @@ public:
         return *this;
     }
 
+    template<typename... Args, typename R, typename C, typename Key>
+    state_view& set_function(Key&& key, R (C::*mem_ptr)(Args...)) {
+        global.set_function(std::forward<Key>(key), mem_ptr);
+        return *this;
+    }
+
+    template<typename Sig, typename C, typename Key>
+    state_view& set_function(Key&& key, Sig C::* mem_ptr) {
+        global.set_function(std::forward<Key>(key), mem_ptr);
+        return *this;
+    }
+
     template<typename... Args, typename R, typename C, typename T, typename Key>
     state_view& set_function(Key&& key, R (C::*mem_ptr)(Args...), T&& obj) {
         global.set_function(std::forward<Key>(key), mem_ptr, std::forward<T>(obj));
@@ -292,6 +304,11 @@ public:
         return create_table(lua_state(), narr, nrec, std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
     }
 
+    template <typename... Args>
+    table create_table_with(Args&&... args) {
+        return create_table_with(lua_state(), std::forward<Args>(args)...);
+    }
+
     static inline table create_table(lua_State* L, int narr = 0, int nrec = 0) {
         return global_table::create(L, narr, nrec);
     }
@@ -299,6 +316,11 @@ public:
     template <typename Key, typename Value, typename... Args>
     static inline table create_table(lua_State* L, int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
         return global_table::create(L, narr, nrec, std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    static inline table create_table_with(lua_State* L, Args&&... args) {
+        return global_table::create_with(L, std::forward<Args>(args)...);
     }
 };
 } // sol

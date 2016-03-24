@@ -43,22 +43,48 @@
 #endif // Lua Version 502, 501 || luajit, 500 
 
 #ifdef _MSC_VER
+#ifdef _DEBUG
+#ifndef SOL_CHECK_ARGUMENTS
+// Do not define by default: let user turn it on
+//#define SOL_CHECK_ARGUMENTS
+#endif // Check Arguments
+#endif // Debug
 
 #ifndef _CPPUNWIND
+#ifndef SOL_NO_EXCEPTIONS
 #define SOL_NO_EXCEPTIONS 1
-#endif // No
+#endif
+#endif // Automatic Exceptions
+
 #ifndef _CPPRTTI
+#ifndef SOL_NO_RTTI
 #define SOL_NO_RTTI 1
+#endif
 #endif // Automatic RTTI
 
 #elif defined(__GNUC__) || defined(__clang__)
 
+#ifndef NDEBUG
+#ifndef __OPTIMIZE__
+#ifndef SOL_CHECK_ARGUMENTS
+// Do not define by default: let user choose
+//#define SOL_CHECK_ARGUMENTS
+#endif // Check Arguments
+#endif // g++ optimizer flag
+#endif // Not Debug
+
 #ifndef __EXCEPTIONS
+#ifndef SOL_NO_EXCEPTIONS
 #define SOL_NO_EXCEPTIONS 1
+#endif
 #endif // No Exceptions
+
 #ifndef __GXX_RTTI
+#ifndef SOL_NO_RTII
 #define SOL_NO_RTTI 1
+#endif
 #endif // No RTTI
+
 #endif // vc++ || clang++/g++
 
 #endif // SOL_VERSION_HPP

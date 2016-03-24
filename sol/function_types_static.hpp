@@ -57,8 +57,34 @@ struct upvalue_member_function {
         auto objdata = stack::stack_detail::get_as_upvalues<T*>(L, memberdata.second);
         function_type& memfx = memberdata.first;
         T& item = *objdata.first;
-        auto fx = [&item, &memfx](auto&&... args) -> typename traits_type::return_type { return (item.*memfx)(std::forward<decltype(args)>(args)...); };
+        auto fx = [&item, &memfx](auto&&... args) -> typename traits_type::return_type { 
+            return (item.*memfx)(std::forward<decltype(args)>(args)...);
+        };
         return stack::call_into_lua(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L, 1);
+    }
+
+    static int call (lua_State* L) {
+        return detail::static_trampoline<(&real_call)>(L);
+    }
+
+    int operator()(lua_State* L) {
+        return call(L);
+    }
+};
+
+template<typename T, typename Function>
+struct upvalue_this_member_function {
+    typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
+    typedef meta::function_traits<function_type> traits_type;
+
+    static int real_call(lua_State* L) {
+        auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L, 1);
+        function_type& memfx = memberdata.first;
+        auto fx = [&memfx](lua_State* L, auto&&... args) -> typename traits_type::return_type { 
+            T& item = stack::get<T>(L, 1);
+            return (item.*memfx)(std::forward<decltype(args)>(args)...);
+        };
+        return stack::call_into_lua(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L, 2, L);
     }
 
     static int call (lua_State* L) {

@@ -372,13 +372,13 @@ TEST_CASE("simple/call-c++-function", "C++ function is called from lua") {
 TEST_CASE("simple/call-lambda", "A C++ lambda is exposed to lua and called") {
     sol::state lua;
 
-    int x = 0;
+    int a = 0;
 
-    lua.set_function("foo", [&x] { x = 1; });
+    lua.set_function("foo", [&a] { a = 1; });
 
     lua.script("foo()");
 
-    REQUIRE(x == 1);
+    REQUIRE(a == 1);
 }
 
 TEST_CASE("advanced/get-and-call", "Checks for lambdas returning values after a get operation") {
@@ -532,6 +532,17 @@ TEST_CASE("tables/create-local-named", "Check if creating a table is kosher") {
     sol::table testtable = lua.create_table("testtable", 0, 0, "Woof", "Bark", 1, 2, 3, 4);
     sol::object testobj = lua["testtable"];
     REQUIRE(testobj.is<sol::table>());
+    REQUIRE((testtable["Woof"] == std::string("Bark")));
+    REQUIRE((testtable[1] == 2));
+    REQUIRE((testtable[3] == 4));
+}
+
+TEST_CASE("tables/create-with-local", "Check if creating a table is kosher") {
+    sol::state lua;
+    lua["testtable"] = lua.create_table_with("Woof", "Bark", 1, 2, 3, 4);
+    sol::object testobj = lua["testtable"];
+    REQUIRE(testobj.is<sol::table>());
+    sol::table testtable = testobj.as<sol::table>();
     REQUIRE((testtable["Woof"] == std::string("Bark")));
     REQUIRE((testtable[1] == 2));
     REQUIRE((testtable[3] == 4));

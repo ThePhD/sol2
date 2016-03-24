@@ -24,6 +24,7 @@ get going:
    api/top
    features
    benchmarks
+   safety
    exceptions
    rtti
    licenses

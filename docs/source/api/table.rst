@@ -121,4 +121,18 @@ Sets the desired function to the specified key value. Note that it also allows f
 
 Creates a table, optionally with the specified values pre-set into the table. If ``narr`` or ``nrec`` are 0, then compile-time shenanigans are used to guess the amount of array entries (e.g., integer keys) and the amount of hashable entries (e.g., all other entries).
 
+.. code-block:: cpp
+	:caption: function: create a table with compile-time defaults assumed
+	:name: table-create-with
+
+	table create(int narr = 0, int nrec = 0);
+	template <typename Key, typename Value, typename... Args>
+	table create(int narr, int nrec, Key&& key, Value&& value, Args&&... args);
+	
+	static table create(lua_State* L, int narr = 0, int nrec = 0);
+	template <typename Key, typename Value, typename... Args>
+	static table create(lua_State* L, int narr, int nrec, Key&& key, Value&& value, Args&&... args);
+
+Creates a table, optionally with the specified values pre-set into the table. If ``narr`` or ``nrec`` are 0, then compile-time shenanigans are used to guess the amount of array entries (e.g., integer keys) and the amount of hashable entries (e.g., all other entries).
+
 .. _input iterators: http://en.cppreference.com/w/cpp/concept/InputIterator

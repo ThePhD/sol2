@@ -62,13 +62,13 @@ class table_core : public reference {
         }
     }
 
-    template<typename... Ret, std::size_t... I, typename Keys>
-    auto tuple_get( types<Ret...>, std::index_sequence<I...>, Keys&& keys ) const
-    -> decltype(stack::pop<std::tuple<Ret...>>(nullptr)){
+    template<typename Ret0, typename Ret1, typename... Ret, std::size_t... I, typename Keys>
+    auto tuple_get( types<Ret0, Ret1, Ret...>, std::index_sequence<I...>, Keys&& keys ) const
+    -> decltype(stack::pop<std::tuple<Ret0, Ret1, Ret...>>(nullptr)){
         auto pp = stack::push_pop<is_global<meta::tuple_element_t<I, Keys>...>::value>(*this);
         int tableindex = lua_gettop(lua_state());
         void(detail::swallow{ ( stack::get_field<top_level>(lua_state(), detail::forward_get<I>(keys), tableindex), 0)... });
-        return stack::pop<std::tuple<Ret...>>( lua_state() );
+        return stack::pop<std::tuple<Ret0, Ret1, Ret...>>( lua_state() );
     }
 
     template<typename Ret, std::size_t I, typename Keys>
@@ -241,6 +241,18 @@ public:
         return *this;
     }
 
+    template<typename... Args, typename R, typename C, typename Key>
+    table_core& set_function( Key&& key, R( C::*mem_ptr )( Args... ) ) {
+        set_resolved_function( std::forward<Key>( key ), mem_ptr );
+        return *this;
+    }
+
+    template<typename Sig, typename C, typename Key>
+    table_core& set_function( Key&& key, Sig C::* mem_ptr ) {
+        set_resolved_function( std::forward<Key>( key ), mem_ptr );
+        return *this;
+    }
+
     template<typename... Sig, typename Fx, typename Key>
     table_core& set_function( Key&& key, Fx&& fx ) {
         set_fx( types<Sig...>( ), std::forward<Key>( key ), std::forward<Fx>( fx ) );
@@ -271,6 +283,37 @@ private:
     }
 
 public:
+    static inline table create(lua_State* L, int narr = 0, int nrec = 0) {
+        lua_createtable(L, narr, nrec);
+        table result(L);
+        lua_pop(L, 1);
+        return result;
+    }
+
+    template <typename Key, typename Value, typename... Args>
+    static inline table create(lua_State* L, int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
+        lua_createtable(L, narr, nrec);
+        table result(L);
+        result.set(std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
+        lua_pop(L, 1);
+        return result;
+    }
+
+    template <typename... Args>
+    static inline table create_with(lua_State* L, Args&&... args) {
+        static const int narr = static_cast<int>(meta::count_if_2_pack<std::is_integral, Args...>::value);
+        return create(L, narr, static_cast<int>((sizeof...(Args) / 2) - narr), std::forward<Args>(args)...);
+    }
+
+    table create(int narr = 0, int nrec = 0) {
+        return create(lua_state(), narr, nrec);
+    }
+
+    template <typename Key, typename Value, typename... Args>
+    table create(int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
+        return create(lua_state(), narr, nrec, std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
+    }
+    
     template <typename Name>
     table create(Name&& name, int narr = 0, int nrec = 0) {
         table x = create(lua_state(), narr, nrec);
@@ -285,32 +328,10 @@ public:
         return x;
     }
 
-    table create(int narr = 0, int nrec = 0) {
-        return create(lua_state(), narr, nrec);
-    }
-
-    template <typename Key, typename Value, typename... Args>
-    table create(int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
-        return create(lua_state(), narr, nrec, std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
-    }
-
-    static inline table create(lua_State* L, int narr = 0, int nrec = 0) {
-        lua_createtable(L, narr, nrec);
-        table result(L);
-        lua_pop(L, 1);
-        return result;
-    }
-
-    template <typename Key, typename Value, typename... Args>
-    static inline table create(lua_State* L, int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
-        if (narr == 0) narr = static_cast<int>(meta::count_if_pack<std::is_integral, Key, Value, Args...>::value);
-        if (nrec == 0) nrec = static_cast<int>(( sizeof...(Args) + 2 ) - narr);
-        lua_createtable(L, narr, nrec);
-        table result(L);
-        result.set(std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
-        lua_pop(L, 1);
-        return result;
-    }
+    template <typename... Args>
+    table create_with(Args&&... args) {
+        return create_with(lua_state(), std::forward<Args>(args)...);
+    }  
 };
 } // sol
 

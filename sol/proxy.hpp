@@ -114,6 +114,7 @@ template<typename Table, typename Key, typename T>
 inline bool operator!=(const proxy<Table, Key>& right, T&& left) {
     return right.template get<std::decay_t<T>>() != left;
 }
+
 namespace stack {
 template <typename Table, typename Key>
 struct pusher<proxy<Table, Key>> {

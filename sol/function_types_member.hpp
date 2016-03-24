@@ -47,6 +47,37 @@ struct functor_function : public base_function {
 };
 
 template<typename Function, typename T>
+struct this_member_function : public base_function {
+    typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
+    typedef meta::function_return_t<function_type> return_type;
+    typedef meta::function_args_t<function_type> args_types;
+    struct functor {
+        function_type invocation;
+
+        template<typename... Args>
+        functor(Args&&... args): invocation(std::forward<Args>(args)...) {}
+
+        template<typename... Args>
+        return_type operator()(lua_State* L, Args&&... args) {
+            auto& mem = detail::unwrap(stack::get<T&>(L, 1));
+            return (mem.*invocation)(std::forward<Args>(args)...);
+        }
+    } fx;
+
+    template<typename... Args>
+    this_member_function(Args&&... args): fx(std::forward<Args>(args)...) {}
+
+    int call(lua_State* L) {
+        return stack::call_into_lua(meta::tuple_types<return_type>(), args_types(), fx, L, 2, L);
+    }
+
+    virtual int operator()(lua_State* L) override {
+        auto f = [&](lua_State* L) -> int { return this->call(L);};
+        return detail::trampoline(L, f);
+    }
+};
+
+template<typename Function, typename T>
 struct member_function : public base_function {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
     typedef meta::function_return_t<function_type> return_type;

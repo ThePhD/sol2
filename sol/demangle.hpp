@@ -113,7 +113,7 @@ inline std::string get_type_name() {
 #endif // No Runtime Type information
 
 template <typename T>
-inline std::string demangle() {
+inline std::string demangle_once() {
 #ifndef SOL_NO_RTTI
     std::string realname = get_type_name(typeid(T));
 #else
@@ -138,6 +138,12 @@ inline std::string demangle() {
     }
 
     return realname;
+}
+
+template <typename T>
+inline std::string demangle() {
+    static const std::string d = demangle_once<T>();
+    return d;
 }
 } // detail
 } // sol

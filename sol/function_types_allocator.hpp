@@ -23,6 +23,7 @@
 #define SOL_FUNCTION_TYPES_ALLOCATOR_HPP
 
 #include "raii.hpp"
+#include "stack.hpp"
 #include "function_types_overload.hpp"
 
 namespace sol {

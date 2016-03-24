@@ -43,11 +43,7 @@ private:
     template<std::size_t... I, typename... Ret>
     auto invoke( types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n ) {
         luacall(n, sizeof...(Ret));
-        int stacksize = lua_gettop(lua_state());
-        int firstreturn = std::max(1, stacksize - static_cast<int>(sizeof...(Ret)) + 1);
-        auto r = stack::get<std::tuple<Ret...>>(lua_state(), firstreturn);
-        lua_pop(lua_state(), static_cast<int>(sizeof...(Ret)));
-        return r;
+        return stack::pop<std::tuple<Ret...>>(lua_state());
     }
 
     template<std::size_t I, typename Ret>

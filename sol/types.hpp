@@ -34,9 +34,9 @@ inline int static_trampoline (lua_State* L) {
     return f(L);
 }
 
-template <typename Fx>
-inline int trampoline(lua_State* L, Fx&& f) {
-    return f(L);
+template <typename Fx, typename... Args>
+inline int trampoline(lua_State* L, Fx&& f, Args&&... args) {
+    return f(L, std::forward<Args>(args)...);
 }
 
 inline int c_trampoline(lua_State* L, lua_CFunction f) {
@@ -48,7 +48,7 @@ inline int static_trampoline (lua_State* L) {
     try {
         return f(L);
     }
-    catch (const char *s) {  // Catch and convert exceptions.
+    catch (const char *s) {
         lua_pushstring(L, s);
     }
     catch (const std::exception& e) {
@@ -60,12 +60,12 @@ inline int static_trampoline (lua_State* L) {
     return lua_error(L);
 }
 
-template <typename Fx>
-inline int trampoline(lua_State* L, Fx&& f) {
+template <typename Fx, typename... Args>
+inline int trampoline(lua_State* L, Fx&& f, Args&&... args) {
     try {
-        return f(L);
+        return f(L, std::forward<Args>(args)...);
     }
-    catch (const char *s) {  // Catch and convert exceptions.
+    catch (const char *s) {
         lua_pushstring(L, s);
     }
     catch (const std::exception& e) {
@@ -233,7 +233,16 @@ template <>
 struct lua_type_of<global_table> : std::integral_constant<type, type::table> { };
 
 template <>
+struct lua_type_of<reference> : std::integral_constant<type, type::poly> {};
+
+template <>
 struct lua_type_of<object> : std::integral_constant<type, type::poly> {};
+
+template <typename... Args>
+struct lua_type_of<std::tuple<Args...>> : std::integral_constant<type, type::poly> {};
+
+template <typename A, typename B>
+struct lua_type_of<std::pair<A, B>> : std::integral_constant<type, type::poly> {};
 
 template <>
 struct lua_type_of<light_userdata_value> : std::integral_constant<type, type::lightuserdata> {};
@@ -275,7 +284,18 @@ template <typename T>
 struct lua_type_of<T, std::enable_if_t<std::is_enum<T>::value>> : std::integral_constant<type, type::number> {};
 
 template <typename T>
-struct is_lua_primitive : std::integral_constant<bool, type::userdata != lua_type_of<meta::Unqualified<T>>::value || std::is_base_of<reference, meta::Unqualified<T>>::value> { };
+struct is_lua_primitive : std::integral_constant<bool, 
+    type::userdata != lua_type_of<meta::Unqualified<T>>::value
+    || std::is_base_of<reference, meta::Unqualified<T>>::value> { };
+
+template <typename T>
+struct is_lua_primitive<T*> : std::true_type {};
+template <>
+struct is_lua_primitive<userdata_value> : std::true_type {};
+template <>
+struct is_lua_primitive<light_userdata_value> : std::true_type {};
+template <typename T>
+struct is_lua_primitive<non_null<T>> : is_lua_primitive<T*> {};
 
 template <typename T>
 struct is_proxy_primitive : is_lua_primitive<T> { };

@@ -120,6 +120,21 @@ enum class stage {
     uniquemeta,
 };
 
+template<bool releasemem = false, typename TCont>
+inline int push_upvalues(lua_State* L, TCont&& cont) {
+    int n = 0;
+    for(auto& c : cont) {
+        if(releasemem) {
+            stack::push<light_userdata_value>(L, c.release());
+        }
+        else {
+            stack::push<light_userdata_value>(L, c.get());
+        }
+        ++n;
+    }
+    return n;
+}
+
 template<typename T, stage metastage>
 inline void push_metatable(lua_State* L, bool needsindexfunction, std::vector<std::unique_ptr<function_detail::base_function>>& funcs, std::vector<luaL_Reg>& functable, std::vector<luaL_Reg>& metafunctable, void* baseclasscheck, void* baseclasscast) {
     static const auto& gcname = meta_function_names[static_cast<int>(meta_function::garbage_collect)];
@@ -137,7 +152,7 @@ inline void push_metatable(lua_State* L, bool needsindexfunction, std::vector<st
         return;
     }
     // Metamethods directly on the metatable itself
-    int metaup = stack::stack_detail::push_upvalues(L, funcs);
+    int metaup = push_upvalues(L, funcs);
     switch (metastage) {
         case stage::uniquemeta: {
             if (gcname != metafunctable.back().name) {
@@ -178,7 +193,7 @@ inline void push_metatable(lua_State* L, bool needsindexfunction, std::vector<st
     // Otherwise, we use quick, fast table indexing for methods
     // gives us performance boost in calling them
     lua_createtable(L, 0, static_cast<int>(functable.size()));
-    int up = stack::stack_detail::push_upvalues(L, funcs);
+    int up = push_upvalues(L, funcs);
     functable.push_back({nullptr, nullptr});
     luaL_setfuncs(L, functable.data(), up);
     functable.pop_back();
@@ -192,7 +207,7 @@ inline void set_global_deleter(lua_State* L, lua_CFunction cleanup, Functions&& 
     // even if the user calls collectgarbage(), weirdly enough
     lua_createtable(L, 0, 0); // global table that sits at toplevel
     lua_createtable(L, 0, 1); // metatable for the global table
-    int up = stack::stack_detail::push_upvalues<true>(L, functions);
+    int up = push_upvalues<true>(L, functions);
     stack::set_field(L, "__gc", c_closure(cleanup, up));
     lua_setmetatable(L, -2);
     // gctable name by default has ♻ part of it

@@ -142,11 +142,24 @@ namespace meta_detail {
     template<std::size_t I, template<typename...> class Pred, typename... Ts>
     struct count_if_pack {};
     template<std::size_t I, template<typename...> class Pred, typename T, typename... Ts>
-    struct count_if_pack<I, Pred, T, Ts...> : std::conditional_t<sizeof...(Ts) == 0, std::integral_constant<std::size_t, I>, count_if_pack<I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>> { };
+    struct count_if_pack<I, Pred, T, Ts...> : std::conditional_t<sizeof...(Ts) == 0, 
+        std::integral_constant<std::size_t, I + static_cast<std::size_t>(Pred<T>::value)>,
+        count_if_pack<I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>
+    > { };
+    template<std::size_t I, template<typename...> class Pred, typename... Ts>
+    struct count_if_2_pack {};
+    template<std::size_t I, template<typename...> class Pred, typename T, typename U, typename... Ts>
+    struct count_if_2_pack<I, Pred, T, U, Ts...> : std::conditional_t<sizeof...(Ts) == 0, 
+        std::integral_constant<std::size_t, I + static_cast<std::size_t>(Pred<T>::value)>, 
+        count_if_2_pack<I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>
+    > { };
 } // meta_detail
 
 template<template<typename...> class Pred, typename... Ts>
 struct count_if_pack : meta_detail::count_if_pack<0, Pred, Ts...> { };
+
+template<template<typename...> class Pred, typename... Ts>
+struct count_if_2_pack : meta_detail::count_if_2_pack<0, Pred, Ts...> { };
 
 template<typename... Args>
 struct return_type {

@@ -53,11 +53,7 @@ private:
     template<std::size_t... I, typename... Ret>
     auto invoke( types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n ) const {
         luacall( n, sizeof...( Ret ) );
-        int stacksize = lua_gettop( lua_state( ) );
-        int firstreturn = std::max(1, stacksize - static_cast<int>(sizeof...(Ret)) + 1);
-        auto r = stack::get<std::tuple<Ret...>>( lua_state( ), firstreturn );
-        lua_pop(lua_state(), static_cast<int>(sizeof...(Ret)));
-        return r;
+        return stack::pop<std::tuple<Ret...>>( lua_state( ) );
     }
 
     template<std::size_t I, typename Ret>
@@ -129,6 +125,24 @@ struct pusher<function_sig<Sigs...>> {
         set_fx(std::false_type(), L, fxptr);
     }
 
+    template<typename... Args, typename R, typename C>
+    static void set(lua_State* L, R (C::*memfxptr)(Args...)) {
+        // Layout:
+        // idx 1...n: verbatim data of member function pointer
+        lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, R(C::*)(Args...)>::call;
+        int upvalues = stack::stack_detail::push_as_upvalues(L, memfxptr);
+        stack::push(L, freefunc, upvalues);
+    }
+
+    template<typename Sig, typename C>
+    static void set(lua_State* L, Sig C::* memfxptr) {
+        // Layout:
+        // idx 1...n: verbatim data of member function pointer
+        lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, Sig C::*>::call;
+        int upvalues = stack::stack_detail::push_as_upvalues(L, memfxptr);
+        stack::push(L, freefunc, upvalues);
+    }
+
     template<typename... Args, typename R, typename C, typename T>
     static void set(lua_State* L, R (C::*memfxptr)(Args...), T&& obj) {
         typedef meta::Bool<meta::is_specialization_of<meta::Unqualified<T>, std::reference_wrapper>::value || std::is_pointer<T>::value> is_reference;
@@ -148,7 +162,7 @@ struct pusher<function_sig<Sigs...>> {
 
     template<typename Fx, typename R, typename... Args>
     static void set_isconvertible_fx(std::true_type, types<R(Args...)>, lua_State* L, Fx&& fx) {
-        typedef R(* fx_ptr_t)(Args...);
+        using fx_ptr_t = R(*)(Args...);
         fx_ptr_t fxptr = detail::unwrap(std::forward<Fx>(fx));
         set(L, fxptr);
     }
@@ -203,7 +217,7 @@ struct pusher<function_sig<Sigs...>> {
 
     static void set_fx(lua_State* L, std::unique_ptr<function_detail::base_function> luafunc) {
         function_detail::base_function* target = luafunc.release();
-        void* targetdata = reinterpret_cast<void*>(target);
+        void* targetdata = static_cast<void*>(target);
         lua_CFunction freefunc = function_detail::call;
 
         stack::push(L, userdata_value(targetdata));
