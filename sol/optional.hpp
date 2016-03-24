@@ -25,7 +25,7 @@
 #if __cplusplus > 201402L
 #include <optional>
 #else
-#include "Optional/optional.hpp"
+#include "../Optional/optional.hpp"
 #endif // C++ 14
 
 namespace sol {
@@ -34,7 +34,7 @@ namespace sol {
 template <typename T>
 using optional = sol::optional<T>;
 using nullopt_t = std::nullopt_t;
-constexpr nullopt_t nullopt = std::experimental::nullopt;
+constexpr nullopt_t nullopt = std::nullopt;
 #else
 #endif // C++ 14
 }
