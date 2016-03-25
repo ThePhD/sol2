@@ -27,8 +27,6 @@
 #include "stack.hpp"
 
 namespace sol {
-template <typename T>
-struct idn { typedef T type; };
 template <typename Super>
 struct proxy_base {
     operator std::string() const {

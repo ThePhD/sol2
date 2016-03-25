@@ -93,6 +93,12 @@ public:
     decltype(auto) operator()(Args&&... args) {
         return call<>(std::forward<Args>(args)...);
     }
+
+    bool valid () const {
+        auto p = stack::probe_get_field<std::is_same<meta::Unqualified<Table>, global_table>::value>(tbl.lua_state(), key);
+	   lua_pop(tbl.lua_state(), p.levels);
+	   return p;
+    }
 };
 
 template<typename Table, typename Key, typename T>
@@ -113,6 +119,26 @@ inline bool operator!=(T&& left, const proxy<Table, Key>& right) {
 template<typename Table, typename Key, typename T>
 inline bool operator!=(const proxy<Table, Key>& right, T&& left) {
     return right.template get<std::decay_t<T>>() != left;
+}
+
+template<typename Table, typename Key>
+inline bool operator==(nil_t left, const proxy<Table, Key>& right) {
+    return !right.valid();
+}
+
+template<typename Table, typename Key>
+inline bool operator==(const proxy<Table, Key>& right, nil_t) {
+    return !right.valid();
+}
+
+template<typename Table, typename Key>
+inline bool operator!=(nil_t, const proxy<Table, Key>& right) {
+    return right.valid();
+}
+
+template<typename Table, typename Key>
+inline bool operator!=(const proxy<Table, Key>& right, nil_t) {
+    return right.valid();
 }
 
 namespace stack {

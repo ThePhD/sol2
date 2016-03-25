@@ -651,6 +651,28 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
     REQUIRE_NOTHROW(assert1(lua.globals()));
 }
 
+TEST_CASE("tables/operator[]-valid", "Test if proxies on tables can lazily evaluate validity") {
+    sol::state lua;
+    bool isFullScreen = false;
+    auto fullscreennopers = lua["fullscreen"]["nopers"];
+    auto fullscreen = lua["fullscreen"];
+    REQUIRE_FALSE(fullscreennopers.valid());
+    REQUIRE_FALSE(fullscreen.valid());
+
+    lua["fullscreen"] = true;
+
+    REQUIRE_FALSE(fullscreennopers.valid());
+    REQUIRE(fullscreen.valid());
+    isFullScreen = lua["fullscreen"];
+    REQUIRE(isFullScreen);
+
+    lua["fullscreen"] = false;
+    REQUIRE_FALSE(fullscreennopers.valid());
+    REQUIRE(fullscreen.valid());
+    isFullScreen = lua["fullscreen"];
+    REQUIRE_FALSE(isFullScreen);
+}
+
 TEST_CASE("tables/usertype", "Show that we can create classes from usertype and use them") {
 
     sol::state lua;

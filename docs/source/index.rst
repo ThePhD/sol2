@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Sol 2.0
+Sol 2.1
 =======
 a fast, simple C++ and Lua Binding
 ----------------------------------

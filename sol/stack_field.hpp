@@ -42,7 +42,6 @@ template <typename... Args, bool b, typename C>
 struct field_getter<std::tuple<Args...>, b, C> {
     template <std::size_t... I, typename Keys>
     void apply(std::index_sequence<I...>, lua_State* L, Keys&& keys, int tableindex) {
-        tableindex = lua_absindex(L, tableindex);
         void(detail::swallow{ (get_field<I < 1 && b>(L, detail::forward_get<I>(keys), tableindex), 0)... });
         reference saved(L, -1);
         lua_pop(L, static_cast<int>(sizeof...(I)));
@@ -51,6 +50,7 @@ struct field_getter<std::tuple<Args...>, b, C> {
 
     template <typename Keys>
     void get(lua_State* L, Keys&& keys, int tableindex = -2) {
+        tableindex = lua_absindex(L, tableindex);
         apply(std::index_sequence_for<Args...>(), L, std::forward<Keys>(keys), tableindex);
     }
 };

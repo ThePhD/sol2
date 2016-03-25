@@ -55,6 +55,8 @@ template<typename T, bool global = false, typename = void>
 struct field_getter;
 template<typename T, bool global = false, typename = void>
 struct field_setter;
+template <typename T, bool global = false, typename = void>
+struct probe_field_getter;
 template<typename T, typename = void>
 struct getter;
 template<typename T, typename = void>
@@ -65,6 +67,15 @@ template<typename T, type = lua_type_of<T>::value, typename = void>
 struct checker;
 template<typename T, typename = void>
 struct check_getter;
+
+struct probe {
+    bool success;
+    int levels;
+
+    probe(bool s, int l) : success(s), levels(l) {}
+
+    operator bool() const { return success; };
+};
 
 namespace stack_detail {
 template <typename T>
@@ -92,6 +103,11 @@ inline decltype(auto) unchecked_get(lua_State* L, int index = -1) {
     return getter<meta::Unqualified<T>>{}.get(L, index);
 }
 } // stack_detail
+
+inline bool maybe_indexable(lua_State* L, int index = -1) {
+    type t = type_of(L, index);
+    return t == type::userdata || t == type::table;
+}
 
 template<typename T, typename... Args>
 inline int push(lua_State* L, T&& t, Args&&... args) {
@@ -166,6 +182,16 @@ void get_field(lua_State* L, Key&& key) {
 template <bool global = false, typename Key>
 void get_field(lua_State* L, Key&& key, int tableindex) {
     field_getter<meta::Unqualified<Key>, global>{}.get(L, std::forward<Key>(key), tableindex);
+}
+
+template <bool global = false, typename Key>
+probe probe_get_field(lua_State* L, Key&& key) {
+    return probe_field_getter<meta::Unqualified<Key>, global>{}.get(L, std::forward<Key>(key));
+}
+
+template <bool global = false, typename Key>
+probe probe_get_field(lua_State* L, Key&& key, int tableindex) {
+    return probe_field_getter<meta::Unqualified<Key>, global>{}.get(L, std::forward<Key>(key), tableindex);
 }
 
 template <bool global = false, typename Key, typename Value>

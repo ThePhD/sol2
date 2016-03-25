@@ -29,6 +29,7 @@
 #include "stack_push.hpp"
 #include "stack_pop.hpp"
 #include "stack_field.hpp"
+#include "stack_probe.hpp"
 #include <cstring>
 #include <array>
 
