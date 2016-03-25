@@ -282,6 +282,14 @@ struct checker<std::pair<A, B>, type::poly, C> {
         return stack::check<A>(L, index, handler) && stack::check<B>(L, index + 1, handler);
     }
 };
+
+template<typename T, typename C>
+struct checker<optional<T>, type::poly, C> {
+    template <typename Handler>
+    static bool check(lua_State* L, int index, Handler&& handler) {
+        return stack::check<T>(L, index, std::forward<Handler>(handler));
+    }
+};
 } // stack
 } // sol
 

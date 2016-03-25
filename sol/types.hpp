@@ -24,6 +24,7 @@
 
 #include "compatibility.hpp"
 #include "traits.hpp"
+#include "optional.hpp"
 #include <string>
 
 namespace sol {
@@ -275,6 +276,9 @@ template <typename Signature>
 struct lua_type_of<std::function<Signature>> : std::integral_constant<type, type::function>{};
 
 template <typename T>
+struct lua_type_of<optional<T>> : std::integral_constant<type, type::poly>{};
+
+template <typename T>
 struct lua_type_of<T*> : std::integral_constant<type, type::userdata> {};
 
 template <typename T>
@@ -302,6 +306,9 @@ struct is_proxy_primitive : is_lua_primitive<T> { };
 
 template <typename T>
 struct is_proxy_primitive<std::reference_wrapper<T>> : std::true_type { };
+
+template <typename T>
+struct is_proxy_primitive<optional<T>> : std::true_type {};
 
 template <typename... Args>
 struct is_proxy_primitive<std::tuple<Args...>> : std::true_type { };

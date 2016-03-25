@@ -158,8 +158,10 @@ inline decltype(auto) check_get(lua_State* L, int index = -1) {
     return check_get<T>(L, index, handler);
 }
 
-template<typename T>
-inline decltype(auto) get(lua_State* L, int index = -1) {
+namespace stack_detail {
+
+template <typename T>
+inline decltype(auto) tagged_get(types<T>, lua_State* L, int index = -1) {
 #ifdef SOL_CHECK_ARGUMENTS
     auto op = check_get<T>(L, index, type_panic);
     typedef typename meta::Unqualified<decltype(op)>::value_type U;
@@ -167,6 +169,18 @@ inline decltype(auto) get(lua_State* L, int index = -1) {
 #else
     return stack_detail::unchecked_get<T>(L, index);
 #endif
+}
+
+template <typename T>
+inline decltype(auto) tagged_get(types<optional<T>>, lua_State* L, int index = -1) {
+    return stack_detail::unchecked_get<optional<T>>(L, index);
+}
+
+} // stack_detail
+
+template<typename T>
+inline decltype(auto) get(lua_State* L, int index = -1) {
+    return stack_detail::tagged_get(types<T>(), L, index);
 }
 
 template<typename T>

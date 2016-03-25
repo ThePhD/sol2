@@ -43,6 +43,14 @@ struct check_getter {
 };
 
 template <typename T>
+struct check_getter<optional<T>> {
+    template <typename Handler>
+    static decltype(auto) get(lua_State* L, int index, Handler&&) {
+        return check_get<T>(L, index, no_panic);
+    }
+};
+
+template <typename T>
 struct check_getter<T, std::enable_if_t<std::is_integral<T>::value && !std::is_same<T, bool>::value>> {
     template <typename Handler>
     static optional<T> get( lua_State* L, int index, Handler&& handler) {
@@ -67,6 +75,13 @@ struct check_getter<T, std::enable_if_t<std::is_floating_point<T>::value>> {
             return nullopt;
         }
         return static_cast<T>(value);
+    }
+};
+
+template <typename T>
+struct getter<optional<T>> {
+    static decltype(auto) get(lua_State* L, int index) {
+        return check_get<T>(L, index);
     }
 };
 } // stack

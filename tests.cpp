@@ -673,6 +673,20 @@ TEST_CASE("tables/operator[]-valid", "Test if proxies on tables can lazily evalu
     REQUIRE_FALSE(isFullScreen);
 }
 
+TEST_CASE("tables/operator[]-optional", "Test if proxies on tables can lazily evaluate validity") {
+    sol::state lua;
+    
+    sol::optional<int> test1 = lua["no_exist_yet"];
+    bool present = (bool)test1;
+    REQUIRE_FALSE(present);
+
+    lua["no_exist_yet"] = 262;
+    sol::optional<int> test2 = lua["no_exist_yet"];
+    present = (bool)test2;
+    REQUIRE(present);
+    REQUIRE(test2.value() == 262);
+}
+
 TEST_CASE("tables/usertype", "Show that we can create classes from usertype and use them") {
 
     sol::state lua;
