@@ -45,13 +45,13 @@ struct probe_field_getter<std::tuple<Args...>, b, C> {
         return probe(!check<nil_t>(L), sofar);
     }
 
-    template <std::size_t I, std::size_t... In, typename Keys>
-    probe apply(std::index_sequence<I, In...>, int sofar, lua_State* L, Keys&& keys, int tableindex) {
+    template <std::size_t I, std::size_t I1, std::size_t... In, typename Keys>
+    probe apply(std::index_sequence<I, I1, In...>, int sofar, lua_State* L, Keys&& keys, int tableindex) {
         get_field<I < 1 && b>(L, std::get<I>(keys), tableindex);
         if (!maybe_indexable(L)) {
             return probe(false, sofar);
         }
-        return apply(std::index_sequence<In...>(), sofar + 1, L, std::forward<Keys>(keys), tableindex);
+        return apply(std::index_sequence<I1, In...>(), sofar + 1, L, std::forward<Keys>(keys), tableindex);
     }
 
     template <typename Keys>
