@@ -113,8 +113,16 @@ Gets the value associated with the keys the proxy was generated and convers it t
 
 Gets the value associated with the keys the proxy was generated and convers it to the type ``T``.
 
-proxy-only members
-------------------
+``operator[]`` proxy-only members
+---------------------------------
+
+.. code-block:: c++
+	:caption: function: validity
+	:name: proxy-valid
+
+	bool valid () const;
+
+Returns whether this proxy actually refers to a valid object.
 
 .. code-block:: c++
 	:caption: functions: [overloaded] implicit set

@@ -21,7 +21,9 @@ functions
 	template <typename T>
 	auto get( lua_State* L, int index = -1 )
 
-Retrieves the value of the object at ``index`` in the stack. The return type varies based on ``T``: with primitive types, it is usually ``T``: for all unrecognized ``T``, it is generally a ``T&`` or whatever the extension point :ref:`stack::getter\<T><getter>` implementation returns. The type ``T`` has top-level ``const`` qualifiers and reference modifiers removed before being forwarded to the extension point :ref:`stack::getter\<T><getter>` struct. ``stack::get`` will default to forwarding all arguments to the :ref:`stack::check_get<stack-check-get>` function with a handler of ``type_panic`` to strongly alert for errors, if you ask for the :ref:`safety<safety>`.
+Retrieves the value of the object at ``index`` in the stack. The return type varies based on ``T``: with primitive types, it is usually ``T``: for all unrecognized ``T``, it is generally a ``T&`` or whatever the extension point :ref:`stack::getter\<T><getter>` implementation returns. The type ``T`` has top-level ``const`` qualifiers and reference modifiers removed before being forwarded to the extension point :ref:`stack::getter\<T><getter>` struct. ``stack::get`` will default to forwarding all arguments to the :ref:`stack::check_get<stack-check-get>` function with a handler of ``type_panic`` to strongly alert for errors, if you ask for the :doc:`safety<../safety>`.
+
+You may also retrieve an :doc:`sol::optional\<T><optional>` from this as well, to have it attempt to not throw errors when performing the get and the type is not correct.
 
 .. code-block:: cpp
 	:caption: function: check
@@ -34,6 +36,17 @@ Retrieves the value of the object at ``index`` in the stack. The return type var
 	bool check( lua_State* L, int index, Handler&& handler )
 
 Checks if the object at ``index`` is of type ``T``. If it is not, it will call the ``handler`` function with ``lua_State*``, ``int index``, ``type`` expected, and ``type`` actual as arguments.
+
+.. code-block:: cpp
+	:caption: function: check_get
+	:name: stack-check-get
+
+	template <typename T>
+	auto check_get( lua_State* L, int index = -1 )
+	template <typename T, typename Handler>
+	auto check_get( lua_State* L, int index, Handler&& handler )
+
+Retrieves the value of the object at ``index`` in the stack, but does so safely. It returns an ``optional<U>``, where ``U`` in this case is the return type deduced from ``stack::get<T>``. This allows a person to properly check if the type they're getting is what they actually want, and gracefully handle errors when working with the stack if they so choose to. You can define ``SOL_CHECK_ARGUMENTS`` to turn on additional :doc:`safety<../safety>`, in which ``stack::get`` will default to calling this version of the function with a handler of ``type_panic`` to strongly alert for errors and help you track bugs if you suspect something might be going wrong in your system.
 
 .. code-block:: cpp
 	:caption: function: push
@@ -52,17 +65,6 @@ Checks if the object at ``index`` is of type ``T``. If it is not, it will call t
 	int multi_push( lua_State* L, Args&&... args )
 
 Based on how it is called, pushes a variable amount of objects onto the stack. in 99% of cases, returns for 1 object pushed onto the stack. For the case of a ``std::tuple<...>``, it recursively pushes each object contained inside the tuple, from left to right, resulting in a variable number of things pushed onto the stack (this enables multi-valued returns when binding a C++ function to a Lua). Can be called with ``sol::stack::push<T>( L, args... )`` to have arguments different from the type that wants to be pushed, or ``sol::stack::push( L, arg, args... )`` where ``T`` will be inferred from ``arg``. The final form of this function is ``sol::stack::multi_push``, which will call one ``sol::stack::push`` for each argument. The ``T`` that describes what to push is first sanitized by removing top-level ``const`` qualifiers and reference qualifiers before being forwarded to the extension point :ref:`stack::pusher\<T><pusher>` struct.
-
-.. code-block:: cpp
-	:caption: function: check_get
-	:name: stack-check-get
-
-	template <typename T>
-	auto check_get( lua_State* L, int index = -1 )
-	template <typename T, typename Handler>
-	auto check_get( lua_State* L, int index, Handler&& handler )
-
-Retrieves the value of the object at ``index`` in the stack, but does so safely. It returns an ``optional<U>``, where ``U`` in this case is the return type deduced from ``stack::get<T>``. This allows a person to properly check if the type they're getting is what they actually want, and gracefully handle errors when working with the stack if they so choose to. You can define ``SOL_CHECK_ARGUMENTS`` to turn on additional :ref:`safety<safety>`, in which ``stack::get`` will default to calling this version of the function with a handler of ``type_panic`` to strongly alert for errors and help you track bugs if you suspect something might be going wrong in your system.
 
 .. code-block:: cpp
 	:caption: function: set_field
