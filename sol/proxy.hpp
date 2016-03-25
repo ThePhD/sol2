@@ -122,7 +122,7 @@ inline bool operator!=(const proxy<Table, Key>& right, T&& left) {
 }
 
 template<typename Table, typename Key>
-inline bool operator==(nil_t left, const proxy<Table, Key>& right) {
+inline bool operator==(nil_t, const proxy<Table, Key>& right) {
     return !right.valid();
 }
 
