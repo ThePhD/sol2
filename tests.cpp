@@ -505,6 +505,23 @@ TEST_CASE("tables/variables", "Check if tables and variables work as intended") 
     REQUIRE_NOTHROW(lua.script("assert(os.name == \"windows\")"));
 }
 
+TEST_CASE("simple/get_default", "Test that table::get_default work corretly") {
+  sol::state lua;
+
+  auto bob_table = lua.create_table("bob");
+  int is_set=0;
+  int is_not_set=0;
+  bob_table.set("is_set",42);
+
+  is_set = bob_table.get_with_default("is_set",3);
+  is_not_set = bob_table.get_with_default("is_not_set",22);
+
+  REQUIRE(is_set == 42);
+  REQUIRE(is_not_set == 22);
+}
+
+
+
 TEST_CASE("tables/create", "Check if creating a table is kosher") {
     sol::state lua;
     lua["testtable"] = sol::table::create(lua.lua_state(), 0, 0, "Woof", "Bark", 1, 2, 3, 4);

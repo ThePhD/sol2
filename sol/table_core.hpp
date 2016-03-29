@@ -140,6 +140,18 @@ public:
         return tuple_get( types<Ret...>( ), std::index_sequence_for<Ret...>( ), std::forward_as_tuple(std::forward<Keys>(keys)...));
     }
 
+    template<typename Ret, typename Key>
+    Ret get_with_default(Key key, Ret _default) const {
+
+      sol::optional<Ret> option = operator[](key);
+      if( option ){
+        return option.value();
+      }
+      else {
+        return _default;
+      }
+    }
+
     template <typename T, typename... Keys>
     decltype(auto) traverse_get( Keys&&... keys ) const {
         auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
