@@ -94,12 +94,14 @@ public:
                 luaL_requiref(L, "package", luaopen_package, 1);
                 lua_pop(L, 1);
                 break;
-#if SOL_LUA_VERSION > 501
+#if !defined(SOL_LUAJIT)
             case lib::coroutine:
+#if SOL_LUA_VERSION > 501
                 luaL_requiref(L, "coroutine", luaopen_coroutine, 1);
                 lua_pop(L, 1);
-                break;
 #endif // Lua 5.2+ only
+                break;
+#endif // Not LuaJIT
             case lib::string:
                 luaL_requiref(L, "string", luaopen_string, 1);
                 lua_pop(L, 1);
@@ -113,7 +115,7 @@ public:
                 lua_pop(L, 1);
                 break;
             case lib::bit32:
-#if SOL_LUA_VERSION > 510
+#if SOL_LUA_VERSION > 501
                 luaL_requiref(L, "bit32", luaopen_bit32, 1);
                 lua_pop(L, 1);
 #else
