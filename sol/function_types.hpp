@@ -88,7 +88,7 @@ struct pusher<function_sig<Sigs...>> {
     static void select_reference_member_variable(std::true_type, lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
         typedef std::decay_t<Fx> dFx;
         dFx memfxptr(std::forward<Fx>(fx));
-        auto userptr = detail::ptr(std::forward<T>(obj));
+        auto userptr = detail::ptr(std::forward<T>(obj), std::forward<Args>(args)...);
         lua_CFunction freefunc = &function_detail::upvalue_member_variable<std::decay_t<decltype(*userptr)>, meta::Unqualified<Fx>>::call;
 
         int upvalues = stack::stack_detail::push_as_upvalues(L, memfxptr);
