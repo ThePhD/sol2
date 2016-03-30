@@ -364,7 +364,7 @@ public:
     template <typename Name, typename... Args>
     table create_named(Name&& name, Args&&... args) {
         static const int narr = static_cast<int>(meta::count_if_2_pack<std::is_integral, Args...>::value);
-        return create(lua_state(), narr, sizeof...(Args) / 2 - narr, std::forward<Args>(args)...);
+        return create(std::forward<Name>(name), narr, sizeof...(Args) / 2 - narr, std::forward<Args>(args)...);
     }
 };
 } // sol
