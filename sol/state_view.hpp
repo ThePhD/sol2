@@ -182,6 +182,16 @@ public:
         return global.get<Args...>(std::forward<Keys>(keys)...);
     }
 
+    template<typename T, typename Key>
+    decltype(auto) get_or(Key&& key, T&& otherwise) const {
+        return global.get_or(std::forward<Key>(key), std::forward<T>(otherwise));
+    }
+
+    template<typename T, typename Key, typename D>
+    decltype(auto) get_or(Key&& key, D&& otherwise) const {
+        return global.get_or<T>(std::forward<Key>(key), std::forward<D>(otherwise));
+    }
+
     template<typename... Args>
     state_view& set(Args&&... args) {
         global.set(std::forward<Args>(args)...);

@@ -325,6 +325,25 @@ TEST_CASE("simple/set-get-global-integer", "Tests if the get function works prop
     REQUIRE(b == 1);
 }
 
+TEST_CASE("simple/get_or", "check if table.get_or works correctly") {
+    sol::state lua;
+
+    auto bob_table = lua.create_table("bob");
+    int is_set=0;
+    int is_not_set=0;
+    bob_table.set("is_set",42);
+
+    is_set = bob_table.get_or("is_set", 3);
+    is_not_set = bob_table.get_or("is_not_set", 22);
+
+    REQUIRE(is_set == 42);
+    REQUIRE(is_not_set == 22);
+
+    lua["joe"] = 55.6;
+    double bark = lua.get_or<double>("joe", 60);
+    REQUIRE(bark == 55.6);
+}
+
 TEST_CASE("simple/addition", "check if addition works and can be gotten through lua.get and lua.set") {
     sol::state lua;
 
@@ -504,23 +523,6 @@ TEST_CASE("tables/variables", "Check if tables and variables work as intended") 
     lua.get<sol::table>("os").set("name", "windows");
     REQUIRE_NOTHROW(lua.script("assert(os.name == \"windows\")"));
 }
-
-TEST_CASE("simple/get_default", "Test that table::get_default work corretly") {
-  sol::state lua;
-
-  auto bob_table = lua.create_table("bob");
-  int is_set=0;
-  int is_not_set=0;
-  bob_table.set("is_set",42);
-
-  is_set = bob_table.get_with_default("is_set",3);
-  is_not_set = bob_table.get_with_default("is_not_set",22);
-
-  REQUIRE(is_set == 42);
-  REQUIRE(is_not_set == 22);
-}
-
-
 
 TEST_CASE("tables/create", "Check if creating a table is kosher") {
     sol::state lua;
@@ -719,6 +721,7 @@ TEST_CASE("tables/operator[]-optional", "Test if proxies on tables can lazily ev
     REQUIRE(non_nope.value() == 1);
     REQUIRE(non_nope2.value() == 1);
 
+    std::cout << "Keys: nope, kek, hah" << std::endl;
     lua.set(std::make_tuple("nope", "kek", "hah"), 35);
     sol::optional<int> non_nope3 = lua["nope"]["kek"]["hah"].get<sol::optional<int>>();
     sol::optional<int> non_nope4 = lua.get<sol::optional<int>>(std::make_tuple("nope", "kek", "hah"));
@@ -726,8 +729,8 @@ TEST_CASE("tables/operator[]-optional", "Test if proxies on tables can lazily ev
     REQUIRE(present);
     present = (bool)non_nope4;
     REQUIRE(present);
-    REQUIRE(non_nope3.value() == 1);
-    REQUIRE(non_nope4.value() == 1);
+    REQUIRE(non_nope3.value() == 35);
+    REQUIRE(non_nope4.value() == 35);
 }
 
 TEST_CASE("tables/usertype", "Show that we can create classes from usertype and use them") {

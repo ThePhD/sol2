@@ -43,14 +43,19 @@ struct field_getter<std::tuple<Args...>, b, C> {
     template <std::size_t... I, typename Keys>
     void apply(std::index_sequence<0, I...>, lua_State* L, Keys&& keys, int tableindex) {
         get_field<b>(L, detail::forward_get<0>(keys), tableindex);
-        void(detail::swallow{ (get_field<false>(L, detail::forward_get<I>(keys), -1), 0)... });
+        void(detail::swallow{ (get_field<false>(L, detail::forward_get<I>(keys)), 0)... });
         reference saved(L, -1);
         lua_pop(L, static_cast<int>(sizeof...(I)));
         saved.push();
     }
 
     template <typename Keys>
-    void get(lua_State* L, Keys&& keys, int tableindex = -2) {
+    void get(lua_State* L, Keys&& keys) {
+        apply(std::index_sequence_for<Args...>(), L, std::forward<Keys>(keys), lua_absindex(L, -1));
+    }
+
+    template <typename Keys>
+    void get(lua_State* L, Keys&& keys, int tableindex) {
         apply(std::index_sequence_for<Args...>(), L, std::forward<Keys>(keys), tableindex);
     }
 };
@@ -58,10 +63,18 @@ struct field_getter<std::tuple<Args...>, b, C> {
 template <typename A, typename B, bool b, typename C>
 struct field_getter<std::pair<A, B>, b, C> {
     template <typename Keys>
-    void get(lua_State* L, Keys&& keys, int tableindex = -2) {
-        tableindex = lua_absindex(L, tableindex);
+    void get(lua_State* L, Keys&& keys, int tableindex) {
         get_field<b>(L, detail::forward_get<0>(keys), tableindex);
-        get_field<false>(L, detail::forward_get<1>(keys), tableindex + 1);
+        get_field<false>(L, detail::forward_get<1>(keys));
+        reference saved(L, -1);
+        lua_pop(L, static_cast<int>(2));
+        saved.push();
+    }
+
+    template <typename Keys>
+    void get(lua_State* L, Keys&& keys) {
+        get_field<b>(L, detail::forward_get<0>(keys));
+        get_field<false>(L, detail::forward_get<1>(keys));
         reference saved(L, -1);
         lua_pop(L, static_cast<int>(2));
         saved.push();
@@ -137,7 +150,9 @@ template <typename... Args, bool b, typename C>
 struct field_setter<std::tuple<Args...>, b, C> {
     template <bool g, std::size_t I, typename Key, typename Value>
     void apply(std::index_sequence<I>, lua_State* L, Key&& keys, Value&& value, int tableindex) {
-        set_field<g>(L, detail::forward_get<I>(keys), std::forward<Value>(value), I > 0 ? -1 : tableindex);
+        I > 0 ? 
+            set_field<g>(L, detail::forward_get<I>(keys), std::forward<Value>(value)) :
+            set_field<g>(L, detail::forward_get<I>(keys), std::forward<Value>(value), tableindex);
     }
 
     template <bool g, std::size_t I0, std::size_t I1, std::size_t... I, typename Keys, typename Value>

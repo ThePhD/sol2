@@ -178,16 +178,23 @@ public:
 	   return tuple_get( types<Ret...>( ), std::index_sequence_for<Ret...>( ), std::forward_as_tuple(std::forward<Keys>(keys)...));
     }
 
-    template<typename Ret, typename Key>
-    Ret get_with_default(Key key, Ret _default) const {
+    template<typename T, typename Key>
+    decltype(auto) get_or(Key&& key, T&& otherwise) const {
+        typedef decltype(get<T>("")) U;
+        sol::optional<U> option = get<sol::optional<U>>(std::forward<Key>(key));
+        if (option) {
+            return static_cast<U>(option.value());
+        }
+        return static_cast<U>(std::forward<T>(otherwise));
+    }
 
-      sol::optional<Ret> option = operator[](key);
-      if( option ){
-        return option.value();
-      }
-      else {
-        return _default;
-      }
+    template<typename T, typename Key, typename D>
+    decltype(auto) get_or(Key&& key, D&& otherwise) const {
+        sol::optional<T> option = get<sol::optional<T>>(std::forward<Key>(key));
+        if (option) {
+            return static_cast<T>(option.value());
+        }
+        return static_cast<T>(std::forward<D>(otherwise));
     }
 
     template <typename T, typename... Keys>
