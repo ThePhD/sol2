@@ -16,6 +16,7 @@ reading
 
 .. code-block:: cpp
 	:caption: main.cpp
+	:name: variables-main-cpp
 
 	int main () {
 
@@ -29,6 +30,7 @@ You can interact with the variables like this:
 
 .. code-block:: cpp
 	:caption: main.cpp extended
+	:name: extended-variables-main-cpp
 
 	#include <utility> // for std::pair
 

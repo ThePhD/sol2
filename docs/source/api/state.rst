@@ -54,7 +54,7 @@ This function takes a number of :ref:`sol::lib<lib-enum>` as arguments and opens
 	void script(const std::string& code);
 	void script_file(const std::string& filename);
 
-These functions run the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. 
+These functions run the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run isolated: any scripts or code run will affect code in other states as well: code ran in this fashion is not isolated. 
 
 .. code-block:: cpp
 	:caption: function: global table / registry table

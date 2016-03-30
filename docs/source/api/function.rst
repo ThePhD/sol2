@@ -33,6 +33,8 @@ The following C++ code will call this function from this file and retrieve the r
 
 The call ``woof(20)`` generates a :ref:`function_result<function-result>`, which is then implicitly converted to an ``double`` after being called. The intermediate temporary ``function_result`` is then destructed, popping the Lua function call results off the Lua stack. 
 
+.. _function-result-warning:
+
 .. warning::
 
 	Do NOT save the return type of a :ref:`function_result<function-result>` with ``auto``, as in ``auto numwoof = woof(20);``, and do NOT store it anywhere. Unlike its counterpart :ref:`protected_function_result<protected-function-result>`, ``function_result`` is NOT safe to store as it assumes that its return types are still at the top of the stack and when its destructor is called will pop the number of results the function was supposed to return off the top of the stack. If you mess with the Lua stack between saving ``function_result`` and it being destructed, you will be subject to an incredible number of surprising and hard-to-track bugs. Don't do it.
@@ -52,7 +54,7 @@ The call ``woof(20)`` generates a :ref:`function_result<function-result>`, which
 Calls the function. The second ``operator()`` lets you specify the templated return types using the ``my_func(sol::types<int, std::string>, ...)`` syntax. Function assumes there are no runtime errors, and thusly will call the ``atpanic`` function if an error does occur.
 
 
-safety
-------
+function call safety
+--------------------
 
-You can have functions here and on usertypes check to definitely make sure that the types passed to C++ functions are what they're supposed to be by adding a ``#define SOL_CHECK_ARGUMENTS`` before including Sol, or passing it on the command line. Otherwise, for speed reasons, these checks are only used where absolutely necessary (like discriminating between :doc:`overloads<overload>`)
+You can have functions here and on usertypes check to definitely make sure that the types passed to C++ functions are what they're supposed to be by adding a ``#define SOL_CHECK_ARGUMENTS`` before including Sol, or passing it on the command line. Otherwise, for speed reasons, these checks are only used where absolutely necessary (like discriminating between :doc:`overloads<overload>`). See :doc:`safety<../safety>` for more information.

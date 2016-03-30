@@ -8,3 +8,10 @@ Sol was designed to be correct and fast, and in the pursuit of both uses the reg
 	* ``sol::stack::call`` and its variants will, if no templated boolean is specified, check all of the arguments for a function call.
 
 Remember that if you want these features, you must explicitly turn them on. Additionally, you can have basic boolean checks when using the API by just converting to a :doc:`sol::optional\<T><api/optional>` when necessary. Tests are compiled with this on to ensure everythign is going as expected.
+
+
+Finally, some warnings that may help with errors when working with Sol:
+
+.. warning::
+
+	Do NOT save the return type of a :ref:`function_result<function-result>` with ``auto``, as in ``auto numwoof = woof(20);``, and do NOT store it anywhere. See :ref:`here<function-result-warning>`.

@@ -30,7 +30,13 @@ members
 	template<typename T, typename... Keys>
 	decltype(auto) traverse_get(Keys&&... keys) const;
 
-These functions retrieve items from the table. The first one (``get``) can pull out *multiple* values, 1 for each key value passed into the function. In the case of multiple return values, it is returned in a ``std::tuple<Args...>``. It is similar to doing ``return table["a"], table["b"], table["c"]``. Because it returns a ``std::tuple``, you can use ``std::tie`` on a multi-get to retrieve all of the necessary variables. The second one (``traverse_get``) pulls out a *single* value,	using each successive key provided to do another lookup into the last. It is similar to doing ``x = table["a"]["b"]["c"][...]``.
+	template<typename T, typename Key, typename D>
+	decltype(auto) get_or(Key&& key, D&& otherwise) const;
+
+
+These functions retrieve items from the table. The first one (``get``) can pull out *multiple* values, 1 for each key value passed into the function. In the case of multiple return values, it is returned in a ``std::tuple<Args...>``. It is similar to doing ``return table["a"], table["b"], table["c"]``. Because it returns a ``std::tuple``, you can use ``std::tie``/``std::make_tuple`` on a multi-get to retrieve all of the necessary variables. The second one (``traverse_get``) pulls out a *single* value,	using each successive key provided to do another lookup into the last. It is similar to doing ``x = table["a"]["b"]["c"][...]``.
+
+If the keys within nested queries try to traverse into a table that doesn't exist, the second lookup into the nil-returned variable and belong will cause a panic to be fired by the lua C API. If you need to check for keys, check with ``auto x = table.get<sol::optional<int>>( std::tie("a", "b", "c" ) );``, and then use the :doc:`optional<optional>` interface to check for errors. As a short-hand, easy method for returning a default if a value doesn't exist, you can use ``get_or`` instead.
 
 .. code-block:: cpp
 	:caption: function: set / traversing set
@@ -132,5 +138,15 @@ Creates a table, optionally with the specified values pre-set into the table. If
 	
 
 Creates a table, optionally with the specified values pre-set into the table. It checks every 2nd argument (the keys) and generates hints for how many array or map-style entries will be placed into the table.
+
+.. code-block:: cpp
+	:caption: function: create a named table with compile-time defaults assumed
+	:name: table-create-named
+
+	template <typename Name, typename... Args>
+	table create_named(Name&& name, Args&&... args);
+	
+
+Creates a table, optionally with the specified values pre-set into the table, and sets it as the key ``name`` in the table.
 
 .. _input iterators: http://en.cppreference.com/w/cpp/concept/InputIterator
