@@ -134,6 +134,7 @@ public:
                 lua_pop(L, 1);
                 break;
             case lib::count:
+            default:
                 break;
             }
         }
