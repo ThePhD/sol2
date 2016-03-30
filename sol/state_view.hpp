@@ -243,45 +243,15 @@ public:
         return global[std::forward<T>(key)];
     }
 
-    template<typename... Args, typename R, typename Key>
-    state_view& set_function(Key&& key, R fun_ptr(Args...)){
-        global.set_function(std::forward<Key>(key), fun_ptr);
+    template<typename Sig, typename... Args, typename Key>
+    state_view& set_function(Key&& key, Args&&... args) {
+        global.set_function<Sig>(std::forward<Key>(key), std::forward<Args>(args)...);
         return *this;
     }
 
-    template<typename Sig, typename Key>
-    state_view& set_function(Key&& key, Sig* fun_ptr){
-        global.set_function(std::forward<Key>(key), fun_ptr);
-        return *this;
-    }
-
-    template<typename... Args, typename R, typename C, typename Key>
-    state_view& set_function(Key&& key, R (C::*mem_ptr)(Args...)) {
-        global.set_function(std::forward<Key>(key), mem_ptr);
-        return *this;
-    }
-
-    template<typename Sig, typename C, typename Key>
-    state_view& set_function(Key&& key, Sig C::* mem_ptr) {
-        global.set_function(std::forward<Key>(key), mem_ptr);
-        return *this;
-    }
-
-    template<typename... Args, typename R, typename C, typename T, typename Key>
-    state_view& set_function(Key&& key, R (C::*mem_ptr)(Args...), T&& obj) {
-        global.set_function(std::forward<Key>(key), mem_ptr, std::forward<T>(obj));
-        return *this;
-    }
-
-    template<typename Sig, typename C, typename T, typename Key>
-    state_view& set_function(Key&& key, Sig C::* mem_ptr, T&& obj) {
-        global.set_function(std::forward<Key>(key), mem_ptr, std::forward<T>(obj));
-        return *this;
-    }
-
-    template<typename... Sig, typename Fx, typename Key>
-    state_view& set_function(Key&& key, Fx&& fx) {
-        global.set_function<Sig...>(std::forward<Key>(key), std::forward<Fx>(fx));
+    template<typename... Args, typename Key>
+    state_view& set_function(Key&& key, Args&&... args) {
+        global.set_function(std::forward<Key>(key), std::forward<Args>(args)...);
         return *this;
     }
 
@@ -293,6 +263,13 @@ public:
     template <typename Name, typename Key, typename Value, typename... Args>
     table create_table(Name&& name, int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
         return global.create(std::forward<Name>(name), narr, nrec, std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
+    }
+
+    template <typename Name, typename... Args>
+    table create_named_table(Name&& name, Args&&... args) {
+        table x = global.create_with(std::forward<Args>(args)...);
+	   global.set(std::forward<Name>(name), x);
+	   return x;
     }
 
     table create_table(int narr = 0, int nrec = 0) {

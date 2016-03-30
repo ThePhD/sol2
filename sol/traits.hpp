@@ -140,14 +140,14 @@ struct at_in_pack<I, Arg, Args...> : std::conditional<I == 0, Arg, at_in_pack_t<
 
 namespace meta_detail {
     template<std::size_t I, template<typename...> class Pred, typename... Ts>
-    struct count_if_pack {};
+    struct count_if_pack : std::integral_constant<std::size_t, 0> {};
     template<std::size_t I, template<typename...> class Pred, typename T, typename... Ts>
     struct count_if_pack<I, Pred, T, Ts...> : std::conditional_t<sizeof...(Ts) == 0, 
         std::integral_constant<std::size_t, I + static_cast<std::size_t>(Pred<T>::value)>,
         count_if_pack<I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>
     > { };
     template<std::size_t I, template<typename...> class Pred, typename... Ts>
-    struct count_if_2_pack {};
+    struct count_if_2_pack : std::integral_constant<std::size_t, 0> {};
     template<std::size_t I, template<typename...> class Pred, typename T, typename U, typename... Ts>
     struct count_if_2_pack<I, Pred, T, U, Ts...> : std::conditional_t<sizeof...(Ts) == 0, 
         std::integral_constant<std::size_t, I + static_cast<std::size_t>(Pred<T>::value)>, 
@@ -236,6 +236,7 @@ template<typename T>
 struct Function : Bool<meta_detail::is_function_impl<T>::value> {};
 
 namespace meta_detail {
+
 template<typename Signature, bool b = has_deducible_signature<Signature>::value>
 struct fx_traits;
 
@@ -248,6 +249,7 @@ template<typename T, typename R, typename... Args>
 struct fx_traits<R(T::*)(Args...), false> {
     static const std::size_t arity = sizeof...(Args);
     static const bool is_member_function = true;
+    typedef T object_type;
     typedef std::tuple<Args...> args_tuple_type;
     typedef types<Args...> args_type;
     typedef R(T::* function_pointer_type)(Args...);
@@ -263,6 +265,7 @@ template<typename T, typename R, typename... Args>
 struct fx_traits<R(T::*)(Args...) const, false> {
     static const std::size_t arity = sizeof...(Args);
     static const bool is_member_function = true;
+    typedef T object_type;
     typedef std::tuple<Args...> args_tuple_type;
     typedef types<Args...> args_type;
     typedef R(T::* function_pointer_type)(Args...);
@@ -304,31 +307,16 @@ struct fx_traits<R(*)(Args...), false> {
     using arg = meta::tuple_element_t<i, args_tuple_type>;
 };
 
-} // meta_detail
-
-template<typename Signature>
-struct function_traits : meta_detail::fx_traits<std::decay_t<Signature>> {};
-
-template<typename Signature>
-using function_args_t = typename function_traits<Signature>::args_type;
-
-template<typename Signature>
-using function_signature_t = typename function_traits<Signature>::signature_type;
-
-template<typename Signature>
-using function_return_t = typename function_traits<Signature>::return_type;
-
-namespace meta_detail {
 template<typename Signature, bool b = std::is_member_object_pointer<Signature>::value>
-struct callable_traits : function_traits<Signature> {
+struct callable_traits : fx_traits<std::decay_t<Signature>> {
 
 };
 
-template<typename Signature>
-struct callable_traits<Signature, true> {
-    typedef typename remove_member_pointer<Signature>::type Arg;
-    typedef typename remove_member_pointer<Signature>::type R;
-    typedef Signature signature_type;
+template<typename R, typename T>
+struct callable_traits<R(T::*), true> {
+    typedef R Arg;
+    typedef T object_type;
+    using signature_type = R(T::*);
     static const bool is_member_function = false;
     static const std::size_t arity = 1;
     typedef std::tuple<Arg> args_tuple_type;
@@ -343,9 +331,16 @@ struct callable_traits<Signature, true> {
 } // meta_detail
 
 template<typename Signature>
-struct callable_traits : meta_detail::callable_traits<std::remove_volatile_t<Signature>> {
+struct bind_traits : meta_detail::callable_traits<std::remove_volatile_t<Signature>> {};
 
-};
+template<typename Signature>
+using function_args_t = typename bind_traits<Signature>::args_type;
+
+template<typename Signature>
+using function_signature_t = typename bind_traits<Signature>::signature_type;
+
+template<typename Signature>
+using function_return_t = typename bind_traits<Signature>::return_type;
 
 struct has_begin_end_impl {
     template<typename T, typename U = Unqualified<T>,
@@ -378,7 +373,11 @@ template <typename T>
 using is_string_constructible = Or<std::is_same<Unqualified<T>, const char*>, std::is_same<Unqualified<T>, char>, std::is_same<Unqualified<T>, std::string>, std::is_same<Unqualified<T>, std::initializer_list<char>>>;
 
 template <typename T>
-using is_c_str = Or<std::is_same<std::decay_t<Unqualified<T>>, char*>, std::is_same<Unqualified<T>, std::string>>;
+using is_c_str = Or<
+    std::is_same<std::decay_t<Unqualified<T>>, const char*>, 
+    std::is_same<std::decay_t<Unqualified<T>>, char*>, 
+    std::is_same<Unqualified<T>, std::string>
+>;
 
 namespace meta_detail {
 template <typename T, meta::DisableIf<meta::is_specialization_of<meta::Unqualified<T>, std::tuple>> = 0>

@@ -685,6 +685,32 @@ TEST_CASE("tables/operator[]-optional", "Test if proxies on tables can lazily ev
     present = (bool)test2;
     REQUIRE(present);
     REQUIRE(test2.value() == 262);
+
+    sol::optional<int> nope = lua["nope"]["kek"]["hah"];
+    auto nope2 = lua.get<sol::optional<int>>(std::make_tuple("nope", "kek", "hah"));
+    present = (bool)nope;
+    REQUIRE_FALSE(present);
+    present = (bool)nope2;
+    REQUIRE_FALSE(present);
+    lua.create_named_table("nope", "kek", lua.create_table_with("hah", 1));
+    sol::optional<int> non_nope = lua["nope"]["kek"]["hah"].get<sol::optional<int>>();
+    sol::optional<int> non_nope2 = lua.get<sol::optional<int>>(std::make_tuple("nope", "kek", "hah"));
+    present = (bool)non_nope;
+    REQUIRE(present);
+    present = (bool)non_nope2;
+    REQUIRE(present);
+    REQUIRE(non_nope.value() == 1);
+    REQUIRE(non_nope2.value() == 1);
+
+    lua.set(std::make_tuple("nope", "kek", "hah"), 35);
+    sol::optional<int> non_nope3 = lua["nope"]["kek"]["hah"].get<sol::optional<int>>();
+    sol::optional<int> non_nope4 = lua.get<sol::optional<int>>(std::make_tuple("nope", "kek", "hah"));
+    present = (bool)non_nope3;
+    REQUIRE(present);
+    present = (bool)non_nope4;
+    REQUIRE(present);
+    REQUIRE(non_nope3.value() == 1);
+    REQUIRE(non_nope4.value() == 1);
 }
 
 TEST_CASE("tables/usertype", "Show that we can create classes from usertype and use them") {
@@ -909,6 +935,63 @@ TEST_CASE("tables/for-each", "Testing the use of for_each to get values from a l
     
     iterations = 0;
     tbl.for_each( fxpair );
+    REQUIRE(iterations == tablesize);
+}
+
+TEST_CASE("tables/for-each-empty", "empty tables should not crash") {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+
+    lua.script("arr = {}");
+    sol::table tbl = lua[ "arr" ];
+    REQUIRE(tbl.empty());
+    std::size_t tablesize = 0;
+    std::size_t iterations = 0;
+    auto fx = [&iterations](sol::object key, sol::object value) {
+        ++iterations;
+        sol::type keytype = key.get_type();
+        switch (keytype) {
+        case sol::type::number:
+            switch (key.as<int>()) {
+            case 0:
+                REQUIRE((value.as<std::string>() == "Hi"));
+                break;
+            case 1:
+                REQUIRE((value.as<double>() == 123.45));
+                break;
+            case 2:
+                REQUIRE((value.as<std::string>() == "String value"));
+                break;
+            case 3:
+                REQUIRE((value.is<sol::nil_t>()));
+                break;
+            }
+            break;
+        case sol::type::string:
+            if (key.as<std::string>() == "WOOF") {
+                REQUIRE((value.as<double>() == 123));
+            }
+            break;
+        case sol::type::nil:
+            REQUIRE((value.as<double>() == 3));
+            break;
+        default:
+            break;
+        }
+    };
+    auto fxpair = [&fx](std::pair<sol::object, sol::object> kvp) { fx(kvp.first, kvp.second); };
+    tbl.for_each( fx );
+    REQUIRE(iterations == tablesize);
+    
+    iterations = 0;
+    tbl.for_each( fxpair );
+    REQUIRE(iterations == tablesize);
+
+    iterations = 0;
+    for (const auto& kvp : tbl) {
+        fxpair(kvp);
+        ++iterations;
+    }
     REQUIRE(iterations == tablesize);
 }
 

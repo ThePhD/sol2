@@ -26,8 +26,9 @@
 
 namespace sol {
 namespace function_detail {
-template<typename Function>
+template<typename Func>
 struct functor_function : public base_function {
+    typedef meta::Unwrapped<meta::Unqualified<Func>> Function;
     typedef decltype(&Function::operator()) function_type;
     typedef meta::function_return_t<function_type> return_type;
     typedef meta::function_args_t<function_type> args_types;
@@ -46,48 +47,17 @@ struct functor_function : public base_function {
     }
 };
 
-template<typename Function, typename T>
-struct this_member_function : public base_function {
-    typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-    typedef meta::function_return_t<function_type> return_type;
-    typedef meta::function_args_t<function_type> args_types;
-    struct functor {
-        function_type invocation;
-
-        template<typename... Args>
-        functor(Args&&... args): invocation(std::forward<Args>(args)...) {}
-
-        template<typename... Args>
-        return_type operator()(lua_State* L, Args&&... args) {
-            auto& mem = detail::unwrap(stack::get<T&>(L, 1));
-            return (mem.*invocation)(std::forward<Args>(args)...);
-        }
-    } fx;
-
-    template<typename... Args>
-    this_member_function(Args&&... args): fx(std::forward<Args>(args)...) {}
-
-    int call(lua_State* L) {
-        return stack::call_into_lua(meta::tuple_types<return_type>(), args_types(), fx, L, 2, L);
-    }
-
-    virtual int operator()(lua_State* L) override {
-        auto f = [&](lua_State* L) -> int { return this->call(L);};
-        return detail::trampoline(L, f);
-    }
-};
-
-template<typename Function, typename T>
+template<typename T, typename Function>
 struct member_function : public base_function {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
     typedef meta::function_return_t<function_type> return_type;
     typedef meta::function_args_t<function_type> args_types;
     struct functor {
-        T member;
         function_type invocation;
-
-        template<typename Tm, typename... Args>
-        functor(Tm&& m, Args&&... args): member(std::forward<Tm>(m)), invocation(std::forward<Args>(args)...) {}
+        T member;
+        
+        template<typename F, typename... Args>
+        functor(F&& f, Args&&... args): invocation(std::forward<F>(f)), member(std::forward<Args>(args)...) {}
 
         template<typename... Args>
         return_type operator()(Args&&... args) {
@@ -96,11 +66,44 @@ struct member_function : public base_function {
         }
     } fx;
 
-    template<typename Tm, typename... Args>
-    member_function(Tm&& m, Args&&... args): fx(std::forward<Tm>(m), std::forward<Args>(args)...) {}
+    template<typename F, typename... Args>
+    member_function(F&& f, Args&&... args) : fx(std::forward<F>(f), std::forward<Args>(args)...) {}
 
     int call(lua_State* L) {
         return stack::call_into_lua(meta::tuple_types<return_type>(), args_types(), fx, L, 1);
+    }
+
+    virtual int operator()(lua_State* L) override {
+        auto f = [&](lua_State* L) -> int { return this->call(L);};
+        return detail::trampoline(L, f);
+    }
+};
+
+template<typename T, typename Function>
+struct member_variable : public base_function {
+    typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
+    typedef typename meta::bind_traits<function_type>::return_type return_type;
+    typedef typename meta::bind_traits<function_type>::args_type args_types;
+    function_type var;
+    T member;
+
+    template<typename Fx, typename... Args>
+    member_variable(Fx&& fx, Args&&... args): var(std::forward<Fx>(fx)), member(std::forward<Args>(args)...) {}
+
+    int call(lua_State* L) {
+        auto& mem = detail::unwrap(detail::deref(member));
+        switch (lua_gettop(L)) {
+        case 0: {
+            stack::push(L, (mem.*var));
+            return 1; 
+        }
+        case 1:
+            (mem.*var) = stack::get<return_type>(L, 1);
+            lua_pop(L, 1);
+            return 0;
+        default:
+            return luaL_error(L, "sol: incorrect number of arguments to member variable function");
+        }
     }
 
     virtual int operator()(lua_State* L) override {

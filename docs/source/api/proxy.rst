@@ -122,7 +122,7 @@ Gets the value associated with the keys the proxy was generated and convers it t
 
 	bool valid () const;
 
-Returns whether this proxy actually refers to a valid object.
+Returns whether this proxy actually refers to a valid object. It uses :ref:`sol::stack::probe_get_field<stack-probe-get-field>` to determine whether or not its valid.
 
 .. code-block:: c++
 	:caption: functions: [overloaded] implicit set

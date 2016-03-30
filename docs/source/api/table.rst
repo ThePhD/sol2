@@ -105,7 +105,7 @@ Generates a :doc:`proxy<proxy>` that is templated on the table type and the key 
 	template<typename Key, typename Fx>
 	state_view& set_function(Key&& key, Fx&& fx, [...]);
 
-Sets the desired function to the specified key value. Note that it also allows for passing a member function plus a member object: however, using a lambda is almost always better when you want to bind a member function + class instance to a single function call in Lua.
+Sets the desired function to the specified key value. Note that it also allows for passing a member function plus a member object or just a single member function: however, using a lambda is almost always better when you want to bind a member function + class instance to a single function call in Lua.
 
 .. code-block:: cpp
 	:caption: function: create a table with defaults
@@ -125,14 +125,12 @@ Creates a table, optionally with the specified values pre-set into the table. If
 	:caption: function: create a table with compile-time defaults assumed
 	:name: table-create-with
 
-	table create(int narr = 0, int nrec = 0);
-	template <typename Key, typename Value, typename... Args>
-	table create(int narr, int nrec, Key&& key, Value&& value, Args&&... args);
+	template <typename... Args>
+	table create_with(Args&&... args);
+	template <typename... Args>
+	static table create_with(lua_State* L, Args&&... args);
 	
-	static table create(lua_State* L, int narr = 0, int nrec = 0);
-	template <typename Key, typename Value, typename... Args>
-	static table create(lua_State* L, int narr, int nrec, Key&& key, Value&& value, Args&&... args);
 
-Creates a table, optionally with the specified values pre-set into the table. If ``narr`` or ``nrec`` are 0, then compile-time shenanigans are used to guess the amount of array entries (e.g., integer keys) and the amount of hashable entries (e.g., all other entries).
+Creates a table, optionally with the specified values pre-set into the table. It checks every 2nd argument (the keys) and generates hints for how many array or map-style entries will be placed into the table.
 
 .. _input iterators: http://en.cppreference.com/w/cpp/concept/InputIterator

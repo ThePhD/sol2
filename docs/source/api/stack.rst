@@ -11,8 +11,8 @@ If you find that the higher level abstractions are not meeting your needs, you m
 
 There are, however, a few :ref:`template customization points<extension_points>` that you may use for your purposes and a handful of potentially handy functions. These may help if you're trying to slim down the code you have to write, or if you want to make your types behave differently throughout the Sol stack. Note that overriding the defaults **can** throw out many of the safety guarantees Sol provides: therefore, modify the :ref:`extension points<extension_points>` at your own discretion.
 
-functions
----------
+members
+-------
 
 .. code-block:: cpp
 	:caption: function: get
@@ -86,6 +86,31 @@ Sets the field referenced by the key ``k`` to the given value ``v``, by pushing 
 Gets the field referenced by the key ``k``, by pushing the key onto the stack, and then doing the equivalent of ``lua_getfield``. Performs optimizations and calls faster verions of the function if the type of ``Key`` is considered a c-style string and/or if its also marked by the templated ``global`` argument to be a global.
 
 This function leaves the retrieved value on the stack.
+
+.. code-block:: cpp
+	:caption: function: probe_get_field
+	:name: stack-probe-get-field
+
+	template <bool global = false, typename Key>
+	probe probe_get_field( lua_State* L, Key&& k [, int objectindex] );
+
+Gets the field referenced by the key ``k``, by pushing the key onto the stack, and then doing the equivalent of ``lua_getfield``. Performs optimizations and calls faster verions of the function if the type of ``Key`` is considered a c-style string and/or if its also marked by the templated ``global`` argument to be a global. Furthermore, it does this safely by only going in as many levels deep as is possible: if the returned value is not something that can be indexed into, then traversal queries with ``std::tuple``/``std::pair`` will stop early and return probing information with the :ref:`probe struct<stack-probe-struct>`.
+
+This function leaves the retrieved value on the stack.
+
+.. code-block:: cpp
+	:caption: struct: probe
+	:name: stack-probe-struct
+
+	struct probe {
+		bool success;
+		int levels;
+
+		probe(bool s, int l);
+		operator bool() const;
+	};
+
+This struct is used for showing whether or not a :ref:`probing get_field<stack-probe-get-field>` was successful or not.
 
 .. _extension_points:
 

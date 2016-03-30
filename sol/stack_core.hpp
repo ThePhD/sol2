@@ -53,10 +53,10 @@ namespace stack {
 
 template<typename T, bool global = false, typename = void>
 struct field_getter;
-template<typename T, bool global = false, typename = void>
-struct field_setter;
 template <typename T, bool global = false, typename = void>
 struct probe_field_getter;
+template<typename T, bool global = false, typename = void>
+struct field_setter;
 template<typename T, typename = void>
 struct getter;
 template<typename T, typename = void>

@@ -47,7 +47,7 @@ inline decltype(auto) cleanup_key() {
 
 template<typename T, typename Func, typename = void>
 struct functor {
-    typedef meta::callable_traits<Func> traits_type;
+    typedef meta::bind_traits<Func> traits_type;
     typedef typename traits_type::args_type args_type;
     typedef typename traits_type::return_type return_type;
     static const std::size_t arity = traits_type::arity;
@@ -82,7 +82,7 @@ struct functor {
 
 template<typename T, typename Func>
 struct functor<T, Func, std::enable_if_t<std::is_member_object_pointer<Func>::value>> {
-    typedef meta::callable_traits<Func> traits_type;
+    typedef meta::bind_traits<Func> traits_type;
     typedef typename traits_type::args_type args_type;
     typedef typename traits_type::return_type return_type;
     static const std::size_t arity = traits_type::arity;
@@ -115,7 +115,7 @@ struct functor<T, Func, std::enable_if_t<std::is_member_object_pointer<Func>::va
 
 template<typename T, typename Func>
 struct functor<T, Func, std::enable_if_t<std::is_function<Func>::value || std::is_class<Func>::value>> {
-    typedef meta::callable_traits<Func> traits_type;
+    typedef meta::bind_traits<Func> traits_type;
     typedef meta::pop_front_type_t<typename traits_type::args_type> args_type;
     typedef typename traits_type::return_type return_type;
     static const std::size_t arity = traits_type::arity;

@@ -45,7 +45,7 @@ struct constructor_match {
     template <typename Fx, std::size_t I, typename... R, typename... Args>
     int operator()(types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) const {
         default_construct func{};
-        return stack::call_into_lua<false>(r, a, func, L, start, obj);
+        return stack::call_into_lua<0, false>(r, a, func, L, start, obj);
     }
 };
 } // detail

@@ -275,7 +275,7 @@ private:
     template<typename Fx>
     std::unique_ptr<function_detail::base_function> make_function(const std::string&, Fx&& func) {
         typedef meta::Unqualified<Fx> Fxu;
-        typedef meta::tuple_element_t<0, typename meta::function_traits<Fxu>::args_tuple_type> Arg0;
+        typedef meta::tuple_element_t<0, typename meta::bind_traits<Fxu>::args_tuple_type> Arg0;
         typedef meta::Unqualified<std::remove_pointer_t<Arg0>> Argu;
         static_assert(std::is_base_of<Argu, T>::value, "Any non-member-function must have a first argument which is covariant with the desired usertype.");
         typedef std::decay_t<Fxu> function_type;
@@ -290,6 +290,41 @@ private:
         functions.push_back(nullptr);
         constructfunc = function_detail::construct<T, Args...>;
         metafunctiontable.push_back({ name.c_str(), constructfunc });
+    }
+
+    template<std::size_t N, typename... Args>
+    void build_function(std::string funcname, lua_CFunction direct) {
+        functionnames.push_back(std::move(funcname));
+        std::string& name = functionnames.back();
+        
+        // Insert bubble to keep with compile-time argument count (simpler and cheaper to do)
+        functions.push_back(nullptr);
+        
+        auto metamethodfind = std::find(meta_function_names.begin(), meta_function_names.end(), name);
+        if (metamethodfind != meta_function_names.end()) {
+             metafunctiontable.push_back({ name.c_str(), function_detail::usertype_call<N> });
+             meta_function metafunction = static_cast<meta_function>(metamethodfind - meta_function_names.begin());
+             switch (metafunction) {
+             case meta_function::garbage_collect:
+                  destructfuncname = name.c_str();
+                  destructfunc = function_detail::usertype_call<N>;
+                  return;
+             case meta_function::index:
+                  indexfunc = functions.back().get();
+                  needsindexfunction = true;
+                  break;
+             case meta_function::new_index:
+                  newindexfunc = functions.back().get();
+                  break;
+             case meta_function::construct:
+                  constructfunc = function_detail::usertype_call<N>;
+                  break;
+             default:
+                  break;
+             }
+             return;
+        }
+        functiontable.push_back({ name.c_str(), direct });
     }
 
     template<std::size_t N>

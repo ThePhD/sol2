@@ -19,8 +19,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_FUNCTION_TYPES_STATIC_HPP
-#define SOL_FUNCTION_TYPES_STATIC_HPP
+#ifndef SOL_FUNCTION_TYPES_BASIC_HPP
+#define SOL_FUNCTION_TYPES_BASIC_HPP
 
 #include "stack.hpp"
 
@@ -29,7 +29,7 @@ namespace function_detail {
 template<typename Function>
 struct upvalue_free_function {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-    typedef meta::function_traits<function_type> traits_type;
+    typedef meta::bind_traits<function_type> traits_type;
 
     static int real_call(lua_State* L) {
         auto udata = stack::stack_detail::get_as_upvalues<function_type*>(L);
@@ -50,13 +50,18 @@ struct upvalue_free_function {
 template<typename T, typename Function>
 struct upvalue_member_function {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-    typedef meta::function_traits<function_type> traits_type;
+    typedef meta::bind_traits<function_type> traits_type;
 
     static int real_call(lua_State* L) {
+        // Layout:
+        // idx 1...n: verbatim data of member function pointer
+        // idx n + 1: is the object's void pointer
+        // We don't need to store the size, because the other side is templated
+        // with the same member function pointer type
         auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L, 1);
         auto objdata = stack::stack_detail::get_as_upvalues<T*>(L, memberdata.second);
         function_type& memfx = memberdata.first;
-        T& item = *objdata.first;
+        auto& item = *objdata.first;
         auto fx = [&item, &memfx](auto&&... args) -> typename traits_type::return_type { 
             return (item.*memfx)(std::forward<decltype(args)>(args)...);
         };
@@ -73,18 +78,92 @@ struct upvalue_member_function {
 };
 
 template<typename T, typename Function>
-struct upvalue_this_member_function {
+struct upvalue_member_variable {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-    typedef meta::function_traits<function_type> traits_type;
+    typedef meta::bind_traits<function_type> traits_type;
 
     static int real_call(lua_State* L) {
+        // Layout:
+        // idx 1...n: verbatim data of member variable pointer
+        // idx n + 1: is the object's void pointer
+        // We don't need to store the size, because the other side is templated
+        // with the same member function pointer type
+        auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L, 1);
+        auto objdata = stack::stack_detail::get_as_upvalues<T*>(L, memberdata.second);
+        auto& mem = *objdata.first;
+        function_type& var = memberdata.first;
+        switch (lua_gettop(L)) {
+        case 0:
+            stack::push(L, (mem.*var));
+            return 1;
+        case 1:
+            (mem.*var) = stack::get<typename traits_type::return_type>(L, 1);
+            lua_pop(L, 1);
+            return 0;
+        default:
+            return luaL_error(L, "sol: incorrect number of arguments to member variable function");
+        }
+    }
+
+    static int call (lua_State* L) {
+        return detail::static_trampoline<(&real_call)>(L);
+    }
+
+    int operator()(lua_State* L) {
+        return call(L);
+    }
+};
+
+template<typename T, typename Function>
+struct upvalue_this_member_function {
+    typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
+    typedef meta::bind_traits<function_type> traits_type;
+
+    static int real_call(lua_State* L) {
+        // Layout:
+        // idx 1...n: verbatim data of member variable pointer
         auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L, 1);
         function_type& memfx = memberdata.first;
         auto fx = [&memfx](lua_State* L, auto&&... args) -> typename traits_type::return_type { 
-            T& item = stack::get<T>(L, 1);
+            auto& item = stack::get<T>(L, 1);
             return (item.*memfx)(std::forward<decltype(args)>(args)...);
         };
-        return stack::call_into_lua(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L, 2, L);
+        int n = stack::call_into_lua<1>(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), fx, L, 2, L);
+        return n;
+    }
+
+    static int call (lua_State* L) {
+        return detail::static_trampoline<(&real_call)>(L);
+    }
+
+    int operator()(lua_State* L) {
+        return call(L);
+    }
+};
+
+template<typename T, typename Function>
+struct upvalue_this_member_variable {
+    typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
+    typedef meta::bind_traits<function_type> traits_type;
+
+    static int real_call(lua_State* L) {
+        // Layout:
+        // idx 1...n: verbatim data of member variable pointer
+        auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L, 1);
+        auto& mem = stack::get<T>(L, 1);
+        function_type& var = memberdata.first;
+        switch (lua_gettop(L)) {
+        case 1:
+            lua_pop(L, 1);
+            stack::push(L, (mem.*var));
+            return 1;
+        case 2:
+            (mem.*var) = stack::get<typename traits_type::return_type>(L, 2);
+            lua_pop(L, 2);
+            return 0;
+        default:
+            return luaL_error(L, "sol: incorrect number of arguments to member variable function");
+        }
     }
 
     static int call (lua_State* L) {
@@ -98,4 +177,4 @@ struct upvalue_this_member_function {
 } // function_detail
 } // sol
 
-#endif // SOL_FUNCTION_TYPES_STATIC_HPP
+#endif // SOL_FUNCTION_TYPES_BASIC_HPP

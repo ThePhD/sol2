@@ -23,15 +23,17 @@ You can disambiguate them using ``resolve``:
 ..  code-block:: cpp
 	:linenos:
 
-	auto single = resolve<int(int)>( overloaded );
+	auto one_argument_func = resolve<int(int)>( overloaded );
+	auto two_argument_func = resolve<int(int, int)>( overloaded );
+	auto three_argument_func = resolve<int(int, int, int)>( overloaded );
 
-Note that this resolution is also built into ``set_function`` on :doc:`table<table>` and :doc:`state<state>`:
+This resolution becomes useful when setting functions on a :doc:`table<table>` or :doc:`state_view<state>`:
 
 ..  code-block:: cpp
 	:linenos:
 
 	sol::state lua;
 
-	lua.set_function<int(int)>("overloaded", overloaded);
-	lua.set_function<int(int, int)>("overloaded", overloaded);
-	lua.set_function<int(int, int, int)>("overloaded", overloaded);
+	lua.set_function("a", resolve<int(int)>( overloaded ) );
+	lua.set_function("b", resolve<int(int, int)>( overloaded ));
+	lua.set_function("c", resolve<int(int, int, int)>( overloaded ));

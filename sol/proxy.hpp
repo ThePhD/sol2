@@ -96,8 +96,8 @@ public:
 
     bool valid () const {
         auto p = stack::probe_get_field<std::is_same<meta::Unqualified<Table>, global_table>::value>(tbl.lua_state(), key);
-	   lua_pop(tbl.lua_state(), p.levels);
-	   return p;
+        lua_pop(tbl.lua_state(), p.levels);
+        return p;
     }
 };
 
@@ -145,8 +145,8 @@ namespace stack {
 template <typename Table, typename Key>
 struct pusher<proxy<Table, Key>> {
     static int push (lua_State*, const proxy<Table, Key>& p) {
-	   sol::reference r = p;
-	   r.push();
+        sol::reference r = p;
+        r.push();
         return 1;
     }
 };

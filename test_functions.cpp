@@ -17,7 +17,7 @@ void takefn(std::function<int()> purr) {
 }
 
 struct A {
-	int a = 0xA; int bark() { return 1; }
+    int a = 0xA; int bark() { return 1; }
 };
 
 std::tuple<int, int> bark(int num_value, A* a) {
@@ -73,13 +73,13 @@ TEST_CASE("functions/overload-resolution", "Check if overloaded function resolut
     lua.set_function<int, int, int>("overloaded", overloaded);
     REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2, 3))"));
     */
-    lua.set_function<int(int)>("overloaded", overloaded);
+    lua.set_function("overloaded", sol::resolve<int(int)>(overloaded));
     REQUIRE_NOTHROW(lua.script("print(overloaded(1))"));
 
-    lua.set_function<int(int, int)>("overloaded", overloaded);
+    lua.set_function("overloaded", sol::resolve<int(int, int)>(overloaded));
     REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2))"));
 
-    lua.set_function<int(int, int, int)>("overloaded", overloaded);
+    lua.set_function("overloaded", sol::resolve<int(int, int, int)>(overloaded));
     REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2, 3))"));
 }
 
@@ -326,4 +326,121 @@ TEST_CASE("functions/destructor-tests", "Show that proper copies / destruction h
         REQUIRE(created == 1);
         REQUIRE(destroyed == 1);
     }
+}
+
+
+TEST_CASE("functions/all-kinds", "Register all kinds of functions, make sure they all compile and work") {
+    sol::state lua;
+
+    struct test_1 {
+        int a = 0xA;
+        virtual int bark() {
+            return a;
+        }
+
+        int bark_mem() {
+            return a;
+        }
+
+        static std::tuple<int, int> x_bark(int num_value, test_1* a) {
+            return std::tuple<int, int>(num_value * 2, a->a);
+        }
+    };
+
+    struct test_2 {
+        int a = 0xC;
+        int bark() { 
+            return 20; 
+        }
+    };
+
+    auto a = []() { return 500; };
+    auto b = [&]() { return 501; };
+    auto c = [&]() { return 502; };
+    auto d = []() { return 503; };
+
+    lua.new_usertype<test_1>("test_1",
+        "bark", sol::c_call<decltype(&test_1::bark_mem), &test_1::bark_mem>
+        );
+    lua.new_usertype<test_2>("test_2",
+        "bark", sol::c_call<decltype(&test_2::bark), &test_2::bark>
+        );
+    test_2 t2;
+
+    lua.set_function("a", a);
+    lua.set_function("b", b);
+    lua.set_function("c", std::ref(c));
+    lua.set_function("d", std::ref(d));
+    lua.set_function("f", &test_1::bark);
+    lua.set_function("g", test_1::x_bark);
+    lua.set_function("h", sol::c_call<decltype(&test_1::bark_mem), &test_1::bark_mem>);
+    lua.set_function("i", &test_2::bark, test_2());
+    lua.set_function("j", &test_2::a, test_2());
+    lua.set_function("k", &test_2::a);
+    lua.set_function("l", sol::c_call<decltype(&test_1::a), &test_1::a>);
+    lua.set_function("m", &test_2::a, &t2);
+
+    lua.script(R"(
+o1 = test_1.new()
+o2 = test_2.new()
+
+ob = o1:bark()
+
+A = a()
+B = b()
+C = c()
+D = d()
+F = f(o1)
+G0, G1 = g(2, o1)
+H = h(o1)
+I = i(o1)
+I = i(o1)
+
+J0 = j()
+j(24)
+J1 = j()
+
+K0 = k(o2)
+k(o2, 1024)
+K1 = k(o2)
+
+L0 = l(o1)
+l(o1, 678)
+L1 = l(o1)
+
+
+M0 = m()
+m(256)
+M1 = m()
+    )");
+    int ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1;
+    std::tie( ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1 ) 
+    = lua.get<int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int>(
+        "ob", "A", "B", "C", "D", "F", "G0", "G1", "H", "I", "J0", "J1", "K0", "K1", "L0", "L1", "M0", "M1"
+    );
+   
+    REQUIRE(ob == 0xA);
+    
+    REQUIRE( A == 500 );
+    REQUIRE( B == 501 );
+    REQUIRE( C == 502 );
+    REQUIRE( D == 503 );
+
+    REQUIRE( F == 0xA );
+    REQUIRE( G0 == 4 );
+    REQUIRE( G1 == 0xA );
+    REQUIRE( H == 0xA );
+    REQUIRE( I == 20 );
+
+    REQUIRE( J0 == 0xC );
+    REQUIRE( J1 == 24 );
+
+    REQUIRE( K0 == 0xC );
+    REQUIRE( K1 == 1024 );
+
+    REQUIRE( L0 == 0xA );
+    REQUIRE( L1 == 678 );
+
+    REQUIRE( M0 == 0xC );
+    REQUIRE( M1 == 256 );
 }

@@ -71,7 +71,7 @@ struct pusher<unique_usertype<T, Real>> {
         Real* mem = static_cast<Real*>(static_cast<void*>(fx + 1));
         *fx = detail::special_destruct<T, Real>;
         detail::default_construct::construct(mem, std::forward<Args>(args)...);
-	   *pref = std::addressof(detail::deref(*mem));
+        *pref = std::addressof(detail::deref(*mem));
         if (luaL_newmetatable(L, &usertype_traits<unique_usertype<T>>::metatable[0]) == 1) {
             set_field(L, "__gc", detail::unique_destruct<T>);
         }

@@ -136,7 +136,7 @@ struct checker<T, type::lightuserdata, C> {
     template <typename Handler>
     static bool check (lua_State* L, int index, Handler&& handler) {
         type t = type_of(L, index);
-	   bool success = t == type::userdata || t == type::lightuserdata;
+        bool success = t == type::userdata || t == type::lightuserdata;
         if (!success) {
             // expected type, actual type
             handler(L, index, type::lightuserdata, t);
@@ -181,12 +181,12 @@ struct checker<T, type::userdata, C> {
         if (lua_getmetatable(L, index) == 0) {
              handler(L, index, type::userdata, indextype);
              return false;
-	   }
-	   if (stack_detail::check_metatable<U>(L))
+        }
+        if (stack_detail::check_metatable<U>(L))
             return true;
-	   if (stack_detail::check_metatable<U*>(L))
+        if (stack_detail::check_metatable<U*>(L))
             return true;
-	   if (stack_detail::check_metatable<unique_usertype<U>>(L))
+        if (stack_detail::check_metatable<unique_usertype<U>>(L))
             return true;
 #ifndef SOL_NO_EXCEPTIONS
         lua_getfield(L, -1, &detail::base_class_check_key()[0]);

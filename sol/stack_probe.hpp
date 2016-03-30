@@ -32,8 +32,27 @@ template <typename T, bool b, typename>
 struct probe_field_getter {
     template <typename Key>
     probe get(lua_State* L, Key&& key, int tableindex = -2) {
+        if (!b && !maybe_indexable(L, tableindex)) {
+            return probe(false, 0);
+        }
         get_field<b>(L, std::forward<Key>(key), tableindex);
-	   return probe(!check<nil_t>(L), 1);
+        return probe(!check<nil_t>(L), 1);
+    }
+};
+
+template <typename A, typename B, bool b, typename C>
+struct probe_field_getter<std::pair<A, B>, b, C> {
+    template <typename Keys>
+    probe get(lua_State* L, Keys&& keys, int tableindex = -2) {
+        if (!b && !maybe_indexable(L, tableindex)) {
+            return probe(false, 0);
+        }
+        get_field<b>(L, std::get<0>(keys), tableindex);
+        if (!maybe_indexable(L)) {
+            return probe(false, 1);
+        }
+        get_field<false>(L, std::get<1>(keys), tableindex);
+        return probe(!check<nil_t>(L), 2);
     }
 };
 
@@ -51,11 +70,14 @@ struct probe_field_getter<std::tuple<Args...>, b, C> {
         if (!maybe_indexable(L)) {
             return probe(false, sofar);
         }
-        return apply(std::index_sequence<I1, In...>(), sofar + 1, L, std::forward<Keys>(keys), tableindex);
+        return apply(std::index_sequence<I1, In...>(), sofar + 1, L, std::forward<Keys>(keys), -1);
     }
 
     template <typename Keys>
     probe get(lua_State* L, Keys&& keys, int tableindex = -2) {
+        if (!b && !maybe_indexable(L, tableindex)) {
+            return probe(false, 0);
+        }
         return apply(std::index_sequence_for<Args...>(), 1, L, std::forward<Keys>(keys), tableindex);
     }
 };

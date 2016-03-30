@@ -88,6 +88,8 @@ const nil_t nil {};
 inline bool operator==(nil_t, nil_t) { return true; }
 inline bool operator!=(nil_t, nil_t) { return false; }
 
+typedef std::add_lvalue_reference_t<std::remove_pointer_t<lua_CFunction>> lua_r_CFunction;
+
 template <typename T, typename = void>
 struct unique_usertype {};
 
