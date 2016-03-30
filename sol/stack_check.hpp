@@ -118,6 +118,9 @@ struct checker<nil_t, expected, C> {
     }
 };
 
+template <type expected, typename C>
+struct checker<nullopt_t, expected, C> : checker<nil_t> {};
+
 template <typename T, typename C>
 struct checker<T, type::poly, C> {
     template <typename Handler>

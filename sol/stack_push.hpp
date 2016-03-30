@@ -24,6 +24,7 @@
 
 #include "stack_core.hpp"
 #include "raii.hpp"
+#include "optional.hpp"
 #include <memory>
 
 namespace sol {
@@ -289,6 +290,24 @@ struct pusher<std::pair<A, B>> {
         int pushcount = stack::push(L, detail::forward_get<0>(t));
         pushcount += stack::push(L, detail::forward_get<1>(t));
         return pushcount;
+    }
+};
+
+template<typename O>
+struct pusher<optional<O>> {
+    template <typename T>
+    static int push(lua_State* L, T&& t) {
+        if (t == nullopt) {
+            return stack::push(L, nullopt);
+        }
+	   return stack::push(L, t.value());
+    }
+};
+
+template<>
+struct pusher<nullopt_t> {
+    static int push(lua_State* L, nullopt_t) {
+        return stack::push(L, nil);
     }
 };
 } // stack

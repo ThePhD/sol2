@@ -116,7 +116,14 @@ struct getter<const char*> {
 template<>
 struct getter<nil_t> {
     static nil_t get(lua_State*, int = -1) {
-        return nil_t{ };
+        return nil;
+    }
+};
+
+template<>
+struct getter<nullopt_t> {
+    static nullopt_t get(lua_State*, int = -1) {
+        return nullopt;
     }
 };
 

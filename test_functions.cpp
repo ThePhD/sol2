@@ -3,6 +3,7 @@
 #include <catch.hpp>
 #include <sol.hpp>
 #include <iostream>
+#include "test_stack_guard.hpp"
 
 std::function<int()> makefn() {
     auto fx = []() -> int {
@@ -52,6 +53,13 @@ int overloaded(int x, int y, int z) {
 int non_overloaded(int x, int y, int z) {
     std::cout << x << " " << y << " " << z << std::endl;
     return 13;
+}
+
+namespace sep {
+int plop_xyz(int x, int y, std::string z) {
+    std::cout << x << " " << y << " " << z << std::endl;
+    return 11;
+}
 }
 
 TEST_CASE("functions/overload-resolution", "Check if overloaded function resolution templates compile/work") {
@@ -132,6 +140,24 @@ TEST_CASE("functions/deducing-return-order-and-multi-get", "Check if return orde
     REQUIRE(tluaget == triple);
 }
 
+TEST_CASE("functions/optional-values", "check if optionals can be passed in to be nil or otherwise") {
+    sol::state lua;
+    lua.script(R"( function f (a)
+    return a
+end )");
+
+    sol::function lua_bark = lua["f"];
+    
+    sol::optional<int> testv = lua_bark(sol::optional<int>(29));
+    sol::optional<int> testn = lua_bark(sol::nullopt);
+    REQUIRE((bool)testv);
+    REQUIRE_FALSE((bool)testn);
+    REQUIRE(testv.value() == 29);
+    int v = lua_bark(sol::optional<int>(29));
+    REQUIRE_NOTHROW(sol::nil_t n = lua_bark(sol::nullopt));
+    REQUIRE(v == 29);
+}
+
 TEST_CASE("functions/pair-and-tuple-and-proxy-tests", "Check if sol::reference and sol::proxy can be passed to functions as arguments") {
     sol::state lua;
     lua.new_usertype<A>("A",
@@ -139,22 +165,37 @@ TEST_CASE("functions/pair-and-tuple-and-proxy-tests", "Check if sol::reference a
     lua.script(R"( function f (num_value, a)
     return num_value * 2, a:bark()
 end 
+function h (num_value, a, b)
+    return num_value * 2, a:bark(), b * 3
+end 
 nested = { variables = { no = { problem = 10 } } } )");
     lua.set_function("g", bark);
 
     sol::function cpp_bark = lua["g"];
     sol::function lua_bark = lua["f"];
+    sol::function lua_bark2 = lua["h"];
     
     sol::reference lua_variable_x = lua["nested"]["variables"]["no"]["problem"];
     A cpp_variable_y;
     
+    static const std::tuple<int, int> abdesired(20, 1);
+    static const std::pair<int, int> cddesired = { 20, 1 };
+    static const std::tuple<int, int, int> abcdesired(20, 1, 3);
+    
     std::tuple<int, int> ab = cpp_bark(lua_variable_x, cpp_variable_y);
     std::pair<int, int> cd = lua_bark(lua["nested"]["variables"]["no"]["problem"], cpp_variable_y);
-    
-    static const std::tuple<int, int> abdesired( 20, 1 );
-    static const std::pair<int, int> cddesired = { 20, 1 };
+
     REQUIRE(ab == abdesired);
     REQUIRE(cd == cddesired);
+
+    ab = cpp_bark(std::make_pair(lua_variable_x, cpp_variable_y));
+    cd = lua_bark(std::make_pair(lua["nested"]["variables"]["no"]["problem"], cpp_variable_y));
+
+    REQUIRE(ab == abdesired);
+    REQUIRE(cd == cddesired);
+
+    std::tuple<int, int, int> abc = lua_bark2(std::make_tuple(10, cpp_variable_y), sol::optional<int>(1));
+    REQUIRE(abc == abcdesired);
 }
 
 TEST_CASE("functions/sol::function-to-std::function", "check if conversion to std::function works properly and calls with correct arguments") {
@@ -166,14 +207,14 @@ TEST_CASE("functions/sol::function-to-std::function", "check if conversion to st
     lua.script(
         "testFunc(function() print(\"hello std::function\") end)"
       );
-    lua.script(
+    REQUIRE_NOTHROW(lua.script(
         "function m(a)\n"
         "     print(\"hello std::function with arg \", a)\n"
         "     return a\n"
         "end\n"
         "\n"
         "testFunc2(m, 1)"
-      );
+     ));
 }
 
 TEST_CASE("functions/returning-functions-from-C++-and-gettin-in-lua", "check to see if returning a functor and getting a functor from lua is possible") {
@@ -443,4 +484,145 @@ M1 = m()
 
     REQUIRE( M0 == 0xC );
     REQUIRE( M1 == 256 );
+}
+
+TEST_CASE("simple/call-with-parameters", "Lua function is called with a few parameters from C++") {
+    sol::state lua;
+
+    REQUIRE_NOTHROW(lua.script("function my_add(i, j, k) return i + j + k end"));
+    auto f = lua.get<sol::function>("my_add");
+    REQUIRE_NOTHROW(lua.script("function my_nothing(i, j, k) end"));
+    auto fvoid = lua.get<sol::function>("my_nothing");
+    int a;
+    REQUIRE_NOTHROW(fvoid(1, 2, 3));
+    REQUIRE_NOTHROW(a = f.call<int>(1, 2, 3));
+    REQUIRE(a == 6);
+    REQUIRE_THROWS(a = f(1, 2, "arf"));
+}
+
+TEST_CASE("simple/call-c++-function", "C++ function is called from lua") {
+    sol::state lua;
+
+    lua.set_function("plop_xyz", sep::plop_xyz);
+    lua.script("x = plop_xyz(2, 6, 'hello')");
+
+    REQUIRE(lua.get<int>("x") == 11);
+}
+
+TEST_CASE("simple/call-lambda", "A C++ lambda is exposed to lua and called") {
+    sol::state lua;
+
+    int a = 0;
+
+    lua.set_function("foo", [&a] { a = 1; });
+
+    lua.script("foo()");
+
+    REQUIRE(a == 1);
+}
+
+TEST_CASE("advanced/get-and-call", "Checks for lambdas returning values after a get operation") {
+    const static std::string lol = "lol", str = "str";
+    const static std::tuple<int, float, double, std::string> heh_tuple = std::make_tuple(1, 6.28f, 3.14, std::string("heh"));
+    sol::state lua;
+
+    REQUIRE_NOTHROW(lua.set_function("a", [] { return 42; }));
+    REQUIRE(lua.get<sol::function>("a").call<int>() == 42);
+
+    REQUIRE_NOTHROW(lua.set_function("b", [] { return 42u; }));
+    REQUIRE(lua.get<sol::function>("b").call<unsigned int>() == 42u);
+
+    REQUIRE_NOTHROW(lua.set_function("c", [] { return 3.14; }));
+    REQUIRE(lua.get<sol::function>("c").call<double>() == 3.14);
+
+    REQUIRE_NOTHROW(lua.set_function("d", [] { return 6.28f; }));
+    REQUIRE(lua.get<sol::function>("d").call<float>() == 6.28f);
+
+    REQUIRE_NOTHROW(lua.set_function("e", [] { return "lol"; }));
+    REQUIRE(lua.get<sol::function>("e").call<std::string>() == lol);
+
+    REQUIRE_NOTHROW(lua.set_function("f", [] { return true; }));
+    REQUIRE(lua.get<sol::function>("f").call<bool>());
+
+    REQUIRE_NOTHROW(lua.set_function("g", [] { return std::string("str"); }));
+    REQUIRE(lua.get<sol::function>("g").call<std::string>() == str);
+
+    REQUIRE_NOTHROW(lua.set_function("h", [] { }));
+    REQUIRE_NOTHROW(lua.get<sol::function>("h").call());
+
+    REQUIRE_NOTHROW(lua.set_function("i", [] { return sol::nil; }));
+    REQUIRE(lua.get<sol::function>("i").call<sol::nil_t>() == sol::nil);
+    REQUIRE_NOTHROW(lua.set_function("j", [] { return std::make_tuple(1, 6.28f, 3.14, std::string("heh")); }));
+    REQUIRE((lua.get<sol::function>("j").call<int, float, double, std::string>() == heh_tuple));
+}
+
+TEST_CASE("advanced/operator[]-call", "Checks for lambdas returning values using operator[]") {
+    const static std::string lol = "lol", str = "str";
+    const static std::tuple<int, float, double, std::string> heh_tuple = std::make_tuple(1, 6.28f, 3.14, std::string("heh"));
+    sol::state lua;
+
+    REQUIRE_NOTHROW(lua.set_function("a", [] { return 42; }));
+    REQUIRE(lua["a"].call<int>() == 42);
+
+    REQUIRE_NOTHROW(lua.set_function("b", [] { return 42u; }));
+    REQUIRE(lua["b"].call<unsigned int>() == 42u);
+
+    REQUIRE_NOTHROW(lua.set_function("c", [] { return 3.14; }));
+    REQUIRE(lua["c"].call<double>() == 3.14);
+
+    REQUIRE_NOTHROW(lua.set_function("d", [] { return 6.28f; }));
+    REQUIRE(lua["d"].call<float>() == 6.28f);
+
+    REQUIRE_NOTHROW(lua.set_function("e", [] { return "lol"; }));
+    REQUIRE(lua["e"].call<std::string>() == lol);
+
+    REQUIRE_NOTHROW(lua.set_function("f", [] { return true; }));
+    REQUIRE(lua["f"].call<bool>());
+
+    REQUIRE_NOTHROW(lua.set_function("g", [] { return std::string("str"); }));
+    REQUIRE(lua["g"].call<std::string>() == str);
+
+    REQUIRE_NOTHROW(lua.set_function("h", [] { }));
+    REQUIRE_NOTHROW(lua["h"].call());
+
+    REQUIRE_NOTHROW(lua.set_function("i", [] { return sol::nil; }));
+    REQUIRE(lua["i"].call<sol::nil_t>() == sol::nil);
+    REQUIRE_NOTHROW(lua.set_function("j", [] { return std::make_tuple(1, 6.28f, 3.14, std::string("heh")); }));
+    REQUIRE((lua["j"].call<int, float, double, std::string>() == heh_tuple));
+}
+
+TEST_CASE("advanced/call-lambdas", "A C++ lambda is exposed to lua and called") {
+    sol::state lua;
+
+    int x = 0;
+    lua.set_function("set_x", [&] (int new_x) {
+        x = new_x;
+        return 0;
+    });
+
+    lua.script("set_x(9)");
+    REQUIRE(x == 9);
+}
+
+TEST_CASE("advanced/call-referenced_obj", "A C++ object is passed by pointer/reference_wrapper to lua and invoked") {
+    sol::state lua;
+
+    int x = 0;
+    auto objx = [&](int new_x) {
+        x = new_x;
+        return 0;
+    };
+    lua.set_function("set_x", std::ref(objx));
+
+    int y = 0;
+    auto objy = [&](int new_y) {
+        y = new_y;
+        return std::tuple<int, int>(0, 0);
+    };
+    lua.set_function("set_y", &decltype(objy)::operator(), std::ref(objy));
+
+    lua.script("set_x(9)");
+    lua.script("set_y(9)");
+    REQUIRE(x == 9);
+    REQUIRE(y == 9);
 }

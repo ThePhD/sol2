@@ -5,33 +5,7 @@
 #include <sol.hpp>
 #include <vector>
 #include <map>
-
-struct stack_guard {
-    lua_State* L;
-    int& begintop;
-    int& endtop;
-    stack_guard(lua_State* L, int& begintop, int& endtop) : L(L), begintop(begintop), endtop(endtop) { 
-        begintop = lua_gettop(L);
-    }
-    ~stack_guard() { endtop = lua_gettop(L); }
-};
-
-std::string free_function() {
-    std::cout << "free_function()" << std::endl;
-    return "test";
-}
-
-std::vector<int> test_table_return_one() {
-    return { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-}
-
-std::vector<std::pair<std::string, int>> test_table_return_two() {
-    return {{ "one", 1 }, { "two", 2 }, { "three", 3 }};
-}
-
-std::map<std::string, std::string> test_table_return_three() {
-    return {{ "name", "Rapptz" }, { "friend", "ThePhD" }, { "project", "sol" }};
-}
+#include "test_stack_guard.hpp"
 
 struct self_test {
     int bark;
@@ -82,13 +56,6 @@ struct vars {
     }
 };
 
-struct object {
-    std::string operator() () {
-        std::cout << "member_test()" << std::endl;
-        return "test";
-    }
-};
-
 struct fuser {
     int x;
     fuser() : x(0) {}
@@ -119,11 +86,6 @@ struct fuser {
     }
 };
 } // crapola
-
-int plop_xyz(int x, int y, std::string z) {
-    std::cout << x << " " << y << " " << z << std::endl;
-    return 11;
-}
 
 class Base {
 public:
@@ -365,147 +327,6 @@ TEST_CASE("simple/if", "check if if statements work through lua") {
     REQUIRE((f == lua["f"]));
 }
 
-TEST_CASE("simple/call-with-parameters", "Lua function is called with a few parameters from C++") {
-    sol::state lua;
-
-    REQUIRE_NOTHROW(lua.script("function my_add(i, j, k) return i + j + k end"));
-    auto f = lua.get<sol::function>("my_add");
-    REQUIRE_NOTHROW(lua.script("function my_nothing(i, j, k) end"));
-    auto fvoid = lua.get<sol::function>("my_nothing");
-    int a;
-    REQUIRE_NOTHROW(fvoid(1, 2, 3));
-    REQUIRE_NOTHROW(a = f.call<int>(1, 2, 3));
-    REQUIRE(a == 6);
-    REQUIRE_THROWS(a = f(1, 2, "arf"));
-}
-
-TEST_CASE("simple/call-c++-function", "C++ function is called from lua") {
-    sol::state lua;
-
-    lua.set_function("plop_xyz", plop_xyz);
-    lua.script("x = plop_xyz(2, 6, 'hello')");
-
-    REQUIRE(lua.get<int>("x") == 11);
-}
-
-TEST_CASE("simple/call-lambda", "A C++ lambda is exposed to lua and called") {
-    sol::state lua;
-
-    int a = 0;
-
-    lua.set_function("foo", [&a] { a = 1; });
-
-    lua.script("foo()");
-
-    REQUIRE(a == 1);
-}
-
-TEST_CASE("advanced/get-and-call", "Checks for lambdas returning values after a get operation") {
-    const static std::string lol = "lol", str = "str";
-    const static std::tuple<int, float, double, std::string> heh_tuple = std::make_tuple(1, 6.28f, 3.14, std::string("heh"));
-    sol::state lua;
-
-    REQUIRE_NOTHROW(lua.set_function("a", [] { return 42; }));
-    REQUIRE(lua.get<sol::function>("a").call<int>() == 42);
-
-    REQUIRE_NOTHROW(lua.set_function("b", [] { return 42u; }));
-    REQUIRE(lua.get<sol::function>("b").call<unsigned int>() == 42u);
-
-    REQUIRE_NOTHROW(lua.set_function("c", [] { return 3.14; }));
-    REQUIRE(lua.get<sol::function>("c").call<double>() == 3.14);
-
-    REQUIRE_NOTHROW(lua.set_function("d", [] { return 6.28f; }));
-    REQUIRE(lua.get<sol::function>("d").call<float>() == 6.28f);
-
-    REQUIRE_NOTHROW(lua.set_function("e", [] { return "lol"; }));
-    REQUIRE(lua.get<sol::function>("e").call<std::string>() == lol);
-
-    REQUIRE_NOTHROW(lua.set_function("f", [] { return true; }));
-    REQUIRE(lua.get<sol::function>("f").call<bool>());
-
-    REQUIRE_NOTHROW(lua.set_function("g", [] { return std::string("str"); }));
-    REQUIRE(lua.get<sol::function>("g").call<std::string>() == str);
-
-    REQUIRE_NOTHROW(lua.set_function("h", [] { }));
-    REQUIRE_NOTHROW(lua.get<sol::function>("h").call());
-
-    REQUIRE_NOTHROW(lua.set_function("i", [] { return sol::nil; }));
-    REQUIRE(lua.get<sol::function>("i").call<sol::nil_t>() == sol::nil);
-    REQUIRE_NOTHROW(lua.set_function("j", [] { return std::make_tuple(1, 6.28f, 3.14, std::string("heh")); }));
-    REQUIRE((lua.get<sol::function>("j").call<int, float, double, std::string>() == heh_tuple));
-}
-
-TEST_CASE("advanced/operator[]-call", "Checks for lambdas returning values using operator[]") {
-    const static std::string lol = "lol", str = "str";
-    const static std::tuple<int, float, double, std::string> heh_tuple = std::make_tuple(1, 6.28f, 3.14, std::string("heh"));
-    sol::state lua;
-
-    REQUIRE_NOTHROW(lua.set_function("a", [] { return 42; }));
-    REQUIRE(lua["a"].call<int>() == 42);
-
-    REQUIRE_NOTHROW(lua.set_function("b", [] { return 42u; }));
-    REQUIRE(lua["b"].call<unsigned int>() == 42u);
-
-    REQUIRE_NOTHROW(lua.set_function("c", [] { return 3.14; }));
-    REQUIRE(lua["c"].call<double>() == 3.14);
-
-    REQUIRE_NOTHROW(lua.set_function("d", [] { return 6.28f; }));
-    REQUIRE(lua["d"].call<float>() == 6.28f);
-
-    REQUIRE_NOTHROW(lua.set_function("e", [] { return "lol"; }));
-    REQUIRE(lua["e"].call<std::string>() == lol);
-
-    REQUIRE_NOTHROW(lua.set_function("f", [] { return true; }));
-    REQUIRE(lua["f"].call<bool>());
-
-    REQUIRE_NOTHROW(lua.set_function("g", [] { return std::string("str"); }));
-    REQUIRE(lua["g"].call<std::string>() == str);
-
-    REQUIRE_NOTHROW(lua.set_function("h", [] { }));
-    REQUIRE_NOTHROW(lua["h"].call());
-
-    REQUIRE_NOTHROW(lua.set_function("i", [] { return sol::nil; }));
-    REQUIRE(lua["i"].call<sol::nil_t>() == sol::nil);
-    REQUIRE_NOTHROW(lua.set_function("j", [] { return std::make_tuple(1, 6.28f, 3.14, std::string("heh")); }));
-    REQUIRE((lua["j"].call<int, float, double, std::string>() == heh_tuple));
-}
-
-TEST_CASE("advanced/call-lambdas", "A C++ lambda is exposed to lua and called") {
-    sol::state lua;
-
-    int x = 0;
-    lua.set_function("set_x", [&] (int new_x) {
-        x = new_x;
-        return 0;
-    });
-
-    lua.script("set_x(9)");
-    REQUIRE(x == 9);
-}
-
-TEST_CASE("advanced/call-referenced_obj", "A C++ object is passed by pointer/reference_wrapper to lua and invoked") {
-    sol::state lua;
-
-    int x = 0;
-    auto objx = [&](int new_x) {
-        x = new_x;
-        return 0;
-    };
-    lua.set_function("set_x", std::ref(objx));
-
-    int y = 0;
-    auto objy = [&](int new_y) {
-        y = new_y;
-        return std::tuple<int, int>(0, 0);
-    };
-    lua.set_function("set_y", &decltype(objy)::operator(), std::ref(objy));
-
-    lua.script("set_x(9)");
-    lua.script("set_y(9)");
-    REQUIRE(x == 9);
-    REQUIRE(y == 9);
-}
-
 TEST_CASE("negative/basic_errors", "Check if error handling works correctly") {
     sol::state lua;
 
@@ -517,224 +338,7 @@ TEST_CASE("libraries", "Check if we can open libraries") {
     REQUIRE_NOTHROW(lua.open_libraries(sol::lib::base, sol::lib::os));
 }
 
-TEST_CASE("tables/variables", "Check if tables and variables work as intended") {
-    sol::state lua;
-    lua.open_libraries(sol::lib::base, sol::lib::os);
-    lua.get<sol::table>("os").set("name", "windows");
-    REQUIRE_NOTHROW(lua.script("assert(os.name == \"windows\")"));
-}
-
-TEST_CASE("tables/create", "Check if creating a table is kosher") {
-    sol::state lua;
-    lua["testtable"] = sol::table::create(lua.lua_state(), 0, 0, "Woof", "Bark", 1, 2, 3, 4);
-    sol::object testobj = lua["testtable"];
-    REQUIRE(testobj.is<sol::table>());
-    sol::table testtable = testobj.as<sol::table>();
-    REQUIRE((testtable["Woof"] == std::string("Bark")));
-    REQUIRE((testtable[1] == 2));
-    REQUIRE((testtable[3] == 4));
-}
-
-TEST_CASE("tables/create-local", "Check if creating a table is kosher") {
-    sol::state lua;
-    lua["testtable"] = lua.create_table(0, 0, "Woof", "Bark", 1, 2, 3, 4);
-    sol::object testobj = lua["testtable"];
-    REQUIRE(testobj.is<sol::table>());
-    sol::table testtable = testobj.as<sol::table>();
-    REQUIRE((testtable["Woof"] == std::string("Bark")));
-    REQUIRE((testtable[1] == 2));
-    REQUIRE((testtable[3] == 4));
-}
-
-TEST_CASE("tables/create-local-named", "Check if creating a table is kosher") {
-    sol::state lua;
-    sol::table testtable = lua.create_table("testtable", 0, 0, "Woof", "Bark", 1, 2, 3, 4);
-    sol::object testobj = lua["testtable"];
-    REQUIRE(testobj.is<sol::table>());
-    REQUIRE((testtable["Woof"] == std::string("Bark")));
-    REQUIRE((testtable[1] == 2));
-    REQUIRE((testtable[3] == 4));
-}
-
-TEST_CASE("tables/create-with-local", "Check if creating a table is kosher") {
-    sol::state lua;
-    lua["testtable"] = lua.create_table_with("Woof", "Bark", 1, 2, 3, 4);
-    sol::object testobj = lua["testtable"];
-    REQUIRE(testobj.is<sol::table>());
-    sol::table testtable = testobj.as<sol::table>();
-    REQUIRE((testtable["Woof"] == std::string("Bark")));
-    REQUIRE((testtable[1] == 2));
-    REQUIRE((testtable[3] == 4));
-}
-
-TEST_CASE("tables/functions-variables", "Check if tables and function calls work as intended") {
-    sol::state lua;
-    lua.open_libraries(sol::lib::base, sol::lib::os);
-    auto run_script = [] (sol::state& lua) -> void {
-        lua.script("assert(os.fun() == \"test\")");
-    };
-
-    lua.get<sol::table>("os").set_function("fun",
-        [] () {
-            std::cout << "stateless lambda()" << std::endl;
-            return "test";
-        }
-    );
-    REQUIRE_NOTHROW(run_script(lua));
-
-    lua.get<sol::table>("os").set_function("fun", &free_function);
-    REQUIRE_NOTHROW(run_script(lua));
-
-    // l-value, canNOT optimise
-    // prefer value semantics unless wrapped with std::reference_wrapper
-    {
-    auto lval = object();
-    lua.get<sol::table>("os").set_function("fun", &object::operator(), lval);
-    }
-    REQUIRE_NOTHROW(run_script(lua));
-
-    auto reflval = object();
-    lua.get<sol::table>("os").set_function("fun", &object::operator(), std::ref(reflval));
-    REQUIRE_NOTHROW(run_script(lua));
-
-
-    // stateful lambda: non-convertible, cannot be optimised
-    int breakit = 50;
-    lua.get<sol::table>("os").set_function("fun",
-        [&breakit] () {
-            std::cout << "stateful lambda()" << std::endl;
-            return "test";
-        }
-    );
-    REQUIRE_NOTHROW(run_script(lua));
-
-    // r-value, cannot optimise
-    lua.get<sol::table>("os").set_function("fun", &object::operator(), object());
-    REQUIRE_NOTHROW(run_script(lua));
-
-    // r-value, cannot optimise
-    auto rval = object();
-    lua.get<sol::table>("os").set_function("fun", &object::operator(), std::move(rval));
-    REQUIRE_NOTHROW(run_script(lua));
-}
-
-TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works properly") {
-    sol::state lua;
-    lua.open_libraries(sol::lib::base);
-
-    lua.script("foo = 20\nbar = \"hello world\"");
-    // basic retrieval
-    std::string bar = lua["bar"];
-    int foo = lua["foo"];
-    REQUIRE(bar == "hello world");
-    REQUIRE(foo == 20);
-    // test operator= for stringification
-    // errors due to ambiguous operators
-    bar = lua["bar"];
-
-    // basic setting
-    lua["bar"] = 20.4;
-    lua["foo"] = "goodbye";
-
-    // doesn't modify the actual values obviously.
-    REQUIRE(bar == "hello world");
-    REQUIRE(foo == 20);
-
-    // function setting
-    lua["test"] = plop_xyz;
-    REQUIRE_NOTHROW(lua.script("assert(test(10, 11, \"hello\") == 11)"));
-
-    // function retrieval
-    sol::function test = lua["test"];
-    REQUIRE(test.call<int>(10, 11, "hello") == 11);
-
-    // setting a lambda
-    lua["lamb"] = [](int x) {
-        return x * 2;
-    };
-
-    REQUIRE_NOTHROW(lua.script("assert(lamb(220) == 440)"));
-
-    // function retrieval of a lambda
-    sol::function lamb = lua["lamb"];
-    REQUIRE(lamb.call<int>(220) == 440);
-
-    // test const table retrieval
-    auto assert1 = [](const sol::table& t) {
-        std::string a = t["foo"];
-        double b = t["bar"];
-       REQUIRE(a == "goodbye");
-       REQUIRE(b == 20.4);
-    };
-
-    REQUIRE_NOTHROW(assert1(lua.globals()));
-}
-
-TEST_CASE("tables/operator[]-valid", "Test if proxies on tables can lazily evaluate validity") {
-    sol::state lua;
-    bool isFullScreen = false;
-    auto fullscreennopers = lua["fullscreen"]["nopers"];
-    auto fullscreen = lua["fullscreen"];
-    REQUIRE_FALSE(fullscreennopers.valid());
-    REQUIRE_FALSE(fullscreen.valid());
-
-    lua["fullscreen"] = true;
-
-    REQUIRE_FALSE(fullscreennopers.valid());
-    REQUIRE(fullscreen.valid());
-    isFullScreen = lua["fullscreen"];
-    REQUIRE(isFullScreen);
-
-    lua["fullscreen"] = false;
-    REQUIRE_FALSE(fullscreennopers.valid());
-    REQUIRE(fullscreen.valid());
-    isFullScreen = lua["fullscreen"];
-    REQUIRE_FALSE(isFullScreen);
-}
-
-TEST_CASE("tables/operator[]-optional", "Test if proxies on tables can lazily evaluate validity") {
-    sol::state lua;
-    
-    sol::optional<int> test1 = lua["no_exist_yet"];
-    bool present = (bool)test1;
-    REQUIRE_FALSE(present);
-
-    lua["no_exist_yet"] = 262;
-    sol::optional<int> test2 = lua["no_exist_yet"];
-    present = (bool)test2;
-    REQUIRE(present);
-    REQUIRE(test2.value() == 262);
-
-    sol::optional<int> nope = lua["nope"]["kek"]["hah"];
-    auto nope2 = lua.get<sol::optional<int>>(std::make_tuple("nope", "kek", "hah"));
-    present = (bool)nope;
-    REQUIRE_FALSE(present);
-    present = (bool)nope2;
-    REQUIRE_FALSE(present);
-    lua.create_named_table("nope", "kek", lua.create_table_with("hah", 1));
-    sol::optional<int> non_nope = lua["nope"]["kek"]["hah"].get<sol::optional<int>>();
-    sol::optional<int> non_nope2 = lua.get<sol::optional<int>>(std::make_tuple("nope", "kek", "hah"));
-    present = (bool)non_nope;
-    REQUIRE(present);
-    present = (bool)non_nope2;
-    REQUIRE(present);
-    REQUIRE(non_nope.value() == 1);
-    REQUIRE(non_nope2.value() == 1);
-
-    std::cout << "Keys: nope, kek, hah" << std::endl;
-    lua.set(std::make_tuple("nope", "kek", "hah"), 35);
-    sol::optional<int> non_nope3 = lua["nope"]["kek"]["hah"].get<sol::optional<int>>();
-    sol::optional<int> non_nope4 = lua.get<sol::optional<int>>(std::make_tuple("nope", "kek", "hah"));
-    present = (bool)non_nope3;
-    REQUIRE(present);
-    present = (bool)non_nope4;
-    REQUIRE(present);
-    REQUIRE(non_nope3.value() == 35);
-    REQUIRE(non_nope4.value() == 35);
-}
-
-TEST_CASE("tables/usertype", "Show that we can create classes from usertype and use them") {
-
+TEST_CASE("usertype/usertype", "Show that we can create classes from usertype and use them") {
     sol::state lua;
 
     sol::usertype<fuser> lc{ "add", &fuser::add, "add2", &fuser::add2 };
@@ -760,7 +364,7 @@ TEST_CASE("tables/usertype", "Show that we can create classes from usertype and 
     REQUIRE(cresult == 3);
 }
 
-TEST_CASE("tables/usertype-constructors", "Show that we can create classes from usertype and use them with multiple constructors") {
+TEST_CASE("usertype/usertype-constructors", "Show that we can create classes from usertype and use them with multiple constructors") {
 
     sol::state lua;
 
@@ -803,7 +407,7 @@ TEST_CASE("tables/usertype-constructors", "Show that we can create classes from 
     REQUIRE((z.as<int>() == 9));
 }
 
-TEST_CASE("tables/usertype-utility", "Show internal management of classes registered through new_usertype") {
+TEST_CASE("usertype/usertype-utility", "Show internal management of classes registered through new_usertype") {
     sol::state lua;
 
     lua.new_usertype<fuser>("fuser", "add", &fuser::add, "add2", &fuser::add2);
@@ -828,7 +432,7 @@ TEST_CASE("tables/usertype-utility", "Show internal management of classes regist
     REQUIRE(cresult == 3);
 }
 
-TEST_CASE("tables/usertype-utility-derived", "usertype classes must play nice when a derived class does not overload a publically visible base function") {
+TEST_CASE("usertype/usertype-utility-derived", "usertype classes must play nice when a derived class does not overload a publically visible base function") {
     sol::state lua;
     lua.open_libraries(sol::lib::base);
     sol::constructors<sol::types<int>> basector;
@@ -858,7 +462,7 @@ TEST_CASE("tables/usertype-utility-derived", "usertype classes must play nice wh
     REQUIRE((lua.get<int>("dgn") == 7));
 }
 
-TEST_CASE("tables/self-referential usertype", "usertype classes must play nice when C++ object types are requested for C++ code") {
+TEST_CASE("usertype/self-referential usertype", "usertype classes must play nice when C++ object types are requested for C++ code") {
     sol::state lua;
     lua.open_libraries(sol::lib::base);
 
@@ -871,210 +475,7 @@ TEST_CASE("tables/self-referential usertype", "usertype classes must play nice w
       );
 }
 
-TEST_CASE("tables/arbitrary-creation", "tables should be created from standard containers") {
-    sol::state lua;
-    lua.open_libraries(sol::lib::base);
-    lua.set_function("test_one", test_table_return_one);
-    lua.set_function("test_two", test_table_return_two);
-    lua.set_function("test_three", test_table_return_three);
-
-    REQUIRE_NOTHROW(lua.script("a = test_one()"));
-    REQUIRE_NOTHROW(lua.script("b = test_two()"));
-    REQUIRE_NOTHROW(lua.script("c = test_three()"));
-
-    REQUIRE_NOTHROW(lua.script("assert(#a == 10, 'error')"));
-    REQUIRE_NOTHROW(lua.script("assert(a[3] == 3, 'error')"));
-    REQUIRE_NOTHROW(lua.script("assert(b.one == 1, 'error')"));
-    REQUIRE_NOTHROW(lua.script("assert(b.three == 3, 'error')"));
-    REQUIRE_NOTHROW(lua.script("assert(c.name == 'Rapptz', 'error')"));
-    REQUIRE_NOTHROW(lua.script("assert(c.project == 'sol', 'error')"));
-
-    auto&& a = lua.get<sol::table>("a");
-    auto&& b = lua.get<sol::table>("b");
-    auto&& c = lua.get<sol::table>("c");
-
-    REQUIRE(a.size() == 10ULL);
-    REQUIRE(a.get<int>(3) == 3);
-    REQUIRE(b.get<int>("one") == 1);
-    REQUIRE(b.get<int>("three") == 3);
-    REQUIRE(c.get<std::string>("name") == "Rapptz");
-    REQUIRE(c.get<std::string>("project") == "sol");
-}
-
-TEST_CASE("tables/for-each", "Testing the use of for_each to get values from a lua table") {
-    sol::state lua;
-    lua.open_libraries(sol::lib::base);
-
-    lua.script("arr = {\n"
-        "[0] = \"Hi\",\n"
-        "[1] = 123.45,\n"
-        "[2] = \"String value\",\n"
-        // Does nothing
-        //"[3] = nil,\n"
-        //"[nil] = 3,\n"
-        "[\"WOOF\"] = 123,\n"
-        "}");
-    sol::table tbl = lua[ "arr" ];
-    std::size_t tablesize = 4;
-    std::size_t iterations = 0;
-    auto fx = [&iterations](sol::object key, sol::object value) {
-        ++iterations;
-        sol::type keytype = key.get_type();
-        switch (keytype) {
-        case sol::type::number:
-            switch (key.as<int>()) {
-            case 0:
-                REQUIRE((value.as<std::string>() == "Hi"));
-                break;
-            case 1:
-                REQUIRE((value.as<double>() == 123.45));
-                break;
-            case 2:
-                REQUIRE((value.as<std::string>() == "String value"));
-                break;
-            case 3:
-                REQUIRE((value.is<sol::nil_t>()));
-                break;
-            }
-            break;
-        case sol::type::string:
-            if (key.as<std::string>() == "WOOF") {
-                REQUIRE((value.as<double>() == 123));
-            }
-            break;
-        case sol::type::nil:
-            REQUIRE((value.as<double>() == 3));
-            break;
-        default:
-            break;
-        }
-    };
-    auto fxpair = [&fx](std::pair<sol::object, sol::object> kvp) { fx(kvp.first, kvp.second); };
-    tbl.for_each( fx );
-    REQUIRE(iterations == tablesize);
-    
-    iterations = 0;
-    tbl.for_each( fxpair );
-    REQUIRE(iterations == tablesize);
-}
-
-TEST_CASE("tables/for-each-empty", "empty tables should not crash") {
-    sol::state lua;
-    lua.open_libraries(sol::lib::base);
-
-    lua.script("arr = {}");
-    sol::table tbl = lua[ "arr" ];
-    REQUIRE(tbl.empty());
-    std::size_t tablesize = 0;
-    std::size_t iterations = 0;
-    auto fx = [&iterations](sol::object key, sol::object value) {
-        ++iterations;
-        sol::type keytype = key.get_type();
-        switch (keytype) {
-        case sol::type::number:
-            switch (key.as<int>()) {
-            case 0:
-                REQUIRE((value.as<std::string>() == "Hi"));
-                break;
-            case 1:
-                REQUIRE((value.as<double>() == 123.45));
-                break;
-            case 2:
-                REQUIRE((value.as<std::string>() == "String value"));
-                break;
-            case 3:
-                REQUIRE((value.is<sol::nil_t>()));
-                break;
-            }
-            break;
-        case sol::type::string:
-            if (key.as<std::string>() == "WOOF") {
-                REQUIRE((value.as<double>() == 123));
-            }
-            break;
-        case sol::type::nil:
-            REQUIRE((value.as<double>() == 3));
-            break;
-        default:
-            break;
-        }
-    };
-    auto fxpair = [&fx](std::pair<sol::object, sol::object> kvp) { fx(kvp.first, kvp.second); };
-    tbl.for_each( fx );
-    REQUIRE(iterations == tablesize);
-    
-    iterations = 0;
-    tbl.for_each( fxpair );
-    REQUIRE(iterations == tablesize);
-
-    iterations = 0;
-    for (const auto& kvp : tbl) {
-        fxpair(kvp);
-        ++iterations;
-    }
-    REQUIRE(iterations == tablesize);
-}
-
-TEST_CASE("tables/iterators", "Testing the use of iteratrs to get values from a lua table") {
-    sol::state lua;
-    lua.open_libraries(sol::lib::base);
-
-    lua.script("arr = {\n"
-        "[0] = \"Hi\",\n"
-        "[1] = 123.45,\n"
-        "[2] = \"String value\",\n"
-        // Does nothing
-        //"[3] = nil,\n"
-        //"[nil] = 3,\n"
-        "[\"WOOF\"] = 123,\n"
-        "}");
-    sol::table tbl = lua[ "arr" ];
-    std::size_t tablesize = 4;
-    std::size_t iterations = 0;
-
-    int begintop = 0;
-    int endtop = 0;
-    {
-        stack_guard s(lua.lua_state(), begintop, endtop);
-        for (auto& kvp : tbl) {
-            [&iterations](sol::object key, sol::object value) {
-            ++iterations;
-            sol::type keytype = key.get_type();
-            switch (keytype) {
-            case sol::type::number:
-                switch (key.as<int>()) {
-                case 0:
-                    REQUIRE((value.as<std::string>() == "Hi"));
-                    break;
-                case 1:
-                    REQUIRE((value.as<double>() == 123.45));
-                    break;
-                case 2:
-                    REQUIRE((value.as<std::string>() == "String value"));
-                    break;
-                case 3:
-                    REQUIRE((value.is<sol::nil_t>()));
-                    break;
-                }
-                break;
-            case sol::type::string:
-                if (key.as<std::string>() == "WOOF") {
-                    REQUIRE((value.as<double>() == 123));
-                }
-                break;
-            case sol::type::nil:
-                REQUIRE((value.as<double>() == 3));
-                break;
-            default:
-                break;
-            }
-            }(kvp.first, kvp.second);
-        }
-    } REQUIRE(begintop == endtop);
-    REQUIRE(iterations == tablesize);
-}
-
-TEST_CASE("tables/issue-number-twenty-five", "Using pointers and references from C++ classes in Lua") {
+TEST_CASE("usertype/issue-number-twenty-five", "Using pointers and references from C++ classes in Lua") {
     struct test {
         int x = 0;
         test& set() {
