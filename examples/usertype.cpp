@@ -75,10 +75,10 @@ int main() {
         // the first argument of construction is the name
         // second is the constructor types
         // then the rest are function name and member function pointer pairs
-        sol::usertype<vector> udata("vector", ctor, "is_unit", &vector::is_unit);
+        sol::usertype<vector> utype(ctor, "is_unit", &vector::is_unit);
 
         // then you must register it
-        lua.set_usertype("vector", udata);
+        lua.set_usertype("vector", utype);
         // You can throw away the usertype after you set it: you do NOT
         // have to keep it around
         // cleanup happens automagically
