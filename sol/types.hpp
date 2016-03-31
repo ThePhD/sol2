@@ -163,7 +163,10 @@ enum class type : int {
 };
 
 inline int type_panic(lua_State* L, int index, type expected, type actual) {
-    return luaL_error(L, "stack index %d, expected %s, received %s", index, lua_typename(L, static_cast<int>(expected)), lua_typename(L, static_cast<int>(actual)));
+    return luaL_error(L, "stack index %d, expected %s, received %s", index, 
+        expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected)),
+        expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(actual))
+    );
 }
 
 // Specify this function as the handler for lua::check if you know there's nothing wrong
@@ -197,6 +200,7 @@ inline std::string type_name(lua_State*L, type t) {
 }
 
 class reference;
+class stack_reference;
 template<typename T>
 class usertype;
 template <bool>
@@ -230,6 +234,9 @@ template <>
 struct lua_type_of<nil_t> : std::integral_constant<type, type::nil> { };
 
 template <>
+struct lua_type_of<sol::error> : std::integral_constant<type, type::string> { };
+
+template <>
 struct lua_type_of<table> : std::integral_constant<type, type::table> { };
 
 template <>
@@ -237,6 +244,9 @@ struct lua_type_of<global_table> : std::integral_constant<type, type::table> { }
 
 template <>
 struct lua_type_of<reference> : std::integral_constant<type, type::poly> {};
+
+template <>
+struct lua_type_of<stack_reference> : std::integral_constant<type, type::poly> {};
 
 template <>
 struct lua_type_of<object> : std::integral_constant<type, type::poly> {};
@@ -292,7 +302,10 @@ struct lua_type_of<T, std::enable_if_t<std::is_enum<T>::value>> : std::integral_
 template <typename T>
 struct is_lua_primitive : std::integral_constant<bool, 
     type::userdata != lua_type_of<meta::Unqualified<T>>::value
-    || std::is_base_of<reference, meta::Unqualified<T>>::value> { };
+    || std::is_base_of<reference, meta::Unqualified<T>>::value
+    || meta::is_specialization_of<meta::Unqualified<T>, std::tuple>::value
+    || meta::is_specialization_of<meta::Unqualified<T>, std::pair>::value
+> { };
 
 template <typename T>
 struct is_lua_primitive<T*> : std::true_type {};
@@ -311,12 +324,6 @@ struct is_proxy_primitive<std::reference_wrapper<T>> : std::true_type { };
 
 template <typename T>
 struct is_proxy_primitive<optional<T>> : std::true_type {};
-
-template <typename... Args>
-struct is_proxy_primitive<std::tuple<Args...>> : std::true_type { };
-
-template <typename A, typename B>
-struct is_proxy_primitive<std::pair<A, B>> : std::true_type { };
 
 template <typename T>
 struct is_unique_usertype : std::false_type {};

@@ -104,7 +104,7 @@ private:
 #endif // No Exceptions
             code = static_cast<call_status>(luacall(n, LUA_MULTRET, h));
             int poststacksize = lua_gettop(lua_state());
-            returncount = poststacksize - firstreturn;
+            returncount = poststacksize - (stacksize - 1);
 #ifndef SOL_NO_EXCEPTIONS
         }
         // Handle C++ errors thrown from C++ functions bound inside of lua
@@ -124,7 +124,7 @@ private:
             return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
         }
 #endif // No Exceptions
-        return protected_function_result(lua_state(), firstreturn + ( handlerpushed ? 0 : 1 ), returncount, returncount, code);
+        return protected_function_result(lua_state(), firstreturn, returncount, returncount, code);
     }
 
 public:

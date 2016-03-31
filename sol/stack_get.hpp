@@ -70,6 +70,13 @@ struct getter<T, std::enable_if_t<std::is_base_of<reference, T>::value>> {
 };
 
 template<>
+struct getter<stack_reference> {
+    static stack_reference get(lua_State* L, int index = -1) {
+        return stack_reference(L, index);
+    }
+};
+
+template<>
 struct getter<userdata_value> {
     static userdata_value get(lua_State* L, int index = -1) {
         return userdata_value( lua_touserdata(L, index) );

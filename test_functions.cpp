@@ -233,6 +233,7 @@ TEST_CASE( "functions/function_result-protected_function_result", "Function resu
     lua.open_libraries( sol::lib::base, sol::lib::debug );
     static const char unhandlederrormessage[] = "true error message";
     static const char handlederrormessage[] = "doodle";
+    static const std::string handlederrormessage_s = handlederrormessage;
 
     // Some function; just using a lambda to be cheap
     auto doomfx = []() {
@@ -261,33 +262,79 @@ TEST_CASE( "functions/function_result-protected_function_result", "Function resu
     auto nontrampolinefx = [](lua_State*) -> int { throw "x";};
     lua_CFunction c_nontrampolinefx = nontrampolinefx;
     lua.set("nontrampoline", c_nontrampolinefx);
+    lua.set_function("bark", []() -> int {return 100;});
 
     sol::protected_function doom = lua[ "doom" ];
     sol::protected_function luadoom = lua["luadoom"];
     sol::protected_function nontrampoline = lua["nontrampoline"];
+    sol::protected_function justfine = lua["bark"];
+    sol::protected_function justfinewithhandler = lua["bark"];
     sol::function luahandler = lua["luahandler"];
     sol::function cpphandler = lua[ "cpphandler" ];
     doom.error_handler = luahandler;
     luadoom.error_handler = cpphandler;
     nontrampoline.error_handler = cpphandler;
-    
+    justfinewithhandler.error_handler = luahandler;
+    bool present = true;
     {
         sol::protected_function_result result = doom();
-        REQUIRE(!result.valid());
-        std::string errorstring = result;
-        REQUIRE(errorstring == handlederrormessage);
+        REQUIRE_FALSE(result.valid());
+        sol::optional<sol::error> operr = result;
+        sol::optional<int> opvalue = result;
+        present = (bool)operr;
+        REQUIRE(present);
+        present = (bool)opvalue;
+        REQUIRE_FALSE(present);
+        sol::error err = result;
+        REQUIRE(err.what() == handlederrormessage_s);
     }
     {
         sol::protected_function_result result = luadoom();
-        REQUIRE(!result.valid());
-        std::string errorstring = result;
-        REQUIRE(errorstring == handlederrormessage);
+        REQUIRE_FALSE(result.valid());
+        sol::optional<sol::error> operr = result;
+        sol::optional<int> opvalue = result;
+        present = (bool)operr;
+        REQUIRE(present);
+        present = (bool)opvalue;
+        REQUIRE_FALSE(present);
+        sol::error err = result;
+        REQUIRE(err.what() == handlederrormessage_s);
     }
     {
         sol::protected_function_result result = nontrampoline();
-        REQUIRE(!result.valid());
-        std::string errorstring = result;
-        REQUIRE(errorstring == handlederrormessage);
+        REQUIRE_FALSE(result.valid());
+        sol::optional<sol::error> operr = result;
+        sol::optional<int> opvalue = result;
+        present = (bool)operr;
+        REQUIRE(present);
+        present = (bool)opvalue;
+        REQUIRE_FALSE(present);
+        sol::error err = result;
+        REQUIRE(err.what() == handlederrormessage_s);
+    }
+    {
+        sol::protected_function_result result = justfine();
+        REQUIRE(result.valid());
+        sol::optional<sol::error> operr = result;
+        sol::optional<int> opvalue = result;
+        present = (bool)operr;
+        REQUIRE_FALSE(present);
+        present = (bool)opvalue;
+        REQUIRE(present);
+        int value = result;
+        REQUIRE(value == 100);
+    }
+    {
+        sol::protected_function_result result = justfinewithhandler();
+        REQUIRE(result.valid());
+        sol::optional<sol::error> operr = result;
+        sol::optional<int> opvalue = result;
+        present = (bool)operr;
+        REQUIRE_FALSE(present);
+        present = (bool)opvalue;
+        REQUIRE(present);
+        int value = result;
+        REQUIRE(value == 100);
     }
 }
 
@@ -484,6 +531,36 @@ M1 = m()
 
     REQUIRE( M0 == 0xC );
     REQUIRE( M1 == 256 );
+
+    sol::bond( ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1 ) 
+    = lua.get<int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int>(
+        "ob", "A", "B", "C", "D", "F", "G0", "G1", "H", "I", "J0", "J1", "K0", "K1", "L0", "L1", "M0", "M1"
+    );
+   
+    REQUIRE(ob == 0xA);
+    
+    REQUIRE( A == 500 );
+    REQUIRE( B == 501 );
+    REQUIRE( C == 502 );
+    REQUIRE( D == 503 );
+
+    REQUIRE( F == 0xA );
+    REQUIRE( G0 == 4 );
+    REQUIRE( G1 == 0xA );
+    REQUIRE( H == 0xA );
+    REQUIRE( I == 20 );
+
+    REQUIRE( J0 == 0xC );
+    REQUIRE( J1 == 24 );
+
+    REQUIRE( K0 == 0xC );
+    REQUIRE( K1 == 1024 );
+
+    REQUIRE( L0 == 0xA );
+    REQUIRE( L1 == 678 );
+
+    REQUIRE( M0 == 0xC );
+    REQUIRE( M1 == 256 );
 }
 
 TEST_CASE("simple/call-with-parameters", "Lua function is called with a few parameters from C++") {
@@ -625,4 +702,19 @@ TEST_CASE("advanced/call-referenced_obj", "A C++ object is passed by pointer/ref
     lua.script("set_y(9)");
     REQUIRE(x == 9);
     REQUIRE(y == 9);
+}
+
+TEST_CASE("functions/bond", "make sure advanced syntax with 'bond' works") {
+    sol::state lua;
+
+    lua.script(R"(function f () 
+    return 1, 2, 3 
+end)");
+    sol::function f = lua["f"];
+
+    int a, b, c;
+    sol::bond(a, b, c) = f();
+    REQUIRE(a == 1);
+    REQUIRE(b == 2);
+    REQUIRE(c == 3);
 }

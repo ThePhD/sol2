@@ -58,10 +58,10 @@ public:
         tableidx = lua_gettop(ref.lua_state());
         stack::push(ref.lua_state(), nil);
         this->operator++();
-	   if (idx == -1) {
-		   return;
-	   }
-	   --idx;
+        if (idx == -1) {
+            return;
+        }
+        --idx;
     }
 
     table_iterator& operator++() {

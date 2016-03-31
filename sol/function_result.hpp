@@ -25,6 +25,7 @@
 #include "reference.hpp"
 #include "tuple.hpp"
 #include "stack.hpp"
+#include "stack_proxy.hpp"
 #include "proxy_base.hpp"
 
 namespace sol {
@@ -67,10 +68,21 @@ public:
         return stack::get<T>(L, index);
     }
 
+    lua_State* lua_state() const { return L; };
+    int stack_index() const { return index; };
+
     ~function_result() {
         lua_pop(L, returncount);
     }
 };
+
+template <>
+struct bond_size<function_result> : std::integral_constant<std::size_t, std::numeric_limits<std::size_t>::max()> {};
+
+template <std::size_t I>
+stack_proxy get(const function_result& fr) {
+    return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
+}
 } // sol
 
 #endif // SOL_FUNCTION_RESULT_HPP

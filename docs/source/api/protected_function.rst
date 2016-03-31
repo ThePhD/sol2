@@ -26,7 +26,7 @@ Inspired by a request from `starwing<https://github.com/starwing>` in the old re
 		return (bark_energy * (bark_power / 4))
 	end
 
-The following C++ code will call this function from this file and retrieve the return value:
+The following C++ code will call this function from this file and retrieve the return value, unless an error occurs, in which case you can bind an error handling function like so:
 
 .. code-block:: cpp
 	:linenos:
@@ -45,7 +45,7 @@ The following C++ code will call this function from this file and retrieve the r
 	}
 	else{
 		// An error has occured
-		std::string error = first_woof;
+		sol::error err = first_woof;
 	}
 
 	// errors, calls handler and then returns a string error from Lua at the top of the stack
@@ -59,10 +59,34 @@ The following C++ code will call this function from this file and retrieve the r
 		// Note that if the handler was successfully called, this will include
 		// the additional appended error message information of
 		// "got_problems handler: " ...
-		std::string error = secondwoof;
+		sol::error err = secondwoof;
+		std::string what = err.what();
 	} 
 
-This code is much more long-winded than its :doc:`function<function>` counterpart but allows a person to check for errors. The types here for ``auto`` are ``protected_function_result``. They are implicitly convertible to result types, like all :doc:`proxy-style<proxy>` types are.
+This code is much more long-winded than its :doc:`function<function>` counterpart but allows a person to check for errors. The type here for ``auto`` are ``sol::protected_function_result``. They are implicitly convertible to result types, like all :doc:`proxy-style<proxy>` types are.
+
+Alternatively, with a bad or good function call, you can use ``sol::optional`` to check if the call succeeded or failed:
+
+.. code-block:: cpp
+	:linenos:
+
+	sol::state lua;
+
+	lua.open_file( "pfunc_barks.lua" );
+
+	sol::protected_function problematicwoof = lua["woof"];
+	problematicwoof.error_handler = lua["got_problems"];
+
+	sol::optional<double> maybevalue = problematicwoof(19);
+	if (value) {
+		// Have a value, use it
+		double numwoof = maybevalue.value();
+	}
+	else {
+		// No value!		
+	}
+
+That makes the code a bit more concise and easy to reason about if you don't want to bother with reading the error. Thankfully, unlike ``sol::function_result``, you can save ``sol::protected_function_result`` in a variable and push/pop things above it on the stack where its returned values are. This makes it a bit more flexible  than the rigid, performant ``sol::function_result`` type that comes from calling :doc:`sol::function<function>`. If you're confident the result succeeded, you can also just put the type you want (like ``double`` or ``std::string`` right there and it will get it. But, if it doesn't work out, sol can throw and/or panic if you have the :doc:`safety<../safety>` features turned on.
 
 members
 -------

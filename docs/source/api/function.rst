@@ -33,6 +33,23 @@ The following C++ code will call this function from this file and retrieve the r
 
 The call ``woof(20)`` generates a :ref:`function_result<function-result>`, which is then implicitly converted to an ``double`` after being called. The intermediate temporary ``function_result`` is then destructed, popping the Lua function call results off the Lua stack. 
 
+You can also return multiple values by using std::tuple, or if you need to bind them to pre-existing variables use ``sol::bond``:
+
+.. code-block:: cpp
+	:linenos:
+
+	sol::state lua;
+
+	lua.script( "function f () return 10, 11, 12 end" );
+
+	sol::function f = lua["f"];
+	std::tuple<int, int, int> abc = f(); // 10, 11, 12 from Lua
+	// or
+	int a, b, c;
+	sol::bond(a, b, c) = f(); // a = 10, b = 11, c = 12 from Lua
+
+This makes it much easier to work with multiple return values. Using ``std::tie`` from the C++ standard will result in dangling references or bad behavior because of the very poor way in which C++ tuples were implemented: please use ``sol::bond( ... )`` instead to satisfy any multi-return needs.
+
 .. _function-result-warning:
 
 .. warning::

@@ -178,6 +178,13 @@ struct pusher<T, std::enable_if_t<std::is_base_of<reference, T>::value>> {
 };
 
 template<>
+struct pusher<stack_reference> {
+    static int push(lua_State*, const stack_reference& ref) {
+        return ref.push();
+    }
+};
+
+template<>
 struct pusher<bool> {
     static int push(lua_State* L, bool b) {
         lua_pushboolean(L, b);
@@ -300,7 +307,7 @@ struct pusher<optional<O>> {
         if (t == nullopt) {
             return stack::push(L, nullopt);
         }
-	   return stack::push(L, t.value());
+        return stack::push(L, t.value());
     }
 };
 

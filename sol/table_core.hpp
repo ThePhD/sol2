@@ -106,19 +106,19 @@ class table_core : public reference {
 
     template <bool global, typename T, std::size_t I, typename Key>
     decltype(auto) traverse_get_deep_optional( int& popcount, Key&& key ) const {
-	    auto p = stack::probe_get_field<global>(lua_state(), std::forward<Key>(key), -1);
-	    popcount += p.levels;
-	    if (!p.success)
-		    return T(nullopt);
-	    return stack::get<T>( lua_state( ) );
+        auto p = stack::probe_get_field<global>(lua_state(), std::forward<Key>(key), -1);
+        popcount += p.levels;
+        if (!p.success)
+            return T(nullopt);
+        return stack::get<T>( lua_state( ) );
     }
 
     template <bool global, typename T, std::size_t I, typename Key, typename... Keys>
     decltype(auto) traverse_get_deep_optional( int& popcount, Key&& key, Keys&&... keys ) const {
         auto p = I > 0 ? stack::probe_get_field<global>(lua_state(), std::forward<Key>(key), - 1) : stack::probe_get_field<global>( lua_state( ), std::forward<Key>( key ) );
-	   popcount += p.levels;
-	   if (!p.success)
-		   return T(nullopt);
+        popcount += p.levels;
+        if (!p.success)
+            return T(nullopt);
         return traverse_get_deep_optional<false, T, I + 1>(popcount, std::forward<Keys>(keys)...);
     }
 
@@ -130,9 +130,9 @@ class table_core : public reference {
 
     template <bool global, typename T, typename... Keys>
     decltype(auto) traverse_get_optional( std::true_type, Keys&&... keys ) const {
-	   int popcount = 0;
-	   detail::ref_clean c(lua_state(), popcount);
-	   return traverse_get_deep_optional<top_level, T, 0>(popcount, std::forward<Keys>(keys)...);
+        int popcount = 0;
+        detail::ref_clean c(lua_state(), popcount);
+        return traverse_get_deep_optional<top_level, T, 0>(popcount, std::forward<Keys>(keys)...);
     }
 
     template <bool global, typename Key, typename Value>
@@ -174,8 +174,8 @@ public:
     template<typename... Ret, typename... Keys>
     decltype(auto) get( Keys&&... keys ) const {
         static_assert(sizeof...(Keys) == sizeof...(Ret), "number of keys and number of return types do not match");
-	   auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-	   return tuple_get( types<Ret...>( ), std::make_index_sequence<sizeof...(Ret)>( ), std::forward_as_tuple(std::forward<Keys>(keys)...));
+        auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
+        return tuple_get( types<Ret...>( ), std::make_index_sequence<sizeof...(Ret)>( ), std::forward_as_tuple(std::forward<Keys>(keys)...));
     }
 
     template<typename T, typename Key>

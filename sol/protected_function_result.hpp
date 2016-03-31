@@ -26,6 +26,7 @@
 #include "tuple.hpp"
 #include "stack.hpp"
 #include "proxy_base.hpp"
+#include "stack_proxy.hpp"
 
 namespace sol {
 struct protected_function_result : public proxy_base<protected_function_result> {
@@ -35,6 +36,40 @@ private:
     int returncount;
     int popcount;
     call_status err;
+
+    template <typename T>
+    decltype(auto) tagged_get( types<sol::optional<T>> ) const {
+        if (!valid()) {
+            return sol::optional<T>(nullopt);
+        }
+        return stack::get<sol::optional<T>>(L, index);
+    }
+
+    template <typename T>
+    decltype(auto) tagged_get( types<T> ) const {
+#ifdef SOL_CHECK_ARGUMENTS
+        if (!valid()) {
+            type_panic(L, index, type_of(L, index), type::none);
+        }
+#endif // Check Argument Safety
+        return stack::get<T>(L, index);
+    }
+
+    sol::optional<sol::error> tagged_get( types<sol::optional<sol::error>> ) const {
+        if (valid()) {
+            return nullopt;
+        }
+        return sol::error(detail::direct_error, stack::get<std::string>(L, index));
+    }
+
+    sol::error tagged_get( types<sol::error> ) const {
+#ifdef SOL_CHECK_ARGUMENTS
+        if (valid()) {
+            type_panic(L, index, type_of(L, index), type::none);
+        }
+#endif // Check Argument Safety
+        return sol::error(detail::direct_error, stack::get<std::string>(L, index));
+    }
 
 public:
     protected_function_result() = default;
@@ -75,40 +110,29 @@ public:
     }
 
     bool valid() const {
-        return error() == call_status::ok;
+        return error() == call_status::ok || error() == call_status::yielded;
     }
 
     template<typename T>
     T get() const {
-        return stack::get<T>(L, index);
+        return tagged_get(types<meta::Unqualified<T>>());
     }
+
+    lua_State* lua_state() const { return L; };
+    int stack_index() const { return index; };
 
     ~protected_function_result() {
         stack::remove(L, index, popcount);
     }
 };
 
-struct protected_result {
-private:
-    protected_function_result result;
+template <>
+struct bond_size<protected_function_result> : std::integral_constant<std::size_t, std::numeric_limits<std::size_t>::max()> {};
 
-public:
-    template <typename... Args>
-    protected_result( Args&&... args ) : result(std::forward<Args>(args)...) {
-    }
-
-    bool valid() const { 
-        return result.valid(); 
-    }
-
-    explicit operator bool () const {
-        return valid();
-    }
-
-    protected_function_result& operator* () {
-        return result;
-    }
-};
+template <std::size_t I>
+stack_proxy get(const protected_function_result& fr) {
+    return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
+}
 } // sol
 
 #endif // SOL_FUNCTION_RESULT_HPP

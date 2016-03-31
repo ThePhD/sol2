@@ -19,33 +19,29 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_PROXY_BASE_HPP
-#define SOL_PROXY_BASE_HPP
+#ifndef SOL_STACK_PROXY_HPP
+#define SOL_STACK_PROXY_HPP
 
-#include "reference.hpp"
-#include "tuple.hpp"
 #include "stack.hpp"
+#include "proxy_base.hpp"
 
 namespace sol {
-template <typename Super>
-struct proxy_base {
-    operator std::string() const {
-        const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
-        return super.template get<std::string>();
+struct stack_proxy : public proxy_base<stack_proxy> {
+private:
+    lua_State* L;
+    int index;
+
+public:
+    stack_proxy(lua_State* L, int index) : L(L), index(index) {}
+
+    template<typename T>
+    decltype(auto) get() const {
+        return stack::get<T>(L, stack_index());
     }
 
-    template<typename T, meta::EnableIf<meta::Not<meta::is_string_constructible<T>>, is_proxy_primitive<meta::Unqualified<T>>> = 0>
-    operator T ( ) const {
-        const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
-        return super.template get<T>( );
-    }
-
-    template<typename T, meta::EnableIf<meta::Not<meta::is_string_constructible<T>>, meta::Not<is_proxy_primitive<meta::Unqualified<T>>>> = 0>
-    operator T& ( ) const {
-        const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
-        return super.template get<T&>( );
-    }
+    lua_State* lua_state() const { return L; }
+    int stack_index() const { return index; }
 };
 } // sol
 
-#endif // SOL_PROXY_BASE_HPP
+#endif // SOL_STACK_PROXY_HPP

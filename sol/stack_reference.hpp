@@ -19,33 +19,41 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_PROXY_BASE_HPP
-#define SOL_PROXY_BASE_HPP
+#ifndef SOL_STACK_REFERENCE_HPP
+#define SOL_STACK_REFERENCE_HPP
 
 #include "reference.hpp"
-#include "tuple.hpp"
-#include "stack.hpp"
 
 namespace sol {
-template <typename Super>
-struct proxy_base {
-    operator std::string() const {
-        const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
-        return super.template get<std::string>();
+class stack_reference {
+private:
+    lua_State* L = nullptr;
+    int index = 0;
+
+protected:
+
+public:
+    stack_reference() noexcept = default;
+    stack_reference(lua_State* L, int i) noexcept : L(L), index(lua_absindex(L, i)) {}
+    stack_reference(stack_reference&& o) noexcept = default;
+    stack_reference& operator=(stack_reference&&) noexcept = default;
+    stack_reference(const stack_reference&) noexcept = default;
+    stack_reference& operator=(const stack_reference&) noexcept = default;
+
+    int push() const noexcept {
+        lua_pushvalue(L, index);
+        return 1;
     }
 
-    template<typename T, meta::EnableIf<meta::Not<meta::is_string_constructible<T>>, is_proxy_primitive<meta::Unqualified<T>>> = 0>
-    operator T ( ) const {
-        const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
-        return super.template get<T>( );
+    type get_type() const noexcept {
+        int result = lua_type(L, index);
+        return static_cast<type>(result);
     }
 
-    template<typename T, meta::EnableIf<meta::Not<meta::is_string_constructible<T>>, meta::Not<is_proxy_primitive<meta::Unqualified<T>>>> = 0>
-    operator T& ( ) const {
-        const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
-        return super.template get<T&>( );
+    lua_State* lua_state() const noexcept {
+        return L;
     }
 };
 } // sol
 
-#endif // SOL_PROXY_BASE_HPP
+#endif // SOL_STACK_REFERENCE_HPP

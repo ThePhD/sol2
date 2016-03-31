@@ -1,4 +1,4 @@
-## Sol 2.2
+## Sol 2.3
 
 [![Build Status](https://travis-ci.org/ThePhD/sol2.svg?branch=develop)](https://travis-ci.org/ThePhD/sol2)
 [![Documentation Status](https://readthedocs.org/projects/sol2/badge/?version=latest)](http://sol2.readthedocs.org/en/latest/?badge=latest)

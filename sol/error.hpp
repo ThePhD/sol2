@@ -26,9 +26,14 @@
 #include <string>
 
 namespace sol {
+namespace detail {
+struct direct_error_tag {};
+const auto direct_error = direct_error_tag{};
+} // detail
 class error : public std::runtime_error {
 public:
     error(const std::string& str): std::runtime_error("lua: error: " + str) {}
+    error(detail::direct_error_tag, const std::string& str) : std::runtime_error(str) {}
 };
 } // sol
 

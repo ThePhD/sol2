@@ -36,12 +36,12 @@ private:
 
     template<typename T, std::size_t... I>
     decltype(auto) tuple_get(std::index_sequence<I...>) const {
-        return tbl.template traverse_get<T>( std::get<I>(key)... );
+        return tbl.template traverse_get<T>(std::get<I>(key)...);
     }
 
     template<std::size_t... I, typename T>
     void tuple_set(std::index_sequence<I...>, T&& value) const {
-        tbl.traverse_set( std::get<I>(key)..., std::forward<T>(value) );
+        tbl.traverse_set(std::get<I>(key)..., std::forward<T>(value));
     }
 
 public:
@@ -146,8 +146,7 @@ template <typename Table, typename Key>
 struct pusher<proxy<Table, Key>> {
     static int push (lua_State*, const proxy<Table, Key>& p) {
         sol::reference r = p;
-        r.push();
-        return 1;
+        return r.push();
     }
 };
 } // stack

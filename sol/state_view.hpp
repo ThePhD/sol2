@@ -281,8 +281,8 @@ public:
     template <typename Name, typename... Args>
     table create_named_table(Name&& name, Args&&... args) {
         table x = global.create_with(std::forward<Args>(args)...);
-	   global.set(std::forward<Name>(name), x);
-	   return x;
+        global.set(std::forward<Name>(name), x);
+        return x;
     }
 
     table create_table(int narr = 0, int nrec = 0) {
