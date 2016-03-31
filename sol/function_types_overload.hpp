@@ -66,7 +66,7 @@ inline int overload_match_arity(types<Fx, Fxs...>, std::index_sequence<I, In...>
 
 template <typename... Functions, typename Match, typename... Args>
 inline int overload_match_arity(Match&& matchfx, lua_State* L, int fxarity, int start, Args&&... args) {
-    return internals::overload_match_arity(types<Functions...>(), std::index_sequence_for<Functions...>(), std::index_sequence<>(), std::forward<Match>(matchfx), L, fxarity,  start, std::forward<Args>(args)...);
+    return internals::overload_match_arity(types<Functions...>(), std::make_index_sequence<sizeof...(Functions)>(), std::index_sequence<>(), std::forward<Match>(matchfx), L, fxarity,  start, std::forward<Args>(args)...);
 }
 
 template <typename... Functions, typename Match, typename... Args>
@@ -78,7 +78,7 @@ inline int overload_match(Match&& matchfx, lua_State* L, int start, Args&&... ar
 template <typename... Functions>
 struct overloaded_function : base_function {
     typedef std::tuple<Functions...> overload_list;
-    typedef std::index_sequence_for<Functions...> indices;
+    typedef std::make_index_sequence<sizeof...(Functions)> indices;
     overload_list overloads;
 
     overloaded_function(overload_list set)
@@ -104,7 +104,7 @@ struct overloaded_function : base_function {
 template <typename T, typename... Functions>
 struct usertype_overloaded_function : base_function {
     typedef std::tuple<functor<T, std::remove_pointer_t<std::decay_t<Functions>>>...> overload_list;
-    typedef std::index_sequence_for<Functions...> indices;
+    typedef std::make_index_sequence<sizeof...(Functions)> indices;
     overload_list overloads;
     
     usertype_overloaded_function(std::tuple<Functions...> set) : overloads(std::move(set)) {}

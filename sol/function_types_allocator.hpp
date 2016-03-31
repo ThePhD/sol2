@@ -94,7 +94,7 @@ inline int destruct(lua_State* L) {
 template <typename T, typename... Functions>
 struct usertype_constructor_function : base_function {
     typedef std::tuple<Functions...> overload_list;
-    typedef std::index_sequence_for<Functions...> indices;
+    typedef std::make_index_sequence<sizeof...(Functions)> indices;
     overload_list overloads;
 
     usertype_constructor_function(overload_list set) : overloads(std::move(set)) {}

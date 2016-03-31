@@ -382,7 +382,7 @@ using is_c_str = Or<
 namespace meta_detail {
 template <typename T, meta::DisableIf<meta::is_specialization_of<meta::Unqualified<T>, std::tuple>> = 0>
 decltype(auto) force_tuple(T&& x) {
-    return std::forward_as_tuple(x);
+    return std::forward_as_tuple(std::forward<T>(x));
 }
 
 template <typename T, meta::EnableIf<meta::is_specialization_of<meta::Unqualified<T>, std::tuple>> = 0>
@@ -393,13 +393,24 @@ decltype(auto) force_tuple(T&& x) {
 
 template <typename... X>
 decltype(auto) tuplefy(X&&... x ) {
-    return std::tuple_cat(meta_detail::force_tuple(x)...);
+    return std::tuple_cat(meta_detail::force_tuple(std::forward<X>(x))...);
 }
 } // meta
 namespace detail {
 template <std::size_t I, typename Tuple>
 decltype(auto) forward_get( Tuple&& tuple ) {
     return std::forward<meta::tuple_element_t<I, Tuple>>(std::get<I>(tuple));
+}
+
+template <std::size_t... I, typename Tuple>
+auto forward_tuple_impl( std::index_sequence<I...>, Tuple&& tuple ) -> decltype(std::tuple<decltype(forward_get<I>(tuple))...>(forward_get<I>(tuple)...)) {
+    return std::tuple<decltype(forward_get<I>(tuple))...>(std::move(std::get<I>(tuple))...);
+}
+
+template <typename Tuple>
+auto forward_tuple( Tuple&& tuple ) {
+    auto x = forward_tuple_impl(std::make_index_sequence<std::tuple_size<meta::Unqualified<Tuple>>::value>(), std::forward<Tuple>(tuple));
+    return x;
 }
 
 template<typename T>

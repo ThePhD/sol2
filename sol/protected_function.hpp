@@ -154,7 +154,7 @@ public:
         handler h(error_handler);
         push();
         int pushcount = stack::multi_push(lua_state(), std::forward<Args>(args)...);
-        return invoke(types<Ret...>(), std::index_sequence_for<Ret...>(), pushcount, h);
+        return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount, h);
     }
 };
 } // sol

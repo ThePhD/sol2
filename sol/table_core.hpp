@@ -175,7 +175,7 @@ public:
     decltype(auto) get( Keys&&... keys ) const {
         static_assert(sizeof...(Keys) == sizeof...(Ret), "number of keys and number of return types do not match");
 	   auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-	   return tuple_get( types<Ret...>( ), std::index_sequence_for<Ret...>( ), std::forward_as_tuple(std::forward<Keys>(keys)...));
+	   return tuple_get( types<Ret...>( ), std::make_index_sequence<sizeof...(Ret)>( ), std::forward_as_tuple(std::forward<Keys>(keys)...));
     }
 
     template<typename T, typename Key>

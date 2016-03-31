@@ -51,12 +51,12 @@ struct field_getter<std::tuple<Args...>, b, C> {
 
     template <typename Keys>
     void get(lua_State* L, Keys&& keys) {
-        apply(std::index_sequence_for<Args...>(), L, std::forward<Keys>(keys), lua_absindex(L, -1));
+        apply(std::make_index_sequence<sizeof...(Args)>(), L, std::forward<Keys>(keys), lua_absindex(L, -1));
     }
 
     template <typename Keys>
     void get(lua_State* L, Keys&& keys, int tableindex) {
-        apply(std::index_sequence_for<Args...>(), L, std::forward<Keys>(keys), tableindex);
+        apply(std::make_index_sequence<sizeof...(Args)>(), L, std::forward<Keys>(keys), tableindex);
     }
 };
 

@@ -273,7 +273,7 @@ struct checker<std::tuple<Args...>, type::poly, C> {
 
     template <typename Handler>
     static bool check(lua_State* L, int index, Handler&& handler) {
-        return apply(std::index_sequence_for<Args...>(), L, index, std::forward<Handler>(handler));
+        return apply(std::make_index_sequence<sizeof...(Args)>(), L, index, std::forward<Handler>(handler));
     }
 };
 

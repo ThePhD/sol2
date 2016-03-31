@@ -204,7 +204,7 @@ struct pusher<function_arguments<T, Args...>> {
 
     template <typename FP>
     static int push(lua_State* L, FP&& fp) {
-        return push_func(std::index_sequence_for<Args...>(), L, std::forward<FP>(fp));
+        return push_func(std::make_index_sequence<sizeof...(Args)>(), L, std::forward<FP>(fp));
     }
 };
 

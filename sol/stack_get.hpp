@@ -249,7 +249,7 @@ struct getter<std::tuple<Args...>> {
     }
 
     static decltype(auto) get(lua_State* L, int index = -1) {
-        return apply(std::index_sequence_for<Args...>(), L, index);
+        return apply(std::make_index_sequence<sizeof...(Args)>(), L, index);
     }
 };
 
