@@ -27,6 +27,7 @@
 #include "stack.hpp"
 #include "proxy_base.hpp"
 #include "stack_proxy.hpp"
+#include <limits>
 
 namespace sol {
 struct protected_function_result : public proxy_base<protected_function_result> {
