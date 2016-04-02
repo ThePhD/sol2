@@ -83,7 +83,6 @@ private:
     }
 
     protected_function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n, handler& h) const {
-        bool handlerpushed = error_handler.valid();
         int stacksize = lua_gettop(lua_state());
         int firstreturn = std::max(1, stacksize - static_cast<int>(n) - 1);
         int returncount = 0;

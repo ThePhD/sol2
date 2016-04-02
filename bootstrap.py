@@ -55,7 +55,7 @@ args = parser.parse_args()
 # general variables
 include = [ '.', './include' ]
 depends = [os.path.join('Catch', 'include')]
-cxxflags = [ '-Wall', '-Wextra', '-pedantic', '-pedantic-errors', '-std=c++14', '-ftemplate-depth=1024' ]
+cxxflags = [ '-Wall', '-Wextra', '-Wpedantic', '-pedantic', '-pedantic-errors', '-std=c++14', '-ftemplate-depth=1024' ]
 cxxflags.extend([p for p in re.split("( |\\\".*?\\\"|'.*?')", args.cxx_flags) if p.strip()])
 ldflags = []
 script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
