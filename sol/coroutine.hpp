@@ -67,7 +67,11 @@ private:
     }
 
 public:
-    coroutine(lua_State* L, int index = -1) noexcept : reference(L, index) {}
+    coroutine(lua_State* L, int index = -1) : reference(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+        type_assert(L, index, type::function);
+#endif // Safety
+    }
     coroutine() noexcept = default;
     coroutine(const coroutine&) noexcept = default;
     coroutine& operator=(const coroutine&) noexcept = default;

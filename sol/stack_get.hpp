@@ -143,8 +143,20 @@ struct getter<lua_CFunction> {
 
 template<>
 struct getter<c_closure> {
-    static c_closure get(lua_State* L,  int index = -1) {
-        return c_closure(lua_tocfunction(L, index), -1);
+	static c_closure get(lua_State* L, int index = -1) {
+		return c_closure(lua_tocfunction(L, index), -1);
+	}
+};
+
+template<>
+struct getter<error> {
+    static error get(lua_State* L,  int index = -1) {
+        size_t sz = 0;
+        const char* err = lua_tolstring(L, index, &sz);
+        if (err == nullptr) {
+            return error(detail::direct_error, "");
+        }
+        return error(detail::direct_error, std::string(err, sz));
     }
 };
 

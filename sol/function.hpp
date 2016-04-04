@@ -65,7 +65,16 @@ private:
     }
 
 public:
-    using reference::reference;
+    function() = default;
+    function(const function&) = default;
+    function& operator=(const function&) = default;
+    function( function&& ) = default;
+    function& operator=( function&& ) = default;
+    function(lua_State* L, int index = -1): reference(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+        type_assert(L, index, type::function);
+#endif // Safety
+    }
     
     template<typename... Args>
     function_result operator()( Args&&... args ) const {

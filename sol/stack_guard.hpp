@@ -19,40 +19,41 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_USERDATA_HPP
-#define SOL_USERDATA_HPP
+#ifndef SOL_STACK_GUARD_HPP
+#define SOL_STACK_GUARD_HPP
 
-#include "reference.hpp"
+#include "compatibility/version.hpp"
+#include "error.hpp"
+#include <functional>
 
 namespace sol {
-class userdata : public reference {
-public:
-    userdata () noexcept = default;
-    userdata(const userdata&) = default;
-    userdata(userdata&&) = default;
-    userdata& operator=(const userdata&) = default;
-    userdata& operator=(userdata&&) = default;
-    userdata(lua_State* L, int index = -1) : reference(L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
-        type_assert(L, index, type::userdata);
-#endif // Safety
+namespace detail {
+inline void stack_fail(int, int) {
+#ifndef SOL_NO_EXCEPTIONS
+    throw error(detail::direct_error, "imbalanced stack after operation finish");
+#else
+    // Lol, what do you want, an error printout? :3c
+    // There's no sane default here. The right way would be C-style abort(), and that's not acceptable, so
+    // hopefully someone will register their own stack_fail thing here
+#endif // No Exceptions
+}
+} // detail
+
+struct stack_guard {
+    lua_State* L;
+    int top;
+    std::function<void(int, int)> fx;
+
+    stack_guard(lua_State* L) : stack_guard(L, lua_gettop(L)) {}
+    stack_guard(lua_State* L, int top, std::function<void(int, int)> fx = detail::stack_fail) : L(L), top(top), fx(std::move(fx)) {}
+    ~stack_guard() {
+        int bottom = lua_gettop(L);
+        if (top == bottom) {
+            return;
+        }
+	   fx(top, bottom);
     }
 };
-
-class lightuserdata : public reference {
-public:
-    lightuserdata () noexcept = default;
-    lightuserdata(const lightuserdata&) = default;
-    lightuserdata(lightuserdata&&) = default;
-    lightuserdata& operator=(const lightuserdata&) = default;
-    lightuserdata& operator=(lightuserdata&&) = default;
-    lightuserdata(lua_State* L, int index = -1) : reference(L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
-        type_assert(L, index, type::lightuserdata);
-#endif // Safety
-    }
-};
-
 } // sol
 
-#endif // SOL_USERDATA_HPP
+#endif // SOL_STACK_GUARD_HPP

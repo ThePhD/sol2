@@ -130,13 +130,15 @@ public:
     reference error_handler;
 
     protected_function() = default;
-    protected_function(lua_State* L, int index = -1): reference(L, index), error_handler(get_default_handler()) {
-        type_assert(L, index, type::function);
-    }
     protected_function(const protected_function&) = default;
     protected_function& operator=(const protected_function&) = default;
     protected_function( protected_function&& ) = default;
     protected_function& operator=( protected_function&& ) = default;
+    protected_function(lua_State* L, int index = -1): reference(L, index), error_handler(get_default_handler()) {
+#ifdef SOL_CHECK_ARGUMENTS
+        type_assert(L, index, type::function);
+#endif // Safety
+    }
 
     template<typename... Args>
     protected_function_result operator()(Args&&... args) const {

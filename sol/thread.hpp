@@ -28,7 +28,16 @@
 namespace sol {
 class thread : public reference {
 public:
-    using reference::reference;
+    thread () noexcept = default;
+    thread(const thread&) = default;
+    thread(thread&&) = default;
+    thread& operator=(const thread&) = default;
+    thread& operator=(thread&&) = default;
+    thread(lua_State* L, int index = -1) : reference(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+        type_assert(L, index, type::thread);
+#endif // Safety
+    }
 
     state_view state() const {
         return state_view(this->thread_state());

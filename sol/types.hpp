@@ -213,7 +213,7 @@ class coroutine;
 class thread;
 class object;
 class userdata;
-class light_userdata;
+class lightuserdata;
 
 template <typename T, typename = void>
 struct lua_type_of : std::integral_constant<type, type::userdata> {};
@@ -264,7 +264,7 @@ template <>
 struct lua_type_of<userdata_value> : std::integral_constant<type, type::userdata> {};
 
 template <>
-struct lua_type_of<light_userdata> : std::integral_constant<type, type::lightuserdata> {};
+struct lua_type_of<lightuserdata> : std::integral_constant<type, type::lightuserdata> {};
 
 template <>
 struct lua_type_of<userdata> : std::integral_constant<type, type::userdata> {};

@@ -152,7 +152,9 @@ public:
     table_core( ) noexcept : reference( ) { }
     table_core( const table_core<true>& global ) noexcept : reference( global ) { }
     table_core( lua_State* L, int index = -1 ) : reference( L, index ) {
+#ifdef SOL_CHECK_ARGUMENTS
         type_assert( L, index, type::table );
+#endif // Safety
     }
 
     table_iterator begin () const {
