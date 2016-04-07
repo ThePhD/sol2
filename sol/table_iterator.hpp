@@ -27,7 +27,8 @@
 
 namespace sol {
 
-class table_iterator : public std::iterator<std::input_iterator_tag, std::pair<object, object>> {
+template <typename reference_type>
+class basic_table_iterator : public std::iterator<std::input_iterator_tag, std::pair<object, object>> {
 private:
     typedef std::iterator<std::input_iterator_tag, std::pair<object, object>> base_t;
 public:
@@ -41,19 +42,18 @@ public:
     typedef const value_type& const_reference;
 
 private:
-    typedef ::sol::reference ref_t;
     std::pair<object, object> kvp;
-    ref_t ref;
+    reference_type ref;
     int tableidx = 0;
     std::ptrdiff_t idx = 0;
 
 public:
 
-    table_iterator () : idx(-1) {
+    basic_table_iterator () : idx(-1) {
 
     }
 
-    table_iterator(ref_t x) : ref(std::move(x)) {
+    basic_table_iterator(reference_type x) : ref(std::move(x)) {
         ref.push();
         tableidx = lua_gettop(ref.lua_state());
         stack::push(ref.lua_state(), nil);
@@ -64,7 +64,7 @@ public:
         --idx;
     }
 
-    table_iterator& operator++() {
+    basic_table_iterator& operator++() {
         if (idx == -1)
             return *this;
 
@@ -80,7 +80,7 @@ public:
         return *this;
     }
 
-    table_iterator operator++(int) {
+    basic_table_iterator operator++(int) {
         auto saved = *this;
         this->operator++();
         return saved;
@@ -94,15 +94,15 @@ public:
         return kvp;
     }
 
-    bool operator== (const table_iterator& right) const {
+    bool operator== (const basic_table_iterator& right) const {
         return idx == right.idx;
     }
 
-    bool operator!= (const table_iterator& right) const {
+    bool operator!= (const basic_table_iterator& right) const {
         return idx != right.idx;
     }
 
-    ~table_iterator() {
+    ~basic_table_iterator() {
         if (ref.valid()) {
             stack::remove(ref.lua_state(), tableidx, 1);
         }

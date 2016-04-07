@@ -32,6 +32,8 @@
 
 namespace sol {
 namespace detail {
+struct as_reference_tag{};
+
 using special_destruct_func = void(*)(void*);
 
 template <typename T, typename Real>
@@ -132,6 +134,16 @@ inline int multi_push(lua_State* L, T&& t, Args&&... args) {
     int pushcount = push(L, std::forward<T>(t));
     void(sol::detail::swallow{(pushcount += sol::stack::push(L, std::forward<Args>(args)), 0)... });
     return pushcount;
+}
+
+template<typename T, typename... Args>
+inline int push_reference(lua_State* L, T&& t, Args&&... args) {
+    typedef meta::And<
+        std::is_lvalue_reference<T>, 
+        meta::Not<std::is_const<T>>, 
+        meta::Not<is_lua_primitive<T>>
+    > use_reference_tag;
+    return pusher<std::conditional_t<use_reference_tag::value, detail::as_reference_tag, meta::Unqualified<T>>>{}.push(L, std::forward<T>(t), std::forward<Args>(args)...);
 }
 
 template <typename T, typename Handler>

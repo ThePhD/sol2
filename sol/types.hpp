@@ -105,6 +105,12 @@ struct up_value_index {
     operator int() const { return index; }
 };
 
+struct absolute_index {
+    int index;
+    absolute_index(lua_State* L, int idx) : index(lua_absindex(L, idx)) {}
+    operator int() const { return index; }
+};
+
 struct light_userdata_value {
     void* value;
     light_userdata_value(void* data) : value(data) {}
@@ -203,17 +209,38 @@ class reference;
 class stack_reference;
 template<typename T>
 class usertype;
-template <bool>
-class table_core;
+template <bool, typename T>
+class basic_table_core;
+template <bool b>
+using table_core = basic_table_core<b, reference>;
+template <bool b>
+using stack_table_core = basic_table_core<b, stack_reference>;
 typedef table_core<false> table;
 typedef table_core<true> global_table;
-class function;
-class protected_function;
+typedef stack_table_core<false> stack_table;
+typedef stack_table_core<true> stack_global_table;
+template <typename T>
+class basic_function;
+template <typename T>
+class basic_protected_function;
+using function = basic_function<reference>;
+using protected_function = basic_protected_function<reference>;
+using stack_function = basic_function<stack_reference>;
+using stack_protected_function = basic_protected_function<stack_reference>;
+template <typename base_t>
+class basic_object;
+template <typename base_t>
+class basic_userdata;
+template <typename base_t>
+class basic_lightuserdata;
+using object = basic_object<reference>;
+using stack_object = basic_object<stack_reference>;
+using userdata = basic_userdata<reference>;
+using stack_userdata = basic_userdata<stack_reference>;
+using lightuserdata = basic_lightuserdata<reference>;
+using stack_lightuserdata = basic_lightuserdata<stack_reference>;
 class coroutine;
 class thread;
-class object;
-class userdata;
-class lightuserdata;
 
 template <typename T, typename = void>
 struct lua_type_of : std::integral_constant<type, type::userdata> {};
@@ -243,13 +270,19 @@ template <>
 struct lua_type_of<global_table> : std::integral_constant<type, type::table> { };
 
 template <>
+struct lua_type_of<stack_table> : std::integral_constant<type, type::table> { };
+
+template <>
+struct lua_type_of<stack_global_table> : std::integral_constant<type, type::table> { };
+
+template <>
 struct lua_type_of<reference> : std::integral_constant<type, type::poly> {};
 
 template <>
 struct lua_type_of<stack_reference> : std::integral_constant<type, type::poly> {};
 
-template <>
-struct lua_type_of<object> : std::integral_constant<type, type::poly> {};
+template <typename Base>
+struct lua_type_of<basic_object<Base>> : std::integral_constant<type, type::poly> {};
 
 template <typename... Args>
 struct lua_type_of<std::tuple<Args...>> : std::integral_constant<type, type::poly> {};
@@ -263,26 +296,26 @@ struct lua_type_of<light_userdata_value> : std::integral_constant<type, type::li
 template <>
 struct lua_type_of<userdata_value> : std::integral_constant<type, type::userdata> {};
 
-template <>
-struct lua_type_of<lightuserdata> : std::integral_constant<type, type::lightuserdata> {};
+template <typename Base>
+struct lua_type_of<basic_lightuserdata<Base>> : std::integral_constant<type, type::lightuserdata> {};
 
-template <>
-struct lua_type_of<userdata> : std::integral_constant<type, type::userdata> {};
+template <typename Base>
+struct lua_type_of<basic_userdata<Base>> : std::integral_constant<type, type::userdata> {};
 
 template <>
 struct lua_type_of<lua_CFunction> : std::integral_constant<type, type::function> {};
 
-template <>
-struct lua_type_of<function> : std::integral_constant<type, type::function> {};
+template <typename Base>
+struct lua_type_of<basic_function<Base>> : std::integral_constant<type, type::function> {};
+
+template <typename Base>
+struct lua_type_of<basic_protected_function<Base>> : std::integral_constant<type, type::function> {};
 
 template <>
 struct lua_type_of<coroutine> : std::integral_constant<type, type::function> {};
 
 template <>
 struct lua_type_of<thread> : std::integral_constant<type, type::thread> {};
-
-template <>
-struct lua_type_of<protected_function> : std::integral_constant<type, type::function> {};
 
 template <typename Signature>
 struct lua_type_of<std::function<Signature>> : std::integral_constant<type, type::function>{};
@@ -303,10 +336,15 @@ template <typename T>
 struct is_lua_primitive : std::integral_constant<bool, 
     type::userdata != lua_type_of<meta::Unqualified<T>>::value
     || std::is_base_of<reference, meta::Unqualified<T>>::value
-    || meta::is_specialization_of<meta::Unqualified<T>, std::tuple>::value
-    || meta::is_specialization_of<meta::Unqualified<T>, std::pair>::value
+    || std::is_base_of<stack_reference, meta::Unqualified<T>>::value
+    || meta::is_specialization_of<std::tuple, meta::Unqualified<T>>::value
+    || meta::is_specialization_of<std::pair, meta::Unqualified<T>>::value
 > { };
 
+template <typename T>
+struct is_lua_primitive<std::reference_wrapper<T>> : std::true_type { };
+template <typename T>
+struct is_lua_primitive<optional<T>> : std::true_type {};
 template <typename T>
 struct is_lua_primitive<T*> : std::true_type {};
 template <>
@@ -318,12 +356,6 @@ struct is_lua_primitive<non_null<T>> : is_lua_primitive<T*> {};
 
 template <typename T>
 struct is_proxy_primitive : is_lua_primitive<T> { };
-
-template <typename T>
-struct is_proxy_primitive<std::reference_wrapper<T>> : std::true_type { };
-
-template <typename T>
-struct is_proxy_primitive<optional<T>> : std::true_type {};
 
 template <typename T>
 struct is_unique_usertype : std::false_type {};

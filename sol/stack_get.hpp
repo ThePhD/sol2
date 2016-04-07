@@ -69,6 +69,13 @@ struct getter<T, std::enable_if_t<std::is_base_of<reference, T>::value>> {
     }
 };
 
+template<typename T>
+struct getter<T, std::enable_if_t<std::is_base_of<stack_reference, T>::value>> {
+    static T get(lua_State* L, int index = -1) {
+        return T(L, index);
+    }
+};
+
 template<>
 struct getter<stack_reference> {
     static stack_reference get(lua_State* L, int index = -1) {
@@ -143,9 +150,9 @@ struct getter<lua_CFunction> {
 
 template<>
 struct getter<c_closure> {
-	static c_closure get(lua_State* L, int index = -1) {
-		return c_closure(lua_tocfunction(L, index), -1);
-	}
+    static c_closure get(lua_State* L, int index = -1) {
+        return c_closure(lua_tocfunction(L, index), -1);
+    }
 };
 
 template<>

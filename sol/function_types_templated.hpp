@@ -34,6 +34,30 @@ namespace function_detail {
         return stack::call_into_lua(return_type(), args_type(), fx, L, 1);
     }
 
+    template <typename R, typename V, V, typename T>
+    inline int call_set_assignable(std::false_type, T&&, lua_State* L) {
+        lua_pop(L, 2);
+        return luaL_error(L, "cannot write to this type: copy assignment/constructor not available");
+    }
+
+    template <typename R, typename V, V variable, typename T>
+    inline int call_set_assignable(std::true_type, lua_State* L, T&& mem) {
+        (mem.*variable) = stack::get<R>(L, 2);
+        lua_pop(L, 2);
+        return 0;
+    }
+
+    template <typename R, typename V, V, typename T>
+    inline int call_set_variable(std::false_type, lua_State* L, T&&) {
+        lua_pop(L, 2);
+        return luaL_error(L, "cannot write to a const variable");
+    }
+
+    template <typename R, typename V, V variable, typename T>
+    inline int call_set_variable(std::true_type, lua_State* L, T&& mem) {
+        return call_set_assignable<R, V, variable>(std::is_assignable<std::add_lvalue_reference_t<R>, R>(), L, std::forward<T>(mem));
+    }
+
     template <typename V, V variable>
     inline int call_wrapper_variable(std::true_type, lua_State* L) {
         typedef meta::bind_traits<meta::Unqualified<V>> traits_type;
@@ -41,14 +65,13 @@ namespace function_detail {
         typedef typename traits_type::return_type R;
         auto& mem = stack::get<T>(L, 1);
         switch (lua_gettop(L)) {
-        case 1:
+        case 1: {
+            decltype(auto) r = (mem.*variable);
             lua_pop(L, 1);
-            stack::push(L, (mem.*variable));
-            return 1;
+            stack::push_reference(L, std::forward<decltype(r)>(r));
+            return 1; }
         case 2:
-            (mem.*variable) = stack::get<R>(L, 2);
-            lua_pop(L, 2);
-            return 0;
+            return call_set_variable<R, V, variable>(meta::Not<std::is_const<R>>(), L, mem);
         default:
             return luaL_error(L, "incorrect number of arguments to member variable function call");
         }
@@ -70,7 +93,7 @@ namespace function_detail {
             auto& member = stack::get<T>(L, 1);
             return (member.*fx)(std::forward<decltype(args)>(args)...);
         };
-        int n = stack::call_into_lua<1>(return_type_list(), args_type(), mfx, L, 2);
+        int n = stack::call_into_lua<1>(return_type_list(), args_type(), L, 2, mfx);
         return n;
     }
 

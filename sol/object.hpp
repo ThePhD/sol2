@@ -27,22 +27,45 @@
 #include "stack.hpp"
 
 namespace sol {
-class object : public reference {
-public:
-    using reference::reference;
+template <typename base_t>
+class basic_object : public base_t {
+private:
+    template<typename T>
+    decltype(auto) as_stack(std::true_type) const {
+        return stack::get<T>(lua_state(), base_t::stack_index());
+    }
 
     template<typename T>
-    decltype(auto) as() const {
-        push();
+    decltype(auto) as_stack(std::false_type) const {
+        base_t::push();
         return stack::pop<T>(lua_state());
     }
 
     template<typename T>
-    bool is() const {
-        if (!valid())
-            return false;
+    bool is_stack(std::true_type) const {
+        return stack::check<T>(lua_state(), base_t::stack_index(), no_panic);
+    }
+
+    template<typename T>
+    bool is_stack(std::false_type) const {
         auto pp = stack::push_pop(*this);
         return stack::check<T>(lua_state(), -1, no_panic);
+    }
+
+public:
+    using base_t::base_t;
+    using base_t::lua_state;
+
+    template<typename T>
+    decltype(auto) as() const {
+        return as_stack<T>( std::is_same<base_t, stack_reference>() );
+    }
+
+    template<typename T>
+    bool is() const {
+        if (!base_t::valid())
+            return false;
+        return is_stack<T>(std::is_same<base_t, stack_reference>());
     }
 };
 

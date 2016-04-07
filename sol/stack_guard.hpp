@@ -34,7 +34,7 @@ inline void stack_fail(int, int) {
 #else
     // Lol, what do you want, an error printout? :3c
     // There's no sane default here. The right way would be C-style abort(), and that's not acceptable, so
-    // hopefully someone will register their own stack_fail thing here
+    // hopefully someone will register their own stack_fail thing for the `fx` parameter of stack_guard.
 #endif // No Exceptions
 }
 } // detail
@@ -42,16 +42,16 @@ inline void stack_fail(int, int) {
 struct stack_guard {
     lua_State* L;
     int top;
-    std::function<void(int, int)> fx;
+    std::function<void(int, int)> on_mismatch;
 
     stack_guard(lua_State* L) : stack_guard(L, lua_gettop(L)) {}
-    stack_guard(lua_State* L, int top, std::function<void(int, int)> fx = detail::stack_fail) : L(L), top(top), fx(std::move(fx)) {}
+    stack_guard(lua_State* L, int top, std::function<void(int, int)> fx = detail::stack_fail) : L(L), top(top), on_mismatch(std::move(fx)) {}
     ~stack_guard() {
         int bottom = lua_gettop(L);
         if (top == bottom) {
             return;
         }
-	   fx(top, bottom);
+        on_mismatch(top, bottom);
     }
 };
 } // sol

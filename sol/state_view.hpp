@@ -27,19 +27,6 @@
 #include <memory>
 
 namespace sol {
-namespace detail {
-inline int atpanic(lua_State* L) {
-#ifdef SOL_NO_EXCEPTIONS
-    (void)L;
-    return -1;
-#else
-    const char* message = lua_tostring(L, -1);
-    std::string err = message ? message : "An unexpected error occurred and forced the lua state to call atpanic";
-    throw error(err);
-#endif
-}
-} // detail
-
 enum class lib : char {
     base,
     package,
@@ -60,6 +47,9 @@ private:
     table reg;
     global_table global;
 public:
+    typedef typename global_table::iterator iterator;
+    typedef typename global_table::const_iterator const_iterator;
+
     state_view(lua_State* L):
     L(L),
     reg(L, LUA_REGISTRYINDEX),
@@ -152,19 +142,19 @@ public:
         }
     }
 
-    table_iterator begin () const {
+    iterator begin () const {
         return global.begin();
     }
 
-    table_iterator end() const {
+    iterator end() const {
         return global.end();
     }
 
-    table_iterator cbegin() const {
+    const_iterator cbegin() const {
         return global.cbegin();
     }
 
-    table_iterator cend() const {
+    const_iterator cend() const {
         return global.cend();
     }
 

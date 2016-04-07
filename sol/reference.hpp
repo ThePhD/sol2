@@ -23,6 +23,7 @@
 #define SOL_REFERENCE_HPP
 
 #include "types.hpp"
+#include "stack_reference.hpp"
 
 namespace sol {
 namespace stack {
@@ -65,9 +66,14 @@ protected:
         ref = luaL_ref(L, LUA_REGISTRYINDEX);
     }
 
+    int stack_index() const noexcept {
+        return -1;
+    }
+
 public:
     reference() noexcept = default;
-
+    reference(const stack_reference& r) noexcept : reference(r.lua_state(), r.stack_index()) {}
+    reference(stack_reference&& r) noexcept : reference(r.lua_state(), r.stack_index()) {}
     reference(lua_State* L, int index = -1) noexcept : L(L) {
         lua_pushvalue(L, index);
         ref = luaL_ref(L, LUA_REGISTRYINDEX);

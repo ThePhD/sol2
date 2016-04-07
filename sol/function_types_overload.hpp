@@ -92,7 +92,7 @@ struct overloaded_function : base_function {
     template <typename Fx, std::size_t I, typename... R, typename... Args>
     int call(types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
         auto& func = std::get<I>(overloads);
-        return stack::call_into_lua<0, false>(r, a, func, L, start);
+        return stack::call_into_lua<0, false>(r, a, L, start, func);
     }
 
     virtual int operator()(lua_State* L) override {
@@ -113,7 +113,7 @@ struct usertype_overloaded_function : base_function {
     int call(types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
         auto& func = std::get<I>(overloads);
         func.item = detail::ptr(stack::get<T>(L, 1));
-        return stack::call_into_lua<0, false>(r, a, func, L, start);
+        return stack::call_into_lua<0, false>(r, a, L, start, func);
     }
 
     virtual int operator()(lua_State* L) override {

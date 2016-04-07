@@ -50,6 +50,14 @@ struct pusher {
     }
 };
 
+template <>
+struct pusher<detail::as_reference_tag> {
+    template <typename T>
+    static int push(lua_State* L, T&& obj) {
+        return stack::push(L, detail::ptr(obj));
+    }
+};
+
 template<typename T>
 struct pusher<T*> {
     static int push(lua_State* L, T* obj) {

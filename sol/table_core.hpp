@@ -34,8 +34,9 @@ template <std::size_t n>
 struct clean { lua_State* L; clean(lua_State* L) : L(L) {} ~clean() { lua_pop(L, static_cast<int>(n)); } };
 struct ref_clean { lua_State* L; int& n; ref_clean(lua_State* L, int& n) : L(L), n(n) {} ~ref_clean() { lua_pop(L, static_cast<int>(n)); } };
 }
-template <bool top_level>
-class table_core : public reference {
+
+template <bool top_level, typename base_t>
+class basic_table_core : public base_t {
     friend class state;
     friend class state_view;
 
@@ -45,25 +46,25 @@ class table_core : public reference {
     template<typename Fx>
     void for_each(std::true_type, Fx&& fx) const {
         auto pp = stack::push_pop( *this );
-        stack::push( lua_state( ), nil );
-        while ( lua_next( this->lua_state( ), -2 ) ) {
-            sol::object key( lua_state( ), -2 );
-            sol::object value( lua_state( ), -1 );
+        stack::push( base_t::lua_state( ), nil );
+        while ( lua_next( base_t::lua_state( ), -2 ) ) {
+            sol::object key( base_t::lua_state( ), -2 );
+            sol::object value( base_t::lua_state( ), -1 );
             std::pair<sol::object&, sol::object&> keyvalue(key, value);
             fx( keyvalue );
-            lua_pop( lua_state( ), 1 );
+            lua_pop( base_t::lua_state( ), 1 );
         }
     }
 
     template<typename Fx>
     void for_each(std::false_type, Fx&& fx) const {
         auto pp = stack::push_pop( *this );
-        stack::push( lua_state( ), nil );
-        while ( lua_next( this->lua_state( ), -2 ) ) {
-            sol::object key( lua_state( ), -2 );
-            sol::object value( lua_state( ), -1 );
+        stack::push( base_t::lua_state( ), nil );
+        while ( lua_next( base_t::lua_state( ), -2 ) ) {
+            sol::object key( base_t::lua_state( ), -2 );
+            sol::object value( base_t::lua_state( ), -1 );
             fx( key, value );
-            lua_pop( lua_state( ), 1 );
+            lua_pop( base_t::lua_state( ), 1 );
         }
     }
 
@@ -72,21 +73,21 @@ class table_core : public reference {
     -> decltype(stack::pop<std::tuple<Ret0, Ret1, Ret...>>(nullptr)){
         typedef decltype(stack::pop<std::tuple<Ret0, Ret1, Ret...>>(nullptr)) Tup;
         return Tup(
-            traverse_get_optional<top_level, Ret0>(meta::is_specialization_of<meta::Unqualified<Ret0>, sol::optional>(), detail::forward_get<0>(keys)),
-            traverse_get_optional<top_level, Ret1>(meta::is_specialization_of<meta::Unqualified<Ret1>, sol::optional>(), detail::forward_get<1>(keys)),
-            traverse_get_optional<top_level, Ret>(meta::is_specialization_of<meta::Unqualified<Ret>, sol::optional>(), detail::forward_get<I>(keys))...
+            traverse_get_optional<top_level, Ret0>(meta::is_specialization_of<sol::optional, meta::Unqualified<Ret0>>(), detail::forward_get<0>(keys)),
+            traverse_get_optional<top_level, Ret1>(meta::is_specialization_of<sol::optional, meta::Unqualified<Ret1>>(), detail::forward_get<1>(keys)),
+            traverse_get_optional<top_level, Ret>(meta::is_specialization_of<sol::optional, meta::Unqualified<Ret>>(), detail::forward_get<I>(keys))...
         );
     }
 
     template<typename Ret, std::size_t I, typename Keys>
     decltype(auto) tuple_get( types<Ret>, std::index_sequence<I>, Keys&& keys ) const {
-        return traverse_get_optional<top_level, Ret>( meta::is_specialization_of<meta::Unqualified<Ret>, sol::optional>(), detail::forward_get<I>(keys) );
+        return traverse_get_optional<top_level, Ret>( meta::is_specialization_of<sol::optional, meta::Unqualified<Ret>>(), detail::forward_get<I>(keys) );
     }
 
     template<typename Pairs, std::size_t... I>
     void tuple_set( std::index_sequence<I...>, Pairs&& pairs ) {
         auto pp = stack::push_pop<top_level && (is_global<decltype(detail::forward_get<I * 2>(pairs))...>::value)>(*this);
-        void(detail::swallow{ (stack::set_field<top_level>(lua_state(), 
+        void(detail::swallow{ (stack::set_field<top_level>(base_t::lua_state(), 
             detail::forward_get<I * 2>(pairs),
             detail::forward_get<I * 2 + 1>(pairs)
         ), 0)... });
@@ -94,28 +95,28 @@ class table_core : public reference {
 
     template <bool global, typename T, typename Key>
     decltype(auto) traverse_get_deep( Key&& key ) const {
-        stack::get_field<global>( lua_state( ), std::forward<Key>( key ) );
-        return stack::get<T>( lua_state( ) );
+        stack::get_field<global>( base_t::lua_state( ), std::forward<Key>( key ) );
+        return stack::get<T>( base_t::lua_state( ) );
     }
 
     template <bool global, typename T, typename Key, typename... Keys>
     decltype(auto) traverse_get_deep( Key&& key, Keys&&... keys ) const {
-        stack::get_field<global>( lua_state( ), std::forward<Key>( key ) );
+        stack::get_field<global>( base_t::lua_state( ), std::forward<Key>( key ) );
         return traverse_get_deep<false, T>(std::forward<Keys>(keys)...);
     }
 
     template <bool global, typename T, std::size_t I, typename Key>
     decltype(auto) traverse_get_deep_optional( int& popcount, Key&& key ) const {
-        auto p = stack::probe_get_field<global>(lua_state(), std::forward<Key>(key), -1);
+        auto p = stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), -1);
         popcount += p.levels;
         if (!p.success)
             return T(nullopt);
-        return stack::get<T>( lua_state( ) );
+        return stack::get<T>( base_t::lua_state( ) );
     }
 
     template <bool global, typename T, std::size_t I, typename Key, typename... Keys>
     decltype(auto) traverse_get_deep_optional( int& popcount, Key&& key, Keys&&... keys ) const {
-        auto p = I > 0 ? stack::probe_get_field<global>(lua_state(), std::forward<Key>(key), - 1) : stack::probe_get_field<global>( lua_state( ), std::forward<Key>( key ) );
+        auto p = I > 0 ? stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), - 1) : stack::probe_get_field<global>( base_t::lua_state( ), std::forward<Key>( key ) );
         popcount += p.levels;
         if (!p.success)
             return T(nullopt);
@@ -124,52 +125,57 @@ class table_core : public reference {
 
     template <bool global, typename T, typename... Keys>
     decltype(auto) traverse_get_optional( std::false_type, Keys&&... keys ) const {
-        detail::clean<sizeof...(Keys)> c(lua_state());
+        detail::clean<sizeof...(Keys)> c(base_t::lua_state());
         return traverse_get_deep<top_level, T>(std::forward<Keys>(keys)...);
     }
 
     template <bool global, typename T, typename... Keys>
     decltype(auto) traverse_get_optional( std::true_type, Keys&&... keys ) const {
         int popcount = 0;
-        detail::ref_clean c(lua_state(), popcount);
+        detail::ref_clean c(base_t::lua_state(), popcount);
         return traverse_get_deep_optional<top_level, T, 0>(popcount, std::forward<Keys>(keys)...);
     }
 
     template <bool global, typename Key, typename Value>
     void traverse_set_deep( Key&& key, Value&& value ) const {
-        stack::set_field<global>( lua_state( ), std::forward<Key>( key ), std::forward<Value>(value) );
+        stack::set_field<global>( base_t::lua_state( ), std::forward<Key>( key ), std::forward<Value>(value) );
     }
 
     template <bool global, typename Key, typename... Keys>
     void traverse_set_deep( Key&& key, Keys&&... keys ) const {
-        stack::get_field<global>( lua_state( ), std::forward<Key>( key ) );
+        stack::get_field<global>( base_t::lua_state( ), std::forward<Key>( key ) );
         traverse_set_deep<false>(std::forward<Keys>(keys)...);
     }
 
-    table_core(lua_State* L, detail::global_tag t) noexcept : reference(L, t) { }
+    basic_table_core(lua_State* L, detail::global_tag t) noexcept : reference(L, t) { }
 
 public:
-    table_core( ) noexcept : reference( ) { }
-    table_core( const table_core<true>& global ) noexcept : reference( global ) { }
-    table_core( lua_State* L, int index = -1 ) : reference( L, index ) {
+    typedef basic_table_iterator<base_t> iterator;
+    typedef iterator const_iterator;
+
+    basic_table_core( ) noexcept : base_t( ) { }
+    basic_table_core( const table_core<true>& global ) noexcept : base_t( global ) { }
+    basic_table_core(const stack_reference& r) : basic_table_core(r.lua_state(), r.stack_index()) {}
+    basic_table_core(stack_reference&& r) : basic_table_core(r.lua_state(), r.stack_index()) {}
+    basic_table_core( lua_State* L, int index = -1 ) : base_t( L, index ) {
 #ifdef SOL_CHECK_ARGUMENTS
         type_assert( L, index, type::table );
 #endif // Safety
     }
 
-    table_iterator begin () const {
-        return table_iterator(*this);
+    iterator begin () const {
+        return iterator(*this);
     }
 
-    table_iterator end() const {
-        return table_iterator();
+    iterator end() const {
+        return iterator();
     }
 
-    table_iterator cbegin() const {
+    const_iterator cbegin() const {
         return begin();
     }
 
-    table_iterator cend() const {
+    const_iterator cend() const {
         return end();
     }
 
@@ -202,48 +208,48 @@ public:
     template <typename T, typename... Keys>
     decltype(auto) traverse_get( Keys&&... keys ) const {
         auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-        return traverse_get_optional<top_level, T>(meta::is_specialization_of<meta::Unqualified<T>, sol::optional>(), std::forward<Keys>(keys)...);
+        return traverse_get_optional<top_level, T>(meta::is_specialization_of<sol::optional, meta::Unqualified<T>>(), std::forward<Keys>(keys)...);
     }
 
     template <typename... Keys>
-    table_core& traverse_set( Keys&&... keys ) {
+    basic_table_core& traverse_set( Keys&&... keys ) {
         auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
         traverse_set_deep<top_level>(std::forward<Keys>(keys)...);
-        lua_pop(lua_state(), static_cast<int>(sizeof...(Keys)-2));
+        lua_pop(base_t::lua_state(), static_cast<int>(sizeof...(Keys)-2));
         return *this;
     }
 
     template<typename... Args>
-    table_core& set( Args&&... args ) {
+    basic_table_core& set( Args&&... args ) {
         tuple_set(std::make_index_sequence<sizeof...(Args) / 2>(), std::forward_as_tuple(std::forward<Args>(args)...));
         return *this;
     }
 
     template<typename T>
-    table_core& set_usertype( usertype<T>& user ) {
+    basic_table_core& set_usertype( usertype<T>& user ) {
         return set_usertype(usertype_traits<T>::name, user);
     }
 
     template<typename Key, typename T>
-    table_core& set_usertype( Key&& key, usertype<T>& user ) {
+    basic_table_core& set_usertype( Key&& key, usertype<T>& user ) {
         return set(std::forward<Key>(key), user);
     }
 
     template<typename Class, typename... Args>
-    table_core& new_usertype(const std::string& name, Args&&... args) {
+    basic_table_core& new_usertype(const std::string& name, Args&&... args) {
         usertype<Class> utype(std::forward<Args>(args)...);
         set_usertype(name, utype);
         return *this;
     }
 
     template<typename Class, typename CTor0, typename... CTor, typename... Args>
-    table_core& new_usertype(const std::string& name, Args&&... args) {
+    basic_table_core& new_usertype(const std::string& name, Args&&... args) {
         constructors<types<CTor0, CTor...>> ctor{};
         return new_usertype<Class>(name, ctor, std::forward<Args>(args)...);
     }
 
     template<typename Class, typename... CArgs, typename... Args>
-    table_core& new_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
+    basic_table_core& new_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
         usertype<Class> utype(ctor, std::forward<Args>(args)...);
         set_usertype(name, utype);
         return *this;
@@ -257,7 +263,7 @@ public:
 
     size_t size( ) const {
         auto pp = stack::push_pop( *this );
-        return lua_rawlen(lua_state(), -1);
+        return lua_rawlen(base_t::lua_state(), -1);
     }
 
     bool empty() const {
@@ -265,28 +271,28 @@ public:
     }
 
     template<typename T>
-    proxy<table_core&, T> operator[]( T&& key ) & {
-        return proxy<table_core&, T>( *this, std::forward<T>( key ) );
+    proxy<basic_table_core&, T> operator[]( T&& key ) & {
+        return proxy<basic_table_core&, T>( *this, std::forward<T>( key ) );
     }
 
     template<typename T>
-    proxy<const table_core&, T> operator[]( T&& key ) const & {
-        return proxy<const table_core&, T>( *this, std::forward<T>( key ) );
+    proxy<const basic_table_core&, T> operator[]( T&& key ) const & {
+        return proxy<const basic_table_core&, T>( *this, std::forward<T>( key ) );
     }
 
     template<typename T>
-    proxy<table_core, T> operator[]( T&& key ) && {
-        return proxy<table_core, T>( *this, std::forward<T>( key ) );
+    proxy<basic_table_core, T> operator[]( T&& key ) && {
+        return proxy<basic_table_core, T>( *this, std::forward<T>( key ) );
     }
 
     template<typename Sig, typename Key, typename... Args>
-    table_core& set_function( Key&& key, Args&&... args ) {
+    basic_table_core& set_function( Key&& key, Args&&... args ) {
         set_fx( types<Sig>( ), std::forward<Key>( key ), std::forward<Args>( args )... );
         return *this;
     }
 
     template<typename Key, typename... Args>
-    table_core& set_function( Key&& key, Args&&... args ) {
+    basic_table_core& set_function( Key&& key, Args&&... args ) {
         set_fx( types<>( ), std::forward<Key>( key ), std::forward<Args>( args )... );
         return *this;
     }
@@ -297,12 +303,12 @@ private:
         set_resolved_function<R( Args... )>( std::forward<Key>( key ), std::forward<Fx>( fx ) );
     }
 
-    template<typename Fx, typename Key, meta::EnableIf<meta::is_specialization_of<meta::Unqualified<Fx>, overload_set>> = 0>
+    template<typename Fx, typename Key, meta::EnableIf<meta::is_specialization_of<overload_set, meta::Unqualified<Fx>>> = 0>
     void set_fx( types<>, Key&& key, Fx&& fx ) {
         set(std::forward<Key>(key), std::forward<Fx>(fx));
     }
 
-    template<typename Fx, typename Key, typename... Args, meta::DisableIf<meta::is_specialization_of<meta::Unqualified<Fx>, overload_set>> = 0>
+    template<typename Fx, typename Key, typename... Args, meta::DisableIf<meta::is_specialization_of<overload_set, meta::Unqualified<Fx>>> = 0>
     void set_fx( types<>, Key&& key, Fx&& fx, Args&&... args ) {
         set(std::forward<Key>(key), function_args(std::forward<Fx>(fx), std::forward<Args>(args)...));
     }
@@ -336,31 +342,31 @@ public:
     }
 
     table create(int narr = 0, int nrec = 0) {
-        return create(lua_state(), narr, nrec);
+        return create(base_t::lua_state(), narr, nrec);
     }
 
     template <typename Key, typename Value, typename... Args>
     table create(int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
-        return create(lua_state(), narr, nrec, std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
+        return create(base_t::lua_state(), narr, nrec, std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
     }
     
     template <typename Name>
     table create(Name&& name, int narr = 0, int nrec = 0) {
-        table x = create(lua_state(), narr, nrec);
+        table x = create(base_t::lua_state(), narr, nrec);
         this->set(std::forward<Name>(name), x);
         return x;
     }
 
     template <typename Name, typename Key, typename Value, typename... Args>
     table create(Name&& name, int narr, int nrec, Key&& key, Value&& value, Args&&... args) {
-        table x = create(lua_state(), narr, nrec, std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
+        table x = create(base_t::lua_state(), narr, nrec, std::forward<Key>(key), std::forward<Value>(value), std::forward<Args>(args)...);
         this->set(std::forward<Name>(name), x);
         return x;
     }
 
     template <typename... Args>
     table create_with(Args&&... args) {
-        return create_with(lua_state(), std::forward<Args>(args)...);
+        return create_with(base_t::lua_state(), std::forward<Args>(args)...);
     }
 
     template <typename Name, typename... Args>

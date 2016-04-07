@@ -22,8 +22,6 @@
 #ifndef SOL_STACK_REFERENCE_HPP
 #define SOL_STACK_REFERENCE_HPP
 
-#include "reference.hpp"
-
 namespace sol {
 class stack_reference {
 private:
@@ -31,6 +29,9 @@ private:
     int index = 0;
 
 protected:
+    int registry_index () const noexcept {
+        return LUA_NOREF;
+    }
 
 public:
     stack_reference() noexcept = default;
@@ -43,6 +44,10 @@ public:
     int push() const noexcept {
         lua_pushvalue(L, index);
         return 1;
+    }
+
+    int stack_index () const noexcept {
+        return index;
     }
 
     type get_type() const noexcept {

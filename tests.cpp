@@ -801,3 +801,60 @@ TEST_CASE("usertype/overloading", "Check if overloading works properly for usert
 
     REQUIRE_THROWS(lua.script("r:func(1,2,'meow')"));
 }
+
+TEST_CASE("usertype/reference-and-constness", "Make sure constness compiles properly and errors out at runtime") {
+    struct bark {
+        int var = 50;
+    };
+    struct woof {
+        bark b;
+    };
+
+    struct nested {
+        const int f = 25;
+    };
+
+    struct outer {
+        nested n;
+    };
+
+    bool caughterror = false;
+    std::string msg;
+    sol::state lua;
+    lua.new_usertype<woof>("woof",
+        "b", &woof::b);
+    lua.new_usertype<bark>("bark",
+        "var", &bark::var);
+    lua.new_usertype<outer>("outer",
+        "n", &outer::n);
+    lua.set("w", woof());
+    lua.set("n", nested());
+    lua.set("o", outer());
+    lua.set("f", sol::c_call<decltype(&nested::f), &nested::f>);
+    try {
+        lua.script(R"(
+    x = w.b
+    x.var = 20
+    val = w.b.var == x.var
+    v = f(n);
+    f(n, 50)
+)");
+    }
+    catch (const sol::error& e) {
+        msg = e.what();
+        caughterror = true;
+    }
+    REQUIRE(caughterror);
+    REQUIRE(!msg.empty());
+    woof& w = lua["w"];
+    bark& x = lua["x"];
+    nested& n = lua["n"];
+    int v = lua["v"];
+    bool val = lua["val"];
+    // enforce reference semantics
+    REQUIRE(std::addressof(w.b) == std::addressof(x));
+    REQUIRE(n.f == 25);
+    REQUIRE(v == 25);
+    REQUIRE(val);
+    REQUIRE_THROWS(lua.script("o.n = 25"));
+}

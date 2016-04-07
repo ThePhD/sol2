@@ -25,28 +25,34 @@
 #include "reference.hpp"
 
 namespace sol {
-class userdata : public reference {
+template <typename base_t>
+class basic_userdata : public base_t {
 public:
-    userdata () noexcept = default;
-    userdata(const userdata&) = default;
-    userdata(userdata&&) = default;
-    userdata& operator=(const userdata&) = default;
-    userdata& operator=(userdata&&) = default;
-    userdata(lua_State* L, int index = -1) : reference(L, index) {
+    basic_userdata () noexcept = default;
+    basic_userdata(const basic_userdata&) = default;
+    basic_userdata(basic_userdata&&) = default;
+    basic_userdata& operator=(const basic_userdata&) = default;
+    basic_userdata& operator=(basic_userdata&&) = default;
+    basic_userdata(const stack_reference& r) : basic_userdata(r.lua_state(), r.stack_index()) {}
+    basic_userdata(stack_reference&& r) : basic_userdata(r.lua_state(), r.stack_index()) {}
+    basic_userdata(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
         type_assert(L, index, type::userdata);
 #endif // Safety
     }
 };
 
-class lightuserdata : public reference {
+template <typename base_t>
+class basic_lightuserdata : public base_t {
 public:
-    lightuserdata () noexcept = default;
-    lightuserdata(const lightuserdata&) = default;
-    lightuserdata(lightuserdata&&) = default;
-    lightuserdata& operator=(const lightuserdata&) = default;
-    lightuserdata& operator=(lightuserdata&&) = default;
-    lightuserdata(lua_State* L, int index = -1) : reference(L, index) {
+    basic_lightuserdata () noexcept = default;
+    basic_lightuserdata(const basic_lightuserdata&) = default;
+    basic_lightuserdata(basic_lightuserdata&&) = default;
+    basic_lightuserdata& operator=(const basic_lightuserdata&) = default;
+    basic_lightuserdata& operator=(basic_lightuserdata&&) = default;
+    basic_lightuserdata(const stack_reference& r) : basic_lightuserdata(r.lua_state(), r.stack_index()) {}
+    basic_lightuserdata(stack_reference&& r) : basic_lightuserdata(r.lua_state(), r.stack_index()) {}
+    basic_lightuserdata(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
         type_assert(L, index, type::lightuserdata);
 #endif // Safety

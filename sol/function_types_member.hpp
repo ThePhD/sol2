@@ -38,7 +38,7 @@ struct functor_function : public base_function {
     functor_function(Args&&... args): fx(std::forward<Args>(args)...) {}
 
     int call(lua_State* L) {
-        return stack::call_into_lua(meta::tuple_types<return_type>(), args_types(), fx, L, 1);
+        return stack::call_into_lua(meta::tuple_types<return_type>(), args_types(), L, 1, fx);
     }
 
     virtual int operator()(lua_State* L) override {
@@ -70,7 +70,7 @@ struct member_function : public base_function {
     member_function(F&& f, Args&&... args) : fx(std::forward<F>(f), std::forward<Args>(args)...) {}
 
     int call(lua_State* L) {
-        return stack::call_into_lua(meta::tuple_types<return_type>(), args_types(), fx, L, 1);
+        return stack::call_into_lua(meta::tuple_types<return_type>(), args_types(), L, 1, fx);
     }
 
     virtual int operator()(lua_State* L) override {
@@ -86,21 +86,39 @@ struct member_variable : public base_function {
     typedef typename meta::bind_traits<function_type>::args_type args_types;
     function_type var;
     T member;
+    typedef std::add_lvalue_reference_t<meta::Unwrapped<std::remove_reference_t<decltype(detail::deref(member))>>> M;
 
-    template<typename Fx, typename... Args>
-    member_variable(Fx&& fx, Args&&... args): var(std::forward<Fx>(fx)), member(std::forward<Args>(args)...) {}
+    template<typename V, typename... Args>
+    member_variable(V&& v, Args&&... args): var(std::forward<V>(v)), member(std::forward<Args>(args)...) {}
+
+    int set_assignable(std::false_type, lua_State* L, M) {
+        lua_pop(L, 1);
+        return luaL_error(L, "cannot write to this type: copy assignment/constructor not available");
+    }
+
+    int set_assignable(std::true_type, lua_State* L, M mem) {
+        (mem.*var) = stack::get<return_type>(L, 1);
+        lua_pop(L, 1);
+        return 0;
+    }
+
+    int set_variable(std::true_type, lua_State* L, M mem) {
+        return set_assignable(std::is_assignable<std::add_lvalue_reference_t<return_type>, return_type>(), L, mem);
+    }
+
+    int set_variable(std::false_type, lua_State* L, M) {
+        lua_pop(L, 1);
+        return luaL_error(L, "cannot write to a const variable");
+    }
 
     int call(lua_State* L) {
-        auto& mem = detail::unwrap(detail::deref(member));
+        M mem = detail::unwrap(detail::deref(member));
         switch (lua_gettop(L)) {
-        case 0: {
+        case 0:
             stack::push(L, (mem.*var));
-            return 1; 
-        }
+            return 1;
         case 1:
-            (mem.*var) = stack::get<return_type>(L, 1);
-            lua_pop(L, 1);
-            return 0;
+            return set_variable(meta::Not<std::is_const<return_type>>(), L, mem);
         default:
             return luaL_error(L, "sol: incorrect number of arguments to member variable function");
         }

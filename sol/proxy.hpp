@@ -32,7 +32,7 @@ namespace sol {
 template<typename Table, typename Key>
 struct proxy : public proxy_base<proxy<Table, Key>> {
 private:
-    typedef meta::If<meta::is_specialization_of<Key, std::tuple>, Key, std::tuple<meta::If<std::is_array<meta::Unqualified<Key>>, Key&, meta::Unqualified<Key>>>> key_type;
+    typedef meta::If<meta::is_specialization_of<std::tuple, Key>, Key, std::tuple<meta::If<std::is_array<meta::Unqualified<Key>>, Key&, meta::Unqualified<Key>>>> key_type;
 
     template<typename T, std::size_t... I>
     decltype(auto) tuple_get(std::index_sequence<I...>) const {

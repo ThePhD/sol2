@@ -182,8 +182,7 @@ struct checker<T, type::userdata, C> {
         if (meta::Or<std::is_same<T, light_userdata_value>, std::is_same<T, userdata_value>>::value)
             return true;
         if (lua_getmetatable(L, index) == 0) {
-             handler(L, index, type::userdata, indextype);
-             return false;
+             return true;
         }
         if (stack_detail::check_metatable<U>(L))
             return true;

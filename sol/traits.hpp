@@ -70,10 +70,10 @@ struct remove_member_pointer<R T::* const> {
 template<typename T>
 using remove_member_pointer_t = remove_member_pointer<T>;
 
-template<typename T, template<typename...> class Templ>
+template<template<typename...> class Templ, typename T>
 struct is_specialization_of : std::false_type { };
 template<typename... T, template<typename...> class Templ>
-struct is_specialization_of<Templ<T...>, Templ> : std::true_type { };
+struct is_specialization_of<Templ, Templ<T...>> : std::true_type { };
 
 template<class T, class...>
 struct are_same : std::true_type { };
@@ -380,12 +380,12 @@ using is_c_str = Or<
 >;
 
 namespace meta_detail {
-template <typename T, meta::DisableIf<meta::is_specialization_of<meta::Unqualified<T>, std::tuple>> = 0>
+template <typename T, meta::DisableIf<meta::is_specialization_of<std::tuple, meta::Unqualified<T>>> = 0>
 decltype(auto) force_tuple(T&& x) {
     return std::forward_as_tuple(std::forward<T>(x));
 }
 
-template <typename T, meta::EnableIf<meta::is_specialization_of<meta::Unqualified<T>, std::tuple>> = 0>
+template <typename T, meta::EnableIf<meta::is_specialization_of<std::tuple, meta::Unqualified<T>>> = 0>
 decltype(auto) force_tuple(T&& x) {
     return std::forward<T>(x);
 }

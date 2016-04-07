@@ -103,7 +103,7 @@ struct pusher<function_sig<Sigs...>> {
 
     template <typename Fx, typename T, typename... Args>
     static void select_member_variable(std::true_type, lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
-        typedef meta::Bool<meta::is_specialization_of<meta::Unqualified<T>, std::reference_wrapper>::value || std::is_pointer<T>::value> is_reference;
+        typedef meta::Bool<meta::is_specialization_of<std::reference_wrapper, meta::Unqualified<T>>::value || std::is_pointer<T>::value> is_reference;
         select_reference_member_variable(is_reference(), L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
     }
 
@@ -141,7 +141,7 @@ struct pusher<function_sig<Sigs...>> {
 
     template <typename Fx, typename T, typename... Args>
     static void select_member_function(std::true_type, lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
-        typedef meta::Bool<meta::is_specialization_of<meta::Unqualified<T>, std::reference_wrapper>::value || std::is_pointer<T>::value> is_reference;
+        typedef meta::Bool<meta::is_specialization_of<std::reference_wrapper, meta::Unqualified<T>>::value || std::is_pointer<T>::value> is_reference;
         select_reference_member_function(is_reference(), L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
     }
 

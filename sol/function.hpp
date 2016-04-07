@@ -32,22 +32,23 @@
 #include <memory>
 
 namespace sol {
-class function : public reference {
+template <typename base_t>
+class basic_function : public base_t {
 private:
     void luacall( std::ptrdiff_t argcount, std::ptrdiff_t resultcount ) const {
-        lua_callk( lua_state( ), static_cast<int>( argcount ), static_cast<int>( resultcount ), 0, nullptr );
+        lua_callk( base_t::lua_state( ), static_cast<int>( argcount ), static_cast<int>( resultcount ), 0, nullptr );
     }
 
     template<std::size_t... I, typename... Ret>
     auto invoke( types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n ) const {
         luacall( n, sizeof...( Ret ) );
-        return stack::pop<std::tuple<Ret...>>( lua_state( ) );
+        return stack::pop<std::tuple<Ret...>>( base_t::lua_state( ) );
     }
 
     template<std::size_t I, typename Ret>
     Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n ) const {
         luacall( n, 1 );
-        return stack::pop<Ret>( lua_state( ) );
+        return stack::pop<Ret>( base_t::lua_state( ) );
     }
 
     template <std::size_t I>
@@ -56,21 +57,21 @@ private:
     }
 
     function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n ) const {
-        int stacksize = lua_gettop( lua_state( ) );
+        int stacksize = lua_gettop( base_t::lua_state( ) );
         int firstreturn = std::max( 1, stacksize - static_cast<int>( n ) );
         luacall(n, LUA_MULTRET);
-        int poststacksize = lua_gettop( lua_state( ) );
+        int poststacksize = lua_gettop( base_t::lua_state( ) );
         int returncount = poststacksize - (firstreturn - 1);
-        return function_result( lua_state( ), firstreturn, returncount );
+        return function_result( base_t::lua_state( ), firstreturn, returncount );
     }
 
 public:
-    function() = default;
-    function(const function&) = default;
-    function& operator=(const function&) = default;
-    function( function&& ) = default;
-    function& operator=( function&& ) = default;
-    function(lua_State* L, int index = -1): reference(L, index) {
+    basic_function() = default;
+    basic_function(const basic_function&) = default;
+    basic_function& operator=(const basic_function&) = default;
+    basic_function(basic_function&& ) = default;
+    basic_function& operator=(basic_function&& ) = default;
+    basic_function(lua_State* L, int index = -1): base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
         type_assert(L, index, type::function);
 #endif // Safety
@@ -88,8 +89,8 @@ public:
 
     template<typename... Ret, typename... Args>
     decltype(auto) call( Args&&... args ) const {
-        push( );
-        int pushcount = stack::multi_push( lua_state( ), std::forward<Args>( args )... );
+        base_t::push( );
+        int pushcount = stack::multi_push( base_t::lua_state( ), std::forward<Args>( args )... );
         return invoke( types<Ret...>( ), std::make_index_sequence<sizeof...(Ret)>(), pushcount );
     }
 };

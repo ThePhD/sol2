@@ -97,19 +97,19 @@ struct functor<T, Func, std::enable_if_t<std::is_member_object_pointer<Func>::va
     }
 
     template<typename Arg>
-    void call(types<return_type>, Arg&& arg) {
+    void call(Arg&& arg) {
         T& member = *item;
         (member.*invocation) = std::forward<Arg>(arg);
     }
 
-    return_type call(types<return_type>) {
+    return_type& call() {
          T& member = *item;
          return (member.*invocation);
     }
 
     template<typename... Args>
-    auto operator()(Args&&... args) -> decltype(std::declval<functor>().call(types<return_type>{}, std::forward<Args>(args)...)) {
-        return this->call(types<return_type>{}, std::forward<Args>(args)...);
+    decltype(auto) operator()(Args&&... args) {
+        return this->call(std::forward<Args>(args)...);
     }
 };
 
