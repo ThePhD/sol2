@@ -831,21 +831,13 @@ TEST_CASE("usertype/reference-and-constness", "Make sure constness compiles prop
     lua.set("n", nested());
     lua.set("o", outer());
     lua.set("f", sol::c_call<decltype(&nested::f), &nested::f>);
-    try {
-        lua.script(R"(
+    lua.script(R"(
     x = w.b
     x.var = 20
     val = w.b.var == x.var
     v = f(n);
-    f(n, 50)
-)");
-    }
-    catch (const sol::error& e) {
-        msg = e.what();
-        caughterror = true;
-    }
-    REQUIRE(caughterror);
-    REQUIRE(!msg.empty());
+    )");
+
     woof& w = lua["w"];
     bark& x = lua["x"];
     nested& n = lua["n"];
@@ -856,5 +848,7 @@ TEST_CASE("usertype/reference-and-constness", "Make sure constness compiles prop
     REQUIRE(n.f == 25);
     REQUIRE(v == 25);
     REQUIRE(val);
+    
+    REQUIRE_THROWS(lua.script("f(n, 50)"));
     REQUIRE_THROWS(lua.script("o.n = 25"));
 }
