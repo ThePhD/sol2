@@ -31,7 +31,7 @@ namespace function_detail {
         typedef meta::bind_traits<meta::Unqualified<F>> traits_type;
         typedef typename traits_type::args_type args_type;
         typedef meta::tuple_types<typename traits_type::return_type> return_type;
-        return stack::call_into_lua(return_type(), args_type(), fx, L, 1);
+        return stack::call_into_lua(return_type(), args_type(), L, 1, fx);
     }
 
     template <typename R, typename V, V, typename T>

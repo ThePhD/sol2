@@ -467,6 +467,8 @@ TEST_CASE("functions/all-kinds", "Register all kinds of functions, make sure the
     lua.set_function("k", &test_2::a);
     lua.set_function("l", sol::c_call<decltype(&test_1::a), &test_1::a>);
     lua.set_function("m", &test_2::a, &t2);
+    lua.set_function("n", sol::c_call<decltype(&test_1::x_bark), &test_1::x_bark>);
+    lua.set_function("o", sol::c_call<decltype(test_1::x_bark), test_1::x_bark>);
 
     lua.script(R"(
 o1 = test_1.new()
