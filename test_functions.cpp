@@ -467,7 +467,7 @@ TEST_CASE("functions/all-kinds", "Register all kinds of functions, make sure the
     lua.set_function("k", &test_2::a);
     lua.set_function("l", sol::c_call<decltype(&test_1::a), &test_1::a>);
     lua.set_function("m", &test_2::a, &t2);
-    lua.set_function("n", sol::c_call<decltype(&test_1::x_bark), &test_1::x_bark>);
+    lua.set_function("n", sol::c_call<decltype(&non_overloaded), &non_overloaded>);
 
     lua.script(R"(
 o1 = test_1.new()
@@ -501,11 +501,13 @@ L1 = l(o1)
 M0 = m()
 m(256)
 M1 = m()
+
+N = n(1, 2, 3)
     )");
-    int ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1;
-    std::tie( ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1 ) 
-    = lua.get<int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int>(
-        "ob", "A", "B", "C", "D", "F", "G0", "G1", "H", "I", "J0", "J1", "K0", "K1", "L0", "L1", "M0", "M1"
+    int ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1, N;
+    std::tie( ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1, N ) 
+    = lua.get<int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int>(
+        "ob", "A", "B", "C", "D", "F", "G0", "G1", "H", "I", "J0", "J1", "K0", "K1", "L0", "L1", "M0", "M1", "N"
     );
    
     REQUIRE(ob == 0xA);
@@ -533,9 +535,11 @@ M1 = m()
     REQUIRE( M0 == 0xC );
     REQUIRE( M1 == 256 );
 
-    sol::bond( ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1 ) 
-    = lua.get<int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int>(
-        "ob", "A", "B", "C", "D", "F", "G0", "G1", "H", "I", "J0", "J1", "K0", "K1", "L0", "L1", "M0", "M1"
+    REQUIRE( N == 13 );
+
+    sol::bond( ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1, N ) 
+    = lua.get<int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int>(
+        "ob", "A", "B", "C", "D", "F", "G0", "G1", "H", "I", "J0", "J1", "K0", "K1", "L0", "L1", "M0", "M1", "N"
     );
    
     REQUIRE(ob == 0xA);
@@ -562,6 +566,8 @@ M1 = m()
 
     REQUIRE( M0 == 0xC );
     REQUIRE( M1 == 256 );
+
+    REQUIRE( N == 13 );
 }
 
 TEST_CASE("simple/call-with-parameters", "Lua function is called with a few parameters from C++") {
