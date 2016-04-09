@@ -89,7 +89,7 @@ Explanations for a few categories are below (rest are self-explanatory).
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+
 | tables                    |      ~      |     ~      |     ✔    |    ✔    |     ✔    |     ✔     |     ~     |        ✔       |     ✔    |     ✗    |     ✗     |        ~        |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+
-| table chaining            |      ~      |     ~      |     ✔    |    ✔    |     ✔    |     ✔     |     ✗     |        ✔       |     ✔    |     ✗    |     ✗     |        ~        |
+| table chaining            |      ~      |     ~      |     ~    |    ✔    |     ✔    |     ✔     |     ✗     |        ✔       |     ✔    |     ✗    |     ✗     |        ~        |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+
 | arbitrary keys            |      ~      |     ✔      |     ✔    |    ✔    |     ✔    |     ✔     |     ✗     |        ~       |     ✔    |     ✗    |     ✗     |        ✗        |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+
@@ -145,6 +145,7 @@ Plain C -
 kaguya -
 
 * Probably the closest in implementation details and interface to Sol itself
+* member variables are automatically turned into ``obj:x( value )`` to set and ``obj:x()`` to get
 * Inspired coroutine support for Sol
 * Library author (satoren) is a nice guy!
 * C++11/14, or boostified (which makes it C++03 compatible)
@@ -167,6 +168,7 @@ lua-intf -
 * Macro-based registration (strange pseudo-language)
 * Fairly fast in most regards
 * Registering classes/"modules" in using C++ code is extremely verbose
+* In order to chain lookups, one has to do ``mykey.mykey2`` on the ``operator[]`` lookup (e.g., you can't nest them arbitrarily, you have to pre-compose the proper lookup string) (fails miserably for non-string lookups!).
 * Not too shabby!
 
 Selene -
@@ -204,6 +206,8 @@ luabind -
 * One of the older frameworks, but has many people updating it and providing "deboostified" versions
 * Strange in-lua keywords and parsing to allow for classes to be written in lua
 	- not sure if good feature; vendor lock-in to that library to depend on this specific class syntax?
+* Comprehensive lua bindings (can even bind "properties")
+* Wonky table support: no basic conversion functions on ``luabind::object``; have to push object then use lua API to get what you want
 
 lua-api-pp -
 
@@ -225,7 +229,8 @@ SLB3 -
 oolua -
 
 * The syntax for this library is thicker than a brick. No, seriously. `Go read the docs`_ 
-* The worst in terms of how to use it: may have docs, but the DSL (despite using C++11) is extraordinarily crappy with thick, hard-to-debug/hard-to-error-check macros (and seems not to compile on VS 2015 Update 2 properly for Userdata bindings?)
+* The worst in terms of how to use it: may have docs, but the DSL (despite using C++11) is extraordinarily crappy with thick, hard-to-debug/hard-to-error-check macros
+    - Same problem as lua-api-pp: cannot have the declaration macros anywhere but the toplevel namespace
 * Supports not having exceptions or rtti turned on (shiny!)
 * Poor RAII support: default-construct-and-get style (requires some form of initalization to perform a ``get`` of an object, and it's hard to extend)
 
