@@ -15,6 +15,13 @@ members
 -------
 
 .. code-block:: cpp
+	:caption: constructor: reference
+
+	reference(lua_State* L, int index = -1);
+
+Creates a reference from the Lua stack at the specified index, saving it into the metatable registry. This constructor is exposed on all types that derive from ``sol::reference``.
+
+.. code-block:: cpp
 	:caption: function: push referred-to element from the stack
 
 	int push() const noexcept;

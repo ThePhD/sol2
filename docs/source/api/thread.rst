@@ -13,6 +13,13 @@ members
 -------
 
 .. code-block:: cpp
+	:caption: constructor: thread
+
+	thread(lua_State* L, int index = -1);
+
+Takes a thread from the Lua stack at the specified index and allows a person to use all of the abstractions therein.
+
+.. code-block:: cpp
 	:caption: function: view into thread_state()'s state
 
 	state_view state() const;

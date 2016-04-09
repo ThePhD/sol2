@@ -15,6 +15,13 @@ members
 -------
 
 .. code-block:: cpp
+    :caption: constructor: coroutine
+
+    coroutine(lua_State* L, int index = -1);
+
+Create an object which references the specific element at the given index in the specified ``lua_State*``.
+
+.. code-block:: cpp
 	:caption: function: type conversion
 	
 	template<typename T>

@@ -62,6 +62,13 @@ members
 -------
 
 .. code-block:: cpp
+    :caption: function: constructor
+
+    coroutine(lua_State* L, int index = -1);
+
+Grabs the coroutine at the specified index given a ``lua_State*``. 
+
+.. code-block:: cpp
 	:caption: returning the coroutine's status
 	:name: status
 

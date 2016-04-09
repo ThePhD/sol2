@@ -291,18 +291,33 @@ TEST_CASE("simple/get_or", "check if table.get_or works correctly") {
     sol::state lua;
 
     auto bob_table = lua.create_table("bob");
-    int is_set=0;
-    int is_not_set=0;
-    bob_table.set("is_set",42);
+    bob_table.set("is_set", 42);
 
-    is_set = bob_table.get_or("is_set", 3);
-    is_not_set = bob_table.get_or("is_not_set", 22);
+    int is_set = bob_table.get_or("is_set", 3);
+    int is_not_set = bob_table.get_or("is_not_set", 22);
 
     REQUIRE(is_set == 42);
     REQUIRE(is_not_set == 22);
 
     lua["joe"] = 55.6;
     double bark = lua.get_or<double>("joe", 60);
+    REQUIRE(bark == 55.6);
+}
+
+TEST_CASE("simple/proxy_get_or", "check if proxy.get_or works correctly") {
+    sol::state lua;
+
+    auto bob_table = lua.create_table("bob");
+    bob_table.set("is_set", 42);
+
+    int is_set = bob_table["is_set"].get_or( 3 );
+    int is_not_set = bob_table[ "is_not_set" ].get_or( 22 );
+
+    REQUIRE(is_set == 42);
+    REQUIRE(is_not_set == 22);
+
+    lua["joe"] = 55.6;
+    double bark = lua["joe"].get_or<double>( 60 );
     REQUIRE(bark == 55.6);
 }
 

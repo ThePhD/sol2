@@ -7,7 +7,7 @@ the nitty-gritty core abstraction layer over Lua
 
 	namespace stack
 
-If you find that the higher level abstractions are not meeting your needs, you may want to delve into the ``stack`` namespace to try and get more out of Sol. ``stack.hpp`` and the ``stack`` namespace define several utilities to work with Lua, including pushing / popping utilities, getters, type checkers, Lua call helpers and more. This namespace is not thoroughly documented as the majority of its interface is mercurial and subject to change between releases to either heavily boost performance or improve the Sol :doc:`api<top>`.
+If you find that the higher level abstractions are not meeting your needs, you may want to delve into the ``stack`` namespace to try and get more out of Sol. ``stack.hpp`` and the ``stack`` namespace define several utilities to work with Lua, including pushing / popping utilities, getters, type checkers, Lua call helpers and more. This namespace is not thoroughly documented as the majority of its interface is mercurial and subject to change between releases to either heavily boost performance or improve the Sol :doc:`api<api-top>`.
 
 There are, however, a few :ref:`template customization points<extension_points>` that you may use for your purposes and a handful of potentially handy functions. These may help if you're trying to slim down the code you have to write, or if you want to make your types behave differently throughout the Sol stack. Note that overriding the defaults **can** throw out many of the safety guarantees Sol provides: therefore, modify the :ref:`extension points<extension_points>` at your own discretion.
 

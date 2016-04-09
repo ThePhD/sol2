@@ -18,22 +18,23 @@ get going:
 ----------
 
 .. toctree::
-   :maxdepth: 1
-   :name: mastertoc
+	:maxdepth: 1
+	:name: mastertoc
 	
-   api/top
-   features
-   benchmarks
-   safety
-   exceptions
-   rtti
-   licenses
-   origin
+	tutorial/tutorial-top
+	api/api-top
+	features
+	benchmarks
+	safety
+	exceptions
+	rtti
+	licenses
+	origin
 
 
 "I need feature X, maybe you have it?"
 --------------------------------------
-Take a look at the :doc:`Features<features>` page: it links to much of the API. You can also just straight up browse the API. Don't see a feature you want? Send inquiries for support for a particular abstraction to the `issues`_ tracker.
+Take a look at the :doc:`Features<features>` page: it links to much of the API. You can also just straight up browse the :doc:`api<api/api-top>` or ease in with the :doc:`tutorials<tutorial/tutorial-top>`. Don't see a feature you want? Send inquiries for support for a particular abstraction to the `issues`_ tracker.
 
 
 the basics:

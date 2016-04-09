@@ -7,7 +7,15 @@ Lua function calls that trap errors and provide error handler
 	
 	class protected_function : public reference;
 
-Inspired by a request from `starwing<https://github.com/starwing>` in the old repository, this class provides the same interface as :doc:`function<function>` but with heavy protection and a potential error handler for any Lua errors and C++ exceptions. When called without the return types being specified by either a ``sol::types<...>`` list or a ``call<Ret...>( ... )`` template type list, it generates a :doc:`protected_function_result<proxy>` class that gets implicitly converted to the requested return type. For example:
+Inspired by a request from `starwing<https://github.com/starwing>` in the old repository, this class provides the same interface as :doc:`function<function>` but with heavy protection and a potential error handler for any Lua errors and C++ exceptions. Grab a function directly off the stack using the constructor:
+
+.. code-block:: cpp
+	:caption: constructor: protected_function
+
+	protected_function(lua_State* L, int index = -1);
+
+
+When called without the return types being specified by either a ``sol::types<...>`` list or a ``call<Ret...>( ... )`` template type list, it generates a :doc:`protected_function_result<proxy>` class that gets implicitly converted to the requested return type. For example:
 
 .. code-block:: lua
 	:caption: pfunc_barks.lua

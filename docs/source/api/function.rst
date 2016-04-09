@@ -7,7 +7,15 @@ calling functions bound to Lua
 	
 	class function : public reference;
 
-Function is a correct-assuming version of :doc:`protected_function<protected_function>`, omitting the need for typechecks and error handling. It is the default function type of Sol. When called without the return types being specified by either a ``sol::types<...>`` list or a ``call<Ret...>( ... )`` template type list, it generates a :ref:`function_result<function-result>` class that gets implicitly converted to the requested return type. For example:
+Function is a correct-assuming version of :doc:`protected_function<protected_function>`, omitting the need for typechecks and error handling. It is the default function type of Sol. Grab a function directly off the stack using the constructor:
+
+.. code-block:: cpp
+	:caption: constructor: function
+
+	function(lua_State* L, int index = -1);
+
+
+When called without the return types being specified by either a ``sol::types<...>`` list or a ``call<Ret...>( ... )`` template type list, it generates a :ref:`function_result<function-result>` class that gets implicitly converted to the requested return type. For example:
 
 .. code-block:: lua
 	:caption: func_barks.lua

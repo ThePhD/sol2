@@ -78,6 +78,25 @@ public:
         return tuple_get<T>( std::make_index_sequence<std::tuple_size<meta::Unqualified<key_type>>::value>() );
     }
 
+    template<typename T>
+    decltype(auto) get_or(T&& otherwise) const {
+        typedef decltype(get<T>()) U;
+        sol::optional<U> option = get<sol::optional<U>>();
+        if (option) {
+            return static_cast<U>(option.value());
+        }
+        return static_cast<U>(std::forward<T>(otherwise));
+    }
+
+    template<typename T, typename D>
+    decltype(auto) get_or(D&& otherwise) const {
+        sol::optional<T> option = get<sol::optional<T>>();
+        if (option) {
+            return static_cast<T>(option.value());
+        }
+        return static_cast<T>(std::forward<D>(otherwise));
+    }
+
     template <typename K>
     decltype(auto) operator[](K&& k) const {
         auto keys = meta::tuplefy(key, std::forward<K>(k));

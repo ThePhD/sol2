@@ -12,7 +12,12 @@ If you're already using lua and you just want to use ``sol`` in some places, you
 		// start using Sol with a pre-existing system
 		sol::state_view lua(L); // non-owning
 
-		lua.script("print('bark bark bark!')")
+		lua.script("print('bark bark bark!')");
+
+		sol::table expected_table(L); // get the table off the top of the stack
+		// start using it... 
 	}
 
-Sol has no initialization components that need to deliberately remain alive for the duration of the program. It's entirely self-containing and uses lua's garbage collectors and various implementation techniques to require no state C++-side.
+Sol has no initialization components that need to deliberately remain alive for the duration of the program. It's entirely self-containing and uses lua's garbage collectors and various implementation techniques to require no state C++-side. After you do that, all of the power of `Sol` is available to you, and then some!
+
+Remember that Sol can be as lightweight as you want it: almost all of Sol's types take the ``lua_State*`` argument and then a second ``int index`` stack index argument, meaning you can use :doc:`tables<../api/table>`, :doc:`lua functions<../api/function>`, :doc:`tables<../api/table>`, and other reference-derived objects that expose the proper constructor for your use.

@@ -22,6 +22,13 @@ members
 -------
 
 .. code-block:: cpp
+	:caption: constructor: table
+
+	table(lua_State* L, int index = -1);
+
+Takes a table from the Lua stack at the specified index and allows a person to use all of the abstractions therein.
+
+.. code-block:: cpp
 	:caption: function: get / traversing get
 
 	template<typename... Args, typename... Keys>
@@ -29,6 +36,9 @@ members
 
 	template<typename T, typename... Keys>
 	decltype(auto) traverse_get(Keys&&... keys) const;
+
+	template<typename T, typename Key>
+	decltype(auto) get_or(Key&& key, T&& otherwise) const;
 
 	template<typename T, typename Key, typename D>
 	decltype(auto) get_or(Key&& key, D&& otherwise) const;
