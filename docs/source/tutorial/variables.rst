@@ -178,4 +178,24 @@ This example pretty much sums up what can be done. Note that the syntax ``lua["n
 		}
 	}
 
+Finally, it's possible to erase a reference/variable by setting it to ``nil``, using the constant ``sol::nil`` in C++:
+
+.. code-block:: cpp
+	:caption: main.cpp
+	:name: erase-main-cpp
+
+	#include <sol.hpp>
+
+	int main () {
+
+		sol::state lua;
+		lua["bark"] = 50;
+		sol::optional<int> x = lua["bark"];
+		// x will have a value
+
+		lua["bark"] = sol::nil;
+		sol::optional<int> y = lua["bark"];
+		// y will not have a value
+	}
+
 It's easy to see that there's a lot of options to do what you want here. But, these are just traditional numbers and strings. What if we want more power, more capabilities than what these limited types can offer us? Let's throw some :doc:`functions in there<functions>` :doc:`C++ classes into the mix<cxx-in-lua>`!
