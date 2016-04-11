@@ -46,6 +46,13 @@ function_arguments<Sig, Args...> function_args( Args&&... args ) {
     return function_arguments<Sig, Args...>(std::forward<Args>(args)...);
 }
 
+// Allow someone to make a member variable readonly (const)
+template <typename R, typename T>
+auto readonly( R T::* v ) {
+    typedef const R C;
+    return static_cast<C T::*>( v );
+}
+
 namespace stack {
 template<typename... Sigs>
 struct pusher<function_sig<Sigs...>> {
@@ -107,7 +114,7 @@ struct pusher<function_sig<Sigs...>> {
         select_reference_member_variable(is_reference(), L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
     }
 
-    template <typename Fx, typename... Args>
+    template <typename Fx>
     static void select_member_variable(std::true_type, lua_State* L, Fx&& fx) {
         typedef typename meta::bind_traits<meta::Unqualified<Fx>>::object_type C;
         lua_CFunction freefunc = &function_detail::upvalue_this_member_variable<C, Fx>::call;
@@ -145,7 +152,7 @@ struct pusher<function_sig<Sigs...>> {
         select_reference_member_function(is_reference(), L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
     }
 
-    template <typename Fx, typename... Args>
+    template <typename Fx>
     static void select_member_function(std::true_type, lua_State* L, Fx&& fx) {
         typedef typename meta::bind_traits<meta::Unqualified<Fx>>::object_type C;
         lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, Fx>::call;
@@ -211,7 +218,23 @@ struct pusher<function_arguments<T, Args...>> {
 template<typename Signature>
 struct pusher<std::function<Signature>> {
     static int push(lua_State* L, std::function<Signature> fx) {
-        return pusher<function_sig<>>{}.push(L, std::move(fx));
+        return pusher<function_sig<Signature>>{}.push(L, std::move(fx));
+    }
+};
+
+template<typename Signature>
+struct pusher<Signature, std::enable_if_t<std::is_member_pointer<Signature>::value>> {
+    template <typename F>
+    static int push(lua_State* L, F&& f) {
+        return pusher<function_sig<>>{}.push(L, std::forward<F>(f));
+    }
+};
+
+template<typename Signature>
+struct pusher<Signature, std::enable_if_t<meta::And<std::is_function<Signature>, meta::Not<std::is_same<Signature, lua_CFunction>>, meta::Not<std::is_same<Signature, std::remove_pointer_t<lua_CFunction>>>>::value>> {
+    template <typename F>
+    static int push(lua_State* L, F&& f) {
+        return pusher<function_sig<>>{}.push(L, std::forward<F>(f));
     }
 };
 

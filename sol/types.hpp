@@ -25,6 +25,7 @@
 #include "compatibility.hpp"
 #include "traits.hpp"
 #include "optional.hpp"
+#include <array>
 #include <string>
 
 namespace sol {
@@ -85,6 +86,8 @@ inline int c_trampoline(lua_State* L, lua_CFunction f) {
 }
 struct nil_t {};
 const nil_t nil {};
+struct metatable_key_t {};
+const metatable_key_t metatable_key = {};
 inline bool operator==(nil_t, nil_t) { return true; }
 inline bool operator!=(nil_t, nil_t) { return false; }
 
@@ -168,6 +171,67 @@ enum class type : int {
                     table  | boolean | function | userdata | lightuserdata
 };
 
+enum class meta_function {
+    construct,
+    index,
+    new_index,
+    mode,
+    call,
+    metatable,
+    to_string,
+    length,
+    unary_minus,
+    addition,
+    subtraction,
+    multiplication,
+    division,
+    modulus,
+    power_of,
+    involution = power_of,
+    concatenation,
+    equal_to,
+    less_than,
+    less_than_or_equal_to,
+    garbage_collect,
+    call_function = call,
+};
+
+const std::array<std::string, 2> meta_variable_names = { {
+    "__index",
+    "__newindex",
+} };
+
+const std::array<std::string, 21> meta_function_names = { {
+    "new",
+    "__index",
+    "__newindex",
+    "__mode",
+    "__call",
+    "__metatable",
+    "__tostring",
+    "__len",
+    "__unm",
+    "__add",
+    "__sub",
+    "__mul",
+    "__div",
+    "__mod",
+    "__pow",
+    "__concat",
+    "__eq",
+    "__lt",
+    "__le",
+    "__gc",
+} };
+
+inline const std::string& name_of( meta_function mf ) {
+    return meta_function_names[static_cast<int>(mf)];
+}
+
+inline type type_of(lua_State* L, int index) {
+    return static_cast<type>(lua_type(L, index));
+}
+
 inline int type_panic(lua_State* L, int index, type expected, type actual) {
     return luaL_error(L, "stack index %d, expected %s, received %s", index, 
         expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected)),
@@ -195,13 +259,11 @@ inline void type_assert(lua_State* L, int index, type expected, type actual) {
 }
 
 inline void type_assert(lua_State* L, int index, type expected) {
-    int actual = lua_type(L, index);
-    if(expected != type::poly && static_cast<int>(expected) != actual) {
-           type_error(L, static_cast<int>(expected), actual);
-    }
+    type actual = type_of(L, index);
+    type_assert(L, index, expected, actual);
 }
 
-inline std::string type_name(lua_State*L, type t) {
+inline std::string type_name(lua_State* L, type t) {
     return lua_typename(L, static_cast<int>(t));
 }
 
@@ -263,17 +325,8 @@ struct lua_type_of<nil_t> : std::integral_constant<type, type::nil> { };
 template <>
 struct lua_type_of<sol::error> : std::integral_constant<type, type::string> { };
 
-template <>
-struct lua_type_of<table> : std::integral_constant<type, type::table> { };
-
-template <>
-struct lua_type_of<global_table> : std::integral_constant<type, type::table> { };
-
-template <>
-struct lua_type_of<stack_table> : std::integral_constant<type, type::table> { };
-
-template <>
-struct lua_type_of<stack_global_table> : std::integral_constant<type, type::table> { };
+template <bool b, typename Base>
+struct lua_type_of<basic_table_core<b, Base>> : std::integral_constant<type, type::table> { };
 
 template <>
 struct lua_type_of<reference> : std::integral_constant<type, type::poly> {};
@@ -304,6 +357,9 @@ struct lua_type_of<basic_userdata<Base>> : std::integral_constant<type, type::us
 
 template <>
 struct lua_type_of<lua_CFunction> : std::integral_constant<type, type::function> {};
+
+template <>
+struct lua_type_of<std::remove_pointer_t<lua_CFunction>> : std::integral_constant<type, type::function> {};
 
 template <typename Base>
 struct lua_type_of<basic_function<Base>> : std::integral_constant<type, type::function> {};
@@ -363,10 +419,6 @@ struct is_unique_usertype : std::false_type {};
 template<typename T>
 inline type type_of() {
     return lua_type_of<meta::Unqualified<T>>::value;
-}
-
-inline type type_of(lua_State* L, int index) {
-    return static_cast<type>(lua_type(L, index));
 }
 } // sol
 

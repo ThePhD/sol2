@@ -27,6 +27,26 @@
 namespace sol {
 namespace function_detail {
 template<typename Func>
+struct free_function : public base_function {
+    typedef meta::Unwrapped<meta::Unqualified<Func>> Function;
+    typedef meta::function_return_t<Function> return_type;
+    typedef meta::function_args_t<Function> args_types;
+    Function fx;
+
+    template<typename... Args>
+    free_function(Args&&... args): fx(std::forward<Args>(args)...) {}
+
+    int call(lua_State* L) {
+        return stack::call_into_lua(meta::tuple_types<return_type>(), args_types(), L, 1, fx);
+    }
+
+    virtual int operator()(lua_State* L) override {
+        auto f = [&](lua_State* L) -> int { return this->call(L);};
+        return detail::trampoline(L, f);
+    }
+};
+
+template<typename Func>
 struct functor_function : public base_function {
     typedef meta::Unwrapped<meta::Unqualified<Func>> Function;
     typedef decltype(&Function::operator()) function_type;

@@ -73,7 +73,7 @@ public:
     basic_function& operator=(basic_function&& ) = default;
     basic_function(lua_State* L, int index = -1): base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-        type_assert(L, index, type::function);
+        stack::check<basic_function>(L, index, type_panic);
 #endif // Safety
     }
     

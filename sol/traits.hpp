@@ -29,7 +29,7 @@
 
 namespace sol {
 template<std::size_t I>
-using Index = std::integral_constant<std::size_t, I>;
+using index_value = std::integral_constant<std::size_t, I>;
 
 namespace meta {
 template<typename T>
@@ -119,6 +119,9 @@ using Unqualified = std::remove_cv_t<std::remove_reference_t<T>>;
 
 template<typename T>
 using Unwrapped = typename unwrapped<T>::type;
+
+template <std::size_t N, typename Tuple>
+using tuple_element = std::tuple_element<N, Unqualified<Tuple>>;
 
 template <std::size_t N, typename Tuple>
 using tuple_element_t = std::tuple_element_t<N, Unqualified<Tuple>>;
@@ -237,6 +240,15 @@ struct Function : Bool<meta_detail::is_function_impl<T>::value> {};
 
 namespace meta_detail {
 
+template <std::size_t I, typename T>
+struct void_tuple_element : meta::tuple_element<I, T> {};
+
+template <std::size_t I>
+struct void_tuple_element<I, std::tuple<>> { typedef void type; };
+
+template <std::size_t I, typename T>
+using void_tuple_element_t = typename void_tuple_element<I, T>::type;
+
 template<typename Signature, bool b = has_deducible_signature<Signature>::value>
 struct fx_traits;
 
@@ -258,7 +270,7 @@ struct fx_traits<R(T::*)(Args...), false> {
     typedef R return_type;
     typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
     template<std::size_t i>
-    using arg = meta::tuple_element_t<i, args_tuple_type>;
+    using arg_at = void_tuple_element_t<i, args_tuple_type>;
 };
 
 template<typename T, typename R, typename... Args>
@@ -274,7 +286,7 @@ struct fx_traits<R(T::*)(Args...) const, false> {
     typedef R return_type;
     typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
     template<std::size_t i>
-    using arg = meta::tuple_element_t<i, args_tuple_type>;
+    using arg_at = void_tuple_element_t<i, args_tuple_type>;
 };
 
 template<typename R, typename... Args>
@@ -289,7 +301,7 @@ struct fx_traits<R(Args...), false> {
     typedef R return_type;
     typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
     template<std::size_t i>
-    using arg = meta::tuple_element_t<i, args_tuple_type>;
+    using arg_at = void_tuple_element_t<i, args_tuple_type>;
 };
 
 template<typename R, typename... Args>
@@ -304,7 +316,7 @@ struct fx_traits<R(*)(Args...), false> {
     typedef R return_type;
     typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
     template<std::size_t i>
-    using arg = meta::tuple_element_t<i, args_tuple_type>;
+    using arg_at = void_tuple_element_t<i, args_tuple_type>;
 };
 
 template<typename Signature, bool b = std::is_member_object_pointer<Signature>::value>
@@ -326,7 +338,7 @@ struct callable_traits<R(T::*), true> {
     typedef R(*function_pointer_type)(Arg);
     typedef R(*free_function_pointer_type)(Arg);
     template<std::size_t i>
-    using arg = meta::tuple_element_t<i, args_tuple_type>;
+    using arg_at = void_tuple_element_t<i, args_tuple_type>;
 };
 } // meta_detail
 

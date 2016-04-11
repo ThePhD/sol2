@@ -159,7 +159,7 @@ public:
     basic_table_core(stack_reference&& r) : basic_table_core(r.lua_state(), r.stack_index()) {}
     basic_table_core( lua_State* L, int index = -1 ) : base_t( L, index ) {
 #ifdef SOL_CHECK_ARGUMENTS
-        type_assert( L, index, type::table );
+        stack::check<basic_table_core>(L, index, type_panic);
 #endif // Safety
     }
 

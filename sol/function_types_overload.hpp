@@ -51,7 +51,7 @@ inline int overload_match_arity(types<Fx, Fxs...>, std::index_sequence<I, In...>
     typedef typename traits::args_type args_type;
     typedef typename args_type::indices args_indices;
     // compile-time eliminate any functions that we know ahead of time are of improper arity
-    if (meta::find_in_pack_v<Index<traits::arity>, Index<M>...>::value) {
+    if (meta::find_in_pack_v<index_value<traits::arity>, index_value<M>...>::value) {
         return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
     }
     if (traits::arity != fxarity) {
@@ -60,7 +60,7 @@ inline int overload_match_arity(types<Fx, Fxs...>, std::index_sequence<I, In...>
     if (!stack::stack_detail::check_types<true>().check(args_type(), args_indices(), L, start, no_panic)) {
         return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
     }
-    return matchfx(types<Fx>(), Index<I>(), return_types(), args_type(), L, fxarity, start, std::forward<Args>(args)...);
+    return matchfx(types<Fx>(), index_value<I>(), return_types(), args_type(), L, fxarity, start, std::forward<Args>(args)...);
 }
 } // internals
 
@@ -90,7 +90,7 @@ struct overloaded_function : base_function {
     }
 
     template <typename Fx, std::size_t I, typename... R, typename... Args>
-    int call(types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
+    int call(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
         auto& func = std::get<I>(overloads);
         return stack::call_into_lua<0, false>(r, a, L, start, func);
     }
@@ -110,7 +110,7 @@ struct usertype_overloaded_function : base_function {
     usertype_overloaded_function(std::tuple<Functions...> set) : overloads(std::move(set)) {}
 
     template <typename Fx, std::size_t I, typename... R, typename... Args>
-    int call(types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
+    int call(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
         auto& func = std::get<I>(overloads);
         func.item = detail::ptr(stack::get<T>(L, 1));
         return stack::call_into_lua<0, false>(r, a, L, start, func);

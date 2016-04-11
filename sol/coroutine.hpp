@@ -67,14 +67,14 @@ private:
     }
 
 public:
-    coroutine(lua_State* L, int index = -1) : reference(L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
-        type_assert(L, index, type::function);
-#endif // Safety
-    }
     coroutine() noexcept = default;
     coroutine(const coroutine&) noexcept = default;
     coroutine& operator=(const coroutine&) noexcept = default;
+    coroutine(lua_State* L, int index = -1) : reference(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+        stack::check<coroutine>(L, index, type_panic);
+#endif // Safety
+    }
 
     call_status status() const noexcept {
         return stats;

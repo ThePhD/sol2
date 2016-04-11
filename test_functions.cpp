@@ -442,6 +442,14 @@ TEST_CASE("functions/all-kinds", "Register all kinds of functions, make sure the
         }
     };
 
+    struct inner {
+	    const int z = 5653;
+    };
+
+    struct nested {
+	    inner i;
+    };
+
     auto a = []() { return 500; };
     auto b = [&]() { return 501; };
     auto c = [&]() { return 502; };
@@ -568,6 +576,22 @@ N = n(1, 2, 3)
     REQUIRE( M1 == 256 );
 
     REQUIRE( N == 13 );
+
+    // Work that compiler, WORK IT!
+    lua.set("o", &test_1::bark);
+    lua.set("p", test_1::x_bark);
+    lua.set("q", sol::c_call<decltype(&test_1::bark_mem), &test_1::bark_mem>);
+    lua.set("r", &test_2::a);
+    lua.set("s", sol::readonly(&test_2::a));
+    lua.set_function("t", sol::readonly(&test_2::a), test_2());
+    lua.set_function("u", &nested::i, nested());
+    lua.set("v", &nested::i);
+    lua.set("nested", nested());
+    lua.set("inner", inner());
+    REQUIRE_THROWS(lua.script("s(o2, 2)"));
+    REQUIRE_THROWS(lua.script("t(2)"));
+    REQUIRE_THROWS(lua.script("u(inner)"));
+    REQUIRE_THROWS(lua.script("v(nested, inner)"));
 }
 
 TEST_CASE("simple/call-with-parameters", "Lua function is called with a few parameters from C++") {

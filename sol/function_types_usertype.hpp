@@ -64,7 +64,7 @@ struct usertype_function_core : public base_function {
     }
 
     template<typename... Args, std::size_t Start>
-    int operator()(types<void> tr, types<Args...> ta, Index<Start>, lua_State* L) {
+    int operator()(types<void> tr, types<Args...> ta, index_value<Start>, lua_State* L) {
         stack::call_into_lua(tr, ta, L, static_cast<int>(Start), fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
@@ -72,7 +72,7 @@ struct usertype_function_core : public base_function {
     }
 
     template<typename... Ret, typename... Args, std::size_t Start>
-    int operator()(types<Ret...> tr, types<Args...> ta, Index<Start>, lua_State* L) {
+    int operator()(types<Ret...> tr, types<Args...> ta, index_value<Start>, lua_State* L) {
         decltype(auto) r = stack::call(tr, ta, L, static_cast<int>(Start), fx);
         int nargs = static_cast<int>(sizeof...(Args));
         lua_pop(L, nargs);
@@ -94,7 +94,7 @@ struct usertype_function : public usertype_function_core<Function, Tp> {
 
     int prelude(lua_State* L) {
         this->fx.item = detail::ptr(stack::get<T>(L, 1));
-        return static_cast<base_t&>(*this)(meta::tuple_types<return_type>(), args_type(), Index<2>(), L);
+        return static_cast<base_t&>(*this)(meta::tuple_types<return_type>(), args_type(), index_value<2>(), L);
     }
 
     virtual int operator()(lua_State* L) override {
@@ -119,7 +119,7 @@ struct usertype_variable_function : public usertype_function_core<Function, Tp> 
     }
 
     int set_assignable(std::true_type, lua_State* L) {
-        return static_cast<base_t&>(*this)(meta::tuple_types<void>(), args_type(), Index<3>(), L);
+        return static_cast<base_t&>(*this)(meta::tuple_types<void>(), args_type(), index_value<3>(), L);
     }
 
     int set_variable(std::false_type, lua_State* L) {
@@ -136,7 +136,7 @@ struct usertype_variable_function : public usertype_function_core<Function, Tp> 
         this->fx.item = stack::get<T*>(L, 1);
         switch(argcount) {
         case 2:
-            return static_cast<base_t&>(*this)(meta::tuple_types<return_type>(), types<>(), Index<2>(), L);
+            return static_cast<base_t&>(*this)(meta::tuple_types<return_type>(), types<>(), index_value<2>(), L);
         case 3:
             return set_variable(meta::Not<std::is_const<return_type>>(), L);
         default:

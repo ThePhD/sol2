@@ -77,6 +77,30 @@ struct upvalue_member_function {
     }
 };
 
+template <int N, typename R, typename M, typename V>
+int set_assignable(std::false_type, lua_State* L, M&, V&) {
+    lua_pop(L, N);
+    return luaL_error(L, "cannot write to this type: copy assignment/constructor not available");
+}
+
+template <int N, typename R, typename M, typename V>
+int set_assignable(std::true_type, lua_State* L, M& mem, V& var) {
+    (mem.*var) = stack::get<R>(L, N);
+    lua_pop(L, N);
+    return 0;
+}
+
+template <int N, typename R, typename M, typename V>
+int set_variable(std::true_type, lua_State* L, M& mem, V& var) {
+    return set_assignable<N, R>(std::is_assignable<std::add_lvalue_reference_t<R>, R>(), L, mem, var);
+}
+
+template <int N, typename R, typename M, typename V>
+int set_variable(std::false_type, lua_State* L, M&, V&) {
+    lua_pop(L, N);
+    return luaL_error(L, "cannot write to a const variable");
+}
+
 template<typename T, typename Function>
 struct upvalue_member_variable {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
@@ -97,8 +121,7 @@ struct upvalue_member_variable {
             stack::push(L, (mem.*var));
             return 1;
         case 1:
-            (mem.*var) = stack::get<typename traits_type::return_type>(L, 1);
-            lua_pop(L, 1);
+            set_variable<1, typename traits_type::return_type>(meta::Not<std::is_const<typename traits_type::return_type>>(), L, mem, var);
             return 0;
         default:
             return luaL_error(L, "sol: incorrect number of arguments to member variable function");
@@ -158,8 +181,7 @@ struct upvalue_this_member_variable {
             stack::push(L, (mem.*var));
             return 1;
         case 2:
-            (mem.*var) = stack::get<typename traits_type::return_type>(L, 2);
-            lua_pop(L, 2);
+            set_variable<2, typename traits_type::return_type>(meta::Not<std::is_const<typename traits_type::return_type>>(), L, mem, var);
             return 0;
         default:
             return luaL_error(L, "sol: incorrect number of arguments to member variable function");

@@ -151,12 +151,60 @@ struct checker<T, type::lightuserdata, C> {
 template <typename T, typename C>
 struct checker<non_null<T>, type::userdata, C> : checker<T, lua_type_of<T>::value, C> {};
 
-template <type X, typename C>
-struct checker<lua_CFunction, X, C> : stack_detail::basic_check<type::function, lua_iscfunction> {};
-template <type X, typename C>
-struct checker<std::remove_pointer_t<lua_CFunction>, X, C> : checker<lua_CFunction, X, C> {};
-template <type X, typename C>
-struct checker<c_closure, X, C> : checker<lua_CFunction, X, C> {};
+template <typename C>
+struct checker<lua_CFunction, type::function, C> : stack_detail::basic_check<type::function, lua_iscfunction> {};
+template <typename C>
+struct checker<std::remove_pointer_t<lua_CFunction>, type::function, C> : checker<lua_CFunction, type::function, C> {};
+template <typename C>
+struct checker<c_closure, type::function, C> : checker<lua_CFunction, type::function, C> {};
+
+template <typename T, typename C>
+struct checker<T, type::function, C> {
+    template <typename Handler>
+    static bool check(lua_State* L, int index, Handler&& handler) {
+        type t = type_of(L, index);
+        if (t == type::function) {
+            return true;
+        }
+        if (t != type::userdata && t != type::table) {
+            handler(L, index, t, type::function);
+            return false;
+        }
+        // Do advanced check for call-style userdata?
+        static const auto& callkey = name_of(meta_function::call);
+        lua_getmetatable(L, index);
+        if (lua_isnoneornil(L, -1)) {
+            handler(L, index, t, type::function);
+            lua_pop(L, 1);
+            return false;
+        }
+        lua_getfield(L, -1, &callkey[0]);
+        if (lua_isnoneornil(L, -1)) {
+            handler(L, index, t, type::function);
+            lua_pop(L, 2);
+            return false;
+        }
+        // has call, is definitely a function
+        lua_pop(L, 2);
+        return true;
+    }
+};
+
+template <typename T, typename C>
+struct checker<T, type::table, C> {
+    template <typename Handler>
+    static bool check(lua_State* L, int index, Handler&& handler) {
+        type t = type_of(L, index);
+        if (t == type::table) {
+            return true;
+        }
+        if (t != type::userdata) {
+            handler(L, index, t, type::function);
+            return false;
+        }
+        return true;
+    }
+};
 
 template <typename T, typename C>
 struct checker<T*, type::userdata, C> {

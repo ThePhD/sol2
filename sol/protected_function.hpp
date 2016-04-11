@@ -137,7 +137,7 @@ public:
     basic_protected_function& operator=(basic_protected_function&& ) = default;
     basic_protected_function(lua_State* L, int index = -1): base_t(L, index), error_handler(get_default_handler()) {
 #ifdef SOL_CHECK_ARGUMENTS
-        type_assert(L, index, type::function);
+        stack::check<basic_protected_function>(L, index, type_panic);
 #endif // Safety
     }
 

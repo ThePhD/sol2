@@ -124,7 +124,7 @@ Writing gets a lot simpler. Even without scripting a file or a string, you can r
 		sol::state lua;
 
 		// open those basic lua libraries again, like print() etc.
-		lua.open_libs( sol::lib::base );
+		lua.open_libraries( sol::lib::base );
 
 		// value in the global table
 		lua["bark"] = 50;
@@ -136,7 +136,8 @@ Writing gets a lot simpler. Even without scripting a file or a string, you can r
 			lua["bark"], "the key is 50 and this string is its value!"
 		);
 
-		// Run a plain ol' string
+		// Run a plain ol' string of lua code
+		// Note you can interact with things set through Sol in C++ with lua!
 		// Using a "Raw String Literal" to have multi-line goodness: http://en.cppreference.com/w/cpp/language/string_literal
 		lua.script(R"(
 		

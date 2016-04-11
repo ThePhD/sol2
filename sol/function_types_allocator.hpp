@@ -43,7 +43,7 @@ struct constructor_match {
     constructor_match(T* obj) : obj(obj) {}
 
     template <typename Fx, std::size_t I, typename... R, typename... Args>
-    int operator()(types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) const {
+    int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) const {
         default_construct func{};
         return stack::call_into_lua<0, false>(r, a, L, start, func, obj);
     }
@@ -105,7 +105,7 @@ struct usertype_constructor_function : base_function {
     usertype_constructor_function(Functions... fxs) : overloads(fxs...) {}
 
     template <typename Fx, std::size_t I, typename... R, typename... Args>
-    int call(types<Fx>, Index<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
+    int call(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
         static const auto& meta = usertype_traits<T>::metatable;
         T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
         T*& referencepointer = *pointerpointer;

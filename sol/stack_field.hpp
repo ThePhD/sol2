@@ -38,6 +38,13 @@ struct field_getter {
     }
 };
 
+template <bool b, typename C>
+struct field_getter<metatable_key_t, b, C> {
+    void get(lua_State* L, metatable_key_t, int tableindex = -1) {
+        lua_getmetatable( L, tableindex );
+    }
+};
+
 template <typename... Args, bool b, typename C>
 struct field_getter<std::tuple<Args...>, b, C> {
     template <std::size_t... I, typename Keys>
@@ -114,6 +121,15 @@ struct field_setter {
         push(L, std::forward<Key>(key));
         push(L, std::forward<Value>(value));
         lua_settable(L, tableindex);
+    }
+};
+
+template <bool b, typename C>
+struct field_setter<metatable_key_t, b, C> {
+    template <typename Value>
+    void set(lua_State* L, metatable_key_t, Value&& value, int tableindex = -2) {
+        push(L, std::forward<Value>(value));
+        lua_setmetatable(L, tableindex);
     }
 };
 

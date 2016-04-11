@@ -181,6 +181,10 @@ int factory_test::num_saved = 0;
 int factory_test::num_killed = 0;
 const int factory_test::true_a = 156;
 
+bool something() {
+    return true;
+}
+
 TEST_CASE("table/traversal", "ensure that we can chain requests and tunnel down into a value if we desire") {
 
     sol::state lua;
@@ -866,4 +870,77 @@ TEST_CASE("usertype/reference-and-constness", "Make sure constness compiles prop
     
     REQUIRE_THROWS(lua.script("f(n, 50)"));
     REQUIRE_THROWS(lua.script("o.n = 25"));
+}
+
+TEST_CASE("usertype/readonly-and-static-functions", "Check if static functions can be called on userdata and from their originating (meta)tables") {
+    struct bark {
+        int var = 50;
+
+        void func() {}
+
+        int operator()(int x) {
+            return x;
+        }
+    };
+
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+    lua.new_usertype<bark>("bark",
+        "var", &bark::var,
+        "var2", sol::readonly( &bark::var ),
+        "something", something,
+        "something2", [](int x, int y) { return x + y; },
+        "func", &bark::func,
+        sol::meta_function::call_function, &bark::operator()
+        );
+
+    bark b;
+    lua.set("b", &b);
+
+    sol::table b_table = lua["b"];
+    sol::function member_func = b_table["func"];
+    sol::function s = b_table["something"];
+    sol::function s2 = b_table["something2"];
+    
+    sol::table b_metatable = b_table[sol::metatable_key];
+    bool isvalidmt = b_metatable.valid();
+    REQUIRE(isvalidmt);
+    sol::function b_call = b_metatable["__call"];
+    sol::function b_as_function = lua["b"];
+
+    int x = b_as_function(1);
+    int y = b_call(b, 1);
+    bool z = s();
+    int w = s2(2, 3);
+    REQUIRE(x == 1);
+    REQUIRE(y == 1);
+    REQUIRE(z);
+    REQUIRE(w == 5);
+
+    lua.script(R"(
+lx = b(1)
+ly = getmetatable(b).__call(b, 1)
+lz = b.something()
+lz2 = bark.something()
+lw = b.something2(2, 3)
+lw2 = bark.something2(2, 3)
+    )");
+
+    int lx = lua["lx"];
+    int ly = lua["ly"];
+    bool lz = lua["lz"];
+    int lw = lua["lw"];
+    bool lz2 = lua["lz2"];
+    int lw2 = lua["lw2"];
+    REQUIRE(lx == 1);
+    REQUIRE(ly == 1);
+    REQUIRE(lz);
+    REQUIRE(lz2);
+    REQUIRE(lw == 5);
+    REQUIRE(lw2 == 5);
+    REQUIRE(lx == ly);
+    REQUIRE(lz == lz2);
+    REQUIRE(lw == lw2);
+
+    REQUIRE_THROWS(lua.script("b.var2 = 2"));
 }

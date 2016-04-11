@@ -209,6 +209,14 @@ struct pusher<nil_t> {
 };
 
 template<>
+struct pusher<metatable_key_t> {
+    static int push(lua_State* L, metatable_key_t) {
+        lua_pushlstring(L, "__mt", 4);
+        return 1;
+    }
+};
+
+template<>
 struct pusher<std::remove_pointer_t<lua_CFunction>> {
     static int push(lua_State* L, lua_CFunction func, int n = 0) {
         lua_pushcclosure(L, func, n);

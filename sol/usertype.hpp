@@ -34,60 +34,6 @@
 #include <map>
 
 namespace sol {
-const std::array<std::string, 2> meta_variable_names = { {
-    "__index",
-    "__newindex",
-} };
-
-const std::array<std::string, 21> meta_function_names = { {
-    "new",
-    "__index",
-    "__newindex",
-    "__mode",
-    "__call",
-    "__metatable",
-    "__tostring",
-    "__len",
-    "__unm",
-    "__add",
-    "__sub",
-    "__mul",
-    "__div",
-    "__mod",
-    "__pow",
-    "__concat",
-    "__eq",
-    "__lt",
-    "__le",
-    "__gc",
-    "__call",
-} };
-
-enum class meta_function {
-    construct,
-    index,
-    new_index,
-    mode,
-    call,
-    metatable,
-    to_string,
-    length,
-    unary_minus,
-    addition,
-    subtraction,
-    multiplication,
-    division,
-    modulus,
-    power_of,
-    involution = power_of,
-    concatenation,
-    equal_to,
-    less_than,
-    less_than_or_equal_to,
-    garbage_collect,
-    call_function,
-};
-
 namespace usertype_detail {
 struct add_destructor_tag {};
 struct check_destructor_tag {};
@@ -151,6 +97,13 @@ inline void push_metatable(lua_State* L, bool needsindexfunction, std::vector<st
     if (funcs.size() < 1 && metafunctable.size() < 2) {
         return;
     }
+  
+    // Functions should be placed on the metatable so that they can be called "statically" if the user wants
+    int up = push_upvalues(L, funcs);
+    functable.push_back({ nullptr, nullptr });
+    luaL_setfuncs(L, functable.data(), up);
+    functable.pop_back();
+
     // Metamethods directly on the metatable itself
     int metaup = push_upvalues(L, funcs);
     switch (metastage) {
@@ -193,7 +146,7 @@ inline void push_metatable(lua_State* L, bool needsindexfunction, std::vector<st
     // Otherwise, we use quick, fast table indexing for methods
     // gives us performance boost in calling them
     lua_createtable(L, 0, static_cast<int>(functable.size()));
-    int up = push_upvalues(L, funcs);
+    up = push_upvalues(L, funcs);
     functable.push_back({nullptr, nullptr});
     luaL_setfuncs(L, functable.data(), up);
     functable.pop_back();
@@ -244,12 +197,24 @@ private:
         return std::make_unique<function_detail::usertype_constructor_function<T, Functions...>>(std::move(func.set));
     }
 
-    template<typename Arg, typename... Args, typename Ret>
-    std::unique_ptr<function_detail::base_function> make_function(const std::string&, Ret(*func)(Arg, Args...)) {
-        typedef meta::Unqualified<std::remove_pointer_t<Arg>> Argu;
-        static_assert(std::is_base_of<Argu, T>::value, "Any non-member-function must have a first argument which is covariant with the desired userdata type.");
-        typedef std::decay_t<decltype(func)> function_type;
-        return std::make_unique<function_detail::usertype_function<function_type, T>>(func);
+    template<typename Fx>
+    std::unique_ptr<function_detail::base_function> make_free_function(std::true_type, const std::string&, Fx&& func) {
+        typedef std::decay_t<meta::Unqualified<Fx>> function_type;
+        return std::make_unique<function_detail::usertype_function<function_type, T>>(func);        
+    }
+
+    template<typename Fx>
+    std::unique_ptr<function_detail::base_function> make_free_function(std::false_type, const std::string&, Fx&& func) {
+        typedef std::decay_t<meta::Unqualified<Fx>> function_type;
+        return std::make_unique<function_detail::free_function<function_type>>(func);
+    }
+
+    template<typename... Args, typename Ret>
+    std::unique_ptr<function_detail::base_function> make_function(const std::string& name, Ret(*func)(Args...)) {
+        typedef meta::bind_traits<Ret(Args...)> btraits;
+        typedef typename btraits::template arg_at<0> Argu;
+        typedef meta::Unqualified<std::remove_pointer_t<Argu>> Arg0;
+        return make_free_function(std::is_base_of<Arg0, T>(), name, func);
     }
 
     template<typename Base, typename Ret>
@@ -273,13 +238,24 @@ private:
     }
 
     template<typename Fx>
-    std::unique_ptr<function_detail::base_function> make_function(const std::string&, Fx&& func) {
+    std::unique_ptr<function_detail::base_function> make_functor_function(std::true_type, const std::string&, Fx&& func) {
+        typedef std::decay_t<meta::Unqualified<Fx>> function_type;
+        return std::make_unique<function_detail::usertype_function<function_type, T>>(func);        
+    }
+
+    template<typename Fx>
+    std::unique_ptr<function_detail::base_function> make_functor_function(std::false_type, const std::string&, Fx&& func) {
+        typedef std::decay_t<meta::Unqualified<Fx>> function_type;
+        return std::make_unique<function_detail::functor_function<function_type>>(func);
+    }
+
+    template<typename Fx>
+    std::unique_ptr<function_detail::base_function> make_function(const std::string& name, Fx&& func) {
         typedef meta::Unqualified<Fx> Fxu;
-        typedef meta::tuple_element_t<0, typename meta::bind_traits<Fxu>::args_tuple_type> Arg0;
-        typedef meta::Unqualified<std::remove_pointer_t<Arg0>> Argu;
-        static_assert(std::is_base_of<Argu, T>::value, "Any non-member-function must have a first argument which is covariant with the desired usertype.");
-        typedef std::decay_t<Fxu> function_type;
-        return std::make_unique<function_detail::usertype_function<function_type, T>>(func);
+        typedef meta::bind_traits<Fxu> btraits;
+        typedef typename btraits::template arg_at<0> Argu;
+        typedef meta::Unqualified<std::remove_pointer_t<Argu>> Arg0;
+        return make_functor_function(std::is_base_of<Arg0, T>(), name, std::forward<Fx>(func));
     }
 
     template<std::size_t N, typename... Args>
