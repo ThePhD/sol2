@@ -46,7 +46,7 @@ If this works, you're ready to start! The first line creates the ``lua_State`` a
 .. code-block:: cpp
 	:linenos:
 	:caption: test.cpp: the first snippet
-	:name: the-first-snippet
+	:name: the-second-snippet
 
 	#include <sol.hpp>
 

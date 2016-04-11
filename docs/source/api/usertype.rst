@@ -148,7 +148,7 @@ The constructor of usertype takes a variable number of arguments. It takes an ev
     - If you pass the ``constructors<...>`` argument first when constructing the usertype, then it will automatically be given a ``"{name}"`` of ``"new"``
 * ``"{name}", initializers( func1, func2, ... )``
     - Creates initializers that, given one or more functions, provides an overloaded lua function for creating a the specified type.
-        + The function must have the argument signature ``func T*, Arguments... )`` or ``func( T&, Arguments... )``, where the pointer or reference will point to a place of allocated memory that has an unitialized ``T``. Note that lua controls the memory.
+	   + The function must have the argument signature ``func T*, Arguments... )`` or ``func( T&, Arguments... )``, where the pointer or reference will point to a place of allocated memory that has an unitialized ``T``. Note that lua controls the memory.
 
 .. _destructor:
 

@@ -162,7 +162,7 @@ This is an SFINAE-friendly struct that is meant to expose static function ``push
 			// otherwise, call the handler function,
 			// with the required 4 arguments, then return false
 			handler(L, index, expected, indextype);
-            return false;
+			return false;
 		}
 	};
 

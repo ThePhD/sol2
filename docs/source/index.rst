@@ -11,8 +11,8 @@ a fast, simple C++ and Lua Binding
 When you need to hit the ground running with Lua and C++, `Sol`_ is the go-to framework for high-performance binding with an easy to use API.
 
 .. image:: https://travis-ci.org/ThePhD/sol2.svg?branch=develop
-    :target: https://travis-ci.org/ThePhD/sol2
-    :alt: build status
+	:target: https://travis-ci.org/ThePhD/sol2
+	:alt: build status
 
 get going:
 ----------
@@ -43,61 +43,63 @@ the basics:
 .. note::
 	More examples can be found in the `examples directory`_
 
+
 .. code-block:: c++
-   :caption: functions
-   :linenos:
+	:caption: functions
+	:linenos:
 
 	#include <sol.hpp>
 	#include <cassert>
 
 	int main() {
-	    sol::state lua;
-	    int x = 0;
-	    lua.set_function("beep", [&x]{ ++x; });
-	    lua.script("beep()");
-	    assert(x == 1);
+		sol::state lua;
+		int x = 0;
+		lua.set_function("beep", [&x]{ ++x; });
+		lua.script("beep()");
+		assert(x == 1);
 
-	    sol::function beep = lua["beep"];
-	    beep();
-	    assert(x == 2);
+		sol::function beep = lua["beep"];
+		beep();
+		assert(x == 2);
 
-	    return 0;
+		return 0;
 	}
 
+
 .. code-block:: c++
-   :caption: linking C++ structures to Lua
-   :linenos:
+	:caption: linking C++ structures to Lua
+	:linenos:
 
 	#include <sol.hpp>
 	#include <cassert>
 
 	struct vars {
-	    int boop = 0;
+		int boop = 0;
 
-	    int bop () const {
-	    	return boop + 1;
-	    }
+		int bop () const {
+			return boop + 1;
+		}
 	};
 
 	int main() {
-	    sol::state lua;
-	    lua.new_usertype<vars>("vars", 
-	    	"boop", &vars::boop
-	    	"bop", &vars::bop);
-	    lua.script("beep = vars.new()\n"
-	               "beep.boop = 1\n"
-	               "bopvalue = beep:bop()");
+		sol::state lua;
+		lua.new_usertype<vars>("vars", 
+			"boop", &vars::boop
+			"bop", &vars::bop);
+		lua.script("beep = vars.new()\n"
+			"beep.boop = 1\n"
+			"bopvalue = beep:bop()");
 
-	    vars& beep = lua["beep"];
-	    int bopvalue = lua["bopvalue"];
+		vars& beep = lua["beep"];
+		int bopvalue = lua["bopvalue"];
 
-	    assert(beep.boop == 1);
-	    assert(lua.get<vars>("beep").boop == 1);
-	    assert(beep.bop() == 2);
-	    assert(bopvalue == 2);
+		assert(beep.boop == 1);
+		assert(lua.get<vars>("beep").boop == 1);
+		assert(beep.bop() == 2);
+		assert(bopvalue == 2);
 
-	    return 0;
-	}
+		return 0;
+	}			
 
 
 
