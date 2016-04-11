@@ -166,6 +166,10 @@ public:
         return reg;
     }
 
+    operator lua_State* () const {
+        return lua_state();
+    }
+
     void set_panic(lua_CFunction panic){
         lua_atpanic(L, panic);
     }
