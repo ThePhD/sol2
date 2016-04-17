@@ -128,7 +128,7 @@ public:
 };
 
 template <>
-struct bond_size<protected_function_result> : std::integral_constant<std::size_t, std::numeric_limits<std::size_t>::max()> {};
+struct bond_size<protected_function_result> : std::integral_constant<std::size_t, SIZE_T_MAX> {};
 
 template <std::size_t I>
 stack_proxy get(const protected_function_result& fr) {
