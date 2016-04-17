@@ -5,6 +5,7 @@
 #include <sol.hpp>
 #include <vector>
 #include <map>
+#include <iostream>
 #include "test_stack_guard.hpp"
 
 struct self_test {
@@ -1013,19 +1014,26 @@ TEST_CASE("utilities/this_state", "Ensure this_state argument can be gotten anyw
     };
 
     sol::state lua;
+    std::cout << "created lua state" << std::endl;
     lua.open_libraries(sol::lib::base);
     lua.new_usertype<bark>("bark",
         "with_state", &bark::with_state
     );
 
+    std::cout << "setting b and with_state_2" << std::endl;
     bark b;
     lua.set("b", &b);
     lua.set("with_state_2", bark::with_state_2);
+    std::cout << "finished setting" << std::endl;
     sol::function fx = lua["with_state_2"];
     int a = fx(25, 25);
+    std::cout << "calling a script" << std::endl;
     lua.script("a = with_state_2(25, 25)");
+    std::cout << "calling c script" << std::endl;
     lua.script("c = b:with_state(25, 25)");
+    std::cout << "getting a" << std::endl;
     int la = lua["a"];
+    std::cout << "getting b" << std::endl;
     int lc = lua["c"];
 
     REQUIRE(lc == 50);
