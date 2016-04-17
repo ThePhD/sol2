@@ -38,6 +38,13 @@
 namespace sol {
 namespace stack {
 namespace stack_detail {
+template <typename T>
+struct is_this_state_raw : std::false_type {};
+template <>
+struct is_this_state_raw<this_state> : std::true_type {};
+template <typename T>
+using is_this_state = is_this_state_raw<meta::Unqualified<T>>;
+
 template<typename T>
 inline int push_as_upvalues(lua_State* L, T& item) {
     typedef std::decay_t<T> TValue;
@@ -141,7 +148,7 @@ inline void call_from_top(types<void> tr, types<Args...> ta, lua_State* L, Fx&& 
 template<int additionalpop = 0, bool check_args = stack_detail::default_check_arguments, typename... Args, typename Fx, typename... FxArgs>
 inline int call_into_lua(types<void> tr, types<Args...> ta, lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs) {
     call<check_args>(tr, ta, L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
-    int nargs = static_cast<int>(sizeof...(Args)) + additionalpop;
+    int nargs = static_cast<int>(sizeof...(Args)) + additionalpop - meta::count_if_pack<stack_detail::is_this_state, Args...>::value;
     lua_pop(L, nargs);
     return 0;
 }
@@ -149,7 +156,7 @@ inline int call_into_lua(types<void> tr, types<Args...> ta, lua_State* L, int st
 template<int additionalpop = 0, bool check_args = stack_detail::default_check_arguments, typename Ret0, typename... Ret, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<meta::Not<std::is_void<Ret0>>::value>>
 inline int call_into_lua(types<Ret0, Ret...>, types<Args...> ta, lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs) {
     decltype(auto) r = call<check_args>(types<meta::return_type_t<Ret0, Ret...>>(), ta, L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
-    int nargs = static_cast<int>(sizeof...(Args)) + additionalpop;
+    int nargs = static_cast<int>(sizeof...(Args)) + additionalpop - meta::count_if_pack<stack_detail::is_this_state, Args...>::value;
     lua_pop(L, nargs);
     return push_reference(L, std::forward<decltype(r)>(r));
 }
