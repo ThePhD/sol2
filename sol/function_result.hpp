@@ -27,7 +27,7 @@
 #include "stack.hpp"
 #include "stack_proxy.hpp"
 #include "proxy_base.hpp"
-#include <limits>
+#include <cstdint>
 
 namespace sol {
 struct function_result : public proxy_base<function_result> {
@@ -78,7 +78,7 @@ public:
 };
 
 template <>
-struct bond_size<function_result> : std::integral_constant<std::size_t, SIZE_T_MAX> {};
+struct bond_size<function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
 
 template <std::size_t I>
 stack_proxy get(const function_result& fr) {
