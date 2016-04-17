@@ -113,7 +113,7 @@ struct member_variable : public base_function {
 
     int set_assignable(std::false_type, lua_State* L, M) {
         lua_pop(L, 1);
-        return luaL_error(L, "cannot write to this type: copy assignment/constructor not available");
+        return luaL_error(L, "sol: cannot write to this type: copy assignment/constructor not available");
     }
 
     int set_assignable(std::true_type, lua_State* L, M mem) {
@@ -128,7 +128,7 @@ struct member_variable : public base_function {
 
     int set_variable(std::false_type, lua_State* L, M) {
         lua_pop(L, 1);
-        return luaL_error(L, "cannot write to a const variable");
+        return luaL_error(L, "sol: cannot write to a const variable");
     }
 
     int call(lua_State* L) {

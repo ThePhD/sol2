@@ -65,7 +65,7 @@ struct check_types {
     static bool check(types<Arg0, Args...>, std::index_sequence<I0, I...>, lua_State* L, int firstargument, Handler&& handler) {
         if (!stack::check<Arg0>(L, firstargument + I0, handler))
             return false;
-        return check(types<Args...>(), std::index_sequence<I...>(), L, firstargument, std::forward<Handler>(handler));
+        return check(types<Args...>(), std::index_sequence<I...>(), L, firstargument - static_cast<int>(std::is_same<this_state, meta::Unqualified<Arg0>>::value), std::forward<Handler>(handler));
     }
 
     template <typename Handler>
@@ -120,6 +120,22 @@ struct checker<nil_t, expected, C> {
 
 template <type expected, typename C>
 struct checker<nullopt_t, expected, C> : checker<nil_t> {};
+
+template <typename C>
+struct checker<this_state, type::none, C> {
+    template <typename Handler>
+    static bool check (lua_State*, int, Handler&&) {
+        return true;
+    }
+};
+
+template <typename C>
+struct checker<variadic_args, type::poly, C> {
+    template <typename Handler>
+    static bool check (lua_State*, int, Handler&&) {
+        return true;
+    }
+};
 
 template <typename T, typename C>
 struct checker<T, type::poly, C> {

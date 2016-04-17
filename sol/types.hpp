@@ -83,7 +83,8 @@ inline int c_trampoline(lua_State* L, lua_CFunction f) {
     return trampoline(L, f);
 }
 #endif // Exceptions vs. No Exceptions
-}
+struct empty { void operator()() {} };
+} // detail
 struct nil_t {};
 const nil_t nil {};
 struct metatable_key_t {};
@@ -91,7 +92,7 @@ const metatable_key_t metatable_key = {};
 inline bool operator==(nil_t, nil_t) { return true; }
 inline bool operator!=(nil_t, nil_t) { return false; }
 
-typedef std::add_lvalue_reference_t<std::remove_pointer_t<lua_CFunction>> lua_r_CFunction;
+typedef std::remove_pointer_t<lua_CFunction> lua_r_CFunction;
 
 template <typename T, typename = void>
 struct unique_usertype {};
@@ -130,6 +131,16 @@ struct c_closure {
     lua_CFunction c_function;
     int upvalues;
     c_closure(lua_CFunction f, int upvalues = 0) : c_function(f), upvalues(upvalues) {}
+};
+
+struct this_state {
+    lua_State* L;
+    operator lua_State* () const {
+        return L;
+    }
+    lua_State* operator-> () const {
+        return L;
+    }
 };
 
 enum class call_syntax {
@@ -295,6 +306,7 @@ template <typename base_t>
 class basic_userdata;
 template <typename base_t>
 class basic_lightuserdata;
+struct variadic_args;
 using object = basic_object<reference>;
 using stack_object = basic_object<stack_reference>;
 using userdata = basic_userdata<reference>;
@@ -377,7 +389,10 @@ template <typename Signature>
 struct lua_type_of<std::function<Signature>> : std::integral_constant<type, type::function>{};
 
 template <typename T>
-struct lua_type_of<optional<T>> : std::integral_constant<type, type::poly>{};
+struct lua_type_of<optional<T>> : std::integral_constant<type, type::poly> {};
+
+template <>
+struct lua_type_of<variadic_args> : std::integral_constant<type, type::poly> {};
 
 template <typename T>
 struct lua_type_of<T*> : std::integral_constant<type, type::userdata> {};
@@ -387,6 +402,9 @@ struct lua_type_of<T, std::enable_if_t<std::is_arithmetic<T>::value>> : std::int
 
 template <typename T>
 struct lua_type_of<T, std::enable_if_t<std::is_enum<T>::value>> : std::integral_constant<type, type::number> {};
+
+template <>
+struct lua_type_of<this_state> : std::integral_constant<type, type::none> {};
 
 template <typename T>
 struct is_lua_primitive : std::integral_constant<bool, 

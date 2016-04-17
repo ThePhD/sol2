@@ -28,7 +28,7 @@
 
 namespace sol {
 namespace function_detail {
-template<typename Function, typename Tp>
+template<typename Tp, typename Function>
 struct usertype_function_core : public base_function {
     typedef std::remove_pointer_t<Tp> T;
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
@@ -42,48 +42,15 @@ struct usertype_function_core : public base_function {
     template<typename... Args>
     usertype_function_core(Args&&... args): fx(std::forward<Args>(args)...) {}
 
-    template<typename Return, typename Raw = meta::Unqualified<Return>>
-    std::enable_if_t<std::is_same<T, Raw>::value, int> push(lua_State* L, Return&& r) {
-        if(detail::ptr(detail::unwrap(r)) == fx.item) {
-            // push nothing
-            // note that pushing nothing with the ':'
-            // syntax means we leave the instance of what
-            // was pushed onto the stack by lua to do the
-            // function call alone,
-            // and naturally lua returns that.
-            // It's an "easy" way to return *this,
-            // without allocating an extra userdata, apparently!
-            return 1;
-        }
-        return stack::push_reference(L, std::forward<Return>(r));
-    }
-
-    template<typename Return, typename Raw = meta::Unqualified<Return>>
-    std::enable_if_t<!std::is_same<T, Raw>::value, int> push(lua_State* L, Return&& r) {
-        return stack::push_reference(L, std::forward<Return>(r));
-    }
-
-    template<typename... Args, std::size_t Start>
-    int operator()(types<void> tr, types<Args...> ta, index_value<Start>, lua_State* L) {
-        stack::call_into_lua(tr, ta, L, static_cast<int>(Start), fx);
-        int nargs = static_cast<int>(sizeof...(Args));
-        lua_pop(L, nargs);
-        return 0;
-    }
-
     template<typename... Ret, typename... Args, std::size_t Start>
     int operator()(types<Ret...> tr, types<Args...> ta, index_value<Start>, lua_State* L) {
-        decltype(auto) r = stack::call(tr, ta, L, static_cast<int>(Start), fx);
-        int nargs = static_cast<int>(sizeof...(Args));
-        lua_pop(L, nargs);
-        int pushcount = push(L, std::forward<decltype(r)>(r));
-        return pushcount;
+        return stack::call_into_lua<1>(tr, ta, L, static_cast<int>(Start), fx);
     }
 };
 
-template<typename Function, typename Tp>
-struct usertype_function : public usertype_function_core<Function, Tp> {
-    typedef usertype_function_core<Function, Tp> base_t;
+template<typename Tp, typename Function>
+struct usertype_function : public usertype_function_core<Tp, Function> {
+    typedef usertype_function_core<Tp, Function> base_t;
     typedef std::remove_pointer_t<Tp> T;
     typedef typename base_t::traits_type traits_type;
     typedef typename base_t::args_type args_type;
@@ -102,33 +69,54 @@ struct usertype_function : public usertype_function_core<Function, Tp> {
     }
 };
 
-template<typename Function, typename Tp>
-struct usertype_variable_function : public usertype_function_core<Function, Tp> {
-    typedef usertype_function_core<Function, Tp> base_t;
+template<typename Tp, typename Function>
+struct usertype_variable_function : public usertype_function_core<Tp, Function> {
+    typedef usertype_function_core<Tp, Function> base_t;
     typedef std::remove_pointer_t<Tp> T;
+    typedef typename base_t::fx_t fx_t;
     typedef typename base_t::traits_type traits_type;
     typedef typename base_t::args_type args_type;
     typedef typename base_t::return_type return_type;
+    typedef typename fx_t::can_read can_read;
+    typedef typename fx_t::can_write can_write;
 
     template<typename... Args>
     usertype_variable_function(Args&&... args): base_t(std::forward<Args>(args)...) {}
 
     int set_assignable(std::false_type, lua_State* L) {
-        lua_pop(L, 2);
-        return luaL_error(L, "cannot write to this type: copy assignment/constructor not available");
+        lua_pop(L, 3);
+        return luaL_error(L, "sol: cannot write to this type: copy assignment/constructor not available");
     }
 
     int set_assignable(std::true_type, lua_State* L) {
+        return set_writable(can_write(), L);
+    }
+
+    int set_writable(std::false_type, lua_State* L) {
+        lua_pop(L, 3);
+        return luaL_error(L, "sol: cannot write to readonly variable");
+    }
+
+    int set_writable(std::true_type, lua_State* L) {
         return static_cast<base_t&>(*this)(meta::tuple_types<void>(), args_type(), index_value<3>(), L);
     }
 
     int set_variable(std::false_type, lua_State* L) {
-        lua_pop(L, 2);
-        return luaL_error(L, "cannot write to a const variable");
+        lua_pop(L, 3);
+        return luaL_error(L, "sol: cannot write to a const variable");
     }
 
     int set_variable(std::true_type, lua_State* L) {
         return set_assignable(std::is_assignable<std::add_lvalue_reference_t<return_type>, return_type>(), L);
+    }
+
+    int get_variable(std::false_type, lua_State* L) {
+        lua_pop(L, 2);
+        return luaL_error(L, "sol: cannot read from a readonly property");
+    }
+
+    int get_variable(std::true_type, lua_State* L) {
+        return static_cast<base_t&>(*this)(meta::tuple_types<return_type>(), types<>(), index_value<2>(), L);
     }
 
     int prelude(lua_State* L) {
@@ -136,7 +124,7 @@ struct usertype_variable_function : public usertype_function_core<Function, Tp> 
         this->fx.item = stack::get<T*>(L, 1);
         switch(argcount) {
         case 2:
-            return static_cast<base_t&>(*this)(meta::tuple_types<return_type>(), types<>(), index_value<2>(), L);
+            return get_variable(can_read(), L);
         case 3:
             return set_variable(meta::Not<std::is_const<return_type>>(), L);
         default:

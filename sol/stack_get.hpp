@@ -63,23 +63,9 @@ struct getter<T, std::enable_if_t<meta::And<std::is_integral<T>, std::is_unsigne
 };
 
 template<typename T>
-struct getter<T, std::enable_if_t<std::is_base_of<reference, T>::value>> {
+struct getter<T, std::enable_if_t<std::is_base_of<reference, T>::value || std::is_base_of<stack_reference, T>::value>> {
     static T get(lua_State* L, int index = -1) {
         return T(L, index);
-    }
-};
-
-template<typename T>
-struct getter<T, std::enable_if_t<std::is_base_of<stack_reference, T>::value>> {
-    static T get(lua_State* L, int index = -1) {
-        return T(L, index);
-    }
-};
-
-template<>
-struct getter<stack_reference> {
-    static stack_reference get(lua_State* L, int index = -1) {
-        return stack_reference(L, index);
     }
 };
 
@@ -145,6 +131,13 @@ template<>
 struct getter<nullopt_t> {
     static nullopt_t get(lua_State*, int = -1) {
         return nullopt;
+    }
+};
+
+template<>
+struct getter<this_state> {
+    static this_state get(lua_State* L, int = -1) {
+        return this_state{L};
     }
 };
 

@@ -26,6 +26,108 @@
 #include <memory>
 
 namespace sol {
+template <typename RSig = void, typename WSig = void>
+struct member_property {
+    typedef std::conditional_t<std::is_void<RSig>::value, detail::empty, RSig> R;
+    typedef std::conditional_t<std::is_void<WSig>::value, detail::empty, WSig> W;
+
+    R read;
+    W write;
+
+    member_property(R read, W write) : read(std::move(read)), write(std::move(write)) {}
+
+    template <typename T, typename Arg>
+    void write_if(std::true_type, T& mem, Arg&& arg) {
+        write(mem, arg);
+    }
+
+    template <typename T, typename Arg>
+    void write_if(std::false_type, T&, Arg&&) {
+        // This is a fatal error if we get here...
+        // Should never happen but...
+        // Crash horrifically, for safety?
+        std::abort();
+    }
+
+    template <typename T, typename Arg>
+    void operator()(T& mem, Arg&& arg) {
+        write_if(meta::Not<std::is_void<WSig>>(), mem, arg);
+    }
+
+    template <typename T>
+    decltype(auto) read_if(std::true_type, T& mem) {
+        return read(mem);
+    }
+
+    template <typename T>
+    decltype(auto) read_if(std::false_type, T&) {
+        typedef typename meta::bind_traits<WSig>::template arg_at<1> Arg;
+       typedef std::add_pointer_t<std::remove_reference_t<Arg>> pret;
+        // This is a fatal error if we get here...
+        // Should never happen but...
+        // Crash horrifically, for safety?
+        std::abort();
+        return *pret();
+    }
+
+    template <typename T>
+    decltype(auto) operator()(T& mem) {
+        return read_if(meta::Not<std::is_void<RSig>>(), mem);
+    }
+};
+
+template <typename R, typename T>
+inline decltype(auto) property( R(T::* readfunc )() const) {
+    auto rf = [readfunc](T& mem) -> R {return (mem.*readfunc)();};
+    return member_property<decltype(rf)>(std::move(rf), detail::empty());
+}
+
+template <typename R, typename T>
+inline decltype(auto) property( R(T::* readfunc )()) {
+    auto rf = [readfunc](T& mem) -> R {return (mem.*readfunc)();};
+    return member_property<decltype(rf)>(std::move(rf), detail::empty());
+}
+
+template <typename R, typename T, typename Arg>
+inline decltype(auto) property(R(T::* writefunc)(Arg)) {
+    auto wf = [writefunc](T& mem, Arg arg) {(mem.*writefunc)(std::forward<Arg>(arg));};
+    return member_property<void, decltype(wf)>(detail::empty(), std::move(wf));
+}
+
+template <typename R, typename T, typename Arg>
+inline decltype(auto) property(R(T::* writefunc)(Arg) const) {
+    auto wf = [writefunc](T& mem, Arg arg) {(mem.*writefunc)(std::forward<Arg>(arg));};
+    return member_property<void, decltype(wf)>(detail::empty(), std::move(wf));
+}
+
+template <typename RR, typename RT, typename WR, typename WT, typename Arg>
+inline decltype(auto) property(RR(RT::* readfunc)(), WR(WT::* writefunc)(Arg)) {
+    auto rf = [readfunc](RT& mem) -> RR {return (mem.*readfunc)();};
+    auto wf = [writefunc](WT& mem, Arg arg) {(mem.*writefunc)(std::forward<Arg>(arg));};
+    return member_property<decltype(rf), decltype(wf)>(std::move(rf), std::move(wf));
+}
+
+template <typename RR, typename RT, typename WR, typename WT, typename Arg>
+inline decltype(auto) property(RR(RT::* readfunc)() const, WR(WT::* writefunc)(Arg)) {
+    auto rf = [readfunc](RT& mem) -> RR {return (mem.*readfunc)();};
+    auto wf = [writefunc](WT& mem, Arg arg) {(mem.*writefunc)(std::forward<Arg>(arg));};
+    return member_property<decltype(rf), decltype(wf)>(std::move(rf), std::move(wf));
+}
+
+template <typename RR, typename RT, typename WR, typename WT, typename Arg>
+inline decltype(auto) property(RR(RT::* readfunc)(), WR(WT::* writefunc)(Arg) const) {
+    auto rf = [readfunc](RT& mem) -> RR {return (mem.*readfunc)();};
+    auto wf = [writefunc](WT& mem, Arg arg) {(mem.*writefunc)(std::forward<Arg>(arg));};
+    return member_property<decltype(rf), decltype(wf)>(std::move(rf), std::move(wf));
+}
+
+template <typename RR, typename RT, typename WR, typename WT, typename Arg>
+inline decltype(auto) property(RR(RT::* readfunc)() const, WR(WT::* writefunc)(Arg) const) {
+    auto rf = [readfunc](RT& mem) -> RR {return (mem.*readfunc)();};
+    auto wf = [writefunc](WT& mem, Arg arg) {(mem.*writefunc)(std::forward<Arg>(arg));};
+    return member_property<decltype(rf), decltype(wf)>(std::move(rf), std::move(wf));
+}
+
 namespace function_detail {
 template <typename T>
 struct implicit_wrapper {
@@ -48,35 +150,62 @@ inline decltype(auto) cleanup_key() {
 template<typename T, typename Func, typename = void>
 struct functor {
     typedef meta::bind_traits<Func> traits_type;
-    typedef typename traits_type::args_type args_type;
+    typedef meta::pop_front_type_t<typename traits_type::args_type> args_type;
     typedef typename traits_type::return_type return_type;
-    static const std::size_t arity = traits_type::arity;
-
+    typedef meta::tuple_element_t<0, typename traits_type::args_tuple_type> Arg0;
+    typedef std::conditional_t<std::is_pointer<Func>::value || std::is_class<Func>::value, Func, std::add_pointer_t<Func>> function_type;
     T* item;
-    Func invocation;
+    function_type invocation;
 
     template<typename... Args>
     functor(Args&&... args): item(nullptr), invocation(std::forward<Args>(args)...) {}
 
-    bool check () const {
-         return invocation != nullptr;
-    }
-
     template<typename... Args>
     void call(types<void>, Args&&... args) {
         T& member = *item;
-        (member.*invocation)(std::forward<Args>(args)...);
+        invocation(implicit_wrapper<T>(member), std::forward<Args>(args)...);
     }
 
     template<typename Ret, typename... Args>
     Ret call(types<Ret>, Args&&... args) {
         T& member = *item;
-        return (member.*invocation)(std::forward<Args>(args)...);
+        return invocation(implicit_wrapper<T>(member), std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    auto operator()(Args&&... args) -> decltype(std::declval<functor>().call(types<return_type>{}, std::forward<Args>(args)...)) {
+        return this->call(types<return_type>(), std::forward<Args>(args)...);
+    }
+};
+
+template<typename T, typename RSig, typename WSig, typename C>
+struct functor<T, member_property<RSig, WSig>, C> {
+    typedef meta::bind_traits<std::conditional_t<std::is_void<WSig>::value, RSig, WSig>> traits_type;
+    typedef meta::pop_front_type_t<typename traits_type::args_type> args_type;
+    typedef std::conditional_t<std::is_void<typename traits_type::return_type>::value, typename traits_type::template arg_at<0>, typename traits_type::return_type> return_type;
+    typedef member_property<RSig, WSig> function_type;
+    typedef meta::Not<std::is_void<RSig>> can_read;
+    typedef meta::Not<std::is_void<WSig>> can_write;
+    T* item;
+    function_type invocation;
+
+    template<typename... Args>
+    functor(Args&&... args): item(nullptr), invocation(std::forward<Args>(args)...) {}
+
+    template<typename Arg>
+    void call(Arg&& arg) {
+        T& member = *item;
+        invocation(member, std::forward<Arg>(arg));
+    }
+
+    decltype(auto) call() {
+        T& member = *item;
+        return invocation(member);
     }
 
     template<typename... Args>
     decltype(auto) operator()(Args&&... args) {
-        return this->call(types<return_type>{}, std::forward<Args>(args)...);
+        return this->call(std::forward<Args>(args)...);
     }
 };
 
@@ -86,15 +215,14 @@ struct functor<T, Func, std::enable_if_t<std::is_member_object_pointer<Func>::va
     typedef typename traits_type::args_type args_type;
     typedef typename traits_type::return_type return_type;
     static const std::size_t arity = traits_type::arity;
+    typedef std::true_type can_read;
+    typedef std::true_type can_write;
+
     T* item;
     Func invocation;
 
     template<typename... Args>
     functor(Args&&... args): item(nullptr), invocation(std::forward<Args>(args)...) {}
-
-    bool check () const {
-         return this->fx.invocation != nullptr;
-    }
 
     template<typename Arg>
     void call(Arg&& arg) {
@@ -114,50 +242,33 @@ struct functor<T, Func, std::enable_if_t<std::is_member_object_pointer<Func>::va
 };
 
 template<typename T, typename Func>
-struct functor<T, Func, std::enable_if_t<std::is_function<Func>::value || std::is_class<Func>::value>> {
+struct functor<T, Func, std::enable_if_t<std::is_member_function_pointer<Func>::value>> {
     typedef meta::bind_traits<Func> traits_type;
-    typedef meta::pop_front_type_t<typename traits_type::args_type> args_type;
+    typedef typename traits_type::args_type args_type;
     typedef typename traits_type::return_type return_type;
     static const std::size_t arity = traits_type::arity;
-    typedef meta::tuple_element_t<0, typename traits_type::args_tuple_type> Arg0;
-    typedef std::conditional_t<std::is_pointer<Func>::value || std::is_class<Func>::value, Func, std::add_pointer_t<Func>> function_type;
-    static_assert(std::is_base_of<meta::Unqualified<std::remove_pointer_t<Arg0>>, T>::value, "Any non-member-function must have a first argument which is covariant with the desired userdata type.");
+
     T* item;
-    function_type invocation;
-
-private:
-    bool check(std::false_type) const {
-        return true;
-    }
-
-    bool check(std::true_type) const {
-        return this->invocation != nullptr;
-    }
-
-public:
+    Func invocation;
 
     template<typename... Args>
     functor(Args&&... args): item(nullptr), invocation(std::forward<Args>(args)...) {}
 
-    bool check () const {
-         return this->check(std::is_function<Func>());
-    }
-
     template<typename... Args>
     void call(types<void>, Args&&... args) {
         T& member = *item;
-        invocation(implicit_wrapper<T>(member), std::forward<Args>(args)...);
+        (member.*invocation)(std::forward<Args>(args)...);
     }
 
     template<typename Ret, typename... Args>
     Ret call(types<Ret>, Args&&... args) {
         T& member = *item;
-        return invocation(implicit_wrapper<T>(member), std::forward<Args>(args)...);
+        return (member.*invocation)(std::forward<Args>(args)...);
     }
 
     template<typename... Args>
-    auto operator()(Args&&... args) -> decltype(std::declval<functor>().call(types<return_type>{}, std::forward<Args>(args)...)) {
-        return this->call(types<return_type>(), std::forward<Args>(args)...);
+    decltype(auto) operator()(Args&&... args) {
+        return this->call(types<return_type>{}, std::forward<Args>(args)...);
     }
 };
 

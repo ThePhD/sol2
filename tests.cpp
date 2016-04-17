@@ -192,39 +192,39 @@ TEST_CASE("table/traversal", "ensure that we can chain requests and tunnel down 
 
     lua.script("t1 = {t2 = {t3 = 24}};");
     {
-        stack_guard g(lua.lua_state(), begintop, endtop);
+        test_stack_guard g(lua.lua_state(), begintop, endtop);
         int traversex24 = lua.traverse_get<int>("t1", "t2", "t3");
         REQUIRE(traversex24 == 24);
     } REQUIRE(begintop == endtop);
 
     {
-        stack_guard g(lua.lua_state(), begintop, endtop);
+        test_stack_guard g(lua.lua_state(), begintop, endtop);
         int x24 = lua["t1"]["t2"]["t3"];
         REQUIRE(x24 == 24);
     } REQUIRE(begintop == endtop);
 
     {
-        stack_guard g(lua.lua_state(), begintop, endtop);
+        test_stack_guard g(lua.lua_state(), begintop, endtop);
         lua["t1"]["t2"]["t3"] = 64;
         int traversex64 = lua.traverse_get<int>("t1", "t2", "t3");
         REQUIRE(traversex64 == 64);
     } REQUIRE(begintop == endtop);
 
     {
-        stack_guard g(lua.lua_state(), begintop, endtop);
+        test_stack_guard g(lua.lua_state(), begintop, endtop);
         int x64 = lua["t1"]["t2"]["t3"];
         REQUIRE(x64 == 64);
     } REQUIRE(begintop == endtop);
 
     {
-        stack_guard g(lua.lua_state(), begintop, endtop);
+        test_stack_guard g(lua.lua_state(), begintop, endtop);
         lua.traverse_set("t1", "t2", "t3", 13);
         int traversex13 = lua.traverse_get<int>("t1", "t2", "t3");
         REQUIRE(traversex13 == 13);
     } REQUIRE(begintop == endtop);
 
     {
-        stack_guard g(lua.lua_state(), begintop, endtop);
+        test_stack_guard g(lua.lua_state(), begintop, endtop);
         int x13 = lua["t1"]["t2"]["t3"];
         REQUIRE(x13 == 13);
     } REQUIRE(begintop == endtop);
@@ -234,18 +234,18 @@ TEST_CASE("simple/set", "Check if the set works properly.") {
     sol::state lua;
     int begintop = 0, endtop = 0;
     {
-        stack_guard g(lua.lua_state(), begintop, endtop);
+        test_stack_guard g(lua.lua_state(), begintop, endtop);
         lua.set("a", 9);
     } REQUIRE(begintop == endtop);
     REQUIRE_NOTHROW(lua.script("if a ~= 9 then error('wrong value') end"));
     {
-        stack_guard g(lua.lua_state(), begintop, endtop);
+        test_stack_guard g(lua.lua_state(), begintop, endtop);
         lua.set("d", "hello");
     } REQUIRE(begintop == endtop);
     REQUIRE_NOTHROW(lua.script("if d ~= 'hello' then error('expected \\'hello\\', got '.. tostring(d)) end"));
 
     {
-        stack_guard g(lua.lua_state(), begintop, endtop);
+        test_stack_guard g(lua.lua_state(), begintop, endtop);
         lua.set("e", std::string("hello"), "f", true);
     } REQUIRE(begintop == endtop);
     REQUIRE_NOTHROW(lua.script("if d ~= 'hello' then error('expected \\'hello\\', got '.. tostring(d)) end"));
@@ -258,21 +258,21 @@ TEST_CASE("simple/get", "Tests if the get function works properly.") {
 
     lua.script("a = 9");
     {
-        stack_guard g(lua.lua_state(), begintop, endtop);
+        test_stack_guard g(lua.lua_state(), begintop, endtop);
         auto a = lua.get<int>("a");
         REQUIRE(a == 9.0);
     } REQUIRE(begintop == endtop);
 
     lua.script("b = nil");
     {
-        stack_guard g(lua.lua_state(), begintop, endtop);
+        test_stack_guard g(lua.lua_state(), begintop, endtop);
         REQUIRE_NOTHROW(lua.get<sol::nil_t>("b"));
     } REQUIRE(begintop == endtop);
 
     lua.script("d = 'hello'");
     lua.script("e = true");
     {
-        stack_guard g(lua.lua_state(), begintop, endtop);
+        test_stack_guard g(lua.lua_state(), begintop, endtop);
         std::string d;
         bool e;
         std::tie( d, e ) = lua.get<std::string, bool>("d", "e");
@@ -943,4 +943,92 @@ lw2 = bark.something2(2, 3)
     REQUIRE(lw == lw2);
 
     REQUIRE_THROWS(lua.script("b.var2 = 2"));
+}
+
+TEST_CASE("usertype/properties", "Check if member properties/variables work") {
+    struct bark {
+        int var = 50;
+        int var2 = 25;
+
+        int get_var2() const {
+            return var2;
+        }
+
+        int get_var3() {
+            return var2;
+        }
+
+        void set_var2( int x ) {
+            var2 = x;
+        }
+    };
+
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+    lua.new_usertype<bark>("bark",
+        "var", &bark::var,
+        "var2", sol::readonly( &bark::var2 ),
+        "a", sol::property(&bark::get_var2, &bark::set_var2),
+        "b", sol::property(&bark::get_var2),
+        "c", sol::property(&bark::get_var3),
+        "d", sol::property(&bark::set_var2)
+    );
+
+    bark b;
+    lua.set("b", &b);
+
+    lua.script("b.a = 59");
+    lua.script("var2_0 = b.a");
+    lua.script("var2_1 = b.b");
+    lua.script("b.d = 1568");
+    lua.script("var2_2 = b.c");
+
+    int var2_0 = lua["var2_0"];
+    int var2_1 = lua["var2_1"];
+    int var2_2 = lua["var2_2"];
+    REQUIRE(var2_0 == 59);
+    REQUIRE(var2_1 == 59);
+    REQUIRE(var2_2 == 1568);
+
+    REQUIRE_THROWS(lua.script("b.var2 = 24"));
+    REQUIRE_THROWS(lua.script("r = b.d"));
+    REQUIRE_THROWS(lua.script("r = b.d"));
+    REQUIRE_THROWS(lua.script("b.b = 25"));
+    REQUIRE_THROWS(lua.script("b.c = 11"));
+}
+
+TEST_CASE("utilities/this_state", "Ensure this_state argument can be gotten anywhere in the function.") {
+    struct bark {
+        int with_state(sol::this_state l, int a, int b) {
+            lua_State* L = l;
+            int c = lua_gettop(L);
+            return a + b + (c - c);
+        }
+
+        static int with_state_2(int a, sol::this_state l, int b) {
+            lua_State* L = l;
+            int c = lua_gettop(L);
+            return a * b + (c - c);
+        }
+    };
+
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+    lua.new_usertype<bark>("bark",
+        "with_state", &bark::with_state
+    );
+
+    bark b;
+    lua.set("b", &b);
+    lua.set("with_state_2", bark::with_state_2);
+    sol::function fx = lua["with_state_2"];
+    int a = fx(25, 25);
+    lua.script("a = with_state_2(25, 25)");
+    lua.script("c = b:with_state(25, 25)");
+    int la = lua["a"];
+    int lc = lua["c"];
+
+    REQUIRE(lc == 50);
+    REQUIRE(a == 625);
+    REQUIRE(la == 625);
 }

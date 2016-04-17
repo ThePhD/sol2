@@ -443,11 +443,11 @@ TEST_CASE("functions/all-kinds", "Register all kinds of functions, make sure the
     };
 
     struct inner {
-	    const int z = 5653;
+        const int z = 5653;
     };
 
     struct nested {
-	    inner i;
+        inner i;
     };
 
     auto a = []() { return 500; };
@@ -748,4 +748,36 @@ end)");
     REQUIRE(a == 1);
     REQUIRE(b == 2);
     REQUIRE(c == 3);
+}
+
+TEST_CASE("functions/variadic_args", "Check to see we can receive multiple arguments through a variadic") {
+    struct structure {
+        int x;
+        bool b;
+    };
+
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+    lua.set_function("v", [](sol::this_state, sol::variadic_args va) -> structure {
+        int r = 0;
+        for (int i = 0; i < va.leftover_count(); ++i) {
+            int v = va[i];
+            r += v;
+        }
+        return{ r, r > 200 };
+    });
+    
+    lua.script("x = v(25, 25)");
+    lua.script("x2 = v(25, 25, 100, 50, 250, 150)");
+    lua.script("x3 = v(1, 2, 3, 4, 5, 6)");
+
+    structure& lx = lua["x"];
+    structure& lx2 = lua["x2"];
+    structure& lx3 = lua["x3"];
+    REQUIRE(lx.x == 50);
+    REQUIRE(lx2.x == 600);
+    REQUIRE(lx3.x == 21);
+    REQUIRE_FALSE(lx.b);
+    REQUIRE(lx2.b);
+    REQUIRE_FALSE(lx3.b);
 }

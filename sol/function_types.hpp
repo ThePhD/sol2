@@ -33,7 +33,6 @@
 #include "resolve.hpp"
 
 namespace sol {
-
 template <typename Sig, typename... Ps>
 struct function_arguments {
     std::tuple<Ps...> params;

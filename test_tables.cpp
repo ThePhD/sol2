@@ -168,7 +168,7 @@ TEST_CASE("tables/iterators", "Testing the use of iteratrs to get values from a 
     int begintop = 0;
     int endtop = 0;
     {
-        stack_guard s(lua.lua_state(), begintop, endtop);
+        test_stack_guard s(lua.lua_state(), begintop, endtop);
         for (auto& kvp : tbl) {
             [&iterations](sol::object key, sol::object value) {
             ++iterations;

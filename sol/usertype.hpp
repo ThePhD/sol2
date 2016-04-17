@@ -197,10 +197,15 @@ private:
         return std::make_unique<function_detail::usertype_constructor_function<T, Functions...>>(std::move(func.set));
     }
 
+    template<typename RSig, typename WSig>
+    std::unique_ptr<function_detail::base_function> make_function(const std::string&, member_property<RSig, WSig> func) {
+        return std::make_unique<function_detail::usertype_variable_function<T, member_property<RSig, WSig>>>(std::move(func));
+    }
+
     template<typename Fx>
     std::unique_ptr<function_detail::base_function> make_free_function(std::true_type, const std::string&, Fx&& func) {
         typedef std::decay_t<meta::Unqualified<Fx>> function_type;
-        return std::make_unique<function_detail::usertype_function<function_type, T>>(func);        
+        return std::make_unique<function_detail::usertype_function<T, function_type>>(func);
     }
 
     template<typename Fx>
@@ -219,16 +224,16 @@ private:
 
     template<typename Base, typename Ret>
     std::unique_ptr<function_detail::base_function> make_variable_function(std::true_type, const std::string&, Ret Base::* func) {
-        static_assert(std::is_base_of<Base, T>::value, "Any registered function must be part of the class");
+        static_assert(std::is_base_of<Base, T>::value, "Any registered member variable must be part of the class");
         typedef std::decay_t<decltype(func)> function_type;
-        return std::make_unique<function_detail::usertype_variable_function<function_type, T>>(func);
+        return std::make_unique<function_detail::usertype_variable_function<T, function_type>>(func);
     }
 
     template<typename Base, typename Ret>
     std::unique_ptr<function_detail::base_function> make_variable_function(std::false_type, const std::string&, Ret Base::* func) {
-        static_assert(std::is_base_of<Base, T>::value, "Any registered function must be part of the class");
+        static_assert(std::is_base_of<Base, T>::value, "Any registered member function must be part of the class");
         typedef std::decay_t<decltype(func)> function_type;
-        return std::make_unique<function_detail::usertype_function<function_type, T>>(func);
+        return std::make_unique<function_detail::usertype_function<T, function_type>>(func);
     }
 
     template<typename Base, typename Ret>
@@ -240,7 +245,7 @@ private:
     template<typename Fx>
     std::unique_ptr<function_detail::base_function> make_functor_function(std::true_type, const std::string&, Fx&& func) {
         typedef std::decay_t<meta::Unqualified<Fx>> function_type;
-        return std::make_unique<function_detail::usertype_function<function_type, T>>(func);        
+        return std::make_unique<function_detail::usertype_function<T, function_type>>(func);
     }
 
     template<typename Fx>
@@ -339,7 +344,7 @@ private:
 
     template<std::size_t N, typename Fx>
     void build_function(std::string funcname, Fx&& func) {
-        typedef std::is_member_object_pointer<meta::Unqualified<Fx>> is_variable;
+        typedef meta::Or<std::is_member_object_pointer<meta::Unqualified<Fx>>, meta::is_specialization_of<member_property, meta::Unqualified<Fx>>> is_variable;
         functionnames.push_back(std::move(funcname));
         std::string& name = functionnames.back();
         auto baseptr = make_function(name, std::forward<Fx>(func));

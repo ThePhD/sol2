@@ -80,7 +80,7 @@ struct upvalue_member_function {
 template <int N, typename R, typename M, typename V>
 int set_assignable(std::false_type, lua_State* L, M&, V&) {
     lua_pop(L, N);
-    return luaL_error(L, "cannot write to this type: copy assignment/constructor not available");
+    return luaL_error(L, "sol: cannot write to this type: copy assignment/constructor not available");
 }
 
 template <int N, typename R, typename M, typename V>
@@ -98,7 +98,7 @@ int set_variable(std::true_type, lua_State* L, M& mem, V& var) {
 template <int N, typename R, typename M, typename V>
 int set_variable(std::false_type, lua_State* L, M&, V&) {
     lua_pop(L, N);
-    return luaL_error(L, "cannot write to a const variable");
+    return luaL_error(L, "sol: cannot write to a const variable");
 }
 
 template<typename T, typename Function>

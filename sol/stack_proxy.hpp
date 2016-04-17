@@ -39,9 +39,30 @@ public:
         return stack::get<T>(L, stack_index());
     }
 
+    int push () const {
+        lua_pushvalue(L, index);
+        return 1;
+    }
+
     lua_State* lua_state() const { return L; }
     int stack_index() const { return index; }
 };
+
+namespace stack {
+template <>
+struct getter<stack_proxy> {
+    static stack_proxy get(lua_State* L, int index = -1) {
+        return stack_proxy(L, index);
+    }
+};
+
+template <>
+struct pusher<stack_proxy> {
+    static int push(lua_State*, const stack_proxy& ref) {
+        return ref.push();
+    }
+};
+} // stack
 } // sol
 
 #endif // SOL_STACK_PROXY_HPP

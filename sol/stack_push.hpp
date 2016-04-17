@@ -175,19 +175,12 @@ struct pusher<T, std::enable_if_t<meta::And<meta::has_begin_end<T>, meta::has_ke
 };
 
 template<typename T>
-struct pusher<T, std::enable_if_t<std::is_base_of<reference, T>::value>> {
+struct pusher<T, std::enable_if_t<std::is_base_of<reference, T>::value || std::is_base_of<stack_reference, T>::value>> {
     static int push(lua_State*, T& ref) {
         return ref.push();
     }
 
     static int push(lua_State*, T&& ref) {
-        return ref.push();
-    }
-};
-
-template<>
-struct pusher<stack_reference> {
-    static int push(lua_State*, const stack_reference& ref) {
         return ref.push();
     }
 };
@@ -331,6 +324,13 @@ template<>
 struct pusher<nullopt_t> {
     static int push(lua_State* L, nullopt_t) {
         return stack::push(L, nil);
+    }
+};
+
+template<>
+struct pusher<this_state> {
+    static int push(lua_State*, const this_state&) {
+        return 0;
     }
 };
 } // stack
