@@ -1007,7 +1007,9 @@ TEST_CASE("utilities/this_state", "Ensure this_state argument can be gotten anyw
         }
 
         static int with_state_2(int a, sol::this_state l, int b) {
+            std::cout << "inside with_state_2" << std::endl;
             lua_State* L = l;
+            std::cout << "L is" << (void*)L << std::endl;
             int c = lua_gettop(L);
             return a * b + (c - c);
         }
@@ -1025,8 +1027,11 @@ TEST_CASE("utilities/this_state", "Ensure this_state argument can be gotten anyw
     lua.set("b", &b);
     lua.set("with_state_2", bark::with_state_2);
     std::cout << "finished setting" << std::endl;
+    std::cout << "getting fx" << std::endl;
     sol::function fx = lua["with_state_2"];
+    std::cout << "calling fx" << std::endl;
     int a = fx(25, 25);
+    std::cout << "finished setting fx" << std::endl;
     std::cout << "calling a script" << std::endl;
     lua.script("a = with_state_2(25, 25)");
     std::cout << "calling c script" << std::endl;
