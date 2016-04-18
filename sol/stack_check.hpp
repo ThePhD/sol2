@@ -61,11 +61,11 @@ struct basic_check {
 
 template <bool b>
 struct check_types {
-    template <std::size_t I0, std::size_t... I, typename Arg0, typename... Args, typename Handler>
-    static bool check(types<Arg0, Args...>, std::index_sequence<I0, I...>, lua_State* L, int firstargument, Handler&& handler) {
-        if (!stack::check<Arg0>(L, firstargument + I0, handler))
+    template <std::size_t I0, std::size_t... I, typename T, typename... Args, typename Handler>
+    static bool check(types<T, Args...>, std::index_sequence<I0, I...>, lua_State* L, int firstargument, Handler&& handler) {
+        if (!stack::check<T>(L, firstargument + I0, handler))
             return false;
-        return check(types<Args...>(), std::index_sequence<I...>(), L, firstargument - static_cast<int>(std::is_same<this_state, meta::Unqualified<Arg0>>::value), std::forward<Handler>(handler));
+        return check(types<Args...>(), std::index_sequence<I...>(), L, firstargument - static_cast<int>(is_transparent_argument<meta::Unqualified<T>>::value), std::forward<Handler>(handler));
     }
 
     template <typename Handler>

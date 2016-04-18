@@ -76,18 +76,18 @@ inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 1) {
 
 template <bool checkargs = default_check_arguments, std::size_t... I, typename R, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<!std::is_void<R>::value>>
 inline decltype(auto) call(types<R>, types<Args...> ta, std::index_sequence<I...> tai, lua_State* L, int start, Fx&& fx, FxArgs&&... args) {
-    typedef meta::index_in_pack<this_state, Args...> state_pack_index;
-    typedef std::integral_constant<int, state_pack_index::value == -1 ? INT_MAX : static_cast<int>(state_pack_index::value)> state_idx;
+    typedef meta::index_in_pack<this_state, Args...> state_index;
+    typedef meta::index_in_pack<variadic_args, Args...> va_pack_index;
     check_types<checkargs>{}.check(ta, tai, L, start, type_panic);
-    return fx(std::forward<FxArgs>(args)..., stack_detail::unchecked_get<Args>(L, start + (state_idx::value < I ? I - 1 : I))...);
+    return fx(std::forward<FxArgs>(args)..., stack_detail::unchecked_get<Args>(L, start + I - static_cast<int>(state_index::value < I) - static_cast<int>(va_pack_index::value < I))...);
 }
 
 template <bool checkargs = default_check_arguments, std::size_t... I, typename... Args, typename Fx, typename... FxArgs>
 inline void call(types<void>, types<Args...> ta, std::index_sequence<I...> tai, lua_State* L, int start, Fx&& fx, FxArgs&&... args) {
-    typedef meta::index_in_pack<this_state, Args...> state_pack_index;
-    typedef std::integral_constant<int, state_pack_index::value == -1 ? INT_MAX : static_cast<int>(state_pack_index::value)> state_idx;
+    typedef meta::index_in_pack<this_state, Args...> state_index;
+    typedef meta::index_in_pack<variadic_args, Args...> va_pack_index;
     check_types<checkargs>{}.check(ta, tai, L, start, type_panic);
-    fx(std::forward<FxArgs>(args)..., stack_detail::unchecked_get<Args>(L, start + (state_idx::value < I ? I - 1 : I))...);
+    fx(std::forward<FxArgs>(args)..., stack_detail::unchecked_get<Args>(L, start + I - static_cast<int>(state_index::value < I) - static_cast<int>(va_pack_index::value < I))...);
 }
 } // stack_detail
 

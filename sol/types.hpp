@@ -315,6 +315,8 @@ using lightuserdata = basic_lightuserdata<reference>;
 using stack_lightuserdata = basic_lightuserdata<stack_reference>;
 class coroutine;
 class thread;
+struct variadic_args;
+struct this_state;
 
 template <typename T, typename = void>
 struct lua_type_of : std::integral_constant<type, type::userdata> {};
@@ -433,6 +435,15 @@ struct is_proxy_primitive : is_lua_primitive<T> { };
 
 template <typename T>
 struct is_unique_usertype : std::false_type {};
+
+template <typename T>
+struct is_transparent_argument : std::false_type {};
+
+template <>
+struct is_transparent_argument<this_state> : std::true_type {};
+
+template <>
+struct is_transparent_argument<variadic_args> : std::true_type {};
 
 template<typename T>
 inline type type_of() {

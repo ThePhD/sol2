@@ -134,7 +134,7 @@ struct find_in_pack_v<V, Vs1, Vs...> : Or<Bool<(V::value == Vs1::value)>, find_i
 
 namespace meta_detail {
     template<std::size_t I, typename T, typename... Args>
-    struct index_in_pack : std::integral_constant<std::ptrdiff_t, -1> { };
+    struct index_in_pack : std::integral_constant<std::size_t, SIZE_MAX> { };
 
     template<std::size_t I, typename T, typename T1, typename... Args>
     struct index_in_pack<I, T, T1, Args...> : std::conditional_t<std::is_same<T, T1>::value, std::integral_constant<std::ptrdiff_t, I>, index_in_pack<I + 1, T, Args...>> { };
