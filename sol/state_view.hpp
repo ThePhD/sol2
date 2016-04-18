@@ -38,6 +38,8 @@ enum class lib : char {
     debug,
     bit32,
     io,
+    ffi,
+    jit,
     count
 };
 
@@ -108,6 +110,9 @@ public:
 #if SOL_LUA_VERSION > 501
                 luaL_requiref(L, "bit32", luaopen_bit32, 1);
                 lua_pop(L, 1);
+#elif defined(SOL_LUAJIT)
+                luaL_requiref(L, "bit32", luaopen_bit, 1);
+                lua_pop(L, 1);
 #else
 #endif // Lua 5.2+ only
                 break;
@@ -122,6 +127,16 @@ public:
             case lib::debug:
                 luaL_requiref(L, "debug", luaopen_debug, 1);
                 lua_pop(L, 1);
+                break;
+		  case lib::ffi:
+#ifdef SOL_LUAJIT
+                luaL_requiref(L, "ffi", luaopen_ffi, 1);
+#endif
+                break;
+		  case lib::jit:
+#ifdef SOL_LUAJIT
+                luaL_requiref(L, "jit", luaopen_jit, 1);
+#endif
                 break;
             case lib::count:
             default:

@@ -358,6 +358,21 @@ TEST_CASE("libraries", "Check if we can open libraries") {
     REQUIRE_NOTHROW(lua.open_libraries(sol::lib::base, sol::lib::os));
 }
 
+TEST_CASE("libraries2", "Check if we can open ALL the libraries") {
+    sol::state lua;
+    REQUIRE_NOTHROW(lua.open_libraries(sol::lib::base, 
+    sol::lib::bit32, 
+    sol::lib::coroutine, 
+    sol::lib::debug, 
+    sol::lib::ffi,
+    sol::lib::jit,
+    sol::lib::math,
+    sol::lib::os, 
+    sol::lib::package,
+    sol::lib::string,
+    sol::lib::table));
+}
+
 TEST_CASE("usertype/usertype", "Show that we can create classes from usertype and use them") {
     sol::state lua;
 
