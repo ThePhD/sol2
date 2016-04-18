@@ -107,14 +107,14 @@ public:
                 lua_pop(L, 1);
                 break;
             case lib::bit32:
-#if SOL_LUA_VERSION > 501
-                luaL_requiref(L, "bit32", luaopen_bit32, 1);
-                lua_pop(L, 1);
-#elif defined(SOL_LUAJIT)
+#ifdef SOL_LUAJIT
                 luaL_requiref(L, "bit32", luaopen_bit, 1);
                 lua_pop(L, 1);
+#elif SOL_LUA_VERSION == 502
+                luaL_requiref(L, "bit32", luaopen_bit32, 1);
+                lua_pop(L, 1);
 #else
-#endif // Lua 5.2+ only
+#endif // Lua 5.2 only (deprecated in 5.3 (503))
                 break;
             case lib::io:
                 luaL_requiref(L, "io", luaopen_io, 1);
