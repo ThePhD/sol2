@@ -66,44 +66,11 @@ inline std::string ctti_get_type_name() {
         name.replace(0, 6, "", 0);
     if (name.find("class", 0) == 0)
         name.replace(0, 5, "", 0);
-    while (name.size() > 0 && std::isblank(name.front())) name.erase(name.begin(), ++name.begin());
-    while (name.size() > 0 && std::isblank(name.back())) name.erase(--name.end(), name.end());
+    while (!name.empty() && std::isblank(name.front())) name.erase(name.begin(), ++name.begin());
+    while (!name.empty() && std::isblank(name.back())) name.erase(--name.end(), name.end());
     return name;
 }
-#elif defined(__GNUC__)
-#ifndef SOL_NO_RTTI
-inline std::string get_type_name(const std::type_info& id) {
-    int status;
-    char* unmangled = abi::__cxa_demangle(id.name(), 0, 0, &status);
-    std::string realname = unmangled;
-    std::free(unmangled);
-    return realname;
-}
-#endif // No RTII
-template <typename T>
-inline std::string ctti_get_type_name() {
-    std::string name = __PRETTY_FUNCTION__;
-    std::size_t start = name.find_first_of('=');
-    std::size_t end = name.find_last_of(';');
-    if (end == std::string::npos)
-        end = name.size();
-    if (start == std::string::npos)
-        start = 0;
-    if (start < name.size() - 1)
-        start += 2;
-    name = name.substr(start, end - start);
-    return name;
-}
-#elif defined(__clang__)
-#ifndef SOL_NO_RTTI
-inline std::string get_type_name(const std::type_info& id) {
-    int status;
-    char* unmangled = abi::__cxa_demangle(id.name(), 0, 0, &status);
-    std::string realname = unmangled;
-    std::free(unmangled);
-    return realname;
-}
-#endif // No RTII
+#elif defined(__GNUC__) || defined(__clang__)
 template <typename T>
 inline std::string ctti_get_type_name() {
     std::string name = __PRETTY_FUNCTION__;
@@ -117,9 +84,33 @@ inline std::string ctti_get_type_name() {
     if (start < name.size() - 1)
         start += 1;
     name = name.substr(start, end - start);
+    start = name.find(";");
+    if (start != std::string::npos) {
+        name.erase(start, name.length());
+    }
+    while (!name.empty() && std::isblank(name.front())) name.erase(name.begin(), ++name.begin());
+    while (!name.empty() && std::isblank(name.back())) name.erase(--name.end(), name.end());
     return name;
 }
-
+#ifndef SOL_NO_RTTI
+#if defined(__clang__)
+inline std::string get_type_name(const std::type_info& id) {
+    int status;
+    char* unmangled = abi::__cxa_demangle(id.name(), 0, 0, &status);
+    std::string realname = unmangled;
+    std::free(unmangled);
+    return realname;
+}
+#elif defined(__GNUC__)
+inline std::string get_type_name(const std::type_info& id) {
+    int status;
+    char* unmangled = abi::__cxa_demangle(id.name(), 0, 0, &status);
+    std::string realname = unmangled;
+    std::free(unmangled);
+    return realname;
+}
+#endif // g++ || clang++
+#endif // No RTII
 #else
 #error Compiler not supported for demangling
 #endif // compilers
