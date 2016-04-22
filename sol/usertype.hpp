@@ -449,7 +449,7 @@ private:
     template<typename... Args>
     usertype(usertype_detail::verified_tag, Args&&... args) : indexfunc(nullptr), newindexfunc(nullptr), constructfunc(nullptr), 
     destructfunc(nullptr), functiongcfunc(nullptr), needsindexfunction(false), baseclasscheck(nullptr), baseclasscast(nullptr) {
-        static_assert((sizeof...(Args) % 2) == 0, "incorrect pairing of arguments to usertype creation: maybe forgotten comma somewhere");
+        static_assert((sizeof...(Args) % 2) == 0, "Incorrect argument count to usertype creation: not in pairs. Might be missing name, function/property/variable, comma");
         functionnames.reserve(sizeof...(args)+3);
         functiontable.reserve(sizeof...(args)+3);
         metafunctiontable.reserve(sizeof...(args)+3);
