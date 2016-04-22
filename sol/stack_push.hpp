@@ -44,7 +44,7 @@ struct pusher {
         referencereference = allocationtarget;
         std::allocator<T> alloc{};
         alloc.construct(allocationtarget, std::forward<Args>(args)...);
-        luaL_getmetatable(L, &usertype_traits<T>::metatable[0]);
+        luaL_newmetatable(L, &usertype_traits<T>::metatable[0]);
         lua_setmetatable(L, -2);
         return 1;
     }

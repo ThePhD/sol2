@@ -29,13 +29,17 @@ namespace sol {
 template<typename T>
 struct usertype_traits {
     static const std::string name;
+    static const std::string qualified_name;
     static const std::string metatable;
     static const std::string variable_metatable;
     static const std::string gc_table;
 };
 
 template<typename T>
-const std::string usertype_traits<T>::name = detail::demangle<T>();
+const std::string usertype_traits<T>::name = detail::short_demangle<T>();
+
+template<typename T>
+const std::string usertype_traits<T>::qualified_name = detail::demangle<T>();
 
 template<typename T>
 const std::string usertype_traits<T>::metatable = std::string("sol.").append(detail::demangle<T>());

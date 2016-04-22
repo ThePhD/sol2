@@ -408,13 +408,13 @@ TEST_CASE("usertype/usertype-constructors", "Show that we can create classes fro
     lua.set_usertype(lc);
 
     lua.script(
-        "a = crapola_fuser.new(2)\n"
+        "a = fuser.new(2)\n"
         "u = a:add(1)\n"
         "v = a:add2(1)\n"
-        "b = crapola_fuser:new()\n"
+        "b = fuser:new()\n"
         "w = b:add(1)\n"
         "x = b:add2(1)\n"
-        "c = crapola_fuser.new(2, 3)\n"
+        "c = fuser.new(2, 3)\n"
         "y = c:add(1)\n"
         "z = c:add2(1)\n");
     sol::object a = lua.get<sol::object>("a");
@@ -615,6 +615,21 @@ TEST_CASE("usertype/member-variables", "allow table-like accessors to behave as 
                "local x = v.x\n"
                "assert(x == 3)\n"
                ));
+
+    struct breaks {
+        sol::function f;
+    };
+    
+    lua.open_libraries(sol::lib::base);
+    lua.set("b", breaks());
+    lua.new_usertype<breaks>("breaks",
+        "f", &breaks::f
+    );
+
+    breaks& b = lua["b"];
+    REQUIRE_NOTHROW(lua.script("b.f = function () print('BARK!') end"));
+    REQUIRE_NOTHROW(lua.script("b.f()"));
+    REQUIRE_NOTHROW(b.f());    
 }
 
 TEST_CASE("usertype/nonmember-functions", "let users set non-member functions that take unqualified T as first parameter to usertype") {

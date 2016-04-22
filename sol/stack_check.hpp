@@ -235,6 +235,20 @@ struct checker<T*, type::userdata, C> {
     }
 };
 
+template <typename C>
+struct checker<userdata_value, type::userdata, C> {
+    template <typename Handler>
+    static bool check(lua_State* L, int index, Handler&& handler) {
+        type t = type_of(L, index);
+        bool success = t == type::userdata || t == type::lightuserdata;
+        if (!success) {
+            // expected type, actual type
+            handler(L, index, type::lightuserdata, t);
+        }
+        return success;
+    }
+};
+
 template <typename T, typename C>
 struct checker<T, type::userdata, C> {
     template <typename U, typename Handler>
