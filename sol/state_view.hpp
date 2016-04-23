@@ -164,7 +164,7 @@ public:
     }
 
     stack_proxy load_file(const std::string& filename) {
-        luaL_loadfilex(L, filename.c_str(), nullptr);
+        luaL_loadfile(L, filename.c_str());
         return stack_proxy(L, -1);
     }
 

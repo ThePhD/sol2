@@ -21,8 +21,8 @@ get going:
 	:maxdepth: 1
 	:name: mastertoc
 	
-	tutorial/tutorial-top
 	tutorial/all-the-things
+	tutorial/tutorial-top
 	api/api-top
 	features
 	benchmarks

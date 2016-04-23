@@ -1,4 +1,4 @@
-Tutorial
+tutorial
 ========
 
 Take some time to learn the framework with thse tutorials. But, if you need to get going FAST, try using the :doc:`quick 'n' dirty<all-the-things>` approach and your browser's / editors search function.

@@ -1,5 +1,5 @@
-quick 'n' dirty - all the things
-================================
+tutorial: quick 'n' dirty 
+=========================
 
 These are all the things. Use your browser's search to find something that might help.
 
