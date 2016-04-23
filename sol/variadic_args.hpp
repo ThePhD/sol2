@@ -176,12 +176,12 @@ public:
     const_iterator cbegin() const { return begin(); }
     const_iterator cend() const { return end(); }
 
-    reverse_iterator rbegin() { return std::make_reverse_iterator(begin()); }
-    reverse_iterator rend() { return std::make_reverse_iterator(end()); }
-    const_reverse_iterator rbegin() const { return std::make_reverse_iterator(begin()); }
-    const_reverse_iterator rend() const { return std::make_reverse_iterator(end()); }
-    const_reverse_iterator crbegin() const { return std::make_reverse_iterator(cbegin()); }
-    const_reverse_iterator crend() const { return std::make_reverse_iterator(cend()); }
+    reverse_iterator rbegin() { return std::reverse_iterator<iterator>(begin()); }
+    reverse_iterator rend() { return std::reverse_iterator<iterator>(end()); }
+    const_reverse_iterator rbegin() const { return std::reverse_iterator<const_iterator>(begin()); }
+    const_reverse_iterator rend() const { return std::reverse_iterator<const_iterator>(end()); }
+    const_reverse_iterator crbegin() const { return std::reverse_iterator<const_iterator>(cbegin()); }
+    const_reverse_iterator crend() const { return std::reverse_iterator<const_iterator>(cend()); }
 
     int push () const {
         int pushcount = 0;
