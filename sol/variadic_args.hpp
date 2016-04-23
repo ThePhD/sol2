@@ -24,6 +24,7 @@
 
 #include "stack.hpp"
 #include "stack_proxy.hpp"
+#include <limits>
 #include <iterator>
 
 namespace sol {
