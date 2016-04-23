@@ -23,6 +23,8 @@
 #define SOL_STACK_PROXY_HPP
 
 #include "stack.hpp"
+#include "function.hpp"
+#include "protected_function.hpp"
 #include "proxy_base.hpp"
 
 namespace sol {
@@ -74,6 +76,22 @@ struct pusher<stack_proxy> {
     }
 };
 } // stack
+
+template <>
+struct bond_size<function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
+
+template <std::size_t I>
+stack_proxy get(const function_result& fr) {
+    return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
+}
+
+template <>
+struct bond_size<protected_function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
+
+template <std::size_t I>
+stack_proxy get(const protected_function_result& fr) {
+    return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
+}
 } // sol
 
 #endif // SOL_STACK_PROXY_HPP

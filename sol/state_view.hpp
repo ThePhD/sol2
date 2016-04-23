@@ -24,7 +24,6 @@
 
 #include "error.hpp"
 #include "table.hpp"
-#include "stack_proxy.hpp"
 #include <memory>
 
 namespace sol {
@@ -129,12 +128,12 @@ public:
                 luaL_requiref(L, "debug", luaopen_debug, 1);
                 lua_pop(L, 1);
                 break;
-		  case lib::ffi:
+            case lib::ffi:
 #ifdef SOL_LUAJIT
                 luaL_requiref(L, "ffi", luaopen_ffi, 1);
 #endif
                 break;
-		  case lib::jit:
+            case lib::jit:
 #ifdef SOL_LUAJIT
                 luaL_requiref(L, "jit", luaopen_jit, 1);
 #endif
@@ -160,7 +159,7 @@ public:
 
     stack_proxy load(const std::string& code) {
         luaL_loadstring(L, code.c_str());
- 	   return stack_proxy(L, -1);
+        return stack_proxy(L, -1);
     }
 
     stack_proxy load_file(const std::string& filename) {

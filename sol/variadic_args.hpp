@@ -28,105 +28,105 @@
 #include <iterator>
 
 namespace sol {
-	struct va_iterator : std::iterator<std::random_access_iterator_tag, stack_proxy, std::ptrdiff_t, stack_proxy*, stack_proxy> {
-		lua_State* L;
-		int index;
-		int stacktop;
-		stack_proxy sp;
+    struct va_iterator : std::iterator<std::random_access_iterator_tag, stack_proxy, std::ptrdiff_t, stack_proxy*, stack_proxy> {
+        lua_State* L;
+        int index;
+        int stacktop;
+        stack_proxy sp;
 
-		va_iterator() : L(nullptr), index(std::numeric_limits<int>::max()), stacktop(std::numeric_limits<int>::max()) {}
-		va_iterator(lua_State* L, int index, int stacktop) : L(L), index(index), stacktop(stacktop), sp(L, index) {}
+        va_iterator() : L(nullptr), index(std::numeric_limits<int>::max()), stacktop(std::numeric_limits<int>::max()) {}
+        va_iterator(lua_State* L, int index, int stacktop) : L(L), index(index), stacktop(stacktop), sp(L, index) {}
 
-		stack_proxy operator*() {
-			sp = stack_proxy(L, index);
-			return sp;
-		}
+        stack_proxy operator*() {
+            sp = stack_proxy(L, index);
+            return sp;
+        }
 
-		stack_proxy* operator->() {
-			sp = stack_proxy(L, index);
-			return &sp;
-		}
+        stack_proxy* operator->() {
+            sp = stack_proxy(L, index);
+            return &sp;
+        }
 
-		va_iterator& operator++ () {
-			++index;
-			return *this;
-		}
+        va_iterator& operator++ () {
+            ++index;
+            return *this;
+        }
 
-		va_iterator operator++ (int) {
-			auto r = *this;
-			this->operator ++();
-			return r;
-		}
+        va_iterator operator++ (int) {
+            auto r = *this;
+            this->operator ++();
+            return r;
+        }
 
-		va_iterator& operator-- () {
-			--index;
-			return *this;
-		}
+        va_iterator& operator-- () {
+            --index;
+            return *this;
+        }
 
-		va_iterator operator-- (int) {
-			auto r = *this;
-			this->operator --();
-			return r;
-		}
+        va_iterator operator-- (int) {
+            auto r = *this;
+            this->operator --();
+            return r;
+        }
 
-		va_iterator& operator+= (difference_type idx) {
-			index += static_cast<int>(idx);
-			return *this;
-		}
+        va_iterator& operator+= (difference_type idx) {
+            index += static_cast<int>(idx);
+            return *this;
+        }
 
-		va_iterator& operator-= (difference_type idx) {
-			index -= static_cast<int>(idx);
-			return *this;
-		}
+        va_iterator& operator-= (difference_type idx) {
+            index -= static_cast<int>(idx);
+            return *this;
+        }
 
-		difference_type operator- (const va_iterator& r) const {
-			return index - r.index;
-		}
+        difference_type operator- (const va_iterator& r) const {
+            return index - r.index;
+        }
 
-		va_iterator operator+ (difference_type idx) const {
-			va_iterator r = *this;
-			r += idx;
-			return r;
-		}
+        va_iterator operator+ (difference_type idx) const {
+            va_iterator r = *this;
+            r += idx;
+            return r;
+        }
 
-		stack_proxy operator[](difference_type idx) {
-			return stack_proxy(L, index + static_cast<int>(idx));
-		}
+        stack_proxy operator[](difference_type idx) {
+            return stack_proxy(L, index + static_cast<int>(idx));
+        }
 
-		bool operator==(const va_iterator& r) const {
-			if (stacktop == std::numeric_limits<int>::max()) {
-				return r.index == r.stacktop;
-			}
-			else if (r.stacktop == std::numeric_limits<int>::max()) {
-				return index == stacktop;
-			}
-			return index == r.index;
-		}
+        bool operator==(const va_iterator& r) const {
+            if (stacktop == std::numeric_limits<int>::max()) {
+                return r.index == r.stacktop;
+            }
+            else if (r.stacktop == std::numeric_limits<int>::max()) {
+                return index == stacktop;
+            }
+            return index == r.index;
+        }
 
-		bool operator != (const va_iterator& r) const {
-			return !(this->operator==(r));
-		}
+        bool operator != (const va_iterator& r) const {
+            return !(this->operator==(r));
+        }
 
-		bool operator < (const va_iterator& r) const {
-			return index < r.index;
-		}
+        bool operator < (const va_iterator& r) const {
+            return index < r.index;
+        }
 
-		bool operator > (const va_iterator& r) const {
-			return index > r.index;
-		}
+        bool operator > (const va_iterator& r) const {
+            return index > r.index;
+        }
 
-		bool operator <= (const va_iterator& r) const {
-			return index <= r.index;
-		}
+        bool operator <= (const va_iterator& r) const {
+            return index <= r.index;
+        }
 
-		bool operator >= (const va_iterator& r) const {
-			return index >= r.index;
-		}
-	};
+        bool operator >= (const va_iterator& r) const {
+            return index >= r.index;
+        }
+    };
 
-	inline va_iterator operator+(typename va_iterator::difference_type n, const va_iterator& r) {
-		return r + n;
-	}
+    inline va_iterator operator+(typename va_iterator::difference_type n, const va_iterator& r) {
+        return r + n;
+    }
 
 struct variadic_args {
 private:

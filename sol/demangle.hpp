@@ -39,11 +39,11 @@ inline std::string get_type_name(const std::type_info& id) {
     std::string realname = id.name();
     const static std::array<std::string, 2> removals = { { "struct ", "class " } };
     for (std::size_t r = 0; r < removals.size(); ++r) {
-	    auto found = realname.find(removals[r]);
-	    while (found != std::string::npos) {
-		    realname.erase(found, removals[r].size());
-		    found = realname.find(removals[r]);
-	    }
+        auto found = realname.find(removals[r]);
+        while (found != std::string::npos) {
+            realname.erase(found, removals[r].size());
+            found = realname.find(removals[r]);
+        }
     }
     return realname;
 }
@@ -143,8 +143,8 @@ inline std::string demangle() {
 
 template <typename T>
 inline std::string short_demangle() {
-	static const std::string d = short_demangle_once<T>();
-	return d;
+    static const std::string d = short_demangle_once<T>();
+    return d;
 }
 } // detail
 } // sol

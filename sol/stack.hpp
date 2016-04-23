@@ -24,7 +24,6 @@
 
 #include "stack_core.hpp"
 #include "stack_reference.hpp"
-#include "stack_proxy.hpp"
 #include "stack_check.hpp"
 #include "stack_get.hpp"
 #include "stack_check_get.hpp"

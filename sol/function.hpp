@@ -24,7 +24,6 @@
 
 #include "reference.hpp"
 #include "stack.hpp"
-#include "resolve.hpp"
 #include "function_result.hpp"
 #include "function_types.hpp"
 #include <cstdint>

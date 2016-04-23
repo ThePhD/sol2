@@ -25,7 +25,6 @@
 #include "reference.hpp"
 #include "tuple.hpp"
 #include "stack.hpp"
-#include "stack_proxy.hpp"
 #include "proxy_base.hpp"
 #include <cstdint>
 
@@ -76,14 +75,6 @@ public:
         lua_pop(L, returncount);
     }
 };
-
-template <>
-struct bond_size<function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
-
-template <std::size_t I>
-stack_proxy get(const function_result& fr) {
-    return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
-}
 } // sol
 
 #endif // SOL_FUNCTION_RESULT_HPP
