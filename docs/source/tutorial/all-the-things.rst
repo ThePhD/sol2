@@ -43,10 +43,10 @@ running lua code
 	lua.script_file("path/to/luascript.lua");
 
 	// load file without execute
-	sol::function script1 = state.load_script_file("path/to/luascript.lua");
+	sol::load_result script1 = state.load_file("path/to/luascript.lua");
 	script1(); //execute
 	// load string without execute
-	sol::function script2 = state.load_script("a = 'test'");
+	sol::load_result script2 = state.load("a = 'test'");
 	script2(); //execute
 
 
