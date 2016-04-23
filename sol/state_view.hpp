@@ -24,6 +24,7 @@
 
 #include "error.hpp"
 #include "table.hpp"
+#include "stack_proxy.hpp"
 #include <memory>
 
 namespace sol {
@@ -155,6 +156,16 @@ public:
         if(luaL_dofile(L, filename.c_str())) {
             lua_error(L);
         }
+    }
+
+    stack_proxy load(const std::string& code) {
+        luaL_loadstring(L, code.c_str());
+ 	   return stack_proxy(L, -1);
+    }
+
+    stack_proxy load_file(const std::string& filename) {
+        luaL_loadfilex(L, filename.c_str(), nullptr);
+        return stack_proxy(L, -1);
     }
 
     iterator begin () const {

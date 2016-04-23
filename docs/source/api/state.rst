@@ -30,6 +30,8 @@ enumerations
 	    debug,
 	    bit32,
 	    io,
+	    ffi,
+	    jit,
 	    count // do not use
 	};
 
@@ -57,10 +59,18 @@ This function takes a number of :ref:`sol::lib<lib-enum>` as arguments and opens
 These functions run the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run isolated: any scripts or code run will affect code in other states as well: code ran in this fashion is not isolated. 
 
 .. code-block:: cpp
+	:caption: function: load / load_file
+
+	sol::stack_proxy load(const std::string& code);
+	sol::stack_proxy load_file(const std::string& filename);
+
+These functions *load* the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run: it returns a proxy that can be called, turned into a `sol::function`,. or similar, will run the loaded code.
+
+.. code-block:: cpp
 	:caption: function: global table / registry table
 
-	global_table globals() const;
-	table registry() const;
+	sol::global_table globals() const;
+	sol::table registry() const;
 
 Get either the global table or the Lua registry as a :doc:`sol::table<table>`, which allows you to modify either of them directly. Note that getting the global table from a ``state``/``state_view`` is usually unnecessary as it has all the exact same functions as a :doc:`sol::table<table>` anyhow.
 
@@ -76,13 +86,13 @@ Overrides the panic function Lua calls when something unrecoverable or unexpecte
 .. code-block:: cpp
 	:caption: function: make a table
 
-	table create_table(int narr = 0, int nrec = 0);
+	sol::table create_table(int narr = 0, int nrec = 0);
 	template <typename Key, typename Value, typename... Args>
-	table create_table(int narr, int nrec, Key&& key, Value&& value, Args&&... args);
+	sol::table create_table(int narr, int nrec, Key&& key, Value&& value, Args&&... args);
 	
-	static table create_table(lua_State* L, int narr = 0, int nrec = 0);
+	static sol::table create_table(lua_State* L, int narr = 0, int nrec = 0);
 	template <typename Key, typename Value, typename... Args>
-	static table create_table(lua_State* L, int narr, int nrec, Key&& key, Value&& value, Args&&... args);
+	static sol::table create_table(lua_State* L, int narr, int nrec, Key&& key, Value&& value, Args&&... args);
 
 Creates a table. Forwards its arguments to :ref:`table::create<table-create>`.
 

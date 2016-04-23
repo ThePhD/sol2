@@ -32,6 +32,7 @@ private:
     int index;
 
 public:
+    stack_proxy() : L(nullptr), index(0){}
     stack_proxy(lua_State* L, int index) : L(L), index(index) {}
 
     template<typename T>
@@ -46,6 +47,16 @@ public:
 
     lua_State* lua_state() const { return L; }
     int stack_index() const { return index; }
+
+    template<typename... Ret, typename... Args>
+    decltype(auto) call(Args&&... args) {
+        return get<function>().template call<Ret...>(std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    decltype(auto) operator()(Args&&... args) {
+        return call<>(std::forward<Args>(args)...);
+    }
 };
 
 namespace stack {

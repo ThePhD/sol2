@@ -760,9 +760,9 @@ TEST_CASE("functions/variadic_args", "Check to see we can receive multiple argum
     lua.open_libraries(sol::lib::base);
     lua.set_function("v", [](sol::this_state, sol::variadic_args va) -> structure {
         int r = 0;
-        for (int i = 0; i < va.leftover_count(); ++i) {
-            int v = va[i];
-            r += v;
+        for (auto v : va) {
+            int value = v;
+            r += value;
         }
         return{ r, r > 200 };
     });

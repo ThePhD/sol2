@@ -191,7 +191,8 @@ TEST_CASE("table/traversal", "ensure that we can chain requests and tunnel down 
     sol::state lua;
     int begintop = 0, endtop = 0;
 
-    lua.script("t1 = {t2 = {t3 = 24}};");
+    sol::function scriptload = lua.load("t1 = {t2 = {t3 = 24}};");
+    scriptload();
     {
         test_stack_guard g(lua.lua_state(), begintop, endtop);
         int traversex24 = lua.traverse_get<int>("t1", "t2", "t3");

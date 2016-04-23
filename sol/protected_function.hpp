@@ -135,7 +135,9 @@ public:
     basic_protected_function& operator=(const basic_protected_function&) = default;
     basic_protected_function(basic_protected_function&& ) = default;
     basic_protected_function& operator=(basic_protected_function&& ) = default;
-    basic_protected_function(lua_State* L, int index = -1): base_t(L, index), error_handler(get_default_handler()) {
+    basic_protected_function(const basic_function<base_t>& b) : base_t(b) {}
+    basic_protected_function(basic_function<base_t>&& b) : base_t(std::move(b)) {}
+    basic_protected_function(lua_State* L, int index = -1) : base_t(L, index), error_handler(get_default_handler()) {
 #ifdef SOL_CHECK_ARGUMENTS
         stack::check<basic_protected_function>(L, index, type_panic);
 #endif // Safety

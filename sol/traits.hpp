@@ -143,6 +143,12 @@ namespace meta_detail {
 template<typename T, typename... Args>
 struct index_in_pack : meta_detail::index_in_pack<0, T, Args...> { };
 
+template<typename T, typename List>
+struct index_in : meta_detail::index_in_pack<0, T, List> { };
+
+template<typename T, typename... Args>
+struct index_in<T, types<Args...>> : meta_detail::index_in_pack<0, T, Args...> { };
+
 template<std::size_t I, typename... Args>
 struct at_in_pack {};
 

@@ -24,8 +24,109 @@
 
 #include "stack.hpp"
 #include "stack_proxy.hpp"
+#include <iterator>
 
 namespace sol {
+	struct va_iterator : std::iterator<std::random_access_iterator_tag, stack_proxy, std::ptrdiff_t, stack_proxy*, stack_proxy> {
+		lua_State* L;
+		int index;
+		int stacktop;
+		stack_proxy sp;
+
+		va_iterator() : L(nullptr), index(std::numeric_limits<int>::max()), stacktop(std::numeric_limits<int>::max()) {}
+		va_iterator(lua_State* L, int index, int stacktop) : L(L), index(index), stacktop(stacktop), sp(L, index) {}
+
+		stack_proxy operator*() {
+			sp = stack_proxy(L, index);
+			return sp;
+		}
+
+		stack_proxy* operator->() {
+			sp = stack_proxy(L, index);
+			return &sp;
+		}
+
+		va_iterator& operator++ () {
+			++index;
+			return *this;
+		}
+
+		va_iterator operator++ (int) {
+			auto r = *this;
+			this->operator ++();
+			return r;
+		}
+
+		va_iterator& operator-- () {
+			--index;
+			return *this;
+		}
+
+		va_iterator operator-- (int) {
+			auto r = *this;
+			this->operator --();
+			return r;
+		}
+
+		va_iterator& operator+= (difference_type idx) {
+			index += static_cast<int>(idx);
+			return *this;
+		}
+
+		va_iterator& operator-= (difference_type idx) {
+			index -= static_cast<int>(idx);
+			return *this;
+		}
+
+		difference_type operator- (const va_iterator& r) const {
+			return index - r.index;
+		}
+
+		va_iterator operator+ (difference_type idx) const {
+			va_iterator r = *this;
+			r += idx;
+			return r;
+		}
+
+		stack_proxy operator[](difference_type idx) {
+			return stack_proxy(L, index + static_cast<int>(idx));
+		}
+
+		bool operator==(const va_iterator& r) const {
+			if (stacktop == std::numeric_limits<int>::max()) {
+				return r.index == r.stacktop;
+			}
+			else if (r.stacktop == std::numeric_limits<int>::max()) {
+				return index == stacktop;
+			}
+			return index == r.index;
+		}
+
+		bool operator != (const va_iterator& r) const {
+			return !(this->operator==(r));
+		}
+
+		bool operator < (const va_iterator& r) const {
+			return index < r.index;
+		}
+
+		bool operator > (const va_iterator& r) const {
+			return index > r.index;
+		}
+
+		bool operator <= (const va_iterator& r) const {
+			return index <= r.index;
+		}
+
+		bool operator >= (const va_iterator& r) const {
+			return index >= r.index;
+		}
+	};
+
+	inline va_iterator operator+(typename va_iterator::difference_type n, const va_iterator& r) {
+		return r + n;
+	}
+
 struct variadic_args {
 private:
     lua_State* L;
@@ -33,6 +134,16 @@ private:
     int stacktop;
 
 public:
+    typedef stack_proxy reference_type;
+    typedef stack_proxy value_type;
+    typedef stack_proxy* pointer;
+    typedef std::ptrdiff_t difference_type;
+    typedef std::size_t size_type;
+    typedef va_iterator iterator;
+    typedef const va_iterator const_iterator;
+    typedef std::reverse_iterator<iterator> reverse_iterator;
+    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+
     variadic_args() = default;
     variadic_args(lua_State* L, int index = -1): L(L), index(lua_absindex(L, index)), stacktop(lua_gettop(L)) {}
     variadic_args(const variadic_args&) = default;
@@ -58,6 +169,20 @@ public:
         return *this;
     }
 
+    iterator begin() { return va_iterator(L, index, stacktop + 1); }
+    iterator end() { return va_iterator(L, stacktop + 1, stacktop + 1); }
+    const_iterator begin() const { return va_iterator(L, index, stacktop + 1); }
+    const_iterator end() const { return va_iterator(L, stacktop + 1, stacktop + 1); }
+    const_iterator cbegin() const { return begin(); }
+    const_iterator cend() const { return end(); }
+
+    reverse_iterator rbegin() { return std::make_reverse_iterator(begin()); }
+    reverse_iterator rend() { return std::make_reverse_iterator(end()); }
+    const_reverse_iterator rbegin() const { return std::make_reverse_iterator(begin()); }
+    const_reverse_iterator rend() const { return std::make_reverse_iterator(end()); }
+    const_reverse_iterator crbegin() const { return std::make_reverse_iterator(cbegin()); }
+    const_reverse_iterator crend() const { return std::make_reverse_iterator(cend()); }
+
     int push () const {
         int pushcount = 0;
         for (int i = index; i <= stacktop; ++i) {
@@ -68,12 +193,12 @@ public:
     }
 
     template<typename T>
-    decltype(auto) get(int start = 0) const {
-        return stack::get<T>(L, index + start);
+    decltype(auto) get(difference_type start = 0) const {
+        return stack::get<T>(L, index + static_cast<int>(start));
     }
 
-    stack_proxy operator[](int start) const {
-        return stack_proxy(L, index + start);
+    stack_proxy operator[](difference_type start) const {
+        return stack_proxy(L, index + static_cast<int>(start));
     }
 
     lua_State* lua_state() const { return L; };

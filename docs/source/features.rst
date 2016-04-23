@@ -30,6 +30,7 @@ what Sol supports
 * User-Defined Type (:doc:`sol::usertype<api/usertype>` in the API) support:
 	- Set member functions to be called
 	- Set member variables
+	- Set variables on a class that are based on setter/getter functions
 	- Use free-functions that take the Type as a first argument (pointer or reference)
 	- Support for "Factory" classes that do not expose constructor or destructor
 	- Modifying memory of userdata in C++ directly affects Lua without copying, and
@@ -177,7 +178,6 @@ Selene -
 * Registering classes/"modules" using C++ code is extremely verbose, similar to lua-intf's style
 * Eats crap when it comes to performance, most of the time (see :doc:`benchmarks<benchmarks>`)
 * Lots of users, but the Repository is kinda stagnant...
-
 
 luawrapper -
 

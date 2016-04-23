@@ -50,12 +50,15 @@ inline int overload_match_arity(types<Fx, Fxs...>, std::index_sequence<I, In...>
     typedef meta::tuple_types<typename traits::return_type> return_types;
     typedef typename traits::args_type args_type;
     typedef typename args_type::indices args_indices;
+    typedef meta::index_in<this_state, args_type> state_index;
+    typedef meta::index_in<variadic_args, args_type> va_pack_index;
+    static const std::size_t arity = traits::arity - static_cast<std::size_t>(state_index::value != SIZE_MAX) - static_cast<std::size_t>(va_pack_index::value != SIZE_MAX);
     // compile-time eliminate any functions that we know ahead of time are of improper arity
-    if (meta::find_in_pack_v<index_value<traits::arity>, index_value<M>...>::value) {
+    if (meta::find_in_pack_v<index_value<arity>, index_value<M>...>::value) {
         return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
     }
-    if (traits::arity != fxarity) {
-        return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<traits::arity, M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
+    if (arity != fxarity) {
+        return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<arity, M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
     }
     if (!stack::stack_detail::check_types<true>().check(args_type(), args_indices(), L, start, no_panic)) {
         return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);

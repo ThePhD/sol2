@@ -146,9 +146,9 @@ The constructor of usertype takes a variable number of arguments. It takes an ev
 * ``"{name}", constructors<Type-List-0, Type-List-1, ...>``
     - ``Type-List-N`` must be a ``sol::types<Args...>``, where ``Args...`` is a list of types that a constructor takes. Supports overloading by default
     - If you pass the ``constructors<...>`` argument first when constructing the usertype, then it will automatically be given a ``"{name}"`` of ``"new"``
-* ``"{name}", initializers( func1, func2, ... )``
+* ``"{name}", sol::initializers( func1, func2, ... )``
     - Creates initializers that, given one or more functions, provides an overloaded lua function for creating a the specified type.
-	   + The function must have the argument signature ``func T*, Arguments... )`` or ``func( T&, Arguments... )``, where the pointer or reference will point to a place of allocated memory that has an unitialized ``T``. Note that lua controls the memory.
+	   + The function must have the argument signature ``func( T*, Arguments... )`` or ``func( T&, Arguments... )``, where the pointer or reference will point to a place of allocated memory that has an uninitialized ``T``. Note that lua controls the memory.
 
 .. _destructor:
 
@@ -157,9 +157,15 @@ The constructor of usertype takes a variable number of arguments. It takes an ev
     - If you just want the default constructor, you can replace the second argument with ``sol::default_destructor``.
     - The usertype will throw if you specify a destructor specifically but do not map it to ``sol::meta_function::gc`` or a string equivalent to ``"__gc"``.
 * ``"{name}", &free_function``
-    - Binds a free function / static class function / function object (lambda) to ``"{name}"``. The first argument must be ``T*`` or ``T&`` in this case.
-* ``"{name}", &type::function_name`` or ``"{name}", &type::member_variable`` 
+    - Binds a free function / static class function / function object (lambda) to ``"{name}"``. If the first argument is ``T*`` or ``T&``, then it will bind it as a member function. If it is not, it will be bound as a "static" function on the lua table.
+* ``"{name}", &type::function_name`` or ``"{name}", &type::member_variable``
     - Binds a typical member function or variable to ``"{name}"``. In the case of a member variable or member function, ``type`` must be ``T`` or a base of ``T``.
+* ``"{name}", sol::readonly( &type::member_variable )``
+    - Binds a typical variable to ``"{name}"``. Similar to the above, but the variable will be read-only, meaning an error will be generated if anything attemps to write to this variable.
+* ``"{name}", sol::property( &type::getter_func, &type::setter_func )``
+    - Binds a typical variable to ``"{name}"``, but gets and sets using the specified setter and getter functions. Not that if you do not pass a setter function, the variable will be read-only. Also not that if you do not pass a getter function, it will be write-only.
+* ``"{name}", sol::overloaded( Func1, Func2, ... )``
+    - Creates an oveloaded member function that discriminates on number of arguments and types.
 * ``sol::base_classes, sol::bases<Bases...>``
     - Tells a usertype what its base classes are. If you have exceptions turned on, this need not be necessary: if you do not then you need this to have derived-to-base conversions work properly. See :ref:`inheritance<usertype-inheritance>`.
 
@@ -198,7 +204,7 @@ You must specify the ``sol::base_classes`` tag with the ``sol::bases<Types...>()
 	};
 	struct B : A { 
 		int b = 11; 
-		virtual int call() { return 20; } 
+		virtual int call() override { return 20; } 
 	};
 
 Then, to register the base classes explicitly:
@@ -221,10 +227,6 @@ inheritance + overloading
 -------------------------
 
 While overloading is supported regardless of `inheritance<inheritance>` caveats or not, the current version of Sol has a first-match, first-call style of overloading when it comes to inheritance. Put the functions with the most derived arguments first to get the kind of matching you expect.
-
-.. todo::
-
-   Later versions of Sol will introduce a kind of overload resolution system that will rank overloads and call the best one, which will unfortunately come at a small performance penalty if you explicitly use overloads of  many functions that have the same arity (argument count).
 
 traits
 ------

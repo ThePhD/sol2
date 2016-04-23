@@ -17,6 +17,7 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    protected_function
    object
    overload
+   property
    proxy
    reference
    resolve
@@ -24,8 +25,10 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    optional
    state
    table
+   this_state
    thread
    types
    usertype
    userdata
    usertype_memory
+   variadic_args

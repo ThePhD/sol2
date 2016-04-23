@@ -22,6 +22,7 @@ get going:
 	:name: mastertoc
 	
 	tutorial/tutorial-top
+	tutorial/all-the-things
 	api/api-top
 	features
 	benchmarks
