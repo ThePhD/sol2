@@ -1,4 +1,4 @@
-## Sol 2.3
+## Sol 2.5
 
 [![Build Status](https://travis-ci.org/ThePhD/sol2.svg?branch=develop)](https://travis-ci.org/ThePhD/sol2)
 [![Documentation Status](https://readthedocs.org/projects/sol2/badge/?version=latest)](http://sol2.readthedocs.org/en/latest/?badge=latest)
@@ -8,7 +8,7 @@ The library is header-only for easy integration with projects.
 
 ## Documentation
 
-Find it [here](http://sol2.rtfd.org/). A run-through kind of tutorial is in the works: check back soon! The API documentation goes over most cases (particularly, the "api/usertype" and "api/proxy" and "api/function" sections) that should still get you off your feet and going, and there's an examples directory [here](https://github.com/ThePhD/sol2/tree/develop/examples) as well.
+Find it [here](http://sol2.rtfd.org/). A run-through kind of tutorial is [here](http://sol2.readthedocs.org/en/latest/tutorial/all-the-things.html)! The API documentation goes over most cases (particularly, the "api/usertype" and "api/proxy" and "api/function" sections) that should still get you off your feet and going, and there's an examples directory [here](https://github.com/ThePhD/sol2/tree/develop/examples) as well.
 
 ## Sneak Peek
 
