@@ -24,6 +24,7 @@
 
 #include "error.hpp"
 #include "table.hpp"
+#include "load_result.hpp"
 #include <memory>
 
 namespace sol {
@@ -157,14 +158,14 @@ public:
         }
     }
 
-    stack_proxy load(const std::string& code) {
-        luaL_loadstring(L, code.c_str());
-        return stack_proxy(L, -1);
+    load_result load(const std::string& code) {
+        load_status x = static_cast<load_status>(luaL_loadstring(L, code.c_str()));
+        return load_result(L, -1, 1, 1, x);
     }
 
-    stack_proxy load_file(const std::string& filename) {
-        luaL_loadfile(L, filename.c_str());
-        return stack_proxy(L, -1);
+    load_result load_file(const std::string& filename) {
+        load_status x = static_cast<load_status>(luaL_loadfile(L, filename.c_str()));
+        return load_result(L, -1, 1, 1, x);
     }
 
     iterator begin () const {

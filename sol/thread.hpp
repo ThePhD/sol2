@@ -52,7 +52,7 @@ public:
     thread_status status () const {
         lua_State* lthread = thread_state();
         thread_status lstat = static_cast<thread_status>(lua_status(lthread));
-        if (lstat != thread_status::normal && lua_gettop(lthread) == 0) {
+        if (lstat != thread_status::ok && lua_gettop(lthread) == 0) {
             // No thing on the thread's stack means its dead
             return thread_status::dead;
         }

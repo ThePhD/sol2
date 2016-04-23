@@ -46,6 +46,10 @@ public:
         return 1;
     }
 
+    void pop(int n = 1) const noexcept {
+        lua_pop(lua_state( ), n);
+    }
+
     int stack_index () const noexcept {
         return index;
     }
@@ -57,6 +61,11 @@ public:
 
     lua_State* lua_state() const noexcept {
         return L;
+    }
+
+    bool valid () const noexcept {
+        type t = get_type();
+        return t != type::nil && t != type::none;
     }
 };
 } // sol

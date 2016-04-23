@@ -73,7 +73,7 @@ private:
 
 public:
     protected_function_result() = default;
-    protected_function_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, call_status error = call_status::ok): L(L), index(index), returncount(returncount), popcount(popcount), err(error) {
+    protected_function_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, call_status err = call_status::ok): L(L), index(index), returncount(returncount), popcount(popcount), err(err) {
         
     }
     protected_function_result(const protected_function_result&) = default;
@@ -127,4 +127,4 @@ public:
 };
 } // sol
 
-#endif // SOL_FUNCTION_RESULT_HPP
+#endif // SOL_PROTECTED_FUNCTION_RESULT_HPP

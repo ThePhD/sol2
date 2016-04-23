@@ -60,11 +60,12 @@ These functions run the desired blob of either code that is in a string, or code
 
 .. code-block:: cpp
 	:caption: function: load / load_file
+	:name: state-load-code
 
-	sol::stack_proxy load(const std::string& code);
-	sol::stack_proxy load_file(const std::string& filename);
+	sol::load_result load(const std::string& code);
+	sol::load_result load_file(const std::string& filename);
 
-These functions *load* the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run: it returns a proxy that can be called, turned into a `sol::function`,. or similar, will run the loaded code.
+These functions *load* the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run: it returns a ``load_result`` proxy that can be called, turned into a `sol::function`,. or similar, will run the loaded code.
 
 .. code-block:: cpp
 	:caption: function: global table / registry table

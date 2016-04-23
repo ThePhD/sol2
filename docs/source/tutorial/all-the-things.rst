@@ -34,6 +34,8 @@ For your system/game that already has lua, but you'd like something nice:
 running lua code
 ----------------
 
+.. code-block:: cpp
+
 	sol::state lua;
 	// load and execute from string
 	lua.script("a = 'test'");
@@ -57,17 +59,26 @@ You can set/get everything.
 	
 	sol::lua_state lua;
 
-	lua.set("number", 24); // integer types
-	lua["number2"] = 24.5; // floating point numbers
-	lua["important_string"] = "woof woof"; // becomes string
-	lua["myuserdata"] = some_class(); // non-recognized types is stored as userdata
-	lua["a_function"] = [](){ return 100; }; // is callable, therefore gets stored as a function
+	// integer types
+	lua.set("number", 24);
+	// floating point numbers
+	lua["number2"] = 24.5;
+	// string types
+	lua["important_string"] = "woof woof";
+	// non-recognized types is stored as userdata
+	lua["myuserdata"] = some_class();
+	// is callable, therefore gets stored as a function
+	lua["a_function"] = [](){ return 100; }; 
 
-	int number = lua["number"]; // implicit conversion
-	auto number2 = lua.get<double>("number2"); // explicit get
-	std::string important_string = lua["important_string"]; // strings too
+	// implicit conversion
+	int number = lua["number"];
+	// explicit get
+	auto number2 = lua.get<double>("number2");
+	// strings too
+	std::string important_string = lua["important_string"];
 	
-	some_class& myuserdata = lua["myuserdata"]; // returns a plain reference
+	// returns a plain reference
+	some_class& myuserdata = lua["myuserdata"];
 	// myuserdata.some_variable = 20  WILL (!!) modify 
 	// data inside of lua VM as well, if you get a pointer or a reference
 	

@@ -158,13 +158,21 @@ enum class call_status : int {
 };
 
 enum class thread_status : int {
-    normal        = LUA_OK,
-    yielded       = LUA_YIELD,
-    error_runtime = LUA_ERRRUN,
-    error_memory  = LUA_ERRMEM,
-    error_gc      = LUA_ERRGCMM,
-    error_handler = LUA_ERRERR,
+    ok      = LUA_OK,
+    yielded = LUA_YIELD,
+    runtime = LUA_ERRRUN,
+    memory  = LUA_ERRMEM,
+    gc      = LUA_ERRGCMM,
+    handler = LUA_ERRERR,
     dead,
+};
+
+enum class load_status : int {
+    ok        = LUA_OK,
+    syntax    = LUA_ERRSYNTAX,
+    memory    = LUA_ERRMEM,
+    gc        = LUA_ERRGCMM,
+    file      = LUA_ERRFILE,
 };
 
 enum class type : int {
