@@ -1,9 +1,9 @@
 tutorial: quick 'n' dirty 
 =========================
 
-These are all the things. Use your browser's search to find something that might help.
+These are all the things. Use your browser's search to find things you want.
 
-Compile with -std=c++14 or better / VS 2015 or better.
+Compile with ``-std=c++14`` or better / VS 2015 or better.
 
 opening a state
 ---------------
@@ -153,10 +153,13 @@ You can bind member variables as functions too:
 		 f2() -- some function!
 	)");
 
-	lua.set("sc", some_class()); // put an instance of "some_class" into lua
+	// put an instance of "some_class" into lua
+	lua.set("sc", some_class());
 
-	lua["m1"] = &some_class::member_function; // binds just the member function
-	lua.set_function("m2", &some_class::member_function, some_class{}); // binds the class to the type
+	// binds just the member function
+	lua["m1"] = &some_class::member_function;
+	// binds the class to the type
+	lua.set_function("m2", &some_class::member_function, some_class{});
 
 	lua.script(R"(
 		-- need class instance if you don't bind it with the function
@@ -165,8 +168,10 @@ You can bind member variables as functions too:
 		print(m2()) -- 24.5
 	)");
 
-	lua["v1"] = &some_class::variable; // binds just the membver variable as a function
-	lua.set_function("v2", &some_class::variable, some_class{}); // binds class with member variable as function
+	// binds just the membver variable as a function
+	lua["v1"] = &some_class::variable;
+	// binds class with member variable as function
+	lua.set_function("v2", &some_class::variable, some_class{});
 	
 	lua.script(R"(
 		-- need class instance if you don't bind it with the function
@@ -241,8 +246,12 @@ If you're going deep, be safe:
 
 .. code-block:: cpp
 
-	sol::optional<int> will_not_error = lua["abc"]["DOESNOTEXIST"]["ghi"]; // sol::nullopt
-	int will_not_error2 = lua["abc"]["def"]["ghi"]["jklm"].get_or<int>(25); // is 25
+	sol::optional<int> will_not_error = lua["abc"]["DOESNOTEXIST"]["ghi"];
+	// will_not_error == sol::nullopt
+	int will_not_error2 = lua["abc"]["def"]["ghi"]["jklm"].get_or<int>(25);
+	// is 25
+
+	// if you don't go safe,
 	// will throw (or do at_panic if no exceptions)
 	int aaaahhh = lua["abc"]["hope_u_liek_crash"];
 
@@ -320,7 +329,8 @@ Is set as a userdata.
 
 	// Later...
 	// The following stores a reference, and does not copy/move
-	// lifetime is same as dog in C++ (access after it is destroyed is bad)
+	// lifetime is same as dog in C++ 
+	// (access after it is destroyed is bad)
 	lua["dog"] = &dog;
 	// Same as above: respects std::reference_wrapper
 	lua["dog"] = std::ref(dog);
@@ -358,15 +368,18 @@ Because there's a LOT you can do with Sol:
 		int bullets;
 		int speed;
 
-		player() : player(500, 100) {
+		player() 
+		: player(500, 100) {
 
 		}
 
-		player(int ammo) : player(ammo, 100) {
+		player(int ammo) 
+		: player(ammo, 100) {
 
 		}
 
-		player(int ammo, int hitpoints) : bullets(ammo), hp(hitpoints) {
+		player(int ammo, int hitpoints) 
+		: bullets(ammo), hp(hitpoints) {
 
 		}
 
@@ -402,12 +415,22 @@ Bind all the things:
 
 	// just stuff a userdata in there
 	lua.new_usertype<player>( "player",
-		sol::constructors<sol::types<>, sol::types<int>, sol::types<int, int>>(), // 3 constructors
-		"shoot", &player::shoot, // typical member function that returns a variable
-		"boost", &player::boost, // typical member function
-		"hp", sol::property(&player::get_hp, &player::set_hp), // gets or set the value
-		"speed", &player::speed, // read and write variable
-		"bullets", sol::readonly( &player::bullets ) // can only read from, not write to
+		
+		// 3 constructors
+		sol::constructors<sol::types<>, sol::types<int>, sol::types<int, int>>(),
+		
+		// typical member function that returns a variable
+		"shoot", &player::shoot,
+		// typical member function
+		"boost", &player::boost,
+		
+		// gets or set the value using member variable syntax
+		"hp", sol::property(&player::get_hp, &player::set_hp),
+		
+		// read and write variable
+		"speed", &player::speed,
+		// can only read from, not write to
+		"bullets", sol::readonly( &player::bullets )
 	);
 
 	lua.script_file("player_script.lua");
@@ -417,10 +440,13 @@ And the script:
 .. code-block:: lua
 	:caption: player_script.lua
 	
-	p1 = player.new(2) -- call single argument integer constructor
+	-- call single argument integer constructor
+	p1 = player.new(2)
 	
-	p1.hp = 545; -- call property setter
-	print(p1.hp); -- call property through getter
+	-- set variable property setter
+	p1.hp = 545;
+	-- get variable through property getter
+	print(p1.hp);
 
 	local did_shoot_1 = p1:shoot()
 	print(did_shoot_1)
