@@ -28,112 +28,112 @@
 #include <cstdint>
 
 namespace sol {
-	struct load_result : public proxy_base<load_result> {
-	private:
-		lua_State* L;
-		int index;
-		int returncount;
-		int popcount;
-		load_status err;
+    struct load_result : public proxy_base<load_result> {
+    private:
+        lua_State* L;
+        int index;
+        int returncount;
+        int popcount;
+        load_status err;
 
-		template <typename T>
-		decltype(auto) tagged_get(types<sol::optional<T>>) const {
-			if (!valid()) {
-				return sol::optional<T>(nullopt);
-			}
-			return stack::get<sol::optional<T>>(L, index);
-		}
+        template <typename T>
+        decltype(auto) tagged_get(types<sol::optional<T>>) const {
+            if (!valid()) {
+                return sol::optional<T>(nullopt);
+            }
+            return stack::get<sol::optional<T>>(L, index);
+        }
 
-		template <typename T>
-		decltype(auto) tagged_get(types<T>) const {
+        template <typename T>
+        decltype(auto) tagged_get(types<T>) const {
 #ifdef SOL_CHECK_ARGUMENTS
-			if (!valid()) {
-				type_panic(L, index, type_of(L, index), type::none);
-			}
+            if (!valid()) {
+                type_panic(L, index, type_of(L, index), type::none);
+            }
 #endif // Check Argument Safety
-			return stack::get<T>(L, index);
-		}
+            return stack::get<T>(L, index);
+        }
 
-		sol::optional<sol::error> tagged_get(types<sol::optional<sol::error>>) const {
-			if (valid()) {
-				return nullopt;
-			}
-			return sol::error(detail::direct_error, stack::get<std::string>(L, index));
-		}
+        sol::optional<sol::error> tagged_get(types<sol::optional<sol::error>>) const {
+            if (valid()) {
+                return nullopt;
+            }
+            return sol::error(detail::direct_error, stack::get<std::string>(L, index));
+        }
 
-		sol::error tagged_get(types<sol::error>) const {
+        sol::error tagged_get(types<sol::error>) const {
 #ifdef SOL_CHECK_ARGUMENTS
-			if (valid()) {
-				type_panic(L, index, type_of(L, index), type::none);
-			}
+            if (valid()) {
+                type_panic(L, index, type_of(L, index), type::none);
+            }
 #endif // Check Argument Safety
-			return sol::error(detail::direct_error, stack::get<std::string>(L, index));
-		}
+            return sol::error(detail::direct_error, stack::get<std::string>(L, index));
+        }
 
-	public:
-		load_result() = default;
-		load_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, load_status err = load_status::ok) : L(L), index(index), returncount(returncount), popcount(popcount), err(err) {
+    public:
+        load_result() = default;
+        load_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, load_status err = load_status::ok) : L(L), index(index), returncount(returncount), popcount(popcount), err(err) {
 
-		}
-		load_result(const load_result&) = default;
-		load_result& operator=(const load_result&) = default;
-		load_result(load_result&& o) : L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
-			// Must be manual, otherwise destructor will screw us
-			// return count being 0 is enough to keep things clean
-			// but will be thorough
-			o.L = nullptr;
-			o.index = 0;
-			o.returncount = 0;
-			o.popcount = 0;
-			o.err = load_status::syntax;
-		}
-		load_result& operator=(load_result&& o) {
-			L = o.L;
-			index = o.index;
-			returncount = o.returncount;
-			popcount = o.popcount;
-			err = o.err;
-			// Must be manual, otherwise destructor will screw us
-			// return count being 0 is enough to keep things clean
-			// but will be thorough
-			o.L = nullptr;
-			o.index = 0;
-			o.returncount = 0;
-			o.popcount = 0;
-			o.err = load_status::syntax;
-			return *this;
-		}
+        }
+        load_result(const load_result&) = default;
+        load_result& operator=(const load_result&) = default;
+        load_result(load_result&& o) : L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
+            // Must be manual, otherwise destructor will screw us
+            // return count being 0 is enough to keep things clean
+            // but will be thorough
+            o.L = nullptr;
+            o.index = 0;
+            o.returncount = 0;
+            o.popcount = 0;
+            o.err = load_status::syntax;
+        }
+        load_result& operator=(load_result&& o) {
+            L = o.L;
+            index = o.index;
+            returncount = o.returncount;
+            popcount = o.popcount;
+            err = o.err;
+            // Must be manual, otherwise destructor will screw us
+            // return count being 0 is enough to keep things clean
+            // but will be thorough
+            o.L = nullptr;
+            o.index = 0;
+            o.returncount = 0;
+            o.popcount = 0;
+            o.err = load_status::syntax;
+            return *this;
+        }
 
-		load_status error() const {
-			return err;
-		}
+        load_status error() const {
+            return err;
+        }
 
-		bool valid() const {
-			return error() == load_status::ok;
-		}
+        bool valid() const {
+            return error() == load_status::ok;
+        }
 
-		template<typename T>
-		T get() const {
-			return tagged_get(types<meta::Unqualified<T>>());
-		}
+        template<typename T>
+        T get() const {
+            return tagged_get(types<meta::Unqualified<T>>());
+        }
 
-		template<typename... Ret, typename... Args>
-		decltype(auto) call(Args&&... args) {
-			return get<function>().template call<Ret...>(std::forward<Args>(args)...);
-		}
+        template<typename... Ret, typename... Args>
+        decltype(auto) call(Args&&... args) {
+            return get<function>().template call<Ret...>(std::forward<Args>(args)...);
+        }
 
-		template<typename... Args>
-		decltype(auto) operator()(Args&&... args) {
-			return call<>(std::forward<Args>(args)...);
-		}
+        template<typename... Args>
+        decltype(auto) operator()(Args&&... args) {
+            return call<>(std::forward<Args>(args)...);
+        }
 
-		lua_State* lua_state() const { return L; };
-		int stack_index() const { return index; };
+        lua_State* lua_state() const { return L; };
+        int stack_index() const { return index; };
 
-		~load_result() {
-			stack::remove(L, index, popcount);
-		}
-	};
+        ~load_result() {
+            stack::remove(L, index, popcount);
+        }
+    };
 } // sol
 
 #endif // SOL_LOAD_RESULT_HPP

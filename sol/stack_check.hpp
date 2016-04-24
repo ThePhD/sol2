@@ -266,7 +266,7 @@ struct checker<T, type::userdata, C> {
             return true;
         if (stack_detail::check_metatable<U*>(L))
             return true;
-        if (stack_detail::check_metatable<unique_usertype<U>>(L))
+        if (stack_detail::check_metatable<detail::unique_usertype<U>>(L))
             return true;
 #ifndef SOL_NO_EXCEPTIONS
         lua_getfield(L, -1, &detail::base_class_check_key()[0]);
@@ -308,27 +308,11 @@ struct checker<T, type::userdata, C> {
     }
 };
 
-template<typename T, typename Real, typename C>
-struct checker<unique_usertype<T, Real>, type::userdata, C> {
+template<typename T>
+struct checker<T, type::userdata, std::enable_if_t<is_unique_usertype<T>::value>> {
     template <typename Handler>
     static bool check(lua_State* L, int index, Handler&& handler) {
-        return checker<T, type::userdata, C>{}.check(L, index, std::forward<Handler>(handler));
-    }
-};
-
-template<typename T, typename C>
-struct checker<std::shared_ptr<T>, type::userdata, C> {
-    template <typename Handler>
-    static bool check(lua_State* L, int index, Handler&& handler) {
-        return checker<unique_usertype<T, std::shared_ptr<T>>, type::userdata, C>{}.check(L, index, std::forward<Handler>(handler));
-    }
-};
-
-template<typename T, typename D, typename C>
-struct checker<std::unique_ptr<T, D>, type::userdata, C> {
-    template <typename Handler>
-    static bool check(lua_State* L, int index, Handler&& handler) {
-        return checker<unique_usertype<T, std::unique_ptr<T, D>>, type::userdata, C>{}.check(L, index, std::forward<Handler>(handler));
+        return checker<typename unique_usertype_traits<T>::type, type::userdata>{}.check(L, index, std::forward<Handler>(handler));
     }
 };
 

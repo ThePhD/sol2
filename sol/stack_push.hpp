@@ -71,52 +71,38 @@ struct pusher<T*> {
     }
 };
 
-template<typename T, typename Real>
-struct pusher<unique_usertype<T, Real>> {
+template<typename T>
+struct pusher<T, std::enable_if_t<is_unique_usertype<T>::value>> {
+    typedef typename unique_usertype_traits<T>::type P;
+    typedef typename unique_usertype_traits<T>::actual_type Real;
+
+    template <typename Arg, meta::EnableIf<std::is_base_of<Real, meta::Unqualified<Arg>>> = 0>
+    static int push(lua_State* L, Arg&& arg) {
+        if (unique_usertype_traits<T>::is_null(arg))
+            return stack::push(L, nil);
+        return push_deep(L, std::forward<Arg>(arg));
+    }
+
+    template <typename Arg0, typename Arg1, typename... Args>
+    static int push(lua_State* L, Arg0&& arg0, Arg0&& arg1, Args&&... args) {
+        return push_deep(L, std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...);
+    }
+
     template <typename... Args>
-    static int push(lua_State* L, Args&&... args) {
-        T** pref = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(detail::special_destruct_func) + sizeof(Real)));
+    static int push_deep(lua_State* L, Args&&... args) {
+        P** pref = static_cast<P**>(lua_newuserdata(L, sizeof(P*) + sizeof(detail::special_destruct_func) + sizeof(Real)));
         detail::special_destruct_func* fx = static_cast<detail::special_destruct_func*>(static_cast<void*>(pref + 1));
         Real* mem = static_cast<Real*>(static_cast<void*>(fx + 1));
-        *fx = detail::special_destruct<T, Real>;
+        *fx = detail::special_destruct<P, Real>;
         detail::default_construct::construct(mem, std::forward<Args>(args)...);
-        *pref = std::addressof(detail::deref(*mem));
-        if (luaL_newmetatable(L, &usertype_traits<unique_usertype<T>>::metatable[0]) == 1) {
-            set_field(L, "__gc", detail::unique_destruct<T>);
+        *pref = unique_usertype_traits<T>::get(*mem);
+        if (luaL_newmetatable(L, &usertype_traits<detail::unique_usertype<P>>::metatable[0]) == 1) {
+            set_field(L, "__gc", detail::unique_destruct<P>);
         }
         lua_setmetatable(L, -2);
         return 1;
     }
 };
-
-template<typename T>
-struct pusher<T, std::enable_if_t<is_unique_usertype<T>::value>> {
-    template <typename... Args>
-    static int push(lua_State* L, Args&&... args) {
-        typedef typename is_unique_usertype<T>::metatable_type meta_type;
-        return stack::push<unique_usertype<meta_type, T>>(L, std::forward<Args>(args)...);
-    }
-};
-
-template<typename T, typename D>
-struct pusher<std::unique_ptr<T, D>> {
-    static int push(lua_State* L, std::unique_ptr<T, D> obj) {
-        if (obj == nullptr)
-            return stack::push(L, nil);
-        return stack::push<unique_usertype<T, std::unique_ptr<T, D>>>(L, std::move(obj));
-    }
-};
-
-template<typename T>
-struct pusher<std::shared_ptr<T>> {
-    template <typename S>
-    static int push(lua_State* L, S&& s) {
-        if (s == nullptr)
-            return stack::push(L, nil);
-        return stack::push<unique_usertype<T, std::shared_ptr<T>>>(L, std::forward<S>(s));
-    }
-};
-
 
 template<typename T>
 struct pusher<std::reference_wrapper<T>> {

@@ -267,12 +267,16 @@ template <std::size_t I, typename T>
 using void_tuple_element_t = typename void_tuple_element<I, T>::type;
 
 template<typename Signature, bool b = has_deducible_signature<Signature>::value>
-struct fx_traits;
+struct fx_traits {
+    static const bool is_member_function = false;
+    typedef std::tuple<> args_tuple_type;
+    typedef types<> args_type;
+    template<std::size_t i>
+    using arg_at = void_tuple_element_t<i, args_tuple_type>;
+};
 
 template<typename Signature>
-struct fx_traits<Signature, true> : fx_traits<decltype(&Signature::operator()), false> {
-
-};
+struct fx_traits<Signature, true> : fx_traits<decltype(&Signature::operator()), false> {};
 
 template<typename T, typename R, typename... Args>
 struct fx_traits<R(T::*)(Args...), false> {

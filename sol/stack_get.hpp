@@ -221,16 +221,6 @@ struct getter<T*> {
     }
 };
 
-template<typename T, typename Real>
-struct getter<unique_usertype<T, Real>> {
-    static Real& get(lua_State* L, int index = -1) {
-        T** pref = static_cast<T**>(lua_touserdata(L, index));
-        detail::special_destruct_func* fx = static_cast<detail::special_destruct_func*>(static_cast<void*>(pref + 1));
-        Real* mem = static_cast<Real*>(static_cast<void*>(fx + 1));
-        return *mem;
-    }
-};
-
 template<typename T>
 struct getter<non_null<T*>> {
     static T* get(lua_State* L, int index = -1) {
@@ -246,16 +236,15 @@ struct getter<T&> {
 };
 
 template<typename T>
-struct getter<std::shared_ptr<T>> {
-    static std::shared_ptr<T>& get(lua_State* L, int index = -1) {
-        return getter<unique_usertype<T, std::shared_ptr<T>>>::get(L, index);
-    }
-};
-
-template<typename T, typename D>
-struct getter<std::unique_ptr<T, D>> {
-    static std::unique_ptr<T, D>& get(lua_State* L, int index = -1) {
-        return getter<unique_usertype<T, std::unique_ptr<T, D>>>::get(L, index);
+struct getter<T, std::enable_if_t<is_unique_usertype<T>::value>> {
+    typedef typename unique_usertype_traits<T>::type P;
+    typedef typename unique_usertype_traits<T>::actual_type Real;
+    
+    static Real& get(lua_State* L, int index = -1) {
+        P** pref = static_cast<P**>(lua_touserdata(L, index));
+        detail::special_destruct_func* fx = static_cast<detail::special_destruct_func*>(static_cast<void*>(pref + 1));
+        Real* mem = static_cast<Real*>(static_cast<void*>(fx + 1));
+        return *mem;
     }
 };
 

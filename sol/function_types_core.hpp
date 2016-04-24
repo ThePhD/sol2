@@ -150,10 +150,40 @@ inline decltype(auto) cleanup_key() {
 template<typename T, typename Func, typename = void>
 struct functor {
     typedef meta::bind_traits<Func> traits_type;
+    typedef typename traits_type::args_type args_type;
+    typedef typename traits_type::return_type return_type;
+    typedef std::conditional_t<std::is_pointer<Func>::value || std::is_class<Func>::value, Func, std::add_pointer_t<Func>> function_type;
+    static const std::size_t arity = traits_type::arity;
+    static const bool is_free = true;
+    function_type invocation;
+
+    template<typename... Args>
+    functor(Args&&... args): invocation(std::forward<Args>(args)...) {}
+
+    template<typename... Args>
+    void call(types<void>, Args&&... args) {
+        invocation(std::forward<Args>(args)...);
+    }
+
+    template<typename Ret, typename... Args>
+    Ret call(types<Ret>, Args&&... args) {
+        return invocation(std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    auto operator()(Args&&... args) -> decltype(std::declval<functor>().call(types<return_type>{}, std::forward<Args>(args)...)) {
+        return this->call(types<return_type>(), std::forward<Args>(args)...);
+    }
+};
+
+template<typename T, typename Func>
+struct functor<T, Func, std::enable_if_t<!std::is_member_pointer<Func>::value && std::is_base_of<T, meta::Unqualified<typename meta::bind_traits<Func>::template arg_at<0>>>::value>> {
+    typedef meta::bind_traits<Func> traits_type;
     typedef meta::pop_front_type_t<typename traits_type::args_type> args_type;
     typedef typename traits_type::return_type return_type;
-    typedef meta::tuple_element_t<0, typename traits_type::args_tuple_type> Arg0;
     typedef std::conditional_t<std::is_pointer<Func>::value || std::is_class<Func>::value, Func, std::add_pointer_t<Func>> function_type;
+    static const std::size_t arity = traits_type::arity - 1;
+    static const bool is_free = false;
     T* item;
     function_type invocation;
 
@@ -186,6 +216,8 @@ struct functor<T, member_property<RSig, WSig>, C> {
     typedef member_property<RSig, WSig> function_type;
     typedef meta::Not<std::is_void<RSig>> can_read;
     typedef meta::Not<std::is_void<WSig>> can_write;
+    static const bool is_free = false;
+
     T* item;
     function_type invocation;
 
@@ -217,6 +249,7 @@ struct functor<T, Func, std::enable_if_t<std::is_member_object_pointer<Func>::va
     static const std::size_t arity = traits_type::arity;
     typedef std::true_type can_read;
     typedef std::true_type can_write;
+    static const bool is_free = false;
 
     T* item;
     Func invocation;
@@ -247,6 +280,7 @@ struct functor<T, Func, std::enable_if_t<std::is_member_function_pointer<Func>::
     typedef typename traits_type::args_type args_type;
     typedef typename traits_type::return_type return_type;
     static const std::size_t arity = traits_type::arity;
+    static const bool is_free = false;
 
     T* item;
     Func invocation;

@@ -477,7 +477,7 @@ public:
         // push pointer tables first,
         usertype_detail::push_metatable<T*, usertype_detail::stage::refmeta>(L, needsindexfunction, functions, functiontable, metafunctiontable, baseclasscheck, baseclasscast);
         lua_pop(L, 1);
-        usertype_detail::push_metatable<unique_usertype<T>, usertype_detail::stage::uniquemeta>(L, needsindexfunction, functions, functiontable, metafunctiontable, baseclasscheck, baseclasscast);
+        usertype_detail::push_metatable<detail::unique_usertype<T>, usertype_detail::stage::uniquemeta>(L, needsindexfunction, functions, functiontable, metafunctiontable, baseclasscheck, baseclasscast);
         lua_pop(L, 1);
         // but leave the regular T table on last
         // so it can be linked to a type for usage with `.new(...)` or `:new(...)`

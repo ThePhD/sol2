@@ -31,4 +31,5 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    usertype
    userdata
    usertype_memory
+   unique_usertype_traits
    variadic_args

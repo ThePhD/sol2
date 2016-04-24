@@ -84,6 +84,9 @@ inline int c_trampoline(lua_State* L, lua_CFunction f) {
 }
 #endif // Exceptions vs. No Exceptions
 struct empty { void operator()() {} };
+
+template <typename T>
+struct unique_usertype {};
 } // detail
 struct nil_t {};
 const nil_t nil {};
@@ -94,8 +97,52 @@ inline bool operator!=(nil_t, nil_t) { return false; }
 
 typedef std::remove_pointer_t<lua_CFunction> lua_r_CFunction;
 
-template <typename T, typename = void>
-struct unique_usertype {};
+template <typename T>
+struct unique_usertype_traits {
+    typedef T type;
+    typedef T actual_type;
+    static const bool value = false;
+
+    template <typename U>
+    static bool is_null(U&&) {
+        return false;
+    }
+
+    template <typename U>
+    static auto get(U&& value) {
+        return std::addressof(detail::deref(value));
+    }
+};
+
+template <typename T>
+struct unique_usertype_traits<std::shared_ptr<T>> {
+    typedef T type;
+    typedef std::shared_ptr<T> actual_type;
+    static const bool value = true;
+
+    static bool is_null(const actual_type& value) {
+        return value == nullptr;
+    }
+
+    static type* get(const actual_type& p) {
+        return p.get();
+    }
+};
+
+template <typename T, typename D>
+struct unique_usertype_traits<std::unique_ptr<T, D>> {
+    typedef T type;
+    typedef std::unique_ptr<T, D> actual_type;
+    static const bool value = true;
+
+    static bool is_null(const actual_type& value) {
+        return value == nullptr;
+    }
+
+    static type* get(const actual_type& p) {
+        return p.get();
+    }
+};
 
 template <typename T>
 struct non_null {};
@@ -442,7 +489,7 @@ template <typename T>
 struct is_proxy_primitive : is_lua_primitive<T> { };
 
 template <typename T>
-struct is_unique_usertype : std::false_type {};
+struct is_unique_usertype : std::integral_constant<bool, unique_usertype_traits<T>::value> {};
 
 template <typename T>
 struct is_transparent_argument : std::false_type {};
