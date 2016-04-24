@@ -10,6 +10,8 @@ general purpose reference to Lua object in registry
 
 This type keeps around a reference to something that was on the stack and places it in the Lua registry. It is the backbone for all things that reference items on the stack and needs to keep them around beyond their appearance and lifetime on said Lua stack. Its progeny include :doc:`sol::coroutine<coroutine>`, :doc:`sol::function<function>`, :doc:`sol::<protected_function>`, :doc:`sol::object<object>`, :doc:`sol::table<table>`/:doc:`sol::global_table<table>`, :doc:`sol::<thread>`, and :doc:`sol::userdata<userdata>`.
 
+For all of these types, there's also a ``stack_{x}`` version of them, such as ``stack_table``
+
 
 members
 -------

@@ -20,6 +20,7 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    property
    proxy
    reference
+   stack_reference
    resolve
    stack
    optional

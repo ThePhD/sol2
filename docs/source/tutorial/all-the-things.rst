@@ -8,14 +8,14 @@ You'll need to ``#include <sol.hpp>``/``#include "sol.hpp"`` somewhere in your c
 opening a state
 ---------------
 
-Do it.
-
 .. code-block:: cpp
 	
-	sol::state lua;
-	// open some common libraries
-	lua.open_libraries(sol::lib::base, sol::lib::package);
-	lua.script( "print('bark bark bark!')" );
+	int main (int argc, char* argv[]) {
+		sol::state lua;
+		// open some common libraries
+		lua.open_libraries(sol::lib::base, sol::lib::package);
+		lua.script( "print('bark bark bark!')" );
+	}
 
 
 sol::state on lua_State*
@@ -125,50 +125,6 @@ You can erase things by setting it to ``nullptr`` or ``sol::nil``.
 
 	int second_try = lua.get_or<int>( 322 );
 	// second_try == 322
-
-
-multiple returns from lua
--------------------------
-
-.. code-block:: cpp
-	
-	sol::state lua;
-
-	lua.script("function f (a, b, c) return a, b, c end");
-	
-	std::tuple<int, int, int> result = lua["f"](100, 200, 300); 
-	// result == { 100, 200, 300 }
-	int a, int b;
-	std::string c;
-	sol::tie( a, b, c ) = lua["f"](100, 200, "bark");
-	// a == 100
-	// b == 200
-	// c == "bark"
-
-
-multiple returns to lua
------------------------
-
-.. code-block:: cpp
-	
-	sol::state lua;
-
-	lua["f"] = [](int a, int b, sol::object c) {
-		// sol::object can be anything here: just pass it through
-		return std::make_tuple( 100, 200, c );
-	};
-	
-	std::tuple<int, int, int> result = lua["f"](100, 200, 300); 
-	// result == { 100, 200, 300 }
-	
-	lua[]
-	// result == { 100, 200, 300 }
-	int a, int b;
-	std::string c;
-	sol::tie( a, b, c ) = lua["f"](100, 200, "bark");
-	// a == 100
-	// b == 200
-	// c == "bark"
 
 
 tables
@@ -353,8 +309,52 @@ You can bind member variables as functions too:
 Can use ``sol::readonly( &some_class::variable )`` to make a variable readonly and error if someone tries to write to it.
 
 
-C++ classes in Lua
-------------------
+multiple returns from lua
+-------------------------
+
+.. code-block:: cpp
+	
+	sol::state lua;
+
+	lua.script("function f (a, b, c) return a, b, c end");
+	
+	std::tuple<int, int, int> result = lua["f"](100, 200, 300); 
+	// result == { 100, 200, 300 }
+	int a, int b;
+	std::string c;
+	sol::tie( a, b, c ) = lua["f"](100, 200, "bark");
+	// a == 100
+	// b == 200
+	// c == "bark"
+
+
+multiple returns to lua
+-----------------------
+
+.. code-block:: cpp
+	
+	sol::state lua;
+
+	lua["f"] = [](int a, int b, sol::object c) {
+		// sol::object can be anything here: just pass it through
+		return std::make_tuple( 100, 200, c );
+	};
+	
+	std::tuple<int, int, int> result = lua["f"](100, 200, 300); 
+	// result == { 100, 200, 300 }
+	
+	std::tuple<int, int, std::string> resutl2 = lua["f"](100, 200, "BARK BARK BARK!")
+	// result == { 100, 200, "BARK BARK BARK!" }
+	int a, int b;
+	std::string c;
+	sol::tie( a, b, c ) = lua["f"](100, 200, "bark");
+	// a == 100
+	// b == 200
+	// c == "bark"
+
+
+C++ classes in from C++
+-----------------------
 
 Everything that is not a:
 
@@ -627,6 +627,38 @@ Use/return a ``unique_ptr`` or ``shared_ptr`` instead or just return a value:
 	auto my_unique = std::make_unique<my_type>();
 	lua["other_thing"] = std::move(my_unique);
 
+If you have something you know is going to last and you just want to give it to Lua as a reference, then it's fine too:
+
+.. code-block:: cpp
+
+	// :ok:
+	lua["my_func"] = []() -> my_type* {
+		static my_type mt;
+		return &mt;
+	};
+
+
+Sol can detect ``nullptr``s, so if you happen to return it there won't be any dangling because a ``sol::nil`` will be pushed.
+
+.. code-block:: cpp
+
+	struct my_type {
+		void stuff () {}
+	};
+
+	sol::state lua;
+
+	// BUT THIS IS STILL BAD DON'T DO IT AAAHHH BAD
+	// return a unique_ptr still or something!
+	lua["my_func"] = []() -> my_type* {
+		return nullptr;
+	};
+
+	// Acceptable, it will set ``something`` to nil (and delete it on next GC if there's no more references)
+	lua.set("something", nullptr);
+
+	// Also fine
+	lua["something_else"] = nullptr;
 
 advanced
 --------
@@ -634,6 +666,8 @@ advanced
 Some more advanced things you can do:
 	
 	* :doc:`stack manipulation<../api/stack>` to safely play with the stack. You can also define customization points for ``stack::get``/``stack::check``/``stack::push`` for your type.
+	* :doc:`stack references<../api/stack_reference>` to have zero-overhead Sol abstractions while not copying to the Lua registry.
+	* :doc:`unique usertype traits<../api/unique_usertype_traits>` allows you to specialize handle/RAII types from other frameworks, like boost, and Unreal, to work with Sol.
 	* :doc:`variadic arguments<../api/variadic_args>` in functions with ``sol::variadic_args``.
 	* :doc:`this_state<../api/this_state>` to get the current ``lua_State*``.
 	* :doc:`resolve<../api/resolve>` overloads in case you have overloaded functions; a cleaner casting utility.
