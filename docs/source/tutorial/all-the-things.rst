@@ -198,7 +198,8 @@ Make some:
 	lua.create_named_table("def",
 		"ghi", lua.create_table_with(
 			"bark", 50,
-			"woof", lua["abc"] // can reference other existing stuff too
+			// can reference other existing stuff too
+			"woof", lua["abc"]
 		)
 	);
 
@@ -232,7 +233,8 @@ They're great. Use them:
 
 	// fixed signature std::function<...>
 	std::function<int(int, double, int, std::string)> stdfx = lua["f"];
-	// sol::function is often easier: takes a variable number/types of arguments...
+	// sol::function is often easier: 
+	// takes a variable number/types of arguments...
 	sol::function fx = lua["f"];
 
 	int is_one = stdfx(1, 34.5, 3, "bark");
@@ -318,7 +320,8 @@ multiple returns from lua
 
 	lua.script("function f (a, b, c) return a, b, c end");
 	
-	std::tuple<int, int, int> result = lua["f"](100, 200, 300); 
+	std::tuple<int, int, int> result 
+		= lua["f"](100, 200, 300); 
 	// result == { 100, 200, 300 }
 	int a, int b;
 	std::string c;
@@ -343,7 +346,8 @@ multiple returns to lua
 	std::tuple<int, int, int> result = lua["f"](100, 200, 300); 
 	// result == { 100, 200, 300 }
 	
-	std::tuple<int, int, std::string> resutl2 = lua["f"](100, 200, "BARK BARK BARK!")
+	std::tuple<int, int, std::string> resutl2 
+		= lua["f"](100, 200, "BARK BARK BARK!")
 	// result == { 100, 200, "BARK BARK BARK!" }
 	int a, int b;
 	std::string c;
@@ -638,7 +642,7 @@ If you have something you know is going to last and you just want to give it to 
 	};
 
 
-Sol can detect ``nullptr``s, so if you happen to return it there won't be any dangling because a ``sol::nil`` will be pushed.
+Sol can detect ``nullptr``, so if you happen to return it there won't be any dangling because a ``sol::nil`` will be pushed.
 
 .. code-block:: cpp
 
@@ -654,11 +658,13 @@ Sol can detect ``nullptr``s, so if you happen to return it there won't be any da
 		return nullptr;
 	};
 
-	// Acceptable, it will set ``something`` to nil (and delete it on next GC if there's no more references)
+	// Acceptable, it will set 'something' to nil 
+	// (and delete it on next GC if there's no more references)
 	lua.set("something", nullptr);
 
 	// Also fine
 	lua["something_else"] = nullptr;
+
 
 advanced
 --------
