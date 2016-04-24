@@ -28,6 +28,7 @@ For your system/game that already has lua, but you'd like something nice:
 	int pre_existing_system( lua_State* L ) {
 		sol::state_view lua(L);
 		lua.script( "print('bark bark bark!')" );
+		return 0;
 	}
 
 
@@ -57,10 +58,6 @@ You can set/get everything.
 	
 .. code-block:: cpp
 	
-	struct some_class {
-		bool some_variable = false;
-	};
-
 	sol::lua_state lua;
 
 	lua.open_libraries(sol::lib::base);
@@ -84,12 +81,6 @@ You can set/get everything.
 	// strings too
 	std::string important_string = lua["important_string"];
 	
-	// returns a plain reference
-	some_class& myuserdata = lua["myuserdata"];
-	// Modifies this in LUA VM AS WELL
-	// its a reference, not a copy!
-	myuserdata.some_variable = true;
-
 	// get a function
 	sol::function a_function = lua["a_function"];
 	int value_is_100 = a_function();
@@ -97,7 +88,6 @@ You can set/get everything.
 	// get a std::function
 	std::function<int()> a_std_function = lua["a_function"];
 	int value_is_still_100 = a_std_function();
-
 
 Retrieve Lua types using ``object`` and other ``sol::`` types.
 
@@ -118,6 +108,158 @@ Retrieve Lua types using ``object`` and other ``sol::`` types.
 
 	// will not contain data
 	sol::optional<int> check_for_me = lua["a_function"];
+
+
+You can erase things by setting it to ``nullptr`` or ``sol::nil``.
+
+.. code-block:: cpp
+
+	sol::state lua;
+
+	lua.script("exists = 250");
+
+	int first_try = lua.get_or<int>( 322 );
+	// first_try == 250
+
+	lua.set("exists", sol::nil);
+
+	int second_try = lua.get_or<int>( 322 );
+	// second_try == 322
+
+
+multiple returns from lua
+-------------------------
+
+.. code-block:: cpp
+	
+	sol::state lua;
+
+	lua.script("function f (a, b, c) return a, b, c end");
+	
+	std::tuple<int, int, int> result = lua["f"](100, 200, 300); 
+	// result == { 100, 200, 300 }
+	int a, int b;
+	std::string c;
+	sol::tie( a, b, c ) = lua["f"](100, 200, "bark");
+	// a == 100
+	// b == 200
+	// c == "bark"
+
+
+multiple returns to lua
+-----------------------
+
+.. code-block:: cpp
+	
+	sol::state lua;
+
+	lua["f"] = [](int a, int b, sol::object c) {
+		// sol::object can be anything here: just pass it through
+		return std::make_tuple( 100, 200, c );
+	};
+	
+	std::tuple<int, int, int> result = lua["f"](100, 200, 300); 
+	// result == { 100, 200, 300 }
+	
+	lua[]
+	// result == { 100, 200, 300 }
+	int a, int b;
+	std::string c;
+	sol::tie( a, b, c ) = lua["f"](100, 200, "bark");
+	// a == 100
+	// b == 200
+	// c == "bark"
+
+
+tables
+------
+
+:doc:`sol::state<../api/state>` is a table too.
+
+.. code-block:: cpp
+
+	sol::state lua;
+
+	// Raw string literal for easy multiline
+	lua.script( R"(
+		abc = { [0] = 24 }
+		def = { 
+			ghi = { 
+				bark = 50, 
+				woof = abc 
+			} 
+		}
+	)"
+	);
+
+	sol::table abc = lua["abc"];
+	sol::state def = lua["def"];
+	sol::table ghi = lua["def"]["ghi"];
+
+	int bark1 = def["ghi"]["bark"];
+	// bark1 == 50
+	int bark2 = lua["def"]["ghi"]["bark"];
+	// bark2 == 50
+	
+	bool bark_equal = bark1 == bark2;
+	// true
+
+	int abcval1 = abc[0];
+	// abcval2 == 24
+	int abcval2 = ghi["woof"][0];
+	// abcval2 == 24
+	
+	bool abcval_equal = abcval1 == abcval2; 
+	// true
+
+If you're going deep, be safe:
+
+.. code-block:: cpp
+
+	sol::state lua;
+
+	sol::optional<int> will_not_error = lua["abc"]["DOESNOTEXIST"]["ghi"];
+	// will_not_error == sol::nullopt
+	int will_not_error2 = lua["abc"]["def"]["ghi"]["jklm"].get_or<int>(25);
+	// is 25
+
+	// if you don't go safe,
+	// will throw (or do at_panic if no exceptions)
+	int aaaahhh = lua["abc"]["hope_u_liek_crash"];
+
+
+make tables
+-----------
+
+Make some:
+
+.. code-block:: cpp
+
+	lua["abc"] = lua.create_table_with(
+		0, 24
+	);
+
+	lua.create_named_table("def",
+		"ghi", lua.create_table_with(
+			"bark", 50,
+			"woof", lua["abc"] // can reference other existing stuff too
+		)
+	);
+
+Equivalent Lua code:
+
+.. code-block:: lua
+	
+	abc = { [0] = 24 }
+	def = { 
+		ghi = { 
+			bark = 50, 
+			woof = abc 
+		} 
+	}	
+	
+
+You can put anything you want in tables as values or keys, including strings, numbers, functions, other tables.
 
 
 functions
@@ -143,8 +285,8 @@ They're great. Use them:
 	// call through operator[]
 	int is_three = lua["g"](1, 2);
 	// is_three == 3
-	double is_2_8 = lua["g"](2.4, 2.4);
-	// is_2_8 == 2.8
+	double is_4_8 = lua["g"](2.4, 2.4);
+	// is_4_8 == 4.8
 
 You can bind member variables as functions too:
 
@@ -211,159 +353,32 @@ You can bind member variables as functions too:
 Can use ``sol::readonly( &some_class::variable )`` to make a variable readonly and error if someone tries to write to it.
 
 
-multiple returns from lua
--------------------------
-
-.. code-block:: cpp
-	
-	sol::state lua;
-
-	lua.script("function f (a, b, c) return a, b, c end");
-	
-	std::tuple<int, int, int> result = lua["f"](100, 200, 300); 
-	// result == { 100, 200, 300 }
-	int a, int b;
-	std::string c;
-	sol::bond( a, b, c ) = lua["f"](100, 200, "bark");
-	// a == 100
-	// b == 200
-	// c == "bark"
-
-
-multiple returns to lua
------------------------
-
-.. code-block:: cpp
-	
-	sol::state lua;
-
-	lua["f"] = [](int a, int b, sol::object c) {
-		// sol::object can be anything here: just pass it through
-		return std::make_tuple( 100, 200, c );
-	};
-	
-	std::tuple<int, int, int> result = lua["f"](100, 200, 300); 
-	// result == { 100, 200, 300 }
-	
-	lua[]
-	// result == { 100, 200, 300 }
-	int a, int b;
-	std::string c;
-	sol::bond( a, b, c ) = lua["f"](100, 200, "bark");
-	// a == 100
-	// b == 200
-	// c == "bark"
-
-
-tables
-------
-
-:doc:`state<../api/state>` is a table too.
-
-.. code-block:: cpp
-
-	sol::state lua;
-
-	// Raw string literal for easy multiline
-	lua.script( R"(
-		abc = { [0] = 24 }
-		def = { 
-			ghi = { 
-				bark = 50, 
-				woof = abc 
-			} 
-		}
-	)"
-	);
-
-	sol::table abc = lua["abc"];
-	sol::state def = lua["def"];
-	sol::table ghi = lua["def"]["ghi"];
-
-	int bark1 = def["ghi"]["bark"];
-	// bark1 == 50
-	int bark2 = lua["def"]["ghi"]["bark"];
-	// bark2 == 50
-	
-	bool bark_equal = bark1 == bark2;
-	// true
-
-	int abcval1 = abc[0];
-	// abcval2 == 24
-	int abcval2 = ghi["woof"][0];
-	// abcval2 == 24
-	
-	bool abcval_equal = abcval1 == abcval2; 
-	// true
-
-If you're going deep, be safe:
-
-.. code-block:: cpp
-
-	sol::optional<int> will_not_error = lua["abc"]["DOESNOTEXIST"]["ghi"];
-	// will_not_error == sol::nullopt
-	int will_not_error2 = lua["abc"]["def"]["ghi"]["jklm"].get_or<int>(25);
-	// is 25
-
-	// if you don't go safe,
-	// will throw (or do at_panic if no exceptions)
-	int aaaahhh = lua["abc"]["hope_u_liek_crash"];
-
-
-make tables
------------
-
-Make some:
-
-.. code-block:: cpp
-
-	lua["abc"] = lua.create_table_with(
-		0, 24
-	);
-
-	lua.create_named_table("def",
-		"ghi", lua.create_table_with(
-			"bark", 50,
-			"woof", lua["abc"] // can reference other existing stuff too
-		)
-	);
-
-Equivalent Lua code:
-
-.. code-block:: lua
-	
-	abc = { [0] = 24 }
-	def = { 
-		ghi = { 
-			bark = 50, 
-			woof = abc 
-		} 
-	}	
-	
-
-userdata + usertypes (metatables)
----------------------------------
+C++ classes in Lua
+------------------
 
 Everything that is not a:
 
 	* primitive type: ``bool``, ``char/short/int/long/long long``, ``float/double``
 	* string type: ``std::string``, ``const char*``
-	* function type: function pointers, ``lua_CFunction``, ``std::function``, :doc:`sol::function/sol::protected_function<../api/function>`, :doc:`sol::coroutine<../api/coroutine>`
+	* function type: function pointers, ``lua_CFunction``, ``std::function``, :doc:`sol::function/sol::protected_function<../api/function>`, :doc:`sol::coroutine<../api/coroutine>`, member variable, member function
 	* designated sol type: :doc:`sol::table<../api/table>`, :doc:`sol::thread<../api/thread>`, :doc:`sol::error<../api/error>`, :doc:`sol::object<../api/object>`
 	* transparent argument type: :doc:`sol::variadic_arg<../api/variadic_args>`, :doc:`sol::this_state<../api/this_state>`
 	* usertype<T> class: :doc:`sol::usertype<../api/usertype>`
 
-Is set as a userdata.
+Is set as a :doc:`userdata + usertype<../api/usertype>`.
 
 .. code-block:: cpp
 
-	struct Doge { int tailwag = 50; }
+	struct Doge { 
+		int tailwag = 50; 
+	}
 
 	Doge dog{};
 	
-	// Copy into lua: destroyed when lua VM garbage collects
+	// Copy into lua: destroyed by Lua VM during garbage collection
 	lua["dog"] = dog;
 	// OR: move semantics - will call move constructor if present instead
+	// Again, owned by Lua
 	lua["dog"] = std::move( dog );
 	lua["dog"] = Doge{};
 	lua["dog"] = std::make_unique<Doge>();
@@ -375,9 +390,16 @@ Is set as a userdata.
 	lua.set("dog", std::unique_ptr<Doge>(new Doge()));
 	lua.set("dog", std::shared_ptr<Doge>(new Doge()));
 
-``std::unique_ptr``/``std::shared_ptr``'s reference counts / deleters will be respected. If you want it to refer to something, whose memory you know won't die in C++, do the following:
+``std::unique_ptr``/``std::shared_ptr``'s reference counts / deleters will :doc:`be respected<../api/unique_usertype_traits>`. If you want it to refer to something, whose memory you know won't die in C++, do the following:
 
 .. code-block:: cpp
+
+	struct Doge { 
+		int tailwag = 50; 
+	}
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
 
 	Doge dog{}; // Kept alive somehow
 
@@ -396,6 +418,28 @@ Get userdata in the same way as everything else:
 
 .. code-block:: cpp
 
+	struct Doge { 
+		int tailwag = 50; 
+	}
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	Doge& dog = lua["dog"]; // References Lua memory
+	Doge* dog_pointer = lua["dog"]; // References Lua memory
+	Doge dog_copy = lua["dog"]; // Copies, will not affect lua
+
+Note that you can change the data of usertype variables and it will affect things in lua if you get a pointer or a reference from Sol:
+
+.. code-block:: cpp
+
+	struct Doge { 
+		int tailwag = 50; 
+	}
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
 	Doge& dog = lua["dog"]; // References Lua memory
 	Doge* dog_pointer = lua["dog"]; // References Lua memory
 	Doge dog_copy = lua["dog"]; // Copies, will not affect lua
@@ -409,8 +453,8 @@ Get userdata in the same way as everything else:
 	lua.script("assert(dog.tailwag == 100)");
 
 
-more userdata + usertypes
--------------------------
+C++ classes in Lua
+------------------
 
 Because there's a LOT you can do with Sol:
 
@@ -470,9 +514,6 @@ Bind all the things:
 	// note that you can set a userdata before you register a usertype,
 	// and it will still carry the right metatable if you register it later
 	
-	lua.set("p2", player(0));
-	// p2 has no ammo
-
 	// make usertype metatable
 	lua.new_usertype<player>( "player",
 		
@@ -532,12 +573,18 @@ And the script:
 Even more stuff :doc:`you can do<../api/usertype>` described elsewhere, like initializer functions (private constructors / destructors support), "static" functions callable with ``name.my_function( ... )``, and overloaded member functions.
 
 
-pointers
---------
+ownership
+---------
 
 Sol will not take ownership of raw pointers: raw pointers do not own anything.
 
 .. code-block:: cpp
+
+	struct my_type {
+		void stuff () {}
+	};
+
+	sol::state lua;
 
 	// AAAHHH BAD
 	// dangling pointer!
@@ -545,7 +592,13 @@ Sol will not take ownership of raw pointers: raw pointers do not own anything.
 		return new my_type();
 	};
 
-Return a ``unique_ptr`` or ``shared_ptr`` instead or just return a value:
+	// AAAHHH!
+	lua.set("something", new my_type());
+
+	// AAAAAAHHH!!!
+	lua["something_else"] = new my_type();
+
+Use/return a ``unique_ptr`` or ``shared_ptr`` instead or just return a value:
 
 .. code-block:: cpp
 
@@ -563,6 +616,16 @@ Return a ``unique_ptr`` or ``shared_ptr`` instead or just return a value:
 	lua["my_func"] = []() -> my_type {
 		return my_type();
 	};
+
+	// :ok: 
+	lua.set("something", std::unique_ptr<my_type>(new my_type()));
+
+	std::shared_ptr<my_type> my_shared = std::make_shared<my_type>();
+	// :ok: 
+	lua.set("something_else", my_shared);
+
+	auto my_unique = std::make_unique<my_type>();
+	lua["other_thing"] = std::move(my_unique);
 
 
 advanced

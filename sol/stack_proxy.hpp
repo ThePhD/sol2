@@ -78,7 +78,7 @@ struct pusher<stack_proxy> {
 } // stack
 
 template <>
-struct bond_size<function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
+struct tie_size<function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
 
 template <std::size_t I>
 stack_proxy get(const function_result& fr) {
@@ -86,7 +86,7 @@ stack_proxy get(const function_result& fr) {
 }
 
 template <>
-struct bond_size<protected_function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
+struct tie_size<protected_function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
 
 template <std::size_t I>
 stack_proxy get(const protected_function_result& fr) {

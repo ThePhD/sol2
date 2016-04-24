@@ -28,7 +28,7 @@
 #include "userdata.hpp"
 #include "tuple.hpp"
 #include "traits.hpp"
-#include "bond.hpp"
+#include "tie.hpp"
 
 namespace sol {
 namespace detail {

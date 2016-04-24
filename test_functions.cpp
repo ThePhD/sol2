@@ -545,7 +545,7 @@ N = n(1, 2, 3)
 
     REQUIRE( N == 13 );
 
-    sol::bond( ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1, N ) 
+    sol::tie( ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1, N ) 
     = lua.get<int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int>(
         "ob", "A", "B", "C", "D", "F", "G0", "G1", "H", "I", "J0", "J1", "K0", "K1", "L0", "L1", "M0", "M1", "N"
     );
@@ -735,7 +735,7 @@ TEST_CASE("advanced/call-referenced_obj", "A C++ object is passed by pointer/ref
     REQUIRE(y == 9);
 }
 
-TEST_CASE("functions/bond", "make sure advanced syntax with 'bond' works") {
+TEST_CASE("functions/tie", "make sure advanced syntax with 'tie' works") {
     sol::state lua;
 
     lua.script(R"(function f () 
@@ -744,7 +744,7 @@ end)");
     sol::function f = lua["f"];
 
     int a, b, c;
-    sol::bond(a, b, c) = f();
+    sol::tie(a, b, c) = f();
     REQUIRE(a == 1);
     REQUIRE(b == 2);
     REQUIRE(c == 3);

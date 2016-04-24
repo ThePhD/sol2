@@ -19,21 +19,21 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_BOND_HPP
-#define SOL_BOND_HPP
+#ifndef SOL_TIE_HPP
+#define SOL_TIE_HPP
 
 #include "traits.hpp"
 
 namespace sol {
 
 template <typename T>
-struct bond_size : std::tuple_size<T> {};
+struct tie_size : std::tuple_size<T> {};
 
 template <typename T>
-struct is_bondable : std::integral_constant<bool, (::sol::bond_size<T>::value > 0)> {};
+struct is_tieable : std::integral_constant<bool, (::sol::tie_size<T>::value > 0)> {};
 
 template <typename... Tn>
-struct bond_t : public std::tuple<std::add_lvalue_reference_t<Tn>...> {
+struct tie_t : public std::tuple<std::add_lvalue_reference_t<Tn>...> {
 private:
      typedef std::tuple<std::add_lvalue_reference_t<Tn>...> base_t;
 
@@ -44,8 +44,8 @@ private:
 
      template <typename T>
      void set( std::true_type, T&& target ) {
-          typedef bond_size<meta::Unqualified<T>> value_size;
-          typedef bond_size<std::tuple<Tn...>> tie_size;
+          typedef tie_size<meta::Unqualified<T>> value_size;
+          typedef tie_size<std::tuple<Tn...>> tie_size;
           typedef std::conditional_t<(value_size::value < tie_size::value), value_size, tie_size> indices_size;
           typedef std::make_index_sequence<indices_size::value> indices;
           set( indices(), std::forward<T>( target ) );
@@ -63,8 +63,8 @@ public:
      using base_t::base_t;
 
      template <typename T>
-     bond_t& operator= ( T&& value ) {
-          typedef is_bondable<meta::Unqualified<T>> bondable;
+     tie_t& operator= ( T&& value ) {
+          typedef is_tieable<meta::Unqualified<T>> bondable;
           set( bondable(), std::forward<T>( value ) );
           return *this;
      }
@@ -72,13 +72,17 @@ public:
 };
 
 template <typename... Tn>
-struct bond_size<::sol::bond_t<Tn...>> : ::std::tuple_size<::std::tuple<Tn...>> { };
+struct tie_size<::sol::tie_t<Tn...>> : ::std::tuple_size<::std::tuple<Tn...>> { };
 
+namespace adl_barrier_detail {
 template <typename... Tn>
-inline bond_t<std::remove_reference_t<Tn>...> bond( Tn&&... argn ) {
-     return bond_t<std::remove_reference_t<Tn>...>( std::forward<Tn>( argn )... );
+inline tie_t<std::remove_reference_t<Tn>...> tie(Tn&&... argn) {
+    return tie_t<std::remove_reference_t<Tn>...>(std::forward<Tn>(argn)...);
 }
+}
+
+using namespace adl_barrier_detail;
 
 } // sol
 
-#endif // SOL_BOND_HPP
+#endif // SOL_TIE_HPP

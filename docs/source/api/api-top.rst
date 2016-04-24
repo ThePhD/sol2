@@ -27,6 +27,7 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    table
    this_state
    thread
+   tie
    types
    usertype
    userdata
