@@ -28,7 +28,8 @@
 #include <iterator>
 
 namespace sol {
-    struct va_iterator : std::iterator<std::random_access_iterator_tag, stack_proxy, std::ptrdiff_t, stack_proxy*, stack_proxy> {
+    template <bool is_const>
+    struct va_iterator : std::iterator<std::random_access_iterator_tag, std::conditional_t<is_const, const stack_proxy, stack_proxy>, std::ptrdiff_t, std::conditional_t<is_const, const stack_proxy*, stack_proxy*>, std::conditional_t<is_const, const stack_proxy, stack_proxy>> {
         lua_State* L;
         int index;
         int stacktop;
@@ -37,12 +38,11 @@ namespace sol {
         va_iterator() : L(nullptr), index(std::numeric_limits<int>::max()), stacktop(std::numeric_limits<int>::max()) {}
         va_iterator(lua_State* L, int index, int stacktop) : L(L), index(index), stacktop(stacktop), sp(L, index) {}
 
-        stack_proxy operator*() {
-            sp = stack_proxy(L, index);
-            return sp;
+        reference operator*() {
+            return stack_proxy(L, index);
         }
 
-        stack_proxy* operator->() {
+        pointer operator->() {
             sp = stack_proxy(L, index);
             return &sp;
         }
@@ -89,7 +89,7 @@ namespace sol {
             return r;
         }
 
-        stack_proxy operator[](difference_type idx) {
+        reference operator[](difference_type idx) {
             return stack_proxy(L, index + static_cast<int>(idx));
         }
 
@@ -123,8 +123,9 @@ namespace sol {
             return index >= r.index;
         }
     };
-
-    inline va_iterator operator+(typename va_iterator::difference_type n, const va_iterator& r) {
+    
+    template <bool is_const>
+    inline va_iterator<is_const> operator+(typename va_iterator<is_const>::difference_type n, const va_iterator<is_const>& r) {
         return r + n;
     }
 
@@ -140,8 +141,8 @@ public:
     typedef stack_proxy* pointer;
     typedef std::ptrdiff_t difference_type;
     typedef std::size_t size_type;
-    typedef va_iterator iterator;
-    typedef const va_iterator const_iterator;
+    typedef va_iterator<false> iterator;
+    typedef va_iterator<true> const_iterator;
     typedef std::reverse_iterator<iterator> reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
@@ -170,10 +171,10 @@ public:
         return *this;
     }
 
-    iterator begin() { return va_iterator(L, index, stacktop + 1); }
-    iterator end() { return va_iterator(L, stacktop + 1, stacktop + 1); }
-    const_iterator begin() const { return va_iterator(L, index, stacktop + 1); }
-    const_iterator end() const { return va_iterator(L, stacktop + 1, stacktop + 1); }
+    iterator begin() { return iterator(L, index, stacktop + 1); }
+    iterator end() { return iterator(L, stacktop + 1, stacktop + 1); }
+    const_iterator begin() const { return const_iterator(L, index, stacktop + 1); }
+    const_iterator end() const { return const_iterator(L, stacktop + 1, stacktop + 1); }
     const_iterator cbegin() const { return begin(); }
     const_iterator cend() const { return end(); }
 
