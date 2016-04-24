@@ -3,7 +3,7 @@ tutorial: quick 'n' dirty
 
 These are all the things. Use your browser's search to find things you want.
 
-Compile with ``-std=c++14`` or better / VS 2015 or better.
+You'll need to ``#include <sol.hpp>``/``#include "sol.hpp"`` somewhere in your code. Sol is header-only, so you don't need to compile anything.
 
 opening a state
 ---------------
@@ -50,14 +50,20 @@ running lua code
 	script2(); //execute
 
 
-set and get stuff
------------------
+set and get variables
+---------------------
 
 You can set/get everything.
 	
 .. code-block:: cpp
 	
+	struct some_class {
+		bool some_variable = false;
+	};
+
 	sol::lua_state lua;
+
+	lua.open_libraries(sol::lib::base);
 
 	// integer types
 	lua.set("number", 24);
@@ -66,6 +72,7 @@ You can set/get everything.
 	// string types
 	lua["important_string"] = "woof woof";
 	// non-recognized types is stored as userdata
+	// this moves the type in (or copies, depending on class semantics)
 	lua["myuserdata"] = some_class();
 	// is callable, therefore gets stored as a function
 	lua["a_function"] = [](){ return 100; }; 
@@ -79,9 +86,10 @@ You can set/get everything.
 	
 	// returns a plain reference
 	some_class& myuserdata = lua["myuserdata"];
-	// myuserdata.some_variable = 20  WILL (!!) modify 
-	// data inside of lua VM as well, if you get a pointer or a reference
-	
+	// Modifies this in LUA VM AS WELL
+	// its a reference, not a copy!
+	myuserdata.some_variable = true;
+
 	// get a function
 	sol::function a_function = lua["a_function"];
 	int value_is_100 = a_function();
@@ -91,7 +99,7 @@ You can set/get everything.
 	int value_is_still_100 = a_std_function();
 
 
-Some classes that have stuff to make it easier to look at lua semantics / be safe.
+Retrieve Lua types using ``object`` and other ``sol::`` types.
 
 .. code-block:: cpp
 
@@ -100,10 +108,12 @@ Some classes that have stuff to make it easier to look at lua semantics / be saf
 	// ... everything from before
 
 	sol::object number_obj = lua.get<sol::object>( "number" );
-	sol::type t1 = number_obj.get_type(); // sol::type::number
+	// sol::type::number
+	sol::type t1 = number_obj.get_type();
 
 	sol::object function_obj = lua[ "a_function" ];
-	sol::type t2 = function_obj.get_type(); // sol::type::function
+	// sol::type::function
+	sol::type t2 = function_obj.get_type();
 	bool is_it_really = function_obj.is<std::function<int()>(); // true
 
 	// will not contain data
@@ -120,11 +130,21 @@ They're great. Use them:
 	sol::state lua;
 
 	lua.script("function f (a, b, c, d) return 1 end");
-	std::function<int()> stdfx = lua["f"];
+	lua.script("function g (a, b) a + b end");
+
+	// fixed signature std::function<...>
+	std::function<int(int, double, int, std::string)> stdfx = lua["f"];
+	// sol::function is often easier: takes a variable number/types of arguments...
 	sol::function fx = lua["f"];
 
 	int is_one = stdfx(1, 34.5, 3, "bark");
-	int is_also_one = fx();
+	int is_also_one = fx(1, "boop", 3, "bark");
+
+	// call through operator[]
+	int is_three = lua["g"](1, 2);
+	// is_three == 3
+	double is_2_8 = lua["g"](2.4, 2.4);
+	// is_2_8 == 2.8
 
 You can bind member variables as functions too:
 
@@ -168,7 +188,7 @@ You can bind member variables as functions too:
 		print(m2()) -- 24.5
 	)");
 
-	// binds just the membver variable as a function
+	// binds just the member variable as a function
 	lua["v1"] = &some_class::variable;
 	// binds class with member variable as function
 	lua.set_function("v2", &some_class::variable, some_class{});
@@ -191,8 +211,8 @@ You can bind member variables as functions too:
 Can use ``sol::readonly( &some_class::variable )`` to make a variable readonly and error if someone tries to write to it.
 
 
-multiple returns
-----------------
+multiple returns from lua
+-------------------------
 
 .. code-block:: cpp
 	
@@ -201,6 +221,31 @@ multiple returns
 	lua.script("function f (a, b, c) return a, b, c end");
 	
 	std::tuple<int, int, int> result = lua["f"](100, 200, 300); 
+	// result == { 100, 200, 300 }
+	int a, int b;
+	std::string c;
+	sol::bond( a, b, c ) = lua["f"](100, 200, "bark");
+	// a == 100
+	// b == 200
+	// c == "bark"
+
+
+multiple returns to lua
+-----------------------
+
+.. code-block:: cpp
+	
+	sol::state lua;
+
+	lua["f"] = [](int a, int b, sol::object c) {
+		// sol::object can be anything here: just pass it through
+		return std::make_tuple( 100, 200, c );
+	};
+	
+	std::tuple<int, int, int> result = lua["f"](100, 200, 300); 
+	// result == { 100, 200, 300 }
+	
+	lua[]
 	// result == { 100, 200, 300 }
 	int a, int b;
 	std::string c;
@@ -232,15 +277,24 @@ tables
 	);
 
 	sol::table abc = lua["abc"];
+	sol::state def = lua["def"];
 	sol::table ghi = lua["def"]["ghi"];
 
-	int bark1 = def["y"]["bark"]; // 24
-	int bark2 = lua["def"]["ghi"]["bark"]; // 24
-	bool bark_equal = bark1 == bark2; // true
+	int bark1 = def["ghi"]["bark"];
+	// bark1 == 50
+	int bark2 = lua["def"]["ghi"]["bark"];
+	// bark2 == 50
+	
+	bool bark_equal = bark1 == bark2;
+	// true
 
-	int abcval1 = abc[0]; // 24
-	int abcval2 = ghi["woof"][0]; // 24
-	bool abcval_equal = abcval1 == abcval2; // true
+	int abcval1 = abc[0];
+	// abcval2 == 24
+	int abcval2 = ghi["woof"][0];
+	// abcval2 == 24
+	
+	bool abcval_equal = abcval1 == abcval2; 
+	// true
 
 If you're going deep, be safe:
 
@@ -369,7 +423,7 @@ Because there's a LOT you can do with Sol:
 		int speed;
 
 		player() 
-		: player(500, 100) {
+		: player(3, 100) {
 
 		}
 
@@ -413,7 +467,13 @@ Bind all the things:
 
 	sol::state lua;
 
-	// just stuff a userdata in there
+	// note that you can set a userdata before you register a usertype,
+	// and it will still carry the right metatable if you register it later
+	
+	lua.set("p2", player(0));
+	// p2 has no ammo
+
+	// make usertype metatable
 	lua.new_usertype<player>( "player",
 		
 		// 3 constructors
@@ -442,6 +502,11 @@ And the script:
 	
 	-- call single argument integer constructor
 	p1 = player.new(2)
+
+	-- p2 is still here from being set with lua.set(...) above
+	local p2shoots = p2:shoot()
+	assert(not p2shoots)
+	-- had 0 ammo
 	
 	-- set variable property setter
 	p1.hp = 545;
@@ -467,7 +532,40 @@ And the script:
 Even more stuff :doc:`you can do<../api/usertype>` described elsewhere, like initializer functions (private constructors / destructors support), "static" functions callable with ``name.my_function( ... )``, and overloaded member functions.
 
 
-Advanced
+pointers
+--------
+
+Sol will not take ownership of raw pointers: raw pointers do not own anything.
+
+.. code-block:: cpp
+
+	// AAAHHH BAD
+	// dangling pointer!
+	lua["my_func"] = []() -> my_type* {
+		return new my_type();
+	};
+
+Return a ``unique_ptr`` or ``shared_ptr`` instead or just return a value:
+
+.. code-block:: cpp
+
+	// :ok:
+	lua["my_func"] = []() -> std::unique_ptr<my_type> {
+		return std::make_unique<my_type>();
+	};
+
+	// :ok:
+	lua["my_func"] = []() -> std::shared_ptr<my_type> {
+		return std::make_shared<my_type>();
+	};
+
+	// :ok:
+	lua["my_func"] = []() -> my_type {
+		return my_type();
+	};
+
+
+advanced
 --------
 
 Some more advanced things you can do:
