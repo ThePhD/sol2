@@ -153,20 +153,12 @@ tables
 	sol::table ghi = lua["def"]["ghi"];
 
 	int bark1 = def["ghi"]["bark"];
-	// bark1 == 50
 	int bark2 = lua["def"]["ghi"]["bark"];
-	// bark2 == 50
+	// bark1 == bark2 == 50
 	
-	bool bark_equal = bark1 == bark2;
-	// true
-
 	int abcval1 = abc[0];
-	// abcval2 == 24
 	int abcval2 = ghi["woof"][0];
-	// abcval2 == 24
-	
-	bool abcval_equal = abcval1 == abcval2; 
-	// true
+	// abcval1 == abcval2 == 24
 
 If you're going deep, be safe:
 
@@ -229,7 +221,7 @@ They're great. Use them:
 	sol::state lua;
 
 	lua.script("function f (a, b, c, d) return 1 end");
-	lua.script("function g (a, b) a + b end");
+	lua.script("function g (a, b) return a + b end");
 
 	// fixed signature std::function<...>
 	std::function<int(int, double, int, std::string)> stdfx = lua["f"];
@@ -245,6 +237,8 @@ They're great. Use them:
 	// is_three == 3
 	double is_4_8 = lua["g"](2.4, 2.4);
 	// is_4_8 == 4.8
+
+If you need to protect against errors and parser problems and you're not ready to deal with Lua's `longjmp` problems (if you compiled with C), use :doc:`sol::protected_function<../api/protected_function>`.
 
 You can bind member variables as functions too:
 
@@ -388,8 +382,11 @@ Is set as a :doc:`userdata + usertype<../api/usertype>`.
 	lua["dog"] = std::make_unique<Doge>();
 	lua["dog"] = std::make_shared<Doge>();
 	// Identical to above
-	lua.set("dog", dog);
-	lua.set("dog", std::move(dog));
+
+	Doge dog2{};
+
+	lua.set("dog", dog2);
+	lua.set("dog", std::move(dog2));
 	lua.set("dog", Doge{});
 	lua.set("dog", std::unique_ptr<Doge>(new Doge()));
 	lua.set("dog", std::shared_ptr<Doge>(new Doge()));
