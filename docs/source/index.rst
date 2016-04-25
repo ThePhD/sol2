@@ -3,6 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. image:: sol.png
+	:target: https://github.com/ThePhD/sol2
+	:alt: sol2 repository
+
 Sol 2.5
 =======
 a fast, simple C++ and Lua Binding

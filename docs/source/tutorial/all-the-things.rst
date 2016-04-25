@@ -64,22 +64,46 @@ You can set/get everything.
 
 	// integer types
 	lua.set("number", 24);
+
 	// floating point numbers
 	lua["number2"] = 24.5;
+
 	// string types
 	lua["important_string"] = "woof woof";
+
 	// non-recognized types is stored as userdata
-	// this moves the type in (or copies, depending on class semantics)
-	lua["myuserdata"] = some_class();
 	// is callable, therefore gets stored as a function
-	lua["a_function"] = [](){ return 100; }; 
+	lua["a_function"] = [](){ return 100; };
+
+	// make a table
+	lua["some_table"] = lua.create_table_wth("value", 24);
+
+
+Equivalent to loading a lua file with:
+
+.. code-block:: lua
+
+	number = 24
+	number2 = 24.5
+	important_string = "woof woof"
+	a_function = function () return 100 end
+	some_table = { value = 24 }
+
+Retrieve these variables using this syntax:
+
+.. code-block:: cpp
 
 	// implicit conversion
 	int number = lua["number"];
+	
 	// explicit get
 	auto number2 = lua.get<double>("number2");
+
 	// strings too
 	std::string important_string = lua["important_string"];
+
+	// dig into a table
+	int value = lua["value"]["value"];
 	
 	// get a function
 	sol::function a_function = lua["a_function"];
@@ -240,12 +264,16 @@ They're great. Use them:
 
 If you need to protect against errors and parser problems and you're not ready to deal with Lua's `longjmp` problems (if you compiled with C), use :doc:`sol::protected_function<../api/protected_function>`.
 
-You can bind member variables as functions too:
+You can bind member variables as functions too, as well as all KINDS of function-like things:
 
 .. code-block:: cpp
 	
 	void some_function () {
 		std::cout << "some function!" << std::endl;
+	}
+
+	void some_other_function () {
+		std::cout << "some other function!" << std::endl;
 	}
 
 	struct some_class {
@@ -259,48 +287,56 @@ You can bind member variables as functions too:
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
+	// put an instance of "some_class" into lua
+	// (we'll go into more detail about this later
+	// just know here that it works and is
+	// put into lua as a userdata
+	lua.set("sc", some_class());
+
+	// binds a plain function
 	lua["f1"] = some_function;
 	lua.set_function("f2", &some_other_function);
 
-	lua.script(R"(
-		 f1() -- some function!
-		 f2() -- some function!
-	)");
-
-	// put an instance of "some_class" into lua
-	lua.set("sc", some_class());
-
 	// binds just the member function
 	lua["m1"] = &some_class::member_function;
+	
 	// binds the class to the type
 	lua.set_function("m2", &some_class::member_function, some_class{});
 
-	lua.script(R"(
-		-- need class instance if you don't bind it with the function
-		print(m1(sc)) -- 24.5
-		-- does not need class instance: was made with one 
-		print(m2()) -- 24.5
-	)");
-
 	// binds just the member variable as a function
 	lua["v1"] = &some_class::variable;
+	
 	// binds class with member variable as function
 	lua.set_function("v2", &some_class::variable, some_class{});
+
+The lua code to call these things is:
+
+.. code-block:: lua	
+
+	f1() -- some function!
+	f2() -- some other function!
 	
-	lua.script(R"(
-		-- need class instance if you don't bind it with the function
-		print(v1(sc)) -- 30
-		-- does not need class instance: was bound with one 
-		print(v2()) -- 30
+	-- need class instance if you don't bind it with the function
+	print(m1(sc)) -- 24.5
+	-- does not need class instance: was made with one 
+	print(m2()) -- 24.5
+	
+	-- need class instance if you 
+	-- don't bind it with the function
+	print(v1(sc)) -- 30
+	-- does not need class instance: 
+	-- it was bound with one 
+	print(v2()) -- 30
 
-		-- can set: still requires instance
-		v1(sc, 212)
-		-- can set: does not need class instance: was bound with one 
-		v2(254)
+	-- can set, still 
+	-- requires instance
+	v1(sc, 212)
+	-- can set, does not need 
+	-- class instance: was bound with one 
+	v2(254)
 
-		print(v1(sc)) -- 212
-		print(v2()) -- 254
-	)");
+	print(v1(sc)) -- 212
+	print(v2()) -- 254
 
 Can use ``sol::readonly( &some_class::variable )`` to make a variable readonly and error if someone tries to write to it.
 
@@ -314,8 +350,8 @@ multiple returns from lua
 
 	lua.script("function f (a, b, c) return a, b, c end");
 	
-	std::tuple<int, int, int> result 
-		= lua["f"](100, 200, 300); 
+	std::tuple<int, int, int> result;
+	result = lua["f"](100, 200, 300); 
 	// result == { 100, 200, 300 }
 	int a, int b;
 	std::string c;
@@ -340,9 +376,10 @@ multiple returns to lua
 	std::tuple<int, int, int> result = lua["f"](100, 200, 300); 
 	// result == { 100, 200, 300 }
 	
-	std::tuple<int, int, std::string> resutl2 
-		= lua["f"](100, 200, "BARK BARK BARK!")
-	// result == { 100, 200, "BARK BARK BARK!" }
+	std::tuple<int, int, std::string> result2;
+	result2 = lua["f"](100, 200, "BARK BARK BARK!")
+	// result2 == { 100, 200, "BARK BARK BARK!" }
+
 	int a, int b;
 	std::string c;
 	sol::tie( a, b, c ) = lua["f"](100, 200, "bark");
@@ -351,8 +388,8 @@ multiple returns to lua
 	// c == "bark"
 
 
-C++ classes in from C++
------------------------
+C++ classes from C++
+--------------------
 
 Everything that is not a:
 
@@ -454,220 +491,17 @@ Note that you can change the data of usertype variables and it will affect thing
 	lua.script("assert(dog.tailwag == 100)");
 
 
-C++ classes in Lua
-------------------
+C++ classes put into Lua
+------------------------
 
-Because there's a LOT you can do with Sol:
-
-.. code-block:: cpp
-	:caption: test_player.hpp
-
-	struct player {
-	public:
-		int bullets;
-		int speed;
-
-		player() 
-		: player(3, 100) {
-
-		}
-
-		player(int ammo) 
-		: player(ammo, 100) {
-
-		}
-
-		player(int ammo, int hitpoints) 
-		: bullets(ammo), hp(hitpoints) {
-
-		}
-
-		void boost () {
-			speed += 10;
-		}
-
-		bool shoot () {
-			if (bullets < 1)
-				return false;
-			--bullets;
-			return true;
-		}
-
-		int set_hp(int value) {
-			hp = value;
-		}
-
-		int get_hp() const {
-			return hp;
-		}
-
-	private:
-		int hp;
-	}
-
-Bind all the things:
-
-.. code-block:: cpp
-	:caption: player_script.cpp
-
-	sol::state lua;
-
-	// note that you can set a userdata before you register a usertype,
-	// and it will still carry the right metatable if you register it later
-	
-	// make usertype metatable
-	lua.new_usertype<player>( "player",
-		
-		// 3 constructors
-		sol::constructors<sol::types<>, sol::types<int>, sol::types<int, int>>(),
-		
-		// typical member function that returns a variable
-		"shoot", &player::shoot,
-		// typical member function
-		"boost", &player::boost,
-		
-		// gets or set the value using member variable syntax
-		"hp", sol::property(&player::get_hp, &player::set_hp),
-		
-		// read and write variable
-		"speed", &player::speed,
-		// can only read from, not write to
-		"bullets", sol::readonly( &player::bullets )
-	);
-
-	lua.script_file("player_script.lua");
-
-And the script:
-
-.. code-block:: lua
-	:caption: player_script.lua
-	
-	-- call single argument integer constructor
-	p1 = player.new(2)
-
-	-- p2 is still here from being set with lua.set(...) above
-	local p2shoots = p2:shoot()
-	assert(not p2shoots)
-	-- had 0 ammo
-	
-	-- set variable property setter
-	p1.hp = 545;
-	-- get variable through property getter
-	print(p1.hp);
-
-	local did_shoot_1 = p1:shoot()
-	print(did_shoot_1)
-	print(p1.bullets)
-	local did_shoot_2 = p1:shoot()
-	print(did_shoot_2)
-	print(p1.bullets)
-	local did_shoot_3 = p1:shoot()
-	print(did_shoot_3)
-	
-	-- can read
-	print(p1.bullets)
-	-- would error: is a readonly variable, cannot write
-	-- p1.bullets = 20
-
-	p1:boost()
-
-Even more stuff :doc:`you can do<../api/usertype>` described elsewhere, like initializer functions (private constructors / destructors support), "static" functions callable with ``name.my_function( ... )``, and overloaded member functions.
-
-
-ownership
----------
-
-Sol will not take ownership of raw pointers: raw pointers do not own anything.
-
-.. code-block:: cpp
-
-	struct my_type {
-		void stuff () {}
-	};
-
-	sol::state lua;
-
-	// AAAHHH BAD
-	// dangling pointer!
-	lua["my_func"] = []() -> my_type* {
-		return new my_type();
-	};
-
-	// AAAHHH!
-	lua.set("something", new my_type());
-
-	// AAAAAAHHH!!!
-	lua["something_else"] = new my_type();
-
-Use/return a ``unique_ptr`` or ``shared_ptr`` instead or just return a value:
-
-.. code-block:: cpp
-
-	// :ok:
-	lua["my_func"] = []() -> std::unique_ptr<my_type> {
-		return std::make_unique<my_type>();
-	};
-
-	// :ok:
-	lua["my_func"] = []() -> std::shared_ptr<my_type> {
-		return std::make_shared<my_type>();
-	};
-
-	// :ok:
-	lua["my_func"] = []() -> my_type {
-		return my_type();
-	};
-
-	// :ok: 
-	lua.set("something", std::unique_ptr<my_type>(new my_type()));
-
-	std::shared_ptr<my_type> my_shared = std::make_shared<my_type>();
-	// :ok: 
-	lua.set("something_else", my_shared);
-
-	auto my_unique = std::make_unique<my_type>();
-	lua["other_thing"] = std::move(my_unique);
-
-If you have something you know is going to last and you just want to give it to Lua as a reference, then it's fine too:
-
-.. code-block:: cpp
-
-	// :ok:
-	lua["my_func"] = []() -> my_type* {
-		static my_type mt;
-		return &mt;
-	};
-
-
-Sol can detect ``nullptr``, so if you happen to return it there won't be any dangling because a ``sol::nil`` will be pushed.
-
-.. code-block:: cpp
-
-	struct my_type {
-		void stuff () {}
-	};
-
-	sol::state lua;
-
-	// BUT THIS IS STILL BAD DON'T DO IT AAAHHH BAD
-	// return a unique_ptr still or something!
-	lua["my_func"] = []() -> my_type* {
-		return nullptr;
-	};
-
-	// Acceptable, it will set 'something' to nil 
-	// (and delete it on next GC if there's no more references)
-	lua.set("something", nullptr);
-
-	// Also fine
-	lua["something_else"] = nullptr;
+See this :doc:`section here<cxx-in-lua>`.
 
 
 advanced
 --------
 
-Some more advanced things you can do:
-	
+Some more advanced things you can do/read about:
+	* :doc:`ownership semantics<ownership>` are described for how lua deals with (raw) pointers.
 	* :doc:`stack manipulation<../api/stack>` to safely play with the stack. You can also define customization points for ``stack::get``/``stack::check``/``stack::push`` for your type.
 	* :doc:`stack references<../api/stack_reference>` to have zero-overhead Sol abstractions while not copying to the Lua registry.
 	* :doc:`unique usertype traits<../api/unique_usertype_traits>` allows you to specialize handle/RAII types from other frameworks, like boost, and Unreal, to work with Sol.

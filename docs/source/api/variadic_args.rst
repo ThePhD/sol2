@@ -10,6 +10,8 @@ transparent argument to deal with multiple parameters to a function
 
 This class is meant to represent every single argument at its current index and beyond in a function list. It does not increment the argument count and is thus transparent. You can place it anyway in the argument list, and it will represent all of the objects in a function call that come after it, whether they are listed explicitly or not.
 
+``variadic_args`` also has ``begin()`` and ``end()`` functions that return (almost) random-acess iterators. These return a proxy type that can be implicitly converted, much like the :doc:`table proxy type<proxy>`.
+
 .. code-block:: cpp
 	:linenos:
 

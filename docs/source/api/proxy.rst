@@ -11,9 +11,12 @@ proxy, (protected\_)function_result - proxy_base derivatives
 	template <typename Table, typename Key>
 	struct proxy : proxy_base<...>;
 
+	struct stack_proxy: proxy_base<...>;
+
 	struct function_result : proxy_base<...>;
 
 	struct protected_function_result: proxy_base<...>;
+
 
 These classes provide implicit ``operator=`` (``set``) and ``operator T`` (``get``) support for items retrieved from the underlying Lua implementation in Sol, specifically :doc:`sol::table<table>` and the results of function calls on :doc:`sol::function<function>` and :doc:`sol::protected_function<protected_function>`.
 
@@ -111,7 +114,16 @@ Gets the value associated with the keys the proxy was generated and convers it t
 	template <typename T>
 	T get( ) const;
 
-Gets the value associated with the keys the proxy was generated and convers it to the type ``T``.
+Gets the value associated with the keys and converts it to the type ``T``.
+
+.. code-block:: c++
+	:caption: function: optionally get a value
+	:name: regular-get-or
+
+	template <typename T, typename Otherwise>
+	optional<T> get_or( Otherwise&& otherise ) const;
+
+Gets the value associated with the keys and converts it to the type ``T``. If it is not of the proper type, it will return a ``sol::nullopt`` instead.
 
 ``operator[]`` proxy-only members
 ---------------------------------
@@ -157,6 +169,10 @@ Sets the value associated with the keys the proxy was generated with to a functi
 
 Sets the value associated with the keys the proxy was generated with to ``value``. Does not exist on :ref:`function_result<function-result>` or :ref:`protected_function_result<protected-function-result>`.
 
+stack_proxy
+-----------
+
+``sol::stack_proxy`` is what gets returned by :doc:`sol::variadic_args<variadic_args>` and other parts of the framework. It is similar to proxy, but is meant to alias a stack index and not a named function.
 
 .. _note 1:
 
