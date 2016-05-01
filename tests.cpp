@@ -915,7 +915,7 @@ TEST_CASE("usertype/readonly-and-static-functions", "Check if static functions c
         static void oh_boy() {}
 
         static int oh_boy(std::string name) {
-            return name.length();
+            return static_cast<int>(name.length());
         }
 
         int operator()(int x) {

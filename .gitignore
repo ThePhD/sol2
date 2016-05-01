@@ -58,3 +58,4 @@ docs/build/
 *.sublime-project
 m.lua
 single/sol.hpp
+*.db

@@ -113,6 +113,10 @@ members
 
 Calls the function. The second ``operator()`` lets you specify the templated return types using the ``my_func(sol::types<int, std::string>, ...)`` syntax. If you specify no return type in any way, it produces s ``protected_function_result``.
 
+.. note::
+
+	All arguments are forwarded. Unlike :doc:`get/set/operator[] on sol::state<state>` or :doc:`sol::table<table>`, value semantics are not used here. It is forwarding reference semantics, which do not copy/move unless it is specifically done by the receiving functions / specifically done by the user.
+
 
 .. code-block:: cpp
 	:caption: default handlers

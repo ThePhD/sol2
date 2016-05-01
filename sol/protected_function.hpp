@@ -157,7 +157,7 @@ public:
     decltype(auto) call(Args&&... args) const {
         handler h(error_handler);
         base_t::push();
-        int pushcount = stack::multi_push(base_t::lua_state(), std::forward<Args>(args)...);
+        int pushcount = stack::multi_push_reference(base_t::lua_state(), std::forward<Args>(args)...);
         return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount, h);
     }
 };

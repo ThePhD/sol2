@@ -48,6 +48,10 @@ These functions retrieve items from the table. The first one (``get``) can pull 
 
 If the keys within nested queries try to traverse into a table that doesn't exist, the second lookup into the nil-returned variable and belong will cause a panic to be fired by the lua C API. If you need to check for keys, check with ``auto x = table.get<sol::optional<int>>( std::tie("a", "b", "c" ) );``, and then use the :doc:`optional<optional>` interface to check for errors. As a short-hand, easy method for returning a default if a value doesn't exist, you can use ``get_or`` instead.
 
+.. note::
+
+	Value semantics are applied to all set operations. If you do not ``std::ref( obj )`` or specifically make a pointer with ``std::addressof( obj )`` or ``&obj``, it will copy / move. This is different from how :doc:`sol::function<function>` behaves with its call operator.
+
 .. code-block:: cpp
 	:caption: function: set / traversing set
 
@@ -59,6 +63,10 @@ If the keys within nested queries try to traverse into a table that doesn't exis
 
 These functions set items into the table. The first one (``set``) can set  *multiple* values, in the form ``Key, Value, Key, Value, ...``. It is similar to ``table["a"] = 1; table["b"] = 2, ...``. The second one (``traverse_set``) sets a *single* value, using all but the last argument as keys to do another lookup into the value retrieved prior to it. It is equivalent to ``table["a"]["b"][...] = final_value;``.
 
+.. note::
+
+	Value semantics are applied to all set operations. If you do not ``std::ref( obj )`` or specifically make a pointer with ``std::addressof( obj )`` or ``&obj``, it will copy / move. This is different from how :doc:`sol::function<function>` behaves with its call operator.
+	
 .. code-block:: cpp
 	:caption: function: setting a usertype
 	:name: new-usertype
