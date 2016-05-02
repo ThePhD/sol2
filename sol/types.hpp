@@ -392,6 +392,9 @@ template <>
 struct lua_type_of<nil_t> : std::integral_constant<type, type::nil> { };
 
 template <>
+struct lua_type_of<nullopt_t> : std::integral_constant<type, type::nil> { };
+
+template <>
 struct lua_type_of<sol::error> : std::integral_constant<type, type::string> { };
 
 template <bool b, typename Base>

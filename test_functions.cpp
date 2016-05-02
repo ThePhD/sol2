@@ -141,6 +141,9 @@ TEST_CASE("functions/deducing-return-order-and-multi-get", "Check if return orde
 }
 
 TEST_CASE("functions/optional-values", "check if optionals can be passed in to be nil or otherwise") {
+    struct thing {
+        int v;
+    };
     sol::state lua;
     lua.script(R"( function f (a)
     return a
@@ -153,9 +156,9 @@ end )");
     REQUIRE((bool)testv);
     REQUIRE_FALSE((bool)testn);
     REQUIRE(testv.value() == 29);
-    int v = lua_bark(sol::optional<int>(29));
+    sol::optional<thing> v = lua_bark(sol::optional<thing>(thing{ 29 }));
     REQUIRE_NOTHROW(sol::nil_t n = lua_bark(sol::nullopt));
-    REQUIRE(v == 29);
+    REQUIRE(v->v == 29);
 }
 
 TEST_CASE("functions/pair-and-tuple-and-proxy-tests", "Check if sol::reference and sol::proxy can be passed to functions as arguments") {

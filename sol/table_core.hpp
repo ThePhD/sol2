@@ -107,10 +107,11 @@ class basic_table_core : public base_t {
 
     template <bool global, typename T, std::size_t I, typename Key>
     decltype(auto) traverse_get_deep_optional( int& popcount, Key&& key ) const {
+        typedef decltype(stack::get<T>(base_t::lua_state())) R;
         auto p = stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), -1);
         popcount += p.levels;
         if (!p.success)
-            return T(nullopt);
+            return R(nullopt);
         return stack::get<T>( base_t::lua_state( ) );
     }
 
