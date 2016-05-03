@@ -70,7 +70,7 @@ public:
 };
 
 inline bool operator== (const stack_reference& l, const stack_reference& r) {
-    return lua_compare(l.lua_state(), l.stack_index(), l.stack_index(), LUA_OPEQ) == 0;
+    return lua_compare(l.lua_state(), l.stack_index(), r.stack_index(), LUA_OPEQ) == 0;
 }
 
 inline bool operator!= (const stack_reference& l, const stack_reference& r) {

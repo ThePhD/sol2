@@ -268,7 +268,7 @@ private:
     }
 
     template<std::size_t N>
-    void build_function(std::string funcname, no_construction) {}
+    void build_function(std::string, no_construction) {}
 
     template<std::size_t N, typename... Args>
     void build_function(std::string funcname, constructors<Args...>) {
@@ -499,8 +499,8 @@ public:
         // be sure to link the construction function to allow for people to do the whole lua_bind thing
         if (constructfunc != nullptr && constructfuncname != nullptr && std::find(meta_function_names.cbegin(), meta_function_names.cend(), constructfuncname) != meta_function_names.cend()) {
             lua_createtable(L, 0, 0);
-            sol::stack_table mt(L, -1);
-            mt[constructfuncname] = constructfunc;
+		  lua_pushcclosure(L, constructfunc, 0);
+            lua_setfield(L, -2, constructfuncname);
             lua_setmetatable(L, -2);
         }
         // Make sure to drop a table in the global namespace to properly destroy the pushed functions
