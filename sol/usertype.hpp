@@ -48,6 +48,9 @@ struct is_constructor<constructors<Args...>> : std::true_type {};
 template <typename... Args>
 struct is_constructor<constructor_wrapper<Args...>> : std::true_type {};
 
+template <>
+struct is_constructor<no_construction> : std::true_type {};
+
 template <typename... Args>
 using has_constructor = meta::Or<is_constructor<meta::Unqualified<Args>>...>;
 
@@ -179,6 +182,7 @@ private:
     function_detail::base_function* indexfunc;
     function_detail::base_function* newindexfunc;
     function_map_t indexwrapper, newindexwrapper;
+    const char* constructfuncname;
     lua_CFunction constructfunc;
     const char* destructfuncname;
     lua_CFunction destructfunc;
@@ -263,12 +267,16 @@ private:
         return make_functor_function(std::is_base_of<Arg0, T>(), name, std::forward<Fx>(func));
     }
 
+    template<std::size_t N>
+    void build_function(std::string funcname, no_construction) {}
+
     template<std::size_t N, typename... Args>
     void build_function(std::string funcname, constructors<Args...>) {
         functionnames.push_back(std::move(funcname));
         std::string& name = functionnames.back();
         // Insert bubble to keep with compile-time argument count (simpler and cheaper to do)
         functions.push_back(nullptr);
+        constructfuncname = name.c_str();
         constructfunc = function_detail::construct<T, Args...>;
         metafunctiontable.push_back({ name.c_str(), constructfunc });
     }
@@ -283,27 +291,28 @@ private:
         
         auto metamethodfind = std::find(meta_function_names.begin(), meta_function_names.end(), name);
         if (metamethodfind != meta_function_names.end()) {
-             metafunctiontable.push_back({ name.c_str(), function_detail::usertype_call<N> });
-             meta_function metafunction = static_cast<meta_function>(metamethodfind - meta_function_names.begin());
-             switch (metafunction) {
-             case meta_function::garbage_collect:
-                  destructfuncname = name.c_str();
-                  destructfunc = function_detail::usertype_call<N>;
-                  return;
-             case meta_function::index:
-                  indexfunc = functions.back().get();
-                  needsindexfunction = true;
-                  break;
-             case meta_function::new_index:
-                  newindexfunc = functions.back().get();
-                  break;
-             case meta_function::construct:
-                  constructfunc = function_detail::usertype_call<N>;
-                  break;
+            metafunctiontable.push_back({ name.c_str(), function_detail::usertype_call<N> });
+            meta_function metafunction = static_cast<meta_function>(metamethodfind - meta_function_names.begin());
+            switch (metafunction) {
+            case meta_function::garbage_collect:
+                destructfuncname = name.c_str();
+                destructfunc = function_detail::usertype_call<N>;
+                return;
+            case meta_function::index:
+                indexfunc = functions.back().get();
+                needsindexfunction = true;
+                break;
+            case meta_function::new_index:
+                newindexfunc = functions.back().get();
+                break;
+            case meta_function::construct:
+                constructfuncname = name.c_str();
+                constructfunc = function_detail::usertype_call<N>;
+                break;
              default:
                   break;
-             }
-             return;
+            }
+            return;
         }
         functiontable.push_back({ name.c_str(), direct });
     }
@@ -396,6 +405,11 @@ private:
         build_function_tables<N>(funcname, std::forward<Fx>(func), std::forward<Args>(args)...);
     }
 
+    template<std::size_t N, typename Fx, typename... Args>
+    void build_function_tables(call_construction, Fx&& func, Args&&... args) {
+        build_function_tables<N>("__call", std::forward<Fx>(func), std::forward<Args>(args)...);
+    }
+
     template<std::size_t N, typename... Bases, typename... Args>
     void build_function_tables(base_classes_tag, bases<Bases...>, Args&&... args) {
         build_function_tables<N>(std::forward<Args>(args)...);
@@ -447,8 +461,8 @@ private:
     }
 
     template<typename... Args>
-    usertype(usertype_detail::verified_tag, Args&&... args) : indexfunc(nullptr), newindexfunc(nullptr), constructfunc(nullptr), 
-    destructfunc(nullptr), functiongcfunc(nullptr), needsindexfunction(false), baseclasscheck(nullptr), baseclasscast(nullptr) {
+    usertype(usertype_detail::verified_tag, Args&&... args) : indexfunc(nullptr), newindexfunc(nullptr), constructfuncname(""), constructfunc(nullptr),
+    destructfuncname(""), destructfunc(nullptr), functiongcfunc(nullptr), needsindexfunction(false), baseclasscheck(nullptr), baseclasscast(nullptr) {
         static_assert((sizeof...(Args) % 2) == 0, "Incorrect argument count to usertype creation: not in pairs. Might be missing name, function/property/variable, comma");
         functionnames.reserve(sizeof...(args)+3);
         functiontable.reserve(sizeof...(args)+3);
@@ -480,8 +494,15 @@ public:
         usertype_detail::push_metatable<detail::unique_usertype<T>, usertype_detail::stage::uniquemeta>(L, needsindexfunction, functions, functiontable, metafunctiontable, baseclasscheck, baseclasscast);
         lua_pop(L, 1);
         // but leave the regular T table on last
-        // so it can be linked to a type for usage with `.new(...)` or `:new(...)`
+        // so it can be linked to a key for usage with `.new(...)` or `:new(...)`
         usertype_detail::push_metatable<T, usertype_detail::stage::normalmeta>(L, needsindexfunction, functions, functiontable, metafunctiontable, baseclasscheck, baseclasscast);
+        // be sure to link the construction function to allow for people to do the whole lua_bind thing
+        if (constructfunc != nullptr && constructfuncname != nullptr && std::find(meta_function_names.cbegin(), meta_function_names.cend(), constructfuncname) != meta_function_names.cend()) {
+            lua_createtable(L, 0, 0);
+            sol::stack_table mt(L, -1);
+            mt[constructfuncname] = constructfunc;
+            lua_setmetatable(L, -2);
+        }
         // Make sure to drop a table in the global namespace to properly destroy the pushed functions
         // at some later point in life
         usertype_detail::set_global_deleter<T>(L, functiongcfunc, functions);

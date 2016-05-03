@@ -50,3 +50,22 @@ non-members
 	bool operator!=(const nil_t&, const object& rhs);
 
 These allow a person to compare an ``sol::object`` against :ref:`nil<nil>`, which essentially checks if an object references a non-nil value, like so:
+
+.. code-block:: cpp
+
+	if (myobj == sol::nil) {
+		// doesn't have anything...
+	}
+
+Use this to check objects.
+
+.. code-block:: cpp
+	:caption: function: make object
+	:name: make-object
+
+	template <typename T>
+	object make_object(lua_State* L, T&& value);
+	template <typename T, typename... Args>
+	object make_object(lua_State* L, Args&&... args);
+
+Makes an object out of the value. It pushes it onto the stack, then pops it into the returned ``sol::object``.

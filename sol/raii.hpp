@@ -62,6 +62,12 @@ using constructors = constructor_list<Args...>;
 
 const auto default_constructor = constructors<types<>>{};
 
+struct no_construction {};
+const auto no_constructor = no_construction{};
+
+struct call_construction {};
+const auto call_constructor = call_construction{};
+
 template <typename... Functions>
 struct constructor_wrapper {
     std::tuple<Functions...> set;

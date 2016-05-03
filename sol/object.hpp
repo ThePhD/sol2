@@ -70,6 +70,22 @@ public:
     }
 };
 
+template <typename T>
+object make_object(lua_State* L, T&& value) {
+    int backpedal = stack::push(L, std::forward<T>(value));
+    object r = stack::get<object>(L, -backpedal);
+    lua_pop(L, backpedal);
+    return r;
+}
+
+template <typename T, typename... Args>
+object make_object(lua_State* L, Args&&... args) {
+    int backpedal = stack::push<T>(L, std::forward<Args>(args)...);
+    object r = stack::get<sol::object>(L, -backpedal);
+    lua_pop(L, backpedal);
+    return r;
+}
+
 inline bool operator==(const object& lhs, const nil_t&) {
     return !lhs.valid();
 }

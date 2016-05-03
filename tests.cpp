@@ -186,6 +186,13 @@ bool something() {
     return true;
 }
 
+struct thing {
+    int v = 100;
+
+    thing() {}
+    thing(int x) : v(x) {}
+};
+
 TEST_CASE("table/traversal", "ensure that we can chain requests and tunnel down into a value if we desire") {
 
     sol::state lua;
@@ -935,8 +942,8 @@ TEST_CASE("usertype/readonly-and-static-functions", "Check if static functions c
         sol::meta_function::call_function, &bark::operator()
         );
 
-    lua.script("assert(bark.oh_boy('woo') == 3)");
-    lua.script("bark.oh_boy()");
+    REQUIRE_NOTHROW(lua.script("assert(bark.oh_boy('woo') == 3)"));
+    REQUIRE_NOTHROW(lua.script("bark.oh_boy()"));
 
     bark b;
     lua.set("b", &b);
@@ -1087,4 +1094,47 @@ TEST_CASE("utilities/this_state", "Ensure this_state argument can be gotten anyw
     REQUIRE(lc == 50);
     REQUIRE(a == 625);
     REQUIRE(la == 625);
+}
+
+TEST_CASE("usertype/call_constructor", "make sure lua types can be constructed with function call constructors") {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+
+    lua.new_usertype<thing>("thing",
+        "v", &thing::v
+        , sol::call_constructor, sol::constructors<sol::types<>, sol::types<int>>()
+    );
+
+    lua.script(R"(
+t = thing(256)
+)");
+
+    thing& y = lua["t"];
+    std::cout << y.v << std::endl;
+    REQUIRE(y.v == 256);
+}
+
+TEST_CASE("usertype/blank_constructor", "make sure lua types cannot be constructed if a blank / empty constructor is provided") {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+
+    lua.new_usertype<thing>("thing",
+        "v", &thing::v
+        , sol::call_constructor, sol::constructors<>()
+    );
+
+    REQUIRE_THROWS(lua.script("t = thing(256)"));
+}
+
+
+TEST_CASE("usertype/no_constructor", "make sure lua types cannot be constructed if a blank / empty constructor is provided") {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+
+    lua.new_usertype<thing>("thing",
+        "v", &thing::v
+        , sol::call_constructor, sol::no_constructor
+    );
+
+    REQUIRE_THROWS(lua.script("t = thing.new()"));
 }

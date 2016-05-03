@@ -149,6 +149,10 @@ The constructor of usertype takes a variable number of arguments. It takes an ev
 * ``"{name}", sol::initializers( func1, func2, ... )``
     - Creates initializers that, given one or more functions, provides an overloaded lua function for creating a the specified type.
 	   + The function must have the argument signature ``func( T*, Arguments... )`` or ``func( T&, Arguments... )``, where the pointer or reference will point to a place of allocated memory that has an uninitialized ``T``. Note that lua controls the memory.
+* ``"{name}", sol::no_constructor``
+    - Specifically tells Sol not to create a `.new()` if one is not specified and the type is default-constructible.
+* ``sol::call_constructor, {any constructor type}``
+    - Specifies a function that makes the call turn into ``{usertype-name}( ... constructor arguments ... )``. This is compatible with luabind syntax.
 
 .. _destructor:
 

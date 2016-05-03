@@ -60,7 +60,7 @@ inline int construct(Match&& matchfx, lua_State* L, int fxarity, int start) {
 template <typename T, typename... TypeLists>
 inline int construct(lua_State* L) {
     static const auto& meta = usertype_traits<T>::metatable;
-    call_syntax syntax = stack::get_call_syntax(L, meta);
+    call_syntax syntax = stack::get_call_syntax(L, meta, 1);
     int argcount = lua_gettop(L) - static_cast<int>(syntax);
 
     T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));

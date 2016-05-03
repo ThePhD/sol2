@@ -43,7 +43,7 @@ The value of the reference in the registry.
 	bool valid () const noexcept;
 	explicit operator bool () const noexcept;
 
-These functions check if the reference at ``T`` is valid: that is, if it is not :doc:`nil<types>` and if it is not non-existing (doesn't refer to anything, including nil) reference. The explicit operator bool allows you to use it in the context of an ``if ( my_obj )`` context.
+These functions check if the reference at ``T`` is valid: that is, if it is not :ref:`nil<nil>` and if it is not non-existing (doesn't refer to anything, including nil) reference. The explicit operator bool allows you to use it in the context of an ``if ( my_obj )`` context.
 
 .. code-block:: cpp
 	:caption: function: retrieves the type
@@ -58,3 +58,18 @@ Gets the :doc:`sol::type<types>` of the reference; that is, the Lua reference.
 	lua_State* lua_state() const noexcept;
 
 Gets the ``lua_State*`` this reference exists in.
+
+
+non-members
+-----------
+
+.. code-block:: cpp
+	:caption: functions: reference comparators
+
+	bool operator==(const reference&, const reference&);
+	bool operator!=(const reference&, const reference&);
+
+Compares two references using the Lua API's `lua_compare`_ for equality.
+
+
+.. _lua_compare: https://www.lua.org/manual/5.3/manual.html#lua_compare

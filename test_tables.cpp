@@ -272,6 +272,8 @@ TEST_CASE("tables/create-local-named", "Check if creating a table is kosher") {
     sol::table testtable = lua.create_table("testtable", 0, 0, "Woof", "Bark", 1, 2, 3, 4);
     sol::object testobj = lua["testtable"];
     REQUIRE(testobj.is<sol::table>());
+    REQUIRE((testobj == testtable));
+    REQUIRE_FALSE((testobj != testtable));
     REQUIRE((testtable["Woof"] == std::string("Bark")));
     REQUIRE((testtable[1] == 2));
     REQUIRE((testtable[3] == 4));

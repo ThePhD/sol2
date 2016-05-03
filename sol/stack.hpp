@@ -93,7 +93,7 @@ inline void call(types<void>, types<Args...> ta, std::index_sequence<I...> tai, 
 inline void remove( lua_State* L, int index, int count ) {
     if ( count < 1 )
         return;
-    int top = lua_gettop( L );
+    int top = lua_gettop(L);
     if ( index == -1 || top == index ) {
         // Slice them right off the top
         lua_pop( L, static_cast<int>(count) );
@@ -104,11 +104,11 @@ inline void remove( lua_State* L, int index, int count ) {
     // Probably slower, maybe, haven't benchmarked,
     // but necessary
     if ( index < 0 ) {
-        index = lua_gettop( L ) + (index + 1);
+        index = lua_gettop(L) + (index + 1);
     }
     int last = index + count;
     for ( int i = index; i < last; ++i ) {
-        lua_remove( L, i );
+        lua_remove(L, i);
     }
 }
 
@@ -160,9 +160,9 @@ inline int call_into_lua(types<Ret0, Ret...>, types<Args...> ta, lua_State* L, i
     return push_reference(L, std::forward<decltype(r)>(r));
 }
 
-inline call_syntax get_call_syntax(lua_State* L, const std::string& key) {
+inline call_syntax get_call_syntax(lua_State* L, const std::string& key, int index = -2) {
     luaL_getmetatable(L, key.c_str());
-    if (lua_compare(L, -1, -2, LUA_OPEQ) == 1) {
+    if (lua_compare(L, -1, index, LUA_OPEQ) == 1) {
         lua_pop(L, 1);
         return call_syntax::colon;
     }
