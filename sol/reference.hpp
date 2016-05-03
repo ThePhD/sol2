@@ -148,7 +148,7 @@ public:
 inline bool operator== (const reference& l, const reference& r) {
     auto ppl = stack::push_pop(l);
     auto ppr = stack::push_pop(r);
-    return lua_compare(l.lua_state(), -1, -2, LUA_OPEQ) == 0;
+    return lua_compare(l.lua_state(), -1, -2, LUA_OPEQ) == 1;
 }
 
 inline bool operator!= (const reference& l, const reference& r) {

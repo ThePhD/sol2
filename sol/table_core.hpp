@@ -89,7 +89,8 @@ class basic_table_core : public base_t {
         auto pp = stack::push_pop<top_level && (is_global<decltype(detail::forward_get<I * 2>(pairs))...>::value)>(*this);
         void(detail::swallow{ (stack::set_field<top_level>(base_t::lua_state(), 
             detail::forward_get<I * 2>(pairs),
-            detail::forward_get<I * 2 + 1>(pairs)
+            detail::forward_get<I * 2 + 1>(pairs),
+            lua_gettop(base_t::lua_state())
         ), 0)... });
     }
 
@@ -108,7 +109,7 @@ class basic_table_core : public base_t {
     template <bool global, typename T, std::size_t I, typename Key>
     decltype(auto) traverse_get_deep_optional( int& popcount, Key&& key ) const {
         typedef decltype(stack::get<T>(base_t::lua_state())) R;
-        auto p = stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), -1);
+        auto p = stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), lua_gettop(base_t::lua_state()));
         popcount += p.levels;
         if (!p.success)
             return R(nullopt);
@@ -117,7 +118,7 @@ class basic_table_core : public base_t {
 
     template <bool global, typename T, std::size_t I, typename Key, typename... Keys>
     decltype(auto) traverse_get_deep_optional( int& popcount, Key&& key, Keys&&... keys ) const {
-        auto p = I > 0 ? stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), - 1) : stack::probe_get_field<global>( base_t::lua_state( ), std::forward<Key>( key ) );
+        auto p = I > 0 ? stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), -1) : stack::probe_get_field<global>( base_t::lua_state( ), std::forward<Key>( key ), lua_gettop(base_t::lua_state()));
         popcount += p.levels;
         if (!p.success)
             return T(nullopt);

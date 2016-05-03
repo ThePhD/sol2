@@ -114,7 +114,8 @@ public:
     }
 
     bool valid () const {
-        auto p = stack::probe_get_field<std::is_same<meta::Unqualified<Table>, global_table>::value>(tbl.lua_state(), key);
+        stack::push_pop(tbl);
+        auto p = stack::probe_get_field<std::is_same<meta::Unqualified<Table>, global_table>::value>(tbl.lua_state(), key, lua_gettop(tbl.lua_state()));
         lua_pop(tbl.lua_state(), p.levels);
         return p;
     }
