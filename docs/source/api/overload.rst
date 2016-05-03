@@ -52,7 +52,7 @@ You then use it just like you would for any other part of the api:
 		// regular function
 		"is_cute", &pup::is_cute,
 		// overloaded function
-		"bark", sol::overloaded( &pup::bark, &picky_bark )
+		"bark", sol::overload( &pup::bark, &picky_bark )
 	);
 
 Thusly, doing the following in Lua:
