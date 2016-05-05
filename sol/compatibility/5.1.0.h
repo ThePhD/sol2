@@ -158,11 +158,11 @@ inline const char* kepler_lua_compat_get_string(lua_State* L, void* ud, size_t* 
     return ls->s;
 }
 
-inline int luaL_loadbufferx(lua_State* L, const char* buff, size_t size, const char* name, const char* mode) {
+inline int luaL_loadbufferx(lua_State* L, const char* buff, size_t size, const char* name, const char*) {
     kepler_lua_compat_get_string_view ls;
     ls.s = buff;
     ls.size = size;
-    return lua_load(L, kepler_lua_compat_get_string, &ls, name, mode);
+    return lua_load(L, kepler_lua_compat_get_string, &ls, name/*, mode*/);
 }
 
 #endif /* Lua 5.1 */
