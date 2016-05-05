@@ -168,6 +168,12 @@ public:
         return load_result(L, -1, 1, 1, x);
     }
 
+	load_result load_buffer(const char *buff, size_t size, const char *name)
+	{
+		load_status x = static_cast<load_status>(luaL_loadbuffer(L, buff, size, name));
+		return load_result(L, -1, 1, 1, x);
+	}
+
     iterator begin () const {
         return global.begin();
     }
