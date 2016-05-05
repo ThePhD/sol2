@@ -144,6 +144,27 @@ void luaL_pushresult(luaL_Buffer_52 *B);
 #define luaL_pushresultsize(B, s) \
   (luaL_addsize(B, s), luaL_pushresult(B))
 
+typedef struct kepler_lua_compat_get_string_view {
+	const char *s;
+	size_t size;
+} kepler_lua_compat_get_string_view;
+
+inline const char* kepler_lua_compat_get_string(lua_State* L, void* ud, size_t* size) {
+    kepler_lua_compat_get_string_view* ls = (kepler_lua_compat_get_string_view*) ud;
+    (void)L;
+    if (ls->size == 0) return NULL;
+    *size = ls->size;
+    ls->size = 0;
+    return ls->s;
+}
+
+inline int luaL_loadbufferx(lua_State* L, const char* buff, size_t size, const char* name, const char* mode) {
+    kepler_lua_compat_get_string_view ls;
+    ls.s = buff;
+    ls.size = size;
+    return lua_load(L, getS, &ls, name, mode);
+}
+
 #endif /* Lua 5.1 */
 
 #endif // SOL_5_1_0_H
