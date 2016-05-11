@@ -31,7 +31,7 @@ While other frameworks extend lua's syntax or create Data Structure Languages (D
 		}
 	};
 
-You can bind the it to lua using the following C++ code:
+You can bind the it to Lua using the following C++ code:
 
 .. code-block:: cpp
 	:linenos:
@@ -80,7 +80,9 @@ Note that here, because the C++ class is default-constructible, it will automati
 	:linenos:
 
 	fwoosh = ship.new()
-	local success = fwoosh:shoot() -- note the ":" that is there: this is mandatory for member function calls
+	-- note the ":" that is there: this is mandatory for member function calls
+	-- ":" means "pass self" in Lua
+	local success = fwoosh:shoot()
 	local is_dead = fwoosh:hit(20)
 	-- check if it works
 	print(is_dead) -- the ship is not dead at this point
@@ -255,4 +257,4 @@ performance note
 
 .. note::
 
-	Note that performance for member function calls goes down by a fixed overhead if you also bind variables as well as member functions. This is purely a limitation of the lua implementation and there's, unfortunately, nothing that can be done about it. If you bind only functions and no variables, however, Sol will automatically optimize the Lua runtime and give you the maximum performance possible. *Please consider ease of use and maintenance of code before you make everything into functions.*
+	Note that performance for member function calls goes down by a fixed overhead if you also bind variables as well as member functions. This is purely a limitation of the Lua implementation and there is, unfortunately, nothing that can be done about it. If you bind only functions and no variables, however, Sol will automatically optimize the Lua runtime and give you the maximum performance possible. *Please consider ease of use and maintenance of code before you make everything into functions.*

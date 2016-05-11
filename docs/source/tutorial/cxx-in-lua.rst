@@ -1,7 +1,7 @@
 C++ in Lua
 ==========
 
-Using user defined types ("usertype"s, or just "udt"s) is simple with Sol. If you don't call any member variables or functions, then you don't even have to 'register' the usertype at all: just pass it through. We're going to give a short example here that includes a bunch of information on how to work with things.
+Using user defined types ("usertype"s, or just "udt"s) is simple with Sol. If you don't call any member variables or functions, then you don't even have to 'register' the usertype at all: just pass it through. But if you want variables and functions on your usertype inside of Lua, you need to register it. We're going to give a short example here that includes a bunch of information on how to work with things.
 
 Take this ``player`` struct in C++ in a header file:
 
@@ -52,7 +52,7 @@ Take this ``player`` struct in C++ in a header file:
 	}
 
 
-It's a fairly minimal class, but we don't want to have to rewrite this with metatables in Lua. We want this to be part of Lua easily, so that we can make the following script work:
+It's a fairly minimal class, but we don't want to have to rewrite this with metatables in Lua. We want this to be part of Lua easily. The following is the Lua code that we'd like to have work properly:
 
 .. code-block:: lua
 	:caption: player_script.lua
@@ -61,7 +61,7 @@ It's a fairly minimal class, but we don't want to have to rewrite this with meta
 	p1 = player.new(2)
 
 	-- p2 is still here from being 
-	-- set with lua.set(...) above
+	-- set with lua["p2"] = player(0); below
 	local p2shoots = p2:shoot()
 	assert(not p2shoots)
 	-- had 0 ammo
@@ -87,7 +87,7 @@ It's a fairly minimal class, but we don't want to have to rewrite this with meta
 
 	p1:boost()
 
-To do this, you bind things using Sol like so:
+To do this, you bind things using the ``new_usertype`` and ``set_usertype`` methods as shown below. These methods are on both :doc:`table<../api/table>` and :doc:`state(_view)<../api/state>`, but we're going to just use it on ``state``:
 
 .. code-block:: cpp
 	:caption: player_script.cpp
@@ -99,6 +99,9 @@ To do this, you bind things using Sol like so:
 	// and it will still carry 
 	// the right metatable if you register it later
 	
+	// set a variable "p2" of type "player" with 0 ammo
+	lua["p2"] = player(0);
+
 	// make usertype metatable
 	lua.new_usertype<player>( "player",
 		
@@ -122,3 +125,5 @@ To do this, you bind things using Sol like so:
 	lua.script_file("player_script.lua");
 
 That script should run fine now, and you can observe and play around with the values. Even more stuff :doc:`you can do<../api/usertype>` is described elsewhere, like initializer functions (private constructors / destructors support), "static" functions callable with ``name.my_function( ... )``, and overloaded member functions.
+
+This is a powerful way to allow reuse of C++ code from Lua beyond just registering functions, and should get you on your way to having more complex classes and data structures!
