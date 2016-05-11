@@ -165,6 +165,22 @@ struct usertype_indexing_function : base_function {
         return prelude(L);
     }
 };
+
+struct fail_on_error : base_function {
+    int prelude(lua_State* L) {
+        const char* accessor = stack::get<const char*>(L, 1 - lua_gettop(L));
+        return luaL_error(L, "sol: attempt to index nil value \"%s\" on userdata (bad (mispelled?) key name or does not exist)", accessor);
+    }
+
+    virtual int operator()(lua_State* L) override {
+        return prelude(L);
+    }
+};
+
+inline fail_on_error& failure_on_error() {
+    static fail_on_error f;
+    return f;
+}
 } // function_detail
 } // sol
 

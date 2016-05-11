@@ -435,11 +435,17 @@ private:
     void build_function_tables() {
         int variableend = 0;
         if (!indexwrapper.empty()) {
+            if (indexfunc == nullptr) {
+                indexfunc = &function_detail::failure_on_error();
+            }
             functions.push_back(std::make_unique<function_detail::usertype_indexing_function>("__index", indexfunc, std::move(indexwrapper)));
             metafunctiontable.push_back({ "__index", function_detail::usertype_call<N> });
             ++variableend;
         }
         if (!newindexwrapper.empty()) {
+            if (newindexfunc == nullptr) {
+                newindexfunc = &function_detail::failure_on_error();
+            }
             functions.push_back(std::make_unique<function_detail::usertype_indexing_function>("__newindex", newindexfunc, std::move(newindexwrapper)));
             metafunctiontable.push_back({ "__newindex", indexwrapper.empty() ? function_detail::usertype_call<N> : function_detail::usertype_call<N + 1> });
             ++variableend;
