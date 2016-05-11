@@ -199,7 +199,7 @@ You do not need to manually specify the base classes. We use a technique that in
 
 **With Exceptions Disabled**
 
-You must specify the ``sol::base_classes`` tag with the ``sol::bases<Types...>()`` argument, where ``Types...`` are all the base classes of the single type ``T`` that you are making a usertype out of. when you create the usertype. If you turn exceptions off and are also completely mad and turn off :doc:`run-time type information<../rtti>` as well, we fallback to a id-based  systemthat still requires you to specifically list the base classes as well. For example:
+You must specify the ``sol::base_classes`` tag with the ``sol::bases<Types...>()`` argument, where ``Types...`` are all the base classes of the single type ``T`` that you are making a usertype out of. If you turn exceptions off and are also completely mad and turn off :doc:`run-time type information<../rtti>` as well, we fallback to a id-based  systemthat still requires you to specifically list the base classes as well. For example:
 
 .. code-block:: cpp
 	:linenos:
@@ -232,7 +232,7 @@ Note that Sol does not support down-casting from a base class to a derived class
 inheritance + overloading
 -------------------------
 
-While overloading is supported regardless of `inheritance<inheritance>` caveats or not, the current version of Sol has a first-match, first-call style of overloading when it comes to inheritance. Put the functions with the most derived arguments first to get the kind of matching you expect.
+While overloading is supported regardless of inheritance caveats or not, the current version of Sol has a first-match, first-call style of overloading when it comes to inheritance. Put the functions with the most derived arguments first to get the kind of matching you expect or cast inside of an intermediary C++ function and call the function you desire.
 
 traits
 ------
