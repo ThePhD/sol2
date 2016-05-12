@@ -375,6 +375,7 @@ private:
                 newindexfunc = functions.back().get();
                 break;
             case meta_function::construct:
+                constructfuncname = name.c_str();
                 constructfunc = function_detail::usertype_call<N>;
                 break;
             default:

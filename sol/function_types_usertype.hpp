@@ -175,10 +175,14 @@ struct fail_on_error : base_function {
     virtual int operator()(lua_State* L) override {
         return prelude(L);
     }
+
+    ~fail_on_error() {
+
+    }
 };
 
 inline fail_on_error& failure_on_error() {
-    static fail_on_error f;
+    static fail_on_error f{};
     return f;
 }
 } // function_detail
