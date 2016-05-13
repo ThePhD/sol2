@@ -31,6 +31,8 @@ public:
     thread () noexcept = default;
     thread(const thread&) = default;
     thread(thread&&) = default;
+    thread(const stack_reference& r) : thread(r.lua_state(), r.stack_index()) {};
+    thread(stack_reference&& r) : thread(r.lua_state(), r.stack_index()) {};
     thread& operator=(const thread&) = default;
     thread& operator=(thread&&) = default;
     thread(lua_State* L, int index = -1) : reference(L, index) {

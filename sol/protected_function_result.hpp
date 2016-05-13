@@ -81,7 +81,7 @@ public:
     protected_function_result(protected_function_result&& o) : L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
         // Must be manual, otherwise destructor will screw us
         // return count being 0 is enough to keep things clean
-        // but will be thorough
+        // but we will be thorough
         o.L = nullptr;
         o.index = 0;
         o.returncount = 0;
@@ -96,7 +96,7 @@ public:
         err = o.err;
         // Must be manual, otherwise destructor will screw us
         // return count being 0 is enough to keep things clean
-        // but will be thorough
+        // but we will be thorough
         o.L = nullptr;
         o.index = 0;
         o.returncount = 0;

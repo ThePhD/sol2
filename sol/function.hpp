@@ -68,8 +68,10 @@ public:
     basic_function() = default;
     basic_function(const basic_function&) = default;
     basic_function& operator=(const basic_function&) = default;
-    basic_function(basic_function&& ) = default;
-    basic_function& operator=(basic_function&& ) = default;
+    basic_function(basic_function&&) = default;
+    basic_function& operator=(basic_function&&) = default;
+    basic_function(const stack_reference& r) : basic_function(r.lua_state(), r.stack_index()) {}
+    basic_function(stack_reference&& r) : basic_function(r.lua_state(), r.stack_index()) {}
     basic_function(lua_State* L, int index = -1): base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
         stack::check<basic_function>(L, index, type_panic);

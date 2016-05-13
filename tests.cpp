@@ -1138,3 +1138,51 @@ TEST_CASE("usertype/no_constructor", "make sure lua types cannot be constructed 
 
     REQUIRE_THROWS(lua.script("t = thing.new()"));
 }
+
+TEST_CASE("object/conversions", "make sure all basic reference types can be made into objects") {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+
+    struct d {};
+
+    lua.script("function f () print('bark') end");
+    lua["d"] = d{};
+    lua["l"] = static_cast<void*>(nullptr);
+
+    sol::table t = lua.create_table();
+    sol::thread th = sol::thread::create(lua);
+    sol::function f = lua["f"];
+    sol::protected_function pf = lua["f"];
+    sol::userdata ud = lua["d"];
+    sol::lightuserdata lud = lua["l"];
+
+    sol::object ot(t);
+    sol::object ot2 = ot;
+    sol::object oth(th);
+    sol::object of(f);
+    sol::object opf(pf);
+    sol::object od(ud);
+    sol::object ol(lud);
+
+    auto oni = sol::make_object(lua, 50);
+    auto ond = sol::make_object(lua, 50.0);
+
+    std::string somestring = "look at this text isn't it nice";
+    auto osl = sol::make_object(lua, "Bark bark bark");
+    auto os = sol::make_object(lua, somestring);
+
+    auto omn = sol::make_object(lua, sol::nil);
+
+    REQUIRE(ot.get_type() == sol::type::table);
+    REQUIRE(ot2.get_type() == sol::type::table);
+    REQUIRE(oth.get_type() == sol::type::thread);
+    REQUIRE(of.get_type() == sol::type::function);
+    REQUIRE(opf.get_type() == sol::type::function);
+    REQUIRE(od.get_type() == sol::type::userdata);
+    REQUIRE(ol.get_type() == sol::type::lightuserdata);
+    REQUIRE(oni.get_type() == sol::type::number);
+    REQUIRE(ond.get_type() == sol::type::number);
+    REQUIRE(osl.get_type() == sol::type::string);
+    REQUIRE(os.get_type() == sol::type::string);
+    REQUIRE(omn.get_type() == sol::type::nil);
+}

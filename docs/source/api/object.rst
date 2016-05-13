@@ -15,11 +15,13 @@ members
 -------
 
 .. code-block:: cpp
-    :caption: constructor: coroutine
+    :caption: overloaded constructor: object
 
-    coroutine(lua_State* L, int index = -1);
+    template <typename T>
+    object(T&&);
+    object(lua_State* L, int index = -1);
 
-Create an object which references the specific element at the given index in the specified ``lua_State*``.
+There are 2 kinds of constructors here. One allows construction of a object from other reference types such as :doc:`table<table>` and :doc:`stack_reference`. The other creates an object which references the specific element at the given index in the specified ``lua_State*``.
 
 .. code-block:: cpp
 	:caption: function: type conversion

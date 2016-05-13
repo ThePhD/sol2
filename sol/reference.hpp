@@ -72,6 +72,7 @@ protected:
 
 public:
     reference() noexcept = default;
+    reference(nil_t) noexcept : reference() {}
     reference(const stack_reference& r) noexcept : reference(r.lua_state(), r.stack_index()) {}
     reference(stack_reference&& r) noexcept : reference(r.lua_state(), r.stack_index()) {}
     reference(lua_State* L, int index = -1) noexcept : L(L) {

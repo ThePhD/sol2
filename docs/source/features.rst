@@ -150,7 +150,7 @@ kaguya -
 * Inspired coroutine support for Sol
 * Library author (satoren) is a nice guy!
 * C++11/14, or boostified (which makes it C++03 compatible)
-* Clas registration is a bit verbose, but not as offensive as OOLua or lua-intf or others
+* Class registration is a bit verbose, but not as offensive as OOLua or lua-intf or others
 * Deserves lots of love!
 
 Sol -
@@ -185,6 +185,7 @@ luawrapper -
 * C++11
 * No macros!
 * The interface can be clunky (no table-like data structures: most things go though ``readVariable`` / ``writeVariable``)
+* Internal Compiler errors in Visual Studio 2015 - submitted a PR to fix it, hopefully it'll get picked up
 
 SWIG (3.0) - 
 
@@ -195,11 +196,11 @@ SWIG (3.0) -
 
 luacppinterface -
 
-* It seems like a decent library, until you try to get a function put into Lua using CreateFunction, and then getting it out again -- it fails miserably
+* The branch that fixes VC++ warnings
 * No member variable support
 * Actually has tables (but no operator[])
 * Does not support arbitrary keys
-* Really has potential, but falls down on its face...
+* Pretty decent
 
 luabind -
 
@@ -207,6 +208,7 @@ luabind -
 * Strange in-lua keywords and parsing to allow for classes to be written in lua
 	- not sure if good feature; vendor lock-in to that library to depend on this specific class syntax?
 * Comprehensive lua bindings (can even bind "properties")
+* There's some code that produces an ICE in Visual C++: I submitted a fix to the library in the hopes that it'll get accepted
 * Wonky table support: no basic conversion functions on ``luabind::object``; have to push object then use lua API to get what you want
 
 lua-api-pp -
@@ -238,7 +240,7 @@ luwra -
 
 * Mentioned here because... well, it's a thing
 * Lightweight (read: feature-starved) wrapper library
-* Can push/pop to the global namespace, but doing anymore more detailed is... harder
+* Can push/pop to the global namespace, but doing anymthing more detailed is... harder
 * Might as well go with luawrapper if you're going to bother
 
 

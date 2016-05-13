@@ -54,8 +54,17 @@ private:
     }
 
 public:
-    using base_t::base_t;
-    using base_t::lua_state;
+    basic_object() noexcept = default;
+    template <typename T, meta::EnableIf<meta::Not<std::is_same<meta::Unqualified<T>, basic_object>>, std::is_base_of<base_t, meta::Unqualified<T>>> = 0>
+    basic_object(T&& r) : base_t(std::forward<T>(r)) {}
+    basic_object(nil_t r) : base_t(r) {}
+    basic_object(const basic_object&) = default;
+    basic_object(basic_object&&) = default;
+    basic_object& operator=(const basic_object&) = default;
+    basic_object& operator=(basic_object&&) = default;
+    basic_object(const stack_reference& r) noexcept : basic_object(r.lua_state(), r.stack_index()) {}
+    basic_object(stack_reference&& r) noexcept : basic_object(r.lua_state(), r.stack_index()) {}
+    basic_object(lua_State* L, int index = -1) noexcept : base_t(L, index) {}
 
     template<typename T>
     decltype(auto) as() const {

@@ -156,7 +156,12 @@ public:
     typedef iterator const_iterator;
 
     basic_table_core( ) noexcept : base_t( ) { }
-    basic_table_core( const table_core<true>& global ) noexcept : base_t( global ) { }
+    template <typename T, meta::EnableIf<meta::Bool<!top_level>, meta::Not<std::is_same<meta::Unqualified<T>, basic_table_core>>, std::is_same<meta::Unqualified<T>, global_table>> = 0>
+    basic_table_core( T&& r ) noexcept : base_t( std::forward<T>(r) ) { }
+    basic_table_core(const basic_table_core&) = default;
+    basic_table_core(basic_table_core&&) = default;
+    basic_table_core& operator=(const basic_table_core&) = default;
+    basic_table_core& operator=(basic_table_core&&) = default;
     basic_table_core(const stack_reference& r) : basic_table_core(r.lua_state(), r.stack_index()) {}
     basic_table_core(stack_reference&& r) : basic_table_core(r.lua_state(), r.stack_index()) {}
     basic_table_core( lua_State* L, int index = -1 ) : base_t( L, index ) {
