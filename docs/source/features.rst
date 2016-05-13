@@ -18,6 +18,11 @@ what Sol supports
 	- Implicit conversion to the types you want
 		``double b = table["computed_value"];``
 
+* :doc:`Optional<api/optional>` support: setting values, getting values of multiple (different) types
+	- :doc:`Lazy evaluation<api/proxy>` for nested/chained queries
+		``optional<int> maybe_number = table["a"]["b"]["invalid_key"];``
+	- Turns on safety when you want it: speed when you don't
+
 * Support for callables (functions, lambdas, member functions)
  	- Pull out any Lua function with :doc:`sol::function<api/function>`
  		``sol::function fx = table["socket_send"];``

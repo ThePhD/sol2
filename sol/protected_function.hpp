@@ -55,8 +55,9 @@ private:
                 target.push();
             }
         }
+        bool valid () const { return stackindex > 0;}
         ~handler() {
-            if (stackindex > 0) {
+            if (valid()) {
                 lua_remove(target.lua_state(), stackindex);
             }
         }
