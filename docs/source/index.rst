@@ -27,12 +27,13 @@ get going:
 	
 	tutorial/all-the-things
 	tutorial/tutorial-top
-	api/api-top
 	features
+	api/api-top
 	benchmarks
 	safety
 	exceptions
 	rtti
+	cmake
 	licenses
 	origin
 

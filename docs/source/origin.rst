@@ -11,7 +11,7 @@ And lo, `Danny Y., Rapptz`_ did stand firm in the sea and cast his hands to the 
 seriously
 ---------
 
-Sol was originally started by many moon cycles ago to interop with Lua and C++. `Rapptz`_ It was very successful and many rejoiced at having an easy to use abstraction on top of the Lua API. Rapptz continued to make a number of great projects and has been busy with other things, so upon seeing the repository grow stagnant and tired in the last year, `ThePhD`_ forked it into Sol2 and rebooted the code with the hopes of reaching the Milestone and the documentation you have today.
+Sol was originally started by many moon cycles ago to interop with Lua and C++. `Rapptz`_ It was very successful and many rejoiced at having an easy to use abstraction on top of the Lua API. Rapptz continued to make a number of great projects and has been busy with other things, so upon seeing the repository grow stagnant and tired in the last very long while (over a year), `ThePhD`_ forked it into Sol2 and rebooted the code with the hopes of reaching the Milestone and the documentation you have today.
 
 To get to the old repo, head over `here`_.
 
