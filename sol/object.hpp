@@ -33,24 +33,24 @@ class basic_object : public base_t {
 private:
     template<typename T>
     decltype(auto) as_stack(std::true_type) const {
-        return stack::get<T>(lua_state(), base_t::stack_index());
+        return stack::get<T>(base_t::lua_state(), base_t::stack_index());
     }
 
     template<typename T>
     decltype(auto) as_stack(std::false_type) const {
         base_t::push();
-        return stack::pop<T>(lua_state());
+        return stack::pop<T>(base_t::lua_state());
     }
 
     template<typename T>
     bool is_stack(std::true_type) const {
-        return stack::check<T>(lua_state(), base_t::stack_index(), no_panic);
+        return stack::check<T>(base_t::lua_state(), base_t::stack_index(), no_panic);
     }
 
     template<typename T>
     bool is_stack(std::false_type) const {
         auto pp = stack::push_pop(*this);
-        return stack::check<T>(lua_state(), -1, no_panic);
+        return stack::check<T>(base_t::lua_state(), -1, no_panic);
     }
 
 public:
