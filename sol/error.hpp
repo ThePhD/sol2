@@ -44,7 +44,7 @@ public:
 	error& operator=(const error& e) = default;
 	error& operator=(error&& e) = default;
 
-	virtual const char* what() const override {
+	virtual const char* what() const noexcept override {
 		return w.c_str();
 	}
 };
