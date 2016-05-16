@@ -249,7 +249,7 @@ luwra -
 
 * How do you store stateful functors / lambas ? Cannot find a way to support
 * Cannot pull functions without first leaving them on the stack: manual cleanup becomes a thing
-* Doesn't understand std::function conversions and the like (but with some extra code can get it to work)
+* Doesn't understand ``std::function`` conversions and the like (but with some extra code can get it to work)
 * Recently improved by a lot: can chain tables and such, even if performance is a bit sad for that use case
 * When you do manage to set function calls with the macros they are fast (can a template solution do just as good? Sol is going to find out!)
 * No member variable support - get turned into getter/setter functions, similar to kaguya
