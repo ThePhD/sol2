@@ -241,10 +241,12 @@ SLB3 -
 oolua -
 
 * The syntax for this library is thicker than a brick. No, seriously. `Go read the docs`_ 
-* The worst in terms of how to use it: may have docs, but the DSL (despite using C++11) is extraordinarily crappy with thick, hard-to-debug/hard-to-error-check macros
+* The worst in terms of how to use it: may have docs, but the DSL is extraordinarily crappy with thick, hard-to-debug/hard-to-error-check macros
     - Same problem as lua-api-pp: cannot have the declaration macros anywhere but the toplevel namespace because of template declaration macro
 * Supports not having exceptions or rtti turned on (shiny!)
 * Poor RAII support: default-construct-and-get style (requires some form of initalization to perform a ``get`` of an object, and it's hard to extend)
+	- The library author has informed me that he does personally advises individuals do not use the ``Table`` abstraction in OOLua... Do I likewise tell people to consider its table abstractions defunct?
+* It is fast for member function calls, however
 
 luwra - 
 
