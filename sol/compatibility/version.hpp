@@ -44,10 +44,15 @@
 
 #ifdef _MSC_VER
 #ifdef _DEBUG
+#ifndef NDEBUG
 #ifndef SOL_CHECK_ARGUMENTS
 // Do not define by default: let user turn it on
 //#define SOL_CHECK_ARGUMENTS
 #endif // Check Arguments
+#ifndef SOL_SAFE_USERTYPE
+#define SOL_SAFE_USERTYPE
+#endif // Safe Usertypes
+#endif // NDEBUG
 #endif // Debug
 
 #ifndef _CPPUNWIND
@@ -69,7 +74,11 @@
 #ifndef SOL_CHECK_ARGUMENTS
 // Do not define by default: let user choose
 //#define SOL_CHECK_ARGUMENTS
+// But do check userdata by default:
 #endif // Check Arguments
+#ifndef SOL_SAFE_USERTYPE
+#define SOL_SAFE_USERTYPE
+#endif // Safe Usertypes
 #endif // g++ optimizer flag
 #endif // Not Debug
 
@@ -86,5 +95,11 @@
 #endif // No RTTI
 
 #endif // vc++ || clang++/g++
+
+#ifndef SOL_SAFE_USERTYPE
+#ifdef SOL_CHECK_ARGUMENTS
+#define SOL_SAFE_USERTYPE
+#endif // Turn on Safety for all
+#endif // Safe Usertypes
 
 #endif // SOL_VERSION_HPP

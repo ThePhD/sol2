@@ -1186,3 +1186,19 @@ TEST_CASE("object/conversions", "make sure all basic reference types can be made
     REQUIRE(os.get_type() == sol::type::string);
     REQUIRE(omn.get_type() == sol::type::nil);
 }
+
+TEST_CASE("usertype/safety", "crash with an exception -- not a segfault -- on bad userdata calls") {
+    class Test {
+    public:
+        void sayHello() { std::cout << "Hey\n"; }
+    };
+	
+    sol::state lua;
+    lua.new_usertype<Test>("Test", "sayHello", &Test::sayHello);
+    static const std::string code = R"(
+        local t = Test.new()
+        t:sayHello() --Works fine
+        t.sayHello() --Uh oh.
+    )";
+    REQUIRE_THROWS(lua.script(code));
+}

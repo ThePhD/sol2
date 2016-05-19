@@ -30,6 +30,7 @@
 #include <memory>
 #include <functional>
 #include <utility>
+#include <codecvt>
 
 namespace sol {
 namespace stack {
@@ -110,6 +111,88 @@ template<>
 struct getter<const char*> {
     static const char* get(lua_State* L, int index = -1) {
         return lua_tostring(L, index);
+    }
+};
+
+template<>
+struct getter<char> {
+    static char get(lua_State* L, int index = -1) {
+        size_t len;
+        auto str = lua_tolstring(L, index, &len);
+	   return len > 0 ? str[0] : '\0';
+    }
+};
+
+template<>
+struct getter<std::wstring> {
+    static std::wstring get(lua_State* L, int index = -1) {
+        size_t len;
+        auto str = lua_tolstring(L, index, &len);
+        typedef std::codecvt_utf8<wchar_t> convert;
+        std::wstring_convert<convert, wchar_t> conv;
+        return conv.from_bytes(str, str + len);
+    }
+};
+
+template<>
+struct getter<std::u16string> {
+    static std::u16string get(lua_State* L, int index = -1) {
+        size_t len;
+        auto str = lua_tolstring(L, index, &len);
+#ifdef _MSC_VER // https://connect.microsoft.com/VisualStudio/feedback/details/1348277/link-error-when-using-std-codecvt-utf8-utf16-char16-t
+        typedef uint16_t T;
+        typedef std::codecvt_utf8<T> convert;
+        std::wstring_convert<convert, T> conv;
+        std::basic_string<T> shitty = conv.from_bytes(str, str + len);
+	   return std::u16string(shitty.cbegin(), shitty.cend());  // fuck you VC++
+#else
+        typedef std::codecvt_utf8<char16_t> convert;
+        std::wstring_convert<convert, char16_t> conv;
+        return conv.from_bytes(str, str + len);
+#endif // VC++
+    }
+};
+
+template<>
+struct getter<std::u32string> {
+    static std::u32string get(lua_State* L, int index = -1) {
+        size_t len;
+        auto str = lua_tolstring(L, index, &len);
+#ifdef _MSC_VER // https://connect.microsoft.com/VisualStudio/feedback/details/1348277/link-error-when-using-std-codecvt-utf8-utf16-char16-t
+        typedef int32_t T;
+        typedef std::codecvt_utf8<T> convert;
+        std::wstring_convert<convert, T> conv;
+        std::basic_string<T> shitty = conv.from_bytes(str, str + len);
+	   return std::u32string(shitty.cbegin(), shitty.cend()); // fuck you VC++
+#else
+        typedef std::codecvt_utf8<char32_t> convert;
+        std::wstring_convert<convert, char32_t> conv;
+        return conv.from_bytes(str, str + len);
+#endif // VC++
+    }
+};
+
+template<>
+struct getter<wchar_t> {
+    static wchar_t get(lua_State* L, int index = -1) {
+        auto str = getter<std::wstring>{}.get(L, index);
+	   return str.size() > 0 ? str[0] : '\0';
+    }
+};
+
+template<>
+struct getter<char16_t> {
+    static char get(lua_State* L, int index = -1) {
+        auto str = getter<std::u16string>{}.get(L, index);
+	   return str.size() > 0 ? str[0] : '\0';
+    }
+};
+
+template<>
+struct getter<char32_t> {
+    static char32_t get(lua_State* L, int index = -1) {
+        auto str = getter<std::u32string>{}.get(L, index);
+	   return str.size() > 0 ? str[0] : '\0';
     }
 };
 

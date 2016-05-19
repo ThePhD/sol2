@@ -379,11 +379,47 @@ struct lua_type_of : std::integral_constant<type, type::userdata> {};
 template <>
 struct lua_type_of<std::string> : std::integral_constant<type, type::string> {};
 
+template <>
+struct lua_type_of<std::wstring> : std::integral_constant<type, type::string> {};
+
+template <>
+struct lua_type_of<std::u16string> : std::integral_constant<type, type::string> {};
+
+template <>
+struct lua_type_of<std::u32string> : std::integral_constant<type, type::string> {};
+
 template <std::size_t N>
 struct lua_type_of<char[N]> : std::integral_constant<type, type::string> {};
 
+template <std::size_t N>
+struct lua_type_of<wchar_t[N]> : std::integral_constant<type, type::string> {};
+
+template <std::size_t N>
+struct lua_type_of<char16_t[N]> : std::integral_constant<type, type::string> {};
+
+template <std::size_t N>
+struct lua_type_of<char32_t[N]> : std::integral_constant<type, type::string> {};
+
+template <>
+struct lua_type_of<char> : std::integral_constant<type, type::string> {};
+
+template <>
+struct lua_type_of<wchar_t> : std::integral_constant<type, type::string> {};
+
+template <>
+struct lua_type_of<char16_t> : std::integral_constant<type, type::string> {};
+
+template <>
+struct lua_type_of<char32_t> : std::integral_constant<type, type::string> {};
+
 template <>
 struct lua_type_of<const char*> : std::integral_constant<type, type::string> {};
+
+template <>
+struct lua_type_of<const char16_t*> : std::integral_constant<type, type::string> {};
+
+template <>
+struct lua_type_of<const char32_t*> : std::integral_constant<type, type::string> {};
 
 template <>
 struct lua_type_of<bool> : std::integral_constant<type, type::boolean> {};

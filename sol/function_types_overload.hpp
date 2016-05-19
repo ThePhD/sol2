@@ -119,7 +119,12 @@ struct usertype_overloaded_function : base_function {
     template <typename Fx, std::size_t I, typename... R, typename... Args, meta::DisableIf<meta::Bool<Fx::is_free>> = 0>
     int call(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
         auto& func = std::get<I>(overloads);
-        func.item = detail::ptr(stack::get<T>(L, 1));
+        func.item = stack::get<meta::Unwrapped<T>*>(L, 1);
+#ifdef SOL_SAFE_USERTYPE
+        if (func.item == nullptr) {
+            return luaL_error(L, "sol: received null for 'self' argument (use ':' for accessing member functions)");
+        }
+#endif // Safety
         return stack::call_into_lua<0, false>(r, a, L, start, func);
     }
 

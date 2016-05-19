@@ -60,7 +60,12 @@ struct usertype_function : public usertype_function_core<Tp, Function> {
     usertype_function(Args&&... args): base_t(std::forward<Args>(args)...) {}
 
     int prelude(lua_State* L) {
-        this->fx.item = detail::ptr(stack::get<T>(L, 1));
+        this->fx.item = stack::get<meta::Unwrapped<T>*>(L, 1);
+#ifdef SOL_SAFE_USERTYPE
+        if (this->fx.item == nullptr) {
+            return luaL_error(L, "sol: received null for 'self' argument (use ':' for accessing member functions)");
+        }
+#endif // Safety
         return static_cast<base_t&>(*this)(meta::tuple_types<return_type>(), args_type(), index_value<2>(), L);
     }
 
@@ -122,6 +127,11 @@ struct usertype_variable_function : public usertype_function_core<Tp, Function> 
     int prelude(lua_State* L) {
         int argcount = lua_gettop(L);
         this->fx.item = stack::get<T*>(L, 1);
+#ifdef SOL_SAFE_USERTYPE
+        if (this->fx.item == nullptr) {
+            return luaL_error(L, "sol: received null for 'self' argument (use ':' for accessing member functions)");
+        }
+#endif // Safety
         switch(argcount) {
         case 2:
             return get_variable(can_read(), L);

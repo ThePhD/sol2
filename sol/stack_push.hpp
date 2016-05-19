@@ -26,6 +26,7 @@
 #include "raii.hpp"
 #include "optional.hpp"
 #include <memory>
+#include <codecvt>
 
 namespace sol {
 namespace stack {
@@ -252,6 +253,55 @@ struct pusher<const char*> {
     }
 };
 
+template<>
+struct pusher<const wchar_t*> {
+    static int push(lua_State* L, const wchar_t* wstr) {
+        return push(L, wstr, wstr + std::char_traits<wchar_t>::length(wstr));
+    }
+    static int push(lua_State* L, const wchar_t* wstrb, const wchar_t* wstre) {
+        typedef std::codecvt_utf8<wchar_t> convert;
+        std::wstring_convert<convert, wchar_t> conv;
+        std::string str = conv.to_bytes( wstrb, wstre );
+        return stack::push(L, str);
+    }
+};
+
+template<>
+struct pusher<const char16_t*> {
+    static int push(lua_State* L, const char16_t* u16str) {
+        return push(L, u16str, u16str + std::char_traits<char16_t>::length(u16str));
+    }
+    static int push(lua_State* L, const char16_t* u16strb, const char16_t* u16stre) {
+#ifdef _MSC_VER // https://connect.microsoft.com/VisualStudio/feedback/details/1348277/link-error-when-using-std-codecvt-utf8-utf16-char16-t
+        typedef uint16_t T;
+#else
+        typedef char16_t T;
+#endif // VC++
+        typedef std::codecvt_utf8<T> convert;
+        std::wstring_convert<convert, T> conv;
+        std::string str = conv.to_bytes( reinterpret_cast<const T*>(u16strb), reinterpret_cast<const T*>(u16stre) );
+        return stack::push(L, str);
+    }
+};
+
+template<>
+struct pusher<const char32_t*> {
+    static int push(lua_State* L, const char32_t* u32str) {
+        return push(L, u32str, u32str + std::char_traits<char32_t>::length(u32str));
+    }
+    static int push(lua_State* L, const char32_t* u32strb, const char32_t* u32stre) {
+#ifdef _MSC_VER // https://connect.microsoft.com/VisualStudio/feedback/details/1348277/link-error-when-using-std-codecvt-utf8-utf16-char16-t
+        typedef uint32_t T;
+#else
+        typedef char32_t T;
+#endif // VC++
+        typedef std::codecvt_utf8<T> convert;
+        std::wstring_convert<convert, T> conv;
+        std::string str = conv.to_bytes( reinterpret_cast<const T*>(u32strb), reinterpret_cast<const T*>(u32stre) );
+        return stack::push(L, str);
+    }
+};
+
 template<size_t N>
 struct pusher<char[N]> {
     static int push(lua_State* L, const char (&str)[N]) {
@@ -260,11 +310,85 @@ struct pusher<char[N]> {
     }
 };
 
+template<size_t N>
+struct pusher<wchar_t[N]> {
+    static int push(lua_State* L, const wchar_t (&str)[N]) {
+        return stack::push<const wchar_t*>(L, str, str + N - 1);
+    }
+};
+
+template<size_t N>
+struct pusher<char16_t[N]> {
+    static int push(lua_State* L, const char16_t (&str)[N]) {
+        return stack::push<const char16_t*>(L, str, str + N - 1);
+    }
+};
+
+template<size_t N>
+struct pusher<char32_t[N]> {
+    static int push(lua_State* L, const char32_t (&str)[N]) {
+        return stack::push<const char32_t*>(L, str, str + N - 1);
+    }
+};
+
+template <>
+struct pusher<char> {
+    static int push(lua_State* L, char c) {
+        const char str[2] = { c, '\0'};
+        return stack::push(L, str);
+    }
+};
+
+template <>
+struct pusher<wchar_t> {
+    static int push(lua_State* L, wchar_t c) {
+        const wchar_t str[2] = { c, '\0'};
+        return stack::push(L, str);
+    }
+};
+
+template <>
+struct pusher<char16_t> {
+    static int push(lua_State* L, char16_t c) {
+        const char16_t str[2] = { c, '\0'};
+        return stack::push(L, str);
+    }
+};
+
+template <>
+struct pusher<char32_t> {
+    static int push(lua_State* L, char32_t c) {
+        const char32_t str[2] = { c, '\0'};
+        return stack::push(L, str);
+    }
+};
+
 template<>
 struct pusher<std::string> {
     static int push(lua_State* L, const std::string& str) {
         lua_pushlstring(L, str.c_str(), str.size());
         return 1;
+    }
+};
+
+template<>
+struct pusher<std::wstring> {
+    static int push(lua_State* L, const std::wstring& wstr) {
+        return stack::push(L, wstr.data(), wstr.data() + wstr.size());
+    }
+};
+
+template<>
+struct pusher<std::u16string> {
+    static int push(lua_State* L, const std::u16string& u16str) {
+        return stack::push(L, u16str.data(), u16str.data() + u16str.size());
+    }
+};
+
+template<>
+struct pusher<std::u32string> {
+    static int push(lua_State* L, const std::u32string& u32str) {
+        return stack::push(L, u32str.data(), u32str.data() + u32str.size());
     }
 };
 
