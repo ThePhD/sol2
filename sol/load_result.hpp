@@ -72,12 +72,12 @@ namespace sol {
 
     public:
         load_result() = default;
-        load_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, load_status err = load_status::ok) : L(L), index(index), returncount(returncount), popcount(popcount), err(err) {
+        load_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, load_status err = load_status::ok) noexcept : L(L), index(index), returncount(returncount), popcount(popcount), err(err) {
 
         }
         load_result(const load_result&) = default;
         load_result& operator=(const load_result&) = default;
-        load_result(load_result&& o) : L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
+        load_result(load_result&& o) noexcept : L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
             // Must be manual, otherwise destructor will screw us
             // return count being 0 is enough to keep things clean
             // but we will be thorough
@@ -87,7 +87,7 @@ namespace sol {
             o.popcount = 0;
             o.err = load_status::syntax;
         }
-        load_result& operator=(load_result&& o) {
+        load_result& operator=(load_result&& o) noexcept {
             L = o.L;
             index = o.index;
             returncount = o.returncount;
@@ -104,12 +104,12 @@ namespace sol {
             return *this;
         }
 
-        load_status error() const {
+        load_status status() const noexcept {
             return err;
         }
 
-        bool valid() const {
-            return error() == load_status::ok;
+        bool valid() const noexcept {
+            return status() == load_status::ok;
         }
 
         template<typename T>
@@ -127,8 +127,8 @@ namespace sol {
             return call<>(std::forward<Args>(args)...);
         }
 
-        lua_State* lua_state() const { return L; };
-        int stack_index() const { return index; };
+        lua_State* lua_state() const noexcept { return L; };
+        int stack_index() const noexcept { return index; };
 
         ~load_result() {
             stack::remove(L, index, popcount);

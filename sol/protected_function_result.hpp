@@ -73,12 +73,12 @@ private:
 
 public:
     protected_function_result() = default;
-    protected_function_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, call_status err = call_status::ok): L(L), index(index), returncount(returncount), popcount(popcount), err(err) {
+    protected_function_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, call_status err = call_status::ok) noexcept : L(L), index(index), returncount(returncount), popcount(popcount), err(err) {
         
     }
     protected_function_result(const protected_function_result&) = default;
     protected_function_result& operator=(const protected_function_result&) = default;
-    protected_function_result(protected_function_result&& o) : L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
+    protected_function_result(protected_function_result&& o) noexcept : L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
         // Must be manual, otherwise destructor will screw us
         // return count being 0 is enough to keep things clean
         // but we will be thorough
@@ -88,7 +88,7 @@ public:
         o.popcount = 0;
         o.err = call_status::runtime;
     }
-    protected_function_result& operator=(protected_function_result&& o) {
+    protected_function_result& operator=(protected_function_result&& o) noexcept {
         L = o.L;
         index = o.index;
         returncount = o.returncount;
@@ -105,12 +105,12 @@ public:
         return *this;
     }
 
-    call_status error() const {
+    call_status status() const noexcept {
         return err;
     }
 
-    bool valid() const {
-        return error() == call_status::ok || error() == call_status::yielded;
+    bool valid() const noexcept {
+        return status() == call_status::ok || status() == call_status::yielded;
     }
 
     template<typename T>
@@ -118,8 +118,8 @@ public:
         return tagged_get(types<meta::unqualified_t<T>>());
     }
 
-    lua_State* lua_state() const { return L; };
-    int stack_index() const { return index; };
+    lua_State* lua_state() const noexcept { return L; };
+    int stack_index() const noexcept { return index; };
 
     ~protected_function_result() {
         stack::remove(L, index, popcount);

@@ -547,6 +547,12 @@ public:
 	static const std::size_t arity = base_t::arity - meta::count_for<is_transparent_argument, typename base_t::args_type>::value;
 };
 
+template <typename T>
+struct is_table : std::false_type {};
+
+template <bool x, typename T>
+struct is_table<basic_table_core<x, T>> : std::true_type {};
+
 template<typename T>
 inline type type_of() {
     return lua_type_of<meta::unqualified_t<T>>::value;

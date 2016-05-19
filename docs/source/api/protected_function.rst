@@ -1,7 +1,7 @@
 protected_function
 ==================
-Lua function calls that trap errors and provide error handler
--------------------------------------------------------------
+Lua function calls that trap errors and provide error handling
+--------------------------------------------------------------
 
 .. code-block:: cpp
 	

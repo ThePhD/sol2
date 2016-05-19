@@ -176,8 +176,8 @@ stack_proxy
 
 .. _note 1:
 
-On Function Objects and proxies
-----------------------------------
+on function objects and proxies
+-------------------------------
 
 Consider the following:
 

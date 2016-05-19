@@ -49,6 +49,24 @@ private:
     lua_State* L;
     table reg;
     global_table global;
+
+    template <typename T>
+    void ensure_package(const std::string& key, T&& sr) {
+        auto pkg = (*this)["package"];
+        if (!pkg.valid()) {
+            pkg = create_table_with("loaded", create_table_with(key, sr));
+        }
+	   else {
+            auto ld = pkg["loaded"];
+            if (!ld.valid()) {
+                ld = create_table_with(key, sr);
+            }
+            else {
+                ld[key] = sr;
+            }
+        }
+    }
+
 public:
     typedef global_table::iterator iterator;
     typedef global_table::const_iterator const_iterator;
@@ -132,11 +150,13 @@ public:
             case lib::ffi:
 #ifdef SOL_LUAJIT
                 luaL_requiref(L, "ffi", luaopen_ffi, 1);
+                lua_pop(L, 1);
 #endif
                 break;
             case lib::jit:
 #ifdef SOL_LUAJIT
                 luaL_requiref(L, "jit", luaopen_jit, 1);
+                lua_pop(L, 1);
 #endif
                 break;
             case lib::count:
@@ -144,6 +164,44 @@ public:
                 break;
             }
         }
+    }
+
+    template <typename Fx>
+    object require(const std::string& key, Fx&& open_function, bool is_global_library = true) {
+        auto openfx = [fx = std::forward<Fx>(open_function)](lua_State* L){ 
+            typedef lua_bind_traits<meta::unqualified_t<Fx>> traits;
+            return stack::call(typename traits::return_type(), typename traits::args_type(), L, fx); 
+        };
+        stack::push(L, function_args<function_sig<>>(std::forward<Fx>(openfx)));
+	   lua_CFunction openf = stack::pop<lua_CFunction>(L);
+        luaL_requiref(L, key.c_str(), openf, is_global_library ? 1 : 0);
+        object r stack::pop<object>(L);
+	   lua_pop(L, 1);
+	   return r;
+    }
+
+    object require_script(const std::string& key, const std::string& code) {
+        optional<object> loaded = traverse_get<optional<object>>("package", "loaded", key);
+        bool ismod = loaded && !(loaded->is<bool>() && !loaded->as<bool>());
+        if (ismod)
+            return std::move(*loaded);
+        script(code);
+        auto sr = stack::get<stack_reference>(L);
+        set(key, sr);
+        ensure_package(key, sr);
+	   return stack::pop<object>(L);
+    }
+
+    object require_file(const std::string& key, const std::string& file) {
+        auto loaded = traverse_get<optional<object>>("package", "loaded", key);
+        bool ismod = loaded && !(loaded->is<bool>() && !loaded->as<bool>());
+        if (loaded)
+            return std::move(*loaded);
+        script_file(file);
+        auto sr = stack::get<stack_reference>(L);
+        set(key, sr);
+        ensure_package(key, sr);
+	   return stack::pop<object>(L);
     }
 
     void script(const std::string& code) {
