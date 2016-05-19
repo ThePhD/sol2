@@ -175,13 +175,13 @@ public:
         stack::push(L, function_args<function_sig<>>(std::forward<Fx>(openfx)));
 	   lua_CFunction openf = stack::pop<lua_CFunction>(L);
         luaL_requiref(L, key.c_str(), openf, is_global_library ? 1 : 0);
-        object r stack::pop<object>(L);
+        object r = stack::pop<object>(L);
 	   lua_pop(L, 1);
 	   return r;
     }
 
     object require_script(const std::string& key, const std::string& code) {
-        optional<object> loaded = traverse_get<optional<object>>("package", "loaded", key);
+        optional<object> loaded = global.traverse_get<optional<object>>("package", "loaded", key);
         bool ismod = loaded && !(loaded->is<bool>() && !loaded->as<bool>());
         if (ismod)
             return std::move(*loaded);
@@ -193,7 +193,7 @@ public:
     }
 
     object require_file(const std::string& key, const std::string& file) {
-        auto loaded = traverse_get<optional<object>>("package", "loaded", key);
+        auto loaded = global.traverse_get<optional<object>>("package", "loaded", key);
         bool ismod = loaded && !(loaded->is<bool>() && !loaded->as<bool>());
         if (loaded)
             return std::move(*loaded);
