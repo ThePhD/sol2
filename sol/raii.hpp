@@ -30,7 +30,7 @@ namespace detail {
 struct default_construct {
     template<typename T, typename... Args>
     static void construct(T&& obj, Args&&... args) {
-        std::allocator<meta::Unqualified<T>> alloc{};
+        std::allocator<meta::unqualified_t<T>> alloc{};
         alloc.construct(obj, std::forward<Args>(args)...);
     }
 
@@ -43,7 +43,7 @@ struct default_construct {
 struct default_destruct {
     template<typename T>
     static void destroy(T&& obj) {
-        std::allocator<meta::Unqualified<T>> alloc{};
+        std::allocator<meta::unqualified_t<T>> alloc{};
         alloc.destroy(obj);
     }
 

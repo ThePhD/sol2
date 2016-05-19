@@ -28,7 +28,7 @@ namespace sol {
 namespace function_detail {
     template <typename F, F fx>
     inline int call_wrapper_variable(std::false_type, lua_State* L) {
-        typedef meta::bind_traits<meta::Unqualified<F>> traits_type;
+        typedef meta::bind_traits<meta::unqualified_t<F>> traits_type;
         typedef typename traits_type::args_type args_type;
         typedef meta::tuple_types<typename traits_type::return_type> return_type;
         return stack::call_into_lua(return_type(), args_type(), L, 1, fx);
@@ -60,7 +60,7 @@ namespace function_detail {
 
     template <typename V, V variable>
     inline int call_wrapper_variable(std::true_type, lua_State* L) {
-        typedef meta::bind_traits<meta::Unqualified<V>> traits_type;
+        typedef meta::bind_traits<meta::unqualified_t<V>> traits_type;
         typedef typename traits_type::object_type T;
         typedef typename traits_type::return_type R;
         auto& mem = stack::get<T>(L, 1);
@@ -71,7 +71,7 @@ namespace function_detail {
             stack::push_reference(L, std::forward<decltype(r)>(r));
             return 1; }
         case 2:
-            return call_set_variable<R, V, variable>(meta::Not<std::is_const<R>>(), L, mem);
+            return call_set_variable<R, V, variable>(meta::neg<std::is_const<R>>(), L, mem);
         default:
             return luaL_error(L, "incorrect number of arguments to member variable function call");
         }
@@ -84,7 +84,7 @@ namespace function_detail {
 
     template <typename F, F fx>
     inline int call_wrapper_function(std::true_type, lua_State* L) {
-        typedef meta::bind_traits<meta::Unqualified<F>> traits_type;
+        typedef meta::bind_traits<meta::unqualified_t<F>> traits_type;
         typedef typename traits_type::object_type T;
         typedef typename traits_type::args_type args_type;
         typedef typename traits_type::return_type return_type;
@@ -99,7 +99,7 @@ namespace function_detail {
 
     template <typename F, F fx>
     inline int call_wrapper_entry(lua_State* L) {
-        return call_wrapper_function<F, fx>(std::is_member_function_pointer<meta::Unqualified<F>>(), L);
+        return call_wrapper_function<F, fx>(std::is_member_function_pointer<meta::unqualified_t<F>>(), L);
     }
 } // function_detail
 

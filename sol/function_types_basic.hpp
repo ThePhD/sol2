@@ -29,7 +29,7 @@ namespace function_detail {
 template<typename Function>
 struct upvalue_free_function {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-    typedef meta::bind_traits<function_type> traits_type;
+    typedef lua_bind_traits<function_type> traits_type;
 
     static int real_call(lua_State* L) {
         auto udata = stack::stack_detail::get_as_upvalues<function_type*>(L);
@@ -50,7 +50,7 @@ struct upvalue_free_function {
 template<typename T, typename Function>
 struct upvalue_member_function {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-    typedef meta::bind_traits<function_type> traits_type;
+    typedef lua_bind_traits<function_type> traits_type;
 
     static int real_call(lua_State* L) {
         // Layout:
@@ -104,7 +104,7 @@ int set_variable(std::false_type, lua_State* L, M&, V&) {
 template<typename T, typename Function>
 struct upvalue_member_variable {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-    typedef meta::bind_traits<function_type> traits_type;
+    typedef lua_bind_traits<function_type> traits_type;
 
     static int real_call(lua_State* L) {
         // Layout:
@@ -121,7 +121,7 @@ struct upvalue_member_variable {
             stack::push(L, (mem.*var));
             return 1;
         case 1:
-            set_variable<1, typename traits_type::return_type>(meta::Not<std::is_const<typename traits_type::return_type>>(), L, mem, var);
+            set_variable<1, typename traits_type::return_type>(meta::neg<std::is_const<typename traits_type::return_type>>(), L, mem, var);
             return 0;
         default:
             return luaL_error(L, "sol: incorrect number of arguments to member variable function");
@@ -140,7 +140,7 @@ struct upvalue_member_variable {
 template<typename T, typename Function>
 struct upvalue_this_member_function {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-    typedef meta::bind_traits<function_type> traits_type;
+    typedef lua_bind_traits<function_type> traits_type;
 
     static int real_call(lua_State* L) {
         // Layout:
@@ -167,7 +167,7 @@ struct upvalue_this_member_function {
 template<typename T, typename Function>
 struct upvalue_this_member_variable {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-    typedef meta::bind_traits<function_type> traits_type;
+    typedef lua_bind_traits<function_type> traits_type;
 
     static int real_call(lua_State* L) {
         // Layout:
@@ -181,7 +181,7 @@ struct upvalue_this_member_variable {
             stack::push(L, (mem.*var));
             return 1;
         case 2:
-            set_variable<2, typename traits_type::return_type>(meta::Not<std::is_const<typename traits_type::return_type>>(), L, mem, var);
+            set_variable<2, typename traits_type::return_type>(meta::neg<std::is_const<typename traits_type::return_type>>(), L, mem, var);
             return 0;
         default:
             return luaL_error(L, "sol: incorrect number of arguments to member variable function");

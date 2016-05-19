@@ -55,7 +55,7 @@ private:
 
 public:
     basic_object() noexcept = default;
-    template <typename T, meta::EnableIf<meta::Not<std::is_same<meta::Unqualified<T>, basic_object>>, std::is_base_of<base_t, meta::Unqualified<T>>> = 0>
+    template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_object>>, std::is_base_of<base_t, meta::unqualified_t<T>>> = meta::enabler>
     basic_object(T&& r) : base_t(std::forward<T>(r)) {}
     basic_object(nil_t r) : base_t(r) {}
     basic_object(const basic_object&) = default;

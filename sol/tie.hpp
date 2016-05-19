@@ -44,7 +44,7 @@ private:
 
      template <typename T>
      void set( std::true_type, T&& target ) {
-          typedef tie_size<meta::Unqualified<T>> value_size;
+          typedef tie_size<meta::unqualified_t<T>> value_size;
           typedef tie_size<std::tuple<Tn...>> tie_size;
           typedef std::conditional_t<(value_size::value < tie_size::value), value_size, tie_size> indices_size;
           typedef std::make_index_sequence<indices_size::value> indices;
@@ -64,7 +64,7 @@ public:
 
      template <typename T>
      tie_t& operator= ( T&& value ) {
-          typedef is_tieable<meta::Unqualified<T>> bondable;
+          typedef is_tieable<meta::unqualified_t<T>> bondable;
           set( bondable(), std::forward<T>( value ) );
           return *this;
      }

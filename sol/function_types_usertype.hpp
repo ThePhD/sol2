@@ -60,7 +60,7 @@ struct usertype_function : public usertype_function_core<Tp, Function> {
     usertype_function(Args&&... args): base_t(std::forward<Args>(args)...) {}
 
     int prelude(lua_State* L) {
-        this->fx.item = stack::get<meta::Unwrapped<T>*>(L, 1);
+        this->fx.item = stack::get<meta::unwrapped_t<T>*>(L, 1);
 #ifdef SOL_SAFE_USERTYPE
         if (this->fx.item == nullptr) {
             return luaL_error(L, "sol: received null for 'self' argument (use ':' for accessing member functions)");
@@ -136,7 +136,7 @@ struct usertype_variable_function : public usertype_function_core<Tp, Function> 
         case 2:
             return get_variable(can_read(), L);
         case 3:
-            return set_variable(meta::Not<std::is_const<return_type>>(), L);
+            return set_variable(meta::neg<std::is_const<return_type>>(), L);
         default:
             return luaL_error(L, "sol: cannot get/set userdata member variable with inappropriate number of arguments");
         }

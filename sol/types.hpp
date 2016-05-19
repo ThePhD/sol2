@@ -504,11 +504,11 @@ struct lua_type_of<this_state> : std::integral_constant<type, type::none> {};
 
 template <typename T>
 struct is_lua_primitive : std::integral_constant<bool, 
-    type::userdata != lua_type_of<meta::Unqualified<T>>::value
-    || std::is_base_of<reference, meta::Unqualified<T>>::value
-    || std::is_base_of<stack_reference, meta::Unqualified<T>>::value
-    || meta::is_specialization_of<std::tuple, meta::Unqualified<T>>::value
-    || meta::is_specialization_of<std::pair, meta::Unqualified<T>>::value
+    type::userdata != lua_type_of<meta::unqualified_t<T>>::value
+    || std::is_base_of<reference, meta::unqualified_t<T>>::value
+    || std::is_base_of<stack_reference, meta::unqualified_t<T>>::value
+    || meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>::value
+    || meta::is_specialization_of<std::pair, meta::unqualified_t<T>>::value
 > { };
 
 template <typename T>
@@ -539,9 +539,17 @@ struct is_transparent_argument<this_state> : std::true_type {};
 template <>
 struct is_transparent_argument<variadic_args> : std::true_type {};
 
+template <typename Signature>
+struct lua_bind_traits : meta::bind_traits<Signature> {
+private:
+	typedef meta::bind_traits<Signature> base_t;
+public:
+	static const std::size_t arity = base_t::arity - meta::count_for<is_transparent_argument, typename base_t::args_type>::value;
+};
+
 template<typename T>
 inline type type_of() {
-    return lua_type_of<meta::Unqualified<T>>::value;
+    return lua_type_of<meta::unqualified_t<T>>::value;
 }
 } // sol
 

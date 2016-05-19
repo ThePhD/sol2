@@ -30,7 +30,7 @@ namespace sol {
 namespace function_detail {
 namespace internals {
 template <typename T>
-struct overload_traits : meta::bind_traits<T> {
+struct overload_traits : lua_bind_traits<T> {
     static const std::size_t boost = 0;
 };
 
@@ -49,20 +49,17 @@ inline int overload_match_arity(types<>, std::index_sequence<>, std::index_seque
 
 template <typename Fx, typename... Fxs, std::size_t I, std::size_t... In, std::size_t... M, typename Match, typename... Args>
 inline int overload_match_arity(types<Fx, Fxs...>, std::index_sequence<I, In...>, std::index_sequence<M...>, Match&& matchfx, lua_State* L, int nfxarity, int start, Args&&... args) {
-    typedef overload_traits<meta::Unqualified<Fx>> traits;
+    typedef overload_traits<meta::unqualified_t<Fx>> traits;
     typedef meta::tuple_types<typename traits::return_type> return_types;
     typedef typename traits::args_type args_type;
     typedef typename args_type::indices args_indices;
-    typedef meta::index_in<this_state, args_type> state_index;
-    typedef meta::index_in<variadic_args, args_type> va_pack_index;
-    static const std::size_t arity = traits::arity - static_cast<std::size_t>(state_index::value != SIZE_MAX) - static_cast<std::size_t>(va_pack_index::value != SIZE_MAX);
     int fxarity = traits::boost + nfxarity;
     // compile-time eliminate any functions that we know ahead of time are of improper arity
-    if (meta::find_in_pack_v<index_value<arity>, index_value<M>...>::value) {
+    if (meta::find_in_pack_v<index_value<traits::arity>, index_value<M>...>::value) {
         return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, nfxarity, start, std::forward<Args>(args)...);
     }
-    if (arity != fxarity) {
-        return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<arity, M...>(), std::forward<Match>(matchfx), L, nfxarity, start, std::forward<Args>(args)...);
+    if (traits::arity != fxarity) {
+        return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<traits::arity, M...>(), std::forward<Match>(matchfx), L, nfxarity, start, std::forward<Args>(args)...);
     }
     if (!stack::stack_detail::check_types<true>().check(args_type(), args_indices(), L, start - traits::boost, no_panic)) {
         return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, nfxarity, start, std::forward<Args>(args)...);
@@ -116,10 +113,10 @@ struct usertype_overloaded_function : base_function {
     
     usertype_overloaded_function(std::tuple<Functions...> set) : overloads(std::move(set)) {}
 
-    template <typename Fx, std::size_t I, typename... R, typename... Args, meta::DisableIf<meta::Bool<Fx::is_free>> = 0>
+    template <typename Fx, std::size_t I, typename... R, typename... Args, meta::disable<meta::boolean<Fx::is_free>> = meta::enabler>
     int call(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
         auto& func = std::get<I>(overloads);
-        func.item = stack::get<meta::Unwrapped<T>*>(L, 1);
+        func.item = stack::get<meta::unwrapped_t<T>*>(L, 1);
 #ifdef SOL_SAFE_USERTYPE
         if (func.item == nullptr) {
             return luaL_error(L, "sol: received null for 'self' argument (use ':' for accessing member functions)");
@@ -128,7 +125,7 @@ struct usertype_overloaded_function : base_function {
         return stack::call_into_lua<0, false>(r, a, L, start, func);
     }
 
-    template <typename Fx, std::size_t I, typename... R, typename... Args, meta::EnableIf<meta::Bool<Fx::is_free>> = 0>
+    template <typename Fx, std::size_t I, typename... R, typename... Args, meta::enable<meta::boolean<Fx::is_free>> = meta::enabler>
     int call(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
         auto& func = std::get<I>(overloads);
         return stack::call_into_lua<0, false>(r, a, L, start - 1, func);

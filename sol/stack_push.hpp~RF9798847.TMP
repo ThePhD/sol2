@@ -76,7 +76,7 @@ struct pusher<T, std::enable_if_t<is_unique_usertype<T>::value>> {
     typedef typename unique_usertype_traits<T>::type P;
     typedef typename unique_usertype_traits<T>::actual_type Real;
 
-    template <typename Arg, meta::enable<std::is_base_of<Real, meta::unqualified_t<Arg>>> = meta::enabler>
+    template <typename Arg, meta::EnableIf<std::is_base_of<Real, meta::Unqualified<Arg>>> = 0>
     static int push(lua_State* L, Arg&& arg) {
         if (unique_usertype_traits<T>::is_null(arg))
             return stack::push(L, nil);
@@ -120,7 +120,7 @@ struct pusher<T, std::enable_if_t<std::is_floating_point<T>::value>> {
 };
 
 template<typename T>
-struct pusher<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_signed<T>>::value>> {
+struct pusher<T, std::enable_if_t<meta::And<std::is_integral<T>, std::is_signed<T>>::value>> {
     static int push(lua_State* L, const T& value) {
         lua_pushinteger(L, static_cast<lua_Integer>(value));
         return 1;
@@ -128,7 +128,7 @@ struct pusher<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_signed<
 };
 
 template<typename T>
-struct pusher<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_unsigned<T>>::value>> {
+struct pusher<T, std::enable_if_t<meta::And<std::is_integral<T>, std::is_unsigned<T>>::value>> {
     static int push(lua_State* L, const T& value) {
          typedef std::make_signed_t<T> signed_int;
          return stack::push(L, static_cast<signed_int>(value));
@@ -136,7 +136,7 @@ struct pusher<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_unsigne
 };
 
 template<typename T>
-struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<meta::has_key_value_pair<T>>, meta::neg<std::is_base_of<reference, T>>>::value>> {
+struct pusher<T, std::enable_if_t<meta::And<meta::has_begin_end<T>, meta::Not<meta::has_key_value_pair<T>>, meta::Not<std::is_base_of<reference, T>>>::value>> {
     static int push(lua_State* L, const T& cont) {
         lua_createtable(L, static_cast<int>(cont.size()), 0);
         int tableindex = lua_gettop(L);
@@ -149,7 +149,7 @@ struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<me
 };
 
 template<typename T>
-struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::has_key_value_pair<T>, meta::neg<std::is_base_of<reference, T>>>::value>> {
+struct pusher<T, std::enable_if_t<meta::And<meta::has_begin_end<T>, meta::has_key_value_pair<T>, meta::Not<std::is_base_of<reference, T>>>::value>> {
     static int push(lua_State* L, const T& cont) {
         lua_createtable(L, static_cast<int>(cont.size()), 0);
         int tableindex = lua_gettop(L);
@@ -275,111 +275,6 @@ struct pusher<std::string> {
         return 1;
     }
 };
-
-
-
-#if 0
-
-template<>
-struct pusher<const wchar_t*> {
-	static int push(lua_State* L, const wchar_t* wstr) {
-		return push(L, wstr, wstr + std::char_traits<wchar_t>::length(wstr));
-	}
-	static int push(lua_State* L, const wchar_t* wstrb, const wchar_t* wstre) {
-		std::string str{};
-		return stack::push(L, str);
-	}
-};
-
-template<>
-struct pusher<const char16_t*> {
-	static int push(lua_State* L, const char16_t* u16str) {
-		return push(L, u16str, u16str + std::char_traits<char16_t>::length(u16str));
-	}
-	static int push(lua_State* L, const char16_t* u16strb, const char16_t* u16stre) {
-		std::string str{};
-		return stack::push(L, str);
-	}
-};
-
-template<>
-struct pusher<const char32_t*> {
-	static int push(lua_State* L, const char32_t* u32str) {
-		return push(L, u32str, u32str + std::char_traits<char32_t>::length(u32str));
-	}
-	static int push(lua_State* L, const char32_t* u32strb, const char32_t* u32stre) {
-		std::string str{};
-		return stack::push(L, str);
-	}
-};
-
-template<size_t N>
-struct pusher<wchar_t[N]> {
-	static int push(lua_State* L, const wchar_t(&str)[N]) {
-		return stack::push<const wchar_t*>(L, str, str + N - 1);
-	}
-};
-
-template<size_t N>
-struct pusher<char16_t[N]> {
-	static int push(lua_State* L, const char16_t(&str)[N]) {
-		return stack::push<const char16_t*>(L, str, str + N - 1);
-	}
-};
-
-template<size_t N>
-struct pusher<char32_t[N]> {
-	static int push(lua_State* L, const char32_t(&str)[N]) {
-		return stack::push<const char32_t*>(L, str, str + N - 1);
-	}
-};
-
-template <>
-struct pusher<wchar_t> {
-	static int push(lua_State* L, wchar_t c) {
-		const wchar_t str[2] = { c, '\0' };
-		return stack::push(L, str);
-	}
-};
-
-template <>
-struct pusher<char16_t> {
-	static int push(lua_State* L, char16_t c) {
-		const char16_t str[2] = { c, '\0' };
-		return stack::push(L, str);
-	}
-};
-
-template <>
-struct pusher<char32_t> {
-	static int push(lua_State* L, char32_t c) {
-		const char32_t str[2] = { c, '\0' };
-		return stack::push(L, str);
-	}
-};
-
-template<>
-struct pusher<std::wstring> {
-	static int push(lua_State* L, const std::wstring& wstr) {
-		return stack::push(L, wstr.data(), wstr.data() + wstr.size());
-	}
-};
-
-template<>
-struct pusher<std::u16string> {
-	static int push(lua_State* L, const std::u16string& u16str) {
-		return stack::push(L, u16str.data(), u16str.data() + u16str.size());
-	}
-};
-
-template<>
-struct pusher<std::u32string> {
-	static int push(lua_State* L, const std::u32string& u32str) {
-		return stack::push(L, u32str.data(), u32str.data() + u32str.size());
-	}
-};
-
-#endif // Bad conversions
 
 template<typename... Args>
 struct pusher<std::tuple<Args...>> {

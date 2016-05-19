@@ -82,55 +82,61 @@ template<class T, class U, class... Args>
 struct are_same<T, U, Args...> : std::integral_constant <bool, std::is_same<T, U>::value && are_same<T, Args...>::value> { };
 
 template<typename T>
-using Type = typename T::type;
+using invoke_t = typename T::type;
 
 template<bool B>
-using Bool = std::integral_constant<bool, B>;
+using boolean = std::integral_constant<bool, B>;
 
 template<typename T>
-using Not = Bool<!T::value>;
+using neg = boolean<!T::value>;
 
 template<typename Condition, typename Then, typename Else>
-using If = typename std::conditional<Condition::value, Then, Else>::type;
-
-template<typename Condition, typename Then, typename Else>
-using TypeIf = typename std::conditional<Condition::value, Type<Then>, Type<Else>>::type;
+using condition = std::conditional_t<Condition::value, Then, Else>;
 
 template<typename... Args>
-struct And : Bool<true> {};
+struct all : boolean<true> {};
 
 template<typename T, typename... Args>
-struct And<T, Args...> : If<T, And<Args...>, Bool<false>> {};
+struct all<T, Args...> : condition<T, all<Args...>, boolean<false>> {};
 
 template<typename... Args>
-struct Or : Bool<false> {};
+struct any : boolean<false> {};
 
 template<typename T, typename... Args>
-struct Or<T, Args...> : If<T, Bool<true>, Or<Args...>> {};
+struct any<T, Args...> : condition<T, boolean<true>, any<Args...>> {};
+
+enum class enable_t {
+	_
+};
+
+constexpr const auto enabler = enable_t::_;
 
 template<typename... Args>
-using EnableIf = typename std::enable_if<And<Args...>::value, int>::type;
+using enable = std::enable_if_t<all<Args...>::value, enable_t>;
 
 template<typename... Args>
-using DisableIf = typename std::enable_if<Not<And<Args...>>::value, int>::type;
+using disable = std::enable_if_t<neg<all<Args...>>::value, enable_t>;
 
 template<typename T>
-using Unqualified = std::remove_cv_t<std::remove_reference_t<T>>;
+using unqualified = std::remove_cv<std::remove_reference_t<T>>;
 
 template<typename T>
-using Unwrapped = typename unwrapped<T>::type;
+using unqualified_t = typename unqualified<T>::type;
+
+template<typename T>
+using unwrapped_t = typename unwrapped<T>::type;
 
 template <std::size_t N, typename Tuple>
-using tuple_element = std::tuple_element<N, Unqualified<Tuple>>;
+using tuple_element = std::tuple_element<N, unqualified_t<Tuple>>;
 
 template <std::size_t N, typename Tuple>
-using tuple_element_t = std::tuple_element_t<N, Unqualified<Tuple>>;
+using tuple_element_t = std::tuple_element_t<N, unqualified_t<Tuple>>;
 
 template<typename V, typename... Vs>
-struct find_in_pack_v : Bool<false> { };
+struct find_in_pack_v : boolean<false> { };
 
 template<typename V, typename Vs1, typename... Vs>
-struct find_in_pack_v<V, Vs1, Vs...> : Or<Bool<(V::value == Vs1::value)>, find_in_pack_v<V, Vs...>> { };
+struct find_in_pack_v<V, Vs1, Vs...> : any<boolean<(V::value == Vs1::value)>, find_in_pack_v<V, Vs...>> { };
 
 namespace meta_detail {
     template<std::size_t I, typename T, typename... Args>
@@ -159,27 +165,36 @@ template<std::size_t I, typename Arg, typename... Args>
 struct at_in_pack<I, Arg, Args...> : std::conditional<I == 0, Arg, at_in_pack_t<I - 1, Args...>> {};
 
 namespace meta_detail {
-    template<std::size_t I, template<typename...> class Pred, typename... Ts>
-    struct count_if_pack : std::integral_constant<std::size_t, 0> {};
-    template<std::size_t I, template<typename...> class Pred, typename T, typename... Ts>
-    struct count_if_pack<I, Pred, T, Ts...> : std::conditional_t<sizeof...(Ts) == 0, 
-        std::integral_constant<std::size_t, I + static_cast<std::size_t>(Pred<T>::value)>,
-        count_if_pack<I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>
+    template<std::size_t Limit, std::size_t I, template<typename...> class Pred, typename... Ts>
+    struct count_for_pack : std::integral_constant<std::size_t, 0> {};
+    template<std::size_t Limit, std::size_t I, template<typename...> class Pred, typename T, typename... Ts>
+    struct count_for_pack<Limit, I, Pred, T, Ts...> : std::conditional_t<sizeof...(Ts) == 0 || Limit < 2, 
+        std::integral_constant<std::size_t, I + static_cast<std::size_t>(Limit != 0 && Pred<T>::value)>,
+        count_for_pack<Limit - 1, I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>
     > { };
     template<std::size_t I, template<typename...> class Pred, typename... Ts>
-    struct count_if_2_pack : std::integral_constant<std::size_t, 0> {};
+    struct count_2_for_pack : std::integral_constant<std::size_t, 0> {};
     template<std::size_t I, template<typename...> class Pred, typename T, typename U, typename... Ts>
-    struct count_if_2_pack<I, Pred, T, U, Ts...> : std::conditional_t<sizeof...(Ts) == 0, 
+    struct count_2_for_pack<I, Pred, T, U, Ts...> : std::conditional_t<sizeof...(Ts) == 0, 
         std::integral_constant<std::size_t, I + static_cast<std::size_t>(Pred<T>::value)>, 
-        count_if_2_pack<I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>
+        count_2_for_pack<I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>
     > { };
 } // meta_detail
 
 template<template<typename...> class Pred, typename... Ts>
-struct count_if_pack : meta_detail::count_if_pack<0, Pred, Ts...> { };
+struct count_for_pack : meta_detail::count_for_pack<sizeof...(Ts), 0, Pred, Ts...> { };
+
+template<template<typename...> class Pred, typename List>
+struct count_for;
+
+template<template<typename...> class Pred, typename... Args>
+struct count_for<Pred, types<Args...>> : count_for_pack<Pred, Args...> {};
+
+template<std::size_t Limit, template<typename...> class Pred, typename... Ts>
+struct count_for_to_pack : meta_detail::count_for_pack<Limit, 0, Pred, Ts...> { };
 
 template<template<typename...> class Pred, typename... Ts>
-struct count_if_2_pack : meta_detail::count_if_2_pack<0, Pred, Ts...> { };
+struct count_2_for_pack : meta_detail::count_2_for_pack<0, Pred, Ts...> { };
 
 template<typename... Args>
 struct return_type {
@@ -201,7 +216,7 @@ using return_type_t = typename return_type<Args...>::type;
 
 namespace meta_detail {
 template <typename> struct always_true : std::true_type {};
-struct is_callable_tester {
+struct is_invokable_tester {
     template <typename Fun, typename... Args>
     always_true<decltype(std::declval<Fun>()(std::declval<Args>()...))> static test(int);
     template <typename...>
@@ -210,17 +225,17 @@ struct is_callable_tester {
 } // meta_detail
 
 template <typename T>
-struct is_callable;
+struct is_invokable;
 template <typename Fun, typename... Args>
-struct is_callable<Fun(Args...)> : decltype(meta_detail::is_callable_tester::test<Fun, Args...>(0)) {};
+struct is_invokable<Fun(Args...)> : decltype(meta_detail::is_invokable_tester::test<Fun, Args...>(0)) {};
 
 namespace meta_detail {
 
-template<typename T, bool isclass = std::is_class<Unqualified<T>>::value>
-struct is_function_impl : std::is_function<std::remove_pointer_t<T>> {};
+template<typename T, bool isclass = std::is_class<unqualified_t<T>>::value>
+struct is_callable : std::is_function<std::remove_pointer_t<T>> {};
 
 template<typename T>
-struct is_function_impl<T, true> {
+struct is_callable<T, true> {
     using yes = char;
     using no = struct { char s[2]; };
 
@@ -253,7 +268,7 @@ template<class F>
 struct has_deducible_signature : meta_detail::check_deducible_signature<F>::type { };
 
 template<typename T>
-struct Function : Bool<meta_detail::is_function_impl<T>::value> {};
+struct is_callable : boolean<meta_detail::is_callable<T>::value> {};
 
 namespace meta_detail {
 
@@ -269,8 +284,15 @@ using void_tuple_element_t = typename void_tuple_element<I, T>::type;
 template<typename Signature, bool b = has_deducible_signature<Signature>::value>
 struct fx_traits {
     static const bool is_member_function = false;
-    typedef std::tuple<> args_tuple_type;
+    static const std::size_t arity = 0;
     typedef types<> args_type;
+    typedef std::tuple<> args_tuple_type;
+    typedef void object_type;
+    typedef void function_pointer_type;
+    typedef void function_type;
+    typedef void free_function_pointer_type;
+    typedef void signature_type;
+    typedef void return_type;
     template<std::size_t i>
     using arg_at = void_tuple_element_t<i, args_tuple_type>;
 };
@@ -376,7 +398,7 @@ template<typename Signature>
 using function_return_t = typename bind_traits<Signature>::return_type;
 
 struct has_begin_end_impl {
-    template<typename T, typename U = Unqualified<T>,
+    template<typename T, typename U = unqualified_t<T>,
         typename B = decltype(std::declval<U&>().begin()),
         typename E = decltype(std::declval<U&>().end())>
     static std::true_type test(int);
@@ -389,7 +411,7 @@ template<typename T>
 struct has_begin_end : decltype(has_begin_end_impl::test<T>(0)) {};
 
 struct has_key_value_pair_impl {
-    template<typename T, typename U = Unqualified<T>,
+    template<typename T, typename U = unqualified_t<T>,
         typename V = typename U::value_type,
         typename F = decltype(std::declval<V&>().first),
         typename S = decltype(std::declval<V&>().second)>
@@ -403,22 +425,32 @@ template<typename T>
 struct has_key_value_pair : decltype(has_key_value_pair_impl::test<T>(0)) {};
 
 template <typename T>
-using is_string_constructible = Or<std::is_same<Unqualified<T>, const char*>, std::is_same<Unqualified<T>, char>, std::is_same<Unqualified<T>, std::string>, std::is_same<Unqualified<T>, std::initializer_list<char>>>;
+using is_string_constructible = any<std::is_same<unqualified_t<T>, const char*>, std::is_same<unqualified_t<T>, char>, std::is_same<unqualified_t<T>, std::string>, std::is_same<unqualified_t<T>, std::initializer_list<char>>>;
 
 template <typename T>
-using is_c_str = Or<
-    std::is_same<std::decay_t<Unqualified<T>>, const char*>, 
-    std::is_same<std::decay_t<Unqualified<T>>, char*>, 
-    std::is_same<Unqualified<T>, std::string>
+using is_c_str = any<
+    std::is_same<std::decay_t<unqualified_t<T>>, const char*>, 
+    std::is_same<std::decay_t<unqualified_t<T>>, char*>, 
+    std::is_same<unqualified_t<T>, std::string>
 >;
 
+template <typename T>
+struct is_move_only : all<
+    neg<std::is_reference<T>>, 
+    neg<std::is_copy_constructible<unqualified_t<T>>>, 
+    std::is_move_constructible<unqualified_t<T>>
+> {};
+
+template <typename T>
+using is_not_move_only = neg<is_move_only<T>>;
+
 namespace meta_detail {
-template <typename T, meta::DisableIf<meta::is_specialization_of<std::tuple, meta::Unqualified<T>>> = 0>
+template <typename T, meta::disable<meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>> = meta::enabler>
 decltype(auto) force_tuple(T&& x) {
     return std::forward_as_tuple(std::forward<T>(x));
 }
 
-template <typename T, meta::EnableIf<meta::is_specialization_of<std::tuple, meta::Unqualified<T>>> = 0>
+template <typename T, meta::enable<meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>> = meta::enabler>
 decltype(auto) force_tuple(T&& x) {
     return std::forward<T>(x);
 }
@@ -442,7 +474,7 @@ auto forward_tuple_impl( std::index_sequence<I...>, Tuple&& tuple ) -> decltype(
 
 template <typename Tuple>
 auto forward_tuple( Tuple&& tuple ) {
-    auto x = forward_tuple_impl(std::make_index_sequence<std::tuple_size<meta::Unqualified<Tuple>>::value>(), std::forward<Tuple>(tuple));
+    auto x = forward_tuple_impl(std::make_index_sequence<std::tuple_size<meta::unqualified_t<Tuple>>::value>(), std::forward<Tuple>(tuple));
     return x;
 }
 

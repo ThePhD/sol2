@@ -57,8 +57,8 @@ struct popper<std::pair<A, B>> {
 };
 
 template <typename T>
-struct popper<T, std::enable_if_t<std::is_base_of<stack_reference, meta::Unqualified<T>>::value>> {
-    static_assert(meta::Not<std::is_base_of<stack_reference, meta::Unqualified<T>>>::value, "You cannot pop something that derives from stack_reference: it will not remain on the stack and thusly will go out of scope!");
+struct popper<T, std::enable_if_t<std::is_base_of<stack_reference, meta::unqualified_t<T>>::value>> {
+    static_assert(meta::neg<std::is_base_of<stack_reference, meta::unqualified_t<T>>>::value, "You cannot pop something that derives from stack_reference: it will not remain on the stack and thusly will go out of scope!");
 };
 } // stack
 } // sol

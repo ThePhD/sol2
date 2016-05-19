@@ -41,7 +41,7 @@ class basic_table_core : public base_t {
     friend class state_view;
 
     template <typename... Args>
-    using is_global = meta::And<meta::Bool<top_level>, meta::is_c_str<Args>...>;
+    using is_global = meta::all<meta::boolean<top_level>, meta::is_c_str<Args>...>;
 
     template<typename Fx>
     void for_each(std::true_type, Fx&& fx) const {
@@ -73,15 +73,15 @@ class basic_table_core : public base_t {
     -> decltype(stack::pop<std::tuple<Ret0, Ret1, Ret...>>(nullptr)){
         typedef decltype(stack::pop<std::tuple<Ret0, Ret1, Ret...>>(nullptr)) Tup;
         return Tup(
-            traverse_get_optional<top_level, Ret0>(meta::is_specialization_of<sol::optional, meta::Unqualified<Ret0>>(), detail::forward_get<0>(keys)),
-            traverse_get_optional<top_level, Ret1>(meta::is_specialization_of<sol::optional, meta::Unqualified<Ret1>>(), detail::forward_get<1>(keys)),
-            traverse_get_optional<top_level, Ret>(meta::is_specialization_of<sol::optional, meta::Unqualified<Ret>>(), detail::forward_get<I>(keys))...
+            traverse_get_optional<top_level, Ret0>(meta::is_specialization_of<sol::optional, meta::unqualified_t<Ret0>>(), detail::forward_get<0>(keys)),
+            traverse_get_optional<top_level, Ret1>(meta::is_specialization_of<sol::optional, meta::unqualified_t<Ret1>>(), detail::forward_get<1>(keys)),
+            traverse_get_optional<top_level, Ret>(meta::is_specialization_of<sol::optional, meta::unqualified_t<Ret>>(), detail::forward_get<I>(keys))...
         );
     }
 
     template<typename Ret, std::size_t I, typename Keys>
     decltype(auto) tuple_get( types<Ret>, std::index_sequence<I>, Keys&& keys ) const {
-        return traverse_get_optional<top_level, Ret>( meta::is_specialization_of<sol::optional, meta::Unqualified<Ret>>(), detail::forward_get<I>(keys) );
+        return traverse_get_optional<top_level, Ret>( meta::is_specialization_of<sol::optional, meta::unqualified_t<Ret>>(), detail::forward_get<I>(keys) );
     }
 
     template<typename Pairs, std::size_t... I>
@@ -156,7 +156,7 @@ public:
     typedef iterator const_iterator;
 
     basic_table_core( ) noexcept : base_t( ) { }
-    template <typename T, meta::EnableIf<meta::Bool<!top_level>, meta::Not<std::is_same<meta::Unqualified<T>, basic_table_core>>, std::is_same<meta::Unqualified<T>, global_table>> = 0>
+    template <typename T, meta::enable<meta::boolean<!top_level>, meta::neg<std::is_same<meta::unqualified_t<T>, basic_table_core>>, std::is_same<meta::unqualified_t<T>, global_table>> = meta::enabler>
     basic_table_core( T&& r ) noexcept : base_t( std::forward<T>(r) ) { }
     basic_table_core(const basic_table_core&) = default;
     basic_table_core(basic_table_core&&) = default;
@@ -215,7 +215,7 @@ public:
     template <typename T, typename... Keys>
     decltype(auto) traverse_get( Keys&&... keys ) const {
         auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-        return traverse_get_optional<top_level, T>(meta::is_specialization_of<sol::optional, meta::Unqualified<T>>(), std::forward<Keys>(keys)...);
+        return traverse_get_optional<top_level, T>(meta::is_specialization_of<sol::optional, meta::unqualified_t<T>>(), std::forward<Keys>(keys)...);
     }
 
     template <typename... Keys>
@@ -264,7 +264,7 @@ public:
 
     template<typename Fx>
     void for_each( Fx&& fx ) const {
-        typedef meta::is_callable<Fx( std::pair<sol::object, sol::object> )> is_paired;
+        typedef meta::is_invokable<Fx( std::pair<sol::object, sol::object> )> is_paired;
         for_each(is_paired(), std::forward<Fx>(fx));
     }
 
@@ -310,12 +310,12 @@ private:
         set_resolved_function<R( Args... )>( std::forward<Key>( key ), std::forward<Fx>( fx ) );
     }
 
-    template<typename Fx, typename Key, meta::EnableIf<meta::is_specialization_of<overload_set, meta::Unqualified<Fx>>> = 0>
+    template<typename Fx, typename Key, meta::enable<meta::is_specialization_of<overload_set, meta::unqualified_t<Fx>>> = meta::enabler>
     void set_fx( types<>, Key&& key, Fx&& fx ) {
         set(std::forward<Key>(key), std::forward<Fx>(fx));
     }
 
-    template<typename Fx, typename Key, typename... Args, meta::DisableIf<meta::is_specialization_of<overload_set, meta::Unqualified<Fx>>> = 0>
+    template<typename Fx, typename Key, typename... Args, meta::disable<meta::is_specialization_of<overload_set, meta::unqualified_t<Fx>>> = meta::enabler>
     void set_fx( types<>, Key&& key, Fx&& fx, Args&&... args ) {
         set(std::forward<Key>(key), function_args(std::forward<Fx>(fx), std::forward<Args>(args)...));
     }
@@ -344,7 +344,7 @@ public:
 
     template <typename... Args>
     static inline table create_with(lua_State* L, Args&&... args) {
-        static const int narr = static_cast<int>(meta::count_if_2_pack<std::is_integral, Args...>::value);
+        static const int narr = static_cast<int>(meta::count_2_for_pack<std::is_integral, Args...>::value);
         return create(L, narr, static_cast<int>((sizeof...(Args) / 2) - narr), std::forward<Args>(args)...);
     }
 
@@ -378,7 +378,7 @@ public:
 
     template <typename Name, typename... Args>
     table create_named(Name&& name, Args&&... args) {
-        static const int narr = static_cast<int>(meta::count_if_2_pack<std::is_integral, Args...>::value);
+        static const int narr = static_cast<int>(meta::count_2_for_pack<std::is_integral, Args...>::value);
         return create(std::forward<Name>(name), narr, sizeof...(Args) / 2 - narr, std::forward<Args>(args)...);
     }
 };

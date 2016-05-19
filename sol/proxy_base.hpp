@@ -34,13 +34,13 @@ struct proxy_base {
         return super.template get<std::string>();
     }
 
-    template<typename T, meta::EnableIf<meta::Not<meta::is_string_constructible<T>>, is_proxy_primitive<meta::Unqualified<T>>> = 0>
+    template<typename T, meta::enable<meta::neg<meta::is_string_constructible<T>>, is_proxy_primitive<meta::unqualified_t<T>>> = meta::enabler>
     operator T ( ) const {
         const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
         return super.template get<T>( );
     }
 
-    template<typename T, meta::EnableIf<meta::Not<meta::is_string_constructible<T>>, meta::Not<is_proxy_primitive<meta::Unqualified<T>>>> = 0>
+    template<typename T, meta::enable<meta::neg<meta::is_string_constructible<T>>, meta::neg<is_proxy_primitive<meta::unqualified_t<T>>>> = meta::enabler>
     operator T& ( ) const {
         const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
         return super.template get<T&>( );

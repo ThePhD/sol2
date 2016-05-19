@@ -51,7 +51,7 @@ struct member_property {
 
     template <typename T, typename Arg>
     void operator()(T& mem, Arg&& arg) {
-        write_if(meta::Not<std::is_void<WSig>>(), mem, arg);
+        write_if(meta::neg<std::is_void<WSig>>(), mem, arg);
     }
 
     template <typename T>
@@ -72,7 +72,7 @@ struct member_property {
 
     template <typename T>
     decltype(auto) operator()(T& mem) {
-        return read_if(meta::Not<std::is_void<RSig>>(), mem);
+        return read_if(meta::neg<std::is_void<RSig>>(), mem);
     }
 };
 
@@ -177,7 +177,7 @@ struct functor {
 };
 
 template<typename T, typename Func>
-struct functor<T, Func, std::enable_if_t<!std::is_member_pointer<Func>::value && std::is_base_of<T, meta::Unqualified<typename meta::bind_traits<Func>::template arg_at<0>>>::value>> {
+struct functor<T, Func, std::enable_if_t<!std::is_member_pointer<Func>::value && std::is_base_of<T, meta::unqualified_t<typename meta::bind_traits<Func>::template arg_at<0>>>::value>> {
     typedef meta::bind_traits<Func> traits_type;
     typedef meta::pop_front_type_t<typename traits_type::args_type> args_type;
     typedef typename traits_type::return_type return_type;
@@ -214,8 +214,8 @@ struct functor<T, member_property<RSig, WSig>, C> {
     typedef meta::pop_front_type_t<typename traits_type::args_type> args_type;
     typedef std::conditional_t<std::is_void<typename traits_type::return_type>::value, typename traits_type::template arg_at<0>, typename traits_type::return_type> return_type;
     typedef member_property<RSig, WSig> function_type;
-    typedef meta::Not<std::is_void<RSig>> can_read;
-    typedef meta::Not<std::is_void<WSig>> can_write;
+    typedef meta::neg<std::is_void<RSig>> can_read;
+    typedef meta::neg<std::is_void<WSig>> can_write;
     static const bool is_free = false;
 
     T* item;
@@ -373,7 +373,7 @@ inline int usertype_call(lua_State* L) {
 
 template<std::size_t I>
 inline int usertype_gc(lua_State* L) {
-    func_gc<I>(meta::Bool<(I < 1)>(), L);
+    func_gc<I>(meta::boolean<(I < 1)>(), L);
     return 0;
 }
 

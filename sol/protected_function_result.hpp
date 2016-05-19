@@ -115,7 +115,7 @@ public:
 
     template<typename T>
     T get() const {
-        return tagged_get(types<meta::Unqualified<T>>());
+        return tagged_get(types<meta::unqualified_t<T>>());
     }
 
     lua_State* lua_state() const { return L; };

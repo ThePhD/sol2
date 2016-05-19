@@ -104,7 +104,7 @@ false;
 #endif
 template<typename T>
 inline decltype(auto) unchecked_get(lua_State* L, int index = -1) {
-    return getter<meta::Unqualified<T>>{}.get(L, index);
+    return getter<meta::unqualified_t<T>>{}.get(L, index);
 }
 } // stack_detail
 
@@ -115,23 +115,23 @@ inline bool maybe_indexable(lua_State* L, int index = -1) {
 
 template<typename T, typename... Args>
 inline int push(lua_State* L, T&& t, Args&&... args) {
-    return pusher<meta::Unqualified<T>>{}.push(L, std::forward<T>(t), std::forward<Args>(args)...);
+    return pusher<meta::unqualified_t<T>>{}.push(L, std::forward<T>(t), std::forward<Args>(args)...);
 }
 
 // overload allows to use a pusher of a specific type, but pass in any kind of args
 template<typename T, typename Arg, typename... Args>
 inline int push(lua_State* L, Arg&& arg, Args&&... args) {
-    return pusher<meta::Unqualified<T>>{}.push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
+    return pusher<meta::unqualified_t<T>>{}.push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 }
 
 template<typename T, typename... Args>
 inline int push_reference(lua_State* L, T&& t, Args&&... args) {
-    typedef meta::And<
+    typedef meta::all<
         std::is_lvalue_reference<T>, 
-        meta::Not<std::is_const<T>>, 
-        meta::Not<is_lua_primitive<T>>
+        meta::neg<std::is_const<T>>, 
+        meta::neg<is_lua_primitive<T>>
     > use_reference_tag;
-    return pusher<std::conditional_t<use_reference_tag::value, detail::as_reference_tag, meta::Unqualified<T>>>{}.push(L, std::forward<T>(t), std::forward<Args>(args)...);
+    return pusher<std::conditional_t<use_reference_tag::value, detail::as_reference_tag, meta::unqualified_t<T>>>{}.push(L, std::forward<T>(t), std::forward<Args>(args)...);
 }
 
 inline int multi_push(lua_State*) {
@@ -160,7 +160,7 @@ inline int multi_push_reference(lua_State* L, T&& t, Args&&... args) {
 
 template <typename T, typename Handler>
 bool check(lua_State* L, int index, Handler&& handler) {
-    typedef meta::Unqualified<T> Tu;
+    typedef meta::unqualified_t<T> Tu;
     checker<Tu> c;
     // VC++ has a bad warning here: shut it up
     (void)c;
@@ -175,7 +175,7 @@ bool check(lua_State* L, int index = -1) {
 
 template<typename T, typename Handler>
 inline decltype(auto) check_get(lua_State* L, int index, Handler&& handler) {
-    return check_getter<meta::Unqualified<T>>{}.get(L, index, std::forward<Handler>(handler));
+    return check_getter<meta::unqualified_t<T>>{}.get(L, index, std::forward<Handler>(handler));
 }
 
 template<typename T>
@@ -190,7 +190,7 @@ template <typename T>
 inline decltype(auto) tagged_get(types<T>, lua_State* L, int index = -1) {
 #ifdef SOL_CHECK_ARGUMENTS
     auto op = check_get<T>(L, index, type_panic);
-    typedef typename meta::Unqualified<decltype(op)>::value_type U;
+    typedef typename meta::unqualified_t<decltype(op)>::value_type U;
     return static_cast<U>(*op);
 #else
     return stack_detail::unchecked_get<T>(L, index);
@@ -211,37 +211,37 @@ inline decltype(auto) get(lua_State* L, int index = -1) {
 
 template<typename T>
 inline decltype(auto) pop(lua_State* L) {
-    return popper<meta::Unqualified<T>>{}.pop(L);
+    return popper<meta::unqualified_t<T>>{}.pop(L);
 }
 
 template <bool global = false, typename Key>
 void get_field(lua_State* L, Key&& key) {
-    field_getter<meta::Unqualified<Key>, global>{}.get(L, std::forward<Key>(key));
+    field_getter<meta::unqualified_t<Key>, global>{}.get(L, std::forward<Key>(key));
 }
 
 template <bool global = false, typename Key>
 void get_field(lua_State* L, Key&& key, int tableindex) {
-    field_getter<meta::Unqualified<Key>, global>{}.get(L, std::forward<Key>(key), tableindex);
+    field_getter<meta::unqualified_t<Key>, global>{}.get(L, std::forward<Key>(key), tableindex);
 }
 
 template <bool global = false, typename Key>
 probe probe_get_field(lua_State* L, Key&& key) {
-    return probe_field_getter<meta::Unqualified<Key>, global>{}.get(L, std::forward<Key>(key));
+    return probe_field_getter<meta::unqualified_t<Key>, global>{}.get(L, std::forward<Key>(key));
 }
 
 template <bool global = false, typename Key>
 probe probe_get_field(lua_State* L, Key&& key, int tableindex) {
-    return probe_field_getter<meta::Unqualified<Key>, global>{}.get(L, std::forward<Key>(key), tableindex);
+    return probe_field_getter<meta::unqualified_t<Key>, global>{}.get(L, std::forward<Key>(key), tableindex);
 }
 
 template <bool global = false, typename Key, typename Value>
 void set_field(lua_State* L, Key&& key, Value&& value) {
-    field_setter<meta::Unqualified<Key>, global>{}.set(L, std::forward<Key>(key), std::forward<Value>(value));
+    field_setter<meta::unqualified_t<Key>, global>{}.set(L, std::forward<Key>(key), std::forward<Value>(value));
 }
 
 template <bool global = false, typename Key, typename Value>
 void set_field(lua_State* L, Key&& key, Value&& value, int tableindex) {
-    field_setter<meta::Unqualified<Key>, global>{}.set(L, std::forward<Key>(key), std::forward<Value>(value), tableindex);
+    field_setter<meta::unqualified_t<Key>, global>{}.set(L, std::forward<Key>(key), std::forward<Value>(value), tableindex);
 }
 } // stack
 } // sol

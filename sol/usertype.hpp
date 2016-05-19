@@ -52,7 +52,7 @@ template <>
 struct is_constructor<no_construction> : std::true_type {};
 
 template <typename... Args>
-using has_constructor = meta::Or<is_constructor<meta::Unqualified<Args>>...>;
+using has_constructor = meta::any<is_constructor<meta::unqualified_t<Args>>...>;
 
 template <typename T>
 struct is_destructor : std::false_type {};
@@ -61,7 +61,7 @@ template <typename Fx>
 struct is_destructor<destructor_wrapper<Fx>> : std::true_type {};
 
 template <typename... Args>
-using has_destructor = meta::Or<is_destructor<meta::Unqualified<Args>>...>;
+using has_destructor = meta::any<is_destructor<meta::unqualified_t<Args>>...>;
 
 enum class stage {
     normalmeta,
@@ -208,21 +208,21 @@ private:
 
     template<typename Fx>
     std::unique_ptr<function_detail::base_function> make_free_function(std::true_type, const std::string&, Fx&& func) {
-        typedef std::decay_t<meta::Unqualified<Fx>> function_type;
+        typedef std::decay_t<meta::unqualified_t<Fx>> function_type;
         return std::make_unique<function_detail::usertype_function<T, function_type>>(func);
     }
 
     template<typename Fx>
     std::unique_ptr<function_detail::base_function> make_free_function(std::false_type, const std::string&, Fx&& func) {
-        typedef std::decay_t<meta::Unqualified<Fx>> function_type;
+        typedef std::decay_t<meta::unqualified_t<Fx>> function_type;
         return std::make_unique<function_detail::free_function<function_type>>(func);
     }
 
     template<typename... Args, typename Ret>
     std::unique_ptr<function_detail::base_function> make_function(const std::string& name, Ret(*func)(Args...)) {
-        typedef meta::bind_traits<Ret(Args...)> btraits;
+        typedef lua_bind_traits<Ret(Args...)> btraits;
         typedef typename btraits::template arg_at<0> Argu;
-        typedef meta::Unqualified<std::remove_pointer_t<Argu>> Arg0;
+        typedef meta::unqualified_t<std::remove_pointer_t<Argu>> Arg0;
         return make_free_function(std::is_base_of<Arg0, T>(), name, func);
     }
 
@@ -248,22 +248,22 @@ private:
 
     template<typename Fx>
     std::unique_ptr<function_detail::base_function> make_functor_function(std::true_type, const std::string&, Fx&& func) {
-        typedef std::decay_t<meta::Unqualified<Fx>> function_type;
+        typedef std::decay_t<meta::unqualified_t<Fx>> function_type;
         return std::make_unique<function_detail::usertype_function<T, function_type>>(func);
     }
 
     template<typename Fx>
     std::unique_ptr<function_detail::base_function> make_functor_function(std::false_type, const std::string&, Fx&& func) {
-        typedef std::decay_t<meta::Unqualified<Fx>> function_type;
+        typedef std::decay_t<meta::unqualified_t<Fx>> function_type;
         return std::make_unique<function_detail::functor_function<function_type>>(func);
     }
 
     template<typename Fx>
     std::unique_ptr<function_detail::base_function> make_function(const std::string& name, Fx&& func) {
-        typedef meta::Unqualified<Fx> Fxu;
-        typedef meta::bind_traits<Fxu> btraits;
+        typedef meta::unqualified_t<Fx> Fxu;
+        typedef lua_bind_traits<Fxu> btraits;
         typedef typename btraits::template arg_at<0> Argu;
-        typedef meta::Unqualified<std::remove_pointer_t<Argu>> Arg0;
+        typedef meta::unqualified_t<std::remove_pointer_t<Argu>> Arg0;
         return make_functor_function(std::is_base_of<Arg0, T>(), name, std::forward<Fx>(func));
     }
 
@@ -353,7 +353,7 @@ private:
 
     template<std::size_t N, typename Fx>
     void build_function(std::string funcname, Fx&& func) {
-        typedef meta::Or<std::is_member_object_pointer<meta::Unqualified<Fx>>, meta::is_specialization_of<member_property, meta::Unqualified<Fx>>> is_variable;
+        typedef meta::any<std::is_member_object_pointer<meta::unqualified_t<Fx>>, meta::is_specialization_of<member_property, meta::unqualified_t<Fx>>> is_variable;
         functionnames.push_back(std::move(funcname));
         std::string& name = functionnames.back();
         auto baseptr = make_function(name, std::forward<Fx>(func));
@@ -482,12 +482,12 @@ private:
     usertype(usertype_detail::add_destructor_tag, Args&&... args) : usertype(usertype_detail::verified, "__gc", default_destructor, std::forward<Args>(args)...) {}
 
     template<typename... Args>
-    usertype(usertype_detail::check_destructor_tag, Args&&... args) : usertype(meta::If<meta::And<std::is_destructible<T>, meta::Not<usertype_detail::has_destructor<Args...>>>, usertype_detail::add_destructor_tag, usertype_detail::verified_tag>(), std::forward<Args>(args)...) {}
+    usertype(usertype_detail::check_destructor_tag, Args&&... args) : usertype(meta::condition<meta::all<std::is_destructible<T>, meta::neg<usertype_detail::has_destructor<Args...>>>, usertype_detail::add_destructor_tag, usertype_detail::verified_tag>(), std::forward<Args>(args)...) {}
 
 public:
 
     template<typename... Args>
-    usertype(Args&&... args) : usertype(meta::If<meta::And<std::is_default_constructible<T>, meta::Not<usertype_detail::has_constructor<Args...>>>, decltype(default_constructor), usertype_detail::check_destructor_tag>(), std::forward<Args>(args)...) {}
+    usertype(Args&&... args) : usertype(meta::condition<meta::all<std::is_default_constructible<T>, meta::neg<usertype_detail::has_constructor<Args...>>>, decltype(default_constructor), usertype_detail::check_destructor_tag>(), std::forward<Args>(args)...) {}
 
     template<typename... Args, typename... CArgs>
     usertype(constructors<CArgs...> constructorlist, Args&&... args) : usertype(usertype_detail::verified, "new", constructorlist, "__gc", default_destructor, std::forward<Args>(args)...) {

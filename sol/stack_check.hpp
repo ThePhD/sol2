@@ -65,7 +65,7 @@ struct check_types {
     static bool check(types<T, Args...>, std::index_sequence<I0, I...>, lua_State* L, int firstargument, Handler&& handler) {
         if (!stack::check<T>(L, firstargument + I0, handler))
             return false;
-        return check(types<Args...>(), std::index_sequence<I...>(), L, firstargument - static_cast<int>(is_transparent_argument<meta::Unqualified<T>>::value), std::forward<Handler>(handler));
+        return check(types<Args...>(), std::index_sequence<I...>(), L, firstargument - static_cast<int>(is_transparent_argument<meta::unqualified_t<T>>::value), std::forward<Handler>(handler));
     }
 
     template <typename Handler>
@@ -257,7 +257,7 @@ struct checker<T, type::userdata, C> {
             handler(L, index, type::userdata, indextype);
             return false;
         }
-        if (meta::Or<std::is_same<T, light_userdata_value>, std::is_same<T, userdata_value>, std::is_same<T, userdata>, std::is_same<T, lightuserdata>>::value)
+        if (meta::any<std::is_same<T, light_userdata_value>, std::is_same<T, userdata_value>, std::is_same<T, userdata>, std::is_same<T, lightuserdata>>::value)
             return true;
         if (lua_getmetatable(L, index) == 0) {
              return true;

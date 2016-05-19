@@ -28,7 +28,7 @@ namespace sol {
 namespace function_detail {
 template<typename Func>
 struct free_function : public base_function {
-    typedef meta::Unwrapped<meta::Unqualified<Func>> Function;
+    typedef meta::unwrapped_t<meta::unqualified_t<Func>> Function;
     typedef meta::function_return_t<Function> return_type;
     typedef meta::function_args_t<Function> args_types;
     Function fx;
@@ -48,7 +48,7 @@ struct free_function : public base_function {
 
 template<typename Func>
 struct functor_function : public base_function {
-    typedef meta::Unwrapped<meta::Unqualified<Func>> Function;
+    typedef meta::unwrapped_t<meta::unqualified_t<Func>> Function;
     typedef decltype(&Function::operator()) function_type;
     typedef meta::function_return_t<function_type> return_type;
     typedef meta::function_args_t<function_type> args_types;
@@ -106,7 +106,7 @@ struct member_variable : public base_function {
     typedef typename meta::bind_traits<function_type>::args_type args_types;
     function_type var;
     T member;
-    typedef std::add_lvalue_reference_t<meta::Unwrapped<std::remove_reference_t<decltype(detail::deref(member))>>> M;
+    typedef std::add_lvalue_reference_t<meta::unwrapped_t<std::remove_reference_t<decltype(detail::deref(member))>>> M;
 
     template<typename V, typename... Args>
     member_variable(V&& v, Args&&... args): var(std::forward<V>(v)), member(std::forward<Args>(args)...) {}
@@ -138,7 +138,7 @@ struct member_variable : public base_function {
             stack::push(L, (mem.*var));
             return 1;
         case 1:
-            return set_variable(meta::Not<std::is_const<return_type>>(), L, mem);
+            return set_variable(meta::neg<std::is_const<return_type>>(), L, mem);
         default:
             return luaL_error(L, "sol: incorrect number of arguments to member variable function");
         }

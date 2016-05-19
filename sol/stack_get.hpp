@@ -30,7 +30,6 @@
 #include <memory>
 #include <functional>
 #include <utility>
-#include <codecvt>
 
 namespace sol {
 namespace stack {
@@ -50,14 +49,14 @@ struct getter<T, std::enable_if_t<std::is_floating_point<T>::value>> {
 };
 
 template<typename T>
-struct getter<T, std::enable_if_t<meta::And<std::is_integral<T>, std::is_signed<T>>::value>> {
+struct getter<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_signed<T>>::value>> {
     static T get(lua_State* L, int index = -1) {
         return static_cast<T>(lua_tointeger(L, index));
     }
 };
 
 template<typename T>
-struct getter<T, std::enable_if_t<meta::And<std::is_integral<T>, std::is_unsigned<T>>::value>> {
+struct getter<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_unsigned<T>>::value>> {
     static T get(lua_State* L, int index = -1) {
         return static_cast<T>(lua_tointeger(L, index));
     }
@@ -123,52 +122,26 @@ struct getter<char> {
     }
 };
 
+#if 0
+
 template<>
 struct getter<std::wstring> {
     static std::wstring get(lua_State* L, int index = -1) {
-        size_t len;
-        auto str = lua_tolstring(L, index, &len);
-        typedef std::codecvt_utf8<wchar_t> convert;
-        std::wstring_convert<convert, wchar_t> conv;
-        return conv.from_bytes(str, str + len);
+        return {};
     }
 };
 
 template<>
 struct getter<std::u16string> {
     static std::u16string get(lua_State* L, int index = -1) {
-        size_t len;
-        auto str = lua_tolstring(L, index, &len);
-#ifdef _MSC_VER // https://connect.microsoft.com/VisualStudio/feedback/details/1348277/link-error-when-using-std-codecvt-utf8-utf16-char16-t
-        typedef uint16_t T;
-        typedef std::codecvt_utf8<T> convert;
-        std::wstring_convert<convert, T> conv;
-        std::basic_string<T> shitty = conv.from_bytes(str, str + len);
-	   return std::u16string(shitty.cbegin(), shitty.cend());  // fuck you VC++
-#else
-        typedef std::codecvt_utf8<char16_t> convert;
-        std::wstring_convert<convert, char16_t> conv;
-        return conv.from_bytes(str, str + len);
-#endif // VC++
+        return {};
     }
 };
 
 template<>
 struct getter<std::u32string> {
     static std::u32string get(lua_State* L, int index = -1) {
-        size_t len;
-        auto str = lua_tolstring(L, index, &len);
-#ifdef _MSC_VER // https://connect.microsoft.com/VisualStudio/feedback/details/1348277/link-error-when-using-std-codecvt-utf8-utf16-char16-t
-        typedef int32_t T;
-        typedef std::codecvt_utf8<T> convert;
-        std::wstring_convert<convert, T> conv;
-        std::basic_string<T> shitty = conv.from_bytes(str, str + len);
-	   return std::u32string(shitty.cbegin(), shitty.cend()); // fuck you VC++
-#else
-        typedef std::codecvt_utf8<char32_t> convert;
-        std::wstring_convert<convert, char32_t> conv;
-        return conv.from_bytes(str, str + len);
-#endif // VC++
+        return {};
     }
 };
 
@@ -195,6 +168,8 @@ struct getter<char32_t> {
 	   return str.size() > 0 ? str[0] : '\0';
     }
 };
+
+#endif // For a distant future
 
 template<>
 struct getter<nil_t> {

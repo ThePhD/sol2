@@ -42,7 +42,7 @@ struct is_this_state_raw : std::false_type {};
 template <>
 struct is_this_state_raw<this_state> : std::true_type {};
 template <typename T>
-using is_this_state = is_this_state_raw<meta::Unqualified<T>>;
+using is_this_state = is_this_state_raw<meta::unqualified_t<T>>;
 
 template<typename T>
 inline int push_as_upvalues(lua_State* L, T& item) {
@@ -75,18 +75,20 @@ inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 1) {
 
 template <bool checkargs = default_check_arguments, std::size_t... I, typename R, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<!std::is_void<R>::value>>
 inline decltype(auto) call(types<R>, types<Args...> ta, std::index_sequence<I...> tai, lua_State* L, int start, Fx&& fx, FxArgs&&... args) {
-    typedef meta::index_in_pack<this_state, Args...> state_index;
-    typedef meta::index_in_pack<variadic_args, Args...> va_pack_index;
-    check_types<checkargs>{}.check(ta, tai, L, start, type_panic);
-    return fx(std::forward<FxArgs>(args)..., stack_detail::unchecked_get<Args>(L, start + I - static_cast<int>(state_index::value < I) - static_cast<int>(va_pack_index::value < I))...);
+#ifndef _MSC_VER
+	static_assert(meta::all<meta::is_not_move_only<Args>...>::value, "One of the arguments being bound is a move-only type, and it is not being taken by reference: this will break your code. Please take a reference and std::move it manually if this was your intention.");
+#endif // This compiler make me so fucking sad
+	check_types<checkargs>{}.check(ta, tai, L, start, type_panic);
+    return fx(std::forward<FxArgs>(args)..., stack_detail::unchecked_get<Args>(L, start + I - meta::count_for_to_pack<I, is_transparent_argument, Args...>::value)...);
 }
 
 template <bool checkargs = default_check_arguments, std::size_t... I, typename... Args, typename Fx, typename... FxArgs>
 inline void call(types<void>, types<Args...> ta, std::index_sequence<I...> tai, lua_State* L, int start, Fx&& fx, FxArgs&&... args) {
-    typedef meta::index_in_pack<this_state, Args...> state_index;
-    typedef meta::index_in_pack<variadic_args, Args...> va_pack_index;
+#ifndef _MSC_VER
+    static_assert(meta::all<meta::is_not_move_only<Args>...>::value, "One of the arguments being bound is a move-only type, and it is not being taken by reference: this will break your code. Please take a reference and std::move it manually if this was your intention.");
+#endif // This compiler make me so fucking sad
     check_types<checkargs>{}.check(ta, tai, L, start, type_panic);
-    fx(std::forward<FxArgs>(args)..., stack_detail::unchecked_get<Args>(L, start + I - static_cast<int>(state_index::value < I) - static_cast<int>(va_pack_index::value < I))...);
+    fx(std::forward<FxArgs>(args)..., stack_detail::unchecked_get<Args>(L, start + I - meta::count_for_to_pack<I, is_transparent_argument, Args...>::value)...);
 }
 } // stack_detail
 
@@ -147,15 +149,15 @@ inline void call_from_top(types<void> tr, types<Args...> ta, lua_State* L, Fx&& 
 template<int additionalpop = 0, bool check_args = stack_detail::default_check_arguments, typename... Args, typename Fx, typename... FxArgs>
 inline int call_into_lua(types<void> tr, types<Args...> ta, lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs) {
     call<check_args>(tr, ta, L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
-    int nargs = static_cast<int>(sizeof...(Args)) + additionalpop - meta::count_if_pack<stack_detail::is_this_state, Args...>::value;
+    int nargs = static_cast<int>(sizeof...(Args)) + additionalpop - meta::count_for_pack<stack_detail::is_this_state, Args...>::value;
     lua_pop(L, nargs);
     return 0;
 }
 
-template<int additionalpop = 0, bool check_args = stack_detail::default_check_arguments, typename Ret0, typename... Ret, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<meta::Not<std::is_void<Ret0>>::value>>
+template<int additionalpop = 0, bool check_args = stack_detail::default_check_arguments, typename Ret0, typename... Ret, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<meta::neg<std::is_void<Ret0>>::value>>
 inline int call_into_lua(types<Ret0, Ret...>, types<Args...> ta, lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs) {
     decltype(auto) r = call<check_args>(types<meta::return_type_t<Ret0, Ret...>>(), ta, L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
-    int nargs = static_cast<int>(sizeof...(Args)) + additionalpop - meta::count_if_pack<stack_detail::is_this_state, Args...>::value;
+    int nargs = static_cast<int>(sizeof...(Args)) + additionalpop - meta::count_for_pack<stack_detail::is_this_state, Args...>::value;
     lua_pop(L, nargs);
     return push_reference(L, std::forward<decltype(r)>(r));
 }

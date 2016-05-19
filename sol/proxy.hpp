@@ -32,7 +32,7 @@ namespace sol {
 template<typename Table, typename Key>
 struct proxy : public proxy_base<proxy<Table, Key>> {
 private:
-    typedef meta::If<meta::is_specialization_of<std::tuple, Key>, Key, std::tuple<meta::If<std::is_array<meta::Unqualified<Key>>, Key&, meta::Unqualified<Key>>>> key_type;
+    typedef meta::condition<meta::is_specialization_of<std::tuple, Key>, Key, std::tuple<meta::condition<std::is_array<meta::unqualified_t<Key>>, Key&, meta::unqualified_t<Key>>>> key_type;
 
     template<typename T, std::size_t... I>
     decltype(auto) tuple_get(std::index_sequence<I...>) const {
@@ -53,7 +53,7 @@ public:
 
     template<typename T>
     proxy& set(T&& item) {
-        tuple_set( std::make_index_sequence<std::tuple_size<meta::Unqualified<key_type>>::value>(), std::forward<T>(item) );
+        tuple_set( std::make_index_sequence<std::tuple_size<meta::unqualified_t<key_type>>::value>(), std::forward<T>(item) );
         return *this;
     }
 
@@ -63,19 +63,19 @@ public:
         return *this;
     }
 
-    template<typename U, meta::EnableIf<meta::Function<meta::Unqualified<U>>> = 0>
+    template<typename U, meta::enable<meta::is_callable<meta::unqualified_t<U>>> = meta::enabler>
     proxy& operator=(U&& other) {
         return set_function(std::forward<U>(other));
     }
 
-    template<typename U, meta::DisableIf<meta::Function<meta::Unqualified<U>>> = 0>
+    template<typename U, meta::disable<meta::is_callable<meta::unqualified_t<U>>> = meta::enabler>
     proxy& operator=(U&& other) {
         return set(std::forward<U>(other));
     }
 
     template<typename T>
     decltype(auto) get() const {
-        return tuple_get<T>( std::make_index_sequence<std::tuple_size<meta::Unqualified<key_type>>::value>() );
+        return tuple_get<T>( std::make_index_sequence<std::tuple_size<meta::unqualified_t<key_type>>::value>() );
     }
 
     template<typename T>
@@ -115,7 +115,7 @@ public:
 
     bool valid () const {
         stack::push_pop(tbl);
-        auto p = stack::probe_get_field<std::is_same<meta::Unqualified<Table>, global_table>::value>(tbl.lua_state(), key, lua_gettop(tbl.lua_state()));
+        auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(tbl.lua_state(), key, lua_gettop(tbl.lua_state()));
         lua_pop(tbl.lua_state(), p.levels);
         return p;
     }

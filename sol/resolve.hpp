@@ -27,14 +27,14 @@
 
 namespace sol {
 namespace detail {
-template<typename R, typename... Args, typename F, typename = std::result_of_t<meta::Unqualified<F>(Args...)>>
-inline auto resolve_i(types<R(Args...)>, F&&) -> R(meta::Unqualified<F>::*)(Args...) {
+template<typename R, typename... Args, typename F, typename = std::result_of_t<meta::unqualified_t<F>(Args...)>>
+inline auto resolve_i(types<R(Args...)>, F&&) -> R(meta::unqualified_t<F>::*)(Args...) {
     using Sig = R(Args...);
-    typedef meta::Unqualified<F> Fu;
+    typedef meta::unqualified_t<F> Fu;
     return static_cast<Sig Fu::*>(&Fu::operator());
 }
 
-template<typename F, typename U = meta::Unqualified<F>>
+template<typename F, typename U = meta::unqualified_t<F>>
 inline auto resolve_f(std::true_type, F&& f)
 -> decltype(resolve_i(types<meta::function_signature_t<decltype(&U::operator())>>(), std::forward<F>(f))) {
     return resolve_i(types<meta::function_signature_t<decltype(&U::operator())>>(), std::forward<F>(f));
@@ -46,7 +46,7 @@ inline void resolve_f(std::false_type, F&&) {
                     "Cannot use no-template-parameter call with an overloaded functor: specify the signature");
 }
 
-template<typename F, typename U = meta::Unqualified<F>>
+template<typename F, typename U = meta::unqualified_t<F>>
 inline auto resolve_i(types<>, F&& f) -> decltype(resolve_f(meta::has_deducible_signature<U>(), std::forward<F>(f))) {
     return resolve_f(meta::has_deducible_signature<U> {}, std::forward<F>(f));
 }
