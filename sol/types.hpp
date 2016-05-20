@@ -32,12 +32,12 @@ namespace sol {
 namespace detail {
 #ifdef SOL_NO_EXCEPTIONS
 template <lua_CFunction f>
-inline int static_trampoline (lua_State* L) {
+int static_trampoline (lua_State* L) {
     return f(L);
 }
 
 template <typename Fx, typename... Args>
-inline int trampoline(lua_State* L, Fx&& f, Args&&... args) {
+int trampoline(lua_State* L, Fx&& f, Args&&... args) {
     return f(L, std::forward<Args>(args)...);
 }
 
@@ -46,7 +46,7 @@ inline int c_trampoline(lua_State* L, lua_CFunction f) {
 }
 #else
 template <lua_CFunction f>
-inline int static_trampoline (lua_State* L) {
+int static_trampoline (lua_State* L) {
     try {
         return f(L);
     }
@@ -63,7 +63,7 @@ inline int static_trampoline (lua_State* L) {
 }
 
 template <typename Fx, typename... Args>
-inline int trampoline(lua_State* L, Fx&& f, Args&&... args) {
+int trampoline(lua_State* L, Fx&& f, Args&&... args) {
     try {
         return f(L, std::forward<Args>(args)...);
     }
