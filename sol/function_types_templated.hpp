@@ -98,14 +98,14 @@ namespace function_detail {
     }
 
     template <typename F, F fx>
-    inline int call_wrapper_entry(lua_State* L) {
+    int call_wrapper_entry(lua_State* L) {
         return call_wrapper_function<F, fx>(std::is_member_function_pointer<meta::unqualified_t<F>>(), L);
     }
 } // function_detail
 
 template <typename F, F fx>
 inline int c_call(lua_State* L) {
-    return detail::c_trampoline(L, function_detail::call_wrapper_entry<F, fx>);
+    return detail::static_trampoline<(&function_detail::call_wrapper_entry<F, fx>)>(L);
 }
 } // sol
 

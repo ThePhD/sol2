@@ -62,6 +62,22 @@ int plop_xyz(int x, int y, std::string z) {
 }
 }
 
+int func_1(int) {
+    return 1;
+}
+
+std::string func_1s(std::string a) {
+    return "string: " + a;
+}
+
+int func_2(int, int) {
+    return 2;
+}
+
+void func_3(int, int, int) {
+
+}
+
 TEST_CASE("functions/overload-resolution", "Check if overloaded function resolution templates compile/work") {
     sol::state lua;
     lua.open_libraries(sol::lib::base);
@@ -792,3 +808,27 @@ TEST_CASE("functions/required_and_variadic_args", "Check if a certain number of 
     REQUIRE_NOTHROW(lua.script("v(20, 25)"));
     REQUIRE_THROWS(lua.script("v(20)"));
 }
+
+TEST_CASE("functions/overloading", "Check if overloading works properly for regular set function syntax") {
+    sol::state lua;
+    lua.open_libraries(sol::lib::base);
+
+    lua.set_function("func_1", func_1);
+    lua.set_function("func", sol::overload(func_1, func_1s, func_2, func_3));
+
+    const std::string string_bark = "string: bark";
+
+    REQUIRE_NOTHROW(lua.script(
+"a = func(1)\n"
+"b = func('bark')\n"
+"c = func(1,2)\n"
+"func(1,2,3)\n"
+));
+
+    REQUIRE((lua["a"] == 1));
+    REQUIRE((lua["b"] == string_bark));
+    REQUIRE((lua["c"] == 2));
+
+    REQUIRE_THROWS(lua.script("func(1,2,'meow')"));
+}
+

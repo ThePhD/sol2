@@ -50,21 +50,36 @@ private:
     table reg;
     global_table global;
 
+    optional<object> is_loaded_package(const std::string& key) {
+        auto loaded = reg.traverse_get<optional<object>>("_LOADED", key);
+        bool is53mod = loaded && !(loaded->is<bool>() && !loaded->as<bool>());
+        if (is53mod)
+            return loaded;
+	   return nullopt;
+    }
+
     template <typename T>
     void ensure_package(const std::string& key, T&& sr) {
-        auto pkg = (*this)["package"];
-        if (!pkg.valid()) {
-            pkg = create_table_with("loaded", create_table_with(key, sr));
+        auto loaded = reg["_LOADED"];
+	   if (!loaded.valid()) {
+            loaded = create_table_with(key, sr);
         }
 	   else {
-            auto ld = pkg["loaded"];
-            if (!ld.valid()) {
-                ld = create_table_with(key, sr);
-            }
-            else {
-                ld[key] = sr;
-            }
+            loaded[key] = sr;
         }
+    }
+
+    template <typename Fx>
+    object require_core(const std::string& key, Fx&& action, bool create_global = true) {
+        optional<object> loaded = is_loaded_package(key);
+	   if (loaded)
+		   return std::move(*loaded);
+        action();
+        auto sr = stack::get<stack_reference>(L);
+        if (create_global)
+            set(key, sr);
+        ensure_package(key, sr);
+        return stack::pop<object>(L);   
     }
 
 public:
@@ -166,42 +181,17 @@ public:
         }
     }
 
-    template <typename Fx>
-    object require(const std::string& key, Fx&& open_function, bool is_global_library = true) {
-        auto openfx = [fx = std::forward<Fx>(open_function)](lua_State* L){ 
-            typedef lua_bind_traits<meta::unqualified_t<Fx>> traits;
-            return stack::call(typename traits::return_type(), typename traits::args_type(), L, fx); 
-        };
-        stack::push(L, function_args<function_sig<>>(std::forward<Fx>(openfx)));
-	   lua_CFunction openf = stack::pop<lua_CFunction>(L);
-        luaL_requiref(L, key.c_str(), openf, is_global_library ? 1 : 0);
-        object r = stack::pop<object>(L);
-	   lua_pop(L, 1);
-	   return r;
+    object require(const std::string& key, lua_CFunction open_function, bool create_global = true) {
+        luaL_requiref(L, key.c_str(), open_function, create_global ? 1 : 0);
+        return stack::pop<object>(L);
     }
 
-    object require_script(const std::string& key, const std::string& code) {
-        optional<object> loaded = global.traverse_get<optional<object>>("package", "loaded", key);
-        bool ismod = loaded && !(loaded->is<bool>() && !loaded->as<bool>());
-        if (ismod)
-            return std::move(*loaded);
-        script(code);
-        auto sr = stack::get<stack_reference>(L);
-        set(key, sr);
-        ensure_package(key, sr);
-	   return stack::pop<object>(L);
+    object require_script(const std::string& key, const std::string& code, bool create_global = true) {
+        return require_core(key, [this, &code]() {this->script(code); }, create_global);
     }
 
-    object require_file(const std::string& key, const std::string& file) {
-        auto loaded = global.traverse_get<optional<object>>("package", "loaded", key);
-        bool ismod = loaded && !(loaded->is<bool>() && !loaded->as<bool>());
-        if (loaded)
-            return std::move(*loaded);
-        script_file(file);
-        auto sr = stack::get<stack_reference>(L);
-        set(key, sr);
-        ensure_package(key, sr);
-	   return stack::pop<object>(L);
+    object require_file(const std::string& key, const std::string& file, bool create_global = true) {
+        return require_core(key, [this, &file]() {this->script_file(file); }, create_global);
     }
 
     void script(const std::string& code) {

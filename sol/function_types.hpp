@@ -170,7 +170,7 @@ struct pusher<function_sig<Sigs...>> {
         lua_CFunction freefunc = &function_detail::upvalue_free_function<Fx>::call;
 
         int upvalues = stack::stack_detail::push_as_upvalues(L, target);
-        stack::push(L, freefunc, upvalues);
+        stack::push(L, c_closure(freefunc, upvalues));
     }
 
     static void select_function(std::true_type, lua_State* L, lua_CFunction f) {
@@ -190,7 +190,7 @@ struct pusher<function_sig<Sigs...>> {
         stack::push(L, userdata_value(targetdata));
         function_detail::free_function_cleanup(L);
         lua_setmetatable(L, -2);
-        stack::push(L, freefunc, 1);
+        stack::push(L, c_closure(freefunc, 1));
     }
 
     template<typename... Args>

@@ -69,19 +69,3 @@ TEST_CASE("stack/strings", "test that strings can be roundtripped") {
     REQUIRE(wide_to_char32 == utf32str[0]);
 }
 #endif // Shit C++
-
-
-TEST_CASE("state/strings", "opening strings as 'requires' clauses") {
-    std::string code = "return { modfunc = function () return 221 end }";
-
-    sol::state lua;
-    sol::table thingy1 = lua.require_script("thingy", code);
-    sol::table thingy2 = lua.require_script("thingy", code);
-
-    int val1 = thingy1["modfunc"]();
-    int val2 = thingy2["modfunc"]();
-    REQUIRE(val1 == 221);
-    REQUIRE(val2 == 221);
-    // must have loaded the same table
-    REQUIRE(thingy1 == thingy2);   
-}
