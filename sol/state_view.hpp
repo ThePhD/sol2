@@ -55,11 +55,32 @@ private:
         bool is53mod = loaded && !(loaded->is<bool>() && !loaded->as<bool>());
         if (is53mod)
             return loaded;
-	   return nullopt;
+#if SOL_LUA_VERSION <= 501
+        auto loaded51 = global.traverse_get<optional<object>>("package", "loaded", key);
+        bool is51mod = loaded51 && !(loaded51->is<bool>() && !loaded51->as<bool>());
+        if (is51mod)
+            return loaded51;
+#endif
+        return nullopt;
     }
 
     template <typename T>
     void ensure_package(const std::string& key, T&& sr) {
+#if SOL_LUA_VERSION <= 501
+        auto pkg = global["package"];
+        if (!pkg.valid()) {
+            pkg = create_table_with("loaded", create_table_with(key, sr));
+        }
+        else {
+            auto ld = pkg["loaded"];
+            if (!ld.valid()) {
+                ld = create_table_with(key, sr);
+            }
+            else {
+                ld[key] = sr;
+            }
+        }
+#endif
         auto loaded = reg["_LOADED"];
 	   if (!loaded.valid()) {
             loaded = create_table_with(key, sr);
