@@ -105,7 +105,7 @@ namespace function_detail {
 
 template <typename F, F fx>
 inline int c_call(lua_State* L) {
-#ifdef __clang
+#ifdef __clang__
 	return detail::trampoline(L, function_detail::call_wrapper_entry<F, fx>);
 #else
 	return detail::static_trampoline<(&function_detail::call_wrapper_entry<F, fx>)>(L);
