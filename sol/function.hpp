@@ -57,7 +57,7 @@ private:
 
     function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n ) const {
         int stacksize = lua_gettop( base_t::lua_state( ) );
-        int firstreturn = std::max( 1, stacksize - static_cast<int>( n ) );
+        int firstreturn = (std::max)( 1, stacksize - static_cast<int>( n ) );
         luacall(n, LUA_MULTRET);
         int poststacksize = lua_gettop( base_t::lua_state( ) );
         int returncount = poststacksize - (firstreturn - 1);
@@ -100,7 +100,7 @@ namespace stack {
 template<typename Signature>
 struct getter<std::function<Signature>> {
     typedef meta::bind_traits<Signature> fx_t;
-    typedef typename fx_t::args_type args_types;
+    typedef typename fx_t::args_list args_lists;
     typedef meta::tuple_types<typename fx_t::return_type> return_types;
 
     template<typename... Args, typename... Ret>
@@ -127,7 +127,7 @@ struct getter<std::function<Signature>> {
     }
 
     static std::function<Signature> get(lua_State* L, int index) {
-        return get_std_func(return_types(), args_types(), L, index);
+        return get_std_func(return_types(), args_lists(), L, index);
     }
 };
 } // stack

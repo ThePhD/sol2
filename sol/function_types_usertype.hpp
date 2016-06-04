@@ -34,7 +34,7 @@ struct usertype_function_core : public base_function {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
     typedef functor<T, function_type> fx_t;
     typedef typename fx_t::traits_type traits_type;
-    typedef typename fx_t::args_type args_type;
+    typedef typename fx_t::args_list args_list;
     typedef typename fx_t::return_type return_type;
 
     fx_t fx;
@@ -53,7 +53,7 @@ struct usertype_function : public usertype_function_core<Tp, Function> {
     typedef usertype_function_core<Tp, Function> base_t;
     typedef std::remove_pointer_t<Tp> T;
     typedef typename base_t::traits_type traits_type;
-    typedef typename base_t::args_type args_type;
+    typedef typename base_t::args_list args_list;
     typedef typename base_t::return_type return_type;
 
     template<typename... Args>
@@ -66,7 +66,7 @@ struct usertype_function : public usertype_function_core<Tp, Function> {
             return luaL_error(L, "sol: received null for 'self' argument (use ':' for accessing member functions)");
         }
 #endif // Safety
-        return static_cast<base_t&>(*this)(meta::tuple_types<return_type>(), args_type(), index_value<2>(), L);
+        return static_cast<base_t&>(*this)(meta::tuple_types<return_type>(), args_list(), index_value<2>(), L);
     }
 
     virtual int operator()(lua_State* L) override {
@@ -80,7 +80,7 @@ struct usertype_variable_function : public usertype_function_core<Tp, Function> 
     typedef std::remove_pointer_t<Tp> T;
     typedef typename base_t::fx_t fx_t;
     typedef typename base_t::traits_type traits_type;
-    typedef typename base_t::args_type args_type;
+    typedef typename base_t::args_list args_list;
     typedef typename base_t::return_type return_type;
     typedef typename fx_t::can_read can_read;
     typedef typename fx_t::can_write can_write;
@@ -103,7 +103,7 @@ struct usertype_variable_function : public usertype_function_core<Tp, Function> 
     }
 
     int set_writable(std::true_type, lua_State* L) {
-        return static_cast<base_t&>(*this)(meta::tuple_types<void>(), args_type(), index_value<3>(), L);
+        return static_cast<base_t&>(*this)(meta::tuple_types<void>(), args_list(), index_value<3>(), L);
     }
 
     int set_variable(std::false_type, lua_State* L) {

@@ -31,6 +31,7 @@
 #include "function_types_overload.hpp"
 #include "function_types_allocator.hpp"
 #include "resolve.hpp"
+#include "call.hpp"
 
 namespace sol {
 template <typename Sig, typename... Ps>
@@ -43,13 +44,6 @@ struct function_arguments {
 template <typename Sig = function_sig<>, typename... Args>
 function_arguments<Sig, Args...> function_args( Args&&... args ) { 
     return function_arguments<Sig, Args...>(std::forward<Args>(args)...);
-}
-
-// Allow someone to make a member variable readonly (const)
-template <typename R, typename T>
-auto readonly( R T::* v ) {
-    typedef const R C;
-    return static_cast<C T::*>( v );
 }
 
 namespace stack {

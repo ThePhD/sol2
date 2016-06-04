@@ -22,9 +22,10 @@
 #ifndef SOL_TYPES_HPP
 #define SOL_TYPES_HPP
 
+#include "optional.hpp"
 #include "compatibility.hpp"
 #include "traits.hpp"
-#include "optional.hpp"
+#include "string_shim.hpp"
 #include <array>
 #include <string>
 
@@ -83,8 +84,6 @@ inline int c_trampoline(lua_State* L, lua_CFunction f) {
     return trampoline(L, f);
 }
 #endif // Exceptions vs. No Exceptions
-struct empty { void operator()() {} };
-
 template <typename T>
 struct unique_usertype {};
 } // detail
@@ -174,11 +173,71 @@ struct userdata_value {
     operator void*() const { return value; }
 };
 
-struct c_closure {
-    lua_CFunction c_function;
-    int upvalues;
-    c_closure(lua_CFunction f, int upvalues = 0) : c_function(f), upvalues(upvalues) {}
+template <typename L>
+struct light {
+	L* value;
+	
+	light(L& x) : value(std::addressof(x)) {}
+	light(L* x) : value(x) {}
+	light(void* x) : value(static_cast<L*>(x)) {}
+	operator L* () const { return value; }
+	operator L& () const { return *value; }
 };
+
+template <typename T>
+auto make_light(T& l) {
+	typedef meta::unwrapped_t<std::remove_pointer_t<std::remove_pointer_t<T>>> L;
+	return light<L>(l);
+}
+
+template <typename U>
+struct user {
+	U value;
+
+	user(U x) : value(std::forward<U>(x)) {}
+	operator U* () const { return std::addressof(value); }
+	operator U& () const { return value; }
+};
+
+template <typename T>
+auto make_user(T&& u) {
+	typedef meta::unwrapped_t<meta::unqualified_t<T>> U;
+	return user<U>(std::forward<T>(u));
+}
+
+template <typename T>
+struct metatable_registry_key {
+	T key;
+
+	metatable_registry_key(T key) : key(std::forward<T>(key)) {}
+};
+
+template <typename T>
+auto meta_registry_key(T&& key) {
+	typedef meta::unqualified_t<T> K;
+	return metatable_registry_key<K>(std::forward<T>(key));
+}
+
+template <typename... Upvalues>
+struct closure {
+    lua_CFunction c_function;
+    std::tuple<Upvalues...> upvalues;
+    closure(lua_CFunction f, Upvalues... upvalues) : c_function(f), upvalues(std::forward<Upvalues>(upvalues)...) {}
+};
+
+template <>
+struct closure<> {
+	lua_CFunction c_function;
+	int upvalues;
+	closure(lua_CFunction f, int upvalues = 0) : c_function(f), upvalues(upvalues) {}
+};
+
+typedef closure<> c_closure;
+
+template <typename... Args>
+closure<Args...> make_closure(lua_CFunction f, Args&&... args) {
+	return closure<Args...>(f, std::forward<Args>(args)...);
+}
 
 struct this_state {
     lua_State* L;
@@ -262,6 +321,8 @@ enum class meta_function {
     call_function = call,
 };
 
+typedef meta_function meta_method;
+
 const std::array<std::string, 2> meta_variable_names = { {
     "__index",
     "__newindex",
@@ -320,7 +381,7 @@ inline void type_error(lua_State* L, type expected, type actual) {
 
 inline void type_assert(lua_State* L, int index, type expected, type actual) {
     if (expected != type::poly && expected != actual) {
-           type_panic(L, index, expected, actual);
+        type_panic(L, index, expected, actual);
     }
 }
 
@@ -373,6 +434,7 @@ class thread;
 struct variadic_args;
 struct this_state;
 
+namespace detail {
 template <typename T, typename = void>
 struct lua_type_of : std::integral_constant<type, type::userdata> {};
 
@@ -422,6 +484,9 @@ template <>
 struct lua_type_of<const char32_t*> : std::integral_constant<type, type::string> {};
 
 template <>
+struct lua_type_of<string_detail::string_shim> : std::integral_constant<type, type::string> {};
+
+template <>
 struct lua_type_of<bool> : std::integral_constant<type, type::boolean> {};
 
 template <>
@@ -456,6 +521,12 @@ struct lua_type_of<light_userdata_value> : std::integral_constant<type, type::li
 
 template <>
 struct lua_type_of<userdata_value> : std::integral_constant<type, type::userdata> {};
+
+template <typename T>
+struct lua_type_of<light<T>> : std::integral_constant<type, type::lightuserdata> {};
+
+template <typename T>
+struct lua_type_of<user<T>> : std::integral_constant<type, type::userdata> {};
 
 template <typename Base>
 struct lua_type_of<basic_lightuserdata<Base>> : std::integral_constant<type, type::lightuserdata> {};
@@ -500,7 +571,14 @@ template <typename T>
 struct lua_type_of<T, std::enable_if_t<std::is_enum<T>::value>> : std::integral_constant<type, type::number> {};
 
 template <>
+struct lua_type_of<sol::meta_function> : std::integral_constant<type, type::string> {};
+
+template <>
 struct lua_type_of<this_state> : std::integral_constant<type, type::none> {};
+} // detail
+
+template <typename T>
+struct lua_type_of : detail::lua_type_of<T> {};
 
 template <typename T>
 struct is_lua_primitive : std::integral_constant<bool, 
@@ -544,7 +622,10 @@ struct lua_bind_traits : meta::bind_traits<Signature> {
 private:
 	typedef meta::bind_traits<Signature> base_t;
 public:
-	static const std::size_t arity = base_t::arity - meta::count_for<is_transparent_argument, typename base_t::args_type>::value;
+	static const std::size_t true_arity = base_t::arity;
+	static const std::size_t arity = base_t::arity - meta::count_for<is_transparent_argument, typename base_t::args_list>::value;
+	static const std::size_t true_free_arity = base_t::free_arity;
+	static const std::size_t free_arity = base_t::free_arity - meta::count_for<is_transparent_argument, typename base_t::args_list>::value;
 };
 
 template <typename T>
@@ -555,7 +636,7 @@ struct is_table<basic_table_core<x, T>> : std::true_type {};
 
 template<typename T>
 inline type type_of() {
-    return lua_type_of<meta::unqualified_t<T>>::value;
+	return lua_type_of<meta::unqualified_t<T>>::value;
 }
 } // sol
 

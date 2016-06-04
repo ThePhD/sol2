@@ -111,7 +111,7 @@ struct inheritance {
         return ti != typeid(Base) || type_check(types<Bases...>(), ti);
     }
 
-    static bool check(const std::type_info& ti) {
+    static bool type_check(const std::type_info& ti) {
         return ti != typeid(T) || type_check(types<Bases...>(), ti);
     }
 
@@ -125,14 +125,14 @@ struct inheritance {
         return ti != typeid(Base) ? type_cast(types<Bases...>(), data, ti) : static_cast<void*>(dynamic_cast<Base*>(static_cast<T*>(data)));
     }
 
-    static void* cast(void* voiddata, const std::type_info& ti) {
+    static void* type_cast(void* voiddata, const std::type_info& ti) {
         T* data = static_cast<T*>(voiddata);
         return static_cast<void*>(ti != typeid(T) ? type_cast(types<Bases...>(), data, ti) : data);
     }
 };
 
-using inheritance_check_function = decltype(&inheritance<void>::check);
-using inheritance_cast_function = decltype(&inheritance<void>::cast);
+using inheritance_check_function = decltype(&inheritance<void>::type_check);
+using inheritance_cast_function = decltype(&inheritance<void>::type_cast);
 #else
 template <typename T, typename... Bases>
 struct inheritance {
@@ -145,7 +145,7 @@ struct inheritance {
         return ti != id_for<Base>::value || type_check(types<Bases...>(), ti);
     }
 
-    static bool check(std::size_t ti) {
+    static bool type_check(std::size_t ti) {
         return ti != id_for<T>::value || type_check(types<Bases...>(), ti);
     }
 
@@ -159,14 +159,14 @@ struct inheritance {
         return ti != id_for<Base>::value ? type_cast(types<Bases...>(), data, ti) : static_cast<void*>(static_cast<Base*>(data));
     }
 
-    static void* cast(void* voiddata, std::size_t ti) {
+    static void* type_cast(void* voiddata, std::size_t ti) {
         T* data = static_cast<T*>(voiddata);
         return static_cast<void*>(ti != id_for<T>::value ? type_cast(types<Bases...>(), data, ti) : data);
     }
 };
 
-using inheritance_check_function = decltype(&inheritance<void>::check);
-using inheritance_cast_function = decltype(&inheritance<void>::cast);
+using inheritance_check_function = decltype(&inheritance<void>::type_check);
+using inheritance_cast_function = decltype(&inheritance<void>::type_cast);
 #endif // No Exceptions and/or No Runtime Type Information
 
 } // detail

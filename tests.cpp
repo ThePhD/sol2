@@ -359,7 +359,7 @@ TEST_CASE("state/multi-require", "make sure that requires transfers across hand-
 
     int val1 = thingy1["modfunc"]();
     int val2 = thingy2["modfunc"]();
-    int val3 = thingy2["modfunc"]();
+    int val3 = thingy3["modfunc"]();
     REQUIRE(val1 == 221);
     REQUIRE(val2 == 221);
     REQUIRE(val3 == 221);

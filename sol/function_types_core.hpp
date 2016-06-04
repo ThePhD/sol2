@@ -23,9 +23,13 @@
 #define SOL_FUNCTION_TYPES_CORE_HPP
 
 #include "stack.hpp"
+#include "wrapper.hpp"
 #include <memory>
 
 namespace sol {
+namespace detail {
+struct empty {};
+}
 template <typename RSig = void, typename WSig = void>
 struct member_property {
     typedef std::conditional_t<std::is_void<RSig>::value, detail::empty, RSig> R;
@@ -150,7 +154,7 @@ inline decltype(auto) cleanup_key() {
 template<typename T, typename Func, typename = void>
 struct functor {
     typedef meta::bind_traits<Func> traits_type;
-    typedef typename traits_type::args_type args_type;
+    typedef typename traits_type::args_list args_list;
     typedef typename traits_type::return_type return_type;
     typedef std::conditional_t<std::is_pointer<Func>::value || std::is_class<Func>::value, Func, std::add_pointer_t<Func>> function_type;
     static const std::size_t arity = traits_type::arity;
@@ -179,7 +183,7 @@ struct functor {
 template<typename T, typename Func>
 struct functor<T, Func, std::enable_if_t<!std::is_member_pointer<Func>::value && std::is_base_of<T, meta::unqualified_t<typename meta::bind_traits<Func>::template arg_at<0>>>::value>> {
     typedef meta::bind_traits<Func> traits_type;
-    typedef meta::pop_front_type_t<typename traits_type::args_type> args_type;
+    typedef meta::pop_front_type_t<typename traits_type::args_list> args_list;
     typedef typename traits_type::return_type return_type;
     typedef std::conditional_t<std::is_pointer<Func>::value || std::is_class<Func>::value, Func, std::add_pointer_t<Func>> function_type;
     static const std::size_t arity = traits_type::arity - 1;
@@ -211,7 +215,7 @@ struct functor<T, Func, std::enable_if_t<!std::is_member_pointer<Func>::value &&
 template<typename T, typename RSig, typename WSig, typename C>
 struct functor<T, member_property<RSig, WSig>, C> {
     typedef meta::bind_traits<std::conditional_t<std::is_void<WSig>::value, RSig, WSig>> traits_type;
-    typedef meta::pop_front_type_t<typename traits_type::args_type> args_type;
+    typedef meta::pop_front_type_t<typename traits_type::args_list> args_list;
     typedef std::conditional_t<std::is_void<typename traits_type::return_type>::value, typename traits_type::template arg_at<0>, typename traits_type::return_type> return_type;
     typedef member_property<RSig, WSig> function_type;
     typedef meta::neg<std::is_void<RSig>> can_read;
@@ -244,7 +248,7 @@ struct functor<T, member_property<RSig, WSig>, C> {
 template<typename T, typename Func>
 struct functor<T, Func, std::enable_if_t<std::is_member_object_pointer<Func>::value>> {
     typedef meta::bind_traits<Func> traits_type;
-    typedef typename traits_type::args_type args_type;
+    typedef typename traits_type::args_list args_list;
     typedef typename traits_type::return_type return_type;
     static const std::size_t arity = traits_type::arity;
     typedef std::true_type can_read;
@@ -277,7 +281,7 @@ struct functor<T, Func, std::enable_if_t<std::is_member_object_pointer<Func>::va
 template<typename T, typename Func>
 struct functor<T, Func, std::enable_if_t<std::is_member_function_pointer<Func>::value>> {
     typedef meta::bind_traits<Func> traits_type;
-    typedef typename traits_type::args_type args_type;
+    typedef typename traits_type::args_list args_list;
     typedef typename traits_type::return_type return_type;
     static const std::size_t arity = traits_type::arity;
     static const bool is_free = false;

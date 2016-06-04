@@ -202,6 +202,14 @@ inline decltype(auto) tagged_get(types<optional<T>>, lua_State* L, int index = -
     return stack_detail::unchecked_get<optional<T>>(L, index);
 }
 
+template <typename T>
+inline int alloc_destroy(lua_State* L) {
+	void* rawdata = lua_touserdata(L, up_value_index(1));
+	T* data = static_cast<T*>(rawdata);
+	std::allocator<T> alloc;
+	alloc.destroy(data);
+}
+
 } // stack_detail
 
 template<typename T>

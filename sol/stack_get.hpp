@@ -63,6 +63,13 @@ struct getter<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_unsigne
 };
 
 template<typename T>
+struct getter<T, std::enable_if_t<std::is_enum<T>::value>> {
+    static T get(lua_State* L, int index = -1) {
+        return static_cast<T>(lua_tointegerx(L, index, nullptr));
+    }
+};
+
+template<typename T>
 struct getter<T, std::enable_if_t<std::is_base_of<reference, T>::value || std::is_base_of<stack_reference, T>::value>> {
     static T get(lua_State* L, int index = -1) {
         return T(L, index);
@@ -81,6 +88,27 @@ struct getter<light_userdata_value> {
     static light_userdata_value get(lua_State* L, int index = -1) {
         return light_userdata_value( lua_touserdata(L, index) );
     }
+};
+
+template<typename T>
+struct getter<light<T>> {
+    static light<T> get(lua_State* L, int index = -1) {
+        return light<T>( static_cast<T*>(lua_touserdata(L, index)) );
+    }
+};
+
+template<typename T>
+struct getter<user<T>> {
+	static T& get(lua_State* L, int index = -1) {
+		return *static_cast<T*>(lua_touserdata(L, index));
+	}
+};
+
+template<typename T>
+struct getter<user<T*>> {
+	static T* get(lua_State* L, int index = -1) {
+		return static_cast<T*>(lua_touserdata(L, index));
+	}
 };
 
 template<>
@@ -106,11 +134,31 @@ struct getter<std::string> {
     }
 };
 
+template <>
+struct getter<string_detail::string_shim> {
+	string_detail::string_shim get(lua_State* L, int index) {
+		size_t len;
+		const char* p = lua_tolstring(L, index, &len);
+		return string_detail::string_shim(p, len);
+	}
+};
+
 template<>
 struct getter<const char*> {
     static const char* get(lua_State* L, int index = -1) {
         return lua_tostring(L, index);
     }
+};
+
+template<>
+struct getter<meta_function> {
+	static meta_function get(lua_State *L, int index) {
+		const char* name = getter<const char*>{}.get(L, index);
+		for (std::size_t i = 0; i < meta_function_names.size(); ++i)
+			if (meta_function_names[i] == name)
+				return static_cast<meta_function>(i);
+		return meta_function::construct;
+	}
 };
 
 template<>
@@ -208,9 +256,9 @@ struct getter<lua_CFunction> {
 
 template<>
 struct getter<c_closure> {
-    static c_closure get(lua_State* L, int index = -1) {
-        return c_closure(lua_tocfunction(L, index), -1);
-    }
+	static c_closure get(lua_State* L, int index = -1) {
+		return c_closure(lua_tocfunction(L, index), -1);
+	}
 };
 
 template<>

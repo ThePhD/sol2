@@ -36,7 +36,7 @@ struct overload_traits : lua_bind_traits<T> {
 
 template <typename T, typename Func, typename X>
 struct overload_traits<functor<T, Func, X>> {
-    typedef typename functor<T, Func, X>::args_type args_type;
+    typedef typename functor<T, Func, X>::args_list args_list;
     typedef typename functor<T, Func, X>::return_type return_type;
     static const std::size_t arity = functor<T, Func, X>::arity;
     static const std::size_t boost = static_cast<std::size_t>(functor<T, Func, X>::is_free);
@@ -51,8 +51,8 @@ template <typename Fx, typename... Fxs, std::size_t I, std::size_t... In, std::s
 inline int overload_match_arity(types<Fx, Fxs...>, std::index_sequence<I, In...>, std::index_sequence<M...>, Match&& matchfx, lua_State* L, int nfxarity, int start, Args&&... args) {
     typedef overload_traits<meta::unqualified_t<Fx>> traits;
     typedef meta::tuple_types<typename traits::return_type> return_types;
-    typedef typename traits::args_type args_type;
-    typedef typename args_type::indices args_indices;
+    typedef typename traits::args_list args_list;
+    typedef typename args_list::indices args_indices;
     int fxarity = traits::boost + nfxarity;
     // compile-time eliminate any functions that we know ahead of time are of improper arity
     if (meta::find_in_pack_v<index_value<traits::arity>, index_value<M>...>::value) {
@@ -61,10 +61,10 @@ inline int overload_match_arity(types<Fx, Fxs...>, std::index_sequence<I, In...>
     if (traits::arity != fxarity) {
         return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<traits::arity, M...>(), std::forward<Match>(matchfx), L, nfxarity, start, std::forward<Args>(args)...);
     }
-    if (!stack::stack_detail::check_types<true>().check(args_type(), args_indices(), L, start - traits::boost, no_panic)) {
+    if (!stack::stack_detail::check_types<true>().check(args_list(), args_indices(), L, start - traits::boost, no_panic)) {
         return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, nfxarity, start, std::forward<Args>(args)...);
     }
-    return matchfx(types<Fx>(), index_value<I>(), return_types(), args_type(), L, fxarity, start, std::forward<Args>(args)...);
+    return matchfx(types<Fx>(), index_value<I>(), return_types(), args_list(), L, fxarity, start, std::forward<Args>(args)...);
 }
 } // internals
 

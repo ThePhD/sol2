@@ -34,7 +34,7 @@ struct upvalue_free_function {
     static int real_call(lua_State* L) {
         auto udata = stack::stack_detail::get_as_upvalues<function_type*>(L);
         function_type* fx = udata.first;
-        int r = stack::call_into_lua(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), L, 1, fx);
+        int r = stack::call_into_lua(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_list(), L, 1, fx);
         return r;
     }
 
@@ -65,7 +65,7 @@ struct upvalue_member_function {
         auto fx = [&item, &memfx](auto&&... args) -> typename traits_type::return_type { 
             return (item.*memfx)(std::forward<decltype(args)>(args)...);
         };
-        return stack::call_into_lua(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), L, 1, fx);
+        return stack::call_into_lua(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_list(), L, 1, fx);
     }
 
     static int call (lua_State* L) {
@@ -151,7 +151,7 @@ struct upvalue_this_member_function {
             auto& item = stack::get<T>(L, 1);
             return (item.*memfx)(std::forward<decltype(args)>(args)...);
         };
-        int n = stack::call_into_lua<1>(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_type(), L, 2, fx);
+        int n = stack::call_into_lua<1>(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_list(), L, 2, fx);
         return n;
     }
 

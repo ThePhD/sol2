@@ -28,6 +28,8 @@
 #include "inheritance.hpp"
 #include "raii.hpp"
 #include "deprecate.hpp"
+#include "usertype_metatable.hpp"
+#include "stack.hpp"
 #include <vector>
 #include <array>
 #include <algorithm>
@@ -422,13 +424,13 @@ private:
 #elif !defined(SOL_NO_RTTI)
         static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
         static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
-        baseclasscheck = (void*)&detail::inheritance<T, Bases...>::check;
-        baseclasscast = (void*)&detail::inheritance<T, Bases...>::cast;
+        baseclasscheck = (void*)&detail::inheritance<T, Bases...>::type_check;
+        baseclasscast = (void*)&detail::inheritance<T, Bases...>::type_cast;
 #else
         static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
         static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
-        baseclasscheck = (void*)&detail::inheritance<T, Bases...>::check;
-        baseclasscast = (void*)&detail::inheritance<T, Bases...>::cast;
+        baseclasscheck = (void*)&detail::inheritance<T, Bases...>::type_check;
+        baseclasscast = (void*)&detail::inheritance<T, Bases...>::type_cast;
 #endif // No Runtime Type Information vs. Throw-Style Inheritance
     }
 

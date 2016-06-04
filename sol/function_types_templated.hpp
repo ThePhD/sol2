@@ -29,9 +29,9 @@ namespace function_detail {
     template <typename F, F fx>
     inline int call_wrapper_variable(std::false_type, lua_State* L) {
         typedef meta::bind_traits<meta::unqualified_t<F>> traits_type;
-        typedef typename traits_type::args_type args_type;
+        typedef typename traits_type::args_list args_list;
         typedef meta::tuple_types<typename traits_type::return_type> return_type;
-        return stack::call_into_lua(return_type(), args_type(), L, 1, fx);
+        return stack::call_into_lua(return_type(), args_list(), L, 1, fx);
     }
 
     template <typename R, typename V, V, typename T>
@@ -86,14 +86,14 @@ namespace function_detail {
     inline int call_wrapper_function(std::true_type, lua_State* L) {
         typedef meta::bind_traits<meta::unqualified_t<F>> traits_type;
         typedef typename traits_type::object_type T;
-        typedef typename traits_type::args_type args_type;
+        typedef typename traits_type::args_list args_list;
         typedef typename traits_type::return_type return_type;
         typedef meta::tuple_types<return_type> return_type_list;
         auto mfx = [&](auto&&... args) -> typename traits_type::return_type {
             auto& member = stack::get<T>(L, 1);
             return (member.*fx)(std::forward<decltype(args)>(args)...);
         };
-        int n = stack::call_into_lua<1>(return_type_list(), args_type(), L, 2, mfx);
+        int n = stack::call_into_lua<1>(return_type_list(), args_list(), L, 2, mfx);
         return n;
     }
 

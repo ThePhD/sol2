@@ -30,14 +30,14 @@ template<typename Func>
 struct free_function : public base_function {
     typedef meta::unwrapped_t<meta::unqualified_t<Func>> Function;
     typedef meta::function_return_t<Function> return_type;
-    typedef meta::function_args_t<Function> args_types;
+    typedef meta::function_args_t<Function> args_lists;
     Function fx;
 
     template<typename... Args>
     free_function(Args&&... args): fx(std::forward<Args>(args)...) {}
 
     int call(lua_State* L) {
-        return stack::call_into_lua(meta::tuple_types<return_type>(), args_types(), L, 1, fx);
+        return stack::call_into_lua(meta::tuple_types<return_type>(), args_lists(), L, 1, fx);
     }
 
     virtual int operator()(lua_State* L) override {
@@ -51,14 +51,14 @@ struct functor_function : public base_function {
     typedef meta::unwrapped_t<meta::unqualified_t<Func>> Function;
     typedef decltype(&Function::operator()) function_type;
     typedef meta::function_return_t<function_type> return_type;
-    typedef meta::function_args_t<function_type> args_types;
+    typedef meta::function_args_t<function_type> args_lists;
     Function fx;
 
     template<typename... Args>
     functor_function(Args&&... args): fx(std::forward<Args>(args)...) {}
 
     int call(lua_State* L) {
-        return stack::call_into_lua(meta::tuple_types<return_type>(), args_types(), L, 1, fx);
+        return stack::call_into_lua(meta::tuple_types<return_type>(), args_lists(), L, 1, fx);
     }
 
     virtual int operator()(lua_State* L) override {
@@ -71,7 +71,7 @@ template<typename T, typename Function>
 struct member_function : public base_function {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
     typedef meta::function_return_t<function_type> return_type;
-    typedef meta::function_args_t<function_type> args_types;
+    typedef meta::function_args_t<function_type> args_lists;
     struct functor {
         function_type invocation;
         T member;
@@ -90,7 +90,7 @@ struct member_function : public base_function {
     member_function(F&& f, Args&&... args) : fx(std::forward<F>(f), std::forward<Args>(args)...) {}
 
     int call(lua_State* L) {
-        return stack::call_into_lua(meta::tuple_types<return_type>(), args_types(), L, 1, fx);
+        return stack::call_into_lua(meta::tuple_types<return_type>(), args_lists(), L, 1, fx);
     }
 
     virtual int operator()(lua_State* L) override {
@@ -103,7 +103,7 @@ template<typename T, typename Function>
 struct member_variable : public base_function {
     typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
     typedef typename meta::bind_traits<function_type>::return_type return_type;
-    typedef typename meta::bind_traits<function_type>::args_type args_types;
+    typedef typename meta::bind_traits<function_type>::args_list args_lists;
     function_type var;
     T member;
     typedef std::add_lvalue_reference_t<meta::unwrapped_t<std::remove_reference_t<decltype(detail::deref(member))>>> M;

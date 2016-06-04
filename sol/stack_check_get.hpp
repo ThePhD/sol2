@@ -52,30 +52,44 @@ struct check_getter<optional<T>> {
 
 template <typename T>
 struct check_getter<T, std::enable_if_t<std::is_integral<T>::value && lua_type_of<T>::value == type::number>> {
-    template <typename Handler>
-    static optional<T> get( lua_State* L, int index, Handler&& handler) {
-        int isnum = 0;
-        lua_Integer value = lua_tointegerx(L, index, &isnum);
-        if (isnum == 0) {
-            handler(L, index, type::number, type_of(L, index));
-            return nullopt;
-        }
-        return static_cast<T>(value);
-    }
+	template <typename Handler>
+	static optional<T> get(lua_State* L, int index, Handler&& handler) {
+		int isnum = 0;
+		lua_Integer value = lua_tointegerx(L, index, &isnum);
+		if (isnum == 0) {
+			handler(L, index, type::number, type_of(L, index));
+			return nullopt;
+		}
+		return static_cast<T>(value);
+	}
+};
+
+template <typename T>
+struct check_getter<T, std::enable_if_t<std::is_enum<T>::value>> {
+	template <typename Handler>
+	static optional<T> get(lua_State* L, int index, Handler&& handler) {
+		int isnum = 0;
+		lua_Integer value = lua_tointegerx(L, index, &isnum);
+		if (isnum == 0) {
+			handler(L, index, type::number, type_of(L, index));
+			return nullopt;
+		}
+		return static_cast<T>(value);
+	}
 };
 
 template <typename T>
 struct check_getter<T, std::enable_if_t<std::is_floating_point<T>::value>> {
-    template <typename Handler>
-    static optional<T> get( lua_State* L, int index, Handler&& handler) {
-        int isnum = 0;
-        lua_Number value = lua_tonumberx(L, index, &isnum);
-        if (isnum == 0) {
-            handler(L, index, type::number, type_of(L, index));
-            return nullopt;
-        }
-        return static_cast<T>(value);
-    }
+	template <typename Handler>
+	static optional<T> get(lua_State* L, int index, Handler&& handler) {
+		int isnum = 0;
+		lua_Number value = lua_tonumberx(L, index, &isnum);
+		if (isnum == 0) {
+			handler(L, index, type::number, type_of(L, index));
+			return nullopt;
+		}
+		return static_cast<T>(value);
+	}
 };
 
 template <typename T>

@@ -31,44 +31,54 @@ namespace sol {
 namespace stack {
 template<typename T, typename>
 struct pusher {
-    template <typename... Args>
-    static int push(lua_State* L, Args&&... args) {
-        // Basically, we store all user-data like this:
-        // If it's a movable/copyable value (no std::ref(x)), then we store the pointer to the new
-        // data in the first sizeof(T*) bytes, and then however many bytes it takes to
-        // do the actual object. Things that are std::ref or plain T* are stored as 
-        // just the sizeof(T*), and nothing else.
-        T** pointerpointer = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
-        T*& referencereference = *pointerpointer;
-        T* allocationtarget = reinterpret_cast<T*>(pointerpointer + 1);
-        referencereference = allocationtarget;
-        std::allocator<T> alloc{};
-        alloc.construct(allocationtarget, std::forward<Args>(args)...);
-        luaL_newmetatable(L, &usertype_traits<T>::metatable[0]);
-        lua_setmetatable(L, -2);
-        return 1;
-    }
-};
+	template <typename K, typename... Args>
+	static int push_keyed(lua_State* L, metatable_registry_key<K> k, Args&&... args) {
+		// Basically, we store all user-data like this:
+		// If it's a movable/copyable value (no std::ref(x)), then we store the pointer to the new
+		// data in the first sizeof(T*) bytes, and then however many bytes it takes to
+		// do the actual object. Things that are std::ref or plain T* are stored as 
+		// just the sizeof(T*), and nothing else.
+		T** pointerpointer = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
+		T*& referencereference = *pointerpointer;
+		T* allocationtarget = reinterpret_cast<T*>(pointerpointer + 1);
+		referencereference = allocationtarget;
+		std::allocator<T> alloc{};
+		alloc.construct(allocationtarget, std::forward<Args>(args)...);
+		luaL_newmetatable(L, &k.key[0]);
+		lua_setmetatable(L, -2);
+		return 1;
+	}
 
-template <>
-struct pusher<detail::as_reference_tag> {
-    template <typename T>
-    static int push(lua_State* L, T&& obj) {
-        return stack::push(L, detail::ptr(obj));
-    }
+	template <typename... Args>
+	static int push(lua_State* L, Args&&... args) {
+		return push_keyed(L, meta_registry_key(&usertype_traits<T*>::metatable[0]), std::forward<Args>(args)...);
+	}
 };
 
 template<typename T>
 struct pusher<T*> {
-    static int push(lua_State* L, T* obj) {
-        if (obj == nullptr)
-            return stack::push(L, nil);
-        T** pref = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
-        *pref = obj;
-        luaL_getmetatable(L, &usertype_traits<T*>::metatable[0]);
-        lua_setmetatable(L, -2);
-        return 1;
-    }
+	template <typename K>
+	static int push_keyed(lua_State* L, metatable_registry_key<K> k, T* obj) {
+		if (obj == nullptr)
+			return stack::push(L, nil);
+		T** pref = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
+		*pref = obj;
+		luaL_getmetatable(L, &k.key[0]);
+		lua_setmetatable(L, -2);
+		return 1;
+	}
+
+	static int push(lua_State* L, T* obj) {
+		return push_keyed(L, meta_registry_key(&usertype_traits<T*>::metatable[0]), obj);
+	}
+};
+
+template <>
+struct pusher<detail::as_reference_tag> {
+	template <typename T>
+	static int push(lua_State* L, T&& obj) {
+		return stack::push(L, detail::ptr(obj));
+	}
 };
 
 template<typename T>
@@ -128,6 +138,16 @@ struct pusher<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_signed<
 };
 
 template<typename T>
+struct pusher<T, std::enable_if_t<std::is_enum<T>::value>> {
+	static int push(lua_State* L, const T& value) {
+		if (std::is_same<char, T>::value) {
+			return stack::push(L, static_cast<int>(value));
+		}
+		return stack::push(L, static_cast<std::underlying_type_t<T>>(value));
+	}
+};
+
+template<typename T>
 struct pusher<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_unsigned<T>>::value>> {
     static int push(lua_State* L, const T& value) {
          typedef std::make_signed_t<T> signed_int;
@@ -136,7 +156,7 @@ struct pusher<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_unsigne
 };
 
 template<typename T>
-struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<meta::has_key_value_pair<T>>, meta::neg<std::is_base_of<reference, T>>>::value>> {
+struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<meta::has_key_value_pair<T>>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
     static int push(lua_State* L, const T& cont) {
         lua_createtable(L, static_cast<int>(cont.size()), 0);
         int tableindex = lua_gettop(L);
@@ -149,7 +169,7 @@ struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<me
 };
 
 template<typename T>
-struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::has_key_value_pair<T>, meta::neg<std::is_base_of<reference, T>>>::value>> {
+struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::has_key_value_pair<T>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
     static int push(lua_State* L, const T& cont) {
         lua_createtable(L, static_cast<int>(cont.size()), 0);
         int tableindex = lua_gettop(L);
@@ -213,10 +233,24 @@ struct pusher<lua_CFunction> {
 
 template<>
 struct pusher<c_closure> {
-    static int push(lua_State* L, c_closure closure) {
-        lua_pushcclosure(L, closure.c_function, closure.upvalues);
+    static int push(lua_State* L, c_closure cc) {
+        lua_pushcclosure(L, cc.c_function, cc.upvalues);
         return 1;
     }
+};
+
+template<typename Arg, typename... Args>
+struct pusher<closure<Arg, Args...>> {
+	template <std::size_t... I, typename T>
+	static int push(std::index_sequence<I...>, lua_State* L, T&& c) {
+		int pushcount = multi_push(L, detail::forward_get<I>(c.upvalues)...);
+		return stack::push(L, c_closure(c.c_function, pushcount));
+	}
+
+	template <typename T>
+	static int push(lua_State* L, T&& c) {
+		return push(std::make_index_sequence<1 + sizeof...(Args)>(), L, std::forward<T>(c));
+	}
 };
 
 template<>
@@ -233,6 +267,31 @@ struct pusher<light_userdata_value> {
         lua_pushlightuserdata(L, userdata);
         return 1;
     }
+};
+
+template<typename T>
+struct pusher<light<T>> {
+	static int push(lua_State* L, light<T> l) {
+		lua_pushlightuserdata(L, static_cast<void*>(l.value));
+		return 1;
+	}
+};
+
+template<typename T>
+struct pusher<user<T>> {
+	template <typename... Args>
+	static int push(lua_State* L, Args&&... args ) {
+		// A dumb pusher
+		void* rawdata = lua_newuserdata(L, sizeof(T));
+		std::allocator<T> alloc;
+		alloc.construct(static_cast<T*>(rawdata), std::forward<Args>(args)...);
+		lua_CFunction cdel = stack_detail::alloc_destroy<T>;
+		// Make sure we have a plain GC set for this data
+		lua_pushlightuserdata(L, rawdata);
+		lua_pushcclosure(L, cdel, 1);
+		lua_setfield(L, -2, "__gc");
+		return 1;
+	}
 };
 
 template<>
@@ -274,6 +333,15 @@ struct pusher<std::string> {
         lua_pushlstring(L, str.c_str(), str.size());
         return 1;
     }
+};
+
+template<>
+struct pusher<meta_function> {
+	static int push(lua_State* L, meta_function m) {
+		const std::string& str = name_of(m);
+		lua_pushlstring(L, str.c_str(), str.size());
+		return 1;
+	}
 };
 
 

@@ -41,6 +41,12 @@ template<typename... Args>
 struct tuple_types_<std::tuple<Args...>> { typedef types<Args...> type; };
 } // detail
 
+template<typename T>
+using unqualified = std::remove_cv<std::remove_reference_t<T>>;
+
+template<typename T>
+using unqualified_t = typename unqualified<T>::type;
+
 template<typename... Args>
 using tuple_types = typename detail::tuple_types_<Args...>::type;
 
@@ -50,8 +56,18 @@ struct pop_front_type;
 template<typename Arg>
 using pop_front_type_t = typename pop_front_type<Arg>::type;
 
+template<typename... Args>
+struct pop_front_type<types<Args...>> { typedef void front_type; typedef types<Args...> type; };
+
 template<typename Arg, typename... Args>
-struct pop_front_type<types<Arg, Args...>> { typedef types<Args...> type; };
+struct pop_front_type<types<Arg, Args...>> { typedef Arg front_type; typedef types<Args...> type; };
+
+template <std::size_t N, typename Tuple>
+using tuple_element = std::tuple_element<N, unqualified_t<Tuple>>;
+
+template <std::size_t N, typename Tuple>
+using tuple_element_t = std::tuple_element_t<N, unqualified_t<Tuple>>;
+
 } // meta
 } // sol
 

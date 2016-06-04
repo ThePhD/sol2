@@ -41,7 +41,7 @@ namespace sol {
         int stacktop;
         stack_proxy sp;
 
-        va_iterator() : L(nullptr), index(std::numeric_limits<int>::max()), stacktop(std::numeric_limits<int>::max()) {}
+        va_iterator() : L(nullptr), index((std::numeric_limits<int>::max)()), stacktop((std::numeric_limits<int>::max)()) {}
         va_iterator(lua_State* L, int index, int stacktop) : L(L), index(index), stacktop(stacktop), sp(L, index) {}
 
         reference operator*() {
@@ -100,10 +100,10 @@ namespace sol {
         }
 
         bool operator==(const va_iterator& r) const {
-            if (stacktop == std::numeric_limits<int>::max()) {
+            if (stacktop == (std::numeric_limits<int>::max)()) {
                 return r.index == r.stacktop;
             }
-            else if (r.stacktop == std::numeric_limits<int>::max()) {
+            else if (r.stacktop == (std::numeric_limits<int>::max)()) {
                 return index == stacktop;
             }
             return index == r.index;

@@ -23,6 +23,7 @@
 #define SOL_TRAITS_HPP
 
 #include "tuple.hpp"
+#include "bind_traits.hpp"
 #include <type_traits>
 #include <memory>
 #include <functional>
@@ -53,6 +54,9 @@ template<typename T>
 struct unwrapped<std::reference_wrapper<T>> {
     typedef T type;
 };
+
+template<typename T>
+using unwrapped_t = typename unwrapped<T>::type;
 
 template<typename T>
 struct remove_member_pointer;
@@ -116,21 +120,6 @@ using enable = std::enable_if_t<all<Args...>::value, enable_t>;
 
 template<typename... Args>
 using disable = std::enable_if_t<neg<all<Args...>>::value, enable_t>;
-
-template<typename T>
-using unqualified = std::remove_cv<std::remove_reference_t<T>>;
-
-template<typename T>
-using unqualified_t = typename unqualified<T>::type;
-
-template<typename T>
-using unwrapped_t = typename unwrapped<T>::type;
-
-template <std::size_t N, typename Tuple>
-using tuple_element = std::tuple_element<N, unqualified_t<Tuple>>;
-
-template <std::size_t N, typename Tuple>
-using tuple_element_t = std::tuple_element_t<N, unqualified_t<Tuple>>;
 
 template<typename V, typename... Vs>
 struct find_in_pack_v : boolean<false> { };
@@ -252,150 +241,10 @@ struct is_callable<T, true> {
     static const bool value = sizeof(test<Derived>(0)) == sizeof(yes);
 };
 
-template<class F>
-struct check_deducible_signature {
-    struct nat {};
-    template<class G>
-    static auto test(int) -> decltype(&G::operator(), void());
-    template<class>
-    static auto test(...) -> nat;
-
-    using type = std::is_void<decltype(test<F>(0))>;
-};
 } // meta_detail
-
-template<class F>
-struct has_deducible_signature : meta_detail::check_deducible_signature<F>::type { };
 
 template<typename T>
 struct is_callable : boolean<meta_detail::is_callable<T>::value> {};
-
-namespace meta_detail {
-
-template <std::size_t I, typename T>
-struct void_tuple_element : meta::tuple_element<I, T> {};
-
-template <std::size_t I>
-struct void_tuple_element<I, std::tuple<>> { typedef void type; };
-
-template <std::size_t I, typename T>
-using void_tuple_element_t = typename void_tuple_element<I, T>::type;
-
-template<typename Signature, bool b = has_deducible_signature<Signature>::value>
-struct fx_traits {
-    static const bool is_member_function = false;
-    static const std::size_t arity = 0;
-    typedef types<> args_type;
-    typedef std::tuple<> args_tuple_type;
-    typedef void object_type;
-    typedef void function_pointer_type;
-    typedef void function_type;
-    typedef void free_function_pointer_type;
-    typedef void signature_type;
-    typedef void return_type;
-    template<std::size_t i>
-    using arg_at = void_tuple_element_t<i, args_tuple_type>;
-};
-
-template<typename Signature>
-struct fx_traits<Signature, true> : fx_traits<decltype(&Signature::operator()), false> {};
-
-template<typename T, typename R, typename... Args>
-struct fx_traits<R(T::*)(Args...), false> {
-    static const std::size_t arity = sizeof...(Args);
-    static const bool is_member_function = true;
-    typedef T object_type;
-    typedef std::tuple<Args...> args_tuple_type;
-    typedef types<Args...> args_type;
-    typedef R(T::* function_pointer_type)(Args...);
-    typedef std::remove_pointer_t<function_pointer_type> function_type;
-    typedef R(*free_function_pointer_type)(Args...);
-    typedef R return_type;
-    typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
-    template<std::size_t i>
-    using arg_at = void_tuple_element_t<i, args_tuple_type>;
-};
-
-template<typename T, typename R, typename... Args>
-struct fx_traits<R(T::*)(Args...) const, false> {
-    static const std::size_t arity = sizeof...(Args);
-    static const bool is_member_function = true;
-    typedef T object_type;
-    typedef std::tuple<Args...> args_tuple_type;
-    typedef types<Args...> args_type;
-    typedef R(T::* function_pointer_type)(Args...);
-    typedef std::remove_pointer_t<function_pointer_type> function_type;
-    typedef R(*free_function_pointer_type)(Args...);
-    typedef R return_type;
-    typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
-    template<std::size_t i>
-    using arg_at = void_tuple_element_t<i, args_tuple_type>;
-};
-
-template<typename R, typename... Args>
-struct fx_traits<R(Args...), false> {
-    static const std::size_t arity = sizeof...(Args);
-    static const bool is_member_function = false;
-    typedef std::tuple<Args...> args_tuple_type;
-    typedef types<Args...> args_type;
-    typedef R(function_type)(Args...);
-    typedef R(*function_pointer_type)(Args...);
-    typedef R(*free_function_pointer_type)(Args...);
-    typedef R return_type;
-    typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
-    template<std::size_t i>
-    using arg_at = void_tuple_element_t<i, args_tuple_type>;
-};
-
-template<typename R, typename... Args>
-struct fx_traits<R(*)(Args...), false> {
-    static const std::size_t arity = sizeof...(Args);
-    static const bool is_member_function = false;
-    typedef std::tuple<Args...> args_tuple_type;
-    typedef types<Args...> args_type;
-    typedef R(function_type)(Args...);
-    typedef R(*function_pointer_type)(Args...);
-    typedef R(*free_function_pointer_type)(Args...);
-    typedef R return_type;
-    typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
-    template<std::size_t i>
-    using arg_at = void_tuple_element_t<i, args_tuple_type>;
-};
-
-template<typename Signature, bool b = std::is_member_object_pointer<Signature>::value>
-struct callable_traits : fx_traits<std::decay_t<Signature>> {
-
-};
-
-template<typename R, typename T>
-struct callable_traits<R(T::*), true> {
-    typedef R Arg;
-    typedef T object_type;
-    using signature_type = R(T::*);
-    static const bool is_member_function = false;
-    static const std::size_t arity = 1;
-    typedef std::tuple<Arg> args_tuple_type;
-    typedef types<Arg> args_type;
-    typedef R return_type;
-    typedef R(function_type)(Arg);
-    typedef R(*function_pointer_type)(Arg);
-    typedef R(*free_function_pointer_type)(Arg);
-    template<std::size_t i>
-    using arg_at = void_tuple_element_t<i, args_tuple_type>;
-};
-} // meta_detail
-
-template<typename Signature>
-struct bind_traits : meta_detail::callable_traits<std::remove_volatile_t<Signature>> {};
-
-template<typename Signature>
-using function_args_t = typename bind_traits<Signature>::args_type;
-
-template<typename Signature>
-using function_signature_t = typename bind_traits<Signature>::signature_type;
-
-template<typename Signature>
-using function_return_t = typename bind_traits<Signature>::return_type;
 
 struct has_begin_end_impl {
     template<typename T, typename U = unqualified_t<T>,

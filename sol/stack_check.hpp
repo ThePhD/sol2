@@ -164,6 +164,23 @@ struct checker<T, type::lightuserdata, C> {
     }
 };
 
+template <typename C>
+struct checker<userdata_value, type::userdata, C> {
+	template <typename Handler>
+	static bool check(lua_State* L, int index, Handler&& handler) {
+		type t = type_of(L, index);
+		bool success = t == type::userdata;
+		if (!success) {
+			// expected type, actual type
+			handler(L, index, type::userdata, t);
+		}
+		return success;
+	}
+};
+
+template <typename T, typename C>
+struct checker<user<T>, type::userdata, C> : checker<user<T>, type::lightuserdata, C> {};
+
 template <typename T, typename C>
 struct checker<non_null<T>, type::userdata, C> : checker<T, lua_type_of<T>::value, C> {};
 
@@ -235,77 +252,63 @@ struct checker<T*, type::userdata, C> {
     }
 };
 
-template <typename C>
-struct checker<userdata_value, type::userdata, C> {
-    template <typename Handler>
-    static bool check(lua_State* L, int index, Handler&& handler) {
-        type t = type_of(L, index);
-        bool success = t == type::userdata || t == type::lightuserdata;
-        if (!success) {
-            // expected type, actual type
-            handler(L, index, type::lightuserdata, t);
-        }
-        return success;
-    }
-};
-
 template <typename T, typename C>
 struct checker<T, type::userdata, C> {
-    template <typename U, typename Handler>
-    static bool check (types<U>, lua_State* L, type indextype, int index, Handler&& handler) {
-        if (indextype != type::userdata) {
-            handler(L, index, type::userdata, indextype);
-            return false;
-        }
-        if (meta::any<std::is_same<T, light_userdata_value>, std::is_same<T, userdata_value>, std::is_same<T, userdata>, std::is_same<T, lightuserdata>>::value)
-            return true;
-        if (lua_getmetatable(L, index) == 0) {
-             return true;
-        }
-        if (stack_detail::check_metatable<U>(L))
-            return true;
-        if (stack_detail::check_metatable<U*>(L))
-            return true;
-        if (stack_detail::check_metatable<detail::unique_usertype<U>>(L))
-            return true;
+	template <typename U, typename Handler>
+	static bool check(types<U>, lua_State* L, type indextype, int index, Handler&& handler) {
+		if (indextype != type::userdata) {
+			handler(L, index, type::userdata, indextype);
+			return false;
+		}
+		if (meta::any<std::is_same<T, light_userdata_value>, std::is_same<T, userdata_value>, std::is_same<T, userdata>, std::is_same<T, lightuserdata>>::value)
+			return true;
+		if (lua_getmetatable(L, index) == 0) {
+			return true;
+		}
+		if (stack_detail::check_metatable<U>(L))
+			return true;
+		if (stack_detail::check_metatable<U*>(L))
+			return true;
+		if (stack_detail::check_metatable<detail::unique_usertype<U>>(L))
+			return true;
 #ifndef SOL_NO_EXCEPTIONS
-        lua_getfield(L, -1, &detail::base_class_check_key()[0]);
-        void* basecastdata = lua_touserdata(L, -1);
-        detail::throw_cast basecast = (detail::throw_cast)basecastdata;
-        bool success = detail::catch_check<T>(basecast);
+		lua_getfield(L, -1, &detail::base_class_check_key()[0]);
+		void* basecastdata = lua_touserdata(L, -1);
+		detail::throw_cast basecast = (detail::throw_cast)basecastdata;
+		bool success = detail::catch_check<T>(basecast);
 #elif !defined(SOL_NO_RTTI)
-        lua_getfield(L, -1, &detail::base_class_check_key()[0]);
-        if (stack::get<type>(L) == type::nil) {
-            lua_pop(L, 2);
-            return false;
-        }
-        void* basecastdata = lua_touserdata(L, -1);
-        detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
-        bool success = ic(typeid(T));
+		lua_getfield(L, -1, &detail::base_class_check_key()[0]);
+		if (stack::get<type>(L) == type::nil) {
+			lua_pop(L, 2);
+			return false;
+		}
+		void* basecastdata = lua_touserdata(L, -1);
+		detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
+		bool success = ic(typeid(T));
 #else
-        // Topkek
-        lua_getfield(L, -1, &detail::base_class_check_key()[0]);
-        if (stack::get<type>(L) == type::nil) {
-            lua_pop(L, 2);
-            return false;
-        }
-        void* basecastdata = lua_touserdata(L, -1);
-        detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
-        bool success = ic(detail::id_for<T>::value);
+		// Topkek
+		lua_getfield(L, -1, &detail::base_class_check_key()[0]);
+		if (stack::get<type>(L) == type::nil) {
+			lua_pop(L, 2);
+			return false;
+		}
+		void* basecastdata = lua_touserdata(L, -1);
+		detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
+		bool success = ic(detail::id_for<T>::value);
 #endif // No Runtime Type Information || Exceptions
-        lua_pop(L, 2);
-        if (!success) {
-            handler(L, index, type::userdata, indextype);
-            return false;
-        }
-        return true;
-    }
+		lua_pop(L, 2);
+		if (!success) {
+			handler(L, index, type::userdata, indextype);
+			return false;
+		}
+		return true;
+	}
 
-    template <typename Handler>
-    static bool check (lua_State* L, int index, Handler&& handler) {
-        const type indextype = type_of(L, index);
-        return check(types<T>(), L, indextype, index, std::forward<Handler>(handler));
-    }
+	template <typename Handler>
+	static bool check(lua_State* L, int index, Handler&& handler) {
+		const type indextype = type_of(L, index);
+		return check(types<T>(), L, indextype, index, std::forward<Handler>(handler));
+	}
 };
 
 template<typename T>
