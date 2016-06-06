@@ -29,7 +29,7 @@
 
 namespace sol {
 namespace stack {
-template <typename T, bool, typename>
+template <typename T, bool, bool, typename>
 struct field_getter {
     template <typename Key>
     void get(lua_State* L, Key&& key, int tableindex = -2) {
@@ -38,59 +38,16 @@ struct field_getter {
     }
 };
 
-template <bool b, typename C>
-struct field_getter<metatable_key_t, b, C> {
+template <bool b, bool raw, typename C>
+struct field_getter<metatable_key_t, b, raw, C> {
     void get(lua_State* L, metatable_key_t, int tableindex = -1) {
         if (lua_getmetatable(L, tableindex) == 0)
             push(L, nil);
     }
 };
 
-template <typename... Args, bool b, typename C>
-struct field_getter<std::tuple<Args...>, b, C> {
-    template <std::size_t... I, typename Keys>
-    void apply(std::index_sequence<0, I...>, lua_State* L, Keys&& keys, int tableindex) {
-        get_field<b>(L, detail::forward_get<0>(keys), tableindex);
-        void(detail::swallow{ (get_field<false>(L, detail::forward_get<I>(keys)), 0)... });
-        reference saved(L, -1);
-        lua_pop(L, static_cast<int>(sizeof...(I)));
-        saved.push();
-    }
-
-    template <typename Keys>
-    void get(lua_State* L, Keys&& keys) {
-        apply(std::make_index_sequence<sizeof...(Args)>(), L, std::forward<Keys>(keys), lua_absindex(L, -1));
-    }
-
-    template <typename Keys>
-    void get(lua_State* L, Keys&& keys, int tableindex) {
-        apply(std::make_index_sequence<sizeof...(Args)>(), L, std::forward<Keys>(keys), tableindex);
-    }
-};
-
-template <typename A, typename B, bool b, typename C>
-struct field_getter<std::pair<A, B>, b, C> {
-    template <typename Keys>
-    void get(lua_State* L, Keys&& keys, int tableindex) {
-        get_field<b>(L, detail::forward_get<0>(keys), tableindex);
-        get_field<false>(L, detail::forward_get<1>(keys));
-        reference saved(L, -1);
-        lua_pop(L, static_cast<int>(2));
-        saved.push();
-    }
-
-    template <typename Keys>
-    void get(lua_State* L, Keys&& keys) {
-        get_field<b>(L, detail::forward_get<0>(keys));
-        get_field<false>(L, detail::forward_get<1>(keys));
-        reference saved(L, -1);
-        lua_pop(L, static_cast<int>(2));
-        saved.push();
-    }
-};
-
-template <typename T>
-struct field_getter<T, true, std::enable_if_t<meta::is_c_str<T>::value>> {
+template <typename T, bool raw>
+struct field_getter<T, true, raw, std::enable_if_t<meta::is_c_str<T>::value>> {
     template <typename Key>
     void get(lua_State* L, Key&& key, int = -1) {
         lua_getglobal(L, &key[0]);
@@ -98,7 +55,7 @@ struct field_getter<T, true, std::enable_if_t<meta::is_c_str<T>::value>> {
 };
 
 template <typename T>
-struct field_getter<T, false, std::enable_if_t<meta::is_c_str<T>::value>> {
+struct field_getter<T, false, false, std::enable_if_t<meta::is_c_str<T>::value>> {
     template <typename Key>
     void get(lua_State* L, Key&& key, int tableindex = -1) {
         lua_getfield(L, tableindex, &key[0]);
@@ -107,15 +64,76 @@ struct field_getter<T, false, std::enable_if_t<meta::is_c_str<T>::value>> {
 
 #if SOL_LUA_VERSION >= 503
 template <typename T>
-struct field_getter<T, false, std::enable_if_t<std::is_integral<T>::value>> {
-    template <typename Key>
-    void get(lua_State* L, Key&& key, int tableindex = -1) {
-        lua_geti(L, tableindex, static_cast<lua_Integer>(key));
-    }
+struct field_getter<T, false, false, std::enable_if_t<std::is_integral<T>::value>> {
+	template <typename Key>
+	void get(lua_State* L, Key&& key, int tableindex = -1) {
+		lua_geti(L, tableindex, static_cast<lua_Integer>(key));
+	}
 };
 #endif // Lua 5.3.x
 
-template <typename T, bool, typename>
+#if SOL_LUA_VERSION >= 502
+template <typename C>
+struct field_getter<void*, false, true, C> {
+	void get(lua_State* L, void* key, int tableindex = -1) {
+		lua_rawgetp(L, tableindex, key);
+	}
+};
+#endif // Lua 5.3.x
+
+template <typename T>
+struct field_getter<T, false, true, std::enable_if_t<std::is_integral<T>::value>> {
+	template <typename Key>
+	void get(lua_State* L, Key&& key, int tableindex = -1) {
+		lua_rawgeti(L, tableindex, static_cast<lua_Integer>(key));
+	}
+};
+
+template <typename... Args, bool b, bool raw, typename C>
+struct field_getter<std::tuple<Args...>, b, raw, C> {
+	template <std::size_t... I, typename Keys>
+	void apply(std::index_sequence<0, I...>, lua_State* L, Keys&& keys, int tableindex) {
+		get_field<b, raw>(L, detail::forward_get<0>(keys), tableindex);
+		void(detail::swallow{ (get_field<false, raw>(L, detail::forward_get<I>(keys)), 0)... });
+		reference saved(L, -1);
+		lua_pop(L, static_cast<int>(sizeof...(I)));
+		saved.push();
+	}
+
+	template <typename Keys>
+	void get(lua_State* L, Keys&& keys) {
+		apply(std::make_index_sequence<sizeof...(Args)>(), L, std::forward<Keys>(keys), lua_absindex(L, -1));
+	}
+
+	template <typename Keys>
+	void get(lua_State* L, Keys&& keys, int tableindex) {
+		apply(std::make_index_sequence<sizeof...(Args)>(), L, std::forward<Keys>(keys), tableindex);
+	}
+};
+
+template <typename A, typename B, bool b, bool raw, typename C>
+struct field_getter<std::pair<A, B>, b, raw, C> {
+	template <typename Keys>
+	void get(lua_State* L, Keys&& keys, int tableindex) {
+		get_field<b, raw>(L, detail::forward_get<0>(keys), tableindex);
+		get_field<false, raw>(L, detail::forward_get<1>(keys));
+		reference saved(L, -1);
+		lua_pop(L, static_cast<int>(2));
+		saved.push();
+	}
+
+	template <typename Keys>
+	void get(lua_State* L, Keys&& keys) {
+		get_field<b, raw>(L, detail::forward_get<0>(keys));
+		get_field<false, raw>(L, detail::forward_get<1>(keys));
+		reference saved(L, -1);
+		lua_pop(L, static_cast<int>(2));
+		saved.push();
+	}
+};
+
+
+template <typename T, bool, bool, typename>
 struct field_setter {
     template <typename Key, typename Value>
     void set(lua_State* L, Key&& key, Value&& value, int tableindex = -3) {
@@ -125,8 +143,18 @@ struct field_setter {
     }
 };
 
-template <bool b, typename C>
-struct field_setter<metatable_key_t, b, C> {
+template <typename T, bool b, typename C>
+struct field_setter<T, b, true, C> {
+	template <typename Key, typename Value>
+	void set(lua_State* L, Key&& key, Value&& value, int tableindex = -3) {
+		push(L, std::forward<Key>(key));
+		push(L, std::forward<Value>(value));
+		lua_rawset(L, tableindex);
+	}
+};
+
+template <bool b, bool raw, typename C>
+struct field_setter<metatable_key_t, b, raw, C> {
     template <typename Value>
     void set(lua_State* L, metatable_key_t, Value&& value, int tableindex = -2) {
         push(L, std::forward<Value>(value));
@@ -134,8 +162,8 @@ struct field_setter<metatable_key_t, b, C> {
     }
 };
 
-template <typename T>
-struct field_setter<T, true, std::enable_if_t<meta::is_c_str<T>::value>> {
+template <typename T, bool raw>
+struct field_setter<T, true, raw, std::enable_if_t<meta::is_c_str<T>::value>> {
     template <typename Key, typename Value>
     void set(lua_State* L, Key&& key, Value&& value, int = -2) {
         push(L, std::forward<Value>(value));
@@ -144,7 +172,7 @@ struct field_setter<T, true, std::enable_if_t<meta::is_c_str<T>::value>> {
 };
 
 template <typename T>
-struct field_setter<T, false, std::enable_if_t<meta::is_c_str<T>::value>> {
+struct field_setter<T, false, false, std::enable_if_t<meta::is_c_str<T>::value>> {
     template <typename Key, typename Value>
     void set(lua_State* L, Key&& key, Value&& value, int tableindex = -2) {
         push(L, std::forward<Value>(value));
@@ -154,22 +182,42 @@ struct field_setter<T, false, std::enable_if_t<meta::is_c_str<T>::value>> {
 
 #if SOL_LUA_VERSION >= 503
 template <typename T>
-struct field_setter<T, false, std::enable_if_t<std::is_integral<T>::value>> {
-    template <typename Key, typename Value>
-    void set(lua_State* L, Key&& key, Value&& value, int tableindex = -2) {
-        push(L, std::forward<Value>(value));
-        lua_seti(L, tableindex, static_cast<lua_Integer>(key));
-    }
+struct field_setter<T, false, false, std::enable_if_t<std::is_integral<T>::value>> {
+	template <typename Key, typename Value>
+	void set(lua_State* L, Key&& key, Value&& value, int tableindex = -2) {
+		push(L, std::forward<Value>(value));
+		lua_seti(L, tableindex, static_cast<lua_Integer>(key));
+	}
 };
 #endif // Lua 5.3.x
 
-template <typename... Args, bool b, typename C>
-struct field_setter<std::tuple<Args...>, b, C> {
+template <typename T>
+struct field_setter<T, false, true, std::enable_if_t<std::is_integral<T>::value>> {
+	template <typename Key, typename Value>
+	void set(lua_State* L, Key&& key, Value&& value, int tableindex = -2) {
+		push(L, std::forward<Value>(value));
+		lua_rawseti(L, tableindex, static_cast<lua_Integer>(key));
+	}
+};
+
+#if SOL_LUA_VERSION >= 502
+template <typename C>
+struct field_setter<void*, false, true, C> {
+	template <typename Key, typename Value>
+	void set(lua_State* L, void* key, Value&& value, int tableindex = -2) {
+		push(L, std::forward<Value>(value));
+		lua_rawsetp(L, tableindex, key);
+	}
+};
+#endif // Lua 5.2.x
+
+template <typename... Args, bool b, bool raw, typename C>
+struct field_setter<std::tuple<Args...>, b, raw, C> {
     template <bool g, std::size_t I, typename Key, typename Value>
     void apply(std::index_sequence<I>, lua_State* L, Key&& keys, Value&& value, int tableindex) {
         I < 1 ? 
-            set_field<g>(L, detail::forward_get<I>(keys), std::forward<Value>(value), tableindex) :
-            set_field<g>(L, detail::forward_get<I>(keys), std::forward<Value>(value));
+            set_field<g, raw>(L, detail::forward_get<I>(keys), std::forward<Value>(value), tableindex) :
+            set_field<g, raw>(L, detail::forward_get<I>(keys), std::forward<Value>(value));
     }
 
     template <bool g, std::size_t I0, std::size_t I1, std::size_t... I, typename Keys, typename Value>
@@ -184,12 +232,12 @@ struct field_setter<std::tuple<Args...>, b, C> {
     }
 };
 
-template <typename A, typename B, bool b, typename C>
-struct field_setter<std::pair<A, B>, b, C> {
+template <typename A, typename B, bool b, bool raw, typename C>
+struct field_setter<std::pair<A, B>, b, raw, C> {
     template <typename Keys, typename Value>
     void set(lua_State* L, Keys&& keys, Value&& value, int tableindex = -1) {
-        get_field<b>(L, detail::forward_get<0>(keys), tableindex);
-        set_field<false>(L, detail::forward_get<1>(keys), std::forward<Value>(value));
+        get_field<b, raw>(L, detail::forward_get<0>(keys), tableindex);
+        set_field<false, raw>(L, detail::forward_get<1>(keys), std::forward<Value>(value));
     }
 };
 } // stack

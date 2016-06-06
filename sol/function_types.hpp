@@ -25,11 +25,8 @@
 #include "function_types_core.hpp"
 #include "function_types_templated.hpp"
 #include "function_types_basic.hpp"
-#include "function_types_allocator.hpp"
 #include "function_types_member.hpp"
-#include "function_types_usertype.hpp"
-#include "function_types_overload.hpp"
-#include "function_types_allocator.hpp"
+#include "function_types_overloaded.hpp"
 #include "resolve.hpp"
 #include "call.hpp"
 

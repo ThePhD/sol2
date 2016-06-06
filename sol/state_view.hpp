@@ -120,7 +120,7 @@ public:
 
     template<typename... Args>
     void open_libraries(Args&&... args) {
-        static_assert(meta::are_same<lib, Args...>::value, "all types must be libraries");
+        static_assert(meta::all_same<lib, Args...>::value, "all types must be libraries");
         if(sizeof...(args) == 0) {
             luaL_openlibs(L);
             return;

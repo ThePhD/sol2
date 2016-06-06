@@ -44,6 +44,35 @@ namespace call_detail {
 		return f.write;
 	}
 
+	template <typename T, typename List>
+	struct void_call;
+
+	template <typename T, typename... Args>
+	struct void_call<T, types<Args...>> {
+		static void call(Args...) {}
+	};
+
+	template <typename T, int additional_pop = 0>
+	struct constructor_match {
+		T* obj;
+
+		constructor_match(T* obj) : obj(obj) {}
+
+		template <typename Fx, std::size_t I, typename... R, typename... Args>
+		int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) const {
+			detail::default_construct func{};
+			return stack::call_into_lua<additional_pop, false>(r, a, L, start, func, obj);
+		}
+	};
+
+	template <typename T>
+	inline int destruct(lua_State* L) {
+		T* obj = stack::get<non_null<T*>>(L, 1);
+		std::allocator<T> alloc{};
+		alloc.destroy(obj);
+		return 0;
+	}
+	
 	namespace overload_detail {
 		template <std::size_t... M, typename Match, typename... Args>
 		inline int overload_match_arity(sol::types<>, std::index_sequence<>, std::index_sequence<M...>, Match&&, lua_State* L, int, int, Args&&...) {
@@ -80,6 +109,39 @@ namespace call_detail {
 	inline int overload_match(Match&& matchfx, lua_State* L, int start, Args&&... args) {
 		int fxarity = lua_gettop(L) - (start - 1);
 		return overload_match_arity<Functions...>(std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
+	}
+
+	template <typename T, typename... TypeLists, typename Match, typename... Args>
+	inline int construct(Match&& matchfx, lua_State* L, int fxarity, int start, Args&&... args) {
+		// use same overload resolution matching as all other parts of the framework
+		return overload_match_arity<decltype(void_call<T, TypeLists>::call)...>(std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
+	}
+
+	template <typename T, typename... TypeLists>
+	inline int construct(lua_State* L) {
+		static const auto& meta = usertype_traits<T>::metatable;
+		int argcount = lua_gettop(L);
+		call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, meta, 1) : call_syntax::dot;
+		argcount -= static_cast<int>(syntax);
+
+		T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
+		T*& referencepointer = *pointerpointer;
+		T* obj = reinterpret_cast<T*>(pointerpointer + 1);
+		referencepointer = obj;
+		reference userdataref(L, -1);
+		userdataref.pop();
+
+		construct<T, TypeLists...>(constructor_match<T>(obj), L, argcount, 1 + static_cast<int>(syntax));
+
+		userdataref.push();
+		luaL_getmetatable(L, &meta[0]);
+		if (stack::get<type>(L) == type::nil) {
+			lua_pop(L, 1);
+			return luaL_error(L, "sol: unable to get usertype metatable");
+		}
+
+		lua_setmetatable(L, -2);
+		return 1;
 	}
 
 	template <typename F, bool is_index, bool is_variable, typename = void>
@@ -142,9 +204,9 @@ namespace call_detail {
 			object_type* o = stack::get<object_type*>(L, 1);
 			if (o == nullptr) {
 				if (is_variable) {
-					return luaL_error(L, "sol: received null for 'self' argument (bad '.' access?)");
+					return luaL_error(L, "sol: received nil for 'self' argument (bad '.' access?)");
 				}
-				return luaL_error(L, "sol: received null for 'self' argument (pass 'self' as first argument)");
+				return luaL_error(L, "sol: received nil for 'self' argument (pass 'self' as first argument)");
 			}
 			return stack::call_into_lua<is_variable ? 2 : 1>(types<void>(), args_list(), L, is_variable ? 3 : 2, wrap::caller(), f, *o);
 #else
@@ -183,9 +245,9 @@ namespace call_detail {
 			object_type* o = stack::get<object_type*>(L, 1);
 			if (o == nullptr) {
 				if (is_variable) {
-					return luaL_error(L, "sol: 'self' argument is nullptr (bad '.' access?)");
+					return luaL_error(L, "sol: 'self' argument is nil (bad '.' access?)");
 				}
-				return luaL_error(L, "sol: 'self' argument is nullptr (pass 'self' as first argument)");
+				return luaL_error(L, "sol: 'self' argument is nil (pass 'self' as first argument)");
 			}
 			return stack::call_into_lua<is_variable ? 2 : 1>(returns_list(), types<>(), L, is_variable ? 3 : 2, wrap::caller(), f, *o);
 #else
@@ -212,9 +274,17 @@ namespace call_detail {
 	};
 
 	template <bool is_index, bool is_variable, typename C>
-	struct agnostic_lua_call_wrapper<sol::no_construction, is_index, is_variable, C> {
-		static int call(lua_State* L, sol::no_construction&) {
-			return luaL_error(L, "cannot call something tagged with 'no construction'");
+	struct agnostic_lua_call_wrapper<no_construction, is_index, is_variable, C> {
+		static int call(lua_State* L, no_construction&) {
+			return luaL_error(L, "sol: cannot call this constructor (tagged as non-constructible)");
+		}
+	};
+
+	template <typename... Args, bool is_index, bool is_variable, typename C>
+	struct agnostic_lua_call_wrapper<bases<Args...>, is_index, is_variable, C> {
+		static int call(lua_State* L, bases<Args...>&) {
+			// Uh. How did you even call this, lul
+			return 0;
 		}
 	};
 
@@ -226,22 +296,21 @@ namespace call_detail {
 		typedef sol::constructor_list<Args...> F;
 
 		static int call(lua_State* L, F&) {
-			static const auto& meta = usertype_traits<T>::metatable;
+			static const auto& metakey = usertype_traits<T>::metatable;
 			int argcount = lua_gettop(L);
-			call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, meta, 1) : call_syntax::dot;
+			call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, metakey, 1) : call_syntax::dot;
 			argcount -= static_cast<int>(syntax);
 
 			T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
+			reference userdataref(L, -1);
 			T*& referencepointer = *pointerpointer;
 			T* obj = reinterpret_cast<T*>(pointerpointer + 1);
 			referencepointer = obj;
-			reference userdataref(L, -1);
-			userdataref.pop();
-
-			function_detail::construct<T, Args...>(detail::constructor_match<T>(obj), L, argcount, 1 + static_cast<int>(syntax));
+			
+			construct<T, Args...>(constructor_match<T, 1>(obj), L, argcount, 1 + static_cast<int>(syntax));
 
 			userdataref.push();
-			luaL_getmetatable(L, &meta[0]);
+			luaL_getmetatable(L, &metakey[0]);
 			if (stack::get<type>(L) == type::nil) {
 				lua_pop(L, 1);
 				return luaL_error(L, "sol: unable to get usertype metatable");
@@ -249,6 +318,65 @@ namespace call_detail {
 
 			lua_setmetatable(L, -2);
 			return 1;
+		}
+	};
+
+	template <typename T, typename... Cxs, bool is_index, bool is_variable, typename C>
+	struct lua_call_wrapper<T, sol::constructor_wrapper<Cxs...>, is_index, is_variable, C> {
+		typedef sol::constructor_wrapper<Cxs...> F;
+
+		struct matchfx {
+			template <typename Fx, std::size_t I, typename... R, typename... Args>
+			int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start, F& f) {
+				T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
+				reference userdataref(L, -1);
+				T*& referencepointer = *pointerpointer;
+				T* obj = reinterpret_cast<T*>(pointerpointer + 1);
+				referencepointer = obj;
+
+				auto& func = std::get<I>(f.set);
+				stack::call_into_lua<1, false>(r, a, L, start, func, detail::implicit_wrapper<T>(obj));
+
+				userdataref.push();
+				luaL_getmetatable(L, &usertype_traits<T>::metatable[0]);
+				if (stack::get<type>(L) == type::nil) {
+					lua_pop(L, 1);
+					std::string err = "sol: unable to get usertype metatable for ";
+					err += usertype_traits<T>::name;
+					return luaL_error(L, err.c_str());
+				}
+				lua_setmetatable(L, -2);
+
+				return 1;
+			}
+		};
+
+		static int call(lua_State* L, F& f) {
+			call_syntax syntax = stack::get_call_syntax(L, usertype_traits<T>::metatable);
+			int syntaxval = static_cast<int>(syntax);
+			int argcount = lua_gettop(L) - syntaxval;
+			return construct<T, meta::pop_front_type_t<meta::function_args_t<Cxs>>...>(matchfx{}, L, argcount, 1 + syntaxval, f);
+		}
+
+	};
+
+	template <typename T, typename Fx, bool is_index, bool is_variable>
+	struct lua_call_wrapper<T, sol::destructor_wrapper<Fx>, is_index, is_variable, std::enable_if_t<std::is_void<Fx>::value>> {
+		typedef sol::destructor_wrapper<Fx> F;
+
+		static int call(lua_State* L, F&) {
+			return destruct<T>(L);
+		}
+	};
+
+	template <typename T, typename Fx, bool is_index, bool is_variable>
+	struct lua_call_wrapper<T, sol::destructor_wrapper<Fx>, is_index, is_variable, std::enable_if_t<!std::is_void<Fx>::value>> {
+		typedef sol::destructor_wrapper<Fx> F;
+
+		static int call(lua_State* L, F& f) {
+			T* obj = stack::get<non_null<T*>>(L);
+			f.fx(detail::implicit_wrapper<T>(obj));
+			return 0;
 		}
 	};
 

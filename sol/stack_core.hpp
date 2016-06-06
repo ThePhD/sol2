@@ -55,11 +55,11 @@ inline int unique_destruct(lua_State* L) {
 } // detail
 namespace stack {
 
-template<typename T, bool global = false, typename = void>
+template<typename T, bool global = false, bool raw = false, typename = void>
 struct field_getter;
-template <typename T, bool global = false, typename = void>
+template <typename T, bool global = false, bool raw = false, typename = void>
 struct probe_field_getter;
-template<typename T, bool global = false, typename = void>
+template<typename T, bool global = false, bool raw = false, typename = void>
 struct field_setter;
 template<typename T, typename = void>
 struct getter;
@@ -208,6 +208,7 @@ inline int alloc_destroy(lua_State* L) {
 	T* data = static_cast<T*>(rawdata);
 	std::allocator<T> alloc;
 	alloc.destroy(data);
+	return 0;
 }
 
 } // stack_detail
@@ -222,34 +223,64 @@ inline decltype(auto) pop(lua_State* L) {
     return popper<meta::unqualified_t<T>>{}.pop(L);
 }
 
-template <bool global = false, typename Key>
+template <bool global = false, bool raw = true, typename Key>
 void get_field(lua_State* L, Key&& key) {
-    field_getter<meta::unqualified_t<Key>, global>{}.get(L, std::forward<Key>(key));
+	field_getter<meta::unqualified_t<Key>, global, raw>{}.get(L, std::forward<Key>(key));
 }
 
-template <bool global = false, typename Key>
+template <bool global = false, bool raw = true, typename Key>
 void get_field(lua_State* L, Key&& key, int tableindex) {
-    field_getter<meta::unqualified_t<Key>, global>{}.get(L, std::forward<Key>(key), tableindex);
+	field_getter<meta::unqualified_t<Key>, global, raw>{}.get(L, std::forward<Key>(key), tableindex);
 }
 
 template <bool global = false, typename Key>
+void raw_get_field(lua_State* L, Key&& key) {
+	get_field<global, true>(L, std::forward<Key>(key));
+}
+
+template <bool global = false, typename Key>
+void raw_get_field(lua_State* L, Key&& key, int tableindex) {
+	get_field<global, true>(L, std::forward<Key>(key), tableindex);
+}
+
+template <bool global = false, bool raw = false, typename Key>
 probe probe_get_field(lua_State* L, Key&& key) {
-    return probe_field_getter<meta::unqualified_t<Key>, global>{}.get(L, std::forward<Key>(key));
+	return probe_field_getter<meta::unqualified_t<Key>, global, raw>{}.get(L, std::forward<Key>(key));
+}
+
+template <bool global = false, bool raw = false, typename Key>
+probe probe_get_field(lua_State* L, Key&& key, int tableindex) {
+	return probe_field_getter<meta::unqualified_t<Key>, global, raw>{}.get(L, std::forward<Key>(key), tableindex);
 }
 
 template <bool global = false, typename Key>
-probe probe_get_field(lua_State* L, Key&& key, int tableindex) {
-    return probe_field_getter<meta::unqualified_t<Key>, global>{}.get(L, std::forward<Key>(key), tableindex);
+probe probe_raw_get_field(lua_State* L, Key&& key) {
+	return probe_get_field<global, true>(L, std::forward<Key>(key));
 }
 
-template <bool global = false, typename Key, typename Value>
+template <bool global = false, typename Key>
+probe probe_raw_get_field(lua_State* L, Key&& key, int tableindex) {
+	return probe_get_field<global, true>(L, std::forward<Key>(key), tableindex);
+}
+
+template <bool global = false, bool raw = false, typename Key, typename Value>
 void set_field(lua_State* L, Key&& key, Value&& value) {
-    field_setter<meta::unqualified_t<Key>, global>{}.set(L, std::forward<Key>(key), std::forward<Value>(value));
+	field_setter<meta::unqualified_t<Key>, global, raw>{}.set(L, std::forward<Key>(key), std::forward<Value>(value));
+}
+
+template <bool global = false, bool raw = false, typename Key, typename Value>
+void set_field(lua_State* L, Key&& key, Value&& value, int tableindex) {
+	field_setter<meta::unqualified_t<Key>, global, raw>{}.set(L, std::forward<Key>(key), std::forward<Value>(value), tableindex);
 }
 
 template <bool global = false, typename Key, typename Value>
-void set_field(lua_State* L, Key&& key, Value&& value, int tableindex) {
-    field_setter<meta::unqualified_t<Key>, global>{}.set(L, std::forward<Key>(key), std::forward<Value>(value), tableindex);
+void raw_set_field(lua_State* L, Key&& key, Value&& value) {
+	set_field<global, true>(L, std::forward<Key>(key), std::forward<Value>(value));
+}
+
+template <bool global = false, typename Key, typename Value>
+void raw_set_field(lua_State* L, Key&& key, Value&& value, int tableindex) {
+	set_field<global, true>(L, std::forward<Key>(key), std::forward<Value>(value), tableindex);
 }
 } // stack
 } // sol

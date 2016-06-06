@@ -9,7 +9,7 @@ namespace sol {
 			std::size_t s;
 			const char* p;
 
-			string_shim(std::string& r) : string_shim(r.data(), r.size()) {}
+			string_shim(const std::string& r) : string_shim(r.data(), r.size()) {}
 			string_shim(const char* p) : string_shim(p, std::char_traits<char>::length(p)) {}
 			string_shim(const char* p, std::size_t s) : s(s), p(p) {}
 
@@ -22,6 +22,10 @@ namespace sol {
 				if (lhs_sz > rhs_sz)
 					return 1;
 				return 0;
+			}
+
+			const char* c_str() const {
+				return p;
 			}
 
 			const char* data() const {

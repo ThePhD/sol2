@@ -65,7 +65,7 @@ struct check_getter<T, std::enable_if_t<std::is_integral<T>::value && lua_type_o
 };
 
 template <typename T>
-struct check_getter<T, std::enable_if_t<std::is_enum<T>::value>> {
+struct check_getter<T, std::enable_if_t<std::is_enum<T>::value && !meta::any_same<T, meta_function, type>::value>> {
 	template <typename Handler>
 	static optional<T> get(lua_State* L, int index, Handler&& handler) {
 		int isnum = 0;

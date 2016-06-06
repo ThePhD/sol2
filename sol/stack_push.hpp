@@ -287,9 +287,11 @@ struct pusher<user<T>> {
 		alloc.construct(static_cast<T*>(rawdata), std::forward<Args>(args)...);
 		lua_CFunction cdel = stack_detail::alloc_destroy<T>;
 		// Make sure we have a plain GC set for this data
+		lua_createtable(L, 0, 1);
 		lua_pushlightuserdata(L, rawdata);
 		lua_pushcclosure(L, cdel, 1);
 		lua_setfield(L, -2, "__gc");
+		lua_setmetatable(L, -2);
 		return 1;
 	}
 };

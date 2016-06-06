@@ -97,8 +97,8 @@ struct checker {
     }
 };
 
-template <type expected, typename C>
-struct checker<type, expected, C> {
+template <typename C>
+struct checker<type, type::none, C> {
     template <typename Handler>
     static bool check (lua_State*, int, Handler&&) {
         return true;

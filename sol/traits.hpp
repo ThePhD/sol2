@@ -80,10 +80,16 @@ template<typename... T, template<typename...> class Templ>
 struct is_specialization_of<Templ, Templ<T...>> : std::true_type { };
 
 template<class T, class...>
-struct are_same : std::true_type { };
+struct all_same : std::true_type { };
 
 template<class T, class U, class... Args>
-struct are_same<T, U, Args...> : std::integral_constant <bool, std::is_same<T, U>::value && are_same<T, Args...>::value> { };
+struct all_same<T, U, Args...> : std::integral_constant <bool, std::is_same<T, U>::value && all_same<T, Args...>::value> { };
+
+template<class T, class...>
+struct any_same : std::false_type { };
+
+template<class T, class U, class... Args>
+struct any_same<T, U, Args...> : std::integral_constant <bool, std::is_same<T, U>::value || any_same<T, Args...>::value> { };
 
 template<typename T>
 using invoke_t = typename T::type;

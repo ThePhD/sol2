@@ -84,15 +84,31 @@ inline int c_trampoline(lua_State* L, lua_CFunction f) {
     return trampoline(L, f);
 }
 #endif // Exceptions vs. No Exceptions
+
 template <typename T>
 struct unique_usertype {};
+
+template <typename T>
+struct implicit_wrapper {
+	T& item;
+	implicit_wrapper(T* item) : item(*item) {}
+	implicit_wrapper(T& item) : item(item) {}
+	operator T& () {
+		return item;
+	}
+	operator T* () {
+		return std::addressof(item);
+	}
+};
 } // detail
+
 struct nil_t {};
 const nil_t nil {};
-struct metatable_key_t {};
-const metatable_key_t metatable_key = {};
 inline bool operator==(nil_t, nil_t) { return true; }
 inline bool operator!=(nil_t, nil_t) { return false; }
+
+struct metatable_key_t {};
+const metatable_key_t metatable_key = {};
 
 typedef std::remove_pointer_t<lua_CFunction> lua_r_CFunction;
 
@@ -195,8 +211,8 @@ struct user {
 	U value;
 
 	user(U x) : value(std::forward<U>(x)) {}
-	operator U* () const { return std::addressof(value); }
-	operator U& () const { return value; }
+	operator U* () { return std::addressof(value); }
+	operator U& () { return value; }
 };
 
 template <typename T>
@@ -571,7 +587,10 @@ template <typename T>
 struct lua_type_of<T, std::enable_if_t<std::is_enum<T>::value>> : std::integral_constant<type, type::number> {};
 
 template <>
-struct lua_type_of<sol::meta_function> : std::integral_constant<type, type::string> {};
+struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
+
+template <>
+struct lua_type_of<type> : std::integral_constant<type, type::none> {};
 
 template <>
 struct lua_type_of<this_state> : std::integral_constant<type, type::none> {};
