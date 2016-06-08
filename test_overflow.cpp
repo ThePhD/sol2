@@ -28,3 +28,20 @@ TEST_CASE("issues/stack-overflow", "make sure various operations repeated don't 
 		}
 	);
 }
+
+
+TEST_CASE("issues/stack-overflow-2", "make sure basic iterators clean up properly when they're not iterated through (e.g., with empty())") {
+	sol::state lua;
+	sol::table t = lua.create_table_with(1, "wut");
+	int MAX = 50000;
+	auto fx = [&]() {
+		int a = 50;
+		for (int i = 0; i < MAX; ++i) {
+			if (t.empty()) {
+				a += 4;
+			}
+			a += 2;
+		}
+	};
+	REQUIRE_NOTHROW(fx());
+}

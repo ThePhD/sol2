@@ -915,7 +915,9 @@ TEST_CASE("usertype/coverage", "try all the things") {
 	lua.new_usertype<ext_getset>("ext_getset",
 		sol::call_constructor, sol::constructors<sol::types<>, sol::types<int>>(),
 		sol::meta_function::garbage_collect, sol::destructor(des<ext_getset>),
-		"x", sol::overload(&ext_getset::x, &ext_getset::x2, [](ext_getset& m, std::string x, int y) { return m.meow + 50 + y + x.length(); }),
+		"x", sol::overload(&ext_getset::x, &ext_getset::x2, [](ext_getset& m, std::string x, int y) { 
+			return m.meow + 50 + y + x.length(); 
+		}),
 		"bark", &ext_getset::bark,
 		"meow", &ext_getset::meow,
 		"readonlybark", sol::readonly(&ext_getset::bark),
@@ -935,7 +937,7 @@ print(w)
 )");
 
 	int w = lua["w"];
-	REQUIRE(w == 27);
+	REQUIRE(w == (56 + 50 + 14 + 14));
 
 	lua.script(R"(
 e:set(500)
@@ -977,8 +979,8 @@ print(d)
 
 	int c = lua["c"];
 	int d = lua["d"];
-	REQUIRE(a == 5001);
-	REQUIRE(b == 9700);
+	REQUIRE(c == 9700);
+	REQUIRE(d == 56);
 
 	lua.script(R"(
 e.writeonlypropbark = 500

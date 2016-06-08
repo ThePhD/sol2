@@ -50,7 +50,7 @@ private:
 
 public:
 
-    basic_table_iterator () : idx(-1), keyidx(-1) {
+    basic_table_iterator () : keyidx(-1), idx(-1) {
 
     }
 

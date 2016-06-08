@@ -146,7 +146,7 @@ namespace sol {
 		}
 
 		template <std::size_t I = 0, typename F, typename... Args>
-		int make_regs(regs_t& l, int index, sol::call_construction&, F&, Args&&... args) {
+		int make_regs(regs_t& l, int index, sol::call_construction, F&&, Args&&... args) {
 			callconstructfunc = call<I + 1>;
 			secondarymeta = true;
 			int endindex = make_regs<I + 2>(l, index + 1, std::forward<Args>(args)...);
@@ -154,7 +154,7 @@ namespace sol {
 		}
 
 		template <std::size_t I = 0, typename... Bases, typename... Args>
-		int make_regs(regs_t& l, int index, base_classes_tag&, bases<Bases...>&, Args&&... args) {
+		int make_regs(regs_t& l, int index, base_classes_tag, bases<Bases...>, Args&&... args) {
 			int endindex = make_regs<I + 2>(l, index + 1, std::forward<Args>(args)...);
 			if (sizeof...(Bases) < 1)
 				return endindex;
@@ -174,7 +174,7 @@ namespace sol {
 #endif // No Runtime Type Information vs. Throw-Style Inheritance
 		}
 
-		template <std::size_t I = 0, typename N, typename F, typename... Args>
+		template <std::size_t I = 0, typename N, typename F, typename... Args, typename = std::enable_if_t<!meta::any_same<meta::unqualified_t<N>, base_classes_tag, call_construction>::value>>
 		int make_regs(regs_t& l, int index, N&& n, F&&, Args&&... args) {
 			string_detail::string_shim shimname = usertype_detail::make_shim(n);
 			// Returnable scope
