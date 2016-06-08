@@ -173,9 +173,9 @@ namespace call_detail {
 			typedef typename wrap::returns_list returns_list;
 			typedef typename wrap::args_list args_list;
 			typedef typename wrap::caller caller;
+			typedef typename wrap::object_type object_type;
 
 #ifdef SOL_SAFE_USERTYPE
-			typedef typename wrap::object_type object_type;
 			object_type* o = stack::get<object_type*>(L, 1);
 			if (o == nullptr) {
 				return luaL_error(L, "sol: received null for 'self' argument (use ':' for accessing member functions, make sure member variables are preceeded by the actual object with '.' syntax)");
