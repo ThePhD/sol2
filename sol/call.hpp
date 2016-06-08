@@ -183,7 +183,7 @@ namespace call_detail {
 			return stack::call_into_lua<is_variable ? 2 : 1>(returns_list(), args_list(), L, is_variable ? 3 : 2, caller(), f, *o);
 #else
 			object_type& o = stack::get<object_type&>(L, 1);
-			return stack::call_into_lua<is_variable ? 2 : 1>(returns_list(), args_list(), L, is_variable ? 3 : 2, caller(), f);
+			return stack::call_into_lua<is_variable ? 2 : 1>(returns_list(), args_list(), L, is_variable ? 3 : 2, caller(), f, o);
 #endif // Safety
 		}
 	};
