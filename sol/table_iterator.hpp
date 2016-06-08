@@ -45,11 +45,12 @@ private:
     std::pair<object, object> kvp;
     reference_type ref;
     int tableidx = 0;
+    int keyidx = 0;
     std::ptrdiff_t idx = 0;
 
 public:
 
-    basic_table_iterator () : idx(-1) {
+    basic_table_iterator () : idx(-1), keyidx(-1) {
 
     }
 
@@ -70,6 +71,7 @@ public:
 
         if (lua_next(ref.lua_state(), tableidx) == 0) {
             idx = -1;
+		  keyidx = -1;
             return *this;
         }
         ++idx;
@@ -77,6 +79,7 @@ public:
         kvp.second = object(ref.lua_state(), -1);
         lua_pop(ref.lua_state(), 1);
         // leave key on the stack
+	   keyidx = lua_gettop(ref.lua_state());
         return *this;
     }
 
@@ -103,9 +106,12 @@ public:
     }
 
     ~basic_table_iterator() {
-        if (ref.valid()) {
-            stack::remove(ref.lua_state(), tableidx, 1);
-        }
+	    if (keyidx != -1) {
+		    stack::remove(ref.lua_state(), keyidx, 1);
+	    }
+	    if (ref.valid()) {
+		    stack::remove(ref.lua_state(), tableidx, 1);
+	    }
     }
 };
 

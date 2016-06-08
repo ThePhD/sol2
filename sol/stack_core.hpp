@@ -223,12 +223,12 @@ inline decltype(auto) pop(lua_State* L) {
     return popper<meta::unqualified_t<T>>{}.pop(L);
 }
 
-template <bool global = false, bool raw = true, typename Key>
+template <bool global = false, bool raw = false, typename Key>
 void get_field(lua_State* L, Key&& key) {
 	field_getter<meta::unqualified_t<Key>, global, raw>{}.get(L, std::forward<Key>(key));
 }
 
-template <bool global = false, bool raw = true, typename Key>
+template <bool global = false, bool raw = false, typename Key>
 void get_field(lua_State* L, Key&& key, int tableindex) {
 	field_getter<meta::unqualified_t<Key>, global, raw>{}.get(L, std::forward<Key>(key), tableindex);
 }

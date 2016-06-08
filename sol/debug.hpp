@@ -35,7 +35,7 @@ inline std::string dump_types(lua_State* L) {
         if(i != 1) {
             visual += " | ";
         }
-        visual += type_name(L, stack::get<type>(L, i));
+        visual += type_name(L, stack::get<type>(L, static_cast<int>(i)));
     }
     return visual;
 }

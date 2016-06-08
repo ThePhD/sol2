@@ -85,6 +85,31 @@ TEST_CASE("tables/as-enum-classes", "Making sure enums can be put in and gotten 
 	REQUIRE(dir == direction::up);
 }
 
+TEST_CASE("tables/new_enum", "Making sure enums can be put in and gotten out as values") {
+	enum class direction {
+		up,
+		down,
+		left,
+		right
+	};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_enum( "direction",
+		"up", direction::up,
+		"down", direction::down,
+		"left", direction::left,
+		"right", direction::right
+	);
+
+	direction d = lua["direction"]["left"];
+	REQUIRE(d == direction::left);
+	REQUIRE_THROWS(lua.script("direction.left = 50"));
+	d = lua["direction"]["left"];
+	REQUIRE(d == direction::left);
+}
+
 TEST_CASE("tables/for-each", "Testing the use of for_each to get values from a lua table") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

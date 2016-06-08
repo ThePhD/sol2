@@ -174,7 +174,51 @@ struct self_test {
 	}
 };
 
+struct ext_getset {
 
+	int bark = 24;
+	const int meow = 56;
+
+	ext_getset() = default;
+	ext_getset(int v) : bark(v) {}
+	ext_getset(ext_getset&&) = default;
+	ext_getset(const ext_getset&) = delete;
+	ext_getset& operator=(ext_getset&&) = default;
+	ext_getset& operator=(const ext_getset&) = delete;
+	~ext_getset() {
+
+	}
+
+	std::string x() {
+		return "bark bark bark";
+	}
+
+	int x2(std::string x) {
+		return static_cast<int>(x.length());
+	}
+
+	void set(sol::variadic_args, sol::this_state, int x) {
+		bark = x;
+	}
+
+	int get(sol::this_state, sol::variadic_args) {
+		return bark;
+	}
+
+	static void s_set(int) {
+
+	}
+
+	static int s_get(int x) {
+		return x + 20;
+	}
+
+};
+
+template <typename T>
+void des(T& e) {
+	e.~T();
+}
 
 TEST_CASE("usertype/usertype", "Show that we can create classes from usertype and use them") {
 	sol::state lua;
@@ -864,3 +908,89 @@ TEST_CASE("usertype/no_constructor", "make sure lua types cannot be constructed 
 	REQUIRE_THROWS(lua.script("t = thing.new()"));
 }
 
+TEST_CASE("usertype/coverage", "try all the things") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_usertype<ext_getset>("ext_getset",
+		sol::call_constructor, sol::constructors<sol::types<>, sol::types<int>>(),
+		sol::meta_function::garbage_collect, sol::destructor(des<ext_getset>),
+		"x", sol::overload(&ext_getset::x, &ext_getset::x2, [](ext_getset& m, std::string x, int y) { return m.meow + 50 + y + x.length(); }),
+		"bark", &ext_getset::bark,
+		"meow", &ext_getset::meow,
+		"readonlybark", sol::readonly(&ext_getset::bark),
+		"set", &ext_getset::set,
+		"get", &ext_getset::get,
+		"sset", &ext_getset::s_set,
+		"sget", &ext_getset::s_get,
+		"propbark", sol::property(&ext_getset::set, &ext_getset::get),
+		"readonlypropbark", sol::property(&ext_getset::get),
+		"writeonlypropbark", sol::property(&ext_getset::set)
+		);
+
+	lua.script(R"(
+e = ext_getset()
+w = e:x(e:x(), e:x(e:x()))
+print(w)
+)");
+
+	int w = lua["w"];
+	REQUIRE(w == 27);
+
+	lua.script(R"(
+e:set(500)
+e.sset(24)
+x = e:get()
+y = e.sget(20)
+)");
+
+	int x = lua["x"];
+	int y = lua["y"];
+	REQUIRE(x == 500);
+	REQUIRE(y == 40);
+
+	lua.script(R"(
+e.bark = 5001
+a = e:get()
+print(e.bark)
+print(a)
+
+e.propbark = 9700
+b = e:get()
+print(e.propbark)
+print(b)
+)");
+	int a = lua["a"];
+	int b = lua["b"];
+
+	REQUIRE(a == 5001);
+	REQUIRE(b == 9700);
+
+	lua.script(R"(
+c = e.readonlybark
+d = e.meow
+print(e.readonlybark)
+print(c)
+print(e.meow)
+print(d)
+)");
+
+	int c = lua["c"];
+	int d = lua["d"];
+	REQUIRE(a == 5001);
+	REQUIRE(b == 9700);
+
+	lua.script(R"(
+e.writeonlypropbark = 500
+z = e.readonlypropbark
+print(e.readonlybark)
+print(e.bark)
+)");
+
+	int z = lua["z"];
+	REQUIRE(z == 500);
+
+	REQUIRE_THROWS(lua.script("e.readonlybark = 24"));
+	REQUIRE_THROWS(lua.script("e.readonlypropbark = 500"));
+	REQUIRE_THROWS(lua.script("y = e.writeonlypropbark"));
+}

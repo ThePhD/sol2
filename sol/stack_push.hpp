@@ -32,7 +32,7 @@ namespace stack {
 template<typename T, typename>
 struct pusher {
 	template <typename K, typename... Args>
-	static int push_keyed(lua_State* L, metatable_registry_key<K> k, Args&&... args) {
+	static int push_keyed(lua_State* L, K&& k, Args&&... args) {
 		// Basically, we store all user-data like this:
 		// If it's a movable/copyable value (no std::ref(x)), then we store the pointer to the new
 		// data in the first sizeof(T*) bytes, and then however many bytes it takes to
@@ -44,32 +44,32 @@ struct pusher {
 		referencereference = allocationtarget;
 		std::allocator<T> alloc{};
 		alloc.construct(allocationtarget, std::forward<Args>(args)...);
-		luaL_newmetatable(L, &k.key[0]);
+		luaL_newmetatable(L, &k[0]);
 		lua_setmetatable(L, -2);
 		return 1;
 	}
 
 	template <typename... Args>
 	static int push(lua_State* L, Args&&... args) {
-		return push_keyed(L, meta_registry_key(&usertype_traits<T*>::metatable[0]), std::forward<Args>(args)...);
+		return push_keyed(L, usertype_traits<T>::metatable, std::forward<Args>(args)...);
 	}
 };
 
 template<typename T>
 struct pusher<T*> {
 	template <typename K>
-	static int push_keyed(lua_State* L, metatable_registry_key<K> k, T* obj) {
+	static int push_keyed(lua_State* L, K&& k, T* obj) {
 		if (obj == nullptr)
 			return stack::push(L, nil);
 		T** pref = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
 		*pref = obj;
-		luaL_getmetatable(L, &k.key[0]);
+		luaL_getmetatable(L, &k[0]);
 		lua_setmetatable(L, -2);
 		return 1;
 	}
 
 	static int push(lua_State* L, T* obj) {
-		return push_keyed(L, meta_registry_key(&usertype_traits<T*>::metatable[0]), obj);
+		return push_keyed(L, usertype_traits<T*>::metatable, obj);
 	}
 };
 

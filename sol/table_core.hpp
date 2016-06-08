@@ -33,6 +33,9 @@ namespace detail {
 template <std::size_t n>
 struct clean { lua_State* L; clean(lua_State* L) : L(L) {} ~clean() { lua_pop(L, static_cast<int>(n)); } };
 struct ref_clean { lua_State* L; int& n; ref_clean(lua_State* L, int& n) : L(L), n(n) {} ~ref_clean() { lua_pop(L, static_cast<int>(n)); } };
+inline int fail_on_newindex(lua_State* L) {
+	return luaL_error(L, "sol: cannot modify the elements of an enumeration table");
+}
 }
 
 template <bool top_level, typename base_t>
@@ -268,6 +271,23 @@ public:
         set_usertype(name, utype);
         return *this;
     }
+
+	template<bool read_only = true, typename... Args>
+	basic_table_core& new_enum(const std::string& name, Args&&... args) {
+		if (read_only) {
+			table idx = create_with(std::forward<Args>(args)...);
+			table x = create_with(
+				meta_function::new_index, detail::fail_on_newindex,
+				meta_function::index, idx
+			);
+			table target = create_named(name);
+			target[metatable_key] = x;
+		}
+		else {
+			create_named(name, std::forward<Args>(args)... );
+		}
+		return *this;
+	}
 
     template<typename Fx>
     void for_each( Fx&& fx ) const {

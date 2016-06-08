@@ -125,6 +125,23 @@ namespace sol {
 				l[index] = { name_of(meta_function::garbage_collect).c_str(), destructfunc };
 				++index;
 			}
+			if (baseclasscast != nullptr)
+				return index;
+#ifndef SOL_NO_EXCEPTIONS
+			static_assert(sizeof(void*) <= sizeof(detail::throw_cast), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
+			baseclasscheck = baseclasscast = (void*)&detail::throw_as<T>;
+#elif !defined(SOL_NO_RTTI)
+			static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
+			static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
+			baseclasscheck = (void*)&detail::inheritance<T>::type_check;
+			baseclasscast = (void*)&detail::inheritance<T>::type_cast;
+#else
+			static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
+			static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
+			baseclasscheck = (void*)&detail::inheritance<T>::type_check;
+			baseclasscast = (void*)&detail::inheritance<T>::type_cast;
+#endif // No Runtime Type Information vs. Throw-Style Inheritance
+
 			return index;
 		}
 
@@ -143,7 +160,7 @@ namespace sol {
 				return endindex;
 #ifndef SOL_NO_EXCEPTIONS
 			static_assert(sizeof(void*) <= sizeof(detail::throw_cast), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
-			baseclasscast = (void*)&detail::throw_as<T>;
+			baseclasscheck = baseclasscast = (void*)&detail::throw_as<T>;
 #elif !defined(SOL_NO_RTTI)
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
@@ -186,7 +203,7 @@ namespace sol {
 		}
 
 		template <bool is_index>
-		int find_call(std::integral_constant<bool, is_index>, std::index_sequence<>, lua_State* L, const sol::string_detail::string_shim& accessor) {
+		int find_call(std::integral_constant<bool, is_index>, std::index_sequence<>, lua_State* L, const sol::string_detail::string_shim&) {
 			if (is_index)
 				return indexfunc(L);
 			else
@@ -308,7 +325,7 @@ namespace sol {
 					lua_createtable(L, 0, 1);
 					stack_reference metabehind(L, -1);
 					if (um.callconstructfunc != nullptr) {
-						stack::set_field(L, sol::meta_function::call_function, um.callconstructfunc, metabehind.stack_index());
+						stack::set_field(L, sol::meta_function::call_function, make_closure(um.callconstructfunc, make_light(um)), metabehind.stack_index());
 					}
 					stack::set_field(L, metatable_key, metabehind, t.stack_index());
 					metabehind.pop();

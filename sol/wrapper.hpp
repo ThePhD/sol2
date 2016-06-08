@@ -112,12 +112,12 @@ namespace sol {
 		typedef meta::tuple_types<R> returns_list;
 
 		template <F fx, typename... Args>
-		static R invoke(O& mem, Args... args) {
+		static R invoke(O& mem, Args&&... args) {
 			return (mem.*fx)(std::forward<Args>(args)...);
 		}
 
 		template <typename Fx, typename... Args>
-		static R call(Fx&& fx, O& mem, Args... args) {
+		static R call(Fx&& fx, O& mem, Args&&... args) {
 			return (mem.*fx)(std::forward<Args>(args)...);
 		}
 

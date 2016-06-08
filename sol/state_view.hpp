@@ -329,10 +329,16 @@ public:
         return *this;
     }
 
+    template<bool read_only = true, typename... Args>
+    state_view& new_enum(const std::string& name, Args&&... args) {
+	    global.new_enum<read_only>(name, std::forward<Args>(args)...);
+	    return *this;
+    }
+
     template<typename Class, typename... CArgs, typename... Args>
     state_view& new_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
-        global.new_usertype<Class>(name, ctor, std::forward<Args>(args)...);
-        return *this;
+	    global.new_usertype<Class>(name, ctor, std::forward<Args>(args)...);
+	    return *this;
     }
 
     template <typename Fx>
