@@ -5,6 +5,23 @@ dist: trusty
 git:
     depth: 5
 
+before_install:
+- source ./install.deps.sh
+
+install:
+- install_os_deps
+
+script:
+- echo "Configuration info:"
+- export_compiler_vars
+- ninja --version
+- ./bootstrap.py --ci && ninja && ninja examples
+
+notifications:
+    email:
+        on_success: change
+        on_failure: change
+
 matrix:
   include: 
     - os: linux
@@ -77,6 +94,7 @@ matrix:
        - wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-14.04.tar.xz -O $LLVM_ARCHIVE_PATH
        - mkdir $HOME/clang-$LLVM_VERSION
        - tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang-$LLVM_VERSION --strip-components 1
+       - source ./install.deps.sh
       compiler: clang
       addons:
         apt:
@@ -102,6 +120,7 @@ matrix:
        - wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-14.04.tar.xz -O $LLVM_ARCHIVE_PATH
        - mkdir $HOME/clang-$LLVM_VERSION
        - tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang-$LLVM_VERSION --strip-components 1
+       - source ./install.deps.sh
       compiler: clang
       addons:
         apt:
@@ -125,6 +144,7 @@ matrix:
        - wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-14.04.tar.xz -O $LLVM_ARCHIVE_PATH
        - mkdir $HOME/clang-$LLVM_VERSION
        - tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang-$LLVM_VERSION --strip-components 1
+       - source ./install.deps.sh
       compiler: clang
       addons:
         apt:
@@ -152,20 +172,3 @@ matrix:
   allow_failures:
     - os: osx
       compiler: clang 
-
-before_install:
-- source ./install.deps.sh
-
-install:
-- install_os_deps
-
-script:
-- echo "Configuration info:"
-- export_compiler_vars
-- ninja --version
-- ./bootstrap.py --ci && ninja && ninja examples
-
-notifications:
-    email:
-        on_success: change
-        on_failure: change
