@@ -84,7 +84,7 @@ matrix:
       env:
         - LLVM_VERSION=3.5.0
         - LLVM_ARCHIVE_PATH=$HOME/clang+llvm.tar.xz
-        - COMPILER=clang++3.5
+        - COMPILER=clang++
         - CPPFLAGS="-I $HOME/clang-$LLVM_VERSION/include/c++/v1"
         - CXXFLAGS=-lc++
         - PATH=$HOME/clang-$LLVM_VERSION/bin:$PATH
@@ -110,7 +110,7 @@ matrix:
       env:
         - LLVM_VERSION=3.6.0
         - LLVM_ARCHIVE_PATH=$HOME/clang+llvm.tar.xz
-        - COMPILER=clang++3.6
+        - COMPILER=clang++
         - CPPFLAGS="-I $HOME/clang-$LLVM_VERSION/include/c++/v1"
         - CXXFLAGS=-lc++
         - PATH=$HOME/clang-$LLVM_VERSION/bin:$PATH
@@ -134,7 +134,7 @@ matrix:
       env:
         - LLVM_VERSION=3.6.0
         - LLVM_ARCHIVE_PATH=$HOME/clang+llvm.tar.xz
-        - COMPILER=clang++3.6
+        - COMPILER=clang++
         - CPPFLAGS="-I $HOME/clang-$LLVM_VERSION/include/c++/v1"
         - CXXFLAGS=-lc++
         - PATH=$HOME/clang-$LLVM_VERSION/bin:$PATH
