@@ -59,3 +59,6 @@ docs/build/
 m.lua
 single/sol.hpp
 *.db
+lua53.dll
+main.exe
+main.o

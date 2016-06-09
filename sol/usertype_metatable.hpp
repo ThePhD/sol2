@@ -246,12 +246,6 @@ namespace sol {
 			return f.find_call(std::false_type(), std::make_index_sequence<std::tuple_size<Tuple>::value>(), L, accessor);
 		}
 
-		static int gc_call(lua_State* L) {
-			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, up_value_index(1));
-			f.~usertype_metatable();
-			return 0;
-		}
-
 		virtual int push_um(lua_State* L) override {
 			return stack::push(L, std::move(*this));
 		}
@@ -335,10 +329,15 @@ namespace sol {
 						t.pop();
 					}
 					else {
+						// NOT NEEDED
+						// Perhaps we should look into
+						// whether or not doing ti like this
+						// is better than just letting user<T> handle it?
+
 						// Add cleanup to metatable
 						// Essentially, when the metatable dies,
 						// this too will call the class and kill itself
-						const char* metakey = &usertype_traits<T>::gc_table[0];
+						/*const char* metakey = &usertype_traits<T>::gc_table[0];
 						lua_createtable(L, 1, 0);
 						stack_reference cleanup(L, -1);
 						stack::set_field(L, meta_function::garbage_collect, make_closure(umt_t::gc_call, umt), cleanup.stack_index());
@@ -348,7 +347,7 @@ namespace sol {
 						// otherwise, it will trigger the __index metamethod
 						// we just set
 						stack::raw_set_field(L, metakey, t, t.stack_index());
-						cleanup.pop();
+						cleanup.pop();*/
 					}
 				}
 				
