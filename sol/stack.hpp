@@ -167,7 +167,7 @@ inline int call_lua(lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs) {
 	typedef lua_bind_traits<meta::unqualified_t<Fx>> traits_type;
 	typedef typename traits_type::args_list args_list;
 	typedef typename traits_type::returns_list returns_list;
-	return call_into_lua(returns_list(), args_list(), start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
+	return call_into_lua(returns_list(), args_list(), L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
 }
 
 inline call_syntax get_call_syntax(lua_State* L, const std::string& key, int index = -2) {

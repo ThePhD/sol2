@@ -91,7 +91,7 @@ namespace sol {
 		}
 
 		template <typename Fx, typename Arg, typename... Args>
-		static void call(Fx&& fx, object_type& mem, Arg&& arg, Args&&... args) {
+		static void call(Fx&& fx, object_type& mem, Arg&& arg, Args&&...) {
 			(mem.*fx) = std::forward<Arg>(arg);
 		}
 

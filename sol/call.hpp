@@ -285,7 +285,7 @@ namespace call_detail {
 
 	template <typename... Args, bool is_index, bool is_variable, typename C>
 	struct agnostic_lua_call_wrapper<bases<Args...>, is_index, is_variable, C> {
-		static int call(lua_State* L, bases<Args...>&) {
+		static int call(lua_State*, bases<Args...>&) {
 			// Uh. How did you even call this, lul
 			return 0;
 		}
