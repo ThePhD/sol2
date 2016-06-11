@@ -67,9 +67,9 @@ namespace sol {
 			return string_detail::string_shim(detail::base_class_cast_key());
 		}
 
-		template <typename N, typename F>
-		inline luaL_Reg make_reg(N&& n, F&& f) {
-			luaL_Reg l{ make_shim(std::forward<N>(n)).c_str(), std::forward<F>(f) };
+		template <typename N>
+		inline luaL_Reg make_reg(N&& n, lua_CFunction f) {
+			luaL_Reg l{ make_shim(std::forward<N>(n)).c_str(), f };
 			return l;
 		}
 
@@ -105,6 +105,16 @@ namespace sol {
 		void* baseclasscast;
 		bool mustindex;
 		bool secondarymeta;
+
+		template <std::size_t I>
+		static inline lua_CFunction make_func(lua_CFunction& f) {
+			return f;
+		}
+
+		template <std::size_t I, typename F>
+		static inline lua_CFunction make_func(F&&) {
+			return call<I + 1>;
+		}
 
 		template <std::size_t... I>
 		static bool contains_variable(std::index_sequence<I...>) {
@@ -159,7 +169,7 @@ namespace sol {
 		}
 
 		template <std::size_t I = 0, typename N, typename F, typename... Args, typename = std::enable_if_t<!meta::any_same<meta::unqualified_t<N>, base_classes_tag, call_construction>::value>>
-		int make_regs(regs_t& l, int index, N&& n, F&&, Args&&... args) {
+		int make_regs(regs_t& l, int index, N&& n, F&& f, Args&&... args) {
 			string_detail::string_shim shimname = usertype_detail::make_shim(n);
 			// Returnable scope
 			// That would be a neat keyword for C++
@@ -174,7 +184,7 @@ namespace sol {
 					mustindex = true;
 					return;
 				}
-				l[index] = usertype_detail::make_reg(std::forward<N>(n), call<I + 1>);
+				l[index] = usertype_detail::make_reg(std::forward<N>(n), make_func<I>(std::forward<F>(f)));
 				++index;
 			}();
 			return make_regs<I + 2>(l, index, std::forward<Args>(args)...);
