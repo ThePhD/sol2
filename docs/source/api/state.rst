@@ -56,7 +56,7 @@ This function takes a number of :ref:`sol::lib<lib-enum>` as arguments and opens
 	void script(const std::string& code);
 	void script_file(const std::string& filename);
 
-These functions run the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run isolated: any scripts or code run will affect code in other states as well: code ran in this fashion is not isolated. 
+These functions run the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run isolated: any scripts or code run will affect code in the ``lua_State*`` the object uses as well. Code ran in this fashion is not isolated. If you need isolation, consider creating a new state or traditional Lua sandboxing techniques.
 
 .. code-block:: cpp
 	:caption: function: load / load_file
@@ -65,7 +65,7 @@ These functions run the desired blob of either code that is in a string, or code
 	sol::load_result load(const std::string& code);
 	sol::load_result load_file(const std::string& filename);
 
-These functions *load* the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run: it returns a ``load_result`` proxy that can be called, turned into a `sol::function`,. or similar, will run the loaded code.
+These functions *load* the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run: it returns a ``load_result`` proxy that can be called to actually run the code, turned into a ``sol::function``, a ``sol::protected_function``, or some other abstraction. If it is called, it will run on the object's current ``lua_State*``: it is not isolated. If you need isolation, consider creating a new state or traditional Lua sandboxing techniques.
 
 .. code-block:: cpp
 	:caption: function: global table / registry table

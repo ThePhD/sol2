@@ -289,7 +289,6 @@ struct getter<T*> {
     }
 
     static T* get_no_nil_from(lua_State* L, void* udata, int index = -1) {
-#if 0
 #ifndef SOL_NO_EXCEPTIONS
         if (luaL_getmetafield(L, index, &detail::base_class_check_key()[0]) != 0) {
             void* basecastdata = lua_touserdata(L, -1);
@@ -316,7 +315,6 @@ struct getter<T*> {
             lua_pop(L, 1);
         }
 #endif // No Runtime Type Information || Exceptions
-#endif // Speed test
         T* obj = static_cast<T*>(udata);
         return obj;
     }
