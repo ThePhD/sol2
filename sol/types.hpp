@@ -110,6 +110,9 @@ inline bool operator!=(nil_t, nil_t) { return false; }
 struct metatable_key_t {};
 const metatable_key_t metatable_key = {};
 
+struct no_metatable_t {};
+const no_metatable_t no_metatable = {};
+
 typedef std::remove_pointer_t<lua_CFunction> lua_r_CFunction;
 
 template <typename T>
@@ -177,9 +180,9 @@ struct absolute_index {
     operator int() const { return index; }
 };
 
-struct light_userdata_value {
+struct lightuserdata_value {
     void* value;
-    light_userdata_value(void* data) : value(data) {}
+    lightuserdata_value(void* data) : value(data) {}
     operator void*() const { return value; }
 };
 
@@ -533,7 +536,7 @@ template <typename A, typename B>
 struct lua_type_of<std::pair<A, B>> : std::integral_constant<type, type::poly> {};
 
 template <>
-struct lua_type_of<light_userdata_value> : std::integral_constant<type, type::lightuserdata> {};
+struct lua_type_of<lightuserdata_value> : std::integral_constant<type, type::lightuserdata> {};
 
 template <>
 struct lua_type_of<userdata_value> : std::integral_constant<type, type::userdata> {};
@@ -600,12 +603,12 @@ template <typename T>
 struct lua_type_of : detail::lua_type_of<T> {};
 
 template <typename T>
-struct is_lua_primitive : std::integral_constant<bool, 
-    type::userdata != lua_type_of<meta::unqualified_t<T>>::value
-    || std::is_base_of<reference, meta::unqualified_t<T>>::value
-    || std::is_base_of<stack_reference, meta::unqualified_t<T>>::value
-    || meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>::value
-    || meta::is_specialization_of<std::pair, meta::unqualified_t<T>>::value
+struct is_lua_primitive : std::integral_constant<bool,
+	type::userdata != lua_type_of<meta::unqualified_t<T>>::value
+	|| std::is_base_of<reference, meta::unqualified_t<T>>::value
+	|| std::is_base_of<stack_reference, meta::unqualified_t<T>>::value
+	|| meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>::value
+	|| meta::is_specialization_of<std::pair, meta::unqualified_t<T>>::value
 > { };
 
 template <typename T>
@@ -617,7 +620,7 @@ struct is_lua_primitive<T*> : std::true_type {};
 template <>
 struct is_lua_primitive<userdata_value> : std::true_type {};
 template <>
-struct is_lua_primitive<light_userdata_value> : std::true_type {};
+struct is_lua_primitive<lightuserdata_value> : std::true_type {};
 template <typename T>
 struct is_lua_primitive<non_null<T>> : is_lua_primitive<T*> {};
 

@@ -145,7 +145,7 @@ namespace call_detail {
 
 	template <typename F, bool is_index, bool is_variable, typename = void>
 	struct agnostic_lua_call_wrapper {
-		static int var_call(std::true_type, lua_State* L, F f) {
+		static int var_call(std::true_type, lua_State* L, F& f) {
 			typedef wrapper<meta::unqualified_t<F>> wrap;
 			typedef typename wrap::returns_list returns_list;
 			typedef typename wrap::free_args_list args_list;
@@ -153,7 +153,7 @@ namespace call_detail {
 			return stack::call_into_lua<is_index ? 1 : 2>(returns_list(), args_list(), L, is_index ? 2 : 3, caller(), f);
 		}
 
-		static int var_call(std::false_type, lua_State* L, F f) {
+		static int var_call(std::false_type, lua_State* L, F& f) {
 			typedef wrapper<meta::unqualified_t<F>> wrap;
 			typedef typename wrap::free_args_list args_list;
 			typedef typename wrap::returns_list returns_list;
@@ -161,14 +161,14 @@ namespace call_detail {
 			return stack::call_into_lua(returns_list(), args_list(), L, 1, caller(), f);
 		}
 
-		static int call(lua_State* L, F f) {
+		static int call(lua_State* L, F& f) {
 			return var_call(std::integral_constant<bool, is_variable>(), L, f);
 		}
 	};
 
 	template <typename F, bool is_index, bool is_variable>
 	struct agnostic_lua_call_wrapper<F, is_index, is_variable, std::enable_if_t<std::is_member_function_pointer<F>::value>> {
-		static int call(lua_State* L, F f) {
+		static int call(lua_State* L, F& f) {
 			typedef wrapper<meta::unqualified_t<F>> wrap;
 			typedef typename wrap::returns_list returns_list;
 			typedef typename wrap::args_list args_list;
@@ -204,7 +204,7 @@ namespace call_detail {
 
 	template <bool is_index, bool is_variable, typename C>
 	struct agnostic_lua_call_wrapper<no_prop, is_index, is_variable, C> {
-		static int call(lua_State* L, no_prop) {
+		static int call(lua_State* L, no_prop&) {
 			return luaL_error(L, is_index ? "sol: cannot read from a writeonly property" : "sol: cannot write to a readonly property");
 		}
 	};
@@ -213,7 +213,7 @@ namespace call_detail {
 	struct agnostic_lua_call_wrapper<F, false, is_variable, std::enable_if_t<std::is_member_object_pointer<F>::value>> {
 		typedef sol::lua_bind_traits<F> traits_type;
 
-		static int call_assign(std::true_type, lua_State* L, F f) {
+		static int call_assign(std::true_type, lua_State* L, F& f) {
 			typedef wrapper<meta::unqualified_t<F>> wrap;
 			typedef typename wrap::args_list args_list;
 			typedef typename wrap::object_type object_type;
@@ -233,20 +233,20 @@ namespace call_detail {
 #endif // Safety
 		}
 
-		static int call_assign(std::false_type, lua_State* L, F) {
+		static int call_assign(std::false_type, lua_State* L, F&) {
 			return luaL_error(L, "sol: cannot write to this variable: copy assignment/constructor not available");
 		}
 
-		static int call_const(std::false_type, lua_State* L, F f) {
+		static int call_const(std::false_type, lua_State* L, F& f) {
 			typedef typename traits_type::return_type R;
 			return call_assign(std::is_assignable<std::add_lvalue_reference_t<meta::unqualified_t<R>>, R>(), L, f);
 		}
 
-		static int call_const(std::true_type, lua_State* L, F) {
+		static int call_const(std::true_type, lua_State* L, F&) {
 			return luaL_error(L, "sol: cannot write to a readonly (const) variable");
 		}
 
-		static int call(lua_State* L, F f) {
+		static int call(lua_State* L, F& f) {
 			return call_const(std::is_const<typename traits_type::return_type>(), L, f);
 		}
 	};
@@ -255,7 +255,7 @@ namespace call_detail {
 	struct agnostic_lua_call_wrapper<F, true, is_variable, std::enable_if_t<std::is_member_object_pointer<F>::value>> {
 		typedef sol::lua_bind_traits<F> traits_type;
 
-		static int call(lua_State* L, F f) {
+		static int call(lua_State* L, F& f) {
 			typedef wrapper<meta::unqualified_t<F>> wrap;
 			typedef typename wrap::object_type object_type;
 			typedef typename wrap::returns_list returns_list;

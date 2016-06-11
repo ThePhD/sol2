@@ -260,7 +260,7 @@ struct checker<T, type::userdata, C> {
 			handler(L, index, type::userdata, indextype);
 			return false;
 		}
-		if (meta::any<std::is_same<T, light_userdata_value>, std::is_same<T, userdata_value>, std::is_same<T, userdata>, std::is_same<T, lightuserdata>>::value)
+		if (meta::any<std::is_same<T, lightuserdata_value>, std::is_same<T, userdata_value>, std::is_same<T, userdata>, std::is_same<T, lightuserdata>>::value)
 			return true;
 		if (lua_getmetatable(L, index) == 0) {
 			return true;
@@ -271,30 +271,29 @@ struct checker<T, type::userdata, C> {
 			return true;
 		if (stack_detail::check_metatable<detail::unique_usertype<U>>(L))
 			return true;
+		bool success = true;
 #ifndef SOL_NO_EXCEPTIONS
 		lua_getfield(L, -1, &detail::base_class_check_key()[0]);
-		void* basecastdata = lua_touserdata(L, -1);
-		detail::throw_cast basecast = (detail::throw_cast)basecastdata;
-		bool success = detail::catch_check<T>(basecast);
+		if (stack::get<type>(L) != type::nil) {
+			void* basecastdata = lua_touserdata(L, -1);
+			detail::throw_cast basecast = (detail::throw_cast)basecastdata;
+			success = detail::catch_check<T>(basecast);
+		}
 #elif !defined(SOL_NO_RTTI)
 		lua_getfield(L, -1, &detail::base_class_check_key()[0]);
-		if (stack::get<type>(L) == type::nil) {
-			lua_pop(L, 2);
-			return false;
+		if (stack::get<type>(L) != type::nil) {
+			void* basecastdata = lua_touserdata(L, -1);
+			detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
+			success = ic(typeid(T));
 		}
-		void* basecastdata = lua_touserdata(L, -1);
-		detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
-		bool success = ic(typeid(T));
 #else
 		// Topkek
 		lua_getfield(L, -1, &detail::base_class_check_key()[0]);
-		if (stack::get<type>(L) == type::nil) {
-			lua_pop(L, 2);
-			return false;
+		if (stack::get<type>(L) != type::nil) {
+			void* basecastdata = lua_touserdata(L, -1);
+			detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
+			success = ic(detail::id_for<T>::value);
 		}
-		void* basecastdata = lua_touserdata(L, -1);
-		detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
-		bool success = ic(detail::id_for<T>::value);
 #endif // No Runtime Type Information || Exceptions
 		lua_pop(L, 2);
 		if (!success) {

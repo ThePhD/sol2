@@ -84,9 +84,9 @@ struct getter<userdata_value> {
 };
 
 template<>
-struct getter<light_userdata_value> {
-    static light_userdata_value get(lua_State* L, int index = -1) {
-        return light_userdata_value( lua_touserdata(L, index) );
+struct getter<lightuserdata_value> {
+    static lightuserdata_value get(lua_State* L, int index = -1) {
+        return lightuserdata_value( lua_touserdata(L, index) );
     }
 };
 

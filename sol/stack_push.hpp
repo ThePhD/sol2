@@ -262,8 +262,8 @@ struct pusher<void*> {
 };
 
 template<>
-struct pusher<light_userdata_value> {
-    static int push(lua_State* L, light_userdata_value userdata) {
+struct pusher<lightuserdata_value> {
+    static int push(lua_State* L, lightuserdata_value userdata) {
         lua_pushlightuserdata(L, userdata);
         return 1;
     }
@@ -279,20 +279,38 @@ struct pusher<light<T>> {
 
 template<typename T>
 struct pusher<user<T>> {
-	template <typename... Args>
-	static int push(lua_State* L, Args&&... args ) {
+	template <bool with_meta = true, typename... Args>
+	static int push_with(lua_State* L, Args&&... args ) {
 		// A dumb pusher
 		void* rawdata = lua_newuserdata(L, sizeof(T));
 		std::allocator<T> alloc;
 		alloc.construct(static_cast<T*>(rawdata), std::forward<Args>(args)...);
-		lua_CFunction cdel = stack_detail::alloc_destroy<T>;
-		// Make sure we have a plain GC set for this data
-		lua_createtable(L, 0, 1);
-		lua_pushlightuserdata(L, rawdata);
-		lua_pushcclosure(L, cdel, 1);
-		lua_setfield(L, -2, "__gc");
-		lua_setmetatable(L, -2);
+		if (with_meta) {
+			lua_CFunction cdel = stack_detail::alloc_destroy<T>;
+			// Make sure we have a plain GC set for this data
+			lua_createtable(L, 0, 1);
+			lua_pushlightuserdata(L, rawdata);
+			lua_pushcclosure(L, cdel, 1);
+			lua_setfield(L, -2, "__gc");
+			lua_setmetatable(L, -2);
+		}
 		return 1;
+	}
+
+	static int push(lua_State* L, const user<T>& u) {
+		return push_with(L, u.value);
+	}
+
+	static int push(lua_State* L, user<T>&& u) {
+		return push_with(L, std::move(u.value));
+	}
+
+	static int push(lua_State* L, no_metatable_t, const user<T>& u) {
+		return push_with<false>(L, u.value);
+	}
+
+	static int push(lua_State* L, no_metatable_t, user<T>&& u) {
+		return push_with<false>(L, std::move(u.value));
 	}
 };
 

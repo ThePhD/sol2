@@ -189,17 +189,9 @@ inheritance
 
 Sol can adjust pointers from derived classes to base classes at runtime, but it has some caveats based on what you compile with:
 
-.. _exceptions_enabled:
+If your class has no complicated™ virtual inheritance or multiple inheritance, than you can try to sneak away with the performance boost from not specifying any base classes and doing any casting checks. (What does "complicated™" mean? Ask your compiler's documentation, if you're in that deep.)
 
-**With Exceptions Enabled**
-
-You do not need to manually specify the base classes. We use a technique that infinitely scales and automatically casts derived pointers to their base classes by exploiting the necessity of exception type matching.
-
-.. _exceptions_disabled:
-
-**With Exceptions Disabled**
-
-You must specify the ``sol::base_classes`` tag with the ``sol::bases<Types...>()`` argument, where ``Types...`` are all the base classes of the single type ``T`` that you are making a usertype out of. If you turn exceptions off and are also completely mad and turn off :doc:`run-time type information<../rtti>` as well, we fallback to a id-based  systemthat still requires you to specifically list the base classes as well. For example:
+For the rest of us safe individuals out there: You must specify the ``sol::base_classes`` tag with the ``sol::bases<Types...>()`` argument, where ``Types...`` are all the base classes of the single type ``T`` that you are making a usertype out of. If you turn exceptions off and are also completely mad and turn off :doc:`run-time type information<../rtti>` as well, we fallback to a id-based  systemthat still requires you to specifically list the base classes as well. For example:
 
 .. code-block:: cpp
 	:linenos:

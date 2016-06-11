@@ -89,7 +89,7 @@ struct pusher<function_sig<Sigs...>> {
         lua_CFunction freefunc = &function_detail::upvalue_member_variable<std::decay_t<decltype(*userptr)>, meta::unqualified_t<Fx>>::call;
 
         int upvalues = stack::stack_detail::push_as_upvalues(L, memfxptr);
-        upvalues += stack::push(L, light_userdata_value(static_cast<void*>(userptr)));        
+        upvalues += stack::push(L, lightuserdata_value(static_cast<void*>(userptr)));        
         stack::push(L, c_closure(freefunc, upvalues));
     }
 
@@ -127,7 +127,7 @@ struct pusher<function_sig<Sigs...>> {
         lua_CFunction freefunc = &function_detail::upvalue_member_function<std::decay_t<decltype(*userptr)>, meta::unqualified_t<Fx>>::call;
 
         int upvalues = stack::stack_detail::push_as_upvalues(L, memfxptr);
-        upvalues += stack::push(L, light_userdata_value(static_cast<void*>(userptr)));        
+        upvalues += stack::push(L, lightuserdata_value(static_cast<void*>(userptr)));        
         stack::push(L, c_closure(freefunc, upvalues));
     }
 

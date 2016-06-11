@@ -125,23 +125,6 @@ namespace sol {
 				l[index] = { name_of(meta_function::garbage_collect).c_str(), destructfunc };
 				++index;
 			}
-			if (baseclasscast != nullptr)
-				return index;
-#ifndef SOL_NO_EXCEPTIONS
-			static_assert(sizeof(void*) <= sizeof(detail::throw_cast), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
-			baseclasscheck = baseclasscast = (void*)&detail::throw_as<T>;
-#elif !defined(SOL_NO_RTTI)
-			static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
-			static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
-			baseclasscheck = (void*)&detail::inheritance<T>::type_check;
-			baseclasscast = (void*)&detail::inheritance<T>::type_cast;
-#else
-			static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
-			static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
-			baseclasscheck = (void*)&detail::inheritance<T>::type_check;
-			baseclasscast = (void*)&detail::inheritance<T>::type_cast;
-#endif // No Runtime Type Information vs. Throw-Style Inheritance
-
 			return index;
 		}
 
@@ -172,6 +155,7 @@ namespace sol {
 			baseclasscheck = (void*)&detail::inheritance<T, Args...>::type_check;
 			baseclasscast = (void*)&detail::inheritance<T, Args...>::type_cast;
 #endif // No Runtime Type Information vs. Throw-Style Inheritance
+			return endindex;
 		}
 
 		template <std::size_t I = 0, typename N, typename F, typename... Args, typename = std::enable_if_t<!meta::any_same<meta::unqualified_t<N>, base_classes_tag, call_construction>::value>>
@@ -249,6 +233,10 @@ namespace sol {
 		virtual int push_um(lua_State* L) override {
 			return stack::push(L, std::move(*this));
 		}
+
+		~usertype_metatable() override {
+
+		}
 	};
 
 	namespace stack {
@@ -258,15 +246,22 @@ namespace sol {
 			typedef usertype_metatable<T, Tuple> umt_t;
 			typedef typename umt_t::regs_t regs_t;
 
-			template <std::size_t... I>
-			static int push(std::index_sequence<I...>, lua_State* L, usertype_metatable<T, Tuple>&& umx) {
+			static usertype_metatable<T, Tuple>& make_cleanup(lua_State* L, usertype_metatable<T, Tuple>&& umx) {
 				// Make sure userdata's memory is properly in lua first,
 				// otherwise all the light userdata we make later will become invalid
-				stack::push(L, make_user(std::move(umx)));
-				usertype_metatable<T, Tuple>& um = stack::get<light<usertype_metatable<T, Tuple>>>(L, -1);
-				reference umt(L, -1);
-				umt.pop();
 
+				// Create the top level thing that will act as our deleter later on
+				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
+				stack::set_field<true>(L, gcmetakey, make_user(std::move(umx)));
+				stack::get_field<true>(L, gcmetakey);
+				return stack::pop<light<usertype_metatable<T, Tuple>>>(L);
+			}
+
+			template <std::size_t... I>
+			static int push(std::index_sequence<I...>, lua_State* L, usertype_metatable<T, Tuple>&& umx) {
+				
+				usertype_metatable<T, Tuple>& um = make_cleanup(L, std::move(umx));
+				
 				// Now use um
 				const bool& mustindex = um.mustindex;
 				stack_reference t;
@@ -327,27 +322,6 @@ namespace sol {
 					// in the registry only, otherwise we return it
 					if (i < 2) {
 						t.pop();
-					}
-					else {
-						// NOT NEEDED
-						// Perhaps we should look into
-						// whether or not doing ti like this
-						// is better than just letting user<T> handle it?
-
-						// Add cleanup to metatable
-						// Essentially, when the metatable dies,
-						// this too will call the class and kill itself
-						/*const char* metakey = &usertype_traits<T>::gc_table[0];
-						lua_createtable(L, 1, 0);
-						stack_reference cleanup(L, -1);
-						stack::set_field(L, meta_function::garbage_collect, make_closure(umt_t::gc_call, umt), cleanup.stack_index());
-						stack::set_field(L, metatable_key, cleanup, cleanup.stack_index());
-						// Needs to be raw since we
-						// override the metatable's metatable on 't'
-						// otherwise, it will trigger the __index metamethod
-						// we just set
-						stack::raw_set_field(L, metakey, t, t.stack_index());
-						cleanup.pop();*/
 					}
 				}
 				
