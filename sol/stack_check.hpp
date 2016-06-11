@@ -274,14 +274,14 @@ struct checker<T, type::userdata, C> {
 		bool success = true;
 #ifndef SOL_NO_EXCEPTIONS
 		lua_getfield(L, -1, &detail::base_class_check_key()[0]);
-		if (stack::get<type>(L) != type::nil) {
+		if (type_of(L, -1) != type::nil) {
 			void* basecastdata = lua_touserdata(L, -1);
 			detail::throw_cast basecast = (detail::throw_cast)basecastdata;
 			success = detail::catch_check<T>(basecast);
 		}
 #elif !defined(SOL_NO_RTTI)
 		lua_getfield(L, -1, &detail::base_class_check_key()[0]);
-		if (stack::get<type>(L) != type::nil) {
+		if (type_of(L, -1) != type::nil) {
 			void* basecastdata = lua_touserdata(L, -1);
 			detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
 			success = ic(typeid(T));
@@ -289,7 +289,7 @@ struct checker<T, type::userdata, C> {
 #else
 		// Topkek
 		lua_getfield(L, -1, &detail::base_class_check_key()[0]);
-		if (stack::get<type>(L) != type::nil) {
+		if (type_of(L, -1) != type::nil) {
 			void* basecastdata = lua_touserdata(L, -1);
 			detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
 			success = ic(detail::id_for<T>::value);

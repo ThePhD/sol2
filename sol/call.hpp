@@ -134,7 +134,7 @@ namespace call_detail {
 
 		userdataref.push();
 		luaL_getmetatable(L, &meta[0]);
-		if (stack::get<type>(L) == type::nil) {
+		if (type_of(L, -1) == type::nil) {
 			lua_pop(L, 1);
 			return luaL_error(L, "sol: unable to get usertype metatable");
 		}
@@ -314,7 +314,7 @@ namespace call_detail {
 
 			userdataref.push();
 			luaL_getmetatable(L, &metakey[0]);
-			if (stack::get<type>(L) == type::nil) {
+			if (type_of(L, -1) == type::nil) {
 				lua_pop(L, 1);
 				return luaL_error(L, "sol: unable to get usertype metatable");
 			}
@@ -342,7 +342,7 @@ namespace call_detail {
 
 				userdataref.push();
 				luaL_getmetatable(L, &usertype_traits<T>::metatable[0]);
-				if (stack::get<type>(L) == type::nil) {
+				if (type_of(L, -1) == type::nil) {
 					lua_pop(L, 1);
 					std::string err = "sol: unable to get usertype metatable for ";
 					err += usertype_traits<T>::name;

@@ -115,7 +115,7 @@ namespace sol {
 		template <std::size_t... I>
 		bool contains_index(std::index_sequence<I...>) const {
 			bool idx = false;
-			detail::swallow{ 0, ((idx &= usertype_detail::is_indexer(std::get<I * 2>(functions))), 0) ... };
+			(void)detail::swallow{ 0, ((idx &= usertype_detail::is_indexer(std::get<I * 2>(functions))), 0) ... };
 			return idx;
 		}
 
