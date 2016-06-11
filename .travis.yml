@@ -129,6 +129,8 @@ matrix:
           sources:
           - ubuntu-toolchain-r-test
           packages:
+          - gcc-4.9
+          - g++-4.9
           - ninja-build
           - liblua5.2-dev
 
@@ -154,6 +156,8 @@ matrix:
           sources:
           - ubuntu-toolchain-r-test
           packages:
+          - gcc-4.9
+          - g++-4.9
           - ninja-build
           - libluajit-5.1-dev
 
