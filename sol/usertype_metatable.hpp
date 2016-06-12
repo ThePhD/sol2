@@ -184,6 +184,11 @@ namespace sol {
 					mustindex = true;
 					return;
 				}
+				else if (shimname == name_of(meta_function::new_index)) {
+					newindexfunc = call<I + 1>;
+					mustindex = true;
+					return;
+				}
 				l[index] = usertype_detail::make_reg(std::forward<N>(n), make_func<I>(std::forward<F>(f)));
 				++index;
 			}();
