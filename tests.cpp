@@ -5,6 +5,7 @@
 #include <sol.hpp>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <iostream>
 #include "test_stack_guard.hpp"
 
@@ -369,4 +370,49 @@ TEST_CASE("state/multi-require", "make sure that requires transfers across hand-
 	// But we care, thankfully
 	//REQUIRE(thingy1 == thingy3);
 	REQUIRE(thingy2 == thingy3);
+}
+
+TEST_CASE("misc/indexing_overrides", "make sure index functions can be overridden on types") {
+	struct PropertySet {
+		sol::object get_property_lua(const char* name, sol::this_state s)
+		{
+			auto& var = props[name];
+			return sol::make_object(s, var);
+		}
+
+		void set_property_lua(const char* name, sol::stack_object object)
+		{
+			props[name] = object.as<std::string>();
+		}
+
+		std::unordered_map<std::string, std::string> props;
+	};
+
+	struct DynamicObject {
+		PropertySet& get_dynamic_props() {
+			return dynamic_props;
+		}
+
+		PropertySet dynamic_props;
+	};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_usertype<PropertySet>("PropertySet"
+		, sol::meta_function::new_index, &PropertySet::set_property_lua
+		, sol::meta_function::index, &PropertySet::get_property_lua
+		);
+	lua.new_usertype<DynamicObject>("DynamicObject"
+		, "props", sol::property(&DynamicObject::get_dynamic_props)
+		);
+
+	lua.script(R"__(
+obj = DynamicObject:new()
+obj.props.name = 'test name'
+print('name = ' .. obj.props.name)
+)__");
+
+	std::string name = lua["obj"]["props"]["name"];
+	REQUIRE(name == "test name");
 }

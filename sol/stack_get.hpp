@@ -290,7 +290,7 @@ struct getter<T*> {
 
     static T* get_no_nil_from(lua_State* L, void* udata, int index = -1) {
 #ifndef SOL_NO_EXCEPTIONS
-        if (luaL_getmetafield(L, index, &detail::base_class_check_key()[0]) != 0) {
+        if (has_bases<T>::value && luaL_getmetafield(L, index, &detail::base_class_check_key()[0]) != 0) {
             void* basecastdata = lua_touserdata(L, -1);
             detail::throw_cast basecast = (detail::throw_cast)basecastdata;
             // use the casting function to properly adjust the pointer for the desired T
@@ -298,7 +298,7 @@ struct getter<T*> {
             lua_pop(L, 1);
         }
 #elif !defined(SOL_NO_RTTI)
-        if (luaL_getmetafield(L, index, &detail::base_class_cast_key()[0]) != 0) {
+        if (has_bases<T>::value && luaL_getmetafield(L, index, &detail::base_class_cast_key()[0]) != 0) {
             void* basecastdata = lua_touserdata(L, -1);
             detail::inheritance_cast_function ic = (detail::inheritance_cast_function)basecastdata;
             // use the casting function to properly adjust the pointer for the desired T
@@ -307,7 +307,7 @@ struct getter<T*> {
         }
 #else
         // Lol, you motherfucker
-        if (luaL_getmetafield(L, index, &detail::base_class_cast_key()[0]) != 0) {
+        if (has_bases<T>::value && luaL_getmetafield(L, index, &detail::base_class_cast_key()[0]) != 0) {
             void* basecastdata = lua_touserdata(L, -1);
             detail::inheritance_cast_function ic = (detail::inheritance_cast_function)basecastdata;
             // use the casting function to properly adjust the pointer for the desired T

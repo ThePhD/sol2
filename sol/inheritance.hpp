@@ -23,6 +23,7 @@
 #define SOL_INHERITANCE_HPP
 
 #include "types.hpp"
+#include "bases_for.hpp"
 #if defined(SOL_NO_RTTI) && defined(SOL_NO_EXCEPTIONS)
 #include <atomic>
 #endif // No Runtime Type Information and No Exceptions
