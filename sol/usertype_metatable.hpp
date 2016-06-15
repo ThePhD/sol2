@@ -214,7 +214,7 @@ namespace sol {
 			string_detail::string_shim name = usertype_detail::make_shim(std::get<I0>(functions));
 			if (accessor == name) {
 				if (is_variable_binding<decltype(std::get<I1>(functions))>::value) {
-					return call_with<I1, is_index, true>(L, *this);
+					return real_call_with<I1, is_index, true>(L, *this);
 				}
 				return stack::push(L, c_closure(call<I1, is_index>, stack::push(L, light<usertype_metatable>(*this))));
 			}
@@ -222,27 +222,51 @@ namespace sol {
 		}
 
 		template <std::size_t I, bool is_index = true, bool is_variable = false>
-		static int call(lua_State* L) {
+		static int real_call(lua_State* L) {
 			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, up_value_index(1));
-			return call_with<I, is_index, is_variable>(L, f);
+			return real_call_with<I, is_index, is_variable>(L, f);
 		}
 
 		template <std::size_t I, bool is_index = true, bool is_variable = false>
-		static int call_with(lua_State* L, usertype_metatable& um) {
+		static int real_call_with(lua_State* L, usertype_metatable& um) {
 			auto& f = call_detail::pick(std::integral_constant<bool, is_index>(), std::get<I>(um.functions));
 			return call_detail::call_wrapped<T, is_index, is_variable>(L, f);
 		}
 
-		static int index_call(lua_State* L) {
+		static int real_index_call(lua_State* L) {
 			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, up_value_index(1));
-			string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, -1);
-			return f.find_call(std::true_type(), std::make_index_sequence<std::tuple_size<Tuple>::value>(), L, accessor);
+			if (stack::get<type>(L, -1) == type::string) {
+				string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, -1);
+				return f.find_call(std::true_type(), std::make_index_sequence<std::tuple_size<Tuple>::value>(), L, accessor);
+			}
+			return f.indexfunc(L);
+		}
+
+		static int real_new_index_call(lua_State* L) {
+			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, up_value_index(1));
+			if (stack::get<type>(L, -2) == type::string) {
+				string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, -2);
+				return f.find_call(std::false_type(), std::make_index_sequence<std::tuple_size<Tuple>::value>(), L, accessor);
+			}
+			return f.indexfunc(L);
+		}
+
+		template <std::size_t I, bool is_index = true, bool is_variable = false>
+		static int call(lua_State* L) {
+			return detail::static_trampoline<(&real_call<I, is_index, is_variable>)>(L);
+		}
+
+		template <std::size_t I, bool is_index = true, bool is_variable = false>
+		static int call_with(lua_State* L) {
+			return detail::static_trampoline<(&real_call_with<I, is_index, is_variable>)>(L);
+		}
+
+		static int index_call(lua_State* L) {
+			return detail::static_trampoline<(&real_index_call)>(L);
 		}
 
 		static int new_index_call(lua_State* L) {
-			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, up_value_index(1));
-			string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, -2);
-			return f.find_call(std::false_type(), std::make_index_sequence<std::tuple_size<Tuple>::value>(), L, accessor);
+			return detail::static_trampoline<(&real_new_index_call)>(L);
 		}
 
 		virtual int push_um(lua_State* L) override {
