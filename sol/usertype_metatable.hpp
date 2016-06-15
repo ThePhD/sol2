@@ -248,7 +248,7 @@ namespace sol {
 				string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, -2);
 				return f.find_call(std::false_type(), std::make_index_sequence<std::tuple_size<Tuple>::value>(), L, accessor);
 			}
-			return f.indexfunc(L);
+			return f.newindexfunc(L);
 		}
 
 		template <std::size_t I, bool is_index = true, bool is_variable = false>
