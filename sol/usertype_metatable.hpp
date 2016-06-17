@@ -80,14 +80,14 @@ namespace sol {
 
 		template <bool is_index>
 		inline int indexing_fail(lua_State* L) {
-			string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, -1);
+			string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, is_index ? -1 : -2);
 			if (is_index)
 				return luaL_error(L, "sol: attempt to index (get) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.data());
 			else
 				return luaL_error(L, "sol: attempt to index (set) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.data());
-
 		}
-	}
+		
+	} // usertype_detail
 
 	template <typename T, typename Tuple>
 	struct usertype_metatable : usertype_detail::registrar {
@@ -149,8 +149,11 @@ namespace sol {
 		template <std::size_t I = 0, typename... Bases, typename... Args>
 		int make_regs(regs_t& l, int index, base_classes_tag, bases<Bases...>, Args&&... args) {
 			int endindex = make_regs<I + 2>(l, index + 1, std::forward<Args>(args)...);
-			if (sizeof...(Bases) < 1)
+			if (sizeof...(Bases) < 1) {
+				(void)detail::swallow{ 0, ((detail::has_derived<Bases>::value = false), 0)... };
 				return endindex;
+			}
+			(void)detail::swallow{ 0, ((detail::has_derived<Bases>::value = true), 0)... };
 #ifndef SOL_NO_EXCEPTIONS
 			static_assert(sizeof(void*) <= sizeof(detail::throw_cast), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
 			baseclasscheck = baseclasscast = (void*)&detail::throw_as<T>;

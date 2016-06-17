@@ -372,7 +372,7 @@ TEST_CASE("state/multi-require", "make sure that requires transfers across hand-
 	REQUIRE(thingy2 == thingy3);
 }
 
-TEST_CASE("misc/indexing_overrides", "make sure index functions can be overridden on types") {
+TEST_CASE("feature/indexing-overrides", "make sure index functions can be overridden on types") {
 	struct PropertySet {
 		sol::object get_property_lua(const char* name, sol::this_state s)
 		{
@@ -417,7 +417,7 @@ print('name = ' .. obj.props.name)
 	REQUIRE(name == "test name");
 }
 
-TEST_CASE("misc/indexing_numbers", "make sure indexing functions can be override on usertypes") {
+TEST_CASE("features/indexing-numbers", "make sure indexing functions can be override on usertypes") {
 	class vector {
 	public:
 		double data[3];
@@ -456,4 +456,58 @@ TEST_CASE("misc/indexing_numbers", "make sure indexing functions can be override
 	REQUIRE(v[0] == 0.0);
 	REQUIRE(v[1] == 0.0);
 	REQUIRE(v[2] == 3.0);
+}
+
+TEST_CASE("features/multiple-inheritance", "Ensure that multiple inheritance works as advertised") {
+	struct base1 {
+		int a1 = 250;
+	};
+
+	struct base2 {
+		int a2 = 500;
+	};
+
+	struct simple : base1 {
+
+	};
+
+	struct complex : base1, base2 {
+
+	};
+
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+	lua.new_usertype<base1>("base1",
+		"a1", &base1::a1
+		);
+	lua.new_usertype<base2>("base2",
+		"a2", &base2::a2
+		);
+	lua.new_usertype<simple>("simple",
+		"a1", &simple::a1,
+		sol::base_classes, sol::bases<base1>()
+		);
+	lua.new_usertype<complex>("complex",
+		"a1", &complex::a1,
+		"a2", &complex::a2,
+		sol::base_classes, sol::bases<base1, base2>()
+		);
+	lua.script("c = complex.new()\n"
+		"s = simple.new()\n"
+		"b1 = base1.new()\n"
+		"b2 = base1.new()\n"
+	);
+
+	base1* sb1 = lua["s"];
+	REQUIRE(sb1 != nullptr);
+	REQUIRE(sb1->a1 == 250);
+
+	base1* cb1 = lua["c"];
+	base2* cb2 = lua["c"];
+
+	REQUIRE(cb1 != nullptr);
+	REQUIRE(cb2 != nullptr);
+	REQUIRE(cb1->a1 == 250);
+	REQUIRE(cb2->a2 == 500);
 }
