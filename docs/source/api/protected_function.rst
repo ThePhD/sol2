@@ -60,7 +60,7 @@ The following C++ code will call this function from this file and retrieve the r
 	auto secondwoof = problematic_woof(19);
 	if (secondwoof.valid()) {
 		// Call succeeded
-		double numwoof = firstwoof;
+		double numwoof = secondwoof;
 	}
 	else {
 		// Call failed
@@ -128,6 +128,7 @@ Get and set the Lua entity that is used as the default error handler. The defaul
 
 .. code-block:: cpp
 	:caption: variable: handler
+	:name: protected-function-error-handler
 
 	reference error_handler;
 

@@ -370,7 +370,7 @@ multiple returns to lua
 
 	lua["f"] = [](int a, int b, sol::object c) {
 		// sol::object can be anything here: just pass it through
-		return std::make_tuple( 100, 200, c );
+		return std::make_tuple( a, b, c );
 	};
 	
 	std::tuple<int, int, int> result = lua["f"](100, 200, 300); 
@@ -501,6 +501,7 @@ advanced
 --------
 
 Some more advanced things you can do/read about:
+	* :doc:`metatable manipulations<../api/metatable_key>` allow a user to change how indexing, function calls, and other things work on a single type.
 	* :doc:`ownership semantics<ownership>` are described for how lua deals with (raw) pointers.
 	* :doc:`stack manipulation<../api/stack>` to safely play with the stack. You can also define customization points for ``stack::get``/``stack::check``/``stack::push`` for your type.
 	* :doc:`stack references<../api/stack_reference>` to have zero-overhead Sol abstractions while not copying to the Lua registry.

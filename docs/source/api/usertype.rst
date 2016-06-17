@@ -189,9 +189,13 @@ inheritance
 
 Sol can adjust pointers from derived classes to base classes at runtime, but it has some caveats based on what you compile with:
 
-If your class has no complicated™ virtual inheritance or multiple inheritance, than you can try to sneak away with the performance boost from not specifying any base classes and doing any casting checks. (What does "complicated™" mean? Ask your compiler's documentation, if you're in that deep.)
+If your class has no complicated™ virtual inheritance or multiple inheritance, than you can try to sneak away with a performance boost from not specifying any base classes and doing any casting checks. (What does "complicated™" mean? Ask your compiler's documentation, if you're in that deep.)
 
-For the rest of us safe individuals out there: You must specify the ``sol::base_classes`` tag with the ``sol::bases<Types...>()`` argument, where ``Types...`` are all the base classes of the single type ``T`` that you are making a usertype out of. If you turn exceptions off and are also completely mad and turn off :doc:`run-time type information<../rtti>` as well, we fallback to a id-based  systemthat still requires you to specifically list the base classes as well. For example:
+For the rest of us safe individuals out there: You must specify the ``sol::base_classes`` tag with the ``sol::bases<Types...>()`` argument, where ``Types...`` are all the base classes of the single type ``T`` that you are making a usertype out of. If you turn exceptions off and are also completely mad and turn off :doc:`run-time type information<../rtti>` as well, we fallback to a id-based  system that still requires you to specifically list the base classes as well. For example:
+
+.. note::
+
+	Please be advised that this was a breaking change from before: previously, with the power of exceptions we did not need to list base classes. This unfortunately came at the cost of quite a bit of performance, and therefore it is not adivsable / required to specify all of your base classes, exceptions or no exceptions, RTTI or not: always specify your bases.
 
 .. code-block:: cpp
 	:linenos:
@@ -219,7 +223,9 @@ Then, to register the base classes explicitly:
 		sol::base_classes, sol::bases<A>()
 	);
 
-Note that Sol does not support down-casting from a base class to a derived class at runtime.
+.. note::
+	
+	Sol does not support down-casting from a base class to a derived class at runtime.
 
 inheritance + overloading
 -------------------------
