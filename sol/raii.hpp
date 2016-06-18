@@ -94,7 +94,7 @@ const destructor_wrapper<void> default_destructor{};
 
 template <typename Fx>
 inline destructor_wrapper<Fx> destructor(Fx&& fx) {
-    return destructor_wrapper<Fx>(std::forward<Fx>(fx));
+    return destructor_wrapper<std::decay_t<Fx>>(std::forward<Fx>(fx));
 }
 
 } // sol
