@@ -12,6 +12,7 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
 
    compatibility
    coroutine
+   c_call
    error
    function
    protected_function

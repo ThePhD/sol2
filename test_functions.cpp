@@ -78,6 +78,14 @@ void func_3(int, int, int) {
 
 }
 
+int f1(int) { return 32; }
+int f2(int, int) { return 1; }
+struct fer {
+	double f3(int, int) {
+		return 2.5;
+	}
+};
+
 TEST_CASE("functions/overload-resolution", "Check if overloaded function resolution templates compile/work") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
@@ -837,3 +845,28 @@ TEST_CASE("functions/overloading", "Check if overloading works properly for regu
 	REQUIRE_THROWS(lua.script("func(1,2,'meow')"));
 }
 
+TEST_CASE("overloading/c_call", "Make sure that overloading works with c_call functionality") {
+	sol::state lua;
+	lua.set("f", sol::c_call<sol::wrap<decltype(&f1), &f1>, sol::wrap<decltype(&f2), &f2>, sol::wrap<decltype(&fer::f3), &fer::f3>>);
+	lua.set("g", sol::c_call<sol::wrap<decltype(&f1), &f1>>);
+	lua.set("h", sol::c_call<decltype(&f2), &f2>);
+	lua.set("obj", fer());
+
+	lua.script("r1 = f(1)");
+	lua.script("r2 = f(1, 2)");
+	lua.script("r3 = f(obj, 1, 2)");
+	lua.script("r4 = g(1)");
+	lua.script("r5 = h(1, 2)");
+
+	int r1 = lua["r1"];
+	int r2 = lua["r2"];
+	double r3 = lua["r3"];
+	int r4 = lua["r4"];
+	int r5 = lua["r5"];
+
+	REQUIRE(r1 == 32);
+	REQUIRE(r2 == 1);
+	REQUIRE(r3 == 2.5);
+	REQUIRE(r4 == 32);
+	REQUIRE(r5 == 1);
+}

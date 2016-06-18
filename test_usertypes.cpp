@@ -4,6 +4,7 @@
 #include <catch.hpp>
 
 #include <iostream>
+#include <mutex>
 
 struct vars {
 	vars() {
@@ -909,9 +910,6 @@ TEST_CASE("usertype/no_constructor", "make sure lua types cannot be constructed 
 }
 
 TEST_CASE("usertype/coverage", "try all the things") {
-
-/* SOMETHING IS VERY WRONG WITH LUAJIT: NEED TO INVESTIGATE*/
-#if 0
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -998,5 +996,26 @@ print(e.bark)
 	REQUIRE_THROWS(lua.script("e.readonlybark = 24"));
 	REQUIRE_THROWS(lua.script("e.readonlypropbark = 500"));
 	REQUIRE_THROWS(lua.script("y = e.writeonlypropbark"));
-#endif // LUAJIT IS WEIRD AGAIN
+
+}
+
+TEST_CASE("usertype/copyability", "make sure user can write to a class variable even if the class itself isn't copy-safe") {
+	struct NoCopy
+	{
+		int get() const { return _you_can_copy_me; }
+		void set(int val) { _you_can_copy_me = val; }
+
+		int _you_can_copy_me;
+		std::mutex _haha_you_cant_copy_me;
+	};
+
+	sol::state lua;
+	lua.new_usertype<NoCopy>("NoCopy", "val", sol::property(&NoCopy::get, &NoCopy::set));
+
+	REQUIRE_NOTHROW(
+		lua.script(R"__(
+nocopy = NoCopy.new()
+nocopy.val = 5
+               )__")
+	);
 }

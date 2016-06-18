@@ -159,6 +159,9 @@ using at_in_pack_t = typename at_in_pack<I, Args...>::type;
 template<std::size_t I, typename Arg, typename... Args>
 struct at_in_pack<I, Arg, Args...> : std::conditional<I == 0, Arg, at_in_pack_t<I - 1, Args...>> {};
 
+template<typename Arg, typename... Args>
+struct at_in_pack<0, Arg, Args...> { typedef Arg type; };
+
 namespace meta_detail {
     template<std::size_t Limit, std::size_t I, template<typename...> class Pred, typename... Ts>
     struct count_for_pack : std::integral_constant<std::size_t, 0> {};

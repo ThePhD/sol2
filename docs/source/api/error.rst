@@ -1,7 +1,7 @@
 error
 =====
-the single exception type
--------------------------
+the single error/exception type
+-------------------------------
 
 .. code-block:: cpp
 
