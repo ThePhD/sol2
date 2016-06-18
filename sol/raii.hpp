@@ -76,15 +76,14 @@ struct constructor_wrapper {
 };
 
 template <typename... Functions>
-constructor_wrapper<Functions...> initializers(Functions&&... functions) {
-    return constructor_wrapper<Functions...>(std::forward<Functions>(functions)...);
+inline auto initializers(Functions&&... functions) {
+    return constructor_wrapper<std::decay_t<Functions>...>(std::forward<Functions>(functions)...);
 }
 
 template <typename Function>
 struct destructor_wrapper {
     Function fx;
-    template <typename... Args>
-    destructor_wrapper(Args&&... args) : fx(std::forward<Args>(args)...) {}
+    destructor_wrapper(Function f): fx(std::move(f)) {}
 };
 
 template <>
@@ -93,7 +92,7 @@ struct destructor_wrapper<void> {};
 const destructor_wrapper<void> default_destructor{};
 
 template <typename Fx>
-inline destructor_wrapper<Fx> destructor(Fx&& fx) {
+inline auto destructor(Fx&& fx) {
     return destructor_wrapper<std::decay_t<Fx>>(std::forward<Fx>(fx));
 }
 
