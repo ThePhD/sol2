@@ -125,7 +125,6 @@ namespace sol {
 	template <typename F, F f>
 	struct wrap {
 		typedef F type;
-		typedef wrapper<F> wrapper;
 
 		static int call(lua_State* L) {
 			return c_call<type, f>(L);
