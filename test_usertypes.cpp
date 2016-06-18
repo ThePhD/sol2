@@ -931,6 +931,8 @@ TEST_CASE("usertype/coverage", "try all the things") {
 		"writeonlypropbark", sol::property(&ext_getset::set)
 		);
 
+	std::cout << "usertype created" << std::endl;
+
 	lua.script(R"(
 e = ext_getset()
 w = e:x(e:x(), e:x(e:x()))
@@ -939,6 +941,8 @@ print(w)
 
 	int w = lua["w"];
 	REQUIRE(w == (56 + 50 + 14 + 14));
+
+	std::cout << "REQUIRE(w) successful" << std::endl;
 
 	lua.script(R"(
 e:set(500)
@@ -952,6 +956,8 @@ y = e.sget(20)
 	REQUIRE(x == 500);
 	REQUIRE(y == 40);
 	
+	std::cout << "REQUIRE(x, y) successful" << std::endl;
+
 	lua.script(R"(
 e.bark = 5001
 a = e:get()
@@ -969,6 +975,8 @@ print(b)
 	REQUIRE(a == 5001);
 	REQUIRE(b == 9700);
 
+	std::cout << "REQUIRE(a, b) successful" << std::endl;
+
 	lua.script(R"(
 c = e.readonlybark
 d = e.meow
@@ -983,6 +991,8 @@ print(d)
 	REQUIRE(c == 9700);
 	REQUIRE(d == 56);
 
+	std::cout << "REQUIRE(c, d) successful" << std::endl;
+
 	lua.script(R"(
 e.writeonlypropbark = 500
 z = e.readonlypropbark
@@ -993,9 +1003,14 @@ print(e.bark)
 	int z = lua["z"];
 	REQUIRE(z == 500);
 
+	std::cout << "REQUIRE(z) successful" << std::endl;
+
 	REQUIRE_THROWS(lua.script("e.readonlybark = 24"));
+	std::cout << "REQUIRE_THROWS 1 successful" << std::endl;
 	REQUIRE_THROWS(lua.script("e.readonlypropbark = 500"));
+	std::cout << "REQUIRE_THROWS 2 successful" << std::endl;
 	REQUIRE_THROWS(lua.script("y = e.writeonlypropbark"));
+	std::cout << "REQUIRE_THROWS 3 successful" << std::endl;
 
 }
 
