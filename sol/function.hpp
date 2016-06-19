@@ -31,106 +31,106 @@
 #include <memory>
 
 namespace sol {
-template <typename base_t>
-class basic_function : public base_t {
-private:
-    void luacall( std::ptrdiff_t argcount, std::ptrdiff_t resultcount ) const {
-        lua_callk( base_t::lua_state( ), static_cast<int>( argcount ), static_cast<int>( resultcount ), 0, nullptr );
-    }
+	template <typename base_t>
+	class basic_function : public base_t {
+	private:
+		void luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount) const {
+			lua_callk(base_t::lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount), 0, nullptr);
+		}
 
-    template<std::size_t... I, typename... Ret>
-    auto invoke( types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n ) const {
-        luacall( n, sizeof...( Ret ) );
-        return stack::pop<std::tuple<Ret...>>( base_t::lua_state( ) );
-    }
+		template<std::size_t... I, typename... Ret>
+		auto invoke(types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n) const {
+			luacall(n, sizeof...(Ret));
+			return stack::pop<std::tuple<Ret...>>(base_t::lua_state());
+		}
 
-    template<std::size_t I, typename Ret>
-    Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n ) const {
-        luacall( n, 1 );
-        return stack::pop<Ret>( base_t::lua_state( ) );
-    }
+		template<std::size_t I, typename Ret>
+		Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n) const {
+			luacall(n, 1);
+			return stack::pop<Ret>(base_t::lua_state());
+		}
 
-    template <std::size_t I>
-    void invoke(types<void>, std::index_sequence<I>, std::ptrdiff_t n) const {
-        luacall( n, 0 );
-    }
+		template <std::size_t I>
+		void invoke(types<void>, std::index_sequence<I>, std::ptrdiff_t n) const {
+			luacall(n, 0);
+		}
 
-    function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n ) const {
-        int stacksize = lua_gettop( base_t::lua_state( ) );
-        int firstreturn = (std::max)( 1, stacksize - static_cast<int>( n ) );
-        luacall(n, LUA_MULTRET);
-        int poststacksize = lua_gettop( base_t::lua_state( ) );
-        int returncount = poststacksize - (firstreturn - 1);
-        return function_result( base_t::lua_state( ), firstreturn, returncount );
-    }
+		function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n) const {
+			int stacksize = lua_gettop(base_t::lua_state());
+			int firstreturn = (std::max)(1, stacksize - static_cast<int>(n));
+			luacall(n, LUA_MULTRET);
+			int poststacksize = lua_gettop(base_t::lua_state());
+			int returncount = poststacksize - (firstreturn - 1);
+			return function_result(base_t::lua_state(), firstreturn, returncount);
+		}
 
-public:
-    basic_function() = default;
-    basic_function(const basic_function&) = default;
-    basic_function& operator=(const basic_function&) = default;
-    basic_function(basic_function&&) = default;
-    basic_function& operator=(basic_function&&) = default;
-    basic_function(const stack_reference& r) : basic_function(r.lua_state(), r.stack_index()) {}
-    basic_function(stack_reference&& r) : basic_function(r.lua_state(), r.stack_index()) {}
-    basic_function(lua_State* L, int index = -1): base_t(L, index) {
+	public:
+		basic_function() = default;
+		basic_function(const basic_function&) = default;
+		basic_function& operator=(const basic_function&) = default;
+		basic_function(basic_function&&) = default;
+		basic_function& operator=(basic_function&&) = default;
+		basic_function(const stack_reference& r) : basic_function(r.lua_state(), r.stack_index()) {}
+		basic_function(stack_reference&& r) : basic_function(r.lua_state(), r.stack_index()) {}
+		basic_function(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-        stack::check<basic_function>(L, index, type_panic);
+			stack::check<basic_function>(L, index, type_panic);
 #endif // Safety
-    }
-    
-    template<typename... Args>
-    function_result operator()( Args&&... args ) const {
-        return call<>( std::forward<Args>( args )... );
-    }
+		}
 
-    template<typename... Ret, typename... Args>
-    decltype(auto) operator()( types<Ret...>, Args&&... args ) const {
-        return call<Ret...>( std::forward<Args>( args )... );
-    }
+		template<typename... Args>
+		function_result operator()(Args&&... args) const {
+			return call<>(std::forward<Args>(args)...);
+		}
 
-    template<typename... Ret, typename... Args>
-    decltype(auto) call( Args&&... args ) const {
-        base_t::push( );
-        int pushcount = stack::multi_push_reference( base_t::lua_state( ), std::forward<Args>( args )... );
-        return invoke( types<Ret...>( ), std::make_index_sequence<sizeof...(Ret)>(), pushcount );
-    }
-};
+		template<typename... Ret, typename... Args>
+		decltype(auto) operator()(types<Ret...>, Args&&... args) const {
+			return call<Ret...>(std::forward<Args>(args)...);
+		}
 
-namespace stack {
-template<typename Signature>
-struct getter<std::function<Signature>> {
-    typedef meta::bind_traits<Signature> fx_t;
-    typedef typename fx_t::args_list args_lists;
-    typedef meta::tuple_types<typename fx_t::return_type> return_types;
+		template<typename... Ret, typename... Args>
+		decltype(auto) call(Args&&... args) const {
+			base_t::push();
+			int pushcount = stack::multi_push_reference(base_t::lua_state(), std::forward<Args>(args)...);
+			return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount);
+		}
+	};
 
-    template<typename... Args, typename... Ret>
-    static std::function<Signature> get_std_func(types<Ret...>, types<Args...>, lua_State* L, int index = -1) {
-        sol::function f(L, index);
-        auto fx = [f, L, index](Args&&... args) -> meta::return_type_t<Ret...> {
-            return f.call<Ret...>(std::forward<Args>(args)...);
-        };
-        return std::move(fx);
-    }
+	namespace stack {
+		template<typename Signature>
+		struct getter<std::function<Signature>> {
+			typedef meta::bind_traits<Signature> fx_t;
+			typedef typename fx_t::args_list args_lists;
+			typedef meta::tuple_types<typename fx_t::return_type> return_types;
 
-    template<typename... FxArgs>
-    static std::function<Signature> get_std_func(types<void>, types<FxArgs...>, lua_State* L, int index = -1) {
-        sol::function f(L, index);
-        auto fx = [f, L, index](FxArgs&&... args) -> void {
-            f(std::forward<FxArgs>(args)...);
-        };
-        return std::move(fx);
-    }
+			template<typename... Args, typename... Ret>
+			static std::function<Signature> get_std_func(types<Ret...>, types<Args...>, lua_State* L, int index = -1) {
+				sol::function f(L, index);
+				auto fx = [f, L, index](Args&&... args) -> meta::return_type_t<Ret...> {
+					return f.call<Ret...>(std::forward<Args>(args)...);
+				};
+				return std::move(fx);
+			}
 
-    template<typename... FxArgs>
-    static std::function<Signature> get_std_func(types<>, types<FxArgs...> t, lua_State* L, int index = -1) {
-        return get_std_func(types<void>(), t, L, index);
-    }
+			template<typename... FxArgs>
+			static std::function<Signature> get_std_func(types<void>, types<FxArgs...>, lua_State* L, int index = -1) {
+				sol::function f(L, index);
+				auto fx = [f, L, index](FxArgs&&... args) -> void {
+					f(std::forward<FxArgs>(args)...);
+				};
+				return std::move(fx);
+			}
 
-    static std::function<Signature> get(lua_State* L, int index) {
-        return get_std_func(return_types(), args_lists(), L, index);
-    }
-};
-} // stack
+			template<typename... FxArgs>
+			static std::function<Signature> get_std_func(types<>, types<FxArgs...> t, lua_State* L, int index = -1) {
+				return get_std_func(types<void>(), t, L, index);
+			}
+
+			static std::function<Signature> get(lua_State* L, int index) {
+				return get_std_func(return_types(), args_lists(), L, index);
+			}
+		};
+	} // stack
 } // sol
 
 #endif // SOL_FUNCTION_HPP

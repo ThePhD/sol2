@@ -33,12 +33,15 @@
 #endif // SOL_DEPRECATED
 
 namespace sol {
-namespace detail {
-   template <typename T>
-   struct SOL_DEPRECATED deprecate_type {
-       using type = T;
-   };
-} // detail
+	namespace detail {
+		template <typename T>
+		struct SOL_DEPRECATED deprecate_type {
+			using type = T;
+		};
+
+		template <typename T>
+		using deprecate_type_t = typename deprecate_type<T>::type;
+	} // detail
 } // sol
 
 #endif // SOL_DEPRECATE_HPP

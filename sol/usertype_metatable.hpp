@@ -142,13 +142,13 @@ namespace sol {
 		int make_regs(regs_t& l, int index, sol::call_construction, F&&, Args&&... args) {
 			callconstructfunc = call<I + 1>;
 			secondarymeta = true;
-			int endindex = make_regs<I + 2>(l, index + 1, std::forward<Args>(args)...);
+			int endindex = make_regs<I + 2>(l, index, std::forward<Args>(args)...);
 			return endindex;
 		}
 
 		template <std::size_t I = 0, typename... Bases, typename... Args>
 		int make_regs(regs_t& l, int index, base_classes_tag, bases<Bases...>, Args&&... args) {
-			int endindex = make_regs<I + 2>(l, index + 1, std::forward<Args>(args)...);
+			int endindex = make_regs<I + 2>(l, index, std::forward<Args>(args)...);
 			if (sizeof...(Bases) < 1) {
 				(void)detail::swallow{ 0, ((detail::has_derived<Bases>::value = false), 0)... };
 				return endindex;

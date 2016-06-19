@@ -27,33 +27,33 @@
 #include "function_types_core.hpp"
 
 namespace sol {
-namespace function_detail {
-template <typename... Functions>
-struct overloaded_function : base_function {
-    typedef std::tuple<Functions...> overload_list;
-    typedef std::make_index_sequence<sizeof...(Functions)> indices;
-    overload_list overloads;
+	namespace function_detail {
+		template <typename... Functions>
+		struct overloaded_function : base_function {
+			typedef std::tuple<Functions...> overload_list;
+			typedef std::make_index_sequence<sizeof...(Functions)> indices;
+			overload_list overloads;
 
-    overloaded_function(overload_list set)
-    : overloads(std::move(set)) {}
+			overloaded_function(overload_list set)
+				: overloads(std::move(set)) {}
 
-    overloaded_function(Functions... fxs)
-    : overloads(fxs...) {
+			overloaded_function(Functions... fxs)
+				: overloads(fxs...) {
 
-    }
+			}
 
-    template <typename Fx, std::size_t I, typename... R, typename... Args>
-    int call(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
-        auto& func = std::get<I>(overloads);
-        return stack::call_into_lua<0, false>(r, a, L, start, func);
-    }
+			template <typename Fx, std::size_t I, typename... R, typename... Args>
+			int call(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) {
+				auto& func = std::get<I>(overloads);
+				return stack::call_into_lua<0, false>(r, a, L, start, func);
+			}
 
-    virtual int operator()(lua_State* L) override {
-        auto mfx = [&](auto&&... args){ return this->call(std::forward<decltype(args)>(args)...); };
-        return call_detail::overload_match<Functions...>(mfx, L, 1);
-    }
-};
-} // function_detail
+			virtual int operator()(lua_State* L) override {
+				auto mfx = [&](auto&&... args) { return this->call(std::forward<decltype(args)>(args)...); };
+				return call_detail::overload_match<Functions...>(mfx, L, 1);
+			}
+		};
+	} // function_detail
 } // sol
 
 #endif // SOL_FUNCTION_TYPES_OVERLOAD_HPP

@@ -4,6 +4,10 @@
 #include <sol.hpp>
 #include <iostream>
 #include <map>
+#include <algorithm>
+#include <numeric>
+#include <iterator>
+#include <vector>
 #include "test_stack_guard.hpp"
 
 std::string free_function() {
@@ -530,4 +534,22 @@ TEST_CASE("tables/operator[]-optional", "Test if proxies on tables can lazily ev
 	REQUIRE(present);
 	REQUIRE(non_nope3.value() == 35);
 	REQUIRE(non_nope4.value() == 35);
+}
+
+TEST_CASE("tables/add", "Basic test to make sure the 'add' feature works") {
+	static const int sz = 120;
+
+	sol::state lua;
+	sol::table t = lua.create_table(sz, 0);
+
+	std::vector<int> bigvec( sz );
+	std::iota(bigvec.begin(), bigvec.end(), 1);
+	
+	for (std::size_t i = 0; i < bigvec.size(); ++i) {
+		t.add(bigvec[i]);
+	}
+	for (std::size_t i = 0; i < bigvec.size(); ++i) {
+		int val = t[i + 1];
+		REQUIRE(val == bigvec[i]);
+	}
 }

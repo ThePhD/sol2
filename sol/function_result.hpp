@@ -29,52 +29,52 @@
 #include <cstdint>
 
 namespace sol {
-struct function_result : public proxy_base<function_result> {
-private:
-    lua_State* L;
-    int index;
-    int returncount;
+	struct function_result : public proxy_base<function_result> {
+	private:
+		lua_State* L;
+		int index;
+		int returncount;
 
-public:
-    function_result() = default;
-    function_result(lua_State* L, int index = -1, int returncount = 0): L(L), index(index), returncount(returncount) {
-        
-    }
-    function_result(const function_result&) = default;
-    function_result& operator=(const function_result&) = default;
-    function_result(function_result&& o) : L(o.L), index(o.index), returncount(o.returncount) {
-        // Must be manual, otherwise destructor will screw us
-        // return count being 0 is enough to keep things clean
-        // but will be thorough
-        o.L = nullptr;
-        o.index = 0;
-        o.returncount = 0;
-    }
-    function_result& operator=(function_result&& o) {
-        L = o.L;
-        index = o.index;
-        returncount = o.returncount;
-        // Must be manual, otherwise destructor will screw us
-        // return count being 0 is enough to keep things clean
-        // but will be thorough
-        o.L = nullptr;
-        o.index = 0;
-        o.returncount = 0;
-        return *this;
-    }
+	public:
+		function_result() = default;
+		function_result(lua_State* L, int index = -1, int returncount = 0) : L(L), index(index), returncount(returncount) {
 
-    template<typename T>
-    decltype(auto) get() const {
-        return stack::get<T>(L, index);
-    }
+		}
+		function_result(const function_result&) = default;
+		function_result& operator=(const function_result&) = default;
+		function_result(function_result&& o) : L(o.L), index(o.index), returncount(o.returncount) {
+			// Must be manual, otherwise destructor will screw us
+			// return count being 0 is enough to keep things clean
+			// but will be thorough
+			o.L = nullptr;
+			o.index = 0;
+			o.returncount = 0;
+		}
+		function_result& operator=(function_result&& o) {
+			L = o.L;
+			index = o.index;
+			returncount = o.returncount;
+			// Must be manual, otherwise destructor will screw us
+			// return count being 0 is enough to keep things clean
+			// but will be thorough
+			o.L = nullptr;
+			o.index = 0;
+			o.returncount = 0;
+			return *this;
+		}
 
-    lua_State* lua_state() const { return L; };
-    int stack_index() const { return index; };
+		template<typename T>
+		decltype(auto) get() const {
+			return stack::get<T>(L, index);
+		}
 
-    ~function_result() {
-        lua_pop(L, returncount);
-    }
-};
+		lua_State* lua_state() const { return L; };
+		int stack_index() const { return index; };
+
+		~function_result() {
+			lua_pop(L, returncount);
+		}
+	};
 } // sol
 
 #endif // SOL_FUNCTION_RESULT_HPP

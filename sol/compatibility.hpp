@@ -27,9 +27,10 @@
 // but has been modified in many places for use with Sol and luajit,
 // though the core abstractions remain the same
 
+#include "compatibility/version.hpp"
+
 #ifndef SOL_NO_COMPAT
 
-#include "compatibility/version.hpp"
 #ifdef __cplusplus
 extern "C" {
 #endif
