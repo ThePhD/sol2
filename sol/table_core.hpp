@@ -334,11 +334,9 @@ namespace sol {
 		template <typename... Args>
 		basic_table_core& add(Args&&... args) {
 			auto pp = stack::push_pop(*this);
-			auto action = [&](auto&& arg) {
-				stack::push(base_t::lua_state(), std::forward<decltype(arg)>(arg));
-				luaL_ref(base_t::lua_state(), -2);
+			(void)detail::swallow{0, 
+				(stack::set_ref(base_t::lua_state(), std::forward<Args>(args)), 0)...
 			};
-			(void)detail::swallow{0, (action(std::forward<Args>(args)), 0)...};
 			return *this;
 		}
 

@@ -85,6 +85,12 @@ namespace sol {
 			}
 		} // stack_detail
 
+		template <typename T>
+		int set_ref(lua_State* L, T&& arg, int tableindex = -2) {
+			push(L, std::forward<T>(arg));
+			return luaL_ref(L, tableindex);
+		}
+
 		inline void remove(lua_State* L, int index, int count) {
 			if (count < 1)
 				return;
