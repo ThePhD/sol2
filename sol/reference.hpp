@@ -26,135 +26,135 @@
 #include "stack_reference.hpp"
 
 namespace sol {
-namespace stack {
-template <bool top_level, typename T>
-struct push_popper {
-    T t;
-    push_popper (T x) : t(x) { t.push(); }
-    ~push_popper() { t.pop(); }
-};
-template <typename T>
-struct push_popper<true, T> {
-    push_popper (T) {}
-    ~push_popper() {}
-};
-template <bool top_level = false, typename T>
-push_popper<top_level, T> push_pop(T&& x) {
-    return push_popper<top_level, T>(std::forward<T>(x));
-}
-} // stack
+	namespace stack {
+		template <bool top_level, typename T>
+		struct push_popper {
+			T t;
+			push_popper(T x) : t(x) { t.push(); }
+			~push_popper() { t.pop(); }
+		};
+		template <typename T>
+		struct push_popper<true, T> {
+			push_popper(T) {}
+			~push_popper() {}
+		};
+		template <bool top_level = false, typename T>
+		push_popper<top_level, T> push_pop(T&& x) {
+			return push_popper<top_level, T>(std::forward<T>(x));
+		}
+	} // stack
 
-namespace detail {
-struct global_tag { } const global_{};
-} // detail
+	namespace detail {
+		struct global_tag { } const global_{};
+	} // detail
 
-class reference {
-private:
-    lua_State* L = nullptr; // non-owning
-    int ref = LUA_NOREF;
+	class reference {
+	private:
+		lua_State* L = nullptr; // non-owning
+		int ref = LUA_NOREF;
 
-    int copy() const noexcept {
-        if (ref == LUA_NOREF)
-            return LUA_NOREF;
-        push();
-        return luaL_ref(L, LUA_REGISTRYINDEX);
-    }
+		int copy() const noexcept {
+			if (ref == LUA_NOREF)
+				return LUA_NOREF;
+			push();
+			return luaL_ref(L, LUA_REGISTRYINDEX);
+		}
 
-protected:
-    reference(lua_State* L, detail::global_tag) noexcept : L(L) {
-        lua_pushglobaltable(L);
-        ref = luaL_ref(L, LUA_REGISTRYINDEX);
-    }
+	protected:
+		reference(lua_State* L, detail::global_tag) noexcept : L(L) {
+			lua_pushglobaltable(L);
+			ref = luaL_ref(L, LUA_REGISTRYINDEX);
+		}
 
-    int stack_index() const noexcept {
-        return -1;
-    }
+		int stack_index() const noexcept {
+			return -1;
+		}
 
-public:
-    reference() noexcept = default;
-    reference(nil_t) noexcept : reference() {}
-    reference(const stack_reference& r) noexcept : reference(r.lua_state(), r.stack_index()) {}
-    reference(stack_reference&& r) noexcept : reference(r.lua_state(), r.stack_index()) {}
-    reference(lua_State* L, int index = -1) noexcept : L(L) {
-        lua_pushvalue(L, index);
-        ref = luaL_ref(L, LUA_REGISTRYINDEX);
-    }
+	public:
+		reference() noexcept = default;
+		reference(nil_t) noexcept : reference() {}
+		reference(const stack_reference& r) noexcept : reference(r.lua_state(), r.stack_index()) {}
+		reference(stack_reference&& r) noexcept : reference(r.lua_state(), r.stack_index()) {}
+		reference(lua_State* L, int index = -1) noexcept : L(L) {
+			lua_pushvalue(L, index);
+			ref = luaL_ref(L, LUA_REGISTRYINDEX);
+		}
 
-    virtual ~reference() noexcept {
-        luaL_unref(L, LUA_REGISTRYINDEX, ref);
-    }
+		virtual ~reference() noexcept {
+			luaL_unref(L, LUA_REGISTRYINDEX, ref);
+		}
 
-    reference(reference&& o) noexcept {
-        L = o.L;
-        ref = o.ref;
+		reference(reference&& o) noexcept {
+			L = o.L;
+			ref = o.ref;
 
-        o.L = nullptr;
-        o.ref = LUA_NOREF;
-    }
+			o.L = nullptr;
+			o.ref = LUA_NOREF;
+		}
 
-    reference& operator=(reference&& o) noexcept {
-        L = o.L;
-        ref = o.ref;
+		reference& operator=(reference&& o) noexcept {
+			L = o.L;
+			ref = o.ref;
 
-        o.L = nullptr;
-        o.ref = LUA_NOREF;
+			o.L = nullptr;
+			o.ref = LUA_NOREF;
 
-        return *this;
-    }
+			return *this;
+		}
 
-    reference(const reference& o) noexcept {
-        L = o.L;
-        ref = o.copy();
-    }
+		reference(const reference& o) noexcept {
+			L = o.L;
+			ref = o.copy();
+		}
 
-    reference& operator=(const reference& o) noexcept {
-        L = o.L;
-        ref = o.copy();
-        return *this;
-    }
+		reference& operator=(const reference& o) noexcept {
+			L = o.L;
+			ref = o.copy();
+			return *this;
+		}
 
-    int push() const noexcept {
-        lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
-        return 1;
-    }
+		int push() const noexcept {
+			lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+			return 1;
+		}
 
-    void pop(int n = 1) const noexcept {
-        lua_pop(lua_state( ), n);
-    }
+		void pop(int n = 1) const noexcept {
+			lua_pop(lua_state(), n);
+		}
 
-    int registry_index() const noexcept {
-        return ref;
-    }
+		int registry_index() const noexcept {
+			return ref;
+		}
 
-    bool valid () const noexcept {
-        return !(ref == LUA_NOREF || ref == LUA_REFNIL);
-    }
+		bool valid() const noexcept {
+			return !(ref == LUA_NOREF || ref == LUA_REFNIL);
+		}
 
-    explicit operator bool () const noexcept {
-        return valid();
-    }
+		explicit operator bool() const noexcept {
+			return valid();
+		}
 
-    type get_type() const noexcept {
-        push();
-        int result = lua_type(L, -1);
-        lua_pop(L, 1);
-        return static_cast<type>(result);
-    }
+		type get_type() const noexcept {
+			push();
+			int result = lua_type(L, -1);
+			lua_pop(L, 1);
+			return static_cast<type>(result);
+		}
 
-    lua_State* lua_state() const noexcept {
-        return L;
-    }
-};
+		lua_State* lua_state() const noexcept {
+			return L;
+		}
+	};
 
-inline bool operator== (const reference& l, const reference& r) {
-    auto ppl = stack::push_pop(l);
-    auto ppr = stack::push_pop(r);
-    return lua_compare(l.lua_state(), -1, -2, LUA_OPEQ) == 1;
-}
+	inline bool operator== (const reference& l, const reference& r) {
+		auto ppl = stack::push_pop(l);
+		auto ppr = stack::push_pop(r);
+		return lua_compare(l.lua_state(), -1, -2, LUA_OPEQ) == 1;
+	}
 
-inline bool operator!= (const reference& l, const reference& r) {
-    return !operator==(l, r);
-}
+	inline bool operator!= (const reference& l, const reference& r) {
+		return !operator==(l, r);
+	}
 } // sol
 
 #endif // SOL_REFERENCE_HPP

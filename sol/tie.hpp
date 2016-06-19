@@ -26,62 +26,62 @@
 
 namespace sol {
 
-template <typename T>
-struct tie_size : std::tuple_size<T> {};
+	template <typename T>
+	struct tie_size : std::tuple_size<T> {};
 
-template <typename T>
-struct is_tieable : std::integral_constant<bool, (::sol::tie_size<T>::value > 0)> {};
+	template <typename T>
+	struct is_tieable : std::integral_constant<bool, (::sol::tie_size<T>::value > 0)> {};
 
-template <typename... Tn>
-struct tie_t : public std::tuple<std::add_lvalue_reference_t<Tn>...> {
-private:
-     typedef std::tuple<std::add_lvalue_reference_t<Tn>...> base_t;
+	template <typename... Tn>
+	struct tie_t : public std::tuple<std::add_lvalue_reference_t<Tn>...> {
+	private:
+		typedef std::tuple<std::add_lvalue_reference_t<Tn>...> base_t;
 
-     template <typename T>
-     void set( std::false_type, T&& target ) {
-          std::get<0>( *this ) = std::forward<T>( target );
-     }
+		template <typename T>
+		void set(std::false_type, T&& target) {
+			std::get<0>(*this) = std::forward<T>(target);
+		}
 
-     template <typename T>
-     void set( std::true_type, T&& target ) {
-          typedef tie_size<meta::unqualified_t<T>> value_size;
-          typedef tie_size<std::tuple<Tn...>> tie_size;
-          typedef std::conditional_t<(value_size::value < tie_size::value), value_size, tie_size> indices_size;
-          typedef std::make_index_sequence<indices_size::value> indices;
-          set( indices(), std::forward<T>( target ) );
-     }
+		template <typename T>
+		void set(std::true_type, T&& target) {
+			typedef tie_size<meta::unqualified_t<T>> value_size;
+			typedef tie_size<std::tuple<Tn...>> tie_size;
+			typedef std::conditional_t<(value_size::value < tie_size::value), value_size, tie_size> indices_size;
+			typedef std::make_index_sequence<indices_size::value> indices;
+			set(indices(), std::forward<T>(target));
+		}
 
-     template <std::size_t... I, typename T>
-     void set( std::index_sequence<I...>, T&& target ) {
-          using std::get;
-          (void)detail::swallow{ 0, 
-               ( get<I>(*this) = get<I>(target), 0 )...
-          , 0 };
-     }
+		template <std::size_t... I, typename T>
+		void set(std::index_sequence<I...>, T&& target) {
+			using std::get;
+			(void)detail::swallow{ 0,
+				 (get<I>(*this) = get<I>(target), 0)...
+			, 0 };
+		}
 
-public:
-     using base_t::base_t;
+	public:
+		using base_t::base_t;
 
-     template <typename T>
-     tie_t& operator= ( T&& value ) {
-          typedef is_tieable<meta::unqualified_t<T>> bondable;
-          set( bondable(), std::forward<T>( value ) );
-          return *this;
-     }
+		template <typename T>
+		tie_t& operator= (T&& value) {
+			typedef is_tieable<meta::unqualified_t<T>> bondable;
+			set(bondable(), std::forward<T>(value));
+			return *this;
+		}
 
-};
+	};
 
-template <typename... Tn>
-struct tie_size<::sol::tie_t<Tn...>> : ::std::tuple_size<::std::tuple<Tn...>> { };
+	template <typename... Tn>
+	struct tie_size<::sol::tie_t<Tn...>> : ::std::tuple_size<::std::tuple<Tn...>> { };
 
-namespace adl_barrier_detail {
-template <typename... Tn>
-inline tie_t<std::remove_reference_t<Tn>...> tie(Tn&&... argn) {
-    return tie_t<std::remove_reference_t<Tn>...>(std::forward<Tn>(argn)...);
-}
-}
+	namespace adl_barrier_detail {
+		template <typename... Tn>
+		inline tie_t<std::remove_reference_t<Tn>...> tie(Tn&&... argn) {
+			return tie_t<std::remove_reference_t<Tn>...>(std::forward<Tn>(argn)...);
+		}
+	}
 
-using namespace adl_barrier_detail;
+	using namespace adl_barrier_detail;
 
 } // sol
 

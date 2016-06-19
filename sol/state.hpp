@@ -25,35 +25,35 @@
 #include "state_view.hpp"
 
 namespace sol {
-inline int default_at_panic(lua_State* L) {
+	inline int default_at_panic(lua_State* L) {
 #ifdef SOL_NO_EXCEPTIONS
-    (void)L;
-    return -1;
+		(void)L;
+		return -1;
 #else
-    const char* message = lua_tostring(L, -1);
-    std::string err = message ? message : "An unexpected error occurred and forced the lua state to call atpanic";
-    throw error(err);
+		const char* message = lua_tostring(L, -1);
+		std::string err = message ? message : "An unexpected error occurred and forced the lua state to call atpanic";
+		throw error(err);
 #endif
-}
+	}
 
-class state : private std::unique_ptr<lua_State, void(*)(lua_State*)>, public state_view {
-private:
-    typedef std::unique_ptr<lua_State, void(*)(lua_State*)> unique_base;
-public:
-    state(lua_CFunction panic = default_at_panic) : unique_base(luaL_newstate(), lua_close),
-    state_view(unique_base::get()) {
-        set_panic(panic);
-        stack::luajit_exception_handler(unique_base::get());
-    }
+	class state : private std::unique_ptr<lua_State, void(*)(lua_State*)>, public state_view {
+	private:
+		typedef std::unique_ptr<lua_State, void(*)(lua_State*)> unique_base;
+	public:
+		state(lua_CFunction panic = default_at_panic) : unique_base(luaL_newstate(), lua_close),
+			state_view(unique_base::get()) {
+			set_panic(panic);
+			stack::luajit_exception_handler(unique_base::get());
+		}
 
-    state(lua_CFunction panic, lua_Alloc alfunc, void* alpointer = nullptr) : unique_base(lua_newstate(alfunc, alpointer), lua_close),
-    state_view(unique_base::get()) {
-        set_panic(panic);
-        stack::luajit_exception_handler(unique_base::get());
-    }
+		state(lua_CFunction panic, lua_Alloc alfunc, void* alpointer = nullptr) : unique_base(lua_newstate(alfunc, alpointer), lua_close),
+			state_view(unique_base::get()) {
+			set_panic(panic);
+			stack::luajit_exception_handler(unique_base::get());
+		}
 
-    using state_view::get;
-};
+		using state_view::get;
+	};
 } // sol
 
 #endif // SOL_STATE_HPP

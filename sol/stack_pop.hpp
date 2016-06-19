@@ -28,39 +28,39 @@
 #include <tuple>
 
 namespace sol {
-namespace stack {
-template <typename T, typename>
-struct popper {
-    inline static decltype(auto) pop(lua_State* L) {
-        decltype(auto) r = get<T>(L);
-        lua_pop(L, 1);
-        return r;
-    }
-};
+	namespace stack {
+		template <typename T, typename>
+		struct popper {
+			inline static decltype(auto) pop(lua_State* L) {
+				decltype(auto) r = get<T>(L);
+				lua_pop(L, 1);
+				return r;
+			}
+		};
 
-template <typename... Args>
-struct popper<std::tuple<Args...>> {
-    inline static decltype(auto) pop(lua_State* L) {
-        decltype(auto) r = get<std::tuple<Args...>>(L);
-        lua_pop(L, static_cast<int>(sizeof...(Args)));
-        return r;
-    }
-};
+		template <typename... Args>
+		struct popper<std::tuple<Args...>> {
+			inline static decltype(auto) pop(lua_State* L) {
+				decltype(auto) r = get<std::tuple<Args...>>(L);
+				lua_pop(L, static_cast<int>(sizeof...(Args)));
+				return r;
+			}
+		};
 
-template <typename A, typename B>
-struct popper<std::pair<A, B>> {
-    inline static decltype(auto) pop(lua_State* L) {
-        decltype(auto) r = get<std::pair<A, B>>(L);
-        lua_pop(L, 2);
-        return r;
-    }
-};
+		template <typename A, typename B>
+		struct popper<std::pair<A, B>> {
+			inline static decltype(auto) pop(lua_State* L) {
+				decltype(auto) r = get<std::pair<A, B>>(L);
+				lua_pop(L, 2);
+				return r;
+			}
+		};
 
-template <typename T>
-struct popper<T, std::enable_if_t<std::is_base_of<stack_reference, meta::unqualified_t<T>>::value>> {
-    static_assert(meta::neg<std::is_base_of<stack_reference, meta::unqualified_t<T>>>::value, "You cannot pop something that derives from stack_reference: it will not remain on the stack and thusly will go out of scope!");
-};
-} // stack
+		template <typename T>
+		struct popper<T, std::enable_if_t<std::is_base_of<stack_reference, meta::unqualified_t<T>>::value>> {
+			static_assert(meta::neg<std::is_base_of<stack_reference, meta::unqualified_t<T>>>::value, "You cannot pop something that derives from stack_reference: it will not remain on the stack and thusly will go out of scope!");
+		};
+	} // stack
 } // sol
 
 #endif // SOL_STACK_POP_HPP

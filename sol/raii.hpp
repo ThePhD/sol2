@@ -26,75 +26,75 @@
 #include "traits.hpp"
 
 namespace sol {
-namespace detail {
-struct default_construct {
-    template<typename T, typename... Args>
-    static void construct(T&& obj, Args&&... args) {
-        std::allocator<meta::unqualified_t<T>> alloc{};
-        alloc.construct(obj, std::forward<Args>(args)...);
-    }
+	namespace detail {
+		struct default_construct {
+			template<typename T, typename... Args>
+			static void construct(T&& obj, Args&&... args) {
+				std::allocator<meta::unqualified_t<T>> alloc{};
+				alloc.construct(obj, std::forward<Args>(args)...);
+			}
 
-    template<typename T, typename... Args>
-    void operator()(T&& obj, Args&&... args) const {
-        construct(std::forward<T>(obj), std::forward<Args>(args)...);
-    }
-};
+			template<typename T, typename... Args>
+			void operator()(T&& obj, Args&&... args) const {
+				construct(std::forward<T>(obj), std::forward<Args>(args)...);
+			}
+		};
 
-struct default_destruct {
-    template<typename T>
-    static void destroy(T&& obj) {
-        std::allocator<meta::unqualified_t<T>> alloc{};
-        alloc.destroy(obj);
-    }
+		struct default_destruct {
+			template<typename T>
+			static void destroy(T&& obj) {
+				std::allocator<meta::unqualified_t<T>> alloc{};
+				alloc.destroy(obj);
+			}
 
-    template<typename T>
-    void operator()(T&& obj) const {
-        destroy(std::forward<T>(obj));
-    }
-};
-} // detail
+			template<typename T>
+			void operator()(T&& obj) const {
+				destroy(std::forward<T>(obj));
+			}
+		};
+	} // detail
 
-template <typename... Args>
-struct constructor_list {};
+	template <typename... Args>
+	struct constructor_list {};
 
-template<typename... Args>
-using constructors = constructor_list<Args...>;
+	template<typename... Args>
+	using constructors = constructor_list<Args...>;
 
-const auto default_constructor = constructors<types<>>{};
+	const auto default_constructor = constructors<types<>>{};
 
-struct no_construction {};
-const auto no_constructor = no_construction{};
+	struct no_construction {};
+	const auto no_constructor = no_construction{};
 
-struct call_construction {};
-const auto call_constructor = call_construction{};
+	struct call_construction {};
+	const auto call_constructor = call_construction{};
 
-template <typename... Functions>
-struct constructor_wrapper {
-    std::tuple<Functions...> set;
-    template <typename... Args>
-    constructor_wrapper(Args&&... args) : set(std::forward<Args>(args)...) {}
-};
+	template <typename... Functions>
+	struct constructor_wrapper {
+		std::tuple<Functions...> set;
+		template <typename... Args>
+		constructor_wrapper(Args&&... args) : set(std::forward<Args>(args)...) {}
+	};
 
-template <typename... Functions>
-inline auto initializers(Functions&&... functions) {
-    return constructor_wrapper<std::decay_t<Functions>...>(std::forward<Functions>(functions)...);
-}
+	template <typename... Functions>
+	inline auto initializers(Functions&&... functions) {
+		return constructor_wrapper<std::decay_t<Functions>...>(std::forward<Functions>(functions)...);
+	}
 
-template <typename Function>
-struct destructor_wrapper {
-    Function fx;
-    destructor_wrapper(Function f): fx(std::move(f)) {}
-};
+	template <typename Function>
+	struct destructor_wrapper {
+		Function fx;
+		destructor_wrapper(Function f) : fx(std::move(f)) {}
+	};
 
-template <>
-struct destructor_wrapper<void> {};
+	template <>
+	struct destructor_wrapper<void> {};
 
-const destructor_wrapper<void> default_destructor{};
+	const destructor_wrapper<void> default_destructor{};
 
-template <typename Fx>
-inline auto destructor(Fx&& fx) {
-    return destructor_wrapper<std::decay_t<Fx>>(std::forward<Fx>(fx));
-}
+	template <typename Fx>
+	inline auto destructor(Fx&& fx) {
+		return destructor_wrapper<std::decay_t<Fx>>(std::forward<Fx>(fx));
+	}
 
 } // sol
 

@@ -33,15 +33,15 @@
 namespace sol {
 
 #if __cplusplus > 201402L
-template <typename T>
-using optional = sol::optional<T>;
-using nullopt_t = std::nullopt_t;
-constexpr nullopt_t nullopt = std::nullopt;
+	template <typename T>
+	using optional = sol::optional<T>;
+	using nullopt_t = std::nullopt_t;
+	constexpr nullopt_t nullopt = std::nullopt;
 #elif defined(SOL_USE_BOOST)
-template <typename T>
-using optional = boost::optional<T>;
-using nullopt_t = boost::none_t;
-const nullopt_t nullopt = boost::none;
+	template <typename T>
+	using optional = boost::optional<T>;
+	using nullopt_t = boost::none_t;
+	const nullopt_t nullopt = boost::none;
 #else
 #endif // C++ 14
 }

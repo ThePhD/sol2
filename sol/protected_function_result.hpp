@@ -29,102 +29,102 @@
 #include <cstdint>
 
 namespace sol {
-struct protected_function_result : public proxy_base<protected_function_result> {
-private:
-    lua_State* L;
-    int index;
-    int returncount;
-    int popcount;
-    call_status err;
+	struct protected_function_result : public proxy_base<protected_function_result> {
+	private:
+		lua_State* L;
+		int index;
+		int returncount;
+		int popcount;
+		call_status err;
 
-    template <typename T>
-    decltype(auto) tagged_get( types<sol::optional<T>> ) const {
-        if (!valid()) {
-            return sol::optional<T>(nullopt);
-        }
-        return stack::get<sol::optional<T>>(L, index);
-    }
+		template <typename T>
+		decltype(auto) tagged_get(types<sol::optional<T>>) const {
+			if (!valid()) {
+				return sol::optional<T>(nullopt);
+			}
+			return stack::get<sol::optional<T>>(L, index);
+		}
 
-    template <typename T>
-    decltype(auto) tagged_get( types<T> ) const {
+		template <typename T>
+		decltype(auto) tagged_get(types<T>) const {
 #ifdef SOL_CHECK_ARGUMENTS
-        if (!valid()) {
-            type_panic(L, index, type_of(L, index), type::none);
-        }
+			if (!valid()) {
+				type_panic(L, index, type_of(L, index), type::none);
+			}
 #endif // Check Argument Safety
-        return stack::get<T>(L, index);
-    }
+			return stack::get<T>(L, index);
+		}
 
-    optional<error> tagged_get( types<optional<error>> ) const {
-        if (valid()) {
-            return nullopt;
-        }
-        return error(detail::direct_error, stack::get<std::string>(L, index));
-    }
+		optional<error> tagged_get(types<optional<error>>) const {
+			if (valid()) {
+				return nullopt;
+			}
+			return error(detail::direct_error, stack::get<std::string>(L, index));
+		}
 
-    error tagged_get( types<error> ) const {
+		error tagged_get(types<error>) const {
 #ifdef SOL_CHECK_ARGUMENTS
-        if (valid()) {
-            type_panic(L, index, type_of(L, index), type::none);
-        }
+			if (valid()) {
+				type_panic(L, index, type_of(L, index), type::none);
+			}
 #endif // Check Argument Safety
-        return error(detail::direct_error, stack::get<std::string>(L, index));
-    }
+			return error(detail::direct_error, stack::get<std::string>(L, index));
+		}
 
-public:
-    protected_function_result() = default;
-    protected_function_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, call_status err = call_status::ok) noexcept : L(L), index(index), returncount(returncount), popcount(popcount), err(err) {
-        
-    }
-    protected_function_result(const protected_function_result&) = default;
-    protected_function_result& operator=(const protected_function_result&) = default;
-    protected_function_result(protected_function_result&& o) noexcept : L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
-        // Must be manual, otherwise destructor will screw us
-        // return count being 0 is enough to keep things clean
-        // but we will be thorough
-        o.L = nullptr;
-        o.index = 0;
-        o.returncount = 0;
-        o.popcount = 0;
-        o.err = call_status::runtime;
-    }
-    protected_function_result& operator=(protected_function_result&& o) noexcept {
-        L = o.L;
-        index = o.index;
-        returncount = o.returncount;
-        popcount = o.popcount;
-        err = o.err;
-        // Must be manual, otherwise destructor will screw us
-        // return count being 0 is enough to keep things clean
-        // but we will be thorough
-        o.L = nullptr;
-        o.index = 0;
-        o.returncount = 0;
-        o.popcount = 0;
-        o.err = call_status::runtime;
-        return *this;
-    }
+	public:
+		protected_function_result() = default;
+		protected_function_result(lua_State* L, int index = -1, int returncount = 0, int popcount = 0, call_status err = call_status::ok) noexcept : L(L), index(index), returncount(returncount), popcount(popcount), err(err) {
 
-    call_status status() const noexcept {
-        return err;
-    }
+		}
+		protected_function_result(const protected_function_result&) = default;
+		protected_function_result& operator=(const protected_function_result&) = default;
+		protected_function_result(protected_function_result&& o) noexcept : L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
+			// Must be manual, otherwise destructor will screw us
+			// return count being 0 is enough to keep things clean
+			// but we will be thorough
+			o.L = nullptr;
+			o.index = 0;
+			o.returncount = 0;
+			o.popcount = 0;
+			o.err = call_status::runtime;
+		}
+		protected_function_result& operator=(protected_function_result&& o) noexcept {
+			L = o.L;
+			index = o.index;
+			returncount = o.returncount;
+			popcount = o.popcount;
+			err = o.err;
+			// Must be manual, otherwise destructor will screw us
+			// return count being 0 is enough to keep things clean
+			// but we will be thorough
+			o.L = nullptr;
+			o.index = 0;
+			o.returncount = 0;
+			o.popcount = 0;
+			o.err = call_status::runtime;
+			return *this;
+		}
 
-    bool valid() const noexcept {
-        return status() == call_status::ok || status() == call_status::yielded;
-    }
+		call_status status() const noexcept {
+			return err;
+		}
 
-    template<typename T>
-    T get() const {
-        return tagged_get(types<meta::unqualified_t<T>>());
-    }
+		bool valid() const noexcept {
+			return status() == call_status::ok || status() == call_status::yielded;
+		}
 
-    lua_State* lua_state() const noexcept { return L; };
-    int stack_index() const noexcept { return index; };
+		template<typename T>
+		T get() const {
+			return tagged_get(types<meta::unqualified_t<T>>());
+		}
 
-    ~protected_function_result() {
-        stack::remove(L, index, popcount);
-    }
-};
+		lua_State* lua_state() const noexcept { return L; };
+		int stack_index() const noexcept { return index; };
+
+		~protected_function_result() {
+			stack::remove(L, index, popcount);
+		}
+	};
 } // sol
 
 #endif // SOL_PROTECTED_FUNCTION_RESULT_HPP

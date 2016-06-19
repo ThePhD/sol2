@@ -48,7 +48,7 @@ members
 	template<typename... Args>
 	void open_libraries(Args&&... args);
 
-This function takes a number of :ref:`sol::lib<lib-enum>` as arguments and opens up the associated Lua core libraries. 
+This function takes a number of :ref:`sol::lib<lib-enum>` as arguments and opens up the associated Lua core libraries.
 
 .. code-block:: cpp
 	:caption: function: script / script_file
@@ -57,6 +57,17 @@ This function takes a number of :ref:`sol::lib<lib-enum>` as arguments and opens
 	void script_file(const std::string& filename);
 
 These functions run the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run isolated: any scripts or code run will affect code in the ``lua_State*`` the object uses as well. Code ran in this fashion is not isolated. If you need isolation, consider creating a new state or traditional Lua sandboxing techniques.
+
+.. code-block:: cpp
+	:caption: function: require / require_file
+
+	sol::object require(const std::string& key, lua_CFunction open_function, bool create_global = true);
+	sol::object require_script(const std::string& key, const std::string& code, bool create_global = true);
+	sol::object require_file(const std::string& key, const std::string& file, bool create_global = true);
+
+These functions play a role similar to `luaL_requiref`_ except that they make this functionality available for loading a one-time script or a single file. The code here checks if a module has already been loaded, and if it has not, will either load / execute the file or execute the string of code passed in. If ``create_global`` is set to true, it will also link the name ``key`` to the result returned from the open function, the code or the file. Regardless or whether a fresh load happens or not, the returned module is given as a single :doc:`sol::object<object>` for you to use as you see fit.
+
+Thanks to `Eric (EToreo) for the suggestion on this one`_!
 
 .. code-block:: cpp
 	:caption: function: load / load_file
@@ -90,6 +101,10 @@ Overrides the panic function Lua calls when something unrecoverable or unexpecte
 	sol::table create_table(int narr = 0, int nrec = 0);
 	template <typename Key, typename Value, typename... Args>
 	sol::table create_table(int narr, int nrec, Key&& key, Value&& value, Args&&... args);
+
+
+	template <typename... Args>
+	sol::table create_table_with(Args&&... args);
 	
 	static sol::table create_table(lua_State* L, int narr = 0, int nrec = 0);
 	template <typename Key, typename Value, typename... Args>
@@ -97,4 +112,6 @@ Overrides the panic function Lua calls when something unrecoverable or unexpecte
 
 Creates a table. Forwards its arguments to :ref:`table::create<table-create>`.
 
-.. _standard lua libraries: http://www.lua.org/manual/5.2/manual.html#6 
+.. _standard lua libraries: http://www.lua.org/manual/5.3/manual.html#6 
+.. _luaL_requiref: https://www.lua.org/manual/5.3/manual.html#luaL_requiref
+.. _Eric (EToreo) for the suggestion on this one: https://github.com/ThePhD/sol2/issues/90

@@ -32,6 +32,7 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    thread
    tie
    types
+   user
    usertype
    userdata
    usertype_memory

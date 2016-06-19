@@ -25,7 +25,7 @@
 #include "table_core.hpp"
 
 namespace sol {
-    typedef table_core<false> table;
+	typedef table_core<false> table;
 } // sol
 
 #endif // SOL_TABLE_HPP

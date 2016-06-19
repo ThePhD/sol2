@@ -23,60 +23,60 @@
 #define SOL_STACK_REFERENCE_HPP
 
 namespace sol {
-class stack_reference {
-private:
-    lua_State* L = nullptr;
-    int index = 0;
+	class stack_reference {
+	private:
+		lua_State* L = nullptr;
+		int index = 0;
 
-protected:
-    int registry_index () const noexcept {
-        return LUA_NOREF;
-    }
+	protected:
+		int registry_index() const noexcept {
+			return LUA_NOREF;
+		}
 
-public:
-    stack_reference() noexcept = default;
-    stack_reference(nil_t) noexcept : stack_reference() {};
-    stack_reference(lua_State* L, int i) noexcept : L(L), index(lua_absindex(L, i)) {}
-    stack_reference(stack_reference&& o) noexcept = default;
-    stack_reference& operator=(stack_reference&&) noexcept = default;
-    stack_reference(const stack_reference&) noexcept = default;
-    stack_reference& operator=(const stack_reference&) noexcept = default;
+	public:
+		stack_reference() noexcept = default;
+		stack_reference(nil_t) noexcept : stack_reference() {};
+		stack_reference(lua_State* L, int i) noexcept : L(L), index(lua_absindex(L, i)) {}
+		stack_reference(stack_reference&& o) noexcept = default;
+		stack_reference& operator=(stack_reference&&) noexcept = default;
+		stack_reference(const stack_reference&) noexcept = default;
+		stack_reference& operator=(const stack_reference&) noexcept = default;
 
-    int push() const noexcept {
-        lua_pushvalue(L, index);
-        return 1;
-    }
+		int push() const noexcept {
+			lua_pushvalue(L, index);
+			return 1;
+		}
 
-    void pop(int n = 1) const noexcept {
-        lua_pop(lua_state( ), n);
-    }
+		void pop(int n = 1) const noexcept {
+			lua_pop(lua_state(), n);
+		}
 
-    int stack_index () const noexcept {
-        return index;
-    }
+		int stack_index() const noexcept {
+			return index;
+		}
 
-    type get_type() const noexcept {
-        int result = lua_type(L, index);
-        return static_cast<type>(result);
-    }
+		type get_type() const noexcept {
+			int result = lua_type(L, index);
+			return static_cast<type>(result);
+		}
 
-    lua_State* lua_state() const noexcept {
-        return L;
-    }
+		lua_State* lua_state() const noexcept {
+			return L;
+		}
 
-    bool valid () const noexcept {
-        type t = get_type();
-        return t != type::nil && t != type::none;
-    }
-};
+		bool valid() const noexcept {
+			type t = get_type();
+			return t != type::nil && t != type::none;
+		}
+	};
 
-inline bool operator== (const stack_reference& l, const stack_reference& r) {
-    return lua_compare(l.lua_state(), l.stack_index(), r.stack_index(), LUA_OPEQ) == 0;
-}
+	inline bool operator== (const stack_reference& l, const stack_reference& r) {
+		return lua_compare(l.lua_state(), l.stack_index(), r.stack_index(), LUA_OPEQ) == 0;
+	}
 
-inline bool operator!= (const stack_reference& l, const stack_reference& r) {
-    return !operator==(l, r);
-}
+	inline bool operator!= (const stack_reference& l, const stack_reference& r) {
+		return !operator==(l, r);
+	}
 } // sol
 
 #endif // SOL_STACK_REFERENCE_HPP

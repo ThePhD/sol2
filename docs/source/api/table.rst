@@ -61,11 +61,30 @@ If the keys within nested queries try to traverse into a table that doesn't exis
 	template<typename... Args>
 	table& traverse_set(Args&&... args);
 
-These functions set items into the table. The first one (``set``) can set  *multiple* values, in the form ``Key, Value, Key, Value, ...``. It is similar to ``table["a"] = 1; table["b"] = 2, ...``. The second one (``traverse_set``) sets a *single* value, using all but the last argument as keys to do another lookup into the value retrieved prior to it. It is equivalent to ``table["a"]["b"][...] = final_value;``.
+These functions set items into the table. The first one (``set``) can set  *multiple* values, in the form ``key_a, value_a, key_b, value_b, ...``. It is similar to ``table[key_a] = value_a; table[key_b] = value_b, ...``. The second one (``traverse_set``) sets a *single* value, using all but the last argument as keys to do another lookup into the value retrieved prior to it. It is equivalent to ``table[key_a][key_b][...] = value;``.
 
 .. note::
 
 	Value semantics are applied to all set operations. If you do not ``std::ref( obj )`` or specifically make a pointer with ``std::addressof( obj )`` or ``&obj``, it will copy / move. This is different from how :doc:`sol::function<function>` behaves with its call operator.
+
+
+.. code-block:: cpp
+	:caption: function: add
+
+	template<typename... Args>
+	table& add(Args&&... args);
+
+This function appends a value to a table. The definition of appends here is only well-defined for a table which has a perfectly sequential (and integral) ordering of numeric keys with associated non-null values (the same requirement for the :ref:`size<size-function>` function). Otherwise, this falls to the implementation-defined behavior of your Lua VM, whereupon is may add keys into empty 'holes' in the array (e.g., the first empty non-sequential integer key it gets to from ``size``) or perhaps at the very "end" of the "array". Do yourself the favor of making sure your keys are sequential.
+
+Each argument is appended to the list one at a time.
+
+.. code-block:: cpp
+	:caption: function: size
+	:name: size-function
+
+	std::size_t size() const;
+
+This function returns the size of a table. It is only well-defined in the case of a Lua table which has a perfectly sequential (and integral) ordering of numeric keys with associated non-null values.
 	
 .. code-block:: cpp
 	:caption: function: setting a usertype

@@ -66,7 +66,7 @@ private:
 	usertype(usertype_detail::verified_tag, Args&&... args) : metatableregister( std::make_unique<usertype_metatable<T, std::tuple<std::decay_t<Args>...>>>(std::make_tuple(std::forward<Args>(args)...)) ) {}
 
 	template<typename... Args>
-	usertype(usertype_detail::add_destructor_tag, Args&&... args) : usertype(usertype_detail::verified, "__gc", default_destructor, std::forward<Args>(args)...) {}
+	usertype(usertype_detail::add_destructor_tag, Args&&... args) : usertype(usertype_detail::verified, std::forward<Args>(args)..., "__gc", default_destructor) {}
 
 	template<typename... Args>
 	usertype(usertype_detail::check_destructor_tag, Args&&... args) : usertype(meta::condition<meta::all<std::is_destructible<T>, meta::neg<usertype_detail::has_destructor<Args...>>>, usertype_detail::add_destructor_tag, usertype_detail::verified_tag>(), std::forward<Args>(args)...) {}
@@ -77,10 +77,10 @@ public:
 	usertype(Args&&... args) : usertype(meta::condition<meta::all<std::is_default_constructible<T>, meta::neg<usertype_detail::has_constructor<Args...>>>, decltype(default_constructor), usertype_detail::check_destructor_tag>(), std::forward<Args>(args)...) {}
 
 	template<typename... Args, typename... CArgs>
-	usertype(constructors<CArgs...> constructorlist, Args&&... args) : usertype(usertype_detail::check_destructor_tag(), "new", constructorlist, std::forward<Args>(args)...) {}
+	usertype(constructors<CArgs...> constructorlist, Args&&... args) : usertype(usertype_detail::check_destructor_tag(), std::forward<Args>(args)..., "new", constructorlist) {}
 
 	template<typename... Args, typename... Fxs>
-	usertype(constructor_wrapper<Fxs...> constructorlist, Args&&... args) : usertype(usertype_detail::check_destructor_tag(), "new", constructorlist, std::forward<Args>(args)...) {}
+	usertype(constructor_wrapper<Fxs...> constructorlist, Args&&... args) : usertype(usertype_detail::check_destructor_tag(), std::forward<Args>(args)..., "new", constructorlist) {}
 
 	int push(lua_State* L) {
 		return metatableregister->push_um(L);
