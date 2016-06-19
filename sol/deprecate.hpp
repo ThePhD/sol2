@@ -38,9 +38,6 @@ namespace sol {
 		struct SOL_DEPRECATED deprecate_type {
 			using type = T;
 		};
-
-		template <typename T>
-		using deprecate_type_t = typename deprecate_type<T>::type;
 	} // detail
 } // sol
 
