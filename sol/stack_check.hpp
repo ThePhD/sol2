@@ -196,7 +196,8 @@ namespace sol {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler) {
 				type t = type_of(L, index);
-				if (t == type::function) {
+				if (t == type::nil || t == type::none || t == type::function) {
+					// allow for nil to be returned
 					return true;
 				}
 				if (t != type::userdata && t != type::table) {

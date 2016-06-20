@@ -105,9 +105,6 @@ namespace sol {
 
 			template<typename... Args, typename... Ret>
 			static std::function<Signature> get_std_func(types<Ret...>, types<Args...>, lua_State* L, int index = -1) {
-				if (lua_isnil(L, index) || lua_isnone(L, index)) {
-					return nullptr;
-				}
 				sol::function f(L, index);
 				auto fx = [f, L, index](Args&&... args) -> meta::return_type_t<Ret...> {
 					return f.call<Ret...>(std::forward<Args>(args)...);
@@ -117,9 +114,6 @@ namespace sol {
 
 			template<typename... FxArgs>
 			static std::function<Signature> get_std_func(types<void>, types<FxArgs...>, lua_State* L, int index = -1) {
-				if (lua_isnil(L, index) || lua_isnone(L, index)) {
-					return nullptr;
-				}
 				sol::function f(L, index);
 				auto fx = [f, L, index](FxArgs&&... args) -> void {
 					f(std::forward<FxArgs>(args)...);
@@ -133,6 +127,10 @@ namespace sol {
 			}
 
 			static std::function<Signature> get(lua_State* L, int index) {
+				type t = type_of(L, index);
+				if (t == type::none || t == type::nil) {
+					return nullptr;
+				}
 				return get_std_func(return_types(), args_lists(), L, index);
 			}
 		};

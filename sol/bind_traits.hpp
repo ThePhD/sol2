@@ -239,4 +239,4 @@ namespace sol {
 	} // meta
 } // sol
 
-#endif // SOL_BIND_TRAITS
+#endif // SOL_BIND_TRAITS_HPP
