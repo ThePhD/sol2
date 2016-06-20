@@ -17,11 +17,12 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    function
    protected_function
    object
+   reference
+   stack_reference
+   make_reference
    overload
    property
    proxy
-   reference
-   stack_reference
    resolve
    stack
    optional

@@ -79,20 +79,32 @@ namespace sol {
 		}
 	};
 
-	template <typename T>
-	object make_object(lua_State* L, T&& value) {
+	template <typename R = reference, bool should_pop = !std::is_base_of<stack_reference, R>::value, typename T>
+	R make_reference(lua_State* L, T&& value) {
 		int backpedal = stack::push(L, std::forward<T>(value));
-		object r = stack::get<object>(L, -backpedal);
-		lua_pop(L, backpedal);
+		R r = stack::get<R>(L, -backpedal);
+		if (should_pop) {
+			lua_pop(L, backpedal);
+		}
 		return r;
 	}
 
-	template <typename T, typename... Args>
-	object make_object(lua_State* L, Args&&... args) {
+	template <typename T, typename R = reference, bool should_pop = !std::is_base_of<stack_reference, R>::value, typename... Args>
+	object make_reference(lua_State* L, Args&&... args) {
 		int backpedal = stack::push<T>(L, std::forward<Args>(args)...);
 		object r = stack::get<sol::object>(L, -backpedal);
 		lua_pop(L, backpedal);
 		return r;
+	}
+
+	template <typename T>
+	object make_object(lua_State* L, T&& value) {
+		return make_reference<object, true>(L, std::forward<T>(value));
+	}
+
+	template <typename T, typename... Args>
+	object make_object(lua_State* L, Args&&... args) {
+		return make_reference<T, object, true>(L, std::forward<Args>(args)...);
 	}
 
 	inline bool operator==(const object& lhs, const nil_t&) {

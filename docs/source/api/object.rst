@@ -60,14 +60,3 @@ These allow a person to compare an ``sol::object`` against :ref:`nil<nil>`, whic
 	}
 
 Use this to check objects.
-
-.. code-block:: cpp
-	:caption: function: make object
-	:name: make-object
-
-	template <typename T>
-	object make_object(lua_State* L, T&& value);
-	template <typename T, typename... Args>
-	object make_object(lua_State* L, Args&&... args);
-
-Makes an object out of the value. It pushes it onto the stack, then pops it into the returned ``sol::object``.
