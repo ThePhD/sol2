@@ -7,7 +7,7 @@
 	:target: https://github.com/ThePhD/sol2
 	:alt: sol2 repository
 
-Sol 2.5
+Sol 2.8
 =======
 a fast, simple C++ and Lua Binding
 ----------------------------------

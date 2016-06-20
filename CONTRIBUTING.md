@@ -24,7 +24,7 @@ consistent to those found in the repository.
 They are as follows (more will be added as they come up):
 
 - No spaces between parentheses. e.g. `f(g())` not `f ( g ( ) )`.
-- No tabs allowed. Use 4 space indentation.
+- Tabs for indentation, spaces for alignment.
 - Bracing style is
 
 ```cpp
