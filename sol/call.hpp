@@ -299,7 +299,7 @@ namespace sol {
 			typedef sol::constructor_list<Args...> F;
 
 			static int call(lua_State* L, F&) {
-				static const auto& metakey = usertype_traits<T>::metatable;
+				const auto& metakey = usertype_traits<T>::metatable;
 				int argcount = lua_gettop(L);
 				call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, metakey, 1) : call_syntax::dot;
 				argcount -= static_cast<int>(syntax);
@@ -331,6 +331,7 @@ namespace sol {
 			struct onmatch {
 				template <typename Fx, std::size_t I, typename... R, typename... Args>
 				int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start, F& f) {
+					const auto& metakey = usertype_traits<T>::metatable;
 					T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
 					reference userdataref(L, -1);
 					T*& referencepointer = *pointerpointer;
@@ -341,7 +342,7 @@ namespace sol {
 					stack::call_into_lua<1, false>(r, a, L, start, func, detail::implicit_wrapper<T>(obj));
 
 					userdataref.push();
-					luaL_getmetatable(L, &usertype_traits<T>::metatable[0]);
+					luaL_getmetatable(L, &metakey[0]);
 					if (type_of(L, -1) == type::nil) {
 						lua_pop(L, 1);
 						std::string err = "sol: unable to get usertype metatable for ";

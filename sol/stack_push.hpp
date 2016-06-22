@@ -150,8 +150,8 @@ namespace sol {
 		template<typename T>
 		struct pusher<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_unsigned<T>>::value>> {
 			static int push(lua_State* L, const T& value) {
-				typedef std::make_signed_t<T> signed_int;
-				return stack::push(L, static_cast<signed_int>(value));
+				lua_pushinteger(L, static_cast<lua_Integer>(value));
+				return 1;
 			}
 		};
 

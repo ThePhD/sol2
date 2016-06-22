@@ -93,6 +93,15 @@ This function returns the size of a table. It is only well-defined in the case o
 	table& new_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args);
 
 This class of functions creates a new :doc:`usertype<usertype>` with the specified arguments, providing a few extra details for constructors. After creating a usertype with the specified argument, it passes it to :ref:`set_usertype<set_usertype>`.
+	
+.. code-block:: cpp
+	:caption: function: creating an enum
+	:name: new-enum
+
+	template<bool read_only = true, typename... Args>
+	basic_table_core& new_enum(const std::string& name, Args&&... args);
+	
+Use this function to create an enumeration type in Lua. By default, the enum will be made read-only, which creates a tiny performance hit to make the values stored in this table behave exactly like a read-only enumeration in C++. If you plan on changing the enum values in Lua, set the ``read_only`` template parameter in your ``new_enum`` call to false. The arguments are expected to come in ``key, value, key, value, ...`` list. 
 
 .. _set_usertype:
 

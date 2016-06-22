@@ -34,7 +34,8 @@ namespace sol {
 		namespace stack_detail {
 			template <typename T>
 			inline bool check_metatable(lua_State* L, int index = -2) {
-				luaL_getmetatable(L, &usertype_traits<T>::metatable[0]);
+				const auto& metakey = usertype_traits<T>::metatable;
+				luaL_getmetatable(L, &metakey[0]);
 				const type expectedmetatabletype = static_cast<type>(lua_type(L, -1));
 				if (expectedmetatabletype != type::nil) {
 					if (lua_rawequal(L, -1, index) == 1) {
@@ -272,7 +273,7 @@ namespace sol {
 					return true;
 				if (stack_detail::check_metatable<detail::unique_usertype<U>>(L))
 					return true;
-				bool success = true;
+				bool success = false;
 #ifndef SOL_NO_EXCEPTIONS
 				lua_getfield(L, -1, &detail::base_class_check_key()[0]);
 				if (type_of(L, -1) != type::nil) {
