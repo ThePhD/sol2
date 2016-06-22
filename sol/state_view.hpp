@@ -208,29 +208,23 @@ namespace sol {
 		}
 
 		object require_script(const std::string& key, const std::string& code, bool create_global = true) {
-			return require_core(key, [this, &code]() {this->script(code); }, create_global);
+			return require_core(key, [this, &code]() {stack::script(L, code); }, create_global);
 		}
 
-		object require_file(const std::string& key, const std::string& file, bool create_global = true) {
-			return require_core(key, [this, &file]() {this->script_file(file); }, create_global);
+		object require_file(const std::string& key, const std::string& filename, bool create_global = true) {
+			return require_core(key, [this, &filename]() {stack::script_file(L, filename); }, create_global);
 		}
 
 		function_result script(const std::string& code) {
 			int index = (::std::max)(lua_gettop(L), 1);
-			if (luaL_dostring(L, code.c_str())) {
-				lua_error(L);
-				// Rest of code will never be run because lua_error jumps out
-			}
+			stack::script(L, code);
 			int returns = lua_gettop(L) - (index - 1);
 			return function_result(L, index, returns);
 		}
 
 		function_result script_file(const std::string& filename) {
 			int index = (::std::max)(lua_gettop(L), 1);
-			if (luaL_dofile(L, filename.c_str())) {
-				lua_error(L);
-				// Rest of code will never be run because lua_error jumps out
-			}
+			stack::script_file(L, filename);
 			int returns = lua_gettop(L) - index;
 			return function_result(L, index, returns);
 		}

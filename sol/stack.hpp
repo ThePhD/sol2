@@ -179,6 +179,18 @@ namespace sol {
 			return call_syntax::dot;
 		}
 
+		inline void script(lua_State* L, const std::string& code) {
+			if (luaL_dostring(L, code.c_str())) {
+				lua_error(L);
+			}
+		}
+
+		inline void script_file(lua_State* L, const std::string& filename) {
+			if (luaL_dofile(L, filename.c_str())) {
+				lua_error(L);
+			}
+		}
+
 		inline void luajit_exception_handler(lua_State* L, int(*handler)(lua_State*, lua_CFunction) = detail::c_trampoline) {
 #ifdef SOL_LUAJIT
 			lua_pushlightuserdata(L, (void*)handler);
