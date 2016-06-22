@@ -53,10 +53,12 @@ This function takes a number of :ref:`sol::lib<lib-enum>` as arguments and opens
 .. code-block:: cpp
 	:caption: function: script / script_file
 
-	void script(const std::string& code);
-	void script_file(const std::string& filename);
+	sol::function_result script(const std::string& code);
+	sol::function_result script_file(const std::string& filename);
 
-These functions run the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run isolated: any scripts or code run will affect code in the ``lua_State*`` the object uses as well. Code ran in this fashion is not isolated. If you need isolation, consider creating a new state or traditional Lua sandboxing techniques.
+These functions run the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run isolated: any scripts or code run will affect code in the ``lua_State*`` the object uses as well (unless ``local`` is applied to a variable declaration, as specified by the Lua language). Code ran in this fashion is not isolated. If you need isolation, consider creating a new state or traditional Lua sandboxing techniques.
+
+If your script returns a value, you can capture it from the returned :ref:`function_result<function-result>`.
 
 .. code-block:: cpp
 	:caption: function: require / require_file

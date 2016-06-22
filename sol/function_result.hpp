@@ -68,6 +68,14 @@ namespace sol {
 			return stack::get<T>(L, index);
 		}
 
+		call_status status() const noexcept {
+			return call_status::ok;
+		}
+
+		bool valid() const noexcept {
+			return status() == call_status::ok || status() == call_status::yielded;
+		}
+
 		lua_State* lua_state() const { return L; };
 		int stack_index() const { return index; };
 

@@ -215,16 +215,24 @@ namespace sol {
 			return require_core(key, [this, &file]() {this->script_file(file); }, create_global);
 		}
 
-		void script(const std::string& code) {
+		function_result script(const std::string& code) {
+			int index = (::std::max)(lua_gettop(L), 1);
 			if (luaL_dostring(L, code.c_str())) {
 				lua_error(L);
+				// Rest of code will never be run because lua_error jumps out
 			}
+			int returns = lua_gettop(L) - (index - 1);
+			return function_result(L, index, returns);
 		}
 
-		void script_file(const std::string& filename) {
+		function_result script_file(const std::string& filename) {
+			int index = (::std::max)(lua_gettop(L), 1);
 			if (luaL_dofile(L, filename.c_str())) {
 				lua_error(L);
+				// Rest of code will never be run because lua_error jumps out
 			}
+			int returns = lua_gettop(L) - index;
+			return function_result(L, index, returns);
 		}
 
 		load_result load(const std::string& code) {
