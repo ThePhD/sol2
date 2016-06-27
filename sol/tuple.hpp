@@ -68,6 +68,12 @@ namespace sol {
 		template <std::size_t N, typename Tuple>
 		using tuple_element_t = std::tuple_element_t<N, unqualified_t<Tuple>>;
 
+		template <std::size_t N, typename Tuple>
+		using unqualified_tuple_element = unqualified<tuple_element_t<N, Tuple>>;
+
+		template <std::size_t N, typename Tuple>
+		using unqualified_tuple_element_t = unqualified_t<tuple_element_t<N, Tuple>>;
+
 	} // meta
 } // sol
 

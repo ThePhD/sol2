@@ -97,9 +97,10 @@ namespace sol {
 		typedef std::make_index_sequence<sizeof...(I) * 2> indices;
 		typedef std::index_sequence<I...> half_indices;
 		typedef std::array<luaL_Reg, sizeof...(Tn) / 2 + 1> regs_t;
+		typedef std::tuple<Tn...> Tuple;
 		template <std::size_t Idx>
-		struct check_binding : is_variable_binding<meta::unqualified_t<std::tuple_element_t<Idx, std::tuple<Tn...>>>> {};
-		std::tuple<Tn...> functions;
+		struct check_binding : is_variable_binding<meta::unqualified_tuple_element_t<Idx, Tuple>> {};
+		Tuple functions;
 		lua_CFunction indexfunc;
 		lua_CFunction newindexfunc;
 		lua_CFunction destructfunc;
@@ -109,13 +110,13 @@ namespace sol {
 		bool mustindex;
 		bool secondarymeta;
 
-		template <std::size_t>
-		static inline lua_CFunction make_func(lua_CFunction f) {
-			return f;
+		template <std::size_t Idx, meta::enable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, Tuple>>> = meta::enabler>
+		inline lua_CFunction make_func() {
+			return std::get<Idx + 1>(functions);
 		}
 
-		template <std::size_t Idx, typename F>
-		static inline lua_CFunction make_func(F&&) {
+		template <std::size_t Idx, meta::disable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, Tuple>>> = meta::enabler>
+		inline lua_CFunction make_func() {
 			return call<Idx + 1>;
 		}
 
@@ -130,7 +131,7 @@ namespace sol {
 			return idx;
 		}
 
-		int finish_regs(regs_t& l, int& index ) {
+		int finish_regs(regs_t& l, int& index) {
 			if (destructfunc != nullptr) {
 				l[index] = { name_of(meta_function::garbage_collect).c_str(), destructfunc };
 				++index;
@@ -167,8 +168,8 @@ namespace sol {
 		}
 
 		template <std::size_t Idx, typename N, typename F, typename = std::enable_if_t<!meta::any_same<meta::unqualified_t<N>, base_classes_tag, call_construction>::value>>
-		void make_regs(regs_t& l, int& index, N&& n, F&& f) {
-			luaL_Reg reg = usertype_detail::make_reg(std::forward<N>(n), make_func<Idx>(std::forward<F>(f)));
+		void make_regs(regs_t& l, int& index, N&& n, F&&) {
+			luaL_Reg reg = usertype_detail::make_reg(std::forward<N>(n), make_func<Idx>());
 			// Returnable scope
 			// That would be a neat keyword for C++
 			// returnable { ... };
