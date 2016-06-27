@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-06-27 16:09:32.729819 UTC
-// This header was generated with sol v2.8.9 (revision 02cd92e)
+// Generated 2016-06-27 16:25:12.814979 UTC
+// This header was generated with sol v2.8.9 (revision bd62d99)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -8989,7 +8989,7 @@ namespace sol {
 			static int push(lua_State* L, umt_t&& umx) {
 				
 				umt_t& um = make_cleanup(L, std::move(umx));
-				regs_t value_table{};
+				regs_t value_table{ {} };
 				int lastreg = 0;
 				(void)detail::swallow{ 0, (um.template make_regs<(I * 2)>(value_table, lastreg, std::get<(I * 2)>(um.functions), std::get<(I * 2 + 1)>(um.functions)), 0)... };
 				um.finish_regs(value_table, lastreg);
