@@ -306,7 +306,7 @@ namespace sol {
 			static int push(lua_State* L, umt_t&& umx) {
 				
 				umt_t& um = make_cleanup(L, std::move(umx));
-				regs_t value_table{};
+				regs_t value_table{ {} };
 				int lastreg = 0;
 				(void)detail::swallow{ 0, (um.template make_regs<(I * 2)>(value_table, lastreg, std::get<(I * 2)>(um.functions), std::get<(I * 2 + 1)>(um.functions)), 0)... };
 				um.finish_regs(value_table, lastreg);
