@@ -47,6 +47,18 @@ namespace sol {
 			bool operator==(const std::string& r) const {
 				return compare(r.data(), r.size(), p, s) == 0;
 			}
+
+			bool operator!=(const string_shim& r) const {
+				return !(*this == r);
+			}
+
+			bool operator!=(const char* r) const {
+				return !(*this == r);
+			}
+
+			bool operator!=(const std::string& r) const {
+				return !(*this == r);
+			}
 		};
 	}
 }

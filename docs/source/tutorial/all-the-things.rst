@@ -151,6 +151,8 @@ You can erase things by setting it to ``nullptr`` or ``sol::nil``.
 	// second_try == 322
 
 
+Note that if its a :doc:`userdata/usertype<../doc/usertype>` for a C++ type, the destructor will run only when the garbage collector deems it appropriate to destroy the memory. If you are relying on the destructor being run when its set to ``sol::nil``, you're probably committing a mistake.
+
 tables
 ------
 

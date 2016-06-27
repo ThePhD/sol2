@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-06-22 17:39:19.028386 UTC
-// This header was generated with sol v2.8.7 (revision 97c132d)
+// Generated 2016-06-27 16:09:32.729819 UTC
+// This header was generated with sol v2.8.9 (revision 02cd92e)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -2767,6 +2767,18 @@ namespace sol {
 
 			bool operator==(const std::string& r) const {
 				return compare(r.data(), r.size(), p, s) == 0;
+			}
+
+			bool operator!=(const string_shim& r) const {
+				return !(*this == r);
+			}
+
+			bool operator!=(const char* r) const {
+				return !(*this == r);
+			}
+
+			bool operator!=(const std::string& r) const {
+				return !(*this == r);
 			}
 		};
 	}
@@ -8760,14 +8772,17 @@ namespace sol {
 		
 	} // usertype_detail
 
-	template <typename T, typename Tuple>
-	struct usertype_metatable : usertype_detail::registrar {
-		typedef std::make_index_sequence<std::tuple_size<Tuple>::value> indices;
-		typedef std::make_index_sequence<std::tuple_size<Tuple>::value / 2> half_indices;
-		typedef luaL_Reg regs_t[std::tuple_size<Tuple>::value / 2 + 1];
-		template <std::size_t I>
-		struct check_binding : is_variable_binding<meta::unqualified_t<std::tuple_element_t<I, Tuple>>> {};
-		Tuple functions;
+	template <typename T, typename IndexSequence, typename... Tn>
+	struct usertype_metatable : usertype_detail::registrar {};
+
+	template <typename T, std::size_t... I, typename... Tn>
+	struct usertype_metatable<T, std::index_sequence<I...>, Tn...> : usertype_detail::registrar {
+		typedef std::make_index_sequence<sizeof...(I) * 2> indices;
+		typedef std::index_sequence<I...> half_indices;
+		typedef std::array<luaL_Reg, sizeof...(Tn) / 2 + 1> regs_t;
+		template <std::size_t Idx>
+		struct check_binding : is_variable_binding<meta::unqualified_t<std::tuple_element_t<Idx, std::tuple<Tn...>>>> {};
+		std::tuple<Tn...> functions;
 		lua_CFunction indexfunc;
 		lua_CFunction newindexfunc;
 		lua_CFunction destructfunc;
@@ -8777,31 +8792,28 @@ namespace sol {
 		bool mustindex;
 		bool secondarymeta;
 
-		template <std::size_t I>
-		static inline lua_CFunction make_func(lua_CFunction& f) {
+		template <std::size_t>
+		static inline lua_CFunction make_func(lua_CFunction f) {
 			return f;
 		}
 
-		template <std::size_t I, typename F>
+		template <std::size_t Idx, typename F>
 		static inline lua_CFunction make_func(F&&) {
-			return call<I + 1>;
+			return call<Idx + 1>;
 		}
 
-		template <std::size_t... I>
-		static bool contains_variable(std::index_sequence<I...>) {
+		static bool contains_variable() {
 			typedef meta::any<check_binding<(I * 2 + 1)>...> has_variables;
 			return has_variables::value;
 		}
 
-		template <std::size_t... I>
-		bool contains_index(std::index_sequence<I...>) const {
+		bool contains_index() const {
 			bool idx = false;
-			(void)detail::swallow{ 0, ((idx &= usertype_detail::is_indexer(std::get<I * 2>(functions))), 0) ... };
+			(void)detail::swallow{ 0, ((idx |= usertype_detail::is_indexer(std::get<I * 2>(functions))), 0) ... };
 			return idx;
 		}
 
-		template <std::size_t I = 0>
-		int make_regs(regs_t& l, int index ) {
+		int finish_regs(regs_t& l, int& index ) {
 			if (destructfunc != nullptr) {
 				l[index] = { name_of(meta_function::garbage_collect).c_str(), destructfunc };
 				++index;
@@ -8809,20 +8821,16 @@ namespace sol {
 			return index;
 		}
 
-		template <std::size_t I = 0, typename F, typename... Args>
-		int make_regs(regs_t& l, int index, sol::call_construction, F&&, Args&&... args) {
-			callconstructfunc = call<I + 1>;
+		template <std::size_t Idx, typename F>
+		void make_regs(regs_t&, int&, sol::call_construction, F&&) {
+			callconstructfunc = call<Idx + 1>;
 			secondarymeta = true;
-			int endindex = make_regs<I + 2>(l, index, std::forward<Args>(args)...);
-			return endindex;
 		}
 
-		template <std::size_t I = 0, typename... Bases, typename... Args>
-		int make_regs(regs_t& l, int index, base_classes_tag, bases<Bases...>, Args&&... args) {
-			int endindex = make_regs<I + 2>(l, index, std::forward<Args>(args)...);
+		template <std::size_t, typename... Bases>
+		void make_regs(regs_t&, int&, base_classes_tag, bases<Bases...>) {
 			if (sizeof...(Bases) < 1) {
-				(void)detail::swallow{ 0, ((detail::has_derived<Bases>::value = false), 0)... };
-				return endindex;
+				return;
 			}
 			(void)detail::swallow{ 0, ((detail::has_derived<Bases>::value = true), 0)... };
 #ifndef SOL_NO_EXCEPTIONS
@@ -8839,79 +8847,70 @@ namespace sol {
 			baseclasscheck = (void*)&detail::inheritance<T, Args...>::type_check;
 			baseclasscast = (void*)&detail::inheritance<T, Args...>::type_cast;
 #endif // No Runtime Type Information vs. Throw-Style Inheritance
-			return endindex;
 		}
 
-		template <std::size_t I = 0, typename N, typename F, typename... Args, typename = std::enable_if_t<!meta::any_same<meta::unqualified_t<N>, base_classes_tag, call_construction>::value>>
-		int make_regs(regs_t& l, int index, N&& n, F&& f, Args&&... args) {
-			string_detail::string_shim shimname = usertype_detail::make_shim(n);
+		template <std::size_t Idx, typename N, typename F, typename = std::enable_if_t<!meta::any_same<meta::unqualified_t<N>, base_classes_tag, call_construction>::value>>
+		void make_regs(regs_t& l, int& index, N&& n, F&& f) {
+			luaL_Reg reg = usertype_detail::make_reg(std::forward<N>(n), make_func<Idx>(std::forward<F>(f)));
 			// Returnable scope
 			// That would be a neat keyword for C++
 			// returnable { ... };
-			[&]() {
-				if (shimname == name_of(meta_function::garbage_collect)) {
-					destructfunc = call<I + 1>;
-					return;
-				}
-				else if (shimname == name_of(meta_function::index)) {
-					indexfunc = call<I + 1>;
-					mustindex = true;
-					return;
-				}
-				else if (shimname == name_of(meta_function::new_index)) {
-					newindexfunc = call<I + 1>;
-					mustindex = true;
-					return;
-				}
-				l[index] = usertype_detail::make_reg(std::forward<N>(n), make_func<I>(std::forward<F>(f)));
-				++index;
-			}();
-			return make_regs<I + 2>(l, index, std::forward<Args>(args)...);
+			if (reg.name == name_of(meta_function::garbage_collect)) {
+				destructfunc = reg.func;
+				return;
+			}
+			else if (reg.name == name_of(meta_function::index)) {
+				indexfunc = reg.func;
+				mustindex = true;
+				return;
+			}
+			else if (reg.name == name_of(meta_function::new_index)) {
+				newindexfunc = reg.func;
+				mustindex = true;
+				return;
+			}
+			l[index] = reg;
+			++index;
 		}
 
-		usertype_metatable(Tuple t) : functions(std::move(t)),
+		template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == sizeof...(Tn)>>
+		usertype_metatable(Args&&... args) : functions(std::forward<Args>(args)...),
 		indexfunc(usertype_detail::indexing_fail<true>), newindexfunc(usertype_detail::indexing_fail<false>),
 		destructfunc(nullptr), callconstructfunc(nullptr), baseclasscheck(nullptr), baseclasscast(nullptr), 
-		mustindex(contains_variable(half_indices()) || contains_index(half_indices())), secondarymeta(false) {
+		mustindex(contains_variable() || contains_index()), secondarymeta(false) {
 		}
 
-		template <bool is_index>
-		int find_call(std::integral_constant<bool, is_index>, std::index_sequence<>, lua_State* L, const sol::string_detail::string_shim&) {
-			if (is_index)
-				return indexfunc(L);
-			else
-				return newindexfunc(L);
-		}
-
-		template <bool is_index, std::size_t I0, std::size_t I1, std::size_t... In>
-		int find_call(std::integral_constant<bool, is_index> idx, std::index_sequence<I0, I1, In...>, lua_State* L, const sol::string_detail::string_shim& accessor) {
-			string_detail::string_shim name = usertype_detail::make_shim(std::get<I0>(functions));
-			if (accessor == name) {
-				if (is_variable_binding<decltype(std::get<I1>(functions))>::value) {
-					return real_call_with<I1, is_index, true>(L, *this);
-				}
-				return stack::push(L, c_closure(call<I1, is_index>, stack::push(L, light<usertype_metatable>(*this))));
+		template <std::size_t I0, std::size_t I1, bool is_index>
+		int real_find_call(std::integral_constant<bool, is_index>, lua_State* L) {
+			if (is_variable_binding<decltype(std::get<I1>(functions))>::value) {
+				return real_call_with<I1, is_index, true>(L, *this);
 			}
-			return find_call(idx, std::index_sequence<In...>(), L, accessor);
+			return stack::push(L, c_closure(call<I1, is_index>, stack::push(L, light<usertype_metatable>(*this))));
 		}
 
-		template <std::size_t I, bool is_index = true, bool is_variable = false>
-		static int real_call(lua_State* L) {
-			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, up_value_index(1));
-			return real_call_with<I, is_index, is_variable>(L, f);
-		}
-
-		template <std::size_t I, bool is_index = true, bool is_variable = false>
-		static int real_call_with(lua_State* L, usertype_metatable& um) {
-			auto& f = call_detail::pick(std::integral_constant<bool, is_index>(), std::get<I>(um.functions));
-			return call_detail::call_wrapped<T, is_index, is_variable>(L, f);
+		template <std::size_t I0, std::size_t I1, bool is_index>
+		void find_call(std::integral_constant<bool, is_index> idx, lua_State* L, bool& found, int& ret, const sol::string_detail::string_shim& accessor) {
+			if (found) {
+				return;
+			}
+			string_detail::string_shim name = usertype_detail::make_shim(std::get<I0>(functions));
+			if (accessor != name) {
+				return;
+			}
+			found = true;
+			ret = real_find_call<I0, I1>(idx, L);
 		}
 
 		static int real_index_call(lua_State* L) {
 			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, up_value_index(1));
 			if (stack::get<type>(L, -1) == type::string) {
 				string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, -1);
-				return f.find_call(std::true_type(), std::make_index_sequence<std::tuple_size<Tuple>::value>(), L, accessor);
+				bool found = false;
+				int ret = 0;
+				(void)detail::swallow{ 0, (f.find_call<I * 2, I * 2 + 1>(std::true_type(), L, found, ret, accessor), 0)... };
+				if (found) {
+					return ret;
+				}
 			}
 			return f.indexfunc(L);
 		}
@@ -8920,19 +8919,36 @@ namespace sol {
 			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, up_value_index(1));
 			if (stack::get<type>(L, -2) == type::string) {
 				string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, -2);
-				return f.find_call(std::false_type(), std::make_index_sequence<std::tuple_size<Tuple>::value>(), L, accessor);
+				bool found = false;
+				int ret = 0;
+				(void)detail::swallow{ 0, (f.find_call<I * 2, I * 2 + 1>(std::false_type(), L, found, ret, accessor), 0)... };
+				if (found) {
+					return ret;
+				}
 			}
 			return f.newindexfunc(L);
 		}
 
-		template <std::size_t I, bool is_index = true, bool is_variable = false>
-		static int call(lua_State* L) {
-			return detail::static_trampoline<(&real_call<I, is_index, is_variable>)>(L);
+		template <std::size_t Idx, bool is_index = true, bool is_variable = false>
+		static int real_call(lua_State* L) {
+			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, up_value_index(1));
+			return real_call_with<Idx, is_index, is_variable>(L, f);
 		}
 
-		template <std::size_t I, bool is_index = true, bool is_variable = false>
+		template <std::size_t Idx, bool is_index = true, bool is_variable = false>
+		static int real_call_with(lua_State* L, usertype_metatable& um) {
+			auto& f = call_detail::pick(std::integral_constant<bool, is_index>(), std::get<Idx>(um.functions));
+			return call_detail::call_wrapped<T, is_index, is_variable>(L, f);
+		}
+
+		template <std::size_t Idx, bool is_index = true, bool is_variable = false>
+		static int call(lua_State* L) {
+			return detail::static_trampoline<(&real_call<Idx, is_index, is_variable>)>(L);
+		}
+
+		template <std::size_t Idx, bool is_index = true, bool is_variable = false>
 		static int call_with(lua_State* L) {
-			return detail::static_trampoline<(&real_call_with<I, is_index, is_variable>)>(L);
+			return detail::static_trampoline<(&real_call_with<Idx, is_index, is_variable>)>(L);
 		}
 
 		static int index_call(lua_State* L) {
@@ -8954,12 +8970,12 @@ namespace sol {
 
 	namespace stack {
 
-		template <typename T, typename Tuple>
-		struct pusher<usertype_metatable<T, Tuple>> {
-			typedef usertype_metatable<T, Tuple> umt_t;
+		template <typename T, std::size_t... I, typename... Args>
+		struct pusher<usertype_metatable<T, std::index_sequence<I...>, Args...>> {
+			typedef usertype_metatable<T, std::index_sequence<I...>, Args...> umt_t;
 			typedef typename umt_t::regs_t regs_t;
 
-			static usertype_metatable<T, Tuple>& make_cleanup(lua_State* L, usertype_metatable<T, Tuple>&& umx) {
+			static umt_t& make_cleanup(lua_State* L, umt_t&& umx) {
 				// Make sure userdata's memory is properly in lua first,
 				// otherwise all the light userdata we make later will become invalid
 
@@ -8967,17 +8983,25 @@ namespace sol {
 				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
 				stack::set_field<true>(L, gcmetakey, make_user(std::move(umx)));
 				stack::get_field<true>(L, gcmetakey);
-				return stack::pop<light<usertype_metatable<T, Tuple>>>(L);
+				return stack::pop<light<umt_t>>(L);
 			}
 
-			template <std::size_t... I>
-			static int push(std::index_sequence<I...>, lua_State* L, usertype_metatable<T, Tuple>&& umx) {
+			static int push(lua_State* L, umt_t&& umx) {
 				
-				usertype_metatable<T, Tuple>& um = make_cleanup(L, std::move(umx));
+				umt_t& um = make_cleanup(L, std::move(umx));
+				regs_t value_table{};
+				int lastreg = 0;
+				(void)detail::swallow{ 0, (um.template make_regs<(I * 2)>(value_table, lastreg, std::get<(I * 2)>(um.functions), std::get<(I * 2 + 1)>(um.functions)), 0)... };
+				um.finish_regs(value_table, lastreg);
+				value_table[lastreg] = { nullptr, nullptr };
+				regs_t ref_table = value_table;
+				bool hasdestructor = lastreg > 0 && name_of(meta_function::garbage_collect) == ref_table[lastreg - 1].name;
+				if (hasdestructor) {
+					ref_table[lastreg - 1] = { nullptr, nullptr };
+				}
 				
 				// Now use um
 				const bool& mustindex = um.mustindex;
-				stack_reference t;
 				for (std::size_t i = 0; i < 3; ++i) {
 					// Pointer types, AKA "references" from C++
 					const char* metakey = nullptr;
@@ -8994,17 +9018,15 @@ namespace sol {
 						break;
 					}
 					luaL_newmetatable(L, metakey);
-					t = stack_reference(L, -1);
+					stack_reference t(L, -1);
 					stack::push(L, make_light(um));
-					regs_t l{};
-					int lastreg = um.make_regs(l, 0, std::get<I>(um.functions)... );
-					bool hasdestructor = lastreg > 0 && name_of(meta_function::garbage_collect) == l[lastreg - 1].name;
-					if (i < 2 && hasdestructor) {
-						l[lastreg - 1] = { nullptr, nullptr };
+					if (i < 2) {
+						luaL_setfuncs(L, ref_table.data(), 1);
 					}
-					l[lastreg] = { nullptr, nullptr };
-					luaL_setfuncs(L, l, 1);
-
+					else {
+						luaL_setfuncs(L, value_table.data(), 1);
+					}
+					
 					if (um.baseclasscheck != nullptr) {
 						stack::set_field(L, detail::base_class_check_key(), um.baseclasscheck, t.stack_index());
 					}
@@ -9039,11 +9061,6 @@ namespace sol {
 				}
 				
 				return 1;
-			}
-				
-			static int push(lua_State* L, usertype_metatable<T, Tuple>&& um) {
-				typedef typename umt_t::indices indices;
-				return push(indices(), L, std::move(um));
 			}
 		};
 
@@ -9090,7 +9107,7 @@ private:
 	std::unique_ptr<usertype_detail::registrar> metatableregister;
 
 	template<typename... Args>
-	usertype(usertype_detail::verified_tag, Args&&... args) : metatableregister( std::make_unique<usertype_metatable<T, std::tuple<std::decay_t<Args>...>>>(std::make_tuple(std::forward<Args>(args)...)) ) {}
+	usertype(usertype_detail::verified_tag, Args&&... args) : metatableregister( std::make_unique<usertype_metatable<T, std::make_index_sequence<sizeof...(Args) / 2>, std::decay_t<Args>...>>(std::forward<Args>(args)...) ) {}
 
 	template<typename... Args>
 	usertype(usertype_detail::add_destructor_tag, Args&&... args) : usertype(usertype_detail::verified, std::forward<Args>(args)..., "__gc", default_destructor) {}

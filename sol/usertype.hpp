@@ -63,7 +63,7 @@ private:
 	std::unique_ptr<usertype_detail::registrar> metatableregister;
 
 	template<typename... Args>
-	usertype(usertype_detail::verified_tag, Args&&... args) : metatableregister( std::make_unique<usertype_metatable<T, std::tuple<std::decay_t<Args>...>>>(std::make_tuple(std::forward<Args>(args)...)) ) {}
+	usertype(usertype_detail::verified_tag, Args&&... args) : metatableregister( std::make_unique<usertype_metatable<T, std::make_index_sequence<sizeof...(Args) / 2>, std::decay_t<Args>...>>(std::forward<Args>(args)...) ) {}
 
 	template<typename... Args>
 	usertype(usertype_detail::add_destructor_tag, Args&&... args) : usertype(usertype_detail::verified, std::forward<Args>(args)..., "__gc", default_destructor) {}
