@@ -86,8 +86,15 @@ namespace sol {
 			else
 				return luaL_error(L, "sol: attempt to index (set) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.data());
 		}
-		
 	} // usertype_detail
+
+	template <typename T>
+	struct clean_type {
+		typedef std::conditional_t<std::is_array<meta::unqualified_t<T>>::value, T&, std::decay_t<T>> type;
+	};
+
+	template <typename T>
+	using clean_type_t = typename clean_type<T>::type;
 
 	template <typename T, typename IndexSequence, typename... Tn>
 	struct usertype_metatable : usertype_detail::registrar {};
@@ -97,7 +104,8 @@ namespace sol {
 		typedef std::make_index_sequence<sizeof...(I) * 2> indices;
 		typedef std::index_sequence<I...> half_indices;
 		typedef std::array<luaL_Reg, sizeof...(Tn) / 2 + 1> regs_t;
-		typedef std::tuple<Tn...> Tuple;
+		typedef std::tuple<Tn...> RawTuple;
+		typedef std::tuple<clean_type_t<Tn> ...> Tuple;
 		template <std::size_t Idx>
 		struct check_binding : is_variable_binding<meta::unqualified_tuple_element_t<Idx, Tuple>> {};
 		Tuple functions;
@@ -110,12 +118,12 @@ namespace sol {
 		bool mustindex;
 		bool secondarymeta;
 
-		template <std::size_t Idx, meta::enable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, Tuple>>> = meta::enabler>
+		template <std::size_t Idx, meta::enable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
 		inline lua_CFunction make_func() {
 			return std::get<Idx + 1>(functions);
 		}
 
-		template <std::size_t Idx, meta::disable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, Tuple>>> = meta::enabler>
+		template <std::size_t Idx, meta::disable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
 		inline lua_CFunction make_func() {
 			return call<Idx + 1>;
 		}

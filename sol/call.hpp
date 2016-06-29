@@ -182,21 +182,21 @@ namespace sol {
 
 		template <bool is_index, bool is_variable, typename C>
 		struct agnostic_lua_call_wrapper<no_prop, is_index, is_variable, C> {
-			static int call(lua_State* L, no_prop&) {
+			static int call(lua_State* L, const no_prop&) {
 				return luaL_error(L, is_index ? "sol: cannot read from a writeonly property" : "sol: cannot write to a readonly property");
 			}
 		};
 
 		template <bool is_index, bool is_variable, typename C>
 		struct agnostic_lua_call_wrapper<no_construction, is_index, is_variable, C> {
-			static int call(lua_State* L, no_construction&) {
+			static int call(lua_State* L, const no_construction&) {
 				return luaL_error(L, "sol: cannot call this constructor (tagged as non-constructible)");
 			}
 		};
 
 		template <typename... Args, bool is_index, bool is_variable, typename C>
 		struct agnostic_lua_call_wrapper<bases<Args...>, is_index, is_variable, C> {
-			static int call(lua_State*, bases<Args...>&) {
+			static int call(lua_State*, const bases<Args...>&) {
 				// Uh. How did you even call this, lul
 				return 0;
 			}
@@ -368,7 +368,7 @@ namespace sol {
 		struct lua_call_wrapper<T, sol::destructor_wrapper<Fx>, is_index, is_variable, std::enable_if_t<std::is_void<Fx>::value>> {
 			typedef sol::destructor_wrapper<Fx> F;
 
-			static int call(lua_State* L, F&) {
+			static int call(lua_State* L, const F&) {
 				return destruct<T>(L);
 			}
 		};
@@ -377,8 +377,8 @@ namespace sol {
 		struct lua_call_wrapper<T, sol::destructor_wrapper<Fx>, is_index, is_variable, std::enable_if_t<!std::is_void<Fx>::value>> {
 			typedef sol::destructor_wrapper<Fx> F;
 
-			static int call(lua_State* L, F& f) {
-				T* obj = stack::get<non_null<T*>>(L);
+			static int call(lua_State* L, const F& f) {
+				T& obj = stack::get<T>(L);
 				f.fx(detail::implicit_wrapper<T>(obj));
 				return 0;
 			}

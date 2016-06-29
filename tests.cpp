@@ -511,3 +511,28 @@ TEST_CASE("features/multiple-inheritance", "Ensure that multiple inheritance wor
 	REQUIRE(cb1->a1 == 250);
 	REQUIRE(cb2->a2 == 500);
 }
+
+
+TEST_CASE("regressions/std::ref", "Ensure that std::reference_wrapper<> isn't considered as a function by using unwrap_unqualified_t trait") {
+	struct base1 {
+		int a1 = 250;
+	};
+
+	sol::state lua;
+	base1 v;
+	lua["vp"] = &v;
+	lua["vr"] = std::ref(v);
+
+	base1* vp = lua["vp"];
+	base1& vr = lua["vr"];
+	REQUIRE(vp != nullptr);
+	REQUIRE(vp == &v);
+
+	REQUIRE(vp->a1 == 250);
+	REQUIRE(vr.a1 == 250);
+	
+	v.a1 = 568;
+
+	REQUIRE(vp->a1 == 568);
+	REQUIRE(vr.a1 == 568);
+}

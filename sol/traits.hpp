@@ -58,6 +58,12 @@ namespace sol {
 		template<typename T>
 		using unwrapped_t = typename unwrapped<T>::type;
 
+		template <typename T>
+		struct unwrap_unqualified : unwrapped<unqualified_t<T>> {};
+
+		template <typename T>
+		using unwrap_unqualified_t = typename unwrap_unqualified<T>::type;
+
 		template<typename T>
 		struct remove_member_pointer;
 

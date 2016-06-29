@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-06-27 16:44:52.053533 UTC
-// This header was generated with sol v2.8.9 (revision 4a0bfe1)
+// Generated 2016-06-29 18:04:02.541304 UTC
+// This header was generated with sol v2.8.9 (revision 833be87)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -384,6 +384,12 @@ namespace sol {
 
 		template<typename T>
 		using unwrapped_t = typename unwrapped<T>::type;
+
+		template <typename T>
+		struct unwrap_unqualified : unwrapped<unqualified_t<T>> {};
+
+		template <typename T>
+		using unwrap_unqualified_t = typename unwrap_unqualified<T>::type;
 
 		template<typename T>
 		struct remove_member_pointer;
@@ -5142,6 +5148,18 @@ namespace sol {
 				destroy(std::forward<T>(obj));
 			}
 		};
+
+		struct deleter {
+			template <typename T>
+			void operator()(T* p) const {
+				delete p;
+			}
+		};
+
+		template <typename T, typename Dx, typename... Args>
+		inline std::unique_ptr<T, Dx> make_unique_deleter(Args&&... args) {
+			return std::unique_ptr<T, Dx>(new T(std::forward<Args>(args)...));
+		}
 	} // detail
 
 	template <typename... Args>
@@ -6811,21 +6829,21 @@ namespace sol {
 
 		template <bool is_index, bool is_variable, typename C>
 		struct agnostic_lua_call_wrapper<no_prop, is_index, is_variable, C> {
-			static int call(lua_State* L, no_prop&) {
+			static int call(lua_State* L, const no_prop&) {
 				return luaL_error(L, is_index ? "sol: cannot read from a writeonly property" : "sol: cannot write to a readonly property");
 			}
 		};
 
 		template <bool is_index, bool is_variable, typename C>
 		struct agnostic_lua_call_wrapper<no_construction, is_index, is_variable, C> {
-			static int call(lua_State* L, no_construction&) {
+			static int call(lua_State* L, const no_construction&) {
 				return luaL_error(L, "sol: cannot call this constructor (tagged as non-constructible)");
 			}
 		};
 
 		template <typename... Args, bool is_index, bool is_variable, typename C>
 		struct agnostic_lua_call_wrapper<bases<Args...>, is_index, is_variable, C> {
-			static int call(lua_State*, bases<Args...>&) {
+			static int call(lua_State*, const bases<Args...>&) {
 				// Uh. How did you even call this, lul
 				return 0;
 			}
@@ -6997,7 +7015,7 @@ namespace sol {
 		struct lua_call_wrapper<T, sol::destructor_wrapper<Fx>, is_index, is_variable, std::enable_if_t<std::is_void<Fx>::value>> {
 			typedef sol::destructor_wrapper<Fx> F;
 
-			static int call(lua_State* L, F&) {
+			static int call(lua_State* L, const F&) {
 				return destruct<T>(L);
 			}
 		};
@@ -7006,8 +7024,8 @@ namespace sol {
 		struct lua_call_wrapper<T, sol::destructor_wrapper<Fx>, is_index, is_variable, std::enable_if_t<!std::is_void<Fx>::value>> {
 			typedef sol::destructor_wrapper<Fx> F;
 
-			static int call(lua_State* L, F& f) {
-				T* obj = stack::get<non_null<T*>>(L);
+			static int call(lua_State* L, const F& f) {
+				T& obj = stack::get<T>(L);
 				f.fx(detail::implicit_wrapper<T>(obj));
 				return 0;
 			}
@@ -8583,12 +8601,12 @@ namespace sol {
 			return *this;
 		}
 
-		template<typename U, meta::enable<meta::is_callable<meta::unqualified_t<U>>> = meta::enabler>
+		template<typename U, meta::enable<meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
 		proxy& operator=(U&& other) {
 			return set_function(std::forward<U>(other));
 		}
 
-		template<typename U, meta::disable<meta::is_callable<meta::unqualified_t<U>>> = meta::enabler>
+		template<typename U, meta::disable<meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
 		proxy& operator=(U&& other) {
 			return set(std::forward<U>(other));
 		}
@@ -8775,8 +8793,15 @@ namespace sol {
 			else
 				return luaL_error(L, "sol: attempt to index (set) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.data());
 		}
-		
 	} // usertype_detail
+
+	template <typename T>
+	struct clean_type {
+		typedef std::conditional_t<std::is_array<meta::unqualified_t<T>>::value, T&, std::decay_t<T>> type;
+	};
+
+	template <typename T>
+	using clean_type_t = typename clean_type<T>::type;
 
 	template <typename T, typename IndexSequence, typename... Tn>
 	struct usertype_metatable : usertype_detail::registrar {};
@@ -8786,7 +8811,8 @@ namespace sol {
 		typedef std::make_index_sequence<sizeof...(I) * 2> indices;
 		typedef std::index_sequence<I...> half_indices;
 		typedef std::array<luaL_Reg, sizeof...(Tn) / 2 + 1> regs_t;
-		typedef std::tuple<Tn...> Tuple;
+		typedef std::tuple<Tn...> RawTuple;
+		typedef std::tuple<clean_type_t<Tn> ...> Tuple;
 		template <std::size_t Idx>
 		struct check_binding : is_variable_binding<meta::unqualified_tuple_element_t<Idx, Tuple>> {};
 		Tuple functions;
@@ -8799,12 +8825,12 @@ namespace sol {
 		bool mustindex;
 		bool secondarymeta;
 
-		template <std::size_t Idx, meta::enable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, Tuple>>> = meta::enabler>
+		template <std::size_t Idx, meta::enable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
 		inline lua_CFunction make_func() {
 			return std::get<Idx + 1>(functions);
 		}
 
-		template <std::size_t Idx, meta::disable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, Tuple>>> = meta::enabler>
+		template <std::size_t Idx, meta::disable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
 		inline lua_CFunction make_func() {
 			return call<Idx + 1>;
 		}
@@ -9111,10 +9137,10 @@ using has_destructor = meta::any<is_destructor<meta::unqualified_t<Args>>...>;
 template<typename T>
 class usertype {
 private:
-	std::unique_ptr<usertype_detail::registrar> metatableregister;
+	std::unique_ptr<usertype_detail::registrar, detail::deleter> metatableregister;
 
 	template<typename... Args>
-	usertype(usertype_detail::verified_tag, Args&&... args) : metatableregister( std::make_unique<usertype_metatable<T, std::make_index_sequence<sizeof...(Args) / 2>, std::decay_t<Args>...>>(std::forward<Args>(args)...) ) {}
+	usertype(usertype_detail::verified_tag, Args&&... args) : metatableregister( detail::make_unique_deleter<usertype_metatable<T, std::make_index_sequence<sizeof...(Args) / 2>, Args...>, detail::deleter>(std::forward<Args>(args)...) ) {}
 
 	template<typename... Args>
 	usertype(usertype_detail::add_destructor_tag, Args&&... args) : usertype(usertype_detail::verified, std::forward<Args>(args)..., "__gc", default_destructor) {}
