@@ -24,8 +24,8 @@
 
 #include "function_types_core.hpp"
 #include "function_types_templated.hpp"
-#include "function_types_basic.hpp"
-#include "function_types_member.hpp"
+#include "function_types_stateless.hpp"
+#include "function_types_stateful.hpp"
 #include "function_types_overloaded.hpp"
 #include "resolve.hpp"
 #include "call.hpp"
@@ -44,13 +44,51 @@ namespace sol {
 	}
 
 	namespace stack {
+		template <typename F, typename G>
+		struct pusher<property_wrapper<F, G>, std::enable_if_t<!std::is_void<F>::value && !std::is_void<G>::value>> {
+			static int push(lua_State* L, property_wrapper<F, G> pw) {
+				return stack::push(L, sol::overload(std::move(pw.read), std::move(pw.write)));
+			}
+		};
+
+		template <typename F>
+		struct pusher<property_wrapper<F, void>> {
+			static int push(lua_State* L, property_wrapper<F, void> pw) {			
+				return stack::push(L, std::move(pw.read));
+			}
+		};
+
+		template <typename F>
+		struct pusher<property_wrapper<void, F>> {
+			static int push(lua_State* L, property_wrapper<void, F> pw) {
+				return stack::push(L, std::move(pw.write));
+			}
+		};
+		
+		template <typename T, typename... Lists>
+		struct pusher<detail::constructors_for<T, constructor_list<Lists...>>> {
+			static int push(lua_State* L, detail::constructors_for<T, constructor_list<Lists...>>) {
+				lua_CFunction cf = call_detail::construct<T, Lists...>;
+				return stack::push(L, cf);
+			}
+		};
+
+		template <typename T, typename... Fxs>
+		struct pusher<detail::constructors_for<T, constructor_wrapper<Fxs...>>> {
+			static int push(lua_State* L, constructor_wrapper<Fxs...> c) {
+				lua_CFunction cf = call_detail::call_user<T, false, false>;
+				int closures = stack::push(L, make_user(std::move(c)));
+				return stack::push(L, c_closure(cf, 1));
+			}
+		};
+
 		template<typename... Sigs>
 		struct pusher<function_sig<Sigs...>> {
 			template <typename... Sig, typename Fx, typename... Args>
 			static void select_convertible(std::false_type, types<Sig...>, lua_State* L, Fx&& fx, Args&&... args) {
 				typedef std::remove_pointer_t<std::decay_t<Fx>> clean_fx;
-				std::unique_ptr<function_detail::base_function> sptr = std::make_unique<function_detail::functor_function<clean_fx>>(std::forward<Fx>(fx), std::forward<Args>(args)...);
-				set_fx(L, std::move(sptr));
+				typedef function_detail::functor_function<clean_fx> F;
+				set_fx<F>(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 
 			template <typename R, typename... A, typename Fx, typename... Args>
@@ -62,7 +100,7 @@ namespace sol {
 
 			template <typename R, typename... A, typename Fx, typename... Args>
 			static void select_convertible(types<R(A...)> t, lua_State* L, Fx&& fx, Args&&... args) {
-				typedef std::decay_t<meta::unwrapped_t<meta::unqualified_t<Fx>>> raw_fx_t;
+				typedef std::decay_t<meta::unwrap_unqualified_t<Fx>> raw_fx_t;
 				typedef R(*fx_ptr_t)(A...);
 				typedef std::is_convertible<raw_fx_t, fx_ptr_t> is_convertible;
 				select_convertible(is_convertible(), t, L, std::forward<Fx>(fx), std::forward<Args>(args)...);
@@ -70,15 +108,15 @@ namespace sol {
 
 			template <typename Fx, typename... Args>
 			static void select_convertible(types<>, lua_State* L, Fx&& fx, Args&&... args) {
-				typedef meta::function_signature_t<meta::unwrapped_t<meta::unqualified_t<Fx>>> Sig;
+				typedef meta::function_signature_t<meta::unwrap_unqualified_t<Fx>> Sig;
 				select_convertible(types<Sig>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 
 			template <typename Fx, typename T, typename... Args>
 			static void select_reference_member_variable(std::false_type, lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
 				typedef std::remove_pointer_t<std::decay_t<Fx>> clean_fx;
-				std::unique_ptr<function_detail::base_function> sptr = std::make_unique<function_detail::member_variable<meta::unqualified_t<T>, clean_fx>>(std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
-				set_fx(L, std::move(sptr));
+				typedef function_detail::member_variable<meta::unwrap_unqualified_t<T>, clean_fx> F;
+				set_fx<F>(L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
 			}
 
 			template <typename Fx, typename T, typename... Args>
@@ -114,9 +152,9 @@ namespace sol {
 
 			template <typename Fx, typename T, typename... Args>
 			static void select_reference_member_function(std::false_type, lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
-				typedef std::remove_pointer_t<std::decay_t<Fx>> clean_fx;
-				std::unique_ptr<function_detail::base_function> sptr = std::make_unique<function_detail::member_function<meta::unwrapped_t<meta::unqualified_t<T>>, clean_fx>>(std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
-				set_fx(L, std::move(sptr));
+				typedef std::decay_t<Fx> clean_fx;
+				typedef function_detail::member_function<meta::unwrap_unqualified_t<T>, clean_fx> F;
+				set_fx<F>(L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
 			}
 
 			template <typename Fx, typename T, typename... Args>
@@ -173,14 +211,11 @@ namespace sol {
 				select_function(std::is_function<meta::unqualified_t<Fx>>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 
-			static void set_fx(lua_State* L, std::unique_ptr<function_detail::base_function> luafunc) {
-				function_detail::base_function* target = luafunc.release();
-				void* targetdata = static_cast<void*>(target);
-				lua_CFunction freefunc = function_detail::call;
+			template <typename Fx, typename... Args>
+			static void set_fx(lua_State* L, Args&&... args) {
+				lua_CFunction freefunc = function_detail::call<meta::unqualified_t<Fx>>;
 
-				stack::push(L, userdata_value(targetdata));
-				function_detail::free_function_cleanup(L);
-				lua_setmetatable(L, -2);
+				stack::push<user<Fx>>(L, std::forward<Args>(args)...);
 				stack::push(L, c_closure(freefunc, 1));
 			}
 
@@ -231,12 +266,14 @@ namespace sol {
 		template<typename... Functions>
 		struct pusher<overload_set<Functions...>> {
 			static int push(lua_State* L, overload_set<Functions...>&& set) {
-				pusher<function_sig<>>{}.set_fx(L, std::make_unique<function_detail::overloaded_function<Functions...>>(std::move(set.set)));
+				typedef function_detail::overloaded_function<Functions...> F;
+				pusher<function_sig<>>{}.set_fx<F>(L, std::move(set.set));
 				return 1;
 			}
 
 			static int push(lua_State* L, const overload_set<Functions...>& set) {
-				pusher<function_sig<>>{}.set_fx(L, std::make_unique<function_detail::overloaded_function<Functions...>>(set.set));
+				typedef function_detail::overloaded_function<Functions...> F;
+				pusher<function_sig<>>{}.set_fx<F>(L, set.set);
 				return 1;
 			}
 		};

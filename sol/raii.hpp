@@ -64,6 +64,11 @@ namespace sol {
 		inline std::unique_ptr<T, Dx> make_unique_deleter(Args&&... args) {
 			return std::unique_ptr<T, Dx>(new T(std::forward<Args>(args)...));
 		}
+
+		template <typename T, typename List>
+		struct constructors_for {
+			List l;
+		};
 	} // detail
 
 	template <typename... Args>

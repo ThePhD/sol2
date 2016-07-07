@@ -331,15 +331,33 @@ namespace sol {
 			return *this;
 		}
 
-		template<bool read_only = true, typename... Args>
-		state_view& new_enum(const std::string& name, Args&&... args) {
-			global.new_enum<read_only>(name, std::forward<Args>(args)...);
+		template<typename Class, typename... CArgs, typename... Args>
+		state_view& new_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
+			global.new_usertype<Class>(name, ctor, std::forward<Args>(args)...);
+			return *this;
+		}
+
+		template<typename Class, typename... Args>
+		state_view& new_simple_usertype(const std::string& name, Args&&... args) {
+			global.new_simple_usertype<Class>(name, std::forward<Args>(args)...);
+			return *this;
+		}
+
+		template<typename Class, typename CTor0, typename... CTor, typename... Args>
+		state_view& new_simple_usertype(const std::string& name, Args&&... args) {
+			global.new_simple_usertype<Class, CTor0, CTor...>(name, std::forward<Args>(args)...);
 			return *this;
 		}
 
 		template<typename Class, typename... CArgs, typename... Args>
-		state_view& new_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
-			global.new_usertype<Class>(name, ctor, std::forward<Args>(args)...);
+		state_view& new_simple_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
+			global.new_simple_usertype<Class>(name, ctor, std::forward<Args>(args)...);
+			return *this;
+		}
+
+		template<bool read_only = true, typename... Args>
+		state_view& new_enum(const std::string& name, Args&&... args) {
+			global.new_enum<read_only>(name, std::forward<Args>(args)...);
 			return *this;
 		}
 

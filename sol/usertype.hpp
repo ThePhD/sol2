@@ -22,79 +22,54 @@
 #ifndef SOL_USERTYPE_HPP
 #define SOL_USERTYPE_HPP
 
-#include "usertype_metatable.hpp"
 #include "stack.hpp"
+#include "usertype_metatable.hpp"
+#include "simple_usertype_metatable.hpp"
 #include <memory>
 
 namespace sol {
-namespace usertype_detail {
-struct add_destructor_tag {};
-struct check_destructor_tag {};
-struct verified_tag {} const verified {};
 
-template <typename T>
-struct is_constructor : std::false_type {};
+	template<typename T>
+	class usertype {
+	private:
+		std::unique_ptr<usertype_detail::registrar, detail::deleter> metatableregister;
 
-template <typename... Args>
-struct is_constructor<constructors<Args...>> : std::true_type {};
+		template<typename... Args>
+		usertype(usertype_detail::verified_tag, Args&&... args) : metatableregister(detail::make_unique_deleter<usertype_metatable<T, std::make_index_sequence<sizeof...(Args) / 2>, Args...>, detail::deleter>(std::forward<Args>(args)...)) {}
 
-template <typename... Args>
-struct is_constructor<constructor_wrapper<Args...>> : std::true_type {};
+		template<typename... Args>
+		usertype(usertype_detail::add_destructor_tag, Args&&... args) : usertype(usertype_detail::verified, std::forward<Args>(args)..., "__gc", default_destructor) {}
 
-template <>
-struct is_constructor<no_construction> : std::true_type {};
+		template<typename... Args>
+		usertype(usertype_detail::check_destructor_tag, Args&&... args) : usertype(meta::condition<meta::all<std::is_destructible<T>, meta::neg<usertype_detail::has_destructor<Args...>>>, usertype_detail::add_destructor_tag, usertype_detail::verified_tag>(), std::forward<Args>(args)...) {}
 
-template <typename... Args>
-using has_constructor = meta::any<is_constructor<meta::unqualified_t<Args>>...>;
+	public:
 
-template <typename T>
-struct is_destructor : std::false_type {};
+		template<typename... Args>
+		usertype(Args&&... args) : usertype(meta::condition<meta::all<std::is_default_constructible<T>, meta::neg<usertype_detail::has_constructor<Args...>>>, decltype(default_constructor), usertype_detail::check_destructor_tag>(), std::forward<Args>(args)...) {}
 
-template <typename Fx>
-struct is_destructor<destructor_wrapper<Fx>> : std::true_type {};
+		template<typename... Args, typename... CArgs>
+		usertype(constructors<CArgs...> constructorlist, Args&&... args) : usertype(usertype_detail::check_destructor_tag(), std::forward<Args>(args)..., "new", constructorlist) {}
 
-template <typename... Args>
-using has_destructor = meta::any<is_destructor<meta::unqualified_t<Args>>...>;
-} // usertype_detail
+		template<typename... Args, typename... Fxs>
+		usertype(constructor_wrapper<Fxs...> constructorlist, Args&&... args) : usertype(usertype_detail::check_destructor_tag(), std::forward<Args>(args)..., "new", constructorlist) {}
 
-template<typename T>
-class usertype {
-private:
-	std::unique_ptr<usertype_detail::registrar, detail::deleter> metatableregister;
+		template<typename... Args>
+		usertype(simple_tag, lua_State* L, Args&&... args) : metatableregister(detail::make_unique_deleter<simple_usertype_metatable<T>, detail::deleter>(L, std::forward<Args>(args)...)) {}
 
-	template<typename... Args>
-	usertype(usertype_detail::verified_tag, Args&&... args) : metatableregister( detail::make_unique_deleter<usertype_metatable<T, std::make_index_sequence<sizeof...(Args) / 2>, Args...>, detail::deleter>(std::forward<Args>(args)...) ) {}
+		int push(lua_State* L) {
+			return metatableregister->push_um(L);
+		}
+	};
 
-	template<typename... Args>
-	usertype(usertype_detail::add_destructor_tag, Args&&... args) : usertype(usertype_detail::verified, std::forward<Args>(args)..., "__gc", default_destructor) {}
-
-	template<typename... Args>
-	usertype(usertype_detail::check_destructor_tag, Args&&... args) : usertype(meta::condition<meta::all<std::is_destructible<T>, meta::neg<usertype_detail::has_destructor<Args...>>>, usertype_detail::add_destructor_tag, usertype_detail::verified_tag>(), std::forward<Args>(args)...) {}
-
-public:
-
-	template<typename... Args>
-	usertype(Args&&... args) : usertype(meta::condition<meta::all<std::is_default_constructible<T>, meta::neg<usertype_detail::has_constructor<Args...>>>, decltype(default_constructor), usertype_detail::check_destructor_tag>(), std::forward<Args>(args)...) {}
-
-	template<typename... Args, typename... CArgs>
-	usertype(constructors<CArgs...> constructorlist, Args&&... args) : usertype(usertype_detail::check_destructor_tag(), std::forward<Args>(args)..., "new", constructorlist) {}
-
-	template<typename... Args, typename... Fxs>
-	usertype(constructor_wrapper<Fxs...> constructorlist, Args&&... args) : usertype(usertype_detail::check_destructor_tag(), std::forward<Args>(args)..., "new", constructorlist) {}
-
-	int push(lua_State* L) {
-		return metatableregister->push_um(L);
-	}
-};
-
-namespace stack {
-template<typename T>
-struct pusher<usertype<T>> {
-    static int push(lua_State* L, usertype<T>& user) {
-        return user.push(L);
-    }
-};
-} // stack
+	namespace stack {
+		template<typename T>
+		struct pusher<usertype<T>> {
+			static int push(lua_State* L, usertype<T>& user) {
+				return user.push(L);
+			}
+		};
+	} // stack
 } // sol
 
 #endif // SOL_USERTYPE_HPP

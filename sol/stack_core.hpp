@@ -92,6 +92,10 @@ namespace sol {
 				typedef T& type;
 			};
 			template <typename T>
+			struct strip<user<T>> {
+				typedef T& type;
+			};
+			template <typename T>
 			struct strip<non_null<T>> {
 				typedef T type;
 			};
@@ -207,7 +211,7 @@ namespace sol {
 
 			template <typename T>
 			inline int alloc_destroy(lua_State* L) {
-				void* rawdata = lua_touserdata(L, up_value_index(1));
+				void* rawdata = lua_touserdata(L, upvalue_index(1));
 				T* data = static_cast<T*>(rawdata);
 				std::allocator<T> alloc;
 				alloc.destroy(data);

@@ -168,9 +168,9 @@ namespace sol {
 	template<typename... Args>
 	struct function_sig {};
 
-	struct up_value_index {
+	struct upvalue_index {
 		int index;
-		up_value_index(int idx) : index(lua_upvalueindex(idx)) {}
+		upvalue_index(int idx) : index(lua_upvalueindex(idx)) {}
 		operator int() const { return index; }
 	};
 
@@ -213,9 +213,10 @@ namespace sol {
 	struct user {
 		U value;
 
-		user(U x) : value(std::forward<U>(x)) {}
+		user(U x) : value(std::move(x)) {}
 		operator U* () { return std::addressof(value); }
 		operator U& () { return value; }
+		operator const U& () const { return value; }
 	};
 
 	template <typename T>
@@ -612,11 +613,15 @@ namespace sol {
 	> { };
 
 	template <typename T>
+	struct is_lua_primitive<T*> : std::true_type {};
+	template <typename T>
 	struct is_lua_primitive<std::reference_wrapper<T>> : std::true_type { };
 	template <typename T>
-	struct is_lua_primitive<optional<T>> : std::true_type {};
+	struct is_lua_primitive<user<T>> : std::true_type { };
 	template <typename T>
-	struct is_lua_primitive<T*> : std::true_type {};
+	struct is_lua_primitive<light<T>> : is_lua_primitive<T*> { };
+	template <typename T>
+	struct is_lua_primitive<optional<T>> : std::true_type {};
 	template <>
 	struct is_lua_primitive<userdata_value> : std::true_type {};
 	template <>

@@ -827,7 +827,7 @@ TEST_CASE("functions/overloading", "Check if overloading works properly for regu
 	lua.open_libraries(sol::lib::base);
 
 	lua.set_function("func_1", func_1);
-	lua.set_function("func", sol::overload(func_1, func_1s, func_2, func_3));
+	lua.set_function("func", sol::overload(func_2, func_3, func_1, func_1s));
 
 	const std::string string_bark = "string: bark";
 

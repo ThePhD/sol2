@@ -86,6 +86,36 @@ namespace sol {
 			else
 				return luaL_error(L, "sol: attempt to index (set) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.data());
 		}
+
+		struct add_destructor_tag {};
+		struct check_destructor_tag {};
+		struct verified_tag {} const verified{};
+		struct simple_tag {} const simple;
+
+		template <typename T>
+		struct is_constructor : std::false_type {};
+
+		template <typename... Args>
+		struct is_constructor<constructors<Args...>> : std::true_type {};
+
+		template <typename... Args>
+		struct is_constructor<constructor_wrapper<Args...>> : std::true_type {};
+
+		template <>
+		struct is_constructor<no_construction> : std::true_type {};
+
+		template <typename... Args>
+		using has_constructor = meta::any<is_constructor<meta::unqualified_t<Args>>...>;
+
+		template <typename T>
+		struct is_destructor : std::false_type {};
+
+		template <typename Fx>
+		struct is_destructor<destructor_wrapper<Fx>> : std::true_type {};
+
+		template <typename... Args>
+		using has_destructor = meta::any<is_destructor<meta::unqualified_t<Args>>...>;
+
 	} // usertype_detail
 
 	template <typename T>
@@ -148,7 +178,7 @@ namespace sol {
 		}
 
 		template <std::size_t Idx, typename F>
-		void make_regs(regs_t&, int&, sol::call_construction, F&&) {
+		void make_regs(regs_t&, int&, call_construction, F&&) {
 			callconstructfunc = call<Idx + 1>;
 			secondarymeta = true;
 		}
@@ -228,7 +258,7 @@ namespace sol {
 		}
 
 		static int real_index_call(lua_State* L) {
-			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, up_value_index(1));
+			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, upvalue_index(1));
 			if (stack::get<type>(L, -1) == type::string) {
 				string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, -1);
 				bool found = false;
@@ -242,7 +272,7 @@ namespace sol {
 		}
 
 		static int real_new_index_call(lua_State* L) {
-			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, up_value_index(1));
+			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, upvalue_index(1));
 			if (stack::get<type>(L, -2) == type::string) {
 				string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, -2);
 				bool found = false;
@@ -257,7 +287,7 @@ namespace sol {
 
 		template <std::size_t Idx, bool is_index = true, bool is_variable = false>
 		static int real_call(lua_State* L) {
-			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, up_value_index(1));
+			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, upvalue_index(1));
 			return real_call_with<Idx, is_index, is_variable>(L, f);
 		}
 

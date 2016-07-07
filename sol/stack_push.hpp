@@ -283,8 +283,9 @@ namespace sol {
 			static int push_with(lua_State* L, Args&&... args) {
 				// A dumb pusher
 				void* rawdata = lua_newuserdata(L, sizeof(T));
+				T* data = static_cast<T*>(rawdata);
 				std::allocator<T> alloc;
-				alloc.construct(static_cast<T*>(rawdata), std::forward<Args>(args)...);
+				alloc.construct(data, std::forward<Args>(args)...);
 				if (with_meta) {
 					lua_CFunction cdel = stack_detail::alloc_destroy<T>;
 					// Make sure we have a plain GC set for this data
@@ -295,6 +296,11 @@ namespace sol {
 					lua_setmetatable(L, -2);
 				}
 				return 1;
+			}
+
+			template <typename... Args>
+			static int push(lua_State* L, Args&&... args) {
+				return push_with(L, std::forward<Args>(args)...);
 			}
 
 			static int push(lua_State* L, const user<T>& u) {

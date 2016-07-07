@@ -664,6 +664,35 @@ TEST_CASE("usertype/overloading", "Check if overloading works properly for usert
 	REQUIRE_THROWS(lua.script("r:func(1,2,'meow')"));
 }
 
+TEST_CASE("usertype/overloading_values", "ensure overloads handle properly") {
+	struct overloading_test {
+		int print(int i) { std::cout << "Integer print: " << i << std::endl; return 500 + i; }
+		int print() { std::cout << "No param print." << std::endl; return 500; }
+	};
+
+	sol::state lua;
+	lua.new_usertype<overloading_test>("overloading_test", sol::constructors<>(),
+		"print", sol::overload(static_cast<int (overloading_test::*)(int)>(&overloading_test::print), static_cast<int (overloading_test::*)()>(&overloading_test::print)),
+		"print2", sol::overload(static_cast<int (overloading_test::*)()>(&overloading_test::print), static_cast<int (overloading_test::*)(int)>(&overloading_test::print))
+		);
+	lua.set("test", overloading_test());
+
+	sol::function f0_0 = lua.load("return test:print()");
+	sol::function f0_1 = lua.load("return test:print2()");
+	sol::function f1_0 = lua.load("return test:print(24)");
+	sol::function f1_1 = lua.load("return test:print2(24)");
+	int res = f0_0();
+	int res2 = f0_1();
+	int res3 = f1_0();
+	int res4 = f1_1();
+
+	REQUIRE(res == 500);
+	REQUIRE(res2 == 500);
+
+	REQUIRE(res3 == 524);
+	REQUIRE(res4 == 524);
+}
+
 TEST_CASE("usertype/reference-and-constness", "Make sure constness compiles properly and errors out at runtime") {
 	struct bark {
 		int var = 50;
@@ -1015,8 +1044,7 @@ print(e.bark)
 }
 
 TEST_CASE("usertype/copyability", "make sure user can write to a class variable even if the class itself isn't copy-safe") {
-	struct NoCopy
-	{
+	struct NoCopy {
 		int get() const { return _you_can_copy_me; }
 		void set(int val) { _you_can_copy_me = val; }
 
@@ -1033,4 +1061,27 @@ nocopy = NoCopy.new()
 nocopy.val = 5
                )__")
 	);
+}
+
+TEST_CASE("usertype/protect", "users should be allowed to manually protect a function") {
+	struct protect_me {
+		int gen(int x) {
+			return x;
+		}
+	};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+	lua.new_usertype<protect_me>("protect_me", 
+		"gen", sol::protect( &protect_me::gen )
+	);
+
+	REQUIRE_NOTHROW(
+		lua.script(R"__(
+pm = protect_me.new()
+value = pcall(pm.gen,pm)
+)__");
+	);
+	bool value = lua["value"];
+	REQUIRE_FALSE(value);
 }

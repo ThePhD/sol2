@@ -19,8 +19,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_FUNCTION_TYPES_BASIC_HPP
-#define SOL_FUNCTION_TYPES_BASIC_HPP
+#ifndef SOL_FUNCTION_TYPES_STATELESS_HPP
+#define SOL_FUNCTION_TYPES_STATELESS_HPP
 
 #include "stack.hpp"
 
@@ -147,12 +147,7 @@ namespace sol {
 				// idx 1...n: verbatim data of member variable pointer
 				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L, 1);
 				function_type& memfx = memberdata.first;
-				auto fx = [&L, &memfx](auto&&... args) -> typename traits_type::return_type {
-					auto& item = stack::get<T>(L, 1);
-					return (item.*memfx)(std::forward<decltype(args)>(args)...);
-				};
-				int n = stack::call_into_lua<1>(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_list(), L, 2, fx);
-				return n;
+				return call_detail::call_wrapped<T, false, false>(L, memfx);
 			}
 
 			static int call(lua_State* L) {
@@ -199,4 +194,4 @@ namespace sol {
 	} // function_detail
 } // sol
 
-#endif // SOL_FUNCTION_TYPES_BASIC_HPP
+#endif // SOL_FUNCTION_TYPES_STATELESS_HPP
