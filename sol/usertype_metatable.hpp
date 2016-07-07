@@ -90,7 +90,7 @@ namespace sol {
 		struct add_destructor_tag {};
 		struct check_destructor_tag {};
 		struct verified_tag {} const verified{};
-		struct simple_tag {} const simple;
+		struct simple_tag {} const simple{};
 
 		template <typename T>
 		struct is_constructor : std::false_type {};

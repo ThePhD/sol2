@@ -78,7 +78,7 @@ namespace sol {
 			static int push(lua_State* L, constructor_wrapper<Fxs...> c) {
 				lua_CFunction cf = call_detail::call_user<T, false, false>;
 				int closures = stack::push(L, make_user(std::move(c)));
-				return stack::push(L, c_closure(cf, 1));
+				return stack::push(L, c_closure(cf, closures));
 			}
 		};
 
