@@ -145,6 +145,9 @@ The constructor of usertype takes a variable number of arguments. It takes an ev
 
 .. _constructor:
 
+* ``sol::simple``
+    - Only allowed as the first argument to the usertype constructor
+    - This tag triggers the :doc:`simple usertype<simple_usertype>` changes / optimizations
 * ``"{name}", constructors<Type-List-0, Type-List-1, ...>``
     - ``Type-List-N`` must be a ``sol::types<Args...>``, where ``Args...`` is a list of types that a constructor takes. Supports overloading by default
     - If you pass the ``constructors<...>`` argument first when constructing the usertype, then it will automatically be given a ``"{name}"`` of ``"new"``
@@ -249,6 +252,15 @@ traits
 
 
 This trait is used to provide names for the various metatables and global tables used to perform cleanup and lookup. They are automatically generated at runtime. In the case of RTTI being present, Sol will attempt to demangle the name from ``std::type_info`` to produce a valid name. If RTTI is disabled, Sol attempts to parse the output of ``__PRETTY_FUCNTION__`` (``g++``/``clang++``) or ``_FUNCDSIG`` (``vc++``) to get the proper type name. If you have a special need you can override the names for your specific type.
+
+
+compilation speed
+-----------------
+
+.. note::
+
+	If you find that compilation times are too long and you're only binding member functions, consider perhaps using :doc:`simple usertypes<simple_usertype>`. This can reduce compile times (but may cost memory size and speed). See the simple usertypes documentation for more details.
+
 
 performance note
 ----------------

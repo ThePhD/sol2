@@ -35,6 +35,7 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    types
    user
    usertype
+   simple_usertype
    userdata
    usertype_memory
    unique_usertype_traits

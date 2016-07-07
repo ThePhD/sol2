@@ -60,7 +60,7 @@ namespace sol {
 		simple_usertype_metatable(usertype_detail::verified_tag, std::index_sequence<I...>, lua_State* L, Tuple&& args)
 		: callconstructfunc(nil) {
 			registrations.reserve(std::tuple_size<meta::unqualified_t<Tuple>>::value);
-			detail::swallow{ 0,
+			(void)detail::swallow{ 0,
 				(add(L, detail::forward_get<I * 2>(args), detail::forward_get<I * 2 + 1>(args)),0)...
 			};
 		}
