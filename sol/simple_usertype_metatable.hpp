@@ -29,7 +29,7 @@
 
 namespace sol {
 
-	struct simple_tag {} const simple;
+	struct simple_tag {} const simple{};
 
 	template <typename T>
 	struct simple_usertype_metatable : usertype_detail::registrar {
