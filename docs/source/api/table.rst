@@ -95,6 +95,19 @@ This function returns the size of a table. It is only well-defined in the case o
 This class of functions creates a new :doc:`usertype<usertype>` with the specified arguments, providing a few extra details for constructors. After creating a usertype with the specified argument, it passes it to :ref:`set_usertype<set_usertype>`.
 	
 .. code-block:: cpp
+	:caption: function: setting a simple usertype
+	:name: new-simple-usertype
+
+	template<typename Class, typename... Args>
+	table& new_simple_usertype(const std::string& name, Args&&... args);
+	template<typename Class, typename CTor0, typename... CTor, typename... Args>
+	table& new_simple_usertype(const std::string& name, Args&&... args);
+	template<typename Class, typename... CArgs, typename... Args>
+	table& new_simple_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args);
+
+This class of functions creates a new :doc:`simple usertype<simple_usertype>` with the specified arguments, providing a few extra details for constructors and passing the ``sol::simple`` tag as well. After creating a usertype with the specified argument, it passes it to :ref:`set_usertype<set_usertype>`.
+	
+.. code-block:: cpp
 	:caption: function: creating an enum
 	:name: new-enum
 
