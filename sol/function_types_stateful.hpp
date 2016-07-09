@@ -38,7 +38,7 @@ namespace sol {
 			functor_function(Function f, Args&&... args) : fx(std::move(f), std::forward<Args>(args)...) {}
 
 			int call(lua_State* L) {
-				return stack::call_into_lua(meta::tuple_types<return_type>(), args_lists(), L, 1, fx);
+				return call_detail::call_wrapped<void, true, false>(L, fx);
 			}
 
 			int operator()(lua_State* L) {
@@ -52,34 +52,19 @@ namespace sol {
 			typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 			typedef meta::function_return_t<function_type> return_type;
 			typedef meta::function_args_t<function_type> args_lists;
-			struct functor {
-				function_type invocation;
-				T member;
-
-				template<typename... Args>
-				functor(function_type f, Args&&... args) : invocation(std::move(f)), member(std::forward<Args>(args)...) {}
-
-				template<typename... Args>
-				return_type operator()(Args&&... args) {
-					auto& mem = detail::unwrap(detail::deref(member));
-					return (mem.*invocation)(std::forward<Args>(args)...);
-				}
-			} fx;
+			function_type invocation;
+			T member;
 
 			template<typename... Args>
-			member_function(function_type f, Args&&... args) : fx(std::move(f), std::forward<Args>(args)...) {}
+			member_function(function_type f, Args&&... args) : invocation(std::move(f)), member(std::forward<Args>(args)...) {}
 
 			int call(lua_State* L) {
-				return stack::call_into_lua(meta::tuple_types<return_type>(), args_lists(), L, 1, fx);
+				return call_detail::call_wrapped<T, true, false, -1>(L, invocation, detail::unwrap(detail::deref(member)));
 			}
 
 			int operator()(lua_State* L) {
 				auto f = [&](lua_State* L) -> int { return this->call(L); };
 				return detail::trampoline(L, f);
-			}
-
-			~member_function() {
-
 			}
 		};
 
@@ -95,34 +80,13 @@ namespace sol {
 			template<typename... Args>
 			member_variable(function_type v, Args&&... args) : var(std::move(v)), member(std::forward<Args>(args)...) {}
 
-			int set_assignable(std::false_type, lua_State* L, M) {
-				lua_pop(L, 1);
-				return luaL_error(L, "sol: cannot write to this type: copy assignment/constructor not available");
-			}
-
-			int set_assignable(std::true_type, lua_State* L, M mem) {
-				(mem.*var) = stack::get<return_type>(L, 1);
-				lua_pop(L, 1);
-				return 0;
-			}
-
-			int set_variable(std::true_type, lua_State* L, M mem) {
-				return set_assignable(std::is_assignable<std::add_lvalue_reference_t<return_type>, return_type>(), L, mem);
-			}
-
-			int set_variable(std::false_type, lua_State* L, M) {
-				lua_pop(L, 1);
-				return luaL_error(L, "sol: cannot write to a const variable");
-			}
-
 			int call(lua_State* L) {
 				M mem = detail::unwrap(detail::deref(member));
 				switch (lua_gettop(L)) {
 				case 0:
-					stack::push(L, (mem.*var));
-					return 1;
+					return call_detail::call_wrapped<T, true, false, -1>(L, var, mem);
 				case 1:
-					return set_variable(meta::neg<std::is_const<return_type>>(), L, mem);
+					return call_detail::call_wrapped<T, false, false, -1>(L, var, mem);
 				default:
 					return luaL_error(L, "sol: incorrect number of arguments to member variable function");
 				}

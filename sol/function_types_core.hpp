@@ -28,11 +28,6 @@
 
 namespace sol {
 	namespace function_detail {
-		inline decltype(auto) cleanup_key() {
-			const auto& name = u8"sol.ƒ.♲.🗑.(/¯◡ ‿ ◡)/¯ ~ ┻━┻ (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧";
-			return name;
-		}
-
 		template <typename Fx>
 		inline int call(lua_State* L) {
 			Fx& fx = stack::get<user<Fx>>(L, upvalue_index(1));

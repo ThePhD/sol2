@@ -9,6 +9,14 @@
 #include <iostream>
 #include "test_stack_guard.hpp"
 
+bool func_opt_ret_bool(sol::optional<int> i) {
+	if (i)
+		std::cout << i.value() << std::endl;
+	else
+		std::cout << "optional isn't set" << std::endl;
+	return true;
+}
+
 TEST_CASE("table/traversal", "ensure that we can chain requests and tunnel down into a value if we desire") {
 
 	sol::state lua;
@@ -535,4 +543,20 @@ TEST_CASE("regressions/std::ref", "Ensure that std::reference_wrapper<> isn't co
 
 	REQUIRE(vp->a1 == 568);
 	REQUIRE(vr.a1 == 568);
+}
+
+TEST_CASE("optional/left-out-args", "Make sure arguments can be left out of optional without tanking miserably") {
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	// sol::optional needs an argument no matter what
+	lua.set_function("func_opt_ret_bool", func_opt_ret_bool);
+	REQUIRE_NOTHROW(
+	lua.script(R"(
+        func_opt_ret_bool(42)
+        func_opt_ret_bool()
+        print('ok')
+        )");
+	);
 }

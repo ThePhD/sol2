@@ -145,23 +145,19 @@ namespace sol {
 			call<check_args>(tr, ta, L, static_cast<int>(lua_gettop(L) - sizeof...(Args)), std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 		}
 
-		template<int additionalpop = 0, bool check_args = stack_detail::default_check_arguments, typename... Args, typename Fx, typename... FxArgs>
+		template<bool check_args = stack_detail::default_check_arguments, typename... Args, typename Fx, typename... FxArgs>
 		inline int call_into_lua(types<void> tr, types<Args...> ta, lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs) {
 			call<check_args>(tr, ta, L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
-			int nargs = static_cast<int>(sizeof...(Args)) + additionalpop - meta::count_for_pack<is_transparent_argument, Args...>::value;
-			lua_pop(L, nargs);
 			return 0;
 		}
 
-		template<int additionalpop = 0, bool check_args = stack_detail::default_check_arguments, typename Ret0, typename... Ret, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<meta::neg<std::is_void<Ret0>>::value>>
+		template<bool check_args = stack_detail::default_check_arguments, typename Ret0, typename... Ret, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<meta::neg<std::is_void<Ret0>>::value>>
 		inline int call_into_lua(types<Ret0, Ret...>, types<Args...> ta, lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs) {
 			decltype(auto) r = call<check_args>(types<meta::return_type_t<Ret0, Ret...>>(), ta, L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
-			int nargs = static_cast<int>(sizeof...(Args)) + additionalpop - meta::count_for_pack<is_transparent_argument, Args...>::value;
-			lua_pop(L, nargs);
 			return push_reference(L, std::forward<decltype(r)>(r));
 		}
 
-		template<int additionalpop = 0, bool check_args = stack_detail::default_check_arguments, typename Fx, typename... FxArgs>
+		template<bool check_args = stack_detail::default_check_arguments, typename Fx, typename... FxArgs>
 		inline int call_lua(lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs) {
 			typedef lua_bind_traits<meta::unqualified_t<Fx>> traits_type;
 			typedef typename traits_type::args_list args_list;

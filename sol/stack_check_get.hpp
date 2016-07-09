@@ -95,7 +95,7 @@ namespace sol {
 		template <typename T>
 		struct getter<optional<T>> {
 			static decltype(auto) get(lua_State* L, int index) {
-				return check_get<T>(L, index);
+				return check_get<T>(L, index, no_panic);
 			}
 		};
 	} // stack

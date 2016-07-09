@@ -355,7 +355,7 @@ namespace sol {
 		struct checker<optional<T>, type::poly, C> {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler) {
-				return stack::check<nil_t>(L, index, no_panic) || stack::check<T>(L, index, std::forward<Handler>(handler));
+				return lua_isnoneornil(L, index) || stack::check<T>(L, index, std::forward<Handler>(handler));
 			}
 		};
 	} // stack

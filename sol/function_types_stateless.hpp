@@ -34,8 +34,7 @@ namespace sol {
 			static int real_call(lua_State* L) {
 				auto udata = stack::stack_detail::get_as_upvalues<function_type*>(L);
 				function_type* fx = udata.first;
-				int r = stack::call_into_lua(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_list(), L, 1, fx);
-				return r;
+				return call_detail::call_wrapped<void, true, false>(L, fx);
 			}
 
 			static int call(lua_State* L) {
@@ -62,10 +61,7 @@ namespace sol {
 				auto objdata = stack::stack_detail::get_as_upvalues<T*>(L, memberdata.second);
 				function_type& memfx = memberdata.first;
 				auto& item = *objdata.first;
-				auto fx = [&item, &memfx](auto&&... args) -> typename traits_type::return_type {
-					return (item.*memfx)(std::forward<decltype(args)>(args)...);
-				};
-				return stack::call_into_lua(meta::tuple_types<typename traits_type::return_type>(), typename traits_type::args_list(), L, 1, fx);
+				return call_detail::call_wrapped<T, true, false, -1>(L, memfx, item);
 			}
 
 			static int call(lua_State* L) {
@@ -76,30 +72,6 @@ namespace sol {
 				return call(L);
 			}
 		};
-
-		template <int N, typename R, typename M, typename V>
-		int set_assignable(std::false_type, lua_State* L, M&, V&) {
-			lua_pop(L, N);
-			return luaL_error(L, "sol: cannot write to this type: copy assignment/constructor not available");
-		}
-
-		template <int N, typename R, typename M, typename V>
-		int set_assignable(std::true_type, lua_State* L, M& mem, V& var) {
-			(mem.*var) = stack::get<R>(L, N);
-			lua_pop(L, N);
-			return 0;
-		}
-
-		template <int N, typename R, typename M, typename V>
-		int set_variable(std::true_type, lua_State* L, M& mem, V& var) {
-			return set_assignable<N, R>(std::is_assignable<std::add_lvalue_reference_t<R>, R>(), L, mem, var);
-		}
-
-		template <int N, typename R, typename M, typename V>
-		int set_variable(std::false_type, lua_State* L, M&, V&) {
-			lua_pop(L, N);
-			return luaL_error(L, "sol: cannot write to a const variable");
-		}
 
 		template<typename T, typename Function>
 		struct upvalue_member_variable {
@@ -118,11 +90,9 @@ namespace sol {
 				function_type& var = memberdata.first;
 				switch (lua_gettop(L)) {
 				case 0:
-					stack::push(L, (mem.*var));
-					return 1;
+					return call_detail::call_wrapped<T, true, false, -1>(L, var, mem);
 				case 1:
-					set_variable<1, typename traits_type::return_type>(meta::neg<std::is_const<typename traits_type::return_type>>(), L, mem, var);
-					return 0;
+					return call_detail::call_wrapped<T, false, false, -1>(L, var, mem);
 				default:
 					return luaL_error(L, "sol: incorrect number of arguments to member variable function");
 				}
@@ -168,16 +138,12 @@ namespace sol {
 				// Layout:
 				// idx 1...n: verbatim data of member variable pointer
 				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L, 1);
-				auto& mem = stack::get<T>(L, 1);
 				function_type& var = memberdata.first;
 				switch (lua_gettop(L)) {
 				case 1:
-					lua_pop(L, 1);
-					stack::push(L, (mem.*var));
-					return 1;
+					return call_detail::call_wrapped<T, true, false>(L, var);
 				case 2:
-					set_variable<2, typename traits_type::return_type>(meta::neg<std::is_const<typename traits_type::return_type>>(), L, mem, var);
-					return 0;
+					return call_detail::call_wrapped<T, false, false>(L, var);
 				default:
 					return luaL_error(L, "sol: incorrect number of arguments to member variable function");
 				}

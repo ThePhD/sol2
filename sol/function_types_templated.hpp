@@ -36,20 +36,17 @@ namespace sol {
 
 		template <typename R, typename V, V, typename T>
 		inline int call_set_assignable(std::false_type, T&&, lua_State* L) {
-			lua_pop(L, 2);
 			return luaL_error(L, "cannot write to this type: copy assignment/constructor not available");
 		}
 
 		template <typename R, typename V, V variable, typename T>
 		inline int call_set_assignable(std::true_type, lua_State* L, T&& mem) {
 			(mem.*variable) = stack::get<R>(L, 2);
-			lua_pop(L, 2);
 			return 0;
 		}
 
 		template <typename R, typename V, V, typename T>
 		inline int call_set_variable(std::false_type, lua_State* L, T&&) {
-			lua_pop(L, 2);
 			return luaL_error(L, "cannot write to a const variable");
 		}
 
@@ -67,7 +64,6 @@ namespace sol {
 			switch (lua_gettop(L)) {
 			case 1: {
 				decltype(auto) r = (mem.*variable);
-				lua_pop(L, 1);
 				stack::push_reference(L, std::forward<decltype(r)>(r));
 				return 1; }
 			case 2:
@@ -84,17 +80,7 @@ namespace sol {
 
 		template <typename F, F fx>
 		inline int call_wrapper_function(std::true_type, lua_State* L) {
-			typedef meta::bind_traits<meta::unqualified_t<F>> traits_type;
-			typedef typename traits_type::object_type T;
-			typedef typename traits_type::args_list args_list;
-			typedef typename traits_type::return_type return_type;
-			typedef meta::tuple_types<return_type> return_type_list;
-			auto mfx = [&](auto&&... args) -> typename traits_type::return_type {
-				auto& member = stack::get<T>(L, 1);
-				return (member.*fx)(std::forward<decltype(args)>(args)...);
-			};
-			int n = stack::call_into_lua<1>(return_type_list(), args_list(), L, 2, mfx);
-			return n;
+			return call_detail::call_wrapped<void, false, false>(L, fx);
 		}
 
 		template <typename F, F fx>

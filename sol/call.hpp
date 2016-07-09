@@ -53,7 +53,7 @@ namespace sol {
 			static void call(Args...) {}
 		};
 
-		template <typename T, int additional_pop = 0>
+		template <typename T>
 		struct constructor_match {
 			T* obj;
 
@@ -62,7 +62,7 @@ namespace sol {
 			template <typename Fx, std::size_t I, typename... R, typename... Args>
 			int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) const {
 				detail::default_construct func{};
-				return stack::call_into_lua<additional_pop, false>(r, a, L, start, func, obj);
+				return stack::call_into_lua<false>(r, a, L, start, func, obj);
 			}
 		};
 
@@ -152,7 +152,7 @@ namespace sol {
 				typedef typename wrap::returns_list returns_list;
 				typedef typename wrap::free_args_list args_list;
 				typedef typename wrap::caller caller;
-				return stack::call_into_lua<is_index ? 1 : 2, checked>(returns_list(), args_list(), L, boost + ( is_index ? 2 : 3 ), caller(), std::forward<Fx>(f));
+				return stack::call_into_lua<checked>(returns_list(), args_list(), L, boost + ( is_index ? 2 : 3 ), caller(), std::forward<Fx>(f));
 			}
 
 			template <typename Fx>
@@ -161,7 +161,7 @@ namespace sol {
 				typedef typename wrap::free_args_list args_list;
 				typedef typename wrap::returns_list returns_list;
 				typedef typename wrap::caller caller;
-				return stack::call_into_lua<0, checked>(returns_list(), args_list(), L, boost + 1, caller(), std::forward<Fx>(f));
+				return stack::call_into_lua<checked>(returns_list(), args_list(), L, boost + 1, caller(), std::forward<Fx>(f));
 			}
 
 			template <typename Fx>
@@ -219,7 +219,7 @@ namespace sol {
 				typedef typename wrap::returns_list returns_list;
 				typedef typename wrap::args_list args_list;
 				typedef typename wrap::caller caller;
-				return stack::call_into_lua<is_variable ? 2 : 1, checked>(returns_list(), args_list(), L, boost + ( is_variable ? 3 : 2 ), caller(), std::forward<Fx>(f), o);
+				return stack::call_into_lua<checked>(returns_list(), args_list(), L, boost + ( is_variable ? 3 : 2 ), caller(), std::forward<Fx>(f), o);
 			}
 
 			template <typename Fx>
@@ -248,7 +248,7 @@ namespace sol {
 			static int call_assign(std::true_type, lua_State* L, V&& f, object_type& o) {
 				typedef typename wrap::args_list args_list;
 				typedef typename wrap::caller caller;
-				return stack::call_into_lua<is_variable ? 2 : 1>(types<void>(), args_list(), L, boost + ( is_variable ? 3 : 2 ), caller(), f, o);
+				return stack::call_into_lua<checked>(types<void>(), args_list(), L, boost + ( is_variable ? 3 : 2 ), caller(), f, o);
 			}
 
 			template <typename V>
@@ -306,7 +306,7 @@ namespace sol {
 			static int call(lua_State* L, V&& f, object_type& o) {
 				typedef typename wrap::returns_list returns_list;
 				typedef typename wrap::caller caller;
-				return stack::call_into_lua<is_variable ? 2 : 1, checked>(returns_list(), types<>(), L, boost + ( is_variable ? 3 : 2 ), caller(), f, o);
+				return stack::call_into_lua<checked>(returns_list(), types<>(), L, boost + ( is_variable ? 3 : 2 ), caller(), f, o);
 			}
 
 			template <typename V>
@@ -344,7 +344,7 @@ namespace sol {
 				T* obj = reinterpret_cast<T*>(pointerpointer + 1);
 				referencepointer = obj;
 
-				construct_match<T, Args...>(constructor_match<T, 1>(obj), L, argcount, boost + 1 + static_cast<int>(syntax));
+				construct_match<T, Args...>(constructor_match<T>(obj), L, argcount, boost + 1 + static_cast<int>(syntax));
 
 				userdataref.push();
 				luaL_getmetatable(L, &metakey[0]);
@@ -367,13 +367,13 @@ namespace sol {
 				int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start, F& f) {
 					const auto& metakey = usertype_traits<T>::metatable;
 					T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
-					reference userdataref(L, -1);
+					stack_reference userdataref(L, -1);
 					T*& referencepointer = *pointerpointer;
 					T* obj = reinterpret_cast<T*>(pointerpointer + 1);
 					referencepointer = obj;
 
 					auto& func = std::get<I>(f.set);
-					stack::call_into_lua<1, checked>(r, a, L, boost + start, func, detail::implicit_wrapper<T>(obj));
+					stack::call_into_lua<checked>(r, a, L, boost + start, func, detail::implicit_wrapper<T>(obj));
 
 					userdataref.push();
 					luaL_getmetatable(L, &metakey[0]);

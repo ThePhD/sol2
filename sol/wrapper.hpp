@@ -93,19 +93,20 @@ namespace sol {
 			return (mem.*fx)(std::forward<Args>(args)...);
 		}
 
-		static decltype(auto) call(F& fx, object_type& mem) {
+		template <typename Fx>
+		static decltype(auto) call(Fx&& fx, object_type& mem) {
 			return (mem.*fx);
 		}
 
-		template <typename Arg, typename... Args>
-		static void call(F& fx, object_type& mem, Arg&& arg, Args&&...) {
+		template <typename Fx, typename Arg, typename... Args>
+		static void call(Fx&& fx, object_type& mem, Arg&& arg, Args&&...) {
 			(mem.*fx) = std::forward<Arg>(arg);
 		}
 
 		struct caller {
-			template <typename... Args>
-			decltype(auto) operator()(F& fx, object_type& mem, Args&&... args) const {
-				return call(fx, mem, std::forward<Args>(args)...);
+			template <typename Fx, typename... Args>
+			decltype(auto) operator()(Fx&& fx, object_type& mem, Args&&... args) const {
+				return call(std::forward<Fx>(fx), mem, std::forward<Args>(args)...);
 			}
 		};
 
@@ -131,15 +132,15 @@ namespace sol {
 			return (mem.*fx)(std::forward<Args>(args)...);
 		}
 
-		template <typename... Args>
-		static R call(F& fx, O& mem, Args&&... args) {
+		template <typename Fx, typename... Args>
+		static R call(Fx&& fx, O& mem, Args&&... args) {
 			return (mem.*fx)(std::forward<Args>(args)...);
 		}
 
 		struct caller {
-			template <typename... Args>
-			decltype(auto) operator()(F& fx, O& mem, Args&&... args) const {
-				return call(fx, mem, std::forward<Args>(args)...);
+			template <typename Fx, typename... Args>
+			decltype(auto) operator()(Fx&& fx, O& mem, Args&&... args) const {
+				return call(std::forward<Fx>(fx), mem, std::forward<Args>(args)...);
 			}
 		};
 

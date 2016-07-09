@@ -287,12 +287,14 @@ namespace sol {
 				std::allocator<T> alloc;
 				alloc.construct(data, std::forward<Args>(args)...);
 				if (with_meta) {
+					const auto& name = "\x73\x6F\x6C\x2E\xC6\x92\x2E\xE2\x99\xB2\x2E\xF0\x9F\x97\x91\x2E\x28\x2F\xC2\xAF\xE2\x97\xA1\x20\xE2\x80\xBF\x20\xE2\x97\xA1\x29\x2F\xC2\xAF\x20\x7E\x20\xE2\x94\xBB\xE2\x94\x81\xE2\x94\xBB\x20\x28\xEF\xBE\x89\xE2\x97\x95\xE3\x83\xAE\xE2\x97\x95\x29\xEF\xBE\x89\x2A\x3A\xEF\xBD\xA5\xEF\xBE\x9F\xE2\x9C\xA7";
 					lua_CFunction cdel = stack_detail::alloc_destroy<T>;
 					// Make sure we have a plain GC set for this data
-					lua_createtable(L, 0, 1);
-					lua_pushlightuserdata(L, rawdata);
-					lua_pushcclosure(L, cdel, 1);
-					lua_setfield(L, -2, "__gc");
+					if (luaL_newmetatable(L, name) != 0) {
+						lua_pushlightuserdata(L, rawdata);
+						lua_pushcclosure(L, cdel, 1);
+						lua_setfield(L, -2, "__gc");
+					}
 					lua_setmetatable(L, -2);
 				}
 				return 1;
