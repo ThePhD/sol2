@@ -816,7 +816,10 @@ TEST_CASE("functions/variadic_args", "Check to see we can receive multiple argum
 
 TEST_CASE("functions/required_and_variadic_args", "Check if a certain number of arguments can still be required even when using variadic_args") {
 	sol::state lua;
-	lua.set_function("v", [](sol::this_state, sol::variadic_args, int, int) {});
+	lua.set_function("v", 
+		[](sol::this_state, sol::variadic_args, int, int) {
+		}
+	);
 	REQUIRE_NOTHROW(lua.script("v(20, 25, 30)"));
 	REQUIRE_NOTHROW(lua.script("v(20, 25)"));
 	REQUIRE_THROWS(lua.script("v(20)"));

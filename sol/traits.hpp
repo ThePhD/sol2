@@ -133,6 +133,9 @@ namespace sol {
 		template<typename... Args>
 		using disable = std::enable_if_t<neg<all<Args...>>::value, enable_t>;
 
+		template<typename... Args>
+		using disable_any = std::enable_if_t<neg<any<Args...>>::value, enable_t>;
+
 		template<typename V, typename... Vs>
 		struct find_in_pack_v : boolean<false> { };
 

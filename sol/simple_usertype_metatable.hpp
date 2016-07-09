@@ -66,24 +66,33 @@ namespace sol {
 		}
 
 		template<typename... Args>
-		simple_usertype_metatable(usertype_detail::verified_tag v, lua_State* L, Args&&... args) : simple_usertype_metatable(v, std::make_index_sequence<sizeof...(Args) / 2>(), L, std::forward_as_tuple(std::forward<Args>(args)...)) {}
+		simple_usertype_metatable(lua_State* L, usertype_detail::verified_tag v, Args&&... args) : simple_usertype_metatable(v, std::make_index_sequence<sizeof...(Args) / 2>(), L, std::forward_as_tuple(std::forward<Args>(args)...)) {}
 
 		template<typename... Args>
-		simple_usertype_metatable(usertype_detail::add_destructor_tag, lua_State* L, Args&&... args) : simple_usertype_metatable(usertype_detail::verified, L, std::forward<Args>(args)..., "__gc", default_destructor) {}
+		simple_usertype_metatable(lua_State* L, usertype_detail::add_destructor_tag, Args&&... args) : simple_usertype_metatable(L, usertype_detail::verified, std::forward<Args>(args)..., "__gc", default_destructor) {}
 
 		template<typename... Args>
-		simple_usertype_metatable(usertype_detail::check_destructor_tag, lua_State* L, Args&&... args) : simple_usertype_metatable(meta::condition<meta::all<std::is_destructible<T>, meta::neg<usertype_detail::has_destructor<Args...>>>, usertype_detail::add_destructor_tag, usertype_detail::verified_tag>(), L, std::forward<Args>(args)...) {}
+		simple_usertype_metatable(lua_State* L, usertype_detail::check_destructor_tag, Args&&... args) : simple_usertype_metatable(L, meta::condition<meta::all<std::is_destructible<T>, meta::neg<usertype_detail::has_destructor<Args...>>>, usertype_detail::add_destructor_tag, usertype_detail::verified_tag>(), std::forward<Args>(args)...) {}
 
 	public:
+		simple_usertype_metatable(lua_State* L) : simple_usertype_metatable(meta::condition<meta::all<std::is_default_constructible<T>>, decltype(default_constructor), usertype_detail::check_destructor_tag>(), L) {}
 
-		template<typename... Args>
-		simple_usertype_metatable(lua_State* L, Args&&... args) : simple_usertype_metatable(meta::condition<meta::all<std::is_default_constructible<T>, meta::neg<usertype_detail::has_constructor<Args...>>>, decltype(default_constructor), usertype_detail::check_destructor_tag>(), L, std::forward<Args>(args)...) {}
+		template<typename Arg, typename... Args, meta::disable_any<
+			meta::any_same<meta::unqualified_t<Arg>, 
+				usertype_detail::verified_tag, 
+				usertype_detail::add_destructor_tag,
+				usertype_detail::check_destructor_tag
+			>,
+			meta::is_specialization_of<constructors, meta::unqualified_t<Arg>>,
+			meta::is_specialization_of<constructor_wrapper, meta::unqualified_t<Arg>>
+		> = meta::enabler>
+		simple_usertype_metatable(lua_State* L, Arg&& arg, Args&&... args) : simple_usertype_metatable(L, meta::condition<meta::all<std::is_default_constructible<T>, meta::neg<usertype_detail::has_constructor<Args...>>>, decltype(default_constructor), usertype_detail::check_destructor_tag>(), std::forward<Arg>(arg), std::forward<Args>(args)...) {}
 
 		template<typename... Args, typename... CArgs>
-		simple_usertype_metatable(constructors<CArgs...> constructorlist, lua_State* L, Args&&... args) : simple_usertype_metatable(usertype_detail::check_destructor_tag(), L, std::forward<Args>(args)..., "new", constructorlist) {}
+		simple_usertype_metatable(lua_State* L, constructors<CArgs...> constructorlist, Args&&... args) : simple_usertype_metatable(L, usertype_detail::check_destructor_tag(), std::forward<Args>(args)..., "new", constructorlist) {}
 
 		template<typename... Args, typename... Fxs>
-		simple_usertype_metatable(constructor_wrapper<Fxs...> constructorlist, lua_State* L, Args&&... args) : simple_usertype_metatable(usertype_detail::check_destructor_tag(), L, std::forward<Args>(args)..., "new", constructorlist) {}
+		simple_usertype_metatable(lua_State* L, constructor_wrapper<Fxs...> constructorlist, Args&&... args) : simple_usertype_metatable(L, usertype_detail::check_destructor_tag(), std::forward<Args>(args)..., "new", constructorlist) {}
 
 		virtual int push_um(lua_State* L) override {
 			return stack::push(L, std::move(*this));

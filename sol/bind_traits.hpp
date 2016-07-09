@@ -215,6 +215,7 @@ namespace sol {
 				typedef std::tuple<Arg> args_tuple;
 				typedef R return_type;
 				typedef types<Arg> args_list;
+				typedef types<T, Arg> free_args_list;
 				typedef meta::tuple_types<R> returns_list;
 				typedef R(function_type)(T&, R);
 				typedef R(*function_pointer_type)(T&, R);

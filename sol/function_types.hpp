@@ -44,44 +44,6 @@ namespace sol {
 	}
 
 	namespace stack {
-		template <typename F, typename G>
-		struct pusher<property_wrapper<F, G>, std::enable_if_t<!std::is_void<F>::value && !std::is_void<G>::value>> {
-			static int push(lua_State* L, property_wrapper<F, G> pw) {
-				return stack::push(L, sol::overload(std::move(pw.read), std::move(pw.write)));
-			}
-		};
-
-		template <typename F>
-		struct pusher<property_wrapper<F, void>> {
-			static int push(lua_State* L, property_wrapper<F, void> pw) {			
-				return stack::push(L, std::move(pw.read));
-			}
-		};
-
-		template <typename F>
-		struct pusher<property_wrapper<void, F>> {
-			static int push(lua_State* L, property_wrapper<void, F> pw) {
-				return stack::push(L, std::move(pw.write));
-			}
-		};
-		
-		template <typename T, typename... Lists>
-		struct pusher<detail::constructors_for<T, constructor_list<Lists...>>> {
-			static int push(lua_State* L, detail::constructors_for<T, constructor_list<Lists...>>) {
-				lua_CFunction cf = call_detail::construct<T, Lists...>;
-				return stack::push(L, cf);
-			}
-		};
-
-		template <typename T, typename... Fxs>
-		struct pusher<detail::constructors_for<T, constructor_wrapper<Fxs...>>> {
-			static int push(lua_State* L, constructor_wrapper<Fxs...> c) {
-				lua_CFunction cf = call_detail::call_user<T, false, false>;
-				int closures = stack::push(L, make_user(std::move(c)));
-				return stack::push(L, c_closure(cf, closures));
-			}
-		};
-
 		template<typename... Sigs>
 		struct pusher<function_sig<Sigs...>> {
 			template <typename... Sig, typename Fx, typename... Args>
@@ -275,6 +237,68 @@ namespace sol {
 				typedef function_detail::overloaded_function<Functions...> F;
 				pusher<function_sig<>>{}.set_fx<F>(L, set.set);
 				return 1;
+			}
+		};
+
+		template <typename T>
+		struct pusher<protect_t<T>> {
+			static int push(lua_State* L, protect_t<T>&& pw) {
+				lua_CFunction cf = call_detail::call_user<void, false, false, protect_t<T>>;
+				int closures = stack::push<user<protect_t<T>>>(L, std::move(pw.value));
+				return stack::push(L, c_closure(cf, closures));
+			}
+
+			static int push(lua_State* L, const protect_t<T>& pw) {
+				lua_CFunction cf = call_detail::call_user<void, false, false, protect_t<T>>;
+				int closures = stack::push<user<protect_t<T>>>(L, pw.value);
+				return stack::push(L, c_closure(cf, closures));
+			}
+		};
+
+		template <typename F, typename G>
+		struct pusher<property_wrapper<F, G>, std::enable_if_t<!std::is_void<F>::value && !std::is_void<G>::value>> {
+			static int push(lua_State* L, property_wrapper<F, G>&& pw) {
+				return stack::push(L, sol::overload(std::move(pw.read), std::move(pw.write)));
+			}
+			static int push(lua_State* L, const property_wrapper<F, G>& pw) {
+				return stack::push(L, sol::overload(pw.read, pw.write));
+			}
+		};
+
+		template <typename F>
+		struct pusher<property_wrapper<F, void>> {
+			static int push(lua_State* L, property_wrapper<F, void>&& pw) {
+				return stack::push(L, std::move(pw.read));
+			}
+			static int push(lua_State* L, const property_wrapper<F, void>& pw) {
+				return stack::push(L, pw.read);
+			}
+		};
+
+		template <typename F>
+		struct pusher<property_wrapper<void, F>> {
+			static int push(lua_State* L, property_wrapper<void, F>&& pw) {
+				return stack::push(L, std::move(pw.write));
+			}
+			static int push(lua_State* L, const property_wrapper<void, F>& pw) {
+				return stack::push(L, pw.write);
+			}
+		};
+
+		template <typename T, typename... Lists>
+		struct pusher<detail::constructors_for<T, constructor_list<Lists...>>> {
+			static int push(lua_State* L, detail::constructors_for<T, constructor_list<Lists...>>) {
+				lua_CFunction cf = call_detail::construct<T, Lists...>;
+				return stack::push(L, cf);
+			}
+		};
+
+		template <typename T, typename... Fxs>
+		struct pusher<detail::constructors_for<T, constructor_wrapper<Fxs...>>> {
+			static int push(lua_State* L, constructor_wrapper<Fxs...> c) {
+				lua_CFunction cf = call_detail::call_user<T, false, false, constructor_wrapper<Fxs...>>;
+				int closures = stack::push<user<T>>(L, std::move(c));
+				return stack::push(L, c_closure(cf, closures));
 			}
 		};
 
