@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-07-09 17:39:34.708320 UTC
-// This header was generated with sol v2.9.0 (revision ac5f13c)
+// Generated 2016-07-09 18:21:00.184953 UTC
+// This header was generated with sol v2.9.0 (revision c6b47c8)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -747,8 +747,8 @@ namespace sol {
 #else
 // beginning of Optional\optional.hpp
 
-# ifndef ___SOL2_OPTIONAL_HPP___
-# define ___SOL2_OPTIONAL_HPP___
+# ifndef ___SOL_OPTIONAL_HPP___
+# define ___SOL_OPTIONAL_HPP___
 
 # include <utility>
 # include <type_traits>
@@ -847,8 +847,8 @@ namespace sol{
 # elif defined TR2_OPTIONAL_DISABLE_EMULATION_OF_TYPE_TRAITS
     // leave it: the user doesn't want it
 # else
-    template <typename T>
-    using is_trivially_destructible = std::has_trivial_destructor<T>;
+	template <typename T>
+	using is_trivially_destructible = ::std::has_trivial_destructor<T>;
 # endif
 
 # if (defined TR2_OPTIONAL_GCC_4_7_AND_HIGHER___)
@@ -864,7 +864,7 @@ namespace sol{
 template <class T>
 struct is_nothrow_move_constructible
 {
-  constexpr static bool value = std::is_nothrow_constructible<T, T&&>::value;
+  constexpr static bool value = ::std::is_nothrow_constructible<T, T&&>::value;
 };
 
 template <class T, class U>
@@ -873,7 +873,7 @@ struct is_assignable
   template <class X, class Y>
   constexpr static bool has_assign(...) { return false; }
 
-  template <class X, class Y, size_t S = sizeof((std::declval<X>() = std::declval<Y>(), true)) >
+  template <class X, class Y, size_t S = sizeof((::std::declval<X>() = ::std::declval<Y>(), true)) >
   // the comma operator is necessary for the cases where operator= returns void
   constexpr static bool has_assign(bool) { return true; }
 
@@ -890,7 +890,7 @@ struct is_nothrow_move_assignable
 
   template <class X>
   struct has_nothrow_move_assign<X, true> {
-    constexpr static bool value = noexcept( std::declval<X&>() = std::declval<X&&>() );
+    constexpr static bool value = noexcept( ::std::declval<X&>() = ::std::declval<X&&>() );
   };
 
   constexpr static bool value = has_nothrow_move_assign<T, is_assignable<T&, T&&>::value>::value;
@@ -948,11 +948,11 @@ constexpr T* static_addressof(T& ref)
 template <typename T, TR2_OPTIONAL_REQUIRES(has_overloaded_addressof<T>)>
 T* static_addressof(T& ref)
 {
-  return std::addressof(ref);
+  return ::std::addressof(ref);
 }
 
 template <class U>
-U convert(U v) { return v; }
+constexpr U convert(U v) { return v; }
   
 } // namespace detail
 
@@ -969,8 +969,8 @@ constexpr nullopt_t nullopt{nullopt_t::init()};
 
 class bad_optional_access : public ::std::logic_error {
 public:
-  explicit bad_optional_access(const ::std::string& what_arg) : logic_error{what_arg} {}
-  explicit bad_optional_access(const char* what_arg) : logic_error{what_arg} {}
+  explicit bad_optional_access(const ::std::string& what_arg) : ::std::logic_error{what_arg} {}
+  explicit bad_optional_access(const char* what_arg) : ::std::logic_error{what_arg} {}
 };
 
 template <class T>
@@ -1016,9 +1016,9 @@ struct optional_base
     template <class... Args> explicit optional_base(in_place_t, Args&&... args)
         : init_(true), storage_(constexpr_forward<Args>(args)...) {}
 
-    template <class U, class... Args, TR2_OPTIONAL_REQUIRES(::std::is_constructible<T, std::initializer_list<U>>)>
-    explicit optional_base(in_place_t, std::initializer_list<U> il, Args&&... args)
-        : init_(true), storage_(il, std::forward<Args>(args)...) {}
+    template <class U, class... Args, TR2_OPTIONAL_REQUIRES(::std::is_constructible<T, ::std::initializer_list<U>>)>
+    explicit optional_base(in_place_t, ::std::initializer_list<U> il, Args&&... args)
+        : init_(true), storage_(il, ::std::forward<Args>(args)...) {}
 
     ~optional_base() { if (init_) storage_.value_.T::~T(); }
 };
@@ -1038,38 +1038,38 @@ struct constexpr_optional_base
     template <class... Args> explicit constexpr constexpr_optional_base(in_place_t, Args&&... args)
       : init_(true), storage_(constexpr_forward<Args>(args)...) {}
 
-    template <class U, class... Args, TR2_OPTIONAL_REQUIRES(::std::is_constructible<T, std::initializer_list<U>>)>
-    OPTIONAL_CONSTEXPR_INIT_LIST explicit constexpr_optional_base(in_place_t, std::initializer_list<U> il, Args&&... args)
-      : init_(true), storage_(il, std::forward<Args>(args)...) {}
+    template <class U, class... Args, TR2_OPTIONAL_REQUIRES(::std::is_constructible<T, ::std::initializer_list<U>>)>
+    OPTIONAL_CONSTEXPR_INIT_LIST explicit constexpr_optional_base(in_place_t, ::std::initializer_list<U> il, Args&&... args)
+      : init_(true), storage_(il, ::std::forward<Args>(args)...) {}
 
     ~constexpr_optional_base() = default;
 };
 
 template <class T>
-using OptionalBase = typename std::conditional<
-    ::std::is_trivially_destructible<T>::value,
-    constexpr_optional_base<T>,
-    optional_base<T>
+using OptionalBase = typename ::std::conditional<
+	::std::is_trivially_destructible<T>::value,
+    constexpr_optional_base<typename ::std::remove_const<T>::type>,
+    optional_base<typename ::std::remove_const<T>::type>
 >::type;
 
 template <class T>
 class optional : private OptionalBase<T>
 {
-  static_assert( !std::is_same<typename std::decay<T>::type, nullopt_t>::value, "bad T" );
-  static_assert( !std::is_same<typename std::decay<T>::type, in_place_t>::value, "bad T" );
+  static_assert( !::std::is_same<typename ::std::decay<T>::type, nullopt_t>::value, "bad T" );
+  static_assert( !::std::is_same<typename ::std::decay<T>::type, in_place_t>::value, "bad T" );
   
   constexpr bool initialized() const noexcept { return OptionalBase<T>::init_; }
-  T* dataptr() {  return std::addressof(OptionalBase<T>::storage_.value_); }
+  typename ::std::remove_const<T>::type* dataptr() {  return ::std::addressof(OptionalBase<T>::storage_.value_); }
   constexpr const T* dataptr() const { return detail_::static_addressof(OptionalBase<T>::storage_.value_); }
   
 # if OPTIONAL_HAS_THIS_RVALUE_REFS == 1
   constexpr const T& contained_val() const& { return OptionalBase<T>::storage_.value_; }
 #   if OPTIONAL_HAS_MOVE_ACCESSORS == 1
-  OPTIONAL_MUTABLE_CONSTEXPR T&& contained_val() && { return std::move(OptionalBase<T>::storage_.value_); }
+  OPTIONAL_MUTABLE_CONSTEXPR T&& contained_val() && { return ::std::move(OptionalBase<T>::storage_.value_); }
   OPTIONAL_MUTABLE_CONSTEXPR T& contained_val() & { return OptionalBase<T>::storage_.value_; }
 #   else
   T& contained_val() & { return OptionalBase<T>::storage_.value_; }
-  T&& contained_val() && { return std::move(OptionalBase<T>::storage_.value_); }
+  T&& contained_val() && { return ::std::move(OptionalBase<T>::storage_.value_); }
 #   endif
 # else
   constexpr const T& contained_val() const { return OptionalBase<T>::storage_.value_; }
@@ -1104,13 +1104,6 @@ public:
   constexpr optional() noexcept : OptionalBase<T>()  {};
   constexpr optional(nullopt_t) noexcept : OptionalBase<T>() {};
 
-  optional(const optional<T&>& rhs) : optional() {
-    if (rhs) {
-      ::new (static_cast<void*>(dataptr())) T(*rhs);
-      OptionalBase<T>::init_ = true;
-    }
-  }
-
   optional(const optional& rhs)
   : OptionalBase<T>()
   {
@@ -1120,11 +1113,19 @@ public:
     }
   }
 
+  optional(const optional<T&>& rhs) : optional() 
+  {
+    if (rhs) {
+      ::new (static_cast<void*>(dataptr())) T(*rhs);
+      OptionalBase<T>::init_ = true;
+    }
+  }
+
   optional(optional&& rhs) noexcept(::std::is_nothrow_move_constructible<T>::value)
   : OptionalBase<T>()
   {
     if (rhs.initialized()) {
-        ::new (static_cast<void*>(dataptr())) T(std::move(*rhs));
+        ::new (static_cast<void*>(dataptr())) T(::std::move(*rhs));
         OptionalBase<T>::init_ = true;
     }
   }
@@ -1137,8 +1138,8 @@ public:
   explicit constexpr optional(in_place_t, Args&&... args)
   : OptionalBase<T>(in_place_t{}, constexpr_forward<Args>(args)...) {}
 
-  template <class U, class... Args, TR2_OPTIONAL_REQUIRES(::std::is_constructible<T, std::initializer_list<U>>)>
-  OPTIONAL_CONSTEXPR_INIT_LIST explicit optional(in_place_t, std::initializer_list<U> il, Args&&... args)
+  template <class U, class... Args, TR2_OPTIONAL_REQUIRES(::std::is_constructible<T, ::std::initializer_list<U>>)>
+  OPTIONAL_CONSTEXPR_INIT_LIST explicit optional(in_place_t, ::std::initializer_list<U> il, Args&&... args)
   : OptionalBase<T>(in_place_t{}, il, constexpr_forward<Args>(args)...) {}
 
   // 20.5.4.2, Destructor
@@ -1163,8 +1164,8 @@ public:
   noexcept(::std::is_nothrow_move_assignable<T>::value && ::std::is_nothrow_move_constructible<T>::value)
   {
     if      (initialized() == true  && rhs.initialized() == false) clear();
-    else if (initialized() == false && rhs.initialized() == true)  initialize(std::move(*rhs));
-    else if (initialized() == true  && rhs.initialized() == true)  contained_val() = std::move(*rhs);
+    else if (initialized() == false && rhs.initialized() == true)  initialize(::std::move(*rhs));
+    else if (initialized() == true  && rhs.initialized() == true)  contained_val() = ::std::move(*rhs);
     return *this;
   }
 
@@ -1172,7 +1173,7 @@ public:
   auto operator=(U&& v)
   -> typename ::std::enable_if
   <
-    ::std::is_same<typename ::std::decay<U>::type, T>::value,
+	  ::std::is_same<typename ::std::decay<U>::type, T>::value,
     optional&
   >::type
   {
@@ -1192,11 +1193,11 @@ public:
   void emplace(::std::initializer_list<U> il, Args&&... args)
   {
     clear();
-    initialize<U, Args...>(il, std::forward<Args>(args)...);
+    initialize<U, Args...>(il, ::std::forward<Args>(args)...);
   }
   
   // 20.5.4.4, Swap
-  void swap(optional<T>& rhs) noexcept(::std::is_nothrow_move_constructible<T>::value && noexcept(::std::swap(::std::declval<T&>(), ::std::declval<T&>())))
+  void swap(optional<T>& rhs) noexcept(::std::is_nothrow_move_constructible<T>::value && noexcept(swap(declval<T&>(), declval<T&>())))
   {
     if      (initialized() == true  && rhs.initialized() == false) { rhs.initialize(::std::move(**this)); clear(); }
     else if (initialized() == false && rhs.initialized() == true)  { initialize(::std::move(*rhs)); rhs.clear(); }
@@ -1242,7 +1243,7 @@ public:
   
   OPTIONAL_MUTABLE_CONSTEXPR T&& value() && {
     if (!initialized()) throw bad_optional_access("bad optional access");
-    return ::std::move(contained_val());
+	return ::std::move(contained_val());
   }
   
 # else
@@ -1312,12 +1313,11 @@ public:
 template <class T>
 class optional<T&>
 {
-  static_assert( !std::is_same<T, nullopt_t>::value, "bad T" );
-  static_assert( !std::is_same<T, in_place_t>::value, "bad T" );
+  static_assert( !::std::is_same<T, nullopt_t>::value, "bad T" );
+  static_assert( !::std::is_same<T, in_place_t>::value, "bad T" );
   T* ref;
   
 public:
-  typedef T& value_type;
 
   // 20.5.5.1, construction/destruction
   constexpr optional() noexcept : ref(nullptr) {}
@@ -1356,7 +1356,7 @@ public:
   auto operator=(U&& rhs) noexcept
   -> typename ::std::enable_if
   <
-    ::std::is_same<typename ::std::decay<U>::type, optional<T&>>::value,
+	  ::std::is_same<typename ::std::decay<U>::type, optional<T&>>::value,
     optional&
   >::type
   {
@@ -1404,7 +1404,7 @@ public:
   template <class V>
   constexpr typename ::std::decay<T>::type value_or(V&& v) const
   {
-    return *this ? **this : detail_::convert<typename ::std::decay<T>::type>(constexpr_forward<V>(v));
+    return *this ? **this : detail_::convert<typename decay<T>::type>(constexpr_forward<V>(v));
   }
 };
 
@@ -1702,7 +1702,7 @@ constexpr optional<X&> make_optional(::std::reference_wrapper<X> v)
   return optional<X&>(v.get());
 }
 
-} // namespace sol
+} // namespace 
 
 namespace std
 {
@@ -1713,7 +1713,7 @@ namespace std
     typedef sol::optional<T> argument_type;
     
     constexpr result_type operator()(argument_type const& arg) const {
-      return arg ? std::hash<T>{}(*arg) : result_type{};
+      return arg ? ::std::hash<T>{}(*arg) : result_type{};
     }
   };
   
@@ -1724,7 +1724,7 @@ namespace std
     typedef sol::optional<T&> argument_type;
     
     constexpr result_type operator()(argument_type const& arg) const {
-      return arg ? std::hash<T>{}(*arg) : result_type{};
+      return arg ? ::std::hash<T>{}(*arg) : result_type{};
     }
   };
 }
@@ -1732,7 +1732,7 @@ namespace std
 # undef TR2_OPTIONAL_REQUIRES
 # undef TR2_OPTIONAL_ASSERTED_EXPRESSION
 
-# endif //___SOL2_OPTIONAL_HPP___
+# endif //___SOL_OPTIONAL_HPP___
 // end of Optional\optional.hpp
 
 #endif // C++ 14
