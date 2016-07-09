@@ -21,6 +21,8 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    stack_reference
    make_reference
    overload
+   protect
+   readonly
    property
    proxy
    resolve

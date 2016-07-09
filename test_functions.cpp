@@ -528,20 +528,28 @@ I = i(o1)
 J0 = j()
 j(24)
 J1 = j()
+    )");
 
+	lua.script(R"(
 K0 = k(o2)
 k(o2, 1024)
 K1 = k(o2)
+    )");
 
+	lua.script(R"(
 L0 = l(o1)
 l(o1, 678)
 L1 = l(o1)
+    )");
 
 
+	lua.script(R"(
 M0 = m()
 m(256)
 M1 = m()
+    )");
 
+	lua.script(R"(
 N = n(1, 2, 3)
     )");
 	int ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1, N;
