@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-07-09 18:21:00.184953 UTC
-// This header was generated with sol v2.9.0 (revision c6b47c8)
+// Generated 2016-07-09 19:20:29.179096 UTC
+// This header was generated with sol v2.9.0 (revision 4634ec4)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1197,7 +1197,7 @@ public:
   }
   
   // 20.5.4.4, Swap
-  void swap(optional<T>& rhs) noexcept(::std::is_nothrow_move_constructible<T>::value && noexcept(swap(declval<T&>(), declval<T&>())))
+  void swap(optional<T>& rhs) noexcept(::std::is_nothrow_move_constructible<T>::value && noexcept(swap(::std::declval<T&>(), ::std::declval<T&>())))
   {
     if      (initialized() == true  && rhs.initialized() == false) { rhs.initialize(::std::move(**this)); clear(); }
     else if (initialized() == false && rhs.initialized() == true)  { initialize(::std::move(*rhs)); rhs.clear(); }
@@ -1404,7 +1404,7 @@ public:
   template <class V>
   constexpr typename ::std::decay<T>::type value_or(V&& v) const
   {
-    return *this ? **this : detail_::convert<typename decay<T>::type>(constexpr_forward<V>(v));
+    return *this ? **this : detail_::convert<typename ::std::decay<T>::type>(constexpr_forward<V>(v));
   }
 };
 
