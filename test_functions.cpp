@@ -830,7 +830,9 @@ TEST_CASE("functions/required_and_variadic_args", "Check if a certain number of 
 	);
 	REQUIRE_NOTHROW(lua.script("v(20, 25, 30)"));
 	REQUIRE_NOTHROW(lua.script("v(20, 25)"));
+#ifndef SOL_LUAJIT
 	REQUIRE_THROWS(lua.script("v(20)"));
+#endif // LuaJIT has problems with exceptions, as fucking usual
 }
 
 TEST_CASE("functions/overloading", "Check if overloading works properly for regular set function syntax") {
