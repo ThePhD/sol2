@@ -66,7 +66,7 @@ namespace sol {
 		}
 
 		template <typename T, typename List>
-		struct constructors_for {
+		struct tagged {
 			List l;
 		};
 	} // detail

@@ -286,17 +286,34 @@ namespace sol {
 		};
 
 		template <typename T, typename... Lists>
-		struct pusher<detail::constructors_for<T, constructor_list<Lists...>>> {
-			static int push(lua_State* L, detail::constructors_for<T, constructor_list<Lists...>>) {
+		struct pusher<detail::tagged<T, constructor_list<Lists...>>> {
+			static int push(lua_State* L, detail::tagged<T, constructor_list<Lists...>>) {
 				lua_CFunction cf = call_detail::construct<T, Lists...>;
 				return stack::push(L, cf);
 			}
 		};
 
 		template <typename T, typename... Fxs>
-		struct pusher<detail::constructors_for<T, constructor_wrapper<Fxs...>>> {
+		struct pusher<detail::tagged<T, constructor_wrapper<Fxs...>>> {
 			static int push(lua_State* L, constructor_wrapper<Fxs...> c) {
 				lua_CFunction cf = call_detail::call_user<T, false, false, constructor_wrapper<Fxs...>>;
+				int closures = stack::push<user<T>>(L, std::move(c));
+				return stack::push(L, c_closure(cf, closures));
+			}
+		};
+
+		template <typename T>
+		struct pusher<detail::tagged<T, destructor_wrapper<void>>> {
+			static int push(lua_State* L, detail::tagged<T, destructor_wrapper<void>>) {
+				lua_CFunction cf = call_detail::destruct<T>;
+				return stack::push(L, cf);
+			}
+		};
+
+		template <typename T, typename Fx>
+		struct pusher<detail::tagged<T, destructor_wrapper<Fx>>> {
+			static int push(lua_State* L, destructor_wrapper<Fx> c) {
+				lua_CFunction cf = call_detail::call_user<T, false, false, destructor_wrapper<Fx>>;
 				int closures = stack::push<user<T>>(L, std::move(c));
 				return stack::push(L, c_closure(cf, closures));
 			}

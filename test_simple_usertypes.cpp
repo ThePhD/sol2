@@ -4,9 +4,11 @@
 #include <catch.hpp>
 
 #include <iostream>
+#include <list>
+#include <memory>
 #include <mutex>
 
-TEST_CASE("usertypes/simple_usertypes", "Ensure that simple usertypes properly work here") {
+TEST_CASE("usertypes/simple-usertypes", "Ensure that simple usertypes properly work here") {
 	struct marker {
 		bool value = false;
 	};
@@ -170,3 +172,40 @@ TEST_CASE("usertypes/simple-usertypes-constructors", "Ensure that calls with spe
 	REQUIRE(z == 29);
 }
 
+TEST_CASE("usertype/simple-shared-ptr-regression", "simple usertype metatables should not screw over unique usertype metatables") {
+	static int created = 0;
+	static int destroyed = 0;
+	struct test {
+		test() {
+			++created;
+		}
+
+		~test() {
+			++destroyed;
+		}
+	};
+	{
+		std::list<std::shared_ptr<test>> tests;
+		sol::state lua;
+		lua.open_libraries();
+
+		lua.new_simple_usertype<test>("test",
+			"create", [&]() -> std::shared_ptr<test> {
+			tests.push_back(std::make_shared<test>());
+			return tests.back();
+		}
+		);
+		REQUIRE(created == 0);
+		REQUIRE(destroyed == 0);
+		lua.script("x = test.create()");
+		REQUIRE(created == 1);
+		REQUIRE(destroyed == 0);
+		REQUIRE_FALSE(tests.empty());
+		std::shared_ptr<test>& x = lua["x"];
+		std::size_t xuse = x.use_count();
+		std::size_t tuse = tests.back().use_count();
+		REQUIRE(xuse == tuse);
+	}
+	REQUIRE(created == 1);
+	REQUIRE(destroyed == 1);
+}

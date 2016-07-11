@@ -36,19 +36,24 @@ namespace sol {
 		std::vector<std::pair<object, object>> registrations;
 		object callconstructfunc;
 		
-		template <typename N, typename F>
+		template <typename N, typename F, meta::enable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
+		void add(lua_State* L, N&& n, F&& f) {
+			registrations.emplace_back(make_object(L, std::forward<N>(n)), make_object(L, function_args(std::forward<F>(f))));
+		}
+
+		template <typename N, typename F, meta::disable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
 		void add(lua_State* L, N&& n, F&& f) {
 			registrations.emplace_back(make_object(L, std::forward<N>(n)), make_object(L, std::forward<F>(f)));
 		}
 
 		template <typename N, typename... Fxs>
 		void add(lua_State* L, N&& n, constructor_wrapper<Fxs...> c) {
-			registrations.emplace_back(make_object(L, std::forward<N>(n)), make_object(L, detail::constructors_for<T, constructor_wrapper<Fxs...>>{std::move(c)}));
+			registrations.emplace_back(make_object(L, std::forward<N>(n)), make_object(L, detail::tagged<T, constructor_wrapper<Fxs...>>{std::move(c)}));
 		}
 
 		template <typename N, typename... Lists>
 		void add(lua_State* L, N&& n, constructor_list<Lists...> c) {
-			registrations.emplace_back(make_object(L, std::forward<N>(n)), make_object(L, detail::constructors_for<T, constructor_list<Lists...>>{std::move(c)}));
+			registrations.emplace_back(make_object(L, std::forward<N>(n)), make_object(L, detail::tagged<T, constructor_list<Lists...>>{std::move(c)}));
 		}
 
 		template <typename F>
@@ -123,6 +128,22 @@ namespace sol {
 					luaL_newmetatable(L, metakey);
 					stack_reference t(L, -1);
 					for (auto& kvp : umx.registrations) {
+						switch (i) {
+						case 0:
+							if (kvp.first.template is<std::string>() && kvp.first.template as<std::string>() == "__gc") {
+								continue;
+							}
+							break;
+						case 1:
+							if (kvp.first.template is<std::string>() && kvp.first.template as<std::string>() == "__gc") {
+								stack::set_field(L, kvp.first, detail::unique_destruct<T>, t.stack_index());
+								continue;
+							}
+							break;
+						case 2:
+						default:
+							break;
+						}
 						stack::set_field(L, kvp.first, kvp.second, t.stack_index());
 					}
 

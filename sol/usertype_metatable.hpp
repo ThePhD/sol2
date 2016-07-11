@@ -349,10 +349,12 @@ namespace sol {
 				(void)detail::swallow{ 0, (um.template make_regs<(I * 2)>(value_table, lastreg, std::get<(I * 2)>(um.functions), std::get<(I * 2 + 1)>(um.functions)), 0)... };
 				um.finish_regs(value_table, lastreg);
 				value_table[lastreg] = { nullptr, nullptr };
+				bool hasdestructor = !value_table.empty() && name_of(meta_function::garbage_collect) == value_table[lastreg - 1].name;
 				regs_t ref_table = value_table;
-				bool hasdestructor = lastreg > 0 && name_of(meta_function::garbage_collect) == ref_table[lastreg - 1].name;
+				regs_t unique_table = value_table;
 				if (hasdestructor) {
 					ref_table[lastreg - 1] = { nullptr, nullptr };
+					unique_table[lastreg - 1] = { value_table[lastreg - 1].name, detail::unique_destruct<T> };
 				}
 				
 				// Now use um
@@ -360,27 +362,26 @@ namespace sol {
 				for (std::size_t i = 0; i < 3; ++i) {
 					// Pointer types, AKA "references" from C++
 					const char* metakey = nullptr;
+					luaL_Reg* metaregs = nullptr;
 					switch (i) {
 					case 0:
 						metakey = &usertype_traits<T*>::metatable[0];
+						metaregs = ref_table.data();
 						break;
 					case 1:
 						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable[0];
+						metaregs = unique_table.data();
 						break;
 					case 2:
 					default:
 						metakey = &usertype_traits<T>::metatable[0];
+						metaregs = value_table.data();
 						break;
 					}
 					luaL_newmetatable(L, metakey);
 					stack_reference t(L, -1);
 					stack::push(L, make_light(um));
-					if (i < 2) {
-						luaL_setfuncs(L, ref_table.data(), 1);
-					}
-					else {
-						luaL_setfuncs(L, value_table.data(), 1);
-					}
+					luaL_setfuncs(L, metaregs, 1);
 					
 					if (um.baseclasscheck != nullptr) {
 						stack::set_field(L, detail::base_class_check_key(), um.baseclasscheck, t.stack_index());

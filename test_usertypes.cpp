@@ -4,6 +4,8 @@
 #include <catch.hpp>
 
 #include <iostream>
+#include <list>
+#include <memory>
 #include <mutex>
 
 struct vars {
@@ -1084,4 +1086,42 @@ value = pcall(pm.gen,pm)
 	);
 	bool value = lua["value"];
 	REQUIRE_FALSE(value);
+}
+
+TEST_CASE("usertype/shared-ptr-regression", "usertype metatables should not screw over unique usertype metatables") {
+	static int created = 0;
+	static int destroyed = 0;
+	struct test {
+		test() {
+			++created;
+		}
+
+		~test() {
+			++destroyed;
+		}
+	};
+	{
+		std::list<std::shared_ptr<test>> tests;
+		sol::state lua;
+		lua.open_libraries();
+
+		lua.new_usertype<test>("test",
+			"create", [&]() -> std::shared_ptr<test> {
+			tests.push_back(std::make_shared<test>());
+			return tests.back();
+		}
+		);
+		REQUIRE(created == 0);
+		REQUIRE(destroyed == 0);
+		lua.script("x = test.create()");
+		REQUIRE(created == 1);
+		REQUIRE(destroyed == 0);
+		REQUIRE_FALSE(tests.empty());
+		std::shared_ptr<test>& x = lua["x"];
+		std::size_t xuse = x.use_count();
+		std::size_t tuse = tests.back().use_count();
+		REQUIRE(xuse == tuse);
+	}
+	REQUIRE(created == 1);
+	REQUIRE(destroyed == 1);
 }
