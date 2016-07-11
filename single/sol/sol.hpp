@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-07-09 19:20:29.179096 UTC
-// This header was generated with sol v2.9.0 (revision 4634ec4)
+// Generated 2016-07-11 17:03:17.659207 UTC
+// This header was generated with sol v2.9.0 (revision 6b85ed2)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5175,7 +5175,7 @@ namespace sol {
 		}
 
 		template <typename T, typename List>
-		struct constructors_for {
+		struct tagged {
 			List l;
 		};
 	} // detail
@@ -7787,17 +7787,34 @@ namespace sol {
 		};
 
 		template <typename T, typename... Lists>
-		struct pusher<detail::constructors_for<T, constructor_list<Lists...>>> {
-			static int push(lua_State* L, detail::constructors_for<T, constructor_list<Lists...>>) {
+		struct pusher<detail::tagged<T, constructor_list<Lists...>>> {
+			static int push(lua_State* L, detail::tagged<T, constructor_list<Lists...>>) {
 				lua_CFunction cf = call_detail::construct<T, Lists...>;
 				return stack::push(L, cf);
 			}
 		};
 
 		template <typename T, typename... Fxs>
-		struct pusher<detail::constructors_for<T, constructor_wrapper<Fxs...>>> {
+		struct pusher<detail::tagged<T, constructor_wrapper<Fxs...>>> {
 			static int push(lua_State* L, constructor_wrapper<Fxs...> c) {
 				lua_CFunction cf = call_detail::call_user<T, false, false, constructor_wrapper<Fxs...>>;
+				int closures = stack::push<user<T>>(L, std::move(c));
+				return stack::push(L, c_closure(cf, closures));
+			}
+		};
+
+		template <typename T>
+		struct pusher<detail::tagged<T, destructor_wrapper<void>>> {
+			static int push(lua_State* L, detail::tagged<T, destructor_wrapper<void>>) {
+				lua_CFunction cf = call_detail::destruct<T>;
+				return stack::push(L, cf);
+			}
+		};
+
+		template <typename T, typename Fx>
+		struct pusher<detail::tagged<T, destructor_wrapper<Fx>>> {
+			static int push(lua_State* L, destructor_wrapper<Fx> c) {
+				lua_CFunction cf = call_detail::call_user<T, false, false, destructor_wrapper<Fx>>;
 				int closures = stack::push<user<T>>(L, std::move(c));
 				return stack::push(L, c_closure(cf, closures));
 			}
@@ -9033,10 +9050,12 @@ namespace sol {
 				(void)detail::swallow{ 0, (um.template make_regs<(I * 2)>(value_table, lastreg, std::get<(I * 2)>(um.functions), std::get<(I * 2 + 1)>(um.functions)), 0)... };
 				um.finish_regs(value_table, lastreg);
 				value_table[lastreg] = { nullptr, nullptr };
+				bool hasdestructor = !value_table.empty() && name_of(meta_function::garbage_collect) == value_table[lastreg - 1].name;
 				regs_t ref_table = value_table;
-				bool hasdestructor = lastreg > 0 && name_of(meta_function::garbage_collect) == ref_table[lastreg - 1].name;
+				regs_t unique_table = value_table;
 				if (hasdestructor) {
 					ref_table[lastreg - 1] = { nullptr, nullptr };
+					unique_table[lastreg - 1] = { value_table[lastreg - 1].name, detail::unique_destruct<T> };
 				}
 				
 				// Now use um
@@ -9044,27 +9063,26 @@ namespace sol {
 				for (std::size_t i = 0; i < 3; ++i) {
 					// Pointer types, AKA "references" from C++
 					const char* metakey = nullptr;
+					luaL_Reg* metaregs = nullptr;
 					switch (i) {
 					case 0:
 						metakey = &usertype_traits<T*>::metatable[0];
+						metaregs = ref_table.data();
 						break;
 					case 1:
 						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable[0];
+						metaregs = unique_table.data();
 						break;
 					case 2:
 					default:
 						metakey = &usertype_traits<T>::metatable[0];
+						metaregs = value_table.data();
 						break;
 					}
 					luaL_newmetatable(L, metakey);
 					stack_reference t(L, -1);
 					stack::push(L, make_light(um));
-					if (i < 2) {
-						luaL_setfuncs(L, ref_table.data(), 1);
-					}
-					else {
-						luaL_setfuncs(L, value_table.data(), 1);
-					}
+					luaL_setfuncs(L, metaregs, 1);
 					
 					if (um.baseclasscheck != nullptr) {
 						stack::set_field(L, detail::base_class_check_key(), um.baseclasscheck, t.stack_index());
@@ -9122,19 +9140,24 @@ namespace sol {
 		std::vector<std::pair<object, object>> registrations;
 		object callconstructfunc;
 		
-		template <typename N, typename F>
+		template <typename N, typename F, meta::enable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
+		void add(lua_State* L, N&& n, F&& f) {
+			registrations.emplace_back(make_object(L, std::forward<N>(n)), make_object(L, function_args(std::forward<F>(f))));
+		}
+
+		template <typename N, typename F, meta::disable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
 		void add(lua_State* L, N&& n, F&& f) {
 			registrations.emplace_back(make_object(L, std::forward<N>(n)), make_object(L, std::forward<F>(f)));
 		}
 
 		template <typename N, typename... Fxs>
 		void add(lua_State* L, N&& n, constructor_wrapper<Fxs...> c) {
-			registrations.emplace_back(make_object(L, std::forward<N>(n)), make_object(L, detail::constructors_for<T, constructor_wrapper<Fxs...>>{std::move(c)}));
+			registrations.emplace_back(make_object(L, std::forward<N>(n)), make_object(L, detail::tagged<T, constructor_wrapper<Fxs...>>{std::move(c)}));
 		}
 
 		template <typename N, typename... Lists>
 		void add(lua_State* L, N&& n, constructor_list<Lists...> c) {
-			registrations.emplace_back(make_object(L, std::forward<N>(n)), make_object(L, detail::constructors_for<T, constructor_list<Lists...>>{std::move(c)}));
+			registrations.emplace_back(make_object(L, std::forward<N>(n)), make_object(L, detail::tagged<T, constructor_list<Lists...>>{std::move(c)}));
 		}
 
 		template <typename F>
@@ -9209,6 +9232,22 @@ namespace sol {
 					luaL_newmetatable(L, metakey);
 					stack_reference t(L, -1);
 					for (auto& kvp : umx.registrations) {
+						switch (i) {
+						case 0:
+							if (kvp.first.template is<std::string>() && kvp.first.template as<std::string>() == "__gc") {
+								continue;
+							}
+							break;
+						case 1:
+							if (kvp.first.template is<std::string>() && kvp.first.template as<std::string>() == "__gc") {
+								stack::set_field(L, kvp.first, detail::unique_destruct<T>, t.stack_index());
+								continue;
+							}
+							break;
+						case 2:
+						default:
+							break;
+						}
 						stack::set_field(L, kvp.first, kvp.second, t.stack_index());
 					}
 
