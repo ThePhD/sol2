@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-07-11 17:03:17.659207 UTC
-// This header was generated with sol v2.9.0 (revision 6b85ed2)
+// Generated 2016-07-13 00:54:48.588032 UTC
+// This header was generated with sol v2.9.1 (revision 045d96e)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4151,7 +4151,7 @@ namespace sol {
 		static const std::string name;
 		static const std::string qualified_name;
 		static const std::string metatable;
-		static const std::string variable_metatable;
+		static const std::string user_gc_metatable;
 		static const std::string gc_table;
 	};
 
@@ -4165,7 +4165,7 @@ namespace sol {
 	const std::string usertype_traits<T>::metatable = std::string("sol.").append(detail::demangle<T>());
 
 	template<typename T>
-	const std::string usertype_traits<T>::variable_metatable = std::string("sol.").append(detail::demangle<T>()).append(".variables");
+	const std::string usertype_traits<T>::user_gc_metatable = std::string("sol.").append(detail::demangle<T>()).append(".user\xE2\x99\xBB");
 
 	template<typename T>
 	const std::string usertype_traits<T>::gc_table = std::string("sol.").append(detail::demangle<T>().append(".\xE2\x99\xBB"));
@@ -5486,7 +5486,7 @@ namespace sol {
 				std::allocator<T> alloc;
 				alloc.construct(data, std::forward<Args>(args)...);
 				if (with_meta) {
-					const auto& name = "\x73\x6F\x6C\x2E\xC6\x92\x2E\xE2\x99\xB2\x2E\xF0\x9F\x97\x91\x2E\x28\x2F\xC2\xAF\xE2\x97\xA1\x20\xE2\x80\xBF\x20\xE2\x97\xA1\x29\x2F\xC2\xAF\x20\x7E\x20\xE2\x94\xBB\xE2\x94\x81\xE2\x94\xBB\x20\x28\xEF\xBE\x89\xE2\x97\x95\xE3\x83\xAE\xE2\x97\x95\x29\xEF\xBE\x89\x2A\x3A\xEF\xBD\xA5\xEF\xBE\x9F\xE2\x9C\xA7";
+					const auto name = &usertype_traits<T>::user_gc_metatable[0];
 					lua_CFunction cdel = stack_detail::alloc_destroy<T>;
 					// Make sure we have a plain GC set for this data
 					if (luaL_newmetatable(L, name) != 0) {
@@ -5499,9 +5499,14 @@ namespace sol {
 				return 1;
 			}
 
+			template <typename Arg, typename... Args, meta::disable<std::is_same<no_metatable_t, meta::unqualified_t<Arg>>> = meta::enabler>
+			static int push(lua_State* L, Arg&& arg, Args&&... args) {
+				return push_with(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
+			}
+
 			template <typename... Args>
-			static int push(lua_State* L, Args&&... args) {
-				return push_with(L, std::forward<Args>(args)...);
+			static int push(lua_State* L, no_metatable_t, Args&&... args) {
+				return push_with<false>(L, std::forward<Args>(args)...);
 			}
 
 			static int push(lua_State* L, const user<T>& u) {
@@ -9037,7 +9042,11 @@ namespace sol {
 
 				// Create the top level thing that will act as our deleter later on
 				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
-				stack::set_field<true>(L, gcmetakey, make_user(std::move(umx)));
+				stack::push<user<umt_t>>(L, std::move(umx));
+				stack_reference umt(L, -1);
+				stack::set_field<true>(L, gcmetakey, umt);
+				umt.pop();
+
 				stack::get_field<true>(L, gcmetakey);
 				return stack::pop<light<umt_t>>(L);
 			}

@@ -1125,3 +1125,17 @@ TEST_CASE("usertype/shared-ptr-regression", "usertype metatables should not scre
 	REQUIRE(created == 1);
 	REQUIRE(destroyed == 1);
 }
+
+TEST_CASE("usertype/double-deleter-guards", "usertype metatables internally must not rely on internal ") {
+	struct c_a { int x; };
+	struct c_b { int y; };
+	REQUIRE_NOTHROW( {
+		sol::state lua;
+		lua.new_usertype<c_a>("c_a", "x", &c_a::x);
+		lua.new_usertype<c_b>("c_b", "y", &c_b::y);
+		lua = sol::state();
+		lua.new_usertype<c_a>("c_a", "x", &c_a::x);
+		lua.new_usertype<c_b>("c_b", "y", &c_b::y);
+		lua = sol::state();
+	});
+}

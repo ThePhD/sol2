@@ -287,7 +287,7 @@ namespace sol {
 				std::allocator<T> alloc;
 				alloc.construct(data, std::forward<Args>(args)...);
 				if (with_meta) {
-					const auto& name = "\x73\x6F\x6C\x2E\xC6\x92\x2E\xE2\x99\xB2\x2E\xF0\x9F\x97\x91\x2E\x28\x2F\xC2\xAF\xE2\x97\xA1\x20\xE2\x80\xBF\x20\xE2\x97\xA1\x29\x2F\xC2\xAF\x20\x7E\x20\xE2\x94\xBB\xE2\x94\x81\xE2\x94\xBB\x20\x28\xEF\xBE\x89\xE2\x97\x95\xE3\x83\xAE\xE2\x97\x95\x29\xEF\xBE\x89\x2A\x3A\xEF\xBD\xA5\xEF\xBE\x9F\xE2\x9C\xA7";
+					const auto name = &usertype_traits<T>::user_gc_metatable[0];
 					lua_CFunction cdel = stack_detail::alloc_destroy<T>;
 					// Make sure we have a plain GC set for this data
 					if (luaL_newmetatable(L, name) != 0) {
@@ -300,9 +300,14 @@ namespace sol {
 				return 1;
 			}
 
+			template <typename Arg, typename... Args, meta::disable<std::is_same<no_metatable_t, meta::unqualified_t<Arg>>> = meta::enabler>
+			static int push(lua_State* L, Arg&& arg, Args&&... args) {
+				return push_with(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
+			}
+
 			template <typename... Args>
-			static int push(lua_State* L, Args&&... args) {
-				return push_with(L, std::forward<Args>(args)...);
+			static int push(lua_State* L, no_metatable_t, Args&&... args) {
+				return push_with<false>(L, std::forward<Args>(args)...);
 			}
 
 			static int push(lua_State* L, const user<T>& u) {

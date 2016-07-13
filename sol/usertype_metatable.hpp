@@ -336,7 +336,11 @@ namespace sol {
 
 				// Create the top level thing that will act as our deleter later on
 				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
-				stack::set_field<true>(L, gcmetakey, make_user(std::move(umx)));
+				stack::push<user<umt_t>>(L, std::move(umx));
+				stack_reference umt(L, -1);
+				stack::set_field<true>(L, gcmetakey, umt);
+				umt.pop();
+
 				stack::get_field<true>(L, gcmetakey);
 				return stack::pop<light<umt_t>>(L);
 			}
