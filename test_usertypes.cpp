@@ -1139,3 +1139,37 @@ TEST_CASE("usertype/double-deleter-guards", "usertype metatables internally must
 		lua = sol::state();
 	});
 }
+
+TEST_CASE("usertype/const-correctness", "usertype metatable names should reasonably ignore const attributes") {
+	struct Vec {
+		int x, y, z;
+	};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+	lua.new_usertype<Vec>("Vec", "x", &Vec::x, "y", &Vec::y, "z", &Vec::z);
+
+	Vec vec;
+	vec.x = 1;
+	vec.y = 2;
+	vec.z = -3;
+
+	std::vector<Vec> foo;
+	foo.push_back(vec);
+
+	std::vector<Vec const *> bar;
+	bar.push_back(&vec);
+
+	lua.script(R"(
+func = function(vecs)
+    for i, vec in ipairs(vecs) do
+        print(i, ":", vec.x, vec.y, vec.z)
+    end
+end
+)");
+
+	REQUIRE_NOTHROW({
+		lua["func"](foo);
+		lua["func"](bar);
+	});
+}

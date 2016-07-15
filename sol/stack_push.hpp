@@ -63,13 +63,13 @@ namespace sol {
 					return stack::push(L, nil);
 				T** pref = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
 				*pref = obj;
-				luaL_getmetatable(L, &k[0]);
+				luaL_newmetatable(L, &k[0]);
 				lua_setmetatable(L, -2);
 				return 1;
 			}
 
 			static int push(lua_State* L, T* obj) {
-				return push_keyed(L, usertype_traits<T*>::metatable, obj);
+				return push_keyed(L, usertype_traits<meta::unqualified_t<T>*>::metatable, obj);
 			}
 		};
 
@@ -287,7 +287,7 @@ namespace sol {
 				std::allocator<T> alloc;
 				alloc.construct(data, std::forward<Args>(args)...);
 				if (with_meta) {
-					const auto name = &usertype_traits<T>::user_gc_metatable[0];
+					const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
 					lua_CFunction cdel = stack_detail::alloc_destroy<T>;
 					// Make sure we have a plain GC set for this data
 					if (luaL_newmetatable(L, name) != 0) {
