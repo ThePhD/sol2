@@ -553,3 +553,23 @@ TEST_CASE("tables/add", "Basic test to make sure the 'add' feature works") {
 		REQUIRE(val == bigvec[i]);
 	}
 }
+
+TEST_CASE("tables/returns", "make sure that even references to vectors are being serialized as tables") {
+	sol::state lua;
+	std::vector<int> v{ 1, 2, 3 };
+	lua.set_function("f", [&]() -> std::vector<int>& {
+		return v;
+	});
+	lua.script("x = f()");
+	sol::object x = lua["x"];
+	sol::type xt = x.get_type();
+	REQUIRE(xt == sol::type::table);
+	sol::table t = x;
+	bool matching;
+	matching = t[1] == 1;
+	REQUIRE(matching);
+	matching = t[2] == 2;
+	REQUIRE(matching);
+	matching = t[3] == 3;
+	REQUIRE(matching);
+}

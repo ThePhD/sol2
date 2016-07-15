@@ -598,6 +598,17 @@ namespace sol {
 
 		template <>
 		struct lua_type_of<this_state> : std::integral_constant<type, type::none> {};
+
+		template <typename T>
+		struct lua_type_of<T, std::enable_if_t<
+			meta::all<
+				meta::has_begin_end<T>, 
+				meta::neg<meta::any<
+					std::is_base_of<reference, T>, 
+					std::is_base_of<stack_reference, T>
+				>>
+			>::value
+		>> : std::integral_constant<type, type::table> {};
 	} // detail
 
 	template <typename T>
