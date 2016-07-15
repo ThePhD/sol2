@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-07-13 00:54:48.588032 UTC
-// This header was generated with sol v2.9.1 (revision 045d96e)
+// Generated 2016-07-15 11:56:10.749976 UTC
+// This header was generated with sol v2.9.3 (revision 85daffa)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3371,6 +3371,17 @@ namespace sol {
 
 		template <>
 		struct lua_type_of<this_state> : std::integral_constant<type, type::none> {};
+
+		template <typename T>
+		struct lua_type_of<T, std::enable_if_t<
+			meta::all<
+				meta::has_begin_end<T>, 
+				meta::neg<meta::any<
+					std::is_base_of<reference, T>, 
+					std::is_base_of<stack_reference, T>
+				>>
+			>::value
+		>> : std::integral_constant<type, type::table> {};
 	} // detail
 
 	template <typename T>
