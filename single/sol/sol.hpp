@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-07-15 11:56:10.749976 UTC
-// This header was generated with sol v2.9.3 (revision 85daffa)
+// Generated 2016-07-15 14:14:12.808198 UTC
+// This header was generated with sol v2.9.3 (revision f1965a4)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5273,13 +5273,13 @@ namespace sol {
 					return stack::push(L, nil);
 				T** pref = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
 				*pref = obj;
-				luaL_getmetatable(L, &k[0]);
+				luaL_newmetatable(L, &k[0]);
 				lua_setmetatable(L, -2);
 				return 1;
 			}
 
 			static int push(lua_State* L, T* obj) {
-				return push_keyed(L, usertype_traits<T*>::metatable, obj);
+				return push_keyed(L, usertype_traits<meta::unqualified_t<T>*>::metatable, obj);
 			}
 		};
 
@@ -5497,7 +5497,7 @@ namespace sol {
 				std::allocator<T> alloc;
 				alloc.construct(data, std::forward<Args>(args)...);
 				if (with_meta) {
-					const auto name = &usertype_traits<T>::user_gc_metatable[0];
+					const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
 					lua_CFunction cdel = stack_detail::alloc_destroy<T>;
 					// Make sure we have a plain GC set for this data
 					if (luaL_newmetatable(L, name) != 0) {
