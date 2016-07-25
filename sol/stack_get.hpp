@@ -227,7 +227,7 @@ namespace sol {
 		};
 
 		template<>
-		struct pusher<std::nullptr_t> {
+		struct getter<std::nullptr_t> {
 			static std::nullptr_t get(lua_State*, int = -1) {
 				return nullptr;
 			}
