@@ -528,6 +528,13 @@ namespace sol {
 		};
 
 		template<>
+		struct pusher<std::nullptr_t> {
+			static int push(lua_State* L, std::nullptr_t) {
+				return stack::push(L, nil);
+			}
+		};
+
+		template<>
 		struct pusher<this_state> {
 			static int push(lua_State*, const this_state&) {
 				return 0;
