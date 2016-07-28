@@ -54,8 +54,8 @@ namespace sol {
 				sol::object key(base_t::lua_state(), -2);
 				sol::object value(base_t::lua_state(), -1);
 				std::pair<sol::object&, sol::object&> keyvalue(key, value);
+				auto pn = stack::pop_n(base_t::lua_state(), 1);
 				fx(keyvalue);
-				lua_pop(base_t::lua_state(), 1);
 			}
 		}
 
@@ -66,8 +66,8 @@ namespace sol {
 			while (lua_next(base_t::lua_state(), -2)) {
 				sol::object key(base_t::lua_state(), -2);
 				sol::object value(base_t::lua_state(), -1);
+				auto pn = stack::pop_n(base_t::lua_state(), 1);
 				fx(key, value);
-				lua_pop(base_t::lua_state(), 1);
 			}
 		}
 
@@ -231,8 +231,8 @@ namespace sol {
 		template <typename... Keys>
 		basic_table_core& traverse_set(Keys&&... keys) {
 			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
+			auto pn = stack::pop_n(base_t::lua_state(), static_cast<int>(sizeof...(Keys)-2));
 			traverse_set_deep<top_level>(std::forward<Keys>(keys)...);
-			lua_pop(base_t::lua_state(), static_cast<int>(sizeof...(Keys)-2));
 			return *this;
 		}
 

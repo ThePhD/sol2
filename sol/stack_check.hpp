@@ -209,14 +209,14 @@ namespace sol {
 				static const auto& callkey = name_of(meta_function::call);
 				lua_getmetatable(L, index);
 				if (lua_isnoneornil(L, -1)) {
-					handler(L, index, t, type::function);
 					lua_pop(L, 1);
+					handler(L, index, t, type::function);
 					return false;
 				}
 				lua_getfield(L, -1, &callkey[0]);
 				if (lua_isnoneornil(L, -1)) {
-					handler(L, index, t, type::function);
 					lua_pop(L, 2);
+					handler(L, index, t, type::function);
 					return false;
 				}
 				// has call, is definitely a function
@@ -274,30 +274,15 @@ namespace sol {
 				if (stack_detail::check_metatable<detail::unique_usertype<U>>(L))
 					return true;
 				bool success = false;
-#ifndef SOL_NO_EXCEPTIONS
-				lua_getfield(L, -1, &detail::base_class_check_key()[0]);
-				if (type_of(L, -1) != type::nil) {
-					void* basecastdata = lua_touserdata(L, -1);
-					detail::throw_cast basecast = (detail::throw_cast)basecastdata;
-					success = detail::catch_check<T>(basecast);
+				{
+					auto pn = stack::pop_n(L, 2);
+					lua_getfield(L, -1, &detail::base_class_check_key()[0]);
+					if (type_of(L, -1) != type::nil) {
+						void* basecastdata = lua_touserdata(L, -1);
+						detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
+						success = ic(detail::id_for<T>::value);
+					}
 				}
-#elif !defined(SOL_NO_RTTI)
-				lua_getfield(L, -1, &detail::base_class_check_key()[0]);
-				if (type_of(L, -1) != type::nil) {
-					void* basecastdata = lua_touserdata(L, -1);
-					detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
-					success = ic(typeid(T));
-				}
-#else
-				// Topkek
-				lua_getfield(L, -1, &detail::base_class_check_key()[0]);
-				if (type_of(L, -1) != type::nil) {
-					void* basecastdata = lua_touserdata(L, -1);
-					detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
-					success = ic(detail::id_for<T>::value);
-				}
-#endif // No Runtime Type Information || Exceptions
-				lua_pop(L, 2);
 				if (!success) {
 					handler(L, index, type::userdata, indextype);
 					return false;

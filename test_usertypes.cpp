@@ -627,6 +627,23 @@ TEST_CASE("usertype/private-constructible", "Check to make sure special snowflak
 	REQUIRE(expectednumkilled == factory_test::num_killed);
 }
 
+TEST_CASE("usertype/const-pointer", "Make sure const pointers can be taken") {
+	struct A { int x = 201; };
+	struct B {
+		int foo(const A* a) { return a->x; };
+	};
+
+	sol::state lua;
+	lua.new_usertype<B>("B", 
+		"foo", &B::foo
+	);
+	lua.set("a", A());
+	lua.set("b", B());
+	lua.script("x = b:foo(a)");
+	int x = lua["x"];
+	REQUIRE(x == 201);
+}
+
 TEST_CASE("usertype/overloading", "Check if overloading works properly for usertypes") {
 	struct woof {
 		int var;

@@ -367,7 +367,7 @@ namespace sol {
 				int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start, F& f) {
 					const auto& metakey = usertype_traits<T>::metatable;
 					T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
-					stack_reference userdataref(L, -1);
+					reference userdataref(L, -1);
 					T*& referencepointer = *pointerpointer;
 					T* obj = reinterpret_cast<T*>(pointerpointer + 1);
 					referencepointer = obj;

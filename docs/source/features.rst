@@ -74,18 +74,18 @@ Explanations for a few categories are below (rest are self-explanatory).
 
 * optional: Support for getting an element, or potentially not (and not forcing the default construction of what amounts to a bogus/dead object). Usually comes with ``std(::experimental)::optional``. It's a fairly new class, so a hand-rolled class internal to the library with similar semantics is also acceptable
 * tables: Some sort of abstraction for dealing with tables. Ideal support is ``mytable["some_key"] = value``, and everything that the syntax implies.
-* table chaining: In conjunction with tables, having the ability to do nest deeply into tables ``mytable["key1"]["key2"]["key3"]``. Note that this becomes a tripping point for some libraries: crashing if ``"key1"`` doesn't exist while trying to access ``"key2"`` (Sol avoids this specifically when you use ``sol::optional``), and sometimes it's also a heavy performance bottleneck as expressions are not lazy-evaluated by a library.
-* arbitrary keys: Letting C++ code use userdata, other tables, integers, etc. as keys for into a table without dropping to the plain API.
-* user-defined types (udts): C++ types given form and function in lua code.
+* table chaining: In conjunction with tables, having the ability to query deeply into tables ``mytable["key1"]["key2"]["key3"]``. Note that this becomes a tripping point for some libraries: crashing if ``"key1"`` doesn't exist while trying to access ``"key2"`` (Sol avoids this specifically when you use ``sol::optional``), and sometimes it's also a heavy performance bottleneck as expressions are not lazy-evaluated by a library.
+* arbitrary keys: Letting C++ code use userdata, other tables, integers, etc. as keys for into a table.
+* user-defined types (udts): C++ types given form and function in Lua code.
 * udts - member functions: C++ member functions on a type, usually callable with ``my_object:foo(1)`` or similar in Lua.
 * udts - variables: C++ member variables, manipulated by ``my_object.var = 24`` and friends
 * function binding: Support for binding all types of functions. Lambdas, member functions, free functions, in different contexts, etc... 
-* protected function: Use of ``lua_pcall`` to call a function, which offers error-handling and trampolining
-* multi-return: returning multiple values from and to lua
-* variadic/variant argument: being able to accept "anything" from lua, and even return "anything" to lua
-* inheritance: allowing some degree of subtyping or inheritance on classes / userdata from lua
+* protected function: Use of ``lua_pcall`` to call a function, which offers error-handling and trampolining (as well as the ability to opt-in / opt-out of this behavior)
+* multi-return: returning multiple values from and to Lua (generally through ``std::tuple<...>`` or in some other way)
+* variadic/variant argument: being able to accept "anything" from Lua, and even return "anything" to Lua (``object`` abstraction, variadic arguments, etc...)
+* inheritance: allowing some degree of subtyping or inheritance on classes / userdata from Lua - this generally means that you can retrieve a base pointer from Lua even if you hand the library a derived pointer
 * overloading: the ability to call overloaded functions, matched based on arity or type (``foo( 1 )`` from lua calls a different function then ``foo( "bark" )``).
-* lua thread: basic wrapping of the lua thread API; ties in with coroutine.
+* Lua thread: basic wrapping of the lua thread API; ties in with coroutine.
 * coroutines: allowing a function to be called multiple times, resuming the execution of a Lua coroutine each time
 
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
@@ -112,7 +112,7 @@ Explanations for a few categories are below (rest are self-explanatory).
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
 | function binding          |      ~      |     ✔      |     ✔    |    ✔    |     ✔    |     ✔     |     ✔     |        ✔       |     ✔    |     ✔    |     ✔     |        ✔        |    ~   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
-| protected function        |      ~      |     ✗      |     ~    |    ~    |     ~    |     ✔     |     ~     |        ✔       |     ~    |     ~    |     ~     |        ~        |    ~   |
+| protected call            |      ~      |     ✗      |     ~    |    ~    |     ~    |     ✔     |     ~     |        ✔       |     ~    |     ~    |     ~     |        ~        |    ~   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
 | multi-return              |      ~      |     ✗      |     ✔    |    ✔    |     ✔    |     ✔     |     ~     |        ✔       |     ✔    |     ~    |     ✔     |        ~        |    ✗   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
@@ -122,7 +122,7 @@ Explanations for a few categories are below (rest are self-explanatory).
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
 | overloading               |      ~      |     ✗      |     ✗    |    ✗    |     ✗    |     ✔     |     ✗     |        ✗       |     ✔    |     ✔    |     ✔     |        ✗        |    ✗   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
-| lua thread                |      ~      |     ✗      |     ~    |    ✗    |     ✗    |     ✔     |     ✔     |        ✗       |     ✔    |     ✗    |     ✗     |        ✔        |    ✗   |
+| Lua thread                |      ~      |     ✗      |     ~    |    ✗    |     ✗    |     ✔     |     ✔     |        ✗       |     ✔    |     ✗    |     ✗     |        ✔        |    ✗   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
 | coroutines                |      ~      |     ✗      |     ~    |    ✔    |     ✔    |     ✔     |     ✗     |        ✗       |     ✔    |     ✗    |     ✗     |        ✔        |    ✗   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+

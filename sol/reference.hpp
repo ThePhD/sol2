@@ -27,6 +27,17 @@
 
 namespace sol {
 	namespace stack {
+		template <bool top_level>
+		struct push_popper_n {
+			lua_State* L;
+			int t;
+			push_popper_n(lua_State* L, int x) : L(L), t(x) { }
+			~push_popper_n() { lua_pop(L, t); }
+		};
+		template <>
+		struct push_popper_n<true> {
+			push_popper_n(lua_State*, int) { }
+		};
 		template <bool top_level, typename T>
 		struct push_popper {
 			T t;
@@ -41,6 +52,10 @@ namespace sol {
 		template <bool top_level = false, typename T>
 		push_popper<top_level, T> push_pop(T&& x) {
 			return push_popper<top_level, T>(std::forward<T>(x));
+		}
+		template <bool top_level = false>
+		push_popper_n<top_level> pop_n(lua_State* L, int x) {
+			return push_popper_n<top_level>(L, x);
 		}
 	} // stack
 
@@ -135,9 +150,8 @@ namespace sol {
 		}
 
 		type get_type() const noexcept {
-			push();
+			auto pp = stack::push_pop(*this);
 			int result = lua_type(L, -1);
-			lua_pop(L, 1);
 			return static_cast<type>(result);
 		}
 

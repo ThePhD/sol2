@@ -188,20 +188,11 @@ namespace sol {
 				return;
 			}
 			(void)detail::swallow{ 0, ((detail::has_derived<Bases>::value = true), 0)... };
-#ifndef SOL_NO_EXCEPTIONS
-			static_assert(sizeof(void*) <= sizeof(detail::throw_cast), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
-			baseclasscheck = baseclasscast = (void*)&detail::throw_as<T>;
-#elif !defined(SOL_NO_RTTI)
+
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
-			baseclasscheck = (void*)&detail::inheritance<T, Args...>::type_check;
-			baseclasscast = (void*)&detail::inheritance<T, Args...>::type_cast;
-#else
-			static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
-			static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
-			baseclasscheck = (void*)&detail::inheritance<T, Args...>::type_check;
-			baseclasscast = (void*)&detail::inheritance<T, Args...>::type_cast;
-#endif // No Runtime Type Information vs. Throw-Style Inheritance
+			baseclasscheck = (void*)&detail::inheritance<T, Bases...>::type_check;
+			baseclasscast = (void*)&detail::inheritance<T, Bases...>::type_cast;
 		}
 
 		template <std::size_t Idx, typename N, typename F, typename = std::enable_if_t<!meta::any_same<meta::unqualified_t<N>, base_classes_tag, call_construction>::value>>

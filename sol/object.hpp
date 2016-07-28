@@ -93,7 +93,9 @@ namespace sol {
 	object make_reference(lua_State* L, Args&&... args) {
 		int backpedal = stack::push<T>(L, std::forward<Args>(args)...);
 		object r = stack::get<sol::object>(L, -backpedal);
-		lua_pop(L, backpedal);
+		if (should_pop) {
+			lua_pop(L, backpedal);
+		}
 		return r;
 	}
 

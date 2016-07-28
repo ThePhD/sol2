@@ -289,24 +289,6 @@ namespace sol {
 			}
 
 			static T* get_no_nil_from(lua_State* L, void* udata, int index = -1) {
-#ifndef SOL_NO_EXCEPTIONS
-				if (detail::has_derived<T>::value && luaL_getmetafield(L, index, &detail::base_class_check_key()[0]) != 0) {
-					void* basecastdata = lua_touserdata(L, -1);
-					detail::throw_cast basecast = (detail::throw_cast)basecastdata;
-					// use the casting function to properly adjust the pointer for the desired T
-					udata = detail::catch_cast<T>(udata, basecast);
-					lua_pop(L, 1);
-				}
-#elif !defined(SOL_NO_RTTI)
-				if (detail::has_derived<T>::value && luaL_getmetafield(L, index, &detail::base_class_cast_key()[0]) != 0) {
-					void* basecastdata = lua_touserdata(L, -1);
-					detail::inheritance_cast_function ic = (detail::inheritance_cast_function)basecastdata;
-					// use the casting function to properly adjust the pointer for the desired T
-					udata = ic(udata, typeid(T));
-					lua_pop(L, 1);
-				}
-#else
-				// Lol, you motherfucker
 				if (detail::has_derived<T>::value && luaL_getmetafield(L, index, &detail::base_class_cast_key()[0]) != 0) {
 					void* basecastdata = lua_touserdata(L, -1);
 					detail::inheritance_cast_function ic = (detail::inheritance_cast_function)basecastdata;
@@ -314,7 +296,6 @@ namespace sol {
 					udata = ic(udata, detail::id_for<T>::value);
 					lua_pop(L, 1);
 				}
-#endif // No Runtime Type Information || Exceptions
 				T* obj = static_cast<T*>(udata);
 				return obj;
 			}

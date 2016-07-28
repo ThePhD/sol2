@@ -148,12 +148,14 @@ namespace sol {
 		template<bool check_args = stack_detail::default_check_arguments, typename... Args, typename Fx, typename... FxArgs>
 		inline int call_into_lua(types<void> tr, types<Args...> ta, lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs) {
 			call<check_args>(tr, ta, L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
+			lua_settop(L, 0);
 			return 0;
 		}
 
 		template<bool check_args = stack_detail::default_check_arguments, typename Ret0, typename... Ret, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<meta::neg<std::is_void<Ret0>>::value>>
 		inline int call_into_lua(types<Ret0, Ret...>, types<Args...> ta, lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs) {
 			decltype(auto) r = call<check_args>(types<meta::return_type_t<Ret0, Ret...>>(), ta, L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
+			lua_settop(L, 0);
 			return push_reference(L, std::forward<decltype(r)>(r));
 		}
 
@@ -167,11 +169,10 @@ namespace sol {
 
 		inline call_syntax get_call_syntax(lua_State* L, const std::string& key, int index = -2) {
 			luaL_getmetatable(L, key.c_str());
+			auto pn = pop_n(L, 1);
 			if (lua_compare(L, -1, index, LUA_OPEQ) == 1) {
-				lua_pop(L, 1);
 				return call_syntax::colon;
 			}
-			lua_pop(L, 1);
 			return call_syntax::dot;
 		}
 
@@ -190,8 +191,8 @@ namespace sol {
 		inline void luajit_exception_handler(lua_State* L, int(*handler)(lua_State*, lua_CFunction) = detail::c_trampoline) {
 #ifdef SOL_LUAJIT
 			lua_pushlightuserdata(L, (void*)handler);
+			auto pn = pop_n(L, 1);
 			luaJIT_setmode(L, -1, LUAJIT_MODE_WRAPCFUNC | LUAJIT_MODE_ON);
-			lua_pop(L, 1);
 #else
 			(void)L;
 			(void)handler;
