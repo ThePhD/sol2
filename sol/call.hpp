@@ -85,7 +85,6 @@ namespace sol {
 				typedef lua_bind_traits<meta::unqualified_t<Fx>> traits;
 				typedef meta::tuple_types<typename traits::return_type> return_types;
 				typedef typename traits::free_args_list args_list;
-				typedef typename args_list::indices args_indices;
 				// compile-time eliminate any functions that we know ahead of time are of improper arity
 				if (meta::find_in_pack_v<index_value<traits::free_arity>, index_value<M>...>::value) {
 					return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
@@ -93,7 +92,8 @@ namespace sol {
 				if (traits::free_arity != fxarity) {
 					return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<traits::free_arity, M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
 				}
-				if (!stack::stack_detail::check_types<true>().check(args_list(), args_indices(), L, start, no_panic)) {
+				stack::record tracking{};
+				if (!stack::stack_detail::check_types<true>{}.check(args_list(), L, start, no_panic, tracking)) {
 					return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
 				}
 				return matchfx(types<Fx>(), index_value<I>(), return_types(), args_list(), L, fxarity, start, std::forward<Args>(args)...);

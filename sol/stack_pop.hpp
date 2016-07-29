@@ -32,26 +32,9 @@ namespace sol {
 		template <typename T, typename>
 		struct popper {
 			inline static decltype(auto) pop(lua_State* L) {
-				decltype(auto) r = get<T>(L);
-				lua_pop(L, 1);
-				return r;
-			}
-		};
-
-		template <typename... Args>
-		struct popper<std::tuple<Args...>> {
-			inline static decltype(auto) pop(lua_State* L) {
-				decltype(auto) r = get<std::tuple<Args...>>(L);
-				lua_pop(L, static_cast<int>(sizeof...(Args)));
-				return r;
-			}
-		};
-
-		template <typename A, typename B>
-		struct popper<std::pair<A, B>> {
-			inline static decltype(auto) pop(lua_State* L) {
-				decltype(auto) r = get<std::pair<A, B>>(L);
-				lua_pop(L, 2);
+				record tracking{};
+				decltype(auto) r = get<T>(L, -lua_size<T>::value, tracking);
+				lua_pop(L, tracking.used);
 				return r;
 			}
 		};

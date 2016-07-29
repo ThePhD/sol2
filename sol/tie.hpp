@@ -26,6 +26,11 @@
 
 namespace sol {
 
+	namespace detail {
+		template <typename T>
+		struct is_speshul : std::false_type {};
+	}
+
 	template <typename T>
 	struct tie_size : std::tuple_size<T> {};
 
@@ -48,15 +53,23 @@ namespace sol {
 			typedef tie_size<std::tuple<Tn...>> tie_size;
 			typedef std::conditional_t<(value_size::value < tie_size::value), value_size, tie_size> indices_size;
 			typedef std::make_index_sequence<indices_size::value> indices;
-			set(indices(), std::forward<T>(target));
+			set_extra(detail::is_speshul<meta::unqualified_t<T>>(), indices(), std::forward<T>(target));
 		}
 
 		template <std::size_t... I, typename T>
-		void set(std::index_sequence<I...>, T&& target) {
+		void set_extra(std::true_type, std::index_sequence<I...>, T&& target) {
 			using std::get;
 			(void)detail::swallow{ 0,
-				 (get<I>(*this) = get<I>(target), 0)...
-			, 0 };
+				(get<I>(*this) = get<I>(types<Tn...>(), target), 0)...
+				, 0 };
+		}
+
+		template <std::size_t... I, typename T>
+		void set_extra(std::false_type, std::index_sequence<I...>, T&& target) {
+			using std::get;
+			(void)detail::swallow{ 0,
+				(get<I>(*this) = get<I>(target), 0)...
+				, 0 };
 		}
 
 	public:
@@ -64,8 +77,8 @@ namespace sol {
 
 		template <typename T>
 		tie_t& operator= (T&& value) {
-			typedef is_tieable<meta::unqualified_t<T>> bondable;
-			set(bondable(), std::forward<T>(value));
+			typedef is_tieable<meta::unqualified_t<T>> tieable;
+			set(tieable(), std::forward<T>(value));
 			return *this;
 		}
 

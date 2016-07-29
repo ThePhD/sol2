@@ -500,7 +500,8 @@ TEST_CASE("usertype/nonmember-functions", "let users set non-member functions th
 		"print(tostring(t))\n"
 		"t:gief()\n"
 		"t:gief_stuff(20)\n"));
-	REQUIRE((lua.get<giver>("t").a == 20));
+	giver& g = lua.get<giver>("t");
+	REQUIRE(g.a == 20);
 }
 
 TEST_CASE("usertype/unique-shared-ptr", "manage the conversion and use of unique and shared pointers ('unique usertypes')") {

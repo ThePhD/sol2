@@ -11,6 +11,26 @@ If you find that the higher level abstractions are not meeting your needs, you m
 
 There are, however, a few :ref:`template customization points<extension_points>` that you may use for your purposes and a handful of potentially handy functions. These may help if you're trying to slim down the code you have to write, or if you want to make your types behave differently throughout the Sol stack. Note that overriding the defaults **can** throw out many of the safety guarantees Sol provides: therefore, modify the :ref:`extension points<extension_points>` at your own discretion.
 
+structures
+----------
+
+.. code-block:: cpp
+	:caption: struct: record
+	:name: stack-record
+
+	struct record {
+		int last;
+		int used;
+
+		void use(int count);
+	};
+
+This structure is for advanced usage with :ref:`stack::get<stack-get>` and :ref:`stack::check_get<stack-get>`. When overriding the customization points, it is important to call the ``use`` member function on this class with the amount of things you are pulling from the stack. ``used`` contains the total accumulation of items produced. ``last`` is the number of items gotten from the stack with the last operation (not necessarily popped from the stack). In all trivial cases for types, ``last == 1`` and ``used == 1`` after an operation; structures such as ``std::pair`` and ``std::tuple`` may pull more depending on the classes it contains.
+
+When overriding the :doc:`customization points<../tutorial/customization>`, please note that this structure should enable you to push multiple return values and get multiple return values to the stack, and thus be able to seamlessly pack/unpack return values from Lua into a single C++ struct, and vice-versa. This functionality is only recommended for people who need to customize the library further than the basics. It is also a good way to add support for the type and propose it back to the original library so that others may benefit from your work.
+
+Note that customizations can also be put up on a separate page here, if individuals decide to make in-depth custom ones for their framework or other places.
+
 members
 -------
 
@@ -20,8 +40,12 @@ members
 
 	template <typename T>
 	auto get( lua_State* L, int index = -1 )
+	template <typename T>
+	auto get( lua_State* L, int index, record& tracking )
 
 Retrieves the value of the object at ``index`` in the stack. The return type varies based on ``T``: with primitive types, it is usually ``T``: for all unrecognized ``T``, it is generally a ``T&`` or whatever the extension point :ref:`stack::getter\<T><getter>` implementation returns. The type ``T`` has top-level ``const`` qualifiers and reference modifiers removed before being forwarded to the extension point :ref:`stack::getter\<T><getter>` struct. ``stack::get`` will default to forwarding all arguments to the :ref:`stack::check_get<stack-check-get>` function with a handler of ``type_panic`` to strongly alert for errors, if you ask for the :doc:`safety<../safety>`.
+
+`record`
 
 You may also retrieve an :doc:`sol::optional\<T><optional>` from this as well, to have it attempt to not throw errors when performing the get and the type is not correct.
 
@@ -44,7 +68,7 @@ Checks if the object at ``index`` is of type ``T``. If it is not, it will call t
 	template <typename T>
 	auto check_get( lua_State* L, int index = -1 )
 	template <typename T, typename Handler>
-	auto check_get( lua_State* L, int index, Handler&& handler )
+	auto check_get( lua_State* L, int index, Handler&& handler, record& tracking )
 
 Retrieves the value of the object at ``index`` in the stack, but does so safely. It returns an ``optional<U>``, where ``U`` in this case is the return type deduced from ``stack::get<T>``. This allows a person to properly check if the type they're getting is what they actually want, and gracefully handle errors when working with the stack if they so choose to. You can define ``SOL_CHECK_ARGUMENTS`` to turn on additional :doc:`safety<../safety>`, in which ``stack::get`` will default to calling this version of the function with a handler of ``type_panic`` to strongly alert for errors and help you track bugs if you suspect something might be going wrong in your system.
 
@@ -117,6 +141,10 @@ This struct is used for showing whether or not a :ref:`probing get_field<stack-p
 objects (extension points)
 --------------------------
 
+You can customize the way Sol handles different structures and classes by following the information provided in the :doc:`adding your own types<../tutorial/customization>`.
+
+Below is more extensive information for the curious.
+
 The structs below are already overriden for a handful of types. If you try to mess with them for the types ``sol`` has already overriden them for, you're in for a world of thick template error traces and headaches. Overriding them for your own user defined types should be just fine, however.
 
 .. code-block:: cpp
@@ -125,7 +153,7 @@ The structs below are already overriden for a handful of types. If you try to me
 
 	template <typename T, typename = void>
 	struct getter {
-		static T get (int index = -1) {
+		static T get (lua_State* L, int index, record& tracking) {
 			// ...
 			return // T, or something related to T.
 		}
@@ -156,7 +184,7 @@ This is an SFINAE-friendly struct that is meant to expose static function ``push
 	template <typename T, type expected = lua_type_of<T>, typename = void>
 	struct checker {
 		template <typename Handler>
-		static bool check ( lua_State* L, int index, Handler&& handler ) {
+		static bool check ( lua_State* L, int index, Handler&& handler, record& tracking ) {
 			// if the object in the Lua stack at index is a T, return true
 			if ( ... ) return true;
 			// otherwise, call the handler function,
@@ -166,6 +194,6 @@ This is an SFINAE-friendly struct that is meant to expose static function ``push
 		}
 	};
 
-This is an SFINAE-friendly struct that is meant to expose static function ``check`` that returns the number of things pushed onto the stack. The default implementation simply checks whether the expected type passed in through the template is equal to the type of the object at the specified index in the Lua stack. The default implementation for types which are considered ``userdata`` go through a myriad of checks to support checking if a type is *actually* of type ``T`` or if its the base class of what it actually stored as a userdata in that index. Down-casting from a base class to a mroe derived type is, unfortunately, impossible to do.
+This is an SFINAE-friendly struct that is meant to expose static function ``check`` that returns the number of things pushed onto the stack. The default implementation simply checks whether the expected type passed in through the template is equal to the type of the object at the specified index in the Lua stack. The default implementation for types which are considered ``userdata`` go through a myriad of checks to support checking if a type is *actually* of type ``T`` or if its the base class of what it actually stored as a userdata in that index. Down-casting from a base class to a more derived type is, unfortunately, impossible to do.
 
 .. _lua_CFunction: http://www.Lua.org/manual/5.3/manual.html#lua_CFunction

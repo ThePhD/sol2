@@ -82,6 +82,17 @@ namespace sol {
 			operator bool() const { return success; };
 		};
 
+		struct record {
+			int last;
+			int used;
+
+			record() : last(), used() {}
+			void use(int count) {
+				last = count;
+				used += count;
+			}
+		};
+
 		namespace stack_detail {
 			template <typename T>
 			struct strip {
@@ -108,8 +119,8 @@ namespace sol {
 				false;
 #endif
 			template<typename T>
-			inline decltype(auto) unchecked_get(lua_State* L, int index = -1) {
-				return getter<meta::unqualified_t<T>>{}.get(L, index);
+			inline decltype(auto) unchecked_get(lua_State* L, int index, record& tracking) {
+				return getter<meta::unqualified_t<T>>{}.get(L, index, tracking);
 			}
 		} // stack_detail
 
@@ -164,12 +175,18 @@ namespace sol {
 		}
 
 		template <typename T, typename Handler>
-		bool check(lua_State* L, int index, Handler&& handler) {
+		bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			typedef meta::unqualified_t<T> Tu;
 			checker<Tu> c;
 			// VC++ has a bad warning here: shut it up
 			(void)c;
-			return c.check(L, index, std::forward<Handler>(handler));
+			return c.check(L, index, std::forward<Handler>(handler), tracking);
+		}
+
+		template <typename T, typename Handler>
+		bool check(lua_State* L, int index, Handler&& handler) {
+			record tracking{};
+			return check<T>(L, index, std::forward<Handler>(handler), tracking);
 		}
 
 		template <typename T>
@@ -179,8 +196,14 @@ namespace sol {
 		}
 
 		template<typename T, typename Handler>
+		inline decltype(auto) check_get(lua_State* L, int index, Handler&& handler, record& tracking) {
+			return check_getter<meta::unqualified_t<T>>{}.get(L, index, std::forward<Handler>(handler), tracking);
+		}
+
+		template<typename T, typename Handler>
 		inline decltype(auto) check_get(lua_State* L, int index, Handler&& handler) {
-			return check_getter<meta::unqualified_t<T>>{}.get(L, index, std::forward<Handler>(handler));
+			record tracking{};
+			return check_get<T>(L, index, handler, tracking);
 		}
 
 		template<typename T>
@@ -193,20 +216,20 @@ namespace sol {
 
 #ifdef SOL_CHECK_ARGUMENTS
 			template <typename T>
-			inline auto tagged_get(types<T>, lua_State* L, int index = -1) -> decltype(stack_detail::unchecked_get<T>(L, index)) {
-				auto op = check_get<T>(L, index, type_panic);
+			inline auto tagged_get(types<T>, lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_get<T>(L, index, tracking)) {
+				auto op = check_get<T>(L, index, type_panic, tracking);
 				return *op;
 			}
 #else
 			template <typename T>
-			inline decltype(auto) tagged_get(types<T>, lua_State* L, int index = -1) {
-				return stack_detail::unchecked_get<T>(L, index);
+			inline decltype(auto) tagged_get(types<T>, lua_State* L, int index, record& tracking) {
+				return stack_detail::unchecked_get<T>(L, index, tracking);
 			}
 #endif
 
 			template <typename T>
-			inline decltype(auto) tagged_get(types<optional<T>>, lua_State* L, int index = -1) {
-				return stack_detail::unchecked_get<optional<T>>(L, index);
+			inline decltype(auto) tagged_get(types<optional<T>>, lua_State* L, int index, record& tracking) {
+				return stack_detail::unchecked_get<optional<T>>(L, index, tracking);
 			}
 
 			template <typename T>
@@ -218,11 +241,72 @@ namespace sol {
 				return 0;
 			}
 
+			template <bool b>
+			struct check_types {
+				template <typename T, typename... Args, typename Handler>
+				static bool check(types<T, Args...>, lua_State* L, int firstargument, Handler&& handler, record& tracking) {
+					if (!stack::check<T>(L, firstargument + tracking.used, handler, tracking))
+						return false;
+					return check(types<Args...>(), L, firstargument, std::forward<Handler>(handler), tracking);
+				}
+
+				template <typename Handler>
+				static bool check(types<>, lua_State*, int, Handler&&, record&) {
+					return true;
+				}
+			};
+
+			template <>
+			struct check_types<false> {
+				template <typename... Args, typename Handler>
+				static bool check(types<Args...>, lua_State*, int, Handler&&, record&) {
+					return true;
+				}
+			};
+
 		} // stack_detail
+
+		template <bool b, typename... Args, typename Handler>
+		bool multi_check(lua_State* L, int index, Handler&& handler, record& tracking) {
+			return stack_detail::check_types<b>{}.check(types<meta::unqualified_t<Args>...>(), L, index, std::forward<Handler>(handler), tracking);
+		}
+
+		template <bool b, typename... Args, typename Handler>
+		bool multi_check(lua_State* L, int index, Handler&& handler) {
+			record tracking{};
+			return multi_check<b, Args...>(L, index, std::forward<Handler>(handler), tracking);
+		}
+
+		template <bool b, typename... Args>
+		bool multi_check(lua_State* L, int index) {
+			auto handler = no_panic;
+			return multi_check<b, Args...>(L, index, handler);
+		}
+
+		template <typename... Args, typename Handler>
+		bool multi_check(lua_State* L, int index, Handler&& handler, record& tracking) {
+			return multi_check<true, Args...>(L, index, std::forward<Handler>(handler), tracking);
+		}
+
+		template <typename... Args, typename Handler>
+		bool multi_check(lua_State* L, int index, Handler&& handler) {
+			return multi_check<true, Args...>(L, index, std::forward<Handler>(handler));
+		}
+
+		template <typename... Args>
+		bool multi_check(lua_State* L, int index) {
+			return multi_check<true, Args...>(L, index);
+		}
+
+		template<typename T>
+		inline decltype(auto) get(lua_State* L, int index, record& tracking) {
+			return stack_detail::tagged_get(types<T>(), L, index, tracking);
+		}
 
 		template<typename T>
 		inline decltype(auto) get(lua_State* L, int index = -1) {
-			return stack_detail::tagged_get(types<T>(), L, index);
+			record tracking{};
+			return get<T>(L, index, tracking);
 		}
 
 		template<typename T>

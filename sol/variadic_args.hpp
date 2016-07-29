@@ -218,7 +218,8 @@ namespace sol {
 	namespace stack {
 		template <>
 		struct getter<variadic_args> {
-			static variadic_args get(lua_State* L, int index = -1) {
+			static variadic_args get(lua_State* L, int index, record& tracking) {
+				tracking.last = 0;
 				return variadic_args(L, index);
 			}
 		};

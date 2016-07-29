@@ -40,13 +40,13 @@ namespace sol {
 
 		template<std::size_t... I, typename... Ret>
 		auto invoke(types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n) const {
-			luacall(n, sizeof...(Ret));
+			luacall(n, lua_size<std::tuple<Ret...>>::value);
 			return stack::pop<std::tuple<Ret...>>(base_t::lua_state());
 		}
 
 		template<std::size_t I, typename Ret>
 		Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n) const {
-			luacall(n, 1);
+			luacall(n, lua_size<Ret>::value);
 			return stack::pop<Ret>(base_t::lua_state());
 		}
 
@@ -104,7 +104,7 @@ namespace sol {
 			typedef meta::tuple_types<typename fx_t::return_type> return_types;
 
 			template<typename... Args, typename... Ret>
-			static std::function<Signature> get_std_func(types<Ret...>, types<Args...>, lua_State* L, int index = -1) {
+			static std::function<Signature> get_std_func(types<Ret...>, types<Args...>, lua_State* L, int index) {
 				sol::function f(L, index);
 				auto fx = [f, L, index](Args&&... args) -> meta::return_type_t<Ret...> {
 					return f.call<Ret...>(std::forward<Args>(args)...);
@@ -113,7 +113,7 @@ namespace sol {
 			}
 
 			template<typename... FxArgs>
-			static std::function<Signature> get_std_func(types<void>, types<FxArgs...>, lua_State* L, int index = -1) {
+			static std::function<Signature> get_std_func(types<void>, types<FxArgs...>, lua_State* L, int index) {
 				sol::function f(L, index);
 				auto fx = [f, L, index](FxArgs&&... args) -> void {
 					f(std::forward<FxArgs>(args)...);
@@ -122,11 +122,13 @@ namespace sol {
 			}
 
 			template<typename... FxArgs>
-			static std::function<Signature> get_std_func(types<>, types<FxArgs...> t, lua_State* L, int index = -1) {
+			static std::function<Signature> get_std_func(types<>, types<FxArgs...> t, lua_State* L, int index) {
 				return get_std_func(types<void>(), t, L, index);
 			}
 
-			static std::function<Signature> get(lua_State* L, int index) {
+			static std::function<Signature> get(lua_State* L, int index, record& tracking) {
+				tracking.last = 1;
+				tracking.used += 1;
 				type t = type_of(L, index);
 				if (t == type::none || t == type::nil) {
 					return nullptr;

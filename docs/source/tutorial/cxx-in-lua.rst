@@ -126,4 +126,4 @@ To do this, you bind things using the ``new_usertype`` and ``set_usertype`` meth
 
 That script should run fine now, and you can observe and play around with the values. Even more stuff :doc:`you can do<../api/usertype>` is described elsewhere, like initializer functions (private constructors / destructors support), "static" functions callable with ``name.my_function( ... )``, and overloaded member functions.
 
-This is a powerful way to allow reuse of C++ code from Lua beyond just registering functions, and should get you on your way to having more complex classes and data structures!
+This is a powerful way to allow reuse of C++ code from Lua beyond just registering functions, and should get you on your way to having more complex classes and data structures! In the case that you need more customization than just usertypes, however, you can customize Sol to behave more fit to your desires by using the desired :doc:`customization and extension structures<customization>`.

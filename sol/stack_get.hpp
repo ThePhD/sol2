@@ -36,98 +36,111 @@ namespace sol {
 
 		template<typename T, typename>
 		struct getter {
-			static T& get(lua_State* L, int index = -1) {
-				return getter<T&>{}.get(L, index);
+			static T& get(lua_State* L, int index, record& tracking) {
+				return getter<T&>{}.get(L, index, tracking);
 			}
 		};
 
 		template<typename T>
 		struct getter<T, std::enable_if_t<std::is_floating_point<T>::value>> {
-			static T get(lua_State* L, int index = -1) {
+			static T get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return static_cast<T>(lua_tonumber(L, index));
 			}
 		};
 
 		template<typename T>
 		struct getter<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_signed<T>>::value>> {
-			static T get(lua_State* L, int index = -1) {
+			static T get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return static_cast<T>(lua_tointeger(L, index));
 			}
 		};
 
 		template<typename T>
 		struct getter<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_unsigned<T>>::value>> {
-			static T get(lua_State* L, int index = -1) {
+			static T get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return static_cast<T>(lua_tointeger(L, index));
 			}
 		};
 
 		template<typename T>
 		struct getter<T, std::enable_if_t<std::is_enum<T>::value>> {
-			static T get(lua_State* L, int index = -1) {
+			static T get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return static_cast<T>(lua_tointegerx(L, index, nullptr));
 			}
 		};
 
 		template<typename T>
 		struct getter<T, std::enable_if_t<std::is_base_of<reference, T>::value || std::is_base_of<stack_reference, T>::value>> {
-			static T get(lua_State* L, int index = -1) {
+			static T get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return T(L, index);
 			}
 		};
 
 		template<>
 		struct getter<userdata_value> {
-			static userdata_value get(lua_State* L, int index = -1) {
+			static userdata_value get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return userdata_value(lua_touserdata(L, index));
 			}
 		};
 
 		template<>
 		struct getter<lightuserdata_value> {
-			static lightuserdata_value get(lua_State* L, int index = -1) {
+			static lightuserdata_value get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return lightuserdata_value(lua_touserdata(L, index));
 			}
 		};
 
 		template<typename T>
 		struct getter<light<T>> {
-			static light<T> get(lua_State* L, int index = -1) {
+			static light<T> get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return light<T>(static_cast<T*>(lua_touserdata(L, index)));
 			}
 		};
 
 		template<typename T>
 		struct getter<user<T>> {
-			static T& get(lua_State* L, int index = -1) {
+			static T& get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return *static_cast<T*>(lua_touserdata(L, index));
 			}
 		};
 
 		template<typename T>
 		struct getter<user<T*>> {
-			static T* get(lua_State* L, int index = -1) {
+			static T* get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return static_cast<T*>(lua_touserdata(L, index));
 			}
 		};
 
 		template<>
 		struct getter<type> {
-			static type get(lua_State *L, int index) {
+			static type get(lua_State *L, int index, record& tracking) {
+				tracking.use(1);
 				return static_cast<type>(lua_type(L, index));
 			}
 		};
 
 		template<>
 		struct getter<bool> {
-			static bool get(lua_State* L, int index) {
+			static bool get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return lua_toboolean(L, index) != 0;
 			}
 		};
 
 		template<>
 		struct getter<std::string> {
-			static std::string get(lua_State* L, int index = -1) {
+			static std::string get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				std::size_t len;
 				auto str = lua_tolstring(L, index, &len);
 				return{ str, len };
@@ -136,7 +149,8 @@ namespace sol {
 
 		template <>
 		struct getter<string_detail::string_shim> {
-			string_detail::string_shim get(lua_State* L, int index) {
+			string_detail::string_shim get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				size_t len;
 				const char* p = lua_tolstring(L, index, &len);
 				return string_detail::string_shim(p, len);
@@ -145,15 +159,17 @@ namespace sol {
 
 		template<>
 		struct getter<const char*> {
-			static const char* get(lua_State* L, int index = -1) {
+			static const char* get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return lua_tostring(L, index);
 			}
 		};
 
 		template<>
 		struct getter<meta_function> {
-			static meta_function get(lua_State *L, int index) {
-				const char* name = getter<const char*>{}.get(L, index);
+			static meta_function get(lua_State *L, int index, record& tracking) {
+				tracking.use(1);
+				const char* name = getter<const char*>{}.get(L, index, tracking);
 				for (std::size_t i = 0; i < meta_function_names.size(); ++i)
 					if (meta_function_names[i] == name)
 						return static_cast<meta_function>(i);
@@ -163,7 +179,8 @@ namespace sol {
 
 		template<>
 		struct getter<char> {
-			static char get(lua_State* L, int index = -1) {
+			static char get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				size_t len;
 				auto str = lua_tolstring(L, index, &len);
 				return len > 0 ? str[0] : '\0';
@@ -174,28 +191,32 @@ namespace sol {
 
 		template<>
 		struct getter<std::wstring> {
-			static std::wstring get(lua_State* L, int index = -1) {
+			static std::wstring get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return{};
 			}
 		};
 
 		template<>
 		struct getter<std::u16string> {
-			static std::u16string get(lua_State* L, int index = -1) {
+			static std::u16string get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return{};
 			}
 		};
 
 		template<>
 		struct getter<std::u32string> {
-			static std::u32string get(lua_State* L, int index = -1) {
+			static std::u32string get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return{};
 			}
 		};
 
 		template<>
 		struct getter<wchar_t> {
-			static wchar_t get(lua_State* L, int index = -1) {
+			static wchar_t get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				auto str = getter<std::wstring>{}.get(L, index);
 				return str.size() > 0 ? str[0] : '\0';
 			}
@@ -203,7 +224,8 @@ namespace sol {
 
 		template<>
 		struct getter<char16_t> {
-			static char get(lua_State* L, int index = -1) {
+			static char get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				auto str = getter<std::u16string>{}.get(L, index);
 				return str.size() > 0 ? str[0] : '\0';
 			}
@@ -211,7 +233,8 @@ namespace sol {
 
 		template<>
 		struct getter<char32_t> {
-			static char32_t get(lua_State* L, int index = -1) {
+			static char32_t get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				auto str = getter<std::u32string>{}.get(L, index);
 				return str.size() > 0 ? str[0] : '\0';
 			}
@@ -221,49 +244,56 @@ namespace sol {
 
 		template<>
 		struct getter<nil_t> {
-			static nil_t get(lua_State*, int = -1) {
+			static nil_t get(lua_State*, int, record& tracking) {
+				tracking.use(1);
 				return nil;
 			}
 		};
 
 		template<>
 		struct getter<std::nullptr_t> {
-			static std::nullptr_t get(lua_State*, int = -1) {
+			static std::nullptr_t get(lua_State*, int, record& tracking) {
+				tracking.use(1);
 				return nullptr;
 			}
 		};
 
 		template<>
 		struct getter<nullopt_t> {
-			static nullopt_t get(lua_State*, int = -1) {
+			static nullopt_t get(lua_State*, int, record& tracking) {
+				tracking.use(1);
 				return nullopt;
 			}
 		};
 
 		template<>
 		struct getter<this_state> {
-			static this_state get(lua_State* L, int = -1) {
+			static this_state get(lua_State* L, int, record& tracking) {
+				tracking.use(0);
 				return this_state{ L };
 			}
 		};
 
 		template<>
 		struct getter<lua_CFunction> {
-			static lua_CFunction get(lua_State* L, int index = -1) {
+			static lua_CFunction get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return lua_tocfunction(L, index);
 			}
 		};
 
 		template<>
 		struct getter<c_closure> {
-			static c_closure get(lua_State* L, int index = -1) {
+			static c_closure get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return c_closure(lua_tocfunction(L, index), -1);
 			}
 		};
 
 		template<>
 		struct getter<error> {
-			static error get(lua_State* L, int index = -1) {
+			static error get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				size_t sz = 0;
 				const char* err = lua_tolstring(L, index, &sz);
 				if (err == nullptr) {
@@ -275,20 +305,22 @@ namespace sol {
 
 		template<>
 		struct getter<void*> {
-			static void* get(lua_State* L, int index = -1) {
+			static void* get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return lua_touserdata(L, index);
 			}
 		};
 
 		template<typename T>
 		struct getter<T*> {
-			static T* get_no_nil(lua_State* L, int index = -1) {
+			static T* get_no_nil(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				void** pudata = static_cast<void**>(lua_touserdata(L, index));
 				void* udata = *pudata;
-				return get_no_nil_from(L, udata, index);
+				return get_no_nil_from(L, udata, index, tracking);
 			}
 
-			static T* get_no_nil_from(lua_State* L, void* udata, int index = -1) {
+			static T* get_no_nil_from(lua_State* L, void* udata, int index, record&) {
 				if (detail::has_derived<T>::value && luaL_getmetafield(L, index, &detail::base_class_cast_key()[0]) != 0) {
 					void* basecastdata = lua_touserdata(L, -1);
 					detail::inheritance_cast_function ic = (detail::inheritance_cast_function)basecastdata;
@@ -300,25 +332,27 @@ namespace sol {
 				return obj;
 			}
 
-			static T* get(lua_State* L, int index = -1) {
+			static T* get(lua_State* L, int index, record& tracking) {
 				type t = type_of(L, index);
-				if (t == type::nil)
+				if (t == type::nil) {
+					tracking.use(1);
 					return nullptr;
-				return get_no_nil(L, index);
+				}
+				return get_no_nil(L, index, tracking);
 			}
 		};
 
 		template<typename T>
 		struct getter<non_null<T*>> {
-			static T* get(lua_State* L, int index = -1) {
-				return getter<T*>::get_no_nil(L, index);
+			static T* get(lua_State* L, int index, record& tracking) {
+				return getter<T*>::get_no_nil(L, index, tracking);
 			}
 		};
 
 		template<typename T>
 		struct getter<T&> {
-			static T& get(lua_State* L, int index = -1) {
-				return *getter<T*>::get_no_nil(L, index);
+			static T& get(lua_State* L, int index, record& tracking) {
+				return *getter<T*>::get_no_nil(L, index, tracking);
 			}
 		};
 
@@ -327,7 +361,8 @@ namespace sol {
 			typedef typename unique_usertype_traits<T>::type P;
 			typedef typename unique_usertype_traits<T>::actual_type Real;
 
-			static Real& get(lua_State* L, int index = -1) {
+			static Real& get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				P** pref = static_cast<P**>(lua_touserdata(L, index));
 				detail::special_destruct_func* fx = static_cast<detail::special_destruct_func*>(static_cast<void*>(pref + 1));
 				Real* mem = static_cast<Real*>(static_cast<void*>(fx + 1));
@@ -337,29 +372,27 @@ namespace sol {
 
 		template<typename T>
 		struct getter<std::reference_wrapper<T>> {
-			static T& get(lua_State* L, int index = -1) {
-				return getter<T&>{}.get(L, index);
+			static T& get(lua_State* L, int index, record& tracking) {
+				return getter<T&>{}.get(L, index, tracking);
 			}
 		};
 
 		template<typename... Args>
 		struct getter<std::tuple<Args...>> {
 			template <std::size_t... I>
-			static decltype(auto) apply(std::index_sequence<I...>, lua_State* L, int index = -1) {
-				index = index < 0 ? lua_absindex(L, index) - (sizeof...(I)-1) : index;
-				return std::tuple<decltype(stack::get<Args>(L, index + I))...>(stack::get<Args>(L, index + I)...);
+			static decltype(auto) apply(std::index_sequence<I...>, lua_State* L, int index, record& tracking) {
+				return std::tuple<decltype(stack::get<Args>(L, index))...>{stack::get<Args>(L, index + tracking.used, tracking)...};
 			}
 
-			static decltype(auto) get(lua_State* L, int index = -1) {
-				return apply(std::make_index_sequence<sizeof...(Args)>(), L, index);
+			static decltype(auto) get(lua_State* L, int index, record& tracking) {
+				return apply(std::make_index_sequence<sizeof...(Args)>(), L, index, tracking);
 			}
 		};
 
 		template<typename A, typename B>
 		struct getter<std::pair<A, B>> {
-			static decltype(auto) get(lua_State* L, int index = -1) {
-				index = index < 0 ? lua_absindex(L, index) - 1 : index;
-				return std::pair<decltype(stack::get<A>(L, index)), decltype(stack::get<B>(L, index))>(stack::get<A>(L, index), stack::get<B>(L, index + 1));
+			static decltype(auto) get(lua_State* L, int index, record& tracking) {
+				return std::pair<decltype(stack::get<A>(L, index)), decltype(stack::get<B>(L, index))>{stack::get<A>(L, index, tracking), stack::get<B>(L, index + tracking.used, tracking)};
 			}
 		};
 

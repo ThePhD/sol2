@@ -50,7 +50,8 @@ namespace sol {
 			template <type expected, int(*check_func)(lua_State*, int)>
 			struct basic_check {
 				template <typename Handler>
-				static bool check(lua_State* L, int index, Handler&& handler) {
+				static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+					tracking.use(1);
 					bool success = check_func(L, index) == 1;
 					if (!success) {
 						// expected type, actual type
@@ -59,35 +60,13 @@ namespace sol {
 					return success;
 				}
 			};
-
-			template <bool b>
-			struct check_types {
-				template <std::size_t I0, std::size_t... I, typename T, typename... Args, typename Handler>
-				static bool check(types<T, Args...>, std::index_sequence<I0, I...>, lua_State* L, int firstargument, Handler&& handler) {
-					if (!stack::check<T>(L, firstargument + I0, handler))
-						return false;
-					return check(types<Args...>(), std::index_sequence<I...>(), L, firstargument - static_cast<int>(is_transparent_argument<meta::unqualified_t<T>>::value), std::forward<Handler>(handler));
-				}
-
-				template <typename Handler>
-				static bool check(types<>, std::index_sequence<>, lua_State*, int, Handler&&) {
-					return true;
-				}
-			};
-
-			template <>
-			struct check_types<false> {
-				template <std::size_t... I, typename... Args, typename Handler>
-				static bool check(types<Args...>, std::index_sequence<I...>, lua_State*, int, Handler&&) {
-					return true;
-				}
-			};
 		} // stack_detail
 
 		template <typename T, type expected, typename>
 		struct checker {
 			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler) {
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				tracking.use(1);
 				const type indextype = type_of(L, index);
 				bool success = expected == indextype;
 				if (!success) {
@@ -98,19 +77,17 @@ namespace sol {
 			}
 		};
 
-		template <typename C>
-		struct checker<type, type::none, C> {
-			template <typename Handler>
-			static bool check(lua_State*, int, Handler&&) {
-				return true;
-			}
-		};
-
 		template <type expected, typename C>
 		struct checker<nil_t, expected, C> {
 			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler) {
-				bool success = lua_isnoneornil(L, index);
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				bool success = lua_isnil(L, index);
+				if (success) {
+					tracking.use(1);
+					return success;
+				}
+				tracking.use(0);
+				success = lua_isnone(L, index);
 				if (!success) {
 					// expected type, actual type
 					handler(L, index, expected, type_of(L, index));
@@ -123,9 +100,10 @@ namespace sol {
 		struct checker<nullopt_t, expected, C> : checker<nil_t> {};
 
 		template <typename C>
-		struct checker<this_state, type::none, C> {
+		struct checker<this_state, type::poly, C> {
 			template <typename Handler>
-			static bool check(lua_State*, int, Handler&&) {
+			static bool check(lua_State*, int, Handler&&, record& tracking) {
+				tracking.use(0);
 				return true;
 			}
 		};
@@ -133,7 +111,17 @@ namespace sol {
 		template <typename C>
 		struct checker<variadic_args, type::poly, C> {
 			template <typename Handler>
-			static bool check(lua_State*, int, Handler&&) {
+			static bool check(lua_State*, int, Handler&&, record& tracking) {
+				tracking.use(0);
+				return true;
+			}
+		};
+
+		template <typename C>
+		struct checker<type, type::poly, C> {
+			template <typename Handler>
+			static bool check(lua_State*, int, Handler&&, record& tracking) {
+				tracking.use(0);
 				return true;
 			}
 		};
@@ -141,7 +129,8 @@ namespace sol {
 		template <typename T, typename C>
 		struct checker<T, type::poly, C> {
 			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler) {
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				tracking.use(1);
 				bool success = !lua_isnone(L, index);
 				if (!success) {
 					// expected type, actual type
@@ -154,7 +143,8 @@ namespace sol {
 		template <typename T, typename C>
 		struct checker<T, type::lightuserdata, C> {
 			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler) {
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				tracking.use(1);
 				type t = type_of(L, index);
 				bool success = t == type::userdata || t == type::lightuserdata;
 				if (!success) {
@@ -168,7 +158,8 @@ namespace sol {
 		template <typename C>
 		struct checker<userdata_value, type::userdata, C> {
 			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler) {
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				tracking.use(1);
 				type t = type_of(L, index);
 				bool success = t == type::userdata;
 				if (!success) {
@@ -195,7 +186,8 @@ namespace sol {
 		template <typename T, typename C>
 		struct checker<T, type::function, C> {
 			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler) {
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				tracking.use(1);
 				type t = type_of(L, index);
 				if (t == type::nil || t == type::none || t == type::function) {
 					// allow for nil to be returned
@@ -228,7 +220,8 @@ namespace sol {
 		template <typename T, typename C>
 		struct checker<T, type::table, C> {
 			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler) {
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				tracking.use(1);
 				type t = type_of(L, index);
 				if (t == type::table) {
 					return true;
@@ -244,20 +237,22 @@ namespace sol {
 		template <typename T, typename C>
 		struct checker<T*, type::userdata, C> {
 			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler) {
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				tracking.use(1);
 				const type indextype = type_of(L, index);
 				// Allow nil to be transformed to nullptr
 				if (indextype == type::nil) {
 					return true;
 				}
-				return checker<T, type::userdata, C>{}.check(types<T>(), L, indextype, index, std::forward<Handler>(handler));
+				return checker<T, type::userdata, C>{}.check(types<T>(), L, indextype, index, std::forward<Handler>(handler), tracking);
 			}
 		};
 
 		template <typename T, typename C>
 		struct checker<T, type::userdata, C> {
 			template <typename U, typename Handler>
-			static bool check(types<U>, lua_State* L, type indextype, int index, Handler&& handler) {
+			static bool check(types<U>, lua_State* L, type indextype, int index, Handler&& handler, record& tracking) {
+				tracking.use(1);
 				if (indextype != type::userdata) {
 					handler(L, index, type::userdata, indextype);
 					return false;
@@ -291,56 +286,54 @@ namespace sol {
 			}
 
 			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler) {
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 				const type indextype = type_of(L, index);
-				return check(types<T>(), L, indextype, index, std::forward<Handler>(handler));
+				return check(types<T>(), L, indextype, index, std::forward<Handler>(handler), tracking);
 			}
 		};
 
 		template<typename T>
 		struct checker<T, type::userdata, std::enable_if_t<is_unique_usertype<T>::value>> {
 			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler) {
-				return checker<typename unique_usertype_traits<T>::type, type::userdata>{}.check(L, index, std::forward<Handler>(handler));
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				return checker<typename unique_usertype_traits<T>::type, type::userdata>{}.check(L, index, std::forward<Handler>(handler), tracking);
 			}
 		};
 
 		template<typename T, typename C>
 		struct checker<std::reference_wrapper<T>, type::userdata, C> {
 			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler) {
-				return checker<T, type::userdata, C>{}.check(L, index, std::forward<Handler>(handler));
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				return checker<T, type::userdata, C>{}.check(L, index, std::forward<Handler>(handler), tracking);
 			}
 		};
 
 		template<typename... Args, typename C>
 		struct checker<std::tuple<Args...>, type::poly, C> {
-			template <std::size_t... I, typename Handler>
-			static bool apply(std::index_sequence<I...> is, lua_State* L, int index, Handler&& handler) {
-				index = index < 0 ? lua_absindex(L, index) - (sizeof...(I)-1) : index;
-				return stack_detail::check_types<true>{}.check(types<Args...>(), is, L, index, handler);
-			}
-
 			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler) {
-				return apply(std::make_index_sequence<sizeof...(Args)>(), L, index, std::forward<Handler>(handler));
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				return stack::multi_check<Args...>(L, index, std::forward<Handler>(handler), tracking);
 			}
 		};
 
 		template<typename A, typename B, typename C>
 		struct checker<std::pair<A, B>, type::poly, C> {
 			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler) {
-				index = index < 0 ? lua_absindex(L, index) - 1 : index;
-				return stack::check<A>(L, index, handler) && stack::check<B>(L, index + 1, handler);
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				return stack::multi_check<A, B>(L, index, std::forward<Handler>(handler), tracking);
 			}
 		};
 
 		template<typename T, typename C>
 		struct checker<optional<T>, type::poly, C> {
 			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler) {
-				return lua_isnoneornil(L, index) || stack::check<T>(L, index, std::forward<Handler>(handler));
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				type t = type_of(L, index);
+				if (t == type::none) {
+					tracking.use(0);
+					return true;
+				}
+				return t == type::nil || stack::check<T>(L, index, std::forward<Handler>(handler), tracking);
 			}
 		};
 	} // stack

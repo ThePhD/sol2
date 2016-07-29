@@ -516,6 +516,9 @@ namespace sol {
 		struct lua_type_of<nullopt_t> : std::integral_constant<type, type::nil> { };
 
 		template <>
+		struct lua_type_of<std::nullptr_t> : std::integral_constant<type, type::nil> { };
+
+		template <>
 		struct lua_type_of<sol::error> : std::integral_constant<type, type::string> { };
 
 		template <bool b, typename Base>
@@ -581,6 +584,12 @@ namespace sol {
 		template <>
 		struct lua_type_of<variadic_args> : std::integral_constant<type, type::poly> {};
 
+		template <>
+		struct lua_type_of<this_state> : std::integral_constant<type, type::poly> {};
+
+		template <>
+		struct lua_type_of<type> : std::integral_constant<type, type::poly> {};
+
 		template <typename T>
 		struct lua_type_of<T*> : std::integral_constant<type, type::userdata> {};
 
@@ -593,12 +602,6 @@ namespace sol {
 		template <>
 		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
 
-		template <>
-		struct lua_type_of<type> : std::integral_constant<type, type::none> {};
-
-		template <>
-		struct lua_type_of<this_state> : std::integral_constant<type, type::none> {};
-
 		template <typename T>
 		struct lua_type_of<T, std::enable_if_t<
 			meta::all<
@@ -609,14 +612,30 @@ namespace sol {
 				>>
 			>::value
 		>> : std::integral_constant<type, type::table> {};
+
+		template <typename C, C v, template <typename...> class V, typename... Args>
+		struct accumulate : std::integral_constant<C, v> {};
+
+		template <typename C, C v, template <typename...> class V, typename T, typename... Args>
+		struct accumulate<C, v, V, T, Args...> : accumulate<C, v + V<T>::value, V, Args...> {};
 	} // detail
 
 	template <typename T>
 	struct lua_type_of : detail::lua_type_of<T> {};
 
 	template <typename T>
+	struct lua_size : std::integral_constant<int, 1> { };
+
+	template <typename A, typename B>
+	struct lua_size<std::pair<A, B>> : std::integral_constant<int, lua_size<A>::value + lua_size<B>::value> { };
+
+	template <typename... Args>
+	struct lua_size<std::tuple<Args...>> : std::integral_constant<int, detail::accumulate<int, 0, lua_size, Args...>::value> { };
+
+	template <typename T>
 	struct is_lua_primitive : std::integral_constant<bool,
 		type::userdata != lua_type_of<meta::unqualified_t<T>>::value
+		|| (lua_size<T>::value > 1)
 		|| std::is_base_of<reference, meta::unqualified_t<T>>::value
 		|| std::is_base_of<stack_reference, meta::unqualified_t<T>>::value
 		|| meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>::value
