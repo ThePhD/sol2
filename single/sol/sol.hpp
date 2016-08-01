@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-07-29 05:11:56.948443 UTC
-// This header was generated with sol v2.10.0 (revision 045d937)
+// Generated 2016-08-01 08:04:23.598113 UTC
+// This header was generated with sol v2.10.0 (revision 01bfeda)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4611,13 +4611,13 @@ namespace sol {
 		struct checker<T*, type::userdata, C> {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
-				tracking.use(1);
 				const type indextype = type_of(L, index);
 				// Allow nil to be transformed to nullptr
 				if (indextype == type::nil) {
+					tracking.use(1);
 					return true;
 				}
-				return checker<T, type::userdata, C>{}.check(types<T>(), L, indextype, index, std::forward<Handler>(handler), tracking);
+				return checker<meta::unqualified_t<T>, type::userdata, C>{}.check(types<meta::unqualified_t<T>>(), L, indextype, index, std::forward<Handler>(handler), tracking);
 			}
 		};
 

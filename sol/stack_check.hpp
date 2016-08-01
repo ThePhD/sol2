@@ -238,13 +238,13 @@ namespace sol {
 		struct checker<T*, type::userdata, C> {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
-				tracking.use(1);
 				const type indextype = type_of(L, index);
 				// Allow nil to be transformed to nullptr
 				if (indextype == type::nil) {
+					tracking.use(1);
 					return true;
 				}
-				return checker<T, type::userdata, C>{}.check(types<T>(), L, indextype, index, std::forward<Handler>(handler), tracking);
+				return checker<meta::unqualified_t<T>, type::userdata, C>{}.check(types<meta::unqualified_t<T>>(), L, indextype, index, std::forward<Handler>(handler), tracking);
 			}
 		};
 
