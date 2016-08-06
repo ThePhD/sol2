@@ -373,12 +373,12 @@ namespace sol {
 
 		template<typename Fx, typename Key, typename... Args, meta::disable<meta::is_specialization_of<overload_set, meta::unqualified_t<Fx>>> = meta::enabler>
 		void set_fx(types<>, Key&& key, Fx&& fx, Args&&... args) {
-			set(std::forward<Key>(key), function_args(std::forward<Fx>(fx), std::forward<Args>(args)...));
+			set(std::forward<Key>(key), as_function(std::forward<Fx>(fx), std::forward<Args>(args)...));
 		}
 
 		template<typename... Sig, typename... Args, typename Key>
 		void set_resolved_function(Key&& key, Args&&... args) {
-			set(std::forward<Key>(key), function_args<function_sig<Sig...>>(std::forward<Args>(args)...));
+			set(std::forward<Key>(key), as_function<function_sig<Sig...>>(std::forward<Args>(args)...));
 		}
 
 	public:

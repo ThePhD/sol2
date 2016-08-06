@@ -38,7 +38,7 @@ namespace sol {
 		
 		template <typename N, typename F, meta::enable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
 		void add(lua_State* L, N&& n, F&& f) {
-			registrations.emplace_back(make_object(L, std::forward<N>(n)), make_object(L, function_args(std::forward<F>(f))));
+			registrations.emplace_back(make_object(L, std::forward<N>(n)), make_object(L, as_function(std::forward<F>(f))));
 		}
 
 		template <typename N, typename F, meta::disable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>

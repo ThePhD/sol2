@@ -39,7 +39,7 @@ namespace sol {
 	};
 
 	template <typename Sig = function_sig<>, typename... Args>
-	function_arguments<Sig, Args...> function_args(Args&&... args) {
+	function_arguments<Sig, Args...> as_function(Args&&... args) {
 		return function_arguments<Sig, Args...>(std::forward<Args>(args)...);
 	}
 

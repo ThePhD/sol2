@@ -79,6 +79,13 @@ Sol can detect ``nullptr``, so if you happen to return it there won't be any dan
 		return nullptr;
 	};
 
+	lua["my_func_2"] = [] () -> std::unique_ptr<my_type> {
+		// default-constructs as a nullptr, 
+		// gets pushed as nil to Lua 
+		return std::unique_ptr<my_type>(); 
+		// same happens for std::shared_ptr
+	}
+
 	// Acceptable, it will set 'something' to nil 
 	// (and delete it on next GC if there's no more references)
 	lua.set("something", nullptr);

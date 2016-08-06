@@ -40,3 +40,5 @@ A traits type for alerting the library that a certain type is to be pushed as a 
 	}
 
 This will allow the framework to properly handle ``boost::shared_ptr<T>``, with ref-counting and all. The `type` is the  type that lua and sol will interact with, and will allow you to pull out a non-owning reference / pointer to the data when you just ask for a plain `T*` or `T&` or `T` using the getter functions and properties of Sol.
+
+Note that if ``is_null`` triggers, a ``nil`` value will be pushed into Sol.

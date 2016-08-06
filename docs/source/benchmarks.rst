@@ -11,7 +11,7 @@ These are some informal and formal benchmarks done by both the developers of sol
 
 As of the writing of this documentation (July 29th, 2016), :doc:`Sol<index>` (Sol2) seems to take the cake in most categories for speed! Below are some graphs from `lua-bench`_. You can read the benchmarking code there if you think something was done wrong, and submit a pull requests or comment on something to make sure that ThePhD is being honest about his work. All categories are the performance of things described at the top of the :doc:`feature table<features>`.
 
-Note that Sol here makes use of its more performant variants (see :doc:`c_call<api/c-call>`), and ThePhD also does his best to make use of the most performant variants for other frameworks by disabling type checks where possible as well (Thanks to Liam Devine of OOLua for explaining how to turn off type checks in OOLua).
+Note that Sol here makes use of its more performant variants (see :doc:`c_call<api/c_call>`), and ThePhD also does his best to make use of the most performant variants for other frameworks by disabling type checks where possible as well (Thanks to Liam Devine of OOLua for explaining how to turn off type checks in OOLua).
 
 Bars go up to the average execution time. Lower is better. Reported times are for the desired operation run through `nonius`_ Results are sorted from top to bottom by best to worst. Note that there are error bars to show potential variance in performance: generally, same-sized errors bars plus very close average execution time implies no significant difference in speed, despite the vastly different abstraction techniques used.
 

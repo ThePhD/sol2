@@ -335,7 +335,7 @@ TEST_CASE("state/require", "opening using a file") {
 	struct open {
 		static int open_func(lua_State* L) {
 			sol::state_view lua = L;
-			return sol::stack::push(L, lua.create_table_with("modfunc", sol::function_args([]() { return 221; })));
+			return sol::stack::push(L, lua.create_table_with("modfunc", sol::as_function([]() { return 221; })));
 		}
 	};
 
@@ -356,7 +356,7 @@ TEST_CASE("state/multi-require", "make sure that requires transfers across hand-
 	struct open {
 		static int open_func(lua_State* L) {
 			sol::state_view lua = L;
-			return sol::stack::push(L, lua.create_table_with("modfunc", sol::function_args([]() { return 221; })));
+			return sol::stack::push(L, lua.create_table_with("modfunc", sol::as_function([]() { return 221; })));
 		}
 	};
 

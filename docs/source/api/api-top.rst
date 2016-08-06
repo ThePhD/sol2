@@ -23,9 +23,10 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    overload
    protect
    readonly
+   resolve
+   as_function
    property
    proxy
-   resolve
    stack
    optional
    state

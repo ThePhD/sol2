@@ -50,6 +50,7 @@ If the keys within nested queries try to traverse into a table that doesn't exis
 
 .. code-block:: cpp
 	:caption: function: set / traversing set
+	:name: set-value
 
 	template<typename... Args>
 	table& set(Args&&... args);
@@ -62,6 +63,15 @@ These functions set items into the table. The first one (``set``) can set  *mult
 .. note::
 
 	Value semantics are applied to all set operations. If you do not ``std::ref( obj )`` or specifically make a pointer with ``std::addressof( obj )`` or ``&obj``, it will copy / move. This is different from how :doc:`sol::function<function>` behaves with its call operator.
+
+.. code-block:: cpp
+	:caption: function: set a function with the specified key into lua
+	:name: set-function
+
+	template<typename Key, typename Fx>
+	state_view& set_function(Key&& key, Fx&& fx, [...]);
+
+Sets the desired function to the specified key value. Note that it also allows for passing a member function plus a member object or just a single member function: however, using a lambda is almost always better when you want to bind a member function + class instance to a single function call in Lua.
 
 .. code-block:: cpp
 	:caption: function: add
@@ -158,14 +168,6 @@ A functional ``for_each`` loop that calls the desired function. The passed in fu
 	proxy<const table&, T> operator[](T&& key) const;
 
 Generates a :doc:`proxy<proxy>` that is templated on the table type and the key type. Enables lookup of items and their implicit conversion to a desired type.
-
-.. code-block:: cpp
-	:caption: function: set a function with the specified key into lua
-
-	template<typename Key, typename Fx>
-	state_view& set_function(Key&& key, Fx&& fx, [...]);
-
-Sets the desired function to the specified key value. Note that it also allows for passing a member function plus a member object or just a single member function: however, using a lambda is almost always better when you want to bind a member function + class instance to a single function call in Lua.
 
 .. code-block:: cpp
 	:caption: function: create a table with defaults

@@ -291,7 +291,9 @@ You can also return mutiple items yourself from a C++-bound function. Here, we'r
 	// c == "meow"
 
 
-Note here that we use :doc:`sol::object<../api/object>` to transport through "any value" that can come from Lua. You can also use ``sol::make_object`` to create an object from some value, so that it can be returned into Lua as well. 
+Note here that we use :doc:`sol::object<../api/object>` to transport through "any value" that can come from Lua. You can also use ``sol::make_object`` to create an object from some value, so that it can be returned into Lua as well.
+
+Finally, note that there's a caveat if you use the regular :ref:`sol::table::set<set-value>` function to set a lambda / callable C++ struct (see :doc:`here for more details<../api/as_function>`).
 
 
 This covers almost everything you need to know about Functions and how they interact with Sol. For some advanced tricks and neat things, check out :doc:`sol::this_state<../api/this_state>` and :doc:`sol::variadic_args<../api/variadic_args>`. The last stop in this tutorial is about :doc:`C++ types (usertypes) in Lua<cxx-in-lua>`!

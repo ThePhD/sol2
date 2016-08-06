@@ -62,6 +62,7 @@ If your script returns a value, you can capture it from the returned :ref:`funct
 
 .. code-block:: cpp
 	:caption: function: require / require_file
+	:name: state-require-function
 
 	sol::object require(const std::string& key, lua_CFunction open_function, bool create_global = true);
 	sol::object require_script(const std::string& key, const std::string& code, bool create_global = true);

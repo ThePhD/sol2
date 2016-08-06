@@ -35,7 +35,7 @@ Using this simple command line:
 
 >>> g++ -std=c++14 test.cpp -llua -I"path/to/lua/include" -L"path/to/lua/lib"
 
-Or using your favorite IDE / tool after setting up your include paths and library paths to lua according to the documentation of the Lua distribution you got. Remember your  linked lua library (``-llua``) and include / library paths will depend on your OS, file system, Lua distribution and your installation / compilation method of your Lua distribution.
+Or using your favorite IDE / tool after setting up your include paths and library paths to Lua according to the documentation of the Lua distribution you got. Remember your linked lua library (``-llua``) and include / library paths will depend on your OS, file system, Lua distribution and your installation / compilation method of your Lua distribution.
 
 .. note::
 	
@@ -60,7 +60,7 @@ If this works, you're ready to start! The first line creates the ``lua_State`` a
 		return 0;
 	}
 
-If you're interested in integrating Sol with a project that already uses some other library or Lua in the codebase, check out the :doc:`existing example<existing>` to see how to work with Sol when you add it to a project!
+If you're interested in integrating Sol with a project that already uses some other library or Lua in the codebase, check out the :doc:`existing example<existing>` to see how to work with Sol when you add it to a project (the existing example covers ``require`` as well)!
 
 Next, let's start :doc:`reading/writing some variables<variables>` from Lua into C++, and vice-versa!
 
