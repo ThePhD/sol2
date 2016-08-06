@@ -184,7 +184,7 @@ namespace sol {
 					luaL_requiref(L, "debug", luaopen_debug, 1);
 					lua_pop(L, 1);
 					break;
-				case lib:utf8:
+				case lib::utf8:
 #if SOL_LUA_VERSION > 502 && !defined(SOL_LUAJIT)
 					luaL_requiref(L, "utf8", luaopen_utf8, 1);
 					lua_pop(L, 1);
