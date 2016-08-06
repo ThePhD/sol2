@@ -171,8 +171,10 @@ The constructor of usertype takes a variable number of arguments. It takes an ev
     - Binds a typical member function or variable to ``"{name}"``. In the case of a member variable or member function, ``type`` must be ``T`` or a base of ``T``.
 * ``"{name}", sol::readonly( &type::member_variable )``
     - Binds a typical variable to ``"{name}"``. Similar to the above, but the variable will be read-only, meaning an error will be generated if anything attemps to write to this variable.
-* ``"{name}", sol::property( &type::getter_func, &type::setter_func )``
+* ``"{name}", sol::property( getter_func, setter_func )``
     - Binds a typical variable to ``"{name}"``, but gets and sets using the specified setter and getter functions. Not that if you do not pass a setter function, the variable will be read-only. Also not that if you do not pass a getter function, it will be write-only.
+* ``"{name}", sol::var( some_value )`` or ``"{name}", sol::var( std::ref( some_value ) )``
+    - Binds a typical variable to ``"{name}"``, optionally by reference (e.g., refers to the same memory in C++). This is useful for global variables and the like.
 * ``"{name}", sol::overloaded( Func1, Func2, ... )``
     - Creates an oveloaded member function that discriminates on number of arguments and types.
 * ``sol::base_classes, sol::bases<Bases...>``

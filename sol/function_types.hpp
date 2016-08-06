@@ -288,6 +288,16 @@ namespace sol {
 			}
 		};
 
+		template <typename T>
+		struct pusher<var_wrapper<T>> {
+			static int push(lua_State* L, var_wrapper<T>&& vw) {
+				return stack::push(L, std::move(vw.value));
+			}
+			static int push(lua_State* L, const var_wrapper<T>& vw) {
+				return stack::push(L, vw.value);
+			}
+		};
+
 		template <typename T, typename... Lists>
 		struct pusher<detail::tagged<T, constructor_list<Lists...>>> {
 			static int push(lua_State* L, detail::tagged<T, constructor_list<Lists...>>) {

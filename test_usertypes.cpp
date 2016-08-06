@@ -1207,6 +1207,26 @@ TEST_CASE("usertype/vars", "usertype vars can bind various class items") {
 		"ref_global2", sol::var(std::ref(through_variable))
 		);
 
+	int prets = lua["test"]["straight"];
+	int pretg = lua["test"]["global"];
+	int pretrg = lua["test"]["ref_global"];
+	int pretg2 = lua["test"]["global2"];
+	int pretrg2 = lua["test"]["ref_global2"];
+
+	REQUIRE(prets == 2);
+	REQUIRE(pretg == 25);
+	REQUIRE(pretrg == 25);
+	REQUIRE(pretg2 == 10);
+	REQUIRE(pretrg2 == 10);
+
+	lua.script(R"(
+print(test.straight)
+test.straight = 50
+print(test.straight)
+)");
+	int s = lua["test"]["straight"];
+	REQUIRE(s == 50);
+
 	lua.script(R"(
 t = test.new()
 print(t.global)

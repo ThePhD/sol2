@@ -209,3 +209,31 @@ TEST_CASE("usertype/simple-shared-ptr-regression", "simple usertype metatables s
 	REQUIRE(created == 1);
 	REQUIRE(destroyed == 1);
 }
+
+TEST_CASE("usertypes/simple=vars", "simple usertype vars can bind various values (no ref)") {
+	int muh_variable = 10;
+	int through_variable = 25;
+
+	sol::state lua;
+	lua.open_libraries();
+
+	struct test {};
+	lua.new_simple_usertype<test>("test",
+		"straight", sol::var(2),
+		"global", sol::var(muh_variable),
+		"global2", sol::var(through_variable)
+		);
+
+	lua.script(R"(
+s = test.straight
+g = test.global
+g2 = test.global2
+)");
+
+	int s = lua["s"];
+	int g = lua["g"];
+	int g2 = lua["g2"];
+	REQUIRE(s == 2);
+	REQUIRE(g == 10);
+	REQUIRE(g2 == 25);
+}
