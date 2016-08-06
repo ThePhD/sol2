@@ -149,12 +149,6 @@ namespace sol {
 					lua_pop(L, 1);
 #endif // Lua 5.2+ only
 					break;
-				case lib:utf8:
-#if SOL_LUA_VERSION > 502
-					luaL_requiref(L, "utf8", luaopen_utf8, 1);
-					lua_pop(L, 1);
-#endif // Lua 5.3+ only
-					break;
 #endif // Not LuaJIT
 				case lib::string:
 					luaL_requiref(L, "string", luaopen_string, 1);
@@ -189,6 +183,12 @@ namespace sol {
 				case lib::debug:
 					luaL_requiref(L, "debug", luaopen_debug, 1);
 					lua_pop(L, 1);
+					break;
+				case lib:utf8:
+#if SOL_LUA_VERSION > 502 && !defined(SOL_LUAJIT)
+					luaL_requiref(L, "utf8", luaopen_utf8, 1);
+					lua_pop(L, 1);
+#endif // Lua 5.3+ only
 					break;
 				case lib::ffi:
 #ifdef SOL_LUAJIT
