@@ -1191,3 +1191,58 @@ end
 		lua["func"](bar);
 	});
 }
+
+TEST_CASE("usertype/vars", "usertype vars can bind various class items") {
+	static int muh_variable = 25;
+	static int through_variable = 10;
+
+	sol::state lua;
+	lua.open_libraries();
+	struct test {};
+	lua.new_usertype<test>("test",
+		"straight", sol::var(2),
+		"global", sol::var(muh_variable),
+		"ref_global", sol::var(std::ref(muh_variable)),
+		"global2", sol::var(through_variable),
+		"ref_global2", sol::var(std::ref(through_variable))
+		);
+
+	lua.script(R"(
+t = test.new()
+print(t.global)
+t.global = 50
+print(t.global)
+)");
+	int mv = lua["test"]["global"];
+	REQUIRE(mv == 50);
+	REQUIRE(muh_variable == 25);
+
+
+	lua.script(R"(
+print(t.ref_global)
+t.ref_global = 50
+print(t.ref_global)
+)");
+	int rmv = lua["test"]["ref_global"];
+	REQUIRE(rmv == 50);
+	REQUIRE(muh_variable == 50);
+
+	REQUIRE(through_variable == 10);
+	lua.script(R"(
+print(test.global2)
+test.global2 = 35
+print(test.global2)
+)");
+	int tv = lua["test"]["global2"];
+	REQUIRE(through_variable == 10);
+	REQUIRE(tv == 35);
+
+	lua.script(R"(
+print(test.ref_global2)
+test.ref_global2 = 35
+print(test.ref_global2)
+)");
+	int rtv = lua["test"]["ref_global2"];
+	REQUIRE(rtv == 35);
+	REQUIRE(through_variable == 35);
+}

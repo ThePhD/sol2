@@ -170,6 +170,20 @@ namespace sol {
 			}
 		};
 
+		template <typename T, bool is_index, bool is_variable, bool checked, int boost, typename C>
+		struct agnostic_lua_call_wrapper<var_wrapper<T>, is_index, is_variable, checked, boost, C> {
+			template <typename F>
+			static int call(lua_State* L, F&& f) {
+				if (is_index) {
+					return stack::push(L, detail::unwrap(f.value));
+				}
+				else {
+					detail::unwrap(f.value) = stack::get<meta::unwrapped_t<T>>(L, 3 + boost);
+					return 0;
+				}
+			}
+		};
+
 		template <bool is_index, bool is_variable, bool checked, int boost, typename C>
 		struct agnostic_lua_call_wrapper<lua_r_CFunction, is_index, is_variable, checked, boost, C> {
 			static int call(lua_State* L, lua_r_CFunction f) {
@@ -468,6 +482,8 @@ namespace sol {
 		template <typename R, typename W>
 		struct is_var_bind<property_wrapper<R, W>> : std::true_type {};
 
+		template <typename T>
+		struct is_var_bind<var_wrapper<T>> : std::true_type {};
 	} // call_detail
 
 	template <typename T>

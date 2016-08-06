@@ -197,6 +197,9 @@ namespace sol {
 
 		template <std::size_t Idx, typename N, typename F, typename = std::enable_if_t<!meta::any_same<meta::unqualified_t<N>, base_classes_tag, call_construction>::value>>
 		void make_regs(regs_t& l, int& index, N&& n, F&&) {
+			if (is_variable_binding<meta::unqualified_t<F>>::value) {
+				return;
+			}
 			luaL_Reg reg = usertype_detail::make_reg(std::forward<N>(n), make_func<Idx>());
 			// Returnable scope
 			// That would be a neat keyword for C++
@@ -223,7 +226,7 @@ namespace sol {
 		usertype_metatable(Args&&... args) : functions(std::forward<Args>(args)...),
 		indexfunc(usertype_detail::indexing_fail<true>), newindexfunc(usertype_detail::indexing_fail<false>),
 		destructfunc(nullptr), callconstructfunc(nullptr), baseclasscheck(nullptr), baseclasscast(nullptr), 
-		mustindex(contains_variable() || contains_index()), secondarymeta(false) {
+		mustindex(contains_variable() || contains_index()), secondarymeta(contains_variable()) {
 		}
 
 		template <std::size_t I0, std::size_t I1, bool is_index>
@@ -400,7 +403,11 @@ namespace sol {
 					lua_createtable(L, 0, 1);
 					stack_reference metabehind(L, -1);
 					if (um.callconstructfunc != nullptr) {
-						stack::set_field(L, sol::meta_function::call_function, make_closure(um.callconstructfunc, make_light(um)), metabehind.stack_index());
+						stack::set_field(L, meta_function::call_function, make_closure(um.callconstructfunc, make_light(um)), metabehind.stack_index());
+					}
+					if (um.secondarymeta) {
+						stack::set_field(L, meta_function::index, make_closure(umt_t::index_call, make_light(um)), metabehind.stack_index());
+						stack::set_field(L, meta_function::new_index, make_closure(umt_t::new_index_call, make_light(um)), metabehind.stack_index());
 					}
 					stack::set_field(L, metatable_key, metabehind, t.stack_index());
 					metabehind.pop();

@@ -227,6 +227,10 @@ Then, to register the base classes explicitly:
 	);
 
 .. note::
+
+	You must list ALL base classes, including (if there were any) the base classes of A, and the base classes of those base classes, etc. if you want Sol/Lua to handle them automagically.
+
+.. note::
 	
 	Sol does not support down-casting from a base class to a derived class at runtime.
 

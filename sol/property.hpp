@@ -75,9 +75,26 @@ namespace sol {
 
 	// Allow someone to make a member variable readonly (const)
 	template <typename R, typename T>
-	auto readonly(R T::* v) {
+	inline auto readonly(R T::* v) {
 		typedef const R C;
 		return static_cast<C T::*>(v);
+	}
+
+	template <typename T>
+	struct var_wrapper {
+		T value;
+		template <typename... Args>
+		var_wrapper(Args&&... args) : value(std::forward<Args>(args)...) {}
+		var_wrapper(const var_wrapper&) = default;
+		var_wrapper(var_wrapper&&) = default;
+		var_wrapper& operator=(const var_wrapper&) = default;
+		var_wrapper& operator=(var_wrapper&&) = default;
+	};
+
+	template <typename V>
+	inline auto var(V&& v) {
+		typedef meta::unqualified_t<V> T;
+		return var_wrapper<T>(std::forward<V>(v));
 	}
 
 } // sol

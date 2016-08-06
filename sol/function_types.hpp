@@ -196,9 +196,12 @@ namespace sol {
 				return stack::push<T>(L, detail::forward_get<I>(fp.params)...);
 			}
 
-			template <typename FP>
-			static int push(lua_State* L, FP&& fp) {
-				return push_func(std::make_index_sequence<sizeof...(Args)>(), L, std::forward<FP>(fp));
+			static int push(lua_State* L, const function_arguments<T, Args...>& fp) {
+				return push_func(std::make_index_sequence<sizeof...(Args)>(), L, fp);
+			}
+
+			static int push(lua_State* L, function_arguments<T, Args...>&& fp) {
+				return push_func(std::make_index_sequence<sizeof...(Args)>(), L, std::move(fp));
 			}
 		};
 
