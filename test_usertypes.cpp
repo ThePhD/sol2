@@ -933,6 +933,38 @@ t = thing(256)
 	REQUIRE(y.v == 256);
 }
 
+TEST_CASE("usertype/call_constructor_2", "prevent metatable regression") {
+	class class01 {
+	public:
+		int x = 57;
+		class01() {}
+	};
+
+	class class02 {
+	public:
+		int x = 50;
+		class02() {}
+		class02(const class01& other) : x(other.x) {}
+	};
+
+	sol::state lua;
+
+	lua.new_usertype<class01>("class01",
+		sol::call_constructor, sol::constructors<sol::types<>, sol::types<const class01&>>()
+	);
+
+	lua.new_usertype<class02>("class02",
+		sol::call_constructor, sol::constructors<sol::types<>, sol::types<const class02&>, sol::types<const class01&>>()
+	);
+
+	REQUIRE_NOTHROW(lua.script(R"(
+x = class01()
+y = class02(x)
+)"));
+	class02& y = lua["y"];
+	REQUIRE(y.x == 57);
+}
+
 TEST_CASE("usertype/blank_constructor", "make sure lua types cannot be constructed if a blank / empty constructor is provided") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
