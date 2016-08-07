@@ -62,11 +62,11 @@ namespace sol {
 			return name;
 		}
 #elif defined(__GNUC__) || defined(__clang__)
-		template <typename T>
+		template <typename T, class seperator_mark = int>
 		inline std::string ctti_get_type_name() {
 			const static std::array<std::string, 2> removals = { { "{anonymous}", "(anonymous namespace)" } };
-    		std::string name = __PRETTY_FUNCTION__;
-			std::size_t start = name.find_last_of('[');
+			std::string name = __PRETTY_FUNCTION__;
+			std::size_t start = name.find_first_of('[');
 			start = name.find_first_of('=', start);
 			std::size_t end = name.find_last_of(']');
 			if (end == std::string::npos)
@@ -76,21 +76,21 @@ namespace sol {
 			if (start < name.size() - 1)
 				start += 1;
 			name = name.substr(start, end - start);
-			start = name.find(";");
+			start = name.rfind("seperator_mark");
 			if (start != std::string::npos) {
-				name.erase(start, name.length());
+				name.erase(start - 2, name.length());
 			}
 			while (!name.empty() && std::isblank(name.front())) name.erase(name.begin());
 			while (!name.empty() && std::isblank(name.back())) name.pop_back();
 
-            for (std::size_t r = 0; r < removals.size(); ++r) {
-    			auto found = name.find(removals[r]);
+			for (std::size_t r = 0; r < removals.size(); ++r) {
+				auto found = name.find(removals[r]);
 				while (found != std::string::npos) {
 					name.erase(found, removals[r].size());
 					found = name.find(removals[r]);
 				}
 			}
-            
+
 			return name;
 		}
 #else

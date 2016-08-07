@@ -12,7 +12,7 @@ In general, we always insert a T* in the first `sizeof(T*)` bytes, so the any fr
 For ``T``
 ---------
 
-These are classified with the metatable from ``
+These are classified with the metatable name from :ref:`usertype_traits\<T><usertype-traits>`.
 
 The data layout for references is as follows::
 
@@ -44,4 +44,4 @@ The data layout for these kinds of types is as follows::
 	|        T*        |    void(*)(void*) function_pointer    |               T               |
 	^-sizeof(T*) bytes-^-sizeof(void(*)(void*)) bytes, deleter-^- sizeof(T) bytes, actal data -^
 
-Note that we put a special deleter function before the actual data. This is because the custom deleter must know where the offset to the data is, not the rest of the library. Sol just needs to know about ``T*`` and the userdata (and userdata metatable) to work, everything else is for preserving construction / destruction syntax.
+Note that we put a special deleter function before the actual data. This is because the custom deleter must know where the offset to the data is, not the rest of the library. Sol just needs to know about ``T*`` and the userdata (and userdata metatable) to work, everything else is for preserving construction / destruction semantics.
