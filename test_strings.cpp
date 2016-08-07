@@ -3,7 +3,19 @@
 #include <catch.hpp>
 #include <sol.hpp>
 
-// There isn't a single library roundtripping with codecvt works on. We'll do the nitty-gritty of it later...
+struct test {};
+template <typename T>
+struct test_t {};
+
+namespace muh_namespace {
+	struct ns_test {};
+
+	namespace {
+		struct ns_anon_test {};
+	}
+}
+
+// There isn't a single library roundtripping which codecvt works on. We'll do the nitty-gritty of it later...
 TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	sol::state lua;
 
@@ -69,4 +81,14 @@ TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	REQUIRE(utf32_to_char32 == utf32str[0]);
 	REQUIRE(wide_to_char32 == utf32str[0]);
 #endif // Shit C++
+}
+
+TEST_CASE("detail/demangling", "test some basic demangling cases") {
+	std::string teststr = sol::detail::short_demangle<test>();
+	std::string nsteststr = sol::detail::short_demangle<muh_namespace::ns_test>();
+	std::string nsateststr = sol::detail::short_demangle<muh_namespace::ns_anon_test>();
+
+	REQUIRE(teststr == "test");
+	REQUIRE(nsteststr == "ns_test");
+	REQUIRE(nsateststr == "ns_anon_test");
 }

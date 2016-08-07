@@ -80,7 +80,8 @@ namespace sol {
 
 		template <bool is_index>
 		inline int indexing_fail(lua_State* L) {
-			string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, is_index ? -1 : -2);
+			auto maybeaccessor = stack::get<optional<string_detail::string_shim>>(L, is_index ? -1 : -2);
+			string_detail::string_shim accessor = maybeaccessor.value_or(string_detail::string_shim("(unknown)"));
 			if (is_index)
 				return luaL_error(L, "sol: attempt to index (get) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.data());
 			else
@@ -384,8 +385,14 @@ namespace sol {
 					if (um.baseclasscheck != nullptr) {
 						stack::set_field(L, detail::base_class_check_key(), um.baseclasscheck, t.stack_index());
 					}
+					else {
+						stack::set_field(L, detail::base_class_check_key(), nil, t.stack_index());
+					}
 					if (um.baseclasscast != nullptr) {
 						stack::set_field(L, detail::base_class_cast_key(), um.baseclasscast, t.stack_index());
+					}
+					else {
+						stack::set_field(L, detail::base_class_cast_key(), nil, t.stack_index());
 					}
 
 					if (mustindex) {

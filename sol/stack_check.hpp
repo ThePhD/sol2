@@ -269,8 +269,8 @@ namespace sol {
 				if (stack_detail::check_metatable<detail::unique_usertype<U>>(L))
 					return true;
 				bool success = false;
-				{
-					auto pn = stack::pop_n(L, 2);
+				if (detail::has_derived<T>::value) {
+					auto pn = stack::pop_n(L, 1);
 					lua_getfield(L, -1, &detail::base_class_check_key()[0]);
 					if (type_of(L, -1) != type::nil) {
 						void* basecastdata = lua_touserdata(L, -1);
@@ -279,9 +279,11 @@ namespace sol {
 					}
 				}
 				if (!success) {
+					lua_pop(L, 1);
 					handler(L, index, type::userdata, indextype);
 					return false;
 				}
+				lua_pop(L, 1);
 				return true;
 			}
 
