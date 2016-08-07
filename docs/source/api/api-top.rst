@@ -23,6 +23,7 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    overload
    protect
    readonly
+   var
    resolve
    as_function
    property
