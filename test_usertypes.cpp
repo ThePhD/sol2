@@ -1298,3 +1298,45 @@ print(test.ref_global2)
 	REQUIRE(rtv == 35);
 	REQUIRE(through_variable == 35);
 }
+
+TEST_CASE("usertypes/var-and-property", "make sure const vars are readonly and properties can handle lambdas") {
+	const static int arf = 20;
+
+	struct test {
+		int value = 10;
+	};
+
+	sol::state lua;
+	lua.open_libraries();
+
+	lua.new_usertype<test>("test",
+		"prop", sol::property(
+			[](test& t) {
+				return t.value;
+			},
+			[](test& t, int x) {
+				t.value = x;
+			}
+		),
+		"global", sol::var(std::ref(arf))
+		);
+
+	lua.script(R"(
+t = test.new()
+print(t.prop)
+t.prop = 50
+print(t.prop)
+	)");
+
+	test& t = lua["t"];
+	REQUIRE(t.value == 50);
+
+
+	REQUIRE_THROWS(
+		lua.script(R"(
+t = test.new()
+print(t.global)
+t.global = 20
+print(t.global)
+	)"));
+}

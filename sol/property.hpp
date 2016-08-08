@@ -60,17 +60,20 @@ namespace sol {
 
 	template <typename F, typename G>
 	inline decltype(auto) property(F&& f, G&& g) {
-		using namespace sol;
 		typedef lua_bind_traits<meta::unqualified_t<F>> left_traits;
 		typedef lua_bind_traits<meta::unqualified_t<G>> right_traits;
-		return property_detail::property(meta::boolean<(left_traits::arity < right_traits::arity)>(), std::forward<F>(f), std::forward<G>(g));
+		return property_detail::property(meta::boolean<(left_traits::free_arity < right_traits::free_arity)>(), std::forward<F>(f), std::forward<G>(g));
 	}
 
 	template <typename F>
 	inline decltype(auto) property(F&& f) {
-		using namespace sol;
 		typedef lua_bind_traits<meta::unqualified_t<F>> left_traits;
-		return property_detail::property(meta::boolean<(left_traits::arity == 0)>(), std::forward<F>(f));
+		return property_detail::property(meta::boolean<(left_traits::free_arity < 2)>(), std::forward<F>(f));
+	}
+
+	template <typename F>
+	inline decltype(auto) readonly_property(F&& f) {
+		return property_detail::property(std::true_type(), std::forward<F>(f));
 	}
 
 	// Allow someone to make a member variable readonly (const)
