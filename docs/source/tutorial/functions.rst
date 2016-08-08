@@ -294,4 +294,43 @@ You can also return mutiple items yourself from a C++-bound function. Here, we'r
 Note here that we use :doc:`sol::object<../api/object>` to transport through "any value" that can come from Lua. You can also use ``sol::make_object`` to create an object from some value, so that it can be returned into Lua as well.
 
 
-This covers almost everything you need to know about Functions and how they interact with Sol. For some advanced tricks and neat things, check out :doc:`sol::this_state<../api/this_state>` and :doc:`sol::variadic_args<../api/variadic_args>`. The last stop in this tutorial is about :doc:`C++ types (usertypes) in Lua<cxx-in-lua>`!
+Any return to and from Lua
+--------------------------
+
+It was hinted at in the previous code example, but ``sol::object`` is a good way to pass "any type" back into Lua (while we all wait for ``std::variant<...>`` to get implemented and shipped by C++ compiler/library implementers).
+
+It can be used like so, inconjunction with ``sol::this_state``:
+
+.. code-block:: cpp	
+	:linenos:
+	:caption: Return anything into Lua 
+	:name: object-return-cxx-functions	
+
+	sol::object fancy_func (sol::object a, sol::object b, sol::this_state s) {
+		sol::state_view lua = s;
+		if (a.is<int>() && b.is<int>()) {
+			return sol::make_object(lua, a.as<int>() + b.as<int>());
+		}
+		else if (a.is<bool>()) {
+			bool do_triple = a.as<bool>();
+			return sol::make_object(lua, b.as<double>() * ( do_triple ? 3 : 1 ) );
+		}
+		return sol::make_object(lua, sol::nil);
+	}
+
+	sol::state lua;
+
+	lua["f"] = fancy_func;
+	
+	int result = lua["f"](1, 2);
+	// result == 3
+	double result2 = lua["f"](false, 2.5);
+	// result2 == 2.5
+
+	// call in Lua, get result
+	lua.script("result3 = f(true, 5.5)");
+	double result3 = lua["result3"];
+	// result3 == 16.5
+
+
+This covers almost everything you need to know about Functions and how they interact with Sol. For some advanced tricks and neat things, check out :doc:`sol::this_state<../api/this_state>` and :doc:`sol::variadic_args<../api/variadic_args>`. The next stop in this tutorial is about :doc:`C++ types (usertypes) in Lua<cxx-in-lua>`!
