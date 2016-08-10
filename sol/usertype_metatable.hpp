@@ -193,6 +193,7 @@ namespace sol {
 			if (sizeof...(Bases) < 1) {
 				return;
 			}
+			mustindex = true;
 			(void)detail::swallow{ 0, ((detail::has_derived<Bases>::value = true), 0)... };
 
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
@@ -297,16 +298,21 @@ namespace sol {
 
 		template <bool b, typename... Bases>
 		static void walk_all_bases(lua_State* L, bool& found, int& ret, string_detail::string_shim& accessor) {
+			(void)L;
+			(void)found;
+			(void)ret;
+			(void)accessor;
 			(void)detail::swallow{ 0, (walk_single_base<b, Bases>(L, found, ret, accessor), 0)... };
 		}
 
 		template <bool b, bool toplevel = false>
 		static int core_indexing_call(lua_State* L) {
 			usertype_metatable& f = toplevel ? stack::get<light<usertype_metatable>>(L, upvalue_index(1)) : stack::pop<light<usertype_metatable>>(L);
-			if (toplevel && stack::get<type>(L, -1) != type::string) {
+			static const int keyidx = -2 + static_cast<int>(b);
+			if (toplevel && stack::get<type>(L, keyidx) != type::string) {
 				return b ? f.indexfunc(L) : f.newindexfunc(L);
 			}
-			string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, -1);
+			string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, keyidx);
 			int ret = 0;
 			bool found = false;
 			f.propogating_call<b>(L, found, ret, accessor);
