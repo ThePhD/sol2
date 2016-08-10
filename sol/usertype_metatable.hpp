@@ -138,11 +138,16 @@ namespace sol {
 		typedef std::tuple<clean_type_t<Tn> ...> Tuple;
 		template <std::size_t Idx>
 		struct check_binding : is_variable_binding<meta::unqualified_tuple_element_t<Idx, Tuple>> {};
+		typedef void (*base_walk)(lua_State*, bool&, int&, string_detail::string_shim&);
 		Tuple functions;
 		lua_CFunction indexfunc;
 		lua_CFunction newindexfunc;
 		lua_CFunction destructfunc;
 		lua_CFunction callconstructfunc;
+		lua_CFunction indexbase;
+		lua_CFunction newindexbase;
+		base_walk indexbaseclasspropogation;
+		base_walk newindexbaseclasspropogation;
 		void* baseclasscheck;
 		void* baseclasscast;
 		bool mustindex;
@@ -194,6 +199,8 @@ namespace sol {
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
 			baseclasscheck = (void*)&detail::inheritance<T, Bases...>::type_check;
 			baseclasscast = (void*)&detail::inheritance<T, Bases...>::type_cast;
+			indexbaseclasspropogation = walk_all_bases<true, Bases...>;
+			newindexbaseclasspropogation = walk_all_bases<false, Bases...>;
 		}
 
 		template <std::size_t Idx, typename N, typename F, typename = std::enable_if_t<!meta::any_same<meta::unqualified_t<N>, base_classes_tag, call_construction>::value>>
@@ -226,7 +233,10 @@ namespace sol {
 		template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == sizeof...(Tn)>>
 		usertype_metatable(Args&&... args) : functions(std::forward<Args>(args)...),
 		indexfunc(usertype_detail::indexing_fail<true>), newindexfunc(usertype_detail::indexing_fail<false>),
-		destructfunc(nullptr), callconstructfunc(nullptr), baseclasscheck(nullptr), baseclasscast(nullptr), 
+		destructfunc(nullptr), callconstructfunc(nullptr), 
+		indexbase(&core_indexing_call<true>), newindexbase(&core_indexing_call<false>),
+		indexbaseclasspropogation(walk_all_bases<true>), newindexbaseclasspropogation(walk_all_bases<false>),
+		baseclasscheck(nullptr), baseclasscast(nullptr), 
 		mustindex(contains_variable() || contains_index()), secondarymeta(contains_variable()) {
 		}
 
@@ -251,32 +261,72 @@ namespace sol {
 			ret = real_find_call<I0, I1>(idx, L);
 		}
 
-		static int real_index_call(lua_State* L) {
-			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, upvalue_index(1));
-			if (stack::get<type>(L, -1) == type::string) {
-				string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, -1);
-				bool found = false;
-				int ret = 0;
-				(void)detail::swallow{ 0, (f.find_call<I * 2, I * 2 + 1>(std::true_type(), L, found, ret, accessor), 0)... };
-				if (found) {
-					return ret;
-				}
+		template <bool b>
+		void propogating_call(lua_State* L, bool& found, int& ret, string_detail::string_shim& accessor) {
+			(void)detail::swallow{ 0, (find_call<I * 2, I * 2 + 1>(std::integral_constant<bool, b>(), L, found, ret, accessor), 0)... };
+		}
+
+		template <bool b, typename Base>
+		static void walk_single_base(lua_State* L, bool& found, int& ret, string_detail::string_shim&) {
+			if (found)
+				return;
+			const char* metakey = &usertype_traits<Base>::metatable[0];
+			const char* gcmetakey = &usertype_traits<Base>::gc_table[0];
+			const char* basewalkkey = b ? detail::base_class_index_propogation_key() : detail::base_class_new_index_propogation_key();
+			
+			luaL_getmetatable(L, metakey);
+			if (type_of(L, -1) == type::nil) {
+				lua_pop(L, 1);
+				return;
 			}
-			return f.indexfunc(L);
+			stack::get_field(L, basewalkkey);
+			if (type_of(L, -1) == type::nil) {
+				lua_pop(L, 2);
+				return;
+			}
+			lua_CFunction basewalkfunc = stack::pop<lua_CFunction>(L);
+			lua_pop(L, 1);
+			
+			stack::get_field<true>(L, gcmetakey);
+			int value = basewalkfunc(L);
+			if (value > -1) {
+				found = true;
+				ret = value;
+			}
+		}
+
+		template <bool b, typename... Bases>
+		static void walk_all_bases(lua_State* L, bool& found, int& ret, string_detail::string_shim& accessor) {
+			(void)detail::swallow{ 0, (walk_single_base<b, Bases>(L, found, ret, accessor), 0)... };
+		}
+
+		template <bool b, bool toplevel = false>
+		static int core_indexing_call(lua_State* L) {
+			usertype_metatable& f = toplevel ? stack::get<light<usertype_metatable>>(L, upvalue_index(1)) : stack::pop<light<usertype_metatable>>(L);
+			if (toplevel && stack::get<type>(L, -1) != type::string) {
+				return b ? f.indexfunc(L) : f.newindexfunc(L);
+			}
+			string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, -1);
+			int ret = 0;
+			bool found = false;
+			f.propogating_call<b>(L, found, ret, accessor);
+			if (found) {
+				return ret;
+			}
+			// Otherwise, we need to do propagating calls through the bases
+			f.indexbaseclasspropogation(L, found, ret, accessor);
+			if (found) {
+				return ret;
+			}
+			return toplevel ? (b ? f.indexfunc(L) : f.newindexfunc(L)) : -1;
+		}
+
+		static int real_index_call(lua_State* L) {
+			return core_indexing_call<true, true>(L);
 		}
 
 		static int real_new_index_call(lua_State* L) {
-			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, upvalue_index(1));
-			if (stack::get<type>(L, -2) == type::string) {
-				string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, -2);
-				bool found = false;
-				int ret = 0;
-				(void)detail::swallow{ 0, (f.find_call<I * 2, I * 2 + 1>(std::false_type(), L, found, ret, accessor), 0)... };
-				if (found) {
-					return ret;
-				}
-			}
-			return f.newindexfunc(L);
+			return core_indexing_call<false, true>(L);
 		}
 
 		template <std::size_t Idx, bool is_index = true, bool is_variable = false>
@@ -394,6 +444,9 @@ namespace sol {
 					else {
 						stack::set_field(L, detail::base_class_cast_key(), nil, t.stack_index());
 					}
+					
+					stack::set_field(L, detail::base_class_index_propogation_key(), make_closure(um.indexbase, make_light(um)), t.stack_index());
+					stack::set_field(L, detail::base_class_new_index_propogation_key(), make_closure(um.newindexbase, make_light(um)), t.stack_index());
 
 					if (mustindex) {
 						// Basic index pushing: specialize
