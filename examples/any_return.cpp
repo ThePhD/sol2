@@ -8,12 +8,13 @@
 sol::object fancy_func(sol::object a, sol::object b, sol::this_state s) {
 	sol::state_view lua(s);
 	if (a.is<int>() && b.is<int>()) {
-		return sol::make_object(lua, a.as<int>() + b.as<int>());
+		return sol::object(lua, sol::in_place, a.as<int>() + b.as<int>());
 	}
 	else if (a.is<bool>()) {
 		bool do_triple = a.as<bool>();
-		return sol::make_object(lua, b.as<double>() * (do_triple ? 3 : 1));
+		return sol::object(lua, sol::in_place<double>, b.as<double>() * (do_triple ? 3 : 1));
 	}
+	// Can also use make_object
 	return sol::make_object(lua, sol::nil);
 }
 

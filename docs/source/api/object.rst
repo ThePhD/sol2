@@ -25,7 +25,7 @@ members
     template <typename T, typename... Args>
     object(lua_State* L, in_place_type_t<T>, Args&&... args);
 
-There are 4 kinds of constructors here. One allows construction of a object from other reference types such as :doc:`sol::table<table>` and :doc:`sol::stack_reference<stack_reference>`. The secon creates an object which references the specific element at the given index in the specified ``lua_State*``. The more advanced ``in_place...`` constructors create a single object by pushing the specified type ``T`` onto the stack and then setting it as the object. It gets popped from the stack afterwards (unless this is an instance of ``sol::stack_object``, in which case it is left on the stack).
+There are 4 kinds of constructors here. One allows construction of a object from other reference types such as :doc:`sol::table<table>` and :doc:`sol::stack_reference<stack_reference>`. The secon creates an object which references the specific element at the given index in the specified ``lua_State*``. The more advanced ``in_place...`` constructors create a single object by pushing the specified type ``T`` onto the stack and then setting it as the object. It gets popped from the stack afterwards (unless this is an instance of ``sol::stack_object``, in which case it is left on the stack). An example of using this and :doc:`sol::make_object<make_reference>` can be found in the `any_return example`_
 
 .. code-block:: cpp
 	:caption: function: type conversion
@@ -64,3 +64,6 @@ These allow a person to compare an ``sol::object`` against :ref:`nil<nil>`, whic
 	}
 
 Use this to check objects.
+
+
+.. _any_return example: https://github.com/ThePhD/sol2/blob/develop/examples/any_return.cpp
