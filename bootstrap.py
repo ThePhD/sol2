@@ -132,6 +132,24 @@ if 'win32' in sys.platform:
 else:
      tests = os.path.join(builddir, 'tests')
 
+tests_inputs = []
+tests_object_files = []
+for f in glob.glob('test*.cpp'):
+    obj = object_file(f)
+    tests_inputs.append(f)
+    tests_object_files.append(obj)
+
+examples = []
+examples_input = []
+for f in glob.glob('examples/*.cpp'):
+    if 'win32' in sys.platform:
+        example = os.path.join(builddir, replace_extension(f, '.exe'))
+    else:
+        example = os.path.join(builddir, replace_extension(f, ''))
+    examples_input.append(f)
+    examples.append(example)
+
+
 # ninja file
 ninja = ninja_syntax.Writer(open('build.ninja', 'w'))
 
@@ -149,7 +167,8 @@ ninja.rule('compile', command = '$cxx -MMD -MF $out.d -c $cxxflags -Werror $in -
                       deps = 'gcc', depfile = '$out.d',
                       description = 'Compiling $in to $out')
 ninja.rule('link', command = '$cxx $cxxflags $in -o $out $ldflags', description = 'Creating $out')
-ninja.rule('runner', command = tests)
+ninja.rule('tests_runner', command = tests)
+ninja.rule('examples_runner', command = 'cmd /c ' + (' && '.join(examples)) if 'win32' in sys.platform else ' && '.join(examples) )
 ninja.rule('example', command = '$cxx $cxxflags $in -o $out $ldflags')
 ninja.rule('installer', command = copy_command)
 ninja.rule('uninstaller', command = remove_command)
@@ -158,22 +177,17 @@ ninja.newline()
 # builds
 ninja.build('build.ninja', 'bootstrap', implicit = sys.argv[0])
 
-tests_object_files = []
-for f in glob.glob('test*.cpp'):
-    obj = object_file(f)
-    tests_object_files.append(obj)
+for obj, f in zip(tests_object_files, tests_inputs):
     ninja.build(obj, 'compile', inputs = f)
 
-examples = []
-for f in glob.glob('examples/*.cpp'):
-    example = os.path.join(builddir, replace_extension(f, ''))
-    examples.append(example)
+for example, f in zip(examples, examples_input):
     ninja.build(example, 'example', inputs = f)
 
 ninja.build(tests, 'link', inputs = tests_object_files)
 ninja.build('tests', 'phony', inputs = tests)
+ninja.build('examples', 'phony', inputs = examples)
 ninja.build('install', 'installer', inputs = args.install_dir)
 ninja.build('uninstall', 'uninstaller')
-ninja.build('examples', 'phony', inputs = examples)
-ninja.build('run', 'runner', implicit = 'tests')
-ninja.default('run')
+ninja.build('run', 'tests_runner', implicit = 'tests')
+ninja.build('run_examples', 'examples_runner', implicit = 'examples')
+ninja.default('run run_examples')

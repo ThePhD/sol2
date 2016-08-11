@@ -2,6 +2,8 @@
 #include <iostream>
 
 int main() {
+	std::cout << "=== variables example ===" << std::endl;
+
     sol::state lua;
 
     // need the base library for assertions
@@ -31,4 +33,5 @@ int main() {
     std::cout << y << std::endl;
     std::cout << x2 << std::endl;
     std::cout << y2 << std::endl;
+	std::cout << std::endl;
 }

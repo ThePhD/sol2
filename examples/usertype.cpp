@@ -39,6 +39,8 @@ struct variables {
 };
 
 int main() {
+	std::cout << "=== usertype example ===" << std::endl;
+
     sol::state lua;
     lua.open_libraries(sol::lib::base, sol::lib::math);
 
@@ -101,4 +103,7 @@ int main() {
                "vars.low_gravity = true\n"
                "local x = vars.low_gravity\n"
                "assert(x)");
+
+	std::cout << std::endl;
+
 }

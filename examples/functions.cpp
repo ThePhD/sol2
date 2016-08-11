@@ -21,6 +21,8 @@ inline std::string make_string( std::string input ) {
 }
 
 int main() {
+	std::cout << "=== functions example ===" << std::endl;
+
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -40,7 +42,7 @@ int main() {
 	lua.script("assert(mult_by_ten(50) == 500)");
 	lua.script("assert(mult_by_five(10) == 50)");
 
-	// using lambdas, functions could have state.
+	// using lambdas, functions can have state.
 	int x = 0;
 	lua.set_function("inc", [&x]() { x += 10; });
 
@@ -53,7 +55,11 @@ int main() {
 	}
 
 	// this can be done as many times as you want
-	lua.script("inc()\ninc()\ninc()");
+	lua.script(R"(
+inc()
+inc()
+inc()
+)");
 	assert(x == 40);
 	if (x == 40) {
 		// Do something based on this information
@@ -63,9 +69,11 @@ int main() {
 	// to other variables, using sol::function
 	sol::function add = lua["my_add"];
 	int value = add(10, 11);
-	assert(add.call<int>(10, 11) == 21);
+	// second way to call the function
+	int value2 = add.call<int>(10, 11);
 	assert(value == 21);
-	if (value == 21) {
+	assert(value2 == 21);
+	if (value == 21 && value2 == 21) {
 		std::cout << "Woo, it's 21!" << std::endl;
 	}
 
@@ -78,7 +86,7 @@ int main() {
 	auto multi = lua.get<sol::function>("multi");
 	int first;
 	std::string second;
-	std::tie(first, second) = multi.call<int, std::string>();
+	sol::tie(first, second) = multi();
 
 	// use the values
 	assert(first == 10);
@@ -97,4 +105,6 @@ print(func(1))
 print(func("bark"))
 print(func(1,2))
 )");
+
+	std::cout << std::endl;
 }

@@ -7,6 +7,8 @@ The sole purpose of this tagging type is to work with :doc:`usertypes<usertype>`
 
 .. code-block:: cpp
 
+	#include <sol.hpp>
+
 	struct test {
 		static int muh_variable;
 	};
@@ -19,10 +21,10 @@ The sole purpose of this tagging type is to work with :doc:`usertypes<usertype>`
 		lua.new_usertype<test>("test",
 			"direct", sol::var(2),
 			"global", sol::var(test::muh_variable),
-			"ref_global", sol::var(std::ref(test::muh_variable)),
+			"ref_global", sol::var(std::ref(test::muh_variable))
 		);
 
-		int direct_value = lua["test"]["straight"];
+		int direct_value = lua["test"]["direct"];
 		// direct_value == 2
 		
 		int global = lua["test"]["global"];

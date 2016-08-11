@@ -39,7 +39,7 @@ Take this ``player`` struct in C++ in a header file:
 			return true;
 		}
 
-		int set_hp(int value) {
+		void set_hp(int value) {
 			hp = value;
 		}
 
@@ -49,7 +49,7 @@ Take this ``player`` struct in C++ in a header file:
 
 	private:
 		int hp;
-	}
+	};
 
 
 It's a fairly minimal class, but we don't want to have to rewrite this with metatables in Lua. We want this to be part of Lua easily. The following is the Lua code that we'd like to have work properly:
@@ -92,37 +92,41 @@ To do this, you bind things using the ``new_usertype`` and ``set_usertype`` meth
 .. code-block:: cpp
 	:caption: player_script.cpp
 
-	sol::state lua;
+	#include <sol.hpp>
 
-	// note that you can set a 
-	// userdata before you register a usertype,
-	// and it will still carry 
-	// the right metatable if you register it later
-	
-	// set a variable "p2" of type "player" with 0 ammo
-	lua["p2"] = player(0);
+	int main () {
+		sol::state lua;
 
-	// make usertype metatable
-	lua.new_usertype<player>( "player",
+		// note that you can set a 
+		// userdata before you register a usertype,
+		// and it will still carry 
+		// the right metatable if you register it later
 		
-		// 3 constructors
-		sol::constructors<sol::types<>, sol::types<int>, sol::types<int, int>>(),
-		
-		// typical member function that returns a variable
-		"shoot", &player::shoot,
-		// typical member function
-		"boost", &player::boost,
-		
-		// gets or set the value using member variable syntax
-		"hp", sol::property(&player::get_hp, &player::set_hp),
-		
-		// read and write variable
-		"speed", &player::speed,
-		// can only read from, not write to
-		"bullets", sol::readonly( &player::bullets )
-	);
+		// set a variable "p2" of type "player" with 0 ammo
+		lua["p2"] = player(0);
 
-	lua.script_file("player_script.lua");
+		// make usertype metatable
+		lua.new_usertype<player>( "player",
+			
+			// 3 constructors
+			sol::constructors<sol::types<>, sol::types<int>, sol::types<int, int>>(),
+			
+			// typical member function that returns a variable
+			"shoot", &player::shoot,
+			// typical member function
+			"boost", &player::boost,
+			
+			// gets or set the value using member variable syntax
+			"hp", sol::property(&player::get_hp, &player::set_hp),
+			
+			// read and write variable
+			"speed", &player::speed,
+			// can only read from, not write to
+			"bullets", sol::readonly( &player::bullets )
+		);
+
+		lua.script_file("player_script.lua");
+	}
 
 That script should run fine now, and you can observe and play around with the values. Even more stuff :doc:`you can do<../api/usertype>` is described elsewhere, like initializer functions (private constructors / destructors support), "static" functions callable with ``name.my_function( ... )``, and overloaded member functions. You can even bind global variables (even by reference with ``std::ref``) with ``sol::var``. There's a lot to try out!
 

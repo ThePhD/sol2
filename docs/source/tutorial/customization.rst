@@ -77,7 +77,7 @@ This is the base formula that you can follow to extend to your own classes. Usin
 	#include <sol.hpp>
 	#include <two_things.hpp>
 
-	int main (int argc, char* argv[]) {
+	int main () {
 
 		sol::state lua;
 

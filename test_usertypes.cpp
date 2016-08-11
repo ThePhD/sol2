@@ -1340,3 +1340,56 @@ t.global = 20
 print(t.global)
 	)"));
 }
+
+TEST_CASE("usertype/inheritance", "test that metatables are properly inherited") {
+	struct A {
+		int a = 5;
+	};
+
+	struct B {
+		int b() {
+			return 10;
+		}
+	};
+
+	struct C : B, A {
+		double c = 2.4;
+	};
+
+	struct D : C {
+		bool d() const {
+			return true;
+		}
+	};
+
+	sol::state lua;
+	lua.new_usertype<A>("A",
+		"a", &A::a
+		);
+	lua.new_usertype<B>("B",
+		"b", &B::b
+		);
+	lua.new_usertype<C>("C",
+		"c", &C::c,
+		sol::base_classes, sol::bases<B, A>()
+		);
+	lua.new_usertype<D>("D",
+		"d", &D::d,
+		sol::base_classes, sol::bases<C, B, A>()
+		);
+
+	lua.script("obj = D.new()");
+	lua.script("d = obj:d()");
+	bool d = lua["d"];
+	lua.script("c = obj.c");
+	double c = lua["c"];
+	lua.script("b = obj:b()");
+	int b = lua["b"];
+	lua.script("a = obj.a");
+	int a = lua["a"];
+
+	REQUIRE(d);
+	REQUIRE(c == 2.4);
+	REQUIRE(b == 10);
+	REQUIRE(a == 5);
+}

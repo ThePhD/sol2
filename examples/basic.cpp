@@ -1,5 +1,7 @@
 #include <sol.hpp>
 
+#include <iostream>
+
 int main() {
     // create an empty lua state
     sol::state lua;
@@ -10,5 +12,8 @@ int main() {
     lua.open_libraries(sol::lib::base);
 
     // call lua code directly
-    lua.script("print('hello world')");
+	std::cout << "=== basic example ===" << std::endl;
+	lua.script("print('hello world')");
+
+	std::cout << std::endl;
 }

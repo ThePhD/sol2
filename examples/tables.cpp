@@ -5,6 +5,8 @@
 // this example shows how to read data in from a lua table
 
 int main() {
+	std::cout << "=== tables example ===" << std::endl;
+
     sol::state lua;
     // table used as an array
     lua.script("table1 = {\"hello\", \"table\"}");
@@ -52,4 +54,6 @@ int main() {
               << lua.get<sol::table>("table2").get<sol::table>("nestedTable").get<std::string>("key2")
               << '\n';
     std::cout << "name of t2: " << t2.get<std::string>("name") << '\n';
+
+	std::cout << std::endl;
 }

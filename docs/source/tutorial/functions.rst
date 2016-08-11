@@ -214,6 +214,7 @@ You can get anything that's a callable in Lua, including C++ functions you bind 
 			function f (a)
 				if a < 0 then
 					error("negative number detected")
+				end
 				return a + 5
 			end
 		)");
@@ -224,7 +225,7 @@ You can get anything that's a callable in Lua, including C++ functions you bind 
 		sol::protected_function_result result = f(-500);
 		if (result.valid()) {
 			// Call succeeded
-			int x = r1esult;
+			int x = result;
 		}
 		else {
 			// Call failed
@@ -269,26 +270,28 @@ You can also return mutiple items yourself from a C++-bound function. Here, we'r
 	:caption: Multiple returns into Lua 
 	:name: multi-return-cxx-functions	
 
-	sol::state lua;
+	int main () {
+		sol::state lua;
 
-	lua["f"] = [](int a, int b, sol::object c) {
-		// sol::object can be anything here: just pass it through
-		return std::make_tuple( a, b, c );
-	};
-	
-	std::tuple<int, int, int> result = lua["f"](1, 2, 3); 
-	// result == { 1, 2, 3 }
-	
-	std::tuple<int, int, std::string> result2;
-	result2 = lua["f"](1, 2, "Arf?")
-	// result2 == { 1, 2, "Arf?" }
+		lua["f"] = [](int a, int b, sol::object c) {
+			// sol::object can be anything here: just pass it through
+			return std::make_tuple( a, b, c );
+		};
+		
+		std::tuple<int, int, int> result = lua["f"](1, 2, 3); 
+		// result == { 1, 2, 3 }
+		
+		std::tuple<int, int, std::string> result2;
+		result2 = lua["f"](1, 2, "Arf?")
+		// result2 == { 1, 2, "Arf?" }
 
-	int a, int b;
-	std::string c;
-	sol::tie( a, b, c ) = lua["f"](1, 2, "meow");
-	// a == 1
-	// b == 2
-	// c == "meow"
+		int a, int b;
+		std::string c;
+		sol::tie( a, b, c ) = lua["f"](1, 2, "meow");
+		// a == 1
+		// b == 2
+		// c == "meow"
+	}
 
 
 Note here that we use :doc:`sol::object<../api/object>` to transport through "any value" that can come from Lua. You can also use ``sol::make_object`` to create an object from some value, so that it can be returned into Lua as well.
@@ -307,7 +310,7 @@ It can be used like so, inconjunction with ``sol::this_state``:
 	:name: object-return-cxx-functions	
 
 	sol::object fancy_func (sol::object a, sol::object b, sol::this_state s) {
-		sol::state_view lua = s;
+		sol::state_view lua(s);
 		if (a.is<int>() && b.is<int>()) {
 			return sol::make_object(lua, a.as<int>() + b.as<int>());
 		}
@@ -318,19 +321,21 @@ It can be used like so, inconjunction with ``sol::this_state``:
 		return sol::make_object(lua, sol::nil);
 	}
 
-	sol::state lua;
+	int main () {
+		sol::state lua;
 
-	lua["f"] = fancy_func;
-	
-	int result = lua["f"](1, 2);
-	// result == 3
-	double result2 = lua["f"](false, 2.5);
-	// result2 == 2.5
+		lua["f"] = fancy_func;
+		
+		int result = lua["f"](1, 2);
+		// result == 3
+		double result2 = lua["f"](false, 2.5);
+		// result2 == 2.5
 
-	// call in Lua, get result
-	lua.script("result3 = f(true, 5.5)");
-	double result3 = lua["result3"];
-	// result3 == 16.5
+		// call in Lua, get result
+		lua.script("result3 = f(true, 5.5)");
+		double result3 = lua["result3"];
+		// result3 == 16.5
+	}
 
 
 This covers almost everything you need to know about Functions and how they interact with Sol. For some advanced tricks and neat things, check out :doc:`sol::this_state<../api/this_state>` and :doc:`sol::variadic_args<../api/variadic_args>`. The next stop in this tutorial is about :doc:`C++ types (usertypes) in Lua<cxx-in-lua>`!
