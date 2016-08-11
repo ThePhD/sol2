@@ -358,13 +358,18 @@ namespace sol {
 				lua_pushlstring(L, str, N - 1);
 				return 1;
 			}
+
+			static int push(lua_State* L, const char(&str)[N], std::size_t sz) {
+				lua_pushlstring(L, str, sz);
+				return 1;
+			}
 		};
 
 		template <>
 		struct pusher<char> {
 			static int push(lua_State* L, char c) {
 				const char str[2] = { c, '\0' };
-				return stack::push(L, str);
+				return stack::push(L, str, 1);
 			}
 		};
 
@@ -372,6 +377,11 @@ namespace sol {
 		struct pusher<std::string> {
 			static int push(lua_State* L, const std::string& str) {
 				lua_pushlstring(L, str.c_str(), str.size());
+				return 1;
+			}
+
+			static int push(lua_State* L, const std::string& str, std::size_t sz) {
+				lua_pushlstring(L, str.c_str(), sz);
 				return 1;
 			}
 		};

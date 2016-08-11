@@ -143,7 +143,7 @@ namespace sol {
 				tracking.use(1);
 				std::size_t len;
 				auto str = lua_tolstring(L, index, &len);
-				return{ str, len };
+				return std::string( str, len );
 			}
 		};
 

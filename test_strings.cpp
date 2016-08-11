@@ -92,3 +92,14 @@ TEST_CASE("detail/demangling", "test some basic demangling cases") {
 	REQUIRE(nsteststr == "ns_test");
 	REQUIRE(nsateststr == "ns_anon_test");
 }
+
+TEST_CASE("object/string-pushers", "test some basic string pushers with in_place constructor") {
+	sol::state lua;
+
+	sol::object ocs(lua, sol::in_place, "bark\0bark", 9);
+	sol::object os(lua, sol::in_place<std::string>, std::string("bark\0bark", 9), 8);
+	bool test1 = os.as<std::string>() == std::string("bark\0bar", 8);
+	bool test2 = ocs.as<std::string>() == std::string("bark\0bark", 9);
+	REQUIRE(test1);
+	REQUIRE(test2);
+}
