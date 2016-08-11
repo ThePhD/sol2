@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-11 11:25:37.090286 UTC
-// This header was generated with sol v2.10.5 (revision b88a49a)
+// Generated 2016-08-11 13:34:43.803767 UTC
+// This header was generated with sol v2.11.0 (revision 7a53305)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -740,9 +740,7 @@ namespace sol {
 
 // beginning of sol\optional.hpp
 
-#if __cplusplus > 201402L
-#include <optional>
-#elif defined(SOL_USE_BOOST)
+#if defined(SOL_USE_BOOST)
 #include <boost/optional.hpp>
 #else
 // beginning of Optional\optional.hpp
@@ -953,12 +951,18 @@ T* static_addressof(T& ref)
 
 template <class U>
 constexpr U convert(U v) { return v; }
-  
+
+} // namespace detail_
+
+namespace detail {
+	struct in_place_of {};
 } // namespace detail
 
 constexpr struct trivial_init_t{} trivial_init{};
 
-constexpr struct in_place_t{} in_place{};
+struct in_place_tag { struct init {}; constexpr in_place_tag(init) {} in_place_tag() = delete; };
+constexpr inline in_place_tag in_place(detail::in_place_of) { return in_place_tag(in_place_tag::init()); }
+using in_place_t = in_place_tag(&)(detail::in_place_of);
 
 struct nullopt_t
 {
@@ -1136,11 +1140,11 @@ public:
 
   template <class... Args>
   explicit constexpr optional(in_place_t, Args&&... args)
-  : OptionalBase<T>(in_place_t{}, constexpr_forward<Args>(args)...) {}
+  : OptionalBase<T>(in_place, constexpr_forward<Args>(args)...) {}
 
   template <class U, class... Args, TR2_OPTIONAL_REQUIRES(::std::is_constructible<T, ::std::initializer_list<U>>)>
   OPTIONAL_CONSTEXPR_INIT_LIST explicit optional(in_place_t, ::std::initializer_list<U> il, Args&&... args)
-  : OptionalBase<T>(in_place_t{}, il, constexpr_forward<Args>(args)...) {}
+  : OptionalBase<T>(in_place, il, constexpr_forward<Args>(args)...) {}
 
   // 20.5.4.2, Destructor
   ~optional() = default;
@@ -1735,23 +1739,43 @@ namespace std
 # endif //___SOL_OPTIONAL_HPP___
 // end of Optional\optional.hpp
 
-#endif // C++ 14
+#endif // Boost vs. Better optional
 
 namespace sol {
 
-#if __cplusplus > 201402L
-	template <typename T>
-	using optional = sol::optional<T>;
-	using nullopt_t = std::nullopt_t;
-	constexpr nullopt_t nullopt = std::nullopt;
-#elif defined(SOL_USE_BOOST)
+#if defined(SOL_USE_BOOST)
 	template <typename T>
 	using optional = boost::optional<T>;
 	using nullopt_t = boost::none_t;
 	const nullopt_t nullopt = boost::none;
-#else
-#endif // C++ 14
-}
+
+	namespace detail {
+		struct in_place_of {};
+	} // detail
+
+	struct in_place_tag { struct init {}; constexpr in_place_tag(init) {} in_place_tag() = delete; };
+	constexpr inline in_place_tag in_place(detail::in_place_of) { return in_place_tag(in_place_tag::init()); }
+	using in_place_t = in_place_tag(&)(detail::in_place_of);
+#endif // Boost vs. Better optional
+
+	namespace detail {
+		template <std::size_t I>
+		struct in_place_of_i {};
+		template <typename T>
+		struct in_place_of_t {};
+	}
+
+	template <typename T>
+	constexpr inline in_place_tag in_place(detail::in_place_of_t<T>) { return in_place_tag(in_place_tag::init()); }
+	template <std::size_t I>
+	constexpr inline in_place_tag in_place(detail::in_place_of_i<I>) { return in_place_tag(in_place_tag::init()); }
+
+	template <typename T>
+	using in_place_type_t = in_place_tag(&)(detail::in_place_of_t<T>);
+	template <std::size_t I>
+	using in_place_index_t = in_place_tag(&)(detail::in_place_of_i<I>);
+
+} // sol
 
 // end of sol\optional.hpp
 
@@ -3909,7 +3933,7 @@ namespace sol {
 		}
 
 		// overload allows to use a pusher of a specific type, but pass in any kind of args
-		template<typename T, typename Arg, typename... Args>
+		template<typename T, typename Arg, typename... Args, typename = std::enable_if_t<!std::is_same<T, Arg>::value>>
 		inline int push(lua_State* L, Arg&& arg, Args&&... args) {
 			return pusher<meta::unqualified_t<T>>{}.push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 		}
@@ -4868,7 +4892,7 @@ namespace sol {
 				tracking.use(1);
 				std::size_t len;
 				auto str = lua_tolstring(L, index, &len);
-				return{ str, len };
+				return std::string( str, len );
 			}
 		};
 
@@ -5641,13 +5665,18 @@ namespace sol {
 				lua_pushlstring(L, str, N - 1);
 				return 1;
 			}
+
+			static int push(lua_State* L, const char(&str)[N], std::size_t sz) {
+				lua_pushlstring(L, str, sz);
+				return 1;
+			}
 		};
 
 		template <>
 		struct pusher<char> {
 			static int push(lua_State* L, char c) {
 				const char str[2] = { c, '\0' };
-				return stack::push(L, str);
+				return stack::push(L, str, 1);
 			}
 		};
 
@@ -5655,6 +5684,11 @@ namespace sol {
 		struct pusher<std::string> {
 			static int push(lua_State* L, const std::string& str) {
 				lua_pushlstring(L, str.c_str(), str.size());
+				return 1;
+			}
+
+			static int push(lua_State* L, const std::string& str, std::size_t sz) {
+				lua_pushlstring(L, str.c_str(), sz);
 				return 1;
 			}
 		};
@@ -8702,6 +8736,27 @@ namespace sol {
 // end of sol\variadic_args.hpp
 
 namespace sol {
+
+	template <typename R = reference, bool should_pop = !std::is_base_of<stack_reference, R>::value, typename T>
+	R make_reference(lua_State* L, T&& value) {
+		int backpedal = stack::push(L, std::forward<T>(value));
+		R r = stack::get<R>(L, -backpedal);
+		if (should_pop) {
+			lua_pop(L, backpedal);
+		}
+		return r;
+	}
+
+	template <typename T, typename R = reference, bool should_pop = !std::is_base_of<stack_reference, R>::value, typename... Args>
+	R make_reference(lua_State* L, Args&&... args) {
+		int backpedal = stack::push<T>(L, std::forward<Args>(args)...);
+		R r = stack::get<R>(L, -backpedal);
+		if (should_pop) {
+			lua_pop(L, backpedal);
+		}
+		return r;
+	}
+
 	template <typename base_t>
 	class basic_object : public base_t {
 	private:
@@ -8726,6 +8781,12 @@ namespace sol {
 			auto pp = stack::push_pop(*this);
 			return stack::check<T>(base_t::lua_state(), -1, no_panic);
 		}
+		template <bool invert_and_pop = false>
+		basic_object(std::integral_constant<bool, invert_and_pop>, lua_State* L, int index = -1) noexcept : base_t(L, index) {
+			if (invert_and_pop) {
+				lua_pop(L, -index);
+			}
+		}
 
 	public:
 		basic_object() noexcept = default;
@@ -8739,6 +8800,10 @@ namespace sol {
 		basic_object(const stack_reference& r) noexcept : basic_object(r.lua_state(), r.stack_index()) {}
 		basic_object(stack_reference&& r) noexcept : basic_object(r.lua_state(), r.stack_index()) {}
 		basic_object(lua_State* L, int index = -1) noexcept : base_t(L, index) {}
+		template <typename T, typename... Args>
+		basic_object(lua_State* L, in_place_type_t<T>, Args&&... args) noexcept : basic_object(std::integral_constant<bool, !std::is_base_of<stack_reference, base_t>::value>(), L, -stack::push<T>(L, std::forward<Args>(args)...)) {}
+		template <typename T, typename... Args>
+		basic_object(lua_State* L, in_place_t, T&& arg, Args&&... args) noexcept : basic_object(L, in_place<T>, std::forward<T>(arg), std::forward<Args>(args)...) {}
 
 		template<typename T>
 		decltype(auto) as() const {
@@ -8752,26 +8817,6 @@ namespace sol {
 			return is_stack<T>(std::is_same<base_t, stack_reference>());
 		}
 	};
-
-	template <typename R = reference, bool should_pop = !std::is_base_of<stack_reference, R>::value, typename T>
-	R make_reference(lua_State* L, T&& value) {
-		int backpedal = stack::push(L, std::forward<T>(value));
-		R r = stack::get<R>(L, -backpedal);
-		if (should_pop) {
-			lua_pop(L, backpedal);
-		}
-		return r;
-	}
-
-	template <typename T, typename R = reference, bool should_pop = !std::is_base_of<stack_reference, R>::value, typename... Args>
-	object make_reference(lua_State* L, Args&&... args) {
-		int backpedal = stack::push<T>(L, std::forward<Args>(args)...);
-		object r = stack::get<sol::object>(L, -backpedal);
-		if (should_pop) {
-			lua_pop(L, backpedal);
-		}
-		return r;
-	}
 
 	template <typename T>
 	object make_object(lua_State* L, T&& value) {
