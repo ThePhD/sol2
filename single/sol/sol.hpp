@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-11 13:34:43.803767 UTC
-// This header was generated with sol v2.11.0 (revision 7a53305)
+// Generated 2016-08-11 15:38:20.268226 UTC
+// This header was generated with sol v2.11.1 (revision ff8ac8a)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5489,7 +5489,7 @@ namespace sol {
 
 		template<typename T>
 		struct pusher<T, std::enable_if_t<std::is_base_of<reference, T>::value || std::is_base_of<stack_reference, T>::value>> {
-			static int push(lua_State*, T& ref) {
+			static int push(lua_State*, const T& ref) {
 				return ref.push();
 			}
 
