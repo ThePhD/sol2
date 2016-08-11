@@ -560,3 +560,25 @@ TEST_CASE("optional/left-out-args", "Make sure arguments can be left out of opti
         )");
 	);
 }
+
+TEST_CASE("pusher/constness", "Make sure more types can handle being const and junk") {
+	struct Foo {
+		Foo(sol::function& f) : _f(f) {}
+		const sol::function& _f;
+
+		const sol::function& f() const { return _f; }
+	};
+
+	sol::state lua;
+
+	lua.new_usertype<Foo>("Foo",
+		sol::call_constructor, sol::no_constructor,
+		"f", &Foo::f
+		);
+
+	lua["func"] = []() { return 20; };
+	lua["foo"] = Foo(lua["func"]);
+	Foo& foo = lua["foo"];
+	int x = foo.f()();
+	REQUIRE(x == 20);
+}
