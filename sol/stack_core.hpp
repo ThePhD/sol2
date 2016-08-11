@@ -145,7 +145,7 @@ namespace sol {
 			typedef meta::all<
 				std::is_lvalue_reference<T>,
 				meta::neg<std::is_const<T>>,
-				meta::neg<is_lua_primitive<T>>
+				meta::neg<is_lua_primitive<meta::unqualified_t<T>>>
 			> use_reference_tag;
 			return pusher<std::conditional_t<use_reference_tag::value, detail::as_reference_tag, meta::unqualified_t<T>>>{}.push(L, std::forward<T>(t), std::forward<Args>(args)...);
 		}
