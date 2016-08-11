@@ -563,7 +563,7 @@ TEST_CASE("optional/left-out-args", "Make sure arguments can be left out of opti
 
 TEST_CASE("pusher/constness", "Make sure more types can handle being const and junk") {
 	struct Foo {
-		Foo(sol::function& f) : _f(f) {}
+		Foo(const sol::function& f) : _f(f) {}
 		const sol::function& _f;
 
 		const sol::function& f() const { return _f; }
@@ -577,7 +577,8 @@ TEST_CASE("pusher/constness", "Make sure more types can handle being const and j
 		);
 
 	lua["func"] = []() { return 20; };
-	lua["foo"] = Foo(lua["func"]);
+	sol::function f = lua["func"];
+	lua["foo"] = Foo(f);
 	Foo& foo = lua["foo"];
 	int x = foo.f()();
 	REQUIRE(x == 20);
