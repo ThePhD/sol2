@@ -13,7 +13,7 @@ As of the writing of this documentation (July 29th, 2016), :doc:`Sol<index>` (So
 
 Note that Sol here makes use of its more performant variants (see :doc:`c_call<api/c_call>`), and ThePhD also does his best to make use of the most performant variants for other frameworks by disabling type checks where possible as well (Thanks to Liam Devine of OOLua for explaining how to turn off type checks in OOLua).
 
-Bars go up to the average execution time. Lower is better. Reported times are for the desired operation run through `nonius`_ Results are sorted from top to bottom by best to worst. Note that there are error bars to show potential variance in performance: generally, same-sized errors bars plus very close average execution time implies no significant difference in speed, despite the vastly different abstraction techniques used.
+Bars go up to the average execution time. Lower is better. Reported times are for the desired operation run through `nonius`_. Results are sorted from top to bottom by best to worst. Note that there are error bars to show potential variance in performance: generally, same-sized errors bars plus very close average execution time implies no significant difference in speed, despite the vastly different abstraction techniques used.
 
 .. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20member%20function%20calls.png
 	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20member%20function%20calls.png
