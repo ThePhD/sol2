@@ -3,6 +3,8 @@
 #include <catch.hpp>
 #include <sol.hpp>
 
+#include <iostream>
+
 struct test {};
 template <typename T>
 struct test_t {};
@@ -23,8 +25,10 @@ TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	static const char16_t utf16str[] = { 0xD83C, 0xDF4C, 0x20, 0x6665, 0x20, 0x46, 0x6F, 0x6F, 0x20, 0xA9, 0x20, 0x62, 0x61, 0x72, 0x20, 0xD834, 0xDF06, 0x20, 0x62, 0x61, 0x7A, 0x20, 0x2603, 0x20, 0x71, 0x75, 0x78, 0x00 };
 	static const char32_t utf32str[] = { 0x1F34C, 0x0020, 0x6665, 0x0020, 0x0046, 0x006F, 0x006F, 0x0020, 0x00A9, 0x0020, 0x0062, 0x0061, 0x0072, 0x0020, 0x1D306, 0x0020, 0x0062, 0x0061, 0x007A, 0x0020, 0x2603, 0x0020, 0x0071, 0x0075, 0x0078, 0x00 };
 #ifdef _WIN32
+	std::cout << "win32 widestr" << std::endl;
 	static const wchar_t widestr[] = { 0xD83C, 0xDF4C, 0x20, 0x6665, 0x20, 0x46, 0x6F, 0x6F, 0x20, 0xA9, 0x20, 0x62, 0x61, 0x72, 0x20, 0xD834, 0xDF06, 0x20, 0x62, 0x61, 0x7A, 0x20, 0x2603, 0x20, 0x71, 0x75, 0x78, 0x00 };
 #else
+	std::cout << "non-windows widestr" << std::endl;
 	static const wchar_t widestr[] = { 0x1F34C, 0x0020, 0x6665, 0x0020, 0x0046, 0x006F, 0x006F, 0x0020, 0x00A9, 0x0020, 0x0062, 0x0061, 0x0072, 0x0020, 0x1D306, 0x0020, 0x0062, 0x0061, 0x007A, 0x0020, 0x2603, 0x0020, 0x0071, 0x0075, 0x0078, 0x00 };
 #endif
 	static const std::string utf8str_s = utf8str;
@@ -33,6 +37,12 @@ TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	static const std::wstring widestr_s = widestr;
 
 #ifdef SOL_CODECVT_SUPPORT
+	std::cout << "sizeof(wchar_t): " << sizeof(wchar_t) << std::endl;
+	std::cout << "sizeof(char16_t): " << sizeof(char16_t) << std::endl;
+	std::cout << "sizeof(char32_t): " << sizeof(char32_t) << std::endl;
+	std::cout << "utf8str: " << utf8str << std::endl;
+	std::cout << "utf8str_s: " << utf8str_s << std::endl;
+
 	lua["utf8"] = utf8str;
 	lua["utf16"] = utf16str;
 	lua["utf32"] = utf32str;
@@ -47,7 +57,7 @@ TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	REQUIRE(utf16_to_utf8 == utf8str_s);
 	REQUIRE(utf32_to_utf8 == utf8str_s);
 	REQUIRE(wide_to_utf8 == utf8str_s);
-
+	
 	std::wstring utf8_to_wide = lua["utf8"];
 	std::wstring utf16_to_wide = lua["utf16"];
 	std::wstring utf32_to_wide = lua["utf32"];

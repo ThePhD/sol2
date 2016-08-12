@@ -191,14 +191,17 @@ namespace sol {
 				if (sizeof(wchar_t) == 2) {
 					std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
 					std::wstring r = convert.from_bytes(str, str + len);
+#ifdef __MINGW32__
+					// Fuck you, MinGW, and fuck you libstdc++ for introducing this absolutely asinine bug
+					// https://sourceforge.net/p/mingw-w64/bugs/538/
+					// http://chat.stackoverflow.com/transcript/message/32271369#32271369
+					for (auto& c : r) {
+                        uint8_t* b = reinterpret_cast<uint8_t*>(&c);
+						std::swap(b[0], b[1]);
+					}
+#endif 
 					return r;
 				}
-				else if (sizeof(wchar_t) == 4) {
-					std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
-					std::wstring r = convert.from_bytes(str, str + len);
-					return r;
-				}
-				// ... Uh, what the fuck do I even do here?
 				std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
 				std::wstring r = convert.from_bytes(str, str + len);
 				return r;
@@ -270,7 +273,7 @@ namespace sol {
 				return str.size() > 0 ? str[0] : '\0';
 			}
 		};
-#endif // codecvt Header Support
+#endif // codecvt header support
 
 		template<>
 		struct getter<meta_function> {

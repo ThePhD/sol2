@@ -420,11 +420,6 @@ namespace sol {
 					std::string u8str = convert.to_bytes(strb, stre);
 					return stack::push(L, u8str);
 				}
-				else if (sizeof(wchar_t) == 4) {
-					std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
-					std::string u8str = convert.to_bytes(strb, stre);
-					return stack::push(L, u8str);
-				}
 				std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
 				std::string u8str = convert.to_bytes(strb, stre);
 				return stack::push(L, u8str);
@@ -564,7 +559,7 @@ namespace sol {
 				return stack::push(L, u32str.data(), u32str.data() + sz);
 			}
 		};
-#endif // Codecvt Header Support
+#endif // codecvt Header Support
 
 		template<typename... Args>
 		struct pusher<std::tuple<Args...>> {
