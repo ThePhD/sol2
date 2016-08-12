@@ -4607,7 +4607,7 @@ namespace sol {
 					return true;
 				}
 				if (t != type::userdata && t != type::table) {
-					handler(L, index, t, type::function);
+					handler(L, index, type::function, t);
 					return false;
 				}
 				// Do advanced check for call-style userdata?
@@ -4615,13 +4615,13 @@ namespace sol {
 				lua_getmetatable(L, index);
 				if (lua_isnoneornil(L, -1)) {
 					lua_pop(L, 1);
-					handler(L, index, t, type::function);
+					handler(L, index, type::function, t);
 					return false;
 				}
 				lua_getfield(L, -1, &callkey[0]);
 				if (lua_isnoneornil(L, -1)) {
 					lua_pop(L, 2);
-					handler(L, index, t, type::function);
+					handler(L, index, type::function, t);
 					return false;
 				}
 				// has call, is definitely a function
@@ -4640,7 +4640,7 @@ namespace sol {
 					return true;
 				}
 				if (t != type::userdata) {
-					handler(L, index, t, type::function);
+					handler(L, index, type::function, t);
 					return false;
 				}
 				return true;
