@@ -29,6 +29,7 @@ get going:
 	tutorial/tutorial-top
 	features
 	api/api-top
+	mentions
 	benchmarks
 	safety
 	exceptions

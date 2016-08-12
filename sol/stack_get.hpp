@@ -187,8 +187,6 @@ namespace sol {
 			}
 		};
 
-#if 0
-
 		template<>
 		struct getter<std::wstring> {
 			static std::wstring get(lua_State* L, int index, record& tracking) {
@@ -196,6 +194,8 @@ namespace sol {
 				return{};
 			}
 		};
+
+#if 0
 
 		template<>
 		struct getter<std::u16string> {

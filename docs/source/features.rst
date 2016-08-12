@@ -58,9 +58,9 @@ The Feature Matrix™
 
 The below feature table checks for the presence of something. It, however, does not actually account for any kind of laborious syntax.
 
-✔ full support: works as you'd expecte (operator[] on tables, etc...)
+✔ full support: works as you'd expect (operator[] on tables, etc...)
 
-~ partial support / wonky support: this means its either supported through some other fashion (not with the desired syntax, serious caveats, etc.). Sometimes means dropping down t use the plain C API.
+~ partial support / wonky support: this means its either supported through some other fashion (not with the desired syntax, serious caveats, etc.). Sometimes means dropping down to use the plain C API (at which point, what was the point of the abstraction?).
 
 ✗ no support: feature doesn't work or, if it's there, it REALLY sucks to use
 
@@ -89,10 +89,10 @@ Explanations for a few categories are below (rest are self-explanatory).
 * coroutines: allowing a function to be called multiple times, resuming the execution of a Lua coroutine each time
 
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
-|                           |   plain C   | luawrapper | lua-intf | luabind |  Selene  |    Sol2   |   oolua   |   lua-api-pp   |  kaguya  |    SLB   |    SWIG   | luacppinterface | luwra  |
+|                           |   plain C   | luawrapper | lua-intf | luabind |  Selene  |    Sol2   |   oolua   |   lua-api-pp   |  kaguya  |   SLB3   |    SWIG   | luacppinterface | luwra  |
 |                           |             |            |          |         |          |           |           |                |          |          |           |                 |        |
 +===========================+=============+============+==========+=========+==========+===========+===========+================+==========+==========+===========+=================+========+
-| optional                  |      ~      |     ✗      |     ✔    |    ✗    |     ✗    |     ✔     |     ✗     |        ✗       |     ✗    |     ✗    |     ✗     |        ✗        |    ✗   |
+| optional                  |      ~      |     ✗      |     ✔    |    ✗    |     ✗    |     ✔     |     ✗     |        ✗       |     ✔    |     ✗    |     ✗     |        ✗        |    ✗   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
 | tables                    |      ~      |     ~      |     ~    |    ✔    |     ✔    |     ✔     |     ~     |        ✔       |     ✔    |     ✗    |     ✗     |        ~        |    ✔   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
@@ -110,7 +110,7 @@ Explanations for a few categories are below (rest are self-explanatory).
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
 | lua callables from C(++)  |      ~      |     ✔      |     ✔    |    ✔    |     ✔    |     ✔     |     ✔     |        ✔       |     ✔    |     ✔    |     ✔     |        ✔        |    ~   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
-| function binding          |      ~      |     ✔      |     ✔    |    ✔    |     ✔    |     ✔     |     ✔     |        ✔       |     ✔    |     ✔    |     ✔     |        ✔        |    ~   |
+| function binding          |      ~      |     ✔      |     ✔    |    ✔    |     ✔    |     ✔     |     ~     |        ~       |     ✔    |     ~    |     ~     |        ~        |    ✔   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
 | protected call            |      ~      |     ✗      |     ~    |    ~    |     ~    |     ✔     |     ~     |        ✔       |     ~    |     ~    |     ~     |        ~        |    ~   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
@@ -120,7 +120,7 @@ Explanations for a few categories are below (rest are self-explanatory).
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
 | inheritance               |      ~      |     ✔      |     ✔    |    ✔    |     ✔    |     ✔     |     ~     |        ~       |     ✔    |     ~    |     ✔     |        ~        |    ✗   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
-| overloading               |      ~      |     ✗      |     ✗    |    ✗    |     ✗    |     ✔     |     ✗     |        ✗       |     ✔    |     ✔    |     ✔     |        ✗        |    ✗   |
+| overloading               |      ~      |     ✗      |     ✔    |    ✗    |     ✗    |     ✔     |     ✗     |        ✗       |     ✔    |     ✔    |     ✔     |        ✗        |    ✗   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
 | Lua thread                |      ~      |     ✗      |     ~    |    ✗    |     ✗    |     ✔     |     ✔     |        ✗       |     ✔    |     ✗    |     ✗     |        ✔        |    ✗   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
@@ -153,18 +153,17 @@ Plain C -
 
 kaguya -
 
-* Probably the closest in implementation details and interface to Sol itself
 * member variables are automatically turned into ``obj:x( value )`` to set and ``obj:x()`` to get
+* Has optional support
 * Inspired coroutine support for Sol
 * Library author (satoren) is a nice guy!
 * C++11/14, or boostified (which makes it C++03 compatible)
 * Class registration is a bit verbose, but not as offensive as OOLua or lua-intf or others
-* Deserves lots of love!
 
 Sol -
 
-* Only library with Optional support, hoorah!
-* Prrreeettty fast (still working on being the ABSOLUTE FASTEST)!
+* One of the few libraries with optional support!
+* Basically the fastest in almomst all respects: http://sol2.readthedocs.io/en/latest/benchmarks.html
 * Overloading support can get messy with inheritance, see :doc:`here<api/overload>`
 * C++14/"C++1y" (-std=c++14, -std=c++1y, =std=c++1z) flags are used (available since GCC 4.9 and Clang 3.5)
 * Active issues, active individuals
@@ -173,6 +172,7 @@ Sol -
 lua-intf -
 
 * Can be both header-only or compiled
+* Has optional support
 * C++11
 * Macro-based registration (strange pseudo-language)
 * Fairly fast in most regards
@@ -185,30 +185,28 @@ Selene -
 * member variables are automatically turned into ``obj:set_x( value )`` to set and ``obj:x()`` to get
 * Registering classes/"modules" using C++ code is extremely verbose, similar to lua-intf's style
 * Eats crap when it comes to performance, most of the time (see :doc:`benchmarks<benchmarks>`)
-* Lots of users, but the Repository is kinda stagnant...
+* Lots of users (blogpost etc. made it popular), but the Repository is kinda stagnant...
 
 luawrapper -
 
 * Takes the approach of writing and reading tables using ``readVariable`` and ``writeVariable`` functions
-* C++11
-* No macros!
+* C++11, no macros!
 * The interface can be clunky (no table-like data structures: most things go though ``readVariable`` / ``writeVariable``)
 * Internal Compiler errors in Visual Studio 2015 - submitted a PR to fix it, hopefully it'll get picked up
 
 SWIG (3.0) - 
 
-* Very comprehensive for binding concepts of C++ (classes, variables, etc.) to lua
+* Very comprehensive for binding concepts of C++ (classes, variables, etc.) to Lua
 * Helps with literally nothing else (tables, threads, stack abstractions, etc.)
 * Not really a good, full-featured Library...
 * Requires preprocessing step (but it's not a... TERRIBLY complicated preprocessing step); some boilerplate in writing additional classes that you've already declared
 
 luacppinterface -
 
-* The branch that fixes VC++ warnings
+* The branch that fixes VC++ warnings and introduces some new work has type checker issues, so use the stable branch only
 * No member variable support
 * Actually has tables (but no operator[])
 * Does not support arbitrary keys
-* Pretty decent
 
 luabind -
 

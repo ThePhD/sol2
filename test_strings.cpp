@@ -25,7 +25,6 @@ TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	static const wchar_t widestr[] = L"Fuck these shitty compilers";
 	static const char32_t utf32str2[] = U"🕴";
 
-#if 0
 	lua["utf8"] = utf8str;
 	lua["utf16"] = utf16str;
 	lua["utf32"] = utf32str;
@@ -36,11 +35,22 @@ TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	std::string utf32_to_utf8 = lua["utf32"];
 	std::string wide_to_utf8 = lua["wide"];
 
+	REQUIRE(utf8_to_utf8 == utf8str);
+	REQUIRE(utf16_to_utf8 == utf8str);
+	REQUIRE(utf32_to_utf8 == utf8str);
+	REQUIRE(wide_to_utf8 == utf8str);
+
 	std::wstring utf8_to_wide = lua["utf8"];
 	std::wstring utf16_to_wide = lua["utf16"];
 	std::wstring utf32_to_wide = lua["utf32"];
 	std::wstring wide_to_wide = lua["wide"];
 
+	REQUIRE(utf8_to_wide == widestr);
+	REQUIRE(utf16_to_wide == widestr);
+	REQUIRE(utf32_to_wide == widestr);
+	REQUIRE(wide_to_wide == widestr);
+
+#if 0
 	std::u16string utf8_to_utf16 = lua["utf8"];
 	std::u16string utf16_to_utf16 = lua["utf16"];
 	std::u16string utf32_to_utf16 = lua["utf32"];
@@ -51,25 +61,10 @@ TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	std::u32string utf32_to_utf32 = lua["utf32"];
 	std::u32string wide_to_utf32 = lua["wide"];
 
-	REQUIRE(utf8_to_utf8 == utf8str);
-	REQUIRE(utf16_to_utf8 == utf8str);
-	REQUIRE(utf32_to_utf8 == utf8str);
-	REQUIRE(wide_to_utf8 == utf8str);
-
-	REQUIRE(utf8_to_utf16 == utf16str);
-	REQUIRE(utf16_to_utf16 == utf16str);
-	REQUIRE(utf32_to_utf16 == utf16str);
-	REQUIRE(wide_to_utf16 == utf16str);
-
 	REQUIRE(utf8_to_utf32 == utf32str);
 	REQUIRE(utf16_to_utf32 == utf32str);
 	REQUIRE(utf32_to_utf32 == utf32str);
 	REQUIRE(wide_to_utf32 == utf32str);
-
-	REQUIRE(utf8_to_wide == widestr);
-	REQUIRE(utf16_to_wide == widestr);
-	REQUIRE(utf32_to_wide == widestr);
-	REQUIRE(wide_to_wide == widestr);
 
 	char32_t utf8_to_char32 = lua["utf8"];
 	char32_t utf16_to_char32 = lua["utf16"];
