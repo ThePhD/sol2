@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-12 17:00:49.377996 UTC
-// This header was generated with sol v2.11.3 (revision cd64453)
+// Generated 2016-08-12 20:07:14.493956 UTC
+// This header was generated with sol v2.11.3 (revision f608c4f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1785,12 +1785,12 @@ namespace sol {
 
 #include <lua.hpp>
 
-#if defined(_WIN32) || defined(_MSC_VER) 
+#if defined(_WIN32) || defined(_MSC_VER)  || defined(__MINGW32__)
 #ifndef SOL_CODECVT_SUPPORT
 #define SOL_CODECVT_SUPPORT 1
-#endif // codecvt support
+#endif // sol codecvt support
 #elif defined(__GNUC__)
-#if __GNUC__ == 5
+#if __GNUC__ >= 5
 #ifndef SOL_CODECVT_SUPPORT
 #define SOL_CODECVT_SUPPORT 1
 #endif // codecvt support
@@ -4793,8 +4793,10 @@ namespace sol {
 
 // end of sol\overload.hpp
 
+#ifdef SOL_CODECVT_SUPPORT
 #include <codecvt>
 #include <locale>
+#endif
 
 namespace sol {
 	namespace stack {
@@ -4952,14 +4954,17 @@ namespace sol {
 				if (sizeof(wchar_t) == 2) {
 					std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
 					std::wstring r = convert.from_bytes(str, str + len);
+#ifdef __MINGW32__
+					// Fuck you, MinGW, and fuck you libstdc++ for introducing this absolutely asinine bug
+					// https://sourceforge.net/p/mingw-w64/bugs/538/
+					// http://chat.stackoverflow.com/transcript/message/32271369#32271369
+					for (auto& c : r) {
+                        uint8_t* b = reinterpret_cast<uint8_t*>(&c);
+						std::swap(b[0], b[1]);
+					}
+#endif 
 					return r;
 				}
-				else if (sizeof(wchar_t) == 4) {
-					std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
-					std::wstring r = convert.from_bytes(str, str + len);
-					return r;
-				}
-				// ... Uh, what the fuck do I even do here?
 				std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
 				std::wstring r = convert.from_bytes(str, str + len);
 				return r;
@@ -5031,7 +5036,7 @@ namespace sol {
 				return str.size() > 0 ? str[0] : '\0';
 			}
 		};
-#endif // codecvt Header Support
+#endif // codecvt header support
 
 		template<>
 		struct getter<meta_function> {
@@ -5387,6 +5392,9 @@ namespace sol {
 } // sol
 
 // end of sol\raii.hpp
+
+#ifdef SOL_CODECVT_SUPPORT
+#endif
 
 namespace sol {
 	namespace stack {
@@ -5777,11 +5785,6 @@ namespace sol {
 					std::string u8str = convert.to_bytes(strb, stre);
 					return stack::push(L, u8str);
 				}
-				else if (sizeof(wchar_t) == 4) {
-					std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
-					std::string u8str = convert.to_bytes(strb, stre);
-					return stack::push(L, u8str);
-				}
 				std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
 				std::string u8str = convert.to_bytes(strb, stre);
 				return stack::push(L, u8str);
@@ -5921,7 +5924,7 @@ namespace sol {
 				return stack::push(L, u32str.data(), u32str.data() + sz);
 			}
 		};
-#endif // Codecvt Header Support
+#endif // codecvt Header Support
 
 		template<typename... Args>
 		struct pusher<std::tuple<Args...>> {
