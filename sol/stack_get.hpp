@@ -30,6 +30,8 @@
 #include <memory>
 #include <functional>
 #include <utility>
+#include <codecvt>
+#include <locale>
 
 namespace sol {
 	namespace stack {
@@ -164,19 +166,7 @@ namespace sol {
 				return lua_tostring(L, index);
 			}
 		};
-
-		template<>
-		struct getter<meta_function> {
-			static meta_function get(lua_State *L, int index, record& tracking) {
-				tracking.use(1);
-				const char* name = getter<const char*>{}.get(L, index, tracking);
-				for (std::size_t i = 0; i < meta_function_names.size(); ++i)
-					if (meta_function_names[i] == name)
-						return static_cast<meta_function>(i);
-				return meta_function::construct;
-			}
-		};
-
+		
 		template<>
 		struct getter<char> {
 			static char get(lua_State* L, int index, record& tracking) {
@@ -191,17 +181,45 @@ namespace sol {
 		struct getter<std::wstring> {
 			static std::wstring get(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
-				return{};
+				size_t len;
+				auto str = lua_tolstring(L, index, &len);
+				if (len < 1)
+					return std::wstring();
+				if (sizeof(wchar_t) == 2) {
+					std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
+					std::wstring r = convert.from_bytes(str, str + len);
+					return r;
+				}
+				else if (sizeof(wchar_t) == 4) {
+					std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
+					std::wstring r = convert.from_bytes(str, str + len);
+					return r;
+				}
+				// ... Uh, what the fuck do I even do here?
+				std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
+				std::wstring r = convert.from_bytes(str, str + len);
+				return r;
 			}
 		};
-
-#if 0
 
 		template<>
 		struct getter<std::u16string> {
 			static std::u16string get(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
-				return{};
+				size_t len;
+				auto str = lua_tolstring(L, index, &len);
+				if (len < 1)
+					return std::u16string();
+#ifdef _MSC_VER
+				std::wstring_convert<std::codecvt_utf8_utf16<int16_t>, int16_t> convert;
+				auto intd = convert.from_bytes(str, str + len);
+				std::u16string r(intd.size(), '\0');
+				std::memcpy(&r[0], intd.data(), intd.size() * sizeof(char16_t));
+#else
+				std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
+				std::u16string r = convert.from_bytes(str, str + len);
+#endif // VC++ is a shit
+				return r;
 			}
 		};
 
@@ -209,15 +227,27 @@ namespace sol {
 		struct getter<std::u32string> {
 			static std::u32string get(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
-				return{};
+				size_t len;
+				auto str = lua_tolstring(L, index, &len);
+				if (len < 1)
+					return std::u32string();
+#ifdef _MSC_VER
+				std::wstring_convert<std::codecvt_utf8<int32_t>, int32_t> convert;
+				auto intd = convert.from_bytes(str, str + len);
+				std::u32string r(intd.size(), '\0');
+				std::memcpy(&r[0], intd.data(), r.size() * sizeof(char32_t));
+#else
+				std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> convert;
+				std::u32string r = convert.from_bytes(str, str + len);
+#endif // VC++ is a shit
+				return r;
 			}
 		};
 
 		template<>
 		struct getter<wchar_t> {
 			static wchar_t get(lua_State* L, int index, record& tracking) {
-				tracking.use(1);
-				auto str = getter<std::wstring>{}.get(L, index);
+				auto str = getter<std::wstring>{}.get(L, index, tracking);
 				return str.size() > 0 ? str[0] : '\0';
 			}
 		};
@@ -225,8 +255,7 @@ namespace sol {
 		template<>
 		struct getter<char16_t> {
 			static char get(lua_State* L, int index, record& tracking) {
-				tracking.use(1);
-				auto str = getter<std::u16string>{}.get(L, index);
+				auto str = getter<std::u16string>{}.get(L, index, tracking);
 				return str.size() > 0 ? str[0] : '\0';
 			}
 		};
@@ -234,13 +263,22 @@ namespace sol {
 		template<>
 		struct getter<char32_t> {
 			static char32_t get(lua_State* L, int index, record& tracking) {
-				tracking.use(1);
-				auto str = getter<std::u32string>{}.get(L, index);
+				auto str = getter<std::u32string>{}.get(L, index, tracking);
 				return str.size() > 0 ? str[0] : '\0';
 			}
 		};
 
-#endif // For a distant future
+		template<>
+		struct getter<meta_function> {
+			static meta_function get(lua_State *L, int index, record& tracking) {
+				tracking.use(1);
+				const char* name = getter<const char*>{}.get(L, index, tracking);
+				for (std::size_t i = 0; i < meta_function_names.size(); ++i)
+					if (meta_function_names[i] == name)
+						return static_cast<meta_function>(i);
+				return meta_function::construct;
+			}
+		};
 
 		template<>
 		struct getter<nil_t> {

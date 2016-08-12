@@ -27,6 +27,7 @@
 #include "optional.hpp"
 #include <memory>
 #include <codecvt>
+#include <locale>
 
 namespace sol {
 	namespace stack {
@@ -411,8 +412,18 @@ namespace sol {
 			}
 
 			static int push(lua_State* L, const wchar_t* strb, const wchar_t* stre) {
-				std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
-				std::string u8str = utf8_conv.to_bytes(strb, stre);
+				if (sizeof(wchar_t) == 2) {
+					std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
+					std::string u8str = convert.to_bytes(strb, stre);
+					return stack::push(L, u8str);
+				}
+				else if (sizeof(wchar_t) == 4) {
+					std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
+					std::string u8str = convert.to_bytes(strb, stre);
+					return stack::push(L, u8str);
+				}
+				std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
+				std::string u8str = convert.to_bytes(strb, stre);
 				return stack::push(L, u8str);
 			}
 		};
