@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-12 16:30:43.996035 UTC
-// This header was generated with sol v2.11.3 (revision ffdff21)
+// Generated 2016-08-12 17:00:49.377996 UTC
+// This header was generated with sol v2.11.3 (revision cd64453)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1784,6 +1784,19 @@ namespace sol {
 // beginning of sol\compatibility\version.hpp
 
 #include <lua.hpp>
+
+#if defined(_WIN32) || defined(_MSC_VER) 
+#ifndef SOL_CODECVT_SUPPORT
+#define SOL_CODECVT_SUPPORT 1
+#endif // codecvt support
+#elif defined(__GNUC__)
+#if __GNUC__ == 5
+#ifndef SOL_CODECVT_SUPPORT
+#define SOL_CODECVT_SUPPORT 1
+#endif // codecvt support
+#endif // g++ 5.x.x
+#else
+#endif // Windows/VC++ vs. g++ vs Others
 
 #ifdef LUAJIT_VERSION
 #ifndef SOL_LUAJIT
@@ -4927,6 +4940,7 @@ namespace sol {
 			}
 		};
 
+#ifdef SOL_CODECVT_SUPPORT
 		template<>
 		struct getter<std::wstring> {
 			static std::wstring get(lua_State* L, int index, record& tracking) {
@@ -5017,6 +5031,7 @@ namespace sol {
 				return str.size() > 0 ? str[0] : '\0';
 			}
 		};
+#endif // codecvt Header Support
 
 		template<>
 		struct getter<meta_function> {
@@ -5745,6 +5760,7 @@ namespace sol {
 			}
 		};
 
+#ifdef SOL_CODECVT_SUPPORT
 		template<>
 		struct pusher<const wchar_t*> {
 			static int push(lua_State* L, const wchar_t* wstr) {
@@ -5905,6 +5921,7 @@ namespace sol {
 				return stack::push(L, u32str.data(), u32str.data() + sz);
 			}
 		};
+#endif // Codecvt Header Support
 
 		template<typename... Args>
 		struct pusher<std::tuple<Args...>> {

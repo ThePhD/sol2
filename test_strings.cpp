@@ -32,7 +32,7 @@ TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	static const std::u32string utf32str_s = utf32str;
 	static const std::wstring widestr_s = widestr;
 
-
+#ifdef SOL_CODECVT_SUPPORT
 	lua["utf8"] = utf8str;
 	lua["utf16"] = utf16str;
 	lua["utf32"] = utf32str;
@@ -87,6 +87,7 @@ TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	REQUIRE(utf16_to_char32 == utf32str[0]);
 	REQUIRE(utf32_to_char32 == utf32str[0]);
 	REQUIRE(wide_to_char32 == utf32str[0]);
+#endif // codecvt support
 }
 
 TEST_CASE("detail/demangling", "test some basic demangling cases") {

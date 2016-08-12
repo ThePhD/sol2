@@ -24,6 +24,21 @@
 
 #include <lua.hpp>
 
+#if defined(_WIN32) || defined(_MSC_VER) 
+#ifndef SOL_CODECVT_SUPPORT
+#define SOL_CODECVT_SUPPORT 1
+#endif // codecvt support
+#elif defined(__GNUC__)
+#if __GNUC__ >= 5
+#ifndef SOL_CODECVT_SUPPORT
+#define SOL_CODECVT_SUPPORT 1
+#endif // codecvt support
+#endif // g++ 5.x.x
+#else
+// Clang sucks and doesn't really utilize codecvt support,
+// not without checking the library versions explicitly (and we're not gonna do that, so fuck you)
+#endif // Windows/VC++ vs. g++ vs Others
+
 #ifdef LUAJIT_VERSION
 #ifndef SOL_LUAJIT
 #define SOL_LUAJIT

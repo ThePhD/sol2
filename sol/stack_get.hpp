@@ -30,8 +30,10 @@
 #include <memory>
 #include <functional>
 #include <utility>
+#ifdef SOL_CODECVT_SUPPORT
 #include <codecvt>
 #include <locale>
+#endif
 
 namespace sol {
 	namespace stack {
@@ -177,6 +179,7 @@ namespace sol {
 			}
 		};
 
+#ifdef SOL_CODECVT_SUPPORT
 		template<>
 		struct getter<std::wstring> {
 			static std::wstring get(lua_State* L, int index, record& tracking) {
@@ -267,6 +270,7 @@ namespace sol {
 				return str.size() > 0 ? str[0] : '\0';
 			}
 		};
+#endif // codecvt Header Support
 
 		template<>
 		struct getter<meta_function> {

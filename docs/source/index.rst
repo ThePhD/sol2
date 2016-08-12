@@ -7,7 +7,7 @@
 	:target: https://github.com/ThePhD/sol2
 	:alt: sol2 repository
 
-Sol 2.10
+Sol 2.11
 ========
 a fast, simple C++ and Lua Binding
 ----------------------------------
@@ -34,6 +34,7 @@ get going:
 	safety
 	exceptions
 	rtti
+	codecvt
 	cmake
 	licenses
 	origin

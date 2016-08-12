@@ -26,8 +26,10 @@
 #include "raii.hpp"
 #include "optional.hpp"
 #include <memory>
+#ifdef SOL_CODECVT_SUPPORT
 #include <codecvt>
 #include <locale>
+#endif
 
 namespace sol {
 	namespace stack {
@@ -401,6 +403,7 @@ namespace sol {
 			}
 		};
 
+#ifdef SOL_CODECVT_SUPPORT
 		template<>
 		struct pusher<const wchar_t*> {
 			static int push(lua_State* L, const wchar_t* wstr) {
@@ -561,6 +564,7 @@ namespace sol {
 				return stack::push(L, u32str.data(), u32str.data() + sz);
 			}
 		};
+#endif // Codecvt Header Support
 
 		template<typename... Args>
 		struct pusher<std::tuple<Args...>> {
