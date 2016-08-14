@@ -196,7 +196,7 @@ Sol can adjust pointers from derived classes to base classes at runtime, but it 
 
 If your class has no complicated™ virtual inheritance or multiple inheritance, than you can try to sneak away with a performance boost from not specifying any base classes and doing any casting checks. (What does "complicated™" mean? Ask your compiler's documentation, if you're in that deep.)
 
-For the rest of us safe individuals out there: You must specify the ``sol::base_classes`` tag with the ``sol::bases<Types...>()`` argument, where ``Types...`` are all the base classes of the single type ``T`` that you are making a usertype out of. If you turn exceptions off and are also completely mad and turn off :doc:`run-time type information<../rtti>` as well, we fallback to a id-based  system that still requires you to specifically list the base classes as well. For example:
+For the rest of us safe individuals out there: You must specify the ``sol::base_classes`` tag with the ``sol::bases<Types...>()`` argument, where ``Types...`` are all the base classes of the single type ``T`` that you are making a usertype out of.
 
 .. note::
 
@@ -213,6 +213,10 @@ For the rest of us safe individuals out there: You must specify the ``sol::base_
 		int b = 11; 
 		virtual int call() override { return 20; } 
 	};
+
+.. warning::
+
+	Sol currently attempts to link base class methods and variables with their derived classes with an undocumented, unsupported feature, provided you specify ``sol::base_classes<...>``. Unfortunately, this can come at the cost of prformance, depending on how "far" the base is from the derived class in the bases lookup list. If you do not want to suffer the performance degradation while we iron out the kinks in the implementation (and want it to stay performant forever), please specify all the base methods on the derived class in the method listing you write. In the future, we hope that with reflection we will not have to worry about this.
 
 Then, to register the base classes explicitly:
 
