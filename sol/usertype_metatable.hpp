@@ -320,7 +320,10 @@ namespace sol {
 				return ret;
 			}
 			// Otherwise, we need to do propagating calls through the bases
-			f.indexbaseclasspropogation(L, found, ret, accessor);
+			if (b)
+				f.indexbaseclasspropogation(L, found, ret, accessor);
+			else
+				f.newindexbaseclasspropogation(L, found, ret, accessor);
 			if (found) {
 				return ret;
 			}
