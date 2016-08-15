@@ -7,7 +7,7 @@ Yes, you can turn off exceptions in Sol with ``#define SOL_NO_EXCEPTIONS`` befor
 
 If you turn this off, the default `at_panic`_ function :doc:`state<api/state>` set for you will not throw. Instead, the default Lua behavior of aborting will take place (and give you no chance of escape unless you implement your own at_panic function and decide to try ``longjmp`` out).
 
-To make this not be the case, you can set a panic function directly with `lua_atpanic( lua, my_panic_function );` or when you create the ``sol::state`` with ``sol::state lua(my_panic_function);``. Here's an example ``my_panic_function`` you can have that prints out its errors:
+To make this not be the case, you can set a panic function directly with ``lua_atpanic( lua, my_panic_function );`` or when you create the ``sol::state`` with ``sol::state lua(my_panic_function);``. Here's an example ``my_panic_function`` you can have that prints out its errors:
 
 .. code-block:: cpp
 	:caption: regular panic function
@@ -17,9 +17,9 @@ To make this not be the case, you can set a panic function directly with `lua_at
 
 	int my_panic_function( lua_State* L ) {
 		// error message is at the top of the stack
-     	const char* message = lua_tostring(L, -1);
-     	// message can be null, so don't crash 
-     	// us with nullptr-constructed-string if it is
+		const char* message = lua_tostring(L, -1);
+		// message can be null, so don't crash 
+		// us with nullptr-constructed-string if it is
 		std::string err = message ? message : "An unexpected error occurred and forced the lua state to call atpanic";
 		// Weee
 		std::cerr << err << std::endl;
@@ -34,12 +34,6 @@ To make this not be the case, you can set a panic function directly with `lua_at
 Note that ``SOL_NO_EXCEPTIONS`` will also disable :doc:`protected_function<api/protected_function>`'s ability to catch C++ errors you throw from C++ functions bound to Lua that you are calling through that API. So, only turn off exceptions in Sol if you're sure you're never going to use exceptions ever. Of course, if you are ALREADY not using Exceptions, you don't have to particularly worry about this and now you can use Sol!
 
 If there is a place where a throw statement is called or a try/catch is used and it is not hidden behind a ``#ifndef SOL_NO_EXCEPTIONS`` block, please file an issue at `issue`_ or submit your very own pull request so everyone can benefit!
-
-
-inheritance
------------
-
-Sol uses a nifty feature of exceptions to perform infinitely scaling, compiler-correct casting of derived pointers to their base classes. If you disable this and you want to have a :doc:`user-defined type<api/usertype>` that can be used with functions that take its base class or similar, you must specify those base classes manually using the :ref:`base_classes<usertype-inheritance>` tag with the :ref:`bases\<Types...><usertype-inheritance>` arguments when you create the usertype. If you turn exceptions off and are also completely mad and turn off :doc:`run-time type information<rtti>` as well, we fallback to a id-based base class system that still requires you to specifically list the base classes using the method mentioned previously. But if you have already turned off rtti and exceptions, you must really know what you're doing, so you should be just fine!
 
 
 .. _LuaJIT and exceptions:
