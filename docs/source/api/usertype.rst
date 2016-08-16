@@ -102,28 +102,28 @@ enumerations
 	:linenos:
 
 	enum class meta_function {
-	    construct,
-	    index,
-	    new_index,
-	    mode,
-	    call,
-	    metatable,
-	    to_string,
-	    length,
-	    unary_minus,
-	    addition,
-	    subtraction,
-	    multiplication,
-	    division,
-	    modulus,
-	    power_of,
-	    involution = power_of,
-	    concatenation,
-	    equal_to,
-	    less_than,
-	    less_than_or_equal_to,
-	    garbage_collect,
-	    call_function,
+		construct,
+		index,
+		new_index,
+		mode,
+		call,
+		metatable,
+		to_string,
+		length,
+		unary_minus,
+		addition,
+		subtraction,
+		multiplication,
+		division,
+		modulus,
+		power_of,
+		involution = power_of,
+		concatenation,
+		equal_to,
+		less_than,
+		less_than_or_equal_to,
+		garbage_collect,
+		call_function,
 	};
 
 
@@ -140,45 +140,70 @@ members
 	usertype<T>(Args&&... args);
 
 
-The constructor of usertype takes a variable number of arguments. It takes an even number of arguments (except in the case where the very first argument is passed as the :ref:`constructor<constructor>` or in the case of specifying a custom :ref:`destructor<destructor>`). Names can either be strings, :ref:`special meta_function enumerations<meta_function_enum>`, or one of the special indicators for initializers.
+The constructor of usertype takes a variable number of arguments. It takes an even number of arguments (except in the case where the very first argument is passed as the :ref:`constructor list type<constructor>`). Names can either be strings, :ref:`special meta_function enumerations<meta_function_enum>`, or one of the special indicators for initializers.
 
 
-.. _constructor:
+usertype constructor options
+++++++++++++++++++++++++++++
 
-* ``sol::simple``
-    - Only allowed as the first argument to the usertype constructor
-    - This tag triggers the :doc:`simple usertype<simple_usertype>` changes / optimizations
+If you don't specify any constructor options at all and the type is `default_constructible`_, Sol will generate a ``new`` for you. Otherwise, the following are special ways to handle the construction of a usertype:
+ 
+..  _constructor:
+
 * ``"{name}", constructors<Type-List-0, Type-List-1, ...>``
-    - ``Type-List-N`` must be a ``sol::types<Args...>``, where ``Args...`` is a list of types that a constructor takes. Supports overloading by default
-    - If you pass the ``constructors<...>`` argument first when constructing the usertype, then it will automatically be given a ``"{name}"`` of ``"new"``
+	- ``Type-List-N`` must be a ``sol::types<Args...>``, where ``Args...`` is a list of types that a constructor takes. Supports overloading by default
+	- If you pass the ``constructors<...>`` argument first when constructing the usertype, then it will automatically be given a ``"{name}"`` of ``"new"``
 * ``"{name}", sol::initializers( func1, func2, ... )``
-    - Creates initializers that, given one or more functions, provides an overloaded lua function for creating a the specified type.
-	   + The function must have the argument signature ``func( T*, Arguments... )`` or ``func( T&, Arguments... )``, where the pointer or reference will point to a place of allocated memory that has an uninitialized ``T``. Note that lua controls the memory.
-* ``"{name}", sol::no_constructor``
-    - Specifically tells Sol not to create a `.new()` if one is not specified and the type is default-constructible.
-* ``sol::call_constructor, {any constructor type}``
-    - Specifies a function that makes the call turn into ``{usertype-name}( ... constructor arguments ... )``. This is compatible with luabind syntax.
+	- Used to handle *factory functions* that need to initialize the memory itself (but not actually allocate the memory, since that comes as a userdata block from Lua)
+	- Given one or more functions, provides an overloaded Lua function for creating a the specified type
+		+ The function must have the argument signature ``func( T*, Arguments... )`` or ``func( T&, Arguments... )``, where the pointer or reference will point to a place of allocated memory that has an uninitialized ``T``. Note that Lua controls the memory, so performing a ``new`` and setting it to the ``T*`` or ``T&`` is a bad idea: instead, use ``placement new`` to invoke a constructor, or deal with the memory exactly as you see fit
+* ``{anything}, sol::no_constructor``
+	- Specifically tells Sol not to create a ``.new()`` if one is not specified and the type is default-constructible, and specifically binds
+	- ``{anything}`` should probably be ``"new"``, which will specifically block its creation and give a proper warning if someone calls ``new`` (otherwise it will just give a nil value error)
+	- *Combine with the next one to only allow a factory function for your function type*
+* ``{anything}, {some_factory_function}``
+	- Essentially binds whatever the function is to name ``{anything}``. When used WITH the ``sol::no_constructor`` option above (e.g. ``"new", sol::no_constructor`` and after that having ``"create", &my_creation_func``), one can remove typical constructor avenues and then only provide specific factory functions. To control the destructor as well, see below
+* ``sol::call_constructor, {valid function / constructor / initializer}``
+	- The purpose of this is to enable the syntax ``local v = my_class( 24 )`` and have that call a constructor; it has no other purpose
+	- This is compatible with luabind syntax and looks similar to C++ syntax, but the general consensus in Programming with Lua and other places is to use a function named ``new``
 
-.. _destructor:
+usertype destructor options
++++++++++++++++++++++++++++
+
+If you don't specify anything at all and the type is `destructible`_, then a destructor will be bound to the garbage collection metamethod. Otherwise, the following are special ways to handle the destruction of a usertype:
 
 * ``"__gc", sol::destructor( func )`` or ``sol::meta_function::garbage_collect, sol::destructor( func )``
-    - Creates a custom destructor that takes an argument ``T*`` or ``T&`` and expects it to be destructed/destroyed. Note that lua controls the memory and thusly will deallocate the necessary space AFTER this function returns (e.g., do not call ``delete`` as that will attempt to deallocate memory you did not ``new``).
-    - If you just want the default constructor, you can replace the second argument with ``sol::default_destructor``.
-    - The usertype will throw if you specify a destructor specifically but do not map it to ``sol::meta_function::gc`` or a string equivalent to ``"__gc"``.
+	- Creates a custom destructor that takes an argument ``T*`` or ``T&`` and expects it to be destructed/destroyed. Note that lua controls the memory and thusly will deallocate the necessary space AFTER this function returns (e.g., do not call ``delete`` as that will attempt to deallocate memory you did not ``new``)
+	- If you just want the default constructor, you can replace the second argument with ``sol::default_destructor``
+	- The usertype will error / throw if you specify a destructor specifically but do not map it to ``sol::meta_function::gc`` or a string equivalent to ``"__gc"``
+
+usertype regular function options
++++++++++++++++++++++++++++++++++
+
 * ``"{name}", &free_function``
-    - Binds a free function / static class function / function object (lambda) to ``"{name}"``. If the first argument is ``T*`` or ``T&``, then it will bind it as a member function. If it is not, it will be bound as a "static" function on the lua table.
+	- Binds a free function / static class function / function object (lambda) to ``"{name}"``. If the first argument is ``T*`` or ``T&``, then it will bind it as a member function. If it is not, it will be bound as a "static" function on the lua table
 * ``"{name}", &type::function_name`` or ``"{name}", &type::member_variable``
-    - Binds a typical member function or variable to ``"{name}"``. In the case of a member variable or member function, ``type`` must be ``T`` or a base of ``T``.
+	- Binds a typical member function or variable to ``"{name}"``. In the case of a member variable or member function, ``type`` must be ``T`` or a base of ``T``
 * ``"{name}", sol::readonly( &type::member_variable )``
-    - Binds a typical variable to ``"{name}"``. Similar to the above, but the variable will be read-only, meaning an error will be generated if anything attemps to write to this variable.
+	- Binds a typical variable to ``"{name}"``. Similar to the above, but the variable will be read-only, meaning an error will be generated if anything attemps to write to this variable
 * ``"{name}", sol::property( getter_func, setter_func )``
-    - Binds a typical variable to ``"{name}"``, but gets and sets using the specified setter and getter functions. Not that if you do not pass a setter function, the variable will be read-only. Also not that if you do not pass a getter function, it will be write-only.
+	- Binds a typical variable to ``"{name}"``, but gets and sets using the specified setter and getter functions. Not that if you do not pass a setter function, the variable will be read-only. Also not that if you do not pass a getter function, it will be write-only
 * ``"{name}", sol::var( some_value )`` or ``"{name}", sol::var( std::ref( some_value ) )``
-    - Binds a typical variable to ``"{name}"``, optionally by reference (e.g., refers to the same memory in C++). This is useful for global variables and the like.
+	- Binds a typical variable to ``"{name}"``, optionally by reference (e.g., refers to the same memory in C++). This is useful for global variables / static class variables and the like
 * ``"{name}", sol::overloaded( Func1, Func2, ... )``
-    - Creates an oveloaded member function that discriminates on number of arguments and types.
+	- Creates an oveloaded member function that discriminates on number of arguments and types.
 * ``sol::base_classes, sol::bases<Bases...>``
-    - Tells a usertype what its base classes are. If you have exceptions turned on, this need not be necessary: if you do not then you need this to have derived-to-base conversions work properly. See :ref:`inheritance<usertype-inheritance>`.
+	- Tells a usertype what its base classes are. If you have exceptions turned on, this need not be necessary: if you do not then you need this to have derived-to-base conversions work properly. See :ref:`inheritance<usertype-inheritance>`
+
+
+usertype arguments - simple usertype
+++++++++++++++++++++++++++++++++++++
+
+* ``sol::simple``
+	- Only allowed as the first argument to the usertype constructor, must be accompanied by a ``lua_State*``
+	- This tag triggers the :doc:`simple usertype<simple_usertype>` changes / optimizations
+	- Only supported when directly invoking the constructor (e.g. not when calling ``sol::table::new_usertype`` or ``sol::table::new_simple_usertype``) 
+
 
 
 overloading
@@ -200,7 +225,7 @@ For the rest of us safe individuals out there: You must specify the ``sol::base_
 
 .. note::
 
-	Please be advised that this was a breaking change from before: previously, with the power of exceptions we did not need to list base classes. This unfortunately came at the cost of quite a bit of performance, and therefore it is not adivsable / required to specify all of your base classes, exceptions or no exceptions, RTTI or not: always specify your bases.
+	Always specify your bases if you plan to retrieve a base class using the Sol abstraction directly and not casting yourself.
 
 .. code-block:: cpp
 	:linenos:
@@ -254,10 +279,10 @@ traits
 
 	template<typename T>
 	struct usertype_traits {
-	    static const std::string name;
-	    static const std::string metatable;
-	    static const std::string variable_metatable;
-	    static const std::string gc_table;
+		static const std::string name;
+		static const std::string metatable;
+		static const std::string variable_metatable;
+		static const std::string gc_table;
 	};
 
 
@@ -278,3 +303,7 @@ performance note
 .. note::
 
 	Note that performance for member function calls goes down by a fixed overhead if you also bind variables as well as member functions. This is purely a limitation of the Lua implementation and there is, unfortunately, nothing that can be done about it. If you bind only functions and no variables, however, Sol will automatically optimize the Lua runtime and give you the maximum performance possible. *Please consider ease of use and maintenance of code before you make everything into functions.*
+
+
+.. _destructible: http://en.cppreference.com/w/cpp/types/is_destructible
+.. _default_constructible: http://en.cppreference.com/w/cpp/types/is_constructible

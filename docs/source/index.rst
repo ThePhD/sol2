@@ -31,6 +31,7 @@ get going:
 	api/api-top
 	mentions
 	benchmarks
+	performance
 	safety
 	exceptions
 	rtti

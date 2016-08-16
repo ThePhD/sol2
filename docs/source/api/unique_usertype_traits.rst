@@ -18,7 +18,7 @@ A trait for hooking special handles / pointers
 		static type* get (const actual_type&) {...}
 	};
 
-A traits type for alerting the library that a certain type is to be pushed as a special userdata with special deletion / destruction semantics. It is already defined for ``std::unique_ptr<T, D>`` and ``std::shared_ptr<T>``. You can specialize this to get ``unique_usertype_traits`` semantics with your code, for example with ``boost::shared_ptr<T>`` like so:
+This is a customization point for users who need to *work with special kinds of pointers/handles*. For generic customization, please review the :doc:`customization tutorial<../tutorial/customization>` A traits type for alerting the library that a certain type is to be pushed as a special userdata with special deletion / destruction semantics. It is already defined for ``std::unique_ptr<T, D>`` and ``std::shared_ptr<T>``. You can specialize this to get ``unique_usertype_traits`` semantics with your code, for example with ``boost::shared_ptr<T>`` like so:
 
 .. code-block:: cpp
 	
