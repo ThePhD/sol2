@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-12 20:07:14.493956 UTC
-// This header was generated with sol v2.11.3 (revision f608c4f)
+// Generated 2016-08-17 05:16:05.764792 UTC
+// This header was generated with sol v2.11.3 (revision a8e6837)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5373,6 +5373,18 @@ namespace sol {
 		return constructor_wrapper<std::decay_t<Functions>...>(std::forward<Functions>(functions)...);
 	}
 
+	template <typename... Functions>
+	struct factory_wrapper {
+		std::tuple<Functions...> set;
+		template <typename... Args>
+		factory_wrapper(Args&&... args) : set(std::forward<Args>(args)...) {}
+	};
+
+	template <typename... Functions>
+	inline auto factories(Functions&&... functions) {
+		return factory_wrapper<std::decay_t<Functions>...>(std::forward<Functions>(functions)...);
+	}
+
 	template <typename Function>
 	struct destructor_wrapper {
 		Function fx;
@@ -7340,7 +7352,24 @@ namespace sol {
 				template <typename Fx, std::size_t I, typename... R, typename... Args>
 				int operator()(types<Fx>, index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int, F& fx) {
 					auto& f = std::get<I>(fx.set);
-					return lua_call_wrapper<T, Fx, is_index, is_variable, checked>{}.call(L, f);
+					return lua_call_wrapper<T, Fx, is_index, is_variable, checked, boost>{}.call(L, f);
+				}
+			};
+
+			static int call(lua_State* L, F& fx) {
+				return overload_match_arity<Fs...>(on_match(), L, lua_gettop(L), 1, fx);
+			}
+		};
+
+		template <typename T, typename... Fs, bool is_index, bool is_variable, bool checked, int boost, typename C>
+		struct lua_call_wrapper<T, factory_wrapper<Fs...>, is_index, is_variable, checked, boost, C> {
+			typedef factory_wrapper<Fs...> F;
+
+			struct on_match {
+				template <typename Fx, std::size_t I, typename... R, typename... Args>
+				int operator()(types<Fx>, index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int, F& fx) {
+					auto& f = std::get<I>(fx.set);
+					return lua_call_wrapper<T, Fx, is_index, is_variable, checked, boost>{}.call(L, f);
 				}
 			};
 
@@ -9210,6 +9239,9 @@ namespace sol {
 		template <typename... Args>
 		struct is_constructor<constructor_wrapper<Args...>> : std::true_type {};
 
+		template <typename... Args>
+		struct is_constructor<factory_wrapper<Args...>> : std::true_type {};
+
 		template <>
 		struct is_constructor<no_construction> : std::true_type {};
 
@@ -9429,7 +9461,10 @@ namespace sol {
 				return ret;
 			}
 			// Otherwise, we need to do propagating calls through the bases
-			f.indexbaseclasspropogation(L, found, ret, accessor);
+			if (b)
+				f.indexbaseclasspropogation(L, found, ret, accessor);
+			else
+				f.newindexbaseclasspropogation(L, found, ret, accessor);
 			if (found) {
 				return ret;
 			}

@@ -154,18 +154,25 @@ If you don't specify any constructor options at all and the type is `default_con
 	- ``Type-List-N`` must be a ``sol::types<Args...>``, where ``Args...`` is a list of types that a constructor takes. Supports overloading by default
 	- If you pass the ``constructors<...>`` argument first when constructing the usertype, then it will automatically be given a ``"{name}"`` of ``"new"``
 * ``"{name}", sol::initializers( func1, func2, ... )``
-	- Used to handle *factory functions* that need to initialize the memory itself (but not actually allocate the memory, since that comes as a userdata block from Lua)
+	- Used to handle *initializer functions* that need to initialize the memory itself (but not actually allocate the memory, since that comes as a userdata block from Lua)
 	- Given one or more functions, provides an overloaded Lua function for creating a the specified type
 		+ The function must have the argument signature ``func( T*, Arguments... )`` or ``func( T&, Arguments... )``, where the pointer or reference will point to a place of allocated memory that has an uninitialized ``T``. Note that Lua controls the memory, so performing a ``new`` and setting it to the ``T*`` or ``T&`` is a bad idea: instead, use ``placement new`` to invoke a constructor, or deal with the memory exactly as you see fit
+* ``{anything}, sol::factories( func1, func2, ... )``
+	- Used to indicate that a factory function (e.g., something that produces a ``std::unique_ptr<T, ...>``, ``std::shared_ptr<T>``, ``T``, or similar) will be creating the object type
+	- Given one or more functions, provides an overloaded function for invoking
+		+ The functions can take any form and return anything, since they're just considered to be some plain function and no placement new or otherwise needs to be done. Results from this function will be pushed into Lua according to the same rules as everything else.
+		+ Can be used to stop the generation of a ``.new()`` default constructor since a ``sol::factories`` entry will be recognized as a constructor for the usertype
+		+ If this is not sufficient, see next 2 entries on how to specifically block a constructor
 * ``{anything}, sol::no_constructor``
-	- Specifically tells Sol not to create a ``.new()`` if one is not specified and the type is default-constructible, and specifically binds
+	- Specifically tells Sol not to create a ``.new()`` if one is not specified and the type is default-constructible
 	- ``{anything}`` should probably be ``"new"``, which will specifically block its creation and give a proper warning if someone calls ``new`` (otherwise it will just give a nil value error)
 	- *Combine with the next one to only allow a factory function for your function type*
 * ``{anything}, {some_factory_function}``
-	- Essentially binds whatever the function is to name ``{anything}``. When used WITH the ``sol::no_constructor`` option above (e.g. ``"new", sol::no_constructor`` and after that having ``"create", &my_creation_func``), one can remove typical constructor avenues and then only provide specific factory functions. To control the destructor as well, see below
-* ``sol::call_constructor, {valid function / constructor / initializer}``
+	- Essentially binds whatever the function is to name ``{anything}``
+	- When used WITH the ``sol::no_constructor`` option above (e.g. ``"new", sol::no_constructor`` and after that having ``"create", &my_creation_func``), one can remove typical constructor avenues and then only provide specific factory functions. Note that this combination is similar to using the ``sol::factories`` method mentioned earlier in this list. To control the destructor as well, see further below
+* ``sol::call_constructor, {valid function / constructor / initializer / factory}``
 	- The purpose of this is to enable the syntax ``local v = my_class( 24 )`` and have that call a constructor; it has no other purpose
-	- This is compatible with luabind syntax and looks similar to C++ syntax, but the general consensus in Programming with Lua and other places is to use a function named ``new``
+	- This is compatible with luabind, kaguya and other Lua library syntaxes and looks similar to C++ syntax, but the general consensus in Programming with Lua and other places is to use a function named ``new``
 
 usertype destructor options
 +++++++++++++++++++++++++++

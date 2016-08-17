@@ -445,7 +445,24 @@ namespace sol {
 				template <typename Fx, std::size_t I, typename... R, typename... Args>
 				int operator()(types<Fx>, index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int, F& fx) {
 					auto& f = std::get<I>(fx.set);
-					return lua_call_wrapper<T, Fx, is_index, is_variable, checked>{}.call(L, f);
+					return lua_call_wrapper<T, Fx, is_index, is_variable, checked, boost>{}.call(L, f);
+				}
+			};
+
+			static int call(lua_State* L, F& fx) {
+				return overload_match_arity<Fs...>(on_match(), L, lua_gettop(L), 1, fx);
+			}
+		};
+
+		template <typename T, typename... Fs, bool is_index, bool is_variable, bool checked, int boost, typename C>
+		struct lua_call_wrapper<T, factory_wrapper<Fs...>, is_index, is_variable, checked, boost, C> {
+			typedef factory_wrapper<Fs...> F;
+
+			struct on_match {
+				template <typename Fx, std::size_t I, typename... R, typename... Args>
+				int operator()(types<Fx>, index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int, F& fx) {
+					auto& f = std::get<I>(fx.set);
+					return lua_call_wrapper<T, Fx, is_index, is_variable, checked, boost>{}.call(L, f);
 				}
 			};
 

@@ -97,6 +97,18 @@ namespace sol {
 		return constructor_wrapper<std::decay_t<Functions>...>(std::forward<Functions>(functions)...);
 	}
 
+	template <typename... Functions>
+	struct factory_wrapper {
+		std::tuple<Functions...> set;
+		template <typename... Args>
+		factory_wrapper(Args&&... args) : set(std::forward<Args>(args)...) {}
+	};
+
+	template <typename... Functions>
+	inline auto factories(Functions&&... functions) {
+		return factory_wrapper<std::decay_t<Functions>...>(std::forward<Functions>(functions)...);
+	}
+
 	template <typename Function>
 	struct destructor_wrapper {
 		Function fx;

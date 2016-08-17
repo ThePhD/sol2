@@ -101,6 +101,9 @@ namespace sol {
 		template <typename... Args>
 		struct is_constructor<constructor_wrapper<Args...>> : std::true_type {};
 
+		template <typename... Args>
+		struct is_constructor<factory_wrapper<Args...>> : std::true_type {};
+
 		template <>
 		struct is_constructor<no_construction> : std::true_type {};
 
