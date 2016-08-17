@@ -19,25 +19,32 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_OPTIONAL_HPP
-#define SOL_OPTIONAL_HPP
-
-#if defined(SOL_USE_BOOST)
-#include <boost/optional.hpp>
-#include "../sol/in_place.hpp"
-#else
-#include "../Optional/optional.hpp"
-#endif // Boost vs. Better optional
+#ifndef SOL_IN_PLACE_HPP
+#define SOL_IN_PLACE_HPP
 
 namespace sol {
 
-#if defined(SOL_USE_BOOST)
+	namespace detail {
+		struct in_place_of {};
+		template <std::size_t I>
+		struct in_place_of_i {};
+		template <typename T>
+		struct in_place_of_t {};
+	} // detail
+
+	struct in_place_tag { struct init {}; constexpr in_place_tag(init) {} in_place_tag() = delete; };
+	constexpr inline in_place_tag in_place(detail::in_place_of) { return in_place_tag(in_place_tag::init()); }
 	template <typename T>
-	using optional = boost::optional<T>;
-	using nullopt_t = boost::none_t;
-	const nullopt_t nullopt = boost::none;
-#endif // Boost vs. Better optional
+	constexpr inline in_place_tag in_place(detail::in_place_of_t<T>) { return in_place_tag(in_place_tag::init()); }
+	template <std::size_t I>
+	constexpr inline in_place_tag in_place(detail::in_place_of_i<I>) { return in_place_tag(in_place_tag::init()); }
+
+	using in_place_t = in_place_tag(&)(detail::in_place_of);
+	template <typename T>
+	using in_place_type_t = in_place_tag(&)(detail::in_place_of_t<T>);
+	template <std::size_t I>
+	using in_place_index_t = in_place_tag(&)(detail::in_place_of_i<I>);
 
 } // sol
 
-#endif // SOL_OPTIONAL_HPP
+#endif // SOL_IN_PLACE_HPP

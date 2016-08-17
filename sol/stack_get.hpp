@@ -78,6 +78,54 @@ namespace sol {
 		};
 
 		template<typename T>
+		struct getter<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<meta::has_key_value_pair<T>>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
+			static T get(lua_State* L, int index, record& tracking) {
+				typedef typename T::value_type V;
+				tracking.use(1);
+
+				T arr;
+				index = lua_absindex(L, index);
+				lua_pushnil(L);
+				while (lua_next(L, index) != 0) {
+					int isint = 0;
+					lua_Integer li = lua_tointegerx(L, -2, &isint);
+					if (isint == 0) {
+						lua_pop(L, 1);
+						continue;
+					}
+					std::size_t i = static_cast<std::size_t>(li);
+					arr.push_back(stack::get<V>(L, -1));
+					lua_pop(L, 1);
+				}
+				return arr;
+			}
+		};
+
+		template<typename T>
+		struct getter<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::has_key_value_pair<T>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
+			static T get(lua_State* L, int index, record& tracking) {
+				typedef typename T::value_type P;
+				typedef typename P::first_type K;
+				typedef typename P::second_type V;
+				tracking.use(1);
+
+				T associative;
+				index = lua_absindex(L, index);
+				lua_pushnil(L);
+				while (lua_next(L, index) != 0) {
+					decltype(auto) key = stack::check_get<K>(L, -1);
+					if (!key) {
+						lua_pop(L, 1);
+						continue;
+					}
+					arr.emplace(std::forward<decltype(key)>(key), stack::get<V>(L, -1));
+					lua_pop(L, 1);
+				}
+				return associative;
+			}
+		};
+
+		template<typename T>
 		struct getter<T, std::enable_if_t<std::is_base_of<reference, T>::value || std::is_base_of<stack_reference, T>::value>> {
 			static T get(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
