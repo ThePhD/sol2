@@ -113,12 +113,12 @@ namespace sol {
 				index = lua_absindex(L, index);
 				lua_pushnil(L);
 				while (lua_next(L, index) != 0) {
-					decltype(auto) key = stack::check_get<K>(L, -1);
+					decltype(auto) key = stack::check_get<K>(L, -2);
 					if (!key) {
 						lua_pop(L, 1);
 						continue;
 					}
-					arr.emplace(std::forward<decltype(key)>(key), stack::get<V>(L, -1));
+					associative.emplace(std::forward<decltype(*key)>(*key), stack::get<V>(L, -1));
 					lua_pop(L, 1);
 				}
 				return associative;

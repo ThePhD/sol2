@@ -3,11 +3,13 @@
 #include <catch.hpp>
 #include <sol.hpp>
 #include <iostream>
-#include <map>
 #include <algorithm>
 #include <numeric>
 #include <iterator>
 #include <vector>
+#include <list>
+#include <map>
+#include <unordered_map>
 #include "test_stack_guard.hpp"
 
 std::string free_function() {
@@ -572,4 +574,52 @@ TEST_CASE("tables/returns", "make sure that even references to vectors are being
 	REQUIRE(matching);
 	matching = t[3] == 3;
 	REQUIRE(matching);
+}
+
+TEST_CASE("tables/vector_roundtrip", "make sure vectors can be round-tripped") {
+	sol::state lua;
+	std::vector<int> v{ 1, 2, 3 };
+	lua.set_function("f", [&]() -> std::vector<int>& {
+		return v;
+	});
+	lua.script("x = f()");
+	std::vector<int> x = lua["x"];
+	bool areequal = x == v;
+	REQUIRE(areequal);
+}
+
+TEST_CASE("tables/list_roundtrip", "make sure lists can be round-tripped") {
+	sol::state lua;
+	std::list<int> v{ 1, 2, 3 };
+	lua.set_function("f", [&]() -> std::list<int>& {
+		return v;
+	});
+	lua.script("x = f()");
+	std::list <int> x = lua["x"];
+	bool areequal = x == v;
+	REQUIRE(areequal);
+}
+
+TEST_CASE("tables/map_roundtrip", "make sure maps can be round-tripped") {
+	sol::state lua;
+	std::map<std::string, int> v{ { "a", 1 },{ "b", 2 },{ "c", 3 } };
+	lua.set_function("f", [&]() -> std::map<std::string, int>& {
+		return v;
+	});
+	lua.script("x = f()");
+	std::map<std::string, int> x = lua["x"];
+	bool areequal = x == v;
+	REQUIRE(areequal);
+}
+
+TEST_CASE("tables/unordered_map_roundtrip", "make sure unordered_maps can be round-tripped") {
+	sol::state lua;
+	std::unordered_map<std::string, int> v{ { "a", 1 },{ "b", 2 },{ "c", 3 } };
+	lua.set_function("f", [&]() -> std::unordered_map<std::string, int>& {
+		return v;
+	});
+	lua.script("x = f()");
+	std::unordered_map<std::string, int> x = lua["x"];
+	bool areequal = x == v;
+	REQUIRE(areequal);
 }

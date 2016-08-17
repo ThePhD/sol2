@@ -165,11 +165,13 @@ ninja.newline()
 ninja.rule('bootstrap', command = ' '.join(['python'] + sys.argv), generator = True)
 ninja.rule('compile', command = '$cxx -MMD -MF $out.d -c $cxxflags -Werror $in -o $out',
                       deps = 'gcc', depfile = '$out.d',
-                      description = 'Compiling $in to $out')
-ninja.rule('link', command = '$cxx $cxxflags $in -o $out $ldflags', description = 'Creating $out')
+                      description = 'compiling $in to $out')
+ninja.rule('link', command = '$cxx $cxxflags $in -o $out $ldflags', description = 'creating $out')
 ninja.rule('tests_runner', command = tests)
 ninja.rule('examples_runner', command = 'cmd /c ' + (' && '.join(examples)) if 'win32' in sys.platform else ' && '.join(examples) )
-ninja.rule('example', command = '$cxx $cxxflags $in -o $out $ldflags')
+ninja.rule('example', command = '$cxx $cxxflags -MMD -MF $out.d $in -o $out $ldflags',
+                      deps = 'gcc', depfile = '$out.d',
+                      description = 'compiling example $in to $out')
 ninja.rule('installer', command = copy_command)
 ninja.rule('uninstaller', command = remove_command)
 ninja.newline()
