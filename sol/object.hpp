@@ -22,9 +22,10 @@
 #ifndef SOL_OBJECT_HPP
 #define SOL_OBJECT_HPP
 
+#include "optional.hpp"
 #include "reference.hpp"
-#include "userdata.hpp"
 #include "stack.hpp"
+#include "userdata.hpp"
 #include "variadic_args.hpp"
 
 namespace sol {

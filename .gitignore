@@ -19,6 +19,9 @@ x64/
 *.sln
 *.gitattributes
 
+# VSCode
+.vscode/
+
 # Compiler outputs
 obj/*
 bin/*

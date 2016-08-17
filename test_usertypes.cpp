@@ -982,11 +982,22 @@ TEST_CASE("usertype/no_constructor", "make sure lua types cannot be constructed 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<thing>("thing",
+	SECTION("order1")
+	{
+		lua.new_usertype<thing>("thing",
 		"v", &thing::v
 		, sol::call_constructor, sol::no_constructor
 		);
+	}
 
+	SECTION("order2")
+	{
+		lua.new_usertype<thing>("thing"
+			, sol::call_constructor, sol::no_constructor
+			, "v", &thing::v
+		);
+	}
+	
 	REQUIRE_THROWS(lua.script("t = thing.new()"));
 }
 
