@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-17 19:55:17.106162 UTC
-// This header was generated with sol v2.11.4 (revision d06f2e6)
+// Generated 2016-08-17 20:02:13.087012 UTC
+// This header was generated with sol v2.11.4 (revision 5ac32c7)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4847,7 +4847,7 @@ namespace sol {
 				lua_pushnil(L);
 				while (lua_next(L, index) != 0) {
 					int isint = 0;
-					lua_Integer li = lua_tointegerx(L, -2, &isint);
+					lua_tointegerx(L, -2, &isint);
 					if (isint == 0) {
 						lua_pop(L, 1);
 						continue;
