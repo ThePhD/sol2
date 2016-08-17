@@ -85,7 +85,7 @@ def get_version():
 def process_file(filename, out):
     global includes
     filename = os.path.normpath(filename)
-    relativefilename = filename.replace(script_path + os.sep, "")
+    relativefilename = filename.replace(script_path + os.sep, "").replace("\\", "/")
 
     if filename in includes:
         return
