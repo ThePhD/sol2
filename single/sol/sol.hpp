@@ -20,18 +20,18 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-17 05:16:05.764792 UTC
-// This header was generated with sol v2.11.3 (revision a8e6837)
+// Generated 2016-08-17 18:29:29.153274 UTC
+// This header was generated with sol v2.11.3 (revision 3669378)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
 #define SOL_SINGLE_INCLUDE_HPP
 
-// beginning of sol\state.hpp
+// beginning of sol/state.hpp
 
-// beginning of sol\state_view.hpp
+// beginning of sol/state_view.hpp
 
-// beginning of sol\error.hpp
+// beginning of sol/error.hpp
 
 #include <stdexcept>
 #include <string>
@@ -63,17 +63,17 @@ namespace sol {
 
 } // sol
 
-// end of sol\error.hpp
+// end of sol/error.hpp
 
-// beginning of sol\table.hpp
+// beginning of sol/table.hpp
 
-// beginning of sol\table_core.hpp
+// beginning of sol/table_core.hpp
 
-// beginning of sol\proxy.hpp
+// beginning of sol/proxy.hpp
 
-// beginning of sol\traits.hpp
+// beginning of sol/traits.hpp
 
-// beginning of sol\tuple.hpp
+// beginning of sol/tuple.hpp
 
 #include <tuple>
 #include <cstddef>
@@ -130,9 +130,9 @@ namespace sol {
 	} // meta
 } // sol
 
-// end of sol\tuple.hpp
+// end of sol/tuple.hpp
 
-// beginning of sol\bind_traits.hpp
+// beginning of sol/bind_traits.hpp
 
 namespace sol {
 	namespace meta {
@@ -350,7 +350,7 @@ namespace sol {
 	} // meta
 } // sol
 
-// end of sol\bind_traits.hpp
+// end of sol/bind_traits.hpp
 
 #include <type_traits>
 #include <memory>
@@ -730,20 +730,16 @@ namespace sol {
 	} // detail
 } // sol
 
-// end of sol\traits.hpp
+// end of sol/traits.hpp
 
-// beginning of sol\object.hpp
+// beginning of sol/object.hpp
 
-// beginning of sol\reference.hpp
-
-// beginning of sol\types.hpp
-
-// beginning of sol\optional.hpp
+// beginning of sol/optional.hpp
 
 #if defined(SOL_USE_BOOST)
 #include <boost/optional.hpp>
 #else
-// beginning of Optional\optional.hpp
+// beginning of Optional/optional.hpp
 
 # ifndef ___SOL_OPTIONAL_HPP___
 # define ___SOL_OPTIONAL_HPP___
@@ -1737,7 +1733,7 @@ namespace std
 # undef TR2_OPTIONAL_ASSERTED_EXPRESSION
 
 # endif //___SOL_OPTIONAL_HPP___
-// end of Optional\optional.hpp
+// end of Optional/optional.hpp
 
 #endif // Boost vs. Better optional
 
@@ -1777,11 +1773,15 @@ namespace sol {
 
 } // sol
 
-// end of sol\optional.hpp
+// end of sol/optional.hpp
 
-// beginning of sol\compatibility.hpp
+// beginning of sol/reference.hpp
 
-// beginning of sol\compatibility\version.hpp
+// beginning of sol/types.hpp
+
+// beginning of sol/compatibility.hpp
+
+// beginning of sol/compatibility/version.hpp
 
 #include <lua.hpp>
 
@@ -1869,14 +1869,14 @@ namespace sol {
 #endif // Turn on Safety for all
 #endif // Safe Usertypes
 
-// end of sol\compatibility\version.hpp
+// end of sol/compatibility/version.hpp
 
 #ifndef SOL_NO_COMPAT
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-// beginning of sol\compatibility\5.1.0.h
+// beginning of sol/compatibility/5.1.0.h
 
 #ifndef SOL_5_1_0_H
 #define SOL_5_1_0_H
@@ -2023,9 +2023,9 @@ inline int luaL_loadbufferx(lua_State* L, const char* buff, size_t size, const c
 
 #endif /* Lua 5.1 */
 
-#endif // SOL_5_1_0_H// end of sol\compatibility\5.1.0.h
+#endif // SOL_5_1_0_H// end of sol/compatibility/5.1.0.h
 
-// beginning of sol\compatibility\5.0.0.h
+// beginning of sol/compatibility/5.0.0.h
 
 #ifndef SOL_5_0_0_H
 #define SOL_5_0_0_H
@@ -2048,9 +2048,9 @@ inline int luaL_loadbufferx(lua_State* L, const char* buff, size_t size, const c
 #endif // Lua 5.0
 
 #endif // SOL_5_0_0_H
-// end of sol\compatibility\5.0.0.h
+// end of sol/compatibility/5.0.0.h
 
-// beginning of sol\compatibility\5.x.x.h
+// beginning of sol/compatibility/5.x.x.h
 
 #ifndef SOL_5_X_X_H
 #define SOL_5_X_X_H
@@ -2086,9 +2086,9 @@ int luaL_fileresult(lua_State *L, int stat, const char *fname);
 #endif // Lua 5.1 and below
 
 #endif // SOL_5_X_X_H
-// end of sol\compatibility\5.x.x.h
+// end of sol/compatibility/5.x.x.h
 
-// beginning of sol\compatibility\5.x.x.inl
+// beginning of sol/compatibility/5.x.x.inl
 
 #ifndef SOL_5_X_X_INL
 #define SOL_5_X_X_INL
@@ -2763,7 +2763,7 @@ inline void luaL_pushresult(luaL_Buffer_52 *B) {
 #endif /* SOL_LUA_VERSION == 501 */
 
 #endif // SOL_5_X_X_INL
-// end of sol\compatibility\5.x.x.inl
+// end of sol/compatibility/5.x.x.inl
 
 #ifdef __cplusplus
 }
@@ -2771,9 +2771,9 @@ inline void luaL_pushresult(luaL_Buffer_52 *B) {
 
 #endif // SOL_NO_COMPAT
 
-// end of sol\compatibility.hpp
+// end of sol/compatibility.hpp
 
-// beginning of sol\string_shim.hpp
+// beginning of sol/string_shim.hpp
 
 #pragma once
 
@@ -2835,7 +2835,7 @@ namespace sol {
 			}
 		};
 	}
-}// end of sol\string_shim.hpp
+}// end of sol/string_shim.hpp
 
 #include <array>
 
@@ -3507,9 +3507,9 @@ namespace sol {
 	}
 } // sol
 
-// end of sol\types.hpp
+// end of sol/types.hpp
 
-// beginning of sol\stack_reference.hpp
+// beginning of sol/stack_reference.hpp
 
 namespace sol {
 	class stack_reference {
@@ -3568,7 +3568,7 @@ namespace sol {
 	}
 } // sol
 
-// end of sol\stack_reference.hpp
+// end of sol/stack_reference.hpp
 
 namespace sol {
 	namespace stack {
@@ -3716,9 +3716,13 @@ namespace sol {
 	}
 } // sol
 
-// end of sol\reference.hpp
+// end of sol/reference.hpp
 
-// beginning of sol\userdata.hpp
+// beginning of sol/stack.hpp
+
+// beginning of sol/stack_core.hpp
+
+// beginning of sol/userdata.hpp
 
 namespace sol {
 	template <typename base_t>
@@ -3757,13 +3761,9 @@ namespace sol {
 
 } // sol
 
-// end of sol\userdata.hpp
+// end of sol/userdata.hpp
 
-// beginning of sol\stack.hpp
-
-// beginning of sol\stack_core.hpp
-
-// beginning of sol\tie.hpp
+// beginning of sol/tie.hpp
 
 namespace sol {
 
@@ -3839,7 +3839,7 @@ namespace sol {
 
 } // sol
 
-// end of sol\tie.hpp
+// end of sol/tie.hpp
 
 namespace sol {
 	namespace detail {
@@ -4187,13 +4187,13 @@ namespace sol {
 	} // stack
 } // sol
 
-// end of sol\stack_core.hpp
+// end of sol/stack_core.hpp
 
-// beginning of sol\stack_check.hpp
+// beginning of sol/stack_check.hpp
 
-// beginning of sol\usertype_traits.hpp
+// beginning of sol/usertype_traits.hpp
 
-// beginning of sol\demangle.hpp
+// beginning of sol/demangle.hpp
 
 #include <cctype>
 
@@ -4326,7 +4326,7 @@ namespace sol {
 	} // detail
 } // sol
 
-// end of sol\demangle.hpp
+// end of sol/demangle.hpp
 
 namespace sol {
 
@@ -4356,9 +4356,9 @@ namespace sol {
 
 }
 
-// end of sol\usertype_traits.hpp
+// end of sol/usertype_traits.hpp
 
-// beginning of sol\inheritance.hpp
+// beginning of sol/inheritance.hpp
 
 #include <atomic>
 
@@ -4451,7 +4451,7 @@ namespace sol {
 	} // detail
 } // sol
 
-// end of sol\inheritance.hpp
+// end of sol/inheritance.hpp
 
 #include <utility>
 
@@ -4767,11 +4767,11 @@ namespace sol {
 	} // stack
 } // sol
 
-// end of sol\stack_check.hpp
+// end of sol/stack_check.hpp
 
-// beginning of sol\stack_get.hpp
+// beginning of sol/stack_get.hpp
 
-// beginning of sol\overload.hpp
+// beginning of sol/overload.hpp
 
 namespace sol {
     template <typename... Functions>
@@ -4791,7 +4791,7 @@ namespace sol {
     }
 }
 
-// end of sol\overload.hpp
+// end of sol/overload.hpp
 
 #ifdef SOL_CODECVT_SUPPORT
 #include <codecvt>
@@ -5207,9 +5207,9 @@ namespace sol {
 	} // stack
 } // sol
 
-// end of sol\stack_get.hpp
+// end of sol/stack_get.hpp
 
-// beginning of sol\stack_check_get.hpp
+// beginning of sol/stack_check_get.hpp
 
 namespace sol {
 	namespace stack {
@@ -5295,11 +5295,11 @@ namespace sol {
 	} // stack
 } // sol
 
-// end of sol\stack_check_get.hpp
+// end of sol/stack_check_get.hpp
 
-// beginning of sol\stack_push.hpp
+// beginning of sol/stack_push.hpp
 
-// beginning of sol\raii.hpp
+// beginning of sol/raii.hpp
 
 namespace sol {
 	namespace detail {
@@ -5403,7 +5403,7 @@ namespace sol {
 
 } // sol
 
-// end of sol\raii.hpp
+// end of sol/raii.hpp
 
 #ifdef SOL_CODECVT_SUPPORT
 #endif
@@ -5999,9 +5999,9 @@ namespace sol {
 	} // stack
 } // sol
 
-// end of sol\stack_push.hpp
+// end of sol/stack_push.hpp
 
-// beginning of sol\stack_pop.hpp
+// beginning of sol/stack_pop.hpp
 
 namespace sol {
 	namespace stack {
@@ -6022,9 +6022,9 @@ namespace sol {
 	} // stack
 } // sol
 
-// end of sol\stack_pop.hpp
+// end of sol/stack_pop.hpp
 
-// beginning of sol\stack_field.hpp
+// beginning of sol/stack_field.hpp
 
 namespace sol {
 	namespace stack {
@@ -6241,9 +6241,9 @@ namespace sol {
 	} // stack
 } // sol
 
-// end of sol\stack_field.hpp
+// end of sol/stack_field.hpp
 
-// beginning of sol\stack_probe.hpp
+// beginning of sol/stack_probe.hpp
 
 namespace sol {
 	namespace stack {
@@ -6303,7 +6303,7 @@ namespace sol {
 	} // stack
 } // sol
 
-// end of sol\stack_probe.hpp
+// end of sol/stack_probe.hpp
 
 #include <cstring>
 
@@ -6496,17 +6496,17 @@ namespace sol {
 	} // stack
 } // sol
 
-// end of sol\stack.hpp
+// end of sol/stack.hpp
 
-// beginning of sol\variadic_args.hpp
+// beginning of sol/variadic_args.hpp
 
-// beginning of sol\stack_proxy.hpp
+// beginning of sol/stack_proxy.hpp
 
-// beginning of sol\function.hpp
+// beginning of sol/function.hpp
 
-// beginning of sol\function_result.hpp
+// beginning of sol/function_result.hpp
 
-// beginning of sol\proxy_base.hpp
+// beginning of sol/proxy_base.hpp
 
 namespace sol {
 	template <typename Super>
@@ -6530,7 +6530,7 @@ namespace sol {
 	};
 } // sol
 
-// end of sol\proxy_base.hpp
+// end of sol/proxy_base.hpp
 
 #include <cstdint>
 
@@ -6591,13 +6591,13 @@ namespace sol {
 	};
 } // sol
 
-// end of sol\function_result.hpp
+// end of sol/function_result.hpp
 
-// beginning of sol\function_types.hpp
+// beginning of sol/function_types.hpp
 
-// beginning of sol\function_types_core.hpp
+// beginning of sol/function_types_core.hpp
 
-// beginning of sol\wrapper.hpp
+// beginning of sol/wrapper.hpp
 
 namespace sol {
 
@@ -6805,7 +6805,7 @@ namespace sol {
 
 } // sol
 
-// end of sol\wrapper.hpp
+// end of sol/wrapper.hpp
 
 namespace sol {
 	namespace function_detail {
@@ -6817,13 +6817,13 @@ namespace sol {
 	} // function_detail
 } // sol
 
-// end of sol\function_types_core.hpp
+// end of sol/function_types_core.hpp
 
-// beginning of sol\function_types_templated.hpp
+// beginning of sol/function_types_templated.hpp
 
-// beginning of sol\call.hpp
+// beginning of sol/call.hpp
 
-// beginning of sol\protect.hpp
+// beginning of sol/protect.hpp
 
 namespace sol {
 	
@@ -6848,9 +6848,9 @@ namespace sol {
 
 } // sol
 
-// end of sol\protect.hpp
+// end of sol/protect.hpp
 
-// beginning of sol\property.hpp
+// beginning of sol/property.hpp
 
 namespace sol {
 
@@ -6932,7 +6932,7 @@ namespace sol {
 
 } // sol
 
-// end of sol\property.hpp
+// end of sol/property.hpp
 
 namespace sol {
 	namespace call_detail {
@@ -7477,7 +7477,7 @@ namespace sol {
 
 } // sol
 
-// end of sol\call.hpp
+// end of sol/call.hpp
 
 namespace sol {
 	namespace function_detail {
@@ -7584,9 +7584,9 @@ namespace sol {
 
 } // sol
 
-// end of sol\function_types_templated.hpp
+// end of sol/function_types_templated.hpp
 
-// beginning of sol\function_types_stateless.hpp
+// beginning of sol/function_types_stateless.hpp
 
 namespace sol {
 	namespace function_detail {
@@ -7724,9 +7724,9 @@ namespace sol {
 	} // function_detail
 } // sol
 
-// end of sol\function_types_stateless.hpp
+// end of sol/function_types_stateless.hpp
 
-// beginning of sol\function_types_stateful.hpp
+// beginning of sol/function_types_stateful.hpp
 
 namespace sol {
 	namespace function_detail {
@@ -7804,9 +7804,9 @@ namespace sol {
 	} // function_detail
 } // sol
 
-// end of sol\function_types_stateful.hpp
+// end of sol/function_types_stateful.hpp
 
-// beginning of sol\function_types_overloaded.hpp
+// beginning of sol/function_types_overloaded.hpp
 
 namespace sol {
 	namespace function_detail {
@@ -7838,9 +7838,9 @@ namespace sol {
 	} // function_detail
 } // sol
 
-// end of sol\function_types_overloaded.hpp
+// end of sol/function_types_overloaded.hpp
 
-// beginning of sol\resolve.hpp
+// beginning of sol/resolve.hpp
 
 namespace sol {
 	namespace detail {
@@ -7910,7 +7910,7 @@ namespace sol {
 	}
 } // sol
 
-// end of sol\resolve.hpp
+// end of sol/resolve.hpp
 
 namespace sol {
 	template <typename Sig, typename... Ps>
@@ -8217,7 +8217,7 @@ namespace sol {
 	} // stack
 } // sol
 
-// end of sol\function_types.hpp
+// end of sol/function_types.hpp
 
 namespace sol {
 	template <typename base_t>
@@ -8328,11 +8328,11 @@ namespace sol {
 	} // stack
 } // sol
 
-// end of sol\function.hpp
+// end of sol/function.hpp
 
-// beginning of sol\protected_function.hpp
+// beginning of sol/protected_function.hpp
 
-// beginning of sol\protected_function_result.hpp
+// beginning of sol/protected_function_result.hpp
 
 namespace sol {
 	struct protected_function_result : public proxy_base<protected_function_result> {
@@ -8433,7 +8433,7 @@ namespace sol {
 	};
 } // sol
 
-// end of sol\protected_function_result.hpp
+// end of sol/protected_function_result.hpp
 
 #include <algorithm>
 
@@ -8576,7 +8576,7 @@ namespace sol {
 	};
 } // sol
 
-// end of sol\protected_function.hpp
+// end of sol/protected_function.hpp
 
 namespace sol {
 	struct stack_proxy : public proxy_base<stack_proxy> {
@@ -8672,7 +8672,7 @@ namespace sol {
 	}
 } // sol
 
-// end of sol\stack_proxy.hpp
+// end of sol/stack_proxy.hpp
 
 #include <limits>
 #include <iterator>
@@ -8883,7 +8883,7 @@ namespace sol {
 	} // stack
 } // sol
 
-// end of sol\variadic_args.hpp
+// end of sol/variadic_args.hpp
 
 namespace sol {
 
@@ -8995,7 +8995,7 @@ namespace sol {
 	}
 } // sol
 
-// end of sol\object.hpp
+// end of sol/object.hpp
 
 namespace sol {
 	template<typename Table, typename Key>
@@ -9141,13 +9141,13 @@ namespace sol {
 	} // stack
 } // sol
 
-// end of sol\proxy.hpp
+// end of sol/proxy.hpp
 
-// beginning of sol\usertype.hpp
+// beginning of sol/usertype.hpp
 
-// beginning of sol\usertype_metatable.hpp
+// beginning of sol/usertype_metatable.hpp
 
-// beginning of sol\deprecate.hpp
+// beginning of sol/deprecate.hpp
 
 #ifndef SOL_DEPRECATED
     #ifdef _MSC_VER
@@ -9168,7 +9168,7 @@ namespace sol {
 	} // detail
 } // sol
 
-// end of sol\deprecate.hpp
+// end of sol/deprecate.hpp
 
 namespace sol {
 
@@ -9636,9 +9636,9 @@ namespace sol {
 
 } // sol
 
-// end of sol\usertype_metatable.hpp
+// end of sol/usertype_metatable.hpp
 
-// beginning of sol\simple_usertype_metatable.hpp
+// beginning of sol/simple_usertype_metatable.hpp
 
 #include <vector>
 
@@ -9784,7 +9784,7 @@ namespace sol {
 	} // stack
 } // sol
 
-// end of sol\simple_usertype_metatable.hpp
+// end of sol/simple_usertype_metatable.hpp
 
 namespace sol {
 
@@ -9831,9 +9831,9 @@ namespace sol {
 	} // stack
 } // sol
 
-// end of sol\usertype.hpp
+// end of sol/usertype.hpp
 
-// beginning of sol\table_iterator.hpp
+// beginning of sol/table_iterator.hpp
 
 namespace sol {
 
@@ -9927,7 +9927,7 @@ namespace sol {
 
 } // sol
 
-// end of sol\table_iterator.hpp
+// end of sol/table_iterator.hpp
 
 namespace sol {
 	namespace detail {
@@ -10341,15 +10341,15 @@ namespace sol {
 	};
 } // sol
 
-// end of sol\table_core.hpp
+// end of sol/table_core.hpp
 
 namespace sol {
 	typedef table_core<false> table;
 } // sol
 
-// end of sol\table.hpp
+// end of sol/table.hpp
 
-// beginning of sol\load_result.hpp
+// beginning of sol/load_result.hpp
 
 namespace sol {
 	struct load_result : public proxy_base<load_result> {
@@ -10460,7 +10460,7 @@ namespace sol {
 	};
 } // sol
 
-// end of sol\load_result.hpp
+// end of sol/load_result.hpp
 
 namespace sol {
 	enum class lib : char {
@@ -10877,7 +10877,7 @@ namespace sol {
 	};
 } // sol
 
-// end of sol\state_view.hpp
+// end of sol/state_view.hpp
 
 namespace sol {
 	inline int default_at_panic(lua_State* L) {
@@ -10911,11 +10911,11 @@ namespace sol {
 	};
 } // sol
 
-// end of sol\state.hpp
+// end of sol/state.hpp
 
-// beginning of sol\coroutine.hpp
+// beginning of sol/coroutine.hpp
 
-// beginning of sol\thread.hpp
+// beginning of sol/thread.hpp
 
 namespace sol {
 	class thread : public reference {
@@ -10966,7 +10966,7 @@ namespace sol {
 	};
 } // sol
 
-// end of sol\thread.hpp
+// end of sol/thread.hpp
 
 namespace sol {
 	class coroutine : public reference {
@@ -11054,6 +11054,6 @@ namespace sol {
 	};
 } // sol
 
-// end of sol\coroutine.hpp
+// end of sol/coroutine.hpp
 
 #endif // SOL_SINGLE_INCLUDE_HPP
