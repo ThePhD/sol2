@@ -93,7 +93,6 @@ namespace sol {
 						lua_pop(L, 1);
 						continue;
 					}
-					std::size_t i = static_cast<std::size_t>(li);
 					arr.push_back(stack::get<V>(L, -1));
 					lua_pop(L, 1);
 				}
