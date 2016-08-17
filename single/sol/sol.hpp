@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-17 18:29:29.153274 UTC
-// This header was generated with sol v2.11.3 (revision 3669378)
+// Generated 2016-08-17 19:55:17.106162 UTC
+// This header was generated with sol v2.11.4 (revision d06f2e6)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -738,6 +738,35 @@ namespace sol {
 
 #if defined(SOL_USE_BOOST)
 #include <boost/optional.hpp>
+// beginning of sol/in_place.hpp
+
+namespace sol {
+
+	namespace detail {
+		struct in_place_of {};
+		template <std::size_t I>
+		struct in_place_of_i {};
+		template <typename T>
+		struct in_place_of_t {};
+	} // detail
+
+	struct in_place_tag { struct init {}; constexpr in_place_tag(init) {} in_place_tag() = delete; };
+	constexpr inline in_place_tag in_place(detail::in_place_of) { return in_place_tag(in_place_tag::init()); }
+	template <typename T>
+	constexpr inline in_place_tag in_place(detail::in_place_of_t<T>) { return in_place_tag(in_place_tag::init()); }
+	template <std::size_t I>
+	constexpr inline in_place_tag in_place(detail::in_place_of_i<I>) { return in_place_tag(in_place_tag::init()); }
+
+	using in_place_t = in_place_tag(&)(detail::in_place_of);
+	template <typename T>
+	using in_place_type_t = in_place_tag(&)(detail::in_place_of_t<T>);
+	template <std::size_t I>
+	using in_place_index_t = in_place_tag(&)(detail::in_place_of_i<I>);
+
+} // sol
+
+// end of sol/in_place.hpp
+
 #else
 // beginning of Optional/optional.hpp
 
@@ -950,15 +979,7 @@ constexpr U convert(U v) { return v; }
 
 } // namespace detail_
 
-namespace detail {
-	struct in_place_of {};
-} // namespace detail
-
-constexpr struct trivial_init_t{} trivial_init{};
-
-struct in_place_tag { struct init {}; constexpr in_place_tag(init) {} in_place_tag() = delete; };
-constexpr inline in_place_tag in_place(detail::in_place_of) { return in_place_tag(in_place_tag::init()); }
-using in_place_t = in_place_tag(&)(detail::in_place_of);
+constexpr struct trivial_init_t {} trivial_init{};
 
 struct nullopt_t
 {
@@ -1744,32 +1765,7 @@ namespace sol {
 	using optional = boost::optional<T>;
 	using nullopt_t = boost::none_t;
 	const nullopt_t nullopt = boost::none;
-
-	namespace detail {
-		struct in_place_of {};
-	} // detail
-
-	struct in_place_tag { struct init {}; constexpr in_place_tag(init) {} in_place_tag() = delete; };
-	constexpr inline in_place_tag in_place(detail::in_place_of) { return in_place_tag(in_place_tag::init()); }
-	using in_place_t = in_place_tag(&)(detail::in_place_of);
 #endif // Boost vs. Better optional
-
-	namespace detail {
-		template <std::size_t I>
-		struct in_place_of_i {};
-		template <typename T>
-		struct in_place_of_t {};
-	}
-
-	template <typename T>
-	constexpr inline in_place_tag in_place(detail::in_place_of_t<T>) { return in_place_tag(in_place_tag::init()); }
-	template <std::size_t I>
-	constexpr inline in_place_tag in_place(detail::in_place_of_i<I>) { return in_place_tag(in_place_tag::init()); }
-
-	template <typename T>
-	using in_place_type_t = in_place_tag(&)(detail::in_place_of_t<T>);
-	template <std::size_t I>
-	using in_place_index_t = in_place_tag(&)(detail::in_place_of_i<I>);
 
 } // sol
 
@@ -4837,6 +4833,53 @@ namespace sol {
 			static T get(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
 				return static_cast<T>(lua_tointegerx(L, index, nullptr));
+			}
+		};
+
+		template<typename T>
+		struct getter<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<meta::has_key_value_pair<T>>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
+			static T get(lua_State* L, int index, record& tracking) {
+				typedef typename T::value_type V;
+				tracking.use(1);
+
+				T arr;
+				index = lua_absindex(L, index);
+				lua_pushnil(L);
+				while (lua_next(L, index) != 0) {
+					int isint = 0;
+					lua_Integer li = lua_tointegerx(L, -2, &isint);
+					if (isint == 0) {
+						lua_pop(L, 1);
+						continue;
+					}
+					arr.push_back(stack::get<V>(L, -1));
+					lua_pop(L, 1);
+				}
+				return arr;
+			}
+		};
+
+		template<typename T>
+		struct getter<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::has_key_value_pair<T>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
+			static T get(lua_State* L, int index, record& tracking) {
+				typedef typename T::value_type P;
+				typedef typename P::first_type K;
+				typedef typename P::second_type V;
+				tracking.use(1);
+
+				T associative;
+				index = lua_absindex(L, index);
+				lua_pushnil(L);
+				while (lua_next(L, index) != 0) {
+					decltype(auto) key = stack::check_get<K>(L, -2);
+					if (!key) {
+						lua_pop(L, 1);
+						continue;
+					}
+					associative.emplace(std::forward<decltype(*key)>(*key), stack::get<V>(L, -1));
+					lua_pop(L, 1);
+				}
+				return associative;
 			}
 		};
 
