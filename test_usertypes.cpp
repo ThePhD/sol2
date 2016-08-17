@@ -988,6 +988,7 @@ TEST_CASE("usertype/no_constructor", "make sure lua types cannot be constructed 
 		"v", &thing::v
 		, sol::call_constructor, sol::no_constructor
 		);
+		REQUIRE_THROWS(lua.script("t = thing.new()"));
 	}
 
 	SECTION("order2")
@@ -996,6 +997,7 @@ TEST_CASE("usertype/no_constructor", "make sure lua types cannot be constructed 
 			, sol::call_constructor, sol::no_constructor
 			, "v", &thing::v
 		);
+		REQUIRE_THROWS(lua.script("t = thing.new()"));
 	}
 	
 	REQUIRE_THROWS(lua.script("t = thing.new()"));
