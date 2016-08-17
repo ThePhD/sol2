@@ -88,7 +88,7 @@ namespace sol {
 				lua_pushnil(L);
 				while (lua_next(L, index) != 0) {
 					int isint = 0;
-					lua_Integer li = lua_tointegerx(L, -2, &isint);
+					lua_tointegerx(L, -2, &isint);
 					if (isint == 0) {
 						lua_pop(L, 1);
 						continue;
