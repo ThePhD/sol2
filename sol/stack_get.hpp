@@ -85,17 +85,35 @@ namespace sol {
 
 				T arr;
 				index = lua_absindex(L, index);
-				lua_pushnil(L);
-				while (lua_next(L, index) != 0) {
-					int isint = 0;
-					lua_tointegerx(L, -2, &isint);
-					if (isint == 0) {
-						lua_pop(L, 1);
-						continue;
+#if SOL_LUA_VERSION >= 503
+				// This method is HIGHLY performant over regular table iteration thanks to the Lua API changes in 5.3
+				for (lua_Integer i = 0; ; ++i, lua_pop(L, 1)) {
+					type t = static_cast<type>(lua_geti(L, index, i));
+					if (t == type::nil) {
+						if (i == 0)
+							continue;
+						else
+							break;
 					}
 					arr.push_back(stack::get<V>(L, -1));
-					lua_pop(L, 1);
 				}
+				lua_pop(L, 1);
+#else
+				// Zzzz slower but necessary thanks to the lower version API and missing functions qq
+				for (lua_Integer i = 0; ; ++i, lua_pop(L, 1)) {
+					lua_pushinteger(L, i);
+					lua_gettable(L, index);
+					type t = type_of(L, -1);
+					if (t == type::nil) {
+						if (i == 0)
+							continue;
+						else
+							break;
+					}
+					arr.push_back(stack::get<V>(L, -1));
+				}
+				lua_pop(L, 1);
+#endif
 				return arr;
 			}
 		};
