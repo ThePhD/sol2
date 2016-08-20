@@ -83,14 +83,15 @@ namespace sol {
 				typedef typename T::value_type V;
 				tracking.use(1);
 
-
 				index = lua_absindex(L, index);
 				T arr;
 				get_field<false, true>(L, static_cast<lua_Integer>(-1), index);
-				optional<std::size_t> sizehint = pop<optional<std::size_t>>(L);
-				if (sizehint) {
-					detail::reserve(arr, *sizehint);
+				int isnum;
+				std::size_t sizehint = static_cast<std::size_t>(lua_tointegerx(L, -1, &isnum));
+				if (isnum == 0) {
+					detail::reserve(arr, sizehint);
 				}
+				lua_pop(L, 1);
 #if SOL_LUA_VERSION >= 503
 				// This method is HIGHLY performant over regular table iteration thanks to the Lua API changes in 5.3
 				for (lua_Integer i = 0; ; ++i, lua_pop(L, 1)) {
