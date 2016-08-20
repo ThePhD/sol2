@@ -106,10 +106,10 @@ elif 'darwin' in sys.platform:
         # Using normal lua
         lua_incl = lua_version[:-1] + '.' + lua_version[-1]
         lua_lib = lua_version[:-2] + '.' +  lua_version[-2] + '.' + lua_version[-1]
-    elif re.match(r'luajit5[1-3]', lua_version):
+    elif re.match(r'luajit', lua_version):
         # luajit
         lua_incl = 'luajit-2.0'
-        lua_lib = lua_version[:-2] + '-' + lua_version[-2] + '.' + lua_version[-1]
+        lua_lib = 'luajit'
     else:
         raise Exception('Unknown lua_version={}' % lua_version)
 
