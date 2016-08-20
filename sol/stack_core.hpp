@@ -29,6 +29,8 @@
 #include "tuple.hpp"
 #include "traits.hpp"
 #include "tie.hpp"
+#include <vector>
+#include <string>
 
 namespace sol {
 	namespace detail {
@@ -51,6 +53,19 @@ namespace sol {
 			special_destruct_func& dx = *static_cast<special_destruct_func*>(static_cast<void*>(pointerpointer + 1));
 			(dx)(memory);
 			return 0;
+		}
+
+		template <typename T>
+		void reserve(T&, std::size_t) {}
+
+		template <typename T, typename Al>
+		void reserve(std::vector<T, Al>& arr, std::size_t hint) {
+			arr.reserve(hint);
+		}
+
+		template <typename T, typename Tr, typename Al>
+		void reserve(std::basic_string<T, Tr, Al>& arr, std::size_t hint) {
+			arr.reserve(hint);
 		}
 	} // detail
 

@@ -168,6 +168,7 @@ namespace sol {
 				for (auto&& i : cont) {
 					set_field(L, index++, i, tableindex);
 				}
+				set_field(L, -1, cont.size());
 				return 1;
 			}
 		};

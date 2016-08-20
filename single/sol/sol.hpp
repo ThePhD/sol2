@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-19 03:51:21.744027 UTC
-// This header was generated with sol v2.11.4 (revision c8ea9f7)
+// Generated 2016-08-20 01:06:43.957511 UTC
+// This header was generated with sol v2.11.4 (revision 1ae78e1)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -736,8 +736,6 @@ namespace sol {
 
 // beginning of sol/optional.hpp
 
-#if defined(SOL_USE_BOOST)
-#include <boost/optional.hpp>
 // beginning of sol/in_place.hpp
 
 namespace sol {
@@ -767,6 +765,8 @@ namespace sol {
 
 // end of sol/in_place.hpp
 
+#if defined(SOL_USE_BOOST)
+#include <boost/optional.hpp>
 #else
 // beginning of Optional/optional.hpp
 
@@ -3837,6 +3837,8 @@ namespace sol {
 
 // end of sol/tie.hpp
 
+#include <vector>
+
 namespace sol {
 	namespace detail {
 		struct as_reference_tag {};
@@ -3858,6 +3860,19 @@ namespace sol {
 			special_destruct_func& dx = *static_cast<special_destruct_func*>(static_cast<void*>(pointerpointer + 1));
 			(dx)(memory);
 			return 0;
+		}
+
+		template <typename T>
+		void reserve(T&, std::size_t) {}
+
+		template <typename T, typename Al>
+		void reserve(std::vector<T, Al>& arr, std::size_t hint) {
+			arr.reserve(hint);
+		}
+
+		template <typename T, typename Tr, typename Al>
+		void reserve(std::basic_string<T, Tr, Al>& arr, std::size_t hint) {
+			arr.reserve(hint);
 		}
 	} // detail
 
@@ -4842,8 +4857,13 @@ namespace sol {
 				typedef typename T::value_type V;
 				tracking.use(1);
 
-				T arr;
 				index = lua_absindex(L, index);
+				T arr;
+				get_field<false, true>(L, static_cast<lua_Integer>(-1), index);
+				optional<std::size_t> sizehint = pop<optional<std::size_t>>(L);
+				if (sizehint) {
+					detail::reserve(arr, *sizehint);
+				}
 #if SOL_LUA_VERSION >= 503
 				// This method is HIGHLY performant over regular table iteration thanks to the Lua API changes in 5.3
 				for (lua_Integer i = 0; ; ++i, lua_pop(L, 1)) {
@@ -5606,6 +5626,7 @@ namespace sol {
 				for (auto&& i : cont) {
 					set_field(L, index++, i, tableindex);
 				}
+				set_field(L, -1, cont.size());
 				return 1;
 			}
 		};
@@ -9700,8 +9721,6 @@ namespace sol {
 // end of sol/usertype_metatable.hpp
 
 // beginning of sol/simple_usertype_metatable.hpp
-
-#include <vector>
 
 namespace sol {
 

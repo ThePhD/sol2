@@ -22,9 +22,9 @@
 #ifndef SOL_OPTIONAL_HPP
 #define SOL_OPTIONAL_HPP
 
+#include "in_place.hpp"
 #if defined(SOL_USE_BOOST)
 #include <boost/optional.hpp>
-#include "../sol/in_place.hpp"
 #else
 #include "../Optional/optional.hpp"
 #endif // Boost vs. Better optional
