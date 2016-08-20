@@ -110,6 +110,7 @@ elif 'darwin' in sys.platform:
         # luajit
         lua_incl = 'luajit-2.0'
         lua_lib = 'luajit'
+        ldflags.extend(['-pagezero_size 10000', '-image_base 100000000'])
     else:
         raise Exception('Unknown lua_version={}' % lua_version)
 
