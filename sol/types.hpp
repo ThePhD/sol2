@@ -621,6 +621,9 @@ namespace sol {
 	} // detail
 
 	template <typename T>
+	struct is_unique_usertype : std::integral_constant<bool, unique_usertype_traits<T>::value> {};
+
+	template <typename T>
 	struct lua_type_of : detail::lua_type_of<T> {};
 
 	template <typename T>
@@ -636,6 +639,7 @@ namespace sol {
 	struct is_lua_primitive : std::integral_constant<bool,
 		type::userdata != lua_type_of<meta::unqualified_t<T>>::value
 		|| (lua_size<T>::value > 1)
+		|| is_unique_usertype<T>::value
 		|| std::is_base_of<reference, meta::unqualified_t<T>>::value
 		|| std::is_base_of<stack_reference, meta::unqualified_t<T>>::value
 		|| meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>::value
@@ -661,9 +665,6 @@ namespace sol {
 
 	template <typename T>
 	struct is_proxy_primitive : is_lua_primitive<T> { };
-
-	template <typename T>
-	struct is_unique_usertype : std::integral_constant<bool, unique_usertype_traits<T>::value> {};
 
 	template <typename T>
 	struct is_transparent_argument : std::false_type {};
