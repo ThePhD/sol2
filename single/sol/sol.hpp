@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-20 01:43:43.958063 UTC
-// This header was generated with sol v2.11.5 (revision fd657ea)
+// Generated 2016-08-21 23:23:21.515644 UTC
+// This header was generated with sol v2.11.5 (revision ec97dac)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3427,6 +3427,9 @@ namespace sol {
 	} // detail
 
 	template <typename T>
+	struct is_unique_usertype : std::integral_constant<bool, unique_usertype_traits<T>::value> {};
+
+	template <typename T>
 	struct lua_type_of : detail::lua_type_of<T> {};
 
 	template <typename T>
@@ -3467,9 +3470,6 @@ namespace sol {
 
 	template <typename T>
 	struct is_proxy_primitive : is_lua_primitive<T> { };
-
-	template <typename T>
-	struct is_unique_usertype : std::integral_constant<bool, unique_usertype_traits<T>::value> {};
 
 	template <typename T>
 	struct is_transparent_argument : std::false_type {};
@@ -3967,7 +3967,8 @@ namespace sol {
 			typedef meta::all<
 				std::is_lvalue_reference<T>,
 				meta::neg<std::is_const<T>>,
-				meta::neg<is_lua_primitive<meta::unqualified_t<T>>>
+				meta::neg<is_lua_primitive<meta::unqualified_t<T>>>,
+				meta::neg<is_unique_usertype<T>>
 			> use_reference_tag;
 			return pusher<std::conditional_t<use_reference_tag::value, detail::as_reference_tag, meta::unqualified_t<T>>>{}.push(L, std::forward<T>(t), std::forward<Args>(args)...);
 		}
