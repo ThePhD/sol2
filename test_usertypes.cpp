@@ -686,8 +686,8 @@ TEST_CASE("usertype/overloading", "Check if overloading works properly for usert
 
 TEST_CASE("usertype/overloading_values", "ensure overloads handle properly") {
 	struct overloading_test {
-		int print(int i) { std::cout << "Integer print: " << i << std::endl; return 500 + i; }
-		int print() { std::cout << "No param print." << std::endl; return 500; }
+		int print(int i) { INFO("Integer print: " << i); return 500 + i; }
+		int print() { INFO("No param print."); return 500; }
 	};
 
 	sol::state lua;
@@ -929,7 +929,7 @@ t = thing(256)
 )");
 
 	thing& y = lua["t"];
-	std::cout << y.v << std::endl;
+	INFO(y.v);
 	REQUIRE(y.v == 256);
 }
 
@@ -1025,7 +1025,7 @@ TEST_CASE("usertype/coverage", "try all the things") {
 		"writeonlypropbark", sol::property(&ext_getset::set)
 		);
 
-	std::cout << "usertype created" << std::endl;
+	INFO("usertype created");
 
 	lua.script(R"(
 e = ext_getset()
@@ -1036,7 +1036,7 @@ print(w)
 	int w = lua["w"];
 	REQUIRE(w == (56 + 50 + 14 + 14));
 
-	std::cout << "REQUIRE(w) successful" << std::endl;
+	INFO("REQUIRE(w) successful");
 
 	lua.script(R"(
 e:set(500)
@@ -1050,7 +1050,7 @@ y = e.sget(20)
 	REQUIRE(x == 500);
 	REQUIRE(y == 40);
 	
-	std::cout << "REQUIRE(x, y) successful" << std::endl;
+	INFO("REQUIRE(x, y) successful");
 
 	lua.script(R"(
 e.bark = 5001
@@ -1069,7 +1069,7 @@ print(b)
 	REQUIRE(a == 5001);
 	REQUIRE(b == 9700);
 
-	std::cout << "REQUIRE(a, b) successful" << std::endl;
+	INFO("REQUIRE(a, b) successful");
 
 	lua.script(R"(
 c = e.readonlybark
@@ -1085,7 +1085,7 @@ print(d)
 	REQUIRE(c == 9700);
 	REQUIRE(d == 56);
 
-	std::cout << "REQUIRE(c, d) successful" << std::endl;
+	INFO("REQUIRE(c, d) successful");
 
 	lua.script(R"(
 e.writeonlypropbark = 500
@@ -1097,14 +1097,14 @@ print(e.bark)
 	int z = lua["z"];
 	REQUIRE(z == 500);
 
-	std::cout << "REQUIRE(z) successful" << std::endl;
+	INFO("REQUIRE(z) successful");
 
 	REQUIRE_THROWS(lua.script("e.readonlybark = 24"));
-	std::cout << "REQUIRE_THROWS 1 successful" << std::endl;
+	INFO("REQUIRE_THROWS 1 successful");
 	REQUIRE_THROWS(lua.script("e.readonlypropbark = 500"));
-	std::cout << "REQUIRE_THROWS 2 successful" << std::endl;
+	INFO("REQUIRE_THROWS 2 successful");
 	REQUIRE_THROWS(lua.script("y = e.writeonlypropbark"));
-	std::cout << "REQUIRE_THROWS 3 successful" << std::endl;
+	INFO("REQUIRE_THROWS 3 successful");
 
 }
 

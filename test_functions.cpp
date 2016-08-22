@@ -36,28 +36,28 @@ void test_free_func2(std::function<int(int)> f, int arg1) {
 }
 
 int overloaded(int x) {
-	std::cout << x << std::endl;
+	INFO(x);
 	return 3;
 }
 
 int overloaded(int x, int y) {
-	std::cout << x << " " << y << std::endl;
+	INFO(x << " " << y);
 	return 7;
 }
 
 int overloaded(int x, int y, int z) {
-	std::cout << x << " " << y << " " << z << std::endl;
+	INFO(x << " " << y << " " << z);
 	return 11;
 }
 
 int non_overloaded(int x, int y, int z) {
-	std::cout << x << " " << y << " " << z << std::endl;
+	INFO(x << " " << y << " " << z);
 	return 13;
 }
 
 namespace sep {
 	int plop_xyz(int x, int y, std::string z) {
-		std::cout << x << " " << y << " " << z << std::endl;
+		INFO(x << " " << y << " " << z);
 		return 11;
 	}
 }
@@ -156,9 +156,9 @@ TEST_CASE("functions/deducing-return-order-and-multi-get", "Check if return orde
 	std::tuple<int, int, int> tcpp = lua.get<sol::function>("f")();
 	std::tuple<int, int, int> tlua = lua.get<sol::function>("g")();
 	std::tuple<int, int, int> tluaget = lua.get<int, int, int>("x", "y", "z");
-	std::cout << "cpp: " << std::get<0>(tcpp) << ',' << std::get<1>(tcpp) << ',' << std::get<2>(tcpp) << std::endl;
-	std::cout << "lua: " << std::get<0>(tlua) << ',' << std::get<1>(tlua) << ',' << std::get<2>(tlua) << std::endl;
-	std::cout << "lua xyz: " << lua.get<int>("x") << ',' << lua.get<int>("y") << ',' << lua.get<int>("z") << std::endl;
+	INFO("cpp: " << std::get<0>(tcpp) << ',' << std::get<1>(tcpp) << ',' << std::get<2>(tcpp));
+	INFO("lua: " << std::get<0>(tlua) << ',' << std::get<1>(tlua) << ',' << std::get<2>(tlua));
+	INFO("lua xyz: " << lua.get<int>("x") << ',' << lua.get<int>("y") << ',' << lua.get<int>("z"));
 	REQUIRE(tcpp == triple);
 	REQUIRE(tlua == triple);
 	REQUIRE(tluaget == triple);
@@ -264,11 +264,11 @@ TEST_CASE("functions/function_result-protected_function_result", "Function resul
 
 	// Some function; just using a lambda to be cheap
 	auto doomfx = []() {
-		std::cout << "doomfx called" << std::endl;
+		INFO("doomfx called");
 		throw std::runtime_error(unhandlederrormessage);
 	};
 	auto luadoomfx = [&lua]() {
-		std::cout << "luadoomfx called" << std::endl;
+		INFO("luadoomfx called");
 		// Does not bypass error function, will call it
 		luaL_error(lua.lua_state(), unhandlederrormessage);
 	};
@@ -276,7 +276,7 @@ TEST_CASE("functions/function_result-protected_function_result", "Function resul
 	lua.set_function("luadoom", luadoomfx);
 
 	auto cpphandlerfx = [](std::string x) {
-		std::cout << "c++ handler called with: " << x << std::endl;
+		INFO("c++ handler called with: " << x);
 		return handlederrormessage;
 	};
 	lua.set_function("cpphandler", cpphandlerfx);
