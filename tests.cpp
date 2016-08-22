@@ -3,10 +3,13 @@
 
 #include <catch.hpp>
 #include <sol.hpp>
-#include <vector>
+
+#include <fstream>
+#include <iostream>
 #include <map>
 #include <unordered_map>
-#include <iostream>
+#include <vector>
+
 #include "test_stack_guard.hpp"
 
 bool func_opt_ret_bool(sol::optional<int> i) {
@@ -314,6 +317,64 @@ TEST_CASE("object/conversions", "make sure all basic reference types can be made
 	REQUIRE(osl.get_type() == sol::type::string);
 	REQUIRE(os.get_type() == sol::type::string);
 	REQUIRE(omn.get_type() == sol::type::nil);
+}
+
+TEST_CASE("state/require_file", "opening files as 'requires'") {
+	static const char FILE_NAME[] = "./tmp_thingy.lua";
+
+	std::fstream file(FILE_NAME, std::ios::out);
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	SECTION("with usertypes")
+	{
+		struct foo {
+			foo(int bar) : bar(bar) {}
+
+			const int bar;
+		};
+
+		lua.new_usertype<foo>("foo",
+			sol::constructors<sol::types<int>>{},
+			"bar", &foo::bar
+			);
+		
+		file << "return { modfunc = function () return foo.new(221) end }" << std::endl;
+		file.close();
+		
+		const sol::table thingy1 = lua.require_file("thingy", FILE_NAME);
+
+		CHECK(thingy1.valid());
+
+		const foo foo_v = thingy1["modfunc"]();
+
+		int val1 = foo_v.bar;
+
+		CHECK(val1 == 221);
+	}
+
+	SECTION("simple")
+	{
+		file << "return { modfunc = function () return 221 end }" << std::endl;
+		file.close();
+		
+		const sol::table thingy1 = lua.require_file("thingy", FILE_NAME);
+		const sol::table thingy2 = lua.require_file("thingy", FILE_NAME);
+
+		CHECK(thingy1.valid());
+		CHECK(thingy2.valid());
+
+		int val1 = thingy1["modfunc"]();
+		int val2 = thingy2["modfunc"]();
+
+		CHECK(val1 == 221);
+		CHECK(val2 == 221);
+		// must have loaded the same table
+		CHECK(thingy1 == thingy2);
+	}
+
+	std::remove(FILE_NAME);
 }
 
 TEST_CASE("state/require_script", "opening strings as 'requires' clauses") {

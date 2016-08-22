@@ -42,6 +42,7 @@ parser.add_argument('--cxx', metavar='<compiler>', help='compiler name to use (d
 parser.add_argument('--cxx-flags', help='additional flags passed to the compiler', default='')
 parser.add_argument('--ci', action='store_true', help=argparse.SUPPRESS)
 parser.add_argument('--testing', action='store_true', help=argparse.SUPPRESS)
+parser.add_argument('--lua-version', help='Lua version, e.g. lua53', default='lua53')
 parser.add_argument('--lua-lib', help='lua library name (without the lib on *nix).', default='lua')
 parser.add_argument('--lua-dir', metavar='<dir>', help='directory lua is in with include and lib subdirectories')
 parser.add_argument('--install-dir', metavar='<dir>', help='directory to install the headers to', default=install_dir);
@@ -82,7 +83,7 @@ if args.lua_dir:
     ldflags.extend(library_includes([os.path.join(args.lua_dir, 'lib')]))
 
 if 'linux' in sys.platform:
-    lua_version = os.environ.get('LUA_VERSION', 'lua53')
+    lua_version = os.environ.get('LUA_VERSION', args.lua_version)
     if re.match(r'lua5[1-3]', lua_version):
         # Using normal lua
         lua_lib = lua_version[:-1] + '.' + lua_version[-1]
@@ -101,7 +102,7 @@ if 'linux' in sys.platform:
     ldflags.extend(libraries([lua_lib]))
 elif 'darwin' in sys.platform:
     # OSX 
-    lua_version = os.environ.get('LUA_VERSION', 'lua53')
+    lua_version = os.environ.get('LUA_VERSION', args.lua_version)
     if re.match(r'lua5[1-3]', lua_version):
         # Using normal lua
         lua_incl = lua_version[:-1] + '.' + lua_version[-1]
