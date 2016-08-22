@@ -13,7 +13,7 @@
 #include "test_stack_guard.hpp"
 
 std::string free_function() {
-	std::cout << "free_function()" << std::endl;
+	INFO("free_function()");
 	return "test";
 }
 
@@ -31,13 +31,13 @@ std::map<std::string, std::string> test_table_return_three() {
 
 struct object {
 	std::string operator() () {
-		std::cout << "member_test()" << std::endl;
+		INFO("member_test()");
 		return "test";
 	}
 };
 
 int plop_xyz(int x, int y, std::string z) {
-	std::cout << x << " " << y << " " << z << std::endl;
+	INFO(x << " " << y << " " << z);
 	return 11;
 }
 
@@ -381,7 +381,7 @@ TEST_CASE("tables/functions-variables", "Check if tables and function calls work
 
 	lua.get<sol::table>("os").set_function("fun",
 		[]() {
-		std::cout << "stateless lambda()" << std::endl;
+		INFO("stateless lambda()");
 		return "test";
 	}
 	);
@@ -407,7 +407,7 @@ TEST_CASE("tables/functions-variables", "Check if tables and function calls work
 	int breakit = 50;
 	lua.get<sol::table>("os").set_function("fun",
 		[&breakit]() {
-		std::cout << "stateful lambda()" << std::endl;
+		INFO("stateful lambda()");
 		return "test";
 	}
 	);
@@ -526,7 +526,7 @@ TEST_CASE("tables/operator[]-optional", "Test if proxies on tables can lazily ev
 	REQUIRE(non_nope.value() == 1);
 	REQUIRE(non_nope2.value() == 1);
 
-	std::cout << "Keys: nope, kek, hah" << std::endl;
+	INFO("Keys: nope, kek, hah");
 	lua.set(std::make_tuple("nope", "kek", "hah"), 35);
 	sol::optional<int> non_nope3 = lua["nope"]["kek"]["hah"].get<sol::optional<int>>();
 	sol::optional<int> non_nope4 = lua.get<sol::optional<int>>(std::make_tuple("nope", "kek", "hah"));

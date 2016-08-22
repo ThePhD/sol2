@@ -14,9 +14,13 @@
 
 bool func_opt_ret_bool(sol::optional<int> i) {
 	if (i)
-		std::cout << i.value() << std::endl;
+	{
+		INFO(i.value());
+	}
 	else
-		std::cout << "optional isn't set" << std::endl;
+	{
+		INFO("optional isn't set");
+	}
 	return true;
 }
 
@@ -216,7 +220,7 @@ TEST_CASE("interop/null-to-nil-and-back", "nil should be the given type when a p
 		return nullptr;
 	});
 	lua.set_function("rofl", [](int* x) {
-		std::cout << x << std::endl;
+		INFO(x);
 	});
 	REQUIRE_NOTHROW(lua.script("x = lol()\n"
 		"rofl(x)\n"
@@ -232,38 +236,38 @@ TEST_CASE("utilities/this_state", "Ensure this_state argument can be gotten anyw
 		}
 
 		static int with_state_2(int a, sol::this_state l, int b) {
-			std::cout << "inside with_state_2" << std::endl;
+			INFO("inside with_state_2");
 			lua_State* L = l;
-			std::cout << "L is" << (void*)L << std::endl;
+			INFO("L is" << (void*)L);
 			int c = lua_gettop(L);
 			return a * b + (c - c);
 		}
 	};
 
 	sol::state lua;
-	std::cout << "created lua state" << std::endl;
+	INFO("created lua state");
 	lua.open_libraries(sol::lib::base);
 	lua.new_usertype<bark>("bark",
 		"with_state", &bark::with_state
 		);
 
-	std::cout << "setting b and with_state_2" << std::endl;
+	INFO("setting b and with_state_2");
 	bark b;
 	lua.set("b", &b);
 	lua.set("with_state_2", bark::with_state_2);
-	std::cout << "finished setting" << std::endl;
-	std::cout << "getting fx" << std::endl;
+	INFO("finished setting");
+	INFO("getting fx");
 	sol::function fx = lua["with_state_2"];
-	std::cout << "calling fx" << std::endl;
+	INFO("calling fx");
 	int a = fx(25, 25);
-	std::cout << "finished setting fx" << std::endl;
-	std::cout << "calling a script" << std::endl;
+	INFO("finished setting fx");
+	INFO("calling a script");
 	lua.script("a = with_state_2(25, 25)");
-	std::cout << "calling c script" << std::endl;
+	INFO("calling c script");
 	lua.script("c = b:with_state(25, 25)");
-	std::cout << "getting a" << std::endl;
+	INFO("getting a");
 	int la = lua["a"];
-	std::cout << "getting b" << std::endl;
+	INFO("getting b");
 	int lc = lua["c"];
 
 	REQUIRE(lc == 50);
