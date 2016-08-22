@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-21 23:25:04.369074 UTC
-// This header was generated with sol v2.11.6 (revision 6243cbe)
+// Generated 2016-08-22 02:15:33.510154 UTC
+// This header was generated with sol v2.11.5 (revision 56ed859)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3968,7 +3968,7 @@ namespace sol {
 				std::is_lvalue_reference<T>,
 				meta::neg<std::is_const<T>>,
 				meta::neg<is_lua_primitive<meta::unqualified_t<T>>>,
-				meta::neg<is_unique_usertype<T>>
+				meta::neg<is_unique_usertype<meta::unqualified_t<T>>>
 			> use_reference_tag;
 			return pusher<std::conditional_t<use_reference_tag::value, detail::as_reference_tag, meta::unqualified_t<T>>>{}.push(L, std::forward<T>(t), std::forward<Args>(args)...);
 		}

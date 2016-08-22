@@ -1406,3 +1406,36 @@ TEST_CASE("usertype/inheritance", "test that metatables are properly inherited")
 	REQUIRE(b == 10);
 	REQUIRE(a == 5);
 }
+
+TEST_CASE("usertype/unique_usertype-check", "make sure unique usertypes don't get pushed as references with function calls and the like") {
+	class Entity {
+	public:
+		std::string GetName() {
+			return "Charmander";
+		}
+	};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::math, sol::lib::string, sol::lib::io);
+
+	lua.new_usertype<Entity>("Entity",
+		"new", sol::no_constructor,
+		"get_name", &Entity::GetName
+		);
+
+	lua.script(R"(
+		function my_func(entity)
+		print("INSIDE LUA")
+		print(entity:get_name())
+		end
+)");
+
+	sol::function my_func = lua["my_func"];
+	REQUIRE_NOTHROW({
+	auto ent = std::make_shared<Entity>();
+	my_func(ent);
+	Entity ent2;
+	my_func(ent2);
+	my_func(std::make_shared<Entity>());
+	});
+}
