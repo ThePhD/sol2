@@ -94,7 +94,7 @@ namespace sol {
 		template <typename Fx>
 		object require_core(const std::string& key, Fx&& action, bool create_global = true) {
 			optional<object> loaded = is_loaded_package(key);
-			if (loaded)
+			if (loaded && loaded->valid())
 				return std::move(*loaded);
 			action();
 			auto sr = stack::get<stack_reference>(L);
