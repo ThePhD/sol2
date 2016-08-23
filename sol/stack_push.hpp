@@ -284,15 +284,14 @@ namespace sol {
 
 		template<typename T>
 		struct pusher<user<T>> {
-			template <bool with_meta = true, typename... Args>
-			static int push_with(lua_State* L, Args&&... args) {
+			template <bool with_meta = true, typename Key, typename... Args>
+			static int push_with(lua_State* L, Key&& name, Args&&... args) {
 				// A dumb pusher
 				void* rawdata = lua_newuserdata(L, sizeof(T));
 				T* data = static_cast<T*>(rawdata);
 				std::allocator<T> alloc;
 				alloc.construct(data, std::forward<Args>(args)...);
 				if (with_meta) {
-					const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
 					lua_CFunction cdel = stack_detail::alloc_destroy<T>;
 					// Make sure we have a plain GC set for this data
 					if (luaL_newmetatable(L, name) != 0) {
@@ -305,30 +304,42 @@ namespace sol {
 				return 1;
 			}
 
-			template <typename Arg, typename... Args, meta::disable<std::is_same<no_metatable_t, meta::unqualified_t<Arg>>> = meta::enabler>
+			template <typename Arg, typename... Args, meta::disable<meta::any_same<meta::unqualified_t<Arg>, no_metatable_t, metatable_key_t>> = meta::enabler>
 			static int push(lua_State* L, Arg&& arg, Args&&... args) {
-				return push_with(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				return push_with(L, name, std::forward<Arg>(arg), std::forward<Args>(args)...);
 			}
 
 			template <typename... Args>
 			static int push(lua_State* L, no_metatable_t, Args&&... args) {
-				return push_with<false>(L, std::forward<Args>(args)...);
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				return push_with<false>(L, name, std::forward<Args>(args)...);
+			}
+
+			template <typename Key, typename... Args>
+			static int push(lua_State* L, metatable_key_t, Key&& key, Args&&... args) {
+				const auto name = &key[0];
+				return push_with<true>(L, name, std::forward<Args>(args)...);
 			}
 
 			static int push(lua_State* L, const user<T>& u) {
-				return push_with(L, u.value);
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				return push_with(L, name, u.value);
 			}
 
 			static int push(lua_State* L, user<T>&& u) {
-				return push_with(L, std::move(u.value));
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				return push_with(L, name, std::move(u.value));
 			}
 
 			static int push(lua_State* L, no_metatable_t, const user<T>& u) {
-				return push_with<false>(L, u.value);
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				return push_with<false>(L, name, u.value);
 			}
 
 			static int push(lua_State* L, no_metatable_t, user<T>&& u) {
-				return push_with<false>(L, std::move(u.value));
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				return push_with<false>(L, name, std::move(u.value));
 			}
 		};
 

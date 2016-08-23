@@ -32,13 +32,13 @@ int main() {
 	if (result.valid()) {
 		// Call succeeded
 		int x = result;
-		std::cout << x << std::endl;
+		std::cout << "call succeeded, result is " << x << std::endl;
 	}
 	else {
 		// Call failed
 		sol::error err = result;
 		std::string what = err.what();
-		std::cout << what << std::endl;
+		std::cout << "call failed, sol::error::what() is " << what << std::endl;
 		// 'what' Should read 
 		// "Handled this message: negative number detected"
 	}

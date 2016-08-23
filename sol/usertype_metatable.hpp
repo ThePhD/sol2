@@ -388,12 +388,16 @@ namespace sol {
 			typedef typename umt_t::regs_t regs_t;
 
 			static umt_t& make_cleanup(lua_State* L, umt_t&& umx) {
+				// ensure some sort of uniqueness
+				static int uniqueness = 0;
+				std::string uniquegcmetakey = usertype_traits<T>::user_gc_metatable;
+				uniquegcmetakey.append(std::to_string(uniqueness++));
+				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
+				
 				// Make sure userdata's memory is properly in lua first,
 				// otherwise all the light userdata we make later will become invalid
-
+				stack::push<user<umt_t>>(L, metatable_key, uniquegcmetakey, std::move(umx));
 				// Create the top level thing that will act as our deleter later on
-				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
-				stack::push<user<umt_t>>(L, std::move(umx));
 				stack_reference umt(L, -1);
 				stack::set_field<true>(L, gcmetakey, umt);
 				umt.pop();

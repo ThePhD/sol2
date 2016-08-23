@@ -3,6 +3,8 @@ getting started
 
 Let's get you going with Sol! To start, you'll need to use a lua distribution of some sort. Sol doesn't provide that: it only wraps the API that comes with it, so you can pick whatever distribution you like for your application. There are lots, but the two popular ones are `vanilla Lua`_ and speedy `LuaJIT`_ . We recommend vanilla Lua if you're getting started, LuaJIT if you need speed and can handle some caveats: the interface for Sol doesn't change no matter what Lua version you're using.
 
+If you need help getting or building Lua, check out the `Lua page on getting started`_. Note that for Visual Studio, one can simply download the sources, include all the Lua library files in that project, and then build for debug/release, x86/x64/ARM rather easily and with minimal interference. Just make sure to adjust the Project Property page to build as a static library (or a DLL with the proper define set in the ``Preprocessor`` step).
+
 After that, make sure you grab either the `single header file release`_, or just perform a clone of the `github repository here`_ and set your include paths up so that you can get at ``sol.hpp`` somehow. Note that we also have the latest version of the single header file with all dependencies included kept in the `repository as well`_. We recommend the single-header-file release, since it's easier to move around, manage and update if you commit it with some form of version control. If you use the github clone method and do not point to the `single/sol/sol.hpp`_ on your include files, you *must* update submodules in order to make sure Optional is present in the repository. Clone with:
 
 >>> git clone https://github.com/ThePhD/sol2.git
@@ -33,7 +35,7 @@ When you're ready, try compiling this short snippet:
 
 Using this simple command line:
 
->>> g++ -std=c++14 test.cpp -llua -I"path/to/lua/include" -L"path/to/lua/lib"
+>>> g++ -std=c++14 test.cpp -I"path/to/lua/include" -L"path/to/lua/lib" -llua
 
 Or using your favorite IDE / tool after setting up your include paths and library paths to Lua according to the documentation of the Lua distribution you got. Remember your linked lua library (``-llua``) and include / library paths will depend on your OS, file system, Lua distribution and your installation / compilation method of your Lua distribution.
 
@@ -78,3 +80,5 @@ Next, let's start :doc:`reading/writing some variables<variables>` from Lua into
 .. _single/sol/sol.hpp: https://github.com/ThePhD/sol2/blob/develop/single/sol/sol.hpp
 
 .. _github repository here: https://github.com/ThePhD/sol2
+
+.. _Lua page on getting started: https://www.lua.org/start.html

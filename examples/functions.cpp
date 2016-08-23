@@ -51,7 +51,7 @@ int main() {
 	assert(x == 10);
 	if (x == 10) {
 		// Do something based on this information
-		std::cout << "Yahoo!" << std::endl;
+		std::cout << "Yahoo! x is " << x << std::endl;
 	}
 
 	// this can be done as many times as you want
@@ -63,7 +63,7 @@ inc()
 	assert(x == 40);
 	if (x == 40) {
 		// Do something based on this information
-		std::cout << "Yahoo!" << std::endl;
+		std::cout << "Yahoo! x is " << x << std::endl;
 	}
 	// retrieval of a function is done similarly
 	// to other variables, using sol::function
@@ -74,7 +74,7 @@ inc()
 	assert(value == 21);
 	assert(value2 == 21);
 	if (value == 21 && value2 == 21) {
-		std::cout << "Woo, it's 21!" << std::endl;
+		std::cout << "Woo, value is 21!" << std::endl;
 	}
 
 	// multi-return functions are supported using

@@ -58,6 +58,8 @@ include = [ '.', './include' ]
 depends = [os.path.join('Catch', 'include')]
 cxxflags = [ '-Wall', '-Wextra', '-Wpedantic', '-pedantic', '-pedantic-errors', '-std=c++14', '-ftemplate-depth=1024' ]
 cxxflags.extend([p for p in re.split("( |\\\".*?\\\"|'.*?')", args.cxx_flags) if p.strip()])
+example_cxxflags = [ '-Wall', '-Wextra', '-Wpedantic', '-pedantic', '-pedantic-errors', '-std=c++14', '-ftemplate-depth=1024' ]
+example_cxxflags.extend([p for p in re.split("( |\\\".*?\\\"|'.*?')", args.cxx_flags) if p.strip()])
 ldflags = []
 script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 sol_dir = os.path.join(script_dir, 'sol')
@@ -77,6 +79,7 @@ if args.debug:
     cxxflags.extend(['-g', '-O0'])
 else:
     cxxflags.extend(['-DNDEBUG', '-O3'])
+example_cxxflags.extend(['-g', '-O0'])
 
 if args.lua_dir:
     include.extend([os.path.join(args.lua_dir, 'include')])
@@ -160,6 +163,7 @@ ninja.variable('ninja_required_version', '1.3')
 ninja.variable('builddir', 'bin')
 ninja.variable('cxx', args.cxx)
 ninja.variable('cxxflags', flags(cxxflags + includes(include) + dependencies(depends)))
+ninja.variable('example_cxxflags', flags(example_cxxflags + includes(include) + dependencies(depends)))
 ninja.variable('ldflags', flags(ldflags))
 ninja.newline()
 
@@ -171,7 +175,7 @@ ninja.rule('compile', command = '$cxx -MMD -MF $out.d -c $cxxflags -Werror $in -
 ninja.rule('link', command = '$cxx $cxxflags $in -o $out $ldflags', description = 'creating $out')
 ninja.rule('tests_runner', command = tests)
 ninja.rule('examples_runner', command = 'cmd /c ' + (' && '.join(examples)) if 'win32' in sys.platform else ' && '.join(examples) )
-ninja.rule('example', command = '$cxx $cxxflags -MMD -MF $out.d $in -o $out $ldflags',
+ninja.rule('example', command = '$cxx $example_cxxflags -MMD -MF $out.d $in -o $out $ldflags',
                       deps = 'gcc', depfile = '$out.d',
                       description = 'compiling example $in to $out')
 ninja.rule('installer', command = copy_command)

@@ -89,9 +89,10 @@ assert(not p2shoots)
 -- had 0 ammo
 	
 -- set variable property setter
-p1.hp = 545;
+p1.hp = 545
 -- get variable through property getter
-print(p1.hp);
+print(p1.hp)
+assert(p1.hp == 545)
 
 local did_shoot_1 = p1:shoot()
 print(did_shoot_1)

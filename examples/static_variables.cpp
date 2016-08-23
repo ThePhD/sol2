@@ -1,6 +1,7 @@
 #include <sol.hpp>
 
 #include <iostream>
+#include <cassert>
 
 struct test {
 	static int muh_variable;
@@ -20,13 +21,16 @@ int main() {
 	);
 
 	int direct_value = lua["test"]["direct"];
-	std::cout << "direct_value: " << direct_value << std::endl;
 	// direct_value == 2
+	assert(direct_value == 2);
+	std::cout << "direct_value: " << direct_value << std::endl;
 
 	int global = lua["test"]["global"];
-	// global == 25
 	int global2 = lua["test"]["ref_global"];
+	// global == 25
 	// global2 == 25
+	assert(global == 25);
+	assert(global2 == 25);
 
 	std::cout << "First round of values --" << std::endl;
 	std::cout << global << std::endl;
@@ -44,6 +48,9 @@ int main() {
 	// global2 holds a reference to muh_variable
 	// if muh_variable goes out of scope or is deleted
 	// problems could arise, so be careful!
+
+	assert(global == 25);
+	assert(global2 == 542);
 
 	std::cout << "Second round of values --" << std::endl;
 	std::cout << "global : " << global << std::endl;
