@@ -77,7 +77,8 @@ install_os_deps() {
                 lua53)      lua_pkg=lua53   ;;
                 lua52)      lua_pkg=lua     ;;
                 lua51)      lua_pkg=lua51   ;; 
-                luajit52)   lua_pkg=luajit  ;;
+                luajit52)   lua_pkg=luajit  ;; 
+                luajit)     lua_pkg=luajit  ;;
                 *)  echo "Invalid Lua Version for OSX" 
                     exit 2 
                     ;;
