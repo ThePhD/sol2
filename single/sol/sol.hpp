@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-22 02:15:33.510154 UTC
-// This header was generated with sol v2.11.5 (revision 56ed859)
+// Generated 2016-08-23 03:42:51.761893 UTC
+// This header was generated with sol v2.11.7 (revision 4e967a2)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4013,7 +4013,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		bool check(lua_State* L, int index = -1) {
+		bool check(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
 			auto handler = no_panic;
 			return check<T>(L, index, handler);
 		}
@@ -4030,7 +4030,7 @@ namespace sol {
 		}
 
 		template<typename T>
-		inline decltype(auto) check_get(lua_State* L, int index = -1) {
+		inline decltype(auto) check_get(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
 			auto handler = no_panic;
 			return check_get<T>(L, index, handler);
 		}
@@ -4127,7 +4127,7 @@ namespace sol {
 		}
 
 		template<typename T>
-		inline decltype(auto) get(lua_State* L, int index = -1) {
+		inline decltype(auto) get(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
 			record tracking{};
 			return get<T>(L, index, tracking);
 		}
@@ -5745,15 +5745,14 @@ namespace sol {
 
 		template<typename T>
 		struct pusher<user<T>> {
-			template <bool with_meta = true, typename... Args>
-			static int push_with(lua_State* L, Args&&... args) {
+			template <bool with_meta = true, typename Key, typename... Args>
+			static int push_with(lua_State* L, Key&& name, Args&&... args) {
 				// A dumb pusher
 				void* rawdata = lua_newuserdata(L, sizeof(T));
 				T* data = static_cast<T*>(rawdata);
 				std::allocator<T> alloc;
 				alloc.construct(data, std::forward<Args>(args)...);
 				if (with_meta) {
-					const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
 					lua_CFunction cdel = stack_detail::alloc_destroy<T>;
 					// Make sure we have a plain GC set for this data
 					if (luaL_newmetatable(L, name) != 0) {
@@ -5766,30 +5765,42 @@ namespace sol {
 				return 1;
 			}
 
-			template <typename Arg, typename... Args, meta::disable<std::is_same<no_metatable_t, meta::unqualified_t<Arg>>> = meta::enabler>
+			template <typename Arg, typename... Args, meta::disable<meta::any_same<meta::unqualified_t<Arg>, no_metatable_t, metatable_key_t>> = meta::enabler>
 			static int push(lua_State* L, Arg&& arg, Args&&... args) {
-				return push_with(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				return push_with(L, name, std::forward<Arg>(arg), std::forward<Args>(args)...);
 			}
 
 			template <typename... Args>
 			static int push(lua_State* L, no_metatable_t, Args&&... args) {
-				return push_with<false>(L, std::forward<Args>(args)...);
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				return push_with<false>(L, name, std::forward<Args>(args)...);
+			}
+
+			template <typename Key, typename... Args>
+			static int push(lua_State* L, metatable_key_t, Key&& key, Args&&... args) {
+				const auto name = &key[0];
+				return push_with<true>(L, name, std::forward<Args>(args)...);
 			}
 
 			static int push(lua_State* L, const user<T>& u) {
-				return push_with(L, u.value);
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				return push_with(L, name, u.value);
 			}
 
 			static int push(lua_State* L, user<T>&& u) {
-				return push_with(L, std::move(u.value));
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				return push_with(L, name, std::move(u.value));
 			}
 
 			static int push(lua_State* L, no_metatable_t, const user<T>& u) {
-				return push_with<false>(L, u.value);
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				return push_with<false>(L, name, u.value);
 			}
 
 			static int push(lua_State* L, no_metatable_t, user<T>&& u) {
-				return push_with<false>(L, std::move(u.value));
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				return push_with<false>(L, name, std::move(u.value));
 			}
 		};
 
@@ -9611,12 +9622,16 @@ namespace sol {
 			typedef typename umt_t::regs_t regs_t;
 
 			static umt_t& make_cleanup(lua_State* L, umt_t&& umx) {
+				// ensure some sort of uniqueness
+				static int uniqueness = 0;
+				std::string uniquegcmetakey = usertype_traits<T>::user_gc_metatable;
+				uniquegcmetakey.append(std::to_string(uniqueness++));
+				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
+				
 				// Make sure userdata's memory is properly in lua first,
 				// otherwise all the light userdata we make later will become invalid
-
+				stack::push<user<umt_t>>(L, metatable_key, uniquegcmetakey, std::move(umx));
 				// Create the top level thing that will act as our deleter later on
-				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
-				stack::push<user<umt_t>>(L, std::move(umx));
 				stack_reference umt(L, -1);
 				stack::set_field<true>(L, gcmetakey, umt);
 				umt.pop();
@@ -10612,7 +10627,7 @@ namespace sol {
 		template <typename Fx>
 		object require_core(const std::string& key, Fx&& action, bool create_global = true) {
 			optional<object> loaded = is_loaded_package(key);
-			if (loaded)
+			if (loaded && loaded->valid())
 				return std::move(*loaded);
 			action();
 			auto sr = stack::get<stack_reference>(L);
