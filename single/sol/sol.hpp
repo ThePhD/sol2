@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-24 13:16:37.429596 UTC
-// This header was generated with sol 2.12.0 (revision 1e62e3c)
+// Generated 2016-08-24 16:22:00.354090 UTC
+// This header was generated with sol v2.11.7 (revision 81ffb3f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3253,6 +3253,8 @@ namespace sol {
 
 	class reference;
 	class stack_reference;
+	template <typename Table, typename Key>
+	struct proxy;
 	template<typename T>
 	class usertype;
 	template <bool, typename T>
@@ -3469,6 +3471,13 @@ namespace sol {
 		|| std::is_base_of<stack_reference, meta::unqualified_t<T>>::value
 		|| meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>::value
 		|| meta::is_specialization_of<std::pair, meta::unqualified_t<T>>::value
+	> { };
+
+	template <typename T>
+	struct is_lua_reference : std::integral_constant<bool,
+		std::is_base_of<reference, meta::unqualified_t<T>>::value
+		|| std::is_base_of<stack_reference, meta::unqualified_t<T>>::value
+		|| meta::is_specialization_of<proxy, meta::unqualified_t<T>>::value
 	> { };
 
 	template <typename T>
@@ -9205,12 +9214,12 @@ namespace sol {
 			return *this;
 		}
 
-		template<typename U, meta::enable<meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
+		template<typename U, meta::enable<meta::neg<is_lua_reference<meta::unwrap_unqualified_t<U>>>, meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
 		proxy& operator=(U&& other) {
 			return set_function(std::forward<U>(other));
 		}
 
-		template<typename U, meta::disable<meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
+		template<typename U, meta::disable<meta::neg<is_lua_reference<meta::unwrap_unqualified_t<U>>>, meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
 		proxy& operator=(U&& other) {
 			return set(std::forward<U>(other));
 		}
