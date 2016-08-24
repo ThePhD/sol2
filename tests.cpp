@@ -648,3 +648,18 @@ TEST_CASE("pusher/constness", "Make sure more types can handle being const and j
 	int x = foo.f()();
 	REQUIRE(x == 20);
 }
+
+TEST_CASE("proxy/proper-pushing", "allow proxies to reference other proxies and be serialized as the proxy itself and not a function or something") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::io);
+
+	class T {};
+	lua.new_usertype<T>("T");
+
+	T t;
+	lua["t1"] = &t;
+	lua["t2"] = lua["t1"];
+	lua.script("b = t1 == t2");
+	bool b = lua["b"];
+	REQUIRE(b);
+}
