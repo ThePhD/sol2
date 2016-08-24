@@ -35,6 +35,10 @@
 namespace sol {
 	namespace detail {
 		struct as_reference_tag {};
+		template <typename T>
+		struct as_pointer_tag {};
+		template <typename T>
+		struct as_value_tag {};
 
 		using special_destruct_func = void(*)(void*);
 
@@ -52,6 +56,25 @@ namespace sol {
 			T** pointerpointer = static_cast<T**>(memory);
 			special_destruct_func& dx = *static_cast<special_destruct_func*>(static_cast<void*>(pointerpointer + 1));
 			(dx)(memory);
+			return 0;
+		}
+
+		template <typename T>
+		inline int user_alloc_destroy(lua_State* L) {
+			void* rawdata = lua_touserdata(L, upvalue_index(1));
+			T* data = static_cast<T*>(rawdata);
+			std::allocator<T> alloc;
+			alloc.destroy(data);
+			return 0;
+		}
+
+		template <typename T>
+		inline int usertype_alloc_destroy(lua_State* L) {
+			void* rawdata = lua_touserdata(L, 1);
+			T** pdata = static_cast<T**>(rawdata);
+			T* data = *pdata;
+			std::allocator<T> alloc{};
+			alloc.destroy(data);
 			return 0;
 		}
 
@@ -246,15 +269,6 @@ namespace sol {
 			template <typename T>
 			inline decltype(auto) tagged_get(types<optional<T>>, lua_State* L, int index, record& tracking) {
 				return stack_detail::unchecked_get<optional<T>>(L, index, tracking);
-			}
-
-			template <typename T>
-			inline int alloc_destroy(lua_State* L) {
-				void* rawdata = lua_touserdata(L, upvalue_index(1));
-				T* data = static_cast<T*>(rawdata);
-				std::allocator<T> alloc;
-				alloc.destroy(data);
-				return 0;
 			}
 
 			template <bool b>

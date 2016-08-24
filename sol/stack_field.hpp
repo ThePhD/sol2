@@ -132,7 +132,6 @@ namespace sol {
 			}
 		};
 
-
 		template <typename T, bool, bool, typename>
 		struct field_setter {
 			template <typename Key, typename Value>

@@ -2,31 +2,17 @@
 
 #include <catch.hpp>
 #include <sol.hpp>
+
 #include <iostream>
 #include <algorithm>
 #include <numeric>
-#include <iterator>
 #include <vector>
-#include <list>
-#include <map>
-#include <unordered_map>
+
 #include "test_stack_guard.hpp"
 
 std::string free_function() {
 	INFO("free_function()");
 	return "test";
-}
-
-std::vector<int> test_table_return_one() {
-	return{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-}
-
-std::vector<std::pair<std::string, int>> test_table_return_two() {
-	return{ { "one", 1 },{ "two", 2 },{ "three", 3 } };
-}
-
-std::map<std::string, std::string> test_table_return_three() {
-	return{ { "name", "Rapptz" },{ "friend", "ThePhD" },{ "project", "sol" } };
 }
 
 struct object {
@@ -289,37 +275,6 @@ TEST_CASE("tables/iterators", "Testing the use of iteratrs to get values from a 
 	REQUIRE(iterations == tablesize);
 }
 
-TEST_CASE("tables/arbitrary-creation", "tables should be created from standard containers") {
-	sol::state lua;
-	lua.open_libraries(sol::lib::base);
-	lua.set_function("test_one", test_table_return_one);
-	lua.set_function("test_two", test_table_return_two);
-	lua.set_function("test_three", test_table_return_three);
-
-	REQUIRE_NOTHROW(lua.script("a = test_one()"));
-	REQUIRE_NOTHROW(lua.script("b = test_two()"));
-	REQUIRE_NOTHROW(lua.script("c = test_three()"));
-
-	REQUIRE_NOTHROW(lua.script("assert(#a == 10, 'error')"));
-	REQUIRE_NOTHROW(lua.script("assert(a[3] == 3, 'error')"));
-	REQUIRE_NOTHROW(lua.script("assert(b.one == 1, 'error')"));
-	REQUIRE_NOTHROW(lua.script("assert(b.three == 3, 'error')"));
-	REQUIRE_NOTHROW(lua.script("assert(c.name == 'Rapptz', 'error')"));
-	REQUIRE_NOTHROW(lua.script("assert(c.project == 'sol', 'error')"));
-
-	auto&& a = lua.get<sol::table>("a");
-	auto&& b = lua.get<sol::table>("b");
-	auto&& c = lua.get<sol::table>("c");
-
-	REQUIRE(a.size() == 10ULL);
-	REQUIRE(a.get<int>(3) == 3);
-	REQUIRE(b.get<int>("one") == 1);
-	REQUIRE(b.get<int>("three") == 3);
-	REQUIRE(c.get<std::string>("name") == "Rapptz");
-	REQUIRE(c.get<std::string>("project") == "sol");
-}
-
-
 TEST_CASE("tables/variables", "Check if tables and variables work as intended") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::os);
@@ -554,72 +509,4 @@ TEST_CASE("tables/add", "Basic test to make sure the 'add' feature works") {
 		int val = t[i + 1];
 		REQUIRE(val == bigvec[i]);
 	}
-}
-
-TEST_CASE("tables/returns", "make sure that even references to vectors are being serialized as tables") {
-	sol::state lua;
-	std::vector<int> v{ 1, 2, 3 };
-	lua.set_function("f", [&]() -> std::vector<int>& {
-		return v;
-	});
-	lua.script("x = f()");
-	sol::object x = lua["x"];
-	sol::type xt = x.get_type();
-	REQUIRE(xt == sol::type::table);
-	sol::table t = x;
-	bool matching;
-	matching = t[1] == 1;
-	REQUIRE(matching);
-	matching = t[2] == 2;
-	REQUIRE(matching);
-	matching = t[3] == 3;
-	REQUIRE(matching);
-}
-
-TEST_CASE("tables/vector_roundtrip", "make sure vectors can be round-tripped") {
-	sol::state lua;
-	std::vector<int> v{ 1, 2, 3 };
-	lua.set_function("f", [&]() -> std::vector<int>& {
-		return v;
-	});
-	lua.script("x = f()");
-	std::vector<int> x = lua["x"];
-	bool areequal = x == v;
-	REQUIRE(areequal);
-}
-
-TEST_CASE("tables/list_roundtrip", "make sure lists can be round-tripped") {
-	sol::state lua;
-	std::list<int> v{ 1, 2, 3 };
-	lua.set_function("f", [&]() -> std::list<int>& {
-		return v;
-	});
-	lua.script("x = f()");
-	std::list <int> x = lua["x"];
-	bool areequal = x == v;
-	REQUIRE(areequal);
-}
-
-TEST_CASE("tables/map_roundtrip", "make sure maps can be round-tripped") {
-	sol::state lua;
-	std::map<std::string, int> v{ { "a", 1 },{ "b", 2 },{ "c", 3 } };
-	lua.set_function("f", [&]() -> std::map<std::string, int>& {
-		return v;
-	});
-	lua.script("x = f()");
-	std::map<std::string, int> x = lua["x"];
-	bool areequal = x == v;
-	REQUIRE(areequal);
-}
-
-TEST_CASE("tables/unordered_map_roundtrip", "make sure unordered_maps can be round-tripped") {
-	sol::state lua;
-	std::unordered_map<std::string, int> v{ { "a", 1 },{ "b", 2 },{ "c", 3 } };
-	lua.set_function("f", [&]() -> std::unordered_map<std::string, int>& {
-		return v;
-	});
-	lua.script("x = f()");
-	std::unordered_map<std::string, int> x = lua["x"];
-	bool areequal = x == v;
-	REQUIRE(areequal);
 }

@@ -3,6 +3,9 @@
 #include <catch.hpp>
 #include <sol.hpp>
 
+#include <unordered_map>
+#include <vector>
+
 struct two_things {
 	int a;
 	bool b;

@@ -7,7 +7,7 @@ Take some time to learn the framework with thse tutorials. But, if you need to g
 .. toctree::
    :caption: Sol Tutorial
    :name: tutorialtoc
-   :maxdepth: 1
+   :maxdepth: 2
 
    all-the-things
    getting-started

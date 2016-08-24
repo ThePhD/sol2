@@ -259,6 +259,34 @@ namespace sol {
 		return closure<Args...>(f, std::forward<Args>(args)...);
 	}
 
+	template <typename Sig, typename... Ps>
+	struct function_arguments {
+		std::tuple<Ps...> params;
+		template <typename... Args>
+		function_arguments(Args&&... args) : params(std::forward<Args>(args)...) {}
+	};
+
+	template <typename Sig = function_sig<>, typename... Args>
+	function_arguments<Sig, Args...> as_function(Args&&... args) {
+		return function_arguments<Sig, Args...>(std::forward<Args>(args)...);
+	}
+
+	template <typename T>
+	struct as_table_t {
+		T source;
+		template <typename... Args>
+		as_table_t(Args&&... args) : source(std::forward<Args>(args)...) {}
+
+		operator std::add_lvalue_reference_t<T> () {
+			return source;
+		}
+	};
+
+	template <typename T>
+	as_table_t<T> as_table(T&& container) {
+		return as_table_t<T>(std::forward<T>(container));
+	}
+
 	struct this_state {
 		lua_State* L;
 		operator lua_State* () const {
@@ -601,17 +629,6 @@ namespace sol {
 
 		template <>
 		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
-
-		template <typename T>
-		struct lua_type_of<T, std::enable_if_t<
-			meta::all<
-				meta::has_begin_end<T>, 
-				meta::neg<meta::any<
-					std::is_base_of<reference, T>, 
-					std::is_base_of<stack_reference, T>
-				>>
-			>::value
-		>> : std::integral_constant<type, type::table> {};
 
 		template <typename C, C v, template <typename...> class V, typename... Args>
 		struct accumulate : std::integral_constant<C, v> {};

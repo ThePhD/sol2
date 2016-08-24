@@ -25,6 +25,7 @@
 #include "stack.hpp"
 #include "usertype_metatable.hpp"
 #include "simple_usertype_metatable.hpp"
+#include "container_usertype_metatable.hpp"
 #include <memory>
 
 namespace sol {

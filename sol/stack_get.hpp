@@ -78,7 +78,7 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct getter<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<meta::has_key_value_pair<T>>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
+		struct getter<as_table_t<T>, std::enable_if_t<!meta::has_key_value_pair<meta::unqualified_t<T>>::value>> {
 			static T get(lua_State* L, int index, record& tracking) {
 				typedef typename T::value_type V;
 				tracking.use(1);
@@ -88,45 +88,53 @@ namespace sol {
 				get_field<false, true>(L, static_cast<lua_Integer>(-1), index);
 				int isnum;
 				std::size_t sizehint = static_cast<std::size_t>(lua_tointegerx(L, -1, &isnum));
-				if (isnum == 0) {
+				if (isnum != 0) {
 					detail::reserve(arr, sizehint);
 				}
 				lua_pop(L, 1);
 #if SOL_LUA_VERSION >= 503
 				// This method is HIGHLY performant over regular table iteration thanks to the Lua API changes in 5.3
-				for (lua_Integer i = 0; ; ++i, lua_pop(L, 1)) {
-					type t = static_cast<type>(lua_geti(L, index, i));
-					if (t == type::nil) {
-						if (i == 0)
-							continue;
-						else
-							break;
+				for (lua_Integer i = 0; ; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
+					for (int vi = 0; vi < lua_size<V>::value; ++vi) {
+						type t = static_cast<type>(lua_geti(L, index, i + vi));
+						if (t == type::nil) {
+							if (i == 0) {
+								continue;
+							}
+							else {
+								lua_pop(L, (vi + 1));
+								return arr;
+							}
+						}
 					}
-					arr.push_back(stack::get<V>(L, -1));
+					arr.push_back(stack::get<V>(L, -lua_size<V>::value));
 				}
-				lua_pop(L, 1);
 #else
 				// Zzzz slower but necessary thanks to the lower version API and missing functions qq
-				for (lua_Integer i = 0; ; ++i, lua_pop(L, 1)) {
-					lua_pushinteger(L, i);
-					lua_gettable(L, index);
-					type t = type_of(L, -1);
-					if (t == type::nil) {
-						if (i == 0)
-							continue;
-						else
-							break;
+				for (lua_Integer i = 0; ; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
+					for (int vi = 0; vi < lua_size<V>::value; ++vi) {
+						lua_pushinteger(L, i);
+						lua_gettable(L, index);
+						type t = type_of(L, -1);
+						if (t == type::nil) {
+							if (i == 0) {
+								continue;
+							}
+							else {
+								lua_pop(L, (vi + 1));
+								return arr;
+							}
+						}
 					}
 					arr.push_back(stack::get<V>(L, -1));
 				}
-				lua_pop(L, 1);
 #endif
 				return arr;
 			}
 		};
 
 		template<typename T>
-		struct getter<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::has_key_value_pair<T>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
+		struct getter<as_table_t<T>, std::enable_if_t<meta::has_key_value_pair<meta::unqualified_t<T>>::value>> {
 			static T get(lua_State* L, int index, record& tracking) {
 				typedef typename T::value_type P;
 				typedef typename P::first_type K;

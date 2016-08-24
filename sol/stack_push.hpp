@@ -33,10 +33,10 @@
 
 namespace sol {
 	namespace stack {
-		template<typename T, typename>
-		struct pusher {
-			template <typename K, typename... Args>
-			static int push_keyed(lua_State* L, K&& k, Args&&... args) {
+		template <typename T>
+		struct pusher<detail::as_value_tag<T>> {
+			template <typename F, typename... Args>
+			static int push_fx(lua_State* L, F&& f, Args&&... args) {
 				// Basically, we store all user-data like this:
 				// If it's a movable/copyable value (no std::ref(x)), then we store the pointer to the new
 				// data in the first sizeof(T*) bytes, and then however many bytes it takes to
@@ -48,9 +48,16 @@ namespace sol {
 				referencereference = allocationtarget;
 				std::allocator<T> alloc{};
 				alloc.construct(allocationtarget, std::forward<Args>(args)...);
-				luaL_newmetatable(L, &k[0]);
-				lua_setmetatable(L, -2);
+				f();
 				return 1;
+			}
+
+			template <typename K, typename... Args>
+			static int push_keyed(lua_State* L, K&& k, Args&&... args) {
+				return push_fx(L, [&L, &k]() {
+					luaL_newmetatable(L, &k[0]);
+					lua_setmetatable(L, -2);
+				}, std::forward<Args>(args)...);
 			}
 
 			template <typename... Args>
@@ -59,17 +66,24 @@ namespace sol {
 			}
 		};
 
-		template<typename T>
-		struct pusher<T*> {
-			template <typename K>
-			static int push_keyed(lua_State* L, K&& k, T* obj) {
+		template <typename T>
+		struct pusher<detail::as_pointer_tag<T>> {
+			template <typename F>
+			static int push_fx(lua_State* L, F&& f, T* obj) {
 				if (obj == nullptr)
 					return stack::push(L, nil);
 				T** pref = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
 				*pref = obj;
-				luaL_newmetatable(L, &k[0]);
-				lua_setmetatable(L, -2);
+				f();
 				return 1;
+			}
+
+			template <typename K>
+			static int push_keyed(lua_State* L, K&& k, T* obj) {
+				return push_fx(L, [&L, &k]() {
+					luaL_newmetatable(L, &k[0]);
+					lua_setmetatable(L, -2);
+				}, obj);
 			}
 
 			static int push(lua_State* L, T* obj) {
@@ -82,6 +96,22 @@ namespace sol {
 			template <typename T>
 			static int push(lua_State* L, T&& obj) {
 				return stack::push(L, detail::ptr(obj));
+			}
+		};
+
+		template<typename T, typename>
+		struct pusher {
+			template <typename... Args>
+			static int push(lua_State* L, Args&&... args) {
+				return pusher<detail::as_value_tag<T>>{}.push(L, std::forward<Args>(args)...);
+			}
+		};
+		
+		template<typename T>
+		struct pusher<T*, meta::disable_if_t<meta::all<meta::has_begin_end<meta::unqualified_t<T>>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
+			template <typename... Args>
+			static int push(lua_State* L, Args&&... args) {
+				return pusher<detail::as_pointer_tag<T>>{}.push(L, std::forward<Args>(args)...);
 			}
 		};
 
@@ -160,13 +190,37 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<meta::has_key_value_pair<T>>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
-			static int push(lua_State* L, const T& cont) {
+		struct pusher<as_table_t<T>, std::enable_if_t<!meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>>::value>> {
+			static int push(lua_State* L, const as_table_t<T>& tablecont) {
+				auto& cont = detail::deref(detail::unwrap(tablecont.source));
 				lua_createtable(L, static_cast<int>(cont.size()), 0);
 				int tableindex = lua_gettop(L);
-				unsigned index = 1;
-				for (auto&& i : cont) {
-					set_field(L, index++, i, tableindex);
+				std::size_t index = 1;
+				for (const auto& i : cont) {
+#if SOL_LUA_VERSION >= 503
+					int p = stack::push(L, i);
+					for (int pi = 0; pi < p; ++pi) {
+						lua_seti(L, tableindex, static_cast<lua_Integer>(index++));
+					}
+#else
+					lua_pushinteger(L, static_cast<lua_Integer>(index));
+					int p = stack::push(L, i);
+					if (p == 1) {
+						++index;
+						lua_settable(L, tableindex);
+					}
+					else {
+						int firstindex = tableindex + 1 + 1;
+						for (int pi = 0; pi < p; ++pi) {
+							stack::push(L, index);
+							lua_pushvalue(L, firstindex);
+							lua_settable(L, tableindex);
+							++index;
+							++firstindex;
+						}
+						lua_pop(L, 1 + p);
+					}
+#endif
 				}
 				set_field(L, -1, cont.size());
 				return 1;
@@ -174,11 +228,12 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::has_key_value_pair<T>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
-			static int push(lua_State* L, const T& cont) {
+		struct pusher<as_table_t<T>, std::enable_if_t<meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>>::value>> {
+			static int push(lua_State* L, const as_table_t<T>& tablecont) {
+				auto& cont = detail::deref(detail::unwrap(tablecont.source));
 				lua_createtable(L, static_cast<int>(cont.size()), 0);
 				int tableindex = lua_gettop(L);
-				for (auto&& pair : cont) {
+				for (const auto& pair : cont) {
 					set_field(L, pair.first, pair.second, tableindex);
 				}
 				return 1;
@@ -292,7 +347,7 @@ namespace sol {
 				std::allocator<T> alloc;
 				alloc.construct(data, std::forward<Args>(args)...);
 				if (with_meta) {
-					lua_CFunction cdel = stack_detail::alloc_destroy<T>;
+					lua_CFunction cdel = detail::user_alloc_destroy<T>;
 					// Make sure we have a plain GC set for this data
 					if (luaL_newmetatable(L, name) != 0) {
 						lua_pushlightuserdata(L, rawdata);

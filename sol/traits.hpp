@@ -127,6 +127,9 @@ namespace sol {
 
 		constexpr const auto enabler = enable_t::_;
 
+		template<bool value, typename T = void>
+		using disable_if_t = std::enable_if_t<!value, T>;
+
 		template<typename... Args>
 		using enable = std::enable_if_t<all<Args...>::value, enable_t>;
 

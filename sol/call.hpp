@@ -61,14 +61,6 @@ namespace sol {
 			}
 		};
 
-		template <typename T>
-		inline int destruct(lua_State* L) {
-			T* obj = stack::get<non_null<T*>>(L, 1);
-			std::allocator<T> alloc{};
-			alloc.destroy(obj);
-			return 0;
-		}
-
 		namespace overload_detail {
 			template <std::size_t... M, typename Match, typename... Args>
 			inline int overload_match_arity(types<>, std::index_sequence<>, std::index_sequence<M...>, Match&&, lua_State* L, int, int, Args&&...) {
@@ -251,7 +243,7 @@ namespace sol {
 				}
 				return call(L, std::forward<Fx>(f), *o);
 #else
-				object_type& o = static_cast<object_type&>(stack::get<Ta&>(L, 1));
+				object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
 				return call(L, std::forward<Fx>(f), o);
 #endif // Safety
 			}
@@ -283,7 +275,7 @@ namespace sol {
 				}
 				return call_assign(std::true_type(), L, f, *o);
 #else
-				object_type& o = static_cast<object_type&>(stack::get<Ta&>(L, 1));
+				object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
 				return call_assign(std::true_type(), L, f, o);
 #endif // Safety
 			}
@@ -341,7 +333,7 @@ namespace sol {
 				}
 				return call(L, f, *o);
 #else
-				object_type& o = static_cast<object_type&>(stack::get<Ta&>(L, 1));
+				object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
 				return call(L, f, o);
 #endif // Safety
 			}
@@ -422,7 +414,7 @@ namespace sol {
 			typedef destructor_wrapper<Fx> F;
 
 			static int call(lua_State* L, const F&) {
-				return destruct<T>(L);
+				return detail::usertype_alloc_destroy<T>(L);
 			}
 		};
 
@@ -493,7 +485,7 @@ namespace sol {
 				}
 				object_type& o = *po;
 #else
-				object_type& o = static_cast<object_type&>(stack::get<Ta&>(L, 1));
+				object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
 #endif // Safety
 				typedef typename wrap::returns_list returns_list;
 				typedef typename wrap::caller caller;

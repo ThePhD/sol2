@@ -317,7 +317,8 @@ namespace sol {
 
 		size_t size() const {
 			auto pp = stack::push_pop(*this);
-			return lua_rawlen(base_t::lua_state(), -1);
+			lua_len(base_t::lua_state(), -1);
+			return stack::pop<size_t>(base_t::lua_state());
 		}
 
 		bool empty() const {

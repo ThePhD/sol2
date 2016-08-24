@@ -7,7 +7,7 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
 .. toctree::
    :caption: Sol API
    :name: apitoc
-   :maxdepth: 1
+   :maxdepth: 2
 
    compatibility
    coroutine

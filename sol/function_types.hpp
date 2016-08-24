@@ -31,18 +31,6 @@
 #include "call.hpp"
 
 namespace sol {
-	template <typename Sig, typename... Ps>
-	struct function_arguments {
-		std::tuple<Ps...> params;
-		template <typename... Args>
-		function_arguments(Args&&... args) : params(std::forward<Args>(args)...) {}
-	};
-
-	template <typename Sig = function_sig<>, typename... Args>
-	function_arguments<Sig, Args...> as_function(Args&&... args) {
-		return function_arguments<Sig, Args...>(std::forward<Args>(args)...);
-	}
-
 	namespace stack {
 		template<typename... Sigs>
 		struct pusher<function_sig<Sigs...>> {
@@ -318,7 +306,7 @@ namespace sol {
 		template <typename T>
 		struct pusher<detail::tagged<T, destructor_wrapper<void>>> {
 			static int push(lua_State* L, detail::tagged<T, destructor_wrapper<void>>) {
-				lua_CFunction cf = call_detail::destruct<T>;
+				lua_CFunction cf = detail::user_alloc_destroy<T>;
 				return stack::push(L, cf);
 			}
 		};

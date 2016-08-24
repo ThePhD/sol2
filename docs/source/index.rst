@@ -22,7 +22,7 @@ get going:
 ----------
 
 .. toctree::
-	:maxdepth: 1
+	:maxdepth: 2
 	:name: mastertoc
 	
 	tutorial/all-the-things
