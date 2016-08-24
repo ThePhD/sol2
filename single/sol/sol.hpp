@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-23 03:42:51.761893 UTC
-// This header was generated with sol v2.11.7 (revision 4e967a2)
+// Generated 2016-08-24 12:40:13.351588 UTC
+// This header was generated with sol v2.11.7 (revision 54cffb7)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -454,6 +454,9 @@ namespace sol {
 		};
 
 		constexpr const auto enabler = enable_t::_;
+
+		template<bool value, typename T = void>
+		using disable_if_t = std::enable_if_t<!value, T>;
 
 		template<typename... Args>
 		using enable = std::enable_if_t<all<Args...>::value, enable_t>;
@@ -3065,6 +3068,34 @@ namespace sol {
 		return closure<Args...>(f, std::forward<Args>(args)...);
 	}
 
+	template <typename Sig, typename... Ps>
+	struct function_arguments {
+		std::tuple<Ps...> params;
+		template <typename... Args>
+		function_arguments(Args&&... args) : params(std::forward<Args>(args)...) {}
+	};
+
+	template <typename Sig = function_sig<>, typename... Args>
+	function_arguments<Sig, Args...> as_function(Args&&... args) {
+		return function_arguments<Sig, Args...>(std::forward<Args>(args)...);
+	}
+
+	template <typename T>
+	struct as_table_t {
+		T source;
+		template <typename... Args>
+		as_table_t(Args&&... args) : source(std::forward<Args>(args)...) {}
+
+		operator std::add_lvalue_reference_t<T> () {
+			return source;
+		}
+	};
+
+	template <typename T>
+	as_table_t<T> as_table(T&& container) {
+		return as_table_t<T>(std::forward<T>(container));
+	}
+
 	struct this_state {
 		lua_State* L;
 		operator lua_State* () const {
@@ -3407,17 +3438,6 @@ namespace sol {
 
 		template <>
 		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
-
-		template <typename T>
-		struct lua_type_of<T, std::enable_if_t<
-			meta::all<
-				meta::has_begin_end<T>, 
-				meta::neg<meta::any<
-					std::is_base_of<reference, T>, 
-					std::is_base_of<stack_reference, T>
-				>>
-			>::value
-		>> : std::integral_constant<type, type::table> {};
 
 		template <typename C, C v, template <typename...> class V, typename... Args>
 		struct accumulate : std::integral_constant<C, v> {};
@@ -3842,6 +3862,10 @@ namespace sol {
 namespace sol {
 	namespace detail {
 		struct as_reference_tag {};
+		template <typename T>
+		struct as_pointer_tag {};
+		template <typename T>
+		struct as_value_tag {};
 
 		using special_destruct_func = void(*)(void*);
 
@@ -3859,6 +3883,25 @@ namespace sol {
 			T** pointerpointer = static_cast<T**>(memory);
 			special_destruct_func& dx = *static_cast<special_destruct_func*>(static_cast<void*>(pointerpointer + 1));
 			(dx)(memory);
+			return 0;
+		}
+
+		template <typename T>
+		inline int user_alloc_destroy(lua_State* L) {
+			void* rawdata = lua_touserdata(L, upvalue_index(1));
+			T* data = static_cast<T*>(rawdata);
+			std::allocator<T> alloc;
+			alloc.destroy(data);
+			return 0;
+		}
+
+		template <typename T>
+		inline int usertype_alloc_destroy(lua_State* L) {
+			void* rawdata = lua_touserdata(L, 1);
+			T** pdata = static_cast<T**>(rawdata);
+			T* data = *pdata;
+			std::allocator<T> alloc{};
+			alloc.destroy(data);
 			return 0;
 		}
 
@@ -4053,15 +4096,6 @@ namespace sol {
 			template <typename T>
 			inline decltype(auto) tagged_get(types<optional<T>>, lua_State* L, int index, record& tracking) {
 				return stack_detail::unchecked_get<optional<T>>(L, index, tracking);
-			}
-
-			template <typename T>
-			inline int alloc_destroy(lua_State* L) {
-				void* rawdata = lua_touserdata(L, upvalue_index(1));
-				T* data = static_cast<T*>(rawdata);
-				std::allocator<T> alloc;
-				alloc.destroy(data);
-				return 0;
 			}
 
 			template <bool b>
@@ -4853,7 +4887,7 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct getter<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<meta::has_key_value_pair<T>>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
+		struct getter<as_table_t<T>, std::enable_if_t<!meta::has_key_value_pair<meta::unqualified_t<T>>::value>> {
 			static T get(lua_State* L, int index, record& tracking) {
 				typedef typename T::value_type V;
 				tracking.use(1);
@@ -4863,45 +4897,53 @@ namespace sol {
 				get_field<false, true>(L, static_cast<lua_Integer>(-1), index);
 				int isnum;
 				std::size_t sizehint = static_cast<std::size_t>(lua_tointegerx(L, -1, &isnum));
-				if (isnum == 0) {
+				if (isnum != 0) {
 					detail::reserve(arr, sizehint);
 				}
 				lua_pop(L, 1);
 #if SOL_LUA_VERSION >= 503
 				// This method is HIGHLY performant over regular table iteration thanks to the Lua API changes in 5.3
-				for (lua_Integer i = 0; ; ++i, lua_pop(L, 1)) {
-					type t = static_cast<type>(lua_geti(L, index, i));
-					if (t == type::nil) {
-						if (i == 0)
-							continue;
-						else
-							break;
+				for (lua_Integer i = 0; ; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
+					for (int vi = 0; vi < lua_size<V>::value; ++vi) {
+						type t = static_cast<type>(lua_geti(L, index, i + vi));
+						if (t == type::nil) {
+							if (i == 0) {
+								continue;
+							}
+							else {
+								lua_pop(L, (vi + 1));
+								return arr;
+							}
+						}
 					}
-					arr.push_back(stack::get<V>(L, -1));
+					arr.push_back(stack::get<V>(L, -lua_size<V>::value));
 				}
-				lua_pop(L, 1);
 #else
 				// Zzzz slower but necessary thanks to the lower version API and missing functions qq
-				for (lua_Integer i = 0; ; ++i, lua_pop(L, 1)) {
-					lua_pushinteger(L, i);
-					lua_gettable(L, index);
-					type t = type_of(L, -1);
-					if (t == type::nil) {
-						if (i == 0)
-							continue;
-						else
-							break;
+				for (lua_Integer i = 0; ; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
+					for (int vi = 0; vi < lua_size<V>::value; ++vi) {
+						lua_pushinteger(L, i);
+						lua_gettable(L, index);
+						type t = type_of(L, -1);
+						if (t == type::nil) {
+							if (i == 0) {
+								continue;
+							}
+							else {
+								lua_pop(L, (vi + 1));
+								return arr;
+							}
+						}
 					}
 					arr.push_back(stack::get<V>(L, -1));
 				}
-				lua_pop(L, 1);
 #endif
 				return arr;
 			}
 		};
 
 		template<typename T>
-		struct getter<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::has_key_value_pair<T>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
+		struct getter<as_table_t<T>, std::enable_if_t<meta::has_key_value_pair<meta::unqualified_t<T>>::value>> {
 			static T get(lua_State* L, int index, record& tracking) {
 				typedef typename T::value_type P;
 				typedef typename P::first_type K;
@@ -5494,10 +5536,10 @@ namespace sol {
 
 namespace sol {
 	namespace stack {
-		template<typename T, typename>
-		struct pusher {
-			template <typename K, typename... Args>
-			static int push_keyed(lua_State* L, K&& k, Args&&... args) {
+		template <typename T>
+		struct pusher<detail::as_value_tag<T>> {
+			template <typename F, typename... Args>
+			static int push_fx(lua_State* L, F&& f, Args&&... args) {
 				// Basically, we store all user-data like this:
 				// If it's a movable/copyable value (no std::ref(x)), then we store the pointer to the new
 				// data in the first sizeof(T*) bytes, and then however many bytes it takes to
@@ -5509,9 +5551,16 @@ namespace sol {
 				referencereference = allocationtarget;
 				std::allocator<T> alloc{};
 				alloc.construct(allocationtarget, std::forward<Args>(args)...);
-				luaL_newmetatable(L, &k[0]);
-				lua_setmetatable(L, -2);
+				f();
 				return 1;
+			}
+
+			template <typename K, typename... Args>
+			static int push_keyed(lua_State* L, K&& k, Args&&... args) {
+				return push_fx(L, [&L, &k]() {
+					luaL_newmetatable(L, &k[0]);
+					lua_setmetatable(L, -2);
+				}, std::forward<Args>(args)...);
 			}
 
 			template <typename... Args>
@@ -5520,17 +5569,24 @@ namespace sol {
 			}
 		};
 
-		template<typename T>
-		struct pusher<T*> {
-			template <typename K>
-			static int push_keyed(lua_State* L, K&& k, T* obj) {
+		template <typename T>
+		struct pusher<detail::as_pointer_tag<T>> {
+			template <typename F>
+			static int push_fx(lua_State* L, F&& f, T* obj) {
 				if (obj == nullptr)
 					return stack::push(L, nil);
 				T** pref = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
 				*pref = obj;
-				luaL_newmetatable(L, &k[0]);
-				lua_setmetatable(L, -2);
+				f();
 				return 1;
+			}
+
+			template <typename K>
+			static int push_keyed(lua_State* L, K&& k, T* obj) {
+				return push_fx(L, [&L, &k]() {
+					luaL_newmetatable(L, &k[0]);
+					lua_setmetatable(L, -2);
+				}, obj);
 			}
 
 			static int push(lua_State* L, T* obj) {
@@ -5543,6 +5599,22 @@ namespace sol {
 			template <typename T>
 			static int push(lua_State* L, T&& obj) {
 				return stack::push(L, detail::ptr(obj));
+			}
+		};
+
+		template<typename T, typename>
+		struct pusher {
+			template <typename... Args>
+			static int push(lua_State* L, Args&&... args) {
+				return pusher<detail::as_value_tag<T>>{}.push(L, std::forward<Args>(args)...);
+			}
+		};
+		
+		template<typename T>
+		struct pusher<T*, meta::disable_if_t<meta::all<meta::has_begin_end<meta::unqualified_t<T>>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
+			template <typename... Args>
+			static int push(lua_State* L, Args&&... args) {
+				return pusher<detail::as_pointer_tag<T>>{}.push(L, std::forward<Args>(args)...);
 			}
 		};
 
@@ -5621,13 +5693,37 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<meta::has_key_value_pair<T>>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
-			static int push(lua_State* L, const T& cont) {
+		struct pusher<as_table_t<T>, std::enable_if_t<!meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>>::value>> {
+			static int push(lua_State* L, const as_table_t<T>& tablecont) {
+				auto& cont = detail::deref(detail::unwrap(tablecont.source));
 				lua_createtable(L, static_cast<int>(cont.size()), 0);
 				int tableindex = lua_gettop(L);
-				unsigned index = 1;
-				for (auto&& i : cont) {
-					set_field(L, index++, i, tableindex);
+				std::size_t index = 1;
+				for (const auto& i : cont) {
+#if SOL_LUA_VERSION >= 503
+					int p = stack::push(L, i);
+					for (int pi = 0; pi < p; ++pi) {
+						lua_seti(L, tableindex, static_cast<lua_Integer>(index++));
+					}
+#else
+					lua_pushinteger(L, static_cast<lua_Integer>(index));
+					int p = stack::push(L, i);
+					if (p == 1) {
+						++index;
+						lua_settable(L, tableindex);
+					}
+					else {
+						int firstindex = tableindex + 1 + 1;
+						for (int pi = 0; pi < p; ++pi) {
+							stack::push(L, index);
+							lua_pushvalue(L, firstindex);
+							lua_settable(L, tableindex);
+							++index;
+							++firstindex;
+						}
+						lua_pop(L, 1 + p);
+					}
+#endif
 				}
 				set_field(L, -1, cont.size());
 				return 1;
@@ -5635,11 +5731,12 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::has_key_value_pair<T>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
-			static int push(lua_State* L, const T& cont) {
+		struct pusher<as_table_t<T>, std::enable_if_t<meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>>::value>> {
+			static int push(lua_State* L, const as_table_t<T>& tablecont) {
+				auto& cont = detail::deref(detail::unwrap(tablecont.source));
 				lua_createtable(L, static_cast<int>(cont.size()), 0);
 				int tableindex = lua_gettop(L);
-				for (auto&& pair : cont) {
+				for (const auto& pair : cont) {
 					set_field(L, pair.first, pair.second, tableindex);
 				}
 				return 1;
@@ -5753,7 +5850,7 @@ namespace sol {
 				std::allocator<T> alloc;
 				alloc.construct(data, std::forward<Args>(args)...);
 				if (with_meta) {
-					lua_CFunction cdel = stack_detail::alloc_destroy<T>;
+					lua_CFunction cdel = detail::user_alloc_destroy<T>;
 					// Make sure we have a plain GC set for this data
 					if (luaL_newmetatable(L, name) != 0) {
 						lua_pushlightuserdata(L, rawdata);
@@ -7064,14 +7161,6 @@ namespace sol {
 			}
 		};
 
-		template <typename T>
-		inline int destruct(lua_State* L) {
-			T* obj = stack::get<non_null<T*>>(L, 1);
-			std::allocator<T> alloc{};
-			alloc.destroy(obj);
-			return 0;
-		}
-
 		namespace overload_detail {
 			template <std::size_t... M, typename Match, typename... Args>
 			inline int overload_match_arity(types<>, std::index_sequence<>, std::index_sequence<M...>, Match&&, lua_State* L, int, int, Args&&...) {
@@ -7254,7 +7343,7 @@ namespace sol {
 				}
 				return call(L, std::forward<Fx>(f), *o);
 #else
-				object_type& o = static_cast<object_type&>(stack::get<Ta&>(L, 1));
+				object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
 				return call(L, std::forward<Fx>(f), o);
 #endif // Safety
 			}
@@ -7286,7 +7375,7 @@ namespace sol {
 				}
 				return call_assign(std::true_type(), L, f, *o);
 #else
-				object_type& o = static_cast<object_type&>(stack::get<Ta&>(L, 1));
+				object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
 				return call_assign(std::true_type(), L, f, o);
 #endif // Safety
 			}
@@ -7344,7 +7433,7 @@ namespace sol {
 				}
 				return call(L, f, *o);
 #else
-				object_type& o = static_cast<object_type&>(stack::get<Ta&>(L, 1));
+				object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
 				return call(L, f, o);
 #endif // Safety
 			}
@@ -7425,7 +7514,7 @@ namespace sol {
 			typedef destructor_wrapper<Fx> F;
 
 			static int call(lua_State* L, const F&) {
-				return destruct<T>(L);
+				return detail::usertype_alloc_destroy<T>(L);
 			}
 		};
 
@@ -7496,7 +7585,7 @@ namespace sol {
 				}
 				object_type& o = *po;
 #else
-				object_type& o = static_cast<object_type&>(stack::get<Ta&>(L, 1));
+				object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
 #endif // Safety
 				typedef typename wrap::returns_list returns_list;
 				typedef typename wrap::caller caller;
@@ -8009,18 +8098,6 @@ namespace sol {
 // end of sol/resolve.hpp
 
 namespace sol {
-	template <typename Sig, typename... Ps>
-	struct function_arguments {
-		std::tuple<Ps...> params;
-		template <typename... Args>
-		function_arguments(Args&&... args) : params(std::forward<Args>(args)...) {}
-	};
-
-	template <typename Sig = function_sig<>, typename... Args>
-	function_arguments<Sig, Args...> as_function(Args&&... args) {
-		return function_arguments<Sig, Args...>(std::forward<Args>(args)...);
-	}
-
 	namespace stack {
 		template<typename... Sigs>
 		struct pusher<function_sig<Sigs...>> {
@@ -8296,7 +8373,7 @@ namespace sol {
 		template <typename T>
 		struct pusher<detail::tagged<T, destructor_wrapper<void>>> {
 			static int push(lua_State* L, detail::tagged<T, destructor_wrapper<void>>) {
-				lua_CFunction cf = call_detail::destruct<T>;
+				lua_CFunction cf = detail::user_alloc_destroy<T>;
 				return stack::push(L, cf);
 			}
 		};
@@ -9884,6 +9961,375 @@ namespace sol {
 
 // end of sol/simple_usertype_metatable.hpp
 
+// beginning of sol/container_usertype_metatable.hpp
+
+namespace sol {
+	
+	namespace detail {
+
+		template <typename T>
+		struct has_find {
+		private:
+			typedef std::array<char, 1> one;
+			typedef std::array<char, 2> two;
+
+			template <typename C> static one test(decltype(&C::find));
+			template <typename C> static two test(...);
+
+		public:
+			static const bool value = sizeof(test<T>(0)) == sizeof(char);
+		};
+
+		template <typename T>
+		T& get_first(const T& t) {
+			return std::forward<T>(t);
+		}
+
+		template <typename A, typename B>
+		decltype(auto) get_first(const std::pair<A, B>& t) {
+			return t.first;
+		}
+
+		template <typename C, typename I, meta::enable<has_find<meta::unqualified_t<C>>> = meta::enabler>
+		auto find(C& c, I&& i) {
+			return c.find(std::forward<I>(i));
+		}
+
+		template <typename C, typename I, meta::disable<has_find<meta::unqualified_t<C>>> = meta::enabler>
+		auto find(C& c, I&& i) {
+			using std::begin;
+			using std::end;
+			return std::find_if(begin(c), end(c), [&i](auto&& x) {
+				return i == get_first(x);
+			});
+		}
+
+	}
+
+	template <typename T, typename C = void>
+	struct container_usertype_metatable {
+		typedef meta::unqualified_t<T> U;
+		typedef std::size_t K;
+		typedef typename U::value_type V;
+		typedef typename U::iterator I;
+		struct iter {
+			U& source;
+			I it;
+
+			iter(U& source, I it) : source(source), it(std::move(it)) {}
+		};
+
+		static auto& get_src(lua_State* L) {
+#ifdef SOL_SAFE_USERTYPE
+			auto p = stack::get<T*>(L, 1);
+			if (p == nullptr) {
+				luaL_error(L, "sol: 'self' argument is nil (pass 'self' as first argument or call on proper type)");
+			}
+			return *p;
+#else
+			return stack::get<T>(L, 1);
+#endif
+		}
+
+		static int real_index_call(lua_State* L) {
+			auto& src = get_src(L);
+#ifdef SOL_SAFE_USERTYPE
+			auto maybek = stack::check_get<K>(L, 2);
+			if (maybek) {
+				using std::begin;
+				auto it = begin(src);
+				K k = *maybek;
+				if (k <= src.size() && k > 0) {
+					--k;
+					std::advance(it, k);
+					return stack::push(L, *it);
+				}
+			}
+			return stack::push(L, nil);
+#else
+			using std::begin;
+			auto it = begin(src);
+			K k = stack::get<K>(L, 2);
+			--k;
+			std::advance(it, k);
+			return stack::push(L, *it);
+#endif // Safety
+		}
+
+		static int real_new_index_call_const(std::false_type, lua_State* L) {
+			luaL_error(L, "sol: cannot write to a const value type");
+			return 0;
+		}
+
+		static int real_new_index_call_const(std::true_type, lua_State* L) {
+			auto& src = get_src(L);
+#ifdef SOL_SAFE_USERTYPE
+			auto maybek = stack::check_get<K>(L, 2);
+			if (maybek) {
+				K k = *maybek;
+				if (k <= src.size() && k > 0) {
+					--k;
+					using std::begin;
+					auto it = begin(src);
+					std::advance(it, k);
+					*it = stack::get<V>(L, 3);
+				}
+			}
+#else
+			using std::begin;
+			auto it = begin(src);
+			K k = stack::get<K>(L, 2);
+			--k;
+			std::advance(it, k);
+			*it = stack::get<V>(L, 3);
+#endif
+			return 0;
+		}
+
+		static int real_new_index_call(lua_State* L) {
+			return real_new_index_call_const(meta::neg<std::is_const<V>>(), L);
+		}
+
+		static int real_pairs_next_call(lua_State* L) {
+			using std::end;
+			iter& i = stack::get<user<iter>>(L, 1);
+			auto& source = i.source;
+			auto& it = i.it;
+			K k = stack::get<K>(L, 2);
+			if (it == end(source)) {
+				return 0;
+			}
+			int p = stack::push(L, k + 1);
+			p += stack::push(L, *it);
+			std::advance(it, 1);
+			return p;
+		}
+
+		static int real_pairs_call(lua_State* L) {
+			auto& src = get_src(L);
+			using std::begin;
+			stack::push(L, pairs_next_call);
+			stack::push<user<iter>>(L, src, begin(src));
+			stack::push(L, 0);
+			return 3;
+		}
+
+		static int real_length_call(lua_State*L) {
+			auto& src = get_src(L);
+			return stack::push(L, src.size());
+		}
+
+#if 0
+		static int real_push_back_call(lua_State*L) {
+			auto& src = get_src(L);
+			src.push_back(stack::get<V>(L, 2));
+			return 0;
+		}
+
+		static int real_insert_call(lua_State*L) {
+			using std::begin;
+			auto& src = get_src(L);
+			src.insert(std::next(begin(src), stack::get<K>(L, 2)), stack::get<V>(L, 3));
+			return 0;
+		}
+
+		static int push_back_call(lua_State*L) {
+			return detail::static_trampoline<(&real_length_call)>(L);
+		}
+
+		static int insert_call(lua_State*L) {
+			return detail::static_trampoline<(&real_insert_call)>(L);
+		}
+#endif // Sometime later, in a distant universe...
+
+		static int length_call(lua_State*L) {
+			return detail::static_trampoline<(&real_length_call)>(L);
+		}
+
+		static int pairs_next_call(lua_State*L) {
+			return detail::static_trampoline<(&real_pairs_next_call)>(L);
+		}
+
+		static int pairs_call(lua_State*L) {
+			return detail::static_trampoline<(&real_pairs_call)>(L);
+		}
+
+		static int index_call(lua_State*L) {
+			return detail::static_trampoline<(&real_index_call)>(L);
+		}
+
+		static int new_index_call(lua_State*L) {
+			return detail::static_trampoline<(&real_new_index_call)>(L);
+		}
+	};
+
+	template <typename T>
+	struct container_usertype_metatable<T, std::enable_if_t<meta::has_key_value_pair<T>::value>> {
+		typedef meta::unqualified_t<T> U;
+		typedef typename U::value_type KV;
+		typedef typename KV::first_type K;
+		typedef typename KV::second_type V;
+		typedef typename U::iterator I;
+		struct iter {
+			U& source;
+			I it;
+
+			iter(U& source, I it) : source(source), it(std::move(it)) {}
+		};
+
+		static auto& get_src(lua_State* L) {
+#ifdef SOL_SAFE_USERTYPE
+			auto p = stack::get<T*>(L, 1);
+			if (p == nullptr) {
+				luaL_error(L, "sol: 'self' argument is nil (pass 'self' as first argument or call on proper type)");
+			}
+			return *p;
+#else
+			return stack::get<T>(L, 1);
+#endif
+		}
+
+		static int real_index_call(lua_State* L) {
+			auto& src = get_src(L);
+			auto k = stack::check_get<K>(L, 2);
+			if (k) {
+				using std::end;
+				auto it = detail::find(src, *k);
+				if (it != end(src)) {
+					auto& v = *it;
+					return stack::push(L, v.second);
+				}
+			}
+			return stack::push(L, nil);
+		}
+
+		static int real_new_index_call_const(std::false_type, lua_State* L) {
+			luaL_error(L, "sol: cannot write to a const value type");
+			return 0;
+		}
+
+		static int real_new_index_call_const(std::true_type, lua_State* L) {
+			auto& src = get_src(L);
+			auto k = stack::check_get<K>(L, 2);
+			if (k) {
+				using std::end;
+				auto it = detail::find(src, *k);
+				if (it != end(src)) {
+					auto& v = *it;
+					v.second = stack::get<V>(L, 3);
+				}
+				else {
+					src.insert(it, { std::move(*k), stack::get<V>(L, 3) });
+				}
+			}
+			return 0;
+		}
+
+		static int real_new_index_call(lua_State* L) {
+			return real_new_index_call_const(meta::neg<std::is_const<V>>(), L);
+		}
+
+		static int real_pairs_next_call(lua_State* L) {
+			using std::end;
+			iter& i = stack::get<user<iter>>(L, 1);
+			auto& source = i.source;
+			auto& it = i.it;
+			std::advance(it, 1);
+			if (it == end(source)) {
+				return 0;
+			}
+			return stack::multi_push_reference(L, it->first, it->second);
+		}
+
+		static int real_pairs_call(lua_State* L) {
+			auto& src = get_src(L);
+			using std::begin;
+			stack::push(L, pairs_next_call);
+			stack::push<user<iter>>(L, src, begin(src));
+			stack::push(L, 1);
+			return 3;
+		}
+
+		static int real_length_call(lua_State*L) {
+			auto& src = get_src(L);
+			return stack::push(L, src.size());
+		}
+
+		static int length_call(lua_State*L) {
+			return detail::static_trampoline<(&real_length_call)>(L);
+		}
+
+		static int pairs_next_call(lua_State*L) {
+			return detail::static_trampoline<(&real_pairs_next_call)>(L);
+		}
+
+		static int pairs_call(lua_State*L) {
+			return detail::static_trampoline<(&real_pairs_call)>(L);
+		}
+
+		static int index_call(lua_State*L) {
+			return detail::static_trampoline<(&real_index_call)>(L);
+		}
+
+		static int new_index_call(lua_State*L) {
+			return detail::static_trampoline<(&real_new_index_call)>(L);
+		}
+	};
+
+	namespace stack {
+
+		template<typename T>
+		struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
+			typedef container_usertype_metatable<T> cumt;
+			template <typename C>
+			static int push(lua_State* L, C&& cont) {
+				auto fx = [&L]() {
+					const char* metakey = &usertype_traits<T>::metatable[0];
+					if (luaL_newmetatable(L, metakey) == 1) {
+						luaL_Reg reg[] = {
+							{ "__index", &cumt::index_call },
+							{ "__newindex", &cumt::new_index_call },
+							{ "__pairs", &cumt::pairs_call },
+							{ "__len", &cumt::length_call },
+							{ "__gc", &detail::usertype_alloc_destroy<T> },
+							{ nullptr, nullptr }
+						};
+						luaL_setfuncs(L, reg, 0);
+					}
+					lua_setmetatable(L, -2);
+				};
+				return pusher<detail::as_value_tag<T>>{}.push_fx(L, fx, std::forward<C>(cont));
+			}
+		};
+
+		template<typename T>
+		struct pusher<T*, std::enable_if_t<meta::all<meta::has_begin_end<meta::unqualified_t<T>>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
+			typedef container_usertype_metatable<T> cumt;
+			template <typename C>
+			static int push(lua_State* L, C&& cont) {
+				auto fx = [&L]() {
+					const char* metakey = &usertype_traits<meta::unqualified_t<T>*>::metatable[0];
+					if (luaL_newmetatable(L, metakey) == 1) {
+						luaL_Reg reg[] = {
+							{ "__index", &cumt::index_call },
+							{ "__newindex", &cumt::new_index_call },
+							{ "__pairs", &cumt::pairs_call },
+							{ "__len", &cumt::length_call },
+							{ nullptr, nullptr }
+						};
+						luaL_setfuncs(L, reg, 0);
+					}
+					lua_setmetatable(L, -2);
+				};
+				return pusher<detail::as_pointer_tag<meta::unqualified_t<T>>>{}.push_fx(L, fx, std::forward<C>(cont));
+			}
+		};
+	} // stack
+
+} // sol
+
+// end of sol/container_usertype_metatable.hpp
+
 namespace sol {
 
 	template<typename T>
@@ -10316,7 +10762,8 @@ namespace sol {
 
 		size_t size() const {
 			auto pp = stack::push_pop(*this);
-			return lua_rawlen(base_t::lua_state(), -1);
+			lua_len(base_t::lua_state(), -1);
+			return stack::pop<size_t>(base_t::lua_state());
 		}
 
 		bool empty() const {
@@ -10771,17 +11218,17 @@ namespace sol {
 
 		load_result load(const std::string& code) {
 			load_status x = static_cast<load_status>(luaL_loadstring(L, code.c_str()));
-			return load_result(L, -1, 1, 1, x);
+			return load_result(L, lua_absindex(L, -1), 1, 1, x);
 		}
 
 		load_result load_file(const std::string& filename) {
 			load_status x = static_cast<load_status>(luaL_loadfile(L, filename.c_str()));
-			return load_result(L, -1, 1, 1, x);
+			return load_result(L, lua_absindex(L, -1), 1, 1, x);
 		}
 
 		load_result load_buffer(const char *buff, size_t size, const char *name, const char* mode = nullptr) {
 			load_status x = static_cast<load_status>(luaL_loadbufferx(L, buff, size, name, mode));
-			return load_result(L, -1, 1, 1, x);
+			return load_result(L, lua_absindex(L, -1), 1, 1, x);
 		}
 
 		iterator begin() const {
