@@ -238,17 +238,17 @@ namespace sol {
 
 		load_result load(const std::string& code) {
 			load_status x = static_cast<load_status>(luaL_loadstring(L, code.c_str()));
-			return load_result(L, -1, 1, 1, x);
+			return load_result(L, lua_absindex(L, -1), 1, 1, x);
 		}
 
 		load_result load_file(const std::string& filename) {
 			load_status x = static_cast<load_status>(luaL_loadfile(L, filename.c_str()));
-			return load_result(L, -1, 1, 1, x);
+			return load_result(L, lua_absindex(L, -1), 1, 1, x);
 		}
 
 		load_result load_buffer(const char *buff, size_t size, const char *name, const char* mode = nullptr) {
 			load_status x = static_cast<load_status>(luaL_loadbufferx(L, buff, size, name, mode));
-			return load_result(L, -1, 1, 1, x);
+			return load_result(L, lua_absindex(L, -1), 1, 1, x);
 		}
 
 		iterator begin() const {

@@ -295,7 +295,6 @@ namespace sol {
 			iter& i = stack::get<user<iter>>(L, 1);
 			auto& source = i.source;
 			auto& it = i.it;
-			K k = stack::get<K>(L, 2);
 			std::advance(it, 1);
 			if (it == end(source)) {
 				return 0;
