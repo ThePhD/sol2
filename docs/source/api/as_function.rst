@@ -1,7 +1,7 @@
 as_function
 ===========
-make sure a parameter is pushed as a function
----------------------------------------------
+make sure an object is pushed as a function
+-------------------------------------------
 
 .. code-block:: cpp
 	

@@ -31,6 +31,7 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    optional
    state
    table
+   as_table
    metatable_key
    this_state
    thread
