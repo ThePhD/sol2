@@ -24,6 +24,7 @@ This function serves the purpose of ensuring that a callable struct (like a lamb
 	lua.set( "not_func", callable() );
 	// Binds struct as function
 	lua.set( "func", sol::as_function( callable() ) );
-	// equivalent: lua.set_function( "func", sol::as_function( callable() ) );
+	// equivalent: lua.set_function( "func", callable() );
+	// equivalent: lua["func"] = callable();
 
 Note that if you actually want a userdata, but you want it to be callable, you simply need to create a :ref:`sol::table::new_usertype<new-usertype>` and then bind the ``"__call"`` metamethod (or just use ``sol::meta_function::call`` :ref:`enumeration<meta_function_enum>`).

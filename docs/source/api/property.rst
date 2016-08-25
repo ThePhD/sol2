@@ -43,8 +43,13 @@ These set of functions create a type which allows a setter and getter pair (or a
 	:caption: game.cpp
 	:linenos:
 
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
 	lua.set("theplayer", Player());
 
+	// Yes, you can register after you set a value and it will
+	// connect up the usertype automatically
 	lua.new_usertype<Player>( "Player",
 		"hp", sol::property(&Player::get_hp, &Player::set_hp),
 		"maxHp", sol::property(&Player::get_max_hp, &Player::set_max_hp)
@@ -54,5 +59,6 @@ These set of functions create a type which allows a setter and getter pair (or a
 .. code-block:: lua
 	:caption: game-snippet.lua
 
+	-- variable syntax, calls functions
 	theplayer.hp = 20
 	print(theplayer.hp)

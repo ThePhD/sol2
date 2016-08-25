@@ -256,21 +256,16 @@ For the rest of us safe individuals out there: You must specify the ``sol::base_
 		virtual int call() override { return 20; } 
 	};
 
-.. warning::
-
-	Sol currently attempts to link base class methods and variables with their derived classes with an undocumented, unsupported feature, provided you specify ``sol::base_classes<...>``. Unfortunately, this can come at the cost of prformance, depending on how "far" the base is from the derived class in the bases lookup list. If you do not want to suffer the performance degradation while we iron out the kinks in the implementation (and want it to stay performant forever), please specify all the base methods on the derived class in the method listing you write. In the future, we hope that with reflection we will not have to worry about this.
-
 Then, to register the base classes explicitly:
 
 .. code-block:: cpp
 	:linenos:
-	:emphasize-lines: 5,6
+	:emphasize-lines: 5
 
 	sol::state lua;
 
 	lua.new_usertype<B>( "B",
 		"call", &B::call,
-		// List bases explicitly if you disable exceptions
 		sol::base_classes, sol::bases<A>()
 	);
 
@@ -281,6 +276,11 @@ Then, to register the base classes explicitly:
 .. note::
 	
 	Sol does not support down-casting from a base class to a derived class at runtime.
+
+.. warning::
+
+	Sol currently attempts to link base class methods and variables with their derived classes with an undocumented, unsupported feature, provided you specify ``sol::base_classes<...>``. Unfortunately, this can come at the cost of prformance, depending on how "far" the base is from the derived class in the bases lookup list. If you do not want to suffer the performance degradation while we iron out the kinks in the implementation (and want it to stay performant forever), please specify all the base methods on the derived class in the method listing you write. In the future, we hope that with reflection we will not have to worry about this.
+
 
 inheritance + overloading
 -------------------------
@@ -303,7 +303,7 @@ traits
 	};
 
 
-This trait is used to provide names for the various metatables and global tables used to perform cleanup and lookup. They are automatically generated at runtime. In the case of RTTI being present, Sol will attempt to demangle the name from ``std::type_info`` to produce a valid name. If RTTI is disabled, Sol attempts to parse the output of ``__PRETTY_FUCNTION__`` (``g++``/``clang++``) or ``_FUNCDSIG`` (``vc++``) to get the proper type name. If you have a special need you can override the names for your specific type.
+This trait is used to provide names for the various metatables and global tables used to perform cleanup and lookup. They are automagically generated at runtime. Sol attempts to parse the output of ``__PRETTY_FUCNTION__`` (``g++``/``clang++``) or ``_FUNCDSIG`` (``vc++``) to get the proper type name. If you have a special need you can override the names for your specific type. If you notice a bug in a class name when you don't manually specify it during setting a usertype, feel free to open an issue request or send an e-mail!
 
 
 compilation speed

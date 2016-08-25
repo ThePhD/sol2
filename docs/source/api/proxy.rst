@@ -18,24 +18,9 @@ proxy, (protected\_)function_result - proxy_base derivatives
 	struct protected_function_result: proxy_base<...>;
 
 
-These classes provide implicit ``operator=`` (``set``) and ``operator T`` (``get``) support for items retrieved from the underlying Lua implementation in Sol, specifically :doc:`sol::table<table>` and the results of function calls on :doc:`sol::function<function>` and :doc:`sol::protected_function<protected_function>`.
+These classes provide implicit assignment operator ``operator=`` (for ``set``) and an implicit conversion operator ``operator T`` (for ``get``) to support items retrieved from the underlying Lua implementation, specifically :doc:`sol::table<table>` and the results of function calls on :doc:`sol::function<function>` and :doc:`sol::protected_function<protected_function>`.
 
-
-.. _function-result:
-
-function_result
----------------
-
-``function_result`` is a temporary-only, intermediate-only implicit conversion worker for when :doc:`function<function>` is called. It is *NOT* meant to be stored or captured with ``auto``. It provides fast access to the desired underlying value. It does not implement ``set`` / ``set_function`` / templated ``operator=``, as show below.
-
-
-.. _protected-function-result:
-
-protected_function_result
--------------------------
-
-``protected_function_result`` is a nicer version of ``function_result`` that can be used to detect errors. Its gives safe access to the desired underlying value. It does not implement ``set`` / ``set_function`` / templated ``operator=``, as shown below.
-
+.. _proxy:
 
 proxy
 -----
@@ -174,6 +159,22 @@ stack_proxy
 
 ``sol::stack_proxy`` is what gets returned by :doc:`sol::variadic_args<variadic_args>` and other parts of the framework. It is similar to proxy, but is meant to alias a stack index and not a named function.
 
+.. _function-result:
+
+function_result
+---------------
+
+``function_result`` is a temporary-only, intermediate-only implicit conversion worker for when :doc:`function<function>` is called. It is *NOT* meant to be stored or captured with ``auto``. It provides fast access to the desired underlying value. It does not implement ``set`` / ``set_function`` / templated ``operator=``, as shown below for :ref:`proxy<proxy>`.
+
+
+.. _protected-function-result:
+
+protected_function_result
+-------------------------
+
+``protected_function_result`` is a nicer version of ``function_result`` that can be used to detect errors. Its gives safe access to the desired underlying value. It does not implement ``set`` / ``set_function`` / templated ``operator=``, as shown below for :ref:`proxy<proxy>`.
+
+
 .. _note 1:
 
 on function objects and proxies
@@ -197,4 +198,4 @@ Consider the following:
 	lua["object"] = doge{}; // bind constructed doge to "object"
 	// but it binds as a function
 
-When you use the ``lua["object"] = doge{};`` from above, keep in mind that Sol detects if this is a function *callable with any kind of arguments*. If ``doge`` has overriden ``return_type operator()( argument_types... )`` on itself, it may result in satisfying the ``requires`` constraint from above. This means that if you have a user-defined type you want to bind as a :doc:`userdata with usertype semantics<usertype>` with this syntax, it might get bound as a function and not as a user-defined type. use ``lua["object"].set(doge)`` directly to avoid this, or ``lua["object"].set_function(doge{})`` to perform this explicitly.
+When you use the ``lua["object"] = doge{};`` from above, keep in mind that Sol detects if this is a function *callable with any kind of arguments*. Since ``doge`` has overriden ``return_type operator()( argument_types... )`` on itself, it results in satisfying the ``requires`` constraint from above. This means that if you have a user-defined type you want to bind as a :doc:`userdata with usertype semantics<usertype>` with this syntax, it might get bound as a function and not as a user-defined type (d'oh!). use ``lua["object"].set(doge)`` directly to avoid this, or ``lua["object"].set_function(doge{})`` to perform this explicitly.

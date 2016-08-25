@@ -63,7 +63,7 @@ This enumeration contains the status of a thread. The ``thread_status::dead`` st
 	    file    = LUA_ERRFILE,
 	};
 
-This enumeration contains the status of a load operation from :ref:`state::load(_file)<state-load-code>`. The ``thread_status::dead`` state is generated when the thread has nothing on its stack and it is not running anything.
+This enumeration contains the status of a load operation from :ref:`state::load(_file)<state-load-code>`.
 
 .. code-block:: cpp
 	:caption: type enumeration
@@ -94,7 +94,7 @@ type traits
 	:caption: lua_type_of trait
 	:name: lua-type-of
 
-	template <typename T, typename = void>
+	template <typename T>
 	struct lua_type_of;
 
 This type trait maps a C++ type to a :ref:`type enumeration<type-enum>` value. The default value is ``type::userdata``.
@@ -110,12 +110,11 @@ This type trait maps a C++ type to a :ref:`type enumeration<type-enum>` value. T
 	struct is_proxy_primitive;
 
 
-This trait is used by :doc:`proxy<proxy>` to know which types should be returned as references to internal Lua memory (e.g., ``userdata`` types) and which ones to return as values (strings, numbers, :doc:`references<reference>`). ``std::reference_wrapper``, ``std::tuple<...>`` are returned as values, but their contents are/can be references. The default value is false.
-
-.. nil:
+This trait is used by :doc:`proxy<proxy>` to know which types should be returned as references to internal Lua memory (e.g., ``userdata`` types) and which ones to return as values (strings, numbers, :doc:`references<reference>`). ``std::reference_wrapper``, ``std::tuple<...>`` are returned as values, but their contents can be references. The default value is false.
 
 special types
 -------------
+
 .. code-block:: cpp
 	:caption: nil
 	:name: nil
@@ -159,7 +158,7 @@ functions
 	type type_of(lua_State* L, int index);
 
 
-These functions get the type of a C++ type ``T`` or the type at the specified index on the Lua stack.
+These functions get the type of a C++ type ``T``; or the type at the specified index on the Lua stack.
 
 .. code-block:: cpp
 	:caption: type checking convenience functions
@@ -175,6 +174,8 @@ These functions get the type of a C++ type ``T`` or the type at the specified in
 	void type_assert(lua_State* L, int index, type expected, type actual);
 
 	void type_assert(lua_State* L, int index, type expected);
+
+The purpose of these functions is to assert / throw / crash / error (or do nothing, as is the case with ``no_panic``). They're mostly used internally in the framework, but they're provided here if you should need them.
 
 .. code-block:: cpp
 	:caption: type name retrieval
@@ -197,7 +198,7 @@ structs
 	};
 
 	struct up_value_index {
-    	int index;
+    		int index;
 	};
 
 
