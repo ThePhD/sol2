@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-24 16:24:16.873107 UTC
-// This header was generated with sol v2.12.0 (revision 16cd699)
+// Generated 2016-08-25 16:51:18.743349 UTC
+// This header was generated with sol v2.12.1 (revision 354c267)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -590,37 +590,54 @@ namespace sol {
 				static const bool value = sizeof(test<Derived>(0)) == sizeof(yes);
 			};
 
+			struct has_begin_end_impl {
+				template<typename T, typename U = unqualified_t<T>,
+					typename B = decltype(std::declval<U&>().begin()),
+					typename E = decltype(std::declval<U&>().end())>
+					static std::true_type test(int);
+
+				template<typename...>
+				static std::false_type test(...);
+			};
+
+			struct has_key_value_pair_impl {
+				template<typename T, typename U = unqualified_t<T>,
+					typename V = typename U::value_type,
+					typename F = decltype(std::declval<V&>().first),
+					typename S = decltype(std::declval<V&>().second)>
+					static std::true_type test(int);
+
+				template<typename...>
+				static std::false_type test(...);
+			};
+
+			template <typename T, typename U = T, typename = decltype(std::declval<T&>() < std::declval<U&>())>
+			std::true_type supports_op_less_test(const T&);
+			std::false_type supports_op_less_test(...);
+			template <typename T, typename U = T, typename = decltype(std::declval<T&>() == std::declval<U&>())>
+			std::true_type supports_op_equal_test(const T&);
+			std::false_type supports_op_equal_test(...);
+			template <typename T, typename U = T, typename = decltype(std::declval<T&>() <= std::declval<U&>())>
+			std::true_type supports_op_less_equal_test(const T&);
+			std::false_type supports_op_less_equal_test(...);
+
 		} // meta_detail
+
+		template <typename T>
+		using supports_op_less = decltype(meta_detail::supports_op_less_test(std::declval<T&>()));
+		template <typename T>
+		using supports_op_equal = decltype(meta_detail::supports_op_equal_test(std::declval<T&>()));
+		template <typename T>
+		using supports_op_less_equal = decltype(meta_detail::supports_op_less_equal_test(std::declval<T&>()));
 
 		template<typename T>
 		struct is_callable : boolean<meta_detail::is_callable<T>::value> {};
 
-		struct has_begin_end_impl {
-			template<typename T, typename U = unqualified_t<T>,
-				typename B = decltype(std::declval<U&>().begin()),
-				typename E = decltype(std::declval<U&>().end())>
-				static std::true_type test(int);
-
-			template<typename...>
-			static std::false_type test(...);
-		};
+		template<typename T>
+		struct has_begin_end : decltype(meta_detail::has_begin_end_impl::test<T>(0)) {};
 
 		template<typename T>
-		struct has_begin_end : decltype(has_begin_end_impl::test<T>(0)) {};
-
-		struct has_key_value_pair_impl {
-			template<typename T, typename U = unqualified_t<T>,
-				typename V = typename U::value_type,
-				typename F = decltype(std::declval<V&>().first),
-				typename S = decltype(std::declval<V&>().second)>
-				static std::true_type test(int);
-
-			template<typename...>
-			static std::false_type test(...);
-		};
-
-		template<typename T>
-		struct has_key_value_pair : decltype(has_key_value_pair_impl::test<T>(0)) {};
+		struct has_key_value_pair : decltype(meta_detail::has_key_value_pair_impl::test<T>(0)) {};
 
 		template <typename T>
 		using is_string_constructible = any<std::is_same<unqualified_t<T>, const char*>, std::is_same<unqualified_t<T>, char>, std::is_same<unqualified_t<T>, std::string>, std::is_same<unqualified_t<T>, std::initializer_list<char>>>;
@@ -9353,8 +9370,14 @@ namespace sol {
 // end of sol/deprecate.hpp
 
 namespace sol {
-
 	namespace usertype_detail {
+		struct no_comp {
+			template <typename A, typename B>
+			bool operator()(A&&, B&&) {
+				return false;
+			}
+		};
+
 		inline bool is_indexer(string_detail::string_shim s) {
 			return s == name_of(meta_function::index) || s == name_of(meta_function::new_index);
 		}
@@ -9408,6 +9431,37 @@ namespace sol {
 				return luaL_error(L, "sol: attempt to index (set) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.data());
 		}
 
+		template <typename T, typename Op>
+		inline int operator_wrap(lua_State* L) {
+			auto maybel = stack::check_get<T>(L, 1);
+			if (maybel) {
+				auto mayber = stack::check_get<T>(L, 2);
+				if (mayber) {
+					auto& l = *maybel;
+					auto& r = *mayber;
+					if (std::is_same<no_comp, Op>::value) {
+						return stack::push(L, detail::ptr(l) == detail::ptr(r));
+					}
+					else {
+						Op op;
+						return stack::push(L, (detail::ptr(l) == detail::ptr(r)) || op(detail::deref(l), detail::deref(r)));
+					}
+				}
+			}
+			return stack::push(L, false);
+		}
+
+		template <typename T, typename Op, typename Supports, typename Regs, meta::enable<Supports> = meta::enabler>
+		inline void make_reg_op(Regs& l, int& index, const char* name) {
+			l[index] = { name, &operator_wrap<T, Op> };
+			++index;
+		}
+
+		template <typename T, typename Op, typename Supports, typename Regs, meta::disable<Supports> = meta::enabler>
+		inline void make_reg_op(Regs&, int&, const char*) {
+			// Do nothing if there's no support
+		}
+
 		struct add_destructor_tag {};
 		struct check_destructor_tag {};
 		struct verified_tag {} const verified{};
@@ -9456,7 +9510,7 @@ namespace sol {
 	struct usertype_metatable<T, std::index_sequence<I...>, Tn...> : usertype_detail::registrar {
 		typedef std::make_index_sequence<sizeof...(I) * 2> indices;
 		typedef std::index_sequence<I...> half_indices;
-		typedef std::array<luaL_Reg, sizeof...(Tn) / 2 + 1> regs_t;
+		typedef std::array<luaL_Reg, sizeof...(Tn) / 2 + 1 + 3> regs_t;
 		typedef std::tuple<Tn...> RawTuple;
 		typedef std::tuple<clean_type_t<Tn> ...> Tuple;
 		template <std::size_t Idx>
@@ -9475,6 +9529,9 @@ namespace sol {
 		void* baseclasscast;
 		bool mustindex;
 		bool secondarymeta;
+		bool hasequals;
+		bool hasless;
+		bool haslessequals;
 
 		template <std::size_t Idx, meta::enable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
 		inline lua_CFunction make_func() {
@@ -9498,6 +9555,18 @@ namespace sol {
 		}
 
 		int finish_regs(regs_t& l, int& index) {
+			if (!hasless) {
+				const char* name = name_of(meta_function::less_than).c_str();
+				usertype_detail::make_reg_op<T, std::less<>, meta::supports_op_less<T>>(l, index, name);
+			}
+			if (!haslessequals) {
+				const char* name = name_of(meta_function::less_than_or_equal_to).c_str();
+				usertype_detail::make_reg_op<T, std::less_equal<>, meta::supports_op_less_equal<T>>(l, index, name);
+			}
+			if (!hasequals) {
+				const char* name = name_of(meta_function::equal_to).c_str();
+				usertype_detail::make_reg_op<T, std::conditional_t<meta::supports_op_equal<T>::value, std::equal_to<>, usertype_detail::no_comp>, std::true_type>(l, index, name);
+			}
 			if (destructfunc != nullptr) {
 				l[index] = { name_of(meta_function::garbage_collect).c_str(), destructfunc };
 				++index;
@@ -9536,6 +9605,15 @@ namespace sol {
 			// Returnable scope
 			// That would be a neat keyword for C++
 			// returnable { ... };
+			if (reg.name == name_of(meta_function::equal_to)) {
+				hasequals = true;
+			}
+			if (reg.name == name_of(meta_function::less_than)) {
+				hasless = true;
+			}
+			if (reg.name == name_of(meta_function::less_than_or_equal_to)) {
+				haslessequals = true;
+			}
 			if (reg.name == name_of(meta_function::garbage_collect)) {
 				destructfunc = reg.func;
 				return;
@@ -9561,7 +9639,8 @@ namespace sol {
 		indexbase(&core_indexing_call<true>), newindexbase(&core_indexing_call<false>),
 		indexbaseclasspropogation(walk_all_bases<true>), newindexbaseclasspropogation(walk_all_bases<false>),
 		baseclasscheck(nullptr), baseclasscast(nullptr), 
-		mustindex(contains_variable() || contains_index()), secondarymeta(contains_variable()) {
+		mustindex(contains_variable() || contains_index()), secondarymeta(contains_variable()),
+		hasequals(false), hasless(false), haslessequals(false) {
 		}
 
 		template <std::size_t I0, std::size_t I1, bool is_index>
@@ -9734,9 +9813,9 @@ namespace sol {
 				(void)detail::swallow{ 0, (um.template make_regs<(I * 2)>(value_table, lastreg, std::get<(I * 2)>(um.functions), std::get<(I * 2 + 1)>(um.functions)), 0)... };
 				um.finish_regs(value_table, lastreg);
 				value_table[lastreg] = { nullptr, nullptr };
-				bool hasdestructor = !value_table.empty() && name_of(meta_function::garbage_collect) == value_table[lastreg - 1].name;
 				regs_t ref_table = value_table;
 				regs_t unique_table = value_table;
+				bool hasdestructor = !value_table.empty() && name_of(meta_function::garbage_collect) == value_table[lastreg - 1].name;
 				if (hasdestructor) {
 					ref_table[lastreg - 1] = { nullptr, nullptr };
 					unique_table[lastreg - 1] = { value_table[lastreg - 1].name, detail::unique_destruct<T> };
@@ -9909,6 +9988,9 @@ namespace sol {
 			typedef simple_usertype_metatable<T> umt_t;
 			
 			static int push(lua_State* L, umt_t&& umx) {
+				bool hasequals = false;
+				bool hasless = false;
+				bool haslessequals = false;
 				for (std::size_t i = 0; i < 3; ++i) {
 					// Pointer types, AKA "references" from C++
 					const char* metakey = nullptr;
@@ -9927,25 +10009,53 @@ namespace sol {
 					luaL_newmetatable(L, metakey);
 					stack_reference t(L, -1);
 					for (auto& kvp : umx.registrations) {
-						switch (i) {
-						case 0:
-							if (kvp.first.template is<std::string>() && kvp.first.template as<std::string>() == "__gc") {
-								continue;
+						if (kvp.first.template is<std::string>()) {
+							std::string regname = kvp.first.template as<std::string>();
+							if (regname == name_of(meta_function::equal_to)) {
+								hasequals = true;
 							}
-							break;
-						case 1:
-							if (kvp.first.template is<std::string>() && kvp.first.template as<std::string>() == "__gc") {
-								stack::set_field(L, kvp.first, detail::unique_destruct<T>, t.stack_index());
-								continue;
+							else if (regname == name_of(meta_function::less_than)) {
+								hasless = true;
 							}
-							break;
-						case 2:
-						default:
-							break;
+							else if (regname == name_of(meta_function::less_than_or_equal_to)) {
+								haslessequals = true;
+							}
+							switch (i) {
+							case 0:
+								if (regname == name_of(meta_function::garbage_collect)) {
+									continue;
+								}
+								break;
+							case 1:
+								if (regname == name_of(meta_function::garbage_collect)) {
+									stack::set_field(L, kvp.first, detail::unique_destruct<T>, t.stack_index());
+									continue;
+								}
+								break;
+							case 2:
+							default:
+								break;
+							}
 						}
 						stack::set_field(L, kvp.first, kvp.second, t.stack_index());
 					}
-
+					luaL_Reg opregs[4]{};
+					int opregsindex = 0;
+					if (!hasless) {
+						const char* name = name_of(meta_function::less_than).c_str();
+						usertype_detail::make_reg_op<T, std::less<>, meta::supports_op_less<T>>(opregs, opregsindex, name);
+					}
+					if (!haslessequals) {
+						const char* name = name_of(meta_function::less_than_or_equal_to).c_str();
+						usertype_detail::make_reg_op<T, std::less_equal<>, meta::supports_op_less_equal<T>>(opregs, opregsindex, name);
+					}
+					if (!hasequals) {
+						const char* name = name_of(meta_function::equal_to).c_str();
+						usertype_detail::make_reg_op<T, std::conditional_t<meta::supports_op_equal<T>::value, std::equal_to<>, usertype_detail::no_comp>, std::true_type>(opregs, opregsindex, name);
+					}
+					t.push();
+					luaL_setfuncs(L, opregs, 0);
+					t.pop();
 					// Metatable indexes itself
 					stack::set_field(L, meta_function::index, t, t.stack_index());
 
@@ -10015,17 +10125,17 @@ namespace sol {
 
 	}
 
-	template <typename T, typename C = void>
+	template <typename Raw, typename C = void>
 	struct container_usertype_metatable {
-		typedef meta::unqualified_t<T> U;
+		typedef meta::unqualified_t<Raw> T;
 		typedef std::size_t K;
-		typedef typename U::value_type V;
-		typedef typename U::iterator I;
+		typedef typename T::value_type V;
+		typedef typename T::iterator I;
 		struct iter {
-			U& source;
+			T& source;
 			I it;
 
-			iter(U& source, I it) : source(source), it(std::move(it)) {}
+			iter(T& source, I it) : source(source), it(std::move(it)) {}
 		};
 
 		static auto& get_src(lua_State* L) {
@@ -10172,18 +10282,18 @@ namespace sol {
 		}
 	};
 
-	template <typename T>
-	struct container_usertype_metatable<T, std::enable_if_t<meta::has_key_value_pair<T>::value>> {
-		typedef meta::unqualified_t<T> U;
-		typedef typename U::value_type KV;
+	template <typename Raw>
+	struct container_usertype_metatable<Raw, std::enable_if_t<meta::has_key_value_pair<meta::unqualified_t<Raw>>::value>> {
+		typedef meta::unqualified_t<Raw> T;
+		typedef typename T::value_type KV;
 		typedef typename KV::first_type K;
 		typedef typename KV::second_type V;
-		typedef typename U::iterator I;
+		typedef typename T::iterator I;
 		struct iter {
-			U& source;
+			T& source;
 			I it;
 
-			iter(U& source, I it) : source(source), it(std::move(it)) {}
+			iter(T& source, I it) : source(source), it(std::move(it)) {}
 		};
 
 		static auto& get_src(lua_State* L) {
