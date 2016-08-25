@@ -262,37 +262,54 @@ namespace sol {
 				static const bool value = sizeof(test<Derived>(0)) == sizeof(yes);
 			};
 
+			struct has_begin_end_impl {
+				template<typename T, typename U = unqualified_t<T>,
+					typename B = decltype(std::declval<U&>().begin()),
+					typename E = decltype(std::declval<U&>().end())>
+					static std::true_type test(int);
+
+				template<typename...>
+				static std::false_type test(...);
+			};
+
+			struct has_key_value_pair_impl {
+				template<typename T, typename U = unqualified_t<T>,
+					typename V = typename U::value_type,
+					typename F = decltype(std::declval<V&>().first),
+					typename S = decltype(std::declval<V&>().second)>
+					static std::true_type test(int);
+
+				template<typename...>
+				static std::false_type test(...);
+			};
+
+			template <typename T, typename U = T, typename = decltype(std::declval<T&>() < std::declval<U&>())>
+			std::true_type supports_op_less_test(const T&);
+			std::false_type supports_op_less_test(...);
+			template <typename T, typename U = T, typename = decltype(std::declval<T&>() == std::declval<U&>())>
+			std::true_type supports_op_equal_test(const T&);
+			std::false_type supports_op_equal_test(...);
+			template <typename T, typename U = T, typename = decltype(std::declval<T&>() <= std::declval<U&>())>
+			std::true_type supports_op_less_equal_test(const T&);
+			std::false_type supports_op_less_equal_test(...);
+
 		} // meta_detail
+
+		template <typename T>
+		using supports_op_less = decltype(meta_detail::supports_op_less_test(std::declval<T&>()));
+		template <typename T>
+		using supports_op_equal = decltype(meta_detail::supports_op_equal_test(std::declval<T&>()));
+		template <typename T>
+		using supports_op_less_equal = decltype(meta_detail::supports_op_less_equal_test(std::declval<T&>()));
 
 		template<typename T>
 		struct is_callable : boolean<meta_detail::is_callable<T>::value> {};
 
-		struct has_begin_end_impl {
-			template<typename T, typename U = unqualified_t<T>,
-				typename B = decltype(std::declval<U&>().begin()),
-				typename E = decltype(std::declval<U&>().end())>
-				static std::true_type test(int);
-
-			template<typename...>
-			static std::false_type test(...);
-		};
+		template<typename T>
+		struct has_begin_end : decltype(meta_detail::has_begin_end_impl::test<T>(0)) {};
 
 		template<typename T>
-		struct has_begin_end : decltype(has_begin_end_impl::test<T>(0)) {};
-
-		struct has_key_value_pair_impl {
-			template<typename T, typename U = unqualified_t<T>,
-				typename V = typename U::value_type,
-				typename F = decltype(std::declval<V&>().first),
-				typename S = decltype(std::declval<V&>().second)>
-				static std::true_type test(int);
-
-			template<typename...>
-			static std::false_type test(...);
-		};
-
-		template<typename T>
-		struct has_key_value_pair : decltype(has_key_value_pair_impl::test<T>(0)) {};
+		struct has_key_value_pair : decltype(meta_detail::has_key_value_pair_impl::test<T>(0)) {};
 
 		template <typename T>
 		using is_string_constructible = any<std::is_same<unqualified_t<T>, const char*>, std::is_same<unqualified_t<T>, char>, std::is_same<unqualified_t<T>, std::string>, std::is_same<unqualified_t<T>, std::initializer_list<char>>>;

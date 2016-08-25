@@ -110,6 +110,9 @@ namespace sol {
 			typedef simple_usertype_metatable<T> umt_t;
 			
 			static int push(lua_State* L, umt_t&& umx) {
+				bool hasequals = false;
+				bool hasless = false;
+				bool haslessequals = false;
 				for (std::size_t i = 0; i < 3; ++i) {
 					// Pointer types, AKA "references" from C++
 					const char* metakey = nullptr;
@@ -128,25 +131,53 @@ namespace sol {
 					luaL_newmetatable(L, metakey);
 					stack_reference t(L, -1);
 					for (auto& kvp : umx.registrations) {
-						switch (i) {
-						case 0:
-							if (kvp.first.template is<std::string>() && kvp.first.template as<std::string>() == "__gc") {
-								continue;
+						if (kvp.first.template is<std::string>()) {
+							std::string regname = kvp.first.template as<std::string>();
+							if (regname == name_of(meta_function::equal_to)) {
+								hasequals = true;
 							}
-							break;
-						case 1:
-							if (kvp.first.template is<std::string>() && kvp.first.template as<std::string>() == "__gc") {
-								stack::set_field(L, kvp.first, detail::unique_destruct<T>, t.stack_index());
-								continue;
+							else if (regname == name_of(meta_function::less_than)) {
+								hasless = true;
 							}
-							break;
-						case 2:
-						default:
-							break;
+							else if (regname == name_of(meta_function::less_than_or_equal_to)) {
+								haslessequals = true;
+							}
+							switch (i) {
+							case 0:
+								if (regname == name_of(meta_function::garbage_collect)) {
+									continue;
+								}
+								break;
+							case 1:
+								if (regname == name_of(meta_function::garbage_collect)) {
+									stack::set_field(L, kvp.first, detail::unique_destruct<T>, t.stack_index());
+									continue;
+								}
+								break;
+							case 2:
+							default:
+								break;
+							}
 						}
 						stack::set_field(L, kvp.first, kvp.second, t.stack_index());
 					}
-
+					luaL_Reg opregs[4]{};
+					int opregsindex = 0;
+					if (!hasless) {
+						const char* name = name_of(meta_function::less_than).c_str();
+						usertype_detail::make_reg_op<T, std::less<>, meta::supports_op_less<T>>(opregs, opregsindex, name);
+					}
+					if (!haslessequals) {
+						const char* name = name_of(meta_function::less_than_or_equal_to).c_str();
+						usertype_detail::make_reg_op<T, std::less_equal<>, meta::supports_op_less_equal<T>>(opregs, opregsindex, name);
+					}
+					if (!hasequals) {
+						const char* name = name_of(meta_function::equal_to).c_str();
+						usertype_detail::make_reg_op<T, std::conditional_t<meta::supports_op_equal<T>::value, std::equal_to<>, usertype_detail::no_comp>, std::true_type>(opregs, opregsindex, name);
+					}
+					t.push();
+					luaL_setfuncs(L, opregs, 0);
+					t.pop();
 					// Metatable indexes itself
 					stack::set_field(L, meta_function::index, t, t.stack_index());
 

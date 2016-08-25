@@ -33,8 +33,14 @@
 #include "deprecate.hpp"
 
 namespace sol {
-
 	namespace usertype_detail {
+		struct no_comp {
+			template <typename A, typename B>
+			bool operator()(A&&, B&&) {
+				return false;
+			}
+		};
+
 		inline bool is_indexer(string_detail::string_shim s) {
 			return s == name_of(meta_function::index) || s == name_of(meta_function::new_index);
 		}
@@ -88,6 +94,37 @@ namespace sol {
 				return luaL_error(L, "sol: attempt to index (set) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.data());
 		}
 
+		template <typename T, typename Op>
+		inline int operator_wrap(lua_State* L) {
+			auto maybel = stack::check_get<T>(L, 1);
+			if (maybel) {
+				auto mayber = stack::check_get<T>(L, 2);
+				if (mayber) {
+					auto& l = *maybel;
+					auto& r = *mayber;
+					if (std::is_same<no_comp, Op>::value) {
+						return stack::push(L, detail::ptr(l) == detail::ptr(r));
+					}
+					else {
+						Op op;
+						return stack::push(L, (detail::ptr(l) == detail::ptr(r)) || op(detail::deref(l), detail::deref(r)));
+					}
+				}
+			}
+			return stack::push(L, false);
+		}
+
+		template <typename T, typename Op, typename Supports, typename Regs, meta::enable<Supports> = meta::enabler>
+		inline void make_reg_op(Regs& l, int& index, const char* name) {
+			l[index] = { name, &operator_wrap<T, Op> };
+			++index;
+		}
+
+		template <typename T, typename Op, typename Supports, typename Regs, meta::disable<Supports> = meta::enabler>
+		inline void make_reg_op(Regs&, int&, const char*) {
+			// Do nothing if there's no support
+		}
+
 		struct add_destructor_tag {};
 		struct check_destructor_tag {};
 		struct verified_tag {} const verified{};
@@ -136,7 +173,7 @@ namespace sol {
 	struct usertype_metatable<T, std::index_sequence<I...>, Tn...> : usertype_detail::registrar {
 		typedef std::make_index_sequence<sizeof...(I) * 2> indices;
 		typedef std::index_sequence<I...> half_indices;
-		typedef std::array<luaL_Reg, sizeof...(Tn) / 2 + 1> regs_t;
+		typedef std::array<luaL_Reg, sizeof...(Tn) / 2 + 1 + 3> regs_t;
 		typedef std::tuple<Tn...> RawTuple;
 		typedef std::tuple<clean_type_t<Tn> ...> Tuple;
 		template <std::size_t Idx>
@@ -155,6 +192,9 @@ namespace sol {
 		void* baseclasscast;
 		bool mustindex;
 		bool secondarymeta;
+		bool hasequals;
+		bool hasless;
+		bool haslessequals;
 
 		template <std::size_t Idx, meta::enable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
 		inline lua_CFunction make_func() {
@@ -178,6 +218,18 @@ namespace sol {
 		}
 
 		int finish_regs(regs_t& l, int& index) {
+			if (!hasless) {
+				const char* name = name_of(meta_function::less_than).c_str();
+				usertype_detail::make_reg_op<T, std::less<>, meta::supports_op_less<T>>(l, index, name);
+			}
+			if (!haslessequals) {
+				const char* name = name_of(meta_function::less_than_or_equal_to).c_str();
+				usertype_detail::make_reg_op<T, std::less_equal<>, meta::supports_op_less_equal<T>>(l, index, name);
+			}
+			if (!hasequals) {
+				const char* name = name_of(meta_function::equal_to).c_str();
+				usertype_detail::make_reg_op<T, std::conditional_t<meta::supports_op_equal<T>::value, std::equal_to<>, usertype_detail::no_comp>, std::true_type>(l, index, name);
+			}
 			if (destructfunc != nullptr) {
 				l[index] = { name_of(meta_function::garbage_collect).c_str(), destructfunc };
 				++index;
@@ -216,6 +268,15 @@ namespace sol {
 			// Returnable scope
 			// That would be a neat keyword for C++
 			// returnable { ... };
+			if (reg.name == name_of(meta_function::equal_to)) {
+				hasequals = true;
+			}
+			if (reg.name == name_of(meta_function::less_than)) {
+				hasless = true;
+			}
+			if (reg.name == name_of(meta_function::less_than_or_equal_to)) {
+				haslessequals = true;
+			}
 			if (reg.name == name_of(meta_function::garbage_collect)) {
 				destructfunc = reg.func;
 				return;
@@ -241,7 +302,8 @@ namespace sol {
 		indexbase(&core_indexing_call<true>), newindexbase(&core_indexing_call<false>),
 		indexbaseclasspropogation(walk_all_bases<true>), newindexbaseclasspropogation(walk_all_bases<false>),
 		baseclasscheck(nullptr), baseclasscast(nullptr), 
-		mustindex(contains_variable() || contains_index()), secondarymeta(contains_variable()) {
+		mustindex(contains_variable() || contains_index()), secondarymeta(contains_variable()),
+		hasequals(false), hasless(false), haslessequals(false) {
 		}
 
 		template <std::size_t I0, std::size_t I1, bool is_index>
@@ -414,9 +476,9 @@ namespace sol {
 				(void)detail::swallow{ 0, (um.template make_regs<(I * 2)>(value_table, lastreg, std::get<(I * 2)>(um.functions), std::get<(I * 2 + 1)>(um.functions)), 0)... };
 				um.finish_regs(value_table, lastreg);
 				value_table[lastreg] = { nullptr, nullptr };
-				bool hasdestructor = !value_table.empty() && name_of(meta_function::garbage_collect) == value_table[lastreg - 1].name;
 				regs_t ref_table = value_table;
 				regs_t unique_table = value_table;
+				bool hasdestructor = !value_table.empty() && name_of(meta_function::garbage_collect) == value_table[lastreg - 1].name;
 				if (hasdestructor) {
 					ref_table[lastreg - 1] = { nullptr, nullptr };
 					unique_table[lastreg - 1] = { value_table[lastreg - 1].name, detail::unique_destruct<T> };

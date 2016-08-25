@@ -67,17 +67,17 @@ namespace sol {
 
 	}
 
-	template <typename T, typename C = void>
+	template <typename Raw, typename C = void>
 	struct container_usertype_metatable {
-		typedef meta::unqualified_t<T> U;
+		typedef meta::unqualified_t<Raw> T;
 		typedef std::size_t K;
-		typedef typename U::value_type V;
-		typedef typename U::iterator I;
+		typedef typename T::value_type V;
+		typedef typename T::iterator I;
 		struct iter {
-			U& source;
+			T& source;
 			I it;
 
-			iter(U& source, I it) : source(source), it(std::move(it)) {}
+			iter(T& source, I it) : source(source), it(std::move(it)) {}
 		};
 
 		static auto& get_src(lua_State* L) {
@@ -224,18 +224,18 @@ namespace sol {
 		}
 	};
 
-	template <typename T>
-	struct container_usertype_metatable<T, std::enable_if_t<meta::has_key_value_pair<T>::value>> {
-		typedef meta::unqualified_t<T> U;
-		typedef typename U::value_type KV;
+	template <typename Raw>
+	struct container_usertype_metatable<Raw, std::enable_if_t<meta::has_key_value_pair<meta::unqualified_t<Raw>>::value>> {
+		typedef meta::unqualified_t<Raw> T;
+		typedef typename T::value_type KV;
 		typedef typename KV::first_type K;
 		typedef typename KV::second_type V;
-		typedef typename U::iterator I;
+		typedef typename T::iterator I;
 		struct iter {
-			U& source;
+			T& source;
 			I it;
 
-			iter(U& source, I it) : source(source), it(std::move(it)) {}
+			iter(T& source, I it) : source(source), it(std::move(it)) {}
 		};
 
 		static auto& get_src(lua_State* L) {

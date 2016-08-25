@@ -187,6 +187,16 @@ If you don't specify anything at all and the type is `destructible`_, then a des
 usertype regular function options
 +++++++++++++++++++++++++++++++++
 
+If you don't specify anything at all and the type ``T`` supports ``operator <``, ``operator <=``, or ``operator==`` (``const`` or non-``const`` qualified):
+
+* for ``operator <`` and ``operator <=`` 
+	- These two ``sol::meta_function::less_than(_or_equal_to)`` are generated for you and overriden in Lua.
+* for ``operator==``
+	- An equality operator will always be generated, doing pointer comparison if ``operator==`` on the two value types is not supported or doing a reference comparison and a value comparison if ``operator==`` is supported
+* heterogenous operators cannot be supported for equality, as Lua specifically checks if they use the same function to do the comparison: if they do not, then the equality method is not invoked; one way around this would be to write one ``int super_equality_function(lua_State* L) { ... }``, pull out arguments 1 and 2 from the stack for your type, and check all the types and then invoke ``operator==`` yourself after getting the types out of Lua (possibly using :ref:`sol::stack::get<stack-get>` and :ref:`sol::stack::check_get<stack-check-get>`)
+
+Otherwise, the following is used to specify functions to bind on the specific usertype for ``T``.
+
 * ``"{name}", &free_function``
 	- Binds a free function / static class function / function object (lambda) to ``"{name}"``. If the first argument is ``T*`` or ``T&``, then it will bind it as a member function. If it is not, it will be bound as a "static" function on the lua table
 * ``"{name}", &type::function_name`` or ``"{name}", &type::member_variable``
@@ -209,7 +219,7 @@ usertype arguments - simple usertype
 * ``sol::simple``
 	- Only allowed as the first argument to the usertype constructor, must be accompanied by a ``lua_State*``
 	- This tag triggers the :doc:`simple usertype<simple_usertype>` changes / optimizations
-	- Only supported when directly invoking the constructor (e.g. not when calling ``sol::table::new_usertype`` or ``sol::table::new_simple_usertype``) 
+	- Only supported when directly invoking the constructor (e.g. not when calling ``sol::table::new_usertype`` or ``sol::table::new_simple_usertype``)
 
 
 
