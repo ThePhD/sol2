@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-25 16:51:18.743349 UTC
-// This header was generated with sol v2.12.1 (revision 354c267)
+// Generated 2016-08-27 12:45:21.542724 UTC
+// This header was generated with sol v2.12.1 (revision 580ebc7)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -10131,6 +10131,8 @@ namespace sol {
 		typedef std::size_t K;
 		typedef typename T::value_type V;
 		typedef typename T::iterator I;
+		typedef std::remove_reference_t<decltype(*std::declval<I&>())> IR;
+
 		struct iter {
 			T& source;
 			I it;
@@ -10175,12 +10177,14 @@ namespace sol {
 #endif // Safety
 		}
 
-		static int real_new_index_call_const(std::false_type, lua_State* L) {
-			luaL_error(L, "sol: cannot write to a const value type");
+		template <bool b, meta::disable<meta::boolean<b>> = meta::enabler>
+		static int real_new_index_call_const(std::integral_constant<bool, b>, lua_State* L) {
+			luaL_error(L, "sol: cannot write to a const value type or an immutable iterator (e.g., std::set)");
 			return 0;
 		}
 
-		static int real_new_index_call_const(std::true_type, lua_State* L) {
+		template <bool b, meta::enable<meta::boolean<b>> = meta::enabler>
+		static int real_new_index_call_const(std::integral_constant<bool, b>, lua_State* L) {
 			auto& src = get_src(L);
 #ifdef SOL_SAFE_USERTYPE
 			auto maybek = stack::check_get<K>(L, 2);
@@ -10206,7 +10210,7 @@ namespace sol {
 		}
 
 		static int real_new_index_call(lua_State* L) {
-			return real_new_index_call_const(meta::neg<std::is_const<V>>(), L);
+			return real_new_index_call_const(meta::neg<meta::any<std::is_const<V>, std::is_const<IR>>>(), L);
 		}
 
 		static int real_pairs_next_call(lua_State* L) {

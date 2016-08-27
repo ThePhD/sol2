@@ -8,6 +8,8 @@
 #include <list>
 #include <map>
 #include <unordered_map>
+#include <set>
+#include <unordered_set>
 
 std::vector<int> test_table_return_one() {
 	return{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
@@ -85,6 +87,30 @@ TEST_CASE("containers/unordered_map_roundtrip", "make sure unordered_maps can be
 	});
 	lua.script("x = f()");
 	std::unordered_map<std::string, int> x = lua["x"];
+	bool areequal = x == v;
+	REQUIRE(areequal);
+}
+
+TEST_CASE("containers/unordered_set_roundtrip", "make sure unordered_sets can be round-tripped") {
+	sol::state lua;
+	std::unordered_set<int> v{ 1, 2, 3 };
+	lua.set_function("f", [&]() -> std::unordered_set<int>& {
+		return v;
+	});
+	lua.script("x = f()");
+	std::unordered_set<int> x = lua["x"];
+	bool areequal = x == v;
+	REQUIRE(areequal);
+}
+
+TEST_CASE("containers/set_roundtrip", "make sure sets can be round-tripped") {
+	sol::state lua;
+	std::set<int> v{ 1, 2, 3 };
+	lua.set_function("f", [&]() -> std::set<int>& {
+		return v;
+	});
+	lua.script("x = f()");
+	std::set<int> x = lua["x"];
 	bool areequal = x == v;
 	REQUIRE(areequal);
 }
