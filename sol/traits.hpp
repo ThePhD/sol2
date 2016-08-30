@@ -376,32 +376,32 @@ namespace sol {
 		}
 
 		template<typename T>
-		decltype(auto) deref(T&& item) {
+		auto deref(T&& item) -> decltype(std::forward<T>(item)) {
 			return std::forward<T>(item);
 		}
 
 		template<typename T>
-		T& deref(T* item) {
+		inline T& deref(T* item) {
 			return *item;
 		}
 
 		template<typename T, typename Dx>
-		decltype(auto) deref(std::unique_ptr<T, Dx>& item) {
+		inline std::add_lvalue_reference_t<T> deref(std::unique_ptr<T, Dx>& item) {
 			return *item;
 		}
 
 		template<typename T>
-		T& deref(std::shared_ptr<T>& item) {
+		inline std::add_lvalue_reference_t<T> deref(std::shared_ptr<T>& item) {
 			return *item;
 		}
 
 		template<typename T, typename Dx>
-		decltype(auto) deref(const std::unique_ptr<T, Dx>& item) {
+		inline std::add_lvalue_reference_t<T> deref(const std::unique_ptr<T, Dx>& item) {
 			return *item;
 		}
 
 		template<typename T>
-		T& deref(const std::shared_ptr<T>& item) {
+		inline std::add_lvalue_reference_t<T> deref(const std::shared_ptr<T>& item) {
 			return *item;
 		}
 

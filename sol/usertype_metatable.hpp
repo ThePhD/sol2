@@ -31,6 +31,7 @@
 #include "inheritance.hpp"
 #include "raii.hpp"
 #include "deprecate.hpp"
+#include <cstdio>
 
 namespace sol {
 	namespace usertype_detail {
@@ -453,9 +454,17 @@ namespace sol {
 				// ensure some sort of uniqueness
 				static int uniqueness = 0;
 				std::string uniquegcmetakey = usertype_traits<T>::user_gc_metatable;
-				uniquegcmetakey.append(std::to_string(uniqueness++));
+				// std::to_string doesn't exist in android still, with NDK, so this bullshit
+				// is necessary
+				// thanks, Android :v
+				int appended = std::snprintf(nullptr, 0, "%d", uniqueness);
+				std::size_t insertionpoint = uniquegcmetakey.length() - 1;
+				uniquegcmetakey.append(appended, '\0');
+				char* uniquetarget = &uniquegcmetakey[insertionpoint];
+				std::snprintf(uniquetarget, uniquegcmetakey.length(), "%d", uniqueness);
+				++uniqueness;
+
 				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
-				
 				// Make sure userdata's memory is properly in lua first,
 				// otherwise all the light userdata we make later will become invalid
 				stack::push<user<umt_t>>(L, metatable_key, uniquegcmetakey, std::move(umx));

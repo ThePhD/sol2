@@ -346,8 +346,7 @@ namespace sol {
 		template<typename T>
 		struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
 			typedef container_usertype_metatable<T> cumt;
-			template <typename C>
-			static int push(lua_State* L, C&& cont) {
+			static int push(lua_State* L, const T& cont) {
 				auto fx = [&L]() {
 					const char* metakey = &usertype_traits<T>::metatable[0];
 					if (luaL_newmetatable(L, metakey) == 1) {
@@ -363,15 +362,33 @@ namespace sol {
 					}
 					lua_setmetatable(L, -2);
 				};
-				return pusher<detail::as_value_tag<T>>{}.push_fx(L, fx, std::forward<C>(cont));
+				return pusher<detail::as_value_tag<T>>{}.push_fx(L, fx, cont);
+			}
+
+			static int push(lua_State* L, T&& cont) {
+				auto fx = [&L]() {
+					const char* metakey = &usertype_traits<T>::metatable[0];
+					if (luaL_newmetatable(L, metakey) == 1) {
+						luaL_Reg reg[] = {
+							{ "__index", &cumt::index_call },
+							{ "__newindex", &cumt::new_index_call },
+							{ "__pairs", &cumt::pairs_call },
+							{ "__len", &cumt::length_call },
+							{ "__gc", &detail::usertype_alloc_destroy<T> },
+							{ nullptr, nullptr }
+						};
+						luaL_setfuncs(L, reg, 0);
+					}
+					lua_setmetatable(L, -2);
+				};
+				return pusher<detail::as_value_tag<T>>{}.push_fx(L, fx, std::move(cont));
 			}
 		};
 
 		template<typename T>
 		struct pusher<T*, std::enable_if_t<meta::all<meta::has_begin_end<meta::unqualified_t<T>>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
 			typedef container_usertype_metatable<T> cumt;
-			template <typename C>
-			static int push(lua_State* L, C&& cont) {
+			static int push(lua_State* L, T* cont) {
 				auto fx = [&L]() {
 					const char* metakey = &usertype_traits<meta::unqualified_t<T>*>::metatable[0];
 					if (luaL_newmetatable(L, metakey) == 1) {
@@ -386,7 +403,7 @@ namespace sol {
 					}
 					lua_setmetatable(L, -2);
 				};
-				return pusher<detail::as_pointer_tag<meta::unqualified_t<T>>>{}.push_fx(L, fx, std::forward<C>(cont));
+				return pusher<detail::as_pointer_tag<T>>{}.push_fx(L, fx, cont);
 			}
 		};
 	} // stack

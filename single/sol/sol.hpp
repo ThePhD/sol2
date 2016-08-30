@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-08-27 12:45:21.542724 UTC
-// This header was generated with sol v2.12.1 (revision 580ebc7)
+// Generated 2016-08-30 17:35:03.221817 UTC
+// This header was generated with sol v2.12.1 (revision 5b5d1e9)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -704,32 +704,32 @@ namespace sol {
 		}
 
 		template<typename T>
-		decltype(auto) deref(T&& item) {
+		auto deref(T&& item) -> decltype(std::forward<T>(item)) {
 			return std::forward<T>(item);
 		}
 
 		template<typename T>
-		T& deref(T* item) {
+		inline T& deref(T* item) {
 			return *item;
 		}
 
 		template<typename T, typename Dx>
-		decltype(auto) deref(std::unique_ptr<T, Dx>& item) {
+		inline std::add_lvalue_reference_t<T> deref(std::unique_ptr<T, Dx>& item) {
 			return *item;
 		}
 
 		template<typename T>
-		T& deref(std::shared_ptr<T>& item) {
+		inline std::add_lvalue_reference_t<T> deref(std::shared_ptr<T>& item) {
 			return *item;
 		}
 
 		template<typename T, typename Dx>
-		decltype(auto) deref(const std::unique_ptr<T, Dx>& item) {
+		inline std::add_lvalue_reference_t<T> deref(const std::unique_ptr<T, Dx>& item) {
 			return *item;
 		}
 
 		template<typename T>
-		T& deref(const std::shared_ptr<T>& item) {
+		inline std::add_lvalue_reference_t<T> deref(const std::shared_ptr<T>& item) {
 			return *item;
 		}
 
@@ -9369,6 +9369,8 @@ namespace sol {
 
 // end of sol/deprecate.hpp
 
+#include <cstdio>
+
 namespace sol {
 	namespace usertype_detail {
 		struct no_comp {
@@ -9790,9 +9792,17 @@ namespace sol {
 				// ensure some sort of uniqueness
 				static int uniqueness = 0;
 				std::string uniquegcmetakey = usertype_traits<T>::user_gc_metatable;
-				uniquegcmetakey.append(std::to_string(uniqueness++));
+				// std::to_string doesn't exist in android still, with NDK, so this bullshit
+				// is necessary
+				// thanks, Android :v
+				int appended = std::snprintf(nullptr, 0, "%d", uniqueness);
+				std::size_t insertionpoint = uniquegcmetakey.length() - 1;
+				uniquegcmetakey.append(appended, '\0');
+				char* uniquetarget = &uniquegcmetakey[insertionpoint];
+				std::snprintf(uniquetarget, uniquegcmetakey.length(), "%d", uniqueness);
+				++uniqueness;
+
 				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
-				
 				// Make sure userdata's memory is properly in lua first,
 				// otherwise all the light userdata we make later will become invalid
 				stack::push<user<umt_t>>(L, metatable_key, uniquegcmetakey, std::move(umx));
@@ -10404,8 +10414,7 @@ namespace sol {
 		template<typename T>
 		struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
 			typedef container_usertype_metatable<T> cumt;
-			template <typename C>
-			static int push(lua_State* L, C&& cont) {
+			static int push(lua_State* L, const T& cont) {
 				auto fx = [&L]() {
 					const char* metakey = &usertype_traits<T>::metatable[0];
 					if (luaL_newmetatable(L, metakey) == 1) {
@@ -10421,15 +10430,33 @@ namespace sol {
 					}
 					lua_setmetatable(L, -2);
 				};
-				return pusher<detail::as_value_tag<T>>{}.push_fx(L, fx, std::forward<C>(cont));
+				return pusher<detail::as_value_tag<T>>{}.push_fx(L, fx, cont);
+			}
+
+			static int push(lua_State* L, T&& cont) {
+				auto fx = [&L]() {
+					const char* metakey = &usertype_traits<T>::metatable[0];
+					if (luaL_newmetatable(L, metakey) == 1) {
+						luaL_Reg reg[] = {
+							{ "__index", &cumt::index_call },
+							{ "__newindex", &cumt::new_index_call },
+							{ "__pairs", &cumt::pairs_call },
+							{ "__len", &cumt::length_call },
+							{ "__gc", &detail::usertype_alloc_destroy<T> },
+							{ nullptr, nullptr }
+						};
+						luaL_setfuncs(L, reg, 0);
+					}
+					lua_setmetatable(L, -2);
+				};
+				return pusher<detail::as_value_tag<T>>{}.push_fx(L, fx, std::move(cont));
 			}
 		};
 
 		template<typename T>
 		struct pusher<T*, std::enable_if_t<meta::all<meta::has_begin_end<meta::unqualified_t<T>>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
 			typedef container_usertype_metatable<T> cumt;
-			template <typename C>
-			static int push(lua_State* L, C&& cont) {
+			static int push(lua_State* L, T* cont) {
 				auto fx = [&L]() {
 					const char* metakey = &usertype_traits<meta::unqualified_t<T>*>::metatable[0];
 					if (luaL_newmetatable(L, metakey) == 1) {
@@ -10444,7 +10471,7 @@ namespace sol {
 					}
 					lua_setmetatable(L, -2);
 				};
-				return pusher<detail::as_pointer_tag<meta::unqualified_t<T>>>{}.push_fx(L, fx, std::forward<C>(cont));
+				return pusher<detail::as_pointer_tag<T>>{}.push_fx(L, fx, cont);
 			}
 		};
 	} // stack
