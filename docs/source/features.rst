@@ -244,7 +244,7 @@ oolua -
 * Supports not having exceptions or rtti turned on (shiny!)
 * Poor RAII support: default-construct-and-get style (requires some form of initalization to perform a ``get`` of an object, and it's hard to extend)
 	- The library author has informed me that he does personally advises individuals do not use the ``Table`` abstraction in OOLua... Do I likewise tell people to consider its table abstractions defunct?
-* It is fast for member function calls, however
+* Member variables are turned into function calls (``get_x`` and ``set_x`` by default)
 
 luwra - 
 
