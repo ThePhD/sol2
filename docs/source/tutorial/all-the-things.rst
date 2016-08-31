@@ -175,7 +175,7 @@ tables
 	);
 
 	sol::table abc = lua["abc"];
-	sol::state def = lua["def"];
+	sol::table def = lua["def"];
 	sol::table ghi = lua["def"]["ghi"];
 
 	int bark1 = def["ghi"]["bark"];
@@ -208,6 +208,8 @@ make tables
 Make some:
 
 .. code-block:: cpp
+
+	sol::state lua;
 
 	lua["abc"] = lua.create_table_with(
 		0, 24
@@ -320,7 +322,7 @@ The lua code to call these things is:
 	
 	-- need class instance if you don't bind it with the function
 	print(m1(sc)) -- 24.5
-	-- does not need class instance: was made with one 
+	-- does not need class instance: was bound to lua with one 
 	print(m2()) -- 24.5
 	
 	-- need class instance if you 
