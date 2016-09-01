@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-09-01 12:50:16.642849 UTC
-// This header was generated with sol v2.12.2 (revision 6a3b0ad)
+// Generated 2016-09-01 13:01:05.100545 UTC
+// This header was generated with sol v2.12.2 (revision f266782)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -8715,7 +8715,7 @@ namespace sol {
 				code = luacall(n, LUA_MULTRET, h);
 				int poststacksize = lua_gettop(base_t::lua_state());
 				returncount = poststacksize - (stacksize - 1);
-				if (code != call_status::yielded && != call_status::ok) {
+				if (code != call_status::yielded && code != call_status::ok) {
 					return protected_function_result(base_t::lua_state(), lua_absindex(base_t::lua_state(), -1), returncount, returncount, code);
 				}
 #ifndef SOL_NO_EXCEPTIONS
