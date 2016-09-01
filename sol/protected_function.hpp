@@ -107,9 +107,6 @@ namespace sol {
 				code = luacall(n, LUA_MULTRET, h);
 				int poststacksize = lua_gettop(base_t::lua_state());
 				returncount = poststacksize - (stacksize - 1);
-				if (code != call_status::yielded && code != call_status::ok) {
-					return protected_function_result(base_t::lua_state(), lua_absindex(base_t::lua_state(), -1), returncount, returncount, code);
-				}
 #ifndef SOL_NO_EXCEPTIONS
 			}
 			// Handle C++ errors thrown from C++ functions bound inside of lua
