@@ -64,8 +64,8 @@ namespace sol {
 			}
 		};
 
-		int luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount, handler& h) const {
-			return lua_pcallk(base_t::lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount), h.stackindex, 0, nullptr);
+		call_status luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount, handler& h) const {
+			return static_cast<call_status>(lua_pcallk(base_t::lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount), h.stackindex, 0, nullptr));
 		}
 
 		template<std::size_t... I, typename... Ret>
@@ -104,9 +104,12 @@ namespace sol {
 			};
 			try {
 #endif // No Exceptions
-				code = static_cast<call_status>(luacall(n, LUA_MULTRET, h));
+				code = luacall(n, LUA_MULTRET, h);
 				int poststacksize = lua_gettop(base_t::lua_state());
 				returncount = poststacksize - (stacksize - 1);
+				if (code != call_status::yielded && != call_status::ok) {
+					return protected_function_result(base_t::lua_state(), lua_absindex(base_t::lua_state(), -1), returncount, returncount, code);
+				}
 #ifndef SOL_NO_EXCEPTIONS
 			}
 			// Handle C++ errors thrown from C++ functions bound inside of lua

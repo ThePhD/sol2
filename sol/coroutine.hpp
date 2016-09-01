@@ -63,6 +63,9 @@ namespace sol {
 			luacall(n, LUA_MULTRET);
 			int poststacksize = lua_gettop(lua_state());
 			int returncount = poststacksize - (firstreturn - 1);
+			if (error()) {
+				return protected_function_result(lua_state(), lua_absindex(lua_state(), -1), 1, returncount, status());
+			}
 			return protected_function_result(lua_state(), firstreturn, returncount, returncount, status());
 		}
 

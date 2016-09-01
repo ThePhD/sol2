@@ -67,3 +67,4 @@ main.exe
 main.o
 lua-5.3.3/
 *.pdf
+main.lua
