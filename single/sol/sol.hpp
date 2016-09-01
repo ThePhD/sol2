@@ -41,7 +41,7 @@ namespace sol {
 		struct direct_error_tag {};
 		const auto direct_error = direct_error_tag{};
 	} // detail
-	
+
 	class error : public std::runtime_error {
 	private:
 		// Because VC++ is a fuccboi
@@ -975,7 +975,7 @@ struct has_overloaded_addressof
 {
   template <class X>
   constexpr static bool has_overload(...) { return false; }
-  
+
   template <class X, size_t S = sizeof(::std::declval<X&>().operator&()) >
   constexpr static bool has_overload(bool) { return true; }
 
@@ -1098,11 +1098,11 @@ class optional : private OptionalBase<T>
 {
   static_assert( !::std::is_same<typename ::std::decay<T>::type, nullopt_t>::value, "bad T" );
   static_assert( !::std::is_same<typename ::std::decay<T>::type, in_place_t>::value, "bad T" );
-  
+
   constexpr bool initialized() const noexcept { return OptionalBase<T>::init_; }
   typename ::std::remove_const<T>::type* dataptr() {  return ::std::addressof(OptionalBase<T>::storage_.value_); }
   constexpr const T* dataptr() const { return detail_::static_addressof(OptionalBase<T>::storage_.value_); }
-  
+
 # if OPTIONAL_HAS_THIS_RVALUE_REFS == 1
   constexpr const T& contained_val() const& { return OptionalBase<T>::storage_.value_; }
 #   if OPTIONAL_HAS_MOVE_ACCESSORS == 1
@@ -1121,7 +1121,7 @@ class optional : private OptionalBase<T>
     if (initialized()) dataptr()->T::~T();
     OptionalBase<T>::init_ = false;
   }
-  
+
   template <class... Args>
   void initialize(Args&&... args) noexcept(noexcept(T(::std::forward<Args>(args)...)))
   {
@@ -1154,7 +1154,7 @@ public:
     }
   }
 
-  optional(const optional<T&>& rhs) : optional() 
+  optional(const optional<T&>& rhs) : optional()
   {
     if (rhs) {
       ::new (static_cast<void*>(dataptr())) T(*rhs);
@@ -1192,7 +1192,7 @@ public:
     clear();
     return *this;
   }
-  
+
   optional& operator=(const optional& rhs)
   {
     if      (initialized() == true  && rhs.initialized() == false) clear();
@@ -1200,7 +1200,7 @@ public:
     else if (initialized() == true  && rhs.initialized() == true)  contained_val() = *rhs;
     return *this;
   }
-  
+
   optional& operator=(optional&& rhs)
   noexcept(::std::is_nothrow_move_assignable<T>::value && ::std::is_nothrow_move_constructible<T>::value)
   {
@@ -1222,21 +1222,21 @@ public:
     else               { initialize(::std::forward<U>(v));  }
     return *this;
   }
-  
+
   template <class... Args>
   void emplace(Args&&... args)
   {
     clear();
     initialize(::std::forward<Args>(args)...);
   }
-  
+
   template <class U, class... Args>
   void emplace(::std::initializer_list<U> il, Args&&... args)
   {
     clear();
     initialize<U, Args...>(il, ::std::forward<Args>(args)...);
   }
-  
+
   // 20.5.4.4, Swap
   void swap(optional<T>& rhs) noexcept(::std::is_nothrow_move_constructible<T>::value && noexcept(swap(::std::declval<T&>(), ::std::declval<T&>())))
   {
@@ -1246,29 +1246,29 @@ public:
   }
 
   // 20.5.4.5, Observers
-  
+
   explicit constexpr operator bool() const noexcept { return initialized(); }
-  
+
   constexpr T const* operator ->() const {
     return TR2_OPTIONAL_ASSERTED_EXPRESSION(initialized(), dataptr());
   }
-  
+
 # if OPTIONAL_HAS_MOVE_ACCESSORS == 1
 
   OPTIONAL_MUTABLE_CONSTEXPR T* operator ->() {
     assert (initialized());
     return dataptr();
   }
-  
+
   constexpr T const& operator *() const& {
     return TR2_OPTIONAL_ASSERTED_EXPRESSION(initialized(), contained_val());
   }
-  
+
   OPTIONAL_MUTABLE_CONSTEXPR T& operator *() & {
     assert (initialized());
     return contained_val();
   }
-  
+
   OPTIONAL_MUTABLE_CONSTEXPR T&& operator *() && {
     assert (initialized());
     return constexpr_move(contained_val());
@@ -1277,42 +1277,42 @@ public:
   constexpr T const& value() const& {
     return initialized() ? contained_val() : (throw bad_optional_access("bad optional access"), contained_val());
   }
-  
+
   OPTIONAL_MUTABLE_CONSTEXPR T& value() & {
     return initialized() ? contained_val() : (throw bad_optional_access("bad optional access"), contained_val());
   }
-  
+
   OPTIONAL_MUTABLE_CONSTEXPR T&& value() && {
     if (!initialized()) throw bad_optional_access("bad optional access");
 	return ::std::move(contained_val());
   }
-  
+
 # else
 
   T* operator ->() {
     assert (initialized());
     return dataptr();
   }
-  
+
   constexpr T const& operator *() const {
     return TR2_OPTIONAL_ASSERTED_EXPRESSION(initialized(), contained_val());
   }
-  
+
   T& operator *() {
     assert (initialized());
     return contained_val();
   }
-  
+
   constexpr T const& value() const {
     return initialized() ? contained_val() : (throw bad_optional_access("bad optional access"), contained_val());
   }
-  
+
   T& value() {
     return initialized() ? contained_val() : (throw bad_optional_access("bad optional access"), contained_val());
   }
-  
+
 # endif
-  
+
 # if OPTIONAL_HAS_THIS_RVALUE_REFS == 1
 
   template <class V>
@@ -1320,7 +1320,7 @@ public:
   {
     return *this ? **this : detail_::convert<T>(constexpr_forward<V>(v));
   }
-  
+
 #   if OPTIONAL_HAS_MOVE_ACCESSORS == 1
 
   template <class V>
@@ -1330,17 +1330,17 @@ public:
   }
 
 #   else
- 
+
   template <class V>
   T value_or(V&& v) &&
   {
     return *this ? constexpr_move(const_cast<optional<T>&>(*this).contained_val()) : detail_::convert<T>(constexpr_forward<V>(v));
   }
-  
+
 #   endif
-  
+
 # else
-  
+
   template <class V>
   constexpr T value_or(V&& v) const
   {
@@ -1357,42 +1357,42 @@ class optional<T&>
   static_assert( !::std::is_same<T, nullopt_t>::value, "bad T" );
   static_assert( !::std::is_same<T, in_place_t>::value, "bad T" );
   T* ref;
-  
+
 public:
 
   // 20.5.5.1, construction/destruction
   constexpr optional() noexcept : ref(nullptr) {}
-  
+
   constexpr optional(nullopt_t) noexcept : ref(nullptr) {}
-   
+
   constexpr optional(T& v) noexcept : ref(detail_::static_addressof(v)) {}
-  
+
   optional(T&&) = delete;
-  
+
   constexpr optional(const optional& rhs) noexcept : ref(rhs.ref) {}
-  
+
   explicit constexpr optional(in_place_t, T& v) noexcept : ref(detail_::static_addressof(v)) {}
-  
+
   explicit optional(in_place_t, T&&) = delete;
-  
+
   ~optional() = default;
-  
+
   // 20.5.5.2, mutation
   optional& operator=(nullopt_t) noexcept {
     ref = nullptr;
     return *this;
   }
-  
+
   // optional& operator=(const optional& rhs) noexcept {
     // ref = rhs.ref;
     // return *this;
   // }
-  
+
   // optional& operator=(optional&& rhs) noexcept {
     // ref = rhs.ref;
     // return *this;
   // }
-  
+
   template <typename U>
   auto operator=(U&& rhs) noexcept
   -> typename ::std::enable_if
@@ -1404,7 +1404,7 @@ public:
     ref = rhs.ref;
     return *this;
   }
-  
+
   template <typename U>
   auto operator=(U&& rhs) noexcept
   -> typename ::std::enable_if
@@ -1413,35 +1413,35 @@ public:
     optional&
   >::type
   = delete;
-  
+
   void emplace(T& v) noexcept {
     ref = detail_::static_addressof(v);
   }
-  
+
   void emplace(T&&) = delete;
-  
+
   void swap(optional<T&>& rhs) noexcept
   {
     ::std::swap(ref, rhs.ref);
   }
-    
+
   // 20.5.5.3, observers
   constexpr T* operator->() const {
     return TR2_OPTIONAL_ASSERTED_EXPRESSION(ref, ref);
   }
-  
+
   constexpr T& operator*() const {
     return TR2_OPTIONAL_ASSERTED_EXPRESSION(ref, *ref);
   }
-  
+
   constexpr T& value() const {
     return ref ? *ref : (throw bad_optional_access("bad optional access"), *ref);
   }
-  
+
   explicit constexpr operator bool() const noexcept {
     return ref != nullptr;
   }
-  
+
   template <class V>
   constexpr typename ::std::decay<T>::type value_or(V&& v) const
   {
@@ -1743,7 +1743,7 @@ constexpr optional<X&> make_optional(::std::reference_wrapper<X> v)
   return optional<X&>(v.get());
 }
 
-} // namespace 
+} // namespace
 
 namespace std
 {
@@ -1752,18 +1752,18 @@ namespace std
   {
     typedef typename hash<T>::result_type result_type;
     typedef sol::optional<T> argument_type;
-    
+
     constexpr result_type operator()(argument_type const& arg) const {
       return arg ? ::std::hash<T>{}(*arg) : result_type{};
     }
   };
-  
+
   template <typename T>
   struct hash<sol::optional<T&>>
   {
     typedef typename hash<T>::result_type result_type;
     typedef sol::optional<T&> argument_type;
-    
+
     constexpr result_type operator()(argument_type const& arg) const {
       return arg ? ::std::hash<T>{}(*arg) : result_type{};
     }
@@ -1828,7 +1828,7 @@ namespace sol {
 #define SOL_LUA_VERSION 500
 #else
 #define SOL_LUA_VERSION 502
-#endif // Lua Version 502, 501 || luajit, 500 
+#endif // Lua Version 502, 501 || luajit, 500
 
 #ifdef _MSC_VER
 #ifdef _DEBUG
@@ -5083,7 +5083,7 @@ namespace sol {
 				return lua_tostring(L, index);
 			}
 		};
-		
+
 		template<>
 		struct getter<char> {
 			static char get(lua_State* L, int index, record& tracking) {
@@ -5114,7 +5114,7 @@ namespace sol {
                         uint8_t* b = reinterpret_cast<uint8_t*>(&c);
 						std::swap(b[0], b[1]);
 					}
-#endif 
+#endif
 					return r;
 				}
 				std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
@@ -5569,7 +5569,7 @@ namespace sol {
 				// Basically, we store all user-data like this:
 				// If it's a movable/copyable value (no std::ref(x)), then we store the pointer to the new
 				// data in the first sizeof(T*) bytes, and then however many bytes it takes to
-				// do the actual object. Things that are std::ref or plain T* are stored as 
+				// do the actual object. Things that are std::ref or plain T* are stored as
 				// just the sizeof(T*), and nothing else.
 				T** pointerpointer = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
 				T*& referencereference = *pointerpointer;
@@ -5635,7 +5635,7 @@ namespace sol {
 				return pusher<detail::as_value_tag<T>>{}.push(L, std::forward<Args>(args)...);
 			}
 		};
-		
+
 		template<typename T>
 		struct pusher<T*, meta::disable_if_t<meta::all<meta::has_begin_end<meta::unqualified_t<T>>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
 			template <typename... Args>
@@ -6139,7 +6139,7 @@ namespace sol {
 			static int push(lua_State* L, const std::u16string& u16str) {
 				return push(L, u16str, u16str.size());
 			}
-			
+
 			static int push(lua_State* L, const std::u16string& u16str, std::size_t sz) {
 				return stack::push(L, u16str.data(), u16str.data() + sz);
 			}
@@ -6563,7 +6563,7 @@ namespace sol {
 				static decltype(auto) eval(types<>, std::index_sequence<>, lua_State*, int, record&, Fx&& fx, Args&&... args) {
 					return std::forward<Fx>(fx)(std::forward<Args>(args)...);
 				}
-				
+
 				template <typename Fx, typename Arg, typename... Args, std::size_t I, std::size_t... Is, typename... FxArgs>
 				static decltype(auto) eval(types<Arg, Args...>, std::index_sequence<I, Is...>, lua_State* L, int start, record& tracking, Fx&& fx, FxArgs&&... fxargs) {
 					return eval(types<Args...>(), std::index_sequence<Is...>(), L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)..., stack_detail::unchecked_get<Arg>(L, start + tracking.used, tracking));
@@ -7045,7 +7045,7 @@ namespace sol {
 // beginning of sol/protect.hpp
 
 namespace sol {
-	
+
 	template <typename T>
 	struct protect_t {
 		T value;
@@ -9352,7 +9352,7 @@ namespace sol {
     #ifdef _MSC_VER
         #define SOL_DEPRECATED __declspec(deprecated)
     #elif __GNUC__
-        #define SOL_DEPRECATED __attribute__((deprecated)) 
+        #define SOL_DEPRECATED __attribute__((deprecated))
     #else
         #define SOL_DEPRECATED [[deprecated]]
     #endif // compilers
@@ -9467,7 +9467,7 @@ namespace sol {
 		struct add_destructor_tag {};
 		struct check_destructor_tag {};
 		struct verified_tag {} const verified{};
-		
+
 		template <typename T>
 		struct is_constructor : std::false_type {};
 
@@ -9637,10 +9637,10 @@ namespace sol {
 		template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == sizeof...(Tn)>>
 		usertype_metatable(Args&&... args) : functions(std::forward<Args>(args)...),
 		indexfunc(usertype_detail::indexing_fail<true>), newindexfunc(usertype_detail::indexing_fail<false>),
-		destructfunc(nullptr), callconstructfunc(nullptr), 
+		destructfunc(nullptr), callconstructfunc(nullptr),
 		indexbase(&core_indexing_call<true>), newindexbase(&core_indexing_call<false>),
 		indexbaseclasspropogation(walk_all_bases<true>), newindexbaseclasspropogation(walk_all_bases<false>),
-		baseclasscheck(nullptr), baseclasscast(nullptr), 
+		baseclasscheck(nullptr), baseclasscast(nullptr),
 		mustindex(contains_variable() || contains_index()), secondarymeta(contains_variable()),
 		hasequals(false), hasless(false), haslessequals(false) {
 		}
@@ -9678,7 +9678,7 @@ namespace sol {
 			const char* metakey = &usertype_traits<Base>::metatable[0];
 			const char* gcmetakey = &usertype_traits<Base>::gc_table[0];
 			const char* basewalkkey = b ? detail::base_class_index_propogation_key() : detail::base_class_new_index_propogation_key();
-			
+
 			luaL_getmetatable(L, metakey);
 			if (type_of(L, -1) == type::nil) {
 				lua_pop(L, 1);
@@ -9691,7 +9691,7 @@ namespace sol {
 			}
 			lua_CFunction basewalkfunc = stack::pop<lua_CFunction>(L);
 			lua_pop(L, 1);
-			
+
 			stack::get_field<true>(L, gcmetakey);
 			int value = basewalkfunc(L);
 			if (value > -1) {
@@ -9795,11 +9795,11 @@ namespace sol {
 				// std::to_string doesn't exist in android still, with NDK, so this bullshit
 				// is necessary
 				// thanks, Android :v
-				int appended = std::snprintf(nullptr, 0, "%d", uniqueness);
+				int appended = snprintf(nullptr, 0, "%d", uniqueness);
 				std::size_t insertionpoint = uniquegcmetakey.length() - 1;
 				uniquegcmetakey.append(appended, '\0');
 				char* uniquetarget = &uniquegcmetakey[insertionpoint];
-				std::snprintf(uniquetarget, uniquegcmetakey.length(), "%d", uniqueness);
+				snprintf(uniquetarget, uniquegcmetakey.length(), "%d", uniqueness);
 				++uniqueness;
 
 				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
@@ -9816,7 +9816,7 @@ namespace sol {
 			}
 
 			static int push(lua_State* L, umt_t&& umx) {
-				
+
 				umt_t& um = make_cleanup(L, std::move(umx));
 				regs_t value_table{ {} };
 				int lastreg = 0;
@@ -9830,7 +9830,7 @@ namespace sol {
 					ref_table[lastreg - 1] = { nullptr, nullptr };
 					unique_table[lastreg - 1] = { value_table[lastreg - 1].name, detail::unique_destruct<T> };
 				}
-				
+
 				// Now use um
 				const bool& mustindex = um.mustindex;
 				for (std::size_t i = 0; i < 3; ++i) {
@@ -9856,7 +9856,7 @@ namespace sol {
 					stack_reference t(L, -1);
 					stack::push(L, make_light(um));
 					luaL_setfuncs(L, metaregs, 1);
-					
+
 					if (um.baseclasscheck != nullptr) {
 						stack::set_field(L, detail::base_class_check_key(), um.baseclasscheck, t.stack_index());
 					}
@@ -9869,7 +9869,7 @@ namespace sol {
 					else {
 						stack::set_field(L, detail::base_class_cast_key(), nil, t.stack_index());
 					}
-					
+
 					stack::set_field(L, detail::base_class_index_propogation_key(), make_closure(um.indexbase, make_light(um)), t.stack_index());
 					stack::set_field(L, detail::base_class_new_index_propogation_key(), make_closure(um.newindexbase, make_light(um)), t.stack_index());
 
@@ -9902,7 +9902,7 @@ namespace sol {
 						t.pop();
 					}
 				}
-				
+
 				return 1;
 			}
 		};
@@ -9923,7 +9923,7 @@ namespace sol {
 	struct simple_usertype_metatable : usertype_detail::registrar {
 		std::vector<std::pair<object, object>> registrations;
 		object callconstructfunc;
-		
+
 		template <typename N, typename F, meta::enable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
 		void add(lua_State* L, N&& n, F&& f) {
 			registrations.emplace_back(make_object(L, std::forward<N>(n)), make_object(L, as_function(std::forward<F>(f))));
@@ -9971,8 +9971,8 @@ namespace sol {
 		simple_usertype_metatable(lua_State* L) : simple_usertype_metatable(meta::condition<meta::all<std::is_default_constructible<T>>, decltype(default_constructor), usertype_detail::check_destructor_tag>(), L) {}
 
 		template<typename Arg, typename... Args, meta::disable_any<
-			meta::any_same<meta::unqualified_t<Arg>, 
-				usertype_detail::verified_tag, 
+			meta::any_same<meta::unqualified_t<Arg>,
+				usertype_detail::verified_tag,
 				usertype_detail::add_destructor_tag,
 				usertype_detail::check_destructor_tag
 			>,
@@ -9996,7 +9996,7 @@ namespace sol {
 		template <typename T>
 		struct pusher<simple_usertype_metatable<T>> {
 			typedef simple_usertype_metatable<T> umt_t;
-			
+
 			static int push(lua_State* L, umt_t&& umx) {
 				bool hasequals = false;
 				bool hasless = false;
@@ -10093,7 +10093,7 @@ namespace sol {
 // beginning of sol/container_usertype_metatable.hpp
 
 namespace sol {
-	
+
 	namespace detail {
 
 		template <typename T>
@@ -10950,7 +10950,7 @@ namespace sol {
 		template <typename... Args>
 		basic_table_core& add(Args&&... args) {
 			auto pp = stack::push_pop(*this);
-			(void)detail::swallow{0, 
+			(void)detail::swallow{0,
 				(stack::set_ref(base_t::lua_state(), std::forward<Args>(args)), 0)...
 			};
 			return *this;
