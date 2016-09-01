@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2016 Rapptz, ThePhD and contributors
 
@@ -129,7 +129,7 @@ namespace sol {
 		struct add_destructor_tag {};
 		struct check_destructor_tag {};
 		struct verified_tag {} const verified{};
-		
+
 		template <typename T>
 		struct is_constructor : std::false_type {};
 
@@ -299,10 +299,10 @@ namespace sol {
 		template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == sizeof...(Tn)>>
 		usertype_metatable(Args&&... args) : functions(std::forward<Args>(args)...),
 		indexfunc(usertype_detail::indexing_fail<true>), newindexfunc(usertype_detail::indexing_fail<false>),
-		destructfunc(nullptr), callconstructfunc(nullptr), 
+		destructfunc(nullptr), callconstructfunc(nullptr),
 		indexbase(&core_indexing_call<true>), newindexbase(&core_indexing_call<false>),
 		indexbaseclasspropogation(walk_all_bases<true>), newindexbaseclasspropogation(walk_all_bases<false>),
-		baseclasscheck(nullptr), baseclasscast(nullptr), 
+		baseclasscheck(nullptr), baseclasscast(nullptr),
 		mustindex(contains_variable() || contains_index()), secondarymeta(contains_variable()),
 		hasequals(false), hasless(false), haslessequals(false) {
 		}
@@ -340,7 +340,7 @@ namespace sol {
 			const char* metakey = &usertype_traits<Base>::metatable[0];
 			const char* gcmetakey = &usertype_traits<Base>::gc_table[0];
 			const char* basewalkkey = b ? detail::base_class_index_propogation_key() : detail::base_class_new_index_propogation_key();
-			
+
 			luaL_getmetatable(L, metakey);
 			if (type_of(L, -1) == type::nil) {
 				lua_pop(L, 1);
@@ -353,7 +353,7 @@ namespace sol {
 			}
 			lua_CFunction basewalkfunc = stack::pop<lua_CFunction>(L);
 			lua_pop(L, 1);
-			
+
 			stack::get_field<true>(L, gcmetakey);
 			int value = basewalkfunc(L);
 			if (value > -1) {
@@ -457,11 +457,11 @@ namespace sol {
 				// std::to_string doesn't exist in android still, with NDK, so this bullshit
 				// is necessary
 				// thanks, Android :v
-				int appended = std::snprintf(nullptr, 0, "%d", uniqueness);
+				int appended = snprintf(nullptr, 0, "%d", uniqueness);
 				std::size_t insertionpoint = uniquegcmetakey.length() - 1;
 				uniquegcmetakey.append(appended, '\0');
 				char* uniquetarget = &uniquegcmetakey[insertionpoint];
-				std::snprintf(uniquetarget, uniquegcmetakey.length(), "%d", uniqueness);
+				snprintf(uniquetarget, uniquegcmetakey.length(), "%d", uniqueness);
 				++uniqueness;
 
 				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
@@ -478,7 +478,7 @@ namespace sol {
 			}
 
 			static int push(lua_State* L, umt_t&& umx) {
-				
+
 				umt_t& um = make_cleanup(L, std::move(umx));
 				regs_t value_table{ {} };
 				int lastreg = 0;
@@ -492,7 +492,7 @@ namespace sol {
 					ref_table[lastreg - 1] = { nullptr, nullptr };
 					unique_table[lastreg - 1] = { value_table[lastreg - 1].name, detail::unique_destruct<T> };
 				}
-				
+
 				// Now use um
 				const bool& mustindex = um.mustindex;
 				for (std::size_t i = 0; i < 3; ++i) {
@@ -518,7 +518,7 @@ namespace sol {
 					stack_reference t(L, -1);
 					stack::push(L, make_light(um));
 					luaL_setfuncs(L, metaregs, 1);
-					
+
 					if (um.baseclasscheck != nullptr) {
 						stack::set_field(L, detail::base_class_check_key(), um.baseclasscheck, t.stack_index());
 					}
@@ -531,7 +531,7 @@ namespace sol {
 					else {
 						stack::set_field(L, detail::base_class_cast_key(), nil, t.stack_index());
 					}
-					
+
 					stack::set_field(L, detail::base_class_index_propogation_key(), make_closure(um.indexbase, make_light(um)), t.stack_index());
 					stack::set_field(L, detail::base_class_new_index_propogation_key(), make_closure(um.newindexbase, make_light(um)), t.stack_index());
 
@@ -564,7 +564,7 @@ namespace sol {
 						t.pop();
 					}
 				}
-				
+
 				return 1;
 			}
 		};
