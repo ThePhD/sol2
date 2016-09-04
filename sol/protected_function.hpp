@@ -87,7 +87,8 @@ namespace sol {
 
 		protected_function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n, handler& h) const {
 			int stacksize = lua_gettop(base_t::lua_state());
-			int firstreturn = (std::max)(1, stacksize - static_cast<int>(n) - 1);
+			int poststacksize = stacksize;
+			int firstreturn = 1;
 			int returncount = 0;
 			call_status code = call_status::ok;
 #ifndef SOL_NO_EXCEPTIONS
@@ -105,8 +106,9 @@ namespace sol {
 			try {
 #endif // No Exceptions
 				code = luacall(n, LUA_MULTRET, h);
-				int poststacksize = lua_gettop(base_t::lua_state());
+				poststacksize = lua_gettop(base_t::lua_state());
 				returncount = poststacksize - (stacksize - 1);
+				firstreturn = (std::max)(1, poststacksize - (returncount - 1) - static_cast<int>(h.valid()));
 #ifndef SOL_NO_EXCEPTIONS
 			}
 			// Handle C++ errors thrown from C++ functions bound inside of lua

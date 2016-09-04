@@ -68,3 +68,4 @@ main.o
 lua-5.3.3/
 *.pdf
 main.lua
+LuaJIT-2.1.0/
