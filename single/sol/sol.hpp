@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-09-01 13:01:05.100545 UTC
-// This header was generated with sol v2.12.2 (revision f266782)
+// Generated 2016-09-04 15:42:29.271382 UTC
+// This header was generated with sol v2.12.2 (revision cb0116a)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1817,6 +1817,7 @@ namespace sol {
 #ifdef LUAJIT_VERSION
 #ifndef SOL_LUAJIT
 #define SOL_LUAJIT
+#define SOL_LUAJIT_VERSION LUAJIT_VERSION_NUM
 #endif // sol luajit
 #endif // luajit
 
@@ -2030,12 +2031,16 @@ inline const char* kepler_lua_compat_get_string(lua_State* L, void* ud, size_t* 
     return ls->s;
 }
 
+#if !defined(SOL_LUAJIT) || ((SOL_LUAJIT_VERSION - 020100) <= 0)
+
 inline int luaL_loadbufferx(lua_State* L, const char* buff, size_t size, const char* name, const char*) {
     kepler_lua_compat_get_string_view ls;
     ls.s = buff;
     ls.size = size;
     return lua_load(L, kepler_lua_compat_get_string, &ls, name/*, mode*/);
 }
+
+#endif // LuaJIT 2.1.x beta and beyond
 
 #endif /* Lua 5.1 */
 
@@ -8695,7 +8700,8 @@ namespace sol {
 
 		protected_function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n, handler& h) const {
 			int stacksize = lua_gettop(base_t::lua_state());
-			int firstreturn = (std::max)(1, stacksize - static_cast<int>(n) - 1);
+			int poststacksize = stacksize;
+			int firstreturn = 1;
 			int returncount = 0;
 			call_status code = call_status::ok;
 #ifndef SOL_NO_EXCEPTIONS
@@ -8713,11 +8719,9 @@ namespace sol {
 			try {
 #endif // No Exceptions
 				code = luacall(n, LUA_MULTRET, h);
-				int poststacksize = lua_gettop(base_t::lua_state());
+				poststacksize = lua_gettop(base_t::lua_state());
 				returncount = poststacksize - (stacksize - 1);
-				if (code != call_status::yielded && code != call_status::ok) {
-					return protected_function_result(base_t::lua_state(), lua_absindex(base_t::lua_state(), -1), returncount, returncount, code);
-				}
+				firstreturn = (std::max)(1, poststacksize - (returncount - 1) - static_cast<int>(h.valid()));
 #ifndef SOL_NO_EXCEPTIONS
 			}
 			// Handle C++ errors thrown from C++ functions bound inside of lua
