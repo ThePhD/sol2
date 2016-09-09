@@ -238,6 +238,8 @@ Equivalent Lua code:
 
 You can put anything you want in tables as values or keys, including strings, numbers, functions, other tables.
 
+Note that this idea that things can be nested is important and will help later when you get into :ref:`namespacing<namespaceing>`.
+
 
 functions
 ---------
@@ -500,6 +502,45 @@ C++ classes put into Lua
 
 See this :doc:`section here<cxx-in-lua>`.
 
+
+namespacing
+-----------
+
+You can emulate namespacing by having a table and giving it the namespace names you want before registering enums or usertypes:
+
+.. code-block:: cpp
+	
+	struct my_class {
+		int b = 24;
+
+		int f () const {
+			return 24;
+		}
+
+		void g () {
+			++b;
+		}
+	};
+
+	sol::state lua;
+	lua.open_libraries();
+
+	// set up table
+	sol::table bark = lua.create_named_table("bark");
+	
+	bark.new_usertype<my_class>( "my_class", 
+		"f", &my_class::f,
+		"g", &my_class::g
+	); // the usual
+
+	// 'bark' namespace
+	lua.script("obj = bark.my_class.new()" );
+	lua.script("obj:g()");
+	my_class& obj = lua["obj"];
+	// obj.b == 25
+
+
+This technique can be used to register namespace-like functions and classes. It can be as deep as you want. Just make a table and name it appropriately, in either Lua script or using the equivalent Sol code. As long as the table FIRST exists (e.g., make it using a script or with one of Sol's methods or whatever you like), you can put anything you want specifically into that table using :doc:`sol::table's<../api/table>` abstractions.
 
 advanced
 --------
