@@ -210,7 +210,7 @@ Otherwise, the following is used to specify functions to bind on the specific us
 * ``"{name}", sol::overloaded( Func1, Func2, ... )``
 	- Creates an oveloaded member function that discriminates on number of arguments and types.
 * ``sol::base_classes, sol::bases<Bases...>``
-	- Tells a usertype what its base classes are. If you have exceptions turned on, this need not be necessary: if you do not then you need this to have derived-to-base conversions work properly. See :ref:`inheritance<usertype-inheritance>`
+	- Tells a usertype what its base classes are. You need this to have derived-to-base conversions work properly. See :ref:`inheritance<usertype-inheritance>`
 
 
 usertype arguments - simple usertype
@@ -279,7 +279,7 @@ Then, to register the base classes explicitly:
 
 .. warning::
 
-	Sol currently attempts to link base class methods and variables with their derived classes with an undocumented, unsupported feature, provided you specify ``sol::base_classes<...>``. Unfortunately, this can come at the cost of prformance, depending on how "far" the base is from the derived class in the bases lookup list. If you do not want to suffer the performance degradation while we iron out the kinks in the implementation (and want it to stay performant forever), please specify all the base methods on the derived class in the method listing you write. In the future, we hope that with reflection we will not have to worry about this.
+	Specify all base class member variables and member functions to avoid current implementation caveats regarding automatic base member lookup. Sol currently attempts to link base class methods and variables with their derived classes with an undocumented, unsupported feature, provided you specify ``sol::base_classes<...>``. Unfortunately, this can come at the cost of performance, depending on how "far" the base is from the derived class in the bases lookup list. If you do not want to suffer the performance degradation while we iron out the kinks in the implementation (and want it to stay performant forever), please specify all the base methods on the derived class in the method listing you write. In the future, we hope that with reflection we will not have to worry about this.
 
 
 inheritance + overloading
