@@ -72,6 +72,18 @@ public:
 	}
 };
 
+class abstract_A {
+public:
+	virtual void a() = 0;
+};
+
+class abstract_B : public abstract_A {
+public:
+	virtual void a() override {
+		INFO("overridden a() in B : public A - BARK");
+	}
+};
+
 struct Vec {
 	float x, y, z;
 	Vec(float x, float y, float z) : x{ x }, y{ y }, z{ z } {}
@@ -1404,4 +1416,14 @@ TEST_CASE("usertype/unique_usertype-check", "make sure unique usertypes don't ge
 	my_func(ent2);
 	my_func(std::make_shared<Entity>());
 	});
+}
+
+TEST_CASE("usertype/abstract-base-class", "Ensure that abstract base classes and such can be registered") {
+	
+	sol::state lua;
+	lua.new_usertype<abstract_A>("A", "a", &abstract_A::a);
+	lua.new_usertype<abstract_B>("B", sol::base_classes, sol::bases<abstract_A>());
+	lua.script(R"(local b = B.new()
+b:a()
+)");
 }

@@ -37,7 +37,7 @@ namespace sol {
 	namespace usertype_detail {
 		struct no_comp {
 			template <typename A, typename B>
-			bool operator()(A&&, B&&) {
+			bool operator()(A&&, B&&) const {
 				return false;
 			}
 		};

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-09-04 15:42:29.271382 UTC
-// This header was generated with sol v2.12.2 (revision cb0116a)
+// Generated 2016-09-11 00:47:45.107316 UTC
+// This header was generated with sol v2.12.3 (revision edb8eac)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1442,10 +1442,10 @@ public:
     return ref != nullptr;
   }
   
-  template <class V>
-  constexpr typename ::std::decay<T>::type value_or(V&& v) const
+  template <typename V>
+  constexpr T& value_or(V&& v) const
   {
-    return *this ? **this : detail_::convert<typename ::std::decay<T>::type>(constexpr_forward<V>(v));
+    return *this ? **this : detail_::convert<T&>(constexpr_forward<V>(v));
   }
 };
 
@@ -9382,7 +9382,7 @@ namespace sol {
 	namespace usertype_detail {
 		struct no_comp {
 			template <typename A, typename B>
-			bool operator()(A&&, B&&) {
+			bool operator()(A&&, B&&) const {
 				return false;
 			}
 		};
