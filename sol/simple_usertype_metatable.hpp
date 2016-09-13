@@ -110,19 +110,19 @@ namespace sol {
 			return -1;
 		}
 
-		static int simple_real_index_call(lua_State* L) {
+		inline int simple_real_index_call(lua_State* L) {
 			return simple_core_indexing_call<true, true>(L);
 		}
 
-		static int simple_real_new_index_call(lua_State* L) {
+		inline int simple_real_new_index_call(lua_State* L) {
 			return simple_core_indexing_call<false, true>(L);
 		}
 
-		static int simple_index_call(lua_State* L) {
+		inline int simple_index_call(lua_State* L) {
 			return detail::static_trampoline<(&simple_real_index_call)>(L);
 		}
 
-		static int simple_new_index_call(lua_State* L) {
+		inline int simple_new_index_call(lua_State* L) {
 			return detail::static_trampoline<(&simple_real_new_index_call)>(L);
 		}
 	}

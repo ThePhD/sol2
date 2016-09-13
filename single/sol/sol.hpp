@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-09-13 16:37:49.292465 UTC
-// This header was generated with sol v2.12.4 (revision 0de30f3)
+// Generated 2016-09-13 16:53:17.844066 UTC
+// This header was generated with sol v2.12.4 (revision 22d5a70)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -10045,19 +10045,19 @@ namespace sol {
 			return -1;
 		}
 
-		static int simple_real_index_call(lua_State* L) {
+		inline int simple_real_index_call(lua_State* L) {
 			return simple_core_indexing_call<true, true>(L);
 		}
 
-		static int simple_real_new_index_call(lua_State* L) {
+		inline int simple_real_new_index_call(lua_State* L) {
 			return simple_core_indexing_call<false, true>(L);
 		}
 
-		static int simple_index_call(lua_State* L) {
+		inline int simple_index_call(lua_State* L) {
 			return detail::static_trampoline<(&simple_real_index_call)>(L);
 		}
 
-		static int simple_new_index_call(lua_State* L) {
+		inline int simple_new_index_call(lua_State* L) {
 			return detail::static_trampoline<(&simple_real_new_index_call)>(L);
 		}
 	}
