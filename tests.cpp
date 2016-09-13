@@ -615,7 +615,7 @@ TEST_CASE("optional/left-out-args", "Make sure arguments can be left out of opti
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	// sol::optional needs an argument no matter what
+	// sol::optional needs an argument no matter what?
 	lua.set_function("func_opt_ret_bool", func_opt_ret_bool);
 	REQUIRE_NOTHROW(
 	lua.script(R"(

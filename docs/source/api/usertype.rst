@@ -203,6 +203,8 @@ Otherwise, the following is used to specify functions to bind on the specific us
 	- Binds a typical member function or variable to ``"{name}"``. In the case of a member variable or member function, ``type`` must be ``T`` or a base of ``T``
 * ``"{name}", sol::readonly( &type::member_variable )``
 	- Binds a typical variable to ``"{name}"``. Similar to the above, but the variable will be read-only, meaning an error will be generated if anything attemps to write to this variable
+* ``"{name}", sol::as_function( &type::member_variable )``
+	- Binds a typical variable to ``"{name}"`` *but forces the syntax to be callable like a function*. This produces a getter and a setter accessible by ``obj:name()`` to get and ``obj::name(value)`` to set.
 * ``"{name}", sol::property( getter_func, setter_func )``
 	- Binds a typical variable to ``"{name}"``, but gets and sets using the specified setter and getter functions. Not that if you do not pass a setter function, the variable will be read-only. Also not that if you do not pass a getter function, it will be write-only
 * ``"{name}", sol::var( some_value )`` or ``"{name}", sol::var( std::ref( some_value ) )``
@@ -220,6 +222,7 @@ usertype arguments - simple usertype
 	- Only allowed as the first argument to the usertype constructor, must be accompanied by a ``lua_State*``
 	- This tag triggers the :doc:`simple usertype<simple_usertype>` changes / optimizations
 	- Only supported when directly invoking the constructor (e.g. not when calling ``sol::table::new_usertype`` or ``sol::table::new_simple_usertype``)
+	- Should probably not be used directly. Use ``sol::table::new_usertype`` or ``sol::table::new_simple_usertype`` instead
 
 
 

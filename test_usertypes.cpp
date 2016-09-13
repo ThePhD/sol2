@@ -1418,12 +1418,31 @@ TEST_CASE("usertype/unique_usertype-check", "make sure unique usertypes don't ge
 	});
 }
 
-TEST_CASE("usertype/abstract-base-class", "Ensure that abstract base classes and such can be registered") {
-	
+TEST_CASE("usertype/abstract-base-class", "Ensure that abstract base classes and such can be registered") {	
 	sol::state lua;
 	lua.new_usertype<abstract_A>("A", "a", &abstract_A::a);
 	lua.new_usertype<abstract_B>("B", sol::base_classes, sol::bases<abstract_A>());
 	lua.script(R"(local b = B.new()
 b:a()
 )");
+}
+
+TEST_CASE("usertype/as_function", "Ensure that variables can be turned into functions by as_function") {
+	class B {
+	public:
+		int bvar = 24;
+	};
+
+	sol::state lua;
+	lua.open_libraries();
+	lua.new_usertype<B>("B", "b", &B::bvar, "f", sol::as_function(&B::bvar));
+
+	B b;
+	lua.set("b", &b);
+	lua.script("x = b:f()");
+	lua.script("y = b.b");
+	int x = lua["x"];
+	int y = lua["y"];
+	REQUIRE(x == 24);
+	REQUIRE(y == 24);
 }

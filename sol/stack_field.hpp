@@ -38,6 +38,15 @@ namespace sol {
 			}
 		};
 
+		template <typename T, bool global, typename C>
+		struct field_getter<T, global, true, C> {
+			template <typename Key>
+			void get(lua_State* L, Key&& key, int tableindex = -2) {
+				push(L, std::forward<Key>(key));
+				lua_rawget(L, tableindex);
+			}
+		};
+
 		template <bool b, bool raw, typename C>
 		struct field_getter<metatable_key_t, b, raw, C> {
 			void get(lua_State* L, metatable_key_t, int tableindex = -1) {

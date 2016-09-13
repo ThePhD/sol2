@@ -42,12 +42,12 @@ TEST_CASE("usertypes/simple-usertypes", "Ensure that simple usertypes properly w
 	lua.new_simple_usertype<bark>("bark",
 		"fun", &bark::fun,
 		"get", &bark::get,
-		"var", &bark::var,
-		"the_marker", &bark::the_marker,
-		"x", sol::property(&bark::get),
-		"y", sol::property(&bark::set),
-		"z", sol::property(&bark::get, &bark::set)
-		);
+		"var", sol::as_function( &bark::var ),
+		"the_marker", sol::as_function(&bark::the_marker),
+		"x", sol::overload(&bark::get),
+		"y", sol::overload(&bark::set),
+		"z", sol::overload(&bark::get, &bark::set)
+	);
 
 	lua.script("b = bark.new()");
 	bark& b = lua["b"];
@@ -60,6 +60,7 @@ TEST_CASE("usertypes/simple-usertypes", "Ensure that simple usertypes properly w
 	lua.script("v = b:var()");
 	int v = lua["v"];
 	REQUIRE(v == 20);
+	REQUIRE(b.var == 20);
 
 	lua.script("m = b:the_marker()");
 	marker& m = lua["m"];
@@ -124,12 +125,12 @@ TEST_CASE("usertypes/simple-usertypes-constructors", "Ensure that calls with spe
 		sol::constructors<sol::types<>, sol::types<int>>(),
 		"fun", sol::protect( &bark::fun ),
 		"get", &bark::get,
-		"var", &bark::var,
+		"var", sol::as_function( &bark::var ),
 		"the_marker", &bark::the_marker,
-		"x", sol::property(&bark::get),
-		"y", sol::property(&bark::set),
-		"z", sol::property(&bark::get, &bark::set)
-		);
+		"x", sol::overload(&bark::get),
+		"y", sol::overload(&bark::set),
+		"z", sol::overload(&bark::get, &bark::set)
+	);
 
 	lua.script("bx = bark.new(760)");
 	bark& bx = lua["bx"];
@@ -210,7 +211,7 @@ TEST_CASE("usertype/simple-shared-ptr-regression", "simple usertype metatables s
 	REQUIRE(destroyed == 1);
 }
 
-TEST_CASE("usertypes/simple=vars", "simple usertype vars can bind various values (no ref)") {
+TEST_CASE("usertypes/simple-vars", "simple usertype vars can bind various values (no ref)") {
 	int muh_variable = 10;
 	int through_variable = 25;
 
@@ -222,7 +223,7 @@ TEST_CASE("usertypes/simple=vars", "simple usertype vars can bind various values
 		"straight", sol::var(2),
 		"global", sol::var(muh_variable),
 		"global2", sol::var(through_variable)
-		);
+	);
 
 	lua.script(R"(
 s = test.straight
@@ -236,4 +237,77 @@ g2 = test.global2
 	REQUIRE(s == 2);
 	REQUIRE(g == 10);
 	REQUIRE(g2 == 25);
+}
+
+TEST_CASE("simple_usertypes/variable-control", "test to see if usertypes respond to inheritance and variable controls") {
+	class A {
+	public:
+		virtual void a() { throw std::runtime_error("entered base pure virtual implementation"); };
+	};
+
+	class B : public A {
+	public:
+		virtual void a() override { }
+	};
+
+	class sA {
+	public:
+		virtual void a() { throw std::runtime_error("entered base pure virtual implementation"); };
+	};
+
+	class sB : public sA {
+	public:
+		virtual void a() override { }
+	};
+
+	struct sV {
+		int a = 10;
+		int b = 20;
+
+		int get_b() const {
+			return b + 2;
+		}
+
+		void set_b(int value) {
+			b = value;
+		}
+	};
+
+	struct sW : sV {};
+
+	sol::state lua;
+	lua.open_libraries();
+
+	lua.new_usertype<A>("A", "a", &A::a);
+	lua.new_usertype<B>("B", sol::base_classes, sol::bases<A>());
+	lua.new_simple_usertype<sA>("sA", "a", &sA::a);
+	lua.new_simple_usertype<sB>("sB", sol::base_classes, sol::bases<sA>());
+	lua.new_simple_usertype<sV>("sV", "a", &sV::a, "b", &sV::b, "pb", sol::property(&sV::get_b, &sV::set_b));
+	lua.new_simple_usertype<sW>("sW", sol::base_classes, sol::bases<sV>());
+
+	B b;
+	lua.set("b", &b);
+	lua.script("b:a()");
+
+	sB sb;
+	lua.set("sb", &sb);
+	lua.script("sb:a()");
+
+	sV sv;
+	lua.set("sv", &sv);
+	lua.script("print(sv.b)assert(sv.b == 20)");
+
+	sW sw;
+	lua.set("sw", &sw);
+	lua.script("print(sw.a)assert(sw.a == 10)");
+	lua.script("print(sw.b)assert(sw.b == 20)");
+	lua.script("print(sw.pb)assert(sw.pb == 22)");
+	lua.script("sw.a = 11");
+	lua.script("sw.b = 21");
+	lua.script("print(sw.a)assert(sw.a == 11)");
+	lua.script("print(sw.b)assert(sw.b == 21)");
+	lua.script("print(sw.pb)assert(sw.pb == 23)");
+	lua.script("sw.pb = 25");
+	lua.script("print(sw.b)assert(sw.b == 25)");
+	lua.script("print(sw.pb)assert(sw.pb == 27)");
 }

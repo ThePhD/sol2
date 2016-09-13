@@ -165,7 +165,7 @@ namespace sol {
 	template <typename T>
 	struct non_null {};
 
-	template<typename... Args>
+	template <typename... Args>
 	struct function_sig {};
 
 	struct upvalue_index {
@@ -262,12 +262,17 @@ namespace sol {
 	template <typename Sig, typename... Ps>
 	struct function_arguments {
 		std::tuple<Ps...> params;
-		template <typename... Args>
-		function_arguments(Args&&... args) : params(std::forward<Args>(args)...) {}
+		template <typename Arg, typename... Args, meta::disable<std::is_same<meta::unqualified_t<Arg>, function_arguments>> = meta::enabler>
+		function_arguments(Arg&& arg, Args&&... args) : params(std::forward<Arg>(arg), std::forward<Args>(args)...) {}
 	};
 
 	template <typename Sig = function_sig<>, typename... Args>
-	function_arguments<Sig, Args...> as_function(Args&&... args) {
+	function_arguments<Sig, std::decay_t<Args>...> as_function(Args&&... args) {
+		return function_arguments<Sig, std::decay_t<Args>...>(std::forward<Args>(args)...);
+	}
+
+	template <typename Sig = function_sig<>, typename... Args>
+	function_arguments<Sig, Args...> as_function_reference(Args&&... args) {
 		return function_arguments<Sig, Args...>(std::forward<Args>(args)...);
 	}
 
@@ -568,6 +573,9 @@ namespace sol {
 
 		template <typename A, typename B>
 		struct lua_type_of<std::pair<A, B>> : std::integral_constant<type, type::poly> {};
+
+		template <>
+		struct lua_type_of<void*> : std::integral_constant<type, type::lightuserdata> {};
 
 		template <>
 		struct lua_type_of<lightuserdata_value> : std::integral_constant<type, type::lightuserdata> {};
