@@ -25,7 +25,7 @@
 #include "usertype_metatable.hpp"
 #include "object.hpp"
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <utility>
 
 namespace sol {
@@ -53,8 +53,8 @@ namespace sol {
 			}
 		};
 
-		typedef std::map<std::string, std::unique_ptr<variable_wrapper>, std::less<>> variable_map;
-		typedef std::map<std::string, object, std::less<>> function_map;
+		typedef std::unordered_map<std::string, std::unique_ptr<variable_wrapper>> variable_map;
+		typedef std::unordered_map<std::string, object> function_map;
 
 		struct simple_map {
 			variable_map variables;
@@ -78,7 +78,8 @@ namespace sol {
 				}
 			}
 			string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, keyidx);
-			auto vit = variables.find(accessor.c_str());
+			std::string accessorkey = accessor.c_str();
+			auto vit = variables.find(accessorkey);
 			if (vit != variables.cend()) {
 				auto& varwrap = *(vit->second);
 				if (is_index) {
@@ -86,7 +87,7 @@ namespace sol {
 				}
 				return varwrap.new_index(L);
 			}
-			auto fit = functions.find(accessor.c_str());
+			auto fit = functions.find(accessorkey);
 			if (fit != functions.cend()) {
 				auto& func = (fit->second);
 				return stack::push(L, func);

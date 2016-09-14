@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-09-14 04:01:54.009414 UTC
-// This header was generated with sol v2.14.0 (revision 46b1077)
+// Generated 2016-09-14 04:10:09.319129 UTC
+// This header was generated with sol v2.14.0 (revision 0e56783)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -9979,7 +9979,7 @@ namespace sol {
 
 // beginning of sol/simple_usertype_metatable.hpp
 
-#include <map>
+#include <unordered_map>
 
 namespace sol {
 
@@ -10006,8 +10006,8 @@ namespace sol {
 			}
 		};
 
-		typedef std::map<std::string, std::unique_ptr<variable_wrapper>, std::less<>> variable_map;
-		typedef std::map<std::string, object, std::less<>> function_map;
+		typedef std::unordered_map<std::string, std::unique_ptr<variable_wrapper>> variable_map;
+		typedef std::unordered_map<std::string, object> function_map;
 
 		struct simple_map {
 			variable_map variables;
@@ -10031,7 +10031,8 @@ namespace sol {
 				}
 			}
 			string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, keyidx);
-			auto vit = variables.find(accessor.c_str());
+			std::string accessorkey = accessor.c_str();
+			auto vit = variables.find(accessorkey);
 			if (vit != variables.cend()) {
 				auto& varwrap = *(vit->second);
 				if (is_index) {
@@ -10039,7 +10040,7 @@ namespace sol {
 				}
 				return varwrap.new_index(L);
 			}
-			auto fit = functions.find(accessor.c_str());
+			auto fit = functions.find(accessorkey);
 			if (fit != functions.cend()) {
 				auto& func = (fit->second);
 				return stack::push(L, func);
