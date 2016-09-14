@@ -261,18 +261,18 @@ namespace sol {
 
 	template <typename Sig, typename... Ps>
 	struct function_arguments {
-		std::tuple<Ps...> params;
+		std::tuple<Ps...> arguments;
 		template <typename Arg, typename... Args, meta::disable<std::is_same<meta::unqualified_t<Arg>, function_arguments>> = meta::enabler>
-		function_arguments(Arg&& arg, Args&&... args) : params(std::forward<Arg>(arg), std::forward<Args>(args)...) {}
+		function_arguments(Arg&& arg, Args&&... args) : arguments(std::forward<Arg>(arg), std::forward<Args>(args)...) {}
 	};
 
 	template <typename Sig = function_sig<>, typename... Args>
-	function_arguments<Sig, std::decay_t<Args>...> as_function(Args&&... args) {
+	auto as_function(Args&&... args) {
 		return function_arguments<Sig, std::decay_t<Args>...>(std::forward<Args>(args)...);
 	}
 
 	template <typename Sig = function_sig<>, typename... Args>
-	function_arguments<Sig, Args...> as_function_reference(Args&&... args) {
+	auto as_function_reference(Args&&... args) {
 		return function_arguments<Sig, Args...>(std::forward<Args>(args)...);
 	}
 

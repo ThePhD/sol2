@@ -153,6 +153,10 @@ namespace sol {
 
 		template <typename N, typename F, meta::disable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
 		void add_function(lua_State* L, N&& n, F&& f) {
+			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
+				callconstructfunc = make_object(L, std::forward<F>(f));
+				return;
+			}
 			registrations.emplace(usertype_detail::make_string(std::forward<N>(n)), make_object(L, std::forward<F>(f)));
 		}
 
@@ -170,17 +174,22 @@ namespace sol {
 
 		template <typename N, typename... Fxs>
 		void add(lua_State* L, N&& n, constructor_wrapper<Fxs...> c) {
-			registrations.emplace(usertype_detail::make_string(std::forward<N>(n)), make_object(L, detail::tagged<T, constructor_wrapper<Fxs...>>{std::move(c)}));
+			object o(L, in_place<detail::tagged<T, constructor_wrapper<Fxs...>>>, std::move(c));
+			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
+				callconstructfunc = std::move(o);
+				return;
+			}
+			registrations.emplace(usertype_detail::make_string(std::forward<N>(n)), std::move(o));
 		}
 
 		template <typename N, typename... Lists>
 		void add(lua_State* L, N&& n, constructor_list<Lists...> c) {
-			registrations.emplace(usertype_detail::make_string(std::forward<N>(n)), make_object(L, detail::tagged<T, constructor_list<Lists...>>{std::move(c)}));
-		}
-
-		template <typename F>
-		void add(lua_State* L, call_construction, F&& f) {
-			callconstructfunc = make_object(L, std::forward<F>(f));
+			object o(L, in_place<detail::tagged<T, constructor_list<Lists...>>>, std::move(c));
+			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
+				callconstructfunc = std::move(o);
+				return;
+			}
+			registrations.emplace(usertype_detail::make_string(std::forward<N>(n)), std::move(o));
 		}
 
 		template <typename... Bases>

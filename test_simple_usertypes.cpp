@@ -8,7 +8,7 @@
 #include <memory>
 #include <mutex>
 
-TEST_CASE("usertypes/simple-usertypes", "Ensure that simple usertypes properly work here") {
+TEST_CASE("usertype/simple-usertypes", "Ensure that simple usertypes properly work here") {
 	struct marker {
 		bool value = false;
 	};
@@ -87,7 +87,7 @@ TEST_CASE("usertypes/simple-usertypes", "Ensure that simple usertypes properly w
 	REQUIRE(z == 29);
 }
 
-TEST_CASE("usertypes/simple-usertypes-constructors", "Ensure that calls with specific arguments work") {
+TEST_CASE("usertype/simple-usertypes-constructors", "Ensure that calls with specific arguments work") {
 	struct marker {
 		bool value = false;
 	};
@@ -211,7 +211,7 @@ TEST_CASE("usertype/simple-shared-ptr-regression", "simple usertype metatables s
 	REQUIRE(destroyed == 1);
 }
 
-TEST_CASE("usertypes/simple-vars", "simple usertype vars can bind various values (no ref)") {
+TEST_CASE("usertype/simple-vars", "simple usertype vars can bind various values (no ref)") {
 	int muh_variable = 10;
 	int through_variable = 25;
 
@@ -239,7 +239,7 @@ g2 = test.global2
 	REQUIRE(g2 == 25);
 }
 
-TEST_CASE("simple_usertypes/variable-control", "test to see if usertypes respond to inheritance and variable controls") {
+TEST_CASE("usertypes/simple-variable-control", "test to see if usertypes respond to inheritance and variable controls") {
 	class A {
 	public:
 		virtual void a() { throw std::runtime_error("entered base pure virtual implementation"); };
@@ -310,4 +310,60 @@ TEST_CASE("simple_usertypes/variable-control", "test to see if usertypes respond
 	lua.script("sw.pb = 25");
 	lua.script("print(sw.b)assert(sw.b == 25)");
 	lua.script("print(sw.pb)assert(sw.pb == 27)");
+}
+
+TEST_CASE("usertype/simple-factory-constructor-overload-usage", "simple usertypes should probably invoke types") {
+	class A {
+	public:
+		virtual void a() { throw std::runtime_error("entered base pure virtual implementation"); };
+	};
+
+	class B : public A {
+	public:
+		int bvar = 24;
+		virtual void a() override { }
+		void f() {}
+	};
+
+	sol::state lua;
+	lua.open_libraries();
+	sol::constructors<sol::types<>, sol::types<const B&>> c;
+	lua.new_simple_usertype<B>("B",
+		sol::call_constructor, c,
+		"new", sol::factories([]() { return B(); }),
+		"new2", sol::initializers([](B& mem) { new(&mem)B(); }, [](B& mem, int v) { new(&mem)B(); mem.bvar = v; }),
+		"f", sol::as_function(&B::bvar),
+		"g", sol::overload([](B&) { return 2; }, [](B&, int v) { return v; })
+	);
+
+	lua.script("b = B()");
+	lua.script("b2 = B.new()");
+	lua.script("b3 = B.new2()");
+	lua.script("b4 = B.new2(11)");
+
+	lua.script("x = b:f()");
+	lua.script("x2 = b2:f()");
+	lua.script("x3 = b3:f()");
+	lua.script("x4 = b4:f()");
+	int x = lua["x"];
+	int x2 = lua["x2"];
+	int x3 = lua["x3"];
+	int x4 = lua["x4"];
+	REQUIRE(x == 24);
+	REQUIRE(x2 == 24);
+	REQUIRE(x3 == 24);
+	REQUIRE(x4 == 11);
+
+	lua.script("y = b:g()");
+	lua.script("y2 = b2:g(3)");
+	lua.script("y3 = b3:g()");
+	lua.script("y4 = b4:g(3)");
+	int y = lua["y"];
+	int y2 = lua["y2"];
+	int y3 = lua["y3"];
+	int y4 = lua["y4"];
+	REQUIRE(y == 2);
+	REQUIRE(y2 == 3);
+	REQUIRE(y3 == 2);
+	REQUIRE(y4 == 3);
 }

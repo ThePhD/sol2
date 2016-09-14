@@ -383,7 +383,7 @@ namespace sol {
 					T* obj = reinterpret_cast<T*>(pointerpointer + 1);
 					referencepointer = obj;
 
-					auto& func = std::get<I>(f.set);
+					auto& func = std::get<I>(f.functions);
 					stack::call_into_lua<checked>(r, a, L, boost + start, func, detail::implicit_wrapper<T>(obj));
 
 					userdataref.push();
@@ -436,7 +436,7 @@ namespace sol {
 			struct on_match {
 				template <typename Fx, std::size_t I, typename... R, typename... Args>
 				int operator()(types<Fx>, index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int, F& fx) {
-					auto& f = std::get<I>(fx.set);
+					auto& f = std::get<I>(fx.functions);
 					return lua_call_wrapper<T, Fx, is_index, is_variable, checked, boost>{}.call(L, f);
 				}
 			};
@@ -453,7 +453,7 @@ namespace sol {
 			struct on_match {
 				template <typename Fx, std::size_t I, typename... R, typename... Args>
 				int operator()(types<Fx>, index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int, F& fx) {
-					auto& f = std::get<I>(fx.set);
+					auto& f = std::get<I>(fx.functions);
 					return lua_call_wrapper<T, Fx, is_index, is_variable, checked, boost>{}.call(L, f);
 				}
 			};
@@ -531,7 +531,7 @@ namespace sol {
 		struct lua_call_wrapper<T, function_arguments<Sig, P>, is_index, is_variable, checked, boost, C> {
 			template <typename F>
 			static int call(lua_State* L, F&& f) {
-				return lua_call_wrapper<T, meta::unqualified_t<P>, is_index, is_variable, stack::stack_detail::default_check_arguments, boost>{}.call(L, std::get<0>(f.params));
+				return lua_call_wrapper<T, meta::unqualified_t<P>, is_index, is_variable, stack::stack_detail::default_check_arguments, boost>{}.call(L, std::get<0>(f.arguments));
 			}
 		};
 
