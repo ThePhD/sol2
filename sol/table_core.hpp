@@ -274,7 +274,7 @@ namespace sol {
 
 		template<typename Class, typename... Args>
 		basic_table_core& new_simple_usertype(const std::string& name, Args&&... args) {
-			usertype<Class> utype(simple, base_t::lua_state(), std::forward<Args>(args)...);
+			simple_usertype<Class> utype(base_t::lua_state(), std::forward<Args>(args)...);
 			set_usertype(name, utype);
 			return *this;
 		}
@@ -287,9 +287,27 @@ namespace sol {
 
 		template<typename Class, typename... CArgs, typename... Args>
 		basic_table_core& new_simple_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
-			usertype<Class> utype(simple, base_t::lua_state(), ctor, std::forward<Args>(args)...);
+			simple_usertype<Class> utype(base_t::lua_state(), ctor, std::forward<Args>(args)...);
 			set_usertype(name, utype);
 			return *this;
+		}
+
+		template<typename Class, typename... Args>
+		simple_usertype<Class> create_simple_usertype(Args&&... args) {
+			simple_usertype<Class> utype(base_t::lua_state(), std::forward<Args>(args)...);
+			return utype;
+		}
+
+		template<typename Class, typename CTor0, typename... CTor, typename... Args>
+		simple_usertype<Class> create_simple_usertype(Args&&... args) {
+			constructors<types<CTor0, CTor...>> ctor{};
+			return create_simple_usertype<Class>(ctor, std::forward<Args>(args)...);
+		}
+
+		template<typename Class, typename... CArgs, typename... Args>
+		simple_usertype<Class> create_simple_usertype(constructors<CArgs...> ctor, Args&&... args) {
+			simple_usertype<Class> utype(base_t::lua_state(), ctor, std::forward<Args>(args)...);
+			return utype;
 		}
 
 		template<bool read_only = true, typename... Args>

@@ -355,11 +355,26 @@ namespace sol {
 			global.new_simple_usertype<Class, CTor0, CTor...>(name, std::forward<Args>(args)...);
 			return *this;
 		}
-
+		
 		template<typename Class, typename... CArgs, typename... Args>
 		state_view& new_simple_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
 			global.new_simple_usertype<Class>(name, ctor, std::forward<Args>(args)...);
 			return *this;
+		}
+
+		template<typename Class, typename... Args>
+		simple_usertype<Class> create_simple_usertype(Args&&... args) {
+			return global.create_simple_usertype<Class>(std::forward<Args>(args)...);
+		}
+
+		template<typename Class, typename CTor0, typename... CTor, typename... Args>
+		simple_usertype<Class> create_simple_usertype(Args&&... args) {
+			return global.create_simple_usertype<Class, CTor0, CTor...>(std::forward<Args>(args)...);
+		}
+
+		template<typename Class, typename... CArgs, typename... Args>
+		simple_usertype<Class> create_simple_usertype(constructors<CArgs...> ctor, Args&&... args) {
+			return global.create_simple_usertype<Class>(ctor, std::forward<Args>(args)...);
 		}
 
 		template<bool read_only = true, typename... Args>
