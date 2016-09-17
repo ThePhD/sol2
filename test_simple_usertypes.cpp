@@ -367,3 +367,24 @@ TEST_CASE("usertype/simple-factory-constructor-overload-usage", "simple usertype
 	REQUIRE(y3 == 2);
 	REQUIRE(y4 == 3);
 }
+
+TEST_CASE("usertype/simple-runtime-append", "allow extra functions to be appended at runtime directly to the metatable itself") {
+	class A {
+	};
+
+	class B : public A {
+	};
+
+	sol::state lua;
+	lua.new_simple_usertype<A>("A");
+	lua.new_simple_usertype<B>("B", sol::base_classes, sol::bases<A>()); // OFFTOP: It crashes here because there's no stuff registered in A usertype( is it an issue? )
+	lua.set("b", std::make_unique<B>());
+	lua["A"]["method"] = []() { return 200; };
+	lua.script("x = b.method()");
+	lua.script("y = b:method()");
+
+	int x = lua["x"];
+	int y = lua["y"];
+	REQUIRE(x == 200);
+	REQUIRE(y == 200);
+}

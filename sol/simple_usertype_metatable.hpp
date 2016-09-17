@@ -57,12 +57,13 @@ namespace sol {
 		typedef std::unordered_map<std::string, object> function_map;
 
 		struct simple_map {
+			const char* metakey;
 			variable_map variables;
 			function_map functions;
 			base_walk indexbaseclasspropogation;
 			base_walk newindexbaseclasspropogation;
 
-			simple_map(base_walk index, base_walk newindex, variable_map&& vars, function_map&& funcs) : variables(std::move(vars)), functions(std::move(funcs)), indexbaseclasspropogation(index), newindexbaseclasspropogation(newindex) {}
+			simple_map(const char* mkey, base_walk index, base_walk newindex, variable_map&& vars, function_map&& funcs) : metakey(mkey), variables(std::move(vars)), functions(std::move(funcs)), indexbaseclasspropogation(index), newindexbaseclasspropogation(newindex) {}
 		};
 
 		template <bool is_index, bool toplevel = false>
@@ -92,6 +93,19 @@ namespace sol {
 				auto& func = (fit->second);
 				return stack::push(L, func);
 			}
+			// Check table storage first for a method that works
+			luaL_getmetatable(L, sm.metakey);
+			if (type_of(L, -1) != type::nil) {
+				stack::get_field<false, true>(L, accessor.c_str(), lua_gettop(L));
+				if (type_of(L, -1) != type::nil) {
+					// Woo, we found it?
+					lua_remove(L, -2);
+					return 1;
+				}
+				lua_pop(L, 1);
+			}
+			lua_pop(L, 1);
+			
 			int ret = 0;
 			bool found = false;
 			// Otherwise, we need to do propagating calls through the bases
@@ -234,7 +248,7 @@ namespace sol {
 		simple_usertype_metatable(lua_State* L, usertype_detail::check_destructor_tag, Args&&... args) : simple_usertype_metatable(L, meta::condition<meta::all<std::is_destructible<T>, meta::neg<usertype_detail::has_destructor<Args...>>>, usertype_detail::add_destructor_tag, usertype_detail::verified_tag>(), std::forward<Args>(args)...) {}
 
 	public:
-		simple_usertype_metatable(lua_State* L) : simple_usertype_metatable(meta::condition<meta::all<std::is_default_constructible<T>>, decltype(default_constructor), usertype_detail::check_destructor_tag>(), L) {}
+		simple_usertype_metatable(lua_State* L) : simple_usertype_metatable(L, meta::condition<meta::all<std::is_default_constructible<T>>, decltype(default_constructor), usertype_detail::check_destructor_tag>()) {}
 
 		template<typename Arg, typename... Args, meta::disable_any<
 			meta::any_same<meta::unqualified_t<Arg>, 
@@ -277,7 +291,7 @@ namespace sol {
 				++uniqueness;
 
 				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
-				stack::push<user<usertype_detail::simple_map>>(L, metatable_key, uniquegcmetakey, umx.indexbaseclasspropogation, umx.newindexbaseclasspropogation, std::move(umx.varmap), std::move(umx.registrations));
+				stack::push<user<usertype_detail::simple_map>>(L, metatable_key, uniquegcmetakey, &usertype_traits<T>::metatable[0], umx.indexbaseclasspropogation, umx.newindexbaseclasspropogation, std::move(umx.varmap), std::move(umx.registrations));
 				stack_reference stackvarmap(L, -1);
 				stack::set_field<true>(L, gcmetakey, stackvarmap);
 				stackvarmap.pop();

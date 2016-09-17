@@ -31,6 +31,7 @@
 #include "inheritance.hpp"
 #include "raii.hpp"
 #include "deprecate.hpp"
+#include <unordered_map>
 #include <cstdio>
 
 namespace sol {
@@ -43,6 +44,14 @@ namespace sol {
 		};
 
 		typedef void(*base_walk)(lua_State*, bool&, int&, string_detail::string_shim&);
+		typedef int(*member_search)(lua_State*, void*);
+
+		struct find_call_pair {
+			member_search first;
+			member_search second;
+
+			find_call_pair(member_search first, member_search second) : first(first), second(second) {}
+		};
 
 		inline bool is_indexer(string_detail::string_shim s) {
 			return s == name_of(meta_function::index) || s == name_of(meta_function::new_index);
@@ -116,19 +125,7 @@ namespace sol {
 				lua_pop(L, 1);
 				return;
 			}
-			stack::get_field<false, true>(L, accessor.c_str(), lua_gettop(L));
-			if (type_of(L, -1) == type::nil) {
-				lua_pop(L, 1);
-			}
-			else {
-				// Probably a function. Probably.
-				// Kick off metatable
-				lua_remove(L, -2);
-				// Return the field (which is probably a function) itself
-				found = true;
-				ret = 1;
-				return;
-			}
+			
 			stack::get_field(L, basewalkkey);
 			if (type_of(L, -1) == type::nil) {
 				lua_pop(L, 2);
@@ -239,6 +236,7 @@ namespace sol {
 		template <std::size_t Idx>
 		struct check_binding : is_variable_binding<meta::unqualified_tuple_element_t<Idx, Tuple>> {};
 		Tuple functions;
+		std::unordered_map<std::string, usertype_detail::find_call_pair> mapping;
 		lua_CFunction indexfunc;
 		lua_CFunction newindexfunc;
 		lua_CFunction destructfunc;
@@ -356,6 +354,7 @@ namespace sol {
 
 		template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == sizeof...(Tn)>>
 		usertype_metatable(Args&&... args) : functions(std::forward<Args>(args)...),
+		mapping(),
 		indexfunc(usertype_detail::indexing_fail<true>), newindexfunc(usertype_detail::indexing_fail<false>),
 		destructfunc(nullptr), callconstructfunc(nullptr),
 		indexbase(&core_indexing_call<true>), newindexbase(&core_indexing_call<false>),
@@ -363,32 +362,24 @@ namespace sol {
 		baseclasscheck(nullptr), baseclasscast(nullptr),
 		mustindex(contains_variable() || contains_index()), secondarymeta(contains_variable()),
 		hasequals(false), hasless(false), haslessequals(false) {
+			mapping.insert(
+			{ {
+				std::pair<std::string, usertype_detail::find_call_pair>(
+					usertype_detail::make_string(std::get<I * 2>(functions)),
+					{ &usertype_metatable::real_find_call<I * 2, I * 2 + 1, false>,
+					&usertype_metatable::real_find_call<I * 2, I * 2 + 1, true> }
+					)
+			}... }
+			);
 		}
 
 		template <std::size_t I0, std::size_t I1, bool is_index>
-		int real_find_call(std::integral_constant<bool, is_index>, lua_State* L) {
-			if (is_variable_binding<decltype(std::get<I1>(functions))>::value) {
-				return real_call_with<I1, is_index, true>(L, *this);
+		static int real_find_call(lua_State* L, void* um) {
+			auto& f = *static_cast<usertype_metatable*>(um);
+			if (is_variable_binding<decltype(std::get<I1>(f.functions))>::value) {
+				return real_call_with<I1, is_index, true>(L, f);
 			}
-			return stack::push(L, c_closure(call<I1, is_index>, stack::push(L, light<usertype_metatable>(*this))));
-		}
-
-		template <std::size_t I0, std::size_t I1, bool is_index>
-		void find_call(std::integral_constant<bool, is_index> idx, lua_State* L, bool& found, int& ret, const sol::string_detail::string_shim& accessor) {
-			if (found) {
-				return;
-			}
-			string_detail::string_shim name = usertype_detail::make_shim(std::get<I0>(functions));
-			if (accessor != name) {
-				return;
-			}
-			found = true;
-			ret = real_find_call<I0, I1>(idx, L);
-		}
-
-		template <bool is_index>
-		void propogating_call(lua_State* L, bool& found, int& ret, string_detail::string_shim& accessor) {
-			(void)detail::swallow{ 0, (find_call<I * 2, I * 2 + 1>(std::integral_constant<bool, is_index>(), L, found, ret, accessor), 0)... };
+			return stack::push(L, c_closure(call<I1, is_index>, stack::push(L, light<usertype_metatable>(f))));
 		}
 
 		template <bool is_index, bool toplevel = false>
@@ -398,13 +389,15 @@ namespace sol {
 			if (toplevel && stack::get<type>(L, keyidx) != type::string) {
 				return is_index ? f.indexfunc(L) : f.newindexfunc(L);
 			}
-			string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, keyidx);
+			std::string name = stack::get<std::string>(L, keyidx);
+			auto memberit = f.mapping.find(name);
+			if (memberit != f.mapping.cend()) {
+				auto& member = is_index ? memberit->second.second : memberit->second.first;
+				return (member)(L, static_cast<void*>(&f));
+			}
+			string_detail::string_shim accessor = name;
 			int ret = 0;
 			bool found = false;
-			f.propogating_call<is_index>(L, found, ret, accessor);
-			if (found) {
-				return ret;
-			}
 			// Otherwise, we need to do propagating calls through the bases
 			if (is_index)
 				f.indexbaseclasspropogation(L, found, ret, accessor);
