@@ -32,7 +32,7 @@ namespace sol {
 
 	template<typename T>
 	class usertype {
-	private:
+	protected:
 		std::unique_ptr<usertype_detail::registrar, detail::deleter> metatableregister;
 
 		template<typename... Args>
@@ -60,6 +60,22 @@ namespace sol {
 
 		int push(lua_State* L) {
 			return metatableregister->push_um(L);
+		}
+	};
+
+	template<typename T>
+	class simple_usertype : public usertype<T> {
+	protected:
+		lua_State* state;
+
+	public:
+		template<typename... Args>
+		simple_usertype(lua_State* L, Args&&... args) : state(L), usertype(simple, L, std::forward<Args>(args)...) {}
+		
+		template <typename N, typename F>
+		void add(N&& n, F&& f) {
+			auto meta = (simple_usertype_metatable<T>*) metatableregister.get();
+			meta->add(state, n, f);
 		}
 	};
 
