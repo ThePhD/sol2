@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-09-18 02:22:48.336425 UTC
-// This header was generated with sol v2.14.0 (revision 132ff87)
+// Generated 2016-09-18 02:39:04.820718 UTC
+// This header was generated with sol v2.14.0 (revision 1dfeb1d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -9625,8 +9625,9 @@ namespace sol {
 		typedef std::tuple<clean_type_t<Tn> ...> Tuple;
 		template <std::size_t Idx>
 		struct check_binding : is_variable_binding<meta::unqualified_tuple_element_t<Idx, Tuple>> {};
+		typedef std::unordered_map<std::string, usertype_detail::find_call_pair> mapping_t;
 		Tuple functions;
-		std::unordered_map<std::string, usertype_detail::find_call_pair> mapping;
+		mapping_t mapping;
 		lua_CFunction indexfunc;
 		lua_CFunction newindexfunc;
 		lua_CFunction destructfunc;
@@ -9752,15 +9753,14 @@ namespace sol {
 		baseclasscheck(nullptr), baseclasscast(nullptr),
 		mustindex(contains_variable() || contains_index()), secondarymeta(contains_variable()),
 		hasequals(false), hasless(false), haslessequals(false) {
-			mapping.insert(
-			{ {
+			std::initializer_list<typename mapping_t::value_type> ilist{ {
 				std::pair<std::string, usertype_detail::find_call_pair>(
 					usertype_detail::make_string(std::get<I * 2>(functions)),
-					usertype_detail::find_call_pair( &usertype_metatable::real_find_call<I * 2, I * 2 + 1, false>,
-					&usertype_metatable::real_find_call<I * 2, I * 2 + 1, true> )
+					usertype_detail::find_call_pair(&usertype_metatable::real_find_call<I * 2, I * 2 + 1, false>,
+						&usertype_metatable::real_find_call<I * 2, I * 2 + 1, true>)
 					)
-			}... }
-			);
+			}... };
+			mapping.insert(ilist);
 		}
 
 		template <std::size_t I0, std::size_t I1, bool is_index>
