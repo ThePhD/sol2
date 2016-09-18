@@ -262,16 +262,18 @@ namespace sol {
 				if (lua_getmetatable(L, index) == 0) {
 					return true;
 				}
-				if (stack_detail::check_metatable<U>(L))
+				int metatableindex = lua_gettop(L);
+				if (stack_detail::check_metatable<U>(L, metatableindex))
 					return true;
-				if (stack_detail::check_metatable<U*>(L))
+				if (stack_detail::check_metatable<U*>(L, metatableindex))
 					return true;
-				if (stack_detail::check_metatable<detail::unique_usertype<U>>(L))
+				if (stack_detail::check_metatable<detail::unique_usertype<U>>(L, metatableindex))
 					return true;
 				bool success = false;
 				if (detail::has_derived<T>::value) {
 					auto pn = stack::pop_n(L, 1);
-					lua_getfield(L, -1, &detail::base_class_check_key()[0]);
+					lua_pushstring(L, &detail::base_class_check_key()[0]);
+					lua_rawget(L, metatableindex);
 					if (type_of(L, -1) != type::nil) {
 						void* basecastdata = lua_touserdata(L, -1);
 						detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;

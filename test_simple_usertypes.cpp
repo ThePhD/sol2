@@ -222,21 +222,31 @@ TEST_CASE("usertype/simple-vars", "simple usertype vars can bind various values 
 	lua.new_simple_usertype<test>("test",
 		"straight", sol::var(2),
 		"global", sol::var(muh_variable),
-		"global2", sol::var(through_variable)
+		"global2", sol::var(through_variable),
+		"global3", sol::var(std::ref(through_variable))
 	);
+	
+	through_variable = 20;
 
 	lua.script(R"(
+print(test.straight)
 s = test.straight
+print(test.global)
 g = test.global
+print(test.global2)
 g2 = test.global2
+print(test.global3)
+g3 = test.global3
 )");
 
 	int s = lua["s"];
 	int g = lua["g"];
 	int g2 = lua["g2"];
+	int g3 = lua["g3"];
 	REQUIRE(s == 2);
 	REQUIRE(g == 10);
 	REQUIRE(g2 == 25);
+	REQUIRE(g3 == 20);
 }
 
 TEST_CASE("usertypes/simple-variable-control", "test to see if usertypes respond to inheritance and variable controls") {
@@ -377,9 +387,10 @@ TEST_CASE("usertype/simple-runtime-append", "allow extra functions to be appende
 
 	sol::state lua;
 	lua.new_simple_usertype<A>("A");
-	lua.new_simple_usertype<B>("B", sol::base_classes, sol::bases<A>()); // OFFTOP: It crashes here because there's no stuff registered in A usertype( is it an issue? )
+	lua.new_simple_usertype<B>("B", sol::base_classes, sol::bases<A>());
 	lua.set("b", std::make_unique<B>());
 	lua["A"]["method"] = []() { return 200; };
+	lua["B"]["method2"] = [](B&) { return 100; };
 	lua.script("x = b.method()");
 	lua.script("y = b:method()");
 
@@ -387,4 +398,11 @@ TEST_CASE("usertype/simple-runtime-append", "allow extra functions to be appende
 	int y = lua["y"];
 	REQUIRE(x == 200);
 	REQUIRE(y == 200);
+	
+	lua.script("z = b.method2(b)");
+	lua.script("w = b:method2()");
+	int z = lua["z"];
+	int w = lua["w"];
+	REQUIRE(z == 100);
+	REQUIRE(w == 100);
 }

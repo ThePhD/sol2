@@ -32,7 +32,7 @@ namespace sol {
 
 	template<typename T>
 	class usertype {
-	protected:
+	private:
 		std::unique_ptr<usertype_detail::registrar, detail::deleter> metatableregister;
 
 		template<typename... Args>
@@ -58,6 +58,10 @@ namespace sol {
 		template<typename... Args>
 		usertype(simple_tag, lua_State* L, Args&&... args) : metatableregister(detail::make_unique_deleter<simple_usertype_metatable<T>, detail::deleter>(L, std::forward<Args>(args)...)) {}
 
+		usertype_detail::registrar* registrar_data() {
+			return metatableregister.get();
+		}
+
 		int push(lua_State* L) {
 			return metatableregister->push_um(L);
 		}
@@ -65,16 +69,17 @@ namespace sol {
 
 	template<typename T>
 	class simple_usertype : public usertype<T> {
-	protected:
+	private:
+		typedef usertype<T> base_t;
 		lua_State* state;
 
 	public:
 		template<typename... Args>
-		simple_usertype(lua_State* L, Args&&... args) : state(L), usertype(simple, L, std::forward<Args>(args)...) {}
+		simple_usertype(lua_State* L, Args&&... args) : base_t(simple, L, std::forward<Args>(args)...), state(L) {}
 		
 		template <typename N, typename F>
-		void add(N&& n, F&& f) {
-			auto meta = (simple_usertype_metatable<T>*) metatableregister.get();
+		void set(N&& n, F&& f) {
+			auto meta = static_cast<simple_usertype_metatable<T>*>(base_t::registrar_data());
 			meta->add(state, n, f);
 		}
 	};

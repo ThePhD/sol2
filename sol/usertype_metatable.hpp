@@ -107,13 +107,13 @@ namespace sol {
 			auto maybeaccessor = stack::get<optional<string_detail::string_shim>>(L, is_index ? -1 : -2);
 			string_detail::string_shim accessor = maybeaccessor.value_or(string_detail::string_shim("(unknown)"));
 			if (is_index)
-				return luaL_error(L, "sol: attempt to index (get) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.data());
+				return luaL_error(L, "sol: attempt to index (get) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.c_str());
 			else
-				return luaL_error(L, "sol: attempt to index (set) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.data());
+				return luaL_error(L, "sol: attempt to index (set) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.c_str());
 		}
 
 		template <bool is_index, typename Base>
-		static void walk_single_base(lua_State* L, bool& found, int& ret, string_detail::string_shim& accessor) {
+		static void walk_single_base(lua_State* L, bool& found, int& ret, string_detail::string_shim&) {
 			if (found)
 				return;
 			const char* metakey = &usertype_traits<Base>::metatable[0];

@@ -58,12 +58,12 @@ namespace sol {
 		const std::size_t id_for<T>::value = unique_id();
 
 		inline decltype(auto) base_class_check_key() {
-			static const auto& key = u8"♡o｡.(✿ฺ｡ ✿ฺ)";
+			static const auto& key = "class_check";
 			return key;
 		}
 
 		inline decltype(auto) base_class_cast_key() {
-			static const auto& key = u8"(◕‿◕✿)";
+			static const auto& key = "class_cast";
 			return key;
 		}
 
@@ -85,11 +85,11 @@ namespace sol {
 
 			template <typename Base, typename... Args>
 			static bool type_check_bases(types<Base, Args...>, std::size_t ti) {
-				return ti != id_for<Base>::value || type_check_bases(types<Args...>(), ti);
+				return ti == id_for<Base>::value || type_check_bases(types<Args...>(), ti);
 			}
 
 			static bool type_check(std::size_t ti) {
-				return ti != id_for<T>::value || type_check_bases(types<Bases...>(), ti);
+				return ti == id_for<T>::value || type_check_bases(types<Bases...>(), ti);
 			}
 
 			static void* type_cast_bases(types<>, T*, std::size_t) {

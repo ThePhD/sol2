@@ -43,12 +43,20 @@ running lua code
 	// load and execute from file
 	lua.script_file("path/to/luascript.lua");
 
+	// run a script, get the result
+	int value = lua.script("return 54");
+	// value == 54
+
 	// load file without execute
-	sol::load_result script1 = state.load_file("path/to/luascript.lua");
+	sol::load_result script1 = lua.load_file("path/to/luascript.lua");
 	script1(); //execute
 	// load string without execute
-	sol::load_result script2 = state.load("a = 'test'");
+	sol::load_result script2 = lua.load("a = 'test'");
 	script2(); //execute
+
+	sol::load_result script3 = lua.load("return 24");
+	int value2 = script3(); // execute, get return value
+	// value2 == 24
 
 
 set and get variables
@@ -345,6 +353,40 @@ The lua code to call these things is:
 	print(v2()) -- 254
 
 Can use ``sol::readonly( &some_class::variable )`` to make a variable readonly and error if someone tries to write to it.
+
+
+self call
+---------
+
+You can pass the 'self' argument through C++ to emulate 'member function' calls in Lua.
+
+.. code-block:: cpp
+	
+	sol::state lua;
+
+	lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::table);
+
+	// a small script using 'self' syntax
+	lua.script(R"(
+	some_table = { some_val = 100 }
+
+	function some_table:add_to_some_val(value)
+	    self.some_val = self.some_val + value
+	end
+
+	function print_some_val()
+	    print("some_table.some_val = " .. some_table.some_val)
+	end
+	)");
+
+	// do some printing
+	lua["print_some_val"]();
+	// 100
+
+	sol::table self = lua["some_table"];
+	self["add_to_some_val"](self, 10);
+	lua["print_some_val"]();
+
 
 
 multiple returns from lua

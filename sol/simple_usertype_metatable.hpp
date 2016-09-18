@@ -161,18 +161,30 @@ namespace sol {
 		bool mustindex;
 		bool secondarymeta;
 
+		template <typename N>
+		void insert(N&& n, object&& o) {
+			std::string key = usertype_detail::make_string(std::forward<N>(n));
+			auto hint = registrations.find(key);
+			if (hint == registrations.cend()) {
+				registrations.emplace_hint(hint, std::move(key), std::move(o));
+				return;
+			}
+			hint->second = std::move(o);
+		}
+
 		template <typename N, typename F, meta::enable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
 		void add_function(lua_State* L, N&& n, F&& f) {
-			registrations.emplace(usertype_detail::make_string(std::forward<N>(n)), make_object(L, as_function_reference(std::forward<F>(f))));
+			insert(std::forward<N>(n), make_object(L, as_function_reference(std::forward<F>(f))));
 		}
 
 		template <typename N, typename F, meta::disable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
 		void add_function(lua_State* L, N&& n, F&& f) {
+			object o = make_object(L, std::forward<F>(f));
 			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
-				callconstructfunc = make_object(L, std::forward<F>(f));
+				callconstructfunc = std::move(o);
 				return;
 			}
-			registrations.emplace(usertype_detail::make_string(std::forward<N>(n)), make_object(L, std::forward<F>(f)));
+			insert(std::forward<N>(n), std::move(o));
 		}
 
 		template <typename N, typename F, meta::disable<is_variable_binding<meta::unqualified_t<F>>> = meta::enabler>
@@ -182,9 +194,16 @@ namespace sol {
 
 		template <typename N, typename F, meta::enable<is_variable_binding<meta::unqualified_t<F>>> = meta::enabler>
 		void add(lua_State*, N&& n, F&& f) {
-			varmap.emplace(usertype_detail::make_string(std::forward<N>(n)), std::make_unique<usertype_detail::callable_binding<T, std::decay_t<F>>>(std::forward<F>(f)));
 			mustindex = true;
 			secondarymeta = true;
+			std::string key = usertype_detail::make_string(std::forward<N>(n));
+			auto o = std::make_unique<usertype_detail::callable_binding<T, std::decay_t<F>>>(std::forward<F>(f));
+			auto hint = varmap.find(key);
+			if (hint == varmap.cend()) {
+				varmap.emplace_hint(hint, std::move(key), std::move(o));
+				return;
+			}
+			hint->second = std::move(o);
 		}
 
 		template <typename N, typename... Fxs>
@@ -194,7 +213,7 @@ namespace sol {
 				callconstructfunc = std::move(o);
 				return;
 			}
-			registrations.emplace(usertype_detail::make_string(std::forward<N>(n)), std::move(o));
+			insert(std::forward<N>(n), std::move(o));
 		}
 
 		template <typename N, typename... Lists>
@@ -204,7 +223,27 @@ namespace sol {
 				callconstructfunc = std::move(o);
 				return;
 			}
-			registrations.emplace(usertype_detail::make_string(std::forward<N>(n)), std::move(o));
+			insert(std::forward<N>(n), std::move(o));
+		}
+
+		template <typename N>
+		void add(lua_State* L, N&& n, destructor_wrapper<void> c) {
+			object o(L, in_place<detail::tagged<T, destructor_wrapper<void>>>, std::move(c));
+			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
+				callconstructfunc = std::move(o);
+				return;
+			}
+			insert(std::forward<N>(n), std::move(o));
+		}
+
+		template <typename N, typename Fx>
+		void add(lua_State* L, N&& n, destructor_wrapper<Fx> c) {
+			object o(L, in_place<detail::tagged<T, destructor_wrapper<Fx>>>, std::move(c));
+			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
+				callconstructfunc = std::move(o);
+				return;
+			}
+			insert(std::forward<N>(n), std::move(o));
 		}
 
 		template <typename... Bases>
@@ -224,20 +263,20 @@ namespace sol {
 			newindexbaseclasspropogation = usertype_detail::walk_all_bases<false, Bases...>;
 		}
 
+	private:
 		template<std::size_t... I, typename Tuple>
 		simple_usertype_metatable(usertype_detail::verified_tag, std::index_sequence<I...>, lua_State* L, Tuple&& args)
-		: callconstructfunc(nil), 
-		indexfunc(&usertype_detail::indexing_fail<true>), newindexfunc(&usertype_detail::indexing_fail<false>),
-		indexbase(&usertype_detail::simple_core_indexing_call<true>), newindexbase(&usertype_detail::simple_core_indexing_call<false>),
-		indexbaseclasspropogation(usertype_detail::walk_all_bases<true>), newindexbaseclasspropogation(&usertype_detail::walk_all_bases<false>),
-		baseclasscheck(nullptr), baseclasscast(nullptr),
-		mustindex(false), secondarymeta(false) {
+			: callconstructfunc(nil),
+			indexfunc(&usertype_detail::indexing_fail<true>), newindexfunc(&usertype_detail::indexing_fail<false>),
+			indexbase(&usertype_detail::simple_core_indexing_call<true>), newindexbase(&usertype_detail::simple_core_indexing_call<false>),
+			indexbaseclasspropogation(usertype_detail::walk_all_bases<true>), newindexbaseclasspropogation(&usertype_detail::walk_all_bases<false>),
+			baseclasscheck(nullptr), baseclasscast(nullptr),
+			mustindex(false), secondarymeta(false) {
 			(void)detail::swallow{ 0,
 				(add(L, detail::forward_get<I * 2>(args), detail::forward_get<I * 2 + 1>(args)),0)...
 			};
 		}
 
-	private:
 		template<typename... Args>
 		simple_usertype_metatable(lua_State* L, usertype_detail::verified_tag v, Args&&... args) : simple_usertype_metatable(v, std::make_index_sequence<sizeof...(Args) / 2>(), L, std::forward_as_tuple(std::forward<Args>(args)...)) {}
 
