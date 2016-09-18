@@ -366,8 +366,8 @@ namespace sol {
 			{ {
 				std::pair<std::string, usertype_detail::find_call_pair>(
 					usertype_detail::make_string(std::get<I * 2>(functions)),
-					{ &usertype_metatable::real_find_call<I * 2, I * 2 + 1, false>,
-					&usertype_metatable::real_find_call<I * 2, I * 2 + 1, true> }
+					usertype_detail::find_call_pair( &usertype_metatable::real_find_call<I * 2, I * 2 + 1, false>,
+					&usertype_metatable::real_find_call<I * 2, I * 2 + 1, true> )
 					)
 			}... }
 			);

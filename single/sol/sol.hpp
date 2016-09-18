@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-09-18 02:16:45.191230 UTC
-// This header was generated with sol v2.14.0 (revision 330df79)
+// Generated 2016-09-18 02:22:48.336425 UTC
+// This header was generated with sol v2.14.0 (revision 132ff87)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -9756,8 +9756,8 @@ namespace sol {
 			{ {
 				std::pair<std::string, usertype_detail::find_call_pair>(
 					usertype_detail::make_string(std::get<I * 2>(functions)),
-					{ &usertype_metatable::real_find_call<I * 2, I * 2 + 1, false>,
-					&usertype_metatable::real_find_call<I * 2, I * 2 + 1, true> }
+					usertype_detail::find_call_pair( &usertype_metatable::real_find_call<I * 2, I * 2 + 1, false>,
+					&usertype_metatable::real_find_call<I * 2, I * 2 + 1, true> )
 					)
 			}... }
 			);
