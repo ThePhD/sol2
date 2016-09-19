@@ -232,7 +232,7 @@ namespace sol {
 		function_result script_file(const std::string& filename) {
 			int index = (::std::max)(lua_gettop(L), 1);
 			stack::script_file(L, filename);
-			int returns = lua_gettop(L) - index;
+			int returns = lua_gettop(L) - (index - 1);
 			return function_result(L, index, returns);
 		}
 

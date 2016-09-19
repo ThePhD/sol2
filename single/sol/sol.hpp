@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-09-19 04:36:16.270592 UTC
-// This header was generated with sol v2.14.2 (revision 431c629)
+// Generated 2016-09-19 05:17:09.304397 UTC
+// This header was generated with sol v2.14.2 (revision 89107d3)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -11739,7 +11739,7 @@ namespace sol {
 		function_result script_file(const std::string& filename) {
 			int index = (::std::max)(lua_gettop(L), 1);
 			stack::script_file(L, filename);
-			int returns = lua_gettop(L) - index;
+			int returns = lua_gettop(L) - (index - 1);
 			return function_result(L, index, returns);
 		}
 
