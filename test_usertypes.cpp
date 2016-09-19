@@ -1393,3 +1393,34 @@ TEST_CASE("usertype/as_function", "Ensure that variables can be turned into func
 	REQUIRE(x == 24);
 	REQUIRE(y == 24);
 }
+
+TEST_CASE("usertype/destruction-test", "make sure usertypes are properly destructed and don't double-delete memory or segfault") {
+	sol::state lua;
+
+	class CrashClass {
+	public:
+		CrashClass() {
+		}
+
+		~CrashClass() {
+			a = 10; // This will cause a crash.
+		}
+
+	private:
+		int a;
+	};
+
+	lua.new_usertype<CrashClass>("CrashClass",
+		sol::call_constructor, sol::constructors<sol::types<>>()
+		);
+
+	lua.script(R"(
+		function testCrash()
+			local x = CrashClass()
+			end
+		)");
+
+	for (int i = 0; i < 1000; ++i) {
+		lua["testCrash"]();
+	}
+}

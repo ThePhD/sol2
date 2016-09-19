@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-09-18 02:39:04.820718 UTC
-// This header was generated with sol v2.14.0 (revision 1dfeb1d)
+// Generated 2016-09-19 04:36:16.270592 UTC
+// This header was generated with sol v2.14.2 (revision 431c629)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -8448,8 +8448,8 @@ namespace sol {
 
 		template <typename T>
 		struct pusher<detail::tagged<T, destructor_wrapper<void>>> {
-			static int push(lua_State* L, detail::tagged<T, destructor_wrapper<void>>) {
-				lua_CFunction cf = detail::user_alloc_destroy<T>;
+			static int push(lua_State* L, destructor_wrapper<void>) {
+				lua_CFunction cf = detail::usertype_alloc_destroy<T>;
 				return stack::push(L, cf);
 			}
 		};

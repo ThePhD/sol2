@@ -406,3 +406,34 @@ TEST_CASE("usertype/simple-runtime-append", "allow extra functions to be appende
 	REQUIRE(z == 100);
 	REQUIRE(w == 100);
 }
+
+TEST_CASE("usertype/simple-destruction-test", "make sure usertypes are properly destructed and don't double-delete memory or segfault") {
+	sol::state lua;
+
+	class CrashClass {
+	public:
+		CrashClass() {
+		}
+
+		~CrashClass() {
+			a = 10; // This will cause a crash.
+		}
+
+	private:
+		int a;
+	};
+
+	lua.new_simple_usertype<CrashClass>("CrashClass",
+		sol::call_constructor, sol::constructors<sol::types<>>()
+		);
+
+	lua.script(R"(
+		function testCrash()
+			local x = CrashClass()
+			end
+		)");
+
+	for (int i = 0; i < 1000; ++i) {
+		lua["testCrash"]();
+	}
+}
