@@ -234,9 +234,15 @@ namespace sol {
 				apply<false>(std::index_sequence<I1, I...>(), L, std::forward<Keys>(keys), std::forward<Value>(value), -1);
 			}
 
+			template <bool g, std::size_t I0, std::size_t... I, typename Keys, typename Value>
+			void top_apply(std::index_sequence<I0, I...>, lua_State* L, Keys&& keys, Value&& value, int tableindex) {
+				apply<g>(std::index_sequence<I0, I...>(), L, std::forward<Keys>(keys), std::forward<Value>(value), tableindex);
+				lua_pop(L, static_cast<int>(sizeof...(I)));
+			}
+
 			template <typename Keys, typename Value>
 			void set(lua_State* L, Keys&& keys, Value&& value, int tableindex = -3) {
-				apply<b>(std::make_index_sequence<sizeof...(Args)>(), L, std::forward<Keys>(keys), std::forward<Value>(value), tableindex);
+				top_apply<b>(std::make_index_sequence<sizeof...(Args)>(), L, std::forward<Keys>(keys), std::forward<Value>(value), tableindex);
 			}
 		};
 
@@ -246,6 +252,7 @@ namespace sol {
 			void set(lua_State* L, Keys&& keys, Value&& value, int tableindex = -1) {
 				get_field<b, raw>(L, detail::forward_get<0>(keys), tableindex);
 				set_field<false, raw>(L, detail::forward_get<1>(keys), std::forward<Value>(value));
+				lua_pop(L, 1);
 			}
 		};
 	} // stack

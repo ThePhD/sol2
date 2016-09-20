@@ -9,38 +9,38 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    :name: apitoc
    :maxdepth: 2
 
-   compatibility
-   coroutine
-   c_call
-   error
-   function
-   protected_function
-   object
-   reference
-   stack_reference
-   make_reference
-   overload
-   protect
-   readonly
-   var
-   resolve
-   as_function
-   property
-   proxy
-   stack
-   optional
    state
    table
+   proxy
    as_table
-   metatable_key
-   this_state
-   thread
-   tie
-   types
-   user
    usertype
    simple_usertype
-   userdata
    usertype_memory
    unique_usertype_traits
+   tie
+   function
+   protected_function
+   coroutine
+   error
+   object
+   userdata
+   reference
+   thread
+   stack_reference
+   make_reference
+   optional
+   this_state
    variadic_args
+   overload
+   property
+   var
+   protect
+   readonly
+   as_function
+   c_call
+   resolve
+   stack
+   user
+   compatibility
+   types
+   metatable_key

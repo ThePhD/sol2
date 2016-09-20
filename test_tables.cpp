@@ -77,6 +77,42 @@ TEST_CASE("tables/as-enum-classes", "Making sure enums can be put in and gotten 
 	REQUIRE(dir == direction::up);
 }
 
+TEST_CASE("tables/cleanup", "make sure tables leave the stack balanced") {
+	sol::state lua;
+	lua.open_libraries();
+
+	auto f = [] { return 5; };
+	for (int i = 0; i < 30; i++) {
+		std::string name = std::string("init") + std::to_string(i);
+		int top = lua_gettop(lua);
+		lua[name] = f;
+		int aftertop = lua_gettop(lua);
+		REQUIRE(aftertop == top);
+		int val = lua[name]();
+		REQUIRE(val == 5);
+	}
+}
+
+TEST_CASE("tables/nested-cleanup", "make sure tables leave the stack balanced") {
+	sol::state lua;
+	lua.open_libraries();
+
+	lua.script("A={}");
+	auto f = [] { return 5; };
+	for (int i = 0; i < 30; i++) {
+		std::string name = std::string("init") + std::to_string(i);
+		int top = lua_gettop(lua);
+		auto A = lua["A"];
+		int beforetop = lua_gettop(lua);
+		REQUIRE(beforetop == top);
+		A[name] = f;
+		int aftertop = lua_gettop(lua);
+		REQUIRE(aftertop == top);
+		int val = A[name]();
+		REQUIRE(val == 5);
+	}
+}
+
 TEST_CASE("tables/new_enum", "Making sure enums can be put in and gotten out as values") {
 	enum class direction {
 		up,
