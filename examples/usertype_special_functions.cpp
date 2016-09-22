@@ -60,14 +60,9 @@ int main() {
 	assert(s1.x == 1 && s1.y == -1);
 
 	lua["a2"] = lua["a1"];
-	lua["a3"] = &a1;
 
 	lua.script(R"(
-		-- automatic comparison generated for Lua: 
-		-- pointers are equal
 		assert(a1 == a2)
-		assert(a1 == a3)
-		assert(a2 == a3)
 	)");
 
 	std::cout << std::endl;

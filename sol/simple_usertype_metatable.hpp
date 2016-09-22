@@ -66,12 +66,15 @@ namespace sol {
 			simple_map(const char* mkey, base_walk index, base_walk newindex, variable_map&& vars, function_map&& funcs) : metakey(mkey), variables(std::move(vars)), functions(std::move(funcs)), indexbaseclasspropogation(index), newindexbaseclasspropogation(newindex) {}
 		};
 
+		template <typename T>
 		inline int simple_metatable_newindex(lua_State* L) {
-			simple_map& sm = stack::get<user<simple_map>>(L, upvalue_index(1));
-			luaL_getmetatable(L, sm.metakey);
-			stack::set_field<false, true>(L, stack_reference(L, 2), stack_reference(L, 3), lua_gettop(L));
-			lua_settop(L, 0);
-			return 0;
+			if (stack::stack_detail::check_metatable<T, false>(L, 1)) {
+				stack::set_field<false, true>(L, stack_reference(L, 2), stack_reference(L, 3), 1);
+				lua_settop(L, 0);
+				return 0;
+			}
+			lua_pop(L, 1);
+			return indexing_fail<false>(L);
 		}
 
 		template <bool is_index, bool toplevel = false>
@@ -275,7 +278,7 @@ namespace sol {
 		template<std::size_t... I, typename Tuple>
 		simple_usertype_metatable(usertype_detail::verified_tag, std::index_sequence<I...>, lua_State* L, Tuple&& args)
 			: callconstructfunc(nil),
-			indexfunc(&usertype_detail::indexing_fail<true>), newindexfunc(&usertype_detail::simple_metatable_newindex),
+			indexfunc(&usertype_detail::indexing_fail<true>), newindexfunc(&usertype_detail::simple_metatable_newindex<T>),
 			indexbase(&usertype_detail::simple_core_indexing_call<true>), newindexbase(&usertype_detail::simple_core_indexing_call<false>),
 			indexbaseclasspropogation(usertype_detail::walk_all_bases<true>), newindexbaseclasspropogation(&usertype_detail::walk_all_bases<false>),
 			baseclasscheck(nullptr), baseclasscast(nullptr),

@@ -32,14 +32,14 @@
 namespace sol {
 	namespace stack {
 		namespace stack_detail {
-			template <typename T>
+			template <typename T, bool poptable = true>
 			inline bool check_metatable(lua_State* L, int index = -2) {
 				const auto& metakey = usertype_traits<T>::metatable;
 				luaL_getmetatable(L, &metakey[0]);
 				const type expectedmetatabletype = static_cast<type>(lua_type(L, -1));
 				if (expectedmetatabletype != type::nil) {
 					if (lua_rawequal(L, -1, index) == 1) {
-						lua_pop(L, 2);
+						lua_pop(L, 1 + static_cast<int>(poptable));
 						return true;
 					}
 				}
