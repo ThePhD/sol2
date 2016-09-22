@@ -66,13 +66,13 @@ g.data = mdata.third
 list3 = g:generate_list()
 
 print("From lua: ")
-for i, v in list1 do
+for i = 1, #list1 do
 	print("\tlist1[" .. i .. "] = " .. list1[i])
 end
-for i, v in list2 do
+for i = 1, #list2 do
 	print("\tlist2[" .. i .. "] = " .. list2[i])
 end
-for i, #t in list3 do
+for i = 1, #list3 do
 	print("\tlist3[" .. i .. "] = " .. list3[i])
 end
 
