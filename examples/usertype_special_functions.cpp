@@ -2,6 +2,7 @@
 #include <sol.hpp>
 #include <iostream>
 #include <cassert>
+#include <cmath>
 
 struct vec {
 	double x;
