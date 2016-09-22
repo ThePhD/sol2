@@ -542,8 +542,7 @@ Note that you can change the data of usertype variables and it will affect thing
 C++ classes put into Lua
 ------------------------
 
-See this :doc:`section here<cxx-in-lua>`.
-
+See this :doc:`section here<cxx-in-lua>` and after perhaps see if :doc:`simple usertypes suit your needs<../api/simple_usertype>`. Also check out some `a basic example`_, `special functions`_ and  `initializers`_, 
 
 namespacing
 -----------
@@ -597,3 +596,8 @@ Some more advanced things you can do/read about:
 	* :doc:`variadic arguments<../api/variadic_args>` in functions with ``sol::variadic_args``.
 	* :doc:`this_state<../api/this_state>` to get the current ``lua_State*``.
 	* :doc:`resolve<../api/resolve>` overloads in case you have overloaded functions; a cleaner casting utility.
+
+.. _a basic example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype.cpp
+.. _special functions: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_special_functions.cpp
+.. _initializers: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_initializers.cpp
+

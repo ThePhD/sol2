@@ -61,7 +61,8 @@ It's a fairly minimal class, but we don't want to have to rewrite this with meta
 	p1 = player.new(2)
 
 	-- p2 is still here from being 
-	-- set with lua["p2"] = player(0); below
+	-- set with lua["p2"] = player(0);
+	-- in cpp file
 	local p2shoots = p2:shoot()
 	assert(not p2shoots)
 	-- had 0 ammo
@@ -131,3 +132,7 @@ To do this, you bind things using the ``new_usertype`` and ``set_usertype`` meth
 That script should run fine now, and you can observe and play around with the values. Even more stuff :doc:`you can do<../api/usertype>` is described elsewhere, like initializer functions (private constructors / destructors support), "static" functions callable with ``name.my_function( ... )``, and overloaded member functions. You can even bind global variables (even by reference with ``std::ref``) with ``sol::var``. There's a lot to try out!
 
 This is a powerful way to allow reuse of C++ code from Lua beyond just registering functions, and should get you on your way to having more complex classes and data structures! In the case that you need more customization than just usertypes, however, you can customize Sol to behave more fit to your desires by using the desired :doc:`customization and extension structures<customization>`.
+
+You can check out this code and more complicated code at the `examples directory`_ by looking at the ``usertype_``-prefixed examples.
+
+.. _examples directory: https://github.com/ThePhD/sol2/tree/develop/examples
