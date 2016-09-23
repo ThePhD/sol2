@@ -246,7 +246,7 @@ Equivalent Lua code:
 
 You can put anything you want in tables as values or keys, including strings, numbers, functions, other tables.
 
-Note that this idea that things can be nested is important and will help later when you get into :ref:`namespacing<namespaceing>`.
+Note that this idea that things can be nested is important and will help later when you get into :ref:`namespacing<namespacing>`.
 
 
 functions
@@ -543,6 +543,9 @@ C++ classes put into Lua
 ------------------------
 
 See this :doc:`section here<cxx-in-lua>` and after perhaps see if :doc:`simple usertypes suit your needs<../api/simple_usertype>`. Also check out some `a basic example`_, `special functions`_ and  `initializers`_, 
+
+
+.. _namespacing:
 
 namespacing
 -----------

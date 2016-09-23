@@ -25,6 +25,10 @@ Bars go up to the average execution time. Lower is better. Reported times are fo
 	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20member%20variable.png
 	:alt: bind a variable to an object and call it in Lua code
 
+.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20member%20variable.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20many%20member%20variables.png
+	:alt: bind MANY variables to an object and call it in Lua code
+
 .. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20c%20function%20through%20lua.png
 	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20c%20function%20through%20lua.png
 	:alt: retrieve a C function bound in Lua and call it from C++
