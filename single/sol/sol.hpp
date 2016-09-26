@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-09-22 16:13:14.308519 UTC
-// This header was generated with sol v2.14.2 (revision dc000fb)
+// Generated 2016-09-26 08:01:11.472268 UTC
+// This header was generated with sol v2.14.2 (revision 63093ec)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3005,6 +3005,12 @@ namespace sol {
 		operator int() const { return index; }
 	};
 
+	struct raw_index {
+		int index;
+		raw_index(int i) : index(i) {}
+		operator int() const { return index; }
+	};
+
 	struct absolute_index {
 		int index;
 		absolute_index(lua_State* L, int idx) : index(lua_absindex(L, idx)) {}
@@ -3581,6 +3587,8 @@ namespace sol {
 		stack_reference() noexcept = default;
 		stack_reference(nil_t) noexcept : stack_reference() {};
 		stack_reference(lua_State* L, int i) noexcept : L(L), index(lua_absindex(L, i)) {}
+		stack_reference(lua_State* L, absolute_index i) noexcept : L(L), index(i) {}
+		stack_reference(lua_State* L, raw_index i) noexcept : L(L), index(i) {}
 		stack_reference(stack_reference&& o) noexcept = default;
 		stack_reference& operator=(stack_reference&&) noexcept = default;
 		stack_reference(const stack_reference&) noexcept = default;
@@ -5354,12 +5362,22 @@ namespace sol {
 
 		template<typename... Args>
 		struct getter<std::tuple<Args...>> {
-			template <std::size_t... I>
-			static decltype(auto) apply(std::index_sequence<I...>, lua_State* L, int index, record& tracking) {
-				return std::tuple<decltype(stack::get<Args>(L, index))...>{stack::get<Args>(L, index + tracking.used, tracking)...};
+			typedef std::tuple<decltype(stack::get<Args>(nullptr, 0))...> R;
+			
+			template <typename... TArgs>
+			static R apply(std::index_sequence<>, lua_State*, int, record&, TArgs&&... args) {
+				// Fuck you too, VC++
+				return R{std::forward<TArgs>(args)...};
+			}
+			
+			template <std::size_t I, std::size_t... Ix, typename... TArgs>
+			static R apply(std::index_sequence<I, Ix...>, lua_State* L, int index, record& tracking, TArgs&&... args) {
+				// Fuck you too, VC++
+				typedef std::tuple_element_t<I, std::tuple<Args...>> T;
+				return apply(std::index_sequence<Ix...>(), L, index, tracking, std::forward<TArgs>(args)..., stack::get<T>(L, index + tracking.used, tracking));
 			}
 
-			static decltype(auto) get(lua_State* L, int index, record& tracking) {
+			static R get(lua_State* L, int index, record& tracking) {
 				return apply(std::make_index_sequence<sizeof...(Args)>(), L, index, tracking);
 			}
 		};

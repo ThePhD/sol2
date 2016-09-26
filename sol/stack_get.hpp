@@ -504,12 +504,22 @@ namespace sol {
 
 		template<typename... Args>
 		struct getter<std::tuple<Args...>> {
-			template <std::size_t... I>
-			static decltype(auto) apply(std::index_sequence<I...>, lua_State* L, int index, record& tracking) {
-				return std::tuple<decltype(stack::get<Args>(L, index))...>{stack::get<Args>(L, index + tracking.used, tracking)...};
+			typedef std::tuple<decltype(stack::get<Args>(nullptr, 0))...> R;
+			
+			template <typename... TArgs>
+			static R apply(std::index_sequence<>, lua_State*, int, record&, TArgs&&... args) {
+				// Fuck you too, VC++
+				return R{std::forward<TArgs>(args)...};
+			}
+			
+			template <std::size_t I, std::size_t... Ix, typename... TArgs>
+			static R apply(std::index_sequence<I, Ix...>, lua_State* L, int index, record& tracking, TArgs&&... args) {
+				// Fuck you too, VC++
+				typedef std::tuple_element_t<I, std::tuple<Args...>> T;
+				return apply(std::index_sequence<Ix...>(), L, index, tracking, std::forward<TArgs>(args)..., stack::get<T>(L, index + tracking.used, tracking));
 			}
 
-			static decltype(auto) get(lua_State* L, int index, record& tracking) {
+			static R get(lua_State* L, int index, record& tracking) {
 				return apply(std::make_index_sequence<sizeof...(Args)>(), L, index, tracking);
 			}
 		};

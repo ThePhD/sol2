@@ -86,6 +86,17 @@ struct fer {
 	}
 };
 
+TEST_CASE("functions/tuple-returns", "Make sure tuple returns are ordered properly") {
+	sol::state lua;
+	lua.script("function f() return '3', 4 end");
+
+	std::tuple<std::string, int> result = lua["f"]();
+	auto s = std::get<0>(result);
+	auto v = std::get<1>(result);
+	REQUIRE(s == "3");
+	REQUIRE(v == 4);
+}
+
 TEST_CASE("functions/overload-resolution", "Check if overloaded function resolution templates compile/work") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

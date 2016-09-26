@@ -174,6 +174,12 @@ namespace sol {
 		operator int() const { return index; }
 	};
 
+	struct raw_index {
+		int index;
+		raw_index(int i) : index(i) {}
+		operator int() const { return index; }
+	};
+
 	struct absolute_index {
 		int index;
 		absolute_index(lua_State* L, int idx) : index(lua_absindex(L, idx)) {}
