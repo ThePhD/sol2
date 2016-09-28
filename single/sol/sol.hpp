@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-09-26 08:01:11.472268 UTC
-// This header was generated with sol v2.14.2 (revision 63093ec)
+// Generated 2016-09-28 23:10:06.808593 UTC
+// This header was generated with sol v2.14.5 (revision 86664b4)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -10253,7 +10253,7 @@ namespace sol {
 			indexbase(&usertype_detail::simple_core_indexing_call<true>), newindexbase(&usertype_detail::simple_core_indexing_call<false>),
 			indexbaseclasspropogation(usertype_detail::walk_all_bases<true>), newindexbaseclasspropogation(&usertype_detail::walk_all_bases<false>),
 			baseclasscheck(nullptr), baseclasscast(nullptr),
-			mustindex(false), secondarymeta(false) {
+			mustindex(true), secondarymeta(true) {
 			(void)detail::swallow{ 0,
 				(add(L, detail::forward_get<I * 2>(args), detail::forward_get<I * 2 + 1>(args)),0)...
 			};
@@ -10547,7 +10547,7 @@ namespace sol {
 				if (k <= src.size() && k > 0) {
 					--k;
 					std::advance(it, k);
-					return stack::push(L, *it);
+					return stack::push_reference(L, *it);
 				}
 			}
 			return stack::push(L, nil);
@@ -10557,7 +10557,7 @@ namespace sol {
 			K k = stack::get<K>(L, 2);
 			--k;
 			std::advance(it, k);
-			return stack::push(L, *it);
+			return stack::push_reference(L, *it);
 #endif // Safety
 		}
 
@@ -10606,8 +10606,7 @@ namespace sol {
 			if (it == end(source)) {
 				return 0;
 			}
-			int p = stack::push(L, k + 1);
-			p += stack::push(L, *it);
+			int p = stack::multi_push_reference(L, k + 1, *it);
 			std::advance(it, 1);
 			return p;
 		}
@@ -10704,7 +10703,7 @@ namespace sol {
 				auto it = detail::find(src, *k);
 				if (it != end(src)) {
 					auto& v = *it;
-					return stack::push(L, v.second);
+					return stack::push_reference(L, v.second);
 				}
 			}
 			return stack::push(L, nil);
