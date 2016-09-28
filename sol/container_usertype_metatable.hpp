@@ -105,7 +105,7 @@ namespace sol {
 				if (k <= src.size() && k > 0) {
 					--k;
 					std::advance(it, k);
-					return stack::push(L, *it);
+					return stack::push_reference(L, *it);
 				}
 			}
 			return stack::push(L, nil);
@@ -115,7 +115,7 @@ namespace sol {
 			K k = stack::get<K>(L, 2);
 			--k;
 			std::advance(it, k);
-			return stack::push(L, *it);
+			return stack::push_reference(L, *it);
 #endif // Safety
 		}
 
@@ -164,8 +164,7 @@ namespace sol {
 			if (it == end(source)) {
 				return 0;
 			}
-			int p = stack::push(L, k + 1);
-			p += stack::push(L, *it);
+			int p = stack::multi_push_reference(L, k + 1, *it);
 			std::advance(it, 1);
 			return p;
 		}
@@ -262,7 +261,7 @@ namespace sol {
 				auto it = detail::find(src, *k);
 				if (it != end(src)) {
 					auto& v = *it;
-					return stack::push(L, v.second);
+					return stack::push_reference(L, v.second);
 				}
 			}
 			return stack::push(L, nil);

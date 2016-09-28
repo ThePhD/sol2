@@ -272,3 +272,39 @@ TEST_CASE("containers/arbitrary-creation", "userdata and tables should be usable
 	REQUIRE(c.get<std::string>("name") == "Rapptz");
 	REQUIRE(c.get<std::string>("project") == "sol");
 }
+
+TEST_CASE("containers/usertype-transparency", "Make sure containers pass their arguments through transparently and push the results as references, not new values") {
+	class A {
+	public:
+		int a;
+		A(int b = 2) : a(b) {};
+
+		void func() { }
+	};
+
+	struct B {
+
+		B() {
+			for (std::size_t i = 0; i < 20; ++i) {
+				a_list.emplace_back(static_cast<int>(i));
+			}
+		}
+
+		std::vector<A> a_list;
+	};
+
+	sol::state lua;
+	lua.new_usertype<B>("B",
+		"a_list", &B::a_list
+		);
+
+	lua.script(R"(
+b = B.new()
+a_ref = b.a_list[2]
+)");
+
+	B& b = lua["b"];
+	A& a_ref = lua["a_ref"];
+	REQUIRE(&b.a_list[1] == &a_ref);
+	REQUIRE(b.a_list[1].a == a_ref.a);
+}

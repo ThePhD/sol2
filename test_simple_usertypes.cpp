@@ -437,3 +437,23 @@ TEST_CASE("usertype/simple-destruction-test", "make sure usertypes are properly 
 		lua["testCrash"]();
 	}
 }
+
+TEST_CASE("usertype/simple-table-append", "Ensure that appending to the meta table also affects the internal function table for pointers as well") {
+	struct A {
+		int func() {
+			return 5000;
+		}
+	};
+
+	sol::state lua;
+	lua.open_libraries();
+
+	lua.new_simple_usertype<A>("A");
+	sol::table table = lua["A"];
+	table["func"] = &A::func;
+	A a;
+	lua.set("a", &a);
+	REQUIRE_NOTHROW(
+		lua.script("assert(a:func() == 5000)")
+	);
+}

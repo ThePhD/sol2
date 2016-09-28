@@ -282,7 +282,7 @@ namespace sol {
 			indexbase(&usertype_detail::simple_core_indexing_call<true>), newindexbase(&usertype_detail::simple_core_indexing_call<false>),
 			indexbaseclasspropogation(usertype_detail::walk_all_bases<true>), newindexbaseclasspropogation(&usertype_detail::walk_all_bases<false>),
 			baseclasscheck(nullptr), baseclasscast(nullptr),
-			mustindex(false), secondarymeta(false) {
+			mustindex(true), secondarymeta(true) {
 			(void)detail::swallow{ 0,
 				(add(L, detail::forward_get<I * 2>(args), detail::forward_get<I * 2 + 1>(args)),0)...
 			};
