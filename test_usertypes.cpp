@@ -741,8 +741,6 @@ TEST_CASE("usertype/reference-and-constness", "Make sure constness compiles prop
 		nested n;
 	};
 
-	bool caughterror = false;
-	std::string msg;
 	sol::state lua;
 	lua.new_usertype<woof>("woof",
 		"b", &woof::b);
