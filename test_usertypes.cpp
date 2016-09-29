@@ -349,7 +349,6 @@ TEST_CASE("usertype/usertype-utility-derived", "usertype classes must play nice 
 	lua.set_usertype(derivedusertype);
 
 	lua.script("derived = Derived.new(7)");
-	Derived& derived = lua["derived"];
 	lua.script("dgn = derived:get_num()\n"
 		"print(dgn)");
 	lua.script("dgn10 = derived:get_num_10()\n"
@@ -608,6 +607,8 @@ TEST_CASE("usertype/destructor-tests", "Show that proper copies / destruction ha
 		REQUIRE(created == 4);
 		REQUIRE(destroyed == 0);
 		REQUIRE(std::addressof(x1) == std::addressof(x1ref));
+		REQUIRE(std::addressof(x1copyref) != std::addressof(x1));
+		REQUIRE(std::addressof(x2copyref) != std::addressof(x2));
 	}
 	REQUIRE(created == 4);
 	REQUIRE(destroyed == 4);

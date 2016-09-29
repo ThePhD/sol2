@@ -74,6 +74,7 @@ namespace sol {
 			auto pp = stack::push_pop(*this);
 			return stack::check<T>(base_t::lua_state(), -1, no_panic);
 		}
+
 		template <bool invert_and_pop = false>
 		basic_object(std::integral_constant<bool, invert_and_pop>, lua_State* L, int index = -1) noexcept : base_t(L, index) {
 			if (invert_and_pop) {
@@ -90,6 +91,14 @@ namespace sol {
 		basic_object(basic_object&&) = default;
 		basic_object& operator=(const basic_object&) = default;
 		basic_object& operator=(basic_object&&) = default;
+		basic_object& operator=(const base_t& b) {
+			base_t::operator=(b);
+			return *this;
+		}
+		basic_object& operator=(base_t&& b) {
+			base_t::operator=(std::move(b));
+			return *this;
+		}
 		basic_object(const stack_reference& r) noexcept : basic_object(r.lua_state(), r.stack_index()) {}
 		basic_object(stack_reference&& r) noexcept : basic_object(r.lua_state(), r.stack_index()) {}
 		basic_object(lua_State* L, int index = -1) noexcept : base_t(L, index) {}

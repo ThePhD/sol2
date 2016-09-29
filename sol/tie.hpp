@@ -85,7 +85,7 @@ namespace sol {
 	};
 
 	template <typename... Tn>
-	struct tie_size<::sol::tie_t<Tn...>> : ::std::tuple_size<::std::tuple<Tn...>> { };
+	struct tie_size< tie_t<Tn...> > : std::tuple_size< std::tuple<Tn...> > { };
 
 	namespace adl_barrier_detail {
 		template <typename... Tn>

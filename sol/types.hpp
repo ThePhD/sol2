@@ -138,8 +138,8 @@ namespace sol {
 		typedef std::shared_ptr<T> actual_type;
 		static const bool value = true;
 
-		static bool is_null(const actual_type& value) {
-			return value == nullptr;
+		static bool is_null(const actual_type& p) {
+			return p == nullptr;
 		}
 
 		static type* get(const actual_type& p) {
@@ -153,8 +153,8 @@ namespace sol {
 		typedef std::unique_ptr<T, D> actual_type;
 		static const bool value = true;
 
-		static bool is_null(const actual_type& value) {
-			return value == nullptr;
+		static bool is_null(const actual_type& p) {
+			return p == nullptr;
 		}
 
 		static type* get(const actual_type& p) {

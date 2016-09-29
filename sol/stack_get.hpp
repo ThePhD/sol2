@@ -334,15 +334,15 @@ namespace sol {
 		struct getter<wchar_t> {
 			static wchar_t get(lua_State* L, int index, record& tracking) {
 				auto str = getter<std::wstring>{}.get(L, index, tracking);
-				return str.size() > 0 ? str[0] : '\0';
+				return str.size() > 0 ? str[0] : wchar_t(0);
 			}
 		};
 
 		template<>
 		struct getter<char16_t> {
-			static char get(lua_State* L, int index, record& tracking) {
+			static char16_t get(lua_State* L, int index, record& tracking) {
 				auto str = getter<std::u16string>{}.get(L, index, tracking);
-				return str.size() > 0 ? str[0] : '\0';
+				return str.size() > 0 ? str[0] : char16_t(0);
 			}
 		};
 
@@ -350,7 +350,7 @@ namespace sol {
 		struct getter<char32_t> {
 			static char32_t get(lua_State* L, int index, record& tracking) {
 				auto str = getter<std::u32string>{}.get(L, index, tracking);
-				return str.size() > 0 ? str[0] : '\0';
+				return str.size() > 0 ? str[0] : char32_t(0);
 			}
 		};
 #endif // codecvt header support
