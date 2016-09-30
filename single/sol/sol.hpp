@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-09-28 23:10:06.808593 UTC
-// This header was generated with sol v2.14.5 (revision 86664b4)
+// Generated 2016-09-30 05:42:33.802337 UTC
+// This header was generated with sol v2.14.8 (revision 6c34a2a)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -2969,8 +2969,8 @@ namespace sol {
 		typedef std::shared_ptr<T> actual_type;
 		static const bool value = true;
 
-		static bool is_null(const actual_type& value) {
-			return value == nullptr;
+		static bool is_null(const actual_type& p) {
+			return p == nullptr;
 		}
 
 		static type* get(const actual_type& p) {
@@ -2984,8 +2984,8 @@ namespace sol {
 		typedef std::unique_ptr<T, D> actual_type;
 		static const bool value = true;
 
-		static bool is_null(const actual_type& value) {
-			return value == nullptr;
+		static bool is_null(const actual_type& p) {
+			return p == nullptr;
 		}
 
 		static type* get(const actual_type& p) {
@@ -3889,7 +3889,7 @@ namespace sol {
 	};
 
 	template <typename... Tn>
-	struct tie_size<::sol::tie_t<Tn...>> : ::std::tuple_size<::std::tuple<Tn...>> { };
+	struct tie_size< tie_t<Tn...> > : std::tuple_size< std::tuple<Tn...> > { };
 
 	namespace adl_barrier_detail {
 		template <typename... Tn>
@@ -5192,15 +5192,15 @@ namespace sol {
 		struct getter<wchar_t> {
 			static wchar_t get(lua_State* L, int index, record& tracking) {
 				auto str = getter<std::wstring>{}.get(L, index, tracking);
-				return str.size() > 0 ? str[0] : '\0';
+				return str.size() > 0 ? str[0] : wchar_t(0);
 			}
 		};
 
 		template<>
 		struct getter<char16_t> {
-			static char get(lua_State* L, int index, record& tracking) {
+			static char16_t get(lua_State* L, int index, record& tracking) {
 				auto str = getter<std::u16string>{}.get(L, index, tracking);
-				return str.size() > 0 ? str[0] : '\0';
+				return str.size() > 0 ? str[0] : char16_t(0);
 			}
 		};
 
@@ -5208,7 +5208,7 @@ namespace sol {
 		struct getter<char32_t> {
 			static char32_t get(lua_State* L, int index, record& tracking) {
 				auto str = getter<std::u32string>{}.get(L, index, tracking);
-				return str.size() > 0 ? str[0] : '\0';
+				return str.size() > 0 ? str[0] : char32_t(0);
 			}
 		};
 #endif // codecvt header support
@@ -8712,21 +8712,26 @@ namespace sol {
 #include <algorithm>
 
 namespace sol {
-	template <typename base_t>
-	class basic_protected_function : public base_t {
-	private:
-		static reference& handler_storage() {
+	namespace detail {
+		inline reference& handler_storage() {
 			static sol::reference h;
 			return h;
 		}
-
+	}
+	
+	template <typename base_t>
+	class basic_protected_function : public base_t {
 	public:
-		static const reference& get_default_handler() {
-			return handler_storage();
+		static reference& get_default_handler() {
+			return detail::handler_storage();
 		}
 
-		static void set_default_handler(reference& ref) {
-			handler_storage() = ref;
+		static void set_default_handler(const reference& ref) {
+			detail::handler_storage() = ref;
+		}
+
+		static void set_default_handler(reference&& ref) {
+			detail::handler_storage() = std::move(ref);
 		}
 
 	private:
@@ -8822,11 +8827,11 @@ namespace sol {
 		basic_protected_function& operator=(const basic_protected_function&) = default;
 		basic_protected_function(basic_protected_function&&) = default;
 		basic_protected_function& operator=(basic_protected_function&&) = default;
-		basic_protected_function(const basic_function<base_t>& b) : base_t(b) {}
-		basic_protected_function(basic_function<base_t>&& b) : base_t(std::move(b)) {}
-		basic_protected_function(const stack_reference& r) : basic_protected_function(r.lua_state(), r.stack_index()) {}
-		basic_protected_function(stack_reference&& r) : basic_protected_function(r.lua_state(), r.stack_index()) {}
-		basic_protected_function(lua_State* L, int index = -1) : base_t(L, index), error_handler(get_default_handler()) {
+		basic_protected_function(const basic_function<base_t>& b, reference eh = get_default_handler()) : base_t(b), error_handler(std::move(eh)) {}
+		basic_protected_function(basic_function<base_t>&& b, reference eh = get_default_handler()) : base_t(std::move(b)), error_handler(std::move(eh)) {}
+		basic_protected_function(const stack_reference& r, reference eh = get_default_handler()) : basic_protected_function(r.lua_state(), r.stack_index(), std::move(eh)) {}
+		basic_protected_function(stack_reference&& r, reference eh = get_default_handler()) : basic_protected_function(r.lua_state(), r.stack_index(), std::move(eh)) {}
+		basic_protected_function(lua_State* L, int index = -1, reference eh = get_default_handler()) : base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			stack::check<basic_protected_function>(L, index, type_panic);
 #endif // Safety
@@ -9207,6 +9212,7 @@ namespace sol {
 			auto pp = stack::push_pop(*this);
 			return stack::check<T>(base_t::lua_state(), -1, no_panic);
 		}
+
 		template <bool invert_and_pop = false>
 		basic_object(std::integral_constant<bool, invert_and_pop>, lua_State* L, int index = -1) noexcept : base_t(L, index) {
 			if (invert_and_pop) {
@@ -9223,6 +9229,14 @@ namespace sol {
 		basic_object(basic_object&&) = default;
 		basic_object& operator=(const basic_object&) = default;
 		basic_object& operator=(basic_object&&) = default;
+		basic_object& operator=(const base_t& b) {
+			base_t::operator=(b);
+			return *this;
+		}
+		basic_object& operator=(base_t&& b) {
+			base_t::operator=(std::move(b));
+			return *this;
+		}
 		basic_object(const stack_reference& r) noexcept : basic_object(r.lua_state(), r.stack_index()) {}
 		basic_object(stack_reference&& r) noexcept : basic_object(r.lua_state(), r.stack_index()) {}
 		basic_object(lua_State* L, int index = -1) noexcept : base_t(L, index) {}
