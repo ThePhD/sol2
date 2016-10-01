@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-10-01 06:28:57.464339 UTC
-// This header was generated with sol v2.14.8 (revision b05ce97)
+// Generated 2016-10-01 06:56:10.404062 UTC
+// This header was generated with sol v2.14.8 (revision 72f39d8)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -804,7 +804,10 @@ namespace sol {
 # define TR2_OPTIONAL_REQUIRES(...) typename ::std::enable_if<__VA_ARGS__::value, bool>::type = false
 
 # if defined __GNUC__ // NOTE: GNUC is also defined for Clang
-#   if (__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)
+#   if (__GNUC__ >= 5)
+#     define TR2_OPTIONAL_GCC_5_0_AND_HIGHER___
+#     define TR2_OPTIONAL_GCC_4_8_AND_HIGHER___
+#   elif (__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)
 #     define TR2_OPTIONAL_GCC_4_8_AND_HIGHER___
 #   elif (__GNUC__ > 4)
 #     define TR2_OPTIONAL_GCC_4_8_AND_HIGHER___
@@ -1022,25 +1025,23 @@ struct optional_base
 
     constexpr optional_base() noexcept : init_(false), storage_() {};
 
-    explicit constexpr optional_base(const T& v) : init_(true), storage_() {
+    explicit optional_base(const T& v) : init_(true), storage_() {
 		new (&storage())T(v);
 	}
 
-    explicit constexpr optional_base(T&& v) : init_(true), storage_() {
+    explicit optional_base(T&& v) : init_(true), storage_() {
 		new (&storage())T(constexpr_move(v));
 	}
 
     template <class... Args> explicit optional_base(in_place_t, Args&&... args)
     : init_(true), storage_() {
-		void* space = static_cast<void*>(&storage_[0]);
-		new (space)T(constexpr_forward<Args>(args)...);
+		new (&storage())T(constexpr_forward<Args>(args)...);
 	}
 
     template <class U, class... Args, TR2_OPTIONAL_REQUIRES(::std::is_constructible<T, ::std::initializer_list<U>>)>
     explicit optional_base(in_place_t, ::std::initializer_list<U> il, Args&&... args)
     : init_(true), storage_() {
-		void* space = static_cast<void*>(&storage_[0]);
-		new (space)T(constexpr_forward<Args>(args)...);
+		new (&storage())T(il, constexpr_forward<Args>(args)...);
 	}
 #if defined __GNUC__ 
 #pragma GCC diagnostic push
@@ -1060,12 +1061,15 @@ struct optional_base
 	~optional_base() { if (init_) { storage().T::~T(); } }
 };
 
+#if defined __GNUC__ && !defined TR2_OPTIONAL_GCC_5_0_AND_HIGHER___
+template <typename T>
+using constexpr_optional_base = optional_base<T>;
+#else
 template <class T>
 struct constexpr_optional_base
 {
 	bool init_;
 	char storage_[sizeof(T)];
-
 	constexpr constexpr_optional_base() noexcept : init_(false), storage_() {}
 
 	explicit constexpr constexpr_optional_base(const T& v) : init_(true), storage_() {
@@ -1082,9 +1086,9 @@ struct constexpr_optional_base
 	}
 
     template <class U, class... Args, TR2_OPTIONAL_REQUIRES(::std::is_constructible<T, ::std::initializer_list<U>>)>
-    OPTIONAL_CONSTEXPR_INIT_LIST explicit constexpr_optional_base(in_place_t, ::std::initializer_list<U> il, Args&&... args)
-      : init_(true), storage_() {
-		new (&storage())T(constexpr_forward<Args>(args)...);
+	OPTIONAL_CONSTEXPR_INIT_LIST explicit constexpr_optional_base(in_place_t, ::std::initializer_list<U> il, Args&&... args)
+		: init_(true), storage_() {
+		new (&storage())T(il, constexpr_forward<Args>(args)...);
 	}
 
 #if defined __GNUC__ 
@@ -1104,6 +1108,7 @@ struct constexpr_optional_base
 
     ~constexpr_optional_base() = default;
 };
+#endif
 
 template <class T>
 using OptionalBase = typename ::std::conditional<
