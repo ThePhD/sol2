@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-10-01 05:27:09.914197 UTC
-// This header was generated with sol v2.14.8 (revision ca28f85)
+// Generated 2016-10-01 06:28:57.464339 UTC
+// This header was generated with sol v2.14.8 (revision b05ce97)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1015,73 +1015,92 @@ public:
 };
 
 template <class T>
-union storage_t
-{
-  unsigned char dummy_;
-  T value_;
-
-  constexpr storage_t( trivial_init_t ) noexcept : dummy_() {};
-
-  template <class... Args>
-  constexpr storage_t( Args&&... args ) : value_(constexpr_forward<Args>(args)...) {}
-
-  ~storage_t(){}
-};
-
-template <class T>
-union constexpr_storage_t
-{
-    unsigned char dummy_;
-    T value_;
-
-    constexpr constexpr_storage_t( trivial_init_t ) noexcept : dummy_() {};
-
-    template <class... Args>
-    constexpr constexpr_storage_t( Args&&... args ) : value_(constexpr_forward<Args>(args)...) {}
-
-    ~constexpr_storage_t() = default;
-};
-
-template <class T>
 struct optional_base
 {
     bool init_;
-    storage_t<T> storage_;
+	char storage_[sizeof(T)];
 
-    constexpr optional_base() noexcept : init_(false), storage_(trivial_init) {};
+    constexpr optional_base() noexcept : init_(false), storage_() {};
 
-    explicit constexpr optional_base(const T& v) : init_(true), storage_(v) {}
+    explicit constexpr optional_base(const T& v) : init_(true), storage_() {
+		new (&storage())T(v);
+	}
 
-    explicit constexpr optional_base(T&& v) : init_(true), storage_(constexpr_move(v)) {}
+    explicit constexpr optional_base(T&& v) : init_(true), storage_() {
+		new (&storage())T(constexpr_move(v));
+	}
 
     template <class... Args> explicit optional_base(in_place_t, Args&&... args)
-        : init_(true), storage_(constexpr_forward<Args>(args)...) {}
+    : init_(true), storage_() {
+		void* space = static_cast<void*>(&storage_[0]);
+		new (space)T(constexpr_forward<Args>(args)...);
+	}
 
     template <class U, class... Args, TR2_OPTIONAL_REQUIRES(::std::is_constructible<T, ::std::initializer_list<U>>)>
     explicit optional_base(in_place_t, ::std::initializer_list<U> il, Args&&... args)
-        : init_(true), storage_(il, ::std::forward<Args>(args)...) {}
+    : init_(true), storage_() {
+		void* space = static_cast<void*>(&storage_[0]);
+		new (space)T(constexpr_forward<Args>(args)...);
+	}
+#if defined __GNUC__ 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#endif
+	T& storage() {
+		return *reinterpret_cast<T*>(&storage_[0]);
+	}
 
-    ~optional_base() { if (init_) storage_.value_.T::~T(); }
+	constexpr const T& storage() const {
+		return *reinterpret_cast<T const*>(&storage_[0]);
+	}
+#if defined __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
+	~optional_base() { if (init_) { storage().T::~T(); } }
 };
 
 template <class T>
 struct constexpr_optional_base
 {
-    bool init_;
-    constexpr_storage_t<T> storage_;
+	bool init_;
+	char storage_[sizeof(T)];
 
-    constexpr constexpr_optional_base() noexcept : init_(false), storage_(trivial_init) {};
+	constexpr constexpr_optional_base() noexcept : init_(false), storage_() {}
 
-    explicit constexpr constexpr_optional_base(const T& v) : init_(true), storage_(v) {}
+	explicit constexpr constexpr_optional_base(const T& v) : init_(true), storage_() {
+		new (&storage())T(v);
+	}
 
-    explicit constexpr constexpr_optional_base(T&& v) : init_(true), storage_(constexpr_move(v)) {}
+	explicit constexpr constexpr_optional_base(T&& v) : init_(true), storage_() {
+		new (&storage())T(constexpr_move(v));
+	}
 
     template <class... Args> explicit constexpr constexpr_optional_base(in_place_t, Args&&... args)
-      : init_(true), storage_(constexpr_forward<Args>(args)...) {}
+		: init_(true), storage_() {
+		new (&storage())T(constexpr_forward<Args>(args)...);
+	}
 
     template <class U, class... Args, TR2_OPTIONAL_REQUIRES(::std::is_constructible<T, ::std::initializer_list<U>>)>
     OPTIONAL_CONSTEXPR_INIT_LIST explicit constexpr_optional_base(in_place_t, ::std::initializer_list<U> il, Args&&... args)
-      : init_(true), storage_(il, ::std::forward<Args>(args)...) {}
+      : init_(true), storage_() {
+		new (&storage())T(constexpr_forward<Args>(args)...);
+	}
+
+#if defined __GNUC__ 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#endif
+	T& storage() {
+		return (*reinterpret_cast<T*>(&storage_[0]));
+	}
+
+	constexpr const T& storage() const {
+		return (*reinterpret_cast<T const*>(&storage_[0]));
+	}
+#if defined __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
     ~constexpr_optional_base() = default;
 };
@@ -1100,21 +1119,21 @@ class optional : private OptionalBase<T>
   static_assert( !::std::is_same<typename ::std::decay<T>::type, in_place_t>::value, "bad T" );
   
   constexpr bool initialized() const noexcept { return OptionalBase<T>::init_; }
-  typename ::std::remove_const<T>::type* dataptr() {  return ::std::addressof(OptionalBase<T>::storage_.value_); }
-  constexpr const T* dataptr() const { return detail_::static_addressof(OptionalBase<T>::storage_.value_); }
+  typename ::std::remove_const<T>::type* dataptr() {  return ::std::addressof(OptionalBase<T>::storage()); }
+  constexpr const T* dataptr() const { return detail_::static_addressof(OptionalBase<T>::storage()); }
   
 # if OPTIONAL_HAS_THIS_RVALUE_REFS == 1
-  constexpr const T& contained_val() const& { return OptionalBase<T>::storage_.value_; }
+  constexpr const T& contained_val() const& { return OptionalBase<T>::storage(); }
 #   if OPTIONAL_HAS_MOVE_ACCESSORS == 1
-  OPTIONAL_MUTABLE_CONSTEXPR T&& contained_val() && { return ::std::move(OptionalBase<T>::storage_.value_); }
-  OPTIONAL_MUTABLE_CONSTEXPR T& contained_val() & { return OptionalBase<T>::storage_.value_; }
+  OPTIONAL_MUTABLE_CONSTEXPR T&& contained_val() && { return ::std::move(OptionalBase<T>::storage()); }
+  OPTIONAL_MUTABLE_CONSTEXPR T& contained_val() & { return OptionalBase<T>::storage(); }
 #   else
-  T& contained_val() & { return OptionalBase<T>::storage_.value_; }
-  T&& contained_val() && { return ::std::move(OptionalBase<T>::storage_.value_); }
+  T& contained_val() & { return OptionalBase<T>::storage(); }
+  T&& contained_val() && { return ::std::move(OptionalBase<T>::storage()); }
 #   endif
 # else
-  constexpr const T& contained_val() const { return OptionalBase<T>::storage_.value_; }
-  T& contained_val() { return OptionalBase<T>::storage_.value_; }
+  constexpr const T& contained_val() const { return OptionalBase<T>::storage(); }
+  T& contained_val() { return OptionalBase<T>::storage(); }
 # endif
 
   void clear() noexcept {
