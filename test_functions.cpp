@@ -302,14 +302,13 @@ TEST_CASE("functions/function_result-protected_function_result", "Function resul
 	lua.set("nontrampoline", c_nontrampolinefx);
 	lua.set_function("bark", []() -> int {return 100; });
 
-	sol::protected_function doom = lua["doom"];
-	sol::protected_function luadoom = lua["luadoom"];
+	sol::function luahandler = lua["luahandler"];
+	sol::function cpphandler = lua["cpphandler"];
+	sol::protected_function doom(lua["doom"], luahandler);
+	sol::protected_function luadoom(lua["luadoom"]);
 	sol::protected_function nontrampoline = lua["nontrampoline"];
 	sol::protected_function justfine = lua["bark"];
 	sol::protected_function justfinewithhandler = lua["bark"];
-	sol::function luahandler = lua["luahandler"];
-	sol::function cpphandler = lua["cpphandler"];
-	doom.error_handler = luahandler;
 	luadoom.error_handler = cpphandler;
 	nontrampoline.error_handler = cpphandler;
 	justfinewithhandler.error_handler = luahandler;

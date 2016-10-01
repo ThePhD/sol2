@@ -727,9 +727,25 @@ namespace sol {
 
 	template <typename T>
 	struct is_table : std::false_type {};
-
 	template <bool x, typename T>
 	struct is_table<basic_table_core<x, T>> : std::true_type {};
+
+	template <typename T>
+	struct is_function : std::false_type {};
+	template <typename T>
+	struct is_function<basic_function<T>> : std::true_type {};
+	template <typename T>
+	struct is_function<basic_protected_function<T>> : std::true_type {};
+
+	template <typename T>
+	struct is_lightuserdata : std::false_type {};
+	template <typename T>
+	struct is_lightuserdata<basic_lightuserdata<T>> : std::true_type {};
+
+	template <typename T>
+	struct is_userdata : std::false_type {};
+	template <typename T>
+	struct is_userdata<basic_userdata<T>> : std::true_type {};
 
 	template<typename T>
 	inline type type_of() {
