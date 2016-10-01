@@ -114,7 +114,7 @@ namespace sol {
 		}
 
 		template<typename T>
-		T get() const {
+		decltype(auto) get() const {
 			return tagged_get(types<meta::unqualified_t<T>>());
 		}
 

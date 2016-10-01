@@ -97,7 +97,7 @@ Gets the value associated with the keys the proxy was generated and convers it t
 	:name: regular-get
 
 	template <typename T>
-	T get( ) const;
+	decltype(auto) get( ) const;
 
 Gets the value associated with the keys and converts it to the type ``T``.
 
@@ -114,7 +114,7 @@ Gets the value associated with the keys and converts it to the type ``T``. If it
 ---------------------------------
 
 .. code-block:: c++
-	:caption: function: validity
+	:caption: function: valid
 	:name: proxy-valid
 
 	bool valid () const;
@@ -157,14 +157,14 @@ Sets the value associated with the keys the proxy was generated with to ``value`
 stack_proxy
 -----------
 
-``sol::stack_proxy`` is what gets returned by :doc:`sol::variadic_args<variadic_args>` and other parts of the framework. It is similar to proxy, but is meant to alias a stack index and not a named function.
+``sol::stack_proxy`` is what gets returned by :doc:`sol::variadic_args<variadic_args>` and other parts of the framework. It is similar to proxy, but is meant to alias a stack index and not a named variable.
 
 .. _function-result:
 
 function_result
 ---------------
 
-``function_result`` is a temporary-only, intermediate-only implicit conversion worker for when :doc:`function<function>` is called. It is *NOT* meant to be stored or captured with ``auto``. It provides fast access to the desired underlying value. It does not implement ``set`` / ``set_function`` / templated ``operator=``, as shown below for :ref:`proxy<proxy>`.
+``function_result`` is a temporary-only, intermediate-only implicit conversion worker for when :doc:`function<function>` is called. It is *NOT* meant to be stored or captured with ``auto``. It provides fast access to the desired underlying value. It does not implement ``set`` / ``set_function`` / templated ``operator=``, as is present on :ref:`proxy<proxy>`.
 
 
 .. _protected-function-result:
@@ -172,7 +172,7 @@ function_result
 protected_function_result
 -------------------------
 
-``protected_function_result`` is a nicer version of ``function_result`` that can be used to detect errors. Its gives safe access to the desired underlying value. It does not implement ``set`` / ``set_function`` / templated ``operator=``, as shown below for :ref:`proxy<proxy>`.
+``protected_function_result`` is a nicer version of ``function_result`` that can be used to detect errors. Its gives safe access to the desired underlying value. It does not implement ``set`` / ``set_function`` / templated ``operator=`` as is present on :ref:`proxy<proxy>`.
 
 
 .. _note 1:
