@@ -199,7 +199,11 @@ namespace sol {
 				}
 				// Do advanced check for call-style userdata?
 				static const auto& callkey = name_of(meta_function::call);
-				lua_getmetatable(L, index);
+				if (lua_getmetatable(L, index) == 0) {
+					// No metatable, no __call key possible
+					handler(L, index, type::function, t);
+					return false;
+				}
 				if (lua_isnoneornil(L, -1)) {
 					lua_pop(L, 1);
 					handler(L, index, type::function, t);

@@ -95,6 +95,14 @@ namespace sol {
 		basic_object& operator=(base_t&& b) { base_t::operator=(std::move(b)); return *this; }
 		basic_object(const stack_reference& r) noexcept : basic_object(r.lua_state(), r.stack_index()) {}
 		basic_object(stack_reference&& r) noexcept : basic_object(r.lua_state(), r.stack_index()) {}
+		template <typename Super>
+		basic_object(const proxy_base<Super>& r) noexcept : basic_object(r.operator basic_object()) {}
+		template <typename Super>
+		basic_object(proxy_base<Super>&& r) noexcept : basic_object(r.operator basic_object()) {}
+		template <typename Super>
+		basic_object& operator=(const proxy_base<Super>& r) { this->operator=(r.operator basic_object()); return *this; }
+		template <typename Super>
+		basic_object& operator=(proxy_base<Super>&& r) { this->operator=(r.operator basic_object()); return *this; }
 		basic_object(lua_State* L, int index = -1) noexcept : base_t(L, index) {}
 		template <typename T, typename... Args>
 		basic_object(lua_State* L, in_place_type_t<T>, Args&&... args) noexcept : basic_object(std::integral_constant<bool, !std::is_base_of<stack_reference, base_t>::value>(), L, -stack::push<T>(L, std::forward<Args>(args)...)) {}
