@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-10-02 22:24:19.630150 UTC
-// This header was generated with sol v2.14.8 (revision 4ac35aa)
+// Generated 2016-10-05 03:31:05.813723 UTC
+// This header was generated with sol v2.14.9 (revision dd03161)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3961,6 +3961,44 @@ namespace sol {
 } // sol
 
 // end of sol/tie.hpp
+
+// beginning of sol/stack_guard.hpp
+
+namespace sol {
+	namespace detail {
+		inline void stack_fail(int, int) {
+#ifndef SOL_NO_EXCEPTIONS
+			throw error(detail::direct_error, "imbalanced stack after operation finish");
+#else
+			// Lol, what do you want, an error printout? :3c
+			// There's no sane default here. The right way would be C-style abort(), and that's not acceptable, so
+			// hopefully someone will register their own stack_fail thing for the `fx` parameter of stack_guard.
+#endif // No Exceptions
+		}
+	} // detail
+
+	struct stack_guard {
+		lua_State* L;
+		int top;
+		std::function<void(int, int)> on_mismatch;
+
+		stack_guard(lua_State* L) : stack_guard(L, lua_gettop(L)) {}
+		stack_guard(lua_State* L, int top, std::function<void(int, int)> fx = detail::stack_fail) : L(L), top(top), on_mismatch(std::move(fx)) {}
+		bool check_stack(int modification = 0) const {
+			int bottom = lua_gettop(L) + modification;
+			if (top == bottom) {
+				return true;
+			}
+			on_mismatch(top, bottom);
+			return false;
+		}
+		~stack_guard() {
+			check_stack();
+		}
+	};
+} // sol
+
+// end of sol/stack_guard.hpp
 
 #include <vector>
 
@@ -8788,6 +8826,23 @@ namespace sol {
 			static sol::reference h;
 			return h;
 		}
+
+		struct handler {
+			const reference& target;
+			int stackindex;
+			handler(const reference& target) : target(target), stackindex(0) {
+				if (target.valid()) {
+					stackindex = lua_gettop(target.lua_state()) + 1;
+					target.push();
+				}
+			}
+			bool valid() const { return stackindex != 0; }
+			~handler() {
+				if (valid()) {
+					lua_remove(target.lua_state(), stackindex);
+				}
+			}
+		};
 	}
 	
 	template <typename base_t>
@@ -8806,45 +8861,28 @@ namespace sol {
 		}
 
 	private:
-		struct handler {
-			const reference& target;
-			int stackindex;
-			handler(const reference& target) : target(target), stackindex(0) {
-				if (target.valid()) {
-					stackindex = lua_gettop(target.lua_state()) + 1;
-					target.push();
-				}
-			}
-			bool valid() const { return stackindex > 0; }
-			~handler() {
-				if (valid()) {
-					lua_remove(target.lua_state(), stackindex);
-				}
-			}
-		};
-
-		call_status luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount, handler& h) const {
+		call_status luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount, detail::handler& h) const {
 			return static_cast<call_status>(lua_pcallk(base_t::lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount), h.stackindex, 0, nullptr));
 		}
 
 		template<std::size_t... I, typename... Ret>
-		auto invoke(types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n, handler& h) const {
+		auto invoke(types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n, detail::handler& h) const {
 			luacall(n, sizeof...(Ret), h);
 			return stack::pop<std::tuple<Ret...>>(base_t::lua_state());
 		}
 
 		template<std::size_t I, typename Ret>
-		Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n, handler& h) const {
+		Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n, detail::handler& h) const {
 			luacall(n, 1, h);
 			return stack::pop<Ret>(base_t::lua_state());
 		}
 
 		template <std::size_t I>
-		void invoke(types<void>, std::index_sequence<I>, std::ptrdiff_t n, handler& h) const {
+		void invoke(types<void>, std::index_sequence<I>, std::ptrdiff_t n, detail::handler& h) const {
 			luacall(n, 0, h);
 		}
 
-		protected_function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n, handler& h) const {
+		protected_function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n, detail::handler& h) const {
 			int stacksize = lua_gettop(base_t::lua_state());
 			int poststacksize = stacksize;
 			int firstreturn = 1;
@@ -8864,10 +8902,10 @@ namespace sol {
 			};
 			try {
 #endif // No Exceptions
+				firstreturn = (std::max)(1, static_cast<int>(stacksize - n - static_cast<int>(h.valid())));
 				code = luacall(n, LUA_MULTRET, h);
-				poststacksize = lua_gettop(base_t::lua_state());
-				returncount = poststacksize - (stacksize - 1);
-				firstreturn = (std::max)(1, poststacksize - (returncount - 1) - static_cast<int>(h.valid()));
+				poststacksize = lua_gettop(base_t::lua_state()) - static_cast<int>(h.valid());
+				returncount = poststacksize - (firstreturn - 1);
 #ifndef SOL_NO_EXCEPTIONS
 			}
 			// Handle C++ errors thrown from C++ functions bound inside of lua
@@ -8933,7 +8971,7 @@ namespace sol {
 
 		template<typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) const {
-			handler h(error_handler);
+			detail::handler h(error_handler);
 			base_t::push();
 			int pushcount = stack::multi_push_reference(base_t::lua_state(), std::forward<Args>(args)...);
 			return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount, h);

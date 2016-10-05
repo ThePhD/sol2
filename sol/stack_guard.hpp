@@ -46,12 +46,16 @@ namespace sol {
 
 		stack_guard(lua_State* L) : stack_guard(L, lua_gettop(L)) {}
 		stack_guard(lua_State* L, int top, std::function<void(int, int)> fx = detail::stack_fail) : L(L), top(top), on_mismatch(std::move(fx)) {}
-		~stack_guard() {
-			int bottom = lua_gettop(L);
+		bool check_stack(int modification = 0) const {
+			int bottom = lua_gettop(L) + modification;
 			if (top == bottom) {
-				return;
+				return true;
 			}
 			on_mismatch(top, bottom);
+			return false;
+		}
+		~stack_guard() {
+			check_stack();
 		}
 	};
 } // sol

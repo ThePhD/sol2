@@ -893,3 +893,57 @@ TEST_CASE("overloading/c_call", "Make sure that overloading works with c_call fu
 	REQUIRE(r4 == 32);
 	REQUIRE(r5 == 1);
 }
+
+TEST_CASE("functions/stack-protect", "make sure functions don't impede on the stack") {
+	//setup sol/lua
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::string);
+
+	lua.script("function ErrorHandler(msg) print('Lua created error msg : ' ..  msg) return msg end");
+	lua.script("function stringtest(a) if a == nil then error('fuck') end print('Lua recieved content : ' .. a) return a end");
+
+	// test normal function
+	{
+		sol::stack_guard normalsg(lua);
+		std::string str = lua["stringtest"]("normal test");
+		INFO("Back in C++, direct call result is : " << str);
+	}
+
+	//test protected_function
+	sol::protected_function Stringtest(lua["stringtest"]);
+	Stringtest.error_handler = lua["ErrorHandler"];
+	sol::stack_guard sg(lua);
+	{
+		sol::protected_function_result stringresult = Stringtest("protected test");
+		REQUIRE(stringresult.valid());
+		std::string s = stringresult;
+		INFO("Back in C++, protected result is : " << s);
+	}
+	REQUIRE(sg.check_stack());
+
+	//test optional
+	{
+		sol::stack_guard opsg(lua);
+		sol::optional<std::string> opt_result = Stringtest("optional test");
+		REQUIRE(opsg.check_stack());
+		if (opt_result)
+		{
+			std::string s = opt_result.value();
+			INFO("Back in C++, opt_result is : " << s);
+		}
+		else
+		{
+			INFO("opt_result failed");
+		}
+	}
+	REQUIRE(sg.check_stack());
+
+	{
+		sol::protected_function_result errresult = Stringtest(sol::nil);
+		REQUIRE_FALSE(errresult.valid());
+		sol::error err = errresult;
+		std::string msg = err.what();
+		INFO("error :" << msg);
+	}
+	REQUIRE(sg.check_stack());
+}

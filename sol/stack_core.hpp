@@ -29,6 +29,7 @@
 #include "tuple.hpp"
 #include "traits.hpp"
 #include "tie.hpp"
+#include "stack_guard.hpp"
 #include <vector>
 #include <string>
 
