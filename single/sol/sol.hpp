@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-10-05 04:59:38.196043 UTC
-// This header was generated with sol v2.14.9 (revision 009d6b0)
+// Generated 2016-10-06 00:39:21.588762 UTC
+// This header was generated with sol v2.14.9 (revision d51db7d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -9423,7 +9423,7 @@ namespace sol {
 		}
 
 		template<std::size_t... I, typename T>
-		void tuple_set(std::index_sequence<I...>, T&& value) const {
+		void tuple_set(std::index_sequence<I...>, T&& value) {
 			tbl.traverse_set(std::get<I>(key)..., std::forward<T>(value));
 		}
 

@@ -40,7 +40,7 @@ namespace sol {
 		}
 
 		template<std::size_t... I, typename T>
-		void tuple_set(std::index_sequence<I...>, T&& value) const {
+		void tuple_set(std::index_sequence<I...>, T&& value) {
 			tbl.traverse_set(std::get<I>(key)..., std::forward<T>(value));
 		}
 

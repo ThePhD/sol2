@@ -663,3 +663,18 @@ TEST_CASE("proxy/proper-pushing", "allow proxies to reference other proxies and 
 	bool b = lua["b"];
 	REQUIRE(b);
 }
+
+TEST_CASE("compilation/const-regression", "make sure constness in tables is respected all the way down") {
+	struct State {
+	public:
+		State() {
+			this->state_.registry()["state"] = this;
+		}
+
+		sol::state state_;
+	};
+
+	State state;
+	State* s = state.state_.registry()["state"];
+	REQUIRE(s == &state);
+}
