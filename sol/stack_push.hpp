@@ -222,7 +222,8 @@ namespace sol {
 					}
 #endif
 				}
-				set_field(L, -1, cont.size());
+				// TODO: figure out a better way to do this...?
+				//set_field(L, -1, cont.size());
 				return 1;
 			}
 		};

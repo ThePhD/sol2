@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-10-06 00:39:21.588762 UTC
-// This header was generated with sol v2.14.9 (revision d51db7d)
+// Generated 2016-10-06 00:53:22.017715 UTC
+// This header was generated with sol v2.14.9 (revision 0ba4650)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5886,7 +5886,8 @@ namespace sol {
 					}
 #endif
 				}
-				set_field(L, -1, cont.size());
+				// TODO: figure out a better way to do this...?
+				//set_field(L, -1, cont.size());
 				return 1;
 			}
 		};
