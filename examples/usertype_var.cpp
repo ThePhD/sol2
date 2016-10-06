@@ -32,10 +32,14 @@ int main() {
 	// number is its own memory: was passed by value
 	// So does not change
 
-	assert(lua["test"]["ref_number"] == 25);
+	assert(lua["test"]["ref_number"] == 542);
 	// ref_number is just test::number 
 	// passed through std::ref
 	// so, it holds a reference
+	// which can be updated
+	// be careful about referencing local variables,
+	// if they go out of scope but are still reference
+	// you'll suffer dangling reference bugs!
 
 	return 0;
 }
