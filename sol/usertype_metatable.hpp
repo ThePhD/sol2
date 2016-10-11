@@ -554,7 +554,7 @@ namespace sol {
 					}
 					// metatable on the metatable
 					// for call constructor purposes and such
-					lua_createtable(L, 0, 1);
+					lua_createtable(L, 0, 3);
 					stack_reference metabehind(L, -1);
 					if (um.callconstructfunc != nullptr) {
 						stack::set_field(L, meta_function::call_function, make_closure(um.callconstructfunc, make_light(um)), metabehind.stack_index());
@@ -567,9 +567,26 @@ namespace sol {
 					metabehind.pop();
 					// We want to just leave the table
 					// in the registry only, otherwise we return it
-					if (i < 2) {
-						t.pop();
+					t.pop();
+				}
+
+				// Now for the shim-table that actually gets assigned to the name
+				luaL_newmetatable(L, &usertype_traits<T>::user_metatable[0]);
+				stack_reference t(L, -1);
+				stack::push(L, make_light(um));
+				luaL_setfuncs(L, value_table.data(), 1);
+				{
+					lua_createtable(L, 0, 3);
+					stack_reference metabehind(L, -1);
+					if (um.callconstructfunc != nullptr) {
+						stack::set_field(L, meta_function::call_function, make_closure(um.callconstructfunc, make_light(um)), metabehind.stack_index());
 					}
+					if (um.secondarymeta) {
+						stack::set_field(L, meta_function::index, make_closure(umt_t::index_call, make_light(um)), metabehind.stack_index());
+						stack::set_field(L, meta_function::new_index, make_closure(umt_t::new_index_call, make_light(um)), metabehind.stack_index());
+					}
+					stack::set_field(L, metatable_key, metabehind, t.stack_index());
+					metabehind.pop();
 				}
 
 				return 1;

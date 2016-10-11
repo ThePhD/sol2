@@ -31,6 +31,7 @@ namespace sol {
 		static const std::string name;
 		static const std::string qualified_name;
 		static const std::string metatable;
+		static const std::string user_metatable;
 		static const std::string user_gc_metatable;
 		static const std::string gc_table;
 	};
@@ -43,6 +44,9 @@ namespace sol {
 
 	template<typename T>
 	const std::string usertype_traits<T>::metatable = std::string("sol.").append(detail::demangle<T>());
+
+	template<typename T>
+	const std::string usertype_traits<T>::user_metatable = std::string("sol.").append(detail::demangle<T>()).append(".user");
 
 	template<typename T>
 	const std::string usertype_traits<T>::user_gc_metatable = std::string("sol.").append(detail::demangle<T>()).append(".user\xE2\x99\xBB");
