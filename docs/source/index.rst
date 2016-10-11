@@ -43,7 +43,7 @@ get going:
 
 "I need feature X, maybe you have it?"
 --------------------------------------
-Take a look at the :doc:`Features<features>` page: it links to much of the API. You can also just straight up browse the :doc:`api<api/api-top>` or ease in with the :doc:`tutorials<tutorial/tutorial-top>`. Don't see a feature you want? Send inquiries for support for a particular abstraction to the `issues`_ tracker.
+Take a look at the :doc:`Features<features>` page: it links to much of the API. You can also just straight up browse the :doc:`api<api/api-top>` or ease in with the :doc:`tutorials<tutorial/tutorial-top>`. To know how function arguments are handled, see :ref:`this note<function-argument-handling>`. Don't see a feature you want? Send inquiries for support for a particular abstraction to the `issues`_ tracker.
 
 
 the basics:
