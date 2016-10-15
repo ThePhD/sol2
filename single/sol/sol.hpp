@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-10-15 21:59:41.897573 UTC
-// This header was generated with sol v2.14.10 (revision f3fbd24)
+// Generated 2016-10-15 22:36:09.229006 UTC
+// This header was generated with sol v2.14.10 (revision ebc8d0f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -2137,6 +2137,31 @@ int luaL_fileresult(lua_State *L, int stat, const char *fname);
 
 #ifndef SOL_5_X_X_INL
 #define SOL_5_X_X_INL
+
+// beginning of sol/compatibility/5.2.0.h
+
+#ifndef SOL_5_2_0_H
+#define SOL_5_2_0_H
+
+#if SOL_LUA_VERSION < 503
+
+int lua_isinteger(lua_State* L, int idx) {
+	if (lua_type(L, idx) != LUA_TNUMBER)
+		return 0;
+	// This is a very slipshod way to do the testing
+	// but lua_totingerx doesn't play ball nicely
+	// on older versions...
+	lua_Number n = lua_tonumber(L, idx);
+	lua_Integer i = lua_tointeger(L, idx);
+	if (i != n)
+		return 0;
+	// it's DEFINITELY an integer
+	return 1;
+}
+
+#endif // SOL_LUA_VERSION == 502
+#endif // SOL_5_2_0_H
+// end of sol/compatibility/5.2.0.h
 
 #if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM == 501
 
