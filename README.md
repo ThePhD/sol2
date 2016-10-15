@@ -44,6 +44,13 @@ int main() {
 
 More examples are given in the examples directory.
 
+## Presentations
+
+"A Sun For the Moon - A Zero-Overhead Lua Abstraction using C++"
+ThePhD
+Lua Workshop 2016 - Mashape, San Francisco, CA
+[Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/ThePhD%20-%20No%20Overhead%20C%20Abstraction%20-%202016.10.14.pdf)
+
 ## Creating a single header
 
 You can grab a single header out of the library [here](https://github.com/ThePhD/sol2/tree/develop/single/sol). For stable version, check the releases tab on github for a provided single header file for maximum ease of use. A script called `single.py` is provided in the repository if there's some bleeding edge change that hasn't been published on the releases page. You can run this script to create a single file version of the library so you can only include that part of it. Check `single.py --help` for more info.
