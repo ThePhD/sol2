@@ -25,7 +25,7 @@
 
 #if SOL_LUA_VERSION < 503
 
-int lua_isinteger(lua_State* L, int idx) {
+inline int lua_isinteger(lua_State* L, int idx) {
 	if (lua_type(L, idx) != LUA_TNUMBER)
 		return 0;
 	// This is a very slipshod way to do the testing
