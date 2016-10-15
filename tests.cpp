@@ -698,6 +698,6 @@ TEST_CASE("numbers/integers", "make sure integers are detectable on most platfor
 	REQUIRE(a_is_double);
 
 	// TODO: will this fail on certain lower Lua versions?
-	REQUIRE_FALSE(a_is_int);
-	REQUIRE(a_is_double);
+	REQUIRE_FALSE(b_is_int);
+	REQUIRE(b_is_double);
 }
