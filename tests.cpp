@@ -678,3 +678,26 @@ TEST_CASE("compilation/const-regression", "make sure constness in tables is resp
 	State* s = state.state_.registry()["state"];
 	REQUIRE(s == &state);
 }
+
+TEST_CASE("numbers/integers", "make sure integers are detectable on most platforms") {
+	sol::state lua;
+
+	lua["a"] = 50; // int
+	lua["b"] = 50.5; // double
+
+	sol::object a = lua["a"];
+	sol::object b = lua["b"];
+
+	bool a_is_int = a.is<int>();
+	bool a_is_double = a.is<double>();
+
+	bool b_is_int = b.is<int>();
+	bool b_is_double = b.is<double>();
+
+	REQUIRE(a_is_int);
+	REQUIRE(a_is_double);
+
+	// TODO: will this fail on certain lower Lua versions?
+	REQUIRE_FALSE(a_is_int);
+	REQUIRE(a_is_double);
+}

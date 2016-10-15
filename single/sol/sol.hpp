@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-10-11 10:53:03.759428 UTC
-// This header was generated with sol v2.14.10 (revision 866a297)
+// Generated 2016-10-15 21:59:41.897573 UTC
+// This header was generated with sol v2.14.10 (revision f3fbd24)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4691,6 +4691,34 @@ namespace sol {
 				if (!success) {
 					// expected type, actual type
 					handler(L, index, expected, indextype);
+				}
+				return success;
+			}
+		};
+
+		template<typename T>
+		struct checker<T, type::number, std::enable_if_t<std::is_integral<T>::value>> {
+			template <typename Handler>
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				tracking.use(1);
+				bool success = lua_isinteger(L, index) == 1;
+				if (!success) {
+					// expected type, actual type
+					handler(L, index, type::number, type_of(L, index));
+				}
+				return success;
+			}
+		};
+
+		template<typename T>
+		struct checker<T, type::number, std::enable_if_t<std::is_floating_point<T>::value>> {
+			template <typename Handler>
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				tracking.use(1);
+				bool success = lua_isnumber(L, index) == 1;
+				if (!success) {
+					// expected type, actual type
+					handler(L, index, type::number, type_of(L, index));
 				}
 				return success;
 			}
