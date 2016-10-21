@@ -1,5 +1,7 @@
 ## Sol 2.14
 
+[![Join the chat at https://gitter.im/chat-sol2/Lobby](https://badges.gitter.im/chat-sol2/Lobby.svg)](https://gitter.im/chat-sol2/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Build Status](https://travis-ci.org/ThePhD/sol2.svg?branch=develop)](https://travis-ci.org/ThePhD/sol2)
 [![Documentation Status](https://readthedocs.org/projects/sol2/badge/?version=latest)](http://sol2.readthedocs.io/en/latest/?badge=latest)
 
