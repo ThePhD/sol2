@@ -364,7 +364,7 @@ namespace sol {
 			typedef container_usertype_metatable<T> cumt;
 			static int push(lua_State* L, const T& cont) {
 				auto fx = [&L]() {
-					const char* metakey = &usertype_traits<T>::metatable[0];
+					const char* metakey = &usertype_traits<T>::metatable()[0];
 					if (luaL_newmetatable(L, metakey) == 1) {
 						const auto& reg = stack_detail::container_metatable<T>();
 						luaL_setfuncs(L, reg, 0);
@@ -376,7 +376,7 @@ namespace sol {
 
 			static int push(lua_State* L, T&& cont) {
 				auto fx = [&L]() {
-					const char* metakey = &usertype_traits<T>::metatable[0];
+					const char* metakey = &usertype_traits<T>::metatable()[0];
 					if (luaL_newmetatable(L, metakey) == 1) {
 						const auto& reg = stack_detail::container_metatable<T>();
 						luaL_setfuncs(L, reg, 0);
@@ -392,7 +392,7 @@ namespace sol {
 			typedef container_usertype_metatable<T> cumt;
 			static int push(lua_State* L, T* cont) {
 				auto fx = [&L]() {
-					const char* metakey = &usertype_traits<meta::unqualified_t<T>*>::metatable[0];
+					const char* metakey = &usertype_traits<meta::unqualified_t<T>*>::metatable()[0];
 					if (luaL_newmetatable(L, metakey) == 1) {
 						const auto& reg = stack_detail::container_metatable<T*>();
 						luaL_setfuncs(L, reg, 0);

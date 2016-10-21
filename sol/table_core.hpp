@@ -244,7 +244,7 @@ namespace sol {
 
 		template<typename T>
 		basic_table_core& set_usertype(usertype<T>& user) {
-			return set_usertype(usertype_traits<T>::name, user);
+			return set_usertype(usertype_traits<T>::name(), user);
 		}
 
 		template<typename Key, typename T>

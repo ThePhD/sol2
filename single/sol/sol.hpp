@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-10-21 11:06:29.508272 UTC
-// This header was generated with sol v2.14.11 (revision 4d45f0c)
+// Generated 2016-10-21 21:30:36.718233 UTC
+// This header was generated with sol v2.14.11 (revision 8c3ae42)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4553,31 +4553,31 @@ namespace sol {
 
 	template<typename T>
 	struct usertype_traits {
-		static const std::string name;
-		static const std::string qualified_name;
-		static const std::string metatable;
-		static const std::string user_metatable;
-		static const std::string user_gc_metatable;
-		static const std::string gc_table;
+		static const std::string& name() {
+			static const std::string n = detail::short_demangle<T>();
+			return n;
+		}
+		static const std::string& qualified_name() {
+			static const std::string q_n = detail::demangle<T>();
+			return q_n;
+		}
+		static const std::string& metatable() {
+			static const std::string m = std::string("sol.").append(detail::demangle<T>());
+			return m;
+		}
+		static const std::string& user_metatable() {
+			static const std::string u_m = std::string("sol.").append(detail::demangle<T>()).append(".user");
+			return u_m;
+		}
+		static const std::string& user_gc_metatable() {
+			static const std::string u_g_m = std::string("sol.").append(detail::demangle<T>()).append(".user\xE2\x99\xBB");
+			return u_g_m;
+		}
+		static const std::string& gc_table() {
+			static const std::string g_t = std::string("sol.").append(detail::demangle<T>().append(".\xE2\x99\xBB"));
+			return g_t;
+		}
 	};
-
-	template<typename T>
-	const std::string usertype_traits<T>::name = detail::short_demangle<T>();
-
-	template<typename T>
-	const std::string usertype_traits<T>::qualified_name = detail::demangle<T>();
-
-	template<typename T>
-	const std::string usertype_traits<T>::metatable = std::string("sol.").append(detail::demangle<T>());
-
-	template<typename T>
-	const std::string usertype_traits<T>::user_metatable = std::string("sol.").append(detail::demangle<T>()).append(".user");
-
-	template<typename T>
-	const std::string usertype_traits<T>::user_gc_metatable = std::string("sol.").append(detail::demangle<T>()).append(".user\xE2\x99\xBB");
-
-	template<typename T>
-	const std::string usertype_traits<T>::gc_table = std::string("sol.").append(detail::demangle<T>().append(".\xE2\x99\xBB"));
 
 }
 
@@ -4685,7 +4685,7 @@ namespace sol {
 		namespace stack_detail {
 			template <typename T, bool poptable = true>
 			inline bool check_metatable(lua_State* L, int index = -2) {
-				const auto& metakey = usertype_traits<T>::metatable;
+				const auto& metakey = usertype_traits<T>::metatable();
 				luaL_getmetatable(L, &metakey[0]);
 				const type expectedmetatabletype = static_cast<type>(lua_type(L, -1));
 				if (expectedmetatabletype != type::nil) {
@@ -5790,7 +5790,7 @@ namespace sol {
 
 			template <typename... Args>
 			static int push(lua_State* L, Args&&... args) {
-				return push_keyed(L, usertype_traits<T>::metatable, std::forward<Args>(args)...);
+				return push_keyed(L, usertype_traits<T>::metatable(), std::forward<Args>(args)...);
 			}
 		};
 
@@ -5815,7 +5815,7 @@ namespace sol {
 			}
 
 			static int push(lua_State* L, T* obj) {
-				return push_keyed(L, usertype_traits<meta::unqualified_t<T>*>::metatable, obj);
+				return push_keyed(L, usertype_traits<meta::unqualified_t<T>*>::metatable(), obj);
 			}
 		};
 
@@ -5868,7 +5868,7 @@ namespace sol {
 				*fx = detail::special_destruct<P, Real>;
 				detail::default_construct::construct(mem, std::forward<Args>(args)...);
 				*pref = unique_usertype_traits<T>::get(*mem);
-				if (luaL_newmetatable(L, &usertype_traits<detail::unique_usertype<P>>::metatable[0]) == 1) {
+				if (luaL_newmetatable(L, &usertype_traits<detail::unique_usertype<P>>::metatable()[0]) == 1) {
 					set_field(L, "__gc", detail::unique_destruct<P>);
 				}
 				lua_setmetatable(L, -2);
@@ -6090,13 +6090,13 @@ namespace sol {
 
 			template <typename Arg, typename... Args, meta::disable<meta::any_same<meta::unqualified_t<Arg>, no_metatable_t, metatable_key_t>> = meta::enabler>
 			static int push(lua_State* L, Arg&& arg, Args&&... args) {
-				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable()[0];
 				return push_with(L, name, std::forward<Arg>(arg), std::forward<Args>(args)...);
 			}
 
 			template <typename... Args>
 			static int push(lua_State* L, no_metatable_t, Args&&... args) {
-				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable()[0];
 				return push_with<false>(L, name, std::forward<Args>(args)...);
 			}
 
@@ -6107,22 +6107,22 @@ namespace sol {
 			}
 
 			static int push(lua_State* L, const user<T>& u) {
-				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable()[0];
 				return push_with(L, name, u.value);
 			}
 
 			static int push(lua_State* L, user<T>&& u) {
-				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable()[0];
 				return push_with(L, name, std::move(u.value));
 			}
 
 			static int push(lua_State* L, no_metatable_t, const user<T>& u) {
-				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable()[0];
 				return push_with<false>(L, name, u.value);
 			}
 
 			static int push(lua_State* L, no_metatable_t, user<T>&& u) {
-				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable[0];
+				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable()[0];
 				return push_with<false>(L, name, std::move(u.value));
 			}
 		};
@@ -7448,9 +7448,9 @@ namespace sol {
 
 		template <typename T, typename... TypeLists>
 		inline int construct(lua_State* L) {
-			static const auto& meta = usertype_traits<T>::metatable;
+			static const auto& meta = usertype_traits<T>::metatable();
 			int argcount = lua_gettop(L);
-			call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, &usertype_traits<T>::user_metatable[0], 1) : call_syntax::dot;
+			call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, &usertype_traits<T>::user_metatable()[0], 1) : call_syntax::dot;
 			argcount -= static_cast<int>(syntax);
 
 			T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
@@ -7686,9 +7686,9 @@ namespace sol {
 			typedef constructor_list<Args...> F;
 
 			static int call(lua_State* L, F&) {
-				const auto& metakey = usertype_traits<T>::metatable;
+				const auto& metakey = usertype_traits<T>::metatable();
 				int argcount = lua_gettop(L);
-				call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, &usertype_traits<T>::user_metatable[0], 1) : call_syntax::dot;
+				call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, &usertype_traits<T>::user_metatable()[0], 1) : call_syntax::dot;
 				argcount -= static_cast<int>(syntax);
 
 				T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
@@ -7718,7 +7718,7 @@ namespace sol {
 			struct onmatch {
 				template <typename Fx, std::size_t I, typename... R, typename... Args>
 				int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start, F& f) {
-					const auto& metakey = usertype_traits<T>::metatable;
+					const auto& metakey = usertype_traits<T>::metatable();
 					T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
 					reference userdataref(L, -1);
 					T*& referencepointer = *pointerpointer;
@@ -7733,7 +7733,7 @@ namespace sol {
 					if (type_of(L, -1) == type::nil) {
 						lua_pop(L, 1);
 						std::string err = "sol: unable to get usertype metatable for ";
-						err += usertype_traits<T>::name;
+						err += usertype_traits<T>::name();
 						return luaL_error(L, err.c_str());
 					}
 					lua_setmetatable(L, -2);
@@ -7743,7 +7743,7 @@ namespace sol {
 			};
 
 			static int call(lua_State* L, F& f) {
-				call_syntax syntax = stack::get_call_syntax(L, &usertype_traits<T>::user_metatable[0]);
+				call_syntax syntax = stack::get_call_syntax(L, &usertype_traits<T>::user_metatable()[0]);
 				int syntaxval = static_cast<int>(syntax);
 				int argcount = lua_gettop(L) - syntaxval;
 				return construct_match<T, meta::pop_front_type_t<meta::function_args_t<Cxs>>...>(onmatch(), L, argcount, 1 + syntaxval, f);
@@ -9734,8 +9734,8 @@ namespace sol {
 		static void walk_single_base(lua_State* L, bool& found, int& ret, string_detail::string_shim&) {
 			if (found)
 				return;
-			const char* metakey = &usertype_traits<Base>::metatable[0];
-			const char* gcmetakey = &usertype_traits<Base>::gc_table[0];
+			const char* metakey = &usertype_traits<Base>::metatable()[0];
+			const char* gcmetakey = &usertype_traits<Base>::gc_table()[0];
 			const char* basewalkkey = is_index ? detail::base_class_index_propogation_key() : detail::base_class_new_index_propogation_key();
 
 			luaL_getmetatable(L, metakey);
@@ -10084,7 +10084,7 @@ namespace sol {
 			static umt_t& make_cleanup(lua_State* L, umt_t&& umx) {
 				// ensure some sort of uniqueness
 				static int uniqueness = 0;
-				std::string uniquegcmetakey = usertype_traits<T>::user_gc_metatable;
+				std::string uniquegcmetakey = usertype_traits<T>::user_gc_metatable();
 				// std::to_string doesn't exist in android still, with NDK, so this bullshit
 				// is necessary
 				// thanks, Android :v
@@ -10095,7 +10095,7 @@ namespace sol {
 				snprintf(uniquetarget, uniquegcmetakey.length(), "%d", uniqueness);
 				++uniqueness;
 
-				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
+				const char* gcmetakey = &usertype_traits<T>::gc_table()[0];
 				// Make sure userdata's memory is properly in lua first,
 				// otherwise all the light userdata we make later will become invalid
 				stack::push<user<umt_t>>(L, metatable_key, uniquegcmetakey, std::move(umx));
@@ -10132,16 +10132,16 @@ namespace sol {
 					luaL_Reg* metaregs = nullptr;
 					switch (i) {
 					case 0:
-						metakey = &usertype_traits<T*>::metatable[0];
+						metakey = &usertype_traits<T*>::metatable()[0];
 						metaregs = ref_table.data();
 						break;
 					case 1:
-						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable[0];
+						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable()[0];
 						metaregs = unique_table.data();
 						break;
 					case 2:
 					default:
-						metakey = &usertype_traits<T>::metatable[0];
+						metakey = &usertype_traits<T>::metatable()[0];
 						metaregs = value_table.data();
 						break;
 					}
@@ -10189,7 +10189,7 @@ namespace sol {
 				}
 
 				// Now for the shim-table that actually gets assigned to the name
-				luaL_newmetatable(L, &usertype_traits<T>::user_metatable[0]);
+				luaL_newmetatable(L, &usertype_traits<T>::user_metatable()[0]);
 				stack_reference t(L, -1);
 				stack::push(L, make_light(um));
 				luaL_setfuncs(L, value_table.data(), 1);
@@ -10269,14 +10269,14 @@ namespace sol {
 					const char* metakey = nullptr;
 					switch (i) {
 					case 0:
-						metakey = &usertype_traits<T*>::metatable[0];
+						metakey = &usertype_traits<T*>::metatable()[0];
 						break;
 					case 1:
-						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable[0];
+						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable()[0];
 						break;
 					case 2:
 					default:
-						metakey = &usertype_traits<T>::metatable[0];
+						metakey = &usertype_traits<T>::metatable()[0];
 						break;
 					}
 					luaL_getmetatable(L, metakey);
@@ -10545,7 +10545,7 @@ namespace sol {
 			
 			static usertype_detail::simple_map& make_cleanup(lua_State* L, umt_t& umx) {
 				static int uniqueness = 0;
-				std::string uniquegcmetakey = usertype_traits<T>::user_gc_metatable;
+				std::string uniquegcmetakey = usertype_traits<T>::user_gc_metatable();
 				// std::to_string doesn't exist in android still, with NDK, so this bullshit
 				// is necessary
 				// thanks, Android :v
@@ -10556,8 +10556,11 @@ namespace sol {
 				snprintf(uniquetarget, uniquegcmetakey.length(), "%d", uniqueness);
 				++uniqueness;
 
-				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
-				stack::push<user<usertype_detail::simple_map>>(L, metatable_key, uniquegcmetakey, &usertype_traits<T>::metatable[0], umx.indexbaseclasspropogation, umx.newindexbaseclasspropogation, std::move(umx.varmap), std::move(umx.registrations));
+				const char* gcmetakey = &usertype_traits<T>::gc_table()[0];
+				stack::push<user<usertype_detail::simple_map>>(L, metatable_key, uniquegcmetakey, &usertype_traits<T>::metatable()[0], 
+					umx.indexbaseclasspropogation, umx.newindexbaseclasspropogation, 
+					std::move(umx.varmap), std::move(umx.registrations)
+				);
 				stack_reference stackvarmap(L, -1);
 				stack::set_field<true>(L, gcmetakey, stackvarmap);
 				stackvarmap.pop();
@@ -10611,14 +10614,14 @@ namespace sol {
 					const char* metakey = nullptr;
 					switch (i) {
 					case 0:
-						metakey = &usertype_traits<T*>::metatable[0];
+						metakey = &usertype_traits<T*>::metatable()[0];
 						break;
 					case 1:
-						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable[0];
+						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable()[0];
 						break;
 					case 2:
 					default:
-						metakey = &usertype_traits<T>::metatable[0];
+						metakey = &usertype_traits<T>::metatable()[0];
 						break;
 					}
 					luaL_newmetatable(L, metakey);
@@ -10704,7 +10707,7 @@ namespace sol {
 				}
 
 				// Now for the shim-table that actually gets pushed
-				luaL_newmetatable(L, &usertype_traits<T>::user_metatable[0]);
+				luaL_newmetatable(L, &usertype_traits<T>::user_metatable()[0]);
 				stack_reference t(L, -1);
 				for (auto& kvp : varmap.functions) {
 					auto& first = std::get<0>(kvp);
@@ -11088,7 +11091,7 @@ namespace sol {
 			typedef container_usertype_metatable<T> cumt;
 			static int push(lua_State* L, const T& cont) {
 				auto fx = [&L]() {
-					const char* metakey = &usertype_traits<T>::metatable[0];
+					const char* metakey = &usertype_traits<T>::metatable()[0];
 					if (luaL_newmetatable(L, metakey) == 1) {
 						const auto& reg = stack_detail::container_metatable<T>();
 						luaL_setfuncs(L, reg, 0);
@@ -11100,7 +11103,7 @@ namespace sol {
 
 			static int push(lua_State* L, T&& cont) {
 				auto fx = [&L]() {
-					const char* metakey = &usertype_traits<T>::metatable[0];
+					const char* metakey = &usertype_traits<T>::metatable()[0];
 					if (luaL_newmetatable(L, metakey) == 1) {
 						const auto& reg = stack_detail::container_metatable<T>();
 						luaL_setfuncs(L, reg, 0);
@@ -11116,7 +11119,7 @@ namespace sol {
 			typedef container_usertype_metatable<T> cumt;
 			static int push(lua_State* L, T* cont) {
 				auto fx = [&L]() {
-					const char* metakey = &usertype_traits<meta::unqualified_t<T>*>::metatable[0];
+					const char* metakey = &usertype_traits<meta::unqualified_t<T>*>::metatable()[0];
 					if (luaL_newmetatable(L, metakey) == 1) {
 						const auto& reg = stack_detail::container_metatable<T*>();
 						luaL_setfuncs(L, reg, 0);
@@ -11512,7 +11515,7 @@ namespace sol {
 
 		template<typename T>
 		basic_table_core& set_usertype(usertype<T>& user) {
-			return set_usertype(usertype_traits<T>::name, user);
+			return set_usertype(usertype_traits<T>::name(), user);
 		}
 
 		template<typename Key, typename T>
@@ -12138,7 +12141,7 @@ namespace sol {
 
 		template<typename T>
 		state_view& set_usertype(usertype<T>& user) {
-			return set_usertype(usertype_traits<T>::name, user);
+			return set_usertype(usertype_traits<T>::name(), user);
 		}
 
 		template<typename Key, typename T>

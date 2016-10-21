@@ -106,9 +106,9 @@ namespace sol {
 
 		template <typename T, typename... TypeLists>
 		inline int construct(lua_State* L) {
-			static const auto& meta = usertype_traits<T>::metatable;
+			static const auto& meta = usertype_traits<T>::metatable();
 			int argcount = lua_gettop(L);
-			call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, &usertype_traits<T>::user_metatable[0], 1) : call_syntax::dot;
+			call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, &usertype_traits<T>::user_metatable()[0], 1) : call_syntax::dot;
 			argcount -= static_cast<int>(syntax);
 
 			T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
@@ -344,9 +344,9 @@ namespace sol {
 			typedef constructor_list<Args...> F;
 
 			static int call(lua_State* L, F&) {
-				const auto& metakey = usertype_traits<T>::metatable;
+				const auto& metakey = usertype_traits<T>::metatable();
 				int argcount = lua_gettop(L);
-				call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, &usertype_traits<T>::user_metatable[0], 1) : call_syntax::dot;
+				call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, &usertype_traits<T>::user_metatable()[0], 1) : call_syntax::dot;
 				argcount -= static_cast<int>(syntax);
 
 				T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
@@ -376,7 +376,7 @@ namespace sol {
 			struct onmatch {
 				template <typename Fx, std::size_t I, typename... R, typename... Args>
 				int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start, F& f) {
-					const auto& metakey = usertype_traits<T>::metatable;
+					const auto& metakey = usertype_traits<T>::metatable();
 					T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
 					reference userdataref(L, -1);
 					T*& referencepointer = *pointerpointer;
@@ -391,7 +391,7 @@ namespace sol {
 					if (type_of(L, -1) == type::nil) {
 						lua_pop(L, 1);
 						std::string err = "sol: unable to get usertype metatable for ";
-						err += usertype_traits<T>::name;
+						err += usertype_traits<T>::name();
 						return luaL_error(L, err.c_str());
 					}
 					lua_setmetatable(L, -2);
@@ -401,7 +401,7 @@ namespace sol {
 			};
 
 			static int call(lua_State* L, F& f) {
-				call_syntax syntax = stack::get_call_syntax(L, &usertype_traits<T>::user_metatable[0]);
+				call_syntax syntax = stack::get_call_syntax(L, &usertype_traits<T>::user_metatable()[0]);
 				int syntaxval = static_cast<int>(syntax);
 				int argcount = lua_gettop(L) - syntaxval;
 				return construct_match<T, meta::pop_front_type_t<meta::function_args_t<Cxs>>...>(onmatch(), L, argcount, 1 + syntaxval, f);

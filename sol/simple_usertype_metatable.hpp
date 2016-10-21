@@ -78,14 +78,14 @@ namespace sol {
 					const char* metakey = nullptr;
 					switch (i) {
 					case 0:
-						metakey = &usertype_traits<T*>::metatable[0];
+						metakey = &usertype_traits<T*>::metatable()[0];
 						break;
 					case 1:
-						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable[0];
+						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable()[0];
 						break;
 					case 2:
 					default:
-						metakey = &usertype_traits<T>::metatable[0];
+						metakey = &usertype_traits<T>::metatable()[0];
 						break;
 					}
 					luaL_getmetatable(L, metakey);
@@ -354,7 +354,7 @@ namespace sol {
 			
 			static usertype_detail::simple_map& make_cleanup(lua_State* L, umt_t& umx) {
 				static int uniqueness = 0;
-				std::string uniquegcmetakey = usertype_traits<T>::user_gc_metatable;
+				std::string uniquegcmetakey = usertype_traits<T>::user_gc_metatable();
 				// std::to_string doesn't exist in android still, with NDK, so this bullshit
 				// is necessary
 				// thanks, Android :v
@@ -365,8 +365,11 @@ namespace sol {
 				snprintf(uniquetarget, uniquegcmetakey.length(), "%d", uniqueness);
 				++uniqueness;
 
-				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
-				stack::push<user<usertype_detail::simple_map>>(L, metatable_key, uniquegcmetakey, &usertype_traits<T>::metatable[0], umx.indexbaseclasspropogation, umx.newindexbaseclasspropogation, std::move(umx.varmap), std::move(umx.registrations));
+				const char* gcmetakey = &usertype_traits<T>::gc_table()[0];
+				stack::push<user<usertype_detail::simple_map>>(L, metatable_key, uniquegcmetakey, &usertype_traits<T>::metatable()[0], 
+					umx.indexbaseclasspropogation, umx.newindexbaseclasspropogation, 
+					std::move(umx.varmap), std::move(umx.registrations)
+				);
 				stack_reference stackvarmap(L, -1);
 				stack::set_field<true>(L, gcmetakey, stackvarmap);
 				stackvarmap.pop();
@@ -420,14 +423,14 @@ namespace sol {
 					const char* metakey = nullptr;
 					switch (i) {
 					case 0:
-						metakey = &usertype_traits<T*>::metatable[0];
+						metakey = &usertype_traits<T*>::metatable()[0];
 						break;
 					case 1:
-						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable[0];
+						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable()[0];
 						break;
 					case 2:
 					default:
-						metakey = &usertype_traits<T>::metatable[0];
+						metakey = &usertype_traits<T>::metatable()[0];
 						break;
 					}
 					luaL_newmetatable(L, metakey);
@@ -513,7 +516,7 @@ namespace sol {
 				}
 
 				// Now for the shim-table that actually gets pushed
-				luaL_newmetatable(L, &usertype_traits<T>::user_metatable[0]);
+				luaL_newmetatable(L, &usertype_traits<T>::user_metatable()[0]);
 				stack_reference t(L, -1);
 				for (auto& kvp : varmap.functions) {
 					auto& first = std::get<0>(kvp);

@@ -116,8 +116,8 @@ namespace sol {
 		static void walk_single_base(lua_State* L, bool& found, int& ret, string_detail::string_shim&) {
 			if (found)
 				return;
-			const char* metakey = &usertype_traits<Base>::metatable[0];
-			const char* gcmetakey = &usertype_traits<Base>::gc_table[0];
+			const char* metakey = &usertype_traits<Base>::metatable()[0];
+			const char* gcmetakey = &usertype_traits<Base>::gc_table()[0];
 			const char* basewalkkey = is_index ? detail::base_class_index_propogation_key() : detail::base_class_new_index_propogation_key();
 
 			luaL_getmetatable(L, metakey);
@@ -466,7 +466,7 @@ namespace sol {
 			static umt_t& make_cleanup(lua_State* L, umt_t&& umx) {
 				// ensure some sort of uniqueness
 				static int uniqueness = 0;
-				std::string uniquegcmetakey = usertype_traits<T>::user_gc_metatable;
+				std::string uniquegcmetakey = usertype_traits<T>::user_gc_metatable();
 				// std::to_string doesn't exist in android still, with NDK, so this bullshit
 				// is necessary
 				// thanks, Android :v
@@ -477,7 +477,7 @@ namespace sol {
 				snprintf(uniquetarget, uniquegcmetakey.length(), "%d", uniqueness);
 				++uniqueness;
 
-				const char* gcmetakey = &usertype_traits<T>::gc_table[0];
+				const char* gcmetakey = &usertype_traits<T>::gc_table()[0];
 				// Make sure userdata's memory is properly in lua first,
 				// otherwise all the light userdata we make later will become invalid
 				stack::push<user<umt_t>>(L, metatable_key, uniquegcmetakey, std::move(umx));
@@ -514,16 +514,16 @@ namespace sol {
 					luaL_Reg* metaregs = nullptr;
 					switch (i) {
 					case 0:
-						metakey = &usertype_traits<T*>::metatable[0];
+						metakey = &usertype_traits<T*>::metatable()[0];
 						metaregs = ref_table.data();
 						break;
 					case 1:
-						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable[0];
+						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable()[0];
 						metaregs = unique_table.data();
 						break;
 					case 2:
 					default:
-						metakey = &usertype_traits<T>::metatable[0];
+						metakey = &usertype_traits<T>::metatable()[0];
 						metaregs = value_table.data();
 						break;
 					}
@@ -571,7 +571,7 @@ namespace sol {
 				}
 
 				// Now for the shim-table that actually gets assigned to the name
-				luaL_newmetatable(L, &usertype_traits<T>::user_metatable[0]);
+				luaL_newmetatable(L, &usertype_traits<T>::user_metatable()[0]);
 				stack_reference t(L, -1);
 				stack::push(L, make_light(um));
 				luaL_setfuncs(L, value_table.data(), 1);
