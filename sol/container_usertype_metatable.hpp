@@ -298,11 +298,12 @@ namespace sol {
 			iter& i = stack::get<user<iter>>(L, 1);
 			auto& source = i.source;
 			auto& it = i.it;
-			std::advance(it, 1);
 			if (it == end(source)) {
 				return 0;
 			}
-			return stack::multi_push_reference(L, it->first, it->second);
+			int p = stack::multi_push_reference(L, it->first, it->second);
+			std::advance(it, 1);
+			return p;
 		}
 
 		static int real_pairs_call(lua_State* L) {
@@ -341,6 +342,22 @@ namespace sol {
 	};
 
 	namespace stack {
+		namespace stack_detail {
+			template <typename T>
+			inline const auto& container_metatable() {
+				typedef container_usertype_metatable<std::remove_pointer_t<T>> cumt;
+				static const luaL_Reg reg[] = {
+					{ "__index", &cumt::index_call },
+					{ "__newindex", &cumt::new_index_call },
+					{ "__pairs", &cumt::pairs_call },
+					{ "__ipairs", &cumt::pairs_call },
+					{ "__len", &cumt::length_call },
+					{ std::is_pointer<T>::value ? nullptr : "__gc", std::is_pointer<T>::value ? nullptr : &detail::usertype_alloc_destroy<T> },
+					{ nullptr, nullptr }
+				};
+				return reg;
+			}
+		}
 
 		template<typename T>
 		struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
@@ -349,14 +366,7 @@ namespace sol {
 				auto fx = [&L]() {
 					const char* metakey = &usertype_traits<T>::metatable[0];
 					if (luaL_newmetatable(L, metakey) == 1) {
-						luaL_Reg reg[] = {
-							{ "__index", &cumt::index_call },
-							{ "__newindex", &cumt::new_index_call },
-							{ "__pairs", &cumt::pairs_call },
-							{ "__len", &cumt::length_call },
-							{ "__gc", &detail::usertype_alloc_destroy<T> },
-							{ nullptr, nullptr }
-						};
+						const auto& reg = stack_detail::container_metatable<T>();
 						luaL_setfuncs(L, reg, 0);
 					}
 					lua_setmetatable(L, -2);
@@ -368,14 +378,7 @@ namespace sol {
 				auto fx = [&L]() {
 					const char* metakey = &usertype_traits<T>::metatable[0];
 					if (luaL_newmetatable(L, metakey) == 1) {
-						luaL_Reg reg[] = {
-							{ "__index", &cumt::index_call },
-							{ "__newindex", &cumt::new_index_call },
-							{ "__pairs", &cumt::pairs_call },
-							{ "__len", &cumt::length_call },
-							{ "__gc", &detail::usertype_alloc_destroy<T> },
-							{ nullptr, nullptr }
-						};
+						const auto& reg = stack_detail::container_metatable<T>();
 						luaL_setfuncs(L, reg, 0);
 					}
 					lua_setmetatable(L, -2);
@@ -391,13 +394,7 @@ namespace sol {
 				auto fx = [&L]() {
 					const char* metakey = &usertype_traits<meta::unqualified_t<T>*>::metatable[0];
 					if (luaL_newmetatable(L, metakey) == 1) {
-						luaL_Reg reg[] = {
-							{ "__index", &cumt::index_call },
-							{ "__newindex", &cumt::new_index_call },
-							{ "__pairs", &cumt::pairs_call },
-							{ "__len", &cumt::length_call },
-							{ nullptr, nullptr }
-						};
+						const auto& reg = stack_detail::container_metatable<T*>();
 						luaL_setfuncs(L, reg, 0);
 					}
 					lua_setmetatable(L, -2);
