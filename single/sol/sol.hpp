@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-10-23 21:02:40.993304 UTC
-// This header was generated with sol v2.14.12 (revision 2ac711b)
+// Generated 2016-10-23 23:29:11.436035 UTC
+// This header was generated with sol v2.14.12 (revision 85329ca)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4918,21 +4918,7 @@ namespace sol {
 		};
 
 		template <typename T, typename C>
-		struct checker<T*, type::userdata, C> {
-			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
-				const type indextype = type_of(L, index);
-				// Allow nil to be transformed to nullptr
-				if (indextype == type::nil) {
-					tracking.use(1);
-					return true;
-				}
-				return checker<meta::unqualified_t<T>, type::userdata, C>{}.check(types<meta::unqualified_t<T>>(), L, indextype, index, std::forward<Handler>(handler), tracking);
-			}
-		};
-
-		template <typename T, typename C>
-		struct checker<T, type::userdata, C> {
+		struct checker<detail::as_value_tag<T>, type::userdata, C> {
 			template <typename U, typename Handler>
 			static bool check(types<U>, lua_State* L, type indextype, int index, Handler&& handler, record& tracking) {
 				tracking.use(1);
@@ -4971,11 +4957,28 @@ namespace sol {
 				lua_pop(L, 1);
 				return true;
 			}
+		};
 
+		template <typename T, typename C>
+		struct checker<T, type::userdata, C> {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 				const type indextype = type_of(L, index);
-				return check(types<T>(), L, indextype, index, std::forward<Handler>(handler), tracking);
+				return checker<detail::as_value_tag<T>, type::userdata, C>{}.check(types<T>(), L, indextype, index, std::forward<Handler>(handler), tracking);
+			}
+		};
+
+		template <typename T, typename C>
+		struct checker<T*, type::userdata, C> {
+			template <typename Handler>
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				const type indextype = type_of(L, index);
+				// Allow nil to be transformed to nullptr
+				if (indextype == type::nil) {
+					tracking.use(1);
+					return true;
+				}
+				return checker<meta::unqualified_t<T>, type::userdata, C>{}.check(L, index, std::forward<Handler>(handler), tracking);
 			}
 		};
 
@@ -5513,7 +5516,7 @@ namespace sol {
 		template<typename T>
 		struct getter<std::reference_wrapper<T>> {
 			static T& get(lua_State* L, int index, record& tracking) {
-				return getter<T>{}.get(L, index, tracking);
+				return getter<T&>{}.get(L, index, tracking);
 			}
 		};
 
@@ -7413,7 +7416,7 @@ namespace sol {
 			template <typename Fx, std::size_t I, typename... R, typename... Args>
 			int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) const {
 				detail::default_construct func{};
-				return stack::call_into_lua<false>(r, a, L, start, func, obj);
+				return stack::call_into_lua<stack::stack_detail::default_check_arguments>(r, a, L, start, func, obj);
 			}
 		};
 
