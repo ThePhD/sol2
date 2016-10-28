@@ -360,7 +360,7 @@ namespace sol {
 		}
 
 		template<typename T>
-		struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
+		struct pusher<T, std::enable_if_t<meta::all<is_container<T>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
 			typedef container_usertype_metatable<T> cumt;
 			static int push(lua_State* L, const T& cont) {
 				auto fx = [&L]() {
@@ -388,7 +388,7 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct pusher<T*, std::enable_if_t<meta::all<meta::has_begin_end<meta::unqualified_t<T>>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
+		struct pusher<T*, std::enable_if_t<meta::all<is_container<T>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
 			typedef container_usertype_metatable<T> cumt;
 			static int push(lua_State* L, T* cont) {
 				auto fx = [&L]() {

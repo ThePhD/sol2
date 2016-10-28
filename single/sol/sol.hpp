@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-10-23 23:29:11.436035 UTC
-// This header was generated with sol v2.14.12 (revision 85329ca)
+// Generated 2016-10-28 08:35:21.637539 UTC
+// This header was generated with sol v2.14.12 (revision 31fe82f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3530,6 +3530,12 @@ namespace sol {
 		template <typename T>
 		struct lua_type_of<T, std::enable_if_t<std::is_enum<T>::value>> : std::integral_constant<type, type::number> {};
 
+		template <typename T, typename C = void>
+		struct is_container : std::false_type {};
+
+		template <typename T>
+		struct is_container<T, std::enable_if_t<meta::has_begin_end<meta::unqualified_t<T>>::value>> : std::true_type {};
+
 		template <>
 		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
 
@@ -3634,6 +3640,9 @@ namespace sol {
 	template <typename T>
 	struct is_userdata<basic_userdata<T>> : std::true_type {};
 
+	template <typename T>
+	struct is_container : detail::is_container<T>{};
+	
 	template<typename T>
 	inline type type_of() {
 		return lua_type_of<meta::unqualified_t<T>>::value;
@@ -11143,7 +11152,7 @@ namespace sol {
 		}
 
 		template<typename T>
-		struct pusher<T, std::enable_if_t<meta::all<meta::has_begin_end<T>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
+		struct pusher<T, std::enable_if_t<meta::all<is_container<T>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
 			typedef container_usertype_metatable<T> cumt;
 			static int push(lua_State* L, const T& cont) {
 				auto fx = [&L]() {
@@ -11171,7 +11180,7 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct pusher<T*, std::enable_if_t<meta::all<meta::has_begin_end<meta::unqualified_t<T>>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
+		struct pusher<T*, std::enable_if_t<meta::all<is_container<T>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
 			typedef container_usertype_metatable<T> cumt;
 			static int push(lua_State* L, T* cont) {
 				auto fx = [&L]() {
@@ -11746,6 +11755,7 @@ namespace sol {
 
 		template <typename... Args>
 		static inline table create_with(lua_State* L, Args&&... args) {
+			static_assert(sizeof...(Args) % 2 == 0, "You must have an even number of arguments for a key, value ... list.");
 			static const int narr = static_cast<int>(meta::count_2_for_pack<std::is_integral, Args...>::value);
 			return create(L, narr, static_cast<int>((sizeof...(Args) / 2) - narr), std::forward<Args>(args)...);
 		}

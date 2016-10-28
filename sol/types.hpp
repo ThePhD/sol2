@@ -650,6 +650,12 @@ namespace sol {
 		template <typename T>
 		struct lua_type_of<T, std::enable_if_t<std::is_enum<T>::value>> : std::integral_constant<type, type::number> {};
 
+		template <typename T, typename C = void>
+		struct is_container : std::false_type {};
+
+		template <typename T>
+		struct is_container<T, std::enable_if_t<meta::has_begin_end<meta::unqualified_t<T>>::value>> : std::true_type {};
+
 		template <>
 		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
 
@@ -754,6 +760,9 @@ namespace sol {
 	template <typename T>
 	struct is_userdata<basic_userdata<T>> : std::true_type {};
 
+	template <typename T>
+	struct is_container : detail::is_container<T>{};
+	
 	template<typename T>
 	inline type type_of() {
 		return lua_type_of<meta::unqualified_t<T>>::value;
