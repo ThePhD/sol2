@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-10-28 08:35:21.637539 UTC
-// This header was generated with sol v2.14.12 (revision 31fe82f)
+// Generated 2016-10-29 19:13:08.076162 UTC
+// This header was generated with sol v2.14.12 (revision f896a9e)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -48,6 +48,7 @@ namespace sol {
 		std::string w;
 	public:
 		error(const std::string& str) : error(detail::direct_error, "lua: error: " + str) {}
+		error(std::string&& str) : error(detail::direct_error, "lua: error: " + std::move(str)) {}
 		error(detail::direct_error_tag, const std::string& str) : std::runtime_error(""), w(str) {}
 		error(detail::direct_error_tag, std::string&& str) : std::runtime_error(""), w(std::move(str)) {}
 
@@ -12356,8 +12357,12 @@ namespace sol {
 		return -1;
 #else
 		const char* message = lua_tostring(L, -1);
-		std::string err = message ? message : "An unexpected error occurred and forced the lua state to call atpanic";
-		throw error(err);
+		if (message) {
+			std::string err = message;
+			lua_pop(L, 1);
+			throw error(err);
+		}
+		throw error(std::string("An unexpected error occurred and forced the lua state to call atpanic"));
 #endif
 	}
 
