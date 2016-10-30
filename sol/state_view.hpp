@@ -222,6 +222,16 @@ namespace sol {
 			return require_core(key, [this, &filename]() {stack::script_file(L, filename); }, create_global);
 		}
 
+		protected_function_result do_string(const std::string& code) {
+			sol::protected_function pf = load(code);
+			return pf();
+		}
+
+		protected_function_result do_file(const std::string& filename) {
+			sol::protected_function pf = load_file(filename);
+			return pf();
+		}
+
 		function_result script(const std::string& code) {
 			int index = (::std::max)(lua_gettop(L), 1);
 			stack::script(L, code);
