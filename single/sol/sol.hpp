@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-10-30 08:39:55.311816 UTC
-// This header was generated with sol v2.14.12 (revision 76cae57)
+// Generated 2016-10-30 09:59:20.343998 UTC
+// This header was generated with sol v2.14.12 (revision c9728b7)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -12115,6 +12115,16 @@ namespace sol {
 
 		object require_file(const std::string& key, const std::string& filename, bool create_global = true) {
 			return require_core(key, [this, &filename]() {stack::script_file(L, filename); }, create_global);
+		}
+
+		protected_function_result do_string(const std::string& code) {
+			sol::protected_function pf = load(code);
+			return pf();
+		}
+
+		protected_function_result do_file(const std::string& filename) {
+			sol::protected_function pf = load_file(filename);
+			return pf();
 		}
 
 		function_result script(const std::string& code) {
