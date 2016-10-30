@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-10-29 19:13:08.076162 UTC
-// This header was generated with sol v2.14.12 (revision f896a9e)
+// Generated 2016-10-30 08:39:55.311816 UTC
+// This header was generated with sol v2.14.12 (revision 76cae57)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -9637,22 +9637,26 @@ namespace sol {
 
 	template<typename Table, typename Key, typename T>
 	inline bool operator==(T&& left, const proxy<Table, Key>& right) {
-		return left == right.template get<std::decay_t<T>>();
+		typedef decltype(stack::get<T>(nullptr, 0)) U;
+		return right.template get<optional<U>>() == left;
 	}
 
 	template<typename Table, typename Key, typename T>
 	inline bool operator==(const proxy<Table, Key>& right, T&& left) {
-		return right.template get<std::decay_t<T>>() == left;
+		typedef decltype(stack::get<T>(nullptr, 0)) U;
+		return right.template get<optional<U>>() == left;
 	}
 
 	template<typename Table, typename Key, typename T>
 	inline bool operator!=(T&& left, const proxy<Table, Key>& right) {
-		return right.template get<std::decay_t<T>>() != left;
+		typedef decltype(stack::get<T>(nullptr, 0)) U;
+		return right.template get<optional<U>>() == left;
 	}
 
 	template<typename Table, typename Key, typename T>
 	inline bool operator!=(const proxy<Table, Key>& right, T&& left) {
-		return right.template get<std::decay_t<T>>() != left;
+		typedef decltype(stack::get<T>(nullptr, 0)) U;
+		return right.template get<optional<U>>() == left;
 	}
 
 	template<typename Table, typename Key>
