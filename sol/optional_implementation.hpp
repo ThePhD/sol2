@@ -27,8 +27,8 @@
 // The idea and interface is based on Boost.Optional library
 // authored by Fernando Luis Cacciola Carballal
 
-# ifndef ___SOL_OPTIONAL_HPP___
-# define ___SOL_OPTIONAL_HPP___
+# ifndef SOL_OPTIONAL_IMPLEMENTATION_HPP
+# define SOL_OPTIONAL_IMPLEMENTATION_HPP
 
 # include <utility>
 # include <type_traits>
@@ -578,7 +578,7 @@ namespace sol {
 			T* noreach = (T*)nullptr;
 			return *noreach;
 #else
-			throw bad_optional_access("bad optional access")
+			throw bad_optional_access("bad optional access");
 #endif
 		}
 
@@ -592,7 +592,7 @@ namespace sol {
 			T* noreach = (T*)nullptr;
 			return *noreach;
 #else
-			throw bad_optional_access("bad optional access")
+			throw bad_optional_access("bad optional access");
 #endif
 		}
 
@@ -606,7 +606,7 @@ namespace sol {
 			T* noreach = (T*)nullptr;
 			return std::move(*noreach);
 #else
-			throw bad_optional_access("bad optional access")
+			throw bad_optional_access("bad optional access");
 #endif
 
 		}
@@ -637,7 +637,7 @@ namespace sol {
 			T* noreach = (T*)nullptr;
 			return *noreach;
 #else
-			throw bad_optional_access("bad optional access")
+			throw bad_optional_access("bad optional access");
 #endif
 		}
 
@@ -650,7 +650,7 @@ namespace sol {
 			T* noreach = (T*)nullptr;
 			return *noreach;
 #else
-			throw bad_optional_access("bad optional access")
+			throw bad_optional_access("bad optional access");
 #endif
 		}
 
@@ -789,7 +789,7 @@ namespace sol {
 			T* noreach = (T*)nullptr;
 			return *noreach;
 #else
-			throw bad_optional_access("bad optional access")
+			throw bad_optional_access("bad optional access");
 #endif
 		}
 
@@ -1138,4 +1138,4 @@ namespace std
 # undef TR2_OPTIONAL_REQUIRES
 # undef TR2_OPTIONAL_ASSERTED_EXPRESSION
 
-# endif //___SOL_OPTIONAL_HPP___
+# endif // SOL_OPTIONAL_IMPLEMENTATION_HPP
