@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-11-01 09:35:31.806061 UTC
-// This header was generated with sol v2.14.12 (revision 0fcb62a)
+// Generated 2016-11-01 09:57:31.250938 UTC
+// This header was generated with sol v2.14.12 (revision d3cb904)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -2341,46 +2341,37 @@ namespace sol {
 		}
 
 		constexpr T const& value() const& {
-			if (initialized()) {
-				return contained_val();
-			}
+			return initialized() ?
+				return contained_val()
 #ifdef SOL_NO_EXCEPTIONS
-			// No abort in constexpr
-			//std::abort();
-			T* noreach = (T*)nullptr;
-			return *noreach;
+				// we can't abort here
+				// because there's no constexpr abort
+				: *(T*)nullptr;
 #else
-			throw bad_optional_access("bad optional access");
+				: (throw bad_optional_access("bad optional access"), contained_val());
 #endif
 		}
 
 		OPTIONAL_MUTABLE_CONSTEXPR T& value() & {
-			if (initialized()) {
-				return contained_val();
-			}
+			return initialized() ?
+				return contained_val()
 #ifdef SOL_NO_EXCEPTIONS
-			// No abort in constexpr
-			//std::abort();
-			T* noreach = (T*)nullptr;
-			return *noreach;
+				: *(T*)nullptr;
 #else
-			throw bad_optional_access("bad optional access");
+				: (throw bad_optional_access("bad optional access"), contained_val());
 #endif
 		}
 
 		OPTIONAL_MUTABLE_CONSTEXPR T&& value() && {
-			if (initialized()) {
-				return std::move(contained_val());
-			}
+			return initialized() ?
+				return contained_val()
 #ifdef SOL_NO_EXCEPTIONS
-			// No abort in constexpr
-			//std::abort();
-			T* noreach = (T*)nullptr;
-			return std::move(*noreach);
+				// we can't abort here
+				// because there's no constexpr abort
+				: std::move(*(T*)nullptr);
 #else
-			throw bad_optional_access("bad optional access");
+				: (throw bad_optional_access("bad optional access"), contained_val());
 #endif
-
 		}
 
 # else
@@ -2400,29 +2391,26 @@ namespace sol {
 		}
 
 		constexpr T const& value() const {
-			if (initialized()) {
-				return contained_val();
-			}
+			return initialized() ? 
+				contained_val() 
 #ifdef SOL_NO_EXCEPTIONS
-			// No abort in constexpr
-			//std::abort();
-			T* noreach = (T*)nullptr;
-			return *noreach;
+				// we can't abort here
+				// because there's no constexpr abort
+				: *(T*)nullptr;
 #else
-			throw bad_optional_access("bad optional access");
+				: (throw bad_optional_access("bad optional access"), contained_val());
 #endif
 		}
 
 		T& value() {
-			if (initialized()) {
-				return contained_val();
-			}
+			return initialized() ?
+				contained_val()
 #ifdef SOL_NO_EXCEPTIONS
-			std::abort();
-			T* noreach = (T*)nullptr;
-			return *noreach;
+				// we can abort here
+				// but the others are constexpr, so we can't...
+				: (std::abort(), *(T*)nullptr)
 #else
-			throw bad_optional_access("bad optional access");
+				: (throw bad_optional_access("bad optional access"), contained_val());
 #endif
 		}
 
@@ -2550,16 +2538,14 @@ namespace sol {
 		}
 
 		constexpr T& value() const {
-			if (ref) {
-				return *ref;
-			}
+			return ref ?
+				*ref
 #ifdef SOL_NO_EXCEPTIONS
-			// Can't abort in constexpr. Lovely.
-			std::abort();
-			T* noreach = (T*)nullptr;
-			return *noreach;
+				// we can't abort here
+				// because there's no constexpr abort
+				: *(T*)nullptr;
 #else
-			throw bad_optional_access("bad optional access");
+				: throw bad_optional_access("bad optional access");
 #endif
 		}
 
