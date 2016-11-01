@@ -570,7 +570,7 @@ namespace sol {
 
 		constexpr T const& value() const& {
 			return initialized() ?
-				return contained_val()
+				contained_val()
 #ifdef SOL_NO_EXCEPTIONS
 				// we can't abort here
 				// because there's no constexpr abort
@@ -582,7 +582,7 @@ namespace sol {
 
 		OPTIONAL_MUTABLE_CONSTEXPR T& value() & {
 			return initialized() ?
-				return contained_val()
+				contained_val()
 #ifdef SOL_NO_EXCEPTIONS
 				: *(T*)nullptr;
 #else
@@ -592,7 +592,7 @@ namespace sol {
 
 		OPTIONAL_MUTABLE_CONSTEXPR T&& value() && {
 			return initialized() ?
-				return contained_val()
+				contained_val()
 #ifdef SOL_NO_EXCEPTIONS
 				// we can't abort here
 				// because there's no constexpr abort

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-11-01 09:57:31.250938 UTC
-// This header was generated with sol v2.14.12 (revision d3cb904)
+// Generated 2016-11-01 10:03:33.629309 UTC
+// This header was generated with sol v2.14.12 (revision c2c9ccf)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -2342,7 +2342,7 @@ namespace sol {
 
 		constexpr T const& value() const& {
 			return initialized() ?
-				return contained_val()
+				contained_val()
 #ifdef SOL_NO_EXCEPTIONS
 				// we can't abort here
 				// because there's no constexpr abort
@@ -2354,7 +2354,7 @@ namespace sol {
 
 		OPTIONAL_MUTABLE_CONSTEXPR T& value() & {
 			return initialized() ?
-				return contained_val()
+				contained_val()
 #ifdef SOL_NO_EXCEPTIONS
 				: *(T*)nullptr;
 #else
@@ -2364,7 +2364,7 @@ namespace sol {
 
 		OPTIONAL_MUTABLE_CONSTEXPR T&& value() && {
 			return initialized() ?
-				return contained_val()
+				contained_val()
 #ifdef SOL_NO_EXCEPTIONS
 				// we can't abort here
 				// because there's no constexpr abort
