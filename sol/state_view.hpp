@@ -115,6 +115,10 @@ namespace sol {
 
 		}
 
+		state_view(this_state L) : state_view(L.L){
+
+		}
+
 		lua_State* lua_state() const {
 			return L;
 		}
@@ -233,17 +237,19 @@ namespace sol {
 		}
 
 		function_result script(const std::string& code) {
-			int index = (::std::max)(lua_gettop(L), 1);
+			int index = lua_gettop(L);
 			stack::script(L, code);
-			int returns = lua_gettop(L) - (index - 1);
-			return function_result(L, index, returns);
+			int postindex = lua_gettop(L);
+			int returns = postindex - index;
+			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
 		}
 
 		function_result script_file(const std::string& filename) {
-			int index = (::std::max)(lua_gettop(L), 1);
+			int index = lua_gettop(L);
 			stack::script_file(L, filename);
-			int returns = lua_gettop(L) - (index - 1);
-			return function_result(L, index, returns);
+			int postindex = lua_gettop(L);
+			int returns = postindex - index;
+			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
 		}
 
 		load_result load(const std::string& code) {

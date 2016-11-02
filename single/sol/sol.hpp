@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-11-01 23:23:32.715464 UTC
-// This header was generated with sol v2.14.12 (revision 0a165dc)
+// Generated 2016-11-02 22:59:47.937773 UTC
+// This header was generated with sol v2.14.12 (revision 9836aba)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -11962,7 +11962,7 @@ namespace sol {
 
 		template<typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
-			return get<function>().template call<Ret...>(std::forward<Args>(args)...);
+			return get<protected_function>().template call<Ret...>(std::forward<Args>(args)...);
 		}
 
 		template<typename... Args>
@@ -12066,6 +12066,10 @@ namespace sol {
 			L(L),
 			reg(L, LUA_REGISTRYINDEX),
 			global(L, detail::global_) {
+
+		}
+
+		state_view(this_state L) : state_view(L.L){
 
 		}
 
@@ -12187,17 +12191,19 @@ namespace sol {
 		}
 
 		function_result script(const std::string& code) {
-			int index = (::std::max)(lua_gettop(L), 1);
+			int index = lua_gettop(L);
 			stack::script(L, code);
-			int returns = lua_gettop(L) - (index - 1);
-			return function_result(L, index, returns);
+			int postindex = lua_gettop(L);
+			int returns = postindex - index;
+			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
 		}
 
 		function_result script_file(const std::string& filename) {
-			int index = (::std::max)(lua_gettop(L), 1);
+			int index = lua_gettop(L);
 			stack::script_file(L, filename);
-			int returns = lua_gettop(L) - (index - 1);
-			return function_result(L, index, returns);
+			int postindex = lua_gettop(L);
+			int returns = postindex - index;
+			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
 		}
 
 		load_result load(const std::string& code) {

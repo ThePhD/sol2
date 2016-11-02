@@ -716,3 +716,79 @@ TEST_CASE("numbers/integers", "make sure integers are detectable on most platfor
 	REQUIRE_FALSE(b_is_int);
 	REQUIRE(b_is_double);
 }
+
+TEST_CASE("state/script-returns", "make sure script returns are done properly") {
+	std::string script =
+		R"(
+local example = 
+{
+    str = "this is a string",
+    num = 1234,
+
+    func = function(self)
+        print(self.str)
+		return "fstr"
+    end
+}
+
+return example;
+)";
+
+	auto bar = [&script](sol::this_state l) {
+		sol::state_view lua = l;
+		sol::table data = lua.script(script);
+
+		std::string str = data["str"];
+		int num = data["num"];
+		std::string fstr = data["func"](data);
+		REQUIRE(str == "this is a string");
+		REQUIRE(fstr == "fstr");
+		REQUIRE(num == 1234);
+	};
+
+	auto foo = [&script](int, sol::this_state l) {
+		sol::state_view lua = l;
+		sol::table data = lua.script(script);
+
+		std::string str = data["str"];
+		int num = data["num"];
+		std::string fstr = data["func"](data);
+		REQUIRE(str == "this is a string");
+		REQUIRE(fstr == "fstr");
+		REQUIRE(num == 1234);
+	};
+
+	auto bar2 = [&script](sol::this_state l) {
+		sol::state_view lua = l;
+		sol::table data = lua.do_string(script);
+
+		std::string str = data["str"];
+		int num = data["num"];
+		std::string fstr = data["func"](data);
+		REQUIRE(str == "this is a string");
+		REQUIRE(fstr == "fstr");
+		REQUIRE(num == 1234);
+	};
+
+	auto foo2 = [&script](int, sol::this_state l) {
+		sol::state_view lua = l;
+		sol::table data = lua.do_string(script);
+
+		std::string str = data["str"];
+		int num = data["num"];
+		std::string fstr = data["func"](data);
+		REQUIRE(str == "this is a string");
+		REQUIRE(fstr == "fstr");
+		REQUIRE(num == 1234);
+	};
+
+	sol::state lua;
+	lua.open_libraries();
+
+	lua.set_function("foo", foo);
+	lua.set_function("foo2", foo2);
+	lua.set_function("bar", bar);
+	lua.set_function("bar2", bar2);
+
+	lua.script("bar() bar2() foo(1) foo2(1)");
+}
