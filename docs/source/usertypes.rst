@@ -23,3 +23,4 @@ There are also some notes about guarantees you can find about usertypes, and the
 * Member methods, properties, variables and functions taking ``self&`` arguments modify data directly
 	- Work on a copy by taking or returning a copy by value.
 * The actual metatable associated with the usertype has a long name and is defined to be opaque by the Sol implementation.
+* Containers get pushed as special usertypes, but can be disabled if problems arising as detailed :doc:`here<api/containers>`.
