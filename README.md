@@ -48,9 +48,9 @@ More examples are given in the examples directory.
 
 ## Presentations
 
-"A Sun For the Moon - A Zero-Overhead Lua Abstraction using C++"
-ThePhD
-Lua Workshop 2016 - Mashape, San Francisco, CA
+"A Sun For the Moon - A Zero-Overhead Lua Abstraction using C++"  
+ThePhD  
+Lua Workshop 2016 - Mashape, San Francisco, CA  
 [Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/ThePhD%20-%20No%20Overhead%20C%20Abstraction%20-%202016.10.14.pdf)
 
 ## Creating a single header

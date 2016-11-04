@@ -23,4 +23,6 @@ This function serves the purpose of ensuring that an object is pushed -- if poss
 
 Note that any caveats with Lua tables apply the moment it is serialized, and the data cannot be gotten out back out in C++ as a C++ type without explicitly using the ``as_table_t`` marker for your get and conversion operations using Sol.
 
+If you need this functionality with a member variable, use a :doc:`property on a getter function<property>` that returns the result of ``sol::as_table``.
+
 This marker does NOT apply to :doc:`usertypes<usertype>`.

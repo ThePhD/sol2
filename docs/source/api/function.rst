@@ -3,6 +3,10 @@ function
 calling functions bound to Lua
 ------------------------------
 
+.. note::
+
+	This abstraction assumes the function runs safely. If you expect your code to have errors (e.g., you don't always have explicit control over it or are trying to debug errors), please use :doc:`sol::protected_function<protected_function>`.
+
 .. code-block:: cpp
 	
 	class function : public reference;

@@ -83,6 +83,16 @@ Thanks to `Eric (EToreo) for the suggestion on this one`_!
 These functions *load* the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run: it returns a ``load_result`` proxy that can be called to actually run the code, turned into a ``sol::function``, a ``sol::protected_function``, or some other abstraction. If it is called, it will run on the object's current ``lua_State*``: it is not isolated. If you need isolation, consider creating a new state or traditional Lua sandboxing techniques.
 
 .. code-block:: cpp
+	:caption: function: do_string / do_file
+	:name: state-do-code
+
+	sol::protected_function_result do_string(const std::string& code);
+	sol::protected_function_result do_file(const std::string& filename);
+
+These functions *loads and performs* the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It *will* run and returns a ``protected_function_result`` proxy that can be called to actually run the code, turned into a ``sol::function``, a ``sol::protected_function``, or some other abstraction.
+
+
+.. code-block:: cpp
 	:caption: function: global table / registry table
 
 	sol::global_table globals() const;
