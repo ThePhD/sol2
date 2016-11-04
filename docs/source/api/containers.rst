@@ -18,36 +18,36 @@ Here's a complete working example of it working for Lua 5.3 and Lua 5.2, and how
 		lua.open_libraries();
 
 		lua.script(R"(
-	function f (x)
-		print('--- Calling f ---')
-		for k, v in ipairs(x) do
-			print(k, v)
+		function f (x)
+			print('--- Calling f ---')
+			for k, v in ipairs(x) do
+				print(k, v)
+			end
 		end
-	end
-	)");
+		)");
 
-	// Have the function we 
-	// just defined in Lua
-	sol::function f = lua["f"];
+		// Have the function we 
+		// just defined in Lua
+		sol::function f = lua["f"];
 
-	// Set a global variable called 
-	// "arr" to be a vector of 5 lements
-	lua["arr"] = std::vector<int>{ 2, 4, 6, 8, 10 };
-	
-	// Call it, see 5 elements
-	// printed out
-	f(lua["arr"]);
+		// Set a global variable called 
+		// "arr" to be a vector of 5 lements
+		lua["arr"] = std::vector<int>{ 2, 4, 6, 8, 10 };
+		
+		// Call it, see 5 elements
+		// printed out
+		f(lua["arr"]);
 
-	// Mess with it in C++
-	std::vector<int>& reference_to_arr = lua["arr"];
-	reference_to_arr.push_back(12);
+		// Mess with it in C++
+		std::vector<int>& reference_to_arr = lua["arr"];
+		reference_to_arr.push_back(12);
 
-	// Call it, see *6* elements
-	// printed out
-	f(lua["arr"]);
+		// Call it, see *6* elements
+		// printed out
+		f(lua["arr"]);
 
-	return 0;
-}
+		return 0;
+	}
 
 Note that this will not work well in 5.1, as it has explicit table checks and does not check metamethods, even when ``pairs`` or ``ipairs`` is passed a table. In that case, you will need to use a more manual iteration scheme.
 
