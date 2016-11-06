@@ -209,8 +209,8 @@ namespace sol {
 		}
 
 		static int real_add_call_push(std::false_type, lua_State*L, T& src, int boost = 0) {
-			using std::cend;
-			src.insert(cend(src), stack::get<V>(L, 2 + boost));
+			using std::end;
+			src.insert(end(src), stack::get<V>(L, 2 + boost));
 			return 0;
 		}
 
