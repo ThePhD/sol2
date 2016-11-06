@@ -109,58 +109,65 @@ namespace sol {
 
 		static int real_index_call(lua_State* L) {
 			auto& src = get_src(L);
-#ifdef SOL_SAFE_USERTYPE
 			auto maybek = stack::check_get<K>(L, 2);
 			if (maybek) {
 				using std::begin;
 				auto it = begin(src);
 				K k = *maybek;
-				if (k <= src.size() && k > 0) {
-					--k;
-					std::advance(it, k);
-					return stack::push_reference(L, *it);
+#ifdef SOL_SAFE_USERTYPE
+				if (k > src.size() || k < 1) {
+					return stack::push(L, nil);
+				}
+#else
+#endif // Safety
+				--k;
+				std::advance(it, k);
+				return stack::push_reference(L, *it);
+			}
+			else {
+				auto maybename = stack::check_get<string_detail::string_shim>(L, 2);
+				if (maybename) {
+					auto& name = *maybename;
+					if (name == "add") {
+						return stack::push(L, &add_call);
+					}
+					else if (name == "insert") {
+						return stack::push(L, &insert_call);
+					}
+					else if (name == "clear") {
+						return stack::push(L, &clear_call);
+					}
 				}
 			}
+
 			return stack::push(L, nil);
-#else
-			using std::begin;
-			auto it = begin(src);
-			K k = stack::get<K>(L, 2);
-			--k;
-			std::advance(it, k);
-			return stack::push_reference(L, *it);
-#endif // Safety
 		}
 
-		template <bool b, meta::disable<meta::boolean<b>> = meta::enabler>
-		static int real_new_index_call_const(std::integral_constant<bool, b>, lua_State* L) {
+		static int real_new_index_call_const(std::false_type, lua_State* L) {
 			luaL_error(L, "sol: cannot write to a const value type or an immutable iterator (e.g., std::set)");
 			return 0;
 		}
 
-		template <bool b, meta::enable<meta::boolean<b>> = meta::enabler>
-		static int real_new_index_call_const(std::integral_constant<bool, b>, lua_State* L) {
+		static int real_new_index_call_const(std::true_type, lua_State* L) {
 			auto& src = get_src(L);
 #ifdef SOL_SAFE_USERTYPE
 			auto maybek = stack::check_get<K>(L, 2);
-			if (maybek) {
-				K k = *maybek;
-				if (k <= src.size() && k > 0) {
-					--k;
-					using std::begin;
-					auto it = begin(src);
-					std::advance(it, k);
-					*it = stack::get<V>(L, 3);
-				}
+			if (!maybek) {
+				return stack::push(L, nil);
 			}
+			K k = *maybek;
 #else
+			K k = stack::get<K>(L, 2);
+#endif
 			using std::begin;
 			auto it = begin(src);
-			K k = stack::get<K>(L, 2);
+			if (k == src.size()) {
+				real_add_call_push(std::integral_constant<bool, detail::has_push_back<T>::value>(), L, src, 1);
+				return 0;
+			}
 			--k;
 			std::advance(it, k);
 			*it = stack::get<V>(L, 3);
-#endif
 			return 0;
 		}
 
@@ -196,21 +203,20 @@ namespace sol {
 			return stack::push(L, src.size());
 		}
 
-		static int real_add_call(std::true_type, lua_State*L) {
-			auto& src = get_src(L);
-			src.push_back(stack::get<V>(L, 2));
+		static int real_add_call_push(std::true_type, lua_State*L, T& src, int boost = 0) {
+			src.push_back(stack::get<V>(L, 2 + boost));
 			return 0;
 		}
 
-		static int real_add_call(std::false_type, lua_State*L) {
+		static int real_add_call_push(std::false_type, lua_State*L, T& src, int boost = 0) {
 			using std::cend;
-			auto& src = get_src(L);
-			src.insert(cend(src), stack::get<V>(L, 2));
+			src.insert(cend(src), stack::get<V>(L, 2 + boost));
 			return 0;
 		}
 
 		static int real_add_call(lua_State*L) {
-			return real_add_call(std::integral_constant<bool, detail::has_push_back<T>::value>(), L);
+			auto& src = get_src(L);
+			return real_add_call_push(std::integral_constant<bool, detail::has_push_back<T>::value>(), L, src);
 		}
 
 		static int real_insert_call(lua_State*L) {
@@ -286,14 +292,29 @@ namespace sol {
 		}
 
 		static int real_index_call(lua_State* L) {
-			auto& src = get_src(L);
 			auto k = stack::check_get<K>(L, 2);
 			if (k) {
+				auto& src = get_src(L);
 				using std::end;
 				auto it = detail::find(src, *k);
 				if (it != end(src)) {
 					auto& v = *it;
 					return stack::push_reference(L, v.second);
+				}
+			}
+			else {
+				auto maybename = stack::check_get<string_detail::string_shim>(L, 2);
+				if (maybename) {
+					auto& name = *maybename;
+					if (name == "add") {
+						return stack::push(L, &add_call);
+					}
+					else if (name == "insert") {
+						return stack::push(L, &insert_call);
+					}
+					else if (name == "clear") {
+						return stack::push(L, &clear_call);
+					}
 				}
 			}
 			return stack::push(L, nil);
@@ -400,12 +421,15 @@ namespace sol {
 			template <typename T>
 			inline auto container_metatable() {
 				typedef container_usertype_metatable<std::remove_pointer_t<T>> meta_cumt;
-				std::array<luaL_Reg, 7> reg = { {
+				std::array<luaL_Reg, 10> reg = { {
 					{ "__index", &meta_cumt::index_call },
 					{ "__newindex", &meta_cumt::new_index_call },
 					{ "__pairs", &meta_cumt::pairs_call },
 					{ "__ipairs", &meta_cumt::pairs_call },
 					{ "__len", &meta_cumt::length_call },
+					{ "clear", &meta_cumt::clear_call },
+					{ "insert", &meta_cumt::insert_call },
+					{ "add", &meta_cumt::add_call },
 					std::is_pointer<T>::value ? luaL_Reg{ nullptr, nullptr } : luaL_Reg{ "__gc", &detail::usertype_alloc_destroy<T> },
 					{ nullptr, nullptr }
 				} };
@@ -415,11 +439,9 @@ namespace sol {
 			template <typename T>
 			inline auto container_metatable_behind() {
 				typedef container_usertype_metatable<std::remove_pointer_t<T>> meta_cumt;
-				std::array<luaL_Reg, 5> reg = { {
+				std::array<luaL_Reg, 3> reg = { {
 					{ "__index", &meta_cumt::index_call },
-					{ "clear", &meta_cumt::clear_call },
-					{ "insert", &meta_cumt::insert_call },
-					{ "add", &meta_cumt::add_call },
+					{ "__newindex", &meta_cumt::new_index_call },
 					{ nullptr, nullptr }
 				} };
 				return reg;
@@ -443,10 +465,8 @@ namespace sol {
 						lua_createtable(L, 0, static_cast<int>(containerreg.size()));
 						stack_reference metabehind(L, -1);
 						luaL_setfuncs(L, containerreg.data(), 0);
-						stack::set_field(L, sol::meta_function::index, metabehind, metabehind.stack_index());
-
+						
 						stack::set_field(L, metatable_key, metabehind, metatable.stack_index());
-						stack::set_field(L, sol::meta_function::index, metabehind, metatable.stack_index());
 						metabehind.pop();
 					}
 					lua_setmetatable(L, -2);
