@@ -32,8 +32,10 @@ get going:
 	
 	tutorial/all-the-things
 	tutorial/tutorial-top
+	errors
 	features
 	usertypes
+	traits
 	api/api-top
 	mentions
 	benchmarks

@@ -400,7 +400,7 @@ namespace sol {
 		"__newindex",
 		"__mode",
 		"__call",
-		"__metatable",
+		"__mt",
 		"__tostring",
 		"__len",
 		"__unm",

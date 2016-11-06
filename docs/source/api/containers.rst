@@ -1,9 +1,13 @@
 containers
 ==========
-for handling ``std::vector/map`` and others
--------------------------------------------
+for handling ``std::vector/map/set`` and others
+-----------------------------------------------
 
 Sol2 automatically converts containers (detected using the ``sol::is_container<T>`` type trait, which simply looks for begin / end) to be a special kind of userdata with metatable on it. For Lua 5.2 and 5.3, this is extremely helpful as you can make typical containers behave like Lua tables without losing the actual container that they came from, as well as a small amount of indexing and other operations that behave properly given the table type.
+
+
+a complete example
+------------------
 
 Here's a complete working example of it working for Lua 5.3 and Lua 5.2, and how you can retrieve out the container in all versions:
 
@@ -20,7 +24,7 @@ Here's a complete working example of it working for Lua 5.3 and Lua 5.2, and how
 		lua.script(R"(
 		function f (x)
 			print('--- Calling f ---')
-			for k, v in ipairs(x) do
+			for k, v in pairs(x) do
 				print(k, v)
 			end
 		end
@@ -49,7 +53,24 @@ Here's a complete working example of it working for Lua 5.3 and Lua 5.2, and how
 		return 0;
 	}
 
-Note that this will not work well in 5.1, as it has explicit table checks and does not check metamethods, even when ``pairs`` or ``ipairs`` is passed a table. In that case, you will need to use a more manual iteration scheme.
+Note that this will not work well in 5.1, as it has explicit table checks and does not check metamethods, even when ``pairs`` or ``ipairs`` is passed a table. In that case, you will need to use a more manual iteration scheme or you will have to convert it to a table. In C++, you can use :doc:`sol::as_table<as_table>` when passing something to the library to get a table out of it.
+
+
+additional functions
+--------------------
+
+Based on the type pushed, a few additional functions are added as "member functions" (``self`` functions called with ``obj:func()`` or ``obj.func(obj)`` syntax) within a Lua script:
+
+* ``my_container:clear()``: This will call the underlying containers ``clear`` function.
+* ``my_container:add( key, value )`` or ``my_container:add( value )``: this will add to the end of the container, or if it is an associative or ordered container, simply put in an expected key-value pair into it.
+* ``my_contaner:insert( where, value )`` or ``my_contaner:insert( key, value )``: similar to add, but it only takes two arguments. In the case of ``std::vector`` and the like, the first argument is a ``where`` integer index. The second argument is the value. For associative containers, a key and value argument are expected.
+
+
+.. _container-detection:
+
+too-eager container detection?
+------------------------------
+
 
 If you have a type that has ``begin`` or ``end`` member functions but don't provide iterators, you can specialize ``sol::is_container<T>`` to be ``std::false_type``, and that will treat the type as a regular usertype and push it as a regular userdata:
 

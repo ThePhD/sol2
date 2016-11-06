@@ -59,7 +59,7 @@ You can grab a single header out of the library [here](https://github.com/ThePhD
 
 ## Features
 
-- [Fastest in the land](http://sol2.readthedocs.io/en/latest/benchmarks.html) (see: sol2 graph and table entries).
+- [Fastest in the land](http://sol2.readthedocs.io/en/latest/benchmarks.html) (see: sol bar in graph).
 - Supports retrieval and setting of multiple types including `std::string` and `std::map/unordered_map`.
 - Lambda, function, and member function bindings are supported.
 - Intermediate type for checking if a variable exists.

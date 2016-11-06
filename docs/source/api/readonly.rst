@@ -65,4 +65,4 @@ If you are looking to make a read-only table, you need to go through a bit of a 
 	    return 0;
 	}
 
-It is a verbose example, but it explains everything. Perhaps in the future ``sol2`` may feature a ``create_readonly_table`` abstraction for users!
+It is a verbose example, but it explains everything. Because the process is a bit involved and can have unexpected consequences for users that make their own tables, making read-only tables is something that we ask the users to do themselves with the above code, as getting the semantics right for the dozens of use cases would be tremendously difficult.

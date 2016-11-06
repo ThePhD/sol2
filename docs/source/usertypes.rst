@@ -5,12 +5,12 @@ Perhaps the most powerful feature of sol2, ``usertypes`` are the way sol2 and C+
 
 To learn more about usertypes, visit:
 
-* :doc:`tutorial<tutorial/cxx-in-lua>`
+* :doc:`the basic tutorial<tutorial/cxx-in-lua>`
 * :doc:`customization point tutorial<tutorial/customization>`
 * :doc:`api documentation<api/usertype>`
 * :doc:`memory documentation<api/usertype_memory>`
 
-There are also some notes about guarantees you can find about usertypes, and their associated userdata, below:
+The examples folder also has a number of really great examples for you to see. There are also some notes about guarantees you can find about usertypes, and their associated userdata, below:
 
 * You can push types classified as userdata before you register a usertype.
 	- You can register a usertype with the Lua runtime at any time sol2

@@ -42,6 +42,19 @@ namespace sol {
 		};
 
 		template <typename T>
+		struct has_push_back {
+		private:
+			typedef std::array<char, 1> one;
+			typedef std::array<char, 2> two;
+
+			template <typename C> static one test(decltype(&C::push_back));
+			template <typename C> static two test(...);
+
+		public:
+			static const bool value = sizeof(test<T>(0)) == sizeof(char);
+		};
+
+		template <typename T>
 		T& get_first(const T& t) {
 			return std::forward<T>(t);
 		}
@@ -183,11 +196,21 @@ namespace sol {
 			return stack::push(L, src.size());
 		}
 
-#if 0
-		static int real_push_back_call(lua_State*L) {
+		static int real_add_call(std::true_type, lua_State*L) {
 			auto& src = get_src(L);
 			src.push_back(stack::get<V>(L, 2));
 			return 0;
+		}
+
+		static int real_add_call(std::false_type, lua_State*L) {
+			using std::cend;
+			auto& src = get_src(L);
+			src.insert(cend(src), stack::get<V>(L, 2));
+			return 0;
+		}
+
+		static int real_add_call(lua_State*L) {
+			return real_add_call(std::integral_constant<bool, detail::has_push_back<T>::value>(), L);
 		}
 
 		static int real_insert_call(lua_State*L) {
@@ -197,14 +220,23 @@ namespace sol {
 			return 0;
 		}
 
-		static int push_back_call(lua_State*L) {
-			return detail::static_trampoline<(&real_length_call)>(L);
+		static int real_clear_call(lua_State*L) {
+			auto& src = get_src(L);
+			src.clear();
+			return 0;
+		}
+
+		static int add_call(lua_State*L) {
+			return detail::static_trampoline<(&real_add_call)>(L);
 		}
 
 		static int insert_call(lua_State*L) {
 			return detail::static_trampoline<(&real_insert_call)>(L);
 		}
-#endif // Sometime later, in a distant universe...
+
+		static int clear_call(lua_State*L) {
+			return detail::static_trampoline<(&real_clear_call)>(L);
+		}
 
 		static int length_call(lua_State*L) {
 			return detail::static_trampoline<(&real_length_call)>(L);
@@ -320,6 +352,28 @@ namespace sol {
 			return stack::push(L, src.size());
 		}
 
+		static int real_insert_call(lua_State*L) {
+			return real_new_index_call(L);
+		}
+
+		static int real_clear_call(lua_State*L) {
+			auto& src = get_src(L);
+			src.clear();
+			return 0;
+		}
+
+		static int add_call(lua_State*L) {
+			return detail::static_trampoline<(&real_insert_call)>(L);
+		}
+
+		static int insert_call(lua_State*L) {
+			return detail::static_trampoline<(&real_insert_call)>(L);
+		}
+
+		static int clear_call(lua_State*L) {
+			return detail::static_trampoline<(&real_clear_call)>(L);
+		}
+
 		static int length_call(lua_State*L) {
 			return detail::static_trampoline<(&real_length_call)>(L);
 		}
@@ -344,61 +398,79 @@ namespace sol {
 	namespace stack {
 		namespace stack_detail {
 			template <typename T>
-			inline const auto& container_metatable() {
-				typedef container_usertype_metatable<std::remove_pointer_t<T>> cumt;
-				static const luaL_Reg reg[] = {
-					{ "__index", &cumt::index_call },
-					{ "__newindex", &cumt::new_index_call },
-					{ "__pairs", &cumt::pairs_call },
-					{ "__ipairs", &cumt::pairs_call },
-					{ "__len", &cumt::length_call },
-					{ std::is_pointer<T>::value ? nullptr : "__gc", std::is_pointer<T>::value ? nullptr : &detail::usertype_alloc_destroy<T> },
+			inline auto container_metatable() {
+				typedef container_usertype_metatable<std::remove_pointer_t<T>> meta_cumt;
+				std::array<luaL_Reg, 7> reg = { {
+					{ "__index", &meta_cumt::index_call },
+					{ "__newindex", &meta_cumt::new_index_call },
+					{ "__pairs", &meta_cumt::pairs_call },
+					{ "__ipairs", &meta_cumt::pairs_call },
+					{ "__len", &meta_cumt::length_call },
+					std::is_pointer<T>::value ? luaL_Reg{ nullptr, nullptr } : luaL_Reg{ "__gc", &detail::usertype_alloc_destroy<T> },
 					{ nullptr, nullptr }
-				};
+				} };
 				return reg;
 			}
-		}
 
-		template<typename T>
-		struct pusher<T, std::enable_if_t<meta::all<is_container<T>, meta::neg<meta::any<std::is_base_of<reference, T>, std::is_base_of<stack_reference, T>>>>::value>> {
-			typedef container_usertype_metatable<T> cumt;
-			static int push(lua_State* L, const T& cont) {
-				auto fx = [&L]() {
-					const char* metakey = &usertype_traits<T>::metatable()[0];
+			template <typename T>
+			inline auto container_metatable_behind() {
+				typedef container_usertype_metatable<std::remove_pointer_t<T>> meta_cumt;
+				std::array<luaL_Reg, 5> reg = { {
+					{ "__index", &meta_cumt::index_call },
+					{ "clear", &meta_cumt::clear_call },
+					{ "insert", &meta_cumt::insert_call },
+					{ "add", &meta_cumt::add_call },
+					{ nullptr, nullptr }
+				} };
+				return reg;
+			}
+
+			template <typename T>
+			struct metatable_setup {
+				lua_State* L;
+
+				metatable_setup(lua_State* L) : L(L) {}
+
+				void operator()() {
+					static const auto reg = container_metatable<T>();
+					static const auto containerreg = container_metatable_behind<T>();
+					static const char* metakey = &usertype_traits<T>::metatable()[0];
+					
 					if (luaL_newmetatable(L, metakey) == 1) {
-						const auto& reg = stack_detail::container_metatable<T>();
-						luaL_setfuncs(L, reg, 0);
+						stack_reference metatable(L, -1);
+						luaL_setfuncs(L, reg.data(), 0);
+
+						lua_createtable(L, 0, static_cast<int>(containerreg.size()));
+						stack_reference metabehind(L, -1);
+						luaL_setfuncs(L, containerreg.data(), 0);
+						stack::set_field(L, sol::meta_function::index, metabehind, metabehind.stack_index());
+
+						stack::set_field(L, metatable_key, metabehind, metatable.stack_index());
+						stack::set_field(L, sol::meta_function::index, metabehind, metatable.stack_index());
+						metabehind.pop();
 					}
 					lua_setmetatable(L, -2);
-				};
+				}
+			};
+		}
+		
+		template<typename T>
+		struct pusher<T, std::enable_if_t<meta::all<is_container<T>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
+			static int push(lua_State* L, const T& cont) {
+				stack_detail::metatable_setup<T> fx(L);
 				return pusher<detail::as_value_tag<T>>{}.push_fx(L, fx, cont);
 			}
 
 			static int push(lua_State* L, T&& cont) {
-				auto fx = [&L]() {
-					const char* metakey = &usertype_traits<T>::metatable()[0];
-					if (luaL_newmetatable(L, metakey) == 1) {
-						const auto& reg = stack_detail::container_metatable<T>();
-						luaL_setfuncs(L, reg, 0);
-					}
-					lua_setmetatable(L, -2);
-				};
+				stack_detail::metatable_setup<T> fx(L);
 				return pusher<detail::as_value_tag<T>>{}.push_fx(L, fx, std::move(cont));
 			}
 		};
 
 		template<typename T>
 		struct pusher<T*, std::enable_if_t<meta::all<is_container<T>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
-			typedef container_usertype_metatable<T> cumt;
 			static int push(lua_State* L, T* cont) {
-				auto fx = [&L]() {
-					const char* metakey = &usertype_traits<meta::unqualified_t<T>*>::metatable()[0];
-					if (luaL_newmetatable(L, metakey) == 1) {
-						const auto& reg = stack_detail::container_metatable<T*>();
-						luaL_setfuncs(L, reg, 0);
-					}
-					lua_setmetatable(L, -2);
-				};
+				stack_detail::metatable_setup<T*> fx(L);
 				return pusher<detail::as_pointer_tag<T>>{}.push_fx(L, fx, cont);
 			}
 		};
