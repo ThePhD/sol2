@@ -300,14 +300,14 @@ end
 	// Set a global variable called 
 	// "arr" to be a vector of 5 lements
 	lua["arr"] = std::vector<int>{ 2, 4, 6, 8, 10 };
-	lua["map"] = std::unordered_map<int, int>{ { 1 , 2 },{ 2, 4 },{ 3, 6 },{ 4, 8 },{ 5, 10 } };
+	lua["map"] = std::map<int, int>{ { 1 , 2 },{ 2, 4 },{ 3, 6 },{ 4, 8 },{ 5, 10 } };
 	lua["set"] = std::set<int>{ 2, 4, 6, 8, 10 };
 	std::vector<int>& arr = lua["arr"];
 	std::map<int, int>& map = lua["map"];
 	std::set<int>& set = lua["set"];
 	REQUIRE(arr.size() == 5);
 	REQUIRE(map.size() == 5);
-	REQUIRE(set.size() == 4);
+	REQUIRE(set.size() == 5);
 
 	g(lua["set"]);
 	g(lua["arr"]);

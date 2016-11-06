@@ -7,8 +7,8 @@
 	:target: https://github.com/ThePhD/sol2
 	:alt: sol2 repository
 
-Sol 2.14
-========
+Sol |version|
+=============
 a fast, simple C++ and Lua Binding
 ----------------------------------
 
@@ -19,7 +19,7 @@ When you need to hit the ground running with Lua and C++, `Sol`_ is the go-to fr
 	:alt: build status
 
 .. image:: https://badges.gitter.im/chat-sol2/Lobby.svg
-	target: https://gitter.im/chat-sol2/Lobby
+	:target: https://gitter.im/chat-sol2/Lobby
 	:alt: chat about sol2 on gitter
 
 
