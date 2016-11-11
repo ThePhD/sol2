@@ -31,7 +31,7 @@ To make this not be the case, you can set a panic function directly with ``lua_a
 		// lua_atpanic( L, sol::c_call<decltype(&my_panic)>, &my_panic> );
 		// or, with state/state_view:
 		// sol::state_view lua(L);
-		// lua.set_panic( sol::c_call<decltype(&my_panic_call)>, &my_panic_call> );
+		// lua.set_panic( sol::c_call<decltype(&my_panic)>, &my_panic> );
 	}
 
 
