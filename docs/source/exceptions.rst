@@ -52,7 +52,7 @@ Testing in `this closed issue`_ that it doesn't play nice on 64-bit Linux in man
 Lua and LuaJIT C++ Exception Full Interoperability
 --------------------------------------------------
 
-You can ``#define SOL_EXCEPTIONS_SAFE_PROPOGATION`` before including Sol or define ``SOL_EXCEPTIONS_SAFE_PROPOGATION`` on the command line if you know your implmentation of Lua has proper unwinding semantics that can be thrown through the version of the Lua API you have built / are using.
+You can ``#define SOL_EXCEPTIONS_SAFE_PROPAGATION`` before including Sol or define ``SOL_EXCEPTIONS_SAFE_PROPAGATION`` on the command line if you know your implmentation of Lua has proper unwinding semantics that can be thrown through the version of the Lua API you have built / are using.
 
 This will prevent sol from catching ``(...)`` errors in platforms and compilers that have full C++ exception interoperability. This means that Lua errors can be caught with ``catch (...)`` in the C++ end of your code after it goes through Lua, and exceptions can pass through the Lua API and Stack safely.
 
