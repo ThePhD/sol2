@@ -51,12 +51,17 @@ Testing in `this closed issue`_ that it doesn't play nice on 64-bit Linux in man
 
 .. _LuaJIT C++ Exception Full Interoperability
 
-LuaJIT C++ Exception Full Interoperability
-------------------------------------------
+Lua and LuaJIT C++ Exception Full Interoperability
+--------------------------------------------------
 
-If you are using a platform and compiler that has full c++ exception interoperability (http://luajit.org/extensions.html#exceptions), define ``SOL_LUAJIT_FULL_INTEROPERABILITY``. This will prevent sol from catching (...) errors - in platforms & compilers than have full c++ exception interoperability Lua errors can be caught with catch (...) in C++ - in these cases sol inaccurately prevents Lua errors from being propagated correctly.
+You can ``#define SOL_EXCEPTIONS_SAFE_PROPOGATION`` before including Sol or define ``SOL_EXCEPTIONS_SAFE_PROPOGATION`` on the command line if you know your implmentation of Lua has proper unwinding semantics that can be thrown through the version of the Lua API you have built / are using.
+
+This will prevent sol from catching ``(...)`` errors in platforms and compilers that have full C++ exception interoperability. This means that Lua errors can be caught with ``catch (...)`` in the C++ end of your code after it goes through Lua, and exceptions can pass through the Lua API and Stack safely.
+
+Currently, the only known platform to do this is the listed "Full" `platforms for LuaJIT`_ and Lua compiled as C++. This define is not turned on automatically, even if Sol detects LuaJIT: *it is your job to define it if you know that your platform supports it*!
 
 .. _issue: https://github.com/ThePhD/sol2/issues/
 .. _at_panic: http://www.Lua.org/manual/5.3/manual.html#4.6
 .. _caveats regarding exceptions: http://luajit.org/extensions.html#exceptions
+.. _platforms for LuaJIT: http://luajit.org/extensions.html#exceptions
 .. _this closed issue: https://github.com/ThePhD/sol2/issues/28

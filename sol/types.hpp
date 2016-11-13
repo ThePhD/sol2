@@ -57,7 +57,7 @@ namespace sol {
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
-#ifndef SOL_LUAJIT_FULL_INTEROPERABILITY
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPOGATION)
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
@@ -76,7 +76,7 @@ namespace sol {
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
-#ifndef SOL_LUAJIT_FULL_INTEROPERABILITY
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPOGATION)
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
