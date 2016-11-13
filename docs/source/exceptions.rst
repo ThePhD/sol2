@@ -49,8 +49,6 @@ It is important to note that a popular 5.1 distribution of Lua, LuaJIT, has some
 
 Testing in `this closed issue`_ that it doesn't play nice on 64-bit Linux in many cases either, especially when it hits an error internal to the interpreter (and does not go through Sol). We do have tests, however, that compile for our continuous integration check-ins that check this functionality across several compilers and platforms to keep you protected and given hard, strong guarantees for what happens if you throw in a function bound by Sol. If you stray outside the realm of Sol's protection, however... Good luck.
 
-.. _LuaJIT C++ Exception Full Interoperability
-
 Lua and LuaJIT C++ Exception Full Interoperability
 --------------------------------------------------
 
