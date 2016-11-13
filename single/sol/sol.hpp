@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-11-13 08:48:07.077032 UTC
-// This header was generated with sol v2.15.0 (revision 08a6585)
+// Generated 2016-11-13 09:22:49.603892 UTC
+// This header was generated with sol v2.15.1 (revision 22e17eb)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3000,7 +3000,7 @@ namespace sol {
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPOGATION)
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
@@ -3019,7 +3019,7 @@ namespace sol {
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPOGATION)
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
