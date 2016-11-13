@@ -45,9 +45,16 @@ If there is a place where a throw statement is called or a try/catch is used and
 LuaJIT and exceptions
 ---------------------
 
-It is important to note that a popular 5.1 distribution of Lua, LuaJIT, has some serious `caveats regarding exceptions`_. LuaJIT's exception promises are flaky at best on x64 (64-bit) platforms, and entirely terrible on non-x64 (32-bit, ARM, etc.) platorms. The trampolines we have in place for all functions bound through conventional means in Sol will catch exceptions and turn them into Lua errors so that LuaJIT remainds unperturbed, but if you link up a C function directly yourself and throw, chances are you might have screwed the pooch.
+It is important to note that a popular 5.1 distribution of Lua, LuaJIT, has some serious `caveats regarding exceptions`_. LuaJIT's exception promises are flaky at best on x64 (64-bit) platforms, and entirely terrible on non-x64 (32-bit, ARM, etc.) platforms. The trampolines we have in place for all functions bound through conventional means in Sol will catch exceptions and turn them into Lua errors so that LuaJIT remainds unperturbed, but if you link up a C function directly yourself and throw, chances are you might have screwed the pooch.
 
 Testing in `this closed issue`_ that it doesn't play nice on 64-bit Linux in many cases either, especially when it hits an error internal to the interpreter (and does not go through Sol). We do have tests, however, that compile for our continuous integration check-ins that check this functionality across several compilers and platforms to keep you protected and given hard, strong guarantees for what happens if you throw in a function bound by Sol. If you stray outside the realm of Sol's protection, however... Good luck.
+
+.. _LuaJIT C++ Exception Full Interoperability
+
+LuaJIT C++ Exception Full Interoperability
+------------------------------------------
+
+If you are using a platform and compiler that has full c++ exception interoperability (http://luajit.org/extensions.html#exceptions), define ``SOL_LUAJIT_FULL_INTEROPERABILITY``. This will prevent sol from catching (...) errors - in platforms & compilers than have full c++ exception interoperability Lua errors can be caught with catch (...) in C++ - in these cases sol inaccurately prevents Lua errors from being propagated correctly.
 
 .. _issue: https://github.com/ThePhD/sol2/issues/
 .. _at_panic: http://www.Lua.org/manual/5.3/manual.html#4.6
