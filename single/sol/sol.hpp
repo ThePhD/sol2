@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-11-09 12:45:41.921113 UTC
-// This header was generated with sol v2.15.0 (revision 4116db8)
+// Generated 2016-11-13 06:01:48.356322 UTC
+// This header was generated with sol v2.15.0 (revision 951b821)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -770,7 +770,7 @@ namespace sol {
 
 #include <lua.hpp>
 
-#if defined(_WIN32) || defined(_MSC_VER)  || defined(__MINGW32__)
+#if defined(_WIN32) || defined(_MSC_VER)
 #ifndef SOL_CODECVT_SUPPORT
 #define SOL_CODECVT_SUPPORT 1
 #endif // sol codecvt support
@@ -779,7 +779,7 @@ namespace sol {
 #ifndef SOL_CODECVT_SUPPORT
 #define SOL_CODECVT_SUPPORT 1
 #endif // codecvt support
-#endif // g++ 5.x.x
+#endif // g++ 5.x.x (MinGW too)
 #else
 #endif // Windows/VC++ vs. g++ vs Others
 
@@ -2411,7 +2411,7 @@ namespace sol {
 #ifdef SOL_NO_EXCEPTIONS
 				// we can abort here
 				// but the others are constexpr, so we can't...
-				: (std::abort(), *(T*)nullptr)
+				: (std::abort(), *(T*)nullptr);
 #else
 				: (throw bad_optional_access("bad optional access"), contained_val());
 #endif
@@ -3000,9 +3000,11 @@ namespace sol {
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
+#ifndef SOL_LUAJIT_FULL_INTEROPERABILITY
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
+#endif
 			return lua_error(L);
 		}
 
@@ -3017,9 +3019,11 @@ namespace sol {
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
+#ifndef SOL_LUAJIT_FULL_INTEROPERABILITY
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
+#endif
 			return lua_error(L);
 		}
 
