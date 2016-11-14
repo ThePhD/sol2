@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-11-13 09:22:49.603892 UTC
-// This header was generated with sol v2.15.1 (revision 22e17eb)
+// Generated 2016-11-14 18:42:22.097280 UTC
+// This header was generated with sol v2.15.1 (revision 98cf1a9)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5093,13 +5093,17 @@ namespace sol {
 		template<typename T, typename C>
 		struct checker<optional<T>, type::poly, C> {
 			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+			static bool check(lua_State* L, int index, Handler&&, record& tracking) {
 				type t = type_of(L, index);
 				if (t == type::none) {
 					tracking.use(0);
 					return true;
 				}
-				return t == type::nil || stack::check<T>(L, index, std::forward<Handler>(handler), tracking);
+				if (t == type::nil) {
+					tracking.use(1);
+					return true;
+				}
+				return stack::check<T>(L, index, no_panic, tracking);
 			}
 		};
 	} // stack
@@ -11368,7 +11372,7 @@ namespace sol {
 		template<typename T>
 		struct pusher<T*, std::enable_if_t<meta::all<is_container<T>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
 			static int push(lua_State* L, T* cont) {
-				stack_detail::metatable_setup<T*> fx(L);
+				stack_detail::metatable_setup<meta::unqualified_t<std::remove_pointer_t<T>>*> fx(L);
 				return pusher<detail::as_pointer_tag<T>>{}.push_fx(L, fx, cont);
 			}
 		};

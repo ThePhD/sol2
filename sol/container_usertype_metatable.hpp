@@ -502,7 +502,7 @@ namespace sol {
 		template<typename T>
 		struct pusher<T*, std::enable_if_t<meta::all<is_container<T>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
 			static int push(lua_State* L, T* cont) {
-				stack_detail::metatable_setup<T*> fx(L);
+				stack_detail::metatable_setup<meta::unqualified_t<std::remove_pointer_t<T>>*> fx(L);
 				return pusher<detail::as_pointer_tag<T>>{}.push_fx(L, fx, cont);
 			}
 		};
