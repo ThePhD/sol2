@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-11-15 09:39:55.397287 UTC
-// This header was generated with sol v2.15.1 (revision fe162b9)
+// Generated 2016-11-16 03:43:41.504038 UTC
+// This header was generated with sol v2.15.1 (revision 4aec055)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6986,13 +6986,16 @@ namespace sol {
 			return call_into_lua(returns_list(), args_list(), L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
 		}
 
-		inline call_syntax get_call_syntax(lua_State* L, const std::string& key, int index = -2) {
+		inline call_syntax get_call_syntax(lua_State* L, const std::string& key, int index) {
+			if (lua_gettop(L) == 0) {
+				return call_syntax::dot;
+			}
 			luaL_getmetatable(L, key.c_str());
 			auto pn = pop_n(L, 1);
-			if (lua_compare(L, -1, index, LUA_OPEQ) == 1) {
-				return call_syntax::colon;
+			if (lua_compare(L, -1, index, LUA_OPEQ) != 1) {
+				return call_syntax::dot;
 			}
-			return call_syntax::dot;
+			return call_syntax::colon;
 		}
 
 		inline void script(lua_State* L, const std::string& code) {
@@ -7882,7 +7885,7 @@ namespace sol {
 			};
 
 			static int call(lua_State* L, F& f) {
-				call_syntax syntax = stack::get_call_syntax(L, &usertype_traits<T>::user_metatable()[0]);
+				call_syntax syntax = stack::get_call_syntax(L, &usertype_traits<T>::user_metatable()[0], 1);
 				int syntaxval = static_cast<int>(syntax);
 				int argcount = lua_gettop(L) - syntaxval;
 				return construct_match<T, meta::pop_front_type_t<meta::function_args_t<Cxs>>...>(onmatch(), L, argcount, 1 + syntaxval, f);
