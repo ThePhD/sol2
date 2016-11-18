@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-11-16 03:43:41.504038 UTC
-// This header was generated with sol v2.15.1 (revision 4aec055)
+// Generated 2016-11-18 05:05:58.487868 UTC
+// This header was generated with sol v2.15.1 (revision 97cafba)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -12633,6 +12633,23 @@ namespace sol {
 #endif
 	}
 
+	inline int default_error_handler(lua_State*L) {
+		using namespace sol;
+		std::string msg = "An unknown error has triggered the default error handler";
+		optional<string_detail::string_shim> maybetopmsg = stack::check_get<string_detail::string_shim>(L, 1);
+		if (maybetopmsg) {
+			const string_detail::string_shim& topmsg = maybetopmsg.value();
+			msg.assign(topmsg.c_str(), topmsg.size());
+		}
+		luaL_traceback(L, L, msg.c_str(), 1);
+		optional<string_detail::string_shim> maybetraceback = stack::check_get<string_detail::string_shim>(L, -1);
+		if (maybetraceback) {
+			const string_detail::string_shim& traceback = maybetraceback.value();
+			msg.assign(traceback.c_str(), traceback.size());
+		}
+		return stack::push(L, msg);
+	}
+
 	class state : private std::unique_ptr<lua_State, void(*)(lua_State*)>, public state_view {
 	private:
 		typedef std::unique_ptr<lua_State, void(*)(lua_State*)> unique_base;
@@ -12646,6 +12663,7 @@ namespace sol {
 		state(lua_CFunction panic, lua_Alloc alfunc, void* alpointer = nullptr) : unique_base(lua_newstate(alfunc, alpointer), lua_close),
 			state_view(unique_base::get()) {
 			set_panic(panic);
+			sol::protected_function::set_default_handler(sol::object(lua_state(), in_place, default_error_handler));
 			stack::luajit_exception_handler(unique_base::get());
 		}
 
