@@ -351,8 +351,7 @@ namespace sol {
 					lua_CFunction cdel = detail::user_alloc_destroy<T>;
 					// Make sure we have a plain GC set for this data
 					if (luaL_newmetatable(L, name) != 0) {
-						lua_pushlightuserdata(L, rawdata);
-						lua_pushcclosure(L, cdel, 1);
+						lua_pushcclosure(L, cdel, 0);
 						lua_setfield(L, -2, "__gc");
 					}
 					lua_setmetatable(L, -2);

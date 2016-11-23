@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-11-18 05:05:58.487868 UTC
-// This header was generated with sol v2.15.1 (revision 97cafba)
+// Generated 2016-11-23 07:39:25.032134 UTC
+// This header was generated with sol v2.15.1 (revision 320276d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4139,7 +4139,7 @@ namespace sol {
 
 		template <typename T>
 		inline int user_alloc_destroy(lua_State* L) {
-			void* rawdata = lua_touserdata(L, upvalue_index(1));
+			void* rawdata = lua_touserdata(L, 1);
 			T* data = static_cast<T*>(rawdata);
 			std::allocator<T> alloc;
 			alloc.destroy(data);
@@ -6176,8 +6176,7 @@ namespace sol {
 					lua_CFunction cdel = detail::user_alloc_destroy<T>;
 					// Make sure we have a plain GC set for this data
 					if (luaL_newmetatable(L, name) != 0) {
-						lua_pushlightuserdata(L, rawdata);
-						lua_pushcclosure(L, cdel, 1);
+						lua_pushcclosure(L, cdel, 0);
 						lua_setfield(L, -2, "__gc");
 					}
 					lua_setmetatable(L, -2);

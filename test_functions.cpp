@@ -947,3 +947,43 @@ TEST_CASE("functions/stack-protect", "make sure functions don't impede on the st
 	}
 	REQUIRE(sg.check_stack());
 }
+
+TEST_CASE("functions/same-type-closures", "make sure destructions are per-object, not per-type, by destroying one type multiple times") {
+	static std::set<void*> last_my_closures;
+	static bool checking_closures = false;
+	static bool check_failed = false;
+
+	struct my_closure {
+		int& n;
+
+		my_closure(int& n) : n(n) {}
+		~my_closure() noexcept(false) {
+			if (!checking_closures)
+				return;
+			void* addr = static_cast<void*>(this);
+			auto f = last_my_closures.find(addr);
+			if (f != last_my_closures.cend()) {
+				check_failed = true;
+			}
+			last_my_closures.insert(f, addr);
+		}
+
+		int operator() () {
+			++n; return n;
+		}
+
+	};
+
+	int n = 250;
+	my_closure a(n);
+	my_closure b(n);
+	{
+		sol::state lua;
+
+		lua.set_function("f", a);
+		lua.set_function("g", b);
+		checking_closures = true;
+	}
+	REQUIRE_FALSE(check_failed);
+	REQUIRE(last_my_closures.size() == 2);
+}

@@ -62,7 +62,7 @@ namespace sol {
 
 		template <typename T>
 		inline int user_alloc_destroy(lua_State* L) {
-			void* rawdata = lua_touserdata(L, upvalue_index(1));
+			void* rawdata = lua_touserdata(L, 1);
 			T* data = static_cast<T*>(rawdata);
 			std::allocator<T> alloc;
 			alloc.destroy(data);
