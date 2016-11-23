@@ -971,7 +971,6 @@ TEST_CASE("functions/same-type-closures", "make sure destructions are per-object
 		int operator() () {
 			++n; return n;
 		}
-
 	};
 
 	int n = 250;
