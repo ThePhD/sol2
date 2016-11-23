@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-11-23 07:39:25.032134 UTC
-// This header was generated with sol v2.15.1 (revision 320276d)
+// Generated 2016-11-23 07:55:07.806043 UTC
+// This header was generated with sol v2.15.1 (revision ed21ba7)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -12294,7 +12294,7 @@ namespace sol {
 					lua_pop(L, 1);
 #endif // Lua 5.2+ only
 					break;
-#endif // Not LuaJIT
+#endif // Not LuaJIT - comes builtin
 				case lib::string:
 					luaL_requiref(L, "string", luaopen_string, 1);
 					lua_pop(L, 1);
@@ -12311,11 +12311,11 @@ namespace sol {
 #ifdef SOL_LUAJIT
 					luaL_requiref(L, "bit32", luaopen_bit, 1);
 					lua_pop(L, 1);
-#elif SOL_LUA_VERSION == 502
+#elif (SOL_LUA_VERSION == 502) || defined(LUA_COMPAT_BITLIB)  || defined(LUA_COMPAT_5_2)
 					luaL_requiref(L, "bit32", luaopen_bit32, 1);
 					lua_pop(L, 1);
 #else
-#endif // Lua 5.2 only (deprecated in 5.3 (503))
+#endif // Lua 5.2 only (deprecated in 5.3 (503)) (Can be turned on with Compat flags)
 					break;
 				case lib::io:
 					luaL_requiref(L, "io", luaopen_io, 1);
@@ -12339,13 +12339,13 @@ namespace sol {
 #ifdef SOL_LUAJIT
 					luaL_requiref(L, "ffi", luaopen_ffi, 1);
 					lua_pop(L, 1);
-#endif
+#endif // LuaJIT only
 					break;
 				case lib::jit:
 #ifdef SOL_LUAJIT
 					luaL_requiref(L, "jit", luaopen_jit, 1);
 					lua_pop(L, 1);
-#endif
+#endif // LuaJIT Only
 					break;
 				case lib::count:
 				default:
