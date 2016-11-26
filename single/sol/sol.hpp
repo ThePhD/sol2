@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-11-26 01:46:59.897910 UTC
-// This header was generated with sol v2.15.2 (revision 49a0f71)
+// Generated 2016-11-26 08:32:10.873025 UTC
+// This header was generated with sol v2.15.2 (revision 289ded3)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6936,7 +6936,7 @@ namespace sol {
 			}
 			int last = index + count;
 			for (int i = index; i < last; ++i) {
-				lua_remove(L, i);
+				lua_remove(L, index);
 			}
 		}
 

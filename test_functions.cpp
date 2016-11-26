@@ -986,3 +986,49 @@ TEST_CASE("functions/same-type-closures", "make sure destructions are per-object
 	REQUIRE_FALSE(check_failed);
 	REQUIRE(last_my_closures.size() == 2);
 }
+
+TEST_CASE("functions/stack-multi-return", "Make sure the stack is protected after multi-returns") {
+	sol::state lua;
+	lua.script("function f () return 1, 2, 3, 4, 5 end");
+
+	{
+		sol::stack_guard sg(lua);
+		sol::stack::push(lua, double(256.78));
+		{
+			int a, b, c, d, e;
+			sol::stack_guard sg2(lua);
+			sol::function f = lua["f"];
+			sol::tie(a, b, c, d, e) = f();
+			REQUIRE(a == 1);
+			REQUIRE(b == 2);
+			REQUIRE(c == 3);
+			REQUIRE(d == 4);
+			REQUIRE(e == 5);
+		}
+		double f = sol::stack::pop<double>(lua);
+		REQUIRE(f == 256.78);
+	}
+}
+
+TEST_CASE("functions/protected-stack-multi-return", "Make sure the stack is protected after multi-returns") {
+	sol::state lua;
+	lua.script("function f () return 1, 2, 3, 4, 5 end");
+
+	{
+		sol::stack_guard sg(lua);
+		sol::stack::push(lua, double(256.78));
+		{
+			int a, b, c, d, e;
+			sol::stack_guard sg2(lua);
+			sol::protected_function pf = lua["f"];
+			sol::tie(a, b, c, d, e) = pf();
+			REQUIRE(a == 1);
+			REQUIRE(b == 2);
+			REQUIRE(c == 3);
+			REQUIRE(d == 4);
+			REQUIRE(e == 5);
+		}
+		double f = sol::stack::pop<double>(lua);
+		REQUIRE(f == 256.78);
+	}
+}
