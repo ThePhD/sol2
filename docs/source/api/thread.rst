@@ -9,15 +9,21 @@ a separate state that can contain and run functions
 
 ``sol::thread`` is a separate runnable part of the Lua VM that can be used to execute work separately from the main thread, such as with :doc:`coroutines<coroutine>`. To take a table or a coroutine and run it specifically on the ``sol::thread`` you either pulled out of lua or created, just get that function through the :ref:`state of the thread<thread_state>`
 
+.. note::
+
+	A CPU thread is not always equivalent to a new thread in Lua: ``std::this_thread::get_id()`` can be the same for 2 callbacks that have 2 distinct Lua threads. In order to know which thread a callback was called in, hook into :doc:`sol::this_state<this_state>` from your Lua callback and then construct a ``sol::thread``, passing in the ``sol::this_state`` for both the first and last arguments. Then examine the results of the status and ``is_...`` calls below.
+
 members
 -------
 
 .. code-block:: cpp
 	:caption: constructor: thread
 
+	thread(stack_reference r);
 	thread(lua_State* L, int index = -1);
+	thread(lua_State* L, lua_State* actual_thread);
 
-Takes a thread from the Lua stack at the specified index and allows a person to use all of the abstractions therein.
+Takes a thread from the Lua stack at the specified index and allows a person to use all of the abstractions therein. It can also take an actual thread state to make a thread from that as well.
 
 .. code-block:: cpp
 	:caption: function: view into thread_state()'s state
@@ -41,6 +47,13 @@ This function retrieves the ``lua_State*`` that represents the thread.
 	thread_status status () const;
 
 Retrieves the :doc:`thread status<types>` that describes the current state of the thread.
+
+.. code-block:: cpp
+	:caption: main thread status
+
+	bool is_main_thread () const;
+
+Checks to see if the thread is the main Lua thread.
 
 .. code-block:: cpp
 	:caption: function: thread creation
