@@ -258,7 +258,7 @@ namespace sol {
 			template <typename T>
 			inline auto tagged_get(types<T>, lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_get<T>(L, index, tracking)) {
 				auto op = check_get<T>(L, index, type_panic, tracking);
-				return *op;
+				return *std::move(op);
 			}
 #else
 			template <typename T>

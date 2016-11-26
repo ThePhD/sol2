@@ -42,7 +42,7 @@ namespace sol {
 		stack_proxy sp;
 
 		va_iterator() : L(nullptr), index((std::numeric_limits<int>::max)()), stacktop((std::numeric_limits<int>::max)()) {}
-		va_iterator(lua_State* L, int index, int stacktop) : L(L), index(index), stacktop(stacktop), sp(L, index) {}
+		va_iterator(lua_State* luastate, int idx, int topidx) : L(luastate), index(idx), stacktop(topidx), sp(luastate, idx) {}
 
 		reference operator*() {
 			return stack_proxy(L, index);
@@ -153,7 +153,7 @@ namespace sol {
 		typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
 		variadic_args() = default;
-		variadic_args(lua_State* L, int index = -1) : L(L), index(lua_absindex(L, index)), stacktop(lua_gettop(L)) {}
+		variadic_args(lua_State* luastate, int stackindex = -1) : L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lua_gettop(luastate)) {}
 		variadic_args(const variadic_args&) = default;
 		variadic_args& operator=(const variadic_args&) = default;
 		variadic_args(variadic_args&& o) : L(o.L), index(o.index), stacktop(o.stacktop) {

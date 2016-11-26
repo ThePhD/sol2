@@ -49,7 +49,7 @@ namespace sol {
 		key_type key;
 
 		template<typename T>
-		proxy(Table table, T&& key) : tbl(table), key(std::forward<T>(key)) {}
+		proxy(Table table, T&& k) : tbl(table), key(std::forward<T>(k)) {}
 
 		template<typename T>
 		proxy& set(T&& item) {

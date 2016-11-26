@@ -52,7 +52,7 @@ namespace sol {
 		struct constructor_match {
 			T* obj;
 
-			constructor_match(T* obj) : obj(obj) {}
+			constructor_match(T* o) : obj(o) {}
 
 			template <typename Fx, std::size_t I, typename... R, typename... Args>
 			int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) const {

@@ -33,6 +33,12 @@
 #endif 
 #endif // Unreal Engine 4 Bullshit
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wconversion"
+#endif // g++
+
 #include "sol/state.hpp"
 #include "sol/object.hpp"
 #include "sol/function.hpp"
@@ -40,6 +46,10 @@
 #include "sol/state.hpp"
 #include "sol/coroutine.hpp"
 #include "sol/variadic_args.hpp"
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif // g++
 
 #ifdef SOL_INSIDE_UNREAL
 #ifdef SOL_INSIDE_UNREAL_REMOVED_CHECK

@@ -252,14 +252,14 @@ namespace sol {
 	struct closure {
 		lua_CFunction c_function;
 		std::tuple<Upvalues...> upvalues;
-		closure(lua_CFunction f, Upvalues... upvalues) : c_function(f), upvalues(std::forward<Upvalues>(upvalues)...) {}
+		closure(lua_CFunction f, Upvalues... targetupvalues) : c_function(f), upvalues(std::forward<Upvalues>(targetupvalues)...) {}
 	};
 
 	template <>
 	struct closure<> {
 		lua_CFunction c_function;
 		int upvalues;
-		closure(lua_CFunction f, int upvalues = 0) : c_function(f), upvalues(upvalues) {}
+		closure(lua_CFunction f, int upvalue_count = 0) : c_function(f), upvalues(upvalue_count) {}
 	};
 
 	typedef closure<> c_closure;

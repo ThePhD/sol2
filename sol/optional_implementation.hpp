@@ -110,18 +110,23 @@
 #   define OPTIONAL_CONSTEXPR_INIT_LIST
 # endif
 
-# if defined TR2_OPTIONAL_CLANG_3_5_AND_HIGHTER_ && (defined __cplusplus) && (__cplusplus != 201103L)
+# if defined(TR2_OPTIONAL_MSVC_2015_AND_HIGHER___) || (defined TR2_OPTIONAL_CLANG_3_5_AND_HIGHTER_ && (defined __cplusplus) && (__cplusplus != 201103L))
 #   define OPTIONAL_HAS_MOVE_ACCESSORS 1
 # else
 #   define OPTIONAL_HAS_MOVE_ACCESSORS 0
 # endif
 
 # // In C++11 constexpr implies const, so we need to make non-const members also non-constexpr
-# if (defined __cplusplus) && (__cplusplus == 201103L)
+# if defined(TR2_OPTIONAL_MSVC_2015_AND_HIGHER___) || ((defined __cplusplus) && (__cplusplus == 201103L))
 #   define OPTIONAL_MUTABLE_CONSTEXPR
 # else
 #   define OPTIONAL_MUTABLE_CONSTEXPR constexpr
 # endif
+
+# if defined TR2_OPTIONAL_MSVC_2015_AND_HIGHER___
+#pragma warning( push )
+#pragma warning( disable : 4814 )
+#endif
 
 namespace sol {
 
@@ -1120,6 +1125,11 @@ namespace std
 		}
 	};
 }
+
+# if defined TR2_OPTIONAL_MSVC_2015_AND_HIGHER___
+#pragma warning( pop )
+#endif
+
 
 # undef TR2_OPTIONAL_REQUIRES
 # undef TR2_OPTIONAL_ASSERTED_EXPRESSION

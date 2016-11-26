@@ -108,14 +108,14 @@ namespace sol {
 		typedef global_table::iterator iterator;
 		typedef global_table::const_iterator const_iterator;
 
-		state_view(lua_State* L) :
-			L(L),
-			reg(L, LUA_REGISTRYINDEX),
-			global(L, detail::global_) {
+		state_view(lua_State* Ls) :
+			L(Ls),
+			reg(Ls, LUA_REGISTRYINDEX),
+			global(Ls, detail::global_) {
 
 		}
 
-		state_view(this_state L) : state_view(L.L){
+		state_view(this_state Ls) : state_view(Ls.L){
 
 		}
 

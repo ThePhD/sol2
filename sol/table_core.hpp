@@ -31,8 +31,8 @@
 namespace sol {
 	namespace detail {
 		template <std::size_t n>
-		struct clean { lua_State* L; clean(lua_State* L) : L(L) {} ~clean() { lua_pop(L, static_cast<int>(n)); } };
-		struct ref_clean { lua_State* L; int& n; ref_clean(lua_State* L, int& n) : L(L), n(n) {} ~ref_clean() { lua_pop(L, static_cast<int>(n)); } };
+		struct clean { lua_State* L; clean(lua_State* luastate) : L(luastate) {} ~clean() { lua_pop(L, static_cast<int>(n)); } };
+		struct ref_clean { lua_State* L; int& n; ref_clean(lua_State* luastate, int& n) : L(luastate), n(n) {} ~ref_clean() { lua_pop(L, static_cast<int>(n)); } };
 		inline int fail_on_newindex(lua_State* L) {
 			return luaL_error(L, "sol: cannot modify the elements of an enumeration table");
 		}
@@ -456,6 +456,10 @@ namespace sol {
 		table create_named(Name&& name, Args&&... args) {
 			static const int narr = static_cast<int>(meta::count_2_for_pack<std::is_integral, Args...>::value);
 			return create(std::forward<Name>(name), narr, sizeof...(Args) / 2 - narr, std::forward<Args>(args)...);
+		}
+
+		~basic_table_core() {
+
 		}
 	};
 } // sol
