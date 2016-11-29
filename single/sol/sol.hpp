@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-11-26 19:04:59.941829 UTC
-// This header was generated with sol v2.15.3 (revision d46f2aa)
+// Generated 2016-11-29 17:51:31.281770 UTC
+// This header was generated with sol v2.15.3 (revision 0d43a6f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5942,7 +5942,7 @@ namespace sol {
 		};
 		
 		template<typename T>
-		struct pusher<T*, meta::disable_if_t<meta::all<is_container<T>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
+		struct pusher<T*, meta::disable_if_t<meta::all<is_container<meta::unqualified_t<T>>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
 			template <typename... Args>
 			static int push(lua_State* L, Args&&... args) {
 				return pusher<detail::as_pointer_tag<T>>{}.push(L, std::forward<Args>(args)...);
@@ -11464,7 +11464,7 @@ namespace sol {
 		}
 		
 		template<typename T>
-		struct pusher<T, std::enable_if_t<meta::all<is_container<T>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
+		struct pusher<T, std::enable_if_t<meta::all<is_container<meta::unqualified_t<T>>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
 			static int push(lua_State* L, const T& cont) {
 				stack_detail::metatable_setup<T> fx(L);
 				return pusher<detail::as_value_tag<T>>{}.push_fx(L, fx, cont);
@@ -11477,7 +11477,7 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct pusher<T*, std::enable_if_t<meta::all<is_container<T>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
+		struct pusher<T*, std::enable_if_t<meta::all<is_container<meta::unqualified_t<T>>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
 			static int push(lua_State* L, T* cont) {
 				stack_detail::metatable_setup<meta::unqualified_t<std::remove_pointer_t<T>>*> fx(L);
 				return pusher<detail::as_pointer_tag<T>>{}.push_fx(L, fx, cont);
