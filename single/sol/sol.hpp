@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-11-29 17:51:31.281770 UTC
-// This header was generated with sol v2.15.3 (revision 0d43a6f)
+// Generated 2016-12-02 10:47:03.358052 UTC
+// This header was generated with sol v2.15.3 (revision 7bef50d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6249,6 +6249,8 @@ namespace sol {
 			}
 
 			static int push(lua_State* L, const char* str) {
+				if (str == nullptr)
+					return stack::push(L, nil);
 				return push_sized(L, str, std::char_traits<char>::length(str));
 			}
 

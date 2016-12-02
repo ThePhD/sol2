@@ -415,6 +415,8 @@ namespace sol {
 			}
 
 			static int push(lua_State* L, const char* str) {
+				if (str == nullptr)
+					return stack::push(L, nil);
 				return push_sized(L, str, std::char_traits<char>::length(str));
 			}
 
