@@ -146,22 +146,22 @@ namespace sol {
 	}
 
 	template<typename Table, typename Key>
-	inline bool operator==(nil_t, const proxy<Table, Key>& right) {
+	inline bool operator==(lua_nil_t, const proxy<Table, Key>& right) {
 		return !right.valid();
 	}
 
 	template<typename Table, typename Key>
-	inline bool operator==(const proxy<Table, Key>& right, nil_t) {
+	inline bool operator==(const proxy<Table, Key>& right, lua_nil_t) {
 		return !right.valid();
 	}
 
 	template<typename Table, typename Key>
-	inline bool operator!=(nil_t, const proxy<Table, Key>& right) {
+	inline bool operator!=(lua_nil_t, const proxy<Table, Key>& right) {
 		return right.valid();
 	}
 
 	template<typename Table, typename Key>
-	inline bool operator!=(const proxy<Table, Key>& right, nil_t) {
+	inline bool operator!=(const proxy<Table, Key>& right, lua_nil_t) {
 		return right.valid();
 	}
 

@@ -87,7 +87,7 @@ namespace sol {
 		basic_object() noexcept = default;
 		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_object>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_t, meta::unqualified_t<T>>> = meta::enabler>
 		basic_object(T&& r) : base_t(std::forward<T>(r)) {}
-		basic_object(nil_t r) : base_t(r) {}
+		basic_object(lua_nil_t r) : base_t(r) {}
 		basic_object(const basic_object&) = default;
 		basic_object(basic_object&&) = default;
 		basic_object& operator=(const basic_object&) = default;
@@ -133,19 +133,19 @@ namespace sol {
 		return make_reference<T, object, true>(L, std::forward<Args>(args)...);
 	}
 
-	inline bool operator==(const object& lhs, const nil_t&) {
+	inline bool operator==(const object& lhs, const lua_nil_t&) {
 		return !lhs.valid();
 	}
 
-	inline bool operator==(const nil_t&, const object& rhs) {
+	inline bool operator==(const lua_nil_t&, const object& rhs) {
 		return !rhs.valid();
 	}
 
-	inline bool operator!=(const object& lhs, const nil_t&) {
+	inline bool operator!=(const object& lhs, const lua_nil_t&) {
 		return lhs.valid();
 	}
 
-	inline bool operator!=(const nil_t&, const object& rhs) {
+	inline bool operator!=(const lua_nil_t&, const object& rhs) {
 		return rhs.valid();
 	}
 } // sol

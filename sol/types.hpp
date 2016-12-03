@@ -106,10 +106,14 @@ namespace sol {
 		};
 	} // detail
 
-	struct nil_t {};
+	struct lua_nil_t {};
+	const lua_nil_t lua_nil{};
+	inline bool operator==(lua_nil_t, lua_nil_t) { return true; }
+	inline bool operator!=(lua_nil_t, lua_nil_t) { return false; }
+#ifndef __OBJC__
+	typedef lua_nil_t nil_t;
 	const nil_t nil{};
-	inline bool operator==(nil_t, nil_t) { return true; }
-	inline bool operator!=(nil_t, nil_t) { return false; }
+#endif
 
 	struct metatable_key_t {};
 	const metatable_key_t metatable_key = {};
@@ -346,7 +350,10 @@ namespace sol {
 
 	enum class type : int {
 		none = LUA_TNONE,
-		nil = LUA_TNIL,
+		lua_nil = LUA_TNIL,
+#ifndef __OBJC__
+		nil = lua_nil,
+#endif // Objective C++ Keyword
 		string = LUA_TSTRING,
 		number = LUA_TNUMBER,
 		thread = LUA_TTHREAD,
@@ -355,7 +362,7 @@ namespace sol {
 		userdata = LUA_TUSERDATA,
 		lightuserdata = LUA_TLIGHTUSERDATA,
 		table = LUA_TTABLE,
-		poly = none | nil | string | number | thread |
+		poly = none | lua_nil | string | number | thread |
 		table | boolean | function | userdata | lightuserdata
 	};
 
@@ -562,13 +569,13 @@ namespace sol {
 		struct lua_type_of<bool> : std::integral_constant<type, type::boolean> {};
 
 		template <>
-		struct lua_type_of<nil_t> : std::integral_constant<type, type::nil> { };
+		struct lua_type_of<lua_nil_t> : std::integral_constant<type, type::lua_nil> { };
 
 		template <>
-		struct lua_type_of<nullopt_t> : std::integral_constant<type, type::nil> { };
+		struct lua_type_of<nullopt_t> : std::integral_constant<type, type::lua_nil> { };
 
 		template <>
-		struct lua_type_of<std::nullptr_t> : std::integral_constant<type, type::nil> { };
+		struct lua_type_of<std::nullptr_t> : std::integral_constant<type, type::lua_nil> { };
 
 		template <>
 		struct lua_type_of<sol::error> : std::integral_constant<type, type::string> { };

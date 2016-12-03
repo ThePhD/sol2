@@ -71,7 +71,7 @@ namespace sol {
 			template <typename F>
 			static int push_fx(lua_State* L, F&& f, T* obj) {
 				if (obj == nullptr)
-					return stack::push(L, nil);
+					return stack::push(L, lua_nil);
 				T** pref = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
 				*pref = obj;
 				f();
@@ -123,7 +123,7 @@ namespace sol {
 			template <typename Arg, meta::enable<std::is_base_of<Real, meta::unqualified_t<Arg>>> = meta::enabler>
 			static int push(lua_State* L, Arg&& arg) {
 				if (unique_usertype_traits<T>::is_null(arg))
-					return stack::push(L, nil);
+					return stack::push(L, lua_nil);
 				return push_deep(L, std::forward<Arg>(arg));
 			}
 
@@ -261,8 +261,8 @@ namespace sol {
 		};
 
 		template<>
-		struct pusher<nil_t> {
-			static int push(lua_State* L, nil_t) {
+		struct pusher<lua_nil_t> {
+			static int push(lua_State* L, lua_nil_t) {
 				lua_pushnil(L);
 				return 1;
 			}
@@ -416,7 +416,7 @@ namespace sol {
 
 			static int push(lua_State* L, const char* str) {
 				if (str == nullptr)
-					return stack::push(L, nil);
+					return stack::push(L, lua_nil);
 				return push_sized(L, str, std::char_traits<char>::length(str));
 			}
 
@@ -671,14 +671,14 @@ namespace sol {
 		template<>
 		struct pusher<nullopt_t> {
 			static int push(lua_State* L, nullopt_t) {
-				return stack::push(L, nil);
+				return stack::push(L, lua_nil);
 			}
 		};
 
 		template<>
 		struct pusher<std::nullptr_t> {
 			static int push(lua_State* L, std::nullptr_t) {
-				return stack::push(L, nil);
+				return stack::push(L, lua_nil);
 			}
 		};
 

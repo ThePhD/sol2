@@ -139,7 +139,7 @@ namespace sol {
 				tracking.last = 1;
 				tracking.used += 1;
 				type t = type_of(L, index);
-				if (t == type::none || t == type::nil) {
+				if (t == type::none || t == type::lua_nil) {
 					return nullptr;
 				}
 				return get_std_func(return_types(), args_lists(), L, index);

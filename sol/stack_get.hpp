@@ -97,7 +97,7 @@ namespace sol {
 				for (lua_Integer i = 0; ; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
 					for (int vi = 0; vi < lua_size<V>::value; ++vi) {
 						type t = static_cast<type>(lua_geti(L, index, i + vi));
-						if (t == type::nil) {
+						if (t == type::lua_nil) {
 							if (i == 0) {
 								continue;
 							}
@@ -116,7 +116,7 @@ namespace sol {
 						lua_pushinteger(L, i);
 						lua_gettable(L, index);
 						type t = type_of(L, -1);
-						if (t == type::nil) {
+						if (t == type::lua_nil) {
 							if (i == 0) {
 								continue;
 							}
@@ -368,10 +368,10 @@ namespace sol {
 		};
 
 		template<>
-		struct getter<nil_t> {
-			static nil_t get(lua_State*, int, record& tracking) {
+		struct getter<lua_nil_t> {
+			static lua_nil_t get(lua_State*, int, record& tracking) {
 				tracking.use(1);
-				return nil;
+				return lua_nil;
 			}
 		};
 
@@ -438,14 +438,14 @@ namespace sol {
 
 		template<typename T>
 		struct getter<detail::as_value_tag<T>> {
-			static T* get_no_nil(lua_State* L, int index, record& tracking) {
+			static T* get_no_lua_nil(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
 				void** pudata = static_cast<void**>(lua_touserdata(L, index));
 				void* udata = *pudata;
-				return get_no_nil_from(L, udata, index, tracking);
+				return get_no_lua_nil_from(L, udata, index, tracking);
 			}
 
-			static T* get_no_nil_from(lua_State* L, void* udata, int index, record&) {
+			static T* get_no_lua_nil_from(lua_State* L, void* udata, int index, record&) {
 				if (detail::has_derived<T>::value && luaL_getmetafield(L, index, &detail::base_class_cast_key()[0]) != 0) {
 					void* basecastdata = lua_touserdata(L, -1);
 					detail::inheritance_cast_function ic = (detail::inheritance_cast_function)basecastdata;
@@ -458,7 +458,7 @@ namespace sol {
 			}
 			
 			static T& get(lua_State* L, int index, record& tracking) {
-				return *get_no_nil(L, index, tracking);
+				return *get_no_lua_nil(L, index, tracking);
 			}
 		};
 
@@ -466,18 +466,18 @@ namespace sol {
 		struct getter<detail::as_pointer_tag<T>> {
 			static T* get(lua_State* L, int index, record& tracking) {
 				type t = type_of(L, index);
-				if (t == type::nil) {
+				if (t == type::lua_nil) {
 					tracking.use(1);
 					return nullptr;
 				}
-				return getter<detail::as_value_tag<T>>::get_no_nil(L, index, tracking);
+				return getter<detail::as_value_tag<T>>::get_no_lua_nil(L, index, tracking);
 			}
 		};
 
 		template<typename T>
 		struct getter<non_null<T*>> {
 			static T* get(lua_State* L, int index, record& tracking) {
-				return getter<detail::as_value_tag<T>>::get_no_nil(L, index, tracking);
+				return getter<detail::as_value_tag<T>>::get_no_lua_nil(L, index, tracking);
 			}
 		};
 

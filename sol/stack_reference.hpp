@@ -35,7 +35,7 @@ namespace sol {
 
 	public:
 		stack_reference() noexcept = default;
-		stack_reference(nil_t) noexcept : stack_reference() {};
+		stack_reference(lua_nil_t) noexcept : stack_reference() {};
 		stack_reference(lua_State* L, int i) noexcept : L(L), index(lua_absindex(L, i)) {}
 		stack_reference(lua_State* L, absolute_index i) noexcept : L(L), index(i) {}
 		stack_reference(lua_State* L, raw_index i) noexcept : L(L), index(i) {}
@@ -68,7 +68,7 @@ namespace sol {
 
 		bool valid() const noexcept {
 			type t = get_type();
-			return t != type::nil && t != type::none;
+			return t != type::lua_nil && t != type::none;
 		}
 	};
 

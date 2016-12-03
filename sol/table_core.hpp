@@ -49,7 +49,7 @@ namespace sol {
 		template<typename Fx>
 		void for_each(std::true_type, Fx&& fx) const {
 			auto pp = stack::push_pop(*this);
-			stack::push(base_t::lua_state(), nil);
+			stack::push(base_t::lua_state(), lua_nil);
 			while (lua_next(base_t::lua_state(), -2)) {
 				sol::object key(base_t::lua_state(), -2);
 				sol::object value(base_t::lua_state(), -1);
@@ -62,7 +62,7 @@ namespace sol {
 		template<typename Fx>
 		void for_each(std::false_type, Fx&& fx) const {
 			auto pp = stack::push_pop(*this);
-			stack::push(base_t::lua_state(), nil);
+			stack::push(base_t::lua_state(), lua_nil);
 			while (lua_next(base_t::lua_state(), -2)) {
 				sol::object key(base_t::lua_state(), -2);
 				sol::object value(base_t::lua_state(), -1);
