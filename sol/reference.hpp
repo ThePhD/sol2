@@ -85,6 +85,10 @@ namespace sol {
 			return -1;
 		}
 
+		void deref() const noexcept {
+			luaL_unref(lua_state(), LUA_REGISTRYINDEX, ref);
+		}
+
 	public:
 		reference() noexcept = default;
 		reference(lua_nil_t) noexcept : reference() {}
@@ -95,8 +99,8 @@ namespace sol {
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
 
-		virtual ~reference() noexcept {
-			luaL_unref(lua_state(), LUA_REGISTRYINDEX, ref);
+		~reference() noexcept {
+			deref();
 		}
 
 		reference(reference&& o) noexcept {
@@ -124,6 +128,7 @@ namespace sol {
 
 		reference& operator=(const reference& o) noexcept {
 			luastate = o.luastate;
+			deref();
 			ref = o.copy();
 			return *this;
 		}

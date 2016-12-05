@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-12-03 12:32:47.121440 UTC
-// This header was generated with sol v2.15.3 (revision 20b951d)
+// Generated 2016-12-05 17:03:03.298778 UTC
+// This header was generated with sol v2.15.3 (revision 9c2c27f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3857,6 +3857,10 @@ namespace sol {
 			return -1;
 		}
 
+		void deref() const noexcept {
+			luaL_unref(lua_state(), LUA_REGISTRYINDEX, ref);
+		}
+
 	public:
 		reference() noexcept = default;
 		reference(lua_nil_t) noexcept : reference() {}
@@ -3867,8 +3871,8 @@ namespace sol {
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
 
-		virtual ~reference() noexcept {
-			luaL_unref(lua_state(), LUA_REGISTRYINDEX, ref);
+		~reference() noexcept {
+			deref();
 		}
 
 		reference(reference&& o) noexcept {
@@ -3896,6 +3900,7 @@ namespace sol {
 
 		reference& operator=(const reference& o) noexcept {
 			luastate = o.luastate;
+			deref();
 			ref = o.copy();
 			return *this;
 		}
