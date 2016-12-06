@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-12-05 17:03:03.298778 UTC
-// This header was generated with sol v2.15.3 (revision 9c2c27f)
+// Generated 2016-12-06 15:59:21.255479 UTC
+// This header was generated with sol v2.15.4 (revision 16152c7)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3759,12 +3759,20 @@ namespace sol {
 		stack_reference& operator=(const stack_reference&) noexcept = default;
 
 		int push() const noexcept {
-			lua_pushvalue(L, index);
+			return push(lua_state());
+		}
+
+		int push(lua_State* Ls) const noexcept {
+			lua_pushvalue(Ls, index);
 			return 1;
 		}
 
-		void pop(int n = 1) const noexcept {
-			lua_pop(lua_state(), n);
+		void pop() const noexcept {
+			pop(lua_state());
+		}
+
+		void pop(lua_State* Ls, int n = 1) const noexcept {
+			lua_pop(Ls, n);
 		}
 
 		int stack_index() const noexcept {
@@ -3906,12 +3914,20 @@ namespace sol {
 		}
 
 		int push() const noexcept {
-			lua_rawgeti(lua_state(), LUA_REGISTRYINDEX, ref);
+			return push(lua_state());
+		}
+
+		int push(lua_State* Ls) const noexcept {
+			lua_rawgeti(Ls, LUA_REGISTRYINDEX, ref);
 			return 1;
 		}
 
-		void pop(int n = 1) const noexcept {
-			lua_pop(lua_state(), n);
+		void pop() const noexcept {
+			pop(lua_state());
+		}
+
+		void pop(lua_State* Ls, int n = 1) const noexcept {
+			lua_pop(Ls, n);
 		}
 
 		int registry_index() const noexcept {
@@ -6089,12 +6105,12 @@ namespace sol {
 
 		template<typename T>
 		struct pusher<T, std::enable_if_t<std::is_base_of<reference, T>::value || std::is_base_of<stack_reference, T>::value>> {
-			static int push(lua_State*, const T& ref) {
-				return ref.push();
+			static int push(lua_State* L, const T& ref) {
+				return ref.push(L);
 			}
 
-			static int push(lua_State*, T&& ref) {
-				return ref.push();
+			static int push(lua_State* L, T&& ref) {
+				return ref.push(L);
 			}
 		};
 
@@ -9322,7 +9338,11 @@ namespace sol {
 		}
 
 		int push() const {
-			lua_pushvalue(L, index);
+			return push(L);
+		}
+
+		int push(lua_State* Ls) const {
+			lua_pushvalue(Ls, index);
 			return 1;
 		}
 
@@ -9876,9 +9896,9 @@ namespace sol {
 	namespace stack {
 		template <typename Table, typename Key>
 		struct pusher<proxy<Table, Key>> {
-			static int push(lua_State*, const proxy<Table, Key>& p) {
+			static int push(lua_State* L, const proxy<Table, Key>& p) {
 				sol::reference r = p;
-				return r.push();
+				return r.push(L);
 			}
 		};
 	} // stack
@@ -12242,6 +12262,13 @@ namespace sol {
 		count
 	};
 
+	inline std::size_t total_memory_used(lua_State* L) {
+		std::size_t kb = lua_gc(L, LUA_GCCOUNT, 0);
+		kb *= 1024;
+		kb += lua_gc(L, LUA_GCCOUNTB, 0);
+		return kb;
+	}
+
 	class state_view {
 	private:
 		lua_State* L;
@@ -12486,6 +12513,14 @@ namespace sol {
 
 		table registry() const {
 			return reg;
+		}
+
+		std::size_t memory_used() const {
+			return total_memory_used(lua_state());
+		}
+
+		void collect_garbage() {
+			lua_gc(lua_state(), LUA_GCCOLLECT, 0);
 		}
 
 		operator lua_State* () const {
