@@ -134,12 +134,20 @@ namespace sol {
 		}
 
 		int push() const noexcept {
-			lua_rawgeti(lua_state(), LUA_REGISTRYINDEX, ref);
+			return push(lua_state());
+		}
+
+		int push(lua_State* Ls) const noexcept {
+			lua_rawgeti(Ls, LUA_REGISTRYINDEX, ref);
 			return 1;
 		}
 
-		void pop(int n = 1) const noexcept {
-			lua_pop(lua_state(), n);
+		void pop() const noexcept {
+			pop(lua_state());
+		}
+
+		void pop(lua_State* Ls, int n = 1) const noexcept {
+			lua_pop(Ls, n);
 		}
 
 		int registry_index() const noexcept {

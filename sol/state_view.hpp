@@ -45,6 +45,13 @@ namespace sol {
 		count
 	};
 
+	inline std::size_t total_memory_used(lua_State* L) {
+		std::size_t kb = lua_gc(L, LUA_GCCOUNT, 0);
+		kb *= 1024;
+		kb += lua_gc(L, LUA_GCCOUNTB, 0);
+		return kb;
+	}
+
 	class state_view {
 	private:
 		lua_State* L;
@@ -289,6 +296,14 @@ namespace sol {
 
 		table registry() const {
 			return reg;
+		}
+
+		std::size_t memory_used() const {
+			return total_memory_used(lua_state());
+		}
+
+		void collect_garbage() {
+			lua_gc(lua_state(), LUA_GCCOLLECT, 0);
 		}
 
 		operator lua_State* () const {

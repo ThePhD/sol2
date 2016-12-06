@@ -243,12 +243,12 @@ namespace sol {
 
 		template<typename T>
 		struct pusher<T, std::enable_if_t<std::is_base_of<reference, T>::value || std::is_base_of<stack_reference, T>::value>> {
-			static int push(lua_State*, const T& ref) {
-				return ref.push();
+			static int push(lua_State* L, const T& ref) {
+				return ref.push(L);
 			}
 
-			static int push(lua_State*, T&& ref) {
-				return ref.push();
+			static int push(lua_State* L, T&& ref) {
+				return ref.push(L);
 			}
 		};
 
