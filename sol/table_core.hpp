@@ -179,6 +179,12 @@ namespace sol {
 			stack::check<basic_table_core>(L, index, type_panic);
 #endif // Safety
 		}
+		basic_table_core(lua_State* L, ref_index index) : base_t(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			stack::check<basic_table_core>(L, -1, type_panic);
+#endif // Safety
+		}
 
 		iterator begin() const {
 			return iterator(*this);

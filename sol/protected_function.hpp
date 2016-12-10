@@ -166,6 +166,12 @@ namespace sol {
 			stack::check<basic_protected_function>(L, index, type_panic);
 #endif // Safety
 		}
+		basic_protected_function(lua_State* L, ref_index index, reference eh = get_default_handler()) : base_t(L, index), error_handler(std::move(eh)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			stack::check<basic_protected_function>(L, -1, type_panic);
+#endif // Safety
+		}
 
 		template<typename... Args>
 		protected_function_result operator()(Args&&... args) const {

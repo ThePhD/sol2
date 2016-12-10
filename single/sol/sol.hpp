@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-12-06 15:59:21.255479 UTC
-// This header was generated with sol v2.15.4 (revision 16152c7)
+// Generated 2016-12-10 04:29:58.120585 UTC
+// This header was generated with sol v2.15.5 (revision c6110e5)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3146,6 +3146,12 @@ namespace sol {
 		operator int() const { return index; }
 	};
 
+	struct ref_index {
+		int index;
+		ref_index(int idx) : index(idx) {}
+		operator int() const { return index; }
+	};
+
 	struct lightuserdata_value {
 		void* value;
 		lightuserdata_value(void* data) : value(data) {}
@@ -3753,6 +3759,7 @@ namespace sol {
 		stack_reference(lua_State* L, int i) noexcept : L(L), index(lua_absindex(L, i)) {}
 		stack_reference(lua_State* L, absolute_index i) noexcept : L(L), index(i) {}
 		stack_reference(lua_State* L, raw_index i) noexcept : L(L), index(i) {}
+		stack_reference(lua_State* L, ref_index i) noexcept = delete;
 		stack_reference(stack_reference&& o) noexcept = default;
 		stack_reference& operator=(stack_reference&&) noexcept = default;
 		stack_reference(const stack_reference&) noexcept = default;
@@ -3878,6 +3885,10 @@ namespace sol {
 			lua_pushvalue(lua_state(), index);
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
+		reference(lua_State* L, ref_index index) noexcept : luastate(L) {
+			lua_rawgeti(L, LUA_REGISTRYINDEX, index.index);
+			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+		}
 
 		~reference() noexcept {
 			deref();
@@ -3997,6 +4008,12 @@ namespace sol {
 			type_assert(L, index, type::userdata);
 #endif // Safety
 		}
+		basic_userdata(lua_State* L, ref_index index) : base_t(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			type_assert(L, -1, type::userdata);
+#endif // Safety
+		}
 	};
 
 	template <typename base_t>
@@ -4021,6 +4038,12 @@ namespace sol {
 		basic_lightuserdata(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			type_assert(L, index, type::lightuserdata);
+#endif // Safety
+		}
+		basic_lightuserdata(lua_State* L, ref_index index) : base_t(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			type_assert(L, -1, type::lightuserdata);
 #endif // Safety
 		}
 	};
@@ -8990,6 +9013,12 @@ namespace sol {
 			stack::check<basic_function>(L, index, type_panic);
 #endif // Safety
 		}
+		basic_function(lua_State* L, ref_index index) : base_t(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			stack::check<basic_function>(L, -1, type_panic);
+#endif // Safety
+		}
 
 		template<typename... Args>
 		function_result operator()(Args&&... args) const {
@@ -9297,6 +9326,12 @@ namespace sol {
 		basic_protected_function(lua_State* L, int index = -1, reference eh = get_default_handler()) : base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			stack::check<basic_protected_function>(L, index, type_panic);
+#endif // Safety
+		}
+		basic_protected_function(lua_State* L, ref_index index, reference eh = get_default_handler()) : base_t(L, index), error_handler(std::move(eh)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			stack::check<basic_protected_function>(L, -1, type_panic);
 #endif // Safety
 		}
 
@@ -9694,25 +9729,26 @@ namespace sol {
 		basic_object(lua_nil_t r) : base_t(r) {}
 		basic_object(const basic_object&) = default;
 		basic_object(basic_object&&) = default;
-		basic_object& operator=(const basic_object&) = default;
-		basic_object& operator=(basic_object&&) = default;
-		basic_object& operator=(const base_t& b) { base_t::operator=(b); return *this; }
-		basic_object& operator=(base_t&& b) { base_t::operator=(std::move(b)); return *this; }
 		basic_object(const stack_reference& r) noexcept : basic_object(r.lua_state(), r.stack_index()) {}
 		basic_object(stack_reference&& r) noexcept : basic_object(r.lua_state(), r.stack_index()) {}
 		template <typename Super>
 		basic_object(const proxy_base<Super>& r) noexcept : basic_object(r.operator basic_object()) {}
 		template <typename Super>
 		basic_object(proxy_base<Super>&& r) noexcept : basic_object(r.operator basic_object()) {}
-		template <typename Super>
-		basic_object& operator=(const proxy_base<Super>& r) { this->operator=(r.operator basic_object()); return *this; }
-		template <typename Super>
-		basic_object& operator=(proxy_base<Super>&& r) { this->operator=(r.operator basic_object()); return *this; }
 		basic_object(lua_State* L, int index = -1) noexcept : base_t(L, index) {}
+		basic_object(lua_State* L, ref_index index) noexcept : base_t(L, index) {}
 		template <typename T, typename... Args>
 		basic_object(lua_State* L, in_place_type_t<T>, Args&&... args) noexcept : basic_object(std::integral_constant<bool, !std::is_base_of<stack_reference, base_t>::value>(), L, -stack::push<T>(L, std::forward<Args>(args)...)) {}
 		template <typename T, typename... Args>
 		basic_object(lua_State* L, in_place_t, T&& arg, Args&&... args) noexcept : basic_object(L, in_place<T>, std::forward<T>(arg), std::forward<Args>(args)...) {}
+		basic_object& operator=(const basic_object&) = default;
+		basic_object& operator=(basic_object&&) = default;
+		basic_object& operator=(const base_t& b) { base_t::operator=(b); return *this; }
+		basic_object& operator=(base_t&& b) { base_t::operator=(std::move(b)); return *this; }
+		template <typename Super>
+		basic_object& operator=(const proxy_base<Super>& r) { this->operator=(r.operator basic_object()); return *this; }
+		template <typename Super>
+		basic_object& operator=(proxy_base<Super>&& r) { this->operator=(r.operator basic_object()); return *this; }
 
 		template<typename T>
 		decltype(auto) as() const {
@@ -11838,6 +11874,12 @@ namespace sol {
 			stack::check<basic_table_core>(L, index, type_panic);
 #endif // Safety
 		}
+		basic_table_core(lua_State* L, ref_index index) : base_t(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			stack::check<basic_table_core>(L, -1, type_panic);
+#endif // Safety
+		}
 
 		iterator begin() const {
 			return iterator(*this);
@@ -12790,7 +12832,8 @@ namespace sol {
 
 		template <>
 		struct getter<lua_thread_state> {
-			lua_thread_state get(lua_State* L, int index = -1) {
+			lua_thread_state get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				lua_thread_state lts{ lua_tothread(L, index) };
 				return lts;
 			}
@@ -12799,23 +12842,38 @@ namespace sol {
 		template <>
 		struct check_getter<lua_thread_state> {
 			template <typename Handler>
-			optional<lua_thread_state> get(lua_State* L, int index, Handler&& handler) {
+			optional<lua_thread_state> get(lua_State* L, int index, Handler&& handler, record& tracking) {
 				lua_thread_state lts{ lua_tothread(L, index) };
 				if (lts.L == nullptr) {
 					handler(L, index, type::thread, type_of(L, index));
 					return nullopt;
 				}
+				tracking.use(1);
 				return lts;
 			}
 		};
 
 	}
 
+#if SOL_LUA_VERSION < 502
+	inline lua_State* main_thread(lua_State* L, lua_State* backup_if_unsupported = nullptr) {
+		return backup_if_unsupported;
+	}
+#else
+	inline lua_State* main_thread(lua_State* L, lua_State* = nullptr) {
+		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_MAINTHREAD);
+		lua_thread_state s = stack::pop<lua_thread_state>(L);
+		return s.L;
+	}
+#endif // Lua 5.2+ has the main thread getter
+
 	class thread : public reference {
 	public:
 		thread() noexcept = default;
 		thread(const thread&) = default;
 		thread(thread&&) = default;
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, thread>>, std::is_base_of<reference, meta::unqualified_t<T>>> = meta::enabler>
+		thread(T&& r) : reference(std::forward<T>(r)) {}
 		thread(const stack_reference& r) : thread(r.lua_state(), r.stack_index()) {};
 		thread(stack_reference&& r) : thread(r.lua_state(), r.stack_index()) {};
 		thread& operator=(const thread&) = default;
@@ -12823,6 +12881,12 @@ namespace sol {
 		thread(lua_State* L, int index = -1) : reference(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			type_assert(L, index, type::thread);
+#endif // Safety
+		}
+		thread(lua_State* L, ref_index index) : reference(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			type_assert(L, -1, type::thread);
 #endif // Safety
 		}
 		thread(lua_State* L, lua_State* actualthread) : thread(L, lua_thread_state{ actualthread }) {}
@@ -12920,10 +12984,23 @@ namespace sol {
 	public:
 		coroutine() noexcept = default;
 		coroutine(const coroutine&) noexcept = default;
+		coroutine(coroutine&&) noexcept = default;
 		coroutine& operator=(const coroutine&) noexcept = default;
+		coroutine& operator=(coroutine&&) noexcept = default;
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, coroutine>>, std::is_base_of<reference, meta::unqualified_t<T>>> = meta::enabler>
+		coroutine(T&& r) : reference(std::forward<T>(r)) {}
+		coroutine(lua_nil_t r) : reference(r) {}
+		coroutine(const stack_reference& r) noexcept : coroutine(r.lua_state(), r.stack_index()) {}
+		coroutine(stack_reference&& r) noexcept : coroutine(r.lua_state(), r.stack_index()) {}
 		coroutine(lua_State* L, int index = -1) : reference(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			stack::check<coroutine>(L, index, type_panic);
+#endif // Safety
+		}
+		coroutine(lua_State* L, ref_index index) : reference(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			stack::check<coroutine>(L, -1, type_panic);
 #endif // Safety
 		}
 

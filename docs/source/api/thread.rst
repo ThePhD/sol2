@@ -13,6 +13,21 @@ a separate state that can contain and run functions
 
 	A CPU thread is not always equivalent to a new thread in Lua: ``std::this_thread::get_id()`` can be the same for 2 callbacks that have 2 distinct Lua threads. In order to know which thread a callback was called in, hook into :doc:`sol::this_state<this_state>` from your Lua callback and then construct a ``sol::thread``, passing in the ``sol::this_state`` for both the first and last arguments. Then examine the results of the status and ``is_...`` calls below.
 
+free function
+-------------
+
+.. code-block:: cpp
+	:caption: function: main_thread
+
+	main_thread(lua_State* current, lua_State* backup_if_bad_platform = nullptr);
+
+The function ``sol::main_thread( ... )`` retrieves the main thread of the application on Lua 5.2 and above *only*. It is designed for code that needs to be multithreading-aware (e.g., uses multiple :doc:`threads<thread>` and :doc:`coroutines<coroutine>`).
+
+.. warning::
+	
+	This code function will be present in Lua 5.1/LuaJIT, but only have proper behavior when given a single argument on Lua 5.2 and beyond. Lua 5.1 does not support retrieving the main thread from its registry, and therefore it is entirely suggested if you are writing cross-platform Lua code that you must store the main thread of your application in some global storage accessible somewhere. Then, pass this item into the ``sol::main_thread( possibly_thread_state, my_actual_main_state )`` and it will select that ``my_actual_main_state`` every time. If you are not going to use Lua 5.1 / LuaJIT, you can ignore the last parameter.
+
+
 members
 -------
 

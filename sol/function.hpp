@@ -86,6 +86,12 @@ namespace sol {
 			stack::check<basic_function>(L, index, type_panic);
 #endif // Safety
 		}
+		basic_function(lua_State* L, ref_index index) : base_t(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			stack::check<basic_function>(L, -1, type_panic);
+#endif // Safety
+		}
 
 		template<typename... Args>
 		function_result operator()(Args&&... args) const {

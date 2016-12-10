@@ -49,6 +49,12 @@ namespace sol {
 			type_assert(L, index, type::userdata);
 #endif // Safety
 		}
+		basic_userdata(lua_State* L, ref_index index) : base_t(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			type_assert(L, -1, type::userdata);
+#endif // Safety
+		}
 	};
 
 	template <typename base_t>
@@ -73,6 +79,12 @@ namespace sol {
 		basic_lightuserdata(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			type_assert(L, index, type::lightuserdata);
+#endif // Safety
+		}
+		basic_lightuserdata(lua_State* L, ref_index index) : base_t(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			type_assert(L, -1, type::lightuserdata);
 #endif // Safety
 		}
 	};

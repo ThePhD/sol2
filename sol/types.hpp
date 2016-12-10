@@ -194,6 +194,12 @@ namespace sol {
 		operator int() const { return index; }
 	};
 
+	struct ref_index {
+		int index;
+		ref_index(int idx) : index(idx) {}
+		operator int() const { return index; }
+	};
+
 	struct lightuserdata_value {
 		void* value;
 		lightuserdata_value(void* data) : value(data) {}

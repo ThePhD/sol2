@@ -39,6 +39,7 @@ namespace sol {
 		stack_reference(lua_State* L, int i) noexcept : L(L), index(lua_absindex(L, i)) {}
 		stack_reference(lua_State* L, absolute_index i) noexcept : L(L), index(i) {}
 		stack_reference(lua_State* L, raw_index i) noexcept : L(L), index(i) {}
+		stack_reference(lua_State* L, ref_index i) noexcept = delete;
 		stack_reference(stack_reference&& o) noexcept = default;
 		stack_reference& operator=(stack_reference&&) noexcept = default;
 		stack_reference(const stack_reference&) noexcept = default;

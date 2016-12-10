@@ -48,7 +48,8 @@ namespace sol {
 
 		template <>
 		struct getter<lua_thread_state> {
-			lua_thread_state get(lua_State* L, int index = -1) {
+			lua_thread_state get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				lua_thread_state lts{ lua_tothread(L, index) };
 				return lts;
 			}
@@ -57,23 +58,38 @@ namespace sol {
 		template <>
 		struct check_getter<lua_thread_state> {
 			template <typename Handler>
-			optional<lua_thread_state> get(lua_State* L, int index, Handler&& handler) {
+			optional<lua_thread_state> get(lua_State* L, int index, Handler&& handler, record& tracking) {
 				lua_thread_state lts{ lua_tothread(L, index) };
 				if (lts.L == nullptr) {
 					handler(L, index, type::thread, type_of(L, index));
 					return nullopt;
 				}
+				tracking.use(1);
 				return lts;
 			}
 		};
 
 	}
 
+#if SOL_LUA_VERSION < 502
+	inline lua_State* main_thread(lua_State* L, lua_State* backup_if_unsupported = nullptr) {
+		return backup_if_unsupported;
+	}
+#else
+	inline lua_State* main_thread(lua_State* L, lua_State* = nullptr) {
+		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_MAINTHREAD);
+		lua_thread_state s = stack::pop<lua_thread_state>(L);
+		return s.L;
+	}
+#endif // Lua 5.2+ has the main thread getter
+
 	class thread : public reference {
 	public:
 		thread() noexcept = default;
 		thread(const thread&) = default;
 		thread(thread&&) = default;
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, thread>>, std::is_base_of<reference, meta::unqualified_t<T>>> = meta::enabler>
+		thread(T&& r) : reference(std::forward<T>(r)) {}
 		thread(const stack_reference& r) : thread(r.lua_state(), r.stack_index()) {};
 		thread(stack_reference&& r) : thread(r.lua_state(), r.stack_index()) {};
 		thread& operator=(const thread&) = default;
@@ -81,6 +97,12 @@ namespace sol {
 		thread(lua_State* L, int index = -1) : reference(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			type_assert(L, index, type::thread);
+#endif // Safety
+		}
+		thread(lua_State* L, ref_index index) : reference(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			type_assert(L, -1, type::thread);
 #endif // Safety
 		}
 		thread(lua_State* L, lua_State* actualthread) : thread(L, lua_thread_state{ actualthread }) {}
