@@ -28,7 +28,7 @@ TEST_CASE("storage/main-thread", "ensure round-tripping and pulling out thread d
 	{
 		sol::stack_guard g(lua);
 		lua_State* orig = lua;
-		lua_State* ts = sol::main_thread(lua);
+		lua_State* ts = sol::main_thread(lua, lua);
 		REQUIRE(ts == orig);
 	}
 }
