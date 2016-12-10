@@ -174,6 +174,8 @@ namespace sol {
 		basic_table_core& operator=(basic_table_core&&) = default;
 		basic_table_core(const stack_reference& r) : basic_table_core(r.lua_state(), r.stack_index()) {}
 		basic_table_core(stack_reference&& r) : basic_table_core(r.lua_state(), r.stack_index()) {}
+		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<T, ref_index>>> = meta::enabler>
+		basic_table_core(lua_State* L, T&& r) : basic_table_core(L, sol::ref_index(r.registry_index())) {}
 		basic_table_core(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			stack::check<basic_table_core>(L, index, type_panic);

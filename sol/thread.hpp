@@ -94,6 +94,8 @@ namespace sol {
 		thread(stack_reference&& r) : thread(r.lua_state(), r.stack_index()) {};
 		thread& operator=(const thread&) = default;
 		thread& operator=(thread&&) = default;
+		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<T, ref_index>>> = meta::enabler>
+		thread(lua_State* L, T&& r) : thread(L, sol::ref_index(r.registry_index())) {}
 		thread(lua_State* L, int index = -1) : reference(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			type_assert(L, index, type::thread);

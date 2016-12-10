@@ -80,6 +80,8 @@ namespace sol {
 		coroutine(lua_nil_t r) : reference(r) {}
 		coroutine(const stack_reference& r) noexcept : coroutine(r.lua_state(), r.stack_index()) {}
 		coroutine(stack_reference&& r) noexcept : coroutine(r.lua_state(), r.stack_index()) {}
+		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<T, ref_index>>> = meta::enabler>
+		coroutine(lua_State* L, T&& r) : coroutine(L, sol::ref_index(r.registry_index())) {}
 		coroutine(lua_State* L, int index = -1) : reference(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			stack::check<coroutine>(L, index, type_panic);

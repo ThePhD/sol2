@@ -13,7 +13,7 @@ end
 	sol::state lua;
 	sol::function f = lua["f"];
 	sol::reference r = lua["f"];
-	sol::function regf(lua, sol::ref_index(f.registry_index()));
+	sol::function regf(lua, f);
 	sol::reference regr(lua, sol::ref_index(f.registry_index()));
 	bool isequal = f == r;
 	REQUIRE(isequal);

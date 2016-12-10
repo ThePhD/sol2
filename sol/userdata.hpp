@@ -44,6 +44,8 @@ namespace sol {
 		basic_userdata& operator=(basic_userdata&&) = default;
 		basic_userdata(const stack_reference& r) : basic_userdata(r.lua_state(), r.stack_index()) {}
 		basic_userdata(stack_reference&& r) : basic_userdata(r.lua_state(), r.stack_index()) {}
+		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<T, ref_index>>> = meta::enabler>
+		basic_userdata(lua_State* L, T&& r) : basic_userdata(L, sol::ref_index(r.registry_index())) {}
 		basic_userdata(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			type_assert(L, index, type::userdata);
@@ -76,6 +78,8 @@ namespace sol {
 		basic_lightuserdata& operator=(basic_lightuserdata&&) = default;
 		basic_lightuserdata(const stack_reference& r) : basic_lightuserdata(r.lua_state(), r.stack_index()) {}
 		basic_lightuserdata(stack_reference&& r) : basic_lightuserdata(r.lua_state(), r.stack_index()) {}
+		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<T, ref_index>>> = meta::enabler>
+		basic_lightuserdata(lua_State* L, T&& r) : basic_lightuserdata(L, sol::ref_index(r.registry_index())) {}
 		basic_lightuserdata(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			type_assert(L, index, type::lightuserdata);
