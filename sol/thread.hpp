@@ -72,7 +72,7 @@ namespace sol {
 	}
 
 #if SOL_LUA_VERSION < 502
-	inline lua_State* main_thread(lua_State* L, lua_State* backup_if_unsupported = nullptr) {
+	inline lua_State* main_thread(lua_State*, lua_State* backup_if_unsupported = nullptr) {
 		return backup_if_unsupported;
 	}
 #else
