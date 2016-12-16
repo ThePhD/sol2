@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-12-16 05:28:22.940422 UTC
-// This header was generated with sol v2.15.5 (revision bbcbd41)
+// Generated 2016-12-16 06:00:39.206011 UTC
+// This header was generated with sol v2.15.5 (revision e1329d2)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -2089,8 +2089,8 @@ namespace sol {
 	};
 
 	template <class T>
-	struct optional_base {
-		char storage_[sizeof(T) + (sizeof(T) % alignof(T))];
+	struct alignas(T) optional_base {
+		char storage_[sizeof(T)];
 		bool init_;
 
 		constexpr optional_base() noexcept : storage_(), init_(false) {};
@@ -2137,8 +2137,8 @@ namespace sol {
 	using constexpr_optional_base = optional_base<T>;
 #else
 	template <class T>
-	struct constexpr_optional_base {
-		char storage_[sizeof(T) + (sizeof(T) % alignof(T))];
+	struct alignas(T) constexpr_optional_base {
+		char storage_[sizeof(T)];
 		bool init_;
 		constexpr constexpr_optional_base() noexcept : storage_(), init_(false) {}
 

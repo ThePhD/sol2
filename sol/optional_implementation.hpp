@@ -287,8 +287,8 @@ namespace sol {
 
 
 	template <class T>
-	struct optional_base {
-		char storage_[sizeof(T) + (sizeof(T) % alignof(T))];
+	struct alignas(T) optional_base {
+		char storage_[sizeof(T)];
 		bool init_;
 
 		constexpr optional_base() noexcept : storage_(), init_(false) {};
@@ -335,8 +335,8 @@ namespace sol {
 	using constexpr_optional_base = optional_base<T>;
 #else
 	template <class T>
-	struct constexpr_optional_base {
-		char storage_[sizeof(T) + (sizeof(T) % alignof(T))];
+	struct alignas(T) constexpr_optional_base {
+		char storage_[sizeof(T)];
 		bool init_;
 		constexpr constexpr_optional_base() noexcept : storage_(), init_(false) {}
 
