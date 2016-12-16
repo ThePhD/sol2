@@ -343,7 +343,7 @@ namespace sol {
 		memory = LUA_ERRMEM,
 		gc = LUA_ERRGCMM,
 		handler = LUA_ERRERR,
-		dead,
+		dead = -1,
 	};
 
 	enum class load_status : int {
