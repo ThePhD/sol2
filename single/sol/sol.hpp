@@ -20,12 +20,34 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-12-10 10:55:55.463053 UTC
-// This header was generated with sol v2.15.5 (revision f4f3bff)
+// Generated 2016-12-16 05:28:22.940422 UTC
+// This header was generated with sol v2.15.5 (revision bbcbd41)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
 #define SOL_SINGLE_INCLUDE_HPP
+
+// beginning of sol.hpp
+
+#ifndef SOL_HPP
+#define SOL_HPP
+
+#if defined(UE_BUILD_DEBUG) || defined(UE_BUILD_DEVELOPMENT) || defined(UE_BUILD_TEST) || defined(UE_BUILD_SHIPPING) || defined(UE_SERVER)
+#define SOL_INSIDE_UNREAL
+#endif // Unreal Engine 4 bullshit
+
+#ifdef SOL_INSIDE_UNREAL
+#ifdef check
+#define SOL_INSIDE_UNREAL_REMOVED_CHECK
+#undef check
+#endif 
+#endif // Unreal Engine 4 Bullshit
+
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wconversion"
+#endif // g++
 
 // beginning of sol/state.hpp
 
@@ -1388,7 +1410,7 @@ inline int luaL_fileresult(lua_State *L, int stat, const char *fname) {
     }
     else {
         char buf[1024];
-#ifdef __GLIBC__
+#if defined(__GLIBC__) || defined(_POSIX_VERSION)
         strerror_r(en, buf, 1024);
 #else
         strerror_s(buf, 1024, en);
@@ -2067,18 +2089,17 @@ namespace sol {
 	};
 
 	template <class T>
-	struct optional_base
-	{
+	struct optional_base {
+		char storage_[sizeof(T) + (sizeof(T) % alignof(T))];
 		bool init_;
-		char storage_[sizeof(T)];
 
-		constexpr optional_base() noexcept : init_(false), storage_() {};
+		constexpr optional_base() noexcept : storage_(), init_(false) {};
 
-		explicit optional_base(const T& v) : init_(true), storage_() {
+		explicit optional_base(const T& v) : storage_(), init_(true) {
 			new (&storage())T(v);
 		}
 
-		explicit optional_base(T&& v) : init_(true), storage_() {
+		explicit optional_base(T&& v) : storage_(), init_(true) {
 			new (&storage())T(constexpr_move(v));
 		}
 
@@ -2116,17 +2137,16 @@ namespace sol {
 	using constexpr_optional_base = optional_base<T>;
 #else
 	template <class T>
-	struct constexpr_optional_base
-	{
+	struct constexpr_optional_base {
+		char storage_[sizeof(T) + (sizeof(T) % alignof(T))];
 		bool init_;
-		char storage_[sizeof(T)];
-		constexpr constexpr_optional_base() noexcept : init_(false), storage_() {}
+		constexpr constexpr_optional_base() noexcept : storage_(), init_(false) {}
 
-		explicit constexpr constexpr_optional_base(const T& v) : init_(true), storage_() {
+		explicit constexpr constexpr_optional_base(const T& v) : storage_(), init_(true) {
 			new (&storage())T(v);
 		}
 
-		explicit constexpr constexpr_optional_base(T&& v) : init_(true), storage_() {
+		explicit constexpr constexpr_optional_base(T&& v) : storage_(), init_(true) {
 			new (&storage())T(constexpr_move(v));
 		}
 
@@ -2917,8 +2937,6 @@ namespace sol {
 
 // beginning of sol/string_shim.hpp
 
-#pragma once
-
 namespace sol {
 	namespace string_detail {
 		struct string_shim {
@@ -2977,7 +2995,9 @@ namespace sol {
 			}
 		};
 	}
-}// end of sol/string_shim.hpp
+}
+
+// end of sol/string_shim.hpp
 
 #include <array>
 
@@ -13056,5 +13076,18 @@ namespace sol {
 } // sol
 
 // end of sol/coroutine.hpp
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif // g++
+
+#ifdef SOL_INSIDE_UNREAL
+#ifdef SOL_INSIDE_UNREAL_REMOVED_CHECK
+#define check(expr) { if(UNLIKELY(!(expr))) { FDebug::LogAssertFailedMessage( #expr, __FILE__, __LINE__ ); _DebugBreakAndPromptForRemote(); FDebug::AssertFailed( #expr, __FILE__, __LINE__ ); CA_ASSUME(false); } }}
+#endif 
+#endif // Unreal Engine 4 Bullshit
+
+#endif // SOL_HPP
+// end of sol.hpp
 
 #endif // SOL_SINGLE_INCLUDE_HPP

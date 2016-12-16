@@ -287,18 +287,17 @@ namespace sol {
 
 
 	template <class T>
-	struct optional_base
-	{
+	struct optional_base {
+		char storage_[sizeof(T) + (sizeof(T) % alignof(T))];
 		bool init_;
-		char storage_[sizeof(T)];
 
-		constexpr optional_base() noexcept : init_(false), storage_() {};
+		constexpr optional_base() noexcept : storage_(), init_(false) {};
 
-		explicit optional_base(const T& v) : init_(true), storage_() {
+		explicit optional_base(const T& v) : storage_(), init_(true) {
 			new (&storage())T(v);
 		}
 
-		explicit optional_base(T&& v) : init_(true), storage_() {
+		explicit optional_base(T&& v) : storage_(), init_(true) {
 			new (&storage())T(constexpr_move(v));
 		}
 
@@ -336,17 +335,16 @@ namespace sol {
 	using constexpr_optional_base = optional_base<T>;
 #else
 	template <class T>
-	struct constexpr_optional_base
-	{
+	struct constexpr_optional_base {
+		char storage_[sizeof(T) + (sizeof(T) % alignof(T))];
 		bool init_;
-		char storage_[sizeof(T)];
-		constexpr constexpr_optional_base() noexcept : init_(false), storage_() {}
+		constexpr constexpr_optional_base() noexcept : storage_(), init_(false) {}
 
-		explicit constexpr constexpr_optional_base(const T& v) : init_(true), storage_() {
+		explicit constexpr constexpr_optional_base(const T& v) : storage_(), init_(true) {
 			new (&storage())T(v);
 		}
 
-		explicit constexpr constexpr_optional_base(T&& v) : init_(true), storage_() {
+		explicit constexpr constexpr_optional_base(T&& v) : storage_(), init_(true) {
 			new (&storage())T(constexpr_move(v));
 		}
 
