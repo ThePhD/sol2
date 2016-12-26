@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-12-16 10:31:09.106965 UTC
-// This header was generated with sol v2.15.5 (revision 87f8456)
+// Generated 2016-12-26 18:50:00.916890 UTC
+// This header was generated with sol v2.15.5 (revision 3aa42c5)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -8531,9 +8531,10 @@ namespace sol {
 // beginning of sol/resolve.hpp
 
 namespace sol {
-	// Clang has distinct problems with constexpr arguments,
-	// so don't use the constexpr versions inside of clang.
+	
 #ifndef __clang__
+	// constexpr is fine for not-clang
+
 	namespace detail {
 		template<typename R, typename... Args, typename F, typename = std::result_of_t<meta::unqualified_t<F>(Args...)>>
 		inline constexpr auto resolve_i(types<R(Args...)>, F&&)->R(meta::unqualified_t<F>::*)(Args...) {
@@ -8600,6 +8601,10 @@ namespace sol {
 		return detail::resolve_i(types<Sig...>(), std::forward<F>(f));
 	}
 #else
+
+	// Clang has distinct problems with constexpr arguments,
+	// so don't use the constexpr versions inside of clang.
+
 	namespace detail {
 		template<typename R, typename... Args, typename F, typename = std::result_of_t<meta::unqualified_t<F>(Args...)>>
 		inline auto resolve_i(types<R(Args...)>, F&&)->R(meta::unqualified_t<F>::*)(Args...) {
@@ -8665,7 +8670,9 @@ namespace sol {
 	inline auto resolve(F&& f) -> decltype(detail::resolve_i(types<Sig...>(), std::forward<F>(f))) {
 		return detail::resolve_i(types<Sig...>(), std::forward<F>(f));
 	}
+
 #endif
+
 } // sol
 
 // end of sol/resolve.hpp
@@ -12829,7 +12836,19 @@ namespace sol {
 			stack::luajit_exception_handler(unique_base::get());
 		}
 
+		state(const state&) = delete;
+		state(state&&) = default;
+		state& operator=(const state&) = delete;
+		state& operator=(state&&) = default;
+
 		using state_view::get;
+
+		~state() {
+			auto& handler = protected_function::get_default_handler();
+			if (handler.lua_state() == this->lua_state()) {
+				protected_function::set_default_handler(reference());
+			}
+		}
 	};
 } // sol
 

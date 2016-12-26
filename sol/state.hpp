@@ -75,7 +75,19 @@ namespace sol {
 			stack::luajit_exception_handler(unique_base::get());
 		}
 
+		state(const state&) = delete;
+		state(state&&) = default;
+		state& operator=(const state&) = delete;
+		state& operator=(state&&) = default;
+
 		using state_view::get;
+
+		~state() {
+			auto& handler = protected_function::get_default_handler();
+			if (handler.lua_state() == this->lua_state()) {
+				protected_function::set_default_handler(reference());
+			}
+		}
 	};
 } // sol
 
