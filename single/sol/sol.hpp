@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-12-26 18:50:00.916890 UTC
-// This header was generated with sol v2.15.5 (revision 3aa42c5)
+// Generated 2016-12-26 19:02:10.449461 UTC
+// This header was generated with sol v2.15.5 (revision a2691c6)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1022,7 +1022,7 @@ inline const char* kepler_lua_compat_get_string(lua_State* L, void* ud, size_t* 
     return ls->s;
 }
 
-#if !defined(SOL_LUAJIT) || ((SOL_LUAJIT_VERSION - 20100) <= 0)
+#if !defined(SOL_LUAJIT) || (SOL_LUAJIT_VERSION < 20100)
 
 inline int luaL_loadbufferx(lua_State* L, const char* buff, size_t size, const char* name, const char*) {
     kepler_lua_compat_get_string_view ls;
@@ -1035,7 +1035,8 @@ inline int luaL_loadbufferx(lua_State* L, const char* buff, size_t size, const c
 
 #endif /* Lua 5.1 */
 
-#endif // SOL_5_1_0_H// end of sol/compatibility/5.1.0.h
+#endif // SOL_5_1_0_H
+// end of sol/compatibility/5.1.0.h
 
 // beginning of sol/compatibility/5.0.0.h
 
