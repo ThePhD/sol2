@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2016-12-26 19:02:10.449461 UTC
-// This header was generated with sol v2.15.5 (revision a2691c6)
+// Generated 2017-01-02 14:35:36.677712 UTC
+// This header was generated with sol v2.15.5 (revision bacd93a)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -790,7 +790,13 @@ namespace sol {
 
 // beginning of sol/compatibility/version.hpp
 
+#ifdef SOL_USING_CXX_LUA
+#include <lua.h>
+#include <lualib.h>
+#include <luaxlib.h>
+#else
 #include <lua.hpp>
+#endif // C++-compiler Lua
 
 #if defined(_WIN32) || defined(_MSC_VER)
 #ifndef SOL_CODECVT_SUPPORT
