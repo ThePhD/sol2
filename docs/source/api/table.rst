@@ -150,6 +150,14 @@ Sets a previously created usertype with the specified ``key`` into the table. No
 
 Provides `input iterators`_ for a table. This allows tables to work with single-pass, input-only algorithms (like ``std::for_each``).
 
+.. _iteration_note:
+.. warning::
+
+	The iterators you use to walk through a ``sol::table`` are NOT guaranteed to iterate in numeric order, or ANY kind of order. They may iterate backwards, forwards, in the style of cuckoo-hashing, by accumulating a visited list while calling ``rand()`` to find the next target, or some other crazy scheme. Now, no implementation would be crazy, but it is behavior specifically left undefined because there are many ways that your Lua package can implement the table type.
+
+	Iteration order is NOT something you should rely on. If you want to figure out the length of a table, call the length operation (``int count = mytable.size();`` using the sol API) and then iterate from ``1`` to ``count`` (inclusive of the value of count, because Lua expects iteration to work in the range of ``[1, count]``). This will save you some headaches in the future when the implementation decides not to iterate in numeric order.
+
+
 .. code-block:: cpp
 	:caption: function: iteration with a function
 	:name: table-for-each
