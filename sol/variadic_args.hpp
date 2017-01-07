@@ -192,10 +192,17 @@ namespace sol {
 		const_reverse_iterator crend() const { return std::reverse_iterator<const_iterator>(cend()); }
 
 		int push() const {
+			push(L);
+		}
+
+		int push(lua_State* target) const {
 			int pushcount = 0;
 			for (int i = index; i <= stacktop; ++i) {
 				lua_pushvalue(L, i);
 				pushcount += 1;
+			}
+			if (target != L) {
+				lua_xmove(L, target, pushcount);
 			}
 			return pushcount;
 		}
@@ -226,8 +233,8 @@ namespace sol {
 
 		template <>
 		struct pusher<variadic_args> {
-			static int push(lua_State*, const variadic_args& ref) {
-				return ref.push();
+			static int push(lua_State* L, const variadic_args& ref) {
+				return ref.push(L);
 			}
 		};
 	} // stack

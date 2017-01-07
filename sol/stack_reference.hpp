@@ -50,7 +50,10 @@ namespace sol {
 		}
 
 		int push(lua_State* Ls) const noexcept {
-			lua_pushvalue(Ls, index);
+			lua_pushvalue(lua_state(), index);
+			if (Ls != lua_state()) {
+				lua_xmove(lua_state(), Ls, 1);
+			}
 			return 1;
 		}
 
