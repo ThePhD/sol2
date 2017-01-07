@@ -192,7 +192,7 @@ namespace sol {
 		const_reverse_iterator crend() const { return std::reverse_iterator<const_iterator>(cend()); }
 
 		int push() const {
-			push(L);
+			return push(L);
 		}
 
 		int push(lua_State* target) const {

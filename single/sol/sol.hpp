@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-01-07 05:45:36.396684 UTC
-// This header was generated with sol v2.15.7 (revision 764b2ad)
+// Generated 2017-01-07 06:10:50.767685 UTC
+// This header was generated with sol v2.15.7 (revision 38ba441)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -9670,7 +9670,7 @@ namespace sol {
 		const_reverse_iterator crend() const { return std::reverse_iterator<const_iterator>(cend()); }
 
 		int push() const {
-			push(L);
+			return push(L);
 		}
 
 		int push(lua_State* target) const {
