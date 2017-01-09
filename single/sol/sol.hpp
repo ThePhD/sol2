@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-01-07 06:10:50.767685 UTC
-// This header was generated with sol v2.15.7 (revision 38ba441)
+// Generated 2017-01-09 21:30:54.823287 UTC
+// This header was generated with sol v2.15.7 (revision 969615f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3723,11 +3723,15 @@ namespace sol {
 	template <>
 	struct is_transparent_argument<variadic_args> : std::true_type {};
 
+	template <typename T>
+	struct is_variadic_arguments : std::is_same<T, variadic_args> {};
+
 	template <typename Signature>
 	struct lua_bind_traits : meta::bind_traits<Signature> {
 	private:
 		typedef meta::bind_traits<Signature> base_t;
 	public:
+		typedef std::integral_constant<bool, meta::count_for<is_transparent_argument, typename base_t::args_list>::value != 0> runtime_variadics_t;
 		static const std::size_t true_arity = base_t::arity;
 		static const std::size_t arity = base_t::arity - meta::count_for<is_transparent_argument, typename base_t::args_list>::value;
 		static const std::size_t true_free_arity = base_t::free_arity;
@@ -7642,7 +7646,7 @@ namespace sol {
 				if (meta::find_in_pack_v<index_value<traits::free_arity>, index_value<M>...>::value) {
 					return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
 				}
-				if (traits::free_arity != fxarity) {
+				if (!traits::runtime_variadics_t::value && traits::free_arity != fxarity) {
 					return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<traits::free_arity, M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
 				}
 				stack::record tracking{};
@@ -7666,7 +7670,7 @@ namespace sol {
 				if (meta::find_in_pack_v<index_value<traits::free_arity>, index_value<M>...>::value) {
 					return overload_match_arity(types<>(), std::index_sequence<>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
 				}
-				if (traits::free_arity != fxarity) {
+				if (!traits::runtime_variadics_t::value && traits::free_arity != fxarity) {
 					return overload_match_arity(types<>(), std::index_sequence<>(), std::index_sequence<traits::free_arity, M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
 				}
 				return matchfx(types<Fx>(), index_value<I>(), return_types(), args_list(), L, fxarity, start, std::forward<Args>(args)...);
@@ -7681,7 +7685,7 @@ namespace sol {
 				if (meta::find_in_pack_v<index_value<traits::free_arity>, index_value<M>...>::value) {
 					return overload_match_arity(types<Fx1, Fxs...>(), std::index_sequence<I1, In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
 				}
-				if (traits::free_arity != fxarity) {
+				if (!traits::runtime_variadics_t::value && traits::free_arity != fxarity) {
 					return overload_match_arity(types<Fx1, Fxs...>(), std::index_sequence<I1, In...>(), std::index_sequence<traits::free_arity, M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
 				}
 				stack::record tracking{};

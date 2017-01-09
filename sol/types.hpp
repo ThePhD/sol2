@@ -744,11 +744,15 @@ namespace sol {
 	template <>
 	struct is_transparent_argument<variadic_args> : std::true_type {};
 
+	template <typename T>
+	struct is_variadic_arguments : std::is_same<T, variadic_args> {};
+
 	template <typename Signature>
 	struct lua_bind_traits : meta::bind_traits<Signature> {
 	private:
 		typedef meta::bind_traits<Signature> base_t;
 	public:
+		typedef std::integral_constant<bool, meta::count_for<is_transparent_argument, typename base_t::args_list>::value != 0> runtime_variadics_t;
 		static const std::size_t true_arity = base_t::arity;
 		static const std::size_t arity = base_t::arity - meta::count_for<is_transparent_argument, typename base_t::args_list>::value;
 		static const std::size_t true_free_arity = base_t::free_arity;

@@ -12,6 +12,19 @@ std::function<int()> makefn() {
 	return fx;
 }
 
+template <typename T>
+T va_func(sol::variadic_args va, T first) {
+	T s = 0;
+	for (auto arg : va) {
+		T v = arg;
+		s += v;
+	}
+	std::cout << first << std::endl;
+	std::cout << s << std::endl;
+
+	return s;
+}
+
 void takefn(std::function<int()> purr) {
 	if (purr() != 0x1456789)
 		throw 0;
@@ -1031,4 +1044,23 @@ TEST_CASE("functions/protected-stack-multi-return", "Make sure the stack is prot
 		double f = sol::stack::pop<double>(lua);
 		REQUIRE(f == 256.78);
 	}
+}
+
+TEST_CASE("functions/overloaded-variadic", "make sure variadics work to some degree with overloading") {
+	sol::state lua;
+	lua.open_libraries();
+
+	sol::table ssl = lua.create_named_table("ssl");
+	ssl.set_function("test", sol::overload(&va_func<int>, &va_func<double>));
+
+	lua.script("a = ssl.test(1, 2, 3)");
+	lua.script("b = ssl.test(1, 2)");
+	lua.script("c = ssl.test(2.2)");
+
+	int a = lua["a"];
+	int b = lua["b"];
+	double c = lua["c"];
+	REQUIRE(a == 6);
+	REQUIRE(b == 3);
+	REQUIRE(c == 2.2);
 }
