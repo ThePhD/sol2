@@ -501,7 +501,7 @@ namespace sol {
 			};
 
 			static int call(lua_State* L, F& fx) {
-				return overload_match_arity<Fs...>(on_match(), L, lua_gettop(L), 1, fx);
+				return overload_match_arity<Fs...>(on_match(), L, lua_gettop(L) - boost, 1 + boost, fx);
 			}
 		};
 

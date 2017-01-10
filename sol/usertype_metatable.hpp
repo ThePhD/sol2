@@ -187,19 +187,22 @@ namespace sol {
 		struct verified_tag {} const verified{};
 
 		template <typename T>
-		struct is_constructor : std::false_type {};
+		struct is_non_factory_constructor : std::false_type {};
+		
+		template <typename... Args>
+		struct is_non_factory_constructor<constructors<Args...>> : std::true_type {};
 
 		template <typename... Args>
-		struct is_constructor<constructors<Args...>> : std::true_type {};
+		struct is_non_factory_constructor<constructor_wrapper<Args...>> : std::true_type {};
 
-		template <typename... Args>
-		struct is_constructor<constructor_wrapper<Args...>> : std::true_type {};
+		template <>
+		struct is_non_factory_constructor<no_construction> : std::true_type {};
+
+		template <typename T>
+		struct is_constructor : is_non_factory_constructor<T> {};
 
 		template <typename... Args>
 		struct is_constructor<factory_wrapper<Args...>> : std::true_type {};
-
-		template <>
-		struct is_constructor<no_construction> : std::true_type {};
 
 		template <typename... Args>
 		using has_constructor = meta::any<is_constructor<meta::unqualified_t<Args>>...>;
@@ -425,8 +428,14 @@ namespace sol {
 
 		template <std::size_t Idx, bool is_index = true, bool is_variable = false>
 		static int real_call_with(lua_State* L, usertype_metatable& um) {
+			typedef meta::unqualified_tuple_element_t<Idx - 1, Tuple> K;
+			typedef meta::unqualified_tuple_element_t<Idx, Tuple> F;
+			static const int boost = 
+				!usertype_detail::is_non_factory_constructor<F>::value
+				&& std::is_same<K, call_construction>::value ? 
+				1 : 0;
 			auto& f = std::get<Idx>(um.functions);
-			return call_detail::call_wrapped<T, is_index, is_variable>(L, f);
+			return call_detail::call_wrapped<T, is_index, is_variable, boost>(L, f);
 		}
 
 		template <std::size_t Idx, bool is_index = true, bool is_variable = false>
