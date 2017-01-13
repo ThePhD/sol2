@@ -25,7 +25,7 @@
 #ifdef SOL_USING_CXX_LUA
 #include <lua.h>
 #include <lualib.h>
-#include <luaxlib.h>
+#include <lauxlib.h>
 #else
 #include <lua.hpp>
 #endif // C++-compiler Lua
