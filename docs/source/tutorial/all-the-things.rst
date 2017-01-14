@@ -223,12 +223,12 @@ If you're going deep, be safe:
 
 	sol::optional<int> will_not_error = lua["abc"]["DOESNOTEXIST"]["ghi"];
 	// will_not_error == sol::nullopt
-	int will_not_error2 = lua["abc"]["def"]["ghi"]["jklm"].get_or<int>(25);
+	int also_will_not_error = lua["abc"]["def"]["ghi"]["jklm"].get_or(25);
 	// is 25
 
 	// if you don't go safe,
 	// will throw (or do at_panic if no exceptions)
-	int aaaahhh = lua["abc"]["hope_u_liek_crash"];
+	int aaaahhh = lua["boom"]["the_dynamite"];
 
 
 make tables
