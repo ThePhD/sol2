@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-01-10 04:24:27.805667 UTC
-// This header was generated with sol v2.15.7 (revision 490194f)
+// Generated 2017-01-26 01:38:28.868453 UTC
+// This header was generated with sol v2.15.7 (revision 5b12924)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -793,7 +793,7 @@ namespace sol {
 #ifdef SOL_USING_CXX_LUA
 #include <lua.h>
 #include <lualib.h>
-#include <luaxlib.h>
+#include <lauxlib.h>
 #else
 #include <lua.hpp>
 #endif // C++-compiler Lua
@@ -4128,7 +4128,7 @@ namespace sol {
 		void set_extra(std::true_type, std::index_sequence<I...>, T&& target) {
 			using std::get;
 			(void)detail::swallow{ 0,
-				(get<I>(*this) = get<I>(types<Tn...>(), target), 0)...
+				(get<I>(static_cast<base_t&>(*this)) = get<I>(types<Tn...>(), target), 0)...
 				, 0 };
 		}
 
@@ -4136,7 +4136,7 @@ namespace sol {
 		void set_extra(std::false_type, std::index_sequence<I...>, T&& target) {
 			using std::get;
 			(void)detail::swallow{ 0,
-				(get<I>(*this) = get<I>(target), 0)...
+				(get<I>(static_cast<base_t&>(*this)) = get<I>(target), 0)...
 				, 0 };
 		}
 
