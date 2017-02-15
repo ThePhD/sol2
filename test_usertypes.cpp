@@ -1246,10 +1246,10 @@ TEST_CASE("usertype/shared-ptr-regression", "usertype metatables should not scre
 	REQUIRE(destroyed == 1);
 }
 
-TEST_CASE("usertype/double-deleter-guards", "usertype metatables internally must not rely on internal ") {
+TEST_CASE("usertype/double-deleter-guards", "usertype metatables internally must not rely on C++ state") {
 	struct c_a { int x; };
 	struct c_b { int y; };
-	REQUIRE_NOTHROW( {
+	auto routine = []() {
 		sol::state lua;
 		lua.new_usertype<c_a>("c_a", "x", &c_a::x);
 		lua.new_usertype<c_b>("c_b", "y", &c_b::y);
@@ -1257,7 +1257,8 @@ TEST_CASE("usertype/double-deleter-guards", "usertype metatables internally must
 		lua.new_usertype<c_a>("c_a", "x", &c_a::x);
 		lua.new_usertype<c_b>("c_b", "y", &c_b::y);
 		lua = sol::state();
-	});
+	};
+	REQUIRE_NOTHROW(routine());
 }
 
 TEST_CASE("usertype/vars", "usertype vars can bind various class items") {
