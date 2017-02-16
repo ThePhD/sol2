@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-02-15 10:41:27.152230 UTC
-// This header was generated with sol v2.15.7 (revision fe8b1c1)
+// Generated 2017-02-16 04:42:52.309916 UTC
+// This header was generated with sol v2.15.8 (revision 4aee6d3)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3496,6 +3496,10 @@ namespace sol {
 	using protected_function = basic_protected_function<reference>;
 	using stack_function = basic_function<stack_reference>;
 	using stack_protected_function = basic_protected_function<stack_reference>;
+	using unsafe_function = basic_function<reference>;
+	using safe_function = basic_protected_function<reference>;
+	using stack_unsafe_function = basic_function<stack_reference>;
+	using stack_safe_function = basic_protected_function<stack_reference>;
 	template <typename base_t>
 	class basic_object;
 	template <typename base_t>

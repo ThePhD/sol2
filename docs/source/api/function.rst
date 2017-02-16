@@ -10,6 +10,7 @@ calling functions bound to Lua
 .. code-block:: cpp
 	
 	class function : public reference;
+	typedef function unsafe_function;
 
 Function is a correct-assuming version of :doc:`protected_function<protected_function>`, omitting the need for typechecks and error handling. It is the default function type of Sol. Grab a function directly off the stack using the constructor:
 

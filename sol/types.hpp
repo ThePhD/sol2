@@ -514,6 +514,10 @@ namespace sol {
 	using protected_function = basic_protected_function<reference>;
 	using stack_function = basic_function<stack_reference>;
 	using stack_protected_function = basic_protected_function<stack_reference>;
+	using unsafe_function = basic_function<reference>;
+	using safe_function = basic_protected_function<reference>;
+	using stack_unsafe_function = basic_function<stack_reference>;
+	using stack_safe_function = basic_protected_function<stack_reference>;
 	template <typename base_t>
 	class basic_object;
 	template <typename base_t>

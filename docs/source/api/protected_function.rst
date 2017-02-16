@@ -6,8 +6,9 @@ Lua function calls that trap errors and provide error handling
 .. code-block:: cpp
 	
 	class protected_function : public reference;
+	typedef protected_function safe_function;
 
-Inspired by a request from `starwing<https://github.com/starwing>` in the old repository, this class provides the same interface as :doc:`function<function>` but with heavy protection and a potential error handler for any Lua errors and C++ exceptions. You can grab a function directly off the stack using the constructor, or pass to it 2 valid functions, which we'll demonstrate a little later.
+Inspired by a request from `starwing`_ in the :doc:`old sol repository<../origin>`, this class provides the same interface as :doc:`function<function>` but with heavy protection and a potential error handler for any Lua errors and C++ exceptions. You can grab a function directly off the stack using the constructor, or pass to it 2 valid functions, which we'll demonstrate a little later.
 
 When called without the return types being specified by either a ``sol::types<...>`` list or a ``call<Ret...>( ... )`` template type list, it generates a :doc:`protected_function_result<proxy>` class that gets implicitly converted to the requested return type. For example:
 
@@ -185,3 +186,5 @@ The error-handler that is called should a runtime error that Lua can detect occu
 	``protected_function_result`` safely pops its values off the stack when its destructor is called, keeping track of the index and number of arguments that were supposed to be returned. If you remove items below it using ``lua_remove``, for example, it will not behave as expected. Please do not perform fundamentally stack-rearranging operations until the destructor is called (pushing/popping above it is just fine).
 
 To know more about how function arguments are handled, see :ref:`this note<function-argument-handling>`.
+
+.. _starwing: https://github.com/starwing
