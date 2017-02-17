@@ -208,6 +208,26 @@ namespace sol {
 			hint->second = std::move(o);
 		}
 
+		template <typename N, typename F>
+		void add_member_function(std::true_type, lua_State* L, N&& n, F&& f) {
+			object o = make_object<F>(L, std::forward<F>(f), function_detail::class_indicator<T>());
+			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
+				callconstructfunc = std::move(o);
+				return;
+			}
+			insert(std::forward<N>(n), std::move(o));
+		}
+
+		template <typename N, typename F>
+		void add_member_function(std::false_type, lua_State* L, N&& n, F&& f) {
+			object o = make_object<F>(L, std::forward<F>(f));
+			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
+				callconstructfunc = std::move(o);
+				return;
+			}
+			insert(std::forward<N>(n), std::move(o));
+		}
+
 		template <typename N, typename F, meta::enable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
 		void add_function(lua_State* L, N&& n, F&& f) {
 			insert(std::forward<N>(n), make_object(L, as_function_reference(std::forward<F>(f))));
@@ -215,12 +235,7 @@ namespace sol {
 
 		template <typename N, typename F, meta::disable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
 		void add_function(lua_State* L, N&& n, F&& f) {
-			object o = make_object(L, std::forward<F>(f));
-			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
-				callconstructfunc = std::move(o);
-				return;
-			}
-			insert(std::forward<N>(n), std::move(o));
+			add_member_function(std::is_member_pointer<meta::unwrap_unqualified_t<F>>(), L, std::forward<N>(n), std::forward<F>(f));
 		}
 
 		template <typename N, typename F, meta::disable<is_variable_binding<meta::unqualified_t<F>>> = meta::enabler>

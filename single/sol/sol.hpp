@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-02-16 04:42:52.309916 UTC
-// This header was generated with sol v2.15.8 (revision 4aee6d3)
+// Generated 2017-02-17 10:46:09.695757 UTC
+// This header was generated with sol v2.15.8 (revision 37420dc)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -8715,6 +8715,10 @@ namespace sol {
 // end of sol/resolve.hpp
 
 namespace sol {
+	namespace function_detail {
+		template<typename T>
+		struct class_indicator {};
+	}
 	namespace stack {
 		template<typename... Sigs>
 		struct pusher<function_sig<Sigs...>> {
@@ -8770,10 +8774,17 @@ namespace sol {
 				select_convertible(types<Sigs...>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 
-			template <typename Fx, typename T, typename... Args>
+			template <typename Fx, typename T, typename... Args, meta::disable<meta::is_specialization_of<function_detail::class_indicator, meta::unqualified_t<T>>> = meta::enabler>
 			static void select_member_variable(std::true_type, lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
 				typedef meta::boolean<meta::is_specialization_of<std::reference_wrapper, meta::unqualified_t<T>>::value || std::is_pointer<T>::value> is_reference;
 				select_reference_member_variable(is_reference(), L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
+			}
+
+			template <typename Fx, typename C>
+			static void select_member_variable(std::true_type, lua_State* L, Fx&& fx, function_detail::class_indicator<C>) {
+				lua_CFunction freefunc = &function_detail::upvalue_this_member_variable<C, Fx>::call;
+				int upvalues = stack::stack_detail::push_as_upvalues(L, fx);
+				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
 			template <typename Fx>
@@ -8808,10 +8819,17 @@ namespace sol {
 				select_member_variable(std::is_member_object_pointer<meta::unqualified_t<Fx>>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 
-			template <typename Fx, typename T, typename... Args>
+			template <typename Fx, typename T, typename... Args, meta::disable<meta::is_specialization_of<function_detail::class_indicator, meta::unqualified_t<T>>> = meta::enabler>
 			static void select_member_function(std::true_type, lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
 				typedef meta::boolean<meta::is_specialization_of<std::reference_wrapper, meta::unqualified_t<T>>::value || std::is_pointer<T>::value> is_reference;
 				select_reference_member_function(is_reference(), L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
+			}
+
+			template <typename Fx, typename C>
+			static void select_member_function(std::true_type, lua_State* L, Fx&& fx, function_detail::class_indicator<C>) {
+				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, Fx>::call;
+				int upvalues = stack::stack_detail::push_as_upvalues(L, fx);
+				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
 			template <typename Fx>
@@ -8886,9 +8904,9 @@ namespace sol {
 
 		template<typename Signature>
 		struct pusher<Signature, std::enable_if_t<std::is_member_pointer<Signature>::value>> {
-			template <typename F>
-			static int push(lua_State* L, F&& f) {
-				return pusher<function_sig<>>{}.push(L, std::forward<F>(f));
+			template <typename F, typename... Args>
+			static int push(lua_State* L, F&& f, Args&&... args) {
+				return pusher<function_sig<>>{}.push(L, std::forward<F>(f), std::forward<Args>(args)...);
 			}
 		};
 
@@ -10807,6 +10825,26 @@ namespace sol {
 			hint->second = std::move(o);
 		}
 
+		template <typename N, typename F>
+		void add_member_function(std::true_type, lua_State* L, N&& n, F&& f) {
+			object o = make_object<F>(L, std::forward<F>(f), function_detail::class_indicator<T>());
+			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
+				callconstructfunc = std::move(o);
+				return;
+			}
+			insert(std::forward<N>(n), std::move(o));
+		}
+
+		template <typename N, typename F>
+		void add_member_function(std::false_type, lua_State* L, N&& n, F&& f) {
+			object o = make_object<F>(L, std::forward<F>(f));
+			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
+				callconstructfunc = std::move(o);
+				return;
+			}
+			insert(std::forward<N>(n), std::move(o));
+		}
+
 		template <typename N, typename F, meta::enable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
 		void add_function(lua_State* L, N&& n, F&& f) {
 			insert(std::forward<N>(n), make_object(L, as_function_reference(std::forward<F>(f))));
@@ -10814,12 +10852,7 @@ namespace sol {
 
 		template <typename N, typename F, meta::disable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
 		void add_function(lua_State* L, N&& n, F&& f) {
-			object o = make_object(L, std::forward<F>(f));
-			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
-				callconstructfunc = std::move(o);
-				return;
-			}
-			insert(std::forward<N>(n), std::move(o));
+			add_member_function(std::is_member_pointer<meta::unwrap_unqualified_t<F>>(), L, std::forward<N>(n), std::forward<F>(f));
 		}
 
 		template <typename N, typename F, meta::disable<is_variable_binding<meta::unqualified_t<F>>> = meta::enabler>

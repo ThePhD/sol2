@@ -31,6 +31,10 @@
 #include "call.hpp"
 
 namespace sol {
+	namespace function_detail {
+		template<typename T>
+		struct class_indicator {};
+	}
 	namespace stack {
 		template<typename... Sigs>
 		struct pusher<function_sig<Sigs...>> {
@@ -86,10 +90,17 @@ namespace sol {
 				select_convertible(types<Sigs...>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 
-			template <typename Fx, typename T, typename... Args>
+			template <typename Fx, typename T, typename... Args, meta::disable<meta::is_specialization_of<function_detail::class_indicator, meta::unqualified_t<T>>> = meta::enabler>
 			static void select_member_variable(std::true_type, lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
 				typedef meta::boolean<meta::is_specialization_of<std::reference_wrapper, meta::unqualified_t<T>>::value || std::is_pointer<T>::value> is_reference;
 				select_reference_member_variable(is_reference(), L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
+			}
+
+			template <typename Fx, typename C>
+			static void select_member_variable(std::true_type, lua_State* L, Fx&& fx, function_detail::class_indicator<C>) {
+				lua_CFunction freefunc = &function_detail::upvalue_this_member_variable<C, Fx>::call;
+				int upvalues = stack::stack_detail::push_as_upvalues(L, fx);
+				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
 			template <typename Fx>
@@ -124,10 +135,17 @@ namespace sol {
 				select_member_variable(std::is_member_object_pointer<meta::unqualified_t<Fx>>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 
-			template <typename Fx, typename T, typename... Args>
+			template <typename Fx, typename T, typename... Args, meta::disable<meta::is_specialization_of<function_detail::class_indicator, meta::unqualified_t<T>>> = meta::enabler>
 			static void select_member_function(std::true_type, lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
 				typedef meta::boolean<meta::is_specialization_of<std::reference_wrapper, meta::unqualified_t<T>>::value || std::is_pointer<T>::value> is_reference;
 				select_reference_member_function(is_reference(), L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
+			}
+
+			template <typename Fx, typename C>
+			static void select_member_function(std::true_type, lua_State* L, Fx&& fx, function_detail::class_indicator<C>) {
+				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, Fx>::call;
+				int upvalues = stack::stack_detail::push_as_upvalues(L, fx);
+				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
 			template <typename Fx>
@@ -202,9 +220,9 @@ namespace sol {
 
 		template<typename Signature>
 		struct pusher<Signature, std::enable_if_t<std::is_member_pointer<Signature>::value>> {
-			template <typename F>
-			static int push(lua_State* L, F&& f) {
-				return pusher<function_sig<>>{}.push(L, std::forward<F>(f));
+			template <typename F, typename... Args>
+			static int push(lua_State* L, F&& f, Args&&... args) {
+				return pusher<function_sig<>>{}.push(L, std::forward<F>(f), std::forward<Args>(args)...);
 			}
 		};
 

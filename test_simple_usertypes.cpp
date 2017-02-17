@@ -461,3 +461,29 @@ TEST_CASE("usertype/simple-table-append", "Ensure that appending to the meta tab
 		lua.script("assert(ua:func() == 5000)");
 	);
 }
+
+TEST_CASE("usertype/simple-class-propogation", "make sure methods and variables from base classes work properly in SAFE_USERTYPE mode") {
+	class A {
+	public:
+		int var = 200;
+		int thing() const { return 123; }
+	};
+
+	class B : public A {
+	};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_simple_usertype<B>("B",
+		sol::default_constructor,
+		"thing", &B::thing,
+		"var", &B::var
+		);
+
+	lua.script(R"(
+		b = B.new()
+		print(b.var)
+		b:thing()	
+)");
+}
