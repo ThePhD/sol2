@@ -12,6 +12,8 @@ Here are some notes on achieving better compile-times without sacrificing too mu
 
 * When you bind lots of usertypes, put them all in a *single* translation unit (one C++ file) so that it is not recompiled multiple times over, only to be discarded later by the linker.
 	- Remember that the usertype binding ends up being serialized into the Lua state, so you never need them to appear in a header and cause that same compilation overhead for every compiled unit in your project.
+* Consider placing groups of bindings in multiple different translation units (multiple C++ source files) so that only part of the bindings are recompiled when you have to change the bindings.
+	- Avoid putting your bindings into headers: it *will* slow down your compilation
 * For extremely large usertypes, consider using :doc:`simple_usertype<api/simple_usertype>`.
 	- It performs much more work at runtime rather than compile-time, and should still give comparative performance (but it loses out in some cases for variable bindings or when you bind all functions to a usertype).
 * If you are developing a shared library, restrict your overall surface area by specifically and explicitly marking functions as visible and exported and leaving everything else as hidden or invisible by default

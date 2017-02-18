@@ -28,6 +28,8 @@ The *vast majority* of all users are going to want to work with :doc:`sol::safe_
 
 If you find yourself crashing inside of ``sol::function``, try changing it to a ``sol::protected_function`` and seeing if the error codes and such help you find out what's going on. You can read more about the API on :doc:`the page itself<api/protected_function>`.
 
+As a side note, binding functions with default parameters does not magically bind multiple versions of the function to be called with the default parameters. You must instead use :doc:`sol::overload<api/overload>`.
+
 .. warning::
 
 	Do NOT save the return type of a :ref:`function_result<function-result>` with ``auto``, as in ``auto numwoof = woof(20);``, and do NOT store it anywhere. See :ref:`here<function-result-warning>`.
