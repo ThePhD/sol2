@@ -455,11 +455,11 @@ TEST_CASE("usertype/simple-table-append", "Ensure that appending to the meta tab
 	lua.set("a", &a);
 	lua.set("pa", &a);
 	lua.set("ua", std::make_unique<A>());
-	REQUIRE_NOTHROW(
+	REQUIRE_NOTHROW([&]{
 		lua.script("assert(a:func() == 5000)");
 		lua.script("assert(pa:func() == 5000)");
 		lua.script("assert(ua:func() == 5000)");
-	);
+	}());
 }
 
 TEST_CASE("usertype/simple-class-propogation", "make sure methods and variables from base classes work properly in SAFE_USERTYPE mode") {

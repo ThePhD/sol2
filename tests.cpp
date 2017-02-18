@@ -632,13 +632,13 @@ TEST_CASE("optional/left-out-args", "Make sure arguments can be left out of opti
 
 	// sol::optional needs an argument no matter what?
 	lua.set_function("func_opt_ret_bool", func_opt_ret_bool);
-	REQUIRE_NOTHROW(
+	REQUIRE_NOTHROW([&]{
 	lua.script(R"(
         func_opt_ret_bool(42)
         func_opt_ret_bool()
         print('ok')
         )");
-	);
+	}());
 }
 
 TEST_CASE("pusher/constness", "Make sure more types can handle being const and junk") {
