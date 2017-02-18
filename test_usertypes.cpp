@@ -1202,7 +1202,7 @@ TEST_CASE("usertype/protect", "users should be allowed to manually protect a fun
 		lua.script(R"__(
 pm = protect_me.new()
 value = pcall(pm.gen,pm)
-)__");
+)__")
 	);
 	bool value = lua["value"];
 	REQUIRE_FALSE(value);
@@ -1402,13 +1402,13 @@ TEST_CASE("usertype/unique_usertype-check", "make sure unique usertypes don't ge
 )");
 
 	sol::function my_func = lua["my_func"];
-	REQUIRE_NOTHROW({
+	REQUIRE_NOTHROW([&]{
 	auto ent = std::make_shared<Entity>();
 	my_func(ent);
 	Entity ent2;
 	my_func(ent2);
 	my_func(std::make_shared<Entity>());
-	});
+	}());
 }
 
 TEST_CASE("usertype/abstract-base-class", "Ensure that abstract base classes and such can be registered") {	

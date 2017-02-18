@@ -46,38 +46,38 @@ TEST_CASE("operators/default", "test that generic equality operators and all sor
 	lua["v3"] = &v3;
 
 	// Can only compare identity here
-	REQUIRE_NOTHROW({
+	REQUIRE_NOTHROW([&]{
 		lua.script("assert(t1 == t1)");
 		lua.script("assert(t2 == t2)");
 		lua.script("assert(t3 == t3)");
-	});
-	REQUIRE_NOTHROW({
+	}());
+	REQUIRE_NOTHROW([&]{
 		lua.script("assert(t1 == t2)");
 		lua.script("assert(not (t1 == t3))");
 		lua.script("assert(not (t2 == t3))");
-	});
+	}());
 	// Object should compare equal to themselves
 	// (and not invoke operator==; pointer test should be sufficient)
-	REQUIRE_NOTHROW({
+	REQUIRE_NOTHROW([&]{
 		lua.script("assert(u1 == u1)");
 		lua.script("assert(u2 == u2)");
 		lua.script("assert(u3 == u3)");
-	});
-	REQUIRE_NOTHROW({
+	}());
+	REQUIRE_NOTHROW([&]{
 		lua.script("assert(not (u1 == u2))");
 		lua.script("assert(u1 == u3)");
 		lua.script("assert(not (u2 == u3))");
-	});
+	}());
 	// Object should compare equal to themselves
 	// (and not invoke operator==; pointer test should be sufficient)
-	REQUIRE_NOTHROW({
+	REQUIRE_NOTHROW([&]{
 		lua.script("assert(v1 == v1)");
 		lua.script("assert(v2 == v2)");
 		lua.script("assert(v3 == v3)");
-	});
-	REQUIRE_NOTHROW({
+	}());
+	REQUIRE_NOTHROW([&]{
 		lua.script("assert(not (v1 == v2))");
 		lua.script("assert(v1 == v3)");
 		lua.script("assert(not (v2 == v3))");
-	});
+	}());
 }
