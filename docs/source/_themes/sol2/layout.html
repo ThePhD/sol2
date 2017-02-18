@@ -1,0 +1,14 @@
+{%- extends "haiku/layout.html" %}
+
+{% block haikuheader %} 
+	<div class="header-left">
+		{{ super() }}
+	</div>
+	<div class="header-right">
+		<h3>Search the Documentation</h3>
+		<form action="search.html" method="get">
+			<input type="text" name="q" value="">
+			<input type="submit" value="search">
+		</form>
+	</div>
+{% endblock %}
