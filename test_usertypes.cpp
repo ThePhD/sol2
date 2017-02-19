@@ -1493,3 +1493,13 @@ a = A(24.3)
 	A& a = lua["a"];
 	REQUIRE(a.f == 24.3);
 }
+
+TEST_CASE("usertype/missing-key", "make sure a missing key returns nil") {
+	struct thing {};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_usertype<thing>("thing");
+	REQUIRE_NOTHROW(lua.script("print(thing.missingKey)"));
+}

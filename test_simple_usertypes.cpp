@@ -489,6 +489,10 @@ TEST_CASE("usertype/simple-class-propogation", "make sure methods and variables 
 }
 
 TEST_CASE("usertype/simple-call-constructor", "ensure that all kinds of call-based constructors can be serialized") {
+	struct thing {};
+	struct v_test {
+		
+	};
 	struct f_test {
 		int i; f_test(int i) : i(i) {}
 	};
@@ -503,11 +507,10 @@ TEST_CASE("usertype/simple-call-constructor", "ensure that all kinds of call-bas
 	lua.open_libraries(sol::lib::base);
 
 	auto f = sol::factories([]() {return f_test(30); });
-
 	lua.new_simple_usertype<f_test>("f_test",
 		sol::call_constructor, sol::factories([]() {
-		return f_test(20);
-	}),
+			return f_test(20);
+		}),
 		"new", f
 		);
 
@@ -535,4 +538,42 @@ TEST_CASE("usertype/simple-call-constructor", "ensure that all kinds of call-bas
 	REQUIRE(b.i == 21);
 	REQUIRE(c.i == 22);
 	REQUIRE(d.i == 30);
+
+	auto vfactories = sol::factories(
+		[](const sol::table& tbl) {
+		for (auto v : tbl)
+		{
+			REQUIRE(v.second.valid());
+
+			// This fails only when the call_constructor is used:
+			REQUIRE(v.second.is<thing>());
+		}
+		return v_test();
+	}
+	);
+
+	lua.new_simple_usertype<v_test>("v_test",
+		sol::meta_function::construct, vfactories,
+		sol::call_constructor, vfactories
+		);
+
+	lua.new_simple_usertype<thing>("thing");
+	lua.script("things = {thing.new(), thing.new()}");
+
+	SECTION("new") {
+		REQUIRE_NOTHROW(lua.script("a = v_test.new(things)"));
+	}
+	SECTION("call_constructor") {
+		REQUIRE_NOTHROW(lua.script("b = v_test(things)"));
+	}
+}
+
+TEST_CASE("usertype/simple-missing-key", "make sure a missing key returns nil") {
+	struct thing {};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_simple_usertype<thing>("thing");
+	REQUIRE_NOTHROW(lua.script("print(thing.missingKey)"));
 }

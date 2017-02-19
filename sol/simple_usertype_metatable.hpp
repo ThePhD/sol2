@@ -98,8 +98,11 @@ namespace sol {
 				lua_settop(L, 0);
 				return 0;
 			}
-			lua_pop(L, 1);
 			return indexing_fail<false>(L);
+		}
+
+		inline int simple_indexing_fail(lua_State* L) {
+			return stack::push(L, sol::lua_nil);
 		}
 
 		template <bool is_index, bool toplevel = false>
@@ -209,7 +212,7 @@ namespace sol {
 		}
 
 		template <typename N, typename F, typename... Args>
-		void insert_prepare(std::true_type, lua_State* L, N&& n, F&& f, Args&&... args) {
+		void insert_prepare(std::true_type, lua_State* L, N&&, F&& f, Args&&... args) {
 			object o = make_object<F>(L, std::forward<F>(f), function_detail::call_indicator(), std::forward<Args>(args)...);
 			callconstructfunc = std::move(o);
 		}
@@ -325,7 +328,7 @@ namespace sol {
 		template<std::size_t... I, typename Tuple>
 		simple_usertype_metatable(usertype_detail::verified_tag, std::index_sequence<I...>, lua_State* L, Tuple&& args)
 			: callconstructfunc(lua_nil),
-			indexfunc(&usertype_detail::indexing_fail<true>), newindexfunc(&usertype_detail::indexing_fail<false>),
+			indexfunc(&usertype_detail::simple_indexing_fail), newindexfunc(&usertype_detail::simple_metatable_newindex<T>),
 			indexbase(&usertype_detail::simple_core_indexing_call<true>), newindexbase(&usertype_detail::simple_core_indexing_call<false>),
 			indexbaseclasspropogation(usertype_detail::walk_all_bases<true>), newindexbaseclasspropogation(&usertype_detail::walk_all_bases<false>),
 			baseclasscheck(nullptr), baseclasscast(nullptr),
@@ -555,15 +558,15 @@ namespace sol {
 					stack::set_field(L, meta_function::index,
 						make_closure(&usertype_detail::simple_index_call,
 							make_light(varmap),
-							&usertype_detail::simple_index_call,
-							&usertype_detail::simple_metatable_newindex<T>,
+							umx.indexfunc,
+							umx.newindexfunc,
 							usertype_detail::toplevel_magic
 						), metabehind.stack_index());
 					stack::set_field(L, meta_function::new_index,
 						make_closure(&usertype_detail::simple_new_index_call,
 							make_light(varmap),
-							&usertype_detail::simple_index_call,
-							&usertype_detail::simple_metatable_newindex<T>,
+							umx.indexfunc,
+							umx.newindexfunc,
 							usertype_detail::toplevel_magic
 						), metabehind.stack_index());
 					stack::set_field(L, metatable_key, metabehind, t.stack_index());

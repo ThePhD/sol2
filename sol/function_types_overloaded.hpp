@@ -45,7 +45,7 @@ namespace sol {
 			template <typename Fx, std::size_t I, typename... R, typename... Args>
 			int call(types<Fx>, index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int) {
 				auto& func = std::get<I>(overloads);
-				return call_detail::call_wrapped<void, true, false>(L, func);
+				return call_detail::call_wrapped<void, true, false, start_skew>(L, func);
 			}
 
 			int operator()(lua_State* L) {
