@@ -518,7 +518,7 @@ TEST_CASE("usertype/simple-call-constructor", "ensure that all kinds of call-bas
 		);
 
 	lua.new_simple_usertype<r_test>("r_test",
-		sol::call_constructor, [](sol::table t) {
+		sol::call_constructor, [](sol::table) {
 		return r_test(22);
 	}
 	);
