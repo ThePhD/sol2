@@ -487,3 +487,52 @@ TEST_CASE("usertype/simple-class-propogation", "make sure methods and variables 
 		b:thing()	
 )");
 }
+
+TEST_CASE("usertype/simple-call-constructor", "ensure that all kinds of call-based constructors can be serialized") {
+	struct f_test {
+		int i; f_test(int i) : i(i) {}
+	};
+	struct i_test {
+		int i; i_test(int i) : i(i) {}
+	};
+	struct r_test {
+		int i; r_test(int i) : i(i) {}
+	};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	auto f = sol::factories([]() {return f_test(30); });
+
+	lua.new_simple_usertype<f_test>("f_test",
+		sol::call_constructor, sol::factories([]() {
+		return f_test(20);
+	}),
+		"new", f
+		);
+
+	lua.new_simple_usertype<i_test>("i_test",
+		sol::call_constructor, sol::initializers([](i_test& obj) {
+		new(&obj)i_test(21);
+	})
+		);
+
+	lua.new_simple_usertype<r_test>("r_test",
+		sol::call_constructor, [](sol::table t) {
+		return r_test(22);
+	}
+	);
+
+	lua.script("a = f_test()");
+	lua.script("b = i_test()");
+	lua.script("c = r_test()");
+	lua.script("d = f_test.new()");
+	f_test& a = lua["a"];
+	f_test& d = lua["d"];
+	i_test& b = lua["b"];
+	r_test& c = lua["c"];
+	REQUIRE(a.i == 20);
+	REQUIRE(b.i == 21);
+	REQUIRE(c.i == 22);
+	REQUIRE(d.i == 30);
+}
