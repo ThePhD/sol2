@@ -541,15 +541,12 @@ TEST_CASE("usertype/simple-call-constructor", "ensure that all kinds of call-bas
 
 	auto vfactories = sol::factories(
 		[](const sol::table& tbl) {
-		for (auto v : tbl)
-		{
-			REQUIRE(v.second.valid());
-
-			// This fails only when the call_constructor is used:
-			REQUIRE(v.second.is<thing>());
+			for (auto v : tbl) {
+				REQUIRE(v.second.valid());
+				REQUIRE(v.second.is<thing>());
+			}
+			return v_test();
 		}
-		return v_test();
-	}
 	);
 
 	lua.new_simple_usertype<v_test>("v_test",
@@ -566,6 +563,30 @@ TEST_CASE("usertype/simple-call-constructor", "ensure that all kinds of call-bas
 	SECTION("call_constructor") {
 		REQUIRE_NOTHROW(lua.script("b = v_test(things)"));
 	}
+}
+
+TEST_CASE("usertype/simple-no_constructor", "make sure simple usertype errors when no-constructor types are called") {
+	struct thing {};
+
+	SECTION("new no_constructor") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_simple_usertype<thing>("thing",
+			sol::meta_function::construct, sol::no_constructor
+			);
+		REQUIRE_THROWS(lua.script("a = thing.new()"));
+	}
+
+	SECTION("call no_constructor") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_simple_usertype<thing>("thing",
+			sol::call_constructor, sol::no_constructor
+			);
+		REQUIRE_THROWS(lua.script("a = thing()"));
+	}	
 }
 
 TEST_CASE("usertype/simple-missing-key", "make sure a missing key returns nil") {

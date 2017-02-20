@@ -1036,28 +1036,47 @@ TEST_CASE("usertype/blank_constructor", "make sure lua types cannot be construct
 
 
 TEST_CASE("usertype/no_constructor", "make sure lua types cannot be constructed if a blank / empty constructor is provided") {
-	sol::state lua;
-	lua.open_libraries(sol::lib::base);
-
-	SECTION("order1")
-	{
+	
+	SECTION("order1") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
 		lua.new_usertype<thing>("thing",
-		"v", &thing::v
-		, sol::call_constructor, sol::no_constructor
+			"v", &thing::v, 
+			sol::call_constructor, sol::no_constructor
 		);
-		REQUIRE_THROWS(lua.script("t = thing.new()"));
+		REQUIRE_THROWS(lua.script("t = thing()"));
 	}
 
-	SECTION("order2")
-	{
-		lua.new_usertype<thing>("thing"
-			, sol::call_constructor, sol::no_constructor
-			, "v", &thing::v
+	SECTION("order2") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+		
+		lua.new_usertype<thing>("thing",
+			sol::call_constructor, sol::no_constructor, 
+			"v", &thing::v
 		);
 		REQUIRE_THROWS(lua.script("t = thing.new()"));
 	}
 	
-	REQUIRE_THROWS(lua.script("t = thing.new()"));
+	SECTION("new no_constructor") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_usertype<thing>("thing",
+			sol::meta_function::construct, sol::no_constructor
+			);
+		REQUIRE_THROWS(lua.script("a = thing.new()"));
+	}
+
+	SECTION("call no_constructor") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_usertype<thing>("thing",
+			sol::call_constructor, sol::no_constructor
+			);
+		REQUIRE_THROWS(lua.script("a = thing()"));
+	}
 }
 
 TEST_CASE("usertype/coverage", "try all the things") {
