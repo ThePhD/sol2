@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-02-20 08:45:30.715552 UTC
-// This header was generated with sol v2.15.9 (revision b7b6366)
+// Generated 2017-02-20 23:06:29.737387 UTC
+// This header was generated with sol v2.15.9 (revision 889a45d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3686,10 +3686,14 @@ namespace sol {
 	struct is_unique_usertype : std::integral_constant<bool, unique_usertype_traits<T>::value> {};
 
 	template <typename T>
-	struct lua_type_of : detail::lua_type_of<T> {};
+	struct lua_type_of : detail::lua_type_of<T> {
+		typedef int SOL_INTERNAL_UNSPECIALIZED_MARKER_;
+	};
 
 	template <typename T>
-	struct lua_size : std::integral_constant<int, 1> { };
+	struct lua_size : std::integral_constant<int, 1> { 
+		typedef int SOL_INTERNAL_UNSPECIALIZED_MARKER_; 
+	};
 
 	template <typename A, typename B>
 	struct lua_size<std::pair<A, B>> : std::integral_constant<int, lua_size<A>::value + lua_size<B>::value> { };
@@ -3697,10 +3701,24 @@ namespace sol {
 	template <typename... Args>
 	struct lua_size<std::tuple<Args...>> : std::integral_constant<int, detail::accumulate<int, 0, lua_size, Args...>::value> { };
 
+	namespace detail {
+		template <typename...>
+		struct void_ { typedef void type; };
+		template <typename T, typename = void>
+		struct has_internal_marker_impl : std::false_type {};
+		template <typename T>
+		struct has_internal_marker_impl<T, typename void_<typename T::SOL_INTERNAL_UNSPECIALIZED_MARKER_>::type> : std::true_type {};
+
+		template <typename T>
+		struct has_internal_marker : has_internal_marker_impl<T> {};
+	}
+
 	template <typename T>
 	struct is_lua_primitive : std::integral_constant<bool,
 		type::userdata != lua_type_of<meta::unqualified_t<T>>::value
-		|| (lua_size<T>::value > 1)
+		|| ((type::userdata == lua_type_of<meta::unqualified_t<T>>::value) 
+			&& detail::has_internal_marker<lua_type_of<meta::unqualified_t<T>>>::value 
+			&& !detail::has_internal_marker<lua_size<meta::unqualified_t<T>>>::value)
 		|| std::is_base_of<reference, meta::unqualified_t<T>>::value
 		|| std::is_base_of<stack_reference, meta::unqualified_t<T>>::value
 		|| meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>::value
