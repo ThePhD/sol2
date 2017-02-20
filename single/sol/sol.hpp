@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-02-19 09:59:38.638408 UTC
-// This header was generated with sol v2.15.8 (revision 0c8ec82)
+// Generated 2017-02-20 08:45:30.715552 UTC
+// This header was generated with sol v2.15.9 (revision b7b6366)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -7621,6 +7621,12 @@ namespace sol {
 // end of sol/property.hpp
 
 namespace sol {
+	namespace function_detail {
+		inline int no_construction_error(lua_State* L) {
+			return luaL_error(L, "sol: cannot call this constructor (tagged as non-constructible)");
+		}
+	}
+
 	namespace call_detail {
 
 		template <typename R, typename W>
@@ -7837,7 +7843,7 @@ namespace sol {
 		template <bool is_index, bool is_variable, bool checked, int boost, typename C>
 		struct agnostic_lua_call_wrapper<no_construction, is_index, is_variable, checked, boost, C> {
 			static int call(lua_State* L, const no_construction&) {
-				return luaL_error(L, "sol: cannot call this constructor (tagged as non-constructible)");
+				return function_detail::no_construction_error(L);
 			}
 		};
 
@@ -9014,6 +9020,18 @@ namespace sol {
 				typedef function_detail::overloaded_function<1, Functions...> F;
 				pusher<function_sig<>>{}.set_fx<F>(L, std::move(set.functions));
 				return 1;
+			}
+		};
+
+		template <>
+		struct pusher<no_construction> {
+			static int push(lua_State* L, no_construction) {
+				lua_CFunction cf = &function_detail::no_construction_error;
+				return stack::push(L, cf);
+			}
+
+			static int push(lua_State* L, no_construction c, function_detail::call_indicator) {
+				return push(L, c);
 			}
 		};
 
