@@ -353,7 +353,7 @@ namespace sol {
 
 		template<typename Key, typename T>
 		state_view& set_usertype(Key&& key, usertype<T>& user) {
-			global.set_usertype(std::forward<Key>(key), std::move(user));
+			global.set_usertype(std::forward<Key>(key), user);
 			return *this;
 		}
 
