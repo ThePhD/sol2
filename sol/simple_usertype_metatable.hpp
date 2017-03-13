@@ -31,8 +31,6 @@
 namespace sol {
 
 	namespace usertype_detail {
-		const lua_Integer toplevel_magic = static_cast<lua_Integer>(0x00000001);
-
 		struct variable_wrapper {
 			virtual int index(lua_State* L) = 0;
 			virtual int new_index(lua_State* L) = 0;

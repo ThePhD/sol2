@@ -36,6 +36,7 @@
 
 namespace sol {
 	namespace usertype_detail {
+		const lua_Integer toplevel_magic = static_cast<lua_Integer>(0x00020001);
 
 		struct add_destructor_tag {};
 		struct check_destructor_tag {};
