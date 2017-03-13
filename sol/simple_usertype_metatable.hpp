@@ -328,6 +328,11 @@ namespace sol {
 		template<typename... Args, typename... Fxs>
 		simple_usertype_metatable(lua_State* L, constructor_wrapper<Fxs...> constructorlist, Args&&... args) : simple_usertype_metatable(L, usertype_detail::check_destructor_tag(), std::forward<Args>(args)..., "new", constructorlist) {}
 
+		simple_usertype_metatable(const simple_usertype_metatable&) = default;
+		simple_usertype_metatable(simple_usertype_metatable&&) = default;
+		simple_usertype_metatable& operator=(const simple_usertype_metatable&) = default;
+		simple_usertype_metatable& operator=(simple_usertype_metatable&&) = default;
+
 		virtual int push_um(lua_State* L) override {
 			return stack::push(L, std::move(*this));
 		}

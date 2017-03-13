@@ -13,8 +13,8 @@ Note that you can obtain safety with regards to functions you bind by using the 
 	* Turned on by default with clang++, g++ and VC++ if a basic check for building in debug mode is detected
 
 ``SOL_SAFE_FUNCTION`` triggers the following change:
-	* All uses of ``sol::function`` and ``sol::stack_function`` will default to ``sol::protected_function`` and ``sol::stack_protected_function``, respectively.
-	* Not turned on by default under any detectible compiler settings
+	* All uses of ``sol::function`` and ``sol::stack_function`` will default to ``sol::protected_function`` and ``sol::stack_protected_function``, respectively, rather than ``sol::unsafe_function`` and ``sol::stack_unsafe_function``.
+	* Not turned on by default under any detectible compiler settings: you must turn this one on manually
 
 ``SOL_CHECK_ARGUMENTS`` triggers the following changes:
 	* ``sol::stack::get`` (used everywhere) defaults to using ``sol::stack::check_get`` and dereferencing the argument. It uses ``sol::type_panic`` as the handler if something goes wrong.

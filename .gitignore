@@ -74,3 +74,5 @@ sol.pyproj
 lua-5.3.3.dll
 main.ilk
 main.pdb
+lua-5.3.4-cxx/
+lua-5.3.4/

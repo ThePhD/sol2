@@ -263,7 +263,7 @@ namespace sol {
 		template<typename Class, typename... Args>
 		basic_table_core& new_usertype(const std::string& name, Args&&... args) {
 			usertype<Class> utype(std::forward<Args>(args)...);
-			set_usertype(name, utype);
+			set_usertype(name, std::move(utype));
 			return *this;
 		}
 
@@ -276,7 +276,7 @@ namespace sol {
 		template<typename Class, typename... CArgs, typename... Args>
 		basic_table_core& new_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
 			usertype<Class> utype(ctor, std::forward<Args>(args)...);
-			set_usertype(name, utype);
+			set_usertype(name, std::move(utype));
 			return *this;
 		}
 

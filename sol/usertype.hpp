@@ -63,7 +63,9 @@ namespace sol {
 		}
 
 		int push(lua_State* L) {
-			return metatableregister->push_um(L);
+			int r = metatableregister->push_um(L);
+			metatableregister = nullptr;
+			return r;
 		}
 	};
 

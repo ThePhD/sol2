@@ -138,6 +138,11 @@ namespace sol {
 		}
 
 		struct registrar {
+			registrar() = default;
+			registrar(const registrar&) = default;
+			registrar(registrar&&) = default;
+			registrar& operator=(const registrar&) = default;
+			registrar& operator=(registrar&&) = default;
 			virtual int push_um(lua_State* L) = 0;
 			virtual ~registrar() {}
 		};
@@ -438,6 +443,11 @@ namespace sol {
 			}... };
 			mapping.insert(ilist);
 		}
+
+		usertype_metatable(const usertype_metatable&) = default;
+		usertype_metatable(usertype_metatable&&) = default;
+		usertype_metatable& operator=(const usertype_metatable&) = default;
+		usertype_metatable& operator=(usertype_metatable&&) = default;
 
 		template <std::size_t I0, std::size_t I1, bool is_index>
 		static int real_find_call(lua_State* L, void* um, int) {
