@@ -326,8 +326,6 @@ TEST_CASE("object/conversions", "make sure all basic reference types can be made
 TEST_CASE("state/require_file", "opening files as 'requires'") {
 	static const char FILE_NAME[] = "./tmp_thingy.lua";
 
-	std::fstream file(FILE_NAME, std::ios::out);
-
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -344,6 +342,7 @@ TEST_CASE("state/require_file", "opening files as 'requires'") {
 			"bar", &foo::bar
 			);
 		
+		std::fstream file(FILE_NAME, std::ios::out);
 		file << "return { modfunc = function () return foo.new(221) end }" << std::endl;
 		file.close();
 		
@@ -360,6 +359,7 @@ TEST_CASE("state/require_file", "opening files as 'requires'") {
 
 	SECTION("simple")
 	{
+		std::fstream file(FILE_NAME, std::ios::out);
 		file << "return { modfunc = function () return 221 end }" << std::endl;
 		file.close();
 		

@@ -9,14 +9,19 @@ config
 Note that you can obtain safety with regards to functions you bind by using the :doc:`protect<api/protect>` wrapper around function/variable bindings you set into Lua. Additionally, you can have basic boolean checks when using the API by just converting to a :doc:`sol::optional\<T><api/optional>` when necessary for getting things out of Lua and for function arguments.
 
 ``SOL_SAFE_USERTYPE`` triggers the following change:
-	* If the userdata to a usertype function is nil, will trigger an error instead of letting things go through and letting the system segfault.
+	* If the userdata to a usertype function is nil, will trigger an error instead of letting things go through and letting the system segfault/crash.
+	* Turned on by default with clang++, g++ and VC++ if a basic check for building in debug mode is detected
+
+``SOL_SAFE_FUNCTION`` triggers the following change:
+	* All uses of ``sol::function`` and ``sol::stack_function`` will default to ``sol::protected_function`` and ``sol::stack_protected_function``, respectively.
+	* Not turned on by default under any detectible compiler settings
 
 ``SOL_CHECK_ARGUMENTS`` triggers the following changes:
 	* ``sol::stack::get`` (used everywhere) defaults to using ``sol::stack::check_get`` and dereferencing the argument. It uses ``sol::type_panic`` as the handler if something goes wrong.
 	* ``sol::stack::call`` and its variants will, if no templated boolean is specified, check all of the arguments for a function call.
-	* If ``SOL_SAFE_USERTYPE`` is not defined, it gets defined to turn being on.
+	* If ``SOL_SAFE_USERTYPE`` is not defined, it gets defined to turn being on and the effects described above kick in
 
-Tests are compiled with this on to ensure everything is going as expected. Remember that if you want these features, you must explicitly turn them on. 
+Tests are compiled with this on to ensure everything is going as expected. Remember that if you want these features, you must explicitly turn them on all of them to be sure you are getting them.
 
 Finally, some warnings that may help with errors when working with Sol:
 
@@ -26,7 +31,7 @@ functions
 
 The *vast majority* of all users are going to want to work with :doc:`sol::safe_function/sol::protected_function<api/protected_function>`. This version allows for error checking, prunes results, and responds to the defines listed above by throwing errors if you try to use the result of a function without checking. :doc:`sol::function/sol::unsafe_function<api/function>` is unsafe. It assumes that its contents run correctly and throw no errors, which can result in crashes that are hard to debug while offering a very tiny performance boost for not checking error codes or catching exceptions.
 
-If you find yourself crashing inside of ``sol::function``, try changing it to a ``sol::protected_function`` and seeing if the error codes and such help you find out what's going on. You can read more about the API on :doc:`the page itself<api/protected_function>`.
+If you find yourself crashing inside of ``sol::function``, try changing it to a ``sol::protected_function`` and seeing if the error codes and such help you find out what's going on. You can read more about the API on :doc:`the page itself<api/protected_function>`. You can also define ``SOL_SAFE_FUNCTION`` as described above, but be warned that the ``protected_function`` API is a superset of the regular default ``function`` API: trying to revert back after defining ``SOL_SAFE_FUNCTION`` may result in some compiler errors if you use things beyond the basic, shared interface of the two types.
 
 As a side note, binding functions with default parameters does not magically bind multiple versions of the function to be called with the default parameters. You must instead use :doc:`sol::overload<api/overload>`.
 

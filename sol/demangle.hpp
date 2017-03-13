@@ -25,6 +25,7 @@
 #include <string>
 #include <array>
 #include <cctype>
+#include <locale>
 
 namespace sol {
 	namespace detail {

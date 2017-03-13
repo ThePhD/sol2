@@ -1520,5 +1520,106 @@ TEST_CASE("usertype/missing-key", "make sure a missing key returns nil") {
 	lua.open_libraries(sol::lib::base);
 
 	lua.new_usertype<thing>("thing");
-	REQUIRE_NOTHROW(lua.script("print(thing.missingKey)"));
+	REQUIRE_NOTHROW(lua.script("v = thing.missingKey\nprint(v)"));
+	sol::object o = lua["v"];
+	bool isnil = o.is<sol::lua_nil_t>();
+	REQUIRE(isnil);
+}
+
+TEST_CASE("usertype/runtime-extensibility", "Check if usertypes are runtime extensible") {
+	struct thing {
+		int v = 20;
+		int func(int a) { return a; }
+	};
+	int val = 0;
+
+	SECTION("just functions") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_usertype<thing>("thing",
+			"func", &thing::func
+			);
+
+		lua.script(R"(
+t = thing.new()
+		)");
+
+		REQUIRE_THROWS([&lua]() {
+			lua.script(R"(
+t.runtime_func = function (a)
+	return a + 50
+end
+		)");
+		}());
+
+		REQUIRE_THROWS([&lua]() {
+			lua.script(R"(
+function t:runtime_func(a)
+	return a + 52
+end
+		)");
+		}());
+
+		lua.script("val = t:func(2)");
+		val = lua["val"];
+		REQUIRE(val == 2);
+
+		REQUIRE_NOTHROW([&lua]() {
+			lua.script(R"(
+function thing:runtime_func(a)
+	return a + 1
+end
+		)");
+		}());
+
+		lua.script("val = t:runtime_func(2)");
+		val = lua["val"];
+		REQUIRE(val == 3);
+	}
+	SECTION("with variable") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_usertype<thing>("thing",
+			"func", &thing::func,
+			"v", &thing::v
+			);
+
+		lua.script(R"(
+t = thing.new()
+		)");
+
+		REQUIRE_THROWS([&lua]() {
+			lua.script(R"(
+t.runtime_func = function (a)
+	return a + 50
+end
+		)");
+		}());
+
+		REQUIRE_THROWS([&lua]() {
+			lua.script(R"(
+function t:runtime_func(a)
+	return a + 52
+end
+		)");
+		}());
+
+		lua.script("val = t:func(2)");
+		val = lua["val"];
+		REQUIRE(val == 2);
+
+		REQUIRE_NOTHROW([&lua]() {
+			lua.script(R"(
+function thing:runtime_func(a)
+	return a + 1
+end
+		)");
+		}());
+
+		lua.script("val = t:runtime_func(2)");
+		val = lua["val"];
+		REQUIRE(val == 3);
+	}
 }

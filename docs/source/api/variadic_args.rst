@@ -47,3 +47,41 @@ This class is meant to represent every single argument at its current index and 
 		lua.script("print(x2)"); // 600
 		lua.script("print(x3)"); // 21
 	}
+
+You can also "save" arguments and the like later, by stuffing them into a ``std::vector<sol::object>`` or something similar that pulls out all the arguments. Below is an example of saving all of the arguments provided by ``sol::variadic_args`` in a lambda capture variable called ``args``.
+
+.. code-block:: cpp
+	:linenos:
+
+	#include "sol.hpp"
+	#include <functional>
+
+	std::function<void()> function_storage;
+
+	void store_routine(const sol::function& f, const sol::variadic_args& va) {
+		function_storage = [=, args = std::vector<sol::object>(va.begin(), va.end())]() {
+			f(sol::as_args(args));
+		};
+	}
+
+	int main() {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+		lua.set_function("store_routine", &store_routine);
+		lua.script(R"(
+	function a(name)
+		print(name)
+	end
+	store_routine(a, "some name")
+	)");
+		function_storage();
+
+		lua.script(R"(
+	function b(number, text)
+		print(number, "of", text)
+	end
+	store_routine(b, 20, "these apples")
+	)");
+		function_storage();
+	}
+
