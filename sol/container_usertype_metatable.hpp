@@ -132,7 +132,7 @@ namespace sol {
 			return *p.value();
 #else
 			return stack::get<T>(L, 1);
-#endif
+#endif // Safe getting with error
 		}
 
 		static int real_index_call_associative(std::true_type, lua_State* L) {
@@ -171,12 +171,9 @@ namespace sol {
 				using std::begin;
 				auto it = begin(src);
 				K k = *maybek;
-#ifdef SOL_SAFE_USERTYPE
 				if (k > src.size() || k < 1) {
 					return stack::push(L, lua_nil);
 				}
-#else
-#endif // Safety
 				--k;
 				std::advance(it, k);
 				return stack::push_reference(L, *it);
@@ -234,7 +231,7 @@ namespace sol {
 #ifdef SOL_SAFE_USERTYPE
 			auto maybek = stack::check_get<K>(L, 2);
 			if (!maybek) {
-				return stack::push(L, lua_nil);
+				return 0;
 			}
 			K k = *maybek;
 #else

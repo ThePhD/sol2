@@ -490,3 +490,35 @@ TEST_CASE("containers/to_args", "Test that the to_args abstractions works") {
 	REQUIRE(d == 12);
 
 }
+
+TEST_CASE("containers/ipairs-test", "ensure that abstractions roundtrip properly and push nils to stop pairs / ipairs") {
+	struct thing {
+		int x = 20;
+	};
+	thing t{};
+	sol::state lua;
+	lua.open_libraries();
+
+	lua.set_function("f", [&t]() {
+		return std::vector<thing*>(5, &t);
+	});
+
+	lua.script(R"(
+c = f()
+)");
+
+	lua.script(R"(
+check = {}
+local i = 1
+while c[i] do
+	check[i] = v
+	i = i + 1
+end
+)");
+	sol::table c = lua["check"];
+	for (std::size_t i = 1; i < 6; ++i) {
+		thing& ct = c[i];
+		REQUIRE(&t == &ct);
+		REQUIRE(ct.x == 20);
+	}
+}
