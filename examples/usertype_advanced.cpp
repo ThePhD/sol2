@@ -63,7 +63,7 @@ int main() {
 	lua.new_usertype<player>("player",
 
 		// 3 constructors
-		sol::constructors<sol::types<>, sol::types<int>, sol::types<int, int>>(),
+		sol::constructors<player(), player(int), player(int, int)>(),
 
 		// typical member function that returns a variable
 		"shoot", &player::shoot,

@@ -150,7 +150,11 @@ If you don't specify any constructor options at all and the type is `default_con
  
 ..  _constructor:
 
+* ``"{name}", constructors<T(), T(arg-1-0), T(arg-2-0, arg-2-1), ...>``
+	- Specify the constructors to be bound under ``name``: list constructors by specifying their function signature with ``class_type(arg0, arg1, ... argN)``
+	- If you pass the ``constructors<...>`` argument first when constructing the usertype, then it will automatically be given a ``"{name}"`` of ``"new"``
 * ``"{name}", constructors<Type-List-0, Type-List-1, ...>``
+	- This syntax is longer and provided for backwards-compatibility: the above argument syntax is shorter and cleaner
 	- ``Type-List-N`` must be a ``sol::types<Args...>``, where ``Args...`` is a list of types that a constructor takes. Supports overloading by default
 	- If you pass the ``constructors<...>`` argument first when constructing the usertype, then it will automatically be given a ``"{name}"`` of ``"new"``
 * ``"{name}", sol::initializers( func1, func2, ... )``
