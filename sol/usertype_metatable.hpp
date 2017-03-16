@@ -184,13 +184,13 @@ namespace sol {
 					std::string accessor = stack::get<std::string>(L, 2);
 					auto preexistingit = mapping.find(accessor);
 					if (preexistingit == mapping.cend()) {
+						runtime.emplace_back(L, 3);
+						mapping.emplace_hint(mapping.cend(), accessor, call_information(&runtime_object_call, &runtime_object_call, target));
+					}
+					else {
 						target = preexistingit->second.runtime_target;
 						runtime[target] = sol::object(L, 3);
 						preexistingit->second = call_information(&runtime_object_call, &runtime_object_call, target);
-					}
-					else {
-						runtime.emplace_back(L, 3);
-						mapping.emplace_hint(mapping.cend(), accessor, call_information(&runtime_object_call, &runtime_object_call, target));
 					}
 				}
 				for (std::size_t i = 0; i < 4; lua_pop(L, 1), ++i) {
