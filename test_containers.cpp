@@ -511,7 +511,7 @@ c = f()
 check = {}
 local i = 1
 while c[i] do
-	check[i] = v
+	check[i] = c[i]
 	i = i + 1
 end
 )");
