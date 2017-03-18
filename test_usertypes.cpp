@@ -715,7 +715,6 @@ TEST_CASE("usertype/overloading", "Check if overloading works properly for usert
 	REQUIRE((lua["a"] == 1));
 	REQUIRE((lua["b"] == 3.5));
 	REQUIRE((lua["c"] == bark_58));
-
 	REQUIRE_THROWS(lua.script("r:func(1,2,'meow')"));
 }
 

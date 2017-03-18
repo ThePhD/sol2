@@ -174,15 +174,24 @@ namespace sol {
 		template <typename T, bool is_simple>
 		inline int metatable_newindex(lua_State* L) {
 			int isnum = 0;
-			lua_Integer magic = lua_tointegerx(L, lua_upvalueindex(4), &isnum);
+			lua_Integer magic = lua_tointegerx(L, upvalue_index(4), &isnum);
 			if (isnum != 0 && magic == toplevel_magic) {
-				bool mustindex = lua_isboolean(L, lua_upvalueindex(5)) != 0 && (lua_toboolean(L, lua_upvalueindex(5)) != 0);
+				bool mustindex = lua_isboolean(L, upvalue_index(5)) != 0 && (lua_toboolean(L, upvalue_index(5)) != 0);
 				if (!is_simple && mustindex) {
-					mapping_t& mapping = stack::get<light<mapping_t>>(L, lua_upvalueindex(3));
-					std::vector<object>& runtime = stack::get<light<std::vector<object>>>(L, lua_upvalueindex(2));
+					mapping_t& mapping = stack::get<light<mapping_t>>(L, upvalue_index(3));
+					std::vector<object>& runtime = stack::get<light<std::vector<object>>>(L, upvalue_index(2));
 					int target = static_cast<int>(runtime.size());
-					runtime.emplace_back(L, 3);
-					mapping.emplace_hint(mapping.cend(), stack::get<std::string>(L, 2), call_information(&runtime_object_call, &runtime_object_call, target));
+					std::string accessor = stack::get<std::string>(L, 2);
+					auto preexistingit = mapping.find(accessor);
+					if (preexistingit == mapping.cend()) {
+						runtime.emplace_back(L, 3);
+						mapping.emplace_hint(mapping.cend(), accessor, call_information(&runtime_object_call, &runtime_object_call, target));
+					}
+					else {
+						target = preexistingit->second.runtime_target;
+						runtime[target] = sol::object(L, 3);
+						preexistingit->second = call_information(&runtime_object_call, &runtime_object_call, target);
+					}
 				}
 				for (std::size_t i = 0; i < 4; lua_pop(L, 1), ++i) {
 					const char* metakey = nullptr;
