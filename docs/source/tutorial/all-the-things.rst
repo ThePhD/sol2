@@ -450,7 +450,7 @@ multiple returns to lua
 	result2 = lua["f"](100, 200, "BARK BARK BARK!");
 	// result2 == { 100, 200, "BARK BARK BARK!" }
 
-	int a, int b;
+	int a, b;
 	std::string c;
 	sol::tie( a, b, c ) = lua["f"](100, 200, "bark");
 	// a == 100
