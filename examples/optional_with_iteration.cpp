@@ -49,7 +49,7 @@ int main(int, char**) {
 	// Our recursive function
 	// We use some lambda techniques and pass the function itself itself so we can recurse,
 	// but a regular function would work too!
-	auto fx = [&lua, &things](auto& f, auto& tbl) -> void {
+	auto fx = [&lua, &things](auto& f, auto tbl) -> void {
 		// You can iterate through a table: it has 
 		// begin() and end()
 		// like standard containers
