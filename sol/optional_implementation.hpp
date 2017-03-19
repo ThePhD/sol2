@@ -771,15 +771,12 @@ namespace sol {
 		}
 
 		constexpr T& value() const {
-			return ref ?
-				*ref
 #ifdef SOL_NO_EXCEPTIONS
-				// we can't abort here
-				// because there's no constexpr abort
-				: *(T*)nullptr;
+			return *ref;
 #else
-				: throw bad_optional_access("bad optional access");
-#endif
+			return ref ? *ref
+			: (throw bad_optional_access("bad optional access"), *ref);
+#endif // Exceptions
 		}
 
 		explicit constexpr operator bool() const noexcept {
