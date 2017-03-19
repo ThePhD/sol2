@@ -49,7 +49,7 @@ int main(int, char**) {
 	// Our recursive function
 	// We use some lambda techniques and pass the function itself itself so we can recurse,
 	// but a regular function would work too!
-	auto fx = [&lua, &things](auto& f, auto tbl) -> void {
+	auto fx = [&lua, &things](auto& f, auto& tbl) -> void {
 		// You can iterate through a table: it has 
 		// begin() and end()
 		// like standard containers
@@ -63,9 +63,11 @@ int main(int, char**) {
 			const sol::object& value = key_value_pair.second;
 			sol::type t = value.get_type();
 			switch (t) {
-			case sol::type::table:
-				f(f, value.as<sol::table>());
-				break;
+			case sol::type::table: {
+				sol::table inner = value.as<sol::table>();
+				f(f, inner);
+			}
+			break;
 			case sol::type::userdata: {
 				// This allows us to check if a userdata is 
 				// a specific class type
