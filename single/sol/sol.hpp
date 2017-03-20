@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-03-16 20:01:20.845488 UTC
-// This header was generated with sol v2.15.9 (revision 144892c)
+// Generated 2017-03-20 00:58:15.445662 UTC
+// This header was generated with sol v2.15.9 (revision 4a85169)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -2576,15 +2576,12 @@ namespace sol {
 		}
 
 		constexpr T& value() const {
-			return ref ?
-				*ref
 #ifdef SOL_NO_EXCEPTIONS
-				// we can't abort here
-				// because there's no constexpr abort
-				: *(T*)nullptr;
+			return *ref;
 #else
-				: throw bad_optional_access("bad optional access");
-#endif
+			return ref ? *ref
+			: (throw bad_optional_access("bad optional access"), *ref);
+#endif // Exceptions
 		}
 
 		explicit constexpr operator bool() const noexcept {
