@@ -1,5 +1,7 @@
 {%- extends "haiku/layout.html" %}
 
+{% set script_files = script_files + ["_static/search-fix.js"] %}
+
 {% block haikuheader %} 
 	<div class="header-left">
 		{{ super() }}
