@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-03-21 20:56:11.322560 UTC
-// This header was generated with sol v2.16.0 (revision 8a84999)
+// Generated 2017-03-22 11:54:07.623956 UTC
+// This header was generated with sol v2.16.0 (revision a9644d0)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -9860,6 +9860,11 @@ namespace sol {
 
 		template<typename T>
 		bool is_stack(std::false_type) const {
+			int r = base_t::registry_index();
+			if (r == LUA_REFNIL)
+				return meta::any_same<meta::unqualified_t<T>, lua_nil_t, nullopt_t, std::nullptr_t>::value ? true : false;
+			if (r == LUA_NOREF)
+				return false;
 			auto pp = stack::push_pop(*this);
 			return stack::check<T>(base_t::lua_state(), -1, no_panic);
 		}
@@ -9906,11 +9911,6 @@ namespace sol {
 
 		template<typename T>
 		bool is() const {
-			int r = base_t::registry_index();
-			if (r == LUA_REFNIL)
-				return meta::any_same<meta::unqualified_t<T>, lua_nil_t, nullopt_t, std::nullptr_t>::value ? true : false;
-			if (r == LUA_NOREF)
-				return false;
 			return is_stack<T>(std::is_same<base_t, stack_reference>());
 		}
 	};
