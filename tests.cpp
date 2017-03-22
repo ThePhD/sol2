@@ -876,3 +876,25 @@ TEST_CASE("requires/reload", "ensure that reloading semantics do not cause a cra
 	lua.require_script("test2", "require 'io'\nreturn 'test2'");
 	lua.script("require 'io'\nreturn 'test3'");
 }
+
+TEST_CASE("object/is-method", "test whether or not the is abstraction works properly for a user-defined type") {
+	struct thing {};
+
+	SECTION("stack_object")
+	{
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+		lua.set_function("is_thing", [](sol::stack_object obj) { return obj.is<thing>(); } );
+		lua["a"] = thing{};
+		REQUIRE_NOTHROW(lua.script("assert(is_thing(a))"));
+	}
+
+	SECTION("object")
+	{
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+		lua.set_function("is_thing", [](sol::object obj) { return obj.is<thing>(); });
+		lua["a"] = thing{};
+		REQUIRE_NOTHROW(lua.script("assert(is_thing(a))"));
+	}
+}
