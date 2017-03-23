@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-03-22 11:54:07.623956 UTC
-// This header was generated with sol v2.16.0 (revision a9644d0)
+// Generated 2017-03-23 14:12:13.335349 UTC
+// This header was generated with sol v2.16.0 (revision 6ceb715)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -10424,13 +10424,14 @@ namespace sol {
 		bool haslessequals;
 
 		template <std::size_t Idx, meta::enable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
-		inline lua_CFunction make_func() {
+		lua_CFunction make_func() const {
 			return std::get<Idx + 1>(functions);
 		}
 
 		template <std::size_t Idx, meta::disable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
-		inline lua_CFunction make_func() {
-			return call<Idx + 1>;
+		lua_CFunction make_func() const {
+			const auto& name = std::get<Idx>(functions);
+			return (usertype_detail::make_shim(name) == "__newindex") ? &call<Idx + 1, false> : &call<Idx + 1, true>;
 		}
 
 		static bool contains_variable() {
@@ -10522,6 +10523,17 @@ namespace sol {
 			++index;
 		}
 
+		template <std::size_t Idx>
+		static std::pair<std::string, usertype_detail::call_information> make_call_info(std::string n) {
+			return{ n, (n == "__newindex" || n == "__index") ?
+				usertype_detail::call_information(&usertype_metatable::real_meta_call<Idx * 2 + 1, false>,
+					&usertype_metatable::real_meta_call<Idx * 2 + 1, true>)
+				:
+				usertype_detail::call_information(&usertype_metatable::real_find_call<Idx * 2, Idx * 2 + 1, false>,
+					&usertype_metatable::real_find_call<Idx * 2, Idx * 2 + 1, true>)
+			};
+		}
+
 		template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == sizeof...(Tn)>>
 		usertype_metatable(Args&&... args) : 
 		mapping(),
@@ -10535,9 +10547,7 @@ namespace sol {
 		hasequals(false), hasless(false), haslessequals(false) {
 			std::initializer_list<typename usertype_detail::mapping_t::value_type> ilist{ {
 				std::pair<std::string, usertype_detail::call_information>(
-					usertype_detail::make_string(std::get<I * 2>(functions)),
-					usertype_detail::call_information(&usertype_metatable::real_find_call<I * 2, I * 2 + 1, false>,
-						&usertype_metatable::real_find_call<I * 2, I * 2 + 1, true>)
+					make_call_info<I>(usertype_detail::make_string(std::get<I * 2>(functions)))
 					)
 			}... };
 			mapping.insert(ilist);
@@ -10554,7 +10564,15 @@ namespace sol {
 			if (is_variable_binding<decltype(std::get<I1>(f.functions))>::value) {
 				return real_call_with<I1, is_index, true>(L, f);
 			}
-			return stack::push(L, c_closure(call<I1, is_index>, stack::push(L, light<usertype_metatable>(f))));
+			int upvalues = stack::push(L, light<usertype_metatable>(f));
+			auto cfunc = &call<I1, is_index>;
+			return stack::push(L, c_closure(cfunc, upvalues));
+		}
+
+		template <std::size_t I1, bool is_index>
+		static int real_meta_call(lua_State* L, void* um, int) {
+			auto& f = *static_cast<usertype_metatable*>(um);
+			return real_call_with<I1, is_index>(L, f);
 		}
 
 		template <bool is_index, bool toplevel = false>
