@@ -1,7 +1,40 @@
 ownership
 =========
 
-Sol will not take ownership of raw pointers: raw pointers do not own anything.
+You can take a reference to something that exists in Lua by pulling out a :doc:`sol::reference<../api/reference>` or a :doc:`sol::object<../api/object>`:
+
+.. code-block:: cpp
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+	
+	lua.script(R"(
+	obj = "please don't let me die";
+	)");
+
+	sol::object keep_alive = lua["obj"];
+	lua.script(R"(
+	obj = nil;
+	function say(msg)
+		print(msg)
+	end
+	)");
+
+	lua.collect_garbage();
+
+	lua["say"](lua["obj"]);
+	// still accessible here and still alive in Lua
+	// even though the name was cleared
+	std::string message = keep_alive.as<std::string>();
+	std::cout << message << std::endl;
+	
+	// Can be pushed back into Lua as an argument
+	// or set to a new name,
+	// whatever you like!
+	lua["say"](keep_alive);
+
+
+Sol will not take ownership of raw pointers: raw pointers do not own anything. Sol will not delete raw pointers, because they do not (and are not supposed to) own anything:
 
 .. code-block:: cpp
 

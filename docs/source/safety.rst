@@ -23,8 +23,12 @@ Note that you can obtain safety with regards to functions you bind by using the 
 
 Tests are compiled with this on to ensure everything is going as expected. Remember that if you want these features, you must explicitly turn them on all of them to be sure you are getting them.
 
-Finally, some warnings that may help with errors when working with Sol:
+memory
+------
 
+Memory safety can be tricky. Lua is handled by a garbage-collected runtime, meaning object deletion is not cleary defined or deterministic. If you need to keep an object from the Lua Runtime alive, use :doc:`sol::reference<api/reference>` or one of its derived types, such as :doc:`sol::table<api/table>`, :doc:`sol::object<api/object>`, or similar. These will pin a reference down to an object controlled in C++, and Lua will not delete an object that you still have a reference to through one of these types. You can then retrieve whatever you need from that Lua slot using object's ``obj.as<T>()`` member function or other things, and work on the memory from there.
+
+The usertype memory layout for all Lua-instantiated userdata and for all objects pushed/set into the Lua Runtime is also described :doc:`here<api/usertype_memory>`. Things before or after that specified memory slot is implementation-defined and no assumptions are to be made about it.
 
 functions
 ---------
