@@ -5,7 +5,7 @@ structures and classes from C++ made available to Lua code
 
 *Note: ``T`` refers to the type being turned into a usertype.*
 
-While other frameworks extend lua's syntax or create Data Structure Languages (DSLs) to create classes in lua, :doc:`Sol<../index>` instead offers the ability to generate easy bindings. These use metatables and userdata in lua for their implementation. If you need a usertype that is also extensible at runtime and has less compiler crunch to it, try the :doc:`simple version of this after reading these docs<simple_usertype>` Given this C++ class:
+While other frameworks extend lua's syntax or create Data Structure Languages (DSLs) to create classes in Lua, :doc:`Sol<../index>` instead offers the ability to generate easy bindings. These use metatables and userdata in Lua for their implementation. Usertypes are also `runtime extensible`_. If you need a usertype that has less compiler crunch-time to it, try the :doc:`simple version of this after reading these docs<simple_usertype>` Given this C++ class:
 
 .. code-block:: cpp
 	:linenos:
@@ -150,7 +150,11 @@ If you don't specify any constructor options at all and the type is `default_con
  
 ..  _constructor:
 
+* ``"{name}", constructors<T(), T(arg-1-0), T(arg-2-0, arg-2-1), ...>``
+	- Specify the constructors to be bound under ``name``: list constructors by specifying their function signature with ``class_type(arg0, arg1, ... argN)``
+	- If you pass the ``constructors<...>`` argument first when constructing the usertype, then it will automatically be given a ``"{name}"`` of ``"new"``
 * ``"{name}", constructors<Type-List-0, Type-List-1, ...>``
+	- This syntax is longer and provided for backwards-compatibility: the above argument syntax is shorter and cleaner
 	- ``Type-List-N`` must be a ``sol::types<Args...>``, where ``Args...`` is a list of types that a constructor takes. Supports overloading by default
 	- If you pass the ``constructors<...>`` argument first when constructing the usertype, then it will automatically be given a ``"{name}"`` of ``"new"``
 * ``"{name}", sol::initializers( func1, func2, ... )``
@@ -163,10 +167,6 @@ If you don't specify any constructor options at all and the type is `default_con
 		+ The functions can take any form and return anything, since they're just considered to be some plain function and no placement new or otherwise needs to be done. Results from this function will be pushed into Lua according to the same rules as everything else.
 		+ Can be used to stop the generation of a ``.new()`` default constructor since a ``sol::factories`` entry will be recognized as a constructor for the usertype
 		+ If this is not sufficient, see next 2 entries on how to specifically block a constructor
-* ``{anything}, sol::no_constructor``
-	- Specifically tells Sol not to create a ``.new()`` if one is not specified and the type is default-constructible
-	- ``{anything}`` should probably be ``"new"``, which will specifically block its creation and give a proper warning if someone calls ``new`` (otherwise it will just give a nil value error)
-	- *Combine with the next one to only allow a factory function for your function type*
 * ``{anything}, {some_factory_function}``
 	- Essentially binds whatever the function is to name ``{anything}``
 	- When used WITH the ``sol::no_constructor`` option above (e.g. ``"new", sol::no_constructor`` and after that having ``"create", &my_creation_func``), one can remove typical constructor avenues and then only provide specific factory functions. Note that this combination is similar to using the ``sol::factories`` method mentioned earlier in this list. To control the destructor as well, see further below
@@ -174,6 +174,10 @@ If you don't specify any constructor options at all and the type is `default_con
 	- The purpose of this is to enable the syntax ``local v = my_class( 24 )`` and have that call a constructor; it has no other purpose
 	- This is compatible with luabind, kaguya and other Lua library syntaxes and looks similar to C++ syntax, but the general consensus in Programming with Lua and other places is to use a function named ``new``
 	- Note that with the ``sol::call_constructor`` key, a construct type above must be specified. A free function without it will pass in the metatable describing this object as the first argument without that distinction, which can cause strange runtime errors.
+* ``{anything}, sol::no_constructor``
+	- Specifically tells Sol not to create a ``.new()`` if one is not specified and the type is default-constructible
+	- When the key ``{anything}`` is called on the table, it will result in an error. The error might be that the type is not-constructible. 
+	- *Use this plus some of the above to allow a factory function for your function type but prevent other types of constructor idioms in Lua*
 
 usertype destructor options
 +++++++++++++++++++++++++++
@@ -328,3 +332,4 @@ performance note
 
 .. _destructible: http://en.cppreference.com/w/cpp/types/is_destructible
 .. _default_constructible: http://en.cppreference.com/w/cpp/types/is_constructible
+.. _runtime extensible: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_advanced.cpp#L81

@@ -205,7 +205,7 @@ end )");
 	REQUIRE_FALSE((bool)testn);
 	REQUIRE(testv.value() == 29);
 	sol::optional<thing> v = lua_bark(sol::optional<thing>(thing{ 29 }));
-	REQUIRE_NOTHROW(sol::nil_t n = lua_bark(sol::nullopt));
+	REQUIRE_NOTHROW([&] {sol::nil_t n = lua_bark(sol::nullopt); return n; }());
 	REQUIRE(v->v == 29);
 }
 

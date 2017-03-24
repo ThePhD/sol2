@@ -8,7 +8,7 @@
 #include <memory>
 #include <mutex>
 
-TEST_CASE("usertype/simple-usertypes", "Ensure that simple usertypes properly work here") {
+TEST_CASE("simple_usertype/usertypes", "Ensure that simple usertypes properly work here") {
 	struct marker {
 		bool value = false;
 	};
@@ -87,7 +87,7 @@ TEST_CASE("usertype/simple-usertypes", "Ensure that simple usertypes properly wo
 	REQUIRE(z == 29);
 }
 
-TEST_CASE("usertype/simple-usertypes-constructors", "Ensure that calls with specific arguments work") {
+TEST_CASE("simple_usertype/usertypes-constructors", "Ensure that calls with specific arguments work") {
 	struct marker {
 		bool value = false;
 	};
@@ -173,7 +173,7 @@ TEST_CASE("usertype/simple-usertypes-constructors", "Ensure that calls with spec
 	REQUIRE(z == 29);
 }
 
-TEST_CASE("usertype/simple-shared-ptr-regression", "simple usertype metatables should not screw over unique usertype metatables") {
+TEST_CASE("simple_usertype/shared-ptr-regression", "simple usertype metatables should not screw over unique usertype metatables") {
 	static int created = 0;
 	static int destroyed = 0;
 	struct test {
@@ -211,7 +211,7 @@ TEST_CASE("usertype/simple-shared-ptr-regression", "simple usertype metatables s
 	REQUIRE(destroyed == 1);
 }
 
-TEST_CASE("usertype/simple-vars", "simple usertype vars can bind various values (no ref)") {
+TEST_CASE("simple_usertype/vars", "simple usertype vars can bind various values (no ref)") {
 	int muh_variable = 10;
 	int through_variable = 25;
 
@@ -249,7 +249,7 @@ g3 = test.global3
 	REQUIRE(g3 == 20);
 }
 
-TEST_CASE("usertypes/simple-variable-control", "test to see if usertypes respond to inheritance and variable controls") {
+TEST_CASE("simple_usertype/variable-control", "test to see if usertypes respond to inheritance and variable controls") {
 	class A {
 	public:
 		virtual void a() { throw std::runtime_error("entered base pure virtual implementation"); };
@@ -322,7 +322,7 @@ TEST_CASE("usertypes/simple-variable-control", "test to see if usertypes respond
 	lua.script("print(sw.pb)assert(sw.pb == 27)");
 }
 
-TEST_CASE("usertype/simple-factory-constructor-overload-usage", "simple usertypes should probably invoke types") {
+TEST_CASE("simple_usertype/factory-constructor-overload-usage", "simple usertypes should probably invoke types") {
 	class A {
 	public:
 		virtual void a() { throw std::runtime_error("entered base pure virtual implementation"); };
@@ -378,7 +378,7 @@ TEST_CASE("usertype/simple-factory-constructor-overload-usage", "simple usertype
 	REQUIRE(y4 == 3);
 }
 
-TEST_CASE("usertype/simple-runtime-append", "allow extra functions to be appended at runtime directly to the metatable itself") {
+TEST_CASE("simple_usertype/runtime-append", "allow extra functions to be appended at runtime directly to the metatable itself") {
 	class A {
 	};
 
@@ -407,7 +407,7 @@ TEST_CASE("usertype/simple-runtime-append", "allow extra functions to be appende
 	REQUIRE(w == 100);
 }
 
-TEST_CASE("usertype/simple-destruction-test", "make sure usertypes are properly destructed and don't double-delete memory or segfault") {
+TEST_CASE("simple_usertype/destruction-test", "make sure usertypes are properly destructed and don't double-delete memory or segfault") {
 	sol::state lua;
 
 	class CrashClass {
@@ -438,7 +438,7 @@ TEST_CASE("usertype/simple-destruction-test", "make sure usertypes are properly 
 	}
 }
 
-TEST_CASE("usertype/simple-table-append", "Ensure that appending to the meta table also affects the internal function table for pointers as well") {
+TEST_CASE("simple_usertype/table-append", "Ensure that appending to the meta table also affects the internal function table for pointers as well") {
 	struct A {
 		int func() {
 			return 5000;
@@ -455,9 +455,297 @@ TEST_CASE("usertype/simple-table-append", "Ensure that appending to the meta tab
 	lua.set("a", &a);
 	lua.set("pa", &a);
 	lua.set("ua", std::make_unique<A>());
-	REQUIRE_NOTHROW(
+	REQUIRE_NOTHROW([&]{
 		lua.script("assert(a:func() == 5000)");
 		lua.script("assert(pa:func() == 5000)");
 		lua.script("assert(ua:func() == 5000)");
+	}());
+}
+
+TEST_CASE("simple_usertype/class-propogation", "make sure methods and variables from base classes work properly in SAFE_USERTYPE mode") {
+	class A {
+	public:
+		int var = 200;
+		int thing() const { return 123; }
+	};
+
+	class B : public A {
+	};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_simple_usertype<B>("B",
+		sol::default_constructor,
+		"thing", &B::thing,
+		"var", &B::var
+		);
+
+	lua.script(R"(
+		b = B.new()
+		print(b.var)
+		b:thing()	
+)");
+}
+
+TEST_CASE("simple_usertype/call-constructor", "ensure that all kinds of call-based constructors can be serialized") {
+	struct thing {};
+	struct v_test {
+		
+	};
+	struct f_test {
+		int i; f_test(int i) : i(i) {}
+	};
+	struct i_test {
+		int i; i_test(int i) : i(i) {}
+	};
+	struct r_test {
+		int i; r_test(int i) : i(i) {}
+	};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	auto f = sol::factories([]() {return f_test(30); });
+	lua.new_simple_usertype<f_test>("f_test",
+		sol::call_constructor, sol::factories([]() {
+			return f_test(20);
+		}),
+		"new", f
+		);
+
+	lua.new_simple_usertype<i_test>("i_test",
+		sol::call_constructor, sol::initializers([](i_test& obj) {
+		new(&obj)i_test(21);
+	})
+		);
+
+	lua.new_simple_usertype<r_test>("r_test",
+		sol::call_constructor, [](sol::table) {
+		return r_test(22);
+	}
 	);
+
+	lua.script("a = f_test()");
+	lua.script("b = i_test()");
+	lua.script("c = r_test()");
+	lua.script("d = f_test.new()");
+	f_test& a = lua["a"];
+	f_test& d = lua["d"];
+	i_test& b = lua["b"];
+	r_test& c = lua["c"];
+	REQUIRE(a.i == 20);
+	REQUIRE(b.i == 21);
+	REQUIRE(c.i == 22);
+	REQUIRE(d.i == 30);
+
+	auto vfactories = sol::factories(
+		[](const sol::table& tbl) {
+			for (auto v : tbl) {
+				REQUIRE(v.second.valid());
+				REQUIRE(v.second.is<thing>());
+			}
+			return v_test();
+		}
+	);
+
+	lua.new_simple_usertype<v_test>("v_test",
+		sol::meta_function::construct, vfactories,
+		sol::call_constructor, vfactories
+		);
+
+	lua.new_simple_usertype<thing>("thing");
+	lua.script("things = {thing.new(), thing.new()}");
+
+	SECTION("new") {
+		REQUIRE_NOTHROW(lua.script("a = v_test.new(things)"));
+	}
+	SECTION("call_constructor") {
+		REQUIRE_NOTHROW(lua.script("b = v_test(things)"));
+	}
+}
+
+TEST_CASE("simple_usertype/no_constructor", "make sure simple usertype errors when no-constructor types are called") {
+	struct thing {};
+
+	SECTION("new no_constructor") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_simple_usertype<thing>("thing",
+			sol::meta_function::construct, sol::no_constructor
+			);
+		REQUIRE_THROWS(lua.script("a = thing.new()"));
+	}
+
+	SECTION("call no_constructor") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_simple_usertype<thing>("thing",
+			sol::call_constructor, sol::no_constructor
+			);
+		REQUIRE_THROWS(lua.script("a = thing()"));
+	}	
+}
+
+TEST_CASE("simple_usertype/missing-key", "make sure a missing key returns nil") {
+	struct thing {};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_simple_usertype<thing>("thing");
+	REQUIRE_NOTHROW(lua.script("print(thing.missingKey)"));
+}
+
+TEST_CASE("simple_usertype/runtime-extensibility", "Check if usertypes are runtime extensible") {
+	struct thing {
+		int v = 20;
+		int func(int a) { return a; }
+	};
+	int val = 0;
+
+	SECTION("just functions") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_simple_usertype<thing>("thing",
+			"func", &thing::func
+			);
+
+		lua.script(R"(
+t = thing.new()
+		)");
+
+		REQUIRE_THROWS([&lua]() {
+			lua.script(R"(
+t.runtime_func = function (a)
+	return a + 50
+end
+		)");
+		}());
+
+		REQUIRE_THROWS([&lua]() {
+			lua.script(R"(
+function t:runtime_func(a)
+	return a + 52
+end
+		)");
+		}());
+
+		lua.script("val = t:func(2)");
+		val = lua["val"];
+		REQUIRE(val == 2);
+
+		REQUIRE_NOTHROW([&lua]() {
+			lua.script(R"(
+function thing:runtime_func(a)
+	return a + 1
+end
+		)");
+		}());
+
+		lua.script("val = t:runtime_func(2)");
+		val = lua["val"];
+		REQUIRE(val == 3);
+	}
+	SECTION("with variable") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_simple_usertype<thing>("thing",
+			"func", &thing::func,
+			"v", &thing::v
+			);
+
+		lua.script(R"(
+t = thing.new()
+		)");
+
+		REQUIRE_THROWS([&lua]() {
+			lua.script(R"(
+t.runtime_func = function (a)
+	return a + 50
+end
+		)");
+		}());
+
+		REQUIRE_THROWS([&lua]() {
+			lua.script(R"(
+function t:runtime_func(a)
+	return a + 52
+end
+		)");
+		}());
+
+		lua.script("val = t:func(2)");
+		val = lua["val"];
+		REQUIRE(val == 2);
+
+		REQUIRE_NOTHROW([&lua]() {
+			lua.script(R"(
+function thing:runtime_func(a)
+	return a + 1
+end
+		)");
+		}());
+
+		lua.script("val = t:runtime_func(2)");
+		val = lua["val"];
+		REQUIRE(val == 3);
+	}
+}
+
+TEST_CASE("simple_usertype/meta-key-retrievals", "allow for special meta keys (__index, __newindex) to trigger methods even if overwritten directly") {
+	SECTION("dynamically") {
+		static int writes = 0;
+		static std::string keys[2] = {};
+		static int values[2] = {};
+		struct d_sample {
+			void foo(std::string k, int v) {
+				keys[writes] = k;
+				values[writes] = v;
+				++writes;
+			}
+		};
+
+		sol::state state;
+		state.new_simple_usertype<d_sample>("sample");
+		sol::table s = state["sample"]["new"]();
+		s[sol::metatable_key][sol::meta_function::new_index] = &d_sample::foo;
+		state["var"] = s;
+
+		
+		state.script("var.key = 2");
+		state.script("var.__newindex = 4");
+		REQUIRE(values[0] == 2);
+		REQUIRE(keys[0] == "key");
+		REQUIRE(values[1] == 4);
+		REQUIRE(keys[1] == "__newindex");
+	}
+
+	SECTION("statically") {
+		static int writes = 0;
+		static std::string keys[2] = {};
+		static int values[2] = {};
+		struct sample {
+			void foo(std::string k, int v) {
+				keys[writes] = k;
+				values[writes] = v;
+				++writes;
+			}
+		};
+
+		sol::state state;
+		state.new_simple_usertype<sample>("sample", sol::meta_function::new_index, &sample::foo);
+		
+		state.script("var = sample.new()");
+		state.script("var.key = 2");
+		state.script("var.__newindex = 4");
+		REQUIRE(values[0] == 2);
+		REQUIRE(keys[0] == "key");
+		REQUIRE(values[1] == 4);
+		REQUIRE(keys[1] == "__newindex");
+	}
 }

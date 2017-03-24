@@ -326,8 +326,6 @@ TEST_CASE("object/conversions", "make sure all basic reference types can be made
 TEST_CASE("state/require_file", "opening files as 'requires'") {
 	static const char FILE_NAME[] = "./tmp_thingy.lua";
 
-	std::fstream file(FILE_NAME, std::ios::out);
-
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -344,6 +342,7 @@ TEST_CASE("state/require_file", "opening files as 'requires'") {
 			"bar", &foo::bar
 			);
 		
+		std::fstream file(FILE_NAME, std::ios::out);
 		file << "return { modfunc = function () return foo.new(221) end }" << std::endl;
 		file.close();
 		
@@ -360,6 +359,7 @@ TEST_CASE("state/require_file", "opening files as 'requires'") {
 
 	SECTION("simple")
 	{
+		std::fstream file(FILE_NAME, std::ios::out);
 		file << "return { modfunc = function () return 221 end }" << std::endl;
 		file.close();
 		
@@ -443,6 +443,21 @@ TEST_CASE("state/multi-require", "make sure that requires transfers across hand-
 	// But we care, thankfully
 	//REQUIRE(thingy1 == thingy3);
 	REQUIRE(thingy2 == thingy3);
+}
+
+TEST_CASE("state/require-safety", "make sure unrelated modules aren't harmed in using requires") {
+	sol::state lua;
+	lua.open_libraries();
+	std::string t1 = lua.script(R"(require 'io'
+return 'test1')");
+	sol::object ot2 = lua.require_script("test2", R"(require 'io'
+return 'test2')");
+	std::string t2 = ot2.as<std::string>();
+	std::string t3 = lua.script(R"(require 'io'
+return 'test3')");
+	REQUIRE(t1 == "test1");
+	REQUIRE(t2 == "test2");
+	REQUIRE(t3 == "test3");
 }
 
 TEST_CASE("feature/indexing-overrides", "make sure index functions can be overridden on types") {
@@ -617,13 +632,13 @@ TEST_CASE("optional/left-out-args", "Make sure arguments can be left out of opti
 
 	// sol::optional needs an argument no matter what?
 	lua.set_function("func_opt_ret_bool", func_opt_ret_bool);
-	REQUIRE_NOTHROW(
+	REQUIRE_NOTHROW([&]{
 	lua.script(R"(
         func_opt_ret_bool(42)
         func_opt_ret_bool()
         print('ok')
         )");
-	);
+	}());
 }
 
 TEST_CASE("pusher/constness", "Make sure more types can handle being const and junk") {
@@ -717,6 +732,55 @@ TEST_CASE("numbers/integers", "make sure integers are detectable on most platfor
 	REQUIRE(b_is_double);
 }
 
+TEST_CASE("state/leak-check", "make sure there are no humongous memory leaks in iteration") {
+#if 0
+	sol::state lua;
+	lua.script(R"(
+record = {}
+for i=1,256 do
+	record[i] = i
+end
+function run()
+	for i=1,25000 do
+		fun(record)
+	end
+end
+function run2()
+	for i=1,50000 do
+		fun(record)
+	end
+end
+)");
+
+	lua["fun"] = [](const sol::table &t) {
+		//removing the for loop fixes the memory leak
+		auto b = t.begin();
+		auto e = t.end();
+		for (; b != e; ++b) {
+
+		}
+	};
+
+	size_t beforewarmup = lua.memory_used();
+	lua["run"]();
+
+	size_t beforerun = lua.memory_used();
+	lua["run"]();
+	size_t afterrun = lua.memory_used();
+	lua["run2"]();
+	size_t afterrun2 = lua.memory_used();
+
+	// Less memory used before the warmup
+	REQUIRE(beforewarmup <= beforerun);
+	// Iteration size and such does not bloat or affect memory
+	// (these are weak checks but they'll warn us nonetheless if something goes wrong)
+	REQUIRE(beforerun == afterrun);
+	REQUIRE(afterrun == afterrun2);
+#else
+	REQUIRE(true);
+#endif
+}
+
 TEST_CASE("state/script-returns", "make sure script returns are done properly") {
 	std::string script =
 		R"(
@@ -791,4 +855,46 @@ return example;
 	lua.set_function("bar2", bar2);
 
 	lua.script("bar() bar2() foo(1) foo2(1)");
+}
+
+TEST_CASE("state/copy-move", "ensure state can be properly copied and moved") {
+	sol::state lua;
+	lua["a"] = 1;
+
+	sol::state lua2(std::move(lua));
+	int a2 = lua2["a"];
+	REQUIRE(a2 == 1);
+	lua = std::move(lua2);
+	int a = lua["a"];
+	REQUIRE(a == 1);
+}
+
+TEST_CASE("requires/reload", "ensure that reloading semantics do not cause a crash") {
+	sol::state lua;
+	lua.open_libraries();
+	lua.script("require 'io'\nreturn 'test1'");
+	lua.require_script("test2", "require 'io'\nreturn 'test2'");
+	lua.script("require 'io'\nreturn 'test3'");
+}
+
+TEST_CASE("object/is-method", "test whether or not the is abstraction works properly for a user-defined type") {
+	struct thing {};
+
+	SECTION("stack_object")
+	{
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+		lua.set_function("is_thing", [](sol::stack_object obj) { return obj.is<thing>(); } );
+		lua["a"] = thing{};
+		REQUIRE_NOTHROW(lua.script("assert(is_thing(a))"));
+	}
+
+	SECTION("object")
+	{
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+		lua.set_function("is_thing", [](sol::object obj) { return obj.is<thing>(); });
+		lua["a"] = thing{};
+		REQUIRE_NOTHROW(lua.script("assert(is_thing(a))"));
+	}
 }

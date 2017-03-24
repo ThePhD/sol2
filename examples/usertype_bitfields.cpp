@@ -112,7 +112,7 @@ struct __attribute__((packed, aligned(1))) flags_t {
 	uint8_t Z : 1;
 	uint8_t S : 1;
 	uint16_t D : 14;
-} flags{};
+} flags{0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 int main() {
 	std::cout << "=== usertype_bitfields example ===" << std::endl;

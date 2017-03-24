@@ -31,8 +31,6 @@
 namespace sol {
 
 	namespace usertype_detail {
-		const lua_Integer toplevel_magic = static_cast<lua_Integer>(0x00000001);
-
 		struct variable_wrapper {
 			virtual int index(lua_State* L) = 0;
 			virtual int new_index(lua_State* L) = 0;
@@ -67,40 +65,6 @@ namespace sol {
 
 			simple_map(const char* mkey, base_walk index, base_walk newindex, variable_map&& vars, function_map&& funcs) : metakey(mkey), variables(std::move(vars)), functions(std::move(funcs)), indexbaseclasspropogation(index), newindexbaseclasspropogation(newindex) {}
 		};
-
-		template <typename T>
-		inline int simple_metatable_newindex(lua_State* L) {
-			int isnum = 0;
-			lua_Integer magic = lua_tointegerx(L, lua_upvalueindex(4), &isnum);
-			if (isnum != 0 && magic == toplevel_magic) {
-				for (std::size_t i = 0; i < 3; lua_pop(L, 1), ++i) {
-					// Pointer types, AKA "references" from C++
-					const char* metakey = nullptr;
-					switch (i) {
-					case 0:
-						metakey = &usertype_traits<T*>::metatable()[0];
-						break;
-					case 1:
-						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable()[0];
-						break;
-					case 2:
-					default:
-						metakey = &usertype_traits<T>::metatable()[0];
-						break;
-					}
-					luaL_getmetatable(L, metakey);
-					int tableindex = lua_gettop(L);
-					if (type_of(L, tableindex) == type::lua_nil) {
-						continue;
-					}
-					stack::set_field<false, true>(L, stack_reference(L, 2), stack_reference(L, 3), tableindex);
-				}
-				lua_settop(L, 0);
-				return 0;
-			}
-			lua_pop(L, 1);
-			return indexing_fail<false>(L);
-		}
 
 		template <bool is_index, bool toplevel = false>
 		inline int simple_core_indexing_call(lua_State* L) {
@@ -208,19 +172,41 @@ namespace sol {
 			hint->second = std::move(o);
 		}
 
-		template <typename N, typename F, meta::enable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
-		void add_function(lua_State* L, N&& n, F&& f) {
-			insert(std::forward<N>(n), make_object(L, as_function_reference(std::forward<F>(f))));
+		template <typename N, typename F, typename... Args>
+		void insert_prepare(std::true_type, lua_State* L, N&&, F&& f, Args&&... args) {
+			object o = make_object<F>(L, std::forward<F>(f), function_detail::call_indicator(), std::forward<Args>(args)...);
+			callconstructfunc = std::move(o);
 		}
 
-		template <typename N, typename F, meta::disable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
+		template <typename N, typename F, typename... Args>
+		void insert_prepare(std::false_type, lua_State* L, N&& n, F&& f, Args&&... args) {
+			object o = make_object<F>(L, std::forward<F>(f), std::forward<Args>(args)...);
+			insert(std::forward<N>(n), std::move(o));
+		}
+
+		template <typename N, typename F>
+		void add_member_function(std::true_type, lua_State* L, N&& n, F&& f) {
+			insert_prepare(std::is_same<meta::unqualified_t<N>, call_construction>(), L, std::forward<N>(n), std::forward<F>(f), function_detail::class_indicator<T>());
+		}
+
+		template <typename N, typename F>
+		void add_member_function(std::false_type, lua_State* L, N&& n, F&& f) {
+			insert_prepare(std::is_same<meta::unqualified_t<N>, call_construction>(), L, std::forward<N>(n), std::forward<F>(f));
+		}
+
+		template <typename N, typename F, meta::enable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
 		void add_function(lua_State* L, N&& n, F&& f) {
-			object o = make_object(L, std::forward<F>(f));
+			object o = make_object(L, as_function_reference(std::forward<F>(f)));
 			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
 				callconstructfunc = std::move(o);
 				return;
 			}
 			insert(std::forward<N>(n), std::move(o));
+		}
+
+		template <typename N, typename F, meta::disable<meta::is_callable<meta::unwrap_unqualified_t<F>>> = meta::enabler>
+		void add_function(lua_State* L, N&& n, F&& f) {
+			add_member_function(std::is_member_pointer<meta::unwrap_unqualified_t<F>>(), L, std::forward<N>(n), std::forward<F>(f));
 		}
 
 		template <typename N, typename F, meta::disable<is_variable_binding<meta::unqualified_t<F>>> = meta::enabler>
@@ -303,7 +289,7 @@ namespace sol {
 		template<std::size_t... I, typename Tuple>
 		simple_usertype_metatable(usertype_detail::verified_tag, std::index_sequence<I...>, lua_State* L, Tuple&& args)
 			: callconstructfunc(lua_nil),
-			indexfunc(&usertype_detail::indexing_fail<true>), newindexfunc(&usertype_detail::indexing_fail<false>),
+			indexfunc(&usertype_detail::indexing_fail<true>), newindexfunc(&usertype_detail::metatable_newindex<T, true>),
 			indexbase(&usertype_detail::simple_core_indexing_call<true>), newindexbase(&usertype_detail::simple_core_indexing_call<false>),
 			indexbaseclasspropogation(usertype_detail::walk_all_bases<true>), newindexbaseclasspropogation(&usertype_detail::walk_all_bases<false>),
 			baseclasscheck(nullptr), baseclasscast(nullptr),
@@ -341,6 +327,11 @@ namespace sol {
 
 		template<typename... Args, typename... Fxs>
 		simple_usertype_metatable(lua_State* L, constructor_wrapper<Fxs...> constructorlist, Args&&... args) : simple_usertype_metatable(L, usertype_detail::check_destructor_tag(), std::forward<Args>(args)..., "new", constructorlist) {}
+
+		simple_usertype_metatable(const simple_usertype_metatable&) = default;
+		simple_usertype_metatable(simple_usertype_metatable&&) = default;
+		simple_usertype_metatable& operator=(const simple_usertype_metatable&) = default;
+		simple_usertype_metatable& operator=(simple_usertype_metatable&&) = default;
 
 		virtual int push_um(lua_State* L) override {
 			return stack::push(L, std::move(*this));
@@ -533,15 +524,15 @@ namespace sol {
 					stack::set_field(L, meta_function::index,
 						make_closure(&usertype_detail::simple_index_call,
 							make_light(varmap),
-							&usertype_detail::simple_index_call,
-							&usertype_detail::simple_metatable_newindex<T>,
+							umx.indexfunc,
+							umx.newindexfunc,
 							usertype_detail::toplevel_magic
 						), metabehind.stack_index());
 					stack::set_field(L, meta_function::new_index,
 						make_closure(&usertype_detail::simple_new_index_call,
 							make_light(varmap),
-							&usertype_detail::simple_index_call,
-							&usertype_detail::simple_metatable_newindex<T>,
+							umx.indexfunc,
+							umx.newindexfunc,
 							usertype_detail::toplevel_magic
 						), metabehind.stack_index());
 					stack::set_field(L, metatable_key, metabehind, t.stack_index());

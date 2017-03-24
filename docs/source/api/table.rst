@@ -148,7 +148,7 @@ Sets a previously created usertype with the specified ``key`` into the table. No
 	table_iterator cbegin() const;
 	table_iterator cend() const;
 
-Provides `input iterators`_ for a table. This allows tables to work with single-pass, input-only algorithms (like ``std::for_each``).
+Provides (what can barely be called) `input iterators`_ for a table. This allows tables to work with single-pass, input-only algorithms (like ``std::for_each``). Note that manually getting an iterator from ``.begin()`` without a ``.end()`` or using postfix incrementation (``++mytable.begin()``) will lead to poor results. The Lua stack is manipulated by an iterator and thusly not performing the full iteration once you start is liable to ruin either the next iteration or break other things subtly. Use a C++11 ranged for loop, ``std::for_each``, or other algorithims which pass over the entire collection at least once and let the iterators fall out of scope.
 
 .. _iteration_note:
 .. warning::

@@ -155,20 +155,20 @@ TEST_CASE("containers/basic-serialization", "make sure containers are turned int
 	lua.open_libraries();
 	lua.set("b", woof{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 });
 	REQUIRE_NOTHROW(
-	lua.script("for k = 1, #b do assert(k == b[k]) end");
+	lua.script("for k = 1, #b do assert(k == b[k]) end")
 	);
 	woof w{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
 	lua.set("b", w);
 	REQUIRE_NOTHROW(
-		lua.script("for k = 1, #b do assert(k == b[k]) end");
+		lua.script("for k = 1, #b do assert(k == b[k]) end")
 	);
 	lua.set("b", &w);
 	REQUIRE_NOTHROW(
-		lua.script("for k = 1, #b do assert(k == b[k]) end");
+		lua.script("for k = 1, #b do assert(k == b[k]) end")
 	);
 	lua.set("b", std::ref(w));
 	REQUIRE_NOTHROW(
-		lua.script("for k = 1, #b do assert(k == b[k]) end");
+		lua.script("for k = 1, #b do assert(k == b[k]) end")
 	);
 }
 
@@ -191,20 +191,20 @@ TEST_CASE("containers/table-serialization", "ensure types can be serialized as t
 	lua.open_libraries();
 	lua.set("b", sol::as_table(woof{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 }));
 	REQUIRE_NOTHROW(
-		lua.script("for k, v in ipairs(b) do assert(k == v) end");
+		lua.script("for k, v in ipairs(b) do assert(k == v) end")
 	);
 	woof w{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
 	lua.set("b", sol::as_table(w));
 	REQUIRE_NOTHROW(
-	lua.script("for k, v in ipairs(b) do assert(k == v) end");
+	lua.script("for k, v in ipairs(b) do assert(k == v) end")
 	);
 	lua.set("b", sol::as_table(&w));
 	REQUIRE_NOTHROW(
-	lua.script("for k, v in ipairs(b) do assert(k == v) end");
+	lua.script("for k, v in ipairs(b) do assert(k == v) end")
 	);
 	lua.set("b", sol::as_table(std::ref(w)));
 	REQUIRE_NOTHROW(
-	lua.script("for k, v in ipairs(b) do assert(k == v) end");
+	lua.script("for k, v in ipairs(b) do assert(k == v) end")
 	);
 }
 
@@ -237,10 +237,10 @@ func = function(vecs)
 end
 )");
 
-	REQUIRE_NOTHROW({
+	REQUIRE_NOTHROW([&]{
 		lua["func"](foo);
 		lua["func"](bar);
-	});
+	}());
 }
 
 TEST_CASE("containers/arbitrary-creation", "userdata and tables should be usable from standard containers") {
@@ -489,4 +489,36 @@ TEST_CASE("containers/to_args", "Test that the to_args abstractions works") {
 	REQUIRE(c == 11);
 	REQUIRE(d == 12);
 
+}
+
+TEST_CASE("containers/ipairs-test", "ensure that abstractions roundtrip properly and push nils to stop pairs / ipairs") {
+	struct thing {
+		int x = 20;
+	};
+	thing t{};
+	sol::state lua;
+	lua.open_libraries();
+
+	lua.set_function("f", [&t]() {
+		return std::vector<thing*>(5, &t);
+	});
+
+	lua.script(R"(
+c = f()
+)");
+
+	lua.script(R"(
+check = {}
+local i = 1
+while c[i] do
+	check[i] = c[i]
+	i = i + 1
+end
+)");
+	sol::table c = lua["check"];
+	for (std::size_t i = 1; i < 6; ++i) {
+		thing& ct = c[i];
+		REQUIRE(&t == &ct);
+		REQUIRE(ct.x == 20);
+	}
 }

@@ -63,7 +63,7 @@ int main() {
 	lua.new_usertype<player>("player",
 
 		// 3 constructors
-		sol::constructors<sol::types<>, sol::types<int>, sol::types<int, int>>(),
+		sol::constructors<player(), player(int), player(int, int)>(),
 
 		// typical member function that returns a variable
 		"shoot", &player::shoot,
@@ -78,6 +78,15 @@ int main() {
 		// can only read from, not write to
 		"bullets", sol::readonly(&player::bullets)
 		);
+	
+	// You can also add members to the code, defined in Lua!
+	// This lets you have a high degree of flexibility in the code
+	std::string prelude_script = R"(
+function player:brake ()
+	self.speed = 0
+	print("we hit the brakes!")
+end
+)";
 
 	std::string player_script = R"(
 -- call single argument integer constructor
@@ -110,12 +119,16 @@ print(p1.bullets)
 -- p1.bullets = 20
 
 p1:boost()
+-- call the function we define at runtime from a Lua script
+p1:brake()
 )";
 
 	// Uncomment and use the file to try that out, too!
 	// Make sure it's in the local directory of the executable after you build, or adjust the filename path
 	// Or whatever else you like!
+	//lua.script_file("prelude_script.lua");
 	//lua.script_file("player_script.lua");
+	lua.script(prelude_script);
 	lua.script(player_script);
 	std::cout << std::endl;
 }

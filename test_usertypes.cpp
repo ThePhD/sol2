@@ -715,7 +715,6 @@ TEST_CASE("usertype/overloading", "Check if overloading works properly for usert
 	REQUIRE((lua["a"] == 1));
 	REQUIRE((lua["b"] == 3.5));
 	REQUIRE((lua["c"] == bark_58));
-
 	REQUIRE_THROWS(lua.script("r:func(1,2,'meow')"));
 }
 
@@ -1036,28 +1035,47 @@ TEST_CASE("usertype/blank_constructor", "make sure lua types cannot be construct
 
 
 TEST_CASE("usertype/no_constructor", "make sure lua types cannot be constructed if a blank / empty constructor is provided") {
-	sol::state lua;
-	lua.open_libraries(sol::lib::base);
-
-	SECTION("order1")
-	{
+	
+	SECTION("order1") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
 		lua.new_usertype<thing>("thing",
-		"v", &thing::v
-		, sol::call_constructor, sol::no_constructor
+			"v", &thing::v, 
+			sol::call_constructor, sol::no_constructor
 		);
-		REQUIRE_THROWS(lua.script("t = thing.new()"));
+		REQUIRE_THROWS(lua.script("t = thing()"));
 	}
 
-	SECTION("order2")
-	{
-		lua.new_usertype<thing>("thing"
-			, sol::call_constructor, sol::no_constructor
-			, "v", &thing::v
+	SECTION("order2") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+		
+		lua.new_usertype<thing>("thing",
+			sol::call_constructor, sol::no_constructor, 
+			"v", &thing::v
 		);
 		REQUIRE_THROWS(lua.script("t = thing.new()"));
 	}
 	
-	REQUIRE_THROWS(lua.script("t = thing.new()"));
+	SECTION("new no_constructor") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_usertype<thing>("thing",
+			sol::meta_function::construct, sol::no_constructor
+			);
+		REQUIRE_THROWS(lua.script("a = thing.new()"));
+	}
+
+	SECTION("call no_constructor") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_usertype<thing>("thing",
+			sol::call_constructor, sol::no_constructor
+			);
+		REQUIRE_THROWS(lua.script("a = thing()"));
+	}
 }
 
 TEST_CASE("usertype/coverage", "try all the things") {
@@ -1202,7 +1220,7 @@ TEST_CASE("usertype/protect", "users should be allowed to manually protect a fun
 		lua.script(R"__(
 pm = protect_me.new()
 value = pcall(pm.gen,pm)
-)__");
+)__")
 	);
 	bool value = lua["value"];
 	REQUIRE_FALSE(value);
@@ -1246,10 +1264,10 @@ TEST_CASE("usertype/shared-ptr-regression", "usertype metatables should not scre
 	REQUIRE(destroyed == 1);
 }
 
-TEST_CASE("usertype/double-deleter-guards", "usertype metatables internally must not rely on internal ") {
+TEST_CASE("usertype/double-deleter-guards", "usertype metatables internally must not rely on C++ state") {
 	struct c_a { int x; };
 	struct c_b { int y; };
-	REQUIRE_NOTHROW( {
+	auto routine = []() {
 		sol::state lua;
 		lua.new_usertype<c_a>("c_a", "x", &c_a::x);
 		lua.new_usertype<c_b>("c_b", "y", &c_b::y);
@@ -1257,7 +1275,8 @@ TEST_CASE("usertype/double-deleter-guards", "usertype metatables internally must
 		lua.new_usertype<c_a>("c_a", "x", &c_a::x);
 		lua.new_usertype<c_b>("c_b", "y", &c_b::y);
 		lua = sol::state();
-	});
+	};
+	REQUIRE_NOTHROW(routine());
 }
 
 TEST_CASE("usertype/vars", "usertype vars can bind various class items") {
@@ -1335,7 +1354,7 @@ print(test.ref_global2)
 	REQUIRE(through_variable == 35);
 }
 
-TEST_CASE("usertypes/var-and-property", "make sure const vars are readonly and properties can handle lambdas") {
+TEST_CASE("usertype/var-and-property", "make sure const vars are readonly and properties can handle lambdas") {
 	const static int arf = 20;
 
 	struct test {
@@ -1401,13 +1420,13 @@ TEST_CASE("usertype/unique_usertype-check", "make sure unique usertypes don't ge
 )");
 
 	sol::function my_func = lua["my_func"];
-	REQUIRE_NOTHROW({
+	REQUIRE_NOTHROW([&]{
 	auto ent = std::make_shared<Entity>();
 	my_func(ent);
 	Entity ent2;
 	my_func(ent2);
 	my_func(std::make_shared<Entity>());
-	});
+	}());
 }
 
 TEST_CASE("usertype/abstract-base-class", "Ensure that abstract base classes and such can be registered") {	
@@ -1491,4 +1510,168 @@ a = A(24.3)
 )");
 	A& a = lua["a"];
 	REQUIRE(a.f == 24.3);
+}
+
+TEST_CASE("usertype/missing-key", "make sure a missing key returns nil") {
+	struct thing {};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_usertype<thing>("thing");
+	REQUIRE_NOTHROW(lua.script("v = thing.missingKey\nprint(v)"));
+	sol::object o = lua["v"];
+	bool isnil = o.is<sol::lua_nil_t>();
+	REQUIRE(isnil);
+}
+
+TEST_CASE("usertype/runtime-extensibility", "Check if usertypes are runtime extensible") {
+	struct thing {
+		int v = 20;
+		int func(int a) { return a; }
+	};
+	int val = 0;
+
+	SECTION("just functions") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_usertype<thing>("thing",
+			"func", &thing::func
+			);
+
+		lua.script(R"(
+t = thing.new()
+		)");
+
+		REQUIRE_THROWS([&lua]() {
+			lua.script(R"(
+t.runtime_func = function (a)
+	return a + 50
+end
+		)");
+		}());
+
+		REQUIRE_THROWS([&lua]() {
+			lua.script(R"(
+function t:runtime_func(a)
+	return a + 52
+end
+		)");
+		}());
+
+		lua.script("val = t:func(2)");
+		val = lua["val"];
+		REQUIRE(val == 2);
+
+		REQUIRE_NOTHROW([&lua]() {
+			lua.script(R"(
+function thing:runtime_func(a)
+	return a + 1
+end
+		)");
+		}());
+
+		lua.script("val = t:runtime_func(2)");
+		val = lua["val"];
+		REQUIRE(val == 3);
+	}
+	SECTION("with variable") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_usertype<thing>("thing",
+			"func", &thing::func,
+			"v", &thing::v
+			);
+
+		lua.script(R"(
+t = thing.new()
+		)");
+
+		REQUIRE_THROWS([&lua]() {
+			lua.script(R"(
+t.runtime_func = function (a)
+	return a + 50
+end
+		)");
+		}());
+
+		REQUIRE_THROWS([&lua]() {
+			lua.script(R"(
+function t:runtime_func(a)
+	return a + 52
+end
+		)");
+		}());
+
+		lua.script("val = t:func(2)");
+		val = lua["val"];
+		REQUIRE(val == 2);
+
+		REQUIRE_NOTHROW([&lua]() {
+			lua.script(R"(
+function thing:runtime_func(a)
+	return a + 1
+end
+		)");
+		}());
+
+		lua.script("val = t:runtime_func(2)");
+		val = lua["val"];
+		REQUIRE(val == 3);
+	}
+}
+
+TEST_CASE("usertype/meta-key-retrievals", "allow for special meta keys (__index, __newindex) to trigger methods even if overwritten directly") {
+	SECTION("dynamically") {
+		static int writes = 0;
+		static std::string keys[2] = {};
+		static int values[2] = {};
+		struct d_sample {
+			void foo(std::string k, int v) {
+				keys[writes] = k;
+				values[writes] = v;
+				++writes;
+			}
+		};
+
+		sol::state state;
+		state.new_usertype<d_sample>("sample");
+		sol::table s = state["sample"]["new"]();
+		s[sol::metatable_key][sol::meta_function::new_index] = &d_sample::foo;
+		state["var"] = s;
+
+
+		state.script("var.key = 2");
+		state.script("var.__newindex = 4");
+		REQUIRE(values[0] == 2);
+		REQUIRE(keys[0] == "key");
+		REQUIRE(values[1] == 4);
+		REQUIRE(keys[1] == "__newindex");
+	}
+
+	SECTION("statically") {
+		static int writes = 0;
+		static std::string keys[2] = {};
+		static int values[2] = {};
+		struct sample {
+			void foo(std::string k, int v) {
+				keys[writes] = k;
+				values[writes] = v;
+				++writes;
+			}
+		};
+
+		sol::state state;
+		state.new_usertype<sample>("sample", sol::meta_function::new_index, &sample::foo);
+
+		state.script("var = sample.new()");
+		state.script("var.key = 2");
+		state.script("var.__newindex = 4");
+		REQUIRE(values[0] == 2);
+		REQUIRE(keys[0] == "key");
+		REQUIRE(values[1] == 4);
+		REQUIRE(keys[1] == "__newindex");
+	}
 }

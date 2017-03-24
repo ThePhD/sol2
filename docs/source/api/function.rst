@@ -5,13 +5,14 @@ calling functions bound to Lua
 
 .. note::
 
-	This abstraction assumes the function runs safely. If you expect your code to have errors (e.g., you don't always have explicit control over it or are trying to debug errors), please use :doc:`sol::protected_function<protected_function>`.
+	This abstraction assumes the function runs safely. If you expect your code to have errors (e.g., you don't always have explicit control over it or are trying to debug errors), please use :doc:`sol::protected_function<protected_function>` explicitly.
 
 .. code-block:: cpp
 	
-	class function : public reference;
+	class unsafe_function : public reference;
+	typedef unsafe_function function;
 
-Function is a correct-assuming version of :doc:`protected_function<protected_function>`, omitting the need for typechecks and error handling. It is the default function type of Sol. Grab a function directly off the stack using the constructor:
+Function is a correct-assuming version of :doc:`protected_function<protected_function>`, omitting the need for typechecks and error handling (thus marginally increasing speed in some cases). It is the default function type of Sol. Grab a function directly off the stack using the constructor:
 
 .. code-block:: cpp
 	:caption: constructor: function

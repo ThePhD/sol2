@@ -23,6 +23,8 @@ It is preferred if you catch an error that you log what happened, terminate the 
 
 Lua is a C API first and foremost: exceptions bubbling out of it is essentially last-ditch, terminal behavior that the VM does not expect. You can see an example of handling a panic on the exceptions page :ref:`here<typical-panic-function>`.
 
+Furthermore, it would be a great idea for you to use the safety features talked about :doc:`safety section<safety>`, especially for those related to functions.
+
 
 Destructors and Safety
 ----------------------

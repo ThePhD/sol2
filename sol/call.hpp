@@ -28,6 +28,12 @@
 #include "stack.hpp"
 
 namespace sol {
+	namespace function_detail {
+		inline int no_construction_error(lua_State* L) {
+			return luaL_error(L, "sol: cannot call this constructor (tagged as non-constructible)");
+		}
+	}
+
 	namespace call_detail {
 
 		template <typename R, typename W>
@@ -41,7 +47,7 @@ namespace sol {
 		}
 
 		template <typename T, typename List>
-		struct void_call;
+		struct void_call : void_call<T, meta::function_args_t<List>> {};
 
 		template <typename T, typename... Args>
 		struct void_call<T, types<Args...>> {
@@ -244,7 +250,7 @@ namespace sol {
 		template <bool is_index, bool is_variable, bool checked, int boost, typename C>
 		struct agnostic_lua_call_wrapper<no_construction, is_index, is_variable, checked, boost, C> {
 			static int call(lua_State* L, const no_construction&) {
-				return luaL_error(L, "sol: cannot call this constructor (tagged as non-constructible)");
+				return function_detail::no_construction_error(L);
 			}
 		};
 
@@ -339,12 +345,12 @@ namespace sol {
 
 			template <typename V>
 			static int call(lua_State* L, V&& f) {
-				return call_const(std::is_const<typename traits_type::return_type>(), L, f);
+				return call_const(std::is_const<typename traits_type::return_type>(), L, std::forward<V>(f));
 			}
 
 			template <typename V>
 			static int call(lua_State* L, V&& f, object_type& o) {
-				return call_const(std::is_const<typename traits_type::return_type>(), L, f, o);
+				return call_const(std::is_const<typename traits_type::return_type>(), L, std::forward<V>(f), o);
 			}
 		};
 
@@ -358,7 +364,7 @@ namespace sol {
 			static int call(lua_State* L, V&& f, object_type& o) {
 				typedef typename wrap::returns_list returns_list;
 				typedef typename wrap::caller caller;
-				return stack::call_into_lua<checked>(returns_list(), types<>(), L, boost + ( is_variable ? 3 : 2 ), caller(), f, o);
+				return stack::call_into_lua<checked>(returns_list(), types<>(), L, boost + ( is_variable ? 3 : 2 ), caller(), std::forward<V>(f), o);
 			}
 
 			template <typename V>

@@ -8,9 +8,13 @@ general purpose reference to Lua object in registry
 		
 	class reference;
 
-This type keeps around a reference to something that was on the stack and places it in the Lua registry. It is the backbone for all things that reference items on the stack and needs to keep them around beyond their appearance and lifetime on said Lua stack. Its progeny include :doc:`sol::coroutine<coroutine>`, :doc:`sol::function<function>`, :doc:`sol::protected_function<protected_function>`, :doc:`sol::object<object>`, :doc:`sol::table<table>`/:doc:`sol::global_table<table>`, :doc:`sol::thread<thread>`, and :doc:`sol::userdata<userdata>`.
+This type keeps around a reference to something inside of Lua, whether that object was on the stack or already present as an object in the Lua Runtime. It places the object Lua registry and will keep it alive.
 
-For all of these types, there's also a ``stack_{x}`` version of them, such as ``stack_table``
+It is the backbone for all things that reference items on the stack and needs to keep them around beyond their appearance and lifetime on said Lua stack or need to be kept alive outside of a script beyond garbage collection times. Its progeny include :doc:`sol::coroutine<coroutine>`, :doc:`sol::function<function>`, :doc:`sol::protected_function<protected_function>`, :doc:`sol::object<object>`, :doc:`sol::table<table>`/:doc:`sol::global_table<table>`, :doc:`sol::thread<thread>`, and :doc:`sol::userdata<userdata>`, which are type-specific versions of ``sol::reference``.
+
+Note that if you need to keep a reference to something inside of Lua, it is better to use ``sol::reference`` or :doc:`sol::object<object>` to keep a reference to it and then use the ``obj.as<T>()`` member function to retrieve what you need than to take a direct dependency on the memory by retrieving a pointer or reference to the userdata itself. This will ensure that if a script or the Lua Runtime is finished with an object, it will not be garbage collected. Do this only if you need long-term storage.
+
+For all of these types, there's also a ``sol::stack_{x}`` version of them, such as ``sol::stack_table``.
 
 
 members

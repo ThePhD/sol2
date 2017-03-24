@@ -402,6 +402,8 @@ namespace sol {
 		bitwise_and,
 		bitwise_or,
 		bitwise_xor,
+		pairs,
+		next
 	};
 
 	typedef meta_function meta_method;
@@ -411,7 +413,7 @@ namespace sol {
 		"__newindex",
 	} };
 
-	const std::array<std::string, 21> meta_function_names = { {
+	const std::array<std::string, 29> meta_function_names = { {
 		"new",
 		"__index",
 		"__newindex",
@@ -432,6 +434,17 @@ namespace sol {
 		"__lt",
 		"__le",
 		"__gc",
+		
+		"__idiv",
+		"__shl",
+		"__shr",
+		"__bnot",
+		"__band",
+		"__bor",
+		"__bxor",
+
+		"__pairs",
+		"__next"
 	} };
 
 	inline const std::string& name_of(meta_function mf) {
@@ -497,10 +510,19 @@ namespace sol {
 	class basic_function;
 	template <typename T>
 	class basic_protected_function;
-	using function = basic_function<reference>;
 	using protected_function = basic_protected_function<reference>;
-	using stack_function = basic_function<stack_reference>;
 	using stack_protected_function = basic_protected_function<stack_reference>;
+	using unsafe_function = basic_function<reference>;
+	using safe_function = basic_protected_function<reference>;
+	using stack_unsafe_function = basic_function<stack_reference>;
+	using stack_safe_function = basic_protected_function<stack_reference>;
+#ifdef SOL_SAFE_FUNCTIONS
+	using function = protected_function;
+	using stack_function = stack_protected_function;
+#else
+	using function = unsafe_function;
+	using stack_function = stack_unsafe_function;
+#endif
 	template <typename base_t>
 	class basic_object;
 	template <typename base_t>
@@ -687,10 +709,14 @@ namespace sol {
 	struct is_unique_usertype : std::integral_constant<bool, unique_usertype_traits<T>::value> {};
 
 	template <typename T>
-	struct lua_type_of : detail::lua_type_of<T> {};
+	struct lua_type_of : detail::lua_type_of<T> {
+		typedef int SOL_INTERNAL_UNSPECIALIZED_MARKER_;
+	};
 
 	template <typename T>
-	struct lua_size : std::integral_constant<int, 1> { };
+	struct lua_size : std::integral_constant<int, 1> { 
+		typedef int SOL_INTERNAL_UNSPECIALIZED_MARKER_; 
+	};
 
 	template <typename A, typename B>
 	struct lua_size<std::pair<A, B>> : std::integral_constant<int, lua_size<A>::value + lua_size<B>::value> { };
@@ -698,10 +724,24 @@ namespace sol {
 	template <typename... Args>
 	struct lua_size<std::tuple<Args...>> : std::integral_constant<int, detail::accumulate<int, 0, lua_size, Args...>::value> { };
 
+	namespace detail {
+		template <typename...>
+		struct void_ { typedef void type; };
+		template <typename T, typename = void>
+		struct has_internal_marker_impl : std::false_type {};
+		template <typename T>
+		struct has_internal_marker_impl<T, typename void_<typename T::SOL_INTERNAL_UNSPECIALIZED_MARKER_>::type> : std::true_type {};
+
+		template <typename T>
+		struct has_internal_marker : has_internal_marker_impl<T> {};
+	}
+
 	template <typename T>
 	struct is_lua_primitive : std::integral_constant<bool,
 		type::userdata != lua_type_of<meta::unqualified_t<T>>::value
-		|| (lua_size<T>::value > 1)
+		|| ((type::userdata == lua_type_of<meta::unqualified_t<T>>::value) 
+			&& detail::has_internal_marker<lua_type_of<meta::unqualified_t<T>>>::value 
+			&& !detail::has_internal_marker<lua_size<meta::unqualified_t<T>>>::value)
 		|| std::is_base_of<reference, meta::unqualified_t<T>>::value
 		|| std::is_base_of<stack_reference, meta::unqualified_t<T>>::value
 		|| meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>::value

@@ -24,6 +24,11 @@ These are template class/structs, so you'll override them using a technique C++ 
 		template <>
 		struct lua_size<two_things> : std::integral_constant<int, 2> {};
 
+		// Then, specialize the type to match:
+		// this has multiple types, so we consider it a "poly" type.
+		template <>
+		struct lua_type_of<two_things> : std::integral_constant<sol::type, sol::type::poly> {};
+
 		// Now, specialize various stack structures
 		namespace stack {
 
