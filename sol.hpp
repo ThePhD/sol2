@@ -58,7 +58,11 @@
 
 #ifdef SOL_INSIDE_UNREAL
 #ifdef SOL_INSIDE_UNREAL_REMOVED_CHECK
-#define check(expr) { if(UNLIKELY(!(expr))) { FDebug::LogAssertFailedMessage( #expr, __FILE__, __LINE__ ); _DebugBreakAndPromptForRemote(); FDebug::AssertFailed( #expr, __FILE__, __LINE__ ); CA_ASSUME(false); } }}
+#if DO_CHECK
+#define check(expr) { if(UNLIKELY(!(expr))) { FDebug::LogAssertFailedMessage( #expr, __FILE__, __LINE__ ); _DebugBreakAndPromptForRemote(); FDebug::AssertFailed( #expr, __FILE__, __LINE__ ); CA_ASSUME(false); } }
+#else
+#define check(expr) { CA_ASSUME(expr); }
+#endif
 #endif 
 #endif // Unreal Engine 4 Bullshit
 

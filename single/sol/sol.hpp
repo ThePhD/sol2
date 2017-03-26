@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-03-26 00:27:50.587713 UTC
-// This header was generated with sol v2.16.0 (revision 3342e65)
+// Generated 2017-03-26 15:27:07.597060 UTC
+// This header was generated with sol v2.16.0 (revision e27922e)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -13343,7 +13343,11 @@ namespace sol {
 
 #ifdef SOL_INSIDE_UNREAL
 #ifdef SOL_INSIDE_UNREAL_REMOVED_CHECK
-#define check(expr) { if(UNLIKELY(!(expr))) { FDebug::LogAssertFailedMessage( #expr, __FILE__, __LINE__ ); _DebugBreakAndPromptForRemote(); FDebug::AssertFailed( #expr, __FILE__, __LINE__ ); CA_ASSUME(false); } }}
+#if DO_CHECK
+#define check(expr) { if(UNLIKELY(!(expr))) { FDebug::LogAssertFailedMessage( #expr, __FILE__, __LINE__ ); _DebugBreakAndPromptForRemote(); FDebug::AssertFailed( #expr, __FILE__, __LINE__ ); CA_ASSUME(false); } }
+#else
+#define check(expr) { CA_ASSUME(expr); }
+#endif
 #endif 
 #endif // Unreal Engine 4 Bullshit
 
