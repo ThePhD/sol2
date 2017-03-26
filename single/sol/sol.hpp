@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-03-24 01:12:07.656967 UTC
-// This header was generated with sol v2.16.0 (revision 7c29964)
+// Generated 2017-03-26 00:27:50.587713 UTC
+// This header was generated with sol v2.16.0 (revision 3342e65)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -9462,7 +9462,7 @@ namespace sol {
 		template <typename Super>
 		basic_protected_function(proxy_base<Super>&& p, reference eh = get_default_handler()) : basic_protected_function(p.operator basic_function<base_t>(), std::move(eh)) {}
 		template <typename Super>
-		basic_protected_function(const proxy_base<Super>& p, reference eh = get_default_handler()) : basic_protected_function(static_cast<basic_function<base_t>>(p), std::move(eh)) {}
+		basic_protected_function(const proxy_base<Super>& p, reference eh = get_default_handler()) : basic_protected_function(p.operator basic_function<base_t>(), std::move(eh)) {}
 		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<T, ref_index>>> = meta::enabler>
 		basic_protected_function(lua_State* L, T&& r, reference eh) : basic_protected_function(L, sol::ref_index(r.registry_index()), std::move(eh)) {}
 		basic_protected_function(lua_State* L, int index = -1, reference eh = get_default_handler()) : base_t(L, index), error_handler(std::move(eh)) {
