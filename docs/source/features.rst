@@ -10,7 +10,7 @@ For the hard technical components of Lua and its ecosystem we support, here is t
 what Sol supports
 -----------------
 
-* Support for Lua 5.1, 5.2, and 5.3. We achieve this through our :doc:`compatibility<compatibility>` header.
+* Support for Lua 5.1, 5.2, and 5.3. We achieve this through our :doc:`compatibility<api/compatibility>` header.
 
 * :doc:`Table<api/table>` support: setting values, getting values of multiple (different) types
 	- :doc:`Lazy evaluation<api/proxy>` for nested/chained queries
