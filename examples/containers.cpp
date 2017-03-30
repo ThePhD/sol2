@@ -11,13 +11,15 @@ int main(int, char**) {
 	lua.open_libraries();
 
 	lua.script(R"(
-		function f (x)
-			print('--- Calling f ---')
-			for k, v in pairs(x) do
-				print(k, v)
-			end
-		end
-		)");
+function f (x)
+	print("container has:")
+	for k=1,#x do
+		v = x[k]
+		print("\t", k, v)
+	end
+	print()
+end
+	)");
 
 	// Have the function we 
 	// just defined in Lua
@@ -41,6 +43,21 @@ int main(int, char**) {
 	// printed out
 	f(lua["arr"]);
 
+	lua.script(R"(
+arr:add(28)
+	)");
+
+	// Call it, see *7* elements
+	// printed out
+	f(lua["arr"]);
+
+	lua.script(R"(
+arr:clear()
+	)");
+
+	// Now it's empty
+	f(lua["arr"]);
+	
 	std::cout << std::endl;
 
 	return 0;
