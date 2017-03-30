@@ -81,6 +81,11 @@ namespace sol {
 		struct getter<as_table_t<T>, std::enable_if_t<!meta::has_key_value_pair<meta::unqualified_t<T>>::value>> {
 			static T get(lua_State* L, int relindex, record& tracking) {
 				typedef typename T::value_type V;
+				return get(types<V>(), L, relindex, tracking);
+			}
+
+			template <typename V>
+			static T get(types<V>, lua_State* L, int relindex, record& tracking) {
 				tracking.use(1);
 
 				int index = lua_absindex(L, relindex);
@@ -136,10 +141,15 @@ namespace sol {
 				typedef typename T::value_type P;
 				typedef typename P::first_type K;
 				typedef typename P::second_type V;
+				return get(types<K, V>(), L, index, tracking);
+			}
+			
+			template <typename K, typename V>
+			static T get(types<K, V>, lua_State* L, int relindex, record& tracking) {
 				tracking.use(1);
 
 				T associative;
-				index = lua_absindex(L, index);
+				int index = lua_absindex(L, relindex);
 				lua_pushnil(L);
 				while (lua_next(L, index) != 0) {
 					decltype(auto) key = stack::check_get<K>(L, -2);
@@ -151,6 +161,40 @@ namespace sol {
 					lua_pop(L, 1);
 				}
 				return associative;
+			}
+		};
+
+		template<typename T>
+		struct getter<nested<T>, std::enable_if_t<!is_container<T>::value>> {
+			static T get(lua_State* L, int index, record& tracking) {
+				getter<T> g;
+				// VC++ has a bad warning here: shut it up
+				(void)g;
+				return g.get(L, index, tracking);
+			}
+		};
+		
+		template<typename T>
+		struct getter<nested<T>, std::enable_if_t<meta::all<is_container<T>, meta::neg<meta::has_key_value_pair<meta::unqualified_t<T>>>>::value>> {
+			static T get(lua_State* L, int index, record& tracking) {
+				typedef typename T::value_type V;
+				getter<as_table_t<T>> g;
+				// VC++ has a bad warning here: shut it up
+				(void)g;
+				return g.get(types<nested<V>>(), L, index, tracking);
+			}
+		};
+
+		template<typename T>
+		struct getter<nested<T>, std::enable_if_t<meta::all<is_container<T>, meta::has_key_value_pair<meta::unqualified_t<T>>>::value>> {
+			static T get(lua_State* L, int index, record& tracking) {
+				typedef typename T::value_type P;
+				typedef typename P::first_type K;
+				typedef typename P::second_type V;
+				getter<as_table_t<T>> g;
+				// VC++ has a bad warning here: shut it up
+				(void)g;
+				return g.get(types<K, nested<V>>(), L, index, tracking);
 			}
 		};
 
@@ -467,35 +511,50 @@ namespace sol {
 					tracking.use(1);
 					return nullptr;
 				}
-				return getter<detail::as_value_tag<T>>::get_no_lua_nil(L, index, tracking);
+				getter<detail::as_value_tag<T>> g;
+				// Avoid VC++ warning
+				(void)g;
+				return g.get_no_lua_nil(L, index, tracking);
 			}
 		};
 
 		template<typename T>
 		struct getter<non_null<T*>> {
 			static T* get(lua_State* L, int index, record& tracking) {
-				return getter<detail::as_value_tag<T>>::get_no_lua_nil(L, index, tracking);
+				getter<detail::as_value_tag<T>> g;
+				// Avoid VC++ warning
+				(void)g;
+				return g.get_no_lua_nil(L, index, tracking);
 			}
 		};
 
 		template<typename T>
 		struct getter<T&> {
 			static T& get(lua_State* L, int index, record& tracking) {
-				return getter<detail::as_value_tag<T>>::get(L, index, tracking);
+				getter<detail::as_value_tag<T>> g;
+				// Avoid VC++ warning
+				(void)g;
+				return g.get(L, index, tracking);
 			}
 		};
 
 		template<typename T>
 		struct getter<std::reference_wrapper<T>> {
 			static T& get(lua_State* L, int index, record& tracking) {
-				return getter<T&>{}.get(L, index, tracking);
+				getter<T&> g;
+				// Avoid VC++ warning
+				(void)g;
+				return g.get(L, index, tracking);
 			}
 		};
 
 		template<typename T>
 		struct getter<T*> {
 			static T* get(lua_State* L, int index, record& tracking) {
-				return getter<detail::as_pointer_tag<T>>::get(L, index, tracking);
+				getter<detail::as_pointer_tag<T>> g;
+				// Avoid VC++ warning
+				(void)g;
+				return g.get(L, index, tracking);
 			}
 		};
 

@@ -259,7 +259,7 @@ namespace sol {
 					return true;
 				}
 				if (t != type::userdata) {
-					handler(L, index, type::function, t);
+					handler(L, index, type::table, t);
 					return false;
 				}
 				return true;

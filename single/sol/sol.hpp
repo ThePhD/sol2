@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-03-30 08:20:24.093445 UTC
-// This header was generated with sol v2.16.0 (revision 4f72880)
+// Generated 2017-03-30 18:11:26.562402 UTC
+// This header was generated with sol v2.16.0 (revision 92d31b3)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3287,6 +3287,18 @@ namespace sol {
 	};
 
 	template <typename T>
+	struct nested {
+		T source;
+		
+		template <typename... Args>
+		nested(Args&&... args) : source(std::forward<Args>(args)...) {}
+
+		operator std::add_lvalue_reference_t<T>() {
+			return source;
+		}
+	};
+
+	template <typename T>
 	as_table_t<T> as_table(T&& container) {
 		return as_table_t<T>(std::forward<T>(container));
 	}
@@ -3674,6 +3686,18 @@ namespace sol {
 		template <typename T, typename C = void>
 		struct is_container : std::false_type {};
 
+		template <>
+		struct is_container<std::string> : std::false_type {};
+
+		template <>
+		struct is_container<std::wstring> : std::false_type {};
+
+		template <>
+		struct is_container<std::u16string> : std::false_type {};
+
+		template <>
+		struct is_container<std::u32string> : std::false_type {};
+
 		template <typename T>
 		struct is_container<T, std::enable_if_t<meta::has_begin_end<meta::unqualified_t<T>>::value>> : std::true_type {};
 
@@ -3810,6 +3834,14 @@ namespace sol {
 	inline type type_of() {
 		return lua_type_of<meta::unqualified_t<T>>::value;
 	}
+
+	namespace detail {
+		template <typename T>
+		struct lua_type_of<nested<T>, std::enable_if_t<::sol::is_container<T>::value>> : std::integral_constant<type, type::table> {};
+
+		template <typename T>
+		struct lua_type_of<nested<T>, std::enable_if_t<!::sol::is_container<T>::value>> : lua_type_of<T> {};
+	} // detail
 } // sol
 
 // end of sol/types.hpp
@@ -5131,7 +5163,7 @@ namespace sol {
 					return true;
 				}
 				if (t != type::userdata) {
-					handler(L, index, type::function, t);
+					handler(L, index, type::table, t);
 					return false;
 				}
 				return true;
@@ -5330,6 +5362,11 @@ namespace sol {
 		struct getter<as_table_t<T>, std::enable_if_t<!meta::has_key_value_pair<meta::unqualified_t<T>>::value>> {
 			static T get(lua_State* L, int relindex, record& tracking) {
 				typedef typename T::value_type V;
+				return get(types<V>(), L, relindex, tracking);
+			}
+
+			template <typename V>
+			static T get(types<V>, lua_State* L, int relindex, record& tracking) {
 				tracking.use(1);
 
 				int index = lua_absindex(L, relindex);
@@ -5385,10 +5422,15 @@ namespace sol {
 				typedef typename T::value_type P;
 				typedef typename P::first_type K;
 				typedef typename P::second_type V;
+				return get(types<K, V>(), L, index, tracking);
+			}
+			
+			template <typename K, typename V>
+			static T get(types<K, V>, lua_State* L, int relindex, record& tracking) {
 				tracking.use(1);
 
 				T associative;
-				index = lua_absindex(L, index);
+				int index = lua_absindex(L, relindex);
 				lua_pushnil(L);
 				while (lua_next(L, index) != 0) {
 					decltype(auto) key = stack::check_get<K>(L, -2);
@@ -5400,6 +5442,40 @@ namespace sol {
 					lua_pop(L, 1);
 				}
 				return associative;
+			}
+		};
+
+		template<typename T>
+		struct getter<nested<T>, std::enable_if_t<!is_container<T>::value>> {
+			static T get(lua_State* L, int index, record& tracking) {
+				getter<T> g;
+				// VC++ has a bad warning here: shut it up
+				(void)g;
+				return g.get(L, index, tracking);
+			}
+		};
+		
+		template<typename T>
+		struct getter<nested<T>, std::enable_if_t<meta::all<is_container<T>, meta::neg<meta::has_key_value_pair<meta::unqualified_t<T>>>>::value>> {
+			static T get(lua_State* L, int index, record& tracking) {
+				typedef typename T::value_type V;
+				getter<as_table_t<T>> g;
+				// VC++ has a bad warning here: shut it up
+				(void)g;
+				return g.get(types<nested<V>>(), L, index, tracking);
+			}
+		};
+
+		template<typename T>
+		struct getter<nested<T>, std::enable_if_t<meta::all<is_container<T>, meta::has_key_value_pair<meta::unqualified_t<T>>>::value>> {
+			static T get(lua_State* L, int index, record& tracking) {
+				typedef typename T::value_type P;
+				typedef typename P::first_type K;
+				typedef typename P::second_type V;
+				getter<as_table_t<T>> g;
+				// VC++ has a bad warning here: shut it up
+				(void)g;
+				return g.get(types<K, nested<V>>(), L, index, tracking);
 			}
 		};
 
@@ -5716,35 +5792,50 @@ namespace sol {
 					tracking.use(1);
 					return nullptr;
 				}
-				return getter<detail::as_value_tag<T>>::get_no_lua_nil(L, index, tracking);
+				getter<detail::as_value_tag<T>> g;
+				// Avoid VC++ warning
+				(void)g;
+				return g.get_no_lua_nil(L, index, tracking);
 			}
 		};
 
 		template<typename T>
 		struct getter<non_null<T*>> {
 			static T* get(lua_State* L, int index, record& tracking) {
-				return getter<detail::as_value_tag<T>>::get_no_lua_nil(L, index, tracking);
+				getter<detail::as_value_tag<T>> g;
+				// Avoid VC++ warning
+				(void)g;
+				return g.get_no_lua_nil(L, index, tracking);
 			}
 		};
 
 		template<typename T>
 		struct getter<T&> {
 			static T& get(lua_State* L, int index, record& tracking) {
-				return getter<detail::as_value_tag<T>>::get(L, index, tracking);
+				getter<detail::as_value_tag<T>> g;
+				// Avoid VC++ warning
+				(void)g;
+				return g.get(L, index, tracking);
 			}
 		};
 
 		template<typename T>
 		struct getter<std::reference_wrapper<T>> {
 			static T& get(lua_State* L, int index, record& tracking) {
-				return getter<T&>{}.get(L, index, tracking);
+				getter<T&> g;
+				// Avoid VC++ warning
+				(void)g;
+				return g.get(L, index, tracking);
 			}
 		};
 
 		template<typename T>
 		struct getter<T*> {
 			static T* get(lua_State* L, int index, record& tracking) {
-				return getter<detail::as_pointer_tag<T>>::get(L, index, tracking);
+				getter<detail::as_pointer_tag<T>> g;
+				// Avoid VC++ warning
+				(void)g;
+				return g.get(L, index, tracking);
 			}
 		};
 
