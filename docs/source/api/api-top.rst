@@ -13,6 +13,7 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    table
    proxy
    containers
+   nested
    as_table
    usertype
    simple_usertype

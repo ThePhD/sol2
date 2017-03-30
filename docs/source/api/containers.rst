@@ -5,6 +5,8 @@ for handling ``std::vector/map/set`` and others
 
 Sol2 automatically converts containers (detected using the ``sol::is_container<T>`` type trait, which simply looks for begin / end) to be a special kind of userdata with metatable on it. For Lua 5.2 and 5.3, this is extremely helpful as you can make typical containers behave like Lua tables without losing the actual container that they came from, as well as a small amount of indexing and other operations that behave properly given the table type.
 
+If you need to deal with these things from Lua as tables, please consider :doc:`sol::as_table<as_table>` and :doc:`sol::nested<nested>`.
+
 
 a complete example
 ------------------
