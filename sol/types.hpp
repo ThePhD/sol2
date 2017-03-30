@@ -611,6 +611,9 @@ namespace sol {
 		template <bool b, typename Base>
 		struct lua_type_of<basic_table_core<b, Base>> : std::integral_constant<type, type::table> { };
 
+		template <typename T>
+		struct lua_type_of<as_table_t<T>> : std::integral_constant<type, type::table> {};
+
 		template <>
 		struct lua_type_of<reference> : std::integral_constant<type, type::poly> {};
 

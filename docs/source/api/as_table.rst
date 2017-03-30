@@ -26,3 +26,7 @@ Note that any caveats with Lua tables apply the moment it is serialized, and the
 If you need this functionality with a member variable, use a :doc:`property on a getter function<property>` that returns the result of ``sol::as_table``.
 
 This marker does NOT apply to :doc:`usertypes<usertype>`.
+
+You can also use this to nest types and retrieve tables within tables as shown by `this example`_.
+
+.. _this example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_simple.cpp
