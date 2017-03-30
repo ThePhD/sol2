@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-03-26 15:27:07.597060 UTC
-// This header was generated with sol v2.16.0 (revision e27922e)
+// Generated 2017-03-30 08:20:24.093445 UTC
+// This header was generated with sol v2.16.0 (revision 4f72880)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3590,6 +3590,9 @@ namespace sol {
 		template <bool b, typename Base>
 		struct lua_type_of<basic_table_core<b, Base>> : std::integral_constant<type, type::table> { };
 
+		template <typename T>
+		struct lua_type_of<as_table_t<T>> : std::integral_constant<type, type::table> {};
+
 		template <>
 		struct lua_type_of<reference> : std::integral_constant<type, type::poly> {};
 
@@ -5325,53 +5328,50 @@ namespace sol {
 
 		template<typename T>
 		struct getter<as_table_t<T>, std::enable_if_t<!meta::has_key_value_pair<meta::unqualified_t<T>>::value>> {
-			static T get(lua_State* L, int index, record& tracking) {
+			static T get(lua_State* L, int relindex, record& tracking) {
 				typedef typename T::value_type V;
 				tracking.use(1);
 
-				index = lua_absindex(L, index);
+				int index = lua_absindex(L, relindex);
 				T arr;
-				get_field<false, true>(L, static_cast<lua_Integer>(-1), index);
-				int isnum;
-				std::size_t sizehint = static_cast<std::size_t>(lua_tointegerx(L, -1, &isnum));
-				if (isnum != 0) {
-					detail::reserve(arr, sizehint);
-				}
-				lua_pop(L, 1);
 #if SOL_LUA_VERSION >= 503
 				// This method is HIGHLY performant over regular table iteration thanks to the Lua API changes in 5.3
 				for (lua_Integer i = 0; ; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
+					bool isnil = false;
 					for (int vi = 0; vi < lua_size<V>::value; ++vi) {
 						type t = static_cast<type>(lua_geti(L, index, i + vi));
-						if (t == type::lua_nil) {
+						isnil = t == type::lua_nil;
+						if (isnil) {
 							if (i == 0) {
-								continue;
+								break;
 							}
-							else {
-								lua_pop(L, (vi + 1));
-								return arr;
-							}
+							lua_pop(L, (vi + 1));
+							return arr;
 						}
 					}
+					if (isnil)
+						continue;
 					arr.push_back(stack::get<V>(L, -lua_size<V>::value));
 				}
 #else
 				// Zzzz slower but necessary thanks to the lower version API and missing functions qq
 				for (lua_Integer i = 0; ; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
+					bool isnil = false;
 					for (int vi = 0; vi < lua_size<V>::value; ++vi) {
 						lua_pushinteger(L, i);
 						lua_gettable(L, index);
 						type t = type_of(L, -1);
-						if (t == type::lua_nil) {
+						isnil = t == type::lua_nil;
+						if (isnil) {
 							if (i == 0) {
-								continue;
+								break;
 							}
-							else {
-								lua_pop(L, (vi + 1));
-								return arr;
-							}
+							lua_pop(L, (vi + 1));
+							return arr;
 						}
 					}
+					if (isnil)
+						continue;
 					arr.push_back(stack::get<V>(L, -1));
 				}
 #endif
