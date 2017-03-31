@@ -73,7 +73,7 @@ This makes it much easier to work with multiple return values. Using ``std::tie`
 	:caption: function: call operator / function call
 
 	template<typename... Args>
-	protected_function_result operator()( Args&&... args );
+	function_result operator()( Args&&... args );
 
 	template<typename... Ret, typename... Args>
 	decltype(auto) call( Args&&... args );
