@@ -345,7 +345,9 @@ namespace sol {
 		runtime = LUA_ERRRUN,
 		memory = LUA_ERRMEM,
 		handler = LUA_ERRERR,
-		gc = LUA_ERRGCMM
+		gc = LUA_ERRGCMM,
+		syntax = LUA_ERRSYNTAX,
+		file = LUA_ERRFILE,
 	};
 
 	enum class thread_status : int {
@@ -383,6 +385,61 @@ namespace sol {
 		poly = none | lua_nil | string | number | thread |
 		table | boolean | function | userdata | lightuserdata
 	};
+
+	inline const std::string& to_string(call_status c) {
+		static const std::array<std::string, 8> names{{
+			"ok",
+			"yielded",
+			"runtime",
+			"memory",
+			"handler",
+			"gc",
+			"syntax",
+			"file",
+		}};
+		switch (c) {
+		case call_status::ok:
+			return names[0];
+		case call_status::yielded:
+			return names[1];
+		case call_status::runtime:
+			return names[2];
+		case call_status::memory:
+			return names[3];
+		case call_status::handler:
+			return names[4];
+		case call_status::gc:
+			return names[5];
+		case call_status::syntax:
+			return names[6];
+		case call_status::file:
+			return names[7];
+		}
+		return names[0];
+	}
+
+	inline const std::string& to_string(load_status c) {
+		static const std::array<std::string, 8> names{ {
+				"ok",
+				"memory",
+				"gc",
+				"syntax",
+				"file",
+			} };
+		switch (c) {
+		case load_status::ok:
+			return names[0];
+		case load_status::memory:
+			return names[1];
+		case load_status::gc:
+			return names[2];
+		case load_status::syntax:
+			return names[3];
+		case load_status::file:
+			return names[4];
+		}
+		return names[0];
+	}
 
 	enum class meta_function {
 		construct,

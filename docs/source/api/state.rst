@@ -58,9 +58,34 @@ This function takes a number of :ref:`sol::lib<lib-enum>` as arguments and opens
 	sol::function_result script(const std::string& code);
 	sol::function_result script_file(const std::string& filename);
 
+	template <typename Func>
+	sol::protected_function_result script(const std::string& code, Func&& func);
+	template <typename Func>
+	sol::protected_function_result script_file(const std::string& filename, Func&& func);
+
 These functions run the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run isolated: any scripts or code run will affect code in the ``lua_State*`` the object uses as well (unless ``local`` is applied to a variable declaration, as specified by the Lua language). Code ran in this fashion is not isolated. If you need isolation, consider creating a new state or traditional Lua sandboxing techniques.
 
-If your script returns a value, you can capture it from the returned :ref:`function_result<function-result>`.
+If your script returns a value, you can capture it from the returned :ref:`sol::function_result<function-result>`/:ref:`sol::protected_function_result<protected-function-result>`.
+
+To handle errors when using the second overload, provide a callable function/object that takes a ``lua_State*`` as its first argument and a ``sol::protected_function_result`` as its second argument. Then, handle the errors any way you like:
+
+.. code-block:: cpp
+	:caption: running code safely
+	:name: state-script-safe
+
+	int main () {
+		sol::state lua;
+		// the default handler panics or throws, depending on your settings
+		auto result1 = lua.script("bad.code", &sol::default_on_error);
+		auto result2 = lua.script("123 bad.code", [](lua_State* L, sol::protected_function_result pfr) {
+			// pfr will contain things that went wrong, for either loading or executing the script
+			// the user can do whatever they like here, including throw. Otherwise,
+			// they need to return the protected_function_result
+
+			// You can also just return it, and let the call-site handle the error if necessary.
+			return pfr;
+		});
+	}
 
 .. code-block:: cpp
 	:caption: function: require / require_file

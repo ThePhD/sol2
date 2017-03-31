@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-03-30 18:11:26.562402 UTC
-// This header was generated with sol v2.16.0 (revision 92d31b3)
+// Generated 2017-03-31 21:37:49.518087 UTC
+// This header was generated with sol v2.16.0 (revision 1e367ab)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3324,7 +3324,9 @@ namespace sol {
 		runtime = LUA_ERRRUN,
 		memory = LUA_ERRMEM,
 		handler = LUA_ERRERR,
-		gc = LUA_ERRGCMM
+		gc = LUA_ERRGCMM,
+		syntax = LUA_ERRSYNTAX,
+		file = LUA_ERRFILE,
 	};
 
 	enum class thread_status : int {
@@ -3362,6 +3364,61 @@ namespace sol {
 		poly = none | lua_nil | string | number | thread |
 		table | boolean | function | userdata | lightuserdata
 	};
+
+	inline const std::string& to_string(call_status c) {
+		static const std::array<std::string, 8> names{{
+			"ok",
+			"yielded",
+			"runtime",
+			"memory",
+			"handler",
+			"gc",
+			"syntax",
+			"file",
+		}};
+		switch (c) {
+		case call_status::ok:
+			return names[0];
+		case call_status::yielded:
+			return names[1];
+		case call_status::runtime:
+			return names[2];
+		case call_status::memory:
+			return names[3];
+		case call_status::handler:
+			return names[4];
+		case call_status::gc:
+			return names[5];
+		case call_status::syntax:
+			return names[6];
+		case call_status::file:
+			return names[7];
+		}
+		return names[0];
+	}
+
+	inline const std::string& to_string(load_status c) {
+		static const std::array<std::string, 8> names{ {
+				"ok",
+				"memory",
+				"gc",
+				"syntax",
+				"file",
+			} };
+		switch (c) {
+		case load_status::ok:
+			return names[0];
+		case load_status::memory:
+			return names[1];
+		case load_status::gc:
+			return names[2];
+		case load_status::syntax:
+			return names[3];
+		case load_status::file:
+			return names[4];
+		}
+		return names[0];
+	}
 
 	enum class meta_function {
 		construct,
@@ -12674,6 +12731,25 @@ namespace sol {
 		return kb;
 	}
 
+	inline protected_function_result default_on_error( lua_State* L, const protected_function_result& pfr ) {
+		type t = type_of(L, pfr.stack_index());
+		std::string err = to_string(pfr.status()) + " error";
+		if (t == type::string) {
+			err += " ";
+			err += stack::get<std::string>(L, pfr.stack_index());
+		}
+#ifdef SOL_NO_EXCEPTIONS
+		if (t != type::nil) {
+			lua_pop(L, 1);
+		}
+		stack::push(L, err);
+		lua_error(L);
+#else
+		throw error(detail::direct_error, err);
+#endif
+		return pfr;
+	}
+
 	class state_view {
 	private:
 		lua_State* L;
@@ -12856,13 +12932,39 @@ namespace sol {
 		}
 
 		protected_function_result do_string(const std::string& code) {
-			sol::protected_function pf = load(code);
+			load_status x = static_cast<load_status>(luaL_loadstring(L, code.c_str()));
+			if (x != load_status::ok) {
+				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
+			}
+			protected_function pf(L, -1);
 			return pf();
 		}
 
 		protected_function_result do_file(const std::string& filename) {
-			sol::protected_function pf = load_file(filename);
+			load_status x = static_cast<load_status>(luaL_loadfile(L, filename.c_str()));
+			if (x != load_status::ok) {
+				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
+			}
+			protected_function pf(L, -1);
 			return pf();
+		}
+
+		template <typename Fx>
+		protected_function_result script(const std::string& code, Fx&& on_error) {
+			protected_function_result pfr = do_string(code);
+			if (!pfr.valid()) {
+				return on_error(L, pfr);
+			}
+			return pfr;
+		}
+
+		template <typename Fx>
+		protected_function_result script_file(const std::string& filename, Fx&& on_error) {
+			protected_function_result pfr = do_file(filename);
+			if (!pfr.valid()) {
+				return on_error(L, pfr);
+			}
+			return pfr;
 		}
 
 		function_result script(const std::string& code) {

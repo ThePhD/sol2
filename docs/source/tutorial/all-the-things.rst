@@ -47,6 +47,23 @@ running lua code
 	int value = lua.script("return 54");
 	// value == 54
 
+To run Lua code but have an error handler in case things go wrong:
+
+.. code-block:: cpp
+
+	sol::state lua;
+	
+	// the default handler panics or throws, depending on your settings
+	auto result1 = lua.script("bad.code", &sol::default_on_error);
+
+	auto result2 = lua.script("123 herp.derp", [](lua_State* L, sol::protected_function_result pfr) {
+		// pfr will contain things that went wrong, for either loading or executing the script
+		// Can throw your own custom error
+		// You can also just return it, and let the call-site handle the error if necessary.
+		return pfr;
+	});
+
+
 To check the success of a loading operation:
 
 .. code-block:: cpp
@@ -54,16 +71,24 @@ To check the success of a loading operation:
 	// load file without execute
 	sol::load_result script1 = lua.load_file("path/to/luascript.lua");
 	script1(); //execute
+	
 	// load string without execute
 	sol::load_result script2 = lua.load("a = 'test'");
-	script2(); //execute
+	sol::protected_function_result script2result = script2(); //execute
+	// optionally, check if it worked
+	if (script2result.valid()) {
+		// yay!
+	}
+	else {
+		// aww
+	}
 
 	sol::load_result script3 = lua.load("return 24");
 	int value2 = script3(); // execute, get return value
 	// value2 == 24
 
 
-To check whether a script was successfully run or not (after loading is assumed to be successful):
+To check whether a script was successfully run or not (if the actual loading is successful):
 
 .. code-block:: cpp
 

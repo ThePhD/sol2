@@ -52,6 +52,25 @@ namespace sol {
 		return kb;
 	}
 
+	inline protected_function_result default_on_error( lua_State* L, const protected_function_result& pfr ) {
+		type t = type_of(L, pfr.stack_index());
+		std::string err = to_string(pfr.status()) + " error";
+		if (t == type::string) {
+			err += " ";
+			err += stack::get<std::string>(L, pfr.stack_index());
+		}
+#ifdef SOL_NO_EXCEPTIONS
+		if (t != type::nil) {
+			lua_pop(L, 1);
+		}
+		stack::push(L, err);
+		lua_error(L);
+#else
+		throw error(detail::direct_error, err);
+#endif
+		return pfr;
+	}
+
 	class state_view {
 	private:
 		lua_State* L;
@@ -234,13 +253,39 @@ namespace sol {
 		}
 
 		protected_function_result do_string(const std::string& code) {
-			sol::protected_function pf = load(code);
+			load_status x = static_cast<load_status>(luaL_loadstring(L, code.c_str()));
+			if (x != load_status::ok) {
+				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
+			}
+			protected_function pf(L, -1);
 			return pf();
 		}
 
 		protected_function_result do_file(const std::string& filename) {
-			sol::protected_function pf = load_file(filename);
+			load_status x = static_cast<load_status>(luaL_loadfile(L, filename.c_str()));
+			if (x != load_status::ok) {
+				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
+			}
+			protected_function pf(L, -1);
 			return pf();
+		}
+
+		template <typename Fx>
+		protected_function_result script(const std::string& code, Fx&& on_error) {
+			protected_function_result pfr = do_string(code);
+			if (!pfr.valid()) {
+				return on_error(L, pfr);
+			}
+			return pfr;
+		}
+
+		template <typename Fx>
+		protected_function_result script_file(const std::string& filename, Fx&& on_error) {
+			protected_function_result pfr = do_file(filename);
+			if (!pfr.valid()) {
+				return on_error(L, pfr);
+			}
+			return pfr;
 		}
 
 		function_result script(const std::string& code) {
