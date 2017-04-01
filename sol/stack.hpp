@@ -109,7 +109,7 @@ namespace sol {
 			if (count < 1)
 				return;
 			int top = lua_gettop(L);
-			if (index == -1 || top == index) {
+			if (index == -count || top == index) {
 				// Slice them right off the top
 				lua_pop(L, static_cast<int>(count));
 				return;

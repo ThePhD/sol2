@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-03-31 21:37:49.518087 UTC
-// This header was generated with sol v2.16.0 (revision 1e367ab)
+// Generated 2017-04-01 02:39:08.628086 UTC
+// This header was generated with sol v2.16.0 (revision 91aff61)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -921,7 +921,7 @@ extern "C" {
 
 /* LuaJIT does not have the updated error codes for thread status/function returns */
 #ifndef LUA_ERRGCMM
-#define LUA_ERRGCMM (LUA_ERRERR + 1)
+#define LUA_ERRGCMM (LUA_ERRERR + 2)
 #endif // LUA_ERRGCMM
 
 /* LuaJIT does not support continuation contexts / return error codes? */
@@ -7204,7 +7204,7 @@ namespace sol {
 			if (count < 1)
 				return;
 			int top = lua_gettop(L);
-			if (index == -1 || top == index) {
+			if (index == -count || top == index) {
 				// Slice them right off the top
 				lua_pop(L, static_cast<int>(count));
 				return;
@@ -12731,7 +12731,11 @@ namespace sol {
 		return kb;
 	}
 
-	inline protected_function_result default_on_error( lua_State* L, const protected_function_result& pfr ) {
+	inline protected_function_result simple_on_error(lua_State*, sol::protected_function_result result) {
+		return result;
+	}
+
+	inline protected_function_result default_on_error( lua_State* L, protected_function_result pfr ) {
 		type t = type_of(L, pfr.stack_index());
 		std::string err = to_string(pfr.status()) + " error";
 		if (t == type::string) {
@@ -12953,7 +12957,7 @@ namespace sol {
 		protected_function_result script(const std::string& code, Fx&& on_error) {
 			protected_function_result pfr = do_string(code);
 			if (!pfr.valid()) {
-				return on_error(L, pfr);
+				return on_error(L, std::move(pfr));
 			}
 			return pfr;
 		}
@@ -12962,7 +12966,7 @@ namespace sol {
 		protected_function_result script_file(const std::string& filename, Fx&& on_error) {
 			protected_function_result pfr = do_file(filename);
 			if (!pfr.valid()) {
-				return on_error(L, pfr);
+				return on_error(L, std::move(pfr));
 			}
 			return pfr;
 		}
