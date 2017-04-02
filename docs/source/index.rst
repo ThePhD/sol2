@@ -36,6 +36,7 @@ get going:
 	compilation
 	features
 	usertypes
+	threading
 	traits
 	api/api-top
 	mentions
