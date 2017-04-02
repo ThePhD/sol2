@@ -286,19 +286,23 @@ TEST_CASE("object/conversions", "make sure all basic reference types can be made
 	lua["l"] = static_cast<void*>(nullptr);
 
 	sol::table t = lua.create_table();
+	sol::table t2(lua, sol::create);
 	sol::thread th = sol::thread::create(lua);
 	sol::function f = lua["f"];
 	sol::protected_function pf = lua["f"];
 	sol::userdata ud = lua["d"];
 	sol::lightuserdata lud = lua["l"];
+	sol::environment env(lua, sol::create);
 
 	sol::object ot(t);
-	sol::object ot2 = ot;
+	sol::object ot2(t2);
+	sol::object oteq = ot;
 	sol::object oth(th);
 	sol::object of(f);
 	sol::object opf(pf);
 	sol::object od(ud);
 	sol::object ol(lud);
+	sol::object oenv(env);
 
 	auto oni = sol::make_object(lua, 50);
 	auto ond = sol::make_object(lua, 50.0);
@@ -311,6 +315,7 @@ TEST_CASE("object/conversions", "make sure all basic reference types can be made
 
 	REQUIRE(ot.get_type() == sol::type::table);
 	REQUIRE(ot2.get_type() == sol::type::table);
+	REQUIRE(oteq.get_type() == sol::type::table);
 	REQUIRE(oth.get_type() == sol::type::thread);
 	REQUIRE(of.get_type() == sol::type::function);
 	REQUIRE(opf.get_type() == sol::type::function);
@@ -321,143 +326,7 @@ TEST_CASE("object/conversions", "make sure all basic reference types can be made
 	REQUIRE(osl.get_type() == sol::type::string);
 	REQUIRE(os.get_type() == sol::type::string);
 	REQUIRE(omn.get_type() == sol::type::nil);
-}
-
-TEST_CASE("state/require_file", "opening files as 'requires'") {
-	static const char FILE_NAME[] = "./tmp_thingy.lua";
-
-	sol::state lua;
-	lua.open_libraries(sol::lib::base);
-
-	SECTION("with usertypes")
-	{
-		struct foo {
-			foo(int bar) : bar(bar) {}
-
-			const int bar;
-		};
-
-		lua.new_usertype<foo>("foo",
-			sol::constructors<sol::types<int>>{},
-			"bar", &foo::bar
-			);
-		
-		std::fstream file(FILE_NAME, std::ios::out);
-		file << "return { modfunc = function () return foo.new(221) end }" << std::endl;
-		file.close();
-		
-		const sol::table thingy1 = lua.require_file("thingy", FILE_NAME);
-
-		CHECK(thingy1.valid());
-
-		const foo foo_v = thingy1["modfunc"]();
-
-		int val1 = foo_v.bar;
-
-		CHECK(val1 == 221);
-	}
-
-	SECTION("simple")
-	{
-		std::fstream file(FILE_NAME, std::ios::out);
-		file << "return { modfunc = function () return 221 end }" << std::endl;
-		file.close();
-		
-		const sol::table thingy1 = lua.require_file("thingy", FILE_NAME);
-		const sol::table thingy2 = lua.require_file("thingy", FILE_NAME);
-
-		CHECK(thingy1.valid());
-		CHECK(thingy2.valid());
-
-		int val1 = thingy1["modfunc"]();
-		int val2 = thingy2["modfunc"]();
-
-		CHECK(val1 == 221);
-		CHECK(val2 == 221);
-		// must have loaded the same table
-		CHECK(thingy1 == thingy2);
-	}
-
-	std::remove(FILE_NAME);
-}
-
-TEST_CASE("state/require_script", "opening strings as 'requires' clauses") {
-	std::string code = "return { modfunc = function () return 221 end }";
-
-	sol::state lua;
-	sol::table thingy1 = lua.require_script("thingy", code);
-	sol::table thingy2 = lua.require_script("thingy", code);
-
-	int val1 = thingy1["modfunc"]();
-	int val2 = thingy2["modfunc"]();
-	REQUIRE(val1 == 221);
-	REQUIRE(val2 == 221);
-	// must have loaded the same table
-	REQUIRE(thingy1 == thingy2);
-}
-
-TEST_CASE("state/require", "opening using a file") {
-	struct open {
-		static int open_func(lua_State* L) {
-			sol::state_view lua = L;
-			return sol::stack::push(L, lua.create_table_with("modfunc", sol::as_function([]() { return 221; })));
-		}
-	};
-
-	sol::state lua;
-	sol::table thingy1 = lua.require("thingy", open::open_func);
-	sol::table thingy2 = lua.require("thingy", open::open_func);
-
-	int val1 = thingy1["modfunc"]();
-	int val2 = thingy2["modfunc"]();
-	REQUIRE(val1 == 221);
-	REQUIRE(val2 == 221);
-	// THIS IS ONLY REQUIRED IN LUA 5.3, FOR SOME REASON
-	// must have loaded the same table
-	// REQUIRE(thingy1 == thingy2);   
-}
-
-TEST_CASE("state/multi-require", "make sure that requires transfers across hand-rolled script implementation and standard requiref") {
-	struct open {
-		static int open_func(lua_State* L) {
-			sol::state_view lua = L;
-			return sol::stack::push(L, lua.create_table_with("modfunc", sol::as_function([]() { return 221; })));
-		}
-	};
-
-	std::string code = "return { modfunc = function () return 221 end }";
-	sol::state lua;
-	sol::table thingy1 = lua.require("thingy", open::open_func);
-	sol::table thingy2 = lua.require("thingy", open::open_func);
-	sol::table thingy3 = lua.require_script("thingy", code);
-
-	int val1 = thingy1["modfunc"]();
-	int val2 = thingy2["modfunc"]();
-	int val3 = thingy3["modfunc"]();
-	REQUIRE(val1 == 221);
-	REQUIRE(val2 == 221);
-	REQUIRE(val3 == 221);
-	// must have loaded the same table
-	// Lua is not obliged to give a shit. Thanks, Lua
-	//REQUIRE(thingy1 == thingy2);
-	// But we care, thankfully
-	//REQUIRE(thingy1 == thingy3);
-	REQUIRE(thingy2 == thingy3);
-}
-
-TEST_CASE("state/require-safety", "make sure unrelated modules aren't harmed in using requires") {
-	sol::state lua;
-	lua.open_libraries();
-	std::string t1 = lua.script(R"(require 'io'
-return 'test1')");
-	sol::object ot2 = lua.require_script("test2", R"(require 'io'
-return 'test2')");
-	std::string t2 = ot2.as<std::string>();
-	std::string t3 = lua.script(R"(require 'io'
-return 'test3')");
-	REQUIRE(t1 == "test1");
-	REQUIRE(t2 == "test2");
-	REQUIRE(t3 == "test3");
+	REQUIRE(oenv.get_type() == sol::type::table);
 }
 
 TEST_CASE("feature/indexing-overrides", "make sure index functions can be overridden on types") {
@@ -730,151 +599,6 @@ TEST_CASE("numbers/integers", "make sure integers are detectable on most platfor
 	// TODO: will this fail on certain lower Lua versions?
 	REQUIRE_FALSE(b_is_int);
 	REQUIRE(b_is_double);
-}
-
-TEST_CASE("state/leak-check", "make sure there are no humongous memory leaks in iteration") {
-#if 0
-	sol::state lua;
-	lua.script(R"(
-record = {}
-for i=1,256 do
-	record[i] = i
-end
-function run()
-	for i=1,25000 do
-		fun(record)
-	end
-end
-function run2()
-	for i=1,50000 do
-		fun(record)
-	end
-end
-)");
-
-	lua["fun"] = [](const sol::table &t) {
-		//removing the for loop fixes the memory leak
-		auto b = t.begin();
-		auto e = t.end();
-		for (; b != e; ++b) {
-
-		}
-	};
-
-	size_t beforewarmup = lua.memory_used();
-	lua["run"]();
-
-	size_t beforerun = lua.memory_used();
-	lua["run"]();
-	size_t afterrun = lua.memory_used();
-	lua["run2"]();
-	size_t afterrun2 = lua.memory_used();
-
-	// Less memory used before the warmup
-	REQUIRE(beforewarmup <= beforerun);
-	// Iteration size and such does not bloat or affect memory
-	// (these are weak checks but they'll warn us nonetheless if something goes wrong)
-	REQUIRE(beforerun == afterrun);
-	REQUIRE(afterrun == afterrun2);
-#else
-	REQUIRE(true);
-#endif
-}
-
-TEST_CASE("state/script-returns", "make sure script returns are done properly") {
-	std::string script =
-		R"(
-local example = 
-{
-    str = "this is a string",
-    num = 1234,
-
-    func = function(self)
-        print(self.str)
-		return "fstr"
-    end
-}
-
-return example;
-)";
-
-	auto bar = [&script](sol::this_state l) {
-		sol::state_view lua = l;
-		sol::table data = lua.script(script);
-
-		std::string str = data["str"];
-		int num = data["num"];
-		std::string fstr = data["func"](data);
-		REQUIRE(str == "this is a string");
-		REQUIRE(fstr == "fstr");
-		REQUIRE(num == 1234);
-	};
-
-	auto foo = [&script](int, sol::this_state l) {
-		sol::state_view lua = l;
-		sol::table data = lua.script(script);
-
-		std::string str = data["str"];
-		int num = data["num"];
-		std::string fstr = data["func"](data);
-		REQUIRE(str == "this is a string");
-		REQUIRE(fstr == "fstr");
-		REQUIRE(num == 1234);
-	};
-
-	auto bar2 = [&script](sol::this_state l) {
-		sol::state_view lua = l;
-		sol::table data = lua.do_string(script);
-
-		std::string str = data["str"];
-		int num = data["num"];
-		std::string fstr = data["func"](data);
-		REQUIRE(str == "this is a string");
-		REQUIRE(fstr == "fstr");
-		REQUIRE(num == 1234);
-	};
-
-	auto foo2 = [&script](int, sol::this_state l) {
-		sol::state_view lua = l;
-		sol::table data = lua.do_string(script);
-
-		std::string str = data["str"];
-		int num = data["num"];
-		std::string fstr = data["func"](data);
-		REQUIRE(str == "this is a string");
-		REQUIRE(fstr == "fstr");
-		REQUIRE(num == 1234);
-	};
-
-	sol::state lua;
-	lua.open_libraries();
-
-	lua.set_function("foo", foo);
-	lua.set_function("foo2", foo2);
-	lua.set_function("bar", bar);
-	lua.set_function("bar2", bar2);
-
-	lua.script("bar() bar2() foo(1) foo2(1)");
-}
-
-TEST_CASE("state/copy-move", "ensure state can be properly copied and moved") {
-	sol::state lua;
-	lua["a"] = 1;
-
-	sol::state lua2(std::move(lua));
-	int a2 = lua2["a"];
-	REQUIRE(a2 == 1);
-	lua = std::move(lua2);
-	int a = lua["a"];
-	REQUIRE(a == 1);
-}
-
-TEST_CASE("requires/reload", "ensure that reloading semantics do not cause a crash") {
-	sol::state lua;
-	lua.open_libraries();
-	lua.script("require 'io'\nreturn 'test1'");
-	lua.require_script("test2", "require 'io'\nreturn 'test2'");
-	lua.script("require 'io'\nreturn 'test3'");
 }
 
 TEST_CASE("object/is-method", "test whether or not the is abstraction works properly for a user-defined type") {

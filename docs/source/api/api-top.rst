@@ -10,7 +10,12 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    :maxdepth: 2
 
    state
+   reference
+   stack_reference
+   make_reference
    table
+   userdata
+   environment
    proxy
    containers
    nested
@@ -25,11 +30,7 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    coroutine
    error
    object
-   userdata
-   reference
    thread
-   stack_reference
-   make_reference
    optional
    this_state
    variadic_args

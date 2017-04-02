@@ -1,5 +1,6 @@
 #define SOL_CHECK_ARGUMENTS
 #include <sol.hpp>
+
 #include <cassert>
 #include <iostream>
 

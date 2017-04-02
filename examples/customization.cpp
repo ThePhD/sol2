@@ -1,3 +1,4 @@
+#define SOL_CHECK_ARGUMENTS
 #include <sol.hpp>
 
 #include <iostream>
@@ -34,8 +35,8 @@ namespace sol {
 				// its absolute position using the lua_absindex function 
 				int absolute_index = lua_absindex(L, index);
 				// Check first and second second index for being the proper types
-				bool success = stack::check<int>(L, absolute_index + 1, handler)
-					&& stack::check<bool>(L, absolute_index, handler);
+				bool success = stack::check<int>(L, absolute_index, handler)
+					&& stack::check<bool>(L, absolute_index + 1, handler);
 				tracking.use(2);
 				return success;
 			}

@@ -1,6 +1,7 @@
-#include <string>
+#define SOL_CHECK_ARGUMENTS
 #include "sol.hpp"
 
+#include <string>
 #include <iostream>
 
 int main() {

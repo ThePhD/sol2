@@ -76,3 +76,6 @@ main.ilk
 main.pdb
 lua-5.3.4-cxx/
 lua-5.3.4/
+temp.bad_runtime.lua
+temp.bad_syntax.lua
+temp.good.lua

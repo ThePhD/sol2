@@ -31,6 +31,15 @@
 
 #ifndef SOL_NO_COMPAT
 
+#ifdef SOL_USING_CXX_LUA
+
+#include "compatibility/5.1.0.h"
+#include "compatibility/5.0.0.h"
+#include "compatibility/5.x.x.h"
+#include "compatibility/5.x.x.inl"
+
+#else
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,6 +50,8 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
+#endif // C++ Mangling for Lua
 
 #endif // SOL_NO_COMPAT
 

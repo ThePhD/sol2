@@ -1,3 +1,4 @@
+#define SOL_CHECK_ARGUMENTS
 #include <sol.hpp>
 
 #include <iostream>
@@ -57,4 +58,6 @@ int main() {
 	}
 
 	std::cout << std::endl;
+	
+	return 0;
 }

@@ -1,7 +1,7 @@
 #define SOL_CHECK_ARGUMENTS
 #include <sol.hpp>
-#include <cassert>
 
+#include <cassert>
 #include <iostream>
 
 struct some_class {

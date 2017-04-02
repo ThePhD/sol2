@@ -22,6 +22,8 @@
 #ifndef SOL_STACK_REFERENCE_HPP
 #define SOL_STACK_REFERENCE_HPP
 
+#include "types.hpp"
+
 namespace sol {
 	class stack_reference {
 	private:
@@ -90,6 +92,22 @@ namespace sol {
 
 	inline bool operator!= (const stack_reference& l, const stack_reference& r) {
 		return !operator==(l, r);
+	}
+
+	inline bool operator==(const stack_reference& lhs, const lua_nil_t&) {
+		return !lhs.valid();
+	}
+
+	inline bool operator==(const lua_nil_t&, const stack_reference& rhs) {
+		return !rhs.valid();
+	}
+
+	inline bool operator!=(const stack_reference& lhs, const lua_nil_t&) {
+		return lhs.valid();
+	}
+
+	inline bool operator!=(const lua_nil_t&, const stack_reference& rhs) {
+		return rhs.valid();
 	}
 } // sol
 

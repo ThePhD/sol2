@@ -25,7 +25,6 @@
 #include "types.hpp"
 #include "reference.hpp"
 #include "stack_reference.hpp"
-#include "userdata.hpp"
 #include "tuple.hpp"
 #include "traits.hpp"
 #include "tie.hpp"

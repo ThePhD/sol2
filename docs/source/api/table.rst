@@ -25,8 +25,9 @@ members
 	:caption: constructor: table
 
 	table(lua_State* L, int index = -1);
+	table(lua_State* L, sol::new_table nt)
 
-Takes a table from the Lua stack at the specified index and allows a person to use all of the abstractions therein.
+The first takes a table from the Lua stack at the specified index and allows a person to use all of the abstractions therein. The second creates a new table using the capacity hints specified in ``sol::new_table``'s structure (``sequence_hint`` and ``map_hint``). If you don't care exactly about the capacity, create a table using ``sol::table my_table(my_lua_state, sol::create);``.
 
 .. code-block:: cpp
 	:caption: function: get / traversing get

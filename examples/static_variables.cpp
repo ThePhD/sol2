@@ -1,3 +1,4 @@
+#define SOL_CHECK_ARGUMENTS
 #include <sol.hpp>
 
 #include <iostream>
