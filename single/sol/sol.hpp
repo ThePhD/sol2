@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-04-02 20:29:59.118420 UTC
-// This header was generated with sol v2.16.0 (revision 34c7b74)
+// Generated 2017-04-03 02:39:07.019670 UTC
+// This header was generated with sol v2.16.0 (revision 185f5ec)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3322,6 +3322,19 @@ namespace sol {
 		}
 	};
 
+	struct new_table {
+		int sequence_hint = 0;
+		int map_hint = 0;
+
+		new_table() = default;
+		new_table(const new_table&) = default;
+		new_table(new_table&&) = default;
+		new_table& operator=(const new_table&) = default;
+		new_table& operator=(new_table&&) = default;
+
+		new_table(int sequence_hint, int map_hint = 0) : sequence_hint(sequence_hint), map_hint(map_hint) {}
+	};
+
 	enum class call_syntax {
 		dot = 0,
 		colon = 1
@@ -3673,6 +3686,12 @@ namespace sol {
 
 		template <bool b, typename Base>
 		struct lua_type_of<basic_table_core<b, Base>> : std::integral_constant<type, type::table> { };
+
+		template <typename B>
+		struct lua_type_of<basic_environment<B>> : std::integral_constant<type, type::table> { };
+
+		template <>
+		struct lua_type_of<new_table> : std::integral_constant<type, type::table> { };
 
 		template <typename T>
 		struct lua_type_of<as_table_t<T>> : std::integral_constant<type, type::table> {};
@@ -6774,6 +6793,14 @@ namespace sol {
 				return 0;
 			}
 		};
+
+		template<>
+		struct pusher<new_table> {
+			static int push(lua_State* L, const new_table& nt) {
+				lua_createtable(L, nt.sequence_hint, nt.map_hint);
+				return 1;
+			}
+		};
 	} // stack
 } // sol
 
@@ -7469,8 +7496,10 @@ namespace sol {
 // beginning of sol/proxy_base.hpp
 
 namespace sol {
+	struct proxy_base_tag {};
+
 	template <typename Super>
-	struct proxy_base {
+	struct proxy_base : proxy_base_tag {
 		operator std::string() const {
 			const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
 			return super.template get<std::string>();
@@ -12206,19 +12235,6 @@ namespace sol {
 		}
 	}
 
-	struct new_table {
-		int sequence_hint = 0;
-		int map_hint = 0;
-
-		new_table() = default;
-		new_table(const new_table&) = default;
-		new_table(new_table&&) = default;
-		new_table& operator=(const new_table&) = default;
-		new_table& operator=(new_table&&) = default;
-
-		new_table(int sequence_hint, int map_hint = 0) : sequence_hint(sequence_hint), map_hint(map_hint) {}
-	};
-
 	const new_table create = new_table{};
 
 	template <bool top_level, typename base_type>
@@ -12690,29 +12706,37 @@ namespace sol {
 			this->set(metatable_key, mt);
 			mt.pop();
 		}
-		template <typename T, typename... Args, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_environment>>, meta::boolean<!(sizeof...(Args) == 2 && meta::any_same<new_table, meta::unqualified_t<Args>...>::value)>> = meta::enabler>
+		template <typename T, typename... Args, meta::enable<
+			meta::neg<std::is_same<meta::unqualified_t<T>, basic_environment>>, 
+			meta::boolean<!(sizeof...(Args) == 2 && meta::any_same<new_table, meta::unqualified_t<Args>...>::value)>,
+			meta::boolean<!(sizeof...(Args) == 0 && std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>::value)>
+		> = meta::enabler>
 		basic_environment(T&& arg, Args&&... args) : table_t(std::forward<T>(arg), std::forward<Args>(args)...) { }
+
+		template <typename T>
+		void set_on(const T& target) const {
+			lua_State* L = target.lua_state();
+#if SOL_LUA_VERSION < 502
+			// Use lua_setfenv
+			target.push();
+			this->push();
+			lua_setfenv(L, -2);
+			target.pop();
+#else
+			// Use upvalues as explained in Lua 5.2 and beyond's manual
+			target.push();
+			this->push();
+			if (lua_setupvalue(L, -2, 1) == nullptr) {
+				this->pop();
+			}
+			target.pop();
+#endif
+		}
 	};
 
-	template <typename E>
-	void set_environment(const reference& target, const basic_environment<E>& env) {
-		lua_State* L = target.lua_state();
-#if SOL_LUA_VERSION < 502
-		// Use lua_setfenv
-		target.push();
-		env.push();
-		lua_setfenv(L, -2);
-		env.pop();
-		target.pop();
-#else
-		// Use upvalues as explained in Lua 5.2 and beyond's manual
-		target.push();
-		env.push();
-		if (lua_setupvalue(L, -2, 1) == nullptr) {
-			env.pop();
-		}
-		target.pop();
-#endif
+	template <typename T, typename E>
+	void set_environment(const basic_environment<E>& env, const T& target) {
+		env.set_on(target);
 	}
 
 } // sol
@@ -13068,7 +13092,7 @@ namespace sol {
 				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
 			}
 			protected_function pf(L, -1);
-			set_environment(pf, env);
+			set_environment(env, pf);
 			return pf();
 		}
 
@@ -13079,7 +13103,7 @@ namespace sol {
 				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
 			}
 			protected_function pf(L, -1);
-			set_environment(pf, env);
+			set_environment(env, pf);
 			return pf();
 		}
 
