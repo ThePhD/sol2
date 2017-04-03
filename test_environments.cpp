@@ -44,3 +44,40 @@ TEST_CASE("environments/shadowing", "Environments can properly shadow and fallba
 		REQUIRE(maybe_global_b.value() == 2142);
 	}
 }
+
+TEST_CASE("environments/io", "Environment values can be read and written to") {
+
+	sol::state lua;
+
+	SECTION("value set before execution") {
+		lua.script("a = function() return test end");
+
+		sol::function a = lua["a"];
+		sol::environment env(lua, sol::create);
+		env["test"] = 5;
+		sol::set_environment(a, env);
+
+		sol::optional<int> result = a();
+		REQUIRE(result != sol::nullopt);
+		REQUIRE(result.value() == 5);
+
+		sol::optional<int> globalValue = lua["test"];
+		REQUIRE(globalValue == sol::nullopt);
+	}
+	SECTION("value set during execution") {
+		lua.script("a = function() test = 5 end");
+
+		sol::function a = lua["a"];
+		sol::environment env(lua, sol::create);
+		sol::set_environment(a, env);
+
+		a();
+
+		sol::optional<int> result = env["test"];
+		REQUIRE(result != sol::nullopt);
+		REQUIRE(result.value() == 5);
+
+		sol::optional<int> globalValue = lua["test"];
+		REQUIRE(globalValue == sol::nullopt);
+	}
+}

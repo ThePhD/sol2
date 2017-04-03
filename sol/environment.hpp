@@ -55,7 +55,6 @@ namespace sol {
 		target.push();
 		env.push();
 		lua_setfenv(L, -2);
-		env.pop();
 		target.pop();
 #else
 		// Use upvalues as explained in Lua 5.2 and beyond's manual
