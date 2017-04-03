@@ -185,7 +185,7 @@ matrix:
     - os: osx
       osx_image: xcode8.3
       compiler: clang
-      env: COMPILER=clang++ LUA_VERSION=luajit
+      env: COMPILER=appleclang LUA_VERSION=luajit
 
     - os: osx
       osx_image: xcode8.3
