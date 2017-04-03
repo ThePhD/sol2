@@ -93,6 +93,8 @@ To handle errors when using the second overload, provide a callable function/obj
 		});
 	}
 
+You can also pass a :doc:`sol::environment<environment>` to ``script``/``script_file`` to have the script have sandboxed / contained in a way inside of a state. This is useful for runnig multiple different "perspectives" or "views" on the same state. See the ``sol: 
+
 .. code-block:: cpp
 	:caption: function: require / require_file
 	:name: state-require-function
