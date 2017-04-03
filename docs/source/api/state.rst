@@ -56,12 +56,18 @@ This function takes a number of :ref:`sol::lib<lib-enum>` as arguments and opens
 	:name: state-script-function
 
 	sol::function_result script(const std::string& code);
-	sol::function_result script_file(const std::string& filename);
-
+	sol::protected_function_result script(const std::string& code, const environment& env);
 	template <typename Func>
 	sol::protected_function_result script(const std::string& code, Func&& func);
 	template <typename Func>
+	sol::protected_function_result script(const std::string& code, const environment& env, Func&& func);
+
+	sol::function_result script_file(const std::string& filename);
+	sol::protected_function_result script_file(const std::string& filename, const environment& env);
+	template <typename Func>
 	sol::protected_function_result script_file(const std::string& filename, Func&& func);
+	template <typename Func>
+	sol::protected_function_result script_file(const std::string& filename, const environment& env, Func&& func);
 
 These functions run the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run isolated: any scripts or code run will affect code in the ``lua_State*`` the object uses as well (unless ``local`` is applied to a variable declaration, as specified by the Lua language). Code ran in this fashion is not isolated. If you need isolation, consider creating a new state or traditional Lua sandboxing techniques.
 
