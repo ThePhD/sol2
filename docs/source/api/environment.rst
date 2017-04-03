@@ -18,7 +18,7 @@ Also note that ``sol::environment`` derives from ``sol::table``, which also deri
 
 ``sol::environment`` objects can be used with `script calls`_, and it can also be `set on functions`_. It can even be applied to :doc:`threads<thread>`.
 
-You can set the environment using ``sol::set_environment( some_reference, my_env );`` or ``my_env.apply_to( some_reference );``.
+You can set the environment using ``sol::set_environment( my_env, some_reference );`` or ``my_env.set_on( some_reference );``.
 
 free functions
 --------------
@@ -40,7 +40,7 @@ members
 
 	environment(lua_State* L, sol::new_table nt, const sol::reference& fallback);
 
-The ones from table are used here (of particular note is the ability to use ``sol::environment(my_lua_state, sol::create);`` to make a fresh, unnamed environment), plus the one unique constructor shown above. It is generally used as ``sol::environmeny my_env(my_lua_state, sol::create, my_fallback_table);``. The fallback table serves as the backup to lookup attempts on the environment table being created. It is achieved by simply creating a metatable for the ``sol::environment`` being created, and then doing ``env_metatable["__index"] = fallback;``. You can achieve fancier effects by changing the metatable of the environment to your liking, by creating it in some fashion and then setting the metatable explicitly and populating it with data, particularly with :doc:`sol::metatable_key<metatable_key>`.
+The ones from table are used here (of particular note is the ability to use ``sol::environment(my_lua_state, sol::create);`` to make a fresh, unnamed environment), plus the one unique constructor shown above. It is generally used as ``sol::environment my_env(my_lua_state, sol::create, my_fallback_table);``. The fallback table serves as the backup to lookup attempts on the environment table being created. It is achieved by simply creating a metatable for the ``sol::environment`` being created, and then doing ``env_metatable["__index"] = fallback;``. You can achieve fancier effects by changing the metatable of the environment to your liking, by creating it in some fashion and then setting the metatable explicitly and populating it with data, particularly with :doc:`sol::metatable_key<metatable_key>`.
 
 
 .. code-block:: cpp
