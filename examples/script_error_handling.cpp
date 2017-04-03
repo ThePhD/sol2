@@ -25,7 +25,8 @@ return 24
 		try {
 			int value = lua.script(code, sol::default_on_error);
 			// This will never be reached
-			assert(false);
+			std::cout << value << std::endl;
+			assert(value == 24);
 		}
 		catch (const sol::error& err) {
 			std::cout << "Something went horribly wrong: thrown error" << "\n\t" << err.what() << std::endl;
