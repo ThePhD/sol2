@@ -9,7 +9,7 @@ encapsulation table for script sandboxing
 	class environment : public table;
 
 	template <typename T>
-	void set_environment( const T& target, const environment& env);
+	void set_environment( const environment& env, const T& target );
 
 
 This type is passed to :ref:`sol::state(_view)::script/do_x<state-script-function>` to provide an environment where local variables that are set and get retrieve. It is just a plain table, and all the same operations :doc:`from table still apply<table>`. This is important because it allows you to do things like set the table's metatable (using :doc:`sol::metatable_key<metatable_key>` for instance) and having its ``__index`` entry point to the global table, meaning you can get -- but not set -- variables from a Global environment.
@@ -22,6 +22,14 @@ You can set the environment using ``sol::set_environment( some_reference, my_env
 
 free functions
 --------------
+
+.. code-block:: cpp
+	:caption: function: set_environment
+
+	template <typename T>
+	void set_environment( const environment& env, const T& target );
+
+See :ref:`environment::set_on<environment-set-on>`.
 
 
 members
@@ -37,7 +45,7 @@ The ones from table are used here (of particular note is the ability to use ``so
 
 .. code-block:: cpp
 	:caption: function: set_on
-
+	:name: environment-set-on
 	template <typename T>
 	void set_on(const T& target);
 
