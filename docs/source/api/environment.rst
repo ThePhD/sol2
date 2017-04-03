@@ -46,6 +46,7 @@ The ones from table are used here (of particular note is the ability to use ``so
 .. code-block:: cpp
 	:caption: function: set_on
 	:name: environment-set-on
+	
 	template <typename T>
 	void set_on(const T& target);
 
