@@ -688,6 +688,14 @@ namespace sol {
 				return 0;
 			}
 		};
+
+		template<>
+		struct pusher<new_table> {
+			static int push(lua_State* L, const new_table& nt) {
+				lua_createtable(L, nt.sequence_hint, nt.map_hint);
+				return 1;
+			}
+		};
 	} // stack
 } // sol
 

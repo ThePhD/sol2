@@ -38,19 +38,6 @@ namespace sol {
 		}
 	}
 
-	struct new_table {
-		int sequence_hint = 0;
-		int map_hint = 0;
-
-		new_table() = default;
-		new_table(const new_table&) = default;
-		new_table(new_table&&) = default;
-		new_table& operator=(const new_table&) = default;
-		new_table& operator=(new_table&&) = default;
-
-		new_table(int sequence_hint, int map_hint = 0) : sequence_hint(sequence_hint), map_hint(map_hint) {}
-	};
-
 	const new_table create = new_table{};
 
 	template <bool top_level, typename base_type>

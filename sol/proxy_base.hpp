@@ -27,8 +27,10 @@
 #include "stack.hpp"
 
 namespace sol {
+	struct proxy_base_tag {};
+
 	template <typename Super>
-	struct proxy_base {
+	struct proxy_base : proxy_base_tag {
 		operator std::string() const {
 			const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
 			return super.template get<std::string>();

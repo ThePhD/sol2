@@ -264,7 +264,7 @@ namespace sol {
 				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
 			}
 			protected_function pf(L, -1);
-			set_environment(pf, env);
+			set_environment(env, pf);
 			return pf();
 		}
 
@@ -275,7 +275,7 @@ namespace sol {
 				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
 			}
 			protected_function pf(L, -1);
-			set_environment(pf, env);
+			set_environment(env, pf);
 			return pf();
 		}
 

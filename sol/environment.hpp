@@ -43,29 +43,37 @@ namespace sol {
 			this->set(metatable_key, mt);
 			mt.pop();
 		}
-		template <typename T, typename... Args, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_environment>>, meta::boolean<!(sizeof...(Args) == 2 && meta::any_same<new_table, meta::unqualified_t<Args>...>::value)>> = meta::enabler>
+		template <typename T, typename... Args, meta::enable<
+			meta::neg<std::is_same<meta::unqualified_t<T>, basic_environment>>, 
+			meta::boolean<!(sizeof...(Args) == 2 && meta::any_same<new_table, meta::unqualified_t<Args>...>::value)>,
+			meta::boolean<!(sizeof...(Args) == 0 && std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>::value)>
+		> = meta::enabler>
 		basic_environment(T&& arg, Args&&... args) : table_t(std::forward<T>(arg), std::forward<Args>(args)...) { }
+
+		template <typename T>
+		void set_on(const T& target) const {
+			lua_State* L = target.lua_state();
+#if SOL_LUA_VERSION < 502
+			// Use lua_setfenv
+			target.push();
+			this->push();
+			lua_setfenv(L, -2);
+			target.pop();
+#else
+			// Use upvalues as explained in Lua 5.2 and beyond's manual
+			target.push();
+			this->push();
+			if (lua_setupvalue(L, -2, 1) == nullptr) {
+				this->pop();
+			}
+			target.pop();
+#endif
+		}
 	};
 
-	template <typename E>
-	void set_environment(const reference& target, const basic_environment<E>& env) {
-		lua_State* L = target.lua_state();
-#if SOL_LUA_VERSION < 502
-		// Use lua_setfenv
-		target.push();
-		env.push();
-		lua_setfenv(L, -2);
-		env.pop();
-		target.pop();
-#else
-		// Use upvalues as explained in Lua 5.2 and beyond's manual
-		target.push();
-		env.push();
-		if (lua_setupvalue(L, -2, 1) == nullptr) {
-			env.pop();
-		}
-		target.pop();
-#endif
+	template <typename T, typename E>
+	void set_environment(const basic_environment<E>& env, const T& target) {
+		env.set_on(target);
 	}
 
 } // sol

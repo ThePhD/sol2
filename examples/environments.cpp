@@ -1,9 +1,6 @@
 #define SOL_CHECK_ARGUMENTS
 #include <sol.hpp>
 
-#include <vector>
-#include <map>
-#include <cassert>
 #include <iostream>
 
 void test_environment(std::string key, const sol::environment& env, const sol::state_view& lua) {

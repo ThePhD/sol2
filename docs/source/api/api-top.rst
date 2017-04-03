@@ -48,3 +48,4 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    compatibility
    types
    metatable_key
+   new_table
