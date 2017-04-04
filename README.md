@@ -1,4 +1,4 @@
-## Sol 2.16
+## Sol 2.17
 
 [![Join the chat at https://gitter.im/chat-sol2/Lobby](https://badges.gitter.im/chat-sol2/Lobby.svg)](https://gitter.im/chat-sol2/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
