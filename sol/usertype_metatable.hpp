@@ -117,7 +117,7 @@ namespace sol {
 		};
 
 		inline bool is_indexer(string_detail::string_shim s) {
-			return s == name_of(meta_function::index) || s == name_of(meta_function::new_index);
+			return s == to_string(meta_function::index) || s == to_string(meta_function::new_index);
 		}
 
 		inline bool is_indexer(meta_function mf) {
@@ -137,11 +137,11 @@ namespace sol {
 		}
 
 		inline auto make_shim(call_construction) {
-			return string_detail::string_shim(name_of(meta_function::call_function));
+			return string_detail::string_shim(to_string(meta_function::call_function));
 		}
 
 		inline auto make_shim(meta_function mf) {
-			return string_detail::string_shim(name_of(mf));
+			return string_detail::string_shim(to_string(mf));
 		}
 
 		inline auto make_shim(base_classes_tag) {
@@ -382,19 +382,19 @@ namespace sol {
 
 		int finish_regs(regs_t& l, int& index) {
 			if (!hasless) {
-				const char* name = name_of(meta_function::less_than).c_str();
+				const char* name = to_string(meta_function::less_than).c_str();
 				usertype_detail::make_reg_op<T, std::less<>, meta::supports_op_less<T>>(l, index, name);
 			}
 			if (!haslessequals) {
-				const char* name = name_of(meta_function::less_than_or_equal_to).c_str();
+				const char* name = to_string(meta_function::less_than_or_equal_to).c_str();
 				usertype_detail::make_reg_op<T, std::less_equal<>, meta::supports_op_less_equal<T>>(l, index, name);
 			}
 			if (!hasequals) {
-				const char* name = name_of(meta_function::equal_to).c_str();
+				const char* name = to_string(meta_function::equal_to).c_str();
 				usertype_detail::make_reg_op<T, std::conditional_t<meta::supports_op_equal<T>::value, std::equal_to<>, usertype_detail::no_comp>, std::true_type>(l, index, name);
 			}
 			if (destructfunc != nullptr) {
-				l[index] = { name_of(meta_function::garbage_collect).c_str(), destructfunc };
+				l[index] = { to_string(meta_function::garbage_collect).c_str(), destructfunc };
 				++index;
 			}
 			return index;
@@ -431,25 +431,25 @@ namespace sol {
 			// Returnable scope
 			// That would be a neat keyword for C++
 			// returnable { ... };
-			if (reg.name == name_of(meta_function::equal_to)) {
+			if (reg.name == to_string(meta_function::equal_to)) {
 				hasequals = true;
 			}
-			if (reg.name == name_of(meta_function::less_than)) {
+			if (reg.name == to_string(meta_function::less_than)) {
 				hasless = true;
 			}
-			if (reg.name == name_of(meta_function::less_than_or_equal_to)) {
+			if (reg.name == to_string(meta_function::less_than_or_equal_to)) {
 				haslessequals = true;
 			}
-			if (reg.name == name_of(meta_function::garbage_collect)) {
+			if (reg.name == to_string(meta_function::garbage_collect)) {
 				destructfunc = reg.func;
 				return;
 			}
-			else if (reg.name == name_of(meta_function::index)) {
+			else if (reg.name == to_string(meta_function::index)) {
 				indexfunc = reg.func;
 				mustindex = true;
 				return;
 			}
-			else if (reg.name == name_of(meta_function::new_index)) {
+			else if (reg.name == to_string(meta_function::new_index)) {
 				newindexfunc = reg.func;
 				mustindex = true;
 				return;
@@ -474,7 +474,7 @@ namespace sol {
 					)
 			}... };
 			this->mapping.insert(ilist);
-			for (const auto& n : meta_function_names) {
+			for (const auto& n : meta_function_names()) {
 				this->mapping.erase(n);
 			}
 			this->mustindex = contains_variable() || contains_index();
@@ -628,7 +628,7 @@ namespace sol {
 				value_table[lastreg] = { nullptr, nullptr };
 				regs_t ref_table = value_table;
 				regs_t unique_table = value_table;
-				bool hasdestructor = !value_table.empty() && name_of(meta_function::garbage_collect) == value_table[lastreg - 1].name;
+				bool hasdestructor = !value_table.empty() && to_string(meta_function::garbage_collect) == value_table[lastreg - 1].name;
 				if (hasdestructor) {
 					ref_table[lastreg - 1] = { nullptr, nullptr };
 					unique_table[lastreg - 1] = { value_table[lastreg - 1].name, detail::unique_destruct<T> };

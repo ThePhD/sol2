@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-04-03 02:39:07.019670 UTC
-// This header was generated with sol v2.16.0 (revision 185f5ec)
+// Generated 2017-04-04 20:15:59.634079 UTC
+// This header was generated with sol v2.16.0 (revision 32feb7a)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3044,6 +3044,7 @@ namespace sol {
 			}
 #if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			catch (...) {
+				std::exception_ptr eptr = std::current_exception();
 				lua_pushstring(L, "caught (...) exception");
 			}
 #endif
@@ -3478,47 +3479,45 @@ namespace sol {
 
 	typedef meta_function meta_method;
 
-	const std::array<std::string, 2> meta_variable_names = { {
-		"__index",
-		"__newindex",
-	} };
+	inline const std::array<std::string, 29>& meta_function_names() {
+		static const std::array<std::string, 29> names = { {
+				"new",
+				"__index",
+				"__newindex",
+				"__mode",
+				"__call",
+				"__mt",
+				"__tostring",
+				"__len",
+				"__unm",
+				"__add",
+				"__sub",
+				"__mul",
+				"__div",
+				"__mod",
+				"__pow",
+				"__concat",
+				"__eq",
+				"__lt",
+				"__le",
+				"__gc",
 
-	const std::array<std::string, 29> meta_function_names = { {
-		"new",
-		"__index",
-		"__newindex",
-		"__mode",
-		"__call",
-		"__mt",
-		"__tostring",
-		"__len",
-		"__unm",
-		"__add",
-		"__sub",
-		"__mul",
-		"__div",
-		"__mod",
-		"__pow",
-		"__concat",
-		"__eq",
-		"__lt",
-		"__le",
-		"__gc",
-		
-		"__idiv",
-		"__shl",
-		"__shr",
-		"__bnot",
-		"__band",
-		"__bor",
-		"__bxor",
+				"__idiv",
+				"__shl",
+				"__shr",
+				"__bnot",
+				"__band",
+				"__bor",
+				"__bxor",
 
-		"__pairs",
-		"__next"
-	} };
+				"__pairs",
+				"__next"
+			} };
+		return names;
+	}
 
-	inline const std::string& name_of(meta_function mf) {
-		return meta_function_names[static_cast<int>(mf)];
+	inline const std::string& to_string(meta_function mf) {
+		return meta_function_names()[static_cast<int>(mf)];
 	}
 
 	inline type type_of(lua_State* L, int index) {
@@ -5178,7 +5177,7 @@ namespace sol {
 					return false;
 				}
 				// Do advanced check for call-style userdata?
-				static const auto& callkey = name_of(meta_function::call);
+				static const auto& callkey = to_string(meta_function::call);
 				if (lua_getmetatable(L, index) == 0) {
 					// No metatable, no __call key possible
 					handler(L, index, type::function, t);
@@ -5730,8 +5729,9 @@ namespace sol {
 			static meta_function get(lua_State *L, int index, record& tracking) {
 				tracking.use(1);
 				const char* name = getter<const char*>{}.get(L, index, tracking);
-				for (std::size_t i = 0; i < meta_function_names.size(); ++i)
-					if (meta_function_names[i] == name)
+				const auto& mfnames = meta_function_names();
+				for (std::size_t i = 0; i < mfnames.size(); ++i)
+					if (mfnames[i] == name)
 						return static_cast<meta_function>(i);
 				return meta_function::construct;
 			}
@@ -6571,7 +6571,7 @@ namespace sol {
 		template<>
 		struct pusher<meta_function> {
 			static int push(lua_State* L, meta_function m) {
-				const std::string& str = name_of(m);
+				const std::string& str = to_string(m);
 				lua_pushlstring(L, str.c_str(), str.size());
 				return 1;
 			}
@@ -10439,7 +10439,7 @@ namespace sol {
 		};
 
 		inline bool is_indexer(string_detail::string_shim s) {
-			return s == name_of(meta_function::index) || s == name_of(meta_function::new_index);
+			return s == to_string(meta_function::index) || s == to_string(meta_function::new_index);
 		}
 
 		inline bool is_indexer(meta_function mf) {
@@ -10459,11 +10459,11 @@ namespace sol {
 		}
 
 		inline auto make_shim(call_construction) {
-			return string_detail::string_shim(name_of(meta_function::call_function));
+			return string_detail::string_shim(to_string(meta_function::call_function));
 		}
 
 		inline auto make_shim(meta_function mf) {
-			return string_detail::string_shim(name_of(mf));
+			return string_detail::string_shim(to_string(mf));
 		}
 
 		inline auto make_shim(base_classes_tag) {
@@ -10704,19 +10704,19 @@ namespace sol {
 
 		int finish_regs(regs_t& l, int& index) {
 			if (!hasless) {
-				const char* name = name_of(meta_function::less_than).c_str();
+				const char* name = to_string(meta_function::less_than).c_str();
 				usertype_detail::make_reg_op<T, std::less<>, meta::supports_op_less<T>>(l, index, name);
 			}
 			if (!haslessequals) {
-				const char* name = name_of(meta_function::less_than_or_equal_to).c_str();
+				const char* name = to_string(meta_function::less_than_or_equal_to).c_str();
 				usertype_detail::make_reg_op<T, std::less_equal<>, meta::supports_op_less_equal<T>>(l, index, name);
 			}
 			if (!hasequals) {
-				const char* name = name_of(meta_function::equal_to).c_str();
+				const char* name = to_string(meta_function::equal_to).c_str();
 				usertype_detail::make_reg_op<T, std::conditional_t<meta::supports_op_equal<T>::value, std::equal_to<>, usertype_detail::no_comp>, std::true_type>(l, index, name);
 			}
 			if (destructfunc != nullptr) {
-				l[index] = { name_of(meta_function::garbage_collect).c_str(), destructfunc };
+				l[index] = { to_string(meta_function::garbage_collect).c_str(), destructfunc };
 				++index;
 			}
 			return index;
@@ -10753,25 +10753,25 @@ namespace sol {
 			// Returnable scope
 			// That would be a neat keyword for C++
 			// returnable { ... };
-			if (reg.name == name_of(meta_function::equal_to)) {
+			if (reg.name == to_string(meta_function::equal_to)) {
 				hasequals = true;
 			}
-			if (reg.name == name_of(meta_function::less_than)) {
+			if (reg.name == to_string(meta_function::less_than)) {
 				hasless = true;
 			}
-			if (reg.name == name_of(meta_function::less_than_or_equal_to)) {
+			if (reg.name == to_string(meta_function::less_than_or_equal_to)) {
 				haslessequals = true;
 			}
-			if (reg.name == name_of(meta_function::garbage_collect)) {
+			if (reg.name == to_string(meta_function::garbage_collect)) {
 				destructfunc = reg.func;
 				return;
 			}
-			else if (reg.name == name_of(meta_function::index)) {
+			else if (reg.name == to_string(meta_function::index)) {
 				indexfunc = reg.func;
 				mustindex = true;
 				return;
 			}
-			else if (reg.name == name_of(meta_function::new_index)) {
+			else if (reg.name == to_string(meta_function::new_index)) {
 				newindexfunc = reg.func;
 				mustindex = true;
 				return;
@@ -10796,7 +10796,7 @@ namespace sol {
 					)
 			}... };
 			this->mapping.insert(ilist);
-			for (const auto& n : meta_function_names) {
+			for (const auto& n : meta_function_names()) {
 				this->mapping.erase(n);
 			}
 			this->mustindex = contains_variable() || contains_index();
@@ -10950,7 +10950,7 @@ namespace sol {
 				value_table[lastreg] = { nullptr, nullptr };
 				regs_t ref_table = value_table;
 				regs_t unique_table = value_table;
-				bool hasdestructor = !value_table.empty() && name_of(meta_function::garbage_collect) == value_table[lastreg - 1].name;
+				bool hasdestructor = !value_table.empty() && to_string(meta_function::garbage_collect) == value_table[lastreg - 1].name;
 				if (hasdestructor) {
 					ref_table[lastreg - 1] = { nullptr, nullptr };
 					unique_table[lastreg - 1] = { value_table[lastreg - 1].name, detail::unique_destruct<T> };
@@ -11399,29 +11399,29 @@ namespace sol {
 				bool hasless = false;
 				bool haslessequals = false;
 				auto register_kvp = [&](std::size_t i, stack_reference& t, const std::string& first, object& second) {
-					if (first == name_of(meta_function::equal_to)) {
+					if (first == to_string(meta_function::equal_to)) {
 						hasequals = true;
 					}
-					else if (first == name_of(meta_function::less_than)) {
+					else if (first == to_string(meta_function::less_than)) {
 						hasless = true;
 					}
-					else if (first == name_of(meta_function::less_than_or_equal_to)) {
+					else if (first == to_string(meta_function::less_than_or_equal_to)) {
 						haslessequals = true;
 					}
-					else if (first == name_of(meta_function::index)) {
+					else if (first == to_string(meta_function::index)) {
 						umx.indexfunc = second.template as<lua_CFunction>();
 					}
-					else if (first == name_of(meta_function::new_index)) {
+					else if (first == to_string(meta_function::new_index)) {
 						umx.newindexfunc = second.template as<lua_CFunction>();
 					}
 					switch (i) {
 					case 0:
-						if (first == name_of(meta_function::garbage_collect)) {
+						if (first == to_string(meta_function::garbage_collect)) {
 							return;
 						}
 						break;
 					case 1:
-						if (first == name_of(meta_function::garbage_collect)) {
+						if (first == to_string(meta_function::garbage_collect)) {
 							stack::set_field(L, first, detail::unique_destruct<T>, t.stack_index());
 							return;
 						}
@@ -11457,15 +11457,15 @@ namespace sol {
 					luaL_Reg opregs[4]{};
 					int opregsindex = 0;
 					if (!hasless) {
-						const char* name = name_of(meta_function::less_than).c_str();
+						const char* name = to_string(meta_function::less_than).c_str();
 						usertype_detail::make_reg_op<T, std::less<>, meta::supports_op_less<T>>(opregs, opregsindex, name);
 					}
 					if (!haslessequals) {
-						const char* name = name_of(meta_function::less_than_or_equal_to).c_str();
+						const char* name = to_string(meta_function::less_than_or_equal_to).c_str();
 						usertype_detail::make_reg_op<T, std::less_equal<>, meta::supports_op_less_equal<T>>(opregs, opregsindex, name);
 					}
 					if (!hasequals) {
-						const char* name = name_of(meta_function::equal_to).c_str();
+						const char* name = to_string(meta_function::equal_to).c_str();
 						usertype_detail::make_reg_op<T, std::conditional_t<meta::supports_op_equal<T>::value, std::equal_to<>, usertype_detail::no_comp>, std::true_type>(opregs, opregsindex, name);
 					}
 					t.push();

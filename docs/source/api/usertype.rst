@@ -295,25 +295,6 @@ inheritance + overloading
 
 While overloading is supported regardless of inheritance caveats or not, the current version of Sol has a first-match, first-call style of overloading when it comes to inheritance. Put the functions with the most derived arguments first to get the kind of matching you expect or cast inside of an intermediary C++ function and call the function you desire.
 
-traits
-------
-
-.. code-block:: cpp
-	:caption: usertype_traits<T>
-	:name: usertype-traits
-
-	template<typename T>
-	struct usertype_traits {
-		static const std::string name;
-		static const std::string metatable;
-		static const std::string variable_metatable;
-		static const std::string gc_table;
-	};
-
-
-This trait is used to provide names for the various metatables and global tables used to perform cleanup and lookup. They are automagically generated at runtime. Sol attempts to parse the output of ``__PRETTY_FUCNTION__`` (``g++``/``clang++``) or ``_FUNCDSIG`` (``vc++``) to get the proper type name. If you have a special need you can override the names for your specific type. If you notice a bug in a class name when you don't manually specify it during setting a usertype, feel free to open an issue request or send an e-mail!
-
-
 compilation speed
 -----------------
 

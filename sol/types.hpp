@@ -59,6 +59,7 @@ namespace sol {
 			}
 #if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			catch (...) {
+				std::exception_ptr eptr = std::current_exception();
 				lua_pushstring(L, "caught (...) exception");
 			}
 #endif
@@ -493,47 +494,45 @@ namespace sol {
 
 	typedef meta_function meta_method;
 
-	const std::array<std::string, 2> meta_variable_names = { {
-		"__index",
-		"__newindex",
-	} };
+	inline const std::array<std::string, 29>& meta_function_names() {
+		static const std::array<std::string, 29> names = { {
+				"new",
+				"__index",
+				"__newindex",
+				"__mode",
+				"__call",
+				"__mt",
+				"__tostring",
+				"__len",
+				"__unm",
+				"__add",
+				"__sub",
+				"__mul",
+				"__div",
+				"__mod",
+				"__pow",
+				"__concat",
+				"__eq",
+				"__lt",
+				"__le",
+				"__gc",
 
-	const std::array<std::string, 29> meta_function_names = { {
-		"new",
-		"__index",
-		"__newindex",
-		"__mode",
-		"__call",
-		"__mt",
-		"__tostring",
-		"__len",
-		"__unm",
-		"__add",
-		"__sub",
-		"__mul",
-		"__div",
-		"__mod",
-		"__pow",
-		"__concat",
-		"__eq",
-		"__lt",
-		"__le",
-		"__gc",
-		
-		"__idiv",
-		"__shl",
-		"__shr",
-		"__bnot",
-		"__band",
-		"__bor",
-		"__bxor",
+				"__idiv",
+				"__shl",
+				"__shr",
+				"__bnot",
+				"__band",
+				"__bor",
+				"__bxor",
 
-		"__pairs",
-		"__next"
-	} };
+				"__pairs",
+				"__next"
+			} };
+		return names;
+	}
 
-	inline const std::string& name_of(meta_function mf) {
-		return meta_function_names[static_cast<int>(mf)];
+	inline const std::string& to_string(meta_function mf) {
+		return meta_function_names()[static_cast<int>(mf)];
 	}
 
 	inline type type_of(lua_State* L, int index) {

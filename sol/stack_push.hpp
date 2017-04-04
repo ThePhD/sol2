@@ -466,7 +466,7 @@ namespace sol {
 		template<>
 		struct pusher<meta_function> {
 			static int push(lua_State* L, meta_function m) {
-				const std::string& str = name_of(m);
+				const std::string& str = to_string(m);
 				lua_pushlstring(L, str.c_str(), str.size());
 				return 1;
 			}

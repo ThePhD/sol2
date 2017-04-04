@@ -226,7 +226,7 @@ namespace sol {
 					return false;
 				}
 				// Do advanced check for call-style userdata?
-				static const auto& callkey = name_of(meta_function::call);
+				static const auto& callkey = to_string(meta_function::call);
 				if (lua_getmetatable(L, index) == 0) {
 					// No metatable, no __call key possible
 					handler(L, index, type::function, t);

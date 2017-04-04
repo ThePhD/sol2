@@ -401,8 +401,9 @@ namespace sol {
 			static meta_function get(lua_State *L, int index, record& tracking) {
 				tracking.use(1);
 				const char* name = getter<const char*>{}.get(L, index, tracking);
-				for (std::size_t i = 0; i < meta_function_names.size(); ++i)
-					if (meta_function_names[i] == name)
+				const auto& mfnames = meta_function_names();
+				for (std::size_t i = 0; i < mfnames.size(); ++i)
+					if (mfnames[i] == name)
 						return static_cast<meta_function>(i);
 				return meta_function::construct;
 			}

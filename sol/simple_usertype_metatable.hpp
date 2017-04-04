@@ -376,29 +376,29 @@ namespace sol {
 				bool hasless = false;
 				bool haslessequals = false;
 				auto register_kvp = [&](std::size_t i, stack_reference& t, const std::string& first, object& second) {
-					if (first == name_of(meta_function::equal_to)) {
+					if (first == to_string(meta_function::equal_to)) {
 						hasequals = true;
 					}
-					else if (first == name_of(meta_function::less_than)) {
+					else if (first == to_string(meta_function::less_than)) {
 						hasless = true;
 					}
-					else if (first == name_of(meta_function::less_than_or_equal_to)) {
+					else if (first == to_string(meta_function::less_than_or_equal_to)) {
 						haslessequals = true;
 					}
-					else if (first == name_of(meta_function::index)) {
+					else if (first == to_string(meta_function::index)) {
 						umx.indexfunc = second.template as<lua_CFunction>();
 					}
-					else if (first == name_of(meta_function::new_index)) {
+					else if (first == to_string(meta_function::new_index)) {
 						umx.newindexfunc = second.template as<lua_CFunction>();
 					}
 					switch (i) {
 					case 0:
-						if (first == name_of(meta_function::garbage_collect)) {
+						if (first == to_string(meta_function::garbage_collect)) {
 							return;
 						}
 						break;
 					case 1:
-						if (first == name_of(meta_function::garbage_collect)) {
+						if (first == to_string(meta_function::garbage_collect)) {
 							stack::set_field(L, first, detail::unique_destruct<T>, t.stack_index());
 							return;
 						}
@@ -434,15 +434,15 @@ namespace sol {
 					luaL_Reg opregs[4]{};
 					int opregsindex = 0;
 					if (!hasless) {
-						const char* name = name_of(meta_function::less_than).c_str();
+						const char* name = to_string(meta_function::less_than).c_str();
 						usertype_detail::make_reg_op<T, std::less<>, meta::supports_op_less<T>>(opregs, opregsindex, name);
 					}
 					if (!haslessequals) {
-						const char* name = name_of(meta_function::less_than_or_equal_to).c_str();
+						const char* name = to_string(meta_function::less_than_or_equal_to).c_str();
 						usertype_detail::make_reg_op<T, std::less_equal<>, meta::supports_op_less_equal<T>>(opregs, opregsindex, name);
 					}
 					if (!hasequals) {
-						const char* name = name_of(meta_function::equal_to).c_str();
+						const char* name = to_string(meta_function::equal_to).c_str();
 						usertype_detail::make_reg_op<T, std::conditional_t<meta::supports_op_equal<T>::value, std::equal_to<>, usertype_detail::no_comp>, std::true_type>(opregs, opregsindex, name);
 					}
 					t.push();
