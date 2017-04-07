@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-04-04 20:15:59.634079 UTC
-// This header was generated with sol v2.16.0 (revision 32feb7a)
+// Generated 2017-04-07 01:10:42.173645 UTC
+// This header was generated with sol v2.16.0 (revision e856abc)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -799,7 +799,7 @@ namespace sol {
 #include <lauxlib.h>
 #else
 #include <lua.hpp>
-#endif // C++ Mangming for Lua
+#endif // C++ Mangling for Lua
 
 #if defined(_WIN32) || defined(_MSC_VER)
 #ifndef SOL_CODECVT_SUPPORT
@@ -890,7 +890,33 @@ namespace sol {
 
 #ifndef SOL_NO_COMPAT
 
-#ifdef SOL_USING_CXX_LUA
+#if defined(__cplusplus) && !defined(SOL_USING_CXX_LUA)
+extern "C" {
+#endif
+// beginning of sol/compatibility/5.2.0.h
+
+#ifndef SOL_5_2_0_H
+#define SOL_5_2_0_H
+
+#if SOL_LUA_VERSION < 503
+
+inline int lua_isinteger(lua_State* L, int idx) {
+	if (lua_type(L, idx) != LUA_TNUMBER)
+		return 0;
+	// This is a very slipshod way to do the testing
+	// but lua_totingerx doesn't play ball nicely
+	// on older versions...
+	lua_Number n = lua_tonumber(L, idx);
+	lua_Integer i = lua_tointeger(L, idx);
+	if (i != n)
+		return 0;
+	// it's DEFINITELY an integer
+	return 1;
+}
+
+#endif // SOL_LUA_VERSION == 502
+#endif // SOL_5_2_0_H
+// end of sol/compatibility/5.2.0.h
 
 // beginning of sol/compatibility/5.1.0.h
 
@@ -1114,32 +1140,7 @@ int luaL_fileresult(lua_State *L, int stat, const char *fname);
 #ifndef SOL_5_X_X_INL
 #define SOL_5_X_X_INL
 
-// beginning of sol/compatibility/5.2.0.h
-
-#ifndef SOL_5_2_0_H
-#define SOL_5_2_0_H
-
-#if SOL_LUA_VERSION < 503
-
-inline int lua_isinteger(lua_State* L, int idx) {
-	if (lua_type(L, idx) != LUA_TNUMBER)
-		return 0;
-	// This is a very slipshod way to do the testing
-	// but lua_totingerx doesn't play ball nicely
-	// on older versions...
-	lua_Number n = lua_tonumber(L, idx);
-	lua_Integer i = lua_tointeger(L, idx);
-	if (i != n)
-		return 0;
-	// it's DEFINITELY an integer
-	return 1;
-}
-
-#endif // SOL_LUA_VERSION == 502
-#endif // SOL_5_2_0_H
-// end of sol/compatibility/5.2.0.h
-
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM == 501
+#if SOL_LUA_VERSION < 502
 
 #include <errno.h>
 
@@ -1811,16 +1812,9 @@ inline void luaL_pushresult(luaL_Buffer_52 *B) {
 #endif // SOL_5_X_X_INL
 // end of sol/compatibility/5.x.x.inl
 
-#else
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(SOL_USING_CXX_LUA)
 }
 #endif
-
-#endif // C++ Mangling for Lua
 
 #endif // SOL_NO_COMPAT
 

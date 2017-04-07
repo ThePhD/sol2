@@ -28,7 +28,7 @@
 #include "5.0.0.h"
 #include "5.x.x.h"
 
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM == 501
+#if SOL_LUA_VERSION < 502
 
 #include <errno.h>
 #include <string.h>

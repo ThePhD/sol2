@@ -21,6 +21,7 @@
 
 #ifndef SOL_5_2_0_H
 #define SOL_5_2_0_H
+
 #include "version.hpp"
 
 #if SOL_LUA_VERSION < 503

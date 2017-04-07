@@ -27,7 +27,6 @@
 #if SOL_LUA_VERSION == 501
 /* Lua 5.1 */
 
-#include <lua.hpp>
 #include <stddef.h>
 #include <string.h>
 #include <stdio.h>

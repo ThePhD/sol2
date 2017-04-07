@@ -28,7 +28,7 @@
 #include <lauxlib.h>
 #else
 #include <lua.hpp>
-#endif // C++ Mangming for Lua
+#endif // C++ Mangling for Lua
 
 #if defined(_WIN32) || defined(_MSC_VER)
 #ifndef SOL_CODECVT_SUPPORT
