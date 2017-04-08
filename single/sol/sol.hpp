@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-04-07 01:10:42.173645 UTC
-// This header was generated with sol v2.16.0 (revision e856abc)
+// Generated 2017-04-08 12:25:20.970713 UTC
+// This header was generated with sol v2.17.0 (revision 28fff10)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -11783,11 +11783,11 @@ namespace sol {
 #endif
 			using std::begin;
 			auto it = begin(src);
+			--k;
 			if (k == src.size()) {
 				real_add_call_push(std::integral_constant<bool, detail::has_push_back<T>::value>(), L, src, 1);
 				return 0;
 			}
-			--k;
 			std::advance(it, k);
 			*it = stack::get<V>(L, 3);
 			return 0;

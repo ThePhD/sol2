@@ -239,11 +239,11 @@ namespace sol {
 #endif
 			using std::begin;
 			auto it = begin(src);
+			--k;
 			if (k == src.size()) {
 				real_add_call_push(std::integral_constant<bool, detail::has_push_back<T>::value>(), L, src, 1);
 				return 0;
 			}
-			--k;
 			std::advance(it, k);
 			*it = stack::get<V>(L, 3);
 			return 0;

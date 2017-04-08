@@ -522,3 +522,39 @@ end
 		REQUIRE(ct.x == 20);
 	}
 }
+
+TEST_CASE("containers/append-idiom", "ensure the append-idiom works as intended") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+	lua.script(
+R"(
+function f_fill(vec)
+	print("#vec in lua: " .. #vec)
+	for k = 1, #vec do
+		vec[k] = k
+	end
+	print("#vec in lua: " .. #vec)
+end
+function f_append(vec)
+	print("#vec in lua: " .. #vec)
+	vec[#vec] = -10456407
+	vec[#vec + 1] = -54
+	print("#vec in lua: " .. #vec)
+end
+)");
+	std::vector<int> fill_cmp{ 1, 2, 3 };
+	std::vector<int> append_cmp{ -1, -1, -10456407, -54 };
+
+	std::vector<int> vec1{ -1, -1, -1 };
+	std::vector<int> vec2{ -1, -1, -1 };
+
+	REQUIRE(vec1.size() == 3);
+	lua["f_fill"](vec1);
+	REQUIRE(vec1.size() == 3);
+	REQUIRE(vec1 == fill_cmp);
+
+	REQUIRE(vec2.size() == 3);
+	lua["f_append"](vec2);
+	REQUIRE(vec2.size() == 4);
+	REQUIRE(vec2 == append_cmp);
+}
