@@ -263,8 +263,8 @@ namespace sol {
 			if (x != load_status::ok) {
 				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
 			}
-			stack::push_popper_at pp(L, lua_absindex(L, -1), 1);
 			protected_function pf(L, -1);
+			pf.pop();
 			set_environment(env, pf);
 			return pf();
 		}
@@ -275,8 +275,8 @@ namespace sol {
 			if (x != load_status::ok) {
 				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
 			}
-			stack::push_popper_at pp(L, lua_absindex(L, -1), 1);
-			stack_protected_function pf(L, -1);
+			protected_function pf(L, -1);
+			pf.pop();
 			set_environment(env, pf);
 			return pf();
 		}
@@ -286,8 +286,8 @@ namespace sol {
 			if (x != load_status::ok) {
 				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
 			}
-			stack::push_popper_at pp(L, lua_absindex(L, -1), 1);
-			stack_protected_function pf(L, -1);
+			protected_function pf(L, -1);
+			pf.pop();
 			return pf();
 		}
 
@@ -296,8 +296,8 @@ namespace sol {
 			if (x != load_status::ok) {
 				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
 			}
-			stack::push_popper_at pp(L, lua_absindex(L, -1), 1);
 			protected_function pf(L, -1);
+			pf.pop();
 			return pf();
 		}
 

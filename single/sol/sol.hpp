@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-04-09 16:04:17.392392 UTC
-// This header was generated with sol v2.17.0 (revision 8145622)
+// Generated 2017-04-09 17:03:27.912893 UTC
+// This header was generated with sol 2.17.0 (revision 2df532f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -13093,8 +13093,8 @@ namespace sol {
 			if (x != load_status::ok) {
 				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
 			}
-			stack::push_popper_at pp(L, lua_absindex(L, -1), 1);
 			protected_function pf(L, -1);
+			pf.pop();
 			set_environment(env, pf);
 			return pf();
 		}
@@ -13105,8 +13105,8 @@ namespace sol {
 			if (x != load_status::ok) {
 				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
 			}
-			stack::push_popper_at pp(L, lua_absindex(L, -1), 1);
-			stack_protected_function pf(L, -1);
+			protected_function pf(L, -1);
+			pf.pop();
 			set_environment(env, pf);
 			return pf();
 		}
@@ -13116,8 +13116,8 @@ namespace sol {
 			if (x != load_status::ok) {
 				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
 			}
-			stack::push_popper_at pp(L, lua_absindex(L, -1), 1);
-			stack_protected_function pf(L, -1);
+			protected_function pf(L, -1);
+			pf.pop();
 			return pf();
 		}
 
@@ -13126,8 +13126,8 @@ namespace sol {
 			if (x != load_status::ok) {
 				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
 			}
-			stack::push_popper_at pp(L, lua_absindex(L, -1), 1);
 			protected_function pf(L, -1);
+			pf.pop();
 			return pf();
 		}
 
