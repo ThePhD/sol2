@@ -27,6 +27,36 @@
 
 namespace sol {
 	namespace stack {
+		inline void remove(lua_State* L, int index, int count) {
+			if (count < 1)
+				return;
+			int top = lua_gettop(L);
+			if (index == -count || top == index) {
+				// Slice them right off the top
+				lua_pop(L, static_cast<int>(count));
+				return;
+			}
+
+			// Remove each item one at a time using stack operations
+			// Probably slower, maybe, haven't benchmarked,
+			// but necessary
+			if (index < 0) {
+				index = lua_gettop(L) + (index + 1);
+			}
+			int last = index + count;
+			for (int i = index; i < last; ++i) {
+				lua_remove(L, index);
+			}
+		}
+
+		struct push_popper_at {
+			lua_State* L;
+			int index;
+			int count;
+			push_popper_at(lua_State* luastate, int index = -1, int count = 1) : L(luastate), index(index), count(count) { }
+			~push_popper_at() { remove(L, index, count); }
+		};
+
 		template <bool top_level>
 		struct push_popper_n {
 			lua_State* L;

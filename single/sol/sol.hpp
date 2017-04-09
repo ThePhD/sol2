@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-04-08 12:25:20.970713 UTC
-// This header was generated with sol v2.17.0 (revision 28fff10)
+// Generated 2017-04-09 16:04:17.392392 UTC
+// This header was generated with sol v2.17.0 (revision 8145622)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4023,6 +4023,36 @@ namespace sol {
 
 namespace sol {
 	namespace stack {
+		inline void remove(lua_State* L, int index, int count) {
+			if (count < 1)
+				return;
+			int top = lua_gettop(L);
+			if (index == -count || top == index) {
+				// Slice them right off the top
+				lua_pop(L, static_cast<int>(count));
+				return;
+			}
+
+			// Remove each item one at a time using stack operations
+			// Probably slower, maybe, haven't benchmarked,
+			// but necessary
+			if (index < 0) {
+				index = lua_gettop(L) + (index + 1);
+			}
+			int last = index + count;
+			for (int i = index; i < last; ++i) {
+				lua_remove(L, index);
+			}
+		}
+
+		struct push_popper_at {
+			lua_State* L;
+			int index;
+			int count;
+			push_popper_at(lua_State* luastate, int index = -1, int count = 1) : L(luastate), index(index), count(count) { }
+			~push_popper_at() { remove(L, index, count); }
+		};
+
 		template <bool top_level>
 		struct push_popper_n {
 			lua_State* L;
@@ -7191,28 +7221,6 @@ namespace sol {
 		int set_ref(lua_State* L, T&& arg, int tableindex = -2) {
 			push(L, std::forward<T>(arg));
 			return luaL_ref(L, tableindex);
-		}
-
-		inline void remove(lua_State* L, int index, int count) {
-			if (count < 1)
-				return;
-			int top = lua_gettop(L);
-			if (index == -count || top == index) {
-				// Slice them right off the top
-				lua_pop(L, static_cast<int>(count));
-				return;
-			}
-
-			// Remove each item one at a time using stack operations
-			// Probably slower, maybe, haven't benchmarked,
-			// but necessary
-			if (index < 0) {
-				index = lua_gettop(L) + (index + 1);
-			}
-			int last = index + count;
-			for (int i = index; i < last; ++i) {
-				lua_remove(L, index);
-			}
 		}
 
 		template <bool check_args = stack_detail::default_check_arguments, typename R, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<!std::is_void<R>::value>>
@@ -13085,6 +13093,7 @@ namespace sol {
 			if (x != load_status::ok) {
 				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
 			}
+			stack::push_popper_at pp(L, lua_absindex(L, -1), 1);
 			protected_function pf(L, -1);
 			set_environment(env, pf);
 			return pf();
@@ -13096,7 +13105,8 @@ namespace sol {
 			if (x != load_status::ok) {
 				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
 			}
-			protected_function pf(L, -1);
+			stack::push_popper_at pp(L, lua_absindex(L, -1), 1);
+			stack_protected_function pf(L, -1);
 			set_environment(env, pf);
 			return pf();
 		}
@@ -13106,7 +13116,8 @@ namespace sol {
 			if (x != load_status::ok) {
 				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
 			}
-			protected_function pf(L, -1);
+			stack::push_popper_at pp(L, lua_absindex(L, -1), 1);
+			stack_protected_function pf(L, -1);
 			return pf();
 		}
 
@@ -13115,6 +13126,7 @@ namespace sol {
 			if (x != load_status::ok) {
 				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
 			}
+			stack::push_popper_at pp(L, lua_absindex(L, -1), 1);
 			protected_function pf(L, -1);
 			return pf();
 		}

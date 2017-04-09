@@ -105,28 +105,6 @@ namespace sol {
 			return luaL_ref(L, tableindex);
 		}
 
-		inline void remove(lua_State* L, int index, int count) {
-			if (count < 1)
-				return;
-			int top = lua_gettop(L);
-			if (index == -count || top == index) {
-				// Slice them right off the top
-				lua_pop(L, static_cast<int>(count));
-				return;
-			}
-
-			// Remove each item one at a time using stack operations
-			// Probably slower, maybe, haven't benchmarked,
-			// but necessary
-			if (index < 0) {
-				index = lua_gettop(L) + (index + 1);
-			}
-			int last = index + count;
-			for (int i = index; i < last; ++i) {
-				lua_remove(L, index);
-			}
-		}
-
 		template <bool check_args = stack_detail::default_check_arguments, typename R, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<!std::is_void<R>::value>>
 		inline decltype(auto) call(types<R> tr, types<Args...> ta, lua_State* L, int start, Fx&& fx, FxArgs&&... args) {
 			typedef std::make_index_sequence<sizeof...(Args)> args_indices;
