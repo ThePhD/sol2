@@ -33,9 +33,10 @@ namespace sol {
 		const char* message = lua_tostring(L, -1);
 		if (message) {
 			std::string err = message;
-			lua_pop(L, 1);
+			lua_settop(L, 0);
 			throw error(err);
 		}
+		lua_settop(L, 0);
 		throw error(std::string("An unexpected error occurred and forced the lua state to call atpanic"));
 #endif
 	}
