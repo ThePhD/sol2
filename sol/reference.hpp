@@ -27,11 +27,11 @@
 
 namespace sol {
 	namespace stack {
-		inline void remove(lua_State* L, int index, int count) {
+		inline void remove(lua_State* L, int rawindex, int count) {
 			if (count < 1)
 				return;
 			int top = lua_gettop(L);
-			if (index == -count || top == index) {
+			if (rawindex == -count || top == rawindex) {
 				// Slice them right off the top
 				lua_pop(L, static_cast<int>(count));
 				return;
@@ -40,6 +40,7 @@ namespace sol {
 			// Remove each item one at a time using stack operations
 			// Probably slower, maybe, haven't benchmarked,
 			// but necessary
+			int index = lua_absindex(L, rawindex);
 			if (index < 0) {
 				index = lua_gettop(L) + (index + 1);
 			}
@@ -97,6 +98,7 @@ namespace sol {
 
 	namespace detail {
 		struct global_tag { } const global_{};
+		struct no_safety_tag {} const no_safety;
 	} // detail
 
 	class reference {

@@ -29,35 +29,57 @@ namespace sol {
 	template <typename base_type>
 	struct basic_environment : basic_table<base_type> {
 	private:
-		typedef basic_table<base_type> table_t;
+		typedef basic_table<base_type> base_t;
+
 	public:
 		basic_environment() noexcept = default;
 		basic_environment(const basic_environment&) = default;
 		basic_environment(basic_environment&&) = default;
 		basic_environment& operator=(const basic_environment&) = default;
 		basic_environment& operator=(basic_environment&&) = default;
-		
-		basic_environment(env_t, const stack_reference& extraction_target) : table_t(extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
-			lua_pop(this->lua_state(), 2);
-		}
-		basic_environment(env_t, const reference& extraction_target) : table_t(extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
-			lua_pop(this->lua_state(), 2);
-		}
+		basic_environment(const stack_reference& r) : basic_environment(r.lua_state(), r.stack_index()) {}
+		basic_environment(stack_reference&& r) : basic_environment(r.lua_state(), r.stack_index()) {}
 
-		basic_environment(lua_State* L, new_table t, const reference& fallback) : table_t(L, std::move(t)) {
+		basic_environment(lua_State* L, new_table nt) : base_t(L, std::move(nt)) {}
+		basic_environment(lua_State* L, new_table t, const reference& fallback) : basic_environment(L, std::move(t)) {
 			sol::stack_table mt(L, sol::new_table(0, 1));
 			mt.set(sol::meta_function::index, fallback);
 			this->set(metatable_key, mt);
 			mt.pop();
 		}
-		
-		template <typename T, typename... Args, meta::enable<
-			meta::neg<std::is_same<meta::unqualified_t<T>, basic_environment>>, 
-			meta::boolean<!(sizeof...(Args) == 2 && meta::any_same<new_table, meta::unqualified_t<Args>...>::value)>,
-			meta::boolean<!(sizeof...(Args) == 1 && std::is_same<env_t, meta::unqualified_t<T>>::value)>,
-			meta::boolean<!(sizeof...(Args) == 0 && std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>::value)>
-		> = meta::enabler>
-		basic_environment(T&& arg, Args&&... args) : table_t(std::forward<T>(arg), std::forward<Args>(args)...) { }
+
+		basic_environment(env_t, const stack_reference& extraction_target) : base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			stack::check<env_t>(this->lua_state(), -1, type_panic);
+#endif // Safety
+			lua_pop(this->lua_state(), 2);
+		}
+		basic_environment(env_t, const reference& extraction_target) : base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			stack::check<env_t>(this->lua_state(), -1, type_panic);
+#endif // Safety
+			lua_pop(this->lua_state(), 2);
+		}
+		basic_environment(lua_State* L, int index = -1) : base_t(detail::no_safety, L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			stack::check<basic_environment>(L, index, type_panic);
+#endif // Safety
+		}
+		basic_environment(lua_State* L, ref_index index) : base_t(detail::no_safety, L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			stack::check<basic_environment>(L, -1, type_panic);
+#endif // Safety
+		}
+		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_environment>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		basic_environment(T&& r) noexcept : base_t(detail::no_safety, std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			if (!is_environment<meta::unqualified_t<T>>::value) {
+				auto pp = stack::push_pop(*this);
+				stack::check<basic_environment>(base_t::lua_state(), -1, type_panic);
+			}
+#endif // Safety
+		}
 
 		template <typename T>
 		void set_on(const T& target) const {

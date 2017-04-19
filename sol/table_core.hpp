@@ -156,6 +156,12 @@ namespace sol {
 		}
 
 		basic_table_core(lua_State* L, detail::global_tag t) noexcept : base_t(L, t) { }
+	
+	protected:
+		basic_table_core(detail::no_safety_tag, lua_State* L, int index) : base_t(L, index) {}
+		basic_table_core(detail::no_safety_tag, lua_State* L, ref_index index) : base_t(L, index) {}
+		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		basic_table_core(detail::no_safety_tag, T&& r) noexcept : base_t(std::forward<T>(r)) {}
 		
 	public:
 		typedef basic_table_iterator<base_type> iterator;
@@ -175,19 +181,19 @@ namespace sol {
 				lua_pop(L, 1);
 			}
 		}
-		basic_table_core(lua_State* L, int index = -1) : base_t(L, index) {
+		basic_table_core(lua_State* L, int index = -1) : basic_table_core(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			stack::check<basic_table_core>(L, index, type_panic);
 #endif // Safety
 		}
-		basic_table_core(lua_State* L, ref_index index) : base_t(L, index) {
+		basic_table_core(lua_State* L, ref_index index) : basic_table_core(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
 			stack::check<basic_table_core>(L, -1, type_panic);
 #endif // Safety
 		}
 		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
-		basic_table_core(T&& r) noexcept : base_t(std::forward<T>(r)) {
+		basic_table_core(T&& r) noexcept : basic_table_core(detail::no_safety, std::forward<T>(r)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_table<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);

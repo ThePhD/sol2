@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-04-19 00:25:59.958025 UTC
-// This header was generated with sol v2.17.1 (revision 2acc8be)
+// Generated 2017-04-19 16:59:23.068202 UTC
+// This header was generated with sol v2.17.1 (revision de7d7e8)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3683,14 +3683,14 @@ namespace sol {
 		template <bool b, typename Base>
 		struct lua_type_of<basic_table_core<b, Base>> : std::integral_constant<type, type::table> { };
 
-		template <typename B>
-		struct lua_type_of<basic_environment<B>> : std::integral_constant<type, type::table> { };
-
 		template <>
 		struct lua_type_of<metatable_t> : std::integral_constant<type, type::table> { };
 
+		template <typename B>
+		struct lua_type_of<basic_environment<B>> : std::integral_constant<type, type::poly> { };
+
 		template <>
-		struct lua_type_of<env_t> : std::integral_constant<type, type::table> { };
+		struct lua_type_of<env_t> : std::integral_constant<type, type::poly> { };
 
 		template <>
 		struct lua_type_of<new_table> : std::integral_constant<type, type::table> { };
@@ -3921,6 +3921,9 @@ namespace sol {
 	struct is_userdata<basic_userdata<T>> : std::true_type {};
 
 	template <typename T>
+	struct is_environment : std::integral_constant<bool, is_userdata<T>::value || is_table<T>::value> {};
+
+	template <typename T>
 	struct is_container : detail::is_container<T>{};
 	
 	template<typename T>
@@ -4032,11 +4035,11 @@ namespace sol {
 
 namespace sol {
 	namespace stack {
-		inline void remove(lua_State* L, int index, int count) {
+		inline void remove(lua_State* L, int rawindex, int count) {
 			if (count < 1)
 				return;
 			int top = lua_gettop(L);
-			if (index == -count || top == index) {
+			if (rawindex == -count || top == rawindex) {
 				// Slice them right off the top
 				lua_pop(L, static_cast<int>(count));
 				return;
@@ -4045,6 +4048,7 @@ namespace sol {
 			// Remove each item one at a time using stack operations
 			// Probably slower, maybe, haven't benchmarked,
 			// but necessary
+			int index = lua_absindex(L, rawindex);
 			if (index < 0) {
 				index = lua_gettop(L) + (index + 1);
 			}
@@ -4102,6 +4106,7 @@ namespace sol {
 
 	namespace detail {
 		struct global_tag { } const global_{};
+		struct no_safety_tag {} const no_safety;
 	} // detail
 
 	class reference {
@@ -5188,6 +5193,14 @@ namespace sol {
 			}
 		};
 
+		template <typename B, typename C>
+		struct checker<basic_userdata<B>, type::userdata, C> {
+			template <typename Handler>
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				return stack::check<userdata_value>(L, index, std::forward<Handler>(handler), tracking);
+			}
+		};
+
 		template <typename T, typename C>
 		struct checker<user<T>, type::userdata, C> : checker<user<T>, type::lightuserdata, C> {};
 
@@ -5271,6 +5284,28 @@ namespace sol {
 				}
 				if (t != type::userdata) {
 					lua_pop(L, 1);
+					handler(L, index, expected, t);
+					return false;
+				}
+				return true;
+			}
+		};
+
+		template <typename C>
+		struct checker<env_t, type::poly, C> {
+			template <typename Handler>
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				tracking.use(1);
+				if (lua_getmetatable(L, index) == 0) {
+					return true;
+				}
+				type t = type_of(L, -1);
+				if (t == type::table || t == type::none || t == type::nil) {
+					lua_pop(L, 1);
+					return true;
+				}
+				if (t != type::userdata) {
+					lua_pop(L, 1);
 					handler(L, index, type::table, t);
 					return false;
 				}
@@ -5278,8 +5313,8 @@ namespace sol {
 			}
 		};
 
-		template <type expected, typename C>
-		struct checker<env_t, expected, C> {
+		template <typename E, typename C>
+		struct checker<basic_environment<E>, type::poly, C> {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 				tracking.use(1);
@@ -7500,21 +7535,21 @@ namespace sol {
 		basic_userdata(stack_reference&& r) : basic_userdata(r.lua_state(), r.stack_index()) {}
 		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<meta::unqualified_t<T>, ref_index>>> = meta::enabler>
 		basic_userdata(lua_State* L, T&& r) : basic_userdata(L, sol::ref_index(r.registry_index())) {}
-		basic_userdata(lua_State* L, int index = -1) : base_t(L, index) {
+		basic_userdata(lua_State* L, int index = -1) : base_t(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-			type_assert(L, index, type::userdata);
+			stack::check<basic_userdata>(L, index, type_panic);
 #endif // Safety
 		}
-		basic_userdata(lua_State* L, ref_index index) : base_t(L, index) {
+		basic_userdata(lua_State* L, ref_index index) : base_t(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
-			type_assert(L, -1, type::userdata);
+			stack::check<basic_userdata>(L, index, type_panic);
 #endif // Safety
 		}
 	};
 
 	template <typename base_type>
-	class basic_lightuserdata : public basic_object_base< base_type > {
+	class basic_lightuserdata : public basic_object_base<base_type> {
 		typedef basic_object_base<base_type> base_t;
 	public:
 		basic_lightuserdata() noexcept = default;
@@ -7537,13 +7572,13 @@ namespace sol {
 		basic_lightuserdata(lua_State* L, T&& r) : basic_lightuserdata(L, sol::ref_index(r.registry_index())) {}
 		basic_lightuserdata(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-			type_assert(L, index, type::lightuserdata);
+			stack::check<basic_lightuserdata>(L, index, type_panic);
 #endif // Safety
 		}
 		basic_lightuserdata(lua_State* L, ref_index index) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
-			type_assert(L, -1, type::lightuserdata);
+			stack::check<basic_lightuserdata>(L, index, type_panic);
 #endif // Safety
 		}
 	};
@@ -10594,7 +10629,7 @@ namespace sol {
 			return stack::push(L, runtime[runtimetarget]);
 		}
 
-		template <bool is_index>
+		template <typename T, bool is_index>
 		inline int indexing_fail(lua_State* L) {
 			if (is_index) {
 #if 0//def SOL_SAFE_USERTYPE
@@ -10602,6 +10637,15 @@ namespace sol {
 				string_detail::string_shim accessor = maybeaccessor.value_or(string_detail::string_shim("(unknown)"));
 				return luaL_error(L, "sol: attempt to index (get) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.c_str());
 #else
+				int isnum = 0;
+				lua_Integer magic = lua_tointegerx(L, upvalue_index(4), &isnum);
+				if (isnum != 0 && magic == toplevel_magic) {
+					if (lua_getmetatable(L, 1) == 1) {
+						int metatarget = lua_gettop(L);
+						stack::get_field(L, stack_reference(L, raw_index(2)), metatarget);
+						return 1;
+					}
+				}
 				// With runtime extensibility, we can't hard-error things. They have to return nil, like regular table types, unfortunately...
 				return stack::push(L, lua_nil);
 #endif
@@ -10641,34 +10685,40 @@ namespace sol {
 					}
 				};
 				non_simple();
-				for (std::size_t i = 0; i < 4; lua_pop(L, 1), ++i) {
+				for (std::size_t i = 0; i < 4; lua_settop(L, 3), ++i) {
 					const char* metakey = nullptr;
 					switch (i) {
 					case 0:
 						metakey = &usertype_traits<T*>::metatable()[0];
+						luaL_getmetatable(L, metakey);
 						break;
 					case 1:
 						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable()[0];
+						luaL_getmetatable(L, metakey);
 						break;
 					case 2:
-						metakey = &usertype_traits<T>::user_metatable()[0];
+						metakey = &usertype_traits<T>::metatable()[0];
+						luaL_getmetatable(L, metakey);
 						break;
 					case 3:
 					default:
-						metakey = &usertype_traits<T>::metatable()[0];
+						metakey = &usertype_traits<T>::user_metatable()[0];
+						{
+							luaL_getmetatable(L, metakey);
+							lua_getmetatable(L, -1);
+						}
 						break;
 					}
-					luaL_getmetatable(L, metakey);
 					int tableindex = lua_gettop(L);
 					if (type_of(L, tableindex) == type::lua_nil) {
 						continue;
 					}
-					stack::set_field<false, true>(L, stack_reference(L, 2), stack_reference(L, 3), tableindex);
+					stack::set_field<false, true>(L, stack_reference(L, raw_index(2)), stack_reference(L, raw_index(3)), tableindex);
 				}
 				lua_settop(L, 0);
 				return 0;
 			}
-			return indexing_fail<false>(L);
+			return indexing_fail<T, false>(L);
 		}
 
 		template <bool is_index, typename Base>
@@ -10877,7 +10927,7 @@ namespace sol {
 		}
 
 		template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == sizeof...(Tn)>>
-		usertype_metatable(Args&&... args) : usertype_metatable_core(&usertype_detail::indexing_fail<true>, &usertype_detail::metatable_newindex<T, false>), usertype_detail::registrar(),
+		usertype_metatable(Args&&... args) : usertype_metatable_core(&usertype_detail::indexing_fail<T, true>, &usertype_detail::metatable_newindex<T, false>), usertype_detail::registrar(),
 		functions(std::forward<Args>(args)...),
 		destructfunc(nullptr), callconstructfunc(nullptr),
 		indexbase(&core_indexing_call<true>), newindexbase(&core_indexing_call<false>),
@@ -11408,7 +11458,7 @@ namespace sol {
 		template<std::size_t... I, typename Tuple>
 		simple_usertype_metatable(usertype_detail::verified_tag, std::index_sequence<I...>, lua_State* L, Tuple&& args)
 			: callconstructfunc(lua_nil),
-			indexfunc(&usertype_detail::indexing_fail<true>), newindexfunc(&usertype_detail::metatable_newindex<T, true>),
+			indexfunc(&usertype_detail::indexing_fail<T, true>), newindexfunc(&usertype_detail::metatable_newindex<T, true>),
 			indexbase(&usertype_detail::simple_core_indexing_call<true>), newindexbase(&usertype_detail::simple_core_indexing_call<false>),
 			indexbaseclasspropogation(usertype_detail::walk_all_bases<true>), newindexbaseclasspropogation(&usertype_detail::walk_all_bases<false>),
 			baseclasscheck(nullptr), baseclasscast(nullptr),
@@ -12449,6 +12499,12 @@ namespace sol {
 		}
 
 		basic_table_core(lua_State* L, detail::global_tag t) noexcept : base_t(L, t) { }
+	
+	protected:
+		basic_table_core(detail::no_safety_tag, lua_State* L, int index) : base_t(L, index) {}
+		basic_table_core(detail::no_safety_tag, lua_State* L, ref_index index) : base_t(L, index) {}
+		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		basic_table_core(detail::no_safety_tag, T&& r) noexcept : base_t(std::forward<T>(r)) {}
 		
 	public:
 		typedef basic_table_iterator<base_type> iterator;
@@ -12468,19 +12524,19 @@ namespace sol {
 				lua_pop(L, 1);
 			}
 		}
-		basic_table_core(lua_State* L, int index = -1) : base_t(L, index) {
+		basic_table_core(lua_State* L, int index = -1) : basic_table_core(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			stack::check<basic_table_core>(L, index, type_panic);
 #endif // Safety
 		}
-		basic_table_core(lua_State* L, ref_index index) : base_t(L, index) {
+		basic_table_core(lua_State* L, ref_index index) : basic_table_core(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
 			stack::check<basic_table_core>(L, -1, type_panic);
 #endif // Safety
 		}
 		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
-		basic_table_core(T&& r) noexcept : base_t(std::forward<T>(r)) {
+		basic_table_core(T&& r) noexcept : basic_table_core(detail::no_safety, std::forward<T>(r)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_table<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
@@ -12800,35 +12856,57 @@ namespace sol {
 	template <typename base_type>
 	struct basic_environment : basic_table<base_type> {
 	private:
-		typedef basic_table<base_type> table_t;
+		typedef basic_table<base_type> base_t;
+
 	public:
 		basic_environment() noexcept = default;
 		basic_environment(const basic_environment&) = default;
 		basic_environment(basic_environment&&) = default;
 		basic_environment& operator=(const basic_environment&) = default;
 		basic_environment& operator=(basic_environment&&) = default;
-		
-		basic_environment(env_t, const stack_reference& extraction_target) : table_t(extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
-			lua_pop(this->lua_state(), 2);
-		}
-		basic_environment(env_t, const reference& extraction_target) : table_t(extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
-			lua_pop(this->lua_state(), 2);
-		}
+		basic_environment(const stack_reference& r) : basic_environment(r.lua_state(), r.stack_index()) {}
+		basic_environment(stack_reference&& r) : basic_environment(r.lua_state(), r.stack_index()) {}
 
-		basic_environment(lua_State* L, new_table t, const reference& fallback) : table_t(L, std::move(t)) {
+		basic_environment(lua_State* L, new_table nt) : base_t(L, std::move(nt)) {}
+		basic_environment(lua_State* L, new_table t, const reference& fallback) : basic_environment(L, std::move(t)) {
 			sol::stack_table mt(L, sol::new_table(0, 1));
 			mt.set(sol::meta_function::index, fallback);
 			this->set(metatable_key, mt);
 			mt.pop();
 		}
-		
-		template <typename T, typename... Args, meta::enable<
-			meta::neg<std::is_same<meta::unqualified_t<T>, basic_environment>>, 
-			meta::boolean<!(sizeof...(Args) == 2 && meta::any_same<new_table, meta::unqualified_t<Args>...>::value)>,
-			meta::boolean<!(sizeof...(Args) == 1 && std::is_same<env_t, meta::unqualified_t<T>>::value)>,
-			meta::boolean<!(sizeof...(Args) == 0 && std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>::value)>
-		> = meta::enabler>
-		basic_environment(T&& arg, Args&&... args) : table_t(std::forward<T>(arg), std::forward<Args>(args)...) { }
+
+		basic_environment(env_t, const stack_reference& extraction_target) : base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			stack::check<env_t>(this->lua_state(), -1, type_panic);
+#endif // Safety
+			lua_pop(this->lua_state(), 2);
+		}
+		basic_environment(env_t, const reference& extraction_target) : base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			stack::check<env_t>(this->lua_state(), -1, type_panic);
+#endif // Safety
+			lua_pop(this->lua_state(), 2);
+		}
+		basic_environment(lua_State* L, int index = -1) : base_t(detail::no_safety, L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			stack::check<basic_environment>(L, index, type_panic);
+#endif // Safety
+		}
+		basic_environment(lua_State* L, ref_index index) : base_t(detail::no_safety, L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			stack::check<basic_environment>(L, -1, type_panic);
+#endif // Safety
+		}
+		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_environment>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		basic_environment(T&& r) noexcept : base_t(detail::no_safety, std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			if (!is_environment<meta::unqualified_t<T>>::value) {
+				auto pp = stack::push_pop(*this);
+				stack::check<basic_environment>(base_t::lua_state(), -1, type_panic);
+			}
+#endif // Safety
+		}
 
 		template <typename T>
 		void set_on(const T& target) const {

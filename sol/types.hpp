@@ -704,14 +704,14 @@ namespace sol {
 		template <bool b, typename Base>
 		struct lua_type_of<basic_table_core<b, Base>> : std::integral_constant<type, type::table> { };
 
-		template <typename B>
-		struct lua_type_of<basic_environment<B>> : std::integral_constant<type, type::table> { };
-
 		template <>
 		struct lua_type_of<metatable_t> : std::integral_constant<type, type::table> { };
 
+		template <typename B>
+		struct lua_type_of<basic_environment<B>> : std::integral_constant<type, type::poly> { };
+
 		template <>
-		struct lua_type_of<env_t> : std::integral_constant<type, type::table> { };
+		struct lua_type_of<env_t> : std::integral_constant<type, type::poly> { };
 
 		template <>
 		struct lua_type_of<new_table> : std::integral_constant<type, type::table> { };
@@ -940,6 +940,9 @@ namespace sol {
 	struct is_userdata : std::false_type {};
 	template <typename T>
 	struct is_userdata<basic_userdata<T>> : std::true_type {};
+
+	template <typename T>
+	struct is_environment : std::integral_constant<bool, is_userdata<T>::value || is_table<T>::value> {};
 
 	template <typename T>
 	struct is_container : detail::is_container<T>{};

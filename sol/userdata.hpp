@@ -48,21 +48,21 @@ namespace sol {
 		basic_userdata(stack_reference&& r) : basic_userdata(r.lua_state(), r.stack_index()) {}
 		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<meta::unqualified_t<T>, ref_index>>> = meta::enabler>
 		basic_userdata(lua_State* L, T&& r) : basic_userdata(L, sol::ref_index(r.registry_index())) {}
-		basic_userdata(lua_State* L, int index = -1) : base_t(L, index) {
+		basic_userdata(lua_State* L, int index = -1) : base_t(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-			type_assert(L, index, type::userdata);
+			stack::check<basic_userdata>(L, index, type_panic);
 #endif // Safety
 		}
-		basic_userdata(lua_State* L, ref_index index) : base_t(L, index) {
+		basic_userdata(lua_State* L, ref_index index) : base_t(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
-			type_assert(L, -1, type::userdata);
+			stack::check<basic_userdata>(L, index, type_panic);
 #endif // Safety
 		}
 	};
 
 	template <typename base_type>
-	class basic_lightuserdata : public basic_object_base< base_type > {
+	class basic_lightuserdata : public basic_object_base<base_type> {
 		typedef basic_object_base<base_type> base_t;
 	public:
 		basic_lightuserdata() noexcept = default;
@@ -85,13 +85,13 @@ namespace sol {
 		basic_lightuserdata(lua_State* L, T&& r) : basic_lightuserdata(L, sol::ref_index(r.registry_index())) {}
 		basic_lightuserdata(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-			type_assert(L, index, type::lightuserdata);
+			stack::check<basic_lightuserdata>(L, index, type_panic);
 #endif // Safety
 		}
 		basic_lightuserdata(lua_State* L, ref_index index) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
-			type_assert(L, -1, type::lightuserdata);
+			stack::check<basic_lightuserdata>(L, index, type_panic);
 #endif // Safety
 		}
 	};

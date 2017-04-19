@@ -35,6 +35,8 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 	sol::object global_test = lua["test"];
 	REQUIRE(!global_test.valid());
 
+	lua.script("h = function() end");
+
 	lua.set_function("check_f_env",
 		[&lua, &env_f](sol::object target) {
 		sol::stack_guard sg(lua);
@@ -57,10 +59,18 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 		REQUIRE(env_g == target_env);
 	}
 	);
+	lua.set_function("check_h_env",
+		[&lua](sol::function target) {
+		sol::stack_guard sg(lua);
+		sol::environment target_env = sol::get_environment(target);
+		REQUIRE_FALSE(target_env.valid());
+	}
+	);
 
 	REQUIRE_NOTHROW([&lua]() {
 		lua.script("check_f_env(f)");
 		lua.script("check_g_env(g)");
+		lua.script("check_h_env(h)");
 	}());
 }
 

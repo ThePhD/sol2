@@ -198,6 +198,14 @@ namespace sol {
 			}
 		};
 
+		template <typename B, typename C>
+		struct checker<basic_userdata<B>, type::userdata, C> {
+			template <typename Handler>
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				return stack::check<userdata_value>(L, index, std::forward<Handler>(handler), tracking);
+			}
+		};
+
 		template <typename T, typename C>
 		struct checker<user<T>, type::userdata, C> : checker<user<T>, type::lightuserdata, C> {};
 
@@ -281,6 +289,28 @@ namespace sol {
 				}
 				if (t != type::userdata) {
 					lua_pop(L, 1);
+					handler(L, index, expected, t);
+					return false;
+				}
+				return true;
+			}
+		};
+
+		template <typename C>
+		struct checker<env_t, type::poly, C> {
+			template <typename Handler>
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				tracking.use(1);
+				if (lua_getmetatable(L, index) == 0) {
+					return true;
+				}
+				type t = type_of(L, -1);
+				if (t == type::table || t == type::none || t == type::nil) {
+					lua_pop(L, 1);
+					return true;
+				}
+				if (t != type::userdata) {
+					lua_pop(L, 1);
 					handler(L, index, type::table, t);
 					return false;
 				}
@@ -288,8 +318,8 @@ namespace sol {
 			}
 		};
 
-		template <type expected, typename C>
-		struct checker<env_t, expected, C> {
+		template <typename E, typename C>
+		struct checker<basic_environment<E>, type::poly, C> {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 				tracking.use(1);

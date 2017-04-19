@@ -176,7 +176,7 @@ namespace sol {
 			return stack::push(L, runtime[runtimetarget]);
 		}
 
-		template <bool is_index>
+		template <typename T, bool is_index>
 		inline int indexing_fail(lua_State* L) {
 			if (is_index) {
 #if 0//def SOL_SAFE_USERTYPE
@@ -184,6 +184,15 @@ namespace sol {
 				string_detail::string_shim accessor = maybeaccessor.value_or(string_detail::string_shim("(unknown)"));
 				return luaL_error(L, "sol: attempt to index (get) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.c_str());
 #else
+				int isnum = 0;
+				lua_Integer magic = lua_tointegerx(L, upvalue_index(4), &isnum);
+				if (isnum != 0 && magic == toplevel_magic) {
+					if (lua_getmetatable(L, 1) == 1) {
+						int metatarget = lua_gettop(L);
+						stack::get_field(L, stack_reference(L, raw_index(2)), metatarget);
+						return 1;
+					}
+				}
 				// With runtime extensibility, we can't hard-error things. They have to return nil, like regular table types, unfortunately...
 				return stack::push(L, lua_nil);
 #endif
@@ -223,34 +232,40 @@ namespace sol {
 					}
 				};
 				non_simple();
-				for (std::size_t i = 0; i < 4; lua_pop(L, 1), ++i) {
+				for (std::size_t i = 0; i < 4; lua_settop(L, 3), ++i) {
 					const char* metakey = nullptr;
 					switch (i) {
 					case 0:
 						metakey = &usertype_traits<T*>::metatable()[0];
+						luaL_getmetatable(L, metakey);
 						break;
 					case 1:
 						metakey = &usertype_traits<detail::unique_usertype<T>>::metatable()[0];
+						luaL_getmetatable(L, metakey);
 						break;
 					case 2:
-						metakey = &usertype_traits<T>::user_metatable()[0];
+						metakey = &usertype_traits<T>::metatable()[0];
+						luaL_getmetatable(L, metakey);
 						break;
 					case 3:
 					default:
-						metakey = &usertype_traits<T>::metatable()[0];
+						metakey = &usertype_traits<T>::user_metatable()[0];
+						{
+							luaL_getmetatable(L, metakey);
+							lua_getmetatable(L, -1);
+						}
 						break;
 					}
-					luaL_getmetatable(L, metakey);
 					int tableindex = lua_gettop(L);
 					if (type_of(L, tableindex) == type::lua_nil) {
 						continue;
 					}
-					stack::set_field<false, true>(L, stack_reference(L, 2), stack_reference(L, 3), tableindex);
+					stack::set_field<false, true>(L, stack_reference(L, raw_index(2)), stack_reference(L, raw_index(3)), tableindex);
 				}
 				lua_settop(L, 0);
 				return 0;
 			}
-			return indexing_fail<false>(L);
+			return indexing_fail<T, false>(L);
 		}
 
 		template <bool is_index, typename Base>
@@ -459,7 +474,7 @@ namespace sol {
 		}
 
 		template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == sizeof...(Tn)>>
-		usertype_metatable(Args&&... args) : usertype_metatable_core(&usertype_detail::indexing_fail<true>, &usertype_detail::metatable_newindex<T, false>), usertype_detail::registrar(),
+		usertype_metatable(Args&&... args) : usertype_metatable_core(&usertype_detail::indexing_fail<T, true>, &usertype_detail::metatable_newindex<T, false>), usertype_detail::registrar(),
 		functions(std::forward<Args>(args)...),
 		destructfunc(nullptr), callconstructfunc(nullptr),
 		indexbase(&core_indexing_call<true>), newindexbase(&core_indexing_call<false>),
