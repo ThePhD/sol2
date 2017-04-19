@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-04-19 16:59:23.068202 UTC
-// This header was generated with sol v2.17.1 (revision de7d7e8)
+// Generated 2017-04-19 19:28:54.081352 UTC
+// This header was generated with sol v2.17.1 (revision a1e3dab)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4106,7 +4106,7 @@ namespace sol {
 
 	namespace detail {
 		struct global_tag { } const global_{};
-		struct no_safety_tag {} const no_safety;
+		struct no_safety_tag {} const no_safety{};
 	} // detail
 
 	class reference {

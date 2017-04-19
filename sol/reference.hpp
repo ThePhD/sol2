@@ -98,7 +98,7 @@ namespace sol {
 
 	namespace detail {
 		struct global_tag { } const global_{};
-		struct no_safety_tag {} const no_safety;
+		struct no_safety_tag {} const no_safety{};
 	} // detail
 
 	class reference {
