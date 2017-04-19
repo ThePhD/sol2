@@ -36,16 +36,25 @@ namespace sol {
 		basic_environment(basic_environment&&) = default;
 		basic_environment& operator=(const basic_environment&) = default;
 		basic_environment& operator=(basic_environment&&) = default;
+		
+		basic_environment(env_t, const stack_reference& extraction_target) : table_t(extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
+			lua_pop(this->lua_state(), 2);
+		}
+		basic_environment(env_t, const reference& extraction_target) : table_t(extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
+			lua_pop(this->lua_state(), 2);
+		}
 
-		basic_environment(lua_State* L, sol::new_table t, const sol::reference& fallback) : table_t(L, std::move(t)) {
+		basic_environment(lua_State* L, new_table t, const reference& fallback) : table_t(L, std::move(t)) {
 			sol::stack_table mt(L, sol::new_table(0, 1));
 			mt.set(sol::meta_function::index, fallback);
 			this->set(metatable_key, mt);
 			mt.pop();
 		}
+		
 		template <typename T, typename... Args, meta::enable<
 			meta::neg<std::is_same<meta::unqualified_t<T>, basic_environment>>, 
 			meta::boolean<!(sizeof...(Args) == 2 && meta::any_same<new_table, meta::unqualified_t<Args>...>::value)>,
+			meta::boolean<!(sizeof...(Args) == 1 && std::is_same<env_t, meta::unqualified_t<T>>::value)>,
 			meta::boolean<!(sizeof...(Args) == 0 && std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>::value)>
 		> = meta::enabler>
 		basic_environment(T&& arg, Args&&... args) : table_t(std::forward<T>(arg), std::forward<Args>(args)...) { }
@@ -53,20 +62,17 @@ namespace sol {
 		template <typename T>
 		void set_on(const T& target) const {
 			lua_State* L = target.lua_state();
+			auto pp = stack::push_pop(target);
 #if SOL_LUA_VERSION < 502
 			// Use lua_setfenv
-			target.push();
 			this->push();
 			lua_setfenv(L, -2);
-			target.pop();
 #else
 			// Use upvalues as explained in Lua 5.2 and beyond's manual
-			target.push();
 			this->push();
 			if (lua_setupvalue(L, -2, 1) == nullptr) {
 				this->pop();
 			}
-			target.pop();
 #endif
 		}
 	};
@@ -76,6 +82,21 @@ namespace sol {
 		env.set_on(target);
 	}
 
+	template <typename E = reference, typename T>
+	basic_environment<E> get_environment(const T& target) {
+		lua_State* L = target.lua_state();
+		auto pp = stack::pop_n(L, stack::push_environment_of(target));
+		return basic_environment<E>(L, -1);
+	}
+
+	namespace stack {
+		template <>
+		struct getter<env_t> {
+			static environment get(lua_State* L, int index = -1) {
+				return get_environment(stack_reference(L, raw_index(index)));
+			}
+		};
+	} // stack
 } // sol
 
 #endif // SOL_ENVIRONMENT_HPP

@@ -266,6 +266,50 @@ namespace sol {
 			}
 		};
 
+		template <type expected, typename C>
+		struct checker<metatable_t, expected, C> {
+			template <typename Handler>
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				tracking.use(1);
+				if (lua_getmetatable(L, index) == 0) {
+					return true;
+				}
+				type t = type_of(L, -1);
+				if (t == type::table || t == type::none || t == type::nil) {
+					lua_pop(L, 1);
+					return true;
+				}
+				if (t != type::userdata) {
+					lua_pop(L, 1);
+					handler(L, index, type::table, t);
+					return false;
+				}
+				return true;
+			}
+		};
+
+		template <type expected, typename C>
+		struct checker<env_t, expected, C> {
+			template <typename Handler>
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				tracking.use(1);
+				if (lua_getmetatable(L, index) == 0) {
+					return true;
+				}
+				type t = type_of(L, -1);
+				if (t == type::table || t == type::none || t == type::nil) {
+					lua_pop(L, 1);
+					return true;
+				}
+				if (t != type::userdata) {
+					lua_pop(L, 1);
+					handler(L, index, type::table, t);
+					return false;
+				}
+				return true;
+			}
+		};
+
 		template <typename T, typename C>
 		struct checker<detail::as_value_tag<T>, type::userdata, C> {
 			template <typename U, typename Handler>

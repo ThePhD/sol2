@@ -48,10 +48,25 @@ namespace sol {
 		};
 
 		template <bool b, bool raw, typename C>
-		struct field_getter<metatable_key_t, b, raw, C> {
-			void get(lua_State* L, metatable_key_t, int tableindex = -1) {
+		struct field_getter<metatable_t, b, raw, C> {
+			void get(lua_State* L, metatable_t, int tableindex = -1) {
 				if (lua_getmetatable(L, tableindex) == 0)
 					push(L, lua_nil);
+			}
+		};
+
+		template <bool b, bool raw, typename C>
+		struct field_getter<env_t, b, raw, C> {
+			void get(lua_State* L, env_t, int tableindex = -1) {
+#if SOL_LUA_VERSION < 502
+				// Use lua_setfenv
+				lua_getfenv(L, tableindex);
+#else
+				// Use upvalues as explained in Lua 5.2 and beyond's manual
+				if (lua_getupvalue(L, tableindex, 1) == nullptr) {
+					push(L, lua_nil);
+				}
+#endif
 			}
 		};
 
@@ -162,9 +177,9 @@ namespace sol {
 		};
 
 		template <bool b, bool raw, typename C>
-		struct field_setter<metatable_key_t, b, raw, C> {
+		struct field_setter<metatable_t, b, raw, C> {
 			template <typename Value>
-			void set(lua_State* L, metatable_key_t, Value&& value, int tableindex = -2) {
+			void set(lua_State* L, metatable_t, Value&& value, int tableindex = -2) {
 				push(L, std::forward<Value>(value));
 				lua_setmetatable(L, tableindex);
 			}

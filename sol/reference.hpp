@@ -83,6 +83,12 @@ namespace sol {
 		push_popper<top_level, T> push_pop(T&& x) {
 			return push_popper<top_level, T>(std::forward<T>(x));
 		}
+		template <typename T>
+		push_popper_at push_pop_at(T&& x) {
+			int c = x.push();
+			lua_State* L = x.lua_state();
+			return push_popper_at(L, lua_absindex(L, -c), c);
+		}
 		template <bool top_level = false>
 		push_popper_n<top_level> pop_n(lua_State* L, int x) {
 			return push_popper_n<top_level>(L, x);

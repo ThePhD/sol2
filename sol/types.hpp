@@ -119,8 +119,11 @@ namespace sol {
 	const nil_t nil{};
 #endif
 
-	struct metatable_key_t {};
-	const metatable_key_t metatable_key = {};
+	struct metatable_t {};
+	const metatable_t metatable_key = {};
+
+	struct env_t {};
+	const env_t env_key = {};
 
 	struct no_metatable_t {};
 	const no_metatable_t no_metatable = {};
@@ -703,6 +706,12 @@ namespace sol {
 
 		template <typename B>
 		struct lua_type_of<basic_environment<B>> : std::integral_constant<type, type::table> { };
+
+		template <>
+		struct lua_type_of<metatable_t> : std::integral_constant<type, type::table> { };
+
+		template <>
+		struct lua_type_of<env_t> : std::integral_constant<type, type::table> { };
 
 		template <>
 		struct lua_type_of<new_table> : std::integral_constant<type, type::table> { };

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-04-09 23:37:25.660210 UTC
-// This header was generated with sol v2.17.0 (revision a6e03ac)
+// Generated 2017-04-19 00:21:43.811456 UTC
+// This header was generated with sol v2.17.0 (revision b02f54c)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3098,8 +3098,11 @@ namespace sol {
 	const nil_t nil{};
 #endif
 
-	struct metatable_key_t {};
-	const metatable_key_t metatable_key = {};
+	struct metatable_t {};
+	const metatable_t metatable_key = {};
+
+	struct env_t {};
+	const env_t env_key = {};
 
 	struct no_metatable_t {};
 	const no_metatable_t no_metatable = {};
@@ -3684,6 +3687,12 @@ namespace sol {
 		struct lua_type_of<basic_environment<B>> : std::integral_constant<type, type::table> { };
 
 		template <>
+		struct lua_type_of<metatable_t> : std::integral_constant<type, type::table> { };
+
+		template <>
+		struct lua_type_of<env_t> : std::integral_constant<type, type::table> { };
+
+		template <>
 		struct lua_type_of<new_table> : std::integral_constant<type, type::table> { };
 
 		template <typename T>
@@ -4078,6 +4087,12 @@ namespace sol {
 		template <bool top_level = false, typename T>
 		push_popper<top_level, T> push_pop(T&& x) {
 			return push_popper<top_level, T>(std::forward<T>(x));
+		}
+		template <typename T>
+		push_popper_at push_pop_at(T&& x) {
+			int c = x.push();
+			lua_State* L = x.lua_state();
+			return push_popper_at(L, lua_absindex(L, -c), c);
 		}
 		template <bool top_level = false>
 		push_popper_n<top_level> pop_n(lua_State* L, int x) {
@@ -5241,6 +5256,50 @@ namespace sol {
 			}
 		};
 
+		template <type expected, typename C>
+		struct checker<metatable_t, expected, C> {
+			template <typename Handler>
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				tracking.use(1);
+				if (lua_getmetatable(L, index) == 0) {
+					return true;
+				}
+				type t = type_of(L, -1);
+				if (t == type::table || t == type::none || t == type::nil) {
+					lua_pop(L, 1);
+					return true;
+				}
+				if (t != type::userdata) {
+					lua_pop(L, 1);
+					handler(L, index, type::table, t);
+					return false;
+				}
+				return true;
+			}
+		};
+
+		template <type expected, typename C>
+		struct checker<env_t, expected, C> {
+			template <typename Handler>
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				tracking.use(1);
+				if (lua_getmetatable(L, index) == 0) {
+					return true;
+				}
+				type t = type_of(L, -1);
+				if (t == type::table || t == type::none || t == type::nil) {
+					lua_pop(L, 1);
+					return true;
+				}
+				if (t != type::userdata) {
+					lua_pop(L, 1);
+					handler(L, index, type::table, t);
+					return false;
+				}
+				return true;
+			}
+		};
+
 		template <typename T, typename C>
 		struct checker<detail::as_value_tag<T>, type::userdata, C> {
 			template <typename U, typename Handler>
@@ -5953,7 +6012,6 @@ namespace sol {
 				return std::pair<decltype(stack::get<A>(L, index)), decltype(stack::get<B>(L, index))>{stack::get<A>(L, index, tracking), stack::get<B>(L, index + tracking.used, tracking)};
 			}
 		};
-
 	} // stack
 } // sol
 
@@ -6162,6 +6220,27 @@ namespace sol {
 
 namespace sol {
 	namespace stack {
+		inline int push_environment_of(lua_State* L, int index = -1) {
+#if SOL_LUA_VERSION < 502
+			// Use lua_setfenv
+			lua_getfenv(L, index);
+			return 1;
+#else
+			// Use upvalues as explained in Lua 5.2 and beyond's manual
+			if (lua_getupvalue(L, index, 1) == nullptr) {
+				push(L, lua_nil);
+				return 1;
+			}
+#endif
+			return 1;
+		}
+
+		template <typename T>
+		int push_environment_of(const T& target) {
+			target.push();
+			return push_environment_of(target.lua_state(), -1) + 1;
+		}
+
 		template <typename T>
 		struct pusher<detail::as_value_tag<T>> {
 			template <typename F, typename... Args>
@@ -6398,8 +6477,8 @@ namespace sol {
 		};
 
 		template<>
-		struct pusher<metatable_key_t> {
-			static int push(lua_State* L, metatable_key_t) {
+		struct pusher<metatable_t> {
+			static int push(lua_State* L, metatable_t) {
 				lua_pushlstring(L, "__mt", 4);
 				return 1;
 			}
@@ -6488,7 +6567,7 @@ namespace sol {
 				return 1;
 			}
 
-			template <typename Arg, typename... Args, meta::disable<meta::any_same<meta::unqualified_t<Arg>, no_metatable_t, metatable_key_t>> = meta::enabler>
+			template <typename Arg, typename... Args, meta::disable<meta::any_same<meta::unqualified_t<Arg>, no_metatable_t, metatable_t>> = meta::enabler>
 			static int push(lua_State* L, Arg&& arg, Args&&... args) {
 				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable()[0];
 				return push_with(L, name, std::forward<Arg>(arg), std::forward<Args>(args)...);
@@ -6501,7 +6580,7 @@ namespace sol {
 			}
 
 			template <typename Key, typename... Args>
-			static int push(lua_State* L, metatable_key_t, Key&& key, Args&&... args) {
+			static int push(lua_State* L, metatable_t, Key&& key, Args&&... args) {
 				const auto name = &key[0];
 				return push_with<true>(L, name, std::forward<Args>(args)...);
 			}
@@ -6876,10 +6955,25 @@ namespace sol {
 		};
 
 		template <bool b, bool raw, typename C>
-		struct field_getter<metatable_key_t, b, raw, C> {
-			void get(lua_State* L, metatable_key_t, int tableindex = -1) {
+		struct field_getter<metatable_t, b, raw, C> {
+			void get(lua_State* L, metatable_t, int tableindex = -1) {
 				if (lua_getmetatable(L, tableindex) == 0)
 					push(L, lua_nil);
+			}
+		};
+
+		template <bool b, bool raw, typename C>
+		struct field_getter<env_t, b, raw, C> {
+			void get(lua_State* L, env_t, int tableindex = -1) {
+#if SOL_LUA_VERSION < 502
+				// Use lua_setfenv
+				lua_getfenv(L, tableindex);
+#else
+				// Use upvalues as explained in Lua 5.2 and beyond's manual
+				if (lua_getupvalue(L, tableindex, 1) == nullptr) {
+					push(L, lua_nil);
+				}
+#endif
 			}
 		};
 
@@ -6990,9 +7084,9 @@ namespace sol {
 		};
 
 		template <bool b, bool raw, typename C>
-		struct field_setter<metatable_key_t, b, raw, C> {
+		struct field_setter<metatable_t, b, raw, C> {
 			template <typename Value>
-			void set(lua_State* L, metatable_key_t, Value&& value, int tableindex = -2) {
+			void set(lua_State* L, metatable_t, Value&& value, int tableindex = -2) {
 				push(L, std::forward<Value>(value));
 				lua_setmetatable(L, tableindex);
 			}
@@ -12683,6 +12777,18 @@ namespace sol {
 
 namespace sol {
 	typedef table_core<false> table;
+
+	namespace stack {
+		template <>
+		struct getter<metatable_t> {
+			static table get(lua_State* L, int index = -1) {
+				if (lua_getmetatable(L, index) == 0) {
+					return table(L, ref_index(LUA_REFNIL));
+				}
+				return table(L, -1);
+			}
+		};
+	} // stack
 } // sol
 
 // end of sol/table.hpp
@@ -12701,16 +12807,25 @@ namespace sol {
 		basic_environment(basic_environment&&) = default;
 		basic_environment& operator=(const basic_environment&) = default;
 		basic_environment& operator=(basic_environment&&) = default;
+		
+		basic_environment(env_t, const stack_reference& extraction_target) : table_t(extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
+			lua_pop(this->lua_state(), 2);
+		}
+		basic_environment(env_t, const reference& extraction_target) : table_t(extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
+			lua_pop(this->lua_state(), 2);
+		}
 
-		basic_environment(lua_State* L, sol::new_table t, const sol::reference& fallback) : table_t(L, std::move(t)) {
+		basic_environment(lua_State* L, new_table t, const reference& fallback) : table_t(L, std::move(t)) {
 			sol::stack_table mt(L, sol::new_table(0, 1));
 			mt.set(sol::meta_function::index, fallback);
 			this->set(metatable_key, mt);
 			mt.pop();
 		}
+		
 		template <typename T, typename... Args, meta::enable<
 			meta::neg<std::is_same<meta::unqualified_t<T>, basic_environment>>, 
 			meta::boolean<!(sizeof...(Args) == 2 && meta::any_same<new_table, meta::unqualified_t<Args>...>::value)>,
+			meta::boolean<!(sizeof...(Args) == 1 && std::is_same<env_t, meta::unqualified_t<T>>::value)>,
 			meta::boolean<!(sizeof...(Args) == 0 && std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>::value)>
 		> = meta::enabler>
 		basic_environment(T&& arg, Args&&... args) : table_t(std::forward<T>(arg), std::forward<Args>(args)...) { }
@@ -12718,20 +12833,17 @@ namespace sol {
 		template <typename T>
 		void set_on(const T& target) const {
 			lua_State* L = target.lua_state();
+			auto pp = stack::push_pop(target);
 #if SOL_LUA_VERSION < 502
 			// Use lua_setfenv
-			target.push();
 			this->push();
 			lua_setfenv(L, -2);
-			target.pop();
 #else
 			// Use upvalues as explained in Lua 5.2 and beyond's manual
-			target.push();
 			this->push();
 			if (lua_setupvalue(L, -2, 1) == nullptr) {
 				this->pop();
 			}
-			target.pop();
 #endif
 		}
 	};
@@ -12741,6 +12853,21 @@ namespace sol {
 		env.set_on(target);
 	}
 
+	template <typename E = reference, typename T>
+	basic_environment<E> get_environment(const T& target) {
+		lua_State* L = target.lua_state();
+		auto pp = stack::pop_n(L, stack::push_environment_of(target));
+		return basic_environment<E>(L, -1);
+	}
+
+	namespace stack {
+		template <>
+		struct getter<env_t> {
+			static environment get(lua_State* L, int index = -1) {
+				return get_environment(stack_reference(L, raw_index(index)));
+			}
+		};
+	} // stack
 } // sol
 
 // end of sol/environment.hpp

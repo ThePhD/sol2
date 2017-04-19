@@ -5,6 +5,65 @@
 #include <iostream>
 #include "test_stack_guard.hpp"
 
+
+TEST_CASE("environments/get", "Envronments can be taken out of things like Lua functions properly") {
+	sol::state lua;
+	sol::stack_guard luasg(lua);
+	lua.open_libraries(sol::lib::base);
+
+	lua.script("f = function() return test end");
+	sol::function f = lua["f"];
+
+	sol::environment env_f(lua, sol::create);
+	env_f["test"] = 31;
+	sol::set_environment(env_f, f);
+
+	int result = f();
+	REQUIRE(result == 31);
+
+	lua.script("g = function() test = 5 end");
+	sol::function g = lua["g"];
+	sol::environment env_g(lua, sol::create);
+	env_g.set_on(g);
+
+	g();
+	
+	int test = env_g["test"];
+	REQUIRE(test == 5);
+
+
+	sol::object global_test = lua["test"];
+	REQUIRE(!global_test.valid());
+
+	lua.set_function("check_f_env",
+		[&lua, &env_f](sol::object target) {
+		sol::stack_guard sg(lua);
+		sol::environment target_env(sol::env_key, target);
+		int test_env_f = env_f["test"];
+		int test_target_env = target_env["test"];
+		REQUIRE(test_env_f == test_target_env);
+		REQUIRE(test_env_f == 31);
+		REQUIRE(env_f == target_env);
+	}
+	);
+	lua.set_function("check_g_env",
+		[&lua, &env_g](sol::function target) {
+		sol::stack_guard sg(lua);
+		sol::environment target_env = sol::get_environment(target);
+		int test_env_g = env_g["test"];
+		int test_target_env = target_env["test"];
+		REQUIRE(test_env_g == test_target_env);
+		REQUIRE(test_env_g == 5);
+		REQUIRE(env_g == target_env);
+	}
+	);
+
+	REQUIRE_NOTHROW([&lua]() {
+		lua.script("check_f_env(f)");
+		lua.script("check_g_env(g)");
+	}());
+}
+
 TEST_CASE("environments/shadowing", "Environments can properly shadow and fallback on variables") {
 
 	sol::state lua;

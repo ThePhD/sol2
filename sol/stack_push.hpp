@@ -33,6 +33,27 @@
 
 namespace sol {
 	namespace stack {
+		inline int push_environment_of(lua_State* L, int index = -1) {
+#if SOL_LUA_VERSION < 502
+			// Use lua_setfenv
+			lua_getfenv(L, index);
+			return 1;
+#else
+			// Use upvalues as explained in Lua 5.2 and beyond's manual
+			if (lua_getupvalue(L, index, 1) == nullptr) {
+				push(L, lua_nil);
+				return 1;
+			}
+#endif
+			return 1;
+		}
+
+		template <typename T>
+		int push_environment_of(const T& target) {
+			target.push();
+			return push_environment_of(target.lua_state(), -1) + 1;
+		}
+
 		template <typename T>
 		struct pusher<detail::as_value_tag<T>> {
 			template <typename F, typename... Args>
@@ -269,8 +290,8 @@ namespace sol {
 		};
 
 		template<>
-		struct pusher<metatable_key_t> {
-			static int push(lua_State* L, metatable_key_t) {
+		struct pusher<metatable_t> {
+			static int push(lua_State* L, metatable_t) {
 				lua_pushlstring(L, "__mt", 4);
 				return 1;
 			}
@@ -359,7 +380,7 @@ namespace sol {
 				return 1;
 			}
 
-			template <typename Arg, typename... Args, meta::disable<meta::any_same<meta::unqualified_t<Arg>, no_metatable_t, metatable_key_t>> = meta::enabler>
+			template <typename Arg, typename... Args, meta::disable<meta::any_same<meta::unqualified_t<Arg>, no_metatable_t, metatable_t>> = meta::enabler>
 			static int push(lua_State* L, Arg&& arg, Args&&... args) {
 				const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable()[0];
 				return push_with(L, name, std::forward<Arg>(arg), std::forward<Args>(args)...);
@@ -372,7 +393,7 @@ namespace sol {
 			}
 
 			template <typename Key, typename... Args>
-			static int push(lua_State* L, metatable_key_t, Key&& key, Args&&... args) {
+			static int push(lua_State* L, metatable_t, Key&& key, Args&&... args) {
 				const auto name = &key[0];
 				return push_with<true>(L, name, std::forward<Args>(args)...);
 			}

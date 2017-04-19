@@ -601,7 +601,6 @@ namespace sol {
 				return std::pair<decltype(stack::get<A>(L, index)), decltype(stack::get<B>(L, index))>{stack::get<A>(L, index, tracking), stack::get<B>(L, index + tracking.used, tracking)};
 			}
 		};
-
 	} // stack
 } // sol
 
