@@ -63,7 +63,6 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 		[&lua](sol::function target) {
 		sol::stack_guard sg(lua);
 		sol::environment target_env = sol::get_environment(target);
-		REQUIRE_FALSE(target_env.valid());
 	}
 	);
 
