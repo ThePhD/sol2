@@ -7,6 +7,7 @@ int main() {
 	std::cout << "=== protected_functions example ===" << std::endl;
 
 	sol::state lua;
+	lua.open_libraries(sol::lib::base);
 
 	// A complicated function which can error out
 	// We define both in terms of Lua code
