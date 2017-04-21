@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-04-19 19:28:54.081352 UTC
-// This header was generated with sol v2.17.1 (revision a1e3dab)
+// Generated 2017-04-21 00:18:17.116630 UTC
+// This header was generated with sol v2.17.1 (revision 3d5f80e)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -10493,15 +10493,50 @@ namespace sol {
 		typedef int(*member_search)(lua_State*, void*, int);
 
 		struct call_information {
-			member_search first;
-			member_search second;
+			member_search index;
+			member_search new_index;
 			int runtime_target;
 
-			call_information(member_search first, member_search second) : call_information(first, second, -1) {}
-			call_information(member_search first, member_search second, int runtimetarget) : first(first), second(second), runtime_target(runtimetarget) {}
+			call_information(member_search index, member_search newindex) : call_information(index, newindex, -1) {}
+			call_information(member_search index, member_search newindex, int runtimetarget) : index(index), new_index(newindex), runtime_target(runtimetarget) {}
 		};
 
 		typedef std::unordered_map<std::string, call_information> mapping_t;
+		
+		struct variable_wrapper {
+			virtual int index(lua_State* L) = 0;
+			virtual int new_index(lua_State* L) = 0;
+			virtual ~variable_wrapper() {};
+		};
+
+		template <typename T, typename F>
+		struct callable_binding : variable_wrapper {
+			F fx;
+
+			template <typename Arg>
+			callable_binding(Arg&& arg) : fx(std::forward<Arg>(arg)) {}
+
+			virtual int index(lua_State* L) override {
+				return call_detail::call_wrapped<T, true, true>(L, fx);
+			}
+
+			virtual int new_index(lua_State* L) override {
+				return call_detail::call_wrapped<T, false, true>(L, fx);
+			}
+		};
+
+		typedef std::unordered_map<std::string, std::unique_ptr<variable_wrapper>> variable_map;
+		typedef std::unordered_map<std::string, object> function_map;
+
+		struct simple_map {
+			const char* metakey;
+			variable_map variables;
+			function_map functions;
+			base_walk indexbaseclasspropogation;
+			base_walk newindexbaseclasspropogation;
+
+			simple_map(const char* mkey, base_walk index, base_walk newindex, variable_map&& vars, function_map&& funcs) : metakey(mkey), variables(std::move(vars)), functions(std::move(funcs)), indexbaseclasspropogation(index), newindexbaseclasspropogation(newindex) {}
+		};
 	}
 
 	struct usertype_metatable_core {
@@ -10626,7 +10661,8 @@ namespace sol {
 		inline int runtime_object_call(lua_State* L, void*, int runtimetarget) {
 			usertype_metatable_core& umc = stack::get<light<usertype_metatable_core>>(L, upvalue_index(2));
 			std::vector<object>& runtime = umc.runtime;
-			return stack::push(L, runtime[runtimetarget]);
+			object& runtimeobj = runtime[runtimetarget];
+			return stack::push(L, runtimeobj);
 		}
 
 		template <typename T, bool is_index>
@@ -10657,34 +10693,55 @@ namespace sol {
 			}
 		}
 
+		int runtime_new_index(lua_State* L, void*, int runtimetarget);
+
 		template <typename T, bool is_simple>
 		inline int metatable_newindex(lua_State* L) {
 			int isnum = 0;
 			lua_Integer magic = lua_tointegerx(L, upvalue_index(4), &isnum);
 			if (isnum != 0 && magic == toplevel_magic) {
-				auto non_simple = [&L]() {
-					if (is_simple)
+				auto non_indexable = [&L]() {
+					if (is_simple) {
+						simple_map& sm = stack::get<user<simple_map>>(L, upvalue_index(1));
+						function_map& functions = sm.functions;
+						sol::optional<std::string> maybeaccessor = stack::get<sol::optional<std::string>>(L, 2);
+						if (!maybeaccessor) {
+							return;
+						}
+						std::string& accessor = maybeaccessor.value();
+						auto preexistingit = functions.find(accessor);
+						if (preexistingit == functions.cend()) {
+							functions.emplace_hint(preexistingit, std::move(accessor), sol::object(L, 3));
+						}
+						else {
+							preexistingit->second = sol::object(L, 3);
+						}
 						return;
+					}
 					usertype_metatable_core& umc = stack::get<light<usertype_metatable_core>>(L, upvalue_index(2));
 					bool mustindex = umc.mustindex;
 					if (!mustindex)
 						return;
-					std::string accessor = stack::get<std::string>(L, 2);
+					sol::optional<std::string> maybeaccessor = stack::get<sol::optional<std::string>>(L, 2);
+					if (!maybeaccessor) {
+						return;
+					}
+					std::string& accessor = maybeaccessor.value();
 					mapping_t& mapping = umc.mapping;
 					std::vector<object>& runtime = umc.runtime;
 					int target = static_cast<int>(runtime.size());
 					auto preexistingit = mapping.find(accessor);
 					if (preexistingit == mapping.cend()) {
 						runtime.emplace_back(L, 3);
-						mapping.emplace_hint(mapping.cend(), accessor, call_information(&runtime_object_call, &runtime_object_call, target));
+						mapping.emplace_hint(mapping.cend(), accessor, call_information(&runtime_object_call, &runtime_new_index, target));
 					}
 					else {
 						target = preexistingit->second.runtime_target;
 						runtime[target] = sol::object(L, 3);
-						preexistingit->second = call_information(&runtime_object_call, &runtime_object_call, target);
+						preexistingit->second = call_information(&runtime_object_call, &runtime_new_index, target);
 					}
 				};
-				non_simple();
+				non_indexable();
 				for (std::size_t i = 0; i < 4; lua_settop(L, 3), ++i) {
 					const char* metakey = nullptr;
 					switch (i) {
@@ -10719,6 +10776,14 @@ namespace sol {
 				return 0;
 			}
 			return indexing_fail<T, false>(L);
+		}
+		
+		inline int runtime_new_index(lua_State* L, void*, int runtimetarget) {
+			usertype_metatable_core& umc = stack::get<light<usertype_metatable_core>>(L, upvalue_index(2));
+			std::vector<object>& runtime = umc.runtime;
+			object& runtimeobj = runtime[runtimetarget];
+			runtimeobj = object(L, 3);
+			return 0;
 		}
 
 		template <bool is_index, typename Base>
@@ -10876,6 +10941,7 @@ namespace sol {
 
 		template <std::size_t, typename... Bases>
 		void make_regs(regs_t&, int&, base_classes_tag, bases<Bases...>) {
+			static_assert(!meta::any_same<T, Bases...>::value, "base classes cannot list the original class as part of the bases");
 			if (sizeof...(Bases) < 1) {
 				return;
 			}
@@ -10937,8 +11003,8 @@ namespace sol {
 		hasequals(false), hasless(false), haslessequals(false) {
 			std::initializer_list<typename usertype_detail::mapping_t::value_type> ilist{ {
 				std::pair<std::string, usertype_detail::call_information>( usertype_detail::make_string(std::get<I * 2>(functions)),
-					usertype_detail::call_information(&usertype_metatable::real_find_call<I * 2, I * 2 + 1, false>,
-						&usertype_metatable::real_find_call<I * 2, I * 2 + 1, true>)
+					usertype_detail::call_information(&usertype_metatable::real_find_call<I * 2, I * 2 + 1, true>,
+						&usertype_metatable::real_find_call<I * 2, I * 2 + 1, false>)
 					)
 			}... };
 			this->mapping.insert(ilist);
@@ -10981,7 +11047,7 @@ namespace sol {
 			auto memberit = f.mapping.find(name);
 			if (memberit != f.mapping.cend()) {
 				const usertype_detail::call_information& ci = memberit->second;
-				const usertype_detail::member_search& member = is_index ? ci.second : ci.first;
+				const usertype_detail::member_search& member = is_index ? ci.index: ci.new_index;
 				return (member)(L, static_cast<void*>(&f), ci.runtime_target);
 			}
 			string_detail::string_shim accessor = name;
@@ -11200,41 +11266,6 @@ namespace sol {
 namespace sol {
 
 	namespace usertype_detail {
-		struct variable_wrapper {
-			virtual int index(lua_State* L) = 0;
-			virtual int new_index(lua_State* L) = 0;
-			virtual ~variable_wrapper() {};
-		};
-
-		template <typename T, typename F>
-		struct callable_binding : variable_wrapper {
-			F fx;
-
-			template <typename Arg>
-			callable_binding(Arg&& arg) : fx(std::forward<Arg>(arg)) {}
-
-			virtual int index(lua_State* L) override {
-				return call_detail::call_wrapped<T, true, true>(L, fx);
-			}
-
-			virtual int new_index(lua_State* L) override {
-				return call_detail::call_wrapped<T, false, true>(L, fx);
-			}
-		};
-
-		typedef std::unordered_map<std::string, std::unique_ptr<variable_wrapper>> variable_map;
-		typedef std::unordered_map<std::string, object> function_map;
-
-		struct simple_map {
-			const char* metakey;
-			variable_map variables;
-			function_map functions;
-			base_walk indexbaseclasspropogation;
-			base_walk newindexbaseclasspropogation;
-
-			simple_map(const char* mkey, base_walk index, base_walk newindex, variable_map&& vars, function_map&& funcs) : metakey(mkey), variables(std::move(vars)), functions(std::move(funcs)), indexbaseclasspropogation(index), newindexbaseclasspropogation(newindex) {}
-		};
-
 		template <bool is_index, bool toplevel = false>
 		inline int simple_core_indexing_call(lua_State* L) {
 			simple_map& sm = toplevel ? stack::get<user<simple_map>>(L, upvalue_index(1)) : stack::pop<user<simple_map>>(L);
@@ -11259,8 +11290,14 @@ namespace sol {
 			}
 			auto fit = functions.find(accessorkey);
 			if (fit != functions.cend()) {
-				auto& func = (fit->second);
-				return stack::push(L, func);
+				sol::object& func = fit->second;
+				if (is_index) {
+					return stack::push(L, func);
+				}
+				else {
+					lua_CFunction indexingfunc = is_index ? stack::get<lua_CFunction>(L, upvalue_index(2)) : stack::get<lua_CFunction>(L, upvalue_index(3));
+					return indexingfunc(L);
+				}
 			}
 			// Check table storage first for a method that works
 			luaL_getmetatable(L, sm.metakey);
@@ -11440,6 +11477,7 @@ namespace sol {
 		template <typename... Bases>
 		void add(lua_State*, base_classes_tag, bases<Bases...>) {
 			static_assert(sizeof(usertype_detail::base_walk) <= sizeof(void*), "size of function pointer is greater than sizeof(void*); cannot work on this platform. Please file a bug report.");
+			static_assert(!meta::any_same<T, Bases...>::value, "base classes cannot list the original class as part of the bases");
 			if (sizeof...(Bases) < 1) {
 				return;
 			}

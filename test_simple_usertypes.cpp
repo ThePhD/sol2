@@ -698,27 +698,81 @@ end
 }
 
 TEST_CASE("simple_usertype/runtime-replacement", "ensure that functions can be properly replaced at runtime for non-indexed things") {
-	struct heart_t {};
+	struct heart_base_t {};
+	struct heart_t : heart_base_t {
+		void func() {}
+	};
 
-	sol::state lua;
-	lua.open_libraries(sol::lib::base);
+	SECTION("plain") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<heart_t>("a");
-	REQUIRE_NOTHROW([&lua]() {
-		lua.script("obj = a.new()");
-		lua.script("function a:heartbeat () print('arf') return 1 end");
-		lua.script("v1 = obj:heartbeat()");
-		lua.script("function a:heartbeat () print('bark') return 2 end");
-		lua.script("v2 = obj:heartbeat()");
-		lua.script("a.heartbeat = function(self) print('woof') return 3 end");
-		lua.script("v3 = obj:heartbeat()");
-	}());
-	int v1 = lua["v1"];
-	int v2 = lua["v2"];
-	int v3 = lua["v3"];
-	REQUIRE(v1 == 1);
-	REQUIRE(v2 == 2);
-	REQUIRE(v3 == 3);
+		lua.new_simple_usertype<heart_t>("a");
+		REQUIRE_NOTHROW([&lua]() {
+			lua.script("obj = a.new()");
+			lua.script("function a:heartbeat () print('arf') return 1 end");
+			lua.script("v1 = obj:heartbeat()");
+			lua.script("function a:heartbeat () print('bark') return 2 end");
+			lua.script("v2 = obj:heartbeat()");
+			lua.script("a.heartbeat = function(self) print('woof') return 3 end");
+			lua.script("v3 = obj:heartbeat()");
+		}());
+		int v1 = lua["v1"];
+		int v2 = lua["v2"];
+		int v3 = lua["v3"];
+		REQUIRE(v1 == 1);
+		REQUIRE(v2 == 2);
+		REQUIRE(v3 == 3);
+	}
+	SECTION("variables") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_simple_usertype<heart_t>("a",
+			sol::base_classes, sol::bases<heart_base_t>()
+			);
+
+		REQUIRE_NOTHROW([&lua]() {
+			lua.script("obj = a.new()");
+			lua.script("function a:heartbeat () print('arf') return 1 end");
+			lua.script("v1 = obj:heartbeat()");
+			lua.script("function a:heartbeat () print('bark') return 2 end");
+			lua.script("v2 = obj:heartbeat()");
+			lua.script("a.heartbeat = function(self) print('woof') return 3 end");
+			lua.script("v3 = obj:heartbeat()");
+		}());
+		int v1 = lua["v1"];
+		int v2 = lua["v2"];
+		int v3 = lua["v3"];
+		REQUIRE(v1 == 1);
+		REQUIRE(v2 == 2);
+		REQUIRE(v3 == 3);
+	}
+	SECTION("methods") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_simple_usertype<heart_t>("a",
+			"func", &heart_t::func,
+			sol::base_classes, sol::bases<heart_base_t>()
+			);
+
+		REQUIRE_NOTHROW([&lua]() {
+			lua.script("obj = a.new()");
+			lua.script("function a:heartbeat () print('arf') return 1 end");
+			lua.script("v1 = obj:heartbeat()");
+			lua.script("function a:heartbeat () print('bark') return 2 end");
+			lua.script("v2 = obj:heartbeat()");
+			lua.script("a.heartbeat = function(self) print('woof') return 3 end");
+			lua.script("v3 = obj:heartbeat()");
+		}());
+		int v1 = lua["v1"];
+		int v2 = lua["v2"];
+		int v3 = lua["v3"];
+		REQUIRE(v1 == 1);
+		REQUIRE(v2 == 2);
+		REQUIRE(v3 == 3);
+	}
 }
 
 TEST_CASE("simple_usertype/meta-key-retrievals", "allow for special meta keys (__index, __newindex) to trigger methods even if overwritten directly") {

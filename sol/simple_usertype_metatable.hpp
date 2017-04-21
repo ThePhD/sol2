@@ -31,41 +31,6 @@
 namespace sol {
 
 	namespace usertype_detail {
-		struct variable_wrapper {
-			virtual int index(lua_State* L) = 0;
-			virtual int new_index(lua_State* L) = 0;
-			virtual ~variable_wrapper() {};
-		};
-
-		template <typename T, typename F>
-		struct callable_binding : variable_wrapper {
-			F fx;
-
-			template <typename Arg>
-			callable_binding(Arg&& arg) : fx(std::forward<Arg>(arg)) {}
-
-			virtual int index(lua_State* L) override {
-				return call_detail::call_wrapped<T, true, true>(L, fx);
-			}
-
-			virtual int new_index(lua_State* L) override {
-				return call_detail::call_wrapped<T, false, true>(L, fx);
-			}
-		};
-
-		typedef std::unordered_map<std::string, std::unique_ptr<variable_wrapper>> variable_map;
-		typedef std::unordered_map<std::string, object> function_map;
-
-		struct simple_map {
-			const char* metakey;
-			variable_map variables;
-			function_map functions;
-			base_walk indexbaseclasspropogation;
-			base_walk newindexbaseclasspropogation;
-
-			simple_map(const char* mkey, base_walk index, base_walk newindex, variable_map&& vars, function_map&& funcs) : metakey(mkey), variables(std::move(vars)), functions(std::move(funcs)), indexbaseclasspropogation(index), newindexbaseclasspropogation(newindex) {}
-		};
-
 		template <bool is_index, bool toplevel = false>
 		inline int simple_core_indexing_call(lua_State* L) {
 			simple_map& sm = toplevel ? stack::get<user<simple_map>>(L, upvalue_index(1)) : stack::pop<user<simple_map>>(L);
@@ -90,8 +55,14 @@ namespace sol {
 			}
 			auto fit = functions.find(accessorkey);
 			if (fit != functions.cend()) {
-				auto& func = (fit->second);
-				return stack::push(L, func);
+				sol::object& func = fit->second;
+				if (is_index) {
+					return stack::push(L, func);
+				}
+				else {
+					lua_CFunction indexingfunc = is_index ? stack::get<lua_CFunction>(L, upvalue_index(2)) : stack::get<lua_CFunction>(L, upvalue_index(3));
+					return indexingfunc(L);
+				}
 			}
 			// Check table storage first for a method that works
 			luaL_getmetatable(L, sm.metakey);
@@ -271,6 +242,7 @@ namespace sol {
 		template <typename... Bases>
 		void add(lua_State*, base_classes_tag, bases<Bases...>) {
 			static_assert(sizeof(usertype_detail::base_walk) <= sizeof(void*), "size of function pointer is greater than sizeof(void*); cannot work on this platform. Please file a bug report.");
+			static_assert(!meta::any_same<T, Bases...>::value, "base classes cannot list the original class as part of the bases");
 			if (sizeof...(Bases) < 1) {
 				return;
 			}
