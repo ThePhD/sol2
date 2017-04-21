@@ -1,7 +1,6 @@
 #define SOL_CHECK_ARGUMENTS
 #include <sol.hpp>
 
-#include <iostream>
 #include <cassert>
 #include <cmath>
 
@@ -67,5 +66,5 @@ int main() {
 		assert(a1 == a2)
 	)");
 
-	std::cout << std::endl;
+	return 0;
 }
