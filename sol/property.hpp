@@ -76,6 +76,11 @@ namespace sol {
 		return property_detail::property(std::true_type(), std::forward<F>(f));
 	}
 
+	template <typename F>
+	inline decltype(auto) writeonly_property(F&& f) {
+		return property_detail::property(std::false_type(), std::forward<F>(f));
+	}
+
 	// Allow someone to make a member variable readonly (const)
 	template <typename R, typename T>
 	inline auto readonly(R T::* v) {

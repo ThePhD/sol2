@@ -1353,6 +1353,42 @@ print(test.ref_global2)
 	REQUIRE(through_variable == 35);
 }
 
+TEST_CASE("usertype/static-properties", "allow for static functions to get and set things as a property") {
+	static int b = 50;
+	struct test_t {
+		static double s_func() {
+			return b + 0.5;
+		}
+
+		static void g_func(int v) {
+			b = v;
+		}
+
+		std::size_t func() {
+			return 24;
+		}
+	};
+	test_t manager;
+
+	sol::state lua;
+
+	lua.new_usertype<test_t>("test",
+		"f", std::function<std::size_t()>(std::bind(std::mem_fn(&test_t::func), &manager)),
+		"g", sol::property(&test_t::s_func, &test_t::g_func)
+	);
+
+	lua.script("v1 = test.f()");
+	lua.script("v2 = test.g");
+	lua.script("test.g = 60");
+	lua.script("v2a = test.g");
+	int v1 = lua["v1"];
+	REQUIRE(v1 == 24);
+	double v2 = lua["v2"];
+	REQUIRE(v2 == 50.5);
+	double v2a = lua["v2a"];
+	REQUIRE(v2a == 60.5);
+}
+
 TEST_CASE("usertype/var-and-property", "make sure const vars are readonly and properties can handle lambdas") {
 	const static int arf = 20;
 
