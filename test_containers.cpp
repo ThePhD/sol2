@@ -322,11 +322,19 @@ end
 	REQUIRE(map.size() == 6);
 	REQUIRE(set.size() == 6);
 
-	int r = sf(set, 8);
-	REQUIRE(r == 8);
+	{
+		int r = sf(set, 8);
+		REQUIRE(r == 8);
+		sol::object rn = sf(set, 9);
+		REQUIRE(rn == sol::nil);
+	}
 
-	sol::object rn = sf(set, 9);
-	REQUIRE(rn == sol::nil);
+	{
+		int r = sf(map, 3);
+		REQUIRE(r == 6);
+		sol::object rn = sf(map, 9);
+		REQUIRE(rn == sol::nil);
+	}
 
 	i(lua["arr"]);
 	i(lua["map"]);
