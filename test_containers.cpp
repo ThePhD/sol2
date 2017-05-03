@@ -289,6 +289,11 @@ end
 function i (x)
 	x:clear()
 end
+
+function sf (x,v)
+	return x:find(v)
+end
+
 )");
 
 	// Have the function we 
@@ -296,6 +301,7 @@ end
 	sol::function g = lua["g"];
 	sol::function h = lua["h"];
 	sol::function i = lua["i"];
+	sol::function sf = lua["sf"];
 
 	// Set a global variable called 
 	// "arr" to be a vector of 5 lements
@@ -315,6 +321,12 @@ end
 	REQUIRE(arr.size() == 6);
 	REQUIRE(map.size() == 6);
 	REQUIRE(set.size() == 6);
+
+	int r = sf(set, 8);
+	REQUIRE(r == 8);
+
+	sol::object rn = sf(set, 9);
+	REQUIRE(rn == sol::nil);
 
 	i(lua["arr"]);
 	i(lua["map"]);
