@@ -76,7 +76,7 @@ Based on the type pushed, a few additional functions are added as "member functi
 * ``my_container:clear()``: This will call the underlying containers ``clear`` function.
 * ``my_container:add( key, value )`` or ``my_container:add( value )``: this will add to the end of the container, or if it is an associative or ordered container, simply put in an expected key-value pair into it.
 * ``my_contaner:insert( where, value )`` or ``my_contaner:insert( key, value )``: similar to add, but it only takes two arguments. In the case of ``std::vector`` and the like, the first argument is a ``where`` integer index. The second argument is the value. For associative containers, a key and value argument are expected.
-
+* ``my_container:find( value )``: This will call the underlying containers ``find`` function if it exists, or in case of associative containers, it will work just like an index call. This is meant to give a fast membership check for ``std::set`` and ``std::unordered_set`` containers.
 
 .. _container-detection:
 
