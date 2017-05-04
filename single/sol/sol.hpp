@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-04-25 23:43:53.892903 UTC
-// This header was generated with sol v2.17.1 (revision 0db6d99)
+// Generated 2017-05-04 07:17:19.632331 UTC
+// This header was generated with sol v2.17.1 (revision 7b78558)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -11782,7 +11782,7 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(&C::find));
+			template <typename C> static one test(decltype(std::declval<C>().find(std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
 			template <typename C> static two test(...);
 
 		public:
@@ -11907,6 +11907,9 @@ namespace sol {
 					else if (name == "clear") {
 						return stack::push(L, &clear_call);
 					}
+					else if (name == "find") {
+						return stack::push(L, &find_call);
+					}
 				}
 			}
 			return stack::push(L, lua_nil);
@@ -11938,6 +11941,9 @@ namespace sol {
 					}
 					else if (name == "clear") {
 						return stack::push(L, &clear_call);
+					}
+					else if (name == "find") {
+						return stack::push(L, &find_call);
 					}
 				}
 			}
@@ -12140,6 +12146,36 @@ namespace sol {
 			return real_clear_call_capable(std::integral_constant<bool, detail::has_clear<T>::value>(), L);
 		}
 
+		static int real_find_call_capable(std::false_type, std::false_type, lua_State*L) {
+			static const std::string& s = detail::demangle<T>();
+			return luaL_error(L, "sol: cannot call find on type %s", s.c_str());
+		}
+
+		static int real_find_call_capable(std::false_type, std::true_type, lua_State*L) {
+			return real_index_call(L);
+		}
+
+		static int real_find_call_capable(std::true_type, std::false_type, lua_State* L) {
+			auto k = stack::check_get<V>(L, 2);
+			if (k) {
+				auto& src = get_src(L);
+				auto it = src.find(*k);
+				if (it != src.end()) {
+					auto& v = *it;
+					return stack::push_reference(L, v);
+				}
+			}
+			return stack::push(L, lua_nil);
+		}
+
+		static int real_find_call_capable(std::true_type, std::true_type, lua_State* L) {
+			return real_index_call(L);
+		}
+
+		static int real_find_call(lua_State*L) {
+			return real_find_call_capable(std::integral_constant<bool, detail::has_find<T>::value>(), is_associative(), L);
+		}
+
 		static int add_call(lua_State*L) {
 			return detail::static_trampoline<(&real_add_call)>(L);
 		}
@@ -12150,6 +12186,10 @@ namespace sol {
 
 		static int clear_call(lua_State*L) {
 			return detail::static_trampoline<(&real_clear_call)>(L);
+		}
+
+		static int find_call(lua_State*L) {
+			return detail::static_trampoline<(&real_find_call)>(L);
 		}
 
 		static int length_call(lua_State*L) {
@@ -12178,7 +12218,7 @@ namespace sol {
 			template <typename T>
 			inline auto container_metatable() {
 				typedef container_usertype_metatable<std::remove_pointer_t<T>> meta_cumt;
-				std::array<luaL_Reg, 10> reg = { {
+				std::array<luaL_Reg, 11> reg = { {
 					{ "__index", &meta_cumt::index_call },
 					{ "__newindex", &meta_cumt::new_index_call },
 					{ "__pairs", &meta_cumt::pairs_call },
@@ -12187,6 +12227,7 @@ namespace sol {
 					{ "clear", &meta_cumt::clear_call },
 					{ "insert", &meta_cumt::insert_call },
 					{ "add", &meta_cumt::add_call },
+					{ "find", &meta_cumt::find_call },
 					std::is_pointer<T>::value ? luaL_Reg{ nullptr, nullptr } : luaL_Reg{ "__gc", &detail::usertype_alloc_destroy<T> },
 					{ nullptr, nullptr }
 				} };
