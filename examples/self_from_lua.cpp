@@ -3,6 +3,11 @@
 
 #include <cassert>
 
+// NOTE:
+// There are TWO ways to retrieve the "this"
+// object from calls, when it comes to constructors and regular member functions
+// please pay attention to both: this is a low-level operation!
+
 int main() {
 	struct thing {
 

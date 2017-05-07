@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-05-04 07:17:19.632331 UTC
-// This header was generated with sol v2.17.1 (revision 7b78558)
+// Generated 2017-05-07 14:16:38.081474 UTC
+// This header was generated with sol v2.17.1 (revision 5bc5def)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1111,8 +1111,15 @@ inline int luaL_loadbufferx(lua_State* L, const char* buff, size_t size, const c
 #define lua_pushglobaltable(L) \
   lua_pushvalue(L, LUA_GLOBALSINDEX)
 
+#ifndef SOL_LUAJIT
 #define luaL_newlib(L, l) \
   (lua_newtable((L)),luaL_setfuncs((L), (l), 0))
+#else
+#if SOL_LUAJIT_VERSION < 20100
+#define luaL_newlib(L, l) \
+  (lua_newtable((L)),luaL_setfuncs((L), (l), 0))
+#endif // LuaJIT-2.1.0-beta3 added this in itself
+#endif // LuaJIT Compatibility
 
 void luaL_checkversion(lua_State *L);
 
