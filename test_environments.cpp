@@ -207,12 +207,13 @@ TEST_CASE("environments/this_environment", "test various situations of pulling o
 	
 	sol::state lua;
 
-	lua["f"] = [](sol::this_environment te, int x) {
+	lua["f"] = [](sol::this_environment te, int x, sol::this_state ts) {
 		if (te) {
 			sol::environment& env = te;
 			return x + static_cast<int>(env["x"]);
 		}
-		return x;
+		sol::state_view lua = ts;
+		return x + static_cast<int>(lua["x"]);
 	};
 	
 	sol::environment e(lua, sol::create, lua.globals());
