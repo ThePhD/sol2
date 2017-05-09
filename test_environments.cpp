@@ -216,6 +216,7 @@ TEST_CASE("environments/this_environment", "test various situations of pulling o
 	};
 	
 	sol::environment e(lua, sol::create, lua.globals());
+	lua["x"] = 5;
 	e["x"] = 20;
 	SECTION("from Lua script") {
 		int value = lua.script(code, e);
@@ -230,6 +231,6 @@ TEST_CASE("environments/this_environment", "test various situations of pulling o
 	SECTION("from C++, with no env") {
 		sol::function f = lua["f"];
 		int value = f(10);
-		REQUIRE(value == 10);
+		REQUIRE(value == 15);
 	}
 }
