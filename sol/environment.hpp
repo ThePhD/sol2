@@ -154,7 +154,7 @@ namespace sol {
 
 		template <>
 		struct getter<this_environment> {
-			static this_environment get(lua_State* L, int index, record& tracking) {
+			static this_environment get(lua_State* L, int, record& tracking) {
 				tracking.use(0);
 				lua_Debug info;
 				// Level 0 means current function (this C function, which may or may not be useful for us?)

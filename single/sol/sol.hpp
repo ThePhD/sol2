@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-05-09 17:26:55.402266 UTC
-// This header was generated with sol v2.17.3 (revision 5800366)
+// Generated 2017-05-09 17:31:19.874339 UTC
+// This header was generated with sol v2.17.2 (revision 8efafca)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -13121,7 +13121,7 @@ namespace sol {
 
 		template <>
 		struct getter<this_environment> {
-			static this_environment get(lua_State* L, int index, record& tracking) {
+			static this_environment get(lua_State* L, int, record& tracking) {
 				tracking.use(0);
 				lua_Debug info;
 				// Level 0 means current function (this C function, which may or may not be useful for us?)
