@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-05-07 14:16:38.081474 UTC
-// This header was generated with sol v2.17.1 (revision 5bc5def)
+// Generated 2017-05-09 17:26:55.402266 UTC
+// This header was generated with sol v2.17.3 (revision 5800366)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3619,6 +3619,7 @@ namespace sol {
 	class thread;
 	struct variadic_args;
 	struct this_state;
+	struct this_environment;
 
 	namespace detail {
 		template <typename T, typename = void>
@@ -3772,6 +3773,9 @@ namespace sol {
 		struct lua_type_of<this_state> : std::integral_constant<type, type::poly> {};
 
 		template <>
+		struct lua_type_of<this_environment> : std::integral_constant<type, type::poly> {};
+
+		template <>
 		struct lua_type_of<type> : std::integral_constant<type, type::poly> {};
 
 		template <typename T>
@@ -3886,6 +3890,9 @@ namespace sol {
 
 	template <>
 	struct is_transparent_argument<this_state> : std::true_type {};
+
+	template <>
+	struct is_transparent_argument<this_environment> : std::true_type {};
 
 	template <>
 	struct is_transparent_argument<variadic_args> : std::true_type {};
@@ -5131,6 +5138,15 @@ namespace sol {
 
 		template <typename C>
 		struct checker<this_state, type::poly, C> {
+			template <typename Handler>
+			static bool check(lua_State*, int, Handler&&, record& tracking) {
+				tracking.use(0);
+				return true;
+			}
+		};
+
+		template <typename C>
+		struct checker<this_environment, type::poly, C> {
 			template <typename Handler>
 			static bool check(lua_State*, int, Handler&&, record& tracking) {
 				tracking.use(0);
@@ -7310,7 +7326,7 @@ namespace sol {
 			}
 
 			template<typename T>
-			inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 1) {
+			inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 2) {
 				const static std::size_t data_t_count = (sizeof(T) + (sizeof(void*) - 1)) / sizeof(void*);
 				typedef std::array<void*, data_t_count> data_t;
 				data_t voiddata{ {} };
@@ -7936,9 +7952,9 @@ namespace sol {
 
 namespace sol {
 	namespace function_detail {
-		template <typename Fx>
+		template <typename Fx, int start = 1>
 		inline int call(lua_State* L) {
-			Fx& fx = stack::get<user<Fx>>(L, upvalue_index(1));
+			Fx& fx = stack::get<user<Fx>>(L, upvalue_index(start));
 			return fx(L);
 		}
 	} // function_detail
@@ -8636,9 +8652,9 @@ namespace sol {
 			return lua_call_wrapper<T, meta::unqualified_t<Fx>, is_index, is_variable, stack::stack_detail::default_check_arguments, boost>{}.call(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 		}
 
-		template <typename T, bool is_index, bool is_variable, typename F>
+		template <typename T, bool is_index, bool is_variable, typename F, int start = 1>
 		inline int call_user(lua_State* L) {
-			auto& fx = stack::get<user<F>>(L, upvalue_index(1));
+			auto& fx = stack::get<user<F>>(L, upvalue_index(start));
 			return call_wrapped<T, is_index, is_variable>(L, fx);
 		}
 
@@ -8810,7 +8826,7 @@ namespace sol {
 				// idx n + 1: is the object's void pointer
 				// We don't need to store the size, because the other side is templated
 				// with the same member function pointer type
-				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L, 1);
+				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L);
 				auto objdata = stack::stack_detail::get_as_upvalues<T*>(L, memberdata.second);
 				function_type& memfx = memberdata.first;
 				auto& item = *objdata.first;
@@ -8837,7 +8853,7 @@ namespace sol {
 				// idx n + 1: is the object's void pointer
 				// We don't need to store the size, because the other side is templated
 				// with the same member function pointer type
-				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L, 1);
+				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L);
 				auto objdata = stack::stack_detail::get_as_upvalues<T*>(L, memberdata.second);
 				auto& mem = *objdata.first;
 				function_type& var = memberdata.first;
@@ -8868,7 +8884,7 @@ namespace sol {
 			static int real_call(lua_State* L) {
 				// Layout:
 				// idx 1...n: verbatim data of member variable pointer
-				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L, 1);
+				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L);
 				function_type& memfx = memberdata.first;
 				return call_detail::call_wrapped<T, false, false>(L, memfx);
 			}
@@ -8890,7 +8906,7 @@ namespace sol {
 			static int real_call(lua_State* L) {
 				// Layout:
 				// idx 1...n: verbatim data of member variable pointer
-				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L, 1);
+				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L);
 				function_type& var = memberdata.first;
 				switch (lua_gettop(L)) {
 				case 1:
@@ -9227,7 +9243,9 @@ namespace sol {
 				auto userptr = detail::ptr(std::forward<T>(obj), std::forward<Args>(args)...);
 				lua_CFunction freefunc = &function_detail::upvalue_member_variable<std::decay_t<decltype(*userptr)>, meta::unqualified_t<Fx>>::call;
 
-				int upvalues = stack::stack_detail::push_as_upvalues(L, memfxptr);
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::stack_detail::push_as_upvalues(L, memfxptr);
 				upvalues += stack::push(L, lightuserdata_value(static_cast<void*>(userptr)));
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
@@ -9246,7 +9264,9 @@ namespace sol {
 			template <typename Fx, typename C>
 			static void select_member_variable(std::true_type, lua_State* L, Fx&& fx, function_detail::class_indicator<C>) {
 				lua_CFunction freefunc = &function_detail::upvalue_this_member_variable<C, Fx>::call;
-				int upvalues = stack::stack_detail::push_as_upvalues(L, fx);
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::stack_detail::push_as_upvalues(L, fx);
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
@@ -9254,7 +9274,9 @@ namespace sol {
 			static void select_member_variable(std::true_type, lua_State* L, Fx&& fx) {
 				typedef typename meta::bind_traits<meta::unqualified_t<Fx>>::object_type C;
 				lua_CFunction freefunc = &function_detail::upvalue_this_member_variable<C, Fx>::call;
-				int upvalues = stack::stack_detail::push_as_upvalues(L, fx);
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::stack_detail::push_as_upvalues(L, fx);
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
@@ -9272,7 +9294,9 @@ namespace sol {
 				auto userptr = detail::ptr(std::forward<T>(obj), std::forward<Args>(args)...);
 				lua_CFunction freefunc = &function_detail::upvalue_member_function<std::decay_t<decltype(*userptr)>, meta::unqualified_t<Fx>>::call;
 
-				int upvalues = stack::stack_detail::push_as_upvalues(L, memfxptr);
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::stack_detail::push_as_upvalues(L, memfxptr);
 				upvalues += stack::push(L, lightuserdata_value(static_cast<void*>(userptr)));
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
@@ -9291,7 +9315,9 @@ namespace sol {
 			template <typename Fx, typename C>
 			static void select_member_function(std::true_type, lua_State* L, Fx&& fx, function_detail::class_indicator<C>) {
 				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, Fx>::call;
-				int upvalues = stack::stack_detail::push_as_upvalues(L, fx);
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::stack_detail::push_as_upvalues(L, fx);
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
@@ -9299,7 +9325,9 @@ namespace sol {
 			static void select_member_function(std::true_type, lua_State* L, Fx&& fx) {
 				typedef typename meta::bind_traits<meta::unqualified_t<Fx>>::object_type C;
 				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, Fx>::call;
-				int upvalues = stack::stack_detail::push_as_upvalues(L, fx);
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::stack_detail::push_as_upvalues(L, fx);
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
@@ -9313,7 +9341,9 @@ namespace sol {
 				std::decay_t<Fx> target(std::forward<Fx>(fx), std::forward<Args>(args)...);
 				lua_CFunction freefunc = &function_detail::upvalue_free_function<Fx>::call;
 
-				int upvalues = stack::stack_detail::push_as_upvalues(L, target);
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::stack_detail::push_as_upvalues(L, target);
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
@@ -9328,10 +9358,12 @@ namespace sol {
 
 			template <typename Fx, typename... Args>
 			static void set_fx(lua_State* L, Args&&... args) {
-				lua_CFunction freefunc = function_detail::call<meta::unqualified_t<Fx>>;
+				lua_CFunction freefunc = function_detail::call<meta::unqualified_t<Fx>, 2>;
 
-				stack::push<user<Fx>>(L, std::forward<Args>(args)...);
-				stack::push(L, c_closure(freefunc, 1));
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<Fx>>(L, std::forward<Args>(args)...);
+				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
 			template<typename... Args>
@@ -9399,15 +9431,19 @@ namespace sol {
 		template <typename T>
 		struct pusher<protect_t<T>> {
 			static int push(lua_State* L, protect_t<T>&& pw) {
-				lua_CFunction cf = call_detail::call_user<void, false, false, protect_t<T>>;
-				int closures = stack::push<user<protect_t<T>>>(L, std::move(pw.value));
-				return stack::push(L, c_closure(cf, closures));
+				lua_CFunction cf = call_detail::call_user<void, false, false, protect_t<T>, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<protect_t<T>>>(L, std::move(pw.value));
+				return stack::push(L, c_closure(cf, upvalues));
 			}
 
 			static int push(lua_State* L, const protect_t<T>& pw) {
-				lua_CFunction cf = call_detail::call_user<void, false, false, protect_t<T>>;
-				int closures = stack::push<user<protect_t<T>>>(L, pw.value);
-				return stack::push(L, c_closure(cf, closures));
+				lua_CFunction cf = call_detail::call_user<void, false, false, protect_t<T>, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<protect_t<T>>>(L, pw.value);
+				return stack::push(L, c_closure(cf, upvalues));
 			}
 		};
 
@@ -9502,9 +9538,11 @@ namespace sol {
 		struct pusher<detail::tagged<T, constructor_wrapper<Fxs...>>> {
 			template <typename C>
 			static int push(lua_State* L, C&& c) {
-				lua_CFunction cf = call_detail::call_user<T, false, false, constructor_wrapper<Fxs...>>;
-				int closures = stack::push<user<constructor_wrapper<Fxs...>>>(L, std::forward<C>(c));
-				return stack::push(L, c_closure(cf, closures));
+				lua_CFunction cf = call_detail::call_user<T, false, false, constructor_wrapper<Fxs...>, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<constructor_wrapper<Fxs...>>>(L, std::forward<C>(c));
+				return stack::push(L, c_closure(cf, upvalues));
 			}
 		};
 
@@ -9519,9 +9557,11 @@ namespace sol {
 		template <typename T, typename Fx>
 		struct pusher<detail::tagged<T, destructor_wrapper<Fx>>> {
 			static int push(lua_State* L, destructor_wrapper<Fx> c) {
-				lua_CFunction cf = call_detail::call_user<T, false, false, destructor_wrapper<Fx>>;
-				int closures = stack::push<user<T>>(L, std::move(c));
-				return stack::push(L, c_closure(cf, closures));
+				lua_CFunction cf = call_detail::call_user<T, false, false, destructor_wrapper<Fx>, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<T>>(L, std::move(c));
+				return stack::push(L, c_closure(cf, upvalues));
 			}
 		};
 
@@ -13019,7 +13059,8 @@ namespace sol {
 #else
 			// Use upvalues as explained in Lua 5.2 and beyond's manual
 			this->push();
-			if (lua_setupvalue(L, -2, 1) == nullptr) {
+			const char* name = lua_setupvalue(L, -2, 1);
+			if (name == nullptr) {
 				this->pop();
 			}
 #endif
@@ -13038,11 +13079,72 @@ namespace sol {
 		return basic_environment<E>(L, -1);
 	}
 
+	struct this_environment {
+		optional<environment> env;
+
+		this_environment() : env(nullopt) {}
+		this_environment(sol::environment e) : env(std::move(e)) {}
+		this_environment(const this_environment&) = default;
+		this_environment(this_environment&&) = default;
+		this_environment& operator=(const this_environment&) = default;
+		this_environment& operator=(this_environment&&) = default;
+
+		explicit operator bool() const {
+			return static_cast<bool>(env);
+		}
+
+		operator optional<environment>& () {
+			return env;
+		}
+
+		operator const optional<environment>& () const {
+			return env;
+		}
+
+		operator environment& () {
+			return env.value();
+		}
+
+		operator const environment& () const {
+			return env.value();
+		}
+	};
+
 	namespace stack {
 		template <>
 		struct getter<env_t> {
-			static environment get(lua_State* L, int index = -1) {
+			static environment get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return get_environment(stack_reference(L, raw_index(index)));
+			}
+		};
+
+		template <>
+		struct getter<this_environment> {
+			static this_environment get(lua_State* L, int index, record& tracking) {
+				tracking.use(0);
+				lua_Debug info;
+				// Level 0 means current function (this C function, which may or may not be useful for us?)
+				// Level 1 means next call frame up the stack. (Can be nothing if function called directly from C++ with lua_p/call)
+				int pre_stack_size = lua_gettop(L);
+				if (lua_getstack(L, 1, &info) != 1) {
+					if (lua_getstack(L, 0, &info) != 1) {
+						lua_settop(L, pre_stack_size);
+						return this_environment();
+					}
+				}
+				if (lua_getinfo(L, "f", &info) == 0) {
+					lua_settop(L, pre_stack_size);
+					return this_environment();
+				}
+
+				sol::stack_reference f(L, -1);
+				sol::environment env(sol::env_key, f);
+				if (!env.valid()) {
+					lua_settop(L, pre_stack_size);
+					return this_environment();
+				}
+				return this_environment(std::move(env));
 			}
 		};
 	} // stack
