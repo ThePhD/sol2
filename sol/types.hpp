@@ -633,6 +633,7 @@ namespace sol {
 	class thread;
 	struct variadic_args;
 	struct this_state;
+	struct this_environment;
 
 	namespace detail {
 		template <typename T, typename = void>
@@ -786,6 +787,9 @@ namespace sol {
 		struct lua_type_of<this_state> : std::integral_constant<type, type::poly> {};
 
 		template <>
+		struct lua_type_of<this_environment> : std::integral_constant<type, type::poly> {};
+
+		template <>
 		struct lua_type_of<type> : std::integral_constant<type, type::poly> {};
 
 		template <typename T>
@@ -900,6 +904,9 @@ namespace sol {
 
 	template <>
 	struct is_transparent_argument<this_state> : std::true_type {};
+
+	template <>
+	struct is_transparent_argument<this_environment> : std::true_type {};
 
 	template <>
 	struct is_transparent_argument<variadic_args> : std::true_type {};

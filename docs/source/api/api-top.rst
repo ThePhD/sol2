@@ -10,12 +10,14 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    :maxdepth: 2
 
    state
+   this_state
    reference
    stack_reference
    make_reference
    table
    userdata
    environment
+   this_environment
    proxy
    containers
    nested
@@ -32,7 +34,6 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    object
    thread
    optional
-   this_state
    variadic_args
    as_args
    overload

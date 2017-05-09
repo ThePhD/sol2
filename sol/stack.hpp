@@ -56,7 +56,7 @@ namespace sol {
 			}
 
 			template<typename T>
-			inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 1) {
+			inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 2) {
 				const static std::size_t data_t_count = (sizeof(T) + (sizeof(void*) - 1)) / sizeof(void*);
 				typedef std::array<void*, data_t_count> data_t;
 				data_t voiddata{ {} };

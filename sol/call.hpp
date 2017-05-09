@@ -597,9 +597,9 @@ namespace sol {
 			return lua_call_wrapper<T, meta::unqualified_t<Fx>, is_index, is_variable, stack::stack_detail::default_check_arguments, boost>{}.call(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 		}
 
-		template <typename T, bool is_index, bool is_variable, typename F>
+		template <typename T, bool is_index, bool is_variable, typename F, int start = 1>
 		inline int call_user(lua_State* L) {
-			auto& fx = stack::get<user<F>>(L, upvalue_index(1));
+			auto& fx = stack::get<user<F>>(L, upvalue_index(start));
 			return call_wrapped<T, is_index, is_variable>(L, fx);
 		}
 

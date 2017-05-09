@@ -57,7 +57,7 @@ namespace sol {
 				// idx n + 1: is the object's void pointer
 				// We don't need to store the size, because the other side is templated
 				// with the same member function pointer type
-				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L, 1);
+				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L);
 				auto objdata = stack::stack_detail::get_as_upvalues<T*>(L, memberdata.second);
 				function_type& memfx = memberdata.first;
 				auto& item = *objdata.first;
@@ -84,7 +84,7 @@ namespace sol {
 				// idx n + 1: is the object's void pointer
 				// We don't need to store the size, because the other side is templated
 				// with the same member function pointer type
-				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L, 1);
+				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L);
 				auto objdata = stack::stack_detail::get_as_upvalues<T*>(L, memberdata.second);
 				auto& mem = *objdata.first;
 				function_type& var = memberdata.first;
@@ -115,7 +115,7 @@ namespace sol {
 			static int real_call(lua_State* L) {
 				// Layout:
 				// idx 1...n: verbatim data of member variable pointer
-				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L, 1);
+				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L);
 				function_type& memfx = memberdata.first;
 				return call_detail::call_wrapped<T, false, false>(L, memfx);
 			}
@@ -137,7 +137,7 @@ namespace sol {
 			static int real_call(lua_State* L) {
 				// Layout:
 				// idx 1...n: verbatim data of member variable pointer
-				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L, 1);
+				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L);
 				function_type& var = memberdata.first;
 				switch (lua_gettop(L)) {
 				case 1:

@@ -92,7 +92,8 @@ namespace sol {
 #else
 			// Use upvalues as explained in Lua 5.2 and beyond's manual
 			this->push();
-			if (lua_setupvalue(L, -2, 1) == nullptr) {
+			const char* name = lua_setupvalue(L, -2, 1);
+			if (name == nullptr) {
 				this->pop();
 			}
 #endif
@@ -111,11 +112,72 @@ namespace sol {
 		return basic_environment<E>(L, -1);
 	}
 
+	struct this_environment {
+		optional<environment> env;
+
+		this_environment() : env(nullopt) {}
+		this_environment(sol::environment e) : env(std::move(e)) {}
+		this_environment(const this_environment&) = default;
+		this_environment(this_environment&&) = default;
+		this_environment& operator=(const this_environment&) = default;
+		this_environment& operator=(this_environment&&) = default;
+
+		explicit operator bool() const {
+			return static_cast<bool>(env);
+		}
+
+		operator optional<environment>& () {
+			return env;
+		}
+
+		operator const optional<environment>& () const {
+			return env;
+		}
+
+		operator environment& () {
+			return env.value();
+		}
+
+		operator const environment& () const {
+			return env.value();
+		}
+	};
+
 	namespace stack {
 		template <>
 		struct getter<env_t> {
-			static environment get(lua_State* L, int index = -1) {
+			static environment get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
 				return get_environment(stack_reference(L, raw_index(index)));
+			}
+		};
+
+		template <>
+		struct getter<this_environment> {
+			static this_environment get(lua_State* L, int index, record& tracking) {
+				tracking.use(0);
+				lua_Debug info;
+				// Level 0 means current function (this C function, which may or may not be useful for us?)
+				// Level 1 means next call frame up the stack. (Can be nothing if function called directly from C++ with lua_p/call)
+				int pre_stack_size = lua_gettop(L);
+				if (lua_getstack(L, 1, &info) != 1) {
+					if (lua_getstack(L, 0, &info) != 1) {
+						lua_settop(L, pre_stack_size);
+						return this_environment();
+					}
+				}
+				if (lua_getinfo(L, "f", &info) == 0) {
+					lua_settop(L, pre_stack_size);
+					return this_environment();
+				}
+
+				sol::stack_reference f(L, -1);
+				sol::environment env(sol::env_key, f);
+				if (!env.valid()) {
+					lua_settop(L, pre_stack_size);
+					return this_environment();
+				}
+				return this_environment(std::move(env));
 			}
 		};
 	} // stack

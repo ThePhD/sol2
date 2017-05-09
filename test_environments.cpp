@@ -201,3 +201,35 @@ TEST_CASE("environments/functions", "see if environments on functions are workin
 		REQUIRE(!gtest.valid());
 	}
 }
+
+TEST_CASE("environments/this_environment", "test various situations of pulling out an environment") {
+	static std::string code = "return f(10)";
+	
+	sol::state lua;
+
+	lua["f"] = [](sol::this_environment te, int x) {
+		if (te) {
+			sol::environment& env = te;
+			return x + static_cast<int>(env["x"]);
+		}
+		return x;
+	};
+	
+	sol::environment e(lua, sol::create, lua.globals());
+	e["x"] = 20;
+	SECTION("from Lua script") {
+		int value = lua.script(code, e);
+		REQUIRE(value == 30);
+	}
+	SECTION("from C++") {
+		sol::function f = lua["f"];
+		e.set_on(f);
+		int value = f(10);
+		REQUIRE(value == 30);
+	}
+	SECTION("from C++, with no env") {
+		sol::function f = lua["f"];
+		int value = f(10);
+		REQUIRE(value == 10);
+	}
+}

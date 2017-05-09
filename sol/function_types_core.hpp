@@ -28,9 +28,9 @@
 
 namespace sol {
 	namespace function_detail {
-		template <typename Fx>
+		template <typename Fx, int start = 1>
 		inline int call(lua_State* L) {
-			Fx& fx = stack::get<user<Fx>>(L, upvalue_index(1));
+			Fx& fx = stack::get<user<Fx>>(L, upvalue_index(start));
 			return fx(L);
 		}
 	} // function_detail

@@ -82,7 +82,9 @@ namespace sol {
 				auto userptr = detail::ptr(std::forward<T>(obj), std::forward<Args>(args)...);
 				lua_CFunction freefunc = &function_detail::upvalue_member_variable<std::decay_t<decltype(*userptr)>, meta::unqualified_t<Fx>>::call;
 
-				int upvalues = stack::stack_detail::push_as_upvalues(L, memfxptr);
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::stack_detail::push_as_upvalues(L, memfxptr);
 				upvalues += stack::push(L, lightuserdata_value(static_cast<void*>(userptr)));
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
@@ -101,7 +103,9 @@ namespace sol {
 			template <typename Fx, typename C>
 			static void select_member_variable(std::true_type, lua_State* L, Fx&& fx, function_detail::class_indicator<C>) {
 				lua_CFunction freefunc = &function_detail::upvalue_this_member_variable<C, Fx>::call;
-				int upvalues = stack::stack_detail::push_as_upvalues(L, fx);
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::stack_detail::push_as_upvalues(L, fx);
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
@@ -109,7 +113,9 @@ namespace sol {
 			static void select_member_variable(std::true_type, lua_State* L, Fx&& fx) {
 				typedef typename meta::bind_traits<meta::unqualified_t<Fx>>::object_type C;
 				lua_CFunction freefunc = &function_detail::upvalue_this_member_variable<C, Fx>::call;
-				int upvalues = stack::stack_detail::push_as_upvalues(L, fx);
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::stack_detail::push_as_upvalues(L, fx);
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
@@ -127,7 +133,9 @@ namespace sol {
 				auto userptr = detail::ptr(std::forward<T>(obj), std::forward<Args>(args)...);
 				lua_CFunction freefunc = &function_detail::upvalue_member_function<std::decay_t<decltype(*userptr)>, meta::unqualified_t<Fx>>::call;
 
-				int upvalues = stack::stack_detail::push_as_upvalues(L, memfxptr);
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::stack_detail::push_as_upvalues(L, memfxptr);
 				upvalues += stack::push(L, lightuserdata_value(static_cast<void*>(userptr)));
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
@@ -146,7 +154,9 @@ namespace sol {
 			template <typename Fx, typename C>
 			static void select_member_function(std::true_type, lua_State* L, Fx&& fx, function_detail::class_indicator<C>) {
 				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, Fx>::call;
-				int upvalues = stack::stack_detail::push_as_upvalues(L, fx);
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::stack_detail::push_as_upvalues(L, fx);
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
@@ -154,7 +164,9 @@ namespace sol {
 			static void select_member_function(std::true_type, lua_State* L, Fx&& fx) {
 				typedef typename meta::bind_traits<meta::unqualified_t<Fx>>::object_type C;
 				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, Fx>::call;
-				int upvalues = stack::stack_detail::push_as_upvalues(L, fx);
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::stack_detail::push_as_upvalues(L, fx);
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
@@ -168,7 +180,9 @@ namespace sol {
 				std::decay_t<Fx> target(std::forward<Fx>(fx), std::forward<Args>(args)...);
 				lua_CFunction freefunc = &function_detail::upvalue_free_function<Fx>::call;
 
-				int upvalues = stack::stack_detail::push_as_upvalues(L, target);
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::stack_detail::push_as_upvalues(L, target);
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
@@ -183,10 +197,12 @@ namespace sol {
 
 			template <typename Fx, typename... Args>
 			static void set_fx(lua_State* L, Args&&... args) {
-				lua_CFunction freefunc = function_detail::call<meta::unqualified_t<Fx>>;
+				lua_CFunction freefunc = function_detail::call<meta::unqualified_t<Fx>, 2>;
 
-				stack::push<user<Fx>>(L, std::forward<Args>(args)...);
-				stack::push(L, c_closure(freefunc, 1));
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<Fx>>(L, std::forward<Args>(args)...);
+				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
 			template<typename... Args>
@@ -254,15 +270,19 @@ namespace sol {
 		template <typename T>
 		struct pusher<protect_t<T>> {
 			static int push(lua_State* L, protect_t<T>&& pw) {
-				lua_CFunction cf = call_detail::call_user<void, false, false, protect_t<T>>;
-				int closures = stack::push<user<protect_t<T>>>(L, std::move(pw.value));
-				return stack::push(L, c_closure(cf, closures));
+				lua_CFunction cf = call_detail::call_user<void, false, false, protect_t<T>, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<protect_t<T>>>(L, std::move(pw.value));
+				return stack::push(L, c_closure(cf, upvalues));
 			}
 
 			static int push(lua_State* L, const protect_t<T>& pw) {
-				lua_CFunction cf = call_detail::call_user<void, false, false, protect_t<T>>;
-				int closures = stack::push<user<protect_t<T>>>(L, pw.value);
-				return stack::push(L, c_closure(cf, closures));
+				lua_CFunction cf = call_detail::call_user<void, false, false, protect_t<T>, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<protect_t<T>>>(L, pw.value);
+				return stack::push(L, c_closure(cf, upvalues));
 			}
 		};
 
@@ -357,9 +377,11 @@ namespace sol {
 		struct pusher<detail::tagged<T, constructor_wrapper<Fxs...>>> {
 			template <typename C>
 			static int push(lua_State* L, C&& c) {
-				lua_CFunction cf = call_detail::call_user<T, false, false, constructor_wrapper<Fxs...>>;
-				int closures = stack::push<user<constructor_wrapper<Fxs...>>>(L, std::forward<C>(c));
-				return stack::push(L, c_closure(cf, closures));
+				lua_CFunction cf = call_detail::call_user<T, false, false, constructor_wrapper<Fxs...>, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<constructor_wrapper<Fxs...>>>(L, std::forward<C>(c));
+				return stack::push(L, c_closure(cf, upvalues));
 			}
 		};
 
@@ -374,9 +396,11 @@ namespace sol {
 		template <typename T, typename Fx>
 		struct pusher<detail::tagged<T, destructor_wrapper<Fx>>> {
 			static int push(lua_State* L, destructor_wrapper<Fx> c) {
-				lua_CFunction cf = call_detail::call_user<T, false, false, destructor_wrapper<Fx>>;
-				int closures = stack::push<user<T>>(L, std::move(c));
-				return stack::push(L, c_closure(cf, closures));
+				lua_CFunction cf = call_detail::call_user<T, false, false, destructor_wrapper<Fx>, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<T>>(L, std::move(c));
+				return stack::push(L, c_closure(cf, upvalues));
 			}
 		};
 
