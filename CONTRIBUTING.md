@@ -13,7 +13,7 @@ The guidelines for reporting a bug are relatively simple and are as follows:
 2. Make a descriptive title that summarises the bug as a whole.
 3. Explain the bug in as much detail as you can in the body of the issue.
 
-If you have all of those requirements set, then your issue reporting is golden. 
+If you have all of those requirements set, then your issue reporting is golden.
 
 ## Submitting a pull request
 
