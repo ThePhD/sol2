@@ -61,7 +61,7 @@ struct vec {
 		return sol::object(L, sol::in_place, sol::lua_nil);
 	}
 
-	void setter(sol::stack_object key, sol::stack_object value, sol::this_state L) {
+	void setter(sol::stack_object key, sol::stack_object value, sol::this_state) {
 		// we use stack_object for the arguments because we know
 		// the values from Lua will remain on Lua's stack,
 		// so long we we don't mess with it

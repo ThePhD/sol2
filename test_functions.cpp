@@ -1064,3 +1064,74 @@ TEST_CASE("functions/overloaded-variadic", "make sure variadics work to some deg
 	REQUIRE(b == 3);
 	REQUIRE(c == 2.2);
 }
+
+TEST_CASE("functions/set_function-already-wrapped", "setting a function returned from Lua code that is already wrapped into a sol::function or similar") {
+	SECTION("test different types") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+		sol::function fn = lua.script("return function() return 5 end");
+		sol::protected_function pfn = fn;
+		std::function<int()> sfn = fn;
+	
+		lua.set_function("test", fn);
+		lua.set_function("test2", pfn);
+		lua.set_function("test3", sfn);
+
+		REQUIRE_NOTHROW(lua.script("assert(type(test) == 'function')"));
+		REQUIRE_NOTHROW(lua.script("assert(test() ~= nil)"));
+		REQUIRE_NOTHROW(lua.script("assert(test() == 5)"));
+
+		REQUIRE_NOTHROW(lua.script("assert(type(test2) == 'function')"));
+		REQUIRE_NOTHROW(lua.script("assert(test2() ~= nil)"));
+		REQUIRE_NOTHROW(lua.script("assert(test2() == 5)"));
+
+		REQUIRE_NOTHROW(lua.script("assert(type(test3) == 'function')"));
+		REQUIRE_NOTHROW(lua.script("assert(test3() ~= nil)"));
+		REQUIRE_NOTHROW(lua.script("assert(test3() == 5)"));
+	}
+
+	SECTION("getting the value from C++") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+		sol::function fn = lua.script("return function() return 5 end");
+
+		int result = fn();
+		REQUIRE(result == 5);
+	}
+
+	SECTION("setting the function directly") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+		sol::function fn = lua.script("return function() return 5 end");
+
+		lua.set_function("test", fn);
+
+		REQUIRE_NOTHROW(lua.script("assert(type(test) == 'function')"));
+		REQUIRE_NOTHROW(lua.script("assert(test() ~= nil)"));
+		REQUIRE_NOTHROW(lua.script("assert(test() == 5)"));
+
+	}
+
+	SECTION("does the function actually get executed?") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		sol::function fn2 = lua.script("return function() print('this was executed') end");
+		lua.set_function("test", fn2);
+
+		REQUIRE_NOTHROW(lua.script("assert(type(test) == 'function')"));
+		REQUIRE_NOTHROW(lua.script("test()"));
+	}
+
+	SECTION("setting the function indirectly, with the return value cast explicitly") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+		sol::function fn = lua.script("return function() return 5 end");
+
+		lua.set_function("test", [&fn]() { return fn.call<int>(); });
+
+		REQUIRE_NOTHROW(lua.script("assert(type(test) == 'function')"));
+		REQUIRE_NOTHROW(lua.script("assert(test() ~= nil)"));
+		REQUIRE_NOTHROW(lua.script("assert(test() == 5)"));
+	}
+}
