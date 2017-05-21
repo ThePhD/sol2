@@ -10,6 +10,16 @@ Running Scripts
 
 Scripts can have syntax errors, can load from the file system wrong, or have runtime issues. Knowing which one can be troublesome. There are various small building blocks to load and run code, but to check errors you can use the overloaded :ref:`script/script_file functions on sol::state/sol::state_view<state-script-function>`
 
+Compiler Errors / Warnings
+--------------------------
+
+A myriad of compiler errors can occur when something goes wrong. Here is some basic advice about working with these types:
+
+* If there are a myriad of errors relating to ``std::index_sequence``, type traits, and other ``std::`` members, it is likely you have not turned on your C++14 switch for your compiler. Visual Studio 2015 turns these on by default, but g++ and clang++ do not have them as defaults and you should pass the flag ``--std=c++1y`` or ``--std=c++14``, or similar for your compiler.
+* Sometimes, a generated usertype can be very long if you are binding a lot of member functions. You may end up with a myriad of warnings about debug symbols being cut off or about ``__LINE_VAR`` exceeding maximum length. You can silence these warnings safely for some compilers.
+* Template depth errors may also be a problem on earlier versions of clang++ and g++. Use ``-ftemplate-depth`` compiler flag and specify really high number (something like 2048 or even double that amount) to let the compiler work freely. Also consider potentially using :doc:`simple usertypes<api/simple_usertype>` to save compilation speed.
+* If you have a move-only type, that type may need to be made ``readonly`` if it is bound as a member variable on a usertype or bound using ``state_view::set_function``. See :doc:`sol::readonly<api/readonly>` for more details.
+
 Linker Errors
 -------------
 
