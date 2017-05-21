@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-05-17 00:18:39.909842 UTC
-// This header was generated with sol v2.17.3 (revision 51d6f6f)
+// Generated 2017-05-21 00:02:50.302747 UTC
+// This header was generated with sol v2.17.4 (revision 6047f48)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -12057,7 +12057,7 @@ namespace sol {
 			auto it = begin(src);
 			--k;
 			if (k == src.size()) {
-				real_add_call_push(std::integral_constant<bool, detail::has_push_back<T>::value>(), L, src, 1);
+				real_add_call_push(std::integral_constant<bool, detail::has_push_back<T>::value && std::is_copy_constructible<V>::value>(), L, src, 1);
 				return 0;
 			}
 			std::advance(it, k);
@@ -12066,7 +12066,7 @@ namespace sol {
 		}
 
 		static int real_new_index_call(lua_State* L) {
-			return real_new_index_call_const(meta::neg<meta::any<std::is_const<V>, std::is_const<IR>>>(), is_associative(), L);
+			return real_new_index_call_const(meta::neg<meta::any<std::is_const<V>, std::is_const<IR>, meta::neg<std::is_copy_assignable<V>>>>(), is_associative(), L);
 		}
 
 		static int real_pairs_next_call_assoc(std::true_type, lua_State* L) {
@@ -12144,7 +12144,7 @@ namespace sol {
 		}
 
 		static int real_add_call_push(std::false_type, lua_State*L, T& src, int boost = 0) {
-			return real_add_call_insert(std::integral_constant<bool, detail::has_insert<T>::value>(), L, src, boost);
+			return real_add_call_insert(std::integral_constant<bool, detail::has_insert<T>::value && std::is_copy_constructible<V>::value>(), L, src, boost);
 		}
 
 		static int real_add_call_associative(std::true_type, lua_State* L) {
@@ -12153,7 +12153,7 @@ namespace sol {
 
 		static int real_add_call_associative(std::false_type, lua_State* L) {
 			auto& src = get_src(L);
-			return real_add_call_push(std::integral_constant<bool, detail::has_push_back<T>::value>(), L, src);
+			return real_add_call_push(std::integral_constant<bool, detail::has_push_back<T>::value && std::is_copy_constructible<V>::value>(), L, src);
 		}
 
 		static int real_add_call_capable(std::true_type, lua_State* L) {
@@ -12166,7 +12166,7 @@ namespace sol {
 		}
 
 		static int real_add_call(lua_State* L) {
-			return real_add_call_capable(std::integral_constant<bool, detail::has_push_back<T>::value || detail::has_insert<T>::value>(), L);
+			return real_add_call_capable(std::integral_constant<bool, (detail::has_push_back<T>::value || detail::has_insert<T>::value) && std::is_copy_constructible<V>::value>(), L);
 		}
 
 		static int real_insert_call_capable(std::false_type, std::false_type, lua_State*L) {
@@ -12190,7 +12190,7 @@ namespace sol {
 		}
 
 		static int real_insert_call(lua_State*L) {
-			return real_insert_call_capable(std::integral_constant<bool, detail::has_insert<T>::value>(), is_associative(), L);
+			return real_insert_call_capable(std::integral_constant<bool, detail::has_insert<T>::value && std::is_copy_assignable<V>::value>(), is_associative(), L);
 		}
 
 		static int real_clear_call_capable(std::false_type, lua_State* L) {
