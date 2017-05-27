@@ -131,7 +131,7 @@ You can set/get everything.
 	lua["a_function"] = [](){ return 100; };
 
 	// make a table
-	lua["some_table"] = lua.create_table_wth("value", 24);
+	lua["some_table"] = lua.create_table_with("value", 24);
 
 
 Equivalent to loading a lua file with:
