@@ -185,26 +185,46 @@ namespace sol {
 
 	struct upvalue_index {
 		int index;
-		upvalue_index(int idx) : index(lua_upvalueindex(idx)) {}
-		operator int() const { return index; }
+		upvalue_index(int idx) : index(lua_upvalueindex(idx)) {
+		
+		}
+		
+		operator int() const { 
+			return index; 
+		}
 	};
 
 	struct raw_index {
 		int index;
-		raw_index(int i) : index(i) {}
-		operator int() const { return index; }
+		raw_index(int i) : index(i) {
+		
+		}
+		
+		operator int() const { 
+			return index; 
+		}
 	};
 
 	struct absolute_index {
 		int index;
-		absolute_index(lua_State* L, int idx) : index(lua_absindex(L, idx)) {}
-		operator int() const { return index; }
+		absolute_index(lua_State* L, int idx) : index(lua_absindex(L, idx)) {
+		
+		}
+		
+		operator int() const { 
+			return index; 
+		}
 	};
 
 	struct ref_index {
 		int index;
-		ref_index(int idx) : index(idx) {}
-		operator int() const { return index; }
+		ref_index(int idx) : index(idx) {
+		
+		}
+		
+		operator int() const { 
+			return index; 
+		}
 	};
 
 	struct lightuserdata_value {

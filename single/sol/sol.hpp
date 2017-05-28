@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-05-21 00:02:50.302747 UTC
-// This header was generated with sol v2.17.4 (revision 6047f48)
+// Generated 2017-05-28 23:13:00.247039 UTC
+// This header was generated with sol v2.17.4 (revision acee4db)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3177,26 +3177,46 @@ namespace sol {
 
 	struct upvalue_index {
 		int index;
-		upvalue_index(int idx) : index(lua_upvalueindex(idx)) {}
-		operator int() const { return index; }
+		upvalue_index(int idx) : index(lua_upvalueindex(idx)) {
+		
+		}
+		
+		operator int() const { 
+			return index; 
+		}
 	};
 
 	struct raw_index {
 		int index;
-		raw_index(int i) : index(i) {}
-		operator int() const { return index; }
+		raw_index(int i) : index(i) {
+		
+		}
+		
+		operator int() const { 
+			return index; 
+		}
 	};
 
 	struct absolute_index {
 		int index;
-		absolute_index(lua_State* L, int idx) : index(lua_absindex(L, idx)) {}
-		operator int() const { return index; }
+		absolute_index(lua_State* L, int idx) : index(lua_absindex(L, idx)) {
+		
+		}
+		
+		operator int() const { 
+			return index; 
+		}
 	};
 
 	struct ref_index {
 		int index;
-		ref_index(int idx) : index(idx) {}
-		operator int() const { return index; }
+		ref_index(int idx) : index(idx) {
+		
+		}
+		
+		operator int() const { 
+			return index; 
+		}
 	};
 
 	struct lightuserdata_value {
@@ -10565,6 +10585,15 @@ namespace sol {
 
 namespace sol {
 	namespace usertype_detail {
+		const int metatable_index = 2;
+		const int metatable_core_index = 3;
+		const int filler_index = 4;
+		const int magic_index = 5;
+
+		const int simple_metatable_index = 2;
+		const int index_function_index = 3;
+		const int newindex_function_index = 4;
+
 		typedef void(*base_walk)(lua_State*, bool&, int&, string_detail::string_shim&);
 		typedef int(*member_search)(lua_State*, void*, int);
 
@@ -10608,10 +10637,15 @@ namespace sol {
 			const char* metakey;
 			variable_map variables;
 			function_map functions;
+			object index;
+			object newindex;
 			base_walk indexbaseclasspropogation;
 			base_walk newindexbaseclasspropogation;
 
-			simple_map(const char* mkey, base_walk index, base_walk newindex, variable_map&& vars, function_map&& funcs) : metakey(mkey), variables(std::move(vars)), functions(std::move(funcs)), indexbaseclasspropogation(index), newindexbaseclasspropogation(newindex) {}
+			simple_map(const char* mkey, base_walk index, base_walk newindex, object i, object ni, variable_map&& vars, function_map&& funcs) 
+			: metakey(mkey), variables(std::move(vars)), functions(std::move(funcs)), 
+			index(std::move(i)), newindex(std::move(ni)),
+			indexbaseclasspropogation(index), newindexbaseclasspropogation(newindex) {}
 		};
 	}
 
@@ -10680,20 +10714,32 @@ namespace sol {
 			}
 		};
 
-		inline bool is_indexer(string_detail::string_shim s) {
-			return s == to_string(meta_function::index) || s == to_string(meta_function::new_index);
+		inline int is_indexer(string_detail::string_shim s) {
+			if (s == to_string(meta_function::index)) {
+				return 1;
+			}
+			else if (s == to_string(meta_function::new_index)) {
+				return 2;
+			}
+			return  0;
 		}
 
-		inline bool is_indexer(meta_function mf) {
-			return mf == meta_function::index || mf == meta_function::new_index;
+		inline int is_indexer(meta_function mf) {
+			if (mf == meta_function::index) {
+				return 1;
+			}
+			else if (mf == meta_function::new_index) {
+				return 2;
+			}
+			return 0;
 		}
 
-		inline bool is_indexer(call_construction) {
-			return false;
+		inline int is_indexer(call_construction) {
+			return 0;
 		}
 
-		inline bool is_indexer(base_classes_tag) {
-			return false;
+		inline int is_indexer(base_classes_tag) {
+			return 0;
 		}
 
 		inline auto make_shim(string_detail::string_shim s) {
@@ -10735,7 +10781,7 @@ namespace sol {
 		};
 
 		inline int runtime_object_call(lua_State* L, void*, int runtimetarget) {
-			usertype_metatable_core& umc = stack::get<light<usertype_metatable_core>>(L, upvalue_index(2));
+			usertype_metatable_core& umc = stack::get<light<usertype_metatable_core>>(L, upvalue_index(metatable_core_index));
 			std::vector<object>& runtime = umc.runtime;
 			object& runtimeobj = runtime[runtimetarget];
 			return stack::push(L, runtimeobj);
@@ -10750,7 +10796,7 @@ namespace sol {
 				return luaL_error(L, "sol: attempt to index (get) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.c_str());
 #else
 				int isnum = 0;
-				lua_Integer magic = lua_tointegerx(L, upvalue_index(4), &isnum);
+				lua_Integer magic = lua_tointegerx(L, upvalue_index(magic_index), &isnum);
 				if (isnum != 0 && magic == toplevel_magic) {
 					if (lua_getmetatable(L, 1) == 1) {
 						int metatarget = lua_gettop(L);
@@ -10774,11 +10820,11 @@ namespace sol {
 		template <typename T, bool is_simple>
 		inline int metatable_newindex(lua_State* L) {
 			int isnum = 0;
-			lua_Integer magic = lua_tointegerx(L, upvalue_index(4), &isnum);
+			lua_Integer magic = lua_tointegerx(L, upvalue_index(magic_index), &isnum);
 			if (isnum != 0 && magic == toplevel_magic) {
 				auto non_indexable = [&L]() {
 					if (is_simple) {
-						simple_map& sm = stack::get<user<simple_map>>(L, upvalue_index(1));
+						simple_map& sm = stack::get<user<simple_map>>(L, upvalue_index(simple_metatable_index));
 						function_map& functions = sm.functions;
 						optional<std::string> maybeaccessor = stack::get<optional<std::string>>(L, 2);
 						if (!maybeaccessor) {
@@ -10794,7 +10840,7 @@ namespace sol {
 						}
 						return;
 					}
-					usertype_metatable_core& umc = stack::get<light<usertype_metatable_core>>(L, upvalue_index(2));
+					usertype_metatable_core& umc = stack::get<light<usertype_metatable_core>>(L, upvalue_index(metatable_core_index));
 					bool mustindex = umc.mustindex;
 					if (!mustindex)
 						return;
@@ -10855,7 +10901,7 @@ namespace sol {
 		}
 		
 		inline int runtime_new_index(lua_State* L, void*, int runtimetarget) {
-			usertype_metatable_core& umc = stack::get<light<usertype_metatable_core>>(L, upvalue_index(2));
+			usertype_metatable_core& umc = stack::get<light<usertype_metatable_core>>(L, upvalue_index(metatable_core_index));
 			std::vector<object>& runtime = umc.runtime;
 			object& runtimeobj = runtime[runtimetarget];
 			runtimeobj = object(L, 3);
@@ -10985,7 +11031,7 @@ namespace sol {
 
 		bool contains_index() const {
 			bool idx = false;
-			(void)detail::swallow{ 0, ((idx |= usertype_detail::is_indexer(std::get<I * 2>(functions))), 0) ... };
+			(void)detail::swallow{ 0, ((idx |= (usertype_detail::is_indexer(std::get<I * 2>(functions)) != 0)), 0) ... };
 			return idx;
 		}
 
@@ -11101,7 +11147,11 @@ namespace sol {
 			if (is_variable_binding<decltype(std::get<I1>(f.functions))>::value) {
 				return real_call_with<I1, is_index, true>(L, f);
 			}
-			int upvalues = stack::push(L, light<usertype_metatable>(f));
+			// set up upvalues
+			// for a chained call
+			int upvalues = 0;
+			upvalues += stack::push(L, nullptr);
+			upvalues += stack::push(L, light<usertype_metatable>(f));
 			auto cfunc = &call<I1, is_index>;
 			return stack::push(L, c_closure(cfunc, upvalues));
 		}
@@ -11114,7 +11164,9 @@ namespace sol {
 
 		template <bool is_index, bool toplevel = false>
 		static int core_indexing_call(lua_State* L) {
-			usertype_metatable& f = toplevel ? stack::get<light<usertype_metatable>>(L, upvalue_index(1)) : stack::pop<light<usertype_metatable>>(L);
+			usertype_metatable& f = toplevel 
+				? stack::get<light<usertype_metatable>>(L, upvalue_index(usertype_detail::metatable_index))
+				: stack::pop<light<usertype_metatable>>(L);
 			static const int keyidx = -2 + static_cast<int>(is_index);
 			if (toplevel && stack::get<type>(L, keyidx) != type::string) {
 				return is_index ? f.indexfunc(L) : f.newindexfunc(L);
@@ -11150,7 +11202,7 @@ namespace sol {
 
 		template <std::size_t Idx, bool is_index = true, bool is_variable = false>
 		static int real_call(lua_State* L) {
-			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, upvalue_index(1));
+			usertype_metatable& f = stack::get<light<usertype_metatable>>(L, upvalue_index(usertype_detail::metatable_index));
 			return real_call_with<Idx, is_index, is_variable>(L, f);
 		}
 
@@ -11267,8 +11319,10 @@ namespace sol {
 					}
 					luaL_newmetatable(L, metakey);
 					stack_reference t(L, -1);
-					stack::push(L, make_light(um));
-					luaL_setfuncs(L, metaregs, 1);
+					int upvalues = 0;
+					upvalues += stack::push(L, nullptr);
+					upvalues += stack::push(L, make_light(um));
+					luaL_setfuncs(L, metaregs, upvalues);
 
 					if (um.baseclasscheck != nullptr) {
 						stack::set_field(L, detail::base_class_check_key(), um.baseclasscheck, t.stack_index());
@@ -11277,14 +11331,14 @@ namespace sol {
 						stack::set_field(L, detail::base_class_cast_key(), um.baseclasscast, t.stack_index());
 					}
 
-					stack::set_field(L, detail::base_class_index_propogation_key(), make_closure(um.indexbase, make_light(um), make_light(umc)), t.stack_index());
-					stack::set_field(L, detail::base_class_new_index_propogation_key(), make_closure(um.newindexbase, make_light(um), make_light(umc)), t.stack_index());
+					stack::set_field(L, detail::base_class_index_propogation_key(), make_closure(um.indexbase, nullptr, make_light(um), make_light(umc)), t.stack_index());
+					stack::set_field(L, detail::base_class_new_index_propogation_key(), make_closure(um.newindexbase, nullptr, make_light(um), make_light(umc)), t.stack_index());
 
 					if (mustindex) {
 						// Basic index pushing: specialize
 						// index and newindex to give variables and stuff
-						stack::set_field(L, meta_function::index, make_closure(umt_t::index_call, make_light(um), make_light(umc)), t.stack_index());
-						stack::set_field(L, meta_function::new_index, make_closure(umt_t::new_index_call, make_light(um), make_light(umc)), t.stack_index());
+						stack::set_field(L, meta_function::index, make_closure(umt_t::index_call, nullptr, make_light(um), make_light(umc)), t.stack_index());
+						stack::set_field(L, meta_function::new_index, make_closure(umt_t::new_index_call, nullptr, make_light(um), make_light(umc)), t.stack_index());
 					}
 					else {
 						// If there's only functions, we can use the fast index version
@@ -11295,11 +11349,11 @@ namespace sol {
 					lua_createtable(L, 0, 3);
 					stack_reference metabehind(L, -1);
 					if (um.callconstructfunc != nullptr) {
-						stack::set_field(L, meta_function::call_function, make_closure(um.callconstructfunc, make_light(um), make_light(umc)), metabehind.stack_index());
+						stack::set_field(L, meta_function::call_function, make_closure(um.callconstructfunc, nullptr, make_light(um), make_light(umc)), metabehind.stack_index());
 					}
 					if (um.secondarymeta) {
-						stack::set_field(L, meta_function::index, make_closure(umt_t::index_call, make_light(um), make_light(umc)), metabehind.stack_index());
-						stack::set_field(L, meta_function::new_index, make_closure(umt_t::new_index_call, make_light(um), make_light(umc)), metabehind.stack_index());
+						stack::set_field(L, meta_function::index, make_closure(umt_t::index_call, nullptr, make_light(um), make_light(umc)), metabehind.stack_index());
+						stack::set_field(L, meta_function::new_index, make_closure(umt_t::new_index_call, nullptr, make_light(um), make_light(umc)), metabehind.stack_index());
 					}
 					stack::set_field(L, metatable_key, metabehind, t.stack_index());
 					metabehind.pop();
@@ -11311,17 +11365,19 @@ namespace sol {
 				// Now for the shim-table that actually gets assigned to the name
 				luaL_newmetatable(L, &usertype_traits<T>::user_metatable()[0]);
 				stack_reference t(L, -1);
-				stack::push(L, make_light(um));
-				luaL_setfuncs(L, value_table.data(), 1);
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push(L, make_light(um));
+				luaL_setfuncs(L, value_table.data(), upvalues);
 				{
 					lua_createtable(L, 0, 3);
 					stack_reference metabehind(L, -1);
 					if (um.callconstructfunc != nullptr) {
-						stack::set_field(L, meta_function::call_function, make_closure(um.callconstructfunc, make_light(um), make_light(umc)), metabehind.stack_index());
+						stack::set_field(L, meta_function::call_function, make_closure(um.callconstructfunc, nullptr, make_light(um), make_light(umc)), metabehind.stack_index());
 					}
 					
-					stack::set_field(L, meta_function::index, make_closure(umt_t::index_call, make_light(um), make_light(umc), 0, usertype_detail::toplevel_magic), metabehind.stack_index());
-					stack::set_field(L, meta_function::new_index, make_closure(umt_t::new_index_call, make_light(um), make_light(umc), 0, usertype_detail::toplevel_magic), metabehind.stack_index());
+					stack::set_field(L, meta_function::index, make_closure(umt_t::index_call, nullptr, make_light(um), make_light(umc), nullptr, usertype_detail::toplevel_magic), metabehind.stack_index());
+					stack::set_field(L, meta_function::new_index, make_closure(umt_t::new_index_call, nullptr, make_light(um), make_light(umc), nullptr, usertype_detail::toplevel_magic), metabehind.stack_index());
 					
 					stack::set_field(L, metatable_key, metabehind, t.stack_index());
 					metabehind.pop();
@@ -11342,16 +11398,36 @@ namespace sol {
 namespace sol {
 
 	namespace usertype_detail {
-		template <bool is_index, bool toplevel = false>
+		inline int call_indexing_object(lua_State* L, object& f) {
+			int before = lua_gettop(L);
+			f.push();
+			for (int i = 1; i <= before; ++i) {
+				lua_pushvalue(L, i);
+			}
+			lua_callk(L, before, LUA_MULTRET, 0, nullptr);
+			int after = lua_gettop(L);
+			return after - before;
+		}
+
+		template <typename T, bool is_index, bool toplevel = false, bool has_indexing = false>
 		inline int simple_core_indexing_call(lua_State* L) {
-			simple_map& sm = toplevel ? stack::get<user<simple_map>>(L, upvalue_index(1)) : stack::pop<user<simple_map>>(L);
+			simple_map& sm = toplevel 
+				? stack::get<user<simple_map>>(L, upvalue_index(simple_metatable_index)) 
+				: stack::pop<user<simple_map>>(L);
 			variable_map& variables = sm.variables;
 			function_map& functions = sm.functions;
 			static const int keyidx = -2 + static_cast<int>(is_index);
 			if (toplevel) {
 				if (stack::get<type>(L, keyidx) != type::string) {
-					lua_CFunction indexingfunc = is_index ? stack::get<lua_CFunction>(L, upvalue_index(2)) : stack::get<lua_CFunction>(L, upvalue_index(3));
-					return indexingfunc(L);
+					if (has_indexing) {
+						object& indexingfunc = is_index
+							? sm.index
+							: sm.newindex;
+						return call_indexing_object(L, indexingfunc);
+					}
+					else {
+						return usertype_detail::indexing_fail<T, is_index>(L);
+					}
 				}
 			}
 			string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, keyidx);
@@ -11371,11 +11447,20 @@ namespace sol {
 					return stack::push(L, func);
 				}
 				else {
-					lua_CFunction indexingfunc = is_index ? stack::get<lua_CFunction>(L, upvalue_index(2)) : stack::get<lua_CFunction>(L, upvalue_index(3));
-					return indexingfunc(L);
+					if (has_indexing) {
+						object& indexingfunc = is_index
+							? sm.index
+							: sm.newindex;
+						return call_indexing_object(L, indexingfunc);
+					}
+					else {
+						return is_index 
+							? usertype_detail::indexing_fail<T, is_index>(L)
+							: usertype_detail::metatable_newindex<T, true>(L);
+					}
 				}
 			}
-			// Check table storage first for a method that works
+			/* Check table storage first for a method that works
 			luaL_getmetatable(L, sm.metakey);
 			if (type_of(L, -1) != type::lua_nil) {
 				stack::get_field<false, true>(L, accessor.c_str(), lua_gettop(L));
@@ -11387,7 +11472,8 @@ namespace sol {
 				lua_pop(L, 1);
 			}
 			lua_pop(L, 1);
-			
+			*/
+
 			int ret = 0;
 			bool found = false;
 			// Otherwise, we need to do propagating calls through the bases
@@ -11401,26 +11487,37 @@ namespace sol {
 				return ret;
 			}
 			if (toplevel) {
-				lua_CFunction indexingfunc = is_index ? stack::get<lua_CFunction>(L, upvalue_index(2)) : stack::get<lua_CFunction>(L, upvalue_index(3));
-				return indexingfunc(L);
+				if (has_indexing) {
+					object& indexingfunc = is_index
+						? sm.index
+						: sm.newindex;
+					return call_indexing_object(L, indexingfunc);
+				}
+				else {
+					return usertype_detail::metatable_newindex<T, true>(L);
+				}
 			}
 			return -1;
 		}
 
+		template <typename T, bool has_indexing = false>
 		inline int simple_real_index_call(lua_State* L) {
-			return simple_core_indexing_call<true, true>(L);
+			return simple_core_indexing_call<T, true, true, has_indexing>(L);
 		}
 
+		template <typename T, bool has_indexing = false>
 		inline int simple_real_new_index_call(lua_State* L) {
-			return simple_core_indexing_call<false, true>(L);
+			return simple_core_indexing_call<T, false, true, has_indexing>(L);
 		}
 
+		template <typename T, bool has_indexing = false>
 		inline int simple_index_call(lua_State* L) {
-			return detail::static_trampoline<(&simple_real_index_call)>(L);
+			return detail::static_trampoline<(&simple_real_index_call<T, has_indexing>)>(L);
 		}
 
+		template <typename T, bool has_indexing = false>
 		inline int simple_new_index_call(lua_State* L) {
-			return detail::static_trampoline<(&simple_real_new_index_call)>(L);
+			return detail::static_trampoline<(&simple_real_new_index_call<T, has_indexing>)>(L);
 		}
 	}
 
@@ -11432,8 +11529,8 @@ namespace sol {
 		usertype_detail::function_map registrations;
 		usertype_detail::variable_map varmap;
 		object callconstructfunc;
-		lua_CFunction indexfunc;
-		lua_CFunction newindexfunc;
+		object indexfunc;
+		object newindexfunc;
 		lua_CFunction indexbase;
 		lua_CFunction newindexbase;
 		usertype_detail::base_walk indexbaseclasspropogation;
@@ -11446,6 +11543,15 @@ namespace sol {
 		template <typename N>
 		void insert(N&& n, object&& o) {
 			std::string key = usertype_detail::make_string(std::forward<N>(n));
+			int is_indexer = static_cast<int>(usertype_detail::is_indexer(n));
+			if (is_indexer == 1) {
+				indexfunc = o;
+				mustindex = true;
+			}
+			else if (is_indexer == 2) {
+				newindexfunc = o;
+				mustindex = true;
+			}
 			auto hint = registrations.find(key);
 			if (hint == registrations.cend()) {
 				registrations.emplace_hint(hint, std::move(key), std::move(o));
@@ -11572,8 +11678,8 @@ namespace sol {
 		template<std::size_t... I, typename Tuple>
 		simple_usertype_metatable(usertype_detail::verified_tag, std::index_sequence<I...>, lua_State* L, Tuple&& args)
 			: callconstructfunc(lua_nil),
-			indexfunc(&usertype_detail::indexing_fail<T, true>), newindexfunc(&usertype_detail::metatable_newindex<T, true>),
-			indexbase(&usertype_detail::simple_core_indexing_call<true>), newindexbase(&usertype_detail::simple_core_indexing_call<false>),
+			indexfunc(lua_nil), newindexfunc(lua_nil),
+			indexbase(&usertype_detail::simple_core_indexing_call<T, true>), newindexbase(&usertype_detail::simple_core_indexing_call<T, false>),
 			indexbaseclasspropogation(usertype_detail::walk_all_bases<true>), newindexbaseclasspropogation(&usertype_detail::walk_all_bases<false>),
 			baseclasscheck(nullptr), baseclasscast(nullptr),
 			mustindex(false), secondarymeta(false) {
@@ -11642,6 +11748,7 @@ namespace sol {
 				const char* gcmetakey = &usertype_traits<T>::gc_table()[0];
 				stack::push<user<usertype_detail::simple_map>>(L, metatable_key, uniquegcmetakey, &usertype_traits<T>::metatable()[0], 
 					umx.indexbaseclasspropogation, umx.newindexbaseclasspropogation, 
+					std::move(umx.indexfunc), std::move(umx.newindexfunc),
 					std::move(umx.varmap), std::move(umx.registrations)
 				);
 				stack_reference stackvarmap(L, -1);
@@ -11654,7 +11761,11 @@ namespace sol {
 			}
 
 			static int push(lua_State* L, umt_t&& umx) {
+				bool hasindex = umx.indexfunc.valid();
+				bool hasnewindex = umx.newindexfunc.valid();
 				auto& varmap = make_cleanup(L, umx);
+				auto sic = hasindex ? &usertype_detail::simple_index_call<T, true> : &usertype_detail::simple_index_call<T, false>;
+				auto snic = hasnewindex ? &usertype_detail::simple_new_index_call<T, true> : &usertype_detail::simple_new_index_call<T, false>;
 				bool hasequals = false;
 				bool hasless = false;
 				bool haslessequals = false;
@@ -11669,10 +11780,10 @@ namespace sol {
 						haslessequals = true;
 					}
 					else if (first == to_string(meta_function::index)) {
-						umx.indexfunc = second.template as<lua_CFunction>();
+						umx.indexfunc = second;
 					}
 					else if (first == to_string(meta_function::new_index)) {
-						umx.newindexfunc = second.template as<lua_CFunction>();
+						umx.newindexfunc = second;
 					}
 					switch (i) {
 					case 0:
@@ -11693,7 +11804,6 @@ namespace sol {
 					stack::set_field(L, first, second, t.stack_index());
 				};
 				for (std::size_t i = 0; i < 3; ++i) {
-					// Pointer types, AKA "references" from C++
 					const char* metakey = nullptr;
 					switch (i) {
 					case 0:
@@ -11746,16 +11856,14 @@ namespace sol {
 					if (umx.mustindex) {
 						// use indexing function
 						stack::set_field(L, meta_function::index,
-							make_closure(&usertype_detail::simple_index_call,
-								make_light(varmap),
-								umx.indexfunc,
-								umx.newindexfunc
+							make_closure(sic,
+								nullptr,
+								make_light(varmap)
 							), t.stack_index());
 						stack::set_field(L, meta_function::new_index,
-							make_closure(&usertype_detail::simple_new_index_call,
-								make_light(varmap),
-								umx.indexfunc,
-								umx.newindexfunc
+							make_closure(snic,
+								nullptr,
+								make_light(varmap)
 							), t.stack_index());
 					}
 					else {
@@ -11771,16 +11879,14 @@ namespace sol {
 					}
 					if (umx.secondarymeta) {
 						stack::set_field(L, meta_function::index, 
-							make_closure(&usertype_detail::simple_index_call,
-								make_light(varmap),
-								umx.indexfunc,
-								umx.newindexfunc
+							make_closure(sic,
+								nullptr,
+								make_light(varmap)
 							), metabehind.stack_index());
 						stack::set_field(L, meta_function::new_index, 
-							make_closure(&usertype_detail::simple_new_index_call,
-								make_light(varmap),
-								umx.indexfunc,
-								umx.newindexfunc
+							make_closure(snic,
+								nullptr,
+								make_light(varmap)
 							), metabehind.stack_index());
 					}
 					stack::set_field(L, metatable_key, metabehind, t.stack_index());
@@ -11805,17 +11911,19 @@ namespace sol {
 					}
 					// use indexing function
 					stack::set_field(L, meta_function::index,
-						make_closure(&usertype_detail::simple_index_call,
+						make_closure(sic,
+							nullptr,
 							make_light(varmap),
-							umx.indexfunc,
-							umx.newindexfunc,
+							nullptr,
+							nullptr,
 							usertype_detail::toplevel_magic
 						), metabehind.stack_index());
 					stack::set_field(L, meta_function::new_index,
-						make_closure(&usertype_detail::simple_new_index_call,
+						make_closure(snic,
+							nullptr,
 							make_light(varmap),
-							umx.indexfunc,
-							umx.newindexfunc,
+							nullptr,
+							nullptr,
 							usertype_detail::toplevel_magic
 						), metabehind.stack_index());
 					stack::set_field(L, metatable_key, metabehind, t.stack_index());

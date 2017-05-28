@@ -57,7 +57,8 @@ int main() {
 	// Mix it all together!
 	lua.script(R"(
 mdata = my_data.new()
-
+)");
+	lua.script(R"(
 local g = generator.new()
 g.data = mdata.first
 list1 = g:generate_list()
@@ -65,7 +66,8 @@ g.data = mdata.second
 list2 = g:generate_list()
 g.data = mdata.third
 list3 = g:generate_list()
-
+)");
+	lua.script(R"(
 print("From lua: ")
 for i = 1, #list1 do
 	print("\tlist1[" .. i .. "] = " .. list1[i])
