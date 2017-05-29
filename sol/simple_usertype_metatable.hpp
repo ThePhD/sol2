@@ -59,7 +59,9 @@ namespace sol {
 						return call_indexing_object(L, indexingfunc);
 					}
 					else {
-						return usertype_detail::indexing_fail<T, is_index>(L);
+						return is_index
+							? indexing_fail<T, is_index>(L)
+							: metatable_newindex<T, true>(L);
 					}
 				}
 			}
@@ -80,7 +82,7 @@ namespace sol {
 					return stack::push(L, func);
 				}
 				else {
-					if (has_indexing) {
+					if (has_indexing && !is_toplevel(L)) {
 						object& indexingfunc = is_index
 							? sm.index
 							: sm.newindex;
@@ -88,8 +90,8 @@ namespace sol {
 					}
 					else {
 						return is_index 
-							? usertype_detail::indexing_fail<T, is_index>(L)
-							: usertype_detail::metatable_newindex<T, true>(L);
+							? indexing_fail<T, is_index>(L)
+							: metatable_newindex<T, true>(L);
 					}
 				}
 			}
@@ -120,14 +122,16 @@ namespace sol {
 				return ret;
 			}
 			if (toplevel) {
-				if (has_indexing) {
+				if (has_indexing && !is_toplevel(L)) {
 					object& indexingfunc = is_index
 						? sm.index
 						: sm.newindex;
 					return call_indexing_object(L, indexingfunc);
 				}
 				else {
-					return usertype_detail::metatable_newindex<T, true>(L);
+					return is_index
+						? indexing_fail<T, is_index>(L)
+						: metatable_newindex<T, true>(L);
 				}
 			}
 			return -1;
@@ -145,12 +149,20 @@ namespace sol {
 
 		template <typename T, bool has_indexing = false>
 		inline int simple_index_call(lua_State* L) {
+#if !defined(__clang__)
+			return detail::trampoline(L, &simple_real_index_call<T, has_indexing>);
+#else
 			return detail::static_trampoline<(&simple_real_index_call<T, has_indexing>)>(L);
+#endif
 		}
 
 		template <typename T, bool has_indexing = false>
 		inline int simple_new_index_call(lua_State* L) {
+#if !defined(__clang__)
+			return detail::trampoline(L, &simple_real_new_index_call<T, has_indexing>);
+#else
 			return detail::static_trampoline<(&simple_real_new_index_call<T, has_indexing>)>(L);
+#endif
 		}
 	}
 

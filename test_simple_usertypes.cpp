@@ -893,22 +893,52 @@ TEST_CASE("simple_usertype/indexing", "make sure simple usertypes can be indexed
 			REQUIRE(name == "unknown");
 			val = n.as<int>();
 		}
+
+		int hi() {
+			std::cout << "hi" << std::endl;
+			return 25;
+		}
 	};
 
-	sol::state lua;
-	lua.open_libraries(sol::lib::base);
-	lua.new_simple_usertype<indexing_test>("test",
-		sol::meta_function::index, &indexing_test::getter,
-		sol::meta_function::new_index, &indexing_test::setter
-	);
+	SECTION("no-runtime-additions") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+		lua.new_simple_usertype<indexing_test>("test",
+			sol::meta_function::index, &indexing_test::getter,
+			sol::meta_function::new_index, &indexing_test::setter
+			);
 
-	lua.script(R"(	
+		lua.script(R"(	
 		local t = test.new()
 		v = t.a;
 		print(v)
 		t.unknown = 50;
-	)");
-	int v = lua["v"];
-	REQUIRE(v == 2);
-	REQUIRE(val == 50);
+		)");
+		int v = lua["v"];
+		REQUIRE(v == 2);
+		REQUIRE(val == 50);
+	}
+	SECTION("runtime-additions") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+		lua.new_simple_usertype<indexing_test>("test",
+			sol::meta_function::index, &indexing_test::getter,
+			sol::meta_function::new_index, &indexing_test::setter
+			);
+
+		lua["test"]["hi"] = [](indexing_test& _self) -> int { return _self.hi(); };
+
+		lua.script(R"(	
+		local t = test.new()
+		v = t.a;
+		print(v)
+		t.unknown = 50
+		u = t:hi()
+		)");
+		int v = lua["v"];
+		int u = lua["u"];
+		REQUIRE(v == 2);
+		REQUIRE(u == 25);
+		REQUIRE(val == 50);
+	}
 }

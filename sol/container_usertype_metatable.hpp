@@ -115,6 +115,14 @@ namespace sol {
 		typedef typename KV::first_type K;
 		typedef typename KV::second_type V;
 		typedef std::remove_reference_t<decltype(*std::declval<I&>())> IR;
+		typedef typename meta::iterator_tag<I>::type tag_t;
+		typedef std::conditional_t<std::is_same<tag_t, std::input_iterator_tag>::value, 
+			V, 
+			std::conditional_t<is_associative::value,
+				V,
+				decltype(*std::declval<I&>())
+			>
+		> push_type;
 
 		struct iter {
 			T& source;
@@ -143,7 +151,7 @@ namespace sol {
 				auto it = detail::find(src, *k);
 				if (it != end(src)) {
 					auto& v = *it;
-					return stack::push_reference(L, v.second);
+					return stack::stack_detail::push_reference<push_type>(L, v.second);
 				}
 			}
 			else {
@@ -179,7 +187,7 @@ namespace sol {
 				}
 				--k;
 				std::advance(it, k);
-				return stack::push_reference(L, *it);
+				return stack::stack_detail::push_reference<push_type>(L, *it);
 			}
 			else {
 				auto maybename = stack::check_get<string_detail::string_shim>(L, 2);
@@ -267,7 +275,9 @@ namespace sol {
 			if (it == end(source)) {
 				return 0;
 			}
-			int p = stack::multi_push_reference(L, it->first, it->second);
+			int p;
+			p = stack::push_reference(L, it->first);
+			p += stack::stack_detail::push_reference<push_type>(L, it->second);
 			std::advance(it, 1);
 			return p;
 		}
@@ -290,7 +300,9 @@ namespace sol {
 			if (it == end(source)) {
 				return 0;
 			}
-			int p = stack::multi_push_reference(L, k + 1, *it);
+			int p;
+			p = stack::push_reference(L, k + 1);
+			p += stack::stack_detail::push_reference<push_type>(L, *it);
 			std::advance(it, 1);
 			return p;
 		}
@@ -414,7 +426,7 @@ namespace sol {
 				auto it = src.find(*k);
 				if (it != src.end()) {
 					auto& v = *it;
-					return stack::push_reference(L, v);
+					return stack::stack_detail::push_reference<push_type>(L, v);
 				}
 			}
 			return stack::push(L, lua_nil);

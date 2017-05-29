@@ -621,3 +621,97 @@ TEST_CASE("containers/non_copyable", "make sure non-copyable types in containers
 		}());
 	}
 }
+
+
+TEST_CASE("containers/input_iterators", "test shitty input iterators that are all kinds of B L E H") {
+	class int_shim {
+	public:
+		int_shim() = default;
+
+		int_shim(int x) : x_(x) {}
+
+		int val() const { return x_; }
+
+	private:
+		int x_ = -1;
+	};
+
+	class input_it : public std::iterator<std::input_iterator_tag, int_shim> {
+	public:
+		input_it() = default;
+
+		input_it(int n, int m) : n_(n), m_(m), value_(n_) {
+			assert(n_ >= 0);
+			assert(m_ >= 0);
+			assert(n_ <= m_);
+
+			if (!n_ && !m_) {
+				n_ = -1;
+				m_ = -1;
+				value_ = -1;
+			}
+		}
+
+		const int_shim &operator*() const { return value_; }
+
+		const int_shim *operator->() const { return &value_; }
+
+		input_it &operator++() {
+			assert(n_ >= 0);
+			assert(m_ >= 0);
+			if (n_ == m_ - 1) {
+				n_ = m_ = -1;
+			}
+			else {
+				++n_;
+			}
+			value_ = n_;
+			return *this;
+		}
+
+		bool operator==(const input_it &i) const { return n_ == i.n_ && m_ == i.m_; }
+
+		bool operator!=(const input_it &i) const { return !(*this == i); }
+
+	private:
+		int n_ = -1;
+		int m_ = -1;
+		int_shim value_;
+	};
+
+	class not_really_a_container {
+	public:
+		using value_type = int_shim;
+		using iterator = input_it;
+		using const_iterator = input_it;
+
+		const_iterator begin() const { return iterator(0, 100); }
+
+		const_iterator end() const { return iterator(); }
+
+		std::size_t size() const { return 100; }
+	};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::package);
+	lua.new_usertype<int_shim>("int_shim", 
+		"new", sol::no_constructor, 
+		"val", &int_shim::val);
+
+	not_really_a_container c;
+	lua["c"] = &c;
+#if SOL_LUA_VERSION > 503
+	lua.script(R"lua(
+for k, v in pairs(c) do
+  assert((k - 1) == v:val())
+end
+)lua");
+#else
+	lua.script(R"lua(
+for k=1,#c do
+  v = c[k]
+  assert((k - 1) == v:val())
+end
+)lua");
+#endif
+}
