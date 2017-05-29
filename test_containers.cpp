@@ -689,6 +689,14 @@ TEST_CASE("containers/input_iterators", "test shitty input iterators that are al
 
 		const_iterator end() const { return iterator(); }
 
+		value_type fuck_off_gcc_warning() {
+			// "typedef not used locally"
+			// but it's used elsewhere in the code GCC
+			// so maybe your shitty warning should go
+			// fuck itself???
+			return int_shim();
+		}
+
 		std::size_t size() const { return 100; }
 	};
 

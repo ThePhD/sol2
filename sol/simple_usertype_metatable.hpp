@@ -149,7 +149,7 @@ namespace sol {
 
 		template <typename T, bool has_indexing = false>
 		inline int simple_index_call(lua_State* L) {
-#if !defined(__clang__)
+#if defined(__clang__)
 			return detail::trampoline(L, &simple_real_index_call<T, has_indexing>);
 #else
 			return detail::static_trampoline<(&simple_real_index_call<T, has_indexing>)>(L);
@@ -158,7 +158,7 @@ namespace sol {
 
 		template <typename T, bool has_indexing = false>
 		inline int simple_new_index_call(lua_State* L) {
-#if !defined(__clang__)
+#if defined(__clang__)
 			return detail::trampoline(L, &simple_real_new_index_call<T, has_indexing>);
 #else
 			return detail::static_trampoline<(&simple_real_new_index_call<T, has_indexing>)>(L);

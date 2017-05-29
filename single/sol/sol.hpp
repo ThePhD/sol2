@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-05-29 14:30:33.148325 UTC
-// This header was generated with sol v2.17.4 (revision c6d11a2)
+// Generated 2017-05-29 17:06:19.842907 UTC
+// This header was generated with sol v2.17.4 (revision fd8e2df)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -11652,7 +11652,7 @@ namespace sol {
 
 		template <typename T, bool has_indexing = false>
 		inline int simple_index_call(lua_State* L) {
-#if !defined(__clang__)
+#if defined(__clang__)
 			return detail::trampoline(L, &simple_real_index_call<T, has_indexing>);
 #else
 			return detail::static_trampoline<(&simple_real_index_call<T, has_indexing>)>(L);
@@ -11661,7 +11661,7 @@ namespace sol {
 
 		template <typename T, bool has_indexing = false>
 		inline int simple_new_index_call(lua_State* L) {
-#if !defined(__clang__)
+#if defined(__clang__)
 			return detail::trampoline(L, &simple_real_new_index_call<T, has_indexing>);
 #else
 			return detail::static_trampoline<(&simple_real_new_index_call<T, has_indexing>)>(L);
