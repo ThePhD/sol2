@@ -28,9 +28,13 @@ The examples folder also has a number of really great examples for you to see. T
 	- This means retrieval of class types (not primitive types like strings or integers) by ``T&`` or ``T*`` allow you to modify the data in Lua directly.
 	- Retrieve a plain ``T`` to get a copy
 	- Return types and passing arguments to ``sol::function``-types use perfect forwarding and reference semantics, which means no copies happen unless you specify a value explicitly. See :ref:`this note for details<function-argument-handling>`.
+*  You can set ``index`` and ``new_index`` freely on any usertype you like to override the default "if a key is missing, find it / set it here" functionality of a specific object of a usertype.
+	- new_index and index will not be called if you try to manipulate the named usertype table directly. sol2's will be called to add that function to the usertype's function/variable lookup table.
+	- new_index and index will be called if you attempt to call a key that does not exist on an actual userdata object (the C++ object) itself.
+	- If you made a usertype named ``test``, this means ``t = test()``, with ``t.hi = 54`` will call your function, but ``test.hi = function () print ("hi");`` will instead the key ``hi`` to to that function for all ``test`` types
 * The first ``sizeof( void* )`` bytes is always a pointer to the typed C++ memory. What comes after is based on what you've pushed into the system according to :doc:`the memory specification for usertypes<api/usertype_memory>`. This is compatible with a number of systems other than just sol2, making it easy to interop with select other Lua systems.
 * Member methods, properties, variables and functions taking ``self&`` arguments modify data directly
-	- Work on a copy by taking or returning a copy by value.
+	- Work on a copy by taking arguments or returning by value. Do not use r-value references: they do not mean anything in Lua code.
 * The actual metatable associated with the usertype has a long name and is defined to be opaque by the Sol implementation.
 * The actual metatable inner workings is opaque and defined by the Sol implementation, and there are no internal docs because optimizations on the operations are applied based on heuristics we discover from performance testing the system.
 * Containers get pushed as special usertypes, but can be disabled if problems arise as detailed :doc:`here<api/containers>`.
