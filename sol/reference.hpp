@@ -224,6 +224,10 @@ namespace sol {
 		return lua_compare(l.lua_state(), -1, -2, LUA_OPEQ) == 1;
 	}
 
+	inline bool operator< (const reference& l, const reference& r) {
+		return !(l == r);
+	}
+
 	inline bool operator!= (const reference& l, const reference& r) {
 		return !operator==(l, r);
 	}
