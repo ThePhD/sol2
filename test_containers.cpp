@@ -305,12 +305,15 @@ end
 
 	// Set a global variable called 
 	// "arr" to be a vector of 5 lements
+	lua["c_arr"] = std::array<int, 5>{ { 2, 4, 6, 8, 10 } };
 	lua["arr"] = std::vector<int>{ 2, 4, 6, 8, 10 };
 	lua["map"] = std::map<int, int>{ { 1 , 2 },{ 2, 4 },{ 3, 6 },{ 4, 8 },{ 5, 10 } };
 	lua["set"] = std::set<int>{ 2, 4, 6, 8, 10 };
+	std::array<int, 5>& c_arr = lua["c_arr"];
 	std::vector<int>& arr = lua["arr"];
 	std::map<int, int>& map = lua["map"];
 	std::set<int>& set = lua["set"];
+	REQUIRE(c_arr.size() == 5);
 	REQUIRE(arr.size() == 5);
 	REQUIRE(map.size() == 5);
 	REQUIRE(set.size() == 5);
@@ -342,6 +345,32 @@ end
 	REQUIRE(arr.empty());
 	REQUIRE(map.empty());
 	REQUIRE(set.empty());
+
+	REQUIRE_NOTHROW([&]() {
+		lua.script(R"(
+c_arr[1] = 7
+c_arr[2] = 7
+c_arr[3] = 7
+)");
+	}());
+	SECTION("throw test") {
+		sol::state tlua;
+		tlua["c_arr"] = std::array<int, 5>{ { 2, 4, 6, 8, 10 } };
+		REQUIRE_THROWS([&]() {
+			tlua.script(R"(
+c_arr[0] = 7
+)");
+		}());
+	}
+	SECTION("throw test 2") {
+		sol::state tlua;
+		tlua["c_arr"] = std::array<int, 5>{ { 2, 4, 6, 8, 10 } };
+		REQUIRE_THROWS([&]() {
+			tlua.script(R"(
+c_arr[-1] = 7
+)");
+		}());
+	}
 }
 
 TEST_CASE("containers/usertype-transparency", "Make sure containers pass their arguments through transparently and push the results as references, not new values") {

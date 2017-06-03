@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-05-29 17:06:19.842907 UTC
-// This header was generated with sol v2.17.4 (revision fd8e2df)
+// Generated 2017-06-03 10:24:17.749249 UTC
+// This header was generated with sol v2.17.4 (revision 7168c31)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -12291,39 +12291,55 @@ namespace sol {
 
 		static int real_new_index_call_const(std::true_type, std::true_type, lua_State* L) {
 			auto& src = get_src(L);
-			auto k = stack::check_get<K>(L, 2);
-			if (k) {
-				using std::end;
-				auto it = detail::find(src, *k);
-				if (it != end(src)) {
-					auto& v = *it;
-					v.second = stack::get<V>(L, 3);
-				}
-				else {
-					src.insert(it, { std::move(*k), stack::get<V>(L, 3) });
-				}
+#ifdef SOL_CHECK_ARGUMENTS
+			auto maybek = stack::check_get<K>(L, 2);
+			if (!maybek) {
+				return luaL_error(L, "sol: improper key of type %s to a %s", lua_typename(L, static_cast<int>(type_of(L, 2))), detail::demangle<T>().c_str());
+			}
+			K& k = *maybek;
+#else
+			K k = stack::get<K>(L, 2);
+#endif
+			using std::end;
+			auto it = detail::find(src, k);
+			if (it != end(src)) {
+				auto& v = *it;
+				v.second = stack::get<V>(L, 3);
+			}
+			else {
+				src.insert(it, { std::move(k), stack::get<V>(L, 3) });
 			}
 			return 0;
 		}
 
 		static int real_new_index_call_const(std::true_type, std::false_type, lua_State* L) {
 			auto& src = get_src(L);
-#ifdef SOL_SAFE_USERTYPE
+#ifdef SOL_CHECK_ARGUMENTS
 			auto maybek = stack::check_get<K>(L, 2);
 			if (!maybek) {
-				return 0;
+				return luaL_error(L, "sol: improper index of type %s to a %s", lua_typename(L, static_cast<int>(type_of(L, 2))), detail::demangle<T>().c_str());
 			}
-			K k = *maybek;
+			K& k = *maybek;
 #else
 			K k = stack::get<K>(L, 2);
 #endif
 			using std::begin;
 			auto it = begin(src);
+#ifdef SOL_CHECK_ARGUMENTS
+			if (k < 1) {
+				return luaL_error(L, "sol: out of bounds index to a %s", detail::demangle<T>().c_str());
+			}
+#endif
 			--k;
 			if (k == src.size()) {
 				real_add_call_push(std::integral_constant<bool, detail::has_push_back<T>::value && std::is_copy_constructible<V>::value>(), L, src, 1);
 				return 0;
 			}
+#ifdef SOL_CHECK_ARGUMENTS
+			if (k > src.size()) {
+				return luaL_error(L, "sol: out of bounds index to a %s", detail::demangle<T>().c_str());
+			}
+#endif
 			std::advance(it, k);
 			*it = stack::get<V>(L, 3);
 			return 0;
