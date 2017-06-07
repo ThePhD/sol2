@@ -56,9 +56,9 @@ args = parser.parse_args()
 # general variables
 include = [ '.', './include' ]
 depends = [os.path.join('Catch', 'include')]
-cxxflags = [ '-Wno-unknown-warning', '-Wall', '-Wextra', '-Wpedantic', '-pedantic', '-pedantic-errors', '-Wno-noexcept-type', '-std=c++14', '-ftemplate-depth=1024' ]
+cxxflags = [ '-Wno-unknown-warning', '-Wno-unknown-warning-option', '-Wall', '-Wextra', '-Wpedantic', '-pedantic', '-pedantic-errors', '-Wno-noexcept-type', '-std=c++14', '-ftemplate-depth=1024' ]
 cxxflags.extend([p for p in re.split("( |\\\".*?\\\"|'.*?')", args.cxx_flags) if p.strip()])
-example_cxxflags = [ '-Wall', '-Wextra', '-Wpedantic', '-pedantic', '-pedantic-errors', '-Wno-noexcept-type', '-std=c++14', '-ftemplate-depth=1024' ]
+example_cxxflags = [ '-Wno-unknown-warning', '-Wno-unknown-warning-option', '-Wall', '-Wextra', '-Wpedantic', '-pedantic', '-pedantic-errors', '-Wno-noexcept-type', '-std=c++14', '-ftemplate-depth=1024' ]
 example_cxxflags.extend([p for p in re.split("( |\\\".*?\\\"|'.*?')", args.cxx_flags) if p.strip()])
 ldflags = []
 script_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
