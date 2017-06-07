@@ -28,7 +28,7 @@ MinGW's GCC version 7.x of the compiler fixes a long-standing derp in the <codec
 
 Clang 3.4, 3.5 and 3.6 have many bugs we have run into when developing sol2 and that have negatively impacted users for a long time now.
 
-We encourage all users to upgrade immediately. If you need old code, use sol2 release v2.17.5: otherwise, always grab sol2's latest.
+We encourage all users to upgrade immediately. If you need old code, use `sol2 release v2.17.5`_: otherwise, always grab sol2's latest.
 
 
 binary sizes
@@ -57,3 +57,5 @@ The next step for Sol from a developer standpoint is to formally make the librar
 
 Hopefully, as things progress, we move things forward.
 
+
+.. _sol2 release v2.17.5: https://github.com/ThePhD/sol2/releases/tag/v2.17.5
