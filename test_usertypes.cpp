@@ -6,7 +6,15 @@
 #include <iostream>
 #include <list>
 #include <memory>
-#include <mutex>
+
+
+struct non_copyable {
+	non_copyable() = default;
+	non_copyable(const non_copyable&) = delete;
+	non_copyable& operator=(const non_copyable&) = delete;
+	non_copyable(non_copyable&&) = default;
+	non_copyable& operator=(non_copyable&&) = default;
+};
 
 struct vars {
 	vars() {
@@ -1188,7 +1196,7 @@ TEST_CASE("usertype/copyability", "make sure user can write to a class variable 
 		void set(int val) { _you_can_copy_me = val; }
 
 		int _you_can_copy_me;
-		std::mutex _haha_you_cant_copy_me;
+		non_copyable _haha_you_cant_copy_me;
 	};
 
 	sol::state lua;

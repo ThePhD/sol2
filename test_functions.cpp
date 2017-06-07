@@ -240,7 +240,7 @@ nested = { variables = { no = { problem = 10 } } } )");
 	REQUIRE(cd == cddesired);
 
 	ab = cpp_bark(std::make_pair(lua_variable_x, cpp_variable_y));
-	cd = lua_bark(std::make_pair(lua["nested"]["variables"]["no"]["problem"], cpp_variable_y));
+	cd = static_cast<std::pair<int, int>>(lua_bark(std::make_pair(lua["nested"]["variables"]["no"]["problem"], cpp_variable_y)));
 
 	REQUIRE(ab == abdesired);
 	REQUIRE(cd == cddesired);

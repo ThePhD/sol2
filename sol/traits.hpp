@@ -319,6 +319,12 @@ namespace sol {
 		using is_string_constructible = any<std::is_same<unqualified_t<T>, const char*>, std::is_same<unqualified_t<T>, char>, std::is_same<unqualified_t<T>, std::string>, std::is_same<unqualified_t<T>, std::initializer_list<char>>>;
 
 		template <typename T>
+		struct is_pair : std::false_type {};
+
+		template <typename T1, typename T2>
+		struct is_pair<std::pair<T1, T2>> : std::true_type {};
+
+		template <typename T>
 		using is_c_str = any<
 			std::is_same<std::decay_t<unqualified_t<T>>, const char*>,
 			std::is_same<std::decay_t<unqualified_t<T>>, char*>,
