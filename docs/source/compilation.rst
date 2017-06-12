@@ -30,6 +30,17 @@ Clang 3.4, 3.5 and 3.6 have many bugs we have run into when developing sol2 and 
 
 We encourage all users to upgrade immediately. If you need old code, use `sol2 release v2.17.5`_: otherwise, always grab sol2's latest.
 
+"compiler out of heap space"
+----------------------------
+
+Typical of Visual Studio, the compiler will complain that it is out of heap space because Visual Studio defaults to using the x86 (32-bit) version of itself (it will still compile x86 or x64 or ARM binaries, just the compiler **itself** is a 32-bit executable). In order to get around heap space requirements, add the following statement in your ``.vcoxproj`` files under the ``<Import .../>`` statement, as instructed by `OrfeasZ in this issue`_::
+
+	<PropertyGroup>
+		<PreferredToolArchitecture>x64</PreferredToolArchitecture>
+	</PropertyGroup>
+
+
+This should use the 64-bit tools by default, and increase your maximum heap space to whatever a 64-bit windows machine can handle.
 
 binary sizes
 ------------
@@ -59,3 +70,4 @@ Hopefully, as things progress, we move things forward.
 
 
 .. _sol2 release v2.17.5: https://github.com/ThePhD/sol2/releases/tag/v2.17.5
+.. _OrfeasZ in this issue: https://github.com/ThePhD/sol2/issues/329#issuecomment-276824983
