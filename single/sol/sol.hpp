@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-06-07 16:52:57.840137 UTC
-// This header was generated with sol v2.17.5 (revision 02110a5)
+// Generated 2017-06-12 14:43:06.223161 UTC
+// This header was generated with sol v2.17.5 (revision 50935ae)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -7110,7 +7110,7 @@ namespace sol {
 
 #if SOL_LUA_VERSION >= 503
 		template <typename T>
-		struct field_getter<T, false, false, std::enable_if_t<std::is_integral<T>::value>> {
+		struct field_getter<T, false, false, std::enable_if_t<std::is_integral<T>::value && !std::is_same<bool, T>::value>> {
 			template <typename Key>
 			void get(lua_State* L, Key&& key, int tableindex = -1) {
 				lua_geti(L, tableindex, static_cast<lua_Integer>(key));
@@ -7128,7 +7128,7 @@ namespace sol {
 #endif // Lua 5.3.x
 
 		template <typename T>
-		struct field_getter<T, false, true, std::enable_if_t<std::is_integral<T>::value>> {
+		struct field_getter<T, false, true, std::enable_if_t<std::is_integral<T>::value && !std::is_same<bool, T>::value>> {
 			template <typename Key>
 			void get(lua_State* L, Key&& key, int tableindex = -1) {
 				lua_rawgeti(L, tableindex, static_cast<lua_Integer>(key));
@@ -7227,7 +7227,7 @@ namespace sol {
 
 #if SOL_LUA_VERSION >= 503
 		template <typename T>
-		struct field_setter<T, false, false, std::enable_if_t<std::is_integral<T>::value>> {
+		struct field_setter<T, false, false, std::enable_if_t<std::is_integral<T>::value && !std::is_same<bool, T>::value>> {
 			template <typename Key, typename Value>
 			void set(lua_State* L, Key&& key, Value&& value, int tableindex = -2) {
 				push(L, std::forward<Value>(value));
@@ -7237,7 +7237,7 @@ namespace sol {
 #endif // Lua 5.3.x
 
 		template <typename T>
-		struct field_setter<T, false, true, std::enable_if_t<std::is_integral<T>::value>> {
+		struct field_setter<T, false, true, std::enable_if_t<std::is_integral<T>::value && !std::is_same<bool, T>::value>> {
 			template <typename Key, typename Value>
 			void set(lua_State* L, Key&& key, Value&& value, int tableindex = -2) {
 				push(L, std::forward<Value>(value));
