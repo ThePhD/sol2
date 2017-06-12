@@ -563,5 +563,12 @@ print(tbl[1])
 	int v1 = tbl[true];
 	int v2 = tbl[1];
 	REQUIRE(v1 == 10);
-	REQUIRE(v2 == 10);
+	REQUIRE(v2 == 20);
+
+	tbl[true] = 30;
+	tbl[1] = 40;
+	v1 = tbl[true];
+	v2 = tbl[1];
+	REQUIRE(v1 == 30);
+	REQUIRE(v2 == 40);
 }
