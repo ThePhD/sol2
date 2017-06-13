@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-06-12 14:43:06.223161 UTC
-// This header was generated with sol v2.17.5 (revision 50935ae)
+// Generated 2017-06-13 20:34:08.313723 UTC
+// This header was generated with sol v2.17.5 (revision 51a03b2)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5482,11 +5482,26 @@ namespace sol {
 			}
 		};
 
-		template<typename T>
-		struct checker<T, type::userdata, std::enable_if_t<is_unique_usertype<T>::value>> {
+		template<typename X>
+		struct checker<X, type::userdata, std::enable_if_t<is_unique_usertype<X>::value>> {
+			typedef typename unique_usertype_traits<X>::type T;
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
-				return checker<typename unique_usertype_traits<T>::type, type::userdata>{}.check(L, index, std::forward<Handler>(handler), tracking);
+				const type indextype = type_of(L, index);
+				tracking.use(1);
+				if (indextype != type::userdata) {
+					handler(L, index, type::userdata, indextype);
+					return false;
+				}
+				if (lua_getmetatable(L, index) == 0) {
+					return true;
+				}
+				int metatableindex = lua_gettop(L);
+				if (stack_detail::check_metatable<detail::unique_usertype<T>>(L, metatableindex))
+					return true;
+				lua_pop(L, 1);
+				handler(L, index, type::userdata, indextype);
+				return false;
 			}
 		};
 
@@ -8213,7 +8228,7 @@ namespace sol {
 
 			template <typename Fx, typename... Fxs, std::size_t I, std::size_t... In, std::size_t... M, typename Match, typename... Args>
 			inline int overload_match_arity(types<Fx, Fxs...>, std::index_sequence<I, In...>, std::index_sequence<M...>, Match&& matchfx, lua_State* L, int fxarity, int start, Args&&... args) {
-				typedef lua_bind_traits<meta::unqualified_t<Fx>> traits;
+				typedef lua_bind_traits<meta::unwrap_unqualified_t<Fx>> traits;
 				typedef meta::tuple_types<typename traits::return_type> return_types;
 				typedef typename traits::free_args_list args_list;
 				// compile-time eliminate any functions that we know ahead of time are of improper arity
@@ -8237,7 +8252,7 @@ namespace sol {
 
 			template <typename Fx, std::size_t I, std::size_t... M, typename Match, typename... Args>
 			inline int overload_match_arity_single(types<Fx>, std::index_sequence<I>, std::index_sequence<M...>, Match&& matchfx, lua_State* L, int fxarity, int start, Args&&... args) {
-				typedef lua_bind_traits<meta::unqualified_t<Fx>> traits;
+				typedef lua_bind_traits<meta::unwrap_unqualified_t<Fx>> traits;
 				typedef meta::tuple_types<typename traits::return_type> return_types;
 				typedef typename traits::free_args_list args_list;
 				// compile-time eliminate any functions that we know ahead of time are of improper arity
@@ -8252,7 +8267,7 @@ namespace sol {
 
 			template <typename Fx, typename Fx1, typename... Fxs, std::size_t I, std::size_t I1, std::size_t... In, std::size_t... M, typename Match, typename... Args>
 			inline int overload_match_arity_single(types<Fx, Fx1, Fxs...>, std::index_sequence<I, I1, In...>, std::index_sequence<M...>, Match&& matchfx, lua_State* L, int fxarity, int start, Args&&... args) {
-				typedef lua_bind_traits<meta::unqualified_t<Fx>> traits;
+				typedef lua_bind_traits<meta::unwrap_unqualified_t<Fx>> traits;
 				typedef meta::tuple_types<typename traits::return_type> return_types;
 				typedef typename traits::free_args_list args_list;
 				// compile-time eliminate any functions that we know ahead of time are of improper arity
@@ -8397,6 +8412,13 @@ namespace sol {
 			static int call(lua_State*, const bases<Args...>&) {
 				// Uh. How did you even call this, lul
 				return 0;
+			}
+		};
+
+		template <typename T, bool is_index, bool is_variable, bool checked, int boost, typename C>
+		struct agnostic_lua_call_wrapper<std::reference_wrapper<T>, is_index, is_variable, checked, boost, C> {
+			static int call(lua_State* L, std::reference_wrapper<T> f) {
+				return agnostic_lua_call_wrapper<T, is_index, is_variable, checked, boost>{}.call(L, f.get());
 			}
 		};
 

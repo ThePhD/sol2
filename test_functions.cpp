@@ -1135,3 +1135,37 @@ TEST_CASE("functions/set_function-already-wrapped", "setting a function returned
 		REQUIRE_NOTHROW(lua.script("assert(test() == 5)"));
 	}
 }
+
+TEST_CASE("functions/unique-overloading", "make sure overloading can work with ptr vs. specifically asking for a unique usertype") {
+	sol::state lua;
+
+	struct test { int special_value = 17; };
+	auto print_up_test = [](std::unique_ptr<test>& x) {
+		REQUIRE(x->special_value == 17);
+	};
+
+	auto print_ptr_test = [](test* x) {
+		REQUIRE(x->special_value == 17);
+	};
+
+	lua.set_function("f", print_up_test);
+	lua.set_function("g", sol::overload(
+		std::ref(print_up_test),
+		print_ptr_test
+	));
+
+	lua["v1"] = std::make_unique<test>();
+	lua["v2"] = test{};
+	REQUIRE_NOTHROW([&]() {
+		lua.script("g(v1)");
+	}());
+	REQUIRE_NOTHROW([&]() {
+		lua.script("g(v2)");
+	}());
+	REQUIRE_NOTHROW([&]() {
+		lua.script("f(v1)");
+	}());
+	REQUIRE_THROWS([&]() {
+		lua.script("f(v2)");
+	}());
+}
