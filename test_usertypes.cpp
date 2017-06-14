@@ -265,6 +265,13 @@ struct matrix_xi {
 	}
 };
 
+struct type_without_unique_usertypes {};
+
+namespace sol{
+	template <> struct is_unique_usertype<std::unique_ptr<type_without_unique_usertypes>> : std::false_type {};
+	template <> struct is_unique_usertype<std::shared_ptr<type_without_unique_usertypes>> : std::false_type {};
+}
+
 TEST_CASE("usertype/usertype", "Show that we can create classes from usertype and use them") {
 	sol::state lua;
 
@@ -1808,4 +1815,10 @@ TEST_CASE("usertype/meta-key-retrievals", "allow for special meta keys (__index,
 		REQUIRE(keys[2] == "__index");
 		REQUIRE(keys[3] == "__call");
 	}
+}
+
+TEST_CASE("usertype/unique-shared-ptr-as-non-unique-usertype", "allow for unique_ptr and shared_ptr specializations to be usertypes when they opt out of unique_usertype handling") {
+	sol::state lua;
+	lua.new_usertype<std::unique_ptr<type_without_unique_usertypes>>("up_non_unique");
+	lua.new_usertype<std::shared_ptr<type_without_unique_usertypes>>("sp_non_unique");
 }
