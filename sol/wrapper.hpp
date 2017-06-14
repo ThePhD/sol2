@@ -233,6 +233,85 @@ namespace sol {
 
 	};
 
+#if __cpp_noexcept_function_type >= 201510L //noexcept has become a part of a function's type
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) noexcept> : public member_function_wrapper<R(O:: *)(Args...) noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) const noexcept> : public member_function_wrapper<R(O:: *)(Args...) const noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) const volatile noexcept> : public member_function_wrapper<R(O:: *)(Args...) const volatile noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) & noexcept> : public member_function_wrapper<R(O:: *)(Args...) & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) const & noexcept> : public member_function_wrapper<R(O:: *)(Args...) const & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) const volatile & noexcept> : public member_function_wrapper<R(O:: *)(Args...) const volatile & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args..., ...) & noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args..., ...) const & noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) const & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args..., ...) const volatile & noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) const volatile & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) && noexcept> : public member_function_wrapper<R(O:: *)(Args...) & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) const && noexcept> : public member_function_wrapper<R(O:: *)(Args...) const & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) const volatile && noexcept> : public member_function_wrapper<R(O:: *)(Args...) const volatile & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args..., ...) && noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args..., ...) const && noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) const & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args..., ...) const volatile && noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) const volatile & noexcept, R, O, Args...> {
+
+	};
+
+#endif//#if __cpp_noexcept_function_type >= 201510L //noexcept has become a part of a function's type
+
 } // sol
 
 #endif // SOL_WRAPPER_HPP
