@@ -99,6 +99,9 @@ struct fer {
 	}
 };
 
+inline void noexcept_function() noexcept {}
+struct type_with_noexcept_method{ void noexcept_method() noexcept {} };
+
 TEST_CASE("functions/tuple-returns", "Make sure tuple returns are ordered properly") {
 	sol::state lua;
 	lua.script("function f() return '3', 4 end");
@@ -1221,4 +1224,11 @@ TEST_CASE("functions/unique-overloading", "make sure overloading can work with p
 			lua.script("f(v4)");
 		}());
 	};
+}
+
+TEST_CASE("functions/noexcept", "allow noexcept free - and member functions in Lua") {
+	sol::state lua;
+
+	lua.set_function("noexcept_function", &noexcept_function);
+	lua.set_function("noexcept_member_function", &type_with_noexcept_method::noexcept_method);
 }
