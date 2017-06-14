@@ -413,7 +413,7 @@ namespace sol {
 					}
 					else {
 						Op op;
-						return stack::push(L, (detail::ptr(l) == detail::ptr(r)) || op(detail::deref(l), detail::deref(r)));
+						return stack::push(L, (detail::ptr(l) == detail::ptr(r)) || op(detail::deref<T>(l), detail::deref<T>(r)));
 					}
 				}
 			}
