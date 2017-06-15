@@ -567,7 +567,7 @@ namespace sol {
 			static Real& get(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
 				P** pref = static_cast<P**>(lua_touserdata(L, index));
-				detail::special_destruct_func* fx = static_cast<detail::special_destruct_func*>(static_cast<void*>(pref + 1));
+				detail::unique_destructor* fx = static_cast<detail::unique_destructor*>(static_cast<void*>(pref + 1));
 				Real* mem = static_cast<Real*>(static_cast<void*>(fx + 1));
 				return *mem;
 			}

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-06-13 20:34:08.313723 UTC
-// This header was generated with sol v2.17.5 (revision 51a03b2)
+// Generated 2017-06-15 05:24:30.745677 UTC
+// This header was generated with sol v2.17.5 (revision 0fb5333)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4447,23 +4447,24 @@ namespace sol {
 		template <typename T>
 		struct as_value_tag {};
 
-		using special_destruct_func = void(*)(void*);
-
-		template <typename T, typename Real>
-		inline void special_destruct(void* memory) {
-			T** pointerpointer = static_cast<T**>(memory);
-			special_destruct_func* dx = static_cast<special_destruct_func*>(static_cast<void*>(pointerpointer + 1));
-			Real* target = static_cast<Real*>(static_cast<void*>(dx + 1));
-			target->~Real();
-		}
+		using unique_destructor = void(*)(void*);
 
 		template <typename T>
 		inline int unique_destruct(lua_State* L) {
 			void* memory = lua_touserdata(L, 1);
 			T** pointerpointer = static_cast<T**>(memory);
-			special_destruct_func& dx = *static_cast<special_destruct_func*>(static_cast<void*>(pointerpointer + 1));
+			unique_destructor& dx = *static_cast<unique_destructor*>(static_cast<void*>(pointerpointer + 1));
 			(dx)(memory);
 			return 0;
+		}
+
+		template <typename T, typename Real>
+		inline void usertype_unique_alloc_destroy(void* memory) {
+			T** pointerpointer = static_cast<T**>(memory);
+			unique_destructor* dx = static_cast<unique_destructor*>(static_cast<void*>(pointerpointer + 1));
+			Real* target = static_cast<Real*>(static_cast<void*>(dx + 1));
+			std::allocator<Real> alloc;
+			alloc.destroy(target);
 		}
 
 		template <typename T>
@@ -5497,8 +5498,16 @@ namespace sol {
 					return true;
 				}
 				int metatableindex = lua_gettop(L);
-				if (stack_detail::check_metatable<detail::unique_usertype<T>>(L, metatableindex))
-					return true;
+				if (stack_detail::check_metatable<detail::unique_usertype<T>>(L, metatableindex)) {
+					void* memory = lua_touserdata(L, 1);
+					T** pointerpointer = static_cast<T**>(memory);
+					detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(static_cast<void*>(pointerpointer + 1));
+					bool success = &detail::usertype_unique_alloc_destroy<T, X> == pdx;
+					if (!success) {
+						handler(L, index, type::userdata, indextype);
+					}
+					return success;
+				}
 				lua_pop(L, 1);
 				handler(L, index, type::userdata, indextype);
 				return false;
@@ -6110,7 +6119,7 @@ namespace sol {
 			static Real& get(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
 				P** pref = static_cast<P**>(lua_touserdata(L, index));
-				detail::special_destruct_func* fx = static_cast<detail::special_destruct_func*>(static_cast<void*>(pref + 1));
+				detail::unique_destructor* fx = static_cast<detail::unique_destructor*>(static_cast<void*>(pref + 1));
 				Real* mem = static_cast<Real*>(static_cast<void*>(fx + 1));
 				return *mem;
 			}
@@ -6472,10 +6481,10 @@ namespace sol {
 
 			template <typename... Args>
 			static int push_deep(lua_State* L, Args&&... args) {
-				P** pref = static_cast<P**>(lua_newuserdata(L, sizeof(P*) + sizeof(detail::special_destruct_func) + sizeof(Real)));
-				detail::special_destruct_func* fx = static_cast<detail::special_destruct_func*>(static_cast<void*>(pref + 1));
+				P** pref = static_cast<P**>(lua_newuserdata(L, sizeof(P*) + sizeof(detail::unique_destructor) + sizeof(Real)));
+				detail::unique_destructor* fx = static_cast<detail::unique_destructor*>(static_cast<void*>(pref + 1));
 				Real* mem = static_cast<Real*>(static_cast<void*>(fx + 1));
-				*fx = detail::special_destruct<P, Real>;
+				*fx = detail::usertype_unique_alloc_destroy<P, Real>;
 				detail::default_construct::construct(mem, std::forward<Args>(args)...);
 				*pref = unique_usertype_traits<T>::get(*mem);
 				if (luaL_newmetatable(L, &usertype_traits<detail::unique_usertype<P>>::metatable()[0]) == 1) {
@@ -11458,8 +11467,8 @@ namespace sol {
 				bool hasdestructor = !value_table.empty() && to_string(meta_function::garbage_collect) == value_table[lastreg - 1].name;
 				if (hasdestructor) {
 					ref_table[lastreg - 1] = { nullptr, nullptr };
-					unique_table[lastreg - 1] = { value_table[lastreg - 1].name, detail::unique_destruct<T> };
 				}
+				unique_table[lastreg - 1] = { value_table[lastreg - 1].name, detail::unique_destruct<T> };
 
 				// Now use um
 				const bool& mustindex = umc.mustindex;
