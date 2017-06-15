@@ -1137,35 +1137,88 @@ TEST_CASE("functions/set_function-already-wrapped", "setting a function returned
 }
 
 TEST_CASE("functions/unique-overloading", "make sure overloading can work with ptr vs. specifically asking for a unique usertype") {
-	sol::state lua;
-
-	struct test { int special_value = 17; };
-	auto print_up_test = [](std::unique_ptr<test>& x) {
-		REQUIRE(x->special_value == 17);
+	struct test { 
+		int special_value = 17;
+		test() : special_value(17) {}
+		test(int special_value) : special_value(special_value) {}
 	};
-
+	auto print_up_test = [](std::unique_ptr<test>& x) {
+		REQUIRE(x->special_value == 21);
+	};
+	auto print_sp_test = [](std::shared_ptr<test>& x) {
+		REQUIRE(x->special_value == 44);
+	};
 	auto print_ptr_test = [](test* x) {
 		REQUIRE(x->special_value == 17);
 	};
+	auto print_ref_test = [](test& x) {
+		bool is_any = x.special_value == 17
+			|| x.special_value == 21
+			|| x. special_value == 44;
+		REQUIRE(is_any);
+	};
+	using f_t = void(test&);
+	f_t* fptr = print_ref_test;
+	
+	std::unique_ptr<test> ut = std::make_unique<test>(17);
+	SECTION("working") {
+		sol::state lua;
 
-	lua.set_function("f", print_up_test);
-	lua.set_function("g", sol::overload(
-		std::ref(print_up_test),
-		print_ptr_test
-	));
+		lua.set_function("f", print_up_test);
+		lua.set_function("g", sol::overload(
+			std::move(print_sp_test),
+			print_up_test,
+			std::ref(print_ptr_test)
+		));
+		lua.set_function("h", std::ref(fptr));
 
-	lua["v1"] = std::make_unique<test>();
-	lua["v2"] = test{};
-	REQUIRE_NOTHROW([&]() {
-		lua.script("g(v1)");
-	}());
-	REQUIRE_NOTHROW([&]() {
-		lua.script("g(v2)");
-	}());
-	REQUIRE_NOTHROW([&]() {
-		lua.script("f(v1)");
-	}());
-	REQUIRE_THROWS([&]() {
-		lua.script("f(v2)");
-	}());
+		lua["v1"] = std::make_unique<test>(21);
+		lua["v2"] = std::make_shared<test>(44);
+		lua["v3"] = test(17);
+		lua["v4"] = ut.get();
+
+		REQUIRE_NOTHROW([&]() {
+			lua.script("f(v1)");
+			lua.script("g(v1)");
+			lua.script("g(v2)");
+			lua.script("g(v3)");
+			lua.script("g(v4)");
+			lua.script("h(v1)");
+			lua.script("h(v2)");
+			lua.script("h(v3)");
+			lua.script("h(v4)");
+		}());
+	};
+	// LuaJIT segfaults hard on some Linux machines
+	// and it breaks all the tests...
+	SECTION("throws-value") {
+		sol::state lua;
+
+		lua.set_function("f", print_up_test);
+		lua["v3"] = test(17);
+
+		REQUIRE_THROWS([&]() {
+			lua.script("f(v3)");
+		}());
+	};
+	SECTION("throws-shared_ptr") {
+		sol::state lua;
+
+		lua.set_function("f", print_up_test);
+		lua["v2"] = std::make_shared<test>(44);
+
+		REQUIRE_THROWS([&]() {
+			lua.script("f(v2)");
+		}());
+	};
+	SECTION("throws-ptr") {
+		sol::state lua;
+
+		lua.set_function("f", print_up_test);
+		lua["v4"] = ut.get();
+
+		REQUIRE_THROWS([&]() {
+			lua.script("f(v4)");
+		}());
+	};
 }
