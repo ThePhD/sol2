@@ -407,6 +407,16 @@ namespace sol {
 			return *item;
 		}
 
+		template <typename T>
+		inline const T& deref(const T& item) {
+			return item;
+		}
+
+		template <typename T>
+		inline T& deref(T& item) {
+			return item;
+		}
+
 		template<typename T, typename Dx>
 		inline std::add_lvalue_reference_t<T> deref(std::unique_ptr<T, Dx>& item) {
 			return *item;
