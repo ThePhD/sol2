@@ -99,8 +99,9 @@ struct fer {
 	}
 };
 
-inline void noexcept_function() noexcept {}
-struct type_with_noexcept_method{ void noexcept_method() noexcept {} };
+static int raw_noexcept_function(lua_State* L) noexcept {
+	return sol::stack::push(L, 0x63);
+}
 
 TEST_CASE("functions/tuple-returns", "Make sure tuple returns are ordered properly") {
 	sol::state lua;
@@ -1226,9 +1227,53 @@ TEST_CASE("functions/unique-overloading", "make sure overloading can work with p
 	};
 }
 
-TEST_CASE("functions/noexcept", "allow noexcept free - and member functions in Lua") {
-	sol::state lua;
+TEST_CASE("functions/noexcept", "allow noexcept functions to be serialized properly into Lua using sol2") {
+	struct T {
+		static int noexcept_function() noexcept {
+			return 0x61;
+		}
 
-	lua.set_function("noexcept_function", &noexcept_function);
-	lua.set_function("noexcept_member_function", &type_with_noexcept_method::noexcept_method);
+		int noexcept_method() noexcept { 
+			return 0x62; 
+		}
+	} t;
+	
+	lua_CFunction ccall = sol::c_call<decltype(&raw_noexcept_function), &raw_noexcept_function>;
+
+	sol::state lua;
+	
+	lua.set_function("f", &T::noexcept_function);
+	lua.set_function("g", &T::noexcept_method);
+	lua.set_function("h", &T::noexcept_method, T());
+	lua.set_function("i", &T::noexcept_method, std::ref(t));
+	lua.set_function("j", &T::noexcept_method, &t);
+	lua.set_function("k", &T::noexcept_method, t);
+	lua.set_function("l", &raw_noexcept_function);
+	lua.set_function("m", ccall);
+
+	lua["t"] = T();
+	lua.script("v1 = f()");
+	lua.script("v2 = g(t)");
+	lua.script("v3 = h()");
+	lua.script("v4 = i()");
+	lua.script("v5 = j()");
+	lua.script("v6 = k()");
+	lua.script("v7 = l()");
+	lua.script("v8 = m()");
+	int v1 = lua["v1"];
+	int v2 = lua["v2"];
+	int v3 = lua["v3"];
+	int v4 = lua["v4"];
+	int v5 = lua["v5"];
+	int v6 = lua["v6"];
+	int v7 = lua["v7"];
+	int v8 = lua["v8"];
+	REQUIRE(v1 == 0x61);
+	REQUIRE(v2 == 0x62);
+	REQUIRE(v3 == 0x62);
+	REQUIRE(v4 == 0x62);
+	REQUIRE(v5 == 0x62);
+	REQUIRE(v6 == 0x62);
+	REQUIRE(v7 == 0x63);
+	REQUIRE(v8 == 0x63);
 }

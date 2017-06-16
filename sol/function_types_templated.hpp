@@ -84,7 +84,7 @@ namespace sol {
 		}
 
 		template <typename F, F fx>
-		int call_wrapper_entry(lua_State* L) {
+		int call_wrapper_entry(lua_State* L) noexcept(meta::bind_traits<F>::is_noexcept) {
 			return call_wrapper_function<F, fx>(std::is_member_function_pointer<meta::unqualified_t<F>>(), L);
 		}
 
@@ -97,15 +97,38 @@ namespace sol {
 			}
 		};
 
+		template <typename F, F fx>
+		inline int c_call_raw(std::true_type, lua_State* L) {
+#ifdef __clang__
+			return detail::trampoline(L, fx);
+#else
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+			return meta::bind_traits<F>::is_noexcept ? detail::static_trampoline_noexcept<fx>(L) : detail::static_trampoline<fx>(L);
+#else
+			return detail::static_trampoline<fx>(L);
+#endif
+#endif // fuck you clang :c
+		}
+
+		template <typename F, F fx>
+		inline int c_call_raw(std::false_type, lua_State* L) {
+#ifdef __clang__
+			return detail::trampoline(L, function_detail::call_wrapper_entry<F, fx>);
+#else
+			return detail::static_trampoline<(&function_detail::call_wrapper_entry<F, fx>)>(L);
+#endif // fuck you clang :c
+		}
+
 	} // function_detail
 
 	template <typename F, F fx>
 	inline int c_call(lua_State* L) {
-#ifdef __clang__
-		return detail::trampoline(L, function_detail::call_wrapper_entry<F, fx>);
-#else
-		return detail::static_trampoline<(&function_detail::call_wrapper_entry<F, fx>)>(L);
-#endif // fuck you clang :c
+		typedef meta::unqualified_t<F> Fu;
+		return function_detail::c_call_raw<F, fx>(std::integral_constant<bool, std::is_same<Fu, lua_CFunction>::value
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+			|| std::is_same<Fu, detail::lua_CFunction_noexcept>::value
+#endif 
+		>(), L);
 	}
 
 	template <typename F, F f>

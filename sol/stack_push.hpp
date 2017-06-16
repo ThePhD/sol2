@@ -310,6 +310,23 @@ namespace sol {
 				return 1;
 			}
 		};
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+		template<>
+		struct pusher<std::remove_pointer_t<detail::lua_CFunction_noexcept>> {
+			static int push(lua_State* L, detail::lua_CFunction_noexcept func, int n = 0) {
+				lua_pushcclosure(L, func, n);
+				return 1;
+			}
+		};
+
+		template<>
+		struct pusher<detail::lua_CFunction_noexcept> {
+			static int push(lua_State* L, detail::lua_CFunction_noexcept func, int n = 0) {
+				lua_pushcclosure(L, func, n);
+				return 1;
+			}
+		};
+#endif // noexcept function type
 
 		template<>
 		struct pusher<c_closure> {

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-06-15 05:24:30.745677 UTC
-// This header was generated with sol v2.17.5 (revision 0fb5333)
+// Generated 2017-06-16 19:36:12.857631 UTC
+// This header was generated with sol v2.17.5 (revision 39fdb5e)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -47,9 +47,6 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wconversion"
-#if __GNUC__ > 6
-#pragma GCC diagnostic ignored "-Wnoexcept-type"
-#endif
 #elif defined _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4324 ) // structure was padded due to alignment specifier
@@ -193,12 +190,13 @@ namespace sol {
 			template <std::size_t I, typename T>
 			using void_tuple_element_t = typename void_tuple_element<I, T>::type;
 
-			template <bool has_c_variadic, typename T, typename R, typename... Args>
+			template <bool it_is_noexcept, bool has_c_variadic, typename T, typename R, typename... Args>
 			struct basic_traits {
 			private:
 				typedef std::conditional_t<std::is_void<T>::value, int, T>& first_type;
 
 			public:
+				static const bool is_noexcept = it_is_noexcept;
 				static const bool is_member_function = std::is_void<T>::value;
 				static const bool has_c_var_arg = has_c_variadic;
 				static const std::size_t arity = sizeof...(Args);
@@ -218,122 +216,237 @@ namespace sol {
 			};
 
 			template<typename Signature, bool b = has_deducible_signature<Signature>::value>
-			struct fx_traits : basic_traits<false, void, void> {};
+			struct fx_traits : basic_traits<false, false, void, void> {};
 
 			// Free Functions
 			template<typename R, typename... Args>
-			struct fx_traits<R(Args...), false> : basic_traits<false, void, R, Args...> {
+			struct fx_traits<R(Args...), false> : basic_traits<false, false, void, R, Args...> {
 				typedef R(*function_pointer_type)(Args...);
 			};
 
 			template<typename R, typename... Args>
-			struct fx_traits<R(*)(Args...), false> : basic_traits<false, void, R, Args...> {
+			struct fx_traits<R(*)(Args...), false> : basic_traits<false, false, void, R, Args...> {
 				typedef R(*function_pointer_type)(Args...);
 			};
 
 			template<typename R, typename... Args>
-			struct fx_traits<R(Args..., ...), false> : basic_traits<true, void, R, Args...> {
+			struct fx_traits<R(Args..., ...), false> : basic_traits<false, true, void, R, Args...> {
 				typedef R(*function_pointer_type)(Args..., ...);
 			};
 
 			template<typename R, typename... Args>
-			struct fx_traits<R(*)(Args..., ...), false> : basic_traits<true, void, R, Args...> {
+			struct fx_traits<R(*)(Args..., ...), false> : basic_traits<false, true, void, R, Args...> {
 				typedef R(*function_pointer_type)(Args..., ...);
 			};
 
 			// Member Functions
 			/* C-Style Variadics */
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...), false> : basic_traits<false, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args...), false> : basic_traits<false, false, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args...);
 			};
 
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...), false> : basic_traits<true, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args..., ...), false> : basic_traits<false, true, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args..., ...);
 			};
 
 			/* Const Volatile */
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const, false> : basic_traits<false, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args...) const, false> : basic_traits<false, false, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args...) const;
 			};
 
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const, false> : basic_traits<true, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args..., ...) const, false> : basic_traits<false, true, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args..., ...) const;
 			};
 
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const volatile, false> : basic_traits<false, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args...) const volatile, false> : basic_traits<false, false, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args...) const volatile;
 			};
 
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const volatile, false> : basic_traits<true, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args..., ...) const volatile, false> : basic_traits<false, true, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args..., ...) const volatile;
 			};
 
 			/* Member Function Qualifiers */
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) &, false> : basic_traits<false, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args...) &, false> : basic_traits<false, false, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args...) &;
 			};
 
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) &, false> : basic_traits<true, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args..., ...) &, false> : basic_traits<false, true, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args..., ...) &;
 			};
 
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const &, false> : basic_traits<false, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args...) const &, false> : basic_traits<false, false, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args...) const &;
 			};
 
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const &, false> : basic_traits<true, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args..., ...) const &, false> : basic_traits<false, true, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args..., ...) const &;
 			};
 
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const volatile &, false> : basic_traits<false, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args...) const volatile &, false> : basic_traits<false, false, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args...) const volatile &;
 			};
 
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const volatile &, false> : basic_traits<true, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args..., ...) const volatile &, false> : basic_traits<false, true, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args..., ...) const volatile &;
 			};
 
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) && , false> : basic_traits<false, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args...) && , false> : basic_traits<false, false, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args...) && ;
 			};
 
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) && , false> : basic_traits<true, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args..., ...) && , false> : basic_traits<false, true, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args..., ...) && ;
 			};
 
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const &&, false> : basic_traits<false, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args...) const &&, false> : basic_traits<false, false, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args...) const &&;
 			};
 
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const &&, false> : basic_traits<true, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args..., ...) const &&, false> : basic_traits<false, true, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args..., ...) const &&;
 			};
 
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const volatile &&, false> : basic_traits<false, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args...) const volatile &&, false> : basic_traits<false, false, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args...) const volatile &&;
 			};
 
 			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const volatile &&, false> : basic_traits<true, T, R, Args...> {
+			struct fx_traits<R(T::*)(Args..., ...) const volatile &&, false> : basic_traits<false, true, T, R, Args...> {
 				typedef R(T::* function_pointer_type)(Args..., ...) const volatile &&;
 			};
+
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+
+			template<typename R, typename... Args>
+			struct fx_traits<R(Args...) noexcept, false> : basic_traits<true, false, void, R, Args...> {
+				typedef R(*function_pointer_type)(Args...);
+			};
+
+			template<typename R, typename... Args>
+			struct fx_traits<R(*)(Args...) noexcept, false> : basic_traits<true, false, void, R, Args...> {
+				typedef R(*function_pointer_type)(Args...);
+			};
+
+			template<typename R, typename... Args>
+			struct fx_traits<R(Args..., ...) noexcept, false> : basic_traits<true, true, void, R, Args...> {
+				typedef R(*function_pointer_type)(Args..., ...);
+			};
+
+			template<typename R, typename... Args>
+			struct fx_traits<R(*)(Args..., ...) noexcept, false> : basic_traits<true, true, void, R, Args...> {
+				typedef R(*function_pointer_type)(Args..., ...);
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) noexcept, false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...);
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) noexcept, false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...);
+			};
+
+			/* Const Volatile */
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const noexcept, false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const noexcept, false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const volatile noexcept, false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const volatile;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const volatile noexcept, false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const volatile;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) & noexcept, false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) &;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) & noexcept, false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) &;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const & noexcept, false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const &;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const & noexcept, false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const &;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const volatile & noexcept, false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const volatile &;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const volatile & noexcept, false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const volatile &;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) && noexcept , false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) && ;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) && noexcept , false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) && ;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const && noexcept, false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const &&;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const && noexcept, false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const &&;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const volatile && noexcept, false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const volatile &&;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const volatile && noexcept, false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const volatile &&;
+			};
+
+#endif // noexcept is part of a function's type
 
 			template<typename Signature>
 			struct fx_traits<Signature, true> : fx_traits<typename fx_traits<decltype(&Signature::operator())>::function_type, false> {};
@@ -348,6 +461,7 @@ namespace sol {
 				typedef R Arg;
 				typedef T object_type;
 				using signature_type = R(T::*);
+				static const bool is_noexcept = false;
 				static const bool is_member_function = false;
 				static const std::size_t arity = 1;
 				static const std::size_t free_arity = 2;
@@ -362,6 +476,7 @@ namespace sol {
 				template<std::size_t i>
 				using arg_at = void_tuple_element_t<i, args_tuple>;
 			};
+
 		} // meta_detail
 
 		template<typename Signature>
@@ -822,6 +937,12 @@ namespace sol {
 #else
 #include <lua.hpp>
 #endif // C++ Mangling for Lua
+
+#if defined(__cpp_noexcept_function_type) && (__cpp_noexcept_function_type >= 201510L)
+#ifndef SOL_NOEXCEPT_FUNCTION_TYPE
+#define SOL_NOEXCEPT_FUNCTION_TYPE 1
+#endif // noexcept is part of a function's type
+#endif
 
 #if defined(_WIN32) || defined(_MSC_VER)
 #ifndef SOL_CODECVT_SUPPORT
@@ -3045,6 +3166,10 @@ namespace sol {
 
 namespace sol {
 	namespace detail {
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+		typedef int(*lua_CFunction_noexcept) (lua_State *L) noexcept;
+#endif // noexcept function type for lua_CFunction
+
 #ifdef SOL_NO_EXCEPTIONS
 		template <lua_CFunction f>
 		int static_trampoline(lua_State* L) {
@@ -3080,8 +3205,33 @@ namespace sol {
 			return lua_error(L);
 		}
 
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+		template <lua_CFunction_noexcept f>
+		int static_trampoline(lua_State* L) {
+			try {
+				return f(L);
+			}
+			catch (const char *s) {
+				lua_pushstring(L, s);
+			}
+			catch (const std::exception& e) {
+				lua_pushstring(L, e.what());
+			}
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+			catch (...) {
+				std::exception_ptr eptr = std::current_exception();
+				lua_pushstring(L, "caught (...) exception");
+			}
+#endif
+			return lua_error(L);
+		}
+#endif // noexcept lua_CFunction type
+
 		template <typename Fx, typename... Args>
 		int trampoline(lua_State* L, Fx&& f, Args&&... args) {
+			if (meta::bind_traits<meta::unqualified_t<Fx>>::is_noexcept) {
+				return f(L, std::forward<Args>(args)...);
+			}
 			try {
 				return f(L, std::forward<Args>(args)...);
 			}
@@ -8031,6 +8181,85 @@ namespace sol {
 	struct wrapper<R(O:: *)(Args..., ...) const volatile &&> : public member_function_wrapper<R(O:: *)(Args..., ...) const volatile &, R, O, Args...> {
 
 	};
+
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE //noexcept has become a part of a function's type
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) noexcept> : public member_function_wrapper<R(O:: *)(Args...) noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) const noexcept> : public member_function_wrapper<R(O:: *)(Args...) const noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) const volatile noexcept> : public member_function_wrapper<R(O:: *)(Args...) const volatile noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) & noexcept> : public member_function_wrapper<R(O:: *)(Args...) & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) const & noexcept> : public member_function_wrapper<R(O:: *)(Args...) const & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) const volatile & noexcept> : public member_function_wrapper<R(O:: *)(Args...) const volatile & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args..., ...) & noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args..., ...) const & noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) const & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args..., ...) const volatile & noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) const volatile & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) && noexcept> : public member_function_wrapper<R(O:: *)(Args...) & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) const && noexcept> : public member_function_wrapper<R(O:: *)(Args...) const & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args...) const volatile && noexcept> : public member_function_wrapper<R(O:: *)(Args...) const volatile & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args..., ...) && noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args..., ...) const && noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) const & noexcept, R, O, Args...> {
+
+	};
+
+	template <typename R, typename O, typename... Args>
+	struct wrapper<R(O:: *)(Args..., ...) const volatile && noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) const volatile & noexcept, R, O, Args...> {
+
+	};
+
+#endif // noexcept is part of a function's type
 
 } // sol
 

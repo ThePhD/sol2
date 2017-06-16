@@ -190,9 +190,15 @@ namespace sol {
 				stack::push(L, f);
 			}
 
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+			static void select_function(std::true_type, lua_State* L, detail::lua_CFunction_noexcept f) {
+				stack::push(L, f);
+			}
+#endif // noexcept function type
+
 			template <typename Fx, typename... Args, meta::disable<meta::any<std::is_base_of<reference, meta::unqualified_t<Fx>>, std::is_base_of<stack_reference, meta::unqualified_t<Fx>>>> = meta::enabler>
 			static void select(lua_State* L, Fx&& fx, Args&&... args) {
-				select_function(std::is_function<meta::unqualified_t<Fx>>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
+				select_function(std::is_function<std::remove_pointer_t<meta::unqualified_t<Fx>>>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 
 			template <typename Fx, meta::enable<meta::any<std::is_base_of<reference, meta::unqualified_t<Fx>>, std::is_base_of<stack_reference, meta::unqualified_t<Fx>>>> = meta::enabler>
@@ -254,7 +260,15 @@ namespace sol {
 		};
 
 		template<typename Signature>
-		struct pusher<Signature, std::enable_if_t<meta::all<std::is_function<Signature>, meta::neg<std::is_same<Signature, lua_CFunction>>, meta::neg<std::is_same<Signature, std::remove_pointer_t<lua_CFunction>>>>::value>> {
+		struct pusher<Signature, std::enable_if_t<meta::all<
+			std::is_function<Signature>, 
+			meta::neg<std::is_same<Signature, lua_CFunction>>,
+			meta::neg<std::is_same<Signature, std::remove_pointer_t<lua_CFunction>>>
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+			, meta::neg<std::is_same<Signature, detail::lua_CFunction_noexcept>>,
+			meta::neg<std::is_same<Signature, std::remove_pointer_t<detail::lua_CFunction_noexcept>>>
+#endif // noexcept function types
+		>::value>> {
 			template <typename F>
 			static int push(lua_State* L, F&& f) {
 				return pusher<function_sig<>>{}.push(L, std::forward<F>(f));

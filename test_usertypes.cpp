@@ -265,9 +265,6 @@ struct matrix_xi {
 	}
 };
 
-inline void noexcept_function() noexcept {}
-struct type_with_noexcept_method{ void noexcept_method() noexcept {} };
-
 TEST_CASE("usertype/usertype", "Show that we can create classes from usertype and use them") {
 	sol::state lua;
 
@@ -1814,6 +1811,27 @@ TEST_CASE("usertype/meta-key-retrievals", "allow for special meta keys (__index,
 }
 
 TEST_CASE("usertype/noexcept-methods", "make sure noexcept functinos and methods can be bound to usertypes without issues") {
+	struct T {
+		static int noexcept_function() noexcept {
+			return 0x61;
+		}
+
+		int noexcept_method() noexcept {
+			return 0x62;
+		}
+	};
+
 	sol::state lua;
-	lua.new_usertype<type_with_noexcept_method>("tmp", "nf", &noexcept_function, "nm", &type_with_noexcept_method::noexcept_method);
+	lua.new_usertype<T>("T", 
+		"nf", &T::noexcept_function, 
+		"nm", &T::noexcept_method
+	);
+
+	lua.script("t = T.new()");
+	lua.script("v1 = t.nf()");
+	lua.script("v2 = t:nm()");
+	int v1 = lua["v1"];
+	int v2 = lua["v2"];
+	REQUIRE(v1 == 0x61);
+	REQUIRE(v2 == 0x62);
 }

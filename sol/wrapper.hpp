@@ -233,7 +233,7 @@ namespace sol {
 
 	};
 
-#if __cpp_noexcept_function_type >= 201510L //noexcept has become a part of a function's type
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE //noexcept has become a part of a function's type
 
 	template <typename R, typename O, typename... Args>
 	struct wrapper<R(O:: *)(Args...) noexcept> : public member_function_wrapper<R(O:: *)(Args...) noexcept, R, O, Args...> {
@@ -310,7 +310,7 @@ namespace sol {
 
 	};
 
-#endif//#if __cpp_noexcept_function_type >= 201510L //noexcept has become a part of a function's type
+#endif // noexcept is part of a function's type
 
 } // sol
 

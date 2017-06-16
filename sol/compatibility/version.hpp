@@ -30,6 +30,12 @@
 #include <lua.hpp>
 #endif // C++ Mangling for Lua
 
+#if defined(__cpp_noexcept_function_type) && (__cpp_noexcept_function_type >= 201510L)
+#ifndef SOL_NOEXCEPT_FUNCTION_TYPE
+#define SOL_NOEXCEPT_FUNCTION_TYPE 1
+#endif // noexcept is part of a function's type
+#endif
+
 #if defined(_WIN32) || defined(_MSC_VER)
 #ifndef SOL_CODECVT_SUPPORT
 #define SOL_CODECVT_SUPPORT 1

@@ -31,18 +31,22 @@
 
 namespace sol {
 	namespace detail {
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+		typedef int(*lua_CFunction_noexcept) (lua_State *L) noexcept;
+#endif // noexcept function type for lua_CFunction
+
 #ifdef SOL_NO_EXCEPTIONS
 		template <lua_CFunction f>
-		int static_trampoline(lua_State* L) {
+		int static_trampoline(lua_State* L) noexcept {
 			return f(L);
 		}
 
 		template <typename Fx, typename... Args>
-		int trampoline(lua_State* L, Fx&& f, Args&&... args) {
+		int trampoline(lua_State* L, Fx&& f, Args&&... args) noexcept {
 			return f(L, std::forward<Args>(args)...);
 		}
 
-		inline int c_trampoline(lua_State* L, lua_CFunction f) {
+		inline int c_trampoline(lua_State* L, lua_CFunction f) noexcept {
 			return trampoline(L, f);
 		}
 #else
@@ -59,15 +63,33 @@ namespace sol {
 			}
 #if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			catch (...) {
-				std::exception_ptr eptr = std::current_exception();
 				lua_pushstring(L, "caught (...) exception");
 			}
 #endif
 			return lua_error(L);
 		}
 
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+#if 0 
+// impossible: g++/clang++ choke as they think this function is ambiguous:
+// to fix, wait for template <auto X> and then switch on no-exceptness of the function
+		template <lua_CFunction_noexcept f>
+		int static_trampoline(lua_State* L) noexcept {
+#else
+		template <lua_CFunction_noexcept f>
+		int static_trampoline_noexcept(lua_State* L) noexcept {
+#endif // impossible
+			std::cout << "[STATIC_TRAMPOLINE] HEY A NOEXCEPTION FUNCTION IS GONNA BE CALLED" << std::endl;
+			return f(L);
+		}
+#endif // noexcept lua_CFunction type
+
 		template <typename Fx, typename... Args>
 		int trampoline(lua_State* L, Fx&& f, Args&&... args) {
+			if (meta::bind_traits<meta::unqualified_t<Fx>>::is_noexcept) {
+				std::cout << "[TRAMPOLINE] HEY A NOEXCEPTION FUNCTION IS GONNA BE CALLED" << std::endl;
+				return f(L, std::forward<Args>(args)...);
+			}
 			try {
 				return f(L, std::forward<Args>(args)...);
 			}
