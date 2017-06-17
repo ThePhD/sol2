@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-06-17 04:42:58.829253 UTC
-// This header was generated with sol v2.17.5 (revision 11916a7)
+// Generated 2017-06-17 04:51:25.897832 UTC
+// This header was generated with sol v2.17.5 (revision b811e73)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -9185,7 +9185,7 @@ namespace sol {
 #ifdef __clang__
 			return detail::trampoline(L, function_detail::call_wrapper_entry<F, fx>);
 #else
-			return detail::typed_static_trampoline<decltype(&function_detail::call_wrapper_entry<F, fx>), &function_detail::call_wrapper_entry<F, fx>>(L);
+			return detail::typed_static_trampoline<decltype(&function_detail::call_wrapper_entry<F, fx>), (&function_detail::call_wrapper_entry<F, fx>)>(L);
 #endif // fuck you clang :c
 		}
 
@@ -9240,7 +9240,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -9267,7 +9267,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -9301,7 +9301,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -9333,7 +9333,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -9355,7 +9355,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -9383,7 +9383,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -9410,7 +9410,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -12867,39 +12867,39 @@ namespace sol {
 		}
 
 		static int add_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_add_call), &real_add_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_add_call), (&real_add_call)>(L);
 		}
 
 		static int insert_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_insert_call), &real_insert_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_insert_call), (&real_insert_call)>(L);
 		}
 
 		static int clear_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_clear_call), &real_clear_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_clear_call), (&real_clear_call)>(L);
 		}
 
 		static int find_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_find_call), &real_find_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_find_call), (&real_find_call)>(L);
 		}
 
 		static int length_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_length_call), &real_length_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_length_call), (&real_length_call)>(L);
 		}
 
 		static int pairs_next_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_pairs_next_call), &real_pairs_next_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_pairs_next_call), (&real_pairs_next_call)>(L);
 		}
 
 		static int pairs_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_pairs_call), &real_pairs_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_pairs_call), (&real_pairs_call)>(L);
 		}
 
 		static int index_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_index_call), &real_index_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_index_call), (&real_index_call)>(L);
 		}
 
 		static int new_index_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_new_index_call), &real_new_index_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_new_index_call), (&real_new_index_call)>(L);
 		}
 	};
 

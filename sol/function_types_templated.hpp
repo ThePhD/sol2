@@ -107,7 +107,7 @@ namespace sol {
 #ifdef __clang__
 			return detail::trampoline(L, function_detail::call_wrapper_entry<F, fx>);
 #else
-			return detail::typed_static_trampoline<decltype(&function_detail::call_wrapper_entry<F, fx>), &function_detail::call_wrapper_entry<F, fx>>(L);
+			return detail::typed_static_trampoline<decltype(&function_detail::call_wrapper_entry<F, fx>), (&function_detail::call_wrapper_entry<F, fx>)>(L);
 #endif // fuck you clang :c
 		}
 

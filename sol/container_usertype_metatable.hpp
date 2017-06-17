@@ -457,39 +457,39 @@ namespace sol {
 		}
 
 		static int add_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_add_call), &real_add_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_add_call), (&real_add_call)>(L);
 		}
 
 		static int insert_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_insert_call), &real_insert_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_insert_call), (&real_insert_call)>(L);
 		}
 
 		static int clear_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_clear_call), &real_clear_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_clear_call), (&real_clear_call)>(L);
 		}
 
 		static int find_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_find_call), &real_find_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_find_call), (&real_find_call)>(L);
 		}
 
 		static int length_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_length_call), &real_length_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_length_call), (&real_length_call)>(L);
 		}
 
 		static int pairs_next_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_pairs_next_call), &real_pairs_next_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_pairs_next_call), (&real_pairs_next_call)>(L);
 		}
 
 		static int pairs_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_pairs_call), &real_pairs_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_pairs_call), (&real_pairs_call)>(L);
 		}
 
 		static int index_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_index_call), &real_index_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_index_call), (&real_index_call)>(L);
 		}
 
 		static int new_index_call(lua_State*L) {
-			return detail::typed_static_trampoline<decltype(&real_new_index_call), &real_new_index_call>(L);
+			return detail::typed_static_trampoline<decltype(&real_new_index_call), (&real_new_index_call)>(L);
 		}
 	};
 

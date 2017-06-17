@@ -38,7 +38,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -65,7 +65,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -99,7 +99,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -131,7 +131,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -153,7 +153,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -181,7 +181,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -208,7 +208,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
 			}
 
 			int operator()(lua_State* L) {
