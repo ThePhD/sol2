@@ -41,6 +41,13 @@ namespace sol {
 			return f(L);
 		}
 
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+		template <lua_CFunction_noexcept f>
+		int static_trampoline_noexcept(lua_State* L) noexcept {
+			return f(L);
+		}
+#endif
+
 		template <typename Fx, typename... Args>
 		int trampoline(lua_State* L, Fx&& f, Args&&... args) noexcept {
 			return f(L, std::forward<Args>(args)...);
@@ -79,7 +86,12 @@ namespace sol {
 		template <lua_CFunction_noexcept f>
 		int static_trampoline_noexcept(lua_State* L) noexcept {
 #endif // impossible
-			std::cout << "[STATIC_TRAMPOLINE] HEY A NOEXCEPTION FUNCTION IS GONNA BE CALLED" << std::endl;
+			return f(L);
+		}
+
+#else
+		template <lua_CFunction f>
+		int static_trampoline_noexcept(lua_State* L) noexcept {
 			return f(L);
 		}
 #endif // noexcept lua_CFunction type
@@ -87,7 +99,6 @@ namespace sol {
 		template <typename Fx, typename... Args>
 		int trampoline(lua_State* L, Fx&& f, Args&&... args) {
 			if (meta::bind_traits<meta::unqualified_t<Fx>>::is_noexcept) {
-				std::cout << "[TRAMPOLINE] HEY A NOEXCEPTION FUNCTION IS GONNA BE CALLED" << std::endl;
 				return f(L, std::forward<Args>(args)...);
 			}
 			try {
@@ -111,6 +122,21 @@ namespace sol {
 			return trampoline(L, f);
 		}
 #endif // Exceptions vs. No Exceptions
+
+		template <typename F, F fx>
+		inline int typed_static_trampoline_raw(std::true_type, lua_State* L) {
+			return static_trampoline_noexcept<fx>(L);
+		}
+
+		template <typename F, F fx>
+		inline int typed_static_trampoline_raw(std::false_type, lua_State* L) {
+			return static_trampoline<fx>(L);
+		}
+
+		template <typename F, F fx>
+		inline int typed_static_trampoline(lua_State* L) {
+			return typed_static_trampoline_raw<F, fx>(std::integral_constant<bool, meta::bind_traits<F>::is_noexcept>(), L);
+		}
 
 		template <typename T>
 		struct unique_usertype {};

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-06-16 19:36:12.857631 UTC
-// This header was generated with sol v2.17.5 (revision 39fdb5e)
+// Generated 2017-06-17 04:42:58.829253 UTC
+// This header was generated with sol v2.17.5 (revision 11916a7)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -47,6 +47,9 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wconversion"
+#if __GNUC__ > 6
+#pragma GCC diagnostic ignored "-Wnoexcept-type"
+#endif
 #elif defined _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4324 ) // structure was padded due to alignment specifier
@@ -159,6 +162,84 @@ namespace sol {
 // end of sol/tuple.hpp
 
 // beginning of sol/bind_traits.hpp
+
+// beginning of sol/feature_test.hpp
+
+#if defined(__cpp_noexcept_function_type)
+#ifndef SOL_NOEXCEPT_FUNCTION_TYPE
+#define SOL_NOEXCEPT_FUNCTION_TYPE 1
+#endif // noexcept is part of a function's type
+#endif
+
+#if defined(_WIN32) || defined(_MSC_VER)
+#ifndef SOL_CODECVT_SUPPORT
+#define SOL_CODECVT_SUPPORT 1
+#endif // sol codecvt support
+#elif defined(__GNUC__)
+#if __GNUC__ >= 5
+#ifndef SOL_CODECVT_SUPPORT
+#define SOL_CODECVT_SUPPORT 1
+#endif // codecvt support
+#endif // g++ 5.x.x (MinGW too)
+#else
+#endif // Windows/VC++ vs. g++ vs Others
+
+#ifdef _MSC_VER
+#ifdef _DEBUG
+#ifndef NDEBUG
+#ifndef SOL_CHECK_ARGUMENTS
+#endif // Check Arguments
+#ifndef SOL_SAFE_USERTYPE
+#define SOL_SAFE_USERTYPE
+#endif // Safe Usertypes
+#endif // NDEBUG
+#endif // Debug
+
+#ifndef _CPPUNWIND
+#ifndef SOL_NO_EXCEPTIONS
+#define SOL_NO_EXCEPTIONS 1
+#endif
+#endif // Automatic Exceptions
+
+#ifndef _CPPRTTI
+#ifndef SOL_NO_RTTI
+#define SOL_NO_RTTI 1
+#endif
+#endif // Automatic RTTI
+
+#elif defined(__GNUC__) || defined(__clang__)
+
+#ifndef NDEBUG
+#ifndef __OPTIMIZE__
+#ifndef SOL_CHECK_ARGUMENTS
+#endif // Check Arguments
+#ifndef SOL_SAFE_USERTYPE
+#define SOL_SAFE_USERTYPE
+#endif // Safe Usertypes
+#endif // g++ optimizer flag
+#endif // Not Debug
+
+#ifndef __EXCEPTIONS
+#ifndef SOL_NO_EXCEPTIONS
+#define SOL_NO_EXCEPTIONS 1
+#endif
+#endif // No Exceptions
+
+#ifndef __GXX_RTTI
+#ifndef SOL_NO_RTII
+#define SOL_NO_RTTI 1
+#endif
+#endif // No RTTI
+
+#endif // vc++ || clang++/g++
+
+#ifndef SOL_SAFE_USERTYPE
+#ifdef SOL_CHECK_ARGUMENTS
+#define SOL_SAFE_USERTYPE
+#endif // Turn on Safety for all
+#endif // Safe Usertypes
+
+// end of sol/feature_test.hpp
 
 namespace sol {
 	namespace meta {
@@ -337,113 +418,113 @@ namespace sol {
 
 			template<typename R, typename... Args>
 			struct fx_traits<R(Args...) noexcept, false> : basic_traits<true, false, void, R, Args...> {
-				typedef R(*function_pointer_type)(Args...);
+				typedef R(*function_pointer_type)(Args...) noexcept;
 			};
 
 			template<typename R, typename... Args>
 			struct fx_traits<R(*)(Args...) noexcept, false> : basic_traits<true, false, void, R, Args...> {
-				typedef R(*function_pointer_type)(Args...);
+				typedef R(*function_pointer_type)(Args...) noexcept;
 			};
 
 			template<typename R, typename... Args>
 			struct fx_traits<R(Args..., ...) noexcept, false> : basic_traits<true, true, void, R, Args...> {
-				typedef R(*function_pointer_type)(Args..., ...);
+				typedef R(*function_pointer_type)(Args..., ...) noexcept;
 			};
 
 			template<typename R, typename... Args>
 			struct fx_traits<R(*)(Args..., ...) noexcept, false> : basic_traits<true, true, void, R, Args...> {
-				typedef R(*function_pointer_type)(Args..., ...);
+				typedef R(*function_pointer_type)(Args..., ...) noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args...) noexcept, false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...);
+				typedef R(T::* function_pointer_type)(Args...) noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args..., ...) noexcept, false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...);
+				typedef R(T::* function_pointer_type)(Args..., ...) noexcept;
 			};
 
 			/* Const Volatile */
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args...) const noexcept, false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const;
+				typedef R(T::* function_pointer_type)(Args...) const noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args..., ...) const noexcept, false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const;
+				typedef R(T::* function_pointer_type)(Args..., ...) const noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args...) const volatile noexcept, false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const volatile;
+				typedef R(T::* function_pointer_type)(Args...) const volatile noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args..., ...) const volatile noexcept, false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const volatile;
+				typedef R(T::* function_pointer_type)(Args..., ...) const volatile noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args...) & noexcept, false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) &;
+				typedef R(T::* function_pointer_type)(Args...) & noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args..., ...) & noexcept, false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) &;
+				typedef R(T::* function_pointer_type)(Args..., ...) & noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args...) const & noexcept, false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const &;
+				typedef R(T::* function_pointer_type)(Args...) const & noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args..., ...) const & noexcept, false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const &;
+				typedef R(T::* function_pointer_type)(Args..., ...) const & noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args...) const volatile & noexcept, false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const volatile &;
+				typedef R(T::* function_pointer_type)(Args...) const volatile & noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args..., ...) const volatile & noexcept, false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const volatile &;
+				typedef R(T::* function_pointer_type)(Args..., ...) const volatile & noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args...) && noexcept , false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) && ;
+				typedef R(T::* function_pointer_type)(Args...) && noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args..., ...) && noexcept , false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) && ;
+				typedef R(T::* function_pointer_type)(Args..., ...) && noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args...) const && noexcept, false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const &&;
+				typedef R(T::* function_pointer_type)(Args...) const && noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args..., ...) const && noexcept, false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const &&;
+				typedef R(T::* function_pointer_type)(Args..., ...) const && noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args...) const volatile && noexcept, false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const volatile &&;
+				typedef R(T::* function_pointer_type)(Args...) const volatile && noexcept;
 			};
 
 			template<typename T, typename R, typename... Args>
 			struct fx_traits<R(T::*)(Args..., ...) const volatile && noexcept, false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const volatile &&;
+				typedef R(T::* function_pointer_type)(Args..., ...) const volatile && noexcept;
 			};
 
 #endif // noexcept is part of a function's type
@@ -938,25 +1019,6 @@ namespace sol {
 #include <lua.hpp>
 #endif // C++ Mangling for Lua
 
-#if defined(__cpp_noexcept_function_type) && (__cpp_noexcept_function_type >= 201510L)
-#ifndef SOL_NOEXCEPT_FUNCTION_TYPE
-#define SOL_NOEXCEPT_FUNCTION_TYPE 1
-#endif // noexcept is part of a function's type
-#endif
-
-#if defined(_WIN32) || defined(_MSC_VER)
-#ifndef SOL_CODECVT_SUPPORT
-#define SOL_CODECVT_SUPPORT 1
-#endif // sol codecvt support
-#elif defined(__GNUC__)
-#if __GNUC__ >= 5
-#ifndef SOL_CODECVT_SUPPORT
-#define SOL_CODECVT_SUPPORT 1
-#endif // codecvt support
-#endif // g++ 5.x.x (MinGW too)
-#else
-#endif // Windows/VC++ vs. g++ vs Others
-
 #ifdef LUAJIT_VERSION
 #ifndef SOL_LUAJIT
 #define SOL_LUAJIT
@@ -973,61 +1035,6 @@ namespace sol {
 #else
 #define SOL_LUA_VERSION 502
 #endif // Lua Version 502, 501 || luajit, 500 
-
-#ifdef _MSC_VER
-#ifdef _DEBUG
-#ifndef NDEBUG
-#ifndef SOL_CHECK_ARGUMENTS
-#endif // Check Arguments
-#ifndef SOL_SAFE_USERTYPE
-#define SOL_SAFE_USERTYPE
-#endif // Safe Usertypes
-#endif // NDEBUG
-#endif // Debug
-
-#ifndef _CPPUNWIND
-#ifndef SOL_NO_EXCEPTIONS
-#define SOL_NO_EXCEPTIONS 1
-#endif
-#endif // Automatic Exceptions
-
-#ifndef _CPPRTTI
-#ifndef SOL_NO_RTTI
-#define SOL_NO_RTTI 1
-#endif
-#endif // Automatic RTTI
-
-#elif defined(__GNUC__) || defined(__clang__)
-
-#ifndef NDEBUG
-#ifndef __OPTIMIZE__
-#ifndef SOL_CHECK_ARGUMENTS
-#endif // Check Arguments
-#ifndef SOL_SAFE_USERTYPE
-#define SOL_SAFE_USERTYPE
-#endif // Safe Usertypes
-#endif // g++ optimizer flag
-#endif // Not Debug
-
-#ifndef __EXCEPTIONS
-#ifndef SOL_NO_EXCEPTIONS
-#define SOL_NO_EXCEPTIONS 1
-#endif
-#endif // No Exceptions
-
-#ifndef __GXX_RTTI
-#ifndef SOL_NO_RTII
-#define SOL_NO_RTTI 1
-#endif
-#endif // No RTTI
-
-#endif // vc++ || clang++/g++
-
-#ifndef SOL_SAFE_USERTYPE
-#ifdef SOL_CHECK_ARGUMENTS
-#define SOL_SAFE_USERTYPE
-#endif // Turn on Safety for all
-#endif // Safe Usertypes
 
 // end of sol/compatibility/version.hpp
 
@@ -3172,16 +3179,23 @@ namespace sol {
 
 #ifdef SOL_NO_EXCEPTIONS
 		template <lua_CFunction f>
-		int static_trampoline(lua_State* L) {
+		int static_trampoline(lua_State* L) noexcept {
 			return f(L);
 		}
 
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+		template <lua_CFunction_noexcept f>
+		int static_trampoline_noexcept(lua_State* L) noexcept {
+			return f(L);
+		}
+#endif
+
 		template <typename Fx, typename... Args>
-		int trampoline(lua_State* L, Fx&& f, Args&&... args) {
+		int trampoline(lua_State* L, Fx&& f, Args&&... args) noexcept {
 			return f(L, std::forward<Args>(args)...);
 		}
 
-		inline int c_trampoline(lua_State* L, lua_CFunction f) {
+		inline int c_trampoline(lua_State* L, lua_CFunction f) noexcept {
 			return trampoline(L, f);
 		}
 #else
@@ -3198,7 +3212,6 @@ namespace sol {
 			}
 #if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			catch (...) {
-				std::exception_ptr eptr = std::current_exception();
 				lua_pushstring(L, "caught (...) exception");
 			}
 #endif
@@ -3206,24 +3219,20 @@ namespace sol {
 		}
 
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+#if 0 
 		template <lua_CFunction_noexcept f>
-		int static_trampoline(lua_State* L) {
-			try {
-				return f(L);
-			}
-			catch (const char *s) {
-				lua_pushstring(L, s);
-			}
-			catch (const std::exception& e) {
-				lua_pushstring(L, e.what());
-			}
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
-			catch (...) {
-				std::exception_ptr eptr = std::current_exception();
-				lua_pushstring(L, "caught (...) exception");
-			}
-#endif
-			return lua_error(L);
+		int static_trampoline(lua_State* L) noexcept {
+#else
+		template <lua_CFunction_noexcept f>
+		int static_trampoline_noexcept(lua_State* L) noexcept {
+#endif // impossible
+			return f(L);
+		}
+
+#else
+		template <lua_CFunction f>
+		int static_trampoline_noexcept(lua_State* L) noexcept {
+			return f(L);
 		}
 #endif // noexcept lua_CFunction type
 
@@ -3253,6 +3262,21 @@ namespace sol {
 			return trampoline(L, f);
 		}
 #endif // Exceptions vs. No Exceptions
+
+		template <typename F, F fx>
+		inline int typed_static_trampoline_raw(std::true_type, lua_State* L) {
+			return static_trampoline_noexcept<fx>(L);
+		}
+
+		template <typename F, F fx>
+		inline int typed_static_trampoline_raw(std::false_type, lua_State* L) {
+			return static_trampoline<fx>(L);
+		}
+
+		template <typename F, F fx>
+		inline int typed_static_trampoline(lua_State* L) {
+			return typed_static_trampoline_raw<F, fx>(std::integral_constant<bool, meta::bind_traits<F>::is_noexcept>(), L);
+		}
 
 		template <typename T>
 		struct unique_usertype {};
@@ -6788,6 +6812,23 @@ namespace sol {
 				return 1;
 			}
 		};
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+		template<>
+		struct pusher<std::remove_pointer_t<detail::lua_CFunction_noexcept>> {
+			static int push(lua_State* L, detail::lua_CFunction_noexcept func, int n = 0) {
+				lua_pushcclosure(L, func, n);
+				return 1;
+			}
+		};
+
+		template<>
+		struct pusher<detail::lua_CFunction_noexcept> {
+			static int push(lua_State* L, detail::lua_CFunction_noexcept func, int n = 0) {
+				lua_pushcclosure(L, func, n);
+				return 1;
+			}
+		};
+#endif // noexcept function type
 
 		template<>
 		struct pusher<c_closure> {
@@ -7977,7 +8018,7 @@ namespace sol {
 
 	template <typename F, typename = void>
 	struct wrapper {
-		typedef lua_bind_traits<F> traits_type;
+        typedef lua_bind_traits<meta::unqualified_t<F>> traits_type;
 		typedef typename traits_type::args_list args_list;
 		typedef typename traits_type::args_list free_args_list;
 		typedef typename traits_type::returns_list returns_list;
@@ -7996,8 +8037,8 @@ namespace sol {
 	};
 
 	template <typename F>
-	struct wrapper<F, std::enable_if_t<std::is_function<meta::unqualified_t<std::remove_pointer_t<F>>>::value>> {
-		typedef lua_bind_traits<F> traits_type;
+    struct wrapper<F, std::enable_if_t<std::is_function<std::remove_pointer_t<meta::unqualified_t<F>>>::value>> {
+        typedef lua_bind_traits<std::remove_pointer_t<meta::unqualified_t<F>>> traits_type;
 		typedef typename traits_type::args_list args_list;
 		typedef typename traits_type::args_list free_args_list;
 		typedef typename traits_type::returns_list returns_list;
@@ -8030,7 +8071,7 @@ namespace sol {
 
 	template <typename F>
 	struct wrapper<F, std::enable_if_t<std::is_member_object_pointer<meta::unqualified_t<F>>::value>> {
-		typedef lua_bind_traits<F> traits_type;
+        typedef lua_bind_traits<meta::unqualified_t<F>> traits_type;
 		typedef typename traits_type::object_type object_type;
 		typedef typename traits_type::return_type return_type;
 		typedef typename traits_type::args_list args_list;
@@ -8630,6 +8671,14 @@ namespace sol {
 				return f(L);
 			}
 		};
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+		template <bool is_index, bool is_variable, bool checked, int boost, typename C>
+		struct agnostic_lua_call_wrapper<detail::lua_CFunction_noexcept, is_index, is_variable, checked, boost, C> {
+			static int call(lua_State* L, detail::lua_CFunction_noexcept f) {
+				return f(L);
+			}
+		};
+#endif // noexcept function types
 
 		template <bool is_index, bool is_variable, bool checked, int boost, typename C>
 		struct agnostic_lua_call_wrapper<no_prop, is_index, is_variable, checked, boost, C> {
@@ -9113,7 +9162,7 @@ namespace sol {
 		}
 
 		template <typename F, F fx>
-		int call_wrapper_entry(lua_State* L) {
+		int call_wrapper_entry(lua_State* L) noexcept(meta::bind_traits<F>::is_noexcept) {
 			return call_wrapper_function<F, fx>(std::is_member_function_pointer<meta::unqualified_t<F>>(), L);
 		}
 
@@ -9126,15 +9175,30 @@ namespace sol {
 			}
 		};
 
+		template <typename F, F fx>
+		inline int c_call_raw(std::true_type, lua_State* L) {
+			return fx(L);
+		}
+
+		template <typename F, F fx>
+		inline int c_call_raw(std::false_type, lua_State* L) {
+#ifdef __clang__
+			return detail::trampoline(L, function_detail::call_wrapper_entry<F, fx>);
+#else
+			return detail::typed_static_trampoline<decltype(&function_detail::call_wrapper_entry<F, fx>), &function_detail::call_wrapper_entry<F, fx>>(L);
+#endif // fuck you clang :c
+		}
+
 	} // function_detail
 
 	template <typename F, F fx>
 	inline int c_call(lua_State* L) {
-#ifdef __clang__
-		return detail::trampoline(L, function_detail::call_wrapper_entry<F, fx>);
-#else
-		return detail::static_trampoline<(&function_detail::call_wrapper_entry<F, fx>)>(L);
-#endif // fuck you clang :c
+		typedef meta::unqualified_t<F> Fu;
+		return function_detail::c_call_raw<F, fx>(std::integral_constant<bool, std::is_same<Fu, lua_CFunction>::value
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+			|| std::is_same<Fu, detail::lua_CFunction_noexcept>::value
+#endif 
+		>(), L);
 	}
 
 	template <typename F, F f>
@@ -9167,16 +9231,16 @@ namespace sol {
 		template<typename Function>
 		struct upvalue_free_function {
 			typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-			typedef lua_bind_traits<function_type> traits_type;
+			typedef meta::bind_traits<function_type> traits_type;
 
-			static int real_call(lua_State* L) {
+			static int real_call(lua_State* L) noexcept(traits_type::is_noexcept) {
 				auto udata = stack::stack_detail::get_as_upvalues<function_type*>(L);
 				function_type* fx = udata.first;
 				return call_detail::call_wrapped<void, true, false>(L, fx);
 			}
 
 			static int call(lua_State* L) {
-				return detail::static_trampoline<(&real_call)>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -9189,7 +9253,7 @@ namespace sol {
 			typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 			typedef lua_bind_traits<function_type> traits_type;
 
-			static int real_call(lua_State* L) {
+			static int real_call(lua_State* L) noexcept(traits_type::is_noexcept) {
 				// Layout:
 				// idx 1...n: verbatim data of member function pointer
 				// idx n + 1: is the object's void pointer
@@ -9203,7 +9267,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::static_trampoline<(&real_call)>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -9216,7 +9280,7 @@ namespace sol {
 			typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 			typedef lua_bind_traits<function_type> traits_type;
 
-			static int real_call(lua_State* L) {
+			static int real_call(lua_State* L) noexcept(traits_type::is_noexcept) {
 				// Layout:
 				// idx 1...n: verbatim data of member variable pointer
 				// idx n + 1: is the object's void pointer
@@ -9237,7 +9301,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::static_trampoline<(&real_call)>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -9250,7 +9314,7 @@ namespace sol {
 			typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 			typedef lua_bind_traits<function_type> traits_type;
 
-			static int real_call(lua_State* L) {
+			static int real_call(lua_State* L) noexcept(traits_type::is_noexcept) {
 				// Layout:
 				// idx 1...n: verbatim data of member variable pointer
 				// idx n + 1: is the object's void pointer
@@ -9269,7 +9333,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::static_trampoline<(&real_call)>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -9282,7 +9346,7 @@ namespace sol {
 			typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 			typedef lua_bind_traits<function_type> traits_type;
 
-			static int real_call(lua_State* L) {
+			static int real_call(lua_State* L) noexcept(traits_type::is_noexcept) {
 				// Layout:
 				// idx 1...n: verbatim data of member variable pointer
 				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L);
@@ -9291,7 +9355,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::static_trampoline<(&real_call)>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -9302,9 +9366,8 @@ namespace sol {
 		template<typename T, typename Function>
 		struct upvalue_this_member_variable {
 			typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-			typedef lua_bind_traits<function_type> traits_type;
 
-			static int real_call(lua_State* L) {
+			static int real_call(lua_State* L) noexcept(false) {
 				// Layout:
 				// idx 1...n: verbatim data of member variable pointer
 				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L);
@@ -9320,7 +9383,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::static_trampoline<(&real_call)>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -9333,7 +9396,7 @@ namespace sol {
 			typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 			typedef lua_bind_traits<function_type> traits_type;
 
-			static int real_call(lua_State* L) {
+			static int real_call(lua_State* L) noexcept(false) {
 				// Layout:
 				// idx 1...n: verbatim data of member variable pointer
 				auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L);
@@ -9347,7 +9410,7 @@ namespace sol {
 			}
 
 			static int call(lua_State* L) {
-				return detail::static_trampoline<(&real_call)>(L);
+				return detail::typed_static_trampoline<decltype(&real_call), &real_call>(L);
 			}
 
 			int operator()(lua_State* L) {
@@ -9365,11 +9428,11 @@ namespace sol {
 	namespace function_detail {
 		template<typename Func>
 		struct functor_function {
-			typedef meta::unwrapped_t<meta::unqualified_t<Func>> Function;
-			Function fx;
+			typedef std::decay_t<meta::unwrap_unqualified_t<Func>> function_type;
+			function_type fx;
 
 			template<typename... Args>
-			functor_function(Function f, Args&&... args) : fx(std::move(f), std::forward<Args>(args)...) {}
+			functor_function(function_type f, Args&&... args) : fx(std::move(f), std::forward<Args>(args)...) {}
 
 			int call(lua_State* L) {
 				return call_detail::call_wrapped<void, true, false>(L, fx);
@@ -9779,9 +9842,15 @@ namespace sol {
 				stack::push(L, f);
 			}
 
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+			static void select_function(std::true_type, lua_State* L, detail::lua_CFunction_noexcept f) {
+				stack::push(L, f);
+			}
+#endif // noexcept function type
+
 			template <typename Fx, typename... Args, meta::disable<meta::any<std::is_base_of<reference, meta::unqualified_t<Fx>>, std::is_base_of<stack_reference, meta::unqualified_t<Fx>>>> = meta::enabler>
 			static void select(lua_State* L, Fx&& fx, Args&&... args) {
-				select_function(std::is_function<meta::unqualified_t<Fx>>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
+				select_function(std::is_function<std::remove_pointer_t<meta::unqualified_t<Fx>>>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 
 			template <typename Fx, meta::enable<meta::any<std::is_base_of<reference, meta::unqualified_t<Fx>>, std::is_base_of<stack_reference, meta::unqualified_t<Fx>>>> = meta::enabler>
@@ -9843,7 +9912,15 @@ namespace sol {
 		};
 
 		template<typename Signature>
-		struct pusher<Signature, std::enable_if_t<meta::all<std::is_function<Signature>, meta::neg<std::is_same<Signature, lua_CFunction>>, meta::neg<std::is_same<Signature, std::remove_pointer_t<lua_CFunction>>>>::value>> {
+		struct pusher<Signature, std::enable_if_t<meta::all<
+			std::is_function<Signature>, 
+			meta::neg<std::is_same<Signature, lua_CFunction>>,
+			meta::neg<std::is_same<Signature, std::remove_pointer_t<lua_CFunction>>>
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+			, meta::neg<std::is_same<Signature, detail::lua_CFunction_noexcept>>,
+			meta::neg<std::is_same<Signature, std::remove_pointer_t<detail::lua_CFunction_noexcept>>>
+#endif // noexcept function types
+		>::value>> {
 			template <typename F>
 			static int push(lua_State* L, F&& f) {
 				return pusher<function_sig<>>{}.push(L, std::forward<F>(f));
@@ -11623,20 +11700,20 @@ namespace sol {
 
 		template <std::size_t Idx, bool is_index = true, bool is_variable = false>
 		static int call(lua_State* L) {
-			return detail::static_trampoline<(&real_call<Idx, is_index, is_variable>)>(L);
+			return detail::typed_static_trampoline<decltype(&real_call<Idx, is_index, is_variable>), (&real_call<Idx, is_index, is_variable>)>(L);
 		}
 
 		template <std::size_t Idx, bool is_index = true, bool is_variable = false>
 		static int call_with(lua_State* L) {
-			return detail::static_trampoline<(&real_call_with<Idx, is_index, is_variable>)>(L);
+			return detail::typed_static_trampoline<decltype(&real_call_with<Idx, is_index, is_variable>), (&real_call_with<Idx, is_index, is_variable>)>(L);
 		}
 
 		static int index_call(lua_State* L) {
-			return detail::static_trampoline<(&real_index_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_index_call), (&real_index_call)>(L);
 		}
 
 		static int new_index_call(lua_State* L) {
-			return detail::static_trampoline<(&real_new_index_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_new_index_call), (&real_new_index_call)>(L);
 		}
 
 		virtual int push_um(lua_State* L) override {
@@ -11922,7 +11999,7 @@ namespace sol {
 #if defined(__clang__)
 			return detail::trampoline(L, &simple_real_index_call<T, has_indexing>);
 #else
-			return detail::static_trampoline<(&simple_real_index_call<T, has_indexing>)>(L);
+			return detail::typed_static_trampoline<decltype(&simple_real_index_call<T, has_indexing>), (&simple_real_index_call<T, has_indexing>)>(L);
 #endif
 		}
 
@@ -11931,7 +12008,7 @@ namespace sol {
 #if defined(__clang__)
 			return detail::trampoline(L, &simple_real_new_index_call<T, has_indexing>);
 #else
-			return detail::static_trampoline<(&simple_real_new_index_call<T, has_indexing>)>(L);
+			return detail::typed_static_trampoline<decltype(&simple_real_new_index_call<T, has_indexing>), (&simple_real_new_index_call<T, has_indexing>)>(L);
 #endif
 		}
 	}
@@ -12790,39 +12867,39 @@ namespace sol {
 		}
 
 		static int add_call(lua_State*L) {
-			return detail::static_trampoline<(&real_add_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_add_call), &real_add_call>(L);
 		}
 
 		static int insert_call(lua_State*L) {
-			return detail::static_trampoline<(&real_insert_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_insert_call), &real_insert_call>(L);
 		}
 
 		static int clear_call(lua_State*L) {
-			return detail::static_trampoline<(&real_clear_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_clear_call), &real_clear_call>(L);
 		}
 
 		static int find_call(lua_State*L) {
-			return detail::static_trampoline<(&real_find_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_find_call), &real_find_call>(L);
 		}
 
 		static int length_call(lua_State*L) {
-			return detail::static_trampoline<(&real_length_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_length_call), &real_length_call>(L);
 		}
 
 		static int pairs_next_call(lua_State*L) {
-			return detail::static_trampoline<(&real_pairs_next_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_pairs_next_call), &real_pairs_next_call>(L);
 		}
 
 		static int pairs_call(lua_State*L) {
-			return detail::static_trampoline<(&real_pairs_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_pairs_call), &real_pairs_call>(L);
 		}
 
 		static int index_call(lua_State*L) {
-			return detail::static_trampoline<(&real_index_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_index_call), &real_index_call>(L);
 		}
 
 		static int new_index_call(lua_State*L) {
-			return detail::static_trampoline<(&real_new_index_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_new_index_call), &real_new_index_call>(L);
 		}
 	};
 

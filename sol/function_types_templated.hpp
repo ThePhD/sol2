@@ -99,15 +99,7 @@ namespace sol {
 
 		template <typename F, F fx>
 		inline int c_call_raw(std::true_type, lua_State* L) {
-#ifdef __clang__
-			return detail::trampoline(L, fx);
-#else
-#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
-			return meta::bind_traits<F>::is_noexcept ? detail::static_trampoline_noexcept<fx>(L) : detail::static_trampoline<fx>(L);
-#else
-			return detail::static_trampoline<fx>(L);
-#endif
-#endif // fuck you clang :c
+			return fx(L);
 		}
 
 		template <typename F, F fx>
@@ -115,7 +107,7 @@ namespace sol {
 #ifdef __clang__
 			return detail::trampoline(L, function_detail::call_wrapper_entry<F, fx>);
 #else
-			return detail::static_trampoline<(&function_detail::call_wrapper_entry<F, fx>)>(L);
+			return detail::typed_static_trampoline<decltype(&function_detail::call_wrapper_entry<F, fx>), &function_detail::call_wrapper_entry<F, fx>>(L);
 #endif // fuck you clang :c
 		}
 
