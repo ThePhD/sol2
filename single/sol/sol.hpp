@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-06-20 03:04:07.874965 UTC
-// This header was generated with sol v2.17.5 (revision 5363a63)
+// Generated 2017-06-20 03:06:38.649640 UTC
+// This header was generated with sol v2.17.5 (revision 5468ab8)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1281,7 +1281,6 @@ void *luaL_testudata(lua_State *L, int i, const char *tname);
 int lua_absindex(lua_State *L, int i);
 void lua_rawgetp(lua_State *L, int i, const void *p);
 void lua_rawsetp(lua_State *L, int i, const void *p);
-void *luaL_testudata(lua_State *L, int i, const char *tname);
 void lua_getuservalue(lua_State *L, int i);
 void lua_setuservalue(lua_State *L, int i);
 int luaL_getsubtable(lua_State *L, int i, const char *name);

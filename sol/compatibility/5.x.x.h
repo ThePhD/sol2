@@ -50,7 +50,6 @@ void *luaL_testudata(lua_State *L, int i, const char *tname);
 int lua_absindex(lua_State *L, int i);
 void lua_rawgetp(lua_State *L, int i, const void *p);
 void lua_rawsetp(lua_State *L, int i, const void *p);
-void *luaL_testudata(lua_State *L, int i, const char *tname);
 void lua_getuservalue(lua_State *L, int i);
 void lua_setuservalue(lua_State *L, int i);
 int luaL_getsubtable(lua_State *L, int i, const char *name);
