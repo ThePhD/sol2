@@ -28,6 +28,9 @@
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
+#ifdef SOL_USING_CXX_LUAJIT
+#include <luajit.h>
+#endif // C++ LuaJIT ... whatever that means
 #else
 #include <lua.hpp>
 #endif // C++ Mangling for Lua

@@ -33,28 +33,26 @@
 #define lua_pushglobaltable(L) \
   lua_pushvalue(L, LUA_GLOBALSINDEX)
 
-#ifndef SOL_LUAJIT
-#define luaL_newlib(L, l) \
-  (lua_newtable((L)),luaL_setfuncs((L), (l), 0))
-#else
-#if SOL_LUAJIT_VERSION < 20100
-#define luaL_newlib(L, l) \
-  (lua_newtable((L)),luaL_setfuncs((L), (l), 0))
-#endif // LuaJIT-2.1.0-beta3 added this in itself
-#endif // LuaJIT Compatibility
-
 void luaL_checkversion(lua_State *L);
 
-int lua_absindex(lua_State *L, int i);
+#if !defined(SOL_LUAJIT_VERSION) || SOL_LUAJIT_VERSION < 20100
 void lua_copy(lua_State *L, int from, int to);
+lua_Integer lua_tointegerx(lua_State *L, int i, int *isnum);
+lua_Number lua_tonumberx(lua_State *L, int i, int *isnum);
+const lua_Number *lua_version(lua_State *L);
+void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup);
+void luaL_setmetatable(lua_State *L, const char *tname);
+void *luaL_testudata(lua_State *L, int i, const char *tname);
+#define luaL_newlib(L, l) \
+  (lua_newtable((L)),luaL_setfuncs((L), (l), 0))
+#endif // LuaJIT-2.1.0-beta3 added these compatibility functions
+
+int lua_absindex(lua_State *L, int i);
 void lua_rawgetp(lua_State *L, int i, const void *p);
 void lua_rawsetp(lua_State *L, int i, const void *p);
 void *luaL_testudata(lua_State *L, int i, const char *tname);
-lua_Number lua_tonumberx(lua_State *L, int i, int *isnum);
 void lua_getuservalue(lua_State *L, int i);
 void lua_setuservalue(lua_State *L, int i);
-void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup);
-void luaL_setmetatable(lua_State *L, const char *tname);
 int luaL_getsubtable(lua_State *L, int i, const char *name);
 void luaL_traceback(lua_State *L, lua_State *L1, const char *msg, int level);
 int luaL_fileresult(lua_State *L, int stat, const char *fname);
