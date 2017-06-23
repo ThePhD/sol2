@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-06-20 03:06:38.649640 UTC
-// This header was generated with sol v2.17.5 (revision 5468ab8)
+// Generated 2017-06-23 22:06:34.237732 UTC
+// This header was generated with sol v2.17.5 (revision 6b34a15)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -829,6 +829,24 @@ namespace sol {
 				static std::false_type test(...);
 			};
 
+			struct has_key_type_impl {
+				template<typename T, typename U = unqualified_t<T>,
+					typename V = typename U::key_type>
+					static std::true_type test(int);
+
+				template<typename...>
+				static std::false_type test(...);
+			};
+
+			struct has_mapped_type_impl {
+				template<typename T, typename U = unqualified_t<T>,
+					typename V = typename U::mapped_type>
+					static std::true_type test(int);
+
+				template<typename...>
+				static std::false_type test(...);
+			};
+
 			struct has_key_value_pair_impl {
 				template<typename T, typename U = unqualified_t<T>,
 					typename V = typename U::value_type,
@@ -867,6 +885,15 @@ namespace sol {
 
 		template<typename T>
 		struct has_key_value_pair : decltype(meta_detail::has_key_value_pair_impl::test<T>(0)) {};
+
+		template<typename T>
+		struct has_key_type : decltype(meta_detail::has_key_type_impl::test<T>(0)) {};
+
+		template<typename T>
+		struct has_mapped_type : decltype(meta_detail::has_mapped_type_impl::test<T>(0)) {};
+
+		template <typename T>
+		struct is_associative : meta::all<has_key_value_pair<T>, has_mapped_type<T>> {};
 
 		template <typename T>
 		using is_string_constructible = any<std::is_same<unqualified_t<T>, const char*>, std::is_same<unqualified_t<T>, char>, std::is_same<unqualified_t<T>, std::string>, std::is_same<unqualified_t<T>, std::initializer_list<char>>>;
@@ -3539,6 +3566,11 @@ namespace sol {
 	template <typename T>
 	as_table_t<T> as_table(T&& container) {
 		return as_table_t<T>(std::forward<T>(container));
+	}
+
+	template <typename T>
+	nested<T> as_nested(T&& container) {
+		return as_nested<T>(std::forward<T>(container));
 	}
 
 	struct this_state {
@@ -12520,7 +12552,7 @@ namespace sol {
 
 	template <typename Raw, typename C = void>
 	struct container_usertype_metatable {
-		typedef meta::has_key_value_pair<meta::unqualified_t<Raw>> is_associative;
+		typedef meta::is_associative<std::remove_pointer_t<meta::unqualified_t<Raw>>> is_associative;
 		typedef meta::unqualified_t<Raw> T;
 		typedef typename T::iterator I;
 		typedef std::conditional_t<is_associative::value, typename T::value_type, std::pair<std::size_t, typename T::value_type>> KV;
@@ -12555,6 +12587,25 @@ namespace sol {
 #endif // Safe getting with error
 		}
 
+		static int delegate_call(lua_State* L) {
+			static std::unordered_map<std::string, lua_CFunction> calls{
+				{ "add", &real_add_call },
+				{ "insert", &real_insert_call },
+				{ "clear", &real_clear_call },
+				{ "find", &real_find_call },
+				{ "get", &real_get_call }
+			};
+			auto maybename = stack::check_get<std::string>(L, 2);
+			if (maybename) {
+				auto& name = *maybename;
+				auto it = calls.find(name);
+				if (it != calls.cend()) {
+					return stack::push(L, it->second);
+				}
+			}
+			return stack::push(L, lua_nil);
+		}
+
 		static int real_index_call_associative(std::true_type, lua_State* L) {
 			auto k = stack::check_get<K>(L, 2);
 			if (k) {
@@ -12567,22 +12618,7 @@ namespace sol {
 				}
 			}
 			else {
-				auto maybename = stack::check_get<string_detail::string_shim>(L, 2);
-				if (maybename) {
-					auto& name = *maybename;
-					if (name == "add") {
-						return stack::push(L, &add_call);
-					}
-					else if (name == "insert") {
-						return stack::push(L, &insert_call);
-					}
-					else if (name == "clear") {
-						return stack::push(L, &clear_call);
-					}
-					else if (name == "find") {
-						return stack::push(L, &find_call);
-					}
-				}
+				return delegate_call(L);
 			}
 			return stack::push(L, lua_nil);
 		}
@@ -12602,28 +12638,17 @@ namespace sol {
 				return stack::stack_detail::push_reference<push_type>(L, *it);
 			}
 			else {
-				auto maybename = stack::check_get<string_detail::string_shim>(L, 2);
-				if (maybename) {
-					auto& name = *maybename;
-					if (name == "add") {
-						return stack::push(L, &add_call);
-					}
-					else if (name == "insert") {
-						return stack::push(L, &insert_call);
-					}
-					else if (name == "clear") {
-						return stack::push(L, &clear_call);
-					}
-					else if (name == "find") {
-						return stack::push(L, &find_call);
-					}
-				}
+				return delegate_call(L);
 			}
 
 			return stack::push(L, lua_nil);
 		}
 
 		static int real_index_call(lua_State* L) {
+			return real_index_call_associative(is_associative(), L);
+		}
+
+		static int real_get_call(lua_State* L) {
 			return real_index_call_associative(is_associative(), L);
 		}
 
@@ -12635,12 +12660,12 @@ namespace sol {
 			return luaL_error(L, "sol: cannot write to a const value type or an immutable iterator (e.g., std::set)");
 		}
 
-		static int real_new_index_call_const(std::true_type, std::true_type, lua_State* L) {
+		static int real_new_index_call_fixed(std::true_type, lua_State* L) {
 			auto& src = get_src(L);
 #ifdef SOL_CHECK_ARGUMENTS
 			auto maybek = stack::check_get<K>(L, 2);
 			if (!maybek) {
-				return luaL_error(L, "sol: improper key of type %s to a %s", lua_typename(L, static_cast<int>(type_of(L, 2))), detail::demangle<T>().c_str());
+				return luaL_error(L, "sol: improper key of type %s for %s", lua_typename(L, static_cast<int>(type_of(L, 2))), detail::demangle<T>().c_str());
 			}
 			K& k = *maybek;
 #else
@@ -12656,6 +12681,33 @@ namespace sol {
 				src.insert(it, { std::move(k), stack::get<V>(L, 3) });
 			}
 			return 0;
+		}
+
+		static int real_new_index_call_fixed(std::false_type, lua_State* L) {
+			auto& src = get_src(L);
+#ifdef SOL_CHECK_ARGUMENTS
+			auto maybek = stack::check_get<K>(L, 2);
+			if (!maybek) {
+				return luaL_error(L, "sol: improper key of type %s for %s", lua_typename(L, static_cast<int>(type_of(L, 2))), detail::demangle<T>().c_str());
+			}
+			K& k = *maybek;
+#else
+			K k = stack::get<K>(L, 2);
+#endif
+			using std::end;
+			auto it = detail::find(src, k);
+			if (it != end(src)) {
+				auto& v = *it;
+				v.second = stack::get<V>(L, 3);
+			}
+			else {
+				return luaL_error(L, "sol: cannot insert key of type %s to into %s", lua_typename(L, static_cast<int>(type_of(L, 2))), detail::demangle<T>().c_str());
+			}
+			return 0;
+		}
+
+		static int real_new_index_call_const(std::true_type, std::true_type, lua_State* L) {
+			return real_new_index_call_fixed(std::integral_constant<bool, detail::has_insert<T>::value>(), L);
 		}
 
 		static int real_new_index_call_const(std::true_type, std::false_type, lua_State* L) {
@@ -12692,7 +12744,7 @@ namespace sol {
 		}
 
 		static int real_new_index_call(lua_State* L) {
-			return real_new_index_call_const(meta::neg<meta::any<std::is_const<V>, std::is_const<IR>, meta::neg<std::is_copy_assignable<V>>>>(), is_associative(), L);
+			return real_new_index_call_const(meta::neg<meta::any<std::is_const<V>, std::is_const<IR>, meta::neg<std::is_copy_assignable<V>>>>(), meta::all<is_associative, detail::has_insert<T>>(), L);
 		}
 
 		static int real_pairs_next_call_assoc(std::true_type, lua_State* L) {
@@ -12896,6 +12948,10 @@ namespace sol {
 			return detail::typed_static_trampoline<decltype(&real_pairs_call), (&real_pairs_call)>(L);
 		}
 
+		static int get_call(lua_State*L) {
+			return detail::typed_static_trampoline<decltype(&real_get_call), (&real_get_call)>(L);
+		}
+
 		static int index_call(lua_State*L) {
 			return detail::typed_static_trampoline<decltype(&real_index_call), (&real_index_call)>(L);
 		}
@@ -12910,12 +12966,13 @@ namespace sol {
 			template <typename T>
 			inline auto container_metatable() {
 				typedef container_usertype_metatable<std::remove_pointer_t<T>> meta_cumt;
-				std::array<luaL_Reg, 11> reg = { {
+				std::array<luaL_Reg, 12> reg = { {
 					{ "__index", &meta_cumt::index_call },
 					{ "__newindex", &meta_cumt::new_index_call },
 					{ "__pairs", &meta_cumt::pairs_call },
 					{ "__ipairs", &meta_cumt::pairs_call },
 					{ "__len", &meta_cumt::length_call },
+					{ "get", &meta_cumt::get_call },
 					{ "clear", &meta_cumt::clear_call },
 					{ "insert", &meta_cumt::insert_call },
 					{ "add", &meta_cumt::add_call },

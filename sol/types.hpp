@@ -399,6 +399,11 @@ namespace sol {
 		return as_table_t<T>(std::forward<T>(container));
 	}
 
+	template <typename T>
+	nested<T> as_nested(T&& container) {
+		return as_nested<T>(std::forward<T>(container));
+	}
+
 	struct this_state {
 		lua_State* L;
 		operator lua_State* () const {

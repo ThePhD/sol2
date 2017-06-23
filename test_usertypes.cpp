@@ -671,17 +671,17 @@ TEST_CASE("usertype/private-constructible", "Check to make sure special snowflak
 }
 
 TEST_CASE("usertype/const-pointer", "Make sure const pointers can be taken") {
-	struct A { int x = 201; };
-	struct B {
-		int foo(const A* a) { return a->x; };
+	struct A_x { int x = 201; };
+	struct B_foo {
+		int foo(const A_x* a) { return a->x; };
 	};
 
 	sol::state lua;
-	lua.new_usertype<B>("B", 
-		"foo", &B::foo
+	lua.new_usertype<B_foo>("B", 
+		"foo", &B_foo::foo
 	);
-	lua.set("a", A());
-	lua.set("b", B());
+	lua.set("a", A_x());
+	lua.set("b", B_foo());
 	lua.script("x = b:foo(a)");
 	int x = lua["x"];
 	REQUIRE(x == 201);

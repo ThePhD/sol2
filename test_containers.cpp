@@ -11,16 +11,20 @@
 #include <set>
 #include <unordered_set>
 
-std::vector<int> test_table_return_one() {
-	return{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+auto test_table_return_one() {
+	return sol::as_table(std::vector<int>{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
 }
 
-std::vector<std::pair<std::string, int>> test_table_return_two() {
-	return{ { "one", 1 },{ "two", 2 },{ "three", 3 } };
+auto test_table_return_two() {
+	return sol::as_table(std::vector<std::pair<std::string, int>>{ { "one", 1 },{ "two", 2 },{ "three", 3 } });
 }
 
-std::map<std::string, std::string> test_table_return_three() {
-	return{ { "name", "Rapptz" },{ "friend", "ThePhD" },{ "project", "sol" } };
+auto test_table_return_three() {
+	return sol::as_table(std::map<std::string, std::string>{ { "name", "Rapptz" },{ "friend", "ThePhD" },{ "project", "sol" } });
+}
+
+auto test_table_return_four() {
+	return sol::as_table(std::array<std::pair<std::string, int>, 4>{ { { "one", 1 },{ "two", 2 },{ "three", 3 },{ "four", 4 } } });
 }
 
 TEST_CASE("containers/returns", "make sure that even references to vectors are being serialized as tables") {
@@ -249,10 +253,12 @@ TEST_CASE("containers/arbitrary-creation", "userdata and tables should be usable
 	lua.set_function("test_one", test_table_return_one);
 	lua.set_function("test_two", test_table_return_two);
 	lua.set_function("test_three", test_table_return_three);
+	lua.set_function("test_four", test_table_return_four);
 
 	REQUIRE_NOTHROW(lua.script("a = test_one()"));
 	REQUIRE_NOTHROW(lua.script("b = test_two()"));
 	REQUIRE_NOTHROW(lua.script("c = test_three()"));
+	REQUIRE_NOTHROW(lua.script("d = test_four()"));
 
 	REQUIRE_NOTHROW(lua.script("assert(#a == 10, 'error')"));
 	REQUIRE_NOTHROW(lua.script("assert(a[3] == 3, 'error')"));
@@ -260,10 +266,14 @@ TEST_CASE("containers/arbitrary-creation", "userdata and tables should be usable
 	REQUIRE_NOTHROW(lua.script("assert(b.three == 3, 'error')"));
 	REQUIRE_NOTHROW(lua.script("assert(c.name == 'Rapptz', 'error')"));
 	REQUIRE_NOTHROW(lua.script("assert(c.project == 'sol', 'error')"));
+	REQUIRE_NOTHROW(lua.script("assert(d.one == 1, 'error')"));
+	REQUIRE_NOTHROW(lua.script("assert(d.three == 3, 'error')"));
+	REQUIRE_NOTHROW(lua.script("assert(d.four == 4, 'error')"));
 
 	sol::table a = lua.get<sol::table>("a");
 	sol::table b = lua.get<sol::table>("b");
 	sol::table c = lua.get<sol::table>("c");
+	sol::table d = lua["d"];
 
 	REQUIRE(a.size() == 10ULL);
 	REQUIRE(a.get<int>(3) == 3);
@@ -271,6 +281,9 @@ TEST_CASE("containers/arbitrary-creation", "userdata and tables should be usable
 	REQUIRE(b.get<int>("three") == 3);
 	REQUIRE(c.get<std::string>("name") == "Rapptz");
 	REQUIRE(c.get<std::string>("project") == "sol");
+	REQUIRE(d.get<int>("one") == 1);
+	REQUIRE(d.get<int>("three") == 3);
+	REQUIRE(d.get<int>("four") == 4);
 }
 
 TEST_CASE("containers/extra-functions", "make sure the manipulation functions are present and usable and working across various container types") {
@@ -540,7 +553,7 @@ TEST_CASE("containers/to_args", "Test that the to_args abstractions works") {
 
 }
 
-TEST_CASE("containers/ipairs-test", "ensure that abstractions roundtrip properly and push nils to stop pairs / ipairs") {
+TEST_CASE("containers/ipairs-test", "ensure that abstractions roundtrip properly") {
 	struct thing {
 		int x = 20;
 	};
@@ -751,4 +764,60 @@ for k=1,#c do
 end
 )lua");
 #endif
+}
+
+TEST_CASE("containers/pairs", "test how well pairs work with the underlying system") {
+	sol::state lua;
+
+	lua.open_libraries(sol::lib::base);
+
+	std::vector<std::pair<std::string, int>> a{ { "one", 1 },{ "two", 2 },{ "three", 3 },{ "four", 4 },{ "five", 5 } };
+	std::array<std::pair<std::string, int>, 5> b{ { { "one", 1 },{ "two", 2 },{ "three", 3 },{ "four", 4 },{ "five", 5 } } };
+	//std::pair<std::string, int> c[5]{ { "one", 1 },{ "two", 2 },{ "three", 3 },{ "four", 4 },{ "five", 5 } };
+	//int d[5] = { 1, 2, 3, 4, 5 };
+
+	lua["a"] = std::ref(a);
+	lua["b"] = &b;
+	//lua["c"] = std::ref(c);
+	//lua["d"] = &d;
+
+	lua.script("av1, av2 = a:get(1)");
+	lua.script("bv1, bv2 = b:get(1)");
+	//lua.script("cv1, cv2 = c:get(1)");
+	//lua.script("dv1, dv2 = d:get(1)");
+
+	std::vector<std::pair<std::string, int>>& la = lua["a"];
+	std::array<std::pair<std::string, int>, 5>& lb = lua["b"];
+	//std::pair<std::string, int> (&lc)[5] = lua["c"];
+	//int (&lc)[5] = lua["d"];
+
+	std::pair<std::string, int>& va = la[0];
+	std::pair<std::string, int>& vb = lb[0];
+	//std::pair<std::string, int>& vc = lc[0];
+	//int vd = ld[0];
+	std::string av1 = lua["av1"];
+	int av2 = lua["av2"];
+	std::string bv1 = lua["bv1"];
+	int bv2 = lua["bv2"];
+	//std::string cv1 = lua["cv1"];
+	//int cv2 = lua["cv2"];
+	//int dv1 = lua["dv1"];
+	//sol::lua_nil_t dv2 = lua["dv2"];
+
+	REQUIRE(va.first == "one");
+	REQUIRE(va.second == 1);
+	REQUIRE(vb.first == "one");
+	REQUIRE(vb.second == 1);
+	//REQUIRE(vc.first == "one");
+	//REQUIRE(vc.second == 1);
+	//REQUIRE(vd == 1);
+
+	REQUIRE(av1 == "one");
+	REQUIRE(av2 == 1);
+	REQUIRE(bv1 == "one");
+	REQUIRE(bv2 == 1);
+	//REQUIRE(cv1 == "one");
+	//REQUIRE(cv2 == 1);
+	//REQUIRE(dv1 == 1);
+	//REQUIRE(dv2 == sol::lua_nil);
 }
