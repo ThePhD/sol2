@@ -154,6 +154,7 @@ namespace sol {
 
 		variadic_args() = default;
 		variadic_args(lua_State* luastate, int stackindex = -1) : L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lua_gettop(luastate)) {}
+		variadic_args(lua_State* luastate, int stackindex, int lastindex) : L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lastindex) {}
 		variadic_args(const variadic_args&) = default;
 		variadic_args& operator=(const variadic_args&) = default;
 		variadic_args(variadic_args&& o) : L(o.L), index(o.index), stacktop(o.stacktop) {

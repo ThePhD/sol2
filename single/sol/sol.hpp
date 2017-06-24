@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-06-23 22:06:34.237732 UTC
-// This header was generated with sol v2.17.5 (revision 6b34a15)
+// Generated 2017-06-24 14:16:16.927775 UTC
+// This header was generated with sol v2.17.5 (revision 17271c8)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -10751,6 +10751,7 @@ namespace sol {
 
 		variadic_args() = default;
 		variadic_args(lua_State* luastate, int stackindex = -1) : L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lua_gettop(luastate)) {}
+		variadic_args(lua_State* luastate, int stackindex, int lastindex) : L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lastindex) {}
 		variadic_args(const variadic_args&) = default;
 		variadic_args& operator=(const variadic_args&) = default;
 		variadic_args(variadic_args&& o) : L(o.L), index(o.index), stacktop(o.stacktop) {
