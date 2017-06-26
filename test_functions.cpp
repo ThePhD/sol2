@@ -1195,7 +1195,7 @@ TEST_CASE("functions/unique-overloading", "make sure overloading can work with p
 			lua.script("h(v2)");
 			lua.script("h(v3)");
 			lua.script("h(v4)");
-			lua.script("i(v1)");
+			lua.script("i(20, v1)");
 		}());
 	};
 	// LuaJIT segfaults hard on some Linux machines
