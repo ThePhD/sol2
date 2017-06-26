@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-06-24 14:16:16.927775 UTC
-// This header was generated with sol v2.17.5 (revision 17271c8)
+// Generated 2017-06-26 14:10:10.059447 UTC
+// This header was generated with sol v2.17.5 (revision 13370e7)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5707,7 +5707,7 @@ namespace sol {
 				}
 				int metatableindex = lua_gettop(L);
 				if (stack_detail::check_metatable<detail::unique_usertype<T>>(L, metatableindex)) {
-					void* memory = lua_touserdata(L, 1);
+					void* memory = lua_touserdata(L, index);
 					T** pointerpointer = static_cast<T**>(memory);
 					detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(static_cast<void*>(pointerpointer + 1));
 					bool success = &detail::usertype_unique_alloc_destroy<T, X> == pdx;
