@@ -671,17 +671,17 @@ TEST_CASE("usertype/private-constructible", "Check to make sure special snowflak
 }
 
 TEST_CASE("usertype/const-pointer", "Make sure const pointers can be taken") {
-	struct A { int x = 201; };
-	struct B {
-		int foo(const A* a) { return a->x; };
+	struct A_x { int x = 201; };
+	struct B_foo {
+		int foo(const A_x* a) { return a->x; };
 	};
 
 	sol::state lua;
-	lua.new_usertype<B>("B", 
-		"foo", &B::foo
+	lua.new_usertype<B_foo>("B", 
+		"foo", &B_foo::foo
 	);
-	lua.set("a", A());
-	lua.set("b", B());
+	lua.set("a", A_x());
+	lua.set("b", B_foo());
 	lua.script("x = b:foo(a)");
 	int x = lua["x"];
 	REQUIRE(x == 201);
@@ -1464,11 +1464,11 @@ TEST_CASE("usertype/unique_usertype-check", "make sure unique usertypes don't ge
 
 	sol::function my_func = lua["my_func"];
 	REQUIRE_NOTHROW([&]{
-	auto ent = std::make_shared<Entity>();
-	my_func(ent);
-	Entity ent2;
-	my_func(ent2);
-	my_func(std::make_shared<Entity>());
+		auto ent = std::make_shared<Entity>();
+		my_func(ent);
+		Entity ent2;
+		my_func(ent2);
+		my_func(std::make_shared<Entity>());
 	}());
 }
 
@@ -1476,9 +1476,12 @@ TEST_CASE("usertype/abstract-base-class", "Ensure that abstract base classes and
 	sol::state lua;
 	lua.new_usertype<abstract_A>("A", "a", &abstract_A::a);
 	lua.new_usertype<abstract_B>("B", sol::base_classes, sol::bases<abstract_A>());
-	lua.script(R"(local b = B.new()
+	REQUIRE_NOTHROW([&]() {
+		lua.script(R"(
+local b = B.new()
 b:a()
-)");
+		)");
+	});
 }
 
 TEST_CASE("usertype/as_function", "Ensure that variables can be turned into functions by as_function") {

@@ -430,7 +430,7 @@ namespace sol {
 				}
 				int metatableindex = lua_gettop(L);
 				if (stack_detail::check_metatable<detail::unique_usertype<T>>(L, metatableindex)) {
-					void* memory = lua_touserdata(L, 1);
+					void* memory = lua_touserdata(L, index);
 					T** pointerpointer = static_cast<T**>(memory);
 					detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(static_cast<void*>(pointerpointer + 1));
 					bool success = &detail::usertype_unique_alloc_destroy<T, X> == pdx;

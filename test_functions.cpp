@@ -1149,6 +1149,9 @@ TEST_CASE("functions/unique-overloading", "make sure overloading can work with p
 	auto print_up_test = [](std::unique_ptr<test>& x) {
 		REQUIRE(x->special_value == 21);
 	};
+	auto print_up_2_test = [](int, std::unique_ptr<test>& x) {
+		REQUIRE(x->special_value == 21);
+	};
 	auto print_sp_test = [](std::shared_ptr<test>& x) {
 		REQUIRE(x->special_value == 44);
 	};
@@ -1158,7 +1161,7 @@ TEST_CASE("functions/unique-overloading", "make sure overloading can work with p
 	auto print_ref_test = [](test& x) {
 		bool is_any = x.special_value == 17
 			|| x.special_value == 21
-			|| x. special_value == 44;
+			|| x.special_value == 44;
 		REQUIRE(is_any);
 	};
 	using f_t = void(test&);
@@ -1175,6 +1178,7 @@ TEST_CASE("functions/unique-overloading", "make sure overloading can work with p
 			std::ref(print_ptr_test)
 		));
 		lua.set_function("h", std::ref(fptr));
+		lua.set_function("i", std::move(print_up_2_test));
 
 		lua["v1"] = std::make_unique<test>(21);
 		lua["v2"] = std::make_shared<test>(44);
@@ -1191,6 +1195,7 @@ TEST_CASE("functions/unique-overloading", "make sure overloading can work with p
 			lua.script("h(v2)");
 			lua.script("h(v3)");
 			lua.script("h(v4)");
+			lua.script("i(20, v1)");
 		}());
 	};
 	// LuaJIT segfaults hard on some Linux machines
