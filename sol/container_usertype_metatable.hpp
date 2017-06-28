@@ -23,6 +23,7 @@
 #define SOL_CONTAINER_USERTYPE_HPP
 
 #include "stack.hpp"
+#include <unordered_map>
 
 namespace sol {
 	
@@ -108,7 +109,7 @@ namespace sol {
 
 	template <typename Raw, typename C = void>
 	struct container_usertype_metatable {
-		typedef meta::has_key_value_pair<meta::unqualified_t<Raw>> is_associative;
+		typedef meta::is_associative<std::remove_pointer_t<meta::unqualified_t<Raw>>> is_associative;
 		typedef meta::unqualified_t<Raw> T;
 		typedef typename T::iterator I;
 		typedef std::conditional_t<is_associative::value, typename T::value_type, std::pair<std::size_t, typename T::value_type>> KV;
@@ -143,6 +144,25 @@ namespace sol {
 #endif // Safe getting with error
 		}
 
+		static int delegate_call(lua_State* L) {
+			static std::unordered_map<std::string, lua_CFunction> calls{
+				{ "add", &real_add_call },
+				{ "insert", &real_insert_call },
+				{ "clear", &real_clear_call },
+				{ "find", &real_find_call },
+				{ "get", &real_get_call }
+			};
+			auto maybename = stack::check_get<std::string>(L, 2);
+			if (maybename) {
+				auto& name = *maybename;
+				auto it = calls.find(name);
+				if (it != calls.cend()) {
+					return stack::push(L, it->second);
+				}
+			}
+			return stack::push(L, lua_nil);
+		}
+
 		static int real_index_call_associative(std::true_type, lua_State* L) {
 			auto k = stack::check_get<K>(L, 2);
 			if (k) {
@@ -155,22 +175,7 @@ namespace sol {
 				}
 			}
 			else {
-				auto maybename = stack::check_get<string_detail::string_shim>(L, 2);
-				if (maybename) {
-					auto& name = *maybename;
-					if (name == "add") {
-						return stack::push(L, &add_call);
-					}
-					else if (name == "insert") {
-						return stack::push(L, &insert_call);
-					}
-					else if (name == "clear") {
-						return stack::push(L, &clear_call);
-					}
-					else if (name == "find") {
-						return stack::push(L, &find_call);
-					}
-				}
+				return delegate_call(L);
 			}
 			return stack::push(L, lua_nil);
 		}
@@ -190,28 +195,17 @@ namespace sol {
 				return stack::stack_detail::push_reference<push_type>(L, *it);
 			}
 			else {
-				auto maybename = stack::check_get<string_detail::string_shim>(L, 2);
-				if (maybename) {
-					auto& name = *maybename;
-					if (name == "add") {
-						return stack::push(L, &add_call);
-					}
-					else if (name == "insert") {
-						return stack::push(L, &insert_call);
-					}
-					else if (name == "clear") {
-						return stack::push(L, &clear_call);
-					}
-					else if (name == "find") {
-						return stack::push(L, &find_call);
-					}
-				}
+				return delegate_call(L);
 			}
 
 			return stack::push(L, lua_nil);
 		}
 
 		static int real_index_call(lua_State* L) {
+			return real_index_call_associative(is_associative(), L);
+		}
+
+		static int real_get_call(lua_State* L) {
 			return real_index_call_associative(is_associative(), L);
 		}
 
@@ -223,48 +217,91 @@ namespace sol {
 			return luaL_error(L, "sol: cannot write to a const value type or an immutable iterator (e.g., std::set)");
 		}
 
-		static int real_new_index_call_const(std::true_type, std::true_type, lua_State* L) {
+		static int real_new_index_call_fixed(std::true_type, lua_State* L) {
 			auto& src = get_src(L);
-			auto k = stack::check_get<K>(L, 2);
-			if (k) {
-				using std::end;
-				auto it = detail::find(src, *k);
-				if (it != end(src)) {
-					auto& v = *it;
-					v.second = stack::get<V>(L, 3);
-				}
-				else {
-					src.insert(it, { std::move(*k), stack::get<V>(L, 3) });
-				}
+#ifdef SOL_CHECK_ARGUMENTS
+			auto maybek = stack::check_get<K>(L, 2);
+			if (!maybek) {
+				return luaL_error(L, "sol: improper key of type %s for %s", lua_typename(L, static_cast<int>(type_of(L, 2))), detail::demangle<T>().c_str());
+			}
+			K& k = *maybek;
+#else
+			K k = stack::get<K>(L, 2);
+#endif
+			using std::end;
+			auto it = detail::find(src, k);
+			if (it != end(src)) {
+				auto& v = *it;
+				v.second = stack::get<V>(L, 3);
+			}
+			else {
+				src.insert(it, { std::move(k), stack::get<V>(L, 3) });
 			}
 			return 0;
 		}
 
-		static int real_new_index_call_const(std::true_type, std::false_type, lua_State* L) {
+		static int real_new_index_call_fixed(std::false_type, lua_State* L) {
 			auto& src = get_src(L);
-#ifdef SOL_SAFE_USERTYPE
+#ifdef SOL_CHECK_ARGUMENTS
 			auto maybek = stack::check_get<K>(L, 2);
 			if (!maybek) {
-				return 0;
+				return luaL_error(L, "sol: improper key of type %s for %s", lua_typename(L, static_cast<int>(type_of(L, 2))), detail::demangle<T>().c_str());
 			}
-			K k = *maybek;
+			K& k = *maybek;
+#else
+			K k = stack::get<K>(L, 2);
+#endif
+			using std::end;
+			auto it = detail::find(src, k);
+			if (it != end(src)) {
+				auto& v = *it;
+				v.second = stack::get<V>(L, 3);
+			}
+			else {
+				return luaL_error(L, "sol: cannot insert key of type %s to into %s", lua_typename(L, static_cast<int>(type_of(L, 2))), detail::demangle<T>().c_str());
+			}
+			return 0;
+		}
+
+		static int real_new_index_call_const(std::true_type, std::true_type, lua_State* L) {
+			return real_new_index_call_fixed(std::integral_constant<bool, detail::has_insert<T>::value>(), L);
+		}
+
+		static int real_new_index_call_const(std::true_type, std::false_type, lua_State* L) {
+			auto& src = get_src(L);
+#ifdef SOL_CHECK_ARGUMENTS
+			auto maybek = stack::check_get<K>(L, 2);
+			if (!maybek) {
+				return luaL_error(L, "sol: improper index of type %s to a %s", lua_typename(L, static_cast<int>(type_of(L, 2))), detail::demangle<T>().c_str());
+			}
+			K& k = *maybek;
 #else
 			K k = stack::get<K>(L, 2);
 #endif
 			using std::begin;
 			auto it = begin(src);
+#ifdef SOL_CHECK_ARGUMENTS
+			if (k < 1) {
+				return luaL_error(L, "sol: out of bounds index to a %s", detail::demangle<T>().c_str());
+			}
+#endif
 			--k;
 			if (k == src.size()) {
 				real_add_call_push(std::integral_constant<bool, detail::has_push_back<T>::value && std::is_copy_constructible<V>::value>(), L, src, 1);
 				return 0;
 			}
+#ifdef SOL_CHECK_ARGUMENTS
+			if (k > src.size()) {
+				return luaL_error(L, "sol: out of bounds index to a %s", detail::demangle<T>().c_str());
+			}
+#endif
 			std::advance(it, k);
 			*it = stack::get<V>(L, 3);
 			return 0;
 		}
 
 		static int real_new_index_call(lua_State* L) {
-			return real_new_index_call_const(meta::neg<meta::any<std::is_const<V>, std::is_const<IR>, meta::neg<std::is_copy_assignable<V>>>>(), is_associative(), L);
+			return real_new_index_call_const(meta::neg<meta::any<std::is_const<V>, std::is_const<IR>, meta::neg<std::is_copy_assignable<V>>>>(), meta::all<is_associative, detail::has_insert<T>>(), L);
 		}
 
 		static int real_pairs_next_call_assoc(std::true_type, lua_State* L) {
@@ -441,39 +478,43 @@ namespace sol {
 		}
 
 		static int add_call(lua_State*L) {
-			return detail::static_trampoline<(&real_add_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_add_call), (&real_add_call)>(L);
 		}
 
 		static int insert_call(lua_State*L) {
-			return detail::static_trampoline<(&real_insert_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_insert_call), (&real_insert_call)>(L);
 		}
 
 		static int clear_call(lua_State*L) {
-			return detail::static_trampoline<(&real_clear_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_clear_call), (&real_clear_call)>(L);
 		}
 
 		static int find_call(lua_State*L) {
-			return detail::static_trampoline<(&real_find_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_find_call), (&real_find_call)>(L);
 		}
 
 		static int length_call(lua_State*L) {
-			return detail::static_trampoline<(&real_length_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_length_call), (&real_length_call)>(L);
 		}
 
 		static int pairs_next_call(lua_State*L) {
-			return detail::static_trampoline<(&real_pairs_next_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_pairs_next_call), (&real_pairs_next_call)>(L);
 		}
 
 		static int pairs_call(lua_State*L) {
-			return detail::static_trampoline<(&real_pairs_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_pairs_call), (&real_pairs_call)>(L);
+		}
+
+		static int get_call(lua_State*L) {
+			return detail::typed_static_trampoline<decltype(&real_get_call), (&real_get_call)>(L);
 		}
 
 		static int index_call(lua_State*L) {
-			return detail::static_trampoline<(&real_index_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_index_call), (&real_index_call)>(L);
 		}
 
 		static int new_index_call(lua_State*L) {
-			return detail::static_trampoline<(&real_new_index_call)>(L);
+			return detail::typed_static_trampoline<decltype(&real_new_index_call), (&real_new_index_call)>(L);
 		}
 	};
 
@@ -482,12 +523,13 @@ namespace sol {
 			template <typename T>
 			inline auto container_metatable() {
 				typedef container_usertype_metatable<std::remove_pointer_t<T>> meta_cumt;
-				std::array<luaL_Reg, 11> reg = { {
+				std::array<luaL_Reg, 12> reg = { {
 					{ "__index", &meta_cumt::index_call },
 					{ "__newindex", &meta_cumt::new_index_call },
 					{ "__pairs", &meta_cumt::pairs_call },
 					{ "__ipairs", &meta_cumt::pairs_call },
 					{ "__len", &meta_cumt::length_call },
+					{ "get", &meta_cumt::get_call },
 					{ "clear", &meta_cumt::clear_call },
 					{ "insert", &meta_cumt::insert_call },
 					{ "add", &meta_cumt::add_call },

@@ -6,7 +6,15 @@
 #include <iostream>
 #include <list>
 #include <memory>
-#include <mutex>
+
+
+struct non_copyable {
+	non_copyable() = default;
+	non_copyable(const non_copyable&) = delete;
+	non_copyable& operator=(const non_copyable&) = delete;
+	non_copyable(non_copyable&&) = default;
+	non_copyable& operator=(non_copyable&&) = default;
+};
 
 struct vars {
 	vars() {
@@ -663,17 +671,17 @@ TEST_CASE("usertype/private-constructible", "Check to make sure special snowflak
 }
 
 TEST_CASE("usertype/const-pointer", "Make sure const pointers can be taken") {
-	struct A { int x = 201; };
-	struct B {
-		int foo(const A* a) { return a->x; };
+	struct A_x { int x = 201; };
+	struct B_foo {
+		int foo(const A_x* a) { return a->x; };
 	};
 
 	sol::state lua;
-	lua.new_usertype<B>("B", 
-		"foo", &B::foo
+	lua.new_usertype<B_foo>("B", 
+		"foo", &B_foo::foo
 	);
-	lua.set("a", A());
-	lua.set("b", B());
+	lua.set("a", A_x());
+	lua.set("b", B_foo());
 	lua.script("x = b:foo(a)");
 	int x = lua["x"];
 	REQUIRE(x == 201);
@@ -1188,7 +1196,7 @@ TEST_CASE("usertype/copyability", "make sure user can write to a class variable 
 		void set(int val) { _you_can_copy_me = val; }
 
 		int _you_can_copy_me;
-		std::mutex _haha_you_cant_copy_me;
+		non_copyable _haha_you_cant_copy_me;
 	};
 
 	sol::state lua;
@@ -1456,11 +1464,11 @@ TEST_CASE("usertype/unique_usertype-check", "make sure unique usertypes don't ge
 
 	sol::function my_func = lua["my_func"];
 	REQUIRE_NOTHROW([&]{
-	auto ent = std::make_shared<Entity>();
-	my_func(ent);
-	Entity ent2;
-	my_func(ent2);
-	my_func(std::make_shared<Entity>());
+		auto ent = std::make_shared<Entity>();
+		my_func(ent);
+		Entity ent2;
+		my_func(ent2);
+		my_func(std::make_shared<Entity>());
 	}());
 }
 
@@ -1468,9 +1476,12 @@ TEST_CASE("usertype/abstract-base-class", "Ensure that abstract base classes and
 	sol::state lua;
 	lua.new_usertype<abstract_A>("A", "a", &abstract_A::a);
 	lua.new_usertype<abstract_B>("B", sol::base_classes, sol::bases<abstract_A>());
-	lua.script(R"(local b = B.new()
+	REQUIRE_NOTHROW([&]() {
+		lua.script(R"(
+local b = B.new()
 b:a()
-)");
+		)");
+	});
 }
 
 TEST_CASE("usertype/as_function", "Ensure that variables can be turned into functions by as_function") {
@@ -1800,4 +1811,30 @@ TEST_CASE("usertype/meta-key-retrievals", "allow for special meta keys (__index,
 		REQUIRE(keys[2] == "__index");
 		REQUIRE(keys[3] == "__call");
 	}
+}
+
+TEST_CASE("usertype/noexcept-methods", "make sure noexcept functinos and methods can be bound to usertypes without issues") {
+	struct T {
+		static int noexcept_function() noexcept {
+			return 0x61;
+		}
+
+		int noexcept_method() noexcept {
+			return 0x62;
+		}
+	};
+
+	sol::state lua;
+	lua.new_usertype<T>("T", 
+		"nf", &T::noexcept_function, 
+		"nm", &T::noexcept_method
+	);
+
+	lua.script("t = T.new()");
+	lua.script("v1 = t.nf()");
+	lua.script("v2 = t:nm()");
+	int v1 = lua["v1"];
+	int v2 = lua["v2"];
+	REQUIRE(v1 == 0x61);
+	REQUIRE(v2 == 0x62);
 }

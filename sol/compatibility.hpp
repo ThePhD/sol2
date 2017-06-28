@@ -27,6 +27,7 @@
 // but has been modified in many places for use with Sol and luajit,
 // though the core abstractions remain the same
 
+#include "feature_test.hpp"
 #include "compatibility/version.hpp"
 
 #ifndef SOL_NO_COMPAT

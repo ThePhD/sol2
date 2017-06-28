@@ -152,7 +152,7 @@ namespace sol {
 #if defined(__clang__)
 			return detail::trampoline(L, &simple_real_index_call<T, has_indexing>);
 #else
-			return detail::static_trampoline<(&simple_real_index_call<T, has_indexing>)>(L);
+			return detail::typed_static_trampoline<decltype(&simple_real_index_call<T, has_indexing>), (&simple_real_index_call<T, has_indexing>)>(L);
 #endif
 		}
 
@@ -161,7 +161,7 @@ namespace sol {
 #if defined(__clang__)
 			return detail::trampoline(L, &simple_real_new_index_call<T, has_indexing>);
 #else
-			return detail::static_trampoline<(&simple_real_new_index_call<T, has_indexing>)>(L);
+			return detail::typed_static_trampoline<decltype(&simple_real_new_index_call<T, has_indexing>), (&simple_real_new_index_call<T, has_indexing>)>(L);
 #endif
 		}
 	}

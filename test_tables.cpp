@@ -546,3 +546,29 @@ TEST_CASE("tables/add", "Basic test to make sure the 'add' feature works") {
 		REQUIRE(val == bigvec[i]);
 	}
 }
+
+TEST_CASE("tables/bool-keys", "make sure boolean keys don't get caught up in `is_integral` specializations") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.script(R"(
+tbl = {}
+tbl[true] = 10
+tbl[1] = 20
+
+print(tbl[true])
+print(tbl[1])
+)");
+	sol::table tbl = lua["tbl"];
+	int v1 = tbl[true];
+	int v2 = tbl[1];
+	REQUIRE(v1 == 10);
+	REQUIRE(v2 == 20);
+
+	tbl[true] = 30;
+	tbl[1] = 40;
+	v1 = tbl[true];
+	v2 = tbl[1];
+	REQUIRE(v1 == 30);
+	REQUIRE(v2 == 40);
+}

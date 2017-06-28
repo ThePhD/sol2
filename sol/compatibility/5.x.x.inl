@@ -41,12 +41,76 @@ inline int lua_absindex(lua_State *L, int i) {
     return i;
 }
 
+#if !defined(SOL_LUAJIT_VERSION) || SOL_LUAJIT_VERSION < 20100
 inline void lua_copy(lua_State *L, int from, int to) {
     int abs_to = lua_absindex(L, to);
     luaL_checkstack(L, 1, "not enough stack slots");
     lua_pushvalue(L, from);
     lua_replace(L, abs_to);
 }
+
+inline lua_Integer lua_tointegerx(lua_State *L, int i, int *isnum) {
+	lua_Integer n = lua_tointeger(L, i);
+	if (isnum != NULL) {
+		*isnum = (n != 0 || lua_isnumber(L, i));
+	}
+	return n;
+}
+
+inline lua_Number lua_tonumberx(lua_State *L, int i, int *isnum) {
+	lua_Number n = lua_tonumber(L, i);
+	if (isnum != NULL) {
+		*isnum = (n != 0 || lua_isnumber(L, i));
+	}
+	return n;
+}
+
+inline const lua_Number *lua_version(lua_State *L) {
+	static const lua_Number version = LUA_VERSION_NUM;
+	if (L == NULL) return &version;
+	// TODO: wonky hacks to get at the inside of the incomplete type lua_State?
+	//else return L->l_G->version;
+	else return &version;
+}
+
+/*
+** Adapted from Lua 5.2.0
+*/
+inline void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup) {
+	luaL_checkstack(L, nup + 1, "too many upvalues");
+	for (; l->name != NULL; l++) {  /* fill the table with given functions */
+		int i;
+		lua_pushstring(L, l->name);
+		for (i = 0; i < nup; i++)  /* copy upvalues to the top */
+			lua_pushvalue(L, -(nup + 1));
+		lua_pushcclosure(L, l->func, nup);  /* closure with those upvalues */
+		lua_settable(L, -(nup + 3)); /* table must be below the upvalues, the name and the closure */
+	}
+	lua_pop(L, nup);  /* remove upvalues */
+}
+
+inline void luaL_setmetatable(lua_State *L, const char *tname) {
+	luaL_checkstack(L, 1, "not enough stack slots");
+	luaL_getmetatable(L, tname);
+	lua_setmetatable(L, -2);
+}
+
+inline void *luaL_testudata(lua_State *L, int i, const char *tname) {
+	void *p = lua_touserdata(L, i);
+	luaL_checkstack(L, 2, "not enough stack slots");
+	if (p == NULL || !lua_getmetatable(L, i))
+		return NULL;
+	else {
+		int res = 0;
+		luaL_getmetatable(L, tname);
+		res = lua_rawequal(L, -1, -2);
+		lua_pop(L, 2);
+		if (!res)
+			p = NULL;
+	}
+	return p;
+}
+#endif
 
 inline void lua_rawgetp(lua_State *L, int i, const void *p) {
     int abs_i = lua_absindex(L, i);
@@ -60,30 +124,6 @@ inline void lua_rawsetp(lua_State *L, int i, const void *p) {
     lua_pushlightuserdata(L, (void*)p);
     lua_insert(L, -2);
     lua_rawset(L, abs_i);
-}
-
-inline void *luaL_testudata(lua_State *L, int i, const char *tname) {
-    void *p = lua_touserdata(L, i);
-    luaL_checkstack(L, 2, "not enough stack slots");
-    if (p == NULL || !lua_getmetatable(L, i))
-        return NULL;
-    else {
-        int res = 0;
-        luaL_getmetatable(L, tname);
-        res = lua_rawequal(L, -1, -2);
-        lua_pop(L, 2);
-        if (!res)
-            p = NULL;
-    }
-    return p;
-}
-
-inline lua_Number lua_tonumberx(lua_State *L, int i, int *isnum) {
-    lua_Number n = lua_tonumber(L, i);
-    if (isnum != NULL) {
-        *isnum = (n != 0 || lua_isnumber(L, i));
-    }
-    return n;
 }
 
 inline static void push_package_table(lua_State *L) {
@@ -133,28 +173,6 @@ inline void lua_setuservalue(lua_State *L, int i) {
         lua_replace(L, -2);
     }
     lua_setfenv(L, i);
-}
-
-/*
-** Adapted from Lua 5.2.0
-*/
-inline void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup) {
-    luaL_checkstack(L, nup + 1, "too many upvalues");
-    for (; l->name != NULL; l++) {  /* fill the table with given functions */
-        int i;
-        lua_pushstring(L, l->name);
-        for (i = 0; i < nup; i++)  /* copy upvalues to the top */
-            lua_pushvalue(L, -(nup + 1));
-        lua_pushcclosure(L, l->func, nup);  /* closure with those upvalues */
-        lua_settable(L, -(nup + 3)); /* table must be below the upvalues, the name and the closure */
-    }
-    lua_pop(L, nup);  /* remove upvalues */
-}
-
-inline void luaL_setmetatable(lua_State *L, const char *tname) {
-    luaL_checkstack(L, 1, "not enough stack slots");
-    luaL_getmetatable(L, tname);
-    lua_setmetatable(L, -2);
 }
 
 inline int luaL_getsubtable(lua_State *L, int i, const char *name) {
@@ -272,14 +290,6 @@ inline void luaL_traceback(lua_State *L, lua_State *L1,
 }
 #endif
 
-inline const lua_Number *lua_version(lua_State *L) {
-    static const lua_Number version = LUA_VERSION_NUM;
-    if (L == NULL) return &version;
-    // TODO: wonky hacks to get at the inside of the incomplete type lua_State?
-    //else return L->l_G->version;
-    else return &version;
-}
-
 inline static void luaL_checkversion_(lua_State *L, lua_Number ver) {
     const lua_Number* v = lua_version(L);
     if (v != lua_version(NULL))
@@ -309,7 +319,7 @@ inline int luaL_fileresult(lua_State *L, int stat, const char *fname) {
     }
     else {
         char buf[1024];
-#if defined(__GLIBC__) || defined(_POSIX_VERSION)
+#if defined(__GLIBC__) || defined(_POSIX_VERSION) || defined(__APPLE__)
         strerror_r(en, buf, 1024);
 #else
         strerror_s(buf, 1024, en);
@@ -557,14 +567,6 @@ inline lua_Unsigned lua_tounsignedx(lua_State *L, int i, int *isnum) {
 
 inline lua_Unsigned luaL_optunsigned(lua_State *L, int i, lua_Unsigned def) {
     return luaL_opt(L, luaL_checkunsigned, i, def);
-}
-
-inline lua_Integer lua_tointegerx(lua_State *L, int i, int *isnum) {
-    lua_Integer n = lua_tointeger(L, i);
-    if (isnum != NULL) {
-        *isnum = (n != 0 || lua_isnumber(L, i));
-    }
-    return n;
 }
 
 inline void lua_len(lua_State *L, int i) {
