@@ -45,8 +45,6 @@ members
 
 Retrieves the value of the object at ``index`` in the stack. The return type varies based on ``T``: with primitive types, it is usually ``T``: for all unrecognized ``T``, it is generally a ``T&`` or whatever the extension point :ref:`stack::getter\<T><getter>` implementation returns. The type ``T`` has top-level ``const`` qualifiers and reference modifiers removed before being forwarded to the extension point :ref:`stack::getter\<T><getter>` struct. ``stack::get`` will default to forwarding all arguments to the :ref:`stack::check_get<stack-check-get>` function with a handler of ``type_panic`` to strongly alert for errors, if you ask for the :doc:`safety<../safety>`.
 
-`record`
-
 You may also retrieve an :doc:`sol::optional\<T><optional>` from this as well, to have it attempt to not throw errors when performing the get and the type is not correct.
 
 .. code-block:: cpp
@@ -89,6 +87,35 @@ Retrieves the value of the object at ``index`` in the stack, but does so safely.
 	int multi_push( lua_State* L, Args&&... args )
 
 Based on how it is called, pushes a variable amount of objects onto the stack. in 99% of cases, returns for 1 object pushed onto the stack. For the case of a ``std::tuple<...>``, it recursively pushes each object contained inside the tuple, from left to right, resulting in a variable number of things pushed onto the stack (this enables multi-valued returns when binding a C++ function to a Lua). Can be called with ``sol::stack::push<T>( L, args... )`` to have arguments different from the type that wants to be pushed, or ``sol::stack::push( L, arg, args... )`` where ``T`` will be inferred from ``arg``. The final form of this function is ``sol::stack::multi_push``, which will call one ``sol::stack::push`` for each argument. The ``T`` that describes what to push is first sanitized by removing top-level ``const`` qualifiers and reference qualifiers before being forwarded to the extension point :ref:`stack::pusher\<T><pusher>` struct.
+
+.. code-block:: cpp
+	:caption: function: push_reference
+	:name: stack-push-reference
+
+	// push T inferred from call site, pass args... through to extension point
+	template <typename T, typename... Args>
+	int push_reference( lua_State* L, T&& item, Args&&... args )
+
+	// push T that is explicitly specified, pass args... through to extension point
+	template <typename T, typename Arg, typename... Args>
+	int push_reference( lua_State* L, Arg&& arg, Args&&... args )
+
+	// recursively call the the above "push" with T inferred, one for each argument
+	template <typename... Args>
+	int multi_push_reference( lua_State* L, Args&&... args )
+
+
+These functinos behave similarly to the ones above, but they check for specific criteria and instead attempt to push a reference rather than forcing a copy if appropriate. Use cautiously as sol2 uses this mainly as a return from usertype functions and variables to preserve chaining/variable semantics from that a class object. Its internals are updated to fit the needs of sol2 and while it generally does the "right thing" and has not needed to be changed for a while, sol2 reserves the right to change its internal detection mechanisms to suit its users needs at any time, generally without breaking backwards compatibility and expectations but not exactly guaranteed.
+
+.. code-block:: cpp
+	:caption: function: pop
+	:name: stack-pop
+
+	// push T inferred from call site, pass args... through to extension point
+	template <typename... Args>
+	auto pop( lua_State* L, int index, ... )
+
+
 
 .. code-block:: cpp
 	:caption: function: set_field
