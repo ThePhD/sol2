@@ -143,6 +143,9 @@ namespace sol {
 
 			template <typename Arg, meta::enable<std::is_base_of<Real, meta::unqualified_t<Arg>>> = meta::enabler>
 			static int push(lua_State* L, Arg&& arg) {
+				if (unique_usertype_traits<T>::is_null(arg)) {
+					return stack::push(L, lua_nil);
+				}
 				return push_deep(L, std::forward<Arg>(arg));
 			}
 
