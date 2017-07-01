@@ -176,7 +176,7 @@ Attempts to run the garbage collector. Note that this is subject to the same rul
 	template <typename Key, typename Value, typename... Args>
 	static sol::table create_table(lua_State* L, int narr, int nrec, Key&& key, Value&& value, Args&&... args);
 
-Creates a table. Forwards its arguments to :ref:`table::create<table-create>`.
+Creates a table. Forwards its arguments to :ref:`table::create<table-create>`. Applies the same rules as :ref:`table.set<set-value>` when putting the argument values into the table, including how it handles callable objects.
 
 .. _standard lua libraries: http://www.lua.org/manual/5.3/manual.html#6 
 .. _luaL_requiref: https://www.lua.org/manual/5.3/manual.html#luaL_requiref

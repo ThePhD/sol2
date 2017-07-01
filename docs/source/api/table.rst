@@ -63,7 +63,7 @@ These functions set items into the table. The first one (``set``) can set  *mult
 
 .. note::
 
-	Value semantics are applied to all set operations. If you do not ``std::ref( obj )`` or specifically make a pointer with ``std::addressof( obj )`` or ``&obj``, it will copy / move. This is different from how :doc:`sol::function<function>` behaves with its call operator.
+	Value semantics are applied to all set operations. If you do not ``std::ref( obj )`` or specifically make a pointer with ``std::addressof( obj )`` or ``&obj``, it will copy / move. This is different from how :doc:`sol::function<function>` behaves with its call operator. Also note that this does not detect callables by default: see the :ref:`note here<binding-callable-objects>`.
 
 .. code-block:: cpp
 	:caption: function: set a function with the specified key into lua
@@ -72,7 +72,7 @@ These functions set items into the table. The first one (``set``) can set  *mult
 	template<typename Key, typename Fx>
 	state_view& set_function(Key&& key, Fx&& fx, [...]);
 
-Sets the desired function to the specified key value. Note that it also allows for passing a member function plus a member object or just a single member function: however, using a lambda is almost always better when you want to bind a member function + class instance to a single function call in Lua.
+Sets the desired function to the specified key value. Note that it also allows for passing a member function plus a member object or just a single member function: however, using a lambda is almost always better when you want to bind a member function + class instance to a single function call in Lua. Also note that this will allow Lua to understand that a callable object (such as a lambda) should be serialized as a function and not as a userdata: see the :ref:`note here<binding-callable-objects>` for more details.
 
 .. code-block:: cpp
 	:caption: function: add
@@ -202,7 +202,7 @@ Creates a table, optionally with the specified values pre-set into the table. If
 	static table create_with(lua_State* L, Args&&... args);
 	
 
-Creates a table, optionally with the specified values pre-set into the table. It checks every 2nd argument (the keys) and generates hints for how many array or map-style entries will be placed into the table.
+Creates a table, optionally with the specified values pre-set into the table. It checks every 2nd argument (the keys) and generates hints for how many array or map-style entries will be placed into the table. Applies the same rules as :ref:`table.set<set-value>` when putting the argument values into the table, including how it handles callable objects.
 
 .. code-block:: cpp
 	:caption: function: create a named table with compile-time defaults assumed
@@ -212,6 +212,6 @@ Creates a table, optionally with the specified values pre-set into the table. It
 	table create_named(Name&& name, Args&&... args);
 	
 
-Creates a table, optionally with the specified values pre-set into the table, and sets it as the key ``name`` in the table.
+Creates a table, optionally with the specified values pre-set into the table, and sets it as the key ``name`` in the table. Applies the same rules as :ref:`table.set<set-value>` when putting the argument values into the table, including how it handles callable objects.
 
 .. _input iterators: http://en.cppreference.com/w/cpp/concept/InputIterator
