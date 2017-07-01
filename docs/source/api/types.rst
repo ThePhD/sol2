@@ -216,11 +216,11 @@ structs
 
 Types that differentiate between the two kinds of ``void*`` Lua hands back from its API: full userdata and light userdata, as well as a type that modifies the index passed to ``get`` to refer to `up values`_ These types can be used to trigger different underlying API calls to Lua when working with :doc:`stack<stack>` namespace and the ``push``/``get``/``pop``/``check`` functions.
 
-The ``raw_index`` type is used to tell a :doc:`sol::reference<api/reference>` type or similar that the desired index -- negative or not -- should be passed through directly to the API.
+The ``raw_index`` type is used to tell a :doc:`sol::reference<reference>` type or similar that the desired index -- negative or not -- should be passed through directly to the API.
 
-The ``absolute_index`` type is used to tell a :doc:`sol::reference<api/reference>` type or similar that the desired index -- negative or not -- should be passed through Lua's `lua_absindex`_ function first to adjust where it is, and then given to the underlying API.
+The ``absolute_index`` type is used to tell a :doc:`sol::reference<reference>` type or similar that the desired index -- negative or not -- should be passed through Lua's `lua_absindex`_ function first to adjust where it is, and then given to the underlying API.
 
-The ``ref_index`` type is used to tell a :doc:`sol::reference<api/reference>` type or similar that it should look into the Lua C Registry for its type.
+The ``ref_index`` type is used to tell a :doc:`sol::reference<reference>` type or similar that it should look into the Lua C Registry for its type.
 
 .. _up values: http://www.Lua.org/manual/5.3/manual.html#4.4
 .. _lua_absindex: https://www.lua.org/manual/5.3/manual.html#lua_absindex

@@ -1069,6 +1069,29 @@ TEST_CASE("functions/overloaded-variadic", "make sure variadics work to some deg
 	REQUIRE(c == 2.2);
 }
 
+TEST_CASE("functions/sectioning-variadic", "make sure variadics can bite off chunks of data") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.set_function("f", [](sol::variadic_args va) {
+		int r = 0;
+		sol::variadic_args shifted_va(va.lua_state(), 3);
+		for (auto v : shifted_va) {
+			int value = v;
+			r += value;
+		}
+		return r;
+	});
+
+	lua.script("x = f(1, 2, 3, 4)");
+	lua.script("x2 = f(8, 200, 3, 4)");
+	lua.script("x3 = f(1, 2, 3, 4, 5, 6)");
+
+	lua.script("print(x) assert(x == 7)");
+	lua.script("print(x2) assert(x2 == 7)");
+	lua.script("print(x3) assert(x3 == 18)");
+}
+
 TEST_CASE("functions/set_function-already-wrapped", "setting a function returned from Lua code that is already wrapped into a sol::function or similar") {
 	SECTION("test different types") {
 		sol::state lua;

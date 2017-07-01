@@ -35,6 +35,7 @@ get going:
 	errors
 	compilation
 	features
+	functions
 	usertypes
 	threading
 	traits

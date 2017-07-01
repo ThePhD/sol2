@@ -10,7 +10,7 @@ For the hard technical components of Lua and its ecosystem we support, here is t
 what Sol supports
 -----------------
 
-* Support for Lua 5.1, 5.2, and 5.3. We achieve this through our :doc:`compatibility<api/compatibility>` header.
+* Support for Lua 5.1, 5.2, and 5.3+ and LuaJIT 2.0.4 + 2.1.x-beta3+. We achieve this through our :doc:`compatibility<api/compatibility>` header.
 
 * :doc:`Table<api/table>` support: setting values, getting values of multiple (different) types
 	- :doc:`Lazy evaluation<api/proxy>` for nested/chained queries
@@ -24,13 +24,12 @@ what Sol supports
 	- Turns on safety when you want it: speed when you don't
 
 * Support for callables (functions, lambdas, member functions)
- 	- Pull out any Lua function with :doc:`sol::function<api/function>`
- 		``sol::function fx = table["socket_send"];``
- 	- Can also set callables into :doc:`operator[] proxies<api/proxy>`
- 		``table["move_dude"] = engine::move_dude;``
+ 	- Pull out any Lua function with :doc:`sol::function<api/function>`: ``sol::function fx = table["socket_send"];``
+ 	- Can also set callables into :doc:`operator[] proxies<api/proxy>`: ``table["move_dude"] = &engine::move_dude;``
  	- Safety: use :doc:`sol::protected_function<api/protected_function>` to catch any kind of error
  		+ ANY kind: C++ exception or Lua erors are trapped and run through the optional ``error_handler`` variable
- 	- *Advanced:* Overloading of a single function so you don't need to do boring typechecks
+ 	- *Advanced:* :doc:`overloading of a single function name<api/overload>` so you don't need to do boring typechecks
+ 	- *Advanced:* :doc:`efficient handling and well-documented<functions>` way of dealing with arguments
 
 * User-Defined Type (:doc:`sol::usertype<api/usertype>` in the API) support:
 	- Set member functions to be called

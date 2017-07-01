@@ -36,7 +36,7 @@ By default, Sol will add a ``default_at_panic`` handler. If exceptions are not t
 
 It is preferred if you catch an error that you log what happened, terminate the Lua VM as soon as possible, and then crash if your application cannot handle spinning up a new Lua state. Catching can be done, but you should understand the risks of what you're doing when you do it. For more information about catching exceptions, the potentials, not turning off exceptions and other tricks and caveats, read about :doc:`exceptions in Sol here<exceptions>`.
 
-Lua is a C API first and foremost: exceptions bubbling out of it is essentially last-ditch, terminal behavior that the VM does not expect. You can see an example of handling a panic on the exceptions page :ref:`here<typical-panic-function>`.
+Lua is a C API first and foremost: exceptions bubbling out of it is essentially last-ditch, terminal behavior that the VM does not expect. You can see an example of handling a panic on the exceptions page :ref:`here<typical-panic-function>`. This means that setting up a ``try { ... } catch (...) {}`` around an unprotected sol2 function or script call is **NOT** enough to keep the VM in a clean state. Lua does not understand exceptions and throwing them results in undefined behavior if they bubble through the C API once and then the state is used again. Please catch, and crash.
 
 Furthermore, it would be a great idea for you to use the safety features talked about :doc:`safety section<safety>`, especially for those related to functions.
 
@@ -55,17 +55,7 @@ By default, :doc:`sol::function<api/function>` assumes the code ran just fine an
 Protected Functions Are Not Catch All
 -------------------------------------
 
-Sometimes, some scripts load poorly. Even if you protect the function call, the actual file loading or file execution will be bad, in which case :doc:`sol::protected_function<api/protected_function>` will not save you. Make sure you register your own panic handler so you can catch errors, or follow the advice of the catch + crash behavior above.
-
-Raw Functions
--------------
-
-When you push a function into Lua using Sol using any methods and that function exactly matches the signature ``int( lua_State* );`` (and is a free function (e.g., not a member function pointer)), it will be treated as a *raw C function*. This means that the usual exception trampoline Sol wraps your other function calls in will not be present. You will be responsible for catching exceptions and handling them before they explode into the C API (and potentially destroy your code). Sol in all other cases adds an exception-handling trampoline that turns exceptions into Lua errors that can be caught by the above-mentioned protected functions and accessors.
-
-.. warning::
-	
-	Do NOT assume that building Lua as C++ will allow you to throw directly from a raw function. If an exception is raised and it bubbles into the Lua framework, even if you compile as C++, Lua does not recognize exceptions other than the ones that it uses with ``lua_error``. In other words, it will return some completely bogus result, potentially leave your Lua stack thrashed, and the rest of your VM *can* be in a semi-trashed state. Please avoid this!
-
+Sometimes, some scripts load poorly. Even if you protect the function call, the actual file loading or file execution will be bad, in which case :doc:`sol::protected_function<api/protected_function>` will not save you. Make sure you register your own panic handler so you can catch errors, or follow the advice of the catch + crash behavior above. Remember that you can also bind your own functions and forego sol2's built-in protections for you own by binding a :ref:`raw lua_CFunction function<raw-function-note>`
 
 Iteration
 ---------

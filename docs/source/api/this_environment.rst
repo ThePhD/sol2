@@ -33,6 +33,8 @@ Sometimes in C++ it's useful to know where a Lua call is coming from and what :d
 		lua["freshenv"] = freshenv;
 		
 		lua.set_function("f", env_check);
+		
+		// note that "f" only takes 1 argument and is okay here
 		lua.script("f(25)", freshenv);
 		
 		return 0;

@@ -126,10 +126,10 @@ You can set/get everything.
 	// string types
 	lua["important_string"] = "woof woof";
 
-	// non-recognized types is stored as userdata
 	// is callable, therefore gets stored as a function
 	lua["a_function"] = [](){ return 100; };
-
+	// otherwise, non-recognized types is stored as userdata
+	
 	// make a table
 	lua["some_table"] = lua.create_table_with("value", 24);
 
