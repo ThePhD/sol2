@@ -10,7 +10,7 @@ transparent argument to deal with multiple parameters to a function
 
 This class is meant to represent every single argument at its current index and beyond in a function list. It does not increment the argument count and is thus transparent. You can place it anywhere in the argument list, and it will represent all of the objects in a function call that come after it, whether they are listed explicitly or not.
 
-``variadic_args`` also has ``begin()`` and ``end()`` functions that return (almost) random-acess iterators. These return a proxy type that can be implicitly converted, much like the :doc:`table proxy type<proxy>`.
+``variadic_args`` also has ``begin()`` and ``end()`` functions that return (almost) random-acess iterators. These return a proxy type that can be implicitly converted to a type you want, much like the :doc:`table proxy type<proxy>`.
 
 .. code-block:: cpp
 	:linenos:
@@ -20,6 +20,7 @@ This class is meant to represent every single argument at its current index and 
 	int main () {
 		
 		sol::state lua;
+		lua.open_libraries(sol::lib::base);
 		
 		// Function requires 2 arguments
 		// rest can be variadic, but:
@@ -46,6 +47,8 @@ This class is meant to represent every single argument at its current index and 
 		lua.script("print(x)"); // 50
 		lua.script("print(x2)"); // 600
 		lua.script("print(x3)"); // 21
+
+		return 0;
 	}
 
 You can also "save" arguments and the like later, by stuffing them into a ``std::vector<sol::object>`` or something similar that pulls out all the arguments. Below is an example of saving all of the arguments provided by ``sol::variadic_args`` in a lambda capture variable called ``args``.
@@ -67,7 +70,9 @@ You can also "save" arguments and the like later, by stuffing them into a ``std:
 	int main() {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
+		
 		lua.set_function("store_routine", &store_routine);
+		
 		lua.script(R"(
 	function a(name)
 		print(name)
@@ -83,5 +88,40 @@ You can also "save" arguments and the like later, by stuffing them into a ``std:
 	store_routine(b, 20, "these apples")
 	)");
 		function_storage();
+
+		return 0;
 	}
 
+
+Finally, note that you can use ``sol::variadic_args`` constructor to "offset" which arguments you want:
+
+.. code-block:: cpp
+	:linenos:
+
+	#include <sol.hpp>
+
+	int main () {
+		
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.set_function("f", [](sol::variadic_args va) {
+			int r = 0;
+			sol::variadic_args shifted_va(va.lua_state(), 3);
+			for (auto v : shifted_va) {
+				int value = v;
+				r += value;
+			}
+			return r;
+		});
+	    
+		lua.script("x = f(1, 2, 3, 4)");
+		lua.script("x2 = f(8, 200, 3, 4)");
+		lua.script("x3 = f(1, 2, 3, 4, 5, 6)");
+		
+		lua.script("print(x)"); // 7
+		lua.script("print(x2)"); // 7
+		lua.script("print(x3)"); // 18
+
+		return 0;
+	}

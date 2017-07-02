@@ -1069,6 +1069,29 @@ TEST_CASE("functions/overloaded-variadic", "make sure variadics work to some deg
 	REQUIRE(c == 2.2);
 }
 
+TEST_CASE("functions/sectioning-variadic", "make sure variadics can bite off chunks of data") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.set_function("f", [](sol::variadic_args va) {
+		int r = 0;
+		sol::variadic_args shifted_va(va.lua_state(), 3);
+		for (auto v : shifted_va) {
+			int value = v;
+			r += value;
+		}
+		return r;
+	});
+
+	lua.script("x = f(1, 2, 3, 4)");
+	lua.script("x2 = f(8, 200, 3, 4)");
+	lua.script("x3 = f(1, 2, 3, 4, 5, 6)");
+
+	lua.script("print(x) assert(x == 7)");
+	lua.script("print(x2) assert(x2 == 7)");
+	lua.script("print(x3) assert(x3 == 18)");
+}
+
 TEST_CASE("functions/set_function-already-wrapped", "setting a function returned from Lua code that is already wrapped into a sol::function or similar") {
 	SECTION("test different types") {
 		sol::state lua;
@@ -1140,7 +1163,171 @@ TEST_CASE("functions/set_function-already-wrapped", "setting a function returned
 	}
 }
 
-TEST_CASE("functions/unique-overloading", "make sure overloading can work with ptr vs. specifically asking for a unique usertype") {
+TEST_CASE("functions/pointer-nil", "ensure specific semantics for handling pointer-nils passed through sol") {
+	struct nil_test {
+
+		static void f(nil_test* p) {
+			REQUIRE(p == nullptr);
+		}
+		static void g(std::unique_ptr<nil_test>& p) {
+			REQUIRE(p == nullptr);
+		}
+		static void h(std::shared_ptr<nil_test>& p) {
+			REQUIRE(p == nullptr);
+		}
+	};
+	
+	std::shared_ptr<nil_test> sptr;
+	std::unique_ptr<nil_test> uptr;
+	std::unique_ptr<nil_test> ruptr;
+	nil_test* rptr = ruptr.get();
+	nil_test* vptr = nullptr;
+
+	SECTION("ptr") {
+		sol::state lua;
+		lua["v1"] = sptr;
+		lua["v2"] = std::unique_ptr<nil_test>();
+		lua["v3"] = rptr;
+		lua["v4"] = vptr;
+
+		REQUIRE_NOTHROW([&]() {
+			nil_test* v1 = lua["v1"];
+			nil_test* v2 = lua["v2"];
+			nil_test* v3 = lua["v3"];
+			nil_test* v4 = lua["v4"];
+			REQUIRE(v1 == sptr.get());
+			REQUIRE(v1 == nullptr);
+			REQUIRE(v2 == uptr.get());
+			REQUIRE(v2 == nullptr);
+			REQUIRE(v3 == rptr);
+			REQUIRE(v3 == nullptr);
+			REQUIRE(v4 == vptr);
+			REQUIRE(v4 == nullptr);
+		}());
+	}
+	SECTION("ptr") {
+		sol::state lua;
+		lua.open_libraries();
+
+		lua["v1"] = sptr;
+		lua["v2"] = std::unique_ptr<nil_test>();
+		lua["v3"] = rptr;
+		lua["v4"] = vptr;
+		lua["f"] = &nil_test::f;
+		lua["g"] = &nil_test::g;
+		lua["h"] = &nil_test::h;
+
+		REQUIRE_NOTHROW([&]() {
+			lua.script("f(v1)");
+			lua.script("f(v2)");
+			lua.script("f(v3)");
+			lua.script("f(v4)");
+
+			lua.script("assert(v1 == nil)");
+			lua.script("assert(v2 == nil)");
+			lua.script("assert(v3 == nil)");
+			lua.script("assert(v4 == nil)");
+		}());
+	}
+	SECTION("throw unique argument") {
+		sol::state lua;
+		lua["v2"] = std::unique_ptr<nil_test>();
+		lua["g"] = &nil_test::g;
+
+		REQUIRE_THROWS([&]() {
+			lua.script("g(v2)");
+		}());
+	}
+	SECTION("throw shared argument") {
+		sol::state lua;
+		lua["v1"] = sptr;
+		lua["h"] = &nil_test::h;
+
+		REQUIRE_THROWS([&]() {
+			lua.script("h(v1)");
+		}());
+	}
+	SECTION("throw ref") {
+		REQUIRE_THROWS([&]() {
+			sol::state lua;
+			lua["v1"] = sptr;
+			nil_test& v1 = lua["v1"];
+			(void)(&v1 == sptr.get());
+		}());
+		REQUIRE_THROWS([&]() {
+			sol::state lua;
+			lua["v2"] = std::unique_ptr<nil_test>();
+			nil_test& v2 = lua["v2"];
+			(void)(&v2 == uptr.get());
+		}());
+		REQUIRE_THROWS([&]() {
+			sol::state lua;
+			lua["v3"] = rptr;
+			nil_test& v3 = lua["v3"];
+			(void)(&v3 == rptr);
+		}());
+		REQUIRE_THROWS([&]() {
+			sol::state lua;
+			lua["v4"] = vptr;
+			nil_test& v4 = lua["v4"];
+			(void)(&v4 == vptr);
+		}());
+	}
+	SECTION("throw unique") {
+		REQUIRE_THROWS([&]() {
+			sol::state lua;
+			lua["v1"] = sptr;
+			std::unique_ptr<nil_test>& v1 = lua["v1"];
+			(void)(v1.get() == sptr.get());
+		}());
+		REQUIRE_THROWS([&]() {
+			sol::state lua;
+			lua["v2"] = std::unique_ptr<nil_test>();
+			std::unique_ptr<nil_test>& v2 = lua["v2"];
+			(void)(v2.get() == uptr.get());
+		}());
+		REQUIRE_THROWS([&]() {
+			sol::state lua;
+			lua["v3"] = rptr;
+			std::unique_ptr<nil_test>& v3 = lua["v3"];
+			(void)(v3.get() == rptr);
+		}());
+		REQUIRE_THROWS([&]() {
+			sol::state lua;
+			lua["v4"] = vptr;
+			std::unique_ptr<nil_test>& v4 = lua["v4"];
+			(void)(v4.get() == vptr);
+		}());
+	}
+	SECTION("throw shared") {
+		REQUIRE_THROWS([&]() {
+			sol::state lua;
+			lua["v1"] = sptr;
+			std::shared_ptr<nil_test>& v1 = lua["v1"];
+			(void)(v1.get() == sptr.get());
+		}());
+		REQUIRE_THROWS([&]() {
+			sol::state lua;
+			lua["v2"] = std::unique_ptr<nil_test>();
+			std::shared_ptr<nil_test>& v2 = lua["v2"];
+			(void)(v2.get() == uptr.get());
+		}());
+		REQUIRE_THROWS([&]() {
+			sol::state lua;
+			lua["v3"] = rptr;
+			std::shared_ptr<nil_test>& v3 = lua["v3"];
+			(void)(v3.get() == rptr);
+		}());
+		REQUIRE_THROWS([&]() {
+			sol::state lua;
+			lua["v4"] = vptr;
+			std::shared_ptr<nil_test>& v4 = lua["v4"];
+			(void)(v4.get() == vptr);
+		}());
+	}
+}
+
+TEST_CASE("functions/unique_usertype-overloading", "make sure overloading can work with ptr vs. specifically asking for a unique_usertype") {
 	struct test { 
 		int special_value = 17;
 		test() : special_value(17) {}

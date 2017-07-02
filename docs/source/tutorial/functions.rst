@@ -162,9 +162,7 @@ This is useful for functions which can take multiple types and need to behave di
 
 As a side note, binding functions with default parameters does not magically bind multiple versions of the function to be called with the default parameters. You must instead use :doc:`sol::overload<../api/overload>`.
 
-.. note::
-
-	Function object ``obj`` -- a struct with a ``return_type operator()( ... )`` member defined on them, like all C++ lambdas -- are not interpreted as functions when you use ``set`` for ``mytable.set( key, value )``. This only happens automagically with ``mytable[key] = obj``. To be explicit about wanting a struct to be interpreted as a function, use ``mytable.set_function( key, func_value );``. You can be explicit about wanting a function as well by using the :doc:`sol::as_function<../api/as_function>` call.
+As a side note, please make sure to understand Make sure you understand the :ref:`implications of binding a lambda/callable struct in the various ways<binding-callable-objects>` and what it means for your code!
 
 
 Getting a function from Lua

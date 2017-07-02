@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-06-26 14:10:10.059447 UTC
-// This header was generated with sol v2.17.5 (revision 13370e7)
+// Generated 2017-07-01 15:02:51.956179 UTC
+// This header was generated with sol v2.18.0 (revision da28527)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1614,7 +1614,7 @@ inline int luaL_fileresult(lua_State *L, int stat, const char *fname) {
     }
     else {
         char buf[1024];
-#if defined(__GLIBC__) || defined(_POSIX_VERSION)
+#if defined(__GLIBC__) || defined(_POSIX_VERSION) || defined(__APPLE__)
         strerror_r(en, buf, 1024);
 #else
         strerror_s(buf, 1024, en);
@@ -6679,6 +6679,9 @@ namespace sol {
 
 			template <typename Arg, meta::enable<std::is_base_of<Real, meta::unqualified_t<Arg>>> = meta::enabler>
 			static int push(lua_State* L, Arg&& arg) {
+				if (unique_usertype_traits<T>::is_null(arg)) {
+					return stack::push(L, lua_nil);
+				}
 				return push_deep(L, std::forward<Arg>(arg));
 			}
 

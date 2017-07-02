@@ -65,7 +65,7 @@ Note that this will not work well in Lua 5.1, as it has explicit table checks an
 		print(i, vec[i]) 
 	end
 
-There are also other ways to iterate over key/values, but they can be difficult due to not having proper support in Lua 5.1. We recommend that you upgrade to Lua 5.2 or 5.3.
+There are also other ways to iterate over key/values, but they can be difficult due to not having proper support in Lua 5.1. We recommend that you upgrade to Lua 5.2 or 5.3 if this is integral to your infrastructure.
 
 
 additional functions
