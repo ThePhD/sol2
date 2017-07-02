@@ -22,11 +22,12 @@
 #ifndef SOL_TABLE_CORE_HPP
 #define SOL_TABLE_CORE_HPP
 
+#include "object_base.hpp"
 #include "proxy.hpp"
 #include "stack.hpp"
-#include "function_types.hpp"
 #include "usertype.hpp"
 #include "table_iterator.hpp"
+#include "types.hpp"
 
 namespace sol {
 	namespace detail {
