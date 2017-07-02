@@ -22,6 +22,8 @@
 #ifndef SOL_IN_PLACE_HPP
 #define SOL_IN_PLACE_HPP
 
+#include <cstddef>
+
 namespace sol {
 
 	namespace detail {

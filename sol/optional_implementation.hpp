@@ -30,6 +30,8 @@
 # ifndef SOL_OPTIONAL_IMPLEMENTATION_HPP
 # define SOL_OPTIONAL_IMPLEMENTATION_HPP
 
+#include "in_place.hpp"
+
 # include <utility>
 # include <type_traits>
 # include <initializer_list>

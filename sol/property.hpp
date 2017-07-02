@@ -22,6 +22,10 @@
 #ifndef SOL_PROPERTY_HPP
 #define SOL_PROPERTY_HPP
 
+#include "types.hpp"
+#include <type_traits>
+#include <utility>
+
 namespace sol {
 
 	struct no_prop { };
