@@ -29,6 +29,8 @@
 #include <functional>
 #include <utility>
 
+#include "file_begin.hpp"
+
 namespace sol {
 	namespace stack {
 		namespace stack_detail {
@@ -487,5 +489,7 @@ namespace sol {
 		};
 	} // stack
 } // sol
+
+#include "file_end.hpp"
 
 #endif // SOL_STACK_CHECK_HPP

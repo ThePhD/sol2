@@ -27,6 +27,8 @@
 #include "stack_check.hpp"
 #include "optional.hpp"
 
+#include "file_begin.hpp"
+
 namespace sol {
 	namespace stack {
 		template <typename T, typename>
@@ -110,5 +112,7 @@ namespace sol {
 		};
 	} // stack
 } // sol
+
+#include "file_end.hpp"
 
 #endif // SOL_STACK_CHECK_GET_HPP

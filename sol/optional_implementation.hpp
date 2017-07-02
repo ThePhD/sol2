@@ -32,6 +32,8 @@
 
 #include "in_place.hpp"
 
+#include "file_begin.hpp"
+
 # include <utility>
 # include <type_traits>
 # include <initializer_list>
@@ -1127,8 +1129,9 @@ namespace std
 #pragma warning( pop )
 #endif
 
-
 # undef TR2_OPTIONAL_REQUIRES
 # undef TR2_OPTIONAL_ASSERTED_EXPRESSION
+
+#include "file_end.hpp"
 
 # endif // SOL_OPTIONAL_IMPLEMENTATION_HPP

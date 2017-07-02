@@ -26,6 +26,8 @@
 #include "stack.hpp"
 #include "state_view.hpp"
 
+#include "file_begin.hpp"
+
 namespace sol {
 	struct lua_thread_state {
 		lua_State* L;
@@ -155,5 +157,7 @@ namespace sol {
 		}
 	};
 } // sol
+
+#include "file_end.hpp"
 
 #endif // SOL_THREAD_HPP
