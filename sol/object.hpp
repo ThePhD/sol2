@@ -28,6 +28,7 @@
 #include "as_args.hpp"
 #include "variadic_args.hpp"
 #include "optional.hpp"
+#include "userdata.hpp"
 
 namespace sol {
 
