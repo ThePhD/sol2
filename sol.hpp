@@ -22,28 +22,7 @@
 #ifndef SOL_HPP
 #define SOL_HPP
 
-#if defined(UE_BUILD_DEBUG) || defined(UE_BUILD_DEVELOPMENT) || defined(UE_BUILD_TEST) || defined(UE_BUILD_SHIPPING) || defined(UE_SERVER)
-#define SOL_INSIDE_UNREAL
-#endif // Unreal Engine 4 bullshit
-
-#ifdef SOL_INSIDE_UNREAL
-#ifdef check
-#define SOL_INSIDE_UNREAL_REMOVED_CHECK
-#undef check
-#endif 
-#endif // Unreal Engine 4 Bullshit
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wshadow"
-#pragma GCC diagnostic ignored "-Wconversion"
-#if __GNUC__ > 6
-#pragma GCC diagnostic ignored "-Wnoexcept-type"
-#endif
-#elif defined _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4324 ) // structure was padded due to alignment specifier
-#endif // g++
+#include "sol/global_begin.hpp"
 
 #include "sol/state.hpp"
 #include "sol/object.hpp"
@@ -53,20 +32,6 @@
 #include "sol/coroutine.hpp"
 #include "sol/variadic_args.hpp"
 
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#elif defined _MSC_VER
-#pragma warning( push )
-#endif // g++
-
-#ifdef SOL_INSIDE_UNREAL
-#ifdef SOL_INSIDE_UNREAL_REMOVED_CHECK
-#if DO_CHECK
-#define check(expr) { if(UNLIKELY(!(expr))) { FDebug::LogAssertFailedMessage( #expr, __FILE__, __LINE__ ); _DebugBreakAndPromptForRemote(); FDebug::AssertFailed( #expr, __FILE__, __LINE__ ); CA_ASSUME(false); } }
-#else
-#define check(expr) { CA_ASSUME(expr); }
-#endif
-#endif 
-#endif // Unreal Engine 4 Bullshit
+#include "sol/global_end.hpp"
 
 #endif // SOL_HPP
