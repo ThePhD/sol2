@@ -23,4 +23,8 @@
 #endif
 #endif // Unreal Engine 4 Bullshit
 
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif // clang
+
 #endif // SOL_GLOBAL_HAS_BEGUN

@@ -1,5 +1,10 @@
 // include at the beginning of sol headers AFTER all other sol header inclusions; end sol headers with #include "file_end.hpp"
 #ifndef SOL_GLOBAL_HAS_BEGUN
+#ifdef __clang__
+// clang is a special snowflake of foresight and productivity
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wheader-guard"
+#endif // clang
 #define SOL_FILE_HAS_BEGUN
 
 #if defined(UE_BUILD_DEBUG) || defined(UE_BUILD_DEVELOPMENT) || defined(UE_BUILD_TEST) || defined(UE_BUILD_SHIPPING) || defined(UE_SERVER)
