@@ -66,6 +66,7 @@ namespace sol {
 		state(lua_CFunction panic = default_at_panic) : unique_base(luaL_newstate(), lua_close),
 			state_view(unique_base::get()) {
 			set_panic(panic);
+			sol::protected_function::set_default_handler(sol::object(lua_state(), in_place, default_error_handler));
 			stack::luajit_exception_handler(unique_base::get());
 		}
 

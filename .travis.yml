@@ -29,6 +29,7 @@ notifications:
         on_failure: change
 
 matrix:
+  fast_finish: true
   include: 
     - os: linux
       env: COMPILER=g++-4.9 LUA_VERSION=lua52
@@ -43,7 +44,7 @@ matrix:
           - ninja-build
           - liblua5.2-dev
 
-    # gcc-5
+    # gcc-4.9
     - os: linux
       env: COMPILER=g++-4.9 LUA_VERSION=luajit51
       compiler: gcc

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-07-01 15:02:51.956179 UTC
-// This header was generated with sol v2.18.0 (revision da28527)
+// Generated 2017-07-04 08:40:46.845523 UTC
+// This header was generated with sol v2.18.0 (revision 345a398)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -14576,6 +14576,7 @@ namespace sol {
 		state(lua_CFunction panic = default_at_panic) : unique_base(luaL_newstate(), lua_close),
 			state_view(unique_base::get()) {
 			set_panic(panic);
+			sol::protected_function::set_default_handler(sol::object(lua_state(), in_place, default_error_handler));
 			stack::luajit_exception_handler(unique_base::get());
 		}
 
