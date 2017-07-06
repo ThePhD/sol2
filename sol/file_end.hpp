@@ -1,6 +1,4 @@
 // include at the end of sol headers; begin sol headers with inclusions of other sol headers THEN followed by #include "file_begin.hpp"
-#ifndef SOL_GLOBAL_HAS_BEGUN
-
 #ifdef SOL_FILE_HAS_BEGUN
 #undef SOL_FILE_HAS_BEGUN
 #else
@@ -22,9 +20,3 @@
 #endif
 #endif
 #endif // Unreal Engine 4 Bullshit
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif // clang
-
-#endif // SOL_GLOBAL_HAS_BEGUN

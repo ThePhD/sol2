@@ -22,8 +22,6 @@
 #ifndef SOL_HPP
 #define SOL_HPP
 
-#include "sol/global_begin.hpp"
-
 #include "sol/state.hpp"
 #include "sol/object.hpp"
 #include "sol/userdata.hpp"
@@ -32,7 +30,5 @@
 #include "sol/state.hpp"
 #include "sol/coroutine.hpp"
 #include "sol/variadic_args.hpp"
-
-#include "sol/global_end.hpp"
 
 #endif // SOL_HPP
