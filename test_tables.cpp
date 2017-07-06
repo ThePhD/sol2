@@ -572,3 +572,14 @@ print(tbl[1])
 	REQUIRE(v1 == 30);
 	REQUIRE(v2 == 40);
 }
+
+TEST_CASE("tables/optional-move", "ensure pushing a sol::optional<T> rvalue correctly moves the contained object"){
+	sol::state sol_state;
+	struct move_only{
+		int secret_code;
+		move_only(const move_only&) = delete;
+		move_only(move_only&&) = default;
+	};
+	sol_state["requires_move"] = sol::optional<move_only>{move_only{0x4D}};
+	REQUIRE(sol_state["requires_move"].get<move_only>().secret_code == 0x4D);
+}
