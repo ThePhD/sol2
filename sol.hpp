@@ -26,6 +26,7 @@
 
 #include "sol/state.hpp"
 #include "sol/object.hpp"
+#include "sol/userdata.hpp"
 #include "sol/function.hpp"
 #include "sol/protected_function.hpp"
 #include "sol/state.hpp"
