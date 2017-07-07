@@ -30,6 +30,10 @@
 #include <functional>
 #include <memory>
 
+#ifdef SOL_SAFE_FUNCTIONS
+#include "protected_function.hpp"
+#endif
+
 namespace sol {
 	template <typename base_t>
 	class basic_function : public base_t {

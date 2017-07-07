@@ -32,6 +32,8 @@
 #include <vector>
 #include <string>
 
+#include "file_begin.hpp"
+
 namespace sol {
 	namespace detail {
 		struct as_reference_tag {};
@@ -417,5 +419,7 @@ namespace sol {
 		}
 	} // stack
 } // sol
+
+#include "file_end.hpp"
 
 #endif // SOL_STACK_CORE_HPP

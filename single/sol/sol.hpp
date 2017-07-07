@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-07-04 08:40:46.845523 UTC
-// This header was generated with sol v2.18.0 (revision 345a398)
+// Generated 2017-07-07 04:42:49.277472 UTC
+// This header was generated with sol v2.18.0 (revision 0287c6e)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -31,29 +31,6 @@
 
 #ifndef SOL_HPP
 #define SOL_HPP
-
-#if defined(UE_BUILD_DEBUG) || defined(UE_BUILD_DEVELOPMENT) || defined(UE_BUILD_TEST) || defined(UE_BUILD_SHIPPING) || defined(UE_SERVER)
-#define SOL_INSIDE_UNREAL
-#endif // Unreal Engine 4 bullshit
-
-#ifdef SOL_INSIDE_UNREAL
-#ifdef check
-#define SOL_INSIDE_UNREAL_REMOVED_CHECK
-#undef check
-#endif 
-#endif // Unreal Engine 4 Bullshit
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wshadow"
-#pragma GCC diagnostic ignored "-Wconversion"
-#if __GNUC__ > 6
-#pragma GCC diagnostic ignored "-Wnoexcept-type"
-#endif
-#elif defined _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4324 ) // structure was padded due to alignment specifier
-#endif // g++
 
 // beginning of sol/state.hpp
 
@@ -98,70 +75,15 @@ namespace sol {
 
 // beginning of sol/table_core.hpp
 
-// beginning of sol/proxy.hpp
+// beginning of sol/object_base.hpp
 
-// beginning of sol/traits.hpp
+// beginning of sol/reference.hpp
 
-// beginning of sol/tuple.hpp
+// beginning of sol/types.hpp
 
-#include <tuple>
-#include <cstddef>
+// beginning of sol/optional.hpp
 
-namespace sol {
-	namespace detail {
-		using swallow = std::initializer_list<int>;
-	} // detail
-
-	template<typename... Args>
-	struct types { typedef std::make_index_sequence<sizeof...(Args)> indices; static constexpr std::size_t size() { return sizeof...(Args); } };
-	namespace meta {
-		namespace detail {
-			template<typename... Args>
-			struct tuple_types_ { typedef types<Args...> type; };
-
-			template<typename... Args>
-			struct tuple_types_<std::tuple<Args...>> { typedef types<Args...> type; };
-		} // detail
-
-		template<typename T>
-		using unqualified = std::remove_cv<std::remove_reference_t<T>>;
-
-		template<typename T>
-		using unqualified_t = typename unqualified<T>::type;
-
-		template<typename... Args>
-		using tuple_types = typename detail::tuple_types_<Args...>::type;
-
-		template<typename Arg>
-		struct pop_front_type;
-
-		template<typename Arg>
-		using pop_front_type_t = typename pop_front_type<Arg>::type;
-
-		template<typename... Args>
-		struct pop_front_type<types<Args...>> { typedef void front_type; typedef types<Args...> type; };
-
-		template<typename Arg, typename... Args>
-		struct pop_front_type<types<Arg, Args...>> { typedef Arg front_type; typedef types<Args...> type; };
-
-		template <std::size_t N, typename Tuple>
-		using tuple_element = std::tuple_element<N, unqualified_t<Tuple>>;
-
-		template <std::size_t N, typename Tuple>
-		using tuple_element_t = std::tuple_element_t<N, unqualified_t<Tuple>>;
-
-		template <std::size_t N, typename Tuple>
-		using unqualified_tuple_element = unqualified<tuple_element_t<N, Tuple>>;
-
-		template <std::size_t N, typename Tuple>
-		using unqualified_tuple_element_t = unqualified_t<tuple_element_t<N, Tuple>>;
-
-	} // meta
-} // sol
-
-// end of sol/tuple.hpp
-
-// beginning of sol/bind_traits.hpp
+// beginning of sol/compatibility.hpp
 
 // beginning of sol/feature_test.hpp
 
@@ -240,801 +162,6 @@ namespace sol {
 #endif // Safe Usertypes
 
 // end of sol/feature_test.hpp
-
-namespace sol {
-	namespace meta {
-		namespace meta_detail {
-
-			template<class F>
-			struct check_deducible_signature {
-				struct nat {};
-				template<class G>
-				static auto test(int) -> decltype(&G::operator(), void());
-				template<class>
-				static auto test(...)->nat;
-
-				using type = std::is_void<decltype(test<F>(0))>;
-			};
-		} // meta_detail
-
-		template<class F>
-		struct has_deducible_signature : meta_detail::check_deducible_signature<F>::type { };
-
-		namespace meta_detail {
-
-			template <std::size_t I, typename T>
-			struct void_tuple_element : meta::tuple_element<I, T> {};
-
-			template <std::size_t I>
-			struct void_tuple_element<I, std::tuple<>> { typedef void type; };
-
-			template <std::size_t I, typename T>
-			using void_tuple_element_t = typename void_tuple_element<I, T>::type;
-
-			template <bool it_is_noexcept, bool has_c_variadic, typename T, typename R, typename... Args>
-			struct basic_traits {
-			private:
-				typedef std::conditional_t<std::is_void<T>::value, int, T>& first_type;
-
-			public:
-				static const bool is_noexcept = it_is_noexcept;
-				static const bool is_member_function = std::is_void<T>::value;
-				static const bool has_c_var_arg = has_c_variadic;
-				static const std::size_t arity = sizeof...(Args);
-				static const std::size_t free_arity = sizeof...(Args)+static_cast<std::size_t>(!std::is_void<T>::value);
-				typedef types<Args...> args_list;
-				typedef std::tuple<Args...> args_tuple;
-				typedef T object_type;
-				typedef R return_type;
-				typedef tuple_types<R> returns_list;
-				typedef R(function_type)(Args...);
-				typedef std::conditional_t<std::is_void<T>::value, args_list, types<first_type, Args...>> free_args_list;
-				typedef std::conditional_t<std::is_void<T>::value, R(Args...), R(first_type, Args...)> free_function_type;
-				typedef std::conditional_t<std::is_void<T>::value, R(*)(Args...), R(*)(first_type, Args...)> free_function_pointer_type;
-				typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
-				template<std::size_t i>
-				using arg_at = void_tuple_element_t<i, args_tuple>;
-			};
-
-			template<typename Signature, bool b = has_deducible_signature<Signature>::value>
-			struct fx_traits : basic_traits<false, false, void, void> {};
-
-			// Free Functions
-			template<typename R, typename... Args>
-			struct fx_traits<R(Args...), false> : basic_traits<false, false, void, R, Args...> {
-				typedef R(*function_pointer_type)(Args...);
-			};
-
-			template<typename R, typename... Args>
-			struct fx_traits<R(*)(Args...), false> : basic_traits<false, false, void, R, Args...> {
-				typedef R(*function_pointer_type)(Args...);
-			};
-
-			template<typename R, typename... Args>
-			struct fx_traits<R(Args..., ...), false> : basic_traits<false, true, void, R, Args...> {
-				typedef R(*function_pointer_type)(Args..., ...);
-			};
-
-			template<typename R, typename... Args>
-			struct fx_traits<R(*)(Args..., ...), false> : basic_traits<false, true, void, R, Args...> {
-				typedef R(*function_pointer_type)(Args..., ...);
-			};
-
-			// Member Functions
-			/* C-Style Variadics */
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...), false> : basic_traits<false, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...);
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...), false> : basic_traits<false, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...);
-			};
-
-			/* Const Volatile */
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const, false> : basic_traits<false, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const, false> : basic_traits<false, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const volatile, false> : basic_traits<false, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const volatile;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const volatile, false> : basic_traits<false, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const volatile;
-			};
-
-			/* Member Function Qualifiers */
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) &, false> : basic_traits<false, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) &;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) &, false> : basic_traits<false, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) &;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const &, false> : basic_traits<false, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const &;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const &, false> : basic_traits<false, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const &;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const volatile &, false> : basic_traits<false, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const volatile &;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const volatile &, false> : basic_traits<false, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const volatile &;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) && , false> : basic_traits<false, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) && ;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) && , false> : basic_traits<false, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) && ;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const &&, false> : basic_traits<false, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const &&;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const &&, false> : basic_traits<false, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const &&;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const volatile &&, false> : basic_traits<false, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const volatile &&;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const volatile &&, false> : basic_traits<false, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const volatile &&;
-			};
-
-#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
-
-			template<typename R, typename... Args>
-			struct fx_traits<R(Args...) noexcept, false> : basic_traits<true, false, void, R, Args...> {
-				typedef R(*function_pointer_type)(Args...) noexcept;
-			};
-
-			template<typename R, typename... Args>
-			struct fx_traits<R(*)(Args...) noexcept, false> : basic_traits<true, false, void, R, Args...> {
-				typedef R(*function_pointer_type)(Args...) noexcept;
-			};
-
-			template<typename R, typename... Args>
-			struct fx_traits<R(Args..., ...) noexcept, false> : basic_traits<true, true, void, R, Args...> {
-				typedef R(*function_pointer_type)(Args..., ...) noexcept;
-			};
-
-			template<typename R, typename... Args>
-			struct fx_traits<R(*)(Args..., ...) noexcept, false> : basic_traits<true, true, void, R, Args...> {
-				typedef R(*function_pointer_type)(Args..., ...) noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) noexcept, false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) noexcept, false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) noexcept;
-			};
-
-			/* Const Volatile */
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const noexcept, false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const noexcept, false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const volatile noexcept, false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const volatile noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const volatile noexcept, false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const volatile noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) & noexcept, false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) & noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) & noexcept, false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) & noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const & noexcept, false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const & noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const & noexcept, false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const & noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const volatile & noexcept, false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const volatile & noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const volatile & noexcept, false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const volatile & noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) && noexcept , false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) && noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) && noexcept , false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) && noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const && noexcept, false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const && noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const && noexcept, false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const && noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args...) const volatile && noexcept, false> : basic_traits<true, false, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args...) const volatile && noexcept;
-			};
-
-			template<typename T, typename R, typename... Args>
-			struct fx_traits<R(T::*)(Args..., ...) const volatile && noexcept, false> : basic_traits<true, true, T, R, Args...> {
-				typedef R(T::* function_pointer_type)(Args..., ...) const volatile && noexcept;
-			};
-
-#endif // noexcept is part of a function's type
-
-			template<typename Signature>
-			struct fx_traits<Signature, true> : fx_traits<typename fx_traits<decltype(&Signature::operator())>::function_type, false> {};
-
-			template<typename Signature, bool b = std::is_member_object_pointer<Signature>::value>
-			struct callable_traits : fx_traits<std::decay_t<Signature>> {
-
-			};
-
-			template<typename R, typename T>
-			struct callable_traits<R(T::*), true> {
-				typedef R Arg;
-				typedef T object_type;
-				using signature_type = R(T::*);
-				static const bool is_noexcept = false;
-				static const bool is_member_function = false;
-				static const std::size_t arity = 1;
-				static const std::size_t free_arity = 2;
-				typedef std::tuple<Arg> args_tuple;
-				typedef R return_type;
-				typedef types<Arg> args_list;
-				typedef types<T, Arg> free_args_list;
-				typedef meta::tuple_types<R> returns_list;
-				typedef R(function_type)(T&, R);
-				typedef R(*function_pointer_type)(T&, R);
-				typedef R(*free_function_pointer_type)(T&, R);
-				template<std::size_t i>
-				using arg_at = void_tuple_element_t<i, args_tuple>;
-			};
-
-		} // meta_detail
-
-		template<typename Signature>
-		struct bind_traits : meta_detail::callable_traits<Signature> {};
-
-		template<typename Signature>
-		using function_args_t = typename bind_traits<Signature>::args_list;
-
-		template<typename Signature>
-		using function_signature_t = typename bind_traits<Signature>::signature_type;
-
-		template<typename Signature>
-		using function_return_t = typename bind_traits<Signature>::return_type;
-
-	} // meta
-} // sol
-
-// end of sol/bind_traits.hpp
-
-#include <type_traits>
-#include <memory>
-#include <functional>
-#include <iterator>
-
-namespace sol {
-	template<std::size_t I>
-	using index_value = std::integral_constant<std::size_t, I>;
-
-	namespace meta {
-		template<typename T>
-		struct identity { typedef T type; };
-
-		template<typename T>
-		using identity_t = typename identity<T>::type;
-
-		template<typename... Args>
-		struct is_tuple : std::false_type { };
-
-		template<typename... Args>
-		struct is_tuple<std::tuple<Args...>> : std::true_type { };
-
-		template <typename T>
-		struct is_builtin_type : std::integral_constant<bool, std::is_arithmetic<T>::value || std::is_pointer<T>::value || std::is_array<T>::value> {};
-
-		template<typename T>
-		struct unwrapped {
-			typedef T type;
-		};
-
-		template<typename T>
-		struct unwrapped<std::reference_wrapper<T>> {
-			typedef T type;
-		};
-
-		template<typename T>
-		using unwrapped_t = typename unwrapped<T>::type;
-
-		template <typename T>
-		struct unwrap_unqualified : unwrapped<unqualified_t<T>> {};
-
-		template <typename T>
-		using unwrap_unqualified_t = typename unwrap_unqualified<T>::type;
-
-		template<typename T>
-		struct remove_member_pointer;
-
-		template<typename R, typename T>
-		struct remove_member_pointer<R T::*> {
-			typedef R type;
-		};
-
-		template<typename R, typename T>
-		struct remove_member_pointer<R T::* const> {
-			typedef R type;
-		};
-
-		template<typename T>
-		using remove_member_pointer_t = remove_member_pointer<T>;
-
-		template<template<typename...> class Templ, typename T>
-		struct is_specialization_of : std::false_type { };
-		template<typename... T, template<typename...> class Templ>
-		struct is_specialization_of<Templ, Templ<T...>> : std::true_type { };
-
-		template<class T, class...>
-		struct all_same : std::true_type { };
-
-		template<class T, class U, class... Args>
-		struct all_same<T, U, Args...> : std::integral_constant <bool, std::is_same<T, U>::value && all_same<T, Args...>::value> { };
-
-		template<class T, class...>
-		struct any_same : std::false_type { };
-
-		template<class T, class U, class... Args>
-		struct any_same<T, U, Args...> : std::integral_constant <bool, std::is_same<T, U>::value || any_same<T, Args...>::value> { };
-
-		template<typename T>
-		using invoke_t = typename T::type;
-
-		template<bool B>
-		using boolean = std::integral_constant<bool, B>;
-
-		template<typename T>
-		using neg = boolean<!T::value>;
-
-		template<typename Condition, typename Then, typename Else>
-		using condition = std::conditional_t<Condition::value, Then, Else>;
-
-		template<typename... Args>
-		struct all : boolean<true> {};
-
-		template<typename T, typename... Args>
-		struct all<T, Args...> : condition<T, all<Args...>, boolean<false>> {};
-
-		template<typename... Args>
-		struct any : boolean<false> {};
-
-		template<typename T, typename... Args>
-		struct any<T, Args...> : condition<T, boolean<true>, any<Args...>> {};
-
-		enum class enable_t {
-			_
-		};
-
-		constexpr const auto enabler = enable_t::_;
-
-		template<bool value, typename T = void>
-		using disable_if_t = std::enable_if_t<!value, T>;
-
-		template<typename... Args>
-		using enable = std::enable_if_t<all<Args...>::value, enable_t>;
-
-		template<typename... Args>
-		using disable = std::enable_if_t<neg<all<Args...>>::value, enable_t>;
-
-		template<typename... Args>
-		using disable_any = std::enable_if_t<neg<any<Args...>>::value, enable_t>;
-
-		template<typename V, typename... Vs>
-		struct find_in_pack_v : boolean<false> { };
-
-		template<typename V, typename Vs1, typename... Vs>
-		struct find_in_pack_v<V, Vs1, Vs...> : any<boolean<(V::value == Vs1::value)>, find_in_pack_v<V, Vs...>> { };
-
-		namespace meta_detail {
-			template<std::size_t I, typename T, typename... Args>
-			struct index_in_pack : std::integral_constant<std::size_t, SIZE_MAX> { };
-
-			template<std::size_t I, typename T, typename T1, typename... Args>
-			struct index_in_pack<I, T, T1, Args...> : std::conditional_t<std::is_same<T, T1>::value, std::integral_constant<std::ptrdiff_t, I>, index_in_pack<I + 1, T, Args...>> { };
-		}
-
-		template<typename T, typename... Args>
-		struct index_in_pack : meta_detail::index_in_pack<0, T, Args...> { };
-
-		template<typename T, typename List>
-		struct index_in : meta_detail::index_in_pack<0, T, List> { };
-
-		template<typename T, typename... Args>
-		struct index_in<T, types<Args...>> : meta_detail::index_in_pack<0, T, Args...> { };
-
-		template<std::size_t I, typename... Args>
-		struct at_in_pack {};
-
-		template<std::size_t I, typename... Args>
-		using at_in_pack_t = typename at_in_pack<I, Args...>::type;
-
-		template<std::size_t I, typename Arg, typename... Args>
-		struct at_in_pack<I, Arg, Args...> : std::conditional<I == 0, Arg, at_in_pack_t<I - 1, Args...>> {};
-
-		template<typename Arg, typename... Args>
-		struct at_in_pack<0, Arg, Args...> { typedef Arg type; };
-
-		namespace meta_detail {
-			template<std::size_t Limit, std::size_t I, template<typename...> class Pred, typename... Ts>
-			struct count_for_pack : std::integral_constant<std::size_t, 0> {};
-			template<std::size_t Limit, std::size_t I, template<typename...> class Pred, typename T, typename... Ts>
-			struct count_for_pack<Limit, I, Pred, T, Ts...> : std::conditional_t < sizeof...(Ts) == 0 || Limit < 2,
-				std::integral_constant<std::size_t, I + static_cast<std::size_t>(Limit != 0 && Pred<T>::value)>,
-				count_for_pack<Limit - 1, I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>
-			> { };
-			template<std::size_t I, template<typename...> class Pred, typename... Ts>
-			struct count_2_for_pack : std::integral_constant<std::size_t, 0> {};
-			template<std::size_t I, template<typename...> class Pred, typename T, typename U, typename... Ts>
-			struct count_2_for_pack<I, Pred, T, U, Ts...> : std::conditional_t<sizeof...(Ts) == 0,
-				std::integral_constant<std::size_t, I + static_cast<std::size_t>(Pred<T>::value)>,
-				count_2_for_pack<I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>
-			> { };
-		} // meta_detail
-
-		template<template<typename...> class Pred, typename... Ts>
-		struct count_for_pack : meta_detail::count_for_pack<sizeof...(Ts), 0, Pred, Ts...> { };
-
-		template<template<typename...> class Pred, typename List>
-		struct count_for;
-
-		template<template<typename...> class Pred, typename... Args>
-		struct count_for<Pred, types<Args...>> : count_for_pack<Pred, Args...> {};
-
-		template<std::size_t Limit, template<typename...> class Pred, typename... Ts>
-		struct count_for_to_pack : meta_detail::count_for_pack<Limit, 0, Pred, Ts...> { };
-
-		template<template<typename...> class Pred, typename... Ts>
-		struct count_2_for_pack : meta_detail::count_2_for_pack<0, Pred, Ts...> { };
-
-		template<typename... Args>
-		struct return_type {
-			typedef std::tuple<Args...> type;
-		};
-
-		template<typename T>
-		struct return_type<T> {
-			typedef T type;
-		};
-
-		template<>
-		struct return_type<> {
-			typedef void type;
-		};
-
-		template <typename... Args>
-		using return_type_t = typename return_type<Args...>::type;
-
-		namespace meta_detail {
-			template <typename> struct always_true : std::true_type {};
-			struct is_invokable_tester {
-				template <typename Fun, typename... Args>
-				always_true<decltype(std::declval<Fun>()(std::declval<Args>()...))> static test(int);
-				template <typename...>
-				std::false_type static test(...);
-			};
-		} // meta_detail
-
-		template <typename T>
-		struct is_invokable;
-		template <typename Fun, typename... Args>
-		struct is_invokable<Fun(Args...)> : decltype(meta_detail::is_invokable_tester::test<Fun, Args...>(0)) {};
-
-		namespace meta_detail {
-
-			template<typename T, bool isclass = std::is_class<unqualified_t<T>>::value>
-			struct is_callable : std::is_function<std::remove_pointer_t<T>> {};
-
-			template<typename T>
-			struct is_callable<T, true> {
-				using yes = char;
-				using no = struct { char s[2]; };
-
-				struct F { void operator()(); };
-				struct Derived : T, F {};
-				template<typename U, U> struct Check;
-
-				template<typename V>
-				static no test(Check<void (F::*)(), &V::operator()>*);
-
-				template<typename>
-				static yes test(...);
-
-				static const bool value = sizeof(test<Derived>(0)) == sizeof(yes);
-			};
-
-			struct has_begin_end_impl {
-				template<typename T, typename U = unqualified_t<T>,
-					typename B = decltype(std::declval<U&>().begin()),
-					typename E = decltype(std::declval<U&>().end())>
-					static std::true_type test(int);
-
-				template<typename...>
-				static std::false_type test(...);
-			};
-
-			struct has_key_type_impl {
-				template<typename T, typename U = unqualified_t<T>,
-					typename V = typename U::key_type>
-					static std::true_type test(int);
-
-				template<typename...>
-				static std::false_type test(...);
-			};
-
-			struct has_mapped_type_impl {
-				template<typename T, typename U = unqualified_t<T>,
-					typename V = typename U::mapped_type>
-					static std::true_type test(int);
-
-				template<typename...>
-				static std::false_type test(...);
-			};
-
-			struct has_key_value_pair_impl {
-				template<typename T, typename U = unqualified_t<T>,
-					typename V = typename U::value_type,
-					typename F = decltype(std::declval<V&>().first),
-					typename S = decltype(std::declval<V&>().second)>
-					static std::true_type test(int);
-
-				template<typename...>
-				static std::false_type test(...);
-			};
-
-			template <typename T, typename U = T, typename = decltype(std::declval<T&>() < std::declval<U&>())>
-			std::true_type supports_op_less_test(const T&);
-			std::false_type supports_op_less_test(...);
-			template <typename T, typename U = T, typename = decltype(std::declval<T&>() == std::declval<U&>())>
-			std::true_type supports_op_equal_test(const T&);
-			std::false_type supports_op_equal_test(...);
-			template <typename T, typename U = T, typename = decltype(std::declval<T&>() <= std::declval<U&>())>
-			std::true_type supports_op_less_equal_test(const T&);
-			std::false_type supports_op_less_equal_test(...);
-
-		} // meta_detail
-
-		template <typename T>
-		using supports_op_less = decltype(meta_detail::supports_op_less_test(std::declval<T&>()));
-		template <typename T>
-		using supports_op_equal = decltype(meta_detail::supports_op_equal_test(std::declval<T&>()));
-		template <typename T>
-		using supports_op_less_equal = decltype(meta_detail::supports_op_less_equal_test(std::declval<T&>()));
-
-		template<typename T>
-		struct is_callable : boolean<meta_detail::is_callable<T>::value> {};
-
-		template<typename T>
-		struct has_begin_end : decltype(meta_detail::has_begin_end_impl::test<T>(0)) {};
-
-		template<typename T>
-		struct has_key_value_pair : decltype(meta_detail::has_key_value_pair_impl::test<T>(0)) {};
-
-		template<typename T>
-		struct has_key_type : decltype(meta_detail::has_key_type_impl::test<T>(0)) {};
-
-		template<typename T>
-		struct has_mapped_type : decltype(meta_detail::has_mapped_type_impl::test<T>(0)) {};
-
-		template <typename T>
-		struct is_associative : meta::all<has_key_value_pair<T>, has_mapped_type<T>> {};
-
-		template <typename T>
-		using is_string_constructible = any<std::is_same<unqualified_t<T>, const char*>, std::is_same<unqualified_t<T>, char>, std::is_same<unqualified_t<T>, std::string>, std::is_same<unqualified_t<T>, std::initializer_list<char>>>;
-
-		template <typename T>
-		struct is_pair : std::false_type {};
-
-		template <typename T1, typename T2>
-		struct is_pair<std::pair<T1, T2>> : std::true_type {};
-
-		template <typename T>
-		using is_c_str = any<
-			std::is_same<std::decay_t<unqualified_t<T>>, const char*>,
-			std::is_same<std::decay_t<unqualified_t<T>>, char*>,
-			std::is_same<unqualified_t<T>, std::string>
-		>;
-
-		template <typename T>
-		struct is_move_only : all<
-			neg<std::is_reference<T>>,
-			neg<std::is_copy_constructible<unqualified_t<T>>>,
-			std::is_move_constructible<unqualified_t<T>>
-		> {};
-
-		template <typename T>
-		using is_not_move_only = neg<is_move_only<T>>;
-
-		namespace meta_detail {
-			template <typename T, meta::disable<meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>> = meta::enabler>
-			decltype(auto) force_tuple(T&& x) {
-				return std::forward_as_tuple(std::forward<T>(x));
-			}
-
-			template <typename T, meta::enable<meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>> = meta::enabler>
-			decltype(auto) force_tuple(T&& x) {
-				return std::forward<T>(x);
-			}
-		} // meta_detail
-
-		template <typename... X>
-		decltype(auto) tuplefy(X&&... x) {
-			return std::tuple_cat(meta_detail::force_tuple(std::forward<X>(x))...);
-		}
-
-		template <typename T, typename = void>
-		struct iterator_tag {
-			using type = std::input_iterator_tag;
-		};
-
-		template <typename T>
-		struct iterator_tag<T, std::conditional_t<false, typename T::iterator_category, void>> {
-			using type = typename T::iterator_category;
-		};
-
-	} // meta
-
-	namespace detail {
-		template <std::size_t I, typename Tuple>
-		decltype(auto) forward_get(Tuple&& tuple) {
-			return std::forward<meta::tuple_element_t<I, Tuple>>(std::get<I>(tuple));
-		}
-
-		template <std::size_t... I, typename Tuple>
-		auto forward_tuple_impl(std::index_sequence<I...>, Tuple&& tuple) -> decltype(std::tuple<decltype(forward_get<I>(tuple))...>(forward_get<I>(tuple)...)) {
-			return std::tuple<decltype(forward_get<I>(tuple))...>(std::move(std::get<I>(tuple))...);
-		}
-
-		template <typename Tuple>
-		auto forward_tuple(Tuple&& tuple) {
-			auto x = forward_tuple_impl(std::make_index_sequence<std::tuple_size<meta::unqualified_t<Tuple>>::value>(), std::forward<Tuple>(tuple));
-			return x;
-		}
-
-		template<typename T>
-		auto unwrap(T&& item) -> decltype(std::forward<T>(item)) {
-			return std::forward<T>(item);
-		}
-
-		template<typename T>
-		T& unwrap(std::reference_wrapper<T> arg) {
-			return arg.get();
-		}
-
-		template<typename T>
-		auto deref(T&& item) -> decltype(std::forward<T>(item)) {
-			return std::forward<T>(item);
-		}
-
-		template<typename T>
-		inline T& deref(T* item) {
-			return *item;
-		}
-
-		template<typename T, typename Dx>
-		inline std::add_lvalue_reference_t<T> deref(std::unique_ptr<T, Dx>& item) {
-			return *item;
-		}
-
-		template<typename T>
-		inline std::add_lvalue_reference_t<T> deref(std::shared_ptr<T>& item) {
-			return *item;
-		}
-
-		template<typename T, typename Dx>
-		inline std::add_lvalue_reference_t<T> deref(const std::unique_ptr<T, Dx>& item) {
-			return *item;
-		}
-
-		template<typename T>
-		inline std::add_lvalue_reference_t<T> deref(const std::shared_ptr<T>& item) {
-			return *item;
-		}
-
-		template<typename T>
-		inline T* ptr(T& val) {
-			return std::addressof(val);
-		}
-
-		template<typename T>
-		inline T* ptr(std::reference_wrapper<T> val) {
-			return std::addressof(val.get());
-		}
-
-		template<typename T>
-		inline T* ptr(T* val) {
-			return val;
-		}
-	} // detail
-} // sol
-
-// end of sol/traits.hpp
-
-// beginning of sol/object.hpp
-
-// beginning of sol/reference.hpp
-
-// beginning of sol/types.hpp
-
-// beginning of sol/optional.hpp
-
-// beginning of sol/compatibility.hpp
 
 // beginning of sol/compatibility/version.hpp
 
@@ -2008,6 +1135,8 @@ inline void luaL_pushresult(luaL_Buffer_52 *B) {
 
 // beginning of sol/in_place.hpp
 
+#include <cstddef>
+
 namespace sol {
 
 	namespace detail {
@@ -2042,6 +1171,34 @@ namespace sol {
 
 # ifndef SOL_OPTIONAL_IMPLEMENTATION_HPP
 # define SOL_OPTIONAL_IMPLEMENTATION_HPP
+
+// beginning of sol/file_begin.hpp
+
+#define SOL_FILE_HAS_BEGUN
+
+#if defined(UE_BUILD_DEBUG) || defined(UE_BUILD_DEVELOPMENT) || defined(UE_BUILD_TEST) || defined(UE_BUILD_SHIPPING) || defined(UE_SERVER)
+#define SOL_INSIDE_UNREAL
+#endif // Unreal Engine 4 bullshit
+
+#ifdef SOL_INSIDE_UNREAL
+#ifdef check
+#define SOL_INSIDE_UNREAL_REMOVED_CHECK
+#undef check
+#endif
+#endif // Unreal Engine 4 Bullshit
+
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wconversion"
+#if __GNUC__ > 6
+#pragma GCC diagnostic ignored "-Wnoexcept-type"
+#endif
+#elif defined _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4324 ) // structure was padded due to alignment specifier
+#endif // g++, VS
+// end of sol/file_begin.hpp
 
 # include <utility>
 # include <type_traits>
@@ -3110,6 +2267,31 @@ namespace std
 # undef TR2_OPTIONAL_REQUIRES
 # undef TR2_OPTIONAL_ASSERTED_EXPRESSION
 
+// beginning of sol/file_end.hpp
+
+#ifdef SOL_FILE_HAS_BEGUN
+#undef SOL_FILE_HAS_BEGUN
+#else
+#error "sol/file_end.hpp" was included without including "sol/file_begin.hpp" beforehand; something went wrong!
+#endif // SOL_FILE_HAS_BEGUN
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#elif defined _MSC_VER
+#pragma warning( push )
+#endif // g++
+
+#ifdef SOL_INSIDE_UNREAL
+#ifdef SOL_INSIDE_UNREAL_REMOVED_CHECK
+#if DO_CHECK
+#define check(expr) { if(UNLIKELY(!(expr))) { FDebug::LogAssertFailedMessage( #expr, __FILE__, __LINE__ ); _DebugBreakAndPromptForRemote(); FDebug::AssertFailed( #expr, __FILE__, __LINE__ ); CA_ASSUME(false); } }
+#else
+#define check(expr) { CA_ASSUME(expr); }
+#endif
+#endif
+#endif // Unreal Engine 4 Bullshit
+// end of sol/file_end.hpp
+
 # endif // SOL_OPTIONAL_IMPLEMENTATION_HPP
 // end of sol/optional_implementation.hpp
 
@@ -3133,6 +2315,853 @@ namespace sol {
 } // sol
 
 // end of sol/optional.hpp
+
+// beginning of sol/traits.hpp
+
+// beginning of sol/tuple.hpp
+
+#include <tuple>
+
+namespace sol {
+	namespace detail {
+		using swallow = std::initializer_list<int>;
+	} // detail
+
+	template<typename... Args>
+	struct types { typedef std::make_index_sequence<sizeof...(Args)> indices; static constexpr std::size_t size() { return sizeof...(Args); } };
+	namespace meta {
+		namespace detail {
+			template<typename... Args>
+			struct tuple_types_ { typedef types<Args...> type; };
+
+			template<typename... Args>
+			struct tuple_types_<std::tuple<Args...>> { typedef types<Args...> type; };
+		} // detail
+
+		template<typename T>
+		using unqualified = std::remove_cv<std::remove_reference_t<T>>;
+
+		template<typename T>
+		using unqualified_t = typename unqualified<T>::type;
+
+		template<typename... Args>
+		using tuple_types = typename detail::tuple_types_<Args...>::type;
+
+		template<typename Arg>
+		struct pop_front_type;
+
+		template<typename Arg>
+		using pop_front_type_t = typename pop_front_type<Arg>::type;
+
+		template<typename... Args>
+		struct pop_front_type<types<Args...>> { typedef void front_type; typedef types<Args...> type; };
+
+		template<typename Arg, typename... Args>
+		struct pop_front_type<types<Arg, Args...>> { typedef Arg front_type; typedef types<Args...> type; };
+
+		template <std::size_t N, typename Tuple>
+		using tuple_element = std::tuple_element<N, unqualified_t<Tuple>>;
+
+		template <std::size_t N, typename Tuple>
+		using tuple_element_t = std::tuple_element_t<N, unqualified_t<Tuple>>;
+
+		template <std::size_t N, typename Tuple>
+		using unqualified_tuple_element = unqualified<tuple_element_t<N, Tuple>>;
+
+		template <std::size_t N, typename Tuple>
+		using unqualified_tuple_element_t = unqualified_t<tuple_element_t<N, Tuple>>;
+
+	} // meta
+} // sol
+
+// end of sol/tuple.hpp
+
+// beginning of sol/bind_traits.hpp
+
+namespace sol {
+	namespace meta {
+		namespace meta_detail {
+
+			template<class F>
+			struct check_deducible_signature {
+				struct nat {};
+				template<class G>
+				static auto test(int) -> decltype(&G::operator(), void());
+				template<class>
+				static auto test(...)->nat;
+
+				using type = std::is_void<decltype(test<F>(0))>;
+			};
+		} // meta_detail
+
+		template<class F>
+		struct has_deducible_signature : meta_detail::check_deducible_signature<F>::type { };
+
+		namespace meta_detail {
+
+			template <std::size_t I, typename T>
+			struct void_tuple_element : meta::tuple_element<I, T> {};
+
+			template <std::size_t I>
+			struct void_tuple_element<I, std::tuple<>> { typedef void type; };
+
+			template <std::size_t I, typename T>
+			using void_tuple_element_t = typename void_tuple_element<I, T>::type;
+
+			template <bool it_is_noexcept, bool has_c_variadic, typename T, typename R, typename... Args>
+			struct basic_traits {
+			private:
+				typedef std::conditional_t<std::is_void<T>::value, int, T>& first_type;
+
+			public:
+				static const bool is_noexcept = it_is_noexcept;
+				static const bool is_member_function = std::is_void<T>::value;
+				static const bool has_c_var_arg = has_c_variadic;
+				static const std::size_t arity = sizeof...(Args);
+				static const std::size_t free_arity = sizeof...(Args)+static_cast<std::size_t>(!std::is_void<T>::value);
+				typedef types<Args...> args_list;
+				typedef std::tuple<Args...> args_tuple;
+				typedef T object_type;
+				typedef R return_type;
+				typedef tuple_types<R> returns_list;
+				typedef R(function_type)(Args...);
+				typedef std::conditional_t<std::is_void<T>::value, args_list, types<first_type, Args...>> free_args_list;
+				typedef std::conditional_t<std::is_void<T>::value, R(Args...), R(first_type, Args...)> free_function_type;
+				typedef std::conditional_t<std::is_void<T>::value, R(*)(Args...), R(*)(first_type, Args...)> free_function_pointer_type;
+				typedef std::remove_pointer_t<free_function_pointer_type> signature_type;
+				template<std::size_t i>
+				using arg_at = void_tuple_element_t<i, args_tuple>;
+			};
+
+			template<typename Signature, bool b = has_deducible_signature<Signature>::value>
+			struct fx_traits : basic_traits<false, false, void, void> {};
+
+			// Free Functions
+			template<typename R, typename... Args>
+			struct fx_traits<R(Args...), false> : basic_traits<false, false, void, R, Args...> {
+				typedef R(*function_pointer_type)(Args...);
+			};
+
+			template<typename R, typename... Args>
+			struct fx_traits<R(*)(Args...), false> : basic_traits<false, false, void, R, Args...> {
+				typedef R(*function_pointer_type)(Args...);
+			};
+
+			template<typename R, typename... Args>
+			struct fx_traits<R(Args..., ...), false> : basic_traits<false, true, void, R, Args...> {
+				typedef R(*function_pointer_type)(Args..., ...);
+			};
+
+			template<typename R, typename... Args>
+			struct fx_traits<R(*)(Args..., ...), false> : basic_traits<false, true, void, R, Args...> {
+				typedef R(*function_pointer_type)(Args..., ...);
+			};
+
+			// Member Functions
+			/* C-Style Variadics */
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...), false> : basic_traits<false, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...);
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...), false> : basic_traits<false, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...);
+			};
+
+			/* Const Volatile */
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const, false> : basic_traits<false, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const, false> : basic_traits<false, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const volatile, false> : basic_traits<false, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const volatile;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const volatile, false> : basic_traits<false, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const volatile;
+			};
+
+			/* Member Function Qualifiers */
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) &, false> : basic_traits<false, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) &;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) &, false> : basic_traits<false, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) &;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const &, false> : basic_traits<false, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const &;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const &, false> : basic_traits<false, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const &;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const volatile &, false> : basic_traits<false, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const volatile &;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const volatile &, false> : basic_traits<false, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const volatile &;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) && , false> : basic_traits<false, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) && ;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) && , false> : basic_traits<false, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) && ;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const &&, false> : basic_traits<false, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const &&;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const &&, false> : basic_traits<false, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const &&;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const volatile &&, false> : basic_traits<false, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const volatile &&;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const volatile &&, false> : basic_traits<false, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const volatile &&;
+			};
+
+#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+
+			template<typename R, typename... Args>
+			struct fx_traits<R(Args...) noexcept, false> : basic_traits<true, false, void, R, Args...> {
+				typedef R(*function_pointer_type)(Args...) noexcept;
+			};
+
+			template<typename R, typename... Args>
+			struct fx_traits<R(*)(Args...) noexcept, false> : basic_traits<true, false, void, R, Args...> {
+				typedef R(*function_pointer_type)(Args...) noexcept;
+			};
+
+			template<typename R, typename... Args>
+			struct fx_traits<R(Args..., ...) noexcept, false> : basic_traits<true, true, void, R, Args...> {
+				typedef R(*function_pointer_type)(Args..., ...) noexcept;
+			};
+
+			template<typename R, typename... Args>
+			struct fx_traits<R(*)(Args..., ...) noexcept, false> : basic_traits<true, true, void, R, Args...> {
+				typedef R(*function_pointer_type)(Args..., ...) noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) noexcept, false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) noexcept, false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) noexcept;
+			};
+
+			/* Const Volatile */
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const noexcept, false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const noexcept, false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const volatile noexcept, false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const volatile noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const volatile noexcept, false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const volatile noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) & noexcept, false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) & noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) & noexcept, false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) & noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const & noexcept, false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const & noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const & noexcept, false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const & noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const volatile & noexcept, false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const volatile & noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const volatile & noexcept, false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const volatile & noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) && noexcept , false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) && noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) && noexcept , false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) && noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const && noexcept, false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const && noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const && noexcept, false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const && noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args...) const volatile && noexcept, false> : basic_traits<true, false, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args...) const volatile && noexcept;
+			};
+
+			template<typename T, typename R, typename... Args>
+			struct fx_traits<R(T::*)(Args..., ...) const volatile && noexcept, false> : basic_traits<true, true, T, R, Args...> {
+				typedef R(T::* function_pointer_type)(Args..., ...) const volatile && noexcept;
+			};
+
+#endif // noexcept is part of a function's type
+
+			template<typename Signature>
+			struct fx_traits<Signature, true> : fx_traits<typename fx_traits<decltype(&Signature::operator())>::function_type, false> {};
+
+			template<typename Signature, bool b = std::is_member_object_pointer<Signature>::value>
+			struct callable_traits : fx_traits<std::decay_t<Signature>> {
+
+			};
+
+			template<typename R, typename T>
+			struct callable_traits<R(T::*), true> {
+				typedef R Arg;
+				typedef T object_type;
+				using signature_type = R(T::*);
+				static const bool is_noexcept = false;
+				static const bool is_member_function = false;
+				static const std::size_t arity = 1;
+				static const std::size_t free_arity = 2;
+				typedef std::tuple<Arg> args_tuple;
+				typedef R return_type;
+				typedef types<Arg> args_list;
+				typedef types<T, Arg> free_args_list;
+				typedef meta::tuple_types<R> returns_list;
+				typedef R(function_type)(T&, R);
+				typedef R(*function_pointer_type)(T&, R);
+				typedef R(*free_function_pointer_type)(T&, R);
+				template<std::size_t i>
+				using arg_at = void_tuple_element_t<i, args_tuple>;
+			};
+
+		} // meta_detail
+
+		template<typename Signature>
+		struct bind_traits : meta_detail::callable_traits<Signature> {};
+
+		template<typename Signature>
+		using function_args_t = typename bind_traits<Signature>::args_list;
+
+		template<typename Signature>
+		using function_signature_t = typename bind_traits<Signature>::signature_type;
+
+		template<typename Signature>
+		using function_return_t = typename bind_traits<Signature>::return_type;
+
+	} // meta
+} // sol
+
+// end of sol/bind_traits.hpp
+
+#include <type_traits>
+#include <memory>
+#include <functional>
+#include <iterator>
+
+namespace sol {
+	template<std::size_t I>
+	using index_value = std::integral_constant<std::size_t, I>;
+
+	namespace meta {
+		template<typename T>
+		struct identity { typedef T type; };
+
+		template<typename T>
+		using identity_t = typename identity<T>::type;
+
+		template<typename... Args>
+		struct is_tuple : std::false_type { };
+
+		template<typename... Args>
+		struct is_tuple<std::tuple<Args...>> : std::true_type { };
+
+		template <typename T>
+		struct is_builtin_type : std::integral_constant<bool, std::is_arithmetic<T>::value || std::is_pointer<T>::value || std::is_array<T>::value> {};
+
+		template<typename T>
+		struct unwrapped {
+			typedef T type;
+		};
+
+		template<typename T>
+		struct unwrapped<std::reference_wrapper<T>> {
+			typedef T type;
+		};
+
+		template<typename T>
+		using unwrapped_t = typename unwrapped<T>::type;
+
+		template <typename T>
+		struct unwrap_unqualified : unwrapped<unqualified_t<T>> {};
+
+		template <typename T>
+		using unwrap_unqualified_t = typename unwrap_unqualified<T>::type;
+
+		template<typename T>
+		struct remove_member_pointer;
+
+		template<typename R, typename T>
+		struct remove_member_pointer<R T::*> {
+			typedef R type;
+		};
+
+		template<typename R, typename T>
+		struct remove_member_pointer<R T::* const> {
+			typedef R type;
+		};
+
+		template<typename T>
+		using remove_member_pointer_t = remove_member_pointer<T>;
+
+		template<template<typename...> class Templ, typename T>
+		struct is_specialization_of : std::false_type { };
+		template<typename... T, template<typename...> class Templ>
+		struct is_specialization_of<Templ, Templ<T...>> : std::true_type { };
+
+		template<class T, class...>
+		struct all_same : std::true_type { };
+
+		template<class T, class U, class... Args>
+		struct all_same<T, U, Args...> : std::integral_constant <bool, std::is_same<T, U>::value && all_same<T, Args...>::value> { };
+
+		template<class T, class...>
+		struct any_same : std::false_type { };
+
+		template<class T, class U, class... Args>
+		struct any_same<T, U, Args...> : std::integral_constant <bool, std::is_same<T, U>::value || any_same<T, Args...>::value> { };
+
+		template<typename T>
+		using invoke_t = typename T::type;
+
+		template<bool B>
+		using boolean = std::integral_constant<bool, B>;
+
+		template<typename T>
+		using neg = boolean<!T::value>;
+
+		template<typename Condition, typename Then, typename Else>
+		using condition = std::conditional_t<Condition::value, Then, Else>;
+
+		template<typename... Args>
+		struct all : boolean<true> {};
+
+		template<typename T, typename... Args>
+		struct all<T, Args...> : condition<T, all<Args...>, boolean<false>> {};
+
+		template<typename... Args>
+		struct any : boolean<false> {};
+
+		template<typename T, typename... Args>
+		struct any<T, Args...> : condition<T, boolean<true>, any<Args...>> {};
+
+		enum class enable_t {
+			_
+		};
+
+		constexpr const auto enabler = enable_t::_;
+
+		template<bool value, typename T = void>
+		using disable_if_t = std::enable_if_t<!value, T>;
+
+		template<typename... Args>
+		using enable = std::enable_if_t<all<Args...>::value, enable_t>;
+
+		template<typename... Args>
+		using disable = std::enable_if_t<neg<all<Args...>>::value, enable_t>;
+
+		template<typename... Args>
+		using disable_any = std::enable_if_t<neg<any<Args...>>::value, enable_t>;
+
+		template<typename V, typename... Vs>
+		struct find_in_pack_v : boolean<false> { };
+
+		template<typename V, typename Vs1, typename... Vs>
+		struct find_in_pack_v<V, Vs1, Vs...> : any<boolean<(V::value == Vs1::value)>, find_in_pack_v<V, Vs...>> { };
+
+		namespace meta_detail {
+			template<std::size_t I, typename T, typename... Args>
+			struct index_in_pack : std::integral_constant<std::size_t, SIZE_MAX> { };
+
+			template<std::size_t I, typename T, typename T1, typename... Args>
+			struct index_in_pack<I, T, T1, Args...> : std::conditional_t<std::is_same<T, T1>::value, std::integral_constant<std::ptrdiff_t, I>, index_in_pack<I + 1, T, Args...>> { };
+		}
+
+		template<typename T, typename... Args>
+		struct index_in_pack : meta_detail::index_in_pack<0, T, Args...> { };
+
+		template<typename T, typename List>
+		struct index_in : meta_detail::index_in_pack<0, T, List> { };
+
+		template<typename T, typename... Args>
+		struct index_in<T, types<Args...>> : meta_detail::index_in_pack<0, T, Args...> { };
+
+		template<std::size_t I, typename... Args>
+		struct at_in_pack {};
+
+		template<std::size_t I, typename... Args>
+		using at_in_pack_t = typename at_in_pack<I, Args...>::type;
+
+		template<std::size_t I, typename Arg, typename... Args>
+		struct at_in_pack<I, Arg, Args...> : std::conditional<I == 0, Arg, at_in_pack_t<I - 1, Args...>> {};
+
+		template<typename Arg, typename... Args>
+		struct at_in_pack<0, Arg, Args...> { typedef Arg type; };
+
+		namespace meta_detail {
+			template<std::size_t Limit, std::size_t I, template<typename...> class Pred, typename... Ts>
+			struct count_for_pack : std::integral_constant<std::size_t, 0> {};
+			template<std::size_t Limit, std::size_t I, template<typename...> class Pred, typename T, typename... Ts>
+			struct count_for_pack<Limit, I, Pred, T, Ts...> : std::conditional_t < sizeof...(Ts) == 0 || Limit < 2,
+				std::integral_constant<std::size_t, I + static_cast<std::size_t>(Limit != 0 && Pred<T>::value)>,
+				count_for_pack<Limit - 1, I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>
+			> { };
+			template<std::size_t I, template<typename...> class Pred, typename... Ts>
+			struct count_2_for_pack : std::integral_constant<std::size_t, 0> {};
+			template<std::size_t I, template<typename...> class Pred, typename T, typename U, typename... Ts>
+			struct count_2_for_pack<I, Pred, T, U, Ts...> : std::conditional_t<sizeof...(Ts) == 0,
+				std::integral_constant<std::size_t, I + static_cast<std::size_t>(Pred<T>::value)>,
+				count_2_for_pack<I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>
+			> { };
+		} // meta_detail
+
+		template<template<typename...> class Pred, typename... Ts>
+		struct count_for_pack : meta_detail::count_for_pack<sizeof...(Ts), 0, Pred, Ts...> { };
+
+		template<template<typename...> class Pred, typename List>
+		struct count_for;
+
+		template<template<typename...> class Pred, typename... Args>
+		struct count_for<Pred, types<Args...>> : count_for_pack<Pred, Args...> {};
+
+		template<std::size_t Limit, template<typename...> class Pred, typename... Ts>
+		struct count_for_to_pack : meta_detail::count_for_pack<Limit, 0, Pred, Ts...> { };
+
+		template<template<typename...> class Pred, typename... Ts>
+		struct count_2_for_pack : meta_detail::count_2_for_pack<0, Pred, Ts...> { };
+
+		template<typename... Args>
+		struct return_type {
+			typedef std::tuple<Args...> type;
+		};
+
+		template<typename T>
+		struct return_type<T> {
+			typedef T type;
+		};
+
+		template<>
+		struct return_type<> {
+			typedef void type;
+		};
+
+		template <typename... Args>
+		using return_type_t = typename return_type<Args...>::type;
+
+		namespace meta_detail {
+			template <typename> struct always_true : std::true_type {};
+			struct is_invokable_tester {
+				template <typename Fun, typename... Args>
+				always_true<decltype(std::declval<Fun>()(std::declval<Args>()...))> static test(int);
+				template <typename...>
+				std::false_type static test(...);
+			};
+		} // meta_detail
+
+		template <typename T>
+		struct is_invokable;
+		template <typename Fun, typename... Args>
+		struct is_invokable<Fun(Args...)> : decltype(meta_detail::is_invokable_tester::test<Fun, Args...>(0)) {};
+
+		namespace meta_detail {
+
+			template<typename T, bool isclass = std::is_class<unqualified_t<T>>::value>
+			struct is_callable : std::is_function<std::remove_pointer_t<T>> {};
+
+			template<typename T>
+			struct is_callable<T, true> {
+				using yes = char;
+				using no = struct { char s[2]; };
+
+				struct F { void operator()(); };
+				struct Derived : T, F {};
+				template<typename U, U> struct Check;
+
+				template<typename V>
+				static no test(Check<void (F::*)(), &V::operator()>*);
+
+				template<typename>
+				static yes test(...);
+
+				static const bool value = sizeof(test<Derived>(0)) == sizeof(yes);
+			};
+
+			struct has_begin_end_impl {
+				template<typename T, typename U = unqualified_t<T>,
+					typename B = decltype(std::declval<U&>().begin()),
+					typename E = decltype(std::declval<U&>().end())>
+					static std::true_type test(int);
+
+				template<typename...>
+				static std::false_type test(...);
+			};
+
+			struct has_key_type_impl {
+				template<typename T, typename U = unqualified_t<T>,
+					typename V = typename U::key_type>
+					static std::true_type test(int);
+
+				template<typename...>
+				static std::false_type test(...);
+			};
+
+			struct has_mapped_type_impl {
+				template<typename T, typename U = unqualified_t<T>,
+					typename V = typename U::mapped_type>
+					static std::true_type test(int);
+
+				template<typename...>
+				static std::false_type test(...);
+			};
+
+			struct has_key_value_pair_impl {
+				template<typename T, typename U = unqualified_t<T>,
+					typename V = typename U::value_type,
+					typename F = decltype(std::declval<V&>().first),
+					typename S = decltype(std::declval<V&>().second)>
+					static std::true_type test(int);
+
+				template<typename...>
+				static std::false_type test(...);
+			};
+
+			template <typename T, typename U = T, typename = decltype(std::declval<T&>() < std::declval<U&>())>
+			std::true_type supports_op_less_test(const T&);
+			std::false_type supports_op_less_test(...);
+			template <typename T, typename U = T, typename = decltype(std::declval<T&>() == std::declval<U&>())>
+			std::true_type supports_op_equal_test(const T&);
+			std::false_type supports_op_equal_test(...);
+			template <typename T, typename U = T, typename = decltype(std::declval<T&>() <= std::declval<U&>())>
+			std::true_type supports_op_less_equal_test(const T&);
+			std::false_type supports_op_less_equal_test(...);
+
+		} // meta_detail
+
+		template <typename T>
+		using supports_op_less = decltype(meta_detail::supports_op_less_test(std::declval<T&>()));
+		template <typename T>
+		using supports_op_equal = decltype(meta_detail::supports_op_equal_test(std::declval<T&>()));
+		template <typename T>
+		using supports_op_less_equal = decltype(meta_detail::supports_op_less_equal_test(std::declval<T&>()));
+
+		template<typename T>
+		struct is_callable : boolean<meta_detail::is_callable<T>::value> {};
+
+		template<typename T>
+		struct has_begin_end : decltype(meta_detail::has_begin_end_impl::test<T>(0)) {};
+
+		template<typename T>
+		struct has_key_value_pair : decltype(meta_detail::has_key_value_pair_impl::test<T>(0)) {};
+
+		template<typename T>
+		struct has_key_type : decltype(meta_detail::has_key_type_impl::test<T>(0)) {};
+
+		template<typename T>
+		struct has_mapped_type : decltype(meta_detail::has_mapped_type_impl::test<T>(0)) {};
+
+		template <typename T>
+		struct is_associative : meta::all<has_key_value_pair<T>, has_mapped_type<T>> {};
+
+		template <typename T>
+		using is_string_constructible = any<std::is_same<unqualified_t<T>, const char*>, std::is_same<unqualified_t<T>, char>, std::is_same<unqualified_t<T>, std::string>, std::is_same<unqualified_t<T>, std::initializer_list<char>>>;
+
+		template <typename T>
+		struct is_pair : std::false_type {};
+
+		template <typename T1, typename T2>
+		struct is_pair<std::pair<T1, T2>> : std::true_type {};
+
+		template <typename T>
+		using is_c_str = any<
+			std::is_same<std::decay_t<unqualified_t<T>>, const char*>,
+			std::is_same<std::decay_t<unqualified_t<T>>, char*>,
+			std::is_same<unqualified_t<T>, std::string>
+		>;
+
+		template <typename T>
+		struct is_move_only : all<
+			neg<std::is_reference<T>>,
+			neg<std::is_copy_constructible<unqualified_t<T>>>,
+			std::is_move_constructible<unqualified_t<T>>
+		> {};
+
+		template <typename T>
+		using is_not_move_only = neg<is_move_only<T>>;
+
+		namespace meta_detail {
+			template <typename T, meta::disable<meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>> = meta::enabler>
+			decltype(auto) force_tuple(T&& x) {
+				return std::forward_as_tuple(std::forward<T>(x));
+			}
+
+			template <typename T, meta::enable<meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>> = meta::enabler>
+			decltype(auto) force_tuple(T&& x) {
+				return std::forward<T>(x);
+			}
+		} // meta_detail
+
+		template <typename... X>
+		decltype(auto) tuplefy(X&&... x) {
+			return std::tuple_cat(meta_detail::force_tuple(std::forward<X>(x))...);
+		}
+
+		template <typename T, typename = void>
+		struct iterator_tag {
+			using type = std::input_iterator_tag;
+		};
+
+		template <typename T>
+		struct iterator_tag<T, std::conditional_t<false, typename T::iterator_category, void>> {
+			using type = typename T::iterator_category;
+		};
+
+	} // meta
+
+	namespace detail {
+		template <std::size_t I, typename Tuple>
+		decltype(auto) forward_get(Tuple&& tuple) {
+			return std::forward<meta::tuple_element_t<I, Tuple>>(std::get<I>(tuple));
+		}
+
+		template <std::size_t... I, typename Tuple>
+		auto forward_tuple_impl(std::index_sequence<I...>, Tuple&& tuple) -> decltype(std::tuple<decltype(forward_get<I>(tuple))...>(forward_get<I>(tuple)...)) {
+			return std::tuple<decltype(forward_get<I>(tuple))...>(std::move(std::get<I>(tuple))...);
+		}
+
+		template <typename Tuple>
+		auto forward_tuple(Tuple&& tuple) {
+			auto x = forward_tuple_impl(std::make_index_sequence<std::tuple_size<meta::unqualified_t<Tuple>>::value>(), std::forward<Tuple>(tuple));
+			return x;
+		}
+
+		template<typename T>
+		auto unwrap(T&& item) -> decltype(std::forward<T>(item)) {
+			return std::forward<T>(item);
+		}
+
+		template<typename T>
+		T& unwrap(std::reference_wrapper<T> arg) {
+			return arg.get();
+		}
+
+		template<typename T>
+		auto deref(T&& item) -> decltype(std::forward<T>(item)) {
+			return std::forward<T>(item);
+		}
+
+		template<typename T>
+		inline T& deref(T* item) {
+			return *item;
+		}
+
+		template<typename T, typename Dx>
+		inline std::add_lvalue_reference_t<T> deref(std::unique_ptr<T, Dx>& item) {
+			return *item;
+		}
+
+		template<typename T>
+		inline std::add_lvalue_reference_t<T> deref(std::shared_ptr<T>& item) {
+			return *item;
+		}
+
+		template<typename T, typename Dx>
+		inline std::add_lvalue_reference_t<T> deref(const std::unique_ptr<T, Dx>& item) {
+			return *item;
+		}
+
+		template<typename T>
+		inline std::add_lvalue_reference_t<T> deref(const std::shared_ptr<T>& item) {
+			return *item;
+		}
+
+		template<typename T>
+		inline T* ptr(T& val) {
+			return std::addressof(val);
+		}
+
+		template<typename T>
+		inline T* ptr(std::reference_wrapper<T> val) {
+			return std::addressof(val.get());
+		}
+
+		template<typename T>
+		inline T* ptr(T* val) {
+			return val;
+		}
+	} // detail
+} // sol
+
+// end of sol/traits.hpp
 
 // beginning of sol/string_shim.hpp
 
@@ -7785,8 +7814,6 @@ namespace sol {
 
 // end of sol/stack.hpp
 
-// beginning of sol/object_base.hpp
-
 namespace sol {
 
 	template <typename base_t>
@@ -7842,115 +7869,7 @@ namespace sol {
 
 // end of sol/object_base.hpp
 
-// beginning of sol/userdata.hpp
-
-namespace sol {
-	template <typename base_type>
-	class basic_userdata : public basic_table<base_type> {
-		typedef basic_table<base_type> base_t;
-	public:
-		basic_userdata() noexcept = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_userdata>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
-		basic_userdata(T&& r) noexcept : base_t(std::forward<T>(r)) {
-#ifdef SOL_CHECK_ARGUMENTS
-			if (!is_userdata<meta::unqualified_t<T>>::value) {
-				auto pp = stack::push_pop(*this);
-				type_assert(base_t::lua_state(), -1, type::userdata);
-			}
-#endif // Safety
-		}
-		basic_userdata(const basic_userdata&) = default;
-		basic_userdata(basic_userdata&&) = default;
-		basic_userdata& operator=(const basic_userdata&) = default;
-		basic_userdata& operator=(basic_userdata&&) = default;
-		basic_userdata(const stack_reference& r) : basic_userdata(r.lua_state(), r.stack_index()) {}
-		basic_userdata(stack_reference&& r) : basic_userdata(r.lua_state(), r.stack_index()) {}
-		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<meta::unqualified_t<T>, ref_index>>> = meta::enabler>
-		basic_userdata(lua_State* L, T&& r) : basic_userdata(L, sol::ref_index(r.registry_index())) {}
-		basic_userdata(lua_State* L, int index = -1) : base_t(detail::no_safety, L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
-			stack::check<basic_userdata>(L, index, type_panic);
-#endif // Safety
-		}
-		basic_userdata(lua_State* L, ref_index index) : base_t(detail::no_safety, L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
-			auto pp = stack::push_pop(*this);
-			stack::check<basic_userdata>(L, index, type_panic);
-#endif // Safety
-		}
-	};
-
-	template <typename base_type>
-	class basic_lightuserdata : public basic_object_base<base_type> {
-		typedef basic_object_base<base_type> base_t;
-	public:
-		basic_lightuserdata() noexcept = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_lightuserdata>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
-		basic_lightuserdata(T&& r) noexcept : base_t(std::forward<T>(r)) {
-#ifdef SOL_CHECK_ARGUMENTS
-			if (!is_lightuserdata<meta::unqualified_t<T>>::value) {
-				auto pp = stack::push_pop(*this);
-				type_assert(base_t::lua_state(), -1, type::lightuserdata);
-			}
-#endif // Safety
-		}
-		basic_lightuserdata(const basic_lightuserdata&) = default;
-		basic_lightuserdata(basic_lightuserdata&&) = default;
-		basic_lightuserdata& operator=(const basic_lightuserdata&) = default;
-		basic_lightuserdata& operator=(basic_lightuserdata&&) = default;
-		basic_lightuserdata(const stack_reference& r) : basic_lightuserdata(r.lua_state(), r.stack_index()) {}
-		basic_lightuserdata(stack_reference&& r) : basic_lightuserdata(r.lua_state(), r.stack_index()) {}
-		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<meta::unqualified_t<T>, ref_index>>> = meta::enabler>
-		basic_lightuserdata(lua_State* L, T&& r) : basic_lightuserdata(L, sol::ref_index(r.registry_index())) {}
-		basic_lightuserdata(lua_State* L, int index = -1) : base_t(L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
-			stack::check<basic_lightuserdata>(L, index, type_panic);
-#endif // Safety
-		}
-		basic_lightuserdata(lua_State* L, ref_index index) : base_t(L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
-			auto pp = stack::push_pop(*this);
-			stack::check<basic_lightuserdata>(L, index, type_panic);
-#endif // Safety
-		}
-	};
-
-} // sol
-
-// end of sol/userdata.hpp
-
-// beginning of sol/as_args.hpp
-
-namespace sol {
-	template <typename T>
-	struct to_args_t {
-		T src;
-	};
-
-	template <typename Source>
-	auto as_args(Source&& source) {
-		return to_args_t<Source>{ std::forward<Source>(source) };
-	}
-
-	namespace stack {
-		template <typename T>
-		struct pusher<to_args_t<T>> {
-			int push(lua_State* L, const to_args_t<T>& e) {
-				int p = 0;
-				for (const auto& i : e.src) {
-					p += stack::push(L, i);
-				}
-				return p;
-			}
-		};
-	}
-} // sol
-
-// end of sol/as_args.hpp
-
-// beginning of sol/variadic_args.hpp
-
-// beginning of sol/stack_proxy.hpp
+// beginning of sol/proxy.hpp
 
 // beginning of sol/function.hpp
 
@@ -10121,134 +10040,7 @@ namespace sol {
 
 // end of sol/function_types.hpp
 
-namespace sol {
-	template <typename base_t>
-	class basic_function : public base_t {
-	private:
-		void luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount) const {
-			lua_callk(base_t::lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount), 0, nullptr);
-		}
-
-		template<std::size_t... I, typename... Ret>
-		auto invoke(types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n) const {
-			luacall(n, lua_size<std::tuple<Ret...>>::value);
-			return stack::pop<std::tuple<Ret...>>(base_t::lua_state());
-		}
-
-		template<std::size_t I, typename Ret>
-		Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n) const {
-			luacall(n, lua_size<Ret>::value);
-			return stack::pop<Ret>(base_t::lua_state());
-		}
-
-		template <std::size_t I>
-		void invoke(types<void>, std::index_sequence<I>, std::ptrdiff_t n) const {
-			luacall(n, 0);
-		}
-
-		function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n) const {
-			int stacksize = lua_gettop(base_t::lua_state());
-			int firstreturn = (std::max)(1, stacksize - static_cast<int>(n));
-			luacall(n, LUA_MULTRET);
-			int poststacksize = lua_gettop(base_t::lua_state());
-			int returncount = poststacksize - (firstreturn - 1);
-			return function_result(base_t::lua_state(), firstreturn, returncount);
-		}
-
-	public:
-		basic_function() = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_function>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_t, meta::unqualified_t<T>>> = meta::enabler>
-		basic_function(T&& r) noexcept : base_t(std::forward<T>(r)) {
-#ifdef SOL_CHECK_ARGUMENTS
-			if (!is_function<meta::unqualified_t<T>>::value) {
-				auto pp = stack::push_pop(*this);
-				stack::check<basic_function>(base_t::lua_state(), -1, type_panic);
-			}
-#endif // Safety
-		}
-		basic_function(const basic_function&) = default;
-		basic_function& operator=(const basic_function&) = default;
-		basic_function(basic_function&&) = default;
-		basic_function& operator=(basic_function&&) = default;
-		basic_function(const stack_reference& r) : basic_function(r.lua_state(), r.stack_index()) {}
-		basic_function(stack_reference&& r) : basic_function(r.lua_state(), r.stack_index()) {}
-		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<T, ref_index>>> = meta::enabler>
-		basic_function(lua_State* L, T&& r) : basic_function(L, sol::ref_index(r.registry_index())) {}
-		basic_function(lua_State* L, int index = -1) : base_t(L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
-			stack::check<basic_function>(L, index, type_panic);
-#endif // Safety
-		}
-		basic_function(lua_State* L, ref_index index) : base_t(L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
-			auto pp = stack::push_pop(*this);
-			stack::check<basic_function>(L, -1, type_panic);
-#endif // Safety
-		}
-
-		template<typename... Args>
-		function_result operator()(Args&&... args) const {
-			return call<>(std::forward<Args>(args)...);
-		}
-
-		template<typename... Ret, typename... Args>
-		decltype(auto) operator()(types<Ret...>, Args&&... args) const {
-			return call<Ret...>(std::forward<Args>(args)...);
-		}
-
-		template<typename... Ret, typename... Args>
-		decltype(auto) call(Args&&... args) const {
-			base_t::push();
-			int pushcount = stack::multi_push_reference(base_t::lua_state(), std::forward<Args>(args)...);
-			return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount);
-		}
-	};
-
-	namespace stack {
-		template<typename Signature>
-		struct getter<std::function<Signature>> {
-			typedef meta::bind_traits<Signature> fx_t;
-			typedef typename fx_t::args_list args_lists;
-			typedef meta::tuple_types<typename fx_t::return_type> return_types;
-
-			template<typename... Args, typename... Ret>
-			static std::function<Signature> get_std_func(types<Ret...>, types<Args...>, lua_State* L, int index) {
-				sol::function f(L, index);
-				auto fx = [f, L, index](Args&&... args) -> meta::return_type_t<Ret...> {
-					return f.call<Ret...>(std::forward<Args>(args)...);
-				};
-				return std::move(fx);
-			}
-
-			template<typename... FxArgs>
-			static std::function<Signature> get_std_func(types<void>, types<FxArgs...>, lua_State* L, int index) {
-				sol::function f(L, index);
-				auto fx = [f, L, index](FxArgs&&... args) -> void {
-					f(std::forward<FxArgs>(args)...);
-				};
-				return std::move(fx);
-			}
-
-			template<typename... FxArgs>
-			static std::function<Signature> get_std_func(types<>, types<FxArgs...> t, lua_State* L, int index) {
-				return get_std_func(types<void>(), t, L, index);
-			}
-
-			static std::function<Signature> get(lua_State* L, int index, record& tracking) {
-				tracking.last = 1;
-				tracking.used += 1;
-				type t = type_of(L, index);
-				if (t == type::none || t == type::lua_nil) {
-					return nullptr;
-				}
-				return get_std_func(return_types(), args_lists(), L, index);
-			}
-		};
-	} // stack
-} // sol
-
-// end of sol/function.hpp
-
+#ifdef SOL_SAFE_FUNCTIONS
 // beginning of sol/protected_function.hpp
 
 // beginning of sol/protected_function_result.hpp
@@ -10524,6 +10316,348 @@ namespace sol {
 } // sol
 
 // end of sol/protected_function.hpp
+
+#endif
+
+namespace sol {
+	template <typename base_t>
+	class basic_function : public base_t {
+	private:
+		void luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount) const {
+			lua_callk(base_t::lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount), 0, nullptr);
+		}
+
+		template<std::size_t... I, typename... Ret>
+		auto invoke(types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n) const {
+			luacall(n, lua_size<std::tuple<Ret...>>::value);
+			return stack::pop<std::tuple<Ret...>>(base_t::lua_state());
+		}
+
+		template<std::size_t I, typename Ret>
+		Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n) const {
+			luacall(n, lua_size<Ret>::value);
+			return stack::pop<Ret>(base_t::lua_state());
+		}
+
+		template <std::size_t I>
+		void invoke(types<void>, std::index_sequence<I>, std::ptrdiff_t n) const {
+			luacall(n, 0);
+		}
+
+		function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n) const {
+			int stacksize = lua_gettop(base_t::lua_state());
+			int firstreturn = (std::max)(1, stacksize - static_cast<int>(n));
+			luacall(n, LUA_MULTRET);
+			int poststacksize = lua_gettop(base_t::lua_state());
+			int returncount = poststacksize - (firstreturn - 1);
+			return function_result(base_t::lua_state(), firstreturn, returncount);
+		}
+
+	public:
+		basic_function() = default;
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_function>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_t, meta::unqualified_t<T>>> = meta::enabler>
+		basic_function(T&& r) noexcept : base_t(std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			if (!is_function<meta::unqualified_t<T>>::value) {
+				auto pp = stack::push_pop(*this);
+				stack::check<basic_function>(base_t::lua_state(), -1, type_panic);
+			}
+#endif // Safety
+		}
+		basic_function(const basic_function&) = default;
+		basic_function& operator=(const basic_function&) = default;
+		basic_function(basic_function&&) = default;
+		basic_function& operator=(basic_function&&) = default;
+		basic_function(const stack_reference& r) : basic_function(r.lua_state(), r.stack_index()) {}
+		basic_function(stack_reference&& r) : basic_function(r.lua_state(), r.stack_index()) {}
+		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<T, ref_index>>> = meta::enabler>
+		basic_function(lua_State* L, T&& r) : basic_function(L, sol::ref_index(r.registry_index())) {}
+		basic_function(lua_State* L, int index = -1) : base_t(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			stack::check<basic_function>(L, index, type_panic);
+#endif // Safety
+		}
+		basic_function(lua_State* L, ref_index index) : base_t(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			stack::check<basic_function>(L, -1, type_panic);
+#endif // Safety
+		}
+
+		template<typename... Args>
+		function_result operator()(Args&&... args) const {
+			return call<>(std::forward<Args>(args)...);
+		}
+
+		template<typename... Ret, typename... Args>
+		decltype(auto) operator()(types<Ret...>, Args&&... args) const {
+			return call<Ret...>(std::forward<Args>(args)...);
+		}
+
+		template<typename... Ret, typename... Args>
+		decltype(auto) call(Args&&... args) const {
+			base_t::push();
+			int pushcount = stack::multi_push_reference(base_t::lua_state(), std::forward<Args>(args)...);
+			return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount);
+		}
+	};
+
+	namespace stack {
+		template<typename Signature>
+		struct getter<std::function<Signature>> {
+			typedef meta::bind_traits<Signature> fx_t;
+			typedef typename fx_t::args_list args_lists;
+			typedef meta::tuple_types<typename fx_t::return_type> return_types;
+
+			template<typename... Args, typename... Ret>
+			static std::function<Signature> get_std_func(types<Ret...>, types<Args...>, lua_State* L, int index) {
+				sol::function f(L, index);
+				auto fx = [f, L, index](Args&&... args) -> meta::return_type_t<Ret...> {
+					return f.call<Ret...>(std::forward<Args>(args)...);
+				};
+				return std::move(fx);
+			}
+
+			template<typename... FxArgs>
+			static std::function<Signature> get_std_func(types<void>, types<FxArgs...>, lua_State* L, int index) {
+				sol::function f(L, index);
+				auto fx = [f, L, index](FxArgs&&... args) -> void {
+					f(std::forward<FxArgs>(args)...);
+				};
+				return std::move(fx);
+			}
+
+			template<typename... FxArgs>
+			static std::function<Signature> get_std_func(types<>, types<FxArgs...> t, lua_State* L, int index) {
+				return get_std_func(types<void>(), t, L, index);
+			}
+
+			static std::function<Signature> get(lua_State* L, int index, record& tracking) {
+				tracking.last = 1;
+				tracking.used += 1;
+				type t = type_of(L, index);
+				if (t == type::none || t == type::lua_nil) {
+					return nullptr;
+				}
+				return get_std_func(return_types(), args_lists(), L, index);
+			}
+		};
+	} // stack
+} // sol
+
+// end of sol/function.hpp
+
+namespace sol {
+	template<typename Table, typename Key>
+	struct proxy : public proxy_base<proxy<Table, Key>> {
+	private:
+		typedef meta::condition<meta::is_specialization_of<std::tuple, Key>, Key, std::tuple<meta::condition<std::is_array<meta::unqualified_t<Key>>, Key&, meta::unqualified_t<Key>>>> key_type;
+
+		template<typename T, std::size_t... I>
+		decltype(auto) tuple_get(std::index_sequence<I...>) const {
+			return tbl.template traverse_get<T>(std::get<I>(key)...);
+		}
+
+		template<std::size_t... I, typename T>
+		void tuple_set(std::index_sequence<I...>, T&& value) {
+			tbl.traverse_set(std::get<I>(key)..., std::forward<T>(value));
+		}
+
+	public:
+		Table tbl;
+		key_type key;
+
+		template<typename T>
+		proxy(Table table, T&& k) : tbl(table), key(std::forward<T>(k)) {}
+
+		template<typename T>
+		proxy& set(T&& item) {
+			tuple_set(std::make_index_sequence<std::tuple_size<meta::unqualified_t<key_type>>::value>(), std::forward<T>(item));
+			return *this;
+		}
+
+		template<typename... Args>
+		proxy& set_function(Args&&... args) {
+			tbl.set_function(key, std::forward<Args>(args)...);
+			return *this;
+		}
+
+		template<typename U, meta::enable<meta::neg<is_lua_reference<meta::unwrap_unqualified_t<U>>>, meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
+		proxy& operator=(U&& other) {
+			return set_function(std::forward<U>(other));
+		}
+
+		template<typename U, meta::disable<meta::neg<is_lua_reference<meta::unwrap_unqualified_t<U>>>, meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
+		proxy& operator=(U&& other) {
+			return set(std::forward<U>(other));
+		}
+
+		template<typename T>
+		decltype(auto) get() const {
+			return tuple_get<T>(std::make_index_sequence<std::tuple_size<meta::unqualified_t<key_type>>::value>());
+		}
+
+		template<typename T>
+		decltype(auto) get_or(T&& otherwise) const {
+			typedef decltype(get<T>()) U;
+			optional<U> option = get<optional<U>>();
+			if (option) {
+				return static_cast<U>(option.value());
+			}
+			return static_cast<U>(std::forward<T>(otherwise));
+		}
+
+		template<typename T, typename D>
+		decltype(auto) get_or(D&& otherwise) const {
+			optional<T> option = get<optional<T>>();
+			if (option) {
+				return static_cast<T>(option.value());
+			}
+			return static_cast<T>(std::forward<D>(otherwise));
+		}
+
+		template <typename K>
+		decltype(auto) operator[](K&& k) const {
+			auto keys = meta::tuplefy(key, std::forward<K>(k));
+			return proxy<Table, decltype(keys)>(tbl, std::move(keys));
+		}
+
+		template<typename... Ret, typename... Args>
+		decltype(auto) call(Args&&... args) {
+			return get<function>().template call<Ret...>(std::forward<Args>(args)...);
+		}
+
+		template<typename... Args>
+		decltype(auto) operator()(Args&&... args) {
+			return call<>(std::forward<Args>(args)...);
+		}
+
+		bool valid() const {
+			auto pp = stack::push_pop(tbl);
+			auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(tbl.lua_state(), key, lua_gettop(tbl.lua_state()));
+			lua_pop(tbl.lua_state(), p.levels);
+			return p;
+		}
+	};
+
+	template<typename Table, typename Key, typename T>
+	inline bool operator==(T&& left, const proxy<Table, Key>& right) {
+		typedef decltype(stack::get<T>(nullptr, 0)) U;
+		return right.template get<optional<U>>() == left;
+	}
+
+	template<typename Table, typename Key, typename T>
+	inline bool operator==(const proxy<Table, Key>& right, T&& left) {
+		typedef decltype(stack::get<T>(nullptr, 0)) U;
+		return right.template get<optional<U>>() == left;
+	}
+
+	template<typename Table, typename Key, typename T>
+	inline bool operator!=(T&& left, const proxy<Table, Key>& right) {
+		typedef decltype(stack::get<T>(nullptr, 0)) U;
+		return right.template get<optional<U>>() == left;
+	}
+
+	template<typename Table, typename Key, typename T>
+	inline bool operator!=(const proxy<Table, Key>& right, T&& left) {
+		typedef decltype(stack::get<T>(nullptr, 0)) U;
+		return right.template get<optional<U>>() == left;
+	}
+
+	template<typename Table, typename Key>
+	inline bool operator==(lua_nil_t, const proxy<Table, Key>& right) {
+		return !right.valid();
+	}
+
+	template<typename Table, typename Key>
+	inline bool operator==(const proxy<Table, Key>& right, lua_nil_t) {
+		return !right.valid();
+	}
+
+	template<typename Table, typename Key>
+	inline bool operator!=(lua_nil_t, const proxy<Table, Key>& right) {
+		return right.valid();
+	}
+
+	template<typename Table, typename Key>
+	inline bool operator!=(const proxy<Table, Key>& right, lua_nil_t) {
+		return right.valid();
+	}
+
+	namespace stack {
+		template <typename Table, typename Key>
+		struct pusher<proxy<Table, Key>> {
+			static int push(lua_State* L, const proxy<Table, Key>& p) {
+				sol::reference r = p;
+				return r.push(L);
+			}
+		};
+	} // stack
+} // sol
+
+// end of sol/proxy.hpp
+
+// beginning of sol/usertype.hpp
+
+// beginning of sol/usertype_metatable.hpp
+
+// beginning of sol/deprecate.hpp
+
+#ifndef SOL_DEPRECATED
+    #ifdef _MSC_VER
+        #define SOL_DEPRECATED __declspec(deprecated)
+    #elif __GNUC__
+        #define SOL_DEPRECATED __attribute__((deprecated)) 
+    #else
+        #define SOL_DEPRECATED [[deprecated]]
+    #endif // compilers
+#endif // SOL_DEPRECATED
+
+namespace sol {
+	namespace detail {
+		template <typename T>
+		struct SOL_DEPRECATED deprecate_type {
+			using type = T;
+		};
+	} // detail
+} // sol
+
+// end of sol/deprecate.hpp
+
+// beginning of sol/object.hpp
+
+// beginning of sol/as_args.hpp
+
+namespace sol {
+	template <typename T>
+	struct to_args_t {
+		T src;
+	};
+
+	template <typename Source>
+	auto as_args(Source&& source) {
+		return to_args_t<Source>{ std::forward<Source>(source) };
+	}
+
+	namespace stack {
+		template <typename T>
+		struct pusher<to_args_t<T>> {
+			int push(lua_State* L, const to_args_t<T>& e) {
+				int p = 0;
+				for (const auto& i : e.src) {
+					p += stack::push(L, i);
+				}
+				return p;
+			}
+		};
+	}
+} // sol
+
+// end of sol/as_args.hpp
+
+// beginning of sol/variadic_args.hpp
+
+// beginning of sol/stack_proxy.hpp
 
 namespace sol {
 	struct stack_proxy : public proxy_base<stack_proxy> {
@@ -10918,183 +11052,6 @@ namespace sol {
 } // sol
 
 // end of sol/object.hpp
-
-namespace sol {
-	template<typename Table, typename Key>
-	struct proxy : public proxy_base<proxy<Table, Key>> {
-	private:
-		typedef meta::condition<meta::is_specialization_of<std::tuple, Key>, Key, std::tuple<meta::condition<std::is_array<meta::unqualified_t<Key>>, Key&, meta::unqualified_t<Key>>>> key_type;
-
-		template<typename T, std::size_t... I>
-		decltype(auto) tuple_get(std::index_sequence<I...>) const {
-			return tbl.template traverse_get<T>(std::get<I>(key)...);
-		}
-
-		template<std::size_t... I, typename T>
-		void tuple_set(std::index_sequence<I...>, T&& value) {
-			tbl.traverse_set(std::get<I>(key)..., std::forward<T>(value));
-		}
-
-	public:
-		Table tbl;
-		key_type key;
-
-		template<typename T>
-		proxy(Table table, T&& k) : tbl(table), key(std::forward<T>(k)) {}
-
-		template<typename T>
-		proxy& set(T&& item) {
-			tuple_set(std::make_index_sequence<std::tuple_size<meta::unqualified_t<key_type>>::value>(), std::forward<T>(item));
-			return *this;
-		}
-
-		template<typename... Args>
-		proxy& set_function(Args&&... args) {
-			tbl.set_function(key, std::forward<Args>(args)...);
-			return *this;
-		}
-
-		template<typename U, meta::enable<meta::neg<is_lua_reference<meta::unwrap_unqualified_t<U>>>, meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
-		proxy& operator=(U&& other) {
-			return set_function(std::forward<U>(other));
-		}
-
-		template<typename U, meta::disable<meta::neg<is_lua_reference<meta::unwrap_unqualified_t<U>>>, meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
-		proxy& operator=(U&& other) {
-			return set(std::forward<U>(other));
-		}
-
-		template<typename T>
-		decltype(auto) get() const {
-			return tuple_get<T>(std::make_index_sequence<std::tuple_size<meta::unqualified_t<key_type>>::value>());
-		}
-
-		template<typename T>
-		decltype(auto) get_or(T&& otherwise) const {
-			typedef decltype(get<T>()) U;
-			optional<U> option = get<optional<U>>();
-			if (option) {
-				return static_cast<U>(option.value());
-			}
-			return static_cast<U>(std::forward<T>(otherwise));
-		}
-
-		template<typename T, typename D>
-		decltype(auto) get_or(D&& otherwise) const {
-			optional<T> option = get<optional<T>>();
-			if (option) {
-				return static_cast<T>(option.value());
-			}
-			return static_cast<T>(std::forward<D>(otherwise));
-		}
-
-		template <typename K>
-		decltype(auto) operator[](K&& k) const {
-			auto keys = meta::tuplefy(key, std::forward<K>(k));
-			return proxy<Table, decltype(keys)>(tbl, std::move(keys));
-		}
-
-		template<typename... Ret, typename... Args>
-		decltype(auto) call(Args&&... args) {
-			return get<function>().template call<Ret...>(std::forward<Args>(args)...);
-		}
-
-		template<typename... Args>
-		decltype(auto) operator()(Args&&... args) {
-			return call<>(std::forward<Args>(args)...);
-		}
-
-		bool valid() const {
-			auto pp = stack::push_pop(tbl);
-			auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(tbl.lua_state(), key, lua_gettop(tbl.lua_state()));
-			lua_pop(tbl.lua_state(), p.levels);
-			return p;
-		}
-	};
-
-	template<typename Table, typename Key, typename T>
-	inline bool operator==(T&& left, const proxy<Table, Key>& right) {
-		typedef decltype(stack::get<T>(nullptr, 0)) U;
-		return right.template get<optional<U>>() == left;
-	}
-
-	template<typename Table, typename Key, typename T>
-	inline bool operator==(const proxy<Table, Key>& right, T&& left) {
-		typedef decltype(stack::get<T>(nullptr, 0)) U;
-		return right.template get<optional<U>>() == left;
-	}
-
-	template<typename Table, typename Key, typename T>
-	inline bool operator!=(T&& left, const proxy<Table, Key>& right) {
-		typedef decltype(stack::get<T>(nullptr, 0)) U;
-		return right.template get<optional<U>>() == left;
-	}
-
-	template<typename Table, typename Key, typename T>
-	inline bool operator!=(const proxy<Table, Key>& right, T&& left) {
-		typedef decltype(stack::get<T>(nullptr, 0)) U;
-		return right.template get<optional<U>>() == left;
-	}
-
-	template<typename Table, typename Key>
-	inline bool operator==(lua_nil_t, const proxy<Table, Key>& right) {
-		return !right.valid();
-	}
-
-	template<typename Table, typename Key>
-	inline bool operator==(const proxy<Table, Key>& right, lua_nil_t) {
-		return !right.valid();
-	}
-
-	template<typename Table, typename Key>
-	inline bool operator!=(lua_nil_t, const proxy<Table, Key>& right) {
-		return right.valid();
-	}
-
-	template<typename Table, typename Key>
-	inline bool operator!=(const proxy<Table, Key>& right, lua_nil_t) {
-		return right.valid();
-	}
-
-	namespace stack {
-		template <typename Table, typename Key>
-		struct pusher<proxy<Table, Key>> {
-			static int push(lua_State* L, const proxy<Table, Key>& p) {
-				sol::reference r = p;
-				return r.push(L);
-			}
-		};
-	} // stack
-} // sol
-
-// end of sol/proxy.hpp
-
-// beginning of sol/usertype.hpp
-
-// beginning of sol/usertype_metatable.hpp
-
-// beginning of sol/deprecate.hpp
-
-#ifndef SOL_DEPRECATED
-    #ifdef _MSC_VER
-        #define SOL_DEPRECATED __declspec(deprecated)
-    #elif __GNUC__
-        #define SOL_DEPRECATED __attribute__((deprecated)) 
-    #else
-        #define SOL_DEPRECATED [[deprecated]]
-    #endif // compilers
-#endif // SOL_DEPRECATED
-
-namespace sol {
-	namespace detail {
-		template <typename T>
-		struct SOL_DEPRECATED deprecate_type {
-			using type = T;
-		};
-	} // detail
-} // sol
-
-// end of sol/deprecate.hpp
 
 #include <unordered_map>
 #include <cstdio>
@@ -14609,6 +14566,83 @@ namespace sol {
 
 // end of sol/state.hpp
 
+// beginning of sol/userdata.hpp
+
+namespace sol {
+	template <typename base_type>
+	class basic_userdata : public basic_table<base_type> {
+		typedef basic_table<base_type> base_t;
+	public:
+		basic_userdata() noexcept = default;
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_userdata>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		basic_userdata(T&& r) noexcept : base_t(std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			if (!is_userdata<meta::unqualified_t<T>>::value) {
+				auto pp = stack::push_pop(*this);
+				type_assert(base_t::lua_state(), -1, type::userdata);
+			}
+#endif // Safety
+		}
+		basic_userdata(const basic_userdata&) = default;
+		basic_userdata(basic_userdata&&) = default;
+		basic_userdata& operator=(const basic_userdata&) = default;
+		basic_userdata& operator=(basic_userdata&&) = default;
+		basic_userdata(const stack_reference& r) : basic_userdata(r.lua_state(), r.stack_index()) {}
+		basic_userdata(stack_reference&& r) : basic_userdata(r.lua_state(), r.stack_index()) {}
+		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<meta::unqualified_t<T>, ref_index>>> = meta::enabler>
+		basic_userdata(lua_State* L, T&& r) : basic_userdata(L, sol::ref_index(r.registry_index())) {}
+		basic_userdata(lua_State* L, int index = -1) : base_t(detail::no_safety, L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			stack::check<basic_userdata>(L, index, type_panic);
+#endif // Safety
+		}
+		basic_userdata(lua_State* L, ref_index index) : base_t(detail::no_safety, L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			stack::check<basic_userdata>(L, index, type_panic);
+#endif // Safety
+		}
+	};
+
+	template <typename base_type>
+	class basic_lightuserdata : public basic_object_base<base_type> {
+		typedef basic_object_base<base_type> base_t;
+	public:
+		basic_lightuserdata() noexcept = default;
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_lightuserdata>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		basic_lightuserdata(T&& r) noexcept : base_t(std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			if (!is_lightuserdata<meta::unqualified_t<T>>::value) {
+				auto pp = stack::push_pop(*this);
+				type_assert(base_t::lua_state(), -1, type::lightuserdata);
+			}
+#endif // Safety
+		}
+		basic_lightuserdata(const basic_lightuserdata&) = default;
+		basic_lightuserdata(basic_lightuserdata&&) = default;
+		basic_lightuserdata& operator=(const basic_lightuserdata&) = default;
+		basic_lightuserdata& operator=(basic_lightuserdata&&) = default;
+		basic_lightuserdata(const stack_reference& r) : basic_lightuserdata(r.lua_state(), r.stack_index()) {}
+		basic_lightuserdata(stack_reference&& r) : basic_lightuserdata(r.lua_state(), r.stack_index()) {}
+		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<meta::unqualified_t<T>, ref_index>>> = meta::enabler>
+		basic_lightuserdata(lua_State* L, T&& r) : basic_lightuserdata(L, sol::ref_index(r.registry_index())) {}
+		basic_lightuserdata(lua_State* L, int index = -1) : base_t(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			stack::check<basic_lightuserdata>(L, index, type_panic);
+#endif // Safety
+		}
+		basic_lightuserdata(lua_State* L, ref_index index) : base_t(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			stack::check<basic_lightuserdata>(L, index, type_panic);
+#endif // Safety
+		}
+	};
+
+} // sol
+
+// end of sol/userdata.hpp
+
 // beginning of sol/coroutine.hpp
 
 // beginning of sol/thread.hpp
@@ -14850,22 +14884,6 @@ namespace sol {
 } // sol
 
 // end of sol/coroutine.hpp
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#elif defined _MSC_VER
-#pragma warning( push )
-#endif // g++
-
-#ifdef SOL_INSIDE_UNREAL
-#ifdef SOL_INSIDE_UNREAL_REMOVED_CHECK
-#if DO_CHECK
-#define check(expr) { if(UNLIKELY(!(expr))) { FDebug::LogAssertFailedMessage( #expr, __FILE__, __LINE__ ); _DebugBreakAndPromptForRemote(); FDebug::AssertFailed( #expr, __FILE__, __LINE__ ); CA_ASSUME(false); } }
-#else
-#define check(expr) { CA_ASSUME(expr); }
-#endif
-#endif 
-#endif // Unreal Engine 4 Bullshit
 
 #endif // SOL_HPP
 // end of sol.hpp

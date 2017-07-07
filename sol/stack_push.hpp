@@ -25,6 +25,7 @@
 #include "stack_core.hpp"
 #include "raii.hpp"
 #include "optional.hpp"
+#include "usertype_traits.hpp"
 #include <memory>
 #include <type_traits>
 #ifdef SOL_CODECVT_SUPPORT

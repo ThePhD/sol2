@@ -31,6 +31,7 @@
 #include "inheritance.hpp"
 #include "raii.hpp"
 #include "deprecate.hpp"
+#include "object.hpp"
 #include <unordered_map>
 #include <cstdio>
 

@@ -25,7 +25,6 @@
 #include "reference.hpp"
 #include "stack.hpp"
 #include "object_base.hpp"
-#include "userdata.hpp"
 #include "as_args.hpp"
 #include "variadic_args.hpp"
 #include "optional.hpp"

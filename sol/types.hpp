@@ -22,6 +22,7 @@
 #ifndef SOL_TYPES_HPP
 #define SOL_TYPES_HPP
 
+#include "error.hpp"
 #include "optional.hpp"
 #include "compatibility.hpp"
 #include "traits.hpp"

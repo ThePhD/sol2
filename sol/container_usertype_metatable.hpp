@@ -23,6 +23,7 @@
 #define SOL_CONTAINER_USERTYPE_HPP
 
 #include "stack.hpp"
+#include <algorithm>
 #include <unordered_map>
 
 namespace sol {

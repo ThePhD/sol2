@@ -22,6 +22,7 @@
 #ifndef SOL_FUNCTION_TYPES_STATELESS_HPP
 #define SOL_FUNCTION_TYPES_STATELESS_HPP
 
+#include "call.hpp"
 #include "stack.hpp"
 
 namespace sol {
