@@ -23,7 +23,7 @@ int main() {
 	lua.script("x, y = multi_tuple()");
 	lua.script("assert(x == 10 and y == 'goodbye')");
 
-	auto multi = lua.get<sol::function>("multi");
+	auto multi = lua.get<sol::function>("multi_tuple");
 	int first;
 	std::string second;
 	// tie the values
@@ -63,7 +63,7 @@ int main() {
 		sol::variadic_results values;
 		values.push_back({ L, sol::in_place_type<int>, a });
 		values.push_back({ L, sol::in_place_type<bool>, b });
-		values.push_back({ L, sol::in_place_type<const char*>, "awoo" });
+		values.push_back({ L, sol::in_place, "awoo" });
 		return values;
 	});
 	lua.script("print('calling multi_vars')");
