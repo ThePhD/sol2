@@ -47,13 +47,13 @@ namespace sol {
 		optional<string_detail::string_shim> maybetopmsg = stack::check_get<string_detail::string_shim>(L, 1);
 		if (maybetopmsg) {
 			const string_detail::string_shim& topmsg = maybetopmsg.value();
-			msg.assign(topmsg.c_str(), topmsg.size());
+			msg.assign(topmsg.data(), topmsg.size());
 		}
 		luaL_traceback(L, L, msg.c_str(), 1);
 		optional<string_detail::string_shim> maybetraceback = stack::check_get<string_detail::string_shim>(L, -1);
 		if (maybetraceback) {
 			const string_detail::string_shim& traceback = maybetraceback.value();
-			msg.assign(traceback.c_str(), traceback.size());
+			msg.assign(traceback.data(), traceback.size());
 		}
 		return stack::push(L, msg);
 	}

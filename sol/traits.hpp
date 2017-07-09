@@ -28,6 +28,9 @@
 #include <memory>
 #include <functional>
 #include <iterator>
+#ifdef SOL_CXX17_FEATURES
+#include <string_view>
+#endif
 
 namespace sol {
 	template<std::size_t I>
@@ -294,6 +297,24 @@ namespace sol {
 				static std::false_type test(...);
 			};
 
+			struct has_value_type_impl {
+				template<typename T, typename U = unqualified_t<T>,
+					typename V = typename U::value_type>
+					static std::true_type test(int);
+
+				template<typename...>
+				static std::false_type test(...);
+			};
+
+			struct has_iterator_impl {
+				template<typename T, typename U = unqualified_t<T>,
+					typename V = typename U::iterator>
+					static std::true_type test(int);
+
+				template<typename...>
+				static std::false_type test(...);
+			};
+
 			struct has_key_value_pair_impl {
 				template<typename T, typename U = unqualified_t<T>,
 					typename V = typename U::value_type,
@@ -339,11 +360,25 @@ namespace sol {
 		template<typename T>
 		struct has_mapped_type : decltype(meta_detail::has_mapped_type_impl::test<T>(0)) {};
 
+		template<typename T>
+		struct has_iterator : decltype(meta_detail::has_iterator_impl::test<T>(0)) {};
+
+		template<typename T>
+		struct has_value_type : decltype(meta_detail::has_value_type_impl::test<T>(0)) {};
+
 		template <typename T>
 		struct is_associative : meta::all<has_key_value_pair<T>, has_mapped_type<T>> {};
 
 		template <typename T>
-		using is_string_constructible = any<std::is_same<unqualified_t<T>, const char*>, std::is_same<unqualified_t<T>, char>, std::is_same<unqualified_t<T>, std::string>, std::is_same<unqualified_t<T>, std::initializer_list<char>>>;
+		using is_string_constructible = any<
+			std::is_same<unqualified_t<T>, const char*>
+			, std::is_same<unqualified_t<T>, char>
+			, std::is_same<unqualified_t<T>, std::string>
+			, std::is_same<unqualified_t<T>, std::initializer_list<char>>
+#ifdef SOL_CXX17_FEATURES
+			, std::is_same<unqualified_t<T>, std::string_view>
+#endif
+		>;
 
 		template <typename T>
 		struct is_pair : std::false_type {};

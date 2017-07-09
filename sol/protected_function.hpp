@@ -25,6 +25,7 @@
 #include "reference.hpp"
 #include "stack.hpp"
 #include "protected_function_result.hpp"
+#include "unsafe_function.hpp"
 #include <cstdint>
 #include <algorithm>
 

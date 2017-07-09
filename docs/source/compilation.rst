@@ -50,6 +50,10 @@ Clang 3.4, 3.5 and 3.6 have many bugs we have run into when developing sol2 and 
 We encourage all users to upgrade immediately. If you need old code for some reason, use `sol2 release v2.18.0`_: otherwise, always grab sol2's latest.
 
 
+feature support
+---------------
+
+track future compiler and feature support in `this issue here`_.
 
 supported Lua version
 ---------------------
@@ -106,3 +110,4 @@ Hopefully, as things progress, we move things forward.
 .. _sol2 release v2.18.0: https://github.com/ThePhD/sol2/releases/tag/v2.17.5
 .. _OrfeasZ in this issue: https://github.com/ThePhD/sol2/issues/329#issuecomment-276824983
 .. _issue describing preliminary steps can be found here: https://github.com/ThePhD/sol2/issues/436#issuecomment-312021508
+.. _this issue here: https://github.com/ThePhD/sol2/issues/426

@@ -103,7 +103,7 @@ static int raw_noexcept_function(lua_State* L) noexcept {
 	return sol::stack::push(L, 0x63);
 }
 
-TEST_CASE("functions/tuple-returns", "Make sure tuple returns are ordered properly") {
+TEST_CASE("functions/tuple returns", "Make sure tuple returns are ordered properly") {
 	sol::state lua;
 	lua.script("function f() return '3', 4 end");
 
@@ -114,7 +114,7 @@ TEST_CASE("functions/tuple-returns", "Make sure tuple returns are ordered proper
 	REQUIRE(v == 4);
 }
 
-TEST_CASE("functions/overload-resolution", "Check if overloaded function resolution templates compile/work") {
+TEST_CASE("functions/overload resolution", "Check if overloaded function resolution templates compile/work") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -143,7 +143,7 @@ TEST_CASE("functions/overload-resolution", "Check if overloaded function resolut
 	REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2, 3))"));
 }
 
-TEST_CASE("functions/return-order-and-multi-get", "Check if return order is in the same reading order specified in Lua") {
+TEST_CASE("functions/return order and multi get", "Check if return order is in the same reading order specified in Lua") {
 	const static std::tuple<int, int, int> triple = std::make_tuple(10, 11, 12);
 	const static std::tuple<int, float> paired = std::make_tuple(10, 10.f);
 	sol::state lua;
@@ -165,7 +165,7 @@ TEST_CASE("functions/return-order-and-multi-get", "Check if return order is in t
 	REQUIRE(tcpp2 == paired);
 }
 
-TEST_CASE("functions/deducing-return-order-and-multi-get", "Check if return order is in the same reading order specified in Lua, with regular deducing calls") {
+TEST_CASE("functions/deducing return order and multi get", "Check if return order is in the same reading order specified in Lua, with regular deducing calls") {
 	const static std::tuple<int, int, int> triple = std::make_tuple(10, 11, 12);
 	sol::state lua;
 	lua.set_function("f_string", []() { return "this is a string!"; });
@@ -192,7 +192,7 @@ TEST_CASE("functions/deducing-return-order-and-multi-get", "Check if return orde
 	REQUIRE(tluaget == triple);
 }
 
-TEST_CASE("functions/optional-values", "check if optionals can be passed in to be nil or otherwise") {
+TEST_CASE("functions/optional values", "check if optionals can be passed in to be nil or otherwise") {
 	struct thing {
 		int v;
 	};
@@ -213,7 +213,7 @@ end )");
 	REQUIRE(v->v == 29);
 }
 
-TEST_CASE("functions/pair-and-tuple-and-proxy-tests", "Check if sol::reference and sol::proxy can be passed to functions as arguments") {
+TEST_CASE("functions/pair and tuple and proxy tests", "Check if sol::reference and sol::proxy can be passed to functions as arguments") {
 	sol::state lua;
 	lua.new_usertype<A>("A",
 		"bark", &A::bark);
@@ -253,7 +253,7 @@ nested = { variables = { no = { problem = 10 } } } )");
 	REQUIRE(abc == abcdesired);
 }
 
-TEST_CASE("functions/sol::function-to-std::function", "check if conversion to std::function works properly and calls with correct arguments") {
+TEST_CASE("functions/sol::function to std::function", "check if conversion to std::function works properly and calls with correct arguments") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -272,7 +272,7 @@ TEST_CASE("functions/sol::function-to-std::function", "check if conversion to st
 	));
 }
 
-TEST_CASE("functions/returning-functions-from-C++-and-gettin-in-lua", "check to see if returning a functor and getting a functor from lua is possible") {
+TEST_CASE("functions/returning functions from C++", "check to see if returning a functor and getting a functor from lua is possible") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -283,7 +283,7 @@ TEST_CASE("functions/returning-functions-from-C++-and-gettin-in-lua", "check to 
 		"takefn(afx)\n");
 }
 
-TEST_CASE("functions/function_result-protected_function_result", "Function result should be the beefy return type for sol::function that allows for error checking and error handlers") {
+TEST_CASE("functions/function_result and protected_function_result", "Function result should be the beefy return type for sol::function that allows for error checking and error handlers") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::debug);
 	static const char unhandlederrormessage[] = "true error message";
@@ -392,7 +392,7 @@ TEST_CASE("functions/function_result-protected_function_result", "Function resul
 	}
 }
 
-TEST_CASE("functions/destructor-tests", "Show that proper copies / destruction happens") {
+TEST_CASE("functions/destructor tests", "Show that proper copies / destruction happens") {
 	static int created = 0;
 	static int destroyed = 0;
 	static void* last_call = nullptr;
@@ -471,7 +471,7 @@ TEST_CASE("functions/destructor-tests", "Show that proper copies / destruction h
 }
 
 
-TEST_CASE("functions/all-kinds", "Register all kinds of functions, make sure they all compile and work") {
+TEST_CASE("functions/all kinds", "Register all kinds of functions, make sure they all compile and work") {
 	sol::state lua;
 
 	struct test_1 {
@@ -661,7 +661,7 @@ N = n(1, 2, 3)
 	REQUIRE_THROWS(lua.script("v(nested, inner)"));
 }
 
-TEST_CASE("simple/call-with-parameters", "Lua function is called with a few parameters from C++") {
+TEST_CASE("simple/call with parameters", "Lua function is called with a few parameters from C++") {
 	sol::state lua;
 
 	REQUIRE_NOTHROW(lua.script("function my_add(i, j, k) return i + j + k end"));
@@ -675,7 +675,7 @@ TEST_CASE("simple/call-with-parameters", "Lua function is called with a few para
 	REQUIRE_THROWS(a = f(1, 2, "arf"));
 }
 
-TEST_CASE("simple/call-c++-function", "C++ function is called from lua") {
+TEST_CASE("simple/call c++ function", "C++ function is called from lua") {
 	sol::state lua;
 
 	lua.set_function("plop_xyz", sep::plop_xyz);
@@ -684,7 +684,7 @@ TEST_CASE("simple/call-c++-function", "C++ function is called from lua") {
 	REQUIRE(lua.get<int>("x") == 11);
 }
 
-TEST_CASE("simple/call-lambda", "A C++ lambda is exposed to lua and called") {
+TEST_CASE("simple/call lambda", "A C++ lambda is exposed to lua and called") {
 	sol::state lua;
 
 	int a = 0;
@@ -696,7 +696,7 @@ TEST_CASE("simple/call-lambda", "A C++ lambda is exposed to lua and called") {
 	REQUIRE(a == 1);
 }
 
-TEST_CASE("advanced/get-and-call", "Checks for lambdas returning values after a get operation") {
+TEST_CASE("advanced/get and call", "Checks for lambdas returning values after a get operation") {
 	const static std::string lol = "lol", str = "str";
 	const static std::tuple<int, float, double, std::string> heh_tuple = std::make_tuple(1, 6.28f, 3.14, std::string("heh"));
 	sol::state lua;
@@ -731,7 +731,7 @@ TEST_CASE("advanced/get-and-call", "Checks for lambdas returning values after a 
 	REQUIRE((lua.get<sol::function>("j").call<int, float, double, std::string>() == heh_tuple));
 }
 
-TEST_CASE("advanced/operator[]-call", "Checks for lambdas returning values using operator[]") {
+TEST_CASE("advanced/operator[] call", "Checks for lambdas returning values using operator[]") {
 	const static std::string lol = "lol", str = "str";
 	const static std::tuple<int, float, double, std::string> heh_tuple = std::make_tuple(1, 6.28f, 3.14, std::string("heh"));
 	sol::state lua;
@@ -766,7 +766,7 @@ TEST_CASE("advanced/operator[]-call", "Checks for lambdas returning values using
 	REQUIRE((lua["j"].call<int, float, double, std::string>() == heh_tuple));
 }
 
-TEST_CASE("advanced/call-lambdas", "A C++ lambda is exposed to lua and called") {
+TEST_CASE("advanced/call lambdas", "A C++ lambda is exposed to lua and called") {
 	sol::state lua;
 
 	int x = 0;
@@ -779,7 +779,7 @@ TEST_CASE("advanced/call-lambdas", "A C++ lambda is exposed to lua and called") 
 	REQUIRE(x == 9);
 }
 
-TEST_CASE("advanced/call-referenced_obj", "A C++ object is passed by pointer/reference_wrapper to lua and invoked") {
+TEST_CASE("advanced/call referenced obj", "A C++ object is passed by pointer/reference_wrapper to lua and invoked") {
 	sol::state lua;
 
 	int x = 0;
@@ -815,51 +815,6 @@ end)");
 	REQUIRE(a == 1);
 	REQUIRE(b == 2);
 	REQUIRE(c == 3);
-}
-
-TEST_CASE("functions/variadic_args", "Check to see we can receive multiple arguments through a variadic") {
-	struct structure {
-		int x;
-		bool b;
-	};
-
-	sol::state lua;
-	lua.open_libraries(sol::lib::base);
-	lua.set_function("v", [](sol::this_state, sol::variadic_args va) -> structure {
-		int r = 0;
-		for (auto v : va) {
-			int value = v;
-			r += value;
-		}
-		return{ r, r > 200 };
-	});
-
-	lua.script("x = v(25, 25)");
-	lua.script("x2 = v(25, 25, 100, 50, 250, 150)");
-	lua.script("x3 = v(1, 2, 3, 4, 5, 6)");
-
-	structure& lx = lua["x"];
-	structure& lx2 = lua["x2"];
-	structure& lx3 = lua["x3"];
-	REQUIRE(lx.x == 50);
-	REQUIRE(lx2.x == 600);
-	REQUIRE(lx3.x == 21);
-	REQUIRE_FALSE(lx.b);
-	REQUIRE(lx2.b);
-	REQUIRE_FALSE(lx3.b);
-}
-
-TEST_CASE("functions/required_and_variadic_args", "Check if a certain number of arguments can still be required even when using variadic_args") {
-	sol::state lua;
-	lua.set_function("v", 
-		[](sol::this_state, sol::variadic_args, int, int) {
-		}
-	);
-	REQUIRE_NOTHROW(lua.script("v(20, 25, 30)"));
-	REQUIRE_NOTHROW(lua.script("v(20, 25)"));
-#ifndef SOL_LUAJIT
-	REQUIRE_THROWS(lua.script("v(20)"));
-#endif // LuaJIT has problems with exceptions, as fucking usual
 }
 
 TEST_CASE("functions/overloading", "Check if overloading works properly for regular set function syntax") {

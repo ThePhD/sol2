@@ -82,7 +82,7 @@ namespace sol {
 		template <typename T, typename... Args>
 		basic_object(lua_State* L, in_place_type_t<T>, Args&&... args) noexcept : basic_object(std::integral_constant<bool, !std::is_base_of<stack_reference, base_t>::value>(), L, -stack::push<T>(L, std::forward<Args>(args)...)) {}
 		template <typename T, typename... Args>
-		basic_object(lua_State* L, in_place_t, T&& arg, Args&&... args) noexcept : basic_object(L, in_place<T>, std::forward<T>(arg), std::forward<Args>(args)...) {}
+		basic_object(lua_State* L, in_place_t, T&& arg, Args&&... args) noexcept : basic_object(L, in_place_type<T>, std::forward<T>(arg), std::forward<Args>(args)...) {}
 		basic_object& operator=(const basic_object&) = default;
 		basic_object& operator=(basic_object&&) = default;
 		basic_object& operator=(const base_type& b) { base_t::operator=(b); return *this; }

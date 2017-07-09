@@ -26,6 +26,7 @@
 #include "stack_get.hpp"
 #include "stack_check.hpp"
 #include "optional.hpp"
+#include <cstdlib>
 
 namespace sol {
 	namespace stack {
@@ -108,6 +109,48 @@ namespace sol {
 				return check_get<T>(L, index, no_panic, tracking);
 			}
 		};
+
+#ifdef SOL_CXX17_FEATURES
+		template <typename... Tn>
+		struct check_getter<std::variant<Tn...>> {
+			typedef std::variant<Tn...> V;
+			typedef std::variant_size<V> V_size;
+			typedef std::integral_constant<bool, V_size::value == 0> V_is_empty;
+
+			template <typename Handler>
+			static optional<V> get_empty(std::true_type, lua_State* L, int index, Handler&& handler, record& tracking) {
+				return nullopt;
+			}
+
+			template <typename Handler>
+			static optional<V> get_empty(std::false_type, lua_State* L, int index, Handler&& handler, record& tracking) {
+				typedef std::variant_alternative_t<0, V> T;
+				// This should never be reached...
+				// please check your code and understand what you did to bring yourself here
+				handler(L, index, type::poly, type_of(L, index));
+				return nullopt;
+			}
+
+			template <typename Handler>
+			static optional<V> get_one(std::integral_constant<std::size_t, 0>, lua_State* L, int index, Handler&& handler, record& tracking) {
+				return get_empty(V_is_empty(), L, index, std::forward<Handler>(handler), tracking);
+			}
+
+			template <std::size_t I, typename Handler>
+			static optional<V> get_one(std::integral_constant<std::size_t, I>, lua_State* L, int index, Handler&& handler, record& tracking) {
+				typedef std::variant_alternative_t<I - 1, V> T;
+				if (stack::check<T>(L, index, no_panic, tracking)) {
+					return V(std::in_place_index<I - 1>, stack::get<T>(L, index));
+				}
+				return get_one(std::integral_constant<std::size_t, I - 1>(), L, index, std::forward<Handler>(handler), tracking);
+			}
+
+			template <typename Handler>
+			static optional<V> get(lua_State* L, int index, Handler&& handler, record& tracking) {
+				return get_one(std::integral_constant<std::size_t, V_size::value>(), L, index, std::forward<Handler>(handler), tracking);
+			}
+		};
+#endif // C++17
 	} // stack
 } // sol
 

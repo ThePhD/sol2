@@ -3,7 +3,7 @@
 #include <catch.hpp>
 #include <sol.hpp>
 
-TEST_CASE("storage/registry=construction", "ensure entries from the registry can be retrieved") {
+TEST_CASE("storage/registry construction", "ensure entries from the registry can be retrieved") {
 	const auto& script = R"(
 function f()
     return 2
@@ -23,7 +23,7 @@ end
 	REQUIRE(isequal);
 }
 
-TEST_CASE("storage/main-thread", "ensure round-tripping and pulling out thread data even on 5.1 with a backup works") {
+TEST_CASE("storage/main thread", "ensure round-tripping and pulling out thread data even on 5.1 with a backup works") {
 	sol::state lua;
 	{
 		sol::stack_guard g(lua);

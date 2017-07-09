@@ -5,7 +5,7 @@
 #include <iostream>
 
 inline int my_add(int x, int y) {
-    return x + y;
+	return x + y;
 }
 
 struct multiplier {
@@ -17,10 +17,6 @@ struct multiplier {
         return x * 5;
     }
 };
-
-inline std::string make_string( std::string input ) { 
-	return "string: " + input;
-}
 
 int main() {
 	std::cout << "=== functions example ===" << std::endl;
@@ -67,6 +63,7 @@ inc()
 		// Do something based on this information
 		std::cout << "Yahoo! x is " << x << std::endl;
 	}
+
 	// retrieval of a function is done similarly
 	// to other variables, using sol::function
 	sol::function add = lua["my_add"];
@@ -79,34 +76,7 @@ inc()
 		std::cout << "Woo, value is 21!" << std::endl;
 	}
 
-	// multi-return functions are supported using
-	// std::tuple as the interface.
-	lua.set_function("multi", [] { return std::make_tuple(10, "goodbye"); });
-	lua.script("x, y = multi()");
-	lua.script("assert(x == 10 and y == 'goodbye')");
-
-	auto multi = lua.get<sol::function>("multi");
-	int first;
-	std::string second;
-	sol::tie(first, second) = multi();
-
-	// use the values
-	assert(first == 10);
-	assert(second == "goodbye");
-
-	// you can even overload functions
-	// just pass in the different functions
-	// you want to pack into a single name:
-	// make SURE they take different types!
-	
-	lua.set_function("func", sol::overload([](int x) { return x; }, make_string, my_add));
-
-	// All these functions are now overloaded through "func"
-	lua.script(R"(
-print(func(1))
-print(func("bark"))
-print(func(1,2))
-)");
-
 	std::cout << std::endl;
+
+	return 0;
 }

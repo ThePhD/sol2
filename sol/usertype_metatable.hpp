@@ -31,6 +31,7 @@
 #include "inheritance.hpp"
 #include "raii.hpp"
 #include "deprecate.hpp"
+#include "object.hpp"
 #include <unordered_map>
 #include <cstdio>
 
@@ -250,7 +251,7 @@ namespace sol {
 #if 0//def SOL_SAFE_USERTYPE
 				auto maybeaccessor = stack::get<optional<string_detail::string_shim>>(L, is_index ? -1 : -2);
 				string_detail::string_shim accessor = maybeaccessor.value_or(string_detail::string_shim("(unknown)"));
-				return luaL_error(L, "sol: attempt to index (get) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.c_str());
+				return luaL_error(L, "sol: attempt to index (get) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.data());
 #else
 				if (is_toplevel(L)) {
 					if (lua_getmetatable(L, 1) == 1) {
@@ -266,7 +267,7 @@ namespace sol {
 			else {
 				auto maybeaccessor = stack::get<optional<string_detail::string_shim>>(L, is_index ? -1 : -2);
 				string_detail::string_shim accessor = maybeaccessor.value_or(string_detail::string_shim("(unknown)"));
-				return luaL_error(L, "sol: attempt to index (set) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.c_str());
+				return luaL_error(L, "sol: attempt to index (set) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.data());
 			}
 		}
 

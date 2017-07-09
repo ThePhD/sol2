@@ -42,6 +42,10 @@ namespace sol {
 			return stack::get<T>(L, stack_index());
 		}
 
+		type get_type() const noexcept {
+			return type_of(lua_state(), stack_index());
+		}
+
 		int push() const {
 			return push(L);
 		}

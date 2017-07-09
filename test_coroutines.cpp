@@ -32,7 +32,7 @@ end
 	REQUIRE(counter == 30);
 }
 
-TEST_CASE("threading/new-thread-coroutines", "ensure calling a coroutine works when the work is put on a different thread") {
+TEST_CASE("threading/new thread coroutines", "ensure calling a coroutine works when the work is put on a different thread") {
 	const auto& script = R"(counter = 20
  
 function loop()

@@ -6,7 +6,7 @@ turn an iterable argument into multiple arguments
 .. code-block:: cpp
 	
 	template <typename T>
-	as_args_t { ... };
+	struct as_args_t { ... };
 
 	template <typename T>
 	as_args_t<T> as_args( T&& );
@@ -15,6 +15,7 @@ turn an iterable argument into multiple arguments
 ``sol::as_args`` is a function that that takes an iterable and turns it into multiple arguments to a function call. It forwards its arguments, and is meant to be used as shown below:
 
 .. code-block:: cpp
+	:linenos:
 	:caption: as_args.c++
 
 	#define SOL_CHECK_ARGUMENTS

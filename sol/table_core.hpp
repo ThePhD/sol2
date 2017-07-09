@@ -27,6 +27,8 @@
 #include "function_types.hpp"
 #include "usertype.hpp"
 #include "table_iterator.hpp"
+#include "types.hpp"
+#include "object_base.hpp"
 
 namespace sol {
 	namespace detail {

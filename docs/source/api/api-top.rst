@@ -35,7 +35,9 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    thread
    optional
    variadic_args
+   variadic_results
    as_args
+   as_returns
    overload
    property
    var

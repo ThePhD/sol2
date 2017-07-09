@@ -22,6 +22,12 @@
 #ifndef SOL_FEATURE_TEST_HPP
 #define SOL_FEATURE_TEST_HPP
 
+#if (defined(__cplusplus) && __cplusplus == 201703L) || (defined(_MSC_VER) && _MSC_VER > 1900 && (defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (_MSVC_LANG > 201402))
+#ifndef SOL_CXX17_FEATURES
+#define SOL_CXX17_FEATURES 1
+#endif // C++17 features macro
+#endif // C++17 features check
+
 #if defined(__cpp_noexcept_function_type)
 #ifndef SOL_NOEXCEPT_FUNCTION_TYPE
 #define SOL_NOEXCEPT_FUNCTION_TYPE 1

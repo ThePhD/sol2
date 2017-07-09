@@ -66,7 +66,7 @@ namespace sol {
 				}
 			}
 			string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, keyidx);
-			std::string accessorkey = accessor.c_str();
+			std::string accessorkey = accessor.data();
 			auto vit = variables.find(accessorkey);
 			if (vit != variables.cend()) {
 				auto& varwrap = *(vit->second);

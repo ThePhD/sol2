@@ -30,10 +30,15 @@
 #include <memory>
 #include <functional>
 #include <utility>
+#include <cstdlib>
 #ifdef SOL_CODECVT_SUPPORT
 #include <codecvt>
 #include <locale>
-#endif
+#endif // codecvt header support
+#ifdef SOL_CXX17_FEATURES
+#include <string_view>
+#include <variant>
+#endif // C++17
 
 namespace sol {
 	namespace stack {
@@ -143,7 +148,7 @@ namespace sol {
 				typedef typename P::second_type V;
 				return get(types<K, V>(), L, index, tracking);
 			}
-			
+
 			template <typename K, typename V>
 			static T get(types<K, V>, lua_State* L, int relindex, record& tracking) {
 				tracking.use(1);
@@ -173,7 +178,7 @@ namespace sol {
 				return g.get(L, index, tracking);
 			}
 		};
-		
+
 		template<typename T>
 		struct getter<nested<T>, std::enable_if_t<meta::all<is_container<T>, meta::neg<meta::has_key_value_pair<meta::unqualified_t<T>>>>::value>> {
 			static T get(lua_State* L, int index, record& tracking) {
@@ -268,17 +273,7 @@ namespace sol {
 				tracking.use(1);
 				std::size_t len;
 				auto str = lua_tolstring(L, index, &len);
-				return std::string( str, len );
-			}
-		};
-
-		template <>
-		struct getter<string_detail::string_shim> {
-			string_detail::string_shim get(lua_State* L, int index, record& tracking) {
-				tracking.use(1);
-				size_t len;
-				const char* p = lua_tolstring(L, index, &len);
-				return string_detail::string_shim(p, len);
+				return std::string(str, len);
 			}
 		};
 
@@ -286,10 +281,11 @@ namespace sol {
 		struct getter<const char*> {
 			static const char* get(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
-				return lua_tostring(L, index);
+				size_t sz;
+				return lua_tolstring(L, index, &sz);
 			}
 		};
-		
+
 		template<>
 		struct getter<char> {
 			static char get(lua_State* L, int index, record& tracking) {
@@ -317,7 +313,7 @@ namespace sol {
 					// https://sourceforge.net/p/mingw-w64/bugs/538/
 					// http://chat.stackoverflow.com/transcript/message/32271369#32271369
 					for (auto& c : r) {
-                        uint8_t* b = reinterpret_cast<uint8_t*>(&c);
+						uint8_t* b = reinterpret_cast<uint8_t*>(&c);
 						std::swap(b[0], b[1]);
 					}
 #endif 
@@ -498,7 +494,7 @@ namespace sol {
 				T* obj = static_cast<T*>(udata);
 				return obj;
 			}
-			
+
 			static T& get(lua_State* L, int index, record& tracking) {
 				return *get_no_lua_nil(L, index, tracking);
 			}
@@ -573,25 +569,25 @@ namespace sol {
 			}
 		};
 
-		template<typename... Args>
-		struct getter<std::tuple<Args...>> {
-			typedef std::tuple<decltype(stack::get<Args>(nullptr, 0))...> R;
-			
-			template <typename... TArgs>
-			static R apply(std::index_sequence<>, lua_State*, int, record&, TArgs&&... args) {
+		template<typename... Tn>
+		struct getter<std::tuple<Tn...>> {
+			typedef std::tuple<decltype(stack::get<Tn>(nullptr, 0))...> R;
+
+			template <typename... Args>
+			static R apply(std::index_sequence<>, lua_State*, int, record&, Args&&... args) {
 				// Fuck you too, VC++
-				return R{std::forward<TArgs>(args)...};
+				return R{ std::forward<Args>(args)... };
 			}
-			
-			template <std::size_t I, std::size_t... Ix, typename... TArgs>
-			static R apply(std::index_sequence<I, Ix...>, lua_State* L, int index, record& tracking, TArgs&&... args) {
+
+			template <std::size_t I, std::size_t... Ix, typename... Args>
+			static R apply(std::index_sequence<I, Ix...>, lua_State* L, int index, record& tracking, Args&&... args) {
 				// Fuck you too, VC++
-				typedef std::tuple_element_t<I, std::tuple<Args...>> T;
-				return apply(std::index_sequence<Ix...>(), L, index, tracking, std::forward<TArgs>(args)..., stack::get<T>(L, index + tracking.used, tracking));
+				typedef std::tuple_element_t<I, std::tuple<Tn...>> T;
+				return apply(std::index_sequence<Ix...>(), L, index, tracking, std::forward<Args>(args)..., stack::get<T>(L, index + tracking.used, tracking));
 			}
 
 			static R get(lua_State* L, int index, record& tracking) {
-				return apply(std::make_index_sequence<sizeof...(Args)>(), L, index, tracking);
+				return apply(std::make_index_sequence<sizeof...(Tn)>(), L, index, tracking);
 			}
 		};
 
@@ -601,6 +597,65 @@ namespace sol {
 				return std::pair<decltype(stack::get<A>(L, index)), decltype(stack::get<B>(L, index))>{stack::get<A>(L, index, tracking), stack::get<B>(L, index + tracking.used, tracking)};
 			}
 		};
+
+#ifdef SOL_CXX17_FEATURES
+		template<>
+		struct getter<std::string_view> {
+			static std::string_view get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
+				size_t sz;
+				const char* str = lua_tolstring(L, index, &sz);
+				return std::string_view(str, sz);
+			}
+		};
+
+		template <typename... Tn>
+		struct getter<std::variant<Tn...>> {
+			typedef std::variant<Tn...> V;
+			typedef std::variant_size<V> V_size;
+			typedef std::integral_constant<bool, V_size::value == 0> V_is_empty;
+
+			static V get_empty(std::true_type, lua_State* L, int index, record& tracking) {
+				return V();
+			}
+
+			static V get_empty(std::false_type, lua_State* L, int index, record& tracking) {
+				typedef std::variant_alternative_t<0, V> T;
+				// This should never be reached...
+				// please check your code and understand what you did to bring yourself here
+				std::abort();
+				return V(std::in_place_index<0>, stack::get<T>(L, index));
+			}
+
+			static V get_one(std::integral_constant<std::size_t, 0>, lua_State* L, int index, record& tracking) {
+				return get_empty(V_is_empty(), L, index, tracking);
+			}
+
+			template <std::size_t I>
+			static V get_one(std::integral_constant<std::size_t, I>, lua_State* L, int index, record& tracking) {
+				typedef std::variant_alternative_t<I - 1, V> T;
+				if (stack::check<T>(L, index, no_panic, tracking)) {
+					return V(std::in_place_index<I - 1>, stack::get<T>(L, index));
+				}
+				return get_one(std::integral_constant<std::size_t, I - 1>(), L, index, tracking);
+			}
+
+			static V get(lua_State* L, int index, record& tracking) {
+				return get_one(std::integral_constant<std::size_t, V_size::value>(), L, index, tracking);
+			}
+		};
+#else
+		template <>
+		struct getter<string_detail::string_shim> {
+			string_detail::string_shim get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
+				size_t len;
+				const char* p = lua_tolstring(L, index, &len);
+				return string_detail::string_shim(p, len);
+			}
+		};
+#endif // C++17-wave
+
 	} // stack
 } // sol
 

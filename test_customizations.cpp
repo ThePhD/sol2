@@ -18,6 +18,10 @@ namespace sol {
 	template <>
 	struct lua_size<two_things> : std::integral_constant<int, 2> {};
 
+	// Then, the expected type
+	template <>
+	struct lua_type_of<two_things> : std::integral_constant<sol::type, sol::type::poly> {};
+
 	// Now, specialize various stack structures
 	namespace stack {
 
@@ -60,7 +64,7 @@ namespace sol {
 	}
 }
 
-TEST_CASE("customization/split-struct", "using the newly documented customization points to handle different kinds of classes") {
+TEST_CASE("customization/split struct", "using the newly documented customization points to handle different kinds of classes") {
 	sol::state lua;
 
 	// Create a pass-through style of function

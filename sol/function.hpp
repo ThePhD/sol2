@@ -22,96 +22,12 @@
 #ifndef SOL_FUNCTION_HPP
 #define SOL_FUNCTION_HPP
 
-#include "reference.hpp"
+#include "unsafe_function.hpp"
+#include "protected_function.hpp"
 #include "stack.hpp"
-#include "function_result.hpp"
-#include "function_types.hpp"
-#include <cstdint>
 #include <functional>
-#include <memory>
 
 namespace sol {
-	template <typename base_t>
-	class basic_function : public base_t {
-	private:
-		void luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount) const {
-			lua_callk(base_t::lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount), 0, nullptr);
-		}
-
-		template<std::size_t... I, typename... Ret>
-		auto invoke(types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n) const {
-			luacall(n, lua_size<std::tuple<Ret...>>::value);
-			return stack::pop<std::tuple<Ret...>>(base_t::lua_state());
-		}
-
-		template<std::size_t I, typename Ret>
-		Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n) const {
-			luacall(n, lua_size<Ret>::value);
-			return stack::pop<Ret>(base_t::lua_state());
-		}
-
-		template <std::size_t I>
-		void invoke(types<void>, std::index_sequence<I>, std::ptrdiff_t n) const {
-			luacall(n, 0);
-		}
-
-		function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n) const {
-			int stacksize = lua_gettop(base_t::lua_state());
-			int firstreturn = (std::max)(1, stacksize - static_cast<int>(n));
-			luacall(n, LUA_MULTRET);
-			int poststacksize = lua_gettop(base_t::lua_state());
-			int returncount = poststacksize - (firstreturn - 1);
-			return function_result(base_t::lua_state(), firstreturn, returncount);
-		}
-
-	public:
-		basic_function() = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_function>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_t, meta::unqualified_t<T>>> = meta::enabler>
-		basic_function(T&& r) noexcept : base_t(std::forward<T>(r)) {
-#ifdef SOL_CHECK_ARGUMENTS
-			if (!is_function<meta::unqualified_t<T>>::value) {
-				auto pp = stack::push_pop(*this);
-				stack::check<basic_function>(base_t::lua_state(), -1, type_panic);
-			}
-#endif // Safety
-		}
-		basic_function(const basic_function&) = default;
-		basic_function& operator=(const basic_function&) = default;
-		basic_function(basic_function&&) = default;
-		basic_function& operator=(basic_function&&) = default;
-		basic_function(const stack_reference& r) : basic_function(r.lua_state(), r.stack_index()) {}
-		basic_function(stack_reference&& r) : basic_function(r.lua_state(), r.stack_index()) {}
-		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<T, ref_index>>> = meta::enabler>
-		basic_function(lua_State* L, T&& r) : basic_function(L, sol::ref_index(r.registry_index())) {}
-		basic_function(lua_State* L, int index = -1) : base_t(L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
-			stack::check<basic_function>(L, index, type_panic);
-#endif // Safety
-		}
-		basic_function(lua_State* L, ref_index index) : base_t(L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
-			auto pp = stack::push_pop(*this);
-			stack::check<basic_function>(L, -1, type_panic);
-#endif // Safety
-		}
-
-		template<typename... Args>
-		function_result operator()(Args&&... args) const {
-			return call<>(std::forward<Args>(args)...);
-		}
-
-		template<typename... Ret, typename... Args>
-		decltype(auto) operator()(types<Ret...>, Args&&... args) const {
-			return call<Ret...>(std::forward<Args>(args)...);
-		}
-
-		template<typename... Ret, typename... Args>
-		decltype(auto) call(Args&&... args) const {
-			base_t::push();
-			int pushcount = stack::multi_push_reference(base_t::lua_state(), std::forward<Args>(args)...);
-			return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount);
-		}
-	};
 
 	namespace stack {
 		template<typename Signature>
@@ -154,6 +70,7 @@ namespace sol {
 			}
 		};
 	} // stack
+
 } // sol
 
 #endif // SOL_FUNCTION_HPP

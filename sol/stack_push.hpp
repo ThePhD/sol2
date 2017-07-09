@@ -25,12 +25,17 @@
 #include "stack_core.hpp"
 #include "raii.hpp"
 #include "optional.hpp"
+#include "usertype_traits.hpp"
 #include <memory>
 #include <type_traits>
 #ifdef SOL_CODECVT_SUPPORT
 #include <codecvt>
 #include <locale>
 #endif
+#ifdef SOL_CXX17_FEATURES
+#include <string_view>
+#include <variant>
+#endif // C++17
 
 namespace sol {
 	namespace stack {
@@ -736,6 +741,63 @@ namespace sol {
 				return 1;
 			}
 		};
+
+#ifdef SOL_CXX17_FEATURES
+		template <>
+		struct pusher<std::string_view> {
+			static int push(lua_State* L, const std::string_view& sv) {
+				return stack::push(L, sv.data(), sv.length());
+			}
+		};
+#ifdef SOL_CODECVT_SUPPORT
+		template <>
+		struct pusher<std::wstring_view> {
+			static int push(lua_State* L, const std::wstring_view& sv) {
+				return stack::push(L, sv.data(), sv.length());
+			}
+		};
+
+		template <>
+		struct pusher<std::u16string_view> {
+			static int push(lua_State* L, const std::u16string_view& sv) {
+				return stack::push(L, sv.data(), sv.length());
+			}
+		};
+
+		template <>
+		struct pusher<std::u32string_view> {
+			static int push(lua_State* L, const std::u32string_view& sv) {
+				return stack::push(L, sv.data(), sv.length());
+			}
+		};
+#endif // codecvt header support
+
+		namespace stack_detail {
+
+			struct push_function {
+				lua_State* L;
+
+				push_function(lua_State* L) : L(L) {}
+
+				template <typename T>
+				int operator()(T&& value) const {
+					return stack::push<T>(L, std::forward<T>(value));
+				}
+			};
+
+		} // stack_detail
+
+		template <typename... Tn>
+		struct pusher<std::variant<Tn...>> {
+			static int push(lua_State* L, const std::variant<Tn...>& v) {
+				return std::visit(stack_detail::push_function(L), v);
+			}
+
+			static int push(lua_State* L, std::variant<Tn...>&& v) {
+				return std::visit(stack_detail::push_function(L), std::move(v));
+			}
+		};
+#endif
 	} // stack
 } // sol
 

@@ -43,8 +43,11 @@
 #elif defined _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4324 ) // structure was padded due to alignment specifier
+#pragma warning( disable : 4503 ) // decorated name horse shit
+#pragma warning( disable : 4702 ) // unreachable code
 #endif // g++
 
+#include "sol/forward.hpp"
 #include "sol/state.hpp"
 #include "sol/object.hpp"
 #include "sol/function.hpp"
@@ -52,6 +55,7 @@
 #include "sol/state.hpp"
 #include "sol/coroutine.hpp"
 #include "sol/variadic_args.hpp"
+#include "sol/variadic_results.hpp"
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop

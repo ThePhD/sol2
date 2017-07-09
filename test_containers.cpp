@@ -47,7 +47,7 @@ TEST_CASE("containers/returns", "make sure that even references to vectors are b
 	REQUIRE(matching);
 }
 
-TEST_CASE("containers/vector_roundtrip", "make sure vectors can be round-tripped") {
+TEST_CASE("containers/vector roundtrip", "make sure vectors can be round-tripped") {
 	sol::state lua;
 	std::vector<int> v{ 1, 2, 3 };
 	lua.set_function("f", [&]() -> std::vector<int>& {
@@ -59,7 +59,7 @@ TEST_CASE("containers/vector_roundtrip", "make sure vectors can be round-tripped
 	REQUIRE(areequal);
 }
 
-TEST_CASE("containers/list_roundtrip", "make sure lists can be round-tripped") {
+TEST_CASE("containers/list roundtrip", "make sure lists can be round-tripped") {
 	sol::state lua;
 	std::list<int> v{ 1, 2, 3 };
 	lua.set_function("f", [&]() -> std::list<int>& {
@@ -71,7 +71,7 @@ TEST_CASE("containers/list_roundtrip", "make sure lists can be round-tripped") {
 	REQUIRE(areequal);
 }
 
-TEST_CASE("containers/map_roundtrip", "make sure maps can be round-tripped") {
+TEST_CASE("containers/map roundtrip", "make sure maps can be round-tripped") {
 	sol::state lua;
 	std::map<std::string, int> v{ { "a", 1 },{ "b", 2 },{ "c", 3 } };
 	lua.set_function("f", [&]() -> std::map<std::string, int>& {
@@ -83,7 +83,7 @@ TEST_CASE("containers/map_roundtrip", "make sure maps can be round-tripped") {
 	REQUIRE(areequal);
 }
 
-TEST_CASE("containers/unordered_map_roundtrip", "make sure unordered_maps can be round-tripped") {
+TEST_CASE("containers/unordered_map roundtrip", "make sure unordered_maps can be round-tripped") {
 	sol::state lua;
 	std::unordered_map<std::string, int> v{ { "a", 1 },{ "b", 2 },{ "c", 3 } };
 	lua.set_function("f", [&]() -> std::unordered_map<std::string, int>& {
@@ -95,7 +95,7 @@ TEST_CASE("containers/unordered_map_roundtrip", "make sure unordered_maps can be
 	REQUIRE(areequal);
 }
 
-TEST_CASE("containers/unordered_set_roundtrip", "make sure unordered_sets can be round-tripped") {
+TEST_CASE("containers/unordered_set roundtrip", "make sure unordered_sets can be round-tripped") {
 	sol::state lua;
 	std::unordered_set<int> v{ 1, 2, 3 };
 	lua.set_function("f", [&]() -> std::unordered_set<int>& {
@@ -107,7 +107,7 @@ TEST_CASE("containers/unordered_set_roundtrip", "make sure unordered_sets can be
 	REQUIRE(areequal);
 }
 
-TEST_CASE("containers/set_roundtrip", "make sure sets can be round-tripped") {
+TEST_CASE("containers/set roundtrip", "make sure sets can be round-tripped") {
 	sol::state lua;
 	std::set<int> v{ 1, 2, 3 };
 	lua.set_function("f", [&]() -> std::set<int>& {
@@ -119,7 +119,7 @@ TEST_CASE("containers/set_roundtrip", "make sure sets can be round-tripped") {
 	REQUIRE(areequal);
 }
 
-TEST_CASE("containers/custom-usertype", "make sure container usertype metatables can be overridden") {
+TEST_CASE("containers/custom usertype", "make sure container usertype metatables can be overridden") {
 	typedef std::unordered_map<int, int> bark;
 	
 	sol::state lua;
@@ -141,7 +141,7 @@ TEST_CASE("containers/custom-usertype", "make sure container usertype metatables
 	REQUIRE_NOTHROW(lua.script("a:something()"));
 }
 
-TEST_CASE("containers/const-serialization-kvp", "make sure const keys / values are respected") {
+TEST_CASE("containers/const serialization kvp", "make sure const keys / values are respected") {
 	typedef std::map<int, const int> bark;
 
 	sol::state lua;
@@ -153,7 +153,7 @@ TEST_CASE("containers/const-serialization-kvp", "make sure const keys / values a
 	REQUIRE_NOTHROW(lua.script("assert(a[24] == 50)"));
 }
 
-TEST_CASE("containers/basic-serialization", "make sure containers are turned into proper userdata and have basic hooks established") {
+TEST_CASE("containers/basic serialization", "make sure containers are turned into proper userdata and have basic hooks established") {
 	typedef std::vector<int> woof;
 	sol::state lua;
 	lua.open_libraries();
@@ -189,7 +189,7 @@ TEST_CASE("containers/const-serialization", "make sure containers are turned int
 }
 #endif // Fuck you, glibc
 
-TEST_CASE("containers/table-serialization", "ensure types can be serialized as tables still") {
+TEST_CASE("containers/table serialization", "ensure types can be serialized as tables still") {
 	typedef std::vector<int> woof;
 	sol::state lua;
 	lua.open_libraries();
@@ -212,7 +212,7 @@ TEST_CASE("containers/table-serialization", "ensure types can be serialized as t
 	);
 }
 
-TEST_CASE("containers/const-correctness", "usertype metatable names should reasonably ignore const attributes") {
+TEST_CASE("containers/const correctness", "usertype metatable names should reasonably ignore const attributes") {
 	struct Vec {
 		int x, y, z;
 	};
@@ -247,7 +247,7 @@ end
 	}());
 }
 
-TEST_CASE("containers/arbitrary-creation", "userdata and tables should be usable from standard containers") {
+TEST_CASE("containers/arbitrary creation", "userdata and tables should be usable from standard containers") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 	lua.set_function("test_one", test_table_return_one);
@@ -286,7 +286,7 @@ TEST_CASE("containers/arbitrary-creation", "userdata and tables should be usable
 	REQUIRE(d.get<int>("four") == 4);
 }
 
-TEST_CASE("containers/extra-functions", "make sure the manipulation functions are present and usable and working across various container types") {
+TEST_CASE("containers/extra functions", "make sure the manipulation functions are present and usable and working across various container types") {
 	sol::state lua;
 	lua.open_libraries();
 
@@ -386,7 +386,7 @@ c_arr[-1] = 7
 	}
 }
 
-TEST_CASE("containers/usertype-transparency", "Make sure containers pass their arguments through transparently and push the results as references, not new values") {
+TEST_CASE("containers/usertype transparency", "Make sure containers pass their arguments through transparently and push the results as references, not new values") {
 	class A {
 	public:
 		int a;
@@ -458,7 +458,7 @@ namespace sol {
 	struct is_container<options> : std::false_type {};
 }
 
-TEST_CASE("containers/is-container", "make sure the is_container trait behaves properly") {
+TEST_CASE("containers/is container", "make sure the is_container trait behaves properly") {
 	sol::state lua;
 	lua.open_libraries();
 
@@ -553,7 +553,7 @@ TEST_CASE("containers/to_args", "Test that the to_args abstractions works") {
 
 }
 
-TEST_CASE("containers/ipairs-test", "ensure that abstractions roundtrip properly") {
+TEST_CASE("containers/ipairs test", "ensure that abstractions roundtrip properly") {
 	struct thing {
 		int x = 20;
 	};
@@ -585,7 +585,7 @@ end
 	}
 }
 
-TEST_CASE("containers/append-idiom", "ensure the append-idiom works as intended") {
+TEST_CASE("containers/append idiom", "ensure the append-idiom works as intended") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 	lua.script(

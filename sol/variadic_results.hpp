@@ -19,28 +19,33 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_OVERLOAD_HPP
-#define SOL_OVERLOAD_HPP
+#ifndef SOL_VARIADIC_RESULTS_HPP
+#define SOL_VARIADIC_RESULTS_HPP
 
-#include "traits.hpp"
-#include <utility>
+#include "stack.hpp"
+#include "object.hpp"
+#include "as_returns.hpp"
+#include <vector>
 
 namespace sol {
-    template <typename... Functions>
-    struct overload_set {
-        std::tuple<Functions...> functions;
-        template <typename Arg, typename... Args, meta::disable<std::is_same<overload_set, meta::unqualified_t<Arg>>> = meta::enabler>
-        overload_set (Arg&& arg, Args&&... args) : functions(std::forward<Arg>(arg), std::forward<Args>(args)...) {}
-        overload_set(const overload_set&) = default;
-        overload_set(overload_set&&) = default;
-        overload_set& operator=(const overload_set&) = default;
-        overload_set& operator=(overload_set&&) = default;
-    };
 
-    template <typename... Args>
-    decltype(auto) overload(Args&&... args) {
-        return overload_set<std::decay_t<Args>...>(std::forward<Args>(args)...);
-    }
-}
+	struct variadic_results : public std::vector<object> {
+		using std::vector<object>::vector;
+	};
+	
+	namespace stack {
+		template <>
+		struct pusher<variadic_results> {
+			int push(lua_State* L, const variadic_results& e) {
+				int p = 0;
+				for (const auto& i : e) {
+					p += stack::push(L, i);
+				}
+				return p;
+			}
+		};
+	} // stack
 
-#endif // SOL_OVERLOAD_HPP
+} // sol
+
+#endif SOL_VARIADIC_RESULTS_HPP

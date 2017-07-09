@@ -19,26 +19,26 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_TO_ARGS_HPP
-#define SOL_TO_ARGS_HPP
+#ifndef SOL_AS_ARGS_HPP
+#define SOL_AS_ARGS_HPP
 
 #include "stack.hpp"
 
 namespace sol {
 	template <typename T>
-	struct to_args_t {
+	struct as_args_t {
 		T src;
 	};
 
 	template <typename Source>
 	auto as_args(Source&& source) {
-		return to_args_t<Source>{ std::forward<Source>(source) };
+		return as_args_t<Source>{ std::forward<Source>(source) };
 	}
 
 	namespace stack {
 		template <typename T>
-		struct pusher<to_args_t<T>> {
-			int push(lua_State* L, const to_args_t<T>& e) {
+		struct pusher<as_args_t<T>> {
+			int push(lua_State* L, const as_args_t<T>& e) {
 				int p = 0;
 				for (const auto& i : e.src) {
 					p += stack::push(L, i);
@@ -46,7 +46,7 @@ namespace sol {
 				return p;
 			}
 		};
-	}
+	} // stack
 } // sol
 
-#endif // SOL_TO_ARGS_HPP
+#endif // SOL_AS_ARGS_HPP

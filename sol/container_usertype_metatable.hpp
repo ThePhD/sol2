@@ -174,10 +174,7 @@ namespace sol {
 					return stack::stack_detail::push_reference<push_type>(L, v.second);
 				}
 			}
-			else {
-				return delegate_call(L);
-			}
-			return stack::push(L, lua_nil);
+			return delegate_call(L);
 		}
 
 		static int real_index_call_associative(std::false_type, lua_State* L) {
@@ -194,11 +191,7 @@ namespace sol {
 				std::advance(it, k);
 				return stack::stack_detail::push_reference<push_type>(L, *it);
 			}
-			else {
-				return delegate_call(L);
-			}
-
-			return stack::push(L, lua_nil);
+			return delegate_call(L);
 		}
 
 		static int real_index_call(lua_State* L) {

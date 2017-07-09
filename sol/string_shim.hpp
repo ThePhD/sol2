@@ -22,11 +22,18 @@
 #ifndef SOL_STRING_SHIM_HPP
 #define SOL_STRING_SHIM_HPP
 
+#include "feature_test.hpp"
 #include <cstddef>
 #include <string>
+#ifdef SOL_CXX17_FEATURES
+#include <string_view>
+#endif // C++17 features
 
 namespace sol {
 	namespace string_detail {
+#ifdef SOL_CXX17_FEATURES
+		typedef std::string_view string_shim;
+#else
 		struct string_shim {
 			std::size_t s;
 			const char* p;
@@ -82,6 +89,7 @@ namespace sol {
 				return !(*this == r);
 			}
 		};
+#endif // C++17
 	}
 }
 

@@ -9,11 +9,13 @@ There are a number of examples dealing with functions and how they can be bound 
 * For a quicker walkthrough that demonstrates almost everything, see `the examples`_ and the :doc:`the quick and dirty tutorial<tutorial/all-the-things>`
 * For a full explanation, :doc:`read the tutorial<tutorial/functions>` and consult the subjects below
 * If you have bindings and set-ups that want to leverage the C API without sol2's interference, you can push a raw function, which has certain implications (noted :ref:`below<raw-function-note>`)
+* You return multiple values by returning a `std::tuple`
 * You can work with **transparent arguments** that provide you with special information, such as
 	- :doc:`sol::variadic_args<api/variadic_args>`, for handling variable number of arguments at runtime
 	- :doc:`sol::this_state<api/this_state>`, for getting the current Lua state
 	- :doc:`sol::this_environment<api/this_environment>`, for potentially retrieving the current Lua environment
 * :doc:`Overload function calls on a single name<api/overload>`, discriminating by argument number and type (first-come, first-serve overloading)
+	- Note: because of this feature, automatic number to string conversion from Lua is not permitted
 * Control serialization of arguments and return types with :doc:`sol::nested<api/nested>`, :doc:`sol::as_table<api/nested>`, :doc:`sol::as_args<api/as_args>` and :doc:`sol::as_function<api/as_function>`
 * Set environments for Lua functions and scrips with :doc:`sol::environment<api/environment>`
 

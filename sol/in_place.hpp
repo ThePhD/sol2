@@ -22,8 +22,23 @@
 #ifndef SOL_IN_PLACE_HPP
 #define SOL_IN_PLACE_HPP
 
+#include <cstddef>
+#include <utility>
+
 namespace sol {
 
+#ifdef SOL_CXX17_FEATURES
+	using in_place_t = std::in_place_t;
+	constexpr std::in_place_t in_place{};
+
+	template <typename T> using in_place_type_t = std::in_place_type_t<T>;
+	template <typename T>
+	constexpr std::in_place_type_t<T> in_place_type{};
+	
+	template <size_t I> using in_place_index_t = std::in_place_index_t<I>;
+	template <size_t I>
+	constexpr in_place_index_t<I> in_place_index{};
+#else
 	namespace detail {
 		struct in_place_of {};
 		template <std::size_t I>
@@ -32,18 +47,25 @@ namespace sol {
 		struct in_place_of_t {};
 	} // detail
 
-	struct in_place_tag { struct init {}; constexpr in_place_tag(init) {} in_place_tag() = delete; };
-	constexpr inline in_place_tag in_place(detail::in_place_of) { return in_place_tag(in_place_tag::init()); }
+	struct in_place_tag { constexpr in_place_tag() = default; };
+	
+	constexpr inline in_place_tag in_place (detail::in_place_of) { return in_place_tag(); }
 	template <typename T>
-	constexpr inline in_place_tag in_place(detail::in_place_of_t<T>) { return in_place_tag(in_place_tag::init()); }
+	constexpr inline in_place_tag in_place (detail::in_place_of_t<T>) { return in_place_tag(); }
 	template <std::size_t I>
-	constexpr inline in_place_tag in_place(detail::in_place_of_i<I>) { return in_place_tag(in_place_tag::init()); }
+	constexpr inline in_place_tag in_place (detail::in_place_of_i<I>) { return in_place_tag(); }
+
+	template <typename T>
+	constexpr inline in_place_tag in_place_type (detail::in_place_of_t<T>) { return in_place_tag(); }
+	template <std::size_t I>
+	constexpr inline in_place_tag in_place_index (detail::in_place_of_i<I>) { return in_place_tag(); }
 
 	using in_place_t = in_place_tag(&)(detail::in_place_of);
 	template <typename T>
 	using in_place_type_t = in_place_tag(&)(detail::in_place_of_t<T>);
 	template <std::size_t I>
 	using in_place_index_t = in_place_tag(&)(detail::in_place_of_i<I>);
+#endif
 
 } // sol
 

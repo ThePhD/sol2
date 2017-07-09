@@ -28,6 +28,9 @@
 #include <memory>
 #include <functional>
 #include <utility>
+#ifdef SOL_CXX17_FEATURES
+#include <variant>
+#endif // C++17
 
 namespace sol {
 	namespace stack {
@@ -485,6 +488,40 @@ namespace sol {
 				return stack::check<T>(L, index, no_panic, tracking);
 			}
 		};
+
+#ifdef SOL_CXX17_FEATURES
+		template<typename... Tn, typename C>
+		struct checker<std::variant<Tn...>, type::poly, C> {
+			typedef std::variant<Tn...> V;
+			typedef std::variant_size<V> V_size;
+			typedef std::integral_constant<bool, V_size::value == 0> V_is_empty;
+
+			template <typename Handler>
+			static bool is_one(std::integral_constant<std::size_t, 0>, lua_State* L, int index, Handler&& handler, record& tracking) {
+				if (V_is_empty::value && lua_isnone(L, index)) {
+					return true;
+				}
+				tracking.use(1);
+				handler(L, index, type::poly, type_of(L, index));
+				return false;
+			}
+
+			template <std::size_t I, typename Handler>
+			static bool is_one(std::integral_constant<std::size_t, I>, lua_State* L, int index, Handler&& handler, record& tracking) {
+				typedef std::variant_alternative_t<I - 1, V> T;
+				if (stack::check<T>(L, index, no_panic, tracking)) {
+					return true;
+				}
+				return is_one(std::integral_constant<std::size_t, I - 1>(), L, index, std::forward<Handler>(handler), tracking);
+			}
+			
+			template <typename Handler>
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				return is_one(std::integral_constant<std::size_t, V_size::value>(), L, index, std::forward<Handler>(handler), tracking);
+			}
+		};
+#endif // C++17
+
 	} // stack
 } // sol
 

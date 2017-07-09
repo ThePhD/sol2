@@ -82,7 +82,7 @@ namespace sol {
 		template <typename N, typename F>
 		void set(N&& n, F&& f) {
 			auto meta = static_cast<simple_usertype_metatable<T>*>(base_t::registrar_data());
-			meta->add(state, n, f);
+			meta->add(state, std::forward<N>(n), std::forward<F>(f));
 		}
 	};
 

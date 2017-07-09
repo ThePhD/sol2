@@ -23,7 +23,6 @@
 #define SOL_PROXY_HPP
 
 #include "traits.hpp"
-#include "object.hpp"
 #include "function.hpp"
 #include "protected_function.hpp"
 #include "proxy_base.hpp"
@@ -118,6 +117,17 @@ namespace sol {
 			auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(tbl.lua_state(), key, lua_gettop(tbl.lua_state()));
 			lua_pop(tbl.lua_state(), p.levels);
 			return p;
+		}
+
+		type get_type() const {
+			type t = type::none;
+			auto pp = stack::push_pop(tbl);
+			auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(tbl.lua_state(), key, lua_gettop(tbl.lua_state()));
+			if (p) {
+				t = type_of(tbl.lua_state(), -1);
+			}
+			lua_pop(tbl.lua_state(), p.levels);
+			return t;
 		}
 	};
 

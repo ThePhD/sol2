@@ -22,12 +22,18 @@
 #ifndef SOL_TYPES_HPP
 #define SOL_TYPES_HPP
 
+#include "error.hpp"
 #include "optional.hpp"
 #include "compatibility.hpp"
+#include "forward.hpp"
 #include "traits.hpp"
 #include "string_shim.hpp"
 #include <array>
 #include <string>
+#ifdef SOL_CXX17_FEATURES
+#include <string_view>
+#include <variant>
+#endif // C++17
 
 namespace sol {
 	namespace detail {
@@ -650,64 +656,6 @@ namespace sol {
 		return lua_typename(L, static_cast<int>(t));
 	}
 
-	class reference;
-	class stack_reference;
-	template <typename Table, typename Key>
-	struct proxy;
-	template<typename T>
-	class usertype;
-	template <bool, typename T>
-	class basic_table_core;
-	template <bool b>
-	using table_core = basic_table_core<b, reference>;
-	template <bool b>
-	using stack_table_core = basic_table_core<b, stack_reference>;
-	template <typename T>
-	using basic_table = basic_table_core<false, T>;
-	typedef table_core<false> table;
-	typedef table_core<true> global_table;
-	typedef stack_table_core<false> stack_table;
-	typedef stack_table_core<true> stack_global_table;
-	template <typename base_t>
-	struct basic_environment;
-	using environment = basic_environment<reference>;
-	using stack_environment = basic_environment<stack_reference>;
-	template <typename T>
-	class basic_function;
-	template <typename T>
-	class basic_protected_function;
-	using protected_function = basic_protected_function<reference>;
-	using stack_protected_function = basic_protected_function<stack_reference>;
-	using unsafe_function = basic_function<reference>;
-	using safe_function = basic_protected_function<reference>;
-	using stack_unsafe_function = basic_function<stack_reference>;
-	using stack_safe_function = basic_protected_function<stack_reference>;
-#ifdef SOL_SAFE_FUNCTIONS
-	using function = protected_function;
-	using stack_function = stack_protected_function;
-#else
-	using function = unsafe_function;
-	using stack_function = stack_unsafe_function;
-#endif
-	template <typename base_t>
-	class basic_object;
-	template <typename base_t>
-	class basic_userdata;
-	template <typename base_t>
-	class basic_lightuserdata;
-	struct variadic_args;
-	using object = basic_object<reference>;
-	using stack_object = basic_object<stack_reference>;
-	using userdata = basic_userdata<reference>;
-	using stack_userdata = basic_userdata<stack_reference>;
-	using lightuserdata = basic_lightuserdata<reference>;
-	using stack_lightuserdata = basic_lightuserdata<stack_reference>;
-	class coroutine;
-	class thread;
-	struct variadic_args;
-	struct this_state;
-	struct this_environment;
-
 	namespace detail {
 		template <typename T, typename = void>
 		struct lua_type_of : std::integral_constant<type, type::userdata> {};
@@ -756,9 +704,6 @@ namespace sol {
 
 		template <>
 		struct lua_type_of<const char32_t*> : std::integral_constant<type, type::string> {};
-
-		template <>
-		struct lua_type_of<string_detail::string_shim> : std::integral_constant<type, type::string> {};
 
 		template <>
 		struct lua_type_of<bool> : std::integral_constant<type, type::boolean> {};
@@ -874,6 +819,29 @@ namespace sol {
 		template <typename T>
 		struct lua_type_of<T, std::enable_if_t<std::is_enum<T>::value>> : std::integral_constant<type, type::number> {};
 
+		template <>
+		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
+
+#ifdef SOL_CXX17_FEATURES
+		template <>
+		struct lua_type_of<std::string_view> : std::integral_constant<type, type::string> {};
+
+		template <>
+		struct lua_type_of<std::wstring_view> : std::integral_constant<type, type::string> {};
+
+		template <>
+		struct lua_type_of<std::u16string_view> : std::integral_constant<type, type::string> {};
+
+		template <>
+		struct lua_type_of<std::u32string_view> : std::integral_constant<type, type::string> {};
+
+		template <typename... Tn>
+		struct lua_type_of<std::variant<Tn...>> : std::integral_constant<type, type::poly> {};
+#else
+		template <>
+		struct lua_type_of<string_detail::string_shim> : std::integral_constant<type, type::string> {};
+#endif // C++ 17 (or not) features
+
 		template <typename T, typename C = void>
 		struct is_container : std::false_type {};
 
@@ -889,11 +857,23 @@ namespace sol {
 		template <>
 		struct is_container<std::u32string> : std::false_type {};
 
-		template <typename T>
-		struct is_container<T, std::enable_if_t<meta::has_begin_end<meta::unqualified_t<T>>::value>> : std::true_type {};
+#ifdef SOL_CXX17_FEATURES
+		template <>
+		struct is_container<std::string_view> : std::false_type {};
 
 		template <>
-		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
+		struct is_container<std::wstring_view> : std::false_type {};
+
+		template <>
+		struct is_container<std::u16string_view> : std::false_type {};
+
+		template <>
+		struct is_container<std::u32string_view> : std::false_type {};
+
+#endif // C++ 17
+
+		template <typename T>
+		struct is_container<T, std::enable_if_t<meta::has_begin_end<meta::unqualified_t<T>>::value>> : std::true_type {};
 
 		template <typename C, C v, template <typename...> class V, typename... Args>
 		struct accumulate : std::integral_constant<C, v> {};

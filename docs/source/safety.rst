@@ -11,7 +11,7 @@ config
 Note that you can obtain safety with regards to functions you bind by using the :doc:`protect<api/protect>` wrapper around function/variable bindings you set into Lua. Additionally, you can have basic boolean checks when using the API by just converting to a :doc:`sol::optional\<T><api/optional>` when necessary for getting things out of Lua and for function arguments.
 
 ``SOL_SAFE_USERTYPE`` triggers the following change:
-	* If the userdata to a usertype function is nil, will trigger an error instead of letting things go through and letting the system segfault/crash.
+	* If the userdata to a usertype function is nil, will trigger an error instead of letting things go through and letting the system segfault/crash
 	* Turned on by default with clang++, g++ and VC++ if a basic check for building in debug mode is detected
 
 ``SOL_SAFE_FUNCTION`` triggers the following change:
@@ -19,8 +19,9 @@ Note that you can obtain safety with regards to functions you bind by using the 
 	* Not turned on by default under any detectible compiler settings: you must turn this one on manually
 
 ``SOL_CHECK_ARGUMENTS`` triggers the following changes:
-	* ``sol::stack::get`` (used everywhere) defaults to using ``sol::stack::check_get`` and dereferencing the argument. It uses ``sol::type_panic`` as the handler if something goes wrong.
-	* ``sol::stack::call`` and its variants will, if no templated boolean is specified, check all of the arguments for a function call.
+	* ``sol::stack::get`` (used everywhere) defaults to using ``sol::stack::check_get`` and dereferencing the argument. It uses ``sol::type_panic`` as the handler if something goes wrong
+	* ``lua_tolstring`` conversions are not permitted on numbers: through the API: only actual strings are allowed. This is necessary to allow :doc:`sol::overload<api/overload>` to work properly
+	* ``sol::stack::call`` and its variants will, if no templated boolean is specified, check all of the arguments for a function call
 	* If ``SOL_SAFE_USERTYPE`` is not defined, it gets defined to turn being on and the effects described above kick in
 
 Tests are compiled with this on to ensure everything is going as expected. Remember that if you want these features, you must explicitly turn them on all of them to be sure you are getting them.

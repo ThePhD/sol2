@@ -42,14 +42,24 @@ namespace sol {
 		stack_proxy sp;
 
 		va_iterator() : L(nullptr), index((std::numeric_limits<int>::max)()), stacktop((std::numeric_limits<int>::max)()) {}
+		va_iterator(const va_iterator<true>& r) : L(r.L), index(r.index), stacktop(r.stacktop) {}
 		va_iterator(lua_State* luastate, int idx, int topidx) : L(luastate), index(idx), stacktop(topidx), sp(luastate, idx) {}
 
 		reference operator*() {
 			return stack_proxy(L, index);
 		}
 
+		reference operator*() const {
+			return stack_proxy(L, index);
+		}
+
 		pointer operator->() {
 			sp = stack_proxy(L, index);
+			return &sp;
+		}
+
+		pointer operator->() const {
+			const_cast<stack_proxy&>(sp) = stack_proxy(L, index);
 			return &sp;
 		}
 
@@ -95,7 +105,7 @@ namespace sol {
 			return r;
 		}
 
-		reference operator[](difference_type idx) {
+		reference operator[](difference_type idx) const {
 			return stack_proxy(L, index + static_cast<int>(idx));
 		}
 
@@ -213,6 +223,10 @@ namespace sol {
 			return stack::get<T>(L, index + static_cast<int>(start));
 		}
 
+		type get_type(difference_type start = 0) const noexcept {
+			return type_of(L, index + static_cast<int>(start));
+		}
+
 		stack_proxy operator[](difference_type start) const {
 			return stack_proxy(L, index + static_cast<int>(start));
 		}
@@ -220,6 +234,7 @@ namespace sol {
 		lua_State* lua_state() const { return L; };
 		int stack_index() const { return index; };
 		int leftover_count() const { return stacktop - (index - 1); }
+		std::size_t size() const { return static_cast<std::size_t>(leftover_count()); }
 		int top() const { return stacktop; }
 	};
 
