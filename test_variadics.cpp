@@ -141,17 +141,17 @@ TEST_CASE("variadics/variadic_results", "returning a variable amount of argument
 		lua.set_function("f", [](sol::this_state ts, bool maybe) {
 			if (maybe) {
 				sol::variadic_results vr;
-				vr.emplace_back(ts, sol::in_place<int>, 1);
+				vr.push_back({ ts, sol::in_place, 1 });
 				vr.push_back({ ts, sol::in_place, 2 });
 				vr.insert(vr.cend(), { ts, sol::in_place, 3 });
 				return vr;
 			}
 			else {
 				sol::variadic_results vr;
-				vr.emplace_back(ts, sol::in_place<const char*>, "bark");
-				vr.push_back({ ts, sol::in_place<const char*>, "woof" });
-				vr.insert(vr.cend(), { ts, sol::in_place<const char*>, "arf" });
-				vr.emplace_back(ts, sol::in_place<const char*>, "borf");
+				vr.push_back({ ts, sol::in_place, "bark" });
+				vr.push_back({ ts, sol::in_place, "woof" });
+				vr.insert(vr.cend(), { ts, sol::in_place, "arf" });
+				vr.push_back({ ts, sol::in_place, "borf" });
 				return vr;
 			}
 		});
