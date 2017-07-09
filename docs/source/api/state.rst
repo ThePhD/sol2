@@ -57,21 +57,21 @@ This function takes a number of :ref:`sol::lib<lib-enum>` as arguments and opens
 
 	sol::function_result script(const std::string& code);
 	sol::protected_function_result script(const std::string& code, const environment& env);
-	template <typename Func>
-	sol::protected_function_result script(const std::string& code, Func&& func);
-	template <typename Func>
-	sol::protected_function_result script(const std::string& code, const environment& env, Func&& func);
+	template <typename ErrorFunc>
+	sol::protected_function_result script(const std::string& code, ErrorFunc&& on_error);
+	template <typename ErrorFunc>
+	sol::protected_function_result script(const std::string& code, const environment& env, ErrorFunc&& on_error);
 
 	sol::function_result script_file(const std::string& filename);
 	sol::protected_function_result script_file(const std::string& filename, const environment& env);
-	template <typename Func>
-	sol::protected_function_result script_file(const std::string& filename, Func&& func);
-	template <typename Func>
-	sol::protected_function_result script_file(const std::string& filename, const environment& env, Func&& func);
+	template <typename ErrorFunc>
+	sol::protected_function_result script_file(const std::string& filename, ErrorFunc&& on_error);
+	template <typename ErrorFunc>
+	sol::protected_function_result script_file(const std::string& filename, const environment& env, ErrorFunc&& on_error);
 
 These functions run the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run isolated: any scripts or code run will affect code in the ``lua_State*`` the object uses as well (unless ``local`` is applied to a variable declaration, as specified by the Lua language). Code ran in this fashion is not isolated. If you need isolation, consider creating a new state or traditional Lua sandboxing techniques.
 
-If your script returns a value, you can capture it from the returned :ref:`sol::function_result<function-result>`/:ref:`sol::protected_function_result<protected-function-result>`.
+If your script returns a value, you can capture it from the returned :ref:`sol::function_result<function-result>`/:ref:`sol::protected_function_result<protected-function-result>`. Note that the plain versions that do not take an environment or a callback function assume that the contents internally not only loaded properly but ran to completion without errors, for the sake of simplicity.
 
 To handle errors when using the second overload, provide a callable function/object that takes a ``lua_State*`` as its first argument and a ``sol::protected_function_result`` as its second argument. Then, handle the errors any way you like:
 
@@ -114,7 +114,9 @@ Thanks to `Eric (EToreo) for the suggestion on this one`_!
 	sol::load_result load(const std::string& code);
 	sol::load_result load_file(const std::string& filename);
 
-These functions *load* the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It will not run: it returns a ``load_result`` proxy that can be called to actually run the code, turned into a ``sol::function``, a ``sol::protected_function``, or some other abstraction. If it is called, it will run on the object's current ``lua_State*``: it is not isolated. If you need isolation, consider creating a new state or traditional Lua sandboxing techniques.
+These functions *load* the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. That blob will be turned into a Lua Function. It will not be run: it returns a ``load_result`` proxy that can be called to actually run the code, when you are ready. It can also be turned into a ``sol::function``, a ``sol::protected_function``, or some other abstraction that can serve to call the function. If it is called, it will run on the object's current ``lua_State*``: it is not isolated. If you need isolation, consider using :doc:`sol::environment<environment>`, creating a new state, or other Lua sandboxing techniques.
+
+This is a low-level function and if you do not understand the difference between loading a piece of code versus running that code, you should be using :ref:`state_view::script<state-script-function>`.
 
 .. code-block:: cpp
 	:caption: function: do_string / do_file
@@ -122,8 +124,12 @@ These functions *load* the desired blob of either code that is in a string, or c
 
 	sol::protected_function_result do_string(const std::string& code);
 	sol::protected_function_result do_file(const std::string& filename);
+	sol::protected_function_result do_string(const std::string& code, sol::environment env);
+	sol::protected_function_result do_file(const std::string& filename, sol::environment env);
 
-These functions *loads and performs* the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It *will* run, and then return a ``protected_function_result`` proxy that can be examined for either an error or the return value.
+These functions *loads and performs* the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. It *will* run, and then return a ``protected_function_result`` proxy that can be examined for either an error or the return value. This function does not provide a callback like :ref:`state_view::script<state-script-function>` does. It is a lower-level function that performs less checking and directly calls ``load(_file)`` before running the result, with the optional environment.
+
+It is advised that, unless you have specific needs or the callback function is not to your liking, that you work directly with :ref:`state_view::script<state-script-function>`.
 
 .. code-block:: cpp
 	:caption: function: global table / registry table
