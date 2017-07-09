@@ -95,4 +95,4 @@ namespace sol {
 
 } // sol
 
-#endif SOL_FORWARD_HPP
+#endif // SOL_FORWARD_HPP

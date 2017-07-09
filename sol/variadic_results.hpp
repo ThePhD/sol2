@@ -48,4 +48,4 @@ namespace sol {
 
 } // sol
 
-#endif SOL_VARIADIC_RESULTS_HPP
+#endif // SOL_VARIADIC_RESULTS_HPP
