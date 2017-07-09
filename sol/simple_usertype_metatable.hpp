@@ -263,7 +263,7 @@ namespace sol {
 
 		template <typename N, typename... Fxs>
 		void add(lua_State* L, N&& n, constructor_wrapper<Fxs...> c) {
-			object o(L, in_place<detail::tagged<T, constructor_wrapper<Fxs...>>>, std::move(c));
+			object o(L, in_place_type<detail::tagged<T, constructor_wrapper<Fxs...>>>, std::move(c));
 			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
 				callconstructfunc = std::move(o);
 				return;
@@ -273,7 +273,7 @@ namespace sol {
 
 		template <typename N, typename... Lists>
 		void add(lua_State* L, N&& n, constructor_list<Lists...> c) {
-			object o(L, in_place<detail::tagged<T, constructor_list<Lists...>>>, std::move(c));
+			object o(L, in_place_type<detail::tagged<T, constructor_list<Lists...>>>, std::move(c));
 			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
 				callconstructfunc = std::move(o);
 				return;
@@ -283,7 +283,7 @@ namespace sol {
 
 		template <typename N>
 		void add(lua_State* L, N&& n, destructor_wrapper<void> c) {
-			object o(L, in_place<detail::tagged<T, destructor_wrapper<void>>>, std::move(c));
+			object o(L, in_place_type<detail::tagged<T, destructor_wrapper<void>>>, std::move(c));
 			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
 				callconstructfunc = std::move(o);
 				return;
@@ -293,7 +293,7 @@ namespace sol {
 
 		template <typename N, typename Fx>
 		void add(lua_State* L, N&& n, destructor_wrapper<Fx> c) {
-			object o(L, in_place<detail::tagged<T, destructor_wrapper<Fx>>>, std::move(c));
+			object o(L, in_place_type<detail::tagged<T, destructor_wrapper<Fx>>>, std::move(c));
 			if (std::is_same<meta::unqualified_t<N>, call_construction>::value) {
 				callconstructfunc = std::move(o);
 				return;

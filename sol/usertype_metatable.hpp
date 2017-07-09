@@ -213,12 +213,12 @@ namespace sol {
 		template <typename Arg>
 		inline std::string make_string(Arg&& arg) {
 			string_detail::string_shim s = make_shim(arg);
-			return std::string(s.c_str(), s.size());
+			return std::string(s.data(), s.size());
 		}
 
 		template <typename N>
 		inline luaL_Reg make_reg(N&& n, lua_CFunction f) {
-			luaL_Reg l{ make_shim(std::forward<N>(n)).c_str(), f };
+			luaL_Reg l{ make_shim(std::forward<N>(n)).data(), f };
 			return l;
 		}
 
