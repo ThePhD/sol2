@@ -1,7 +1,7 @@
 usertypes
 =========
 
-Perhaps the most powerful feature of sol2, ``usertypes`` are the way sol2 and C++ communicate your classes to the Lua runtime and bind things between both tables and to specific blocks of C++ memory, allowing you to treat Lua userdata and other things like classes. 
+Perhaps the most powerful feature of sol2, ``usertypes`` are the way sol2 and C++ communicate your classes to the Lua runtime and bind things between both tables and to specific blocks of C++ memory, allowing you to treat Lua userdata and other things like classes.
 
 To learn more about usertypes, visit:
 
@@ -15,11 +15,11 @@ The examples folder also has a number of really great examples for you to see. T
 * Containers get pushed as special usertypes, but can be disabled if problems arise as detailed :doc:`here<api/containers>`.
 * You can use bitfields but it requires some finesse on your part. We have an example to help you get started `here, that uses a few tricks`_.
 * All usertypes are runtime extensible in both `Lua`_ and `C++`_
-* Please note that the semi-colon is necessary to "automatically" pass the ``this``/``self`` argument to Lua methods
+* Please note that the colon is necessary to "automatically" pass the ``this``/``self`` argument to Lua methods
 	- ``obj:method_name()`` is how you call "member" methods in Lua
 	- It is purely syntactic sugar that passes the object name as the first argument to the ``method_name`` function
 	- ``my_obj:foo(bar, baz)`` is the same as ``my_obj.foo(my_obj, bar, baz)``
-	- **Please note** that one uses a semi-colon, and the other uses a dot, and forgetting to do this properly will crash your code
+	- **Please note** that one uses a colon, and the other uses a dot, and forgetting to do this properly will crash your code
 	- There are safety defines outlined in the :ref:`safety page here<config>`
 * You can push types classified as userdata before you register a usertype.
 	- You can register a usertype with the Lua runtime at any time sol2
