@@ -1,7 +1,7 @@
 table
 =====
-a representation of a Lua (meta)table
--------------------------------------
+*a representation of a Lua (meta)table*
+
 
 .. code-block:: cpp
 	

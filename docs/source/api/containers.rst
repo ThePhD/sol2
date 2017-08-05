@@ -1,11 +1,13 @@
 containers
 ==========
-for handling ``std::vector/map/set`` and others
------------------------------------------------
+*for handling ``std::vector/map/set`` and others*
 
-Sol2 automatically converts containers (detected using the ``sol::is_container<T>`` type trait, which simply looks for begin / end) to be a special kind of userdata with metatable on it. For Lua 5.2 and 5.3, this is extremely helpful as you can make typical containers behave like Lua tables without losing the actual container that they came from, as well as a small amount of indexing and other operations that behave properly given the table type.
 
-If you need to deal with these things from Lua as tables, please consider :doc:`sol::as_table<as_table>` and :doc:`sol::nested<nested>`.
+Sol2 automatically converts containers (detected using the ``sol::is_container<T>`` type trait, which simply looks for ``begin`` / ``end``) to be a special kind of userdata with metatable on it. For Lua 5.2 and 5.3, this is extremely helpful as you can make typical containers behave like Lua tables without losing the actual container that they came from, as well as a small amount of indexing and other operations that behave properly given the table type.
+
+An overview of these traits and additional information can be found :doc:`at the top level container page<../containers>`.
+
+If you need to deal with these things from and in Lua to be **actual**, true-blue, Lua tables, please consider :doc:`sol::as_table<as_table>` and :doc:`sol::nested<nested>` for serialization and deserialization into and out of the VM with sol2 operations.
 
 
 a complete example
@@ -65,42 +67,5 @@ Note that this will not work well in Lua 5.1, as it has explicit table checks an
 		print(i, vec[i]) 
 	end
 
-There are also other ways to iterate over key/values, but they can be difficult due to not having proper support in Lua 5.1. We recommend that you upgrade to Lua 5.2 or 5.3 if this is integral to your infrastructure.
+There are also other ways to iterate over key/values, but they can be difficult AND cost your performance due to not having proper support in Lua 5.1. We recommend that you upgrade to Lua 5.2 or 5.3 if this is integral to your infrastructure.
 
-
-additional functions
---------------------
-
-Based on the type pushed, a few additional functions are added as "member functions" (``self`` functions called with ``obj:func()`` or ``obj.func(obj)`` syntax) within a Lua script:
-
-* ``my_container:clear()``: This will call the underlying containers ``clear`` function.
-* ``my_container:add( key, value )`` or ``my_container:add( value )``: this will add to the end of the container, or if it is an associative or ordered container, simply put in an expected key-value pair into it.
-* ``my_contaner:insert( where, value )`` or ``my_contaner:insert( key, value )``: similar to add, but it only takes two arguments. In the case of ``std::vector`` and the like, the first argument is a ``where`` integer index. The second argument is the value. For associative containers, a key and value argument are expected.
-* ``my_container:find( value )``: This will call the underlying containers ``find`` function if it exists, or in case of associative containers, it will work just like an index call. This is meant to give a fast membership check for ``std::set`` and ``std::unordered_set`` containers.
-* ``my_container:get( key )``: This function can return multiple values when the value type is a ``std::pair`` or ``std::tuple``, which is not the case for ``obj[key]``! This will call the underlying containers ``find`` function if it exists, index into a regular container, or in case of certain associative containers, it will work just like an index call. This is meant to give a fast membership check for ``std::set`` and ``std::unordered_set`` containers.
-
-.. _container-detection:
-
-too-eager container detection?
-------------------------------
-
-
-If you have a type that has ``begin`` or ``end`` member functions but don't provide iterators, you can specialize ``sol::is_container<T>`` to be ``std::false_type``, and that will treat the type as a regular usertype and push it as a regular userdata:
-
-.. code-block:: cpp
-	:caption: specialization.hpp
-
-	struct not_container {
-		void begin() {
-
-		}
-
-		void end() {
-
-		}
-	};
-
-	namespace sol {
-		template <>
-		struct is_container<not_container> : std::false_type {};
-	}

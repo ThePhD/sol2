@@ -1,7 +1,6 @@
 userdata
 ========
-reference to a userdata
------------------------
+*reference to a userdata*
 
 .. code-block:: cpp
 	:caption: (light\_)userdata reference

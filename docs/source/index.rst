@@ -9,8 +9,8 @@
 
 Sol |version|
 =============
-a fast, simple C++ and Lua Binding
-----------------------------------
+*a fast, simple C++ and Lua Binding*
+
 
 When you need to hit the ground running with Lua and C++, `Sol`_ is the go-to framework for high-performance binding with an easy to use API.
 
@@ -37,6 +37,7 @@ get going:
 	features
 	functions
 	usertypes
+	containers
 	threading
 	traits
 	api/api-top

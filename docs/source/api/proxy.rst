@@ -1,9 +1,9 @@
 proxy, (protected\_)function_result - proxy_base derivatives
 ============================================================
-``table[x]`` and ``function(...)`` conversion struct
-----------------------------------------------------
+*``table[x]`` and ``function(...)`` conversion struct*
 
-.. code-block:: c++
+
+.. code-block:: cpp
 
 	template <typename Recurring>
 	struct proxy_base;

@@ -3,10 +3,29 @@
 #include <catch.hpp>
 #include <sol.hpp>
 
+#include <thread>
+
 #ifdef SOL_CXX17_FEATURES
 #include <string_view>
 #include <variant>
 #endif
+
+void basic_initialization_and_lib_open() {
+	sol::state lua;
+	try {
+		lua.open_libraries();
+		lua["a"] = 24;
+		int a = lua["a"];
+		REQUIRE(a == 24);
+	}
+	catch (const sol::error& e) {
+		INFO(e.what());
+		REQUIRE(false);
+	}
+	catch (...) {
+		REQUIRE(false);
+	}
+}
 
 
 TEST_CASE("utility/variant", "test that variant can be round-tripped") {
@@ -66,4 +85,65 @@ TEST_CASE("utility/string_view", "test that string_view can be taken as an argum
 #else
 	REQUIRE(true);
 #endif // C++17
+}
+
+TEST_CASE("utility/thread", "fire up lots of threads at the same time to make sure the initialization changes do not cause horrible crashing data races") {
+	REQUIRE_NOTHROW([]() {
+		std::thread thrds[16];
+		for (int i = 0; i < 16; i++) {
+			thrds[i] = std::thread(&basic_initialization_and_lib_open);
+		}
+
+		for (int i = 0; i < 16; i++) {
+			thrds[i].join();
+		}
+	}());
+}
+
+TEST_CASE("utility/this_state", "Ensure this_state argument can be gotten anywhere in the function.") {
+	struct bark {
+		int with_state(sol::this_state l, int a, int b) {
+			lua_State* L = l;
+			int c = lua_gettop(L);
+			return a + b + (c - c);
+		}
+
+		static int with_state_2(int a, sol::this_state l, int b) {
+			INFO("inside with_state_2");
+			lua_State* L = l;
+			INFO("L is" << (void*)L);
+			int c = lua_gettop(L);
+			return a * b + (c - c);
+		}
+	};
+
+	sol::state lua;
+	INFO("created lua state");
+	lua.open_libraries(sol::lib::base);
+	lua.new_usertype<bark>("bark",
+		"with_state", &bark::with_state
+		);
+
+	INFO("setting b and with_state_2");
+	bark b;
+	lua.set("b", &b);
+	lua.set("with_state_2", bark::with_state_2);
+	INFO("finished setting");
+	INFO("getting fx");
+	sol::function fx = lua["with_state_2"];
+	INFO("calling fx");
+	int a = fx(25, 25);
+	INFO("finished setting fx");
+	INFO("calling a script");
+	lua.script("a = with_state_2(25, 25)");
+	INFO("calling c script");
+	lua.script("c = b:with_state(25, 25)");
+	INFO("getting a");
+	int la = lua["a"];
+	INFO("getting b");
+	int lc = lua["c"];
+
+	REQUIRE(lc == 50);
+	REQUIRE(a == 625);
+	REQUIRE(la == 625);
 }

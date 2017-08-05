@@ -25,55 +25,59 @@
 #include "state_view.hpp"
 
 namespace sol {
-	inline int default_at_panic(lua_State* L) {
+
+	namespace detail {
+		inline int default_at_panic(lua_State* L) {
 #ifdef SOL_NO_EXCEPTIONS
-		(void)L;
-		return -1;
+			(void)L;
+			return -1;
 #else
-		const char* message = lua_tostring(L, -1);
-		if (message) {
-			std::string err = message;
+			const char* message = lua_tostring(L, -1);
+			if (message) {
+				std::string err = message;
+				lua_settop(L, 0);
+				throw error(err);
+			}
 			lua_settop(L, 0);
-			throw error(err);
-		}
-		lua_settop(L, 0);
-		throw error(std::string("An unexpected error occurred and forced the lua state to call atpanic"));
+			throw error(std::string("An unexpected error occurred and forced the lua state to call atpanic"));
 #endif
-	}
-
-	inline int default_error_handler(lua_State*L) {
-		using namespace sol;
-		std::string msg = "An unknown error has triggered the default error handler";
-		optional<string_detail::string_shim> maybetopmsg = stack::check_get<string_detail::string_shim>(L, 1);
-		if (maybetopmsg) {
-			const string_detail::string_shim& topmsg = maybetopmsg.value();
-			msg.assign(topmsg.data(), topmsg.size());
 		}
-		luaL_traceback(L, L, msg.c_str(), 1);
-		optional<string_detail::string_shim> maybetraceback = stack::check_get<string_detail::string_shim>(L, -1);
-		if (maybetraceback) {
-			const string_detail::string_shim& traceback = maybetraceback.value();
-			msg.assign(traceback.data(), traceback.size());
-		}
-		return stack::push(L, msg);
-	}
 
+		inline int default_traceback_error_handler(lua_State*L) {
+			using namespace sol;
+			std::string msg = "An unknown error has triggered the default error handler";
+			optional<string_detail::string_shim> maybetopmsg = stack::check_get<string_detail::string_shim>(L, 1);
+			if (maybetopmsg) {
+				const string_detail::string_shim& topmsg = maybetopmsg.value();
+				msg.assign(topmsg.data(), topmsg.size());
+			}
+			luaL_traceback(L, L, msg.c_str(), 1);
+			optional<string_detail::string_shim> maybetraceback = stack::check_get<string_detail::string_shim>(L, -1);
+			if (maybetraceback) {
+				const string_detail::string_shim& traceback = maybetraceback.value();
+				msg.assign(traceback.data(), traceback.size());
+			}
+			return stack::push(L, msg);
+		}
+	} // detail
 
 	class state : private std::unique_ptr<lua_State, void(*)(lua_State*)>, public state_view {
 	private:
 		typedef std::unique_ptr<lua_State, void(*)(lua_State*)> unique_base;
 	public:
-		state(lua_CFunction panic = default_at_panic) : unique_base(luaL_newstate(), lua_close),
+		state(lua_CFunction panic = detail::default_at_panic) : unique_base(luaL_newstate(), lua_close),
 			state_view(unique_base::get()) {
 			set_panic(panic);
-			sol::protected_function::set_default_handler(sol::object(lua_state(), in_place, default_error_handler));
+			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
+			sol::protected_function::set_default_handler(sol::object(lua_state(), in_place, f));
 			stack::luajit_exception_handler(unique_base::get());
 		}
 
 		state(lua_CFunction panic, lua_Alloc alfunc, void* alpointer = nullptr) : unique_base(lua_newstate(alfunc, alpointer), lua_close),
 			state_view(unique_base::get()) {
 			set_panic(panic);
-			sol::protected_function::set_default_handler(sol::object(lua_state(), in_place, default_error_handler));
+			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
+			sol::protected_function::set_default_handler(sol::object(lua_state(), in_place, f));
 			stack::luajit_exception_handler(unique_base::get());
 		}
 
@@ -88,12 +92,7 @@ namespace sol {
 
 		using state_view::get;
 
-		~state() {
-			auto& handler = protected_function::get_default_handler();
-			if (handler.lua_state() == this->lua_state()) {
-				protected_function::set_default_handler(reference());
-			}
-		}
+		~state() {}
 	};
 } // sol
 

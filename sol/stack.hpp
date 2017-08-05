@@ -35,6 +35,13 @@
 #include <array>
 
 namespace sol {
+	namespace detail {
+		inline const std::string& default_chunk_name() {
+			static const std::string name = "string";
+			return name;
+		}
+	} // detail
+
 	namespace stack {
 		namespace stack_detail {
 			template<typename T>
@@ -156,7 +163,7 @@ namespace sol {
 			typedef lua_bind_traits<meta::unqualified_t<Fx>> traits_type;
 			typedef typename traits_type::args_list args_list;
 			typedef typename traits_type::returns_list returns_list;
-			return call_into_lua(returns_list(), args_list(), L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
+			return call_into_lua<check_args>(returns_list(), args_list(), L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
 		}
 
 		inline call_syntax get_call_syntax(lua_State* L, const std::string& key, int index) {
@@ -171,14 +178,14 @@ namespace sol {
 			return call_syntax::colon;
 		}
 
-		inline void script(lua_State* L, const std::string& code) {
-			if (luaL_dostring(L, code.c_str())) {
+		inline void script(lua_State* L, const string_detail::string_shim& code, string_detail::string_shim name = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			if (luaL_loadbufferx(L, code.data(), code.size(), name.data(), to_string(mode).c_str()) || lua_pcall(L, 0, LUA_MULTRET, 0)) {
 				lua_error(L);
 			}
 		}
 
-		inline void script_file(lua_State* L, const std::string& filename) {
-			if (luaL_dofile(L, filename.c_str())) {
+		inline void script_file(lua_State* L, const std::string& filename, load_mode mode = load_mode::any) {
+			if (luaL_loadfilex(L, filename.c_str(), to_string(mode).c_str()) || lua_pcall(L, 0, LUA_MULTRET, 0)) {
 				lua_error(L);
 			}
 		}

@@ -317,7 +317,7 @@ TEST_CASE("functions/function_result and protected_function_result", "Function r
 	auto nontrampolinefx = [](lua_State*) -> int { throw "x"; };
 	lua_CFunction c_nontrampolinefx = nontrampolinefx;
 	lua.set("nontrampoline", c_nontrampolinefx);
-	lua.set_function("bark", []() -> int {return 100; });
+	lua.set_function("bark", []() -> int { return 100; });
 
 	sol::function luahandler = lua["luahandler"];
 	sol::function cpphandler = lua["cpphandler"];
@@ -866,7 +866,7 @@ TEST_CASE("overloading/c_call", "Make sure that overloading works with c_call fu
 	REQUIRE(r5 == 1);
 }
 
-TEST_CASE("functions/stack-protect", "make sure functions don't impede on the stack") {
+TEST_CASE("functions/stack atomic", "make sure functions don't impede on the stack") {
 	//setup sol/lua
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::string);
@@ -920,7 +920,7 @@ TEST_CASE("functions/stack-protect", "make sure functions don't impede on the st
 	REQUIRE(sg.check_stack());
 }
 
-TEST_CASE("functions/same-type-closures", "make sure destructions are per-object, not per-type, by destroying one type multiple times") {
+TEST_CASE("functions/same type closures", "make sure destructions are per-object, not per-type, by destroying one type multiple times") {
 	static std::set<void*> last_my_closures;
 	static bool checking_closures = false;
 	static bool check_failed = false;
@@ -959,7 +959,7 @@ TEST_CASE("functions/same-type-closures", "make sure destructions are per-object
 	REQUIRE(last_my_closures.size() == 2);
 }
 
-TEST_CASE("functions/stack-multi-return", "Make sure the stack is protected after multi-returns") {
+TEST_CASE("functions/stack multi-return", "Make sure the stack is protected after multi-returns") {
 	sol::state lua;
 	lua.script("function f () return 1, 2, 3, 4, 5 end");
 
@@ -982,7 +982,7 @@ TEST_CASE("functions/stack-multi-return", "Make sure the stack is protected afte
 	}
 }
 
-TEST_CASE("functions/protected-stack-multi-return", "Make sure the stack is protected after multi-returns") {
+TEST_CASE("functions/protected stack multi-return", "Make sure the stack is protected after multi-returns") {
 	sol::state lua;
 	lua.script("function f () return 1, 2, 3, 4, 5 end");
 
@@ -1005,7 +1005,65 @@ TEST_CASE("functions/protected-stack-multi-return", "Make sure the stack is prot
 	}
 }
 
-TEST_CASE("functions/overloaded-variadic", "make sure variadics work to some degree with overloading") {
+TEST_CASE("functions/function_result as arguments", "ensure that function_result can be pushed as its results and not a userdata") {
+	sol::state lua;
+	lua.open_libraries();
+
+	lua.script("function f () return 1, 2, 3, 4, 5 end");
+	lua.script("function g (a, b, c, d, e) assert(a == 1) assert(b == 2) assert(c == 3) assert(d == 4) assert(e == 5) end");
+
+	{
+		sol::stack_guard sg(lua);
+		sol::stack::push(lua, double(256.78));
+		{
+			int a, b, c, d, e;
+			sol::stack_guard sg2(lua);
+			sol::function pf = lua["f"];
+			sol::tie(a, b, c, d, e) = pf();
+			REQUIRE(a == 1);
+			REQUIRE(b == 2);
+			REQUIRE(c == 3);
+			REQUIRE(d == 4);
+			REQUIRE(e == 5);
+			REQUIRE_NOTHROW([&]() {
+				lua["g"](pf());
+			}());
+		}
+		double f = sol::stack::pop<double>(lua);
+		REQUIRE(f == 256.78);
+	}
+}
+
+TEST_CASE("functions/protected_function_result as arguments", "ensure that protected_function_result can be pushed as its results and not a userdata") {
+	sol::state lua;
+	lua.open_libraries();
+
+	lua.script("function f () return 1, 2, 3, 4, 5 end");
+	lua.script("function g (a, b, c, d, e) assert(a == 1) assert(b == 2) assert(c == 3) assert(d == 4) assert(e == 5) end");
+
+	{
+		sol::stack_guard sg(lua);
+		sol::stack::push(lua, double(256.78));
+		{
+			int a, b, c, d, e;
+			sol::stack_guard sg2(lua);
+			sol::protected_function pf = lua["f"];
+			sol::tie(a, b, c, d, e) = pf();
+			REQUIRE(a == 1);
+			REQUIRE(b == 2);
+			REQUIRE(c == 3);
+			REQUIRE(d == 4);
+			REQUIRE(e == 5);
+			REQUIRE_NOTHROW([&]() {
+				lua["g"](pf());
+			}());
+		}
+		double f = sol::stack::pop<double>(lua);
+		REQUIRE(f == 256.78);
+	}
+}
+
+TEST_CASE("functions/overloaded variadic", "make sure variadics work to some degree with overloading") {
 	sol::state lua;
 	lua.open_libraries();
 
@@ -1024,7 +1082,7 @@ TEST_CASE("functions/overloaded-variadic", "make sure variadics work to some deg
 	REQUIRE(c == 2.2);
 }
 
-TEST_CASE("functions/sectioning-variadic", "make sure variadics can bite off chunks of data") {
+TEST_CASE("functions/sectioning variadic", "make sure variadics can bite off chunks of data") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -1047,7 +1105,7 @@ TEST_CASE("functions/sectioning-variadic", "make sure variadics can bite off chu
 	lua.script("print(x3) assert(x3 == 18)");
 }
 
-TEST_CASE("functions/set_function-already-wrapped", "setting a function returned from Lua code that is already wrapped into a sol::function or similar") {
+TEST_CASE("functions/set_function already wrapped", "setting a function returned from Lua code that is already wrapped into a sol::function or similar") {
 	SECTION("test different types") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
@@ -1118,7 +1176,7 @@ TEST_CASE("functions/set_function-already-wrapped", "setting a function returned
 	}
 }
 
-TEST_CASE("functions/pointer-nil", "ensure specific semantics for handling pointer-nils passed through sol") {
+TEST_CASE("functions/pointer nullptr + nil", "ensure specific semantics for handling pointer-nils passed through sol") {
 	struct nil_test {
 
 		static void f(nil_test* p) {
@@ -1282,7 +1340,7 @@ TEST_CASE("functions/pointer-nil", "ensure specific semantics for handling point
 	}
 }
 
-TEST_CASE("functions/unique_usertype-overloading", "make sure overloading can work with ptr vs. specifically asking for a unique_usertype") {
+TEST_CASE("functions/unique_usertype overloading", "make sure overloading can work with ptr vs. specifically asking for a unique_usertype") {
 	struct test { 
 		int special_value = 17;
 		test() : special_value(17) {}

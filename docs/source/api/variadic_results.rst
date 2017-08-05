@@ -1,7 +1,6 @@
 variadic_results
 ================
-push multiple disparate arguments into lua
-------------------------------------------
+*push multiple disparate arguments into lua*
 
 .. code-block:: cpp
 	

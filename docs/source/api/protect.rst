@@ -1,7 +1,7 @@
 protect
 =======
-Routine to mark a function / variable as requiring safety
----------------------------------------------------------
+*routine to mark a function / variable as requiring safety*
+
 
 .. code-block:: cpp
 	

@@ -1,7 +1,7 @@
 make_object/make_reference
 ==========================
-Create a value on the Lua stack and return it 
----------------------------------------------
+*create a value in the lua registry / on the Lua stack and return it*
+
 
 .. code-block:: cpp
 	:caption: function: make_reference

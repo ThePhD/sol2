@@ -102,13 +102,16 @@ namespace sol {
 		struct any_same : std::false_type { };
 
 		template<class T, class U, class... Args>
-		struct any_same<T, U, Args...> : std::integral_constant <bool, std::is_same<T, U>::value || any_same<T, Args...>::value> { };
+		struct any_same<T, U, Args...> : std::integral_constant <bool, std::is_same<T, U>::value || any_same<T, Args...>::value> {};
+
+		template<bool B>
+		using boolean = std::integral_constant<bool, B>;
 
 		template<typename T>
 		using invoke_t = typename T::type;
 
-		template<bool B>
-		using boolean = std::integral_constant<bool, B>;
+		template <typename T>
+		using invoke_b = boolean<T::value>;
 
 		template<typename T>
 		using neg = boolean<!T::value>;
@@ -326,24 +329,63 @@ namespace sol {
 				static std::false_type test(...);
 			};
 
-			template <typename T, typename U = T, typename = decltype(std::declval<T&>() < std::declval<U&>())>
-			std::true_type supports_op_less_test(const T&);
+			template <typename T>
+			struct has_push_back_test {
+			private:
+				typedef std::array<char, 1> one;
+				typedef std::array<char, 2> two;
+
+				template <typename C> static one test(decltype(std::declval<C>().push_back(std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
+				template <typename C> static two test(...);
+
+			public:
+				static const bool value = sizeof(test<T>(0)) == sizeof(char);
+			};
+
+			template <typename T>
+			struct has_insert_test {
+			private:
+				typedef std::array<char, 1> one;
+				typedef std::array<char, 2> two;
+
+				template <typename C> static one test(decltype(std::declval<C>().insert(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>(), std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
+				template <typename C> static two test(...);
+
+			public:
+				static const bool value = sizeof(test<T>(0)) == sizeof(char);
+			};
+
+			template <typename T>
+			struct has_insert_after_test {
+			private:
+				typedef std::array<char, 1> one;
+				typedef std::array<char, 2> two;
+
+				template <typename C> static one test(decltype(std::declval<C>().insert_after(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>(), std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
+				template <typename C> static two test(...);
+
+			public:
+				static const bool value = sizeof(test<T>(0)) == sizeof(char);
+			};
+
+			template <typename T, typename U, typename = decltype(std::declval<T&>() < std::declval<U&>())>
+			std::true_type supports_op_less_test(const T&, const U&);
 			std::false_type supports_op_less_test(...);
-			template <typename T, typename U = T, typename = decltype(std::declval<T&>() == std::declval<U&>())>
-			std::true_type supports_op_equal_test(const T&);
+			template <typename T, typename U, typename = decltype(std::declval<T&>() == std::declval<U&>())>
+			std::true_type supports_op_equal_test(const T&, const U&);
 			std::false_type supports_op_equal_test(...);
-			template <typename T, typename U = T, typename = decltype(std::declval<T&>() <= std::declval<U&>())>
-			std::true_type supports_op_less_equal_test(const T&);
+			template <typename T, typename U, typename = decltype(std::declval<T&>() <= std::declval<U&>())>
+			std::true_type supports_op_less_equal_test(const T&, const U&);
 			std::false_type supports_op_less_equal_test(...);
 
 		} // meta_detail
 
-		template <typename T>
-		using supports_op_less = decltype(meta_detail::supports_op_less_test(std::declval<T&>()));
-		template <typename T>
-		using supports_op_equal = decltype(meta_detail::supports_op_equal_test(std::declval<T&>()));
-		template <typename T>
-		using supports_op_less_equal = decltype(meta_detail::supports_op_less_equal_test(std::declval<T&>()));
+		template <typename T, typename U = T>
+		using supports_op_less = decltype(meta_detail::supports_op_less_test(std::declval<T&>(), std::declval<U&>()));
+		template <typename T, typename U = T>
+		using supports_op_equal = decltype(meta_detail::supports_op_equal_test(std::declval<T&>(), std::declval<U&>()));
+		template <typename T, typename U = T>
+		using supports_op_less_equal = decltype(meta_detail::supports_op_less_equal_test(std::declval<T&>(), std::declval<U&>()));
 
 		template<typename T>
 		struct is_callable : boolean<meta_detail::is_callable<T>::value> {};
@@ -367,7 +409,19 @@ namespace sol {
 		struct has_value_type : decltype(meta_detail::has_value_type_impl::test<T>(0)) {};
 
 		template <typename T>
-		struct is_associative : meta::all<has_key_value_pair<T>, has_mapped_type<T>> {};
+		using has_push_back = meta::boolean<meta_detail::has_push_back_test<T>::value>;
+
+		template <typename T>
+		using has_insert = meta::boolean<meta_detail::has_insert_test<T>::value>;
+
+		template <typename T>
+		using has_insert_after = meta::boolean<meta_detail::has_insert_after_test<T>::value>;
+
+		template <typename T>
+		struct is_associative : meta::all<has_key_type<T>, has_key_value_pair<T>, has_mapped_type<T>> {};
+
+		template <typename T>
+		struct is_lookup : meta::all<has_key_type<T>, has_value_type<T>> {};
 
 		template <typename T>
 		using is_string_constructible = any<
@@ -462,6 +516,16 @@ namespace sol {
 		template<typename T>
 		auto deref(T&& item) -> decltype(std::forward<T>(item)) {
 			return std::forward<T>(item);
+		}
+
+		template<typename T>
+		inline auto& deref(T(&item)[5]) {
+			return item;
+		}
+
+		template<typename T>
+		inline auto& deref(const T(&item)[5]) {
+			return item;
 		}
 
 		template<typename T>

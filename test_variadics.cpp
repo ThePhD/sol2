@@ -180,3 +180,52 @@ TEST_CASE("variadics/variadic_results", "returning a variable amount of argument
 		REQUIRE(v7 == "borf");
 	}
 }
+
+TEST_CASE("variadics/fallback_constructor", "ensure constructor matching behaves properly in the presence of variadic fallbacks") {
+	struct vec2 { float x, y; };
+
+	sol::state lua;
+
+	lua.new_simple_usertype<vec2>("vec2",
+		sol::call_constructor, sol::factories([]() {
+		return vec2{};
+	}, [](vec2 const& v) {
+		return vec2{ v };
+	}, [](sol::variadic_args va) {
+		vec2 res{};
+		if (va.size() == 1) {
+			res.x = va[0].get<float>();
+			res.y = va[0].get<float>();
+		}
+		else if (va.size() == 2) {
+			res.x = va[0].get<float>();
+			res.y = va[1].get<float>();
+		}
+		else {
+			throw sol::error("invalid args");
+		}
+		return res;
+	})
+	);
+
+	REQUIRE_NOTHROW([&]() {
+		lua.script("v0 = vec2();");
+		lua.script("v1 = vec2(1);");
+		lua.script("v2 = vec2(1, 2);");
+		lua.script("v3 = vec2(v2)");
+	}());
+
+	vec2& v0 = lua["v0"];
+	vec2& v1 = lua["v1"];
+	vec2& v2 = lua["v2"];
+	vec2& v3 = lua["v3"];
+
+	REQUIRE(v0.x == 0);
+	REQUIRE(v0.y == 0);
+	REQUIRE(v1.x == 1);
+	REQUIRE(v1.y == 1);
+	REQUIRE(v2.x == 1);
+	REQUIRE(v2.y == 2);
+	REQUIRE(v3.x == v2.x);
+	REQUIRE(v3.y == v2.y);
+}

@@ -281,6 +281,12 @@ namespace sol {
 		}
 	};
 
+	struct stack_count {
+		int count;
+
+		stack_count(int cnt) : count(cnt) {}
+	};
+
 	struct lightuserdata_value {
 		void* value;
 		lightuserdata_value(void* data) : value(data) {}
@@ -380,8 +386,19 @@ namespace sol {
 	template <typename T>
 	struct as_table_t {
 		T source;
-		template <typename... Args>
-		as_table_t(Args&&... args) : source(std::forward<Args>(args)...) {}
+		
+		as_table_t() = default;
+		as_table_t(const as_table_t&) = default;
+		as_table_t(as_table_t&&) = default;
+		as_table_t& operator=(const as_table_t&) = default;
+		as_table_t& operator=(as_table_t&&) = default;
+		template <typename Arg, meta::enable<
+			meta::neg<std::is_same<meta::unqualified_t<Arg>, as_table_t>>, 
+			meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<Arg>>>
+		> = meta::enabler>
+		as_table_t(Arg&& arg) : source(std::forward<Arg>(arg)) {}
+		template <typename Arg0, typename Arg1, typename... Args>
+		as_table_t(Arg0&& arg0, Arg1&& arg1, Args&&... args) : source(std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...) {}
 
 		operator std::add_lvalue_reference_t<T> () {
 			return source;
@@ -392,8 +409,18 @@ namespace sol {
 	struct nested {
 		T source;
 		
-		template <typename... Args>
-		nested(Args&&... args) : source(std::forward<Args>(args)...) {}
+		nested() = default;
+		nested(const nested&) = default;
+		nested(nested&&) = default;
+		nested& operator=(const nested&) = default;
+		nested& operator=(nested&&) = default;
+		template <typename Arg, meta::enable<
+			meta::neg<std::is_same<meta::unqualified_t<Arg>, nested>>, 
+			meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<Arg>>>
+		> = meta::enabler>
+		nested(Arg&& arg) : source(std::forward<Arg>(arg)) {}
+		template <typename Arg0, typename Arg1, typename... Args>
+		nested(Arg0&& arg0, Arg1&& arg1, Args&&... args) : source(std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...) {}
 
 		operator std::add_lvalue_reference_t<T>() {
 			return source;
@@ -407,7 +434,7 @@ namespace sol {
 
 	template <typename T>
 	nested<T> as_nested(T&& container) {
-		return as_nested<T>(std::forward<T>(container));
+		return nested<T>(std::forward<T>(container));
 	}
 
 	struct this_state {
@@ -436,6 +463,12 @@ namespace sol {
 	enum class call_syntax {
 		dot = 0,
 		colon = 1
+	};
+
+	enum class load_mode {
+		any = 0,
+		text = 1,
+		binary = 2,
 	};
 
 	enum class call_status : int {
@@ -518,13 +551,13 @@ namespace sol {
 	}
 
 	inline const std::string& to_string(load_status c) {
-		static const std::array<std::string, 8> names{ {
-				"ok",
-				"memory",
-				"gc",
-				"syntax",
-				"file",
-			} };
+		static const std::array<std::string, 8> names{{
+			"ok",
+			"memory",
+			"gc",
+			"syntax",
+			"file",
+		}};
 		switch (c) {
 		case load_status::ok:
 			return names[0];
@@ -538,6 +571,15 @@ namespace sol {
 			return names[4];
 		}
 		return names[0];
+	}
+
+	inline const std::string& to_string(load_mode c) {
+		static const std::array<std::string, 3> names{{
+			"bt",
+			"t",
+			"b",
+		}};
+		return names[static_cast<std::size_t>(c)];
 	}
 
 	enum class meta_function {
@@ -657,6 +699,49 @@ namespace sol {
 	}
 
 	namespace detail {
+		template <typename T, typename C = void>
+		struct is_container : std::false_type {};
+
+		template <>
+		struct is_container<std::string> : std::false_type {};
+
+		template <>
+		struct is_container<std::wstring> : std::false_type {};
+
+		template <>
+		struct is_container<std::u16string> : std::false_type {};
+
+		template <>
+		struct is_container<std::u32string> : std::false_type {};
+
+#ifdef SOL_CXX17_FEATURES
+		template <>
+		struct is_container<std::string_view> : std::false_type {};
+
+		template <>
+		struct is_container<std::wstring_view> : std::false_type {};
+
+		template <>
+		struct is_container<std::u16string_view> : std::false_type {};
+
+		template <>
+		struct is_container<std::u32string_view> : std::false_type {};
+#endif // C++ 17
+
+		template <typename T>
+		struct is_container<T, std::enable_if_t<meta::has_begin_end<meta::unqualified_t<T>>::value>> : std::true_type {};
+
+		template <typename T>
+		struct is_container<T, std::enable_if_t<
+			std::is_array<meta::unqualified_t<T>>::value
+			&& !meta::any_same<std::remove_all_extents_t<meta::unqualified_t<T>>, char, wchar_t, char16_t, char32_t>::value
+		>> : std::true_type {};
+	} // detail
+
+	template <typename T>
+	struct is_container : detail::is_container<T> {};
+
+	namespace detail {
 		template <typename T, typename = void>
 		struct lua_type_of : std::integral_constant<type, type::userdata> {};
 
@@ -733,7 +818,7 @@ namespace sol {
 		struct lua_type_of<env_t> : std::integral_constant<type, type::poly> { };
 
 		template <>
-		struct lua_type_of<new_table> : std::integral_constant<type, type::table> { };
+		struct lua_type_of<new_table> : std::integral_constant<type, type::table> {};
 
 		template <typename T>
 		struct lua_type_of<as_table_t<T>> : std::integral_constant<type, type::table> {};
@@ -780,11 +865,11 @@ namespace sol {
 		template <>
 		struct lua_type_of<std::remove_pointer_t<lua_CFunction>> : std::integral_constant<type, type::function> {};
 
-		template <typename Base>
-		struct lua_type_of<basic_function<Base>> : std::integral_constant<type, type::function> {};
+		template <typename Base, bool aligned>
+		struct lua_type_of<basic_function<Base, aligned>> : std::integral_constant<type, type::function> {};
 
-		template <typename Base>
-		struct lua_type_of<basic_protected_function<Base>> : std::integral_constant<type, type::function> {};
+		template <typename Base, bool aligned>
+		struct lua_type_of<basic_protected_function<Base, aligned>> : std::integral_constant<type, type::function> {};
 
 		template <>
 		struct lua_type_of<coroutine> : std::integral_constant<type, type::function> {};
@@ -800,6 +885,12 @@ namespace sol {
 
 		template <>
 		struct lua_type_of<variadic_args> : std::integral_constant<type, type::poly> {};
+
+		template <>
+		struct lua_type_of<variadic_results> : std::integral_constant<type, type::poly> {};
+
+		template <>
+		struct lua_type_of<stack_count> : std::integral_constant<type, type::poly> {};
 
 		template <>
 		struct lua_type_of<this_state> : std::integral_constant<type, type::poly> {};
@@ -841,39 +932,12 @@ namespace sol {
 		template <>
 		struct lua_type_of<string_detail::string_shim> : std::integral_constant<type, type::string> {};
 #endif // C++ 17 (or not) features
-
-		template <typename T, typename C = void>
-		struct is_container : std::false_type {};
-
-		template <>
-		struct is_container<std::string> : std::false_type {};
-
-		template <>
-		struct is_container<std::wstring> : std::false_type {};
-
-		template <>
-		struct is_container<std::u16string> : std::false_type {};
-
-		template <>
-		struct is_container<std::u32string> : std::false_type {};
-
-#ifdef SOL_CXX17_FEATURES
-		template <>
-		struct is_container<std::string_view> : std::false_type {};
-
-		template <>
-		struct is_container<std::wstring_view> : std::false_type {};
-
-		template <>
-		struct is_container<std::u16string_view> : std::false_type {};
-
-		template <>
-		struct is_container<std::u32string_view> : std::false_type {};
-
-#endif // C++ 17
+		
+		template <typename T>
+		struct lua_type_of<nested<T>, std::enable_if_t<::sol::is_container<T>::value>> : std::integral_constant<type, type::table> {};
 
 		template <typename T>
-		struct is_container<T, std::enable_if_t<meta::has_begin_end<meta::unqualified_t<T>>::value>> : std::true_type {};
+		struct lua_type_of<nested<T>, std::enable_if_t<!::sol::is_container<T>::value>> : lua_type_of<T> {};
 
 		template <typename C, C v, template <typename...> class V, typename... Args>
 		struct accumulate : std::integral_constant<C, v> {};
@@ -942,6 +1006,10 @@ namespace sol {
 	struct is_lua_primitive<light<T>> : is_lua_primitive<T*> { };
 	template <typename T>
 	struct is_lua_primitive<optional<T>> : std::true_type {};
+	template <typename T>
+	struct is_lua_primitive<as_table_t<T>> : std::true_type {};
+	template <typename T>
+	struct is_lua_primitive<nested<T>> : std::true_type {};
 	template <>
 	struct is_lua_primitive<userdata_value> : std::true_type {};
 	template <>
@@ -954,25 +1022,32 @@ namespace sol {
 
 	template <typename T>
 	struct is_transparent_argument : std::false_type {};
-
 	template <>
 	struct is_transparent_argument<this_state> : std::true_type {};
-
 	template <>
 	struct is_transparent_argument<this_environment> : std::true_type {};
-
 	template <>
 	struct is_transparent_argument<variadic_args> : std::true_type {};
+	template <typename T>
+	struct is_variadic_arguments : std::is_same<meta::unqualified_t<T>, variadic_args> {};
 
 	template <typename T>
-	struct is_variadic_arguments : std::is_same<T, variadic_args> {};
+	struct is_lua_index : std::false_type {};
+	template <>
+	struct is_lua_index<raw_index> : std::true_type {};
+	template <>
+	struct is_lua_index<absolute_index> : std::true_type {};
+	template <>
+	struct is_lua_index<ref_index> : std::true_type {};
+	template <>
+	struct is_lua_index<upvalue_index> : std::true_type {};
 
 	template <typename Signature>
 	struct lua_bind_traits : meta::bind_traits<Signature> {
 	private:
 		typedef meta::bind_traits<Signature> base_t;
 	public:
-		typedef std::integral_constant<bool, meta::count_for<is_transparent_argument, typename base_t::args_list>::value != 0> runtime_variadics_t;
+		typedef std::integral_constant<bool, meta::count_for<is_variadic_arguments, typename base_t::args_list>::value != 0> runtime_variadics_t;
 		static const std::size_t true_arity = base_t::arity;
 		static const std::size_t arity = base_t::arity - meta::count_for<is_transparent_argument, typename base_t::args_list>::value;
 		static const std::size_t true_free_arity = base_t::free_arity;
@@ -986,10 +1061,10 @@ namespace sol {
 
 	template <typename T>
 	struct is_function : std::false_type {};
-	template <typename T>
-	struct is_function<basic_function<T>> : std::true_type {};
-	template <typename T>
-	struct is_function<basic_protected_function<T>> : std::true_type {};
+	template <typename T, bool aligned>
+	struct is_function<basic_function<T, aligned>> : std::true_type {};
+	template <typename T, bool aligned>
+	struct is_function<basic_protected_function<T, aligned>> : std::true_type{};
 
 	template <typename T>
 	struct is_lightuserdata : std::false_type {};
@@ -1003,22 +1078,11 @@ namespace sol {
 
 	template <typename T>
 	struct is_environment : std::integral_constant<bool, is_userdata<T>::value || is_table<T>::value> {};
-
-	template <typename T>
-	struct is_container : detail::is_container<T>{};
 	
 	template<typename T>
 	inline type type_of() {
 		return lua_type_of<meta::unqualified_t<T>>::value;
 	}
-
-	namespace detail {
-		template <typename T>
-		struct lua_type_of<nested<T>, std::enable_if_t<::sol::is_container<T>::value>> : std::integral_constant<type, type::table> {};
-
-		template <typename T>
-		struct lua_type_of<nested<T>, std::enable_if_t<!::sol::is_container<T>::value>> : lua_type_of<T> {};
-	} // detail
 } // sol
 
 #endif // SOL_TYPES_HPP

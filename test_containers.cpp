@@ -6,7 +6,10 @@
 #include <iterator>
 #include <vector>
 #include <list>
+#include <forward_list>
 #include <map>
+#include <deque>
+#include <array>
 #include <unordered_map>
 #include <set>
 #include <unordered_set>
@@ -47,6 +50,29 @@ TEST_CASE("containers/returns", "make sure that even references to vectors are b
 	REQUIRE(matching);
 }
 
+TEST_CASE("containers/table conversion", "test table conversions with as_table and nested") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.set_function("bark", []() {
+		return sol::as_nested(std::vector<std::string>{"bark", "woof"});
+	});
+
+	lua.set_function("woof", []() {
+		return sol::as_nested(std::vector<std::string>{"bark", "woof"});
+	});
+
+	lua.script("v1 = bark()");
+	lua.script("v2 = woof()");
+
+	sol::as_table_t<std::vector<std::string>> as_table_strings = lua["v"];
+	sol::nested<std::vector<std::string>> nested_strings = lua["v"];
+
+	std::vector<std::string> expected_values{"bark", "woof"};
+	REQUIRE(as_table_strings.source == expected_values);
+	REQUIRE(nested_strings.source == expected_values);
+}
+
 TEST_CASE("containers/vector roundtrip", "make sure vectors can be round-tripped") {
 	sol::state lua;
 	std::vector<int> v{ 1, 2, 3 };
@@ -59,6 +85,30 @@ TEST_CASE("containers/vector roundtrip", "make sure vectors can be round-tripped
 	REQUIRE(areequal);
 }
 
+TEST_CASE("containers/deque roundtrip", "make sure deques can be round-tripped") {
+	sol::state lua;
+	std::deque<int> v{ 1, 2, 3 };
+	lua.set_function("f", [&]() -> std::deque<int>& {
+		return v;
+	});
+	lua.script("x = f()");
+	std::deque<int> x = lua["x"];
+	bool areequal = x == v;
+	REQUIRE(areequal);
+}
+
+TEST_CASE("containers/array roundtrip", "make sure arrays can be round-tripped") {
+	sol::state lua;
+	std::array<int, 3> v{ 1, 2, 3 };
+	lua.set_function("f", [&]() -> std::array<int, 3>& {
+		return v;
+	});
+	lua.script("x = f()");
+	std::array<int, 3> x = lua["x"];
+	bool areequal = x == v;
+	REQUIRE(areequal);
+}
+
 TEST_CASE("containers/list roundtrip", "make sure lists can be round-tripped") {
 	sol::state lua;
 	std::list<int> v{ 1, 2, 3 };
@@ -67,6 +117,18 @@ TEST_CASE("containers/list roundtrip", "make sure lists can be round-tripped") {
 	});
 	lua.script("x = f()");
 	std::list <int> x = lua["x"];
+	bool areequal = x == v;
+	REQUIRE(areequal);
+}
+
+TEST_CASE("containers/forward_list roundtrip", "make sure forward_lists can be round-tripped") {
+	sol::state lua;
+	std::forward_list<int> v{ 1, 2, 3 };
+	lua.set_function("f", [&]() -> std::forward_list<int>& {
+		return v;
+	});
+	lua.script("x = f()");
+	std::forward_list <int> x = lua["x"];
 	bool areequal = x == v;
 	REQUIRE(areequal);
 }
@@ -116,6 +178,114 @@ TEST_CASE("containers/set roundtrip", "make sure sets can be round-tripped") {
 	lua.script("x = f()");
 	std::set<int> x = lua["x"];
 	bool areequal = x == v;
+	REQUIRE(areequal);
+}
+
+TEST_CASE("containers/vector table roundtrip", "make sure vectors can be round-tripped") {
+	sol::state lua;
+	std::vector<int> v{ 1, 2, 3 };
+	lua.set_function("f", [&]() {
+		return sol::as_table(v);
+	});
+	lua.script("x = f()");
+	sol::as_table_t<std::vector<int>> x = lua["x"];
+	bool areequal = x.source == v;
+	REQUIRE(areequal);
+}
+
+TEST_CASE("containers/deque table roundtrip", "make sure deques can be round-tripped") {
+	sol::state lua;
+	std::deque<int> v{ 1, 2, 3 };
+	lua.set_function("f", [&]() {
+		return sol::as_table(v);
+	});
+	lua.script("x = f()");
+	sol::as_table_t<std::deque<int>> x = lua["x"];
+	bool areequal = x.source == v;
+	REQUIRE(areequal);
+}
+
+TEST_CASE("containers/array table roundtrip", "make sure arrays can be round-tripped") {
+	sol::state lua;
+	std::array<int, 3> v{ 1, 2, 3 };
+	lua.set_function("f", [&]() {
+		return sol::as_table(v);
+	});
+	lua.script("x = f()");
+	sol::as_table_t<std::array<int, 3>> x = lua["x"];
+	bool areequal = x.source == v;
+	REQUIRE(areequal);
+}
+
+TEST_CASE("containers/list table roundtrip", "make sure lists can be round-tripped") {
+	sol::state lua;
+	std::list<int> v{ 1, 2, 3 };
+	lua.set_function("f", [&]() {
+		return sol::as_table(v);
+	});
+	lua.script("x = f()");
+	sol::as_table_t<std::list <int>> x = lua["x"];
+	bool areequal = x.source == v;
+	REQUIRE(areequal);
+}
+
+TEST_CASE("containers/forward_list table roundtrip", "make sure forward_lists can be round-tripped") {
+	sol::state lua;
+	std::forward_list<int> v{ 1, 2, 3 };
+	lua.set_function("f", [&]() {
+		return sol::as_table(v);
+	});
+	lua.script("x = f()");
+	sol::as_table_t<std::forward_list<int>> x = lua["x"];
+	bool areequal = x.source == v;
+	REQUIRE(areequal);
+}
+
+TEST_CASE("containers/map table roundtrip", "make sure maps can be round-tripped") {
+	sol::state lua;
+	std::map<std::string, int> v{ { "a", 1 },{ "b", 2 },{ "c", 3 } };
+	lua.set_function("f", [&]() {
+		return sol::as_table(v);
+	});
+	lua.script("x = f()");
+	sol::as_table_t<std::map<std::string, int>> x = lua["x"];
+	bool areequal = x.source == v;
+	REQUIRE(areequal);
+}
+
+TEST_CASE("containers/unordered_map table roundtrip", "make sure unordered_maps can be round-tripped") {
+	sol::state lua;
+	std::unordered_map<std::string, int> v{ { "a", 1 },{ "b", 2 },{ "c", 3 } };
+	lua.set_function("f", [&]() {
+		return sol::as_table(v);
+	});
+	lua.script("x = f()");
+	sol::as_table_t<std::unordered_map<std::string, int>> x = lua["x"];
+	bool areequal = x.source == v;
+	REQUIRE(areequal);
+}
+
+TEST_CASE("containers/unordered_set table roundtrip", "make sure unordered_sets can be round-tripped") {
+	sol::state lua;
+	std::unordered_set<int> v{ 1, 2, 3 };
+	lua.set_function("f", [&]() {
+		return sol::as_table(v);
+	});
+	lua.script("x = f()");
+	sol::as_table_t<std::unordered_set<int>> x = lua["x"];
+	bool areequal = x.source == v;
+	REQUIRE(areequal);
+}
+
+TEST_CASE("containers/set table roundtrip", "make sure sets can be round-tripped") {
+	sol::state lua;
+	std::set<int> v{ 1, 2, 3 };
+	lua.set_function("f", [&]() {
+		return sol::as_table(v);
+	});
+	lua.script("x = f()");
+	sol::as_table_t<std::set<int>> x = lua["x"];
+	bool areequal = x.source == v;
 	REQUIRE(areequal);
 }
 
@@ -176,8 +346,8 @@ TEST_CASE("containers/basic serialization", "make sure containers are turned int
 	);
 }
 
-#if 0 // glibc is a fuccboi
-TEST_CASE("containers/const-serialization", "make sure containers are turned into proper userdata and the basic hooks respect const-ness") {
+#if 0 // LUL const int holders
+TEST_CASE("containers/const serialization", "make sure containers are turned into proper userdata and the basic hooks respect const-ness") {
 	typedef std::vector<const int> woof;
 	sol::state lua;
 	lua.open_libraries();
@@ -187,7 +357,7 @@ TEST_CASE("containers/const-serialization", "make sure containers are turned int
 	);
 	REQUIRE_THROWS(lua.script("b[1] = 20"));
 }
-#endif // Fuck you, glibc
+#endif
 
 TEST_CASE("containers/table serialization", "ensure types can be serialized as tables still") {
 	typedef std::vector<int> woof;
@@ -665,7 +835,7 @@ TEST_CASE("containers/non_copyable", "make sure non-copyable types in containers
 }
 
 
-TEST_CASE("containers/input_iterators", "test shitty input iterators that are all kinds of B L E H") {
+TEST_CASE("containers/input iterators", "test shitty input iterators that are all kinds of B L E H") {
 	class int_shim {
 	public:
 		int_shim() = default;
@@ -734,8 +904,7 @@ TEST_CASE("containers/input_iterators", "test shitty input iterators that are al
 		value_type fuck_off_gcc_warning() {
 			// "typedef not used locally"
 			// but it's used elsewhere in the code GCC
-			// so maybe your shitty warning should go
-			// fuck itself???
+			// so maybe your warning should sod off
 			return int_shim();
 		}
 

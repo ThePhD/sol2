@@ -120,11 +120,27 @@ namespace sol {
 
 		lua_State* lua_state() const noexcept { return L; };
 		int stack_index() const noexcept { return index; };
+		int return_count() const noexcept { return returncount; };
+		int pop_count() const noexcept { return popcount; };
 
 		~protected_function_result() {
 			stack::remove(L, index, popcount);
 		}
 	};
+
+	namespace stack {
+		template <>
+		struct pusher<protected_function_result> {
+			static int push(lua_State* L, const protected_function_result& pfr) {
+				int p = 0;
+				for (int i = 0; i < pfr.pop_count(); ++i) {
+					lua_pushvalue(L, i + pfr.stack_index());
+					++p;
+				}
+				return p;
+			}
+		};
+	} // stack
 } // sol
 
 #endif // SOL_PROTECTED_FUNCTION_RESULT_HPP

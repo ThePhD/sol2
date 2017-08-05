@@ -114,20 +114,24 @@ namespace sol {
 
 		bool valid() const {
 			auto pp = stack::push_pop(tbl);
-			auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(tbl.lua_state(), key, lua_gettop(tbl.lua_state()));
-			lua_pop(tbl.lua_state(), p.levels);
+			auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(lua_state(), key, lua_gettop(lua_state()));
+			lua_pop(lua_state(), p.levels);
 			return p;
 		}
 
 		type get_type() const {
 			type t = type::none;
 			auto pp = stack::push_pop(tbl);
-			auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(tbl.lua_state(), key, lua_gettop(tbl.lua_state()));
+			auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(lua_state(), key, lua_gettop(lua_state()));
 			if (p) {
-				t = type_of(tbl.lua_state(), -1);
+				t = type_of(lua_state(), -1);
 			}
-			lua_pop(tbl.lua_state(), p.levels);
+			lua_pop(lua_state(), p.levels);
 			return t;
+		}
+
+		lua_State* lua_state() const {
+			return tbl.lua_state();
 		}
 	};
 

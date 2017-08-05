@@ -4,7 +4,7 @@
 #include <sol.hpp>
 
 
-TEST_CASE("issues/stack-overflow", "make sure various operations repeated don't trigger stack overflow") {
+TEST_CASE("issues/stack overflow", "make sure various operations repeated don't trigger stack overflow") {
 	sol::state lua;
 	lua.script("t = {};t[0]=20");
 	lua.script("lua_function=function(i)return i;end");
@@ -30,7 +30,7 @@ TEST_CASE("issues/stack-overflow", "make sure various operations repeated don't 
 }
 
 
-TEST_CASE("issues/stack-overflow-2", "make sure basic iterators clean up properly when they're not iterated through (e.g., with empty())") {
+TEST_CASE("issues/stack overflow 2", "make sure basic iterators clean up properly when they're not iterated through (e.g., with empty())") {
 	sol::state lua;
 	sol::table t = lua.create_table_with(1, "wut");
 	int MAX = 50000;

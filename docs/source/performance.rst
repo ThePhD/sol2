@@ -1,7 +1,6 @@
 getting performance
 ===================
-things to make Sol as fast as possible
---------------------------------------
+*things to make Sol as fast as possible*
 
 
 As shown by the :doc:`benchmarks<benchmarks>`, Sol is very performant with its abstractions. However, in the case where you need every last drop of performance from Sol, a number of tips and API usage tricks will be documented here. PLEASE benchmark / profile your code before you start invoking these, as some of them trade in readability / clarity for performance.

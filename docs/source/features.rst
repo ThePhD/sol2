@@ -1,7 +1,7 @@
 features
 ========
-what does Sol (and other libraries) support?
---------------------------------------------
+*what does Sol (and other libraries) support?*
+
 
 The goal of Sol is to provide an incredibly clean API that provides high performance (comparable or better than the C it was written on) and extreme ease of use. That is, users should be able to say: "this works pretty much how I expected it to."
 

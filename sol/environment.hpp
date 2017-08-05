@@ -32,6 +32,8 @@ namespace sol {
 		typedef basic_table<base_type> base_t;
 
 	public:
+		using base_t::lua_state;
+
 		basic_environment() noexcept = default;
 		basic_environment(const basic_environment&) = default;
 		basic_environment(basic_environment&&) = default;
@@ -76,7 +78,7 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_environment<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
-				stack::check<basic_environment>(base_t::lua_state(), -1, type_panic);
+				stack::check<basic_environment>(lua_state(), -1, type_panic);
 			}
 #endif // Safety
 		}

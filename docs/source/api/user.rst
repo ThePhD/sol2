@@ -1,7 +1,7 @@
 light<T>/user<T>
 ================
-Utility class for the cheapest form of (light) userdata
--------------------------------------------------------
+*utility class for the cheapest form of (light) userdata*
+
 
 .. code-block:: cpp
 	

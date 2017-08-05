@@ -1,7 +1,7 @@
 this_state
 ==========
-transparent state argument for the current state
-------------------------------------------------
+*transparent state argument for the current state*
+
 
 .. code-block:: cpp
 	

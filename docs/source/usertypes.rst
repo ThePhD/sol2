@@ -12,6 +12,8 @@ To learn more about usertypes, visit:
 
 The examples folder also has a number of really great examples for you to see. There are also some notes about guarantees you can find about usertypes, and their associated userdata, below:
 
+* Containers get pushed as special usertypes, but can be disabled if problems arise as detailed :doc:`here<api/containers>`.
+* You can use bitfields but it requires some finesse on your part. We have an example to help you get started `here, that uses a few tricks`_.
 * All usertypes are runtime extensible in both `Lua`_ and `C++`_
 * Please note that the semi-colon is necessary to "automatically" pass the ``this``/``self`` argument to Lua methods
 	- ``obj:method_name()`` is how you call "member" methods in Lua
@@ -37,8 +39,6 @@ The examples folder also has a number of really great examples for you to see. T
 	- Work on a copy by taking arguments or returning by value. Do not use r-value references: they do not mean anything in Lua code.
 * The actual metatable associated with the usertype has a long name and is defined to be opaque by the Sol implementation.
 * The actual metatable inner workings is opaque and defined by the Sol implementation, and there are no internal docs because optimizations on the operations are applied based on heuristics we discover from performance testing the system.
-* Containers get pushed as special usertypes, but can be disabled if problems arise as detailed :doc:`here<api/containers>`.
-* You can use bitfields but it requires some finesse on your part. We have an example to help you get started `here, that uses a few tricks`_.
 
 .. _here, that uses a few tricks: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_bitfields.cpp
 .. _Lua: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_advanced.cpp#L81

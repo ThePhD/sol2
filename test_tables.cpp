@@ -27,7 +27,7 @@ int plop_xyz(int x, int y, std::string z) {
 	return 11;
 }
 
-TEST_CASE("tables/as-enums", "Making sure enums can be put in and gotten out as values") {
+TEST_CASE("tables/as enums", "Making sure enums can be put in and gotten out as values") {
 	enum direction {
 		up,
 		down,
@@ -52,7 +52,7 @@ TEST_CASE("tables/as-enums", "Making sure enums can be put in and gotten out as 
 	REQUIRE(dir == direction::up);
 }
 
-TEST_CASE("tables/as-enum-classes", "Making sure enums can be put in and gotten out as values") {
+TEST_CASE("tables/as enum classes", "Making sure enums can be put in and gotten out as values") {
 	enum class direction {
 		up,
 		down,
@@ -93,7 +93,7 @@ TEST_CASE("tables/cleanup", "make sure tables leave the stack balanced") {
 	}
 }
 
-TEST_CASE("tables/nested-cleanup", "make sure tables leave the stack balanced") {
+TEST_CASE("tables/nested cleanup", "make sure tables leave the stack balanced") {
 	sol::state lua;
 	lua.open_libraries();
 
@@ -138,7 +138,7 @@ TEST_CASE("tables/new_enum", "Making sure enums can be put in and gotten out as 
 	REQUIRE(d == direction::left);
 }
 
-TEST_CASE("tables/for-each", "Testing the use of for_each to get values from a lua table") {
+TEST_CASE("tables/for_each", "Testing the use of for_each to get values from a lua table") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -195,7 +195,7 @@ TEST_CASE("tables/for-each", "Testing the use of for_each to get values from a l
 	REQUIRE(iterations == tablesize);
 }
 
-TEST_CASE("tables/for-each-empty", "empty tables should not crash") {
+TEST_CASE("tables/for_each empty", "empty tables should not crash") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -329,7 +329,7 @@ TEST_CASE("tables/create", "Check if creating a table is kosher") {
 	REQUIRE((testtable[3] == 4));
 }
 
-TEST_CASE("tables/create-local", "Check if creating a table is kosher") {
+TEST_CASE("tables/create local", "Check if creating a table is kosher") {
 	sol::state lua;
 	lua["testtable"] = lua.create_table(0, 0, "Woof", "Bark", 1, 2, 3, 4);
 	sol::object testobj = lua["testtable"];
@@ -340,7 +340,7 @@ TEST_CASE("tables/create-local", "Check if creating a table is kosher") {
 	REQUIRE((testtable[3] == 4));
 }
 
-TEST_CASE("tables/create-local-named", "Check if creating a table is kosher") {
+TEST_CASE("tables/create local named", "Check if creating a table is kosher") {
 	sol::state lua;
 	sol::table testtable = lua.create_table("testtable", 0, 0, "Woof", "Bark", 1, 2, 3, 4);
 	sol::object testobj = lua["testtable"];
@@ -363,7 +363,7 @@ TEST_CASE("tables/create-with-local", "Check if creating a table is kosher") {
 	REQUIRE((testtable[3] == 4));
 }
 
-TEST_CASE("tables/functions-variables", "Check if tables and function calls work as intended") {
+TEST_CASE("tables/function variables", "Check if tables and function calls work as intended") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::os);
 	auto run_script = [](sol::state& lua) -> void {
@@ -466,7 +466,7 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
 	REQUIRE_NOTHROW(assert1(lua.globals()));
 }
 
-TEST_CASE("tables/operator[]-valid", "Test if proxies on tables can lazily evaluate validity") {
+TEST_CASE("tables/operator[] valid", "Test if proxies on tables can lazily evaluate validity") {
 	sol::state lua;
 	bool isFullScreen = false;
 	auto fullscreennopers = lua["fullscreen"]["nopers"];
@@ -488,7 +488,7 @@ TEST_CASE("tables/operator[]-valid", "Test if proxies on tables can lazily evalu
 	REQUIRE_FALSE(isFullScreen);
 }
 
-TEST_CASE("tables/operator[]-optional", "Test if proxies on tables can lazily evaluate validity") {
+TEST_CASE("tables/operator[] optional", "Test if proxies on tables can lazily evaluate validity") {
 	sol::state lua;
 
 	sol::optional<int> test1 = lua["no_exist_yet"];
@@ -547,7 +547,7 @@ TEST_CASE("tables/add", "Basic test to make sure the 'add' feature works") {
 	}
 }
 
-TEST_CASE("tables/bool-keys", "make sure boolean keys don't get caught up in `is_integral` specializations") {
+TEST_CASE("tables/boolean keys", "make sure boolean keys don't get caught up in `is_integral` specializations") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -573,13 +573,13 @@ print(tbl[1])
 	REQUIRE(v2 == 40);
 }
 
-TEST_CASE("tables/optional-move", "ensure pushing a sol::optional<T> rvalue correctly moves the contained object"){
+TEST_CASE("tables/optional move", "ensure pushing a sol::optional<T> rvalue correctly moves the contained object into tables") {
 	sol::state sol_state;
-	struct move_only{
+	struct move_only {
 		int secret_code;
 		move_only(const move_only&) = delete;
 		move_only(move_only&&) = default;
 	};
-	sol_state["requires_move"] = sol::optional<move_only>{move_only{0x4D}};
+	sol_state["requires_move"] = sol::optional<move_only>{ move_only{ 0x4D } };
 	REQUIRE(sol_state["requires_move"].get<move_only>().secret_code == 0x4D);
 }

@@ -58,7 +58,7 @@ TEST_CASE("inheritance/basic", "test that metatables are properly inherited") {
 	REQUIRE(a == 5);
 }
 
-TEST_CASE("inheritance/multi-base", "test that multiple bases all work and overloading for constructors works with them") {
+TEST_CASE("inheritance/multi base", "test that multiple bases all work and overloading for constructors works with them") {
 	class TestClass00 {
 	public:
 		int Thing() const { return 123; }
@@ -153,7 +153,7 @@ tc3 = TestClass03(tc1)
 	REQUIRE(tc3.c == 1);
 }
 
-TEST_CASE("inheritance/simple-multi-base", "test that multiple bases all work and overloading for constructors works with them") {
+TEST_CASE("inheritance/simple multi base", "test that multiple bases all work and overloading for constructors works with them") {
 	class TestClass00 {
 	public:
 		int Thing() const { return 123; }

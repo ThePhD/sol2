@@ -1,7 +1,7 @@
 as_returns
 ==========
-turn an iterable argument into a multiple-return type
------------------------------------------------------
+*turn an iterable argument into a multiple-return type*
+
 
 .. code-block:: cpp
 	

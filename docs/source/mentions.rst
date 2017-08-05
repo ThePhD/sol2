@@ -1,7 +1,6 @@
 mentions
 ========
-so does anyone cool use this thing...?
---------------------------------------
+*so does anyone cool use this thing...?*
 
 First off, feel free to `tell me about your uses!`_
 
@@ -26,6 +25,7 @@ Okay, so the features don't convince you, the documentation doesn't convince you
 
 * The `Multiple Arcade Machine Emulator (MAME)`_ project switched from using LuaBridge to sol2!
 	- `The pull request`_ in which it was introduced to the master branch.
+* For scripting, in `OpenMPT`_
 * (CppNow) sol2 was mentioned in a comparison to other scripting languages by ChaiScript developer, Jason Turner (@lefticus), at a conference!
 	- `Jason Turner's presentation`_
 * (CppCast) Showed up in CppCast with Elias Daler!
@@ -60,3 +60,4 @@ Are you using sol2 for something neat? Want it to be featured here or think it's
 .. _"sol2 saved my life.": https://twitter.com/EliasDaler/status/739215685264494593
 .. _Multiple Arcade Machine Emulator (MAME): http://www.mamedev.org/index.php
 .. _The pull request: https://github.com/mamedev/mame/pull/1626
+.. _OpenMPT: https://openmpt.org/

@@ -1,7 +1,7 @@
 as_args
 =======
-turn an iterable argument into multiple arguments
--------------------------------------------------
+*turn an iterable argument into multiple arguments*
+
 
 .. code-block:: cpp
 	

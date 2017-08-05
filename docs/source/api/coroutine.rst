@@ -1,7 +1,7 @@
 coroutine
 =========
-resumable/yielding functions from Lua
--------------------------------------
+*resumable/yielding functions from Lua*
+
 
 A ``coroutine`` is a :doc:`reference<reference>` to a function in Lua that can be called multiple times to yield a specific result. It is run on the :doc:`lua_State<state>` that was used to create it (see :doc:`thread<thread>` for an example on how to get a coroutine that runs on a thread separate from your usual "main" :doc:`lua_State<state>`).
 

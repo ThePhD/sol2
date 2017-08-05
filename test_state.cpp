@@ -102,7 +102,7 @@ TEST_CASE("state/require", "opening using a file") {
 	// REQUIRE(thingy1 == thingy2);   
 }
 
-TEST_CASE("state/multi-require", "make sure that requires transfers across hand-rolled script implementation and standard requiref") {
+TEST_CASE("state/multi require", "make sure that requires transfers across hand-rolled script implementation and standard requiref") {
 	struct open {
 		static int open_func(lua_State* L) {
 			sol::state_view lua = L;
@@ -145,7 +145,7 @@ return 'test3')");
 	REQUIRE(t3 == "test3");
 }
 
-TEST_CASE("state/leak-check", "make sure there are no humongous memory leaks in iteration") {
+TEST_CASE("state/leak check", "make sure there are no humongous memory leaks in iteration") {
 #if 0
 	sol::state lua;
 	lua.script(R"(
@@ -194,7 +194,7 @@ end
 #endif
 }
 
-TEST_CASE("state/script-returns", "make sure script returns are done properly") {
+TEST_CASE("state/script returns", "make sure script returns are done properly") {
 	std::string script =
 		R"(
 local example = 
@@ -271,7 +271,7 @@ return example;
 	lua.script("bar() bar2() foo(1) foo2(1)");
 }
 
-TEST_CASE("state/copy-move", "ensure state can be properly copied and moved") {
+TEST_CASE("state/copy and move", "ensure state can be properly copied and moved") {
 	sol::state lua;
 	lua["a"] = 1;
 
@@ -292,7 +292,7 @@ TEST_CASE("state/requires-reload", "ensure that reloading semantics do not cause
 	lua.script("require 'io'\nreturn 'test3'");
 }
 
-TEST_CASE("state/script-do-load", "test success and failure cases for loading and running scripts") {
+TEST_CASE("state/script, do, and load", "test success and failure cases for loading and running scripts") {
 	const static std::string bad_syntax = "weird\n%$@symb\nols";
 	static const char file_bad_syntax[] = "./temp.bad_syntax.lua";
 	const static std::string bad_runtime = "bad.code = 20";
@@ -311,13 +311,13 @@ TEST_CASE("state/script-do-load", "test success and failure cases for loading an
 	SECTION("script-handler") {
 		sol::state lua;
 		sol::stack_guard sg(lua);
-		auto errbs = lua.script(bad_syntax, sol::simple_on_error);
+		auto errbs = lua.script(bad_syntax, sol::script_pass_on_error);
 		REQUIRE(!errbs.valid());
 
-		auto errbr = lua.script(bad_runtime, sol::simple_on_error);
+		auto errbr = lua.script(bad_runtime, sol::script_pass_on_error);
 		REQUIRE(!errbr.valid());
 
-		auto result = lua.script(good, sol::simple_on_error);
+		auto result = lua.script(good, sol::script_pass_on_error);
 		int a = lua["a"];
 		int ar = result;
 		REQUIRE(result.valid());
@@ -381,13 +381,13 @@ TEST_CASE("state/script-do-load", "test success and failure cases for loading an
 	SECTION("script_file-handler") {
 		sol::state lua;
 		sol::stack_guard sg(lua);
-		auto errbs = lua.script_file(file_bad_syntax, sol::simple_on_error);
+		auto errbs = lua.script_file(file_bad_syntax, sol::script_pass_on_error);
 		REQUIRE(!errbs.valid());
 
-		auto errbr = lua.script_file(file_bad_runtime, sol::simple_on_error);
+		auto errbr = lua.script_file(file_bad_runtime, sol::script_pass_on_error);
 		REQUIRE(!errbr.valid());
 
-		auto result = lua.script_file(file_good, sol::simple_on_error);
+		auto result = lua.script_file(file_good, sol::script_pass_on_error);
 		int a = lua["a"];
 		int ar = result;
 		REQUIRE(result.valid());

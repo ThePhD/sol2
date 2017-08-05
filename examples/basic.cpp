@@ -19,7 +19,7 @@ int main() {
 	lua.script("print('hello world')");
 
 	// call lua code, and check to make sure it has loaded and run properly:
-	auto handler = &sol::default_on_error;
+	auto handler = &sol::script_default_on_error;
 	lua.script("print('hello again, world')", handler);
 
 	// Use a custom error handler if you need it

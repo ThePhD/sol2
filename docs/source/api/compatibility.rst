@@ -1,7 +1,7 @@
 compatibility.hpp
 =================
-Lua 5.3/5.2 compatibility for Lua 5.1/LuaJIT
---------------------------------------------
+*Lua 5.3/5.2 compatibility for Lua 5.1/LuaJIT*
+
 
 This is a detail header used to maintain compatability with the 5.2 and 5.3+ APIs. It contains code from the MIT-Licensed `Lua code`_ in some places and also from the `lua-compat`_ repository by KeplerProject.
 

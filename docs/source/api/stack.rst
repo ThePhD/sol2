@@ -1,13 +1,15 @@
 stack namespace
 ===============
-the nitty-gritty core abstraction layer over Lua
-------------------------------------------------
+*the nitty-gritty core abstraction layer over Lua*
+
 
 .. code-block:: cpp
 
 	namespace stack
 
 If you find that the higher level abstractions are not meeting your needs, you may want to delve into the ``stack`` namespace to try and get more out of Sol. ``stack.hpp`` and the ``stack`` namespace define several utilities to work with Lua, including pushing / popping utilities, getters, type checkers, Lua call helpers and more. This namespace is not thoroughly documented as the majority of its interface is mercurial and subject to change between releases to either heavily boost performance or improve the Sol :doc:`api<api-top>`.
+
+Working at this level of the stack can be enhanced by understanding how the `Lua stack works in general`_ and then supplementing it with the objects and items here.
 
 There are, however, a few :ref:`template customization points<extension_points>` that you may use for your purposes and a handful of potentially handy functions. These may help if you're trying to slim down the code you have to write, or if you want to make your types behave differently throughout the Sol stack. Note that overriding the defaults **can** throw out many of the safety guarantees Sol provides: therefore, modify the :ref:`extension points<extension_points>` at your own discretion.
 
@@ -31,8 +33,32 @@ When overriding the :doc:`customization points<../tutorial/customization>`, plea
 
 Note that customizations can also be put up on a separate page here, if individuals decide to make in-depth custom ones for their framework or other places.
 
+.. code-block:: cpp
+	:caption: struct: probe
+	:name: stack-probe-struct
+
+	struct probe {
+		bool success;
+		int levels;
+
+		probe(bool s, int l);
+		operator bool() const;
+	};
+
+This struct is used for showing whether or not a :ref:`probing get_field<stack-probe-get-field>` was successful or not.
+
+
 members
 -------
+
+.. code-block:: cpp
+	:caption: function: call_lua
+	:name: stack-call-lua
+
+	template<bool check_args = stack_detail::default_check_arguments, typename Fx, typename... FxArgs>
+	inline int call_lua(lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs);
+
+This function is helpful for when you bind to a raw C function but need sol's abstractions to save you the agony of setting up arguments and know how `calling C functions works`_. The ``start`` parameter tells the function where to start pulling arguments from. The parameter ``fx``  is what's supposed to be called. Extra arguments are passed to the function directly. There are intermediate versions of this (``sol::stack::call_into_lua`` and similar) for more advanced users, but they are not documented as they are subject to change to improve performance or adjust the API accordingly in later iterations of sol2. Use the more advanced versions at your own peril.
 
 .. code-block:: cpp
 	:caption: function: get
@@ -57,7 +83,10 @@ You may also retrieve an :doc:`sol::optional\<T><optional>` from this as well, t
 	template <typename T, typename Handler>
 	bool check( lua_State* L, int index, Handler&& handler )
 
-Checks if the object at ``index`` is of type ``T``. If it is not, it will call the ``handler`` function with ``lua_State*``, ``int index``, ``type`` expected, and ``type`` actual as arguments.
+	template <typename T, typename Handler>
+	bool check( lua_State* L, int index, Handler&& handler, record& tracking )
+
+Checks if the object at ``index`` is of type ``T``. If it is not, it will call the ``handler`` function with ``lua_State*``, ``int index``, ``type`` expected, and ``type`` actual as arguments. If you do not pass your own handler, a ``no_panic`` handler will be passed.
 
 .. code-block:: cpp
 	:caption: function: check_get
@@ -111,11 +140,18 @@ These functinos behave similarly to the ones above, but they check for specific 
 	:caption: function: pop
 	:name: stack-pop
 
-	// push T inferred from call site, pass args... through to extension point
 	template <typename... Args>
-	auto pop( lua_State* L, int index, ... )
+	auto pop( lua_State* L );
 
+Pops an object off the stack. Will remove a fixed number of objects off the stack, generally determined by the ``sol::lua_size<T>`` traits of the arguments supplied. Generally a simplicity function, used for convenience.
 
+.. code-block:: cpp
+	:caption: function: top
+	:name: stack-top
+
+	int top( lua_State* L );
+
+Returns the number of values on the stack.
 
 .. code-block:: cpp
 	:caption: function: set_field
@@ -148,20 +184,6 @@ This function leaves the retrieved value on the stack.
 Gets the field referenced by the key ``k``, by pushing the key onto the stack, and then doing the equivalent of ``lua_getfield``. Performs optimizations and calls faster verions of the function if the type of ``Key`` is considered a c-style string and/or if its also marked by the templated ``global`` argument to be a global. Furthermore, it does this safely by only going in as many levels deep as is possible: if the returned value is not something that can be indexed into, then traversal queries with ``std::tuple``/``std::pair`` will stop early and return probing information with the :ref:`probe struct<stack-probe-struct>`.
 
 This function leaves the retrieved value on the stack.
-
-.. code-block:: cpp
-	:caption: struct: probe
-	:name: stack-probe-struct
-
-	struct probe {
-		bool success;
-		int levels;
-
-		probe(bool s, int l);
-		operator bool() const;
-	};
-
-This struct is used for showing whether or not a :ref:`probing get_field<stack-probe-get-field>` was successful or not.
 
 .. _extension_points:
 
@@ -224,3 +246,5 @@ This is an SFINAE-friendly struct that is meant to expose static function ``push
 This is an SFINAE-friendly struct that is meant to expose static function ``check`` that returns the number of things pushed onto the stack. The default implementation simply checks whether the expected type passed in through the template is equal to the type of the object at the specified index in the Lua stack. The default implementation for types which are considered ``userdata`` go through a myriad of checks to support checking if a type is *actually* of type ``T`` or if its the base class of what it actually stored as a userdata in that index. Down-casting from a base class to a more derived type is, unfortunately, impossible to do.
 
 .. _lua_CFunction: http://www.Lua.org/manual/5.3/manual.html#lua_CFunction
+.. _Lua stack works in general: https://www.lua.org/pil/24.2.html
+.. _calling C functions works: https://www.lua.org/pil/26.html

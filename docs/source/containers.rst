@@ -1,0 +1,169 @@
+containers
+==========
+
+Containers are objects that are meant to be inspected and iterated and whose job is to typically provide storage to a collection of items. The ``std::`` library has several containers of varying types, and all of them have ``begin()`` and ``end()`` function which return iterators. C-style arrays are also containers, and sol2 will detect all of them for use and bestow them with special properties and functions.
+
+.. _container-c-array:
+
+.. note::
+	
+	Please note that c-style arrays must be added to Lua using ``lua["my_arr"] = &my_c_array;`` or ``lua["my_arr"] = std::ref(my_c_array);`` to be bestowed these properties. No, a plain ``T*`` pointer is **not** considered an array. This is important because ``lua["my_string"] = "some string";`` is also typed as an array (``const char[n]``) and thusly we can only use ``std::reference_wrapper``s or pointers to arrays to work for us.
+
+
+.. _container-detection:
+
+container detection
+-------------------
+
+containers are detected by the type trait ``sol::is_container<T>``. If that turns out to be true, sol2 will attempt to push a userdata into Lua for the specified type ``T``, and bestow it with some of the functions and properties listed below. These functions and properties are provided by a template struct ``sol::container_traits<T>``, which has a number of static Lua C functions bound to a safety metatable. If you want to override the behavior for a specific container, you must first specialize ``sol::is_container<T>`` to drive from ``std::true_type``, then override the functions you want to change. Any function you do not override will call the default implementation or equivalent. The default implementation for unrecognized containers is simply errors.
+
+You can also specialize ``sol::is_container<T>`` to turn off container detection, if you find it too eager for a type that just happens to have ``begin`` and ``end`` functions, like so:
+
+.. code-block:: cpp
+	:caption: not_container.hpp
+
+	struct not_container {
+		void begin() {
+
+		}
+
+		void end() {
+
+		}
+	};
+
+	namespace sol {
+		template <>
+		struct is_container<not_container> : std::false_type {};
+	}
+
+This will let the type be pushed as a regular userdata.
+
+
+container overriding
+--------------------
+
+If you **want** it to participate as a table, use ``std::true_type`` instead of ``std::false_type`` from the :ref:`containter detection<container-detection>` example. and provide the appropriate ``iterator`` and ``value_type`` definitions on the type. Failure to do so will result in a container whose operations fail by default (or compilation will fail).
+
+If you need a type whose declaration and definition you do not have control over to be a container, then you must override the default behavior by specializing container traits, like so:
+
+.. code-block:: cpp
+	:caption: specializing.hpp
+
+	struct not_my_type { ... };
+
+	namespace sol {
+		template <>
+		struct is_container<not_my_type> : std::true_type {};
+
+		template <>
+		struct container_traits<not_my_type> {
+
+			...
+			// see below for implemetation details	
+		};
+	}
+
+
+The various operations provided by ``container_traits<T>`` are expected to be like so, below. Ability to override them requires familiarity with the Lua stack and how it operates, as well as knowledge of Lua's :ref:`raw C functions<raw-function-note>`. You can read up on raw C functions by looking at the "Programming in Lua" book. The `online version's information`_ about the stack and how to return information is still relevant, and you can combine that by also using sol's low-level :doc:`stack API<api/stack>` to achieve whatever behavior you need.
+
+.. warning::
+
+	Exception handling **WILL** be provided around these particular raw C functions, so you do not need to worry about exceptions or errors bubbling through and handling that part. It is specifically handled for you in this specific instance, and **ONLY** in this specific instance. The raw note still applies to every other raw C function you make manually.
+
+
+container operations
+-------------------------
+
+Below are the many container operations and their override points for ``container_traits<T>``. Please use these to understand how to use any part of the implementation.
+
++-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| operation | lua syntax                                | container_traits<T>                   | stack argument order | notes/caveats                                                                                                                                                                                |
+|           |                                           | extension point                       |                      |                                                                                                                                                                                              |
++-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| set       | ``c:set(key, value)``                     | ``static int set(lua_State*);``       | 1 self               | - if ``value`` is nil, it performs an erase in default implementation                                                                                                                        |
+|           |                                           |                                       | 2 key                | - if this is a sequence container and it support insertion and ``key``,is an index equal to the size of the container,+ 1, it will insert at,the end of the container (this is a Lua idiom)  |
+|           |                                           |                                       | 3 value              |                                                                                                                                                                                              |
++-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| index_set | ``c[key] = value``                        | ``static int index_set(lua_State*);`` | 1 self               | - default implementation calls "set"                                                                                                                                                         |
+|           |                                           |                                       | 2 key                | - if this is a sequence container and it support insertion and ``key`` is an index equal to the size of the container  + 1, it will insert at the end of the container (this is a Lua idiom) |
+|           |                                           |                                       | 3 value              |                                                                                                                                                                                              |
++-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| get       | ``v = c:get(key)``                        | ``static int get(lua_State*);``       | 1 self               | - can return multiple values                                                                                                                                                                 |
+|           |                                           |                                       | 2 key                | - default implementation increments iterators linearly for non-random-access                                                                                                                 |
++-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| index_get | ``v = c[key]``                            | ``static int index_get(lua_State*);`` | 1 self               | - can only return 1 value                                                                                                                                                                    |
+|           |                                           |                                       | 2 key                | - default implementation just calls "get"                                                                                                                                                    |
+|           |                                           |                                       |                      | - if ``key`` is a string and ``key`` is one of the other member functions, it will return that member function rather than perform a lookup / index get                                      |
++-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| find      | ``c:find(target)``                        | ``static int find(lua_State*);``      | 1 self               | - ``target`` is a value for non-lookup containers (fixed containers, sequence containers, non-associative and non-ordered containers)                                                        |
+|           |                                           |                                       | 2 target             |                                                                                                                                                                                              |
++-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| erase     | ``c:erase(target)``                       | ``static int erase(lua_State*);``     | 1 self               | - for sequence containers, ``target`` is an index to erase                                                                                                                                   |
+|           |                                           |                                       | 2 target             | - for lookup containers, ``target`` is the key type                                                                                                                                          |
+|           |                                           |                                       |                      | - uses linear incrementation to spot for sequence containers that do not have random access iterators (``std::list``, ``std::forward_list``, and similar)                                    |
+|           |                                           |                                       |                      | - invalidates iteration                                                                                                                                                                      |
++-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| insert    | ``c:insert(target, value)``               |                                       | 1 self               | - for sequence containers, ``target`` is an index, otherwise it is the key type                                                                                                              |
+|           |                                           |                                       | 2 target             | - inserts into a container if possible at the specified location                                                                                                                             |
+|           |                                           |                                       | 3 key                |                                                                                                                                                                                              |
++-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| add       | ``c:add(key, value)`` or ``c:add(value)`` | ``static int add(lua_State*);``       | 1 self               | - 2nd argument (3rd on stack) is provided for associative containers to add                                                                                                                  |
+|           |                                           |                                       | 2 key/value          | - ordered containers will insert into the appropriate spot, not necessarily at the end                                                                                                       |
+|           |                                           |                                       | 3 value              |                                                                                                                                                                                              |
++-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| size      | ``#c``                                    | ``static int size(lua_State*);``      | 1 self               | - default implementation calls ``.size()`` if present                                                                                                                                        |
+|           |                                           |                                       |                      | - otherwise, default implementation uses ``std::distance(begin(L, self), end(L, self))``                                                                                                     |
++-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| clear     | ``c:clear()``                             | ``static int clear(lua_State*);``     | 1 self               | - default implementation provides no fallback if there's no ``clear`` operation                                                                                                              |
++-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| begin     | n/a                                       | ``static int begin(lua_State*, T&);`` | n/a                  | - called by default implementation                                                                                                                                                           |
++-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| end       | n/a                                       | ``static int end(lua_State*, T&);``   | n/a                  | - called by default implementation                                                                                                                                                           |
++-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| pairs     |                                           | ``static int pairs(lua_State*);``     | 1 self               | - implement if advanced user only that understands caveats                                                                                                                                   |
+|           |                                           |                                       |                      | - override begin and end instead and leave this to default implementation if you do not know what ``__pairs`` is for or how to implement it and the ``next`` function                        |
+|           |                                           |                                       |                      | - works only in Lua 5.2+                                                                                                                                                                     |
+|           |                                           |                                       |                      | - calling ``pairs( c )`` in Lua 5.1 / LuaJIT will crash with assertion failure (Lua expects ``c`` to be a table)                                                                             |
++-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+.. _container-classifications: 
+
+container classifications
+-------------------------
+
+When you serialize a container into sol2, the default container handler deals with the containers by inspecting various properties, functions, and typedefs on them. Here are the broad implications of containers sol2's defaults will recognize, and which already-known containers fall into their categories:
+
++------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
+| container type         | requirements                           | known containers        | notes/caveats                                                                                 |
++------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
+| sequence               | ``erase(iterator)``                    | std::vector             | - ``find`` operation is linear in size of list (searches all elements)                        |
+|                        | ``push_back``/``insert(value_type)``   | std::deque              | - std::forward_list has forward-only iterators: set/find is a linear operation                |
+|                        |                                        | std::list               | - std::forward_list uses "insert_after" idiom, requires special handling internally           |
+|                        |                                        | std::forward_list       |                                                                                               |
++------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
+| fixed                  | lacking ``push_back``/``insert``       | std::array<T, n>        | - regular c-style arrays must be set with                                                     |
+|                        | lacking ``erase``                      | T[n] (fixed arrays)     | ``std::ref( arr )`` or ``&arr``                                                               |
+|                        |                                        |                         | to be used as a container type with sol2                                                      |
++------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
+| ordered                | ``key_type`` typedef                   | std::set                | - ``container[key] = stuff`` operation erases when ``stuff`` is nil, inserts/sets when not    |
+|                        | ``erase(key)``                         | std::multi_set          | - ``container.get(key)`` returns the key itself                                               |
+|                        | ``find(key)``                          |                         |                                                                                               |
+|                        | ``insert(key)``                        |                         |                                                                                               |
++------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
+| associative, ordered   | ``key_type``, ``mapped_type`` typedefs | std::map                |                                                                                               |
+|                        | ``erase(key)``                         | std::multi_map          |                                                                                               |
+|                        | ``find(key)``                          |                         |                                                                                               |
+|                        | ``insert({ key, value })``             |                         |                                                                                               |
++------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
+| unordered              | same as ordered                        | std::unordered_set      | - ``container[key] = stuff`` operation erases when ``stuff`` is nil, inserts/sets when not    |
+|                        |                                        | std::unordered_multiset | - ``container.get(key)`` returns the key itself                                               |
+|                        |                                        |                         | - iteration not guaranteed to be in order of insertion, just like in C++ container            |
+|                        |                                        |                         |                                                                                               |
++------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
+| unordered, associative | same as ordered, associative           | std::unordered_map      | - iteration not guaranteed to be in order of insertion, just like in C++ container            |
+|                        |                                        | std::unordered_multimap |                                                                                               |
++------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
+
+
+.. _online version's information: https://www.lua.org/pil/26.html

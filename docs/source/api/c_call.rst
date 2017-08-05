@@ -1,7 +1,7 @@
 c_call
 ======
-Templated type to transport functions through templates
--------------------------------------------------------
+*templated type to transport functions through templates*
+
 
 .. code-block:: cpp
 	

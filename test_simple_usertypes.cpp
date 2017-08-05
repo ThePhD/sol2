@@ -87,7 +87,7 @@ TEST_CASE("simple_usertype/usertypes", "Ensure that simple usertypes properly wo
 	REQUIRE(z == 29);
 }
 
-TEST_CASE("simple_usertype/usertypes-constructors", "Ensure that calls with specific arguments work") {
+TEST_CASE("simple_usertype/usertype constructors", "Ensure that calls with specific arguments work") {
 	struct marker {
 		bool value = false;
 	};
@@ -173,7 +173,7 @@ TEST_CASE("simple_usertype/usertypes-constructors", "Ensure that calls with spec
 	REQUIRE(z == 29);
 }
 
-TEST_CASE("simple_usertype/shared-ptr-regression", "simple usertype metatables should not screw over unique usertype metatables") {
+TEST_CASE("simple_usertype/shared_ptr regression", "simple usertype metatables should not screw over unique usertype metatables") {
 	static int created = 0;
 	static int destroyed = 0;
 	struct test {
@@ -322,7 +322,7 @@ TEST_CASE("simple_usertype/variable-control", "test to see if usertypes respond 
 	lua.script("print(sw.pb)assert(sw.pb == 27)");
 }
 
-TEST_CASE("simple_usertype/factory-constructor-overload-usage", "simple usertypes should probably invoke types") {
+TEST_CASE("simple_usertype/factory constructor overloads", "simple usertypes should invoke the proper factories") {
 	class A {
 	public:
 		virtual void a() { throw std::runtime_error("entered base pure virtual implementation"); };
@@ -378,7 +378,7 @@ TEST_CASE("simple_usertype/factory-constructor-overload-usage", "simple usertype
 	REQUIRE(y4 == 3);
 }
 
-TEST_CASE("simple_usertype/runtime-append", "allow extra functions to be appended at runtime directly to the metatable itself") {
+TEST_CASE("simple_usertype/runtime append", "allow extra functions to be appended at runtime directly to the metatable itself") {
 	class A {
 	};
 
@@ -407,7 +407,7 @@ TEST_CASE("simple_usertype/runtime-append", "allow extra functions to be appende
 	REQUIRE(w == 100);
 }
 
-TEST_CASE("simple_usertype/destruction-test", "make sure usertypes are properly destructed and don't double-delete memory or segfault") {
+TEST_CASE("simple_usertype/destruction test", "make sure usertypes are properly destructed and don't double-delete memory or segfault") {
 	sol::state lua;
 
 	class CrashClass {
@@ -438,7 +438,7 @@ TEST_CASE("simple_usertype/destruction-test", "make sure usertypes are properly 
 	}
 }
 
-TEST_CASE("simple_usertype/table-append", "Ensure that appending to the meta table also affects the internal function table for pointers as well") {
+TEST_CASE("simple_usertype/table append", "Ensure that appending to the meta table also affects the internal function table for pointers as well") {
 	struct A {
 		int func() {
 			return 5000;
@@ -462,7 +462,7 @@ TEST_CASE("simple_usertype/table-append", "Ensure that appending to the meta tab
 	}());
 }
 
-TEST_CASE("simple_usertype/class-propogation", "make sure methods and variables from base classes work properly in SAFE_USERTYPE mode") {
+TEST_CASE("simple_usertype/class call propogation", "make sure methods and variables from base classes work properly in SAFE_USERTYPE mode") {
 	class A {
 	public:
 		int var = 200;
@@ -488,7 +488,7 @@ TEST_CASE("simple_usertype/class-propogation", "make sure methods and variables 
 )");
 }
 
-TEST_CASE("simple_usertype/call-constructor", "ensure that all kinds of call-based constructors can be serialized") {
+TEST_CASE("simple_usertype/call constructor", "ensure that all kinds of call-based constructors can be serialized") {
 	struct thing {};
 	struct v_test {
 		
@@ -589,7 +589,7 @@ TEST_CASE("simple_usertype/no_constructor", "make sure simple usertype errors wh
 	}	
 }
 
-TEST_CASE("simple_usertype/missing-key", "make sure a missing key returns nil") {
+TEST_CASE("simple_usertype/missing key", "make sure a missing key returns nil") {
 	struct thing {};
 
 	sol::state lua;
@@ -599,7 +599,7 @@ TEST_CASE("simple_usertype/missing-key", "make sure a missing key returns nil") 
 	REQUIRE_NOTHROW(lua.script("print(thing.missingKey)"));
 }
 
-TEST_CASE("simple_usertype/runtime-extensibility", "Check if usertypes are runtime extensible") {
+TEST_CASE("simple_usertype/runtime extensibility", "Check if usertypes are runtime extensible") {
 	struct thing {
 		int v = 20;
 		int func(int a) { return a; }
@@ -697,7 +697,7 @@ end
 	}
 }
 
-TEST_CASE("simple_usertype/runtime-replacement", "ensure that functions can be properly replaced at runtime for non-indexed things") {
+TEST_CASE("simple_usertype/runtime replacement", "ensure that functions can be properly replaced at runtime for non-indexed things") {
 	struct heart_base_t {};
 	struct heart_t : heart_base_t {
 		void func() {}
@@ -775,7 +775,7 @@ TEST_CASE("simple_usertype/runtime-replacement", "ensure that functions can be p
 	}
 }
 
-TEST_CASE("simple_usertype/meta-key-retrievals", "allow for special meta keys (__index, __newindex) to trigger methods even if overwritten directly") {
+TEST_CASE("simple_usertype/meta key retrievals", "allow for special meta keys (__index, __newindex) to trigger methods even if overwritten directly") {
 	SECTION("dynamically") {
 		static int writes = 0;
 		static std::string keys[4] = {};
@@ -841,7 +841,7 @@ TEST_CASE("simple_usertype/meta-key-retrievals", "allow for special meta keys (_
 	}
 }
 
-TEST_CASE("simple_usertype/static-properties", "allow for static functions to get and set things as a property") {
+TEST_CASE("simple_usertype/static properties", "allow for static functions to get and set things as a property") {
 	static int b = 50;
 	struct test_t {
 		static double s_func() {
@@ -900,7 +900,7 @@ TEST_CASE("simple_usertype/indexing", "make sure simple usertypes can be indexed
 		}
 	};
 
-	SECTION("no-runtime-additions") {
+	SECTION("no runtime additions") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 		lua.new_simple_usertype<indexing_test>("test",
@@ -918,7 +918,7 @@ TEST_CASE("simple_usertype/indexing", "make sure simple usertypes can be indexed
 		REQUIRE(v == 2);
 		REQUIRE(val == 50);
 	}
-	SECTION("runtime-additions") {
+	SECTION("runtime additions") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 		lua.new_simple_usertype<indexing_test>("test",

@@ -1,7 +1,7 @@
 metatable_key
 =============
-A key for setting and getting an object's metatable
----------------------------------------------------
+*a key for setting and getting an object's metatable*
+
 
 .. code-block:: cpp
 

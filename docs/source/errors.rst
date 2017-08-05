@@ -20,6 +20,8 @@ A myriad of compiler errors can occur when something goes wrong. Here is some ba
 * Template depth errors may also be a problem on earlier versions of clang++ and g++. Use ``-ftemplate-depth`` compiler flag and specify really high number (something like 2048 or even double that amount) to let the compiler work freely. Also consider potentially using :doc:`simple usertypes<api/simple_usertype>` to save compilation speed.
 * If you have a move-only type, that type may need to be made ``readonly`` if it is bound as a member variable on a usertype or bound using ``state_view::set_function``. See :doc:`sol::readonly<api/readonly>` for more details.
 * Assigning a ``std::string`` or a ``std::pair<T1, T2>`` using ``operator=`` after it's been constructed can result in compiler errors when working with ``sol::function`` and its results. See `this issue for fixes to this behavior`_.
+* Sometimes, using ``__stdcall`` in a 32-bit (x86) environment on VC++ can cause problems binding functions because of a compiler bug. Put the function in a ``std::function`` to make the compiler errors and other problems go away. Also see `this __stdcall issue report`_ for more details.
+
 
 Linker Errors
 -------------
@@ -63,3 +65,4 @@ Iteration
 Tables may have other junk on them that makes iterating through their numeric part difficult when using a bland ``for-each`` loop, or when calling sol's ``for_each`` function. Use a numeric look to iterate through a table. Iteration does not iterate in any defined order also: see :ref:`this note in the table documentation for more explanation<iteration_note>`.
 
 .. _this issue for fixes to this behavior: https://github.com/ThePhD/sol2/issues/414#issuecomment-306839439
+.. _this __stdcall issue report: https://github.com/ThePhD/sol2/issues/463

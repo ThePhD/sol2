@@ -1,7 +1,7 @@
 usertype<T>
 ===========
-structures and classes from C++ made available to Lua code
-----------------------------------------------------------
+*structures and classes from C++ made available to Lua code*
+
 
 *Note: ``T`` refers to the type being turned into a usertype.*
 
@@ -229,6 +229,44 @@ usertype arguments - simple usertype
 	- Only supported when directly invoking the constructor (e.g. not when calling ``sol::table::new_usertype`` or ``sol::table::new_simple_usertype``)
 	- Should probably not be used directly. Use ``sol::table::new_usertype`` or ``sol::table::new_simple_usertype`` instead
 
+
+runtime functions
+-----------------
+
+You can add functions at runtime **to the whole class**. Set a name under the metatable name you bound using ``new_usertype``/``new_simple_usertype`` to an object. For example:
+
+.. code-block:: cpp
+	:linenos:
+	:caption: runtime_extension.cpp
+	:name: runtime-extension
+
+	#define SOL_CHECK_ARGUMENTS 1
+	#include <sol.hpp>
+
+	struct object { 
+		int value = 0; 
+	};
+
+	int main (int, char*[]) {
+
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_usertype<object>( "object" );
+
+		// runtime additions: through the sol API
+		lua["object"]["func"] = [](object& o) { return o.value; };
+		// runtime additions: through a lua script
+		lua.script("function object:print () print(self:func()) end");
+		
+		// see it work
+		lua.script("local obj = object.new() \n obj:print()");
+	}
+
+
+.. note::
+
+	You cannot add functions to an individual object. You can only add functions to the whole class / usertype.
 
 
 overloading

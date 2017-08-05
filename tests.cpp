@@ -121,7 +121,7 @@ TEST_CASE("simple/get", "Tests if the get function works properly.") {
 	} REQUIRE(begintop == endtop);
 }
 
-TEST_CASE("simple/set-get-global-integer", "Tests if the get function works properly with global integers") {
+TEST_CASE("simple/set and get global integer", "Tests if the get function works properly with global integers") {
 	sol::state lua;
 	lua[1] = 25.4;
 	lua.script("b = 1");
@@ -148,7 +148,7 @@ TEST_CASE("simple/get_or", "check if table.get_or works correctly") {
 	REQUIRE(bark == 55.6);
 }
 
-TEST_CASE("simple/proxy_get_or", "check if proxy.get_or works correctly") {
+TEST_CASE("simple/proxy get_or", "check if proxy.get_or works correctly") {
 	sol::state lua;
 
 	auto bob_table = lua.create_table("bob");
@@ -186,7 +186,7 @@ TEST_CASE("simple/if", "check if if statements work through lua") {
 	REQUIRE((f == lua["f"]));
 }
 
-TEST_CASE("negative/basic_errors", "Check if error handling works correctly") {
+TEST_CASE("negative/basic errors", "Check if error handling works correctly") {
 	sol::state lua;
 
 	REQUIRE_THROWS(lua.script("nil[5]"));
@@ -225,54 +225,6 @@ TEST_CASE("interop/null-to-nil-and-back", "nil should be the given type when a p
 	REQUIRE_NOTHROW(lua.script("x = lol()\n"
 		"rofl(x)\n"
 		"assert(x == nil)"));
-}
-
-TEST_CASE("utilities/this_state", "Ensure this_state argument can be gotten anywhere in the function.") {
-	struct bark {
-		int with_state(sol::this_state l, int a, int b) {
-			lua_State* L = l;
-			int c = lua_gettop(L);
-			return a + b + (c - c);
-		}
-
-		static int with_state_2(int a, sol::this_state l, int b) {
-			INFO("inside with_state_2");
-			lua_State* L = l;
-			INFO("L is" << (void*)L);
-			int c = lua_gettop(L);
-			return a * b + (c - c);
-		}
-	};
-
-	sol::state lua;
-	INFO("created lua state");
-	lua.open_libraries(sol::lib::base);
-	lua.new_usertype<bark>("bark",
-		"with_state", &bark::with_state
-		);
-
-	INFO("setting b and with_state_2");
-	bark b;
-	lua.set("b", &b);
-	lua.set("with_state_2", bark::with_state_2);
-	INFO("finished setting");
-	INFO("getting fx");
-	sol::function fx = lua["with_state_2"];
-	INFO("calling fx");
-	int a = fx(25, 25);
-	INFO("finished setting fx");
-	INFO("calling a script");
-	lua.script("a = with_state_2(25, 25)");
-	INFO("calling c script");
-	lua.script("c = b:with_state(25, 25)");
-	INFO("getting a");
-	int la = lua["a"];
-	INFO("getting b");
-	int lc = lua["c"];
-
-	REQUIRE(lc == 50);
-	REQUIRE(a == 625);
-	REQUIRE(la == 625);
 }
 
 TEST_CASE("object/conversions", "make sure all basic reference types can be made into objects") {
@@ -329,7 +281,7 @@ TEST_CASE("object/conversions", "make sure all basic reference types can be made
 	REQUIRE(oenv.get_type() == sol::type::table);
 }
 
-TEST_CASE("feature/indexing-overrides", "make sure index functions can be overridden on types") {
+TEST_CASE("feature/indexing overrides", "make sure index functions can be overridden on types") {
 	struct PropertySet {
 		sol::object get_property_lua(const char* name, sol::this_state s)
 		{
@@ -374,7 +326,7 @@ print('name = ' .. obj.props.name)
 	REQUIRE(name == "test name");
 }
 
-TEST_CASE("features/indexing-numbers", "make sure indexing functions can be override on usertypes") {
+TEST_CASE("features/indexing numbers", "make sure indexing functions can be override on usertypes") {
 	class vector {
 	public:
 		double data[3];
@@ -415,7 +367,7 @@ TEST_CASE("features/indexing-numbers", "make sure indexing functions can be over
 	REQUIRE(v[2] == 3.0);
 }
 
-TEST_CASE("features/multiple-inheritance", "Ensure that multiple inheritance works as advertised") {
+TEST_CASE("features/multiple inheritance", "Ensure that multiple inheritance works as advertised") {
 	struct base1 {
 		int a1 = 250;
 	};
@@ -494,7 +446,7 @@ TEST_CASE("regressions/std::ref", "Ensure that std::reference_wrapper<> isn't co
 	REQUIRE(vr.a1 == 568);
 }
 
-TEST_CASE("optional/left-out-args", "Make sure arguments can be left out of optional without tanking miserably") {
+TEST_CASE("optional/left out args", "Make sure arguments can be left out of optional without tanking miserably") {
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
@@ -563,7 +515,7 @@ TEST_CASE("proxy/equality", "check to make sure equality tests work") {
 	REQUIRE((lua["a"] == 2)); //1
 }
 
-TEST_CASE("compilation/const-regression", "make sure constness in tables is respected all the way down") {
+TEST_CASE("compilation/const regression", "make sure constness in tables is respected all the way down") {
 	struct State {
 	public:
 		State() {
@@ -601,7 +553,7 @@ TEST_CASE("numbers/integers", "make sure integers are detectable on most platfor
 	REQUIRE(b_is_double);
 }
 
-TEST_CASE("object/is-method", "test whether or not the is abstraction works properly for a user-defined type") {
+TEST_CASE("object/is", "test whether or not the is abstraction works properly for a user-defined type") {
 	struct thing {};
 
 	SECTION("stack_object")

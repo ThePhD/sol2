@@ -1,7 +1,6 @@
 variadic_args
 =============
-transparent argument to deal with multiple parameters to a function
--------------------------------------------------------------------
+*transparent argument to deal with multiple parameters to a function*
 
 
 .. code-block:: cpp

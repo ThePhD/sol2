@@ -1,7 +1,6 @@
 thread
 ======
-a separate state that can contain and run functions
----------------------------------------------------
+*a separate state that can contain and run functions*
 
 .. code-block:: cpp
 	

@@ -1,7 +1,7 @@
 new_table
 =========
-a table creation hint to environment/table
-------------------------------------------
+*a table creation hint to environment/table*
+
 
 .. code-block:: cpp
 	

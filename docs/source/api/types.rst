@@ -1,7 +1,6 @@
 types
 =====
-nil, lua_primitive type traits, and other fundamentals
-------------------------------------------------------
+*nil, lua_primitive type traits, and other fundamentals*
 
 The ``types.hpp`` header contains various fundamentals and utilities of Sol.
 

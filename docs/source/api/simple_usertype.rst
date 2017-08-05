@@ -1,14 +1,17 @@
 simple_usertype<T>
 ==================
-structures and classes from C++ made available to Lua code (simpler)
---------------------------------------------------------------------
+*structures and classes from C++ made available to Lua code (simpler)*
 
 
-This type is no different from :doc:`regular usertype<usertype>`, but allows much of its work to be done at runtime instead of compile-time. You can reduce compilation times from a plain ``usertype`` when you have an exceedingly bulky registration listing.
+This usertype is no difference from :doc:`regular usertype<usertype>`, but allows much of its work to be done at runtime instead of compile-time. You can reduce compilation times from a plain ``usertype`` when you have an exceedingly bulky registration listing.
 
-You can set functions incrementally to reduce compile-time burden with ``simple_usertype`` as well, as shown in `this example`_. This means both adding incrementally during registration.
+You can set functions incrementally to reduce compile-time burden with ``simple_usertype`` as well, as shown in `this example`_. This means both adding incrementally during registration and even adding at runt=time.
 
-You can add functions to both regular and simple usertypes afterwards by adding items to the metatable directly at runtime (e.g., with :doc:`metatable_key<metatable_key>` or by accessing the named metatable yourself).
+You can add functions to both regular and simple usertypes afterwards by adding items to the metatable directly at runtime (e.g., by accessing the named metatable yourself and setting functions on it).
+
+.. note::
+
+	You cannot add functions to an individual object. You can only add functions to the whole class / usertype.
 
 Some developers used ``simple_usertype`` in older versions to have variables automatically be functions. To achieve this behavior, wrap the desired variable into :doc:`sol::as_function<as_function>`.
 

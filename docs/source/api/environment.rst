@@ -1,7 +1,7 @@
 environment
 ===========
-encapsulation table for script sandboxing
------------------------------------------
+*encapsulation table for script sandboxing*
+
 
 .. code-block:: cpp
 	:caption: environment

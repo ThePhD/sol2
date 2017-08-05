@@ -30,13 +30,15 @@ namespace sol {
 	class basic_userdata : public basic_table<base_type> {
 		typedef basic_table<base_type> base_t;
 	public:
+		using base_t::lua_state;
+
 		basic_userdata() noexcept = default;
 		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_userdata>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
 		basic_userdata(T&& r) noexcept : base_t(std::forward<T>(r)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_userdata<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
-				type_assert(base_t::lua_state(), -1, type::userdata);
+				type_assert(lua_state(), -1, type::userdata);
 			}
 #endif // Safety
 		}
@@ -65,13 +67,15 @@ namespace sol {
 	class basic_lightuserdata : public basic_object_base<base_type> {
 		typedef basic_object_base<base_type> base_t;
 	public:
+		using base_t::lua_state;
+
 		basic_lightuserdata() noexcept = default;
 		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_lightuserdata>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
 		basic_lightuserdata(T&& r) noexcept : base_t(std::forward<T>(r)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_lightuserdata<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
-				type_assert(base_t::lua_state(), -1, type::lightuserdata);
+				type_assert(lua_state(), -1, type::lightuserdata);
 			}
 #endif // Safety
 		}

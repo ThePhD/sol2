@@ -30,6 +30,7 @@
 #include "tie.hpp"
 #include "stack_guard.hpp"
 #include <vector>
+#include <forward_list>
 #include <string>
 
 namespace sol {
@@ -158,6 +159,18 @@ namespace sol {
 #else
 				false;
 #endif
+
+			template <typename C>
+			static int get_size_hint(const C& c) {
+				return static_cast<int>(c.size());
+			}
+
+			template <typename V, typename Al>
+			static int get_size_hint(const std::forward_list<V, Al>& c) {
+				// forward_list makes me sad
+				return static_cast<int>(32);
+			}
+
 			template<typename T>
 			inline decltype(auto) unchecked_get(lua_State* L, int index, record& tracking) {
 				return getter<meta::unqualified_t<T>>{}.get(L, index, tracking);
@@ -178,6 +191,10 @@ namespace sol {
 		inline bool maybe_indexable(lua_State* L, int index = -1) {
 			type t = type_of(L, index);
 			return t == type::userdata || t == type::table;
+		}
+
+		inline int top(lua_State* L) {
+			return lua_gettop(L);
 		}
 
 		template<typename T, typename... Args>
@@ -248,7 +265,10 @@ namespace sol {
 
 		template<typename T, typename Handler>
 		inline decltype(auto) check_get(lua_State* L, int index, Handler&& handler, record& tracking) {
-			return check_getter<meta::unqualified_t<T>>{}.get(L, index, std::forward<Handler>(handler), tracking);
+			typedef meta::unqualified_t<T> Tu;
+			check_getter<Tu> cg{};
+			(void)cg;
+			return cg.get(L, index, std::forward<Handler>(handler), tracking);
 		}
 
 		template<typename T, typename Handler>

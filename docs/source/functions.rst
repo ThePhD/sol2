@@ -1,7 +1,6 @@
 functions
 =========
-working with functions in sol2
-------------------------------
+*working with functions in sol2*
 
 
 There are a number of examples dealing with functions and how they can be bound to sol2:
@@ -9,15 +8,18 @@ There are a number of examples dealing with functions and how they can be bound 
 * For a quicker walkthrough that demonstrates almost everything, see `the examples`_ and the :doc:`the quick and dirty tutorial<tutorial/all-the-things>`
 * For a full explanation, :doc:`read the tutorial<tutorial/functions>` and consult the subjects below
 * If you have bindings and set-ups that want to leverage the C API without sol2's interference, you can push a raw function, which has certain implications (noted :ref:`below<raw-function-note>`)
-* You return multiple values by returning a `std::tuple`
+* Return multiple values into Lua by:
+	- returning a ``std::tuple``
+	- using :doc:`sol::variadic_results<api/variadic_results>`
+* :doc:`Overload function calls with different argument types and count on a single name<api/overload>` (first-bound, first-serve overloading)
+	- Note: because of this feature, automatic number to string conversion from Lua is not permitted for overloads and does not work when safeties are turned on
+	- Use C++ captures and lambdas to bind member functions tied to a single object /
 * You can work with **transparent arguments** that provide you with special information, such as
 	- :doc:`sol::variadic_args<api/variadic_args>`, for handling variable number of arguments at runtime
 	- :doc:`sol::this_state<api/this_state>`, for getting the current Lua state
 	- :doc:`sol::this_environment<api/this_environment>`, for potentially retrieving the current Lua environment
-* :doc:`Overload function calls on a single name<api/overload>`, discriminating by argument number and type (first-come, first-serve overloading)
-	- Note: because of this feature, automatic number to string conversion from Lua is not permitted
 * Control serialization of arguments and return types with :doc:`sol::nested<api/nested>`, :doc:`sol::as_table<api/nested>`, :doc:`sol::as_args<api/as_args>` and :doc:`sol::as_function<api/as_function>`
-* Set environments for Lua functions and scrips with :doc:`sol::environment<api/environment>`
+* Set environments for Lua functions and scripts with :doc:`sol::environment<api/environment>`
 
 
 .. _binding-callable-objects:
@@ -25,9 +27,13 @@ There are a number of examples dealing with functions and how they can be bound 
 working with callables/lambdas
 ------------------------------
 
+To be explicit about wanting a struct to be interpreted as a function, use ``mytable.set_function( key, func_value );``. You can be explicit about wanting a function as well by using the :doc:`sol::as_function<../api/as_function>` call, which will wrap and identify your type as a function.
+
 .. note::
 
-	Function objects ``obj`` -- a struct with a ``return_type operator()( ... )`` member defined on them, like all C++ lambdas -- are not interpreted as functions when you use ``set`` for ``mytable.set( key, value )`` and ``state.create_table(_with)( ... )``. This only happens automagically with ``mytable[key] = obj``. To be explicit about wanting a struct to be interpreted as a function, use ``mytable.set_function( key, func_value );``. You can be explicit about wanting a function as well by using the :doc:`sol::as_function<../api/as_function>` call, which will wrap and identify your type as a function.
+	Function objects ``obj`` -- a struct with a ``return_type operator()( ... )`` member defined on them, like all C++ lambdas -- are not interpreted as functions when you use ``set`` for ``mytable.set( key, value )`` and ``state.create_table(_with)( ... )``. This only happens automagically with ``mytable[key] = obj``.
+
+	Note that this also applies to calling functions, for example: ``my_state["table"]["sort"]( some_table, sorting_object );``.
 
 .. _function-exception-handling:
 

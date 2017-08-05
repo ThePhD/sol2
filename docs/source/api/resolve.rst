@@ -1,7 +1,7 @@
 resolve
 =======
-utility to pick overloaded C++ function calls
----------------------------------------------
+*utility to pick overloaded C++ function calls*
+
 
 .. code-block:: cpp
 	:caption: function: resolve C++ overload

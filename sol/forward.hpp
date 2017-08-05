@@ -28,6 +28,7 @@ namespace sol {
 
 	class reference;
 	class stack_reference;
+	struct proxy_base_tag;
 	template <typename Table, typename Key>
 	struct proxy;
 	template<typename T>
@@ -50,30 +51,38 @@ namespace sol {
 	struct basic_environment;
 	using environment = basic_environment<reference>;
 	using stack_environment = basic_environment<stack_reference>;
-	template <typename T>
+	template <typename T, bool>
 	class basic_function;
-	template <typename T>
+	template <typename T, bool>
 	class basic_protected_function;
-	using protected_function = basic_protected_function<reference>;
-	using stack_protected_function = basic_protected_function<stack_reference>;
-	using unsafe_function = basic_function<reference>;
-	using safe_function = basic_protected_function<reference>;
-	using stack_unsafe_function = basic_function<stack_reference>;
-	using stack_safe_function = basic_protected_function<stack_reference>;
+	using unsafe_function = basic_function<reference, false>;
+	using safe_function = basic_protected_function<reference, false>;
+	using stack_unsafe_function = basic_function<stack_reference, false>;
+	using stack_safe_function = basic_protected_function<stack_reference, false>;
+	using stack_aligned_unsafe_function = basic_function<stack_reference, true>;
+	using stack_aligned_safe_function = basic_protected_function<stack_reference, true>;
+	using protected_function = safe_function;
+	using stack_protected_function = stack_safe_function;
+	using stack_aligned_protected_function = stack_aligned_safe_function;
 #ifdef SOL_SAFE_FUNCTIONS
 	using function = protected_function;
 	using stack_function = stack_protected_function;
+	using stack_aligned_function = stack_aligned_safe_function;
 #else
 	using function = unsafe_function;
 	using stack_function = stack_unsafe_function;
+	using stack_aligned_function = stack_aligned_unsafe_function;
 #endif
+	struct function_result;
+	struct protected_function_result;
+	using safe_function_result = protected_function_result;
+	using unsafe_function_result = function_result;
 	template <typename base_t>
 	class basic_object;
 	template <typename base_t>
 	class basic_userdata;
 	template <typename base_t>
 	class basic_lightuserdata;
-	struct variadic_args;
 	using object = basic_object<reference>;
 	using stack_object = basic_object<stack_reference>;
 	using userdata = basic_userdata<reference>;
@@ -84,8 +93,13 @@ namespace sol {
 	class thread;
 	struct variadic_args;
 	struct variadic_results;
+	struct stack_count;
 	struct this_state;
 	struct this_environment;
+	template <typename T>
+	struct as_table_t;
+	template <typename T>
+	struct nested;
 	template <typename T>
 	struct light;
 	template <typename T>

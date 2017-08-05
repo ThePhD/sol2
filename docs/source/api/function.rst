@@ -1,7 +1,7 @@
 function
 ========
-calling functions bound to Lua
-------------------------------
+*calling functions bound to Lua*
+
 
 .. note::
 

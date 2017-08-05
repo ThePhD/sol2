@@ -1,6 +1,7 @@
 nested
 ======
 
+
 .. code-block:: cpp
 	
 	template <typename T>

@@ -1,7 +1,7 @@
 state
 =====
-owning and non-owning state holders for registry and globals
-------------------------------------------------------------
+*owning and non-owning state holders for registry and globals*
+
 
 .. code-block:: cpp
 
@@ -9,9 +9,9 @@ owning and non-owning state holders for registry and globals
 	
 	class state : state_view, std::unique_ptr<lua_State*, deleter>;
 
-The most important class here is ``state_view``. This structure takes a ``lua_State*`` that was already created and gives you simple, easy access to Lua's interfaces without taking ownership. ``state`` derives from ``state_view``, inheriting all of this functionality, but has the additional purpose of creating a fresh ``lua_State*`` and managing its lifetime for you in the default constructor.
+The most important class here is ``state_view``. This structure takes a ``lua_State*`` that was already created and gives you simple, easy access to Lua's interfaces without taking ownership. ``state`` derives from ``state_view``, inheriting all of this functionality, but has the additional purpose of creating a fresh ``lua_State*`` and managing its lifetime for you in its constructors.
 
-The majority of the members between ``state_view`` and :doc:`sol::table<table>` are identical, with added for this higher-level type. Therefore, all of the examples and notes in :doc:`sol::table<table>` apply here as well.
+The majority of the members between ``state_view`` and :doc:`sol::table<table>` are identical, with a few added for this higher-level type. Therefore, all of the examples and notes in :doc:`sol::table<table>` apply here as well.
 
 enumerations
 ------------
@@ -111,8 +111,9 @@ Thanks to `Eric (EToreo) for the suggestion on this one`_!
 	:caption: function: load / load_file
 	:name: state-load-code
 
-	sol::load_result load(const std::string& code);
-	sol::load_result load_file(const std::string& filename);
+	sol::load_result load(lua_Reader reader, void* data, const std::string& chunk_name = "[string]", load_mode mode = load_mode::any);
+	sol::load_result load(const string_view& code, const std::string& chunk_name = "[string]", load_mode mode = load_mode::any);
+	sol::load_result load_file(const std::string& filename, load_mode mode = load_mode::any);
 
 These functions *load* the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. That blob will be turned into a Lua Function. It will not be run: it returns a ``load_result`` proxy that can be called to actually run the code, when you are ready. It can also be turned into a ``sol::function``, a ``sol::protected_function``, or some other abstraction that can serve to call the function. If it is called, it will run on the object's current ``lua_State*``: it is not isolated. If you need isolation, consider using :doc:`sol::environment<environment>`, creating a new state, or other Lua sandboxing techniques.
 

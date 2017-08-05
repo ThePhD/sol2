@@ -1,7 +1,7 @@
 as_table
 ===========
-make sure an object is pushed as a table
-----------------------------------------
+*make sure an object is pushed as a table*
+
 
 .. code-block:: cpp
 	

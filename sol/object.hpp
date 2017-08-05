@@ -78,6 +78,8 @@ namespace sol {
 		template <typename Super>
 		basic_object(proxy_base<Super>&& r) noexcept : basic_object(r.operator basic_object()) {}
 		basic_object(lua_State* L, int index = -1) noexcept : base_t(L, index) {}
+		basic_object(lua_State* L, absolute_index index) noexcept : base_t(L, index) {}
+		basic_object(lua_State* L, raw_index index) noexcept : base_t(L, index) {}
 		basic_object(lua_State* L, ref_index index) noexcept : base_t(L, index) {}
 		template <typename T, typename... Args>
 		basic_object(lua_State* L, in_place_type_t<T>, Args&&... args) noexcept 

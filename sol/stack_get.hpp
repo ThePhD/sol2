@@ -83,21 +83,52 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct getter<as_table_t<T>, std::enable_if_t<!meta::has_key_value_pair<meta::unqualified_t<T>>::value>> {
+		struct getter<as_table_t<T>> {
+			typedef meta::unqualified_t<T> Tu;
+
+			template <typename V>
+			static void push_back_at_end(std::true_type, types<V>, lua_State* L, T& arr, std::size_t) {
+				arr.push_back(stack::get<V>(L, -lua_size<V>::value));
+			}
+
+			template <typename V>
+			static void push_back_at_end(std::false_type, types<V> t, lua_State* L, T& arr, std::size_t idx) {
+				insert_at_end(meta::has_insert<Tu>(), t, L, arr, idx);
+			}
+
+			template <typename V>
+			static void insert_at_end(std::true_type, types<V>, lua_State* L, T& arr, std::size_t) {
+				using std::cend;
+				arr.insert(cend(arr), stack::get<V>(L, -lua_size<V>::value));
+			}
+
+			template <typename V>
+			static void insert_at_end(std::false_type, types<V>, lua_State* L, T& arr, std::size_t idx) {
+				arr[idx] = stack::get<V>(L, -lua_size<V>::value);
+			}
+
 			static T get(lua_State* L, int relindex, record& tracking) {
+				return get(meta::has_key_value_pair<meta::unqualified_t<T>>(), L, relindex, tracking);
+			}
+
+			static T get(std::false_type, lua_State* L, int relindex, record& tracking) {
 				typedef typename T::value_type V;
 				return get(types<V>(), L, relindex, tracking);
 			}
 
 			template <typename V>
-			static T get(types<V>, lua_State* L, int relindex, record& tracking) {
+			static T get(types<V> t, lua_State* L, int relindex, record& tracking) {
 				tracking.use(1);
 
 				int index = lua_absindex(L, relindex);
 				T arr;
+				std::size_t idx = 0;
 #if SOL_LUA_VERSION >= 503
 				// This method is HIGHLY performant over regular table iteration thanks to the Lua API changes in 5.3
 				for (lua_Integer i = 0; ; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
+					if (idx >= arr.max_size()) {
+						return arr;
+					}
 					bool isnil = false;
 					for (int vi = 0; vi < lua_size<V>::value; ++vi) {
 						type t = static_cast<type>(lua_geti(L, index, i + vi));
@@ -112,7 +143,8 @@ namespace sol {
 					}
 					if (isnil)
 						continue;
-					arr.push_back(stack::get<V>(L, -lua_size<V>::value));
+					push_back_at_end(meta::has_push_back<Tu>(), t, L, arr, idx);
+					++idx;
 				}
 #else
 				// Zzzz slower but necessary thanks to the lower version API and missing functions qq
@@ -133,16 +165,14 @@ namespace sol {
 					}
 					if (isnil)
 						continue;
-					arr.push_back(stack::get<V>(L, -1));
+					push_back_at_end(meta::has_push_back<Tu>(), t, L, arr, idx);
+					++idx;
 				}
 #endif
 				return arr;
 			}
-		};
 
-		template<typename T>
-		struct getter<as_table_t<T>, std::enable_if_t<meta::has_key_value_pair<meta::unqualified_t<T>>::value>> {
-			static T get(lua_State* L, int index, record& tracking) {
+			static T get(std::true_type, lua_State* L, int index, record& tracking) {
 				typedef typename T::value_type P;
 				typedef typename P::first_type K;
 				typedef typename P::second_type V;
@@ -163,6 +193,104 @@ namespace sol {
 						continue;
 					}
 					associative.emplace(std::forward<decltype(*key)>(*key), stack::get<V>(L, -1));
+					lua_pop(L, 1);
+				}
+				return associative;
+			}
+		};
+
+		template<typename T, typename Al>
+		struct getter<as_table_t<std::forward_list<T, Al>>> {
+			typedef std::forward_list<T, Al> C;
+
+			static C get(lua_State* L, int relindex, record& tracking) {
+				return get(meta::has_key_value_pair<C>(), L, relindex, tracking);
+			}
+
+			static C get(std::true_type, lua_State* L, int index, record& tracking) {
+				typedef typename T::value_type P;
+				typedef typename P::first_type K;
+				typedef typename P::second_type V;
+				return get(types<K, V>(), L, index, tracking);
+			}
+
+			static C get(std::false_type, lua_State* L, int relindex, record& tracking) {
+				typedef typename C::value_type V;
+				return get(types<V>(), L, relindex, tracking);
+			}
+
+			template <typename V>
+			static C get(types<V> t, lua_State* L, int relindex, record& tracking) {
+				tracking.use(1);
+
+				int index = lua_absindex(L, relindex);
+				C arr;
+				auto at = arr.cbefore_begin();
+				std::size_t idx = 0;
+#if SOL_LUA_VERSION >= 503
+				// This method is HIGHLY performant over regular table iteration thanks to the Lua API changes in 5.3
+				for (lua_Integer i = 0; ; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
+					if (idx >= arr.max_size()) {
+						return arr;
+					}
+					bool isnil = false;
+					for (int vi = 0; vi < lua_size<V>::value; ++vi) {
+						type t = static_cast<type>(lua_geti(L, index, i + vi));
+						isnil = t == type::lua_nil;
+						if (isnil) {
+							if (i == 0) {
+								break;
+							}
+							lua_pop(L, (vi + 1));
+							return arr;
+						}
+					}
+					if (isnil)
+						continue;
+					at = arr.insert_after(at, stack::get<V>(L, -lua_size<V>::value));
+					++idx;
+				}
+#else
+				// Zzzz slower but necessary thanks to the lower version API and missing functions qq
+				for (lua_Integer i = 0; ; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
+					bool isnil = false;
+					for (int vi = 0; vi < lua_size<V>::value; ++vi) {
+						lua_pushinteger(L, i);
+						lua_gettable(L, index);
+						type t = type_of(L, -1);
+						isnil = t == type::lua_nil;
+						if (isnil) {
+							if (i == 0) {
+								break;
+							}
+							lua_pop(L, (vi + 1));
+							return arr;
+						}
+					}
+					if (isnil)
+						continue;
+					at = arr.insert_after(at, stack::get<V>(L, -lua_size<V>::value));
+					++idx;
+				}
+#endif
+				return arr;
+			}
+
+			template <typename K, typename V>
+			static C get(types<K, V>, lua_State* L, int relindex, record& tracking) {
+				tracking.use(1);
+
+				C associative;
+				auto at = associative.cbefore_begin();
+				int index = lua_absindex(L, relindex);
+				lua_pushnil(L);
+				while (lua_next(L, index) != 0) {
+					decltype(auto) key = stack::check_get<K>(L, -2);
+					if (!key) {
+						lua_pop(L, 1);
+						continue;
+					}
+					at = associative.emplace_after(at, std::forward<decltype(*key)>(*key), stack::get<V>(L, -1));
 					lua_pop(L, 1);
 				}
 				return associative;

@@ -96,7 +96,7 @@ TEST_CASE("environments/shadowing", "Environments can properly shadow and fallba
 	}
 	SECTION("fallback") {
 		sol::environment env_with_fallback(lua, sol::create, lua.globals());
-		lua.script("a = 56", env_with_fallback, sol::default_on_error);
+		lua.script("a = 56", env_with_fallback, sol::script_default_on_error);
 		sol::optional<int> maybe_env_a = env_with_fallback["a"];
 		sol::optional<int> maybe_global_a = lua["a"];
 		sol::optional<int> maybe_env_b = env_with_fallback["b"];
@@ -115,7 +115,7 @@ TEST_CASE("environments/shadowing", "Environments can properly shadow and fallba
 		sol::environment env_with_fallback(lua, sol::create, lua.globals());
 		lua["env"] = env_with_fallback;
 		sol::environment env = lua["env"];
-		lua.script("a = 56", env, sol::default_on_error);
+		lua.script("a = 56", env, sol::script_default_on_error);
 		sol::optional<int> maybe_env_a = env["a"];
 		sol::optional<int> maybe_global_a = lua["a"];
 		sol::optional<int> maybe_env_b = env["b"];

@@ -167,6 +167,10 @@ inline int luaL_loadbufferx(lua_State* L, const char* buff, size_t size, const c
     return lua_load(L, kepler_lua_compat_get_string, &ls, name/*, mode*/);
 }
 
+inline int luaL_loadfilex(lua_State* L, const char* filename, const char*) {
+	return luaL_loadfile(L, filename/*, mode*/);
+}
+
 #endif // LuaJIT 2.1.x beta and beyond
 
 #endif /* Lua 5.1 */

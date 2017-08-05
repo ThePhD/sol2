@@ -1,9 +1,19 @@
 overload
 ========
-calling different functions based on argument number/type
----------------------------------------------------------
+*calling different functions based on argument number/type*
 
-This function helps users make overloaded functions that can be called from Lua using 1 name but multiple arguments. It is meant to replace the spaghetti of code whre users mock this up by doing strange if statements and switches on what version of a function to call based on `luaL_check{number/udata/string}`_.
+
+.. code-block:: cpp
+	:caption: function: create overloaded set
+	:linenos:
+
+	template <typename... Args>
+	struct overloaded_set : std::tuple<Args...> { /* ... */ };
+
+	template <typename... Args>
+	overloaded_set<Args...> overload( Args&&... args );
+
+The actual class produced by ``sol::overload`` is essentially a type-wrapper around ``std::tuple`` that signals to the library that an overload is being created. The function helps users make overloaded functions that can be called from Lua using 1 name but multiple arguments. It is meant to replace the spaghetti of code whre users mock this up by doing strange if statements and switches on what version of a function to call based on `luaL_check{number/udata/string}`_.
 
 .. note::
 
@@ -77,20 +87,15 @@ Thusly, doing the following in Lua:
 	bark(pup, 20) -- calls ultra_bark
 	local nowherebark = bark() -- calls lambda which returns that string
 
-The actual class produced by ``sol::overload`` is essentially a type-wrapper around ``std::tuple`` that signals to the library that an overload is being created:
+.. note::
 
-.. code-block:: cpp
-	:caption: function: create overloaded set
-	:linenos:
+	Overloading is done on a first-come, first-serve system. This means if two overloads are compatible, workable overloads, it will choose the first one in the list.
 
-	template <typename... Args>
-	struct overloaded_set : std::tuple<Args...> { /* ... */ };
-
-	template <typename... Args>
-	overloaded_set<Args...> overload( Args&&... args );
+Note that because of this system, you can use :doc:`sol::variadic_args<variadic_args>` to make a function that serves as a "fallback". Be sure that it is the last specified function in the listed functions for ``sol::overload( ... )``. `This example shows how`_.
 
 .. note::
 
 	Please keep in mind that doing this bears a runtime cost to find the proper overload. The cost scales directly not exactly with the number of overloads, but the number of functions that have the same argument count as each other (Sol will early-eliminate any functions that do not match the argument count).
 
 .. _luaL_check{number/udata/string}: http://www.Lua.org/manual/5.3/manual.html#luaL_checkinteger
+.. _This example shows how: https://github.com/ThePhD/sol2/blob/develop/examples/overloading_with_fallback.cpp

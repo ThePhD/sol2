@@ -41,7 +41,7 @@ namespace sol {
 	namespace stack {
 		inline int push_environment_of(lua_State* L, int index = -1) {
 #if SOL_LUA_VERSION < 502
-			// Use lua_setfenv
+			// Use lua_getfenv
 			lua_getfenv(L, index);
 			return 1;
 #else
@@ -200,16 +200,6 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct pusher<T, std::enable_if_t<std::is_enum<T>::value>> {
-			static int push(lua_State* L, const T& value) {
-				if (std::is_same<char, T>::value) {
-					return stack::push(L, static_cast<int>(value));
-				}
-				return stack::push(L, static_cast<std::underlying_type_t<T>>(value));
-			}
-		};
-
-		template<typename T>
 		struct pusher<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_unsigned<T>>::value>> {
 			static int push(lua_State* L, const T& value) {
 				lua_pushinteger(L, static_cast<lua_Integer>(value));
@@ -218,10 +208,34 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct pusher<as_table_t<T>, std::enable_if_t<!meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>>::value>> {
-			static int push(lua_State* L, const as_table_t<T>& tablecont) {
-				auto& cont = detail::deref(detail::unwrap(tablecont.source));
+		struct pusher<T, std::enable_if_t<std::is_enum<T>::value>> {
+			static int push(lua_State* L, const T& value) {
+				if (std::is_same<char, std::underlying_type_t<T>>::value) {
+					return stack::push(L, static_cast<int>(value));
+				}
+				return stack::push(L, static_cast<std::underlying_type_t<T>>(value));
+			}
+		};
+
+		template<typename T>
+		struct pusher<as_table_t<T>, std::enable_if_t<is_container<meta::unqualified_t<T>>::value>> {
+			static int push(lua_State* L, const T& tablecont) {
+				return push(meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>>(), L, tablecont);
+			}
+			
+			static int push(std::true_type, lua_State* L, const T& tablecont) {
+				auto& cont = detail::deref(detail::unwrap(tablecont));
 				lua_createtable(L, static_cast<int>(cont.size()), 0);
+				int tableindex = lua_gettop(L);
+				for (const auto& pair : cont) {
+					set_field(L, pair.first, pair.second, tableindex);
+				}
+				return 1;
+			}
+			
+			static int push(std::false_type, lua_State* L, const T& tablecont) {
+				auto& cont = detail::deref(detail::unwrap(tablecont));
+				lua_createtable(L, stack_detail::get_size_hint(tablecont), 0);
 				int tableindex = lua_gettop(L);
 				std::size_t index = 1;
 				for (const auto& i : cont) {
@@ -257,15 +271,19 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct pusher<as_table_t<T>, std::enable_if_t<meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>>::value>> {
-			static int push(lua_State* L, const as_table_t<T>& tablecont) {
-				auto& cont = detail::deref(detail::unwrap(tablecont.source));
-				lua_createtable(L, static_cast<int>(cont.size()), 0);
-				int tableindex = lua_gettop(L);
-				for (const auto& pair : cont) {
-					set_field(L, pair.first, pair.second, tableindex);
-				}
-				return 1;
+		struct pusher<as_table_t<T>, std::enable_if_t<!is_container<meta::unqualified_t<T>>::value>> {
+			static int push(lua_State* L, const T& v) {
+				return stack::push(L, v);
+			}
+		};
+
+		template<typename T>
+		struct pusher<nested<T>> {
+			static int push(lua_State* L, const T& tablecont) {
+				pusher<as_table_t<T>> p{};
+				// silence annoying VC++ warning
+				(void)p;
+				return p.push(L, tablecont);
 			}
 		};
 
@@ -293,6 +311,13 @@ namespace sol {
 			static int push(lua_State* L, lua_nil_t) {
 				lua_pushnil(L);
 				return 1;
+			}
+		};
+
+		template<>
+		struct pusher<stack_count> {
+			static int push(lua_State*, stack_count st) {
+				return st.count;
 			}
 		};
 

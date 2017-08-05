@@ -1,7 +1,7 @@
 object
 ======
-general-purpose safety reference to an existing object
-------------------------------------------------------
+*general-purpose safety reference to an existing object*
+
 
 .. code-block:: cpp
 	

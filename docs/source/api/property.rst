@@ -1,5 +1,6 @@
 property
 ========
+*wrapper to specify read and write variable functionality using functions*
 
 .. code-block:: cpp
 	

@@ -42,6 +42,16 @@ namespace sol {
 			return stack::get<T>(L, stack_index());
 		}
 
+		template <typename T>
+		bool is() const {
+			return stack::check<T>(L, stack_index());
+		}
+
+		template <typename T>
+		decltype(auto) as() const {
+			return get<T>();
+		}
+
 		type get_type() const noexcept {
 			return type_of(lua_state(), stack_index());
 		}

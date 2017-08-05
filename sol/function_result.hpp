@@ -78,11 +78,26 @@ namespace sol {
 
 		lua_State* lua_state() const { return L; };
 		int stack_index() const { return index; };
+		int return_count() const { return returncount; };
 
 		~function_result() {
 			lua_pop(L, returncount);
 		}
 	};
+
+	namespace stack {
+		template <>
+		struct pusher<function_result> {
+			static int push(lua_State* L, const function_result& fr) {
+				int p = 0;
+				for (int i = 0; i < fr.return_count(); ++i) {
+					lua_pushvalue(L, i + fr.stack_index());
+					++p;
+				}
+				return p;
+			}
+		};
+	} // stack
 } // sol
 
 #endif // SOL_FUNCTION_RESULT_HPP

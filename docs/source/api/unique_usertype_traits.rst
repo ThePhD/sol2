@@ -1,7 +1,7 @@
 unique_usertype_traits<T>
 =========================
-A trait for hooking special handles / pointers
-----------------------------------------------
+*trait for hooking special handles / pointers*
+
 
 .. code-block:: cpp
 	:caption: unique_usertype

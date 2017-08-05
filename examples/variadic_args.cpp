@@ -18,7 +18,8 @@ int main() {
 		int r = 0;
 		for (auto v : va) {
 			int value = v; // get argument out (implicit conversion)
-						   // can also do int v = va.get<int>(i); with index i
+						// can also do int v = v.as<int>();
+						// can also do int v = va.get<int>(i); with index i
 			r += value;
 		}
 		// Only have to add a, b was included from variadic_args and beyond
