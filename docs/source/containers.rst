@@ -1,7 +1,17 @@
 containers
 ==========
+*working with containers in sol2*
 
 Containers are objects that are meant to be inspected and iterated and whose job is to typically provide storage to a collection of items. The ``std::`` library has several containers of varying types, and all of them have ``begin()`` and ``end()`` function which return iterators. C-style arrays are also containers, and sol2 will detect all of them for use and bestow them with special properties and functions.
+
+* Containers from C++ are stored as ``userdata`` with special ``usertype`` metatables with :ref:`special operations<container-operations>`
+* Containers can be manipulated from C++ and Lua and, like userdata, will `reflect changes if you use a reference`_ to the data.
+* This means containers **do not automatically serialize as Lua tables**
+	- If you need tables, consider using ``sol::as_table`` and ``sol::nested``
+	- See `this table serialization example`_ for more details
+* Lua 5.1 has different semantics for ``pairs`` and ``ipairs``: see the example for plain containers in the :doc:`api documentation page for containers<api/containers>`
+* You can override container behavior by overriding :ref:`the detection trait<container-detection>` and :ref:`specializing the container_traits template<container-traits>`
+* You can bind typical C-style arrays, but must follow :ref:`the rules<container-c-array>`
 
 .. _container-c-array:
 
@@ -40,6 +50,8 @@ You can also specialize ``sol::is_container<T>`` to turn off container detection
 This will let the type be pushed as a regular userdata.
 
 
+.. _container-traits:
+
 container overriding
 --------------------
 
@@ -71,6 +83,7 @@ The various operations provided by ``container_traits<T>`` are expected to be li
 
 	Exception handling **WILL** be provided around these particular raw C functions, so you do not need to worry about exceptions or errors bubbling through and handling that part. It is specifically handled for you in this specific instance, and **ONLY** in this specific instance. The raw note still applies to every other raw C function you make manually.
 
+.. _container-operations::
 
 container operations
 -------------------------
@@ -167,3 +180,5 @@ When you serialize a container into sol2, the default container handler deals wi
 
 
 .. _online version's information: https://www.lua.org/pil/26.html
+.. _reflect changes if you use a reference: https://github.com/ThePhD/sol2/blob/develop/examples/containers.cpp
+.. _this table serialization example: https://github.com/ThePhD/sol2/blob/develop/examples/containers_as_table.cpp

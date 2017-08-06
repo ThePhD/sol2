@@ -13,4 +13,48 @@ All of the base types have ``stack`` versions of themselves, and the APIs are id
 stack_aligned_function
 ----------------------
 
-This type is particular to working with the stack. It does not push the function object on the stack before pushing the arguments, assuming that the function present is already on the stack before going ahead and invoking the function it is targeted at. It is identical to :doc:`sol::function<function>` and has a protected counterpart as well. If you are working with the stack and know there is a callable object in the right place (i.e., at the top of the Lua stack), use this abstraction to work with the very top of the stack and have it call your function while still having the easy-to-use Lua abstractions on top.
+This type is particular to working with the stack. It does not push the function object on the stack before pushing the arguments, assuming that the function present is already on the stack before going ahead and invoking the function it is targeted at. It is identical to :doc:`sol::function<function>` and has a protected counterpart as well. If you are working with the stack and know there is a callable object in the right place (i.e., at the top of the Lua stack), use this abstraction to have it call your stack-based function while still having the easy-to-use Lua abstractions.
+
+Furthermore, if you know you have a function in the right place alongside proper arguments on top of it, you can use the ``sol::stack_count`` structure and give its constructor the number of arguments off the top that you want to call your pre-prepared function with:
+
+.. code-block:: cpp
+	:caption: stack_aligned_function.cpp
+	:linenos:
+	:name: stack-top-example
+
+	#define SOL_CHECK_ARGUMENTS 1
+	#include <sol.hpp>
+
+	#include <cassert>
+
+	int main (int, char*[]) {
+		sol::state lua;
+		lua.set_function("func", [](int a, int b) { return (a + b) * 2;});
+
+		sol::reference func_ref = lua["func"];
+		lua_State* L = lua.lua_state();
+
+		// for some reason, you need to use the low-level API
+		func_ref.push(); // function on stack now
+		
+		// maybe this is in a lua_CFunction you bind,
+		// or maybe you're trying to work with a pre-existing system
+		sol::stack_aligned_function func(L, -1);
+		lua_pushinteger(L, 5); // argument 1
+		lua_pushinteger(L, 6); // argument 2
+		// take 2 arguments from the top, 
+		// and use "stack_aligned_function" to call
+		int result = func(sol::stack_count(2));
+		
+		// make sure everything is clean
+		assert(result == 22);
+		assert(lua.stack_top() == 0); // stack is empty/balanced
+
+		return 0;
+	}
+
+Finally, there is a special abstraction that provides further stack optimizations for ``sol::protected_function`` variants that are aligned, and it is called ``sol::stack_aligned_stack_handler_protected_function``. This typedef expects you to pass a ``stack_reference`` handler to its constructor, meaning that you have already placed an appropriate error-handling function somewhere on the stack before the aligned function. You can use ``sol::stack_count`` with this type as well,
+
+.. warning::
+
+	Do not use ``sol::stack_top`` with a ``sol::stack_aligned_protected_function``. The default behavior checks if the ``error_handler`` member variable is valid, and attempts to push the handler onto the stack in preparation for calling the function. This inevitably changes the stack. Only use ``sol::stack_aligned_protected_function`` if you know that the handler is not valid (``nil``), or if you use ``sol::stack_aligned_stack_handler_protected_function``, which references an existing stack index that can be before the precise placement of the function and its arguments.

@@ -140,6 +140,7 @@ namespace sol {
 			lua_rawgeti(L, LUA_REGISTRYINDEX, index.index);
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
+		reference(lua_State* L, lua_nil_t) noexcept : luastate(L) {}
 
 		~reference() noexcept {
 			deref();

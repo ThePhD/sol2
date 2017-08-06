@@ -82,11 +82,7 @@ namespace sol {
 			// Must be manual, otherwise destructor will screw us
 			// return count being 0 is enough to keep things clean
 			// but we will be thorough
-			o.L = nullptr;
-			o.index = 0;
-			o.returncount = 0;
-			o.popcount = 0;
-			o.err = call_status::runtime;
+			o.abandon();
 		}
 		protected_function_result& operator=(protected_function_result&& o) noexcept {
 			L = o.L;
@@ -97,11 +93,7 @@ namespace sol {
 			// Must be manual, otherwise destructor will screw us
 			// return count being 0 is enough to keep things clean
 			// but we will be thorough
-			o.L = nullptr;
-			o.index = 0;
-			o.returncount = 0;
-			o.popcount = 0;
-			o.err = call_status::runtime;
+			o.abandon();
 			return *this;
 		}
 
@@ -122,7 +114,13 @@ namespace sol {
 		int stack_index() const noexcept { return index; };
 		int return_count() const noexcept { return returncount; };
 		int pop_count() const noexcept { return popcount; };
-
+		void abandon() noexcept {
+			L = nullptr;
+			index = 0;
+			returncount = 0;
+			popcount = 0;
+			err = call_status::runtime;
+		}
 		~protected_function_result() {
 			stack::remove(L, index, popcount);
 		}

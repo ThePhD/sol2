@@ -16,7 +16,7 @@ namespace my_object {
 		return module;
 	}
 
-}
+} // namespace my_object
 
 extern "C" int luaopen_my_object(lua_State* L) {
 	// pass the lua_State,

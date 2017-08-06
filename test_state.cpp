@@ -199,13 +199,13 @@ TEST_CASE("state/script returns", "make sure script returns are done properly") 
 		R"(
 local example = 
 {
-    str = "this is a string",
-    num = 1234,
+	str = "this is a string",
+	num = 1234,
 
-    func = function(self)
-        print(self.str)
+	func = function(self)
+		print(self.str)
 		return "fstr"
-    end
+	end
 }
 
 return example;

@@ -53,14 +53,14 @@ namespace sol {
 	using stack_environment = basic_environment<stack_reference>;
 	template <typename T, bool>
 	class basic_function;
-	template <typename T, bool>
+	template <typename T, bool, typename H>
 	class basic_protected_function;
 	using unsafe_function = basic_function<reference, false>;
-	using safe_function = basic_protected_function<reference, false>;
+	using safe_function = basic_protected_function<reference, false, reference>;
 	using stack_unsafe_function = basic_function<stack_reference, false>;
-	using stack_safe_function = basic_protected_function<stack_reference, false>;
+	using stack_safe_function = basic_protected_function<stack_reference, false, reference>;
 	using stack_aligned_unsafe_function = basic_function<stack_reference, true>;
-	using stack_aligned_safe_function = basic_protected_function<stack_reference, true>;
+	using stack_aligned_safe_function = basic_protected_function<stack_reference, true, reference>;
 	using protected_function = safe_function;
 	using stack_protected_function = stack_safe_function;
 	using stack_aligned_protected_function = stack_aligned_safe_function;
@@ -73,6 +73,8 @@ namespace sol {
 	using stack_function = stack_unsafe_function;
 	using stack_aligned_function = stack_aligned_unsafe_function;
 #endif
+	using stack_aligned_stack_handler_function = basic_protected_function<stack_reference, true, stack_reference>;
+
 	struct function_result;
 	struct protected_function_result;
 	using safe_function_result = protected_function_result;

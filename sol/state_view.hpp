@@ -64,7 +64,7 @@ namespace sol {
 		err += " error:";
 		if (t == type::string) {
 			err += " ";
-			string_detail::string_shim serr = stack::get<string_detail::string_shim>(L, pfr.stack_index());
+			string_view serr = stack::get<string_view>(L, pfr.stack_index());
 			err.append(serr.data(), serr.size());
 		}
 #ifdef SOL_NO_EXCEPTIONS
@@ -253,7 +253,7 @@ namespace sol {
 			return stack::pop<object>(L);
 		}
 
-		object require_script(const std::string& key, const string_detail::string_shim& code, bool create_global = true, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		object require_script(const std::string& key, const string_view& code, bool create_global = true, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return require_core(key, [this, &code, &chunkname, &mode]() {stack::script(L, code, chunkname, mode); }, create_global);
 		}
 
@@ -262,13 +262,12 @@ namespace sol {
 		}
 
 		template <typename E>
-		protected_function_result do_string(const string_detail::string_shim& code, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		protected_function_result do_string(const string_view& code, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), chunkname.c_str(), to_string(mode).c_str()));
 			if (x != load_status::ok) {
-				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
+				return protected_function_result(L, absolute_index(L, -1), 0, 1, static_cast<call_status>(x));
 			}
-			protected_function pf(L, -1);
-			pf.pop();
+			stack_aligned_protected_function pf(L, -1);
 			set_environment(env, pf);
 			return pf();
 		}
@@ -277,36 +276,33 @@ namespace sol {
 		protected_function_result do_file(const std::string& filename, const basic_environment<E>& env, load_mode mode = load_mode::any) {
 			load_status x = static_cast<load_status>(luaL_loadfilex(L, filename.c_str(), to_string(mode).c_str()));
 			if (x != load_status::ok) {
-				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
+				return protected_function_result(L, absolute_index(L, -1), 0, 1, static_cast<call_status>(x));
 			}
-			protected_function pf(L, -1);
-			pf.pop();
+			stack_aligned_protected_function pf(L, -1);
 			set_environment(env, pf);
 			return pf();
 		}
 
-		protected_function_result do_string(const string_detail::string_shim& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		protected_function_result do_string(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), chunkname.c_str(), to_string(mode).c_str()));
 			if (x != load_status::ok) {
-				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
+				return protected_function_result(L, absolute_index(L, -1), 0, 1, static_cast<call_status>(x));
 			}
-			protected_function pf(L, -1);
-			pf.pop();
+			stack_aligned_protected_function pf(L, -1);
 			return pf();
 		}
 
 		protected_function_result do_file(const std::string& filename, load_mode mode = load_mode::any) {
 			load_status x = static_cast<load_status>(luaL_loadfilex(L, filename.c_str(), to_string(mode).c_str()));
 			if (x != load_status::ok) {
-				return protected_function_result(L, -1, 0, 1, static_cast<call_status>(x));
+				return protected_function_result(L, absolute_index(L, -1), 0, 1, static_cast<call_status>(x));
 			}
-			protected_function pf(L, -1);
-			pf.pop();
+			stack_aligned_protected_function pf(L, -1);
 			return pf();
 		}
 
 		template <typename Fx, meta::disable<meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
-		protected_function_result safe_script(const string_detail::string_shim& code, Fx&& on_error, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		protected_function_result safe_script(const string_view& code, Fx&& on_error, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			protected_function_result pfr = do_string(code, chunkname, mode);
 			if (!pfr.valid()) {
 				return on_error(L, std::move(pfr));
@@ -314,18 +310,27 @@ namespace sol {
 			return pfr;
 		}
 
-		template <typename Fx, meta::disable<meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
-		protected_function_result safe_script_file(const std::string& filename, Fx&& on_error, load_mode mode = load_mode::any) {
-			protected_function_result pfr = do_file(filename, mode);
+		template <typename Fx, typename E>
+		protected_function_result safe_script(const string_view& code, const basic_environment<E>& env, Fx&& on_error, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			protected_function_result pfr = do_string(code, env, chunkname, mode);
 			if (!pfr.valid()) {
 				return on_error(L, std::move(pfr));
 			}
 			return pfr;
 		}
 
-		template <typename Fx, typename E>
-		protected_function_result safe_script(const string_detail::string_shim& code, const basic_environment<E>& env, Fx&& on_error, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			protected_function_result pfr = do_string(code, env, chunkname, mode);
+		template <typename E>
+		protected_function_result safe_script(const string_view&  code, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			return safe_script(code, env, script_default_on_error, chunkname, mode);
+		}
+
+		protected_function_result safe_script(const string_view&  code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			return safe_script(code, script_default_on_error, chunkname, mode);
+		}
+
+		template <typename Fx, meta::disable<meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
+		protected_function_result safe_script_file(const std::string& filename, Fx&& on_error, load_mode mode = load_mode::any) {
+			protected_function_result pfr = do_file(filename, mode);
 			if (!pfr.valid()) {
 				return on_error(L, std::move(pfr));
 			}
@@ -341,25 +346,48 @@ namespace sol {
 			return pfr;
 		}
 
-		protected_function_result safe_script(const string_detail::string_shim&  code, const environment& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			return safe_script(code, env, sol::script_default_on_error, chunkname, mode);
-		}
-
-		protected_function_result safe_script_file(const std::string& filename, const environment& env, load_mode mode = load_mode::any) {
-			return safe_script_file(filename, env, sol::script_default_on_error, mode);
-		}
-
-		protected_function_result safe_script(const string_detail::string_shim&  code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			return safe_script(code, sol::script_default_on_error, chunkname, mode);
+		template <typename E>
+		protected_function_result safe_script_file(const std::string& filename, const basic_environment<E>& env, load_mode mode = load_mode::any) {
+			return safe_script_file(filename, env, script_default_on_error, mode);
 		}
 
 		protected_function_result safe_script_file(const std::string& filename, load_mode mode = load_mode::any) {
-			return safe_script_file(filename, sol::script_default_on_error, mode);
+			return safe_script_file(filename, script_default_on_error, mode);
 		}
 
-		function_result unsafe_script(const string_detail::string_shim& code, const std::string& name = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		template <typename E>
+		function_result unsafe_script(const string_view& code, const sol::basic_environment<E>& env, load_mode mode = load_mode::any) {
+			int index = lua_gettop(L);
+			if (luaL_loadbufferx(L, code.data(), code.size(), name.data(), to_string(mode).c_str())) {
+				lua_error(L);
+			}
+			set_environment(env, stack_reference(L, raw_index(index + 1)));
+			if (lua_call(L, 0, LUA_MULTRET)) {
+				lua_error(L);
+			}
+			int postindex = lua_gettop(L);
+			int returns = postindex - index;
+			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
+		}
+
+		function_result unsafe_script(const string_view& code, const std::string& name = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			int index = lua_gettop(L);
 			stack::script(L, code, name, mode);
+			int postindex = lua_gettop(L);
+			int returns = postindex - index;
+			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
+		}
+
+		template <typename E>
+		function_result unsafe_script_file(const std::string& filename, const sol::basic_environment<E>& env, load_mode mode = load_mode::any) {
+			int index = lua_gettop(L);
+			if (luaL_loadfilex(L, filename.c_str(), to_string(mode).c_str())) {
+				lua_error(L);
+			}
+			set_environment(env, stack_reference(L, raw_index(index + 1)));
+			if (lua_call(L, 0, LUA_MULTRET)) {
+				lua_error(L);
+			}
 			int postindex = lua_gettop(L);
 			int returns = postindex - index;
 			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
@@ -374,7 +402,7 @@ namespace sol {
 		}
 
 		template <typename Fx, meta::disable<meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
-		protected_function_result script(const string_detail::string_shim& code, Fx&& on_error, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		protected_function_result script(const string_view& code, Fx&& on_error, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return safe_script(code, std::forward<Fx>(on_error), chunkname, mode);
 		}
 
@@ -384,7 +412,7 @@ namespace sol {
 		}
 
 		template <typename Fx, typename E>
-		protected_function_result script(const string_detail::string_shim& code, const basic_environment<E>& env, Fx&& on_error, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		protected_function_result script(const string_view& code, const basic_environment<E>& env, Fx&& on_error, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return safe_script(code, env, std::forward<Fx>(on_error), chunkname, mode);
 		}
 
@@ -393,15 +421,15 @@ namespace sol {
 			return safe_script_file(filename, env, std::forward<Fx>(on_error), mode);
 		}
 
-		protected_function_result script(const string_detail::string_shim&  code, const environment& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			return safe_script(code, env, sol::script_default_on_error, chunkname, mode);
+		protected_function_result script(const string_view&  code, const environment& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			return safe_script(code, env, script_default_on_error, chunkname, mode);
 		}
 
 		protected_function_result script_file(const std::string& filename, const environment& env, load_mode mode = load_mode::any) {
-			return safe_script_file(filename, env, sol::script_default_on_error, mode);
+			return safe_script_file(filename, env, script_default_on_error, mode);
 		}
 
-		function_result script(const string_detail::string_shim& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		function_result script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return unsafe_script(code, chunkname, mode);
 		}
 
@@ -409,7 +437,7 @@ namespace sol {
 			return unsafe_script_file(filename, mode);
 		}
 
-		load_result load(const string_detail::string_shim& code, const std::string& name = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		load_result load(const string_view& code, const std::string& name = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), name.c_str(), to_string(mode).c_str()));
 			return load_result(L, lua_absindex(L, -1), 1, 1, x);
 		}
@@ -450,6 +478,10 @@ namespace sol {
 
 		std::size_t memory_used() const {
 			return total_memory_used(lua_state());
+		}
+
+		int stack_top() const {
+			return stack::top(L);
 		}
 
 		void collect_garbage() {

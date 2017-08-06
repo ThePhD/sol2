@@ -868,8 +868,8 @@ namespace sol {
 		template <typename Base, bool aligned>
 		struct lua_type_of<basic_function<Base, aligned>> : std::integral_constant<type, type::function> {};
 
-		template <typename Base, bool aligned>
-		struct lua_type_of<basic_protected_function<Base, aligned>> : std::integral_constant<type, type::function> {};
+		template <typename Base, bool aligned, typename Handler>
+		struct lua_type_of<basic_protected_function<Base, aligned, Handler>> : std::integral_constant<type, type::function> {};
 
 		template <>
 		struct lua_type_of<coroutine> : std::integral_constant<type, type::function> {};
@@ -1063,8 +1063,8 @@ namespace sol {
 	struct is_function : std::false_type {};
 	template <typename T, bool aligned>
 	struct is_function<basic_function<T, aligned>> : std::true_type {};
-	template <typename T, bool aligned>
-	struct is_function<basic_protected_function<T, aligned>> : std::true_type{};
+	template <typename T, bool aligned, typename Handler>
+	struct is_function<basic_protected_function<T, aligned, Handler>> : std::true_type{};
 
 	template <typename T>
 	struct is_lightuserdata : std::false_type {};

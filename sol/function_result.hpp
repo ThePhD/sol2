@@ -46,9 +46,7 @@ namespace sol {
 			// Must be manual, otherwise destructor will screw us
 			// return count being 0 is enough to keep things clean
 			// but will be thorough
-			o.L = nullptr;
-			o.index = 0;
-			o.returncount = 0;
+			o.abandon();
 		}
 		function_result& operator=(function_result&& o) {
 			L = o.L;
@@ -57,9 +55,7 @@ namespace sol {
 			// Must be manual, otherwise destructor will screw us
 			// return count being 0 is enough to keep things clean
 			// but will be thorough
-			o.L = nullptr;
-			o.index = 0;
-			o.returncount = 0;
+			o.abandon();
 			return *this;
 		}
 
@@ -79,7 +75,11 @@ namespace sol {
 		lua_State* lua_state() const { return L; };
 		int stack_index() const { return index; };
 		int return_count() const { return returncount; };
-
+		void abandon() noexcept {
+			L = nullptr;
+			index = 0;
+			returncount = 0;
+		}
 		~function_result() {
 			lua_pop(L, returncount);
 		}

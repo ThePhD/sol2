@@ -36,63 +36,90 @@ namespace sol {
 			return name;
 		}
 
+		template <bool b, typename target_t = reference>
 		struct handler {
-			const reference& target;
+			typedef std::is_base_of<stack_reference, target_t> is_stack;
+			const target_t& target;
 			int stackindex;
-			handler(const reference& target) : target(target), stackindex(0) {
-				if (target.valid()) {
+
+			handler(std::false_type, const target_t& target) : target(target), stackindex(0) {
+				if (b) {
 					stackindex = lua_gettop(target.lua_state()) + 1;
 					target.push();
 				}
 			}
-			bool valid() const { return stackindex != 0; }
+
+			handler(std::true_type, const target_t& target) : target(target), stackindex(0) {
+				if (b) {
+					stackindex = target.stack_index();
+				}
+			}
+
+			handler(const target_t& target) : handler(is_stack(), target) {}
+
+			bool valid() const noexcept { return b; }
+
 			~handler() {
-				if (valid()) {
+				if (b && !is_stack::value) {
 					lua_remove(target.lua_state(), stackindex);
 				}
 			}
 		};
-	}
+	} // detail
 	
-	template <typename base_t, bool aligned = false>
+	template <typename base_t, bool aligned = false, typename handler_t = reference>
 	class basic_protected_function : public base_t {
 	public:
-		static reference get_default_handler(lua_State* L) {
-			if (L == nullptr)
-				return reference(lua_nil);
+		typedef std::is_base_of<stack_reference, handler_t> is_stack_handler;
+
+		static handler_t get_default_handler(lua_State* L) {
+			if (is_stack_handler::value || L == nullptr)
+				return handler_t(L, lua_nil);
 			lua_getglobal(L, detail::default_handler_name());
 			auto pp = stack::pop_n(L, 1);
-			return reference(L, -1);
+			return handler_t(L, -1);
 		}
 
-		static void set_default_handler(const reference& ref) {
-			ref.push();
-			lua_setglobal(ref.lua_state(), detail::default_handler_name());
+		template <typename T>
+		static void set_default_handler(const T& ref) {
+			if (ref.lua_state() == nullptr) {
+				return;
+			}
+			if (!ref.valid()) {
+				lua_pushnil(ref.lua_state());
+				lua_setglobal(ref.lua_state(), detail::default_handler_name());
+			} 
+			else {
+				ref.push();
+				lua_setglobal(ref.lua_state(), detail::default_handler_name());
+			}
 		}
 
 	private:
-		call_status luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount, detail::handler& h) const {
+		template <bool b>
+		call_status luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount, detail::handler<b, handler_t>& h) const {
 			return static_cast<call_status>(lua_pcallk(lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount), h.stackindex, 0, nullptr));
 		}
 
-		template<std::size_t... I, typename... Ret>
-		auto invoke(types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n, detail::handler& h) const {
+		template<std::size_t... I, bool b, typename... Ret>
+		auto invoke(types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n, detail::handler<b, handler_t>& h) const {
 			luacall(n, sizeof...(Ret), h);
 			return stack::pop<std::tuple<Ret...>>(lua_state());
 		}
 
-		template<std::size_t I, typename Ret>
-		Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n, detail::handler& h) const {
+		template<std::size_t I, bool b, typename Ret>
+		Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n, detail::handler<b, handler_t>& h) const {
 			luacall(n, 1, h);
 			return stack::pop<Ret>(lua_state());
 		}
 
-		template <std::size_t I>
-		void invoke(types<void>, std::index_sequence<I>, std::ptrdiff_t n, detail::handler& h) const {
+		template <std::size_t I, bool b>
+		void invoke(types<void>, std::index_sequence<I>, std::ptrdiff_t n, detail::handler<b, handler_t>& h) const {
 			luacall(n, 0, h);
 		}
 
-		protected_function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n, detail::handler& h) const {
+		template <bool b>
+		protected_function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n, detail::handler<b, handler_t>& h) const {
 			int stacksize = lua_gettop(lua_state());
 			int poststacksize = stacksize;
 			int firstreturn = 1;
@@ -141,7 +168,7 @@ namespace sol {
 	public:
 		using base_t::lua_state;
 
-		reference error_handler;
+		handler_t error_handler;
 
 		basic_protected_function() = default;
 		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_protected_function>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_t, meta::unqualified_t<T>>> = meta::enabler>
@@ -159,12 +186,12 @@ namespace sol {
 		basic_protected_function& operator=(basic_protected_function&&) = default;
 		basic_protected_function(const basic_function<base_t>& b) : basic_protected_function(b, get_default_handler(b.lua_state())) {}
 		basic_protected_function(basic_function<base_t>&& b) : basic_protected_function(std::move(b), get_default_handler(b.lua_state())) {}
-		basic_protected_function(const basic_function<base_t>& b, reference eh) : base_t(b), error_handler(std::move(eh)) {}
-		basic_protected_function(basic_function<base_t>&& b, reference eh) : base_t(std::move(b)), error_handler(std::move(eh)) {}
+		basic_protected_function(const basic_function<base_t>& b, handler_t eh) : base_t(b), error_handler(std::move(eh)) {}
+		basic_protected_function(basic_function<base_t>&& b, handler_t eh) : base_t(std::move(b)), error_handler(std::move(eh)) {}
 		basic_protected_function(const stack_reference& r) : basic_protected_function(r.lua_state(), r.stack_index(), get_default_handler(r.lua_state())) {}
 		basic_protected_function(stack_reference&& r) : basic_protected_function(r.lua_state(), r.stack_index(), get_default_handler(r.lua_state())) {}
-		basic_protected_function(const stack_reference& r, reference eh) : basic_protected_function(r.lua_state(), r.stack_index(), std::move(eh)) {}
-		basic_protected_function(stack_reference&& r, reference eh) : basic_protected_function(r.lua_state(), r.stack_index(), std::move(eh)) {}
+		basic_protected_function(const stack_reference& r, handler_t eh) : basic_protected_function(r.lua_state(), r.stack_index(), std::move(eh)) {}
+		basic_protected_function(stack_reference&& r, handler_t eh) : basic_protected_function(r.lua_state(), r.stack_index(), std::move(eh)) {}
 		template <typename Super>
 		basic_protected_function(const proxy_base<Super>& p) : basic_protected_function(p.operator basic_function<base_t>(), get_default_handler(p.lua_state())) {}
 		template <typename Super>
@@ -172,27 +199,27 @@ namespace sol {
 		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
 		basic_protected_function(lua_State* L, T&& r) : basic_protected_function(L, std::forward<T>(r), get_default_handler(L)) {}
 		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
-		basic_protected_function(lua_State* L, T&& r, reference eh) : basic_protected_function(L, sol::ref_index(r.registry_index()), std::move(eh)) {}
+		basic_protected_function(lua_State* L, T&& r, handler_t eh) : basic_protected_function(L, sol::ref_index(r.registry_index()), std::move(eh)) {}
 		basic_protected_function(lua_State* L, int index = -1) : basic_protected_function(L, index, get_default_handler(L)) {}
-		basic_protected_function(lua_State* L, int index, reference eh) : base_t(L, index), error_handler(std::move(eh)) {
+		basic_protected_function(lua_State* L, int index, handler_t eh) : base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			stack::check<basic_protected_function>(L, index, type_panic);
 #endif // Safety
 		}
 		basic_protected_function(lua_State* L, absolute_index index) : basic_protected_function(L, index, get_default_handler(L)) {}
-		basic_protected_function(lua_State* L, absolute_index index, reference eh) : base_t(L, index), error_handler(std::move(eh)) {
+		basic_protected_function(lua_State* L, absolute_index index, handler_t eh) : base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			stack::check<basic_protected_function>(L, index, type_panic);
 #endif // Safety
 		}
 		basic_protected_function(lua_State* L, raw_index index) : basic_protected_function(L, index, get_default_handler(L)) {}
-		basic_protected_function(lua_State* L, raw_index index, reference eh) : base_t(L, index), error_handler(std::move(eh)) {
+		basic_protected_function(lua_State* L, raw_index index, handler_t eh) : base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			stack::check<basic_protected_function>(L, index, type_panic);
 #endif // Safety
 		}
 		basic_protected_function(lua_State* L, ref_index index) : basic_protected_function(L, index, get_default_handler(L)) {}
-		basic_protected_function(lua_State* L, ref_index index, reference eh) : base_t(L, index), error_handler(std::move(eh)) {
+		basic_protected_function(lua_State* L, ref_index index, handler_t eh) : base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
 			stack::check<basic_protected_function>(L, -1, type_panic);
@@ -211,12 +238,45 @@ namespace sol {
 
 		template<typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) const {
-			detail::handler h(error_handler);
 			if (!aligned) {
-				base_t::push();
+				// we do not expect the function to already be on the stack: push it
+				if (error_handler.valid()) {
+					detail::handler<true, handler_t> h(error_handler);
+					base_t::push();
+					int pushcount = stack::multi_push_reference(lua_state(), std::forward<Args>(args)...);
+					return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount, h);
+				}
+				else {
+					detail::handler<false, handler_t> h(error_handler);
+					base_t::push();
+					int pushcount = stack::multi_push_reference(lua_state(), std::forward<Args>(args)...);
+					return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount, h);
+				}
 			}
-			int pushcount = stack::multi_push_reference(lua_state(), std::forward<Args>(args)...);
-			return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount, h);
+			else {
+				// the function is already on the stack at the right location
+				if (error_handler.valid()) {
+					// the handler will be pushed onto the stack manually,
+					// since it's not already on the stack this means we need to push our own
+					// function on the stack too and swap things to be in-place
+					if (!is_stack_handler::value) {
+						// so, we need to remove the function at the top and then dump the handler out ourselves
+						base_t::push();
+					}
+					detail::handler<true, handler_t> h(error_handler);
+					if (!is_stack_handler::value) {
+						lua_replace(lua_state(), -3);
+						h.stackindex = lua_absindex(lua_state(), -2);
+					}
+					int pushcount = stack::multi_push_reference(lua_state(), std::forward<Args>(args)...);
+					return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount, h);
+				}
+				else {
+					detail::handler<false, handler_t> h(error_handler);
+					int pushcount = stack::multi_push_reference(lua_state(), std::forward<Args>(args)...);
+					return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount, h);
+				}
+			}
 		}
 	};
 } // sol

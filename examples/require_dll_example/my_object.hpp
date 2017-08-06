@@ -2,6 +2,14 @@
 
 #include "my_object_api.hpp"
 
+// forward declare as a C struct 
+// so a pointer to lua_State can be part of a signature
+extern "C" {
+	struct lua_State;
+}
+// you can replace the above if you're fine with including 
+// <sol.hpp> earlier than absolutely necessary
+
 namespace my_object {
 
 	struct test {
@@ -11,7 +19,7 @@ namespace my_object {
 		test(int val) : value(val) {}
 	};
 
-} // my_object
+} // namespace my_object
 
 // this function needs to be exported from your
 // dll. "extern 'C'" should do the trick, but

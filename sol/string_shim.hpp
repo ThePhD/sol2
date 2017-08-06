@@ -91,6 +91,8 @@ namespace sol {
 		};
 #endif // C++17
 	}
+
+	typedef string_detail::string_shim string_view;
 }
 
 #endif // SOL_STRING_SHIM_HPP
