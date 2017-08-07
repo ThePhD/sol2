@@ -487,6 +487,13 @@ namespace sol {
 	} // meta
 
 	namespace detail {
+		template <typename T>
+		struct is_pointer_like : std::is_pointer<T> {};
+		template <typename T, typename D>
+		struct is_pointer_like<std::unique_ptr<T, D>> : std::true_type {};
+		template <typename T>
+		struct is_pointer_like<std::shared_ptr<T>> : std::true_type {};
+
 		template <std::size_t I, typename Tuple>
 		decltype(auto) forward_get(Tuple&& tuple) {
 			return std::forward<meta::tuple_element_t<I, Tuple>>(std::get<I>(tuple));
@@ -513,44 +520,14 @@ namespace sol {
 			return arg.get();
 		}
 
-		template<typename T>
+		template<typename T, meta::enable<meta::neg<is_pointer_like<meta::unqualified_t<T>>>> = meta::enabler>
 		auto deref(T&& item) -> decltype(std::forward<T>(item)) {
 			return std::forward<T>(item);
 		}
 
-		template<typename T>
-		inline auto& deref(T(&item)[5]) {
-			return item;
-		}
-
-		template<typename T>
-		inline auto& deref(const T(&item)[5]) {
-			return item;
-		}
-
-		template<typename T>
-		inline T& deref(T* item) {
-			return *item;
-		}
-
-		template<typename T, typename Dx>
-		inline std::add_lvalue_reference_t<T> deref(std::unique_ptr<T, Dx>& item) {
-			return *item;
-		}
-
-		template<typename T>
-		inline std::add_lvalue_reference_t<T> deref(std::shared_ptr<T>& item) {
-			return *item;
-		}
-
-		template<typename T, typename Dx>
-		inline std::add_lvalue_reference_t<T> deref(const std::unique_ptr<T, Dx>& item) {
-			return *item;
-		}
-
-		template<typename T>
-		inline std::add_lvalue_reference_t<T> deref(const std::shared_ptr<T>& item) {
-			return *item;
+		template<typename T, meta::enable<is_pointer_like<meta::unqualified_t<T>>> = meta::enabler>
+		inline auto& deref(T&& item) {
+			return *std::forward<T>(item);
 		}
 
 		template<typename T>

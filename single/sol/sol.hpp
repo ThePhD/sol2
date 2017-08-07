@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-07 06:26:17.141906 UTC
-// This header was generated with sol v2.18.0 (revision ca685e0)
+// Generated 2017-08-07 12:34:45.380203 UTC
+// This header was generated with sol v2.18.0 (revision 62b242b)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1139,6 +1139,13 @@ namespace sol {
 	} // meta
 
 	namespace detail {
+		template <typename T>
+		struct is_pointer_like : std::is_pointer<T> {};
+		template <typename T, typename D>
+		struct is_pointer_like<std::unique_ptr<T, D>> : std::true_type {};
+		template <typename T>
+		struct is_pointer_like<std::shared_ptr<T>> : std::true_type {};
+
 		template <std::size_t I, typename Tuple>
 		decltype(auto) forward_get(Tuple&& tuple) {
 			return std::forward<meta::tuple_element_t<I, Tuple>>(std::get<I>(tuple));
@@ -1165,44 +1172,14 @@ namespace sol {
 			return arg.get();
 		}
 
-		template<typename T>
+		template<typename T, meta::enable<meta::neg<is_pointer_like<meta::unqualified_t<T>>>> = meta::enabler>
 		auto deref(T&& item) -> decltype(std::forward<T>(item)) {
 			return std::forward<T>(item);
 		}
 
-		template<typename T>
-		inline auto& deref(T(&item)[5]) {
-			return item;
-		}
-
-		template<typename T>
-		inline auto& deref(const T(&item)[5]) {
-			return item;
-		}
-
-		template<typename T>
-		inline T& deref(T* item) {
-			return *item;
-		}
-
-		template<typename T, typename Dx>
-		inline std::add_lvalue_reference_t<T> deref(std::unique_ptr<T, Dx>& item) {
-			return *item;
-		}
-
-		template<typename T>
-		inline std::add_lvalue_reference_t<T> deref(std::shared_ptr<T>& item) {
-			return *item;
-		}
-
-		template<typename T, typename Dx>
-		inline std::add_lvalue_reference_t<T> deref(const std::unique_ptr<T, Dx>& item) {
-			return *item;
-		}
-
-		template<typename T>
-		inline std::add_lvalue_reference_t<T> deref(const std::shared_ptr<T>& item) {
-			return *item;
+		template<typename T, meta::enable<is_pointer_like<meta::unqualified_t<T>>> = meta::enabler>
+		inline auto& deref(T&& item) {
+			return *std::forward<T>(item);
 		}
 
 		template<typename T>
@@ -8278,9 +8255,14 @@ namespace sol {
 				auto it = code.cbegin();
 				auto e = code.cend();
 				std::size_t i = 0;
-				static const std::size_t n = N - 1;
+				static const std::size_t n = N - 4;
 				for (i = 0; i < n && it != e; ++i, ++it) {
 					basechunkname[i] = *it;
+				}
+				if (it != e) {
+					for (std::size_t c = 0; c < 3; ++i, ++c) {
+						basechunkname[i] = '.';
+					}
 				}
 				basechunkname[i] = '\0';
 				return &basechunkname[0];
@@ -14397,7 +14379,7 @@ namespace sol {
 			static int get(lua_State* L) {
 				T& self = get_src(L);
 				std::ptrdiff_t idx = stack::get<std::ptrdiff_t>(L, 2);
-				if (idx > std::extent<T>::value || idx < 1) {
+				if (idx > static_cast<std::ptrdiff_t>(std::extent<T>::value) || idx < 1) {
 					return stack::push(L, lua_nil);
 				}
 				--idx;
@@ -14411,7 +14393,7 @@ namespace sol {
 			static int set(lua_State* L) {
 				T& self = get_src(L);
 				std::ptrdiff_t idx = stack::get<std::ptrdiff_t>(L, 2);
-				if (idx > std::extent<T>::value) {
+				if (idx > static_cast<std::ptrdiff_t>(std::extent<T>::value)) {
 					return luaL_error(L, "sol: index out of bounds (too big) for set on '%s'", detail::demangle<T>().c_str());
 				}
 				if (idx < 1) {
@@ -16079,7 +16061,12 @@ namespace sol {
 		load_result load(lua_Reader reader, void* data, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			char basechunkname[17] = {};
 			const char* chunknametarget = detail::make_chunk_name("lua_reader", chunkname, basechunkname);
+#if SOL_LUA_VERSION > 501
 			load_status x = static_cast<load_status>(lua_load(L, reader, data, chunknametarget, to_string(mode).c_str()));
+#else
+			(void)mode;
+			load_status x = static_cast<load_status>(lua_load(L, reader, data, chunknametarget));
+#endif
 			return load_result(L, absolute_index(L, -1), 1, 1, x);
 		}
 
