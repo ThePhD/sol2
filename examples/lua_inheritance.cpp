@@ -34,7 +34,7 @@ obj = object.new()
 obj:print()
 	)");
 
-	object& obj = lua["obj"];
+	cpp_class& obj = lua["obj"];
 	assert(obj.value == 1);
 
 	return 0;

@@ -60,7 +60,7 @@ namespace sol {
 			bool valid() const noexcept { return b; }
 
 			~handler() {
-				if (b && !is_stack::value) {
+				if (!is_stack::value && stackindex != 0) {
 					lua_remove(target.lua_state(), stackindex);
 				}
 			}
@@ -128,7 +128,7 @@ namespace sol {
 #ifndef SOL_NO_EXCEPTIONS
 			auto onexcept = [&](const char* error) {
 				h.stackindex = 0;
-				if (h.target.valid()) {
+				if (b) {
 					h.target.push();
 					stack::push(lua_state(), error);
 					lua_call(lua_state(), 1, 1);
@@ -171,7 +171,12 @@ namespace sol {
 		handler_t error_handler;
 
 		basic_protected_function() = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_protected_function>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_t, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<
+			meta::neg<std::is_same<meta::unqualified_t<T>, basic_protected_function>>, 
+			meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>>, 
+			meta::neg<std::is_same<base_t, stack_reference>>, 
+			std::is_base_of<base_t, meta::unqualified_t<T>>
+		> = meta::enabler>
 		basic_protected_function(T&& r) noexcept : base_t(std::forward<T>(r)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_function<meta::unqualified_t<T>>::value) {
@@ -192,14 +197,22 @@ namespace sol {
 		basic_protected_function(stack_reference&& r) : basic_protected_function(r.lua_state(), r.stack_index(), get_default_handler(r.lua_state())) {}
 		basic_protected_function(const stack_reference& r, handler_t eh) : basic_protected_function(r.lua_state(), r.stack_index(), std::move(eh)) {}
 		basic_protected_function(stack_reference&& r, handler_t eh) : basic_protected_function(r.lua_state(), r.stack_index(), std::move(eh)) {}
+
 		template <typename Super>
-		basic_protected_function(const proxy_base<Super>& p) : basic_protected_function(p.operator basic_function<base_t>(), get_default_handler(p.lua_state())) {}
+		basic_protected_function(const proxy_base<Super>& p) : basic_protected_function(p, get_default_handler(p.lua_state())) {}
 		template <typename Super>
-		basic_protected_function(proxy_base<Super>&& p) : basic_protected_function(p.operator basic_function<base_t>(), get_default_handler(p.lua_state())) {}
-		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
+		basic_protected_function(proxy_base<Super>&& p) : basic_protected_function(std::move(p), get_default_handler(p.lua_state())) {}
+		template <typename Proxy, typename Handler, meta::enable<
+			std::is_base_of<proxy_base_tag, meta::unqualified_t<Proxy>>,
+			meta::neg<is_lua_index<meta::unqualified_t<Handler>>>
+		> = meta::enabler>
+		basic_protected_function(Proxy&& p, Handler&& eh) : basic_protected_function(p.operator basic_function<base_t>(), std::forward<Handler>(eh)) {}
+
+		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
 		basic_protected_function(lua_State* L, T&& r) : basic_protected_function(L, std::forward<T>(r), get_default_handler(L)) {}
-		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
 		basic_protected_function(lua_State* L, T&& r, handler_t eh) : basic_protected_function(L, sol::ref_index(r.registry_index()), std::move(eh)) {}
+
 		basic_protected_function(lua_State* L, int index = -1) : basic_protected_function(L, index, get_default_handler(L)) {}
 		basic_protected_function(lua_State* L, int index, handler_t eh) : base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS

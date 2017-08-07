@@ -46,7 +46,7 @@ namespace sol {
 		template<typename T, typename>
 		struct getter {
 			static T& get(lua_State* L, int index, record& tracking) {
-				return getter<sol::detail::as_value_tag<T>>{}.get(L, index, tracking);
+				return getter<detail::as_value_tag<T>>{}.get(L, index, tracking);
 			}
 		};
 
@@ -220,7 +220,7 @@ namespace sol {
 			}
 
 			template <typename V>
-			static C get(types<V> t, lua_State* L, int relindex, record& tracking) {
+			static C get(types<V>, lua_State* L, int relindex, record& tracking) {
 				tracking.use(1);
 
 				int index = lua_absindex(L, relindex);

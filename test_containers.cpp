@@ -65,8 +65,8 @@ TEST_CASE("containers/table conversion", "test table conversions with as_table a
 	lua.script("v1 = bark()");
 	lua.script("v2 = woof()");
 
-	sol::as_table_t<std::vector<std::string>> as_table_strings = lua["v"];
-	sol::nested<std::vector<std::string>> nested_strings = lua["v"];
+	sol::as_table_t<std::vector<std::string>> as_table_strings = lua["v1"];
+	sol::nested<std::vector<std::string>> nested_strings = lua["v2"];
 
 	std::vector<std::string> expected_values{"bark", "woof"};
 	REQUIRE(as_table_strings.source == expected_values);
@@ -456,106 +456,6 @@ TEST_CASE("containers/arbitrary creation", "userdata and tables should be usable
 	REQUIRE(d.get<int>("four") == 4);
 }
 
-TEST_CASE("containers/extra functions", "make sure the manipulation functions are present and usable and working across various container types") {
-	sol::state lua;
-	lua.open_libraries();
-
-	lua.script(R"(
-function g (x)
-	x:add(20)
-end
-
-function h (x)
-	x:add(20, 40)
-end
-
-function i (x)
-	x:clear()
-end
-
-function sf (x,v)
-	return x:find(v)
-end
-
-)");
-
-	// Have the function we 
-	// just defined in Lua
-	sol::function g = lua["g"];
-	sol::function h = lua["h"];
-	sol::function i = lua["i"];
-	sol::function sf = lua["sf"];
-
-	// Set a global variable called 
-	// "arr" to be a vector of 5 lements
-	lua["c_arr"] = std::array<int, 5>{ { 2, 4, 6, 8, 10 } };
-	lua["arr"] = std::vector<int>{ 2, 4, 6, 8, 10 };
-	lua["map"] = std::map<int, int>{ { 1 , 2 },{ 2, 4 },{ 3, 6 },{ 4, 8 },{ 5, 10 } };
-	lua["set"] = std::set<int>{ 2, 4, 6, 8, 10 };
-	std::array<int, 5>& c_arr = lua["c_arr"];
-	std::vector<int>& arr = lua["arr"];
-	std::map<int, int>& map = lua["map"];
-	std::set<int>& set = lua["set"];
-	REQUIRE(c_arr.size() == 5);
-	REQUIRE(arr.size() == 5);
-	REQUIRE(map.size() == 5);
-	REQUIRE(set.size() == 5);
-
-	g(lua["set"]);
-	g(lua["arr"]);
-	h(lua["map"]);
-	REQUIRE(arr.size() == 6);
-	REQUIRE(map.size() == 6);
-	REQUIRE(set.size() == 6);
-
-	{
-		int r = sf(set, 8);
-		REQUIRE(r == 8);
-		sol::object rn = sf(set, 9);
-		REQUIRE(rn == sol::nil);
-	}
-
-	{
-		int r = sf(map, 3);
-		REQUIRE(r == 6);
-		sol::object rn = sf(map, 9);
-		REQUIRE(rn == sol::nil);
-	}
-
-	i(lua["arr"]);
-	i(lua["map"]);
-	i(lua["set"]);	
-	REQUIRE(arr.empty());
-	REQUIRE(map.empty());
-	REQUIRE(set.empty());
-
-	REQUIRE_NOTHROW([&]() {
-		lua.script(R"(
-c_arr[1] = 7
-c_arr[2] = 7
-c_arr[3] = 7
-)");
-	}());
-	SECTION("throw test") {
-		sol::state tlua;
-		tlua["c_arr"] = std::array<int, 5>{ { 2, 4, 6, 8, 10 } };
-		REQUIRE_THROWS([&]() {
-			tlua.script(R"(
-c_arr[0] = 7
-)");
-		}());
-	}
-	SECTION("throw test 2") {
-		sol::state tlua;
-		tlua["c_arr"] = std::array<int, 5>{ { 2, 4, 6, 8, 10 } };
-		REQUIRE_THROWS([&]() {
-			tlua.script(R"(
-c_arr[-1] = 7
-)");
-		}());
-	}
-}
-
 TEST_CASE("containers/usertype transparency", "Make sure containers pass their arguments through transparently and push the results as references, not new values") {
 	class A {
 	public:
@@ -919,20 +819,19 @@ TEST_CASE("containers/input iterators", "test shitty input iterators that are al
 
 	not_really_a_container c;
 	lua["c"] = &c;
-#if SOL_LUA_VERSION > 503
+#if SOL_LUA_VERSION > 502
 	lua.script(R"lua(
 for k, v in pairs(c) do
   assert((k - 1) == v:val())
 end
 )lua");
-#else
+#endif
 	lua.script(R"lua(
 for k=1,#c do
   v = c[k]
   assert((k - 1) == v:val())
 end
 )lua");
-#endif
 }
 
 TEST_CASE("containers/pairs", "test how well pairs work with the underlying system") {

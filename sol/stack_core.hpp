@@ -166,14 +166,16 @@ namespace sol {
 			}
 
 			template <typename V, typename Al>
-			static int get_size_hint(const std::forward_list<V, Al>& c) {
+			static int get_size_hint(const std::forward_list<V, Al>&) {
 				// forward_list makes me sad
 				return static_cast<int>(32);
 			}
 
 			template<typename T>
 			inline decltype(auto) unchecked_get(lua_State* L, int index, record& tracking) {
-				return getter<meta::unqualified_t<T>>{}.get(L, index, tracking);
+				getter<meta::unqualified_t<T>> g{};
+				(void)g;
+				return g.get(L, index, tracking);
 			}
 
 			template<typename T, typename Arg, typename... Args>

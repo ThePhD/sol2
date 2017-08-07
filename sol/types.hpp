@@ -666,7 +666,7 @@ namespace sol {
 	inline int type_panic(lua_State* L, int index, type expected, type actual) noexcept(false) {
 		return luaL_error(L, "stack index %d, expected %s, received %s", index,
 			expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected)),
-			expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(actual))
+			actual == type::poly ? "anything" : lua_typename(L, static_cast<int>(actual))
 		);
 	}
 
@@ -1032,7 +1032,7 @@ namespace sol {
 	struct is_variadic_arguments : std::is_same<meta::unqualified_t<T>, variadic_args> {};
 
 	template <typename T>
-	struct is_lua_index : std::false_type {};
+	struct is_lua_index : std::is_integral<T> {};
 	template <>
 	struct is_lua_index<raw_index> : std::true_type {};
 	template <>

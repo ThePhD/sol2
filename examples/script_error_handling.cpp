@@ -21,9 +21,9 @@ return 24
 	// and then rely on the `lua_atpanic` function being called 
 	// and trapping errors there before exiting the application
 	{
-		// default_on_error throws / panics when the code is bad: trap the error
+		// script_default_on_error throws / panics when the code is bad: trap the error
 		try {
-			int value = lua.script(code, sol::default_on_error);
+			int value = lua.script(code, sol::script_default_on_error);
 			// This will never be reached
 			std::cout << value << std::endl;
 			assert(value == 24);
@@ -34,12 +34,12 @@ return 24
 	}
 
 	/* OPTION 2 */
-	// Use the simple_on_error handler
+	// Use the script_pass_on_error handler
 	// this simply passes through the protected_function_result,
 	// rather than throwing it or calling panic
 	// This will check code validity and also whether or not it runs well
 	{
-		sol::protected_function_result result = lua.script(code, sol::simple_on_error);
+		sol::protected_function_result result = lua.script(code, sol::script_pass_on_error);
 		assert(!result.valid());
 		if (!result.valid()) {
 			sol::error err = result;
@@ -78,6 +78,8 @@ return 24
 			}
 		}
 	}
+
+	std::cout << std::endl;
 
 	return 0;
 }

@@ -81,5 +81,7 @@ int main() {
 	lua.script("f()", freshenv);
 	lua.script("g()", freshenv);
 
+	std::cout << std::endl;
+
 	return 0;
 }

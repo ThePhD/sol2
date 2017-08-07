@@ -381,7 +381,7 @@ namespace sol {
 			typedef typename T::value_type value_type;
 			typedef std::conditional_t<is_associative::value, 
 				value_type, 
-				std::conditional_t<is_lookup::value, std::pair<value_type, value_type>, std::pair<std::size_t, value_type>>
+				std::conditional_t<is_lookup::value, std::pair<value_type, value_type>, std::pair<std::ptrdiff_t, value_type>>
 			> KV;
 			typedef typename KV::first_type K;
 			typedef typename KV::second_type V;
@@ -389,7 +389,7 @@ namespace sol {
 			typedef typename meta::iterator_tag<iterator>::type iterator_category;
 			typedef std::is_same<iterator_category, std::input_iterator_tag> is_input_iterator;
 			typedef std::conditional_t<is_input_iterator::value, 
-				std::add_lvalue_reference_t<V>,
+				V,
 				std::conditional_t<is_associative::value, std::add_lvalue_reference_t<V>, iterator_return>
 			> push_type;
 			typedef std::is_copy_assignable<V> is_copyable;
@@ -422,11 +422,11 @@ namespace sol {
 
 			static int get_associative(std::true_type, lua_State* L, iterator& it) {
 				auto& v = *it;
-				return stack::push_reference(L, v.second);
+				return stack::stack_detail::push_reference<push_type>(L, v.second);
 			}
 
 			static int get_associative(std::false_type, lua_State* L, iterator& it) {
-				return stack::push_reference(L, *it);
+				return stack::stack_detail::push_reference<push_type>(L, *it);
 			}
 
 			static int get_category(std::input_iterator_tag, lua_State* L, T& self, K& key) {
@@ -449,7 +449,7 @@ namespace sol {
 			}
 
 			static int get_category(std::random_access_iterator_tag, lua_State* L, T& self, K& key) {
-				std::size_t len = size_start(L, self);
+				std::ptrdiff_t len = static_cast<std::ptrdiff_t>(size_start(L, self));
 				if (key < 1 || key > len) {
 					return stack::push(L, lua_nil);
 				}
@@ -513,7 +513,7 @@ namespace sol {
 						add_copyable(is_copyable(), L, self, std::move(value), meta::has_insert_after<T>::value ? backit : it);
 						return;
 					}
-					// TODO: error here in safety mode
+					luaL_error(L, "out of bounds (too big) for set on '%s'", detail::demangle<T>().c_str());
 					return;
 				}
 				set_writable(is_writable(), L, self, it, std::move(value));
@@ -521,18 +521,18 @@ namespace sol {
 
 			static void set_category(std::random_access_iterator_tag, lua_State* L, T& self, stack_object okey, stack_object value) {
 				decltype(auto) key = okey.as<K>();
-				std::size_t len = size_start(L, self);
 				if (key < 1) {
-					// error here in safety mode
+					luaL_error(L, "sol: out of bounds (too small) for set on '%s'", detail::demangle<T>().c_str());
 					return;
 				}
 				--key;
+				std::ptrdiff_t len = static_cast<std::ptrdiff_t>(size_start(L, self));
 				if (key == len) {
 					add_copyable(is_copyable(), L, self, std::move(value));
 					return;
 				}
 				else if (key > len) {
-					// error here in safety mode
+					luaL_error(L, "sol: out of bounds (too big) for set on '%s'", detail::demangle<T>().c_str());
 					return;
 				}
 				auto it = std::next(begin(L, self), key);
@@ -652,7 +652,7 @@ namespace sol {
 				luaL_error(L, "cannot call 'add' on type '%s': no suitable insert/push_back C++ functions", sol::detail::demangle<T>().data());
 			}
 
-			static void add_insert_after(std::true_type, lua_State* L, T& self, stack_object value, iterator& at) {
+			static void add_insert_after(std::true_type, lua_State*, T& self, stack_object value, iterator& at) {
 				self.insert_after(at, value.as<V>());
 			}
 
@@ -752,7 +752,7 @@ namespace sol {
 					auto e = end(L, self);
 					for (auto it = begin(L, self); key > 0; ++backit, ++it, --key) {
 						if (backit == e) {
-							// TODO: error here in safety mode
+							luaL_error(L, "sol: out of bounds (too big) for set on '%s'", detail::demangle<T>().c_str());
 							return;
 						}
 					}
@@ -814,7 +814,7 @@ namespace sol {
 					auto e = end(L, self);
 					for (auto it = begin(L, self); key > 0; ++backit, ++it, --key) {
 						if (backit == e) {
-							// TODO: error here in safety mode
+							luaL_error(L, "sol: out of bounds for erase on '%s'", detail::demangle<T>().c_str());
 							return;
 						}
 					}
@@ -822,7 +822,7 @@ namespace sol {
 				self.erase_after(backit);
 			}
 
-			static void erase_after_has(std::false_type, lua_State* L, T& self, const K& key) {
+			static void erase_after_has(std::false_type, lua_State* L, T&, const K&) {
 				luaL_error(L, "sol: cannot call erase on '%s'", detail::demangle<T>().c_str());
 			}
 
@@ -1012,15 +1012,13 @@ namespace sol {
 			};
 
 			static auto& get_src(lua_State* L) {
-#ifdef SOL_SAFE_USERTYPE
 				auto p = stack::check_get<T*>(L, 1);
+#ifdef SOL_SAFE_USERTYPE
 				if (!p || p.value() == nullptr) {
 					luaL_error(L, "sol: 'self' argument is nil or not of type '%s' (pass 'self' as first argument with ':' or call on proper type)", detail::demangle<T>().c_str());
 				}
-				return *p.value();
-#else
-				return stack::get<T>(L, 1);
 #endif // Safe getting with error
+				return *p.value();
 			}
 
 			static int find(std::true_type, lua_State* L) {
@@ -1074,7 +1072,7 @@ namespace sol {
 
 			static int get(lua_State* L) {
 				T& self = get_src(L);
-				std::size_t idx = stack::get<std::size_t>(L, 2);
+				std::ptrdiff_t idx = stack::get<std::ptrdiff_t>(L, 2);
 				if (idx > std::extent<T>::value || idx < 1) {
 					return stack::push(L, lua_nil);
 				}
@@ -1088,9 +1086,12 @@ namespace sol {
 
 			static int set(lua_State* L) {
 				T& self = get_src(L);
-				std::size_t idx = stack::get<std::size_t>(L, 2);
-				if (idx > std::extent<T>::value || idx < 1) {
-					return luaL_error(L, "sol: index out of bounds on set");
+				std::ptrdiff_t idx = stack::get<std::ptrdiff_t>(L, 2);
+				if (idx > std::extent<T>::value) {
+					return luaL_error(L, "sol: index out of bounds (too big) for set on '%s'", detail::demangle<T>().c_str());
+				}
+				if (idx < 1) {
+					return luaL_error(L, "sol: index out of bounds (too small) for set on '%s'", detail::demangle<T>().c_str());
 				}
 				--idx;
 				self[idx] = stack::get<value_type>(L, 3);

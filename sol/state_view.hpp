@@ -263,7 +263,9 @@ namespace sol {
 
 		template <typename E>
 		protected_function_result do_string(const string_view& code, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), chunkname.c_str(), to_string(mode).c_str()));
+			char basechunkname[17] = {};
+			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
+			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str()));
 			if (x != load_status::ok) {
 				return protected_function_result(L, absolute_index(L, -1), 0, 1, static_cast<call_status>(x));
 			}
@@ -284,7 +286,9 @@ namespace sol {
 		}
 
 		protected_function_result do_string(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), chunkname.c_str(), to_string(mode).c_str()));
+			char basechunkname[17] = {};
+			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
+			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str()));
 			if (x != load_status::ok) {
 				return protected_function_result(L, absolute_index(L, -1), 0, 1, static_cast<call_status>(x));
 			}
@@ -356,9 +360,11 @@ namespace sol {
 		}
 
 		template <typename E>
-		function_result unsafe_script(const string_view& code, const sol::basic_environment<E>& env, load_mode mode = load_mode::any) {
+		function_result unsafe_script(const string_view& code, const sol::basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			char basechunkname[17] = {};
+			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
 			int index = lua_gettop(L);
-			if (luaL_loadbufferx(L, code.data(), code.size(), name.data(), to_string(mode).c_str())) {
+			if (luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str())) {
 				lua_error(L);
 			}
 			set_environment(env, stack_reference(L, raw_index(index + 1)));
@@ -370,9 +376,9 @@ namespace sol {
 			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
 		}
 
-		function_result unsafe_script(const string_view& code, const std::string& name = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		function_result unsafe_script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			int index = lua_gettop(L);
-			stack::script(L, code, name, mode);
+			stack::script(L, code, chunkname, mode);
 			int postindex = lua_gettop(L);
 			int returns = postindex - index;
 			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
@@ -437,19 +443,23 @@ namespace sol {
 			return unsafe_script_file(filename, mode);
 		}
 
-		load_result load(const string_view& code, const std::string& name = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), name.c_str(), to_string(mode).c_str()));
-			return load_result(L, lua_absindex(L, -1), 1, 1, x);
+		load_result load(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			char basechunkname[17] = {};
+			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
+			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str()));
+			return load_result(L, absolute_index(L, -1), 1, 1, x);
 		}
 
 		load_result load_file(const std::string& filename, load_mode mode = load_mode::any) {
 			load_status x = static_cast<load_status>(luaL_loadfilex(L, filename.c_str(), to_string(mode).c_str()));
-			return load_result(L, lua_absindex(L, -1), 1, 1, x);
+			return load_result(L, absolute_index(L, -1), 1, 1, x);
 		}
 
-		load_result load(lua_Reader reader, void* data, const std::string& name = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			load_status x = static_cast<load_status>(lua_load(L, reader, data, name.c_str(), to_string(mode).c_str()));
-			return load_result(L, lua_absindex(L, -1), 1, 1, x);
+		load_result load(lua_Reader reader, void* data, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			char basechunkname[17] = {};
+			const char* chunknametarget = detail::make_chunk_name("lua_reader", chunkname, basechunkname);
+			load_status x = static_cast<load_status>(lua_load(L, reader, data, chunknametarget, to_string(mode).c_str()));
+			return load_result(L, absolute_index(L, -1), 1, 1, x);
 		}
 
 		iterator begin() const {

@@ -37,8 +37,26 @@
 namespace sol {
 	namespace detail {
 		inline const std::string& default_chunk_name() {
-			static const std::string name = "string";
+			static const std::string name = "script";
 			return name;
+		}
+
+		template <std::size_t N>
+		const char* make_chunk_name(const string_view& code, const std::string& chunkname, char (&basechunkname)[N]) {
+			if (chunkname.empty()) {
+				auto it = code.cbegin();
+				auto e = code.cend();
+				std::size_t i = 0;
+				static const std::size_t n = N - 1;
+				for (i = 0; i < n && it != e; ++i, ++it) {
+					basechunkname[i] = *it;
+				}
+				basechunkname[i] = '\0';
+				return &basechunkname[0];
+			}
+			else {
+				return chunkname.c_str();
+			}
 		}
 	} // detail
 
@@ -178,8 +196,10 @@ namespace sol {
 			return call_syntax::colon;
 		}
 
-		inline void script(lua_State* L, const string_detail::string_shim& code, string_detail::string_shim name = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			if (luaL_loadbufferx(L, code.data(), code.size(), name.data(), to_string(mode).c_str()) || lua_pcall(L, 0, LUA_MULTRET, 0)) {
+		inline void script(lua_State* L, const string_detail::string_shim& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			char basechunkname[17] = {};
+			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
+			if (luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str()) || lua_pcall(L, 0, LUA_MULTRET, 0)) {
 				lua_error(L);
 			}
 		}

@@ -5,13 +5,6 @@
 #include <iostream>
 #include "test_stack_guard.hpp"
 
-std::function<int()> makefn() {
-	auto fx = []() -> int {
-		return 0x1456789;
-	};
-	return fx;
-}
-
 template <typename T>
 T va_func(sol::variadic_args va, T first) {
 	T s = 0;
@@ -23,6 +16,13 @@ T va_func(sol::variadic_args va, T first) {
 	std::cout << s << std::endl;
 
 	return s;
+}
+
+std::function<int()> makefn() {
+	auto fx = []() -> int {
+		return 0x1456789;
+	};
+	return fx;
 }
 
 void takefn(std::function<int()> purr) {

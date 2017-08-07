@@ -53,8 +53,20 @@ namespace sol {
 				return 0;
 			}
 
-			const char* c_str() const {
+			const char* begin() const {
 				return p;
+			}
+
+			const char* end() const {
+				return p + s;
+			}
+
+			const char* cbegin() const {
+				return p;
+			}
+
+			const char* cend() const {
+				return p + s;
 			}
 
 			const char* data() const {

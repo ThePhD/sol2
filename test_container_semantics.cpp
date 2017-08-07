@@ -128,7 +128,7 @@ void ordered_container_check(sol::state& lua, T& items) {
 	{
 		auto r1 = lua.script(R"(
 for i=1,#c do 
-	v = c[i] 
+	v = c[(i + 10)] 
 	assert(v == (i + 10)) 
 end
 		)", sol::script_pass_on_error);
@@ -323,8 +323,8 @@ void associative_ordered_container_check(sol::state& lua, T& items) {
 	{
 		auto r1 = lua.script(R"(
 for i=1,#c do 
-	v = c[i] 
-	assert(v == (i + 10)) 
+	v = c[(i + 10)] 
+	assert(v == (i + 20))
 end
 		)", sol::script_pass_on_error);
 		REQUIRE(r1.valid());
@@ -808,5 +808,107 @@ TEST_CASE("containers/associative unordered containers", "check associative (map
 		};
 		lua["c"] = &items;
 		associative_unordered_container_check(lua, items);
+	}
+}
+
+TEST_CASE("containers/auxiliary functions test", "make sure the manipulation functions are present and usable and working across various container types") {
+	sol::state lua;
+	lua.open_libraries();
+
+	lua.script(R"(
+function g (x)
+	x:add(20)
+end
+
+function h (x)
+	x:add(20, 40)
+end
+
+function i (x)
+	x:clear()
+end
+
+function sf (x,v)
+	return x:find(v)
+end
+
+)");
+
+	// Have the function we 
+	// just defined in Lua
+	sol::function g = lua["g"];
+	sol::function h = lua["h"];
+	sol::function i = lua["i"];
+	sol::function sf = lua["sf"];
+
+	// Set a global variable called 
+	// "arr" to be a vector of 5 lements
+	lua["c_arr"] = std::array<int, 5>{ { 2, 4, 6, 8, 10 } };
+	lua["arr"] = std::vector<int>{ 2, 4, 6, 8, 10 };
+	lua["map"] = std::map<int, int>{ { 1 , 2 },{ 2, 4 },{ 3, 6 },{ 4, 8 },{ 5, 10 } };
+	lua["set"] = std::set<int>{ 2, 4, 6, 8, 10 };
+	std::array<int, 5>& c_arr = lua["c_arr"];
+	std::vector<int>& arr = lua["arr"];
+	std::map<int, int>& map = lua["map"];
+	std::set<int>& set = lua["set"];
+	REQUIRE(c_arr.size() == 5);
+	REQUIRE(arr.size() == 5);
+	REQUIRE(map.size() == 5);
+	REQUIRE(set.size() == 5);
+
+	g(lua["set"]);
+	g(lua["arr"]);
+	h(lua["map"]);
+	REQUIRE(arr.size() == 6);
+	REQUIRE(map.size() == 6);
+	REQUIRE(set.size() == 6);
+
+	{
+		int r = sf(set, 8);
+		REQUIRE(r == 8);
+		sol::object rn = sf(set, 9);
+		REQUIRE(rn == sol::nil);
+	}
+
+	{
+		int r = sf(map, 3);
+		REQUIRE(r == 6);
+		sol::object rn = sf(map, 9);
+		REQUIRE(rn == sol::nil);
+	}
+
+	i(lua["arr"]);
+	i(lua["map"]);
+	i(lua["set"]);
+	REQUIRE(arr.empty());
+	REQUIRE(map.empty());
+	REQUIRE(set.empty());
+
+	REQUIRE_NOTHROW([&]() {
+		lua.script(R"(
+c_arr[1] = 7
+c_arr[2] = 7
+c_arr[3] = 7
+)");
+	}());
+}
+
+TEST_CASE("containers/indices test", "test indices on fixed array types") {
+	SECTION("zero index test") {
+		sol::state lua;
+		lua["c_arr"] = std::array<int, 5>{ { 2, 4, 6, 8, 10 } };
+		auto result = lua.safe_script(R"(
+c_arr[0] = 7
+)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+	}
+
+	SECTION("negative index test") {
+		sol::state lua;
+		lua["c_arr"] = std::array<int, 5>{ { 2, 4, 6, 8, 10 } };
+		auto result = lua.safe_script(R"(
+c_arr[-1] = 7
+)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
 	}
 }
