@@ -53,7 +53,7 @@ namespace sol {
 				}
 				if (it != e) {
 					for (std::size_t c = 0; c < 3; ++i, ++c) {
-						basechunkname[i] = ".";
+						basechunkname[i] = '.';
 					}
 				}
 				basechunkname[i] = '\0';

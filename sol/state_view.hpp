@@ -461,6 +461,7 @@ namespace sol {
 #if SOL_LUA_VERSION > 501
 			load_status x = static_cast<load_status>(lua_load(L, reader, data, chunknametarget, to_string(mode).c_str()));
 #else
+			(void)mode;
 			load_status x = static_cast<load_status>(lua_load(L, reader, data, chunknametarget));
 #endif
 			return load_result(L, absolute_index(L, -1), 1, 1, x);
