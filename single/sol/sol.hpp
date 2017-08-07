@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-07 18:22:38.155280 UTC
-// This header was generated with sol v2.18.0 (revision 6eaa277)
+// Generated 2017-08-07 18:54:03.754890 UTC
+// This header was generated with sol v2.18.0 (revision c8728af)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -7295,7 +7295,7 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct pusher<as_table_t<T>, std::enable_if_t<is_container<meta::unqualified_t<T>>::value>> {
+		struct pusher<as_table_t<T>, std::enable_if_t<is_container<meta::unwrap_unqualified_t<T>>::value>> {
 			static int push(lua_State* L, const T& tablecont) {
 				return push(meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>>(), L, tablecont);
 			}
@@ -7312,7 +7312,7 @@ namespace sol {
 			
 			static int push(std::false_type, lua_State* L, const T& tablecont) {
 				auto& cont = detail::deref(detail::unwrap(tablecont));
-				lua_createtable(L, stack_detail::get_size_hint(tablecont), 0);
+				lua_createtable(L, stack_detail::get_size_hint(cont), 0);
 				int tableindex = lua_gettop(L);
 				std::size_t index = 1;
 				for (const auto& i : cont) {
@@ -7348,7 +7348,7 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct pusher<as_table_t<T>, std::enable_if_t<!is_container<meta::unqualified_t<T>>::value>> {
+		struct pusher<as_table_t<T>, std::enable_if_t<!is_container<meta::unwrap_unqualified_t<T>>::value>> {
 			static int push(lua_State* L, const T& v) {
 				return stack::push(L, v);
 			}

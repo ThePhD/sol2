@@ -218,7 +218,7 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct pusher<as_table_t<T>, std::enable_if_t<is_container<meta::unqualified_t<T>>::value>> {
+		struct pusher<as_table_t<T>, std::enable_if_t<is_container<meta::unwrap_unqualified_t<T>>::value>> {
 			static int push(lua_State* L, const T& tablecont) {
 				return push(meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>>(), L, tablecont);
 			}
@@ -235,7 +235,7 @@ namespace sol {
 			
 			static int push(std::false_type, lua_State* L, const T& tablecont) {
 				auto& cont = detail::deref(detail::unwrap(tablecont));
-				lua_createtable(L, stack_detail::get_size_hint(tablecont), 0);
+				lua_createtable(L, stack_detail::get_size_hint(cont), 0);
 				int tableindex = lua_gettop(L);
 				std::size_t index = 1;
 				for (const auto& i : cont) {
@@ -271,7 +271,7 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct pusher<as_table_t<T>, std::enable_if_t<!is_container<meta::unqualified_t<T>>::value>> {
+		struct pusher<as_table_t<T>, std::enable_if_t<!is_container<meta::unwrap_unqualified_t<T>>::value>> {
 			static int push(lua_State* L, const T& v) {
 				return stack::push(L, v);
 			}
