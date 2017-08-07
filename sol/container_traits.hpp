@@ -1123,7 +1123,7 @@ namespace sol {
 			}
 
 			static iterator end(lua_State*, T& self) {
-				return std::addressof(self[std::extent<T>::value]);
+				return std::addressof(self[0]) + std::extent<T>::value;
 			}
 		};
 	} // container_detail

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-07 12:34:45.380203 UTC
-// This header was generated with sol v2.18.0 (revision 62b242b)
+// Generated 2017-08-07 17:57:23.393094 UTC
+// This header was generated with sol v2.18.0 (revision 5ce8c9f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -14429,7 +14429,7 @@ namespace sol {
 			}
 
 			static iterator end(lua_State*, T& self) {
-				return std::addressof(self[std::extent<T>::value]);
+				return std::addressof(self[0]) + std::extent<T>::value;
 			}
 		};
 	} // container_detail

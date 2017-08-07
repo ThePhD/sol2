@@ -133,7 +133,7 @@ if args.testing:
     cxxflags.append('-Wmissing-declarations')
 
 if 'linux' in sys.platform:
-    cxxflangs.append('-pthread')
+    cxxflags.append('-pthread')
     ldflags.extend(libraries(['dl']))
 
 builddir = 'bin'
