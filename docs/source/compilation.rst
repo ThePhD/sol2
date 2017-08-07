@@ -23,7 +23,7 @@ GCC 7.x is now out alongside Visual Studio 2017. This means that `sol2 release v
 	- v3.9.x
 	- v3.8.x
 	- v3.7.x
-	- v3.5.x
+	- v3.6.x
 	- Note: this applies to XCode's Apple Clang as well, but that compiler packs its own deficiencies and problems as well
 
 **This does not mean we are immediately abandoning older compilers.** We will update this page as relevant bugfixes are backported to the v2.x.x releases. Remember that sol2 is feature-complete: there is nothing more we can add to the library at this time with C++11/C++14 compiler support, so your code will be covered for a long time to come.
