@@ -98,8 +98,8 @@ namespace sol {
 
 			template <typename V>
 			static void insert_at_end(std::true_type, types<V>, lua_State* L, T& arr, std::size_t) {
-				using std::cend;
-				arr.insert(cend(arr), stack::get<V>(L, -lua_size<V>::value));
+				using std::end;
+				arr.insert(end(arr), stack::get<V>(L, -lua_size<V>::value));
 			}
 
 			template <typename V>

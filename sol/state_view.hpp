@@ -368,7 +368,7 @@ namespace sol {
 				lua_error(L);
 			}
 			set_environment(env, stack_reference(L, raw_index(index + 1)));
-			if (lua_call(L, 0, LUA_MULTRET)) {
+			if (lua_pcall(L, 0, LUA_MULTRET, 0)) {
 				lua_error(L);
 			}
 			int postindex = lua_gettop(L);
@@ -391,7 +391,7 @@ namespace sol {
 				lua_error(L);
 			}
 			set_environment(env, stack_reference(L, raw_index(index + 1)));
-			if (lua_call(L, 0, LUA_MULTRET)) {
+			if (lua_pcall(L, 0, LUA_MULTRET, 0)) {
 				lua_error(L);
 			}
 			int postindex = lua_gettop(L);

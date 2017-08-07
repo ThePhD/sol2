@@ -258,7 +258,6 @@ namespace sol {
 					} }; 
 					
 					if (luaL_newmetatable(L, metakey) == 1) {
-						stack_reference metatable(L, -1);
 						luaL_setfuncs(L, reg.data(), 0);
 					}
 					lua_setmetatable(L, -2);

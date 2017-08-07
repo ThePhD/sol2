@@ -351,12 +351,12 @@ namespace sol {
 				return luaL_error(L, "sol: cannot call '__pairs' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 			}
 
-			static iterator begin(lua_State* L, T& self) {
+			static iterator begin(lua_State* L, T&) {
 				luaL_error(L, "sol: cannot call 'being' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 				return lua_nil;
 			}
 
-			static iterator end(lua_State* L, T& self) {
+			static iterator end(lua_State* L, T&) {
 				luaL_error(L, "sol: cannot call 'end' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 				return lua_nil;
 			}
@@ -474,7 +474,7 @@ namespace sol {
 				return get_associative(is_associative(), L, it);
 			}
 
-			static int get_comparative(std::false_type, lua_State* L, T& self, K& key) {
+			static int get_comparative(std::false_type, lua_State* L, T&, K&) {
 				return luaL_error(L, "cannot get this key on '%s': no suitable way to increment iterator and compare to key value '%s'", detail::demangle<T>().data(), detail::demangle<K>().data());
 			}
 
@@ -556,7 +556,7 @@ namespace sol {
 				set_writable(is_writable(), L, self, it, std::move(value));
 			}
 
-			static void set_comparative(std::false_type, lua_State* L, T& self, stack_object key, stack_object value) {
+			static void set_comparative(std::false_type, lua_State* L, T&, stack_object, stack_object) {
 				luaL_error(L, "cannot set this value on '%s': no suitable way to increment iterator or compare to '%s' key", detail::demangle<T>().data(), detail::demangle<K>().data());
 			}
 
@@ -1118,11 +1118,11 @@ namespace sol {
 				return 3;
 			}
 
-			static iterator begin(lua_State* L, T& self) {
+			static iterator begin(lua_State*, T& self) {
 				return std::addressof(self[0]);
 			}
 
-			static iterator end(lua_State* L, T& self) {
+			static iterator end(lua_State*, T& self) {
 				return std::addressof(self[std::extent<T>::value]);
 			}
 		};

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-07 06:06:53.826612 UTC
-// This header was generated with sol v2.18.0 (revision 03c229b)
+// Generated 2017-08-07 06:26:17.141906 UTC
+// This header was generated with sol v2.18.0 (revision ca685e0)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6201,8 +6201,8 @@ namespace sol {
 
 			template <typename V>
 			static void insert_at_end(std::true_type, types<V>, lua_State* L, T& arr, std::size_t) {
-				using std::cend;
-				arr.insert(cend(arr), stack::get<V>(L, -lua_size<V>::value));
+				using std::end;
+				arr.insert(end(arr), stack::get<V>(L, -lua_size<V>::value));
 			}
 
 			template <typename V>
@@ -8268,7 +8268,7 @@ namespace sol {
 namespace sol {
 	namespace detail {
 		inline const std::string& default_chunk_name() {
-			static const std::string name = "script";
+			static const std::string name = "";
 			return name;
 		}
 
@@ -13675,12 +13675,12 @@ namespace sol {
 				return luaL_error(L, "sol: cannot call '__pairs' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 			}
 
-			static iterator begin(lua_State* L, T& self) {
+			static iterator begin(lua_State* L, T&) {
 				luaL_error(L, "sol: cannot call 'being' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 				return lua_nil;
 			}
 
-			static iterator end(lua_State* L, T& self) {
+			static iterator end(lua_State* L, T&) {
 				luaL_error(L, "sol: cannot call 'end' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 				return lua_nil;
 			}
@@ -13798,7 +13798,7 @@ namespace sol {
 				return get_associative(is_associative(), L, it);
 			}
 
-			static int get_comparative(std::false_type, lua_State* L, T& self, K& key) {
+			static int get_comparative(std::false_type, lua_State* L, T&, K&) {
 				return luaL_error(L, "cannot get this key on '%s': no suitable way to increment iterator and compare to key value '%s'", detail::demangle<T>().data(), detail::demangle<K>().data());
 			}
 
@@ -13880,7 +13880,7 @@ namespace sol {
 				set_writable(is_writable(), L, self, it, std::move(value));
 			}
 
-			static void set_comparative(std::false_type, lua_State* L, T& self, stack_object key, stack_object value) {
+			static void set_comparative(std::false_type, lua_State* L, T&, stack_object, stack_object) {
 				luaL_error(L, "cannot set this value on '%s': no suitable way to increment iterator or compare to '%s' key", detail::demangle<T>().data(), detail::demangle<K>().data());
 			}
 
@@ -14442,11 +14442,11 @@ namespace sol {
 				return 3;
 			}
 
-			static iterator begin(lua_State* L, T& self) {
+			static iterator begin(lua_State*, T& self) {
 				return std::addressof(self[0]);
 			}
 
-			static iterator end(lua_State* L, T& self) {
+			static iterator end(lua_State*, T& self) {
 				return std::addressof(self[std::extent<T>::value]);
 			}
 		};
@@ -14690,7 +14690,6 @@ namespace sol {
 					} }; 
 					
 					if (luaL_newmetatable(L, metakey) == 1) {
-						stack_reference metatable(L, -1);
 						luaL_setfuncs(L, reg.data(), 0);
 					}
 					lua_setmetatable(L, -2);
@@ -15990,7 +15989,7 @@ namespace sol {
 				lua_error(L);
 			}
 			set_environment(env, stack_reference(L, raw_index(index + 1)));
-			if (lua_call(L, 0, LUA_MULTRET)) {
+			if (lua_pcall(L, 0, LUA_MULTRET, 0)) {
 				lua_error(L);
 			}
 			int postindex = lua_gettop(L);
@@ -16013,7 +16012,7 @@ namespace sol {
 				lua_error(L);
 			}
 			set_environment(env, stack_reference(L, raw_index(index + 1)));
-			if (lua_call(L, 0, LUA_MULTRET)) {
+			if (lua_pcall(L, 0, LUA_MULTRET, 0)) {
 				lua_error(L);
 			}
 			int postindex = lua_gettop(L);

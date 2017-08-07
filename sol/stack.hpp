@@ -37,7 +37,7 @@
 namespace sol {
 	namespace detail {
 		inline const std::string& default_chunk_name() {
-			static const std::string name = "script";
+			static const std::string name = "";
 			return name;
 		}
 

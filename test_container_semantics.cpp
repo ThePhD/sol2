@@ -106,21 +106,21 @@ end
 		std::size_t idx = 0;
 		for (const auto& i : items) {
 			const auto& v = values[idx];
-			REQUIRE(i == v);
+			REQUIRE((i == v));
 			++idx;
 		}
 	}
-	REQUIRE(s1 == 6);
-	REQUIRE(s2 == 5);
-	REQUIRE(s3 == 4);
-	REQUIRE(len == 6);
-	REQUIRE(first == 20);
-	REQUIRE(last == 18);
-	REQUIRE(i1 == 1);
-	REQUIRE(i2 == 4);
-	REQUIRE(v1 == 11);
-	REQUIRE(v2 == 13);
-	REQUIRE(v3 == 18);
+	REQUIRE((s1 == 6));
+	REQUIRE((s2 == 5));
+	REQUIRE((s3 == 4));
+	REQUIRE((len == 6));
+	REQUIRE((first == 20));
+	REQUIRE((last == 18));
+	REQUIRE((i1 == 1));
+	REQUIRE((i2 == 4));
+	REQUIRE((v1 == 11));
+	REQUIRE((v2 == 13));
+	REQUIRE((v3 == 18));
 }
 
 template <typename T>
@@ -215,21 +215,21 @@ end
 		std::size_t idx = 0;
 		for (const auto& i : items) {
 			const auto& v = values[idx];
-			REQUIRE(i == v);
+			REQUIRE((i == v));
 			++idx;
 		}
 	}
-	REQUIRE(s1 == 7);
-	REQUIRE(s2 == 6);
-	REQUIRE(s3 == 5);
-	REQUIRE(len == 7);
-	REQUIRE(first == 12);
-	REQUIRE(last == 20);
-	REQUIRE(i1 == 11);
-	REQUIRE(i2 == 14);
-	REQUIRE(v1 == 11);
-	REQUIRE(v2 == 13);
-	REQUIRE(v3 == 20);
+	REQUIRE((s1 == 7));
+	REQUIRE((s2 == 6));
+	REQUIRE((s3 == 5));
+	REQUIRE((len == 7));
+	REQUIRE((first == 12));
+	REQUIRE((last == 20));
+	REQUIRE((i1 == 11));
+	REQUIRE((i2 == 14));
+	REQUIRE((v1 == 11));
+	REQUIRE((v2 == 13));
+	REQUIRE((v3 == 20));
 }
 
 template <typename T>
@@ -302,20 +302,20 @@ void unordered_container_check(sol::state& lua, T& items) {
 		for (const auto& i : items) {
 			const auto& v = values[idx];
 			auto it = items.find(v);
-			REQUIRE(it != items.cend());
-			REQUIRE(*it == v);
+			REQUIRE((it != items.cend()));
+			REQUIRE((*it == v));
 			++idx;
 		}
 	}
-	REQUIRE(s1 == 7);
-	REQUIRE(s2 == 6);
-	REQUIRE(s3 == 5);
-	REQUIRE(len == 7);
-	REQUIRE(i1 == 11);
-	REQUIRE(i2 == 14);
-	REQUIRE(v1 == 11);
-	REQUIRE(v2 == 13);
-	REQUIRE(v3 == 20);
+	REQUIRE((s1 == 7));
+	REQUIRE((s2 == 6));
+	REQUIRE((s3 == 5));
+	REQUIRE((len == 7));
+	REQUIRE((i1 == 11));
+	REQUIRE((i2 == 14));
+	REQUIRE((v1 == 11));
+	REQUIRE((v2 == 13));
+	REQUIRE((v3 == 20));
 }
 
 template <typename T>
@@ -418,23 +418,23 @@ end
 		std::size_t idx = 0;
 		for (const auto& i : items) {
 			const auto& v = values[idx];
-			REQUIRE(i == v);
+			REQUIRE((i == v));
 			++idx;
 		}
 	}
-	REQUIRE(s1 == 7);
-	REQUIRE(s2 == 6);
-	REQUIRE(s3 == 5);
-	REQUIRE(len == 7);
-	REQUIRE(first.first == 12);
-	REQUIRE(last.first == 20);
-	REQUIRE(first.second == 31);
-	REQUIRE(last.second == 30);
-	REQUIRE(i1 == 21);
-	REQUIRE(i2 == 24);
-	REQUIRE(v1 == 21);
-	REQUIRE(v2 == 23);
-	REQUIRE(v3 == 30);
+	REQUIRE((s1 == 7));
+	REQUIRE((s2 == 6));
+	REQUIRE((s3 == 5));
+	REQUIRE((len == 7));
+	REQUIRE((first.first == 12));
+	REQUIRE((last.first == 20));
+	REQUIRE((first.second == 31));
+	REQUIRE((last.second == 30));
+	REQUIRE((i1 == 21));
+	REQUIRE((i2 == 24));
+	REQUIRE((v1 == 21));
+	REQUIRE((v2 == 23));
+	REQUIRE((v3 == 30));
 }
 
 template <typename T>
@@ -516,20 +516,20 @@ void associative_unordered_container_check(sol::state& lua, T& items) {
 		for (const auto& i : items) {
 			const auto& v = values[idx];
 			auto it = items.find(v.first);
-			REQUIRE(it != items.cend());
-			REQUIRE(it->second == v.second);
+			REQUIRE((it != items.cend()));
+			REQUIRE((it->second == v.second));
 			++idx;
 		}
 	}
-	REQUIRE(s1 == 7);
-	REQUIRE(s2 == 6);
-	REQUIRE(s3 == 5);
-	REQUIRE(len == 7);
-	REQUIRE(i1 == 21);
-	REQUIRE(i2 == 24);
-	REQUIRE(v1 == 21);
-	REQUIRE(v2 == 23);
-	REQUIRE(v3 == 30);
+	REQUIRE((s1 == 7));
+	REQUIRE((s2 == 6));
+	REQUIRE((s3 == 5));
+	REQUIRE((len == 7));
+	REQUIRE((i1 == 21));
+	REQUIRE((i2 == 24));
+	REQUIRE((v1 == 21));
+	REQUIRE((v2 == 23));
+	REQUIRE((v3 == 30));
 }
 
 template <typename T>
@@ -624,21 +624,21 @@ end
 		std::size_t idx = 0;
 		for (const auto& i : items) {
 			const auto& v = values[idx];
-			REQUIRE(i == v);
+			REQUIRE((i == v));
 			++idx;
 		}
 	}
-	REQUIRE(first == 11);
-	REQUIRE(last == 18);
-	REQUIRE(s1 == 5);
-	REQUIRE(s2 == 5);
-	REQUIRE(s3 == 5);
-	REQUIRE(len == 5);
-	REQUIRE(i1 == 1);
-	REQUIRE(i2 == 4);
-	REQUIRE(v1 == 12);
-	REQUIRE(v2 == 15);
-	REQUIRE(v3 == 14);
+	REQUIRE((first == 11));
+	REQUIRE((last == 18));
+	REQUIRE((s1 == 5));
+	REQUIRE((s2 == 5));
+	REQUIRE((s3 == 5));
+	REQUIRE((len == 5));
+	REQUIRE((i1 == 1));
+	REQUIRE((i2 == 4));
+	REQUIRE((v1 == 12));
+	REQUIRE((v2 == 15));
+	REQUIRE((v3 == 14));
 }
 
 TEST_CASE("containers/sequence containers", "check all of the functinos for every single container") {
