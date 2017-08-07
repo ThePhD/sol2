@@ -65,6 +65,11 @@ namespace sol {
 				}
 			}
 		};
+
+		template <typename base_t, typename T>
+		basic_function<base_t> force_cast(T& p) {
+			return p;
+		}
 	} // detail
 	
 	template <typename base_t, bool aligned = false, typename handler_t = reference>
@@ -206,7 +211,7 @@ namespace sol {
 			std::is_base_of<proxy_base_tag, meta::unqualified_t<Proxy>>,
 			meta::neg<is_lua_index<meta::unqualified_t<Handler>>>
 		> = meta::enabler>
-		basic_protected_function(Proxy&& p, Handler&& eh) : basic_protected_function(p.operator basic_function<base_t>(), std::forward<Handler>(eh)) {}
+		basic_protected_function(Proxy&& p, Handler&& eh) : basic_protected_function(detail::force_cast<base_t>(p), std::forward<Handler>(eh)) {}
 
 		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
 		basic_protected_function(lua_State* L, T&& r) : basic_protected_function(L, std::forward<T>(r), get_default_handler(L)) {}
