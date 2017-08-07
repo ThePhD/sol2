@@ -681,7 +681,7 @@ TEST_CASE("containers/fixed containers", "check immutable container types") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		std::array<int, 5> items{ 11, 12, 13, 14, 15 };
+		std::array<int, 5> items{ { 11, 12, 13, 14, 15 } };
 		lua["c"] = &items;
 		fixed_container_check(lua, items);
 	}
@@ -689,7 +689,7 @@ TEST_CASE("containers/fixed containers", "check immutable container types") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		std::array<int, 5> items{ 11, 12, 13, 14, 15 };
+		std::array<int, 5> items{ { 11, 12, 13, 14, 15 } };
 		lua["c"] = std::ref(items);
 		fixed_container_check(lua, items);
 	}

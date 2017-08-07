@@ -99,7 +99,7 @@ TEST_CASE("containers/deque roundtrip", "make sure deques can be round-tripped")
 
 TEST_CASE("containers/array roundtrip", "make sure arrays can be round-tripped") {
 	sol::state lua;
-	std::array<int, 3> v{ 1, 2, 3 };
+	std::array<int, 3> v{ { 1, 2, 3 } };
 	lua.set_function("f", [&]() -> std::array<int, 3>& {
 		return v;
 	});
@@ -207,7 +207,7 @@ TEST_CASE("containers/deque table roundtrip", "make sure deques can be round-tri
 
 TEST_CASE("containers/array table roundtrip", "make sure arrays can be round-tripped") {
 	sol::state lua;
-	std::array<int, 3> v{ 1, 2, 3 };
+	std::array<int, 3> v{ { 1, 2, 3 } };
 	lua.set_function("f", [&]() {
 		return sol::as_table(v);
 	});

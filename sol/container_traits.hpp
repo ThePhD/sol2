@@ -1073,7 +1073,7 @@ namespace sol {
 			static int get(lua_State* L) {
 				T& self = get_src(L);
 				std::ptrdiff_t idx = stack::get<std::ptrdiff_t>(L, 2);
-				if (idx > std::extent<T>::value || idx < 1) {
+				if (idx > static_cast<std::ptrdiff_t>(std::extent<T>::value) || idx < 1) {
 					return stack::push(L, lua_nil);
 				}
 				--idx;
@@ -1087,7 +1087,7 @@ namespace sol {
 			static int set(lua_State* L) {
 				T& self = get_src(L);
 				std::ptrdiff_t idx = stack::get<std::ptrdiff_t>(L, 2);
-				if (idx > std::extent<T>::value) {
+				if (idx > static_cast<std::ptrdiff_t>(std::extent<T>::value)) {
 					return luaL_error(L, "sol: index out of bounds (too big) for set on '%s'", detail::demangle<T>().c_str());
 				}
 				if (idx < 1) {

@@ -47,9 +47,14 @@ namespace sol {
 				auto it = code.cbegin();
 				auto e = code.cend();
 				std::size_t i = 0;
-				static const std::size_t n = N - 1;
+				static const std::size_t n = N - 4;
 				for (i = 0; i < n && it != e; ++i, ++it) {
 					basechunkname[i] = *it;
+				}
+				if (it != e) {
+					for (std::size_t c = 0; c < 3; ++i, ++c) {
+						basechunkname[i] = ".";
+					}
 				}
 				basechunkname[i] = '\0';
 				return &basechunkname[0];
