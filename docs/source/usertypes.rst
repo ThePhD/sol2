@@ -22,8 +22,8 @@ The examples folder also has a number of really great examples for you to see. T
 	- **Please note** that one uses a colon, and the other uses a dot, and forgetting to do this properly will crash your code
 	- There are safety defines outlined in the :ref:`safety page here<config>`
 * You can push types classified as userdata before you register a usertype.
-	- You can register a usertype with the Lua runtime at any time sol2
-	- You can retrieve them from the Lua runtime as well through sol2
+	- You can register a usertype with the Lua runtime at any time
+	- You can retrieve a usertype from the Lua runtime at any time
 	- Methods and properties will be added to the type only after you register the usertype with the Lua runtime
 	- All methods and properties will appear on all userdata, even if that object was pushed before the usertype (all userdata will be updated)
 * Types either copy once or move once into the memory location, if it is a value type. If it is a pointer, we store only the reference.
