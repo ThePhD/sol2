@@ -17,7 +17,7 @@ Containers are objects that are meant to be inspected and iterated and whose job
 
 .. note::
 	
-	Please note that c-style arrays must be added to Lua using ``lua["my_arr"] = &my_c_array;`` or ``lua["my_arr"] = std::ref(my_c_array);`` to be bestowed these properties. No, a plain ``T*`` pointer is **not** considered an array. This is important because ``lua["my_string"] = "some string";`` is also typed as an array (``const char[n]``) and thusly we can only use  ``std::reference_wrapper`` or pointers to arrays to work for us.
+	Please note that c-style arrays must be added to Lua using ``lua["my_arr"] = &my_c_array;`` or ``lua["my_arr"] = std::ref(my_c_array);`` to be bestowed these properties. No, a plain ``T*`` pointer is **not** considered an array. This is important because ``lua["my_string"] = "some string";`` is also typed as an array (``const char[n]``) and thusly we can only use ``std::reference_wrapper`` or pointers to arrays to work for us.
 
 
 .. _container-detection:
