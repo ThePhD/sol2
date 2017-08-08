@@ -44,7 +44,7 @@ You can bind the it to Lua using the following C++ code:
 		"shoot", &ship::shoot,
 		"hurt", &ship::hurt,
 		// bind variable types, too
-		"life", &ship::bullets
+		"life", &ship::life,
 		// names in lua don't have to be the same as C++,
 		// but it probably helps if they're kept the same,
 		// here we change it just to show its possible
@@ -64,7 +64,7 @@ Equivalently, you can also write:
 	usertype<ship> shiptype(
 		"shoot", &ship::shoot,
 		"hurt", &ship::hurt,
-		"life", &ship::bullets
+		"life", &ship::life,
 		"bullet_count", &ship::bullets
 	);
 
