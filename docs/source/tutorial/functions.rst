@@ -31,7 +31,7 @@ Given a C++ function, you can drop it into Sol in several equivalent ways, worki
 
 		// This function is now accessible as 'my_func' in
 		// lua scripts / code run on this state:
-		lua.script("some_str = my_func(1, "Da");
+		lua.script("some_str = my_func(1, 'Da')");
 
 		// Read out the global variable we stored in 'some_str' in the
 		// quick lua code we just executed
