@@ -2,10 +2,10 @@ containers
 ==========
 *working with containers in sol2*
 
-Containers are objects that are meant to be inspected and iterated and whose job is to typically provide storage to a collection of items. The ``std::`` library has several containers of varying types, and all of them have ``begin()`` and ``end()`` function which return iterators. C-style arrays are also containers, and sol2 will detect all of them for use and bestow them with special properties and functions.
+Containers are objects that are meant to be inspected and iterated and whose job is to typically provide storage to a collection of items. The standard library has several containers of varying types, and all of them have ``begin()`` and ``end()`` methods which return iterators. C-style arrays are also containers, and sol2 will detect all of them for use and bestow upon them special properties and functions.
 
 * Containers from C++ are stored as ``userdata`` with special ``usertype`` metatables with :ref:`special operations<container-operations>`
-* Containers can be manipulated from C++ and Lua and, like userdata, will `reflect changes if you use a reference`_ to the data.
+* Containers can be manipulated from both C++ and Lua, and, like userdata, will `reflect changes if you use a reference`_ to the data.
 * This means containers **do not automatically serialize as Lua tables**
 	- If you need tables, consider using ``sol::as_table`` and ``sol::nested``
 	- See `this table serialization example`_ for more details
@@ -17,7 +17,7 @@ Containers are objects that are meant to be inspected and iterated and whose job
 
 .. note::
 	
-	Please note that c-style arrays must be added to Lua using ``lua["my_arr"] = &my_c_array;`` or ``lua["my_arr"] = std::ref(my_c_array);`` to be bestowed these properties. No, a plain ``T*`` pointer is **not** considered an array. This is important because ``lua["my_string"] = "some string";`` is also typed as an array (``const char[n]``) and thusly we can only use ``std::reference_wrapper``s or pointers to arrays to work for us.
+	Please note that c-style arrays must be added to Lua using ``lua["my_arr"] = &my_c_array;`` or ``lua["my_arr"] = std::ref(my_c_array);`` to be bestowed these properties. No, a plain ``T*`` pointer is **not** considered an array. This is important because ``lua["my_string"] = "some string";`` is also typed as an array (``const char[n]``) and thusly we can only use  ``std::reference_wrapper`` or pointers to arrays to work for us.
 
 
 .. _container-detection:
