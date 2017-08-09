@@ -13,14 +13,14 @@ overload
 	template <typename... Args>
 	overloaded_set<Args...> overload( Args&&... args );
 
-The actual class produced by ``sol::overload`` is essentially a type-wrapper around ``std::tuple`` that signals to the library that an overload is being created. The function helps users make overloaded functions that can be called from Lua using 1 name but multiple arguments. It is meant to replace the spaghetti of code whre users mock this up by doing strange if statements and switches on what version of a function to call based on `luaL_check{number/udata/string}`_.
+The actual class produced by ``sol::overload`` is essentially a type-wrapper around ``std::tuple`` that signals to the library that an overload is being created. The function helps users make overloaded functions that can be called from Lua using 1 name but multiple arguments. It is meant to replace the spaghetti of code where users mock this up by doing strange if statements and switches on what version of a function to call based on `luaL_check{number/udata/string}`_.
 
 .. note::
 
 	Please note that default parameters in a function (e.g., ``int func(int a = 20)``) do not exist beyond C++'s compile-time fun. When that function gets bound or serialized into Lua's framework, it is bound as a function taking 1 argument, not 2 functions taking either 0 or 1 argument. If you want to achieve the same effect, then you need to use overloading and explicitly call the version of the function you want. There is no magic in C++ that allows me to retrieve default parameters and set this up automatically.
 
 
-Its use is simple: whereever you can pass a function type to Lua, whether its on a :doc:`usertype<usertype>` or if you are just setting any kind of function with ``set`` or ``set_function`` (for :doc:`table<table>` or :doc:`state(_view)<state>`), simply wrap up the functions you wish to be considered for overload resolution on one function like so:
+Its use is simple: wherever you can pass a function type to Lua, whether its on a :doc:`usertype<usertype>` or if you are just setting any kind of function with ``set`` or ``set_function`` (for :doc:`table<table>` or :doc:`state(_view)<state>`), simply wrap up the functions you wish to be considered for overload resolution on one function like so:
 
 .. code-block:: cpp
 	
