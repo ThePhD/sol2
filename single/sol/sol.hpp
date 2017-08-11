@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-11 22:03:08.549881 UTC
-// This header was generated with sol v2.18.0 (revision 2e5d319)
+// Generated 2017-08-11 22:24:57.365154 UTC
+// This header was generated with sol v2.18.0 (revision 7af8b4e)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -7518,7 +7518,11 @@ namespace sol {
 #endif
 #if defined(SOL_CHECK_ARGUMENTS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
 				if (static_cast<T>(std::llround(static_cast<lua_Number>(value))) != value) {
-					luaL_error(L, "integer value will be misrepresented in lua");
+#ifndef SOL_NO_EXCEPTIONS
+					throw sol::error("The integer will be misrepresented in lua.");
+#else
+					assert(false && "The integer will be misrepresented in lua.");
+#endif
 				}
 #endif
 				lua_pushnumber(L, static_cast<lua_Number>(value));
