@@ -28,6 +28,8 @@
 #include "usertype_traits.hpp"
 #include <memory>
 #include <type_traits>
+#include <cassert>
+#include <limits>
 #ifdef SOL_CODECVT_SUPPORT
 #include <codecvt>
 #include <locale>
@@ -192,17 +194,34 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct pusher<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_signed<T>>::value>> {
+		struct pusher<T, std::enable_if_t<std::is_integral<T>::value>> {
 			static int push(lua_State* L, const T& value) {
-				lua_pushinteger(L, static_cast<lua_Integer>(value));
-				return 1;
-			}
-		};
-
-		template<typename T>
-		struct pusher<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_unsigned<T>>::value>> {
-			static int push(lua_State* L, const T& value) {
-				lua_pushinteger(L, static_cast<lua_Integer>(value));
+#if SOL_LUA_VERSION >= 503
+				static auto integer_value_fits = [](T const& value) {
+					if (sizeof(T) < sizeof(lua_Integer) || std::is_signed<T>::value && sizeof(T) == sizeof(lua_Integer)) {
+						return true;
+					}
+					auto u_min = static_cast<std::intmax_t>(std::numeric_limits<lua_Integer>::min());
+					auto u_max = static_cast<std::uintmax_t>(std::numeric_limits<lua_Integer>::max());
+					auto t_min = static_cast<std::intmax_t>(std::numeric_limits<T>::min());
+					auto t_max = static_cast<std::uintmax_t>(std::numeric_limits<T>::max());
+					return (u_min <= t_min || value >= static_cast<T>(u_min)) && (u_max >= t_max || value <= static_cast<T>(u_max));
+				};
+				if (integer_value_fits(value)) {
+					lua_pushinteger(L, static_cast<lua_Integer>(value));
+					return 1;
+				}
+#endif
+#if defined(SOL_CHECK_ARGUMENTS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
+				if (static_cast<T>(std::llround(static_cast<lua_Number>(value))) != value) {
+#ifndef SOL_NO_EXCEPTIONS
+					throw sol::error("The integer will be misrepresented in lua.");
+#else
+					assert(false && "The integer will be misrepresented in lua.");
+#endif
+				}
+#endif
+				lua_pushnumber(L, static_cast<lua_Number>(value));
 				return 1;
 			}
 		};
