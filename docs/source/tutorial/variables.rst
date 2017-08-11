@@ -18,8 +18,10 @@ reading
 	:caption: main.cpp
 	:name: variables-main-cpp
 
+	#define SOL_CHECK_ARGUMENTS 1
 	#include <sol.hpp>
-
+	
+	
 	int main () {
 
 		sol::state lua;
@@ -34,7 +36,9 @@ You can interact with the variables like this:
 	:caption: main.cpp extended
 	:name: extended-variables-main-cpp
 
+	#define SOL_CHECK_ARGUMENTS 1
 	#include <sol.hpp>
+
 	#include <tuple>
 	#include <utility> // for std::pair
 
@@ -49,7 +53,7 @@ You can interact with the variables like this:
 		
 		// can also get it using the "get" member function
 		// auto replaces the unqualified type name
-		auto resolution = config.get<sol::table>( "config" );
+		auto resolution = config.get<sol::table>( "resolution );
 
 		// table and state can have multiple things pulled out of it too
 		std::pair<int, int> xyresolution = resolution.get<int, int>( "x", "y" );
@@ -116,7 +120,9 @@ Writing gets a lot simpler. Even without scripting a file or a string, you can r
 	:caption: main.cpp
 	:name: writing-main-cpp
 
+	#define SOL_CHECK_ARGUMENTS 1
 	#include <sol.hpp>
+	
 	#include <iostream>
 
 	int main () {
@@ -159,7 +165,9 @@ This example pretty much sums up what can be done. Note that the syntax ``lua["n
 	:caption: main.cpp
 	:name: lazy-main-cpp
 
+	#define SOL_CHECK_ARGUMENTS 1
 	#include <sol.hpp>
+	
 	#include <iostream>
 
 	int main () {
@@ -185,8 +193,9 @@ Finally, it's possible to erase a reference/variable by setting it to ``nil``, u
 	:caption: main.cpp
 	:name: erase-main-cpp
 
+	#define SOL_CHECK_ARGUMENTS 1
 	#include <sol.hpp>
-
+	
 	int main () {
 
 		sol::state lua;

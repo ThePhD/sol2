@@ -48,9 +48,8 @@ TEST_CASE("variadics/required with variadic_args", "Check if a certain number of
 	);
 	REQUIRE_NOTHROW(lua.script("v(20, 25, 30)"));
 	REQUIRE_NOTHROW(lua.script("v(20, 25)"));
-#ifndef SOL_LUAJIT
-	REQUIRE_THROWS(lua.script("v(20)"));
-#endif // LuaJIT has problems with exceptions, as fucking usual
+	auto result = lua.safe_script("v(20)", sol::script_pass_on_error);
+	REQUIRE_FALSE(result.valid());
 }
 
 TEST_CASE("variadics/variadic_args get type", "Make sure we can inspect types proper from variadic_args") {

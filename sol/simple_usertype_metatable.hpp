@@ -184,6 +184,7 @@ namespace sol {
 		void* baseclasscast;
 		bool mustindex;
 		bool secondarymeta;
+		std::array<bool, 29> properties;
 
 		template <typename N>
 		void insert(N&& n, object&& o) {
@@ -327,10 +328,13 @@ namespace sol {
 			indexbase(&usertype_detail::simple_core_indexing_call<T, true>), newindexbase(&usertype_detail::simple_core_indexing_call<T, false>),
 			indexbaseclasspropogation(usertype_detail::walk_all_bases<true>), newindexbaseclasspropogation(&usertype_detail::walk_all_bases<false>),
 			baseclasscheck(nullptr), baseclasscast(nullptr),
-			mustindex(false), secondarymeta(false) {
+			mustindex(false), secondarymeta(false), properties() {
 			(void)detail::swallow{ 0,
 				(add(L, detail::forward_get<I * 2>(args), detail::forward_get<I * 2 + 1>(args)),0)...
 			};
+			std::array<luaL_Reg, 29> regs{};
+			int index = 0;
+
 		}
 
 		template<typename... Args>
@@ -409,35 +413,35 @@ namespace sol {
 				bool hasindex = umx.indexfunc.valid();
 				bool hasnewindex = umx.newindexfunc.valid();
 				auto& varmap = make_cleanup(L, umx);
+				auto& properties = umx.properties;
 				auto sic = hasindex ? &usertype_detail::simple_index_call<T, true> : &usertype_detail::simple_index_call<T, false>;
 				auto snic = hasnewindex ? &usertype_detail::simple_new_index_call<T, true> : &usertype_detail::simple_new_index_call<T, false>;
-				bool hasequals = false;
-				bool hasless = false;
-				bool haslessequals = false;
 				auto register_kvp = [&](std::size_t i, stack_reference& t, const std::string& first, object& second) {
-					if (first == to_string(meta_function::equal_to)) {
-						hasequals = true;
-					}
-					else if (first == to_string(meta_function::less_than)) {
-						hasless = true;
-					}
-					else if (first == to_string(meta_function::less_than_or_equal_to)) {
-						haslessequals = true;
-					}
-					else if (first == to_string(meta_function::index)) {
-						umx.indexfunc = second;
-					}
-					else if (first == to_string(meta_function::new_index)) {
-						umx.newindexfunc = second;
+					meta_function mf = meta_function::construct;
+					for (std::size_t i = 1; i < properties.size(); ++i) {
+						mf = static_cast<meta_function>(i);
+						const std::string& mfname = to_string(mf);
+						if (mfname == first) {
+							properties[i] = true;
+							switch (mf) {
+							case meta_function::index:
+								umx.indexfunc = second;
+								break;
+							case meta_function::new_index:
+								umx.newindexfunc = second;
+								break;
+							}
+						}
+						break;
 					}
 					switch (i) {
 					case 0:
-						if (first == to_string(meta_function::garbage_collect)) {
+						if (mf == meta_function::garbage_collect) {
 							return;
 						}
 						break;
 					case 1:
-						if (first == to_string(meta_function::garbage_collect)) {
+						if (mf == meta_function::garbage_collect) {
 							stack::set_field(L, first, detail::unique_destruct<T>, t.stack_index());
 							return;
 						}
@@ -469,19 +473,33 @@ namespace sol {
 						auto& second = std::get<1>(kvp);
 						register_kvp(i, t, first, second);
 					}
-					luaL_Reg opregs[4]{};
+					luaL_Reg opregs[29]{};
 					int opregsindex = 0;
-					if (!hasless) {
+					if (!properties[static_cast<int>(meta_function::less_than)]) {
 						const char* name = to_string(meta_function::less_than).c_str();
 						usertype_detail::make_reg_op<T, std::less<>, meta::supports_op_less<T>>(opregs, opregsindex, name);
 					}
-					if (!haslessequals) {
+					if (!properties[static_cast<int>(meta_function::less_than_or_equal_to)]) {
 						const char* name = to_string(meta_function::less_than_or_equal_to).c_str();
 						usertype_detail::make_reg_op<T, std::less_equal<>, meta::supports_op_less_equal<T>>(opregs, opregsindex, name);
 					}
-					if (!hasequals) {
+					if (!properties[static_cast<int>(meta_function::equal_to)]) {
 						const char* name = to_string(meta_function::equal_to).c_str();
 						usertype_detail::make_reg_op<T, std::conditional_t<meta::supports_op_equal<T>::value, std::equal_to<>, usertype_detail::no_comp>, std::true_type>(opregs, opregsindex, name);
+					}
+					if (!properties[static_cast<int>(meta_function::pairs)]) {
+						const char* name = to_string(meta_function::pairs).c_str();
+						opregs[opregsindex] = { name, container_usertype_metatable<as_container_t<T>>::pairs_call };
+						++opregsindex;
+					}
+					if (!properties[static_cast<int>(meta_function::length)]) {
+						usertype_detail::make_length_op<T>(opregs, opregsindex);
+					}
+					if (!properties[static_cast<int>(meta_function::to_string)]) {
+						usertype_detail::make_to_string_op<T, meta::supports_ostream_op<T>>(opregs, opregsindex);
+					}
+					if (!properties[static_cast<int>(meta_function::call)]) {
+						usertype_detail::make_call_op<T>(opregs, opregsindex);
 					}
 					t.push();
 					luaL_setfuncs(L, opregs, 0);

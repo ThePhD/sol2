@@ -319,7 +319,8 @@ TEST_CASE("containers/const serialization kvp", "make sure const keys / values a
 	bark obj{ { 24, 50 } };
 	lua.set("a", &obj);
 	REQUIRE_NOTHROW(lua.script("assert(a[24] == 50)"));
-	REQUIRE_THROWS(lua.script("a[24] = 51"));
+	auto result = lua.safe_script("a[24] = 51", sol::script_pass_on_error);
+	REQUIRE_FALSE(result.valid());
 	REQUIRE_NOTHROW(lua.script("assert(a[24] == 50)"));
 }
 
@@ -355,7 +356,8 @@ TEST_CASE("containers/const serialization", "make sure containers are turned int
 	REQUIRE_NOTHROW(
 		lua.script("for k, v in pairs(b) do assert(k == v) end");
 	);
-	REQUIRE_THROWS(lua.script("b[1] = 20"));
+	auto result = lua.safe_script("b[1] = 20", sol::script_pass_on_error);
+	REQUIRE_FALSE(result.valid());
 }
 #endif
 
@@ -716,9 +718,8 @@ TEST_CASE("containers/non_copyable", "make sure non-copyable types in containers
 
 		lua["v"] = std::vector<non_copyable>{};
 
-		REQUIRE_THROWS([&lua]() {
-			lua.script("t = test.new()\nt.b = v");
-		}());
+		auto pfr = lua.safe_script("t = test.new()\nt.b = v", sol::script_pass_on_error);
+		REQUIRE_FALSE(pfr.valid());
 	}
 	SECTION("simple") {
 		sol::state lua;
@@ -728,9 +729,8 @@ TEST_CASE("containers/non_copyable", "make sure non-copyable types in containers
 		
 		lua["v"] = std::vector<non_copyable>{};
 
-		REQUIRE_THROWS([&lua]() {
-			lua.script("t = test.new()\nt.b = v");
-		}());
+		auto pfr = lua.safe_script("t = test.new()\nt.b = v", sol::script_pass_on_error);
+		REQUIRE_FALSE(pfr.valid());
 	}
 }
 
@@ -801,10 +801,7 @@ TEST_CASE("containers/input iterators", "test shitty input iterators that are al
 
 		const_iterator end() const { return iterator(); }
 
-		value_type fuck_off_gcc_warning() {
-			// "typedef not used locally"
-			// but it's used elsewhere in the code GCC
-			// so maybe your warning should sod off
+		value_type gcc_warning_block() {
 			return int_shim();
 		}
 
@@ -835,57 +832,107 @@ end
 }
 
 TEST_CASE("containers/pairs", "test how well pairs work with the underlying system") {
+	typedef std::pair<std::string, int> pair_arr_t[5];
+	typedef int arr_t[5];
+
 	sol::state lua;
 
 	lua.open_libraries(sol::lib::base);
 
 	std::vector<std::pair<std::string, int>> a{ { "one", 1 },{ "two", 2 },{ "three", 3 },{ "four", 4 },{ "five", 5 } };
 	std::array<std::pair<std::string, int>, 5> b{ { { "one", 1 },{ "two", 2 },{ "three", 3 },{ "four", 4 },{ "five", 5 } } };
-	//std::pair<std::string, int> c[5]{ { "one", 1 },{ "two", 2 },{ "three", 3 },{ "four", 4 },{ "five", 5 } };
-	//int d[5] = { 1, 2, 3, 4, 5 };
+	pair_arr_t c{ { "one", 1 },{ "two", 2 },{ "three", 3 },{ "four", 4 },{ "five", 5 } };
+	arr_t d = { 1, 2, 3, 4, 5 };
 
 	lua["a"] = std::ref(a);
 	lua["b"] = &b;
-	//lua["c"] = std::ref(c);
-	//lua["d"] = &d;
+	lua["c"] = std::ref(c);
+	lua["d"] = &d;
 
 	lua.script("av1, av2 = a:get(1)");
 	lua.script("bv1, bv2 = b:get(1)");
-	//lua.script("cv1, cv2 = c:get(1)");
-	//lua.script("dv1, dv2 = d:get(1)");
+	lua.script("cv1, cv2 = c:get(1)");
+	lua.script("dv1, dv2 = d:get(1)");
 
 	std::vector<std::pair<std::string, int>>& la = lua["a"];
 	std::array<std::pair<std::string, int>, 5>& lb = lua["b"];
-	//std::pair<std::string, int> (&lc)[5] = lua["c"];
-	//int (&lc)[5] = lua["d"];
+	pair_arr_t* plc = lua["c"];
+	pair_arr_t& lc = *plc;
+	arr_t* pld = lua["d"];
+	arr_t& ld = *pld;
 
 	std::pair<std::string, int>& va = la[0];
 	std::pair<std::string, int>& vb = lb[0];
-	//std::pair<std::string, int>& vc = lc[0];
-	//int vd = ld[0];
+	std::pair<std::string, int>& vc = lc[0];
+	int& vd = ld[0];
+
 	std::string av1 = lua["av1"];
 	int av2 = lua["av2"];
 	std::string bv1 = lua["bv1"];
 	int bv2 = lua["bv2"];
-	//std::string cv1 = lua["cv1"];
-	//int cv2 = lua["cv2"];
-	//int dv1 = lua["dv1"];
-	//sol::lua_nil_t dv2 = lua["dv2"];
+	std::string cv1 = lua["cv1"];
+	int cv2 = lua["cv2"];
+	int dv1 = lua["dv1"];
+	sol::lua_nil_t dv2 = lua["dv2"];
 
 	REQUIRE(va.first == "one");
 	REQUIRE(va.second == 1);
 	REQUIRE(vb.first == "one");
 	REQUIRE(vb.second == 1);
-	//REQUIRE(vc.first == "one");
-	//REQUIRE(vc.second == 1);
-	//REQUIRE(vd == 1);
+	REQUIRE(vc.first == "one");
+	REQUIRE(vc.second == 1);
+	REQUIRE(vd == 1);
 
 	REQUIRE(av1 == "one");
 	REQUIRE(av2 == 1);
 	REQUIRE(bv1 == "one");
 	REQUIRE(bv2 == 1);
-	//REQUIRE(cv1 == "one");
-	//REQUIRE(cv2 == 1);
-	//REQUIRE(dv1 == 1);
-	//REQUIRE(dv2 == sol::lua_nil);
+	REQUIRE(cv1 == "one");
+	REQUIRE(cv2 == 1);
+	REQUIRE(dv1 == 1);
+	REQUIRE(dv2 == sol::lua_nil);
+}
+
+TEST_CASE("containers/pointer types", "check that containers with unique usertypes and pointers or something") {
+	struct base_t {
+		virtual int get() const = 0;
+	};
+
+	struct derived_1_t : base_t {
+		virtual int get() const override {
+			return 250;
+		}
+	};
+
+	struct derived_2_t : base_t {
+		virtual int get() const override {
+			return 500;
+		}
+	};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+	derived_1_t d1;
+	derived_2_t d2;
+
+	std::vector<std::unique_ptr<base_t>> v1;
+	v1.push_back(std::make_unique<derived_1_t>());
+	v1.push_back(std::make_unique<derived_2_t>());
+
+	std::vector<base_t*> v2;
+	v2.push_back(&d1);
+	v2.push_back(&d2);
+
+	lua["c1"] = std::move(v1);
+	lua["c2"] = &v2;
+
+	lua.safe_script("b1 = c1[1]");
+	base_t* b1 = lua["b1"];
+	int val1 = b1->get();
+	REQUIRE(val1 == 250);
+
+	lua.safe_script("b2 = c2[2]");
+	base_t* b2 = lua["b2"];
+	int val2 = b2->get();
+	REQUIRE(val2 == 500);
 }

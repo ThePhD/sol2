@@ -133,7 +133,8 @@ TEST_CASE("tables/new_enum", "Making sure enums can be put in and gotten out as 
 
 	direction d = lua["direction"]["left"];
 	REQUIRE(d == direction::left);
-	REQUIRE_THROWS(lua.script("direction.left = 50"));
+	auto result = lua.safe_script("direction.left = 50", sol::script_pass_on_error);
+	REQUIRE_FALSE(result.valid());
 	d = lua["direction"]["left"];
 	REQUIRE(d == direction::left);
 }

@@ -373,6 +373,8 @@ namespace sol {
 					return true;
 				if (stack_detail::check_metatable<detail::unique_usertype<U>>(L, metatableindex))
 					return true;
+				if (stack_detail::check_metatable<as_container_t<U>>(L, metatableindex))
+					return true;
 				bool success = false;
 				if (detail::has_derived<T>::value) {
 					auto pn = stack::pop_n(L, 1);

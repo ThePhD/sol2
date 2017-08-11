@@ -7,7 +7,7 @@ Sol2 automatically converts containers (detected using the ``sol::is_container<T
 
 An overview of these traits and additional information can be found :doc:`at the top level container page<../containers>`.
 
-If you need to deal with these things from and in Lua to be **actual**, true-blue, Lua tables, please consider :doc:`sol::as_table<as_table>` and :doc:`sol::nested<nested>` for serialization and deserialization into and out of the VM with sol2 operations.
+If you need to deal with these things from and in Lua to be **actual**, true-blue, Lua tables, please consider :doc:`sol::as_table<as_table>` and :doc:`sol::nested<nested>` for serialization and deserialization into and out of the VM with sol2 operations. You can also force something that is marked as not-a-container by using :doc:`sol::as_container<as_container>`.
 
 
 a complete example

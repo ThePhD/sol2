@@ -722,7 +722,8 @@ TEST_CASE("usertype/overloading", "Check if overloading works properly for usert
 	REQUIRE((lua["a"] == 1));
 	REQUIRE((lua["b"] == 3.5));
 	REQUIRE((lua["c"] == bark_58));
-	REQUIRE_THROWS(lua.script("r:func(1,2,'meow')"));
+	auto result = lua.safe_script("r:func(1,2,'meow')", sol::script_pass_on_error);
+	REQUIRE_FALSE(result.valid());
 }
 
 TEST_CASE("usertype/overloading_values", "ensure overloads handle properly") {
@@ -799,8 +800,14 @@ TEST_CASE("usertype/reference-and-constness", "Make sure constness compiles prop
 	REQUIRE(v == 25);
 	REQUIRE(val);
 
-	REQUIRE_THROWS(lua.script("f(n, 50)"));
-	REQUIRE_THROWS(lua.script("o.n = 25"));
+	{
+		auto result = lua.safe_script("f(n, 50)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("o.n = 25", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+	}
 }
 
 TEST_CASE("usertype/readonly-and-static-functions", "Check if static functions can be called on userdata and from their originating (meta)tables") {
@@ -883,7 +890,8 @@ lw2 = bark.something2(2, 3)
 	REQUIRE(lz == lz2);
 	REQUIRE(lw == lw2);
 
-	REQUIRE_THROWS(lua.script("b.var2 = 2"));
+	auto result = lua.safe_script("b.var2 = 2", sol::script_pass_on_error);
+	REQUIRE_FALSE(result.valid());
 }
 
 TEST_CASE("usertype/properties", "Check if member properties/variables work") {
@@ -931,11 +939,26 @@ TEST_CASE("usertype/properties", "Check if member properties/variables work") {
 	REQUIRE(var2_1 == 59);
 	REQUIRE(var2_2 == 1568);
 
-	REQUIRE_THROWS(lua.script("b.var2 = 24"));
-	REQUIRE_THROWS(lua.script("r = b.d"));
-	REQUIRE_THROWS(lua.script("r = b.d"));
-	REQUIRE_THROWS(lua.script("b.b = 25"));
-	REQUIRE_THROWS(lua.script("b.c = 11"));
+	{
+		auto result = lua.safe_script("b.var2 = 24", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("r = b.d", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("r = b.d", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("b.b = 25", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("b.c = 11", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+	}
 }
 
 TEST_CASE("usertype/safety", "crash with an exception -- not a segfault -- on bad userdata calls") {
@@ -951,7 +974,8 @@ TEST_CASE("usertype/safety", "crash with an exception -- not a segfault -- on ba
         t:sayHello() --Works fine
         t.sayHello() --Uh oh.
     )";
-	REQUIRE_THROWS(lua.script(code));
+	auto result = lua.safe_script(code, sol::script_pass_on_error);
+	REQUIRE_FALSE(result.valid());
 }
 
 TEST_CASE("usertype/call_constructor", "make sure lua types can be constructed with function call constructors") {
@@ -1028,16 +1052,17 @@ y = class02(x)
 	REQUIRE(y.x == 57);
 }
 
-TEST_CASE("usertype/blank_constructor", "make sure lua types cannot be constructed if a blank / empty constructor is provided") {
+TEST_CASE("usertype/blank_constructor", "make sure lua types cannot be constructed with arguments if a blank / empty constructor is provided") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
 	lua.new_usertype<thing>("thing",
 		"v", &thing::v
 		, sol::call_constructor, sol::constructors<>()
-		);
+	);
 
-	REQUIRE_THROWS(lua.script("t = thing(256)"));
+	auto result = lua.safe_script("t = thing(256)", sol::script_pass_on_error);
+	REQUIRE_FALSE(result.valid());
 }
 
 
@@ -1050,7 +1075,8 @@ TEST_CASE("usertype/no_constructor", "make sure lua types cannot be constructed 
 			"v", &thing::v, 
 			sol::call_constructor, sol::no_constructor
 		);
-		REQUIRE_THROWS(lua.script("t = thing()"));
+		auto result = lua.safe_script("t = thing()", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
 	}
 
 	SECTION("order2") {
@@ -1061,7 +1087,8 @@ TEST_CASE("usertype/no_constructor", "make sure lua types cannot be constructed 
 			sol::call_constructor, sol::no_constructor, 
 			"v", &thing::v
 		);
-		REQUIRE_THROWS(lua.script("t = thing.new()"));
+		auto result = lua.safe_script("t = thing.new()", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
 	}
 	
 	SECTION("new no_constructor") {
@@ -1071,7 +1098,8 @@ TEST_CASE("usertype/no_constructor", "make sure lua types cannot be constructed 
 		lua.new_usertype<thing>("thing",
 			sol::meta_function::construct, sol::no_constructor
 			);
-		REQUIRE_THROWS(lua.script("a = thing.new()"));
+		auto result = lua.safe_script("t = thing.new()", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
 	}
 
 	SECTION("call no_constructor") {
@@ -1081,7 +1109,8 @@ TEST_CASE("usertype/no_constructor", "make sure lua types cannot be constructed 
 		lua.new_usertype<thing>("thing",
 			sol::call_constructor, sol::no_constructor
 			);
-		REQUIRE_THROWS(lua.script("a = thing()"));
+		auto result = lua.safe_script("t = thing()", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
 	}
 }
 
@@ -1180,14 +1209,21 @@ print(e.bark)
 	REQUIRE(z == 500);
 
 	INFO("REQUIRE(z) successful");
-
-	REQUIRE_THROWS(lua.script("e.readonlybark = 24"));
-	INFO("REQUIRE_THROWS 1 successful");
-	REQUIRE_THROWS(lua.script("e.readonlypropbark = 500"));
-	INFO("REQUIRE_THROWS 2 successful");
-	REQUIRE_THROWS(lua.script("y = e.writeonlypropbark"));
-	INFO("REQUIRE_THROWS 3 successful");
-
+	{
+		auto result = lua.safe_script("e.readonlybark = 24", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+		INFO("REQUIRE_FALSE 1 successful");
+	}
+	{
+		auto result = lua.safe_script("e.readonlypropbark = 500", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+		INFO("REQUIRE_FALSE 2 successful");
+	}
+	{
+		auto result = lua.safe_script("y = e.writeonlypropbark", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+		INFO("REQUIRE_FALSE 3 successful");
+	}
 }
 
 TEST_CASE("usertype/copyability", "make sure user can write to a class variable even if the class itself isn't copy-safe") {
@@ -1429,14 +1465,15 @@ print(t.prop)
 	test& t = lua["t"];
 	REQUIRE(t.value == 50);
 
-
-	REQUIRE_THROWS(
-		lua.script(R"(
+	lua.script(R"(
 t = test.new()
 print(t.global)
-t.global = 20
-print(t.global)
-	)"));
+	)");
+	{
+		auto result = lua.safe_script("t.global = 20", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+	}
+	lua.script("print(t.global)");
 }
 
 TEST_CASE("usertype/unique_usertype-check", "make sure unique usertypes don't get pushed as references with function calls and the like") {
@@ -1590,21 +1627,23 @@ TEST_CASE("usertype/runtime-extensibility", "Check if usertypes are runtime exte
 t = thing.new()
 		)");
 
-		REQUIRE_THROWS([&lua]() {
-			lua.script(R"(
+		{
+			auto result = lua.safe_script(R"(
 t.runtime_func = function (a)
 	return a + 50
 end
-		)");
-		}());
+		)", sol::script_pass_on_error);
+			REQUIRE_FALSE(result.valid());
+		};
 
-		REQUIRE_THROWS([&lua]() {
-			lua.script(R"(
+		{
+			auto result = lua.safe_script(R"(
 function t:runtime_func(a)
 	return a + 52
 end
-		)");
-		}());
+		)", sol::script_pass_on_error);
+			REQUIRE_FALSE(result.valid());
+		};
 
 		lua.script("val = t:func(2)");
 		val = lua["val"];
@@ -1635,21 +1674,23 @@ end
 t = thing.new()
 		)");
 
-		REQUIRE_THROWS([&lua]() {
-			lua.script(R"(
+		{
+			auto result = lua.safe_script(R"(
 t.runtime_func = function (a)
 	return a + 50
 end
-		)");
-		}());
+		)", sol::script_pass_on_error);
+			REQUIRE_FALSE(result.valid());
+		};
 
-		REQUIRE_THROWS([&lua]() {
-			lua.script(R"(
+		{
+			auto result = lua.safe_script(R"(
 function t:runtime_func(a)
 	return a + 52
 end
-		)");
-		}());
+		)", sol::script_pass_on_error);
+			REQUIRE_FALSE(result.valid());
+		};
 
 		lua.script("val = t:func(2)");
 		val = lua["val"];
