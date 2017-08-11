@@ -201,7 +201,7 @@ TEST_CASE("operators/container-like", "test that generic begin/end and iterator 
 		typedef int* iterator;
 		typedef int value_type;
 
-		int values[10];
+		value_type values[10];
 
 		container() {
 			std::iota(begin(), end(), 1);

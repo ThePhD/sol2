@@ -331,7 +331,7 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 	const static std::string good = "a = 21\nreturn a";
 	static const char file_good[] = "./temp.good.lua";
 	static std::once_flag flag_file_bs = {}, flag_file_br = {}, flag_file_g = {};
-	static std::atomic<int> finished = 0;
+	static std::atomic<int> finished(0);
 	std::call_once(flag_file_bs, write_file_attempt_object(), file_bad_syntax, bad_syntax);
 	std::call_once(flag_file_br, write_file_attempt_object(), file_bad_runtime, bad_runtime);
 	std::call_once(flag_file_g, write_file_attempt_object(), file_good, good);

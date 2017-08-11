@@ -332,9 +332,6 @@ namespace sol {
 			(void)detail::swallow{ 0,
 				(add(L, detail::forward_get<I * 2>(args), detail::forward_get<I * 2 + 1>(args)),0)...
 			};
-			std::array<luaL_Reg, 29> regs{};
-			int index = 0;
-
 		}
 
 		template<typename... Args>
@@ -429,6 +426,8 @@ namespace sol {
 								break;
 							case meta_function::new_index:
 								umx.newindexfunc = second;
+								break;
+							default:
 								break;
 							}
 						}

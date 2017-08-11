@@ -17,7 +17,7 @@ public:
 
 	// automatically bound to obj( args... ) [ __call ]
 	void operator()() {
-		data.push_back(static_cast<double>(data.size() + 1) / 3.0);
+		data.push_back(static_cast<value_type>(data.size() + 1) / 3.0);
 	}
 
 	// automatically used for pairs(obj) [ __pairs ], 5.2+
