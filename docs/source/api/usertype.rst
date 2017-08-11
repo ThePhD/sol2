@@ -44,7 +44,7 @@ You can bind the it to Lua using the following C++ code:
 		"shoot", &ship::shoot,
 		"hurt", &ship::hurt,
 		// bind variable types, too
-		"life", &ship::bullets
+		"life", &ship::life,
 		// names in lua don't have to be the same as C++,
 		// but it probably helps if they're kept the same,
 		// here we change it just to show its possible
@@ -64,7 +64,7 @@ Equivalently, you can also write:
 	usertype<ship> shiptype(
 		"shoot", &ship::shoot,
 		"hurt", &ship::hurt,
-		"life", &ship::bullets
+		"life", &ship::life,
 		"bullet_count", &ship::bullets
 	);
 
@@ -169,7 +169,7 @@ If you don't specify any constructor options at all and the type is `default_con
 		+ If this is not sufficient, see next 2 entries on how to specifically block a constructor
 * ``{anything}, {some_factory_function}``
 	- Essentially binds whatever the function is to name ``{anything}``
-	- When used WITH the ``sol::no_constructor`` option above (e.g. ``"new", sol::no_constructor`` and after that having ``"create", &my_creation_func``), one can remove typical constructor avenues and then only provide specific factory functions. Note that this combination is similar to using the ``sol::factories`` method mentioned earlier in this list. To control the destructor as well, see further below
+	- When used WITH the ``sol::no_constructor`` option below (e.g. ``"new", sol::no_constructor`` and after that having ``"create", &my_creation_func``), one can remove typical constructor avenues and then only provide specific factory functions. Note that this combination is similar to using the ``sol::factories`` method mentioned earlier in this list. To control the destructor as well, see further below
 * ``sol::call_constructor, {valid constructor / initializer / factory}``
 	- The purpose of this is to enable the syntax ``local v = my_class( 24 )`` and have that call a constructor; it has no other purpose
 	- This is compatible with luabind, kaguya and other Lua library syntaxes and looks similar to C++ syntax, but the general consensus in Programming with Lua and other places is to use a function named ``new``
@@ -345,7 +345,7 @@ Then, to register the base classes explicitly:
 
 .. warning::
 
-	Specify all base class member variables and member functions to avoid current implementation caveats regarding automatic base member lookup. Sol currently attempts to link base class methods and variables with their derived classes with an undocumented, unsupported feature, provided you specify ``sol::base_classes<...>``. Unfortunately, this can come at the cost of performance, depending on how "far" the base is from the derived class in the bases lookup list. If you do not want to suffer the performance degradation while we iron out the kinks in the implementation (and want it to stay performant forever), please specify all the base methods on the derived class in the method listing you write. In the future, we hope that with reflection we will not have to worry about this.
+	Specify all base class member variables and member functions to avoid current implementation caveats regarding automatic base member lookup. Sol currently attempts to link base class methods and variables with their derived classes with an undocumented, unsupported feature, provided you specify ``sol::bases<...>``. Unfortunately, this can come at the cost of performance, depending on how "far" the base is from the derived class in the bases lookup list. If you do not want to suffer the performance degradation while we iron out the kinks in the implementation (and want it to stay performant forever), please specify all the base methods on the derived class in the method listing you write. In the future, we hope that with reflection we will not have to worry about this.
 
 
 inheritance + overloading
