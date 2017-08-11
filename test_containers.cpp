@@ -922,17 +922,22 @@ TEST_CASE("containers/pointer types", "check that containers with unique usertyp
 	std::vector<base_t*> v2;
 	v2.push_back(&d1);
 	v2.push_back(&d2);
+	REQUIRE_NOTHROW([&]() {
+		lua["c1"] = std::move(v1);
+		lua["c2"] = &v2;
+	}());
 
-	lua["c1"] = std::move(v1);
-	lua["c2"] = &v2;
+	REQUIRE_NOTHROW([&]() {
+		lua.safe_script("b1 = c1[1]");
+		base_t* b1 = lua["b1"];
+		int val1 = b1->get();
+		REQUIRE(val1 == 250);
+	}());
 
-	lua.safe_script("b1 = c1[1]");
-	base_t* b1 = lua["b1"];
-	int val1 = b1->get();
-	REQUIRE(val1 == 250);
-
-	lua.safe_script("b2 = c2[2]");
-	base_t* b2 = lua["b2"];
-	int val2 = b2->get();
-	REQUIRE(val2 == 500);
+	REQUIRE_NOTHROW([&]() {
+		lua.safe_script("b2 = c2[2]");
+		base_t* b2 = lua["b2"];
+		int val2 = b2->get();
+		REQUIRE(val2 == 500);
+	}());
 }

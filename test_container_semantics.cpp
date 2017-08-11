@@ -1007,7 +1007,7 @@ TEST_CASE("containers/as_container", "test that we can force a container to be t
 
 #if SOL_LUA_VERSION > 501
 	REQUIRE_NOTHROW([&]() {
-		lua.script(R"(
+		lua.safe_script(R"(
 mop = my_object.new(20)
 for i, v in pairs(mop) do
 	assert(i == v)
@@ -1027,6 +1027,7 @@ c_mo = mo
 c_iterable = mo:iterable()
 )");
 	}());
+
 	my_object& mo = lua["c_mo"];
 	my_object& mo_iterable = lua["c_iterable"];
 	REQUIRE(&mo == &mo_iterable);
