@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-11 14:21:00.571402 UTC
-// This header was generated with sol v2.18.0 (revision 644a5c5)
+// Generated 2017-08-11 14:35:51.568053 UTC
+// This header was generated with sol v2.18.0 (revision 4f7f1af)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -14112,7 +14112,7 @@ namespace sol {
 
 		template <typename T, typename Op, typename Supports, typename Regs, meta::enable<Supports> = meta::enabler>
 		inline void make_reg_op(Regs& l, int& index, const char* name) {
-			lua_CFunction f = &detail::static_trampoline<&operator_wrap<T, Op>>;
+			lua_CFunction f = &operator_wrap<T, Op>;
 			l[index] = luaL_Reg{ name, f };
 			++index;
 		}

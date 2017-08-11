@@ -432,7 +432,7 @@ namespace sol {
 
 		template <typename T, typename Op, typename Supports, typename Regs, meta::enable<Supports> = meta::enabler>
 		inline void make_reg_op(Regs& l, int& index, const char* name) {
-			lua_CFunction f = &detail::static_trampoline<&operator_wrap<T, Op>>;
+			lua_CFunction f = &operator_wrap<T, Op>;
 			l[index] = luaL_Reg{ name, f };
 			++index;
 		}
