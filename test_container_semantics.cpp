@@ -992,7 +992,7 @@ c_arr[-1] = 7
 #endif // Something is wrong with g++'s lower versions: it always fails this test...
 }
 
-TEST_CASE("containers/as_container", "test that we can force a container to be treated like one despite the trait being false using the proper marker") {
+TEST_CASE("containers/as_container reference", "test that we can force a container to be treated like one despite the trait being false using the proper marker") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -1093,4 +1093,78 @@ print(mo)
 		my_object& mo = lua["mo"];
 		REQUIRE(&mo == my_object::last_printed);
 	}());
+}
+
+TEST_CASE("containers/as_container", "test that we can force a container to be treated like one despite the trait being false using the proper marker") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.set_function("f", [](int v) {
+		return sol::as_container(my_object(v));
+	});
+
+#if SOL_LUA_VERSION > 501
+	REQUIRE_NOTHROW([&]() {
+		lua.safe_script(R"(
+mop = f(20)
+for i, v in pairs(mop) do
+	assert(i == v)
+end
+	)");
+	}());
+#endif
+	REQUIRE_NOTHROW([&]() {
+		lua.safe_script(R"(
+mo = f(10)
+c_iterable = mo
+)");
+	}());
+
+	{
+		my_object& mo = lua["mo"];
+		my_object& mo_iterable = lua["c_iterable"];
+		REQUIRE(&mo == &mo_iterable);
+		REQUIRE(mo == mo_iterable);
+	}
+
+	REQUIRE_NOTHROW([&]() {
+		lua.safe_script(R"(
+s1_iterable = c_iterable:size()
+s1_iterable_len = #c_iterable
+)");
+	}());
+
+	{
+		std::size_t s1_iterable = lua["s1_iterable"];
+		std::size_t s1_iterable_len = lua["s1_iterable_len"];
+		REQUIRE(s1_iterable == 10);
+		REQUIRE(s1_iterable == s1_iterable_len);
+	}
+
+	REQUIRE_NOTHROW([&]() {
+		lua.safe_script(R"(
+for i=1,#c_iterable do
+	v_iterable = c_iterable[i]
+	assert(v_iterable == i)
+end
+)");
+	}());
+
+	REQUIRE_NOTHROW([&]() {
+		lua.safe_script(R"(
+c_iterable:insert(1, 100)
+v1 = c_iterable:get(1)
+s2_iterable = c_iterable:size()
+s2_iterable_len = #c_iterable
+	)");
+	}());
+
+	{
+		int v1 = lua["v1"];
+		std::size_t s2_iterable = lua["s2_iterable"];
+		std::size_t s2_iterable_len = lua["s2_iterable_len"];
+		REQUIRE(v1 == 100);
+		REQUIRE(s2_iterable_len == 11);
+		REQUIRE(s2_iterable == s2_iterable_len);
+	}
 }

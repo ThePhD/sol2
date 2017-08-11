@@ -16,13 +16,17 @@ Note that you can obtain safety with regards to functions you bind by using the 
 
 ``SOL_SAFE_FUNCTION`` triggers the following change:
 	* All uses of ``sol::function`` and ``sol::stack_function`` will default to ``sol::protected_function`` and ``sol::stack_protected_function``, respectively, rather than ``sol::unsafe_function`` and ``sol::stack_unsafe_function``.
-	* Not turned on by default under any detectible compiler settings: you must turn this one on manually
+	* **Not** turned on by default under any detectible compiler settings: *you must turn this one on manually*
 
 ``SOL_CHECK_ARGUMENTS`` triggers the following changes:
 	* ``sol::stack::get`` (used everywhere) defaults to using ``sol::stack::check_get`` and dereferencing the argument. It uses ``sol::type_panic`` as the handler if something goes wrong
 	* ``lua_tolstring`` conversions are not permitted on numbers: through the API: only actual strings are allowed. This is necessary to allow :doc:`sol::overload<api/overload>` to work properly
 	* ``sol::stack::call`` and its variants will, if no templated boolean is specified, check all of the arguments for a function call
 	* If ``SOL_SAFE_USERTYPE`` is not defined, it gets defined to turn being on and the effects described above kick in
+	* Numbers will also be checked to see if they fit within a ``lua_Number`` if there is no ``lua_Integer`` type available that can fit your signed or unsigned number. You can opt-out of this behavior with ``SOL_NO_CHECK_NUMBER_PRECISION``
+	
+``SOL_NO_CHECK_NUMBER_PRECISION`` triggers the following changes:
+	* If ``SOL_CHECK_ARGUMENTS`` is defined, turns off number precision and integer precision fitting when pushing numbers into sol2
 
 Tests are compiled with this on to ensure everything is going as expected. Remember that if you want these features, you must explicitly turn them on all of them to be sure you are getting them.
 
@@ -44,4 +48,4 @@ As a side note, binding functions with default parameters does not magically bin
 
 .. warning::
 
-	Do NOT save the return type of a :ref:`function_result<function-result>` with ``auto``, as in ``auto numwoof = woof(20);``, and do NOT store it anywhere. See :ref:`here<function-result-warning>`.
+	Do **NOT** save the return type of a :ref:`function_result<function-result>` with ``auto``, as in ``auto numwoof = woof(20);``, and do NOT store it anywhere unless you are exactly aware of the consequences of messing with the stack. See :ref:`here<function-result-warning>` for more information.

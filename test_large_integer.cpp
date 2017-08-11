@@ -18,9 +18,10 @@ TEST_CASE("large_integer/bool", "pass bool integral value to and from lua") {
 	REQUIRE(x.is<bool>());
 	REQUIRE(x.as<bool>() == true);
 	REQUIRE_FALSE(x.is<std::int32_t>());
-	REQUIRE_THROWS([&lua]() {
-		lua.script("f(1)");
-	}());
+	{
+		auto result = lua.safe_script("f(1)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+	}
 }
 
 TEST_CASE("large_integers/unsigned32", "pass large unsigned 32bit values to and from lua") {
@@ -56,12 +57,12 @@ TEST_CASE("large_integer/unsigned53", "pass large unsigned 53bit value to and fr
 TEST_CASE("large_integer/unsigned64", "pass too large unsigned 64bit value to lua") {
 	using T = std::int64_t;
 	sol::state lua;
-	lua.open_libraries();
 	lua.set_function("f", [&](T num) -> T {
 		return num;
 	});
-	REQUIRE_THROWS([&lua]() {
-		lua["f"](0xFFFFFFFFFFFFFFFFull);
+	REQUIRE_THROWS([&lua](){
+		sol::protected_function pf = lua["f"];
+		auto result = pf(0xFFFFFFFFFFFFFFFFull);
 	}());
 }
 

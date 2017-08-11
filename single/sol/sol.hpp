@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-11 12:59:23.551177 UTC
-// This header was generated with sol v2.18.0 (revision 5e109c2)
+// Generated 2017-08-11 22:03:08.549881 UTC
+// This header was generated with sol v2.18.0 (revision 2e5d319)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -7121,11 +7121,16 @@ namespace sol {
 				int isnum = 0;
 				const lua_Number value = lua_tonumberx(L, index, &isnum);
 				if (isnum != 0) {
+#if 1 // defined(SOL_CHECK_ARGUMENTS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
 					const auto integer_value = std::llround(value);
 					if (static_cast<lua_Number>(integer_value) == value) {
 						tracking.use(1);
 						return static_cast<T>(integer_value);
 					}
+#else
+					tracking.use(1);
+					return static_cast<T>(value);
+#endif
 				}
 				const type t = type_of(L, index);
 				tracking.use(static_cast<int>(t != type::none));
@@ -7497,7 +7502,7 @@ namespace sol {
 			static int push(lua_State* L, const T& value) {
 #if SOL_LUA_VERSION >= 503
 				static auto integer_value_fits = [](T const& value) {
-					if (sizeof(T) < sizeof(lua_Integer) || std::is_signed<T>::value && sizeof(T) == sizeof(lua_Integer)) {
+					if (sizeof(T) < sizeof(lua_Integer) || (std::is_signed<T>::value && sizeof(T) == sizeof(lua_Integer))) {
 						return true;
 					}
 					auto u_min = static_cast<std::intmax_t>(std::numeric_limits<lua_Integer>::min());
@@ -7513,11 +7518,7 @@ namespace sol {
 #endif
 #if defined(SOL_CHECK_ARGUMENTS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
 				if (static_cast<T>(std::llround(static_cast<lua_Number>(value))) != value) {
-#ifndef SOL_NO_EXCEPTIONS
-					throw sol::error("The integer will be misrepresented in lua.");
-#else
-					assert(false && "The integer will be misrepresented in lua.");
-#endif
+					luaL_error(L, "integer value will be misrepresented in lua");
 				}
 #endif
 				lua_pushnumber(L, static_cast<lua_Number>(value));
@@ -12215,11 +12216,11 @@ namespace sol {
 
 		as_container_t(T value) : source(std::move(value)) {}
 
-		operator T() {
+        operator std::add_rvalue_reference_t<T>() {
 			return std::move(source);
 		}
 
-		operator std::add_const_t<std::add_lvalue_reference_t<T>>() const {
+        operator std::add_lvalue_reference_t<std::add_const_t<T>>() const {
 			return source;
 		}
 	};
@@ -13631,7 +13632,7 @@ namespace sol {
 						as_container_t<std::remove_pointer_t<T>>, 
 						std::remove_pointer_t<T>
 					>> meta_cumt;
-					static const char* metakey = is_shim ? &usertype_traits<as_container_t<T>>::metatable()[0] : &usertype_traits<T>::metatable()[0];
+					static const char* metakey = is_shim ? &usertype_traits<as_container_t<std::remove_pointer_t<T>>>::metatable()[0] : &usertype_traits<T>::metatable()[0];
 					static const std::array<luaL_Reg, 16> reg = { {
 						{ "__pairs", &meta_cumt::pairs_call },
 						{ "__ipairs", &meta_cumt::pairs_call },
@@ -13663,23 +13664,31 @@ namespace sol {
 		struct pusher<as_container_t<T>> {
 			typedef meta::unqualified_t<T> C;
 
-			static int push(std::true_type, lua_State* L, const C& cont) {
-				stack_detail::metatable_setup<C, true> fx(L);
+			static int push_lvalue(std::true_type, lua_State* L, const C& cont) {
+				stack_detail::metatable_setup<C*, true> fx(L);
 				return pusher<detail::as_pointer_tag<const C>>{}.push_fx(L, fx, detail::ptr(cont));
 			}
 
-			static int push(std::false_type, lua_State* L, const C& cont) {
+			static int push_lvalue(std::false_type, lua_State* L, const C& cont) {
 				stack_detail::metatable_setup<C, true> fx(L);
 				return pusher<detail::as_value_tag<C>>{}.push_fx(L, fx, cont);
 			}
 
-			static int push(lua_State* L, const C& cont) {
-				return push(std::is_lvalue_reference<T>(), L, cont);
-			}
-
-			static int push(lua_State* L, C&& cont) {
+			static int push_rvalue(std::true_type, lua_State* L, C&& cont) {
 				stack_detail::metatable_setup<C, true> fx(L);
 				return pusher<detail::as_value_tag<C>>{}.push_fx(L, fx, std::move(cont));
+			}
+
+			static int push_rvalue(std::false_type, lua_State* L, const C& cont) {
+				return push_lvalue(std::is_lvalue_reference<T>(), L, cont);
+			}
+
+			static int push(lua_State* L, const as_container_t<T>& as_cont) {
+				return push_lvalue(std::is_lvalue_reference<T>(), L, as_cont.source);
+			}
+
+			static int push(lua_State* L, as_container_t<T>&& as_cont) {
+				return push_rvalue(meta::all<std::is_rvalue_reference<T>, meta::neg<std::is_lvalue_reference<T>>>(), L, std::forward<T>(as_cont.source));
 			}
 		};
 

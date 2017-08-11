@@ -30,6 +30,12 @@ There are lots of reasons for compiler linker errors. A common one is not knowin
 
 However, when the target Lua library is compiled with C++, one must change the calling convention and name mangling scheme by getting rid of the ``extern 'C'`` block. This can be achieved by adding ``#define SOL_USING_CXX_LUA`` before including sol2, or by adding it to your compilation's command line.
 
+"caught (...) exception" errors
+-------------------------------
+
+Sometimes, you expect properly written errors and instead receive an error about catching a ``...`` exception instead. This might mean that you either built Lua as C++ or are using a framework like LuaJIT that has full interopability support for exceptions on certain system types (x64 for LuaJIT 2.0.5, x86 and x64 on LuaJIT 2.1.x-beta and later).
+
+Please make sure to use the ``SOL_EXCEPTIONS_SAFE_PROPAGATION`` define before including sol2 to make this work out. You can read more :ref:`at the exception page here<exception-interop>`.
 
 Catch and CRASH!
 ----------------

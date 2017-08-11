@@ -260,7 +260,7 @@ namespace sol {
 						as_container_t<std::remove_pointer_t<T>>, 
 						std::remove_pointer_t<T>
 					>> meta_cumt;
-					static const char* metakey = is_shim ? &usertype_traits<as_container_t<T>>::metatable()[0] : &usertype_traits<T>::metatable()[0];
+					static const char* metakey = is_shim ? &usertype_traits<as_container_t<std::remove_pointer_t<T>>>::metatable()[0] : &usertype_traits<T>::metatable()[0];
 					static const std::array<luaL_Reg, 16> reg = { {
 						{ "__pairs", &meta_cumt::pairs_call },
 						{ "__ipairs", &meta_cumt::pairs_call },
@@ -292,23 +292,31 @@ namespace sol {
 		struct pusher<as_container_t<T>> {
 			typedef meta::unqualified_t<T> C;
 
-			static int push(std::true_type, lua_State* L, const C& cont) {
-				stack_detail::metatable_setup<C, true> fx(L);
+			static int push_lvalue(std::true_type, lua_State* L, const C& cont) {
+				stack_detail::metatable_setup<C*, true> fx(L);
 				return pusher<detail::as_pointer_tag<const C>>{}.push_fx(L, fx, detail::ptr(cont));
 			}
 
-			static int push(std::false_type, lua_State* L, const C& cont) {
+			static int push_lvalue(std::false_type, lua_State* L, const C& cont) {
 				stack_detail::metatable_setup<C, true> fx(L);
 				return pusher<detail::as_value_tag<C>>{}.push_fx(L, fx, cont);
 			}
 
-			static int push(lua_State* L, const C& cont) {
-				return push(std::is_lvalue_reference<T>(), L, cont);
-			}
-
-			static int push(lua_State* L, C&& cont) {
+			static int push_rvalue(std::true_type, lua_State* L, C&& cont) {
 				stack_detail::metatable_setup<C, true> fx(L);
 				return pusher<detail::as_value_tag<C>>{}.push_fx(L, fx, std::move(cont));
+			}
+
+			static int push_rvalue(std::false_type, lua_State* L, const C& cont) {
+				return push_lvalue(std::is_lvalue_reference<T>(), L, cont);
+			}
+
+			static int push(lua_State* L, const as_container_t<T>& as_cont) {
+				return push_lvalue(std::is_lvalue_reference<T>(), L, as_cont.source);
+			}
+
+			static int push(lua_State* L, as_container_t<T>&& as_cont) {
+				return push_rvalue(meta::all<std::is_rvalue_reference<T>, meta::neg<std::is_lvalue_reference<T>>>(), L, std::forward<T>(as_cont.source));
 			}
 		};
 

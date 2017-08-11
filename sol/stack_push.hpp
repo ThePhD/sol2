@@ -198,7 +198,7 @@ namespace sol {
 			static int push(lua_State* L, const T& value) {
 #if SOL_LUA_VERSION >= 503
 				static auto integer_value_fits = [](T const& value) {
-					if (sizeof(T) < sizeof(lua_Integer) || std::is_signed<T>::value && sizeof(T) == sizeof(lua_Integer)) {
+					if (sizeof(T) < sizeof(lua_Integer) || (std::is_signed<T>::value && sizeof(T) == sizeof(lua_Integer))) {
 						return true;
 					}
 					auto u_min = static_cast<std::intmax_t>(std::numeric_limits<lua_Integer>::min());

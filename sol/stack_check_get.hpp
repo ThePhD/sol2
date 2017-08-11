@@ -66,11 +66,16 @@ namespace sol {
 				int isnum = 0;
 				const lua_Number value = lua_tonumberx(L, index, &isnum);
 				if (isnum != 0) {
+#if 1 // defined(SOL_CHECK_ARGUMENTS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
 					const auto integer_value = std::llround(value);
 					if (static_cast<lua_Number>(integer_value) == value) {
 						tracking.use(1);
 						return static_cast<T>(integer_value);
 					}
+#else
+					tracking.use(1);
+					return static_cast<T>(value);
+#endif
 				}
 				const type t = type_of(L, index);
 				tracking.use(static_cast<int>(t != type::none));

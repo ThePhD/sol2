@@ -37,11 +37,11 @@ namespace sol {
 
 		as_container_t(T value) : source(std::move(value)) {}
 
-		operator T() {
+        operator std::add_rvalue_reference_t<T>() {
 			return std::move(source);
 		}
 
-		operator std::add_const_t<std::add_lvalue_reference_t<T>>() const {
+        operator std::add_lvalue_reference_t<std::add_const_t<T>>() const {
 			return source;
 		}
 	};
