@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-11 14:35:51.568053 UTC
-// This header was generated with sol v2.18.0 (revision 4f7f1af)
+// Generated 2017-08-11 12:59:23.551177 UTC
+// This header was generated with sol v2.18.0 (revision 5e109c2)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5798,6 +5798,7 @@ namespace sol {
 
 // end of sol/inheritance.hpp
 
+#include <cmath>
 #ifdef SOL_CXX17_FEATURES
 #endif // C++17
 
@@ -5854,7 +5855,14 @@ namespace sol {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 				tracking.use(1);
-				bool success = lua_isinteger(L, index) == 1;
+#if SOL_LUA_VERSION >= 503
+				if (lua_isinteger(L, index) != 0) {
+					return true;
+				}
+#endif
+				int isnum = 0;
+				const lua_Number v = lua_tonumberx(L, index, &isnum);
+				const bool success = isnum != 0 && static_cast<lua_Number>(std::llround(v)) == v;
 				if (!success) {
 					// expected type, actual type
 					handler(L, index, type::number, type_of(L, index));
@@ -6347,18 +6355,15 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct getter<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_signed<T>>::value>> {
+		struct getter<T, std::enable_if_t<std::is_integral<T>::value>> {
 			static T get(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
-				return static_cast<T>(lua_tointeger(L, index));
-			}
-		};
-
-		template<typename T>
-		struct getter<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_unsigned<T>>::value>> {
-			static T get(lua_State* L, int index, record& tracking) {
-				tracking.use(1);
-				return static_cast<T>(lua_tointeger(L, index));
+#if SOL_LUA_VERSION >= 503
+				if (lua_isinteger(L, index) != 0) {
+					return static_cast<T>(lua_tointeger(L, index));
+				}
+#endif
+				return static_cast<T>(std::llround(lua_tonumber(L, index)));
 			}
 		};
 
@@ -7107,16 +7112,25 @@ namespace sol {
 		struct check_getter<T, std::enable_if_t<std::is_integral<T>::value && lua_type_of<T>::value == type::number>> {
 			template <typename Handler>
 			static optional<T> get(lua_State* L, int index, Handler&& handler, record& tracking) {
-				int isnum = 0;
-				lua_Integer value = lua_tointegerx(L, index, &isnum);
-				if (isnum == 0) {
-					type t = type_of(L, index);
-					tracking.use(static_cast<int>(t != type::none));
-					handler(L, index, type::number, t);
-					return nullopt;
+#if SOL_LUA_VERSION >= 503
+				if (lua_isinteger(L, index) != 0) {
+					tracking.use(1);
+					return static_cast<T>(lua_tointeger(L, index));
 				}
-				tracking.use(1);
-				return static_cast<T>(value);
+#endif
+				int isnum = 0;
+				const lua_Number value = lua_tonumberx(L, index, &isnum);
+				if (isnum != 0) {
+					const auto integer_value = std::llround(value);
+					if (static_cast<lua_Number>(integer_value) == value) {
+						tracking.use(1);
+						return static_cast<T>(integer_value);
+					}
+				}
+				const type t = type_of(L, index);
+				tracking.use(static_cast<int>(t != type::none));
+				handler(L, index, type::number, t);
+				return nullopt;
 			}
 		};
 
@@ -7317,6 +7331,8 @@ namespace sol {
 
 // end of sol/raii.hpp
 
+#include <cassert>
+#include <limits>
 #ifdef SOL_CODECVT_SUPPORT
 #endif
 #ifdef SOL_CXX17_FEATURES
@@ -7477,17 +7493,34 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct pusher<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_signed<T>>::value>> {
+		struct pusher<T, std::enable_if_t<std::is_integral<T>::value>> {
 			static int push(lua_State* L, const T& value) {
-				lua_pushinteger(L, static_cast<lua_Integer>(value));
-				return 1;
-			}
-		};
-
-		template<typename T>
-		struct pusher<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_unsigned<T>>::value>> {
-			static int push(lua_State* L, const T& value) {
-				lua_pushinteger(L, static_cast<lua_Integer>(value));
+#if SOL_LUA_VERSION >= 503
+				static auto integer_value_fits = [](T const& value) {
+					if (sizeof(T) < sizeof(lua_Integer) || std::is_signed<T>::value && sizeof(T) == sizeof(lua_Integer)) {
+						return true;
+					}
+					auto u_min = static_cast<std::intmax_t>(std::numeric_limits<lua_Integer>::min());
+					auto u_max = static_cast<std::uintmax_t>(std::numeric_limits<lua_Integer>::max());
+					auto t_min = static_cast<std::intmax_t>(std::numeric_limits<T>::min());
+					auto t_max = static_cast<std::uintmax_t>(std::numeric_limits<T>::max());
+					return (u_min <= t_min || value >= static_cast<T>(u_min)) && (u_max >= t_max || value <= static_cast<T>(u_max));
+				};
+				if (integer_value_fits(value)) {
+					lua_pushinteger(L, static_cast<lua_Integer>(value));
+					return 1;
+				}
+#endif
+#if defined(SOL_CHECK_ARGUMENTS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
+				if (static_cast<T>(std::llround(static_cast<lua_Number>(value))) != value) {
+#ifndef SOL_NO_EXCEPTIONS
+					throw sol::error("The integer will be misrepresented in lua.");
+#else
+					assert(false && "The integer will be misrepresented in lua.");
+#endif
+				}
+#endif
+				lua_pushnumber(L, static_cast<lua_Number>(value));
 				return 1;
 			}
 		};
@@ -11854,8 +11887,6 @@ namespace sol {
 
 // end of sol/stack_proxy.hpp
 
-#include <limits>
-
 namespace sol {
 	template <bool is_const>
 	struct va_iterator : std::iterator<std::random_access_iterator_tag, std::conditional_t<is_const, const stack_proxy, stack_proxy>, std::ptrdiff_t, std::conditional_t<is_const, const stack_proxy*, stack_proxy*>, std::conditional_t<is_const, const stack_proxy, stack_proxy>> {
@@ -13716,7 +13747,6 @@ namespace sol {
 
 #include <cstdio>
 #include <sstream>
-#include <cassert>
 
 namespace sol {
 	namespace usertype_detail {

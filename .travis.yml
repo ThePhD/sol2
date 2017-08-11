@@ -74,6 +74,29 @@ matrix:
           - ninja-build
           - libluajit-5.1-dev
 
+    # gcc-5:i386
+    - os: linux
+      env: COMPILER=g++-5 LUA_VERSION=luajit51:i386
+      compiler: gcc
+      install:
+       - sudo dpkg --add-architecture i386
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test
+          packages:
+          - gcc-5
+          - g++-5
+          - ninja-build
+          - libluajit-5.1-dev
+          - libluajit-5.1-dev:i386
+          - libc6:i386
+          - libncurses5:i386
+          - libstdc++6:i386
+          - gcc-5-multilib
+          - g++-5-multilib
+          - linux-libc-dev:i386
+
     # clang
     - os: linux
       env:

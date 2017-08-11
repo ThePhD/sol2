@@ -91,6 +91,12 @@ if 'linux' in sys.platform:
         # Using normal lua
         lua_lib = lua_version[:-1] + '.' + lua_version[-1]
         lua_incl = lua_lib
+    elif re.match(r'luajit5[1-3]:i386', lua_version):
+        # luajit:i386
+        lua_incl = 'luajit-2.0'
+        lua_lib = lua_version[:-7] + '-' + lua_version[-7] + '.' + lua_version[-6]
+        cxxflags.append('-m32')
+        include.extend(['/usr/include/luajit-2.0/', '/usr/local/include/luajit-2.0/'])
     elif re.match(r'luajit5[1-3]', lua_version):
         # luajit
         lua_incl = 'luajit-2.0' # I don't get this..

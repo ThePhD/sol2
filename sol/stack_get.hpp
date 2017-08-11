@@ -31,6 +31,7 @@
 #include <functional>
 #include <utility>
 #include <cstdlib>
+#include <cmath>
 #ifdef SOL_CODECVT_SUPPORT
 #include <codecvt>
 #include <locale>
@@ -59,18 +60,15 @@ namespace sol {
 		};
 
 		template<typename T>
-		struct getter<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_signed<T>>::value>> {
+		struct getter<T, std::enable_if_t<std::is_integral<T>::value>> {
 			static T get(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
-				return static_cast<T>(lua_tointeger(L, index));
-			}
-		};
-
-		template<typename T>
-		struct getter<T, std::enable_if_t<meta::all<std::is_integral<T>, std::is_unsigned<T>>::value>> {
-			static T get(lua_State* L, int index, record& tracking) {
-				tracking.use(1);
-				return static_cast<T>(lua_tointeger(L, index));
+#if SOL_LUA_VERSION >= 503
+				if (lua_isinteger(L, index) != 0) {
+					return static_cast<T>(lua_tointeger(L, index));
+				}
+#endif
+				return static_cast<T>(std::llround(lua_tonumber(L, index)));
 			}
 		};
 
