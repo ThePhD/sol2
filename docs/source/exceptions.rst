@@ -56,7 +56,11 @@ You can ``#define SOL_EXCEPTIONS_SAFE_PROPAGATION`` before including Sol or defi
 
 This will prevent sol from catching ``(...)`` errors in platforms and compilers that have full C++ exception interoperability. This means that Lua errors can be caught with ``catch (...)`` in the C++ end of your code after it goes through Lua, and exceptions can pass through the Lua API and Stack safely.
 
-Currently, the only known platform to do this is the listed "Full" `platforms for LuaJIT`_ and Lua compiled as C++. This define is not turned on automatically, even if Sol detects LuaJIT: *it is your job to define it if you know that your platform supports it*!
+Currently, the only known platform to do this is the listed "Full" `platforms for LuaJIT`_ and Lua compiled as C++. This define is turned on automatically for compiling Lua as C++.
+
+.. warning::
+	``SOL_EXCEPTIONS_SAFE_PROPAGATION`` is not defined automatically when Sol detects LuaJIT. *It is your job to define it if you know that your platform supports it*!
+
 
 .. _issue: https://github.com/ThePhD/sol2/issues/
 .. _at_panic: http://www.Lua.org/manual/5.3/manual.html#4.6

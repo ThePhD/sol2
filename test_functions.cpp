@@ -655,11 +655,24 @@ N = n(1, 2, 3)
 	lua.set("v", &nested::i);
 	lua.set("nested", nested());
 	lua.set("inner", inner());
-	REQUIRE_THROWS(lua.script("s(o2, 2)"));
-	REQUIRE_THROWS(lua.script("t(2)"));
-	REQUIRE_THROWS(lua.script("u(inner)"));
-	REQUIRE_THROWS(lua.script("v(nested, inner)"));
+	{
+		auto result = lua.safe_script("s(o2, 2)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("t(2)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("u(inner)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("v(nested, inner)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+	}	
 }
+
 
 TEST_CASE("simple/call with parameters", "Lua function is called with a few parameters from C++") {
 	sol::state lua;
@@ -668,11 +681,18 @@ TEST_CASE("simple/call with parameters", "Lua function is called with a few para
 	auto f = lua.get<sol::function>("my_add");
 	REQUIRE_NOTHROW(lua.script("function my_nothing(i, j, k) end"));
 	auto fvoid = lua.get<sol::function>("my_nothing");
-	int a;
-	REQUIRE_NOTHROW(fvoid(1, 2, 3));
-	REQUIRE_NOTHROW(a = f.call<int>(1, 2, 3));
-	REQUIRE(a == 6);
-	REQUIRE_THROWS(a = f(1, 2, "arf"));
+	REQUIRE_NOTHROW([&]() {
+		fvoid(1, 2, 3);
+	}());
+	REQUIRE_NOTHROW([&]() {
+		int a = f.call<int>(1, 2, 3);
+		REQUIRE(a == 6);
+	}());
+	sol::protected_function pf = f;
+	REQUIRE_NOTHROW([&]() {
+		sol::protected_function_result pfr = pf(1, 2, "arf");
+		REQUIRE_FALSE(pfr.valid());
+	}());
 }
 
 TEST_CASE("simple/call c++ function", "C++ function is called from lua") {
@@ -837,7 +857,8 @@ TEST_CASE("functions/overloading", "Check if overloading works properly for regu
 	REQUIRE((lua["b"] == string_bark));
 	REQUIRE((lua["c"] == 2));
 
-	REQUIRE_THROWS(lua.script("func(1,2,'meow')"));
+	auto result = lua.safe_script("func(1,2,'meow')", sol::script_pass_on_error);
+	REQUIRE_FALSE(result.valid());
 }
 
 TEST_CASE("overloading/c_call", "Make sure that overloading works with c_call functionality") {
@@ -1247,18 +1268,16 @@ TEST_CASE("functions/pointer nullptr + nil", "ensure specific semantics for hand
 		lua["v2"] = std::unique_ptr<nil_test>();
 		lua["g"] = &nil_test::g;
 
-		REQUIRE_THROWS([&]() {
-			lua.script("g(v2)");
-		}());
+		auto result = lua.safe_script("g(v2)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
 	}
 	SECTION("throw shared argument") {
 		sol::state lua;
 		lua["v1"] = sptr;
 		lua["h"] = &nil_test::h;
 
-		REQUIRE_THROWS([&]() {
-			lua.script("h(v1)");
-		}());
+		auto result = lua.safe_script("h(v1)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
 	}
 	SECTION("throw ref") {
 		REQUIRE_THROWS([&]() {
@@ -1406,9 +1425,8 @@ TEST_CASE("functions/unique_usertype overloading", "make sure overloading can wo
 		lua.set_function("f", print_up_test);
 		lua["v3"] = test(17);
 
-		REQUIRE_THROWS([&]() {
-			lua.script("f(v3)");
-		}());
+		auto result = lua.safe_script("f(v3)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
 	};
 	SECTION("throws-shared_ptr") {
 		sol::state lua;
@@ -1416,9 +1434,8 @@ TEST_CASE("functions/unique_usertype overloading", "make sure overloading can wo
 		lua.set_function("f", print_up_test);
 		lua["v2"] = std::make_shared<test>(44);
 
-		REQUIRE_THROWS([&]() {
-			lua.script("f(v2)");
-		}());
+		auto result = lua.safe_script("f(v2)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
 	};
 	SECTION("throws-ptr") {
 		sol::state lua;
@@ -1426,9 +1443,8 @@ TEST_CASE("functions/unique_usertype overloading", "make sure overloading can wo
 		lua.set_function("f", print_up_test);
 		lua["v4"] = ut.get();
 
-		REQUIRE_THROWS([&]() {
-			lua.script("f(v4)");
-		}());
+		auto result = lua.safe_script("f(v4)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
 	};
 }
 

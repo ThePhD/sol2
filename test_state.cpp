@@ -4,61 +4,92 @@
 #include <sol.hpp>
 #include <iostream>
 #include <fstream>
+#include <chrono>
+#include <thread>
+#include <mutex>
+
 #include "test_stack_guard.hpp"
+
+template <typename Name, typename Data>
+void write_file_attempt(Name&& filename, Data&& data) {
+	bool success = false;
+	for (std::size_t i = 0; i < 20; ++i) {
+		try {
+			std::ofstream file(std::forward<Name>(filename), std::ios::out);
+			file.exceptions(std::ios_base::badbit | std::ios_base::failbit);
+			file << std::forward<Data>(data) << std::endl;
+			file.close();
+		}
+		catch (const std::exception&) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			continue;
+		}
+		success = true;
+		break;
+	}
+	if (!success) {
+		throw std::runtime_error("cannot open file or write out");
+	}
+}
+
+struct write_file_attempt_object {
+	template <typename... Args>
+	void operator()(Args&&... args) {
+		write_file_attempt(std::forward<Args>(args)...);
+	}
+};
 
 TEST_CASE("state/require_file", "opening files as 'requires'") {
 	static const char FILE_NAME[] = "./tmp_thingy.lua";
+	static const char FILE_NAME_USER[] = "./tmp_thingy_user.lua";
 
-	sol::state lua;
-	lua.open_libraries(sol::lib::base);
-
-	SECTION("with usertypes")
-	{
+	SECTION("with usertypes") {
+		write_file_attempt(FILE_NAME_USER, "return { modfunc = function () return foo.new(221) end }");
+		
 		struct foo {
 			foo(int bar) : bar(bar) {}
 
 			const int bar;
 		};
 
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
 		lua.new_usertype<foo>("foo",
 			sol::constructors<sol::types<int>>{},
 			"bar", &foo::bar
 			);
 
-		std::fstream file(FILE_NAME, std::ios::out);
-		file << "return { modfunc = function () return foo.new(221) end }" << std::endl;
-		file.close();
+		const sol::table thingy1 = lua.require_file("thingy", FILE_NAME_USER);
 
-		const sol::table thingy1 = lua.require_file("thingy", FILE_NAME);
-
-		CHECK(thingy1.valid());
+		REQUIRE(thingy1.valid());
 
 		const foo foo_v = thingy1["modfunc"]();
 
 		int val1 = foo_v.bar;
 
-		CHECK(val1 == 221);
+		REQUIRE(val1 == 221);
 	}
 
-	SECTION("simple")
-	{
-		std::fstream file(FILE_NAME, std::ios::out);
-		file << "return { modfunc = function () return 221 end }" << std::endl;
-		file.close();
+	SECTION("simple") {
+		write_file_attempt(FILE_NAME, "return { modfunc = function () return 221 end }");
+
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
 
 		const sol::table thingy1 = lua.require_file("thingy", FILE_NAME);
 		const sol::table thingy2 = lua.require_file("thingy", FILE_NAME);
 
-		CHECK(thingy1.valid());
-		CHECK(thingy2.valid());
+		REQUIRE(thingy1.valid());
+		REQUIRE(thingy2.valid());
 
 		int val1 = thingy1["modfunc"]();
 		int val2 = thingy2["modfunc"]();
 
-		CHECK(val1 == 221);
-		CHECK(val2 == 221);
+		REQUIRE(val1 == 221);
+		REQUIRE(val2 == 221);
 		// must have loaded the same table
-		CHECK(thingy1 == thingy2);
+		REQUIRE((thingy1 == thingy2));
 	}
 
 	std::remove(FILE_NAME);
@@ -77,10 +108,10 @@ TEST_CASE("state/require_script", "opening strings as 'requires' clauses") {
 	REQUIRE(val1 == 221);
 	REQUIRE(val2 == 221);
 	// must have loaded the same table
-	REQUIRE(thingy1 == thingy2);
+	REQUIRE((thingy1 == thingy2));
 }
 
-TEST_CASE("state/require", "opening using a file") {
+TEST_CASE("state/require", "require using a function") {
 	struct open {
 		static int open_func(lua_State* L) {
 			sol::state_view lua = L;
@@ -127,7 +158,7 @@ TEST_CASE("state/multi require", "make sure that requires transfers across hand-
 	//REQUIRE(thingy1 == thingy2);
 	// But we care, thankfully
 	//REQUIRE(thingy1 == thingy3);
-	REQUIRE(thingy2 == thingy3);
+	REQUIRE((thingy2 == thingy3));
 }
 
 TEST_CASE("state/require-safety", "make sure unrelated modules aren't harmed in using requires") {
@@ -299,6 +330,20 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 	static const char file_bad_runtime[] = "./temp.bad_runtime.lua";
 	const static std::string good = "a = 21\nreturn a";
 	static const char file_good[] = "./temp.good.lua";
+	static std::once_flag flag_file_bs = {}, flag_file_br = {}, flag_file_g = {};
+	static std::atomic<int> finished(0);
+	std::call_once(flag_file_bs, write_file_attempt_object(), file_bad_syntax, bad_syntax);
+	std::call_once(flag_file_br, write_file_attempt_object(), file_bad_runtime, bad_runtime);
+	std::call_once(flag_file_g, write_file_attempt_object(), file_good, good);
+
+	auto clean_files = []() {
+		if (finished.fetch_add(1) != 11) {
+			return;
+		}
+		std::remove(file_bad_syntax);
+		std::remove(file_bad_runtime);
+		std::remove(file_good);
+	};
 
 	SECTION("script") {
 		sol::state lua;
@@ -307,6 +352,16 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 		int a = lua["a"];
 		REQUIRE(a == 21);
 		REQUIRE(ar == 21);
+		clean_files();
+	}
+	SECTION("unsafe_script") {
+		sol::state lua;
+		sol::stack_guard sg(lua);
+		int ar = lua.unsafe_script(good);
+		int a = lua["a"];
+		REQUIRE(a == 21);
+		REQUIRE(ar == 21);
+		clean_files();
 	}
 	SECTION("script-handler") {
 		sol::state lua;
@@ -323,6 +378,7 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 		REQUIRE(result.valid());
 		REQUIRE(a == 21);
 		REQUIRE(ar == 21);
+		clean_files();
 	}
 	SECTION("do_string") {
 		sol::state lua;
@@ -339,6 +395,7 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 		REQUIRE(result.valid());
 		REQUIRE(a == 21);
 		REQUIRE(ar == 21);
+		clean_files();
 	}
 	SECTION("load_string") {
 		sol::state lua;
@@ -361,14 +418,7 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 		REQUIRE(result.valid());
 		REQUIRE(a == 21);
 		REQUIRE(ar == 21);
-	}
-	{
-		std::ofstream fbs(file_bad_syntax, std::ios::out);
-		fbs << bad_syntax;
-		std::ofstream fbr(file_bad_runtime, std::ios::out);
-		fbr << bad_runtime;
-		std::ofstream fg(file_good, std::ios::out);
-		fg << good;
+		clean_files();
 	}
 	SECTION("script_file") {
 		sol::state lua;
@@ -377,6 +427,16 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 		int a = lua["a"];
 		REQUIRE(a == 21);
 		REQUIRE(ar == 21);
+		clean_files();
+	}
+	SECTION("unsafe_script_file") {
+		sol::state lua;
+		sol::stack_guard sg(lua);
+		int ar = lua.unsafe_script_file(file_good);
+		int a = lua["a"];
+		REQUIRE(a == 21);
+		REQUIRE(ar == 21);
+		clean_files();
 	}
 	SECTION("script_file-handler") {
 		sol::state lua;
@@ -393,6 +453,24 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 		REQUIRE(result.valid());
 		REQUIRE(a == 21);
 		REQUIRE(ar == 21);
+		clean_files();
+	}
+	SECTION("safe_script_file-handler") {
+		sol::state lua;
+		sol::stack_guard sg(lua);
+		auto errbs = lua.safe_script_file(file_bad_syntax, sol::script_pass_on_error);
+		REQUIRE(!errbs.valid());
+
+		auto errbr = lua.safe_script_file(file_bad_runtime, sol::script_pass_on_error);
+		REQUIRE(!errbr.valid());
+
+		auto result = lua.safe_script_file(file_good, sol::script_pass_on_error);
+		int a = lua["a"];
+		int ar = result;
+		REQUIRE(result.valid());
+		REQUIRE(a == 21);
+		REQUIRE(ar == 21);
+		clean_files();
 	}
 	SECTION("do_file") {
 		sol::state lua;
@@ -409,6 +487,7 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 		REQUIRE(result.valid());
 		REQUIRE(a == 21);
 		REQUIRE(ar == 21);
+		clean_files();
 	}
 	SECTION("load_file") {
 		sol::state lua;
@@ -431,6 +510,7 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 		REQUIRE(result.valid());
 		REQUIRE(a == 21);
 		REQUIRE(ar == 21);
+		clean_files();
 	}
 
 }

@@ -12,7 +12,8 @@ To learn more about usertypes, visit:
 
 The examples folder also has a number of really great examples for you to see. There are also some notes about guarantees you can find about usertypes, and their associated userdata, below:
 
-* Containers get pushed as special usertypes, but can be disabled if problems arise as detailed :doc:`here<api/containers>`.
+* Containers get pushed as special usertypes, but can be disabled if problems arise as detailed :doc:`here<containers>`.
+* `Certain operators`_ are detected and bound automatically for usertypes
 * You can use bitfields but it requires some finesse on your part. We have an example to help you get started `here, that uses a few tricks`_.
 * All usertypes are runtime extensible in both `Lua`_ and `C++`_
 * Please note that the colon is necessary to "automatically" pass the ``this``/``self`` argument to Lua methods
@@ -43,3 +44,4 @@ The examples folder also has a number of really great examples for you to see. T
 .. _here, that uses a few tricks: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_bitfields.cpp
 .. _Lua: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_advanced.cpp#L81
 .. _C++: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_simple.cpp#L51
+.. _Certain operators: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_automatic_operators.cpp

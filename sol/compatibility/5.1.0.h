@@ -157,8 +157,9 @@ inline const char* kepler_lua_compat_get_string(lua_State* L, void* ud, size_t* 
     return ls->s;
 }
 
-#if !defined(SOL_LUAJIT) || (SOL_LUAJIT_VERSION < 20100)
-// Luajit 2.1.0 has this function already
+#if !defined(SOL_LUAJIT) || (SOL_LUAJIT_VERSION < 20001)
+// Luajit 2.1.0, 2.0.1+ has this function already based on the downloads from LuaJIT.org
+// if you encounter a bug related to this please file a report so we can further check values
 
 inline int luaL_loadbufferx(lua_State* L, const char* buff, size_t size, const char* name, const char*) {
     kepler_lua_compat_get_string_view ls;
@@ -171,7 +172,7 @@ inline int luaL_loadfilex(lua_State* L, const char* filename, const char*) {
 	return luaL_loadfile(L, filename/*, mode*/);
 }
 
-#endif // LuaJIT 2.1.x beta and beyond
+#endif // Luajit 2.1.0-beta+, 2.0.1+ beta and beyond
 
 #endif /* Lua 5.1 */
 

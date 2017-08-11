@@ -575,7 +575,8 @@ TEST_CASE("simple_usertype/no_constructor", "make sure simple usertype errors wh
 		lua.new_simple_usertype<thing>("thing",
 			sol::meta_function::construct, sol::no_constructor
 			);
-		REQUIRE_THROWS(lua.script("a = thing.new()"));
+		auto result = lua.safe_script("a = thing.new()", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
 	}
 
 	SECTION("call no_constructor") {
@@ -585,7 +586,8 @@ TEST_CASE("simple_usertype/no_constructor", "make sure simple usertype errors wh
 		lua.new_simple_usertype<thing>("thing",
 			sol::call_constructor, sol::no_constructor
 			);
-		REQUIRE_THROWS(lua.script("a = thing()"));
+		auto result = lua.safe_script("a = thing()", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
 	}	
 }
 
@@ -618,21 +620,23 @@ TEST_CASE("simple_usertype/runtime extensibility", "Check if usertypes are runti
 t = thing.new()
 		)");
 
-		REQUIRE_THROWS([&lua]() {
-			lua.script(R"(
+		{
+			auto result = lua.safe_script(R"(
 t.runtime_func = function (a)
 	return a + 50
 end
-		)");
-		}());
+		)", sol::script_pass_on_error);
+			REQUIRE_FALSE(result.valid());
+		}
 
-		REQUIRE_THROWS([&lua]() {
-			lua.script(R"(
+		{
+			auto result = lua.safe_script(R"(
 function t:runtime_func(a)
 	return a + 52
 end
-		)");
-		}());
+		)", sol::script_pass_on_error);
+			REQUIRE_FALSE(result.valid());
+		}
 
 		lua.script("val = t:func(2)");
 		val = lua["val"];
@@ -663,20 +667,22 @@ end
 t = thing.new()
 		)");
 
-		REQUIRE_THROWS([&lua]() {
-			lua.script(R"(
+		{
+			auto result = lua.safe_script(R"(
 t.runtime_func = function (a)
 	return a + 50
 end
-		)");
-		}());
+		)", sol::script_pass_on_error);
+			REQUIRE_FALSE(result.valid());
+		}
 
-		REQUIRE_THROWS([&lua]() {
-			lua.script(R"(
+		REQUIRE_NOTHROW([&lua]() {
+			auto result = lua.safe_script(R"(
 function t:runtime_func(a)
 	return a + 52
 end
-		)");
+		)", sol::script_pass_on_error);
+			REQUIRE_FALSE(result.valid());
 		}());
 
 		lua.script("val = t:func(2)");
@@ -910,9 +916,9 @@ TEST_CASE("simple_usertype/indexing", "make sure simple usertypes can be indexed
 
 		lua.script(R"(	
 		local t = test.new()
-		v = t.a;
+		v = t.a
 		print(v)
-		t.unknown = 50;
+		t.unknown = 50
 		)");
 		int v = lua["v"];
 		REQUIRE(v == 2);

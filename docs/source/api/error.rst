@@ -7,8 +7,14 @@ error
 
 	class error : public std::runtime_error {
 	public:
-		error(const std::string& str): std::runtime_error("Lua: error: " + str) {}
+		error(const std::string& str): std::runtime_error("lua: error: " + str) {}
 	};
+
+
+.. note::
+
+	Please do not throw this error type yourself. It belongs to the library and we do some information appending at the front.
+
 
 If an eror is thrown by Sol, it is going to be of this type. We use this in a single place: the default ``at_panic`` function we bind on construction of a :ref:`sol::state<set-panic>`. If you turn :doc:`off exceptions<../exceptions>`, the chances of you seeing this error are nil unless you specifically use it to pull errors out of things such as :doc:`sol::protected_function<protected_function>`.
 

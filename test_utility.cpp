@@ -3,6 +3,7 @@
 #include <catch.hpp>
 #include <sol.hpp>
 
+#include <mutex>
 #include <thread>
 
 #ifdef SOL_CXX17_FEATURES
@@ -10,19 +11,27 @@
 #include <variant>
 #endif
 
+std::mutex basic_init_require_mutex;
+
 void basic_initialization_and_lib_open() {
+	
 	sol::state lua;
 	try {
 		lua.open_libraries();
 		lua["a"] = 24;
 		int a = lua["a"];
-		REQUIRE(a == 24);
+		{
+			std::lock_guard<std::mutex> lg(basic_init_require_mutex);
+			REQUIRE(a == 24);
+		}
 	}
 	catch (const sol::error& e) {
+		std::lock_guard<std::mutex> lg(basic_init_require_mutex);
 		INFO(e.what());
 		REQUIRE(false);
 	}
 	catch (...) {
+		std::lock_guard<std::mutex> lg(basic_init_require_mutex);
 		REQUIRE(false);
 	}
 }
@@ -59,10 +68,14 @@ TEST_CASE("utility/variant", "test that variant can be round-tripped") {
 			return v == 2;
 		});
 		lua["v"] = std::variant<float, int, std::string>(std::string("bark"));
-		REQUIRE_THROWS([&]() {
-			lua.script("assert(f(v))");
-			lua.script("assert(g(v))");
-		}());
+		{
+			auto result = lua.safe_script("assert(f(v))", sol::script_pass_on_error);
+			REQUIRE_FALSE(result.valid());
+		};
+		{
+			auto result = lua.safe_script("assert(g(v))", sol::script_pass_on_error);
+			REQUIRE_FALSE(result.valid());
+		};
 	}
 #else
 	REQUIRE(true);

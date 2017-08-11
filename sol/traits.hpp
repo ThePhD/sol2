@@ -28,6 +28,7 @@
 #include <memory>
 #include <functional>
 #include <iterator>
+#include <iosfwd>
 #ifdef SOL_CXX17_FEATURES
 #include <string_view>
 #endif
@@ -368,6 +369,19 @@ namespace sol {
 				static const bool value = sizeof(test<T>(0)) == sizeof(char);
 			};
 
+			template <typename T>
+			struct has_size_test {
+			private:
+				typedef std::array<char, 1> one;
+				typedef std::array<char, 2> two;
+
+				template <typename C> static one test(decltype(std::declval<C>().size())*);
+				template <typename C> static two test(...);
+
+			public:
+				static const bool value = sizeof(test<T>(0)) == sizeof(char);
+			};
+
 			template <typename T, typename U, typename = decltype(std::declval<T&>() < std::declval<U&>())>
 			std::true_type supports_op_less_test(const T&, const U&);
 			std::false_type supports_op_less_test(...);
@@ -377,6 +391,9 @@ namespace sol {
 			template <typename T, typename U, typename = decltype(std::declval<T&>() <= std::declval<U&>())>
 			std::true_type supports_op_less_equal_test(const T&, const U&);
 			std::false_type supports_op_less_equal_test(...);
+			template <typename T, typename OS, typename = decltype(std::declval<OS&>() << std::declval<T&>())>
+			std::true_type supports_ostream_op(const T&, const OS&);
+			std::false_type supports_ostream_op(...);
 
 		} // meta_detail
 
@@ -386,6 +403,8 @@ namespace sol {
 		using supports_op_equal = decltype(meta_detail::supports_op_equal_test(std::declval<T&>(), std::declval<U&>()));
 		template <typename T, typename U = T>
 		using supports_op_less_equal = decltype(meta_detail::supports_op_less_equal_test(std::declval<T&>(), std::declval<U&>()));
+		template <typename T, typename U = std::ostream>
+		using supports_ostream_op = decltype(meta_detail::supports_ostream_op(std::declval<T&>(), std::declval<U&>()));
 
 		template<typename T>
 		struct is_callable : boolean<meta_detail::is_callable<T>::value> {};
@@ -416,6 +435,9 @@ namespace sol {
 
 		template <typename T>
 		using has_insert_after = meta::boolean<meta_detail::has_insert_after_test<T>::value>;
+
+		template <typename T>
+		using has_size = meta::boolean<meta_detail::has_size_test<T>::value>;
 
 		template <typename T>
 		struct is_associative : meta::all<has_key_type<T>, has_key_value_pair<T>, has_mapped_type<T>> {};
@@ -526,7 +548,7 @@ namespace sol {
 		}
 
 		template<typename T, meta::enable<is_pointer_like<meta::unqualified_t<T>>> = meta::enabler>
-		inline auto& deref(T&& item) {
+		inline auto deref(T&& item) -> decltype(*std::forward<T>(item)) {
 			return *std::forward<T>(item);
 		}
 

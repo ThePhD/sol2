@@ -31,6 +31,8 @@ notifications:
 matrix:
   fast_finish: true
   include: 
+    # linux machines
+    # gcc
     - os: linux
       env: COMPILER=g++-4.9 LUA_VERSION=lua52
       compiler: gcc
@@ -43,20 +45,6 @@ matrix:
           - g++-4.9
           - ninja-build
           - liblua5.2-dev
-
-    # gcc-4.9
-    - os: linux
-      env: COMPILER=g++-4.9 LUA_VERSION=luajit51
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-          - ubuntu-toolchain-r-test
-          packages:
-          - gcc-4.9
-          - g++-4.9
-          - ninja-build
-          - libluajit-5.1-dev
 
     # gcc-5
     - os: linux
@@ -85,6 +73,29 @@ matrix:
           - g++-5
           - ninja-build
           - libluajit-5.1-dev
+
+    # gcc-5:i386
+    - os: linux
+      env: COMPILER=g++-5 LUA_VERSION=luajit51:i386
+      compiler: gcc
+      install:
+       - sudo dpkg --add-architecture i386
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test
+          packages:
+          - gcc-5
+          - g++-5
+          - ninja-build
+          - libluajit-5.1-dev
+          - libluajit-5.1-dev:i386
+          - libc6:i386
+          - libncurses5:i386
+          - libstdc++6:i386
+          - gcc-5-multilib
+          - g++-5-multilib
+          - linux-libc-dev:i386
 
     # clang
     - os: linux
@@ -257,17 +268,17 @@ matrix:
     - os: osx
       osx_image: xcode8.3
       compiler: gcc
-      env: COMPILER=g++-5 LUA_VERSION=lua53
-
-    - os: osx
-      osx_image: xcode8.3
-      compiler: gcc
       env: COMPILER=g++-5 LUA_VERSION=luajit
 
     - os: osx
       osx_image: xcode8.3
-      compiler: clang
-      env: COMPILER=appleclang LUA_VERSION=luajit
+      compiler: gcc
+      env: COMPILER=g++-5 LUA_VERSION=lua52
+
+    - os: osx
+      osx_image: xcode8.3
+      compiler: gcc
+      env: COMPILER=g++-5 LUA_VERSION=lua53
 
     - os: osx
       osx_image: xcode8.3
@@ -276,4 +287,3 @@ matrix:
 
   allow_failures:
     - os: osx
-      compiler: clang 

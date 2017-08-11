@@ -27,6 +27,7 @@
 #include "stack_check.hpp"
 #include "optional.hpp"
 #include <cstdlib>
+#include <cmath>
 
 namespace sol {
 	namespace stack {
@@ -56,16 +57,25 @@ namespace sol {
 		struct check_getter<T, std::enable_if_t<std::is_integral<T>::value && lua_type_of<T>::value == type::number>> {
 			template <typename Handler>
 			static optional<T> get(lua_State* L, int index, Handler&& handler, record& tracking) {
-				int isnum = 0;
-				lua_Integer value = lua_tointegerx(L, index, &isnum);
-				if (isnum == 0) {
-					type t = type_of(L, index);
-					tracking.use(static_cast<int>(t != type::none));
-					handler(L, index, type::number, t);
-					return nullopt;
+#if SOL_LUA_VERSION >= 503
+				if (lua_isinteger(L, index) != 0) {
+					tracking.use(1);
+					return static_cast<T>(lua_tointeger(L, index));
 				}
-				tracking.use(1);
-				return static_cast<T>(value);
+#endif
+				int isnum = 0;
+				const lua_Number value = lua_tonumberx(L, index, &isnum);
+				if (isnum != 0) {
+					const auto integer_value = std::llround(value);
+					if (static_cast<lua_Number>(integer_value) == value) {
+						tracking.use(1);
+						return static_cast<T>(integer_value);
+					}
+				}
+				const type t = type_of(L, index);
+				tracking.use(static_cast<int>(t != type::none));
+				handler(L, index, type::number, t);
+				return nullopt;
 			}
 		};
 

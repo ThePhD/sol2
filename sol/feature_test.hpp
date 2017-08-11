@@ -23,90 +23,89 @@
 #define SOL_FEATURE_TEST_HPP
 
 #if (defined(__cplusplus) && __cplusplus == 201703L) || (defined(_MSC_VER) && _MSC_VER > 1900 && (defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (_MSVC_LANG > 201402))
-#ifndef SOL_CXX17_FEATURES
-#define SOL_CXX17_FEATURES 1
-#endif // C++17 features macro
+	#ifndef SOL_CXX17_FEATURES
+		#define SOL_CXX17_FEATURES 1
+	#endif // C++17 features macro
 #endif // C++17 features check
 
 #if defined(__cpp_noexcept_function_type)
-#ifndef SOL_NOEXCEPT_FUNCTION_TYPE
-#define SOL_NOEXCEPT_FUNCTION_TYPE 1
-#endif // noexcept is part of a function's type
+	#ifndef SOL_NOEXCEPT_FUNCTION_TYPE
+		#define SOL_NOEXCEPT_FUNCTION_TYPE 1
+	#endif // noexcept is part of a function's type
 #endif
 
 #if defined(_WIN32) || defined(_MSC_VER)
-#ifndef SOL_CODECVT_SUPPORT
-#define SOL_CODECVT_SUPPORT 1
-#endif // sol codecvt support
+	#ifndef SOL_CODECVT_SUPPORT
+		#define SOL_CODECVT_SUPPORT 1
+	#endif // sol codecvt support
 #elif defined(__GNUC__)
-#if __GNUC__ >= 5
-#ifndef SOL_CODECVT_SUPPORT
-#define SOL_CODECVT_SUPPORT 1
-#endif // codecvt support
-#endif // g++ 5.x.x (MinGW too)
+	#if __GNUC__ >= 5
+		#ifndef SOL_CODECVT_SUPPORT
+			#define SOL_CODECVT_SUPPORT 1
+		#endif // codecvt support
+	#endif // g++ 5.x.x (MinGW too)
 #else
-// Clang sucks and doesn't really utilize codecvt support,
-// not without checking the library versions explicitly (and we're not gonna do that, so fuck you)
+	// Clang sucks and doesn't really utilize codecvt support,
+	// not without checking the library versions explicitly (and we're not gonna do that)
 #endif // Windows/VC++ vs. g++ vs Others
 
 #ifdef _MSC_VER
-#ifdef _DEBUG
-#ifndef NDEBUG
-#ifndef SOL_CHECK_ARGUMENTS
-// Do not define by default: let user turn it on
-//#define SOL_CHECK_ARGUMENTS
-#endif // Check Arguments
-#ifndef SOL_SAFE_USERTYPE
-#define SOL_SAFE_USERTYPE
-#endif // Safe Usertypes
-#endif // NDEBUG
-#endif // Debug
+	#ifdef _DEBUG
+		#ifndef NDEBUG
+			#ifndef SOL_CHECK_ARGUMENTS
+				// Do not define by default: let user turn it on
+				//#define SOL_CHECK_ARGUMENTS
+			#endif // Check Arguments
+			#ifndef SOL_SAFE_USERTYPE
+				#define SOL_SAFE_USERTYPE
+			#endif // Safe Usertypes
+		#endif // NDEBUG
+	#endif // Debug
 
-#ifndef _CPPUNWIND
-#ifndef SOL_NO_EXCEPTIONS
-#define SOL_NO_EXCEPTIONS 1
-#endif
-#endif // Automatic Exceptions
+	#ifndef _CPPUNWIND
+		#ifndef SOL_NO_EXCEPTIONS
+		#define SOL_NO_EXCEPTIONS 1
+		#endif
+	#endif // Automatic Exceptions
 
-#ifndef _CPPRTTI
-#ifndef SOL_NO_RTTI
-#define SOL_NO_RTTI 1
-#endif
-#endif // Automatic RTTI
-
+	#ifndef _CPPRTTI
+		#ifndef SOL_NO_RTTI
+		#define SOL_NO_RTTI 1
+		#endif
+	#endif // Automatic RTTI
 #elif defined(__GNUC__) || defined(__clang__)
 
-#ifndef NDEBUG
-#ifndef __OPTIMIZE__
-#ifndef SOL_CHECK_ARGUMENTS
-// Do not define by default: let user choose
-//#define SOL_CHECK_ARGUMENTS
-// But do check userdata by default:
-#endif // Check Arguments
-#ifndef SOL_SAFE_USERTYPE
-#define SOL_SAFE_USERTYPE
-#endif // Safe Usertypes
-#endif // g++ optimizer flag
-#endif // Not Debug
+	#ifndef NDEBUG
+		#ifndef __OPTIMIZE__
+			#ifndef SOL_CHECK_ARGUMENTS
+			// Do not define by default: let user choose
+			//#define SOL_CHECK_ARGUMENTS
+			// But do check userdata by default:
+			#endif // Check Arguments
+			#ifndef SOL_SAFE_USERTYPE
+				#define SOL_SAFE_USERTYPE
+			#endif // Safe Usertypes
+		#endif // g++ optimizer flag
+	#endif // Not Debug
 
-#ifndef __EXCEPTIONS
-#ifndef SOL_NO_EXCEPTIONS
-#define SOL_NO_EXCEPTIONS 1
-#endif
-#endif // No Exceptions
+	#ifndef __EXCEPTIONS
+		#ifndef SOL_NO_EXCEPTIONS
+			#define SOL_NO_EXCEPTIONS 1
+		#endif
+	#endif // No Exceptions
 
-#ifndef __GXX_RTTI
-#ifndef SOL_NO_RTII
-#define SOL_NO_RTTI 1
-#endif
-#endif // No RTTI
+	#ifndef __GXX_RTTI
+		#ifndef SOL_NO_RTII
+			#define SOL_NO_RTTI 1
+		#endif
+	#endif // No RTTI
 
 #endif // vc++ || clang++/g++
 
 #ifndef SOL_SAFE_USERTYPE
-#ifdef SOL_CHECK_ARGUMENTS
-#define SOL_SAFE_USERTYPE
-#endif // Turn on Safety for all
+	#ifdef SOL_CHECK_ARGUMENTS
+		#define SOL_SAFE_USERTYPE
+	#endif // Turn on Safety for all
 #endif // Safe Usertypes
 
 #endif // SOL_FEATURE_TEST_HPP

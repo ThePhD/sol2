@@ -13,6 +13,12 @@ The most important class here is ``state_view``. This structure takes a ``lua_St
 
 The majority of the members between ``state_view`` and :doc:`sol::table<table>` are identical, with a few added for this higher-level type. Therefore, all of the examples and notes in :doc:`sol::table<table>` apply here as well.
 
+``state_view`` is cheap to construct and creates 2 references to things in the ``lua_State*`` while it is alive: the global Lua table, and the Lua C Registry.
+
+.. warning::
+
+	It is your responsibility to make sure ``sol::state_view`` goes out of scope before you call ``lua_close`` on a pre-existing state, or before ``sol::state`` goes out of scope and its destructor gets called. Failure to do so can result in intermittent crashes because the ``sol::state_view`` has outstanding references to an already-dead ``lua_State*``, and thusly will try to decrement the reference counts for the Lua Registry and the Global Table on a dead state. Please use ``{`` and ``}`` to create a new scope when you know you are going to call ``lua_close`` to specifically control the lifetime of an object.
+
 enumerations
 ------------
 

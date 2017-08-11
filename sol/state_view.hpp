@@ -69,7 +69,7 @@ namespace sol {
 		}
 #ifdef SOL_NO_EXCEPTIONS
 		// replacing information of stack error into pfr
-		if (t != type::nil) {
+		if (t != type::none) {
 			lua_pop(L, 1);
 		}
 		stack::push(L, err);

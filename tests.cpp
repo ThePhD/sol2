@@ -189,7 +189,8 @@ TEST_CASE("simple/if", "check if if statements work through lua") {
 TEST_CASE("negative/basic errors", "Check if error handling works correctly") {
 	sol::state lua;
 
-	REQUIRE_THROWS(lua.script("nil[5]"));
+	auto result = lua.safe_script("nil[5]", sol::script_pass_on_error);
+	REQUIRE_FALSE(result.valid());
 }
 
 TEST_CASE("libraries", "Check if we can open libraries") {

@@ -17,8 +17,7 @@ Containers are objects that are meant to be inspected and iterated and whose job
 
 .. note::
 	
-	Please note that c-style arrays must be added to Lua using ``lua["my_arr"] = &my_c_array;`` or ``lua["my_arr"] = std::ref(my_c_array);`` to be bestowed these properties. No, a plain ``T*`` pointer is **not** considered an array. This is important because ``lua["my_string"] = "some string";`` is also typed as an array (``const char[n]``) and thusly we can only use ``std::reference_wrapper`` or pointers to arrays to work for us.
-
+	Please note that c-style arrays must be added to Lua using ``lua["my_arr"] = &my_c_array;`` or ``lua["my_arr"] = std::ref(my_c_array);`` to be bestowed these properties. No, a plain ``T*`` pointer is **not** considered an array. This is important because ``lua["my_string"] = "some string";`` is also typed as an array (``const char[n]``) and thusly we can only use ``std::reference_wrapper``\s or pointers to arrays to work for us.
 
 .. _container-detection:
 
@@ -48,6 +47,10 @@ You can also specialize ``sol::is_container<T>`` to turn off container detection
 	}
 
 This will let the type be pushed as a regular userdata.
+
+.. note::
+
+	Pushing a new :doc:`usertype<api/usertype>` will prevent a qualifying C++ container type from being treated like a container. To force a type that you've registered to be treated like a container, use :doc:`sol::as_container<api/as_container>`. 
 
 
 .. _container-traits:
@@ -83,7 +86,7 @@ The various operations provided by ``container_traits<T>`` are expected to be li
 
 	Exception handling **WILL** be provided around these particular raw C functions, so you do not need to worry about exceptions or errors bubbling through and handling that part. It is specifically handled for you in this specific instance, and **ONLY** in this specific instance. The raw note still applies to every other raw C function you make manually.
 
-.. _container-operations::
+.. _container-operations:
 
 container operations
 -------------------------
@@ -155,9 +158,9 @@ When you serialize a container into sol2, the default container handler deals wi
 |                        |                                        | std::list               | - std::forward_list uses "insert_after" idiom, requires special handling internally           |
 |                        |                                        | std::forward_list       |                                                                                               |
 +------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
-| fixed                  | lacking ``push_back``/``insert``       | std::array<T, n>        | - regular c-style arrays must be set with                                                     |
-|                        | lacking ``erase``                      | T[n] (fixed arrays)     | ``std::ref( arr )`` or ``&arr``                                                               |
-|                        |                                        |                         | to be used as a container type with sol2                                                      |
+| fixed                  | lacking ``push_back``/``insert``       | std::array<T, n>        | - regular c-style arrays must be set with ``std::ref( arr )`` or ``&arr`` to be usable        |
+|                        | lacking ``erase``                      | T[n] (fixed arrays)     |                                                                                               |
+|                        |                                        |                         |                                                                                               |
 +------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
 | ordered                | ``key_type`` typedef                   | std::set                | - ``container[key] = stuff`` operation erases when ``stuff`` is nil, inserts/sets when not    |
 |                        | ``erase(key)``                         | std::multi_set          | - ``container.get(key)`` returns the key itself                                               |

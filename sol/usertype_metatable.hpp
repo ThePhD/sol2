@@ -32,8 +32,11 @@
 #include "raii.hpp"
 #include "deprecate.hpp"
 #include "object.hpp"
+#include "container_usertype_metatable.hpp"
 #include <unordered_map>
 #include <cstdio>
+#include <sstream>
+#include <cassert>
 
 namespace sol {
 	namespace usertype_detail {
@@ -99,7 +102,14 @@ namespace sol {
 			index(std::move(i)), newindex(std::move(ni)),
 			indexbaseclasspropogation(index), newindexbaseclasspropogation(newindex) {}
 		};
-	}
+
+		template <typename T>
+		inline int default_to_string(lua_State* L) {
+			std::ostringstream oss;
+			oss << stack::get<T>(L, 1);
+			return stack::push(L, oss.str());
+		}
+	} // usertype_detail
 
 	struct usertype_metatable_core {
 		usertype_detail::mapping_t mapping;
@@ -109,9 +119,8 @@ namespace sol {
 		bool mustindex;
 
 		usertype_metatable_core(lua_CFunction ifx, lua_CFunction nifx) :
-			mapping(), indexfunc(ifx),
-			newindexfunc(nifx), runtime(), mustindex(false)
-		{
+		mapping(), indexfunc(ifx),
+		newindexfunc(nifx), runtime(), mustindex(false) {
 
 		}
 
@@ -402,7 +411,7 @@ namespace sol {
 		}
 
 		template <typename T, typename Op>
-		inline int operator_wrap(lua_State* L) {
+		int operator_wrap(lua_State* L) {
 			auto maybel = stack::check_get<T>(L, 1);
 			if (maybel) {
 				auto mayber = stack::check_get<T>(L, 2);
@@ -423,12 +432,51 @@ namespace sol {
 
 		template <typename T, typename Op, typename Supports, typename Regs, meta::enable<Supports> = meta::enabler>
 		inline void make_reg_op(Regs& l, int& index, const char* name) {
-			l[index] = { name, &operator_wrap<T, Op> };
+			lua_CFunction f = &operator_wrap<T, Op>;
+			l[index] = luaL_Reg{ name, f };
 			++index;
 		}
 
 		template <typename T, typename Op, typename Supports, typename Regs, meta::disable<Supports> = meta::enabler>
 		inline void make_reg_op(Regs&, int&, const char*) {
+			// Do nothing if there's no support
+		}
+
+		template <typename T, typename Supports, typename Regs, meta::enable<Supports> = meta::enabler>
+		inline void make_to_string_op(Regs& l, int& index) {
+			const char* name = to_string(meta_function::to_string).c_str();
+			lua_CFunction f = &detail::static_trampoline<&default_to_string<T>>;
+			l[index] = luaL_Reg{ name, f };
+			++index;
+		}
+
+		template <typename T, typename Supports, typename Regs, meta::disable<Supports> = meta::enabler>
+		inline void make_to_string_op(Regs&, int&) {
+			// Do nothing if there's no support
+		}
+
+		template <typename T, typename Regs, meta::enable<meta::has_deducible_signature<T>> = meta::enabler>
+		inline void make_call_op(Regs& l, int& index) {
+			const char* name = to_string(meta_function::call).c_str();
+			lua_CFunction f = &c_call<decltype(&T::operator()), &T::operator()>;
+			l[index] = luaL_Reg{ name, f };
+			++index;
+		}
+
+		template <typename T, typename Regs, meta::disable<meta::has_deducible_signature<T>> = meta::enabler>
+		inline void make_call_op(Regs&, int&) {
+			// Do nothing if there's no support
+		}
+
+		template <typename T, typename Regs, meta::enable<meta::has_size<T>> = meta::enabler>
+		inline void make_length_op(Regs& l, int& index) {
+			const char* name = to_string(meta_function::length).c_str();
+			l[index] = luaL_Reg{ name, &c_call<decltype(&T::size), &T::size> };
+			++index;
+		}
+
+		template <typename T, typename Regs, meta::disable<meta::has_size<T>> = meta::enabler>
+		inline void make_length_op(Regs&, int&) {
 			// Do nothing if there's no support
 		}
 	} // usertype_detail
@@ -448,7 +496,7 @@ namespace sol {
 	struct usertype_metatable<T, std::index_sequence<I...>, Tn...> : usertype_metatable_core, usertype_detail::registrar {
 		typedef std::make_index_sequence<sizeof...(I) * 2> indices;
 		typedef std::index_sequence<I...> half_indices;
-		typedef std::array<luaL_Reg, sizeof...(Tn) / 2 + 1 + 3> regs_t;
+		typedef std::array<luaL_Reg, sizeof...(Tn) / 2 + 1 + 29> regs_t;
 		typedef std::tuple<Tn...> RawTuple;
 		typedef std::tuple<clean_type_t<Tn> ...> Tuple;
 		template <std::size_t Idx>
@@ -463,9 +511,7 @@ namespace sol {
 		void* baseclasscheck;
 		void* baseclasscast;
 		bool secondarymeta;
-		bool hasequals;
-		bool hasless;
-		bool haslessequals;
+		std::array<bool, 29> properties;
 
 		template <std::size_t Idx, meta::enable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
 		lua_CFunction make_func() const {
@@ -490,20 +536,34 @@ namespace sol {
 		}
 
 		int finish_regs(regs_t& l, int& index) {
-			if (!hasless) {
+			if (!properties[static_cast<int>(meta_function::less_than)]) {
 				const char* name = to_string(meta_function::less_than).c_str();
 				usertype_detail::make_reg_op<T, std::less<>, meta::supports_op_less<T>>(l, index, name);
 			}
-			if (!haslessequals) {
+			if (!properties[static_cast<int>(meta_function::less_than_or_equal_to)]) {
 				const char* name = to_string(meta_function::less_than_or_equal_to).c_str();
 				usertype_detail::make_reg_op<T, std::less_equal<>, meta::supports_op_less_equal<T>>(l, index, name);
 			}
-			if (!hasequals) {
+			if (!properties[static_cast<int>(meta_function::equal_to)]) {
 				const char* name = to_string(meta_function::equal_to).c_str();
 				usertype_detail::make_reg_op<T, std::conditional_t<meta::supports_op_equal<T>::value, std::equal_to<>, usertype_detail::no_comp>, std::true_type>(l, index, name);
 			}
+			if (!properties[static_cast<int>(meta_function::pairs)]) {
+				const char* name = to_string(meta_function::pairs).c_str();
+				l[index] = luaL_Reg{ name, container_usertype_metatable<as_container_t<T>>::pairs_call };
+				++index;
+			}
+			if (!properties[static_cast<int>(meta_function::length)]) {
+				usertype_detail::make_length_op<T>(l, index);
+			}
+			if (!properties[static_cast<int>(meta_function::to_string)]) {
+				usertype_detail::make_to_string_op<T, meta::supports_ostream_op<T>>(l, index);
+			}
+			if (!properties[static_cast<int>(meta_function::call)]) {
+				usertype_detail::make_call_op<T>(l, index);
+			}
 			if (destructfunc != nullptr) {
-				l[index] = { to_string(meta_function::garbage_collect).c_str(), destructfunc };
+				l[index] = luaL_Reg{ to_string(meta_function::garbage_collect).c_str(), destructfunc };
 				++index;
 			}
 			return index;
@@ -538,31 +598,37 @@ namespace sol {
 				return;
 			}
 			luaL_Reg reg = usertype_detail::make_reg(std::forward<N>(n), make_func<Idx>());
-			// Returnable scope
-			// That would be a neat keyword for C++
-			// returnable { ... };
-			if (reg.name == to_string(meta_function::equal_to)) {
-				hasequals = true;
-			}
-			if (reg.name == to_string(meta_function::less_than)) {
-				hasless = true;
-			}
-			if (reg.name == to_string(meta_function::less_than_or_equal_to)) {
-				haslessequals = true;
-			}
-			if (reg.name == to_string(meta_function::garbage_collect)) {
-				destructfunc = reg.func;
-				return;
-			}
-			else if (reg.name == to_string(meta_function::index)) {
-				indexfunc = reg.func;
-				mustindex = true;
-				return;
-			}
-			else if (reg.name == to_string(meta_function::new_index)) {
-				newindexfunc = reg.func;
-				mustindex = true;
-				return;
+			for (std::size_t i = 1; i < properties.size(); ++i) {
+				meta_function mf = static_cast<meta_function>(i);
+				const std::string& mfname = to_string(mf);
+				if (mfname == reg.name) {
+					switch (mf) {
+					case meta_function::garbage_collect:
+						if (destructfunc != nullptr) {
+#ifdef SOL_NO_EXCEPTIONS
+							throw sol::error("sol: 2 separate garbage_collect functions were set on this type. Please specify only 1 sol::meta_function::gc type AND wrap the function in a sol::destruct call, as shown by the documentation and examples");
+#else
+							assert(false && "sol: 2 separate garbage_collect functions were set on this type. Please specify only 1 sol::meta_function::gc type AND wrap the function in a sol::destruct call, as shown by the documentation and examples");
+#endif
+						}
+						destructfunc = reg.func;
+						return;
+					case meta_function::index:
+						indexfunc = reg.func;
+						mustindex = true;
+						properties[i] = true;
+						return;
+					case meta_function::new_index:
+						newindexfunc = reg.func;
+						mustindex = true;
+						properties[i] = true;
+						return;
+					default:
+						break;
+					}
+					properties[i] = true;
+					break;
+				}
 			}
 			l[index] = reg;
 			++index;
@@ -576,7 +642,8 @@ namespace sol {
 		indexbaseclasspropogation(usertype_detail::walk_all_bases<true>), newindexbaseclasspropogation(usertype_detail::walk_all_bases<false>),
 		baseclasscheck(nullptr), baseclasscast(nullptr),
 		secondarymeta(contains_variable()),
-		hasequals(false), hasless(false), haslessequals(false) {
+		properties() {
+			properties.fill(false);
 			std::initializer_list<typename usertype_detail::mapping_t::value_type> ilist{ {
 				std::pair<std::string, usertype_detail::call_information>( usertype_detail::make_string(std::get<I * 2>(functions)),
 					usertype_detail::call_information(&usertype_metatable::real_find_call<I * 2, I * 2 + 1, true>,

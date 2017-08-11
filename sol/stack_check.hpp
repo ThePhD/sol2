@@ -28,6 +28,7 @@
 #include <memory>
 #include <functional>
 #include <utility>
+#include <cmath>
 #ifdef SOL_CXX17_FEATURES
 #include <variant>
 #endif // C++17
@@ -85,7 +86,14 @@ namespace sol {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 				tracking.use(1);
-				bool success = lua_isinteger(L, index) == 1;
+#if SOL_LUA_VERSION >= 503
+				if (lua_isinteger(L, index) != 0) {
+					return true;
+				}
+#endif
+				int isnum = 0;
+				const lua_Number v = lua_tonumberx(L, index, &isnum);
+				const bool success = isnum != 0 && static_cast<lua_Number>(std::llround(v)) == v;
 				if (!success) {
 					// expected type, actual type
 					handler(L, index, type::number, type_of(L, index));
@@ -372,6 +380,8 @@ namespace sol {
 				if (stack_detail::check_metatable<U*>(L, metatableindex))
 					return true;
 				if (stack_detail::check_metatable<detail::unique_usertype<U>>(L, metatableindex))
+					return true;
+				if (stack_detail::check_metatable<as_container_t<U>>(L, metatableindex))
 					return true;
 				bool success = false;
 				if (detail::has_derived<T>::value) {

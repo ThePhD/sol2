@@ -31,8 +31,39 @@ namespace sol {
 	template <typename T>
 	struct container_traits;
 
+	template <typename T>
+	struct as_container_t {
+		T source;
+
+		as_container_t(T value) : source(std::move(value)) {}
+
+		operator T() {
+			return std::move(source);
+		}
+
+		operator std::add_const_t<std::add_lvalue_reference_t<T>>() const {
+			return source;
+		}
+	};
+
+	template <typename T>
+	struct as_container_t<T&> {
+		std::reference_wrapper<T> source;
+
+		as_container_t(T& value) : source(value) {}
+
+		operator T&() {
+			return source;
+		}
+	};
+
+	template <typename T>
+	auto as_container(T&& value) {
+		return as_container_t<T>(std::forward<T>(value));
+	}
+
 	namespace container_detail {
-		
+
 		template <typename T>
 		struct has_clear_test {
 		private:
@@ -47,12 +78,12 @@ namespace sol {
 		};
 
 		template <typename T>
-		struct has_size_test {
+		struct has_empty_test {
 		private:
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(&C::size));
+			template <typename C> static one test(decltype(&C::empty));
 			template <typename C> static two test(...);
 
 		public:
@@ -229,10 +260,10 @@ namespace sol {
 		};
 
 		template <typename T>
-		using has_size = meta::boolean<has_size_test<T>::value>;
+		using has_clear = meta::boolean<has_clear_test<T>::value>;
 
 		template <typename T>
-		using has_clear = meta::boolean<has_clear_test<T>::value>;
+		using has_empty = meta::boolean<has_empty_test<T>::value>;
 
 		template <typename T>
 		using has_find = meta::boolean<has_find_test<T>::value>;
@@ -262,10 +293,13 @@ namespace sol {
 		using has_traits_add = meta::boolean<has_traits_add_test<T>::value>;
 
 		template <typename T>
-		using has_traits_size = has_size<T>;
+		using has_traits_size = meta::has_size<T>;
 
 		template <typename T>
 		using has_traits_clear = has_clear<T>;
+
+		template <typename T>
+		using has_traits_empty = has_empty<T>;
 
 		template <typename T>
 		using has_traits_find = meta::boolean<has_traits_find_test<T>::value>;
@@ -278,6 +312,25 @@ namespace sol {
 
 		template <typename T>
 		using has_traits_erase = meta::boolean<has_traits_erase_test<T>::value>;
+
+		template <typename T>
+		struct is_forced_container : is_container<T> {};
+
+		template <typename T>
+		struct is_forced_container<as_container_t<T>> : std::true_type {};
+
+		template <typename T>
+		struct container_decay {
+			typedef T type;
+		};
+
+		template <typename T>
+		struct container_decay<as_container_t<T>> {
+			typedef T type;
+		};
+
+		template <typename T>
+		using container_decay_t = typename container_decay<meta::unqualified_t<T>>::type;
 
 		template <typename T>
 		decltype(auto) get_key(std::false_type, T&& t) {
@@ -343,6 +396,10 @@ namespace sol {
 				return luaL_error(L, "sol: cannot call 'clear' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 			}
 
+			static int empty(lua_State* L) {
+				return luaL_error(L, "sol: cannot call 'empty' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
+			}
+
 			static int erase(lua_State* L) {
 				return luaL_error(L, "sol: cannot call 'erase' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 			}
@@ -365,17 +422,16 @@ namespace sol {
 		template <typename X>
 		struct container_traits_default<X, std::enable_if_t<
 			meta::all<
-				is_container<meta::unqualified_t<X>>
-				, meta::has_value_type<meta::unqualified_t<X>>
-				, meta::has_iterator<meta::unqualified_t<X>>
+				is_forced_container<meta::unqualified_t<X>>
+				, meta::has_value_type<meta::unqualified_t<container_decay_t<X>>>
+				, meta::has_iterator<meta::unqualified_t<container_decay_t<X>>>
 			>::value
 		>> {
 		private:
-			typedef std::remove_pointer_t<meta::unwrap_unqualified_t<X>> T;
-		public:
-			typedef std::true_type is_container;
-			typedef meta::is_associative<T> is_associative;
+			typedef std::remove_pointer_t<meta::unwrap_unqualified_t<container_decay_t<X>>> T;
 		private:
+			typedef container_traits<X> deferred_traits;
+			typedef meta::is_associative<T> is_associative;
 			typedef meta::is_lookup<T> is_lookup;
 			typedef typename T::iterator iterator;
 			typedef typename T::value_type value_type;
@@ -390,7 +446,7 @@ namespace sol {
 			typedef std::is_same<iterator_category, std::input_iterator_tag> is_input_iterator;
 			typedef std::conditional_t<is_input_iterator::value, 
 				V,
-				std::conditional_t<is_associative::value, std::add_lvalue_reference_t<V>, iterator_return>
+				decltype(detail::deref(std::declval<std::conditional_t<is_associative::value, std::add_lvalue_reference_t<V>, iterator_return>>()))
 			> push_type;
 			typedef std::is_copy_assignable<V> is_copyable;
 			typedef meta::neg<meta::any<
@@ -409,24 +465,28 @@ namespace sol {
 			};
 
 			static auto& get_src(lua_State* L) {
+				typedef std::remove_pointer_t<meta::unwrap_unqualified_t<X>> Tu;
 #ifdef SOL_SAFE_USERTYPE
-				auto p = stack::check_get<T*>(L, 1);
-				if (!p || p.value() == nullptr) {
-					luaL_error(L, "sol: 'self' argument is nil or not of type '%s' (pass 'self' as first argument with ':' or call on proper type)", detail::demangle<T>().c_str());
+				auto p = stack::check_get<Tu*>(L, 1);
+				if (!p) {
+					luaL_error(L, "sol: 'self' is not of type '%s' (pass 'self' as first argument with ':' or call on proper type)", detail::demangle<T>().c_str());
+				}
+				if (p.value() == nullptr) {
+					luaL_error(L, "sol: 'self' argument is nil (pass 'self' as first argument with ':' or call on a '%s' type)", detail::demangle<T>().c_str());
 				}
 				return *p.value();
 #else
-				return stack::get<T>(L, 1);
+				return stack::get<Tu>(L, 1);
 #endif // Safe getting with error
 			}
 
 			static int get_associative(std::true_type, lua_State* L, iterator& it) {
 				auto& v = *it;
-				return stack::stack_detail::push_reference<push_type>(L, v.second);
+				return stack::stack_detail::push_reference<push_type>(L, detail::deref(v.second));
 			}
 
 			static int get_associative(std::false_type, lua_State* L, iterator& it) {
-				return stack::stack_detail::push_reference<push_type>(L, *it);
+				return stack::stack_detail::push_reference<push_type>(L, detail::deref(*it));
 			}
 
 			static int get_category(std::input_iterator_tag, lua_State* L, T& self, K& key) {
@@ -625,7 +685,7 @@ namespace sol {
 			}
 
 			static int find_comparative(std::true_type, lua_State* L, T& self) {
-				V value = stack::get<V>(L, 2);
+				decltype(auto) value = stack::get<V>(L, 2);
 				auto it = begin(L, self);
 				auto e = end(L, self);
 				std::size_t index = 1;
@@ -773,7 +833,7 @@ namespace sol {
 			}
 
 			static void insert_copyable(std::true_type, lua_State* L, T& self, stack_object key, stack_object value) {
-				insert_has(has_find<T>(), L, self, std::move(key), std::move(value));
+				insert_has(meta::has_insert<T>(), L, self, std::move(key), std::move(value));
 			}
 
 			static void insert_copyable(std::false_type, lua_State* L, T&, stack_object, stack_object) {
@@ -835,7 +895,7 @@ namespace sol {
 			}
 
 			static auto size_has(std::false_type, lua_State* L, T& self) {
-				return std::distance(container_traits<T>::begin(L, self), container_traits<T>::end(L, self));
+				return std::distance(deferred_traits::begin(L, self), deferred_traits::end(L, self));
 			}
 
 			static auto size_has(std::true_type, lua_State*, T& self) {
@@ -850,6 +910,14 @@ namespace sol {
 				luaL_error(L, "sol: cannot call clear on '%s'", detail::demangle<T>().c_str());
 			}
 
+			static bool empty_has(std::true_type, lua_State*, T& self) {
+				return self.empty();
+			}
+
+			static bool empty_has(std::false_type, lua_State* L, T& self) {
+				return deferred_traits::begin(L, self) == deferred_traits::end(L, self);
+			}
+
 			static int get_start(lua_State* L, T& self, K& key) {
 				return get_it(is_linear_integral(), L, self, key);
 			}
@@ -859,11 +927,15 @@ namespace sol {
 			}
 
 			static std::size_t size_start(lua_State* L, T& self) {
-				return size_has(has_size<T>(), L, self);
+				return size_has(meta::has_size<T>(), L, self);
 			}
 
 			static void clear_start(lua_State* L, T& self) {
 				clear_has(has_clear<T>(), L, self);
+			}
+
+			static bool empty_start(lua_State* L, T& self) {
+				return empty_has(has_empty<T>(), L, self);
 			}
 
 			static void erase_start(lua_State* L, T& self, K& key) {
@@ -874,12 +946,12 @@ namespace sol {
 				iter& i = stack::get<user<iter>>(L, 1);
 				auto& source = i.source;
 				auto& it = i.it;
-				if (it == container_traits<T>::end(L, source)) {
+				if (it == deferred_traits::end(L, source)) {
 					return 0;
 				}
 				int p;
 				p = stack::push_reference(L, it->first);
-				p += stack::stack_detail::push_reference<push_type>(L, it->second);
+				p += stack::stack_detail::push_reference<push_type>(L, detail::deref(it->second));
 				std::advance(it, 1);
 				return p;
 			}
@@ -887,7 +959,7 @@ namespace sol {
 			static int pairs_associative(std::true_type, lua_State* L) {
 				auto& src = get_src(L);
 				stack::push(L, next);
-				stack::push<user<iter>>(L, src, container_traits<T>::begin(L, src));
+				stack::push<user<iter>>(L, src, deferred_traits::begin(L, src));
 				stack::push(L, 1);
 				return 3;
 			}
@@ -897,12 +969,12 @@ namespace sol {
 				auto& source = i.source;
 				auto& it = i.it;
 				K k = stack::get<K>(L, 2);
-				if (it == container_traits<T>::end(L, source)) {
+				if (it == deferred_traits::end(L, source)) {
 					return 0;
 				}
 				int p;
 				p = stack::push_reference(L, k + 1);
-				p += stack::stack_detail::push_reference<push_type>(L, *it);
+				p += stack::stack_detail::push_reference<push_type>(L, detail::deref(*it));
 				std::advance(it, 1);
 				return p;
 			}
@@ -910,7 +982,7 @@ namespace sol {
 			static int pairs_associative(std::false_type, lua_State* L) {
 				auto& src = get_src(L);
 				stack::push(L, next);
-				stack::push<user<iter>>(L, src, container_traits<T>::begin(L, src));
+				stack::push<user<iter>>(L, src, deferred_traits::begin(L, src));
 				stack::push(L, 0);
 				return 3;
 			}
@@ -952,7 +1024,7 @@ namespace sol {
 
 			static int insert(lua_State* L) {
 				auto& self = get_src(L);
-				insert_copyable(meta::any<is_associative, is_lookup>(), L, self, stack_object(L, raw_index(2)), stack_object(L, raw_index(3)));
+				insert_copyable(is_copyable(), L, self, stack_object(L, raw_index(2)), stack_object(L, raw_index(3)));
 				return 0;
 			}
 
@@ -990,6 +1062,11 @@ namespace sol {
 				return 0;
 			}
 
+			static int empty(lua_State* L) {
+				auto& self = get_src(L);
+				return stack::push(L, empty_start(L, self));
+			}
+
 			static int pairs(lua_State* L) {
 				return pairs_associative(is_associative(), L);
 			}
@@ -999,6 +1076,7 @@ namespace sol {
 		struct container_traits_default<X, std::enable_if_t<std::is_array<std::remove_pointer_t<meta::unwrap_unqualified_t<X>>>::value>> {
 		private:
 			typedef std::remove_pointer_t<meta::unwrap_unqualified_t<X>> T;
+			typedef container_traits<X> deferred_traits;
 		public:
 			typedef std::remove_extent_t<T> value_type;
 			typedef value_type* iterator;
@@ -1043,12 +1121,12 @@ namespace sol {
 				auto& source = i.source;
 				auto& it = i.it;
 				std::size_t k = stack::get<std::size_t>(L, 2);
-				if (it == container_traits<T>::end(L, source)) {
+				if (it == deferred_traits::end(L, source)) {
 					return 0;
 				}
 				int p;
 				p = stack::push_reference(L, k + 1);
-				p += stack::push_reference(L, *it);
+				p += stack::push_reference(L, detail::deref(*it));
 				std::advance(it, 1);
 				return p;
 			}
@@ -1077,7 +1155,7 @@ namespace sol {
 					return stack::push(L, lua_nil);
 				}
 				--idx;
-				return stack::push_reference(L, self[idx]);
+				return stack::push_reference(L, detail::deref(self[idx]));
 			}
 
 			static int index_get(lua_State* L) {
@@ -1110,10 +1188,14 @@ namespace sol {
 				return stack::push(L, std::extent<T>::value);
 			}
 
+			static int empty(lua_State* L) {
+				return stack::push(L, std::extent<T>::value > 0);
+			}
+
 			static int pairs(lua_State* L) {
 				auto& src = get_src(L);
 				stack::push(L, next);
-				stack::push<user<iter>>(L, src, container_traits<T>::begin(L, src));
+				stack::push<user<iter>>(L, src, deferred_traits::begin(L, src));
 				stack::push(L, 0);
 				return 3;
 			}
@@ -1126,6 +1208,9 @@ namespace sol {
 				return std::addressof(self[0]) + std::extent<T>::value;
 			}
 		};
+
+		template <typename X>
+		struct container_traits_default<container_traits<X>> : container_traits_default<X> {};
 	} // container_detail
 
 	template <typename T>
