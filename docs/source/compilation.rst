@@ -107,7 +107,7 @@ The next step for Sol from a developer standpoint is to formally make the librar
 Hopefully, as things progress, we move things forward.
 
 
-.. _sol2 release v2.18.0: https://github.com/ThePhD/sol2/releases/tag/v2.17.5
+.. _sol2 release v2.18.0: https://github.com/ThePhD/sol2/releases/tag/v2.18.0
 .. _OrfeasZ in this issue: https://github.com/ThePhD/sol2/issues/329#issuecomment-276824983
 .. _issue describing preliminary steps can be found here: https://github.com/ThePhD/sol2/issues/436#issuecomment-312021508
 .. _this issue here: https://github.com/ThePhD/sol2/issues/426
