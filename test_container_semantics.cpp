@@ -1015,10 +1015,10 @@ end
 print(mop)
 	)");
 	}());
-	{
-		const my_object& mo = lua["mop"];
+	REQUIRE_NOTHROW([&]() {
+		my_object& mo = lua["mop"];
 		REQUIRE((&mo == my_object::last_printed));
-	}
+	}());
 #endif
 	REQUIRE_NOTHROW([&]() {
 		lua.safe_script(R"(
@@ -1028,10 +1028,12 @@ c_iterable = mo:iterable()
 )");
 	}());
 
-	my_object& mo = lua["c_mo"];
-	my_object& mo_iterable = lua["c_iterable"];
-	REQUIRE(&mo == &mo_iterable);
-	REQUIRE(mo == mo_iterable);
+	REQUIRE_NOTHROW([&]() {
+		my_object& mo = lua["c_mo"];
+		my_object& mo_iterable = lua["c_iterable"];
+		REQUIRE(&mo == &mo_iterable);
+		REQUIRE(mo == mo_iterable);
+	}());
 
 	REQUIRE_NOTHROW([&]() {
 		lua.safe_script(R"(
@@ -1042,14 +1044,16 @@ s1_iterable_len = #c_iterable
 )");
 	}());
 
-	std::size_t s1 = lua["s1"];
-	std::size_t s1_len = lua["s1_len"];
-	std::size_t s1_iterable = lua["s1_iterable"];
-	std::size_t s1_iterable_len = lua["s1_iterable_len"];
-	REQUIRE(s1 == 10);
-	REQUIRE(s1 == s1_len);
-	REQUIRE(s1 == s1_iterable_len);
-	REQUIRE(s1_iterable == s1_iterable_len);
+	REQUIRE_NOTHROW([&]() {
+		std::size_t s1 = lua["s1"];
+		std::size_t s1_len = lua["s1_len"];
+		std::size_t s1_iterable = lua["s1_iterable"];
+		std::size_t s1_iterable_len = lua["s1_iterable_len"];
+		REQUIRE(s1 == 10);
+		REQUIRE(s1 == s1_len);
+		REQUIRE(s1 == s1_iterable_len);
+		REQUIRE(s1_iterable == s1_iterable_len);
+	}());
 
 	REQUIRE_NOTHROW([&]() {
 		lua.safe_script(R"(
@@ -1073,16 +1077,20 @@ print(mo)
 	)");
 	}());
 
-	int v1 = lua["v1"];
-	std::size_t s2 = lua["s2"];
-	std::size_t s2_len = lua["s2_len"];
-	std::size_t s2_iterable = lua["s2_iterable"];
-	std::size_t s2_iterable_len = lua["s2_iterable_len"];
-
-	REQUIRE(v1 == 100);
-	REQUIRE(s2 == 16);
-	REQUIRE(s2 == s2_len);
-	REQUIRE(s2 == s2_iterable_len);
-	REQUIRE(s2_iterable == s2_iterable_len);
-	REQUIRE(&mo == my_object::last_printed);
+	REQUIRE_NOTHROW([&]() {
+		int v1 = lua["v1"];
+		std::size_t s2 = lua["s2"];
+		std::size_t s2_len = lua["s2_len"];
+		std::size_t s2_iterable = lua["s2_iterable"];
+		std::size_t s2_iterable_len = lua["s2_iterable_len"];
+		REQUIRE(v1 == 100);
+		REQUIRE(s2 == 16);
+		REQUIRE(s2 == s2_len);
+		REQUIRE(s2 == s2_iterable_len);
+		REQUIRE(s2_iterable == s2_iterable_len);
+	}());
+	REQUIRE_NOTHROW([&]() {
+		my_object& mo = lua["mo"];
+		REQUIRE(&mo == my_object::last_printed);
+	}());
 }

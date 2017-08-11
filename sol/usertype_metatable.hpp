@@ -411,7 +411,7 @@ namespace sol {
 		}
 
 		template <typename T, typename Op>
-		inline int operator_wrap(lua_State* L) {
+		int operator_wrap(lua_State* L) {
 			auto maybel = stack::check_get<T>(L, 1);
 			if (maybel) {
 				auto mayber = stack::check_get<T>(L, 2);
@@ -432,7 +432,8 @@ namespace sol {
 
 		template <typename T, typename Op, typename Supports, typename Regs, meta::enable<Supports> = meta::enabler>
 		inline void make_reg_op(Regs& l, int& index, const char* name) {
-			l[index] = luaL_Reg{ name, &c_call<decltype(&operator_wrap<T, Op>), &operator_wrap<T, Op>> };
+			lua_CFunction f = &detail::static_trampoline<&operator_wrap<T, Op>>;
+			l[index] = luaL_Reg{ name, f };
 			++index;
 		}
 
@@ -444,7 +445,8 @@ namespace sol {
 		template <typename T, typename Supports, typename Regs, meta::enable<Supports> = meta::enabler>
 		inline void make_to_string_op(Regs& l, int& index) {
 			const char* name = to_string(meta_function::to_string).c_str();
-			l[index] = luaL_Reg{ name, &c_call<decltype(&default_to_string<T>), &default_to_string<T>> };
+			lua_CFunction f = &detail::static_trampoline<&default_to_string<T>>;
+			l[index] = luaL_Reg{ name, f };
 			++index;
 		}
 
@@ -456,7 +458,8 @@ namespace sol {
 		template <typename T, typename Regs, meta::enable<meta::has_deducible_signature<T>> = meta::enabler>
 		inline void make_call_op(Regs& l, int& index) {
 			const char* name = to_string(meta_function::call).c_str();
-			l[index] = luaL_Reg{ name, &c_call<decltype(&T::operator()), &T::operator()> };
+			lua_CFunction f = &c_call<decltype(&T::operator()), &T::operator()>;
+			l[index] = luaL_Reg{ name, f };
 			++index;
 		}
 
