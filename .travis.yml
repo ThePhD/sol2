@@ -264,5 +264,4 @@ matrix:
 
   allow_failures:
     - os: osx
-      compiler: clang 
-      compiler: gcc
+      compiler: gcc clang
