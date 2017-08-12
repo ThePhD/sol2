@@ -201,10 +201,10 @@ namespace sol {
 					if (sizeof(T) < sizeof(lua_Integer) || (std::is_signed<T>::value && sizeof(T) == sizeof(lua_Integer))) {
 						return true;
 					}
-					auto u_min = static_cast<std::intmax_t>(std::numeric_limits<lua_Integer>::min());
-					auto u_max = static_cast<std::uintmax_t>(std::numeric_limits<lua_Integer>::max());
-					auto t_min = static_cast<std::intmax_t>(std::numeric_limits<T>::min());
-					auto t_max = static_cast<std::uintmax_t>(std::numeric_limits<T>::max());
+					auto u_min = static_cast<std::intmax_t>((std::numeric_limits<lua_Integer>::min)());
+					auto u_max = static_cast<std::uintmax_t>((std::numeric_limits<lua_Integer>::max)());
+					auto t_min = static_cast<std::intmax_t>((std::numeric_limits<T>::min)());
+					auto t_max = static_cast<std::uintmax_t>((std::numeric_limits<T>::max)());
 					return (u_min <= t_min || value >= static_cast<T>(u_min)) && (u_max >= t_max || value <= static_cast<T>(u_max));
 				};
 				if (integer_value_fits(value)) {

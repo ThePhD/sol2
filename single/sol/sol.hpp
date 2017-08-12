@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-11 22:24:57.365154 UTC
-// This header was generated with sol v2.18.0 (revision 7af8b4e)
+// Generated 2017-08-12 02:25:46.299991 UTC
+// This header was generated with sol v2.18.0 (revision 2486d6a)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -7505,10 +7505,10 @@ namespace sol {
 					if (sizeof(T) < sizeof(lua_Integer) || (std::is_signed<T>::value && sizeof(T) == sizeof(lua_Integer))) {
 						return true;
 					}
-					auto u_min = static_cast<std::intmax_t>(std::numeric_limits<lua_Integer>::min());
-					auto u_max = static_cast<std::uintmax_t>(std::numeric_limits<lua_Integer>::max());
-					auto t_min = static_cast<std::intmax_t>(std::numeric_limits<T>::min());
-					auto t_max = static_cast<std::uintmax_t>(std::numeric_limits<T>::max());
+					auto u_min = static_cast<std::intmax_t>((std::numeric_limits<lua_Integer>::min)());
+					auto u_max = static_cast<std::uintmax_t>((std::numeric_limits<lua_Integer>::max)());
+					auto t_min = static_cast<std::intmax_t>((std::numeric_limits<T>::min)());
+					auto t_max = static_cast<std::uintmax_t>((std::numeric_limits<T>::max)());
 					return (u_min <= t_min || value >= static_cast<T>(u_min)) && (u_max >= t_max || value <= static_cast<T>(u_max));
 				};
 				if (integer_value_fits(value)) {
