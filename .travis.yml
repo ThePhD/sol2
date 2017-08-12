@@ -122,7 +122,6 @@ matrix:
           packages:
           - gcc-4.9
           - g++-4.9
-          - ninja
           - ninja-build
           - liblua5.2-dev
 
