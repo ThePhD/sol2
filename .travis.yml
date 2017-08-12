@@ -266,21 +266,21 @@ matrix:
       compiler: gcc
       env: COMPILER=g++-4.9 LUA_VERSION=lua53
 
-    - os: osx
-      osx_image: xcode8.3
-      compiler: gcc
-      env: COMPILER=g++-5 LUA_VERSION=luajit
-
-    - os: osx
-      osx_image: xcode8.3
-      compiler: gcc
-      env: COMPILER=g++-5 LUA_VERSION=lua52
-
-    - os: osx
-      osx_image: xcode8.3
-      compiler: gcc
-      env: COMPILER=g++-5 LUA_VERSION=lua53
-
+#    - os: osx
+#      osx_image: xcode8.3
+#      compiler: gcc
+#      env: COMPILER=g++-5 LUA_VERSION=luajit
+#
+#    - os: osx
+#      osx_image: xcode8.3
+#      compiler: gcc
+#      env: COMPILER=g++-5 LUA_VERSION=lua52
+#
+#    - os: osx
+#      osx_image: xcode8.3
+#      compiler: gcc
+#      env: COMPILER=g++-5 LUA_VERSION=lua53
+#
     - os: osx
       osx_image: xcode8.3
       compiler: clang
@@ -288,4 +288,4 @@ matrix:
 
   allow_failures:
     - os: osx
-    - osx_image: xcode8.3
+      osx_image: xcode8.3
