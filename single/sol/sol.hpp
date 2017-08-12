@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-12 02:25:46.299991 UTC
-// This header was generated with sol v2.18.0 (revision 2486d6a)
+// Generated 2017-08-12 13:41:38.924501 UTC
+// This header was generated with sol v2.18.0 (revision 180ba56)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6727,7 +6727,7 @@ namespace sol {
 				if (len < 1)
 					return std::wstring();
 				if (sizeof(wchar_t) == 2) {
-					static std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
+					thread_local std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
 					std::wstring r = convert.from_bytes(str, str + len);
 #if defined(__MINGW32__) && defined(__GNUC__) && __GNUC__ < 7
 					// Fuck you, MinGW, and fuck you libstdc++ for introducing this absolutely asinine bug
@@ -6740,7 +6740,7 @@ namespace sol {
 #endif 
 					return r;
 				}
-				static std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
+				thread_local std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
 				std::wstring r = convert.from_bytes(str, str + len);
 				return r;
 			}
@@ -6755,12 +6755,12 @@ namespace sol {
 				if (len < 1)
 					return std::u16string();
 #ifdef _MSC_VER
-				static std::wstring_convert<std::codecvt_utf8_utf16<int16_t>, int16_t> convert;
+				thread_local std::wstring_convert<std::codecvt_utf8_utf16<int16_t>, int16_t> convert;
 				auto intd = convert.from_bytes(str, str + len);
 				std::u16string r(intd.size(), '\0');
 				std::memcpy(&r[0], intd.data(), intd.size() * sizeof(char16_t));
 #else
-				static std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
+				thread_local std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
 				std::u16string r = convert.from_bytes(str, str + len);
 #endif // VC++ is a shit
 				return r;
@@ -6776,12 +6776,12 @@ namespace sol {
 				if (len < 1)
 					return std::u32string();
 #ifdef _MSC_VER
-				static std::wstring_convert<std::codecvt_utf8<int32_t>, int32_t> convert;
+				thread_local std::wstring_convert<std::codecvt_utf8<int32_t>, int32_t> convert;
 				auto intd = convert.from_bytes(str, str + len);
 				std::u32string r(intd.size(), '\0');
 				std::memcpy(&r[0], intd.data(), r.size() * sizeof(char32_t));
 #else
-				static std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> convert;
+				thread_local std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> convert;
 				std::u32string r = convert.from_bytes(str, str + len);
 #endif // VC++ is a shit
 				return r;
@@ -7339,7 +7339,7 @@ namespace sol {
 #include <cassert>
 #include <limits>
 #ifdef SOL_CODECVT_SUPPORT
-#endif
+#endif // codecvt support
 #ifdef SOL_CXX17_FEATURES
 #endif // C++17
 
@@ -7878,11 +7878,11 @@ namespace sol {
 
 			static int push(lua_State* L, const wchar_t* strb, const wchar_t* stre) {
 				if (sizeof(wchar_t) == 2) {
-					static std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
+					thread_local std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
 					std::string u8str = convert.to_bytes(strb, stre);
 					return stack::push(L, u8str);
 				}
-				static std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
+				thread_local std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
 				std::string u8str = convert.to_bytes(strb, stre);
 				return stack::push(L, u8str);
 			}
@@ -7900,10 +7900,10 @@ namespace sol {
 
 			static int push(lua_State* L, const char16_t* strb, const char16_t* stre) {
 #ifdef _MSC_VER
-				static std::wstring_convert<std::codecvt_utf8_utf16<int16_t>, int16_t> convert;
+				thread_local std::wstring_convert<std::codecvt_utf8_utf16<int16_t>, int16_t> convert;
 				std::string u8str = convert.to_bytes(reinterpret_cast<const int16_t*>(strb), reinterpret_cast<const int16_t*>(stre));
 #else
-				static std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
+				thread_local std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
 				std::string u8str = convert.to_bytes(strb, stre);
 #endif // VC++ is a shit
 				return stack::push(L, u8str);
@@ -7922,10 +7922,10 @@ namespace sol {
 
 			static int push(lua_State* L, const char32_t* strb, const char32_t* stre) {
 #ifdef _MSC_VER
-				static std::wstring_convert<std::codecvt_utf8<int32_t>, int32_t> convert;
+				thread_local std::wstring_convert<std::codecvt_utf8<int32_t>, int32_t> convert;
 				std::string u8str = convert.to_bytes(reinterpret_cast<const int32_t*>(strb), reinterpret_cast<const int32_t*>(stre));
 #else
-				static std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> convert;
+				thread_local std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> convert;
 				std::string u8str = convert.to_bytes(strb, stre);
 #endif // VC++ is a shit
 				return stack::push(L, u8str);

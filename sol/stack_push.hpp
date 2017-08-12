@@ -33,7 +33,7 @@
 #ifdef SOL_CODECVT_SUPPORT
 #include <codecvt>
 #include <locale>
-#endif
+#endif // codecvt support
 #ifdef SOL_CXX17_FEATURES
 #include <string_view>
 #include <variant>
@@ -574,11 +574,11 @@ namespace sol {
 
 			static int push(lua_State* L, const wchar_t* strb, const wchar_t* stre) {
 				if (sizeof(wchar_t) == 2) {
-					static std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
+					thread_local std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
 					std::string u8str = convert.to_bytes(strb, stre);
 					return stack::push(L, u8str);
 				}
-				static std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
+				thread_local std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
 				std::string u8str = convert.to_bytes(strb, stre);
 				return stack::push(L, u8str);
 			}
@@ -596,10 +596,10 @@ namespace sol {
 
 			static int push(lua_State* L, const char16_t* strb, const char16_t* stre) {
 #ifdef _MSC_VER
-				static std::wstring_convert<std::codecvt_utf8_utf16<int16_t>, int16_t> convert;
+				thread_local std::wstring_convert<std::codecvt_utf8_utf16<int16_t>, int16_t> convert;
 				std::string u8str = convert.to_bytes(reinterpret_cast<const int16_t*>(strb), reinterpret_cast<const int16_t*>(stre));
 #else
-				static std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
+				thread_local std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
 				std::string u8str = convert.to_bytes(strb, stre);
 #endif // VC++ is a shit
 				return stack::push(L, u8str);
@@ -618,10 +618,10 @@ namespace sol {
 
 			static int push(lua_State* L, const char32_t* strb, const char32_t* stre) {
 #ifdef _MSC_VER
-				static std::wstring_convert<std::codecvt_utf8<int32_t>, int32_t> convert;
+				thread_local std::wstring_convert<std::codecvt_utf8<int32_t>, int32_t> convert;
 				std::string u8str = convert.to_bytes(reinterpret_cast<const int32_t*>(strb), reinterpret_cast<const int32_t*>(stre));
 #else
-				static std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> convert;
+				thread_local std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> convert;
 				std::string u8str = convert.to_bytes(strb, stre);
 #endif // VC++ is a shit
 				return stack::push(L, u8str);
