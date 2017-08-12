@@ -122,19 +122,9 @@ matrix:
           packages:
           - gcc-4.9
           - g++-4.9
+          - ninja
           - ninja-build
           - liblua5.2-dev
-
-      compiler: clang
-      addons:
-        apt:
-          sources:
-          - ubuntu-toolchain-r-test
-          packages:
-          - gcc-4.9
-          - g++-4.9
-          - ninja-build
-          - libluajit-5.1-dev
 
     - os: linux
       env:
@@ -233,7 +223,17 @@ matrix:
        - tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang-$LLVM_VERSION --strip-components 1
        - export PATH=$HOME/clang+llvm/bin:$PATH
        - source ./install.deps.sh
-
+      compiler: clang
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test
+          packages:
+          - gcc-4.9
+          - g++-4.9
+          - ninja-build
+          - libluajit-5.1-dev
+          
     - os: linux
       env:
         - LUA_VERSION=lua52
@@ -288,3 +288,4 @@ matrix:
 
   allow_failures:
     - os: osx
+    - osx_image: xcode8.3
