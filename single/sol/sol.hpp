@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-12 13:41:38.924501 UTC
-// This header was generated with sol v2.18.0 (revision 180ba56)
+// Generated 2017-08-13 17:16:44.325943 UTC
+// This header was generated with sol v2.18.0 (revision 7d2665e)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1993,6 +1993,42 @@ inline void luaL_checkversion(lua_State* L) {
 }
 
 #ifndef SOL_LUAJIT
+#if defined(__GNUC__) && defined(__MINGW32__) && (__GNUC__ < 6) 
+int strerror_r(int errnum, char *buf, size_t len) {
+	// did we get a crap buffer?
+	if (buf == NULL) {
+		// considered a range error
+		// write errno, then return
+		errno = ERANGE;
+		return ERANGE;
+	}
+	//
+	if ((errnum < 0) || (errnum >= sys_nerr)) {
+		// failure
+		snprintf(buf, len, "unknown error: %d", errnum);
+		// write errno, then return
+		errno = EINVAL;
+		return EINVAL;
+	}
+	// TODO: this is technically thread unsafe if `strerror` doesn't use threadlocal storage
+	// itself
+	// but I really am too lazy to figure out how to lock mutexes
+	// in plain C... does the std C lib even have synchro primitives?
+	// NOTe: Turns out there are not.... great
+	// pthreads isn't guaranteed either
+	// let's just hope the stdc lib devs use thread_local on their stuff
+	char* hopeitsthreadlocal = strerror(errnum);
+	if (snprintf(buf, len, "%s", hopeitsthreadlocal) >= len) {
+		// if this triggers we attempted to overwrite the buffer
+		// how fun
+		errno = ERANGE;
+		return ERANGE;
+	}
+
+	return 0;
+}
+#endif // MinGW missing stuff
+
 inline int luaL_fileresult(lua_State *L, int stat, const char *fname) {
     int en = errno;  /* calls to Lua API may change this value */
     if (stat) {
@@ -2001,7 +2037,7 @@ inline int luaL_fileresult(lua_State *L, int stat, const char *fname) {
     }
     else {
         char buf[1024];
-#if defined(__GLIBC__) || defined(_POSIX_VERSION) || defined(__APPLE__)
+#if defined(__GLIBC__) || defined(_POSIX_VERSION) || defined(__APPLE__) || (defined(__GNUC__) && defined (__MINGW32__) && (__GNUC__ < 6))
         strerror_r(en, buf, 1024);
 #else
         strerror_s(buf, 1024, en);
