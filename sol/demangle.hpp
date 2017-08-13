@@ -25,6 +25,11 @@
 #include <string>
 #include <array>
 #include <cctype>
+#if defined(__GNUC__) && defined(__MINGW32__) && (__GNUC__ < 6)
+extern "C" {
+#include <ctype.h>
+}
+#endif // MinGW is on some stuff
 #include <locale>
 
 namespace sol {
@@ -32,6 +37,8 @@ namespace sol {
 #if defined(__GNUC__) || defined(__clang__)
 		template <typename T, class seperator_mark = int>
 		inline std::string ctti_get_type_name() {
+			// cardinal sins from MINGW
+			using namespace std;
 			const static std::array<std::string, 2> removals = { { "{anonymous}", "(anonymous namespace)" } };
 			std::string name = __PRETTY_FUNCTION__;
 			std::size_t start = name.find_first_of('[');
@@ -48,8 +55,8 @@ namespace sol {
 			if (start != std::string::npos) {
 				name.erase(start - 2, name.length());
 			}
-			while (!name.empty() && std::isblank(name.front())) name.erase(name.begin());
-			while (!name.empty() && std::isblank(name.back())) name.pop_back();
+			while (!name.empty() && isblank(name.front())) name.erase(name.begin());
+			while (!name.empty() && isblank(name.back())) name.pop_back();
 
 			for (std::size_t r = 0; r < removals.size(); ++r) {
 				auto found = name.find(removals[r]);
