@@ -237,7 +237,7 @@ namespace sol {
 					break;
 				case lib::jit:
 #ifdef SOL_LUAJIT
-					luaL_requiref(L, "jit", luaopen_jit, 1);
+					luaL_requiref(L, "jit", luaopen_jit, 0);
 					lua_pop(L, 1);
 #endif // LuaJIT Only
 					break;

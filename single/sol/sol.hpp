@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-13 17:24:40.860735 UTC
-// This header was generated with sol v2.18.0 (revision 769faee)
+// Generated 2017-08-14 00:39:04.525857 UTC
+// This header was generated with sol v2.18.0 (revision 3a12435)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -16389,7 +16389,7 @@ namespace sol {
 					break;
 				case lib::jit:
 #ifdef SOL_LUAJIT
-					luaL_requiref(L, "jit", luaopen_jit, 1);
+					luaL_requiref(L, "jit", luaopen_jit, 0);
 					lua_pop(L, 1);
 #endif // LuaJIT Only
 					break;
