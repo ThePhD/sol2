@@ -32,6 +32,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
 
 #define PACKAGE_KEY "_sol.package"
 
@@ -339,7 +340,7 @@ int strerror_r(int errnum, char *buf, size_t len) {
 	// pthreads isn't guaranteed either
 	// let's just hope the stdc lib devs use thread_local on their stuff
 	char* hopeitsthreadlocal = strerror(errnum);
-	if (snprintf(buf, len, "%s", hopeitsthreadlocal) >= len) {
+	if (snprintf(buf, len, "%s", hopeitsthreadlocal) >= (ptrdiff_t)len) {
 		// if this triggers we attempted to overwrite the buffer
 		// how fun
 		errno = ERANGE;
@@ -619,9 +620,11 @@ inline void lua_len(lua_State *L, int i) {
         if (luaL_callmeta(L, i, "__len"))
             break;
         /* maybe fall through */
+        luaL_error(L, "attempt to get length of a %s value", lua_typename(L, lua_type(L, i)));
+		break;
     default:
-        luaL_error(L, "attempt to get length of a %s value",
-            lua_typename(L, lua_type(L, i)));
+        luaL_error(L, "attempt to get length of a %s value", lua_typename(L, lua_type(L, i)));
+		break;
     }
 }
 
