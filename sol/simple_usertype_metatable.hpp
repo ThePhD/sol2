@@ -417,11 +417,11 @@ namespace sol {
 				auto snic = hasnewindex ? &usertype_detail::simple_new_index_call<T, true> : &usertype_detail::simple_new_index_call<T, false>;
 				auto register_kvp = [&](std::size_t i, stack_reference& t, const std::string& first, object& second) {
 					meta_function mf = meta_function::construct;
-					for (std::size_t i = 1; i < properties.size(); ++i) {
-						mf = static_cast<meta_function>(i);
+					for (std::size_t j = 1; j < properties.size(); ++j) {
+						mf = static_cast<meta_function>(j);
 						const std::string& mfname = to_string(mf);
 						if (mfname == first) {
-							properties[i] = true;
+							properties[j] = true;
 							switch (mf) {
 							case meta_function::index:
 								umx.indexfunc = second;
