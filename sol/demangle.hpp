@@ -88,8 +88,8 @@ namespace sol {
 				name.replace(0, 6, "", 0);
 			if (name.find("class", 0) == 0)
 				name.replace(0, 5, "", 0);
-			while (!name.empty() && std::isblank(name.front())) name.erase(name.begin());
-			while (!name.empty() && std::isblank(name.back())) name.pop_back();
+			while (!name.empty() && isblank(name.front())) name.erase(name.begin());
+			while (!name.empty() && isblank(name.back())) name.pop_back();
 
 			for (std::size_t r = 0; r < removals.size(); ++r) {
 				auto found = name.find(removals[r]);

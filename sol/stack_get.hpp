@@ -68,7 +68,7 @@ namespace sol {
 					return static_cast<T>(lua_tointeger(L, index));
 				}
 #endif
-				return static_cast<T>(std::llround(lua_tonumber(L, index)));
+				return static_cast<T>(llround(lua_tonumber(L, index)));
 			}
 		};
 

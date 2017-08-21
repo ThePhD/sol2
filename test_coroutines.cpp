@@ -18,7 +18,7 @@ end
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::coroutine);
-	lua.script(script);
+	lua.safe_script(script);
 	sol::coroutine cr = lua["loop"];
 
 	int counter;
@@ -47,7 +47,7 @@ end
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::coroutine);
-	lua.script(script);
+	lua.safe_script(script);
 	sol::thread runner = sol::thread::create(lua.lua_state());
 	sol::state_view runnerstate = runner.state();
 	sol::coroutine cr = runnerstate["loop"];

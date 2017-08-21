@@ -121,6 +121,7 @@ Thanks to `Eric (EToreo) for the suggestion on this one`_!
 
 	sol::load_result load(lua_Reader reader, void* data, const std::string& chunk_name = "[string]", load_mode mode = load_mode::any);
 	sol::load_result load(const string_view& code, const std::string& chunk_name = "[string]", load_mode mode = load_mode::any);
+	sol::load_result load_buffer(const char* buff, std::size_t buffsize, const std::string& chunk_name = "[string]", load_mode mode = load_mode::any);
 	sol::load_result load_file(const std::string& filename, load_mode mode = load_mode::any);
 
 These functions *load* the desired blob of either code that is in a string, or code that comes from a filename, on the ``lua_State*``. That blob will be turned into a Lua Function. It will not be run: it returns a ``load_result`` proxy that can be called to actually run the code, when you are ready. It can also be turned into a ``sol::function``, a ``sol::protected_function``, or some other abstraction that can serve to call the function. If it is called, it will run on the object's current ``lua_State*``: it is not isolated. If you need isolation, consider using :doc:`sol::environment<environment>`, creating a new state, or other Lua sandboxing techniques.

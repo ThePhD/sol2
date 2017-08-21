@@ -36,7 +36,7 @@ TEST_CASE("containers/returns", "make sure that even references to vectors are b
 	lua.set_function("f", [&]() -> std::vector<int>& {
 		return v;
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	sol::object x = lua["x"];
 	sol::type xt = x.get_type();
 	REQUIRE(xt == sol::type::userdata);
@@ -62,8 +62,8 @@ TEST_CASE("containers/table conversion", "test table conversions with as_table a
 		return sol::as_nested(std::vector<std::string>{"bark", "woof"});
 	});
 
-	lua.script("v1 = bark()");
-	lua.script("v2 = woof()");
+	lua.safe_script("v1 = bark()");
+	lua.safe_script("v2 = woof()");
 
 	sol::as_table_t<std::vector<std::string>> as_table_strings = lua["v1"];
 	sol::nested<std::vector<std::string>> nested_strings = lua["v2"];
@@ -79,7 +79,7 @@ TEST_CASE("containers/vector roundtrip", "make sure vectors can be round-tripped
 	lua.set_function("f", [&]() -> std::vector<int>& {
 		return v;
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	std::vector<int> x = lua["x"];
 	bool areequal = x == v;
 	REQUIRE(areequal);
@@ -91,7 +91,7 @@ TEST_CASE("containers/deque roundtrip", "make sure deques can be round-tripped")
 	lua.set_function("f", [&]() -> std::deque<int>& {
 		return v;
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	std::deque<int> x = lua["x"];
 	bool areequal = x == v;
 	REQUIRE(areequal);
@@ -103,7 +103,7 @@ TEST_CASE("containers/array roundtrip", "make sure arrays can be round-tripped")
 	lua.set_function("f", [&]() -> std::array<int, 3>& {
 		return v;
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	std::array<int, 3> x = lua["x"];
 	bool areequal = x == v;
 	REQUIRE(areequal);
@@ -115,7 +115,7 @@ TEST_CASE("containers/list roundtrip", "make sure lists can be round-tripped") {
 	lua.set_function("f", [&]() -> std::list<int>& {
 		return v;
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	std::list <int> x = lua["x"];
 	bool areequal = x == v;
 	REQUIRE(areequal);
@@ -127,7 +127,7 @@ TEST_CASE("containers/forward_list roundtrip", "make sure forward_lists can be r
 	lua.set_function("f", [&]() -> std::forward_list<int>& {
 		return v;
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	std::forward_list <int> x = lua["x"];
 	bool areequal = x == v;
 	REQUIRE(areequal);
@@ -139,7 +139,7 @@ TEST_CASE("containers/map roundtrip", "make sure maps can be round-tripped") {
 	lua.set_function("f", [&]() -> std::map<std::string, int>& {
 		return v;
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	std::map<std::string, int> x = lua["x"];
 	bool areequal = x == v;
 	REQUIRE(areequal);
@@ -151,7 +151,7 @@ TEST_CASE("containers/unordered_map roundtrip", "make sure unordered_maps can be
 	lua.set_function("f", [&]() -> std::unordered_map<std::string, int>& {
 		return v;
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	std::unordered_map<std::string, int> x = lua["x"];
 	bool areequal = x == v;
 	REQUIRE(areequal);
@@ -163,7 +163,7 @@ TEST_CASE("containers/unordered_set roundtrip", "make sure unordered_sets can be
 	lua.set_function("f", [&]() -> std::unordered_set<int>& {
 		return v;
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	std::unordered_set<int> x = lua["x"];
 	bool areequal = x == v;
 	REQUIRE(areequal);
@@ -175,7 +175,7 @@ TEST_CASE("containers/set roundtrip", "make sure sets can be round-tripped") {
 	lua.set_function("f", [&]() -> std::set<int>& {
 		return v;
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	std::set<int> x = lua["x"];
 	bool areequal = x == v;
 	REQUIRE(areequal);
@@ -187,7 +187,7 @@ TEST_CASE("containers/vector table roundtrip", "make sure vectors can be round-t
 	lua.set_function("f", [&]() {
 		return sol::as_table(v);
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	sol::as_table_t<std::vector<int>> x = lua["x"];
 	bool areequal = x.source == v;
 	REQUIRE(areequal);
@@ -199,7 +199,7 @@ TEST_CASE("containers/deque table roundtrip", "make sure deques can be round-tri
 	lua.set_function("f", [&]() {
 		return sol::as_table(v);
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	sol::as_table_t<std::deque<int>> x = lua["x"];
 	bool areequal = x.source == v;
 	REQUIRE(areequal);
@@ -211,7 +211,7 @@ TEST_CASE("containers/array table roundtrip", "make sure arrays can be round-tri
 	lua.set_function("f", [&]() {
 		return sol::as_table(v);
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	sol::as_table_t<std::array<int, 3>> x = lua["x"];
 	bool areequal = x.source == v;
 	REQUIRE(areequal);
@@ -223,7 +223,7 @@ TEST_CASE("containers/list table roundtrip", "make sure lists can be round-tripp
 	lua.set_function("f", [&]() {
 		return sol::as_table(v);
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	sol::as_table_t<std::list <int>> x = lua["x"];
 	bool areequal = x.source == v;
 	REQUIRE(areequal);
@@ -235,7 +235,7 @@ TEST_CASE("containers/forward_list table roundtrip", "make sure forward_lists ca
 	lua.set_function("f", [&]() {
 		return sol::as_table(v);
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	sol::as_table_t<std::forward_list<int>> x = lua["x"];
 	bool areequal = x.source == v;
 	REQUIRE(areequal);
@@ -247,7 +247,7 @@ TEST_CASE("containers/map table roundtrip", "make sure maps can be round-tripped
 	lua.set_function("f", [&]() {
 		return sol::as_table(v);
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	sol::as_table_t<std::map<std::string, int>> x = lua["x"];
 	bool areequal = x.source == v;
 	REQUIRE(areequal);
@@ -259,7 +259,7 @@ TEST_CASE("containers/unordered_map table roundtrip", "make sure unordered_maps 
 	lua.set_function("f", [&]() {
 		return sol::as_table(v);
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	sol::as_table_t<std::unordered_map<std::string, int>> x = lua["x"];
 	bool areequal = x.source == v;
 	REQUIRE(areequal);
@@ -271,7 +271,7 @@ TEST_CASE("containers/unordered_set table roundtrip", "make sure unordered_sets 
 	lua.set_function("f", [&]() {
 		return sol::as_table(v);
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	sol::as_table_t<std::unordered_set<int>> x = lua["x"];
 	bool areequal = x.source == v;
 	REQUIRE(areequal);
@@ -283,7 +283,7 @@ TEST_CASE("containers/set table roundtrip", "make sure sets can be round-tripped
 	lua.set_function("f", [&]() {
 		return sol::as_table(v);
 	});
-	lua.script("x = f()");
+	lua.safe_script("x = f()");
 	sol::as_table_t<std::set<int>> x = lua["x"];
 	bool areequal = x.source == v;
 	REQUIRE(areequal);
@@ -304,11 +304,11 @@ TEST_CASE("containers/custom usertype", "make sure container usertype metatables
 		);
 	bark obj{ { 24, 50 } };
 	lua.set("a", &obj);
-	REQUIRE_NOTHROW(lua.script("assert(a:at(24) == 50)"));
-	REQUIRE_NOTHROW(lua.script("a:something()"));
+	REQUIRE_NOTHROW(lua.safe_script("assert(a:at(24) == 50)"));
+	REQUIRE_NOTHROW(lua.safe_script("a:something()"));
 	lua.set("a", obj);
-	REQUIRE_NOTHROW(lua.script("assert(a:at(24) == 50)"));
-	REQUIRE_NOTHROW(lua.script("a:something()"));
+	REQUIRE_NOTHROW(lua.safe_script("assert(a:at(24) == 50)"));
+	REQUIRE_NOTHROW(lua.safe_script("a:something()"));
 }
 
 TEST_CASE("containers/const serialization kvp", "make sure const keys / values are respected") {
@@ -318,10 +318,10 @@ TEST_CASE("containers/const serialization kvp", "make sure const keys / values a
 	lua.open_libraries();
 	bark obj{ { 24, 50 } };
 	lua.set("a", &obj);
-	REQUIRE_NOTHROW(lua.script("assert(a[24] == 50)"));
+	REQUIRE_NOTHROW(lua.safe_script("assert(a[24] == 50)"));
 	auto result = lua.safe_script("a[24] = 51", sol::script_pass_on_error);
 	REQUIRE_FALSE(result.valid());
-	REQUIRE_NOTHROW(lua.script("assert(a[24] == 50)"));
+	REQUIRE_NOTHROW(lua.safe_script("assert(a[24] == 50)"));
 }
 
 TEST_CASE("containers/basic serialization", "make sure containers are turned into proper userdata and have basic hooks established") {
@@ -330,20 +330,20 @@ TEST_CASE("containers/basic serialization", "make sure containers are turned int
 	lua.open_libraries();
 	lua.set("b", woof{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 });
 	REQUIRE_NOTHROW(
-	lua.script("for k = 1, #b do assert(k == b[k]) end")
+	lua.safe_script("for k = 1, #b do assert(k == b[k]) end")
 	);
 	woof w{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
 	lua.set("b", w);
 	REQUIRE_NOTHROW(
-		lua.script("for k = 1, #b do assert(k == b[k]) end")
+		lua.safe_script("for k = 1, #b do assert(k == b[k]) end")
 	);
 	lua.set("b", &w);
 	REQUIRE_NOTHROW(
-		lua.script("for k = 1, #b do assert(k == b[k]) end")
+		lua.safe_script("for k = 1, #b do assert(k == b[k]) end")
 	);
 	lua.set("b", std::ref(w));
 	REQUIRE_NOTHROW(
-		lua.script("for k = 1, #b do assert(k == b[k]) end")
+		lua.safe_script("for k = 1, #b do assert(k == b[k]) end")
 	);
 }
 
@@ -354,7 +354,7 @@ TEST_CASE("containers/const serialization", "make sure containers are turned int
 	lua.open_libraries();
 	lua.set("b", woof{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 });
 	REQUIRE_NOTHROW(
-		lua.script("for k, v in pairs(b) do assert(k == v) end");
+		lua.safe_script("for k, v in pairs(b) do assert(k == v) end");
 	);
 	auto result = lua.safe_script("b[1] = 20", sol::script_pass_on_error);
 	REQUIRE_FALSE(result.valid());
@@ -367,20 +367,20 @@ TEST_CASE("containers/table serialization", "ensure types can be serialized as t
 	lua.open_libraries();
 	lua.set("b", sol::as_table(woof{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 }));
 	REQUIRE_NOTHROW(
-		lua.script("for k, v in ipairs(b) do assert(k == v) end")
+		lua.safe_script("for k, v in ipairs(b) do assert(k == v) end")
 	);
 	woof w{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
 	lua.set("b", sol::as_table(w));
 	REQUIRE_NOTHROW(
-	lua.script("for k, v in ipairs(b) do assert(k == v) end")
+	lua.safe_script("for k, v in ipairs(b) do assert(k == v) end")
 	);
 	lua.set("b", sol::as_table(&w));
 	REQUIRE_NOTHROW(
-	lua.script("for k, v in ipairs(b) do assert(k == v) end")
+	lua.safe_script("for k, v in ipairs(b) do assert(k == v) end")
 	);
 	lua.set("b", sol::as_table(std::ref(w)));
 	REQUIRE_NOTHROW(
-	lua.script("for k, v in ipairs(b) do assert(k == v) end")
+	lua.safe_script("for k, v in ipairs(b) do assert(k == v) end")
 	);
 }
 
@@ -404,7 +404,7 @@ TEST_CASE("containers/const correctness", "usertype metatable names should reaso
 	std::vector<Vec const *> bar;
 	bar.push_back(&vec);
 
-	lua.script(R"(
+	lua.safe_script(R"(
 func = function(vecs)
     for i = 1, #vecs do
 		vec = vecs[i]
@@ -427,20 +427,20 @@ TEST_CASE("containers/arbitrary creation", "userdata and tables should be usable
 	lua.set_function("test_three", test_table_return_three);
 	lua.set_function("test_four", test_table_return_four);
 
-	REQUIRE_NOTHROW(lua.script("a = test_one()"));
-	REQUIRE_NOTHROW(lua.script("b = test_two()"));
-	REQUIRE_NOTHROW(lua.script("c = test_three()"));
-	REQUIRE_NOTHROW(lua.script("d = test_four()"));
+	REQUIRE_NOTHROW(lua.safe_script("a = test_one()"));
+	REQUIRE_NOTHROW(lua.safe_script("b = test_two()"));
+	REQUIRE_NOTHROW(lua.safe_script("c = test_three()"));
+	REQUIRE_NOTHROW(lua.safe_script("d = test_four()"));
 
-	REQUIRE_NOTHROW(lua.script("assert(#a == 10, 'error')"));
-	REQUIRE_NOTHROW(lua.script("assert(a[3] == 3, 'error')"));
-	REQUIRE_NOTHROW(lua.script("assert(b.one == 1, 'error')"));
-	REQUIRE_NOTHROW(lua.script("assert(b.three == 3, 'error')"));
-	REQUIRE_NOTHROW(lua.script("assert(c.name == 'Rapptz', 'error')"));
-	REQUIRE_NOTHROW(lua.script("assert(c.project == 'sol', 'error')"));
-	REQUIRE_NOTHROW(lua.script("assert(d.one == 1, 'error')"));
-	REQUIRE_NOTHROW(lua.script("assert(d.three == 3, 'error')"));
-	REQUIRE_NOTHROW(lua.script("assert(d.four == 4, 'error')"));
+	REQUIRE_NOTHROW(lua.safe_script("assert(#a == 10, 'error')"));
+	REQUIRE_NOTHROW(lua.safe_script("assert(a[3] == 3, 'error')"));
+	REQUIRE_NOTHROW(lua.safe_script("assert(b.one == 1, 'error')"));
+	REQUIRE_NOTHROW(lua.safe_script("assert(b.three == 3, 'error')"));
+	REQUIRE_NOTHROW(lua.safe_script("assert(c.name == 'Rapptz', 'error')"));
+	REQUIRE_NOTHROW(lua.safe_script("assert(c.project == 'sol', 'error')"));
+	REQUIRE_NOTHROW(lua.safe_script("assert(d.one == 1, 'error')"));
+	REQUIRE_NOTHROW(lua.safe_script("assert(d.three == 3, 'error')"));
+	REQUIRE_NOTHROW(lua.safe_script("assert(d.four == 4, 'error')"));
 
 	sol::table a = lua.get<sol::table>("a");
 	sol::table b = lua.get<sol::table>("b");
@@ -483,7 +483,7 @@ TEST_CASE("containers/usertype transparency", "Make sure containers pass their a
 		"a_list", &B::a_list
 		);
 
-	lua.script(R"(
+	lua.safe_script(R"(
 b = B.new()
 a_ref = b.a_list[2]
 )");
@@ -548,7 +548,7 @@ TEST_CASE("containers/is container", "make sure the is_container trait behaves p
 		machine m;
 		lua["machine"] = &m;
 
-		lua.script(R"(
+		lua.safe_script(R"(
 	machine:opt():output_help()
 	)");
 
@@ -577,7 +577,7 @@ TEST_CASE("containers/readonly", "make sure readonly members are stored appropri
 		);
 	lua["value"] = std::list<bar>{ {},{},{} };
 		
-	lua.script(R"(
+	lua.safe_script(R"(
 a = foo.new()
 x = a.seq
 a.seq = value
@@ -597,7 +597,7 @@ TEST_CASE("containers/to_args", "Test that the to_args abstractions works") {
 	sol::state lua;
 	lua.open_libraries();
 
-	lua.script("function f (a, b, c, d) print(a, b, c, d) return a, b, c, d end");
+	lua.safe_script("function f (a, b, c, d) print(a, b, c, d) return a, b, c, d end");
 
 	sol::function f = lua["f"];
 	int a, b, c, d;
@@ -637,11 +637,11 @@ TEST_CASE("containers/ipairs test", "ensure that abstractions roundtrip properly
 		return std::vector<thing*>(5, &t);
 	});
 
-	lua.script(R"(
+	lua.safe_script(R"(
 c = f()
 )");
 
-	lua.script(R"(
+	lua.safe_script(R"(
 check = {}
 local i = 1
 while c[i] do
@@ -660,7 +660,7 @@ end
 TEST_CASE("containers/append idiom", "ensure the append-idiom works as intended") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
-	lua.script(
+	lua.safe_script(
 R"(
 function f_fill(vec)
 	print("#vec in lua: " .. #vec)
@@ -817,13 +817,13 @@ TEST_CASE("containers/input iterators", "test shitty input iterators that are al
 	not_really_a_container c;
 	lua["c"] = &c;
 #if SOL_LUA_VERSION > 502
-	lua.script(R"lua(
+	lua.safe_script(R"lua(
 for k, v in pairs(c) do
   assert((k - 1) == v:val())
 end
 )lua");
 #endif
-	lua.script(R"lua(
+	lua.safe_script(R"lua(
 for k=1,#c do
   v = c[k]
   assert((k - 1) == v:val())
@@ -849,10 +849,10 @@ TEST_CASE("containers/pairs", "test how well pairs work with the underlying syst
 	lua["c"] = std::ref(c);
 	lua["d"] = &d;
 
-	lua.script("av1, av2 = a:get(1)");
-	lua.script("bv1, bv2 = b:get(1)");
-	lua.script("cv1, cv2 = c:get(1)");
-	lua.script("dv1, dv2 = d:get(1)");
+	lua.safe_script("av1, av2 = a:get(1)");
+	lua.safe_script("bv1, bv2 = b:get(1)");
+	lua.safe_script("cv1, cv2 = c:get(1)");
+	lua.safe_script("dv1, dv2 = d:get(1)");
 
 	std::vector<std::pair<std::string, int>>& la = lua["a"];
 	std::array<std::pair<std::string, int>, 5>& lb = lua["b"];

@@ -164,12 +164,12 @@ TEST_CASE("state/multi require", "make sure that requires transfers across hand-
 TEST_CASE("state/require-safety", "make sure unrelated modules aren't harmed in using requires") {
 	sol::state lua;
 	lua.open_libraries();
-	std::string t1 = lua.script(R"(require 'io'
+	std::string t1 = lua.safe_script(R"(require 'io'
 return 'test1')");
 	sol::object ot2 = lua.require_script("test2", R"(require 'io'
 return 'test2')");
 	std::string t2 = ot2.as<std::string>();
-	std::string t3 = lua.script(R"(require 'io'
+	std::string t3 = lua.safe_script(R"(require 'io'
 return 'test3')");
 	REQUIRE(t1 == "test1");
 	REQUIRE(t2 == "test2");
@@ -179,7 +179,7 @@ return 'test3')");
 TEST_CASE("state/leak check", "make sure there are no humongous memory leaks in iteration") {
 #if 0
 	sol::state lua;
-	lua.script(R"(
+	lua.safe_script(R"(
 record = {}
 for i=1,256 do
 	record[i] = i
@@ -244,7 +244,7 @@ return example;
 
 	auto bar = [&script](sol::this_state l) {
 		sol::state_view lua = l;
-		sol::table data = lua.script(script);
+		sol::table data = lua.safe_script(script);
 
 		std::string str = data["str"];
 		int num = data["num"];
@@ -256,7 +256,7 @@ return example;
 
 	auto foo = [&script](int, sol::this_state l) {
 		sol::state_view lua = l;
-		sol::table data = lua.script(script);
+		sol::table data = lua.safe_script(script);
 
 		std::string str = data["str"];
 		int num = data["num"];
@@ -299,7 +299,7 @@ return example;
 	lua.set_function("bar", bar);
 	lua.set_function("bar2", bar2);
 
-	lua.script("bar() bar2() foo(1) foo2(1)");
+	lua.safe_script("bar() bar2() foo(1) foo2(1)");
 }
 
 TEST_CASE("state/copy and move", "ensure state can be properly copied and moved") {
@@ -318,9 +318,9 @@ TEST_CASE("state/requires-reload", "ensure that reloading semantics do not cause
 	sol::state lua;
 	sol::stack_guard sg(lua);
 	lua.open_libraries();
-	lua.script("require 'io'\nreturn 'test1'");
+	lua.safe_script("require 'io'\nreturn 'test1'");
 	lua.require_script("test2", "require 'io'\nreturn 'test2'");
-	lua.script("require 'io'\nreturn 'test3'");
+	lua.safe_script("require 'io'\nreturn 'test3'");
 }
 
 TEST_CASE("state/script, do, and load", "test success and failure cases for loading and running scripts") {
@@ -348,7 +348,7 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 	SECTION("script") {
 		sol::state lua;
 		sol::stack_guard sg(lua);
-		int ar = lua.script(good);
+		int ar = lua.safe_script(good);
 		int a = lua["a"];
 		REQUIRE(a == 21);
 		REQUIRE(ar == 21);
@@ -366,13 +366,13 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 	SECTION("script-handler") {
 		sol::state lua;
 		sol::stack_guard sg(lua);
-		auto errbs = lua.script(bad_syntax, sol::script_pass_on_error);
+		auto errbs = lua.safe_script(bad_syntax, sol::script_pass_on_error);
 		REQUIRE(!errbs.valid());
 
-		auto errbr = lua.script(bad_runtime, sol::script_pass_on_error);
+		auto errbr = lua.safe_script(bad_runtime, sol::script_pass_on_error);
 		REQUIRE(!errbr.valid());
 
-		auto result = lua.script(good, sol::script_pass_on_error);
+		auto result = lua.safe_script(good, sol::script_pass_on_error);
 		int a = lua["a"];
 		int ar = result;
 		REQUIRE(result.valid());
@@ -423,7 +423,7 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 	SECTION("script_file") {
 		sol::state lua;
 		sol::stack_guard sg(lua);
-		int ar = lua.script_file(file_good);
+		int ar = lua.safe_script_file(file_good);
 		int a = lua["a"];
 		REQUIRE(a == 21);
 		REQUIRE(ar == 21);
@@ -441,13 +441,13 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 	SECTION("script_file-handler") {
 		sol::state lua;
 		sol::stack_guard sg(lua);
-		auto errbs = lua.script_file(file_bad_syntax, sol::script_pass_on_error);
+		auto errbs = lua.safe_script_file(file_bad_syntax, sol::script_pass_on_error);
 		REQUIRE(!errbs.valid());
 
-		auto errbr = lua.script_file(file_bad_runtime, sol::script_pass_on_error);
+		auto errbr = lua.safe_script_file(file_bad_runtime, sol::script_pass_on_error);
 		REQUIRE(!errbr.valid());
 
-		auto result = lua.script_file(file_good, sol::script_pass_on_error);
+		auto result = lua.safe_script_file(file_good, sol::script_pass_on_error);
 		int a = lua["a"];
 		int ar = result;
 		REQUIRE(result.valid());

@@ -110,7 +110,10 @@ namespace sol {
 	struct user;
 	template <typename T>
 	struct as_args_t;
-
+	template <typename T>
+	struct protect_t;
+	template <typename F, typename... Filters>
+	struct filter_wrapper;
 } // sol
 
 #endif // SOL_FORWARD_HPP

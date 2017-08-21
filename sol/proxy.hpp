@@ -43,6 +43,19 @@ namespace sol {
 			tbl.traverse_set(std::get<I>(key)..., std::forward<T>(value));
 		}
 
+		auto setup_table(std::true_type) {
+			auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(lua_state(), key, tbl.stack_index());
+			lua_pop(lua_state(), p.levels);
+			return p;
+		}
+
+		bool is_valid(std::false_type) {
+			auto pp = stack::push_pop(tbl);
+			auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(lua_state(), key, lua_gettop(lua_state()));
+			lua_pop(lua_state(), p.levels);
+			return p;
+		}
+
 	public:
 		Table tbl;
 		key_type key;

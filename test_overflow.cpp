@@ -6,8 +6,8 @@
 
 TEST_CASE("issues/stack overflow", "make sure various operations repeated don't trigger stack overflow") {
 	sol::state lua;
-	lua.script("t = {};t[0]=20");
-	lua.script("lua_function=function(i)return i;end");
+	lua.safe_script("t = {};t[0]=20");
+	lua.safe_script("lua_function=function(i)return i;end");
 
 	sol::function f = lua["lua_function"];
 	std::string teststring = "testtext";

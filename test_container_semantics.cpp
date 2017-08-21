@@ -1,4 +1,4 @@
-#define SOL_CHECK_ARGUMENTS
+#define SOL_CHECK_ARGUMENTS 1
 
 #include <sol.hpp>
 #include <catch.hpp>
@@ -94,7 +94,7 @@ namespace sol {
 template <typename T>
 void sequence_container_check(sol::state& lua, T& items) {
 	{
-		auto r1 = lua.script(R"(
+		auto r1 = lua.safe_script(R"(
 for i=1,#c do 
 	v = c[i] 
 	assert(v == (i + 10)) 
@@ -104,45 +104,45 @@ end
 	}
 	{
 		auto ffind = [&]() {
-			auto r1 = lua.script("i1 = c:find(11)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("i1 = c:find(11)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("i2 = c:find(14)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("i2 = c:find(14)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
 		auto fget = [&]() {
-			auto r1 = lua.script("v1 = c:get(1)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("v1 = c:get(1)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("v2 = c:get(3)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("v2 = c:get(3)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
 		auto fset = [&]() {
-			auto r1 = lua.script("c:set(2, 20)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("c:set(2, 20)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("c:set(6, 16)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("c:set(6, 16)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
 		auto ferase = [&]() {
-			auto r5 = lua.script("s1 = #c", sol::script_pass_on_error);
+			auto r5 = lua.safe_script("s1 = #c", sol::script_pass_on_error);
 			REQUIRE(r5.valid());
-			auto r1 = lua.script("c:erase(i1)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("c:erase(i1)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r3 = lua.script("s2 = #c", sol::script_pass_on_error);
+			auto r3 = lua.safe_script("s2 = #c", sol::script_pass_on_error);
 			REQUIRE(r3.valid());
-			auto r2 = lua.script("c:erase(i2)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("c:erase(i2)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
-			auto r4 = lua.script("s3 = #c", sol::script_pass_on_error);
+			auto r4 = lua.safe_script("s3 = #c", sol::script_pass_on_error);
 			REQUIRE(r4.valid());
 		};
 		auto fadd = [&]() {
-			auto r = lua.script("c:add(17)", sol::script_pass_on_error);
+			auto r = lua.safe_script("c:add(17)", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		auto fopset = [&]() {
-			auto r = lua.script("c[#c + 1] = 18", sol::script_pass_on_error);
+			auto r = lua.safe_script("c[#c + 1] = 18", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		auto fopget = [&]() {
-			auto r = lua.script("v3 = c[#c]", sol::script_pass_on_error);
+			auto r = lua.safe_script("v3 = c[#c]", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		REQUIRE_NOTHROW(ffind());
@@ -203,7 +203,7 @@ end
 template <typename T>
 void ordered_container_check(sol::state& lua, T& items) {
 	{
-		auto r1 = lua.script(R"(
+		auto r1 = lua.safe_script(R"(
 for i=1,#c do 
 	v = c[(i + 10)] 
 	assert(v == (i + 10)) 
@@ -213,45 +213,45 @@ end
 	}
 	{
 		auto ffind = [&]() {
-			auto r1 = lua.script("i1 = c:find(11)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("i1 = c:find(11)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("i2 = c:find(14)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("i2 = c:find(14)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
 		auto fget = [&]() {
-			auto r1 = lua.script("v1 = c:get(11)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("v1 = c:get(11)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("v2 = c:get(13)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("v2 = c:get(13)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
 		auto fset = [&]() {
-			auto r1 = lua.script("c:set(20)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("c:set(20)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("c:set(16)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("c:set(16)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
 		auto ferase = [&]() {
-			auto r5 = lua.script("s1 = #c", sol::script_pass_on_error);
+			auto r5 = lua.safe_script("s1 = #c", sol::script_pass_on_error);
 			REQUIRE(r5.valid());
-			auto r1 = lua.script("c:erase(i1)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("c:erase(i1)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r3 = lua.script("s2 = #c", sol::script_pass_on_error);
+			auto r3 = lua.safe_script("s2 = #c", sol::script_pass_on_error);
 			REQUIRE(r3.valid());
-			auto r2 = lua.script("c:erase(i2)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("c:erase(i2)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
-			auto r4 = lua.script("s3 = #c", sol::script_pass_on_error);
+			auto r4 = lua.safe_script("s3 = #c", sol::script_pass_on_error);
 			REQUIRE(r4.valid());
 		};
 		auto fadd = [&]() {
-			auto r = lua.script("c:add(17)", sol::script_pass_on_error);
+			auto r = lua.safe_script("c:add(17)", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		auto fopset = [&]() {
-			auto r = lua.script("c[18] = true", sol::script_pass_on_error);
+			auto r = lua.safe_script("c[18] = true", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		auto fopget = [&]() {
-			auto r = lua.script("v3 = c[20]", sol::script_pass_on_error);
+			auto r = lua.safe_script("v3 = c[20]", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		REQUIRE_NOTHROW(ffind());
@@ -313,45 +313,45 @@ template <typename T>
 void unordered_container_check(sol::state& lua, T& items) {
 	{
 		auto ffind = [&]() {
-			auto r1 = lua.script("i1 = c:find(11)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("i1 = c:find(11)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("i2 = c:find(14)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("i2 = c:find(14)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
 		auto fget = [&]() {
-			auto r1 = lua.script("v1 = c:get(11)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("v1 = c:get(11)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("v2 = c:get(13)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("v2 = c:get(13)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
 		auto fset = [&]() {
-			auto r1 = lua.script("c:set(20)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("c:set(20)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("c:set(16)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("c:set(16)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
 		auto ferase = [&]() {
-			auto r5 = lua.script("s1 = #c", sol::script_pass_on_error);
+			auto r5 = lua.safe_script("s1 = #c", sol::script_pass_on_error);
 			REQUIRE(r5.valid());
-			auto r1 = lua.script("c:erase(i1)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("c:erase(i1)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r3 = lua.script("s2 = #c", sol::script_pass_on_error);
+			auto r3 = lua.safe_script("s2 = #c", sol::script_pass_on_error);
 			REQUIRE(r3.valid());
-			auto r2 = lua.script("c:erase(i2)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("c:erase(i2)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
-			auto r4 = lua.script("s3 = #c", sol::script_pass_on_error);
+			auto r4 = lua.safe_script("s3 = #c", sol::script_pass_on_error);
 			REQUIRE(r4.valid());
 		};
 		auto fadd = [&]() {
-			auto r = lua.script("c:add(17)", sol::script_pass_on_error);
+			auto r = lua.safe_script("c:add(17)", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		auto fopset = [&]() {
-			auto r = lua.script("c[18] = true", sol::script_pass_on_error);
+			auto r = lua.safe_script("c[18] = true", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		auto fopget = [&]() {
-			auto r = lua.script("v3 = c[20]", sol::script_pass_on_error);
+			auto r = lua.safe_script("v3 = c[20]", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		REQUIRE_NOTHROW(ffind());
@@ -398,7 +398,7 @@ void unordered_container_check(sol::state& lua, T& items) {
 template <typename T>
 void associative_ordered_container_check(sol::state& lua, T& items) {
 	{
-		auto r1 = lua.script(R"(
+		auto r1 = lua.safe_script(R"(
 for i=1,#c do 
 	v = c[(i + 10)] 
 	assert(v == (i + 20))
@@ -408,47 +408,47 @@ end
 	}
 	{
 		auto ffind = [&]() {
-			auto r1 = lua.script("i1 = c:find(11)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("i1 = c:find(11)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("i2 = c:find(14)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("i2 = c:find(14)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
 		auto fget = [&]() {
-			auto r1 = lua.script("v1 = c:get(11)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("v1 = c:get(11)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("v2 = c:get(13)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("v2 = c:get(13)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
 		auto fset = [&]() {
-			auto r1 = lua.script("c:set(20, 30)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("c:set(20, 30)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("c:set(16, 26)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("c:set(16, 26)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
-			auto r3 = lua.script("c:set(12, 31)", sol::script_pass_on_error);
+			auto r3 = lua.safe_script("c:set(12, 31)", sol::script_pass_on_error);
 			REQUIRE(r3.valid());
 		};
 		auto ferase = [&]() {
-			auto r5 = lua.script("s1 = #c", sol::script_pass_on_error);
+			auto r5 = lua.safe_script("s1 = #c", sol::script_pass_on_error);
 			REQUIRE(r5.valid());
-			auto r1 = lua.script("c:erase(11)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("c:erase(11)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r3 = lua.script("s2 = #c", sol::script_pass_on_error);
+			auto r3 = lua.safe_script("s2 = #c", sol::script_pass_on_error);
 			REQUIRE(r3.valid());
-			auto r2 = lua.script("c:erase(14)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("c:erase(14)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
-			auto r4 = lua.script("s3 = #c", sol::script_pass_on_error);
+			auto r4 = lua.safe_script("s3 = #c", sol::script_pass_on_error);
 			REQUIRE(r4.valid());
 		};
 		auto fadd = [&]() {
-			auto r = lua.script("c:add(17, 27)", sol::script_pass_on_error);
+			auto r = lua.safe_script("c:add(17, 27)", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		auto fopset = [&]() {
-			auto r = lua.script("c[18] = 28", sol::script_pass_on_error);
+			auto r = lua.safe_script("c[18] = 28", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		auto fopget = [&]() {
-			auto r = lua.script("v3 = c[20]", sol::script_pass_on_error);
+			auto r = lua.safe_script("v3 = c[20]", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		REQUIRE_NOTHROW(ffind());
@@ -518,47 +518,47 @@ template <typename T>
 void associative_unordered_container_check(sol::state& lua, T& items) {
 	{
 		auto ffind = [&]() {
-			auto r1 = lua.script("i1 = c:find(11)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("i1 = c:find(11)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("i2 = c:find(14)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("i2 = c:find(14)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
 		auto fget = [&]() {
-			auto r1 = lua.script("v1 = c:get(11)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("v1 = c:get(11)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("v2 = c:get(13)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("v2 = c:get(13)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
 		auto fset = [&]() {
-			auto r1 = lua.script("c:set(20, 30)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("c:set(20, 30)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("c:set(16, 26)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("c:set(16, 26)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
-			auto r3 = lua.script("c:set(12, 31)", sol::script_pass_on_error);
+			auto r3 = lua.safe_script("c:set(12, 31)", sol::script_pass_on_error);
 			REQUIRE(r3.valid());
 		};
 		auto ferase = [&]() {
-			auto r5 = lua.script("s1 = #c", sol::script_pass_on_error);
+			auto r5 = lua.safe_script("s1 = #c", sol::script_pass_on_error);
 			REQUIRE(r5.valid());
-			auto r1 = lua.script("c:erase(11)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("c:erase(11)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r3 = lua.script("s2 = #c", sol::script_pass_on_error);
+			auto r3 = lua.safe_script("s2 = #c", sol::script_pass_on_error);
 			REQUIRE(r3.valid());
-			auto r2 = lua.script("c:erase(14)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("c:erase(14)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
-			auto r4 = lua.script("s3 = #c", sol::script_pass_on_error);
+			auto r4 = lua.safe_script("s3 = #c", sol::script_pass_on_error);
 			REQUIRE(r4.valid());
 		};
 		auto fadd = [&]() {
-			auto r = lua.script("c:add(17, 27)", sol::script_pass_on_error);
+			auto r = lua.safe_script("c:add(17, 27)", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		auto fopset = [&]() {
-			auto r = lua.script("c[18] = 28", sol::script_pass_on_error);
+			auto r = lua.safe_script("c[18] = 28", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		auto fopget = [&]() {
-			auto r = lua.script("v3 = c[20]", sol::script_pass_on_error);
+			auto r = lua.safe_script("v3 = c[20]", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		REQUIRE_NOTHROW(ffind());
@@ -612,7 +612,7 @@ void associative_unordered_container_check(sol::state& lua, T& items) {
 template <typename T>
 void fixed_container_check(sol::state& lua, T& items) {
 	{
-		auto r1 = lua.script(R"(
+		auto r1 = lua.safe_script(R"(
 for i=1,#c do 
 	v = c[i] 
 	assert(v == (i + 10)) 
@@ -622,45 +622,45 @@ end
 	}
 	{
 		auto ffind = [&]() {
-			auto r1 = lua.script("i1 = c:find(11)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("i1 = c:find(11)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("i2 = c:find(14)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("i2 = c:find(14)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
 		auto fget = [&]() {
-			auto r1 = lua.script("v1 = c:get(2)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("v1 = c:get(2)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("v2 = c:get(5)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("v2 = c:get(5)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
 		auto fset = [&]() {
-			auto r1 = lua.script("c:set(2, 20)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("c:set(2, 20)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
-			auto r2 = lua.script("c:set(6, 16)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("c:set(6, 16)", sol::script_pass_on_error);
 			REQUIRE_FALSE(r2.valid());
 		};
 		auto ferase = [&]() {
-			auto r5 = lua.script("s1 = #c", sol::script_pass_on_error);
+			auto r5 = lua.safe_script("s1 = #c", sol::script_pass_on_error);
 			REQUIRE(r5.valid());
-			auto r1 = lua.script("c:erase(i1)", sol::script_pass_on_error);
+			auto r1 = lua.safe_script("c:erase(i1)", sol::script_pass_on_error);
 			REQUIRE_FALSE(r1.valid());
-			auto r3 = lua.script("s2 = #c", sol::script_pass_on_error);
+			auto r3 = lua.safe_script("s2 = #c", sol::script_pass_on_error);
 			REQUIRE(r3.valid());
-			auto r2 = lua.script("c:erase(i2)", sol::script_pass_on_error);
+			auto r2 = lua.safe_script("c:erase(i2)", sol::script_pass_on_error);
 			REQUIRE_FALSE(r2.valid());
-			auto r4 = lua.script("s3 = #c", sol::script_pass_on_error);
+			auto r4 = lua.safe_script("s3 = #c", sol::script_pass_on_error);
 			REQUIRE(r4.valid());
 		};
 		auto fadd = [&]() {
-			auto r = lua.script("c:add(17)", sol::script_pass_on_error);
+			auto r = lua.safe_script("c:add(17)", sol::script_pass_on_error);
 			REQUIRE_FALSE(r.valid());
 		};
 		auto fopset = [&]() {
-			auto r = lua.script("c[5] = 18", sol::script_pass_on_error);
+			auto r = lua.safe_script("c[5] = 18", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		auto fopget = [&]() {
-			auto r = lua.script("v3 = c[4]", sol::script_pass_on_error);
+			auto r = lua.safe_script("v3 = c[4]", sol::script_pass_on_error);
 			REQUIRE(r.valid());
 		};
 		REQUIRE_NOTHROW(ffind());
@@ -892,7 +892,7 @@ TEST_CASE("containers/auxiliary functions test", "make sure the manipulation fun
 	sol::state lua;
 	lua.open_libraries();
 
-	lua.script(R"(
+	lua.safe_script(R"(
 function g (x)
 	x:add(20)
 end
@@ -962,7 +962,7 @@ end
 	REQUIRE(set.empty());
 
 	REQUIRE_NOTHROW([&]() {
-		lua.script(R"(
+		lua.safe_script(R"(
 c_arr[1] = 7
 c_arr[2] = 7
 c_arr[3] = 7

@@ -29,9 +29,13 @@
 #include "traits.hpp"
 #include "tie.hpp"
 #include "stack_guard.hpp"
+#include "demangle.hpp"
+#include "forward_detail.hpp"
+
 #include <vector>
 #include <forward_list>
 #include <string>
+#include <algorithm>
 
 namespace sol {
 	namespace detail {
@@ -52,17 +56,8 @@ namespace sol {
 			return 0;
 		}
 
-		template <typename T, typename Real>
-		inline void usertype_unique_alloc_destroy(void* memory) {
-			T** pointerpointer = static_cast<T**>(memory);
-			unique_destructor* dx = static_cast<unique_destructor*>(static_cast<void*>(pointerpointer + 1));
-			Real* target = static_cast<Real*>(static_cast<void*>(dx + 1));
-			std::allocator<Real> alloc;
-			alloc.destroy(target);
-		}
-
 		template <typename T>
-		inline int user_alloc_destroy(lua_State* L) {
+		inline int user_alloc_destruct(lua_State* L) {
 			void* rawdata = lua_touserdata(L, 1);
 			T* data = static_cast<T*>(rawdata);
 			std::allocator<T> alloc;
@@ -71,13 +66,27 @@ namespace sol {
 		}
 
 		template <typename T>
-		inline int usertype_alloc_destroy(lua_State* L) {
+		inline int usertype_alloc_destruct(lua_State* L) {
 			void* rawdata = lua_touserdata(L, 1);
 			T** pdata = static_cast<T**>(rawdata);
 			T* data = *pdata;
 			std::allocator<T> alloc{};
 			alloc.destroy(data);
 			return 0;
+		}
+
+		template <typename T>
+		inline int cannot_destruct(lua_State* L) {
+			return luaL_error(L, "cannot call the destructor for '%s': it is either hidden (protected/private) or removed with '= delete' and thusly this type is being destroyed without properly destructing, invoking undefined behavior", detail::demangle<T>().data());
+		}
+
+		template <typename T, typename Real>
+		inline void usertype_unique_alloc_destroy(void* memory) {
+			T** pointerpointer = static_cast<T**>(memory);
+			unique_destructor* dx = static_cast<unique_destructor*>(static_cast<void*>(pointerpointer + 1));
+			Real* target = static_cast<Real*>(static_cast<void*>(dx + 1));
+			std::allocator<Real> alloc;
+			alloc.destroy(target);
 		}
 
 		template <typename T>

@@ -81,7 +81,7 @@ namespace sol {
 		basic_function& operator=(basic_function&&) = default;
 		basic_function(const stack_reference& r) : basic_function(r.lua_state(), r.stack_index()) {}
 		basic_function(stack_reference&& r) : basic_function(r.lua_state(), r.stack_index()) {}
-		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<T, ref_index>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
 		basic_function(lua_State* L, T&& r) : basic_function(L, sol::ref_index(r.registry_index())) {}
 		basic_function(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS

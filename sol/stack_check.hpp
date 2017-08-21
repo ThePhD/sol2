@@ -87,18 +87,45 @@ namespace sol {
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 				tracking.use(1);
 #if SOL_LUA_VERSION >= 503
-				if (lua_isinteger(L, index) != 0) {
+#ifdef SOL_STRINGS_ARE_NUMBERS
+				int isnum = 0;
+				lua_tointegerx(L, index, &isnum);
+				const bool success = isnum != 0;
+#else
+				// this check is precise, does not convert
+				if (lua_isinteger(L, index) == 1) {
 					return true;
 				}
-#endif
-				int isnum = 0;
-				const lua_Number v = lua_tonumberx(L, index, &isnum);
-				const bool success = isnum != 0 && static_cast<lua_Number>(std::llround(v)) == v;
+				const bool success = false;
+#endif // If numbers are enabled, use the imprecise check
 				if (!success) {
 					// expected type, actual type
 					handler(L, index, type::number, type_of(L, index));
 				}
 				return success;
+#else
+#ifndef SOL_STRINGS_ARE_NUMBERS
+				// must pre-check, because it will convert
+				type t = type_of(L, index);
+				if (t != type::number) {
+					// expected type, actual type
+					handler(L, index, type::number, t);
+					return false;
+				}
+#endif // Do not allow strings to be numbers
+				int isnum = 0;
+				const lua_Number v = lua_tonumberx(L, index, &isnum);
+				const bool success = isnum != 0 && static_cast<lua_Number>(llround(v)) == v;
+				if (!success) {
+					// expected type, actual type
+#ifndef SOL_STRINGS_ARE_NUMBERS
+					handler(L, index, type::number, t);
+#else
+					handler(L, index, type::number, type_of(L, index));
+#endif
+				}
+				return success;
+#endif
 			}
 		};
 
@@ -107,12 +134,22 @@ namespace sol {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 				tracking.use(1);
+#ifdef SOL_STRINGS_ARE_NUMBERS
+				type t = type_of(L, index);
+				bool success = t == type::number;
+				if (!success) {
+					// expected type, actual type
+					handler(L, index, type::number, t);
+				}
+				return success;
+#else
 				bool success = lua_isnumber(L, index) == 1;
 				if (!success) {
 					// expected type, actual type
 					handler(L, index, type::number, type_of(L, index));
 				}
 				return success;
+#endif
 			}
 		};
 

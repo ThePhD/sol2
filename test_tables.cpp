@@ -97,7 +97,7 @@ TEST_CASE("tables/nested cleanup", "make sure tables leave the stack balanced") 
 	sol::state lua;
 	lua.open_libraries();
 
-	lua.script("A={}");
+	lua.safe_script("A={}");
 	auto f = [] { return 5; };
 	for (int i = 0; i < 30; i++) {
 		std::string name = std::string("init") + std::to_string(i);
@@ -143,7 +143,7 @@ TEST_CASE("tables/for_each", "Testing the use of for_each to get values from a l
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.script("arr = {\n"
+	lua.safe_script("arr = {\n"
 		"[0] = \"Hi\",\n"
 		"[1] = 123.45,\n"
 		"[2] = \"String value\",\n"
@@ -200,7 +200,7 @@ TEST_CASE("tables/for_each empty", "empty tables should not crash") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.script("arr = {}");
+	lua.safe_script("arr = {}");
 	sol::table tbl = lua["arr"];
 	REQUIRE(tbl.empty());
 	std::size_t tablesize = 0;
@@ -257,7 +257,7 @@ TEST_CASE("tables/iterators", "Testing the use of iteratrs to get values from a 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.script("arr = {\n"
+	lua.safe_script("arr = {\n"
 		"[0] = \"Hi\",\n"
 		"[1] = 123.45,\n"
 		"[2] = \"String value\",\n"
@@ -316,7 +316,7 @@ TEST_CASE("tables/variables", "Check if tables and variables work as intended") 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::os);
 	lua.get<sol::table>("os").set("name", "windows");
-	REQUIRE_NOTHROW(lua.script("assert(os.name == \"windows\")"));
+	REQUIRE_NOTHROW(lua.safe_script("assert(os.name == \"windows\")"));
 }
 
 TEST_CASE("tables/create", "Check if creating a table is kosher") {
@@ -368,7 +368,7 @@ TEST_CASE("tables/function variables", "Check if tables and function calls work 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::os);
 	auto run_script = [](sol::state& lua) -> void {
-		lua.script("assert(os.fun() == \"test\")");
+		lua.safe_script("assert(os.fun() == \"test\")");
 	};
 
 	lua.get<sol::table>("os").set_function("fun",
@@ -419,7 +419,7 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.script("foo = 20\nbar = \"hello world\"");
+	lua.safe_script("foo = 20\nbar = \"hello world\"");
 	// basic retrieval
 	std::string bar = lua["bar"];
 	int foo = lua["foo"];
@@ -439,7 +439,7 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
 
 	// function setting
 	lua["test"] = plop_xyz;
-	REQUIRE_NOTHROW(lua.script("assert(test(10, 11, \"hello\") == 11)"));
+	REQUIRE_NOTHROW(lua.safe_script("assert(test(10, 11, \"hello\") == 11)"));
 
 	// function retrieval
 	sol::function test = lua["test"];
@@ -450,7 +450,7 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
 		return x * 2;
 	};
 
-	REQUIRE_NOTHROW(lua.script("assert(lamb(220) == 440)"));
+	REQUIRE_NOTHROW(lua.safe_script("assert(lamb(220) == 440)"));
 
 	// function retrieval of a lambda
 	sol::function lamb = lua["lamb"];
@@ -552,7 +552,7 @@ TEST_CASE("tables/boolean keys", "make sure boolean keys don't get caught up in 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.script(R"(
+	lua.safe_script(R"(
 tbl = {}
 tbl[true] = 10
 tbl[1] = 20

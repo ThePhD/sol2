@@ -52,8 +52,8 @@ TEST_CASE("utility/variant", "test that variant can be round-tripped") {
 		});
 		lua["v"] = std::variant<float, int, std::string>(2);
 		REQUIRE_NOTHROW([&]() {
-			lua.script("assert(f(v))");
-			lua.script("assert(g(v))");
+			lua.safe_script("assert(f(v))");
+			lua.safe_script("assert(g(v))");
 		}());
 	}
 	SECTION("throws") {
@@ -93,7 +93,7 @@ TEST_CASE("utility/string_view", "test that string_view can be taken as an argum
 	lua["v"] = "bark!";
 
 	REQUIRE_NOTHROW([&]() {
-		lua.script("assert(f(v))");
+		lua.safe_script("assert(f(v))");
 	}());
 #else
 	REQUIRE(true);
@@ -148,9 +148,9 @@ TEST_CASE("utility/this_state", "Ensure this_state argument can be gotten anywhe
 	int a = fx(25, 25);
 	INFO("finished setting fx");
 	INFO("calling a script");
-	lua.script("a = with_state_2(25, 25)");
+	lua.safe_script("a = with_state_2(25, 25)");
 	INFO("calling c script");
-	lua.script("c = b:with_state(25, 25)");
+	lua.safe_script("c = b:with_state(25, 25)");
 	INFO("getting a");
 	int la = lua["a"];
 	INFO("getting b");

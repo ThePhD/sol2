@@ -68,7 +68,7 @@ TEST_CASE("customization/split struct", "using the newly documented customizatio
 	sol::state lua;
 
 	// Create a pass-through style of function
-	lua.script("function f ( a, b, c ) return a + c, b end");
+	lua.safe_script("function f ( a, b, c ) return a + c, b end");
 	lua.set_function("g", [](int a, bool b, int c, double d) {
 		return std::make_tuple(a + c, b, d + 2.5);
 	});

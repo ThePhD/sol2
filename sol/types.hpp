@@ -26,8 +26,12 @@
 #include "optional.hpp"
 #include "compatibility.hpp"
 #include "forward.hpp"
+#include "forward_detail.hpp"
 #include "traits.hpp"
 #include "string_shim.hpp"
+#include "raii.hpp"
+#include "filters.hpp"
+
 #include <array>
 #include <string>
 #ifdef SOL_CXX17_FEATURES
@@ -1042,6 +1046,13 @@ namespace sol {
 	template <>
 	struct is_lua_index<upvalue_index> : std::true_type {};
 
+	template <typename T>
+	struct is_stack_based : std::is_base_of<stack_reference, T> {};
+	template <>
+	struct is_stack_based<raw_index> : std::true_type {};
+	template <>
+	struct is_stack_based<absolute_index> : std::true_type {};
+
 	template <typename Signature>
 	struct lua_bind_traits : meta::bind_traits<Signature> {
 	private:
@@ -1083,6 +1094,48 @@ namespace sol {
 	inline type type_of() {
 		return lua_type_of<meta::unqualified_t<T>>::value;
 	}
+
+	namespace detail {
+		template <typename T>
+		struct is_non_factory_constructor : std::false_type {};
+
+		template <typename... Args>
+		struct is_non_factory_constructor<constructors<Args...>> : std::true_type {};
+
+		template <typename... Args>
+		struct is_non_factory_constructor<constructor_wrapper<Args...>> : std::true_type {};
+
+		template <>
+		struct is_non_factory_constructor<no_construction> : std::true_type {};
+
+		template <typename T>
+		struct is_constructor : is_non_factory_constructor<T> {};
+
+		template <typename... Args>
+		struct is_constructor<factory_wrapper<Args...>> : std::true_type {};
+
+		template <typename T>
+		struct is_constructor<protect_t<T>> : is_constructor<meta::unqualified_t<T>> {};
+
+		template <typename F, typename... Filters>
+		struct is_constructor<filter_wrapper<F, Filters...>> : is_constructor<meta::unqualified_t<F>> {};
+
+		template <typename... Args>
+		using has_constructor = meta::any<is_constructor<meta::unqualified_t<Args>>...>;
+
+		template <typename T>
+		struct is_destructor : std::false_type {};
+
+		template <typename Fx>
+		struct is_destructor<destructor_wrapper<Fx>> : std::true_type {};
+
+		template <typename... Args>
+		using has_destructor = meta::any<is_destructor<meta::unqualified_t<Args>>...>;
+
+		struct add_destructor_tag {};
+		struct check_destructor_tag {};
+		struct verified_tag {} const verified{};
+	} // detail
 } // sol
 
 #endif // SOL_TYPES_HPP

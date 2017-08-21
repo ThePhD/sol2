@@ -32,9 +32,10 @@ namespace sol {
 			(void)L;
 			return -1;
 #else
-			const char* message = lua_tostring(L, -1);
+			size_t messagesize;
+			const char* message = lua_tolstring(L, -1, &messagesize);
 			if (message) {
-				std::string err = message;
+				std::string err(message, messagesize);
 				lua_settop(L, 0);
 				throw error(err);
 			}

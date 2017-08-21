@@ -391,7 +391,7 @@ namespace sol {
 		template <typename T, typename... Lists>
 		struct pusher<detail::tagged<T, constructor_list<Lists...>>> {
 			static int push(lua_State* L, detail::tagged<T, constructor_list<Lists...>>) {
-				lua_CFunction cf = call_detail::construct<T, Lists...>;
+				lua_CFunction cf = call_detail::construct<T, stack_detail::default_check_arguments, true, Lists...>;
 				return stack::push(L, cf);
 			}
 		};
@@ -411,7 +411,7 @@ namespace sol {
 		template <typename T>
 		struct pusher<detail::tagged<T, destructor_wrapper<void>>> {
 			static int push(lua_State* L, destructor_wrapper<void>) {
-				lua_CFunction cf = detail::usertype_alloc_destroy<T>;
+				lua_CFunction cf = detail::usertype_alloc_destruct<T>;
 				return stack::push(L, cf);
 			}
 		};
@@ -427,6 +427,26 @@ namespace sol {
 			}
 		};
 
+		template <typename F, typename... Filters>
+		struct pusher<filter_wrapper<F, Filters...>> {
+			typedef filter_wrapper<F, Filters...> P;
+
+			static int push(lua_State* L, const P& p) {
+				lua_CFunction cf = call_detail::call_user<void, false, false, P, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<P>>(L, p);
+				return stack::push(L, c_closure(cf, upvalues));
+			}
+
+			static int push(lua_State* L, P&& p) {
+				lua_CFunction cf = call_detail::call_user<void, false, false, P, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<P>>(L, std::move(p));
+				return stack::push(L, c_closure(cf, upvalues));
+			}
+		};
 	} // stack
 } // sol
 

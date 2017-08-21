@@ -26,6 +26,8 @@
 #include "raii.hpp"
 #include "optional.hpp"
 #include "usertype_traits.hpp"
+#include "filters.hpp"
+
 #include <memory>
 #include <type_traits>
 #include <cassert>
@@ -83,10 +85,8 @@ namespace sol {
 
 			template <typename K, typename... Args>
 			static int push_keyed(lua_State* L, K&& k, Args&&... args) {
-				return push_fx(L, [&L, &k]() {
-					luaL_newmetatable(L, &k[0]);
-					lua_setmetatable(L, -2);
-				}, std::forward<Args>(args)...);
+				stack_detail::undefined_metatable<T> fx(L, &k[0]);
+				return push_fx(L, fx, std::forward<Args>(args)...);
 			}
 
 			template <typename... Args>
@@ -97,6 +97,8 @@ namespace sol {
 
 		template <typename T>
 		struct pusher<detail::as_pointer_tag<T>> {
+			typedef meta::unqualified_t<T> U;
+
 			template <typename F>
 			static int push_fx(lua_State* L, F&& f, T* obj) {
 				if (obj == nullptr)
@@ -109,14 +111,12 @@ namespace sol {
 
 			template <typename K>
 			static int push_keyed(lua_State* L, K&& k, T* obj) {
-				return push_fx(L, [&L, &k]() {
-					luaL_newmetatable(L, &k[0]);
-					lua_setmetatable(L, -2);
-				}, obj);
+				stack_detail::undefined_metatable<U*> fx(L, &k[0]);
+				return push_fx(L, fx, obj);
 			}
 
 			static int push(lua_State* L, T* obj) {
-				return push_keyed(L, usertype_traits<meta::unqualified_t<T>*>::metatable(), obj);
+				return push_keyed(L, usertype_traits<U*>::metatable(), obj);
 			}
 		};
 
@@ -171,7 +171,12 @@ namespace sol {
 				detail::default_construct::construct(mem, std::forward<Args>(args)...);
 				*pref = unique_usertype_traits<T>::get(*mem);
 				if (luaL_newmetatable(L, &usertype_traits<detail::unique_usertype<P>>::metatable()[0]) == 1) {
-					set_field(L, "__gc", detail::unique_destruct<P>);
+					luaL_Reg l[32]{};
+					int index = 0;
+					auto prop_fx = [](meta_function) { return true; };
+					usertype_detail::insert_default_registrations<P>(l, index, prop_fx);
+					usertype_detail::make_destructor<T>(l, index);
+					luaL_setfuncs(L, l, 0);
 				}
 				lua_setmetatable(L, -2);
 				return 1;
@@ -213,7 +218,7 @@ namespace sol {
 				}
 #endif
 #if defined(SOL_CHECK_ARGUMENTS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
-				if (static_cast<T>(std::llround(static_cast<lua_Number>(value))) != value) {
+				if (static_cast<T>(llround(static_cast<lua_Number>(value))) != value) {
 #ifndef SOL_NO_EXCEPTIONS
 					throw sol::error("The integer will be misrepresented in lua.");
 #else
@@ -437,7 +442,7 @@ namespace sol {
 				std::allocator<T> alloc;
 				alloc.construct(data, std::forward<Args>(args)...);
 				if (with_meta) {
-					lua_CFunction cdel = detail::user_alloc_destroy<T>;
+					lua_CFunction cdel = detail::user_alloc_destruct<T>;
 					// Make sure we have a plain GC set for this data
 					if (luaL_newmetatable(L, name) != 0) {
 						lua_pushcclosure(L, cdel, 0);
@@ -557,6 +562,30 @@ namespace sol {
 			static int push(lua_State* L, meta_function m) {
 				const std::string& str = to_string(m);
 				lua_pushlstring(L, str.c_str(), str.size());
+				return 1;
+			}
+		};
+
+		template <>
+		struct pusher<absolute_index> {
+			static int push(lua_State* L, absolute_index ai) {
+				lua_pushvalue(L, ai);
+				return 1;
+			}
+		};
+
+		template <>
+		struct pusher<raw_index> {
+			static int push(lua_State* L, raw_index ri) {
+				lua_pushvalue(L, ri);
+				return 1;
+			}
+		};
+
+		template <>
+		struct pusher<ref_index> {
+			static int push(lua_State* L, ref_index ri) {
+				lua_rawgeti(L, LUA_REGISTRYINDEX, ri);
 				return 1;
 			}
 		};

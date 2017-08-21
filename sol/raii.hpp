@@ -22,8 +22,9 @@
 #ifndef SOL_RAII_HPP
 #define SOL_RAII_HPP
 
-#include <memory>
 #include "traits.hpp"
+
+#include <memory>
 
 namespace sol {
 	namespace detail {

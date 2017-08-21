@@ -77,40 +77,40 @@ TEST_CASE("simple/set", "Check if the set works properly.") {
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		lua.set("a", 9);
 	} REQUIRE(begintop == endtop);
-	REQUIRE_NOTHROW(lua.script("if a ~= 9 then error('wrong value') end"));
+	REQUIRE_NOTHROW(lua.safe_script("if a ~= 9 then error('wrong value') end"));
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		lua.set("d", "hello");
 	} REQUIRE(begintop == endtop);
-	REQUIRE_NOTHROW(lua.script("if d ~= 'hello' then error('expected \\'hello\\', got '.. tostring(d)) end"));
+	REQUIRE_NOTHROW(lua.safe_script("if d ~= 'hello' then error('expected \\'hello\\', got '.. tostring(d)) end"));
 
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		lua.set("e", std::string("hello"), "f", true);
 	} REQUIRE(begintop == endtop);
-	REQUIRE_NOTHROW(lua.script("if d ~= 'hello' then error('expected \\'hello\\', got '.. tostring(d)) end"));
-	REQUIRE_NOTHROW(lua.script("if f ~= true then error('wrong value') end"));
+	REQUIRE_NOTHROW(lua.safe_script("if d ~= 'hello' then error('expected \\'hello\\', got '.. tostring(d)) end"));
+	REQUIRE_NOTHROW(lua.safe_script("if f ~= true then error('wrong value') end"));
 }
 
 TEST_CASE("simple/get", "Tests if the get function works properly.") {
 	sol::state lua;
 	int begintop = 0, endtop = 0;
 
-	lua.script("a = 9");
+	lua.safe_script("a = 9");
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		auto a = lua.get<int>("a");
 		REQUIRE(a == 9.0);
 	} REQUIRE(begintop == endtop);
 
-	lua.script("b = nil");
+	lua.safe_script("b = nil");
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		REQUIRE_NOTHROW(lua.get<sol::nil_t>("b"));
 	} REQUIRE(begintop == endtop);
 
-	lua.script("d = 'hello'");
-	lua.script("e = true");
+	lua.safe_script("d = 'hello'");
+	lua.safe_script("e = true");
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		std::string d;
@@ -124,7 +124,7 @@ TEST_CASE("simple/get", "Tests if the get function works properly.") {
 TEST_CASE("simple/set and get global integer", "Tests if the get function works properly with global integers") {
 	sol::state lua;
 	lua[1] = 25.4;
-	lua.script("b = 1");
+	lua.safe_script("b = 1");
 	double a = lua.get<double>(1);
 	double b = lua.get<double>("b");
 	REQUIRE(a == 25.4);
@@ -169,7 +169,7 @@ TEST_CASE("simple/addition", "check if addition works and can be gotten through 
 	sol::state lua;
 
 	lua.set("b", 0.2);
-	lua.script("c = 9 + b");
+	lua.safe_script("c = 9 + b");
 	auto c = lua.get<double>("c");
 
 	REQUIRE(c == 9.2);
@@ -179,7 +179,7 @@ TEST_CASE("simple/if", "check if if statements work through lua") {
 	sol::state lua;
 
 	std::string program = "if true then f = 0.1 else f = 'test' end";
-	lua.script(program);
+	lua.safe_script(program);
 	auto f = lua.get<double>("f");
 
 	REQUIRE(f == 0.1);
@@ -223,7 +223,7 @@ TEST_CASE("interop/null-to-nil-and-back", "nil should be the given type when a p
 	lua.set_function("rofl", [](int* x) {
 		INFO(x);
 	});
-	REQUIRE_NOTHROW(lua.script("x = lol()\n"
+	REQUIRE_NOTHROW(lua.safe_script("x = lol()\n"
 		"rofl(x)\n"
 		"assert(x == nil)"));
 }
@@ -234,7 +234,7 @@ TEST_CASE("object/conversions", "make sure all basic reference types can be made
 
 	struct d {};
 
-	lua.script("function f () print('bark') end");
+	lua.safe_script("function f () print('bark') end");
 	lua["d"] = d{};
 	lua["l"] = static_cast<void*>(nullptr);
 
@@ -317,7 +317,7 @@ TEST_CASE("feature/indexing overrides", "make sure index functions can be overri
 		, "props", sol::property(&DynamicObject::get_dynamic_props)
 		);
 
-	lua.script(R"__(
+	lua.safe_script(R"__(
 obj = DynamicObject:new()
 obj.props.name = 'test name'
 print('name = ' .. obj.props.name)
@@ -356,7 +356,7 @@ TEST_CASE("features/indexing numbers", "make sure indexing functions can be over
 	lua.new_usertype<vector>("vector", sol::constructors<sol::types<>>(),
 		sol::meta_function::index, &vector::my_index,
 		sol::meta_function::new_index, &vector::my_new_index);
-	lua.script("v = vector.new()\n"
+	lua.safe_script("v = vector.new()\n"
 		"print(v[1])\n"
 		"v[2] = 3\n"
 		"print(v[2])\n"
@@ -403,7 +403,7 @@ TEST_CASE("features/multiple inheritance", "Ensure that multiple inheritance wor
 		"a2", &complex::a2,
 		sol::base_classes, sol::bases<base1, base2>()
 		);
-	lua.script("c = complex.new()\n"
+	lua.safe_script("c = complex.new()\n"
 		"s = simple.new()\n"
 		"b1 = base1.new()\n"
 		"b2 = base1.new()\n"
@@ -455,7 +455,7 @@ TEST_CASE("optional/left out args", "Make sure arguments can be left out of opti
 	// sol::optional needs an argument no matter what?
 	lua.set_function("func_opt_ret_bool", func_opt_ret_bool);
 	REQUIRE_NOTHROW([&]{
-	lua.script(R"(
+	lua.safe_script(R"(
         func_opt_ret_bool(42)
         func_opt_ret_bool()
         print('ok')
@@ -496,7 +496,7 @@ TEST_CASE("proxy/proper-pushing", "allow proxies to reference other proxies and 
 	T t;
 	lua["t1"] = &t;
 	lua["t2"] = lua["t1"];
-	lua.script("b = t1 == t2");
+	lua.safe_script("b = t1 == t2");
 	bool b = lua["b"];
 	REQUIRE(b);
 }
@@ -563,7 +563,7 @@ TEST_CASE("object/is", "test whether or not the is abstraction works properly fo
 		lua.open_libraries(sol::lib::base);
 		lua.set_function("is_thing", [](sol::stack_object obj) { return obj.is<thing>(); } );
 		lua["a"] = thing{};
-		REQUIRE_NOTHROW(lua.script("assert(is_thing(a))"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(is_thing(a))"));
 	}
 
 	SECTION("object")
@@ -572,6 +572,6 @@ TEST_CASE("object/is", "test whether or not the is abstraction works properly fo
 		lua.open_libraries(sol::lib::base);
 		lua.set_function("is_thing", [](sol::object obj) { return obj.is<thing>(); });
 		lua["a"] = thing{};
-		REQUIRE_NOTHROW(lua.script("assert(is_thing(a))"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(is_thing(a))"));
 	}
 }

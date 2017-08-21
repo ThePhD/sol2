@@ -450,6 +450,10 @@ namespace sol {
 			return load_result(L, absolute_index(L, -1), 1, 1, x);
 		}
 
+		load_result load_buffer(const char* buff, size_t size, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			return load(string_view(buff, size), chunkname, mode);
+		}
+
 		load_result load_file(const std::string& filename, load_mode mode = load_mode::any) {
 			load_status x = static_cast<load_status>(luaL_loadfilex(L, filename.c_str(), to_string(mode).c_str()));
 			return load_result(L, absolute_index(L, -1), 1, 1, x);
@@ -457,7 +461,7 @@ namespace sol {
 
 		load_result load(lua_Reader reader, void* data, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			char basechunkname[17] = {};
-			const char* chunknametarget = detail::make_chunk_name("lua_reader", chunkname, basechunkname);
+			const char* chunknametarget = detail::make_chunk_name("lua_Reader", chunkname, basechunkname);
 #if SOL_LUA_VERSION > 501
 			load_status x = static_cast<load_status>(lua_load(L, reader, data, chunknametarget, to_string(mode).c_str()));
 #else

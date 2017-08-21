@@ -1,7 +1,9 @@
-#define SOL_CHECK_ARGUMENTS
+#define SOL_CHECK_ARGUMENTS 1
+
+#include <sol.hpp>
 
 #include <catch.hpp>
-#include <sol.hpp>
+
 #include <iostream>
 #include "test_stack_guard.hpp"
 
@@ -105,7 +107,7 @@ static int raw_noexcept_function(lua_State* L) noexcept {
 
 TEST_CASE("functions/tuple returns", "Make sure tuple returns are ordered properly") {
 	sol::state lua;
-	lua.script("function f() return '3', 4 end");
+	lua.safe_script("function f() return '3', 4 end");
 
 	std::tuple<std::string, int> result = lua["f"]();
 	auto s = std::get<0>(result);
@@ -119,28 +121,28 @@ TEST_CASE("functions/overload resolution", "Check if overloaded function resolut
 	lua.open_libraries(sol::lib::base);
 
 	lua.set_function("non_overloaded", non_overloaded);
-	REQUIRE_NOTHROW(lua.script("x = non_overloaded(1, 2, 3)\nprint(x)"));
+	REQUIRE_NOTHROW(lua.safe_script("x = non_overloaded(1, 2, 3)\nprint(x)"));
 
 	/*
 	// Cannot reasonably support: clang++ refuses to try enough
 	// deductions to make this work
 	lua.set_function<int>("overloaded", overloaded);
-	REQUIRE_NOTHROW(lua.script("print(overloaded(1))"));
+	REQUIRE_NOTHROW(lua.safe_script("print(overloaded(1))"));
 
 	lua.set_function<int, int>("overloaded", overloaded);
-	REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2))"));
+	REQUIRE_NOTHROW(lua.safe_script("print(overloaded(1, 2))"));
 
 	lua.set_function<int, int, int>("overloaded", overloaded);
-	REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2, 3))"));
+	REQUIRE_NOTHROW(lua.safe_script("print(overloaded(1, 2, 3))"));
 	*/
 	lua.set_function("overloaded", sol::resolve<int(int)>(overloaded));
-	REQUIRE_NOTHROW(lua.script("print(overloaded(1))"));
+	REQUIRE_NOTHROW(lua.safe_script("print(overloaded(1))"));
 
 	lua.set_function("overloaded", sol::resolve<int(int, int)>(overloaded));
-	REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2))"));
+	REQUIRE_NOTHROW(lua.safe_script("print(overloaded(1, 2))"));
 
 	lua.set_function("overloaded", sol::resolve<int(int, int, int)>(overloaded));
-	REQUIRE_NOTHROW(lua.script("print(overloaded(1, 2, 3))"));
+	REQUIRE_NOTHROW(lua.safe_script("print(overloaded(1, 2, 3))"));
 }
 
 TEST_CASE("functions/return order and multi get", "Check if return order is in the same reading order specified in Lua") {
@@ -154,7 +156,7 @@ TEST_CASE("functions/return order and multi get", "Check if return order is in t
 	lua.set_function("h", []() {
 		return std::make_tuple(10, 10.0f);
 	});
-	lua.script("function g() return 10, 11, 12 end\nx,y,z = g()");
+	lua.safe_script("function g() return 10, 11, 12 end\nx,y,z = g()");
 	auto tcpp = lua.get<sol::function>("f").call<int, int, int>();
 	auto tlua = lua.get<sol::function>("g").call<int, int, int>();
 	auto tcpp2 = lua.get<sol::function>("h").call<int, float>();
@@ -180,7 +182,7 @@ TEST_CASE("functions/deducing return order and multi get", "Check if return orde
 	lua.set_function("f", [] {
 		return std::make_tuple(10, 11, 12);
 	});
-	lua.script("function g() return 10, 11, 12 end\nx,y,z = g()");
+	lua.safe_script("function g() return 10, 11, 12 end\nx,y,z = g()");
 	std::tuple<int, int, int> tcpp = lua.get<sol::function>("f")();
 	std::tuple<int, int, int> tlua = lua.get<sol::function>("g")();
 	std::tuple<int, int, int> tluaget = lua.get<int, int, int>("x", "y", "z");
@@ -197,7 +199,7 @@ TEST_CASE("functions/optional values", "check if optionals can be passed in to b
 		int v;
 	};
 	sol::state lua;
-	lua.script(R"( function f (a)
+	lua.safe_script(R"( function f (a)
     return a
 end )");
 
@@ -217,7 +219,7 @@ TEST_CASE("functions/pair and tuple and proxy tests", "Check if sol::reference a
 	sol::state lua;
 	lua.new_usertype<A>("A",
 		"bark", &A::bark);
-	lua.script(R"( function f (num_value, a)
+	lua.safe_script(R"( function f (num_value, a)
     return num_value * 2, a:bark()
 end 
 function h (num_value, a, b)
@@ -259,10 +261,10 @@ TEST_CASE("functions/sol::function to std::function", "check if conversion to st
 
 	lua.set_function("testFunc", test_free_func);
 	lua.set_function("testFunc2", test_free_func2);
-	lua.script(
+	lua.safe_script(
 		"testFunc(function() print(\"hello std::function\") end)"
 	);
-	REQUIRE_NOTHROW(lua.script(
+	REQUIRE_NOTHROW(lua.safe_script(
 		"function m(a)\n"
 		"     print(\"hello std::function with arg \", a)\n"
 		"     return a\n"
@@ -278,7 +280,7 @@ TEST_CASE("functions/returning functions from C++", "check to see if returning a
 
 	lua.set_function("makefn", makefn);
 	lua.set_function("takefn", takefn);
-	lua.script("afx = makefn()\n"
+	lua.safe_script("afx = makefn()\n"
 		"print(afx())\n"
 		"takefn(afx)\n");
 }
@@ -308,7 +310,7 @@ TEST_CASE("functions/function_result and protected_function_result", "Function r
 		return handlederrormessage;
 	};
 	lua.set_function("cpphandler", cpphandlerfx);
-	lua.script(
+	lua.safe_script(
 		std::string("function luahandler ( message )")
 		+ "    print('lua handler called with: ' .. message)"
 		+ "    return '" + handlederrormessage + "'"
@@ -392,85 +394,6 @@ TEST_CASE("functions/function_result and protected_function_result", "Function r
 	}
 }
 
-TEST_CASE("functions/destructor tests", "Show that proper copies / destruction happens") {
-	static int created = 0;
-	static int destroyed = 0;
-	static void* last_call = nullptr;
-	static void* static_call = reinterpret_cast<void*>(0x01);
-	typedef void(*fptr)();
-	struct x {
-		x() { ++created; }
-		x(const x&) { ++created; }
-		x(x&&) { ++created; }
-		x& operator=(const x&) { return *this; }
-		x& operator=(x&&) { return *this; }
-		void func() { last_call = static_cast<void*>(this); };
-		~x() { ++destroyed; }
-	};
-	struct y {
-		y() { ++created; }
-		y(const x&) { ++created; }
-		y(x&&) { ++created; }
-		y& operator=(const x&) { return *this; }
-		y& operator=(x&&) { return *this; }
-		static void func() { last_call = static_call; };
-		void operator()() { func(); }
-		operator fptr () { return func; }
-		~y() { ++destroyed; }
-	};
-
-	// stateful functors/member functions should always copy unless specified
-	{
-		created = 0;
-		destroyed = 0;
-		last_call = nullptr;
-		{
-			sol::state lua;
-			x x1;
-			lua.set_function("x1copy", &x::func, x1);
-			lua.script("x1copy()");
-			REQUIRE(created == 2);
-			REQUIRE(destroyed == 0);
-			REQUIRE_FALSE(last_call == &x1);
-
-			lua.set_function("x1ref", &x::func, std::ref(x1));
-			lua.script("x1ref()");
-			REQUIRE(created == 2);
-			REQUIRE(destroyed == 0);
-			REQUIRE(last_call == &x1);
-		}
-		REQUIRE(created == 2);
-		REQUIRE(destroyed == 2);
-	}
-
-	// things convertible to a static function should _never_ be forced to make copies
-	// therefore, pass through untouched
-	{
-		created = 0;
-		destroyed = 0;
-		last_call = nullptr;
-		{
-			sol::state lua;
-			y y1;
-			lua.set_function("y1copy", y1);
-			lua.script("y1copy()");
-			REQUIRE(created == 1);
-			REQUIRE(destroyed == 0);
-			REQUIRE(last_call == static_call);
-
-			last_call = nullptr;
-			lua.set_function("y1ref", std::ref(y1));
-			lua.script("y1ref()");
-			REQUIRE(created == 1);
-			REQUIRE(destroyed == 0);
-			REQUIRE(last_call == static_call);
-		}
-		REQUIRE(created == 1);
-		REQUIRE(destroyed == 1);
-	}
-}
-
-
 TEST_CASE("functions/all kinds", "Register all kinds of functions, make sure they all compile and work") {
 	sol::state lua;
 
@@ -531,12 +454,12 @@ TEST_CASE("functions/all kinds", "Register all kinds of functions, make sure the
 	lua.set_function("m", &test_2::a, &t2);
 	lua.set_function("n", sol::c_call<decltype(&non_overloaded), &non_overloaded>);
 
-	lua.script(R"(
+	lua.safe_script(R"(
 o1 = test_1.new()
 o2 = test_2.new()
 )");
 
-	lua.script(R"(
+	lua.safe_script(R"(
 ob = o1:bark()
 
 A = a()
@@ -551,32 +474,32 @@ I = i(o1)
 )");
 
 	
-	lua.script(R"(
+	lua.safe_script(R"(
 J0 = j()
 j(24)
 J1 = j()
     )");
 
-	lua.script(R"(
+	lua.safe_script(R"(
 K0 = k(o2)
 k(o2, 1024)
 K1 = k(o2)
     )");
 
-	lua.script(R"(
+	lua.safe_script(R"(
 L0 = l(o1)
 l(o1, 678)
 L1 = l(o1)
     )");
 
 
-	lua.script(R"(
+	lua.safe_script(R"(
 M0 = m()
 m(256)
 M1 = m()
     )");
 
-	lua.script(R"(
+	lua.safe_script(R"(
 N = n(1, 2, 3)
     )");
 	int ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1, N;
@@ -677,9 +600,9 @@ N = n(1, 2, 3)
 TEST_CASE("simple/call with parameters", "Lua function is called with a few parameters from C++") {
 	sol::state lua;
 
-	REQUIRE_NOTHROW(lua.script("function my_add(i, j, k) return i + j + k end"));
+	REQUIRE_NOTHROW(lua.safe_script("function my_add(i, j, k) return i + j + k end"));
 	auto f = lua.get<sol::function>("my_add");
-	REQUIRE_NOTHROW(lua.script("function my_nothing(i, j, k) end"));
+	REQUIRE_NOTHROW(lua.safe_script("function my_nothing(i, j, k) end"));
 	auto fvoid = lua.get<sol::function>("my_nothing");
 	REQUIRE_NOTHROW([&]() {
 		fvoid(1, 2, 3);
@@ -699,7 +622,7 @@ TEST_CASE("simple/call c++ function", "C++ function is called from lua") {
 	sol::state lua;
 
 	lua.set_function("plop_xyz", sep::plop_xyz);
-	lua.script("x = plop_xyz(2, 6, 'hello')");
+	lua.safe_script("x = plop_xyz(2, 6, 'hello')");
 
 	REQUIRE(lua.get<int>("x") == 11);
 }
@@ -711,7 +634,7 @@ TEST_CASE("simple/call lambda", "A C++ lambda is exposed to lua and called") {
 
 	lua.set_function("foo", [&a] { a = 1; });
 
-	lua.script("foo()");
+	lua.safe_script("foo()");
 
 	REQUIRE(a == 1);
 }
@@ -795,7 +718,7 @@ TEST_CASE("advanced/call lambdas", "A C++ lambda is exposed to lua and called") 
 		return 0;
 	});
 
-	lua.script("set_x(9)");
+	lua.safe_script("set_x(9)");
 	REQUIRE(x == 9);
 }
 
@@ -816,8 +739,8 @@ TEST_CASE("advanced/call referenced obj", "A C++ object is passed by pointer/ref
 	};
 	lua.set_function("set_y", &decltype(objy)::operator(), std::ref(objy));
 
-	lua.script("set_x(9)");
-	lua.script("set_y(9)");
+	lua.safe_script("set_x(9)");
+	lua.safe_script("set_y(9)");
 	REQUIRE(x == 9);
 	REQUIRE(y == 9);
 }
@@ -825,7 +748,7 @@ TEST_CASE("advanced/call referenced obj", "A C++ object is passed by pointer/ref
 TEST_CASE("functions/tie", "make sure advanced syntax with 'tie' works") {
 	sol::state lua;
 
-	lua.script(R"(function f () 
+	lua.safe_script(R"(function f () 
     return 1, 2, 3 
 end)");
 	sol::function f = lua["f"];
@@ -846,7 +769,7 @@ TEST_CASE("functions/overloading", "Check if overloading works properly for regu
 
 	const std::string string_bark = "string: bark";
 
-	REQUIRE_NOTHROW(lua.script(
+	REQUIRE_NOTHROW(lua.safe_script(
 		"a = func(1)\n"
 		"b = func('bark')\n"
 		"c = func(1,2)\n"
@@ -868,11 +791,11 @@ TEST_CASE("overloading/c_call", "Make sure that overloading works with c_call fu
 	lua.set("h", sol::c_call<decltype(&f2), &f2>);
 	lua.set("obj", fer());
 
-	lua.script("r1 = f(1)");
-	lua.script("r2 = f(1, 2)");
-	lua.script("r3 = f(obj, 1, 2)");
-	lua.script("r4 = g(1)");
-	lua.script("r5 = h(1, 2)");
+	lua.safe_script("r1 = f(1)");
+	lua.safe_script("r2 = f(1, 2)");
+	lua.safe_script("r3 = f(obj, 1, 2)");
+	lua.safe_script("r4 = g(1)");
+	lua.safe_script("r5 = h(1, 2)");
 
 	int r1 = lua["r1"];
 	int r2 = lua["r2"];
@@ -892,8 +815,8 @@ TEST_CASE("functions/stack atomic", "make sure functions don't impede on the sta
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::string);
 
-	lua.script("function ErrorHandler(msg) print('Lua created error msg : ' ..  msg) return msg end");
-	lua.script("function stringtest(a) if a == nil then error('fuck') end print('Lua recieved content : ' .. a) return a end");
+	lua.safe_script("function ErrorHandler(msg) print('Lua created error msg : ' ..  msg) return msg end");
+	lua.safe_script("function stringtest(a) if a == nil then error('fuck') end print('Lua recieved content : ' .. a) return a end");
 
 	// test normal function
 	{
@@ -941,48 +864,9 @@ TEST_CASE("functions/stack atomic", "make sure functions don't impede on the sta
 	REQUIRE(sg.check_stack());
 }
 
-TEST_CASE("functions/same type closures", "make sure destructions are per-object, not per-type, by destroying one type multiple times") {
-	static std::set<void*> last_my_closures;
-	static bool checking_closures = false;
-	static bool check_failed = false;
-
-	struct my_closure {
-		int& n;
-
-		my_closure(int& n) : n(n) {}
-		~my_closure() noexcept(false) {
-			if (!checking_closures)
-				return;
-			void* addr = static_cast<void*>(this);
-			auto f = last_my_closures.find(addr);
-			if (f != last_my_closures.cend()) {
-				check_failed = true;
-			}
-			last_my_closures.insert(f, addr);
-		}
-
-		int operator() () {
-			++n; return n;
-		}
-	};
-
-	int n = 250;
-	my_closure a(n);
-	my_closure b(n);
-	{
-		sol::state lua;
-
-		lua.set_function("f", a);
-		lua.set_function("g", b);
-		checking_closures = true;
-	}
-	REQUIRE_FALSE(check_failed);
-	REQUIRE(last_my_closures.size() == 2);
-}
-
 TEST_CASE("functions/stack multi-return", "Make sure the stack is protected after multi-returns") {
 	sol::state lua;
-	lua.script("function f () return 1, 2, 3, 4, 5 end");
+	lua.safe_script("function f () return 1, 2, 3, 4, 5 end");
 
 	{
 		sol::stack_guard sg(lua);
@@ -1005,7 +889,7 @@ TEST_CASE("functions/stack multi-return", "Make sure the stack is protected afte
 
 TEST_CASE("functions/protected stack multi-return", "Make sure the stack is protected after multi-returns") {
 	sol::state lua;
-	lua.script("function f () return 1, 2, 3, 4, 5 end");
+	lua.safe_script("function f () return 1, 2, 3, 4, 5 end");
 
 	{
 		sol::stack_guard sg(lua);
@@ -1030,8 +914,8 @@ TEST_CASE("functions/function_result as arguments", "ensure that function_result
 	sol::state lua;
 	lua.open_libraries();
 
-	lua.script("function f () return 1, 2, 3, 4, 5 end");
-	lua.script("function g (a, b, c, d, e) assert(a == 1) assert(b == 2) assert(c == 3) assert(d == 4) assert(e == 5) end");
+	lua.safe_script("function f () return 1, 2, 3, 4, 5 end");
+	lua.safe_script("function g (a, b, c, d, e) assert(a == 1) assert(b == 2) assert(c == 3) assert(d == 4) assert(e == 5) end");
 
 	{
 		sol::stack_guard sg(lua);
@@ -1059,8 +943,8 @@ TEST_CASE("functions/protected_function_result as arguments", "ensure that prote
 	sol::state lua;
 	lua.open_libraries();
 
-	lua.script("function f () return 1, 2, 3, 4, 5 end");
-	lua.script("function g (a, b, c, d, e) assert(a == 1) assert(b == 2) assert(c == 3) assert(d == 4) assert(e == 5) end");
+	lua.safe_script("function f () return 1, 2, 3, 4, 5 end");
+	lua.safe_script("function g (a, b, c, d, e) assert(a == 1) assert(b == 2) assert(c == 3) assert(d == 4) assert(e == 5) end");
 
 	{
 		sol::stack_guard sg(lua);
@@ -1091,9 +975,9 @@ TEST_CASE("functions/overloaded variadic", "make sure variadics work to some deg
 	sol::table ssl = lua.create_named_table("ssl");
 	ssl.set_function("test", sol::overload(&va_func<int>, &va_func<double>));
 
-	lua.script("a = ssl.test(1, 2, 3)");
-	lua.script("b = ssl.test(1, 2)");
-	lua.script("c = ssl.test(2.2)");
+	lua.safe_script("a = ssl.test(1, 2, 3)");
+	lua.safe_script("b = ssl.test(1, 2)");
+	lua.safe_script("c = ssl.test(2.2)");
 
 	int a = lua["a"];
 	int b = lua["b"];
@@ -1117,20 +1001,20 @@ TEST_CASE("functions/sectioning variadic", "make sure variadics can bite off chu
 		return r;
 	});
 
-	lua.script("x = f(1, 2, 3, 4)");
-	lua.script("x2 = f(8, 200, 3, 4)");
-	lua.script("x3 = f(1, 2, 3, 4, 5, 6)");
+	lua.safe_script("x = f(1, 2, 3, 4)");
+	lua.safe_script("x2 = f(8, 200, 3, 4)");
+	lua.safe_script("x3 = f(1, 2, 3, 4, 5, 6)");
 
-	lua.script("print(x) assert(x == 7)");
-	lua.script("print(x2) assert(x2 == 7)");
-	lua.script("print(x3) assert(x3 == 18)");
+	lua.safe_script("print(x) assert(x == 7)");
+	lua.safe_script("print(x2) assert(x2 == 7)");
+	lua.safe_script("print(x3) assert(x3 == 18)");
 }
 
 TEST_CASE("functions/set_function already wrapped", "setting a function returned from Lua code that is already wrapped into a sol::function or similar") {
 	SECTION("test different types") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
-		sol::function fn = lua.script("return function() return 5 end");
+		sol::function fn = lua.safe_script("return function() return 5 end");
 		sol::protected_function pfn = fn;
 		std::function<int()> sfn = fn;
 	
@@ -1138,23 +1022,23 @@ TEST_CASE("functions/set_function already wrapped", "setting a function returned
 		lua.set_function("test2", pfn);
 		lua.set_function("test3", sfn);
 
-		REQUIRE_NOTHROW(lua.script("assert(type(test) == 'function')"));
-		REQUIRE_NOTHROW(lua.script("assert(test() ~= nil)"));
-		REQUIRE_NOTHROW(lua.script("assert(test() == 5)"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(type(test) == 'function')"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(test() ~= nil)"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(test() == 5)"));
 
-		REQUIRE_NOTHROW(lua.script("assert(type(test2) == 'function')"));
-		REQUIRE_NOTHROW(lua.script("assert(test2() ~= nil)"));
-		REQUIRE_NOTHROW(lua.script("assert(test2() == 5)"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(type(test2) == 'function')"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(test2() ~= nil)"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(test2() == 5)"));
 
-		REQUIRE_NOTHROW(lua.script("assert(type(test3) == 'function')"));
-		REQUIRE_NOTHROW(lua.script("assert(test3() ~= nil)"));
-		REQUIRE_NOTHROW(lua.script("assert(test3() == 5)"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(type(test3) == 'function')"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(test3() ~= nil)"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(test3() == 5)"));
 	}
 
 	SECTION("getting the value from C++") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
-		sol::function fn = lua.script("return function() return 5 end");
+		sol::function fn = lua.safe_script("return function() return 5 end");
 
 		int result = fn();
 		REQUIRE(result == 5);
@@ -1163,13 +1047,13 @@ TEST_CASE("functions/set_function already wrapped", "setting a function returned
 	SECTION("setting the function directly") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
-		sol::function fn = lua.script("return function() return 5 end");
+		sol::function fn = lua.safe_script("return function() return 5 end");
 
 		lua.set_function("test", fn);
 
-		REQUIRE_NOTHROW(lua.script("assert(type(test) == 'function')"));
-		REQUIRE_NOTHROW(lua.script("assert(test() ~= nil)"));
-		REQUIRE_NOTHROW(lua.script("assert(test() == 5)"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(type(test) == 'function')"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(test() ~= nil)"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(test() == 5)"));
 
 	}
 
@@ -1177,23 +1061,23 @@ TEST_CASE("functions/set_function already wrapped", "setting a function returned
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		sol::function fn2 = lua.script("return function() print('this was executed') end");
+		sol::function fn2 = lua.safe_script("return function() print('this was executed') end");
 		lua.set_function("test", fn2);
 
-		REQUIRE_NOTHROW(lua.script("assert(type(test) == 'function')"));
-		REQUIRE_NOTHROW(lua.script("test()"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(type(test) == 'function')"));
+		REQUIRE_NOTHROW(lua.safe_script("test()"));
 	}
 
 	SECTION("setting the function indirectly, with the return value cast explicitly") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
-		sol::function fn = lua.script("return function() return 5 end");
+		sol::function fn = lua.safe_script("return function() return 5 end");
 
 		lua.set_function("test", [&fn]() { return fn.call<int>(); });
 
-		REQUIRE_NOTHROW(lua.script("assert(type(test) == 'function')"));
-		REQUIRE_NOTHROW(lua.script("assert(test() ~= nil)"));
-		REQUIRE_NOTHROW(lua.script("assert(test() == 5)"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(type(test) == 'function')"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(test() ~= nil)"));
+		REQUIRE_NOTHROW(lua.safe_script("assert(test() == 5)"));
 	}
 }
 
@@ -1252,15 +1136,15 @@ TEST_CASE("functions/pointer nullptr + nil", "ensure specific semantics for hand
 		lua["h"] = &nil_test::h;
 
 		REQUIRE_NOTHROW([&]() {
-			lua.script("f(v1)");
-			lua.script("f(v2)");
-			lua.script("f(v3)");
-			lua.script("f(v4)");
+			lua.safe_script("f(v1)");
+			lua.safe_script("f(v2)");
+			lua.safe_script("f(v3)");
+			lua.safe_script("f(v4)");
 
-			lua.script("assert(v1 == nil)");
-			lua.script("assert(v2 == nil)");
-			lua.script("assert(v3 == nil)");
-			lua.script("assert(v4 == nil)");
+			lua.safe_script("assert(v1 == nil)");
+			lua.safe_script("assert(v2 == nil)");
+			lua.safe_script("assert(v3 == nil)");
+			lua.safe_script("assert(v4 == nil)");
 		}());
 	}
 	SECTION("throw unique argument") {
@@ -1405,16 +1289,16 @@ TEST_CASE("functions/unique_usertype overloading", "make sure overloading can wo
 		lua["v4"] = ut.get();
 
 		REQUIRE_NOTHROW([&]() {
-			lua.script("f(v1)");
-			lua.script("g(v1)");
-			lua.script("g(v2)");
-			lua.script("g(v3)");
-			lua.script("g(v4)");
-			lua.script("h(v1)");
-			lua.script("h(v2)");
-			lua.script("h(v3)");
-			lua.script("h(v4)");
-			lua.script("i(20, v1)");
+			lua.safe_script("f(v1)");
+			lua.safe_script("g(v1)");
+			lua.safe_script("g(v2)");
+			lua.safe_script("g(v3)");
+			lua.safe_script("g(v4)");
+			lua.safe_script("h(v1)");
+			lua.safe_script("h(v2)");
+			lua.safe_script("h(v3)");
+			lua.safe_script("h(v4)");
+			lua.safe_script("i(20, v1)");
 		}());
 	};
 	// LuaJIT segfaults hard on some Linux machines
@@ -1473,14 +1357,14 @@ TEST_CASE("functions/noexcept", "allow noexcept functions to be serialized prope
 	lua.set_function("m", ccall);
 
 	lua["t"] = T();
-	lua.script("v1 = f()");
-	lua.script("v2 = g(t)");
-	lua.script("v3 = h()");
-	lua.script("v4 = i()");
-	lua.script("v5 = j()");
-	lua.script("v6 = k()");
-	lua.script("v7 = l()");
-	lua.script("v8 = m()");
+	lua.safe_script("v1 = f()");
+	lua.safe_script("v2 = g(t)");
+	lua.safe_script("v3 = h()");
+	lua.safe_script("v4 = i()");
+	lua.safe_script("v5 = j()");
+	lua.safe_script("v6 = k()");
+	lua.safe_script("v7 = l()");
+	lua.safe_script("v8 = m()");
 	int v1 = lua["v1"];
 	int v2 = lua["v2"];
 	int v3 = lua["v3"];

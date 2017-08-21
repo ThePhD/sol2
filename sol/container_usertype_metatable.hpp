@@ -276,7 +276,7 @@ namespace sol {
 						{ "add", &meta_cumt::add_call },
 						{ "find", &meta_cumt::find_call },
 						{ "erase", &meta_cumt::erase_call },
-						std::is_pointer<T>::value ? luaL_Reg{ nullptr, nullptr } : luaL_Reg{ "__gc", &detail::usertype_alloc_destroy<T> },
+						std::is_pointer<T>::value ? luaL_Reg{ nullptr, nullptr } : luaL_Reg{ "__gc", &detail::usertype_alloc_destruct<T> },
 						{ nullptr, nullptr }
 					} }; 
 					

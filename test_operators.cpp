@@ -47,6 +47,43 @@ TEST_CASE("operators/default", "test that generic equality operators and all sor
 	lua["v2"] = &v2;
 	lua["v3"] = &v3;
 
+	SECTION("plain") {
+		// Can only compare identity here
+		REQUIRE_NOTHROW([&] {
+			lua.safe_script("assert(t1 == t1)");
+			lua.safe_script("assert(t2 == t2)");
+			lua.safe_script("assert(t3 == t3)");
+		}());
+		REQUIRE_NOTHROW([&] {
+			lua.safe_script("assert(t1 == t2)");
+			lua.safe_script("assert(not (t1 == t3))");
+			lua.safe_script("assert(not (t2 == t3))");
+		}());
+		// Object should compare equal to themselves
+		// (and not invoke operator==; pointer test should be sufficient)
+		REQUIRE_NOTHROW([&] {
+			lua.safe_script("assert(u1 == u1)");
+			lua.safe_script("assert(u2 == u2)");
+			lua.safe_script("assert(u3 == u3)");
+		}());
+		REQUIRE_NOTHROW([&] {
+			lua.safe_script("assert(not (u1 == u2))");
+			lua.safe_script("assert(u1 == u3)");
+			lua.safe_script("assert(not (u2 == u3))");
+		}());
+		// Object should compare equal to themselves
+		// (and not invoke operator==; pointer test should be sufficient)
+		REQUIRE_NOTHROW([&] {
+			lua.safe_script("assert(v1 == v1)");
+			lua.safe_script("assert(v2 == v2)");
+			lua.safe_script("assert(v3 == v3)");
+		}());
+		REQUIRE_NOTHROW([&] {
+			lua.safe_script("assert(not (v1 == v2))");
+			lua.safe_script("assert(v1 == v3)");
+			lua.safe_script("assert(not (v2 == v3))");
+		}());
+	}
 	SECTION("regular") {
 		lua.new_usertype<T>("T");
 		lua.new_usertype<U>("U");
@@ -54,38 +91,38 @@ TEST_CASE("operators/default", "test that generic equality operators and all sor
 
 		// Can only compare identity here
 		REQUIRE_NOTHROW([&] {
-			lua.script("assert(t1 == t1)");
-			lua.script("assert(t2 == t2)");
-			lua.script("assert(t3 == t3)");
+			lua.safe_script("assert(t1 == t1)");
+			lua.safe_script("assert(t2 == t2)");
+			lua.safe_script("assert(t3 == t3)");
 		}());
 		REQUIRE_NOTHROW([&] {
-			lua.script("assert(t1 == t2)");
-			lua.script("assert(not (t1 == t3))");
-			lua.script("assert(not (t2 == t3))");
-		}());
-		// Object should compare equal to themselves
-		// (and not invoke operator==; pointer test should be sufficient)
-		REQUIRE_NOTHROW([&] {
-			lua.script("assert(u1 == u1)");
-			lua.script("assert(u2 == u2)");
-			lua.script("assert(u3 == u3)");
-		}());
-		REQUIRE_NOTHROW([&] {
-			lua.script("assert(not (u1 == u2))");
-			lua.script("assert(u1 == u3)");
-			lua.script("assert(not (u2 == u3))");
+			lua.safe_script("assert(t1 == t2)");
+			lua.safe_script("assert(not (t1 == t3))");
+			lua.safe_script("assert(not (t2 == t3))");
 		}());
 		// Object should compare equal to themselves
 		// (and not invoke operator==; pointer test should be sufficient)
 		REQUIRE_NOTHROW([&] {
-			lua.script("assert(v1 == v1)");
-			lua.script("assert(v2 == v2)");
-			lua.script("assert(v3 == v3)");
+			lua.safe_script("assert(u1 == u1)");
+			lua.safe_script("assert(u2 == u2)");
+			lua.safe_script("assert(u3 == u3)");
 		}());
 		REQUIRE_NOTHROW([&] {
-			lua.script("assert(not (v1 == v2))");
-			lua.script("assert(v1 == v3)");
-			lua.script("assert(not (v2 == v3))");
+			lua.safe_script("assert(not (u1 == u2))");
+			lua.safe_script("assert(u1 == u3)");
+			lua.safe_script("assert(not (u2 == u3))");
+		}());
+		// Object should compare equal to themselves
+		// (and not invoke operator==; pointer test should be sufficient)
+		REQUIRE_NOTHROW([&] {
+			lua.safe_script("assert(v1 == v1)");
+			lua.safe_script("assert(v2 == v2)");
+			lua.safe_script("assert(v3 == v3)");
+		}());
+		REQUIRE_NOTHROW([&] {
+			lua.safe_script("assert(not (v1 == v2))");
+			lua.safe_script("assert(v1 == v3)");
+			lua.safe_script("assert(not (v2 == v3))");
 		}());
 	}
 	SECTION("simple") {
@@ -95,38 +132,38 @@ TEST_CASE("operators/default", "test that generic equality operators and all sor
 
 		// Can only compare identity here
 		REQUIRE_NOTHROW([&] {
-			lua.script("assert(t1 == t1)");
-			lua.script("assert(t2 == t2)");
-			lua.script("assert(t3 == t3)");
+			lua.safe_script("assert(t1 == t1)");
+			lua.safe_script("assert(t2 == t2)");
+			lua.safe_script("assert(t3 == t3)");
 		}());
 		REQUIRE_NOTHROW([&] {
-			lua.script("assert(t1 == t2)");
-			lua.script("assert(not (t1 == t3))");
-			lua.script("assert(not (t2 == t3))");
-		}());
-		// Object should compare equal to themselves
-		// (and not invoke operator==; pointer test should be sufficient)
-		REQUIRE_NOTHROW([&] {
-			lua.script("assert(u1 == u1)");
-			lua.script("assert(u2 == u2)");
-			lua.script("assert(u3 == u3)");
-		}());
-		REQUIRE_NOTHROW([&] {
-			lua.script("assert(not (u1 == u2))");
-			lua.script("assert(u1 == u3)");
-			lua.script("assert(not (u2 == u3))");
+			lua.safe_script("assert(t1 == t2)");
+			lua.safe_script("assert(not (t1 == t3))");
+			lua.safe_script("assert(not (t2 == t3))");
 		}());
 		// Object should compare equal to themselves
 		// (and not invoke operator==; pointer test should be sufficient)
 		REQUIRE_NOTHROW([&] {
-			lua.script("assert(v1 == v1)");
-			lua.script("assert(v2 == v2)");
-			lua.script("assert(v3 == v3)");
+			lua.safe_script("assert(u1 == u1)");
+			lua.safe_script("assert(u2 == u2)");
+			lua.safe_script("assert(u3 == u3)");
 		}());
 		REQUIRE_NOTHROW([&] {
-			lua.script("assert(not (v1 == v2))");
-			lua.script("assert(v1 == v3)");
-			lua.script("assert(not (v2 == v3))");
+			lua.safe_script("assert(not (u1 == u2))");
+			lua.safe_script("assert(u1 == u3)");
+			lua.safe_script("assert(not (u2 == u3))");
+		}());
+		// Object should compare equal to themselves
+		// (and not invoke operator==; pointer test should be sufficient)
+		REQUIRE_NOTHROW([&] {
+			lua.safe_script("assert(v1 == v1)");
+			lua.safe_script("assert(v2 == v2)");
+			lua.safe_script("assert(v3 == v3)");
+		}());
+		REQUIRE_NOTHROW([&] {
+			lua.safe_script("assert(not (v1 == v2))");
+			lua.safe_script("assert(v1 == v3)");
+			lua.safe_script("assert(not (v2 == v3))");
 		}());
 	}
 }
@@ -134,13 +171,21 @@ TEST_CASE("operators/default", "test that generic equality operators and all sor
 TEST_CASE("operators/call", "test call operator generation") {
 	struct callable {
 		int operator ()(int a, std::string b) {
-			return a + b.length();
+			return a + static_cast<int>(b.length());
 		}
 	};
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
+	SECTION("plain") {
+		{
+			lua.set("obj", callable());
+			lua.safe_script("v = obj(2, 'bark woof')");
+			int v = lua["v"];
+			REQUIRE(v == 11);
+		}
+	}
 	SECTION("regular") {
 		lua.new_usertype<callable>("callable");
 		{
@@ -168,13 +213,53 @@ const void* stringable::last_print_ptr = nullptr;
 
 std::ostream& operator<< (std::ostream& ostr, const stringable& o) {
 	stringable::last_print_ptr = static_cast<const void*>(&o);
-	return ostr << " { stringable! }";
+	return ostr << "{ stringable, std::ostream! }";
 }
+
+struct adl_stringable {
+	static const void* last_print_ptr;
+};
+const void* adl_stringable::last_print_ptr = nullptr;
+
+std::string to_string(const adl_stringable& o) {
+	adl_stringable::last_print_ptr = static_cast<const void*>(&o);
+	return "{ adl_stringable, to_string! }";
+}
+
+namespace inside {
+	struct adl_stringable2 {
+		static const void* last_print_ptr;
+	};
+	const void* adl_stringable2::last_print_ptr = nullptr;
+
+	std::string to_string(const adl_stringable2& o) {
+		adl_stringable2::last_print_ptr = static_cast<const void*>(&o);
+		return "{ inside::adl_stringable2, inside::to_string! }";
+	}
+}
+
+struct member_stringable {
+	static const void* last_print_ptr;
+
+	std::string to_string() const {
+		member_stringable::last_print_ptr = static_cast<const void*>(this);
+		return "{ member_stringable, to_string! }";
+	}
+};
+const void* member_stringable::last_print_ptr = nullptr;
 
 TEST_CASE("operators/stringable", "test std::ostream stringability") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
+	SECTION("plain") {
+		{
+			lua["obj"] = stringable();
+			lua.safe_script("print(obj)");
+			stringable& obj = lua["obj"];
+			REQUIRE(stringable::last_print_ptr == &obj);
+		}
+	}
 	SECTION("regular") {
 		lua.new_usertype<stringable>("stringable");
 		{
@@ -191,6 +276,102 @@ TEST_CASE("operators/stringable", "test std::ostream stringability") {
 			lua.safe_script("print(obj)");
 			stringable& obj = lua["obj"];
 			REQUIRE(stringable::last_print_ptr == &obj);
+		}
+	}
+}
+
+TEST_CASE("operators/adl_stringable", "test adl to_string stringability") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	SECTION("plain") {
+		{
+			lua["obj"] = adl_stringable();
+			lua.safe_script("print(obj)");
+			adl_stringable& obj = lua["obj"];
+			REQUIRE(adl_stringable::last_print_ptr == &obj);
+		}
+	}
+	SECTION("regular") {
+		lua.new_usertype<adl_stringable>("stringable");
+		{
+			lua["obj"] = adl_stringable();
+			lua.safe_script("print(obj)");
+			adl_stringable& obj = lua["obj"];
+			REQUIRE(adl_stringable::last_print_ptr == &obj);
+		}
+	}
+	SECTION("simple") {
+		lua.new_simple_usertype<adl_stringable>("stringable");
+		{
+			lua.safe_script("obj = stringable.new()");
+			lua.safe_script("print(obj)");
+			adl_stringable& obj = lua["obj"];
+			REQUIRE(adl_stringable::last_print_ptr == &obj);
+		}
+	}
+}
+
+TEST_CASE("operators/inside::adl_stringable2", "test adl to_string stringability from inside a namespace") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	SECTION("plain") {
+		{
+			lua["obj"] = inside::adl_stringable2();
+			lua.safe_script("print(obj)");
+			inside::adl_stringable2& obj = lua["obj"];
+			REQUIRE(inside::adl_stringable2::last_print_ptr == &obj);
+		}
+	}
+	SECTION("regular") {
+		lua.new_usertype<inside::adl_stringable2>("stringable");
+		{
+			lua.safe_script("obj = stringable.new()");
+			lua.safe_script("print(obj)");
+			inside::adl_stringable2& obj = lua["obj"];
+			REQUIRE(inside::adl_stringable2::last_print_ptr == &obj);
+		}
+	}
+	SECTION("simple") {
+		lua.new_simple_usertype<inside::adl_stringable2>("stringable");
+		{
+			lua.safe_script("obj = stringable.new()");
+			lua.safe_script("print(obj)");
+			inside::adl_stringable2& obj = lua["obj"];
+			REQUIRE(inside::adl_stringable2::last_print_ptr == &obj);
+		}
+	}
+}
+
+TEST_CASE("operators/member_stringable", "test member to_string stringability") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	SECTION("plain") {
+		{
+			lua["obj"] = member_stringable();
+			lua.safe_script("print(obj)");
+			member_stringable& obj = lua["obj"];
+			REQUIRE(member_stringable::last_print_ptr == &obj);
+		}
+	}
+	SECTION("regular") {
+		lua.new_usertype<member_stringable>("stringable");
+		{
+			lua.safe_script("obj = stringable.new()");
+			lua.safe_script("print(obj)");
+			member_stringable& obj = lua["obj"];
+			REQUIRE(member_stringable::last_print_ptr == &obj);
+		}
+	}
+	SECTION("simple") {
+		lua.new_simple_usertype<member_stringable>("stringable");
+		{
+			lua.safe_script("obj = stringable.new()");
+			lua.safe_script("print(obj)");
+			member_stringable& obj = lua["obj"];
+			REQUIRE(member_stringable::last_print_ptr == &obj);
 		}
 	}
 }
@@ -219,6 +400,14 @@ TEST_CASE("operators/container-like", "test that generic begin/end and iterator 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
+	SECTION("plain") {
+		{
+			lua["obj"] = container();
+			lua.safe_script("i = 0 for k, v in pairs(obj) do i = i + 1 assert(k == v) end");
+			std::size_t i = lua["i"];
+			REQUIRE(i == 10);
+		}
+	}
 	SECTION("regular") {
 		lua.new_usertype<container>("container");
 		{
@@ -252,6 +441,14 @@ TEST_CASE("operators/length", "test that size is automatically bound to the leng
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
+	SECTION("plain") {
+		{
+			lua["obj"] = sizable();
+			lua.safe_script("s = #obj");
+			std::size_t s = lua["s"];
+			REQUIRE(s == 6);
+		}
+	}
 	SECTION("regular") {
 		lua.new_usertype<sizable>("sizable");
 		{ 

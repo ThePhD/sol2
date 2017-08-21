@@ -49,20 +49,20 @@ TEST_CASE("simple_usertype/usertypes", "Ensure that simple usertypes properly wo
 		"z", sol::overload(&bark::get, &bark::set)
 	);
 
-	lua.script("b = bark.new()");
+	lua.safe_script("b = bark.new()");
 	bark& b = lua["b"];
 
-	lua.script("b:fun()");
+	lua.safe_script("b:fun()");
 	int var = b.var;
 	REQUIRE(var == 51);
 
-	lua.script("b:var(20)");
-	lua.script("v = b:var()");
+	lua.safe_script("b:var(20)");
+	lua.safe_script("v = b:var()");
 	int v = lua["v"];
 	REQUIRE(v == 20);
 	REQUIRE(b.var == 20);
 
-	lua.script("m = b:the_marker()");
+	lua.safe_script("m = b:the_marker()");
 	marker& m = lua["m"];
 	REQUIRE_FALSE(b.mark.value);
 	REQUIRE_FALSE(m.value);
@@ -73,16 +73,16 @@ TEST_CASE("simple_usertype/usertypes", "Ensure that simple usertypes properly wo
 	sol::table barktable = lua["bark"];
 	barktable["special"] = &bark::special;
 
-	lua.script("s = b:special()");
+	lua.safe_script("s = b:special()");
 	std::string s = lua["s"];
 	REQUIRE(s == "woof");
 
-	lua.script("b:y(24)");
-	lua.script("x = b:x()");
+	lua.safe_script("b:y(24)");
+	lua.safe_script("x = b:x()");
 	int x = lua["x"];
 	REQUIRE(x == 24);
 
-	lua.script("z = b:z(b:z() + 5)");
+	lua.safe_script("z = b:z(b:z() + 5)");
 	int z = lua["z"];
 	REQUIRE(z == 29);
 }
@@ -132,23 +132,23 @@ TEST_CASE("simple_usertype/usertype constructors", "Ensure that calls with speci
 		"z", sol::overload(&bark::get, &bark::set)
 	);
 
-	lua.script("bx = bark.new(760)");
+	lua.safe_script("bx = bark.new(760)");
 	bark& bx = lua["bx"];
 	REQUIRE(bx.var == 760);
 
-	lua.script("b = bark.new()");
+	lua.safe_script("b = bark.new()");
 	bark& b = lua["b"];
 
-	lua.script("b:fun()");
+	lua.safe_script("b:fun()");
 	int var = b.var;
 	REQUIRE(var == 51);
 
-	lua.script("b:var(20)");
-	lua.script("v = b:var()");
+	lua.safe_script("b:var(20)");
+	lua.safe_script("v = b:var()");
 	int v = lua["v"];
 	REQUIRE(v == 20);
 
-	lua.script("m = b:the_marker()");
+	lua.safe_script("m = b:the_marker()");
 	marker& m = lua["m"];
 	REQUIRE_FALSE(b.mark.value);
 	REQUIRE_FALSE(m.value);
@@ -159,56 +159,18 @@ TEST_CASE("simple_usertype/usertype constructors", "Ensure that calls with speci
 	sol::table barktable = lua["bark"];
 	barktable["special"] = &bark::special;
 
-	lua.script("s = b:special()");
+	lua.safe_script("s = b:special()");
 	std::string s = lua["s"];
 	REQUIRE(s == "woof");
 
-	lua.script("b:y(24)");
-	lua.script("x = b:x()");
+	lua.safe_script("b:y(24)");
+	lua.safe_script("x = b:x()");
 	int x = lua["x"];
 	REQUIRE(x == 24);
 
-	lua.script("z = b:z(b:z() + 5)");
+	lua.safe_script("z = b:z(b:z() + 5)");
 	int z = lua["z"];
 	REQUIRE(z == 29);
-}
-
-TEST_CASE("simple_usertype/shared_ptr regression", "simple usertype metatables should not screw over unique usertype metatables") {
-	static int created = 0;
-	static int destroyed = 0;
-	struct test {
-		test() {
-			++created;
-		}
-
-		~test() {
-			++destroyed;
-		}
-	};
-	{
-		std::list<std::shared_ptr<test>> tests;
-		sol::state lua;
-		lua.open_libraries();
-
-		lua.new_simple_usertype<test>("test",
-			"create", [&]() -> std::shared_ptr<test> {
-			tests.push_back(std::make_shared<test>());
-			return tests.back();
-		}
-		);
-		REQUIRE(created == 0);
-		REQUIRE(destroyed == 0);
-		lua.script("x = test.create()");
-		REQUIRE(created == 1);
-		REQUIRE(destroyed == 0);
-		REQUIRE_FALSE(tests.empty());
-		std::shared_ptr<test>& x = lua["x"];
-		std::size_t xuse = x.use_count();
-		std::size_t tuse = tests.back().use_count();
-		REQUIRE(xuse == tuse);
-	}
-	REQUIRE(created == 1);
-	REQUIRE(destroyed == 1);
 }
 
 TEST_CASE("simple_usertype/vars", "simple usertype vars can bind various values (no ref)") {
@@ -228,7 +190,7 @@ TEST_CASE("simple_usertype/vars", "simple usertype vars can bind various values 
 	
 	through_variable = 20;
 
-	lua.script(R"(
+	lua.safe_script(R"(
 print(test.straight)
 s = test.straight
 print(test.global)
@@ -297,29 +259,29 @@ TEST_CASE("simple_usertype/variable-control", "test to see if usertypes respond 
 
 	B b;
 	lua.set("b", &b);
-	lua.script("b:a()");
+	lua.safe_script("b:a()");
 
 	sB sb;
 	lua.set("sb", &sb);
-	lua.script("sb:a()");
+	lua.safe_script("sb:a()");
 
 	sV sv;
 	lua.set("sv", &sv);
-	lua.script("print(sv.b)assert(sv.b == 20)");
+	lua.safe_script("print(sv.b)assert(sv.b == 20)");
 
 	sW sw;
 	lua.set("sw", &sw);
-	lua.script("print(sw.a)assert(sw.a == 10)");
-	lua.script("print(sw.b)assert(sw.b == 20)");
-	lua.script("print(sw.pb)assert(sw.pb == 22)");
-	lua.script("sw.a = 11");
-	lua.script("sw.b = 21");
-	lua.script("print(sw.a)assert(sw.a == 11)");
-	lua.script("print(sw.b)assert(sw.b == 21)");
-	lua.script("print(sw.pb)assert(sw.pb == 23)");
-	lua.script("sw.pb = 25");
-	lua.script("print(sw.b)assert(sw.b == 25)");
-	lua.script("print(sw.pb)assert(sw.pb == 27)");
+	lua.safe_script("print(sw.a)assert(sw.a == 10)");
+	lua.safe_script("print(sw.b)assert(sw.b == 20)");
+	lua.safe_script("print(sw.pb)assert(sw.pb == 22)");
+	lua.safe_script("sw.a = 11");
+	lua.safe_script("sw.b = 21");
+	lua.safe_script("print(sw.a)assert(sw.a == 11)");
+	lua.safe_script("print(sw.b)assert(sw.b == 21)");
+	lua.safe_script("print(sw.pb)assert(sw.pb == 23)");
+	lua.safe_script("sw.pb = 25");
+	lua.safe_script("print(sw.b)assert(sw.b == 25)");
+	lua.safe_script("print(sw.pb)assert(sw.pb == 27)");
 }
 
 TEST_CASE("simple_usertype/factory constructor overloads", "simple usertypes should invoke the proper factories") {
@@ -340,21 +302,30 @@ TEST_CASE("simple_usertype/factory constructor overloads", "simple usertypes sho
 	sol::constructors<sol::types<>, sol::types<const B&>> c;
 	lua.new_simple_usertype<B>("B",
 		sol::call_constructor, c,
-		"new", sol::factories([]() { return B(); }),
-		"new2", sol::initializers([](B& mem) { new(&mem)B(); }, [](B& mem, int v) { new(&mem)B(); mem.bvar = v; }),
+		"new", sol::factories([]() { 
+			return B(); 
+		}),
+		"new2", sol::initializers(
+			[](B& mem) { 
+				new(&mem)B(); 
+			}, 
+			[](B& mem, int v) { 
+				new(&mem)B(); mem.bvar = v; 
+			}
+		),
 		"f", sol::as_function(&B::bvar),
 		"g", sol::overload([](B&) { return 2; }, [](B&, int v) { return v; })
 	);
 
-	lua.script("b = B()");
-	lua.script("b2 = B.new()");
-	lua.script("b3 = B.new2()");
-	lua.script("b4 = B.new2(11)");
+	lua.safe_script("b = B()");
+	lua.safe_script("b2 = B.new()");
+	lua.safe_script("b3 = B.new2()");
+	lua.safe_script("b4 = B.new2(11)");
 
-	lua.script("x = b:f()");
-	lua.script("x2 = b2:f()");
-	lua.script("x3 = b3:f()");
-	lua.script("x4 = b4:f()");
+	lua.safe_script("x = b:f()");
+	lua.safe_script("x2 = b2:f()");
+	lua.safe_script("x3 = b3:f()");
+	lua.safe_script("x4 = b4:f()");
 	int x = lua["x"];
 	int x2 = lua["x2"];
 	int x3 = lua["x3"];
@@ -364,10 +335,10 @@ TEST_CASE("simple_usertype/factory constructor overloads", "simple usertypes sho
 	REQUIRE(x3 == 24);
 	REQUIRE(x4 == 11);
 
-	lua.script("y = b:g()");
-	lua.script("y2 = b2:g(3)");
-	lua.script("y3 = b3:g()");
-	lua.script("y4 = b4:g(3)");
+	lua.safe_script("y = b:g()");
+	lua.safe_script("y2 = b2:g(3)");
+	lua.safe_script("y3 = b3:g()");
+	lua.safe_script("y4 = b4:g(3)");
 	int y = lua["y"];
 	int y2 = lua["y2"];
 	int y3 = lua["y3"];
@@ -391,51 +362,20 @@ TEST_CASE("simple_usertype/runtime append", "allow extra functions to be appende
 	lua.set("b", std::make_unique<B>());
 	lua["A"]["method"] = []() { return 200; };
 	lua["B"]["method2"] = [](B&) { return 100; };
-	lua.script("x = b.method()");
-	lua.script("y = b:method()");
+	lua.safe_script("x = b.method()");
+	lua.safe_script("y = b:method()");
 
 	int x = lua["x"];
 	int y = lua["y"];
 	REQUIRE(x == 200);
 	REQUIRE(y == 200);
 	
-	lua.script("z = b.method2(b)");
-	lua.script("w = b:method2()");
+	lua.safe_script("z = b.method2(b)");
+	lua.safe_script("w = b:method2()");
 	int z = lua["z"];
 	int w = lua["w"];
 	REQUIRE(z == 100);
 	REQUIRE(w == 100);
-}
-
-TEST_CASE("simple_usertype/destruction test", "make sure usertypes are properly destructed and don't double-delete memory or segfault") {
-	sol::state lua;
-
-	class CrashClass {
-	public:
-		CrashClass() {
-		}
-
-		~CrashClass() {
-			a = 10; // This will cause a crash.
-		}
-
-	private:
-		int a;
-	};
-
-	lua.new_simple_usertype<CrashClass>("CrashClass",
-		sol::call_constructor, sol::constructors<sol::types<>>()
-		);
-
-	lua.script(R"(
-		function testCrash()
-			local x = CrashClass()
-			end
-		)");
-
-	for (int i = 0; i < 1000; ++i) {
-		lua["testCrash"]();
-	}
 }
 
 TEST_CASE("simple_usertype/table append", "Ensure that appending to the meta table also affects the internal function table for pointers as well") {
@@ -456,9 +396,9 @@ TEST_CASE("simple_usertype/table append", "Ensure that appending to the meta tab
 	lua.set("pa", &a);
 	lua.set("ua", std::make_unique<A>());
 	REQUIRE_NOTHROW([&]{
-		lua.script("assert(a:func() == 5000)");
-		lua.script("assert(pa:func() == 5000)");
-		lua.script("assert(ua:func() == 5000)");
+		lua.safe_script("assert(a:func() == 5000)");
+		lua.safe_script("assert(pa:func() == 5000)");
+		lua.safe_script("assert(ua:func() == 5000)");
 	}());
 }
 
@@ -481,7 +421,7 @@ TEST_CASE("simple_usertype/class call propogation", "make sure methods and varia
 		"var", &B::var
 		);
 
-	lua.script(R"(
+	lua.safe_script(R"(
 		b = B.new()
 		print(b.var)
 		b:thing()	
@@ -526,10 +466,10 @@ TEST_CASE("simple_usertype/call constructor", "ensure that all kinds of call-bas
 	}
 	);
 
-	lua.script("a = f_test()");
-	lua.script("b = i_test()");
-	lua.script("c = r_test()");
-	lua.script("d = f_test.new()");
+	lua.safe_script("a = f_test()");
+	lua.safe_script("b = i_test()");
+	lua.safe_script("c = r_test()");
+	lua.safe_script("d = f_test.new()");
 	f_test& a = lua["a"];
 	f_test& d = lua["d"];
 	i_test& b = lua["b"];
@@ -555,13 +495,13 @@ TEST_CASE("simple_usertype/call constructor", "ensure that all kinds of call-bas
 		);
 
 	lua.new_simple_usertype<thing>("thing");
-	lua.script("things = {thing.new(), thing.new()}");
+	lua.safe_script("things = {thing.new(), thing.new()}");
 
 	SECTION("new") {
-		REQUIRE_NOTHROW(lua.script("a = v_test.new(things)"));
+		REQUIRE_NOTHROW(lua.safe_script("a = v_test.new(things)"));
 	}
 	SECTION("call_constructor") {
-		REQUIRE_NOTHROW(lua.script("b = v_test(things)"));
+		REQUIRE_NOTHROW(lua.safe_script("b = v_test(things)"));
 	}
 }
 
@@ -598,7 +538,7 @@ TEST_CASE("simple_usertype/missing key", "make sure a missing key returns nil") 
 	lua.open_libraries(sol::lib::base);
 
 	lua.new_simple_usertype<thing>("thing");
-	REQUIRE_NOTHROW(lua.script("print(thing.missingKey)"));
+	REQUIRE_NOTHROW(lua.safe_script("print(thing.missingKey)"));
 }
 
 TEST_CASE("simple_usertype/runtime extensibility", "Check if usertypes are runtime extensible") {
@@ -616,7 +556,7 @@ TEST_CASE("simple_usertype/runtime extensibility", "Check if usertypes are runti
 			"func", &thing::func
 			);
 
-		lua.script(R"(
+		lua.safe_script(R"(
 t = thing.new()
 		)");
 
@@ -638,19 +578,19 @@ end
 			REQUIRE_FALSE(result.valid());
 		}
 
-		lua.script("val = t:func(2)");
+		lua.safe_script("val = t:func(2)");
 		val = lua["val"];
 		REQUIRE(val == 2);
 
 		REQUIRE_NOTHROW([&lua]() {
-			lua.script(R"(
+			lua.safe_script(R"(
 function thing:runtime_func(a)
 	return a + 1
 end
 		)");
 		}());
 
-		lua.script("val = t:runtime_func(2)");
+		lua.safe_script("val = t:runtime_func(2)");
 		val = lua["val"];
 		REQUIRE(val == 3);
 	}
@@ -663,7 +603,7 @@ end
 			"v", &thing::v
 			);
 
-		lua.script(R"(
+		lua.safe_script(R"(
 t = thing.new()
 		)");
 
@@ -685,19 +625,19 @@ end
 			REQUIRE_FALSE(result.valid());
 		}());
 
-		lua.script("val = t:func(2)");
+		lua.safe_script("val = t:func(2)");
 		val = lua["val"];
 		REQUIRE(val == 2);
 
 		REQUIRE_NOTHROW([&lua]() {
-			lua.script(R"(
+			lua.safe_script(R"(
 function thing:runtime_func(a)
 	return a + 1
 end
 		)");
 		}());
 
-		lua.script("val = t:runtime_func(2)");
+		lua.safe_script("val = t:runtime_func(2)");
 		val = lua["val"];
 		REQUIRE(val == 3);
 	}
@@ -715,13 +655,13 @@ TEST_CASE("simple_usertype/runtime replacement", "ensure that functions can be p
 
 		lua.new_simple_usertype<heart_t>("a");
 		REQUIRE_NOTHROW([&lua]() {
-			lua.script("obj = a.new()");
-			lua.script("function a:heartbeat () print('arf') return 1 end");
-			lua.script("v1 = obj:heartbeat()");
-			lua.script("function a:heartbeat () print('bark') return 2 end");
-			lua.script("v2 = obj:heartbeat()");
-			lua.script("a.heartbeat = function(self) print('woof') return 3 end");
-			lua.script("v3 = obj:heartbeat()");
+			lua.safe_script("obj = a.new()");
+			lua.safe_script("function a:heartbeat () print('arf') return 1 end");
+			lua.safe_script("v1 = obj:heartbeat()");
+			lua.safe_script("function a:heartbeat () print('bark') return 2 end");
+			lua.safe_script("v2 = obj:heartbeat()");
+			lua.safe_script("a.heartbeat = function(self) print('woof') return 3 end");
+			lua.safe_script("v3 = obj:heartbeat()");
 		}());
 		int v1 = lua["v1"];
 		int v2 = lua["v2"];
@@ -739,13 +679,13 @@ TEST_CASE("simple_usertype/runtime replacement", "ensure that functions can be p
 			);
 
 		REQUIRE_NOTHROW([&lua]() {
-			lua.script("obj = a.new()");
-			lua.script("function a:heartbeat () print('arf') return 1 end");
-			lua.script("v1 = obj:heartbeat()");
-			lua.script("function a:heartbeat () print('bark') return 2 end");
-			lua.script("v2 = obj:heartbeat()");
-			lua.script("a.heartbeat = function(self) print('woof') return 3 end");
-			lua.script("v3 = obj:heartbeat()");
+			lua.safe_script("obj = a.new()");
+			lua.safe_script("function a:heartbeat () print('arf') return 1 end");
+			lua.safe_script("v1 = obj:heartbeat()");
+			lua.safe_script("function a:heartbeat () print('bark') return 2 end");
+			lua.safe_script("v2 = obj:heartbeat()");
+			lua.safe_script("a.heartbeat = function(self) print('woof') return 3 end");
+			lua.safe_script("v3 = obj:heartbeat()");
 		}());
 		int v1 = lua["v1"];
 		int v2 = lua["v2"];
@@ -764,13 +704,13 @@ TEST_CASE("simple_usertype/runtime replacement", "ensure that functions can be p
 			);
 
 		REQUIRE_NOTHROW([&lua]() {
-			lua.script("obj = a.new()");
-			lua.script("function a:heartbeat () print('arf') return 1 end");
-			lua.script("v1 = obj:heartbeat()");
-			lua.script("function a:heartbeat () print('bark') return 2 end");
-			lua.script("v2 = obj:heartbeat()");
-			lua.script("a.heartbeat = function(self) print('woof') return 3 end");
-			lua.script("v3 = obj:heartbeat()");
+			lua.safe_script("obj = a.new()");
+			lua.safe_script("function a:heartbeat () print('arf') return 1 end");
+			lua.safe_script("v1 = obj:heartbeat()");
+			lua.safe_script("function a:heartbeat () print('bark') return 2 end");
+			lua.safe_script("v2 = obj:heartbeat()");
+			lua.safe_script("a.heartbeat = function(self) print('woof') return 3 end");
+			lua.safe_script("v3 = obj:heartbeat()");
 		}());
 		int v1 = lua["v1"];
 		int v2 = lua["v2"];
@@ -801,11 +741,11 @@ TEST_CASE("simple_usertype/meta key retrievals", "allow for special meta keys (_
 		lua["var"] = s;
 
 		
-		lua.script("var = sample.new()");
-		lua.script("var.key = 2");
-		lua.script("var.__newindex = 4");
-		lua.script("var.__index = 3");
-		lua.script("var.__call = 1");
+		lua.safe_script("var = sample.new()");
+		lua.safe_script("var.key = 2");
+		lua.safe_script("var.__newindex = 4");
+		lua.safe_script("var.__index = 3");
+		lua.safe_script("var.__call = 1");
 		REQUIRE(values[0] == 2);
 		REQUIRE(values[1] == 4);
 		REQUIRE(values[2] == 3);
@@ -831,11 +771,11 @@ TEST_CASE("simple_usertype/meta key retrievals", "allow for special meta keys (_
 		sol::state lua;
 		lua.new_simple_usertype<sample>("sample", sol::meta_function::new_index, &sample::foo);
 		
-		lua.script("var = sample.new()");
-		lua.script("var.key = 2");
-		lua.script("var.__newindex = 4");
-		lua.script("var.__index = 3");
-		lua.script("var.__call = 1");
+		lua.safe_script("var = sample.new()");
+		lua.safe_script("var.key = 2");
+		lua.safe_script("var.__newindex = 4");
+		lua.safe_script("var.__index = 3");
+		lua.safe_script("var.__call = 1");
 		REQUIRE(values[0] == 2);
 		REQUIRE(values[1] == 4);
 		REQUIRE(values[2] == 3);
@@ -871,10 +811,10 @@ TEST_CASE("simple_usertype/static properties", "allow for static functions to ge
 		"g", sol::property(&test_t::s_func, &test_t::g_func)
 		);
 
-	lua.script("v1 = test.f()");
-	lua.script("v2 = test.g");
-	lua.script("test.g = 60");
-	lua.script("v2a = test.g");
+	lua.safe_script("v1 = test.f()");
+	lua.safe_script("v2 = test.g");
+	lua.safe_script("test.g = 60");
+	lua.safe_script("v2a = test.g");
 	int v1 = lua["v1"];
 	REQUIRE(v1 == 24);
 	double v2 = lua["v2"];
@@ -914,7 +854,7 @@ TEST_CASE("simple_usertype/indexing", "make sure simple usertypes can be indexed
 			sol::meta_function::new_index, &indexing_test::setter
 			);
 
-		lua.script(R"(	
+		lua.safe_script(R"(	
 		local t = test.new()
 		v = t.a
 		print(v)
@@ -934,7 +874,7 @@ TEST_CASE("simple_usertype/indexing", "make sure simple usertypes can be indexed
 
 		lua["test"]["hi"] = [](indexing_test& _self) -> int { return _self.hi(); };
 
-		lua.script(R"(	
+		lua.safe_script(R"(	
 		local t = test.new()
 		v = t.a;
 		print(v)

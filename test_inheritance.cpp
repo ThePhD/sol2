@@ -42,14 +42,14 @@ TEST_CASE("inheritance/basic", "test that metatables are properly inherited") {
 		sol::base_classes, sol::bases<C, B, A>()
 		);
 
-	lua.script("obj = D.new()");
-	lua.script("d = obj:d()");
+	lua.safe_script("obj = D.new()");
+	lua.safe_script("d = obj:d()");
 	bool d = lua["d"];
-	lua.script("c = obj.c");
+	lua.safe_script("c = obj.c");
 	double c = lua["c"];
-	lua.script("b = obj:b()");
+	lua.safe_script("b = obj:b()");
 	int b = lua["b"];
-	lua.script("a = obj.a");
+	lua.safe_script("a = obj.a");
 	int a = lua["a"];
 
 	REQUIRE(d);
@@ -124,19 +124,19 @@ TEST_CASE("inheritance/multi base", "test that multiple bases all work and overl
 
 	lua.set_usertype("TestClass03", s_TestUsertype03);
 
-	lua.script(R"(
+	lua.safe_script(R"(
 tc0 = TestClass00()
 )");
 
-	lua.script(R"(
+	lua.safe_script(R"(
 tc2 = TestClass02(tc0)
 )");
 
-	lua.script(R"(
+	lua.safe_script(R"(
 tc1 = TestClass01()
 )");
 
-	lua.script(R"(
+	lua.safe_script(R"(
 tc3 = TestClass03(tc1)
 )");
 
@@ -219,19 +219,19 @@ TEST_CASE("inheritance/simple multi base", "test that multiple bases all work an
 
 	lua.set_usertype("TestClass03", s_TestUsertype03);
 
-	lua.script(R"(
+	lua.safe_script(R"(
 tc0 = TestClass00()
 )");
 
-	lua.script(R"(
+	lua.safe_script(R"(
 tc2 = TestClass02(tc0)
 )");
 
-	lua.script(R"(
+	lua.safe_script(R"(
 tc1 = TestClass01()
 )");
 
-	lua.script(R"(
+	lua.safe_script(R"(
 tc3 = TestClass03(tc1)
 )");
 

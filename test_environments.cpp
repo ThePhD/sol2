@@ -1,7 +1,8 @@
-#define SOL_CHECK_ARGUMENTS
+#define SOL_CHECK_ARGUMENTS 1
+
+#include <sol.hpp>
 
 #include <catch.hpp>
-#include <sol.hpp>
 #include <iostream>
 #include "test_stack_guard.hpp"
 
@@ -11,7 +12,7 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
 
-	lua.script("f = function() return test end");
+	lua.safe_script("f = function() return test end");
 	sol::function f = lua["f"];
 
 	sol::environment env_f(lua, sol::create);
@@ -21,7 +22,7 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 	int result = f();
 	REQUIRE(result == 31);
 
-	lua.script("g = function() test = 5 end");
+	lua.safe_script("g = function() test = 5 end");
 	sol::function g = lua["g"];
 	sol::environment env_g(lua, sol::create);
 	env_g.set_on(g);
@@ -35,7 +36,7 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 	sol::object global_test = lua["test"];
 	REQUIRE(!global_test.valid());
 
-	lua.script("h = function() end");
+	lua.safe_script("h = function() end");
 
 	lua.set_function("check_f_env",
 		[&lua, &env_f](sol::object target) {
@@ -67,9 +68,9 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 	);
 
 	REQUIRE_NOTHROW([&lua]() {
-		lua.script("check_f_env(f)");
-		lua.script("check_g_env(g)");
-		lua.script("check_h_env(h)");
+		lua.safe_script("check_f_env(f)");
+		lua.safe_script("check_g_env(g)");
+		lua.safe_script("check_h_env(h)");
 	}());
 }
 
@@ -80,7 +81,7 @@ TEST_CASE("environments/shadowing", "Environments can properly shadow and fallba
 
 	SECTION("no fallback") {
 		sol::environment plain_env(lua, sol::create);
-		lua.script("a = 24", plain_env);
+		lua.safe_script("a = 24", plain_env);
 		sol::optional<int> maybe_env_a = plain_env["a"];
 		sol::optional<int> maybe_global_a = lua["a"];
 		sol::optional<int> maybe_env_b = plain_env["b"];
@@ -96,7 +97,7 @@ TEST_CASE("environments/shadowing", "Environments can properly shadow and fallba
 	}
 	SECTION("fallback") {
 		sol::environment env_with_fallback(lua, sol::create, lua.globals());
-		lua.script("a = 56", env_with_fallback, sol::script_default_on_error);
+		lua.safe_script("a = 56", env_with_fallback, sol::script_default_on_error);
 		sol::optional<int> maybe_env_a = env_with_fallback["a"];
 		sol::optional<int> maybe_global_a = lua["a"];
 		sol::optional<int> maybe_env_b = env_with_fallback["b"];
@@ -115,7 +116,7 @@ TEST_CASE("environments/shadowing", "Environments can properly shadow and fallba
 		sol::environment env_with_fallback(lua, sol::create, lua.globals());
 		lua["env"] = env_with_fallback;
 		sol::environment env = lua["env"];
-		lua.script("a = 56", env, sol::script_default_on_error);
+		lua.safe_script("a = 56", env, sol::script_default_on_error);
 		sol::optional<int> maybe_env_a = env["a"];
 		sol::optional<int> maybe_global_a = lua["a"];
 		sol::optional<int> maybe_env_b = env["b"];
@@ -133,7 +134,7 @@ TEST_CASE("environments/shadowing", "Environments can properly shadow and fallba
 	SECTION("name with newtable") {
 		lua["blank_env"] = sol::new_table(0, 1);
 		sol::environment plain_env = lua["blank_env"];
-		lua.script("a = 24", plain_env);
+		lua.safe_script("a = 24", plain_env);
 		sol::optional<int> maybe_env_a = plain_env["a"];
 		sol::optional<int> maybe_global_a = lua["a"];
 		sol::optional<int> maybe_env_b = plain_env["b"];
@@ -154,7 +155,7 @@ TEST_CASE("environments/functions", "see if environments on functions are workin
 	SECTION("basic") {
 		sol::state lua;
 
-		lua.script("a = function() return 5 end");
+		lua.safe_script("a = function() return 5 end");
 
 		sol::function a = lua["a"];
 
@@ -170,7 +171,7 @@ TEST_CASE("environments/functions", "see if environments on functions are workin
 	SECTION("return environment value") {
 		sol::state lua;
 
-		lua.script("a = function() return test end");
+		lua.safe_script("a = function() return test end");
 
 		sol::function a = lua["a"];
 		sol::environment env(lua, sol::create);
@@ -184,7 +185,7 @@ TEST_CASE("environments/functions", "see if environments on functions are workin
 
 	SECTION("set environment value") {
 		sol::state lua;
-		lua.script("a = function() test = 5 end");
+		lua.safe_script("a = function() test = 5 end");
 
 		sol::function a = lua["a"];
 		sol::environment env(lua, sol::create);
@@ -220,7 +221,7 @@ TEST_CASE("environments/this_environment", "test various situations of pulling o
 	lua["x"] = 5;
 	e["x"] = 20;
 	SECTION("from Lua script") {
-		int value = lua.script(code, e);
+		int value = lua.safe_script(code, e);
 		REQUIRE(value == 30);
 	}
 	SECTION("from C++") {

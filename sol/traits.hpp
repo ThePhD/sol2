@@ -261,7 +261,7 @@ namespace sol {
 				using no = struct { char s[2]; };
 
 				struct F { void operator()(); };
-				struct Derived : T, F {};
+				struct Derived : T, F { ~Derived() = delete; };
 				template<typename U, U> struct Check;
 
 				template<typename V>
@@ -382,6 +382,35 @@ namespace sol {
 				static const bool value = sizeof(test<T>(0)) == sizeof(char);
 			};
 
+			template <typename T>
+			struct has_to_string_test {
+			private:
+				typedef std::array<char, 1> one;
+				typedef std::array<char, 2> two;
+
+				template <typename C> static one test(decltype(std::declval<C>().to_string())*);
+				template <typename C> static two test(...);
+
+			public:
+				static const bool value = sizeof(test<T>(0)) == sizeof(char);
+			};
+#if defined(_MSC_VER) && _MSC_VER <= 1910
+			template <typename T, typename U, typename = decltype(std::declval<T&>() < std::declval<U&>())>
+			std::true_type supports_op_less_test(std::reference_wrapper<T>, std::reference_wrapper<U>);
+			std::false_type supports_op_less_test(...);
+			template <typename T, typename U, typename = decltype(std::declval<T&>() == std::declval<U&>())>
+			std::true_type supports_op_equal_test(std::reference_wrapper<T>, std::reference_wrapper<U>);
+			std::false_type supports_op_equal_test(...);
+			template <typename T, typename U, typename = decltype(std::declval<T&>() <= std::declval<U&>())>
+			std::true_type supports_op_less_equal_test(std::reference_wrapper<T>, std::reference_wrapper<U>);
+			std::false_type supports_op_less_equal_test(...);
+			template <typename T, typename OS, typename = decltype(std::declval<OS&>() << std::declval<T&>())>
+			std::true_type supports_ostream_op(std::reference_wrapper<T>, std::reference_wrapper<OS>);
+			std::false_type supports_ostream_op(...);
+			template <typename T, typename = decltype(to_string(std::declval<T&>()))>
+			std::true_type supports_adl_to_string(std::reference_wrapper<T>);
+			std::false_type supports_adl_to_string(...);
+#else
 			template <typename T, typename U, typename = decltype(std::declval<T&>() < std::declval<U&>())>
 			std::true_type supports_op_less_test(const T&, const U&);
 			std::false_type supports_op_less_test(...);
@@ -394,9 +423,24 @@ namespace sol {
 			template <typename T, typename OS, typename = decltype(std::declval<OS&>() << std::declval<T&>())>
 			std::true_type supports_ostream_op(const T&, const OS&);
 			std::false_type supports_ostream_op(...);
-
+			template <typename T, typename = decltype(to_string(std::declval<T&>()))>
+			std::true_type supports_adl_to_string(const T&);
+			std::false_type supports_adl_to_string(...);
+#endif
 		} // meta_detail
 
+#if defined(_MSC_VER) && _MSC_VER <= 1910
+		template <typename T, typename U = T>
+		using supports_op_less = decltype(meta_detail::supports_op_less_test(std::ref(std::declval<T&>()), std::ref(std::declval<U&>())));
+		template <typename T, typename U = T>
+		using supports_op_equal = decltype(meta_detail::supports_op_equal_test(std::ref(std::declval<T&>()), std::ref(std::declval<U&>())));
+		template <typename T, typename U = T>
+		using supports_op_less_equal = decltype(meta_detail::supports_op_less_equal_test(std::ref(std::declval<T&>()), std::ref(std::declval<U&>())));
+		template <typename T, typename U = std::ostream>
+		using supports_ostream_op = decltype(meta_detail::supports_ostream_op(std::ref(std::declval<T&>()), std::ref(std::declval<U&>())));
+		template <typename T>
+		using supports_adl_to_string = decltype(meta_detail::supports_adl_to_string(std::ref(std::declval<T&>())));
+#else
 		template <typename T, typename U = T>
 		using supports_op_less = decltype(meta_detail::supports_op_less_test(std::declval<T&>(), std::declval<U&>()));
 		template <typename T, typename U = T>
@@ -405,6 +449,11 @@ namespace sol {
 		using supports_op_less_equal = decltype(meta_detail::supports_op_less_equal_test(std::declval<T&>(), std::declval<U&>()));
 		template <typename T, typename U = std::ostream>
 		using supports_ostream_op = decltype(meta_detail::supports_ostream_op(std::declval<T&>(), std::declval<U&>()));
+		template <typename T>
+		using supports_adl_to_string = decltype(meta_detail::supports_adl_to_string(std::declval<T&>()));
+#endif
+		template <typename T>
+		using supports_to_string_member = meta::boolean<meta_detail::has_to_string_test<T>::value>;
 
 		template<typename T>
 		struct is_callable : boolean<meta_detail::is_callable<T>::value> {};

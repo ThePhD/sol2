@@ -69,17 +69,23 @@ namespace sol {
 		struct push_popper_n<true> {
 			push_popper_n(lua_State*, int) { }
 		};
-		template <bool top_level, typename T>
+		template <bool, typename T, typename = void>
 		struct push_popper {
 			T t;
 			push_popper(T x) : t(x) { t.push(); }
 			~push_popper() { t.pop(); }
 		};
-		template <typename T>
-		struct push_popper<true, T> {
+		template <typename T, typename C>
+		struct push_popper<true, T, C> {
 			push_popper(T) {}
 			~push_popper() {}
 		};
+		template <typename T>
+		struct push_popper<false, T, std::enable_if_t<std::is_base_of<stack_reference, meta::unqualified_t<T>>::value>> {
+			push_popper(T) {}
+			~push_popper() {}
+		};
+
 		template <bool top_level = false, typename T>
 		push_popper<top_level, T> push_pop(T&& x) {
 			return push_popper<top_level, T>(std::forward<T>(x));

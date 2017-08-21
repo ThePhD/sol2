@@ -33,6 +33,7 @@
 #include "deprecate.hpp"
 #include "object.hpp"
 #include "container_usertype_metatable.hpp"
+#include "usertype_core.hpp"
 #include <unordered_map>
 #include <cstdio>
 #include <sstream>
@@ -102,13 +103,6 @@ namespace sol {
 			index(std::move(i)), newindex(std::move(ni)),
 			indexbaseclasspropogation(index), newindexbaseclasspropogation(newindex) {}
 		};
-
-		template <typename T>
-		inline int default_to_string(lua_State* L) {
-			std::ostringstream oss;
-			oss << stack::get<T>(L, 1);
-			return stack::push(L, oss.str());
-		}
 	} // usertype_detail
 
 	struct usertype_metatable_core {
@@ -133,47 +127,6 @@ namespace sol {
 
 	namespace usertype_detail {
 		const lua_Integer toplevel_magic = static_cast<lua_Integer>(0xCCC2CCC1);
-
-		struct add_destructor_tag {};
-		struct check_destructor_tag {};
-		struct verified_tag {} const verified{};
-
-		template <typename T>
-		struct is_non_factory_constructor : std::false_type {};
-
-		template <typename... Args>
-		struct is_non_factory_constructor<constructors<Args...>> : std::true_type {};
-
-		template <typename... Args>
-		struct is_non_factory_constructor<constructor_wrapper<Args...>> : std::true_type {};
-
-		template <>
-		struct is_non_factory_constructor<no_construction> : std::true_type {};
-
-		template <typename T>
-		struct is_constructor : is_non_factory_constructor<T> {};
-
-		template <typename... Args>
-		struct is_constructor<factory_wrapper<Args...>> : std::true_type {};
-
-		template <typename... Args>
-		using has_constructor = meta::any<is_constructor<meta::unqualified_t<Args>>...>;
-
-		template <typename T>
-		struct is_destructor : std::false_type {};
-
-		template <typename Fx>
-		struct is_destructor<destructor_wrapper<Fx>> : std::true_type {};
-
-		template <typename... Args>
-		using has_destructor = meta::any<is_destructor<meta::unqualified_t<Args>>...>;
-
-		struct no_comp {
-			template <typename A, typename B>
-			bool operator()(A&&, B&&) const {
-				return false;
-			}
-		};
 
 		inline int is_indexer(string_detail::string_shim s) {
 			if (s == to_string(meta_function::index)) {
@@ -409,76 +362,6 @@ namespace sol {
 			(void)accessor;
 			(void)detail::swallow{ 0, (walk_single_base<is_index, Bases>(L, found, ret, accessor), 0)... };
 		}
-
-		template <typename T, typename Op>
-		int operator_wrap(lua_State* L) {
-			auto maybel = stack::check_get<T>(L, 1);
-			if (maybel) {
-				auto mayber = stack::check_get<T>(L, 2);
-				if (mayber) {
-					auto& l = *maybel;
-					auto& r = *mayber;
-					if (std::is_same<no_comp, Op>::value) {
-						return stack::push(L, detail::ptr(l) == detail::ptr(r));
-					}
-					else {
-						Op op;
-						return stack::push(L, (detail::ptr(l) == detail::ptr(r)) || op(detail::deref(l), detail::deref(r)));
-					}
-				}
-			}
-			return stack::push(L, false);
-		}
-
-		template <typename T, typename Op, typename Supports, typename Regs, meta::enable<Supports> = meta::enabler>
-		inline void make_reg_op(Regs& l, int& index, const char* name) {
-			lua_CFunction f = &operator_wrap<T, Op>;
-			l[index] = luaL_Reg{ name, f };
-			++index;
-		}
-
-		template <typename T, typename Op, typename Supports, typename Regs, meta::disable<Supports> = meta::enabler>
-		inline void make_reg_op(Regs&, int&, const char*) {
-			// Do nothing if there's no support
-		}
-
-		template <typename T, typename Supports, typename Regs, meta::enable<Supports> = meta::enabler>
-		inline void make_to_string_op(Regs& l, int& index) {
-			const char* name = to_string(meta_function::to_string).c_str();
-			lua_CFunction f = &detail::static_trampoline<&default_to_string<T>>;
-			l[index] = luaL_Reg{ name, f };
-			++index;
-		}
-
-		template <typename T, typename Supports, typename Regs, meta::disable<Supports> = meta::enabler>
-		inline void make_to_string_op(Regs&, int&) {
-			// Do nothing if there's no support
-		}
-
-		template <typename T, typename Regs, meta::enable<meta::has_deducible_signature<T>> = meta::enabler>
-		inline void make_call_op(Regs& l, int& index) {
-			const char* name = to_string(meta_function::call).c_str();
-			lua_CFunction f = &c_call<decltype(&T::operator()), &T::operator()>;
-			l[index] = luaL_Reg{ name, f };
-			++index;
-		}
-
-		template <typename T, typename Regs, meta::disable<meta::has_deducible_signature<T>> = meta::enabler>
-		inline void make_call_op(Regs&, int&) {
-			// Do nothing if there's no support
-		}
-
-		template <typename T, typename Regs, meta::enable<meta::has_size<T>> = meta::enabler>
-		inline void make_length_op(Regs& l, int& index) {
-			const char* name = to_string(meta_function::length).c_str();
-			l[index] = luaL_Reg{ name, &c_call<decltype(&T::size), &T::size> };
-			++index;
-		}
-
-		template <typename T, typename Regs, meta::disable<meta::has_size<T>> = meta::enabler>
-		inline void make_length_op(Regs&, int&) {
-			// Do nothing if there's no support
-		}
 	} // usertype_detail
 
 	template <typename T>
@@ -536,32 +419,8 @@ namespace sol {
 		}
 
 		int finish_regs(regs_t& l, int& index) {
-			if (!properties[static_cast<int>(meta_function::less_than)]) {
-				const char* name = to_string(meta_function::less_than).c_str();
-				usertype_detail::make_reg_op<T, std::less<>, meta::supports_op_less<T>>(l, index, name);
-			}
-			if (!properties[static_cast<int>(meta_function::less_than_or_equal_to)]) {
-				const char* name = to_string(meta_function::less_than_or_equal_to).c_str();
-				usertype_detail::make_reg_op<T, std::less_equal<>, meta::supports_op_less_equal<T>>(l, index, name);
-			}
-			if (!properties[static_cast<int>(meta_function::equal_to)]) {
-				const char* name = to_string(meta_function::equal_to).c_str();
-				usertype_detail::make_reg_op<T, std::conditional_t<meta::supports_op_equal<T>::value, std::equal_to<>, usertype_detail::no_comp>, std::true_type>(l, index, name);
-			}
-			if (!properties[static_cast<int>(meta_function::pairs)]) {
-				const char* name = to_string(meta_function::pairs).c_str();
-				l[index] = luaL_Reg{ name, container_usertype_metatable<as_container_t<T>>::pairs_call };
-				++index;
-			}
-			if (!properties[static_cast<int>(meta_function::length)]) {
-				usertype_detail::make_length_op<T>(l, index);
-			}
-			if (!properties[static_cast<int>(meta_function::to_string)]) {
-				usertype_detail::make_to_string_op<T, meta::supports_ostream_op<T>>(l, index);
-			}
-			if (!properties[static_cast<int>(meta_function::call)]) {
-				usertype_detail::make_call_op<T>(l, index);
-			}
+			auto prop_fx = [&](meta_function mf) { return !properties[static_cast<int>(mf)]; };
+			usertype_detail::insert_default_registrations<T>(l, index, prop_fx);
 			if (destructfunc != nullptr) {
 				l[index] = luaL_Reg{ to_string(meta_function::garbage_collect).c_str(), destructfunc };
 				++index;
@@ -732,7 +591,7 @@ namespace sol {
 			typedef meta::unqualified_tuple_element_t<Idx - 1, Tuple> K;
 			typedef meta::unqualified_tuple_element_t<Idx, Tuple> F;
 			static const int boost = 
-				!usertype_detail::is_non_factory_constructor<F>::value
+				!detail::is_non_factory_constructor<F>::value
 				&& std::is_same<K, call_construction>::value ? 
 				1 : 0;
 			auto& f = std::get<Idx>(um.functions);

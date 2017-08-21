@@ -12,8 +12,8 @@ TEST_CASE("large_integer/bool", "pass bool integral value to and from lua") {
 		REQUIRE(num == true);
 		return num;
 	});
-	lua.script("x = f(true)");
-	lua.script("assert(x == true)");
+	lua.safe_script("x = f(true)");
+	lua.safe_script("assert(x == true)");
 	sol::object x = lua["x"];
 	REQUIRE(x.is<bool>());
 	REQUIRE(x.as<bool>() == true);
@@ -32,8 +32,8 @@ TEST_CASE("large_integers/unsigned32", "pass large unsigned 32bit values to and 
 		REQUIRE(num == 0xFFFFFFFF);
 		return num;
 	});
-	lua.script("x = f(0xFFFFFFFF)");
-	lua.script("assert(x == 0xFFFFFFFF)");
+	lua.safe_script("x = f(0xFFFFFFFF)");
+	lua.safe_script("assert(x == 0xFFFFFFFF)");
 	sol::object x = lua["x"];
 	REQUIRE(x.is<T>());
 	REQUIRE(x.as<T>() == 0xFFFFFFFF);
@@ -47,8 +47,8 @@ TEST_CASE("large_integer/unsigned53", "pass large unsigned 53bit value to and fr
 		REQUIRE(num == 0x1FFFFFFFFFFFFFull);
 		return num;
 	});
-	lua.script("x = f(0x1FFFFFFFFFFFFF)");
-	lua.script("assert(x == 0x1FFFFFFFFFFFFF)");
+	lua.safe_script("x = f(0x1FFFFFFFFFFFFF)");
+	lua.safe_script("assert(x == 0x1FFFFFFFFFFFFF)");
 	sol::object x = lua["x"];
 	REQUIRE(x.is<T>());
 	REQUIRE(x.as<T>() == 0x1FFFFFFFFFFFFFull);
@@ -83,10 +83,10 @@ TEST_CASE("large_integer/double", "pass negative and large positive values as si
 	});
 	//signed 32bit
 	REQUIRE_NOTHROW([&lua]() {
-		lua.script("x = s32(-1)");
-		lua.script("assert(x == -1)");
-		lua.script("x = s32(0xFFFFFFFF)");
-		lua.script("assert(x == -1)");
+		lua.safe_script("x = s32(-1)");
+		lua.safe_script("assert(x == -1)");
+		lua.safe_script("x = s32(0xFFFFFFFF)");
+		lua.safe_script("assert(x == -1)");
 		sol::object x = lua["x"];
 		REQUIRE(x.is<std::int32_t>());
 		REQUIRE(x.as<std::int32_t>() == -1);
@@ -95,10 +95,10 @@ TEST_CASE("large_integer/double", "pass negative and large positive values as si
 	}());
 	//unsigned 32bit
 	REQUIRE_NOTHROW([&lua]() {
-		lua.script("x = u32(0xFFFFFFFF)");
-		lua.script("assert(x == 0xFFFFFFFF)");
-		lua.script("x = u32(-1)");
-		lua.script("assert(x == 0xFFFFFFFF)");
+		lua.safe_script("x = u32(0xFFFFFFFF)");
+		lua.safe_script("assert(x == 0xFFFFFFFF)");
+		lua.safe_script("x = u32(-1)");
+		lua.safe_script("assert(x == 0xFFFFFFFF)");
 		sol::object x = lua["x"];
 		REQUIRE(x.is<std::int32_t>());
 		REQUIRE(x.as<std::int32_t>() == -1);
@@ -107,8 +107,8 @@ TEST_CASE("large_integer/double", "pass negative and large positive values as si
 	}());
 	//signed 64bit
 	REQUIRE_NOTHROW([&lua]() {
-		lua.script("x = s64(-1)");
-		lua.script("assert(x == -1)");
+		lua.safe_script("x = s64(-1)");
+		lua.safe_script("assert(x == -1)");
 		sol::object x = lua["x"];
 		REQUIRE(x.is<std::int64_t>());
 		REQUIRE(x.as<std::int64_t>() == -1);

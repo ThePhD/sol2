@@ -25,9 +25,9 @@ TEST_CASE("variadics/variadic_args", "Check to see we can receive multiple argum
 		return{ r, r > 200 };
 	});
 
-	lua.script("x = v(25, 25)");
-	lua.script("x2 = v(25, 25, 100, 50, 250, 150)");
-	lua.script("x3 = v(1, 2, 3, 4, 5, 6)");
+	lua.safe_script("x = v(25, 25)");
+	lua.safe_script("x2 = v(25, 25, 100, 50, 250, 150)");
+	lua.safe_script("x3 = v(1, 2, 3, 4, 5, 6)");
 
 	structure& lx = lua["x"];
 	structure& lx2 = lua["x2"];
@@ -46,8 +46,8 @@ TEST_CASE("variadics/required with variadic_args", "Check if a certain number of
 		[](sol::this_state, sol::variadic_args, int, int) {
 	}
 	);
-	REQUIRE_NOTHROW(lua.script("v(20, 25, 30)"));
-	REQUIRE_NOTHROW(lua.script("v(20, 25)"));
+	REQUIRE_NOTHROW(lua.safe_script("v(20, 25, 30)"));
+	REQUIRE_NOTHROW(lua.safe_script("v(20, 25)"));
 	auto result = lua.safe_script("v(20)", sol::script_pass_on_error);
 	REQUIRE_FALSE(result.valid());
 }
@@ -72,8 +72,8 @@ TEST_CASE("variadics/variadic_args get type", "Make sure we can inspect types pr
 		REQUIRE(working);
 	});
 
-	lua.script("f(1, 'bark', true)");
-	lua.script("f(2, 'wuf', false)");
+	lua.safe_script("f(1, 'bark', true)");
+	lua.safe_script("f(2, 'wuf', false)");
 }
 
 TEST_CASE("variadics/variadic_results", "returning a variable amount of arguments from C++") {
@@ -90,7 +90,7 @@ TEST_CASE("variadics/variadic_results", "returning a variable amount of argument
 		});
 
 		REQUIRE_NOTHROW([&]() {
-			lua.script(R"(
+			lua.safe_script(R"(
 	v1, v2, v3 = f()
 	v4, v5 = g()
 )");
@@ -116,7 +116,7 @@ TEST_CASE("variadics/variadic_results", "returning a variable amount of argument
 		});
 
 		REQUIRE_NOTHROW([&]() {
-			lua.script(R"(
+			lua.safe_script(R"(
 	v1, v2, v3 = f(1, 'bark', true)
 	v4, v5 = f(25, 82)
 )");
@@ -156,7 +156,7 @@ TEST_CASE("variadics/variadic_results", "returning a variable amount of argument
 		});
 
 		REQUIRE_NOTHROW([&]() {
-			lua.script(R"(
+			lua.safe_script(R"(
 	v1, v2, v3 = f(true)
 	v4, v5, v6, v7 = f(false)
 )");
@@ -208,10 +208,10 @@ TEST_CASE("variadics/fallback_constructor", "ensure constructor matching behaves
 	);
 
 	REQUIRE_NOTHROW([&]() {
-		lua.script("v0 = vec2();");
-		lua.script("v1 = vec2(1);");
-		lua.script("v2 = vec2(1, 2);");
-		lua.script("v3 = vec2(v2)");
+		lua.safe_script("v0 = vec2();");
+		lua.safe_script("v1 = vec2(1);");
+		lua.safe_script("v2 = vec2(1, 2);");
+		lua.safe_script("v3 = vec2(v2)");
 	}());
 
 	vec2& v0 = lua["v0"];

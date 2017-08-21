@@ -322,7 +322,7 @@ namespace sol {
 
 	private:
 		template<std::size_t... I, typename Tuple>
-		simple_usertype_metatable(usertype_detail::verified_tag, std::index_sequence<I...>, lua_State* L, Tuple&& args)
+		simple_usertype_metatable(detail::verified_tag, std::index_sequence<I...>, lua_State* L, Tuple&& args)
 		: callconstructfunc(lua_nil),
 		indexfunc(lua_nil), newindexfunc(lua_nil),
 		indexbase(&usertype_detail::simple_core_indexing_call<T, true>), newindexbase(&usertype_detail::simple_core_indexing_call<T, false>),
@@ -337,33 +337,33 @@ namespace sol {
 		}
 
 		template<typename... Args>
-		simple_usertype_metatable(lua_State* L, usertype_detail::verified_tag v, Args&&... args) : simple_usertype_metatable(v, std::make_index_sequence<sizeof...(Args) / 2>(), L, std::forward_as_tuple(std::forward<Args>(args)...)) {}
+		simple_usertype_metatable(lua_State* L, detail::verified_tag v, Args&&... args) : simple_usertype_metatable(v, std::make_index_sequence<sizeof...(Args) / 2>(), L, std::forward_as_tuple(std::forward<Args>(args)...)) {}
 
 		template<typename... Args>
-		simple_usertype_metatable(lua_State* L, usertype_detail::add_destructor_tag, Args&&... args) : simple_usertype_metatable(L, usertype_detail::verified, std::forward<Args>(args)..., "__gc", default_destructor) {}
+		simple_usertype_metatable(lua_State* L, detail::add_destructor_tag, Args&&... args) : simple_usertype_metatable(L, detail::verified, std::forward<Args>(args)..., "__gc", default_destructor) {}
 
 		template<typename... Args>
-		simple_usertype_metatable(lua_State* L, usertype_detail::check_destructor_tag, Args&&... args) : simple_usertype_metatable(L, meta::condition<meta::all<std::is_destructible<T>, meta::neg<usertype_detail::has_destructor<Args...>>>, usertype_detail::add_destructor_tag, usertype_detail::verified_tag>(), std::forward<Args>(args)...) {}
+		simple_usertype_metatable(lua_State* L, detail::check_destructor_tag, Args&&... args) : simple_usertype_metatable(L, meta::condition<meta::all<std::is_destructible<T>, meta::neg<detail::has_destructor<Args...>>>, detail::add_destructor_tag, detail::verified_tag>(), std::forward<Args>(args)...) {}
 
 	public:
-		simple_usertype_metatable(lua_State* L) : simple_usertype_metatable(L, meta::condition<meta::all<std::is_default_constructible<T>>, decltype(default_constructor), usertype_detail::check_destructor_tag>()) {}
+		simple_usertype_metatable(lua_State* L) : simple_usertype_metatable(L, meta::condition<meta::all<std::is_default_constructible<T>>, decltype(default_constructor), detail::check_destructor_tag>()) {}
 
 		template<typename Arg, typename... Args, meta::disable_any<
 			meta::any_same<meta::unqualified_t<Arg>, 
-				usertype_detail::verified_tag, 
-				usertype_detail::add_destructor_tag,
-				usertype_detail::check_destructor_tag
+				detail::verified_tag, 
+				detail::add_destructor_tag,
+				detail::check_destructor_tag
 			>,
 			meta::is_specialization_of<constructors, meta::unqualified_t<Arg>>,
 			meta::is_specialization_of<constructor_wrapper, meta::unqualified_t<Arg>>
 		> = meta::enabler>
-		simple_usertype_metatable(lua_State* L, Arg&& arg, Args&&... args) : simple_usertype_metatable(L, meta::condition<meta::all<std::is_default_constructible<T>, meta::neg<usertype_detail::has_constructor<Args...>>>, decltype(default_constructor), usertype_detail::check_destructor_tag>(), std::forward<Arg>(arg), std::forward<Args>(args)...) {}
+		simple_usertype_metatable(lua_State* L, Arg&& arg, Args&&... args) : simple_usertype_metatable(L, meta::condition<meta::all<std::is_default_constructible<T>, meta::neg<detail::has_constructor<Args...>>>, decltype(default_constructor), detail::check_destructor_tag>(), std::forward<Arg>(arg), std::forward<Args>(args)...) {}
 
 		template<typename... Args, typename... CArgs>
-		simple_usertype_metatable(lua_State* L, constructors<CArgs...> constructorlist, Args&&... args) : simple_usertype_metatable(L, usertype_detail::check_destructor_tag(), std::forward<Args>(args)..., "new", constructorlist) {}
+		simple_usertype_metatable(lua_State* L, constructors<CArgs...> constructorlist, Args&&... args) : simple_usertype_metatable(L, detail::check_destructor_tag(), std::forward<Args>(args)..., "new", constructorlist) {}
 
 		template<typename... Args, typename... Fxs>
-		simple_usertype_metatable(lua_State* L, constructor_wrapper<Fxs...> constructorlist, Args&&... args) : simple_usertype_metatable(L, usertype_detail::check_destructor_tag(), std::forward<Args>(args)..., "new", constructorlist) {}
+		simple_usertype_metatable(lua_State* L, constructor_wrapper<Fxs...> constructorlist, Args&&... args) : simple_usertype_metatable(L, detail::check_destructor_tag(), std::forward<Args>(args)..., "new", constructorlist) {}
 
 		simple_usertype_metatable(const simple_usertype_metatable&) = default;
 		simple_usertype_metatable(simple_usertype_metatable&&) = default;
@@ -420,18 +420,18 @@ namespace sol {
 					for (std::size_t i = 1; i < properties.size(); ++i) {
 						mf = static_cast<meta_function>(i);
 						const std::string& mfname = to_string(mf);
-						if (mfname == first) {
-							properties[i] = true;
-							switch (mf) {
-							case meta_function::index:
-								umx.indexfunc = second;
-								break;
-							case meta_function::new_index:
-								umx.newindexfunc = second;
-								break;
-							default:
-								break;
-							}
+						if (mfname != first)
+							continue;
+						properties[i] = true;
+						switch (mf) {
+						case meta_function::index:
+							umx.indexfunc = second;
+							break;
+						case meta_function::new_index:
+							umx.newindexfunc = second;
+							break;
+						default:
+							break;
 						}
 						break;
 					}
@@ -474,34 +474,10 @@ namespace sol {
 						auto& second = std::get<1>(kvp);
 						register_kvp(i, t, first, second);
 					}
-					luaL_Reg opregs[29]{};
+					luaL_Reg opregs[32]{};
 					int opregsindex = 0;
-					if (!properties[static_cast<int>(meta_function::less_than)]) {
-						const char* name = to_string(meta_function::less_than).c_str();
-						usertype_detail::make_reg_op<T, std::less<>, meta::supports_op_less<T>>(opregs, opregsindex, name);
-					}
-					if (!properties[static_cast<int>(meta_function::less_than_or_equal_to)]) {
-						const char* name = to_string(meta_function::less_than_or_equal_to).c_str();
-						usertype_detail::make_reg_op<T, std::less_equal<>, meta::supports_op_less_equal<T>>(opregs, opregsindex, name);
-					}
-					if (!properties[static_cast<int>(meta_function::equal_to)]) {
-						const char* name = to_string(meta_function::equal_to).c_str();
-						usertype_detail::make_reg_op<T, std::conditional_t<meta::supports_op_equal<T>::value, std::equal_to<>, usertype_detail::no_comp>, std::true_type>(opregs, opregsindex, name);
-					}
-					if (!properties[static_cast<int>(meta_function::pairs)]) {
-						const char* name = to_string(meta_function::pairs).c_str();
-						opregs[opregsindex] = { name, container_usertype_metatable<as_container_t<T>>::pairs_call };
-						++opregsindex;
-					}
-					if (!properties[static_cast<int>(meta_function::length)]) {
-						usertype_detail::make_length_op<T>(opregs, opregsindex);
-					}
-					if (!properties[static_cast<int>(meta_function::to_string)]) {
-						usertype_detail::make_to_string_op<T, meta::supports_ostream_op<T>>(opregs, opregsindex);
-					}
-					if (!properties[static_cast<int>(meta_function::call)]) {
-						usertype_detail::make_call_op<T>(opregs, opregsindex);
-					}
+					auto prop_fx = [&](meta_function mf) { return !properties[static_cast<int>(mf)]; };
+					usertype_detail::insert_default_registrations<T>(opregs, opregsindex, prop_fx);
 					t.push();
 					luaL_setfuncs(L, opregs, 0);
 					t.pop();
