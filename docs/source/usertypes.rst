@@ -16,6 +16,7 @@ The examples folder also has a number of really great examples for you to see. T
 * `Certain operators`_ are detected and bound automatically for usertypes
 * You can use bitfields but it requires some finesse on your part. We have an example to help you get started `here, that uses a few tricks`_.
 * All usertypes are runtime extensible in both `Lua`_ and `C++`_
+* You can use :doc:`filters<api/filters>` to control dependencies and streamline return values, as well as apply custom behavior to a functions return
 * Please note that the colon is necessary to "automatically" pass the ``this``/``self`` argument to Lua methods
 	- ``obj:method_name()`` is how you call "member" methods in Lua
 	- It is purely syntactic sugar that passes the object name as the first argument to the ``method_name`` function

@@ -43,6 +43,7 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    property
    var
    protect
+   filters
    readonly
    as_function
    c_call

@@ -20,6 +20,8 @@ There are a number of examples dealing with functions and how they can be bound 
 	- :doc:`sol::this_environment<api/this_environment>`, for potentially retrieving the current Lua environment
 * Control serialization of arguments and return types with :doc:`sol::nested<api/nested>`, :doc:`sol::as_table<api/nested>`, :doc:`sol::as_args<api/as_args>` and :doc:`sol::as_function<api/as_function>`
 * Set environments for Lua functions and scripts with :doc:`sol::environment<api/environment>`
+* You can use :doc:`filters<api/filters>` to control dependencies and streamline return values, as well as apply custom behavior to a functions return
+
 
 
 .. _binding-callable-objects:
