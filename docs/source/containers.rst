@@ -53,7 +53,7 @@ This will let the type be pushed as a regular userdata.
 
 .. note::
 
-	Pushing a new :doc:`usertype<api/usertype>` will prevent a qualifying C++ container type from being treated like a container. To force a type that you've registered to be treated like a container, use :doc:`sol::as_container<api/as_container>`. 
+	Pushing a new :doc:`usertype<api/usertype>` will prevent a qualifying C++ container type from being treated like a container. To force a type that you've registered/bound as a usertype using ``new_usertype`` or ``new_simple_usertype`` to be treated like a container, use :doc:`sol::as_container<api/as_container>`. 
 
 
 .. _container-traits:
@@ -148,7 +148,7 @@ Below are the many container operations and their override points for ``containe
 
 .. note::
 
-	If your type does not adequately support ``begin()`` and ``end()`` and you cannot override it, use the ``sol::is_container`` trait override plus a custom implementation of ``pairs`` on your usertype to get it to work as you please. Note that a type not having proper ``begin()`` and ``end()`` will not work if you try to forcefully serialize it as a table (this means avoid using :doc:`sol::as_table<api/as_table>` and :doc:`sol::nested<api/nested>`, otherwise you will have compiler errors). Just set it or get it directly, as shown in the examples, to work with the container examples.
+	If your type does not adequately support ``begin()`` and ``end()`` and you cannot override it, use the ``sol::is_container`` trait override plus a custom implementation of ``pairs`` on your usertype to get it to work as you please. Note that a type not having proper ``begin()`` and ``end()`` will not work if you try to forcefully serialize it as a table (this means avoid using :doc:`sol::as_table<api/as_table>` and :doc:`sol::nested<api/nested>`, otherwise you will have compiler errors). Just set it or get it directly, as shown in the examples, to work with the C++ containers.
 
 .. _container-classifications: 
 
