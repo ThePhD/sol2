@@ -62,6 +62,37 @@ TEST_CASE("gc/destructors", "test if destructors are fired properly through gc o
 	REQUIRE(nullptr != pt);
 }
 
+TEST_CASE("gc/virtual destructors", "ensure types with virtual destructions behave just fine") {
+	class B;
+	class A;
+	static std::vector<B*> bs;
+	static std::vector<A*> as;
+
+	class A {
+	public:
+		virtual ~A() { as.push_back(this); std::cout << "~A" << std::endl; }
+	};
+
+	class B : public A {
+	public:
+		virtual ~B() { bs.push_back(this); std::cout << "~B" << std::endl; }
+	};
+
+	{
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_usertype<A>("A");
+		lua.new_usertype<B>("B", sol::base_classes, sol::bases<A>());
+
+		B b1;
+		lua["b1"] = b1; // breaks here
+	}
+
+	REQUIRE(as.size() == 2);
+	REQUIRE(bs.size() == 2);
+}
+
 TEST_CASE("gc/function argument storage", "ensure functions take references on their types, not ownership, when specified") {
 	class gc_entity;
 	static std::vector<gc_entity*> entities;

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-21 20:22:51.208425 UTC
-// This header was generated with sol v2.18.1 (revision 8f6b51a)
+// Generated 2017-08-22 14:53:37.052568 UTC
+// This header was generated with sol v2.18.1 (revision 7164a8a)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1097,7 +1097,7 @@ namespace sol {
 				using no = struct { char s[2]; };
 
 				struct F { void operator()(); };
-				struct Derived : T, F { ~Derived() = delete; };
+				struct Derived : T, F { ~Derived() = default; };
 				template<typename U, U> struct Check;
 
 				template<typename V>

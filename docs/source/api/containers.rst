@@ -3,11 +3,15 @@ containers
 *for handling ``std::vector/map/set`` and others*
 
 
-Sol2 automatically converts containers (detected using the ``sol::is_container<T>`` type trait, which simply looks for ``begin`` / ``end``) to be a special kind of userdata with metatable on it. For Lua 5.2 and 5.3, this is extremely helpful as you can make typical containers behave like Lua tables without losing the actual container that they came from, as well as a small amount of indexing and other operations that behave properly given the table type.
+Sol2 automatically converts containers (detected using the ``sol::is_container<T>`` type trait, which simply looks for ``begin`` / ``end``) to be a special kind of userdata with metatable on it. For Lua 5.2 and 5.3, this is extremely helpful as you can make typical containers behave like Lua tables without losing the actual C++ container that they came from, as well as a small amount of indexing and other operations that behave properly given the table type.
 
 An overview of these traits and additional information can be found :doc:`at the top level container page<../containers>`.
 
-If you need to deal with these things from and in Lua to be **actual**, true-blue, Lua tables, please consider :doc:`sol::as_table<as_table>` and :doc:`sol::nested<nested>` for serialization and deserialization into and out of the VM with sol2 operations. You can also force something that is marked as not-a-container by using :doc:`sol::as_container<as_container>`.
+If you need to deal with these things from and in Lua to be **actual**, true-blue, Lua tables, please consider :doc:`sol::as_table<as_table>` and :doc:`sol::nested<nested>` for serialization and deserialization into and out of the VM with sol2 operations. You can also force something that is marked as not-a-container by using :doc:`sol::as_container<as_container>` for sol2 to push it as a userdata with the aforementioned special usertype metatable into Lua.
+
+.. note::
+
+	Overriding the detection traits and operation traits listed :doc:`on the top level container page<../containers>` and then trying to use ``sol::as_table`` or similar can result in compilation failures if you do not have a proper ``begin()`` or ``end()`` function on the type. If you want things to behave with special usertype considerations, please do not wrap the container in one of the special table-forcing abstractions.
 
 
 a complete example

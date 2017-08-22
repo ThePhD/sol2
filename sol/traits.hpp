@@ -261,7 +261,7 @@ namespace sol {
 				using no = struct { char s[2]; };
 
 				struct F { void operator()(); };
-				struct Derived : T, F { ~Derived() = delete; };
+				struct Derived : T, F { ~Derived() = default; };
 				template<typename U, U> struct Check;
 
 				template<typename V>

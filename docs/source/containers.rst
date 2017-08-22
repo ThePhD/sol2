@@ -5,6 +5,9 @@ containers
 Containers are objects that are meant to be inspected and iterated and whose job is to typically provide storage to a collection of items. The standard library has several containers of varying types, and all of them have ``begin()`` and ``end()`` methods which return iterators. C-style arrays are also containers, and sol2 will detect all of them for use and bestow upon them special properties and functions.
 
 * Containers from C++ are stored as ``userdata`` with special ``usertype`` metatables with :ref:`special operations<container-operations>`
+	- In Lua 5.1, this means containers pushed without wrappers like :doc:`as_table<api/as_table>` and :doc:`nested<api/nested>` will not work with ``pairs`` or other built-in iteration functions from Lua
+		+ Lua 5.2+ will behave just fine (does not include LuaJIT 2.0.x)
+	- You must push containers into C++ by returning them directly and getting/setting them directly, and they will have a type of ``sol::type::userdata`` and treated like a usertype
 * Containers can be manipulated from both C++ and Lua, and, like userdata, will `reflect changes if you use a reference`_ to the data.
 * This means containers **do not automatically serialize as Lua tables**
 	- If you need tables, consider using ``sol::as_table`` and ``sol::nested``
@@ -142,6 +145,10 @@ Below are the many container operations and their override points for ``containe
 |           |                                           |                                       |                      | - works only in Lua 5.2+                                                                                                                                                                     |
 |           |                                           |                                       |                      | - calling ``pairs( c )`` in Lua 5.1 / LuaJIT will crash with assertion failure (Lua expects ``c`` to be a table)                                                                             |
 +-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+.. note::
+
+	If your type does not adequately support ``begin()`` and ``end()`` and you cannot override it, use the ``sol::is_container`` trait override plus a custom implementation of ``pairs`` on your usertype to get it to work as you please. Note that a type not having proper ``begin()`` and ``end()`` will not work if you try to forcefully serialize it as a table (this means avoid using :doc:`sol::as_table<api/as_table>` and :doc:`sol::nested<api/nested>`, otherwise you will have compiler errors). Just set it or get it directly, as shown in the examples, to work with the container examples.
 
 .. _container-classifications: 
 
