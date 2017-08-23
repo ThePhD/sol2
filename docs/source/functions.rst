@@ -33,9 +33,45 @@ To be explicit about wanting a struct to be interpreted as a function, use ``myt
 
 .. note::
 
+	As of sol 2.18.1, the below 
+
+.. note::
+
 	Function objects ``obj`` -- a struct with a ``return_type operator()( ... )`` member defined on them, like all C++ lambdas -- are not interpreted as functions when you use ``set`` for ``mytable.set( key, value )`` and ``state.create_table(_with)( ... )``. This only happens automagically with ``mytable[key] = obj``.
 
 	Note that this also applies to calling functions, for example: ``my_state["table"]["sort"]( some_table, sorting_object );``.
+
+Furthermore, it is important to know that lambdas without a specified return type (and a non-const, non-reference-qualified ``auto``) will decay return values. To capture or return references explicitly, use ``decltype(auto)`` or specify the return type **exactly** as desired::
+
+	#define SOL_CHECK_ARGUMENTS 1
+	#include <sol.hpp>
+
+	int main(int argc, char* argv[]) {
+
+		struct test {
+			int blah = 0;
+		};
+
+		test t;
+		sol::state lua;
+		lua.set_function("f", [&t]() {
+			return t;
+		});
+		lua.set_function("g", [&t]() -> test& {
+			return t;
+		});
+
+		lua.script("t1 = f()");
+		lua.script("t2 = g()");
+
+		test& lt1 = lua["t1"];
+		test& lt2 = lua["t2"];
+
+		assert(&lt1 != &t); // not the same: 'f' lambda copied
+		assert(&lt2 == &t); // the same: 'g' lambda returned reference
+
+		return 0;
+	}
 
 .. _function-exception-handling:
 
