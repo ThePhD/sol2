@@ -77,13 +77,14 @@ int main(int, char*[]) {
 		sol::meta_function::pairs, my_pairs
 	);
 
+#ifdef SOL_LUA_VERSION < 502
 	lua.safe_script(R"(
 local mt = my_thing.new()
 for k, v in pairs(mt) do 
 	print(k, v) 
 end
 )");
-
+#endif // Does not work on Lua 5.1
 	std::cout << std::endl;
 
 	return 0;
