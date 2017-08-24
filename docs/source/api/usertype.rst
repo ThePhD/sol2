@@ -123,11 +123,14 @@ enumerations
 		less_than,
 		less_than_or_equal_to,
 		garbage_collect,
-		call_function,
+		call_function = call,
+		pairs
 	};
 
+	typedef meta_function meta_method;
 
-Use this enumeration to specify names in a manner friendlier than memorizing the special lua metamethod names for each of these. Each binds to a specific operation indicated by the descriptive name of the enum.
+
+Use this enumeration to specify names in a manner friendlier than memorizing the special lua metamethod names for each of these. Each binds to a specific operation indicated by the descriptive name of the enum. You can read more about `the metamethods in the Lua manual`_ and learn about how they work and are supposed to be implemented there. Each of the names here (except for the ones used as shortcuts to other names like ``meta_function::call_function`` and ``meta_function::involution`` and not including ``construct``, which just maps to the name ``new``) link directly to the Lua name for the operation. ``meta_function::pairs`` is only available in Lua 5.2 and above (does not include LuaJIT or Lua 5.1).
 
 members
 -------
@@ -372,3 +375,4 @@ performance note
 .. _destructible: http://en.cppreference.com/w/cpp/types/is_destructible
 .. _default_constructible: http://en.cppreference.com/w/cpp/types/is_constructible
 .. _runtime extensible: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_advanced.cpp#L81
+.. _the metamethods in the Lua manual: https://www.lua.org/manual/5.3/manual.html#2.4
