@@ -28,7 +28,7 @@ namespace sol {
 
 	template <typename F, typename = void>
 	struct wrapper {
-        typedef lua_bind_traits<meta::unqualified_t<F>> traits_type;
+		typedef lua_bind_traits<meta::unqualified_t<F>> traits_type;
 		typedef typename traits_type::args_list args_list;
 		typedef typename traits_type::args_list free_args_list;
 		typedef typename traits_type::returns_list returns_list;

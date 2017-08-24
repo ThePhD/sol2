@@ -261,7 +261,7 @@ namespace sol {
 
 		template<typename Signature>
 		struct pusher<Signature, std::enable_if_t<meta::all<
-			std::is_function<Signature>, 
+			std::is_function<std::remove_pointer_t<Signature>>, 
 			meta::neg<std::is_same<Signature, lua_CFunction>>,
 			meta::neg<std::is_same<Signature, std::remove_pointer_t<lua_CFunction>>>
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE

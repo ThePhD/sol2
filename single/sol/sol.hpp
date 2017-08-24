@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-22 14:53:37.052568 UTC
-// This header was generated with sol v2.18.1 (revision 7164a8a)
+// Generated 2017-08-24 18:37:55.297938 UTC
+// This header was generated with sol v2.18.1 (revision a163ae7)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1088,16 +1088,34 @@ namespace sol {
 
 		namespace meta_detail {
 
-			template<typename T, bool isclass = std::is_class<unqualified_t<T>>::value>
+			template<typename T, typename = void>
 			struct is_callable : std::is_function<std::remove_pointer_t<T>> {};
 
 			template<typename T>
-			struct is_callable<T, true> {
+			struct is_callable<T, std::enable_if_t<std::is_class<unqualified_t<T>>::value && std::is_destructible<unqualified_t<T>>::value>> {
 				using yes = char;
 				using no = struct { char s[2]; };
 
 				struct F { void operator()(); };
-				struct Derived : T, F { ~Derived() = default; };
+				struct Derived : T, F { };
+				template<typename U, U> struct Check;
+
+				template<typename V>
+				static no test(Check<void (F::*)(), &V::operator()>*);
+
+				template<typename>
+				static yes test(...);
+
+				static const bool value = sizeof(test<Derived>(0)) == sizeof(yes);
+			};
+
+			template<typename T>
+			struct is_callable<T, std::enable_if_t<std::is_class<unqualified_t<T>>::value && !std::is_destructible<unqualified_t<T>>::value>> {
+				using yes = char;
+				using no = struct { char s[2]; };
+
+				struct F { void operator()(); };
+				struct Derived : T, F { ~Derived() = delete; };
 				template<typename U, U> struct Check;
 
 				template<typename V>
@@ -3898,7 +3916,7 @@ namespace sol {
 	
 	template <typename F, typename... Filters>
 	struct filter_wrapper {
-		typedef std::make_integer_sequence<std::size_t, sizeof...(Filters)> indices;
+		typedef std::index_sequence_for<Filters...> indices;
 
 		F value;
 		std::tuple<Filters...> filters;
@@ -4208,7 +4226,7 @@ namespace sol {
 		U value;
 
 		user(U x) : value(std::move(x)) {}
-		operator U* () { return std::addressof(value); }
+		operator std::remove_reference_t<U>* () { return std::addressof(value); }
 		operator U& () { return value; }
 		operator const U& () const { return value; }
 	};
@@ -7053,9 +7071,9 @@ namespace sol {
 
 		template<typename T>
 		struct getter<user<T>> {
-			static T& get(lua_State* L, int index, record& tracking) {
+			static std::add_lvalue_reference_t<T> get(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
-				return *static_cast<T*>(lua_touserdata(L, index));
+				return *static_cast<std::remove_reference_t<T>*>(lua_touserdata(L, index));
 			}
 		};
 
@@ -7726,7 +7744,14 @@ namespace sol {
 		};
 		
 		template<typename T>
-		struct pusher<T*, meta::disable_if_t<meta::all<is_container<meta::unqualified_t<T>>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
+		struct pusher<T*, meta::disable_if_t<
+			meta::any<
+				is_container<meta::unqualified_t<T>>, 
+				std::is_function<meta::unqualified_t<T>>,
+				std::is_base_of<reference, meta::unqualified_t<T>>, 
+				std::is_base_of<stack_reference, meta::unqualified_t<T>>
+			>::value
+		>> {
 			template <typename... Args>
 			static int push(lua_State* L, Args&&... args) {
 				return pusher<detail::as_pointer_tag<T>>{}.push(L, std::forward<Args>(args)...);
@@ -9136,7 +9161,7 @@ namespace sol {
 
 	template <typename F, typename = void>
 	struct wrapper {
-        typedef lua_bind_traits<meta::unqualified_t<F>> traits_type;
+		typedef lua_bind_traits<meta::unqualified_t<F>> traits_type;
 		typedef typename traits_type::args_list args_list;
 		typedef typename traits_type::args_list free_args_list;
 		typedef typename traits_type::returns_list returns_list;
@@ -9779,13 +9804,29 @@ namespace sol {
 
 		template <typename F, bool is_index, bool is_variable, bool checked, int boost, bool clean_stack, typename = void>
 		struct agnostic_lua_call_wrapper {
+			typedef wrapper<meta::unqualified_t<F>> wrap;
+			
 			template <typename Fx, typename... Args>
-			static int call(lua_State* L, Fx&& f, Args&&... args) {
-				typedef wrapper<meta::unqualified_t<F>> wrap;
+			static int convertible_call(std::true_type, lua_State* L, Fx&& f, Args&&... args) {
+				typedef typename wrap::traits_type traits_type;
+				typedef typename traits_type::function_pointer_type fp_t;
+				fp_t fx = f;
+				return agnostic_lua_call_wrapper<fp_t, is_index, is_variable, checked, boost, clean_stack>{}.call(L, fx, std::forward<Args>(args)...);
+			}
+
+			template <typename Fx, typename... Args>
+			static int convertible_call(std::false_type, lua_State* L, Fx&& f, Args&&... args) {
 				typedef typename wrap::returns_list returns_list;
 				typedef typename wrap::free_args_list args_list;
 				typedef typename wrap::caller caller;
 				return stack::call_into_lua<checked, clean_stack>(returns_list(), args_list(), L, boost + 1, caller(), std::forward<Fx>(f), std::forward<Args>(args)...);
+			}
+
+			template <typename Fx, typename... Args>
+			static int call(lua_State* L, Fx&& f, Args&&... args) {
+				typedef typename wrap::traits_type traits_type;
+				typedef typename traits_type::function_pointer_type fp_t;
+				return convertible_call(std::conditional_t<std::is_class<meta::unqualified_t<F>>::value, std::is_convertible<std::decay_t<Fx>, fp_t>, std::false_type>(), L, std::forward<Fx>(f), std::forward<Args>(args)...);
 			}
 		};
 
@@ -11110,7 +11151,7 @@ namespace sol {
 
 		template<typename Signature>
 		struct pusher<Signature, std::enable_if_t<meta::all<
-			std::is_function<Signature>, 
+			std::is_function<std::remove_pointer_t<Signature>>, 
 			meta::neg<std::is_same<Signature, lua_CFunction>>,
 			meta::neg<std::is_same<Signature, std::remove_pointer_t<lua_CFunction>>>
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
@@ -13573,7 +13614,7 @@ namespace sol {
 				auto& src = get_src(L);
 				stack::push(L, next);
 				stack::push<user<iter>>(L, src, deferred_traits::begin(L, src));
-				stack::push(L, 1);
+				stack::push(L, sol::lua_nil);
 				return 3;
 			}
 

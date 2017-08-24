@@ -325,7 +325,7 @@ namespace sol {
 		U value;
 
 		user(U x) : value(std::move(x)) {}
-		operator U* () { return std::addressof(value); }
+		operator std::remove_reference_t<U>* () { return std::addressof(value); }
 		operator U& () { return value; }
 		operator const U& () const { return value; }
 	};

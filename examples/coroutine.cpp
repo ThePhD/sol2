@@ -1,5 +1,5 @@
-#define SOL_CHECK_ARGUMENTS
-#include "sol.hpp"
+#define SOL_CHECK_ARGUMENTS 1
+#include <sol.hpp>
 
 #include <string>
 #include <iostream>
