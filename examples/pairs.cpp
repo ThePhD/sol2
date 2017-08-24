@@ -77,7 +77,7 @@ int main(int, char*[]) {
 		sol::meta_function::pairs, my_pairs
 	);
 
-#ifdef SOL_LUA_VERSION < 502
+#if SOL_LUA_VERSION < 502
 	lua.safe_script(R"(
 local mt = my_thing.new()
 for k, v in pairs(mt) do 
