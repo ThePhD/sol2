@@ -19,6 +19,7 @@ The examples folder also has a number of really great examples for you to see. T
 	- If you need dynamic callbacks or runtime overridable functions, have a ``std::function`` member variable and get/set it on the usertype object
 	- ``std::function`` works as a member variable or in passing as an argument / returning as a value (you can even use it with ``sol::property``)
 	- You can also create an entirely dynamic object: see the `dynamic_object example`_ for more details
+* (Advanced) You can override the iteration function for Lua 5.2 and above (LuaJIT not included) `as shown in the pairs example`_
 * You can use :doc:`filters<api/filters>` to control dependencies and streamline return values, as well as apply custom behavior to a functions return
 * Please note that the colon is necessary to "automatically" pass the ``this``/``self`` argument to Lua methods
 	- ``obj:method_name()`` is how you call "member" methods in Lua
@@ -52,3 +53,4 @@ The examples folder also has a number of really great examples for you to see. T
 .. _C++: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_simple.cpp#L51
 .. _Certain operators: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_automatic_operators.cpp
 .. _dynamic_object example: https://github.com/ThePhD/sol2/blob/develop/examples/dynamic_object.cpp
+.. _as shown in this example: https://github.com/ThePhD/sol2/blob/develop/examples/pairs.cpp

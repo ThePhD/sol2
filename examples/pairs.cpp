@@ -21,9 +21,8 @@ struct lua_iterator_state {
 	typedef std::map<std::string, int>::iterator it_t;
 	it_t it;
 	it_t last;
-	std::reference_wrapper<my_thing> source;
 
-	lua_iterator_state(my_thing& mt) : it(mt.m.begin()), last(mt.m.end()), source(mt) {}
+	lua_iterator_state(my_thing& mt) : it(mt.m.begin()), last(mt.m.end()) {}
 };
 
 std::tuple<sol::object, sol::object> my_next(sol::user<lua_iterator_state&> user_it_state, sol::this_state l) {
@@ -35,7 +34,6 @@ std::tuple<sol::object, sol::object> my_next(sol::user<lua_iterator_state&> user
 	// the key value is argument 2, but we do not 
 	// care about the key value here
 	lua_iterator_state& it_state = user_it_state;
-	my_thing& source = it_state.source;
 	auto& it = it_state.it;
 	if (it == it_state.last) {
 		// return nil to signify that 
@@ -53,7 +51,7 @@ std::tuple<sol::object, sol::object> my_next(sol::user<lua_iterator_state&> user
 	// the iterator must be moved forward one before we return
 	std::advance(it, 1);
 	return r;
-};
+}
 
 auto my_pairs(my_thing& mt) {
 	// pairs expects 3 returns:
@@ -67,11 +65,9 @@ auto my_pairs(my_thing& mt) {
 	// it's incompatible with regular usertypes and stores the type T directly in lua without any pretty setup
 	// saves space allocation and a single dereference
 	return std::make_tuple(&my_next, sol::user<lua_iterator_state>(std::move(it_state)), sol::lua_nil);
-};
+}
 
-
-
-int main(int argc, char* argv[]) {
+int main(int, char*[]) {
 	std::cout << "===== pairs (advanced) =====" << std::endl;
 
 	sol::state lua;

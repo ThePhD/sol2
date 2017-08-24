@@ -79,9 +79,18 @@ print("obj1:", obj1)
 print("obj2:", obj2)
 print("obj3:", obj2)
 
+print("#obj1:", #obj1)
+print("#obj2:", #obj2)
+print("#obj3:", #obj3)
+
 obj1() obj1() obj1() obj1() obj1() obj1()
 obj2() obj2() obj2()
 obj3() obj3() obj3()
+
+print("after modifications using obj() operator")
+print("obj1:", obj1)
+print("obj2:", obj2)
+print("obj3:", obj2)
 
 print("#obj1:", #obj1)
 print("#obj2:", #obj2)
@@ -100,14 +109,15 @@ end
 print("obj1 == obj2:", obj1 == obj2)
 print("obj1 <  obj2:", obj1 < obj2)
 print("obj1 >= obj2:", obj1 >= obj2)
+assert(obj1 ~= obj2)
+assert(obj1 > obj2)
+assert(obj1 >= obj2)
 
-print("obj2 == obj3:", obj1 == obj2)
-print("obj2 >  obj3:", obj1 > obj2)
-print("obj2 <= obj3:", obj1 <= obj2)
-
-print("obj1:", obj1)
-print("obj2:", obj2)
-print("obj3:", obj2)
+print("obj2 == obj3:", obj2 == obj3)
+print("obj2 >  obj3:", obj2 > obj3)
+print("obj2 <= obj3:", obj2 <= obj3)
+assert(obj2 == obj3)
+assert(obj2 <= obj3)
 	)");
 
 	std::cout << std::endl;

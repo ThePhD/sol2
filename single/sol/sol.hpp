@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-24 18:37:55.297938 UTC
-// This header was generated with sol v2.18.1 (revision a163ae7)
+// Generated 2017-08-24 18:56:19.661582 UTC
+// This header was generated with sol v2.18.0 (revision 92a6fb8)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4225,10 +4225,10 @@ namespace sol {
 	struct user {
 		U value;
 
-		user(U x) : value(std::move(x)) {}
-		operator std::remove_reference_t<U>* () { return std::addressof(value); }
-		operator U& () { return value; }
-		operator const U& () const { return value; }
+		user(U x) : value(std::forward<U>(x)) {}
+		operator std::add_pointer_t<std::remove_reference_t<U>> () { return std::addressof(value); }
+		operator std::add_lvalue_reference_t<U> () { return value; }
+		operator std::add_const_t<std::add_lvalue_reference_t<U>>& () const { return value; }
 	};
 
 	template <typename T>
