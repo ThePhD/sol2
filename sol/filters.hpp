@@ -63,7 +63,7 @@ namespace sol {
 	
 	template <typename F, typename... Filters>
 	struct filter_wrapper {
-		typedef std::make_integer_sequence<std::size_t, sizeof...(Filters)> indices;
+		typedef std::index_sequence_for<Filters...> indices;
 
 		F value;
 		std::tuple<Filters...> filters;

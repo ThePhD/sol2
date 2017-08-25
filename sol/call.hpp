@@ -230,13 +230,29 @@ namespace sol {
 
 		template <typename F, bool is_index, bool is_variable, bool checked, int boost, bool clean_stack, typename = void>
 		struct agnostic_lua_call_wrapper {
+			typedef wrapper<meta::unqualified_t<F>> wrap;
+			
 			template <typename Fx, typename... Args>
-			static int call(lua_State* L, Fx&& f, Args&&... args) {
-				typedef wrapper<meta::unqualified_t<F>> wrap;
+			static int convertible_call(std::true_type, lua_State* L, Fx&& f, Args&&... args) {
+				typedef typename wrap::traits_type traits_type;
+				typedef typename traits_type::function_pointer_type fp_t;
+				fp_t fx = f;
+				return agnostic_lua_call_wrapper<fp_t, is_index, is_variable, checked, boost, clean_stack>{}.call(L, fx, std::forward<Args>(args)...);
+			}
+
+			template <typename Fx, typename... Args>
+			static int convertible_call(std::false_type, lua_State* L, Fx&& f, Args&&... args) {
 				typedef typename wrap::returns_list returns_list;
 				typedef typename wrap::free_args_list args_list;
 				typedef typename wrap::caller caller;
 				return stack::call_into_lua<checked, clean_stack>(returns_list(), args_list(), L, boost + 1, caller(), std::forward<Fx>(f), std::forward<Args>(args)...);
+			}
+
+			template <typename Fx, typename... Args>
+			static int call(lua_State* L, Fx&& f, Args&&... args) {
+				typedef typename wrap::traits_type traits_type;
+				typedef typename traits_type::function_pointer_type fp_t;
+				return convertible_call(std::conditional_t<std::is_class<meta::unqualified_t<F>>::value, std::is_convertible<std::decay_t<Fx>, fp_t>, std::false_type>(), L, std::forward<Fx>(f), std::forward<Args>(args)...);
 			}
 		};
 

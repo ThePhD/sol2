@@ -960,7 +960,7 @@ namespace sol {
 				auto& src = get_src(L);
 				stack::push(L, next);
 				stack::push<user<iter>>(L, src, deferred_traits::begin(L, src));
-				stack::push(L, 1);
+				stack::push(L, sol::lua_nil);
 				return 3;
 			}
 

@@ -252,16 +252,34 @@ namespace sol {
 
 		namespace meta_detail {
 
-			template<typename T, bool isclass = std::is_class<unqualified_t<T>>::value>
+			template<typename T, typename = void>
 			struct is_callable : std::is_function<std::remove_pointer_t<T>> {};
 
 			template<typename T>
-			struct is_callable<T, true> {
+			struct is_callable<T, std::enable_if_t<std::is_class<unqualified_t<T>>::value && std::is_destructible<unqualified_t<T>>::value>> {
 				using yes = char;
 				using no = struct { char s[2]; };
 
 				struct F { void operator()(); };
-				struct Derived : T, F { ~Derived() = default; };
+				struct Derived : T, F { };
+				template<typename U, U> struct Check;
+
+				template<typename V>
+				static no test(Check<void (F::*)(), &V::operator()>*);
+
+				template<typename>
+				static yes test(...);
+
+				static const bool value = sizeof(test<Derived>(0)) == sizeof(yes);
+			};
+
+			template<typename T>
+			struct is_callable<T, std::enable_if_t<std::is_class<unqualified_t<T>>::value && !std::is_destructible<unqualified_t<T>>::value>> {
+				using yes = char;
+				using no = struct { char s[2]; };
+
+				struct F { void operator()(); };
+				struct Derived : T, F { ~Derived() = delete; };
 				template<typename U, U> struct Check;
 
 				template<typename V>

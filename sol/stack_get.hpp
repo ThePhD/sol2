@@ -363,9 +363,9 @@ namespace sol {
 
 		template<typename T>
 		struct getter<user<T>> {
-			static T& get(lua_State* L, int index, record& tracking) {
+			static std::add_lvalue_reference_t<T> get(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
-				return *static_cast<T*>(lua_touserdata(L, index));
+				return *static_cast<std::remove_reference_t<T>*>(lua_touserdata(L, index));
 			}
 		};
 

@@ -324,10 +324,10 @@ namespace sol {
 	struct user {
 		U value;
 
-		user(U x) : value(std::move(x)) {}
-		operator U* () { return std::addressof(value); }
-		operator U& () { return value; }
-		operator const U& () const { return value; }
+		user(U x) : value(std::forward<U>(x)) {}
+		operator std::add_pointer_t<std::remove_reference_t<U>> () { return std::addressof(value); }
+		operator std::add_lvalue_reference_t<U> () { return value; }
+		operator std::add_const_t<std::add_lvalue_reference_t<U>>& () const { return value; }
 	};
 
 	template <typename T>
