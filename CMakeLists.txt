@@ -8,16 +8,18 @@ include_directories(.)
 
 set(LUA_VERSION "5.3" CACHE STRING "The version of Lua needed (5.1, 5.2, 5.3)")
 if (LUA_VERSION MATCHES "5.1")
-  Find_Package(Lua 5.1 EXACT REQUIRED)
+  find_package(Lua 5.1 EXACT REQUIRED)
 elseif(LUA_VERSION MATCHES "5.2")
-  Find_Package(Lua 5.2 EXACT REQUIRED)
+  find_package(Lua 5.2 EXACT REQUIRED)
 elseif(LUA_VERSION MATCHES "5.3")
-  Find_Package(Lua 5.3 EXACT REQUIRED)
+  find_package(Lua 5.3 EXACT REQUIRED)
+elseif(LUA_VERSION MATCHES "LuaJIT")
+  find_package(LuaJIT REQUIRED)
 else()
   message(FATAL_ERROR "${LUA_VERSION} is not a supported version for lua.")
 endif()
 
-include_directories(${LUA_INCLUDE_DIRS})
+include_directories(${LUA_INCLUDE_DIR})
 
 if (NOT MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors -Wno-noexcept-type -ftemplate-depth=1024")
@@ -63,7 +65,7 @@ set(EXAMPLES_SRC examples/any_return.cpp
                  examples/usertype_var.cpp
                  examples/variables.cpp
                  examples/variadic_args.cpp)
-source_group(examples FILES ${EXAMPLES_SRC})
+source_group(EXAMPLES FILES ${EXAMPLES_SRC})
 foreach(example_source_file ${EXAMPLES_SRC})
 message(STATUS "${example_source_file}")
   get_filename_component(example_name ${example_source_file} NAME_WE)
@@ -84,7 +86,7 @@ set(TEST_SRC test_state.cpp test_operators.cpp
              test_functions.cpp test_usertypes.cpp
              test_containers.cpp test_filters.cpp
 )
-source_group(Tests FILES ${TEST_SRC})
+source_group(TESTS FILES ${TEST_SRC})
 
 add_executable(tests ${TEST_SRC})
 target_include_directories(tests PRIVATE ./Catch/include/)
