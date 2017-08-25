@@ -21,81 +21,8 @@ endif()
 
 include_directories(${LUA_INCLUDE_DIR})
 
-if (NOT MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors -Wno-noexcept-type -ftemplate-depth=1024")
-endif()
-
-set(EXAMPLES_SRC examples/any_return.cpp
-                 examples/basic.cpp
-                 examples/calling_lua_functions.cpp
-                 examples/config.cpp
-                 examples/containers_as_table.cpp
-                 examples/containers.cpp
-                 examples/container_usertype_as_container.cpp
-                 examples/coroutine.cpp
-                 examples/customization.cpp
-                 examples/dynamic_object.cpp
-                 examples/environments.cpp
-                 examples/environment_snooping.cpp
-                 examples/environments_on_functions.cpp
-                 examples/functions.cpp
-                 examples/multi_results.cpp
-                 examples/namespacing.cpp
-                 examples/optional_with_iteration.cpp
-                 examples/overloading.cpp
-                 examples/overloading_with_fallback.cpp
-                 examples/protected_functions.cpp
-                 examples/require.cpp
-                 examples/runtime_additions.cpp
-                 examples/script_error_handling.cpp
-                 examples/self_call.cpp
-                 examples/self_from_lua.cpp
-                 examples/stack_aligned_function.cpp
-                 examples/static_variables.cpp
-                 examples/tables.cpp
-                 examples/usertype_advanced.cpp
-                 examples/usertype_automatic_operators.cpp
-                 examples/usertype_bitfields.cpp
-                 examples/usertype_call_from_c++.cpp
-                 examples/usertype.cpp
-                 examples/usertype_dynamic_getter_setter.cpp
-                 examples/usertype_initializers.cpp
-                 examples/usertype_simple.cpp
-                 examples/usertype_special_functions.cpp
-                 examples/usertype_var.cpp
-                 examples/variables.cpp
-                 examples/variadic_args.cpp)
-source_group(EXAMPLES FILES ${EXAMPLES_SRC})
-foreach(example_source_file ${EXAMPLES_SRC})
-message(STATUS "${example_source_file}")
-  get_filename_component(example_name ${example_source_file} NAME_WE)
-  add_executable(${example_name} ${example_source_file})
-  target_link_libraries(${example_name} ${LUA_LIBRARIES})
-  install(TARGETS ${example_name} RUNTIME DESTINATION bin/examples)
-endforeach()
-
-set(TEST_SRC test_state.cpp test_operators.cpp
-             test_tables.cpp test_utility.cpp
-             test_strings.cpp test_environments.cpp
-             test_customizations.cpp test_large_integer.cpp
-             test_inheritance.cpp tests.cpp
-             test_variadics.cpp test_coroutines.cpp
-             test_container_semantics.cpp test_storage.cpp
-             test_overflow.cpp test_plain_types.cpp
-             test_simple_usertypes.cpp test_gc.cpp
-             test_functions.cpp test_usertypes.cpp
-             test_containers.cpp test_filters.cpp
-)
-source_group(TESTS FILES ${TEST_SRC})
-
-add_executable(tests ${TEST_SRC})
-target_include_directories(tests PRIVATE ./Catch/include/)
-
-find_package(Threads)
-target_link_libraries(tests Threads::Threads ${LUA_LIBRARIES})
-install(TARGETS tests RUNTIME DESTINATION bin)
-
-set(HEADER_SRCS sol/as_args.hpp
+set(HEADER_SRCS sol.hpp
+                sol/as_args.hpp
                 sol/as_returns.hpp
                 sol/bind_traits.hpp
                 sol/call.hpp
@@ -177,11 +104,84 @@ set(HEADER_SRCS sol/as_args.hpp
                 sol/variadic_results.hpp
                 sol/wrapper.hpp)
 
+if (NOT MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors -Wno-noexcept-type -ftemplate-depth=1024")
+endif()
+
+set(EXAMPLES_SRC examples/any_return.cpp
+                 examples/basic.cpp
+                 examples/calling_lua_functions.cpp
+                 examples/config.cpp
+                 examples/containers_as_table.cpp
+                 examples/containers.cpp
+                 examples/container_usertype_as_container.cpp
+                 examples/coroutine.cpp
+                 examples/customization.cpp
+                 examples/dynamic_object.cpp
+                 examples/environments.cpp
+                 examples/environment_snooping.cpp
+                 examples/environments_on_functions.cpp
+                 examples/functions.cpp
+                 examples/multi_results.cpp
+                 examples/namespacing.cpp
+                 examples/optional_with_iteration.cpp
+                 examples/overloading.cpp
+                 examples/overloading_with_fallback.cpp
+                 examples/protected_functions.cpp
+                 examples/require.cpp
+                 examples/runtime_additions.cpp
+                 examples/script_error_handling.cpp
+                 examples/self_call.cpp
+                 examples/self_from_lua.cpp
+                 examples/stack_aligned_function.cpp
+                 examples/static_variables.cpp
+                 examples/tables.cpp
+                 examples/usertype_advanced.cpp
+                 examples/usertype_automatic_operators.cpp
+                 examples/usertype_bitfields.cpp
+                 examples/usertype_call_from_c++.cpp
+                 examples/usertype.cpp
+                 examples/usertype_dynamic_getter_setter.cpp
+                 examples/usertype_initializers.cpp
+                 examples/usertype_simple.cpp
+                 examples/usertype_special_functions.cpp
+                 examples/usertype_var.cpp
+                 examples/variables.cpp
+                 examples/variadic_args.cpp)
+source_group(EXAMPLES FILES ${EXAMPLES_SRC})
+foreach(example_source_file ${EXAMPLES_SRC})
+message(STATUS "${example_source_file}")
+  get_filename_component(example_name ${example_source_file} NAME_WE)
+  add_executable(${example_name} ${example_source_file} ${HEADER_SRCS})
+  target_link_libraries(${example_name} ${LUA_LIBRARIES})
+  install(TARGETS ${example_name} RUNTIME DESTINATION bin/examples)
+endforeach()
+
+set(TEST_SRC test_state.cpp test_operators.cpp
+             test_tables.cpp test_utility.cpp
+             test_strings.cpp test_environments.cpp
+             test_customizations.cpp test_large_integer.cpp
+             test_inheritance.cpp tests.cpp
+             test_variadics.cpp test_coroutines.cpp
+             test_container_semantics.cpp test_storage.cpp
+             test_overflow.cpp test_plain_types.cpp
+             test_simple_usertypes.cpp test_gc.cpp
+             test_functions.cpp test_usertypes.cpp
+             test_containers.cpp test_filters.cpp)
+source_group(TESTS FILES ${TEST_SRC})
+
+add_executable(tests ${TEST_SRC} ${HEADER_SRCS})
+target_include_directories(tests PRIVATE ./Catch/include/)
+
+find_package(Threads)
+target_link_libraries(tests Threads::Threads ${LUA_LIBRARIES})
+install(TARGETS tests RUNTIME DESTINATION bin)
+
 find_package(PythonInterp 3)
 if (PYTHONINTERP_FOUND)
-  add_custom_command(OUTPUT sol.hpp COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/single.py --output ${CMAKE_CURRENT_BINARY_DIR}/sol.hpp DEPENDS ${HEADER_SRCS})
-  add_custom_target(single_sol DEPENDS sol.hpp)
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/sol.hpp" DESTINATION include)
+  add_custom_command(OUTPUT single/sol.hpp COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/single && ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/single.py --output ${CMAKE_CURRENT_BINARY_DIR}/single/sol.hpp DEPENDS ${HEADER_SRCS})
+  add_custom_target(single_sol DEPENDS single/sol.hpp)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/single/sol.hpp" DESTINATION include/single)
   message(STATUS "single_sol can be generated as python 3 has been found.")
 else()
   message(STATUS "single_sol cannot be generated as python 3 has not been found.")
