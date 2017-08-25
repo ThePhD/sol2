@@ -177,7 +177,7 @@ set(HEADER_SRCS sol/as_args.hpp
                 sol/variadic_results.hpp
                 sol/wrapper.hpp)
 
-find_package(PythonInterp 4)
+find_package(PythonInterp 3)
 if (PYTHONINTERP_FOUND)
   add_custom_command(OUTPUT sol.hpp COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/single.py --output ${CMAKE_CURRENT_BINARY_DIR}/sol.hpp DEPENDS ${HEADER_SRCS})
   add_custom_target(single_sol DEPENDS sol.hpp)
