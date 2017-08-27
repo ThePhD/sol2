@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-24 18:56:19.661582 UTC
-// This header was generated with sol v2.18.0 (revision 92a6fb8)
+// Generated 2017-08-27 04:00:40.261712 UTC
+// This header was generated with sol v2.18.1 (revision 626da4d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -9108,6 +9108,11 @@ namespace sol {
 			return *this;
 		}
 
+		function_result(const protected_function_result& o) = delete;
+		function_result& operator=(const protected_function_result& o) = delete;
+		function_result(protected_function_result&& o) noexcept;
+		function_result& operator=(protected_function_result&& o) noexcept;
+
 		template<typename T>
 		decltype(auto) get() const {
 			return stack::get<T>(L, index);
@@ -9125,7 +9130,7 @@ namespace sol {
 		int stack_index() const { return index; };
 		int return_count() const { return returncount; };
 		void abandon() noexcept {
-			L = nullptr;
+			//L = nullptr;
 			index = 0;
 			returncount = 0;
 		}
@@ -11505,6 +11510,11 @@ namespace sol {
 			return *this;
 		}
 
+		protected_function_result(const function_result& o) = delete;
+		protected_function_result& operator=(const function_result& o) = delete;
+		protected_function_result(function_result&& o) noexcept;
+		protected_function_result& operator=(function_result&& o) noexcept;
+
 		call_status status() const noexcept {
 			return err;
 		}
@@ -11523,7 +11533,7 @@ namespace sol {
 		int return_count() const noexcept { return returncount; };
 		int pop_count() const noexcept { return popcount; };
 		void abandon() noexcept {
-			L = nullptr;
+			//L = nullptr;
 			index = 0;
 			returncount = 0;
 			popcount = 0;
@@ -11824,6 +11834,42 @@ namespace sol {
 // end of sol/protected_function.hpp
 
 namespace sol {
+
+	protected_function_result::protected_function_result(function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()), popcount(o.return_count()), err(o.status()) {
+		// Must be manual, otherwise destructor will screw us
+		// return count being 0 is enough to keep things clean
+		// but we will be thorough
+		o.abandon();
+	}
+	protected_function_result& protected_function_result::operator=(function_result&& o) noexcept {
+		L = o.lua_state();
+		index = o.stack_index();
+		returncount = o.return_count();
+		popcount = o.return_count();
+		err = o.status();
+		// Must be manual, otherwise destructor will screw us
+		// return count being 0 is enough to keep things clean
+		// but we will be thorough
+		o.abandon();
+		return *this;
+	}
+
+	function_result::function_result(protected_function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()) {
+		// Must be manual, otherwise destructor will screw us
+		// return count being 0 is enough to keep things clean
+		// but we will be thorough
+		o.abandon();
+	}
+	function_result& function_result::operator=(protected_function_result&& o) noexcept {
+		L = o.lua_state();
+		index = o.stack_index();
+		returncount = o.return_count();
+		// Must be manual, otherwise destructor will screw us
+		// return count being 0 is enough to keep things clean
+		// but we will be thorough
+		o.abandon();
+		return *this;
+	}
 
 	namespace stack {
 		template<typename Signature>

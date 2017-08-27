@@ -29,6 +29,42 @@
 
 namespace sol {
 
+	protected_function_result::protected_function_result(function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()), popcount(o.return_count()), err(o.status()) {
+		// Must be manual, otherwise destructor will screw us
+		// return count being 0 is enough to keep things clean
+		// but we will be thorough
+		o.abandon();
+	}
+	protected_function_result& protected_function_result::operator=(function_result&& o) noexcept {
+		L = o.lua_state();
+		index = o.stack_index();
+		returncount = o.return_count();
+		popcount = o.return_count();
+		err = o.status();
+		// Must be manual, otherwise destructor will screw us
+		// return count being 0 is enough to keep things clean
+		// but we will be thorough
+		o.abandon();
+		return *this;
+	}
+
+	function_result::function_result(protected_function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()) {
+		// Must be manual, otherwise destructor will screw us
+		// return count being 0 is enough to keep things clean
+		// but we will be thorough
+		o.abandon();
+	}
+	function_result& function_result::operator=(protected_function_result&& o) noexcept {
+		L = o.lua_state();
+		index = o.stack_index();
+		returncount = o.return_count();
+		// Must be manual, otherwise destructor will screw us
+		// return count being 0 is enough to keep things clean
+		// but we will be thorough
+		o.abandon();
+		return *this;
+	}
+
 	namespace stack {
 		template<typename Signature>
 		struct getter<std::function<Signature>> {

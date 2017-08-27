@@ -512,5 +512,38 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 		REQUIRE(ar == 21);
 		clean_files();
 	}
+}
 
+TEST_CASE("state/script return converts", "make sure that script return values are convertable from one to another") {
+	sol::state lua;
+
+	sol::protected_function_result r1 = lua.unsafe_script("return 2");
+	sol::function_result r2 = lua.safe_script("return 3");
+
+	int v1 = r1;
+	int v2 = r2;
+	REQUIRE(v1 == 2);
+	REQUIRE(v2 == 3);
+}
+
+TEST_CASE("state/script function returns", "make sure that returned functions are converitble from a result to a function") {
+	SECTION("from result move constructor") {
+		sol::state lua;
+
+		sol::protected_function pf = lua.safe_script("return function () return 2 end", sol::script_pass_on_error);
+		REQUIRE(pf.valid());
+
+		int v1 = pf();
+		REQUIRE(v1 == 2);
+	}
+	SECTION("from result operator=") {
+		sol::state lua;
+
+		sol::protected_function_result r1 = lua.safe_script("return function () return 1 end", sol::script_pass_on_error);
+		REQUIRE(r1.valid());
+
+		sol::protected_function pf = r1;
+		int v1 = pf();
+		REQUIRE(v1 == 1);
+	}
 }
