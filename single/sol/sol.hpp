@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-27 04:00:40.261712 UTC
-// This header was generated with sol v2.18.1 (revision 626da4d)
+// Generated 2017-08-27 04:40:46.804312 UTC
+// This header was generated with sol v2.18.0 (revision a396792)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -11835,13 +11835,14 @@ namespace sol {
 
 namespace sol {
 
-	protected_function_result::protected_function_result(function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()), popcount(o.return_count()), err(o.status()) {
+	inline protected_function_result::protected_function_result(function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()), popcount(o.return_count()), err(o.status()) {
 		// Must be manual, otherwise destructor will screw us
 		// return count being 0 is enough to keep things clean
 		// but we will be thorough
 		o.abandon();
 	}
-	protected_function_result& protected_function_result::operator=(function_result&& o) noexcept {
+
+	inline protected_function_result& protected_function_result::operator=(function_result&& o) noexcept {
 		L = o.lua_state();
 		index = o.stack_index();
 		returncount = o.return_count();
@@ -11854,13 +11855,13 @@ namespace sol {
 		return *this;
 	}
 
-	function_result::function_result(protected_function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()) {
+	inline function_result::function_result(protected_function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()) {
 		// Must be manual, otherwise destructor will screw us
 		// return count being 0 is enough to keep things clean
 		// but we will be thorough
 		o.abandon();
 	}
-	function_result& function_result::operator=(protected_function_result&& o) noexcept {
+	inline function_result& function_result::operator=(protected_function_result&& o) noexcept {
 		L = o.lua_state();
 		index = o.stack_index();
 		returncount = o.return_count();
