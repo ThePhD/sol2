@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-27 04:40:46.804312 UTC
-// This header was generated with sol v2.18.0 (revision a396792)
+// Generated 2017-08-27 06:10:15.120314 UTC
+// This header was generated with sol v2.18.1 (revision 64baf6e)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4903,6 +4903,10 @@ namespace sol {
 
 	template <typename T>
 	struct is_lua_primitive<T*> : std::true_type {};
+	template <>
+	struct is_lua_primitive<function_result> : std::true_type {};
+	template <>
+	struct is_lua_primitive<protected_function_result> : std::true_type {};
 	template <typename T>
 	struct is_lua_primitive<std::reference_wrapper<T>> : std::true_type { };
 	template <typename T>
