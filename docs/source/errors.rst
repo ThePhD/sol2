@@ -8,7 +8,7 @@ Here is some advice and some tricks for common errors about iteration, compile t
 Running Scripts
 ---------------
 
-Scripts can have syntax errors, can load from the file system wrong, or have runtime issues. Knowing which one can be troublesome. There are various small building blocks to load and run code, but to check errors you can use the overloaded :ref:`script/script_file functions on sol::state/sol::state_view<state-script-function>`
+Scripts can have syntax errors, can load from the file system wrong, or have runtime issues. Knowing which one can be troublesome. There are various small building blocks to load and run code, but to check errors you can use the overloaded :ref:`script/script_file functions on sol::state/sol::state_view<state-script-function>`, specifically the ``safe_script`` variants. These also take an error callback that is called only when something goes wrong, and Sol comes with some default error handlers in the form of ``sol::script_default_on_error`` and ``sol::script_pass_on_error``.
 
 Compiler Errors / Warnings
 --------------------------
@@ -20,7 +20,20 @@ A myriad of compiler errors can occur when something goes wrong. Here is some ba
 * Template depth errors may also be a problem on earlier versions of clang++ and g++. Use ``-ftemplate-depth`` compiler flag and specify really high number (something like 2048 or even double that amount) to let the compiler work freely. Also consider potentially using :doc:`simple usertypes<api/simple_usertype>` to save compilation speed.
 * If you have a move-only type, that type may need to be made ``readonly`` if it is bound as a member variable on a usertype or bound using ``state_view::set_function``. See :doc:`sol::readonly<api/readonly>` for more details.
 * Assigning a ``std::string`` or a ``std::pair<T1, T2>`` using ``operator=`` after it's been constructed can result in compiler errors when working with ``sol::function`` and its results. See `this issue for fixes to this behavior`_.
-* Sometimes, using ``__stdcall`` in a 32-bit (x86) environment on VC++ can cause problems binding functions because of a compiler bug. Put the function in a ``std::function`` to make the compiler errors and other problems go away. Also see `this __stdcall issue report`_ for more details.
+* Sometimes, using ``__stdcall`` in a 32-bit (x86) environment on VC++ can cause problems binding functions because of a compiler bug. We have a prelimanry fix in, but if it doesn't work and there are still problems: put the function in a ``std::function`` to make the compiler errors and other problems go away. Also see `this __stdcall issue report`_ for more details.
+
+
+"compiler out of heap space"
+----------------------------
+
+Typical of Visual Studio, the compiler will complain that it is out of heap space because Visual Studio defaults to using the x86 (32-bit) version of itself (it will still compile x86 or x64 or ARM binaries, just the compiler **itself** is a 32-bit executable). In order to get around heap space requirements, add the following statement in your ``.vcoxproj`` files under the ``<Import .../>`` statement, as instructed by `OrfeasZ in this issue`_::
+
+	<PropertyGroup>
+		<PreferredToolArchitecture>x64</PreferredToolArchitecture>
+	</PropertyGroup>
+
+
+This should use the 64-bit tools by default, and increase your maximum heap space to whatever a 64-bit windows machine can handle. If you do not have more than 4 GB of RAM, or you still encounter issues, you should look into using ``create_simple_usertype`` and adding functions 1 by 1 using ``.set( ... )``, as shown in `the simple usertype example here`_.
 
 
 Linker Errors
@@ -72,3 +85,4 @@ Tables may have other junk on them that makes iterating through their numeric pa
 
 .. _this issue for fixes to this behavior: https://github.com/ThePhD/sol2/issues/414#issuecomment-306839439
 .. _this __stdcall issue report: https://github.com/ThePhD/sol2/issues/463
+.. _the simple usertype example here: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_simple.cpp#L45

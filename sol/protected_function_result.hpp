@@ -97,6 +97,11 @@ namespace sol {
 			return *this;
 		}
 
+		protected_function_result(const function_result& o) = delete;
+		protected_function_result& operator=(const function_result& o) = delete;
+		protected_function_result(function_result&& o) noexcept;
+		protected_function_result& operator=(function_result&& o) noexcept;
+
 		call_status status() const noexcept {
 			return err;
 		}
@@ -115,7 +120,7 @@ namespace sol {
 		int return_count() const noexcept { return returncount; };
 		int pop_count() const noexcept { return popcount; };
 		void abandon() noexcept {
-			L = nullptr;
+			//L = nullptr;
 			index = 0;
 			returncount = 0;
 			popcount = 0;

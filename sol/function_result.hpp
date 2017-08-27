@@ -59,6 +59,11 @@ namespace sol {
 			return *this;
 		}
 
+		function_result(const protected_function_result& o) = delete;
+		function_result& operator=(const protected_function_result& o) = delete;
+		function_result(protected_function_result&& o) noexcept;
+		function_result& operator=(protected_function_result&& o) noexcept;
+
 		template<typename T>
 		decltype(auto) get() const {
 			return stack::get<T>(L, index);
@@ -76,7 +81,7 @@ namespace sol {
 		int stack_index() const { return index; };
 		int return_count() const { return returncount; };
 		void abandon() noexcept {
-			L = nullptr;
+			//L = nullptr;
 			index = 0;
 			returncount = 0;
 		}
