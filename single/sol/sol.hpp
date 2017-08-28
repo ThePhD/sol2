@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-27 06:10:15.120314 UTC
-// This header was generated with sol v2.18.1 (revision 64baf6e)
+// Generated 2017-08-28 13:38:08.132808 UTC
+// This header was generated with sol v2.18.1 (revision 043deed)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -61,7 +61,7 @@
 
 // beginning of sol/feature_test.hpp
 
-#if (defined(__cplusplus) && __cplusplus == 201703L) || (defined(_MSC_VER) && _MSC_VER > 1900 && (defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (_MSVC_LANG > 201402))
+#if (defined(__cplusplus) && __cplusplus == 201703L) || (defined(_MSC_VER) && _MSC_VER > 1900 && ((defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(_MSVC_LANG) && _MSVC_LANG > 201402)))
 	#ifndef SOL_CXX17_FEATURES
 		#define SOL_CXX17_FEATURES 1
 	#endif // C++17 features macro
