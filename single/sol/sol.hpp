@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-27 04:00:40.261712 UTC
-// This header was generated with sol v2.18.1 (revision 626da4d)
+// Generated 2017-08-28 13:38:08.132808 UTC
+// This header was generated with sol v2.18.1 (revision 043deed)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -61,7 +61,7 @@
 
 // beginning of sol/feature_test.hpp
 
-#if (defined(__cplusplus) && __cplusplus == 201703L) || (defined(_MSC_VER) && _MSC_VER > 1900 && (defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (_MSVC_LANG > 201402))
+#if (defined(__cplusplus) && __cplusplus == 201703L) || (defined(_MSC_VER) && _MSC_VER > 1900 && ((defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(_MSVC_LANG) && _MSVC_LANG > 201402)))
 	#ifndef SOL_CXX17_FEATURES
 		#define SOL_CXX17_FEATURES 1
 	#endif // C++17 features macro
@@ -4903,6 +4903,10 @@ namespace sol {
 
 	template <typename T>
 	struct is_lua_primitive<T*> : std::true_type {};
+	template <>
+	struct is_lua_primitive<function_result> : std::true_type {};
+	template <>
+	struct is_lua_primitive<protected_function_result> : std::true_type {};
 	template <typename T>
 	struct is_lua_primitive<std::reference_wrapper<T>> : std::true_type { };
 	template <typename T>
@@ -11835,13 +11839,14 @@ namespace sol {
 
 namespace sol {
 
-	protected_function_result::protected_function_result(function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()), popcount(o.return_count()), err(o.status()) {
+	inline protected_function_result::protected_function_result(function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()), popcount(o.return_count()), err(o.status()) {
 		// Must be manual, otherwise destructor will screw us
 		// return count being 0 is enough to keep things clean
 		// but we will be thorough
 		o.abandon();
 	}
-	protected_function_result& protected_function_result::operator=(function_result&& o) noexcept {
+
+	inline protected_function_result& protected_function_result::operator=(function_result&& o) noexcept {
 		L = o.lua_state();
 		index = o.stack_index();
 		returncount = o.return_count();
@@ -11854,13 +11859,13 @@ namespace sol {
 		return *this;
 	}
 
-	function_result::function_result(protected_function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()) {
+	inline function_result::function_result(protected_function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()) {
 		// Must be manual, otherwise destructor will screw us
 		// return count being 0 is enough to keep things clean
 		// but we will be thorough
 		o.abandon();
 	}
-	function_result& function_result::operator=(protected_function_result&& o) noexcept {
+	inline function_result& function_result::operator=(protected_function_result&& o) noexcept {
 		L = o.lua_state();
 		index = o.stack_index();
 		returncount = o.return_count();

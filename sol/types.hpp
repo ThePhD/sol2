@@ -1002,6 +1002,10 @@ namespace sol {
 
 	template <typename T>
 	struct is_lua_primitive<T*> : std::true_type {};
+	template <>
+	struct is_lua_primitive<function_result> : std::true_type {};
+	template <>
+	struct is_lua_primitive<protected_function_result> : std::true_type {};
 	template <typename T>
 	struct is_lua_primitive<std::reference_wrapper<T>> : std::true_type { };
 	template <typename T>

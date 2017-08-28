@@ -29,13 +29,14 @@
 
 namespace sol {
 
-	protected_function_result::protected_function_result(function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()), popcount(o.return_count()), err(o.status()) {
+	inline protected_function_result::protected_function_result(function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()), popcount(o.return_count()), err(o.status()) {
 		// Must be manual, otherwise destructor will screw us
 		// return count being 0 is enough to keep things clean
 		// but we will be thorough
 		o.abandon();
 	}
-	protected_function_result& protected_function_result::operator=(function_result&& o) noexcept {
+
+	inline protected_function_result& protected_function_result::operator=(function_result&& o) noexcept {
 		L = o.lua_state();
 		index = o.stack_index();
 		returncount = o.return_count();
@@ -48,13 +49,13 @@ namespace sol {
 		return *this;
 	}
 
-	function_result::function_result(protected_function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()) {
+	inline function_result::function_result(protected_function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()) {
 		// Must be manual, otherwise destructor will screw us
 		// return count being 0 is enough to keep things clean
 		// but we will be thorough
 		o.abandon();
 	}
-	function_result& function_result::operator=(protected_function_result&& o) noexcept {
+	inline function_result& function_result::operator=(protected_function_result&& o) noexcept {
 		L = o.lua_state();
 		index = o.stack_index();
 		returncount = o.return_count();

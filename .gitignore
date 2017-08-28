@@ -80,3 +80,4 @@ temp.bad_runtime.lua
 temp.bad_syntax.lua
 temp.good.lua
 catch_mock.hpp
+main_aux.cpp
