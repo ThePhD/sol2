@@ -8,7 +8,7 @@ include_directories(.)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules" "${CMAKE_MODULE_PATH}")
 
-set(LUA_VERSION "5.3" CACHE STRING "The version of Lua needed (5.1, 5.2, 5.3)")
+set(LUA_VERSION "5.3" CACHE STRING "The version of Lua needed (5.1, 5.2, 5.3, luaJIT)")
 if (LUA_VERSION MATCHES "5.1")
   find_package(Lua 5.1 EXACT REQUIRED)
 elseif(LUA_VERSION MATCHES "5.2")
@@ -42,8 +42,7 @@ set(CXX_FEATURES  cxx_auto_type
                   cxx_static_assert
                   cxx_strong_enums
                   cxx_variadic_macros
-                  cxx_variadic_templates
-            )
+                  cxx_variadic_templates)
 
 set(HEADER_SRCS sol.hpp
                 sol/as_args.hpp
@@ -172,10 +171,10 @@ set(EXAMPLES_SRC examples/any_return.cpp
                  examples/usertype_var.cpp
                  examples/variables.cpp
                  examples/variadic_args.cpp)
-source_group(EXAMPLES FILES ${EXAMPLES_SRC})
+source_group(examples FILES ${EXAMPLES_SRC})
 foreach(example_source_file ${EXAMPLES_SRC})
-message(STATUS "${example_source_file}")
   get_filename_component(example_name ${example_source_file} NAME_WE)
+  set(example_name "example-${example_name}")
   add_executable(${example_name} ${example_source_file} ${HEADER_SRCS})
   target_link_libraries(${example_name} ${LUA_LIBRARIES})
   target_compile_features(${example_name} PUBLIC ${CXX_FEATURES})
@@ -193,7 +192,7 @@ set(TEST_SRC test_state.cpp test_operators.cpp
              test_simple_usertypes.cpp test_gc.cpp
              test_functions.cpp test_usertypes.cpp
              test_containers.cpp test_filters.cpp)
-source_group(TESTS FILES ${TEST_SRC})
+source_group(tests FILES ${TEST_SRC})
 
 add_executable(tests ${TEST_SRC} ${HEADER_SRCS})
 target_include_directories(tests PRIVATE ./Catch/include/)
@@ -206,7 +205,7 @@ find_package(PythonInterp 3)
 if (PYTHONINTERP_FOUND)
   add_custom_command(OUTPUT single/sol/sol.hpp COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/single.py --output ${CMAKE_CURRENT_SOURCE_DIR}/single/sol/sol.hpp DEPENDS ${HEADER_SRCS})
   add_custom_target(single_sol DEPENDS single/sol/sol.hpp)
-  install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/single/sol/sol.hpp" DESTINATION include/single/sol)
+  install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/single/sol/sol.hpp" DESTINATION include/sol)
   message(STATUS "single_sol can be generated as python 3 has been found.")
 else()
   message(STATUS "single_sol cannot be generated as python 3 has not been found.")
