@@ -22,6 +22,11 @@ x64/
 # VSCode
 .vscode/
 
+# CMake
+build/
+CMakeCache.txt
+CMakeFiles/
+
 # Compiler outputs
 obj/*
 bin/*
