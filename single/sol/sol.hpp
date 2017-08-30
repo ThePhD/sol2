@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-28 13:38:08.132808 UTC
-// This header was generated with sol v2.18.1 (revision 043deed)
+// Generated 2017-08-30 20:09:44.279724 UTC
+// This header was generated with sol v2.18.1 (revision dea0ec0)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -14295,8 +14295,8 @@ namespace sol {
 
 		template <typename T>
 		inline int member_default_to_string(std::true_type, lua_State* L) {
-			std::string ts = stack::get<T>(L, 1).to_string();
-			return stack::push(L, std::move(ts));
+			decltype(auto) ts = stack::get<T>(L, 1).to_string();
+			return stack::push(L, std::forward<decltype(ts)>(ts));
 		}
 
 		template <typename T>
@@ -14306,9 +14306,9 @@ namespace sol {
 		
 		template <typename T>
 		inline int adl_default_to_string(std::true_type, lua_State* L) {
-			using std::to_string;
-			std::string ts = to_string(stack::get<T>(L, 1));
-			return stack::push(L, std::move(ts));
+			using namespace std;
+			decltype(auto) ts = to_string(stack::get<T>(L, 1));
+			return stack::push(L, std::forward<decltype(ts)>(ts));
 		}
 
 		template <typename T>

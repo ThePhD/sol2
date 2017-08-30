@@ -46,8 +46,8 @@ namespace sol {
 
 		template <typename T>
 		inline int member_default_to_string(std::true_type, lua_State* L) {
-			std::string ts = stack::get<T>(L, 1).to_string();
-			return stack::push(L, std::move(ts));
+			decltype(auto) ts = stack::get<T>(L, 1).to_string();
+			return stack::push(L, std::forward<decltype(ts)>(ts));
 		}
 
 		template <typename T>
@@ -57,9 +57,9 @@ namespace sol {
 		
 		template <typename T>
 		inline int adl_default_to_string(std::true_type, lua_State* L) {
-			using std::to_string;
-			std::string ts = to_string(stack::get<T>(L, 1));
-			return stack::push(L, std::move(ts));
+			using namespace std;
+			decltype(auto) ts = to_string(stack::get<T>(L, 1));
+			return stack::push(L, std::forward<decltype(ts)>(ts));
 		}
 
 		template <typename T>
