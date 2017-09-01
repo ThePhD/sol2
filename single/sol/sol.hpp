@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-01 00:38:40.996447 UTC
-// This header was generated with sol v2.18.1 (revision 3549bfa)
+// Generated 2017-09-01 01:02:04.624150 UTC
+// This header was generated with sol v2.18.2 (revision 54bcda1)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5051,13 +5051,13 @@ namespace sol {
 	const type_panic_t type_panic = {};
 
 	struct constructor_handler {
-		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) noexcept(false) {
+		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
 			return type_panic_string(L, index, expected, actual, message + " (type check failed in constructor)");
 		}
 	};
 
 	struct argument_handler {
-		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) noexcept(false) {
+		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
 			return type_panic_string(L, index, expected, actual, message + " (bad argument to variable or function call)");
 		}
 	};
