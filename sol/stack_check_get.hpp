@@ -66,7 +66,7 @@ namespace sol {
 				int isnum = 0;
 				const lua_Number value = lua_tonumberx(L, index, &isnum);
 				if (isnum != 0) {
-#if 1 // defined(SOL_CHECK_ARGUMENTS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
+#if defined(SOL_CHECK_ARGUMENTS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
 					const auto integer_value = llround(value);
 					if (static_cast<lua_Number>(integer_value) == value) {
 						tracking.use(1);
@@ -79,7 +79,7 @@ namespace sol {
 				}
 				const type t = type_of(L, index);
 				tracking.use(static_cast<int>(t != type::none));
-				handler(L, index, type::number, t);
+				handler(L, index, type::number, t, "not an integer");
 				return nullopt;
 			}
 		};
@@ -93,7 +93,7 @@ namespace sol {
 				if (isnum == 0) {
 					type t = type_of(L, index);
 					tracking.use(static_cast<int>(t != type::none));
-					handler(L, index, type::number, t);
+					handler(L, index, type::number, t, "not a valid enumeration value");
 					return nullopt;
 				}
 				tracking.use(1);
@@ -110,7 +110,7 @@ namespace sol {
 				if (isnum == 0) {
 					type t = type_of(L, index);
 					tracking.use(static_cast<int>(t != type::none));
-					handler(L, index, type::number, t);
+					handler(L, index, type::number, t, "not a valid floating point number");
 					return nullopt;
 				}
 				tracking.use(1);
@@ -142,7 +142,7 @@ namespace sol {
 				typedef std::variant_alternative_t<0, V> T;
 				// This should never be reached...
 				// please check your code and understand what you did to bring yourself here
-				handler(L, index, type::poly, type_of(L, index));
+				handler(L, index, type::poly, type_of(L, index), "this variant code should never be reached: if it has, you have done something so terribly wrong");
 				return nullopt;
 			}
 

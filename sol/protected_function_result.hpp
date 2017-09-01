@@ -49,7 +49,7 @@ namespace sol {
 		decltype(auto) tagged_get(types<T>) const {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!valid()) {
-				type_panic(L, index, type_of(L, index), type::none);
+				type_panic_c_str(L, index, type_of(L, index), type::none);
 			}
 #endif // Check Argument Safety
 			return stack::get<T>(L, index);
@@ -65,7 +65,7 @@ namespace sol {
 		error tagged_get(types<error>) const {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (valid()) {
-				type_panic(L, index, type_of(L, index), type::none);
+				type_panic_c_str(L, index, type_of(L, index), type::none);
 			}
 #endif // Check Argument Safety
 			return error(detail::direct_error, stack::get<std::string>(L, index));

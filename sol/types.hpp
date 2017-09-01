@@ -667,37 +667,6 @@ namespace sol {
 		return static_cast<type>(lua_type(L, index));
 	}
 
-	inline int type_panic(lua_State* L, int index, type expected, type actual) noexcept(false) {
-		return luaL_error(L, "stack index %d, expected %s, received %s", index,
-			expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected)),
-			actual == type::poly ? "anything" : lua_typename(L, static_cast<int>(actual))
-		);
-	}
-
-	// Specify this function as the handler for lua::check if you know there's nothing wrong
-	inline int no_panic(lua_State*, int, type, type) noexcept {
-		return 0;
-	}
-
-	inline void type_error(lua_State* L, int expected, int actual) noexcept(false) {
-		luaL_error(L, "expected %s, received %s", lua_typename(L, expected), lua_typename(L, actual));
-	}
-
-	inline void type_error(lua_State* L, type expected, type actual) noexcept(false) {
-		type_error(L, static_cast<int>(expected), static_cast<int>(actual));
-	}
-
-	inline void type_assert(lua_State* L, int index, type expected, type actual) noexcept(false) {
-		if (expected != type::poly && expected != actual) {
-			type_panic(L, index, expected, actual);
-		}
-	}
-
-	inline void type_assert(lua_State* L, int index, type expected) {
-		type actual = type_of(L, index);
-		type_assert(L, index, expected, actual);
-	}
-
 	inline std::string type_name(lua_State* L, type t) {
 		return lua_typename(L, static_cast<int>(t));
 	}

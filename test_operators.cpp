@@ -427,7 +427,7 @@ TEST_CASE("operators/container-like", "test that generic begin/end and iterator 
 		}
 	}
 #else
-	REQUIRE(true);
+	SUCCEED("");
 #endif
 }
 

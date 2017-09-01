@@ -23,6 +23,7 @@
 #define SOL_STACK_CORE_HPP
 
 #include "types.hpp"
+#include "error_handler.hpp"
 #include "reference.hpp"
 #include "stack_reference.hpp"
 #include "tuple.hpp"
@@ -299,7 +300,7 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			template <typename T>
 			inline auto tagged_get(types<T>, lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_get<T>(L, index, tracking)) {
-				auto op = check_get<T>(L, index, type_panic, tracking);
+				auto op = check_get<T>(L, index, type_panic_c_str, tracking);
 				return *std::move(op);
 			}
 #else

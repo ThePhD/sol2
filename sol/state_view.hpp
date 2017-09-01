@@ -435,6 +435,15 @@ namespace sol {
 			return safe_script_file(filename, env, script_default_on_error, mode);
 		}
 
+#ifdef SOL_SAFE_FUNCTIONS
+		protected_function_result script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			return safe_script(code, chunkname, mode);
+		}
+
+		protected_function_result script_file(const std::string& filename, load_mode mode = load_mode::any) {
+			return safe_script_file(filename, mode);
+		}
+#else
 		function_result script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return unsafe_script(code, chunkname, mode);
 		}
@@ -442,7 +451,7 @@ namespace sol {
 		function_result script_file(const std::string& filename, load_mode mode = load_mode::any) {
 			return unsafe_script_file(filename, mode);
 		}
-
+#endif
 		load_result load(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			char basechunkname[17] = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);

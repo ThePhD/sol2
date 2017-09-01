@@ -226,10 +226,13 @@ namespace sol {
 #endif
 #if defined(SOL_CHECK_ARGUMENTS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
 				if (static_cast<T>(llround(static_cast<lua_Number>(value))) != value) {
-#ifndef SOL_NO_EXCEPTIONS
-					throw sol::error("The integer will be misrepresented in lua.");
+#ifdef SOL_NO_EXCEPTIONS
+					// Is this really worth it?
+					assert(false && "integer value will be misrepresented in lua");
+					lua_pushnumber(L, static_cast<lua_Number>(value));
+					return 1;
 #else
-					assert(false && "The integer will be misrepresented in lua.");
+					throw error(detail::direct_error, "integer value will be misrepresented in lua");
 #endif
 				}
 #endif

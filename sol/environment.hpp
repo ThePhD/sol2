@@ -52,25 +52,29 @@ namespace sol {
 
 		basic_environment(env_t, const stack_reference& extraction_target) : base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<env_t>(this->lua_state(), -1, type_panic);
+			constructor_handler handler{};
+			stack::check<env_t>(this->lua_state(), -1, handler);
 #endif // Safety
 			lua_pop(this->lua_state(), 2);
 		}
 		basic_environment(env_t, const reference& extraction_target) : base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<env_t>(this->lua_state(), -1, type_panic);
+			constructor_handler handler{};
+			stack::check<env_t>(this->lua_state(), -1, handler);
 #endif // Safety
 			lua_pop(this->lua_state(), 2);
 		}
 		basic_environment(lua_State* L, int index = -1) : base_t(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<basic_environment>(L, index, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_environment>(L, index, handler);
 #endif // Safety
 		}
 		basic_environment(lua_State* L, ref_index index) : base_t(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
-			stack::check<basic_environment>(L, -1, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_environment>(L, -1, handler);
 #endif // Safety
 		}
 		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_environment>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
@@ -78,7 +82,8 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_environment<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
-				stack::check<basic_environment>(lua_state(), -1, type_panic);
+				constructor_handler handler{};
+				stack::check<basic_environment>(lua_state(), -1, handler);
 			}
 #endif // Safety
 		}

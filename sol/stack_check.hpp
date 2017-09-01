@@ -59,7 +59,7 @@ namespace sol {
 					bool success = check_func(L, index) == 1;
 					if (!success) {
 						// expected type, actual type
-						handler(L, index, expected, type_of(L, index));
+						handler(L, index, expected, type_of(L, index), "");
 					}
 					return success;
 				}
@@ -74,8 +74,8 @@ namespace sol {
 				const type indextype = type_of(L, index);
 				bool success = expected == indextype;
 				if (!success) {
-					// expected type, actual type
-					handler(L, index, expected, indextype);
+					// expected type, actual type, message
+					handler(L, index, expected, indextype, "");
 				}
 				return success;
 			}
@@ -100,7 +100,7 @@ namespace sol {
 #endif // If numbers are enabled, use the imprecise check
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::number, type_of(L, index));
+					handler(L, index, type::number, type_of(L, index), "not a numeric type");
 				}
 				return success;
 #else
@@ -109,7 +109,7 @@ namespace sol {
 				type t = type_of(L, index);
 				if (t != type::number) {
 					// expected type, actual type
-					handler(L, index, type::number, t);
+					handler(L, index, type::number, t, "not a numeric type");
 					return false;
 				}
 #endif // Do not allow strings to be numbers
@@ -119,9 +119,9 @@ namespace sol {
 				if (!success) {
 					// expected type, actual type
 #ifndef SOL_STRINGS_ARE_NUMBERS
-					handler(L, index, type::number, t);
+					handler(L, index, type::number, t, "not a numeric type");
 #else
-					handler(L, index, type::number, type_of(L, index));
+					handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
 #endif
 				}
 				return success;
@@ -134,19 +134,19 @@ namespace sol {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 				tracking.use(1);
-#ifdef SOL_STRINGS_ARE_NUMBERS
+#ifndef SOL_STRINGS_ARE_NUMBERS
 				type t = type_of(L, index);
 				bool success = t == type::number;
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::number, t);
+					handler(L, index, type::number, t, "not a numeric type");
 				}
 				return success;
 #else
 				bool success = lua_isnumber(L, index) == 1;
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::number, type_of(L, index));
+					handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
 				}
 				return success;
 #endif
@@ -166,7 +166,7 @@ namespace sol {
 				success = lua_isnone(L, index);
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, expected, type_of(L, index));
+					handler(L, index, expected, type_of(L, index), "");
 				}
 				return success;
 			}
@@ -219,7 +219,7 @@ namespace sol {
 				bool success = !lua_isnone(L, index);
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::none, type_of(L, index));
+					handler(L, index, type::none, type_of(L, index), "");
 				}
 				return success;
 			}
@@ -234,7 +234,7 @@ namespace sol {
 				bool success = t == type::userdata || t == type::lightuserdata;
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::lightuserdata, t);
+					handler(L, index, type::lightuserdata, t, "");
 				}
 				return success;
 			}
@@ -249,7 +249,7 @@ namespace sol {
 				bool success = t == type::userdata;
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::userdata, t);
+					handler(L, index, type::userdata, t, "");
 				}
 				return success;
 			}
@@ -287,25 +287,25 @@ namespace sol {
 					return true;
 				}
 				if (t != type::userdata && t != type::table) {
-					handler(L, index, type::function, t);
+					handler(L, index, type::function, t, "must be a function or table or a userdata");
 					return false;
 				}
 				// Do advanced check for call-style userdata?
 				static const auto& callkey = to_string(meta_function::call);
 				if (lua_getmetatable(L, index) == 0) {
 					// No metatable, no __call key possible
-					handler(L, index, type::function, t);
+					handler(L, index, type::function, t, "value is not a function and does not have overriden metatable");
 					return false;
 				}
 				if (lua_isnoneornil(L, -1)) {
 					lua_pop(L, 1);
-					handler(L, index, type::function, t);
+					handler(L, index, type::function, t, "value is not a function and does not have valid metatable");
 					return false;
 				}
 				lua_getfield(L, -1, &callkey[0]);
 				if (lua_isnoneornil(L, -1)) {
 					lua_pop(L, 2);
-					handler(L, index, type::function, t);
+					handler(L, index, type::function, t, "value's metatable does not have __call overridden in metatable, cannot call this type");
 					return false;
 				}
 				// has call, is definitely a function
@@ -324,7 +324,7 @@ namespace sol {
 					return true;
 				}
 				if (t != type::userdata) {
-					handler(L, index, type::table, t);
+					handler(L, index, type::table, t, "value is not a table or a userdata that can behave like one");
 					return false;
 				}
 				return true;
@@ -346,7 +346,7 @@ namespace sol {
 				}
 				if (t != type::userdata) {
 					lua_pop(L, 1);
-					handler(L, index, expected, t);
+					handler(L, index, expected, t, "value does not have a valid metatable");
 					return false;
 				}
 				return true;
@@ -358,19 +358,11 @@ namespace sol {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 				tracking.use(1);
-				if (lua_getmetatable(L, index) == 0) {
+				type t = type_of(L, index);
+				if (t == type::table || t == type::none || t == type::nil || t == type::userdata) {
 					return true;
 				}
-				type t = type_of(L, -1);
-				if (t == type::table || t == type::none || t == type::nil) {
-					lua_pop(L, 1);
-					return true;
-				}
-				if (t != type::userdata) {
-					lua_pop(L, 1);
-					handler(L, index, type::table, t);
-					return false;
-				}
+				handler(L, index, type::table, t, "value cannot not have a valid environment");
 				return true;
 			}
 		};
@@ -390,7 +382,7 @@ namespace sol {
 				}
 				if (t != type::userdata) {
 					lua_pop(L, 1);
-					handler(L, index, type::table, t);
+					handler(L, index, type::table, t, "value does not have a valid metatable");
 					return false;
 				}
 				return true;
@@ -403,7 +395,7 @@ namespace sol {
 			static bool check(types<U>, lua_State* L, type indextype, int index, Handler&& handler, record& tracking) {
 				tracking.use(1);
 				if (indextype != type::userdata) {
-					handler(L, index, type::userdata, indextype);
+					handler(L, index, type::userdata, indextype, "value is not a valid userdata");
 					return false;
 				}
 				if (meta::any<std::is_same<T, lightuserdata_value>, std::is_same<T, userdata_value>, std::is_same<T, userdata>, std::is_same<T, lightuserdata>>::value)
@@ -433,7 +425,7 @@ namespace sol {
 				}
 				if (!success) {
 					lua_pop(L, 1);
-					handler(L, index, type::userdata, indextype);
+					handler(L, index, type::userdata, indextype, "value is not a valid sol userdata of any kind");
 					return false;
 				}
 				lua_pop(L, 1);
@@ -472,7 +464,7 @@ namespace sol {
 				const type indextype = type_of(L, index);
 				tracking.use(1);
 				if (indextype != type::userdata) {
-					handler(L, index, type::userdata, indextype);
+					handler(L, index, type::userdata, indextype, "value is not a userdata");
 					return false;
 				}
 				if (lua_getmetatable(L, index) == 0) {
@@ -485,12 +477,12 @@ namespace sol {
 					detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(static_cast<void*>(pointerpointer + 1));
 					bool success = &detail::usertype_unique_alloc_destroy<T, X> == pdx;
 					if (!success) {
-						handler(L, index, type::userdata, indextype);
+						handler(L, index, type::userdata, indextype, "value is a userdata but is not the correct unique usertype");
 					}
 					return success;
 				}
 				lua_pop(L, 1);
-				handler(L, index, type::userdata, indextype);
+				handler(L, index, type::userdata, indextype, "unrecognized userdata (not pushed by sol?)");
 				return false;
 			}
 		};
@@ -549,7 +541,7 @@ namespace sol {
 					return true;
 				}
 				tracking.use(1);
-				handler(L, index, type::poly, type_of(L, index));
+				handler(L, index, type::poly, type_of(L, index), "value does not fit any type present in the variant");
 				return false;
 			}
 

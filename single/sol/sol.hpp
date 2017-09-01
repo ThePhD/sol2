@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-08-30 20:09:44.279724 UTC
-// This header was generated with sol v2.18.1 (revision dea0ec0)
+// Generated 2017-09-01 00:38:40.996447 UTC
+// This header was generated with sol v2.18.1 (revision 3549bfa)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4568,37 +4568,6 @@ namespace sol {
 		return static_cast<type>(lua_type(L, index));
 	}
 
-	inline int type_panic(lua_State* L, int index, type expected, type actual) noexcept(false) {
-		return luaL_error(L, "stack index %d, expected %s, received %s", index,
-			expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected)),
-			actual == type::poly ? "anything" : lua_typename(L, static_cast<int>(actual))
-		);
-	}
-
-	// Specify this function as the handler for lua::check if you know there's nothing wrong
-	inline int no_panic(lua_State*, int, type, type) noexcept {
-		return 0;
-	}
-
-	inline void type_error(lua_State* L, int expected, int actual) noexcept(false) {
-		luaL_error(L, "expected %s, received %s", lua_typename(L, expected), lua_typename(L, actual));
-	}
-
-	inline void type_error(lua_State* L, type expected, type actual) noexcept(false) {
-		type_error(L, static_cast<int>(expected), static_cast<int>(actual));
-	}
-
-	inline void type_assert(lua_State* L, int index, type expected, type actual) noexcept(false) {
-		if (expected != type::poly && expected != actual) {
-			type_panic(L, index, expected, actual);
-		}
-	}
-
-	inline void type_assert(lua_State* L, int index, type expected) {
-		type actual = type_of(L, index);
-		type_assert(L, index, expected, actual);
-	}
-
 	inline std::string type_name(lua_State* L, type t) {
 		return lua_typename(L, static_cast<int>(t));
 	}
@@ -5044,6 +5013,82 @@ namespace sol {
 } // sol
 
 // end of sol/types.hpp
+
+// beginning of sol/error_handler.hpp
+
+namespace sol {
+
+	inline int type_panic_string(lua_State* L, int index, type expected, type actual, const std::string& message = "") noexcept(false) {
+		const char* err = message.empty() ? "stack index %d, expected %s, received %s" : "stack index %d, expected %s, received %s with message %s";
+		return luaL_error(L, err, index,
+			expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected)),
+			actual == type::poly ? "anything" : lua_typename(L, static_cast<int>(actual)),
+			message.c_str()
+		);
+	}
+
+	inline int type_panic_c_str(lua_State* L, int index, type expected, type actual, const char* message = nullptr) noexcept(false) {
+		const char* err = message == nullptr || (std::char_traits<char>::length(message) == 0) ? "stack index %d, expected %s, received %s" : "stack index %d, expected %s, received %s with message %s";
+		return luaL_error(L, err, index,
+			expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected)),
+			actual == type::poly ? "anything" : lua_typename(L, static_cast<int>(actual)),
+			message
+		);
+	}
+
+	struct type_panic_t {
+		int operator()(lua_State* L, int index, type expected, type actual) const noexcept(false) {
+			return type_panic_c_str(L, index, expected, actual, nullptr);
+		}
+		int operator()(lua_State* L, int index, type expected, type actual, const char* message) const noexcept(false) {
+			return type_panic_c_str(L, index, expected, actual, message);
+		}
+		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
+			return type_panic_string(L, index, expected, actual, message);
+		}
+	};
+
+	const type_panic_t type_panic = {};
+
+	struct constructor_handler {
+		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) noexcept(false) {
+			return type_panic_string(L, index, expected, actual, message + " (type check failed in constructor)");
+		}
+	};
+
+	struct argument_handler {
+		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) noexcept(false) {
+			return type_panic_string(L, index, expected, actual, message + " (bad argument to variable or function call)");
+		}
+	};
+
+	// Specify this function as the handler for lua::check if you know there's nothing wrong
+	inline int no_panic(lua_State*, int, type, type, const char* = nullptr) noexcept {
+		return 0;
+	}
+
+	inline void type_error(lua_State* L, int expected, int actual) noexcept(false) {
+		luaL_error(L, "expected %s, received %s", lua_typename(L, expected), lua_typename(L, actual));
+	}
+
+	inline void type_error(lua_State* L, type expected, type actual) noexcept(false) {
+		type_error(L, static_cast<int>(expected), static_cast<int>(actual));
+	}
+
+	inline void type_assert(lua_State* L, int index, type expected, type actual) noexcept(false) {
+		if (expected != type::poly && expected != actual) {
+			type_panic_c_str(L, index, expected, actual, nullptr);
+		}
+	}
+
+	inline void type_assert(lua_State* L, int index, type expected) {
+		type actual = type_of(L, index);
+		type_assert(L, index, expected, actual);
+	}
+
+} // sol
+
+// end of sol/error_handler.hpp
 
 // beginning of sol/reference.hpp
 
@@ -5893,7 +5938,7 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			template <typename T>
 			inline auto tagged_get(types<T>, lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_get<T>(L, index, tracking)) {
-				auto op = check_get<T>(L, index, type_panic, tracking);
+				auto op = check_get<T>(L, index, type_panic_c_str, tracking);
 				return *std::move(op);
 			}
 #else
@@ -6208,7 +6253,7 @@ namespace sol {
 					bool success = check_func(L, index) == 1;
 					if (!success) {
 						// expected type, actual type
-						handler(L, index, expected, type_of(L, index));
+						handler(L, index, expected, type_of(L, index), "");
 					}
 					return success;
 				}
@@ -6223,8 +6268,8 @@ namespace sol {
 				const type indextype = type_of(L, index);
 				bool success = expected == indextype;
 				if (!success) {
-					// expected type, actual type
-					handler(L, index, expected, indextype);
+					// expected type, actual type, message
+					handler(L, index, expected, indextype, "");
 				}
 				return success;
 			}
@@ -6249,7 +6294,7 @@ namespace sol {
 #endif // If numbers are enabled, use the imprecise check
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::number, type_of(L, index));
+					handler(L, index, type::number, type_of(L, index), "not a numeric type");
 				}
 				return success;
 #else
@@ -6258,7 +6303,7 @@ namespace sol {
 				type t = type_of(L, index);
 				if (t != type::number) {
 					// expected type, actual type
-					handler(L, index, type::number, t);
+					handler(L, index, type::number, t, "not a numeric type");
 					return false;
 				}
 #endif // Do not allow strings to be numbers
@@ -6268,9 +6313,9 @@ namespace sol {
 				if (!success) {
 					// expected type, actual type
 #ifndef SOL_STRINGS_ARE_NUMBERS
-					handler(L, index, type::number, t);
+					handler(L, index, type::number, t, "not a numeric type");
 #else
-					handler(L, index, type::number, type_of(L, index));
+					handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
 #endif
 				}
 				return success;
@@ -6283,19 +6328,19 @@ namespace sol {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 				tracking.use(1);
-#ifdef SOL_STRINGS_ARE_NUMBERS
+#ifndef SOL_STRINGS_ARE_NUMBERS
 				type t = type_of(L, index);
 				bool success = t == type::number;
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::number, t);
+					handler(L, index, type::number, t, "not a numeric type");
 				}
 				return success;
 #else
 				bool success = lua_isnumber(L, index) == 1;
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::number, type_of(L, index));
+					handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
 				}
 				return success;
 #endif
@@ -6315,7 +6360,7 @@ namespace sol {
 				success = lua_isnone(L, index);
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, expected, type_of(L, index));
+					handler(L, index, expected, type_of(L, index), "");
 				}
 				return success;
 			}
@@ -6368,7 +6413,7 @@ namespace sol {
 				bool success = !lua_isnone(L, index);
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::none, type_of(L, index));
+					handler(L, index, type::none, type_of(L, index), "");
 				}
 				return success;
 			}
@@ -6383,7 +6428,7 @@ namespace sol {
 				bool success = t == type::userdata || t == type::lightuserdata;
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::lightuserdata, t);
+					handler(L, index, type::lightuserdata, t, "");
 				}
 				return success;
 			}
@@ -6398,7 +6443,7 @@ namespace sol {
 				bool success = t == type::userdata;
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::userdata, t);
+					handler(L, index, type::userdata, t, "");
 				}
 				return success;
 			}
@@ -6436,25 +6481,25 @@ namespace sol {
 					return true;
 				}
 				if (t != type::userdata && t != type::table) {
-					handler(L, index, type::function, t);
+					handler(L, index, type::function, t, "must be a function or table or a userdata");
 					return false;
 				}
 				// Do advanced check for call-style userdata?
 				static const auto& callkey = to_string(meta_function::call);
 				if (lua_getmetatable(L, index) == 0) {
 					// No metatable, no __call key possible
-					handler(L, index, type::function, t);
+					handler(L, index, type::function, t, "value is not a function and does not have overriden metatable");
 					return false;
 				}
 				if (lua_isnoneornil(L, -1)) {
 					lua_pop(L, 1);
-					handler(L, index, type::function, t);
+					handler(L, index, type::function, t, "value is not a function and does not have valid metatable");
 					return false;
 				}
 				lua_getfield(L, -1, &callkey[0]);
 				if (lua_isnoneornil(L, -1)) {
 					lua_pop(L, 2);
-					handler(L, index, type::function, t);
+					handler(L, index, type::function, t, "value's metatable does not have __call overridden in metatable, cannot call this type");
 					return false;
 				}
 				// has call, is definitely a function
@@ -6473,7 +6518,7 @@ namespace sol {
 					return true;
 				}
 				if (t != type::userdata) {
-					handler(L, index, type::table, t);
+					handler(L, index, type::table, t, "value is not a table or a userdata that can behave like one");
 					return false;
 				}
 				return true;
@@ -6495,7 +6540,7 @@ namespace sol {
 				}
 				if (t != type::userdata) {
 					lua_pop(L, 1);
-					handler(L, index, expected, t);
+					handler(L, index, expected, t, "value does not have a valid metatable");
 					return false;
 				}
 				return true;
@@ -6507,19 +6552,11 @@ namespace sol {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 				tracking.use(1);
-				if (lua_getmetatable(L, index) == 0) {
+				type t = type_of(L, index);
+				if (t == type::table || t == type::none || t == type::nil || t == type::userdata) {
 					return true;
 				}
-				type t = type_of(L, -1);
-				if (t == type::table || t == type::none || t == type::nil) {
-					lua_pop(L, 1);
-					return true;
-				}
-				if (t != type::userdata) {
-					lua_pop(L, 1);
-					handler(L, index, type::table, t);
-					return false;
-				}
+				handler(L, index, type::table, t, "value cannot not have a valid environment");
 				return true;
 			}
 		};
@@ -6539,7 +6576,7 @@ namespace sol {
 				}
 				if (t != type::userdata) {
 					lua_pop(L, 1);
-					handler(L, index, type::table, t);
+					handler(L, index, type::table, t, "value does not have a valid metatable");
 					return false;
 				}
 				return true;
@@ -6552,7 +6589,7 @@ namespace sol {
 			static bool check(types<U>, lua_State* L, type indextype, int index, Handler&& handler, record& tracking) {
 				tracking.use(1);
 				if (indextype != type::userdata) {
-					handler(L, index, type::userdata, indextype);
+					handler(L, index, type::userdata, indextype, "value is not a valid userdata");
 					return false;
 				}
 				if (meta::any<std::is_same<T, lightuserdata_value>, std::is_same<T, userdata_value>, std::is_same<T, userdata>, std::is_same<T, lightuserdata>>::value)
@@ -6582,7 +6619,7 @@ namespace sol {
 				}
 				if (!success) {
 					lua_pop(L, 1);
-					handler(L, index, type::userdata, indextype);
+					handler(L, index, type::userdata, indextype, "value is not a valid sol userdata of any kind");
 					return false;
 				}
 				lua_pop(L, 1);
@@ -6621,7 +6658,7 @@ namespace sol {
 				const type indextype = type_of(L, index);
 				tracking.use(1);
 				if (indextype != type::userdata) {
-					handler(L, index, type::userdata, indextype);
+					handler(L, index, type::userdata, indextype, "value is not a userdata");
 					return false;
 				}
 				if (lua_getmetatable(L, index) == 0) {
@@ -6634,12 +6671,12 @@ namespace sol {
 					detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(static_cast<void*>(pointerpointer + 1));
 					bool success = &detail::usertype_unique_alloc_destroy<T, X> == pdx;
 					if (!success) {
-						handler(L, index, type::userdata, indextype);
+						handler(L, index, type::userdata, indextype, "value is a userdata but is not the correct unique usertype");
 					}
 					return success;
 				}
 				lua_pop(L, 1);
-				handler(L, index, type::userdata, indextype);
+				handler(L, index, type::userdata, indextype, "unrecognized userdata (not pushed by sol?)");
 				return false;
 			}
 		};
@@ -6698,7 +6735,7 @@ namespace sol {
 					return true;
 				}
 				tracking.use(1);
-				handler(L, index, type::poly, type_of(L, index));
+				handler(L, index, type::poly, type_of(L, index), "value does not fit any type present in the variant");
 				return false;
 			}
 
@@ -7538,7 +7575,7 @@ namespace sol {
 				int isnum = 0;
 				const lua_Number value = lua_tonumberx(L, index, &isnum);
 				if (isnum != 0) {
-#if 1 // defined(SOL_CHECK_ARGUMENTS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
+#if defined(SOL_CHECK_ARGUMENTS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
 					const auto integer_value = llround(value);
 					if (static_cast<lua_Number>(integer_value) == value) {
 						tracking.use(1);
@@ -7551,7 +7588,7 @@ namespace sol {
 				}
 				const type t = type_of(L, index);
 				tracking.use(static_cast<int>(t != type::none));
-				handler(L, index, type::number, t);
+				handler(L, index, type::number, t, "not an integer");
 				return nullopt;
 			}
 		};
@@ -7565,7 +7602,7 @@ namespace sol {
 				if (isnum == 0) {
 					type t = type_of(L, index);
 					tracking.use(static_cast<int>(t != type::none));
-					handler(L, index, type::number, t);
+					handler(L, index, type::number, t, "not a valid enumeration value");
 					return nullopt;
 				}
 				tracking.use(1);
@@ -7582,7 +7619,7 @@ namespace sol {
 				if (isnum == 0) {
 					type t = type_of(L, index);
 					tracking.use(static_cast<int>(t != type::none));
-					handler(L, index, type::number, t);
+					handler(L, index, type::number, t, "not a valid floating point number");
 					return nullopt;
 				}
 				tracking.use(1);
@@ -7614,7 +7651,7 @@ namespace sol {
 				typedef std::variant_alternative_t<0, V> T;
 				// This should never be reached...
 				// please check your code and understand what you did to bring yourself here
-				handler(L, index, type::poly, type_of(L, index));
+				handler(L, index, type::poly, type_of(L, index), "this variant code should never be reached: if it has, you have done something so terribly wrong");
 				return nullopt;
 			}
 
@@ -7837,10 +7874,13 @@ namespace sol {
 #endif
 #if defined(SOL_CHECK_ARGUMENTS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
 				if (static_cast<T>(llround(static_cast<lua_Number>(value))) != value) {
-#ifndef SOL_NO_EXCEPTIONS
-					throw sol::error("The integer will be misrepresented in lua.");
+#ifdef SOL_NO_EXCEPTIONS
+					// Is this really worth it?
+					assert(false && "integer value will be misrepresented in lua");
+					lua_pushnumber(L, static_cast<lua_Number>(value));
+					return 1;
 #else
-					assert(false && "The integer will be misrepresented in lua.");
+					throw error(detail::direct_error, "integer value will be misrepresented in lua");
 #endif
 				}
 #endif
@@ -8910,7 +8950,8 @@ namespace sol {
 #ifndef _MSC_VER
 				static_assert(meta::all<meta::is_not_move_only<Args>...>::value, "One of the arguments being bound is a move-only type, and it is not being taken by reference: this will break your code. Please take a reference and std::move it manually if this was your intention.");
 #endif // This compiler make me so fucking sad
-				multi_check<checkargs, Args...>(L, start, type_panic);
+				argument_handler handler{};
+				multi_check<checkargs, Args...>(L, start, handler);
 				record tracking{};
 				return evaluator{}.eval(ta, tai, L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 			}
@@ -8920,7 +8961,8 @@ namespace sol {
 #ifndef _MSC_VER
 				static_assert(meta::all<meta::is_not_move_only<Args>...>::value, "One of the arguments being bound is a move-only type, and it is not being taken by reference: this will break your code. Please take a reference and std::move it manually if this was your intention.");
 #endif // This compiler make me so fucking sad
-				multi_check<checkargs, Args...>(L, start, type_panic);
+				argument_handler handler{};
+				multi_check<checkargs, Args...>(L, start, handler);
 				record tracking{};
 				evaluator{}.eval(ta, tai, L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 			}
@@ -11394,7 +11436,8 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_function<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
-				stack::check<basic_function>(lua_state(), -1, type_panic);
+				constructor_handler handler{};
+				stack::check<basic_function>(lua_state(), -1, handler);
 			}
 #endif // Safety
 		}
@@ -11408,13 +11451,15 @@ namespace sol {
 		basic_function(lua_State* L, T&& r) : basic_function(L, sol::ref_index(r.registry_index())) {}
 		basic_function(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<basic_function>(L, index, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_function>(L, index, handler);
 #endif // Safety
 		}
 		basic_function(lua_State* L, ref_index index) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
-			stack::check<basic_function>(L, -1, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_function>(L, -1, handler);
 #endif // Safety
 		}
 
@@ -11466,7 +11511,7 @@ namespace sol {
 		decltype(auto) tagged_get(types<T>) const {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!valid()) {
-				type_panic(L, index, type_of(L, index), type::none);
+				type_panic_c_str(L, index, type_of(L, index), type::none);
 			}
 #endif // Check Argument Safety
 			return stack::get<T>(L, index);
@@ -11482,7 +11527,7 @@ namespace sol {
 		error tagged_get(types<error>) const {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (valid()) {
-				type_panic(L, index, type_of(L, index), type::none);
+				type_panic_c_str(L, index, type_of(L, index), type::none);
 			}
 #endif // Check Argument Safety
 			return error(detail::direct_error, stack::get<std::string>(L, index));
@@ -11573,29 +11618,29 @@ namespace sol {
 		}
 
 		template <bool b, typename target_t = reference>
-		struct handler {
+		struct protected_handler {
 			typedef std::is_base_of<stack_reference, target_t> is_stack;
 			const target_t& target;
 			int stackindex;
 
-			handler(std::false_type, const target_t& target) : target(target), stackindex(0) {
+			protected_handler(std::false_type, const target_t& target) : target(target), stackindex(0) {
 				if (b) {
 					stackindex = lua_gettop(target.lua_state()) + 1;
 					target.push();
 				}
 			}
 
-			handler(std::true_type, const target_t& target) : target(target), stackindex(0) {
+			protected_handler(std::true_type, const target_t& target) : target(target), stackindex(0) {
 				if (b) {
 					stackindex = target.stack_index();
 				}
 			}
 
-			handler(const target_t& target) : handler(is_stack(), target) {}
+			protected_handler(const target_t& target) : protected_handler(is_stack(), target) {}
 
 			bool valid() const noexcept { return b; }
 
-			~handler() {
+			~protected_handler() {
 				if (!is_stack::value && stackindex != 0) {
 					lua_remove(target.lua_state(), stackindex);
 				}
@@ -11638,29 +11683,29 @@ namespace sol {
 
 	private:
 		template <bool b>
-		call_status luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount, detail::handler<b, handler_t>& h) const {
+		call_status luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount, detail::protected_handler<b, handler_t>& h) const {
 			return static_cast<call_status>(lua_pcallk(lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount), h.stackindex, 0, nullptr));
 		}
 
 		template<std::size_t... I, bool b, typename... Ret>
-		auto invoke(types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n, detail::handler<b, handler_t>& h) const {
+		auto invoke(types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n, detail::protected_handler<b, handler_t>& h) const {
 			luacall(n, sizeof...(Ret), h);
 			return stack::pop<std::tuple<Ret...>>(lua_state());
 		}
 
 		template<std::size_t I, bool b, typename Ret>
-		Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n, detail::handler<b, handler_t>& h) const {
+		Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n, detail::protected_handler<b, handler_t>& h) const {
 			luacall(n, 1, h);
 			return stack::pop<Ret>(lua_state());
 		}
 
 		template <std::size_t I, bool b>
-		void invoke(types<void>, std::index_sequence<I>, std::ptrdiff_t n, detail::handler<b, handler_t>& h) const {
+		void invoke(types<void>, std::index_sequence<I>, std::ptrdiff_t n, detail::protected_handler<b, handler_t>& h) const {
 			luacall(n, 0, h);
 		}
 
 		template <bool b>
-		protected_function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n, detail::handler<b, handler_t>& h) const {
+		protected_function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n, detail::protected_handler<b, handler_t>& h) const {
 			int stacksize = lua_gettop(lua_state());
 			int poststacksize = stacksize;
 			int firstreturn = 1;
@@ -11722,7 +11767,8 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_function<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
-				stack::check<basic_protected_function>(lua_state(), -1, type_panic);
+				constructor_handler handler{};
+				stack::check<basic_protected_function>(lua_state(), -1, handler);
 			}
 #endif // Safety
 		}
@@ -11757,26 +11803,30 @@ namespace sol {
 		basic_protected_function(lua_State* L, int index = -1) : basic_protected_function(L, index, get_default_handler(L)) {}
 		basic_protected_function(lua_State* L, int index, handler_t eh) : base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<basic_protected_function>(L, index, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_protected_function>(L, index, handler);
 #endif // Safety
 		}
 		basic_protected_function(lua_State* L, absolute_index index) : basic_protected_function(L, index, get_default_handler(L)) {}
 		basic_protected_function(lua_State* L, absolute_index index, handler_t eh) : base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<basic_protected_function>(L, index, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_protected_function>(L, index, handler);
 #endif // Safety
 		}
 		basic_protected_function(lua_State* L, raw_index index) : basic_protected_function(L, index, get_default_handler(L)) {}
 		basic_protected_function(lua_State* L, raw_index index, handler_t eh) : base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<basic_protected_function>(L, index, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_protected_function>(L, index, handler);
 #endif // Safety
 		}
 		basic_protected_function(lua_State* L, ref_index index) : basic_protected_function(L, index, get_default_handler(L)) {}
 		basic_protected_function(lua_State* L, ref_index index, handler_t eh) : base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
-			stack::check<basic_protected_function>(L, -1, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_protected_function>(L, -1, handler);
 #endif // Safety
 		}
 
@@ -11795,13 +11845,13 @@ namespace sol {
 			if (!aligned) {
 				// we do not expect the function to already be on the stack: push it
 				if (error_handler.valid()) {
-					detail::handler<true, handler_t> h(error_handler);
+					detail::protected_handler<true, handler_t> h(error_handler);
 					base_t::push();
 					int pushcount = stack::multi_push_reference(lua_state(), std::forward<Args>(args)...);
 					return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount, h);
 				}
 				else {
-					detail::handler<false, handler_t> h(error_handler);
+					detail::protected_handler<false, handler_t> h(error_handler);
 					base_t::push();
 					int pushcount = stack::multi_push_reference(lua_state(), std::forward<Args>(args)...);
 					return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount, h);
@@ -11817,7 +11867,7 @@ namespace sol {
 						// so, we need to remove the function at the top and then dump the handler out ourselves
 						base_t::push();
 					}
-					detail::handler<true, handler_t> h(error_handler);
+					detail::protected_handler<true, handler_t> h(error_handler);
 					if (!is_stack_handler::value) {
 						lua_replace(lua_state(), -3);
 						h.stackindex = lua_absindex(lua_state(), -2);
@@ -11826,7 +11876,7 @@ namespace sol {
 					return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount, h);
 				}
 				else {
-					detail::handler<false, handler_t> h(error_handler);
+					detail::protected_handler<false, handler_t> h(error_handler);
 					int pushcount = stack::multi_push_reference(lua_state(), std::forward<Args>(args)...);
 					return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount, h);
 				}
@@ -12215,13 +12265,15 @@ namespace sol {
 		basic_userdata(lua_State* L, T&& r) : basic_userdata(L, sol::ref_index(r.registry_index())) {}
 		basic_userdata(lua_State* L, int index = -1) : base_t(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<basic_userdata>(L, index, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_userdata>(L, index, handler);
 #endif // Safety
 		}
 		basic_userdata(lua_State* L, ref_index index) : base_t(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
-			stack::check<basic_userdata>(L, index, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_userdata>(L, index, handler);
 #endif // Safety
 		}
 	};
@@ -12252,13 +12304,15 @@ namespace sol {
 		basic_lightuserdata(lua_State* L, T&& r) : basic_lightuserdata(L, sol::ref_index(r.registry_index())) {}
 		basic_lightuserdata(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<basic_lightuserdata>(L, index, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_lightuserdata>(L, index, handler);
 #endif // Safety
 		}
 		basic_lightuserdata(lua_State* L, ref_index index) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
-			stack::check<basic_lightuserdata>(L, index, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_lightuserdata>(L, index, handler);
 #endif // Safety
 		}
 	};
@@ -16096,13 +16150,15 @@ namespace sol {
 		}
 		basic_table_core(lua_State* L, int index = -1) : basic_table_core(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<basic_table_core>(L, index, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_table_core>(L, index, handler);
 #endif // Safety
 		}
 		basic_table_core(lua_State* L, ref_index index) : basic_table_core(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
-			stack::check<basic_table_core>(L, -1, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_table_core>(L, -1, handler);
 #endif // Safety
 		}
 		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
@@ -16110,7 +16166,8 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_table<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
-				stack::check<basic_table_core>(base_t::lua_state(), -1, type_panic);
+				constructor_handler handler{};
+				stack::check<basic_table_core>(base_t::lua_state(), -1, handler);
 			}
 #endif // Safety
 		}
@@ -16449,25 +16506,29 @@ namespace sol {
 
 		basic_environment(env_t, const stack_reference& extraction_target) : base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<env_t>(this->lua_state(), -1, type_panic);
+			constructor_handler handler{};
+			stack::check<env_t>(this->lua_state(), -1, handler);
 #endif // Safety
 			lua_pop(this->lua_state(), 2);
 		}
 		basic_environment(env_t, const reference& extraction_target) : base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<env_t>(this->lua_state(), -1, type_panic);
+			constructor_handler handler{};
+			stack::check<env_t>(this->lua_state(), -1, handler);
 #endif // Safety
 			lua_pop(this->lua_state(), 2);
 		}
 		basic_environment(lua_State* L, int index = -1) : base_t(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<basic_environment>(L, index, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_environment>(L, index, handler);
 #endif // Safety
 		}
 		basic_environment(lua_State* L, ref_index index) : base_t(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
-			stack::check<basic_environment>(L, -1, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_environment>(L, -1, handler);
 #endif // Safety
 		}
 		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_environment>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
@@ -16475,7 +16536,8 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_environment<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
-				stack::check<basic_environment>(lua_state(), -1, type_panic);
+				constructor_handler handler{};
+				stack::check<basic_environment>(lua_state(), -1, handler);
 			}
 #endif // Safety
 		}
@@ -16607,7 +16669,7 @@ namespace sol {
 		decltype(auto) tagged_get(types<T>) const {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!valid()) {
-				type_panic(L, index, type_of(L, index), type::none);
+				type_panic_c_str(L, index, type_of(L, index), type::none, "");
 			}
 #endif // Check Argument Safety
 			return stack::get<T>(L, index);
@@ -16623,7 +16685,7 @@ namespace sol {
 		error tagged_get(types<error>) const {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (valid()) {
-				type_panic(L, index, type_of(L, index), type::none);
+				type_panic_c_str(L, index, type_of(L, index), type::none);
 			}
 #endif // Check Argument Safety
 			return error(detail::direct_error, stack::get<std::string>(L, index));
@@ -17104,6 +17166,15 @@ namespace sol {
 			return safe_script_file(filename, env, script_default_on_error, mode);
 		}
 
+#ifdef SOL_SAFE_FUNCTIONS
+		protected_function_result script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			return safe_script(code, chunkname, mode);
+		}
+
+		protected_function_result script_file(const std::string& filename, load_mode mode = load_mode::any) {
+			return safe_script_file(filename, mode);
+		}
+#else
 		function_result script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return unsafe_script(code, chunkname, mode);
 		}
@@ -17111,7 +17182,7 @@ namespace sol {
 		function_result script_file(const std::string& filename, load_mode mode = load_mode::any) {
 			return unsafe_script_file(filename, mode);
 		}
-
+#endif
 		load_result load(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			char basechunkname[17] = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
@@ -17475,7 +17546,7 @@ namespace sol {
 			optional<lua_thread_state> get(lua_State* L, int index, Handler&& handler, record& tracking) {
 				lua_thread_state lts{ lua_tothread(L, index) };
 				if (lts.L == nullptr) {
-					handler(L, index, type::thread, type_of(L, index));
+					handler(L, index, type::thread, type_of(L, index), "value does is not a valid thread type");
 					return nullopt;
 				}
 				tracking.use(1);
@@ -17628,13 +17699,15 @@ namespace sol {
 		coroutine(lua_State* L, T&& r) : coroutine(L, sol::ref_index(r.registry_index())) {}
 		coroutine(lua_State* L, int index = -1) : reference(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<coroutine>(L, index, type_panic);
+			constructor_handler handler{};
+			stack::check<coroutine>(L, index, handler);
 #endif // Safety
 		}
 		coroutine(lua_State* L, ref_index index) : reference(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
-			stack::check<coroutine>(L, -1, type_panic);
+			constructor_handler handler{};
+			stack::check<coroutine>(L, -1, handler);
 #endif // Safety
 		}
 
