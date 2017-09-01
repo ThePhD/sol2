@@ -1,5 +1,14 @@
-Please make sure that you understand and can know the following before you submit your issue! This will help us get back to you as soon as possible.
+The guidelines for reporting a bug are relatively simple and are as follows:
 
-- [ ] Specify what specifications you have (particularly: Compiler/IDE wtih Version, Build System, and any other relevant information (Objective-C++, etc...))
-- [ ] You have the compiler error / compiler output available, in the case of a compiler error. OR. You have the runtime error that occurs, in the case of a failed script (use `safe_script`/`safe_script_file` to have sol2 attempt to generate a backtrace for you).
-- [ ] You have the example code that generates the problem. If it's deeply embroiled in your library / framework / application and it is not reproducible, the best we can do for you is guess at solutions.
+1. Produce a simple, short, compilable test case that reproduces your problem.
+2. Make a descriptive title that summarises the bug as a whole.
+3. Explain the bug in as much detail as you can in the body of the issue. 
+4. Include Compiler/IDE, Build and Deployment System, Language (C++, Objective-C++).
+
+If you want to request a feature:
+
+2. Produce any relevant imaginary code that illustrates what you would like or desired behavior.
+1. Include a description and title of what you would like.
+3. Annotate and describe the behavior through comments, asserts or just a small write up.
+
+Thanks for helping sol!
