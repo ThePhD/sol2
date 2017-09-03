@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-03 07:07:21.540122 UTC
-// This header was generated with sol v2.18.2 (revision dd11514)
+// Generated 2017-09-03 13:52:23.734893 UTC
+// This header was generated with sol v2.18.2 (revision 1f64a7f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -13062,9 +13062,6 @@ namespace sol {
 
 		template <typename T>
 		using has_traits_find = meta::boolean<has_traits_find_test<T>::value>;
-
-		template <typename T>
-		using has_traits_insert = meta::boolean<has_traits_insert_test<T>::value>;
 
 		template <typename T>
 		using has_traits_insert = meta::boolean<has_traits_insert_test<T>::value>;

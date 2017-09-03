@@ -308,9 +308,6 @@ namespace sol {
 		using has_traits_insert = meta::boolean<has_traits_insert_test<T>::value>;
 
 		template <typename T>
-		using has_traits_insert = meta::boolean<has_traits_insert_test<T>::value>;
-
-		template <typename T>
 		using has_traits_erase = meta::boolean<has_traits_erase_test<T>::value>;
 
 		template <typename T>
