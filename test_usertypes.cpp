@@ -1764,3 +1764,34 @@ TEST_CASE("usertype/noexcept-methods", "make sure noexcept functinos and methods
 	REQUIRE(v1 == 0x61);
 	REQUIRE(v2 == 0x62);
 }
+
+TEST_CASE("usertype/basic type information", "check that we can query some basic type information") {
+	struct my_thing {};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_simple_usertype<my_thing>("my_thing");
+
+	lua.safe_script("obj = my_thing.new()");
+
+	lua.safe_script("assert(my_thing.__type.is(obj))");
+	lua.safe_script("assert(not my_thing.__type.is(1))");
+	lua.safe_script("assert(not my_thing.__type.is(\"not a thing\"))");
+	lua.safe_script("print(my_thing.__type.name)");
+
+	lua.safe_script("assert(obj.__type.is(obj))");
+	lua.safe_script("assert(not obj.__type.is(1))");
+	lua.safe_script("assert(not obj.__type.is(\"not a thing\"))");
+	lua.safe_script("print(obj.__type.name)");
+
+	lua.safe_script("assert(getmetatable(my_thing).__type.is(obj))");
+	lua.safe_script("assert(not getmetatable(my_thing).__type.is(1))");
+	lua.safe_script("assert(not getmetatable(my_thing).__type.is(\"not a thing\"))");
+	lua.safe_script("print(getmetatable(my_thing).__type.name)");
+
+	lua.safe_script("assert(getmetatable(obj).__type.is(obj))");
+	lua.safe_script("assert(not getmetatable(obj).__type.is(1))");
+	lua.safe_script("assert(not getmetatable(obj).__type.is(\"not a thing\"))");
+	lua.safe_script("print(getmetatable(obj).__type.name)");
+}

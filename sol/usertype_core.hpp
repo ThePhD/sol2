@@ -45,6 +45,11 @@ namespace sol {
 		};
 
 		template <typename T>
+		int is_check(lua_State* L) {
+			return stack::push(L, stack::check<T>(L, 1, &no_panic));
+		}
+
+		template <typename T>
 		inline int member_default_to_string(std::true_type, lua_State* L) {
 			decltype(auto) ts = stack::get<T>(L, 1).to_string();
 			return stack::push(L, std::forward<decltype(ts)>(ts));

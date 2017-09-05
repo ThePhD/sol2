@@ -379,7 +379,7 @@ namespace sol {
 	struct usertype_metatable<T, std::index_sequence<I...>, Tn...> : usertype_metatable_core, usertype_detail::registrar {
 		typedef std::make_index_sequence<sizeof...(I) * 2> indices;
 		typedef std::index_sequence<I...> half_indices;
-		typedef std::array<luaL_Reg, sizeof...(Tn) / 2 + 1 + 29> regs_t;
+		typedef std::array<luaL_Reg, sizeof...(Tn) / 2 + 1 + 31> regs_t;
 		typedef std::tuple<Tn...> RawTuple;
 		typedef std::tuple<clean_type_t<Tn> ...> Tuple;
 		template <std::size_t Idx>
@@ -394,7 +394,7 @@ namespace sol {
 		void* baseclasscheck;
 		void* baseclasscast;
 		bool secondarymeta;
-		std::array<bool, 29> properties;
+		std::array<bool, 30> properties;
 
 		template <std::size_t Idx, meta::enable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
 		lua_CFunction make_func() const {
@@ -676,6 +676,12 @@ namespace sol {
 				}
 				unique_table[lastreg - 1] = { value_table[lastreg - 1].name, detail::unique_destruct<T> };
 
+				lua_createtable(L, 0, 2);
+				stack_reference type_table(L, -1);
+
+				stack::set_field(L, "name", detail::demangle<T>(), type_table.stack_index());
+				stack::set_field(L, "is", &usertype_detail::is_check<T>, type_table.stack_index());
+
 				// Now use um
 				const bool& mustindex = umc.mustindex;
 				for (std::size_t i = 0; i < 3; ++i) {
@@ -699,6 +705,7 @@ namespace sol {
 					}
 					luaL_newmetatable(L, metakey);
 					stack_reference t(L, -1);
+					stack::set_field(L, meta_function::type, type_table, t.stack_index());
 					int upvalues = 0;
 					upvalues += stack::push(L, nullptr);
 					upvalues += stack::push(L, make_light(um));
@@ -735,6 +742,9 @@ namespace sol {
 						stack::set_field(L, meta_function::index, make_closure(umt_t::index_call, nullptr, make_light(um), make_light(umc)), metabehind.stack_index());
 						stack::set_field(L, meta_function::new_index, make_closure(umt_t::new_index_call, nullptr, make_light(um), make_light(umc)), metabehind.stack_index());
 					}
+					// type information needs to be present on the behind-tables too
+					stack::set_field(L, meta_function::type, type_table, metabehind.stack_index());
+					
 					stack::set_field(L, metatable_key, metabehind, t.stack_index());
 					metabehind.pop();
 					// We want to just leave the table
@@ -745,6 +755,7 @@ namespace sol {
 				// Now for the shim-table that actually gets assigned to the name
 				luaL_newmetatable(L, &usertype_traits<T>::user_metatable()[0]);
 				stack_reference t(L, -1);
+				stack::set_field(L, meta_function::type, type_table, t.stack_index());
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
 				upvalues += stack::push(L, make_light(um));
@@ -758,10 +769,13 @@ namespace sol {
 					
 					stack::set_field(L, meta_function::index, make_closure(umt_t::index_call, nullptr, make_light(um), make_light(umc), nullptr, usertype_detail::toplevel_magic), metabehind.stack_index());
 					stack::set_field(L, meta_function::new_index, make_closure(umt_t::new_index_call, nullptr, make_light(um), make_light(umc), nullptr, usertype_detail::toplevel_magic), metabehind.stack_index());
-					
 					stack::set_field(L, metatable_key, metabehind, t.stack_index());
+					// type information needs to be present on the behind-tables too
+					stack::set_field(L, meta_function::type, type_table, metabehind.stack_index());
 					metabehind.pop();
 				}
+
+				lua_remove(L, type_table.stack_index());
 
 				return 1;
 			}

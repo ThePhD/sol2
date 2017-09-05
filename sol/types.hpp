@@ -186,7 +186,7 @@ namespace sol {
 	struct no_metatable_t {};
 	const no_metatable_t no_metatable = {};
 
-	typedef std::remove_pointer_t<lua_CFunction> lua_r_CFunction;
+	typedef std::remove_pointer_t<lua_CFunction> lua_CFunction_ref;
 
 	template <typename T>
 	struct unique_usertype_traits {
@@ -617,13 +617,15 @@ namespace sol {
 		bitwise_or,
 		bitwise_xor,
 		pairs,
-		next
+		next,
+		type,
+		type_info,
 	};
 
 	typedef meta_function meta_method;
 
-	inline const std::array<std::string, 29>& meta_function_names() {
-		static const std::array<std::string, 29> names = { {
+	inline const std::array<std::string, 31>& meta_function_names() {
+		static const std::array<std::string, 31> names = { {
 				"new",
 				"__index",
 				"__newindex",
@@ -654,7 +656,9 @@ namespace sol {
 				"__bxor",
 
 				"__pairs",
-				"__next"
+				"__next",
+				"__type",
+				"__typeinfo"
 			} };
 		return names;
 	}

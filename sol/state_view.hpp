@@ -30,19 +30,33 @@
 
 namespace sol {
 	enum class lib : char {
+		// print, assert, and other base functions
 		base,
+		// require and other package functions
 		package,
+		// coroutine functions and utilities
 		coroutine,
+		// string library
 		string,
+		// functionality from the OS
 		os,
+		// all things math
 		math,
+		// the table manipulator and observer functions
 		table,
+		// the debug library
 		debug,
+		// the bit library: different based on which you're using
 		bit32,
+		// input/output library
 		io,
+		// LuaJIT only
 		ffi,
+		// LuaJIT only
 		jit,
+		// library for handling utf8: new to Lua
 		utf8,
+		// do not use
 		count
 	};
 

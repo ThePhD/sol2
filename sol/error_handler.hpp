@@ -64,9 +64,30 @@ namespace sol {
 		}
 	};
 
+	template <typename F = void>
 	struct argument_handler {
 		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
 			return type_panic_string(L, index, expected, actual, message + " (bad argument to variable or function call)");
+		}
+	};
+
+	template <typename R, typename... Args>
+	struct argument_handler<types<R, Args...>> {
+		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
+			std::string addendum = " (bad argument to type expecting '";
+			addendum += detail::demangle<R>();
+			addendum += "(";
+			int marker = 0;
+			auto action = [&addendum, &marker](const std::string& n) {
+				if (marker > 0) {
+					addendum += ", ";
+				}
+				addendum += n;
+				++marker;
+			}
+			(void)detail::swallow{ int(), (action(detail::demangle<Args>()), int())... };
+			addendum += ")')";
+			return type_panic_string(L, index, expected, actual, message + addendum);
 		}
 	};
 

@@ -880,7 +880,18 @@ namespace sol {
 				return std::visit(stack_detail::push_function(L), std::move(v));
 			}
 		};
-#endif
+#else
+		template <>
+		struct pusher<string_view> {
+			static int push(lua_State* L, const std::string_view& sv) {
+				return stack::push(L, sv.data(), sv.length());
+			}
+
+			static int push(lua_State* L, const std::string_view& sv, std::size_t len) {
+				return stack::push(L, sv.data(), len);
+			}
+		};
+#endif // C++17 Support
 	} // stack
 } // sol
 
