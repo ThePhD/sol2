@@ -55,7 +55,7 @@ members
 	:caption: function: call_lua
 	:name: stack-call-lua
 
-	template<bool check_args = stack_detail::default_check_arguments, typename Fx, typename... FxArgs>
+	template<bool check_args = stack_detail::default_check_arguments, bool clean_stack = true, typename Fx, typename... FxArgs>
 	inline int call_lua(lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs);
 
 This function is helpful for when you bind to a raw C function but need sol's abstractions to save you the agony of setting up arguments and know how `calling C functions works`_. The ``start`` parameter tells the function where to start pulling arguments from. The parameter ``fx``  is what's supposed to be called. Extra arguments are passed to the function directly. There are intermediate versions of this (``sol::stack::call_into_lua`` and similar) for more advanced users, but they are not documented as they are subject to change to improve performance or adjust the API accordingly in later iterations of sol2. Use the more advanced versions at your own peril.
@@ -97,7 +97,7 @@ Checks if the object at ``index`` is of type ``T``. If it is not, it will call t
 	template <typename T, typename Handler>
 	auto check_get( lua_State* L, int index, Handler&& handler, record& tracking )
 
-Retrieves the value of the object at ``index`` in the stack, but does so safely. It returns an ``optional<U>``, where ``U`` in this case is the return type deduced from ``stack::get<T>``. This allows a person to properly check if the type they're getting is what they actually want, and gracefully handle errors when working with the stack if they so choose to. You can define ``SOL_CHECK_ARGUMENTS`` to turn on additional :doc:`safety<../safety>`, in which ``stack::get`` will default to calling this version of the function with a handler of ``type_panic`` to strongly alert for errors and help you track bugs if you suspect something might be going wrong in your system.
+Retrieves the value of the object at ``index`` in the stack, but does so safely. It returns an ``optional<U>``, where ``U`` in this case is the return type deduced from ``stack::get<T>``. This allows a person to properly check if the type they're getting is what they actually want, and gracefully handle errors when working with the stack if they so choose to. You can define ``SOL_CHECK_ARGUMENTS`` to turn on additional :doc:`safety<../safety>`, in which ``stack::get`` will default to calling this version of the function with some variant on a handler of ``sol::type_panic_string`` to strongly alert for errors and help you track bugs if you suspect something might be going wrong in your system.
 
 .. code-block:: cpp
 	:caption: function: push
@@ -237,8 +237,9 @@ This is an SFINAE-friendly struct that is meant to expose static function ``push
 			// if the object in the Lua stack at index is a T, return true
 			if ( ... ) return true;
 			// otherwise, call the handler function,
-			// with the required 4 arguments, then return false
-			handler(L, index, expected, indextype);
+			// with the required 5 arguments, then return false
+			//
+			handler(L, index, expected, indextype, "optional message");
 			return false;
 		}
 	};

@@ -302,8 +302,8 @@ namespace sol {
 		};
 
 		template <bool is_index, bool is_variable, bool checked, int boost, bool clean_stack, typename C>
-		struct agnostic_lua_call_wrapper<lua_r_CFunction, is_index, is_variable, checked, boost, clean_stack, C> {
-			static int call(lua_State* L, lua_r_CFunction f) {
+		struct agnostic_lua_call_wrapper<lua_CFunction_ref, is_index, is_variable, checked, boost, clean_stack, C> {
+			static int call(lua_State* L, lua_CFunction_ref f) {
 				return f(L);
 			}
 		};

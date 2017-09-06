@@ -185,13 +185,15 @@ namespace sol {
 		}
 		basic_table_core(lua_State* L, int index = -1) : basic_table_core(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<basic_table_core>(L, index, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_table_core>(L, index, handler);
 #endif // Safety
 		}
 		basic_table_core(lua_State* L, ref_index index) : basic_table_core(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
-			stack::check<basic_table_core>(L, -1, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_table_core>(L, -1, handler);
 #endif // Safety
 		}
 		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
@@ -199,7 +201,8 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_table<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
-				stack::check<basic_table_core>(base_t::lua_state(), -1, type_panic);
+				constructor_handler handler{};
+				stack::check<basic_table_core>(base_t::lua_state(), -1, handler);
 			}
 #endif // Safety
 		}

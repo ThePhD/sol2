@@ -226,10 +226,13 @@ namespace sol {
 #endif
 #if defined(SOL_CHECK_ARGUMENTS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
 				if (static_cast<T>(llround(static_cast<lua_Number>(value))) != value) {
-#ifndef SOL_NO_EXCEPTIONS
-					throw sol::error("The integer will be misrepresented in lua.");
+#ifdef SOL_NO_EXCEPTIONS
+					// Is this really worth it?
+					assert(false && "integer value will be misrepresented in lua");
+					lua_pushnumber(L, static_cast<lua_Number>(value));
+					return 1;
 #else
-					assert(false && "The integer will be misrepresented in lua.");
+					throw error(detail::direct_error, "integer value will be misrepresented in lua");
 #endif
 				}
 #endif
@@ -564,6 +567,17 @@ namespace sol {
 			}
 		};
 
+		template <>
+		struct pusher<string_view> {
+			static int push(lua_State* L, const string_view& sv) {
+				return stack::push(L, sv.data(), sv.length());
+			}
+
+			static int push(lua_State* L, const string_view& sv, std::size_t n) {
+				return stack::push(L, sv.data(), n);
+			}
+		};
+
 		template<>
 		struct pusher<meta_function> {
 			static int push(lua_State* L, meta_function m) {
@@ -753,6 +767,39 @@ namespace sol {
 				return stack::push(L, u32str.data(), u32str.data() + sz);
 			}
 		};
+
+		template <>
+		struct pusher<wstring_view> {
+			static int push(lua_State* L, const wstring_view& sv) {
+				return stack::push(L, sv.data(), sv.length());
+			}
+
+			static int push(lua_State* L, const wstring_view& sv, std::size_t n) {
+				return stack::push(L, sv.data(), n);
+			}
+		};
+
+		template <>
+		struct pusher<u16string_view> {
+			static int push(lua_State* L, const u16string_view& sv) {
+				return stack::push(L, sv.data(), sv.length());
+			}
+
+			static int push(lua_State* L, const u16string_view& sv, std::size_t n) {
+				return stack::push(L, sv.data(), n);
+			}
+		};
+
+		template <>
+		struct pusher<u32string_view> {
+			static int push(lua_State* L, const u32string_view& sv) {
+				return stack::push(L, sv.data(), sv.length());
+			}
+
+			static int push(lua_State* L, const u32string_view& sv, std::size_t n) {
+				return stack::push(L, sv.data(), n);
+			}
+		};
 #endif // codecvt Header Support
 
 		template<typename... Args>
@@ -823,35 +870,6 @@ namespace sol {
 		};
 
 #ifdef SOL_CXX17_FEATURES
-		template <>
-		struct pusher<std::string_view> {
-			static int push(lua_State* L, const std::string_view& sv) {
-				return stack::push(L, sv.data(), sv.length());
-			}
-		};
-#ifdef SOL_CODECVT_SUPPORT
-		template <>
-		struct pusher<std::wstring_view> {
-			static int push(lua_State* L, const std::wstring_view& sv) {
-				return stack::push(L, sv.data(), sv.length());
-			}
-		};
-
-		template <>
-		struct pusher<std::u16string_view> {
-			static int push(lua_State* L, const std::u16string_view& sv) {
-				return stack::push(L, sv.data(), sv.length());
-			}
-		};
-
-		template <>
-		struct pusher<std::u32string_view> {
-			static int push(lua_State* L, const std::u32string_view& sv) {
-				return stack::push(L, sv.data(), sv.length());
-			}
-		};
-#endif // codecvt header support
-
 		namespace stack_detail {
 
 			struct push_function {
@@ -877,7 +895,9 @@ namespace sol {
 				return std::visit(stack_detail::push_function(L), std::move(v));
 			}
 		};
-#endif
+#endif // C++17 Support
+
+
 	} // stack
 } // sol
 

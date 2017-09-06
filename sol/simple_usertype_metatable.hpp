@@ -65,7 +65,7 @@ namespace sol {
 					}
 				}
 			}
-			string_detail::string_shim accessor = stack::get<string_detail::string_shim>(L, keyidx);
+			string_view accessor = stack::get<string_view>(L, keyidx);
 			std::string accessorkey = accessor.data();
 			auto vit = variables.find(accessorkey);
 			if (vit != variables.cend()) {
@@ -184,7 +184,7 @@ namespace sol {
 		void* baseclasscast;
 		bool mustindex;
 		bool secondarymeta;
-		std::array<bool, 29> properties;
+		std::array<bool, 31> properties;
 
 		template <typename N>
 		void insert(N&& n, object&& o) {
@@ -415,6 +415,13 @@ namespace sol {
 				auto& properties = umx.properties;
 				auto sic = hasindex ? &usertype_detail::simple_index_call<T, true> : &usertype_detail::simple_index_call<T, false>;
 				auto snic = hasnewindex ? &usertype_detail::simple_new_index_call<T, true> : &usertype_detail::simple_new_index_call<T, false>;
+
+				lua_createtable(L, 0, 2);
+				stack_reference type_table(L, -1);
+
+				stack::set_field(L, "name", detail::demangle<T>(), type_table.stack_index());
+				stack::set_field(L, "is", &usertype_detail::is_check<T>, type_table.stack_index());
+
 				auto register_kvp = [&](std::size_t meta_index, stack_reference& t, const std::string& first, object& second) {
 					meta_function mf = meta_function::construct;
 					for (std::size_t j = 1; j < properties.size(); ++j) {
@@ -469,12 +476,14 @@ namespace sol {
 					}
 					luaL_newmetatable(L, metakey);
 					stack_reference t(L, -1);
+					stack::set_field(L, meta_function::type, type_table, t.stack_index());
+
 					for (auto& kvp : varmap.functions) {
 						auto& first = std::get<0>(kvp);
 						auto& second = std::get<1>(kvp);
 						register_kvp(i, t, first, second);
 					}
-					luaL_Reg opregs[32]{};
+					luaL_Reg opregs[34]{};
 					int opregsindex = 0;
 					auto prop_fx = [&](meta_function mf) { return !properties[static_cast<int>(mf)]; };
 					usertype_detail::insert_default_registrations<T>(opregs, opregsindex, prop_fx);
@@ -514,6 +523,7 @@ namespace sol {
 					// for call constructor purposes and such
 					lua_createtable(L, 0, 2 * static_cast<int>(umx.secondarymeta) + static_cast<int>(umx.callconstructfunc.valid()));
 					stack_reference metabehind(L, -1);
+					stack::set_field(L, meta_function::type, type_table, metabehind.stack_index());
 					if (umx.callconstructfunc.valid()) {
 						stack::set_field(L, sol::meta_function::call_function, umx.callconstructfunc, metabehind.stack_index());
 					}
@@ -538,6 +548,8 @@ namespace sol {
 				// Now for the shim-table that actually gets pushed
 				luaL_newmetatable(L, &usertype_traits<T>::user_metatable()[0]);
 				stack_reference t(L, -1);
+				stack::set_field(L, meta_function::type, type_table, t.stack_index());
+				
 				for (auto& kvp : varmap.functions) {
 					auto& first = std::get<0>(kvp);
 					auto& second = std::get<1>(kvp);
@@ -546,6 +558,7 @@ namespace sol {
 				{
 					lua_createtable(L, 0, 2 + static_cast<int>(umx.callconstructfunc.valid()));
 					stack_reference metabehind(L, -1);
+					stack::set_field(L, meta_function::type, type_table, metabehind.stack_index());
 					if (umx.callconstructfunc.valid()) {
 						stack::set_field(L, sol::meta_function::call_function, umx.callconstructfunc, metabehind.stack_index());
 					}
@@ -569,6 +582,8 @@ namespace sol {
 					stack::set_field(L, metatable_key, metabehind, t.stack_index());
 					metabehind.pop();
 				}
+
+				lua_remove(L, type_table.stack_index());
 
 				// Don't pop the table when we're done;
 				// return it

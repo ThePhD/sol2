@@ -28,7 +28,7 @@
 #include "forward.hpp"
 #include "forward_detail.hpp"
 #include "traits.hpp"
-#include "string_shim.hpp"
+#include "string_view.hpp"
 #include "raii.hpp"
 #include "filters.hpp"
 
@@ -186,7 +186,7 @@ namespace sol {
 	struct no_metatable_t {};
 	const no_metatable_t no_metatable = {};
 
-	typedef std::remove_pointer_t<lua_CFunction> lua_r_CFunction;
+	typedef std::remove_pointer_t<lua_CFunction> lua_CFunction_ref;
 
 	template <typename T>
 	struct unique_usertype_traits {
@@ -617,13 +617,15 @@ namespace sol {
 		bitwise_or,
 		bitwise_xor,
 		pairs,
-		next
+		next,
+		type,
+		type_info,
 	};
 
 	typedef meta_function meta_method;
 
-	inline const std::array<std::string, 29>& meta_function_names() {
-		static const std::array<std::string, 29> names = { {
+	inline const std::array<std::string, 31>& meta_function_names() {
+		static const std::array<std::string, 31> names = { {
 				"new",
 				"__index",
 				"__newindex",
@@ -654,7 +656,9 @@ namespace sol {
 				"__bxor",
 
 				"__pairs",
-				"__next"
+				"__next",
+				"__type",
+				"__typeinfo"
 			} };
 		return names;
 	}
@@ -665,37 +669,6 @@ namespace sol {
 
 	inline type type_of(lua_State* L, int index) {
 		return static_cast<type>(lua_type(L, index));
-	}
-
-	inline int type_panic(lua_State* L, int index, type expected, type actual) noexcept(false) {
-		return luaL_error(L, "stack index %d, expected %s, received %s", index,
-			expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected)),
-			actual == type::poly ? "anything" : lua_typename(L, static_cast<int>(actual))
-		);
-	}
-
-	// Specify this function as the handler for lua::check if you know there's nothing wrong
-	inline int no_panic(lua_State*, int, type, type) noexcept {
-		return 0;
-	}
-
-	inline void type_error(lua_State* L, int expected, int actual) noexcept(false) {
-		luaL_error(L, "expected %s, received %s", lua_typename(L, expected), lua_typename(L, actual));
-	}
-
-	inline void type_error(lua_State* L, type expected, type actual) noexcept(false) {
-		type_error(L, static_cast<int>(expected), static_cast<int>(actual));
-	}
-
-	inline void type_assert(lua_State* L, int index, type expected, type actual) noexcept(false) {
-		if (expected != type::poly && expected != actual) {
-			type_panic(L, index, expected, actual);
-		}
-	}
-
-	inline void type_assert(lua_State* L, int index, type expected) {
-		type actual = type_of(L, index);
-		type_assert(L, index, expected, actual);
 	}
 
 	inline std::string type_name(lua_State* L, type t) {
@@ -917,24 +890,21 @@ namespace sol {
 		template <>
 		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
 
+		template <>
+		struct lua_type_of<string_view> : std::integral_constant<type, type::string> {};
+
+		template <>
+		struct lua_type_of<wstring_view> : std::integral_constant<type, type::string> {};
+
+		template <>
+		struct lua_type_of<u16string_view> : std::integral_constant<type, type::string> {};
+
+		template <>
+		struct lua_type_of<u32string_view> : std::integral_constant<type, type::string> {};
+
 #ifdef SOL_CXX17_FEATURES
-		template <>
-		struct lua_type_of<std::string_view> : std::integral_constant<type, type::string> {};
-
-		template <>
-		struct lua_type_of<std::wstring_view> : std::integral_constant<type, type::string> {};
-
-		template <>
-		struct lua_type_of<std::u16string_view> : std::integral_constant<type, type::string> {};
-
-		template <>
-		struct lua_type_of<std::u32string_view> : std::integral_constant<type, type::string> {};
-
 		template <typename... Tn>
 		struct lua_type_of<std::variant<Tn...>> : std::integral_constant<type, type::poly> {};
-#else
-		template <>
-		struct lua_type_of<string_detail::string_shim> : std::integral_constant<type, type::string> {};
 #endif // C++ 17 (or not) features
 		
 		template <typename T>

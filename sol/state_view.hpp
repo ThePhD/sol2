@@ -30,19 +30,33 @@
 
 namespace sol {
 	enum class lib : char {
+		// print, assert, and other base functions
 		base,
+		// require and other package functions
 		package,
+		// coroutine functions and utilities
 		coroutine,
+		// string library
 		string,
+		// functionality from the OS
 		os,
+		// all things math
 		math,
+		// the table manipulator and observer functions
 		table,
+		// the debug library
 		debug,
+		// the bit library: different based on which you're using
 		bit32,
+		// input/output library
 		io,
+		// LuaJIT only
 		ffi,
+		// LuaJIT only
 		jit,
+		// library for handling utf8: new to Lua
 		utf8,
+		// do not use
 		count
 	};
 
@@ -435,6 +449,15 @@ namespace sol {
 			return safe_script_file(filename, env, script_default_on_error, mode);
 		}
 
+#ifdef SOL_SAFE_FUNCTIONS
+		protected_function_result script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			return safe_script(code, chunkname, mode);
+		}
+
+		protected_function_result script_file(const std::string& filename, load_mode mode = load_mode::any) {
+			return safe_script_file(filename, mode);
+		}
+#else
 		function_result script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return unsafe_script(code, chunkname, mode);
 		}
@@ -442,7 +465,7 @@ namespace sol {
 		function_result script_file(const std::string& filename, load_mode mode = load_mode::any) {
 			return unsafe_script_file(filename, mode);
 		}
-
+#endif
 		load_result load(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			char basechunkname[17] = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);

@@ -151,7 +151,7 @@ else:
 
 tests_inputs = []
 tests_object_files = []
-for f in glob.glob('test*.cpp'):
+for f in glob.glob('tests/test*.cpp'):
     obj = object_file(f)
     tests_inputs.append(f)
     tests_object_files.append(obj)

@@ -1164,82 +1164,94 @@ TEST_CASE("functions/pointer nullptr + nil", "ensure specific semantics for hand
 		REQUIRE_FALSE(result.valid());
 	}
 	SECTION("throw ref") {
-		REQUIRE_THROWS([&]() {
+		{
 			sol::state lua;
 			lua["v1"] = sptr;
-			nil_test& v1 = lua["v1"];
-			(void)(&v1 == sptr.get());
-		}());
-		REQUIRE_THROWS([&]() {
+			sol::object o = lua["v1"];
+			bool isp = o.is<nil_test&>();
+			REQUIRE_FALSE(isp);
+		}
+		{
 			sol::state lua;
 			lua["v2"] = std::unique_ptr<nil_test>();
-			nil_test& v2 = lua["v2"];
-			(void)(&v2 == uptr.get());
-		}());
-		REQUIRE_THROWS([&]() {
+			sol::object o = lua["v2"];
+			bool isp = o.is<nil_test&>();
+			REQUIRE_FALSE(isp);
+		}
+		{
 			sol::state lua;
 			lua["v3"] = rptr;
-			nil_test& v3 = lua["v3"];
-			(void)(&v3 == rptr);
-		}());
-		REQUIRE_THROWS([&]() {
+			sol::object o = lua["v3"];
+			bool isp = o.is<nil_test&>();
+			REQUIRE_FALSE(isp);
+		}
+		{
 			sol::state lua;
 			lua["v4"] = vptr;
-			nil_test& v4 = lua["v4"];
-			(void)(&v4 == vptr);
-		}());
+			sol::object o = lua["v4"];
+			bool isp = o.is<nil_test&>();
+			REQUIRE_FALSE(isp);
+		}
 	}
 	SECTION("throw unique") {
-		REQUIRE_THROWS([&]() {
+		{
 			sol::state lua;
 			lua["v1"] = sptr;
-			std::unique_ptr<nil_test>& v1 = lua["v1"];
-			(void)(v1.get() == sptr.get());
-		}());
-		REQUIRE_THROWS([&]() {
+			sol::object o = lua["v1"];
+			bool isp = o.is<std::unique_ptr<nil_test>>();
+			REQUIRE_FALSE(isp);
+		}
+		{
 			sol::state lua;
 			lua["v2"] = std::unique_ptr<nil_test>();
-			std::unique_ptr<nil_test>& v2 = lua["v2"];
-			(void)(v2.get() == uptr.get());
-		}());
-		REQUIRE_THROWS([&]() {
+			sol::object o = lua["v2"];
+			bool isp = o.is<std::unique_ptr<nil_test>>();
+			REQUIRE_FALSE(isp);
+		}
+		{
 			sol::state lua;
 			lua["v3"] = rptr;
-			std::unique_ptr<nil_test>& v3 = lua["v3"];
-			(void)(v3.get() == rptr);
-		}());
-		REQUIRE_THROWS([&]() {
+			sol::object o = lua["v3"];
+			bool isp = o.is<std::unique_ptr<nil_test>>();
+			REQUIRE_FALSE(isp);
+		};
+		{
 			sol::state lua;
 			lua["v4"] = vptr;
-			std::unique_ptr<nil_test>& v4 = lua["v4"];
-			(void)(v4.get() == vptr);
-		}());
+			sol::object o = lua["v4"];
+			bool isp = o.is<std::unique_ptr<nil_test>>();
+			REQUIRE_FALSE(isp);
+		};
 	}
 	SECTION("throw shared") {
-		REQUIRE_THROWS([&]() {
+		{
 			sol::state lua;
 			lua["v1"] = sptr;
-			std::shared_ptr<nil_test>& v1 = lua["v1"];
-			(void)(v1.get() == sptr.get());
-		}());
-		REQUIRE_THROWS([&]() {
+			sol::object o = lua["v1"];
+			bool isp = o.is<std::shared_ptr<nil_test>>();
+			REQUIRE_FALSE(isp);
+		}
+		{
 			sol::state lua;
 			lua["v2"] = std::unique_ptr<nil_test>();
-			std::shared_ptr<nil_test>& v2 = lua["v2"];
-			(void)(v2.get() == uptr.get());
-		}());
-		REQUIRE_THROWS([&]() {
+			sol::object o = lua["v2"];
+			bool isp = o.is<std::shared_ptr<nil_test>>();
+			REQUIRE_FALSE(isp);
+		}
+		{
 			sol::state lua;
 			lua["v3"] = rptr;
-			std::shared_ptr<nil_test>& v3 = lua["v3"];
-			(void)(v3.get() == rptr);
-		}());
-		REQUIRE_THROWS([&]() {
+			sol::object o = lua["v3"];
+			bool isp = o.is<std::shared_ptr<nil_test>>();
+			REQUIRE_FALSE(isp);
+		}
+		{
 			sol::state lua;
 			lua["v4"] = vptr;
-			std::shared_ptr<nil_test>& v4 = lua["v4"];
-			(void)(v4.get() == vptr);
-		}());
+			sol::object o = lua["v4"];
+			bool isp = o.is<std::shared_ptr<nil_test>>();
+			REQUIRE_FALSE(isp);
+		}
 	}
 }
 

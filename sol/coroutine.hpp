@@ -84,13 +84,15 @@ namespace sol {
 		coroutine(lua_State* L, T&& r) : coroutine(L, sol::ref_index(r.registry_index())) {}
 		coroutine(lua_State* L, int index = -1) : reference(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<coroutine>(L, index, type_panic);
+			constructor_handler handler{};
+			stack::check<coroutine>(L, index, handler);
 #endif // Safety
 		}
 		coroutine(lua_State* L, ref_index index) : reference(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
-			stack::check<coroutine>(L, -1, type_panic);
+			constructor_handler handler{};
+			stack::check<coroutine>(L, -1, handler);
 #endif // Safety
 		}
 

@@ -115,8 +115,23 @@ TEST_CASE("object/string-pushers", "test some basic string pushers with in_place
 
 	sol::object ocs(lua, sol::in_place, "bark\0bark", 9);
 	sol::object os(lua, sol::in_place_type<std::string>, std::string("bark\0bark", 9), 8);
-	bool test1 = os.as<std::string>() == std::string("bark\0bar", 8);
-	bool test2 = ocs.as<std::string>() == std::string("bark\0bark", 9);
+	sol::object osv(lua, sol::in_place_type<sol::string_view>, sol::string_view("woofwoof", 8), 8);
+	bool test1 = ocs.as<std::string>() == std::string("bark\0bark", 9);
+	bool test2 = os.as<std::string>() == std::string("bark\0bar", 8);
+	bool test3 = osv.as<std::string>() == std::string("woofwoof", 8);
+	REQUIRE(ocs.get_type() == sol::type::string);
+	REQUIRE(ocs.is<std::string>());
+	REQUIRE(ocs.is<sol::string_view>());
+
+	REQUIRE(os.get_type() == sol::type::string);
+	REQUIRE(os.is<std::string>());
+	REQUIRE(os.is<sol::string_view>());
+
+	REQUIRE(osv.get_type() == sol::type::string);
+	REQUIRE(osv.is<std::string>());
+	REQUIRE(osv.is<sol::string_view>());
+
 	REQUIRE(test1);
 	REQUIRE(test2);
+	REQUIRE(test3);
 }

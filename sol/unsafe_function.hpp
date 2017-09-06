@@ -71,7 +71,8 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_function<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
-				stack::check<basic_function>(lua_state(), -1, type_panic);
+				constructor_handler handler{};
+				stack::check<basic_function>(lua_state(), -1, handler);
 			}
 #endif // Safety
 		}
@@ -85,13 +86,15 @@ namespace sol {
 		basic_function(lua_State* L, T&& r) : basic_function(L, sol::ref_index(r.registry_index())) {}
 		basic_function(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-			stack::check<basic_function>(L, index, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_function>(L, index, handler);
 #endif // Safety
 		}
 		basic_function(lua_State* L, ref_index index) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
-			stack::check<basic_function>(L, -1, type_panic);
+			constructor_handler handler{};
+			stack::check<basic_function>(L, -1, handler);
 #endif // Safety
 		}
 
