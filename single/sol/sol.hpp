@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-06 03:05:33.019474 UTC
-// This header was generated with sol v2.18.2 (revision fc91147)
+// Generated 2017-09-06 20:49:28.612590 UTC
+// This header was generated with sol v2.18.2 (revision fbdc5d9)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4527,6 +4527,7 @@ namespace sol {
 		bitwise_or,
 		bitwise_xor,
 		pairs,
+		ipairs,
 		next,
 		type,
 		type_info,
@@ -4534,8 +4535,8 @@ namespace sol {
 
 	typedef meta_function meta_method;
 
-	inline const std::array<std::string, 31>& meta_function_names() {
-		static const std::array<std::string, 31> names = { {
+	inline const std::array<std::string, 32>& meta_function_names() {
+		static const std::array<std::string, 32> names = { {
 				"new",
 				"__index",
 				"__newindex",
@@ -4566,6 +4567,7 @@ namespace sol {
 				"__bxor",
 
 				"__pairs",
+				"__ipairs",
 				"__next",
 				"__type",
 				"__typeinfo"
@@ -8910,6 +8912,8 @@ namespace sol {
 
 namespace sol {
 	namespace detail {
+		using typical_chunk_name_t = char[32];
+
 		inline const std::string& default_chunk_name() {
 			static const std::string name = "";
 			return name;
@@ -9085,7 +9089,7 @@ namespace sol {
 		}
 
 		inline void script(lua_State* L, const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			char basechunkname[17] = {};
+			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
 			if (luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str()) || lua_pcall(L, 0, LUA_MULTRET, 0)) {
 				lua_error(L);
@@ -13043,6 +13047,19 @@ namespace sol {
 		};
 
 		template <typename T>
+		struct has_traits_ipairs_test {
+		private:
+			typedef std::array<char, 1> one;
+			typedef std::array<char, 2> two;
+
+			template <typename C> static one test(decltype(&C::ipairs));
+			template <typename C> static two test(...);
+
+		public:
+			static const bool value = sizeof(test<T>(0)) == sizeof(char);
+		};
+
+		template <typename T>
 		struct has_traits_add_test {
 		private:
 			typedef std::array<char, 1> one;
@@ -13084,6 +13101,9 @@ namespace sol {
 
 		template <typename T>
 		using has_traits_pairs = meta::boolean<has_traits_pairs_test<T>::value>;
+
+		template <typename T>
+		using has_traits_ipairs = meta::boolean<has_traits_ipairs_test<T>::value>;
 
 		template <typename T>
 		using has_traits_add = meta::boolean<has_traits_add_test<T>::value>;
@@ -13201,6 +13221,10 @@ namespace sol {
 				return luaL_error(L, "sol: cannot call '__pairs' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 			}
 
+			static int ipairs(lua_State* L) {
+				return luaL_error(L, "sol: cannot call '__ipairs' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
+			}
+
 			static iterator begin(lua_State* L, T&) {
 				luaL_error(L, "sol: cannot call 'being' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 				return lua_nil;
@@ -13253,8 +13277,9 @@ namespace sol {
 			struct iter {
 				T& source;
 				iterator it;
+				std::size_t i;
 
-				iter(T& source, iterator it) : source(source), it(std::move(it)) {}
+				iter(T& source, iterator it) : source(source), it(std::move(it)), i(0) {}
 			};
 
 			static auto& get_src(lua_State* L) {
@@ -13735,6 +13760,7 @@ namespace sol {
 				erase_has(has_erase<T>(), L, self, key);
 			}
 
+			template <bool ip>
 			static int next_associative(std::true_type, lua_State* L) {
 				iter& i = stack::get<user<iter>>(L, 1);
 				auto& source = i.source;
@@ -13743,20 +13769,28 @@ namespace sol {
 					return 0;
 				}
 				int p;
-				p = stack::push_reference(L, it->first);
+				if (ip) {
+					p = stack::push_reference(L, it->first);
+				}
+				else {
+					++i.i;
+					p = stack::push_reference(L, i.i);
+				}
 				p += stack::stack_detail::push_reference<push_type>(L, detail::deref(it->second));
 				std::advance(it, 1);
 				return p;
 			}
 
+			template <bool ip>
 			static int pairs_associative(std::true_type, lua_State* L) {
 				auto& src = get_src(L);
-				stack::push(L, next);
+				stack::push(L, next<ip>);
 				stack::push<user<iter>>(L, src, deferred_traits::begin(L, src));
 				stack::push(L, sol::lua_nil);
 				return 3;
 			}
 
+			template <bool>
 			static int next_associative(std::false_type, lua_State* L) {
 				iter& i = stack::get<user<iter>>(L, 1);
 				auto& source = i.source;
@@ -13772,16 +13806,18 @@ namespace sol {
 				return p;
 			}
 
+			template <bool ip>
 			static int pairs_associative(std::false_type, lua_State* L) {
 				auto& src = get_src(L);
-				stack::push(L, next);
+				stack::push(L, next<ip>);
 				stack::push<user<iter>>(L, src, deferred_traits::begin(L, src));
 				stack::push(L, 0);
 				return 3;
 			}
 
+			template <bool ip>
 			static int next(lua_State* L) {
-				return next_associative(is_associative(), L);
+				return next_associative<ip>(is_associative(), L);
 			}
 
 		public:
@@ -13861,7 +13897,11 @@ namespace sol {
 			}
 
 			static int pairs(lua_State* L) {
-				return pairs_associative(is_associative(), L);
+				return pairs_associative<false>(is_associative(), L);
+			}
+
+			static int ipairs(lua_State* L) {
+				return pairs_associative<true>(is_associative(), L);
 			}
 		};
 
@@ -13993,6 +14033,10 @@ namespace sol {
 				return 3;
 			}
 
+			static int ipairs(lua_State* L) {
+				return pairs(L);
+			}
+
 			static iterator begin(lua_State*, T& self) {
 				return std::addressof(self[0]);
 			}
@@ -14098,6 +14142,18 @@ namespace sol {
 
 		static int real_pairs_call(lua_State* L) {
 			return real_pairs_traits(container_detail::has_traits_pairs<traits>(), L);
+		}
+
+		static int real_ipairs_traits(std::true_type, lua_State* L) {
+			return traits::ipairs(L);
+		}
+
+		static int real_ipairs_traits(std::false_type, lua_State* L) {
+			return default_traits::ipairs(L);
+		}
+
+		static int real_ipairs_call(lua_State* L) {
+			return real_ipairs_traits(container_detail::has_traits_ipairs<traits>(), L);
 		}
 
 		static int real_size_traits(std::true_type, lua_State* L) {
@@ -14216,6 +14272,10 @@ namespace sol {
 			return detail::typed_static_trampoline<decltype(&real_pairs_call), (&real_pairs_call)>(L);
 		}
 
+		static int ipairs_call(lua_State*L) {
+			return detail::typed_static_trampoline<decltype(&real_ipairs_call), (&real_ipairs_call)>(L);
+		}
+
 		static int get_call(lua_State*L) {
 			return detail::typed_static_trampoline<decltype(&real_get_call), (&real_get_call)>(L);
 		}
@@ -14249,7 +14309,7 @@ namespace sol {
 					static const char* metakey = is_shim ? &usertype_traits<as_container_t<std::remove_pointer_t<T>>>::metatable()[0] : &usertype_traits<T>::metatable()[0];
 					static const std::array<luaL_Reg, 16> reg = { {
 						{ "__pairs", &meta_cumt::pairs_call },
-						{ "__ipairs", &meta_cumt::pairs_call },
+						{ "__ipairs", &meta_cumt::ipairs_call },
 						{ "__len", &meta_cumt::length_call },
 						{ "__index", &meta_cumt::index_call },
 						{ "__newindex", &meta_cumt::new_index_call },
@@ -14933,7 +14993,7 @@ namespace sol {
 		void* baseclasscheck;
 		void* baseclasscast;
 		bool secondarymeta;
-		std::array<bool, 31> properties;
+		std::array<bool, 32> properties;
 
 		template <std::size_t Idx, meta::enable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
 		lua_CFunction make_func() const {
@@ -15484,7 +15544,7 @@ namespace sol {
 		void* baseclasscast;
 		bool mustindex;
 		bool secondarymeta;
-		std::array<bool, 31> properties;
+		std::array<bool, 32> properties;
 
 		template <typename N>
 		void insert(N&& n, object&& o) {
@@ -16109,85 +16169,85 @@ namespace sol {
 			}
 		}
 
-		template<typename Ret0, typename Ret1, typename... Ret, std::size_t... I, typename Keys>
+		template<bool raw, typename Ret0, typename Ret1, typename... Ret, std::size_t... I, typename Keys>
 		auto tuple_get(types<Ret0, Ret1, Ret...>, std::index_sequence<0, 1, I...>, Keys&& keys) const
 			-> decltype(stack::pop<std::tuple<Ret0, Ret1, Ret...>>(nullptr)) {
 			typedef decltype(stack::pop<std::tuple<Ret0, Ret1, Ret...>>(nullptr)) Tup;
 			return Tup(
-				traverse_get_optional<top_level, Ret0>(meta::is_optional<meta::unqualified_t<Ret0>>(), detail::forward_get<0>(keys)),
-				traverse_get_optional<top_level, Ret1>(meta::is_optional<meta::unqualified_t<Ret1>>(), detail::forward_get<1>(keys)),
-				traverse_get_optional<top_level, Ret>(meta::is_optional<meta::unqualified_t<Ret>>(), detail::forward_get<I>(keys))...
+				traverse_get_optional<top_level, raw, Ret0>(meta::is_optional<meta::unqualified_t<Ret0>>(), detail::forward_get<0>(keys)),
+				traverse_get_optional<top_level, raw, Ret1>(meta::is_optional<meta::unqualified_t<Ret1>>(), detail::forward_get<1>(keys)),
+				traverse_get_optional<top_level, raw, Ret>(meta::is_optional<meta::unqualified_t<Ret>>(), detail::forward_get<I>(keys))...
 			);
 		}
 
-		template<typename Ret, std::size_t I, typename Keys>
+		template<bool raw, typename Ret, std::size_t I, typename Keys>
 		decltype(auto) tuple_get(types<Ret>, std::index_sequence<I>, Keys&& keys) const {
-			return traverse_get_optional<top_level, Ret>(meta::is_optional<meta::unqualified_t<Ret>>(), detail::forward_get<I>(keys));
+			return traverse_get_optional<top_level, raw, Ret>(meta::is_optional<meta::unqualified_t<Ret>>(), detail::forward_get<I>(keys));
 		}
 
-		template<typename Pairs, std::size_t... I>
+		template<bool raw, typename Pairs, std::size_t... I>
 		void tuple_set(std::index_sequence<I...>, Pairs&& pairs) {
 			auto pp = stack::push_pop<top_level && (is_global<decltype(detail::forward_get<I * 2>(pairs))...>::value)>(*this);
-			void(detail::swallow{ (stack::set_field<top_level>(base_t::lua_state(),
+			void(detail::swallow{ (stack::set_field<top_level, raw>(base_t::lua_state(),
 				detail::forward_get<I * 2>(pairs),
 				detail::forward_get<I * 2 + 1>(pairs),
 				lua_gettop(base_t::lua_state())
 			), 0)... });
 		}
 
-		template <bool global, typename T, typename Key>
+		template <bool global, bool raw, typename T, typename Key>
 		decltype(auto) traverse_get_deep(Key&& key) const {
-			stack::get_field<global>(base_t::lua_state(), std::forward<Key>(key));
+			stack::get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key));
 			return stack::get<T>(base_t::lua_state());
 		}
 
-		template <bool global, typename T, typename Key, typename... Keys>
+		template <bool global, bool raw, typename T, typename Key, typename... Keys>
 		decltype(auto) traverse_get_deep(Key&& key, Keys&&... keys) const {
-			stack::get_field<global>(base_t::lua_state(), std::forward<Key>(key));
-			return traverse_get_deep<false, T>(std::forward<Keys>(keys)...);
+			stack::get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key));
+			return traverse_get_deep<false, raw, T>(std::forward<Keys>(keys)...);
 		}
 
-		template <bool global, typename T, std::size_t I, typename Key>
+		template <bool global, bool raw, typename T, std::size_t I, typename Key>
 		decltype(auto) traverse_get_deep_optional(int& popcount, Key&& key) const {
 			typedef decltype(stack::get<T>(base_t::lua_state())) R;
-			auto p = stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), lua_gettop(base_t::lua_state()));
+			auto p = stack::probe_get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key), lua_gettop(base_t::lua_state()));
 			popcount += p.levels;
 			if (!p.success)
 				return R(nullopt);
 			return stack::get<T>(base_t::lua_state());
 		}
 
-		template <bool global, typename T, std::size_t I, typename Key, typename... Keys>
+		template <bool global, bool raw, typename T, std::size_t I, typename Key, typename... Keys>
 		decltype(auto) traverse_get_deep_optional(int& popcount, Key&& key, Keys&&... keys) const {
 			auto p = I > 0 ? stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), -1) : stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), lua_gettop(base_t::lua_state()));
 			popcount += p.levels;
 			if (!p.success)
 				return T(nullopt);
-			return traverse_get_deep_optional<false, T, I + 1>(popcount, std::forward<Keys>(keys)...);
+			return traverse_get_deep_optional<false, raw, T, I + 1>(popcount, std::forward<Keys>(keys)...);
 		}
 
-		template <bool global, typename T, typename... Keys>
+		template <bool global, bool raw, typename T, typename... Keys>
 		decltype(auto) traverse_get_optional(std::false_type, Keys&&... keys) const {
 			detail::clean<sizeof...(Keys)> c(base_t::lua_state());
-			return traverse_get_deep<top_level, T>(std::forward<Keys>(keys)...);
+			return traverse_get_deep<global, raw, T>(std::forward<Keys>(keys)...);
 		}
 
-		template <bool global, typename T, typename... Keys>
+		template <bool global, bool raw, typename T, typename... Keys>
 		decltype(auto) traverse_get_optional(std::true_type, Keys&&... keys) const {
 			int popcount = 0;
 			detail::ref_clean c(base_t::lua_state(), popcount);
-			return traverse_get_deep_optional<top_level, T, 0>(popcount, std::forward<Keys>(keys)...);
+			return traverse_get_deep_optional<global, raw, T, 0>(popcount, std::forward<Keys>(keys)...);
 		}
 
-		template <bool global, typename Key, typename Value>
+		template <bool global, bool raw, typename Key, typename Value>
 		void traverse_set_deep(Key&& key, Value&& value) const {
-			stack::set_field<global>(base_t::lua_state(), std::forward<Key>(key), std::forward<Value>(value));
+			stack::set_field<global, raw>(base_t::lua_state(), std::forward<Key>(key), std::forward<Value>(value));
 		}
 
-		template <bool global, typename Key, typename... Keys>
+		template <bool global, bool raw, typename Key, typename... Keys>
 		void traverse_set_deep(Key&& key, Keys&&... keys) const {
-			stack::get_field<global>(base_t::lua_state(), std::forward<Key>(key));
-			traverse_set_deep<false>(std::forward<Keys>(keys)...);
+			stack::get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key));
+			traverse_set_deep<false, raw>(std::forward<Keys>(keys)...);
 		}
 
 		basic_table_core(lua_State* L, detail::global_tag t) noexcept : base_t(L, t) { }
@@ -16260,7 +16320,7 @@ namespace sol {
 		decltype(auto) get(Keys&&... keys) const {
 			static_assert(sizeof...(Keys) == sizeof...(Ret), "number of keys and number of return types do not match");
 			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-			return tuple_get(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), std::forward_as_tuple(std::forward<Keys>(keys)...));
+			return tuple_get<false>(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), std::forward_as_tuple(std::forward<Keys>(keys)...));
 		}
 
 		template<typename T, typename Key>
@@ -16285,20 +16345,66 @@ namespace sol {
 		template <typename T, typename... Keys>
 		decltype(auto) traverse_get(Keys&&... keys) const {
 			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-			return traverse_get_optional<top_level, T>(meta::is_optional<meta::unqualified_t<T>>(), std::forward<Keys>(keys)...);
+			return traverse_get_optional<false, top_level, T>(meta::is_optional<meta::unqualified_t<T>>(), std::forward<Keys>(keys)...);
 		}
 
 		template <typename... Keys>
 		basic_table_core& traverse_set(Keys&&... keys) {
 			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
 			auto pn = stack::pop_n(base_t::lua_state(), static_cast<int>(sizeof...(Keys)-2));
-			traverse_set_deep<top_level>(std::forward<Keys>(keys)...);
+			traverse_set_deep<false, top_level>(std::forward<Keys>(keys)...);
 			return *this;
 		}
 
 		template<typename... Args>
 		basic_table_core& set(Args&&... args) {
-			tuple_set(std::make_index_sequence<sizeof...(Args) / 2>(), std::forward_as_tuple(std::forward<Args>(args)...));
+			tuple_set<false>(std::make_index_sequence<sizeof...(Args) / 2>(), std::forward_as_tuple(std::forward<Args>(args)...));
+			return *this;
+		}
+
+		template<typename... Ret, typename... Keys>
+		decltype(auto) raw_get(Keys&&... keys) const {
+			static_assert(sizeof...(Keys) == sizeof...(Ret), "number of keys and number of return types do not match");
+			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
+			return tuple_get<false>(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), std::forward_as_tuple(std::forward<Keys>(keys)...));
+		}
+
+		template<typename T, typename Key>
+		decltype(auto) raw_get_or(Key&& key, T&& otherwise) const {
+			typedef decltype(raw_get<T>("")) U;
+			optional<U> option = raw_get<optional<U>>(std::forward<Key>(key));
+			if (option) {
+				return static_cast<U>(option.value());
+			}
+			return static_cast<U>(std::forward<T>(otherwise));
+		}
+
+		template<typename T, typename Key, typename D>
+		decltype(auto) raw_get_or(Key&& key, D&& otherwise) const {
+			optional<T> option = raw_get<optional<T>>(std::forward<Key>(key));
+			if (option) {
+				return static_cast<T>(option.value());
+			}
+			return static_cast<T>(std::forward<D>(otherwise));
+		}
+
+		template <typename T, typename... Keys>
+		decltype(auto) traverse_raw_get(Keys&&... keys) const {
+			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
+			return traverse_get_optional<true, top_level, T>(meta::is_optional<meta::unqualified_t<T>>(), std::forward<Keys>(keys)...);
+		}
+
+		template <typename... Keys>
+		basic_table_core& traverse_raw_set(Keys&&... keys) {
+			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
+			auto pn = stack::pop_n(base_t::lua_state(), static_cast<int>(sizeof...(Keys)-2));
+			traverse_set_deep<true, top_level>(std::forward<Keys>(keys)...);
+			return *this;
+		}
+
+		template<typename... Args>
+		basic_table_core& raw_set(Args&&... args) {
+			tuple_set<true>(std::make_index_sequence<sizeof...(Args) / 2>(), std::forward_as_tuple(std::forward<Args>(args)...));
 			return *this;
 		}
 
@@ -16371,20 +16477,40 @@ namespace sol {
 		}
 
 		template<bool read_only = true, typename... Args>
-		basic_table_core& new_enum(const std::string& name, Args&&... args) {
+		table new_enum(const string_view& name, Args&&... args) {
+			table target = create_with(std::forward<Args>(args)...);
 			if (read_only) {
-				table idx = create_with(std::forward<Args>(args)...);
 				table x = create_with(
 					meta_function::new_index, detail::fail_on_newindex,
-					meta_function::index, idx
+					meta_function::index, target
 				);
-				table target = create_named(name);
-				target[metatable_key] = x;
+				table shim = create_named(name, metatable_key, x);
+				return shim;
 			}
 			else {
-				create_named(name, std::forward<Args>(args)...);
+				set(name, target);
+				return target;
 			}
-			return *this;
+		}
+
+		template<typename T, bool read_only = true>
+		table new_enum(const string_view& name, std::initializer_list<std::pair<string_view, T>> items) {
+			table target = create(items.size(), 0);
+			for (const auto& kvp : items) {
+				target.set(kvp.first, kvp.second);
+			}
+			if (read_only) {
+				table x = create_with(
+					meta_function::new_index, detail::fail_on_newindex,
+					meta_function::index, target
+				);
+				table shim = create_named(name, metatable_key, x);
+				return shim;
+			}
+			else {
+				set(name, target);
+				return target;
+			}
 		}
 
 		template<typename Fx>
@@ -16515,11 +16641,7 @@ namespace sol {
 		template <typename Name, typename... Args>
 		table create_named(Name&& name, Args&&... args) {
 			static const int narr = static_cast<int>(meta::count_2_for_pack<std::is_integral, Args...>::value);
-			return create(std::forward<Name>(name), narr, sizeof...(Args) / 2 - narr, std::forward<Args>(args)...);
-		}
-
-		~basic_table_core() {
-
+			return create(std::forward<Name>(name), narr, (sizeof...(Args) / 2) - narr, std::forward<Args>(args)...);
 		}
 	};
 } // sol
@@ -17076,7 +17198,7 @@ namespace sol {
 
 		template <typename E>
 		protected_function_result do_string(const string_view& code, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			char basechunkname[17] = {};
+			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
 			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str()));
 			if (x != load_status::ok) {
@@ -17099,7 +17221,7 @@ namespace sol {
 		}
 
 		protected_function_result do_string(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			char basechunkname[17] = {};
+			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
 			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str()));
 			if (x != load_status::ok) {
@@ -17174,7 +17296,7 @@ namespace sol {
 
 		template <typename E>
 		function_result unsafe_script(const string_view& code, const sol::basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			char basechunkname[17] = {};
+			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
 			int index = lua_gettop(L);
 			if (luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str())) {
@@ -17266,7 +17388,7 @@ namespace sol {
 		}
 #endif
 		load_result load(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			char basechunkname[17] = {};
+			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
 			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str()));
 			return load_result(L, absolute_index(L, -1), 1, 1, x);
@@ -17282,7 +17404,7 @@ namespace sol {
 		}
 
 		load_result load(lua_Reader reader, void* data, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			char basechunkname[17] = {};
+			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name("lua_Reader", chunkname, basechunkname);
 #if SOL_LUA_VERSION > 501
 			load_status x = static_cast<load_status>(lua_load(L, reader, data, chunknametarget, to_string(mode).c_str()));
@@ -17434,6 +17556,12 @@ namespace sol {
 		template<bool read_only = true, typename... Args>
 		state_view& new_enum(const std::string& name, Args&&... args) {
 			global.new_enum<read_only>(name, std::forward<Args>(args)...);
+			return *this;
+		}
+
+		template<typename T, bool read_only = true>
+		state_view& new_enum(const std::string& name, std::initializer_list<std::pair<string_view, T>> items) {
+			global.new_enum<T, read_only>(name, std::move(items));
 			return *this;
 		}
 

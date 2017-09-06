@@ -1233,6 +1233,10 @@ namespace sol {
 				return 3;
 			}
 
+			static int ipairs(lua_State* L) {
+				return pairs(L);
+			}
+
 			static iterator begin(lua_State*, T& self) {
 				return std::addressof(self[0]);
 			}
