@@ -36,6 +36,8 @@
 
 namespace sol {
 	namespace detail {
+		using typical_chunk_name_t = char[32];
+
 		inline const std::string& default_chunk_name() {
 			static const std::string name = "";
 			return name;
@@ -211,7 +213,7 @@ namespace sol {
 		}
 
 		inline void script(lua_State* L, const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			char basechunkname[17] = {};
+			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
 			if (luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str()) || lua_pcall(L, 0, LUA_MULTRET, 0)) {
 				lua_error(L);

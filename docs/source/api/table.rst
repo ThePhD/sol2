@@ -31,6 +31,7 @@ The first takes a table from the Lua stack at the specified index and allows a p
 
 .. code-block:: cpp
 	:caption: function: get / traversing get
+	:name: get-value
 
 	template<typename... Args, typename... Keys>
 	decltype(auto) get(Keys&&... keys) const;
@@ -50,6 +51,23 @@ These functions retrieve items from the table. The first one (``get``) can pull 
 If the keys within nested queries try to traverse into a table that doesn't exist, the second lookup into the nil-returned variable and belong will cause a panic to be fired by the lua C API. If you need to check for keys, check with ``auto x = table.get<sol::optional<int>>( std::tie("a", "b", "c" ) );``, and then use the :doc:`optional<optional>` interface to check for errors. As a short-hand, easy method for returning a default if a value doesn't exist, you can use ``get_or`` instead.
 
 .. code-block:: cpp
+	:caption: function: raw get / traversing raw get
+	:name: raw-get-value
+
+	template<typename... Args, typename... Keys>
+	decltype(auto) raw_get(Keys&&... keys) const;
+
+	template<typename T, typename... Keys>
+	decltype(auto) traverse_raw_get(Keys&&... keys) const;
+
+	template<typename T, typename Key>
+	decltype(auto) raw_get_or(Key&& key, T&& otherwise) const;
+
+	template<typename T, typename Key, typename D>
+	decltype(auto) raw_get_or(Key&& key, D&& otherwise) const;
+
+
+.. code-block:: cpp
 	:caption: function: set / traversing set
 	:name: set-value
 
@@ -60,6 +78,18 @@ If the keys within nested queries try to traverse into a table that doesn't exis
 	table& traverse_set(Args&&... args);
 
 These functions set items into the table. The first one (``set``) can set  *multiple* values, in the form ``key_a, value_a, key_b, value_b, ...``. It is similar to ``table[key_a] = value_a; table[key_b] = value_b, ...``. The second one (``traverse_set``) sets a *single* value, using all but the last argument as keys to do another lookup into the value retrieved prior to it. It is equivalent to ``table[key_a][key_b][...] = value;``.
+
+.. code-block:: cpp
+	:caption: function: raw set / traversing raw set
+	:name: raw-set-value
+
+	template<typename... Args>
+	table& raw_set(Args&&... args);
+
+	template<typename... Args>
+	table& traverse_raw_set(Args&&... args);
+
+Similar to :ref:`set<set-value>`, but it does so "raw" (ignoring metamethods on the table's metatable).
 
 .. note::
 
@@ -124,8 +154,12 @@ This class of functions creates a new :doc:`simple usertype<simple_usertype>` wi
 
 	template<bool read_only = true, typename... Args>
 	basic_table_core& new_enum(const std::string& name, Args&&... args);
+	template<typename T, bool read_only = true>
+	basic_table_core& new_enum(const std::string& name, std::initializer_list<std::pair<string_view, T>> items);
 	
-Use this function to create an enumeration type in Lua. By default, the enum will be made read-only, which creates a tiny performance hit to make the values stored in this table behave exactly like a read-only enumeration in C++. If you plan on changing the enum values in Lua, set the ``read_only`` template parameter in your ``new_enum`` call to false. The arguments are expected to come in ``key, value, key, value, ...`` list. 
+Use this function to create an enumeration type in Lua. By default, the enum will be made read-only, which creates a tiny performance hit to make the values stored in this table behave exactly like a read-only enumeration in C++. If you plan on changing the enum values in Lua, set the ``read_only`` template parameter in your ``new_enum`` call to false. The arguments are expected to come in ``key, value, key, value, ...`` list.
+
+If you use the second overload, you will create a (runtime) ``std::initializer_list``. This will avoid compiler overhead for excessively large enumerations. For this overload, hoever, you must pass the enumeration name as a template parameter first, and then the ``read_only`` parameter, like ``lua.new_enum<my_enum>( "my_enum", { {"a", my_enum:: a}, { "b", my_enum::b } } );``.
 
 .. _set_usertype:
 
@@ -176,7 +210,7 @@ A functional ``for_each`` loop that calls the desired function. The passed in fu
 	template<typename T>
 	proxy<const table&, T> operator[](T&& key) const;
 
-Generates a :doc:`proxy<proxy>` that is templated on the table type and the key type. Enables lookup of items and their implicit conversion to a desired type.
+Generates a :doc:`proxy<proxy>` that is templated on the table type and the key type. Enables lookup of items and their implicit conversion to a desired type. Lookup is done lazily.
 
 .. code-block:: cpp
 	:caption: function: create a table with defaults

@@ -184,7 +184,7 @@ namespace sol {
 		void* baseclasscast;
 		bool mustindex;
 		bool secondarymeta;
-		std::array<bool, 31> properties;
+		std::array<bool, 32> properties;
 
 		template <typename N>
 		void insert(N&& n, object&& o) {

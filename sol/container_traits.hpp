@@ -247,6 +247,19 @@ namespace sol {
 		};
 
 		template <typename T>
+		struct has_traits_ipairs_test {
+		private:
+			typedef std::array<char, 1> one;
+			typedef std::array<char, 2> two;
+
+			template <typename C> static one test(decltype(&C::ipairs));
+			template <typename C> static two test(...);
+
+		public:
+			static const bool value = sizeof(test<T>(0)) == sizeof(char);
+		};
+
+		template <typename T>
 		struct has_traits_add_test {
 		private:
 			typedef std::array<char, 1> one;
@@ -288,6 +301,9 @@ namespace sol {
 
 		template <typename T>
 		using has_traits_pairs = meta::boolean<has_traits_pairs_test<T>::value>;
+
+		template <typename T>
+		using has_traits_ipairs = meta::boolean<has_traits_ipairs_test<T>::value>;
 
 		template <typename T>
 		using has_traits_add = meta::boolean<has_traits_add_test<T>::value>;
@@ -405,6 +421,10 @@ namespace sol {
 				return luaL_error(L, "sol: cannot call '__pairs' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 			}
 
+			static int ipairs(lua_State* L) {
+				return luaL_error(L, "sol: cannot call '__ipairs' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
+			}
+
 			static iterator begin(lua_State* L, T&) {
 				luaL_error(L, "sol: cannot call 'being' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 				return lua_nil;
@@ -457,8 +477,9 @@ namespace sol {
 			struct iter {
 				T& source;
 				iterator it;
+				std::size_t i;
 
-				iter(T& source, iterator it) : source(source), it(std::move(it)) {}
+				iter(T& source, iterator it) : source(source), it(std::move(it)), i(0) {}
 			};
 
 			static auto& get_src(lua_State* L) {
@@ -939,6 +960,7 @@ namespace sol {
 				erase_has(has_erase<T>(), L, self, key);
 			}
 
+			template <bool ip>
 			static int next_associative(std::true_type, lua_State* L) {
 				iter& i = stack::get<user<iter>>(L, 1);
 				auto& source = i.source;
@@ -947,20 +969,28 @@ namespace sol {
 					return 0;
 				}
 				int p;
-				p = stack::push_reference(L, it->first);
+				if (ip) {
+					p = stack::push_reference(L, it->first);
+				}
+				else {
+					++i.i;
+					p = stack::push_reference(L, i.i);
+				}
 				p += stack::stack_detail::push_reference<push_type>(L, detail::deref(it->second));
 				std::advance(it, 1);
 				return p;
 			}
 
+			template <bool ip>
 			static int pairs_associative(std::true_type, lua_State* L) {
 				auto& src = get_src(L);
-				stack::push(L, next);
+				stack::push(L, next<ip>);
 				stack::push<user<iter>>(L, src, deferred_traits::begin(L, src));
 				stack::push(L, sol::lua_nil);
 				return 3;
 			}
 
+			template <bool>
 			static int next_associative(std::false_type, lua_State* L) {
 				iter& i = stack::get<user<iter>>(L, 1);
 				auto& source = i.source;
@@ -976,16 +1006,18 @@ namespace sol {
 				return p;
 			}
 
+			template <bool ip>
 			static int pairs_associative(std::false_type, lua_State* L) {
 				auto& src = get_src(L);
-				stack::push(L, next);
+				stack::push(L, next<ip>);
 				stack::push<user<iter>>(L, src, deferred_traits::begin(L, src));
 				stack::push(L, 0);
 				return 3;
 			}
 
+			template <bool ip>
 			static int next(lua_State* L) {
-				return next_associative(is_associative(), L);
+				return next_associative<ip>(is_associative(), L);
 			}
 
 		public:
@@ -1065,7 +1097,11 @@ namespace sol {
 			}
 
 			static int pairs(lua_State* L) {
-				return pairs_associative(is_associative(), L);
+				return pairs_associative<false>(is_associative(), L);
+			}
+
+			static int ipairs(lua_State* L) {
+				return pairs_associative<true>(is_associative(), L);
 			}
 		};
 

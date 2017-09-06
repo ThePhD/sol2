@@ -20,7 +20,7 @@ Containers are objects that are meant to be inspected and iterated and whose job
 
 .. note::
 	
-	Please note that c-style arrays must be added to Lua using ``lua["my_arr"] = &my_c_array;`` or ``lua["my_arr"] = std::ref(my_c_array);`` to be bestowed these properties. No, a plain ``T*`` pointer is **not** considered an array. This is important because ``lua["my_string"] = "some string";`` is also typed as an array (``const char[n]``) and thusly we can only use ``std::reference_wrapper``\s or pointers to arrays to work for us.
+	Please note that c-style arrays must be added to Lua using ``lua["my_arr"] = &my_c_array;`` or ``lua["my_arr"] = std::ref(my_c_array);`` to be bestowed these properties. No, a plain ``T*`` pointer is **not** considered an array. This is important because ``lua["my_string"] = "some string";`` is also typed as an array (``const char[n]``) and thusly we can only use ``std::reference_wrapper``\s or pointers to the actual array types to work for this purpose.
 
 .. _container-detection:
 
@@ -145,10 +145,15 @@ Below are the many container operations and their override points for ``containe
 |           |                                           |                                       |                      | - works only in Lua 5.2+                                                                                                                                                                     |
 |           |                                           |                                       |                      | - calling ``pairs( c )`` in Lua 5.1 / LuaJIT will crash with assertion failure (Lua expects ``c`` to be a table)                                                                             |
 +-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ipairs    |                                           | ``static int ipairs(lua_State*);``    | 1 self               | - implement if advanced user only that understands caveats                                                                                                                                   |
+|           |                                           |                                       |                      | - override begin and end instead and leave this to default implementation if you do not know what ``__ipairs`` is for or how to implement it and the ``next`` function                       |
+|           |                                           |                                       |                      | - works only in Lua 5.2, deprecated in Lua 5.3 (but might still be called in compatibiltiy modes)                                                                                            |
+|           |                                           |                                       |                      | - calling ``ipairs( c )`` in Lua 5.1 / LuaJIT will crash with assertion failure (Lua expects ``c`` to be a table)                                                                            |
++-----------+-------------------------------------------+---------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 .. note::
 
-	If your type does not adequately support ``begin()`` and ``end()`` and you cannot override it, use the ``sol::is_container`` trait override plus a custom implementation of ``pairs`` on your usertype to get it to work as you please. Note that a type not having proper ``begin()`` and ``end()`` will not work if you try to forcefully serialize it as a table (this means avoid using :doc:`sol::as_table<api/as_table>` and :doc:`sol::nested<api/nested>`, otherwise you will have compiler errors). Just set it or get it directly, as shown in the examples, to work with the C++ containers.
+	If your type does not adequately support ``begin()`` and ``end()`` and you cannot override it, use the ``sol::is_container`` trait override along with a custom implementation of ``pairs`` on your usertype to get it to work as you want it to. Note that a type not having proper ``begin()`` and ``end()`` will not work if you try to forcefully serialize it as a table (this means avoid using :doc:`sol::as_table<api/as_table>` and :doc:`sol::nested<api/nested>`, otherwise you will have compiler errors). Just set it or get it directly, as shown in the examples, to work with the C++ containers.
 
 .. _container-classifications: 
 

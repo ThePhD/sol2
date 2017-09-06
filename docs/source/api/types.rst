@@ -162,9 +162,11 @@ These functions get the type of a C++ type ``T``; or the type at the specified i
 .. code-block:: cpp
 	:caption: type checking convenience functions
 
-	int type_panic(lua_State* L, int index, type expected, type actual);
+	int type_panic_string(lua_State* L, int index, type expected, type actual, const std::string& message);
 
-	int no_panic(lua_State*, int, type, type) noexcept;
+	int type_panic_c_str(lua_State* L, int index, type expected, type actual, const char* message);
+
+	int no_panic(lua_State*, int, type, type, const char*) noexcept;
 
 	void type_error(lua_State* L, int expected, int actual);
 

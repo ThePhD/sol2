@@ -121,22 +121,42 @@ TEST_CASE("tables/new_enum", "Making sure enums can be put in and gotten out as 
 		right
 	};
 
-	sol::state lua;
-	lua.open_libraries(sol::lib::base);
+	SECTION("variadics") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
 
-	lua.new_enum( "direction",
-		"up", direction::up,
-		"down", direction::down,
-		"left", direction::left,
-		"right", direction::right
-	);
+		lua.new_enum("direction",
+			"up", direction::up,
+			"down", direction::down,
+			"left", direction::left,
+			"right", direction::right
+		);
 
-	direction d = lua["direction"]["left"];
-	REQUIRE(d == direction::left);
-	auto result = lua.safe_script("direction.left = 50", sol::script_pass_on_error);
-	REQUIRE_FALSE(result.valid());
-	d = lua["direction"]["left"];
-	REQUIRE(d == direction::left);
+		direction d = lua["direction"]["left"];
+		REQUIRE(d == direction::left);
+		auto result = lua.safe_script("direction.left = 50", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+		d = lua["direction"]["left"];
+		REQUIRE(d == direction::left);
+	}
+	SECTION("initializer_list") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_enum<direction>("direction", {
+			{ "up", direction::up },
+			{ "down", direction::down },
+			{ "left", direction::left },
+			{ "right", direction::right }
+		} );
+
+		direction d = lua["direction"]["left"];
+		REQUIRE(d == direction::left);
+		auto result = lua.safe_script("direction.left = 50", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+		d = lua["direction"]["left"];
+		REQUIRE(d == direction::left);
+	}
 }
 
 TEST_CASE("tables/for_each", "Testing the use of for_each to get values from a lua table") {
@@ -536,9 +556,9 @@ TEST_CASE("tables/add", "Basic test to make sure the 'add' feature works") {
 	sol::state lua;
 	sol::table t = lua.create_table(sz, 0);
 
-	std::vector<int> bigvec( sz );
+	std::vector<int> bigvec(sz);
 	std::iota(bigvec.begin(), bigvec.end(), 1);
-	
+
 	for (std::size_t i = 0; i < bigvec.size(); ++i) {
 		t.add(bigvec[i]);
 	}
@@ -546,6 +566,18 @@ TEST_CASE("tables/add", "Basic test to make sure the 'add' feature works") {
 		int val = t[i + 1];
 		REQUIRE(val == bigvec[i]);
 	}
+}
+
+TEST_CASE("tables/raw set and raw get", "ensure raw setting and getting works through metatables") {
+	sol::state lua;
+	sol::table t = lua.create_table();
+	t[sol::metatable_key] = lua.create_table_with(
+		sol::meta_function::new_index, [](lua_State* L) { return luaL_error(L, "nay"); },
+		sol::meta_function::index, [](lua_State* L) { return luaL_error(L, "nay"); }
+	);
+	t.raw_set("a", 2.5);
+	double la = t.raw_get<double>("a");
+	REQUIRE(la == 2.5);
 }
 
 TEST_CASE("tables/boolean keys", "make sure boolean keys don't get caught up in `is_integral` specializations") {

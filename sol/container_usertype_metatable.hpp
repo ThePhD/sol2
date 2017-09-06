@@ -114,6 +114,18 @@ namespace sol {
 			return real_pairs_traits(container_detail::has_traits_pairs<traits>(), L);
 		}
 
+		static int real_ipairs_traits(std::true_type, lua_State* L) {
+			return traits::ipairs(L);
+		}
+
+		static int real_ipairs_traits(std::false_type, lua_State* L) {
+			return default_traits::ipairs(L);
+		}
+
+		static int real_ipairs_call(lua_State* L) {
+			return real_ipairs_traits(container_detail::has_traits_ipairs<traits>(), L);
+		}
+
 		static int real_size_traits(std::true_type, lua_State* L) {
 			return traits::size(L);
 		}
@@ -230,6 +242,10 @@ namespace sol {
 			return detail::typed_static_trampoline<decltype(&real_pairs_call), (&real_pairs_call)>(L);
 		}
 
+		static int ipairs_call(lua_State*L) {
+			return detail::typed_static_trampoline<decltype(&real_ipairs_call), (&real_ipairs_call)>(L);
+		}
+
 		static int get_call(lua_State*L) {
 			return detail::typed_static_trampoline<decltype(&real_get_call), (&real_get_call)>(L);
 		}
@@ -263,7 +279,7 @@ namespace sol {
 					static const char* metakey = is_shim ? &usertype_traits<as_container_t<std::remove_pointer_t<T>>>::metatable()[0] : &usertype_traits<T>::metatable()[0];
 					static const std::array<luaL_Reg, 16> reg = { {
 						{ "__pairs", &meta_cumt::pairs_call },
-						{ "__ipairs", &meta_cumt::pairs_call },
+						{ "__ipairs", &meta_cumt::ipairs_call },
 						{ "__len", &meta_cumt::length_call },
 						{ "__index", &meta_cumt::index_call },
 						{ "__newindex", &meta_cumt::new_index_call },
