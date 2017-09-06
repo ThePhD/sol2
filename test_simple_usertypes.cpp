@@ -895,7 +895,7 @@ TEST_CASE("simple_usertype/basic type information", "check that we can query som
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<my_thing>("my_thing");
+	lua.new_simple_usertype<my_thing>("my_thing");
 
 	lua.safe_script("obj = my_thing.new()");
 
@@ -919,4 +919,3 @@ TEST_CASE("simple_usertype/basic type information", "check that we can query som
 	lua.safe_script("assert(not getmetatable(obj).__type.is(\"not a thing\"))");
 	lua.safe_script("print(getmetatable(obj).__type.name)");
 }
-

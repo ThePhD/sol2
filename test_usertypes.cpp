@@ -1771,7 +1771,7 @@ TEST_CASE("usertype/basic type information", "check that we can query some basic
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_simple_usertype<my_thing>("my_thing");
+	lua.new_usertype<my_thing>("my_thing");
 
 	lua.safe_script("obj = my_thing.new()");
 

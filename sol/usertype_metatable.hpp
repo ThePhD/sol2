@@ -394,7 +394,7 @@ namespace sol {
 		void* baseclasscheck;
 		void* baseclasscast;
 		bool secondarymeta;
-		std::array<bool, 30> properties;
+		std::array<bool, 31> properties;
 
 		template <std::size_t Idx, meta::enable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
 		lua_CFunction make_func() const {
@@ -735,6 +735,7 @@ namespace sol {
 					// for call constructor purposes and such
 					lua_createtable(L, 0, 3);
 					stack_reference metabehind(L, -1);
+					stack::set_field(L, meta_function::type, type_table, metabehind.stack_index());
 					if (um.callconstructfunc != nullptr) {
 						stack::set_field(L, meta_function::call_function, make_closure(um.callconstructfunc, nullptr, make_light(um), make_light(umc)), metabehind.stack_index());
 					}
@@ -743,7 +744,6 @@ namespace sol {
 						stack::set_field(L, meta_function::new_index, make_closure(umt_t::new_index_call, nullptr, make_light(um), make_light(umc)), metabehind.stack_index());
 					}
 					// type information needs to be present on the behind-tables too
-					stack::set_field(L, meta_function::type, type_table, metabehind.stack_index());
 					
 					stack::set_field(L, metatable_key, metabehind, t.stack_index());
 					metabehind.pop();
@@ -763,6 +763,8 @@ namespace sol {
 				{
 					lua_createtable(L, 0, 3);
 					stack_reference metabehind(L, -1);
+					// type information needs to be present on the behind-tables too
+					stack::set_field(L, meta_function::type, type_table, metabehind.stack_index());
 					if (um.callconstructfunc != nullptr) {
 						stack::set_field(L, meta_function::call_function, make_closure(um.callconstructfunc, nullptr, make_light(um), make_light(umc)), metabehind.stack_index());
 					}
@@ -770,8 +772,6 @@ namespace sol {
 					stack::set_field(L, meta_function::index, make_closure(umt_t::index_call, nullptr, make_light(um), make_light(umc), nullptr, usertype_detail::toplevel_magic), metabehind.stack_index());
 					stack::set_field(L, meta_function::new_index, make_closure(umt_t::new_index_call, nullptr, make_light(um), make_light(umc), nullptr, usertype_detail::toplevel_magic), metabehind.stack_index());
 					stack::set_field(L, metatable_key, metabehind, t.stack_index());
-					// type information needs to be present on the behind-tables too
-					stack::set_field(L, meta_function::type, type_table, metabehind.stack_index());
 					metabehind.pop();
 				}
 

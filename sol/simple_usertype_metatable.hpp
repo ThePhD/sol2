@@ -184,7 +184,7 @@ namespace sol {
 		void* baseclasscast;
 		bool mustindex;
 		bool secondarymeta;
-		std::array<bool, 30> properties;
+		std::array<bool, 31> properties;
 
 		template <typename N>
 		void insert(N&& n, object&& o) {
@@ -483,7 +483,7 @@ namespace sol {
 						auto& second = std::get<1>(kvp);
 						register_kvp(i, t, first, second);
 					}
-					luaL_Reg opregs[32]{};
+					luaL_Reg opregs[34]{};
 					int opregsindex = 0;
 					auto prop_fx = [&](meta_function mf) { return !properties[static_cast<int>(mf)]; };
 					usertype_detail::insert_default_registrations<T>(opregs, opregsindex, prop_fx);
@@ -549,6 +549,7 @@ namespace sol {
 				luaL_newmetatable(L, &usertype_traits<T>::user_metatable()[0]);
 				stack_reference t(L, -1);
 				stack::set_field(L, meta_function::type, type_table, t.stack_index());
+				
 				for (auto& kvp : varmap.functions) {
 					auto& first = std::get<0>(kvp);
 					auto& second = std::get<1>(kvp);

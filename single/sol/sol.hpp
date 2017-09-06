@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-06 01:05:13.658647 UTC
-// This header was generated with sol v2.18.2 (revision eb313eb)
+// Generated 2017-09-06 03:05:33.019474 UTC
+// This header was generated with sol v2.18.2 (revision fc91147)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -14933,7 +14933,7 @@ namespace sol {
 		void* baseclasscheck;
 		void* baseclasscast;
 		bool secondarymeta;
-		std::array<bool, 30> properties;
+		std::array<bool, 31> properties;
 
 		template <std::size_t Idx, meta::enable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
 		lua_CFunction make_func() const {
@@ -15274,6 +15274,7 @@ namespace sol {
 					// for call constructor purposes and such
 					lua_createtable(L, 0, 3);
 					stack_reference metabehind(L, -1);
+					stack::set_field(L, meta_function::type, type_table, metabehind.stack_index());
 					if (um.callconstructfunc != nullptr) {
 						stack::set_field(L, meta_function::call_function, make_closure(um.callconstructfunc, nullptr, make_light(um), make_light(umc)), metabehind.stack_index());
 					}
@@ -15282,7 +15283,6 @@ namespace sol {
 						stack::set_field(L, meta_function::new_index, make_closure(umt_t::new_index_call, nullptr, make_light(um), make_light(umc)), metabehind.stack_index());
 					}
 					// type information needs to be present on the behind-tables too
-					stack::set_field(L, meta_function::type, type_table, metabehind.stack_index());
 					
 					stack::set_field(L, metatable_key, metabehind, t.stack_index());
 					metabehind.pop();
@@ -15302,6 +15302,8 @@ namespace sol {
 				{
 					lua_createtable(L, 0, 3);
 					stack_reference metabehind(L, -1);
+					// type information needs to be present on the behind-tables too
+					stack::set_field(L, meta_function::type, type_table, metabehind.stack_index());
 					if (um.callconstructfunc != nullptr) {
 						stack::set_field(L, meta_function::call_function, make_closure(um.callconstructfunc, nullptr, make_light(um), make_light(umc)), metabehind.stack_index());
 					}
@@ -15309,8 +15311,6 @@ namespace sol {
 					stack::set_field(L, meta_function::index, make_closure(umt_t::index_call, nullptr, make_light(um), make_light(umc), nullptr, usertype_detail::toplevel_magic), metabehind.stack_index());
 					stack::set_field(L, meta_function::new_index, make_closure(umt_t::new_index_call, nullptr, make_light(um), make_light(umc), nullptr, usertype_detail::toplevel_magic), metabehind.stack_index());
 					stack::set_field(L, metatable_key, metabehind, t.stack_index());
-					// type information needs to be present on the behind-tables too
-					stack::set_field(L, meta_function::type, type_table, metabehind.stack_index());
 					metabehind.pop();
 				}
 
@@ -15484,7 +15484,7 @@ namespace sol {
 		void* baseclasscast;
 		bool mustindex;
 		bool secondarymeta;
-		std::array<bool, 30> properties;
+		std::array<bool, 31> properties;
 
 		template <typename N>
 		void insert(N&& n, object&& o) {
@@ -15783,7 +15783,7 @@ namespace sol {
 						auto& second = std::get<1>(kvp);
 						register_kvp(i, t, first, second);
 					}
-					luaL_Reg opregs[32]{};
+					luaL_Reg opregs[34]{};
 					int opregsindex = 0;
 					auto prop_fx = [&](meta_function mf) { return !properties[static_cast<int>(mf)]; };
 					usertype_detail::insert_default_registrations<T>(opregs, opregsindex, prop_fx);
@@ -15849,6 +15849,7 @@ namespace sol {
 				luaL_newmetatable(L, &usertype_traits<T>::user_metatable()[0]);
 				stack_reference t(L, -1);
 				stack::set_field(L, meta_function::type, type_table, t.stack_index());
+				
 				for (auto& kvp : varmap.functions) {
 					auto& first = std::get<0>(kvp);
 					auto& second = std::get<1>(kvp);
