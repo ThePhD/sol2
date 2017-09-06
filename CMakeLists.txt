@@ -70,7 +70,7 @@ if (EXAMPLES)
 endif()
 
 if (TESTS)
-  file(GLOB TEST_SRC test*.cpp)
+  file(GLOB TEST_SRC tests/test*.cpp)
   source_group(tests FILES ${TEST_SRC})
 
   add_executable(tests ${TEST_SRC} ${HEADER_SRCS})
