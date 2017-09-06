@@ -23,6 +23,7 @@
 #define SOL_ERROR_HANDLER_HPP
 
 #include "types.hpp"
+#include "demangle.hpp"
 
 namespace sol {
 

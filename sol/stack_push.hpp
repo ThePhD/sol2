@@ -567,6 +567,13 @@ namespace sol {
 			}
 		};
 
+		template <>
+		struct pusher<string_view> {
+			static int push(lua_State* L, const string_view& sv) {
+				return stack::push(L, sv.data(), sv.length());
+			}
+		};
+
 		template<>
 		struct pusher<meta_function> {
 			static int push(lua_State* L, meta_function m) {
@@ -756,6 +763,27 @@ namespace sol {
 				return stack::push(L, u32str.data(), u32str.data() + sz);
 			}
 		};
+
+		template <>
+		struct pusher<wstring_view> {
+			static int push(lua_State* L, const wstring_view& sv) {
+				return stack::push(L, sv.data(), sv.length());
+			}
+		};
+
+		template <>
+		struct pusher<u16string_view> {
+			static int push(lua_State* L, const u16string_view& sv) {
+				return stack::push(L, sv.data(), sv.length());
+			}
+		};
+
+		template <>
+		struct pusher<u32string_view> {
+			static int push(lua_State* L, const u32string_view& sv) {
+				return stack::push(L, sv.data(), sv.length());
+			}
+		};
 #endif // codecvt Header Support
 
 		template<typename... Args>
@@ -826,35 +854,6 @@ namespace sol {
 		};
 
 #ifdef SOL_CXX17_FEATURES
-		template <>
-		struct pusher<std::string_view> {
-			static int push(lua_State* L, const std::string_view& sv) {
-				return stack::push(L, sv.data(), sv.length());
-			}
-		};
-#ifdef SOL_CODECVT_SUPPORT
-		template <>
-		struct pusher<std::wstring_view> {
-			static int push(lua_State* L, const std::wstring_view& sv) {
-				return stack::push(L, sv.data(), sv.length());
-			}
-		};
-
-		template <>
-		struct pusher<std::u16string_view> {
-			static int push(lua_State* L, const std::u16string_view& sv) {
-				return stack::push(L, sv.data(), sv.length());
-			}
-		};
-
-		template <>
-		struct pusher<std::u32string_view> {
-			static int push(lua_State* L, const std::u32string_view& sv) {
-				return stack::push(L, sv.data(), sv.length());
-			}
-		};
-#endif // codecvt header support
-
 		namespace stack_detail {
 
 			struct push_function {
@@ -880,18 +879,9 @@ namespace sol {
 				return std::visit(stack_detail::push_function(L), std::move(v));
 			}
 		};
-#else
-		template <>
-		struct pusher<string_view> {
-			static int push(lua_State* L, const std::string_view& sv) {
-				return stack::push(L, sv.data(), sv.length());
-			}
-
-			static int push(lua_State* L, const std::string_view& sv, std::size_t len) {
-				return stack::push(L, sv.data(), len);
-			}
-		};
 #endif // C++17 Support
+
+
 	} // stack
 } // sol
 

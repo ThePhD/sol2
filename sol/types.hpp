@@ -28,7 +28,7 @@
 #include "forward.hpp"
 #include "forward_detail.hpp"
 #include "traits.hpp"
-#include "string_shim.hpp"
+#include "string_view.hpp"
 #include "raii.hpp"
 #include "filters.hpp"
 
@@ -890,24 +890,21 @@ namespace sol {
 		template <>
 		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
 
+		template <>
+		struct lua_type_of<string_view> : std::integral_constant<type, type::string> {};
+
+		template <>
+		struct lua_type_of<wstring_view> : std::integral_constant<type, type::string> {};
+
+		template <>
+		struct lua_type_of<u16string_view> : std::integral_constant<type, type::string> {};
+
+		template <>
+		struct lua_type_of<u32string_view> : std::integral_constant<type, type::string> {};
+
 #ifdef SOL_CXX17_FEATURES
-		template <>
-		struct lua_type_of<std::string_view> : std::integral_constant<type, type::string> {};
-
-		template <>
-		struct lua_type_of<std::wstring_view> : std::integral_constant<type, type::string> {};
-
-		template <>
-		struct lua_type_of<std::u16string_view> : std::integral_constant<type, type::string> {};
-
-		template <>
-		struct lua_type_of<std::u32string_view> : std::integral_constant<type, type::string> {};
-
 		template <typename... Tn>
 		struct lua_type_of<std::variant<Tn...>> : std::integral_constant<type, type::poly> {};
-#else
-		template <>
-		struct lua_type_of<string_detail::string_shim> : std::integral_constant<type, type::string> {};
 #endif // C++ 17 (or not) features
 		
 		template <typename T>

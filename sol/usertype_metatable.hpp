@@ -50,7 +50,7 @@ namespace sol {
 		const int index_function_index = 3;
 		const int newindex_function_index = 4;
 
-		typedef void(*base_walk)(lua_State*, bool&, int&, string_detail::string_shim&);
+		typedef void(*base_walk)(lua_State*, bool&, int&, string_view&);
 		typedef int(*member_search)(lua_State*, void*, int);
 
 		struct call_information {
@@ -128,7 +128,7 @@ namespace sol {
 	namespace usertype_detail {
 		const lua_Integer toplevel_magic = static_cast<lua_Integer>(0xCCC2CCC1);
 
-		inline int is_indexer(string_detail::string_shim s) {
+		inline int is_indexer(string_view s) {
 			if (s == to_string(meta_function::index)) {
 				return 1;
 			}
@@ -156,31 +156,31 @@ namespace sol {
 			return 0;
 		}
 
-		inline auto make_shim(string_detail::string_shim s) {
+		inline auto make_string_view(string_view s) {
 			return s;
 		}
 
-		inline auto make_shim(call_construction) {
-			return string_detail::string_shim(to_string(meta_function::call_function));
+		inline auto make_string_view(call_construction) {
+			return string_view(to_string(meta_function::call_function));
 		}
 
-		inline auto make_shim(meta_function mf) {
-			return string_detail::string_shim(to_string(mf));
+		inline auto make_string_view(meta_function mf) {
+			return string_view(to_string(mf));
 		}
 
-		inline auto make_shim(base_classes_tag) {
-			return string_detail::string_shim(detail::base_class_cast_key());
+		inline auto make_string_view(base_classes_tag) {
+			return string_view(detail::base_class_cast_key());
 		}
 
 		template <typename Arg>
 		inline std::string make_string(Arg&& arg) {
-			string_detail::string_shim s = make_shim(arg);
+			string_view s = make_string_view(arg);
 			return std::string(s.data(), s.size());
 		}
 
 		template <typename N>
 		inline luaL_Reg make_reg(N&& n, lua_CFunction f) {
-			luaL_Reg l{ make_shim(std::forward<N>(n)).data(), f };
+			luaL_Reg l{ make_string_view(std::forward<N>(n)).data(), f };
 			return l;
 		}
 
@@ -227,8 +227,8 @@ namespace sol {
 #endif
 			}
 			else {
-				auto maybeaccessor = stack::get<optional<string_detail::string_shim>>(L, is_index ? -1 : -2);
-				string_detail::string_shim accessor = maybeaccessor.value_or(string_detail::string_shim("(unknown)"));
+				auto maybeaccessor = stack::get<optional<string_view>>(L, is_index ? -1 : -2);
+				string_view accessor = maybeaccessor.value_or(string_view("(unknown)"));
 				return luaL_error(L, "sol: attempt to index (set) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.data());
 			}
 		}
@@ -325,7 +325,7 @@ namespace sol {
 		}
 
 		template <bool is_index, typename Base>
-		static void walk_single_base(lua_State* L, bool& found, int& ret, string_detail::string_shim&) {
+		static void walk_single_base(lua_State* L, bool& found, int& ret, string_view&) {
 			if (found)
 				return;
 			const char* metakey = &usertype_traits<Base>::metatable()[0];
@@ -355,7 +355,7 @@ namespace sol {
 		}
 
 		template <bool is_index, typename... Bases>
-		static void walk_all_bases(lua_State* L, bool& found, int& ret, string_detail::string_shim& accessor) {
+		static void walk_all_bases(lua_State* L, bool& found, int& ret, string_view& accessor) {
 			(void)L;
 			(void)found;
 			(void)ret;
@@ -404,7 +404,7 @@ namespace sol {
 		template <std::size_t Idx, meta::disable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
 		lua_CFunction make_func() const {
 			const auto& name = std::get<Idx>(functions);
-			return (usertype_detail::make_shim(name) == "__newindex") ? &call<Idx + 1, false> : &call<Idx + 1, true>;
+			return (usertype_detail::make_string_view(name) == "__newindex") ? &call<Idx + 1, false> : &call<Idx + 1, true>;
 		}
 
 		static bool contains_variable() {
@@ -558,7 +558,7 @@ namespace sol {
 				const usertype_detail::member_search& member = is_index ? ci.index: ci.new_index;
 				return (member)(L, static_cast<void*>(&f), ci.runtime_target);
 			}
-			string_detail::string_shim accessor = name;
+			string_view accessor = name;
 			int ret = 0;
 			bool found = false;
 			// Otherwise, we need to do propagating calls through the bases

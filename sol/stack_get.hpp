@@ -422,6 +422,16 @@ namespace sol {
 			}
 		};
 
+		template<>
+		struct getter<string_view> {
+			static string_view get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
+				size_t sz;
+				const char* str = lua_tolstring(L, index, &sz);
+				return string_view(str, sz);
+			}
+		};
+
 #ifdef SOL_CODECVT_SUPPORT
 		template<>
 		struct getter<std::wstring> {
@@ -725,16 +735,6 @@ namespace sol {
 		};
 
 #ifdef SOL_CXX17_FEATURES
-		template<>
-		struct getter<std::string_view> {
-			static std::string_view get(lua_State* L, int index, record& tracking) {
-				tracking.use(1);
-				size_t sz;
-				const char* str = lua_tolstring(L, index, &sz);
-				return std::string_view(str, sz);
-			}
-		};
-
 		template <typename... Tn>
 		struct getter<std::variant<Tn...>> {
 			typedef std::variant<Tn...> V;
@@ -768,16 +768,6 @@ namespace sol {
 
 			static V get(lua_State* L, int index, record& tracking) {
 				return get_one(std::integral_constant<std::size_t, V_size::value>(), L, index, tracking);
-			}
-		};
-#else
-		template <>
-		struct getter<string_detail::string_shim> {
-			string_detail::string_shim get(lua_State* L, int index, record& tracking) {
-				tracking.use(1);
-				size_t len;
-				const char* p = lua_tolstring(L, index, &len);
-				return string_detail::string_shim(p, len);
 			}
 		};
 #endif // C++17-wave
