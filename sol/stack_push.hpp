@@ -572,6 +572,10 @@ namespace sol {
 			static int push(lua_State* L, const string_view& sv) {
 				return stack::push(L, sv.data(), sv.length());
 			}
+
+			static int push(lua_State* L, const string_view& sv, std::size_t n) {
+				return stack::push(L, sv.data(), n);
+			}
 		};
 
 		template<>
@@ -769,6 +773,10 @@ namespace sol {
 			static int push(lua_State* L, const wstring_view& sv) {
 				return stack::push(L, sv.data(), sv.length());
 			}
+
+			static int push(lua_State* L, const wstring_view& sv, std::size_t n) {
+				return stack::push(L, sv.data(), n);
+			}
 		};
 
 		template <>
@@ -776,12 +784,20 @@ namespace sol {
 			static int push(lua_State* L, const u16string_view& sv) {
 				return stack::push(L, sv.data(), sv.length());
 			}
+
+			static int push(lua_State* L, const u16string_view& sv, std::size_t n) {
+				return stack::push(L, sv.data(), n);
+			}
 		};
 
 		template <>
 		struct pusher<u32string_view> {
 			static int push(lua_State* L, const u32string_view& sv) {
 				return stack::push(L, sv.data(), sv.length());
+			}
+
+			static int push(lua_State* L, const u32string_view& sv, std::size_t n) {
+				return stack::push(L, sv.data(), n);
 			}
 		};
 #endif // codecvt Header Support

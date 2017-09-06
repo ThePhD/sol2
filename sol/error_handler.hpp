@@ -85,7 +85,7 @@ namespace sol {
 				}
 				addendum += n;
 				++marker;
-			}
+			};
 			(void)detail::swallow{ int(), (action(detail::demangle<Args>()), int())... };
 			addendum += ")')";
 			return type_panic_string(L, index, expected, actual, message + addendum);
