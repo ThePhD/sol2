@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-06 20:49:28.612590 UTC
-// This header was generated with sol v2.18.2 (revision fbdc5d9)
+// Generated 2017-09-07 04:51:15.580524 UTC
+// This header was generated with sol v2.18.2 (revision 30c7e40)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -16345,14 +16345,14 @@ namespace sol {
 		template <typename T, typename... Keys>
 		decltype(auto) traverse_get(Keys&&... keys) const {
 			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-			return traverse_get_optional<false, top_level, T>(meta::is_optional<meta::unqualified_t<T>>(), std::forward<Keys>(keys)...);
+			return traverse_get_optional<top_level, false, T>(meta::is_optional<meta::unqualified_t<T>>(), std::forward<Keys>(keys)...);
 		}
 
 		template <typename... Keys>
 		basic_table_core& traverse_set(Keys&&... keys) {
 			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
 			auto pn = stack::pop_n(base_t::lua_state(), static_cast<int>(sizeof...(Keys)-2));
-			traverse_set_deep<false, top_level>(std::forward<Keys>(keys)...);
+			traverse_set_deep<top_level, false>(std::forward<Keys>(keys)...);
 			return *this;
 		}
 
@@ -16366,7 +16366,7 @@ namespace sol {
 		decltype(auto) raw_get(Keys&&... keys) const {
 			static_assert(sizeof...(Keys) == sizeof...(Ret), "number of keys and number of return types do not match");
 			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-			return tuple_get<false>(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), std::forward_as_tuple(std::forward<Keys>(keys)...));
+			return tuple_get<true>(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), std::forward_as_tuple(std::forward<Keys>(keys)...));
 		}
 
 		template<typename T, typename Key>
@@ -16391,14 +16391,14 @@ namespace sol {
 		template <typename T, typename... Keys>
 		decltype(auto) traverse_raw_get(Keys&&... keys) const {
 			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-			return traverse_get_optional<true, top_level, T>(meta::is_optional<meta::unqualified_t<T>>(), std::forward<Keys>(keys)...);
+			return traverse_get_optional<top_level, true, T>(meta::is_optional<meta::unqualified_t<T>>(), std::forward<Keys>(keys)...);
 		}
 
 		template <typename... Keys>
 		basic_table_core& traverse_raw_set(Keys&&... keys) {
 			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
 			auto pn = stack::pop_n(base_t::lua_state(), static_cast<int>(sizeof...(Keys)-2));
-			traverse_set_deep<true, top_level>(std::forward<Keys>(keys)...);
+			traverse_set_deep<top_level, true>(std::forward<Keys>(keys)...);
 			return *this;
 		}
 
