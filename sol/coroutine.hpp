@@ -33,11 +33,7 @@ namespace sol {
 		call_status stats = call_status::yielded;
 
 		void luacall(std::ptrdiff_t argcount, std::ptrdiff_t) {
-#if SOL_LUA_VERSION < 502
-			stats = static_cast<call_status>(lua_resume(lua_state(), static_cast<int>(argcount)));
-#else
 			stats = static_cast<call_status>(lua_resume(lua_state(), nullptr, static_cast<int>(argcount)));
-#endif // Lua 5.1 compat
 		}
 
 		template<std::size_t... I, typename... Ret>

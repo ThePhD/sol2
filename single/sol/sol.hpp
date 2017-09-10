@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-07 04:51:15.580524 UTC
-// This header was generated with sol v2.18.2 (revision 30c7e40)
+// Generated 2017-09-10 01:37:11.449518 UTC
+// This header was generated with sol v2.18.2 (revision 8409a82)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1523,144 +1523,243 @@ namespace sol {
 
 #ifndef SOL_NO_COMPAT
 
-#if defined(__cplusplus) && !defined(SOL_USING_CXX_LUA)
-extern "C" {
+#if defined(SOL_USING_CXX_LUA)
+#ifndef COMPAT53_LUA_CPP
+#define COMPAT53_LUA_CPP 1
 #endif
-// beginning of sol/compatibility/5.2.0.h
+#endif
 
-#ifndef SOL_5_2_0_H
-#define SOL_5_2_0_H
+// beginning of sol/compatibility/compat-5.3.h
 
-#if SOL_LUA_VERSION < 503
-
-inline int lua_isinteger(lua_State* L, int idx) {
-	if (lua_type(L, idx) != LUA_TNUMBER)
-		return 0;
-	// This is a very slipshod way to do the testing
-	// but lua_totingerx doesn't play ball nicely
-	// on older versions...
-	lua_Number n = lua_tonumber(L, idx);
-	lua_Integer i = lua_tointeger(L, idx);
-	if (i != n)
-		return 0;
-	// it's DEFINITELY an integer
-	return 1;
-}
-
-#endif // SOL_LUA_VERSION == 502
-#endif // SOL_5_2_0_H
-// end of sol/compatibility/5.2.0.h
-
-// beginning of sol/compatibility/5.1.0.h
-
-#ifndef SOL_5_1_0_H
-#define SOL_5_1_0_H
-
-#if SOL_LUA_VERSION == 501
-/* Lua 5.1 */
+#ifndef COMPAT53_H_
+#define COMPAT53_H_
 
 #include <stddef.h>
-#include <string.h>
-#include <stdio.h>
-
-/* LuaJIT doesn't define these unofficial macros ... */
-#if !defined(LUAI_INT32)
 #include <limits.h>
-#if INT_MAX-20 < 32760
-#define LUAI_INT32  long
-#define LUAI_UINT32 unsigned long
-#elif INT_MAX > 2147483640L
-#define LUAI_INT32  int
-#define LUAI_UINT32 unsigned int
-#else
-#error "could not detect suitable lua_Unsigned datatype"
+#include <string.h>
+#if defined(__cplusplus) && !defined(COMPAT53_LUA_CPP)
+extern "C" {
 #endif
+#if defined(__cplusplus) && !defined(COMPAT53_LUA_CPP)
+}
 #endif
 
-/* LuaJIT does not have the updated error codes for thread status/function returns */
-#ifndef LUA_ERRGCMM
-#define LUA_ERRGCMM (LUA_ERRERR + 2)
-#endif // LUA_ERRGCMM
+#if defined(COMPAT53_PREFIX)
+/* - change the symbol names of functions to avoid linker conflicts
+ * - compat-5.3.c needs to be compiled (and linked) separately
+ */
+#  if !defined(COMPAT53_API)
+#    define COMPAT53_API extern
+#  endif
+#  undef COMPAT53_INCLUDE_SOURCE
+#else /* COMPAT53_PREFIX */
+/* - make all functions static and include the source.
+ * - compat-5.3.c doesn't need to be compiled (and linked) separately
+ */
+#  define COMPAT53_PREFIX compat53
+#  undef COMPAT53_API
+#  if defined(__GNUC__) || defined(__clang__)
+#    define COMPAT53_API __attribute__((__unused__)) static
+#  else
+#    define COMPAT53_API static
+#  endif
+#  define COMPAT53_INCLUDE_SOURCE
+#endif /* COMPAT53_PREFIX */
 
-/* LuaJIT does not support continuation contexts / return error codes? */
-#ifndef LUA_KCONTEXT
-#define LUA_KCONTEXT std::ptrdiff_t
-typedef LUA_KCONTEXT lua_KContext;
-typedef int(*lua_KFunction) (lua_State *L, int status, lua_KContext ctx);
-#endif // LUA_KCONTEXT
+#define COMPAT53_CONCAT_HELPER(a, b) a##b
+#define COMPAT53_CONCAT(a, b) COMPAT53_CONCAT_HELPER(a, b)
 
-#define LUA_OPADD 0
-#define LUA_OPSUB 1
-#define LUA_OPMUL 2
-#define LUA_OPDIV 3
-#define LUA_OPMOD 4
-#define LUA_OPPOW 5
-#define LUA_OPUNM 6
-#define LUA_OPEQ 0
-#define LUA_OPLT 1
-#define LUA_OPLE 2
+/* declarations for Lua 5.1 */
+#if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM == 501
 
-typedef LUAI_UINT32 lua_Unsigned;
+/* XXX not implemented:
+ * lua_arith (new operators)
+ * lua_upvalueid
+ * lua_upvaluejoin
+ * lua_version
+ * lua_yieldk
+ */
 
-typedef struct luaL_Buffer_52 {
-    luaL_Buffer b; /* make incorrect code crash! */
-    char *ptr;
-    size_t nelems;
-    size_t capacity;
-    lua_State *L2;
-} luaL_Buffer_52;
-#define luaL_Buffer luaL_Buffer_52
+#ifndef LUA_OK
+#  define LUA_OK 0
+#endif
+#ifndef LUA_OPADD
+#  define LUA_OPADD 0
+#endif
+#ifndef LUA_OPSUB
+#  define LUA_OPSUB 1
+#endif
+#ifndef LUA_OPMUL
+#  define LUA_OPMUL 2
+#endif
+#ifndef LUA_OPDIV
+#  define LUA_OPDIV 3
+#endif
+#ifndef LUA_OPMOD
+#  define LUA_OPMOD 4
+#endif
+#ifndef LUA_OPPOW
+#  define LUA_OPPOW 5
+#endif
+#ifndef LUA_OPUNM
+#  define LUA_OPUNM 6
+#endif
+#ifndef LUA_OPEQ
+#  define LUA_OPEQ 0
+#endif
+#ifndef LUA_OPLT
+#  define LUA_OPLT 1
+#endif
+#ifndef LUA_OPLE
+#  define LUA_OPLE 2
+#endif
 
-#define lua_tounsigned(L, i) lua_tounsignedx(L, i, NULL)
+/* LuaJIT/Lua 5.1 does not have the updated 
+ * error codes for thread status/function returns (but some patched versions do)
+ * define it only if it's not found
+ */
+#if !defined(LUA_ERRGCMM)
+/* Use + 2 because in some versions of Lua (Lua 5.1) 
+ * LUA_ERRFILE is defined as (LUA_ERRERR+1)
+ * so we need to avoid it (LuaJIT might have something at this
+ * integer value too)
+ */
+#  define LUA_ERRGCMM (LUA_ERRERR + 2)
+#endif /* LUA_ERRGCMM define */
 
-#define lua_rawlen(L, i) lua_objlen(L, i)
+typedef size_t lua_Unsigned;
 
-inline void lua_callk(lua_State *L, int nargs, int nresults, lua_KContext, lua_KFunction) {
-    // should probably warn the user of Lua 5.1 that continuation isn't supported...
-    lua_call(L, nargs, nresults);
-}
-inline int lua_pcallk(lua_State *L, int nargs, int nresults, int errfunc, lua_KContext, lua_KFunction) {
-    // should probably warn the user of Lua 5.1 that continuation isn't supported...
-    return lua_pcall(L, nargs, nresults, errfunc);
-}
-void lua_arith(lua_State *L, int op);
-int lua_compare(lua_State *L, int idx1, int idx2, int op);
-void lua_pushunsigned(lua_State *L, lua_Unsigned n);
-lua_Unsigned luaL_checkunsigned(lua_State *L, int i);
-lua_Unsigned lua_tounsignedx(lua_State *L, int i, int *isnum);
-lua_Unsigned luaL_optunsigned(lua_State *L, int i, lua_Unsigned def);
-lua_Integer lua_tointegerx(lua_State *L, int i, int *isnum);
-void lua_len(lua_State *L, int i);
-int luaL_len(lua_State *L, int i);
-const char *luaL_tolstring(lua_State *L, int idx, size_t *len);
-void luaL_requiref(lua_State *L, char const* modname, lua_CFunction openf, int glb);
+typedef struct luaL_Buffer_53 {
+  luaL_Buffer b; /* make incorrect code crash! */
+  char *ptr;
+  size_t nelems;
+  size_t capacity;
+  lua_State *L2;
+} luaL_Buffer_53;
+#define luaL_Buffer luaL_Buffer_53
 
-#define luaL_buffinit luaL_buffinit_52
-void luaL_buffinit(lua_State *L, luaL_Buffer_52 *B);
+#define lua_absindex COMPAT53_CONCAT(COMPAT53_PREFIX, _absindex)
+COMPAT53_API int lua_absindex (lua_State *L, int i);
 
-#define luaL_prepbuffsize luaL_prepbuffsize_52
-char *luaL_prepbuffsize(luaL_Buffer_52 *B, size_t s);
+#define lua_arith COMPAT53_CONCAT(COMPAT53_PREFIX, _arith)
+COMPAT53_API void lua_arith (lua_State *L, int op);
 
-#define luaL_addlstring luaL_addlstring_52
-void luaL_addlstring(luaL_Buffer_52 *B, const char *s, size_t l);
+#define lua_compare COMPAT53_CONCAT(COMPAT53_PREFIX, _compare)
+COMPAT53_API int lua_compare (lua_State *L, int idx1, int idx2, int op);
 
-#define luaL_addvalue luaL_addvalue_52
-void luaL_addvalue(luaL_Buffer_52 *B);
+#define lua_copy COMPAT53_CONCAT(COMPAT53_PREFIX, _copy)
+COMPAT53_API void lua_copy (lua_State *L, int from, int to);
 
-#define luaL_pushresult luaL_pushresult_52
-void luaL_pushresult(luaL_Buffer_52 *B);
+#define lua_getuservalue(L, i) \
+  (lua_getfenv((L), (i)), lua_type((L), -1))
+#define lua_setuservalue(L, i) \
+  (luaL_checktype((L), -1, LUA_TTABLE), lua_setfenv((L), (i)))
+
+#define lua_len COMPAT53_CONCAT(COMPAT53_PREFIX, _len)
+COMPAT53_API void lua_len (lua_State *L, int i);
+
+#define lua_pushstring(L, s) \
+  (lua_pushstring((L), (s)), lua_tostring((L), -1))
+
+#define lua_pushlstring(L, s, len) \
+  ((((len) == 0) ? lua_pushlstring((L), "", 0) : lua_pushlstring((L), (s), (len))), lua_tostring((L), -1))
+
+#ifndef luaL_newlibtable
+#  define luaL_newlibtable(L, l) \
+  (lua_createtable((L), 0, sizeof((l))/sizeof(*(l))-1))
+#endif
+#ifndef luaL_newlib
+#  define luaL_newlib(L, l) \
+  (luaL_newlibtable((L), (l)), luaL_register((L), NULL, (l)))
+#endif
+
+#define lua_pushglobaltable(L) \
+  lua_pushvalue((L), LUA_GLOBALSINDEX)
+
+#define lua_rawgetp COMPAT53_CONCAT(COMPAT53_PREFIX, _rawgetp)
+COMPAT53_API int lua_rawgetp (lua_State *L, int i, const void *p);
+
+#define lua_rawsetp COMPAT53_CONCAT(COMPAT53_PREFIX, _rawsetp)
+COMPAT53_API void lua_rawsetp(lua_State *L, int i, const void *p);
+
+#define lua_rawlen(L, i) lua_objlen((L), (i))
+
+#define lua_tointegerx COMPAT53_CONCAT(COMPAT53_PREFIX, _tointegerx)
+COMPAT53_API lua_Integer lua_tointegerx (lua_State *L, int i, int *isnum);
+
+#define lua_tonumberx COMPAT53_CONCAT(COMPAT53_PREFIX, _tonumberx)
+COMPAT53_API lua_Number lua_tonumberx (lua_State *L, int i, int *isnum);
+
+#define luaL_checkversion COMPAT53_CONCAT(COMPAT53_PREFIX, L_checkversion)
+COMPAT53_API void luaL_checkversion (lua_State *L);
+
+#define luaL_loadfilex COMPAT53_CONCAT(COMPAT53_PREFIX, L_loadfilex)
+COMPAT53_API void luaL_loadfilex (lua_State *L);
+
+#define luaL_loadbufferx COMPAT53_CONCAT(COMPAT53_PREFIX, L_loadbufferx)
+COMPAT53_API void luaL_loadbufferx (lua_State *L);
+
+#define luaL_checkstack COMPAT53_CONCAT(COMPAT53_PREFIX, L_checkstack_53)
+COMPAT53_API void luaL_checkstack (lua_State *L, int sp, const char *msg);
+
+#define luaL_getsubtable COMPAT53_CONCAT(COMPAT53_PREFIX, L_getsubtable)
+COMPAT53_API int luaL_getsubtable (lua_State* L, int i, const char *name);
+
+#define luaL_len COMPAT53_CONCAT(COMPAT53_PREFIX, L_len)
+COMPAT53_API lua_Integer luaL_len (lua_State *L, int i);
+
+#define luaL_setfuncs COMPAT53_CONCAT(COMPAT53_PREFIX, L_setfuncs)
+COMPAT53_API void luaL_setfuncs (lua_State *L, const luaL_Reg *l, int nup);
+
+#define luaL_setmetatable COMPAT53_CONCAT(COMPAT53_PREFIX, L_setmetatable)
+COMPAT53_API void luaL_setmetatable (lua_State *L, const char *tname);
+
+#define luaL_testudata COMPAT53_CONCAT(COMPAT53_PREFIX, L_testudata)
+COMPAT53_API void *luaL_testudata (lua_State *L, int i, const char *tname);
+
+#define luaL_traceback COMPAT53_CONCAT(COMPAT53_PREFIX, L_traceback)
+COMPAT53_API void luaL_traceback (lua_State *L, lua_State *L1, const char *msg, int level);
+
+#define luaL_fileresult COMPAT53_CONCAT(COMPAT53_PREFIX, L_fileresult)
+COMPAT53_API int luaL_fileresult (lua_State *L, int stat, const char *fname);
+
+#define luaL_execresult COMPAT53_CONCAT(COMPAT53_PREFIX, L_execresult)
+COMPAT53_API int luaL_execresult (lua_State *L, int stat);
+
+#define lua_callk(L, na, nr, ctx, cont) \
+  ((void)(ctx), (void)(cont), lua_call((L), (na), (nr)))
+#define lua_pcallk(L, na, nr, err, ctx, cont) \
+  ((void)(ctx), (void)(cont), lua_pcall((L), (na), (nr), (err)))
+
+#define lua_resume(L, from, nargs) \
+  ((void)(from), lua_resume((L), (nargs)))
+
+#define luaL_buffinit COMPAT53_CONCAT(COMPAT53_PREFIX, _buffinit_53)
+COMPAT53_API void luaL_buffinit (lua_State *L, luaL_Buffer_53 *B);
+
+#define luaL_prepbuffsize COMPAT53_CONCAT(COMPAT53_PREFIX, _prepbufsize_53)
+COMPAT53_API char *luaL_prepbuffsize (luaL_Buffer_53 *B, size_t s);
+
+#define luaL_addlstring COMPAT53_CONCAT(COMPAT53_PREFIX, _addlstring_53)
+COMPAT53_API void luaL_addlstring (luaL_Buffer_53 *B, const char *s, size_t l);
+
+#define luaL_addvalue COMPAT53_CONCAT(COMPAT53_PREFIX, _addvalue_53)
+COMPAT53_API void luaL_addvalue (luaL_Buffer_53 *B);
+
+#define luaL_pushresult COMPAT53_CONCAT(COMPAT53_PREFIX, _pushresult_53)
+COMPAT53_API void luaL_pushresult (luaL_Buffer_53 *B);
 
 #undef luaL_buffinitsize
 #define luaL_buffinitsize(L, B, s) \
-  (luaL_buffinit(L, B), luaL_prepbuffsize(B, s))
+  (luaL_buffinit((L), (B)), luaL_prepbuffsize((B), (s)))
 
 #undef luaL_prepbuffer
 #define luaL_prepbuffer(B) \
-  luaL_prepbuffsize(B, LUAL_BUFFERSIZE)
+  luaL_prepbuffsize((B), LUAL_BUFFERSIZE)
 
 #undef luaL_addchar
 #define luaL_addchar(B, c) \
-  ((void)((B)->nelems < (B)->capacity || luaL_prepbuffsize(B, 1)), \
+  ((void)((B)->nelems < (B)->capacity || luaL_prepbuffsize((B), 1)), \
    ((B)->ptr[(B)->nelems++] = (c)))
 
 #undef luaL_addsize
@@ -1669,522 +1768,829 @@ void luaL_pushresult(luaL_Buffer_52 *B);
 
 #undef luaL_addstring
 #define luaL_addstring(B, s) \
-  luaL_addlstring(B, s, strlen(s))
+  luaL_addlstring((B), (s), strlen((s)))
 
 #undef luaL_pushresultsize
 #define luaL_pushresultsize(B, s) \
-  (luaL_addsize(B, s), luaL_pushresult(B))
+  (luaL_addsize((B), (s)), luaL_pushresult((B)))
 
-typedef struct kepler_lua_compat_get_string_view {
-	const char *s;
-	size_t size;
-} kepler_lua_compat_get_string_view;
+#if defined(LUA_COMPAT_APIINTCASTS)
+#define lua_pushunsigned(L, n) \
+  lua_pushinteger((L), (lua_Integer)(n))
+#define lua_tounsignedx(L, i, is) \
+  ((lua_Unsigned)lua_tointegerx((L), (i), (is)))
+#define lua_tounsigned(L, i) \
+  lua_tounsignedx((L), (i), NULL)
+#define luaL_checkunsigned(L, a) \
+  ((lua_Unsigned)luaL_checkinteger((L), (a)))
+#define luaL_optunsigned(L, a, d) \
+  ((lua_Unsigned)luaL_optinteger((L), (a), (lua_Integer)(d)))
+#endif
 
-inline const char* kepler_lua_compat_get_string(lua_State* L, void* ud, size_t* size) {
-    kepler_lua_compat_get_string_view* ls = (kepler_lua_compat_get_string_view*) ud;
-    (void)L;
-    if (ls->size == 0) return NULL;
-    *size = ls->size;
-    ls->size = 0;
-    return ls->s;
+#endif /* Lua 5.1 only */
+
+/* declarations for Lua 5.1 and 5.2 */
+#if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM <= 502
+
+typedef int lua_KContext;
+
+typedef int (*lua_KFunction)(lua_State *L, int status, lua_KContext ctx);
+
+#define lua_dump(L, w, d, s) \
+  ((void)(s), lua_dump((L), (w), (d)))
+
+#define lua_getfield(L, i, k) \
+  (lua_getfield((L), (i), (k)), lua_type((L), -1))
+
+#define lua_gettable(L, i) \
+  (lua_gettable((L), (i)), lua_type((L), -1))
+
+#define lua_geti COMPAT53_CONCAT(COMPAT53_PREFIX, _geti)
+COMPAT53_API int lua_geti (lua_State *L, int index, lua_Integer i);
+
+#define lua_isinteger COMPAT53_CONCAT(COMPAT53_PREFIX, _isinteger)
+COMPAT53_API int lua_isinteger (lua_State *L, int index);
+
+#define lua_numbertointeger(n, p) \
+  ((*(p) = (lua_Integer)(n)), 1)
+
+#define lua_rawget(L, i) \
+  (lua_rawget((L), (i)), lua_type((L), -1))
+
+#define lua_rawgeti(L, i, n) \
+  (lua_rawgeti((L), (i), (n)), lua_type((L), -1))
+
+#define lua_rotate COMPAT53_CONCAT(COMPAT53_PREFIX, _rotate)
+COMPAT53_API void lua_rotate (lua_State *L, int idx, int n);
+
+#define lua_seti COMPAT53_CONCAT(COMPAT53_PREFIX, _seti)
+COMPAT53_API void lua_seti (lua_State *L, int index, lua_Integer i);
+
+#define lua_stringtonumber COMPAT53_CONCAT(COMPAT53_PREFIX, _stringtonumber)
+COMPAT53_API size_t lua_stringtonumber (lua_State *L, const char *s);
+
+#define luaL_tolstring COMPAT53_CONCAT(COMPAT53_PREFIX, L_tolstring)
+COMPAT53_API const char *luaL_tolstring (lua_State *L, int idx, size_t *len);
+
+#define luaL_getmetafield(L, o, e) \
+  (luaL_getmetafield((L), (o), (e)) ? lua_type((L), -1) : LUA_TNIL)
+
+#define luaL_newmetatable(L, tn) \
+  (luaL_newmetatable((L), (tn)) ? (lua_pushstring((L), (tn)), lua_setfield((L), -2, "__name"), 1) : 0)
+
+#define luaL_requiref COMPAT53_CONCAT(COMPAT53_PREFIX, L_requiref_53)
+COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
+                                 lua_CFunction openf, int glb );
+
+#endif /* Lua 5.1 and Lua 5.2 */
+
+/* declarations for Lua 5.2 */
+#if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM == 502
+
+/* XXX not implemented:
+ * lua_isyieldable
+ * lua_getextraspace
+ * lua_arith (new operators)
+ * lua_pushfstring (new formats)
+ */
+
+#define lua_getglobal(L, n) \
+  (lua_getglobal((L), (n)), lua_type((L), -1))
+
+#define lua_getuservalue(L, i) \
+  (lua_getuservalue((L), (i)), lua_type((L), -1))
+
+#define lua_pushlstring(L, s, len) \
+  (((len) == 0) ? lua_pushlstring((L), "", 0) : lua_pushlstring((L), (s), (len)))
+
+#define lua_rawgetp(L, i, p) \
+  (lua_rawgetp((L), (i), (p)), lua_type((L), -1))
+
+#define LUA_KFUNCTION(_name) \
+  static int (_name)(lua_State *L, int status, lua_KContext ctx); \
+  static int (_name ## _52)(lua_State *L) { \
+    lua_KContext ctx; \
+    int status = lua_getctx(L, &ctx); \
+    return (_name)(L, status, ctx); \
+  } \
+  static int (_name)(lua_State *L, int status, lua_KContext ctx)
+
+#define lua_pcallk(L, na, nr, err, ctx, cont) \
+  lua_pcallk((L), (na), (nr), (err), (ctx), cont ## _52)
+
+#define lua_callk(L, na, nr, ctx, cont) \
+  lua_callk((L), (na), (nr), (ctx), cont ## _52)
+
+#define lua_yieldk(L, nr, ctx, cont) \
+  lua_yieldk((L), (nr), (ctx), cont ## _52)
+
+#ifdef lua_call
+#  undef lua_call
+#  define lua_call(L, na, nr) \
+  (lua_callk)((L), (na), (nr), 0, NULL)
+#endif
+
+#ifdef lua_pcall
+#  undef lua_pcall
+#  define lua_pcall(L, na, nr, err) \
+  (lua_pcallk)((L), (na), (nr), (err), 0, NULL)
+#endif
+
+#ifdef lua_yield
+#  undef lua_yield
+#  define lua_yield(L, nr) \
+  (lua_yieldk)((L), (nr), 0, NULL)
+#endif
+
+#endif /* Lua 5.2 only */
+
+/* other Lua versions */
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501 || LUA_VERSION_NUM > 503
+
+#  error "unsupported Lua version (i.e. not Lua 5.1, 5.2, or 5.3)"
+
+#endif /* other Lua versions except 5.1, 5.2, and 5.3 */
+
+/* helper macro for defining continuation functions (for every version
+ * *except* Lua 5.2) */
+#ifndef LUA_KFUNCTION
+#define LUA_KFUNCTION(_name) \
+  static int (_name)(lua_State *L, int status, lua_KContext ctx)
+#endif
+
+#if defined(COMPAT53_INCLUDE_SOURCE)
+// beginning of sol/compatibility/compat-5.3.c
+
+#include <stdlib.h>
+#include <ctype.h>
+#include <errno.h>
+#include <stdio.h>
+
+/* don't compile it again if it already is included via compat53.h */
+#ifndef COMPAT53_C_
+#define COMPAT53_C_
+
+/* definitions for Lua 5.1 only */
+#if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM == 501
+
+#ifndef COMPAT53_LUA_FILE_BUFFER_SIZE
+#define COMPAT53_LUA_FILE_BUFFER_SIZE 4096
+#endif // Lua File Buffer Size
+
+#define compat53_f_parser_buffer COMPAT53_CONCAT(COMPAT53_PREFIX, compat53_f_parser_buffer)
+struct compat53_f_parser_buffer {
+  FILE* file;
+  size_t start;
+  char buffer[COMPAT53_LUA_FILE_BUFFER_SIZE];
+};
+
+COMPAT53_API int lua_absindex (lua_State *L, int i) {
+  if (i < 0 && i > LUA_REGISTRYINDEX)
+    i += lua_gettop(L) + 1;
+  return i;
 }
 
-#if !defined(SOL_LUAJIT) || (SOL_LUAJIT_VERSION < 20001)
-
-inline int luaL_loadbufferx(lua_State* L, const char* buff, size_t size, const char* name, const char*) {
-    kepler_lua_compat_get_string_view ls;
-    ls.s = buff;
-    ls.size = size;
-    return lua_load(L, kepler_lua_compat_get_string, &ls, name/*, mode*/);
+static void compat53_call_lua (lua_State *L, char const code[], size_t len,
+                               int nargs, int nret) {
+  lua_rawgetp(L, LUA_REGISTRYINDEX, (void*)code);
+  if (lua_type(L, -1) != LUA_TFUNCTION) {
+    lua_pop(L, 1);
+    if (luaL_loadbuffer(L, code, len, "=none"))
+      lua_error(L);
+    lua_pushvalue(L, -1);
+    lua_rawsetp(L, LUA_REGISTRYINDEX, (void*)code);
+  }
+  lua_insert(L, -nargs-1);
+  lua_call(L, nargs, nret);
 }
 
-inline int luaL_loadfilex(lua_State* L, const char* filename, const char*) {
-	return luaL_loadfile(L, filename/*, mode*/);
+static const char compat53_arith_code[] =
+  "local op,a,b=...\n"
+  "if op==0 then return a+b\n"
+  "elseif op==1 then return a-b\n"
+  "elseif op==2 then return a*b\n"
+  "elseif op==3 then return a/b\n"
+  "elseif op==4 then return a%b\n"
+  "elseif op==5 then return a^b\n"
+  "elseif op==6 then return -a\n"
+  "end\n";
+
+COMPAT53_API void lua_arith (lua_State *L, int op) {
+  if (op < LUA_OPADD || op > LUA_OPUNM)
+    luaL_error(L, "invalid 'op' argument for lua_arith");
+  luaL_checkstack(L, 5, "not enough stack slots");
+  if (op == LUA_OPUNM)
+    lua_pushvalue(L, -1);
+  lua_pushnumber(L, op);
+  lua_insert(L, -3);
+  compat53_call_lua(L, compat53_arith_code,
+                    sizeof(compat53_arith_code)-1, 3, 1);
 }
 
-#endif // Luajit 2.1.0-beta+, 2.0.1+ beta and beyond
+static const char compat53_compare_code[] =
+  "local a,b=...\n"
+  "return a<=b\n";
+
+COMPAT53_API int lua_compare (lua_State *L, int idx1, int idx2, int op) {
+  int result = 0;
+  switch (op) {
+    case LUA_OPEQ:
+      return lua_equal(L, idx1, idx2);
+    case LUA_OPLT:
+      return lua_lessthan(L, idx1, idx2);
+    case LUA_OPLE:
+      luaL_checkstack(L, 5, "not enough stack slots");
+      idx1 = lua_absindex(L, idx1);
+      idx2 = lua_absindex(L, idx2);
+      lua_pushvalue(L, idx1);
+      lua_pushvalue(L, idx2);
+      compat53_call_lua(L, compat53_compare_code,
+                        sizeof(compat53_compare_code)-1, 2, 1);
+      result = lua_toboolean(L, -1);
+      lua_pop(L, 1);
+      return result;
+    default:
+      luaL_error(L, "invalid 'op' argument for lua_compare");
+  }
+  return 0;
+}
+
+COMPAT53_API void lua_copy (lua_State *L, int from, int to) {
+  int abs_to = lua_absindex(L, to);
+  luaL_checkstack(L, 1, "not enough stack slots");
+  lua_pushvalue(L, from);
+  lua_replace(L, abs_to);
+}
+
+COMPAT53_API void lua_len (lua_State *L, int i) {
+  switch (lua_type(L, i)) {
+    case LUA_TSTRING:
+      lua_pushnumber(L, (lua_Number)lua_objlen(L, i));
+      break;
+    case LUA_TTABLE:
+      if (!luaL_callmeta(L, i, "__len"))
+        lua_pushnumber(L, (lua_Number)lua_objlen(L, i));
+      break;
+    case LUA_TUSERDATA:
+      if (luaL_callmeta(L, i, "__len"))
+        break;
+      /* FALLTHROUGH */
+    default:
+      luaL_error(L, "attempt to get length of a %s value",
+                 lua_typename(L, lua_type(L, i)));
+  }
+}
+
+COMPAT53_API int lua_rawgetp (lua_State *L, int i, const void *p) {
+  int abs_i = lua_absindex(L, i);
+  lua_pushlightuserdata(L, (void*)p);
+  lua_rawget(L, abs_i);
+  return lua_type(L, -1);
+}
+
+COMPAT53_API void lua_rawsetp (lua_State *L, int i, const void *p) {
+  int abs_i = lua_absindex(L, i);
+  luaL_checkstack(L, 1, "not enough stack slots");
+  lua_pushlightuserdata(L, (void*)p);
+  lua_insert(L, -2);
+  lua_rawset(L, abs_i);
+}
+
+COMPAT53_API lua_Integer lua_tointegerx (lua_State *L, int i, int *isnum) {
+  lua_Integer n = lua_tointeger(L, i);
+  if (isnum != NULL) {
+    *isnum = (n != 0 || lua_isnumber(L, i));
+  }
+  return n;
+}
+
+COMPAT53_API lua_Number lua_tonumberx (lua_State *L, int i, int *isnum) {
+  lua_Number n = lua_tonumber(L, i);
+  if (isnum != NULL) {
+    *isnum = (n != 0 || lua_isnumber(L, i));
+  }
+  return n;
+}
+
+COMPAT53_API void luaL_checkversion (lua_State *L) {
+  (void)L;
+}
+
+COMPAT53_API void luaL_checkstack (lua_State *L, int sp, const char *msg) {
+  if (!lua_checkstack(L, sp+LUA_MINSTACK)) {
+    if (msg != NULL)
+      luaL_error(L, "stack overflow (%s)", msg);
+    else {
+      lua_pushliteral(L, "stack overflow");
+      lua_error(L);
+    }
+  }
+}
+
+COMPAT53_API int luaL_getsubtable (lua_State *L, int i, const char *name) {
+  int abs_i = lua_absindex(L, i);
+  luaL_checkstack(L, 3, "not enough stack slots");
+  lua_pushstring(L, name);
+  lua_gettable(L, abs_i);
+  if (lua_istable(L, -1))
+    return 1;
+  lua_pop(L, 1);
+  lua_newtable(L);
+  lua_pushstring(L, name);
+  lua_pushvalue(L, -2);
+  lua_settable(L, abs_i);
+  return 0;
+}
+
+COMPAT53_API lua_Integer luaL_len (lua_State *L, int i) {
+  lua_Integer res = 0;
+  int isnum = 0;
+  luaL_checkstack(L, 1, "not enough stack slots");
+  lua_len(L, i);
+  res = lua_tointegerx(L, -1, &isnum);
+  lua_pop(L, 1);
+  if (!isnum)
+    luaL_error(L, "object length is not an integer");
+  return res;
+}
+
+COMPAT53_API void luaL_setfuncs (lua_State *L, const luaL_Reg *l, int nup) {
+  luaL_checkstack(L, nup+1, "too many upvalues");
+  for (; l->name != NULL; l++) {  /* fill the table with given functions */
+    int i;
+    lua_pushstring(L, l->name);
+    for (i = 0; i < nup; i++)  /* copy upvalues to the top */
+      lua_pushvalue(L, -(nup + 1));
+    lua_pushcclosure(L, l->func, nup);  /* closure with those upvalues */
+    lua_settable(L, -(nup + 3)); /* table must be below the upvalues, the name and the closure */
+  }
+  lua_pop(L, nup);  /* remove upvalues */
+}
+
+COMPAT53_API void luaL_setmetatable (lua_State *L, const char *tname) {
+  luaL_checkstack(L, 1, "not enough stack slots");
+  luaL_getmetatable(L, tname);
+  lua_setmetatable(L, -2);
+}
+
+COMPAT53_API void *luaL_testudata (lua_State *L, int i, const char *tname) {
+  void *p = lua_touserdata(L, i);
+  luaL_checkstack(L, 2, "not enough stack slots");
+  if (p == NULL || !lua_getmetatable(L, i))
+    return NULL;
+  else {
+    int res = 0;
+    luaL_getmetatable(L, tname);
+    res = lua_rawequal(L, -1, -2);
+    lua_pop(L, 2);
+    if (!res)
+      p = NULL;
+  }
+  return p;
+}
+
+static int compat53_countlevels (lua_State *L) {
+  lua_Debug ar;
+  int li = 1, le = 1;
+  /* find an upper bound */
+  while (lua_getstack(L, le, &ar)) { li = le; le *= 2; }
+  /* do a binary search */
+  while (li < le) {
+    int m = (li + le)/2;
+    if (lua_getstack(L, m, &ar)) li = m + 1;
+    else le = m;
+  }
+  return le - 1;
+}
+
+static int compat53_findfield (lua_State *L, int objidx, int level) {
+  if (level == 0 || !lua_istable(L, -1))
+    return 0;  /* not found */
+  lua_pushnil(L);  /* start 'next' loop */
+  while (lua_next(L, -2)) {  /* for each pair in table */
+    if (lua_type(L, -2) == LUA_TSTRING) {  /* ignore non-string keys */
+      if (lua_rawequal(L, objidx, -1)) {  /* found object? */
+        lua_pop(L, 1);  /* remove value (but keep name) */
+        return 1;
+      }
+      else if (compat53_findfield(L, objidx, level - 1)) {  /* try recursively */
+        lua_remove(L, -2);  /* remove table (but keep name) */
+        lua_pushliteral(L, ".");
+        lua_insert(L, -2);  /* place '.' between the two names */
+        lua_concat(L, 3);
+        return 1;
+      }
+    }
+    lua_pop(L, 1);  /* remove value */
+  }
+  return 0;  /* not found */
+}
+
+static int compat53_pushglobalfuncname (lua_State *L, lua_Debug *ar) {
+  int top = lua_gettop(L);
+  lua_getinfo(L, "f", ar);  /* push function */
+  lua_pushvalue(L, LUA_GLOBALSINDEX);
+  if (compat53_findfield(L, top + 1, 2)) {
+    lua_copy(L, -1, top + 1);  /* move name to proper place */
+    lua_pop(L, 2);  /* remove pushed values */
+    return 1;
+  }
+  else {
+    lua_settop(L, top);  /* remove function and global table */
+    return 0;
+  }
+}
+
+static void compat53_pushfuncname (lua_State *L, lua_Debug *ar) {
+  if (*ar->namewhat != '\0')  /* is there a name? */
+    lua_pushfstring(L, "function " LUA_QS, ar->name);
+  else if (*ar->what == 'm')  /* main? */
+      lua_pushliteral(L, "main chunk");
+  else if (*ar->what == 'C') {
+    if (compat53_pushglobalfuncname(L, ar)) {
+      lua_pushfstring(L, "function " LUA_QS, lua_tostring(L, -1));
+      lua_remove(L, -2);  /* remove name */
+    }
+    else
+      lua_pushliteral(L, "?");
+  }
+  else
+    lua_pushfstring(L, "function <%s:%d>", ar->short_src, ar->linedefined);
+}
+
+#define COMPAT53_LEVELS1 12  /* size of the first part of the stack */
+#define COMPAT53_LEVELS2 10  /* size of the second part of the stack */
+
+COMPAT53_API void luaL_traceback (lua_State *L, lua_State *L1,
+                                  const char *msg, int level) {
+  lua_Debug ar;
+  int top = lua_gettop(L);
+  int numlevels = compat53_countlevels(L1);
+  int mark = (numlevels > COMPAT53_LEVELS1 + COMPAT53_LEVELS2) ? COMPAT53_LEVELS1 : 0;
+  if (msg) lua_pushfstring(L, "%s\n", msg);
+  lua_pushliteral(L, "stack traceback:");
+  while (lua_getstack(L1, level++, &ar)) {
+    if (level == mark) {  /* too many levels? */
+      lua_pushliteral(L, "\n\t...");  /* add a '...' */
+      level = numlevels - COMPAT53_LEVELS2;  /* and skip to last ones */
+    }
+    else {
+      lua_getinfo(L1, "Slnt", &ar);
+      lua_pushfstring(L, "\n\t%s:", ar.short_src);
+      if (ar.currentline > 0)
+        lua_pushfstring(L, "%d:", ar.currentline);
+      lua_pushliteral(L, " in ");
+      compat53_pushfuncname(L, &ar);
+      lua_concat(L, lua_gettop(L) - top);
+    }
+  }
+  lua_concat(L, lua_gettop(L) - top);
+}
+
+COMPAT53_API int luaL_fileresult (lua_State *L, int stat, const char *fname) {
+  const char* s = NULL;
+  int en = errno;  /* calls to Lua API may change this value */
+  if (stat) {
+    lua_pushboolean(L, 1);
+    return 1;
+  }
+  else {
+    lua_pushnil(L);
+#if defined(__GLIBC__) || defined(_POSIX_VERSION) || defined(__APPLE__) || (!defined (__MINGW32__) && defined(__GNUC__) && (__GNUC__ < 6))
+    /* use strerror_r here, because it's available on these specific platforms */
+    char buf[512] = {0};
+#if ((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || (defined(_XOPEN_SOURCE) || _XOPEN_SOURCE >= 600)) && (!defined(_GNU_SOURCE) || !_GNU_SOURCE)
+    /* XSI Compliant */
+    strerror_r(en, buf, 512);
+    s = buf;
+#else
+	/* GNU-specific which returns const char* */
+    s = strerror_r(en, buf, 512);
+#endif
+#elif defined(_MSC_VER) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L)
+    /* for MSVC and other C11 implementations, use strerror_s 
+     * since it's provided by default by the libraries 
+	*/
+    char buf[512] = {0};
+    strerror_s(buf, 512, en);
+    s = buf;
+#else
+    /* fallback, but
+     * strerror is not guaranteed to be threadsafe due to modifying
+     * errno itself and some impls not locking a static buffer for it
+     * ... but it works in 99% of cases, so I don't need the reason to stop
+     * the train now
+     */ 
+    s = strerror(en);
+#endif
+    if (fname)
+      lua_pushfstring(L, "%s: %s", fname, s);
+    else
+      lua_pushstring(L, s);
+    lua_pushnumber(L, (lua_Number)en);
+    return 3;
+  }
+}
+
+static const char* compat53_f_parser_handler (lua_State *L, void *data, size_t *size) {
+  struct compat53_f_parser_buffer *p = (struct compat53_f_parser_buffer*)data;
+  size_t readcount = fread(p->buffer + p->start, sizeof(*p->buffer), sizeof(p->buffer), p->file);
+  if (ferror(p->file) != 0 || feof(p->file) != 0) {
+    *size = 0;
+    return NULL;
+  }
+  *size = readcount + p->start;
+  p->start = 0;
+  return p->buffer;
+}
+
+static int checkmode (lua_State *L, const char *mode, const char *modename, int err) {
+  if (mode && strchr(mode, modename[0]) == NULL) {
+    lua_pushfstring(L, "attempt to load a %s chunk (mode is '%s')", modename, mode);
+    return err;
+  }
+  return LUA_OK;
+}
+
+COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char *mode) {
+  FILE* fp;
+  int err;
+  int c;
+  int status = LUA_OK;
+#if defined(_MSC_VER)
+  err = fopen_s(&fp, filename, "rb");
+  if (err != 0) {
+    fclose(fp);
+    lua_pushfstring(L, "cannot open file '%s'", filename);
+    return LUA_ERRFILE;
+  }
+#else /* fopen error on Visual C */
+  fp = fopen(filename, "rb");
+  if (fp == NULL) {
+    fclose(fp);
+    lua_pushfstring(L, "cannot open file '%s'", filename);
+    return LUA_ERRFILE;
+  }
+#endif /* fopen error on Visual C */
+  c = fgetc(fp);
+  if (ferror(fp) != 0) {
+    /* can't read even a single character */
+    fclose(fp);
+    lua_pushfstring(L, "cannot read from file '%s'", filename);
+    return LUA_ERRFILE;
+  }
+  if (c == '\x1b') {
+    status = checkmode(L, mode, "binary", LUA_ERRFILE);
+  }
+  else {
+    status = checkmode(L, mode, "text", LUA_ERRFILE);
+  }
+  if (status != LUA_OK) {
+    fclose(fp);
+    return status;
+  }
+  struct compat53_f_parser_buffer fbuf;
+  fbuf.file = fp;
+  fbuf.start = 1;
+  status = lua_load(L, &compat53_f_parser_handler, &fbuf, filename);
+  fclose(fp);
+  return status;
+}
+
+COMPAT53_API int luaL_loadbufferx (lua_State *L, const char *buff, size_t sz, const char *name, const char *mode) {
+  int status = LUA_OK;
+  if (buff[0] == '\x1b') {
+    status = checkmode(L, mode, "binary", LUA_ERRSYNTAX);
+  }
+  else {
+    status = checkmode(L, mode, "text", LUA_ERRSYNTAX);
+  }
+  if (status != LUA_OK)
+    return status;
+  return luaL_loadbuffer(L, buff, sz, name);
+}
+
+#if !defined(l_inspectstat) && \
+    (defined(unix) || defined(__unix) || defined(__unix__) || \
+     defined(__TOS_AIX__) || defined(_SYSTYPE_BSD) || \
+     (defined(__APPLE__) && defined(__MACH__)))
+/* some form of unix; check feature macros in unistd.h for details */
+#  include <unistd.h>
+/* check posix version; the relevant include files and macros probably
+ * were available before 2001, but I'm not sure */
+#  if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
+#    include <sys/wait.h>
+#    define l_inspectstat(stat,what) \
+  if (WIFEXITED(stat)) { stat = WEXITSTATUS(stat); } \
+  else if (WIFSIGNALED(stat)) { stat = WTERMSIG(stat); what = "signal"; }
+#  endif
+#endif
+
+/* provide default (no-op) version */
+#if !defined(l_inspectstat)
+#  define l_inspectstat(stat,what) ((void)0)
+#endif
+
+COMPAT53_API int luaL_execresult (lua_State *L, int stat) {
+  const char *what = "exit";
+  if (stat == -1)
+    return luaL_fileresult(L, 0, NULL);
+  else {
+    l_inspectstat(stat, what);
+    if (*what == 'e' && stat == 0)
+      lua_pushboolean(L, 1);
+    else
+      lua_pushnil(L);
+    lua_pushstring(L, what);
+    lua_pushinteger(L, stat);
+    return 3;
+  }
+}
+
+COMPAT53_API void luaL_buffinit (lua_State *L, luaL_Buffer_53 *B) {
+  /* make it crash if used via pointer to a 5.1-style luaL_Buffer */
+  B->b.p = NULL;
+  B->b.L = NULL;
+  B->b.lvl = 0;
+  /* reuse the buffer from the 5.1-style luaL_Buffer though! */
+  B->ptr = B->b.buffer;
+  B->capacity = LUAL_BUFFERSIZE;
+  B->nelems = 0;
+  B->L2 = L;
+}
+
+COMPAT53_API char *luaL_prepbuffsize (luaL_Buffer_53 *B, size_t s) {
+  if (B->capacity - B->nelems < s) { /* needs to grow */
+    char* newptr = NULL;
+    size_t newcap = B->capacity * 2;
+    if (newcap - B->nelems < s)
+      newcap = B->nelems + s;
+    if (newcap < B->capacity) /* overflow */
+      luaL_error(B->L2, "buffer too large");
+    newptr = (char*)lua_newuserdata(B->L2, newcap);
+    memcpy(newptr, B->ptr, B->nelems);
+    if (B->ptr != B->b.buffer)
+      lua_replace(B->L2, -2); /* remove old buffer */
+    B->ptr = newptr;
+    B->capacity = newcap;
+  }
+  return B->ptr+B->nelems;
+}
+
+COMPAT53_API void luaL_addlstring (luaL_Buffer_53 *B, const char *s, size_t l) {
+  memcpy(luaL_prepbuffsize(B, l), s, l);
+  luaL_addsize(B, l);
+}
+
+COMPAT53_API void luaL_addvalue (luaL_Buffer_53 *B) {
+  size_t len = 0;
+  const char *s = lua_tolstring(B->L2, -1, &len);
+  if (!s)
+    luaL_error(B->L2, "cannot convert value to string");
+  if (B->ptr != B->b.buffer)
+    lua_insert(B->L2, -2); /* userdata buffer must be at stack top */
+  luaL_addlstring(B, s, len);
+  lua_remove(B->L2, B->ptr != B->b.buffer ? -2 : -1);
+}
+
+void luaL_pushresult (luaL_Buffer_53 *B) {
+  lua_pushlstring(B->L2, B->ptr, B->nelems);
+  if (B->ptr != B->b.buffer)
+    lua_replace(B->L2, -2); /* remove userdata buffer */
+}
 
 #endif /* Lua 5.1 */
 
-#endif // SOL_5_1_0_H
-// end of sol/compatibility/5.1.0.h
+/* definitions for Lua 5.1 and Lua 5.2 */
+#if defined( LUA_VERSION_NUM ) && LUA_VERSION_NUM <= 502
 
-// beginning of sol/compatibility/5.0.0.h
-
-#ifndef SOL_5_0_0_H
-#define SOL_5_0_0_H
-
-#if SOL_LUA_VERSION < 501
-/* Lua 5.0 */
-
-#define LUA_QL(x) "'" x "'"
-#define LUA_QS LUA_QL("%s")
-
-#define luaL_Reg luaL_reg
-
-#define luaL_opt(L, f, n, d) \
-  (lua_isnoneornil(L, n) ? (d) : f(L, n))
-
-#define luaL_addchar(B,c) \
-  ((void)((B)->p < ((B)->buffer+LUAL_BUFFERSIZE) || luaL_prepbuffer(B)), \
-   (*(B)->p++ = (char)(c)))
-
-#endif // Lua 5.0
-
-#endif // SOL_5_0_0_H
-// end of sol/compatibility/5.0.0.h
-
-// beginning of sol/compatibility/5.x.x.h
-
-#ifndef SOL_5_X_X_H
-#define SOL_5_X_X_H
-
-#if SOL_LUA_VERSION < 502
-
-#define LUA_RIDX_GLOBALS LUA_GLOBALSINDEX
-
-#define LUA_OK 0
-
-#define lua_pushglobaltable(L) \
-  lua_pushvalue(L, LUA_GLOBALSINDEX)
-
-void luaL_checkversion(lua_State *L);
-
-#if !defined(SOL_LUAJIT_VERSION) || SOL_LUAJIT_VERSION < 20100
-void lua_copy(lua_State *L, int from, int to);
-lua_Integer lua_tointegerx(lua_State *L, int i, int *isnum);
-lua_Number lua_tonumberx(lua_State *L, int i, int *isnum);
-const lua_Number *lua_version(lua_State *L);
-void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup);
-void luaL_setmetatable(lua_State *L, const char *tname);
-void *luaL_testudata(lua_State *L, int i, const char *tname);
-#define luaL_newlib(L, l) \
-  (lua_newtable((L)),luaL_setfuncs((L), (l), 0))
-#endif // LuaJIT-2.1.0-beta3 added these compatibility functions
-
-int lua_absindex(lua_State *L, int i);
-void lua_rawgetp(lua_State *L, int i, const void *p);
-void lua_rawsetp(lua_State *L, int i, const void *p);
-void lua_getuservalue(lua_State *L, int i);
-void lua_setuservalue(lua_State *L, int i);
-int luaL_getsubtable(lua_State *L, int i, const char *name);
-void luaL_traceback(lua_State *L, lua_State *L1, const char *msg, int level);
-int luaL_fileresult(lua_State *L, int stat, const char *fname);
-
-#endif // Lua 5.1 and below
-
-#endif // SOL_5_X_X_H
-// end of sol/compatibility/5.x.x.h
-
-// beginning of sol/compatibility/5.x.x.inl
-
-#ifndef SOL_5_X_X_INL
-#define SOL_5_X_X_INL
-
-#if SOL_LUA_VERSION < 502
-
-#include <errno.h>
-
-#define PACKAGE_KEY "_sol.package"
-
-inline int lua_absindex(lua_State *L, int i) {
-    if (i < 0 && i > LUA_REGISTRYINDEX)
-        i += lua_gettop(L) + 1;
-    return i;
+COMPAT53_API int lua_geti (lua_State *L, int index, lua_Integer i) {
+  index = lua_absindex(L, index);
+  lua_pushinteger(L, i);
+  lua_gettable(L, index);
+  return lua_type(L, -1);
 }
 
-#if !defined(SOL_LUAJIT_VERSION) || SOL_LUAJIT_VERSION < 20100
-inline void lua_copy(lua_State *L, int from, int to) {
-    int abs_to = lua_absindex(L, to);
-    luaL_checkstack(L, 1, "not enough stack slots");
-    lua_pushvalue(L, from);
-    lua_replace(L, abs_to);
+COMPAT53_API int lua_isinteger (lua_State *L, int index) {
+  if (lua_type(L, index) == LUA_TNUMBER) {
+    lua_Number n = lua_tonumber(L, index);
+    lua_Integer i = lua_tointeger(L, index);
+    if (i == n)
+      return 1;
+  }
+  return 0;
 }
 
-inline lua_Integer lua_tointegerx(lua_State *L, int i, int *isnum) {
-	lua_Integer n = lua_tointeger(L, i);
-	if (isnum != NULL) {
-		*isnum = (n != 0 || lua_isnumber(L, i));
-	}
-	return n;
+static void compat53_reverse (lua_State *L, int a, int b) {
+  for (; a < b; ++a, --b) {
+    lua_pushvalue(L, a);
+    lua_pushvalue(L, b);
+    lua_replace(L, a);
+    lua_replace(L, b);
+  }
 }
 
-inline lua_Number lua_tonumberx(lua_State *L, int i, int *isnum) {
-	lua_Number n = lua_tonumber(L, i);
-	if (isnum != NULL) {
-		*isnum = (n != 0 || lua_isnumber(L, i));
-	}
-	return n;
+COMPAT53_API void lua_rotate (lua_State *L, int idx, int n) {
+  int n_elems = 0;
+  idx = lua_absindex(L, idx);
+  n_elems = lua_gettop(L)-idx+1;
+  if (n < 0)
+    n += n_elems;
+  if ( n > 0 && n < n_elems) {
+    luaL_checkstack(L, 2, "not enough stack slots available");
+    n = n_elems - n;
+    compat53_reverse(L, idx, idx+n-1);
+    compat53_reverse(L, idx+n, idx+n_elems-1);
+    compat53_reverse(L, idx, idx+n_elems-1);
+  }
 }
 
-inline const lua_Number *lua_version(lua_State *L) {
-	static const lua_Number version = LUA_VERSION_NUM;
-	if (L == NULL) return &version;
-	// TODO: wonky hacks to get at the inside of the incomplete type lua_State?
-	//else return L->l_G->version;
-	else return &version;
+COMPAT53_API void lua_seti (lua_State *L, int index, lua_Integer i) {
+  luaL_checkstack(L, 1, "not enough stack slots available");
+  index = lua_absindex(L, index);
+  lua_pushinteger(L, i);
+  lua_insert(L, -2);
+  lua_settable(L, index);
 }
 
-/*
-** Adapted from Lua 5.2.0
-*/
-inline void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup) {
-	luaL_checkstack(L, nup + 1, "too many upvalues");
-	for (; l->name != NULL; l++) {  /* fill the table with given functions */
-		int i;
-		lua_pushstring(L, l->name);
-		for (i = 0; i < nup; i++)  /* copy upvalues to the top */
-			lua_pushvalue(L, -(nup + 1));
-		lua_pushcclosure(L, l->func, nup);  /* closure with those upvalues */
-		lua_settable(L, -(nup + 3)); /* table must be below the upvalues, the name and the closure */
-	}
-	lua_pop(L, nup);  /* remove upvalues */
-}
-
-inline void luaL_setmetatable(lua_State *L, const char *tname) {
-	luaL_checkstack(L, 1, "not enough stack slots");
-	luaL_getmetatable(L, tname);
-	lua_setmetatable(L, -2);
-}
-
-inline void *luaL_testudata(lua_State *L, int i, const char *tname) {
-	void *p = lua_touserdata(L, i);
-	luaL_checkstack(L, 2, "not enough stack slots");
-	if (p == NULL || !lua_getmetatable(L, i))
-		return NULL;
-	else {
-		int res = 0;
-		luaL_getmetatable(L, tname);
-		res = lua_rawequal(L, -1, -2);
-		lua_pop(L, 2);
-		if (!res)
-			p = NULL;
-	}
-	return p;
-}
+#if !defined(lua_str2number)
+#  define lua_str2number(s, p)  strtod((s), (p))
 #endif
 
-inline void lua_rawgetp(lua_State *L, int i, const void *p) {
-    int abs_i = lua_absindex(L, i);
-    lua_pushlightuserdata(L, (void*)p);
-    lua_rawget(L, abs_i);
-}
-
-inline void lua_rawsetp(lua_State *L, int i, const void *p) {
-    int abs_i = lua_absindex(L, i);
-    luaL_checkstack(L, 1, "not enough stack slots");
-    lua_pushlightuserdata(L, (void*)p);
-    lua_insert(L, -2);
-    lua_rawset(L, abs_i);
-}
-
-inline static void push_package_table(lua_State *L) {
-    lua_pushliteral(L, PACKAGE_KEY);
-    lua_rawget(L, LUA_REGISTRYINDEX);
-    if (!lua_istable(L, -1)) {
-        lua_pop(L, 1);
-        /* try to get package table from globals */
-        lua_pushliteral(L, "package");
-        lua_rawget(L, LUA_GLOBALSINDEX);
-        if (lua_istable(L, -1)) {
-            lua_pushliteral(L, PACKAGE_KEY);
-            lua_pushvalue(L, -2);
-            lua_rawset(L, LUA_REGISTRYINDEX);
-        }
+COMPAT53_API size_t lua_stringtonumber (lua_State *L, const char *s) {
+  char* endptr;
+  lua_Number n = lua_str2number(s, &endptr);
+  if (endptr != s) {
+    while (*endptr != '\0' && isspace((unsigned char)*endptr))
+      ++endptr;
+    if (*endptr == '\0') {
+      lua_pushnumber(L, n);
+      return endptr - s + 1;
     }
+  }
+  return 0;
 }
 
-inline void lua_getuservalue(lua_State *L, int i) {
-    luaL_checktype(L, i, LUA_TUSERDATA);
-    luaL_checkstack(L, 2, "not enough stack slots");
-    lua_getfenv(L, i);
-    lua_pushvalue(L, LUA_GLOBALSINDEX);
-    if (lua_rawequal(L, -1, -2)) {
-        lua_pop(L, 1);
-        lua_pushnil(L);
-        lua_replace(L, -2);
-    }
-    else {
-        lua_pop(L, 1);
-        push_package_table(L);
-        if (lua_rawequal(L, -1, -2)) {
-            lua_pop(L, 1);
-            lua_pushnil(L);
-            lua_replace(L, -2);
-        }
+COMPAT53_API const char *luaL_tolstring (lua_State *L, int idx, size_t *len) {
+  if (!luaL_callmeta(L, idx, "__tostring")) {
+    int t = lua_type(L, idx), tt = 0;
+    char const* name = NULL;
+    switch (t) {
+      case LUA_TNIL:
+        lua_pushliteral(L, "nil");
+        break;
+      case LUA_TSTRING:
+      case LUA_TNUMBER:
+        lua_pushvalue(L, idx);
+        break;
+      case LUA_TBOOLEAN:
+        if (lua_toboolean(L, idx))
+          lua_pushliteral(L, "true");
         else
-            lua_pop(L, 1);
+          lua_pushliteral(L, "false");
+        break;
+      default:
+        tt = luaL_getmetafield(L, idx, "__name");
+        name = (tt == LUA_TSTRING) ? lua_tostring(L, -1) : lua_typename(L, t);
+        lua_pushfstring(L, "%s: %p", name, lua_topointer(L, idx));
+        if (tt != LUA_TNIL)
+          lua_replace(L, -2);
+        break;
     }
+  } else {
+    if (!lua_isstring(L, -1))
+      luaL_error(L, "'__tostring' must return a string");
+  }
+  return lua_tolstring(L, -1, len);
 }
 
-inline void lua_setuservalue(lua_State *L, int i) {
-    luaL_checktype(L, i, LUA_TUSERDATA);
-    if (lua_isnil(L, -1)) {
-        luaL_checkstack(L, 1, "not enough stack slots");
-        lua_pushvalue(L, LUA_GLOBALSINDEX);
-        lua_replace(L, -2);
-    }
-    lua_setfenv(L, i);
-}
-
-inline int luaL_getsubtable(lua_State *L, int i, const char *name) {
-    int abs_i = lua_absindex(L, i);
-    luaL_checkstack(L, 3, "not enough stack slots");
-    lua_pushstring(L, name);
-    lua_gettable(L, abs_i);
-    if (lua_istable(L, -1))
-        return 1;
+COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
+                                 lua_CFunction openf, int glb) {
+  luaL_checkstack(L, 3, "not enough stack slots available");
+  luaL_getsubtable(L, LUA_REGISTRYINDEX, "_LOADED");
+  if (lua_getfield(L, -1, modname) == LUA_TNIL) {
     lua_pop(L, 1);
-    lua_newtable(L);
-    lua_pushstring(L, name);
-    lua_pushvalue(L, -2);
-    lua_settable(L, abs_i);
-    return 0;
+    lua_pushcfunction(L, openf);
+    lua_pushstring(L, modname);
+    lua_call(L, 1, 1);
+    lua_pushvalue(L, -1);
+    lua_setfield(L, -3, modname);
+  }
+  if (glb) {
+    lua_pushvalue(L, -1);
+    lua_setglobal(L, modname);
+  }
+  lua_replace(L, -2);
 }
 
-#ifndef SOL_LUAJIT
-inline static int countlevels(lua_State *L) {
-    lua_Debug ar;
-    int li = 1, le = 1;
-    /* find an upper bound */
-    while (lua_getstack(L, le, &ar)) { li = le; le *= 2; }
-    /* do a binary search */
-    while (li < le) {
-        int m = (li + le) / 2;
-        if (lua_getstack(L, m, &ar)) li = m + 1;
-        else le = m;
-    }
-    return le - 1;
-}
+#endif /* Lua 5.1 and 5.2 */
 
-inline static int findfield(lua_State *L, int objidx, int level) {
-    if (level == 0 || !lua_istable(L, -1))
-        return 0;  /* not found */
-    lua_pushnil(L);  /* start 'next' loop */
-    while (lua_next(L, -2)) {  /* for each pair in table */
-        if (lua_type(L, -2) == LUA_TSTRING) {  /* ignore non-string keys */
-            if (lua_rawequal(L, objidx, -1)) {  /* found object? */
-                lua_pop(L, 1);  /* remove value (but keep name) */
-                return 1;
-            }
-            else if (findfield(L, objidx, level - 1)) {  /* try recursively */
-                lua_remove(L, -2);  /* remove table (but keep name) */
-                lua_pushliteral(L, ".");
-                lua_insert(L, -2);  /* place '.' between the two names */
-                lua_concat(L, 3);
-                return 1;
-            }
-        }
-        lua_pop(L, 1);  /* remove value */
-    }
-    return 0;  /* not found */
-}
-
-inline static int pushglobalfuncname(lua_State *L, lua_Debug *ar) {
-    int top = lua_gettop(L);
-    lua_getinfo(L, "f", ar);  /* push function */
-    lua_pushvalue(L, LUA_GLOBALSINDEX);
-    if (findfield(L, top + 1, 2)) {
-        lua_copy(L, -1, top + 1);  /* move name to proper place */
-        lua_pop(L, 2);  /* remove pushed values */
-        return 1;
-    }
-    else {
-        lua_settop(L, top);  /* remove function and global table */
-        return 0;
-    }
-}
-
-inline static void pushfuncname(lua_State *L, lua_Debug *ar) {
-    if (*ar->namewhat != '\0')  /* is there a name? */
-        lua_pushfstring(L, "function " LUA_QS, ar->name);
-    else if (*ar->what == 'm')  /* main? */
-        lua_pushliteral(L, "main chunk");
-    else if (*ar->what == 'C') {
-        if (pushglobalfuncname(L, ar)) {
-            lua_pushfstring(L, "function " LUA_QS, lua_tostring(L, -1));
-            lua_remove(L, -2);  /* remove name */
-        }
-        else
-            lua_pushliteral(L, "?");
-    }
-    else
-        lua_pushfstring(L, "function <%s:%d>", ar->short_src, ar->linedefined);
-}
-
-#define LEVELS1 12  /* size of the first part of the stack */
-#define LEVELS2 10  /* size of the second part of the stack */
-
-inline void luaL_traceback(lua_State *L, lua_State *L1,
-    const char *msg, int level) {
-    lua_Debug ar;
-    int top = lua_gettop(L);
-    int numlevels = countlevels(L1);
-    int mark = (numlevels > LEVELS1 + LEVELS2) ? LEVELS1 : 0;
-    if (msg) lua_pushfstring(L, "%s\n", msg);
-    lua_pushliteral(L, "stack traceback:");
-    while (lua_getstack(L1, level++, &ar)) {
-        if (level == mark) {  /* too many levels? */
-            lua_pushliteral(L, "\n\t...");  /* add a '...' */
-            level = numlevels - LEVELS2;  /* and skip to last ones */
-        }
-        else {
-            lua_getinfo(L1, "Slnt", &ar);
-            lua_pushfstring(L, "\n\t%s:", ar.short_src);
-            if (ar.currentline > 0)
-                lua_pushfstring(L, "%d:", ar.currentline);
-            lua_pushliteral(L, " in ");
-            pushfuncname(L, &ar);
-            lua_concat(L, lua_gettop(L) - top);
-        }
-    }
-    lua_concat(L, lua_gettop(L) - top);
-}
-#endif
-
-inline static void luaL_checkversion_(lua_State *L, lua_Number ver) {
-    const lua_Number* v = lua_version(L);
-    if (v != lua_version(NULL))
-        luaL_error(L, "multiple Lua VMs detected");
-    else if (*v != ver)
-        luaL_error(L, "version mismatch: app. needs %f, Lua core provides %f",
-            ver, *v);
-    /* check conversions number -> integer types */
-    lua_pushnumber(L, -(lua_Number)0x1234);
-    if (lua_tointeger(L, -1) != -0x1234 ||
-        lua_tounsigned(L, -1) != (lua_Unsigned)-0x1234)
-        luaL_error(L, "bad conversion number->int;"
-            " must recompile Lua with proper settings");
-    lua_pop(L, 1);
-}
-
-inline void luaL_checkversion(lua_State* L) {
-    luaL_checkversion_(L, LUA_VERSION_NUM);
-}
-
-#ifndef SOL_LUAJIT
-#if defined(__GNUC__) && defined(__MINGW32__) && (__GNUC__ < 6) 
-int strerror_r(int errnum, char *buf, size_t len) {
-	// did we get a crap buffer?
-	if (buf == NULL) {
-		// considered a range error
-		// write errno, then return
-		errno = ERANGE;
-		return ERANGE;
-	}
-	//
-	if ((errnum < 0) || (errnum >= sys_nerr)) {
-		// failure
-		snprintf(buf, len, "unknown error: %d", errnum);
-		// write errno, then return
-		errno = EINVAL;
-		return EINVAL;
-	}
-	// TODO: this is technically thread unsafe if `strerror` doesn't use threadlocal storage
-	// itself
-	// but I really am too lazy to figure out how to lock mutexes
-	// in plain C... does the std C lib even have synchro primitives?
-	// NOTe: Turns out there are not.... great
-	// pthreads isn't guaranteed either
-	// let's just hope the stdc lib devs use thread_local on their stuff
-	char* hopeitsthreadlocal = strerror(errnum);
-	if (snprintf(buf, len, "%s", hopeitsthreadlocal) >= (ptrdiff_t)len) {
-		// if this triggers we attempted to overwrite the buffer
-		// how fun
-		errno = ERANGE;
-		return ERANGE;
-	}
-
-	return 0;
-}
-#endif // MinGW missing stuff
-
-inline int luaL_fileresult(lua_State *L, int stat, const char *fname) {
-    int en = errno;  /* calls to Lua API may change this value */
-    if (stat) {
-        lua_pushboolean(L, 1);
-        return 1;
-    }
-    else {
-        char buf[1024];
-#if defined(__GLIBC__) || defined(_POSIX_VERSION) || defined(__APPLE__) || (defined(__GNUC__) && defined (__MINGW32__) && (__GNUC__ < 6))
-        strerror_r(en, buf, 1024);
-#else
-        strerror_s(buf, 1024, en);
-#endif
-        lua_pushnil(L);
-        if (fname)
-            lua_pushfstring(L, "%s: %s", fname, buf);
-        else
-            lua_pushstring(L, buf);
-        lua_pushnumber(L, (lua_Number)en);
-        return 3;
-    }
-}
-#endif // luajit
-#endif // Lua 5.0 or Lua 5.1
-
-#if SOL_LUA_VERSION == 501
-
-typedef LUAI_INT32 LUA_INT32;
-
-/********************************************************************/
-/*                    extract of 5.2's luaconf.h                    */
-/*  detects proper defines for faster unsigned<->number conversion  */
-/*           see copyright notice at the end of this file           */
-/********************************************************************/
-
-#if !defined(LUA_ANSI) && defined(_WIN32) && !defined(_WIN32_WCE)
-#define LUA_WIN        /* enable goodies for regular Windows platforms */
-#endif
-
-#if defined(LUA_NUMBER_DOUBLE) && !defined(LUA_ANSI)    /* { */
-
-/* Microsoft compiler on a Pentium (32 bit) ? */
-#if defined(LUA_WIN) && defined(_MSC_VER) && defined(_M_IX86)    /* { */
-
-#define LUA_MSASMTRICK
-#define LUA_IEEEENDIAN        0
-#define LUA_NANTRICK
-
-/* pentium 32 bits? */
-#elif defined(__i386__) || defined(__i386) || defined(__X86__) /* }{ */
-
-#define LUA_IEEE754TRICK
-#define LUA_IEEELL
-#define LUA_IEEEENDIAN        0
-#define LUA_NANTRICK
-
-/* pentium 64 bits? */
-#elif defined(__x86_64)                        /* }{ */
-
-#define LUA_IEEE754TRICK
-#define LUA_IEEEENDIAN        0
-
-#elif defined(__POWERPC__) || defined(__ppc__)            /* }{ */
-
-#define LUA_IEEE754TRICK
-#define LUA_IEEEENDIAN        1
-
-#else                                /* }{ */
-
-/* assume IEEE754 and a 32-bit integer type */
-#define LUA_IEEE754TRICK
-
-#endif                                /* } */
-
-#endif                            /* } */
-
-/********************************************************************/
-/*                    extract of 5.2's llimits.h                    */
-/*       gives us lua_number2unsigned and lua_unsigned2number       */
-/*           see copyright notice just below this one here          */
-/********************************************************************/
+#endif /* COMPAT53_C_ */
 
 /*********************************************************************
-* This file contains parts of Lua 5.2's source code:
+* This file contains parts of Lua 5.2's and Lua 5.3's source code:
 *
-* Copyright (C) 1994-2013 Lua.org, PUC-Rio.
+* Copyright (C) 1994-2014 Lua.org, PUC-Rio.
 *
 * Permission is hereby granted, free of charge, to any person obtaining
 * a copy of this software and associated documentation files (the
@@ -2206,296 +2612,13 @@ typedef LUAI_INT32 LUA_INT32;
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *********************************************************************/
 
-#if defined(MS_ASMTRICK) || defined(LUA_MSASMTRICK)    /* { */
-/* trick with Microsoft assembler for X86 */
+// end of sol/compatibility/compat-5.3.c
 
-#define lua_number2unsigned(i,n)  \
-  {__int64 l; __asm {__asm fld n   __asm fistp l} i = (unsigned int)l;}
-
-#elif defined(LUA_IEEE754TRICK)        /* }{ */
-/* the next trick should work on any machine using IEEE754 with
-a 32-bit int type */
-
-union compat52_luai_Cast { double l_d; LUA_INT32 l_p[2]; };
-
-#if !defined(LUA_IEEEENDIAN)    /* { */
-#define LUAI_EXTRAIEEE    \
-  static const union compat52_luai_Cast ieeeendian = {-(33.0 + 6755399441055744.0)};
-#define LUA_IEEEENDIANLOC    (ieeeendian.l_p[1] == 33)
-#else
-#define LUA_IEEEENDIANLOC    LUA_IEEEENDIAN
-#define LUAI_EXTRAIEEE        /* empty */
-#endif                /* } */
-
-#define lua_number2int32(i,n,t) \
-  { LUAI_EXTRAIEEE \
-    volatile union compat52_luai_Cast u; u.l_d = (n) + 6755399441055744.0; \
-    (i) = (t)u.l_p[LUA_IEEEENDIANLOC]; }
-
-#define lua_number2unsigned(i,n)    lua_number2int32(i, n, lua_Unsigned)
-
-#endif                /* } */
-
-/* the following definitions always work, but may be slow */
-
-#if !defined(lua_number2unsigned)    /* { */
-/* the following definition assures proper modulo behavior */
-#if defined(LUA_NUMBER_DOUBLE) || defined(LUA_NUMBER_FLOAT)
-#include <math.h>
-#define SUPUNSIGNED    ((lua_Number)(~(lua_Unsigned)0) + 1)
-#define lua_number2unsigned(i,n)  \
-    ((i)=(lua_Unsigned)((n) - floor((n)/SUPUNSIGNED)*SUPUNSIGNED))
-#else
-#define lua_number2unsigned(i,n)    ((i)=(lua_Unsigned)(n))
-#endif
-#endif                /* } */
-
-#if !defined(lua_unsigned2number)
-/* on several machines, coercion from unsigned to double is slow,
-so it may be worth to avoid */
-#define lua_unsigned2number(u)  \
-    (((u) <= (lua_Unsigned)INT_MAX) ? (lua_Number)(int)(u) : (lua_Number)(u))
 #endif
 
-/********************************************************************/
+#endif /* COMPAT53_H_ */
 
-inline static void compat52_call_lua(lua_State *L, char const code[], size_t len,
-    int nargs, int nret) {
-    lua_rawgetp(L, LUA_REGISTRYINDEX, (void*)code);
-    if (lua_type(L, -1) != LUA_TFUNCTION) {
-        lua_pop(L, 1);
-        if (luaL_loadbuffer(L, code, len, "=none"))
-            lua_error(L);
-        lua_pushvalue(L, -1);
-        lua_rawsetp(L, LUA_REGISTRYINDEX, (void*)code);
-    }
-    lua_insert(L, -nargs - 1);
-    lua_call(L, nargs, nret);
-}
-
-static const char compat52_arith_code[] = {
-    "local op,a,b=...\n"
-    "if op==0 then return a+b\n"
-    "elseif op==1 then return a-b\n"
-    "elseif op==2 then return a*b\n"
-    "elseif op==3 then return a/b\n"
-    "elseif op==4 then return a%b\n"
-    "elseif op==5 then return a^b\n"
-    "elseif op==6 then return -a\n"
-    "end\n"
-};
-
-inline void lua_arith(lua_State *L, int op) {
-    if (op < LUA_OPADD || op > LUA_OPUNM)
-        luaL_error(L, "invalid 'op' argument for lua_arith");
-    luaL_checkstack(L, 5, "not enough stack slots");
-    if (op == LUA_OPUNM)
-        lua_pushvalue(L, -1);
-    lua_pushnumber(L, op);
-    lua_insert(L, -3);
-    compat52_call_lua(L, compat52_arith_code,
-        sizeof(compat52_arith_code) - 1, 3, 1);
-}
-
-static const char compat52_compare_code[] = {
-    "local a,b=...\n"
-    "return a<=b\n"
-};
-
-inline int lua_compare(lua_State *L, int idx1, int idx2, int op) {
-    int result = 0;
-    switch (op) {
-    case LUA_OPEQ:
-        return lua_equal(L, idx1, idx2);
-    case LUA_OPLT:
-        return lua_lessthan(L, idx1, idx2);
-    case LUA_OPLE:
-        luaL_checkstack(L, 5, "not enough stack slots");
-        idx1 = lua_absindex(L, idx1);
-        idx2 = lua_absindex(L, idx2);
-        lua_pushvalue(L, idx1);
-        lua_pushvalue(L, idx2);
-        compat52_call_lua(L, compat52_compare_code,
-            sizeof(compat52_compare_code) - 1, 2, 1);
-        result = lua_toboolean(L, -1);
-        lua_pop(L, 1);
-        return result;
-    default:
-        luaL_error(L, "invalid 'op' argument for lua_compare");
-    }
-    return 0;
-}
-
-inline void lua_pushunsigned(lua_State *L, lua_Unsigned n) {
-    lua_pushnumber(L, lua_unsigned2number(n));
-}
-
-inline lua_Unsigned luaL_checkunsigned(lua_State *L, int i) {
-    lua_Unsigned result;
-    lua_Number n = lua_tonumber(L, i);
-    if (n == 0 && !lua_isnumber(L, i))
-        luaL_checktype(L, i, LUA_TNUMBER);
-    lua_number2unsigned(result, n);
-    return result;
-}
-
-inline lua_Unsigned lua_tounsignedx(lua_State *L, int i, int *isnum) {
-    lua_Unsigned result;
-    lua_Number n = lua_tonumberx(L, i, isnum);
-    lua_number2unsigned(result, n);
-    return result;
-}
-
-inline lua_Unsigned luaL_optunsigned(lua_State *L, int i, lua_Unsigned def) {
-    return luaL_opt(L, luaL_checkunsigned, i, def);
-}
-
-inline void lua_len(lua_State *L, int i) {
-    switch (lua_type(L, i)) {
-    case LUA_TSTRING: /* fall through */
-    case LUA_TTABLE:
-        if (!luaL_callmeta(L, i, "__len"))
-            lua_pushnumber(L, (int)lua_objlen(L, i));
-        break;
-    case LUA_TUSERDATA:
-        if (luaL_callmeta(L, i, "__len"))
-            break;
-        /* maybe fall through */
-        luaL_error(L, "attempt to get length of a %s value", lua_typename(L, lua_type(L, i)));
-		break;
-    default:
-        luaL_error(L, "attempt to get length of a %s value", lua_typename(L, lua_type(L, i)));
-		break;
-    }
-}
-
-inline int luaL_len(lua_State *L, int i) {
-    int res = 0, isnum = 0;
-    luaL_checkstack(L, 1, "not enough stack slots");
-    lua_len(L, i);
-    res = (int)lua_tointegerx(L, -1, &isnum);
-    lua_pop(L, 1);
-    if (!isnum)
-        luaL_error(L, "object length is not a number");
-    return res;
-}
-
-inline const char *luaL_tolstring(lua_State *L, int idx, size_t *len) {
-    if (!luaL_callmeta(L, idx, "__tostring")) {
-        int t = lua_type(L, idx);
-        switch (t) {
-        case LUA_TNIL:
-            lua_pushliteral(L, "nil");
-            break;
-        case LUA_TSTRING:
-        case LUA_TNUMBER:
-            lua_pushvalue(L, idx);
-            break;
-        case LUA_TBOOLEAN:
-            if (lua_toboolean(L, idx))
-                lua_pushliteral(L, "true");
-            else
-                lua_pushliteral(L, "false");
-            break;
-        default:
-            lua_pushfstring(L, "%s: %p", lua_typename(L, t),
-                lua_topointer(L, idx));
-            break;
-        }
-    }
-    return lua_tolstring(L, -1, len);
-}
-
-inline void luaL_requiref(lua_State *L, char const* modname,
-    lua_CFunction openf, int glb) {
-    luaL_checkstack(L, 3, "not enough stack slots");
-    lua_pushcfunction(L, openf);
-    lua_pushstring(L, modname);
-    lua_call(L, 1, 1);
-    lua_getglobal(L, "package");
-    if (lua_istable(L, -1) == 0) {
-        lua_pop(L, 1);
-        lua_createtable(L, 0, 16);
-        lua_setglobal(L, "package");
-        lua_getglobal(L, "package");
-    }
-    lua_getfield(L, -1, "loaded");
-    if (lua_istable(L, -1) == 0) {
-        lua_pop(L, 1);
-        lua_createtable(L, 0, 1);
-        lua_setfield(L, -2, "loaded");
-        lua_getfield(L, -1, "loaded");
-    }
-    lua_replace(L, -2);
-    lua_pushvalue(L, -2);
-    lua_setfield(L, -2, modname);
-    lua_pop(L, 1);
-    if (glb) {
-        lua_pushvalue(L, -1);
-        lua_setglobal(L, modname);
-    }
-}
-
-inline void luaL_buffinit(lua_State *L, luaL_Buffer_52 *B) {
-    /* make it crash if used via pointer to a 5.1-style luaL_Buffer */
-    B->b.p = NULL;
-    B->b.L = NULL;
-    B->b.lvl = 0;
-    /* reuse the buffer from the 5.1-style luaL_Buffer though! */
-    B->ptr = B->b.buffer;
-    B->capacity = LUAL_BUFFERSIZE;
-    B->nelems = 0;
-    B->L2 = L;
-}
-
-inline char *luaL_prepbuffsize(luaL_Buffer_52 *B, size_t s) {
-    if (B->capacity - B->nelems < s) { /* needs to grow */
-        char* newptr = NULL;
-        size_t newcap = B->capacity * 2;
-        if (newcap - B->nelems < s)
-            newcap = B->nelems + s;
-        if (newcap < B->capacity) /* overflow */
-            luaL_error(B->L2, "buffer too large");
-        newptr = (char*)lua_newuserdata(B->L2, newcap);
-        memcpy(newptr, B->ptr, B->nelems);
-        if (B->ptr != B->b.buffer)
-            lua_replace(B->L2, -2); /* remove old buffer */
-        B->ptr = newptr;
-        B->capacity = newcap;
-    }
-    return B->ptr + B->nelems;
-}
-
-inline void luaL_addlstring(luaL_Buffer_52 *B, const char *s, size_t l) {
-    memcpy(luaL_prepbuffsize(B, l), s, l);
-    luaL_addsize(B, l);
-}
-
-inline void luaL_addvalue(luaL_Buffer_52 *B) {
-    size_t len = 0;
-    const char *s = lua_tolstring(B->L2, -1, &len);
-    if (!s)
-        luaL_error(B->L2, "cannot convert value to string");
-    if (B->ptr != B->b.buffer)
-        lua_insert(B->L2, -2); /* userdata buffer must be at stack top */
-    luaL_addlstring(B, s, len);
-    lua_remove(B->L2, B->ptr != B->b.buffer ? -2 : -1);
-}
-
-inline void luaL_pushresult(luaL_Buffer_52 *B) {
-    lua_pushlstring(B->L2, B->ptr, B->nelems);
-    if (B->ptr != B->b.buffer)
-        lua_replace(B->L2, -2); /* remove userdata buffer */
-}
-
-#endif /* SOL_LUA_VERSION == 501 */
-
-#endif // SOL_5_X_X_INL
-// end of sol/compatibility/5.x.x.inl
-
-#if defined(__cplusplus) && !defined(SOL_USING_CXX_LUA)
-}
-#endif
+// end of sol/compatibility/compat-5.3.h
 
 #endif // SOL_NO_COMPAT
 
@@ -5033,7 +5156,6 @@ namespace sol {
 #include <cctype>
 #if defined(__GNUC__) && defined(__MINGW32__) && (__GNUC__ < 6)
 extern "C" {
-#include <ctype.h>
 }
 #endif // MinGW is on some stuff
 #include <locale>
@@ -17858,11 +17980,7 @@ namespace sol {
 		call_status stats = call_status::yielded;
 
 		void luacall(std::ptrdiff_t argcount, std::ptrdiff_t) {
-#if SOL_LUA_VERSION < 502
-			stats = static_cast<call_status>(lua_resume(lua_state(), static_cast<int>(argcount)));
-#else
 			stats = static_cast<call_status>(lua_resume(lua_state(), nullptr, static_cast<int>(argcount)));
-#endif // Lua 5.1 compat
 		}
 
 		template<std::size_t... I, typename... Ret>
