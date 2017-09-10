@@ -17,20 +17,20 @@
 
 #if defined(__GLIBC__) || defined(_POSIX_VERSION) || defined(__APPLE__) || (!defined (__MINGW32__) && defined(__GNUC__) && (__GNUC__ < 6))
 #ifndef COMPAT53_HAVE_STRERROR_R
-#define COMPAT53_HAVE_STRERROR_R
+#define COMPAT53_HAVE_STRERROR_R 1
 #endif // have strerror_r
 #if ((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || (defined(_XOPEN_SOURCE) || _XOPEN_SOURCE >= 600)) && (!defined(_GNU_SOURCE) || !_GNU_SOURCE)
 #ifndef COMPAT53_HAVE_STRERROR_R_XSI
-#define COMPAT53_HAVE_STRERROR_R_XSI
+#define COMPAT53_HAVE_STRERROR_R_XSI 1
 #endif // XSI-Compliant strerror_r
 #else
 #ifndef COMPAT53_HAVE_STRERROR_R_GNU
-#define COMPAT53_HAVE_STRERROR_R_GNU
+#define COMPAT53_HAVE_STRERROR_R_GNU 1
 #endif // GNU variant strerror_r
 #endif // XSI/Posix vs. GNU strerror_r
 #elif defined(_MSC_VER) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || defined(__STDC_LIB_EXT1__)
 #ifndef COMPAT53_HAVE_STRERROR_S
-#define COMPAT53_HAVE_STRERROR_S
+#define COMPAT53_HAVE_STRERROR_S 1
 #endif // GNU variant strerror_r
 #endif // strerror_r vs. strerror_s vs. strerror usage
 
@@ -369,7 +369,7 @@ COMPAT53_API void luaL_traceback (lua_State *L, lua_State *L1,
 COMPAT53_API int luaL_fileresult (lua_State *L, int stat, const char *fname) {
   const char* s = NULL;
   int en = errno;  /* calls to Lua API may change this value */
-#if defined(COMPAT53_HAVE_STRERROR_R) || defined(COMPAT53_HAVE_STRERROR_S)
+#if (defined(COMPAT53_HAVE_STRERROR_R) && COMPAT53_HAVE_STRERROR_R) || (defined(COMPAT53_HAVE_STRERROR_S) && COMPAT53_HAVE_STRERROR_S)
   char buf[512] = { 0 };
 #endif // buffer for threadsafe variants of strerror if possible
   if (stat) {
@@ -388,7 +388,7 @@ COMPAT53_API int luaL_fileresult (lua_State *L, int stat, const char *fname) {
     /* GNU-specific which returns const char* */
     s = strerror_r(en, buf, 512);
 #endif
-#elif defined(COMPAT53_HAVE_STRERROR_S)
+#elif (defined(COMPAT53_HAVE_STRERROR_S) && COMPAT53_HAVE_STRERROR_S)
     /* for MSVC and other C11 implementations, use strerror_s 
      * since it's provided by default by the libraries 
      */
@@ -413,7 +413,8 @@ COMPAT53_API int luaL_fileresult (lua_State *L, int stat, const char *fname) {
 }
 
 
-static const char* compat53_f_parser_handler (lua_State *, void *data, size_t *size) {
+static const char* compat53_f_parser_handler (lua_State *L, void *data, size_t *size) {
+  (void)L; // better fix for unused parameter warnings
   struct compat53_f_parser_buffer *p = (struct compat53_f_parser_buffer*)data;
   size_t readcount = fread(p->buffer + p->start, sizeof(*p->buffer), sizeof(p->buffer), p->file);
   if (ferror(p->file) != 0 || feof(p->file) != 0) {
