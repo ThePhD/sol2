@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-10 14:29:12.857783 UTC
-// This header was generated with sol v2.18.2 (revision 2ca0393)
+// Generated 2017-09-10 14:55:41.345191 UTC
+// This header was generated with sol v2.18.2 (revision ae07a5d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1694,10 +1694,10 @@ COMPAT53_API lua_Number lua_tonumberx (lua_State *L, int i, int *isnum);
 COMPAT53_API void luaL_checkversion (lua_State *L);
 
 #define luaL_loadfilex COMPAT53_CONCAT(COMPAT53_PREFIX, L_loadfilex)
-COMPAT53_API void luaL_loadfilex (lua_State *L, const char *filename, const char *mode);
+COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char *mode);
 
 #define luaL_loadbufferx COMPAT53_CONCAT(COMPAT53_PREFIX, L_loadbufferx)
-COMPAT53_API void luaL_loadbufferx (lua_State *L, const char *buff, size_t sz, const char *name, const char *mode);
+COMPAT53_API int luaL_loadbufferx (lua_State *L, const char *buff, size_t sz, const char *name, const char *mode);
 
 #define luaL_checkstack COMPAT53_CONCAT(COMPAT53_PREFIX, L_checkstack_53)
 COMPAT53_API void luaL_checkstack (lua_State *L, int sp, const char *msg);
@@ -1933,30 +1933,35 @@ COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
 /* definitions for Lua 5.1 only */
 #if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM == 501
 
-#if defined(__GLIBC__) || defined(_POSIX_VERSION) || defined(__APPLE__) || (!defined (__MINGW32__) && defined(__GNUC__) && (__GNUC__ < 6))
 #ifndef COMPAT53_HAVE_STRERROR_R
-#define COMPAT53_HAVE_STRERROR_R 1
-#endif // have strerror_r
-#if ((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || (defined(_XOPEN_SOURCE) || _XOPEN_SOURCE >= 600)) && (!defined(_GNU_SOURCE) || !_GNU_SOURCE)
-#ifndef COMPAT53_HAVE_STRERROR_R_XSI
-#define COMPAT53_HAVE_STRERROR_R_XSI 1
-#endif // XSI-Compliant strerror_r
-#else
-#ifndef COMPAT53_HAVE_STRERROR_R_GNU
-#define COMPAT53_HAVE_STRERROR_R_GNU 1
-#endif // GNU variant strerror_r
-#endif // XSI/Posix vs. GNU strerror_r
-#elif defined(_MSC_VER) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || defined(__STDC_LIB_EXT1__)
+#  if defined(__GLIBC__) || defined(_POSIX_VERSION) || defined(__APPLE__) || (!defined (__MINGW32__) && defined(__GNUC__) && (__GNUC__ < 6))
+#    define COMPAT53_HAVE_STRERROR_R 1
+#    if ((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || (defined(_XOPEN_SOURCE) || _XOPEN_SOURCE >= 600)) && (!defined(_GNU_SOURCE) || !_GNU_SOURCE)
+#    ifndef COMPAT53_HAVE_STRERROR_R_XSI
+#      define COMPAT53_HAVE_STRERROR_R_XSI 1
+#    endif /* XSI-Compliant strerror_r */
+#    else /* XSI/Posix vs. GNU strerror_r */
+#      ifndef COMPAT53_HAVE_STRERROR_R_GNU
+#        define COMPAT53_HAVE_STRERROR_R_GNU 1
+#      endif /* GNU variant strerror_r */
+#    endif /* XSI/Posix vs. GNU strerror_r */
+#  else /* none of the defines matched: define to 0 */
+#    define COMPAT53_HAVE_STRERROR_R 0
+#  endif /* have strerror_r of some form */
+#endif /* strerror_r */
+
 #ifndef COMPAT53_HAVE_STRERROR_S
-#define COMPAT53_HAVE_STRERROR_S 1
-#endif // GNU variant strerror_r
-#endif // strerror_r vs. strerror_s vs. strerror usage
+#  if defined(_MSC_VER) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || (defined(__STDC_LIB_EXT1__) && __STDC_LIB_EXT1__)
+#    define COMPAT53_HAVE_STRERROR_S 1
+#  else /* not VC++ or C11 */
+#    define COMPAT53_HAVE_STRERROR_S 0
+#  endif /* strerror_s from VC++ or C11 */
+#endif /* strerror_s */
 
 #ifndef COMPAT53_LUA_FILE_BUFFER_SIZE
 #define COMPAT53_LUA_FILE_BUFFER_SIZE 4096
-#endif // Lua File Buffer Size
+#endif /* Lua File Buffer Size */
 
-#define compat53_f_parser_buffer COMPAT53_CONCAT(COMPAT53_PREFIX, compat53_f_parser_buffer)
 struct compat53_f_parser_buffer {
   FILE* file;
   size_t start;
@@ -2271,14 +2276,14 @@ COMPAT53_API int luaL_fileresult (lua_State *L, int stat, const char *fname) {
   int en = errno;  /* calls to Lua API may change this value */
 #if (defined(COMPAT53_HAVE_STRERROR_R) && COMPAT53_HAVE_STRERROR_R) || (defined(COMPAT53_HAVE_STRERROR_S) && COMPAT53_HAVE_STRERROR_S)
   char buf[512] = { 0 };
-#endif // buffer for threadsafe variants of strerror if possible
+#endif /* buffer for threadsafe variants of strerror if possible */
   if (stat) {
     lua_pushboolean(L, 1);
     return 1;
   }
   else {
     lua_pushnil(L);
-#if defined(COMPAT53_HAVE_STRERROR_R)
+#if (defined(COMPAT53_HAVE_STRERROR_R) && COMPAT53_HAVE_STRERROR_R)
     /* use strerror_r here, because it's available on these specific platforms */
 #if defined(COMPAT53_HAVE_STRERROR_R_XSI)
     /* XSI Compliant */
@@ -2313,7 +2318,7 @@ COMPAT53_API int luaL_fileresult (lua_State *L, int stat, const char *fname) {
 }
 
 static const char* compat53_f_parser_handler (lua_State *L, void *data, size_t *size) {
-  (void)L; // better fix for unused parameter warnings
+  (void)L; /* better fix for unused parameter warnings */
   struct compat53_f_parser_buffer *p = (struct compat53_f_parser_buffer*)data;
   size_t readcount = fread(p->buffer + p->start, sizeof(*p->buffer), sizeof(p->buffer), p->file);
   if (ferror(p->file) != 0 || feof(p->file) != 0) {
