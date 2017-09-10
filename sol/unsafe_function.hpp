@@ -33,7 +33,7 @@ namespace sol {
 	class basic_function : public base_t {
 	private:
 		void luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount) const {
-			lua_callk(lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount), 0, nullptr);
+			lua_call(lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount));
 		}
 
 		template<std::size_t... I, typename... Ret>
