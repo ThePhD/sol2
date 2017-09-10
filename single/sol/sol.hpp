@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-10 14:55:41.345191 UTC
-// This header was generated with sol v2.18.2 (revision ae07a5d)
+// Generated 2017-09-10 16:07:52.509059 UTC
+// This header was generated with sol v2.18.2 (revision 7aca8ac)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -2320,8 +2320,12 @@ COMPAT53_API int luaL_fileresult (lua_State *L, int stat, const char *fname) {
 static const char* compat53_f_parser_handler (lua_State *L, void *data, size_t *size) {
   (void)L; /* better fix for unused parameter warnings */
   struct compat53_f_parser_buffer *p = (struct compat53_f_parser_buffer*)data;
+  if (feof(p->file) != 0) {
+	  *size = 0;
+	  return NULL;
+  }
   size_t readcount = fread(p->buffer + p->start, sizeof(*p->buffer), sizeof(p->buffer), p->file);
-  if (ferror(p->file) != 0 || feof(p->file) != 0) {
+  if (ferror(p->file) != 0) {
     *size = 0;
     return NULL;
   }
@@ -2378,6 +2382,7 @@ COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char 
   struct compat53_f_parser_buffer fbuf;
   fbuf.file = fp;
   fbuf.start = 1;
+  fbuf.buffer[0] = (char)c;
   status = lua_load(L, &compat53_f_parser_handler, &fbuf, filename);
   fclose(fp);
   return status;
@@ -17215,7 +17220,7 @@ namespace sol {
 			if (loaded && loaded->valid())
 				return std::move(*loaded);
 			action();
-			auto sr = stack::get<stack_reference>(L);
+			stack_reference sr(L, -1);
 			if (create_global)
 				set(key, sr);
 			ensure_package(key, sr);
@@ -17337,11 +17342,17 @@ namespace sol {
 		}
 
 		object require_script(const std::string& key, const string_view& code, bool create_global = true, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			return require_core(key, [this, &code, &chunkname, &mode]() {stack::script(L, code, chunkname, mode); }, create_global);
+			auto action = [this, &code, &chunkname, &mode]() {
+				stack::script(L, code, chunkname, mode); 
+			};
+			return require_core(key, action, create_global);
 		}
 
 		object require_file(const std::string& key, const std::string& filename, bool create_global = true, load_mode mode = load_mode::any) {
-			return require_core(key, [this, &filename, &mode]() {stack::script_file(L, filename, mode); }, create_global);
+			auto action = [this, &filename, &mode]() {
+				stack::script_file(L, filename, mode); 
+			};
+			return require_core(key, action, create_global);
 		}
 
 		template <typename E>

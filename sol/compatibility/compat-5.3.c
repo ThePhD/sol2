@@ -421,8 +421,12 @@ COMPAT53_API int luaL_fileresult (lua_State *L, int stat, const char *fname) {
 static const char* compat53_f_parser_handler (lua_State *L, void *data, size_t *size) {
   (void)L; /* better fix for unused parameter warnings */
   struct compat53_f_parser_buffer *p = (struct compat53_f_parser_buffer*)data;
+  if (feof(p->file) != 0) {
+	  *size = 0;
+	  return NULL;
+  }
   size_t readcount = fread(p->buffer + p->start, sizeof(*p->buffer), sizeof(p->buffer), p->file);
-  if (ferror(p->file) != 0 || feof(p->file) != 0) {
+  if (ferror(p->file) != 0) {
     *size = 0;
     return NULL;
   }
@@ -481,6 +485,7 @@ COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char 
   struct compat53_f_parser_buffer fbuf;
   fbuf.file = fp;
   fbuf.start = 1;
+  fbuf.buffer[0] = (char)c;
   status = lua_load(L, &compat53_f_parser_handler, &fbuf, filename);
   fclose(fp);
   return status;

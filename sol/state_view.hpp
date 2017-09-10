@@ -146,7 +146,7 @@ namespace sol {
 			if (loaded && loaded->valid())
 				return std::move(*loaded);
 			action();
-			auto sr = stack::get<stack_reference>(L);
+			stack_reference sr(L, -1);
 			if (create_global)
 				set(key, sr);
 			ensure_package(key, sr);
@@ -268,11 +268,17 @@ namespace sol {
 		}
 
 		object require_script(const std::string& key, const string_view& code, bool create_global = true, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			return require_core(key, [this, &code, &chunkname, &mode]() {stack::script(L, code, chunkname, mode); }, create_global);
+			auto action = [this, &code, &chunkname, &mode]() {
+				stack::script(L, code, chunkname, mode); 
+			};
+			return require_core(key, action, create_global);
 		}
 
 		object require_file(const std::string& key, const std::string& filename, bool create_global = true, load_mode mode = load_mode::any) {
-			return require_core(key, [this, &filename, &mode]() {stack::script_file(L, filename, mode); }, create_global);
+			auto action = [this, &filename, &mode]() {
+				stack::script_file(L, filename, mode); 
+			};
+			return require_core(key, action, create_global);
 		}
 
 		template <typename E>
