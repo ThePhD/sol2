@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-10 16:07:52.509059 UTC
-// This header was generated with sol v2.18.2 (revision 7aca8ac)
+// Generated 2017-09-10 16:28:15.461709 UTC
+// This header was generated with sol v2.18.2 (revision b38a382)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -2287,17 +2287,17 @@ COMPAT53_API int luaL_fileresult (lua_State *L, int stat, const char *fname) {
     /* use strerror_r here, because it's available on these specific platforms */
 #if defined(COMPAT53_HAVE_STRERROR_R_XSI)
     /* XSI Compliant */
-    strerror_r(en, buf, 512);
+    strerror_r(en, buf, sizeof(buf));
     s = buf;
 #else
     /* GNU-specific which returns const char* */
-    s = strerror_r(en, buf, 512);
+    s = strerror_r(en, buf, sizeof(buf));
 #endif
 #elif (defined(COMPAT53_HAVE_STRERROR_S) && COMPAT53_HAVE_STRERROR_S)
     /* for MSVC and other C11 implementations, use strerror_s 
      * since it's provided by default by the libraries 
      */
-    strerror_s(buf, 512, en);
+    strerror_s(buf, sizeof(buf), en);
     s = buf;
 #else
     /* fallback, but
