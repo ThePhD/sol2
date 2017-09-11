@@ -176,8 +176,11 @@ namespace sol {
 		basic_table_core& operator=(basic_table_core&&) = default;
 		basic_table_core(const stack_reference& r) : basic_table_core(r.lua_state(), r.stack_index()) {}
 		basic_table_core(stack_reference&& r) : basic_table_core(r.lua_state(), r.stack_index()) {}
-		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
-		basic_table_core(lua_State* L, T&& r) : basic_table_core(L, sol::ref_index(r.registry_index())) {}
+		template <typename T, meta::enable_any<
+			std::is_base_of<reference, meta::unqualified_t<T>>,
+			std::is_base_of<stack_reference, meta::unqualified_t<T>>
+		> = meta::enabler>
+		basic_table_core(lua_State* L, T&& r) : basic_table_core(L, std::forward<T>(r)) {}
 		basic_table_core(lua_State* L, new_table nt) : base_t(L, (lua_createtable(L, nt.sequence_hint, nt.map_hint), -1)) {
 			if (!std::is_base_of<stack_reference, base_type>::value) {
 				lua_pop(L, 1);

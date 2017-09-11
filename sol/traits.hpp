@@ -145,6 +145,9 @@ namespace sol {
 		using enable = std::enable_if_t<all<Args...>::value, enable_t>;
 
 		template<typename... Args>
+		using enable_any = std::enable_if_t<any<Args...>::value, enable_t>;
+
+		template<typename... Args>
 		using disable = std::enable_if_t<neg<all<Args...>>::value, enable_t>;
 
 		template<typename... Args>

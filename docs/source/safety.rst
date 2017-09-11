@@ -16,14 +16,19 @@ Note that you can obtain safety with regards to functions you bind by using the 
 
 ``SOL_SAFE_FUNCTION`` triggers the following change:
 	* All uses of ``sol::function`` and ``sol::stack_function`` will default to ``sol::protected_function`` and ``sol::stack_protected_function``, respectively, rather than ``sol::unsafe_function`` and ``sol::stack_unsafe_function``.
-	* **Not** turned on by default under any detectible compiler settings: *you MUST turn this one on manually*
+	* Will make any ``sol::state_view::script`` calls default to their safe variants if there is no supplied environment or error handler function
+	* **Not** turned on by default under any detectible compiler settings: *this MUST be turned on manually*
 
 ``SOL_STRINGS_ARE_NUMBERS`` triggers the following changes:
 	* ``sol::stack::get`` and ``sol::stack::check_get`` will allow anything that Lua thinks is number-worthy to be number-worthy
 	* This includes: integers, numbers, and strings
 	* Does **not** include: booleans, types with ``__tostring`` enabled, and everything else
 	* Overrides ``SOL_CHECK_ARGUMENTS`` and always applies if it is turned on
-	* **Not** turned on by default under any settings: *you MUST be turned on manually*
+	* **Not** turned on by default under any settings: *this MUST be turned on manually*
+
+``SOL_NO_CHECK_NUMBER_PRECISION`` triggers the following changes:
+	* If ``SOL_CHECK_ARGUMENTS`` is defined, turns off number precision and integer precision fitting when pushing numbers into sol2
+	* **Not** turned on by default under any settings: *thus MUSt be turned on manually*
 
 ``SOL_CHECK_ARGUMENTS`` triggers the following changes:
 	* ``sol::stack::get`` (used everywhere) defaults to using ``sol::stack::check_get`` and dereferencing the argument. It uses ``sol::type_panic`` as the handler if something goes wrong
@@ -31,10 +36,8 @@ Note that you can obtain safety with regards to functions you bind by using the 
 	* ``sol::stack::call`` and its variants will, if no templated boolean is specified, check all of the arguments for a function call
 	* If ``SOL_SAFE_USERTYPE`` is not defined, it gets defined to turn being on and the effects described above kick in
 	* Numbers will also be checked to see if they fit within a ``lua_Number`` if there is no ``lua_Integer`` type available that can fit your signed or unsigned number. You can opt-out of this behavior with ``SOL_NO_CHECK_NUMBER_PRECISION``
+	* **Not** turned on by default under any settings: *this MUST be turned on manually*
 	
-``SOL_NO_CHECK_NUMBER_PRECISION`` triggers the following changes:
-	* If ``SOL_CHECK_ARGUMENTS`` is defined, turns off number precision and integer precision fitting when pushing numbers into sol2
-
 Tests are compiled with this on to ensure everything is going as expected. Remember that if you want these features, you must explicitly turn them on all of them to be sure you are getting them.
 
 memory

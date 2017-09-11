@@ -138,6 +138,41 @@ namespace sol {
 		reference(lua_nil_t) noexcept : reference() {}
 		reference(const stack_reference& r) noexcept : reference(r.lua_state(), r.stack_index()) {}
 		reference(stack_reference&& r) noexcept : reference(r.lua_state(), r.stack_index()) {}
+		reference(lua_State* L, const reference& r) noexcept : luastate(L) {
+			if (r.ref == LUA_NOREF) {
+				ref = LUA_NOREF;
+				return;
+			}
+			int p = r.push();
+			if (r.lua_state() != luastate) {
+				lua_xmove(r.lua_state(), L, p);
+			}
+			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+		}
+		reference(lua_State* L, reference&& r) noexcept : luastate(L) {
+			if (r.ref == LUA_NOREF) {
+				ref = LUA_NOREF;
+				return;
+			}
+			if (r.lua_state() != luastate) {
+				int p = r.push();
+				lua_xmove(r.lua_state(), L, p);
+				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+			}
+			else {
+				ref = r.ref;
+				r.luastate = nullptr;
+				r.ref = LUA_NOREF;
+			}
+		}
+		reference(lua_State* L, const stack_reference& r) noexcept : luastate(L) {
+			if (!r.valid()) {
+				ref = LUA_NOREF;
+				return;
+			}
+			r.push(luastate);
+			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+		}
 		reference(lua_State* L, int index = -1) noexcept : luastate(L) {
 			lua_pushvalue(lua_state(), index);
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
@@ -190,7 +225,10 @@ namespace sol {
 		}
 
 		int push(lua_State* Ls) const noexcept {
-			lua_rawgeti(Ls, LUA_REGISTRYINDEX, ref);
+			lua_rawgeti(lua_state(), LUA_REGISTRYINDEX, ref);
+			if (Ls != lua_state()) {
+				lua_xmove(lua_state(), Ls, 1);
+			}
 			return 1;
 		}
 

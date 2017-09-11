@@ -443,10 +443,15 @@ namespace sol {
 
 	struct this_state {
 		lua_State* L;
-		operator lua_State* () const {
-			return L;
+		operator lua_State* () const noexcept {
+			return lua_state();
 		}
-		lua_State* operator-> () const {
+
+		lua_State* operator-> () const noexcept {
+			return lua_state();
+		}
+
+		lua_State* lua_state() const noexcept {
 			return L;
 		}
 	};

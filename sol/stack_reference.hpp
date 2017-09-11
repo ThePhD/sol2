@@ -27,7 +27,7 @@
 namespace sol {
 	class stack_reference {
 	private:
-		lua_State* L = nullptr;
+		lua_State* luastate = nullptr;
 		int index = 0;
 
 	protected:
@@ -38,11 +38,25 @@ namespace sol {
 	public:
 		stack_reference() noexcept = default;
 		stack_reference(lua_nil_t) noexcept : stack_reference() {};
-		stack_reference(lua_State* L, lua_nil_t) noexcept : L(L), index(0) {}
-		stack_reference(lua_State* L, int i) noexcept : L(L), index(lua_absindex(L, i)) {}
-		stack_reference(lua_State* L, absolute_index i) noexcept : L(L), index(i) {}
-		stack_reference(lua_State* L, raw_index i) noexcept : L(L), index(i) {}
+		stack_reference(lua_State* L, lua_nil_t) noexcept : luastate(L), index(0) {}
+		stack_reference(lua_State* L, int i) noexcept : stack_reference(L, absolute_index(L, i)) {}
+		stack_reference(lua_State* L, absolute_index i) noexcept : luastate(L), index(i) {}
+		stack_reference(lua_State* L, raw_index i) noexcept : luastate(L), index(i) {}
 		stack_reference(lua_State* L, ref_index i) noexcept = delete;
+		stack_reference(lua_State* L, const reference& r) noexcept = delete;
+		stack_reference(lua_State* L, const stack_reference& r) noexcept : luastate(L) {
+			if (!r.valid()) {
+				index = 0;
+				return;
+			}
+			int i = r.stack_index();
+			if (r.lua_state() != luastate) {
+				lua_pushvalue(r.lua_state(), r.index);
+				lua_xmove(r.lua_state(), luastate, 1);
+				i = absolute_index(luastate, -1);
+			}
+			index = i;
+		}
 		stack_reference(stack_reference&& o) noexcept = default;
 		stack_reference& operator=(stack_reference&&) noexcept = default;
 		stack_reference(const stack_reference&) noexcept = default;
@@ -73,12 +87,12 @@ namespace sol {
 		}
 
 		type get_type() const noexcept {
-			int result = lua_type(L, index);
+			int result = lua_type(lua_state(), index);
 			return static_cast<type>(result);
 		}
 
 		lua_State* lua_state() const noexcept {
-			return L;
+			return luastate;
 		}
 
 		bool valid() const noexcept {

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-11 17:24:33.633292 UTC
-// This header was generated with sol v2.18.2 (revision ac849a5)
+// Generated 2017-09-11 20:10:45.557320 UTC
+// This header was generated with sol v2.18.2 (revision 85c81f6)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -979,6 +979,9 @@ namespace sol {
 
 		template<typename... Args>
 		using enable = std::enable_if_t<all<Args...>::value, enable_t>;
+
+		template<typename... Args>
+		using enable_any = std::enable_if_t<any<Args...>::value, enable_t>;
 
 		template<typename... Args>
 		using disable = std::enable_if_t<neg<all<Args...>>::value, enable_t>;
@@ -4603,10 +4606,15 @@ namespace sol {
 
 	struct this_state {
 		lua_State* L;
-		operator lua_State* () const {
-			return L;
+		operator lua_State* () const noexcept {
+			return lua_state();
 		}
-		lua_State* operator-> () const {
+
+		lua_State* operator-> () const noexcept {
+			return lua_state();
+		}
+
+		lua_State* lua_state() const noexcept {
 			return L;
 		}
 	};
@@ -5522,7 +5530,7 @@ namespace sol {
 namespace sol {
 	class stack_reference {
 	private:
-		lua_State* L = nullptr;
+		lua_State* luastate = nullptr;
 		int index = 0;
 
 	protected:
@@ -5533,11 +5541,25 @@ namespace sol {
 	public:
 		stack_reference() noexcept = default;
 		stack_reference(lua_nil_t) noexcept : stack_reference() {};
-		stack_reference(lua_State* L, lua_nil_t) noexcept : L(L), index(0) {}
-		stack_reference(lua_State* L, int i) noexcept : L(L), index(lua_absindex(L, i)) {}
-		stack_reference(lua_State* L, absolute_index i) noexcept : L(L), index(i) {}
-		stack_reference(lua_State* L, raw_index i) noexcept : L(L), index(i) {}
+		stack_reference(lua_State* L, lua_nil_t) noexcept : luastate(L), index(0) {}
+		stack_reference(lua_State* L, int i) noexcept : stack_reference(L, absolute_index(L, i)) {}
+		stack_reference(lua_State* L, absolute_index i) noexcept : luastate(L), index(i) {}
+		stack_reference(lua_State* L, raw_index i) noexcept : luastate(L), index(i) {}
 		stack_reference(lua_State* L, ref_index i) noexcept = delete;
+		stack_reference(lua_State* L, const reference& r) noexcept = delete;
+		stack_reference(lua_State* L, const stack_reference& r) noexcept : luastate(L) {
+			if (!r.valid()) {
+				index = 0;
+				return;
+			}
+			int i = r.stack_index();
+			if (r.lua_state() != luastate) {
+				lua_pushvalue(r.lua_state(), r.index);
+				lua_xmove(r.lua_state(), luastate, 1);
+				i = absolute_index(luastate, -1);
+			}
+			index = i;
+		}
 		stack_reference(stack_reference&& o) noexcept = default;
 		stack_reference& operator=(stack_reference&&) noexcept = default;
 		stack_reference(const stack_reference&) noexcept = default;
@@ -5568,12 +5590,12 @@ namespace sol {
 		}
 
 		type get_type() const noexcept {
-			int result = lua_type(L, index);
+			int result = lua_type(lua_state(), index);
 			return static_cast<type>(result);
 		}
 
 		lua_State* lua_state() const noexcept {
-			return L;
+			return luastate;
 		}
 
 		bool valid() const noexcept {
@@ -5722,6 +5744,41 @@ namespace sol {
 		reference(lua_nil_t) noexcept : reference() {}
 		reference(const stack_reference& r) noexcept : reference(r.lua_state(), r.stack_index()) {}
 		reference(stack_reference&& r) noexcept : reference(r.lua_state(), r.stack_index()) {}
+		reference(lua_State* L, const reference& r) noexcept : luastate(L) {
+			if (r.ref == LUA_NOREF) {
+				ref = LUA_NOREF;
+				return;
+			}
+			int p = r.push();
+			if (r.lua_state() != luastate) {
+				lua_xmove(r.lua_state(), L, p);
+			}
+			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+		}
+		reference(lua_State* L, reference&& r) noexcept : luastate(L) {
+			if (r.ref == LUA_NOREF) {
+				ref = LUA_NOREF;
+				return;
+			}
+			if (r.lua_state() != luastate) {
+				int p = r.push();
+				lua_xmove(r.lua_state(), L, p);
+				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+			}
+			else {
+				ref = r.ref;
+				r.luastate = nullptr;
+				r.ref = LUA_NOREF;
+			}
+		}
+		reference(lua_State* L, const stack_reference& r) noexcept : luastate(L) {
+			if (!r.valid()) {
+				ref = LUA_NOREF;
+				return;
+			}
+			r.push(luastate);
+			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+		}
 		reference(lua_State* L, int index = -1) noexcept : luastate(L) {
 			lua_pushvalue(lua_state(), index);
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
@@ -5774,7 +5831,10 @@ namespace sol {
 		}
 
 		int push(lua_State* Ls) const noexcept {
-			lua_rawgeti(Ls, LUA_REGISTRYINDEX, ref);
+			lua_rawgeti(lua_state(), LUA_REGISTRYINDEX, ref);
+			if (Ls != lua_state()) {
+				lua_xmove(lua_state(), Ls, 1);
+			}
 			return 1;
 		}
 
@@ -11737,8 +11797,11 @@ namespace sol {
 		basic_function& operator=(basic_function&&) = default;
 		basic_function(const stack_reference& r) : basic_function(r.lua_state(), r.stack_index()) {}
 		basic_function(stack_reference&& r) : basic_function(r.lua_state(), r.stack_index()) {}
-		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
-		basic_function(lua_State* L, T&& r) : basic_function(L, sol::ref_index(r.registry_index())) {}
+		template <typename T, meta::enable_any<
+			std::is_base_of<reference, meta::unqualified_t<T>>,
+			std::is_base_of<stack_reference, meta::unqualified_t<T>>
+		> = meta::enabler>
+		basic_function(lua_State* L, T&& r) : base_t(L, std::forward<T>(r)) {}
 		basic_function(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};
@@ -12085,10 +12148,16 @@ namespace sol {
 		> = meta::enabler>
 		basic_protected_function(Proxy&& p, Handler&& eh) : basic_protected_function(detail::force_cast<base_t>(p), std::forward<Handler>(eh)) {}
 
-		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
+		template <typename T, meta::enable<
+			std::is_base_of<reference, meta::unqualified_t<T>>,
+			std::is_base_of<stack_reference, meta::unqualified_t<T>>
+		> = meta::enabler>
 		basic_protected_function(lua_State* L, T&& r) : basic_protected_function(L, std::forward<T>(r), get_default_handler(L)) {}
-		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
-		basic_protected_function(lua_State* L, T&& r, handler_t eh) : basic_protected_function(L, sol::ref_index(r.registry_index()), std::move(eh)) {}
+		template <typename T, meta::enable_any<
+			std::is_base_of<reference, meta::unqualified_t<T>>,
+			std::is_base_of<stack_reference, meta::unqualified_t<T>>
+		> = meta::enabler>
+		basic_protected_function(lua_State* L, T&& r, handler_t eh) : base_t(L, std::forward<T>(r)), error_handler(std::move(eh)) {}
 
 		basic_protected_function(lua_State* L, int index = -1) : basic_protected_function(L, index, get_default_handler(L)) {}
 		basic_protected_function(lua_State* L, int index, handler_t eh) : base_t(L, index), error_handler(std::move(eh)) {
@@ -12551,8 +12620,11 @@ namespace sol {
 		basic_userdata& operator=(basic_userdata&&) = default;
 		basic_userdata(const stack_reference& r) : basic_userdata(r.lua_state(), r.stack_index()) {}
 		basic_userdata(stack_reference&& r) : basic_userdata(r.lua_state(), r.stack_index()) {}
-		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
-		basic_userdata(lua_State* L, T&& r) : basic_userdata(L, sol::ref_index(r.registry_index())) {}
+		template <typename T, meta::enable_any<
+			std::is_base_of<reference, meta::unqualified_t<T>>,
+			std::is_base_of<stack_reference, meta::unqualified_t<T>>
+		> = meta::enabler>
+		basic_userdata(lua_State* L, T&& r) : base_t(L, std::forward<T>(r)) {}
 		basic_userdata(lua_State* L, int index = -1) : base_t(detail::no_safety, L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};
@@ -12590,8 +12662,11 @@ namespace sol {
 		basic_lightuserdata& operator=(basic_lightuserdata&&) = default;
 		basic_lightuserdata(const stack_reference& r) : basic_lightuserdata(r.lua_state(), r.stack_index()) {}
 		basic_lightuserdata(stack_reference&& r) : basic_lightuserdata(r.lua_state(), r.stack_index()) {}
-		template <typename T, meta::enable<meta::neg<is_lua_index<T>>> = meta::enabler>
-		basic_lightuserdata(lua_State* L, T&& r) : basic_lightuserdata(L, sol::ref_index(r.registry_index())) {}
+		template <typename T, meta::enable_any<
+			std::is_base_of<reference, meta::unqualified_t<T>>,
+			std::is_base_of<stack_reference, meta::unqualified_t<T>>
+		> = meta::enabler>
+		basic_lightuserdata(lua_State* L, T&& r) : basic_lightuserdata(L, std::forward<T>(r)) {}
 		basic_lightuserdata(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};
@@ -13025,8 +13100,17 @@ namespace sol {
 
 	public:
 		basic_object() noexcept = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_object>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<
+			meta::neg<std::is_same<meta::unqualified_t<T>, basic_object>>, 
+			meta::neg<std::is_same<base_type, stack_reference>>, 
+			std::is_base_of<base_type, meta::unqualified_t<T>>
+		> = meta::enabler>
 		basic_object(T&& r) : base_t(std::forward<T>(r)) {}
+		template <typename T, meta::enable_any<
+			std::is_base_of<reference, meta::unqualified_t<T>>,
+			std::is_base_of<stack_reference, meta::unqualified_t<T>>
+		> = meta::enabler>
+		basic_object(lua_State* L, T&& r) : base_t(L, std::forward<T>(r)) {}
 		basic_object(lua_nil_t r) : base_t(r) {}
 		basic_object(const basic_object&) = default;
 		basic_object(basic_object&&) = default;
@@ -13036,6 +13120,7 @@ namespace sol {
 		basic_object(const proxy_base<Super>& r) noexcept : basic_object(r.operator basic_object()) {}
 		template <typename Super>
 		basic_object(proxy_base<Super>&& r) noexcept : basic_object(r.operator basic_object()) {}
+		basic_object(lua_State* L, lua_nil_t r) noexcept : base_t(L, r) {}
 		basic_object(lua_State* L, int index = -1) noexcept : base_t(L, index) {}
 		basic_object(lua_State* L, absolute_index index) noexcept : base_t(L, index) {}
 		basic_object(lua_State* L, raw_index index) noexcept : base_t(L, index) {}
@@ -16518,8 +16603,11 @@ namespace sol {
 		basic_table_core& operator=(basic_table_core&&) = default;
 		basic_table_core(const stack_reference& r) : basic_table_core(r.lua_state(), r.stack_index()) {}
 		basic_table_core(stack_reference&& r) : basic_table_core(r.lua_state(), r.stack_index()) {}
-		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
-		basic_table_core(lua_State* L, T&& r) : basic_table_core(L, sol::ref_index(r.registry_index())) {}
+		template <typename T, meta::enable_any<
+			std::is_base_of<reference, meta::unqualified_t<T>>,
+			std::is_base_of<stack_reference, meta::unqualified_t<T>>
+		> = meta::enabler>
+		basic_table_core(lua_State* L, T&& r) : basic_table_core(L, std::forward<T>(r)) {}
 		basic_table_core(lua_State* L, new_table nt) : base_t(L, (lua_createtable(L, nt.sequence_hint, nt.map_hint), -1)) {
 			if (!std::is_base_of<stack_reference, base_type>::value) {
 				lua_pop(L, 1);
