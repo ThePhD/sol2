@@ -77,7 +77,7 @@ assert(value == 15)
 	auto script_result = lua.safe_script("local value = d1:run(5)", sol::script_pass_on_error);
 	assert(!script_result.valid());
 	sol::error err = script_result;
-	std::cout << "received error: " << err.what() << std::endl;
+	std::cout << "received expected error: " << err.what() << std::endl;
 	std::cout << std::endl;
 
 	return 0;

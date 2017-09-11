@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-11 20:10:45.557320 UTC
-// This header was generated with sol v2.18.2 (revision 85c81f6)
+// Generated 2017-09-11 20:41:41.805495 UTC
+// This header was generated with sol v2.18.2 (revision 074b9ae)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5570,6 +5570,10 @@ namespace sol {
 		}
 
 		int push(lua_State* Ls) const noexcept {
+			if (lua_state() == nullptr) {
+				lua_pushnil(Ls);
+				return 1;
+			}
 			lua_pushvalue(lua_state(), index);
 			if (Ls != lua_state()) {
 				lua_xmove(lua_state(), Ls, 1);
@@ -5831,6 +5835,10 @@ namespace sol {
 		}
 
 		int push(lua_State* Ls) const noexcept {
+			if (lua_state() == nullptr) {
+				lua_pushnil(Ls);
+				return 1;
+			}
 			lua_rawgeti(lua_state(), LUA_REGISTRYINDEX, ref);
 			if (Ls != lua_state()) {
 				lua_xmove(lua_state(), Ls, 1);

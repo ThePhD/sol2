@@ -67,6 +67,10 @@ namespace sol {
 		}
 
 		int push(lua_State* Ls) const noexcept {
+			if (lua_state() == nullptr) {
+				lua_pushnil(Ls);
+				return 1;
+			}
 			lua_pushvalue(lua_state(), index);
 			if (Ls != lua_state()) {
 				lua_xmove(lua_state(), Ls, 1);
