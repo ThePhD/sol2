@@ -49,11 +49,11 @@ static char* compat53_strerror(int en, char* buff, size_t sz) {
 	/* use strerror_r here, because it's available on these specific platforms */
 #if defined(COMPAT53_HAVE_STRERROR_R_XSI)
 	/* XSI Compliant */
-	strerror_r(en, buf, sz);
-	return buf;
+	strerror_r(en, buff, sz);
+	return buff;
 #else
 	/* GNU-specific which returns const char* */
-	return strerror_r(en, buf, sz);
+	return strerror_r(en, buff, sz);
 #endif
 #elif COMPAT53_HAVE_STRERROR_S
 	/* for MSVC and other C11 implementations, use strerror_s

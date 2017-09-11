@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-11 15:30:55.804543 UTC
-// This header was generated with sol v2.18.2 (revision 5fe73be)
+// Generated 2017-09-11 15:41:55.640032 UTC
+// This header was generated with sol v2.18.2 (revision 7a29676)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1967,11 +1967,11 @@ static char* compat53_strerror(int en, char* buff, size_t sz) {
 	/* use strerror_r here, because it's available on these specific platforms */
 #if defined(COMPAT53_HAVE_STRERROR_R_XSI)
 	/* XSI Compliant */
-	strerror_r(en, buf, sz);
-	return buf;
+	strerror_r(en, buff, sz);
+	return buff;
 #else
 	/* GNU-specific which returns const char* */
-	return strerror_r(en, buf, sz);
+	return strerror_r(en, buff, sz);
 #endif
 #elif COMPAT53_HAVE_STRERROR_S
 	/* for MSVC and other C11 implementations, use strerror_s
