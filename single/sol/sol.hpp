@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-11 15:41:55.640032 UTC
-// This header was generated with sol v2.18.2 (revision 7a29676)
+// Generated 2017-09-11 17:13:51.701888 UTC
+// This header was generated with sol v2.18.2 (revision b4c1ab0)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1933,20 +1933,44 @@ COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
 /* definitions for Lua 5.1 only */
 #if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM == 501
 
+#ifndef COMPAT53_FOPEN_NO_LOCK
+#  if defined(_MSC_VER)
+#    define COMPAT53_FOPEN_NO_LOCK 1
+#  else /* otherwise */
+#    define COMPAT53_FOPEN_NO_LOCK 0
+#  endif /* VC++ only so far */
+#endif /* No-lock fopen_s usage if possible */
+
+#if defined(_MSC_VER) && COMPAT53_FOPEN_NO_LOCK
+#include <share.h>
+#endif // VC++ _fsopen for share-allowed file read
+
 #ifndef COMPAT53_HAVE_STRERROR_R
 #  if defined(__GLIBC__) || defined(_POSIX_VERSION) || defined(__APPLE__) || (!defined (__MINGW32__) && defined(__GNUC__) && (__GNUC__ < 6))
 #    define COMPAT53_HAVE_STRERROR_R 1
 #    if ((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || (defined(_XOPEN_SOURCE) || _XOPEN_SOURCE >= 600)) && (!defined(_GNU_SOURCE) || !_GNU_SOURCE)
-#    ifndef COMPAT53_HAVE_STRERROR_R_XSI
-#      define COMPAT53_HAVE_STRERROR_R_XSI 1
-#    endif /* XSI-Compliant strerror_r */
+#      ifndef COMPAT53_HAVE_STRERROR_R_XSI
+#        define COMPAT53_HAVE_STRERROR_R_XSI 1
+#      endif /* XSI-Compliant strerror_r */
+#      ifndef COMPAT53_HAVE_STRERROR_R_GNU
+#        define COMPAT53_HAVE_STRERROR_R_GNU 0
+#      endif /* GNU strerror_r */
 #    else /* XSI/Posix vs. GNU strerror_r */
 #      ifndef COMPAT53_HAVE_STRERROR_R_GNU
 #        define COMPAT53_HAVE_STRERROR_R_GNU 1
 #      endif /* GNU variant strerror_r */
+#      ifndef COMPAT53_HAVE_STRERROR_R_XSI
+#        define COMPAT53_HAVE_STRERROR_R_XSI 0
+#      endif /* XSI strerror_r */
 #    endif /* XSI/Posix vs. GNU strerror_r */
 #  else /* none of the defines matched: define to 0 */
 #    define COMPAT53_HAVE_STRERROR_R 0
+#    ifndef COMPAT53_HAVE_STRERROR_R_XSI
+#      define COMPAT53_HAVE_STRERROR_R_XSI 0
+#    endif /* XSI strerror_r */
+#    ifndef COMPAT53_HAVE_STRERROR_R_GNU
+#      define COMPAT53_HAVE_STRERROR_R_GNU 0
+#    endif /* GNU strerror_r */
 #  endif /* have strerror_r of some form */
 #endif /* strerror_r */
 
@@ -1964,31 +1988,31 @@ COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
 
 static char* compat53_strerror(int en, char* buff, size_t sz) {
 #if COMPAT53_HAVE_STRERROR_R
-	/* use strerror_r here, because it's available on these specific platforms */
-#if defined(COMPAT53_HAVE_STRERROR_R_XSI)
-	/* XSI Compliant */
-	strerror_r(en, buff, sz);
-	return buff;
+  /* use strerror_r here, because it's available on these specific platforms */
+#if COMPAT53_HAVE_STRERROR_R_XSI
+  /* XSI Compliant */
+  strerror_r(en, buff, sz);
+  return buff;
 #else
-	/* GNU-specific which returns const char* */
-	return strerror_r(en, buff, sz);
+  /* GNU-specific which returns const char* */
+  return strerror_r(en, buff, sz);
 #endif
 #elif COMPAT53_HAVE_STRERROR_S
-	/* for MSVC and other C11 implementations, use strerror_s
-	* since it's provided by default by the libraries
-	*/
-	strerror_s(buff, sz, en);
-	return buff;
+  /* for MSVC and other C11 implementations, use strerror_s
+   * since it's provided by default by the libraries
+   */
+  strerror_s(buff, sz, en);
+  return buff;
 #else
-	/* fallback, but
-	* strerror is not guaranteed to be threadsafe due to modifying
-	* errno itself and some impls not locking a static buffer for it
-	* ... but most known systems have threadsafe errno: this might only change
-	* if the locale is changed out from under someone while this function is being called
-	*/
-	(void)buff;
-	(void)sz;
-	return strerror(en);
+  /* fallback, but
+   * strerror is not guaranteed to be threadsafe due to modifying
+   * errno itself and some impls not locking a static buffer for it
+   * ... but most known systems have threadsafe errno: this might only change
+   * if the locale is changed out from under someone while this function is being called
+   */
+  (void)buff;
+  (void)sz;
+  return strerror(en);
 #endif
 }
 
@@ -2329,7 +2353,7 @@ typedef struct compat53_LoadF {
   char buff[COMPAT53_LUA_FILE_BUFFER_SIZE];  /* area for reading file */
 } compat53_LoadF;
 
-static const char *getF (lua_State *L, void *ud, size_t *size) {
+static const char *compat53_getF (lua_State *L, void *ud, size_t *size) {
   compat53_LoadF *lf = (compat53_LoadF *)ud;
   (void)L;  /* not used */
   if (lf->n > 0) {  /* are there pre-read characters to be read? */
@@ -2338,7 +2362,7 @@ static const char *getF (lua_State *L, void *ud, size_t *size) {
   }
   else {  /* read a block from file */
     /* 'fread' can return > 0 *and* set the EOF flag. If next call to
-       'getF' called 'fread', it might still wait for user input.
+       'compat53_getF' called 'fread', it might still wait for user input.
        The next check avoids this problem. */
     if (feof(lf->f)) return NULL;
     *size = fread(lf->buff, 1, sizeof(lf->buff), lf->f);  /* read block */
@@ -2400,13 +2424,27 @@ COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char 
   else {
     lua_pushfstring(L, "@%s", filename);
 #if defined(_MSC_VER)
-    /* a quick check shows that fopen_s this goes back to VS 2005, possibly even before that 
+    /* a quick check shows that fopen_s this goes back to VS 2005, 
+     * and _fsopen goes back to VS 2003 .NET, possibly even before that 
      * so we don't need to do any version number checks, 
-	* since this has been there since forever
+     * since this has been there since forever
+     */
+
+    /* TO USER: if you want the behavior of typical fopen_s/fopen, 
+     * which does lock the file on VC++, define the macro used below
 	*/
-    if (fopen_s(&lf.f, filename, "r") != 0) return compat53_errfile(L, "open", fnameindex);
+#if COMPAT53_FOPEN_NO_LOCK
+    lf.f = _fsopen(filename, mode, _SH_DENYNO); /* do not lock the file in any way */
+    if (lf.f == NULL) {
+      return compat53_errfile(L, "open", fnameindex);
+    }
+#else /* use default locking version */
+    if (fopen_s(&lf.f, filename, "r") != 0) {
+      return compat53_errfile(L, "open", fnameindex);
+    }
+#endif /* Locking vs. No-locking fopen variants */
 #else
-    lf.f = fopen(filename, "r");
+    lf.f = fopen(filename, "r"); /* default stdlib doesn't forcefully lock files here */
     if (lf.f == NULL) return compat53_errfile(L, "open", fnameindex);
 #endif
   }
@@ -2435,7 +2473,7 @@ COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char 
   }
   if (c != EOF)
     lf.buff[lf.n++] = c;  /* 'c' is the first character of the stream */
-  status = lua_load(L, getF, &lf, lua_tostring(L, -1));
+  status = lua_load(L, &compat53_getF, &lf, lua_tostring(L, -1));
   readstatus = ferror(lf.f);
   if (filename) fclose(lf.f);  /* close file (even in case of errors) */
   if (readstatus) {
