@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-11 17:13:51.701888 UTC
-// This header was generated with sol v2.18.2 (revision b4c1ab0)
+// Generated 2017-09-11 17:24:33.633292 UTC
+// This header was generated with sol v2.18.2 (revision ac849a5)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -2434,7 +2434,7 @@ COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char 
      * which does lock the file on VC++, define the macro used below
 	*/
 #if COMPAT53_FOPEN_NO_LOCK
-    lf.f = _fsopen(filename, mode, _SH_DENYNO); /* do not lock the file in any way */
+    lf.f = _fsopen(filename, "r", _SH_DENYNO); /* do not lock the file in any way */
     if (lf.f == NULL) {
       return compat53_errfile(L, "open", fnameindex);
     }

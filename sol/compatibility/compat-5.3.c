@@ -540,7 +540,7 @@ COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char 
      * which does lock the file on VC++, define the macro used below
 	*/
 #if COMPAT53_FOPEN_NO_LOCK
-    lf.f = _fsopen(filename, mode, _SH_DENYNO); /* do not lock the file in any way */
+    lf.f = _fsopen(filename, "r", _SH_DENYNO); /* do not lock the file in any way */
     if (lf.f == NULL) {
       return compat53_errfile(L, "open", fnameindex);
     }
