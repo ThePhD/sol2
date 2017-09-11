@@ -182,7 +182,7 @@ namespace sol {
 			meta::neg<std::is_same<base_t, stack_reference>>, 
 			std::is_base_of<base_t, meta::unqualified_t<T>>
 		> = meta::enabler>
-		basic_protected_function(T&& r) noexcept : base_t(std::forward<T>(r)) {
+		basic_protected_function(T&& r) noexcept : base_t(std::forward<T>(r)), error_handler(get_default_handler(r.lua_state())) {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_function<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
