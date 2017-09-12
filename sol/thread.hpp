@@ -77,12 +77,14 @@ namespace sol {
 			}
 			lua_pushthread(L);
 			lua_setglobal(L, detail::default_main_thread_name());
+#else
+			(void)L;
 #endif
 		}
 	} // stack
 
-#if SOL_LUA_VERSION < 502
 	inline lua_State* main_thread(lua_State* L, lua_State* backup_if_unsupported = nullptr) {
+#if SOL_LUA_VERSION < 502
 		if (L == nullptr)
 			return backup_if_unsupported;
 		lua_getglobal(L, detail::default_main_thread_name());
@@ -91,14 +93,13 @@ namespace sol {
 			return lua_tothread(L, -1);
 		}
 		return backup_if_unsupported;
-	}
 #else
-	inline lua_State* main_thread(lua_State* L, lua_State* = nullptr) {
+		(void)backup_if_unsupported;
 		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_MAINTHREAD);
 		lua_thread_state s = stack::pop<lua_thread_state>(L);
 		return s.L;
-	}
 #endif // Lua 5.2+ has the main thread getter
+	}
 
 	class thread : public reference {
 	public:
