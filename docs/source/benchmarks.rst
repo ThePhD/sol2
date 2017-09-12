@@ -17,72 +17,72 @@ Note that Sol here makes use of its more performant variants (see :doc:`c_call<a
 
 Bars go up to the average execution time. Lower is better. Reported times are for the desired operation run through `nonius`_. Results are sorted from top to bottom by best to worst. Note that there are error bars to show potential variance in performance: generally, same-sized errors bars plus very close average execution time implies no significant difference in speed, despite the vastly different abstraction techniques used.
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20member%20function%20calls.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20member%20function%20calls.png
+.. image:: /media/bench/lua_bench_graph_member_function_calls.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_member_function_calls.png
 	:alt: bind several member functions to an object and call them in Lua code
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20userdata%20variable%20access.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20userdata%20variable%20access.png
+.. image:: /media/bench/lua_bench_graph_userdata_variable_access.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_userdata_variable_access.png
 	:alt: bind a variable to an object and call it in Lua code
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20many%20userdata%20variables%20access.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20many%20userdata%20variables%20access.png
+.. image:: /media/bench/lua_bench_graph_many_userdata_variables_access.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_many_userdata_variables_access.png
 	:alt: bind MANY variables to an object and call it in Lua code
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20c%20function%20through%20lua.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20c%20function%20through%20lua.png
+.. image:: /media/bench/lua_bench_graph_c_function_through_lua.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_c_function_through_lua.png
 	:alt: retrieve a C function bound in Lua and call it from C++
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20stateful%20c%20function.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20stateful%20c%20function.png
+.. image:: /media/bench/lua_bench_graph_stateful_c_function.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_stateful_c_function.png
 	:alt: bind a stateful C function (e.g., a mutable lambda), retrieve it, and call it from C++
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20c%20function.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20c%20function.png
+.. image:: /media/bench/lua_bench_graph_c_function.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_c_function.png
 	:alt: call a C function through Lua code
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20lua%20function.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20lua%20function.png
+.. image:: /media/bench/lua_bench_graph_lua_function.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_lua_function.png
 	:alt: retrieve a plain Lua function and call it from C++
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20multi%20return.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20multi%20return.png
+.. image:: /media/bench/lua_bench_graph_multi_return.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_multi_return.png
 	:alt: return mutliple objects from C++ using std::tuple or through a library-defined mechanism
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20global%20get.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20global%20get.png
+.. image:: /media/bench/lua_bench_graph_global_get.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_global_get.png
 	:alt: retrieve a value from the global table
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20global%20set.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20global%20set.png
+.. image:: /media/bench/lua_bench_graph_global_set.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_global_set.png
 	:alt: set a value into the global table
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20table%20chained%20get.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20table%20chained%20get.png
+.. image:: /media/bench/lua_bench_graph_table_chained_get.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_table_chained_get.png
 	:alt: measures the cost of doing consecutive lookups into a table that exists from C++; some libraries fail here because they do not do lazy evaluation or chaining properly
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20table%20get.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20table%20get.png
+.. image:: /media/bench/lua_bench_graph_table_get.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_table_get.png
 	:alt: measures the cost of retrieving a value from a table in C++; this nests 1 level so as to not be equivalent to any measured global table get optimzations
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20table%20chained%20set.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20table%20chained%20set.png
+.. image:: /media/bench/lua_bench_graph_table_chained_set.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_table_chained_set.png
 	:alt: measures the cost of doing consecutive lookups into a table that exists from C++ and setting the final value; some libraries fail here because they do not do lazy evaluation or chaining properly
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20table%20set.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20table%20set.png
+.. image:: /media/bench/lua_bench_graph_table_set.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_table_set.png
 	:alt: measures the cost of setting a value into a table in C++; this nests 1 level so as to not be equivalent to any measured global table set optimzations
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20return%20userdata.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20return%20userdata.png
+.. image:: /media/bench/lua_bench_graph_return_userdata.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_return_userdata.png
 	:alt: bind a C function which returns a custom class by-value and call it through Lua code
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20get%20optional.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20get%20optional.png
+.. image:: /media/bench/lua_bench_graph_get_optional.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_get_optional.png
 	:alt: retrieve an item from a table that does not exist in Lua and check for its existence (testing the cost of the failure case)
 
-.. image:: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20base%20from%20derived.png
-	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua%20bench%20graph%20-%20base%20from%20derived.png
+.. image:: /media/bench/lua_bench_graph_base_from_derived.png
+	:target: https://raw.githubusercontent.com/ThePhD/lua-bench/master/lua%20-%20results/lua_bench_graph_base_from_derived.png
 	:alt: retrieve base class pointer out of Lua without knowing exact derived at compile-time, and have it be correct for multiple-inheritance
 
 

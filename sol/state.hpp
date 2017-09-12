@@ -23,6 +23,7 @@
 #define SOL_STATE_HPP
 
 #include "state_view.hpp"
+#include "thread.hpp"
 
 namespace sol {
 
@@ -70,7 +71,8 @@ namespace sol {
 			state_view(unique_base::get()) {
 			set_panic(panic);
 			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
-			sol::protected_function::set_default_handler(sol::object(lua_state(), in_place, f));
+			protected_function::set_default_handler(sol::object(lua_state(), in_place, f));
+			stack::register_main_thread(unique_base::get());
 			stack::luajit_exception_handler(unique_base::get());
 		}
 
@@ -78,7 +80,8 @@ namespace sol {
 			state_view(unique_base::get()) {
 			set_panic(panic);
 			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
-			sol::protected_function::set_default_handler(sol::object(lua_state(), in_place, f));
+			protected_function::set_default_handler(sol::object(lua_state(), in_place, f));
+			stack::register_main_thread(unique_base::get());
 			stack::luajit_exception_handler(unique_base::get());
 		}
 

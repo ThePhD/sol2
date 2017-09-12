@@ -31,8 +31,8 @@
 
 namespace sol {
 	namespace detail {
-		inline const char (&default_handler_name())[11] {
-			static const char name[11] = "sol.\xF0\x9F\x94\xA9";
+		inline const char (&default_handler_name())[9] {
+			static const char name[9] = "sol.\xF0\x9F\x94\xA9";
 			return name;
 		}
 

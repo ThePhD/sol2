@@ -37,7 +37,6 @@ namespace sol {
 	};
 
 	namespace stack {
-
 		template <>
 		struct pusher<lua_thread_state> {
 			int push(lua_State*, lua_thread_state lts) {
@@ -69,10 +68,28 @@ namespace sol {
 			}
 		};
 
-	}
+		inline void register_main_thread(lua_State* L) {
+#if SOL_LUA_VERSION < 502
+			if (L == nullptr) {
+				lua_pushnil(L);
+				lua_setglobal(L, detail::default_main_thread_name());
+				return;
+			}
+			lua_pushthread(L);
+			lua_setglobal(L, detail::default_main_thread_name());
+#endif
+		}
+	} // stack
 
 #if SOL_LUA_VERSION < 502
-	inline lua_State* main_thread(lua_State*, lua_State* backup_if_unsupported = nullptr) {
+	inline lua_State* main_thread(lua_State* L, lua_State* backup_if_unsupported = nullptr) {
+		if (L == nullptr)
+			return backup_if_unsupported;
+		lua_getglobal(L, detail::default_main_thread_name());
+		auto pp = stack::pop_n(L, 1);
+		if (type_of(L, -1) == type::thread) {
+			return lua_tothread(L, -1);
+		}
 		return backup_if_unsupported;
 	}
 #else

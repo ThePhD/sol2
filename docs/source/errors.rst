@@ -83,6 +83,7 @@ Iteration
 
 Tables may have other junk on them that makes iterating through their numeric part difficult when using a bland ``for-each`` loop, or when calling sol's ``for_each`` function. Use a numeric look to iterate through a table. Iteration does not iterate in any defined order also: see :ref:`this note in the table documentation for more explanation<iteration_note>`.
 
+.. _OrfeasZ in this issue: https://github.com/ThePhD/sol2/issues/329#issuecomment-276824983
 .. _this issue for fixes to this behavior: https://github.com/ThePhD/sol2/issues/414#issuecomment-306839439
 .. _this __stdcall issue report: https://github.com/ThePhD/sol2/issues/463
 .. _the simple usertype example here: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_simple.cpp#L45

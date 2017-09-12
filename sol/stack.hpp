@@ -228,6 +228,9 @@ namespace sol {
 
 		inline void luajit_exception_handler(lua_State* L, int(*handler)(lua_State*, lua_CFunction) = detail::c_trampoline) {
 #ifdef SOL_LUAJIT
+			if (L == nullptr) {
+				return;
+			}
 			lua_pushlightuserdata(L, (void*)handler);
 			auto pn = pop_n(L, 1);
 			luaJIT_setmode(L, -1, LUAJIT_MODE_WRAPCFUNC | LUAJIT_MODE_ON);
@@ -239,6 +242,9 @@ namespace sol {
 
 		inline void luajit_exception_off(lua_State* L) {
 #ifdef SOL_LUAJIT
+			if (L == nullptr) {
+				return;
+			}
 			luaJIT_setmode(L, -1, LUAJIT_MODE_WRAPCFUNC | LUAJIT_MODE_OFF);
 #else
 			(void)L;

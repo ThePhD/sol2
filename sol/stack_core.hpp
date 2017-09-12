@@ -102,6 +102,11 @@ namespace sol {
 		void reserve(std::basic_string<T, Tr, Al>& arr, std::size_t hint) {
 			arr.reserve(hint);
 		}
+
+		inline const char(&default_main_thread_name())[9]{
+			static const char name[9] = "sol.\xF0\x9F\x93\x8C";
+			return name;
+		}
 	} // detail
 
 	namespace stack {

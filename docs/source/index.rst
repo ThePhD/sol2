@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. image:: sol.png
+.. image:: media/sol.png
 	:target: https://github.com/ThePhD/sol2
 	:alt: sol2 repository
 
@@ -13,15 +13,6 @@ Sol |version|
 
 
 When you need to hit the ground running with Lua and C++, `Sol`_ is the go-to framework for high-performance binding with an easy to use API.
-
-.. image:: https://travis-ci.org/ThePhD/sol2.svg?branch=develop
-	:target: https://travis-ci.org/ThePhD/sol2
-	:alt: build status
-
-.. image:: https://badges.gitter.im/chat-sol2/Lobby.svg
-	:target: https://gitter.im/chat-sol2/Lobby
-	:alt: chat about sol2 on gitter
-
 
 get going:
 ----------

@@ -187,10 +187,10 @@ namespace sol {
 			deref();
 		}
 
-		reference(reference&& o) noexcept {
-			luastate = o.luastate;
-			ref = o.ref;
+		reference(const reference& o) noexcept : luastate(o.luastate), ref(o.copy()) {
+		}
 
+		reference(reference&& o) noexcept : luastate(o.luastate), ref(o.ref) {
 			o.luastate = nullptr;
 			o.ref = LUA_NOREF;
 		}
@@ -199,8 +199,24 @@ namespace sol {
 			if (valid()) {
 				deref();
 			}
-			luastate = o.luastate;
-			ref = o.ref;
+			if (lua_state() != o.lua_state() && lua_state() != nullptr) {
+				// different state (different threads???)
+				if (o.lua_state() != nullptr) {
+					// both are valid but different?
+					o.push(lua_state());
+					ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+					return *this;
+				}
+				else {
+					luastate = o.luastate;
+					ref = o.ref;
+				}
+			}
+			else {
+				// same state, or this state is nullptr
+				luastate = o.luastate;
+				ref = o.ref;
+			}
 
 			o.luastate = nullptr;
 			o.ref = LUA_NOREF;
@@ -208,14 +224,24 @@ namespace sol {
 			return *this;
 		}
 
-		reference(const reference& o) noexcept {
-			luastate = o.luastate;
-			ref = o.copy();
-		}
-
 		reference& operator=(const reference& o) noexcept {
+			if (valid()) {
+				deref();
+			}
+			if (lua_state() != o.lua_state() && lua_state() != nullptr) {
+				// different state (different threads???)
+				if (o.lua_state() != nullptr) {
+					// both are valid but different?
+					o.push(lua_state());
+					ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+				}
+				else {
+					luastate = o.luastate;
+					ref = o.ref;
+				}
+				return *this;
+			}
 			luastate = o.luastate;
-			deref();
 			ref = o.copy();
 			return *this;
 		}

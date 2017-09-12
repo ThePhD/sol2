@@ -9,12 +9,12 @@ Okay, so the features don't convince you, the documentation doesn't convince you
 `eevee`_ demonstrating the sheer code reduction by using sol2:
 
 
-.. |before| image:: eevee_code_before.jpg
+.. |before| image:: media/eevee_code_before.jpg
 	:target: https://twitter.com/eevee/status/762039984085798913
 	:alt: Plain C API
 	:align: middle
 
-.. |after| image:: eevee_code_after.jpg
+.. |after| image:: media/eevee_code_after.jpg
 	:target: https://twitter.com/eevee/status/762039984085798913
 	:alt: Now with sol2!
 	:align: middle

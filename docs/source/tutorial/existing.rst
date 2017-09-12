@@ -24,9 +24,10 @@ If you're already using lua and you just want to use ``sol`` in some places, you
 
 You may also want to call ``require`` and supply a string of a script file or something that returns an object that you set equal to something in C++. For that, you can use the :ref:`require functionality<state-require-function>`.
 
-Remember that Sol can be as lightweight as you want it: almost all of Sol's Lua types take the ``lua_State*`` argument and then a second ``int index`` stack index argument, meaning you can use :doc:`tables<../api/table>`, :doc:`lua functions<../api/function>`, :doc:`coroutines<../api/coroutine>`, and other reference-derived objects that expose the proper constructor for your use. You can also set :doc:`usertypes<../api/usertype>` and other things you need without changing your entire architecture.
+Remember that Sol can be as lightweight as you want it: almost all of Sol's Lua types take the ``lua_State*`` argument and then a second ``int index`` stack index argument, meaning you can use :doc:`tables<../api/table>`, :doc:`lua functions<../api/function>`, :doc:`coroutines<../api/coroutine>`, and other reference-derived objects that expose the proper constructor for your use. You can also set :doc:`usertypes<../api/usertype>` and other things you need without changing your entire architecture in one go.
 
 Note that you can also make non-standard pointer and reference types with custom reference counting and such also play nice with the system. See :doc:`unique_usertype_traits\<T><../api/unique_usertype_traits>` to see how! Custom types is also mentioned in the :doc:`customization tutorial<customization>`.
 
+There are a few things that creating a ``sol::state`` does for you. You can read about it :ref:`in the sol::state docs<state-automatic-handlers>` and call those functions directly if you need them.
 
 .. _create a DLL that loads some Lua module: https://github.com/ThePhD/sol2/tree/develop/examples/require_dll_example
