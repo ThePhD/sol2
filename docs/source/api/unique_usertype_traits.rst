@@ -18,7 +18,7 @@ unique_usertype_traits<T>
 		static type* get (const actual_type&) {...}
 	};
 
-This is a customization point for users who need to *work with special kinds of pointers/handles*. For generic customization, please review the :doc:`customization tutorial<../tutorial/customization>` A traits type for alerting the library that a certain type is to be pushed as a special userdata with special deletion / destruction semantics. It is already defined for ``std::unique_ptr<T, D>`` and ``std::shared_ptr<T>``. You can specialize this to get ``unique_usertype_traits`` semantics with your code, for example with ``boost::shared_ptr<T>`` like so:
+This is a customization point for users who need to *work with special kinds of pointers/handles*. The traits type alerts the library that a certain type is to be pushed as a special userdata with special deletion / destruction semantics, like many smart pointers / custom smart pointers / handles It is already defined for ``std::unique_ptr<T, D>`` and ``std::shared_ptr<T>``. You can specialize this to get ``unique_usertype_traits`` semantics with your code. For example, here is how ``boost::shared_ptr<T>`` would look:
 
 .. code-block:: cpp
 	
@@ -39,6 +39,8 @@ This is a customization point for users who need to *work with special kinds of 
 		}
 	}
 
-This will allow the framework to properly handle ``boost::shared_ptr<T>``, with ref-counting and all. The `type` is the  type that lua and sol will interact with, and will allow you to pull out a non-owning reference / pointer to the data when you just ask for a plain `T*` or `T&` or `T` using the getter functions and properties of Sol.
+This will allow the library to properly handle ``boost::shared_ptr<T>``, with ref-counting and all. The ``type`` is the type that lua and sol will interact with, and will allow you to pull out a non-owning reference / pointer to the data when you just ask for a plain ``T*`` or ``T&`` or ``T`` using the getter functions and properties of Sol. The ``actual_type`` is just the "real type" that controls the semantics (shared, unique, ``CComPtr``, ``ComPtr``, OpenGL handles, DirectX objects, the list goes on).
 
-Note that if ``is_null`` triggers, a ``nil`` value will be pushed into Sol.
+.. note::
+	
+	If ``is_null`` triggers (returns ``true``), a ``nil`` value will be pushed into Lua rather than an empty structure.

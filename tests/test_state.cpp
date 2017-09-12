@@ -40,12 +40,24 @@ struct write_file_attempt_object {
 };
 
 TEST_CASE("state/require_file", "opening files as 'requires'") {
-	static const char FILE_NAME[] = "./tmp_thingy.lua";
-	static const char FILE_NAME_USER[] = "./tmp_thingy_user.lua";
+	static const char file_require_file[] = "./tmp_thingy.lua";
+	static const char file_require_file_user[] = "./tmp_thingy_user.lua";
+	static const char require_file_code[] = "return { modfunc = function () return 221 end }";
+	static const char require_file_user_code[] = "return { modfunc = function () return foo.new(221) end }";
+	static std::atomic<int> finished(0);
+	static std::once_flag flag_file = {}, flag_file_user = {};
+	std::call_once(flag_file, write_file_attempt_object(), file_require_file, require_file_code);
+	std::call_once(flag_file_user, write_file_attempt_object(), file_require_file_user, require_file_user_code);
 
-	SECTION("with usertypes") {
-		write_file_attempt(FILE_NAME_USER, "return { modfunc = function () return foo.new(221) end }");
-		
+	auto clean_files = []() {
+		if (finished.fetch_add(1) < 1) {
+			return;
+		}
+		std::remove(file_require_file);
+		std::remove(file_require_file_user);
+	};
+
+	SECTION("with usertypes") {		
 		struct foo {
 			foo(int bar) : bar(bar) {}
 
@@ -60,7 +72,7 @@ TEST_CASE("state/require_file", "opening files as 'requires'") {
 			"bar", &foo::bar
 			);
 
-		const sol::table thingy1 = lua.require_file("thingy", FILE_NAME_USER);
+		const sol::table thingy1 = lua.require_file("thingy", file_require_file_user);
 
 		REQUIRE(thingy1.valid());
 
@@ -69,16 +81,15 @@ TEST_CASE("state/require_file", "opening files as 'requires'") {
 		int val1 = foo_v.bar;
 
 		REQUIRE(val1 == 221);
+		clean_files();
 	}
 
 	SECTION("simple") {
-		write_file_attempt(FILE_NAME, "return { modfunc = function () return 221 end }");
-
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		const sol::table thingy1 = lua.require_file("thingy", FILE_NAME);
-		const sol::table thingy2 = lua.require_file("thingy", FILE_NAME);
+		const sol::table thingy1 = lua.require_file("thingy", file_require_file);
+		const sol::table thingy2 = lua.require_file("thingy", file_require_file);
 
 		REQUIRE(thingy1.valid());
 		REQUIRE(thingy2.valid());
@@ -90,9 +101,8 @@ TEST_CASE("state/require_file", "opening files as 'requires'") {
 		REQUIRE(val2 == 221);
 		// must have loaded the same table
 		REQUIRE((thingy1 == thingy2));
+		clean_files();
 	}
-
-	std::remove(FILE_NAME);
 }
 
 TEST_CASE("state/require_script", "opening strings as 'requires' clauses") {
@@ -337,7 +347,7 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 	std::call_once(flag_file_g, write_file_attempt_object(), file_good, good);
 
 	auto clean_files = []() {
-		if (finished.fetch_add(1) != 11) {
+		if (finished.fetch_add(1) < 10) {
 			return;
 		}
 		std::remove(file_bad_syntax);

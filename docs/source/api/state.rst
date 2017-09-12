@@ -81,7 +81,7 @@ These functions run the desired blob of either code that is in a string, or code
 
 If your script returns a value, you can capture it from the returned :ref:`sol::function_result<function-result>`/:ref:`sol::protected_function_result<protected-function-result>`. Note that the plain versions that do not take an environment or a callback function assume that the contents internally not only loaded properly but ran to completion without errors, for the sake of simplicity and performance.
 
-To handle errors when using the second overload, provide a callable function/object that takes a ``lua_State*`` as its first argument and a ``sol::protected_function_result`` as its second argument. ``sol::script_default_on_error`` and ``sol::script_pass_on_error`` are 2 functions that will either generate a traceback error to return / throw (if throwing is allowed); or, pass the error on through and return it to the user (respectively). Then, handle the errors any way you like:
+To handle errors when using the second overload, provide a callable function/object that takes a ``lua_State*`` as its first argument and a ``sol::protected_function_result`` as its second argument. ``sol::script_default_on_error`` and ``sol::script_pass_on_error`` are 2 functions provided by sol that will either generate a traceback error to return / throw (if throwing is allowed); or, pass the error on through and return it to the user (respectively). An example of having your:
 
 .. code-block:: cpp
 	:caption: running code safely
@@ -89,14 +89,19 @@ To handle errors when using the second overload, provide a callable function/obj
 
 	int main () {
 		sol::state lua;
-		// the default handler panics or throws, depending on your settings
+		// uses sol::script_default_on_error, which either panics or throws, 
+		// depending on your configuration and compiler settings
 		auto result1 = lua.safe_script("bad.code");
+
+		// a custom handler that you write yourself
+		// is only called when an error happens with loading or running the script
 		auto result2 = lua.safe_script("123 bad.code", [](lua_State* L, sol::protected_function_result pfr) {
 			// pfr will contain things that went wrong, for either loading or executing the script
-			// the user can do whatever they like here, including throw. Otherwise,
-			// they need to return the protected_function_result
+			// the user can do whatever they like here, including throw. Otherwise...
+			sol::error err = pfr;
+			std::cout << err.what() << std::endl;
 
-			// You can also just return it, and let the call-site handle the error if necessary.
+			// ... they need to return the protected_function_result
 			return pfr;
 		});
 	}

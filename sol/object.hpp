@@ -66,8 +66,17 @@ namespace sol {
 
 	public:
 		basic_object() noexcept = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_object>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<
+			meta::neg<std::is_same<meta::unqualified_t<T>, basic_object>>, 
+			meta::neg<std::is_same<base_type, stack_reference>>, 
+			std::is_base_of<base_type, meta::unqualified_t<T>>
+		> = meta::enabler>
 		basic_object(T&& r) : base_t(std::forward<T>(r)) {}
+		template <typename T, meta::enable_any<
+			std::is_base_of<reference, meta::unqualified_t<T>>,
+			std::is_base_of<stack_reference, meta::unqualified_t<T>>
+		> = meta::enabler>
+		basic_object(lua_State* L, T&& r) : base_t(L, std::forward<T>(r)) {}
 		basic_object(lua_nil_t r) : base_t(r) {}
 		basic_object(const basic_object&) = default;
 		basic_object(basic_object&&) = default;
@@ -77,6 +86,7 @@ namespace sol {
 		basic_object(const proxy_base<Super>& r) noexcept : basic_object(r.operator basic_object()) {}
 		template <typename Super>
 		basic_object(proxy_base<Super>&& r) noexcept : basic_object(r.operator basic_object()) {}
+		basic_object(lua_State* L, lua_nil_t r) noexcept : base_t(L, r) {}
 		basic_object(lua_State* L, int index = -1) noexcept : base_t(L, index) {}
 		basic_object(lua_State* L, absolute_index index) noexcept : base_t(L, index) {}
 		basic_object(lua_State* L, raw_index index) noexcept : base_t(L, index) {}

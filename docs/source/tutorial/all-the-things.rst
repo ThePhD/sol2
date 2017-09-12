@@ -5,6 +5,11 @@ These are all the things. Use your browser's search to find things you want.
 
 You'll need to ``#include <sol.hpp>``/``#include "sol.hpp"`` somewhere in your code. Sol is header-only, so you don't need to compile anything.
 
+.. note::
+
+	After you learn the basics of sol, it is usually advised that if you think something can work, you should TRY IT. It will probably work!
+	
+
 opening a state
 ---------------
 
@@ -633,18 +638,22 @@ You can emulate namespacing by having a table and giving it the namespace names 
 
 This technique can be used to register namespace-like functions and classes. It can be as deep as you want. Just make a table and name it appropriately, in either Lua script or using the equivalent Sol code. As long as the table FIRST exists (e.g., make it using a script or with one of Sol's methods or whatever you like), you can put anything you want specifically into that table using :doc:`sol::table's<../api/table>` abstractions.
 
-advanced
---------
+there is a LOT more
+-------------------
 
-Some more advanced things you can do/read about:
+Some more things you can do/read about:
+	* :doc:`the usertypes page<../usertypes>` lists the huge amount of features for functions
+		- :doc:`unique usertype traits<../api/unique_usertype_traits>` allows you to specialize handle/RAII types from other libraries frameworks, like boost and Unreal, to work with Sol. Allows custom smart pointers, custom handles and others
+	* :doc:`the containers page<../containers>` gives full information about handling everything about container-like usertypes
+	* :doc:`the functions page<../functions.rst>` lists a myriad of features for functions
+		- :doc:`variadic arguments<../api/variadic_args>` in functions with ``sol::variadic_args``.
+		- also comes with :doc:`variadic_results<../api/variadic_results>` for returning multiple differently-typed arguments
+		- :doc:`this_state<../api/this_state>` to get the current ``lua_State*``, alongside other transparent argument types
 	* :doc:`metatable manipulations<../api/metatable_key>` allow a user to change how indexing, function calls, and other things work on a single type.
 	* :doc:`ownership semantics<ownership>` are described for how Lua deals with its own internal references and (raw) pointers.
 	* :doc:`stack manipulation<../api/stack>` to safely play with the stack. You can also define customization points for ``stack::get``/``stack::check``/``stack::push`` for your type.
 	* :doc:`make_reference/make_object convenience function<../api/make_reference>` to get the same benefits and conveniences as the low-level stack API but put into objects you can specify.
 	* :doc:`stack references<../api/stack_reference>` to have zero-overhead Sol abstractions while not copying to the Lua registry.
-	* :doc:`unique usertype traits<../api/unique_usertype_traits>` allows you to specialize handle/RAII types from other frameworks, like boost and Unreal, to work with Sol.
-	* :doc:`variadic arguments<../api/variadic_args>` in functions with ``sol::variadic_args``.
-	* :doc:`this_state<../api/this_state>` to get the current ``lua_State*``.
 	* :doc:`resolve<../api/resolve>` overloads in case you have overloaded functions; a cleaner casting utility. You must use this to emulate default parameters.
 
 .. _a basic example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype.cpp

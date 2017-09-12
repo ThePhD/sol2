@@ -33,7 +33,7 @@ namespace sol {
 	class basic_function : public base_t {
 	private:
 		void luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount) const {
-			lua_callk(lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount), 0, nullptr);
+			lua_call(lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount));
 		}
 
 		template<std::size_t... I, typename... Ret>
@@ -82,8 +82,11 @@ namespace sol {
 		basic_function& operator=(basic_function&&) = default;
 		basic_function(const stack_reference& r) : basic_function(r.lua_state(), r.stack_index()) {}
 		basic_function(stack_reference&& r) : basic_function(r.lua_state(), r.stack_index()) {}
-		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
-		basic_function(lua_State* L, T&& r) : basic_function(L, sol::ref_index(r.registry_index())) {}
+		template <typename T, meta::enable_any<
+			std::is_base_of<reference, meta::unqualified_t<T>>,
+			std::is_base_of<stack_reference, meta::unqualified_t<T>>
+		> = meta::enabler>
+		basic_function(lua_State* L, T&& r) : base_t(L, std::forward<T>(r)) {}
 		basic_function(lua_State* L, int index = -1) : base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};

@@ -23,7 +23,7 @@
 #define SOL_COMPATIBILITY_HPP
 
 // The various pieces of the compatibility layer
-// comes from https://github.com/keplerproject/lua-compat-5.2
+// comes from https://github.com/keplerproject/lua-compat-5.3
 // but has been modified in many places for use with Sol and luajit,
 // though the core abstractions remain the same
 
@@ -32,17 +32,13 @@
 
 #ifndef SOL_NO_COMPAT
 
-#if defined(__cplusplus) && !defined(SOL_USING_CXX_LUA)
-extern "C" {
+#if defined(SOL_USING_CXX_LUA)
+#ifndef COMPAT53_LUA_CPP
+#define COMPAT53_LUA_CPP 1
 #endif
-#include "compatibility/5.2.0.h"
-#include "compatibility/5.1.0.h"
-#include "compatibility/5.0.0.h"
-#include "compatibility/5.x.x.h"
-#include "compatibility/5.x.x.inl"
-#if defined(__cplusplus) && !defined(SOL_USING_CXX_LUA)
-}
 #endif
+
+#include "compatibility//compat-5.3.h"
 
 #endif // SOL_NO_COMPAT
 

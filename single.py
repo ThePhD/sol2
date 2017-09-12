@@ -58,7 +58,7 @@ module_path = os.path.join(script_path)
 
 includes = set([])
 standard_include = re.compile(r'#include <(.*?)>')
-local_include = re.compile(r'#include "(.*?)"')
+local_include = re.compile(r'#(\s*?)include "(.*?)"')
 ifndef_cpp = re.compile(r'#ifndef SOL_.*?_HPP')
 define_cpp = re.compile(r'#define SOL_.*?_HPP')
 endif_cpp = re.compile(r'#endif // SOL_.*?_HPP')
@@ -67,7 +67,7 @@ def get_include(line, base_path):
     local_match = local_include.match(line)
     if local_match:
         # local include found
-        full_path = os.path.normpath(os.path.join(base_path, local_match.group(1))).replace('\\', '/')
+        full_path = os.path.normpath(os.path.join(base_path, local_match.group(2))).replace('\\', '/')
         return full_path
 
     return None

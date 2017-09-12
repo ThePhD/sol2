@@ -62,3 +62,48 @@ end
 	counter -= 1;
 	REQUIRE(counter == 30);
 }
+
+TEST_CASE("coroutines/transfer", "test that things created inside of a coroutine can have their state transferred using lua_xmove constructors") {
+	for (std::size_t tries = 0; tries < 200; ++tries) {
+		sol::state lua;
+		lua.open_libraries();
+		{
+			sol::function f2;
+			lua["f"] = [&lua, &f2](sol::object t) {
+				f2 = sol::function(lua, t);
+			};
+
+			lua.script(R"(
+i = 0
+function INIT()
+	co = coroutine.create(
+		function()
+			local g = function() i = i + 1 end
+			f(g)
+			g = nil
+			collectgarbage()
+		end
+	)
+	coroutine.resume(co)
+	co = nil
+	collectgarbage()
+end
+)");
+			sol::function f3;
+			sol::function f1;
+
+			lua.safe_script("INIT()");
+			f2();
+			sol::function update = lua.safe_script("return function() collectgarbage() end");
+			update();
+			f3 = f2;
+			f3();
+			update();
+			f1 = f2;
+			f1();
+			update();
+			int i = lua["i"];
+			REQUIRE(i == 3);
+		}
+	}
+}

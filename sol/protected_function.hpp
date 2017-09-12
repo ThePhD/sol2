@@ -103,7 +103,7 @@ namespace sol {
 	private:
 		template <bool b>
 		call_status luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount, detail::protected_handler<b, handler_t>& h) const {
-			return static_cast<call_status>(lua_pcallk(lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount), h.stackindex, 0, nullptr));
+			return static_cast<call_status>(lua_pcall(lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount), h.stackindex));
 		}
 
 		template<std::size_t... I, bool b, typename... Ret>
@@ -182,7 +182,7 @@ namespace sol {
 			meta::neg<std::is_same<base_t, stack_reference>>, 
 			std::is_base_of<base_t, meta::unqualified_t<T>>
 		> = meta::enabler>
-		basic_protected_function(T&& r) noexcept : base_t(std::forward<T>(r)) {
+		basic_protected_function(T&& r) noexcept : base_t(std::forward<T>(r)), error_handler(get_default_handler(r.lua_state())) {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_function<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
@@ -214,10 +214,16 @@ namespace sol {
 		> = meta::enabler>
 		basic_protected_function(Proxy&& p, Handler&& eh) : basic_protected_function(detail::force_cast<base_t>(p), std::forward<Handler>(eh)) {}
 
-		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
+		template <typename T, meta::enable<
+			std::is_base_of<reference, meta::unqualified_t<T>>,
+			std::is_base_of<stack_reference, meta::unqualified_t<T>>
+		> = meta::enabler>
 		basic_protected_function(lua_State* L, T&& r) : basic_protected_function(L, std::forward<T>(r), get_default_handler(L)) {}
-		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
-		basic_protected_function(lua_State* L, T&& r, handler_t eh) : basic_protected_function(L, sol::ref_index(r.registry_index()), std::move(eh)) {}
+		template <typename T, meta::enable_any<
+			std::is_base_of<reference, meta::unqualified_t<T>>,
+			std::is_base_of<stack_reference, meta::unqualified_t<T>>
+		> = meta::enabler>
+		basic_protected_function(lua_State* L, T&& r, handler_t eh) : base_t(L, std::forward<T>(r)), error_handler(std::move(eh)) {}
 
 		basic_protected_function(lua_State* L, int index = -1) : basic_protected_function(L, index, get_default_handler(L)) {}
 		basic_protected_function(lua_State* L, int index, handler_t eh) : base_t(L, index), error_handler(std::move(eh)) {

@@ -61,25 +61,23 @@ The second line opens a single lua-provided library, "base". There are several o
 
 If you're interested in integrating Sol with a project that already uses some other library or Lua in the codebase, check out the :doc:`existing example<existing>` to see how to work with Sol when you add it to a project (the existing example covers ``require`` as well)!
 
-Some more ways of loading scripts and handling errors is shown `in this example`_!
+.. note::
+
+	After you learn the basics of sol, it is usually advised that if you think something can work, you should TRY IT. It will probably work!
+	
+
+Some more ways of loading scripts and handling errors is shown `in this example`_! There is also a full, cross-platform `example of loading a DLL`_.
 
 Next, let's start :doc:`reading/writing some variables<variables>` from Lua into C++, and vice-versa!
 
 
 .. _vanilla Lua: https://www.lua.org/
-
 .. _LuaJIT: http://luajit.org/
-
 .. _GCC 6.0: https://gcc.gnu.org/gcc-6/changes.html
-
 .. _single header file release: https://github.com/ThePhD/sol2/releases
-
 .. _repository as well: https://github.com/ThePhD/sol2/blob/develop/single/sol/sol.hpp
-
 .. _single/sol/sol.hpp: https://github.com/ThePhD/sol2/blob/develop/single/sol/sol.hpp
-
 .. _github repository here: https://github.com/ThePhD/sol2
-
 .. _Lua page on getting started: https://www.lua.org/start.html
-
 .. _in this example: https://github.com/ThePhD/sol2/blob/develop/examples/basic.cpp
+.. _example of loading a DLL: https://github.com/ThePhD/sol2/tree/develop/examples/require_dll_example

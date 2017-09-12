@@ -37,7 +37,7 @@ namespace sol {
 			for (int i = 1; i <= before; ++i) {
 				lua_pushvalue(L, i);
 			}
-			lua_callk(L, before, LUA_MULTRET, 0, nullptr);
+			lua_call(L, before, LUA_MULTRET);
 			int after = lua_gettop(L);
 			return after - before;
 		}
@@ -184,7 +184,7 @@ namespace sol {
 		void* baseclasscast;
 		bool mustindex;
 		bool secondarymeta;
-		std::array<bool, 31> properties;
+		std::array<bool, 32> properties;
 
 		template <typename N>
 		void insert(N&& n, object&& o) {

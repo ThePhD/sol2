@@ -394,7 +394,7 @@ namespace sol {
 		void* baseclasscheck;
 		void* baseclasscast;
 		bool secondarymeta;
-		std::array<bool, 31> properties;
+		std::array<bool, 32> properties;
 
 		template <std::size_t Idx, meta::enable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
 		lua_CFunction make_func() const {

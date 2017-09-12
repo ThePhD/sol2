@@ -146,7 +146,7 @@ namespace sol {
 			if (loaded && loaded->valid())
 				return std::move(*loaded);
 			action();
-			auto sr = stack::get<stack_reference>(L);
+			stack_reference sr(L, -1);
 			if (create_global)
 				set(key, sr);
 			ensure_package(key, sr);
@@ -268,16 +268,22 @@ namespace sol {
 		}
 
 		object require_script(const std::string& key, const string_view& code, bool create_global = true, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			return require_core(key, [this, &code, &chunkname, &mode]() {stack::script(L, code, chunkname, mode); }, create_global);
+			auto action = [this, &code, &chunkname, &mode]() {
+				stack::script(L, code, chunkname, mode); 
+			};
+			return require_core(key, action, create_global);
 		}
 
 		object require_file(const std::string& key, const std::string& filename, bool create_global = true, load_mode mode = load_mode::any) {
-			return require_core(key, [this, &filename, &mode]() {stack::script_file(L, filename, mode); }, create_global);
+			auto action = [this, &filename, &mode]() {
+				stack::script_file(L, filename, mode); 
+			};
+			return require_core(key, action, create_global);
 		}
 
 		template <typename E>
 		protected_function_result do_string(const string_view& code, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			char basechunkname[17] = {};
+			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
 			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str()));
 			if (x != load_status::ok) {
@@ -300,7 +306,7 @@ namespace sol {
 		}
 
 		protected_function_result do_string(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			char basechunkname[17] = {};
+			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
 			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str()));
 			if (x != load_status::ok) {
@@ -375,7 +381,7 @@ namespace sol {
 
 		template <typename E>
 		function_result unsafe_script(const string_view& code, const sol::basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			char basechunkname[17] = {};
+			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
 			int index = lua_gettop(L);
 			if (luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str())) {
@@ -467,7 +473,7 @@ namespace sol {
 		}
 #endif
 		load_result load(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			char basechunkname[17] = {};
+			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
 			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str()));
 			return load_result(L, absolute_index(L, -1), 1, 1, x);
@@ -483,7 +489,7 @@ namespace sol {
 		}
 
 		load_result load(lua_Reader reader, void* data, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
-			char basechunkname[17] = {};
+			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name("lua_Reader", chunkname, basechunkname);
 #if SOL_LUA_VERSION > 501
 			load_status x = static_cast<load_status>(lua_load(L, reader, data, chunknametarget, to_string(mode).c_str()));
@@ -635,6 +641,12 @@ namespace sol {
 		template<bool read_only = true, typename... Args>
 		state_view& new_enum(const std::string& name, Args&&... args) {
 			global.new_enum<read_only>(name, std::forward<Args>(args)...);
+			return *this;
+		}
+
+		template<typename T, bool read_only = true>
+		state_view& new_enum(const std::string& name, std::initializer_list<std::pair<string_view, T>> items) {
+			global.new_enum<T, read_only>(name, std::move(items));
 			return *this;
 		}
 

@@ -443,10 +443,15 @@ namespace sol {
 
 	struct this_state {
 		lua_State* L;
-		operator lua_State* () const {
-			return L;
+		operator lua_State* () const noexcept {
+			return lua_state();
 		}
-		lua_State* operator-> () const {
+
+		lua_State* operator-> () const noexcept {
+			return lua_state();
+		}
+
+		lua_State* lua_state() const noexcept {
 			return L;
 		}
 	};
@@ -617,6 +622,7 @@ namespace sol {
 		bitwise_or,
 		bitwise_xor,
 		pairs,
+		ipairs,
 		next,
 		type,
 		type_info,
@@ -624,8 +630,8 @@ namespace sol {
 
 	typedef meta_function meta_method;
 
-	inline const std::array<std::string, 31>& meta_function_names() {
-		static const std::array<std::string, 31> names = { {
+	inline const std::array<std::string, 32>& meta_function_names() {
+		static const std::array<std::string, 32> names = { {
 				"new",
 				"__index",
 				"__newindex",
@@ -656,6 +662,7 @@ namespace sol {
 				"__bxor",
 
 				"__pairs",
+				"__ipairs",
 				"__next",
 				"__type",
 				"__typeinfo"

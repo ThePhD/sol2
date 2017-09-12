@@ -22,6 +22,7 @@ The examples folder also has a number of really great examples for you to see. T
 * You can use :doc:`filters<api/filters>` to control dependencies and streamline return values, as well as apply custom behavior to a functions return
 * You can work with special wrapper types such as ``std::unique_ptr<T>``, ``std::shared_ptr<T>``, and others by default
     - Extend them using the :doc:`sol::unique_usertype\<T\> traits<api/unique_usertype_traits>`
+    - This allows for custom smart pointers, special pointers, custom handles and others to be given certain handling semantics to ensure proper RAII with Lua's garbage collection
 * (Advanced) You can override the iteration function for Lua 5.2 and above (LuaJIT does not have the capability) `as shown in the pairs example`_
 * Please note that the colon is necessary to "automatically" pass the ``this``/``self`` argument to Lua methods
 	- ``obj:method_name()`` is how you call "member" methods in Lua
@@ -46,7 +47,7 @@ The examples folder also has a number of really great examples for you to see. T
 * Member methods, properties, variables and functions taking ``self&`` arguments modify data directly
 	- Work on a copy by taking arguments or returning by value.
 	- Do not use r-value references: they do not mean anything in Lua code.
-	- Move-only types can only be taken by reference: sol2 cannot know if/when to move a value (except when serializing with perfect forwarding *into* Lua)
+	- Move-only types can only be taken by reference: sol2 cannot know if/when to move a value (except when serializing with perfect forwarding *into* Lua, but not calling a C++ function from Lua)
 * The actual metatable associated with the usertype has a long name and is defined to be opaque by the Sol implementation.
 * The actual metatable inner workings is opaque and defined by the Sol implementation, and there are no internal docs because optimizations on the operations are applied based on heuristics we discover from performance testing the system.
 
