@@ -18,8 +18,6 @@ working with multiple Lua threads
 
 You can mitigate some of the pressure of using coroutines and threading by using the ``lua_xmove`` constructors that sol implements. Simply keep a reference to your ``sol::state_view`` or ``sol::state`` or the target ``lua_State*`` pointer, and pass it into the constructor along with the object you want to copy.
 
-Note that copy and move assignment operators -- when you create a :doc:`sol::reference<api/reference>`-derived type like ``sol::table`` or ``sol::function`` -- also have the ``lua_xmove`` functionality built in: just make sure to initialize your types with ``sol::function f(target_state, sol::lua_nil_t);`` to lock that type onto that thread when using a copy assignment or move assignment operator. Below is an example of using the pinning thread:
-
 .. code-block:: cpp 
 	:caption: transfer from state function
 	:name: state-transfer

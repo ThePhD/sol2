@@ -149,11 +149,13 @@ co = nil
 		}
 
 		void store(sol::table ref) {
-			obj = std::move(ref);
+			// must be explicit
+			obj = sol::reference(obj.lua_state(), ref);
 		}
 
 		void copy_store(sol::table ref) {
-			obj = ref;
+			// must be explicit
+			obj = sol::reference(obj.lua_state(), ref);
 		}
 
 		sol::reference get() {

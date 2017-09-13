@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-12 23:51:14.830850 UTC
-// This header was generated with sol v2.18.2 (revision e201f85)
+// Generated 2017-09-13 01:59:58.724391 UTC
+// This header was generated with sol v2.18.2 (revision 0325e27)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5809,25 +5809,9 @@ namespace sol {
 			if (valid()) {
 				deref();
 			}
-			if (lua_state() != o.lua_state() && lua_state() != nullptr) {
-				// different state (different threads???)
-				if (o.lua_state() != nullptr) {
-					// both are valid but different?
-					o.push(lua_state());
-					ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
-					return *this;
-				}
-				else {
-					luastate = o.luastate;
-					ref = o.ref;
-				}
-			}
-			else {
-				// same state, or this state is nullptr
-				luastate = o.luastate;
-				ref = o.ref;
-			}
-
+			luastate = o.luastate;
+			ref = o.ref;
+			
 			o.luastate = nullptr;
 			o.ref = LUA_NOREF;
 
@@ -5838,19 +5822,7 @@ namespace sol {
 			if (valid()) {
 				deref();
 			}
-			if (lua_state() != o.lua_state() && lua_state() != nullptr) {
-				// different state (different threads???)
-				if (o.lua_state() != nullptr) {
-					// both are valid but different?
-					o.push(lua_state());
-					ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
-				}
-				else {
-					luastate = o.luastate;
-					ref = o.ref;
-				}
-				return *this;
-			}
+			
 			luastate = o.luastate;
 			ref = o.copy();
 			return *this;
@@ -18066,7 +18038,7 @@ namespace sol {
 			optional<lua_thread_state> get(lua_State* L, int index, Handler&& handler, record& tracking) {
 				lua_thread_state lts{ lua_tothread(L, index) };
 				if (lts.L == nullptr) {
-					handler(L, index, type::thread, type_of(L, index), "value does is not a valid thread type");
+					handler(L, index, type::thread, type_of(L, index), "value is not a valid thread type");
 					return nullopt;
 				}
 				tracking.use(1);

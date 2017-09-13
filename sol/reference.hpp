@@ -199,25 +199,9 @@ namespace sol {
 			if (valid()) {
 				deref();
 			}
-			if (lua_state() != o.lua_state() && lua_state() != nullptr) {
-				// different state (different threads???)
-				if (o.lua_state() != nullptr) {
-					// both are valid but different?
-					o.push(lua_state());
-					ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
-					return *this;
-				}
-				else {
-					luastate = o.luastate;
-					ref = o.ref;
-				}
-			}
-			else {
-				// same state, or this state is nullptr
-				luastate = o.luastate;
-				ref = o.ref;
-			}
-
+			luastate = o.luastate;
+			ref = o.ref;
+			
 			o.luastate = nullptr;
 			o.ref = LUA_NOREF;
 
@@ -228,19 +212,7 @@ namespace sol {
 			if (valid()) {
 				deref();
 			}
-			if (lua_state() != o.lua_state() && lua_state() != nullptr) {
-				// different state (different threads???)
-				if (o.lua_state() != nullptr) {
-					// both are valid but different?
-					o.push(lua_state());
-					ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
-				}
-				else {
-					luastate = o.luastate;
-					ref = o.ref;
-				}
-				return *this;
-			}
+			
 			luastate = o.luastate;
 			ref = o.copy();
 			return *this;

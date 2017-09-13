@@ -60,7 +60,7 @@ namespace sol {
 			optional<lua_thread_state> get(lua_State* L, int index, Handler&& handler, record& tracking) {
 				lua_thread_state lts{ lua_tothread(L, index) };
 				if (lts.L == nullptr) {
-					handler(L, index, type::thread, type_of(L, index), "value does is not a valid thread type");
+					handler(L, index, type::thread, type_of(L, index), "value is not a valid thread type");
 					return nullopt;
 				}
 				tracking.use(1);
