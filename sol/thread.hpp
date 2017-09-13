@@ -28,11 +28,15 @@
 namespace sol {
 	struct lua_thread_state {
 		lua_State* L;
-		operator lua_State*() const {
+
+		lua_State* lua_state() const noexcept {
 			return L;
 		}
-		lua_State* operator->() const {
-			return L;
+		operator lua_State*() const noexcept {
+			return lua_state();
+		}
+		lua_State* operator->() const noexcept {
+			return lua_state();
 		}
 	};
 
@@ -82,24 +86,6 @@ namespace sol {
 #endif
 		}
 	} // namespace stack
-
-	inline lua_State* main_thread(lua_State* L, lua_State* backup_if_unsupported = nullptr) {
-#if SOL_LUA_VERSION < 502
-		if (L == nullptr)
-			return backup_if_unsupported;
-		lua_getglobal(L, detail::default_main_thread_name());
-		auto pp = stack::pop_n(L, 1);
-		if (type_of(L, -1) == type::thread) {
-			return lua_tothread(L, -1);
-		}
-		return backup_if_unsupported;
-#else
-		(void)backup_if_unsupported;
-		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_MAINTHREAD);
-		lua_thread_state s = stack::pop<lua_thread_state>(L);
-		return s.L;
-#endif // Lua 5.2+ has the main thread getter
-	}
 
 	class thread : public reference {
 	public:

@@ -6,7 +6,7 @@
 #include <iostream>
 
 int main(int, char**) {
-	std::cout << "=== optional and iteration example ===" << std::endl;
+	std::cout << "=== optional with iteration example ===" << std::endl;
 
 	struct thing {
 		int a = 20;

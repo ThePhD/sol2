@@ -16,7 +16,7 @@ Lua 5.1 does not keep a reference to the main thread, therefore the user has to 
 working with multiple Lua threads
 ---------------------------------
 
-You can mitigate some of the pressure of using coroutines and threading by using the ``lua_xmove`` constructors that sol implements. Simply keep a reference to your ``sol::state_view`` or ``sol::state`` or the target ``lua_State*`` pointer, and pass it into the constructor along with the object you want to copy.
+You can mitigate some of the pressure of using coroutines and threading by using the ``lua_xmove`` constructors that sol implements. Simply keep a reference to your ``sol::state_view`` or ``sol::state`` or the target ``lua_State*`` pointer, and pass it into the constructor along with the object you want to copy. Note that there is also some implicit ``lua_xmove`` checks that are done for copy and move assignment operators as well, as noted :ref:`at the reference constructor explanations<lua_xmove-note>`.
 
 .. code-block:: cpp 
 	:caption: transfer from state function

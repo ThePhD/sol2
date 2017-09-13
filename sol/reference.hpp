@@ -26,6 +26,13 @@
 #include "stack_reference.hpp"
 
 namespace sol {
+	namespace detail {
+		inline const char (&default_main_thread_name())[9] {
+			static const char name[9] = "sol.\xF0\x9F\x93\x8C";
+			return name;
+		}
+	} // namespace detail
+
 	namespace stack {
 		inline void remove(lua_State* L, int rawindex, int count) {
 			if (count < 1)
@@ -119,6 +126,25 @@ namespace sol {
 			return push_popper_n<top_level>(L, x);
 		}
 	} // namespace stack
+
+	inline lua_State* main_thread(lua_State* L, lua_State* backup_if_unsupported = nullptr) {
+#if SOL_LUA_VERSION < 502
+		if (L == nullptr)
+			return backup_if_unsupported;
+		lua_getglobal(L, detail::default_main_thread_name());
+		auto pp = stack::pop_n(L, 1);
+		if (type_of(L, -1) == type::thread) {
+			return lua_tothread(L, -1);
+		}
+		return backup_if_unsupported;
+#else
+		if (L == nullptr)
+			return backup_if_unsupported;
+		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_MAINTHREAD);
+		L = lua_tothread(L, -1);
+		return L;
+#endif // Lua 5.2+ has the main thread getter
+	}
 
 	namespace detail {
 		struct global_tag {
@@ -246,11 +272,15 @@ namespace sol {
 		}
 
 		reference& operator=(reference&& r) noexcept {
+			if (valid()) {
+				deref();
+			}
 			if (r.ref == LUA_REFNIL) {
+				luastate = r.lua_state();
 				ref = LUA_REFNIL;
 				return *this;
 			}
-			if (r.ref == LUA_NOREF || lua_state() == nullptr) {
+			if (r.ref == LUA_NOREF) {
 				ref = LUA_NOREF;
 				return *this;
 			}
@@ -260,6 +290,7 @@ namespace sol {
 				return *this;
 			}
 
+			luastate = r.lua_state();
 			ref = r.ref;
 			r.ref = LUA_NOREF;
 			r.luastate = nullptr;
@@ -267,11 +298,15 @@ namespace sol {
 		}
 
 		reference& operator=(const reference& r) noexcept {
+			if (valid()) {
+				deref();
+			}
 			if (r.ref == LUA_REFNIL) {
+				luastate = r.lua_state();
 				ref = LUA_REFNIL;
 				return *this;
 			}
-			if (r.ref == LUA_NOREF || lua_state() == nullptr) {
+			if (r.ref == LUA_NOREF) {
 				ref = LUA_NOREF;
 				return *this;
 			}
@@ -280,7 +315,7 @@ namespace sol {
 				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 				return *this;
 			}
-
+			luastate = r.lua_state();
 			ref = r.copy();
 			return *this;
 		}
