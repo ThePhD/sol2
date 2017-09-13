@@ -1,0 +1,80 @@
+---
+BasedOnStyle: WebKit
+IndentWidth: 5
+TabWidth: 5
+ContinuationIndentWidth: 5
+UseTab: Always
+
+# Namespaces
+NamespaceIndentation: All
+CompactNamespaces: true
+FixNamespaceComments: true
+
+# Overall Alignment
+ColumnLimit: 0
+AlignAfterOpenBracket: DontAlign # uses ContinuationIndentWidth for this instead
+
+# Type Alignment
+DerivePointerAlignment: false
+PointerAlignment: Left
+AlwaysBreakTemplateDeclarations: true
+AlwaysBreakBeforeMultilineStrings: true
+
+# Comments
+AlignTrailingComments: true
+ReflowComments: true
+
+# Macros
+AlignEscapedNewlines: Left
+SortIncludes: false
+IndentPPDirectives: AfterHash
+
+# Functions
+AllowShortFunctionsOnASingleLine: None
+AlwaysBreakAfterReturnType: None
+BreakConstructorInitializers: 
+ConstructorInitializerIndentWidth: 5
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+
+# Braces
+Cpp11BracedListStyle: true
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterEnum: false
+  AfterStruct: false
+  AfterControlStatement: false
+  AfterClass: false
+  AfterNamespace: false
+  AfterStruct: false
+  AfterUnion: false
+  BeforeElse: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: true
+
+# Control Statements
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+IndentCaseLabels: true
+
+
+# Spaces
+SpaceAfterCStyleCast: false
+SpacesInCStyleCastParentheses: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+MaxEmptyLinesToKeep: 1
+
+# OCD
+SortUsingDeclarations: true
+
+---
+Language: Cpp
+Standard: LS_Cpp11
