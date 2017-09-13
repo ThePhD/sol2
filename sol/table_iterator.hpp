@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -31,6 +31,7 @@ namespace sol {
 	class basic_table_iterator : public std::iterator<std::input_iterator_tag, std::pair<object, object>> {
 	private:
 		typedef std::iterator<std::input_iterator_tag, std::pair<object, object>> base_t;
+
 	public:
 		typedef object key_type;
 		typedef object mapped_type;
@@ -49,12 +50,12 @@ namespace sol {
 		std::ptrdiff_t idx = 0;
 
 	public:
-
-		basic_table_iterator() : keyidx(-1), idx(-1) {
-
+		basic_table_iterator()
+		: keyidx(-1), idx(-1) {
 		}
 
-		basic_table_iterator(reference_type x) : ref(std::move(x)) {
+		basic_table_iterator(reference_type x)
+		: ref(std::move(x)) {
 			ref.push();
 			tableidx = lua_gettop(ref.lua_state());
 			stack::push(ref.lua_state(), lua_nil);
@@ -97,11 +98,11 @@ namespace sol {
 			return kvp;
 		}
 
-		bool operator== (const basic_table_iterator& right) const {
+		bool operator==(const basic_table_iterator& right) const {
 			return idx == right.idx;
 		}
 
-		bool operator!= (const basic_table_iterator& right) const {
+		bool operator!=(const basic_table_iterator& right) const {
 			return idx != right.idx;
 		}
 
@@ -115,6 +116,6 @@ namespace sol {
 		}
 	};
 
-} // sol
+} // namespace sol
 
 #endif // SOL_TABLE_ITERATOR_HPP

@@ -35,13 +35,15 @@ namespace sol {
 	struct as_container_t {
 		T source;
 
-		as_container_t(T value) : source(std::move(value)) {}
+		as_container_t(T value)
+		: source(std::move(value)) {
+		}
 
-        operator std::add_rvalue_reference_t<T>() {
+		operator std::add_rvalue_reference_t<T>() {
 			return std::move(source);
 		}
 
-        operator std::add_lvalue_reference_t<std::add_const_t<T>>() const {
+		operator std::add_lvalue_reference_t<std::add_const_t<T>>() const {
 			return source;
 		}
 	};
@@ -50,7 +52,9 @@ namespace sol {
 	struct as_container_t<T&> {
 		std::reference_wrapper<T> source;
 
-		as_container_t(T& value) : source(value) {}
+		as_container_t(T& value)
+		: source(value) {
+		}
 
 		operator T&() {
 			return source;
@@ -70,8 +74,10 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(&C::clear));
-			template <typename C> static two test(...);
+			template <typename C>
+			static one test(decltype(&C::clear));
+			template <typename C>
+			static two test(...);
 
 		public:
 			static const bool value = sizeof(test<T>(0)) == sizeof(char);
@@ -83,8 +89,10 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(&C::empty));
-			template <typename C> static two test(...);
+			template <typename C>
+			static one test(decltype(&C::empty));
+			template <typename C>
+			static two test(...);
 
 		public:
 			static const bool value = sizeof(test<T>(0)) == sizeof(char);
@@ -96,8 +104,10 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(std::declval<C>().erase_after(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>()))*);
-			template <typename C> static two test(...);
+			template <typename C>
+			static one test(decltype(std::declval<C>().erase_after(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>()))*);
+			template <typename C>
+			static two test(...);
 
 		public:
 			static const bool value = sizeof(test<T>(0)) == sizeof(char);
@@ -109,8 +119,10 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(std::declval<C>().find(std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
-			template <typename C> static two test(...);
+			template <typename C>
+			static one test(decltype(std::declval<C>().find(std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
+			template <typename C>
+			static two test(...);
 
 		public:
 			static const bool value = sizeof(test<T>(0)) == sizeof(char);
@@ -122,8 +134,10 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(std::declval<C>().find(std::declval<std::add_rvalue_reference_t<typename C::key_type>>()))*);
-			template <typename C> static two test(...);
+			template <typename C>
+			static one test(decltype(std::declval<C>().find(std::declval<std::add_rvalue_reference_t<typename C::key_type>>()))*);
+			template <typename C>
+			static two test(...);
 
 		public:
 			static const bool value = sizeof(test<T>(0)) == sizeof(char);
@@ -135,8 +149,10 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(std::declval<C>().erase(std::declval<typename C::iterator>()))*);
-			template <typename C> static two test(...);
+			template <typename C>
+			static one test(decltype(std::declval<C>().erase(std::declval<typename C::iterator>()))*);
+			template <typename C>
+			static two test(...);
 
 		public:
 			static const bool value = sizeof(test<T>(0)) == sizeof(char);
@@ -148,8 +164,10 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(&C::find));
-			template <typename C> static two test(...);
+			template <typename C>
+			static one test(decltype(&C::find));
+			template <typename C>
+			static two test(...);
 
 		public:
 			static const bool value = sizeof(test<T>(0)) == sizeof(char);
@@ -161,8 +179,10 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(&C::insert));
-			template <typename C> static two test(...);
+			template <typename C>
+			static one test(decltype(&C::insert));
+			template <typename C>
+			static two test(...);
 
 		public:
 			static const bool value = sizeof(test<T>(0)) == sizeof(char);
@@ -174,8 +194,10 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(&C::erase));
-			template <typename C> static two test(...);
+			template <typename C>
+			static one test(decltype(&C::erase));
+			template <typename C>
+			static two test(...);
 
 		public:
 			static const bool value = sizeof(test<T>(0)) == sizeof(char);
@@ -187,8 +209,10 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(&C::index_set));
-			template <typename C> static two test(...);
+			template <typename C>
+			static one test(decltype(&C::index_set));
+			template <typename C>
+			static two test(...);
 
 		public:
 			static const bool value = sizeof(test<T>(0)) == sizeof(char);
@@ -200,8 +224,10 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(&C::index_get));
-			template <typename C> static two test(...);
+			template <typename C>
+			static one test(decltype(&C::index_get));
+			template <typename C>
+			static two test(...);
 
 		public:
 			static const bool value = sizeof(test<T>(0)) == sizeof(char);
@@ -213,8 +239,10 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(&C::set));
-			template <typename C> static two test(...);
+			template <typename C>
+			static one test(decltype(&C::set));
+			template <typename C>
+			static two test(...);
 
 		public:
 			static const bool value = sizeof(test<T>(0)) == sizeof(char);
@@ -226,8 +254,10 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(&C::get));
-			template <typename C> static two test(...);
+			template <typename C>
+			static one test(decltype(&C::get));
+			template <typename C>
+			static two test(...);
 
 		public:
 			static const bool value = sizeof(test<T>(0)) == sizeof(char);
@@ -239,8 +269,10 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(&C::pairs));
-			template <typename C> static two test(...);
+			template <typename C>
+			static one test(decltype(&C::pairs));
+			template <typename C>
+			static two test(...);
 
 		public:
 			static const bool value = sizeof(test<T>(0)) == sizeof(char);
@@ -252,8 +284,10 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(&C::ipairs));
-			template <typename C> static two test(...);
+			template <typename C>
+			static one test(decltype(&C::ipairs));
+			template <typename C>
+			static two test(...);
 
 		public:
 			static const bool value = sizeof(test<T>(0)) == sizeof(char);
@@ -265,8 +299,10 @@ namespace sol {
 			typedef std::array<char, 1> one;
 			typedef std::array<char, 2> two;
 
-			template <typename C> static one test(decltype(&C::add));
-			template <typename C> static two test(...);
+			template <typename C>
+			static one test(decltype(&C::add));
+			template <typename C>
+			static two test(...);
 
 		public:
 			static const bool value = sizeof(test<T>(0)) == sizeof(char);
@@ -369,6 +405,7 @@ namespace sol {
 		struct container_traits_default {
 		private:
 			typedef std::remove_pointer_t<meta::unwrap_unqualified_t<X>> T;
+
 		public:
 			typedef lua_nil_t iterator;
 			typedef lua_nil_t value_type;
@@ -437,40 +474,33 @@ namespace sol {
 		};
 
 		template <typename X>
-		struct container_traits_default<X, std::enable_if_t<
-			meta::all<
-				is_forced_container<meta::unqualified_t<X>>
-				, meta::has_value_type<meta::unqualified_t<container_decay_t<X>>>
-				, meta::has_iterator<meta::unqualified_t<container_decay_t<X>>>
-			>::value
-		>> {
+		struct container_traits_default<X, std::enable_if_t<meta::all<is_forced_container<meta::unqualified_t<X>>, meta::has_value_type<meta::unqualified_t<container_decay_t<X>>>, meta::has_iterator<meta::unqualified_t<container_decay_t<X>>>>::value>> {
 		private:
 			typedef std::remove_pointer_t<meta::unwrap_unqualified_t<container_decay_t<X>>> T;
+
 		private:
 			typedef container_traits<X> deferred_traits;
 			typedef meta::is_associative<T> is_associative;
 			typedef meta::is_lookup<T> is_lookup;
 			typedef typename T::iterator iterator;
 			typedef typename T::value_type value_type;
-			typedef std::conditional_t<is_associative::value, 
-				value_type, 
-				std::conditional_t<is_lookup::value, std::pair<value_type, value_type>, std::pair<std::ptrdiff_t, value_type>>
-			> KV;
+			typedef std::conditional_t<is_associative::value,
+				value_type,
+				std::conditional_t<is_lookup::value, std::pair<value_type, value_type>, std::pair<std::ptrdiff_t, value_type>>>
+				KV;
 			typedef typename KV::first_type K;
 			typedef typename KV::second_type V;
 			typedef decltype(*std::declval<iterator&>()) iterator_return;
 			typedef typename meta::iterator_tag<iterator>::type iterator_category;
 			typedef std::is_same<iterator_category, std::input_iterator_tag> is_input_iterator;
-			typedef std::conditional_t<is_input_iterator::value, 
+			typedef std::conditional_t<is_input_iterator::value,
 				V,
-				decltype(detail::deref(std::declval<std::conditional_t<is_associative::value, std::add_lvalue_reference_t<V>, iterator_return>>()))
-			> push_type;
+				decltype(detail::deref(std::declval<std::conditional_t<is_associative::value, std::add_lvalue_reference_t<V>, iterator_return>>()))>
+				push_type;
 			typedef std::is_copy_assignable<V> is_copyable;
 			typedef meta::neg<meta::any<
-				std::is_const<V>
-				, std::is_const<std::remove_reference_t<iterator_return>>
-				, meta::neg<is_copyable>
-			>> is_writable;
+				std::is_const<V>, std::is_const<std::remove_reference_t<iterator_return>>, meta::neg<is_copyable>>>
+				is_writable;
 			typedef meta::unqualified_t<decltype(get_key(is_associative(), std::declval<std::add_lvalue_reference_t<value_type>>()))> key_type;
 			typedef meta::all<std::is_integral<K>, meta::neg<meta::any<is_associative, is_lookup>>> is_linear_integral;
 
@@ -479,7 +509,9 @@ namespace sol {
 				iterator it;
 				std::size_t i;
 
-				iter(T& source, iterator it) : source(source), it(std::move(it)), i(0) {}
+				iter(T& source, iterator it)
+				: source(source), it(std::move(it)), i(0) {
+				}
 			};
 
 			static auto& get_src(lua_State* L) {
@@ -620,7 +652,8 @@ namespace sol {
 			static void set_comparative(std::true_type, lua_State* L, T& self, stack_object okey, stack_object value) {
 				decltype(auto) key = okey.as<K>();
 				if (!is_writable::value) {
-					luaL_error(L, "cannot perform a 'set': '%s's iterator reference is not writable (non-copy-assignable or const)", detail::demangle<T>().data());;
+					luaL_error(L, "cannot perform a 'set': '%s's iterator reference is not writable (non-copy-assignable or const)", detail::demangle<T>().data());
+					;
 					return;
 				}
 				auto fx = [&](const value_type& r) -> bool {
@@ -698,7 +731,7 @@ namespace sol {
 				return stack::push(L, index);
 			}
 
-			static int find_comparative(std::false_type, lua_State* L, T& ) {
+			static int find_comparative(std::false_type, lua_State* L, T&) {
 				return luaL_error(L, "cannot call 'find' on '%s': there is no 'find' function and the value_type is not equality comparable", detail::demangle<T>().c_str());
 			}
 
@@ -738,7 +771,8 @@ namespace sol {
 				auto backit = self.before_begin();
 				{
 					auto e = end(L, self);
-					for (auto it = begin(L, self); it != e; ++backit, ++it) {}
+					for (auto it = begin(L, self); it != e; ++backit, ++it) {
+					}
 				}
 				return add_insert_after(std::true_type(), L, self, value, backit);
 			}
@@ -1110,6 +1144,7 @@ namespace sol {
 		private:
 			typedef std::remove_pointer_t<meta::unwrap_unqualified_t<X>> T;
 			typedef container_traits<X> deferred_traits;
+
 		public:
 			typedef std::remove_extent_t<T> value_type;
 			typedef value_type* iterator;
@@ -1119,7 +1154,9 @@ namespace sol {
 				T& source;
 				iterator it;
 
-				iter(T& source, iterator it) : source(source), it(std::move(it)) {}
+				iter(T& source, iterator it)
+				: source(source), it(std::move(it)) {
+				}
 			};
 
 			static auto& get_src(lua_State* L) {
@@ -1172,7 +1209,7 @@ namespace sol {
 			static int erase(lua_State* L) {
 				return luaL_error(L, "sol: cannot call 'erase' on type '%s': cannot remove an item from fixed arrays", detail::demangle<T>().c_str());
 			}
-			
+
 			static int add(lua_State* L) {
 				return luaL_error(L, "sol: cannot call 'add' on type '%s': cannot add to fixed arrays", detail::demangle<T>().c_str());
 			}
@@ -1248,11 +1285,11 @@ namespace sol {
 
 		template <typename X>
 		struct container_traits_default<container_traits<X>> : container_traits_default<X> {};
-	} // container_detail
+	} // namespace container_detail
 
 	template <typename T>
 	struct container_traits : container_detail::container_traits_default<T> {};
 
-} // sol
+} // namespace sol
 
 #endif // SOL_CONTAINER_TRAITS_HPP

@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -26,7 +26,7 @@
 
 namespace sol {
 
-	template<typename T>
+	template <typename T>
 	struct usertype_traits {
 		static const std::string& name() {
 			static const std::string& n = detail::short_demangle<T>();
@@ -54,6 +54,6 @@ namespace sol {
 		}
 	};
 
-}
+} // namespace sol
 
 #endif // SOL_USERTYPE_TRAITS_HPP

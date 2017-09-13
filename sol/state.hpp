@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -45,7 +45,7 @@ namespace sol {
 #endif
 		}
 
-		inline int default_traceback_error_handler(lua_State*L) {
+		inline int default_traceback_error_handler(lua_State* L) {
 			using namespace sol;
 			std::string msg = "An unknown error has triggered the default error handler";
 			optional<string_view> maybetopmsg = stack::check_get<string_view>(L, 1);
@@ -61,14 +61,15 @@ namespace sol {
 			}
 			return stack::push(L, msg);
 		}
-	} // detail
+	} // namespace detail
 
-	class state : private std::unique_ptr<lua_State, void(*)(lua_State*)>, public state_view {
+	class state : private std::unique_ptr<lua_State, void (*)(lua_State*)>, public state_view {
 	private:
-		typedef std::unique_ptr<lua_State, void(*)(lua_State*)> unique_base;
+		typedef std::unique_ptr<lua_State, void (*)(lua_State*)> unique_base;
+
 	public:
-		state(lua_CFunction panic = detail::default_at_panic) : unique_base(luaL_newstate(), lua_close),
-			state_view(unique_base::get()) {
+		state(lua_CFunction panic = detail::default_at_panic)
+		: unique_base(luaL_newstate(), lua_close), state_view(unique_base::get()) {
 			set_panic(panic);
 			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
 			protected_function::set_default_handler(sol::object(lua_state(), in_place, f));
@@ -76,8 +77,8 @@ namespace sol {
 			stack::luajit_exception_handler(unique_base::get());
 		}
 
-		state(lua_CFunction panic, lua_Alloc alfunc, void* alpointer = nullptr) : unique_base(lua_newstate(alfunc, alpointer), lua_close),
-			state_view(unique_base::get()) {
+		state(lua_CFunction panic, lua_Alloc alfunc, void* alpointer = nullptr)
+		: unique_base(lua_newstate(alfunc, alpointer), lua_close), state_view(unique_base::get()) {
 			set_panic(panic);
 			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
 			protected_function::set_default_handler(sol::object(lua_state(), in_place, f));
@@ -96,8 +97,9 @@ namespace sol {
 
 		using state_view::get;
 
-		~state() {}
+		~state() {
+		}
 	};
-} // sol
+} // namespace sol
 
 #endif // SOL_STATE_HPP

@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -37,15 +37,19 @@ namespace sol {
 			// hopefully someone will register their own stack_fail thing for the `fx` parameter of stack_guard.
 #endif // No Exceptions
 		}
-	} // detail
+	} // namespace detail
 
 	struct stack_guard {
 		lua_State* L;
 		int top;
 		std::function<void(int, int)> on_mismatch;
 
-		stack_guard(lua_State* L) : stack_guard(L, lua_gettop(L)) {}
-		stack_guard(lua_State* L, int top, std::function<void(int, int)> fx = detail::stack_fail) : L(L), top(top), on_mismatch(std::move(fx)) {}
+		stack_guard(lua_State* L)
+		: stack_guard(L, lua_gettop(L)) {
+		}
+		stack_guard(lua_State* L, int top, std::function<void(int, int)> fx = detail::stack_fail)
+		: L(L), top(top), on_mismatch(std::move(fx)) {
+		}
 		bool check_stack(int modification = 0) const {
 			int bottom = lua_gettop(L) + modification;
 			if (top == bottom) {
@@ -58,6 +62,6 @@ namespace sol {
 			check_stack();
 		}
 	};
-} // sol
+} // namespace sol
 
 #endif // SOL_STACK_GUARD_HPP

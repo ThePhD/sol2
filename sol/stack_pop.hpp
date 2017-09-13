@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -28,22 +28,22 @@
 #include <tuple>
 
 namespace sol {
-	namespace stack {
-		template <typename T, typename>
-		struct popper {
-			inline static decltype(auto) pop(lua_State* L) {
-				record tracking{};
-				decltype(auto) r = get<T>(L, -lua_size<T>::value, tracking);
-				lua_pop(L, tracking.used);
-				return r;
-			}
-		};
+namespace stack {
+	template <typename T, typename>
+	struct popper {
+		inline static decltype(auto) pop(lua_State* L) {
+			record tracking{};
+			decltype(auto) r = get<T>(L, -lua_size<T>::value, tracking);
+			lua_pop(L, tracking.used);
+			return r;
+		}
+	};
 
-		template <typename T>
-		struct popper<T, std::enable_if_t<std::is_base_of<stack_reference, meta::unqualified_t<T>>::value>> {
-			static_assert(meta::neg<std::is_base_of<stack_reference, meta::unqualified_t<T>>>::value, "You cannot pop something that derives from stack_reference: it will not remain on the stack and thusly will go out of scope!");
-		};
-	} // stack
-} // sol
+	template <typename T>
+	struct popper<T, std::enable_if_t<std::is_base_of<stack_reference, meta::unqualified_t<T>>::value>> {
+		static_assert(meta::neg<std::is_base_of<stack_reference, meta::unqualified_t<T>>>::value, "You cannot pop something that derives from stack_reference: it will not remain on the stack and thusly will go out of scope!");
+	};
+}
+} // namespace sol::stack
 
 #endif // SOL_STACK_POP_HPP

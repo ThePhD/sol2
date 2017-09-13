@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -46,7 +46,7 @@ namespace sol {
 		template <typename T>
 		struct as_value_tag {};
 
-		using unique_destructor = void(*)(void*);
+		using unique_destructor = void (*)(void*);
 
 		template <typename T>
 		inline int unique_destruct(lua_State* L) {
@@ -91,7 +91,8 @@ namespace sol {
 		}
 
 		template <typename T>
-		void reserve(T&, std::size_t) {}
+		void reserve(T&, std::size_t) {
+		}
 
 		template <typename T, typename Al>
 		void reserve(std::vector<T, Al>& arr, std::size_t hint) {
@@ -103,45 +104,51 @@ namespace sol {
 			arr.reserve(hint);
 		}
 
-		inline const char(&default_main_thread_name())[9]{
+		inline const char (&default_main_thread_name())[9] {
 			static const char name[9] = "sol.\xF0\x9F\x93\x8C";
 			return name;
 		}
-	} // detail
+	} // namespace detail
 
 	namespace stack {
 
-		template<typename T, bool global = false, bool raw = false, typename = void>
+		template <typename T, bool global = false, bool raw = false, typename = void>
 		struct field_getter;
 		template <typename T, bool global = false, bool raw = false, typename = void>
 		struct probe_field_getter;
-		template<typename T, bool global = false, bool raw = false, typename = void>
+		template <typename T, bool global = false, bool raw = false, typename = void>
 		struct field_setter;
-		template<typename T, typename = void>
+		template <typename T, typename = void>
 		struct getter;
-		template<typename T, typename = void>
+		template <typename T, typename = void>
 		struct popper;
-		template<typename T, typename = void>
+		template <typename T, typename = void>
 		struct pusher;
-		template<typename T, type = lua_type_of<T>::value, typename = void>
+		template <typename T, type = lua_type_of<T>::value, typename = void>
 		struct checker;
-		template<typename T, typename = void>
+		template <typename T, typename = void>
 		struct check_getter;
 
 		struct probe {
 			bool success;
 			int levels;
 
-			probe(bool s, int l) : success(s), levels(l) {}
+			probe(bool s, int l)
+			: success(s), levels(l) {
+			}
 
-			operator bool() const { return success; };
+			operator bool() const {
+				return success;
+			};
 		};
 
 		struct record {
 			int last;
 			int used;
 
-			record() : last(), used() {}
+			record()
+			: last(), used() {
+			}
 			void use(int count) {
 				last = count;
 				used += count;
@@ -186,24 +193,24 @@ namespace sol {
 				return static_cast<int>(32);
 			}
 
-			template<typename T>
+			template <typename T>
 			inline decltype(auto) unchecked_get(lua_State* L, int index, record& tracking) {
 				getter<meta::unqualified_t<T>> g{};
 				(void)g;
 				return g.get(L, index, tracking);
 			}
 
-			template<typename T, typename Arg, typename... Args>
+			template <typename T, typename Arg, typename... Args>
 			inline int push_reference(lua_State* L, Arg&& arg, Args&&... args) {
 				typedef meta::all<
 					std::is_lvalue_reference<T>,
 					meta::neg<std::is_const<T>>,
 					meta::neg<is_lua_primitive<meta::unqualified_t<T>>>,
-					meta::neg<is_unique_usertype<meta::unqualified_t<T>>>
-				> use_reference_tag;
+					meta::neg<is_unique_usertype<meta::unqualified_t<T>>>>
+					use_reference_tag;
 				return pusher<std::conditional_t<use_reference_tag::value, detail::as_reference_tag, meta::unqualified_t<T>>>{}.push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 			}
-		} // stack_detail
+		} // namespace stack_detail
 
 		inline bool maybe_indexable(lua_State* L, int index = -1) {
 			type t = type_of(L, index);
@@ -214,23 +221,23 @@ namespace sol {
 			return lua_gettop(L);
 		}
 
-		template<typename T, typename... Args>
+		template <typename T, typename... Args>
 		inline int push(lua_State* L, T&& t, Args&&... args) {
 			return pusher<meta::unqualified_t<T>>{}.push(L, std::forward<T>(t), std::forward<Args>(args)...);
 		}
 
 		// overload allows to use a pusher of a specific type, but pass in any kind of args
-		template<typename T, typename Arg, typename... Args, typename = std::enable_if_t<!std::is_same<T, Arg>::value>>
+		template <typename T, typename Arg, typename... Args, typename = std::enable_if_t<!std::is_same<T, Arg>::value>>
 		inline int push(lua_State* L, Arg&& arg, Args&&... args) {
 			return pusher<meta::unqualified_t<T>>{}.push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 		}
 
-		template<typename T, typename... Args>
+		template <typename T, typename... Args>
 		inline int push_reference(lua_State* L, T&& t, Args&&... args) {
 			return stack_detail::push_reference<T>(L, std::forward<T>(t), std::forward<Args>(args)...);
 		}
 
-		template<typename T, typename Arg, typename... Args>
+		template <typename T, typename Arg, typename... Args>
 		inline int push_reference(lua_State* L, Arg&& arg, Args&&... args) {
 			return stack_detail::push_reference<T>(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 		}
@@ -240,10 +247,10 @@ namespace sol {
 			return 0;
 		}
 
-		template<typename T, typename... Args>
+		template <typename T, typename... Args>
 		inline int multi_push(lua_State* L, T&& t, Args&&... args) {
 			int pushcount = push(L, std::forward<T>(t));
-			void(sol::detail::swallow{ (pushcount += sol::stack::push(L, std::forward<Args>(args)), 0)... });
+			void(sol::detail::swallow{(pushcount += sol::stack::push(L, std::forward<Args>(args)), 0)...});
 			return pushcount;
 		}
 
@@ -252,10 +259,10 @@ namespace sol {
 			return 0;
 		}
 
-		template<typename T, typename... Args>
+		template <typename T, typename... Args>
 		inline int multi_push_reference(lua_State* L, T&& t, Args&&... args) {
 			int pushcount = push_reference(L, std::forward<T>(t));
-			void(sol::detail::swallow{ (pushcount += sol::stack::push_reference(L, std::forward<Args>(args)), 0)... });
+			void(sol::detail::swallow{(pushcount += sol::stack::push_reference(L, std::forward<Args>(args)), 0)...});
 			return pushcount;
 		}
 
@@ -280,7 +287,7 @@ namespace sol {
 			return check<T>(L, index, handler);
 		}
 
-		template<typename T, typename Handler>
+		template <typename T, typename Handler>
 		inline decltype(auto) check_get(lua_State* L, int index, Handler&& handler, record& tracking) {
 			typedef meta::unqualified_t<T> Tu;
 			check_getter<Tu> cg{};
@@ -288,13 +295,13 @@ namespace sol {
 			return cg.get(L, index, std::forward<Handler>(handler), tracking);
 		}
 
-		template<typename T, typename Handler>
+		template <typename T, typename Handler>
 		inline decltype(auto) check_get(lua_State* L, int index, Handler&& handler) {
 			record tracking{};
 			return check_get<T>(L, index, handler, tracking);
 		}
 
-		template<typename T>
+		template <typename T>
 		inline decltype(auto) check_get(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
 			auto handler = no_panic;
 			return check_get<T>(L, index, handler);
@@ -343,7 +350,7 @@ namespace sol {
 				}
 			};
 
-		} // stack_detail
+		} // namespace stack_detail
 
 		template <bool b, typename... Args, typename Handler>
 		bool multi_check(lua_State* L, int index, Handler&& handler, record& tracking) {
@@ -377,18 +384,18 @@ namespace sol {
 			return multi_check<true, Args...>(L, index);
 		}
 
-		template<typename T>
+		template <typename T>
 		inline decltype(auto) get(lua_State* L, int index, record& tracking) {
 			return stack_detail::tagged_get(types<T>(), L, index, tracking);
 		}
 
-		template<typename T>
+		template <typename T>
 		inline decltype(auto) get(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
 			record tracking{};
 			return get<T>(L, index, tracking);
 		}
 
-		template<typename T>
+		template <typename T>
 		inline decltype(auto) pop(lua_State* L) {
 			return popper<meta::unqualified_t<T>>{}.pop(L);
 		}
@@ -452,7 +459,7 @@ namespace sol {
 		void raw_set_field(lua_State* L, Key&& key, Value&& value, int tableindex) {
 			set_field<global, true>(L, std::forward<Key>(key), std::forward<Value>(value), tableindex);
 		}
-	} // stack
-} // sol
+	} // namespace stack
+} // namespace sol
 
 #endif // SOL_STACK_CORE_HPP

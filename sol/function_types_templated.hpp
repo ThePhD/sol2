@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -65,7 +65,8 @@ namespace sol {
 			case 1: {
 				decltype(auto) r = (mem.*variable);
 				stack::push_reference(L, std::forward<decltype(r)>(r));
-				return 1; }
+				return 1;
+			}
 			case 2:
 				return call_set_variable<R, V, variable>(meta::neg<std::is_const<R>>(), L, mem);
 			default:
@@ -111,16 +112,17 @@ namespace sol {
 #endif // fuck you clang :c
 		}
 
-	} // function_detail
+	} // namespace function_detail
 
 	template <typename F, F fx>
 	inline int c_call(lua_State* L) {
 		typedef meta::unqualified_t<F> Fu;
-		return function_detail::c_call_raw<F, fx>(std::integral_constant<bool, std::is_same<Fu, lua_CFunction>::value
+		return function_detail::c_call_raw<F, fx>(std::integral_constant < bool, std::is_same<Fu, lua_CFunction>::value
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
-			|| std::is_same<Fu, detail::lua_CFunction_noexcept>::value
-#endif 
-		>(), L);
+				|| std::is_same<Fu, detail::lua_CFunction_noexcept>::value
+#endif
+					> (),
+			L);
 	}
 
 	template <typename F, F f>
@@ -142,6 +144,6 @@ namespace sol {
 		}
 	}
 
-} // sol
+} // namespace sol
 
 #endif // SOL_FUNCTION_TYPES_TEMPLATED_HPP

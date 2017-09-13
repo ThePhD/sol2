@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -29,7 +29,7 @@ namespace sol {
 	namespace detail {
 		template <typename T>
 		struct is_speshul : std::false_type {};
-	}
+	} // namespace detail
 
 	template <typename T>
 	struct tie_size : std::tuple_size<T> {};
@@ -59,43 +59,40 @@ namespace sol {
 		template <std::size_t... I, typename T>
 		void set_extra(std::true_type, std::index_sequence<I...>, T&& target) {
 			using std::get;
-			(void)detail::swallow{ 0,
-				(get<I>(static_cast<base_t&>(*this)) = get<I>(types<Tn...>(), target), 0)...
-				, 0 };
+			(void)detail::swallow{0,
+				(get<I>(static_cast<base_t&>(*this)) = get<I>(types<Tn...>(), target), 0)..., 0};
 		}
 
 		template <std::size_t... I, typename T>
 		void set_extra(std::false_type, std::index_sequence<I...>, T&& target) {
 			using std::get;
-			(void)detail::swallow{ 0,
-				(get<I>(static_cast<base_t&>(*this)) = get<I>(target), 0)...
-				, 0 };
+			(void)detail::swallow{0,
+				(get<I>(static_cast<base_t&>(*this)) = get<I>(target), 0)..., 0};
 		}
 
 	public:
 		using base_t::base_t;
 
 		template <typename T>
-		tie_t& operator= (T&& value) {
+		tie_t& operator=(T&& value) {
 			typedef is_tieable<meta::unqualified_t<T>> tieable;
 			set(tieable(), std::forward<T>(value));
 			return *this;
 		}
-
 	};
 
 	template <typename... Tn>
-	struct tie_size< tie_t<Tn...> > : std::tuple_size< std::tuple<Tn...> > { };
+	struct tie_size<tie_t<Tn...>> : std::tuple_size<std::tuple<Tn...>> {};
 
 	namespace adl_barrier_detail {
 		template <typename... Tn>
 		inline tie_t<std::remove_reference_t<Tn>...> tie(Tn&&... argn) {
 			return tie_t<std::remove_reference_t<Tn>...>(std::forward<Tn>(argn)...);
 		}
-	}
+	} // namespace adl_barrier_detail
 
 	using namespace adl_barrier_detail;
 
-} // sol
+} // namespace sol
 
 #endif // SOL_TIE_HPP

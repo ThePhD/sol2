@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -29,17 +29,26 @@ namespace sol {
 	namespace detail {
 		struct direct_error_tag {};
 		const auto direct_error = direct_error_tag{};
-	} // detail
-	
+	} // namespace detail
+
 	class error : public std::runtime_error {
 	private:
 		// Because VC++ is a fuccboi
 		std::string w;
+
 	public:
-		error(const std::string& str) : error(detail::direct_error, "lua: error: " + str) {}
-		error(std::string&& str) : error(detail::direct_error, "lua: error: " + std::move(str)) {}
-		error(detail::direct_error_tag, const std::string& str) : std::runtime_error(""), w(str) {}
-		error(detail::direct_error_tag, std::string&& str) : std::runtime_error(""), w(std::move(str)) {}
+		error(const std::string& str)
+		: error(detail::direct_error, "lua: error: " + str) {
+		}
+		error(std::string&& str)
+		: error(detail::direct_error, "lua: error: " + std::move(str)) {
+		}
+		error(detail::direct_error_tag, const std::string& str)
+		: std::runtime_error(""), w(str) {
+		}
+		error(detail::direct_error_tag, std::string&& str)
+		: std::runtime_error(""), w(std::move(str)) {
+		}
 
 		error(const error& e) = default;
 		error(error&& e) = default;
@@ -51,6 +60,6 @@ namespace sol {
 		}
 	};
 
-} // sol
+} // namespace sol
 
 #endif // SOL_ERROR_HPP

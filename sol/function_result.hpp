@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -37,12 +37,13 @@ namespace sol {
 
 	public:
 		function_result() = default;
-		function_result(lua_State* Ls, int idx = -1, int retnum = 0) : L(Ls), index(idx), returncount(retnum) {
-
+		function_result(lua_State* Ls, int idx = -1, int retnum = 0)
+		: L(Ls), index(idx), returncount(retnum) {
 		}
 		function_result(const function_result&) = default;
 		function_result& operator=(const function_result&) = default;
-		function_result(function_result&& o) : L(o.L), index(o.index), returncount(o.returncount) {
+		function_result(function_result&& o)
+		: L(o.L), index(o.index), returncount(o.returncount) {
 			// Must be manual, otherwise destructor will screw us
 			// return count being 0 is enough to keep things clean
 			// but will be thorough
@@ -64,7 +65,7 @@ namespace sol {
 		function_result(protected_function_result&& o) noexcept;
 		function_result& operator=(protected_function_result&& o) noexcept;
 
-		template<typename T>
+		template <typename T>
 		decltype(auto) get() const {
 			return stack::get<T>(L, index);
 		}
@@ -77,9 +78,15 @@ namespace sol {
 			return status() == call_status::ok || status() == call_status::yielded;
 		}
 
-		lua_State* lua_state() const { return L; };
-		int stack_index() const { return index; };
-		int return_count() const { return returncount; };
+		lua_State* lua_state() const {
+			return L;
+		};
+		int stack_index() const {
+			return index;
+		};
+		int return_count() const {
+			return returncount;
+		};
 		void abandon() noexcept {
 			//L = nullptr;
 			index = 0;
@@ -102,7 +109,7 @@ namespace sol {
 				return p;
 			}
 		};
-	} // stack
-} // sol
+	} // namespace stack
+} // namespace sol
 
 #endif // SOL_FUNCTION_RESULT_HPP

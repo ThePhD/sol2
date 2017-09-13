@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -157,22 +157,19 @@ namespace sol {
 		typedef global_table::iterator iterator;
 		typedef global_table::const_iterator const_iterator;
 
-		state_view(lua_State* Ls) :
-			L(Ls),
-			reg(Ls, LUA_REGISTRYINDEX),
-			global(Ls, detail::global_) {
-
+		state_view(lua_State* Ls)
+		: L(Ls), reg(Ls, LUA_REGISTRYINDEX), global(Ls, detail::global_) {
 		}
 
-		state_view(this_state Ls) : state_view(Ls.L) {
-
+		state_view(this_state Ls)
+		: state_view(Ls.L) {
 		}
 
 		lua_State* lua_state() const {
 			return L;
 		}
 
-		template<typename... Args>
+		template <typename... Args>
 		void open_libraries(Args&&... args) {
 			static_assert(meta::all_same<lib, Args...>::value, "all types must be libraries");
 			if (sizeof...(args) == 0) {
@@ -180,7 +177,7 @@ namespace sol {
 				return;
 			}
 
-			lib libraries[1 + sizeof...(args)] = { lib::count, std::forward<Args>(args)... };
+			lib libraries[1 + sizeof...(args)] = {lib::count, std::forward<Args>(args)...};
 
 			for (auto&& library : libraries) {
 				switch (library) {
@@ -219,7 +216,7 @@ namespace sol {
 #ifdef SOL_LUAJIT
 					luaL_requiref(L, "bit32", luaopen_bit, 1);
 					lua_pop(L, 1);
-#elif (SOL_LUA_VERSION == 502) || defined(LUA_COMPAT_BITLIB)  || defined(LUA_COMPAT_5_2)
+#elif (SOL_LUA_VERSION == 502) || defined(LUA_COMPAT_BITLIB) || defined(LUA_COMPAT_5_2)
 					luaL_requiref(L, "bit32", luaopen_bit32, 1);
 					lua_pop(L, 1);
 #else
@@ -269,14 +266,14 @@ namespace sol {
 
 		object require_script(const std::string& key, const string_view& code, bool create_global = true, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			auto action = [this, &code, &chunkname, &mode]() {
-				stack::script(L, code, chunkname, mode); 
+				stack::script(L, code, chunkname, mode);
 			};
 			return require_core(key, action, create_global);
 		}
 
 		object require_file(const std::string& key, const std::string& filename, bool create_global = true, load_mode mode = load_mode::any) {
 			auto action = [this, &filename, &mode]() {
-				stack::script_file(L, filename, mode); 
+				stack::script_file(L, filename, mode);
 			};
 			return require_core(key, action, create_global);
 		}
@@ -344,11 +341,11 @@ namespace sol {
 		}
 
 		template <typename E>
-		protected_function_result safe_script(const string_view&  code, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		protected_function_result safe_script(const string_view& code, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return safe_script(code, env, script_default_on_error, chunkname, mode);
 		}
 
-		protected_function_result safe_script(const string_view&  code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		protected_function_result safe_script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return safe_script(code, script_default_on_error, chunkname, mode);
 		}
 
@@ -447,7 +444,7 @@ namespace sol {
 			return safe_script_file(filename, env, std::forward<Fx>(on_error), mode);
 		}
 
-		protected_function_result script(const string_view&  code, const environment& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		protected_function_result script(const string_view& code, const environment& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return safe_script(code, env, script_default_on_error, chunkname, mode);
 		}
 
@@ -536,7 +533,7 @@ namespace sol {
 			lua_gc(lua_state(), LUA_GCCOLLECT, 0);
 		}
 
-		operator lua_State* () const {
+		operator lua_State*() const {
 			return lua_state();
 		}
 
@@ -544,107 +541,107 @@ namespace sol {
 			lua_atpanic(L, panic);
 		}
 
-		template<typename... Args, typename... Keys>
+		template <typename... Args, typename... Keys>
 		decltype(auto) get(Keys&&... keys) const {
 			return global.get<Args...>(std::forward<Keys>(keys)...);
 		}
 
-		template<typename T, typename Key>
+		template <typename T, typename Key>
 		decltype(auto) get_or(Key&& key, T&& otherwise) const {
 			return global.get_or(std::forward<Key>(key), std::forward<T>(otherwise));
 		}
 
-		template<typename T, typename Key, typename D>
+		template <typename T, typename Key, typename D>
 		decltype(auto) get_or(Key&& key, D&& otherwise) const {
 			return global.get_or<T>(std::forward<Key>(key), std::forward<D>(otherwise));
 		}
 
-		template<typename... Args>
+		template <typename... Args>
 		state_view& set(Args&&... args) {
 			global.set(std::forward<Args>(args)...);
 			return *this;
 		}
 
-		template<typename T, typename... Keys>
+		template <typename T, typename... Keys>
 		decltype(auto) traverse_get(Keys&&... keys) const {
 			return global.traverse_get<T>(std::forward<Keys>(keys)...);
 		}
 
-		template<typename... Args>
+		template <typename... Args>
 		state_view& traverse_set(Args&&... args) {
 			global.traverse_set(std::forward<Args>(args)...);
 			return *this;
 		}
 
-		template<typename T>
+		template <typename T>
 		state_view& set_usertype(usertype<T>& user) {
 			return set_usertype(usertype_traits<T>::name(), user);
 		}
 
-		template<typename Key, typename T>
+		template <typename Key, typename T>
 		state_view& set_usertype(Key&& key, usertype<T>& user) {
 			global.set_usertype(std::forward<Key>(key), user);
 			return *this;
 		}
 
-		template<typename Class, typename... Args>
+		template <typename Class, typename... Args>
 		state_view& new_usertype(const std::string& name, Args&&... args) {
 			global.new_usertype<Class>(name, std::forward<Args>(args)...);
 			return *this;
 		}
 
-		template<typename Class, typename CTor0, typename... CTor, typename... Args>
+		template <typename Class, typename CTor0, typename... CTor, typename... Args>
 		state_view& new_usertype(const std::string& name, Args&&... args) {
 			global.new_usertype<Class, CTor0, CTor...>(name, std::forward<Args>(args)...);
 			return *this;
 		}
 
-		template<typename Class, typename... CArgs, typename... Args>
+		template <typename Class, typename... CArgs, typename... Args>
 		state_view& new_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
 			global.new_usertype<Class>(name, ctor, std::forward<Args>(args)...);
 			return *this;
 		}
 
-		template<typename Class, typename... Args>
+		template <typename Class, typename... Args>
 		state_view& new_simple_usertype(const std::string& name, Args&&... args) {
 			global.new_simple_usertype<Class>(name, std::forward<Args>(args)...);
 			return *this;
 		}
 
-		template<typename Class, typename CTor0, typename... CTor, typename... Args>
+		template <typename Class, typename CTor0, typename... CTor, typename... Args>
 		state_view& new_simple_usertype(const std::string& name, Args&&... args) {
 			global.new_simple_usertype<Class, CTor0, CTor...>(name, std::forward<Args>(args)...);
 			return *this;
 		}
-		
-		template<typename Class, typename... CArgs, typename... Args>
+
+		template <typename Class, typename... CArgs, typename... Args>
 		state_view& new_simple_usertype(const std::string& name, constructors<CArgs...> ctor, Args&&... args) {
 			global.new_simple_usertype<Class>(name, ctor, std::forward<Args>(args)...);
 			return *this;
 		}
 
-		template<typename Class, typename... Args>
+		template <typename Class, typename... Args>
 		simple_usertype<Class> create_simple_usertype(Args&&... args) {
 			return global.create_simple_usertype<Class>(std::forward<Args>(args)...);
 		}
 
-		template<typename Class, typename CTor0, typename... CTor, typename... Args>
+		template <typename Class, typename CTor0, typename... CTor, typename... Args>
 		simple_usertype<Class> create_simple_usertype(Args&&... args) {
 			return global.create_simple_usertype<Class, CTor0, CTor...>(std::forward<Args>(args)...);
 		}
 
-		template<typename Class, typename... CArgs, typename... Args>
+		template <typename Class, typename... CArgs, typename... Args>
 		simple_usertype<Class> create_simple_usertype(constructors<CArgs...> ctor, Args&&... args) {
 			return global.create_simple_usertype<Class>(ctor, std::forward<Args>(args)...);
 		}
 
-		template<bool read_only = true, typename... Args>
+		template <bool read_only = true, typename... Args>
 		state_view& new_enum(const std::string& name, Args&&... args) {
 			global.new_enum<read_only>(name, std::forward<Args>(args)...);
 			return *this;
 		}
 
-		template<typename T, bool read_only = true>
+		template <typename T, bool read_only = true>
 		state_view& new_enum(const std::string& name, std::initializer_list<std::pair<string_view, T>> items) {
 			global.new_enum<T, read_only>(name, std::move(items));
 			return *this;
@@ -655,23 +652,23 @@ namespace sol {
 			global.for_each(std::forward<Fx>(fx));
 		}
 
-		template<typename T>
+		template <typename T>
 		proxy<global_table&, T> operator[](T&& key) {
 			return global[std::forward<T>(key)];
 		}
 
-		template<typename T>
+		template <typename T>
 		proxy<const global_table&, T> operator[](T&& key) const {
 			return global[std::forward<T>(key)];
 		}
 
-		template<typename Sig, typename... Args, typename Key>
+		template <typename Sig, typename... Args, typename Key>
 		state_view& set_function(Key&& key, Args&&... args) {
 			global.set_function<Sig>(std::forward<Key>(key), std::forward<Args>(args)...);
 			return *this;
 		}
 
-		template<typename... Args, typename Key>
+		template <typename... Args, typename Key>
 		state_view& set_function(Key&& key, Args&&... args) {
 			global.set_function(std::forward<Key>(key), std::forward<Args>(args)...);
 			return *this;
@@ -722,6 +719,6 @@ namespace sol {
 			return global_table::create_with(L, std::forward<Args>(args)...);
 		}
 	};
-} // sol
+} // namespace sol
 
 #endif // SOL_STATE_VIEW_HPP

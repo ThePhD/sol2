@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -42,22 +42,28 @@ namespace sol {
 			const target_t& target;
 			int stackindex;
 
-			protected_handler(std::false_type, const target_t& target) : target(target), stackindex(0) {
+			protected_handler(std::false_type, const target_t& target)
+			: target(target), stackindex(0) {
 				if (b) {
 					stackindex = lua_gettop(target.lua_state()) + 1;
 					target.push();
 				}
 			}
 
-			protected_handler(std::true_type, const target_t& target) : target(target), stackindex(0) {
+			protected_handler(std::true_type, const target_t& target)
+			: target(target), stackindex(0) {
 				if (b) {
 					stackindex = target.stack_index();
 				}
 			}
 
-			protected_handler(const target_t& target) : protected_handler(is_stack(), target) {}
+			protected_handler(const target_t& target)
+			: protected_handler(is_stack(), target) {
+			}
 
-			bool valid() const noexcept { return b; }
+			bool valid() const noexcept {
+				return b;
+			}
 
 			~protected_handler() {
 				if (!is_stack::value && stackindex != 0) {
@@ -70,8 +76,8 @@ namespace sol {
 		basic_function<base_t> force_cast(T& p) {
 			return p;
 		}
-	} // detail
-	
+	} // namespace detail
+
 	template <typename base_t, bool aligned = false, typename handler_t = reference>
 	class basic_protected_function : public base_t {
 	public:
@@ -93,7 +99,7 @@ namespace sol {
 			if (!ref.valid()) {
 				lua_pushnil(ref.lua_state());
 				lua_setglobal(ref.lua_state(), detail::default_handler_name());
-			} 
+			}
 			else {
 				ref.push();
 				lua_setglobal(ref.lua_state(), detail::default_handler_name());
@@ -106,13 +112,13 @@ namespace sol {
 			return static_cast<call_status>(lua_pcall(lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount), h.stackindex));
 		}
 
-		template<std::size_t... I, bool b, typename... Ret>
+		template <std::size_t... I, bool b, typename... Ret>
 		auto invoke(types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n, detail::protected_handler<b, handler_t>& h) const {
 			luacall(n, sizeof...(Ret), h);
 			return stack::pop<std::tuple<Ret...>>(lua_state());
 		}
 
-		template<std::size_t I, bool b, typename Ret>
+		template <std::size_t I, bool b, typename Ret>
 		Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n, detail::protected_handler<b, handler_t>& h) const {
 			luacall(n, 1, h);
 			return stack::pop<Ret>(lua_state());
@@ -176,13 +182,9 @@ namespace sol {
 		handler_t error_handler;
 
 		basic_protected_function() = default;
-		template <typename T, meta::enable<
-			meta::neg<std::is_same<meta::unqualified_t<T>, basic_protected_function>>, 
-			meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>>, 
-			meta::neg<std::is_same<base_t, stack_reference>>, 
-			std::is_base_of<base_t, meta::unqualified_t<T>>
-		> = meta::enabler>
-		basic_protected_function(T&& r) noexcept : base_t(std::forward<T>(r)), error_handler(get_default_handler(r.lua_state())) {
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_protected_function>>, meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_t, meta::unqualified_t<T>>> = meta::enabler>
+		basic_protected_function(T&& r) noexcept
+		: base_t(std::forward<T>(r)), error_handler(get_default_handler(r.lua_state())) {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_function<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
@@ -195,59 +197,88 @@ namespace sol {
 		basic_protected_function& operator=(const basic_protected_function&) = default;
 		basic_protected_function(basic_protected_function&&) = default;
 		basic_protected_function& operator=(basic_protected_function&&) = default;
-		basic_protected_function(const basic_function<base_t>& b) : basic_protected_function(b, get_default_handler(b.lua_state())) {}
-		basic_protected_function(basic_function<base_t>&& b) : basic_protected_function(std::move(b), get_default_handler(b.lua_state())) {}
-		basic_protected_function(const basic_function<base_t>& b, handler_t eh) : base_t(b), error_handler(std::move(eh)) {}
-		basic_protected_function(basic_function<base_t>&& b, handler_t eh) : base_t(std::move(b)), error_handler(std::move(eh)) {}
-		basic_protected_function(const stack_reference& r) : basic_protected_function(r.lua_state(), r.stack_index(), get_default_handler(r.lua_state())) {}
-		basic_protected_function(stack_reference&& r) : basic_protected_function(r.lua_state(), r.stack_index(), get_default_handler(r.lua_state())) {}
-		basic_protected_function(const stack_reference& r, handler_t eh) : basic_protected_function(r.lua_state(), r.stack_index(), std::move(eh)) {}
-		basic_protected_function(stack_reference&& r, handler_t eh) : basic_protected_function(r.lua_state(), r.stack_index(), std::move(eh)) {}
+		basic_protected_function(const basic_function<base_t>& b)
+		: basic_protected_function(b, get_default_handler(b.lua_state())) {
+		}
+		basic_protected_function(basic_function<base_t>&& b)
+		: basic_protected_function(std::move(b), get_default_handler(b.lua_state())) {
+		}
+		basic_protected_function(const basic_function<base_t>& b, handler_t eh)
+		: base_t(b), error_handler(std::move(eh)) {
+		}
+		basic_protected_function(basic_function<base_t>&& b, handler_t eh)
+		: base_t(std::move(b)), error_handler(std::move(eh)) {
+		}
+		basic_protected_function(const stack_reference& r)
+		: basic_protected_function(r.lua_state(), r.stack_index(), get_default_handler(r.lua_state())) {
+		}
+		basic_protected_function(stack_reference&& r)
+		: basic_protected_function(r.lua_state(), r.stack_index(), get_default_handler(r.lua_state())) {
+		}
+		basic_protected_function(const stack_reference& r, handler_t eh)
+		: basic_protected_function(r.lua_state(), r.stack_index(), std::move(eh)) {
+		}
+		basic_protected_function(stack_reference&& r, handler_t eh)
+		: basic_protected_function(r.lua_state(), r.stack_index(), std::move(eh)) {
+		}
 
 		template <typename Super>
-		basic_protected_function(const proxy_base<Super>& p) : basic_protected_function(p, get_default_handler(p.lua_state())) {}
+		basic_protected_function(const proxy_base<Super>& p)
+		: basic_protected_function(p, get_default_handler(p.lua_state())) {
+		}
 		template <typename Super>
-		basic_protected_function(proxy_base<Super>&& p) : basic_protected_function(std::move(p), get_default_handler(p.lua_state())) {}
-		template <typename Proxy, typename Handler, meta::enable<
-			std::is_base_of<proxy_base_tag, meta::unqualified_t<Proxy>>,
-			meta::neg<is_lua_index<meta::unqualified_t<Handler>>>
-		> = meta::enabler>
-		basic_protected_function(Proxy&& p, Handler&& eh) : basic_protected_function(detail::force_cast<base_t>(p), std::forward<Handler>(eh)) {}
+		basic_protected_function(proxy_base<Super>&& p)
+		: basic_protected_function(std::move(p), get_default_handler(p.lua_state())) {
+		}
+		template <typename Proxy, typename Handler, meta::enable<std::is_base_of<proxy_base_tag, meta::unqualified_t<Proxy>>, meta::neg<is_lua_index<meta::unqualified_t<Handler>>>> = meta::enabler>
+		basic_protected_function(Proxy&& p, Handler&& eh)
+		: basic_protected_function(detail::force_cast<base_t>(p), std::forward<Handler>(eh)) {
+		}
 
-		template <typename T, meta::enable<
-			std::is_base_of<reference, meta::unqualified_t<T>>,
-			std::is_base_of<stack_reference, meta::unqualified_t<T>>
-		> = meta::enabler>
-		basic_protected_function(lua_State* L, T&& r) : basic_protected_function(L, std::forward<T>(r), get_default_handler(L)) {}
-		template <typename T, meta::enable_any<
-			std::is_base_of<reference, meta::unqualified_t<T>>,
-			std::is_base_of<stack_reference, meta::unqualified_t<T>>
-		> = meta::enabler>
-		basic_protected_function(lua_State* L, T&& r, handler_t eh) : base_t(L, std::forward<T>(r)), error_handler(std::move(eh)) {}
+		template <typename T, meta::enable<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>> = meta::enabler>
+		basic_protected_function(lua_State* L, T&& r)
+		: basic_protected_function(L, std::forward<T>(r), get_default_handler(L)) {
+		}
+		template <typename T, meta::enable_any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>> = meta::enabler>
+		basic_protected_function(lua_State* L, T&& r, handler_t eh)
+		: base_t(L, std::forward<T>(r)), error_handler(std::move(eh)) {
+		}
 
-		basic_protected_function(lua_State* L, int index = -1) : basic_protected_function(L, index, get_default_handler(L)) {}
-		basic_protected_function(lua_State* L, int index, handler_t eh) : base_t(L, index), error_handler(std::move(eh)) {
+		basic_protected_function(lua_State* L, int index = -1)
+		: basic_protected_function(L, index, get_default_handler(L)) {
+		}
+		basic_protected_function(lua_State* L, int index, handler_t eh)
+		: base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};
 			stack::check<basic_protected_function>(L, index, handler);
 #endif // Safety
 		}
-		basic_protected_function(lua_State* L, absolute_index index) : basic_protected_function(L, index, get_default_handler(L)) {}
-		basic_protected_function(lua_State* L, absolute_index index, handler_t eh) : base_t(L, index), error_handler(std::move(eh)) {
+		basic_protected_function(lua_State* L, absolute_index index)
+		: basic_protected_function(L, index, get_default_handler(L)) {
+		}
+		basic_protected_function(lua_State* L, absolute_index index, handler_t eh)
+		: base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};
 			stack::check<basic_protected_function>(L, index, handler);
 #endif // Safety
 		}
-		basic_protected_function(lua_State* L, raw_index index) : basic_protected_function(L, index, get_default_handler(L)) {}
-		basic_protected_function(lua_State* L, raw_index index, handler_t eh) : base_t(L, index), error_handler(std::move(eh)) {
+		basic_protected_function(lua_State* L, raw_index index)
+		: basic_protected_function(L, index, get_default_handler(L)) {
+		}
+		basic_protected_function(lua_State* L, raw_index index, handler_t eh)
+		: base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};
 			stack::check<basic_protected_function>(L, index, handler);
 #endif // Safety
 		}
-		basic_protected_function(lua_State* L, ref_index index) : basic_protected_function(L, index, get_default_handler(L)) {}
-		basic_protected_function(lua_State* L, ref_index index, handler_t eh) : base_t(L, index), error_handler(std::move(eh)) {
+		basic_protected_function(lua_State* L, ref_index index)
+		: basic_protected_function(L, index, get_default_handler(L)) {
+		}
+		basic_protected_function(lua_State* L, ref_index index, handler_t eh)
+		: base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
@@ -255,17 +286,17 @@ namespace sol {
 #endif // Safety
 		}
 
-		template<typename... Args>
+		template <typename... Args>
 		protected_function_result operator()(Args&&... args) const {
 			return call<>(std::forward<Args>(args)...);
 		}
 
-		template<typename... Ret, typename... Args>
+		template <typename... Ret, typename... Args>
 		decltype(auto) operator()(types<Ret...>, Args&&... args) const {
 			return call<Ret...>(std::forward<Args>(args)...);
 		}
 
-		template<typename... Ret, typename... Args>
+		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) const {
 			if (!aligned) {
 				// we do not expect the function to already be on the stack: push it
@@ -308,6 +339,6 @@ namespace sol {
 			}
 		}
 	};
-} // sol
+} // namespace sol
 
 #endif // SOL_FUNCTION_HPP

@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -54,36 +54,54 @@ namespace sol {
 			lua_State* L;
 			int index;
 			int count;
-			push_popper_at(lua_State* luastate, int index = -1, int count = 1) : L(luastate), index(index), count(count) { }
-			~push_popper_at() { remove(L, index, count); }
+			push_popper_at(lua_State* luastate, int index = -1, int count = 1)
+			: L(luastate), index(index), count(count) {
+			}
+			~push_popper_at() {
+				remove(L, index, count);
+			}
 		};
 
 		template <bool top_level>
 		struct push_popper_n {
 			lua_State* L;
 			int t;
-			push_popper_n(lua_State* luastate, int x) : L(luastate), t(x) { }
-			~push_popper_n() { lua_pop(L, t); }
+			push_popper_n(lua_State* luastate, int x)
+			: L(luastate), t(x) {
+			}
+			~push_popper_n() {
+				lua_pop(L, t);
+			}
 		};
 		template <>
 		struct push_popper_n<true> {
-			push_popper_n(lua_State*, int) { }
+			push_popper_n(lua_State*, int) {
+			}
 		};
 		template <bool, typename T, typename = void>
 		struct push_popper {
 			T t;
-			push_popper(T x) : t(x) { t.push(); }
-			~push_popper() { t.pop(); }
+			push_popper(T x)
+			: t(x) {
+				t.push();
+			}
+			~push_popper() {
+				t.pop();
+			}
 		};
 		template <typename T, typename C>
 		struct push_popper<true, T, C> {
-			push_popper(T) {}
-			~push_popper() {}
+			push_popper(T) {
+			}
+			~push_popper() {
+			}
 		};
 		template <typename T>
 		struct push_popper<false, T, std::enable_if_t<std::is_base_of<stack_reference, meta::unqualified_t<T>>::value>> {
-			push_popper(T) {}
-			~push_popper() {}
+			push_popper(T) {
+			}
+			~push_popper() {
+			}
 		};
 
 		template <bool top_level = false, typename T>
@@ -100,12 +118,14 @@ namespace sol {
 		push_popper_n<top_level> pop_n(lua_State* L, int x) {
 			return push_popper_n<top_level>(L, x);
 		}
-	} // stack
+	} // namespace stack
 
 	namespace detail {
-		struct global_tag { } const global_{};
-		struct no_safety_tag {} const no_safety{};
-	} // detail
+		struct global_tag {
+		} const global_{};
+		struct no_safety_tag {
+		} const no_safety{};
+	} // namespace detail
 
 	class reference {
 	private:
@@ -120,7 +140,8 @@ namespace sol {
 		}
 
 	protected:
-		reference(lua_State* L, detail::global_tag) noexcept : luastate(L) {
+		reference(lua_State* L, detail::global_tag) noexcept
+		: luastate(L) {
 			lua_pushglobaltable(lua_state());
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
@@ -135,10 +156,17 @@ namespace sol {
 
 	public:
 		reference() noexcept = default;
-		reference(lua_nil_t) noexcept : reference() {}
-		reference(const stack_reference& r) noexcept : reference(r.lua_state(), r.stack_index()) {}
-		reference(stack_reference&& r) noexcept : reference(r.lua_state(), r.stack_index()) {}
-		reference(lua_State* L, const reference& r) noexcept : luastate(L) {
+		reference(lua_nil_t) noexcept
+		: reference() {
+		}
+		reference(const stack_reference& r) noexcept
+		: reference(r.lua_state(), r.stack_index()) {
+		}
+		reference(stack_reference&& r) noexcept
+		: reference(r.lua_state(), r.stack_index()) {
+		}
+		reference(lua_State* L, const reference& r) noexcept
+		: luastate(L) {
 			if (r.ref == LUA_NOREF) {
 				ref = LUA_NOREF;
 				return;
@@ -149,7 +177,8 @@ namespace sol {
 			}
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
-		reference(lua_State* L, reference&& r) noexcept : luastate(L) {
+		reference(lua_State* L, reference&& r) noexcept
+		: luastate(L) {
 			if (r.ref == LUA_NOREF) {
 				ref = LUA_NOREF;
 				return;
@@ -165,7 +194,8 @@ namespace sol {
 				r.ref = LUA_NOREF;
 			}
 		}
-		reference(lua_State* L, const stack_reference& r) noexcept : luastate(L) {
+		reference(lua_State* L, const stack_reference& r) noexcept
+		: luastate(L) {
 			if (!r.valid()) {
 				ref = LUA_NOREF;
 				return;
@@ -173,24 +203,30 @@ namespace sol {
 			r.push(luastate);
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
-		reference(lua_State* L, int index = -1) noexcept : luastate(L) {
+		reference(lua_State* L, int index = -1) noexcept
+		: luastate(L) {
 			lua_pushvalue(lua_state(), index);
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
-		reference(lua_State* L, ref_index index) noexcept : luastate(L) {
+		reference(lua_State* L, ref_index index) noexcept
+		: luastate(L) {
 			lua_rawgeti(L, LUA_REGISTRYINDEX, index.index);
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
-		reference(lua_State* L, lua_nil_t) noexcept : luastate(L) {}
+		reference(lua_State* L, lua_nil_t) noexcept
+		: luastate(L) {
+		}
 
 		~reference() noexcept {
 			deref();
 		}
 
-		reference(const reference& o) noexcept : luastate(o.luastate), ref(o.copy()) {
+		reference(const reference& o) noexcept
+		: luastate(o.luastate), ref(o.copy()) {
 		}
 
-		reference(reference&& o) noexcept : luastate(o.luastate), ref(o.ref) {
+		reference(reference&& o) noexcept
+		: luastate(o.luastate), ref(o.ref) {
 			o.luastate = nullptr;
 			o.ref = LUA_NOREF;
 		}
@@ -201,7 +237,7 @@ namespace sol {
 			}
 			luastate = o.luastate;
 			ref = o.ref;
-			
+
 			o.luastate = nullptr;
 			o.ref = LUA_NOREF;
 
@@ -212,7 +248,7 @@ namespace sol {
 			if (valid()) {
 				deref();
 			}
-			
+
 			luastate = o.luastate;
 			ref = o.copy();
 			return *this;
@@ -265,13 +301,13 @@ namespace sol {
 		}
 	};
 
-	inline bool operator== (const reference& l, const reference& r) {
+	inline bool operator==(const reference& l, const reference& r) {
 		auto ppl = stack::push_pop(l);
 		auto ppr = stack::push_pop(r);
 		return lua_compare(l.lua_state(), -1, -2, LUA_OPEQ) == 1;
 	}
 
-	inline bool operator!= (const reference& l, const reference& r) {
+	inline bool operator!=(const reference& l, const reference& r) {
 		return !operator==(l, r);
 	}
 
@@ -290,6 +326,6 @@ namespace sol {
 	inline bool operator!=(const lua_nil_t&, const reference& rhs) {
 		return rhs.valid();
 	}
-} // sol
+} // namespace sol
 
 #endif // SOL_REFERENCE_HPP

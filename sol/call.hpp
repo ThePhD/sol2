@@ -30,8 +30,8 @@
 
 namespace sol {
 	namespace usertype_detail {
-		
-	} // usertype_detail
+
+	} // namespace usertype_detail
 
 	namespace filter_detail {
 		template <int I, int... In>
@@ -78,13 +78,13 @@ namespace sol {
 		inline void handle_filter(P&& p, lua_State* L, int& pushed) {
 			pushed = std::forward<P>(p)(L, pushed);
 		}
-	} // filter_detail
+	} // namespace filter_detail
 
 	namespace function_detail {
 		inline int no_construction_error(lua_State* L) {
 			return luaL_error(L, "sol: cannot call this constructor (tagged as non-constructible)");
 		}
-	} // function_detail
+	} // namespace function_detail
 
 	namespace call_detail {
 
@@ -103,14 +103,17 @@ namespace sol {
 
 		template <typename T, typename... Args>
 		struct void_call<T, types<Args...>> {
-			static void call(Args...) {}
+			static void call(Args...) {
+			}
 		};
 
 		template <typename T, bool checked, bool clean_stack>
 		struct constructor_match {
 			T* obj;
 
-			constructor_match(T* o) : obj(o) {}
+			constructor_match(T* o)
+			: obj(o) {
+			}
 
 			template <typename Fx, std::size_t I, typename... R, typename... Args>
 			int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) const {
@@ -182,7 +185,7 @@ namespace sol {
 				}
 				return matchfx(types<Fx>(), index_value<I>(), return_types(), args_list(), L, fxarity, start, std::forward<Args>(args)...);
 			}
-		} // overload_detail
+		} // namespace overload_detail
 
 		template <typename... Functions, typename Match, typename... Args>
 		inline int overload_match_arity(Match&& matchfx, lua_State* L, int fxarity, int start, Args&&... args) {
@@ -231,7 +234,7 @@ namespace sol {
 		template <typename F, bool is_index, bool is_variable, bool checked, int boost, bool clean_stack, typename = void>
 		struct agnostic_lua_call_wrapper {
 			typedef wrapper<meta::unqualified_t<F>> wrap;
-			
+
 			template <typename Fx, typename... Args>
 			static int convertible_call(std::true_type, lua_State* L, Fx&& f, Args&&... args) {
 				typedef typename wrap::traits_type traits_type;
@@ -366,7 +369,7 @@ namespace sol {
 				typedef typename wrap::returns_list returns_list;
 				typedef typename wrap::args_list args_list;
 				typedef typename wrap::caller caller;
-				return stack::call_into_lua<checked, clean_stack>(returns_list(), args_list(), L, boost + ( is_variable ? 3 : 2 ), caller(), std::forward<Fx>(f), o);
+				return stack::call_into_lua<checked, clean_stack>(returns_list(), args_list(), L, boost + (is_variable ? 3 : 2), caller(), std::forward<Fx>(f), o);
 			}
 
 			template <typename Fx>
@@ -396,7 +399,7 @@ namespace sol {
 			static int call_assign(std::true_type, lua_State* L, V&& f, object_type& o) {
 				typedef typename wrap::args_list args_list;
 				typedef typename wrap::caller caller;
-				return stack::call_into_lua<checked, clean_stack>(types<void>(), args_list(), L, boost + ( is_variable ? 3 : 2 ), caller(), f, o);
+				return stack::call_into_lua<checked, clean_stack>(types<void>(), args_list(), L, boost + (is_variable ? 3 : 2), caller(), f, o);
 			}
 
 			template <typename V>
@@ -456,7 +459,7 @@ namespace sol {
 				typedef typename wrap::returns_list returns_list;
 				typedef typename wrap::caller caller;
 				F f(std::forward<V>(v));
-				return stack::call_into_lua<checked, clean_stack>(returns_list(), types<>(), L, boost + ( is_variable ? 3 : 2 ), caller(), f, o);
+				return stack::call_into_lua<checked, clean_stack>(returns_list(), types<>(), L, boost + (is_variable ? 3 : 2), caller(), f, o);
 			}
 
 			template <typename V>
@@ -498,7 +501,6 @@ namespace sol {
 
 		template <typename T, typename F, bool is_variable, bool checked, int boost, bool clean_stack, typename C>
 		struct lua_call_wrapper<T, readonly_wrapper<F>, true, is_variable, checked, boost, clean_stack, C> : lua_call_wrapper<T, F, true, is_variable, checked, boost, clean_stack, C> {
-			
 		};
 
 		template <typename T, typename... Args, bool is_index, bool is_variable, bool checked, int boost, bool clean_stack, typename C>
@@ -568,7 +570,6 @@ namespace sol {
 				int argcount = lua_gettop(L) - syntaxval;
 				return construct_match<T, meta::pop_front_type_t<meta::function_args_t<Cxs>>...>(onmatch(), L, argcount, 1 + syntaxval, f);
 			}
-
 		};
 
 		template <typename T, typename Fx, bool is_index, bool is_variable, bool checked, int boost, bool clean_stack>
@@ -682,8 +683,8 @@ namespace sol {
 					meta::is_specialization_of<var_wrapper, U>,
 					meta::is_specialization_of<constructor_wrapper, U>,
 					meta::is_specialization_of<constructor_list, U>,
-					std::is_member_pointer<U>
-				> is_specialized;
+					std::is_member_pointer<U>>
+					is_specialized;
 				return defer_call(is_specialized(), L, std::forward<F>(f), std::forward<Args>(args)...);
 			}
 		};
@@ -754,7 +755,7 @@ namespace sol {
 
 		template <typename F, typename... Filters>
 		struct is_var_bind<filter_wrapper<F, Filters...>> : is_var_bind<meta::unqualified_t<F>> {};
-	} // call_detail
+	} // namespace call_detail
 
 	template <typename T>
 	struct is_variable_binding : call_detail::is_var_bind<meta::unqualified_t<T>> {};
@@ -762,6 +763,6 @@ namespace sol {
 	template <typename T>
 	struct is_function_binding : meta::neg<is_variable_binding<T>> {};
 
-} // sol
+} // namespace sol
 
 #endif // SOL_CALL_HPP

@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -32,8 +32,7 @@ namespace sol {
 		return luaL_error(L, err, index,
 			expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected)),
 			actual == type::poly ? "anything" : lua_typename(L, static_cast<int>(actual)),
-			message.c_str()
-		);
+			message.c_str());
 	}
 
 	inline int type_panic_c_str(lua_State* L, int index, type expected, type actual, const char* message = nullptr) noexcept(false) {
@@ -41,8 +40,7 @@ namespace sol {
 		return luaL_error(L, err, index,
 			expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected)),
 			actual == type::poly ? "anything" : lua_typename(L, static_cast<int>(actual)),
-			message
-		);
+			message);
 	}
 
 	struct type_panic_t {
@@ -86,7 +84,7 @@ namespace sol {
 				addendum += n;
 				++marker;
 			};
-			(void)detail::swallow{ int(), (action(detail::demangle<Args>()), int())... };
+			(void)detail::swallow{int(), (action(detail::demangle<Args>()), int())...};
 			addendum += ")')";
 			return type_panic_string(L, index, expected, actual, message + addendum);
 		}
@@ -116,6 +114,6 @@ namespace sol {
 		type_assert(L, index, expected, actual);
 	}
 
-} // sol
+} // namespace sol
 
 #endif // SOL_ERROR_HANDLER_HPP

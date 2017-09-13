@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -27,7 +27,7 @@
 
 namespace sol {
 	template <typename... Args>
-	struct base_list { };
+	struct base_list {};
 	template <typename... Args>
 	using bases = base_list<Args...>;
 
@@ -111,7 +111,7 @@ namespace sol {
 		using inheritance_check_function = decltype(&inheritance<void>::type_check);
 		using inheritance_cast_function = decltype(&inheritance<void>::type_cast);
 
-	} // detail
-} // sol
+	} // namespace detail
+} // namespace sol
 
 #endif // SOL_INHERITANCE_HPP

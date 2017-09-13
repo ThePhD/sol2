@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -26,29 +26,29 @@
 #include <iostream>
 
 namespace sol {
-	namespace detail {
-		namespace debug {
-			inline std::string dump_types(lua_State* L) {
-				std::string visual;
-				std::size_t size = lua_gettop(L) + 1;
-				for (std::size_t i = 1; i < size; ++i) {
-					if (i != 1) {
-						visual += " | ";
-					}
-					visual += type_name(L, stack::get<type>(L, static_cast<int>(i)));
-				}
-				return visual;
+namespace detail {
+namespace debug {
+	inline std::string dump_types(lua_State* L) {
+		std::string visual;
+		std::size_t size = lua_gettop(L) + 1;
+		for (std::size_t i = 1; i < size; ++i) {
+			if (i != 1) {
+				visual += " | ";
 			}
+			visual += type_name(L, stack::get<type>(L, static_cast<int>(i)));
+		}
+		return visual;
+	}
 
-			inline void print_stack(lua_State* L) {
-				std::cout << dump_types(L) << std::endl;
-			}
+	inline void print_stack(lua_State* L) {
+		std::cout << dump_types(L) << std::endl;
+	}
 
-			inline void print_section(const std::string& message, lua_State* L) {
-				std::cout << "-- " << message << " -- [ " << dump_types(L) << " ]" << std::endl;
-			}
-		} // detail
-	} // debug
-} // sol
+	inline void print_section(const std::string& message, lua_State* L) {
+		std::cout << "-- " << message << " -- [ " << dump_types(L) << " ]" << std::endl;
+	}
+}
+}
+} // namespace sol::detail::debug
 
 #endif // SOL_DEBUG_HPP

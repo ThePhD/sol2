@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -34,10 +34,14 @@ namespace sol {
 		int index;
 
 	public:
-		stack_proxy() : L(nullptr), index(0) {}
-		stack_proxy(lua_State* L, int index) : L(L), index(index) {}
+		stack_proxy()
+		: L(nullptr), index(0) {
+		}
+		stack_proxy(lua_State* L, int index)
+		: L(L), index(index) {
+		}
 
-		template<typename T>
+		template <typename T>
 		decltype(auto) get() const {
 			return stack::get<T>(L, stack_index());
 		}
@@ -65,15 +69,19 @@ namespace sol {
 			return 1;
 		}
 
-		lua_State* lua_state() const { return L; }
-		int stack_index() const { return index; }
+		lua_State* lua_state() const {
+			return L;
+		}
+		int stack_index() const {
+			return index;
+		}
 
-		template<typename... Ret, typename... Args>
+		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
 			return get<function>().template call<Ret...>(std::forward<Args>(args)...);
 		}
 
-		template<typename... Args>
+		template <typename... Args>
 		decltype(auto) operator()(Args&&... args) {
 			return call<>(std::forward<Args>(args)...);
 		}
@@ -93,7 +101,7 @@ namespace sol {
 				return ref.push();
 			}
 		};
-	} // stack
+	} // namespace stack
 
 	namespace detail {
 		template <>
@@ -110,7 +118,7 @@ namespace sol {
 		stack_proxy get(types<Arg, Args...>, index_value<N>, index_value<I>, const T& fr) {
 			return get(types<Args...>(), index_value<N - 1>(), index_value<I + lua_size<Arg>::value>(), fr);
 		}
-	}
+	} // namespace detail
 
 	template <>
 	struct tie_size<function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
@@ -137,6 +145,6 @@ namespace sol {
 	stack_proxy get(types<Args...> t, const protected_function_result& fr) {
 		return detail::get(t, index_value<I>(), index_value<0>(), fr);
 	}
-} // sol
+} // namespace sol
 
 #endif // SOL_STACK_PROXY_HPP

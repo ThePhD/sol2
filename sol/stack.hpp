@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -65,11 +65,11 @@ namespace sol {
 				return chunkname.c_str();
 			}
 		}
-	} // detail
+	} // namespace detail
 
 	namespace stack {
 		namespace stack_detail {
-			template<typename T>
+			template <typename T>
 			inline int push_as_upvalues(lua_State* L, T& item) {
 				typedef std::decay_t<T> TValue;
 				const static std::size_t itemsize = sizeof(TValue);
@@ -78,7 +78,7 @@ namespace sol {
 				const static std::size_t data_t_count = (sizeof(TValue) + voidsizem1) / voidsize;
 				typedef std::array<void*, data_t_count> data_t;
 
-				data_t data{ {} };
+				data_t data{{}};
 				std::memcpy(&data[0], std::addressof(item), itemsize);
 				int pushcount = 0;
 				for (auto&& v : data) {
@@ -87,11 +87,11 @@ namespace sol {
 				return pushcount;
 			}
 
-			template<typename T>
+			template <typename T>
 			inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 2) {
 				const static std::size_t data_t_count = (sizeof(T) + (sizeof(void*) - 1)) / sizeof(void*);
 				typedef std::array<void*, data_t_count> data_t;
-				data_t voiddata{ {} };
+				data_t voiddata{{}};
 				for (std::size_t i = 0, d = 0; d < sizeof(T); ++i, d += sizeof(void*)) {
 					voiddata[i] = get<lightuserdata_value>(L, upvalue_index(index++));
 				}
@@ -103,7 +103,7 @@ namespace sol {
 				static decltype(auto) eval(types<>, std::index_sequence<>, lua_State*, int, record&, Fx&& fx, Args&&... args) {
 					return std::forward<Fx>(fx)(std::forward<Args>(args)...);
 				}
-				
+
 				template <typename Fx, typename Arg, typename... Args, std::size_t I, std::size_t... Is, typename... FxArgs>
 				static decltype(auto) eval(types<Arg, Args...>, std::index_sequence<I, Is...>, lua_State* L, int start, record& tracking, Fx&& fx, FxArgs&&... fxargs) {
 					return eval(types<Args...>(), std::index_sequence<Is...>(), L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)..., stack_detail::unchecked_get<Arg>(L, start + tracking.used, tracking));
@@ -131,7 +131,7 @@ namespace sol {
 				record tracking{};
 				evaluator{}.eval(ta, tai, L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 			}
-		} // stack_detail
+		} // namespace stack_detail
 
 		template <typename T>
 		int set_ref(lua_State* L, T&& arg, int tableindex = -2) {
@@ -173,7 +173,7 @@ namespace sol {
 			call<check_args>(tr, ta, L, (std::max)(static_cast<int>(lua_gettop(L) - expected_count::value), static_cast<int>(0)), std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 		}
 
-		template<bool check_args = stack_detail::default_check_arguments, bool clean_stack = true, typename... Args, typename Fx, typename... FxArgs>
+		template <bool check_args = stack_detail::default_check_arguments, bool clean_stack = true, typename... Args, typename Fx, typename... FxArgs>
 		inline int call_into_lua(types<void> tr, types<Args...> ta, lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs) {
 			call<check_args>(tr, ta, L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
 			if (clean_stack) {
@@ -182,7 +182,7 @@ namespace sol {
 			return 0;
 		}
 
-		template<bool check_args = stack_detail::default_check_arguments, bool clean_stack = true, typename Ret0, typename... Ret, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<meta::neg<std::is_void<Ret0>>::value>>
+		template <bool check_args = stack_detail::default_check_arguments, bool clean_stack = true, typename Ret0, typename... Ret, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<meta::neg<std::is_void<Ret0>>::value>>
 		inline int call_into_lua(types<Ret0, Ret...>, types<Args...> ta, lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs) {
 			decltype(auto) r = call<check_args>(types<meta::return_type_t<Ret0, Ret...>>(), ta, L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
 			typedef is_stack_based<meta::unqualified_t<decltype(r)>> is_stack;
@@ -192,7 +192,7 @@ namespace sol {
 			return push_reference(L, std::forward<decltype(r)>(r));
 		}
 
-		template<bool check_args = stack_detail::default_check_arguments, bool clean_stack = true, typename Fx, typename... FxArgs>
+		template <bool check_args = stack_detail::default_check_arguments, bool clean_stack = true, typename Fx, typename... FxArgs>
 		inline int call_lua(lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs) {
 			typedef lua_bind_traits<meta::unqualified_t<Fx>> traits_type;
 			typedef typename traits_type::args_list args_list;
@@ -226,7 +226,7 @@ namespace sol {
 			}
 		}
 
-		inline void luajit_exception_handler(lua_State* L, int(*handler)(lua_State*, lua_CFunction) = detail::c_trampoline) {
+		inline void luajit_exception_handler(lua_State* L, int (*handler)(lua_State*, lua_CFunction) = detail::c_trampoline) {
 #ifdef SOL_LUAJIT
 			if (L == nullptr) {
 				return;
@@ -250,7 +250,7 @@ namespace sol {
 			(void)L;
 #endif
 		}
-	} // stack
-} // sol
+	} // namespace stack
+} // namespace sol
 
 #endif // SOL_STACK_HPP

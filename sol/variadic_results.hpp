@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -32,7 +32,7 @@ namespace sol {
 	struct variadic_results : public std::vector<object> {
 		using std::vector<object>::vector;
 	};
-	
+
 	namespace stack {
 		template <>
 		struct pusher<variadic_results> {
@@ -44,8 +44,8 @@ namespace sol {
 				return p;
 			}
 		};
-	} // stack
+	} // namespace stack
 
-} // sol
+} // namespace sol
 
 #endif // SOL_VARIADIC_RESULTS_HPP

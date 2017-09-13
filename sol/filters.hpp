@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -28,7 +28,7 @@
 namespace sol {
 	namespace detail {
 		struct filter_base_tag {};
-	} // detail
+	} // namespace detail
 
 	template <int Target, int... In>
 	struct static_stack_dependencies : detail::filter_base_tag {};
@@ -43,16 +43,17 @@ namespace sol {
 		std::size_t len;
 
 		template <typename... Args>
-		stack_dependencies(int stack_target, Args&&... args) : target(stack_target), stack_indices(), len(sizeof...(Args)) {
+		stack_dependencies(int stack_target, Args&&... args)
+		: target(stack_target), stack_indices(), len(sizeof...(Args)) {
 			std::size_t i = 0;
-			(void)detail::swallow{ int(), (stack_indices[i++] = static_cast<int>(std::forward<Args>(args)), int() )... };
+			(void)detail::swallow{int(), (stack_indices[i++] = static_cast<int>(std::forward<Args>(args)), int())...};
 		}
 
-		int& operator[] (std::size_t i) {
+		int& operator[](std::size_t i) {
 			return stack_indices[i];
 		}
 
-		const int& operator[] (std::size_t i) const {
+		const int& operator[](std::size_t i) const {
 			return stack_indices[i];
 		}
 
@@ -60,7 +61,7 @@ namespace sol {
 			return len;
 		}
 	};
-	
+
 	template <typename F, typename... Filters>
 	struct filter_wrapper {
 		typedef std::index_sequence_for<Filters...> indices;
@@ -69,7 +70,9 @@ namespace sol {
 		std::tuple<Filters...> filters;
 
 		template <typename Fx, typename... Args, meta::enable<meta::neg<std::is_same<meta::unqualified_t<Fx>, filter_wrapper>>> = meta::enabler>
-		filter_wrapper(Fx&& fx, Args&&... args) : value(std::forward<Fx>(fx)), filters(std::forward<Args>(args)...) {}
+		filter_wrapper(Fx&& fx, Args&&... args)
+		: value(std::forward<Fx>(fx)), filters(std::forward<Args>(args)...) {
+		}
 
 		filter_wrapper(const filter_wrapper&) = default;
 		filter_wrapper& operator=(const filter_wrapper&) = default;
@@ -79,8 +82,8 @@ namespace sol {
 
 	template <typename F, typename... Args>
 	auto filters(F&& f, Args&&... args) {
-		return filter_wrapper<std::decay_t<F>, std::decay_t<Args>...>( std::forward<F>(f), std::forward<Args>(args)... );
+		return filter_wrapper<std::decay_t<F>, std::decay_t<Args>...>(std::forward<F>(f), std::forward<Args>(args)...);
 	}
-} // sol
+} // namespace sol
 
 #endif // SOL_FILTERS_HPP

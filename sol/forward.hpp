@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -31,9 +31,9 @@ namespace sol {
 	struct proxy_base_tag;
 	template <typename Table, typename Key>
 	struct proxy;
-	template<typename T>
+	template <typename T>
 	class usertype;
-	template<typename T>
+	template <typename T>
 	class simple_usertype;
 	template <bool, typename T>
 	class basic_table_core;
@@ -114,6 +114,6 @@ namespace sol {
 	struct protect_t;
 	template <typename F, typename... Filters>
 	struct filter_wrapper;
-} // sol
+} // namespace sol
 
 #endif // SOL_FORWARD_HPP

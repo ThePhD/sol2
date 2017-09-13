@@ -13,6 +13,9 @@ FixNamespaceComments: true
 # Overall Alignment
 ColumnLimit: 0
 AlignAfterOpenBracket: DontAlign # uses ContinuationIndentWidth for this instead
+AccessModifierOffset: -5 # do not push public: or private: around
+#AlignConsecutiveAssignments: true
+#AlignConsecutiveDeclarations: true
 
 # Type Alignment
 DerivePointerAlignment: false
@@ -27,17 +30,20 @@ ReflowComments: true
 # Macros
 AlignEscapedNewlines: Left
 SortIncludes: false
-IndentPPDirectives: AfterHash
+IndentPPDirectives: None
 
 # Functions
 AllowShortFunctionsOnASingleLine: None
 AlwaysBreakAfterReturnType: None
-BreakConstructorInitializers: 
-ConstructorInitializerIndentWidth: 5
-ConstructorInitializerAllOnOneLineOrOnePerLine: false
+BreakConstructorInitializers: BeforeComma
+ConstructorInitializerIndentWidth: 0
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+
+# Classes
+BreakBeforeInheritanceComma: false
 
 # Braces
-Cpp11BracedListStyle: true
+Cpp11BracedListStyle: false
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterEnum: false
@@ -47,7 +53,8 @@ BraceWrapping:
   AfterNamespace: false
   AfterStruct: false
   AfterUnion: false
-  BeforeElse: false
+  BeforeElse: true
+  BeforeCatch: true
   IndentBraces: false
   SplitEmptyFunction: false
   SplitEmptyRecord: false
@@ -57,7 +64,7 @@ BraceWrapping:
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
-IndentCaseLabels: true
+IndentCaseLabels: false
 
 
 # Spaces
@@ -77,4 +84,4 @@ SortUsingDeclarations: true
 
 ---
 Language: Cpp
-Standard: LS_Cpp11
+Standard: Cpp11

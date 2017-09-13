@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -27,13 +27,13 @@
 #include <memory>
 
 namespace sol {
-	namespace function_detail {
-		template <typename Fx, int start = 1>
-		inline int call(lua_State* L) {
-			Fx& fx = stack::get<user<Fx>>(L, upvalue_index(start));
-			return fx(L);
-		}
-	} // function_detail
-} // sol
+namespace function_detail {
+	template <typename Fx, int start = 1>
+	inline int call(lua_State* L) {
+		Fx& fx = stack::get<user<Fx>>(L, upvalue_index(start));
+		return fx(L);
+	}
+}
+} // namespace sol::function_detail
 
 #endif // SOL_FUNCTION_TYPES_CORE_HPP

@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -59,7 +59,7 @@ namespace sol {
 		inline int member_default_to_string(std::false_type, lua_State* L) {
 			return luaL_error(L, "cannot perform to_string on '%s': no 'to_string' overload in namespace, 'to_string' member function, or operator<<(ostream&, ...) present", detail::demangle<T>().data());
 		}
-		
+
 		template <typename T>
 		inline int adl_default_to_string(std::true_type, lua_State* L) {
 			using namespace std;
@@ -112,7 +112,7 @@ namespace sol {
 		template <typename T, typename Op, typename Supports, typename Regs, meta::enable<Supports> = meta::enabler>
 		inline void make_reg_op(Regs& l, int& index, const char* name) {
 			lua_CFunction f = &comparsion_operator_wrap<T, Op>;
-			l[index] = luaL_Reg{ name, f };
+			l[index] = luaL_Reg{name, f};
 			++index;
 		}
 
@@ -125,7 +125,7 @@ namespace sol {
 		inline void make_to_string_op(Regs& l, int& index) {
 			const char* name = to_string(meta_function::to_string).c_str();
 			lua_CFunction f = &detail::static_trampoline<&default_to_string<T>>;
-			l[index] = luaL_Reg{ name, f };
+			l[index] = luaL_Reg{name, f};
 			++index;
 		}
 
@@ -138,7 +138,7 @@ namespace sol {
 		inline void make_call_op(Regs& l, int& index) {
 			const char* name = to_string(meta_function::call).c_str();
 			lua_CFunction f = &c_call<decltype(&T::operator()), &T::operator()>;
-			l[index] = luaL_Reg{ name, f };
+			l[index] = luaL_Reg{name, f};
 			++index;
 		}
 
@@ -150,7 +150,7 @@ namespace sol {
 		template <typename T, typename Regs, meta::enable<meta::has_size<T>> = meta::enabler>
 		inline void make_length_op(Regs& l, int& index) {
 			const char* name = to_string(meta_function::length).c_str();
-			l[index] = luaL_Reg{ name, &c_call<decltype(&T::size), &T::size> };
+			l[index] = luaL_Reg{name, &c_call<decltype(&T::size), &T::size>};
 			++index;
 		}
 
@@ -162,7 +162,7 @@ namespace sol {
 		template <typename T, typename Regs, meta::enable<meta::neg<std::is_pointer<T>>, std::is_destructible<T>>>
 		void make_destructor(Regs& l, int& index) {
 			const char* name = to_string(meta_function::garbage_collect).c_str();
-			l[index] = luaL_Reg{ name, is_unique_usertype<T>::value ? &detail::unique_destruct<T> : &detail::usertype_alloc_destruct<T> };
+			l[index] = luaL_Reg{name, is_unique_usertype<T>::value ? &detail::unique_destruct<T> : &detail::usertype_alloc_destruct<T>};
 			++index;
 		}
 
@@ -174,7 +174,7 @@ namespace sol {
 				// this won't trigger if the user performs `new_usertype` / `new_simple_usertype` and
 				// rigs the class up properly
 				const char* name = to_string(meta_function::garbage_collect).c_str();
-				l[index] = luaL_Reg{ name, &detail::cannot_destruct<T> };
+				l[index] = luaL_Reg{name, &detail::cannot_destruct<T>};
 				++index;
 			}
 		}
@@ -195,7 +195,7 @@ namespace sol {
 			}
 			if (fx(meta_function::pairs)) {
 				const char* name = to_string(meta_function::pairs).c_str();
-				l[index] = luaL_Reg{ name, container_usertype_metatable<as_container_t<T>>::pairs_call };
+				l[index] = luaL_Reg{name, container_usertype_metatable<as_container_t<T>>::pairs_call};
 				++index;
 			}
 			if (fx(meta_function::length)) {
@@ -208,33 +208,35 @@ namespace sol {
 				usertype_detail::make_call_op<T>(l, index);
 			}
 		}
-	} // usertype_detail
+	} // namespace usertype_detail
 
 	namespace stack {
-		namespace stack_detail {
-			template <typename T>
-			struct undefined_metatable {
-				typedef meta::all<meta::neg<std::is_pointer<T>>, std::is_destructible<T>> is_destructible;
-				typedef std::remove_pointer_t<T> P;
-				lua_State* L;
-				const char* key;
+	namespace stack_detail {
+		template <typename T>
+		struct undefined_metatable {
+			typedef meta::all<meta::neg<std::is_pointer<T>>, std::is_destructible<T>> is_destructible;
+			typedef std::remove_pointer_t<T> P;
+			lua_State* L;
+			const char* key;
 
-				undefined_metatable(lua_State* l, const char* k) : L(l), key(k) {}
+			undefined_metatable(lua_State* l, const char* k)
+			: L(l), key(k) {
+			}
 
-				void operator () () const {
-					if (luaL_newmetatable(L, key) == 1) {
-						luaL_Reg l[32]{};
-						int index = 0;
-						auto fx = [](meta_function) { return true; };
-						usertype_detail::insert_default_registrations<P>(l, index, fx);
-						usertype_detail::make_destructor<T>(l, index);
-						luaL_setfuncs(L, l, 0);
-					}
-					lua_setmetatable(L, -2);
+			void operator()() const {
+				if (luaL_newmetatable(L, key) == 1) {
+					luaL_Reg l[32]{};
+					int index = 0;
+					auto fx = [](meta_function) { return true; };
+					usertype_detail::insert_default_registrations<P>(l, index, fx);
+					usertype_detail::make_destructor<T>(l, index);
+					luaL_setfuncs(L, l, 0);
 				}
-			};
-		} // stack_detail
-	} // stack
-} // sol
+				lua_setmetatable(L, -2);
+			}
+		};
+	}
+	} // namespace stack::stack_detail
+} // namespace sol
 
 #endif // SOL_USERTYPE_CORE_HPP

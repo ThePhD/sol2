@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -58,7 +58,8 @@ namespace sol {
 		typedef basic_object_base<base_type> base_t;
 
 		template <bool invert_and_pop = false>
-		basic_object(std::integral_constant<bool, invert_and_pop>, lua_State* L, int index = -1) noexcept : base_t(L, index) {
+		basic_object(std::integral_constant<bool, invert_and_pop>, lua_State* L, int index = -1) noexcept
+		: base_t(L, index) {
 			if (invert_and_pop) {
 				lua_pop(L, -index);
 			}
@@ -66,45 +67,76 @@ namespace sol {
 
 	public:
 		basic_object() noexcept = default;
-		template <typename T, meta::enable<
-			meta::neg<std::is_same<meta::unqualified_t<T>, basic_object>>, 
-			meta::neg<std::is_same<base_type, stack_reference>>, 
-			std::is_base_of<base_type, meta::unqualified_t<T>>
-		> = meta::enabler>
-		basic_object(T&& r) : base_t(std::forward<T>(r)) {}
-		template <typename T, meta::enable_any<
-			std::is_base_of<reference, meta::unqualified_t<T>>,
-			std::is_base_of<stack_reference, meta::unqualified_t<T>>
-		> = meta::enabler>
-		basic_object(lua_State* L, T&& r) : base_t(L, std::forward<T>(r)) {}
-		basic_object(lua_nil_t r) : base_t(r) {}
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_object>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		basic_object(T&& r)
+		: base_t(std::forward<T>(r)) {
+		}
+		template <typename T, meta::enable_any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>> = meta::enabler>
+		basic_object(lua_State* L, T&& r)
+		: base_t(L, std::forward<T>(r)) {
+		}
+		basic_object(lua_nil_t r)
+		: base_t(r) {
+		}
 		basic_object(const basic_object&) = default;
 		basic_object(basic_object&&) = default;
-		basic_object(const stack_reference& r) noexcept : basic_object(r.lua_state(), r.stack_index()) {}
-		basic_object(stack_reference&& r) noexcept : basic_object(r.lua_state(), r.stack_index()) {}
+		basic_object(const stack_reference& r) noexcept
+		: basic_object(r.lua_state(), r.stack_index()) {
+		}
+		basic_object(stack_reference&& r) noexcept
+		: basic_object(r.lua_state(), r.stack_index()) {
+		}
 		template <typename Super>
-		basic_object(const proxy_base<Super>& r) noexcept : basic_object(r.operator basic_object()) {}
+		basic_object(const proxy_base<Super>& r) noexcept
+		: basic_object(r.operator basic_object()) {
+		}
 		template <typename Super>
-		basic_object(proxy_base<Super>&& r) noexcept : basic_object(r.operator basic_object()) {}
-		basic_object(lua_State* L, lua_nil_t r) noexcept : base_t(L, r) {}
-		basic_object(lua_State* L, int index = -1) noexcept : base_t(L, index) {}
-		basic_object(lua_State* L, absolute_index index) noexcept : base_t(L, index) {}
-		basic_object(lua_State* L, raw_index index) noexcept : base_t(L, index) {}
-		basic_object(lua_State* L, ref_index index) noexcept : base_t(L, index) {}
+		basic_object(proxy_base<Super>&& r) noexcept
+		: basic_object(r.operator basic_object()) {
+		}
+		basic_object(lua_State* L, lua_nil_t r) noexcept
+		: base_t(L, r) {
+		}
+		basic_object(lua_State* L, int index = -1) noexcept
+		: base_t(L, index) {
+		}
+		basic_object(lua_State* L, absolute_index index) noexcept
+		: base_t(L, index) {
+		}
+		basic_object(lua_State* L, raw_index index) noexcept
+		: base_t(L, index) {
+		}
+		basic_object(lua_State* L, ref_index index) noexcept
+		: base_t(L, index) {
+		}
 		template <typename T, typename... Args>
-		basic_object(lua_State* L, in_place_type_t<T>, Args&&... args) noexcept 
-		: basic_object(std::integral_constant<bool, !std::is_base_of<stack_reference, base_t>::value>(), L, -stack::push<T>(L, std::forward<Args>(args)...)) {}
+		basic_object(lua_State* L, in_place_type_t<T>, Args&&... args) noexcept
+		: basic_object(std::integral_constant<bool, !std::is_base_of<stack_reference, base_t>::value>(), L, -stack::push<T>(L, std::forward<Args>(args)...)) {
+		}
 		template <typename T, typename... Args>
-		basic_object(lua_State* L, in_place_t, T&& arg, Args&&... args) noexcept 
-		: basic_object(L, in_place_type<T>, std::forward<T>(arg), std::forward<Args>(args)...) {}
+		basic_object(lua_State* L, in_place_t, T&& arg, Args&&... args) noexcept
+		: basic_object(L, in_place_type<T>, std::forward<T>(arg), std::forward<Args>(args)...) {
+		}
 		basic_object& operator=(const basic_object&) = default;
 		basic_object& operator=(basic_object&&) = default;
-		basic_object& operator=(const base_type& b) { base_t::operator=(b); return *this; }
-		basic_object& operator=(base_type&& b) { base_t::operator=(std::move(b)); return *this; }
+		basic_object& operator=(const base_type& b) {
+			base_t::operator=(b);
+			return *this;
+		}
+		basic_object& operator=(base_type&& b) {
+			base_t::operator=(std::move(b));
+			return *this;
+		}
 		template <typename Super>
-		basic_object& operator=(const proxy_base<Super>& r) { this->operator=(r.operator basic_object()); return *this; }
+		basic_object& operator=(const proxy_base<Super>& r) {
+			this->operator=(r.operator basic_object());
+			return *this;
+		}
 		template <typename Super>
-		basic_object& operator=(proxy_base<Super>&& r) { this->operator=(r.operator basic_object()); return *this; }
+		basic_object& operator=(proxy_base<Super>&& r) {
+			this->operator=(r.operator basic_object());
+			return *this;
+		}
 	};
 
 	template <typename T>
@@ -116,6 +148,6 @@ namespace sol {
 	object make_object(lua_State* L, Args&&... args) {
 		return make_reference<T, object, true>(L, std::forward<Args>(args)...);
 	}
-} // sol
+} // namespace sol
 
 #endif // SOL_OBJECT_HPP
