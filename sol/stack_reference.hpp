@@ -25,6 +25,17 @@
 #include "types.hpp"
 
 namespace sol {
+	namespace detail {
+		inline bool xmovable(lua_State* leftL, lua_State* rightL) {
+			if (rightL == nullptr || leftL == nullptr || leftL == rightL) {
+				return false;
+			}
+			const void* leftregistry = lua_topointer(leftL, LUA_REGISTRYINDEX);
+			const void* rightregistry = lua_topointer(rightL, LUA_REGISTRYINDEX);
+			return leftregistry == rightregistry;
+		}
+	} // namespace detail
+
 	class stack_reference {
 	private:
 		lua_State* luastate = nullptr;
@@ -60,7 +71,7 @@ namespace sol {
 				return;
 			}
 			int i = r.stack_index();
-			if (r.lua_state() != luastate) {
+			if (detail::xmovable(lua_state(), r.lua_state())) {
 				lua_pushvalue(r.lua_state(), r.index);
 				lua_xmove(r.lua_state(), luastate, 1);
 				i = absolute_index(luastate, -1);

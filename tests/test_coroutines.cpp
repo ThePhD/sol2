@@ -108,7 +108,7 @@ end
 	}
 }
 
-TEST_CASE("coroutines/implicit transfer", "check that copy and move assignment constructors implicitly shift things around") {
+TEST_CASE("coroutines/explicit transfer", "check that the xmove constructors shift things around appropriately") {
 	const std::string code = R"(
 -- main thread - L1
 -- co - L2
@@ -182,6 +182,93 @@ co = nil
 	REQUIRE(r.valid());
 
 	co_test& ct = lua["x"];
+
+	lua_State* Lmain1 = lua.lua_state();
+	lua_State* Lmain2 = sol::main_thread(lua);
+	lua_State* Lmain3 = ct.get().lua_state();
+	REQUIRE(Lmain1 == Lmain2);
+	REQUIRE(Lmain1 == Lmain3);
+
+	sol::table t = ct.get();
+	REQUIRE(t.size() == 1);
+	std::string s = t[1];
+	REQUIRE(s == "SOME_TABLE");
+}
+
+TEST_CASE("coroutines/implicit transfer", "check that copy and move assignment constructors implicitly shift things around") {
+	const std::string code = R"(
+-- main thread - L1
+-- co - L2
+-- co2 - L3
+
+x = co_test.new("x")
+local co = coroutine.wrap(
+	function()
+		local t = co_test.new("t")
+		local co2 = coroutine.wrap(
+			function()
+				local t2 = { "SOME_TABLE" }
+				t:copy_store(t2) -- t2 = [L3], t.obj = [L2]
+			end
+		)
+
+		co2()
+		co2 = nil
+
+		collectgarbage() -- t2 ref in t remains valid!
+
+		x:store(t:get()) -- t.obj = [L2], x.obj = [L1]
+    end
+)
+
+co()
+collectgarbage()
+collectgarbage()
+co = nil
+)";
+
+	struct co_test_implicit {
+		std::string identifier;
+		sol::reference obj;
+
+		co_test_implicit(sol::this_state L, std::string id) : identifier(id), obj(L, sol::lua_nil) {
+
+		}
+
+		void store(sol::table ref) {
+			// must be explicit
+			obj = std::move(ref);
+		}
+
+		void copy_store(sol::table ref) {
+			// must be explicit
+			obj = ref;
+		}
+
+		sol::reference get() {
+			return obj;
+		}
+
+		~co_test_implicit() {
+
+		}
+	};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::coroutine, sol::lib::base);
+
+	lua.new_usertype<co_test_implicit>("co_test",
+		sol::constructors<co_test_implicit(sol::this_state, std::string)>(),
+		"store", &co_test_implicit::store,
+		"copy_store", &co_test_implicit::copy_store,
+		"get", &co_test_implicit::get
+		);
+
+
+	auto r = lua.safe_script(code);
+	REQUIRE(r.valid());
+
+	co_test_implicit& ct = lua["x"];
 
 	lua_State* Lmain1 = lua.lua_state();
 	lua_State* Lmain2 = sol::main_thread(lua);

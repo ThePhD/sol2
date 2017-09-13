@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-13 06:45:53.519071 UTC
-// This header was generated with sol v2.18.2 (revision 66eb025)
+// Generated 2017-09-13 14:18:42.960702 UTC
+// This header was generated with sol v2.18.2 (revision 5816c6c)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5672,6 +5672,17 @@ namespace sol {
 // beginning of sol/stack_reference.hpp
 
 namespace sol {
+	namespace detail {
+		inline bool xmovable(lua_State* leftL, lua_State* rightL) {
+			if (rightL == nullptr || leftL == nullptr || leftL == rightL) {
+				return false;
+			}
+			const void* leftregistry = lua_topointer(leftL, LUA_REGISTRYINDEX);
+			const void* rightregistry = lua_topointer(rightL, LUA_REGISTRYINDEX);
+			return leftregistry == rightregistry;
+		}
+	} // namespace detail
+
 	class stack_reference {
 	private:
 		lua_State* luastate = nullptr;
@@ -5707,7 +5718,7 @@ namespace sol {
 				return;
 			}
 			int i = r.stack_index();
-			if (r.lua_state() != luastate) {
+			if (detail::xmovable(lua_state(), r.lua_state())) {
 				lua_pushvalue(r.lua_state(), r.index);
 				lua_xmove(r.lua_state(), luastate, 1);
 				i = absolute_index(luastate, -1);
@@ -5931,40 +5942,54 @@ namespace sol {
 		}
 		reference(lua_State* L, const reference& r) noexcept
 		: luastate(L) {
-			if (r.ref == LUA_NOREF) {
+			if (r.ref == LUA_REFNIL) {
+				ref = LUA_REFNIL;
+				return;
+			}
+			if (r.ref == LUA_NOREF || lua_state() == nullptr) {
 				ref = LUA_NOREF;
 				return;
 			}
-			int p = r.push();
-			if (r.lua_state() != luastate) {
-				lua_xmove(r.lua_state(), L, p);
+			if (detail::xmovable(lua_state(), r.lua_state())) {
+				r.push(lua_state());
+				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+				return;
 			}
-			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+			ref = r.copy();
 		}
 		reference(lua_State* L, reference&& r) noexcept
 		: luastate(L) {
-			if (r.ref == LUA_NOREF) {
+			if (r.ref == LUA_REFNIL) {
+				ref = LUA_REFNIL;
+				return;
+			}
+			if (r.ref == LUA_NOREF || lua_state() == nullptr) {
 				ref = LUA_NOREF;
 				return;
 			}
-			if (r.lua_state() != luastate) {
-				int p = r.push();
-				lua_xmove(r.lua_state(), L, p);
+			if (detail::xmovable(lua_state(), r.lua_state())) {
+				r.push(lua_state());
 				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+				return;
 			}
-			else {
-				ref = r.ref;
-				r.luastate = nullptr;
-				r.ref = LUA_NOREF;
-			}
+			ref = r.ref;
+			r.ref = LUA_NOREF;
+			r.luastate = nullptr;
 		}
 		reference(lua_State* L, const stack_reference& r) noexcept
 		: luastate(L) {
-			if (!r.valid()) {
+			if (lua_state() == nullptr || r.lua_state() == nullptr || r.get_type() == type::none) {
 				ref = LUA_NOREF;
 				return;
 			}
-			r.push(luastate);
+			if (r.get_type() == type::nil) {
+				ref = LUA_REFNIL;
+				return;
+			}
+			if (lua_state() != r.lua_state() && !detail::xmovable(lua_state(), r.lua_state())) {
+				return;
+			}
+			r.push(lua_state());
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
 		reference(lua_State* L, int index = -1) noexcept
@@ -5995,26 +6020,43 @@ namespace sol {
 			o.ref = LUA_NOREF;
 		}
 
-		reference& operator=(reference&& o) noexcept {
-			if (valid()) {
-				deref();
+		reference& operator=(reference&& r) noexcept {
+			if (r.ref == LUA_REFNIL) {
+				ref = LUA_REFNIL;
+				return *this;
 			}
-			luastate = o.luastate;
-			ref = o.ref;
+			if (r.ref == LUA_NOREF || lua_state() == nullptr) {
+				ref = LUA_NOREF;
+				return *this;
+			}
+			if (detail::xmovable(lua_state(), r.lua_state())) {
+				r.push(lua_state());
+				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+				return *this;
+			}
 
-			o.luastate = nullptr;
-			o.ref = LUA_NOREF;
-
+			ref = r.ref;
+			r.ref = LUA_NOREF;
+			r.luastate = nullptr;
 			return *this;
 		}
 
-		reference& operator=(const reference& o) noexcept {
-			if (valid()) {
-				deref();
+		reference& operator=(const reference& r) noexcept {
+			if (r.ref == LUA_REFNIL) {
+				ref = LUA_REFNIL;
+				return *this;
+			}
+			if (r.ref == LUA_NOREF || lua_state() == nullptr) {
+				ref = LUA_NOREF;
+				return *this;
+			}
+			if (detail::xmovable(lua_state(), r.lua_state())) {
+				r.push(lua_state());
+				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+				return *this;
 			}
 
-			luastate = o.luastate;
-			ref = o.copy();
+			ref = r.copy();
 			return *this;
 		}
 

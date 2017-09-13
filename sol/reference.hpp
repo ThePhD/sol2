@@ -167,40 +167,54 @@ namespace sol {
 		}
 		reference(lua_State* L, const reference& r) noexcept
 		: luastate(L) {
-			if (r.ref == LUA_NOREF) {
+			if (r.ref == LUA_REFNIL) {
+				ref = LUA_REFNIL;
+				return;
+			}
+			if (r.ref == LUA_NOREF || lua_state() == nullptr) {
 				ref = LUA_NOREF;
 				return;
 			}
-			int p = r.push();
-			if (r.lua_state() != luastate) {
-				lua_xmove(r.lua_state(), L, p);
+			if (detail::xmovable(lua_state(), r.lua_state())) {
+				r.push(lua_state());
+				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+				return;
 			}
-			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+			ref = r.copy();
 		}
 		reference(lua_State* L, reference&& r) noexcept
 		: luastate(L) {
-			if (r.ref == LUA_NOREF) {
+			if (r.ref == LUA_REFNIL) {
+				ref = LUA_REFNIL;
+				return;
+			}
+			if (r.ref == LUA_NOREF || lua_state() == nullptr) {
 				ref = LUA_NOREF;
 				return;
 			}
-			if (r.lua_state() != luastate) {
-				int p = r.push();
-				lua_xmove(r.lua_state(), L, p);
+			if (detail::xmovable(lua_state(), r.lua_state())) {
+				r.push(lua_state());
 				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+				return;
 			}
-			else {
-				ref = r.ref;
-				r.luastate = nullptr;
-				r.ref = LUA_NOREF;
-			}
+			ref = r.ref;
+			r.ref = LUA_NOREF;
+			r.luastate = nullptr;
 		}
 		reference(lua_State* L, const stack_reference& r) noexcept
 		: luastate(L) {
-			if (!r.valid()) {
+			if (lua_state() == nullptr || r.lua_state() == nullptr || r.get_type() == type::none) {
 				ref = LUA_NOREF;
 				return;
 			}
-			r.push(luastate);
+			if (r.get_type() == type::nil) {
+				ref = LUA_REFNIL;
+				return;
+			}
+			if (lua_state() != r.lua_state() && !detail::xmovable(lua_state(), r.lua_state())) {
+				return;
+			}
+			r.push(lua_state());
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
 		reference(lua_State* L, int index = -1) noexcept
@@ -231,26 +245,43 @@ namespace sol {
 			o.ref = LUA_NOREF;
 		}
 
-		reference& operator=(reference&& o) noexcept {
-			if (valid()) {
-				deref();
+		reference& operator=(reference&& r) noexcept {
+			if (r.ref == LUA_REFNIL) {
+				ref = LUA_REFNIL;
+				return *this;
 			}
-			luastate = o.luastate;
-			ref = o.ref;
+			if (r.ref == LUA_NOREF || lua_state() == nullptr) {
+				ref = LUA_NOREF;
+				return *this;
+			}
+			if (detail::xmovable(lua_state(), r.lua_state())) {
+				r.push(lua_state());
+				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+				return *this;
+			}
 
-			o.luastate = nullptr;
-			o.ref = LUA_NOREF;
-
+			ref = r.ref;
+			r.ref = LUA_NOREF;
+			r.luastate = nullptr;
 			return *this;
 		}
 
-		reference& operator=(const reference& o) noexcept {
-			if (valid()) {
-				deref();
+		reference& operator=(const reference& r) noexcept {
+			if (r.ref == LUA_REFNIL) {
+				ref = LUA_REFNIL;
+				return *this;
+			}
+			if (r.ref == LUA_NOREF || lua_state() == nullptr) {
+				ref = LUA_NOREF;
+				return *this;
+			}
+			if (detail::xmovable(lua_state(), r.lua_state())) {
+				r.push(lua_state());
+				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+				return *this;
 			}
 
-			luastate = o.luastate;
-			ref = o.copy();
+			ref = r.copy();
 			return *this;
 		}
 
