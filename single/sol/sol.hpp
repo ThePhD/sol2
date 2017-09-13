@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-13 15:37:13.293030 UTC
-// This header was generated with sol v2.18.3 (revision 7ff3a39)
+// Generated 2017-09-13 15:45:14.036087 UTC
+// This header was generated with sol v2.18.3 (revision a068c4e)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5916,8 +5916,9 @@ namespace sol {
 		if (L == nullptr)
 			return backup_if_unsupported;
 		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_MAINTHREAD);
-		L = lua_tothread(L, -1);
-		return L;
+		lua_State* Lmain = lua_tothread(L, -1);
+		lua_pop(L, 1);
+		return Lmain;
 #endif // Lua 5.2+ has the main thread getter
 	}
 

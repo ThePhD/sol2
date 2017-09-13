@@ -141,8 +141,9 @@ namespace sol {
 		if (L == nullptr)
 			return backup_if_unsupported;
 		lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_MAINTHREAD);
-		L = lua_tothread(L, -1);
-		return L;
+		lua_State* Lmain = lua_tothread(L, -1);
+		lua_pop(L, 1);
+		return Lmain;
 #endif // Lua 5.2+ has the main thread getter
 	}
 
