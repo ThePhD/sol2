@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-14 04:35:07.305798 UTC
-// This header was generated with sol v2.18.3 (revision 72143a4)
+// Generated 2017-09-14 04:46:07.441029 UTC
+// This header was generated with sol v2.18.3 (revision d3620c9)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -12973,14 +12973,14 @@ namespace sol {
 	template <bool b>
 	template <typename Super>
 	basic_reference<b>& basic_reference<b>::operator=(proxy_base<Super>&& r) {
-		*this = r.template operator basic_reference<b>();
+		this->operator=(r.operator basic_reference<b>());
 		return *this;
 	}
 
 	template <bool b>
 	template <typename Super>
 	basic_reference<b>& basic_reference<b>::operator=(const proxy_base<Super>& r) {
-		*this = r.template operator basic_reference<b>();
+		this->operator=(r.operator basic_reference<b>());
 		return *this;
 	}
 
