@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-14 12:45:28.604426 UTC
-// This header was generated with sol v2.18.3 (revision ed341e0)
+// Generated 2017-09-14 12:49:46.096117 UTC
+// This header was generated with sol v2.18.3 (revision 1fc0027)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -18803,7 +18803,7 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
-			stack::check<basic_thread>(L, -1, handler);
+			stack::check<basic_thread>(lua_state(), -1, handler);
 #endif // Safety
 		}
 		basic_thread(const stack_reference& r)
@@ -18818,14 +18818,14 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
-			stack::check<basic_thread>(L, -1, handler);
+			stack::check<basic_thread>(lua_state(), -1, handler);
 #endif // Safety
 		}
 		basic_thread(lua_State* L, int index = -1)
 		: base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};
-			stack::check<basic_thread>(L, -1, handler);
+			stack::check<basic_thread>(L, index, handler);
 #endif // Safety
 		}
 		basic_thread(lua_State* L, ref_index index)

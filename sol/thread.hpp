@@ -105,7 +105,7 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
-			stack::check<basic_thread>(L, -1, handler);
+			stack::check<basic_thread>(lua_state(), -1, handler);
 #endif // Safety
 		}
 		basic_thread(const stack_reference& r)
@@ -120,14 +120,14 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
-			stack::check<basic_thread>(L, -1, handler);
+			stack::check<basic_thread>(lua_state(), -1, handler);
 #endif // Safety
 		}
 		basic_thread(lua_State* L, int index = -1)
 		: base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};
-			stack::check<basic_thread>(L, -1, handler);
+			stack::check<basic_thread>(L, index, handler);
 #endif // Safety
 		}
 		basic_thread(lua_State* L, ref_index index)
