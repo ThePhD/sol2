@@ -90,9 +90,20 @@ namespace sol {
 			stack::check<basic_environment>(L, -1, handler);
 #endif // Safety
 		}
-		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_environment>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_environment>>, meta::neg<std::is_same<base_type, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_environment(T&& r) noexcept
 		: base_t(detail::no_safety, std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			if (!is_environment<meta::unqualified_t<T>>::value) {
+				auto pp = stack::push_pop(*this);
+				constructor_handler handler{};
+				stack::check<basic_environment>(lua_state(), -1, handler);
+			}
+#endif // Safety
+		}
+		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		basic_environment(lua_State* L, T&& r) noexcept
+			: base_t(detail::no_safety, L, std::forward<T>(r)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_environment<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);

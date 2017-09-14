@@ -87,9 +87,14 @@ namespace sol {
 		basic_coroutine(stack_reference&& r) noexcept
 		: basic_coroutine(r.lua_state(), r.stack_index()) {
 		}
-		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
+		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_coroutine(lua_State* L, T&& r)
 		: base_t(L, std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			constructor_handler handler{};
+			stack::check<basic_coroutine>(lua_state(), -1, handler);
+#endif // Safety
 		}
 		basic_coroutine(lua_State* L, int index = -1)
 		: base_t(L, index) {

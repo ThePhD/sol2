@@ -76,6 +76,7 @@ namespace sol {
 	using stack_aligned_unsafe_function = basic_function<stack_reference, true>;
 	using stack_aligned_safe_function = basic_protected_function<stack_reference, true, reference>;
 	using protected_function = safe_function;
+	using main_protected_function = main_safe_function;
 	using stack_protected_function = stack_safe_function;
 	using stack_aligned_protected_function = stack_aligned_safe_function;
 #ifdef SOL_SAFE_FUNCTIONS

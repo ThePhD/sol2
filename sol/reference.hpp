@@ -312,8 +312,9 @@ namespace sol {
 		}
 		basic_reference(lua_State* L, int index = -1) noexcept
 		: luastate(detail::pick_main_thread<main_only>(L, L)) {
-			lua_pushvalue(lua_state(), index);
-			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+			// use L to stick with that state's execution stack
+			lua_pushvalue(L, index);
+			ref = luaL_ref(L, LUA_REGISTRYINDEX);
 		}
 		basic_reference(lua_State* L, ref_index index) noexcept
 		: luastate(detail::pick_main_thread<main_only>(L, L)) {

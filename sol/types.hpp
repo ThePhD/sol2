@@ -924,11 +924,11 @@ namespace sol {
 		template <typename Base, bool aligned, typename Handler>
 		struct lua_type_of<basic_protected_function<Base, aligned, Handler>> : std::integral_constant<type, type::function> {};
 
-		template <>
-		struct lua_type_of<coroutine> : std::integral_constant<type, type::function> {};
+		template <typename Base>
+		struct lua_type_of<basic_coroutine<Base>> : std::integral_constant<type, type::function> {};
 
-		template <>
-		struct lua_type_of<thread> : std::integral_constant<type, type::thread> {};
+		template <typename Base>
+		struct lua_type_of<basic_thread<Base>> : std::integral_constant<type, type::thread> {};
 
 		template <typename Signature>
 		struct lua_type_of<std::function<Signature>> : std::integral_constant<type, type::function> {};

@@ -67,7 +67,7 @@ namespace sol {
 
 	public:
 		basic_object() noexcept = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_object>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_object>>, meta::neg<std::is_same<base_type, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_object(T&& r)
 		: base_t(std::forward<T>(r)) {
 		}

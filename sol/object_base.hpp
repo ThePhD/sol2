@@ -70,12 +70,12 @@ namespace sol {
 
 		template <typename T>
 		decltype(auto) as() const {
-			return as_stack<T>(std::is_same<base_t, stack_reference>());
+			return as_stack<T>(is_stack_based<base_t>());
 		}
 
 		template <typename T>
 		bool is() const {
-			return is_stack<T>(std::is_same<base_t, stack_reference>());
+			return is_stack<T>(is_stack_based<base_t>());
 		}
 	};
 } // namespace sol

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-14 04:46:07.441029 UTC
-// This header was generated with sol v2.18.3 (revision d3620c9)
+// Generated 2017-09-14 12:45:28.604426 UTC
+// This header was generated with sol v2.18.3 (revision ed341e0)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -194,6 +194,7 @@ namespace sol {
 	using stack_aligned_unsafe_function = basic_function<stack_reference, true>;
 	using stack_aligned_safe_function = basic_protected_function<stack_reference, true, reference>;
 	using protected_function = safe_function;
+	using main_protected_function = main_safe_function;
 	using stack_protected_function = stack_safe_function;
 	using stack_aligned_protected_function = stack_aligned_safe_function;
 #ifdef SOL_SAFE_FUNCTIONS
@@ -5215,11 +5216,11 @@ namespace sol {
 		template <typename Base, bool aligned, typename Handler>
 		struct lua_type_of<basic_protected_function<Base, aligned, Handler>> : std::integral_constant<type, type::function> {};
 
-		template <>
-		struct lua_type_of<coroutine> : std::integral_constant<type, type::function> {};
+		template <typename Base>
+		struct lua_type_of<basic_coroutine<Base>> : std::integral_constant<type, type::function> {};
 
-		template <>
-		struct lua_type_of<thread> : std::integral_constant<type, type::thread> {};
+		template <typename Base>
+		struct lua_type_of<basic_thread<Base>> : std::integral_constant<type, type::thread> {};
 
 		template <typename Signature>
 		struct lua_type_of<std::function<Signature>> : std::integral_constant<type, type::function> {};
@@ -6152,8 +6153,9 @@ namespace sol {
 		}
 		basic_reference(lua_State* L, int index = -1) noexcept
 		: luastate(detail::pick_main_thread<main_only>(L, L)) {
-			lua_pushvalue(lua_state(), index);
-			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+			// use L to stick with that state's execution stack
+			lua_pushvalue(L, index);
+			ref = luaL_ref(L, LUA_REGISTRYINDEX);
 		}
 		basic_reference(lua_State* L, ref_index index) noexcept
 		: luastate(detail::pick_main_thread<main_only>(L, L)) {
@@ -12203,7 +12205,7 @@ namespace sol {
 		using base_t::lua_state;
 
 		basic_function() = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_function>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_t, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_function>>, meta::neg<std::is_same<base_t, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_function(T&& r) noexcept
 		: base_t(std::forward<T>(r)) {
 #ifdef SOL_CHECK_ARGUMENTS
@@ -12224,9 +12226,14 @@ namespace sol {
 		basic_function(stack_reference&& r)
 		: basic_function(r.lua_state(), r.stack_index()) {
 		}
-		template <typename T, meta::enable_any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_function(lua_State* L, T&& r)
 		: base_t(L, std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			constructor_handler handler{};
+			stack::check<basic_function>(lua_state(), -1, handler);
+#endif // Safety
 		}
 		basic_function(lua_State* L, int index = -1)
 		: base_t(L, index) {
@@ -12240,7 +12247,7 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
-			stack::check<basic_function>(L, -1, handler);
+			stack::check<basic_function>(lua_state(), -1, handler);
 #endif // Safety
 		}
 
@@ -12555,7 +12562,7 @@ namespace sol {
 		handler_t error_handler;
 
 		basic_protected_function() = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_protected_function>>, meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_t, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_protected_function>>, meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>>, meta::neg<std::is_same<base_t, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_protected_function(T&& r) noexcept
 		: base_t(std::forward<T>(r)), error_handler(get_default_handler(r.lua_state())) {
 #ifdef SOL_CHECK_ARGUMENTS
@@ -12615,6 +12622,11 @@ namespace sol {
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_protected_function(lua_State* L, T&& r, handler_t eh)
 		: base_t(L, std::forward<T>(r)), error_handler(std::move(eh)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			constructor_handler handler{};
+			stack::check<basic_protected_function>(lua_state(), -1, handler);
+#endif // Safety
 		}
 
 		basic_protected_function(lua_State* L, int index = -1)
@@ -12624,7 +12636,7 @@ namespace sol {
 		: base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};
-			stack::check<basic_protected_function>(lua_state(), index, handler);
+			stack::check<basic_protected_function>(L, index, handler);
 #endif // Safety
 		}
 		basic_protected_function(lua_State* L, absolute_index index)
@@ -12634,7 +12646,7 @@ namespace sol {
 		: base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};
-			stack::check<basic_protected_function>(lua_state(), index, handler);
+			stack::check<basic_protected_function>(L, index, handler);
 #endif // Safety
 		}
 		basic_protected_function(lua_State* L, raw_index index)
@@ -12644,7 +12656,7 @@ namespace sol {
 		: base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};
-			stack::check<basic_protected_function>(lua_state(), index, handler);
+			stack::check<basic_protected_function>(L, index, handler);
 #endif // Safety
 		}
 		basic_protected_function(lua_State* L, ref_index index)
@@ -12655,7 +12667,7 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
-			stack::check<basic_protected_function>(L, -1, handler);
+			stack::check<basic_protected_function>(lua_state(), -1, handler);
 #endif // Safety
 		}
 
@@ -13073,12 +13085,12 @@ namespace sol {
 
 		template <typename T>
 		decltype(auto) as() const {
-			return as_stack<T>(std::is_same<base_t, stack_reference>());
+			return as_stack<T>(is_stack_based<base_t>());
 		}
 
 		template <typename T>
 		bool is() const {
-			return is_stack<T>(std::is_same<base_t, stack_reference>());
+			return is_stack<T>(is_stack_based<base_t>());
 		}
 	};
 } // namespace sol
@@ -13096,7 +13108,7 @@ namespace sol {
 		using base_t::lua_state;
 
 		basic_userdata() noexcept = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_userdata>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_userdata>>, meta::neg<std::is_same<base_t, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_userdata(T&& r) noexcept
 		: base_t(std::forward<T>(r)) {
 #ifdef SOL_CHECK_ARGUMENTS
@@ -13119,6 +13131,11 @@ namespace sol {
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_userdata(lua_State* L, T&& r)
 		: base_t(L, std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			constructor_handler handler{};
+			stack::check<basic_userdata>(L, -1, handler);
+#endif // Safety
 		}
 		basic_userdata(lua_State* L, int index = -1)
 		: base_t(detail::no_safety, L, index) {
@@ -13132,7 +13149,7 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
-			stack::check<basic_userdata>(L, index, handler);
+			stack::check<basic_userdata>(L, -1, handler);
 #endif // Safety
 		}
 	};
@@ -13145,7 +13162,7 @@ namespace sol {
 		using base_t::lua_state;
 
 		basic_lightuserdata() noexcept = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_lightuserdata>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_lightuserdata>>, meta::neg<std::is_same<base_t, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_lightuserdata(T&& r) noexcept
 		: base_t(std::forward<T>(r)) {
 #ifdef SOL_CHECK_ARGUMENTS
@@ -13165,9 +13182,14 @@ namespace sol {
 		basic_lightuserdata(stack_reference&& r)
 		: basic_lightuserdata(r.lua_state(), r.stack_index()) {
 		}
-		template <typename T, meta::enable_any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_lightuserdata(lua_State* L, T&& r)
 		: basic_lightuserdata(L, std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			constructor_handler handler{};
+			stack::check<basic_lightuserdata>(lua_state(), -1, handler);
+#endif // Safety
 		}
 		basic_lightuserdata(lua_State* L, int index = -1)
 		: base_t(L, index) {
@@ -13181,7 +13203,7 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
-			stack::check<basic_lightuserdata>(L, index, handler);
+			stack::check<basic_lightuserdata>(lua_state(), index, handler);
 #endif // Safety
 		}
 	};
@@ -13658,7 +13680,7 @@ namespace sol {
 
 	public:
 		basic_object() noexcept = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_object>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_object>>, meta::neg<std::is_same<base_type, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_object(T&& r)
 		: base_t(std::forward<T>(r)) {
 		}
@@ -17183,11 +17205,11 @@ namespace sol {
 		template <bool raw, typename Pairs, std::size_t... I>
 		void tuple_set(std::index_sequence<I...>, Pairs&& pairs) {
 			auto pp = stack::push_pop < top_level && (is_global<decltype(detail::forward_get<I * 2>(pairs))...>::value) > (*this);
-			void(detail::swallow{(stack::set_field<top_level, raw>(base_t::lua_state(),
-								  detail::forward_get<I * 2>(pairs),
-								  detail::forward_get<I * 2 + 1>(pairs),
-								  lua_gettop(base_t::lua_state())),
-				0)...});
+			void(detail::swallow{ (stack::set_field<top_level, raw>(base_t::lua_state(),
+								   detail::forward_get<I * 2>(pairs),
+								   detail::forward_get<I * 2 + 1>(pairs),
+								   lua_gettop(base_t::lua_state())),
+				0)... });
 		}
 
 		template <bool global, bool raw, typename T, typename Key>
@@ -17256,14 +17278,20 @@ namespace sol {
 		basic_table_core(detail::no_safety_tag, lua_State* L, ref_index index)
 		: base_t(L, index) {
 		}
-		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_table_core(detail::no_safety_tag, T&& r) noexcept
 		: base_t(std::forward<T>(r)) {
+		}
+		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		basic_table_core(detail::no_safety_tag, lua_State*L, T&& r) noexcept
+		: base_t(L, std::forward<T>(r)) {
 		}
 
 	public:
 		typedef basic_table_iterator<base_type> iterator;
 		typedef iterator const_iterator;
+
+		using base_t::lua_state;
 
 		basic_table_core() noexcept = default;
 		basic_table_core(const basic_table_core&) = default;
@@ -17278,7 +17306,12 @@ namespace sol {
 		}
 		template <typename T, meta::enable_any<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_table_core(lua_State* L, T&& r)
-		: basic_table_core(L, std::forward<T>(r)) {
+		: base_t(L, std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			constructor_handler handler{};
+			stack::check<basic_table_core>(lua_state(), -1, handler);
+#endif // Safety
 		}
 		basic_table_core(lua_State* L, new_table nt)
 		: base_t(L, (lua_createtable(L, nt.sequence_hint, nt.map_hint), -1)) {
@@ -17298,10 +17331,10 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
-			stack::check<basic_table_core>(L, -1, handler);
+			stack::check<basic_table_core>(lua_state(), -1, handler);
 #endif // Safety
 		}
-		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_table_core(T&& r) noexcept
 		: basic_table_core(detail::no_safety, std::forward<T>(r)) {
 #ifdef SOL_CHECK_ARGUMENTS
@@ -17570,8 +17603,8 @@ namespace sol {
 		template <typename... Args>
 		basic_table_core& add(Args&&... args) {
 			auto pp = stack::push_pop(*this);
-			(void)detail::swallow{0,
-				(stack::set_ref(base_t::lua_state(), std::forward<Args>(args)), 0)...};
+			(void)detail::swallow{ 0,
+				(stack::set_ref(base_t::lua_state(), std::forward<Args>(args)), 0)... };
 			return *this;
 		}
 
@@ -17744,9 +17777,20 @@ namespace sol {
 			stack::check<basic_environment>(L, -1, handler);
 #endif // Safety
 		}
-		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_environment>>, meta::neg<std::is_same<base_type, stack_reference>>, std::is_base_of<base_type, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_environment>>, meta::neg<std::is_same<base_type, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_environment(T&& r) noexcept
 		: base_t(detail::no_safety, std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			if (!is_environment<meta::unqualified_t<T>>::value) {
+				auto pp = stack::push_pop(*this);
+				constructor_handler handler{};
+				stack::check<basic_environment>(lua_state(), -1, handler);
+			}
+#endif // Safety
+		}
+		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		basic_environment(lua_State* L, T&& r) noexcept
+			: base_t(detail::no_safety, L, std::forward<T>(r)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_environment<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
@@ -18753,9 +18797,14 @@ namespace sol {
 		basic_thread() noexcept = default;
 		basic_thread(const basic_thread&) = default;
 		basic_thread(basic_thread&&) = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_thread>>, std::is_base_of<base_t, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_thread>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_thread(T&& r)
 		: base_t(std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			constructor_handler handler{};
+			stack::check<basic_thread>(L, -1, handler);
+#endif // Safety
 		}
 		basic_thread(const stack_reference& r)
 		: basic_thread(r.lua_state(), r.stack_index()){};
@@ -18763,16 +18812,20 @@ namespace sol {
 		: basic_thread(r.lua_state(), r.stack_index()){};
 		basic_thread& operator=(const basic_thread&) = default;
 		basic_thread& operator=(basic_thread&&) = default;
-		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
+		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_thread(lua_State* L, T&& r)
-		: basic_thread(L, std::forward<T>(r)) {
+		: base_t(L, std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			constructor_handler handler{};
+			stack::check<basic_thread>(L, -1, handler);
+#endif // Safety
 		}
 		basic_thread(lua_State* L, int index = -1)
 		: base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
-			stack::check<basic_thread>(lua_state(), -1, handler);
+			stack::check<basic_thread>(L, -1, handler);
 #endif // Safety
 		}
 		basic_thread(lua_State* L, ref_index index)
@@ -18987,9 +19040,14 @@ namespace sol {
 		basic_coroutine(stack_reference&& r) noexcept
 		: basic_coroutine(r.lua_state(), r.stack_index()) {
 		}
-		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
+		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_coroutine(lua_State* L, T&& r)
 		: base_t(L, std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			constructor_handler handler{};
+			stack::check<basic_coroutine>(lua_state(), -1, handler);
+#endif // Safety
 		}
 		basic_coroutine(lua_State* L, int index = -1)
 		: base_t(L, index) {

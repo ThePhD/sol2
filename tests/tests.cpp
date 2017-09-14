@@ -282,6 +282,60 @@ TEST_CASE("object/conversions", "make sure all basic reference types can be made
 	REQUIRE(oenv.get_type() == sol::type::table);
 }
 
+TEST_CASE("object/main_* conversions", "make sure all basic reference types can be made into objects") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	struct d {};
+
+	lua.safe_script("function f () print('bark') end");
+	lua["d"] = d{};
+	lua["l"] = static_cast<void*>(nullptr);
+
+	sol::main_table t = lua.create_table();
+	sol::main_table t2(lua, sol::create);
+	sol::thread th = sol::thread::create(lua);
+	sol::main_function f = lua["f"];
+	sol::main_protected_function pf = lua["f"];
+	sol::main_userdata ud = lua["d"];
+	sol::main_lightuserdata lud = lua["l"];
+	sol::main_environment env(lua, sol::create);
+
+	sol::main_object ot(t);
+	sol::main_object ot2(t2);
+	sol::main_object oteq = ot;
+	sol::main_object oth(th);
+	sol::main_object of(f);
+	sol::main_object opf(pf);
+	sol::main_object od(ud);
+	sol::main_object ol(lud);
+	sol::main_object oenv(env);
+
+	auto oni = sol::make_object(lua, 50);
+	auto ond = sol::make_object(lua, 50.0);
+
+	std::string somestring = "look at this text isn't it nice";
+	auto osl = sol::make_object(lua, "Bark bark bark");
+	auto os = sol::make_object(lua, somestring);
+
+	auto omn = sol::make_object(lua, sol::nil);
+
+	REQUIRE(ot.get_type() == sol::type::table);
+	REQUIRE(ot2.get_type() == sol::type::table);
+	REQUIRE(oteq.get_type() == sol::type::table);
+	REQUIRE(oth.get_type() == sol::type::thread);
+	REQUIRE(of.get_type() == sol::type::function);
+	REQUIRE(opf.get_type() == sol::type::function);
+	REQUIRE(od.get_type() == sol::type::userdata);
+	REQUIRE(ol.get_type() == sol::type::lightuserdata);
+	REQUIRE(oni.get_type() == sol::type::number);
+	REQUIRE(ond.get_type() == sol::type::number);
+	REQUIRE(osl.get_type() == sol::type::string);
+	REQUIRE(os.get_type() == sol::type::string);
+	REQUIRE(omn.get_type() == sol::type::nil);
+	REQUIRE(oenv.get_type() == sol::type::table);
+}
+
 TEST_CASE("feature/indexing overrides", "make sure index functions can be overridden on types") {
 	struct PropertySet {
 		sol::object get_property_lua(const char* name, sol::this_state s)

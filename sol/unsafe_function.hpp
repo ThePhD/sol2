@@ -66,7 +66,7 @@ namespace sol {
 		using base_t::lua_state;
 
 		basic_function() = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_function>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_t, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_function>>, meta::neg<std::is_same<base_t, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_function(T&& r) noexcept
 		: base_t(std::forward<T>(r)) {
 #ifdef SOL_CHECK_ARGUMENTS
@@ -87,9 +87,14 @@ namespace sol {
 		basic_function(stack_reference&& r)
 		: basic_function(r.lua_state(), r.stack_index()) {
 		}
-		template <typename T, meta::enable_any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_function(lua_State* L, T&& r)
 		: base_t(L, std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			constructor_handler handler{};
+			stack::check<basic_function>(lua_state(), -1, handler);
+#endif // Safety
 		}
 		basic_function(lua_State* L, int index = -1)
 		: base_t(L, index) {
@@ -103,7 +108,7 @@ namespace sol {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
-			stack::check<basic_function>(L, -1, handler);
+			stack::check<basic_function>(lua_state(), -1, handler);
 #endif // Safety
 		}
 

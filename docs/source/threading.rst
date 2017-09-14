@@ -20,6 +20,13 @@ You can mitigate some of the pressure of using coroutines and threading by using
 
 Furthermore, for every single ``sol::reference`` derived type, there exists a version prefixed with the word ``main_``, such as ``sol::main_table``, ``sol::main_function``, ``sol::main_object`` and similar. These classes, on construction, assignment and other operations, forcibly obtain the ``lua_State*`` associated with the main thread, if possible. Using these classes will allow your code to be immune when a wrapped coroutine or a lua thread is set to ``nil`` and then garbage-collected.
 
+.. note::
+
+	This does **not** provide immunity from typical multithreading issues in C++, such as synchronized access and the like. Lua's coroutines are cooperative in nature and concurrent execution with things like ``std::thread`` and similar still need to follow good C++ practices for multi threading.
+
+
+Here's an example of explicit state transferring below:
+
 .. code-block:: cpp 
 	:caption: transfer from state function
 	:name: state-transfer
