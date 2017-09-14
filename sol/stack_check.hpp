@@ -185,6 +185,15 @@ namespace stack {
 	};
 
 	template <typename C>
+	struct checker<this_main_state, type::poly, C> {
+		template <typename Handler>
+		static bool check(lua_State*, int, Handler&&, record& tracking) {
+			tracking.use(0);
+			return true;
+		}
+	};
+
+	template <typename C>
 	struct checker<this_environment, type::poly, C> {
 		template <typename Handler>
 		static bool check(lua_State*, int, Handler&&, record& tracking) {

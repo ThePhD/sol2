@@ -77,7 +77,7 @@ namespace sol {
 			}
 			auto fit = functions.find(accessorkey);
 			if (fit != functions.cend()) {
-				sol::object& func = fit->second;
+				object& func = fit->second;
 				if (is_index) {
 					return stack::push(L, func);
 				}
@@ -525,7 +525,7 @@ namespace sol {
 					stack_reference metabehind(L, -1);
 					stack::set_field(L, meta_function::type, type_table, metabehind.stack_index());
 					if (umx.callconstructfunc.valid()) {
-						stack::set_field(L, sol::meta_function::call_function, umx.callconstructfunc, metabehind.stack_index());
+						stack::set_field(L, meta_function::call_function, umx.callconstructfunc, metabehind.stack_index());
 					}
 					if (umx.secondarymeta) {
 						stack::set_field(L, meta_function::index,
@@ -560,7 +560,7 @@ namespace sol {
 					stack_reference metabehind(L, -1);
 					stack::set_field(L, meta_function::type, type_table, metabehind.stack_index());
 					if (umx.callconstructfunc.valid()) {
-						stack::set_field(L, sol::meta_function::call_function, umx.callconstructfunc, metabehind.stack_index());
+						stack::set_field(L, meta_function::call_function, umx.callconstructfunc, metabehind.stack_index());
 					}
 					// use indexing function
 					stack::set_field(L, meta_function::index,

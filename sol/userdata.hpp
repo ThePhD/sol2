@@ -54,7 +54,7 @@ namespace sol {
 		basic_userdata(stack_reference&& r)
 		: basic_userdata(r.lua_state(), r.stack_index()) {
 		}
-		template <typename T, meta::enable_any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_userdata(lua_State* L, T&& r)
 		: base_t(L, std::forward<T>(r)) {
 		}

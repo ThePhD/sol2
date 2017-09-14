@@ -29,6 +29,10 @@ namespace sol {
 	struct lua_thread_state {
 		lua_State* L;
 
+		lua_thread_state(lua_State* Ls)
+		: L(Ls) {
+		}
+
 		lua_State* lua_state() const noexcept {
 			return L;
 		}
@@ -53,7 +57,7 @@ namespace sol {
 		struct getter<lua_thread_state> {
 			lua_thread_state get(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
-				lua_thread_state lts{lua_tothread(L, index)};
+				lua_thread_state lts( lua_tothread(L, index) );
 				return lts;
 			}
 		};
@@ -62,8 +66,8 @@ namespace sol {
 		struct check_getter<lua_thread_state> {
 			template <typename Handler>
 			optional<lua_thread_state> get(lua_State* L, int index, Handler&& handler, record& tracking) {
-				lua_thread_state lts{lua_tothread(L, index)};
-				if (lts.L == nullptr) {
+				lua_thread_state lts( lua_tothread(L, index) );
+				if (lts.lua_state() == nullptr) {
 					handler(L, index, type::thread, type_of(L, index), "value is not a valid thread type");
 					return nullopt;
 				}
@@ -87,50 +91,59 @@ namespace sol {
 		}
 	} // namespace stack
 
-	class thread : public reference {
+	template <typename base_t>
+	class basic_thread : public base_t {
 	public:
-		thread() noexcept = default;
-		thread(const thread&) = default;
-		thread(thread&&) = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, thread>>, std::is_base_of<reference, meta::unqualified_t<T>>> = meta::enabler>
-		thread(T&& r)
-		: reference(std::forward<T>(r)) {
+		using base_t::lua_state;
+
+		basic_thread() noexcept = default;
+		basic_thread(const basic_thread&) = default;
+		basic_thread(basic_thread&&) = default;
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_thread>>, std::is_base_of<base_t, meta::unqualified_t<T>>> = meta::enabler>
+		basic_thread(T&& r)
+		: base_t(std::forward<T>(r)) {
 		}
-		thread(const stack_reference& r)
-		: thread(r.lua_state(), r.stack_index()){};
-		thread(stack_reference&& r)
-		: thread(r.lua_state(), r.stack_index()){};
-		thread& operator=(const thread&) = default;
-		thread& operator=(thread&&) = default;
-		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<T, ref_index>>> = meta::enabler>
-		thread(lua_State* L, T&& r)
-		: thread(L, sol::ref_index(r.registry_index())) {
+		basic_thread(const stack_reference& r)
+		: basic_thread(r.lua_state(), r.stack_index()){};
+		basic_thread(stack_reference&& r)
+		: basic_thread(r.lua_state(), r.stack_index()){};
+		basic_thread& operator=(const basic_thread&) = default;
+		basic_thread& operator=(basic_thread&&) = default;
+		template <typename T, meta::enable<meta::neg<is_lua_index<meta::unqualified_t<T>>>> = meta::enabler>
+		basic_thread(lua_State* L, T&& r)
+		: basic_thread(L, std::forward<T>(r)) {
 		}
-		thread(lua_State* L, int index = -1)
-		: reference(L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
-			type_assert(L, index, type::thread);
-#endif // Safety
-		}
-		thread(lua_State* L, ref_index index)
-		: reference(L, index) {
+		basic_thread(lua_State* L, int index = -1)
+		: base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
-			type_assert(L, -1, type::thread);
+			constructor_handler handler{};
+			stack::check<basic_thread>(lua_state(), -1, handler);
 #endif // Safety
 		}
-		thread(lua_State* L, lua_State* actualthread)
-		: thread(L, lua_thread_state{actualthread}) {
-		}
-		thread(lua_State* L, sol::this_state actualthread)
-		: thread(L, lua_thread_state{actualthread.L}) {
-		}
-		thread(lua_State* L, lua_thread_state actualthread)
-		: reference(L, -stack::push(L, actualthread)) {
+		basic_thread(lua_State* L, ref_index index)
+		: base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
-			type_assert(L, -1, type::thread);
+			auto pp = stack::push_pop(*this);
+			constructor_handler handler{};
+			stack::check<basic_thread>(lua_state(), -1, handler);
 #endif // Safety
-			lua_pop(L, 1);
+		}
+		basic_thread(lua_State* L, lua_State* actualthread)
+		: basic_thread(L, lua_thread_state{ actualthread }) {
+		}
+		basic_thread(lua_State* L, this_state actualthread)
+		: basic_thread(L, lua_thread_state{ actualthread.L }) {
+		}
+		basic_thread(lua_State* L, lua_thread_state actualthread)
+		: base_t(L, -stack::push(L, actualthread)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			constructor_handler handler{};
+			stack::check<basic_thread>(lua_state(), -1, handler);
+#endif // Safety
+			if (!is_stack_based<base_t>::value) {
+				lua_pop(lua_state(), 1);
+			}
 		}
 
 		state_view state() const {
@@ -153,23 +166,28 @@ namespace sol {
 			lua_State* lthread = thread_state();
 			thread_status lstat = static_cast<thread_status>(lua_status(lthread));
 			if (lstat != thread_status::ok && lua_gettop(lthread) == 0) {
-				// No thing on the thread's stack means its dead
+				// No thing on the basic_thread's stack means its dead
 				return thread_status::dead;
 			}
 			return lstat;
 		}
 
-		thread create() {
+		basic_thread create() {
 			return create(lua_state());
 		}
 
-		static thread create(lua_State* L) {
+		static basic_thread create(lua_State* L) {
 			lua_newthread(L);
-			thread result(L);
-			lua_pop(L, 1);
+			basic_thread result(L);
+			if (!is_stack_based<base_t>::value) {
+				lua_pop(L, 1);
+			}
 			return result;
 		}
 	};
+
+	typedef basic_thread<reference> thread;
+	typedef basic_thread<stack_reference> stack_thread;
 } // namespace sol
 
 #endif // SOL_THREAD_HPP

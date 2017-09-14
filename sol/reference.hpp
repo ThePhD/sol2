@@ -152,10 +152,23 @@ namespace sol {
 		} const global_{};
 		struct no_safety_tag {
 		} const no_safety{};
+
+		template <bool b>
+		inline lua_State* pick_main_thread(lua_State* L, lua_State* backup_if_unsupported = nullptr) {
+			(void)L;
+			(void)backup_if_unsupported;
+			if (b) {
+				return main_thread(L, backup_if_unsupported);
+			}
+			return L;
+		}
 	} // namespace detail
 
-	class reference {
+	template <bool main_only = false>
+	class basic_reference {
 	private:
+		template <bool o_main_only>
+		friend class basic_reference;
 		lua_State* luastate = nullptr; // non-owning
 		int ref = LUA_NOREF;
 
@@ -166,9 +179,58 @@ namespace sol {
 			return luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
 
+		template <bool r_main_only>
+		void copy_assign(const basic_reference<r_main_only>& r) {
+			if (valid()) {
+				deref();
+			}
+			if (r.ref == LUA_REFNIL) {
+				luastate = detail::pick_main_thread < main_only && !r_main_only >(r.lua_state(), r.lua_state());
+				ref = LUA_REFNIL;
+				return;
+			}
+			if (r.ref == LUA_NOREF) {
+				ref = LUA_NOREF;
+				return;
+			}
+			if (detail::xmovable(lua_state(), r.lua_state())) {
+				r.push(lua_state());
+				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+				return;
+			}
+			luastate = detail::pick_main_thread < main_only && !r_main_only >(r.lua_state(), r.lua_state());
+			ref = r.copy();
+		}
+
+		template <bool r_main_only>
+		void move_assign(basic_reference<r_main_only>&& r) {
+			if (valid()) {
+				deref();
+			}
+			if (r.ref == LUA_REFNIL) {
+				luastate = detail::pick_main_thread<main_only && !r_main_only>(r.lua_state(), r.lua_state());
+				ref = LUA_REFNIL;
+				return;
+			}
+			if (r.ref == LUA_NOREF) {
+				ref = LUA_NOREF;
+				return;
+			}
+			if (detail::xmovable(lua_state(), r.lua_state())) {
+				r.push(lua_state());
+				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+				return;
+			}
+
+			luastate = detail::pick_main_thread < main_only && !r_main_only >(r.lua_state(), r.lua_state());
+			ref = r.ref;
+			r.ref = LUA_NOREF;
+			r.luastate = nullptr;
+		}
+
 	protected:
-		reference(lua_State* L, detail::global_tag) noexcept
-		: luastate(L) {
+		basic_reference(lua_State* L, detail::global_tag) noexcept
+		: luastate(detail::pick_main_thread<main_only>(L, L)) {
 			lua_pushglobaltable(lua_state());
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
@@ -182,18 +244,19 @@ namespace sol {
 		}
 
 	public:
-		reference() noexcept = default;
-		reference(lua_nil_t) noexcept
-		: reference() {
+		basic_reference() noexcept = default;
+		basic_reference(lua_nil_t) noexcept
+		: basic_reference() {
 		}
-		reference(const stack_reference& r) noexcept
-		: reference(r.lua_state(), r.stack_index()) {
+		basic_reference(const stack_reference& r) noexcept
+		: basic_reference(r.lua_state(), r.stack_index()) {
 		}
-		reference(stack_reference&& r) noexcept
-		: reference(r.lua_state(), r.stack_index()) {
+		basic_reference(stack_reference&& r) noexcept
+		: basic_reference(r.lua_state(), r.stack_index()) {
 		}
-		reference(lua_State* L, const reference& r) noexcept
-		: luastate(L) {
+		template <bool r_main_only>
+		basic_reference(lua_State* L, const basic_reference<r_main_only>& r) noexcept
+		: luastate(detail::pick_main_thread<main_only>(L, L)) {
 			if (r.ref == LUA_REFNIL) {
 				ref = LUA_REFNIL;
 				return;
@@ -209,8 +272,10 @@ namespace sol {
 			}
 			ref = r.copy();
 		}
-		reference(lua_State* L, reference&& r) noexcept
-		: luastate(L) {
+
+		template <bool r_main_only>
+		basic_reference(lua_State* L, basic_reference<r_main_only>&& r) noexcept
+		: luastate(detail::pick_main_thread<main_only>(L, L)) {
 			if (r.ref == LUA_REFNIL) {
 				ref = LUA_REFNIL;
 				return;
@@ -228,8 +293,9 @@ namespace sol {
 			r.ref = LUA_NOREF;
 			r.luastate = nullptr;
 		}
-		reference(lua_State* L, const stack_reference& r) noexcept
-		: luastate(L) {
+
+		basic_reference(lua_State* L, const stack_reference& r) noexcept
+		: luastate(detail::pick_main_thread<main_only>(L, L)) {
 			if (lua_state() == nullptr || r.lua_state() == nullptr || r.get_type() == type::none) {
 				ref = LUA_NOREF;
 				return;
@@ -244,82 +310,71 @@ namespace sol {
 			r.push(lua_state());
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
-		reference(lua_State* L, int index = -1) noexcept
-		: luastate(L) {
+		basic_reference(lua_State* L, int index = -1) noexcept
+		: luastate(detail::pick_main_thread<main_only>(L, L)) {
 			lua_pushvalue(lua_state(), index);
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
-		reference(lua_State* L, ref_index index) noexcept
-		: luastate(L) {
-			lua_rawgeti(L, LUA_REGISTRYINDEX, index.index);
+		basic_reference(lua_State* L, ref_index index) noexcept
+		: luastate(detail::pick_main_thread<main_only>(L, L)) {
+			lua_rawgeti(lua_state(), LUA_REGISTRYINDEX, index.index);
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
-		reference(lua_State* L, lua_nil_t) noexcept
-		: luastate(L) {
+		basic_reference(lua_State* L, lua_nil_t) noexcept
+		: luastate(detail::pick_main_thread<main_only>(L, L)) {
 		}
 
-		~reference() noexcept {
+		~basic_reference() noexcept {
+			if (lua_state() == nullptr || ref == LUA_NOREF)
+				return;
 			deref();
 		}
 
-		reference(const reference& o) noexcept
-		: luastate(o.luastate), ref(o.copy()) {
+		basic_reference(const basic_reference& o) noexcept
+		: luastate(o.lua_state()), ref(o.copy()) {
 		}
 
-		reference(reference&& o) noexcept
-		: luastate(o.luastate), ref(o.ref) {
+		basic_reference(basic_reference&& o) noexcept
+		: luastate(o.lua_state()), ref(o.ref) {
 			o.luastate = nullptr;
 			o.ref = LUA_NOREF;
 		}
 
-		reference& operator=(reference&& r) noexcept {
-			if (valid()) {
-				deref();
-			}
-			if (r.ref == LUA_REFNIL) {
-				luastate = r.lua_state();
-				ref = LUA_REFNIL;
-				return *this;
-			}
-			if (r.ref == LUA_NOREF) {
-				ref = LUA_NOREF;
-				return *this;
-			}
-			if (detail::xmovable(lua_state(), r.lua_state())) {
-				r.push(lua_state());
-				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
-				return *this;
-			}
+		basic_reference(const basic_reference<!main_only>& o) noexcept
+		: luastate(detail::pick_main_thread<main_only && !main_only>(o.lua_state(), o.lua_state())), ref(o.copy()) {
+		}
 
-			luastate = r.lua_state();
-			ref = r.ref;
-			r.ref = LUA_NOREF;
-			r.luastate = nullptr;
+		basic_reference(basic_reference<!main_only>&& o) noexcept
+		: luastate(detail::pick_main_thread<main_only && !main_only>(o.lua_state(), o.lua_state())), ref(o.ref) {
+			o.luastate = nullptr;
+			o.ref = LUA_NOREF;
+		}
+
+		basic_reference& operator=(basic_reference&& r) noexcept {
+			move_assign(std::move(r));
 			return *this;
 		}
 
-		reference& operator=(const reference& r) noexcept {
-			if (valid()) {
-				deref();
-			}
-			if (r.ref == LUA_REFNIL) {
-				luastate = r.lua_state();
-				ref = LUA_REFNIL;
-				return *this;
-			}
-			if (r.ref == LUA_NOREF) {
-				ref = LUA_NOREF;
-				return *this;
-			}
-			if (detail::xmovable(lua_state(), r.lua_state())) {
-				r.push(lua_state());
-				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
-				return *this;
-			}
-			luastate = r.lua_state();
-			ref = r.copy();
+		basic_reference& operator=(const basic_reference& r) noexcept {
+			copy_assign(r);
 			return *this;
 		}
+
+		basic_reference& operator=(basic_reference<!main_only>&& r) noexcept {
+			move_assign(std::move(r));
+			return *this;
+		}
+
+		basic_reference& operator=(const basic_reference<!main_only>& r) noexcept {
+			copy_assign(r);
+			return *this;
+		}
+		
+		template <typename Super>
+		basic_reference& operator=(proxy_base<Super>&& r);
+
+		template <typename Super>
+		basic_reference& operator=(const proxy_base<Super>& r);
 
 		int push() const noexcept {
 			return push(lua_state());
@@ -368,29 +423,35 @@ namespace sol {
 		}
 	};
 
-	inline bool operator==(const reference& l, const reference& r) {
+	template <bool lb, bool rb>
+	inline bool operator==(const basic_reference<lb>& l, const basic_reference<rb>& r) {
 		auto ppl = stack::push_pop(l);
 		auto ppr = stack::push_pop(r);
 		return lua_compare(l.lua_state(), -1, -2, LUA_OPEQ) == 1;
 	}
 
-	inline bool operator!=(const reference& l, const reference& r) {
+	template <bool lb, bool rb>
+	inline bool operator!=(const basic_reference<lb>& l, const basic_reference<rb>& r) {
 		return !operator==(l, r);
 	}
 
-	inline bool operator==(const reference& lhs, const lua_nil_t&) {
+	template <bool lb>
+	inline bool operator==(const basic_reference<lb>& lhs, const lua_nil_t&) {
 		return !lhs.valid();
 	}
 
-	inline bool operator==(const lua_nil_t&, const reference& rhs) {
+	template <bool rb>
+	inline bool operator==(const lua_nil_t&, const basic_reference<rb>& rhs) {
 		return !rhs.valid();
 	}
 
-	inline bool operator!=(const reference& lhs, const lua_nil_t&) {
+	template <bool lb>
+	inline bool operator!=(const basic_reference<lb>& lhs, const lua_nil_t&) {
 		return lhs.valid();
 	}
 
-	inline bool operator!=(const lua_nil_t&, const reference& rhs) {
+	template <bool rb>
+	inline bool operator!=(const lua_nil_t&, const basic_reference<rb>& rhs) {
 		return rhs.valid();
 	}
 } // namespace sol

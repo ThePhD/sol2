@@ -14,8 +14,8 @@ FixNamespaceComments: true
 ColumnLimit: 0
 AlignAfterOpenBracket: DontAlign # uses ContinuationIndentWidth for this instead
 AccessModifierOffset: -5 # do not push public: or private: around
-#AlignConsecutiveAssignments: true
-#AlignConsecutiveDeclarations: true
+#AlignConsecutiveAssignments: true # affects more than what's expected: do not use
+#AlignConsecutiveDeclarations: true # affects more than what's expected: do not use
 
 # Type Alignment
 DerivePointerAlignment: false
@@ -29,7 +29,6 @@ ReflowComments: true
 
 # Macros
 AlignEscapedNewlines: Left
-SortIncludes: false
 IndentPPDirectives: None
 
 # Functions
@@ -38,6 +37,8 @@ AlwaysBreakAfterReturnType: None
 BreakConstructorInitializers: BeforeComma
 ConstructorInitializerIndentWidth: 0
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
+BinPackArguments: true
+BinPackParameters: true
 
 # Classes
 BreakBeforeInheritanceComma: false
@@ -66,7 +67,6 @@ AllowShortLoopsOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
 IndentCaseLabels: false
 
-
 # Spaces
 SpaceAfterCStyleCast: false
 SpacesInCStyleCastParentheses: false
@@ -81,6 +81,7 @@ MaxEmptyLinesToKeep: 1
 
 # OCD
 SortUsingDeclarations: true
+SortIncludes: false
 
 ---
 Language: Cpp

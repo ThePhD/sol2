@@ -38,7 +38,7 @@ namespace sol {
 
 		template <bool b, typename target_t = reference>
 		struct protected_handler {
-			typedef std::is_base_of<stack_reference, target_t> is_stack;
+			typedef is_stack_based<target_t> is_stack;
 			const target_t& target;
 			int stackindex;
 
@@ -81,11 +81,12 @@ namespace sol {
 	template <typename base_t, bool aligned = false, typename handler_t = reference>
 	class basic_protected_function : public base_t {
 	public:
-		typedef std::is_base_of<stack_reference, handler_t> is_stack_handler;
+		typedef is_stack_based<handler_t> is_stack_handler;
 
 		static handler_t get_default_handler(lua_State* L) {
 			if (is_stack_handler::value || L == nullptr)
 				return handler_t(L, lua_nil);
+			L = is_main_threaded<base_t>::value ? main_thread(L, L) : L;
 			lua_getglobal(L, detail::default_handler_name());
 			auto pp = stack::pop_n(L, 1);
 			return handler_t(L, -1);
@@ -96,13 +97,14 @@ namespace sol {
 			if (ref.lua_state() == nullptr) {
 				return;
 			}
+			lua_State* L = ref.lua_state();
 			if (!ref.valid()) {
-				lua_pushnil(ref.lua_state());
-				lua_setglobal(ref.lua_state(), detail::default_handler_name());
+				lua_pushnil(L);
+				lua_setglobal(L, detail::default_handler_name());
 			}
 			else {
 				ref.push();
-				lua_setglobal(ref.lua_state(), detail::default_handler_name());
+				lua_setglobal(L, detail::default_handler_name());
 			}
 		}
 
@@ -235,11 +237,11 @@ namespace sol {
 		: basic_protected_function(detail::force_cast<base_t>(p), std::forward<Handler>(eh)) {
 		}
 
-		template <typename T, meta::enable<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_protected_function(lua_State* L, T&& r)
 		: basic_protected_function(L, std::forward<T>(r), get_default_handler(L)) {
 		}
-		template <typename T, meta::enable_any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_protected_function(lua_State* L, T&& r, handler_t eh)
 		: base_t(L, std::forward<T>(r)), error_handler(std::move(eh)) {
 		}
@@ -251,7 +253,7 @@ namespace sol {
 		: base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};
-			stack::check<basic_protected_function>(L, index, handler);
+			stack::check<basic_protected_function>(lua_state(), index, handler);
 #endif // Safety
 		}
 		basic_protected_function(lua_State* L, absolute_index index)
@@ -261,7 +263,7 @@ namespace sol {
 		: base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};
-			stack::check<basic_protected_function>(L, index, handler);
+			stack::check<basic_protected_function>(lua_state(), index, handler);
 #endif // Safety
 		}
 		basic_protected_function(lua_State* L, raw_index index)
@@ -271,7 +273,7 @@ namespace sol {
 		: base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};
-			stack::check<basic_protected_function>(L, index, handler);
+			stack::check<basic_protected_function>(lua_state(), index, handler);
 #endif // Safety
 		}
 		basic_protected_function(lua_State* L, ref_index index)

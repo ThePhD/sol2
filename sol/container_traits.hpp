@@ -760,7 +760,7 @@ namespace sol {
 			}
 
 			static void add_insert_after(std::false_type, lua_State* L, T&, stack_object) {
-				luaL_error(L, "cannot call 'add' on type '%s': no suitable insert/push_back C++ functions", sol::detail::demangle<T>().data());
+				luaL_error(L, "cannot call 'add' on type '%s': no suitable insert/push_back C++ functions", detail::demangle<T>().data());
 			}
 
 			static void add_insert_after(std::true_type, lua_State*, T& self, stack_object value, iterator& at) {
@@ -1020,7 +1020,7 @@ namespace sol {
 				auto& src = get_src(L);
 				stack::push(L, next<ip>);
 				stack::push<user<iter>>(L, src, deferred_traits::begin(L, src));
-				stack::push(L, sol::lua_nil);
+				stack::push(L, lua_nil);
 				return 3;
 			}
 

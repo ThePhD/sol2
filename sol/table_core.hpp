@@ -73,9 +73,9 @@ namespace sol {
 			auto pp = stack::push_pop(*this);
 			stack::push(base_t::lua_state(), lua_nil);
 			while (lua_next(base_t::lua_state(), -2)) {
-				sol::object key(base_t::lua_state(), -2);
-				sol::object value(base_t::lua_state(), -1);
-				std::pair<sol::object&, sol::object&> keyvalue(key, value);
+				object key(base_t::lua_state(), -2);
+				object value(base_t::lua_state(), -1);
+				std::pair<object&, object&> keyvalue(key, value);
 				auto pn = stack::pop_n(base_t::lua_state(), 1);
 				fx(keyvalue);
 			}
@@ -86,8 +86,8 @@ namespace sol {
 			auto pp = stack::push_pop(*this);
 			stack::push(base_t::lua_state(), lua_nil);
 			while (lua_next(base_t::lua_state(), -2)) {
-				sol::object key(base_t::lua_state(), -2);
-				sol::object value(base_t::lua_state(), -1);
+				object key(base_t::lua_state(), -2);
+				object value(base_t::lua_state(), -1);
 				auto pn = stack::pop_n(base_t::lua_state(), 1);
 				fx(key, value);
 			}
@@ -204,13 +204,13 @@ namespace sol {
 		basic_table_core(stack_reference&& r)
 		: basic_table_core(r.lua_state(), r.stack_index()) {
 		}
-		template <typename T, meta::enable_any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable_any<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_table_core(lua_State* L, T&& r)
 		: basic_table_core(L, std::forward<T>(r)) {
 		}
 		basic_table_core(lua_State* L, new_table nt)
 		: base_t(L, (lua_createtable(L, nt.sequence_hint, nt.map_hint), -1)) {
-			if (!std::is_base_of<stack_reference, base_type>::value) {
+			if (!is_stack_based<meta::unqualified_t<base_type>>::value) {
 				lua_pop(L, 1);
 			}
 		}
@@ -454,7 +454,7 @@ namespace sol {
 
 		template <typename Fx>
 		void for_each(Fx&& fx) const {
-			typedef meta::is_invokable<Fx(std::pair<sol::object, sol::object>)> is_paired;
+			typedef meta::is_invokable<Fx(std::pair<object, object>)> is_paired;
 			for_each(is_paired(), std::forward<Fx>(fx));
 		}
 

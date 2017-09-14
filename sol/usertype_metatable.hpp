@@ -252,10 +252,10 @@ namespace sol {
 						std::string& accessor = maybeaccessor.value();
 						auto preexistingit = functions.find(accessor);
 						if (preexistingit == functions.cend()) {
-							functions.emplace_hint(preexistingit, std::move(accessor), sol::object(L, 3));
+							functions.emplace_hint(preexistingit, std::move(accessor), object(L, 3));
 						}
 						else {
-							preexistingit->second = sol::object(L, 3);
+							preexistingit->second = object(L, 3);
 						}
 						return;
 					}
@@ -278,7 +278,7 @@ namespace sol {
 					}
 					else {
 						target = preexistingit->second.runtime_target;
-						runtime[target] = sol::object(L, 3);
+						runtime[target] = object(L, 3);
 						preexistingit->second = call_information(&runtime_object_call, &runtime_new_index, target);
 					}
 				};
@@ -468,7 +468,7 @@ namespace sol {
 					case meta_function::garbage_collect:
 						if (destructfunc != nullptr) {
 #ifdef SOL_NO_EXCEPTIONS
-							throw sol::error("sol: 2 separate garbage_collect functions were set on this type. Please specify only 1 sol::meta_function::gc type AND wrap the function in a sol::destruct call, as shown by the documentation and examples");
+							throw error("sol: 2 separate garbage_collect functions were set on this type. Please specify only 1 sol::meta_function::gc type AND wrap the function in a sol::destruct call, as shown by the documentation and examples");
 #else
 							assert(false && "sol: 2 separate garbage_collect functions were set on this type. Please specify only 1 sol::meta_function::gc type AND wrap the function in a sol::destruct call, as shown by the documentation and examples");
 #endif

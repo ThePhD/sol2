@@ -346,7 +346,7 @@ namespace sol {
 		};
 
 		template <typename T>
-		struct pusher<T, std::enable_if_t<meta::all<is_container<meta::unqualified_t<T>>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
+		struct pusher<T, std::enable_if_t<meta::all<is_container<meta::unqualified_t<T>>, meta::neg<is_lua_reference<meta::unqualified_t<T>>>>::value>> {
 			typedef meta::unqualified_t<T> C;
 
 			static int push(lua_State* L, const T& cont) {
@@ -361,7 +361,7 @@ namespace sol {
 		};
 
 		template <typename T>
-		struct pusher<T*, std::enable_if_t<meta::all<is_container<meta::unqualified_t<T>>, meta::neg<meta::any<std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>>>::value>> {
+		struct pusher<T*, std::enable_if_t<meta::all<is_container<meta::unqualified_t<T>>, meta::neg<is_lua_reference<meta::unqualified_t<T>>>>::value>> {
 			typedef std::add_pointer_t<meta::unqualified_t<std::remove_pointer_t<T>>> C;
 
 			static int push(lua_State* L, T* cont) {

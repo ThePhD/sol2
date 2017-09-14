@@ -78,7 +78,7 @@ namespace sol {
 				const static std::size_t data_t_count = (sizeof(TValue) + voidsizem1) / voidsize;
 				typedef std::array<void*, data_t_count> data_t;
 
-				data_t data{{}};
+				data_t data{ {} };
 				std::memcpy(&data[0], std::addressof(item), itemsize);
 				int pushcount = 0;
 				for (auto&& v : data) {
@@ -91,7 +91,7 @@ namespace sol {
 			inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 2) {
 				const static std::size_t data_t_count = (sizeof(T) + (sizeof(void*) - 1)) / sizeof(void*);
 				typedef std::array<void*, data_t_count> data_t;
-				data_t voiddata{{}};
+				data_t voiddata{ {} };
 				for (std::size_t i = 0, d = 0; d < sizeof(T); ++i, d += sizeof(void*)) {
 					voiddata[i] = get<lightuserdata_value>(L, upvalue_index(index++));
 				}
@@ -185,7 +185,12 @@ namespace sol {
 		template <bool check_args = stack_detail::default_check_arguments, bool clean_stack = true, typename Ret0, typename... Ret, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<meta::neg<std::is_void<Ret0>>::value>>
 		inline int call_into_lua(types<Ret0, Ret...>, types<Args...> ta, lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs) {
 			decltype(auto) r = call<check_args>(types<meta::return_type_t<Ret0, Ret...>>(), ta, L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
-			typedef is_stack_based<meta::unqualified_t<decltype(r)>> is_stack;
+			typedef meta::unqualified_t<decltype(r)> R;
+			typedef meta::any<is_stack_based<R>,
+				std::is_same<R, absolute_index>,
+				std::is_same<R, ref_index>,
+				std::is_same<R, raw_index>>
+				is_stack;
 			if (clean_stack && !is_stack::value) {
 				lua_settop(L, 0);
 			}

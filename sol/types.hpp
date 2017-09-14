@@ -491,6 +491,31 @@ namespace sol {
 
 	struct this_state {
 		lua_State* L;
+
+		this_state(lua_State* Ls)
+		: L(Ls) {
+		}
+
+		operator lua_State*() const noexcept {
+			return lua_state();
+		}
+
+		lua_State* operator->() const noexcept {
+			return lua_state();
+		}
+
+		lua_State* lua_state() const noexcept {
+			return L;
+		}
+	};
+
+	struct this_main_state {
+		lua_State* L;
+
+		this_main_state(lua_State* Ls)
+		: L(Ls) {
+		}
+
 		operator lua_State*() const noexcept {
 			return lua_state();
 		}
@@ -577,7 +602,7 @@ namespace sol {
 	};
 
 	inline const std::string& to_string(call_status c) {
-		static const std::array<std::string, 8> names{{
+		static const std::array<std::string, 8> names{ {
 			"ok",
 			"yielded",
 			"runtime",
@@ -586,7 +611,7 @@ namespace sol {
 			"gc",
 			"syntax",
 			"file",
-		}};
+		} };
 		switch (c) {
 		case call_status::ok:
 			return names[0];
@@ -609,13 +634,13 @@ namespace sol {
 	}
 
 	inline const std::string& to_string(load_status c) {
-		static const std::array<std::string, 8> names{{
+		static const std::array<std::string, 8> names{ {
 			"ok",
 			"memory",
 			"gc",
 			"syntax",
 			"file",
-		}};
+		} };
 		switch (c) {
 		case load_status::ok:
 			return names[0];
@@ -632,11 +657,11 @@ namespace sol {
 	}
 
 	inline const std::string& to_string(load_mode c) {
-		static const std::array<std::string, 3> names{{
+		static const std::array<std::string, 3> names{ {
 			"bt",
 			"t",
 			"b",
-		}};
+		} };
 		return names[static_cast<std::size_t>(c)];
 	}
 
@@ -680,7 +705,7 @@ namespace sol {
 	typedef meta_function meta_method;
 
 	inline const std::array<std::string, 32>& meta_function_names() {
-		static const std::array<std::string, 32> names = {{"new",
+		static const std::array<std::string, 32> names = { { "new",
 			"__index",
 			"__newindex",
 			"__mode",
@@ -713,7 +738,7 @@ namespace sol {
 			"__ipairs",
 			"__next",
 			"__type",
-			"__typeinfo"}};
+			"__typeinfo" } };
 		return names;
 	}
 
@@ -831,7 +856,7 @@ namespace sol {
 		struct lua_type_of<std::nullptr_t> : std::integral_constant<type, type::lua_nil> {};
 
 		template <>
-		struct lua_type_of<sol::error> : std::integral_constant<type, type::string> {};
+		struct lua_type_of<error> : std::integral_constant<type, type::string> {};
 
 		template <bool b, typename Base>
 		struct lua_type_of<basic_table_core<b, Base>> : std::integral_constant<type, type::table> {};
@@ -851,8 +876,8 @@ namespace sol {
 		template <typename T>
 		struct lua_type_of<as_table_t<T>> : std::integral_constant<type, type::table> {};
 
-		template <>
-		struct lua_type_of<reference> : std::integral_constant<type, type::poly> {};
+		template <bool b>
+		struct lua_type_of<basic_reference<b>> : std::integral_constant<type, type::poly> {};
 
 		template <>
 		struct lua_type_of<stack_reference> : std::integral_constant<type, type::poly> {};
@@ -922,6 +947,9 @@ namespace sol {
 
 		template <>
 		struct lua_type_of<this_state> : std::integral_constant<type, type::poly> {};
+
+		template <>
+		struct lua_type_of<this_main_state> : std::integral_constant<type, type::poly> {};
 
 		template <>
 		struct lua_type_of<this_environment> : std::integral_constant<type, type::poly> {};
@@ -1009,6 +1037,7 @@ namespace sol {
 									    && detail::has_internal_marker<lua_type_of<meta::unqualified_t<T>>>::value
 									    && !detail::has_internal_marker<lua_size<meta::unqualified_t<T>>>::value)
 								 || std::is_base_of<reference, meta::unqualified_t<T>>::value
+								 || std::is_base_of<main_reference, meta::unqualified_t<T>>::value
 								 || std::is_base_of<stack_reference, meta::unqualified_t<T>>::value
 								 || meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>::value
 								 || meta::is_specialization_of<std::pair, meta::unqualified_t<T>>::value> {};
@@ -1016,8 +1045,19 @@ namespace sol {
 	template <typename T>
 	struct is_lua_reference : std::integral_constant<bool,
 							 std::is_base_of<reference, meta::unqualified_t<T>>::value
-								 || std::is_base_of<stack_reference, meta::unqualified_t<T>>::value
-								 || meta::is_specialization_of<proxy, meta::unqualified_t<T>>::value> {};
+								 || std::is_base_of<main_reference, meta::unqualified_t<T>>::value
+								 || std::is_base_of<stack_reference, meta::unqualified_t<T>>::value> {};
+
+	template <typename T>
+	struct is_lua_reference_or_proxy : std::integral_constant<bool,
+									is_lua_reference<meta::unqualified_t<T>>::value
+										|| meta::is_specialization_of<proxy, meta::unqualified_t<T>>::value> {};
+
+	template <typename T>
+	struct is_main_threaded : std::is_base_of<main_reference, T> {};
+	
+	template <typename T>
+	struct is_stack_based : std::is_base_of<stack_reference, T> {};
 
 	template <typename T>
 	struct is_lua_primitive<T*> : std::true_type {};
@@ -1052,6 +1092,8 @@ namespace sol {
 	template <>
 	struct is_transparent_argument<this_state> : std::true_type {};
 	template <>
+	struct is_transparent_argument<this_main_state> : std::true_type {};
+	template <>
 	struct is_transparent_argument<this_environment> : std::true_type {};
 	template <>
 	struct is_transparent_argument<variadic_args> : std::true_type {};
@@ -1068,13 +1110,6 @@ namespace sol {
 	struct is_lua_index<ref_index> : std::true_type {};
 	template <>
 	struct is_lua_index<upvalue_index> : std::true_type {};
-
-	template <typename T>
-	struct is_stack_based : std::is_base_of<stack_reference, T> {};
-	template <>
-	struct is_stack_based<raw_index> : std::true_type {};
-	template <>
-	struct is_stack_based<absolute_index> : std::true_type {};
 
 	template <typename Signature>
 	struct lua_bind_traits : meta::bind_traits<Signature> {

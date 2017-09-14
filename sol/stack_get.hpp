@@ -330,7 +330,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<T, std::enable_if_t<std::is_base_of<reference, T>::value || std::is_base_of<stack_reference, T>::value>> {
+	struct getter<T, std::enable_if_t<is_lua_reference<T>::value>> {
 		static T get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			return T(L, index);
@@ -569,7 +569,15 @@ namespace stack {
 	struct getter<this_state> {
 		static this_state get(lua_State* L, int, record& tracking) {
 			tracking.use(0);
-			return this_state{L};
+			return this_state( L );
+		}
+	};
+
+	template <>
+	struct getter<this_main_state> {
+		static this_main_state get(lua_State* L, int, record& tracking) {
+			tracking.use(0);
+			return this_main_state( main_thread(L, L) );
 		}
 	};
 

@@ -137,7 +137,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct pusher<T*, meta::disable_if_t<meta::any<is_container<meta::unqualified_t<T>>, std::is_function<meta::unqualified_t<T>>, std::is_base_of<reference, meta::unqualified_t<T>>, std::is_base_of<stack_reference, meta::unqualified_t<T>>>::value>> {
+	struct pusher<T*, meta::disable_if_t<meta::any<is_container<meta::unqualified_t<T>>, std::is_function<meta::unqualified_t<T>>, is_lua_reference<meta::unqualified_t<T>>>::value>> {
 		template <typename... Args>
 		static int push(lua_State* L, Args&&... args) {
 			return pusher<detail::as_pointer_tag<T>>{}.push(L, std::forward<Args>(args)...);
@@ -315,7 +315,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct pusher<T, std::enable_if_t<std::is_base_of<reference, T>::value || std::is_base_of<stack_reference, T>::value>> {
+	struct pusher<T, std::enable_if_t<is_lua_reference<T>::value>> {
 		static int push(lua_State* L, const T& ref) {
 			return ref.push(L);
 		}
@@ -848,6 +848,13 @@ namespace stack {
 	template <>
 	struct pusher<this_state> {
 		static int push(lua_State*, const this_state&) {
+			return 0;
+		}
+	};
+
+	template <>
+	struct pusher<this_main_state> {
+		static int push(lua_State*, const this_main_state&) {
 			return 0;
 		}
 	};

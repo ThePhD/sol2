@@ -49,10 +49,11 @@ namespace sol {
 		basic_environment(lua_State* L, new_table nt)
 		: base_t(L, std::move(nt)) {
 		}
-		basic_environment(lua_State* L, new_table t, const reference& fallback)
+		template <bool b>
+		basic_environment(lua_State* L, new_table t, const basic_reference<b>& fallback)
 		: basic_environment(L, std::move(t)) {
-			sol::stack_table mt(L, sol::new_table(0, 1));
-			mt.set(sol::meta_function::index, fallback);
+			stack_table mt(L, new_table(0, 1));
+			mt.set(meta_function::index, fallback);
 			this->set(metatable_key, mt);
 			mt.pop();
 		}
@@ -65,7 +66,8 @@ namespace sol {
 #endif // Safety
 			lua_pop(this->lua_state(), 2);
 		}
-		basic_environment(env_t, const reference& extraction_target)
+		template <bool b>
+		basic_environment(env_t, const basic_reference<b>& extraction_target)
 		: base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};
@@ -137,7 +139,7 @@ namespace sol {
 		this_environment()
 		: env(nullopt) {
 		}
-		this_environment(sol::environment e)
+		this_environment(environment e)
 		: env(std::move(e)) {
 		}
 		this_environment(const this_environment&) = default;
@@ -194,8 +196,8 @@ namespace sol {
 					return this_environment();
 				}
 
-				sol::stack_reference f(L, -1);
-				sol::environment env(sol::env_key, f);
+				stack_reference f(L, -1);
+				environment env(env_key, f);
 				if (!env.valid()) {
 					lua_settop(L, pre_stack_size);
 					return this_environment();

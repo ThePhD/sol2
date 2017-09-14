@@ -67,7 +67,7 @@ namespace sol {
 		return kb;
 	}
 
-	inline protected_function_result script_pass_on_error(lua_State*, sol::protected_function_result result) {
+	inline protected_function_result script_pass_on_error(lua_State*, protected_function_result result) {
 		return result;
 	}
 
@@ -377,7 +377,7 @@ namespace sol {
 		}
 
 		template <typename E>
-		function_result unsafe_script(const string_view& code, const sol::basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		function_result unsafe_script(const string_view& code, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
 			int index = lua_gettop(L);
@@ -402,7 +402,7 @@ namespace sol {
 		}
 
 		template <typename E>
-		function_result unsafe_script_file(const std::string& filename, const sol::basic_environment<E>& env, load_mode mode = load_mode::any) {
+		function_result unsafe_script_file(const std::string& filename, const basic_environment<E>& env, load_mode mode = load_mode::any) {
 			int index = lua_gettop(L);
 			if (luaL_loadfilex(L, filename.c_str(), to_string(mode).c_str())) {
 				lua_error(L);

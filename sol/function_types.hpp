@@ -196,12 +196,12 @@ namespace sol {
 			}
 #endif // noexcept function type
 
-			template <typename Fx, typename... Args, meta::disable<meta::any<std::is_base_of<reference, meta::unqualified_t<Fx>>, std::is_base_of<stack_reference, meta::unqualified_t<Fx>>>> = meta::enabler>
+			template <typename Fx, typename... Args, meta::disable<is_lua_reference<meta::unqualified_t<Fx>>> = meta::enabler>
 			static void select(lua_State* L, Fx&& fx, Args&&... args) {
 				select_function(std::is_function<std::remove_pointer_t<meta::unqualified_t<Fx>>>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 
-			template <typename Fx, meta::enable<meta::any<std::is_base_of<reference, meta::unqualified_t<Fx>>, std::is_base_of<stack_reference, meta::unqualified_t<Fx>>>> = meta::enabler>
+			template <typename Fx, meta::enable<is_lua_reference<meta::unqualified_t<Fx>>> = meta::enabler>
 			static void select(lua_State* L, Fx&& fx) {
 				stack::push(L, std::forward<Fx>(fx));
 			}
@@ -309,10 +309,10 @@ namespace sol {
 		template <typename F, typename G>
 		struct pusher<property_wrapper<F, G>, std::enable_if_t<!std::is_void<F>::value && !std::is_void<G>::value>> {
 			static int push(lua_State* L, property_wrapper<F, G>&& pw) {
-				return stack::push(L, sol::overload(std::move(pw.read), std::move(pw.write)));
+				return stack::push(L, overload(std::move(pw.read), std::move(pw.write)));
 			}
 			static int push(lua_State* L, const property_wrapper<F, G>& pw) {
-				return stack::push(L, sol::overload(pw.read, pw.write));
+				return stack::push(L, overload(pw.read, pw.write));
 			}
 		};
 

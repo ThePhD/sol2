@@ -112,7 +112,7 @@ namespace sol {
 		template <typename T, typename Op, typename Supports, typename Regs, meta::enable<Supports> = meta::enabler>
 		inline void make_reg_op(Regs& l, int& index, const char* name) {
 			lua_CFunction f = &comparsion_operator_wrap<T, Op>;
-			l[index] = luaL_Reg{name, f};
+			l[index] = luaL_Reg{ name, f };
 			++index;
 		}
 
@@ -125,7 +125,7 @@ namespace sol {
 		inline void make_to_string_op(Regs& l, int& index) {
 			const char* name = to_string(meta_function::to_string).c_str();
 			lua_CFunction f = &detail::static_trampoline<&default_to_string<T>>;
-			l[index] = luaL_Reg{name, f};
+			l[index] = luaL_Reg{ name, f };
 			++index;
 		}
 
@@ -138,7 +138,7 @@ namespace sol {
 		inline void make_call_op(Regs& l, int& index) {
 			const char* name = to_string(meta_function::call).c_str();
 			lua_CFunction f = &c_call<decltype(&T::operator()), &T::operator()>;
-			l[index] = luaL_Reg{name, f};
+			l[index] = luaL_Reg{ name, f };
 			++index;
 		}
 
@@ -150,7 +150,7 @@ namespace sol {
 		template <typename T, typename Regs, meta::enable<meta::has_size<T>> = meta::enabler>
 		inline void make_length_op(Regs& l, int& index) {
 			const char* name = to_string(meta_function::length).c_str();
-			l[index] = luaL_Reg{name, &c_call<decltype(&T::size), &T::size>};
+			l[index] = luaL_Reg{ name, &c_call<decltype(&T::size), &T::size> };
 			++index;
 		}
 
@@ -162,7 +162,7 @@ namespace sol {
 		template <typename T, typename Regs, meta::enable<meta::neg<std::is_pointer<T>>, std::is_destructible<T>>>
 		void make_destructor(Regs& l, int& index) {
 			const char* name = to_string(meta_function::garbage_collect).c_str();
-			l[index] = luaL_Reg{name, is_unique_usertype<T>::value ? &detail::unique_destruct<T> : &detail::usertype_alloc_destruct<T>};
+			l[index] = luaL_Reg{ name, is_unique_usertype<T>::value ? &detail::unique_destruct<T> : &detail::usertype_alloc_destruct<T> };
 			++index;
 		}
 
@@ -174,7 +174,7 @@ namespace sol {
 				// this won't trigger if the user performs `new_usertype` / `new_simple_usertype` and
 				// rigs the class up properly
 				const char* name = to_string(meta_function::garbage_collect).c_str();
-				l[index] = luaL_Reg{name, &detail::cannot_destruct<T>};
+				l[index] = luaL_Reg{ name, &detail::cannot_destruct<T> };
 				++index;
 			}
 		}
@@ -195,7 +195,7 @@ namespace sol {
 			}
 			if (fx(meta_function::pairs)) {
 				const char* name = to_string(meta_function::pairs).c_str();
-				l[index] = luaL_Reg{name, container_usertype_metatable<as_container_t<T>>::pairs_call};
+				l[index] = luaL_Reg{ name, container_usertype_metatable<as_container_t<T>>::pairs_call };
 				++index;
 			}
 			if (fx(meta_function::length)) {
@@ -210,8 +210,7 @@ namespace sol {
 		}
 	} // namespace usertype_detail
 
-	namespace stack {
-	namespace stack_detail {
+	namespace stack { namespace stack_detail {
 		template <typename T>
 		struct undefined_metatable {
 			typedef meta::all<meta::neg<std::is_pointer<T>>, std::is_destructible<T>> is_destructible;
@@ -231,6 +230,16 @@ namespace sol {
 					usertype_detail::insert_default_registrations<P>(l, index, fx);
 					usertype_detail::make_destructor<T>(l, index);
 					luaL_setfuncs(L, l, 0);
+					
+					// __type table
+					lua_createtable(L, 0, 2);
+					const std::string& name = detail::demangle<T>();
+					lua_pushlstring(L, name.c_str(), name.size());
+					lua_setfield(L, -2, "name");
+					lua_CFunction is_func = &usertype_detail::is_check<T>;
+					lua_pushcclosure(L, is_func, 0);
+					lua_setfield(L, -2, "is");
+					lua_setfield(L, -2, to_string(meta_function::type).c_str());
 				}
 				lua_setmetatable(L, -2);
 			}

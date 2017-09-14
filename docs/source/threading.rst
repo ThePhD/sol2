@@ -18,6 +18,8 @@ working with multiple Lua threads
 
 You can mitigate some of the pressure of using coroutines and threading by using the ``lua_xmove`` constructors that sol implements. Simply keep a reference to your ``sol::state_view`` or ``sol::state`` or the target ``lua_State*`` pointer, and pass it into the constructor along with the object you want to copy. Note that there is also some implicit ``lua_xmove`` checks that are done for copy and move assignment operators as well, as noted :ref:`at the reference constructor explanations<lua_xmove-note>`.
 
+Furthermore, for every single ``sol::reference`` derived type, there exists a version prefixed with the word ``main_``, such as ``sol::main_table``, ``sol::main_function``, ``sol::main_object`` and similar. These classes, on construction, assignment and other operations, forcibly obtain the ``lua_State*`` associated with the main thread, if possible. Using these classes will allow your code to be immune when a wrapped coroutine or a lua thread is set to ``nil`` and then garbage-collected.
+
 .. code-block:: cpp 
 	:caption: transfer from state function
 	:name: state-transfer

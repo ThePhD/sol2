@@ -72,7 +72,7 @@ namespace sol {
 		: unique_base(luaL_newstate(), lua_close), state_view(unique_base::get()) {
 			set_panic(panic);
 			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
-			protected_function::set_default_handler(sol::object(lua_state(), in_place, f));
+			protected_function::set_default_handler(object(lua_state(), in_place, f));
 			stack::register_main_thread(unique_base::get());
 			stack::luajit_exception_handler(unique_base::get());
 		}
@@ -81,7 +81,7 @@ namespace sol {
 		: unique_base(lua_newstate(alfunc, alpointer), lua_close), state_view(unique_base::get()) {
 			set_panic(panic);
 			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
-			protected_function::set_default_handler(sol::object(lua_state(), in_place, f));
+			protected_function::set_default_handler(object(lua_state(), in_place, f));
 			stack::register_main_thread(unique_base::get());
 			stack::luajit_exception_handler(unique_base::get());
 		}
