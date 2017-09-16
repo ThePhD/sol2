@@ -14,7 +14,7 @@
 std::mutex basic_init_require_mutex;
 
 void basic_initialization_and_lib_open() {
-	
+
 	sol::state lua;
 	try {
 		lua.open_libraries();
@@ -35,7 +35,6 @@ void basic_initialization_and_lib_open() {
 		REQUIRE(false);
 	}
 }
-
 
 TEST_CASE("utility/variant", "test that variant can be round-tripped") {
 #ifdef SOL_CXX17_FEATURES
@@ -134,8 +133,7 @@ TEST_CASE("utility/this_state", "Ensure this_state argument can be gotten anywhe
 	INFO("created lua state");
 	lua.open_libraries(sol::lib::base);
 	lua.new_usertype<bark>("bark",
-		"with_state", &bark::with_state
-		);
+		"with_state", &bark::with_state);
 
 	INFO("setting b and with_state_2");
 	bark b;

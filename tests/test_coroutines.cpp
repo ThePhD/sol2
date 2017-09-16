@@ -144,8 +144,8 @@ co = nil
 		std::string identifier;
 		sol::reference obj;
 
-		co_test(sol::this_state L, std::string id) : identifier(id), obj(L, sol::lua_nil) {
-
+		co_test(sol::this_state L, std::string id)
+		: identifier(id), obj(L, sol::lua_nil) {
 		}
 
 		void store(sol::table ref) {
@@ -163,7 +163,6 @@ co = nil
 		}
 
 		~co_test() {
-
 		}
 	};
 
@@ -174,9 +173,7 @@ co = nil
 		sol::constructors<co_test(sol::this_state, std::string)>(),
 		"store", &co_test::store,
 		"copy_store", &co_test::copy_store,
-		"get", &co_test::get
-		);
-
+		"get", &co_test::get);
 
 	auto r = lua.safe_script(code);
 	REQUIRE(r.valid());
@@ -231,8 +228,8 @@ co = nil
 		std::string identifier;
 		sol::reference obj;
 
-		co_test_implicit(sol::this_state L, std::string id) : identifier(id), obj(L, sol::lua_nil) {
-
+		co_test_implicit(sol::this_state L, std::string id)
+		: identifier(id), obj(L, sol::lua_nil) {
 		}
 
 		void store(sol::table ref) {
@@ -250,7 +247,6 @@ co = nil
 		}
 
 		~co_test_implicit() {
-
 		}
 	};
 
@@ -261,9 +257,7 @@ co = nil
 		sol::constructors<co_test_implicit(sol::this_state, std::string)>(),
 		"store", &co_test_implicit::store,
 		"copy_store", &co_test_implicit::copy_store,
-		"get", &co_test_implicit::get
-		);
-
+		"get", &co_test_implicit::get);
 
 	auto r = lua.safe_script(code);
 	REQUIRE(r.valid());
@@ -317,8 +311,8 @@ collectgarbage()
 		std::string identifier;
 		sol::main_reference obj;
 
-		co_test_implicit(sol::this_state L, std::string id) : identifier(id), obj(L, sol::lua_nil) {
-
+		co_test_implicit(sol::this_state L, std::string id)
+		: identifier(id), obj(L, sol::lua_nil) {
 		}
 
 		void store(sol::table ref) {
@@ -340,7 +334,6 @@ collectgarbage()
 		}
 
 		~co_test_implicit() {
-
 		}
 	};
 
@@ -351,9 +344,7 @@ collectgarbage()
 		sol::constructors<co_test_implicit(sol::this_state, std::string)>(),
 		"store", &co_test_implicit::store,
 		"copy_store", &co_test_implicit::copy_store,
-		"get", &co_test_implicit::get
-		);
-
+		"get", &co_test_implicit::get);
 
 	auto r = lua.safe_script(code);
 	REQUIRE(r.valid());

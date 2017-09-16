@@ -16,7 +16,7 @@ std::string free_function() {
 }
 
 struct object {
-	std::string operator() () {
+	std::string operator()() {
 		INFO("member_test()");
 		return "test";
 	}
@@ -34,7 +34,7 @@ TEST_CASE("tables/as enums", "Making sure enums can be put in and gotten out as 
 		left,
 		right
 	};
-	
+
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -42,8 +42,7 @@ TEST_CASE("tables/as enums", "Making sure enums can be put in and gotten out as 
 		"up", direction::up,
 		"down", direction::down,
 		"left", direction::left,
-		"right", direction::right
-	);
+		"right", direction::right);
 
 	sol::object obj = lua["direction"]["up"];
 	bool isdir = obj.is<direction>();
@@ -67,8 +66,7 @@ TEST_CASE("tables/as enum classes", "Making sure enums can be put in and gotten 
 		"up", direction::up,
 		"down", direction::down,
 		"left", direction::left,
-		"right", direction::right
-	);
+		"right", direction::right);
 
 	sol::object obj = lua["direction"]["up"];
 	bool isdir = obj.is<direction>();
@@ -129,8 +127,7 @@ TEST_CASE("tables/new_enum", "Making sure enums can be put in and gotten out as 
 			"up", direction::up,
 			"down", direction::down,
 			"left", direction::left,
-			"right", direction::right
-		);
+			"right", direction::right);
 
 		direction d = lua["direction"]["left"];
 		REQUIRE(d == direction::left);
@@ -143,12 +140,7 @@ TEST_CASE("tables/new_enum", "Making sure enums can be put in and gotten out as 
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		lua.new_enum<direction>("direction", {
-			{ "up", direction::up },
-			{ "down", direction::down },
-			{ "left", direction::left },
-			{ "right", direction::right }
-		} );
+		lua.new_enum<direction>("direction", { { "up", direction::up }, { "down", direction::down }, { "left", direction::left }, { "right", direction::right } });
 
 		direction d = lua["direction"]["left"];
 		REQUIRE(d == direction::left);
@@ -163,7 +155,8 @@ TEST_CASE("tables/for_each", "Testing the use of for_each to get values from a l
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.safe_script("arr = {\n"
+	lua.safe_script(
+		"arr = {\n"
 		"[0] = \"Hi\",\n"
 		"[1] = 123.45,\n"
 		"[2] = \"String value\",\n"
@@ -277,7 +270,8 @@ TEST_CASE("tables/iterators", "Testing the use of iteratrs to get values from a 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.safe_script("arr = {\n"
+	lua.safe_script(
+		"arr = {\n"
 		"[0] = \"Hi\",\n"
 		"[1] = 123.45,\n"
 		"[2] = \"String value\",\n"
@@ -328,7 +322,8 @@ TEST_CASE("tables/iterators", "Testing the use of iteratrs to get values from a 
 				}
 			}(kvp.first, kvp.second);
 		}
-	} REQUIRE(begintop == endtop);
+	}
+	REQUIRE(begintop == endtop);
 	REQUIRE(iterations == tablesize);
 }
 
@@ -393,10 +388,9 @@ TEST_CASE("tables/function variables", "Check if tables and function calls work 
 
 	lua.get<sol::table>("os").set_function("fun",
 		[]() {
-		INFO("stateless lambda()");
-		return "test";
-	}
-	);
+			INFO("stateless lambda()");
+			return "test";
+		});
 	REQUIRE_NOTHROW(run_script(lua));
 
 	lua.get<sol::table>("os").set_function("fun", &free_function);
@@ -414,15 +408,13 @@ TEST_CASE("tables/function variables", "Check if tables and function calls work 
 	lua.get<sol::table>("os").set_function("fun", &object::operator(), std::ref(reflval));
 	REQUIRE_NOTHROW(run_script(lua));
 
-
 	// stateful lambda: non-convertible, cannot be optimised
 	int breakit = 50;
 	lua.get<sol::table>("os").set_function("fun",
 		[&breakit]() {
-		INFO("stateful lambda()");
-		return "test";
-	}
-	);
+			INFO("stateful lambda()");
+			return "test";
+		});
 	REQUIRE_NOTHROW(run_script(lua));
 
 	// r-value, cannot optimise
@@ -573,8 +565,7 @@ TEST_CASE("tables/raw set and raw get", "ensure raw setting and getting works th
 	sol::table t = lua.create_table();
 	t[sol::metatable_key] = lua.create_table_with(
 		sol::meta_function::new_index, [](lua_State* L) { return luaL_error(L, "nay"); },
-		sol::meta_function::index, [](lua_State* L) { return luaL_error(L, "nay"); }
-	);
+		sol::meta_function::index, [](lua_State* L) { return luaL_error(L, "nay"); });
 	t.raw_set("a", 2.5);
 	double la = t.raw_get<double>("a");
 	REQUIRE(la == 2.5);

@@ -42,12 +42,11 @@ TEST_CASE("simple_usertype/usertypes", "Ensure that simple usertypes properly wo
 	lua.new_simple_usertype<bark>("bark",
 		"fun", &bark::fun,
 		"get", &bark::get,
-		"var", sol::as_function( &bark::var ),
+		"var", sol::as_function(&bark::var),
 		"the_marker", sol::as_function(&bark::the_marker),
 		"x", sol::overload(&bark::get),
 		"y", sol::overload(&bark::set),
-		"z", sol::overload(&bark::get, &bark::set)
-	);
+		"z", sol::overload(&bark::get, &bark::set));
 
 	lua.safe_script("b = bark.new()");
 	bark& b = lua["b"];
@@ -95,8 +94,11 @@ TEST_CASE("simple_usertype/usertype constructors", "Ensure that calls with speci
 		int var = 50;
 		marker mark;
 
-		bark() {}
-		bark(int v) : var(v) {}
+		bark() {
+		}
+		bark(int v)
+		: var(v) {
+		}
 
 		void fun() {
 			var = 51;
@@ -123,14 +125,13 @@ TEST_CASE("simple_usertype/usertype constructors", "Ensure that calls with speci
 	sol::state lua;
 	lua.new_simple_usertype<bark>("bark",
 		sol::constructors<sol::types<>, sol::types<int>>(),
-		"fun", sol::protect( &bark::fun ),
+		"fun", sol::protect(&bark::fun),
 		"get", &bark::get,
-		"var", sol::as_function( &bark::var ),
+		"var", sol::as_function(&bark::var),
 		"the_marker", &bark::the_marker,
 		"x", sol::overload(&bark::get),
 		"y", sol::overload(&bark::set),
-		"z", sol::overload(&bark::get, &bark::set)
-	);
+		"z", sol::overload(&bark::get, &bark::set));
 
 	lua.safe_script("bx = bark.new(760)");
 	bark& bx = lua["bx"];
@@ -185,9 +186,8 @@ TEST_CASE("simple_usertype/vars", "simple usertype vars can bind various values 
 		"straight", sol::var(2),
 		"global", sol::var(muh_variable),
 		"global2", sol::var(through_variable),
-		"global3", sol::var(std::ref(through_variable))
-	);
-	
+		"global3", sol::var(std::ref(through_variable)));
+
 	through_variable = 20;
 
 	lua.safe_script(R"(
@@ -214,22 +214,28 @@ g3 = test.global3
 TEST_CASE("simple_usertype/variable-control", "test to see if usertypes respond to inheritance and variable controls") {
 	class A {
 	public:
-		virtual void a() { throw std::runtime_error("entered base pure virtual implementation"); };
+		virtual void a() {
+			throw std::runtime_error("entered base pure virtual implementation");
+		};
 	};
 
 	class B : public A {
 	public:
-		virtual void a() override { }
+		virtual void a() override {
+		}
 	};
 
 	class sA {
 	public:
-		virtual void a() { throw std::runtime_error("entered base pure virtual implementation"); };
+		virtual void a() {
+			throw std::runtime_error("entered base pure virtual implementation");
+		};
 	};
 
 	class sB : public sA {
 	public:
-		virtual void a() override { }
+		virtual void a() override {
+		}
 	};
 
 	struct sV {
@@ -287,14 +293,18 @@ TEST_CASE("simple_usertype/variable-control", "test to see if usertypes respond 
 TEST_CASE("simple_usertype/factory constructor overloads", "simple usertypes should invoke the proper factories") {
 	class A {
 	public:
-		virtual void a() { throw std::runtime_error("entered base pure virtual implementation"); };
+		virtual void a() {
+			throw std::runtime_error("entered base pure virtual implementation");
+		};
 	};
 
 	class B : public A {
 	public:
 		int bvar = 24;
-		virtual void a() override { }
-		void f() {}
+		virtual void a() override {
+		}
+		void f() {
+		}
 	};
 
 	sol::state lua;
@@ -302,20 +312,13 @@ TEST_CASE("simple_usertype/factory constructor overloads", "simple usertypes sho
 	sol::constructors<sol::types<>, sol::types<const B&>> c;
 	lua.new_simple_usertype<B>("B",
 		sol::call_constructor, c,
-		"new", sol::factories([]() { 
-			return B(); 
+		"new", sol::factories([]() {
+			return B();
 		}),
-		"new2", sol::initializers(
-			[](B& mem) { 
-				new(&mem)B(); 
-			}, 
-			[](B& mem, int v) { 
-				new(&mem)B(); mem.bvar = v; 
-			}
-		),
+		"new2", sol::initializers([](B& mem) { new (&mem) B(); }, [](B& mem, int v) { 
+				new(&mem)B(); mem.bvar = v; }),
 		"f", sol::as_function(&B::bvar),
-		"g", sol::overload([](B&) { return 2; }, [](B&, int v) { return v; })
-	);
+		"g", sol::overload([](B&) { return 2; }, [](B&, int v) { return v; }));
 
 	lua.safe_script("b = B()");
 	lua.safe_script("b2 = B.new()");
@@ -369,7 +372,7 @@ TEST_CASE("simple_usertype/runtime append", "allow extra functions to be appende
 	int y = lua["y"];
 	REQUIRE(x == 200);
 	REQUIRE(y == 200);
-	
+
 	lua.safe_script("z = b.method2(b)");
 	lua.safe_script("w = b:method2()");
 	int z = lua["z"];
@@ -395,7 +398,7 @@ TEST_CASE("simple_usertype/table append", "Ensure that appending to the meta tab
 	lua.set("a", &a);
 	lua.set("pa", &a);
 	lua.set("ua", std::make_unique<A>());
-	REQUIRE_NOTHROW([&]{
+	REQUIRE_NOTHROW([&] {
 		lua.safe_script("assert(a:func() == 5000)");
 		lua.safe_script("assert(pa:func() == 5000)");
 		lua.safe_script("assert(ua:func() == 5000)");
@@ -406,7 +409,9 @@ TEST_CASE("simple_usertype/class call propogation", "make sure methods and varia
 	class A {
 	public:
 		int var = 200;
-		int thing() const { return 123; }
+		int thing() const {
+			return 123;
+		}
 	};
 
 	class B : public A {
@@ -418,8 +423,7 @@ TEST_CASE("simple_usertype/class call propogation", "make sure methods and varia
 	lua.new_simple_usertype<B>("B",
 		sol::default_constructor,
 		"thing", &B::thing,
-		"var", &B::var
-		);
+		"var", &B::var);
 
 	lua.safe_script(R"(
 		b = B.new()
@@ -431,40 +435,45 @@ TEST_CASE("simple_usertype/class call propogation", "make sure methods and varia
 TEST_CASE("simple_usertype/call constructor", "ensure that all kinds of call-based constructors can be serialized") {
 	struct thing {};
 	struct v_test {
-		
 	};
 	struct f_test {
-		int i; f_test(int i) : i(i) {}
+		int i;
+		f_test(int i)
+		: i(i) {
+		}
 	};
 	struct i_test {
-		int i; i_test(int i) : i(i) {}
+		int i;
+		i_test(int i)
+		: i(i) {
+		}
 	};
 	struct r_test {
-		int i; r_test(int i) : i(i) {}
+		int i;
+		r_test(int i)
+		: i(i) {
+		}
 	};
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	auto f = sol::factories([]() {return f_test(30); });
+	auto f = sol::factories([]() { return f_test(30); });
 	lua.new_simple_usertype<f_test>("f_test",
 		sol::call_constructor, sol::factories([]() {
 			return f_test(20);
 		}),
-		"new", f
-		);
+		"new", f);
 
 	lua.new_simple_usertype<i_test>("i_test",
 		sol::call_constructor, sol::initializers([](i_test& obj) {
-		new(&obj)i_test(21);
-	})
-		);
+			new (&obj) i_test(21);
+		}));
 
 	lua.new_simple_usertype<r_test>("r_test",
 		sol::call_constructor, [](sol::table) {
-		return r_test(22);
-	}
-	);
+			return r_test(22);
+		});
 
 	lua.safe_script("a = f_test()");
 	lua.safe_script("b = i_test()");
@@ -486,13 +495,11 @@ TEST_CASE("simple_usertype/call constructor", "ensure that all kinds of call-bas
 				REQUIRE(v.second.is<thing>());
 			}
 			return v_test();
-		}
-	);
+		});
 
 	lua.new_simple_usertype<v_test>("v_test",
 		sol::meta_function::construct, vfactories,
-		sol::call_constructor, vfactories
-		);
+		sol::call_constructor, vfactories);
 
 	lua.new_simple_usertype<thing>("thing");
 	lua.safe_script("things = {thing.new(), thing.new()}");
@@ -513,8 +520,7 @@ TEST_CASE("simple_usertype/no_constructor", "make sure simple usertype errors wh
 		lua.open_libraries(sol::lib::base);
 
 		lua.new_simple_usertype<thing>("thing",
-			sol::meta_function::construct, sol::no_constructor
-			);
+			sol::meta_function::construct, sol::no_constructor);
 		auto result = lua.safe_script("a = thing.new()", sol::script_pass_on_error);
 		REQUIRE_FALSE(result.valid());
 	}
@@ -524,11 +530,10 @@ TEST_CASE("simple_usertype/no_constructor", "make sure simple usertype errors wh
 		lua.open_libraries(sol::lib::base);
 
 		lua.new_simple_usertype<thing>("thing",
-			sol::call_constructor, sol::no_constructor
-			);
+			sol::call_constructor, sol::no_constructor);
 		auto result = lua.safe_script("a = thing()", sol::script_pass_on_error);
 		REQUIRE_FALSE(result.valid());
-	}	
+	}
 }
 
 TEST_CASE("simple_usertype/missing key", "make sure a missing key returns nil") {
@@ -544,7 +549,9 @@ TEST_CASE("simple_usertype/missing key", "make sure a missing key returns nil") 
 TEST_CASE("simple_usertype/runtime extensibility", "Check if usertypes are runtime extensible") {
 	struct thing {
 		int v = 20;
-		int func(int a) { return a; }
+		int func(int a) {
+			return a;
+		}
 	};
 	int val = 0;
 
@@ -553,8 +560,7 @@ TEST_CASE("simple_usertype/runtime extensibility", "Check if usertypes are runti
 		lua.open_libraries(sol::lib::base);
 
 		lua.new_simple_usertype<thing>("thing",
-			"func", &thing::func
-			);
+			"func", &thing::func);
 
 		lua.safe_script(R"(
 t = thing.new()
@@ -565,7 +571,8 @@ t = thing.new()
 t.runtime_func = function (a)
 	return a + 50
 end
-		)", sol::script_pass_on_error);
+		)",
+				sol::script_pass_on_error);
 			REQUIRE_FALSE(result.valid());
 		}
 
@@ -574,7 +581,8 @@ end
 function t:runtime_func(a)
 	return a + 52
 end
-		)", sol::script_pass_on_error);
+		)",
+				sol::script_pass_on_error);
 			REQUIRE_FALSE(result.valid());
 		}
 
@@ -600,8 +608,7 @@ end
 
 		lua.new_simple_usertype<thing>("thing",
 			"func", &thing::func,
-			"v", &thing::v
-			);
+			"v", &thing::v);
 
 		lua.safe_script(R"(
 t = thing.new()
@@ -612,7 +619,8 @@ t = thing.new()
 t.runtime_func = function (a)
 	return a + 50
 end
-		)", sol::script_pass_on_error);
+		)",
+				sol::script_pass_on_error);
 			REQUIRE_FALSE(result.valid());
 		}
 
@@ -621,7 +629,8 @@ end
 function t:runtime_func(a)
 	return a + 52
 end
-		)", sol::script_pass_on_error);
+		)",
+				sol::script_pass_on_error);
 			REQUIRE_FALSE(result.valid());
 		}());
 
@@ -646,7 +655,8 @@ end
 TEST_CASE("simple_usertype/runtime replacement", "ensure that functions can be properly replaced at runtime for non-indexed things") {
 	struct heart_base_t {};
 	struct heart_t : heart_base_t {
-		void func() {}
+		void func() {
+		}
 	};
 
 	SECTION("plain") {
@@ -675,8 +685,7 @@ TEST_CASE("simple_usertype/runtime replacement", "ensure that functions can be p
 		lua.open_libraries(sol::lib::base);
 
 		lua.new_simple_usertype<heart_t>("a",
-			sol::base_classes, sol::bases<heart_base_t>()
-			);
+			sol::base_classes, sol::bases<heart_base_t>());
 
 		REQUIRE_NOTHROW([&lua]() {
 			lua.safe_script("obj = a.new()");
@@ -700,8 +709,7 @@ TEST_CASE("simple_usertype/runtime replacement", "ensure that functions can be p
 
 		lua.new_simple_usertype<heart_t>("a",
 			"func", &heart_t::func,
-			sol::base_classes, sol::bases<heart_base_t>()
-			);
+			sol::base_classes, sol::bases<heart_base_t>());
 
 		REQUIRE_NOTHROW([&lua]() {
 			lua.safe_script("obj = a.new()");
@@ -740,7 +748,6 @@ TEST_CASE("simple_usertype/meta key retrievals", "allow for special meta keys (_
 		s[sol::metatable_key][sol::meta_function::new_index] = &d_sample::foo;
 		lua["var"] = s;
 
-		
 		lua.safe_script("var = sample.new()");
 		lua.safe_script("var.key = 2");
 		lua.safe_script("var.__newindex = 4");
@@ -770,7 +777,7 @@ TEST_CASE("simple_usertype/meta key retrievals", "allow for special meta keys (_
 
 		sol::state lua;
 		lua.new_simple_usertype<sample>("sample", sol::meta_function::new_index, &sample::foo);
-		
+
 		lua.safe_script("var = sample.new()");
 		lua.safe_script("var.key = 2");
 		lua.safe_script("var.__newindex = 4");
@@ -808,8 +815,7 @@ TEST_CASE("simple_usertype/static properties", "allow for static functions to ge
 
 	lua.new_simple_usertype<test_t>("test",
 		"f", std::function<std::size_t()>(std::bind(std::mem_fn(&test_t::func), &manager)),
-		"g", sol::property(&test_t::s_func, &test_t::g_func)
-		);
+		"g", sol::property(&test_t::s_func, &test_t::g_func));
 
 	lua.safe_script("v1 = test.f()");
 	lua.safe_script("v2 = test.g");
@@ -825,10 +831,12 @@ TEST_CASE("simple_usertype/static properties", "allow for static functions to ge
 
 TEST_CASE("simple_usertype/indexing", "make sure simple usertypes can be indexed/new_indexed properly without breaking") {
 	static int val = 0;
-	
+
 	class indexing_test {
 	public:
-		indexing_test() { val = 0; }
+		indexing_test() {
+			val = 0;
+		}
 
 		sol::object getter(const std::string& name, sol::this_state _s) {
 			REQUIRE(name == "a");
@@ -851,8 +859,7 @@ TEST_CASE("simple_usertype/indexing", "make sure simple usertypes can be indexed
 		lua.open_libraries(sol::lib::base);
 		lua.new_simple_usertype<indexing_test>("test",
 			sol::meta_function::index, &indexing_test::getter,
-			sol::meta_function::new_index, &indexing_test::setter
-			);
+			sol::meta_function::new_index, &indexing_test::setter);
 
 		lua.safe_script(R"(	
 		local t = test.new()
@@ -869,8 +876,7 @@ TEST_CASE("simple_usertype/indexing", "make sure simple usertypes can be indexed
 		lua.open_libraries(sol::lib::base);
 		lua.new_simple_usertype<indexing_test>("test",
 			sol::meta_function::index, &indexing_test::getter,
-			sol::meta_function::new_index, &indexing_test::setter
-			);
+			sol::meta_function::new_index, &indexing_test::setter);
 
 		lua["test"]["hi"] = [](indexing_test& _self) -> int { return _self.hi(); };
 

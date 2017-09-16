@@ -70,12 +70,18 @@ TEST_CASE("gc/virtual destructors", "ensure types with virtual destructions beha
 
 	class A {
 	public:
-		virtual ~A() { as.push_back(this); std::cout << "~A" << std::endl; }
+		virtual ~A() {
+			as.push_back(this);
+			std::cout << "~A" << std::endl;
+		}
 	};
 
 	class B : public A {
 	public:
-		virtual ~B() { bs.push_back(this); std::cout << "~B" << std::endl; }
+		virtual ~B() {
+			bs.push_back(this);
+			std::cout << "~B" << std::endl;
+		}
 	};
 
 	{
@@ -99,7 +105,9 @@ TEST_CASE("gc/function argument storage", "ensure functions take references on t
 
 	class gc_entity {
 	public:
-		~gc_entity() { entities.push_back(this); }
+		~gc_entity() {
+			entities.push_back(this);
+		}
 	};
 	SECTION("plain") {
 		entities.clear();
@@ -115,18 +123,17 @@ end
 			gc_entity e;
 			target = &e;
 			{
-				f(e); // same with std::ref(e)!
+				f(e);			   // same with std::ref(e)!
 				lua.collect_garbage(); // destroys e for some reason
 			}
 			{
-				f(&e); // same with std::ref(e)!
+				f(&e);			   // same with std::ref(e)!
 				lua.collect_garbage(); // destroys e for some reason
 			}
 			{
-				f(std::ref(e)); // same with std::ref(e)!
+				f(std::ref(e));	   // same with std::ref(e)!
 				lua.collect_garbage(); // destroys e for some reason
 			}
-
 		}
 		REQUIRE(entities.size() == 1);
 		REQUIRE(entities.back() == target);
@@ -146,18 +153,17 @@ end
 			gc_entity e;
 			target = &e;
 			{
-				f(e); // same with std::ref(e)!
+				f(e);			   // same with std::ref(e)!
 				lua.collect_garbage(); // destroys e for some reason
 			}
 			{
-				f(&e); // same with std::ref(e)!
+				f(&e);			   // same with std::ref(e)!
 				lua.collect_garbage(); // destroys e for some reason
 			}
 			{
-				f(std::ref(e)); // same with std::ref(e)!
+				f(std::ref(e));	   // same with std::ref(e)!
 				lua.collect_garbage(); // destroys e for some reason
 			}
-
 		}
 		REQUIRE(entities.size() == 1);
 		REQUIRE(entities.back() == target);
@@ -177,50 +183,80 @@ end
 			gc_entity e;
 			target = &e;
 			{
-				f(e); // same with std::ref(e)!
+				f(e);			   // same with std::ref(e)!
 				lua.collect_garbage(); // destroys e for some reason
 			}
 			{
-				f(&e); // same with std::ref(e)!
+				f(&e);			   // same with std::ref(e)!
 				lua.collect_garbage(); // destroys e for some reason
 			}
 			{
-				f(std::ref(e)); // same with std::ref(e)!
+				f(std::ref(e));	   // same with std::ref(e)!
 				lua.collect_garbage(); // destroys e for some reason
 			}
-
 		}
 		REQUIRE(entities.size() == 1);
 		REQUIRE(entities.back() == target);
 	}
 }
 
-
 TEST_CASE("gc/function storage", "show that proper copies / destruction happens for function storage (or not)") {
 	static int created = 0;
 	static int destroyed = 0;
 	static void* last_call = nullptr;
 	static void* static_call = reinterpret_cast<void*>(0x01);
-	typedef void(*fptr)();
+	typedef void (*fptr)();
 	struct x {
-		x() { ++created; }
-		x(const x&) { ++created; }
-		x(x&&) { ++created; }
-		x& operator=(const x&) { return *this; }
-		x& operator=(x&&) { return *this; }
-		void func() { last_call = static_cast<void*>(this); };
-		~x() { ++destroyed; }
+		x() {
+			++created;
+		}
+		x(const x&) {
+			++created;
+		}
+		x(x&&) {
+			++created;
+		}
+		x& operator=(const x&) {
+			return *this;
+		}
+		x& operator=(x&&) {
+			return *this;
+		}
+		void func() {
+			last_call = static_cast<void*>(this);
+		};
+		~x() {
+			++destroyed;
+		}
 	};
 	struct y {
-		y() { ++created; }
-		y(const x&) { ++created; }
-		y(x&&) { ++created; }
-		y& operator=(const x&) { return *this; }
-		y& operator=(x&&) { return *this; }
-		static void func() { last_call = static_call; };
-		void operator()() { func(); }
-		operator fptr () { return func; }
-		~y() { ++destroyed; }
+		y() {
+			++created;
+		}
+		y(const x&) {
+			++created;
+		}
+		y(x&&) {
+			++created;
+		}
+		y& operator=(const x&) {
+			return *this;
+		}
+		y& operator=(x&&) {
+			return *this;
+		}
+		static void func() {
+			last_call = static_call;
+		};
+		void operator()() {
+			func();
+		}
+		operator fptr() {
+			return func;
+		}
+		~y() {
+			++destroyed;
+		}
 	};
 
 	// stateful functors/member functions should always copy unless specified
@@ -274,7 +310,6 @@ TEST_CASE("gc/function storage", "show that proper copies / destruction happens 
 	}
 }
 
-
 TEST_CASE("gc/same type closures", "make sure destructions are per-object, not per-type, by destroying one type multiple times") {
 	static std::set<void*> last_my_closures;
 	static bool checking_closures = false;
@@ -283,7 +318,9 @@ TEST_CASE("gc/same type closures", "make sure destructions are per-object, not p
 	struct my_closure {
 		int& n;
 
-		my_closure(int& n) : n(n) {}
+		my_closure(int& n)
+		: n(n) {
+		}
 		~my_closure() noexcept(false) {
 			if (!checking_closures)
 				return;
@@ -295,8 +332,9 @@ TEST_CASE("gc/same type closures", "make sure destructions are per-object, not p
 			last_my_closures.insert(f, addr);
 		}
 
-		int operator() () {
-			++n; return n;
+		int operator()() {
+			++n;
+			return n;
 		}
 	};
 
@@ -318,12 +356,24 @@ TEST_CASE("gc/usertypes", "show that proper copies / destruction happens for use
 	static int created = 0;
 	static int destroyed = 0;
 	struct x {
-		x() { ++created; }
-		x(const x&) { ++created; }
-		x(x&&) { ++created; }
-		x& operator=(const x&) { return *this; }
-		x& operator=(x&&) { return *this; }
-		~x() { ++destroyed; }
+		x() {
+			++created;
+		}
+		x(const x&) {
+			++created;
+		}
+		x(x&&) {
+			++created;
+		}
+		x& operator=(const x&) {
+			return *this;
+		}
+		x& operator=(x&&) {
+			return *this;
+		}
+		~x() {
+			++destroyed;
+		}
 	};
 	SECTION("plain") {
 		created = 0;
@@ -392,8 +442,12 @@ TEST_CASE("gc/usertypes", "show that proper copies / destruction happens for use
 TEST_CASE("gc/double-deletion tests", "make sure usertypes are properly destructed and don't double-delete memory or segfault") {
 	class crash_class {
 	public:
-		crash_class() {}
-		~crash_class() { a = 10; }
+		crash_class() {
+		}
+		~crash_class() {
+			a = 10;
+		}
+
 	private:
 		int a;
 	};
@@ -402,8 +456,7 @@ TEST_CASE("gc/double-deletion tests", "make sure usertypes are properly destruct
 
 	SECTION("regular") {
 		lua.new_usertype<crash_class>("CrashClass",
-			sol::call_constructor, sol::constructors<sol::types<>>()
-			);
+			sol::call_constructor, sol::constructors<sol::types<>>());
 
 		lua.safe_script(R"(
 		function testCrash()
@@ -417,8 +470,7 @@ TEST_CASE("gc/double-deletion tests", "make sure usertypes are properly destruct
 	}
 	SECTION("simple") {
 		lua.new_simple_usertype<crash_class>("CrashClass",
-			sol::call_constructor, sol::constructors<sol::types<>>()
-			);
+			sol::call_constructor, sol::constructors<sol::types<>>());
 
 		lua.safe_script(R"(
 		function testCrash()
@@ -455,10 +507,9 @@ TEST_CASE("gc/shared_ptr regression", "metatables should not screw over unique u
 
 			lua.new_usertype<test>("test",
 				"create", [&]() -> std::shared_ptr<test> {
-				tests.push_back(std::make_shared<test>());
-				return tests.back();
-			}
-			);
+					tests.push_back(std::make_shared<test>());
+					return tests.back();
+				});
 			REQUIRE(created == 0);
 			REQUIRE(destroyed == 0);
 			lua.safe_script("x = test.create()");
@@ -483,10 +534,9 @@ TEST_CASE("gc/shared_ptr regression", "metatables should not screw over unique u
 
 			lua.new_simple_usertype<test>("test",
 				"create", [&]() -> std::shared_ptr<test> {
-				tests.push_back(std::make_shared<test>());
-				return tests.back();
-			}
-			);
+					tests.push_back(std::make_shared<test>());
+					return tests.back();
+				});
 			REQUIRE(created == 0);
 			REQUIRE(destroyed == 0);
 			lua.safe_script("x = test.create()");
@@ -505,8 +555,12 @@ TEST_CASE("gc/shared_ptr regression", "metatables should not screw over unique u
 
 TEST_CASE("gc/double deleter guards", "usertype metatables internally must not rely on C++ state") {
 	SECTION("regular") {
-		struct c_a { int xv; };
-		struct c_b { int yv; };
+		struct c_a {
+			int xv;
+		};
+		struct c_b {
+			int yv;
+		};
 		auto routine = []() {
 			sol::state lua;
 			lua.new_usertype<c_a>("c_a", "x", &c_a::xv);
@@ -519,8 +573,12 @@ TEST_CASE("gc/double deleter guards", "usertype metatables internally must not r
 		REQUIRE_NOTHROW(routine());
 	}
 	SECTION("simple") {
-		struct sc_a { int xv; };
-		struct sc_b { int yv; };
+		struct sc_a {
+			int xv;
+		};
+		struct sc_b {
+			int yv;
+		};
 		auto routine = []() {
 			sol::state lua;
 			lua.new_simple_usertype<sc_a>("c_a", "x", &sc_a::xv);

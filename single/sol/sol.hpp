@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-14 12:49:46.096117 UTC
-// This header was generated with sol v2.18.3 (revision 1fc0027)
+// Generated 2017-09-16 18:18:13.277753 UTC
+// This header was generated with sol v2.18.3 (revision 2aecb11)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1604,6 +1604,7 @@ extern "C" {
 }
 #endif
 
+#undef COMPAT53_INCLUDE_SOURCE
 #if defined(COMPAT53_PREFIX)
 /* - change the symbol names of functions to avoid linker conflicts
  * - compat-5.3.c needs to be compiled (and linked) separately
@@ -1611,7 +1612,6 @@ extern "C" {
 #  if !defined(COMPAT53_API)
 #    define COMPAT53_API extern
 #  endif
-#  undef COMPAT53_INCLUDE_SOURCE
 #else /* COMPAT53_PREFIX */
 /* - make all functions static and include the source.
  * - compat-5.3.c doesn't need to be compiled (and linked) separately
@@ -1674,12 +1674,12 @@ extern "C" {
 #  define LUA_OPLE 2
 #endif
 
-/* LuaJIT/Lua 5.1 does not have the updated 
+/* LuaJIT/Lua 5.1 does not have the updated
  * error codes for thread status/function returns (but some patched versions do)
  * define it only if it's not found
  */
 #if !defined(LUA_ERRGCMM)
-/* Use + 2 because in some versions of Lua (Lua 5.1) 
+/* Use + 2 because in some versions of Lua (Lua 5.1)
  * LUA_ERRFILE is defined as (LUA_ERRERR+1)
  * so we need to avoid it (LuaJIT might have something at this
  * integer value too)
@@ -1697,6 +1697,14 @@ typedef struct luaL_Buffer_53 {
   lua_State *L2;
 } luaL_Buffer_53;
 #define luaL_Buffer luaL_Buffer_53
+
+/* In PUC-Rio 5.1, userdata is a simple FILE*
+ * In LuaJIT, it's a struct where the first member is a FILE*
+ * We can't support the `closef` member
+ */
+typedef struct luaL_Stream {
+  FILE *f;
+} luaL_Stream;
 
 #define lua_absindex COMPAT53_CONCAT(COMPAT53_PREFIX, _absindex)
 COMPAT53_API int lua_absindex (lua_State *L, int i);
@@ -1752,6 +1760,9 @@ COMPAT53_API lua_Number lua_tonumberx (lua_State *L, int i, int *isnum);
 
 #define luaL_checkversion COMPAT53_CONCAT(COMPAT53_PREFIX, L_checkversion)
 COMPAT53_API void luaL_checkversion (lua_State *L);
+
+#define lua_load COMPAT53_CONCAT(COMPAT53_PREFIX, _load_53)
+COMPAT53_API int lua_load (lua_State *L, lua_Reader reader, void *data, const char* source, const char* mode);
 
 #define luaL_loadfilex COMPAT53_CONCAT(COMPAT53_PREFIX, L_loadfilex)
 COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char *mode);
@@ -2003,12 +2014,15 @@ COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
 
 #if defined(_MSC_VER) && COMPAT53_FOPEN_NO_LOCK
 #include <share.h>
-#endif // VC++ _fsopen for share-allowed file read
+#endif /* VC++ _fsopen for share-allowed file read */
 
 #ifndef COMPAT53_HAVE_STRERROR_R
-#  if defined(__GLIBC__) || defined(_POSIX_VERSION) || defined(__APPLE__) || (!defined (__MINGW32__) && defined(__GNUC__) && (__GNUC__ < 6))
+#  if defined(__GLIBC__) || defined(_POSIX_VERSION) || defined(__APPLE__) || \
+      (!defined (__MINGW32__) && defined(__GNUC__) && (__GNUC__ < 6))
 #    define COMPAT53_HAVE_STRERROR_R 1
-#    if ((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || (defined(_XOPEN_SOURCE) || _XOPEN_SOURCE >= 600)) && (!defined(_GNU_SOURCE) || !_GNU_SOURCE)
+#    if ((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || \
+         (defined(_XOPEN_SOURCE) || _XOPEN_SOURCE >= 600)) && \
+        (!defined(_GNU_SOURCE) || !_GNU_SOURCE)
 #      ifndef COMPAT53_HAVE_STRERROR_R_XSI
 #        define COMPAT53_HAVE_STRERROR_R_XSI 1
 #      endif /* XSI-Compliant strerror_r */
@@ -2035,7 +2049,8 @@ COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
 #endif /* strerror_r */
 
 #ifndef COMPAT53_HAVE_STRERROR_S
-#  if defined(_MSC_VER) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || (defined(__STDC_LIB_EXT1__) && __STDC_LIB_EXT1__)
+#  if defined(_MSC_VER) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || \
+      (defined(__STDC_LIB_EXT1__) && __STDC_LIB_EXT1__)
 #    define COMPAT53_HAVE_STRERROR_S 1
 #  else /* not VC++ or C11 */
 #    define COMPAT53_HAVE_STRERROR_S 0
@@ -2046,7 +2061,7 @@ COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
 #define COMPAT53_LUA_FILE_BUFFER_SIZE 4096
 #endif /* Lua File Buffer Size */
 
-static char* compat53_strerror(int en, char* buff, size_t sz) {
+static char* compat53_strerror (int en, char* buff, size_t sz) {
 #if COMPAT53_HAVE_STRERROR_R
   /* use strerror_r here, because it's available on these specific platforms */
 #if COMPAT53_HAVE_STRERROR_R_XSI
@@ -2401,13 +2416,48 @@ COMPAT53_API int luaL_fileresult (lua_State *L, int stat, const char *fname) {
 
 static int compat53_checkmode (lua_State *L, const char *mode, const char *modename, int err) {
   if (mode && strchr(mode, modename[0]) == NULL) {
-    lua_pushfstring(L, "attempt to load a %s chunk when 'mode' is '%s'", modename, mode);
+    lua_pushfstring(L, "attempt to load a %s chunk (mode is '%s')", modename, mode);
     return err;
   }
   return LUA_OK;
 }
 
-typedef struct compat53_LoadF {
+typedef struct {
+  lua_Reader reader;
+  void *ud;
+  int has_peeked_data;
+  const char *peeked_data;
+  size_t peeked_data_size;
+} compat53_reader_data;
+
+static const char *compat53_reader (lua_State *L, void *ud, size_t *size) {
+  compat53_reader_data *data = (compat53_reader_data *)ud;
+  if (data->has_peeked_data) {
+    data->has_peeked_data = 0;
+    *size = data->peeked_data_size;
+    return data->peeked_data;
+  } else
+    return data->reader(L, data->ud, size);
+}
+
+COMPAT53_API int lua_load (lua_State *L, lua_Reader reader, void *data, const char *source, const char *mode) {
+  int status = LUA_OK;
+  compat53_reader_data compat53_data = { reader, data, 1, 0, 0 };
+  compat53_data.peeked_data = reader(L, data, &(compat53_data.peeked_data_size));
+  if (compat53_data.peeked_data && compat53_data.peeked_data_size &&
+      compat53_data.peeked_data[0] == LUA_SIGNATURE[0]) /* binary file? */
+      status = compat53_checkmode(L, mode, "binary", LUA_ERRSYNTAX);
+  else
+      status = compat53_checkmode(L, mode, "text", LUA_ERRSYNTAX);
+  if (status != LUA_OK)
+    return status;
+  /* we need to call the original 5.1 version of lua_load! */
+#undef lua_load
+  return lua_load(L, compat53_reader, &compat53_data, source);
+#define lua_load COMPAT53_CONCAT(COMPAT53_PREFIX, _load_53)
+}
+
+typedef struct {
   int n;  /* number of pre-read characters */
   FILE *f;  /* file being read */
   char buff[COMPAT53_LUA_FILE_BUFFER_SIZE];  /* area for reading file */
@@ -2472,7 +2522,6 @@ static int compat53_skipcomment (compat53_LoadF *lf, int *cp) {
 }
 
 COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char *mode) {
-  static const char lua_signature[] = "\x1bLua";
   compat53_LoadF lf;
   int status, readstatus;
   int c;
@@ -2484,24 +2533,25 @@ COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char 
   else {
     lua_pushfstring(L, "@%s", filename);
 #if defined(_MSC_VER)
-    /* a quick check shows that fopen_s this goes back to VS 2005, 
-     * and _fsopen goes back to VS 2003 .NET, possibly even before that 
-     * so we don't need to do any version number checks, 
-     * since this has been there since forever
+    /* This code is here to stop a deprecation error that stops builds
+     * if a certain macro is defined. While normally not caring would
+     * be best, some header-only libraries and builds can't afford to
+     * dictate this to the user. A quick check shows that fopen_s this
+     * goes back to VS 2005, and _fsopen goes back to VS 2003 .NET,
+     * possibly even before that so we don't need to do any version
+     * number checks, since this has been there since forever.
      */
 
-    /* TO USER: if you want the behavior of typical fopen_s/fopen, 
-     * which does lock the file on VC++, define the macro used below
-	*/
+    /* TO USER: if you want the behavior of typical fopen_s/fopen,
+     * which does lock the file on VC++, define the macro used below to 0
+    */
 #if COMPAT53_FOPEN_NO_LOCK
     lf.f = _fsopen(filename, "r", _SH_DENYNO); /* do not lock the file in any way */
-    if (lf.f == NULL) {
+    if (lf.f == NULL)
       return compat53_errfile(L, "open", fnameindex);
-    }
 #else /* use default locking version */
-    if (fopen_s(&lf.f, filename, "r") != 0) {
+    if (fopen_s(&lf.f, filename, "r") != 0)
       return compat53_errfile(L, "open", fnameindex);
-    }
 #endif /* Locking vs. No-locking fopen variants */
 #else
     lf.f = fopen(filename, "r"); /* default stdlib doesn't forcefully lock files here */
@@ -2510,30 +2560,19 @@ COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char 
   }
   if (compat53_skipcomment(&lf, &c))  /* read initial portion */
     lf.buff[lf.n++] = '\n';  /* add line to correct line numbers */
-  if (c == lua_signature[0]) {  /* binary file? */
-    status = compat53_checkmode(L, mode, "binary", LUA_ERRFILE);
-    if (status != LUA_OK) {
-      fclose(lf.f);
-      return compat53_errfile(L, "improper mode", fnameindex);
-    }
+  if (c == LUA_SIGNATURE[0] && filename) {  /* binary file? */
 #if defined(_MSC_VER)
-    if (freopen_s(&lf.f, filename, "r", lf.f) != 0) return compat53_errfile(L, "open", fnameindex);
+    if (freopen_s(&lf.f, filename, "rb", lf.f) != 0)
+      return compat53_errfile(L, "reopen", fnameindex);
 #else
     lf.f = freopen(filename, "rb", lf.f);  /* reopen in binary mode */
     if (lf.f == NULL) return compat53_errfile(L, "reopen", fnameindex);
 #endif
     compat53_skipcomment(&lf, &c);  /* re-read initial portion */
   }
-  else { /* text file */
-    status = compat53_checkmode(L, mode, "text", LUA_ERRFILE);
-    if (status != LUA_OK) {
-      fclose(lf.f);
-      return compat53_errfile(L, "improper mode", fnameindex);
-    }    
-  }
   if (c != EOF)
     lf.buff[lf.n++] = c;  /* 'c' is the first character of the stream */
-  status = lua_load(L, &compat53_getF, &lf, lua_tostring(L, -1));
+  status = lua_load(L, &compat53_getF, &lf, lua_tostring(L, -1), mode);
   readstatus = ferror(lf.f);
   if (filename) fclose(lf.f);  /* close file (even in case of errors) */
   if (readstatus) {
@@ -2546,7 +2585,7 @@ COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char 
 
 COMPAT53_API int luaL_loadbufferx (lua_State *L, const char *buff, size_t sz, const char *name, const char *mode) {
   int status = LUA_OK;
-  if (sz > 0 && buff[0] == '\x1b') {
+  if (sz > 0 && buff[0] == LUA_SIGNATURE[0]) {
     status = compat53_checkmode(L, mode, "binary", LUA_ERRSYNTAX);
   }
   else {
@@ -18486,12 +18525,7 @@ namespace sol {
 		load_result load(lua_Reader reader, void* data, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name("lua_Reader", chunkname, basechunkname);
-#if SOL_LUA_VERSION > 501
 			load_status x = static_cast<load_status>(lua_load(L, reader, data, chunknametarget, to_string(mode).c_str()));
-#else
-			(void)mode;
-			load_status x = static_cast<load_status>(lua_load(L, reader, data, chunknametarget));
-#endif
 			return load_result(L, absolute_index(L, -1), 1, 1, x);
 		}
 

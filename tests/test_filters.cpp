@@ -33,8 +33,7 @@ TEST_CASE("filters/self", "ensure we return a direct reference to the lua userda
 	lua.new_usertype<vec2>("vec2",
 		"x", &vec2::x,
 		"y", &vec2::y,
-		"normalize", sol::filters(&vec2::normalize, sol::returns_self())
-	);
+		"normalize", sol::filters(&vec2::normalize, sol::returns_self()));
 	REQUIRE_NOTHROW([&]() {
 		lua.safe_script(R"(
 v1 = vec2.new()
@@ -47,7 +46,7 @@ assert(rawequal(v1, v2))
 v1 = nil
 collectgarbage()
 print(v2) -- v2 points to same, is not destroyed
-		)"); 
+		)");
 	}());
 }
 
@@ -60,7 +59,8 @@ TEST_CASE("filters/self_dependency", "ensure we can keep a userdata instance ali
 	struct dep {
 		int value = 20;
 		~dep() {
-			std::cout << "\t" << "[C++] ~dep" << std::endl;
+			std::cout << "\t"
+					<< "[C++] ~dep" << std::endl;
 			value = std::numeric_limits<int>::max();
 			deps_destroyed.push_back(this);
 		}
@@ -71,7 +71,8 @@ TEST_CASE("filters/self_dependency", "ensure we can keep a userdata instance ali
 		dep d;
 
 		~gc_test() {
-			std::cout << "\t" << "[C++] ~gc_test" << std::endl;
+			std::cout << "\t"
+					<< "[C++] ~gc_test" << std::endl;
 			gc_tests_destroyed.push_back(this);
 		}
 	};
@@ -82,15 +83,13 @@ TEST_CASE("filters/self_dependency", "ensure we can keep a userdata instance ali
 	lua.new_usertype<dep>("dep",
 		"value", &dep::value,
 		sol::meta_function::to_string, [](dep& d) {
-		return "{ " + std::to_string(d.value) + " }";
-	}
-	);
+			return "{ " + std::to_string(d.value) + " }";
+		});
 	lua.new_usertype<gc_test>("gc_test",
 		"d", sol::filters(&gc_test::d, sol::self_dependency()),
 		sol::meta_function::to_string, [](gc_test& g) {
-		return "{ d: { " + std::to_string(g.d.value) + " } }";
-	}
-	);
+			return "{ d: { " + std::to_string(g.d.value) + " } }";
+		});
 
 	lua.safe_script(R"(
 g = gc_test.new()
@@ -157,7 +156,9 @@ TEST_CASE("filters/stack_dependencies", "ensure we can take dependencies even to
 		std::reference_wrapper<holder> href;
 		composition_related comp;
 
-		depends_on_reference(holder& h) : href(h) {}
+		depends_on_reference(holder& h)
+		: href(h) {
+		}
 
 		~depends_on_reference() {
 			std::cout << "[C++] ~depends_on_reference" << std::endl;
@@ -169,12 +170,10 @@ TEST_CASE("filters/stack_dependencies", "ensure we can take dependencies even to
 	lua.open_libraries(sol::lib::base);
 
 	lua.new_usertype<holder>("holder",
-		"value", &holder::value
-		);
+		"value", &holder::value);
 	lua.new_usertype<depends_on_reference>("depends_on_reference",
 		"new", sol::filters(sol::constructors<depends_on_reference(holder&)>(), sol::stack_dependencies(-1, 1)),
-		"comp", &depends_on_reference::comp
-		);
+		"comp", &depends_on_reference::comp);
 
 	lua.safe_script(R"(
 h = holder.new()

@@ -13,12 +13,10 @@
 #include "test_stack_guard.hpp"
 
 bool func_opt_ret_bool(sol::optional<int> i) {
-	if (i)
-	{
+	if (i) {
 		INFO(i.value());
 	}
-	else
-	{
+	else {
 		INFO("optional isn't set");
 	}
 	return true;
@@ -35,39 +33,45 @@ TEST_CASE("table/traversal", "ensure that we can chain requests and tunnel down 
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		int traversex24 = lua.traverse_get<int>("t1", "t2", "t3");
 		REQUIRE(traversex24 == 24);
-	} REQUIRE(begintop == endtop);
+	}
+	REQUIRE(begintop == endtop);
 
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		int x24 = lua["t1"]["t2"]["t3"];
 		REQUIRE(x24 == 24);
-	} REQUIRE(begintop == endtop);
+	}
+	REQUIRE(begintop == endtop);
 
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		lua["t1"]["t2"]["t3"] = 64;
 		int traversex64 = lua.traverse_get<int>("t1", "t2", "t3");
 		REQUIRE(traversex64 == 64);
-	} REQUIRE(begintop == endtop);
+	}
+	REQUIRE(begintop == endtop);
 
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		int x64 = lua["t1"]["t2"]["t3"];
 		REQUIRE(x64 == 64);
-	} REQUIRE(begintop == endtop);
+	}
+	REQUIRE(begintop == endtop);
 
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		lua.traverse_set("t1", "t2", "t3", 13);
 		int traversex13 = lua.traverse_get<int>("t1", "t2", "t3");
 		REQUIRE(traversex13 == 13);
-	} REQUIRE(begintop == endtop);
+	}
+	REQUIRE(begintop == endtop);
 
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		int x13 = lua["t1"]["t2"]["t3"];
 		REQUIRE(x13 == 13);
-	} REQUIRE(begintop == endtop);
+	}
+	REQUIRE(begintop == endtop);
 }
 
 TEST_CASE("simple/set", "Check if the set works properly.") {
@@ -76,18 +80,21 @@ TEST_CASE("simple/set", "Check if the set works properly.") {
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		lua.set("a", 9);
-	} REQUIRE(begintop == endtop);
+	}
+	REQUIRE(begintop == endtop);
 	REQUIRE_NOTHROW(lua.safe_script("if a ~= 9 then error('wrong value') end"));
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		lua.set("d", "hello");
-	} REQUIRE(begintop == endtop);
+	}
+	REQUIRE(begintop == endtop);
 	REQUIRE_NOTHROW(lua.safe_script("if d ~= 'hello' then error('expected \\'hello\\', got '.. tostring(d)) end"));
 
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		lua.set("e", std::string("hello"), "f", true);
-	} REQUIRE(begintop == endtop);
+	}
+	REQUIRE(begintop == endtop);
 	REQUIRE_NOTHROW(lua.safe_script("if d ~= 'hello' then error('expected \\'hello\\', got '.. tostring(d)) end"));
 	REQUIRE_NOTHROW(lua.safe_script("if f ~= true then error('wrong value') end"));
 }
@@ -101,13 +108,15 @@ TEST_CASE("simple/get", "Tests if the get function works properly.") {
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		auto a = lua.get<int>("a");
 		REQUIRE(a == 9.0);
-	} REQUIRE(begintop == endtop);
+	}
+	REQUIRE(begintop == endtop);
 
 	lua.safe_script("b = nil");
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		REQUIRE_NOTHROW(lua.get<sol::nil_t>("b"));
-	} REQUIRE(begintop == endtop);
+	}
+	REQUIRE(begintop == endtop);
 
 	lua.safe_script("d = 'hello'");
 	lua.safe_script("e = true");
@@ -118,7 +127,8 @@ TEST_CASE("simple/get", "Tests if the get function works properly.") {
 		std::tie(d, e) = lua.get<std::string, bool>("d", "e");
 		REQUIRE(d == "hello");
 		REQUIRE(e == true);
-	} REQUIRE(begintop == endtop);
+	}
+	REQUIRE(begintop == endtop);
 }
 
 TEST_CASE("simple/set and get global integer", "Tests if the get function works properly with global integers") {
@@ -223,7 +233,8 @@ TEST_CASE("interop/null-to-nil-and-back", "nil should be the given type when a p
 	lua.set_function("rofl", [](int* x) {
 		INFO(x);
 	});
-	REQUIRE_NOTHROW(lua.safe_script("x = lol()\n"
+	REQUIRE_NOTHROW(lua.safe_script(
+		"x = lol()\n"
 		"rofl(x)\n"
 		"assert(x == nil)"));
 }
@@ -338,14 +349,12 @@ TEST_CASE("object/main_* conversions", "make sure all basic reference types can 
 
 TEST_CASE("feature/indexing overrides", "make sure index functions can be overridden on types") {
 	struct PropertySet {
-		sol::object get_property_lua(const char* name, sol::this_state s)
-		{
+		sol::object get_property_lua(const char* name, sol::this_state s) {
 			auto& var = props[name];
 			return sol::make_object(s, var);
 		}
 
-		void set_property_lua(const char* name, sol::stack_object object)
-		{
+		void set_property_lua(const char* name, sol::stack_object object) {
 			props[name] = object.as<std::string>();
 		}
 
@@ -363,13 +372,8 @@ TEST_CASE("feature/indexing overrides", "make sure index functions can be overri
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<PropertySet>("PropertySet"
-		, sol::meta_function::new_index, &PropertySet::set_property_lua
-		, sol::meta_function::index, &PropertySet::get_property_lua
-		);
-	lua.new_usertype<DynamicObject>("DynamicObject"
-		, "props", sol::property(&DynamicObject::get_dynamic_props)
-		);
+	lua.new_usertype<PropertySet>("PropertySet", sol::meta_function::new_index, &PropertySet::set_property_lua, sol::meta_function::index, &PropertySet::get_property_lua);
+	lua.new_usertype<DynamicObject>("DynamicObject", "props", sol::property(&DynamicObject::get_dynamic_props));
 
 	lua.safe_script(R"__(
 obj = DynamicObject:new()
@@ -386,21 +390,19 @@ TEST_CASE("features/indexing numbers", "make sure indexing functions can be over
 	public:
 		double data[3];
 
-		vector() : data{ 0,0,0 } {}
+		vector()
+		: data{ 0, 0, 0 } {
+		}
 
-		double& operator[](int i)
-		{
+		double& operator[](int i) {
 			return data[i];
 		}
 
-
-		static double my_index(vector& v, int i)
-		{
+		static double my_index(vector& v, int i) {
 			return v[i];
 		}
 
-		static void my_new_index(vector& v, int i, double x)
-		{
+		static void my_new_index(vector& v, int i, double x) {
 			v[i] = x;
 		}
 	};
@@ -410,11 +412,11 @@ TEST_CASE("features/indexing numbers", "make sure indexing functions can be over
 	lua.new_usertype<vector>("vector", sol::constructors<sol::types<>>(),
 		sol::meta_function::index, &vector::my_index,
 		sol::meta_function::new_index, &vector::my_new_index);
-	lua.safe_script("v = vector.new()\n"
+	lua.safe_script(
+		"v = vector.new()\n"
 		"print(v[1])\n"
 		"v[2] = 3\n"
-		"print(v[2])\n"
-	);
+		"print(v[2])\n");
 
 	vector& v = lua["v"];
 	REQUIRE(v[0] == 0.0);
@@ -432,36 +434,29 @@ TEST_CASE("features/multiple inheritance", "Ensure that multiple inheritance wor
 	};
 
 	struct simple : base1 {
-
 	};
 
 	struct complex : base1, base2 {
-
 	};
-
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 	lua.new_usertype<base1>("base1",
-		"a1", &base1::a1
-		);
+		"a1", &base1::a1);
 	lua.new_usertype<base2>("base2",
-		"a2", &base2::a2
-		);
+		"a2", &base2::a2);
 	lua.new_usertype<simple>("simple",
 		"a1", &simple::a1,
-		sol::base_classes, sol::bases<base1>()
-		);
+		sol::base_classes, sol::bases<base1>());
 	lua.new_usertype<complex>("complex",
 		"a1", &complex::a1,
 		"a2", &complex::a2,
-		sol::base_classes, sol::bases<base1, base2>()
-		);
-	lua.safe_script("c = complex.new()\n"
+		sol::base_classes, sol::bases<base1, base2>());
+	lua.safe_script(
+		"c = complex.new()\n"
 		"s = simple.new()\n"
 		"b1 = base1.new()\n"
-		"b2 = base1.new()\n"
-	);
+		"b2 = base1.new()\n");
 
 	base1* sb1 = lua["s"];
 	REQUIRE(sb1 != nullptr);
@@ -475,7 +470,6 @@ TEST_CASE("features/multiple inheritance", "Ensure that multiple inheritance wor
 	REQUIRE(cb1->a1 == 250);
 	REQUIRE(cb2->a2 == 500);
 }
-
 
 TEST_CASE("regressions/std::ref", "Ensure that std::reference_wrapper<> isn't considered as a function by using unwrap_unqualified_t trait") {
 	struct base1 {
@@ -494,7 +488,7 @@ TEST_CASE("regressions/std::ref", "Ensure that std::reference_wrapper<> isn't co
 
 	REQUIRE(vp->a1 == 250);
 	REQUIRE(vr.a1 == 250);
-	
+
 	v.a1 = 568;
 
 	REQUIRE(vp->a1 == 568);
@@ -508,8 +502,8 @@ TEST_CASE("optional/left out args", "Make sure arguments can be left out of opti
 
 	// sol::optional needs an argument no matter what?
 	lua.set_function("func_opt_ret_bool", func_opt_ret_bool);
-	REQUIRE_NOTHROW([&]{
-	lua.safe_script(R"(
+	REQUIRE_NOTHROW([&] {
+		lua.safe_script(R"(
         func_opt_ret_bool(42)
         func_opt_ret_bool()
         print('ok')
@@ -519,18 +513,21 @@ TEST_CASE("optional/left out args", "Make sure arguments can be left out of opti
 
 TEST_CASE("pusher/constness", "Make sure more types can handle being const and junk") {
 	struct Foo {
-		Foo(const sol::function& f) : _f(f) {}
+		Foo(const sol::function& f)
+		: _f(f) {
+		}
 		const sol::function& _f;
 
-		const sol::function& f() const { return _f; }
+		const sol::function& f() const {
+			return _f;
+		}
 	};
 
 	sol::state lua;
 
 	lua.new_usertype<Foo>("Foo",
 		sol::call_constructor, sol::no_constructor,
-		"f", &Foo::f
-		);
+		"f", &Foo::f);
 
 	lua["func"] = []() { return 20; };
 	sol::function f = lua["func"];
@@ -561,13 +558,13 @@ TEST_CASE("proxy/equality", "check to make sure equality tests work") {
 	REQUIRE_FALSE((lua["a"] == nullptr));
 	REQUIRE_FALSE((lua["a"] == 0));
 	REQUIRE_FALSE((lua["a"] == 2));
-	
+
 	lua["a"] = 2;
-	
+
 	REQUIRE_FALSE((lua["a"] == sol::nil)); //0
-	REQUIRE_FALSE((lua["a"] == nullptr)); //0
-	REQUIRE_FALSE((lua["a"] == 0)); //0
-	REQUIRE((lua["a"] == 2)); //1
+	REQUIRE_FALSE((lua["a"] == nullptr));  //0
+	REQUIRE_FALSE((lua["a"] == 0));	   //0
+	REQUIRE((lua["a"] == 2));		    //1
 }
 
 TEST_CASE("compilation/const regression", "make sure constness in tables is respected all the way down") {
@@ -588,7 +585,7 @@ TEST_CASE("compilation/const regression", "make sure constness in tables is resp
 TEST_CASE("numbers/integers", "make sure integers are detectable on most platforms") {
 	sol::state lua;
 
-	lua["a"] = 50; // int
+	lua["a"] = 50;   // int
 	lua["b"] = 50.5; // double
 
 	sol::object a = lua["a"];
@@ -611,17 +608,15 @@ TEST_CASE("numbers/integers", "make sure integers are detectable on most platfor
 TEST_CASE("object/is", "test whether or not the is abstraction works properly for a user-defined type") {
 	struct thing {};
 
-	SECTION("stack_object")
-	{
+	SECTION("stack_object") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
-		lua.set_function("is_thing", [](sol::stack_object obj) { return obj.is<thing>(); } );
+		lua.set_function("is_thing", [](sol::stack_object obj) { return obj.is<thing>(); });
 		lua["a"] = thing{};
 		REQUIRE_NOTHROW(lua.safe_script("assert(is_thing(a))"));
 	}
 
-	SECTION("object")
-	{
+	SECTION("object") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 		lua.set_function("is_thing", [](sol::object obj) { return obj.is<thing>(); });

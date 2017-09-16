@@ -36,9 +36,9 @@ TEST_CASE("plain/indestructible", "test that we error for types that are innatel
 				i->~indestructible();
 			}
 		};
+
 	private:
 		~indestructible() {
-
 		}
 	};
 
@@ -61,10 +61,9 @@ TEST_CASE("plain/indestructible", "test that we error for types that are innatel
 		lua.new_usertype<indestructible>("indestructible",
 			sol::default_constructor,
 			sol::meta_function::garbage_collect, sol::destructor([](indestructible& i) {
-			indestructible::insider del;
-			del(&i);
-		})
-			);
+				indestructible::insider del;
+				del(&i);
+			}));
 		lua.safe_script("i = nil");
 		auto result = lua.safe_script("collectgarbage()", sol::script_pass_on_error);
 		REQUIRE(result.valid());

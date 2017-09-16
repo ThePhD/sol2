@@ -22,7 +22,7 @@ TEST_CASE("variadics/variadic_args", "Check to see we can receive multiple argum
 			int value = v;
 			r += value;
 		}
-		return{ r, r > 200 };
+		return { r, r > 200 };
 	});
 
 	lua.safe_script("x = v(25, 25)");
@@ -44,8 +44,7 @@ TEST_CASE("variadics/required with variadic_args", "Check if a certain number of
 	sol::state lua;
 	lua.set_function("v",
 		[](sol::this_state, sol::variadic_args, int, int) {
-	}
-	);
+		});
 	REQUIRE_NOTHROW(lua.safe_script("v(20, 25, 30)"));
 	REQUIRE_NOTHROW(lua.safe_script("v(20, 25)"));
 	auto result = lua.safe_script("v(20)", sol::script_pass_on_error);
@@ -181,16 +180,14 @@ TEST_CASE("variadics/variadic_results", "returning a variable amount of argument
 }
 
 TEST_CASE("variadics/fallback_constructor", "ensure constructor matching behaves properly in the presence of variadic fallbacks") {
-	struct vec2 { float x = 0, y = 0; };
+	struct vec2 {
+		float x = 0, y = 0;
+	};
 
 	sol::state lua;
 
 	lua.new_simple_usertype<vec2>("vec2",
-		sol::call_constructor, sol::factories([]() {
-		return vec2{};
-	}, [](vec2 const& v) -> vec2 {
-		return v;
-	}, [](sol::variadic_args va) {
+		sol::call_constructor, sol::factories([]() { return vec2{}; }, [](vec2 const& v) -> vec2 { return v; }, [](sol::variadic_args va) {
 		vec2 res{};
 		if (va.size() == 1) {
 			res.x = va[0].get<float>();
@@ -203,9 +200,7 @@ TEST_CASE("variadics/fallback_constructor", "ensure constructor matching behaves
 		else {
 			throw sol::error("invalid args");
 		}
-		return res;
-	})
-	);
+		return res; }));
 
 	REQUIRE_NOTHROW([&]() {
 		lua.safe_script("v0 = vec2();");

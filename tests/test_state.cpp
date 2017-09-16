@@ -39,6 +39,26 @@ struct write_file_attempt_object {
 	}
 };
 
+struct string_reader_load {
+	const std::string& str;
+	std::size_t reads;
+
+	string_reader_load(const std::string& s)
+	: str(s), reads(0) {
+	}
+};
+
+const char* string_reader(lua_State* L, void* vpstr, size_t* sz) {
+	(void)L;
+	string_reader_load& srl = *static_cast<string_reader_load*>(vpstr);
+	if (srl.reads++ > 0) {
+		*sz = 0;
+		return NULL;
+	}
+	*sz = static_cast<size_t>(srl.str.size());
+	return srl.str.c_str();
+}
+
 TEST_CASE("state/require_file", "opening files as 'requires'") {
 	static const char file_require_file[] = "./tmp_thingy.lua";
 	static const char file_require_file_user[] = "./tmp_thingy_user.lua";
@@ -57,9 +77,11 @@ TEST_CASE("state/require_file", "opening files as 'requires'") {
 		std::remove(file_require_file_user);
 	};
 
-	SECTION("with usertypes") {		
+	SECTION("with usertypes") {
 		struct foo {
-			foo(int bar) : bar(bar) {}
+			foo(int bar)
+			: bar(bar) {
+			}
 
 			const int bar;
 		};
@@ -69,8 +91,7 @@ TEST_CASE("state/require_file", "opening files as 'requires'") {
 
 		lua.new_usertype<foo>("foo",
 			sol::constructors<sol::types<int>>{},
-			"bar", &foo::bar
-			);
+			"bar", &foo::bar);
 
 		const sol::table thingy1 = lua.require_file("thingy", file_require_file_user);
 
@@ -140,7 +161,7 @@ TEST_CASE("state/require", "require using a function") {
 	REQUIRE(val2 == 221);
 	// THIS IS ONLY REQUIRED IN LUA 5.3, FOR SOME REASON
 	// must have loaded the same table
-	// REQUIRE(thingy1 == thingy2);   
+	// REQUIRE(thingy1 == thingy2);
 }
 
 TEST_CASE("state/multi require", "make sure that requires transfers across hand-rolled script implementation and standard requiref") {
@@ -347,7 +368,7 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 	std::call_once(flag_file_g, write_file_attempt_object(), file_good, good);
 
 	auto clean_files = []() {
-		if (finished.fetch_add(1) < 10) {
+		if (finished.fetch_add(1) < 14) {
 			return;
 		}
 		std::remove(file_bad_syntax);
@@ -412,7 +433,7 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 		sol::stack_guard sg(lua);
 		auto errbsload = lua.load(bad_syntax);
 		REQUIRE(!errbsload.valid());
-		
+
 		sol::load_result errbrload = lua.load(bad_runtime);
 		REQUIRE(errbrload.valid());
 		sol::protected_function errbrpf = errbrload;
@@ -420,6 +441,87 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 		REQUIRE(!errbr.valid());
 
 		sol::load_result resultload = lua.load(good);
+		REQUIRE(resultload.valid());
+		sol::protected_function resultpf = resultload;
+		auto result = resultpf();
+		int a = lua["a"];
+		int ar = result;
+		REQUIRE(result.valid());
+		REQUIRE(a == 21);
+		REQUIRE(ar == 21);
+		clean_files();
+	}
+	SECTION("load") {
+		sol::state lua;
+		sol::stack_guard sg(lua);
+		string_reader_load bssrl(bad_syntax);
+		void* vpbssrl = static_cast<void*>(&bssrl);
+		auto errbsload = lua.load(&string_reader, vpbssrl, bad_syntax);
+		REQUIRE(!errbsload.valid());
+
+		string_reader_load brsrl(bad_runtime);
+		void* vpbrsrl = static_cast<void*>(&brsrl);
+		sol::load_result errbrload = lua.load(&string_reader, vpbrsrl, bad_runtime);
+		REQUIRE(errbrload.valid());
+		sol::protected_function errbrpf = errbrload;
+		auto errbr = errbrpf();
+		REQUIRE(!errbr.valid());
+
+		string_reader_load gsrl(good);
+		void* vpgsrl = static_cast<void*>(&gsrl);
+		sol::load_result resultload = lua.load(&string_reader, vpgsrl, good);
+		REQUIRE(resultload.valid());
+		sol::protected_function resultpf = resultload;
+		auto result = resultpf();
+		int a = lua["a"];
+		int ar = result;
+		REQUIRE(result.valid());
+		REQUIRE(a == 21);
+		REQUIRE(ar == 21);
+		clean_files();
+	}
+	SECTION("load_string (text)") {
+		sol::state lua;
+		sol::stack_guard sg(lua);
+		auto errbsload = lua.load(bad_syntax, bad_syntax, sol::load_mode::text);
+		REQUIRE(!errbsload.valid());
+
+		sol::load_result errbrload = lua.load(bad_runtime, bad_runtime, sol::load_mode::text);
+		REQUIRE(errbrload.valid());
+		sol::protected_function errbrpf = errbrload;
+		auto errbr = errbrpf();
+		REQUIRE(!errbr.valid());
+
+		sol::load_result resultload = lua.load(good, good, sol::load_mode::text);
+		REQUIRE(resultload.valid());
+		sol::protected_function resultpf = resultload;
+		auto result = resultpf();
+		int a = lua["a"];
+		int ar = result;
+		REQUIRE(result.valid());
+		REQUIRE(a == 21);
+		REQUIRE(ar == 21);
+		clean_files();
+	}
+	SECTION("load (text)") {
+		sol::state lua;
+		sol::stack_guard sg(lua);
+		string_reader_load bssrl(bad_syntax);
+		void* vpbssrl = static_cast<void*>(&bssrl);
+		auto errbsload = lua.load(&string_reader, vpbssrl, bad_syntax, sol::load_mode::text);
+		REQUIRE(!errbsload.valid());
+
+		string_reader_load brsrl(bad_runtime);
+		void* vpbrsrl = static_cast<void*>(&brsrl);
+		sol::load_result errbrload = lua.load(&string_reader, vpbrsrl, bad_runtime, sol::load_mode::text);
+		REQUIRE(errbrload.valid());
+		sol::protected_function errbrpf = errbrload;
+		auto errbr = errbrpf();
+		REQUIRE(!errbr.valid());
+
+		string_reader_load gsrl(good);
+		void* vpgsrl = static_cast<void*>(&gsrl);
+		sol::load_result resultload = lua.load(&string_reader, vpgsrl, good, sol::load_mode::text);
 		REQUIRE(resultload.valid());
 		sol::protected_function resultpf = resultload;
 		auto result = resultpf();
@@ -512,6 +614,29 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 		REQUIRE(!errbr.valid());
 
 		sol::load_result resultload = lua.load_file(file_good);
+		REQUIRE(resultload.valid());
+		sol::protected_function resultpf = resultload;
+		auto result = resultpf();
+		int a = lua["a"];
+		int ar = result;
+		REQUIRE(result.valid());
+		REQUIRE(a == 21);
+		REQUIRE(ar == 21);
+		clean_files();
+	}
+	SECTION("load_file (text)") {
+		sol::state lua;
+		sol::stack_guard sg(lua);
+		auto errbsload = lua.load_file(file_bad_syntax, sol::load_mode::text);
+		REQUIRE(!errbsload.valid());
+
+		sol::load_result errbrload = lua.load_file(file_bad_runtime, sol::load_mode::text);
+		REQUIRE(errbrload.valid());
+		sol::protected_function errbrpf = errbrload;
+		auto errbr = errbrpf();
+		REQUIRE(!errbr.valid());
+
+		sol::load_result resultload = lua.load_file(file_good, sol::load_mode::text);
 		REQUIRE(resultload.valid());
 		sol::protected_function resultpf = resultload;
 		auto result = resultpf();

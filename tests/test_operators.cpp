@@ -12,14 +12,18 @@ TEST_CASE("operators/default", "test that generic equality operators and all sor
 	struct T {};
 	struct U {
 		int a;
-		U(int x = 20) : a(x) {}
+		U(int x = 20)
+		: a(x) {
+		}
 		bool operator==(const U& r) {
 			return a == r.a;
 		}
 	};
 	struct V {
 		int a;
-		V(int x = 20) : a(x) {}
+		V(int x = 20)
+		: a(x) {
+		}
 		bool operator==(const V& r) const {
 			return a == r.a;
 		}
@@ -170,7 +174,7 @@ TEST_CASE("operators/default", "test that generic equality operators and all sor
 
 TEST_CASE("operators/call", "test call operator generation") {
 	struct callable {
-		int operator ()(int a, std::string b) {
+		int operator()(int a, std::string b) {
 			return a + static_cast<int>(b.length());
 		}
 	};
@@ -211,7 +215,7 @@ struct stringable {
 };
 const void* stringable::last_print_ptr = nullptr;
 
-std::ostream& operator<< (std::ostream& ostr, const stringable& o) {
+std::ostream& operator<<(std::ostream& ostr, const stringable& o) {
 	stringable::last_print_ptr = static_cast<const void*>(&o);
 	return ostr << "{ stringable, std::ostream! }";
 }
@@ -236,7 +240,7 @@ namespace inside {
 		adl_stringable2::last_print_ptr = static_cast<const void*>(&o);
 		return "{ inside::adl_stringable2, inside::to_string! }";
 	}
-}
+} // namespace inside
 
 struct member_stringable {
 	static const void* last_print_ptr;
@@ -451,8 +455,8 @@ TEST_CASE("operators/length", "test that size is automatically bound to the leng
 	}
 	SECTION("regular") {
 		lua.new_usertype<sizable>("sizable");
-		{ 
-			lua.safe_script("obj = sizable.new()"); 
+		{
+			lua.safe_script("obj = sizable.new()");
 			lua.safe_script("s = #obj");
 			std::size_t s = lua["s"];
 			REQUIRE(s == 6);

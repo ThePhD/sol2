@@ -14,8 +14,8 @@ namespace muh_namespace {
 
 	namespace {
 		struct ns_anon_test {};
-	}
-}
+	} // namespace
+} // namespace muh_namespace
 
 // There isn't a single library roundtripping which codecvt works on. We'll do the nitty-gritty of it later...
 TEST_CASE("stack/strings", "test that strings can be roundtripped") {
@@ -57,7 +57,7 @@ TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	REQUIRE(utf16_to_utf8 == utf8str_s);
 	REQUIRE(utf32_to_utf8 == utf8str_s);
 	REQUIRE(wide_to_utf8 == utf8str_s);
-	
+
 	std::wstring utf8_to_wide = lua["utf8"];
 	std::wstring utf16_to_wide = lua["utf16"];
 	std::wstring utf32_to_wide = lua["utf32"];
