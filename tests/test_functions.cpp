@@ -158,7 +158,6 @@ TEST_CASE("functions/return order and multi get", "Check if return order is in t
 	lua.set_function("f", [] {
 		return std::make_tuple(10, 11, 12);
 	});
-	int a = 0;
 	lua.set_function("h", []() {
 		return std::make_tuple(10, 10.0f);
 	});

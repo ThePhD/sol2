@@ -4,12 +4,27 @@
 #include <sol.hpp>
 
 TEST_CASE("storage/registry construction", "ensure entries from the registry can be retrieved") {
-	const auto& script = R"(
+	const auto& code = R"(
 function f()
     return 2
 end
 )";
 
+	sol::state lua;
+	lua.script(code);
+	sol::function f = lua["f"];
+	sol::reference r = lua["f"];
+	sol::function regf(lua, f);
+	sol::reference regr(lua, sol::ref_index(f.registry_index()));
+	bool isequal = f == r;
+	REQUIRE(isequal);
+	isequal = f == regf;
+	REQUIRE(isequal);
+	isequal = f == regr;
+	REQUIRE(isequal);
+}
+
+TEST_CASE("storage/registry construction empty", "ensure entries from the registry can be retrieved") {
 	sol::state lua;
 	sol::function f = lua["f"];
 	sol::reference r = lua["f"];

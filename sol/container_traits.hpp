@@ -1067,7 +1067,7 @@ namespace sol {
 
 			static int set(lua_State* L) {
 				stack_object value = stack_object(L, raw_index(3));
-				if (type_of(L, 3) == type::nil) {
+				if (type_of(L, 3) == type::lua_nil) {
 					return erase(L);
 				}
 				auto& self = get_src(L);

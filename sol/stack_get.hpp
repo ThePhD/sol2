@@ -119,7 +119,7 @@ namespace stack {
 			tracking.use(1);
 
 			int index = lua_absindex(L, relindex);
-			T arr;
+			T arr{};
 			std::size_t idx = 0;
 #if SOL_LUA_VERSION >= 503
 			// This method is HIGHLY performant over regular table iteration thanks to the Lua API changes in 5.3
@@ -151,8 +151,8 @@ namespace stack {
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
 					lua_pushinteger(L, i);
 					lua_gettable(L, index);
-					type t = type_of(L, -1);
-					isnil = t == type::lua_nil;
+					type vt = type_of(L, -1);
+					isnil = vt == type::lua_nil;
 					if (isnil) {
 						if (i == 0) {
 							break;
@@ -749,7 +749,7 @@ namespace stack {
 		typedef std::variant_size<V> V_size;
 		typedef std::integral_constant<bool, V_size::value == 0> V_is_empty;
 
-		static V get_empty(std::true_type, lua_State* L, int index, record& tracking) {
+		static V get_empty(std::true_type, lua_State*, int, record&) {
 			return V();
 		}
 
@@ -758,7 +758,7 @@ namespace stack {
 			// This should never be reached...
 			// please check your code and understand what you did to bring yourself here
 			std::abort();
-			return V(std::in_place_index<0>, stack::get<T>(L, index));
+			return V(std::in_place_index<0>, stack::get<T>(L, index, tracking));
 		}
 
 		static V get_one(std::integral_constant<std::size_t, 0>, lua_State* L, int index, record& tracking) {

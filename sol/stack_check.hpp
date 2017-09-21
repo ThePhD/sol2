@@ -349,7 +349,7 @@ namespace stack {
 				return true;
 			}
 			type t = type_of(L, -1);
-			if (t == type::table || t == type::none || t == type::nil) {
+			if (t == type::table || t == type::none || t == type::lua_nil) {
 				lua_pop(L, 1);
 				return true;
 			}
@@ -368,7 +368,7 @@ namespace stack {
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
 			type t = type_of(L, index);
-			if (t == type::table || t == type::none || t == type::nil || t == type::userdata) {
+			if (t == type::table || t == type::none || t == type::lua_nil || t == type::userdata) {
 				return true;
 			}
 			handler(L, index, type::table, t, "value cannot not have a valid environment");
@@ -385,7 +385,7 @@ namespace stack {
 				return true;
 			}
 			type t = type_of(L, -1);
-			if (t == type::table || t == type::none || t == type::nil) {
+			if (t == type::table || t == type::none || t == type::lua_nil) {
 				lua_pop(L, 1);
 				return true;
 			}

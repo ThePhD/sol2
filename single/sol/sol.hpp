@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-16 18:18:13.277753 UTC
-// This header was generated with sol v2.18.3 (revision 2aecb11)
+// Generated 2017-09-21 23:23:58.410071 UTC
+// This header was generated with sol v2.18.3 (revision 76d7195)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -50,12 +50,15 @@
 #if __GNUC__ > 6
 #pragma GCC diagnostic ignored "-Wnoexcept-type"
 #endif
+#elif defined __clang__
 #elif defined _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4324 ) // structure was padded due to alignment specifier
 #pragma warning( disable : 4503 ) // decorated name horse shit
 #pragma warning( disable : 4702 ) // unreachable code
-#endif // g++
+#pragma warning( disable: 4127 ) // 'conditional expression is constant' yeah that's the point your old compilers don't have `if constexpr` you jerk
+#pragma warning( disable: 4505 ) // some other nonsense warning
+#endif // clang++ vs. g++ vs. VC++
 
 // beginning of sol/forward.hpp
 
@@ -2496,7 +2499,7 @@ static int compat53_skipBOM (compat53_LoadF *lf) {
   do {
     c = getc(lf->f);
     if (c == EOF || c != *(const unsigned char *)p++) return c;
-    lf->buff[lf->n++] = c;  /* to be read by the parser */
+    lf->buff[lf->n++] = (char)c;  /* to be read by the parser */
   } while (*p != '\0');
   lf->n = 0;  /* prefix matched; discard it */
   return getc(lf->f);  /* return next character */
@@ -2571,7 +2574,7 @@ COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char 
     compat53_skipcomment(&lf, &c);  /* re-read initial portion */
   }
   if (c != EOF)
-    lf.buff[lf.n++] = c;  /* 'c' is the first character of the stream */
+    lf.buff[lf.n++] = (char)(c);  /* 'c' is the first character of the stream */
   status = lua_load(L, &compat53_getF, &lf, lua_tostring(L, -1), mode);
   readstatus = ferror(lf.f);
   if (filename) fclose(lf.f);  /* close file (even in case of errors) */
@@ -6180,7 +6183,7 @@ namespace sol {
 				ref = LUA_NOREF;
 				return;
 			}
-			if (r.get_type() == type::nil) {
+			if (r.get_type() == type::lua_nil) {
 				ref = LUA_REFNIL;
 				return;
 			}
@@ -7334,7 +7337,7 @@ namespace stack {
 				return true;
 			}
 			type t = type_of(L, -1);
-			if (t == type::table || t == type::none || t == type::nil) {
+			if (t == type::table || t == type::none || t == type::lua_nil) {
 				lua_pop(L, 1);
 				return true;
 			}
@@ -7353,7 +7356,7 @@ namespace stack {
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
 			type t = type_of(L, index);
-			if (t == type::table || t == type::none || t == type::nil || t == type::userdata) {
+			if (t == type::table || t == type::none || t == type::lua_nil || t == type::userdata) {
 				return true;
 			}
 			handler(L, index, type::table, t, "value cannot not have a valid environment");
@@ -7370,7 +7373,7 @@ namespace stack {
 				return true;
 			}
 			type t = type_of(L, -1);
-			if (t == type::table || t == type::none || t == type::nil) {
+			if (t == type::table || t == type::none || t == type::lua_nil) {
 				lua_pop(L, 1);
 				return true;
 			}
@@ -7669,7 +7672,7 @@ namespace stack {
 			tracking.use(1);
 
 			int index = lua_absindex(L, relindex);
-			T arr;
+			T arr{};
 			std::size_t idx = 0;
 #if SOL_LUA_VERSION >= 503
 			// This method is HIGHLY performant over regular table iteration thanks to the Lua API changes in 5.3
@@ -7701,8 +7704,8 @@ namespace stack {
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
 					lua_pushinteger(L, i);
 					lua_gettable(L, index);
-					type t = type_of(L, -1);
-					isnil = t == type::lua_nil;
+					type vt = type_of(L, -1);
+					isnil = vt == type::lua_nil;
 					if (isnil) {
 						if (i == 0) {
 							break;
@@ -8299,7 +8302,7 @@ namespace stack {
 		typedef std::variant_size<V> V_size;
 		typedef std::integral_constant<bool, V_size::value == 0> V_is_empty;
 
-		static V get_empty(std::true_type, lua_State* L, int index, record& tracking) {
+		static V get_empty(std::true_type, lua_State*, int, record&) {
 			return V();
 		}
 
@@ -8308,7 +8311,7 @@ namespace stack {
 			// This should never be reached...
 			// please check your code and understand what you did to bring yourself here
 			std::abort();
-			return V(std::in_place_index<0>, stack::get<T>(L, index));
+			return V(std::in_place_index<0>, stack::get<T>(L, index, tracking));
 		}
 
 		static V get_one(std::integral_constant<std::size_t, 0>, lua_State* L, int index, record& tracking) {
@@ -14851,7 +14854,7 @@ namespace sol {
 
 			static int set(lua_State* L) {
 				stack_object value = stack_object(L, raw_index(3));
-				if (type_of(L, 3) == type::nil) {
+				if (type_of(L, 3) == type::lua_nil) {
 					return erase(L);
 				}
 				auto& self = get_src(L);

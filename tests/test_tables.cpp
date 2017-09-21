@@ -193,7 +193,7 @@ TEST_CASE("tables/for_each", "Testing the use of for_each to get values from a l
 				REQUIRE((value.as<double>() == 123));
 			}
 			break;
-		case sol::type::nil:
+		case sol::type::lua_nil:
 			REQUIRE((value.as<double>() == 3));
 			break;
 		default:
@@ -243,7 +243,7 @@ TEST_CASE("tables/for_each empty", "empty tables should not crash") {
 				REQUIRE((value.as<double>() == 123));
 			}
 			break;
-		case sol::type::nil:
+		case sol::type::lua_nil:
 			REQUIRE((value.as<double>() == 3));
 			break;
 		default:
@@ -314,7 +314,7 @@ TEST_CASE("tables/iterators", "Testing the use of iteratrs to get values from a 
 						REQUIRE((value.as<double>() == 123));
 					}
 					break;
-				case sol::type::nil:
+				case sol::type::lua_nil:
 					REQUIRE((value.as<double>() == 3));
 					break;
 				default:

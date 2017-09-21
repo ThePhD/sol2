@@ -300,7 +300,7 @@ namespace sol {
 				ref = LUA_NOREF;
 				return;
 			}
-			if (r.get_type() == type::nil) {
+			if (r.get_type() == type::lua_nil) {
 				ref = LUA_REFNIL;
 				return;
 			}

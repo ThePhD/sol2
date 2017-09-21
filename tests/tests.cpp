@@ -289,7 +289,7 @@ TEST_CASE("object/conversions", "make sure all basic reference types can be made
 	REQUIRE(ond.get_type() == sol::type::number);
 	REQUIRE(osl.get_type() == sol::type::string);
 	REQUIRE(os.get_type() == sol::type::string);
-	REQUIRE(omn.get_type() == sol::type::nil);
+	REQUIRE(omn.get_type() == sol::type::lua_nil);
 	REQUIRE(oenv.get_type() == sol::type::table);
 }
 
@@ -343,7 +343,7 @@ TEST_CASE("object/main_* conversions", "make sure all basic reference types can 
 	REQUIRE(ond.get_type() == sol::type::number);
 	REQUIRE(osl.get_type() == sol::type::string);
 	REQUIRE(os.get_type() == sol::type::string);
-	REQUIRE(omn.get_type() == sol::type::nil);
+	REQUIRE(omn.get_type() == sol::type::lua_nil);
 	REQUIRE(oenv.get_type() == sol::type::table);
 }
 

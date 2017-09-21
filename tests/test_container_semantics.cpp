@@ -403,13 +403,10 @@ void unordered_container_check(sol::state& lua, T& items) {
 		12, 13, 15, 16, 17, 18, 20
 	};
 	{
-		std::size_t idx = 0;
-		for (const auto& i : items) {
-			const auto& v = values[idx];
+		for (const auto& v : values) {
 			auto it = items.find(v);
 			REQUIRE((it != items.cend()));
 			REQUIRE((*it == v));
-			++idx;
 		}
 	}
 	REQUIRE((s1 == 7));
@@ -512,13 +509,13 @@ end
 	int v2 = lua["v2"];
 	int v3 = lua["v3"];
 	std::pair<const short, int> values[] = {
-		{ 12, 31 },
-		{ 13, 23 },
-		{ 15, 25 },
-		{ 16, 26 },
-		{ 17, 27 },
-		{ 18, 28 },
-		{ 20, 30 }
+		{ (short)12, 31 },
+		{ (short)13, 23 },
+		{ (short)15, 25 },
+		{ (short)16, 26 },
+		{ (short)17, 27 },
+		{ (short)18, 28 },
+		{ (short)20, 30 }
 	};
 	{
 		std::size_t idx = 0;
@@ -608,23 +605,19 @@ void associative_unordered_container_check(sol::state& lua, T& items) {
 	int v2 = lua["v2"];
 	int v3 = lua["v3"];
 	std::pair<const short, int> values[] = {
-		{ 12, 31 },
-		{ 13, 23 },
-		{ 15, 25 },
-		{ 16, 26 },
-		{ 17, 27 },
-		{ 18, 28 },
-		{ 20, 30 }
+		{ (short)12, 31 },
+		{ (short)13, 23 },
+		{ (short)15, 25 },
+		{ (short)16, 26 },
+		{ (short)17, 27 },
+		{ (short)18, 28 },
+		{ (short)20, 30 }
 	};
-	std::pair<const short, int> item_values[7];
 	{
-		std::size_t idx = 0;
-		for (const auto& i : items) {
-			const auto& v = values[idx];
+		for (const auto& v : values) {
 			auto it = items.find(v.first);
 			REQUIRE((it != items.cend()));
 			REQUIRE((it->second == v.second));
-			++idx;
 		}
 	}
 	REQUIRE((s1 == 7));
@@ -862,11 +855,11 @@ TEST_CASE("containers/associative ordered containers", "check associative (map) 
 		lua.open_libraries(sol::lib::base);
 
 		std::map<short, int> items{
-			{ 11, 21 },
-			{ 12, 22 },
-			{ 13, 23 },
-			{ 14, 24 },
-			{ 15, 25 }
+			{ (short)11, 21 },
+			{ (short)12, 22 },
+			{ (short)13, 23 },
+			{ (short)14, 24 },
+			{ (short)15, 25 }
 		};
 		lua["c"] = &items;
 		associative_ordered_container_check(lua, items);
@@ -876,11 +869,11 @@ TEST_CASE("containers/associative ordered containers", "check associative (map) 
 		lua.open_libraries(sol::lib::base);
 
 		std::multimap<short, int> items{
-			{ 11, 21 },
-			{ 12, 22 },
-			{ 13, 23 },
-			{ 14, 24 },
-			{ 15, 25 }
+			{ (short)11, 21 },
+			{ (short)12, 22 },
+			{ (short)13, 23 },
+			{ (short)14, 24 },
+			{ (short)15, 25 }
 		};
 		lua["c"] = &items;
 		associative_ordered_container_check(lua, items);
@@ -893,11 +886,11 @@ TEST_CASE("containers/associative unordered containers", "check associative (map
 		lua.open_libraries(sol::lib::base);
 
 		std::unordered_map<short, int> items{
-			{ 11, 21 },
-			{ 12, 22 },
-			{ 13, 23 },
-			{ 14, 24 },
-			{ 15, 25 }
+			{ (short)11, 21 },
+			{ (short)12, 22 },
+			{ (short)13, 23 },
+			{ (short)14, 24 },
+			{ (short)15, 25 }
 		};
 		lua["c"] = &items;
 		associative_unordered_container_check(lua, items);
@@ -907,11 +900,11 @@ TEST_CASE("containers/associative unordered containers", "check associative (map
 		lua.open_libraries(sol::lib::base);
 
 		std::unordered_multimap<short, int> items{
-			{ 11, 21 },
-			{ 12, 22 },
-			{ 13, 23 },
-			{ 14, 24 },
-			{ 15, 25 }
+			{ (short)11, 21 },
+			{ (short)12, 22 },
+			{ (short)13, 23 },
+			{ (short)14, 24 },
+			{ (short)15, 25 }
 		};
 		lua["c"] = &items;
 		associative_unordered_container_check(lua, items);
