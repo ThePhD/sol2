@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -36,13 +36,13 @@ namespace sol {
 			lua_call(lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount));
 		}
 
-		template<std::size_t... I, typename... Ret>
+		template <std::size_t... I, typename... Ret>
 		auto invoke(types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n) const {
 			luacall(n, lua_size<std::tuple<Ret...>>::value);
 			return stack::pop<std::tuple<Ret...>>(lua_state());
 		}
 
-		template<std::size_t I, typename Ret>
+		template <std::size_t I, typename Ret>
 		Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n) const {
 			luacall(n, lua_size<Ret>::value);
 			return stack::pop<Ret>(lua_state());
@@ -66,8 +66,9 @@ namespace sol {
 		using base_t::lua_state;
 
 		basic_function() = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_function>>, meta::neg<std::is_same<base_t, stack_reference>>, std::is_base_of<base_t, meta::unqualified_t<T>>> = meta::enabler>
-		basic_function(T&& r) noexcept : base_t(std::forward<T>(r)) {
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_function>>, meta::neg<std::is_same<base_t, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		basic_function(T&& r) noexcept
+		: base_t(std::forward<T>(r)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!is_function<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
@@ -80,38 +81,48 @@ namespace sol {
 		basic_function& operator=(const basic_function&) = default;
 		basic_function(basic_function&&) = default;
 		basic_function& operator=(basic_function&&) = default;
-		basic_function(const stack_reference& r) : basic_function(r.lua_state(), r.stack_index()) {}
-		basic_function(stack_reference&& r) : basic_function(r.lua_state(), r.stack_index()) {}
-		template <typename T, meta::enable_any<
-			std::is_base_of<reference, meta::unqualified_t<T>>,
-			std::is_base_of<stack_reference, meta::unqualified_t<T>>
-		> = meta::enabler>
-		basic_function(lua_State* L, T&& r) : base_t(L, std::forward<T>(r)) {}
-		basic_function(lua_State* L, int index = -1) : base_t(L, index) {
+		basic_function(const stack_reference& r)
+		: basic_function(r.lua_state(), r.stack_index()) {
+		}
+		basic_function(stack_reference&& r)
+		: basic_function(r.lua_state(), r.stack_index()) {
+		}
+		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		basic_function(lua_State* L, T&& r)
+		: base_t(L, std::forward<T>(r)) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			constructor_handler handler{};
+			stack::check<basic_function>(lua_state(), -1, handler);
+#endif // Safety
+		}
+		basic_function(lua_State* L, int index = -1)
+		: base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			constructor_handler handler{};
 			stack::check<basic_function>(L, index, handler);
 #endif // Safety
 		}
-		basic_function(lua_State* L, ref_index index) : base_t(L, index) {
+		basic_function(lua_State* L, ref_index index)
+		: base_t(L, index) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
-			stack::check<basic_function>(L, -1, handler);
+			stack::check<basic_function>(lua_state(), -1, handler);
 #endif // Safety
 		}
 
-		template<typename... Args>
+		template <typename... Args>
 		function_result operator()(Args&&... args) const {
 			return call<>(std::forward<Args>(args)...);
 		}
 
-		template<typename... Ret, typename... Args>
+		template <typename... Ret, typename... Args>
 		decltype(auto) operator()(types<Ret...>, Args&&... args) const {
 			return call<Ret...>(std::forward<Args>(args)...);
 		}
 
-		template<typename... Ret, typename... Args>
+		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) const {
 			if (!aligned) {
 				base_t::push();
@@ -120,6 +131,6 @@ namespace sol {
 			return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount);
 		}
 	};
-} // sol
+} // namespace sol
 
 #endif // SOL_UNSAFE_FUNCTION_HPP

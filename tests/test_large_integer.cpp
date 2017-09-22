@@ -60,7 +60,7 @@ TEST_CASE("large_integer/unsigned64", "pass too large unsigned 64bit value to lu
 	lua.set_function("f", [&](T num) -> T {
 		return num;
 	});
-	REQUIRE_THROWS([&lua](){
+	REQUIRE_THROWS([&lua]() {
 		sol::protected_function pf = lua["f"];
 		auto result = pf(0xFFFFFFFFFFFFFFFFull);
 	}());
@@ -72,7 +72,7 @@ TEST_CASE("large_integer/double", "pass negative and large positive values as si
 	lua.set_function("s32", [&](std::int32_t num) {
 		return num;
 	});
-    lua.set_function("s64", [&](std::int64_t num) {
+	lua.set_function("s64", [&](std::int64_t num) {
 		return num;
 	});
 	lua.set_function("u32", [&](std::uint32_t num) {

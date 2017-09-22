@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -47,8 +47,8 @@ namespace sol {
 	};
 
 	template <typename F>
-    struct wrapper<F, std::enable_if_t<std::is_function<std::remove_pointer_t<meta::unqualified_t<F>>>::value>> {
-        typedef lua_bind_traits<std::remove_pointer_t<meta::unqualified_t<F>>> traits_type;
+	struct wrapper<F, std::enable_if_t<std::is_function<std::remove_pointer_t<meta::unqualified_t<F>>>::value>> {
+		typedef lua_bind_traits<std::remove_pointer_t<meta::unqualified_t<F>>> traits_type;
 		typedef typename traits_type::args_list args_list;
 		typedef typename traits_type::args_list free_args_list;
 		typedef typename traits_type::returns_list returns_list;
@@ -81,7 +81,7 @@ namespace sol {
 
 	template <typename F>
 	struct wrapper<F, std::enable_if_t<std::is_member_object_pointer<meta::unqualified_t<F>>::value>> {
-        typedef lua_bind_traits<meta::unqualified_t<F>> traits_type;
+		typedef lua_bind_traits<meta::unqualified_t<F>> traits_type;
 		typedef typename traits_type::object_type object_type;
 		typedef typename traits_type::return_type return_type;
 		typedef typename traits_type::args_list args_list;
@@ -159,159 +159,129 @@ namespace sol {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...)> : public member_function_wrapper<R(O:: *)(Args...), R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...)> : public member_function_wrapper<R (O::*)(Args...), R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) const> : public member_function_wrapper<R(O:: *)(Args...) const, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...) const> : public member_function_wrapper<R (O::*)(Args...) const, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) const volatile> : public member_function_wrapper<R(O:: *)(Args...) const volatile, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...) const volatile> : public member_function_wrapper<R (O::*)(Args...) const volatile, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) &> : public member_function_wrapper<R(O:: *)(Args...) &, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...)&> : public member_function_wrapper<R (O::*)(Args...)&, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) const &> : public member_function_wrapper<R(O:: *)(Args...) const &, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...) const&> : public member_function_wrapper<R (O::*)(Args...) const&, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) const volatile &> : public member_function_wrapper<R(O:: *)(Args...) const volatile &, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...) const volatile&> : public member_function_wrapper<R (O::*)(Args...) const volatile&, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args..., ...) &> : public member_function_wrapper<R(O:: *)(Args..., ...) &, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args..., ...)&> : public member_function_wrapper<R (O::*)(Args..., ...)&, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args..., ...) const &> : public member_function_wrapper<R(O:: *)(Args..., ...) const &, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args..., ...) const&> : public member_function_wrapper<R (O::*)(Args..., ...) const&, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args..., ...) const volatile &> : public member_function_wrapper<R(O:: *)(Args..., ...) const volatile &, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args..., ...) const volatile&> : public member_function_wrapper<R (O::*)(Args..., ...) const volatile&, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) && > : public member_function_wrapper<R(O:: *)(Args...) &, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...) &&> : public member_function_wrapper<R (O::*)(Args...)&, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) const &&> : public member_function_wrapper<R(O:: *)(Args...) const &, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...) const&&> : public member_function_wrapper<R (O::*)(Args...) const&, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) const volatile &&> : public member_function_wrapper<R(O:: *)(Args...) const volatile &, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...) const volatile&&> : public member_function_wrapper<R (O::*)(Args...) const volatile&, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args..., ...) && > : public member_function_wrapper<R(O:: *)(Args..., ...) &, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args..., ...) &&> : public member_function_wrapper<R (O::*)(Args..., ...)&, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args..., ...) const &&> : public member_function_wrapper<R(O:: *)(Args..., ...) const &, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args..., ...) const&&> : public member_function_wrapper<R (O::*)(Args..., ...) const&, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args..., ...) const volatile &&> : public member_function_wrapper<R(O:: *)(Args..., ...) const volatile &, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args..., ...) const volatile&&> : public member_function_wrapper<R (O::*)(Args..., ...) const volatile&, R, O, Args...> {
 	};
 
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE //noexcept has become a part of a function's type
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) noexcept> : public member_function_wrapper<R(O:: *)(Args...) noexcept, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...) noexcept> : public member_function_wrapper<R (O::*)(Args...) noexcept, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) const noexcept> : public member_function_wrapper<R(O:: *)(Args...) const noexcept, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...) const noexcept> : public member_function_wrapper<R (O::*)(Args...) const noexcept, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) const volatile noexcept> : public member_function_wrapper<R(O:: *)(Args...) const volatile noexcept, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...) const volatile noexcept> : public member_function_wrapper<R (O::*)(Args...) const volatile noexcept, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) & noexcept> : public member_function_wrapper<R(O:: *)(Args...) & noexcept, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...) & noexcept> : public member_function_wrapper<R (O::*)(Args...) & noexcept, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) const & noexcept> : public member_function_wrapper<R(O:: *)(Args...) const & noexcept, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...) const& noexcept> : public member_function_wrapper<R (O::*)(Args...) const& noexcept, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) const volatile & noexcept> : public member_function_wrapper<R(O:: *)(Args...) const volatile & noexcept, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...) const volatile& noexcept> : public member_function_wrapper<R (O::*)(Args...) const volatile& noexcept, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args..., ...) & noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) & noexcept, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args..., ...) & noexcept> : public member_function_wrapper<R (O::*)(Args..., ...) & noexcept, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args..., ...) const & noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) const & noexcept, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args..., ...) const& noexcept> : public member_function_wrapper<R (O::*)(Args..., ...) const& noexcept, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args..., ...) const volatile & noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) const volatile & noexcept, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args..., ...) const volatile& noexcept> : public member_function_wrapper<R (O::*)(Args..., ...) const volatile& noexcept, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) && noexcept> : public member_function_wrapper<R(O:: *)(Args...) & noexcept, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...) && noexcept> : public member_function_wrapper<R (O::*)(Args...) & noexcept, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) const && noexcept> : public member_function_wrapper<R(O:: *)(Args...) const & noexcept, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...) const&& noexcept> : public member_function_wrapper<R (O::*)(Args...) const& noexcept, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args...) const volatile && noexcept> : public member_function_wrapper<R(O:: *)(Args...) const volatile & noexcept, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args...) const volatile&& noexcept> : public member_function_wrapper<R (O::*)(Args...) const volatile& noexcept, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args..., ...) && noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) & noexcept, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args..., ...) && noexcept> : public member_function_wrapper<R (O::*)(Args..., ...) & noexcept, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args..., ...) const && noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) const & noexcept, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args..., ...) const&& noexcept> : public member_function_wrapper<R (O::*)(Args..., ...) const& noexcept, R, O, Args...> {
 	};
 
 	template <typename R, typename O, typename... Args>
-	struct wrapper<R(O:: *)(Args..., ...) const volatile && noexcept> : public member_function_wrapper<R(O:: *)(Args..., ...) const volatile & noexcept, R, O, Args...> {
-
+	struct wrapper<R (O::*)(Args..., ...) const volatile&& noexcept> : public member_function_wrapper<R (O::*)(Args..., ...) const volatile& noexcept, R, O, Args...> {
 	};
 
 #endif // noexcept is part of a function's type
 
-} // sol
+} // namespace sol
 
 #endif // SOL_WRAPPER_HPP

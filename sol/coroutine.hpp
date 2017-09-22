@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -28,7 +28,8 @@
 #include "thread.hpp"
 
 namespace sol {
-	class coroutine : public reference {
+	template <typename base_t>
+	class basic_coroutine : public base_t {
 	private:
 		call_status stats = call_status::yielded;
 
@@ -36,13 +37,13 @@ namespace sol {
 			stats = static_cast<call_status>(lua_resume(lua_state(), nullptr, static_cast<int>(argcount)));
 		}
 
-		template<std::size_t... I, typename... Ret>
+		template <std::size_t... I, typename... Ret>
 		auto invoke(types<Ret...>, std::index_sequence<I...>, std::ptrdiff_t n) {
 			luacall(n, sizeof...(Ret));
 			return stack::pop<std::tuple<Ret...>>(lua_state());
 		}
 
-		template<std::size_t I, typename Ret>
+		template <std::size_t I, typename Ret>
 		Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n) {
 			luacall(n, 1);
 			return stack::pop<Ret>(lua_state());
@@ -66,29 +67,48 @@ namespace sol {
 		}
 
 	public:
-		coroutine() noexcept = default;
-		coroutine(const coroutine&) noexcept = default;
-		coroutine(coroutine&&) noexcept = default;
-		coroutine& operator=(const coroutine&) noexcept = default;
-		coroutine& operator=(coroutine&&) noexcept = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, coroutine>>, std::is_base_of<reference, meta::unqualified_t<T>>> = meta::enabler>
-		coroutine(T&& r) : reference(std::forward<T>(r)) {}
-		coroutine(lua_nil_t r) : reference(r) {}
-		coroutine(const stack_reference& r) noexcept : coroutine(r.lua_state(), r.stack_index()) {}
-		coroutine(stack_reference&& r) noexcept : coroutine(r.lua_state(), r.stack_index()) {}
-		template <typename T, meta::enable<meta::neg<std::is_integral<meta::unqualified_t<T>>>, meta::neg<std::is_same<T, ref_index>>> = meta::enabler>
-		coroutine(lua_State* L, T&& r) : coroutine(L, sol::ref_index(r.registry_index())) {}
-		coroutine(lua_State* L, int index = -1) : reference(L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
-			constructor_handler handler{};
-			stack::check<coroutine>(L, index, handler);
-#endif // Safety
+		using base_t::lua_state;
+		
+		basic_coroutine() noexcept = default;
+		basic_coroutine(const basic_coroutine&) noexcept = default;
+		basic_coroutine(basic_coroutine&&) noexcept = default;
+		basic_coroutine& operator=(const basic_coroutine&) noexcept = default;
+		basic_coroutine& operator=(basic_coroutine&&) noexcept = default;
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_coroutine>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		basic_coroutine(T&& r)
+		: base_t(std::forward<T>(r)) {
 		}
-		coroutine(lua_State* L, ref_index index) : reference(L, index) {
+		basic_coroutine(lua_nil_t r)
+		: base_t(r) {
+		}
+		basic_coroutine(const stack_reference& r) noexcept
+		: basic_coroutine(r.lua_state(), r.stack_index()) {
+		}
+		basic_coroutine(stack_reference&& r) noexcept
+		: basic_coroutine(r.lua_state(), r.stack_index()) {
+		}
+		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		basic_coroutine(lua_State* L, T&& r)
+		: base_t(L, std::forward<T>(r)) {
 #ifdef SOL_CHECK_ARGUMENTS
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
-			stack::check<coroutine>(L, -1, handler);
+			stack::check<basic_coroutine>(lua_state(), -1, handler);
+#endif // Safety
+		}
+		basic_coroutine(lua_State* L, int index = -1)
+		: base_t(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			constructor_handler handler{};
+			stack::check<basic_coroutine>(lua_state(), index, handler);
+#endif // Safety
+		}
+		basic_coroutine(lua_State* L, ref_index index)
+		: base_t(L, index) {
+#ifdef SOL_CHECK_ARGUMENTS
+			auto pp = stack::push_pop(*this);
+			constructor_handler handler{};
+			stack::check<basic_coroutine>(lua_state(), -1, handler);
 #endif // Safety
 		}
 
@@ -102,7 +122,7 @@ namespace sol {
 		}
 
 		bool runnable() const noexcept {
-			return valid()
+			return base_t::valid()
 				&& (status() == call_status::yielded);
 		}
 
@@ -110,23 +130,23 @@ namespace sol {
 			return runnable();
 		}
 
-		template<typename... Args>
+		template <typename... Args>
 		protected_function_result operator()(Args&&... args) {
 			return call<>(std::forward<Args>(args)...);
 		}
 
-		template<typename... Ret, typename... Args>
+		template <typename... Ret, typename... Args>
 		decltype(auto) operator()(types<Ret...>, Args&&... args) {
 			return call<Ret...>(std::forward<Args>(args)...);
 		}
 
-		template<typename... Ret, typename... Args>
+		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
-			push();
-			int pushcount = stack::multi_push(lua_state(), std::forward<Args>(args)...);
+			base_t::push();
+			int pushcount = stack::multi_push_reference(lua_state(), std::forward<Args>(args)...);
 			return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount);
 		}
 	};
-} // sol
+} // namespace sol
 
 #endif // SOL_COUROUTINE_HPP

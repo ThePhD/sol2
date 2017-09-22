@@ -21,38 +21,7 @@ Submitting a pull request is fairly simple, just make sure it focuses on a singl
 manage to have scope creep and it's probably good to go. It would be incredibly lovely if the style is 
 consistent to those found in the repository.
 
-They are as follows (more will be added as they come up):
-
-- No spaces between parentheses. e.g. `f(g())` not `f ( g ( ) )`.
-- Tabs for indentation, spaces for alignment.
-- Bracing style is
-
-```cpp
-if(my_bool) {
-    
-}
-else if(my_other_bool) {
-    
-}
-else {
-    
-}
-```
-
-- Variable names follow those in the C++ standard, basically snake_case.
-- Maximum column length is 125
-- Trailing return type will always be in the same line. Even if it goes off the column length. e.g.
-`auto f() -> decltype(/* my long expression */) {`
-- Since this is a header-only library, all free functions must be marked `inline`.
-- Use braces in optional contexts like `if`, `for`, `else`, `while`, etc. e.g.
-
-```cpp
-if(x > 12) {
-    return x * 2;
-}
-```
-
-- Use `typename` instead of `class` for template parameters. e.g. `template<typename T>`.
+To help with this, a `.clang-format` is included. Please run it on your code before you push anything.
 
 If you don't meet all of these style guidelines, don't fret. I'll probably fix it. But please
 do make an effort to actually meet them. Otherwise I'm more likely to reject the pull request.

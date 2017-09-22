@@ -1,5 +1,5 @@
-safety
-======
+config and safety
+=================
 
 Sol was designed to be correct and fast, and in the pursuit of both uses the regular ``lua_to{x}`` functions of Lua rather than the checking versions (``lua_check{X}``) functions. The API defaults to paranoidly-safe alternatives if you have a ``#define SOL_CHECK_ARGUMENTS`` before you include Sol, or if you pass the ``SOL_CHECK_ARGUMENTS`` define on the build command for your build system. By default, it is off and remains off unless you define this, even in debug mode. The same goes for ``#define SOL_SAFE_USERTYPE``.
 
@@ -9,6 +9,9 @@ config
 ------
 
 Note that you can obtain safety with regards to functions you bind by using the :doc:`protect<api/protect>` wrapper around function/variable bindings you set into Lua. Additionally, you can have basic boolean checks when using the API by just converting to a :doc:`sol::optional\<T><api/optional>` when necessary for getting things out of Lua and for function arguments.
+
+``SOL_USE_BOOST`` triggers the following change:
+	* Attempts to use ``boost::optional`` instead of sol's own ``optional``
 
 ``SOL_SAFE_USERTYPE`` triggers the following change:
 	* If the userdata to a usertype function is nil, will trigger an error instead of letting things go through and letting the system segfault/crash

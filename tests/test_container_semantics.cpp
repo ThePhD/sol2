@@ -22,12 +22,13 @@ private:
 public:
 	static const void* last_printed;
 
-	my_object(int sz) : mdata() {
+	my_object(int sz)
+	: mdata() {
 		mdata.resize(sz);
 		std::iota(mdata.begin(), mdata.end(), 1);
 	}
 
-	void operator() (std::size_t count, int value) {
+	void operator()(std::size_t count, int value) {
 		for (; count > 0; --count) {
 			mdata.push_back(value);
 		}
@@ -42,19 +43,45 @@ public: // Container requirements, as per the C++ standard
 	using difference_type = decltype(mdata)::difference_type;
 	using size_type = decltype(mdata)::size_type;
 
-	iterator begin() { return iterator(mdata.begin()); }
-	iterator end() { return iterator(mdata.end()); }
-	const_iterator begin() const { return const_iterator(mdata.begin()); }
-	const_iterator end() const { return const_iterator(mdata.end()); }
-	const_iterator cbegin() const { return begin(); }
-	const_iterator cend() const { return end(); }
-	size_type size() const noexcept { return mdata.size(); }
-	size_type max_size() const noexcept { return mdata.max_size(); }
-	void push_back(const value_type& v) { mdata.push_back(v); }
-	void insert(const_iterator where, const value_type& v) { mdata.insert(where, v); }
-	bool empty() const noexcept { return mdata.empty(); }
-	bool operator== (const my_object& right) const { return mdata == right.mdata; }
-	bool operator!=(const my_object& right) const noexcept { return mdata != right.mdata; }
+	iterator begin() {
+		return iterator(mdata.begin());
+	}
+	iterator end() {
+		return iterator(mdata.end());
+	}
+	const_iterator begin() const {
+		return const_iterator(mdata.begin());
+	}
+	const_iterator end() const {
+		return const_iterator(mdata.end());
+	}
+	const_iterator cbegin() const {
+		return begin();
+	}
+	const_iterator cend() const {
+		return end();
+	}
+	size_type size() const noexcept {
+		return mdata.size();
+	}
+	size_type max_size() const noexcept {
+		return mdata.max_size();
+	}
+	void push_back(const value_type& v) {
+		mdata.push_back(v);
+	}
+	void insert(const_iterator where, const value_type& v) {
+		mdata.insert(where, v);
+	}
+	bool empty() const noexcept {
+		return mdata.empty();
+	}
+	bool operator==(const my_object& right) const {
+		return mdata == right.mdata;
+	}
+	bool operator!=(const my_object& right) const noexcept {
+		return mdata != right.mdata;
+	}
 
 	std::vector<int>& data() {
 		return mdata;
@@ -63,12 +90,11 @@ public: // Container requirements, as per the C++ standard
 	const std::vector<int>& data() const {
 		return mdata;
 	}
-
 };
 
 const void* my_object::last_printed = nullptr;
 
-std::ostream& operator<< (std::ostream& ostr, const my_object& mo) {
+std::ostream& operator<<(std::ostream& ostr, const my_object& mo) {
 	my_object::last_printed = static_cast<const void*>(&mo);
 	ostr << "{ ";
 	const auto& v = mo.data();
@@ -89,7 +115,7 @@ std::ostream& operator<< (std::ostream& ostr, const my_object& mo) {
 namespace sol {
 	template <>
 	struct is_container<my_object> : std::false_type {};
-}
+} // namespace sol
 
 template <typename T>
 void sequence_container_check(sol::state& lua, T& items) {
@@ -99,7 +125,8 @@ for i=1,#c do
 	v = c[i] 
 	assert(v == (i + 10)) 
 end
-		)", sol::script_pass_on_error);
+		)",
+			sol::script_pass_on_error);
 		REQUIRE(r1.valid());
 	}
 	{
@@ -208,7 +235,8 @@ for i=1,#c do
 	v = c[(i + 10)] 
 	assert(v == (i + 10)) 
 end
-		)", sol::script_pass_on_error);
+		)",
+			sol::script_pass_on_error);
 		REQUIRE(r1.valid());
 	}
 	{
@@ -375,13 +403,10 @@ void unordered_container_check(sol::state& lua, T& items) {
 		12, 13, 15, 16, 17, 18, 20
 	};
 	{
-		std::size_t idx = 0;
-		for (const auto& i : items) {
-			const auto& v = values[idx];
+		for (const auto& v : values) {
 			auto it = items.find(v);
 			REQUIRE((it != items.cend()));
 			REQUIRE((*it == v));
-			++idx;
 		}
 	}
 	REQUIRE((s1 == 7));
@@ -403,7 +428,8 @@ for i=1,#c do
 	v = c[(i + 10)] 
 	assert(v == (i + 20))
 end
-		)", sol::script_pass_on_error);
+		)",
+			sol::script_pass_on_error);
 		REQUIRE(r1.valid());
 	}
 	{
@@ -483,13 +509,13 @@ end
 	int v2 = lua["v2"];
 	int v3 = lua["v3"];
 	std::pair<const short, int> values[] = {
-		{ 12, 31 },
-		{ 13, 23 },
-		{ 15, 25 },
-		{ 16, 26 },
-		{ 17, 27 },
-		{ 18, 28 },
-		{ 20, 30 }
+		{ (short)12, 31 },
+		{ (short)13, 23 },
+		{ (short)15, 25 },
+		{ (short)16, 26 },
+		{ (short)17, 27 },
+		{ (short)18, 28 },
+		{ (short)20, 30 }
 	};
 	{
 		std::size_t idx = 0;
@@ -579,23 +605,19 @@ void associative_unordered_container_check(sol::state& lua, T& items) {
 	int v2 = lua["v2"];
 	int v3 = lua["v3"];
 	std::pair<const short, int> values[] = {
-		{ 12, 31 },
-		{ 13, 23 },
-		{ 15, 25 },
-		{ 16, 26 },
-		{ 17, 27 },
-		{ 18, 28 },
-		{ 20, 30 }
+		{ (short)12, 31 },
+		{ (short)13, 23 },
+		{ (short)15, 25 },
+		{ (short)16, 26 },
+		{ (short)17, 27 },
+		{ (short)18, 28 },
+		{ (short)20, 30 }
 	};
-	std::pair<const short, int> item_values[7];
 	{
-		std::size_t idx = 0;
-		for (const auto& i : items) {
-			const auto& v = values[idx];
+		for (const auto& v : values) {
 			auto it = items.find(v.first);
 			REQUIRE((it != items.cend()));
 			REQUIRE((it->second == v.second));
-			++idx;
 		}
 	}
 	REQUIRE((s1 == 7));
@@ -617,7 +639,8 @@ for i=1,#c do
 	v = c[i] 
 	assert(v == (i + 10)) 
 end
-		)", sol::script_pass_on_error);
+		)",
+			sol::script_pass_on_error);
 		REQUIRE(r1.valid());
 	}
 	{
@@ -730,7 +753,7 @@ TEST_CASE("containers/sequence containers", "check all of the functinos for ever
 	SECTION("list") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
-		
+
 		std::list<int> items{ 11, 12, 13, 14, 15 };
 		lua["c"] = &items;
 		sequence_container_check(lua, items);
@@ -832,11 +855,11 @@ TEST_CASE("containers/associative ordered containers", "check associative (map) 
 		lua.open_libraries(sol::lib::base);
 
 		std::map<short, int> items{
-			{ 11, 21 },
-			{ 12, 22 },
-			{ 13, 23 },
-			{ 14, 24 },
-			{ 15, 25 }
+			{ (short)11, 21 },
+			{ (short)12, 22 },
+			{ (short)13, 23 },
+			{ (short)14, 24 },
+			{ (short)15, 25 }
 		};
 		lua["c"] = &items;
 		associative_ordered_container_check(lua, items);
@@ -846,11 +869,11 @@ TEST_CASE("containers/associative ordered containers", "check associative (map) 
 		lua.open_libraries(sol::lib::base);
 
 		std::multimap<short, int> items{
-			{ 11, 21 },
-			{ 12, 22 },
-			{ 13, 23 },
-			{ 14, 24 },
-			{ 15, 25 }
+			{ (short)11, 21 },
+			{ (short)12, 22 },
+			{ (short)13, 23 },
+			{ (short)14, 24 },
+			{ (short)15, 25 }
 		};
 		lua["c"] = &items;
 		associative_ordered_container_check(lua, items);
@@ -863,11 +886,11 @@ TEST_CASE("containers/associative unordered containers", "check associative (map
 		lua.open_libraries(sol::lib::base);
 
 		std::unordered_map<short, int> items{
-			{ 11, 21 },
-			{ 12, 22 },
-			{ 13, 23 },
-			{ 14, 24 },
-			{ 15, 25 }
+			{ (short)11, 21 },
+			{ (short)12, 22 },
+			{ (short)13, 23 },
+			{ (short)14, 24 },
+			{ (short)15, 25 }
 		};
 		lua["c"] = &items;
 		associative_unordered_container_check(lua, items);
@@ -877,11 +900,11 @@ TEST_CASE("containers/associative unordered containers", "check associative (map
 		lua.open_libraries(sol::lib::base);
 
 		std::unordered_multimap<short, int> items{
-			{ 11, 21 },
-			{ 12, 22 },
-			{ 13, 23 },
-			{ 14, 24 },
-			{ 15, 25 }
+			{ (short)11, 21 },
+			{ (short)12, 22 },
+			{ (short)13, 23 },
+			{ (short)14, 24 },
+			{ (short)15, 25 }
 		};
 		lua["c"] = &items;
 		associative_unordered_container_check(lua, items);
@@ -911,18 +934,18 @@ end
 
 )");
 
-	// Have the function we 
+	// Have the function we
 	// just defined in Lua
 	sol::function g = lua["g"];
 	sol::function h = lua["h"];
 	sol::function i = lua["i"];
 	sol::function sf = lua["sf"];
 
-	// Set a global variable called 
+	// Set a global variable called
 	// "arr" to be a vector of 5 lements
 	lua["c_arr"] = std::array<int, 5>{ { 2, 4, 6, 8, 10 } };
 	lua["arr"] = std::vector<int>{ 2, 4, 6, 8, 10 };
-	lua["map"] = std::map<int, int>{ { 1 , 2 },{ 2, 4 },{ 3, 6 },{ 4, 8 },{ 5, 10 } };
+	lua["map"] = std::map<int, int>{ { 1, 2 }, { 2, 4 }, { 3, 6 }, { 4, 8 }, { 5, 10 } };
 	lua["set"] = std::set<int>{ 2, 4, 6, 8, 10 };
 	std::array<int, 5>& c_arr = lua["c_arr"];
 	std::vector<int>& arr = lua["arr"];
@@ -944,14 +967,14 @@ end
 		int r = sf(set, 8);
 		REQUIRE(r == 8);
 		sol::object rn = sf(set, 9);
-		REQUIRE(rn == sol::nil);
+		REQUIRE(rn == sol::lua_nil);
 	}
 
 	{
 		int r = sf(map, 3);
 		REQUIRE(r == 6);
 		sol::object rn = sf(map, 9);
-		REQUIRE(rn == sol::nil);
+		REQUIRE(rn == sol::lua_nil);
 	}
 
 	i(lua["arr"]);
@@ -1002,8 +1025,7 @@ TEST_CASE("containers/as_container reference", "test that we can force a contain
 		"size", &my_object::size,
 		"iterable", [](my_object& mo) {
 			return sol::as_container(mo);
-		}
-	);
+		});
 
 #if SOL_LUA_VERSION > 501
 	REQUIRE_NOTHROW([&]() {

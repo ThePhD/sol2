@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -29,7 +29,8 @@
 
 namespace sol {
 
-	inline protected_function_result::protected_function_result(function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()), popcount(o.return_count()), err(o.status()) {
+	inline protected_function_result::protected_function_result(function_result&& o) noexcept
+	: L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()), popcount(o.return_count()), err(o.status()) {
 		// Must be manual, otherwise destructor will screw us
 		// return count being 0 is enough to keep things clean
 		// but we will be thorough
@@ -49,7 +50,8 @@ namespace sol {
 		return *this;
 	}
 
-	inline function_result::function_result(protected_function_result&& o) noexcept : L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()) {
+	inline function_result::function_result(protected_function_result&& o) noexcept
+	: L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()) {
 		// Must be manual, otherwise destructor will screw us
 		// return count being 0 is enough to keep things clean
 		// but we will be thorough
@@ -67,31 +69,31 @@ namespace sol {
 	}
 
 	namespace stack {
-		template<typename Signature>
+		template <typename Signature>
 		struct getter<std::function<Signature>> {
 			typedef meta::bind_traits<Signature> fx_t;
 			typedef typename fx_t::args_list args_lists;
 			typedef meta::tuple_types<typename fx_t::return_type> return_types;
 
-			template<typename... Args, typename... Ret>
+			template <typename... Args, typename... Ret>
 			static std::function<Signature> get_std_func(types<Ret...>, types<Args...>, lua_State* L, int index) {
-				sol::function f(L, index);
-				auto fx = [f, L, index](Args&&... args) -> meta::return_type_t<Ret...> {
+				unsafe_function f(L, index);
+				auto fx = [ f = std::move(f), L, index ](Args && ... args) -> meta::return_type_t<Ret...> {
 					return f.call<Ret...>(std::forward<Args>(args)...);
 				};
 				return std::move(fx);
 			}
 
-			template<typename... FxArgs>
+			template <typename... FxArgs>
 			static std::function<Signature> get_std_func(types<void>, types<FxArgs...>, lua_State* L, int index) {
-				sol::function f(L, index);
-				auto fx = [f, L, index](FxArgs&&... args) -> void {
+				unsafe_function f(L, index);
+				auto fx = [f = std::move(f), L, index](FxArgs&&... args) -> void {
 					f(std::forward<FxArgs>(args)...);
 				};
 				return std::move(fx);
 			}
 
-			template<typename... FxArgs>
+			template <typename... FxArgs>
 			static std::function<Signature> get_std_func(types<>, types<FxArgs...> t, lua_State* L, int index) {
 				return get_std_func(types<void>(), t, L, index);
 			}
@@ -106,8 +108,8 @@ namespace sol {
 				return get_std_func(return_types(), args_lists(), L, index);
 			}
 		};
-	} // stack
+	} // namespace stack
 
-} // sol
+} // namespace sol
 
 #endif // SOL_FUNCTION_HPP

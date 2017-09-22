@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -28,17 +28,17 @@
 #include "proxy_base.hpp"
 
 namespace sol {
-	template<typename Table, typename Key>
+	template <typename Table, typename Key>
 	struct proxy : public proxy_base<proxy<Table, Key>> {
 	private:
 		typedef meta::condition<meta::is_specialization_of<std::tuple, Key>, Key, std::tuple<meta::condition<std::is_array<meta::unqualified_t<Key>>, Key&, meta::unqualified_t<Key>>>> key_type;
 
-		template<typename T, std::size_t... I>
+		template <typename T, std::size_t... I>
 		decltype(auto) tuple_get(std::index_sequence<I...>) const {
 			return tbl.template traverse_get<T>(std::get<I>(key)...);
 		}
 
-		template<std::size_t... I, typename T>
+		template <std::size_t... I, typename T>
 		void tuple_set(std::index_sequence<I...>, T&& value) {
 			tbl.traverse_set(std::get<I>(key)..., std::forward<T>(value));
 		}
@@ -60,37 +60,39 @@ namespace sol {
 		Table tbl;
 		key_type key;
 
-		template<typename T>
-		proxy(Table table, T&& k) : tbl(table), key(std::forward<T>(k)) {}
+		template <typename T>
+		proxy(Table table, T&& k)
+		: tbl(table), key(std::forward<T>(k)) {
+		}
 
-		template<typename T>
+		template <typename T>
 		proxy& set(T&& item) {
 			tuple_set(std::make_index_sequence<std::tuple_size<meta::unqualified_t<key_type>>::value>(), std::forward<T>(item));
 			return *this;
 		}
 
-		template<typename... Args>
+		template <typename... Args>
 		proxy& set_function(Args&&... args) {
 			tbl.set_function(key, std::forward<Args>(args)...);
 			return *this;
 		}
 
-		template<typename U, meta::enable<meta::neg<is_lua_reference<meta::unwrap_unqualified_t<U>>>, meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
+		template <typename U, meta::enable<meta::neg<is_lua_reference_or_proxy<meta::unwrap_unqualified_t<U>>>, meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
 		proxy& operator=(U&& other) {
 			return set_function(std::forward<U>(other));
 		}
 
-		template<typename U, meta::disable<meta::neg<is_lua_reference<meta::unwrap_unqualified_t<U>>>, meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
+		template <typename U, meta::disable<meta::neg<is_lua_reference_or_proxy<meta::unwrap_unqualified_t<U>>>, meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
 		proxy& operator=(U&& other) {
 			return set(std::forward<U>(other));
 		}
 
-		template<typename T>
+		template <typename T>
 		decltype(auto) get() const {
 			return tuple_get<T>(std::make_index_sequence<std::tuple_size<meta::unqualified_t<key_type>>::value>());
 		}
 
-		template<typename T>
+		template <typename T>
 		decltype(auto) get_or(T&& otherwise) const {
 			typedef decltype(get<T>()) U;
 			optional<U> option = get<optional<U>>();
@@ -100,7 +102,7 @@ namespace sol {
 			return static_cast<U>(std::forward<T>(otherwise));
 		}
 
-		template<typename T, typename D>
+		template <typename T, typename D>
 		decltype(auto) get_or(D&& otherwise) const {
 			optional<T> option = get<optional<T>>();
 			if (option) {
@@ -115,12 +117,12 @@ namespace sol {
 			return proxy<Table, decltype(keys)>(tbl, std::move(keys));
 		}
 
-		template<typename... Ret, typename... Args>
+		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
 			return get<function>().template call<Ret...>(std::forward<Args>(args)...);
 		}
 
-		template<typename... Args>
+		template <typename... Args>
 		decltype(auto) operator()(Args&&... args) {
 			return call<>(std::forward<Args>(args)...);
 		}
@@ -148,59 +150,73 @@ namespace sol {
 		}
 	};
 
-	template<typename Table, typename Key, typename T>
+	template <typename Table, typename Key, typename T>
 	inline bool operator==(T&& left, const proxy<Table, Key>& right) {
 		typedef decltype(stack::get<T>(nullptr, 0)) U;
 		return right.template get<optional<U>>() == left;
 	}
 
-	template<typename Table, typename Key, typename T>
+	template <typename Table, typename Key, typename T>
 	inline bool operator==(const proxy<Table, Key>& right, T&& left) {
 		typedef decltype(stack::get<T>(nullptr, 0)) U;
 		return right.template get<optional<U>>() == left;
 	}
 
-	template<typename Table, typename Key, typename T>
+	template <typename Table, typename Key, typename T>
 	inline bool operator!=(T&& left, const proxy<Table, Key>& right) {
 		typedef decltype(stack::get<T>(nullptr, 0)) U;
 		return right.template get<optional<U>>() == left;
 	}
 
-	template<typename Table, typename Key, typename T>
+	template <typename Table, typename Key, typename T>
 	inline bool operator!=(const proxy<Table, Key>& right, T&& left) {
 		typedef decltype(stack::get<T>(nullptr, 0)) U;
 		return right.template get<optional<U>>() == left;
 	}
 
-	template<typename Table, typename Key>
+	template <typename Table, typename Key>
 	inline bool operator==(lua_nil_t, const proxy<Table, Key>& right) {
 		return !right.valid();
 	}
 
-	template<typename Table, typename Key>
+	template <typename Table, typename Key>
 	inline bool operator==(const proxy<Table, Key>& right, lua_nil_t) {
 		return !right.valid();
 	}
 
-	template<typename Table, typename Key>
+	template <typename Table, typename Key>
 	inline bool operator!=(lua_nil_t, const proxy<Table, Key>& right) {
 		return right.valid();
 	}
 
-	template<typename Table, typename Key>
+	template <typename Table, typename Key>
 	inline bool operator!=(const proxy<Table, Key>& right, lua_nil_t) {
 		return right.valid();
+	}
+
+	template <bool b>
+	template <typename Super>
+	basic_reference<b>& basic_reference<b>::operator=(proxy_base<Super>&& r) {
+		this->operator=(r.operator basic_reference<b>());
+		return *this;
+	}
+
+	template <bool b>
+	template <typename Super>
+	basic_reference<b>& basic_reference<b>::operator=(const proxy_base<Super>& r) {
+		this->operator=(r.operator basic_reference<b>());
+		return *this;
 	}
 
 	namespace stack {
 		template <typename Table, typename Key>
 		struct pusher<proxy<Table, Key>> {
 			static int push(lua_State* L, const proxy<Table, Key>& p) {
-				sol::reference r = p;
+				reference r = p;
 				return r.push(L);
 			}
 		};
-	} // stack
-} // sol
+	} // namespace stack
+} // namespace sol
 
 #endif // SOL_PROXY_HPP

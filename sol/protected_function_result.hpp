@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -73,12 +73,13 @@ namespace sol {
 
 	public:
 		protected_function_result() = default;
-		protected_function_result(lua_State* Ls, int idx = -1, int retnum = 0, int popped = 0, call_status pferr = call_status::ok) noexcept : L(Ls), index(idx), returncount(retnum), popcount(popped), err(pferr) {
-
+		protected_function_result(lua_State* Ls, int idx = -1, int retnum = 0, int popped = 0, call_status pferr = call_status::ok) noexcept
+		: L(Ls), index(idx), returncount(retnum), popcount(popped), err(pferr) {
 		}
 		protected_function_result(const protected_function_result&) = default;
 		protected_function_result& operator=(const protected_function_result&) = default;
-		protected_function_result(protected_function_result&& o) noexcept : L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
+		protected_function_result(protected_function_result&& o) noexcept
+		: L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
 			// Must be manual, otherwise destructor will screw us
 			// return count being 0 is enough to keep things clean
 			// but we will be thorough
@@ -110,15 +111,23 @@ namespace sol {
 			return status() == call_status::ok || status() == call_status::yielded;
 		}
 
-		template<typename T>
+		template <typename T>
 		decltype(auto) get() const {
 			return tagged_get(types<meta::unqualified_t<T>>());
 		}
 
-		lua_State* lua_state() const noexcept { return L; };
-		int stack_index() const noexcept { return index; };
-		int return_count() const noexcept { return returncount; };
-		int pop_count() const noexcept { return popcount; };
+		lua_State* lua_state() const noexcept {
+			return L;
+		};
+		int stack_index() const noexcept {
+			return index;
+		};
+		int return_count() const noexcept {
+			return returncount;
+		};
+		int pop_count() const noexcept {
+			return popcount;
+		};
 		void abandon() noexcept {
 			//L = nullptr;
 			index = 0;
@@ -143,7 +152,7 @@ namespace sol {
 				return p;
 			}
 		};
-	} // stack
-} // sol
+	} // namespace stack
+} // namespace sol
 
 #endif // SOL_PROTECTED_FUNCTION_RESULT_HPP

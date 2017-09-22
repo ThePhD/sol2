@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -41,9 +41,15 @@ namespace sol {
 		std::size_t s;
 		const Char* p;
 
-		basic_string_view(const std::string& r) : basic_string_view(r.data(), r.size()) {}
-		basic_string_view(const Char* ptr) : basic_string_view(ptr, Traits::length(ptr)) {}
-		basic_string_view(const Char* ptr, std::size_t sz) : s(sz), p(ptr) {}
+		basic_string_view(const std::string& r)
+		: basic_string_view(r.data(), r.size()) {
+		}
+		basic_string_view(const Char* ptr)
+		: basic_string_view(ptr, Traits::length(ptr)) {
+		}
+		basic_string_view(const Char* ptr, std::size_t sz)
+		: s(sz), p(ptr) {
+		}
 
 		static int compare(const Char* lhs_p, std::size_t lhs_sz, const Char* rhs_p, std::size_t rhs_sz) {
 			int result = Traits::compare(lhs_p, rhs_p, lhs_sz < rhs_sz ? lhs_sz : rhs_sz);
@@ -114,6 +120,6 @@ namespace sol {
 	using u16string_view = basic_string_view<char16_t>;
 	using u32string_view = basic_string_view<char32_t>;
 #endif // C++17 Support
-}
+} // namespace sol
 
 #endif // SOL_STRING_VIEW_HPP

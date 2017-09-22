@@ -15,9 +15,18 @@ The majority of the members between ``state_view`` and :doc:`sol::table<table>` 
 
 ``state_view`` is cheap to construct and creates 2 references to things in the ``lua_State*`` while it is alive: the global Lua table, and the Lua C Registry.
 
+.. _state-automatic-handlers:
+
+One last thing you should understand: constructing a ``sol::state`` does a few things behind-the-scenes for you, mostly to ensure compatibility. They are as follows:
+
+* set a default panic handler with ``state_view::set_panic``
+* set a default ``sol::protected_function`` handler with ``sol::protected_function::set_default_handler``, using a ``sol::reference`` to ``&sol::detail::default_traceback_error_handler`` as the default handler function
+* register the state as the main thread (only does something for Lua 5.1, which does not have a way to get the main thread) using ``sol::stack::register_main_thread(L)``
+* register the LuaJIT C function exception handler with ``stack::luajit_exception_handler(L)``
+
 .. warning::
 
-	It is your responsibility to make sure ``sol::state_view`` goes out of scope before you call ``lua_close`` on a pre-existing state, or before ``sol::state`` goes out of scope and its destructor gets called. Failure to do so can result in intermittent crashes because the ``sol::state_view`` has outstanding references to an already-dead ``lua_State*``, and thusly will try to decrement the reference counts for the Lua Registry and the Global Table on a dead state. Please use ``{`` and ``}`` to create a new scope when you know you are going to call ``lua_close`` to specifically control the lifetime of an object.
+	It is your responsibility to make sure ``sol::state_view`` goes out of scope before you call ``lua_close`` on a pre-existing state, or before ``sol::state`` goes out of scope and its destructor gets called. Failure to do so can result in intermittent crashes because the ``sol::state_view`` has outstanding references to an already-dead ``lua_State*``, and thusly will try to decrement the reference counts for the Lua Registry and the Global Table on a dead state. Please use ``{`` and ``}`` to create a new scope, or other lifetime techniques, when you know you are going to call ``lua_close`` so that you have a chance to specifically control the lifetime of a ``sol::state_view`` object.
 
 enumerations
 ------------

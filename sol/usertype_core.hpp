@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -59,7 +59,7 @@ namespace sol {
 		inline int member_default_to_string(std::false_type, lua_State* L) {
 			return luaL_error(L, "cannot perform to_string on '%s': no 'to_string' overload in namespace, 'to_string' member function, or operator<<(ostream&, ...) present", detail::demangle<T>().data());
 		}
-		
+
 		template <typename T>
 		inline int adl_default_to_string(std::true_type, lua_State* L) {
 			using namespace std;
@@ -208,33 +208,44 @@ namespace sol {
 				usertype_detail::make_call_op<T>(l, index);
 			}
 		}
-	} // usertype_detail
+	} // namespace usertype_detail
 
-	namespace stack {
-		namespace stack_detail {
-			template <typename T>
-			struct undefined_metatable {
-				typedef meta::all<meta::neg<std::is_pointer<T>>, std::is_destructible<T>> is_destructible;
-				typedef std::remove_pointer_t<T> P;
-				lua_State* L;
-				const char* key;
+	namespace stack { namespace stack_detail {
+		template <typename T>
+		struct undefined_metatable {
+			typedef meta::all<meta::neg<std::is_pointer<T>>, std::is_destructible<T>> is_destructible;
+			typedef std::remove_pointer_t<T> P;
+			lua_State* L;
+			const char* key;
 
-				undefined_metatable(lua_State* l, const char* k) : L(l), key(k) {}
+			undefined_metatable(lua_State* l, const char* k)
+			: L(l), key(k) {
+			}
 
-				void operator () () const {
-					if (luaL_newmetatable(L, key) == 1) {
-						luaL_Reg l[32]{};
-						int index = 0;
-						auto fx = [](meta_function) { return true; };
-						usertype_detail::insert_default_registrations<P>(l, index, fx);
-						usertype_detail::make_destructor<T>(l, index);
-						luaL_setfuncs(L, l, 0);
-					}
-					lua_setmetatable(L, -2);
+			void operator()() const {
+				if (luaL_newmetatable(L, key) == 1) {
+					luaL_Reg l[32]{};
+					int index = 0;
+					auto fx = [](meta_function) { return true; };
+					usertype_detail::insert_default_registrations<P>(l, index, fx);
+					usertype_detail::make_destructor<T>(l, index);
+					luaL_setfuncs(L, l, 0);
+					
+					// __type table
+					lua_createtable(L, 0, 2);
+					const std::string& name = detail::demangle<T>();
+					lua_pushlstring(L, name.c_str(), name.size());
+					lua_setfield(L, -2, "name");
+					lua_CFunction is_func = &usertype_detail::is_check<T>;
+					lua_pushcclosure(L, is_func, 0);
+					lua_setfield(L, -2, "is");
+					lua_setfield(L, -2, to_string(meta_function::type).c_str());
 				}
-			};
-		} // stack_detail
-	} // stack
-} // sol
+				lua_setmetatable(L, -2);
+			}
+		};
+	}
+	} // namespace stack::stack_detail
+} // namespace sol
 
 #endif // SOL_USERTYPE_CORE_HPP

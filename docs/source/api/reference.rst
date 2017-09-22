@@ -24,11 +24,22 @@ members
 	:caption: constructor: reference
 
 	reference(lua_State* L, int index = -1);
+	reference(lua_State* L, lua_nil_t);
+	reference(lua_State* L, absolute_index index);
+	reference(lua_State* L, raw_index index);
 	reference(lua_State* L, ref_index index);
 	template <typename Object>
 	reference(Object&& o);
+	template <typename Object>
+	reference(lua_State* L, Object&& o);
 
 The first constructor creates a reference from the Lua stack at the specified index, saving it into the metatable registry. The second attemtps to register something that already exists in the registry. The third attempts to reference a pre-existing object and create a reference to it. These constructors are exposed on all types that derive from ``sol::reference``, meaning that you can grab tables, functions, and coroutines from the registry, stack, or from other objects easily.
+
+.. _lua_xmove-note::
+
+.. note::
+
+	Note that the last constructor has ``lua_xmove`` safety built into it. You can pin an object to a certain thread (or the main thread) by initializing it with ``sol::reference pinned(state, other_reference_object);``. This ensures that ``other_reference_object`` will exist in the state/thread of ``state``. Also note that copy/move assignment operations will also use pinning semantics if it detects that the state of the object on the right is ``lua_xmove`` compatible. (But, the ``reference`` object on the left must have a valid state as well. You can have a nil ``reference`` with a valid state by using the ``sol::reference pinned(state, sol::lua_nil)`` constructor as well.) This applies for any ``sol::reference`` derived type.
 
 .. code-block:: cpp
 	:caption: function: push referred-to element from the stack

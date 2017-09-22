@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -32,13 +32,13 @@
 
 namespace sol {
 	namespace function_detail {
-		template<typename T>
+		template <typename T>
 		struct class_indicator {};
 
 		struct call_indicator {};
-	}
+	} // namespace function_detail
 	namespace stack {
-		template<typename... Sigs>
+		template <typename... Sigs>
 		struct pusher<function_sig<Sigs...>> {
 			template <typename... Sig, typename Fx, typename... Args>
 			static void select_convertible(std::false_type, types<Sig...>, lua_State* L, Fx&& fx, Args&&... args) {
@@ -49,7 +49,7 @@ namespace sol {
 
 			template <typename R, typename... A, typename Fx, typename... Args>
 			static void select_convertible(std::true_type, types<R(A...)>, lua_State* L, Fx&& fx, Args&&... args) {
-				using fx_ptr_t = R(*)(A...);
+				using fx_ptr_t = R (*)(A...);
 				fx_ptr_t fxptr = detail::unwrap(std::forward<Fx>(fx));
 				select_function(std::true_type(), L, fxptr, std::forward<Args>(args)...);
 			}
@@ -57,7 +57,7 @@ namespace sol {
 			template <typename R, typename... A, typename Fx, typename... Args>
 			static void select_convertible(types<R(A...)> t, lua_State* L, Fx&& fx, Args&&... args) {
 				typedef std::decay_t<meta::unwrap_unqualified_t<Fx>> raw_fx_t;
-				typedef R(*fx_ptr_t)(A...);
+				typedef R (*fx_ptr_t)(A...);
 				typedef std::is_convertible<raw_fx_t, fx_ptr_t> is_convertible;
 				select_convertible(is_convertible(), t, L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
@@ -196,12 +196,12 @@ namespace sol {
 			}
 #endif // noexcept function type
 
-			template <typename Fx, typename... Args, meta::disable<meta::any<std::is_base_of<reference, meta::unqualified_t<Fx>>, std::is_base_of<stack_reference, meta::unqualified_t<Fx>>>> = meta::enabler>
+			template <typename Fx, typename... Args, meta::disable<is_lua_reference<meta::unqualified_t<Fx>>> = meta::enabler>
 			static void select(lua_State* L, Fx&& fx, Args&&... args) {
 				select_function(std::is_function<std::remove_pointer_t<meta::unqualified_t<Fx>>>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 
-			template <typename Fx, meta::enable<meta::any<std::is_base_of<reference, meta::unqualified_t<Fx>>, std::is_base_of<stack_reference, meta::unqualified_t<Fx>>>> = meta::enabler>
+			template <typename Fx, meta::enable<is_lua_reference<meta::unqualified_t<Fx>>> = meta::enabler>
 			static void select(lua_State* L, Fx&& fx) {
 				stack::push(L, std::forward<Fx>(fx));
 			}
@@ -216,7 +216,7 @@ namespace sol {
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
-			template<typename... Args>
+			template <typename... Args>
 			static int push(lua_State* L, Args&&... args) {
 				// Set will always place one thing (function) on the stack
 				select(L, std::forward<Args>(args)...);
@@ -224,7 +224,7 @@ namespace sol {
 			}
 		};
 
-		template<typename T, typename... Args>
+		template <typename T, typename... Args>
 		struct pusher<function_arguments<T, Args...>> {
 			template <std::size_t... I, typename FP>
 			static int push_func(std::index_sequence<I...>, lua_State* L, FP&& fp) {
@@ -240,7 +240,7 @@ namespace sol {
 			}
 		};
 
-		template<typename Signature>
+		template <typename Signature>
 		struct pusher<std::function<Signature>> {
 			static int push(lua_State* L, const std::function<Signature>& fx) {
 				return pusher<function_sig<Signature>>{}.push(L, fx);
@@ -251,7 +251,7 @@ namespace sol {
 			}
 		};
 
-		template<typename Signature>
+		template <typename Signature>
 		struct pusher<Signature, std::enable_if_t<std::is_member_pointer<Signature>::value>> {
 			template <typename F, typename... Args>
 			static int push(lua_State* L, F&& f, Args&&... args) {
@@ -259,23 +259,20 @@ namespace sol {
 			}
 		};
 
-		template<typename Signature>
-		struct pusher<Signature, std::enable_if_t<meta::all<
-			std::is_function<std::remove_pointer_t<Signature>>, 
-			meta::neg<std::is_same<Signature, lua_CFunction>>,
-			meta::neg<std::is_same<Signature, std::remove_pointer_t<lua_CFunction>>>
+		template <typename Signature>
+		struct pusher<Signature, std::enable_if_t<meta::all<std::is_function<std::remove_pointer_t<Signature>>, meta::neg<std::is_same<Signature, lua_CFunction>>, meta::neg<std::is_same<Signature, std::remove_pointer_t<lua_CFunction>>>
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
-			, meta::neg<std::is_same<Signature, detail::lua_CFunction_noexcept>>,
-			meta::neg<std::is_same<Signature, std::remove_pointer_t<detail::lua_CFunction_noexcept>>>
+								,
+								meta::neg<std::is_same<Signature, detail::lua_CFunction_noexcept>>, meta::neg<std::is_same<Signature, std::remove_pointer_t<detail::lua_CFunction_noexcept>>>
 #endif // noexcept function types
-		>::value>> {
+								>::value>> {
 			template <typename F>
 			static int push(lua_State* L, F&& f) {
 				return pusher<function_sig<>>{}.push(L, std::forward<F>(f));
 			}
 		};
 
-		template<typename... Functions>
+		template <typename... Functions>
 		struct pusher<overload_set<Functions...>> {
 			static int push(lua_State* L, overload_set<Functions...>&& set) {
 				typedef function_detail::overloaded_function<0, Functions...> F;
@@ -312,10 +309,10 @@ namespace sol {
 		template <typename F, typename G>
 		struct pusher<property_wrapper<F, G>, std::enable_if_t<!std::is_void<F>::value && !std::is_void<G>::value>> {
 			static int push(lua_State* L, property_wrapper<F, G>&& pw) {
-				return stack::push(L, sol::overload(std::move(pw.read), std::move(pw.write)));
+				return stack::push(L, overload(std::move(pw.read), std::move(pw.write)));
 			}
 			static int push(lua_State* L, const property_wrapper<F, G>& pw) {
-				return stack::push(L, sol::overload(pw.read, pw.write));
+				return stack::push(L, overload(pw.read, pw.write));
 			}
 		};
 
@@ -447,7 +444,7 @@ namespace sol {
 				return stack::push(L, c_closure(cf, upvalues));
 			}
 		};
-	} // stack
-} // sol
+	} // namespace stack
+} // namespace sol
 
 #endif // SOL_FUNCTION_TYPES_HPP

@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -55,6 +55,6 @@
 #else
 // ??? Not sure, assume 502?
 #define SOL_LUA_VERSION 502
-#endif // Lua Version 502, 501 || luajit, 500 
+#endif // Lua Version 502, 501 || luajit, 500
 
 #endif // SOL_VERSION_HPP

@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -29,26 +29,26 @@
 namespace sol {
 	namespace detail {
 		struct default_construct {
-			template<typename T, typename... Args>
+			template <typename T, typename... Args>
 			static void construct(T&& obj, Args&&... args) {
 				std::allocator<meta::unqualified_t<T>> alloc{};
 				alloc.construct(obj, std::forward<Args>(args)...);
 			}
 
-			template<typename T, typename... Args>
+			template <typename T, typename... Args>
 			void operator()(T&& obj, Args&&... args) const {
 				construct(std::forward<T>(obj), std::forward<Args>(args)...);
 			}
 		};
 
 		struct default_destruct {
-			template<typename T>
+			template <typename T>
 			static void destroy(T&& obj) {
 				std::allocator<meta::unqualified_t<T>> alloc{};
 				alloc.destroy(obj);
 			}
 
-			template<typename T>
+			template <typename T>
 			void operator()(T&& obj) const {
 				destroy(std::forward<T>(obj));
 			}
@@ -70,14 +70,16 @@ namespace sol {
 		struct tagged {
 			T value;
 			template <typename Arg, typename... Args, meta::disable<std::is_same<meta::unqualified_t<Arg>, tagged>> = meta::enabler>
-			tagged(Arg&& arg, Args&&... args) : value(std::forward<Arg>(arg), std::forward<Args>(args)...) {}
+			tagged(Arg&& arg, Args&&... args)
+			: value(std::forward<Arg>(arg), std::forward<Args>(args)...) {
+			}
 		};
-	} // detail
+	} // namespace detail
 
 	template <typename... Args>
 	struct constructor_list {};
 
-	template<typename... Args>
+	template <typename... Args>
 	using constructors = constructor_list<Args...>;
 
 	const auto default_constructor = constructors<types<>>{};
@@ -92,7 +94,9 @@ namespace sol {
 	struct constructor_wrapper {
 		std::tuple<Functions...> functions;
 		template <typename Arg, typename... Args, meta::disable<std::is_same<meta::unqualified_t<Arg>, constructor_wrapper>> = meta::enabler>
-		constructor_wrapper(Arg&& arg, Args&&... args) : functions(std::forward<Arg>(arg), std::forward<Args>(args)...) {}
+		constructor_wrapper(Arg&& arg, Args&&... args)
+		: functions(std::forward<Arg>(arg), std::forward<Args>(args)...) {
+		}
 	};
 
 	template <typename... Functions>
@@ -104,7 +108,9 @@ namespace sol {
 	struct factory_wrapper {
 		std::tuple<Functions...> functions;
 		template <typename Arg, typename... Args, meta::disable<std::is_same<meta::unqualified_t<Arg>, factory_wrapper>> = meta::enabler>
-		factory_wrapper(Arg&& arg, Args&&... args) : functions(std::forward<Arg>(arg), std::forward<Args>(args)...) {}
+		factory_wrapper(Arg&& arg, Args&&... args)
+		: functions(std::forward<Arg>(arg), std::forward<Args>(args)...) {
+		}
 	};
 
 	template <typename... Functions>
@@ -115,7 +121,9 @@ namespace sol {
 	template <typename Function>
 	struct destructor_wrapper {
 		Function fx;
-		destructor_wrapper(Function f) : fx(std::move(f)) {}
+		destructor_wrapper(Function f)
+		: fx(std::move(f)) {
+		}
 	};
 
 	template <>
@@ -128,6 +136,6 @@ namespace sol {
 		return destructor_wrapper<std::decay_t<Fx>>(std::forward<Fx>(fx));
 	}
 
-} // sol
+} // namespace sol
 
 #endif // SOL_RAII_HPP

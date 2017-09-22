@@ -42,7 +42,7 @@ namespace sol {
 			static two_things get(lua_State* L, int index, record& tracking) {
 				// Get the first element
 				int a = stack::get<int>(L, index);
-				// Get the second element, 
+				// Get the second element,
 				// in the +1 position from the first
 				bool b = stack::get<bool>(L, index + 1);
 				// we use 2 slots, each of the previous takes 1
@@ -61,8 +61,8 @@ namespace sol {
 			}
 		};
 
-	}
-}
+	} // namespace stack
+} // namespace sol
 
 TEST_CASE("customization/split struct", "using the newly documented customization points to handle different kinds of classes") {
 	sol::state lua;
@@ -80,7 +80,7 @@ TEST_CASE("customization/split struct", "using the newly documented customizatio
 	two_things thingsf = f(two_things{ 24, true }, 1);
 	two_things thingsg;
 	double d;
-	sol::tie( thingsg, d ) = g(two_things{ 25, false }, 2, 34.0);
+	sol::tie(thingsg, d) = g(two_things{ 25, false }, 2, 34.0);
 	REQUIRE(thingsf.a == 25);
 	REQUIRE(thingsf.b);
 

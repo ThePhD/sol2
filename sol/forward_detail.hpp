@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -28,17 +28,16 @@
 
 namespace sol {
 	namespace meta {
-		namespace meta_detail {
-
-		} // meta_detail
-	} // meta
+	namespace meta_detail {
+	}
+	} // namespace meta::meta_detail
 
 	namespace stack {
-		namespace stack_detail {
-			template <typename T>
-			struct undefined_metatable;
-		} // stack_detail
-	} // stack
+	namespace stack_detail {
+		template <typename T>
+		struct undefined_metatable;
+	}
+	} // namespace stack::stack_detail
 
 	namespace usertype_detail {
 		template <typename T, typename Regs, typename Fx>
@@ -48,7 +47,7 @@ namespace sol {
 		void make_destructor(Regs& l, int& index);
 		template <typename T, typename Regs, meta::disable<meta::neg<std::is_pointer<T>>, std::is_destructible<T>> = meta::enabler>
 		void make_destructor(Regs& l, int& index);
-	} // usertype_detail
-} // sol
+	} // namespace usertype_detail
+} // namespace sol
 
 #endif // SOL_FORWARD_DETAIL_HPP

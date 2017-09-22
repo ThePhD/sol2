@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -25,6 +25,17 @@
 #include "types.hpp"
 
 namespace sol {
+	namespace detail {
+		inline bool xmovable(lua_State* leftL, lua_State* rightL) {
+			if (rightL == nullptr || leftL == nullptr || leftL == rightL) {
+				return false;
+			}
+			const void* leftregistry = lua_topointer(leftL, LUA_REGISTRYINDEX);
+			const void* rightregistry = lua_topointer(rightL, LUA_REGISTRYINDEX);
+			return leftregistry == rightregistry;
+		}
+	} // namespace detail
+
 	class stack_reference {
 	private:
 		lua_State* luastate = nullptr;
@@ -37,20 +48,30 @@ namespace sol {
 
 	public:
 		stack_reference() noexcept = default;
-		stack_reference(lua_nil_t) noexcept : stack_reference() {};
-		stack_reference(lua_State* L, lua_nil_t) noexcept : luastate(L), index(0) {}
-		stack_reference(lua_State* L, int i) noexcept : stack_reference(L, absolute_index(L, i)) {}
-		stack_reference(lua_State* L, absolute_index i) noexcept : luastate(L), index(i) {}
-		stack_reference(lua_State* L, raw_index i) noexcept : luastate(L), index(i) {}
+		stack_reference(lua_nil_t) noexcept
+		: stack_reference(){};
+		stack_reference(lua_State* L, lua_nil_t) noexcept
+		: luastate(L), index(0) {
+		}
+		stack_reference(lua_State* L, int i) noexcept
+		: stack_reference(L, absolute_index(L, i)) {
+		}
+		stack_reference(lua_State* L, absolute_index i) noexcept
+		: luastate(L), index(i) {
+		}
+		stack_reference(lua_State* L, raw_index i) noexcept
+		: luastate(L), index(i) {
+		}
 		stack_reference(lua_State* L, ref_index i) noexcept = delete;
 		stack_reference(lua_State* L, const reference& r) noexcept = delete;
-		stack_reference(lua_State* L, const stack_reference& r) noexcept : luastate(L) {
+		stack_reference(lua_State* L, const stack_reference& r) noexcept
+		: luastate(L) {
 			if (!r.valid()) {
 				index = 0;
 				return;
 			}
 			int i = r.stack_index();
-			if (r.lua_state() != luastate) {
+			if (detail::xmovable(lua_state(), r.lua_state())) {
 				lua_pushvalue(r.lua_state(), r.index);
 				lua_xmove(r.lua_state(), luastate, 1);
 				i = absolute_index(luastate, -1);
@@ -105,11 +126,11 @@ namespace sol {
 		}
 	};
 
-	inline bool operator== (const stack_reference& l, const stack_reference& r) {
+	inline bool operator==(const stack_reference& l, const stack_reference& r) {
 		return lua_compare(l.lua_state(), l.stack_index(), r.stack_index(), LUA_OPEQ) == 0;
 	}
 
-	inline bool operator!= (const stack_reference& l, const stack_reference& r) {
+	inline bool operator!=(const stack_reference& l, const stack_reference& r) {
 		return !operator==(l, r);
 	}
 
@@ -128,6 +149,6 @@ namespace sol {
 	inline bool operator!=(const lua_nil_t&, const stack_reference& rhs) {
 		return rhs.valid();
 	}
-} // sol
+} // namespace sol
 
 #endif // SOL_STACK_REFERENCE_HPP

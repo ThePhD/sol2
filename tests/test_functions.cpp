@@ -33,7 +33,10 @@ void takefn(std::function<int()> purr) {
 }
 
 struct A {
-	int a = 0xA; int bark() { return 1; }
+	int a = 0xA;
+	int bark() {
+		return 1;
+	}
 };
 
 std::tuple<int, int> bark(int num_value, A* a) {
@@ -75,7 +78,7 @@ namespace sep {
 		INFO(x << " " << y << " " << z);
 		return 11;
 	}
-}
+} // namespace sep
 
 int func_1(int) {
 	return 1;
@@ -90,11 +93,14 @@ int func_2(int, int) {
 }
 
 void func_3(int, int, int) {
-
 }
 
-int f1(int) { return 32; }
-int f2(int, int) { return 1; }
+int f1(int) {
+	return 32;
+}
+int f2(int, int) {
+	return 1;
+}
 struct fer {
 	double f3(int, int) {
 		return 2.5;
@@ -152,7 +158,6 @@ TEST_CASE("functions/return order and multi get", "Check if return order is in t
 	lua.set_function("f", [] {
 		return std::make_tuple(10, 11, 12);
 	});
-	int a = 0;
 	lua.set_function("h", []() {
 		return std::make_tuple(10, 10.0f);
 	});
@@ -211,7 +216,7 @@ end )");
 	REQUIRE_FALSE((bool)testn);
 	REQUIRE(testv.value() == 29);
 	sol::optional<thing> v = lua_bark(sol::optional<thing>(thing{ 29 }));
-	REQUIRE_NOTHROW([&] {sol::nil_t n = lua_bark(sol::nullopt); return n; }());
+	REQUIRE_NOTHROW([&] {sol::lua_nil_t n = lua_bark(sol::nullopt); return n; }());
 	REQUIRE(v->v == 29);
 }
 
@@ -262,16 +267,14 @@ TEST_CASE("functions/sol::function to std::function", "check if conversion to st
 	lua.set_function("testFunc", test_free_func);
 	lua.set_function("testFunc2", test_free_func2);
 	lua.safe_script(
-		"testFunc(function() print(\"hello std::function\") end)"
-	);
+		"testFunc(function() print(\"hello std::function\") end)");
 	REQUIRE_NOTHROW(lua.safe_script(
 		"function m(a)\n"
 		"     print(\"hello std::function with arg \", a)\n"
 		"     return a\n"
 		"end\n"
 		"\n"
-		"testFunc2(m, 1)"
-	));
+		"testFunc2(m, 1)"));
 }
 
 TEST_CASE("functions/returning functions from C++", "check to see if returning a functor and getting a functor from lua is possible") {
@@ -280,7 +283,8 @@ TEST_CASE("functions/returning functions from C++", "check to see if returning a
 
 	lua.set_function("makefn", makefn);
 	lua.set_function("takefn", takefn);
-	lua.safe_script("afx = makefn()\n"
+	lua.safe_script(
+		"afx = makefn()\n"
 		"print(afx())\n"
 		"takefn(afx)\n");
 }
@@ -314,8 +318,7 @@ TEST_CASE("functions/function_result and protected_function_result", "Function r
 		std::string("function luahandler ( message )")
 		+ "    print('lua handler called with: ' .. message)"
 		+ "    return '" + handlederrormessage + "'"
-		+ "end"
-	);
+		+ "end");
 	auto nontrampolinefx = [](lua_State*) -> int { throw "x"; };
 	lua_CFunction c_nontrampolinefx = nontrampolinefx;
 	lua.set("nontrampoline", c_nontrampolinefx);
@@ -433,11 +436,9 @@ TEST_CASE("functions/all kinds", "Register all kinds of functions, make sure the
 	auto d = []() { return 503; };
 
 	lua.new_usertype<test_1>("test_1",
-		"bark", sol::c_call<decltype(&test_1::bark_mem), &test_1::bark_mem>
-		);
+		"bark", sol::c_call<decltype(&test_1::bark_mem), &test_1::bark_mem>);
 	lua.new_usertype<test_2>("test_2",
-		"bark", sol::c_call<decltype(&test_2::bark), &test_2::bark>
-		);
+		"bark", sol::c_call<decltype(&test_2::bark), &test_2::bark>);
 	test_2 t2;
 
 	lua.set_function("a", a);
@@ -473,7 +474,6 @@ I = i(o1)
 I = i(o1)
 )");
 
-	
 	lua.safe_script(R"(
 J0 = j()
 j(24)
@@ -492,7 +492,6 @@ l(o1, 678)
 L1 = l(o1)
     )");
 
-
 	lua.safe_script(R"(
 M0 = m()
 m(256)
@@ -505,8 +504,7 @@ N = n(1, 2, 3)
 	int ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1, N;
 	std::tie(ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1, N)
 		= lua.get<int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int>(
-			"ob", "A", "B", "C", "D", "F", "G0", "G1", "H", "I", "J0", "J1", "K0", "K1", "L0", "L1", "M0", "M1", "N"
-			);
+			"ob", "A", "B", "C", "D", "F", "G0", "G1", "H", "I", "J0", "J1", "K0", "K1", "L0", "L1", "M0", "M1", "N");
 
 	REQUIRE(ob == 0xA);
 
@@ -537,8 +535,7 @@ N = n(1, 2, 3)
 
 	sol::tie(ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1, N)
 		= lua.get<int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int>(
-			"ob", "A", "B", "C", "D", "F", "G0", "G1", "H", "I", "J0", "J1", "K0", "K1", "L0", "L1", "M0", "M1", "N"
-			);
+			"ob", "A", "B", "C", "D", "F", "G0", "G1", "H", "I", "J0", "J1", "K0", "K1", "L0", "L1", "M0", "M1", "N");
 
 	REQUIRE(ob == 0xA);
 
@@ -593,9 +590,8 @@ N = n(1, 2, 3)
 	{
 		auto result = lua.safe_script("v(nested, inner)", sol::script_pass_on_error);
 		REQUIRE_FALSE(result.valid());
-	}	
+	}
 }
-
 
 TEST_CASE("simple/call with parameters", "Lua function is called with a few parameters from C++") {
 	sol::state lua;
@@ -668,8 +664,8 @@ TEST_CASE("advanced/get and call", "Checks for lambdas returning values after a 
 	REQUIRE_NOTHROW(lua.set_function("h", [] {}));
 	REQUIRE_NOTHROW(lua.get<sol::function>("h").call());
 
-	REQUIRE_NOTHROW(lua.set_function("i", [] { return sol::nil; }));
-	REQUIRE(lua.get<sol::function>("i").call<sol::nil_t>() == sol::nil);
+	REQUIRE_NOTHROW(lua.set_function("i", [] { return sol::lua_nil; }));
+	REQUIRE(lua.get<sol::function>("i").call<sol::lua_nil_t>() == sol::lua_nil);
 	REQUIRE_NOTHROW(lua.set_function("j", [] { return std::make_tuple(1, 6.28f, 3.14, std::string("heh")); }));
 	REQUIRE((lua.get<sol::function>("j").call<int, float, double, std::string>() == heh_tuple));
 }
@@ -703,8 +699,8 @@ TEST_CASE("advanced/operator[] call", "Checks for lambdas returning values using
 	REQUIRE_NOTHROW(lua.set_function("h", [] {}));
 	REQUIRE_NOTHROW(lua["h"].call());
 
-	REQUIRE_NOTHROW(lua.set_function("i", [] { return sol::nil; }));
-	REQUIRE(lua["i"].call<sol::nil_t>() == sol::nil);
+	REQUIRE_NOTHROW(lua.set_function("i", [] { return sol::lua_nil; }));
+	REQUIRE(lua["i"].call<sol::lua_nil_t>() == sol::lua_nil);
 	REQUIRE_NOTHROW(lua.set_function("j", [] { return std::make_tuple(1, 6.28f, 3.14, std::string("heh")); }));
 	REQUIRE((lua["j"].call<int, float, double, std::string>() == heh_tuple));
 }
@@ -773,8 +769,7 @@ TEST_CASE("functions/overloading", "Check if overloading works properly for regu
 		"a = func(1)\n"
 		"b = func('bark')\n"
 		"c = func(1,2)\n"
-		"func(1,2,3)\n"
-	));
+		"func(1,2,3)\n"));
 
 	REQUIRE((lua["a"] == 1));
 	REQUIRE((lua["b"] == string_bark));
@@ -842,20 +837,18 @@ TEST_CASE("functions/stack atomic", "make sure functions don't impede on the sta
 		sol::stack_guard opsg(lua);
 		sol::optional<std::string> opt_result = Stringtest("optional test");
 		REQUIRE(opsg.check_stack());
-		if (opt_result)
-		{
+		if (opt_result) {
 			std::string s = opt_result.value();
 			INFO("Back in C++, opt_result is : " << s);
 		}
-		else
-		{
+		else {
 			INFO("opt_result failed");
 		}
 	}
 	REQUIRE(sg.check_stack());
 
 	{
-		sol::protected_function_result errresult = Stringtest(sol::nil);
+		sol::protected_function_result errresult = Stringtest(sol::lua_nil);
 		REQUIRE_FALSE(errresult.valid());
 		sol::error err = errresult;
 		std::string msg = err.what();
@@ -1017,7 +1010,7 @@ TEST_CASE("functions/set_function already wrapped", "setting a function returned
 		sol::function fn = lua.safe_script("return function() return 5 end");
 		sol::protected_function pfn = fn;
 		std::function<int()> sfn = fn;
-	
+
 		lua.set_function("test", fn);
 		lua.set_function("test2", pfn);
 		lua.set_function("test3", sfn);
@@ -1054,7 +1047,6 @@ TEST_CASE("functions/set_function already wrapped", "setting a function returned
 		REQUIRE_NOTHROW(lua.safe_script("assert(type(test) == 'function')"));
 		REQUIRE_NOTHROW(lua.safe_script("assert(test() ~= nil)"));
 		REQUIRE_NOTHROW(lua.safe_script("assert(test() == 5)"));
-
 	}
 
 	SECTION("does the function actually get executed?") {
@@ -1094,7 +1086,7 @@ TEST_CASE("functions/pointer nullptr + nil", "ensure specific semantics for hand
 			REQUIRE(p == nullptr);
 		}
 	};
-	
+
 	std::shared_ptr<nil_test> sptr;
 	std::unique_ptr<nil_test> uptr;
 	std::unique_ptr<nil_test> ruptr;
@@ -1256,10 +1248,14 @@ TEST_CASE("functions/pointer nullptr + nil", "ensure specific semantics for hand
 }
 
 TEST_CASE("functions/unique_usertype overloading", "make sure overloading can work with ptr vs. specifically asking for a unique_usertype") {
-	struct test { 
+	struct test {
 		int special_value = 17;
-		test() : special_value(17) {}
-		test(int special_value) : special_value(special_value) {}
+		test()
+		: special_value(17) {
+		}
+		test(int special_value)
+		: special_value(special_value) {
+		}
 	};
 	auto print_up_test = [](std::unique_ptr<test>& x) {
 		REQUIRE(x->special_value == 21);
@@ -1281,17 +1277,13 @@ TEST_CASE("functions/unique_usertype overloading", "make sure overloading can wo
 	};
 	using f_t = void(test&);
 	f_t* fptr = print_ref_test;
-	
+
 	std::unique_ptr<test> ut = std::make_unique<test>(17);
 	SECTION("working") {
 		sol::state lua;
 
 		lua.set_function("f", print_up_test);
-		lua.set_function("g", sol::overload(
-			std::move(print_sp_test),
-			print_up_test,
-			std::ref(print_ptr_test)
-		));
+		lua.set_function("g", sol::overload(std::move(print_sp_test), print_up_test, std::ref(print_ptr_test)));
 		lua.set_function("h", std::ref(fptr));
 		lua.set_function("i", std::move(print_up_2_test));
 
@@ -1350,15 +1342,15 @@ TEST_CASE("functions/noexcept", "allow noexcept functions to be serialized prope
 			return 0x61;
 		}
 
-		int noexcept_method() noexcept { 
-			return 0x62; 
+		int noexcept_method() noexcept {
+			return 0x62;
 		}
 	} t;
-	
+
 	lua_CFunction ccall = sol::c_call<decltype(&raw_noexcept_function), &raw_noexcept_function>;
 
 	sol::state lua;
-	
+
 	lua.set_function("f", &T::noexcept_function);
 	lua.set_function("g", &T::noexcept_method);
 	lua.set_function("h", &T::noexcept_method, T());

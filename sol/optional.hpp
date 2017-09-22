@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -44,7 +44,7 @@ namespace sol {
 		struct is_optional : std::false_type {};
 		template <typename T>
 		struct is_optional<optional<T>> : std::true_type {};
-	} // meta
-} // sol
+	} // namespace meta
+} // namespace sol
 
 #endif // SOL_OPTIONAL_HPP

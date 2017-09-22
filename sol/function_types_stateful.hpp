@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -25,76 +25,82 @@
 #include "function_types_core.hpp"
 
 namespace sol {
-	namespace function_detail {
-		template<typename Func>
-		struct functor_function {
-			typedef std::decay_t<meta::unwrap_unqualified_t<Func>> function_type;
-			function_type fx;
+namespace function_detail {
+	template <typename Func>
+	struct functor_function {
+		typedef std::decay_t<meta::unwrap_unqualified_t<Func>> function_type;
+		function_type fx;
 
-			template<typename... Args>
-			functor_function(function_type f, Args&&... args) : fx(std::move(f), std::forward<Args>(args)...) {}
+		template <typename... Args>
+		functor_function(function_type f, Args&&... args)
+		: fx(std::move(f), std::forward<Args>(args)...) {
+		}
 
-			int call(lua_State* L) {
-				return call_detail::call_wrapped<void, true, false>(L, fx);
+		int call(lua_State* L) {
+			return call_detail::call_wrapped<void, true, false>(L, fx);
+		}
+
+		int operator()(lua_State* L) {
+			auto f = [&](lua_State*) -> int { return this->call(L); };
+			return detail::trampoline(L, f);
+		}
+	};
+
+	template <typename T, typename Function>
+	struct member_function {
+		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
+		typedef meta::function_return_t<function_type> return_type;
+		typedef meta::function_args_t<function_type> args_lists;
+		function_type invocation;
+		T member;
+
+		template <typename... Args>
+		member_function(function_type f, Args&&... args)
+		: invocation(std::move(f)), member(std::forward<Args>(args)...) {
+		}
+
+		int call(lua_State* L) {
+			return call_detail::call_wrapped<T, true, false, -1>(L, invocation, detail::unwrap(detail::deref(member)));
+		}
+
+		int operator()(lua_State* L) {
+			auto f = [&](lua_State*) -> int { return this->call(L); };
+			return detail::trampoline(L, f);
+		}
+	};
+
+	template <typename T, typename Function>
+	struct member_variable {
+		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
+		typedef typename meta::bind_traits<function_type>::return_type return_type;
+		typedef typename meta::bind_traits<function_type>::args_list args_lists;
+		function_type var;
+		T member;
+		typedef std::add_lvalue_reference_t<meta::unwrapped_t<std::remove_reference_t<decltype(detail::deref(member))>>> M;
+
+		template <typename... Args>
+		member_variable(function_type v, Args&&... args)
+		: var(std::move(v)), member(std::forward<Args>(args)...) {
+		}
+
+		int call(lua_State* L) {
+			M mem = detail::unwrap(detail::deref(member));
+			switch (lua_gettop(L)) {
+			case 0:
+				return call_detail::call_wrapped<T, true, false, -1>(L, var, mem);
+			case 1:
+				return call_detail::call_wrapped<T, false, false, -1>(L, var, mem);
+			default:
+				return luaL_error(L, "sol: incorrect number of arguments to member variable function");
 			}
+		}
 
-			int operator()(lua_State* L) {
-				auto f = [&](lua_State*) -> int { return this->call(L); };
-				return detail::trampoline(L, f);
-			}
-		};
-
-		template<typename T, typename Function>
-		struct member_function {
-			typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-			typedef meta::function_return_t<function_type> return_type;
-			typedef meta::function_args_t<function_type> args_lists;
-			function_type invocation;
-			T member;
-
-			template<typename... Args>
-			member_function(function_type f, Args&&... args) : invocation(std::move(f)), member(std::forward<Args>(args)...) {}
-
-			int call(lua_State* L) {
-				return call_detail::call_wrapped<T, true, false, -1>(L, invocation, detail::unwrap(detail::deref(member)));
-			}
-
-			int operator()(lua_State* L) {
-				auto f = [&](lua_State*) -> int { return this->call(L); };
-				return detail::trampoline(L, f);
-			}
-		};
-
-		template<typename T, typename Function>
-		struct member_variable {
-			typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-			typedef typename meta::bind_traits<function_type>::return_type return_type;
-			typedef typename meta::bind_traits<function_type>::args_list args_lists;
-			function_type var;
-			T member;
-			typedef std::add_lvalue_reference_t<meta::unwrapped_t<std::remove_reference_t<decltype(detail::deref(member))>>> M;
-
-			template<typename... Args>
-			member_variable(function_type v, Args&&... args) : var(std::move(v)), member(std::forward<Args>(args)...) {}
-
-			int call(lua_State* L) {
-				M mem = detail::unwrap(detail::deref(member));
-				switch (lua_gettop(L)) {
-				case 0:
-					return call_detail::call_wrapped<T, true, false, -1>(L, var, mem);
-				case 1:
-					return call_detail::call_wrapped<T, false, false, -1>(L, var, mem);
-				default:
-					return luaL_error(L, "sol: incorrect number of arguments to member variable function");
-				}
-			}
-
-			int operator()(lua_State* L) {
-				auto f = [&](lua_State*) -> int { return this->call(L); };
-				return detail::trampoline(L, f);
-			}
-		};
-	} // function_detail
-} // sol
+		int operator()(lua_State* L) {
+			auto f = [&](lua_State*) -> int { return this->call(L); };
+			return detail::trampoline(L, f);
+		}
+	};
+}
+} // namespace sol::function_detail
 
 #endif // SOL_FUNCTION_TYPES_STATEFUL_HPP

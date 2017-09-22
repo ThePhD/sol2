@@ -28,7 +28,7 @@
 
 namespace sol {
 
-	struct no_prop { };
+	struct no_prop {};
 
 	template <typename R, typename W>
 	struct property_wrapper {
@@ -40,7 +40,9 @@ namespace sol {
 		Write write;
 
 		template <typename Rx, typename Wx>
-		property_wrapper(Rx&& r, Wx&& w) : read(std::forward<Rx>(r)), write(std::forward<Wx>(w)) {}
+		property_wrapper(Rx&& r, Wx&& w)
+		: read(std::forward<Rx>(r)), write(std::forward<Wx>(w)) {
+		}
 	};
 
 	namespace property_detail {
@@ -60,7 +62,7 @@ namespace sol {
 		inline decltype(auto) property(std::false_type, W&& write) {
 			return property_wrapper<void, std::decay_t<W>>(no_prop(), std::forward<W>(write));
 		}
-	} // property_detail
+	} // namespace property_detail
 
 	template <typename F, typename G>
 	inline decltype(auto) property(F&& f, G&& g) {
@@ -89,19 +91,21 @@ namespace sol {
 	struct readonly_wrapper {
 		T v;
 
-		readonly_wrapper(T v) : v(std::move(v)) {}
+		readonly_wrapper(T v)
+		: v(std::move(v)) {
+		}
 
-		operator T& () {
+		operator T&() {
 			return v;
 		}
-		operator const T& () const {
+		operator const T&() const {
 			return v;
 		}
 	};
 
 	// Allow someone to make a member variable readonly (const)
 	template <typename R, typename T>
-	inline auto readonly(R T::* v) {
+	inline auto readonly(R T::*v) {
 		return readonly_wrapper<meta::unqualified_t<decltype(v)>>(v);
 	}
 
@@ -109,7 +113,9 @@ namespace sol {
 	struct var_wrapper {
 		T value;
 		template <typename... Args>
-		var_wrapper(Args&&... args) : value(std::forward<Args>(args)...) {}
+		var_wrapper(Args&&... args)
+		: value(std::forward<Args>(args)...) {
+		}
 		var_wrapper(const var_wrapper&) = default;
 		var_wrapper(var_wrapper&&) = default;
 		var_wrapper& operator=(const var_wrapper&) = default;
@@ -128,8 +134,8 @@ namespace sol {
 
 		template <typename T>
 		struct is_member_object<readonly_wrapper<T>> : std::true_type {};
-	}
+	} // namespace meta
 
-} // sol
+} // namespace sol
 
 #endif // SOL_PROPERTY_HPP

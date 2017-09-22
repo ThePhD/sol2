@@ -1,4 +1,4 @@
-// The MIT License (MIT) 
+// The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
 
@@ -41,9 +41,15 @@ namespace sol {
 		int stacktop;
 		stack_proxy sp;
 
-		va_iterator() : L(nullptr), index((std::numeric_limits<int>::max)()), stacktop((std::numeric_limits<int>::max)()) {}
-		va_iterator(const va_iterator<true>& r) : L(r.L), index(r.index), stacktop(r.stacktop) {}
-		va_iterator(lua_State* luastate, int idx, int topidx) : L(luastate), index(idx), stacktop(topidx), sp(luastate, idx) {}
+		va_iterator()
+		: L(nullptr), index((std::numeric_limits<int>::max)()), stacktop((std::numeric_limits<int>::max)()) {
+		}
+		va_iterator(const va_iterator<true>& r)
+		: L(r.L), index(r.index), stacktop(r.stacktop) {
+		}
+		va_iterator(lua_State* luastate, int idx, int topidx)
+		: L(luastate), index(idx), stacktop(topidx), sp(luastate, idx) {
+		}
 
 		reference operator*() {
 			return stack_proxy(L, index);
@@ -63,43 +69,43 @@ namespace sol {
 			return &sp;
 		}
 
-		va_iterator& operator++ () {
+		va_iterator& operator++() {
 			++index;
 			return *this;
 		}
 
-		va_iterator operator++ (int) {
+		va_iterator operator++(int) {
 			auto r = *this;
-			this->operator ++();
+			this->operator++();
 			return r;
 		}
 
-		va_iterator& operator-- () {
+		va_iterator& operator--() {
 			--index;
 			return *this;
 		}
 
-		va_iterator operator-- (int) {
+		va_iterator operator--(int) {
 			auto r = *this;
-			this->operator --();
+			this->operator--();
 			return r;
 		}
 
-		va_iterator& operator+= (difference_type idx) {
+		va_iterator& operator+=(difference_type idx) {
 			index += static_cast<int>(idx);
 			return *this;
 		}
 
-		va_iterator& operator-= (difference_type idx) {
+		va_iterator& operator-=(difference_type idx) {
 			index -= static_cast<int>(idx);
 			return *this;
 		}
 
-		difference_type operator- (const va_iterator& r) const {
+		difference_type operator-(const va_iterator& r) const {
 			return index - r.index;
 		}
 
-		va_iterator operator+ (difference_type idx) const {
+		va_iterator operator+(difference_type idx) const {
 			va_iterator r = *this;
 			r += idx;
 			return r;
@@ -119,23 +125,23 @@ namespace sol {
 			return index == r.index;
 		}
 
-		bool operator != (const va_iterator& r) const {
+		bool operator!=(const va_iterator& r) const {
 			return !(this->operator==(r));
 		}
 
-		bool operator < (const va_iterator& r) const {
+		bool operator<(const va_iterator& r) const {
 			return index < r.index;
 		}
 
-		bool operator > (const va_iterator& r) const {
+		bool operator>(const va_iterator& r) const {
 			return index > r.index;
 		}
 
-		bool operator <= (const va_iterator& r) const {
+		bool operator<=(const va_iterator& r) const {
 			return index <= r.index;
 		}
 
-		bool operator >= (const va_iterator& r) const {
+		bool operator>=(const va_iterator& r) const {
 			return index >= r.index;
 		}
 	};
@@ -163,11 +169,16 @@ namespace sol {
 		typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
 		variadic_args() = default;
-		variadic_args(lua_State* luastate, int stackindex = -1) : L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lua_gettop(luastate)) {}
-		variadic_args(lua_State* luastate, int stackindex, int lastindex) : L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lastindex) {}
+		variadic_args(lua_State* luastate, int stackindex = -1)
+		: L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lua_gettop(luastate)) {
+		}
+		variadic_args(lua_State* luastate, int stackindex, int lastindex)
+		: L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lastindex) {
+		}
 		variadic_args(const variadic_args&) = default;
 		variadic_args& operator=(const variadic_args&) = default;
-		variadic_args(variadic_args&& o) : L(o.L), index(o.index), stacktop(o.stacktop) {
+		variadic_args(variadic_args&& o)
+		: L(o.L), index(o.index), stacktop(o.stacktop) {
 			// Must be manual, otherwise destructor will screw us
 			// return count being 0 is enough to keep things clean
 			// but will be thorough
@@ -188,19 +199,43 @@ namespace sol {
 			return *this;
 		}
 
-		iterator begin() { return iterator(L, index, stacktop + 1); }
-		iterator end() { return iterator(L, stacktop + 1, stacktop + 1); }
-		const_iterator begin() const { return const_iterator(L, index, stacktop + 1); }
-		const_iterator end() const { return const_iterator(L, stacktop + 1, stacktop + 1); }
-		const_iterator cbegin() const { return begin(); }
-		const_iterator cend() const { return end(); }
+		iterator begin() {
+			return iterator(L, index, stacktop + 1);
+		}
+		iterator end() {
+			return iterator(L, stacktop + 1, stacktop + 1);
+		}
+		const_iterator begin() const {
+			return const_iterator(L, index, stacktop + 1);
+		}
+		const_iterator end() const {
+			return const_iterator(L, stacktop + 1, stacktop + 1);
+		}
+		const_iterator cbegin() const {
+			return begin();
+		}
+		const_iterator cend() const {
+			return end();
+		}
 
-		reverse_iterator rbegin() { return std::reverse_iterator<iterator>(begin()); }
-		reverse_iterator rend() { return std::reverse_iterator<iterator>(end()); }
-		const_reverse_iterator rbegin() const { return std::reverse_iterator<const_iterator>(begin()); }
-		const_reverse_iterator rend() const { return std::reverse_iterator<const_iterator>(end()); }
-		const_reverse_iterator crbegin() const { return std::reverse_iterator<const_iterator>(cbegin()); }
-		const_reverse_iterator crend() const { return std::reverse_iterator<const_iterator>(cend()); }
+		reverse_iterator rbegin() {
+			return std::reverse_iterator<iterator>(begin());
+		}
+		reverse_iterator rend() {
+			return std::reverse_iterator<iterator>(end());
+		}
+		const_reverse_iterator rbegin() const {
+			return std::reverse_iterator<const_iterator>(begin());
+		}
+		const_reverse_iterator rend() const {
+			return std::reverse_iterator<const_iterator>(end());
+		}
+		const_reverse_iterator crbegin() const {
+			return std::reverse_iterator<const_iterator>(cbegin());
+		}
+		const_reverse_iterator crend() const {
+			return std::reverse_iterator<const_iterator>(cend());
+		}
 
 		int push() const {
 			return push(L);
@@ -218,7 +253,7 @@ namespace sol {
 			return pushcount;
 		}
 
-		template<typename T>
+		template <typename T>
 		decltype(auto) get(difference_type start = 0) const {
 			return stack::get<T>(L, index + static_cast<int>(start));
 		}
@@ -231,11 +266,21 @@ namespace sol {
 			return stack_proxy(L, index + static_cast<int>(start));
 		}
 
-		lua_State* lua_state() const { return L; };
-		int stack_index() const { return index; };
-		int leftover_count() const { return stacktop - (index - 1); }
-		std::size_t size() const { return static_cast<std::size_t>(leftover_count()); }
-		int top() const { return stacktop; }
+		lua_State* lua_state() const {
+			return L;
+		};
+		int stack_index() const {
+			return index;
+		};
+		int leftover_count() const {
+			return stacktop - (index - 1);
+		}
+		std::size_t size() const {
+			return static_cast<std::size_t>(leftover_count());
+		}
+		int top() const {
+			return stacktop;
+		}
 	};
 
 	namespace stack {
@@ -253,7 +298,7 @@ namespace sol {
 				return ref.push(L);
 			}
 		};
-	} // stack
-} // sol
+	} // namespace stack
+} // namespace sol
 
 #endif // SOL_VARIADIC_ARGS_HPP

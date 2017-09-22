@@ -645,7 +645,7 @@ Some more things you can do/read about:
 	* :doc:`the usertypes page<../usertypes>` lists the huge amount of features for functions
 		- :doc:`unique usertype traits<../api/unique_usertype_traits>` allows you to specialize handle/RAII types from other libraries frameworks, like boost and Unreal, to work with Sol. Allows custom smart pointers, custom handles and others
 	* :doc:`the containers page<../containers>` gives full information about handling everything about container-like usertypes
-	* :doc:`the functions page<../functions.rst>` lists a myriad of features for functions
+	* :doc:`the functions page<../functions>` lists a myriad of features for functions
 		- :doc:`variadic arguments<../api/variadic_args>` in functions with ``sol::variadic_args``.
 		- also comes with :doc:`variadic_results<../api/variadic_results>` for returning multiple differently-typed arguments
 		- :doc:`this_state<../api/this_state>` to get the current ``lua_State*``, alongside other transparent argument types
