@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-21 23:23:58.410071 UTC
-// This header was generated with sol v2.18.3 (revision 76d7195)
+// Generated 2017-09-22 01:32:30.111717 UTC
+// This header was generated with sol v2.18.2 (revision 61d610b)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4921,9 +4921,9 @@ namespace sol {
 	enum class type : int {
 		none = LUA_TNONE,
 		lua_nil = LUA_TNIL,
-#ifndef __OBJC__
+#if !defined(__MAC_OS_X_VERSION_MAX_ALLOWED) || !defined(__OBJC__) || !defined(nil)
 		nil = lua_nil,
-#endif // Objective C++ Keyword
+#endif // Objective C/C++ Keyword that's found in OSX SDK and OBJC -- check for all forms to protect
 		string = LUA_TSTRING,
 		number = LUA_TNUMBER,
 		thread = LUA_TTHREAD,
@@ -7672,7 +7672,7 @@ namespace stack {
 			tracking.use(1);
 
 			int index = lua_absindex(L, relindex);
-			T arr{};
+			T arr;
 			std::size_t idx = 0;
 #if SOL_LUA_VERSION >= 503
 			// This method is HIGHLY performant over regular table iteration thanks to the Lua API changes in 5.3
@@ -7700,6 +7700,9 @@ namespace stack {
 #else
 			// Zzzz slower but necessary thanks to the lower version API and missing functions qq
 			for (lua_Integer i = 0;; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
+				if (idx >= arr.max_size()) {
+					return arr;
+				}
 				bool isnil = false;
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
 					lua_pushinteger(L, i);
@@ -7804,6 +7807,9 @@ namespace stack {
 #else
 			// Zzzz slower but necessary thanks to the lower version API and missing functions qq
 			for (lua_Integer i = 0;; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
+				if (idx >= arr.max_size()) {
+					return arr;
+				}
 				bool isnil = false;
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
 					lua_pushinteger(L, i);

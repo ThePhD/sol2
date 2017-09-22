@@ -119,7 +119,7 @@ namespace stack {
 			tracking.use(1);
 
 			int index = lua_absindex(L, relindex);
-			T arr{};
+			T arr;
 			std::size_t idx = 0;
 #if SOL_LUA_VERSION >= 503
 			// This method is HIGHLY performant over regular table iteration thanks to the Lua API changes in 5.3
@@ -147,6 +147,9 @@ namespace stack {
 #else
 			// Zzzz slower but necessary thanks to the lower version API and missing functions qq
 			for (lua_Integer i = 0;; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
+				if (idx >= arr.max_size()) {
+					return arr;
+				}
 				bool isnil = false;
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
 					lua_pushinteger(L, i);
@@ -251,6 +254,9 @@ namespace stack {
 #else
 			// Zzzz slower but necessary thanks to the lower version API and missing functions qq
 			for (lua_Integer i = 0;; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
+				if (idx >= arr.max_size()) {
+					return arr;
+				}
 				bool isnil = false;
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
 					lua_pushinteger(L, i);

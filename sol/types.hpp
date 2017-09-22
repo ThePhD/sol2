@@ -587,9 +587,9 @@ namespace sol {
 	enum class type : int {
 		none = LUA_TNONE,
 		lua_nil = LUA_TNIL,
-#ifndef __OBJC__
+#if !defined(__MAC_OS_X_VERSION_MAX_ALLOWED) || !defined(__OBJC__) || !defined(nil)
 		nil = lua_nil,
-#endif // Objective C++ Keyword
+#endif // Objective C/C++ Keyword that's found in OSX SDK and OBJC -- check for all forms to protect
 		string = LUA_TSTRING,
 		number = LUA_TNUMBER,
 		thread = LUA_TTHREAD,
