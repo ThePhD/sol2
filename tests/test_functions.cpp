@@ -216,7 +216,7 @@ end )");
 	REQUIRE_FALSE((bool)testn);
 	REQUIRE(testv.value() == 29);
 	sol::optional<thing> v = lua_bark(sol::optional<thing>(thing{ 29 }));
-	REQUIRE_NOTHROW([&] {sol::nil_t n = lua_bark(sol::nullopt); return n; }());
+	REQUIRE_NOTHROW([&] {sol::lua_nil_t n = lua_bark(sol::nullopt); return n; }());
 	REQUIRE(v->v == 29);
 }
 
@@ -665,7 +665,7 @@ TEST_CASE("advanced/get and call", "Checks for lambdas returning values after a 
 	REQUIRE_NOTHROW(lua.get<sol::function>("h").call());
 
 	REQUIRE_NOTHROW(lua.set_function("i", [] { return sol::lua_nil; }));
-	REQUIRE(lua.get<sol::function>("i").call<sol::nil_t>() == sol::lua_nil);
+	REQUIRE(lua.get<sol::function>("i").call<sol::lua_nil_t>() == sol::lua_nil);
 	REQUIRE_NOTHROW(lua.set_function("j", [] { return std::make_tuple(1, 6.28f, 3.14, std::string("heh")); }));
 	REQUIRE((lua.get<sol::function>("j").call<int, float, double, std::string>() == heh_tuple));
 }
@@ -700,7 +700,7 @@ TEST_CASE("advanced/operator[] call", "Checks for lambdas returning values using
 	REQUIRE_NOTHROW(lua["h"].call());
 
 	REQUIRE_NOTHROW(lua.set_function("i", [] { return sol::lua_nil; }));
-	REQUIRE(lua["i"].call<sol::nil_t>() == sol::lua_nil);
+	REQUIRE(lua["i"].call<sol::lua_nil_t>() == sol::lua_nil);
 	REQUIRE_NOTHROW(lua.set_function("j", [] { return std::make_tuple(1, 6.28f, 3.14, std::string("heh")); }));
 	REQUIRE((lua["j"].call<int, float, double, std::string>() == heh_tuple));
 }

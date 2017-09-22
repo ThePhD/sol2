@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-22 11:30:13.483049 UTC
-// This header was generated with sol v2.18.3 (revision 1b23ad8)
+// Generated 2017-09-22 15:04:13.948949 UTC
+// This header was generated with sol v2.18.3 (revision 0114882)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4522,8 +4522,8 @@ namespace sol {
 	inline bool operator!=(lua_nil_t, lua_nil_t) {
 		return false;
 	}
-#if !defined(SOL_NO_NIL)
 	typedef lua_nil_t nil_t;
+#if !defined(SOL_NO_NIL)
 	const nil_t nil{};
 #endif
 

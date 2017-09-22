@@ -114,7 +114,7 @@ TEST_CASE("simple/get", "Tests if the get function works properly.") {
 	lua.safe_script("b = nil");
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
-		REQUIRE_NOTHROW(lua.get<sol::nil_t>("b"));
+		REQUIRE_NOTHROW(lua.get<sol::lua_nil_t>("b"));
 	}
 	REQUIRE(begintop == endtop);
 

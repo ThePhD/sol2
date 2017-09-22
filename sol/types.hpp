@@ -182,8 +182,8 @@ namespace sol {
 	inline bool operator!=(lua_nil_t, lua_nil_t) {
 		return false;
 	}
-#if !defined(SOL_NO_NIL)
 	typedef lua_nil_t nil_t;
+#if !defined(SOL_NO_NIL)
 	const nil_t nil{};
 #endif
 

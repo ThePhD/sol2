@@ -184,7 +184,7 @@ TEST_CASE("tables/for_each", "Testing the use of for_each to get values from a l
 				REQUIRE((value.as<std::string>() == "String value"));
 				break;
 			case 3:
-				REQUIRE((value.is<sol::nil_t>()));
+				REQUIRE((value.is<sol::lua_nil_t>()));
 				break;
 			}
 			break;
@@ -234,7 +234,7 @@ TEST_CASE("tables/for_each empty", "empty tables should not crash") {
 				REQUIRE((value.as<std::string>() == "String value"));
 				break;
 			case 3:
-				REQUIRE((value.is<sol::nil_t>()));
+				REQUIRE((value.is<sol::lua_nil_t>()));
 				break;
 			}
 			break;
@@ -305,7 +305,7 @@ TEST_CASE("tables/iterators", "Testing the use of iteratrs to get values from a 
 						REQUIRE((value.as<std::string>() == "String value"));
 						break;
 					case 3:
-						REQUIRE((value.is<sol::nil_t>()));
+						REQUIRE((value.is<sol::lua_nil_t>()));
 						break;
 					}
 					break;
