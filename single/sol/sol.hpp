@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-22 01:32:30.111717 UTC
-// This header was generated with sol v2.18.2 (revision 61d610b)
+// Generated 2017-09-22 11:30:13.483049 UTC
+// This header was generated with sol v2.18.3 (revision 1b23ad8)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -95,7 +95,7 @@
 #ifndef SOL_CHECK_ARGUMENTS
 #endif // Check Arguments
 #ifndef SOL_SAFE_USERTYPE
-#define SOL_SAFE_USERTYPE
+#define SOL_SAFE_USERTYPE 1
 #endif // Safe Usertypes
 #endif // NDEBUG
 #endif // Debug
@@ -118,7 +118,7 @@
 #ifndef SOL_CHECK_ARGUMENTS
 #endif // Check Arguments
 #ifndef SOL_SAFE_USERTYPE
-#define SOL_SAFE_USERTYPE
+#define SOL_SAFE_USERTYPE 1
 #endif // Safe Usertypes
 #endif // g++ optimizer flag
 #endif // Not Debug
@@ -139,9 +139,15 @@
 
 #ifndef SOL_SAFE_USERTYPE
 #ifdef SOL_CHECK_ARGUMENTS
-#define SOL_SAFE_USERTYPE
+#define SOL_SAFE_USERTYPE 1
 #endif // Turn on Safety for all
 #endif // Safe Usertypes
+
+#if defined(__MAC_OS_X_VERSION_MAX_ALLOWED) || defined(__OBJC__) || defined(nil)
+#ifndef SOL_NO_NIL
+#define SOL_NO_NIL 1
+#endif
+#endif // avoiding nil defines / keywords
 
 // end of sol/feature_test.hpp
 
@@ -4516,7 +4522,7 @@ namespace sol {
 	inline bool operator!=(lua_nil_t, lua_nil_t) {
 		return false;
 	}
-#ifndef __OBJC__
+#if !defined(SOL_NO_NIL)
 	typedef lua_nil_t nil_t;
 	const nil_t nil{};
 #endif
@@ -4921,7 +4927,7 @@ namespace sol {
 	enum class type : int {
 		none = LUA_TNONE,
 		lua_nil = LUA_TNIL,
-#if !defined(__MAC_OS_X_VERSION_MAX_ALLOWED) || !defined(__OBJC__) || !defined(nil)
+#if !defined(SOL_NO_NIL)
 		nil = lua_nil,
 #endif // Objective C/C++ Keyword that's found in OSX SDK and OBJC -- check for all forms to protect
 		string = LUA_TSTRING,
@@ -5389,7 +5395,7 @@ namespace sol {
 
 	template <typename T>
 	struct is_main_threaded : std::is_base_of<main_reference, T> {};
-	
+
 	template <typename T>
 	struct is_stack_based : std::is_base_of<stack_reference, T> {};
 
@@ -7682,8 +7688,8 @@ namespace stack {
 				}
 				bool isnil = false;
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
-					type t = static_cast<type>(lua_geti(L, index, i + vi));
-					isnil = t == type::lua_nil;
+					type vt = static_cast<type>(lua_geti(L, index, i + vi));
+					isnil = vt == type::lua_nil;
 					if (isnil) {
 						if (i == 0) {
 							break;
@@ -8128,7 +8134,7 @@ namespace stack {
 	struct getter<this_state> {
 		static this_state get(lua_State* L, int, record& tracking) {
 			tracking.use(0);
-			return this_state( L );
+			return this_state(L);
 		}
 	};
 
@@ -8136,7 +8142,7 @@ namespace stack {
 	struct getter<this_main_state> {
 		static this_main_state get(lua_State* L, int, record& tracking) {
 			tracking.use(0);
-			return this_main_state( main_thread(L, L) );
+			return this_main_state(main_thread(L, L));
 		}
 	};
 
@@ -8279,7 +8285,7 @@ namespace stack {
 		template <typename... Args>
 		static R apply(std::index_sequence<>, lua_State*, int, record&, Args&&... args) {
 			// Fuck you too, VC++
-			return R{std::forward<Args>(args)...};
+			return R{ std::forward<Args>(args)... };
 		}
 
 		template <std::size_t I, std::size_t... Ix, typename... Args>
@@ -8297,7 +8303,7 @@ namespace stack {
 	template <typename A, typename B>
 	struct getter<std::pair<A, B>> {
 		static decltype(auto) get(lua_State* L, int index, record& tracking) {
-			return std::pair<decltype(stack::get<A>(L, index)), decltype(stack::get<B>(L, index))>{stack::get<A>(L, index, tracking), stack::get<B>(L, index + tracking.used, tracking)};
+			return std::pair<decltype(stack::get<A>(L, index)), decltype(stack::get<B>(L, index))>{ stack::get<A>(L, index, tracking), stack::get<B>(L, index + tracking.used, tracking) };
 		}
 	};
 

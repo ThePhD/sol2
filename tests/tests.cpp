@@ -275,7 +275,7 @@ TEST_CASE("object/conversions", "make sure all basic reference types can be made
 	auto osl = sol::make_object(lua, "Bark bark bark");
 	auto os = sol::make_object(lua, somestring);
 
-	auto omn = sol::make_object(lua, sol::nil);
+	auto omn = sol::make_object(lua, sol::lua_nil);
 
 	REQUIRE(ot.get_type() == sol::type::table);
 	REQUIRE(ot2.get_type() == sol::type::table);
@@ -329,7 +329,7 @@ TEST_CASE("object/main_* conversions", "make sure all basic reference types can 
 	auto osl = sol::make_object(lua, "Bark bark bark");
 	auto os = sol::make_object(lua, somestring);
 
-	auto omn = sol::make_object(lua, sol::nil);
+	auto omn = sol::make_object(lua, sol::lua_nil);
 
 	REQUIRE(ot.get_type() == sol::type::table);
 	REQUIRE(ot2.get_type() == sol::type::table);
@@ -554,14 +554,14 @@ TEST_CASE("proxy/proper-pushing", "allow proxies to reference other proxies and 
 
 TEST_CASE("proxy/equality", "check to make sure equality tests work") {
 	sol::state lua;
-	REQUIRE((lua["a"] == sol::nil));
+	REQUIRE((lua["a"] == sol::lua_nil));
 	REQUIRE_FALSE((lua["a"] == nullptr));
 	REQUIRE_FALSE((lua["a"] == 0));
 	REQUIRE_FALSE((lua["a"] == 2));
 
 	lua["a"] = 2;
 
-	REQUIRE_FALSE((lua["a"] == sol::nil)); //0
+	REQUIRE_FALSE((lua["a"] == sol::lua_nil)); //0
 	REQUIRE_FALSE((lua["a"] == nullptr));  //0
 	REQUIRE_FALSE((lua["a"] == 0));	   //0
 	REQUIRE((lua["a"] == 2));		    //1

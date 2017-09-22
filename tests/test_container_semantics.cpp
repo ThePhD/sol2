@@ -967,14 +967,14 @@ end
 		int r = sf(set, 8);
 		REQUIRE(r == 8);
 		sol::object rn = sf(set, 9);
-		REQUIRE(rn == sol::nil);
+		REQUIRE(rn == sol::lua_nil);
 	}
 
 	{
 		int r = sf(map, 3);
 		REQUIRE(r == 6);
 		sol::object rn = sf(map, 9);
-		REQUIRE(rn == sol::nil);
+		REQUIRE(rn == sol::lua_nil);
 	}
 
 	i(lua["arr"]);

@@ -57,7 +57,7 @@
 //#define SOL_CHECK_ARGUMENTS
 #endif // Check Arguments
 #ifndef SOL_SAFE_USERTYPE
-#define SOL_SAFE_USERTYPE
+#define SOL_SAFE_USERTYPE 1
 #endif // Safe Usertypes
 #endif // NDEBUG
 #endif // Debug
@@ -83,7 +83,7 @@
 // But do check userdata by default:
 #endif // Check Arguments
 #ifndef SOL_SAFE_USERTYPE
-#define SOL_SAFE_USERTYPE
+#define SOL_SAFE_USERTYPE 1
 #endif // Safe Usertypes
 #endif // g++ optimizer flag
 #endif // Not Debug
@@ -104,8 +104,14 @@
 
 #ifndef SOL_SAFE_USERTYPE
 #ifdef SOL_CHECK_ARGUMENTS
-#define SOL_SAFE_USERTYPE
+#define SOL_SAFE_USERTYPE 1
 #endif // Turn on Safety for all
 #endif // Safe Usertypes
+
+#if defined(__MAC_OS_X_VERSION_MAX_ALLOWED) || defined(__OBJC__) || defined(nil)
+#ifndef SOL_NO_NIL
+#define SOL_NO_NIL 1
+#endif
+#endif // avoiding nil defines / keywords
 
 #endif // SOL_FEATURE_TEST_HPP

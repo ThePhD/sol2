@@ -182,7 +182,7 @@ namespace sol {
 	inline bool operator!=(lua_nil_t, lua_nil_t) {
 		return false;
 	}
-#ifndef __OBJC__
+#if !defined(SOL_NO_NIL)
 	typedef lua_nil_t nil_t;
 	const nil_t nil{};
 #endif
@@ -587,7 +587,7 @@ namespace sol {
 	enum class type : int {
 		none = LUA_TNONE,
 		lua_nil = LUA_TNIL,
-#if !defined(__MAC_OS_X_VERSION_MAX_ALLOWED) || !defined(__OBJC__) || !defined(nil)
+#if !defined(SOL_NO_NIL)
 		nil = lua_nil,
 #endif // Objective C/C++ Keyword that's found in OSX SDK and OBJC -- check for all forms to protect
 		string = LUA_TSTRING,
@@ -1055,7 +1055,7 @@ namespace sol {
 
 	template <typename T>
 	struct is_main_threaded : std::is_base_of<main_reference, T> {};
-	
+
 	template <typename T>
 	struct is_stack_based : std::is_base_of<stack_reference, T> {};
 

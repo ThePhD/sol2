@@ -129,8 +129,8 @@ namespace stack {
 				}
 				bool isnil = false;
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
-					type t = static_cast<type>(lua_geti(L, index, i + vi));
-					isnil = t == type::lua_nil;
+					type vt = static_cast<type>(lua_geti(L, index, i + vi));
+					isnil = vt == type::lua_nil;
 					if (isnil) {
 						if (i == 0) {
 							break;
@@ -575,7 +575,7 @@ namespace stack {
 	struct getter<this_state> {
 		static this_state get(lua_State* L, int, record& tracking) {
 			tracking.use(0);
-			return this_state( L );
+			return this_state(L);
 		}
 	};
 
@@ -583,7 +583,7 @@ namespace stack {
 	struct getter<this_main_state> {
 		static this_main_state get(lua_State* L, int, record& tracking) {
 			tracking.use(0);
-			return this_main_state( main_thread(L, L) );
+			return this_main_state(main_thread(L, L));
 		}
 	};
 
@@ -726,7 +726,7 @@ namespace stack {
 		template <typename... Args>
 		static R apply(std::index_sequence<>, lua_State*, int, record&, Args&&... args) {
 			// Fuck you too, VC++
-			return R{std::forward<Args>(args)...};
+			return R{ std::forward<Args>(args)... };
 		}
 
 		template <std::size_t I, std::size_t... Ix, typename... Args>
@@ -744,7 +744,7 @@ namespace stack {
 	template <typename A, typename B>
 	struct getter<std::pair<A, B>> {
 		static decltype(auto) get(lua_State* L, int index, record& tracking) {
-			return std::pair<decltype(stack::get<A>(L, index)), decltype(stack::get<B>(L, index))>{stack::get<A>(L, index, tracking), stack::get<B>(L, index + tracking.used, tracking)};
+			return std::pair<decltype(stack::get<A>(L, index)), decltype(stack::get<B>(L, index))>{ stack::get<A>(L, index, tracking), stack::get<B>(L, index + tracking.used, tracking) };
 		}
 	};
 
