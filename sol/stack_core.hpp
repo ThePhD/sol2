@@ -45,6 +45,8 @@ namespace sol {
 		struct as_pointer_tag {};
 		template <typename T>
 		struct as_value_tag {};
+		template <typename T>
+		struct as_table_tag {};
 
 		using unique_destructor = void (*)(void*);
 
@@ -245,7 +247,7 @@ namespace sol {
 		template <typename T, typename... Args>
 		inline int multi_push(lua_State* L, T&& t, Args&&... args) {
 			int pushcount = push(L, std::forward<T>(t));
-			void(detail::swallow{(pushcount += stack::push(L, std::forward<Args>(args)), 0)...});
+			void(detail::swallow{ (pushcount += stack::push(L, std::forward<Args>(args)), 0)... });
 			return pushcount;
 		}
 
@@ -257,7 +259,7 @@ namespace sol {
 		template <typename T, typename... Args>
 		inline int multi_push_reference(lua_State* L, T&& t, Args&&... args) {
 			int pushcount = push_reference(L, std::forward<T>(t));
-			void(detail::swallow{(pushcount += stack::push_reference(L, std::forward<Args>(args)), 0)...});
+			void(detail::swallow{ (pushcount += stack::push_reference(L, std::forward<Args>(args)), 0)... });
 			return pushcount;
 		}
 

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-22 15:04:13.948949 UTC
-// This header was generated with sol v2.18.3 (revision 0114882)
+// Generated 2017-09-22 22:53:40.988986 UTC
+// This header was generated with sol v2.18.3 (revision 290a671)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5095,8 +5095,17 @@ namespace sol {
 	}
 
 	namespace detail {
+		template <typename T>
+		struct is_initializer_list : std::false_type {};
+
+		template <typename T>
+		struct is_initializer_list<std::initializer_list<T>> : std::true_type {};
+
 		template <typename T, typename C = void>
 		struct is_container : std::false_type {};
+
+		template <typename T>
+		struct is_container<std::initializer_list<T>> : std::false_type {};
 
 		template <>
 		struct is_container<std::string> : std::false_type {};
@@ -5125,7 +5134,8 @@ namespace sol {
 #endif // C++ 17
 
 		template <typename T>
-		struct is_container<T, std::enable_if_t<meta::has_begin_end<meta::unqualified_t<T>>::value>> : std::true_type {};
+		struct is_container<T,
+			std::enable_if_t<meta::has_begin_end<meta::unqualified_t<T>>::value && !is_initializer_list<meta::unqualified_t<T>>::value>> : std::true_type {};
 
 		template <typename T>
 		struct is_container<T, std::enable_if_t<std::is_array<meta::unqualified_t<T>>::value && !meta::any_same<std::remove_all_extents_t<meta::unqualified_t<T>>, char, wchar_t, char16_t, char32_t>::value>> : std::true_type {};
@@ -5215,6 +5225,9 @@ namespace sol {
 
 		template <typename T>
 		struct lua_type_of<as_table_t<T>> : std::integral_constant<type, type::table> {};
+
+		template <typename T>
+		struct lua_type_of<std::initializer_list<T>> : std::integral_constant<type, type::table> {};
 
 		template <bool b>
 		struct lua_type_of<basic_reference<b>> : std::integral_constant<type, type::poly> {};
@@ -6476,6 +6489,8 @@ namespace sol {
 		struct as_pointer_tag {};
 		template <typename T>
 		struct as_value_tag {};
+		template <typename T>
+		struct as_table_tag {};
 
 		using unique_destructor = void (*)(void*);
 
@@ -6676,7 +6691,7 @@ namespace sol {
 		template <typename T, typename... Args>
 		inline int multi_push(lua_State* L, T&& t, Args&&... args) {
 			int pushcount = push(L, std::forward<T>(t));
-			void(detail::swallow{(pushcount += stack::push(L, std::forward<Args>(args)), 0)...});
+			void(detail::swallow{ (pushcount += stack::push(L, std::forward<Args>(args)), 0)... });
 			return pushcount;
 		}
 
@@ -6688,7 +6703,7 @@ namespace sol {
 		template <typename T, typename... Args>
 		inline int multi_push_reference(lua_State* L, T&& t, Args&&... args) {
 			int pushcount = push_reference(L, std::forward<T>(t));
-			void(detail::swallow{(pushcount += stack::push_reference(L, std::forward<Args>(args)), 0)...});
+			void(detail::swallow{ (pushcount += stack::push_reference(L, std::forward<Args>(args)), 0)... });
 			return pushcount;
 		}
 
@@ -8705,9 +8720,10 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct pusher<as_table_t<T>, std::enable_if_t<is_container<std::remove_pointer_t<meta::unwrap_unqualified_t<T>>>::value>> {
+	struct pusher<detail::as_table_tag<T>> {
 		static int push(lua_State* L, const T& tablecont) {
-			return push(meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>>(), L, tablecont);
+			typedef meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>> has_kvp;
+			return push(has_kvp(), L, tablecont);
 		}
 
 		static int push(std::true_type, lua_State* L, const T& tablecont) {
@@ -8758,6 +8774,13 @@ namespace stack {
 	};
 
 	template <typename T>
+	struct pusher<as_table_t<T>, std::enable_if_t<is_container<std::remove_pointer_t<meta::unwrap_unqualified_t<T>>>::value>> {
+		static int push(lua_State* L, const T& tablecont) {
+			return stack::push<detail::as_table_tag<T>>(L, tablecont);
+		}
+	};
+
+	template <typename T>
 	struct pusher<as_table_t<T>, std::enable_if_t<!is_container<std::remove_pointer_t<meta::unwrap_unqualified_t<T>>>::value>> {
 		static int push(lua_State* L, const T& v) {
 			return stack::push(L, v);
@@ -8771,6 +8794,16 @@ namespace stack {
 			// silence annoying VC++ warning
 			(void)p;
 			return p.push(L, tablecont);
+		}
+	};
+
+	template <typename T>
+	struct pusher<std::initializer_list<T>> {
+		static int push(lua_State* L, const std::initializer_list<T>& il) {
+			pusher<detail::as_table_tag<std::initializer_list<T>>> p{};
+			// silence annoying VC++ warning
+			(void)p;
+			return p.push(L, il);
 		}
 	};
 
@@ -9002,7 +9035,7 @@ namespace stack {
 	template <>
 	struct pusher<char> {
 		static int push(lua_State* L, char c) {
-			const char str[2] = {c, '\0'};
+			const char str[2] = { c, '\0' };
 			return stack::push(L, str, 1);
 		}
 	};
@@ -9167,7 +9200,7 @@ namespace stack {
 	template <>
 	struct pusher<wchar_t> {
 		static int push(lua_State* L, wchar_t c) {
-			const wchar_t str[2] = {c, '\0'};
+			const wchar_t str[2] = { c, '\0' };
 			return stack::push(L, str, 1);
 		}
 	};
@@ -9175,7 +9208,7 @@ namespace stack {
 	template <>
 	struct pusher<char16_t> {
 		static int push(lua_State* L, char16_t c) {
-			const char16_t str[2] = {c, '\0'};
+			const char16_t str[2] = { c, '\0' };
 			return stack::push(L, str, 1);
 		}
 	};
@@ -9183,7 +9216,7 @@ namespace stack {
 	template <>
 	struct pusher<char32_t> {
 		static int push(lua_State* L, char32_t c) {
-			const char32_t str[2] = {c, '\0'};
+			const char32_t str[2] = { c, '\0' };
 			return stack::push(L, str, 1);
 		}
 	};
@@ -9260,7 +9293,7 @@ namespace stack {
 		template <std::size_t... I, typename T>
 		static int push(std::index_sequence<I...>, lua_State* L, T&& t) {
 			int pushcount = 0;
-			(void)detail::swallow{0, (pushcount += stack::push(L, detail::forward_get<I>(t)), 0)...};
+			(void)detail::swallow{ 0, (pushcount += stack::push(L, detail::forward_get<I>(t)), 0)... };
 			return pushcount;
 		}
 
@@ -12927,6 +12960,11 @@ namespace sol {
 		template <typename U, meta::disable<meta::neg<is_lua_reference_or_proxy<meta::unwrap_unqualified_t<U>>>, meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
 		proxy& operator=(U&& other) {
 			return set(std::forward<U>(other));
+		}
+
+		template <typename T>
+		proxy& operator=(std::initializer_list<T> other) {
+			return set(std::move(other));
 		}
 
 		template <typename T>

@@ -33,6 +33,7 @@
 #include "filters.hpp"
 
 #include <array>
+#include <initializer_list>
 #include <string>
 #ifdef SOL_CXX17_FEATURES
 #include <string_view>
@@ -755,8 +756,17 @@ namespace sol {
 	}
 
 	namespace detail {
+		template <typename T>
+		struct is_initializer_list : std::false_type {};
+
+		template <typename T>
+		struct is_initializer_list<std::initializer_list<T>> : std::true_type {};
+
 		template <typename T, typename C = void>
 		struct is_container : std::false_type {};
+
+		template <typename T>
+		struct is_container<std::initializer_list<T>> : std::false_type {};
 
 		template <>
 		struct is_container<std::string> : std::false_type {};
@@ -785,7 +795,8 @@ namespace sol {
 #endif // C++ 17
 
 		template <typename T>
-		struct is_container<T, std::enable_if_t<meta::has_begin_end<meta::unqualified_t<T>>::value>> : std::true_type {};
+		struct is_container<T,
+			std::enable_if_t<meta::has_begin_end<meta::unqualified_t<T>>::value && !is_initializer_list<meta::unqualified_t<T>>::value>> : std::true_type {};
 
 		template <typename T>
 		struct is_container<T, std::enable_if_t<std::is_array<meta::unqualified_t<T>>::value && !meta::any_same<std::remove_all_extents_t<meta::unqualified_t<T>>, char, wchar_t, char16_t, char32_t>::value>> : std::true_type {};
@@ -875,6 +886,9 @@ namespace sol {
 
 		template <typename T>
 		struct lua_type_of<as_table_t<T>> : std::integral_constant<type, type::table> {};
+
+		template <typename T>
+		struct lua_type_of<std::initializer_list<T>> : std::integral_constant<type, type::table> {};
 
 		template <bool b>
 		struct lua_type_of<basic_reference<b>> : std::integral_constant<type, type::poly> {};

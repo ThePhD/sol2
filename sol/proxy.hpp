@@ -88,6 +88,11 @@ namespace sol {
 		}
 
 		template <typename T>
+		proxy& operator=(std::initializer_list<T> other) {
+			return set(std::move(other));
+		}
+
+		template <typename T>
 		decltype(auto) get() const {
 			return tuple_get<T>(std::make_index_sequence<std::tuple_size<meta::unqualified_t<key_type>>::value>());
 		}

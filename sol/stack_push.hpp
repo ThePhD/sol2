@@ -245,9 +245,10 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct pusher<as_table_t<T>, std::enable_if_t<is_container<std::remove_pointer_t<meta::unwrap_unqualified_t<T>>>::value>> {
+	struct pusher<detail::as_table_tag<T>> {
 		static int push(lua_State* L, const T& tablecont) {
-			return push(meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>>(), L, tablecont);
+			typedef meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>> has_kvp;
+			return push(has_kvp(), L, tablecont);
 		}
 
 		static int push(std::true_type, lua_State* L, const T& tablecont) {
@@ -298,6 +299,13 @@ namespace stack {
 	};
 
 	template <typename T>
+	struct pusher<as_table_t<T>, std::enable_if_t<is_container<std::remove_pointer_t<meta::unwrap_unqualified_t<T>>>::value>> {
+		static int push(lua_State* L, const T& tablecont) {
+			return stack::push<detail::as_table_tag<T>>(L, tablecont);
+		}
+	};
+
+	template <typename T>
 	struct pusher<as_table_t<T>, std::enable_if_t<!is_container<std::remove_pointer_t<meta::unwrap_unqualified_t<T>>>::value>> {
 		static int push(lua_State* L, const T& v) {
 			return stack::push(L, v);
@@ -311,6 +319,16 @@ namespace stack {
 			// silence annoying VC++ warning
 			(void)p;
 			return p.push(L, tablecont);
+		}
+	};
+
+	template <typename T>
+	struct pusher<std::initializer_list<T>> {
+		static int push(lua_State* L, const std::initializer_list<T>& il) {
+			pusher<detail::as_table_tag<std::initializer_list<T>>> p{};
+			// silence annoying VC++ warning
+			(void)p;
+			return p.push(L, il);
 		}
 	};
 
@@ -542,7 +560,7 @@ namespace stack {
 	template <>
 	struct pusher<char> {
 		static int push(lua_State* L, char c) {
-			const char str[2] = {c, '\0'};
+			const char str[2] = { c, '\0' };
 			return stack::push(L, str, 1);
 		}
 	};
@@ -707,7 +725,7 @@ namespace stack {
 	template <>
 	struct pusher<wchar_t> {
 		static int push(lua_State* L, wchar_t c) {
-			const wchar_t str[2] = {c, '\0'};
+			const wchar_t str[2] = { c, '\0' };
 			return stack::push(L, str, 1);
 		}
 	};
@@ -715,7 +733,7 @@ namespace stack {
 	template <>
 	struct pusher<char16_t> {
 		static int push(lua_State* L, char16_t c) {
-			const char16_t str[2] = {c, '\0'};
+			const char16_t str[2] = { c, '\0' };
 			return stack::push(L, str, 1);
 		}
 	};
@@ -723,7 +741,7 @@ namespace stack {
 	template <>
 	struct pusher<char32_t> {
 		static int push(lua_State* L, char32_t c) {
-			const char32_t str[2] = {c, '\0'};
+			const char32_t str[2] = { c, '\0' };
 			return stack::push(L, str, 1);
 		}
 	};
@@ -800,7 +818,7 @@ namespace stack {
 		template <std::size_t... I, typename T>
 		static int push(std::index_sequence<I...>, lua_State* L, T&& t) {
 			int pushcount = 0;
-			(void)detail::swallow{0, (pushcount += stack::push(L, detail::forward_get<I>(t)), 0)...};
+			(void)detail::swallow{ 0, (pushcount += stack::push(L, detail::forward_get<I>(t)), 0)... };
 			return pushcount;
 		}
 

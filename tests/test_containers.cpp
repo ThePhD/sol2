@@ -30,6 +30,30 @@ auto test_table_return_four() {
 	return sol::as_table(std::array<std::pair<std::string, int>, 4>{ { { "one", 1 }, { "two", 2 }, { "three", 3 }, { "four", 4 } } });
 }
 
+template <typename S, typename T>
+void check_ordered_values(S& src, T& target) {
+	std::size_t idx = 0;
+	auto b = std::begin(target);
+	auto e = std::end(target);
+	for (; b != e; ++b, ++idx) {
+		const auto& v = src[idx];
+		REQUIRE(*b == v);
+	}
+}
+
+template <typename S, typename T>
+void check_unordered_values(S& src, T& target) {
+	std::size_t idx = 0;
+	auto b = std::begin(target);
+	auto e = std::end(target);
+	for (; b != e; ++b, ++idx) {
+		auto sb = std::begin(src);
+		auto se = std::end(src);
+		auto it = std::find(sb, se, *b);
+		REQUIRE(it != se);
+	}
+}
+
 TEST_CASE("containers/returns", "make sure that even references to vectors are being serialized as tables") {
 	sol::state lua;
 	std::vector<int> v{ 1, 2, 3 };
@@ -947,4 +971,53 @@ TEST_CASE("containers/pointer types", "check that containers with unique usertyp
 		int val2 = b2->get();
 		REQUIRE(val2 == 500);
 	}());
+}
+
+TEST_CASE("containers/initializer-list", "test initializer lists get pushed as tables directly rather than userdata") {
+	SECTION("array-like") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base, sol::lib::table);
+
+		lua["c"] = { 1, 2, 3, 4, 5 };
+		lua.safe_script(R"lua(
+for k, v in pairs(c) do
+  assert(k == v)
+end
+)lua");
+		sol::as_table_t<std::vector<int>> t1vector = lua["c"];
+		sol::as_table_t<std::deque<int>> t1deque = lua["c"];
+		sol::as_table_t<std::list<int>> t1list = lua["c"];
+		sol::as_table_t<std::forward_list<int>> t1flist = lua["c"];
+		sol::as_table_t<std::set<int>> t1set = lua["c"];
+		const int src[5] = { 1, 2, 3, 4, 5 };
+		check_ordered_values(src, t1vector.source);
+		check_ordered_values(src, t1deque.source);
+		check_ordered_values(src, t1list.source);
+		check_ordered_values(src, t1flist.source);
+		check_ordered_values(src, t1set.source);
+	}
+	SECTION("map-like") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base, sol::lib::table);
+		std::pair<const std::string, int> src[5]{
+			{ "a", 21 },
+			{ "b", 22 },
+			{ "c", 23 },
+			{ "d", 24 },
+			{ "e", 25 }
+		};
+
+		lua["c"] = std::initializer_list<std::pair<std::string, int>>{
+			{ "a", 21 },
+			{ "b", 22 },
+			{ "c", 23 },
+			{ "d", 24 },
+			{ "e", 25 }
+		};
+
+		sol::as_table_t<std::unordered_map<std::string, int>> t1umap = lua["c"];
+		sol::as_table_t<std::unordered_multimap<std::string, int>> t1ummap = lua["c"];
+		check_unordered_values(src, t1umap.source);
+		check_unordered_values(src, t1ummap.source);
+	}
 }
