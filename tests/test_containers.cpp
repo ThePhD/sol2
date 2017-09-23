@@ -37,7 +37,7 @@ void check_ordered_values(S& src, T& target) {
 	auto e = std::end(target);
 	for (; b != e; ++b, ++idx) {
 		const auto& v = src[idx];
-		REQUIRE(*b == v);
+		REQUIRE((*b == v));
 	}
 }
 
@@ -50,7 +50,7 @@ void check_unordered_values(S& src, T& target) {
 		auto sb = std::begin(src);
 		auto se = std::end(src);
 		auto it = std::find(sb, se, *b);
-		REQUIRE(it != se);
+		REQUIRE((it != se));
 	}
 }
 
