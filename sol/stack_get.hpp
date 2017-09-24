@@ -44,8 +44,10 @@
 namespace sol {
 namespace stack {
 
-	template <typename T>
-	struct userdata_getter<T> {
+	template <typename U>
+	struct userdata_getter<U> {
+		typedef stack_detail::strip_extensible_t<U> T;
+
 		static std::pair<bool, T*> get(lua_State*, int, void*, record&) {
 			return { false, nullptr };
 		}

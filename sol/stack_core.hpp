@@ -179,6 +179,15 @@ namespace sol {
 			template <typename T>
 			using strip_t = typename strip<T>::type;
 
+			template <typename T>
+			struct strip_extensible { typedef T type; };
+
+			template <typename T>
+			struct strip_extensible<extensible<T>> { typedef T type; };
+
+			template <typename T>
+			using strip_extensible_t = typename strip_extensible<T>::type;
+
 			const bool default_check_arguments =
 #ifdef SOL_CHECK_ARGUMENTS
 				true;

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-24 00:26:27.067649 UTC
-// This header was generated with sol v2.18.3 (revision 6d879f5)
+// Generated 2017-09-24 20:03:42.743518 UTC
+// This header was generated with sol v2.18.3 (revision 0c20d06)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6623,6 +6623,15 @@ namespace sol {
 			template <typename T>
 			using strip_t = typename strip<T>::type;
 
+			template <typename T>
+			struct strip_extensible { typedef T type; };
+
+			template <typename T>
+			struct strip_extensible<extensible<T>> { typedef T type; };
+
+			template <typename T>
+			using strip_extensible_t = typename strip_extensible<T>::type;
+
 			const bool default_check_arguments =
 #ifdef SOL_CHECK_ARGUMENTS
 				true;
@@ -7640,8 +7649,10 @@ namespace sol {
 namespace sol {
 namespace stack {
 
-	template <typename T>
-	struct userdata_getter<T> {
+	template <typename U>
+	struct userdata_getter<U> {
+		typedef stack_detail::strip_extensible_t<U> T;
+
 		static std::pair<bool, T*> get(lua_State*, int, void*, record&) {
 			return { false, nullptr };
 		}
