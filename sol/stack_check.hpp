@@ -66,6 +66,14 @@ namespace stack {
 		};
 	} // namespace stack_detail
 
+	template <typename T, typename>
+	struct userdata_checker {
+		template <typename Handler>
+		static bool check(lua_State*, int, type, Handler&&, record&) {
+			return false;
+		}
+	};
+
 	template <typename T, type expected, typename>
 	struct checker {
 		template <typename Handler>
@@ -401,7 +409,14 @@ namespace stack {
 	template <typename T, typename C>
 	struct checker<detail::as_value_tag<T>, type::userdata, C> {
 		template <typename U, typename Handler>
-		static bool check(types<U>, lua_State* L, type indextype, int index, Handler&& handler, record& tracking) {
+		static bool check(types<U>, lua_State* L, int index, type indextype, Handler&& handler, record& tracking) {
+#ifdef SOL_ENABLE_INTEROP
+			userdata_checker<extensible<T>> uc;
+			(void)uc;
+			if (uc.check(L, index, indextype, handler, tracking)) {
+				return true;
+			}
+#endif // interop extensibility
 			tracking.use(1);
 			if (indextype != type::userdata) {
 				handler(L, index, type::userdata, indextype, "value is not a valid userdata");
@@ -447,7 +462,7 @@ namespace stack {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			const type indextype = type_of(L, index);
-			return checker<detail::as_value_tag<T>, type::userdata, C>{}.check(types<T>(), L, indextype, index, std::forward<Handler>(handler), tracking);
+			return checker<detail::as_value_tag<T>, type::userdata, C>{}.check(types<T>(), L, index, indextype, std::forward<Handler>(handler), tracking);
 		}
 	};
 

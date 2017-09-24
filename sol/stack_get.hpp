@@ -44,6 +44,13 @@
 namespace sol {
 namespace stack {
 
+	template <typename T>
+	struct userdata_getter<T> {
+		static std::pair<bool, T*> get(lua_State*, int, void*, record&) {
+			return { false, nullptr };
+		}
+	};
+
 	template <typename T, typename>
 	struct getter {
 		static T& get(lua_State* L, int index, record& tracking) {
@@ -628,7 +635,16 @@ namespace stack {
 	struct getter<detail::as_value_tag<T>> {
 		static T* get_no_lua_nil(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
-			void** pudata = static_cast<void**>(lua_touserdata(L, index));
+			void* rawdata = lua_touserdata(L, index);
+#ifdef SOL_ENABLE_INTEROP
+			userdata_getter<extensible<T>> ug;
+			(void)ug;
+			auto ugr = ug.get(L, index, rawdata, tracking);
+			if (ugr.first) {
+				return ugr.second;
+			}
+#endif // interop extensibility
+			void** pudata = static_cast<void**>(rawdata);
 			void* udata = *pudata;
 			return get_no_lua_nil_from(L, udata, index, tracking);
 		}

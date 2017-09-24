@@ -109,6 +109,9 @@ namespace sol {
 
 	namespace stack {
 
+		template <typename T>
+		struct extensible {};
+
 		template <typename T, bool global = false, bool raw = false, typename = void>
 		struct field_getter;
 		template <typename T, bool global = false, bool raw = false, typename = void>
@@ -118,11 +121,15 @@ namespace sol {
 		template <typename T, typename = void>
 		struct getter;
 		template <typename T, typename = void>
+		struct userdata_getter;
+		template <typename T, typename = void>
 		struct popper;
 		template <typename T, typename = void>
 		struct pusher;
 		template <typename T, type = lua_type_of<T>::value, typename = void>
 		struct checker;
+		template <typename T, typename = void>
+		struct userdata_checker;
 		template <typename T, typename = void>
 		struct check_getter;
 

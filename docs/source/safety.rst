@@ -13,6 +13,13 @@ Note that you can obtain safety with regards to functions you bind by using the 
 ``SOL_USE_BOOST`` triggers the following change:
 	* Attempts to use ``boost::optional`` instead of sol's own ``optional``
 
+``SOL_ENABLE_INTEROP`` triggers the following change:
+	* Allows the use of ``extensible<T>`` to be used with ``userdata_checker`` and ``userdata_getter`` to retrieve non-sol usertypes
+		- Particularly enables non-sol usertypes to be used in overloads
+		- See the :ref:`stack dcoumentation` for details
+	* May come with a slight performance penalty: only recommended for those stuck with non-sol libraries that still need to leverage some of sol's power
+	* **Not** turned on by default under any settings: *this MUST be turned on manually*
+
 ``SOL_SAFE_USERTYPE`` triggers the following change:
 	* If the userdata to a usertype function is nil, will trigger an error instead of letting things go through and letting the system segfault/crash
 	* Turned on by default with clang++, g++ and VC++ if a basic check for building in debug mode is detected
@@ -31,7 +38,7 @@ Note that you can obtain safety with regards to functions you bind by using the 
 
 ``SOL_NO_CHECK_NUMBER_PRECISION`` triggers the following changes:
 	* If ``SOL_CHECK_ARGUMENTS`` is defined, turns off number precision and integer precision fitting when pushing numbers into sol2
-	* **Not** turned on by default under any settings: *thus MUSt be turned on manually*
+	* **Not** turned on by default under any settings: *this MUST be turned on manually*
 
 ``SOL_CHECK_ARGUMENTS`` triggers the following changes:
 	* ``sol::stack::get`` (used everywhere) defaults to using ``sol::stack::check_get`` and dereferencing the argument. It uses ``sol::type_panic`` as the handler if something goes wrong

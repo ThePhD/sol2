@@ -235,7 +235,10 @@ This is an SFINAE-friendly struct that is meant to expose static function ``push
 		template <typename Handler>
 		static bool check ( lua_State* L, int index, Handler&& handler, record& tracking ) {
 			// if the object in the Lua stack at index is a T, return true
-			if ( ... ) return true;
+			if ( ... ) { 
+				tracking.use(1); // or however many you use
+				return true;
+			}
 			// otherwise, call the handler function,
 			// with the required 5 arguments, then return false
 			//
@@ -244,8 +247,57 @@ This is an SFINAE-friendly struct that is meant to expose static function ``push
 		}
 	};
 
-This is an SFINAE-friendly struct that is meant to expose static function ``check`` that returns the number of things pushed onto the stack. The default implementation simply checks whether the expected type passed in through the template is equal to the type of the object at the specified index in the Lua stack. The default implementation for types which are considered ``userdata`` go through a myriad of checks to support checking if a type is *actually* of type ``T`` or if its the base class of what it actually stored as a userdata in that index. Down-casting from a base class to a more derived type is, unfortunately, impossible to do.
+This is an SFINAE-friendly struct that is meant to expose static function ``check`` that returns whether or not a type at a given index is what its supposed to be. The default implementation simply checks whether the expected type passed in through the template is equal to the type of the object at the specified index in the Lua stack. The default implementation for types which are considered ``userdata`` go through a myriad of checks to support checking if a type is *actually* of type ``T`` or if its the base class of what it actually stored as a userdata in that index. Down-casting from a base class to a more derived type is, unfortunately, impossible to do.
+
+.. code-block:: cpp
+	:caption: struct: userdata_checker
+	:name: userdata_checker
+
+	template <typename T, typename = void>
+	struct userdata_checker {
+		template <typename Handler>
+		static bool check ( lua_State* L, int index, type indextype, Handler&& handler, record& tracking ) {
+			// implement custom checking here for a userdata:
+			// if it doesn't match, return "false" and regular 
+			// sol userdata checks will kick in
+			return false;
+			// returning true will skip sol's
+			// default checks
+		}
+	};
+
+This is an SFINAE-friendly struct that is meant to expose a function ``check=`` that returns ``true`` if a type meets some custom userdata specifiction, and ``false`` if it does not. The default implementation just returns ``false`` to let the original sol2 handlers take care of everything. If you want to implement your own usertype checking; e.g., for messing with ``toLua`` or ``OOLua`` or ``kaguya`` or some other libraries. Note that the library must have a with a :doc:`memory compatible layout<usertype_memory>` if you **want to specialize this checker method but not the subsequent getter method**. You can specialize it as shown in the `interop examples`_.
+
+.. note::
+	You must turn it on with ``SOL_ENABLE_INTEROP``, as described in the :ref:`config and safety section<config>`.
+
+.. code-block:: cpp
+	:caption: struct: userdata_getter
+	:name: userdata_getter
+
+	template <typename T, typename = void>
+	struct userdata_getter {
+		static std::pair<bool, T*> get ( lua_State* L, int index, void* unadjusted_pointer, record& tracking ) {
+			// implement custom getting here for non-sol2 userdatas:
+			// if it doesn't match, return "false" and regular 
+			// sol userdata checks will kick in
+			return { false, nullptr };
+		}
+	};
+
+This is an SFINAE-friendly struct that is meant to expose a function ``get`` that returns ``true`` and an adjusted pointer if a type meets some custom userdata specifiction (from, say, another library or an internal framework). The default implementation just returns ``{ false, nullptr }`` to let the original sol2 getter take care of everything. If you want to implement your own usertype getter; e.g., for messing with ``kaguya`` or some other libraries. You can specialize it as shown in the `interop examples`_.
+
+.. note::
+
+	You do NOT need to use this method in particular if the :doc:`memory layout<usertype_memory>` is compatible. (For example, ``toLua`` stores userdata in a sol2-compatible way.)
+
+
+.. note::
+
+	You must turn it on with ``SOL_ENABLE_INTEROP``, as described in the :ref:`config and safety section<config>`.
+
 
 .. _lua_CFunction: http://www.Lua.org/manual/5.3/manual.html#lua_CFunction
 .. _Lua stack works in general: https://www.lua.org/pil/24.2.html
 .. _calling C functions works: https://www.lua.org/pil/26.html
+.. _interop example: https://github.com/ThePhD/sol2/blob/develop/examples/interop

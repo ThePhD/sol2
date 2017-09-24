@@ -24,6 +24,8 @@ The examples folder also has a number of really great examples for you to see. T
     - Extend them using the :doc:`sol::unique_usertype\<T\> traits<api/unique_usertype_traits>`
     - This allows for custom smart pointers, special pointers, custom handles and others to be given certain handling semantics to ensure proper RAII with Lua's garbage collection
 * (Advanced) You can override the iteration function for Lua 5.2 and above (LuaJIT does not have the capability) `as shown in the pairs example`_
+* (Advanced) Interop with ``toLua``, ``kaguya``, ``OOLua``, ``LuaBind``, ``luwra``, and all other existing libraries by using the stack API's ``sol::stack::userdata_checker`` and ``sol::stack::userdata_getter`` :ref:`extension points<extension_points>`
+    - Must turn on ``SOL_ENABLE_INTEROP``, as defined in the :ref:`configuration and safety documentation<config>`, to use
 * Please note that the colon is necessary to "automatically" pass the ``this``/``self`` argument to Lua methods
 	- ``obj:method_name()`` is how you call "member" methods in Lua
 	- It is purely syntactic sugar that passes the object name as the first argument to the ``method_name`` function
