@@ -2,7 +2,7 @@
 #define SOL_ENABLE_INTEROP 1 // MUST be defined to use interop features
 #include <sol.hpp>
 
-#include "kaguya.hpp"
+#include <kaguya/kaguya.hpp>
 
 #include <iostream>
 #include <cassert>
@@ -44,12 +44,13 @@ namespace stack {
 	template <typename T>
 	struct userdata_checker<extensible<T>> {
 		template <typename Handler>
-		static bool check(lua_State* L, int index, type index_type, Handler&& handler, record& tracking) {
+		static bool check(lua_State* L, int relindex, type index_type, Handler&& handler, record& tracking) {
 			// just marking unused parameters for no compiler warnings
 			(void)index_type;
 			(void)handler;
 			// using 1 element
 			tracking.use(1);
+			int index = lua_absindex(L, relindex);
 			// use kaguya's own detail wrapper check to see if it's correct
 			bool is_correct_type = kaguya::detail::object_wrapper_type_check(L, index);
 			return is_correct_type;
@@ -58,7 +59,7 @@ namespace stack {
 
 	template <typename T>
 	struct userdata_getter<extensible<T>> {
-		static std::pair<bool, T*> get(lua_State* L, int index, void* unadjusted_pointer, record& tracking) {
+		static std::pair<bool, T*> get(lua_State* L, int relindex, void* unadjusted_pointer, record& tracking) {
 			// you may not need to specialize this method every time:
 			// some libraries are compatible with sol2's layout
 
@@ -66,6 +67,7 @@ namespace stack {
 			// it stores the data directly in the pointer, not a pointer inside of the `void*`
 			// therefore, leave the raw userdata pointer as-is,
 			// if it's of the right type
+			int index = lua_absindex(L, relindex);
 			if (!kaguya::detail::object_wrapper_type_check(L, index)) {
 				return { false, nullptr };
 			}
