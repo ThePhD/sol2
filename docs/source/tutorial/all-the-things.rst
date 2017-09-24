@@ -629,9 +629,15 @@ You can emulate namespacing by having a table and giving it the namespace names 
 		"g", &my_class::g
 	); // the usual
 
+	// can add functions, as well (just like the global table)
+	bark.set_function("print_my_class", [](my_class& self) { std::cout << "my_class { b: " << self.b << " }" << std::endl; });
+
 	// 'bark' namespace
 	lua.script("obj = bark.my_class.new()" );
 	lua.script("obj:g()");
+	// access the function on the 'namespace'
+	lua.script("bark.print_my_class(obj)");
+
 	my_class& obj = lua["obj"];
 	// obj.b == 25
 

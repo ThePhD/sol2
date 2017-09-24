@@ -1,7 +1,7 @@
 config and safety
 =================
 
-Sol was designed to be correct and fast, and in the pursuit of both uses the regular ``lua_to{x}`` functions of Lua rather than the checking versions (``lua_check{X}``) functions. The API defaults to paranoidly-safe alternatives if you have a ``#define SOL_CHECK_ARGUMENTS`` before you include Sol, or if you pass the ``SOL_CHECK_ARGUMENTS`` define on the build command for your build system. By default, it is off and remains off unless you define this, even in debug mode. The same goes for ``#define SOL_SAFE_USERTYPE``.
+Sol was designed to be correct and fast, and in the pursuit of both uses the regular ``lua_to{x}`` functions of Lua rather than the checking versions (``lua_check{X}``) functions. The API defaults to paranoidly-safe alternatives if you have a ``#define SOL_CHECK_ARGUMENTS`` before you include Sol, or if you pass the ``SOL_CHECK_ARGUMENTS`` define on the build command for your build system. By default, it is off and remains off unless you define this, even in debug mode.
 
 .. _config:
 
@@ -22,7 +22,7 @@ Note that you can obtain safety with regards to functions you bind by using the 
 
 ``SOL_SAFE_USERTYPE`` triggers the following change:
 	* If the userdata to a usertype function is nil, will trigger an error instead of letting things go through and letting the system segfault/crash
-	* Turned on by default with clang++, g++ and VC++ if a basic check for building in debug mode is detected
+	* Turned on by default with clang++, g++ and VC++ if a basic check for building in debug mode is detected (lack of ``_NDEBUG`` or similar compiler-specific checks)
 
 ``SOL_SAFE_FUNCTION`` triggers the following change:
 	* All uses of ``sol::function`` and ``sol::stack_function`` will default to ``sol::protected_function`` and ``sol::stack_protected_function``, respectively, rather than ``sol::unsafe_function`` and ``sol::stack_unsafe_function``.
