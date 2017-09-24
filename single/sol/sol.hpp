@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-22 22:53:40.988986 UTC
-// This header was generated with sol v2.18.3 (revision 290a671)
+// Generated 2017-09-24 00:26:27.067649 UTC
+// This header was generated with sol v2.18.3 (revision 6d879f5)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6553,6 +6553,9 @@ namespace sol {
 
 	namespace stack {
 
+		template <typename T>
+		struct extensible {};
+
 		template <typename T, bool global = false, bool raw = false, typename = void>
 		struct field_getter;
 		template <typename T, bool global = false, bool raw = false, typename = void>
@@ -6562,11 +6565,15 @@ namespace sol {
 		template <typename T, typename = void>
 		struct getter;
 		template <typename T, typename = void>
+		struct userdata_getter;
+		template <typename T, typename = void>
 		struct popper;
 		template <typename T, typename = void>
 		struct pusher;
 		template <typename T, type = lua_type_of<T>::value, typename = void>
 		struct checker;
+		template <typename T, typename = void>
+		struct userdata_checker;
 		template <typename T, typename = void>
 		struct check_getter;
 
@@ -7075,6 +7082,14 @@ namespace stack {
 		};
 	} // namespace stack_detail
 
+	template <typename T, typename>
+	struct userdata_checker {
+		template <typename Handler>
+		static bool check(lua_State*, int, type, Handler&&, record&) {
+			return false;
+		}
+	};
+
 	template <typename T, type expected, typename>
 	struct checker {
 		template <typename Handler>
@@ -7410,7 +7425,14 @@ namespace stack {
 	template <typename T, typename C>
 	struct checker<detail::as_value_tag<T>, type::userdata, C> {
 		template <typename U, typename Handler>
-		static bool check(types<U>, lua_State* L, type indextype, int index, Handler&& handler, record& tracking) {
+		static bool check(types<U>, lua_State* L, int index, type indextype, Handler&& handler, record& tracking) {
+#ifdef SOL_ENABLE_INTEROP
+			userdata_checker<extensible<T>> uc;
+			(void)uc;
+			if (uc.check(L, index, indextype, handler, tracking)) {
+				return true;
+			}
+#endif // interop extensibility
 			tracking.use(1);
 			if (indextype != type::userdata) {
 				handler(L, index, type::userdata, indextype, "value is not a valid userdata");
@@ -7456,7 +7478,7 @@ namespace stack {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			const type indextype = type_of(L, index);
-			return checker<detail::as_value_tag<T>, type::userdata, C>{}.check(types<T>(), L, indextype, index, std::forward<Handler>(handler), tracking);
+			return checker<detail::as_value_tag<T>, type::userdata, C>{}.check(types<T>(), L, index, indextype, std::forward<Handler>(handler), tracking);
 		}
 	};
 
@@ -7617,6 +7639,13 @@ namespace sol {
 
 namespace sol {
 namespace stack {
+
+	template <typename T>
+	struct userdata_getter<T> {
+		static std::pair<bool, T*> get(lua_State*, int, void*, record&) {
+			return { false, nullptr };
+		}
+	};
 
 	template <typename T, typename>
 	struct getter {
@@ -8202,7 +8231,16 @@ namespace stack {
 	struct getter<detail::as_value_tag<T>> {
 		static T* get_no_lua_nil(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
-			void** pudata = static_cast<void**>(lua_touserdata(L, index));
+			void* rawdata = lua_touserdata(L, index);
+#ifdef SOL_ENABLE_INTEROP
+			userdata_getter<extensible<T>> ug;
+			(void)ug;
+			auto ugr = ug.get(L, index, rawdata, tracking);
+			if (ugr.first) {
+				return ugr.second;
+			}
+#endif // interop extensibility
+			void** pudata = static_cast<void**>(rawdata);
 			void* udata = *pudata;
 			return get_no_lua_nil_from(L, udata, index, tracking);
 		}
