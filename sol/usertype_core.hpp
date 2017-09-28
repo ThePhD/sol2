@@ -202,7 +202,7 @@ namespace sol {
 				usertype_detail::make_length_op<T>(l, index);
 			}
 			if (fx(meta_function::to_string)) {
-				usertype_detail::make_to_string_op<T, meta::any<meta::supports_to_string_member<T>, meta::supports_adl_to_string<T>, meta::supports_ostream_op<T>>>(l, index);
+				usertype_detail::make_to_string_op<T, is_to_stringable<T>>(l, index);
 			}
 			if (fx(meta_function::call_function)) {
 				usertype_detail::make_call_op<T>(l, index);
@@ -230,7 +230,7 @@ namespace sol {
 					usertype_detail::insert_default_registrations<P>(l, index, fx);
 					usertype_detail::make_destructor<T>(l, index);
 					luaL_setfuncs(L, l, 0);
-					
+
 					// __type table
 					lua_createtable(L, 0, 2);
 					const std::string& name = detail::demangle<T>();

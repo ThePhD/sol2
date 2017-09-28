@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-09-24 20:50:41.761192 UTC
-// This header was generated with sol v2.18.4 (revision 2eb53ac)
+// Generated 2017-09-28 23:07:20.129208 UTC
+// This header was generated with sol v2.18.4 (revision e31ed4f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5143,6 +5143,9 @@ namespace sol {
 
 	template <typename T>
 	struct is_container : detail::is_container<T> {};
+
+	template <typename T>
+	struct is_to_stringable : meta::any<meta::supports_to_string_member<meta::unqualified_t<T>>, meta::supports_adl_to_string<meta::unqualified_t<T>>, meta::supports_ostream_op<meta::unqualified_t<T>>> {};
 
 	namespace detail {
 		template <typename T, typename = void>
@@ -15722,7 +15725,7 @@ namespace sol {
 				usertype_detail::make_length_op<T>(l, index);
 			}
 			if (fx(meta_function::to_string)) {
-				usertype_detail::make_to_string_op<T, meta::any<meta::supports_to_string_member<T>, meta::supports_adl_to_string<T>, meta::supports_ostream_op<T>>>(l, index);
+				usertype_detail::make_to_string_op<T, is_to_stringable<T>>(l, index);
 			}
 			if (fx(meta_function::call_function)) {
 				usertype_detail::make_call_op<T>(l, index);
@@ -15750,7 +15753,7 @@ namespace sol {
 					usertype_detail::insert_default_registrations<P>(l, index, fx);
 					usertype_detail::make_destructor<T>(l, index);
 					luaL_setfuncs(L, l, 0);
-					
+
 					// __type table
 					lua_createtable(L, 0, 2);
 					const std::string& name = detail::demangle<T>();
