@@ -51,6 +51,19 @@ namespace sol {
 		using unique_destructor = void (*)(void*);
 
 		template <typename T>
+		int user_aligned_alloc(lua_State* L, std::size_t offset, void*& mem, T*& obj) {
+			const auto alignment = std::alignment_of<T>();
+			mem = lua_newuserdata(L, offset + sizeof(T) + alignment - 1);
+			auto aligned_userdata = (std::uintptr_t)mem + offset;
+			// check the alignment. if it's not correct, adjust the pointer.
+			if ((aligned_userdata % alignment) != 0) {
+				aligned_userdata += alignment - aligned_userdata % alignment;
+			}
+			obj = reinterpret_cast<T*>(aligned_userdata);
+			return 1;
+		}
+
+		template <typename T>
 		inline int unique_destruct(lua_State* L) {
 			void* memory = lua_touserdata(L, 1);
 			T** pointerpointer = static_cast<T**>(memory);
@@ -62,9 +75,12 @@ namespace sol {
 		template <typename T>
 		inline int user_alloc_destruct(lua_State* L) {
 			void* rawdata = lua_touserdata(L, 1);
-			T* data = static_cast<T*>(rawdata);
+			auto data = (std::uintptr_t)rawdata;
+			if ((data % std::alignment_of<T>()) != 0) {
+				data += std::alignment_of<T>() - data % std::alignment_of<T>();
+			}
 			std::allocator<T> alloc;
-			alloc.destroy(data);
+			alloc.destroy((T*)data);
 			return 0;
 		}
 

@@ -73,12 +73,12 @@ namespace stack {
 			// data in the first sizeof(T*) bytes, and then however many bytes it takes to
 			// do the actual object. Things that are std::ref or plain T* are stored as
 			// just the sizeof(T*), and nothing else.
-			T** pointerpointer = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
-			T*& referencereference = *pointerpointer;
-			T* allocationtarget = reinterpret_cast<T*>(pointerpointer + 1);
-			referencereference = allocationtarget;
+			T* obj = nullptr;
+			void* userdata = nullptr;
+			detail::user_aligned_alloc<T>(L, sizeof(T*), userdata, obj);
+			*reinterpret_cast<T**>(userdata) = obj;
 			std::allocator<T> alloc{};
-			alloc.construct(allocationtarget, std::forward<Args>(args)...);
+			alloc.construct(obj, std::forward<Args>(args)...);
 			f();
 			return 1;
 		}
@@ -164,11 +164,16 @@ namespace stack {
 
 		template <typename... Args>
 		static int push_deep(lua_State* L, Args&&... args) {
-			P** pref = static_cast<P**>(lua_newuserdata(L, sizeof(P*) + sizeof(detail::unique_destructor) + sizeof(Real)));
+
+			Real* mem = nullptr;
+			void* userdata = nullptr;
+			detail::user_aligned_alloc<Real>(L, sizeof(P*) + sizeof(detail::unique_destructor), userdata, mem);
+			P** pref = static_cast<P**>(userdata);
 			detail::unique_destructor* fx = static_cast<detail::unique_destructor*>(static_cast<void*>(pref + 1));
-			Real* mem = static_cast<Real*>(static_cast<void*>(fx + 1));
 			*fx = detail::usertype_unique_alloc_destroy<P, Real>;
+			
 			detail::default_construct::construct(mem, std::forward<Args>(args)...);
+
 			*pref = unique_usertype_traits<T>::get(*mem);
 			if (luaL_newmetatable(L, &usertype_traits<detail::unique_usertype<P>>::metatable()[0]) == 1) {
 				luaL_Reg l[32]{};
@@ -458,8 +463,10 @@ namespace stack {
 		template <bool with_meta = true, typename Key, typename... Args>
 		static int push_with(lua_State* L, Key&& name, Args&&... args) {
 			// A dumb pusher
-			void* rawdata = lua_newuserdata(L, sizeof(T));
-			T* data = static_cast<T*>(rawdata);
+			void* mem = nullptr;
+			T* data = nullptr;
+			detail::user_aligned_alloc<T>(L, 0, mem, data);
+
 			std::allocator<T> alloc;
 			alloc.construct(data, std::forward<Args>(args)...);
 			if (with_meta) {
