@@ -31,9 +31,10 @@
 #  if defined(__GLIBC__) || defined(_POSIX_VERSION) || defined(__APPLE__) || \
       (!defined (__MINGW32__) && defined(__GNUC__) && (__GNUC__ < 6))
 #    define COMPAT53_HAVE_STRERROR_R 1
-#    if ((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || \
+#    if (((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || \
          (defined(_XOPEN_SOURCE) || _XOPEN_SOURCE >= 600)) && \
-        (!defined(_GNU_SOURCE) || !_GNU_SOURCE)
+         (!defined(_GNU_SOURCE) || !_GNU_SOURCE)) || \
+        defined(__APPLE__)
 #      ifndef COMPAT53_HAVE_STRERROR_R_XSI
 #        define COMPAT53_HAVE_STRERROR_R_XSI 1
 #      endif /* XSI-Compliant strerror_r */
