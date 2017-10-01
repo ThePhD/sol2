@@ -53,3 +53,22 @@ TEST_CASE("storage/main thread", "ensure round-tripping and pulling out thread d
 		REQUIRE(ts == orig);
 	}
 }
+
+TEST_CASE("storage/alignment", "ensure entries in lua are properly aligned") {
+	sol::state lua;
+	struct alignas(64) aligned_struct {
+		float val;
+	};
+	REQUIRE(std::alignment_of<aligned_struct>() == 64);
+	for (int i = 0; i < 10; i++) { // the allocator may return aligned memory by accident, so retry a few times
+		aligned_struct mystructonstack;
+		mystructonstack.val = 1.f;
+		sol::object mystructobject = sol::make_object(lua, mystructonstack);
+		REQUIRE(mystructobject.is<aligned_struct*>());
+		aligned_struct* mystruct = mystructobject.as<aligned_struct*>();
+		REQUIRE(&mystructonstack != mystruct);
+		REQUIRE(mystruct->val == 1.f);
+		std::uintptr_t p = (std::uintptr_t)mystruct;
+		REQUIRE(p % std::alignment_of<aligned_struct>() == 0);
+	}
+}
