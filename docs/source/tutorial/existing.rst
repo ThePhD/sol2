@@ -36,4 +36,4 @@ Note that you can also make non-standard pointer and reference types with custom
 There are a few things that creating a ``sol::state`` does for you. You can read about it :ref:`in the sol::state docs<state-automatic-handlers>` and call those functions directly if you need them.
 
 .. _create a DLL that loads some Lua module: https://github.com/ThePhD/sol2/tree/develop/examples/require_dll_example
-.. _work with an external Lua library: https://github.com/ThePhD/sol2/tree/develop/examples/interop
+.. _work with an external Lua wrapper/framework/library: https://github.com/ThePhD/sol2/tree/develop/examples/interop

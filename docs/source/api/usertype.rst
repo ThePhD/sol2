@@ -208,15 +208,27 @@ If you don't specify anything at all and the type is `destructible`_, then a des
 	You MUST specify ``sol::destructor`` around your destruction function, otherwise it will be ignored.
 
 
-
-usertype regular function options
+usertype automatic meta functions
 +++++++++++++++++++++++++++++++++
 
 If you don't specify a ``sol::meta_function`` name (or equivalent string metamethod name) and the type ``T`` supports certain operations, sol2 will generate the following operations provided it can find a good default implementation:
 
-* for ``to_string`` operations where ``std::ostream& operator<<( std::ostream&, const T& )`` exists on the C++ type
+* for ``to_string`` operations where ``std::ostream& operator<<( std::ostream&, const T& )``, ``obj.to_string()``, or ``to_string( const T& )`` (in the namespace) exists on the C++ type
 	- a ``sol::meta_function::to_string`` operator will be generated
-	- writing is done into a ``std::ostringstream`` before the underlying string is serialized into Lua
+	- writing is done into either
+		+ a ``std::ostringstream`` before the underlying string is serialized into Lua
+		+ directly serializing the return value of ``obj.to_string()`` or ``to_string( const T& )``
+	- order of preference is the ``std::ostream& operator<<``, then the member function ``obj.to_string()``, then the ADL-lookup based ``to_string( const T& )``
+	- if you need to turn this behavior off for a type (for example, to avoid compiler errors for ADL conflicts), specialize ``sol::is_to_stringable<T>`` for your type to be ``std::false_type``, like so:
+
+.. code-block:: cpp
+
+	namespace sol {
+		template <>
+		struct is_to_stringable<my_type> : std::false_type {};
+	}
+
+
 * for call operations where ``operator()( parameters ... )`` exists on the C++ type
 	- a ``sol::meta_function::call`` operator will be generated
 	- the function call operator in C++ must not be overloaded, otherwise sol will be unable to bind it automagically
@@ -233,6 +245,10 @@ If you don't specify a ``sol::meta_function`` name (or equivalent string metamet
 	- An equality operator will always be generated, doing pointer comparison if ``operator==`` on the two value types is not supported or doing a reference comparison and a value comparison if ``operator==`` is supported
 * heterogenous operators cannot be supported for equality, as Lua specifically checks if they use the same function to do the comparison: if they do not, then the equality method is not invoked; one way around this would be to write one ``int super_equality_function(lua_State* L) { ... }``, pull out arguments 1 and 2 from the stack for your type, and check all the types and then invoke ``operator==`` yourself after getting the types out of Lua (possibly using :ref:`sol::stack::get<stack-get>` and :ref:`sol::stack::check_get<stack-check-get>`)
 
+
+
+usertype regular function options
++++++++++++++++++++++++++++++++++
 
 Otherwise, the following is used to specify functions to bind on the specific usertype for ``T``.
 

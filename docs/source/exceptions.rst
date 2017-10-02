@@ -62,6 +62,7 @@ This will prevent sol from catching ``(...)`` errors in platforms and compilers 
 Currently, the only known platform to do this is the listed "Full" `platforms for LuaJIT`_ and Lua compiled as C++. This define is turned on automatically for compiling Lua as C++.
 
 .. warning::
+
 	``SOL_EXCEPTIONS_SAFE_PROPAGATION`` is not defined automatically when Sol detects LuaJIT. *It is your job to define it if you know that your platform supports it*!
 
 

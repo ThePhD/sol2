@@ -14,7 +14,43 @@ environment
 	basic_environment<E> get_environment( const T& target );
 
 
-This type is passed to :ref:`sol::state(_view)::script/do_x<state-script-function>` to provide an environment where local variables that are set and get retrieve. It is just a plain table, and all the same operations :doc:`from table still apply<table>`. This is important because it allows you to do things like set the table's metatable (using :doc:`sol::metatable_key<metatable_key>` for instance) and having its ``__index`` entry point to the global table, meaning you can get -- but not set -- variables from a Global environment.
+This type is passed to :ref:`sol::state(_view)::script/do_x<state-script-function>` to provide an environment where local variables that are set and get retrieve. It is just a plain table, and all the same operations :doc:`from table still apply<table>`. This is important because it allows you to do things like set the table's metatable (using :doc:`sol::metatable_key<metatable_key>` for instance) and having its ``__index`` entry point to the global table, meaning you can get -- but not set -- variables from a Global environment, for example.
+
+There are many more uses, including storing state or special dependent variables in an environment that you pre-create using regular table opertions, and then changing at-will:
+
+.. code-block:: cpp
+	:caption: preparing environments
+
+	#define SOL_CHECK_ARGUMENTS 1
+	#include <sol.hpp>
+
+	int main (int, char*[]) {
+		sol::state lua;
+		lua.open_libraries();
+		sol::environment my_env(lua, sol::create);
+		// set value, and we need to explicitly allow for 
+		// access to "print", since a new environment hides 
+		// everything that's not defined inside of it
+		// NOTE: hiding also hides library functions (!!)
+		// BE WARNED
+		my_env["var"] = 50;
+		my_env["print"] = lua["print"];
+
+		sol::environment my_other_env(lua, sol::create, lua.globals());
+		// do not need to explicitly allow access to "print",
+		// since we used the "Set a fallback" version 
+		// of the sol::environment constructor
+		my_other_env["var"] = 443;
+
+		// output: 50
+		lua.script("print(var)", my_env);
+
+		// output: 443
+		lua.script("print(var)", my_other_env);
+
+		return 0;
+	}
+
 
 Also note that ``sol::environment`` derives from ``sol::table``, which also derives from ``sol::reference``: in other words, copying one ``sol::environment`` value to another ``sol::environment`` value **does not** deep-copy the table, just creates a new reference pointing to the same lua object.
 
@@ -49,6 +85,7 @@ members
 .. code-block:: cpp
 	:caption: constructor: environment
 
+	environment(lua_State* L, sol::new_table nt);
 	environment(lua_State* L, sol::new_table nt, const sol::reference& fallback);
 	environment(sol::env_t, const sol::reference& object_that_has_environment);
 	environment(sol::env_t, const sol::stack_reference& object_that_has_environment);

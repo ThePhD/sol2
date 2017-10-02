@@ -497,8 +497,8 @@ namespace stack {
 			int metatableindex = lua_gettop(L);
 			if (stack_detail::check_metatable<detail::unique_usertype<T>>(L, metatableindex)) {
 				void* memory = lua_touserdata(L, index);
-				T** pointerpointer = static_cast<T**>(memory);
-				detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(static_cast<void*>(pointerpointer + 1));
+				memory = detail::align_usertype_unique_destructor(memory);
+				detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(memory);
 				bool success = &detail::usertype_unique_alloc_destroy<T, X> == pdx;
 				if (!success) {
 					handler(L, index, type::userdata, indextype, "value is a userdata but is not the correct unique usertype");

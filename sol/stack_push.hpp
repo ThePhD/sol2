@@ -73,12 +73,9 @@ namespace stack {
 			// data in the first sizeof(T*) bytes, and then however many bytes it takes to
 			// do the actual object. Things that are std::ref or plain T* are stored as
 			// just the sizeof(T*), and nothing else.
-			T** pointerpointer = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
-			T*& referencereference = *pointerpointer;
-			T* allocationtarget = reinterpret_cast<T*>(pointerpointer + 1);
-			referencereference = allocationtarget;
+			T* obj = detail::usertype_allocate<T>(L);
 			std::allocator<T> alloc{};
-			alloc.construct(allocationtarget, std::forward<Args>(args)...);
+			alloc.construct(obj, std::forward<Args>(args)...);
 			f();
 			return 1;
 		}
@@ -103,7 +100,7 @@ namespace stack {
 		static int push_fx(lua_State* L, F&& f, T* obj) {
 			if (obj == nullptr)
 				return stack::push(L, lua_nil);
-			T** pref = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
+			T** pref = detail::usertype_allocate_pointer<T>(L);
 			*pref = obj;
 			f();
 			return 1;
@@ -164,9 +161,9 @@ namespace stack {
 
 		template <typename... Args>
 		static int push_deep(lua_State* L, Args&&... args) {
-			P** pref = static_cast<P**>(lua_newuserdata(L, sizeof(P*) + sizeof(detail::unique_destructor) + sizeof(Real)));
-			detail::unique_destructor* fx = static_cast<detail::unique_destructor*>(static_cast<void*>(pref + 1));
-			Real* mem = static_cast<Real*>(static_cast<void*>(fx + 1));
+			P** pref = nullptr;
+			detail::unique_destructor* fx = nullptr;
+			Real* mem = detail::usertype_unique_allocate<P, Real>(L, pref, fx);
 			*fx = detail::usertype_unique_alloc_destroy<P, Real>;
 			detail::default_construct::construct(mem, std::forward<Args>(args)...);
 			*pref = unique_usertype_traits<T>::get(*mem);
@@ -458,14 +455,13 @@ namespace stack {
 		template <bool with_meta = true, typename Key, typename... Args>
 		static int push_with(lua_State* L, Key&& name, Args&&... args) {
 			// A dumb pusher
-			void* rawdata = lua_newuserdata(L, sizeof(T));
-			T* data = static_cast<T*>(rawdata);
+			T* data = detail::user_allocate<T>(L);
 			std::allocator<T> alloc;
 			alloc.construct(data, std::forward<Args>(args)...);
 			if (with_meta) {
-				lua_CFunction cdel = detail::user_alloc_destruct<T>;
 				// Make sure we have a plain GC set for this data
 				if (luaL_newmetatable(L, name) != 0) {
+					lua_CFunction cdel = detail::user_alloc_destruct<T>;
 					lua_pushcclosure(L, cdel, 0);
 					lua_setfield(L, -2, "__gc");
 				}
@@ -541,6 +537,33 @@ namespace stack {
 
 		static int push(lua_State* L, const char* str, std::size_t len) {
 			return push_sized(L, str, len);
+		}
+	};
+
+	template <>
+	struct pusher<char*> {
+		static int push_sized(lua_State* L, const char* str, std::size_t len) {
+			pusher<const char*> p{};
+			(void)p;
+			return p.push_sized(L, str, len);
+		}
+
+		static int push(lua_State* L, const char* str) {
+			pusher<const char*> p{};
+			(void)p;
+			return p.push(L, str);
+		}
+
+		static int push(lua_State* L, const char* strb, const char* stre) {
+			pusher<const char*> p{};
+			(void)p;
+			return p.push(L, strb, stre);
+		}
+
+		static int push(lua_State* L, const char* str, std::size_t len) {
+			pusher<const char*> p{};
+			(void)p;
+			return p.push(L, str, len);
 		}
 	};
 
@@ -646,6 +669,27 @@ namespace stack {
 	};
 
 	template <>
+	struct pusher<wchar_t*> {
+		static int push(lua_State* L, const wchar_t* str) {
+			pusher<const wchar_t*> p{};
+			(void)p;
+			return p.push(L, str);
+		}
+
+		static int push(lua_State* L, const wchar_t* strb, const wchar_t* stre) {
+			pusher<const wchar_t*> p{};
+			(void)p;
+			return p.push(L, strb, stre);
+		}
+
+		static int push(lua_State* L, const wchar_t* str, std::size_t len) {
+			pusher<const wchar_t*> p{};
+			(void)p;
+			return p.push(L, str, len);
+		}
+	};
+
+	template <>
 	struct pusher<const char16_t*> {
 		static int push(lua_State* L, const char16_t* u16str) {
 			return push(L, u16str, std::char_traits<char16_t>::length(u16str));
@@ -668,6 +712,27 @@ namespace stack {
 	};
 
 	template <>
+	struct pusher<char16_t*> {
+		static int push(lua_State* L, const char16_t* str) {
+			pusher<const char16_t*> p{};
+			(void)p;
+			return p.push(L, str);
+		}
+
+		static int push(lua_State* L, const char16_t* strb, const char16_t* stre) {
+			pusher<const char16_t*> p{};
+			(void)p;
+			return p.push(L, strb, stre);
+		}
+
+		static int push(lua_State* L, const char16_t* str, std::size_t len) {
+			pusher<const char16_t*> p{};
+			(void)p;
+			return p.push(L, str, len);
+		}
+	};
+
+	template <>
 	struct pusher<const char32_t*> {
 		static int push(lua_State* L, const char32_t* u32str) {
 			return push(L, u32str, u32str + std::char_traits<char32_t>::length(u32str));
@@ -686,6 +751,27 @@ namespace stack {
 			std::string u8str = convert.to_bytes(strb, stre);
 #endif // VC++ is a shit
 			return stack::push(L, u8str);
+		}
+	};
+
+	template <>
+	struct pusher<char32_t*> {
+		static int push(lua_State* L, const char32_t* str) {
+			pusher<const char32_t*> p{};
+			(void)p;
+			return p.push(L, str);
+		}
+
+		static int push(lua_State* L, const char32_t* strb, const char32_t* stre) {
+			pusher<const char32_t*> p{};
+			(void)p;
+			return p.push(L, strb, stre);
+		}
+
+		static int push(lua_State* L, const char32_t* str, std::size_t len) {
+			pusher<const char32_t*> p{};
+			(void)p;
+			return p.push(L, str, len);
 		}
 	};
 

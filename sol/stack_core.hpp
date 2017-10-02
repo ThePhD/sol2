@@ -50,28 +50,343 @@ namespace sol {
 
 		using unique_destructor = void (*)(void*);
 
-		template <typename T>
-		inline int unique_destruct(lua_State* L) {
-			void* memory = lua_touserdata(L, 1);
-			T** pointerpointer = static_cast<T**>(memory);
-			unique_destructor& dx = *static_cast<unique_destructor*>(static_cast<void*>(pointerpointer + 1));
-			(dx)(memory);
-			return 0;
+		inline void* align(std::size_t alignment, std::size_t size, void*& ptr, std::size_t& space, std::size_t& required_space) {
+			// this handels arbitrary alignments...
+			// make this into a power-of-2-only?
+			// actually can't: this is a C++14-compatible framework,
+			// power of 2 alignment is C++17
+			std::uintptr_t initial = reinterpret_cast<std::uintptr_t>(ptr);
+			std::uintptr_t offby = static_cast<std::uintptr_t>(initial % alignment);
+			std::uintptr_t padding = (alignment - offby) % alignment;
+			required_space += size + padding;
+			if (space < required_space) {
+				return nullptr;
+			}
+			ptr = static_cast<void*>(static_cast<char*>(ptr) + padding);
+			space -= padding;
+			return ptr;
+		}
+
+		inline void* align(std::size_t alignment, std::size_t size, void*& ptr, std::size_t& space) {
+			std::size_t required_space = 0;
+			return align(alignment, size, ptr, space, required_space);
+		}
+
+		template <typename... Args>
+		inline std::size_t aligned_space_for(void* alignment = nullptr) {
+			char* start = static_cast<char*>(alignment);
+			auto specific_align = [&alignment](std::size_t a, std::size_t s) {
+				std::size_t space = std::numeric_limits<std::size_t>::max();
+				alignment = align(a, s, alignment, space);
+				alignment = static_cast<void*>(static_cast<char*>(alignment) + s);
+			};
+			(void)detail::swallow{ int{}, (specific_align(std::alignment_of<Args>::value, sizeof(Args)), int{})... };
+			return static_cast<char*>(alignment) - start;
+		}
+
+		inline void* align_usertype_pointer(void* ptr) {
+			typedef std::integral_constant<bool,
+#ifdef SOL_NO_MEMORY_ALIGNMENT
+				false
+#else
+				(std::alignment_of<void*>::value > 1)
+#endif
+				>
+				use_align;
+			if (!use_align::value) {
+				return ptr;
+			}
+			std::size_t space = std::numeric_limits<std::size_t>::max();
+			return align(std::alignment_of<void*>::value, sizeof(void*), ptr, space);
+		}
+
+		inline void* align_usertype_unique_destructor(void* ptr) {
+			typedef std::integral_constant<bool,
+#ifdef SOL_NO_MEMORY_ALIGNMENT
+				false
+#else
+				(std::alignment_of<unique_destructor>::value > 1)
+#endif
+				>
+				use_align;
+			if (!use_align::value) {
+				return static_cast<void*>(static_cast<void**>(ptr) + 1);
+			}
+			ptr = align_usertype_pointer(ptr);
+			ptr = static_cast<void*>(static_cast<char*>(ptr) + sizeof(void*));
+			std::size_t space = std::numeric_limits<std::size_t>::max();
+			return align(std::alignment_of<unique_destructor>::value, sizeof(unique_destructor), ptr, space);
+		}
+
+		template <typename T, bool pre_aligned = false>
+		inline void* align_usertype_unique(void* ptr) {
+			typedef std::integral_constant<bool,
+#ifdef SOL_NO_MEMORY_ALIGNMENT
+				false
+#else
+				(std::alignment_of<T>::value > 1)
+#endif
+				>
+				use_align;
+			if (!pre_aligned) {
+				ptr = align_usertype_unique_destructor(ptr);
+				ptr = static_cast<void*>(static_cast<char*>(ptr) + sizeof(unique_destructor));
+			}
+			if (!use_align::value) {
+				return ptr;
+			}
+			std::size_t space = std::numeric_limits<std::size_t>::max();
+			return align(std::alignment_of<T>::value, sizeof(T), ptr, space);
 		}
 
 		template <typename T>
-		inline int user_alloc_destruct(lua_State* L) {
-			void* rawdata = lua_touserdata(L, 1);
-			T* data = static_cast<T*>(rawdata);
-			std::allocator<T> alloc;
-			alloc.destroy(data);
-			return 0;
+		inline void* align_user(void* ptr) {
+			typedef std::integral_constant<bool,
+#ifdef SOL_NO_MEMORY_ALIGNMENT
+				false
+#else
+				(std::alignment_of<T>::value > 1)
+#endif
+				>
+				use_align;
+			if (!use_align::value) {
+				return ptr;
+			}
+			std::size_t space = std::numeric_limits<std::size_t>::max();
+			return align(std::alignment_of<T>::value, sizeof(T), ptr, space);
+		}
+
+		template <typename T>
+		inline T** usertype_allocate_pointer(lua_State* L) {
+			typedef std::integral_constant<bool,
+#ifdef SOL_NO_MEMORY_ALIGNMENT
+				false
+#else
+				(std::alignment_of<T*>::value > 1)
+#endif
+				>
+				use_align;
+			if (!use_align::value) {
+				T** pointerpointer = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
+				return pointerpointer;
+			}
+			static const std::size_t initial_size = aligned_space_for<T*>(nullptr);
+			static const std::size_t misaligned_size = aligned_space_for<T*>(reinterpret_cast<void*>(0x1));
+
+			std::size_t allocated_size = initial_size;
+			void* unadjusted = lua_newuserdata(L, initial_size);
+			void* adjusted = align(std::alignment_of<T*>::value, sizeof(T*), unadjusted, allocated_size);
+			if (adjusted == nullptr) {
+				lua_pop(L, 1);
+				// what kind of absolute garbage trash allocator are we dealing with?
+				// whatever, add some padding in the case of MAXIMAL alignment waste...
+				allocated_size = misaligned_size;
+				unadjusted = lua_newuserdata(L, allocated_size);
+				adjusted = align(std::alignment_of<T*>::value, sizeof(T*), unadjusted, allocated_size);
+				if (adjusted == nullptr) {
+					// trash allocator can burn in hell
+					lua_pop(L, 1);
+					//luaL_error(L, "if you are the one that wrote this allocator you should feel bad for doing a worse job than malloc/realloc and should go read some books, yeah?");
+					luaL_error(L, "cannot properly align memory for '%s'", detail::demangle<T*>().data());
+				}
+			}
+			return static_cast<T**>(adjusted);
+		}
+
+		template <typename T>
+		inline T* usertype_allocate(lua_State* L) {
+			typedef std::integral_constant<bool,
+#ifdef SOL_NO_MEMORY_ALIGNMENT
+				false
+#else
+				(std::alignment_of<T*>::value > 1 || std::alignment_of<T>::value > 1)
+#endif
+				>
+				use_align;
+			if (!use_align::value) {
+				T** pointerpointer = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
+				T*& pointerreference = *pointerpointer;
+				T* allocationtarget = reinterpret_cast<T*>(pointerpointer + 1);
+				pointerreference = allocationtarget;
+				return allocationtarget;
+			}
+
+			/* the assumption is that `lua_newuserdata` -- unless someone
+			passes a specific lua_Alloc that gives us bogus, un-aligned pointers
+			-- uses malloc, which tends to hand out more or less aligned pointers to memory
+			(most of the time, anyhow)
+
+			but it's not guaranteed, so we have to do a post-adjustment check and increase padding
+
+			we do this preliminarily with compile-time stuff, to see
+			if we strike lucky with the allocator and alignment values
+
+			otherwise, we have to re-allocate the userdata and
+			over-allocate some space for additional padding because
+			compilers are optimized for aligned reads/writes
+			(and clang will barf UBsan errors on us for not being aligned)
+			*/
+			static const std::size_t initial_size = aligned_space_for<T*, T>(nullptr);
+			static const std::size_t misaligned_size = aligned_space_for<T*, T>(reinterpret_cast<void*>(0x1));
+
+			void* pointer_adjusted;
+			void* data_adjusted;
+			auto attempt_alloc = [](lua_State* L, std::size_t allocated_size, void*& pointer_adjusted, void*& data_adjusted) -> bool {
+				void* adjusted = lua_newuserdata(L, allocated_size);
+				pointer_adjusted = align(std::alignment_of<T*>::value, sizeof(T*), adjusted, allocated_size);
+				if (pointer_adjusted == nullptr) {
+					lua_pop(L, 1);
+					return false;
+				}
+				// subtract size of what we're going to allocate there
+				allocated_size -= sizeof(T*);
+				adjusted = static_cast<void*>(static_cast<char*>(pointer_adjusted) + sizeof(T*));
+				data_adjusted = align(std::alignment_of<T>::value, sizeof(T), adjusted, allocated_size);
+				if (data_adjusted == nullptr) {
+					lua_pop(L, 1);
+					return false;
+				}
+				return true;
+			};
+			bool result = attempt_alloc(L, initial_size, pointer_adjusted, data_adjusted);
+			if (!result) {
+				// we're likely to get something that fails to perform the proper allocation a second time,
+				// so we use the suggested_new_size bump to help us out here
+				pointer_adjusted = nullptr;
+				data_adjusted = nullptr;
+				result = attempt_alloc(L, misaligned_size, pointer_adjusted, data_adjusted);
+				if (!result) {
+					if (pointer_adjusted == nullptr) {
+						luaL_error(L, "aligned allocation of userdata block (pointer section) for '%s' failed", detail::demangle<T>().c_str());
+					}
+					else {
+						luaL_error(L, "aligned allocation of userdata block (data section) for '%s' failed", detail::demangle<T>().c_str());
+					}
+					return nullptr;
+				}
+			}
+
+			T** pointerpointer = reinterpret_cast<T**>(pointer_adjusted);
+			T*& pointerreference = *pointerpointer;
+			T* allocationtarget = reinterpret_cast<T*>(data_adjusted);
+			pointerreference = allocationtarget;
+			return allocationtarget;
+		}
+
+		template <typename T, typename Real>
+		inline Real* usertype_unique_allocate(lua_State* L, T**& pref, unique_destructor*& dx) {
+			typedef std::integral_constant<bool,
+#ifdef SOL_NO_MEMORY_ALIGNMENT
+				false
+#else
+				(std::alignment_of<T*>::value > 1 || std::alignment_of<unique_destructor>::value > 1 || std::alignment_of<Real>::value > 1)
+#endif
+				>
+				use_align;
+			if (!use_align::value) {
+				pref = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(detail::unique_destructor) + sizeof(Real)));
+				dx = static_cast<detail::unique_destructor*>(static_cast<void*>(pref + 1));
+				Real* mem = static_cast<Real*>(static_cast<void*>(dx + 1));
+				return mem;
+			}
+
+			static const std::size_t initial_size = aligned_space_for<T*, unique_destructor, Real>(nullptr);
+			static const std::size_t misaligned_size = aligned_space_for<T*, unique_destructor, Real>(reinterpret_cast<void*>(0x1));
+
+			void* pointer_adjusted;
+			void* dx_adjusted;
+			void* data_adjusted;
+			auto attempt_alloc = [](lua_State* L, std::size_t allocated_size, void*& pointer_adjusted, void*& dx_adjusted, void*& data_adjusted) -> bool {
+				void* adjusted = lua_newuserdata(L, allocated_size);
+				pointer_adjusted = align(std::alignment_of<T*>::value, sizeof(T*), adjusted, allocated_size);
+				if (pointer_adjusted == nullptr) {
+					lua_pop(L, 1);
+					return false;
+				}
+				allocated_size -= sizeof(T*);
+				adjusted = static_cast<void*>(static_cast<char*>(pointer_adjusted) + sizeof(T*));
+				dx_adjusted = align(std::alignment_of<unique_destructor>::value, sizeof(unique_destructor), adjusted, allocated_size);
+				if (dx_adjusted == nullptr) {
+					lua_pop(L, 1);
+					return false;
+				}
+				allocated_size -= sizeof(unique_destructor);
+				adjusted = static_cast<void*>(static_cast<char*>(dx_adjusted) + sizeof(unique_destructor));
+				data_adjusted = align(std::alignment_of<Real>::value, sizeof(Real), adjusted, allocated_size);
+				if (data_adjusted == nullptr) {
+					lua_pop(L, 1);
+					return false;
+				}
+				return true;
+			};
+			bool result = attempt_alloc(L, initial_size, pointer_adjusted, dx_adjusted, data_adjusted);
+			if (!result) {
+				// we're likely to get something that fails to perform the proper allocation a second time,
+				// so we use the suggested_new_size bump to help us out here
+				pointer_adjusted = nullptr;
+				dx_adjusted = nullptr;
+				data_adjusted = nullptr;
+				result = attempt_alloc(L, misaligned_size, pointer_adjusted, dx_adjusted, data_adjusted);
+				if (!result) {
+					if (pointer_adjusted == nullptr) {
+						luaL_error(L, "aligned allocation of userdata block (pointer section) for '%s' failed", detail::demangle<T>().c_str());
+					}
+					else if (dx_adjusted == nullptr) {
+						luaL_error(L, "aligned allocation of userdata block (deleter section) for '%s' failed", detail::demangle<Real>().c_str());
+					}
+					else {
+						luaL_error(L, "aligned allocation of userdata block (data section) for '%s' failed", detail::demangle<Real>().c_str());
+					}
+					return nullptr;
+				}
+			}
+
+			pref = static_cast<T**>(pointer_adjusted);
+			dx = static_cast<detail::unique_destructor*>(dx_adjusted);
+			Real* mem = static_cast<Real*>(data_adjusted);
+			return mem;
+		}
+
+		template <typename T>
+		inline T* user_allocate(lua_State* L) {
+			typedef std::integral_constant<bool,
+#ifdef SOL_NO_MEMORY_ALIGNMENT
+				false
+#else
+				(std::alignment_of<T>::value > 1)
+#endif
+				>
+				use_align;
+			if (!use_align::value) {
+				T* pointer = static_cast<T*>(lua_newuserdata(L, sizeof(T)));
+				return pointer;
+			}
+
+			static const std::size_t initial_size = aligned_space_for<T>(nullptr);
+			static const std::size_t misaligned_size = aligned_space_for<T>(reinterpret_cast<void*>(0x1));
+
+			std::size_t allocated_size = initial_size;
+			void* unadjusted = lua_newuserdata(L, allocated_size);
+			void* adjusted = align(std::alignment_of<T>::value, sizeof(T), unadjusted, allocated_size);
+			if (adjusted == nullptr) {
+				lua_pop(L, 1);
+				// try again, add extra space for alignment padding
+				allocated_size = misaligned_size;
+				unadjusted = lua_newuserdata(L, allocated_size);
+				adjusted = align(std::alignment_of<T>::value, sizeof(T), unadjusted, allocated_size);
+				if (adjusted == nullptr) {
+					lua_pop(L, 1);
+					luaL_error(L, "cannot properly align memory for '%s'", detail::demangle<T>().data());
+				}
+			}
+			return static_cast<T*>(adjusted);
 		}
 
 		template <typename T>
 		inline int usertype_alloc_destruct(lua_State* L) {
-			void* rawdata = lua_touserdata(L, 1);
-			T** pdata = static_cast<T**>(rawdata);
+			void* memory = lua_touserdata(L, 1);
+			memory = align_usertype_pointer(memory);
+			T** pdata = static_cast<T**>(memory);
 			T* data = *pdata;
 			std::allocator<T> alloc{};
 			alloc.destroy(data);
@@ -79,17 +394,36 @@ namespace sol {
 		}
 
 		template <typename T>
-		inline int cannot_destruct(lua_State* L) {
-			return luaL_error(L, "cannot call the destructor for '%s': it is either hidden (protected/private) or removed with '= delete' and thusly this type is being destroyed without properly destructing, invoking undefined behavior", detail::demangle<T>().data());
+		inline int unique_destruct(lua_State* L) {
+			void* memory = lua_touserdata(L, 1);
+			memory = align_usertype_unique_destructor(memory);
+			unique_destructor& dx = *static_cast<unique_destructor*>(memory);
+			memory = static_cast<void*>(static_cast<char*>(memory) + sizeof(unique_destructor));
+			(dx)(memory);
+			return 0;
+		}
+
+		template <typename T>
+		inline int user_alloc_destruct(lua_State* L) {
+			void* memory = lua_touserdata(L, 1);
+			memory = align_user<T>(memory);
+			T* data = static_cast<T*>(memory);
+			std::allocator<T> alloc;
+			alloc.destroy(data);
+			return 0;
 		}
 
 		template <typename T, typename Real>
 		inline void usertype_unique_alloc_destroy(void* memory) {
-			T** pointerpointer = static_cast<T**>(memory);
-			unique_destructor* dx = static_cast<unique_destructor*>(static_cast<void*>(pointerpointer + 1));
-			Real* target = static_cast<Real*>(static_cast<void*>(dx + 1));
+			memory = align_usertype_unique<Real, true>(memory);
+			Real* target = static_cast<Real*>(memory);
 			std::allocator<Real> alloc;
 			alloc.destroy(target);
+		}
+
+		template <typename T>
+		inline int cannot_destruct(lua_State* L) {
+			return luaL_error(L, "cannot call the destructor for '%s': it is either hidden (protected/private) or removed with '= delete' and thusly this type is being destroyed without properly destructing, invoking undefined behavior: please bind a usertype and specify a custom destructor to define the behavior properly", detail::demangle<T>().data());
 		}
 
 		template <typename T>

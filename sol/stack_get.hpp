@@ -637,15 +637,16 @@ namespace stack {
 	struct getter<detail::as_value_tag<T>> {
 		static T* get_no_lua_nil(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
-			void* rawdata = lua_touserdata(L, index);
+			void* memory = lua_touserdata(L, index);
 #ifdef SOL_ENABLE_INTEROP
 			userdata_getter<extensible<T>> ug;
 			(void)ug;
-			auto ugr = ug.get(L, index, rawdata, tracking);
+			auto ugr = ug.get(L, index, memory, tracking);
 			if (ugr.first) {
 				return ugr.second;
 			}
 #endif // interop extensibility
+			void* rawdata = detail::align_usertype_pointer(memory);
 			void** pudata = static_cast<void**>(rawdata);
 			void* udata = *pudata;
 			return get_no_lua_nil_from(L, udata, index, tracking);
@@ -730,9 +731,9 @@ namespace stack {
 
 		static Real& get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
-			P** pref = static_cast<P**>(lua_touserdata(L, index));
-			detail::unique_destructor* fx = static_cast<detail::unique_destructor*>(static_cast<void*>(pref + 1));
-			Real* mem = static_cast<Real*>(static_cast<void*>(fx + 1));
+			void* memory = lua_touserdata(L, index);
+			memory = detail::align_usertype_unique<Real>(memory);
+			Real* mem = static_cast<Real*>(memory);
 			return *mem;
 		}
 	};

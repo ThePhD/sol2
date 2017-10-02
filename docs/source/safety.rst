@@ -16,7 +16,7 @@ Note that you can obtain safety with regards to functions you bind by using the 
 ``SOL_ENABLE_INTEROP`` triggers the following change:
 	* Allows the use of ``extensible<T>`` to be used with ``userdata_checker`` and ``userdata_getter`` to retrieve non-sol usertypes
 		- Particularly enables non-sol usertypes to be used in overloads
-		- See the :ref:`stack dcoumentation` for details
+		- See the :ref:`stack dcoumentation<userdata-interop>` for details
 	* May come with a slight performance penalty: only recommended for those stuck with non-sol libraries that still need to leverage some of sol's power
 	* **Not** turned on by default under any settings: *this MUST be turned on manually*
 
@@ -48,6 +48,22 @@ Note that you can obtain safety with regards to functions you bind by using the 
 	* Numbers will also be checked to see if they fit within a ``lua_Number`` if there is no ``lua_Integer`` type available that can fit your signed or unsigned number. You can opt-out of this behavior with ``SOL_NO_CHECK_NUMBER_PRECISION``
 	* **Not** turned on by default under any settings: *this MUST be turned on manually*
 	
+.. _config-memory:
+
+``SOL_NO_MEMORY_ALIGNMENT`` triggers the following changes:
+	* Memory is no longer aligned and is instead directly sized and allocated
+	* If you need to access underlying userdata memory from sol, please see the :doc:`usertype memory documentation<api/usertype_memory>`
+
+.. _config-linker:
+
+``SOL_USING_CXX_LUA`` triggers the following changes:
+	* Lua includes are no longer wrapped in ``extern "C" {}`` blocks
+	* Only use this if you know you've built your LuaJIT with the C++-specific invocations of your compiler (Lua by default builds as C code and is not distributed as a C++ library, but a C one with C symbols)
+
+``SOL_USING_CXX_LUA_JIT`` triggers the following changes:
+	* LuaJIT includes are no longer wrapped in ``extern "C" {}`` blocks
+	* Only use this if you know you've built your LuaJIT with the C++-specific invocations of your compiler (LuaJIT by default builds as C code)
+
 Tests are compiled with this on to ensure everything is going as expected. Remember that if you want these features, you must explicitly turn them on all of them to be sure you are getting them.
 
 memory

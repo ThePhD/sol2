@@ -592,3 +592,38 @@ TEST_CASE("gc/double deleter guards", "usertype metatables internally must not r
 		REQUIRE_NOTHROW(routine());
 	}
 }
+
+TEST_CASE("gc/alignment", "test that allocation is always on aligned boundaries, no matter the wrapper / type") {
+	struct test {
+		std::function<void()> callback = []() { std::cout << "Hello world!" << std::endl; };
+
+		~test() {
+			std::uintptr_t p = reinterpret_cast<std::uintptr_t>(this);
+			std::uintptr_t offset = p % std::alignment_of<test>::value;
+			REQUIRE(offset == 0);
+		}
+	};
+
+	sol::state lua;
+	lua.new_usertype<test>("test",
+		"callback", &test::callback);
+
+	test obj{};
+	lua["obj"] = &obj;
+	lua.script("obj.callback()");
+
+	lua["obj0"] = std::ref(obj);
+	lua.script("obj0.callback()");
+
+	lua["obj1"] = obj;
+	lua.script("obj1.callback()");
+
+	lua["obj2"] = test{};
+	lua.script("obj2.callback()");
+
+	lua["obj3"] = std::make_unique<test>();
+	lua.script("obj3.callback()");
+
+	lua["obj4"] = std::make_shared<test>();
+	lua.script("obj4.callback()");
+}

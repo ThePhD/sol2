@@ -7,4 +7,4 @@ Individuals using Visual Studio 2015, or on Windows with the VC++ and MinGW comp
 
 ThePhD did not want this to have to be a thing, but slow implementations and such force their hand. When GCC 7.x comes out, ThePhD will consider removing the effect of defining this macro and leaving <codecvt> support in at all times.
 
-GCC 7.x is now out, and its codecvt support seems to work in it as well. We will be removing the conditional SOL_CODECVT support and deprecating support for GCC 4.x.x, Clang 3.5.x, and Clang 3.6.x in releases past sol2 v2.17.5
+GCC 7.x is now out, and its codecvt support seems to work in it as well. We will be deprecating the conditional SOL_CODECVT support and deprecating support for GCC 4.x.x, Clang 3.5.x, and Clang 3.6.x in releases past sol2 v2.17.5

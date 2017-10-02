@@ -135,3 +135,16 @@ TEST_CASE("object/string-pushers", "test some basic string pushers with in_place
 	REQUIRE(test2);
 	REQUIRE(test3);
 }
+
+TEST_CASE("strings/non const c strings", "push non const qualified c strings as strings") {
+	sol::state lua;
+
+	char cbark[] = "bark";
+	char* bark = cbark;
+	lua["bark"] = bark;
+	sol::type t = lua["bark"].get_type();
+	std::string lbark = lua["bark"];
+
+	REQUIRE((t == sol::type::string));
+	REQUIRE((bark == std::string("bark")));
+}

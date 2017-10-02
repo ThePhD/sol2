@@ -249,6 +249,8 @@ This is an SFINAE-friendly struct that is meant to expose static function ``push
 
 This is an SFINAE-friendly struct that is meant to expose static function ``check`` that returns whether or not a type at a given index is what its supposed to be. The default implementation simply checks whether the expected type passed in through the template is equal to the type of the object at the specified index in the Lua stack. The default implementation for types which are considered ``userdata`` go through a myriad of checks to support checking if a type is *actually* of type ``T`` or if its the base class of what it actually stored as a userdata in that index. Down-casting from a base class to a more derived type is, unfortunately, impossible to do.
 
+.. _userdata-interop:
+
 .. code-block:: cpp
 	:caption: struct: userdata_checker
 	:name: userdata_checker
@@ -269,7 +271,9 @@ This is an SFINAE-friendly struct that is meant to expose static function ``chec
 This is an SFINAE-friendly struct that is meant to expose a function ``check=`` that returns ``true`` if a type meets some custom userdata specifiction, and ``false`` if it does not. The default implementation just returns ``false`` to let the original sol2 handlers take care of everything. If you want to implement your own usertype checking; e.g., for messing with ``toLua`` or ``OOLua`` or ``kaguya`` or some other libraries. Note that the library must have a with a :doc:`memory compatible layout<usertype_memory>` if you **want to specialize this checker method but not the subsequent getter method**. You can specialize it as shown in the `interop examples`_.
 
 .. note::
+
 	You must turn it on with ``SOL_ENABLE_INTEROP``, as described in the :ref:`config and safety section<config>`.
+
 
 .. code-block:: cpp
 	:caption: struct: userdata_getter
@@ -300,4 +304,4 @@ This is an SFINAE-friendly struct that is meant to expose a function ``get`` tha
 .. _lua_CFunction: http://www.Lua.org/manual/5.3/manual.html#lua_CFunction
 .. _Lua stack works in general: https://www.lua.org/pil/24.2.html
 .. _calling C functions works: https://www.lua.org/pil/26.html
-.. _interop example: https://github.com/ThePhD/sol2/blob/develop/examples/interop
+.. _interop examples: https://github.com/ThePhD/sol2/blob/develop/examples/interop

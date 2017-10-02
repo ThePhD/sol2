@@ -41,7 +41,9 @@ Linker Errors
 
 There are lots of reasons for compiler linker errors. A common one is not knowing that you've compiled the Lua library as C++: when building with C++, it is important to note that every typical (static or dynamic) library expects the C calling convention to be used and that Sol includes the code using ``extern 'C'`` where applicable.
 
-However, when the target Lua library is compiled with C++, one must change the calling convention and name mangling scheme by getting rid of the ``extern 'C'`` block. This can be achieved by adding ``#define SOL_USING_CXX_LUA`` before including sol2, or by adding it to your compilation's command line.
+However, when the target Lua library is compiled with C++, one must change the calling convention and name mangling scheme by getting rid of the ``extern 'C'`` block. This can be achieved by adding ``#define SOL_USING_CXX_LUA`` before including sol2, or by adding it to your compilation's command line. If you build LuaJIT in C++ mode (how you would even, is beyond me), then you need to ``#define SOL_USING_CXX_LUAJIT`` as well.
+
+Note that you should not be defining these with standard builds of either Lua or LuaJIT. See the :ref:`config page<config-linker>` for more details.
 
 "caught (...) exception" errors
 -------------------------------

@@ -211,10 +211,7 @@ namespace sol {
 			call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, &usertype_traits<T>::user_metatable()[0], 1) : call_syntax::dot;
 			argcount -= static_cast<int>(syntax);
 
-			T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
-			T*& referencepointer = *pointerpointer;
-			T* obj = reinterpret_cast<T*>(pointerpointer + 1);
-			referencepointer = obj;
+			T* obj = detail::usertype_allocate<T>(L);
 			reference userdataref(L, -1);
 			userdataref.pop();
 
@@ -513,11 +510,8 @@ namespace sol {
 				call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, &usertype_traits<T>::user_metatable()[0], 1) : call_syntax::dot;
 				argcount -= static_cast<int>(syntax);
 
-				T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
+				T* obj = detail::usertype_allocate<T>(L);
 				reference userdataref(L, -1);
-				T*& referencepointer = *pointerpointer;
-				T* obj = reinterpret_cast<T*>(pointerpointer + 1);
-				referencepointer = obj;
 
 				construct_match<T, Args...>(constructor_match<T, false, clean_stack>(obj), L, argcount, boost + 1 + static_cast<int>(syntax));
 
@@ -541,12 +535,9 @@ namespace sol {
 				template <typename Fx, std::size_t I, typename... R, typename... Args>
 				int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start, F& f) {
 					const auto& metakey = usertype_traits<T>::metatable();
-					T** pointerpointer = reinterpret_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
+					T* obj = detail::usertype_allocate<T>(L);
 					reference userdataref(L, -1);
-					T*& referencepointer = *pointerpointer;
-					T* obj = reinterpret_cast<T*>(pointerpointer + 1);
-					referencepointer = obj;
-
+					
 					auto& func = std::get<I>(f.functions);
 					stack::call_into_lua<checked, clean_stack>(r, a, L, boost + start, func, detail::implicit_wrapper<T>(obj));
 

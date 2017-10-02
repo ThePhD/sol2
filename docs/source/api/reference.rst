@@ -35,7 +35,7 @@ members
 
 The first constructor creates a reference from the Lua stack at the specified index, saving it into the metatable registry. The second attemtps to register something that already exists in the registry. The third attempts to reference a pre-existing object and create a reference to it. These constructors are exposed on all types that derive from ``sol::reference``, meaning that you can grab tables, functions, and coroutines from the registry, stack, or from other objects easily.
 
-.. _lua_xmove-note::
+.. _lua_xmove-note:
 
 .. note::
 
