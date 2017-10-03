@@ -649,7 +649,8 @@ namespace sol {
 				umt.pop();
 
 				stack::get_field<true>(L, gcmetakey);
-				return stack::pop<light<umt_t>>(L);
+				umt_t& target_umt = stack::pop<user<umt_t>>(L);
+				return target_umt;
 			}
 
 			static int push(lua_State* L, umt_t&& umx) {

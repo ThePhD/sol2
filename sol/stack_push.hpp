@@ -512,7 +512,7 @@ namespace stack {
 	template <>
 	struct pusher<userdata_value> {
 		static int push(lua_State* L, userdata_value data) {
-			void** ud = static_cast<void**>(lua_newuserdata(L, sizeof(void*)));
+			void** ud = detail::usertype_allocate_pointer<void>(L);
 			*ud = data.value;
 			return 1;
 		}

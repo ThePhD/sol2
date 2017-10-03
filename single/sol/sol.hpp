@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-10-03 12:26:06.843171 UTC
-// This header was generated with sol v2.18.4 (revision 3660aec)
+// Generated 2017-10-03 14:46:14.157422 UTC
+// This header was generated with sol v2.18.4 (revision c5505c2)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -9380,7 +9380,7 @@ namespace stack {
 	template <>
 	struct pusher<userdata_value> {
 		static int push(lua_State* L, userdata_value data) {
-			void** ud = static_cast<void**>(lua_newuserdata(L, sizeof(void*)));
+			void** ud = detail::usertype_allocate_pointer<void>(L);
 			*ud = data.value;
 			return 1;
 		}
@@ -16803,7 +16803,8 @@ namespace sol {
 				umt.pop();
 
 				stack::get_field<true>(L, gcmetakey);
-				return stack::pop<light<umt_t>>(L);
+				umt_t& target_umt = stack::pop<user<umt_t>>(L);
+				return target_umt;
 			}
 
 			static int push(lua_State* L, umt_t&& umx) {
@@ -17312,7 +17313,7 @@ namespace sol {
 				stackvarmap.pop();
 
 				stack::get_field<true>(L, gcmetakey);
-				usertype_detail::simple_map& varmap = stack::pop<light<usertype_detail::simple_map>>(L);
+				usertype_detail::simple_map& varmap = stack::pop<user<usertype_detail::simple_map>>(L);
 				return varmap;
 			}
 

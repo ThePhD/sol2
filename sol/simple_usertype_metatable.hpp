@@ -404,7 +404,7 @@ namespace sol {
 				stackvarmap.pop();
 
 				stack::get_field<true>(L, gcmetakey);
-				usertype_detail::simple_map& varmap = stack::pop<light<usertype_detail::simple_map>>(L);
+				usertype_detail::simple_map& varmap = stack::pop<user<usertype_detail::simple_map>>(L);
 				return varmap;
 			}
 
