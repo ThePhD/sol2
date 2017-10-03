@@ -383,7 +383,7 @@ namespace stack {
 			tracking.use(1);
 			void* memory = lua_touserdata(L, index);
 			memory = detail::align_user<T>(memory);
-			return *static_cast<std::remove_reference_t<T>*>();
+			return *static_cast<std::remove_reference_t<T>*>(memory);
 		}
 	};
 

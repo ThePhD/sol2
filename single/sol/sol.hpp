@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-10-03 12:11:17.678787 UTC
-// This header was generated with sol v2.18.4 (revision 22d9905)
+// Generated 2017-10-03 12:26:06.843171 UTC
+// This header was generated with sol v2.18.4 (revision 3660aec)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -8326,7 +8326,7 @@ namespace stack {
 			tracking.use(1);
 			void* memory = lua_touserdata(L, index);
 			memory = detail::align_user<T>(memory);
-			return *static_cast<std::remove_reference_t<T>*>();
+			return *static_cast<std::remove_reference_t<T>*>(memory);
 		}
 	};
 
