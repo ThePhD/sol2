@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-10-02 21:33:04.936340 UTC
-// This header was generated with sol v2.18.4 (revision 73484bf)
+// Generated 2017-10-03 12:11:17.678787 UTC
+// This header was generated with sol v2.18.4 (revision 22d9905)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -8315,7 +8315,8 @@ namespace stack {
 	struct getter<light<T>> {
 		static light<T> get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
-			return light<T>(static_cast<T*>(lua_touserdata(L, index)));
+			void* memory = lua_touserdata(L, index);
+			return light<T>(static_cast<T*>(memory));
 		}
 	};
 
@@ -8323,7 +8324,9 @@ namespace stack {
 	struct getter<user<T>> {
 		static std::add_lvalue_reference_t<T> get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
-			return *static_cast<std::remove_reference_t<T>*>(lua_touserdata(L, index));
+			void* memory = lua_touserdata(L, index);
+			memory = detail::align_user<T>(memory);
+			return *static_cast<std::remove_reference_t<T>*>();
 		}
 	};
 
@@ -8331,7 +8334,9 @@ namespace stack {
 	struct getter<user<T*>> {
 		static T* get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
-			return static_cast<T*>(lua_touserdata(L, index));
+			void* memory = lua_touserdata(L, index);
+			memory = detail::align_user<T*>(memory);
+			return static_cast<T*>(memory);
 		}
 	};
 
