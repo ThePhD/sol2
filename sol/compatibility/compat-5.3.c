@@ -24,39 +24,15 @@
 #endif /* No-lock fopen_s usage if possible */
 
 #if defined(_MSC_VER) && COMPAT53_FOPEN_NO_LOCK
-#include <share.h>
+#  include <share.h>
 #endif /* VC++ _fsopen for share-allowed file read */
 
 #ifndef COMPAT53_HAVE_STRERROR_R
 #  if defined(__GLIBC__) || defined(_POSIX_VERSION) || defined(__APPLE__) || \
       (!defined (__MINGW32__) && defined(__GNUC__) && (__GNUC__ < 6))
 #    define COMPAT53_HAVE_STRERROR_R 1
-#    if (((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || \
-         (defined(_XOPEN_SOURCE) || _XOPEN_SOURCE >= 600)) && \
-         (!defined(_GNU_SOURCE) || !_GNU_SOURCE)) || \
-        defined(__APPLE__)
-#      ifndef COMPAT53_HAVE_STRERROR_R_XSI
-#        define COMPAT53_HAVE_STRERROR_R_XSI 1
-#      endif /* XSI-Compliant strerror_r */
-#      ifndef COMPAT53_HAVE_STRERROR_R_GNU
-#        define COMPAT53_HAVE_STRERROR_R_GNU 0
-#      endif /* GNU strerror_r */
-#    else /* XSI/Posix vs. GNU strerror_r */
-#      ifndef COMPAT53_HAVE_STRERROR_R_GNU
-#        define COMPAT53_HAVE_STRERROR_R_GNU 1
-#      endif /* GNU variant strerror_r */
-#      ifndef COMPAT53_HAVE_STRERROR_R_XSI
-#        define COMPAT53_HAVE_STRERROR_R_XSI 0
-#      endif /* XSI strerror_r */
-#    endif /* XSI/Posix vs. GNU strerror_r */
 #  else /* none of the defines matched: define to 0 */
 #    define COMPAT53_HAVE_STRERROR_R 0
-#    ifndef COMPAT53_HAVE_STRERROR_R_XSI
-#      define COMPAT53_HAVE_STRERROR_R_XSI 0
-#    endif /* XSI strerror_r */
-#    ifndef COMPAT53_HAVE_STRERROR_R_GNU
-#      define COMPAT53_HAVE_STRERROR_R_GNU 0
-#    endif /* GNU strerror_r */
 #  endif /* have strerror_r of some form */
 #endif /* strerror_r */
 
@@ -70,34 +46,38 @@
 #endif /* strerror_s */
 
 #ifndef COMPAT53_LUA_FILE_BUFFER_SIZE
-#define COMPAT53_LUA_FILE_BUFFER_SIZE 4096
+#  define COMPAT53_LUA_FILE_BUFFER_SIZE 4096
 #endif /* Lua File Buffer Size */
 
 
 static char* compat53_strerror (int en, char* buff, size_t sz) {
 #if COMPAT53_HAVE_STRERROR_R
   /* use strerror_r here, because it's available on these specific platforms */
-#if COMPAT53_HAVE_STRERROR_R_XSI
-  /* XSI Compliant */
-  strerror_r(en, buff, sz);
-  return buff;
-#else
-  /* GNU-specific which returns const char* */
-  return strerror_r(en, buff, sz);
-#endif
+  if (sz > 0) {
+    buff[0] = '\0';
+    /* we don't care whether the GNU version or the XSI version is used: */
+    if (strerror_r(en, buff, sz)) {
+      /* Yes, we really DO want to ignore the return value!
+       * GCC makes that extra hard, not even a (void) cast will do. */
+    }
+    if (buff[0] == '\0') {
+      /* Buffer is unchanged, so we probably have called GNU strerror_r which
+       * returned a static constant string. Chances are that strerror will
+       * return the same static constant string and therefore be thread-safe. */
+      return strerror(en);
+    }
+  }
+  return buff; /* sz is 0 *or* strerror_r wrote into the buffer */
 #elif COMPAT53_HAVE_STRERROR_S
-  /* for MSVC and other C11 implementations, use strerror_s
-   * since it's provided by default by the libraries
-   */
+  /* for MSVC and other C11 implementations, use strerror_s since it's
+   * provided by default by the libraries */
   strerror_s(buff, sz, en);
   return buff;
 #else
-  /* fallback, but
-   * strerror is not guaranteed to be threadsafe due to modifying
-   * errno itself and some impls not locking a static buffer for it
-   * ... but most known systems have threadsafe errno: this might only change
-   * if the locale is changed out from under someone while this function is being called
-   */
+  /* fallback, but strerror is not guaranteed to be threadsafe due to modifying
+   * errno itself and some impls not locking a static buffer for it ... but most
+   * known systems have threadsafe errno: this might only change if the locale
+   * is changed out from under someone while this function is being called */
   (void)buff;
   (void)sz;
   return strerror(en);
@@ -580,12 +560,10 @@ COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char 
      * dictate this to the user. A quick check shows that fopen_s this
      * goes back to VS 2005, and _fsopen goes back to VS 2003 .NET,
      * possibly even before that so we don't need to do any version
-     * number checks, since this has been there since forever.
-     */
+     * number checks, since this has been there since forever.  */
 
     /* TO USER: if you want the behavior of typical fopen_s/fopen,
-     * which does lock the file on VC++, define the macro used below to 0
-    */
+     * which does lock the file on VC++, define the macro used below to 0 */
 #if COMPAT53_FOPEN_NO_LOCK
     lf.f = _fsopen(filename, "r", _SH_DENYNO); /* do not lock the file in any way */
     if (lf.f == NULL)
@@ -612,7 +590,7 @@ COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char 
     compat53_skipcomment(&lf, &c);  /* re-read initial portion */
   }
   if (c != EOF)
-    lf.buff[lf.n++] = (char)(c);  /* 'c' is the first character of the stream */
+    lf.buff[lf.n++] = (char)c;  /* 'c' is the first character of the stream */
   status = lua_load(L, &compat53_getF, &lf, lua_tostring(L, -1), mode);
   readstatus = ferror(lf.f);
   if (filename) fclose(lf.f);  /* close file (even in case of errors) */
