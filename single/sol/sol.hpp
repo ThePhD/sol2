@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-10-03 14:46:14.157422 UTC
-// This header was generated with sol v2.18.4 (revision c5505c2)
+// Generated 2017-10-16 23:28:23.354459 UTC
+// This header was generated with sol v2.18.4 (revision a679742)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -2022,39 +2022,15 @@ COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
 #endif /* No-lock fopen_s usage if possible */
 
 #if defined(_MSC_VER) && COMPAT53_FOPEN_NO_LOCK
-#include <share.h>
+#  include <share.h>
 #endif /* VC++ _fsopen for share-allowed file read */
 
 #ifndef COMPAT53_HAVE_STRERROR_R
 #  if defined(__GLIBC__) || defined(_POSIX_VERSION) || defined(__APPLE__) || \
       (!defined (__MINGW32__) && defined(__GNUC__) && (__GNUC__ < 6))
 #    define COMPAT53_HAVE_STRERROR_R 1
-#    if (((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || \
-         (defined(_XOPEN_SOURCE) || _XOPEN_SOURCE >= 600)) && \
-         (!defined(_GNU_SOURCE) || !_GNU_SOURCE)) || \
-        defined(__APPLE__)
-#      ifndef COMPAT53_HAVE_STRERROR_R_XSI
-#        define COMPAT53_HAVE_STRERROR_R_XSI 1
-#      endif /* XSI-Compliant strerror_r */
-#      ifndef COMPAT53_HAVE_STRERROR_R_GNU
-#        define COMPAT53_HAVE_STRERROR_R_GNU 0
-#      endif /* GNU strerror_r */
-#    else /* XSI/Posix vs. GNU strerror_r */
-#      ifndef COMPAT53_HAVE_STRERROR_R_GNU
-#        define COMPAT53_HAVE_STRERROR_R_GNU 1
-#      endif /* GNU variant strerror_r */
-#      ifndef COMPAT53_HAVE_STRERROR_R_XSI
-#        define COMPAT53_HAVE_STRERROR_R_XSI 0
-#      endif /* XSI strerror_r */
-#    endif /* XSI/Posix vs. GNU strerror_r */
 #  else /* none of the defines matched: define to 0 */
 #    define COMPAT53_HAVE_STRERROR_R 0
-#    ifndef COMPAT53_HAVE_STRERROR_R_XSI
-#      define COMPAT53_HAVE_STRERROR_R_XSI 0
-#    endif /* XSI strerror_r */
-#    ifndef COMPAT53_HAVE_STRERROR_R_GNU
-#      define COMPAT53_HAVE_STRERROR_R_GNU 0
-#    endif /* GNU strerror_r */
 #  endif /* have strerror_r of some form */
 #endif /* strerror_r */
 
@@ -2068,33 +2044,37 @@ COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
 #endif /* strerror_s */
 
 #ifndef COMPAT53_LUA_FILE_BUFFER_SIZE
-#define COMPAT53_LUA_FILE_BUFFER_SIZE 4096
+#  define COMPAT53_LUA_FILE_BUFFER_SIZE 4096
 #endif /* Lua File Buffer Size */
 
 static char* compat53_strerror (int en, char* buff, size_t sz) {
 #if COMPAT53_HAVE_STRERROR_R
   /* use strerror_r here, because it's available on these specific platforms */
-#if COMPAT53_HAVE_STRERROR_R_XSI
-  /* XSI Compliant */
-  strerror_r(en, buff, sz);
-  return buff;
-#else
-  /* GNU-specific which returns const char* */
-  return strerror_r(en, buff, sz);
-#endif
+  if (sz > 0) {
+    buff[0] = '\0';
+    /* we don't care whether the GNU version or the XSI version is used: */
+    if (strerror_r(en, buff, sz)) {
+      /* Yes, we really DO want to ignore the return value!
+       * GCC makes that extra hard, not even a (void) cast will do. */
+    }
+    if (buff[0] == '\0') {
+      /* Buffer is unchanged, so we probably have called GNU strerror_r which
+       * returned a static constant string. Chances are that strerror will
+       * return the same static constant string and therefore be thread-safe. */
+      return strerror(en);
+    }
+  }
+  return buff; /* sz is 0 *or* strerror_r wrote into the buffer */
 #elif COMPAT53_HAVE_STRERROR_S
-  /* for MSVC and other C11 implementations, use strerror_s
-   * since it's provided by default by the libraries
-   */
+  /* for MSVC and other C11 implementations, use strerror_s since it's
+   * provided by default by the libraries */
   strerror_s(buff, sz, en);
   return buff;
 #else
-  /* fallback, but
-   * strerror is not guaranteed to be threadsafe due to modifying
-   * errno itself and some impls not locking a static buffer for it
-   * ... but most known systems have threadsafe errno: this might only change
-   * if the locale is changed out from under someone while this function is being called
-   */
+  /* fallback, but strerror is not guaranteed to be threadsafe due to modifying
+   * errno itself and some impls not locking a static buffer for it ... but most
+   * known systems have threadsafe errno: this might only change if the locale
+   * is changed out from under someone while this function is being called */
   (void)buff;
   (void)sz;
   return strerror(en);
@@ -2549,12 +2529,10 @@ COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char 
      * dictate this to the user. A quick check shows that fopen_s this
      * goes back to VS 2005, and _fsopen goes back to VS 2003 .NET,
      * possibly even before that so we don't need to do any version
-     * number checks, since this has been there since forever.
-     */
+     * number checks, since this has been there since forever.  */
 
     /* TO USER: if you want the behavior of typical fopen_s/fopen,
-     * which does lock the file on VC++, define the macro used below to 0
-    */
+     * which does lock the file on VC++, define the macro used below to 0 */
 #if COMPAT53_FOPEN_NO_LOCK
     lf.f = _fsopen(filename, "r", _SH_DENYNO); /* do not lock the file in any way */
     if (lf.f == NULL)
@@ -2581,7 +2559,7 @@ COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char 
     compat53_skipcomment(&lf, &c);  /* re-read initial portion */
   }
   if (c != EOF)
-    lf.buff[lf.n++] = (char)(c);  /* 'c' is the first character of the stream */
+    lf.buff[lf.n++] = (char)c;  /* 'c' is the first character of the stream */
   status = lua_load(L, &compat53_getF, &lf, lua_tostring(L, -1), mode);
   readstatus = ferror(lf.f);
   if (filename) fclose(lf.f);  /* close file (even in case of errors) */
@@ -5982,6 +5960,10 @@ namespace sol {
 			push_popper_n(lua_State* luastate, int x)
 			: L(luastate), t(x) {
 			}
+			push_popper_n(const push_popper_n&) = delete;
+			push_popper_n(push_popper_n&&) = default;
+			push_popper_n& operator=(const push_popper_n&) = delete;
+			push_popper_n& operator=(push_popper_n&&) = default;
 			~push_popper_n() {
 				lua_pop(L, t);
 			}
@@ -6091,7 +6073,7 @@ namespace sol {
 				deref();
 			}
 			if (r.ref == LUA_REFNIL) {
-				luastate = detail::pick_main_thread < main_only && !r_main_only >(r.lua_state(), r.lua_state());
+				luastate = detail::pick_main_thread < main_only && !r_main_only > (r.lua_state(), r.lua_state());
 				ref = LUA_REFNIL;
 				return;
 			}
@@ -6104,7 +6086,7 @@ namespace sol {
 				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 				return;
 			}
-			luastate = detail::pick_main_thread < main_only && !r_main_only >(r.lua_state(), r.lua_state());
+			luastate = detail::pick_main_thread < main_only && !r_main_only > (r.lua_state(), r.lua_state());
 			ref = r.copy();
 		}
 
@@ -6114,7 +6096,7 @@ namespace sol {
 				deref();
 			}
 			if (r.ref == LUA_REFNIL) {
-				luastate = detail::pick_main_thread<main_only && !r_main_only>(r.lua_state(), r.lua_state());
+				luastate = detail::pick_main_thread < main_only && !r_main_only > (r.lua_state(), r.lua_state());
 				ref = LUA_REFNIL;
 				return;
 			}
@@ -6128,7 +6110,7 @@ namespace sol {
 				return;
 			}
 
-			luastate = detail::pick_main_thread < main_only && !r_main_only >(r.lua_state(), r.lua_state());
+			luastate = detail::pick_main_thread < main_only && !r_main_only > (r.lua_state(), r.lua_state());
 			ref = r.ref;
 			r.ref = LUA_NOREF;
 			r.luastate = nullptr;
@@ -6248,11 +6230,11 @@ namespace sol {
 		}
 
 		basic_reference(const basic_reference<!main_only>& o) noexcept
-		: luastate(detail::pick_main_thread<main_only && !main_only>(o.lua_state(), o.lua_state())), ref(o.copy()) {
+		: luastate(detail::pick_main_thread < main_only && !main_only > (o.lua_state(), o.lua_state())), ref(o.copy()) {
 		}
 
 		basic_reference(basic_reference<!main_only>&& o) noexcept
-		: luastate(detail::pick_main_thread<main_only && !main_only>(o.lua_state(), o.lua_state())), ref(o.ref) {
+		: luastate(detail::pick_main_thread < main_only && !main_only > (o.lua_state(), o.lua_state())), ref(o.ref) {
 			o.luastate = nullptr;
 			o.ref = LUA_NOREF;
 		}
@@ -6276,7 +6258,7 @@ namespace sol {
 			copy_assign(r);
 			return *this;
 		}
-		
+
 		template <typename Super>
 		basic_reference& operator=(proxy_base<Super>&& r);
 
@@ -12856,7 +12838,7 @@ namespace sol {
 		decltype(auto) tagged_get(types<T>) const {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!valid()) {
-				type_panic_c_str(L, index, type_of(L, index), type::none);
+				type_panic_c_str(L, index, type_of(L, index), type::none, "bad get from protected_function_result (is not an error)");
 			}
 #endif // Check Argument Safety
 			return stack::get<T>(L, index);
@@ -12872,7 +12854,7 @@ namespace sol {
 		error tagged_get(types<error>) const {
 #ifdef SOL_CHECK_ARGUMENTS
 			if (valid()) {
-				type_panic_c_str(L, index, type_of(L, index), type::none);
+				type_panic_c_str(L, index, type_of(L, index), type::none, "bad get from protected_function_result (is an error)");
 			}
 #endif // Check Argument Safety
 			return error(detail::direct_error, stack::get<std::string>(L, index));
@@ -13515,13 +13497,13 @@ namespace sol {
 	template <typename Table, typename Key, typename T>
 	inline bool operator!=(T&& left, const proxy<Table, Key>& right) {
 		typedef decltype(stack::get<T>(nullptr, 0)) U;
-		return right.template get<optional<U>>() == left;
+		return right.template get<optional<U>>() != left;
 	}
 
 	template <typename Table, typename Key, typename T>
 	inline bool operator!=(const proxy<Table, Key>& right, T&& left) {
 		typedef decltype(stack::get<T>(nullptr, 0)) U;
-		return right.template get<optional<U>>() == left;
+		return right.template get<optional<U>>() != left;
 	}
 
 	template <typename Table, typename Key>

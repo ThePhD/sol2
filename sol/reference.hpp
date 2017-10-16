@@ -76,6 +76,10 @@ namespace sol {
 			push_popper_n(lua_State* luastate, int x)
 			: L(luastate), t(x) {
 			}
+			push_popper_n(const push_popper_n&) = delete;
+			push_popper_n(push_popper_n&&) = default;
+			push_popper_n& operator=(const push_popper_n&) = delete;
+			push_popper_n& operator=(push_popper_n&&) = default;
 			~push_popper_n() {
 				lua_pop(L, t);
 			}
@@ -185,7 +189,7 @@ namespace sol {
 				deref();
 			}
 			if (r.ref == LUA_REFNIL) {
-				luastate = detail::pick_main_thread < main_only && !r_main_only >(r.lua_state(), r.lua_state());
+				luastate = detail::pick_main_thread < main_only && !r_main_only > (r.lua_state(), r.lua_state());
 				ref = LUA_REFNIL;
 				return;
 			}
@@ -198,7 +202,7 @@ namespace sol {
 				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 				return;
 			}
-			luastate = detail::pick_main_thread < main_only && !r_main_only >(r.lua_state(), r.lua_state());
+			luastate = detail::pick_main_thread < main_only && !r_main_only > (r.lua_state(), r.lua_state());
 			ref = r.copy();
 		}
 
@@ -208,7 +212,7 @@ namespace sol {
 				deref();
 			}
 			if (r.ref == LUA_REFNIL) {
-				luastate = detail::pick_main_thread<main_only && !r_main_only>(r.lua_state(), r.lua_state());
+				luastate = detail::pick_main_thread < main_only && !r_main_only > (r.lua_state(), r.lua_state());
 				ref = LUA_REFNIL;
 				return;
 			}
@@ -222,7 +226,7 @@ namespace sol {
 				return;
 			}
 
-			luastate = detail::pick_main_thread < main_only && !r_main_only >(r.lua_state(), r.lua_state());
+			luastate = detail::pick_main_thread < main_only && !r_main_only > (r.lua_state(), r.lua_state());
 			ref = r.ref;
 			r.ref = LUA_NOREF;
 			r.luastate = nullptr;
@@ -342,11 +346,11 @@ namespace sol {
 		}
 
 		basic_reference(const basic_reference<!main_only>& o) noexcept
-		: luastate(detail::pick_main_thread<main_only && !main_only>(o.lua_state(), o.lua_state())), ref(o.copy()) {
+		: luastate(detail::pick_main_thread < main_only && !main_only > (o.lua_state(), o.lua_state())), ref(o.copy()) {
 		}
 
 		basic_reference(basic_reference<!main_only>&& o) noexcept
-		: luastate(detail::pick_main_thread<main_only && !main_only>(o.lua_state(), o.lua_state())), ref(o.ref) {
+		: luastate(detail::pick_main_thread < main_only && !main_only > (o.lua_state(), o.lua_state())), ref(o.ref) {
 			o.luastate = nullptr;
 			o.ref = LUA_NOREF;
 		}
@@ -370,7 +374,7 @@ namespace sol {
 			copy_assign(r);
 			return *this;
 		}
-		
+
 		template <typename Super>
 		basic_reference& operator=(proxy_base<Super>&& r);
 
