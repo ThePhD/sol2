@@ -44,7 +44,7 @@ int main() {
 }
 ```
 
-More examples are given in the examples directory.
+More examples are given in the examples directory [here](https://github.com/ThePhD/sol2/tree/develop/examples). 
 
 ## Presentations
 
@@ -72,14 +72,14 @@ You can grab a single header out of the library [here](https://github.com/ThePhD
 
 ## Supported Compilers
 
-Sol makes use of C++11 **and** C++14 features. GCC 5.x.x and Clang 3.6.x (with std=c++1z and appropriate standard library) 
-or higher should be able to compile without problems.  However, the officially supported and CI-tested compilers are:
+Sol makes use of C++11 **and** C++14 features. GCC 5.x.x and Clang 3.6.x (with `-std=c++1z` and appropriate standard library) 
+or higher should be able to compile without problems. However, the officially supported and CI-tested compilers are:
 
 - GCC 5.x.x+
 - Clang 3.6.x+
 - Visual Studio 2015 Community (Visual C++ 14.0)+
 
-Please make sure you use the `-std=c++1y`, `-std=c++14`, `-std=c++1z`, `-std=c++17` or better  standard flags 
+Please make sure you use the `-std=c++1y`, `-std=c++14`, `-std=c++1z`, `-std=c++17` or better standard flags 
 (some of these flags are the defaults in later versions of GCC 6+ and better).
 
 Older compilers (GCC 4.9.x, Clang 3.4.x seem to be the lowest) can work with versions as late 
