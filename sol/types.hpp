@@ -73,13 +73,13 @@ namespace sol {
 			try {
 				return f(L);
 			}
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			catch (const char* s) {
 				lua_pushstring(L, s);
 			}
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
@@ -117,13 +117,13 @@ namespace sol {
 			try {
 				return f(L, std::forward<Args>(args)...);
 			}
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			catch (const char* s) {
 				lua_pushstring(L, s);
 			}
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}

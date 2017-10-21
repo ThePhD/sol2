@@ -158,6 +158,7 @@ namespace sol {
 				returncount = poststacksize - (firstreturn - 1);
 #ifndef SOL_NO_EXCEPTIONS
 			}
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			// Handle C++ errors thrown from C++ functions bound inside of lua
 			catch (const char* error) {
 				onexcept(error);
@@ -174,6 +175,9 @@ namespace sol {
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}
+#else
+			// do not handle exceptions: they can be propogated into C++ and keep all type information / rich information
+#endif // about as safe as possible
 #endif // No Exceptions
 			return protected_function_result(lua_state(), firstreturn, returncount, returncount, code);
 		}

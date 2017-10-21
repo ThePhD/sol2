@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-10-16 23:28:23.354459 UTC
-// This header was generated with sol v2.18.4 (revision a679742)
+// Generated 2017-10-21 00:59:28.565154 UTC
+// This header was generated with sol v2.18.4 (revision 3ee36c7)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4391,13 +4391,13 @@ namespace sol {
 			try {
 				return f(L);
 			}
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			catch (const char* s) {
 				lua_pushstring(L, s);
 			}
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
@@ -4435,13 +4435,13 @@ namespace sol {
 			try {
 				return f(L, std::forward<Args>(args)...);
 			}
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			catch (const char* s) {
 				lua_pushstring(L, s);
 			}
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
@@ -13075,6 +13075,7 @@ namespace sol {
 				returncount = poststacksize - (firstreturn - 1);
 #ifndef SOL_NO_EXCEPTIONS
 			}
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			// Handle C++ errors thrown from C++ functions bound inside of lua
 			catch (const char* error) {
 				onexcept(error);
@@ -13091,6 +13092,9 @@ namespace sol {
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}
+#else
+			// do not handle exceptions: they can be propogated into C++ and keep all type information / rich information
+#endif // about as safe as possible
 #endif // No Exceptions
 			return protected_function_result(lua_state(), firstreturn, returncount, returncount, code);
 		}
