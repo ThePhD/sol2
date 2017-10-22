@@ -53,7 +53,7 @@ You can interact with the variables like this:
 		
 		// can also get it using the "get" member function
 		// auto replaces the unqualified type name
-		auto resolution = config.get<sol::table>( "resolution );
+		auto resolution = config.get<sol::table>( "resolution" );
 
 		// table and state can have multiple things pulled out of it too
 		std::pair<int, int> xyresolution = resolution.get<int, int>( "x", "y" );
