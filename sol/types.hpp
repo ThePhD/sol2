@@ -70,10 +70,12 @@ namespace sol {
 #else
 		template <lua_CFunction f>
 		int static_trampoline(lua_State* L) {
-			try {
-				return f(L);
-			}
 #if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+			try {
+#endif
+				return f(L);
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+			}
 			catch (const char* s) {
 				lua_pushstring(L, s);
 			}
@@ -83,8 +85,9 @@ namespace sol {
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
-#endif
+
 			return lua_error(L);
+#endif
 		}
 
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
@@ -114,10 +117,12 @@ namespace sol {
 			if (meta::bind_traits<meta::unqualified_t<Fx>>::is_noexcept) {
 				return f(L, std::forward<Args>(args)...);
 			}
-			try {
-				return f(L, std::forward<Args>(args)...);
-			}
 #if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+			try {
+#endif
+				return f(L, std::forward<Args>(args)...);
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+			}
 			catch (const char* s) {
 				lua_pushstring(L, s);
 			}
@@ -127,8 +132,9 @@ namespace sol {
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
-#endif
+
 			return lua_error(L);
+#endif
 		}
 
 		inline int c_trampoline(lua_State* L, lua_CFunction f) {

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-10-26 17:02:46.122060 UTC
-// This header was generated with sol v2.18.5 (revision d107cb8)
+// Generated 2017-10-26 17:14:51.531340 UTC
+// This header was generated with sol v2.18.5 (revision 540d322)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4395,10 +4395,12 @@ namespace sol {
 #else
 		template <lua_CFunction f>
 		int static_trampoline(lua_State* L) {
-			try {
-				return f(L);
-			}
 #if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+			try {
+#endif
+				return f(L);
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+			}
 			catch (const char* s) {
 				lua_pushstring(L, s);
 			}
@@ -4408,8 +4410,9 @@ namespace sol {
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
-#endif
+
 			return lua_error(L);
+#endif
 		}
 
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
@@ -4439,10 +4442,12 @@ namespace sol {
 			if (meta::bind_traits<meta::unqualified_t<Fx>>::is_noexcept) {
 				return f(L, std::forward<Args>(args)...);
 			}
-			try {
-				return f(L, std::forward<Args>(args)...);
-			}
 #if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+			try {
+#endif
+				return f(L, std::forward<Args>(args)...);
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+			}
 			catch (const char* s) {
 				lua_pushstring(L, s);
 			}
@@ -4452,8 +4457,9 @@ namespace sol {
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
-#endif
+
 			return lua_error(L);
+#endif
 		}
 
 		inline int c_trampoline(lua_State* L, lua_CFunction f) {
@@ -13099,15 +13105,17 @@ namespace sol {
 					stack::push(lua_state(), error);
 				}
 			};
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			try {
+#endif
 #endif // No Exceptions
 				firstreturn = (std::max)(1, static_cast<int>(stacksize - n - static_cast<int>(h.valid())));
 				code = luacall(n, LUA_MULTRET, h);
 				poststacksize = lua_gettop(lua_state()) - static_cast<int>(h.valid());
 				returncount = poststacksize - (firstreturn - 1);
 #ifndef SOL_NO_EXCEPTIONS
-			}
 #if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+			}
 			// Handle C++ errors thrown from C++ functions bound inside of lua
 			catch (const char* error) {
 				onexcept(error);
