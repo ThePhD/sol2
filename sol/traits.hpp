@@ -260,7 +260,14 @@ namespace sol {
 			struct is_callable : std::is_function<std::remove_pointer_t<T>> {};
 
 			template <typename T>
-			struct is_callable<T, std::enable_if_t<std::is_class<unqualified_t<T>>::value && std::is_destructible<unqualified_t<T>>::value>> {
+			struct is_callable<T, std::enable_if_t<std::is_final<unqualified_t<T>>::value 
+				&& std::is_class<unqualified_t<T>>::value
+				&&  std::is_same<decltype(void(&T::operator())), void>::value>> {
+
+			};
+
+			template <typename T>
+			struct is_callable<T, std::enable_if_t<!std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value && std::is_destructible<unqualified_t<T>>::value>> {
 				using yes = char;
 				using no = struct { char s[2]; };
 
@@ -281,7 +288,7 @@ namespace sol {
 			};
 
 			template <typename T>
-			struct is_callable<T, std::enable_if_t<std::is_class<unqualified_t<T>>::value && !std::is_destructible<unqualified_t<T>>::value>> {
+			struct is_callable<T, std::enable_if_t<!std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value && !std::is_destructible<unqualified_t<T>>::value>> {
 				using yes = char;
 				using no = struct { char s[2]; };
 

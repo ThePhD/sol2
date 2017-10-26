@@ -449,7 +449,7 @@ namespace stack {
 			}
 			if (!success) {
 				lua_pop(L, 1);
-				handler(L, index, type::userdata, indextype, "value is not a valid sol userdata of any kind");
+				handler(L, index, type::userdata, indextype, "value at this index does not properly reflect the desired type");
 				return false;
 			}
 			lua_pop(L, 1);

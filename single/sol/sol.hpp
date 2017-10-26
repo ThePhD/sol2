@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-10-21 00:59:28.565154 UTC
-// This header was generated with sol v2.18.4 (revision 3ee36c7)
+// Generated 2017-10-26 16:52:58.996254 UTC
+// This header was generated with sol v2.18.4 (revision e9580bc)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1147,7 +1147,14 @@ namespace sol {
 			struct is_callable : std::is_function<std::remove_pointer_t<T>> {};
 
 			template <typename T>
-			struct is_callable<T, std::enable_if_t<std::is_class<unqualified_t<T>>::value && std::is_destructible<unqualified_t<T>>::value>> {
+			struct is_callable<T, std::enable_if_t<std::is_final<unqualified_t<T>>::value 
+				&& std::is_class<unqualified_t<T>>::value
+				&&  std::is_same<decltype(void(&T::operator())), void>::value>> {
+
+			};
+
+			template <typename T>
+			struct is_callable<T, std::enable_if_t<!std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value && std::is_destructible<unqualified_t<T>>::value>> {
 				using yes = char;
 				using no = struct { char s[2]; };
 
@@ -1168,7 +1175,7 @@ namespace sol {
 			};
 
 			template <typename T>
-			struct is_callable<T, std::enable_if_t<std::is_class<unqualified_t<T>>::value && !std::is_destructible<unqualified_t<T>>::value>> {
+			struct is_callable<T, std::enable_if_t<!std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value && !std::is_destructible<unqualified_t<T>>::value>> {
 				using yes = char;
 				using no = struct { char s[2]; };
 
@@ -5685,19 +5692,44 @@ namespace detail {
 
 namespace sol {
 
+	inline std::string associated_type_name(lua_State* L, int index, type t) {
+		switch (t) {
+		case type::poly:
+			return "anything";
+		case type::userdata:
+		{
+			if (lua_getmetatable(L, index) == 0) {
+				break;
+			}
+			lua_pushlstring(L, "__name", 6);
+			lua_rawget(L, -2);
+			size_t sz;
+			const char* name = lua_tolstring(L, -1, &sz);
+			std::string tn(name, static_cast<std::string::size_type>(sz));
+			lua_pop(L, 2);
+			return name;
+		}
+		default:
+			break;
+		}
+		return lua_typename(L, static_cast<int>(t));
+	}
+
 	inline int type_panic_string(lua_State* L, int index, type expected, type actual, const std::string& message = "") noexcept(false) {
-		const char* err = message.empty() ? "stack index %d, expected %s, received %s" : "stack index %d, expected %s, received %s with message %s";
+		const char* err = message.empty() ? "stack index %d, expected %s, received %s" : "stack index %d, expected %s, received %s: %s";
+		std::string actualname = associated_type_name(L, index, actual);
 		return luaL_error(L, err, index,
 			expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected)),
-			actual == type::poly ? "anything" : lua_typename(L, static_cast<int>(actual)),
+			actualname.c_str(),
 			message.c_str());
 	}
 
 	inline int type_panic_c_str(lua_State* L, int index, type expected, type actual, const char* message = nullptr) noexcept(false) {
-		const char* err = message == nullptr || (std::char_traits<char>::length(message) == 0) ? "stack index %d, expected %s, received %s" : "stack index %d, expected %s, received %s with message %s";
+		const char* err = message == nullptr || (std::char_traits<char>::length(message) == 0) ? "stack index %d, expected %s, received %s" : "stack index %d, expected %s, received %s: %s";
+		std::string actualname = associated_type_name(L, index, actual);
 		return luaL_error(L, err, index,
 			expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected)),
-			actual == type::poly ? "anything" : lua_typename(L, static_cast<int>(actual)),
+			actualname.c_str(),
 			message);
 	}
 
@@ -5731,7 +5763,7 @@ namespace sol {
 	template <typename R, typename... Args>
 	struct argument_handler<types<R, Args...>> {
 		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
-			std::string addendum = " (bad argument to type expecting '";
+			std::string addendum = " (bad argument into '";
 			addendum += detail::demangle<R>();
 			addendum += "(";
 			int marker = 0;
@@ -7794,7 +7826,7 @@ namespace stack {
 			}
 			if (!success) {
 				lua_pop(L, 1);
-				handler(L, index, type::userdata, indextype, "value is not a valid sol userdata of any kind");
+				handler(L, index, type::userdata, indextype, "value at this index does not properly reflect the desired type");
 				return false;
 			}
 			lua_pop(L, 1);

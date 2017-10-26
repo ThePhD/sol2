@@ -27,19 +27,44 @@
 
 namespace sol {
 
+	inline std::string associated_type_name(lua_State* L, int index, type t) {
+		switch (t) {
+		case type::poly:
+			return "anything";
+		case type::userdata:
+		{
+			if (lua_getmetatable(L, index) == 0) {
+				break;
+			}
+			lua_pushlstring(L, "__name", 6);
+			lua_rawget(L, -2);
+			size_t sz;
+			const char* name = lua_tolstring(L, -1, &sz);
+			std::string tn(name, static_cast<std::string::size_type>(sz));
+			lua_pop(L, 2);
+			return name;
+		}
+		default:
+			break;
+		}
+		return lua_typename(L, static_cast<int>(t));
+	}
+
 	inline int type_panic_string(lua_State* L, int index, type expected, type actual, const std::string& message = "") noexcept(false) {
-		const char* err = message.empty() ? "stack index %d, expected %s, received %s" : "stack index %d, expected %s, received %s with message %s";
+		const char* err = message.empty() ? "stack index %d, expected %s, received %s" : "stack index %d, expected %s, received %s: %s";
+		std::string actualname = associated_type_name(L, index, actual);
 		return luaL_error(L, err, index,
 			expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected)),
-			actual == type::poly ? "anything" : lua_typename(L, static_cast<int>(actual)),
+			actualname.c_str(),
 			message.c_str());
 	}
 
 	inline int type_panic_c_str(lua_State* L, int index, type expected, type actual, const char* message = nullptr) noexcept(false) {
-		const char* err = message == nullptr || (std::char_traits<char>::length(message) == 0) ? "stack index %d, expected %s, received %s" : "stack index %d, expected %s, received %s with message %s";
+		const char* err = message == nullptr || (std::char_traits<char>::length(message) == 0) ? "stack index %d, expected %s, received %s" : "stack index %d, expected %s, received %s: %s";
+		std::string actualname = associated_type_name(L, index, actual);
 		return luaL_error(L, err, index,
 			expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected)),
-			actual == type::poly ? "anything" : lua_typename(L, static_cast<int>(actual)),
+			actualname.c_str(),
 			message);
 	}
 
@@ -73,7 +98,7 @@ namespace sol {
 	template <typename R, typename... Args>
 	struct argument_handler<types<R, Args...>> {
 		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
-			std::string addendum = " (bad argument to type expecting '";
+			std::string addendum = " (bad argument into '";
 			addendum += detail::demangle<R>();
 			addendum += "(";
 			int marker = 0;
