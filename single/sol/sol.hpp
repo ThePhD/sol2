@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-10-26 17:14:51.531340 UTC
-// This header was generated with sol v2.18.5 (revision 540d322)
+// Generated 2017-10-30 18:38:03.122522 UTC
+// This header was generated with sol v2.18.5 (revision 882f337)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -15337,11 +15337,11 @@ namespace sol {
 				}
 				int p;
 				if (ip) {
-					p = stack::push_reference(L, it->first);
-				}
-				else {
 					++i.i;
 					p = stack::push_reference(L, i.i);
+				}
+				else {
+					p = stack::push_reference(L, it->first);
 				}
 				p += stack::stack_detail::push_reference<push_type>(L, detail::deref(it->second));
 				std::advance(it, 1);

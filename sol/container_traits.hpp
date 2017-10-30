@@ -1004,11 +1004,11 @@ namespace sol {
 				}
 				int p;
 				if (ip) {
-					p = stack::push_reference(L, it->first);
-				}
-				else {
 					++i.i;
 					p = stack::push_reference(L, i.i);
+				}
+				else {
+					p = stack::push_reference(L, it->first);
 				}
 				p += stack::stack_detail::push_reference<push_type>(L, detail::deref(it->second));
 				std::advance(it, 1);

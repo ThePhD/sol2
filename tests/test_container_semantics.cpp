@@ -633,6 +633,28 @@ void associative_unordered_container_check(sol::state& lua, T& items) {
 }
 
 template <typename T>
+void associative_ordered_container_key_value_check(sol::state& lua, T& data, T& reflect) {
+	typedef typename T::key_type K;
+	typedef typename T::mapped_type V;
+	lua["collect"] = [&reflect](K k, V v) {
+		reflect.insert({ k, v });
+	};
+
+#if SOL_LUA_VERSION > 502
+	lua["val"] = data;
+	lua.script(R"(
+for k, v in pairs(val) do
+	collect(k, v)
+end
+print()
+)");
+#else
+	reflect = data;
+#endif
+	REQUIRE((data == reflect));
+}
+
+template <typename T>
 void fixed_container_check(sol::state& lua, T& items) {
 	{
 		auto r1 = lua.safe_script(R"(
@@ -909,6 +931,27 @@ TEST_CASE("containers/associative unordered containers", "check associative (map
 		};
 		lua["c"] = &items;
 		associative_unordered_container_check(lua, items);
+	}
+}
+
+TEST_CASE("containers/associative ordered pairs", "check to make sure pairs works properly for key-value types") {
+	struct bar {};
+	std::unique_ptr<bar> ua(new bar()), ub(new bar()), uc(new bar());
+	bar* a = ua.get();
+	bar* b = ub.get();
+	bar* c = uc.get();
+
+	SECTION("map") {
+		sol::state lua;
+		std::map<std::string, bar*> data({ { "a", a },{ "b", b },{ "c", c } });
+		std::map<std::string, bar*> reflect;
+		associative_ordered_container_key_value_check(lua, data, reflect);
+	}
+	SECTION("multimap") {
+		sol::state lua;
+		std::multimap<std::string, bar*> data({ { "a", a },{ "b", b },{ "c", c } });
+		std::multimap<std::string, bar*> reflect;
+		associative_ordered_container_key_value_check(lua, data, reflect);
 	}
 }
 
