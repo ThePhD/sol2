@@ -943,12 +943,14 @@ TEST_CASE("containers/associative ordered pairs", "check to make sure pairs work
 
 	SECTION("map") {
 		sol::state lua;
+		lua.open_libraries(sol::lib::base);
 		std::map<std::string, bar*> data({ { "a", a },{ "b", b },{ "c", c } });
 		std::map<std::string, bar*> reflect;
 		associative_ordered_container_key_value_check(lua, data, reflect);
 	}
 	SECTION("multimap") {
 		sol::state lua;
+		lua.open_libraries(sol::lib::base);
 		std::multimap<std::string, bar*> data({ { "a", a },{ "b", b },{ "c", c } });
 		std::multimap<std::string, bar*> reflect;
 		associative_ordered_container_key_value_check(lua, data, reflect);
