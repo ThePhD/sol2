@@ -58,11 +58,18 @@ Note that you can obtain safety with regards to functions you bind by using the 
 
 ``SOL_USING_CXX_LUA`` triggers the following changes:
 	* Lua includes are no longer wrapped in ``extern "C" {}`` blocks
+	* Turns on ``SOL_EXCEPTIONS_SAFE_PROPAGATION`` automatically for you
 	* Only use this if you know you've built your LuaJIT with the C++-specific invocations of your compiler (Lua by default builds as C code and is not distributed as a C++ library, but a C one with C symbols)
 
 ``SOL_USING_CXX_LUA_JIT`` triggers the following changes:
 	* LuaJIT includes are no longer wrapped in ``extern "C" {}`` blocks
+	* Turns on ``SOL_EXCEPTIONS_SAFE_PROPAGATION`` automatically for you
 	* Only use this if you know you've built your LuaJIT with the C++-specific invocations of your compiler (LuaJIT by default builds as C code)
+
+``SOL_EXCEPTIONS_SAFE_PROPAGATION`` triggers the following changes:
+	* try/catch will not be used around C-function trampolines when going from Lua to C++
+	* try/catch will not be used in ``safe_``/``protected_function`` internals
+	* Should only be used in accordance with compiling vanilla PUC-RIO Lua as C++, using :ref:`LuaJIT under the proper conditions<exception-interop>`, or in accordance with your Lua distribution's documentation
 
 Tests are compiled with this on to ensure everything is going as expected. Remember that if you want these features, you must explicitly turn them on all of them to be sure you are getting them.
 

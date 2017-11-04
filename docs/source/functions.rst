@@ -88,16 +88,21 @@ Please read the :doc:`error page<errors>` and :doc:`exception page<exceptions>` 
 functions and argument passing
 ------------------------------
 
-.. note::
-
-	All arguments are forwarded. Unlike :doc:`get/set/operator[] on sol::state<api/state>` or :doc:`sol::table<api/table>`, value semantics are not used here. It is forwarding reference semantics, which do not copy/move unless it is specifically done by the receiving functions / specifically done by the user.
-
+All arguments are forwarded. Unlike :doc:`get/set/operator[] on sol::state<api/state>` or :doc:`sol::table<api/table>`, value semantics are not used here. It is forwarding reference semantics, which do not copy/move unless it is specifically done by the receiving functions / specifically done by the user.
 
 .. note::
 
 	This also means that you should pass and receive arguments in certain ways to maximize efficiency. For example, ``sol::table``, ``sol::object``, ``sol::userdata`` and friends are cheap to copy, and should simply by taken as values. This includes primitive types like ``int`` and ``double``. However, C++ types -- if you do not want copies -- should be taken as ``const type&`` or ``type&``, to save on copies if it's important. Note that taking references from Lua also means you can modify the data inside of Lua directly, so be careful. Lua by default deals with things mostly by reference (save for primitive types).
 
-	Please avoid taking special unique_usertype arguments, by either reference or value. In many cases, by-value does not work (e.g., with ``std::unique_ptr``) because many types are move-only and Lua has no concept of "move" semantics. By-reference is dangerous because sol2 will hand you a reference to the original data: but, any pointers stored in Lua can be invalidated if you call ``.reset()`` or similar on the core pointer. Please take a pointer (``T*``) if you anticipate ``nil``/``nullptr`` being passed to your function, or a reference (``const T&`` or ``T&``) if you do not. 
+
+When you bind a function to Lua, please take any pointer arguments as ``T*``, unless you specifically know you are going to match the exact type of the unique/shared pointer and the class it wraps. sol2 cannot support "implicit wrapped pointer casting", such as taking a ``std::shared_ptr<MySecondBaseClass>`` when the function is passed a ``std::shared_ptr<MyDerivedClass>``. Sometimes it may work because the compiler might be able to line up your classes in such a way that raw casts work, but this is undefined behavior through and through and sol2 has no mechanisms by which it can make this safe and not blow up in the user's face.
+
+.. note::
+
+	Please avoid taking special unique_usertype arguments, by either reference or value. In many cases, by-value does not work (e.g., with ``std::unique_ptr``) because many types are move-only and Lua has no concept of "move" semantics. By-reference is dangerous because sol2 will hand you a reference to the original data: but, any pointers stored in Lua can be invalidated if you call ``.reset()`` or similar on the core pointer. Please take a pointer (``T*``) if you anticipate ``nil``/``nullptr`` being passed to your function, or a reference (``const T&`` or ``T&``) if you do not. As a side note, if you write a small wrapping class that holds a base pointer type, and interact using the wrapper, then when you get the wrapper as an argument in a C++-function bound to Lua you can cast the internal object freely. It is simply a direct cast as an argument to a function that is the problem.
+
+
+.. note::
 
 	You can get even more speed out of ``sol::object`` style of types by taking a ``sol::stack_object`` (or ``sol::stack_...``, where ``...`` is ``userdata``, ``reference``, ``table``, etc.). These reference a stack position directly rather than cheaply/safely the internal Lua reference to make sure it can't be swept out from under you. Note that if you manipulate the stack out from under these objects, they may misbehave, so please do not blow up your Lua stack when working with these types.
 
