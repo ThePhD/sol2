@@ -1,5 +1,5 @@
-proxy, (protected\_)function_result - proxy_base derivatives
-============================================================
+proxy, (protected\unsafe)_function_result - proxy_base derivatives
+==================================================================
 *``table[x]`` and ``function(...)`` conversion struct*
 
 
@@ -13,7 +13,7 @@ proxy, (protected\_)function_result - proxy_base derivatives
 
 	struct stack_proxy: proxy_base<...>;
 
-	struct function_result : proxy_base<...>;
+	struct unsafe_function_result : proxy_base<...>;
 
 	struct protected_function_result: proxy_base<...>;
 
@@ -133,7 +133,7 @@ Returns whether this proxy actually refers to a valid object. It uses :ref:`sol:
 	template <typename Fx>
 	proxy& operator=( Fx&& function );
 
-Sets the value associated with the keys the proxy was generated with to ``value``. If this is a function, calls ``set_function``. If it is not, just calls ``set``. Does not exist on :ref:`function_result<function-result>` or :ref:`protected_function_result<protected-function-result>`. See :ref:`note<note 1>` for caveats.
+Sets the value associated with the keys the proxy was generated with to ``value``. If this is a function, calls ``set_function``. If it is not, just calls ``set``. Does not exist on :ref:`unsage_function_result<unsafe-function-result>` or :ref:`protected_function_result<protected-function-result>`. See :ref:`note<note 1>` for caveats.
 
 .. code-block:: c++
 	:caption: function: set a callable
@@ -142,7 +142,7 @@ Sets the value associated with the keys the proxy was generated with to ``value`
 	template <typename Fx>
 	proxy& set_function( Fx&& fx );
 
-Sets the value associated with the keys the proxy was generated with to a function ``fx``. Does not exist on :ref:`function_result<function-result>` or :ref:`protected_function_result<protected-function-result>`.
+Sets the value associated with the keys the proxy was generated with to a function ``fx``. Does not exist on :ref:`unsafe_function_result<unsafe-function-result>` or :ref:`protected_function_result<protected-function-result>`.
 
 
 .. code-block:: c++
@@ -152,28 +152,32 @@ Sets the value associated with the keys the proxy was generated with to a functi
 	template <typename T>
 	proxy& set( T&& value );
 
-Sets the value associated with the keys the proxy was generated with to ``value``. Does not exist on :ref:`function_result<function-result>` or :ref:`protected_function_result<protected-function-result>`.
+Sets the value associated with the keys the proxy was generated with to ``value``. Does not exist on :ref:`unsafe_function_result<unsafe-function-result>` or :ref:`protected_function_result<protected-function-result>`.
 
 stack_proxy
 -----------
 
 ``sol::stack_proxy`` is what gets returned by :doc:`sol::variadic_args<variadic_args>` and other parts of the framework. It is similar to proxy, but is meant to alias a stack index and not a named variable.
 
-.. _function-result:
+.. _unsafe-function-result:
 
-function_result
----------------
+unsafe_function_result
+----------------------
 
-``function_result`` is a temporary-only, intermediate-only implicit conversion worker for when :doc:`function<function>` is called. It is *NOT* meant to be stored or captured with ``auto``. It provides fast access to the desired underlying value. It does not implement ``set`` / ``set_function`` / templated ``operator=``, as is present on :ref:`proxy<proxy>`.
+``unsafe_function_result`` is a temporary-only, intermediate-only implicit conversion worker for when :doc:`function<function>` is called. It is *NOT* meant to be stored or captured with ``auto``. It provides fast access to the desired underlying value. It does not implement ``set`` / ``set_function`` / templated ``operator=``, as is present on :ref:`proxy<proxy>`.
 
+
+This type does, however, allow access to multiple underlying values. Use ``result.get<Type>(index_offset)`` to retrieve an object of ``Type`` at an offset of ``index_offset`` in the results. Offset is 0 based. Not specifying an argument defaults the value to 0.
 
 .. _protected-function-result:
 
 protected_function_result
 -------------------------
 
-``protected_function_result`` is a nicer version of ``function_result`` that can be used to detect errors. Its gives safe access to the desired underlying value. It does not implement ``set`` / ``set_function`` / templated ``operator=`` as is present on :ref:`proxy<proxy>`.
+``protected_function_result`` is a nicer version of ``unsafe_function_result`` that can be used to detect errors. Its gives safe access to the desired underlying value. It does not implement ``set`` / ``set_function`` / templated ``operator=`` as is present on :ref:`proxy<proxy>`.
 
+
+This type does, however, allow access to multiple underlying values. Use ``result.get<Type>(index_offset)`` to retrieve an object of ``Type`` at an offset of ``index_offset`` in the results. Offset is 0 based. Not specifying an argument defaults the value to 0.
 
 .. _note 1:
 

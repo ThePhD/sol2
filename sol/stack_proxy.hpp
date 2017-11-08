@@ -105,7 +105,7 @@ namespace sol {
 
 	namespace detail {
 		template <>
-		struct is_speshul<function_result> : std::true_type {};
+		struct is_speshul<unsafe_function_result> : std::true_type {};
 		template <>
 		struct is_speshul<protected_function_result> : std::true_type {};
 
@@ -121,15 +121,15 @@ namespace sol {
 	} // namespace detail
 
 	template <>
-	struct tie_size<function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
+	struct tie_size<unsafe_function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
 
 	template <std::size_t I>
-	stack_proxy get(const function_result& fr) {
+	stack_proxy get(const unsafe_function_result& fr) {
 		return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
 	}
 
 	template <std::size_t I, typename... Args>
-	stack_proxy get(types<Args...> t, const function_result& fr) {
+	stack_proxy get(types<Args...> t, const unsafe_function_result& fr) {
 		return detail::get(t, index_value<I>(), index_value<0>(), fr);
 	}
 

@@ -232,7 +232,7 @@ namespace sol {
 		}
 
 		inline void luajit_exception_handler(lua_State* L, int (*handler)(lua_State*, lua_CFunction) = detail::c_trampoline) {
-#ifdef SOL_LUAJIT
+#if defined(SOL_LUAJIT) && !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			if (L == nullptr) {
 				return;
 			}

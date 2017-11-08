@@ -377,7 +377,7 @@ namespace sol {
 		}
 
 		template <typename E>
-		function_result unsafe_script(const string_view& code, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		unsafe_function_result unsafe_script(const string_view& code, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
 			int index = lua_gettop(L);
@@ -390,19 +390,19 @@ namespace sol {
 			}
 			int postindex = lua_gettop(L);
 			int returns = postindex - index;
-			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
+			return unsafe_function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
 		}
 
-		function_result unsafe_script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		unsafe_function_result unsafe_script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			int index = lua_gettop(L);
 			stack::script(L, code, chunkname, mode);
 			int postindex = lua_gettop(L);
 			int returns = postindex - index;
-			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
+			return unsafe_function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
 		}
 
 		template <typename E>
-		function_result unsafe_script_file(const std::string& filename, const basic_environment<E>& env, load_mode mode = load_mode::any) {
+		unsafe_function_result unsafe_script_file(const std::string& filename, const basic_environment<E>& env, load_mode mode = load_mode::any) {
 			int index = lua_gettop(L);
 			if (luaL_loadfilex(L, filename.c_str(), to_string(mode).c_str())) {
 				lua_error(L);
@@ -413,15 +413,15 @@ namespace sol {
 			}
 			int postindex = lua_gettop(L);
 			int returns = postindex - index;
-			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
+			return unsafe_function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
 		}
 
-		function_result unsafe_script_file(const std::string& filename, load_mode mode = load_mode::any) {
+		unsafe_function_result unsafe_script_file(const std::string& filename, load_mode mode = load_mode::any) {
 			int index = lua_gettop(L);
 			stack::script_file(L, filename, mode);
 			int postindex = lua_gettop(L);
 			int returns = postindex - index;
-			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
+			return unsafe_function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
 		}
 
 		template <typename Fx, meta::disable<meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
@@ -452,7 +452,7 @@ namespace sol {
 			return safe_script_file(filename, env, script_default_on_error, mode);
 		}
 
-#ifdef SOL_SAFE_FUNCTIONS
+#ifdef SOL_SAFE_FUNCTION
 		protected_function_result script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return safe_script(code, chunkname, mode);
 		}
@@ -461,11 +461,11 @@ namespace sol {
 			return safe_script_file(filename, mode);
 		}
 #else
-		function_result script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		unsafe_function_result script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return unsafe_script(code, chunkname, mode);
 		}
 
-		function_result script_file(const std::string& filename, load_mode mode = load_mode::any) {
+		unsafe_function_result script_file(const std::string& filename, load_mode mode = load_mode::any) {
 			return unsafe_script_file(filename, mode);
 		}
 #endif

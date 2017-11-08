@@ -95,7 +95,7 @@ Alternatively, with a bad or good function call, you can use ``sol::optional`` t
 		// No value!		
 	}
 
-That makes the code a bit more concise and easy to reason about if you don't want to bother with reading the error. Thankfully, unlike ``sol::function_result``, you can save ``sol::protected_function_result`` in a variable and push/pop things above it on the stack where its returned values are. This makes it a bit more flexible  than the rigid, performant ``sol::function_result`` type that comes from calling :doc:`sol::function<function>`.
+That makes the code a bit more concise and easy to reason about if you don't want to bother with reading the error. Thankfully, unlike ``sol::unsafe_function_result``, you can save ``sol::protected_function_result`` in a variable and push/pop things above it on the stack where its returned values are. This makes it a bit more flexible  than the rigid, performant ``sol::unsafe_function_result`` type that comes from calling :doc:`sol::unsafe_function<function>`.
 
 If you're confident the result succeeded, you can also just put the type you want (like ``double`` or ``std::string`` right there and it will get it. But, if it doesn't work out, sol can throw and/or panic if you have the :doc:`safety<../safety>` features turned on:
 

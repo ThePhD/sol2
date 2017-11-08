@@ -653,7 +653,7 @@ TEST_CASE("state/script return converts", "make sure that script return values a
 	sol::state lua;
 
 	sol::protected_function_result r1 = lua.unsafe_script("return 2");
-	sol::function_result r2 = lua.safe_script("return 3");
+	sol::unsafe_function_result r2 = lua.safe_script("return 3");
 
 	int v1 = r1;
 	int v2 = r2;

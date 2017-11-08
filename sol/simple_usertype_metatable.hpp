@@ -422,14 +422,55 @@ namespace sol {
 				stack::set_field(L, "name", detail::demangle<T>(), type_table.stack_index());
 				stack::set_field(L, "is", &usertype_detail::is_check<T>, type_table.stack_index());
 
-				auto register_kvp = [&](std::size_t meta_index, stack_reference& t, const std::string& first, object& second) {
-					meta_function mf = meta_function::construct;
-					for (std::size_t j = 1; j < properties.size(); ++j) {
-						mf = static_cast<meta_function>(j);
+				auto safety_check = [&](const std::string& first) {
+					for (std::size_t j = 0; j < properties.size(); ++j) {
+						meta_function mf = static_cast<meta_function>(j);
 						const std::string& mfname = to_string(mf);
+						bool& prop = properties[j];
 						if (mfname != first)
 							continue;
-						properties[j] = true;
+						switch (mf) {
+						case meta_function::construct:
+							if (prop) {
+#ifndef SOL_NO_EXCEPTIONS
+								throw error(
+#else
+								assert(false &&
+#endif
+									"sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
+							}
+							break;
+						case meta_function::garbage_collect:
+							if (prop) {
+#ifndef SOL_NO_EXCEPTIONS
+								throw error(
+#else
+								assert(false &&
+#endif
+									"sol: 2 separate garbage_collect functions were set on this type. Please specify only 1 sol::meta_function::gc type AND wrap the function in a sol::destruct call, as shown by the documentation and examples");
+							}
+							return;
+						default:
+							break;
+						}
+						prop = true;
+						break;
+					}
+				};
+
+				for (auto& kvp : varmap.functions) {
+					auto& first = std::get<0>(kvp);
+					safety_check(first);
+				}
+
+				auto register_kvp = [&](std::size_t meta_index, stack_reference& t, const std::string& first, object& second) {
+					meta_function mf = meta_function::construct;
+					for (std::size_t j = 0; j < properties.size(); ++j) {
+						mf = static_cast<meta_function>(j);
+						const std::string& mfname = to_string(mf);
+						bool& prop = properties[j];
+						if (mfname != first)
+							continue;
 						switch (mf) {
 						case meta_function::index:
 							umx.indexfunc = second;
@@ -440,6 +481,7 @@ namespace sol {
 						default:
 							break;
 						}
+						prop = true;
 						break;
 					}
 					switch (meta_index) {

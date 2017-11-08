@@ -38,37 +38,43 @@ namespace sol {
 		call_status err;
 
 		template <typename T>
-		decltype(auto) tagged_get(types<optional<T>>) const {
+		decltype(auto) tagged_get(types<optional<T>>, int index_offset) const {
+			int target = index + index_offset;
 			if (!valid()) {
 				return optional<T>(nullopt);
 			}
-			return stack::get<optional<T>>(L, index);
+			return stack::get<optional<T>>(L, target);
 		}
 
 		template <typename T>
-		decltype(auto) tagged_get(types<T>) const {
+		decltype(auto) tagged_get(types<T>, int index_offset) const {
+			int target = index + index_offset;
 #ifdef SOL_CHECK_ARGUMENTS
 			if (!valid()) {
-				type_panic_c_str(L, index, type_of(L, index), type::none, "bad get from protected_function_result (is not an error)");
+				type t = type_of(L, target);
+				type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is not an error)");
 			}
 #endif // Check Argument Safety
-			return stack::get<T>(L, index);
+			return stack::get<T>(L, target);
 		}
 
-		optional<error> tagged_get(types<optional<error>>) const {
+		optional<error> tagged_get(types<optional<error>>, int index_offset) const {
+			int target = index + index_offset;
 			if (valid()) {
 				return nullopt;
 			}
-			return error(detail::direct_error, stack::get<std::string>(L, index));
+			return error(detail::direct_error, stack::get<std::string>(L, target));
 		}
 
-		error tagged_get(types<error>) const {
+		error tagged_get(types<error>, int index_offset) const {
+			int target = index + index_offset;
 #ifdef SOL_CHECK_ARGUMENTS
 			if (valid()) {
-				type_panic_c_str(L, index, type_of(L, index), type::none, "bad get from protected_function_result (is an error)");
+				type t = type_of(L, target);
+				type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is an error)");
 			}
 #endif // Check Argument Safety
-			return error(detail::direct_error, stack::get<std::string>(L, index));
+			return error(detail::direct_error, stack::get<std::string>(L, target));
 		}
 
 	public:
@@ -98,10 +104,10 @@ namespace sol {
 			return *this;
 		}
 
-		protected_function_result(const function_result& o) = delete;
-		protected_function_result& operator=(const function_result& o) = delete;
-		protected_function_result(function_result&& o) noexcept;
-		protected_function_result& operator=(function_result&& o) noexcept;
+		protected_function_result(const unsafe_function_result& o) = delete;
+		protected_function_result& operator=(const unsafe_function_result& o) = delete;
+		protected_function_result(unsafe_function_result&& o) noexcept;
+		protected_function_result& operator=(unsafe_function_result&& o) noexcept;
 
 		call_status status() const noexcept {
 			return err;
@@ -112,8 +118,8 @@ namespace sol {
 		}
 
 		template <typename T>
-		decltype(auto) get() const {
-			return tagged_get(types<meta::unqualified_t<T>>());
+		decltype(auto) get(int index_offset = 0) const {
+			return tagged_get(types<meta::unqualified_t<T>>(), index_offset);
 		}
 
 		lua_State* lua_state() const noexcept {

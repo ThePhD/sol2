@@ -53,13 +53,13 @@ namespace sol {
 			luacall(n, 0);
 		}
 
-		function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n) const {
+		unsafe_function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n) const {
 			int stacksize = lua_gettop(lua_state());
 			int firstreturn = (std::max)(1, stacksize - static_cast<int>(n));
 			luacall(n, LUA_MULTRET);
 			int poststacksize = lua_gettop(lua_state());
 			int returncount = poststacksize - (firstreturn - 1);
-			return function_result(lua_state(), firstreturn, returncount);
+			return unsafe_function_result(lua_state(), firstreturn, returncount);
 		}
 
 	public:
@@ -113,7 +113,7 @@ namespace sol {
 		}
 
 		template <typename... Args>
-		function_result operator()(Args&&... args) const {
+		unsafe_function_result operator()(Args&&... args) const {
 			return call<>(std::forward<Args>(args)...);
 		}
 

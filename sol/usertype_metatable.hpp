@@ -460,35 +460,47 @@ namespace sol {
 				return;
 			}
 			luaL_Reg reg = usertype_detail::make_reg(std::forward<N>(n), make_func<Idx>());
-			for (std::size_t i = 1; i < properties.size(); ++i) {
+			for (std::size_t i = 0; i < properties.size(); ++i) {
 				meta_function mf = static_cast<meta_function>(i);
+				bool& prop = properties[i];
 				const std::string& mfname = to_string(mf);
 				if (mfname == reg.name) {
 					switch (mf) {
+					case meta_function::construct:
+						if (prop) {
+#ifndef SOL_NO_EXCEPTIONS
+							throw error(
+#else
+							assert(false &&
+#endif
+								"sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
+						}
+						break;
 					case meta_function::garbage_collect:
 						if (destructfunc != nullptr) {
-#ifdef SOL_NO_EXCEPTIONS
-							throw error("sol: 2 separate garbage_collect functions were set on this type. Please specify only 1 sol::meta_function::gc type AND wrap the function in a sol::destruct call, as shown by the documentation and examples");
+#ifndef SOL_NO_EXCEPTIONS
+							throw error(
 #else
-							assert(false && "sol: 2 separate garbage_collect functions were set on this type. Please specify only 1 sol::meta_function::gc type AND wrap the function in a sol::destruct call, as shown by the documentation and examples");
+							assert(false && 
 #endif
+								"sol: 2 separate garbage_collect functions were set on this type. Please specify only 1 sol::meta_function::gc type AND wrap the function in a sol::destruct call, as shown by the documentation and examples");
 						}
 						destructfunc = reg.func;
 						return;
 					case meta_function::index:
 						indexfunc = reg.func;
 						mustindex = true;
-						properties[i] = true;
+						prop = true;
 						return;
 					case meta_function::new_index:
 						newindexfunc = reg.func;
 						mustindex = true;
-						properties[i] = true;
+						prop = true;
 						return;
 					default:
 						break;
 					}
-					properties[i] = true;
+					prop = true;
 					break;
 				}
 			}

@@ -79,7 +79,7 @@ namespace sol {
 	using main_protected_function = main_safe_function;
 	using stack_protected_function = stack_safe_function;
 	using stack_aligned_protected_function = stack_aligned_safe_function;
-#ifdef SOL_SAFE_FUNCTIONS
+#ifdef SOL_SAFE_FUNCTION
 	using function = protected_function;
 	using main_function = main_protected_function;
 	using stack_function = stack_protected_function;
@@ -92,10 +92,14 @@ namespace sol {
 #endif
 	using stack_aligned_stack_handler_function = basic_protected_function<stack_reference, true, stack_reference>;
 
-	struct function_result;
+	struct unsafe_function_result;
 	struct protected_function_result;
 	using safe_function_result = protected_function_result;
-	using unsafe_function_result = function_result;
+#ifdef SOL_SAFE_FUNCTION
+	using function_result = safe_function_result;
+#else
+	using function_result = unsafe_function_result;
+#endif
 
 	template <typename base_t>
 	class basic_object;

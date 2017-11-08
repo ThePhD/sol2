@@ -91,4 +91,4 @@ As a side note, binding functions with default parameters does not magically bin
 
 .. warning::
 
-	Do **NOT** save the return type of a :ref:`function_result<function-result>` with ``auto``, as in ``auto numwoof = woof(20);``, and do NOT store it anywhere unless you are exactly aware of the consequences of messing with the stack. See :ref:`here<function-result-warning>` for more information.
+	Do **NOT** save the return type of a :ref:`unsafe_function_result<unsafe-function-result>` with ``auto``, as in ``auto numwoof = woof(20);``, and do NOT store it anywhere unless you are exactly aware of the consequences of messing with the stack. See :ref:`here<function-result-warning>` for more information.
