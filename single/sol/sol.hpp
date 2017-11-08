@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-10-30 18:38:03.122522 UTC
-// This header was generated with sol v2.18.5 (revision 882f337)
+// Generated 2017-11-08 01:20:39.160314 UTC
+// This header was generated with sol v2.18.6 (revision 10b1bb0)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -206,7 +206,7 @@ namespace sol {
 	using main_protected_function = main_safe_function;
 	using stack_protected_function = stack_safe_function;
 	using stack_aligned_protected_function = stack_aligned_safe_function;
-#ifdef SOL_SAFE_FUNCTIONS
+#ifdef SOL_SAFE_FUNCTION
 	using function = protected_function;
 	using main_function = main_protected_function;
 	using stack_function = stack_protected_function;
@@ -219,10 +219,14 @@ namespace sol {
 #endif
 	using stack_aligned_stack_handler_function = basic_protected_function<stack_reference, true, stack_reference>;
 
-	struct function_result;
+	struct unsafe_function_result;
 	struct protected_function_result;
 	using safe_function_result = protected_function_result;
-	using unsafe_function_result = function_result;
+#ifdef SOL_SAFE_FUNCTION
+	using function_result = safe_function_result;
+#else
+	using function_result = unsafe_function_result;
+#endif
 
 	template <typename base_t>
 	class basic_object;
@@ -5410,7 +5414,7 @@ namespace sol {
 	template <typename T>
 	struct is_lua_primitive<T*> : std::true_type {};
 	template <>
-	struct is_lua_primitive<function_result> : std::true_type {};
+	struct is_lua_primitive<unsafe_function_result> : std::true_type {};
 	template <>
 	struct is_lua_primitive<protected_function_result> : std::true_type {};
 	template <typename T>
@@ -10426,7 +10430,7 @@ namespace sol {
 		}
 
 		inline void luajit_exception_handler(lua_State* L, int (*handler)(lua_State*, lua_CFunction) = detail::c_trampoline) {
-#ifdef SOL_LUAJIT
+#if defined(SOL_LUAJIT) && !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			if (L == nullptr) {
 				return;
 			}
@@ -10457,6 +10461,8 @@ namespace sol {
 // beginning of sol/unsafe_function.hpp
 
 // beginning of sol/function_result.hpp
+
+// beginning of sol/protected_function_result.hpp
 
 // beginning of sol/proxy_base.hpp
 
@@ -10494,27 +10500,164 @@ namespace sol {
 #include <cstdint>
 
 namespace sol {
-	struct function_result : public proxy_base<function_result> {
+	struct protected_function_result : public proxy_base<protected_function_result> {
+	private:
+		lua_State* L;
+		int index;
+		int returncount;
+		int popcount;
+		call_status err;
+
+		template <typename T>
+		decltype(auto) tagged_get(types<optional<T>>, int index_offset) const {
+			int target = index + index_offset;
+			if (!valid()) {
+				return optional<T>(nullopt);
+			}
+			return stack::get<optional<T>>(L, target);
+		}
+
+		template <typename T>
+		decltype(auto) tagged_get(types<T>, int index_offset) const {
+			int target = index + index_offset;
+#ifdef SOL_CHECK_ARGUMENTS
+			if (!valid()) {
+				type t = type_of(L, target);
+				type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is not an error)");
+			}
+#endif // Check Argument Safety
+			return stack::get<T>(L, target);
+		}
+
+		optional<error> tagged_get(types<optional<error>>, int index_offset) const {
+			int target = index + index_offset;
+			if (valid()) {
+				return nullopt;
+			}
+			return error(detail::direct_error, stack::get<std::string>(L, target));
+		}
+
+		error tagged_get(types<error>, int index_offset) const {
+			int target = index + index_offset;
+#ifdef SOL_CHECK_ARGUMENTS
+			if (valid()) {
+				type t = type_of(L, target);
+				type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is an error)");
+			}
+#endif // Check Argument Safety
+			return error(detail::direct_error, stack::get<std::string>(L, target));
+		}
+
+	public:
+		protected_function_result() = default;
+		protected_function_result(lua_State* Ls, int idx = -1, int retnum = 0, int popped = 0, call_status pferr = call_status::ok) noexcept
+		: L(Ls), index(idx), returncount(retnum), popcount(popped), err(pferr) {
+		}
+		protected_function_result(const protected_function_result&) = default;
+		protected_function_result& operator=(const protected_function_result&) = default;
+		protected_function_result(protected_function_result&& o) noexcept
+		: L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
+			// Must be manual, otherwise destructor will screw us
+			// return count being 0 is enough to keep things clean
+			// but we will be thorough
+			o.abandon();
+		}
+		protected_function_result& operator=(protected_function_result&& o) noexcept {
+			L = o.L;
+			index = o.index;
+			returncount = o.returncount;
+			popcount = o.popcount;
+			err = o.err;
+			// Must be manual, otherwise destructor will screw us
+			// return count being 0 is enough to keep things clean
+			// but we will be thorough
+			o.abandon();
+			return *this;
+		}
+
+		protected_function_result(const unsafe_function_result& o) = delete;
+		protected_function_result& operator=(const unsafe_function_result& o) = delete;
+		protected_function_result(unsafe_function_result&& o) noexcept;
+		protected_function_result& operator=(unsafe_function_result&& o) noexcept;
+
+		call_status status() const noexcept {
+			return err;
+		}
+
+		bool valid() const noexcept {
+			return status() == call_status::ok || status() == call_status::yielded;
+		}
+
+		template <typename T>
+		decltype(auto) get(int index_offset = 0) const {
+			return tagged_get(types<meta::unqualified_t<T>>(), index_offset);
+		}
+
+		lua_State* lua_state() const noexcept {
+			return L;
+		};
+		int stack_index() const noexcept {
+			return index;
+		};
+		int return_count() const noexcept {
+			return returncount;
+		};
+		int pop_count() const noexcept {
+			return popcount;
+		};
+		void abandon() noexcept {
+			//L = nullptr;
+			index = 0;
+			returncount = 0;
+			popcount = 0;
+			err = call_status::runtime;
+		}
+		~protected_function_result() {
+			stack::remove(L, index, popcount);
+		}
+	};
+
+	namespace stack {
+		template <>
+		struct pusher<protected_function_result> {
+			static int push(lua_State* L, const protected_function_result& pfr) {
+				int p = 0;
+				for (int i = 0; i < pfr.pop_count(); ++i) {
+					lua_pushvalue(L, i + pfr.stack_index());
+					++p;
+				}
+				return p;
+			}
+		};
+	} // namespace stack
+} // namespace sol
+
+// end of sol/protected_function_result.hpp
+
+// beginning of sol/unsafe_function_result.hpp
+
+namespace sol {
+	struct unsafe_function_result : public proxy_base<unsafe_function_result> {
 	private:
 		lua_State* L;
 		int index;
 		int returncount;
 
 	public:
-		function_result() = default;
-		function_result(lua_State* Ls, int idx = -1, int retnum = 0)
-		: L(Ls), index(idx), returncount(retnum) {
+		unsafe_function_result() = default;
+		unsafe_function_result(lua_State* Ls, int idx = -1, int retnum = 0)
+			: L(Ls), index(idx), returncount(retnum) {
 		}
-		function_result(const function_result&) = default;
-		function_result& operator=(const function_result&) = default;
-		function_result(function_result&& o)
-		: L(o.L), index(o.index), returncount(o.returncount) {
+		unsafe_function_result(const unsafe_function_result&) = default;
+		unsafe_function_result& operator=(const unsafe_function_result&) = default;
+		unsafe_function_result(unsafe_function_result&& o)
+			: L(o.L), index(o.index), returncount(o.returncount) {
 			// Must be manual, otherwise destructor will screw us
 			// return count being 0 is enough to keep things clean
 			// but will be thorough
 			o.abandon();
 		}
-		function_result& operator=(function_result&& o) {
+		unsafe_function_result& operator=(unsafe_function_result&& o) {
 			L = o.L;
 			index = o.index;
 			returncount = o.returncount;
@@ -10525,14 +10668,14 @@ namespace sol {
 			return *this;
 		}
 
-		function_result(const protected_function_result& o) = delete;
-		function_result& operator=(const protected_function_result& o) = delete;
-		function_result(protected_function_result&& o) noexcept;
-		function_result& operator=(protected_function_result&& o) noexcept;
+		unsafe_function_result(const protected_function_result& o) = delete;
+		unsafe_function_result& operator=(const protected_function_result& o) = delete;
+		unsafe_function_result(protected_function_result&& o) noexcept;
+		unsafe_function_result& operator=(protected_function_result&& o) noexcept;
 
 		template <typename T>
-		decltype(auto) get() const {
-			return stack::get<T>(L, index);
+		decltype(auto) get(int index_offset = 0) const {
+			return stack::get<T>(L, index + index_offset);
 		}
 
 		call_status status() const noexcept {
@@ -10557,15 +10700,15 @@ namespace sol {
 			index = 0;
 			returncount = 0;
 		}
-		~function_result() {
+		~unsafe_function_result() {
 			lua_pop(L, returncount);
 		}
 	};
 
 	namespace stack {
 		template <>
-		struct pusher<function_result> {
-			static int push(lua_State* L, const function_result& fr) {
+		struct pusher<unsafe_function_result> {
+			static int push(lua_State* L, const unsafe_function_result& fr) {
 				int p = 0;
 				for (int i = 0; i < fr.return_count(); ++i) {
 					lua_pushvalue(L, i + fr.stack_index());
@@ -10576,6 +10719,8 @@ namespace sol {
 		};
 	} // namespace stack
 } // namespace sol
+
+// end of sol/unsafe_function_result.hpp
 
 // end of sol/function_result.hpp
 
@@ -12769,13 +12914,13 @@ namespace sol {
 			luacall(n, 0);
 		}
 
-		function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n) const {
+		unsafe_function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n) const {
 			int stacksize = lua_gettop(lua_state());
 			int firstreturn = (std::max)(1, stacksize - static_cast<int>(n));
 			luacall(n, LUA_MULTRET);
 			int poststacksize = lua_gettop(lua_state());
 			int returncount = poststacksize - (firstreturn - 1);
-			return function_result(lua_state(), firstreturn, returncount);
+			return unsafe_function_result(lua_state(), firstreturn, returncount);
 		}
 
 	public:
@@ -12829,7 +12974,7 @@ namespace sol {
 		}
 
 		template <typename... Args>
-		function_result operator()(Args&&... args) const {
+		unsafe_function_result operator()(Args&&... args) const {
 			return call<>(std::forward<Args>(args)...);
 		}
 
@@ -12852,137 +12997,6 @@ namespace sol {
 // end of sol/unsafe_function.hpp
 
 // beginning of sol/protected_function.hpp
-
-// beginning of sol/protected_function_result.hpp
-
-namespace sol {
-	struct protected_function_result : public proxy_base<protected_function_result> {
-	private:
-		lua_State* L;
-		int index;
-		int returncount;
-		int popcount;
-		call_status err;
-
-		template <typename T>
-		decltype(auto) tagged_get(types<optional<T>>) const {
-			if (!valid()) {
-				return optional<T>(nullopt);
-			}
-			return stack::get<optional<T>>(L, index);
-		}
-
-		template <typename T>
-		decltype(auto) tagged_get(types<T>) const {
-#ifdef SOL_CHECK_ARGUMENTS
-			if (!valid()) {
-				type_panic_c_str(L, index, type_of(L, index), type::none, "bad get from protected_function_result (is not an error)");
-			}
-#endif // Check Argument Safety
-			return stack::get<T>(L, index);
-		}
-
-		optional<error> tagged_get(types<optional<error>>) const {
-			if (valid()) {
-				return nullopt;
-			}
-			return error(detail::direct_error, stack::get<std::string>(L, index));
-		}
-
-		error tagged_get(types<error>) const {
-#ifdef SOL_CHECK_ARGUMENTS
-			if (valid()) {
-				type_panic_c_str(L, index, type_of(L, index), type::none, "bad get from protected_function_result (is an error)");
-			}
-#endif // Check Argument Safety
-			return error(detail::direct_error, stack::get<std::string>(L, index));
-		}
-
-	public:
-		protected_function_result() = default;
-		protected_function_result(lua_State* Ls, int idx = -1, int retnum = 0, int popped = 0, call_status pferr = call_status::ok) noexcept
-		: L(Ls), index(idx), returncount(retnum), popcount(popped), err(pferr) {
-		}
-		protected_function_result(const protected_function_result&) = default;
-		protected_function_result& operator=(const protected_function_result&) = default;
-		protected_function_result(protected_function_result&& o) noexcept
-		: L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
-			// Must be manual, otherwise destructor will screw us
-			// return count being 0 is enough to keep things clean
-			// but we will be thorough
-			o.abandon();
-		}
-		protected_function_result& operator=(protected_function_result&& o) noexcept {
-			L = o.L;
-			index = o.index;
-			returncount = o.returncount;
-			popcount = o.popcount;
-			err = o.err;
-			// Must be manual, otherwise destructor will screw us
-			// return count being 0 is enough to keep things clean
-			// but we will be thorough
-			o.abandon();
-			return *this;
-		}
-
-		protected_function_result(const function_result& o) = delete;
-		protected_function_result& operator=(const function_result& o) = delete;
-		protected_function_result(function_result&& o) noexcept;
-		protected_function_result& operator=(function_result&& o) noexcept;
-
-		call_status status() const noexcept {
-			return err;
-		}
-
-		bool valid() const noexcept {
-			return status() == call_status::ok || status() == call_status::yielded;
-		}
-
-		template <typename T>
-		decltype(auto) get() const {
-			return tagged_get(types<meta::unqualified_t<T>>());
-		}
-
-		lua_State* lua_state() const noexcept {
-			return L;
-		};
-		int stack_index() const noexcept {
-			return index;
-		};
-		int return_count() const noexcept {
-			return returncount;
-		};
-		int pop_count() const noexcept {
-			return popcount;
-		};
-		void abandon() noexcept {
-			//L = nullptr;
-			index = 0;
-			returncount = 0;
-			popcount = 0;
-			err = call_status::runtime;
-		}
-		~protected_function_result() {
-			stack::remove(L, index, popcount);
-		}
-	};
-
-	namespace stack {
-		template <>
-		struct pusher<protected_function_result> {
-			static int push(lua_State* L, const protected_function_result& pfr) {
-				int p = 0;
-				for (int i = 0; i < pfr.pop_count(); ++i) {
-					lua_pushvalue(L, i + pfr.stack_index());
-					++p;
-				}
-				return p;
-			}
-		};
-	} // namespace stack
-} // namespace sol
-
-// end of sol/protected_function_result.hpp
 
 namespace sol {
 	namespace detail {
@@ -13313,7 +13327,7 @@ namespace sol {
 
 namespace sol {
 
-	inline protected_function_result::protected_function_result(function_result&& o) noexcept
+	inline protected_function_result::protected_function_result(unsafe_function_result&& o) noexcept
 	: L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()), popcount(o.return_count()), err(o.status()) {
 		// Must be manual, otherwise destructor will screw us
 		// return count being 0 is enough to keep things clean
@@ -13321,7 +13335,7 @@ namespace sol {
 		o.abandon();
 	}
 
-	inline protected_function_result& protected_function_result::operator=(function_result&& o) noexcept {
+	inline protected_function_result& protected_function_result::operator=(unsafe_function_result&& o) noexcept {
 		L = o.lua_state();
 		index = o.stack_index();
 		returncount = o.return_count();
@@ -13334,14 +13348,14 @@ namespace sol {
 		return *this;
 	}
 
-	inline function_result::function_result(protected_function_result&& o) noexcept
+	inline unsafe_function_result::unsafe_function_result(protected_function_result&& o) noexcept
 	: L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()) {
 		// Must be manual, otherwise destructor will screw us
 		// return count being 0 is enough to keep things clean
 		// but we will be thorough
 		o.abandon();
 	}
-	inline function_result& function_result::operator=(protected_function_result&& o) noexcept {
+	inline unsafe_function_result& unsafe_function_result::operator=(protected_function_result&& o) noexcept {
 		L = o.lua_state();
 		index = o.stack_index();
 		returncount = o.return_count();
@@ -13911,7 +13925,7 @@ namespace sol {
 
 	namespace detail {
 		template <>
-		struct is_speshul<function_result> : std::true_type {};
+		struct is_speshul<unsafe_function_result> : std::true_type {};
 		template <>
 		struct is_speshul<protected_function_result> : std::true_type {};
 
@@ -13927,15 +13941,15 @@ namespace sol {
 	} // namespace detail
 
 	template <>
-	struct tie_size<function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
+	struct tie_size<unsafe_function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
 
 	template <std::size_t I>
-	stack_proxy get(const function_result& fr) {
+	stack_proxy get(const unsafe_function_result& fr) {
 		return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
 	}
 
 	template <std::size_t I, typename... Args>
-	stack_proxy get(types<Args...> t, const function_result& fr) {
+	stack_proxy get(types<Args...> t, const unsafe_function_result& fr) {
 		return detail::get(t, index_value<I>(), index_value<0>(), fr);
 	}
 
@@ -16640,35 +16654,47 @@ namespace sol {
 				return;
 			}
 			luaL_Reg reg = usertype_detail::make_reg(std::forward<N>(n), make_func<Idx>());
-			for (std::size_t i = 1; i < properties.size(); ++i) {
+			for (std::size_t i = 0; i < properties.size(); ++i) {
 				meta_function mf = static_cast<meta_function>(i);
+				bool& prop = properties[i];
 				const std::string& mfname = to_string(mf);
 				if (mfname == reg.name) {
 					switch (mf) {
+					case meta_function::construct:
+						if (prop) {
+#ifndef SOL_NO_EXCEPTIONS
+							throw error(
+#else
+							assert(false &&
+#endif
+								"sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
+						}
+						break;
 					case meta_function::garbage_collect:
 						if (destructfunc != nullptr) {
-#ifdef SOL_NO_EXCEPTIONS
-							throw error("sol: 2 separate garbage_collect functions were set on this type. Please specify only 1 sol::meta_function::gc type AND wrap the function in a sol::destruct call, as shown by the documentation and examples");
+#ifndef SOL_NO_EXCEPTIONS
+							throw error(
 #else
-							assert(false && "sol: 2 separate garbage_collect functions were set on this type. Please specify only 1 sol::meta_function::gc type AND wrap the function in a sol::destruct call, as shown by the documentation and examples");
+							assert(false && 
 #endif
+								"sol: 2 separate garbage_collect functions were set on this type. Please specify only 1 sol::meta_function::gc type AND wrap the function in a sol::destruct call, as shown by the documentation and examples");
 						}
 						destructfunc = reg.func;
 						return;
 					case meta_function::index:
 						indexfunc = reg.func;
 						mustindex = true;
-						properties[i] = true;
+						prop = true;
 						return;
 					case meta_function::new_index:
 						newindexfunc = reg.func;
 						mustindex = true;
-						properties[i] = true;
+						prop = true;
 						return;
 					default:
 						break;
 					}
-					properties[i] = true;
+					prop = true;
 					break;
 				}
 			}
@@ -17357,14 +17383,55 @@ namespace sol {
 				stack::set_field(L, "name", detail::demangle<T>(), type_table.stack_index());
 				stack::set_field(L, "is", &usertype_detail::is_check<T>, type_table.stack_index());
 
-				auto register_kvp = [&](std::size_t meta_index, stack_reference& t, const std::string& first, object& second) {
-					meta_function mf = meta_function::construct;
-					for (std::size_t j = 1; j < properties.size(); ++j) {
-						mf = static_cast<meta_function>(j);
+				auto safety_check = [&](const std::string& first) {
+					for (std::size_t j = 0; j < properties.size(); ++j) {
+						meta_function mf = static_cast<meta_function>(j);
 						const std::string& mfname = to_string(mf);
+						bool& prop = properties[j];
 						if (mfname != first)
 							continue;
-						properties[j] = true;
+						switch (mf) {
+						case meta_function::construct:
+							if (prop) {
+#ifndef SOL_NO_EXCEPTIONS
+								throw error(
+#else
+								assert(false &&
+#endif
+									"sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
+							}
+							break;
+						case meta_function::garbage_collect:
+							if (prop) {
+#ifndef SOL_NO_EXCEPTIONS
+								throw error(
+#else
+								assert(false &&
+#endif
+									"sol: 2 separate garbage_collect functions were set on this type. Please specify only 1 sol::meta_function::gc type AND wrap the function in a sol::destruct call, as shown by the documentation and examples");
+							}
+							return;
+						default:
+							break;
+						}
+						prop = true;
+						break;
+					}
+				};
+
+				for (auto& kvp : varmap.functions) {
+					auto& first = std::get<0>(kvp);
+					safety_check(first);
+				}
+
+				auto register_kvp = [&](std::size_t meta_index, stack_reference& t, const std::string& first, object& second) {
+					meta_function mf = meta_function::construct;
+					for (std::size_t j = 0; j < properties.size(); ++j) {
+						mf = static_cast<meta_function>(j);
+						const std::string& mfname = to_string(mf);
+						bool& prop = properties[j];
+						if (mfname != first)
+							continue;
 						switch (mf) {
 						case meta_function::index:
 							umx.indexfunc = second;
@@ -17375,6 +17442,7 @@ namespace sol {
 						default:
 							break;
 						}
+						prop = true;
 						break;
 					}
 					switch (meta_index) {
@@ -18964,7 +19032,7 @@ namespace sol {
 		}
 
 		template <typename E>
-		function_result unsafe_script(const string_view& code, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		unsafe_function_result unsafe_script(const string_view& code, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
 			int index = lua_gettop(L);
@@ -18977,19 +19045,19 @@ namespace sol {
 			}
 			int postindex = lua_gettop(L);
 			int returns = postindex - index;
-			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
+			return unsafe_function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
 		}
 
-		function_result unsafe_script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		unsafe_function_result unsafe_script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			int index = lua_gettop(L);
 			stack::script(L, code, chunkname, mode);
 			int postindex = lua_gettop(L);
 			int returns = postindex - index;
-			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
+			return unsafe_function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
 		}
 
 		template <typename E>
-		function_result unsafe_script_file(const std::string& filename, const basic_environment<E>& env, load_mode mode = load_mode::any) {
+		unsafe_function_result unsafe_script_file(const std::string& filename, const basic_environment<E>& env, load_mode mode = load_mode::any) {
 			int index = lua_gettop(L);
 			if (luaL_loadfilex(L, filename.c_str(), to_string(mode).c_str())) {
 				lua_error(L);
@@ -19000,15 +19068,15 @@ namespace sol {
 			}
 			int postindex = lua_gettop(L);
 			int returns = postindex - index;
-			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
+			return unsafe_function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
 		}
 
-		function_result unsafe_script_file(const std::string& filename, load_mode mode = load_mode::any) {
+		unsafe_function_result unsafe_script_file(const std::string& filename, load_mode mode = load_mode::any) {
 			int index = lua_gettop(L);
 			stack::script_file(L, filename, mode);
 			int postindex = lua_gettop(L);
 			int returns = postindex - index;
-			return function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
+			return unsafe_function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
 		}
 
 		template <typename Fx, meta::disable<meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
@@ -19039,7 +19107,7 @@ namespace sol {
 			return safe_script_file(filename, env, script_default_on_error, mode);
 		}
 
-#ifdef SOL_SAFE_FUNCTIONS
+#ifdef SOL_SAFE_FUNCTION
 		protected_function_result script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return safe_script(code, chunkname, mode);
 		}
@@ -19048,11 +19116,11 @@ namespace sol {
 			return safe_script_file(filename, mode);
 		}
 #else
-		function_result script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		unsafe_function_result script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return unsafe_script(code, chunkname, mode);
 		}
 
-		function_result script_file(const std::string& filename, load_mode mode = load_mode::any) {
+		unsafe_function_result script_file(const std::string& filename, load_mode mode = load_mode::any) {
 			return unsafe_script_file(filename, mode);
 		}
 #endif
