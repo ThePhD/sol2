@@ -29,4 +29,4 @@ This marker does NOT apply to :doc:`usertypes<usertype>`.
 
 You can also use this to nest types and retrieve tables within tables as shown by `this example`_.
 
-.. _this example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_simple.cpp
+.. _this example: https://github.com/ThePhD/sol2/blob/develop/examples/containers_as_table.cpp

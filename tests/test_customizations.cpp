@@ -1,4 +1,5 @@
-#define SOL_CHECK_ARGUMENTS
+#define SOL_CHECK_ARGUMENTS 1
+#define SOL_ENABLE_INTEROP 1
 
 #include <catch.hpp>
 #include <sol.hpp>

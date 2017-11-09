@@ -70,11 +70,12 @@ namespace sol {
 #else
 		template <lua_CFunction f>
 		int static_trampoline(lua_State* L) {
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_LUAJIT)
+			return f(L);
+
+#else
 			try {
-#endif
 				return f(L);
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			}
 			catch (const char* s) {
 				lua_pushstring(L, s);
@@ -82,10 +83,14 @@ namespace sol {
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
+#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && defined(SOL_LUAJIT)
+			// LuaJIT cannot have the catchall when the safe propagation is on
+			// but LuaJIT will swallow all C++ errors 
+			// if we don't at least catch std::exception ones
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
-
+#endif // LuaJIT cannot have the catchall, but we must catch std::exceps for it
 			return lua_error(L);
 #endif
 		}
@@ -117,11 +122,11 @@ namespace sol {
 			if (meta::bind_traits<meta::unqualified_t<Fx>>::is_noexcept) {
 				return f(L, std::forward<Args>(args)...);
 			}
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_LUAJIT)
+			return f(L, std::forward<Args>(args)...);
+#else
 			try {
-#endif
 				return f(L, std::forward<Args>(args)...);
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			}
 			catch (const char* s) {
 				lua_pushstring(L, s);
@@ -129,10 +134,14 @@ namespace sol {
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
+#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_LUAJIT)
+			// LuaJIT cannot have the catchall when the safe propagation is on
+			// but LuaJIT will swallow all C++ errors 
+			// if we don't at least catch std::exception ones
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
-
+#endif
 			return lua_error(L);
 #endif
 		}
@@ -1081,6 +1090,16 @@ namespace sol {
 
 	template <typename T>
 	struct is_stack_based : std::is_base_of<stack_reference, T> {};
+	template <>
+	struct is_stack_based<variadic_args> : std::true_type {};
+	template <>
+	struct is_stack_based<unsafe_function_result> : std::true_type {};
+	template <>
+	struct is_stack_based<protected_function_result> : std::true_type {};
+	template <>
+	struct is_stack_based<stack_proxy> : std::true_type {};
+	template <>
+	struct is_stack_based<stack_proxy_base> : std::true_type {};
 
 	template <typename T>
 	struct is_lua_primitive<T*> : std::true_type {};

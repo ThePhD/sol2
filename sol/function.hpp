@@ -28,6 +28,11 @@
 #include <functional>
 
 namespace sol {
+	template <typename... Ret, typename... Args>
+	inline decltype(auto) stack_proxy::call(Args&&... args) {
+		stack_function sf(this->lua_state(), this->stack_index());
+		return sf.template call<Ret...>(std::forward<Args>(args)...);
+	}
 
 	inline protected_function_result::protected_function_result(unsafe_function_result&& o) noexcept
 	: L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()), popcount(o.return_count()), err(o.status()) {

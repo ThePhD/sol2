@@ -1,14 +1,12 @@
 #define SOL_CHECK_ARGUMENTS 1
 #include <sol.hpp>
 
-#include <cassert>
 #include <iostream>
 
 int main() {
 	std::cout << "=== self_call example ===" << std::endl;
 
 	sol::state lua;
-
 	lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::table);
 
 	// a small script using 'self' syntax
@@ -33,4 +31,6 @@ int main() {
 	lua["print_some_val"]();
 
 	std::cout << std::endl;
+
+	return 0;
 }

@@ -1,8 +1,10 @@
 #define CATCH_CONFIG_MAIN
-#define SOL_CHECK_ARGUMENTS
+#define SOL_CHECK_ARGUMENTS 1
+#define SOL_ENABLE_INTEROP 1
+
+#include <sol.hpp>
 
 #include <catch.hpp>
-#include <sol.hpp>
 
 #include <fstream>
 #include <iostream>

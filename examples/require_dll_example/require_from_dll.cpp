@@ -10,6 +10,7 @@ int main(int, char*[]) {
 	std::cout << "=== require from DLL example ===" << std::endl;
 
 	sol::state lua;
+	lua.open_libraries(sol::lib::package);
 
 	lua.script_file(R"(
 mo = require("my_object")

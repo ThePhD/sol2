@@ -1,7 +1,9 @@
-#define SOL_CHECK_ARGUMENTS
+#define SOL_CHECK_ARGUMENTS 1
+#define SOL_ENABLE_INTEROP 1
+
+#include <sol.hpp>
 
 #include <catch.hpp>
-#include <sol.hpp>
 
 TEST_CASE("issues/stack overflow", "make sure various operations repeated don't trigger stack overflow") {
 	sol::state lua;

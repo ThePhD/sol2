@@ -66,7 +66,7 @@ After loading that file in or putting it in a string and reading the string dire
 	int changed_value = z; // now it's 20!
 
 
-We don't recommend the above to be used across classes or between function: it's more of something you can do to save a reference to a value you like, call a script or run a lua function, and then get it afterwards. You can also set functions (and function objects :ref:`*<note 1>`) this way, and retrieve them as well.
+We don't recommend the above to be used across classes or between function: it's more of something you can do to save a reference to a value you like, call a script or run a lua function, and then get it afterwards. You can also set functions (and function objects) this way, and retrieve them as well.
 
 .. code-block:: c++
 	:linenos:
@@ -133,7 +133,7 @@ Returns whether this proxy actually refers to a valid object. It uses :ref:`sol:
 	template <typename Fx>
 	proxy& operator=( Fx&& function );
 
-Sets the value associated with the keys the proxy was generated with to ``value``. If this is a function, calls ``set_function``. If it is not, just calls ``set``. Does not exist on :ref:`unsage_function_result<unsafe-function-result>` or :ref:`protected_function_result<protected-function-result>`. See :ref:`note<note 1>` for caveats.
+Sets the value associated with the keys the proxy was generated with to ``value``. If this is a function, calls ``set_function``. If it is not, just calls ``set``. Does not exist on :ref:`unsage_function_result<unsafe-function-result>` or :ref:`protected_function_result<protected-function-result>`.
 
 .. code-block:: c++
 	:caption: function: set a callable
@@ -154,6 +154,8 @@ Sets the value associated with the keys the proxy was generated with to a functi
 
 Sets the value associated with the keys the proxy was generated with to ``value``. Does not exist on :ref:`unsafe_function_result<unsafe-function-result>` or :ref:`protected_function_result<protected-function-result>`.
 
+.. _stack-proxy:
+
 stack_proxy
 -----------
 
@@ -169,6 +171,8 @@ unsafe_function_result
 
 This type does, however, allow access to multiple underlying values. Use ``result.get<Type>(index_offset)`` to retrieve an object of ``Type`` at an offset of ``index_offset`` in the results. Offset is 0 based. Not specifying an argument defaults the value to 0.
 
+``unsafe_function_result`` also has ``begin()`` and ``end()`` functions that return (almost) "random-acess" iterators. These return a proxy type that can be implicitly converted to :ref:`stack_proxy<stack-proxy>`.
+
 .. _protected-function-result:
 
 protected_function_result
@@ -179,10 +183,22 @@ protected_function_result
 
 This type does, however, allow access to multiple underlying values. Use ``result.get<Type>(index_offset)`` to retrieve an object of ``Type`` at an offset of ``index_offset`` in the results. Offset is 0 based. Not specifying an argument defaults the value to 0.
 
+``unsafe_function_result`` also has ``begin()`` and ``end()`` functions that return (almost) "random-acess" iterators. These return a proxy type that can be implicitly converted to :ref:`stack_proxy<stack-proxy>`.
+
 .. _note 1:
 
 on function objects and proxies
 -------------------------------
+
+.. note::
+
+	As of recent versions of sol2 (2.18.2 and above), this is no longer an issue, as even bound classes will have any detectable function call operator automatically bound to the object, to allow this to work without having to use ``.set`` or ``.set_function``. The note here is kept for posterity and information for older versions.
+
+
+.. warning::
+
+	*The below information is outdated.*
+
 
 Consider the following:
 

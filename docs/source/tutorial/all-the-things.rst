@@ -10,29 +10,63 @@ You'll need to ``#include <sol.hpp>``/``#include "sol.hpp"`` somewhere in your c
 	After you learn the basics of sol, it is usually advised that if you think something can work, you should TRY IT. It will probably work!
 	
 
+.. note::
+	
+	All of the code below is available at the `sol2 tutorial examples`_.
+
 opening a state
 ---------------
 
 .. code-block:: cpp
 	
+	#define SOL_CHECK_ARGUMENTS 1
+	#include <sol.hpp>
+
 	int main (int argc, char* argv[]) {
 		sol::state lua;
 		// open some common libraries
 		lua.open_libraries(sol::lib::base, sol::lib::package);
+		// go!
 		lua.script( "print('bark bark bark!')" );
 	}
 
 
-sol::state on lua_State*
-------------------------
+.. _sol-state-on-lua-state:
 
-For your system/game that already has lua, but you'd like something nice:
+using sol2 on a lua_State*
+--------------------------
+
+For your system/game that already has Lua or uses an in-house or pre-rolled Lua system (LuaBridge, kaguya, Luwra, etc.), but you'd still like sol2 and nice things:
 
 .. code-block:: cpp
 	
-	int pre_existing_system( lua_State* L ) {
+	#define SOL_CHECK_ARGUMENTS 1
+	#include <sol.hpp>
+
+	#include <iostream>
+
+	int use_sol2(lua_State* L) {
 		sol::state_view lua(L);
-		lua.script( "print('bark bark bark!')" );
+		lua.script("print('bark bark bark!')");
+		return 0;
+	}
+
+	int main(int, char*[]) {
+		std::cout << "=== opening sol::state_view on raw Lua example ===" << std::endl;
+
+		lua_State* L = luaL_newstate();
+		luaL_openlibs(L);
+
+		lua_pushcclosure(L, &use_sol2, 0);
+		lua_setglobal(L, "use_sol2");
+
+		if (luaL_dostring(L, "use_sol2()")) {
+			lua_error(L);
+			return -1;
+		}
+
+		std::cout << std::endl;
+
 		return 0;
 	}
 
@@ -42,74 +76,53 @@ running lua code
 
 .. code-block:: cpp
 
-	sol::state lua;
-	// load and execute from string
-	lua.script("a = 'test'");
-	// load and execute from file
-	lua.script_file("path/to/luascript.lua");
+	#define SOL_CHECK_ARGUMENTS 1
+	#include <sol.hpp>
 
-	// run a script, get the result
-	int value = lua.script("return 54");
-	// value == 54
+	#include <iostream>
+	#include <cassert>
+
+	int main(int, char*[]) {
+		std::cout << "=== running lua code (low level) example ===" << std::endl;
+
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+		
+		sol::state lua;
+		// load and execute from string
+		lua.script("a = 'test'");
+		// load and execute from file
+		lua.script_file("a_lua_script.lua");
+
+		// run a script, get the result
+		int value = lua.script("return 54");
+		assert(value == 54);
+
+		/* ... continued in next block */
 
 To run Lua code but have an error handler in case things go wrong:
 
 .. code-block:: cpp
 
-	sol::state lua;
-	
-	// the default handler panics or throws, depending on your settings
-	auto result1 = lua.script("bad.code", &sol::default_on_error);
+		/* ... from previous block */
+		auto bad_code_result = lua.script("123 herp.derp", [](lua_State* L, sol::protected_function_result pfr) {
+			// pfr will contain things that went wrong, for either loading or executing the script
+			// Can throw your own custom error
+			// You can also just return it, and let the call-site handle the error if necessary.
+			return pfr;
+		});
+		// it did not work
+		assert(!bad_code_result.valid());
+		
+		// the default handler panics or throws, depending on your settings
+		// uncomment for explosions:
+		//auto bad_code_result_2 = lua.script("bad.code", &sol::script_default_on_error);
 
-	auto result2 = lua.script("123 herp.derp", [](lua_State* L, sol::protected_function_result pfr) {
-		// pfr will contain things that went wrong, for either loading or executing the script
-		// Can throw your own custom error
-		// You can also just return it, and let the call-site handle the error if necessary.
-		return pfr;
-	});
+		std::cout << std::endl;
 
-
-To check the success of a loading operation:
-
-.. code-block:: cpp
-
-	// load file without execute
-	sol::load_result script1 = lua.load_file("path/to/luascript.lua");
-	script1(); //execute
-	
-	// load string without execute
-	sol::load_result script2 = lua.load("a = 'test'");
-	sol::protected_function_result script2result = script2(); //execute
-	// optionally, check if it worked
-	if (script2result.valid()) {
-		// yay!
-	}
-	else {
-		// aww
+		return 0;
 	}
 
-	sol::load_result script3 = lua.load("return 24");
-	int value2 = script3(); // execute, get return value
-	// value2 == 24
-
-
-To check whether a script was successfully run or not (if the actual loading is successful):
-
-.. code-block:: cpp
-
-	// execute and return result
-	sol::protected_function_result result1 = lua.do_string("return 24");
-	if (result1.valid()) {
-		int value = result1;
-		// value == 24
-		// yay!
-	}
-	else {
-		// ahhh :c
-	}
-	
-
-There is also ``lua.do_file("path/to/luascript.lua");``.
 
 set and get variables
 ---------------------
@@ -168,10 +181,12 @@ Retrieve these variables using this syntax:
 	// get a function
 	sol::function a_function = lua["a_function"];
 	int value_is_100 = a_function();
-
-	// get a std::function
-	std::function<int()> a_std_function = lua["a_function"];
+	// value_is_100 == 100
+	
+	// convertible to std::function
+	std::function<int()> a_std_function = a_function;
 	int value_is_still_100 = a_std_function();
+	// value_is_still_100 == 100
 
 Retrieve Lua types using ``object`` and other ``sol::`` types.
 
@@ -312,12 +327,13 @@ They're great. Use them:
 	lua.script("function f (a, b, c, d) return 1 end");
 	lua.script("function g (a, b) return a + b end");
 
-	// fixed signature std::function<...>
-	std::function<int(int, double, int, std::string)> stdfx = lua["f"];
 	// sol::function is often easier: 
 	// takes a variable number/types of arguments...
 	sol::function fx = lua["f"];
-
+	// fixed signature std::function<...>
+	// can be used to tie a sol::function down
+	std::function<int(int, double, int, std::string)> stdfx = fx;
+	
 	int is_one = stdfx(1, 34.5, 3, "bark");
 	int is_also_one = fx(1, "boop", 3, "bark");
 
@@ -497,7 +513,7 @@ Everything that is not a:
 	* string type: ``std::string``, ``const char*``
 	* function type: function pointers, ``lua_CFunction``, ``std::function``, :doc:`sol::function/sol::protected_function<../api/function>`, :doc:`sol::coroutine<../api/coroutine>`, member variable, member function
 	* designated sol type: :doc:`sol::table<../api/table>`, :doc:`sol::thread<../api/thread>`, :doc:`sol::error<../api/error>`, :doc:`sol::object<../api/object>`
-	* transparent argument type: :doc:`sol::variadic_arg<../api/variadic_args>`, :doc:`sol::this_state<../api/this_state>`
+	* transparent argument type: :doc:`sol::variadic_arg<../api/variadic_args>`, :doc:`sol::this_state<../api/this_state>`, :doc:`sol::this_environment<../api/this_environment>`
 	* usertype<T> class: :doc:`sol::usertype<../api/usertype>`
 
 Is set as a :doc:`userdata + usertype<../api/usertype>`.
@@ -665,4 +681,4 @@ Some more things you can do/read about:
 .. _a basic example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype.cpp
 .. _special functions: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_special_functions.cpp
 .. _initializers: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_initializers.cpp
-
+.. _sol2 tutorial examples: https://github.com/ThePhD/sol2/tree/develop/examples/tutorials/quick 'n' dirty

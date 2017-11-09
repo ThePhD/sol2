@@ -126,6 +126,8 @@ namespace sol {
 	using stack_thread = basic_thread<stack_reference>;
 	using stack_coroutine = basic_coroutine<stack_reference>;
 
+	struct stack_proxy_base;
+	struct stack_proxy;
 	struct variadic_args;
 	struct variadic_results;
 	struct stack_count;

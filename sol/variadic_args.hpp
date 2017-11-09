@@ -24,133 +24,11 @@
 
 #include "stack.hpp"
 #include "stack_proxy.hpp"
+#include "stack_iterator.hpp"
 #include <limits>
 #include <iterator>
 
 namespace sol {
-	template <bool is_const>
-	struct va_iterator : std::iterator<std::random_access_iterator_tag, std::conditional_t<is_const, const stack_proxy, stack_proxy>, std::ptrdiff_t, std::conditional_t<is_const, const stack_proxy*, stack_proxy*>, std::conditional_t<is_const, const stack_proxy, stack_proxy>> {
-		typedef std::iterator<std::random_access_iterator_tag, std::conditional_t<is_const, const stack_proxy, stack_proxy>, std::ptrdiff_t, std::conditional_t<is_const, const stack_proxy*, stack_proxy*>, std::conditional_t<is_const, const stack_proxy, stack_proxy>> base_t;
-		typedef typename base_t::reference reference;
-		typedef typename base_t::pointer pointer;
-		typedef typename base_t::value_type value_type;
-		typedef typename base_t::difference_type difference_type;
-		typedef typename base_t::iterator_category iterator_category;
-		lua_State* L;
-		int index;
-		int stacktop;
-		stack_proxy sp;
-
-		va_iterator()
-		: L(nullptr), index((std::numeric_limits<int>::max)()), stacktop((std::numeric_limits<int>::max)()) {
-		}
-		va_iterator(const va_iterator<true>& r)
-		: L(r.L), index(r.index), stacktop(r.stacktop) {
-		}
-		va_iterator(lua_State* luastate, int idx, int topidx)
-		: L(luastate), index(idx), stacktop(topidx), sp(luastate, idx) {
-		}
-
-		reference operator*() {
-			return stack_proxy(L, index);
-		}
-
-		reference operator*() const {
-			return stack_proxy(L, index);
-		}
-
-		pointer operator->() {
-			sp = stack_proxy(L, index);
-			return &sp;
-		}
-
-		pointer operator->() const {
-			const_cast<stack_proxy&>(sp) = stack_proxy(L, index);
-			return &sp;
-		}
-
-		va_iterator& operator++() {
-			++index;
-			return *this;
-		}
-
-		va_iterator operator++(int) {
-			auto r = *this;
-			this->operator++();
-			return r;
-		}
-
-		va_iterator& operator--() {
-			--index;
-			return *this;
-		}
-
-		va_iterator operator--(int) {
-			auto r = *this;
-			this->operator--();
-			return r;
-		}
-
-		va_iterator& operator+=(difference_type idx) {
-			index += static_cast<int>(idx);
-			return *this;
-		}
-
-		va_iterator& operator-=(difference_type idx) {
-			index -= static_cast<int>(idx);
-			return *this;
-		}
-
-		difference_type operator-(const va_iterator& r) const {
-			return index - r.index;
-		}
-
-		va_iterator operator+(difference_type idx) const {
-			va_iterator r = *this;
-			r += idx;
-			return r;
-		}
-
-		reference operator[](difference_type idx) const {
-			return stack_proxy(L, index + static_cast<int>(idx));
-		}
-
-		bool operator==(const va_iterator& r) const {
-			if (stacktop == (std::numeric_limits<int>::max)()) {
-				return r.index == r.stacktop;
-			}
-			else if (r.stacktop == (std::numeric_limits<int>::max)()) {
-				return index == stacktop;
-			}
-			return index == r.index;
-		}
-
-		bool operator!=(const va_iterator& r) const {
-			return !(this->operator==(r));
-		}
-
-		bool operator<(const va_iterator& r) const {
-			return index < r.index;
-		}
-
-		bool operator>(const va_iterator& r) const {
-			return index > r.index;
-		}
-
-		bool operator<=(const va_iterator& r) const {
-			return index <= r.index;
-		}
-
-		bool operator>=(const va_iterator& r) const {
-			return index >= r.index;
-		}
-	};
-
-	template <bool is_const>
-	inline va_iterator<is_const> operator+(typename va_iterator<is_const>::difference_type n, const va_iterator<is_const>& r) {
-		return r + n;
-	}
-
 	struct variadic_args {
 	private:
 		lua_State* L;
@@ -163,22 +41,22 @@ namespace sol {
 		typedef stack_proxy* pointer;
 		typedef std::ptrdiff_t difference_type;
 		typedef std::size_t size_type;
-		typedef va_iterator<false> iterator;
-		typedef va_iterator<true> const_iterator;
+		typedef stack_iterator<stack_proxy, false> iterator;
+		typedef stack_iterator<stack_proxy, true> const_iterator;
 		typedef std::reverse_iterator<iterator> reverse_iterator;
 		typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
 		variadic_args() = default;
 		variadic_args(lua_State* luastate, int stackindex = -1)
-		: L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lua_gettop(luastate)) {
+			: L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lua_gettop(luastate)) {
 		}
 		variadic_args(lua_State* luastate, int stackindex, int lastindex)
-		: L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lastindex) {
+			: L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lastindex) {
 		}
 		variadic_args(const variadic_args&) = default;
 		variadic_args& operator=(const variadic_args&) = default;
 		variadic_args(variadic_args&& o)
-		: L(o.L), index(o.index), stacktop(o.stacktop) {
+			: L(o.L), index(o.index), stacktop(o.stacktop) {
 			// Must be manual, otherwise destructor will screw us
 			// return count being 0 is enough to keep things clean
 			// but will be thorough
@@ -254,16 +132,16 @@ namespace sol {
 		}
 
 		template <typename T>
-		decltype(auto) get(difference_type start = 0) const {
-			return stack::get<T>(L, index + static_cast<int>(start));
+		decltype(auto) get(difference_type index_offset = 0) const {
+			return stack::get<T>(L, index + static_cast<int>(index_offset));
 		}
 
-		type get_type(difference_type start = 0) const noexcept {
-			return type_of(L, index + static_cast<int>(start));
+		type get_type(difference_type index_offset = 0) const noexcept {
+			return type_of(L, index + static_cast<int>(index_offset));
 		}
 
-		stack_proxy operator[](difference_type start) const {
-			return stack_proxy(L, index + static_cast<int>(start));
+		stack_proxy operator[](difference_type index_offset) const {
+			return stack_proxy(L, index + static_cast<int>(index_offset));
 		}
 
 		lua_State* lua_state() const {

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-11-08 01:20:39.160314 UTC
-// This header was generated with sol v2.18.6 (revision 10b1bb0)
+// Generated 2017-11-09 22:36:14.826447 UTC
+// This header was generated with sol v2.18.6 (revision 90bbead)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -253,6 +253,8 @@ namespace sol {
 	using stack_thread = basic_thread<stack_reference>;
 	using stack_coroutine = basic_coroutine<stack_reference>;
 
+	struct stack_proxy_base;
+	struct stack_proxy;
 	struct variadic_args;
 	struct variadic_results;
 	struct stack_count;
@@ -4399,11 +4401,12 @@ namespace sol {
 #else
 		template <lua_CFunction f>
 		int static_trampoline(lua_State* L) {
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_LUAJIT)
+			return f(L);
+
+#else
 			try {
-#endif
 				return f(L);
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			}
 			catch (const char* s) {
 				lua_pushstring(L, s);
@@ -4411,10 +4414,14 @@ namespace sol {
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
+#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && defined(SOL_LUAJIT)
+			// LuaJIT cannot have the catchall when the safe propagation is on
+			// but LuaJIT will swallow all C++ errors 
+			// if we don't at least catch std::exception ones
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
-
+#endif // LuaJIT cannot have the catchall, but we must catch std::exceps for it
 			return lua_error(L);
 #endif
 		}
@@ -4446,11 +4453,11 @@ namespace sol {
 			if (meta::bind_traits<meta::unqualified_t<Fx>>::is_noexcept) {
 				return f(L, std::forward<Args>(args)...);
 			}
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_LUAJIT)
+			return f(L, std::forward<Args>(args)...);
+#else
 			try {
-#endif
 				return f(L, std::forward<Args>(args)...);
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			}
 			catch (const char* s) {
 				lua_pushstring(L, s);
@@ -4458,10 +4465,14 @@ namespace sol {
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
+#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_LUAJIT)
+			// LuaJIT cannot have the catchall when the safe propagation is on
+			// but LuaJIT will swallow all C++ errors 
+			// if we don't at least catch std::exception ones
 			catch (...) {
 				lua_pushstring(L, "caught (...) exception");
 			}
-
+#endif
 			return lua_error(L);
 #endif
 		}
@@ -5410,6 +5421,16 @@ namespace sol {
 
 	template <typename T>
 	struct is_stack_based : std::is_base_of<stack_reference, T> {};
+	template <>
+	struct is_stack_based<variadic_args> : std::true_type {};
+	template <>
+	struct is_stack_based<unsafe_function_result> : std::true_type {};
+	template <>
+	struct is_stack_based<protected_function_result> : std::true_type {};
+	template <>
+	struct is_stack_based<stack_proxy> : std::true_type {};
+	template <>
+	struct is_stack_based<stack_proxy_base> : std::true_type {};
 
 	template <typename T>
 	struct is_lua_primitive<T*> : std::true_type {};
@@ -10497,6 +10518,251 @@ namespace sol {
 
 // end of sol/proxy_base.hpp
 
+// beginning of sol/stack_iterator.hpp
+
+namespace sol {
+	template <typename proxy_t, bool is_const>
+	struct stack_iterator : std::iterator<std::random_access_iterator_tag, std::conditional_t<is_const, const proxy_t, proxy_t>, std::ptrdiff_t, std::conditional_t<is_const, const proxy_t*, proxy_t*>, std::conditional_t<is_const, const proxy_t, proxy_t>> {
+		typedef std::iterator<std::random_access_iterator_tag, std::conditional_t<is_const, const proxy_t, proxy_t>, std::ptrdiff_t, std::conditional_t<is_const, const proxy_t*, proxy_t*>, std::conditional_t<is_const, const proxy_t, proxy_t>> base_t;
+		typedef typename base_t::reference reference;
+		typedef typename base_t::pointer pointer;
+		typedef typename base_t::value_type value_type;
+		typedef typename base_t::difference_type difference_type;
+		typedef typename base_t::iterator_category iterator_category;
+		lua_State* L;
+		int index;
+		int stacktop;
+		proxy_t sp;
+
+		stack_iterator()
+			: L(nullptr), index((std::numeric_limits<int>::max)()), stacktop((std::numeric_limits<int>::max)()), sp() {
+		}
+		stack_iterator(const stack_iterator<proxy_t, true>& r)
+			: L(r.L), index(r.index), stacktop(r.stacktop), sp(r.sp) {
+		}
+		stack_iterator(lua_State* luastate, int idx, int topidx)
+			: L(luastate), index(idx), stacktop(topidx), sp(luastate, idx) {
+		}
+
+		reference operator*() {
+			return proxy_t(L, index);
+		}
+
+		reference operator*() const {
+			return proxy_t(L, index);
+		}
+
+		pointer operator->() {
+			sp = proxy_t(L, index);
+			return &sp;
+		}
+
+		pointer operator->() const {
+			const_cast<proxy_t&>(sp) = proxy_t(L, index);
+			return &sp;
+		}
+
+		stack_iterator& operator++() {
+			++index;
+			return *this;
+		}
+
+		stack_iterator operator++(int) {
+			auto r = *this;
+			this->operator++();
+			return r;
+		}
+
+		stack_iterator& operator--() {
+			--index;
+			return *this;
+		}
+
+		stack_iterator operator--(int) {
+			auto r = *this;
+			this->operator--();
+			return r;
+		}
+
+		stack_iterator& operator+=(difference_type idx) {
+			index += static_cast<int>(idx);
+			return *this;
+		}
+
+		stack_iterator& operator-=(difference_type idx) {
+			index -= static_cast<int>(idx);
+			return *this;
+		}
+
+		difference_type operator-(const stack_iterator& r) const {
+			return index - r.index;
+		}
+
+		stack_iterator operator+(difference_type idx) const {
+			stack_iterator r = *this;
+			r += idx;
+			return r;
+		}
+
+		reference operator[](difference_type idx) const {
+			return proxy_t(L, index + static_cast<int>(idx));
+		}
+
+		bool operator==(const stack_iterator& r) const {
+			if (stacktop == (std::numeric_limits<int>::max)()) {
+				return r.index == r.stacktop;
+			}
+			else if (r.stacktop == (std::numeric_limits<int>::max)()) {
+				return index == stacktop;
+			}
+			return index == r.index;
+		}
+
+		bool operator!=(const stack_iterator& r) const {
+			return !(this->operator==(r));
+		}
+
+		bool operator<(const stack_iterator& r) const {
+			return index < r.index;
+		}
+
+		bool operator>(const stack_iterator& r) const {
+			return index > r.index;
+		}
+
+		bool operator<=(const stack_iterator& r) const {
+			return index <= r.index;
+		}
+
+		bool operator>=(const stack_iterator& r) const {
+			return index >= r.index;
+		}
+	};
+
+	template <typename proxy_t, bool is_const>
+	inline stack_iterator<proxy_t, is_const> operator+(typename stack_iterator<proxy_t, is_const>::difference_type n, const stack_iterator<proxy_t, is_const>& r) {
+		return r + n;
+	}
+} // namespace sol
+
+// end of sol/stack_iterator.hpp
+
+// beginning of sol/stack_proxy.hpp
+
+// beginning of sol/stack_proxy_base.hpp
+
+namespace sol {
+	struct stack_proxy_base : public proxy_base<stack_proxy_base> {
+	private:
+		lua_State* L;
+		int index;
+
+	public:
+		stack_proxy_base()
+			: L(nullptr), index(0) {
+		}
+		stack_proxy_base(lua_State* L, int index)
+			: L(L), index(index) {
+		}
+
+		template <typename T>
+		decltype(auto) get() const {
+			return stack::get<T>(L, stack_index());
+		}
+
+		template <typename T>
+		bool is() const {
+			return stack::check<T>(L, stack_index());
+		}
+
+		template <typename T>
+		decltype(auto) as() const {
+			return get<T>();
+		}
+
+		type get_type() const noexcept {
+			return type_of(lua_state(), stack_index());
+		}
+
+		int push() const {
+			return push(L);
+		}
+
+		int push(lua_State* Ls) const {
+			lua_pushvalue(Ls, index);
+			return 1;
+		}
+
+		lua_State* lua_state() const {
+			return L;
+		}
+		int stack_index() const {
+			return index;
+		}
+	};
+
+	namespace stack {
+		template <>
+		struct getter<stack_proxy_base> {
+			static stack_proxy_base get(lua_State* L, int index = -1) {
+				return stack_proxy_base(L, index);
+			}
+		};
+
+		template <>
+		struct pusher<stack_proxy_base> {
+			static int push(lua_State*, const stack_proxy_base& ref) {
+				return ref.push();
+			}
+		};
+	} // namespace stack
+
+} // namespace sol
+
+// end of sol/stack_proxy_base.hpp
+
+namespace sol {
+	struct stack_proxy : public stack_proxy_base {
+	private:
+		lua_State* L;
+		int index;
+
+	public:
+		stack_proxy()
+		: stack_proxy_base() {
+		}
+		stack_proxy(lua_State* L, int index)
+		: stack_proxy_base(L, index) {
+		}
+
+		template <typename... Ret, typename... Args>
+		decltype(auto) call(Args&&... args);
+
+		template <typename... Args>
+		decltype(auto) operator()(Args&&... args) {
+			return call<>(std::forward<Args>(args)...);
+		}
+	};
+
+	namespace stack {
+		template <>
+		struct getter<stack_proxy> {
+			static stack_proxy get(lua_State* L, int index = -1) {
+				return stack_proxy(L, index);
+			}
+		};
+
+		template <>
+		struct pusher<stack_proxy> {
+			static int push(lua_State*, const stack_proxy& ref) {
+				return ref.push();
+			}
+		};
+	} // namespace stack
+} // namespace sol
+
+// end of sol/stack_proxy.hpp
+
 #include <cstdint>
 
 namespace sol {
@@ -10549,6 +10815,16 @@ namespace sol {
 		}
 
 	public:
+		typedef stack_proxy reference_type;
+		typedef stack_proxy value_type;
+		typedef stack_proxy* pointer;
+		typedef std::ptrdiff_t difference_type;
+		typedef std::size_t size_type;
+		typedef stack_iterator<stack_proxy, false> iterator;
+		typedef stack_iterator<stack_proxy, true> const_iterator;
+		typedef std::reverse_iterator<iterator> reverse_iterator;
+		typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+
 		protected_function_result() = default;
 		protected_function_result(lua_State* Ls, int idx = -1, int retnum = 0, int popped = 0, call_status pferr = call_status::ok) noexcept
 		: L(Ls), index(idx), returncount(retnum), popcount(popped), err(pferr) {
@@ -10591,6 +10867,52 @@ namespace sol {
 		template <typename T>
 		decltype(auto) get(int index_offset = 0) const {
 			return tagged_get(types<meta::unqualified_t<T>>(), index_offset);
+		}
+
+		type get_type(difference_type index_offset = 0) const noexcept {
+			return type_of(L, index + static_cast<int>(index_offset));
+		}
+
+		stack_proxy operator[](difference_type index_offset) const {
+			return stack_proxy(L, index + static_cast<int>(index_offset));
+		}
+
+		iterator begin() {
+			return iterator(L, index, stack_index() + return_count());
+		}
+		iterator end() {
+			return iterator(L, stack_index() + return_count(), stack_index() + return_count());
+		}
+		const_iterator begin() const {
+			return const_iterator(L, index, stack_index() + return_count());
+		}
+		const_iterator end() const {
+			return const_iterator(L, stack_index() + return_count(), stack_index() + return_count());
+		}
+		const_iterator cbegin() const {
+			return begin();
+		}
+		const_iterator cend() const {
+			return end();
+		}
+
+		reverse_iterator rbegin() {
+			return std::reverse_iterator<iterator>(begin());
+		}
+		reverse_iterator rend() {
+			return std::reverse_iterator<iterator>(end());
+		}
+		const_reverse_iterator rbegin() const {
+			return std::reverse_iterator<const_iterator>(begin());
+		}
+		const_reverse_iterator rend() const {
+			return std::reverse_iterator<const_iterator>(end());
+		}
+		const_reverse_iterator crbegin() const {
+			return std::reverse_iterator<const_iterator>(cbegin());
+		}
+		const_reverse_iterator crend() const {
+			return std::reverse_iterator<const_iterator>(cend());
 		}
 
 		lua_State* lua_state() const noexcept {
@@ -10644,6 +10966,16 @@ namespace sol {
 		int returncount;
 
 	public:
+		typedef stack_proxy reference_type;
+		typedef stack_proxy value_type;
+		typedef stack_proxy* pointer;
+		typedef std::ptrdiff_t difference_type;
+		typedef std::size_t size_type;
+		typedef stack_iterator<stack_proxy, false> iterator;
+		typedef stack_iterator<stack_proxy, true> const_iterator;
+		typedef std::reverse_iterator<iterator> reverse_iterator;
+		typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+
 		unsafe_function_result() = default;
 		unsafe_function_result(lua_State* Ls, int idx = -1, int retnum = 0)
 			: L(Ls), index(idx), returncount(retnum) {
@@ -10674,8 +11006,54 @@ namespace sol {
 		unsafe_function_result& operator=(protected_function_result&& o) noexcept;
 
 		template <typename T>
-		decltype(auto) get(int index_offset = 0) const {
-			return stack::get<T>(L, index + index_offset);
+		decltype(auto) get(difference_type index_offset = 0) const {
+			return stack::get<T>(L, index + static_cast<int>(index_offset));
+		}
+
+		type get_type(difference_type index_offset = 0) const noexcept {
+			return type_of(L, index + static_cast<int>(index_offset));
+		}
+
+		stack_proxy operator[](difference_type index_offset) const {
+			return stack_proxy(L, index + static_cast<int>(index_offset));
+		}
+
+		iterator begin() {
+			return iterator(L, index, stack_index() + return_count());
+		}
+		iterator end() {
+			return iterator(L, stack_index() + return_count(), stack_index() + return_count());
+		}
+		const_iterator begin() const {
+			return const_iterator(L, index, stack_index() + return_count());
+		}
+		const_iterator end() const {
+			return const_iterator(L, stack_index() + return_count(), stack_index() + return_count());
+		}
+		const_iterator cbegin() const {
+			return begin();
+		}
+		const_iterator cend() const {
+			return end();
+		}
+
+		reverse_iterator rbegin() {
+			return std::reverse_iterator<iterator>(begin());
+		}
+		reverse_iterator rend() {
+			return std::reverse_iterator<iterator>(end());
+		}
+		const_reverse_iterator rbegin() const {
+			return std::reverse_iterator<const_iterator>(begin());
+		}
+		const_reverse_iterator rend() const {
+			return std::reverse_iterator<const_iterator>(end());
+		}
+		const_reverse_iterator crbegin() const {
+			return std::reverse_iterator<const_iterator>(cbegin());
+		}
+		const_reverse_iterator crend() const {
+			return std::reverse_iterator<const_iterator>(cend());
 		}
 
 		call_status status() const noexcept {
@@ -10721,6 +11099,52 @@ namespace sol {
 } // namespace sol
 
 // end of sol/unsafe_function_result.hpp
+
+namespace sol {
+
+	namespace detail {
+		template <>
+		struct is_speshul<unsafe_function_result> : std::true_type {};
+		template <>
+		struct is_speshul<protected_function_result> : std::true_type {};
+
+		template <std::size_t I, typename... Args, typename T>
+		stack_proxy get(types<Args...>, index_value<0>, index_value<I>, const T& fr) {
+			return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
+		}
+
+		template <std::size_t I, std::size_t N, typename Arg, typename... Args, typename T, meta::enable<meta::boolean<(N > 0)>> = meta::enabler>
+		stack_proxy get(types<Arg, Args...>, index_value<N>, index_value<I>, const T& fr) {
+			return get(types<Args...>(), index_value<N - 1>(), index_value<I + lua_size<Arg>::value>(), fr);
+		}
+	} // namespace detail
+
+	template <>
+	struct tie_size<unsafe_function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
+
+	template <>
+	struct tie_size<protected_function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
+
+	template <std::size_t I>
+	stack_proxy get(const unsafe_function_result& fr) {
+		return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
+	}
+
+	template <std::size_t I, typename... Args>
+	stack_proxy get(types<Args...> t, const unsafe_function_result& fr) {
+		return detail::get(t, index_value<I>(), index_value<0>(), fr);
+	}
+
+	template <std::size_t I>
+	stack_proxy get(const protected_function_result& fr) {
+		return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
+	}
+
+	template <std::size_t I, typename... Args>
+	stack_proxy get(types<Args...> t, const protected_function_result& fr) {
+		return detail::get(t, index_value<I>(), index_value<0>(), fr);
+	}
+} // namespace sol
 
 // end of sol/function_result.hpp
 
@@ -13119,7 +13543,7 @@ namespace sol {
 					stack::push(lua_state(), error);
 				}
 			};
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || defined(SOL_LUAJIT)
 			try {
 #endif
 #endif // No Exceptions
@@ -13128,7 +13552,7 @@ namespace sol {
 				poststacksize = lua_gettop(lua_state()) - static_cast<int>(h.valid());
 				returncount = poststacksize - (firstreturn - 1);
 #ifndef SOL_NO_EXCEPTIONS
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || defined(SOL_LUAJIT)
 			}
 			// Handle C++ errors thrown from C++ functions bound inside of lua
 			catch (const char* error) {
@@ -13141,11 +13565,16 @@ namespace sol {
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}
+#if !defined(SOL_LUAJIT)
+			// LuaJIT cannot have the catchall when the safe propagation is on
+			// but LuaJIT will swallow all C++ errors 
+			// if we don't at least catch std::exception ones
 			catch (...) {
 				onexcept("caught (...) unknown error during protected_function call");
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}
+#endif // LuaJIT
 #else
 			// do not handle exceptions: they can be propogated into C++ and keep all type information / rich information
 #endif // about as safe as possible
@@ -13326,6 +13755,11 @@ namespace sol {
 // end of sol/protected_function.hpp
 
 namespace sol {
+	template <typename... Ret, typename... Args>
+	inline decltype(auto) stack_proxy::call(Args&&... args) {
+		stack_function sf(this->lua_state(), this->stack_index());
+		return sf.template call<Ret...>(std::forward<Args>(args)...);
+	}
 
 	inline protected_function_result::protected_function_result(unsafe_function_result&& o) noexcept
 	: L(o.lua_state()), index(o.stack_index()), returncount(o.return_count()), popcount(o.return_count()), err(o.status()) {
@@ -13845,254 +14279,7 @@ namespace sol {
 
 // beginning of sol/variadic_args.hpp
 
-// beginning of sol/stack_proxy.hpp
-
 namespace sol {
-	struct stack_proxy : public proxy_base<stack_proxy> {
-	private:
-		lua_State* L;
-		int index;
-
-	public:
-		stack_proxy()
-		: L(nullptr), index(0) {
-		}
-		stack_proxy(lua_State* L, int index)
-		: L(L), index(index) {
-		}
-
-		template <typename T>
-		decltype(auto) get() const {
-			return stack::get<T>(L, stack_index());
-		}
-
-		template <typename T>
-		bool is() const {
-			return stack::check<T>(L, stack_index());
-		}
-
-		template <typename T>
-		decltype(auto) as() const {
-			return get<T>();
-		}
-
-		type get_type() const noexcept {
-			return type_of(lua_state(), stack_index());
-		}
-
-		int push() const {
-			return push(L);
-		}
-
-		int push(lua_State* Ls) const {
-			lua_pushvalue(Ls, index);
-			return 1;
-		}
-
-		lua_State* lua_state() const {
-			return L;
-		}
-		int stack_index() const {
-			return index;
-		}
-
-		template <typename... Ret, typename... Args>
-		decltype(auto) call(Args&&... args) {
-			return get<function>().template call<Ret...>(std::forward<Args>(args)...);
-		}
-
-		template <typename... Args>
-		decltype(auto) operator()(Args&&... args) {
-			return call<>(std::forward<Args>(args)...);
-		}
-	};
-
-	namespace stack {
-		template <>
-		struct getter<stack_proxy> {
-			static stack_proxy get(lua_State* L, int index = -1) {
-				return stack_proxy(L, index);
-			}
-		};
-
-		template <>
-		struct pusher<stack_proxy> {
-			static int push(lua_State*, const stack_proxy& ref) {
-				return ref.push();
-			}
-		};
-	} // namespace stack
-
-	namespace detail {
-		template <>
-		struct is_speshul<unsafe_function_result> : std::true_type {};
-		template <>
-		struct is_speshul<protected_function_result> : std::true_type {};
-
-		template <std::size_t I, typename... Args, typename T>
-		stack_proxy get(types<Args...>, index_value<0>, index_value<I>, const T& fr) {
-			return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
-		}
-
-		template <std::size_t I, std::size_t N, typename Arg, typename... Args, typename T, meta::enable<meta::boolean<(N > 0)>> = meta::enabler>
-		stack_proxy get(types<Arg, Args...>, index_value<N>, index_value<I>, const T& fr) {
-			return get(types<Args...>(), index_value<N - 1>(), index_value<I + lua_size<Arg>::value>(), fr);
-		}
-	} // namespace detail
-
-	template <>
-	struct tie_size<unsafe_function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
-
-	template <std::size_t I>
-	stack_proxy get(const unsafe_function_result& fr) {
-		return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
-	}
-
-	template <std::size_t I, typename... Args>
-	stack_proxy get(types<Args...> t, const unsafe_function_result& fr) {
-		return detail::get(t, index_value<I>(), index_value<0>(), fr);
-	}
-
-	template <>
-	struct tie_size<protected_function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
-
-	template <std::size_t I>
-	stack_proxy get(const protected_function_result& fr) {
-		return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
-	}
-
-	template <std::size_t I, typename... Args>
-	stack_proxy get(types<Args...> t, const protected_function_result& fr) {
-		return detail::get(t, index_value<I>(), index_value<0>(), fr);
-	}
-} // namespace sol
-
-// end of sol/stack_proxy.hpp
-
-namespace sol {
-	template <bool is_const>
-	struct va_iterator : std::iterator<std::random_access_iterator_tag, std::conditional_t<is_const, const stack_proxy, stack_proxy>, std::ptrdiff_t, std::conditional_t<is_const, const stack_proxy*, stack_proxy*>, std::conditional_t<is_const, const stack_proxy, stack_proxy>> {
-		typedef std::iterator<std::random_access_iterator_tag, std::conditional_t<is_const, const stack_proxy, stack_proxy>, std::ptrdiff_t, std::conditional_t<is_const, const stack_proxy*, stack_proxy*>, std::conditional_t<is_const, const stack_proxy, stack_proxy>> base_t;
-		typedef typename base_t::reference reference;
-		typedef typename base_t::pointer pointer;
-		typedef typename base_t::value_type value_type;
-		typedef typename base_t::difference_type difference_type;
-		typedef typename base_t::iterator_category iterator_category;
-		lua_State* L;
-		int index;
-		int stacktop;
-		stack_proxy sp;
-
-		va_iterator()
-		: L(nullptr), index((std::numeric_limits<int>::max)()), stacktop((std::numeric_limits<int>::max)()) {
-		}
-		va_iterator(const va_iterator<true>& r)
-		: L(r.L), index(r.index), stacktop(r.stacktop) {
-		}
-		va_iterator(lua_State* luastate, int idx, int topidx)
-		: L(luastate), index(idx), stacktop(topidx), sp(luastate, idx) {
-		}
-
-		reference operator*() {
-			return stack_proxy(L, index);
-		}
-
-		reference operator*() const {
-			return stack_proxy(L, index);
-		}
-
-		pointer operator->() {
-			sp = stack_proxy(L, index);
-			return &sp;
-		}
-
-		pointer operator->() const {
-			const_cast<stack_proxy&>(sp) = stack_proxy(L, index);
-			return &sp;
-		}
-
-		va_iterator& operator++() {
-			++index;
-			return *this;
-		}
-
-		va_iterator operator++(int) {
-			auto r = *this;
-			this->operator++();
-			return r;
-		}
-
-		va_iterator& operator--() {
-			--index;
-			return *this;
-		}
-
-		va_iterator operator--(int) {
-			auto r = *this;
-			this->operator--();
-			return r;
-		}
-
-		va_iterator& operator+=(difference_type idx) {
-			index += static_cast<int>(idx);
-			return *this;
-		}
-
-		va_iterator& operator-=(difference_type idx) {
-			index -= static_cast<int>(idx);
-			return *this;
-		}
-
-		difference_type operator-(const va_iterator& r) const {
-			return index - r.index;
-		}
-
-		va_iterator operator+(difference_type idx) const {
-			va_iterator r = *this;
-			r += idx;
-			return r;
-		}
-
-		reference operator[](difference_type idx) const {
-			return stack_proxy(L, index + static_cast<int>(idx));
-		}
-
-		bool operator==(const va_iterator& r) const {
-			if (stacktop == (std::numeric_limits<int>::max)()) {
-				return r.index == r.stacktop;
-			}
-			else if (r.stacktop == (std::numeric_limits<int>::max)()) {
-				return index == stacktop;
-			}
-			return index == r.index;
-		}
-
-		bool operator!=(const va_iterator& r) const {
-			return !(this->operator==(r));
-		}
-
-		bool operator<(const va_iterator& r) const {
-			return index < r.index;
-		}
-
-		bool operator>(const va_iterator& r) const {
-			return index > r.index;
-		}
-
-		bool operator<=(const va_iterator& r) const {
-			return index <= r.index;
-		}
-
-		bool operator>=(const va_iterator& r) const {
-			return index >= r.index;
-		}
-	};
-
-	template <bool is_const>
-	inline va_iterator<is_const> operator+(typename va_iterator<is_const>::difference_type n, const va_iterator<is_const>& r) {
-		return r + n;
-	}
-
 	struct variadic_args {
 	private:
 		lua_State* L;
@@ -14105,22 +14292,22 @@ namespace sol {
 		typedef stack_proxy* pointer;
 		typedef std::ptrdiff_t difference_type;
 		typedef std::size_t size_type;
-		typedef va_iterator<false> iterator;
-		typedef va_iterator<true> const_iterator;
+		typedef stack_iterator<stack_proxy, false> iterator;
+		typedef stack_iterator<stack_proxy, true> const_iterator;
 		typedef std::reverse_iterator<iterator> reverse_iterator;
 		typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
 		variadic_args() = default;
 		variadic_args(lua_State* luastate, int stackindex = -1)
-		: L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lua_gettop(luastate)) {
+			: L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lua_gettop(luastate)) {
 		}
 		variadic_args(lua_State* luastate, int stackindex, int lastindex)
-		: L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lastindex) {
+			: L(luastate), index(lua_absindex(luastate, stackindex)), stacktop(lastindex) {
 		}
 		variadic_args(const variadic_args&) = default;
 		variadic_args& operator=(const variadic_args&) = default;
 		variadic_args(variadic_args&& o)
-		: L(o.L), index(o.index), stacktop(o.stacktop) {
+			: L(o.L), index(o.index), stacktop(o.stacktop) {
 			// Must be manual, otherwise destructor will screw us
 			// return count being 0 is enough to keep things clean
 			// but will be thorough
@@ -14196,16 +14383,16 @@ namespace sol {
 		}
 
 		template <typename T>
-		decltype(auto) get(difference_type start = 0) const {
-			return stack::get<T>(L, index + static_cast<int>(start));
+		decltype(auto) get(difference_type index_offset = 0) const {
+			return stack::get<T>(L, index + static_cast<int>(index_offset));
 		}
 
-		type get_type(difference_type start = 0) const noexcept {
-			return type_of(L, index + static_cast<int>(start));
+		type get_type(difference_type index_offset = 0) const noexcept {
+			return type_of(L, index + static_cast<int>(index_offset));
 		}
 
-		stack_proxy operator[](difference_type start) const {
-			return stack_proxy(L, index + static_cast<int>(start));
+		stack_proxy operator[](difference_type index_offset) const {
+			return stack_proxy(L, index + static_cast<int>(index_offset));
 		}
 
 		lua_State* lua_state() const {

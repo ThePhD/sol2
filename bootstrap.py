@@ -158,13 +158,24 @@ for f in glob.glob('tests/test*.cpp'):
 
 examples = []
 examples_input = []
+
+def add_example (f):
+	if 'win32' in sys.platform:
+		example = os.path.join(builddir, replace_extension(f, '.exe'))
+		example = example.replace('/', '\\');
+	else:
+		example = os.path.join(builddir, replace_extension(f, ''))
+		example = example.replace('\\', '/');
+	#if ' ' in example:
+	#	example = '"' + example + '"'
+	examples_input.append(f)
+	examples.append(example)
+
 for f in glob.glob('examples/*.cpp'):
-    if 'win32' in sys.platform:
-        example = os.path.join(builddir, replace_extension(f, '.exe'))
-    else:
-        example = os.path.join(builddir, replace_extension(f, ''))
-    examples_input.append(f)
-    examples.append(example)
+    add_example(f)
+
+for f in glob.glob('examples/tutorials/quick_n_dirty/**.cpp'):
+    add_example(f)
 
 
 # ninja file
