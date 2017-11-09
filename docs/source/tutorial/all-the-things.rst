@@ -83,7 +83,7 @@ running lua code
 	#include <cassert>
 
 	int main(int, char*[]) {
-		std::cout << "=== running lua code (low level) example ===" << std::endl;
+		std::cout << "=== running lua code example ===" << std::endl;
 
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
