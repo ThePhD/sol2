@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-11-11 12:41:27.450855 UTC
-// This header was generated with sol v2.18.6 (revision e667e69)
+// Generated 2017-11-11 23:29:02.509687 UTC
+// This header was generated with sol v2.18.6 (revision 2d31d84)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -10468,7 +10468,7 @@ namespace sol {
 		}
 
 		inline void luajit_exception_off(lua_State* L) {
-#ifdef SOL_LUAJIT
+#if defined(SOL_LUAJIT)
 			if (L == nullptr) {
 				return;
 			}
@@ -13546,7 +13546,7 @@ namespace sol {
 					stack::push(lua_state(), error);
 				}
 			};
-#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_LUAJIT)
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || defined(SOL_LUAJIT)
 			try {
 #endif // Safe Exception Propagation
 #endif // No Exceptions
@@ -13555,7 +13555,7 @@ namespace sol {
 				poststacksize = lua_gettop(lua_state()) - static_cast<int>(h.valid());
 				returncount = poststacksize - (firstreturn - 1);
 #ifndef SOL_NO_EXCEPTIONS
-#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_LUAJIT)
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || defined(SOL_LUAJIT)
 			}
 			// Handle C++ errors thrown from C++ functions bound inside of lua
 			catch (const char* error) {

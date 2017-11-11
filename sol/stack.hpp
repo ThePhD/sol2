@@ -246,7 +246,7 @@ namespace sol {
 		}
 
 		inline void luajit_exception_off(lua_State* L) {
-#ifdef SOL_LUAJIT
+#if defined(SOL_LUAJIT)
 			if (L == nullptr) {
 				return;
 			}
