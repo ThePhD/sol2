@@ -77,13 +77,16 @@ namespace sol {
 			try {
 				return f(L);
 			}
-			catch (const char* s) {
-				lua_pushstring(L, s);
+			catch (const char* cs) {
+				lua_pushstring(L, cs);
+			}
+			catch (const std::string& s) {
+				lua_pushlstring(L, s.c_str(), s.size());
 			}
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
-#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && defined(SOL_LUAJIT)
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			// LuaJIT cannot have the catchall when the safe propagation is on
 			// but LuaJIT will swallow all C++ errors 
 			// if we don't at least catch std::exception ones
@@ -92,7 +95,7 @@ namespace sol {
 			}
 #endif // LuaJIT cannot have the catchall, but we must catch std::exceps for it
 			return lua_error(L);
-#endif
+#endif // Safe exceptions
 		}
 
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
@@ -134,7 +137,7 @@ namespace sol {
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
-#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_LUAJIT)
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			// LuaJIT cannot have the catchall when the safe propagation is on
 			// but LuaJIT will swallow all C++ errors 
 			// if we don't at least catch std::exception ones

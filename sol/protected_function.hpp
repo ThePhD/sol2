@@ -150,20 +150,25 @@ namespace sol {
 					stack::push(lua_state(), error);
 				}
 			};
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || defined(SOL_LUAJIT)
+#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_LUAJIT)
 			try {
-#endif
+#endif // Safe Exception Propagation
 #endif // No Exceptions
 				firstreturn = (std::max)(1, static_cast<int>(stacksize - n - static_cast<int>(h.valid())));
 				code = luacall(n, LUA_MULTRET, h);
 				poststacksize = lua_gettop(lua_state()) - static_cast<int>(h.valid());
 				returncount = poststacksize - (firstreturn - 1);
 #ifndef SOL_NO_EXCEPTIONS
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || defined(SOL_LUAJIT)
+#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_LUAJIT)
 			}
 			// Handle C++ errors thrown from C++ functions bound inside of lua
 			catch (const char* error) {
 				onexcept(error);
+				firstreturn = lua_gettop(lua_state());
+				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
+			}
+			catch (const std::string& error) {
+				onexcept(error.c_str());
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}
@@ -172,7 +177,7 @@ namespace sol {
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}
-#if !defined(SOL_LUAJIT)
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			// LuaJIT cannot have the catchall when the safe propagation is on
 			// but LuaJIT will swallow all C++ errors 
 			// if we don't at least catch std::exception ones
@@ -184,8 +189,8 @@ namespace sol {
 #endif // LuaJIT
 #else
 			// do not handle exceptions: they can be propogated into C++ and keep all type information / rich information
-#endif // about as safe as possible
-#endif // No Exceptions
+#endif // Safe Exception Propagation
+#endif // Exceptions vs. No Exceptions
 			return protected_function_result(lua_state(), firstreturn, returncount, returncount, code);
 		}
 

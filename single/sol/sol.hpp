@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-11-09 22:36:14.826447 UTC
-// This header was generated with sol v2.18.6 (revision 90bbead)
+// Generated 2017-11-11 12:41:27.450855 UTC
+// This header was generated with sol v2.18.6 (revision e667e69)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4408,13 +4408,16 @@ namespace sol {
 			try {
 				return f(L);
 			}
-			catch (const char* s) {
-				lua_pushstring(L, s);
+			catch (const char* cs) {
+				lua_pushstring(L, cs);
+			}
+			catch (const std::string& s) {
+				lua_pushlstring(L, s.c_str(), s.size());
 			}
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
-#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && defined(SOL_LUAJIT)
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			// LuaJIT cannot have the catchall when the safe propagation is on
 			// but LuaJIT will swallow all C++ errors 
 			// if we don't at least catch std::exception ones
@@ -4423,7 +4426,7 @@ namespace sol {
 			}
 #endif // LuaJIT cannot have the catchall, but we must catch std::exceps for it
 			return lua_error(L);
-#endif
+#endif // Safe exceptions
 		}
 
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
@@ -4465,7 +4468,7 @@ namespace sol {
 			catch (const std::exception& e) {
 				lua_pushstring(L, e.what());
 			}
-#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_LUAJIT)
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			// LuaJIT cannot have the catchall when the safe propagation is on
 			// but LuaJIT will swallow all C++ errors 
 			// if we don't at least catch std::exception ones
@@ -13543,20 +13546,25 @@ namespace sol {
 					stack::push(lua_state(), error);
 				}
 			};
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || defined(SOL_LUAJIT)
+#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_LUAJIT)
 			try {
-#endif
+#endif // Safe Exception Propagation
 #endif // No Exceptions
 				firstreturn = (std::max)(1, static_cast<int>(stacksize - n - static_cast<int>(h.valid())));
 				code = luacall(n, LUA_MULTRET, h);
 				poststacksize = lua_gettop(lua_state()) - static_cast<int>(h.valid());
 				returncount = poststacksize - (firstreturn - 1);
 #ifndef SOL_NO_EXCEPTIONS
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || defined(SOL_LUAJIT)
+#if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_LUAJIT)
 			}
 			// Handle C++ errors thrown from C++ functions bound inside of lua
 			catch (const char* error) {
 				onexcept(error);
+				firstreturn = lua_gettop(lua_state());
+				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
+			}
+			catch (const std::string& error) {
+				onexcept(error.c_str());
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}
@@ -13565,7 +13573,7 @@ namespace sol {
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}
-#if !defined(SOL_LUAJIT)
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			// LuaJIT cannot have the catchall when the safe propagation is on
 			// but LuaJIT will swallow all C++ errors 
 			// if we don't at least catch std::exception ones
@@ -13577,8 +13585,8 @@ namespace sol {
 #endif // LuaJIT
 #else
 			// do not handle exceptions: they can be propogated into C++ and keep all type information / rich information
-#endif // about as safe as possible
-#endif // No Exceptions
+#endif // Safe Exception Propagation
+#endif // Exceptions vs. No Exceptions
 			return protected_function_result(lua_state(), firstreturn, returncount, returncount, code);
 		}
 
