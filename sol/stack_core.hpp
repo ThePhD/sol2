@@ -76,7 +76,7 @@ namespace sol {
 		inline std::size_t aligned_space_for(void* alignment = nullptr) {
 			char* start = static_cast<char*>(alignment);
 			auto specific_align = [&alignment](std::size_t a, std::size_t s) {
-				std::size_t space = std::numeric_limits<std::size_t>::max();
+				std::size_t space = (std::numeric_limits<std::size_t>::max)();
 				alignment = align(a, s, alignment, space);
 				alignment = static_cast<void*>(static_cast<char*>(alignment) + s);
 			};
@@ -96,7 +96,7 @@ namespace sol {
 			if (!use_align::value) {
 				return ptr;
 			}
-			std::size_t space = std::numeric_limits<std::size_t>::max();
+			std::size_t space = (std::numeric_limits<std::size_t>::max)();
 			return align(std::alignment_of<void*>::value, sizeof(void*), ptr, space);
 		}
 
@@ -114,7 +114,7 @@ namespace sol {
 			}
 			ptr = align_usertype_pointer(ptr);
 			ptr = static_cast<void*>(static_cast<char*>(ptr) + sizeof(void*));
-			std::size_t space = std::numeric_limits<std::size_t>::max();
+			std::size_t space = (std::numeric_limits<std::size_t>::max)();
 			return align(std::alignment_of<unique_destructor>::value, sizeof(unique_destructor), ptr, space);
 		}
 
@@ -135,7 +135,7 @@ namespace sol {
 			if (!use_align::value) {
 				return ptr;
 			}
-			std::size_t space = std::numeric_limits<std::size_t>::max();
+			std::size_t space = (std::numeric_limits<std::size_t>::max)();
 			return align(std::alignment_of<T>::value, sizeof(T), ptr, space);
 		}
 
@@ -152,7 +152,7 @@ namespace sol {
 			if (!use_align::value) {
 				return ptr;
 			}
-			std::size_t space = std::numeric_limits<std::size_t>::max();
+			std::size_t space = (std::numeric_limits<std::size_t>::max)();
 			return align(std::alignment_of<T>::value, sizeof(T), ptr, space);
 		}
 

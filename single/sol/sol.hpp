@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-11-17 12:07:21.024261 UTC
-// This header was generated with sol v2.18.6 (revision 6738cee)
+// Generated 2017-11-17 12:20:03.514818 UTC
+// This header was generated with sol v2.18.6 (revision fa912a5)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6573,7 +6573,7 @@ namespace sol {
 		inline std::size_t aligned_space_for(void* alignment = nullptr) {
 			char* start = static_cast<char*>(alignment);
 			auto specific_align = [&alignment](std::size_t a, std::size_t s) {
-				std::size_t space = std::numeric_limits<std::size_t>::max();
+				std::size_t space = (std::numeric_limits<std::size_t>::max)();
 				alignment = align(a, s, alignment, space);
 				alignment = static_cast<void*>(static_cast<char*>(alignment) + s);
 			};
@@ -6593,7 +6593,7 @@ namespace sol {
 			if (!use_align::value) {
 				return ptr;
 			}
-			std::size_t space = std::numeric_limits<std::size_t>::max();
+			std::size_t space = (std::numeric_limits<std::size_t>::max)();
 			return align(std::alignment_of<void*>::value, sizeof(void*), ptr, space);
 		}
 
@@ -6611,7 +6611,7 @@ namespace sol {
 			}
 			ptr = align_usertype_pointer(ptr);
 			ptr = static_cast<void*>(static_cast<char*>(ptr) + sizeof(void*));
-			std::size_t space = std::numeric_limits<std::size_t>::max();
+			std::size_t space = (std::numeric_limits<std::size_t>::max)();
 			return align(std::alignment_of<unique_destructor>::value, sizeof(unique_destructor), ptr, space);
 		}
 
@@ -6632,7 +6632,7 @@ namespace sol {
 			if (!use_align::value) {
 				return ptr;
 			}
-			std::size_t space = std::numeric_limits<std::size_t>::max();
+			std::size_t space = (std::numeric_limits<std::size_t>::max)();
 			return align(std::alignment_of<T>::value, sizeof(T), ptr, space);
 		}
 
@@ -6649,7 +6649,7 @@ namespace sol {
 			if (!use_align::value) {
 				return ptr;
 			}
-			std::size_t space = std::numeric_limits<std::size_t>::max();
+			std::size_t space = (std::numeric_limits<std::size_t>::max)();
 			return align(std::alignment_of<T>::value, sizeof(T), ptr, space);
 		}
 
