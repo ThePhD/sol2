@@ -617,7 +617,7 @@ namespace sol {
 		userdata = LUA_TUSERDATA,
 		lightuserdata = LUA_TLIGHTUSERDATA,
 		table = LUA_TTABLE,
-		poly = none | lua_nil | string | number | thread | table | boolean | function | userdata | lightuserdata
+		poly = -0xFFFF
 	};
 
 	inline const std::string& to_string(call_status c) {

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-11-17 12:20:03.514818 UTC
-// This header was generated with sol v2.18.6 (revision fa912a5)
+// Generated 2017-11-17 21:50:58.352644 UTC
+// This header was generated with sol v2.18.6 (revision 4a39020)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4949,7 +4949,7 @@ namespace sol {
 		userdata = LUA_TUSERDATA,
 		lightuserdata = LUA_TLIGHTUSERDATA,
 		table = LUA_TTABLE,
-		poly = none | lua_nil | string | number | thread | table | boolean | function | userdata | lightuserdata
+		poly = -0xFFFF
 	};
 
 	inline const std::string& to_string(call_status c) {
@@ -5811,7 +5811,7 @@ namespace sol {
 			};
 			(void)detail::swallow{int(), (action(detail::demangle<Args>()), int())...};
 			addendum += ")')";
-			return type_panic_string(L, index, expected, actual, message + addendum);
+			return type_panic_string(L, index, expected, actual, message.empty() ? addendum : message + addendum);
 		}
 	};
 

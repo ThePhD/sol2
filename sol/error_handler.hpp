@@ -84,21 +84,23 @@ namespace sol {
 
 	struct constructor_handler {
 		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
-			return type_panic_string(L, index, expected, actual, message + " (type check failed in constructor)");
+			std::string str = "(type check failed in constructor)";
+			return type_panic_string(L, index, expected, actual, message.empty() ? str : message + " " + str);
 		}
 	};
 
 	template <typename F = void>
 	struct argument_handler {
 		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
-			return type_panic_string(L, index, expected, actual, message + " (bad argument to variable or function call)");
+			std::string str = "(bad argument to variable or function call)";
+			return type_panic_string(L, index, expected, actual, message.empty() ? str : message + " " + str );
 		}
 	};
 
 	template <typename R, typename... Args>
 	struct argument_handler<types<R, Args...>> {
 		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
-			std::string addendum = " (bad argument into '";
+			std::string addendum = "(bad argument into '";
 			addendum += detail::demangle<R>();
 			addendum += "(";
 			int marker = 0;
@@ -111,7 +113,7 @@ namespace sol {
 			};
 			(void)detail::swallow{int(), (action(detail::demangle<Args>()), int())...};
 			addendum += ")')";
-			return type_panic_string(L, index, expected, actual, message + addendum);
+			return type_panic_string(L, index, expected, actual, message.empty() ? addendum : message + " " + addendum);
 		}
 	};
 
