@@ -25,6 +25,8 @@
 #include "protected_function_result.hpp"
 #include "unsafe_function_result.hpp"
 
+#include <cstdint>
+
 namespace sol {
 
 	namespace detail {

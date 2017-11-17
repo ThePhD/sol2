@@ -24,7 +24,9 @@
 
 #include "tuple.hpp"
 #include "bind_traits.hpp"
+
 #include <type_traits>
+#include <cstdint>
 #include <memory>
 #include <functional>
 #include <iterator>

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-11-11 23:29:02.509687 UTC
-// This header was generated with sol v2.18.6 (revision 2d31d84)
+// Generated 2017-11-17 12:07:21.024261 UTC
+// This header was generated with sol v2.18.6 (revision 6738cee)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -918,6 +918,7 @@ namespace meta {
 // end of sol/bind_traits.hpp
 
 #include <type_traits>
+#include <cstdint>
 #include <memory>
 #include <functional>
 #include <iterator>
@@ -10765,8 +10766,6 @@ namespace sol {
 } // namespace sol
 
 // end of sol/stack_proxy.hpp
-
-#include <cstdint>
 
 namespace sol {
 	struct protected_function_result : public proxy_base<protected_function_result> {
