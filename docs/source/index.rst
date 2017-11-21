@@ -133,4 +133,4 @@ Indices and tables
 .. _Sol: https://github.com/ThePhD/sol2
 .. _issues: https://github.com/ThePhD/sol2/issues
 .. _examples directory: https://github.com/ThePhD/sol2/tree/develop/examples
-.. _donating a little something here: paypal.me/LMeneide
+.. _donating a little something here: https://www.paypal.me/LMeneide
