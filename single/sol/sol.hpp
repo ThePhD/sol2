@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-11-17 21:50:58.352644 UTC
-// This header was generated with sol v2.18.6 (revision 4a39020)
+// Generated 2017-11-21 19:13:27.385503 UTC
+// This header was generated with sol v2.18.6 (revision 4256c07)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -247,6 +247,7 @@ namespace sol {
 	using main_object = basic_object<main_reference>;
 	using main_userdata = basic_userdata<main_reference>;
 	using main_lightuserdata = basic_lightuserdata<main_reference>;
+	using main_coroutine = basic_coroutine<main_reference>;
 	using stack_object = basic_object<stack_reference>;
 	using stack_userdata = basic_userdata<stack_reference>;
 	using stack_lightuserdata = basic_lightuserdata<stack_reference>;
@@ -5784,21 +5785,23 @@ namespace sol {
 
 	struct constructor_handler {
 		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
-			return type_panic_string(L, index, expected, actual, message + " (type check failed in constructor)");
+			std::string str = "(type check failed in constructor)";
+			return type_panic_string(L, index, expected, actual, message.empty() ? str : message + " " + str);
 		}
 	};
 
 	template <typename F = void>
 	struct argument_handler {
 		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
-			return type_panic_string(L, index, expected, actual, message + " (bad argument to variable or function call)");
+			std::string str = "(bad argument to variable or function call)";
+			return type_panic_string(L, index, expected, actual, message.empty() ? str : message + " " + str );
 		}
 	};
 
 	template <typename R, typename... Args>
 	struct argument_handler<types<R, Args...>> {
 		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
-			std::string addendum = " (bad argument into '";
+			std::string addendum = "(bad argument into '";
 			addendum += detail::demangle<R>();
 			addendum += "(";
 			int marker = 0;
@@ -5811,7 +5814,7 @@ namespace sol {
 			};
 			(void)detail::swallow{int(), (action(detail::demangle<Args>()), int())...};
 			addendum += ")')";
-			return type_panic_string(L, index, expected, actual, message.empty() ? addendum : message + addendum);
+			return type_panic_string(L, index, expected, actual, message.empty() ? addendum : message + " " + addendum);
 		}
 	};
 
@@ -7063,6 +7066,28 @@ namespace sol {
 
 		inline int top(lua_State* L) {
 			return lua_gettop(L);
+		}
+
+		inline bool is_main_thread(lua_State* L) {
+			int ismainthread = lua_pushthread(L);
+			lua_pop(L, 1);
+			return ismainthread == 1;
+		}
+
+		inline void coroutine_create_guard(lua_State* L) {
+			if (is_main_thread(L)) {
+				return;
+			}
+			int stacksize = lua_gettop(L);
+			if (stacksize < 1) {
+				return;
+			}
+			if (type_of(L, 1) != type::function) {
+				return;
+			}
+			// well now we're screwed...
+			// we can clean the stack and pray it doesn't destroy anything?
+			lua_pop(L, stacksize);
 		}
 
 		template <typename T, typename... Args>
@@ -19373,6 +19398,12 @@ namespace sol {
 			return stack::top(L);
 		}
 
+		int stack_clear() {
+			int s = stack_top();
+			lua_pop(L, s);
+			return s;
+		}
+
 		void collect_garbage() {
 			lua_gc(lua_state(), LUA_GCCOLLECT, 0);
 		}
@@ -19704,9 +19735,7 @@ namespace sol {
 		}
 
 		bool is_main_thread() const {
-			int ismainthread = lua_pushthread(this->thread_state());
-			lua_pop(this->thread_state(), 1);
-			return ismainthread == 1;
+			return stack::is_main_thread(this->thread_state());
 		}
 
 		lua_State* thread_state() const {
@@ -19941,6 +19970,11 @@ namespace sol {
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
+			// some users screw up coroutine.create
+			// and try to use it with sol::coroutine without ever calling the first resume in Lua
+			// this makes the stack incompatible with other kinds of stacks: protect against this
+			// make sure coroutines don't screw us over
+			stack::coroutine_create_guard(lua_state());
 			base_t::push();
 			int pushcount = stack::multi_push_reference(lua_state(), std::forward<Args>(args)...);
 			return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount);

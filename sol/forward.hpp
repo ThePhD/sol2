@@ -120,6 +120,7 @@ namespace sol {
 	using main_object = basic_object<main_reference>;
 	using main_userdata = basic_userdata<main_reference>;
 	using main_lightuserdata = basic_lightuserdata<main_reference>;
+	using main_coroutine = basic_coroutine<main_reference>;
 	using stack_object = basic_object<stack_reference>;
 	using stack_userdata = basic_userdata<stack_reference>;
 	using stack_lightuserdata = basic_lightuserdata<stack_reference>;

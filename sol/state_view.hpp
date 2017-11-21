@@ -524,6 +524,12 @@ namespace sol {
 			return stack::top(L);
 		}
 
+		int stack_clear() {
+			int s = stack_top();
+			lua_pop(L, s);
+			return s;
+		}
+
 		void collect_garbage() {
 			lua_gc(lua_state(), LUA_GCCOLLECT, 0);
 		}

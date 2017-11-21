@@ -114,6 +114,15 @@ the basics:
 	}			
 
 
+helping out
+-----------
+
+You can support the library by submitting pull requests to fix anything (the code, typos, even contribute your own examples).
+
+You can support me and my family by `donating a little something here`_.
+
+Thank you for using sol2!
+
 
 Indices and tables
 ==================
@@ -124,3 +133,4 @@ Indices and tables
 .. _Sol: https://github.com/ThePhD/sol2
 .. _issues: https://github.com/ThePhD/sol2/issues
 .. _examples directory: https://github.com/ThePhD/sol2/tree/develop/examples
+.. _donating a little something here: paypal.me/LMeneide

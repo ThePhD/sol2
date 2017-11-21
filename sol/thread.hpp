@@ -160,9 +160,7 @@ namespace sol {
 		}
 
 		bool is_main_thread() const {
-			int ismainthread = lua_pushthread(this->thread_state());
-			lua_pop(this->thread_state(), 1);
-			return ismainthread == 1;
+			return stack::is_main_thread(this->thread_state());
 		}
 
 		lua_State* thread_state() const {

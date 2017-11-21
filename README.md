@@ -85,6 +85,12 @@ Please make sure you use the `-std=c++1y`, `-std=c++14`, `-std=c++1z`, `-std=c++
 Older compilers (GCC 4.9.x, Clang 3.4.x seem to be the lowest) can work with versions as late 
 as [v2.17.5](https://github.com/ThePhD/sol2/releases/tag/v2.17.5), with the flag `-std=c++14` or `-std=c++1y`.
 
+## Supporting
+
+You can help out the library by submitting pull requests to fix anything or add anything you think would be helpful! This includes making small, useful examples of something you haven't seen, or fixing typos and bad code in the documentation.
+
+You can also [donate to support me and my family](paypal.me/LMeneide), which is always appreciated!
+
 ## License
 
 Sol is distributed with an MIT License. You can see LICENSE.txt for more info.

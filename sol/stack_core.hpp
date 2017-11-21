@@ -568,6 +568,28 @@ namespace sol {
 			return lua_gettop(L);
 		}
 
+		inline bool is_main_thread(lua_State* L) {
+			int ismainthread = lua_pushthread(L);
+			lua_pop(L, 1);
+			return ismainthread == 1;
+		}
+
+		inline void coroutine_create_guard(lua_State* L) {
+			if (is_main_thread(L)) {
+				return;
+			}
+			int stacksize = lua_gettop(L);
+			if (stacksize < 1) {
+				return;
+			}
+			if (type_of(L, 1) != type::function) {
+				return;
+			}
+			// well now we're screwed...
+			// we can clean the stack and pray it doesn't destroy anything?
+			lua_pop(L, stacksize);
+		}
+
 		template <typename T, typename... Args>
 		inline int push(lua_State* L, T&& t, Args&&... args) {
 			return pusher<meta::unqualified_t<T>>{}.push(L, std::forward<T>(t), std::forward<Args>(args)...);

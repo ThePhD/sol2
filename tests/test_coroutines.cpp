@@ -4,7 +4,7 @@
 #include <catch.hpp>
 #include <sol.hpp>
 
-TEST_CASE("coroutines/threading", "ensure calling a coroutine works") {
+TEST_CASE("coroutines/yielding", "ensure calling a coroutine works") {
 	const auto& script = R"(counter = 20
  
 function loop()
@@ -362,4 +362,44 @@ collectgarbage()
 	REQUIRE(t.size() == 1);
 	std::string s = t[1];
 	REQUIRE(s == "SOME_TABLE");
+}
+
+TEST_CASE("coroutines/coroutine.create protection", "ensure that a thread picked up from coroutine.create does not throw off the lua stack entirely when called from C++") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::coroutine);
+
+	lua.script(
+		R"(
+function loop()
+	local i = 0
+	while true do
+		print("pre-yield in loop")
+		coroutine.yield(i)
+		print("post-yield in loop")
+		i = i+1
+	end
+end
+loop_th = coroutine.create(loop)
+)"
+);
+
+	sol::thread runner_thread = lua["loop_th"];
+
+	auto test_resume = [&runner_thread]() {
+		sol::state_view th_state = runner_thread.state();
+		sol::coroutine cr = th_state["loop"];
+		int r = cr();
+		return r;
+	};
+
+	lua.set_function("test_resume", std::ref(test_resume));
+
+	int v0 = test_resume();
+	int v1 = test_resume();
+	int v2 = lua.script("return test_resume()");
+	int v3 = lua.script("return test_resume()");
+	REQUIRE(v0 == 0);
+	REQUIRE(v1 == 1);
+	REQUIRE(v2 == 2);
+	REQUIRE(v3 == 3);
 }
