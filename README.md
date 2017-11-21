@@ -89,7 +89,7 @@ as [v2.17.5](https://github.com/ThePhD/sol2/releases/tag/v2.17.5), with the flag
 
 You can help out the library by submitting pull requests to fix anything or add anything you think would be helpful! This includes making small, useful examples of something you haven't seen, or fixing typos and bad code in the documentation.
 
-You can also [donate to support me and my family](paypal.me/LMeneide), which is always appreciated!
+You can also [donate to support me and my family](https://www.paypal.me/LMeneide), which is always appreciated!
 
 ## License
 
