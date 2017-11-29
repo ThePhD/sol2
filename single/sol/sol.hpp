@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-11-21 19:35:19.155726 UTC
-// This header was generated with sol v2.18.7 (revision a0de11a)
+// Generated 2017-11-29 18:34:24.375352 UTC
+// This header was generated with sol v2.18.7 (revision e17455f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -19747,7 +19747,8 @@ namespace sol {
 		thread_status status() const {
 			lua_State* lthread = thread_state();
 			thread_status lstat = static_cast<thread_status>(lua_status(lthread));
-			if (lstat != thread_status::ok && lua_gettop(lthread) == 0) {
+			int stacksize = lua_gettop(lthread);
+			if (lstat != thread_status::ok && lstat != thread_status::yielded && stacksize == 0) {
 				// No thing on the basic_thread's stack means its dead
 				return thread_status::dead;
 			}

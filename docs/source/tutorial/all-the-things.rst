@@ -17,18 +17,8 @@ You'll need to ``#include <sol.hpp>``/``#include "sol.hpp"`` somewhere in your c
 opening a state
 ---------------
 
-.. code-block:: cpp
-	
-	#define SOL_CHECK_ARGUMENTS 1
-	#include <sol.hpp>
-
-	int main (int argc, char* argv[]) {
-		sol::state lua;
-		// open some common libraries
-		lua.open_libraries(sol::lib::base, sol::lib::package);
-		// go!
-		lua.script( "print('bark bark bark!')" );
-	}
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/opening_a_state.cpp
+	:linenos:
 
 
 .. _sol-state-on-lua-state:
@@ -38,194 +28,64 @@ using sol2 on a lua_State*
 
 For your system/game that already has Lua or uses an in-house or pre-rolled Lua system (LuaBridge, kaguya, Luwra, etc.), but you'd still like sol2 and nice things:
 
-.. code-block:: cpp
-	
-	#define SOL_CHECK_ARGUMENTS 1
-	#include <sol.hpp>
 
-	#include <iostream>
-
-	int use_sol2(lua_State* L) {
-		sol::state_view lua(L);
-		lua.script("print('bark bark bark!')");
-		return 0;
-	}
-
-	int main(int, char*[]) {
-		std::cout << "=== opening sol::state_view on raw Lua example ===" << std::endl;
-
-		lua_State* L = luaL_newstate();
-		luaL_openlibs(L);
-
-		lua_pushcclosure(L, &use_sol2, 0);
-		lua_setglobal(L, "use_sol2");
-
-		if (luaL_dostring(L, "use_sol2()")) {
-			lua_error(L);
-			return -1;
-		}
-
-		std::cout << std::endl;
-
-		return 0;
-	}
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/opening_state_on_raw_lua.cpp
+	:linenos:
 
 
 running lua code
 ----------------
 
-.. code-block:: cpp
-
-	#define SOL_CHECK_ARGUMENTS 1
-	#include <sol.hpp>
-
-	#include <iostream>
-	#include <cassert>
-
-	int main(int, char*[]) {
-		std::cout << "=== running lua code example ===" << std::endl;
-
-		sol::state lua;
-		lua.open_libraries(sol::lib::base);
-		
-		sol::state lua;
-		// load and execute from string
-		lua.script("a = 'test'");
-		// load and execute from file
-		lua.script_file("a_lua_script.lua");
-
-		// run a script, get the result
-		int value = lua.script("return 54");
-		assert(value == 54);
-
-		/* ... continued in next block */
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/running_lua_code.cpp
+	:linenos:
+	:lines: 1-10, 16-26
 
 To run Lua code but have an error handler in case things go wrong:
 
-.. code-block:: cpp
-
-		/* ... from previous block */
-		auto bad_code_result = lua.script("123 herp.derp", [](lua_State* L, sol::protected_function_result pfr) {
-			// pfr will contain things that went wrong, for either loading or executing the script
-			// Can throw your own custom error
-			// You can also just return it, and let the call-site handle the error if necessary.
-			return pfr;
-		});
-		// it did not work
-		assert(!bad_code_result.valid());
-		
-		// the default handler panics or throws, depending on your settings
-		// uncomment for explosions:
-		//auto bad_code_result_2 = lua.script("bad.code", &sol::script_default_on_error);
-
-		std::cout << std::endl;
-
-		return 0;
-	}
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/running_lua_code.cpp
+	:linenos:
+	:lines: 28-
 
 
 set and get variables
 ---------------------
 
-You can set/get everything.
+You can set/get everything using table-like syntax.
 	
-.. code-block:: cpp
-	
-	sol::lua_state lua;
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/set_and_get_variables.cpp
+	:linenos:
+	:lines: 1-19
 
-	lua.open_libraries(sol::lib::base);
+Equivalent to loading lua values like so:
 
-	// integer types
-	lua.set("number", 24);
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/set_and_get_variables.cpp
+	:linenos:
+	:lines: 22-34
 
-	// floating point numbers
-	lua["number2"] = 24.5;
+You can show they are equivalent:
 
-	// string types
-	lua["important_string"] = "woof woof";
-
-	// is callable, therefore gets stored as a function
-	lua["a_function"] = [](){ return 100; };
-	// otherwise, non-recognized types is stored as userdata
-	
-	// make a table
-	lua["some_table"] = lua.create_table_with("value", 24);
-
-
-Equivalent to loading a lua file with:
-
-.. code-block:: lua
-
-	number = 24
-	number2 = 24.5
-	important_string = "woof woof"
-	a_function = function () return 100 end
-	some_table = { value = 24 }
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/set_and_get_variables.cpp
+	:linenos:
+	:lines: 36-44
 
 Retrieve these variables using this syntax:
 
-.. code-block:: cpp
-
-	// implicit conversion
-	int number = lua["number"];
-	
-	// explicit get
-	auto number2 = lua.get<double>("number2");
-
-	// strings too
-	std::string important_string = lua["important_string"];
-
-	// dig into a table
-	int value = lua["some_table"]["value"];
-	
-	// get a function
-	sol::function a_function = lua["a_function"];
-	int value_is_100 = a_function();
-	// value_is_100 == 100
-	
-	// convertible to std::function
-	std::function<int()> a_std_function = a_function;
-	int value_is_still_100 = a_std_function();
-	// value_is_still_100 == 100
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/set_and_get_variables.cpp
+	:linenos:
+	:lines: 45-64
 
 Retrieve Lua types using ``object`` and other ``sol::`` types.
 
-.. code-block:: cpp
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/set_and_get_variables.cpp
+	:linenos:
+	:lines: 66-
 
-	sol::state lua;
+You can erase things by setting it to ``nullptr`` or ``sol::lua_nil``.
 
-	// ... everything from before
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/set_and_get_variables_exists.cpp
+	:linenos:
 
-	sol::object number_obj = lua.get<sol::object>( "number" );
-	// sol::type::number
-	sol::type t1 = number_obj.get_type();
-
-	sol::object function_obj = lua[ "a_function" ];
-	// sol::type::function
-	sol::type t2 = function_obj.get_type();
-	bool is_it_really = function_obj.is<std::function<int()>>(); // true
-
-	// will not contain data
-	sol::optional<int> check_for_me = lua["a_function"];
-
-
-You can erase things by setting it to ``nullptr`` or ``sol::nil``.
-
-.. code-block:: cpp
-
-	sol::state lua;
-
-	lua.script("exists = 250");
-
-	int first_try = lua.get_or( "exists", 322 );
-	// first_try == 250
-
-	lua.set("exists", sol::nil);
-	int second_try = lua.get_or( "exists", 322 );
-	// second_try == 322
-
-
-Note that if its a :doc:`userdata/usertype<../api/usertype>` for a C++ type, the destructor will run only when the garbage collector deems it appropriate to destroy the memory. If you are relying on the destructor being run when its set to ``sol::nil``, you're probably committing a mistake.
+Note that if its a :doc:`userdata/usertype<../api/usertype>` for a C++ type, the destructor will run only when the garbage collector deems it appropriate to destroy the memory. If you are relying on the destructor being run when its set to ``sol::lua_nil``, you're probably committing a mistake.
 
 tables
 ------
