@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-11-29 18:34:24.375352 UTC
-// This header was generated with sol v2.18.7 (revision e17455f)
+// Generated 2017-12-01 23:47:06.820012 UTC
+// This header was generated with sol v2.18.7 (revision a8b2c25)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1572,14 +1572,14 @@ namespace sol {
 
 // beginning of sol/compatibility/version.hpp
 
-#ifdef SOL_USING_CXX_LUA
+#if defined(SOL_USING_CXX_LUA)
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
 #ifdef SOL_USING_CXX_LUAJIT
 #include <luajit.h>
 #endif // C++ LuaJIT ... whatever that means
-#ifndef SOL_EXCEPTIONS_SAFE_PROPAGATION
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_EXCEPTIONS_UNSAFE_ALWAYS)
 #define SOL_EXCEPTIONS_SAFE_PROPAGATION
 #endif // Exceptions can be propagated safely using C++-compiled Lua
 #else

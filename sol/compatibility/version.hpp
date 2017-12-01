@@ -24,14 +24,14 @@
 
 #include "../feature_test.hpp"
 
-#ifdef SOL_USING_CXX_LUA
+#if defined(SOL_USING_CXX_LUA)
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
 #ifdef SOL_USING_CXX_LUAJIT
 #include <luajit.h>
 #endif // C++ LuaJIT ... whatever that means
-#ifndef SOL_EXCEPTIONS_SAFE_PROPAGATION
+#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_EXCEPTIONS_UNSAFE_ALWAYS)
 #define SOL_EXCEPTIONS_SAFE_PROPAGATION
 #endif // Exceptions can be propagated safely using C++-compiled Lua
 #else
