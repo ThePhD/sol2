@@ -71,6 +71,10 @@ Note that you can obtain safety with regards to functions you bind by using the 
 	* try/catch will not be used in ``safe_``/``protected_function`` internals
 	* Should only be used in accordance with compiling vanilla PUC-RIO Lua as C++, using :ref:`LuaJIT under the proper conditions<exception-interop>`, or in accordance with your Lua distribution's documentation
 
+``SOL_EXCEPTIONS_ALWAYS_UNSAFE`` triggers the following changes:
+	* If any of the ``SOL_USING_CXX_*`` defines are in play, it does not automatically turn on ``SOL_EXCEPTIONS_SAFE_PROPAGATION`` automatically
+	* This standardizes some behavior, since throwing exceptions through the C API's interface can still lead to undefined behavior that Lua cannot handle properly
+
 Tests are compiled with this on to ensure everything is going as expected. Remember that if you want these features, you must explicitly turn them on all of them to be sure you are getting them.
 
 memory

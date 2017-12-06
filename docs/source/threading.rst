@@ -1,11 +1,15 @@
 threading
 =========
 
-Lua has no thread safety. sol does not force thread safety bottlenecks anywhere.
+Lua has no thread safety. sol does not force thread safety bottlenecks anywhere. Tr(eat access and object handling like you were dealing with a raw ``int`` reference (``int&``) (no safety or order guarantees whatsoever).
 
-Assume any access or any call on Lua affects the whole global state (because it does, in a fair bit of cases). Therefore, every call to a state should be blocked off in C++ with some kind of access control. When you start hitting the same state from multiple threads, race conditions (data or instruction) can happen. Individual Lua coroutines might be able to run on separate C++-created threads without tanking the state utterly, since each Lua coroutine has the capability to run on an independent Lua thread which has its own stack, as well as some other associated bits and pieces that won't quite interfere with the global state.
+Assume any access or any call on Lua affects the whole global state (because it does, in a fair bit of cases). Therefore, every call to a state should be blocked off in C++ with some kind of access control (when you're working with multiple C++ threads). When you start hitting the same state from multiple threads, race conditions (data or instruction) can happen.
 
-To handle multithreaded environments, it is encouraged to either spawn mutliple Lua states for each thread you are working with and keep inter-state communication to synchronized serialization points. Using coroutines and Lua's threads might also buy you some concurrency and parallelism, but remember that Lua's threading technique is ultimately cooperative and requires explicit yielding and resuming (simplified as function calls for :doc:`sol::coroutine<api/coroutine>`).
+Individual Lua coroutines might be able to run on separate C++-created threads without tanking the state utterly, since each Lua coroutine has the capability to run on an independent Lua execution stack (Lua confusingly calls it a ``thread`` in the C API, but it really just means a seperate execution stack) as well as some other associated bits and pieces that won't quite interfere with the global state.
+
+To handle multithreaded environments, it is encouraged to either spawn a Lua state for each thread you are working with and keep inter-state communication to synchronized serialization points. This means that 3 C++ threads should each have their own Lua state, and access between them should be controlled using some kind of synchronied C++ mechanism (actual transfer between states must be done by serializing the value into C++ and then re-pushing it into the other state).
+
+Using coroutines and Lua's threads might also buy you some concurrency and parallelism (**unconfirmed and likely untrue, do not gamble on this**), but remember that Lua's 'threading' technique is ultimately cooperative and requires explicit yielding and resuming (simplified as function calls for :doc:`sol::coroutine<api/coroutine>`).
 
 
 getting the main thread
@@ -18,7 +22,10 @@ working with multiple Lua threads
 
 You can mitigate some of the pressure of using coroutines and threading by using the ``lua_xmove`` constructors that sol implements. Simply keep a reference to your ``sol::state_view`` or ``sol::state`` or the target ``lua_State*`` pointer, and pass it into the constructor along with the object you want to copy. Note that there is also some implicit ``lua_xmove`` checks that are done for copy and move assignment operators as well, as noted :ref:`at the reference constructor explanations<lua_xmove-note>`.
 
-Furthermore, for every single ``sol::reference`` derived type, there exists a version prefixed with the word ``main_``, such as ``sol::main_table``, ``sol::main_function``, ``sol::main_object`` and similar. These classes, on construction, assignment and other operations, forcibly obtain the ``lua_State*`` associated with the main thread, if possible. Using these classes will allow your code to be immune when a wrapped coroutine or a lua thread is set to ``nil`` and then garbage-collected.
+.. note::
+
+	Advanced used: Furthermore, for every single ``sol::reference`` derived type, there exists a version prefixed with the word ``main_``, such as ``sol::main_table``, ``sol::main_function``, ``sol::main_object`` and similar. These classes, on construction, assignment and other operations, forcibly obtain the ``lua_State*`` associated with the main thread, if possible. Using these classes will allow your code to be immune when a wrapped coroutine or a lua thread is set to ``nil`` and then garbage-collected.
+
 
 .. note::
 
