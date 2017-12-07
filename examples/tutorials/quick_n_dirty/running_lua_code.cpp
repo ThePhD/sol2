@@ -40,5 +40,9 @@ int main(int, char*[]) {
 
 	std::cout << std::endl;
 
+	{
+		std::remove("a_lua_script.lua");
+	}
+
 	return 0;
 }

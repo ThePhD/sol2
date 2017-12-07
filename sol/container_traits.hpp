@@ -668,7 +668,7 @@ namespace sol {
 				return set_writable(is_writable(), L, self, it, std::move(value));
 			}
 
-			static void set_comparative(std::true_type, lua_State* L, T& self, stack_object okey, stack_object value) {
+			static error_result set_comparative(std::true_type, lua_State* L, T& self, stack_object okey, stack_object value) {
 				decltype(auto) key = okey.as<K>();
 				if (!is_writable::value) {
 					return error_result("cannot perform a 'set': '%s's iterator reference is not writable (non-copy-assignable or const)", detail::demangle<T>().data());

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-12-07 13:23:41.409999 UTC
-// This header was generated with sol v2.18.7 (revision e17c0a1)
+// Generated 2017-12-07 14:04:12.736591 UTC
+// This header was generated with sol v2.18.7 (revision 7193115)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -15258,7 +15258,7 @@ namespace sol {
 				return set_writable(is_writable(), L, self, it, std::move(value));
 			}
 
-			static void set_comparative(std::true_type, lua_State* L, T& self, stack_object okey, stack_object value) {
+			static error_result set_comparative(std::true_type, lua_State* L, T& self, stack_object okey, stack_object value) {
 				decltype(auto) key = okey.as<K>();
 				if (!is_writable::value) {
 					return error_result("cannot perform a 'set': '%s's iterator reference is not writable (non-copy-assignable or const)", detail::demangle<T>().data());

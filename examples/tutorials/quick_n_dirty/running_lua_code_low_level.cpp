@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <cstdio>
 #include <cassert>
 
 int main(int, char*[]) {
@@ -39,6 +40,10 @@ int main(int, char*[]) {
 	assert(value2 == 24);
 
 	std::cout << std::endl;
+
+	{
+		std::remove("a_lua_script.lua");
+	}
 
 	return 0;
 }
