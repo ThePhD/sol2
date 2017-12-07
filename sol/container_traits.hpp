@@ -412,7 +412,8 @@ namespace sol {
 			error_result(int results) : results(results), fmt(nullptr) {
 			}
 
-			error_result(const char* fmt, const char* msg) : results(0), fmt(fmt), args({ msg, nullptr, nullptr, nullptr }) {
+			error_result(const char* fmt, const char* msg) : results(0), fmt(fmt) {
+				args[0] = msg;
 			}
 		};
 
