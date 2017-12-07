@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-12-07 14:04:12.736591 UTC
-// This header was generated with sol v2.18.7 (revision 7193115)
+// Generated 2017-12-07 14:16:34.213850 UTC
+// This header was generated with sol v2.18.7 (revision a86e9ee)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -14996,10 +14996,10 @@ namespace sol {
 			const char* fmt;
 			std::array<const char*, 4> args;
 
-			error_result() : results(0), fmt(nullptr), args({}) {
+			error_result() : results(0), fmt(nullptr) {
 			}
 
-			error_result(int results) : results(results), fmt(nullptr), args({}) {
+			error_result(int results) : results(results), fmt(nullptr) {
 			}
 
 			error_result(const char* fmt, const char* msg) : results(0), fmt(fmt), args({ msg, nullptr, nullptr, nullptr }) {

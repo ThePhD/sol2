@@ -406,10 +406,10 @@ namespace sol {
 			const char* fmt;
 			std::array<const char*, 4> args;
 
-			error_result() : results(0), fmt(nullptr), args({}) {
+			error_result() : results(0), fmt(nullptr) {
 			}
 
-			error_result(int results) : results(results), fmt(nullptr), args({}) {
+			error_result(int results) : results(results), fmt(nullptr) {
 			}
 
 			error_result(const char* fmt, const char* msg) : results(0), fmt(fmt), args({ msg, nullptr, nullptr, nullptr }) {
