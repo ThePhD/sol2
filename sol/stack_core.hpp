@@ -389,7 +389,7 @@ namespace sol {
 			T** pdata = static_cast<T**>(memory);
 			T* data = *pdata;
 			std::allocator<T> alloc{};
-			alloc.destroy(data);
+			std::allocator_traits<std::allocator<T>>::destroy(alloc, data);
 			return 0;
 		}
 
@@ -409,7 +409,7 @@ namespace sol {
 			memory = align_user<T>(memory);
 			T* data = static_cast<T*>(memory);
 			std::allocator<T> alloc;
-			alloc.destroy(data);
+			std::allocator_traits<std::allocator<T>>::destroy(alloc, data);
 			return 0;
 		}
 
@@ -418,7 +418,7 @@ namespace sol {
 			memory = align_usertype_unique<Real, true>(memory);
 			Real* target = static_cast<Real*>(memory);
 			std::allocator<Real> alloc;
-			alloc.destroy(target);
+			std::allocator_traits<std::allocator<Real>>::destroy(alloc, target);
 		}
 
 		template <typename T>

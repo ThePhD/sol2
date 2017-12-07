@@ -84,21 +84,33 @@ TEST_CASE("simple/set", "Check if the set works properly.") {
 		lua.set("a", 9);
 	}
 	REQUIRE(begintop == endtop);
-	REQUIRE_NOTHROW(lua.safe_script("if a ~= 9 then error('wrong value') end"));
+	{
+		auto result = lua.safe_script("if a ~= 9 then error('wrong value') end", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		lua.set("d", "hello");
 	}
 	REQUIRE(begintop == endtop);
-	REQUIRE_NOTHROW(lua.safe_script("if d ~= 'hello' then error('expected \\'hello\\', got '.. tostring(d)) end"));
+	{
+		auto result = lua.safe_script("if d ~= 'hello' then error('expected \\'hello\\', got '.. tostring(d)) end", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		lua.set("e", std::string("hello"), "f", true);
 	}
 	REQUIRE(begintop == endtop);
-	REQUIRE_NOTHROW(lua.safe_script("if d ~= 'hello' then error('expected \\'hello\\', got '.. tostring(d)) end"));
-	REQUIRE_NOTHROW(lua.safe_script("if f ~= true then error('wrong value') end"));
+	{
+		auto result = lua.safe_script("if d ~= 'hello' then error('expected \\'hello\\', got '.. tostring(d)) end", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("if f ~= true then error('wrong value') end", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 }
 
 TEST_CASE("simple/get", "Tests if the get function works properly.") {
@@ -564,9 +576,9 @@ TEST_CASE("proxy/equality", "check to make sure equality tests work") {
 	lua["a"] = 2;
 
 	REQUIRE_FALSE((lua["a"] == sol::lua_nil)); //0
-	REQUIRE_FALSE((lua["a"] == nullptr));  //0
-	REQUIRE_FALSE((lua["a"] == 0));	   //0
-	REQUIRE((lua["a"] == 2));		    //1
+	REQUIRE_FALSE((lua["a"] == nullptr));	 //0
+	REQUIRE_FALSE((lua["a"] == 0));		   //0
+	REQUIRE((lua["a"] == 2));			   //1
 }
 
 TEST_CASE("compilation/const regression", "make sure constness in tables is respected all the way down") {
@@ -615,7 +627,10 @@ TEST_CASE("object/is", "test whether or not the is abstraction works properly fo
 		lua.open_libraries(sol::lib::base);
 		lua.set_function("is_thing", [](sol::stack_object obj) { return obj.is<thing>(); });
 		lua["a"] = thing{};
-		REQUIRE_NOTHROW(lua.safe_script("assert(is_thing(a))"));
+		{
+			auto result = lua.safe_script("assert(is_thing(a))", sol::script_pass_on_error);
+			REQUIRE(result.valid());
+		}
 	}
 
 	SECTION("object") {
@@ -623,6 +638,9 @@ TEST_CASE("object/is", "test whether or not the is abstraction works properly fo
 		lua.open_libraries(sol::lib::base);
 		lua.set_function("is_thing", [](sol::object obj) { return obj.is<thing>(); });
 		lua["a"] = thing{};
-		REQUIRE_NOTHROW(lua.safe_script("assert(is_thing(a))"));
+		{
+			auto result = lua.safe_script("assert(is_thing(a))", sol::script_pass_on_error);
+			REQUIRE(result.valid());
+		}
 	}
 }

@@ -202,14 +202,16 @@ namespace sol {
 	template <bool b>
 	template <typename Super>
 	basic_reference<b>& basic_reference<b>::operator=(proxy_base<Super>&& r) {
-		this->operator=(r.operator basic_reference<b>());
+		basic_reference<b> v = r;
+		this->operator=(std::move(v));
 		return *this;
 	}
 
 	template <bool b>
 	template <typename Super>
 	basic_reference<b>& basic_reference<b>::operator=(const proxy_base<Super>& r) {
-		this->operator=(r.operator basic_reference<b>());
+		basic_reference<b> v = r;
+		this->operator=(std::move(v));
 		return *this;
 	}
 

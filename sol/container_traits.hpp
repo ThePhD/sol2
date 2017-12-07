@@ -401,6 +401,28 @@ namespace sol {
 			return t.second;
 		}
 
+		struct error_result {
+			int results;
+			const char* fmt;
+			std::array<const char*, 4> args;
+
+			error_result() : results(0), fmt(nullptr), args({}) {
+			}
+
+			error_result(int results) : results(results), fmt(nullptr), args({}) {
+			}
+
+			error_result(const char* fmt, const char* msg) : results(0), fmt(fmt), args({ msg, nullptr, nullptr, nullptr }) {
+			}
+		};
+
+		inline int handle_errors(lua_State* L, const error_result& er) {
+			if (er.fmt == nullptr) {
+				return er.results;
+			}
+			return luaL_error(L, er.fmt, er.args[0], er.args[1], er.args[2], er.args[3]);
+		}
+
 		template <typename X, typename = void>
 		struct container_traits_default {
 		private:
@@ -530,21 +552,21 @@ namespace sol {
 #endif // Safe getting with error
 			}
 
-			static int get_associative(std::true_type, lua_State* L, iterator& it) {
+			static error_result get_associative(std::true_type, lua_State* L, iterator& it) {
 				auto& v = *it;
 				return stack::stack_detail::push_reference<push_type>(L, detail::deref(v.second));
 			}
 
-			static int get_associative(std::false_type, lua_State* L, iterator& it) {
+			static error_result get_associative(std::false_type, lua_State* L, iterator& it) {
 				return stack::stack_detail::push_reference<push_type>(L, detail::deref(*it));
 			}
 
-			static int get_category(std::input_iterator_tag, lua_State* L, T& self, K& key) {
+			static error_result get_category(std::input_iterator_tag, lua_State* L, T& self, K& key) {
 				if (key < 1) {
 					return stack::push(L, lua_nil);
 				}
-				auto it = begin(L, self);
-				auto e = end(L, self);
+				auto it = deferred_traits::begin(L, self);
+				auto e = deferred_traits::end(L, self);
 				if (it == e) {
 					return stack::push(L, lua_nil);
 				}
@@ -558,187 +580,183 @@ namespace sol {
 				return get_associative(is_associative(), L, it);
 			}
 
-			static int get_category(std::random_access_iterator_tag, lua_State* L, T& self, K& key) {
+			static error_result get_category(std::random_access_iterator_tag, lua_State* L, T& self, K& key) {
 				std::ptrdiff_t len = static_cast<std::ptrdiff_t>(size_start(L, self));
 				if (key < 1 || key > len) {
 					return stack::push(L, lua_nil);
 				}
 				--key;
-				auto it = std::next(begin(L, self), key);
+				auto it = std::next(deferred_traits::begin(L, self), key);
 				return get_associative(is_associative(), L, it);
 			}
 
-			static int get_it(std::true_type, lua_State* L, T& self, K& key) {
+			static error_result get_it(std::true_type, lua_State* L, T& self, K& key) {
 				return get_category(iterator_category(), L, self, key);
 			}
 
-			static int get_comparative(std::true_type, lua_State* L, T& self, K& key) {
+			static error_result get_comparative(std::true_type, lua_State* L, T& self, K& key) {
 				auto fx = [&](const value_type& r) -> bool {
 					return key == get_key(is_associative(), r);
 				};
-				auto e = end(L, self);
-				auto it = std::find_if(begin(L, self), e, std::ref(fx));
+				auto e = deferred_traits::end(L, self);
+				auto it = std::find_if(deferred_traits::begin(L, self), e, std::ref(fx));
 				if (it == e) {
 					return stack::push(L, lua_nil);
 				}
 				return get_associative(is_associative(), L, it);
 			}
 
-			static int get_comparative(std::false_type, lua_State* L, T&, K&) {
-				return luaL_error(L, "cannot get this key on '%s': no suitable way to increment iterator and compare to key value '%s'", detail::demangle<T>().data(), detail::demangle<K>().data());
+			static error_result get_comparative(std::false_type, lua_State*, T&, K&) {
+				return error_result("cannot get this key on '%s': no suitable way to increment iterator and compare to key value '%s'", detail::demangle<T>().data(), detail::demangle<K>().data());
 			}
 
-			static int get_it(std::false_type, lua_State* L, T& self, K& key) {
+			static error_result get_it(std::false_type, lua_State* L, T& self, K& key) {
 				return get_comparative(meta::supports_op_equal<K, key_type>(), L, self, key);
 			}
 
-			static void set_associative(std::true_type, iterator& it, stack_object value) {
+			static error_result set_associative(std::true_type, iterator& it, stack_object value) {
 				auto& v = *it;
 				v.second = value.as<V>();
+				return {};
 			}
 
-			static void set_associative(std::false_type, iterator& it, stack_object value) {
+			static error_result set_associative(std::false_type, iterator& it, stack_object value) {
 				auto& v = *it;
 				v = value.as<V>();
+				return {};
 			}
 
-			static void set_writable(std::true_type, lua_State*, T&, iterator& it, stack_object value) {
-				set_associative(is_associative(), it, std::move(value));
+			static error_result set_writable(std::true_type, lua_State*, T&, iterator& it, stack_object value) {
+				return set_associative(is_associative(), it, std::move(value));
 			}
 
-			static void set_writable(std::false_type, lua_State* L, T&, iterator&, stack_object) {
-				luaL_error(L, "cannot perform a 'set': '%s's iterator reference is not writable (non-copy-assignable or const)", detail::demangle<T>().data());
+			static error_result set_writable(std::false_type, lua_State*, T&, iterator&, stack_object) {
+				return error_result("cannot perform a 'set': '%s's iterator reference is not writable (non-copy-assignable or const)", detail::demangle<T>().data());
 			}
 
-			static void set_category(std::input_iterator_tag, lua_State* L, T& self, stack_object okey, stack_object value) {
+			static error_result set_category(std::input_iterator_tag, lua_State* L, T& self, stack_object okey, stack_object value) {
 				decltype(auto) key = okey.as<K>();
-				auto e = end(L, self);
-				auto it = begin(L, self);
+				auto e = deferred_traits::end(L, self);
+				auto it = deferred_traits::begin(L, self);
 				auto backit = it;
 				for (; key > 1 && it != e; --key, ++it) {
 					backit = it;
 				}
 				if (it == e) {
 					if (key == 1) {
-						add_copyable(is_copyable(), L, self, std::move(value), meta::has_insert_after<T>::value ? backit : it);
-						return;
+						return add_copyable(is_copyable(), L, self, std::move(value), meta::has_insert_after<T>::value ? backit : it);
 					}
-					luaL_error(L, "out of bounds (too big) for set on '%s'", detail::demangle<T>().c_str());
-					return;
+					return error_result("out of bounds (too big) for set on '%s'", detail::demangle<T>().c_str());
 				}
-				set_writable(is_writable(), L, self, it, std::move(value));
+				return set_writable(is_writable(), L, self, it, std::move(value));
 			}
 
-			static void set_category(std::random_access_iterator_tag, lua_State* L, T& self, stack_object okey, stack_object value) {
+			static error_result set_category(std::random_access_iterator_tag, lua_State* L, T& self, stack_object okey, stack_object value) {
 				decltype(auto) key = okey.as<K>();
 				if (key < 1) {
-					luaL_error(L, "sol: out of bounds (too small) for set on '%s'", detail::demangle<T>().c_str());
-					return;
+					return error_result("sol: out of bounds (too small) for set on '%s'", detail::demangle<T>().c_str());
 				}
 				--key;
 				std::ptrdiff_t len = static_cast<std::ptrdiff_t>(size_start(L, self));
 				if (key == len) {
-					add_copyable(is_copyable(), L, self, std::move(value));
-					return;
+					return add_copyable(is_copyable(), L, self, std::move(value));
 				}
 				else if (key > len) {
-					luaL_error(L, "sol: out of bounds (too big) for set on '%s'", detail::demangle<T>().c_str());
-					return;
+					return error_result("sol: out of bounds (too big) for set on '%s'", detail::demangle<T>().c_str());
 				}
-				auto it = std::next(begin(L, self), key);
-				set_writable(is_writable(), L, self, it, std::move(value));
+				auto it = std::next(deferred_traits::begin(L, self), key);
+				return set_writable(is_writable(), L, self, it, std::move(value));
 			}
 
 			static void set_comparative(std::true_type, lua_State* L, T& self, stack_object okey, stack_object value) {
 				decltype(auto) key = okey.as<K>();
 				if (!is_writable::value) {
-					luaL_error(L, "cannot perform a 'set': '%s's iterator reference is not writable (non-copy-assignable or const)", detail::demangle<T>().data());
-					;
-					return;
+					return error_result("cannot perform a 'set': '%s's iterator reference is not writable (non-copy-assignable or const)", detail::demangle<T>().data());
 				}
 				auto fx = [&](const value_type& r) -> bool {
 					return key == get_key(is_associative(), r);
 				};
-				auto e = end(L, self);
-				auto it = std::find_if(begin(L, self), e, std::ref(fx));
+				auto e = deferred_traits::end(L, self);
+				auto it = std::find_if(deferred_traits::begin(L, self), e, std::ref(fx));
 				if (it == e) {
-					return;
+					return {};
 				}
-				set_writable(is_writable(), L, self, it, std::move(value));
+				return set_writable(is_writable(), L, self, it, std::move(value));
 			}
 
-			static void set_comparative(std::false_type, lua_State* L, T&, stack_object, stack_object) {
-				luaL_error(L, "cannot set this value on '%s': no suitable way to increment iterator or compare to '%s' key", detail::demangle<T>().data(), detail::demangle<K>().data());
+			static error_result set_comparative(std::false_type, lua_State*, T&, stack_object, stack_object) {
+				return error_result("cannot set this value on '%s': no suitable way to increment iterator or compare to '%s' key", detail::demangle<T>().data(), detail::demangle<K>().data());
 			}
 
-			static void set_associative_insert(std::true_type, lua_State*, T& self, iterator& it, K& key, stack_object value) {
+			static error_result set_associative_insert(std::true_type, lua_State*, T& self, iterator& it, K& key, stack_object value) {
 				self.insert(it, value_type(key, value.as<V>()));
+				return {};
 			}
 
-			static void set_associative_insert(std::false_type, lua_State*, T& self, iterator& it, K& key, stack_object) {
+			static error_result set_associative_insert(std::false_type, lua_State*, T& self, iterator& it, K& key, stack_object) {
 				self.insert(it, key);
+				return {};
 			}
 
-			static void set_associative_find(std::true_type, lua_State* L, T& self, stack_object okey, stack_object value) {
+			static error_result set_associative_find(std::true_type, lua_State* L, T& self, stack_object okey, stack_object value) {
 				decltype(auto) key = okey.as<K>();
 				auto it = self.find(key);
-				if (it == end(L, self)) {
-					set_associative_insert(is_associative(), L, self, it, key, std::move(value));
-					return;
+				if (it == deferred_traits::end(L, self)) {
+					return set_associative_insert(is_associative(), L, self, it, key, std::move(value));
 				}
-				set_writable(is_writable(), L, self, it, std::move(value));
+				return set_writable(is_writable(), L, self, it, std::move(value));
 			}
 
-			static void set_associative_find(std::false_type, lua_State* L, T& self, stack_object key, stack_object value) {
-				set_comparative(meta::supports_op_equal<K, key_type>(), L, self, std::move(key), std::move(value));
+			static error_result set_associative_find(std::false_type, lua_State* L, T& self, stack_object key, stack_object value) {
+				return set_comparative(meta::supports_op_equal<K, key_type>(), L, self, std::move(key), std::move(value));
 			}
 
-			static void set_it(std::true_type, lua_State* L, T& self, stack_object key, stack_object value) {
-				set_category(iterator_category(), L, self, std::move(key), std::move(value));
+			static error_result set_it(std::true_type, lua_State* L, T& self, stack_object key, stack_object value) {
+				return set_category(iterator_category(), L, self, std::move(key), std::move(value));
 			}
 
-			static void set_it(std::false_type, lua_State* L, T& self, stack_object key, stack_object value) {
-				set_associative_find(meta::all<has_find<T>, meta::any<is_associative, is_lookup>>(), L, self, std::move(key), std::move(value));
+			static error_result set_it(std::false_type, lua_State* L, T& self, stack_object key, stack_object value) {
+				return set_associative_find(meta::all<has_find<T>, meta::any<is_associative, is_lookup>>(), L, self, std::move(key), std::move(value));
 			}
 
-			static int find_has_associative_lookup(std::true_type, lua_State* L, T& self) {
+			static error_result find_has_associative_lookup(std::true_type, lua_State* L, T& self) {
 				decltype(auto) key = stack::get<K>(L, 2);
 				auto it = self.find(key);
-				if (it == end(L, self)) {
+				if (it == deferred_traits::end(L, self)) {
 					return stack::push(L, lua_nil);
 				}
 				return get_associative(is_associative(), L, it);
 			}
 
-			static int find_has_associative_lookup(std::false_type, lua_State* L, T& self) {
+			static error_result find_has_associative_lookup(std::false_type, lua_State* L, T& self) {
 				decltype(auto) value = stack::get<V>(L, 2);
 				auto it = self.find(value);
-				if (it == end(L, self)) {
+				if (it == deferred_traits::end(L, self)) {
 					return stack::push(L, lua_nil);
 				}
 				return get_associative(is_associative(), L, it);
 			}
 
-			static int find_has(std::true_type, lua_State* L, T& self) {
+			static error_result find_has(std::true_type, lua_State* L, T& self) {
 				return find_has_associative_lookup(meta::any<is_lookup, is_associative>(), L, self);
 			}
 
-			static int find_associative_lookup(std::true_type, lua_State* L, iterator& it, std::size_t) {
+			static error_result find_associative_lookup(std::true_type, lua_State* L, iterator& it, std::size_t) {
 				return get_associative(is_associative(), L, it);
 			}
 
-			static int find_associative_lookup(std::false_type, lua_State* L, iterator&, std::size_t index) {
+			static error_result find_associative_lookup(std::false_type, lua_State* L, iterator&, std::size_t index) {
 				return stack::push(L, index);
 			}
 
-			static int find_comparative(std::false_type, lua_State* L, T&) {
-				return luaL_error(L, "cannot call 'find' on '%s': there is no 'find' function and the value_type is not equality comparable", detail::demangle<T>().c_str());
+			static error_result find_comparative(std::false_type, lua_State*, T&) {
+				return error_result("cannot call 'find' on '%s': there is no 'find' function and the value_type is not equality comparable", detail::demangle<T>().c_str());
 			}
 
-			static int find_comparative(std::true_type, lua_State* L, T& self) {
+			static error_result find_comparative(std::true_type, lua_State* L, T& self) {
 				decltype(auto) value = stack::get<V>(L, 2);
-				auto it = begin(L, self);
-				auto e = end(L, self);
+				auto it = deferred_traits::begin(L, self);
+				auto e = deferred_traits::end(L, self);
 				std::size_t index = 1;
 				for (;; ++it, ++index) {
 					if (it == e) {
@@ -751,199 +769,210 @@ namespace sol {
 				return find_associative_lookup(meta::any<is_lookup, is_associative>(), L, it, index);
 			}
 
-			static int find_has(std::false_type, lua_State* L, T& self) {
+			static error_result find_has(std::false_type, lua_State* L, T& self) {
 				return find_comparative(meta::supports_op_equal<V>(), L, self);
 			}
 
-			static void add_insert_after(std::false_type, lua_State* L, T& self, stack_object value, iterator&) {
-				add_insert_after(std::false_type(), L, self, value);
+			static error_result add_insert_after(std::false_type, lua_State* L, T& self, stack_object value, iterator&) {
+				return add_insert_after(std::false_type(), L, self, value);
 			}
 
-			static void add_insert_after(std::false_type, lua_State* L, T&, stack_object) {
-				luaL_error(L, "cannot call 'add' on type '%s': no suitable insert/push_back C++ functions", detail::demangle<T>().data());
+			static error_result add_insert_after(std::false_type, lua_State*, T&, stack_object) {
+				return error_result("cannot call 'add' on type '%s': no suitable insert/push_back C++ functions", detail::demangle<T>().data());
 			}
 
-			static void add_insert_after(std::true_type, lua_State*, T& self, stack_object value, iterator& at) {
+			static error_result add_insert_after(std::true_type, lua_State*, T& self, stack_object value, iterator& at) {
 				self.insert_after(at, value.as<V>());
+				return {};
 			}
 
-			static void add_insert_after(std::true_type, lua_State* L, T& self, stack_object value) {
+			static error_result add_insert_after(std::true_type, lua_State* L, T& self, stack_object value) {
 				auto backit = self.before_begin();
 				{
-					auto e = end(L, self);
-					for (auto it = begin(L, self); it != e; ++backit, ++it) {
+					auto e = deferred_traits::end(L, self);
+					for (auto it = deferred_traits::begin(L, self); it != e; ++backit, ++it) {
 					}
 				}
 				return add_insert_after(std::true_type(), L, self, value, backit);
 			}
 
-			static void add_insert(std::true_type, lua_State*, T& self, stack_object value, iterator& at) {
+			static error_result add_insert(std::true_type, lua_State*, T& self, stack_object value, iterator& at) {
 				self.insert(at, value.as<V>());
+				return {};
 			}
 
-			static void add_insert(std::true_type, lua_State* L, T& self, stack_object value) {
-				auto at = end(L, self);
-				add_insert(std::true_type(), L, self, value, at);
+			static error_result add_insert(std::true_type, lua_State* L, T& self, stack_object value) {
+				auto at = deferred_traits::end(L, self);
+				return add_insert(std::true_type(), L, self, value, at);
 			}
 
-			static void add_insert(std::false_type, lua_State* L, T& self, stack_object value, iterator& at) {
+			static error_result add_insert(std::false_type, lua_State* L, T& self, stack_object value, iterator& at) {
 				return add_insert_after(meta::has_insert_after<T>(), L, self, std::move(value), at);
 			}
 
-			static void add_insert(std::false_type, lua_State* L, T& self, stack_object value) {
+			static error_result add_insert(std::false_type, lua_State* L, T& self, stack_object value) {
 				return add_insert_after(meta::has_insert_after<T>(), L, self, std::move(value));
 			}
 
-			static void add_push_back(std::true_type, lua_State*, T& self, stack_object value, iterator&) {
+			static error_result add_push_back(std::true_type, lua_State*, T& self, stack_object value, iterator&) {
 				self.push_back(value.as<V>());
+				return {};
 			}
 
-			static void add_push_back(std::true_type, lua_State*, T& self, stack_object value) {
+			static error_result add_push_back(std::true_type, lua_State*, T& self, stack_object value) {
 				self.push_back(value.as<V>());
+				return {};
 			}
 
-			static void add_push_back(std::false_type, lua_State* L, T& self, stack_object value, iterator& at) {
-				add_insert(meta::has_insert<T>(), L, self, value, at);
+			static error_result add_push_back(std::false_type, lua_State* L, T& self, stack_object value, iterator& at) {
+				return add_insert(meta::has_insert<T>(), L, self, value, at);
 			}
 
-			static void add_push_back(std::false_type, lua_State* L, T& self, stack_object value) {
-				add_insert(meta::has_insert<T>(), L, self, value);
+			static error_result add_push_back(std::false_type, lua_State* L, T& self, stack_object value) {
+				return add_insert(meta::has_insert<T>(), L, self, value);
 			}
 
-			static void add_associative(std::true_type, lua_State* L, T& self, stack_object key, iterator& at) {
+			static error_result add_associative(std::true_type, lua_State* L, T& self, stack_object key, iterator& at) {
 				self.insert(at, value_type(key.as<K>(), stack::get<V>(L, 3)));
+				return {};
 			}
 
-			static void add_associative(std::true_type, lua_State* L, T& self, stack_object key) {
-				auto at = end(L, self);
-				add_associative(std::true_type(), L, self, std::move(key), at);
+			static error_result add_associative(std::true_type, lua_State* L, T& self, stack_object key) {
+				auto at = deferred_traits::end(L, self);
+				return add_associative(std::true_type(), L, self, std::move(key), at);
 			}
 
-			static void add_associative(std::false_type, lua_State* L, T& self, stack_object value, iterator& at) {
-				add_push_back(meta::has_push_back<T>(), L, self, value, at);
+			static error_result add_associative(std::false_type, lua_State* L, T& self, stack_object value, iterator& at) {
+				return add_push_back(meta::has_push_back<T>(), L, self, value, at);
 			}
 
-			static void add_associative(std::false_type, lua_State* L, T& self, stack_object value) {
-				add_push_back(meta::has_push_back<T>(), L, self, value);
+			static error_result add_associative(std::false_type, lua_State* L, T& self, stack_object value) {
+				return add_push_back(meta::has_push_back<T>(), L, self, value);
 			}
 
-			static void add_copyable(std::true_type, lua_State* L, T& self, stack_object value, iterator& at) {
-				add_associative(is_associative(), L, self, std::move(value), at);
+			static error_result add_copyable(std::true_type, lua_State* L, T& self, stack_object value, iterator& at) {
+				return add_associative(is_associative(), L, self, std::move(value), at);
 			}
 
-			static void add_copyable(std::true_type, lua_State* L, T& self, stack_object value) {
-				add_associative(is_associative(), L, self, value);
+			static error_result add_copyable(std::true_type, lua_State* L, T& self, stack_object value) {
+				return add_associative(is_associative(), L, self, value);
 			}
 
-			static void add_copyable(std::false_type, lua_State* L, T& self, stack_object value, iterator&) {
-				add_copyable(std::false_type(), L, self, std::move(value));
+			static error_result add_copyable(std::false_type, lua_State* L, T& self, stack_object value, iterator&) {
+				return add_copyable(std::false_type(), L, self, std::move(value));
 			}
 
-			static void add_copyable(std::false_type, lua_State* L, T&, stack_object) {
-				luaL_error(L, "cannot call 'add' on '%s': value_type is non-copyable", detail::demangle<T>().data());
+			static error_result add_copyable(std::false_type, lua_State*, T&, stack_object) {
+				return error_result("cannot call 'add' on '%s': value_type is non-copyable", detail::demangle<T>().data());
 			}
 
-			static void insert_lookup(std::true_type, lua_State* L, T& self, stack_object, stack_object value) {
+			static error_result insert_lookup(std::true_type, lua_State* L, T& self, stack_object, stack_object value) {
 				// TODO: should we warn or error about someone calling insert on an ordered / lookup container with no associativity?
-				add_copyable(std::true_type(), L, self, std::move(value));
+				return add_copyable(std::true_type(), L, self, std::move(value));
 			}
 
-			static void insert_lookup(std::false_type, lua_State* L, T& self, stack_object where, stack_object value) {
-				auto it = begin(L, self);
+			static error_result insert_lookup(std::false_type, lua_State* L, T& self, stack_object where, stack_object value) {
+				auto it = deferred_traits::begin(L, self);
 				auto key = where.as<K>();
 				--key;
 				std::advance(it, key);
 				self.insert(it, value.as<V>());
+				return {};
 			}
 
-			static void insert_after_has(std::true_type, lua_State* L, T& self, stack_object where, stack_object value) {
+			static error_result insert_after_has(std::true_type, lua_State* L, T& self, stack_object where, stack_object value) {
 				auto key = where.as<K>();
 				auto backit = self.before_begin();
 				{
 					--key;
-					auto e = end(L, self);
-					for (auto it = begin(L, self); key > 0; ++backit, ++it, --key) {
+					auto e = deferred_traits::end(L, self);
+					for (auto it = deferred_traits::begin(L, self); key > 0; ++backit, ++it, --key) {
 						if (backit == e) {
-							luaL_error(L, "sol: out of bounds (too big) for set on '%s'", detail::demangle<T>().c_str());
-							return;
+							return error_result("sol: out of bounds (too big) for set on '%s'", detail::demangle<T>().c_str());
 						}
 					}
 				}
 				self.insert_after(backit, value.as<V>());
+				return {};
 			}
 
-			static void insert_after_has(std::false_type, lua_State* L, T&, stack_object, stack_object) {
-				luaL_error(L, "cannot call 'insert' on '%s': no suitable or similar functionality detected on this container", detail::demangle<T>().data());
+			static error_result insert_after_has(std::false_type, lua_State*, T&, stack_object, stack_object) {
+				return error_result("cannot call 'insert' on '%s': no suitable or similar functionality detected on this container", detail::demangle<T>().data());
 			}
 
-			static void insert_has(std::true_type, lua_State* L, T& self, stack_object key, stack_object value) {
-				insert_lookup(meta::all<is_associative, is_lookup>(), L, self, std::move(key), std::move(value));
+			static error_result insert_has(std::true_type, lua_State* L, T& self, stack_object key, stack_object value) {
+				return insert_lookup(meta::all<is_associative, is_lookup>(), L, self, std::move(key), std::move(value));
 			}
 
-			static void insert_has(std::false_type, lua_State* L, T& self, stack_object where, stack_object value) {
-				insert_after_has(meta::has_insert_after<T>(), L, self, where, value);
+			static error_result insert_has(std::false_type, lua_State* L, T& self, stack_object where, stack_object value) {
+				return insert_after_has(meta::has_insert_after<T>(), L, self, where, value);
 			}
 
-			static void insert_copyable(std::true_type, lua_State* L, T& self, stack_object key, stack_object value) {
-				insert_has(meta::has_insert<T>(), L, self, std::move(key), std::move(value));
+			static error_result insert_copyable(std::true_type, lua_State* L, T& self, stack_object key, stack_object value) {
+				return insert_has(meta::has_insert<T>(), L, self, std::move(key), std::move(value));
 			}
 
-			static void insert_copyable(std::false_type, lua_State* L, T&, stack_object, stack_object) {
-				luaL_error(L, "cannot call 'insert' on '%s': value_type is non-copyable", detail::demangle<T>().data());
+			static error_result insert_copyable(std::false_type, lua_State*, T&, stack_object, stack_object) {
+				return error_result("cannot call 'insert' on '%s': value_type is non-copyable", detail::demangle<T>().data());
 			}
 
-			static void erase_integral(std::true_type, lua_State* L, T& self, K& key) {
-				auto it = begin(L, self);
+			static error_result erase_integral(std::true_type, lua_State* L, T& self, K& key) {
+				auto it = deferred_traits::begin(L, self);
 				--key;
 				std::advance(it, key);
 				self.erase(it);
+
+				return {};
 			}
 
-			static void erase_integral(std::false_type, lua_State* L, T& self, const K& key) {
+			static error_result erase_integral(std::false_type, lua_State* L, T& self, const K& key) {
 				auto fx = [&](const value_type& r) -> bool {
 					return key == r;
 				};
-				auto e = end(L, self);
-				auto it = std::find_if(begin(L, self), e, std::ref(fx));
+				auto e = deferred_traits::end(L, self);
+				auto it = std::find_if(deferred_traits::begin(L, self), e, std::ref(fx));
 				if (it == e) {
-					return;
+					return {};
 				}
 				self.erase(it);
+
+				return {};
 			}
 
-			static void erase_associative_lookup(std::true_type, lua_State*, T& self, const K& key) {
+			static error_result erase_associative_lookup(std::true_type, lua_State*, T& self, const K& key) {
 				self.erase(key);
+				return {};
 			}
 
-			static void erase_associative_lookup(std::false_type, lua_State* L, T& self, K& key) {
-				erase_integral(std::is_integral<K>(), L, self, key);
+			static error_result erase_associative_lookup(std::false_type, lua_State* L, T& self, K& key) {
+				return erase_integral(std::is_integral<K>(), L, self, key);
 			}
 
-			static void erase_after_has(std::true_type, lua_State* L, T& self, K& key) {
+			static error_result erase_after_has(std::true_type, lua_State* L, T& self, K& key) {
 				auto backit = self.before_begin();
 				{
 					--key;
-					auto e = end(L, self);
-					for (auto it = begin(L, self); key > 0; ++backit, ++it, --key) {
+					auto e = deferred_traits::end(L, self);
+					for (auto it = deferred_traits::begin(L, self); key > 0; ++backit, ++it, --key) {
 						if (backit == e) {
-							luaL_error(L, "sol: out of bounds for erase on '%s'", detail::demangle<T>().c_str());
-							return;
+							return error_result("sol: out of bounds for erase on '%s'", detail::demangle<T>().c_str());
 						}
 					}
 				}
 				self.erase_after(backit);
+				return {};
 			}
 
-			static void erase_after_has(std::false_type, lua_State* L, T&, const K&) {
-				luaL_error(L, "sol: cannot call erase on '%s'", detail::demangle<T>().c_str());
+			static error_result erase_after_has(std::false_type, lua_State*, T&, const K&) {
+				return error_result("sol: cannot call erase on '%s'", detail::demangle<T>().c_str());
 			}
 
-			static void erase_has(std::true_type, lua_State* L, T& self, K& key) {
-				erase_associative_lookup(meta::any<is_associative, is_lookup>(), L, self, key);
+			static error_result erase_has(std::true_type, lua_State* L, T& self, K& key) {
+				return erase_associative_lookup(meta::any<is_associative, is_lookup>(), L, self, key);
 			}
 
-			static void erase_has(std::false_type, lua_State* L, T& self, K& key) {
-				erase_after_has(has_erase_after<T>(), L, self, key);
+			static error_result erase_has(std::false_type, lua_State* L, T& self, K& key) {
+				return erase_after_has(has_erase_after<T>(), L, self, key);
 			}
 
 			static auto size_has(std::false_type, lua_State* L, T& self) {
@@ -970,12 +999,12 @@ namespace sol {
 				return deferred_traits::begin(L, self) == deferred_traits::end(L, self);
 			}
 
-			static int get_start(lua_State* L, T& self, K& key) {
+			static error_result get_start(lua_State* L, T& self, K& key) {
 				return get_it(is_linear_integral(), L, self, key);
 			}
 
-			static void set_start(lua_State* L, T& self, stack_object key, stack_object value) {
-				set_it(is_linear_integral(), L, self, std::move(key), std::move(value));
+			static error_result set_start(lua_State* L, T& self, stack_object key, stack_object value) {
+				return set_it(is_linear_integral(), L, self, std::move(key), std::move(value));
 			}
 
 			static std::size_t size_start(lua_State* L, T& self) {
@@ -989,9 +1018,9 @@ namespace sol {
 			static bool empty_start(lua_State* L, T& self) {
 				return empty_has(has_empty<T>(), L, self);
 			}
-
-			static void erase_start(lua_State* L, T& self, K& key) {
-				erase_has(has_erase<T>(), L, self, key);
+			
+			static error_result erase_start(lua_State* L, T& self, K& key) {
+				return erase_has(has_erase<T>(), L, self, key);
 			}
 
 			template <bool ip>
@@ -1057,8 +1086,12 @@ namespace sol {
 		public:
 			static int get(lua_State* L) {
 				auto& self = get_src(L);
-				decltype(auto) key = stack::get<K>(L);
-				return get_start(L, self, key);
+				error_result er;
+				{
+					decltype(auto) key = stack::get<K>(L);
+					er = get_start(L, self, key);
+				}
+				return handle_errors(L, er);
 			}
 
 			static int index_get(lua_State* L) {
@@ -1071,8 +1104,8 @@ namespace sol {
 					return erase(L);
 				}
 				auto& self = get_src(L);
-				set_start(L, self, stack_object(L, raw_index(2)), std::move(value));
-				return 0;
+				error_result er = set_start(L, self, stack_object(L, raw_index(2)), std::move(value));
+				return handle_errors(L, er);
 			}
 
 			static int index_set(lua_State* L) {
@@ -1081,19 +1114,20 @@ namespace sol {
 
 			static int add(lua_State* L) {
 				auto& self = get_src(L);
-				add_copyable(is_copyable(), L, self, stack_object(L, raw_index(2)));
-				return 0;
+				error_result er = add_copyable(is_copyable(), L, self, stack_object(L, raw_index(2)));
+				return handle_errors(L, er);
 			}
 
 			static int insert(lua_State* L) {
 				auto& self = get_src(L);
-				insert_copyable(is_copyable(), L, self, stack_object(L, raw_index(2)), stack_object(L, raw_index(3)));
-				return 0;
+				error_result er = insert_copyable(is_copyable(), L, self, stack_object(L, raw_index(2)), stack_object(L, raw_index(3)));
+				return handle_errors(L, er);
 			}
 
 			static int find(lua_State* L) {
 				auto& self = get_src(L);
-				return find_has(has_find<T>(), L, self);
+				error_result er = find_has(has_find<T>(), L, self);
+				return handle_errors(L, er);
 			}
 
 			static iterator begin(lua_State*, T& self) {
@@ -1120,9 +1154,12 @@ namespace sol {
 
 			static int erase(lua_State* L) {
 				auto& self = get_src(L);
-				decltype(auto) key = stack::get<K>(L, 2);
-				erase_start(L, self, key);
-				return 0;
+				error_result er;
+				{
+					decltype(auto) key = stack::get<K>(L, 2);
+					er = erase_start(L, self, key);
+				}
+				return handle_errors(L, er);
 			}
 
 			static int empty(lua_State* L) {

@@ -388,7 +388,10 @@ TEST_CASE("usertype/usertype-utility-derived", "usertype classes must play nice 
 	lua.set_usertype(baseusertype);
 
 	lua.safe_script("base = Base.new(5)");
-	REQUIRE_NOTHROW(lua.safe_script("print(base:get_num())"));
+	{
+		auto result = lua.safe_script("print(base:get_num())", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 
 	sol::constructors<sol::types<int>> derivedctor;
 	sol::usertype<Derived> derivedusertype(derivedctor,
@@ -449,16 +452,46 @@ TEST_CASE("usertype/issue-number-twenty-five", "Using pointers and references fr
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 	lua.new_usertype<test>("test", "set", &test::set, "get", &test::get, "pointer_get", &test::pget, "fun", &test::fun, "create_get", &test::create_get);
-	REQUIRE_NOTHROW(lua.safe_script("x = test.new()"));
-	REQUIRE_NOTHROW(lua.safe_script("assert(x:set():get() == 10)"));
-	REQUIRE_NOTHROW(lua.safe_script("y = x:pointer_get()"));
-	REQUIRE_NOTHROW(lua.safe_script("y:set():get()"));
-	REQUIRE_NOTHROW(lua.safe_script("y:fun(10)"));
-	REQUIRE_NOTHROW(lua.safe_script("x:fun(10)"));
-	REQUIRE_NOTHROW(lua.safe_script("assert(y:fun(10) == x:fun(10), '...')"));
-	REQUIRE_NOTHROW(lua.safe_script("assert(y:fun(10) == 100, '...')"));
-	REQUIRE_NOTHROW(lua.safe_script("assert(y:set():get() == y:set():get(), '...')"));
-	REQUIRE_NOTHROW(lua.safe_script("assert(y:set():get() == 10, '...')"));
+	{
+		auto result = lua.safe_script("x = test.new()", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("assert(x:set():get() == 10)", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("y = x:pointer_get()", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("y:set():get()", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("y:fun(10)", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("x:fun(10)", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("assert(y:fun(10) == x:fun(10), '...')", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("assert(y:fun(10) == 100, '...')", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("assert(y:set():get() == y:set():get(), '...')", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("assert(y:set():get() == 10, '...')", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 }
 
 TEST_CASE("usertype/issue-number-thirty-five", "using value types created from lua-called C++ code, fixing user-defined types with constructors") {
@@ -541,8 +574,14 @@ TEST_CASE("usertype/member-variables", "allow table-like accessors to behave as 
 		"f", &breaks::f);
 
 	breaks& b = lua["b"];
-	REQUIRE_NOTHROW(lua.safe_script("b.f = function () print('BARK!') end"));
-	REQUIRE_NOTHROW(lua.safe_script("b.f()"));
+	{
+		auto result = lua.safe_script("b.f = function () print('BARK!') end", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("b.f()", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 	REQUIRE_NOTHROW(b.f());
 }
 
@@ -559,12 +598,18 @@ TEST_CASE("usertype/nonmember-functions", "let users set non-member functions th
 		.get<sol::table>("giver")
 		.set_function("stuff", giver::stuff);
 
-	REQUIRE_NOTHROW(lua.safe_script("giver.stuff()"));
-	REQUIRE_NOTHROW(lua.safe_script(
-		"t = giver.new()\n"
-		"print(tostring(t))\n"
-		"t:gief()\n"
-		"t:gief_stuff(20)\n"));
+	{
+		auto result = lua.safe_script("giver.stuff()", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script(
+			"t = giver.new()\n"
+			"print(tostring(t))\n"
+			"t:gief()\n"
+			"t:gief_stuff(20)\n");
+		REQUIRE(result.valid());
+	}
 	giver& g = lua.get<giver>("t");
 	REQUIRE(g.a == 20);
 }
@@ -653,7 +698,10 @@ TEST_CASE("usertype/private-constructible", "Check to make sure special snowflak
 
 		std::unique_ptr<factory_test, factory_test::deleter> f = factory_test::make();
 		lua.set("true_a", factory_test::true_a, "f", f.get());
-		REQUIRE_NOTHROW(lua.safe_script("assert(f.a == true_a)"));
+		{
+			auto result = lua.safe_script("assert(f.a == true_a)", sol::script_pass_on_error);
+			REQUIRE(result.valid());
+		}
 
 		REQUIRE_NOTHROW(lua.safe_script(
 			"local fresh_f = factory_test:new()\n"
@@ -841,8 +889,14 @@ TEST_CASE("usertype/readonly-and-static-functions", "Check if static functions c
 		"oh_boy", sol::overload(sol::resolve<void()>(&bark::oh_boy), sol::resolve<int(std::string)>(&bark::oh_boy)),
 		sol::meta_function::call_function, &bark::operator());
 
-	REQUIRE_NOTHROW(lua.safe_script("assert(bark.oh_boy('woo') == 3)"));
-	REQUIRE_NOTHROW(lua.safe_script("bark.oh_boy()"));
+	{
+		auto result = lua.safe_script("assert(bark.oh_boy('woo') == 3)", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("bark.oh_boy()", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 
 	bark b;
 	lua.set("b", &b);
@@ -1490,7 +1544,10 @@ TEST_CASE("usertype/missing-key", "make sure a missing key returns nil") {
 	lua.open_libraries(sol::lib::base);
 
 	lua.new_usertype<thing>("thing");
-	REQUIRE_NOTHROW(lua.safe_script("v = thing.missingKey\nprint(v)"));
+	{
+		auto result = lua.safe_script("v = thing.missingKey\nprint(v)", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 	sol::object o = lua["v"];
 	bool isnil = o.is<sol::lua_nil_t>();
 	REQUIRE(isnil);

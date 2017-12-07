@@ -5,6 +5,8 @@ because this is surprisingly hard using standard C++
 
 Individuals using Visual Studio 2015, or on Windows with the VC++ and MinGW compilers (possibly Clang++ on Windows as well) have ``<codecvt>`` headers, and thusly Sol will attempt to include it. Individuals on GCC 4.9.x, Clang 3.5.x, Clang 3.6.x do not seem to have ``<codecvt>`` shipped with the standard library that comes with installation of these compilers. If you want ``std::wstring``, ``std::u16string``, ``std::u32string`` automatic handling then you need to make sure you have those headers and then define ``SOL_CODECVT_SUPPORT`` on unsupported compilers.
 
-ThePhD did not want this to have to be a thing, but slow implementations and such force their hand. When GCC 7.x comes out, ThePhD will consider removing the effect of defining this macro and leaving <codecvt> support in at all times.
+.. _codecvt-deprecation:
 
-GCC 7.x is now out, and its codecvt support seems to work in it as well. We will be deprecating the conditional SOL_CODECVT support and deprecating support for GCC 4.x.x, Clang 3.5.x, and Clang 3.6.x in releases past sol2 v2.17.5
+.. note::
+
+	Visual C++, in Visual Studio versions 15.5+ (``_MSC_VER >= 1912``), introduced deprecation macros when you are in ``/std:c++latest``. In order to get rid of codecvt issues, you need to define the silencing macros they ask for. It must be defined because despite the committee deprecating it, there is no useful standard alternative to perform these conversions (without, saying, including ``<Windows.h>`` on Windows machines, which is unacceptable).

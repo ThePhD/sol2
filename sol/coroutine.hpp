@@ -55,8 +55,7 @@ namespace sol {
 		}
 
 		protected_function_result invoke(types<>, std::index_sequence<>, std::ptrdiff_t n) {
-			int stacksize = lua_gettop(lua_state());
-			int firstreturn = (std::max)(1, stacksize - static_cast<int>(n));
+			int firstreturn = 1;
 			luacall(n, LUA_MULTRET);
 			int poststacksize = lua_gettop(lua_state());
 			int returncount = poststacksize - (firstreturn - 1);
@@ -146,7 +145,6 @@ namespace sol {
 			// and try to use it with sol::coroutine without ever calling the first resume in Lua
 			// this makes the stack incompatible with other kinds of stacks: protect against this
 			// make sure coroutines don't screw us over
-			stack::coroutine_create_guard(lua_state());
 			base_t::push();
 			int pushcount = stack::multi_push_reference(lua_state(), std::forward<Args>(args)...);
 			return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount);

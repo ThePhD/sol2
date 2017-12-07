@@ -47,10 +47,18 @@ TEST_CASE("variadics/required with variadic_args", "Check if a certain number of
 	lua.set_function("v",
 		[](sol::this_state, sol::variadic_args, int, int) {
 		});
-	REQUIRE_NOTHROW(lua.safe_script("v(20, 25, 30)"));
-	REQUIRE_NOTHROW(lua.safe_script("v(20, 25)"));
-	auto result = lua.safe_script("v(20)", sol::script_pass_on_error);
-	REQUIRE_FALSE(result.valid());
+	{
+		auto result = lua.safe_script("v(20, 25, 30)", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("v(20, 25)", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("v(20)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+	}
 }
 
 TEST_CASE("variadics/variadic_args get type", "Make sure we can inspect types proper from variadic_args") {

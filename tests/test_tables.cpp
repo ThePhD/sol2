@@ -333,7 +333,10 @@ TEST_CASE("tables/variables", "Check if tables and variables work as intended") 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::os);
 	lua.get<sol::table>("os").set("name", "windows");
-	REQUIRE_NOTHROW(lua.safe_script("assert(os.name == \"windows\")"));
+	{
+		auto result = lua.safe_script("assert(os.name == \"windows\")", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 }
 
 TEST_CASE("tables/create", "Check if creating a table is kosher") {
@@ -453,7 +456,10 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
 
 	// function setting
 	lua["test"] = plop_xyz;
-	REQUIRE_NOTHROW(lua.safe_script("assert(test(10, 11, \"hello\") == 11)"));
+	{
+		auto result = lua.safe_script("assert(test(10, 11, \"hello\") == 11)", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 
 	// function retrieval
 	sol::function test = lua["test"];
@@ -464,7 +470,10 @@ TEST_CASE("tables/operator[]", "Check if operator[] retrieval and setting works 
 		return x * 2;
 	};
 
-	REQUIRE_NOTHROW(lua.safe_script("assert(lamb(220) == 440)"));
+	{
+		auto result = lua.safe_script("assert(lamb(220) == 440)", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 
 	// function retrieval of a lambda
 	sol::function lamb = lua["lamb"];

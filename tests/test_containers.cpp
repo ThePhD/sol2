@@ -326,11 +326,21 @@ TEST_CASE("containers/custom usertype", "make sure container usertype metatables
 		"size", &bark::size, "at", sol::resolve<const int&>(&bark::at), "clear", &bark::clear);
 	bark obj{ { 24, 50 } };
 	lua.set("a", &obj);
-	REQUIRE_NOTHROW(lua.safe_script("assert(a:at(24) == 50)"));
-	REQUIRE_NOTHROW(lua.safe_script("a:something()"));
+	{
+		auto result0 = lua.safe_script("assert(a:at(24) == 50)", sol::script_pass_on_error);
+		REQUIRE(result0.valid());
+		auto result1 = lua.safe_script("a:something()");
+		REQUIRE(result1.valid());
+	}
 	lua.set("a", obj);
-	REQUIRE_NOTHROW(lua.safe_script("assert(a:at(24) == 50)"));
-	REQUIRE_NOTHROW(lua.safe_script("a:something()"));
+	{
+		auto result = lua.safe_script("assert(a:at(24) == 50)", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("a:something()", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 }
 
 TEST_CASE("containers/const serialization kvp", "make sure const keys / values are respected") {
@@ -338,12 +348,16 @@ TEST_CASE("containers/const serialization kvp", "make sure const keys / values a
 
 	sol::state lua;
 	lua.open_libraries();
-	bark obj{ { 24, 50 } };
-	lua.set("a", &obj);
-	REQUIRE_NOTHROW(lua.safe_script("assert(a[24] == 50)"));
-	auto result = lua.safe_script("a[24] = 51", sol::script_pass_on_error);
-	REQUIRE_FALSE(result.valid());
-	REQUIRE_NOTHROW(lua.safe_script("assert(a[24] == 50)"));
+	{
+		bark obj{ { 24, 50 } };
+		lua.set("a", std::ref(obj));
+		auto result0 = lua.safe_script("assert(a[24] == 50)", sol::script_pass_on_error);
+		REQUIRE(result0.valid());
+		auto result = lua.safe_script("a[24] = 51", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+		auto result2 = lua.safe_script("assert(a[24] == 50)", sol::script_pass_on_error);
+		REQUIRE(result2.valid());
+	}
 }
 
 TEST_CASE("containers/basic serialization", "make sure containers are turned into proper userdata and have basic hooks established") {
@@ -351,18 +365,26 @@ TEST_CASE("containers/basic serialization", "make sure containers are turned int
 	sol::state lua;
 	lua.open_libraries();
 	lua.set("b", woof{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 });
-	REQUIRE_NOTHROW(
-		lua.safe_script("for k = 1, #b do assert(k == b[k]) end"));
+	{
+		auto result = lua.safe_script("for k = 1, #b do assert(k == b[k]) end", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 	woof w{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
 	lua.set("b", w);
-	REQUIRE_NOTHROW(
-		lua.safe_script("for k = 1, #b do assert(k == b[k]) end"));
+	{
+		auto result = lua.safe_script("for k = 1, #b do assert(k == b[k]) end", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 	lua.set("b", &w);
-	REQUIRE_NOTHROW(
-		lua.safe_script("for k = 1, #b do assert(k == b[k]) end"));
+	{
+		auto result = lua.safe_script("for k = 1, #b do assert(k == b[k]) end", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 	lua.set("b", std::ref(w));
-	REQUIRE_NOTHROW(
-		lua.safe_script("for k = 1, #b do assert(k == b[k]) end"));
+	{
+		auto result = lua.safe_script("for k = 1, #b do assert(k == b[k]) end", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 }
 
 #if 0 // LUL const int holders
@@ -371,11 +393,14 @@ TEST_CASE("containers/const serialization", "make sure containers are turned int
 	sol::state lua;
 	lua.open_libraries();
 	lua.set("b", woof{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 });
-	REQUIRE_NOTHROW(
-		lua.safe_script("for k, v in pairs(b) do assert(k == v) end");
-	);
-	auto result = lua.safe_script("b[1] = 20", sol::script_pass_on_error);
-	REQUIRE_FALSE(result.valid());
+	{
+		auto result = lua.safe_script("for k, v in pairs(b) do assert(k == v) end", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("b[1] = 20", sol::script_pass_on_error);
+		REQUIRE_FALSE(result.valid());
+	}
 }
 #endif
 
@@ -384,18 +409,26 @@ TEST_CASE("containers/table serialization", "ensure types can be serialized as t
 	sol::state lua;
 	lua.open_libraries();
 	lua.set("b", sol::as_table(woof{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 }));
-	REQUIRE_NOTHROW(
-		lua.safe_script("for k, v in ipairs(b) do assert(k == v) end"));
+	{
+		auto result = lua.safe_script("for k, v in ipairs(b) do assert(k == v) end", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 	woof w{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
 	lua.set("b", sol::as_table(w));
-	REQUIRE_NOTHROW(
-		lua.safe_script("for k, v in ipairs(b) do assert(k == v) end"));
+	{
+		auto result = lua.safe_script("for k, v in ipairs(b) do assert(k == v) end", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 	lua.set("b", sol::as_table(&w));
-	REQUIRE_NOTHROW(
-		lua.safe_script("for k, v in ipairs(b) do assert(k == v) end"));
+	{
+		auto result = lua.safe_script("for k, v in ipairs(b) do assert(k == v) end", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 	lua.set("b", sol::as_table(std::ref(w)));
-	REQUIRE_NOTHROW(
-		lua.safe_script("for k, v in ipairs(b) do assert(k == v) end"));
+	{
+		auto result = lua.safe_script("for k, v in ipairs(b) do assert(k == v) end", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 }
 
 TEST_CASE("containers/const correctness", "usertype metatable names should reasonably ignore const attributes") {
@@ -441,20 +474,59 @@ TEST_CASE("containers/arbitrary creation", "userdata and tables should be usable
 	lua.set_function("test_three", test_table_return_three);
 	lua.set_function("test_four", test_table_return_four);
 
-	REQUIRE_NOTHROW(lua.safe_script("a = test_one()"));
-	REQUIRE_NOTHROW(lua.safe_script("b = test_two()"));
-	REQUIRE_NOTHROW(lua.safe_script("c = test_three()"));
-	REQUIRE_NOTHROW(lua.safe_script("d = test_four()"));
+	{
+		auto result = lua.safe_script("a = test_one()", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("b = test_two()", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("c = test_three()", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("d = test_four()", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 
-	REQUIRE_NOTHROW(lua.safe_script("assert(#a == 10, 'error')"));
-	REQUIRE_NOTHROW(lua.safe_script("assert(a[3] == 3, 'error')"));
-	REQUIRE_NOTHROW(lua.safe_script("assert(b.one == 1, 'error')"));
-	REQUIRE_NOTHROW(lua.safe_script("assert(b.three == 3, 'error')"));
-	REQUIRE_NOTHROW(lua.safe_script("assert(c.name == 'Rapptz', 'error')"));
-	REQUIRE_NOTHROW(lua.safe_script("assert(c.project == 'sol', 'error')"));
-	REQUIRE_NOTHROW(lua.safe_script("assert(d.one == 1, 'error')"));
-	REQUIRE_NOTHROW(lua.safe_script("assert(d.three == 3, 'error')"));
-	REQUIRE_NOTHROW(lua.safe_script("assert(d.four == 4, 'error')"));
+	{
+		auto result = lua.safe_script("assert(#a == 10, 'error')", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("assert(a[3] == 3, 'error')", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("assert(b.one == 1, 'error')", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("assert(b.three == 3, 'error')", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("assert(c.name == 'Rapptz', 'error')", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("assert(c.project == 'sol', 'error')", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("assert(d.one == 1, 'error')", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("assert(d.three == 3, 'error')", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script("assert(d.four == 4, 'error')", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 
 	sol::table a = lua.get<sol::table>("a");
 	sol::table b = lua.get<sol::table>("b");
@@ -765,8 +837,15 @@ TEST_CASE("containers/input iterators", "test shitty input iterators that are al
 		int x_ = -1;
 	};
 
-	class input_it : public std::iterator<std::input_iterator_tag, int_shim> {
+	class input_it {
 	public:
+		typedef std::input_iterator_tag iterator_category;
+		typedef int_shim value_type;
+		typedef value_type& reference;
+		typedef const value_type& const_reference;
+		typedef value_type* pointer;
+		typedef std::ptrdiff_t difference_type;
+
 		input_it() = default;
 
 		input_it(int n, int m)

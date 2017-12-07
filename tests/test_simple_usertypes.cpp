@@ -507,10 +507,16 @@ TEST_CASE("simple_usertype/call constructor", "ensure that all kinds of call-bas
 	lua.safe_script("things = {thing.new(), thing.new()}");
 
 	SECTION("new") {
-		REQUIRE_NOTHROW(lua.safe_script("a = v_test.new(things)"));
+		{
+			auto result = lua.safe_script("a = v_test.new(things)", sol::script_pass_on_error);
+			REQUIRE(result.valid());
+		}
 	}
 	SECTION("call_constructor") {
-		REQUIRE_NOTHROW(lua.safe_script("b = v_test(things)"));
+		{
+			auto result = lua.safe_script("b = v_test(things)", sol::script_pass_on_error);
+			REQUIRE(result.valid());
+		}
 	}
 }
 
@@ -545,7 +551,10 @@ TEST_CASE("simple_usertype/missing key", "make sure a missing key returns nil") 
 	lua.open_libraries(sol::lib::base);
 
 	lua.new_simple_usertype<thing>("thing");
-	REQUIRE_NOTHROW(lua.safe_script("print(thing.missingKey)"));
+	{
+		auto result = lua.safe_script("print(thing.missingKey)", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 }
 
 TEST_CASE("simple_usertype/runtime extensibility", "Check if usertypes are runtime extensible") {

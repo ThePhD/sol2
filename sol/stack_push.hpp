@@ -75,7 +75,7 @@ namespace stack {
 			// just the sizeof(T*), and nothing else.
 			T* obj = detail::usertype_allocate<T>(L);
 			std::allocator<T> alloc{};
-			alloc.construct(obj, std::forward<Args>(args)...);
+			std::allocator_traits<std::allocator<T>>::construct(alloc, obj, std::forward<Args>(args)...);
 			f();
 			return 1;
 		}
@@ -456,8 +456,8 @@ namespace stack {
 		static int push_with(lua_State* L, Key&& name, Args&&... args) {
 			// A dumb pusher
 			T* data = detail::user_allocate<T>(L);
-			std::allocator<T> alloc;
-			alloc.construct(data, std::forward<Args>(args)...);
+			std::allocator<T> alloc{};
+			std::allocator_traits<std::allocator<T>>::construct(alloc, data, std::forward<Args>(args)...);
 			if (with_meta) {
 				// Make sure we have a plain GC set for this data
 				if (luaL_newmetatable(L, name) != 0) {

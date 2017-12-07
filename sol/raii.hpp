@@ -31,8 +31,9 @@ namespace sol {
 		struct default_construct {
 			template <typename T, typename... Args>
 			static void construct(T&& obj, Args&&... args) {
-				std::allocator<meta::unqualified_t<T>> alloc{};
-				alloc.construct(obj, std::forward<Args>(args)...);
+				typedef meta::unqualified_t<T> Tu;
+				std::allocator<Tu> alloc{};
+				std::allocator_traits<std::allocator<Tu>>::construct(alloc, obj, std::forward<Args>(args)...);
 			}
 
 			template <typename T, typename... Args>

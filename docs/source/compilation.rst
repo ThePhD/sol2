@@ -8,7 +8,7 @@ supported compilers
 
 GCC 7.x is now out alongside Visual Studio 2017. This means that `sol2 release v2.18.3`_ is the current version of the code targeted at the older compilers not listed below. Newer code will be targeted at working with the following compilers and leveraging their features, possibly taking advantage of whatever C++17 features are made available by the compilers and standard libraries bundled by-default with them.
 
-``v2.18.2`` supports:
+``v2.18.3`` supports:
 
 * VC++
 	- Visual Studio 2017

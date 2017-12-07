@@ -28,13 +28,12 @@
 
 namespace sol {
 	template <typename proxy_t, bool is_const>
-	struct stack_iterator : std::iterator<std::random_access_iterator_tag, std::conditional_t<is_const, const proxy_t, proxy_t>, std::ptrdiff_t, std::conditional_t<is_const, const proxy_t*, proxy_t*>, std::conditional_t<is_const, const proxy_t, proxy_t>> {
-		typedef std::iterator<std::random_access_iterator_tag, std::conditional_t<is_const, const proxy_t, proxy_t>, std::ptrdiff_t, std::conditional_t<is_const, const proxy_t*, proxy_t*>, std::conditional_t<is_const, const proxy_t, proxy_t>> base_t;
-		typedef typename base_t::reference reference;
-		typedef typename base_t::pointer pointer;
-		typedef typename base_t::value_type value_type;
-		typedef typename base_t::difference_type difference_type;
-		typedef typename base_t::iterator_category iterator_category;
+	struct stack_iterator {
+		typedef std::conditional_t<is_const, const proxy_t, proxy_t> reference;
+		typedef std::conditional_t<is_const, const proxy_t*, proxy_t*> pointer;
+		typedef proxy_t value_type;
+		typedef std::ptrdiff_t difference_type;
+		typedef std::random_access_iterator_tag iterator_category;
 		lua_State* L;
 		int index;
 		int stacktop;

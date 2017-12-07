@@ -29,17 +29,14 @@ namespace sol {
 
 	template <typename reference_type>
 	class basic_table_iterator : public std::iterator<std::input_iterator_tag, std::pair<object, object>> {
-	private:
-		typedef std::iterator<std::input_iterator_tag, std::pair<object, object>> base_t;
-
 	public:
 		typedef object key_type;
 		typedef object mapped_type;
-		typedef base_t::value_type value_type;
-		typedef base_t::iterator_category iterator_category;
-		typedef base_t::difference_type difference_type;
-		typedef base_t::pointer pointer;
-		typedef base_t::reference reference;
+		typedef std::pair<object, object> value_type;
+		typedef std::input_iterator_tag iterator_category;
+		typedef std::ptrdiff_t difference_type;
+		typedef value_type* pointer;
+		typedef value_type& reference;
 		typedef const value_type& const_reference;
 
 	private:

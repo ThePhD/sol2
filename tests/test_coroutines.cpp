@@ -403,3 +403,77 @@ loop_th = coroutine.create(loop)
 	REQUIRE(v2 == 2);
 	REQUIRE(v3 == 3);
 }
+
+TEST_CASE("coroutines/stack-check", "check that resumed functions consume the entire execution stack") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::table, sol::lib::coroutine);
+
+	lua.script(
+		R"(
+unpack = unpack or table.unpack
+
+function loop()
+    local i = 0
+    while true do
+        print("pre-yield in loop")
+        coroutine.yield(i)
+        print("post-yield in loop")
+        i = i+1
+    end
+end
+loop_th = coroutine.create(loop)
+loop_res = function(...) 
+	returns = { coroutine.resume(loop_th, ...) }
+	return unpack(returns, 2)
+end 
+)"
+);
+
+	// Resume from lua via thread and coroutine
+	sol::thread runner_thread = lua["loop_th"];
+	sol::state_view runner_thread_state = runner_thread.state();
+	auto test_resume = [&runner_thread, &runner_thread_state]() {
+		sol::coroutine cr = runner_thread_state["loop"];
+		sol::stack::push(runner_thread_state, 50);
+		sol::stack::push(runner_thread_state, 25);
+		int r = cr();
+		return r;
+	};
+	lua.set_function("test_resume", std::ref(test_resume));
+
+	// Resume via getting a sol::function from the state
+	sol::function test_resume_lua = lua["loop_res"];
+
+	// Resume via passing a sol::function object
+	auto test_resume_func = [](sol::function f) {
+		int r = f();
+		return r;
+	};
+	lua.set_function("test_resume_func", std::ref(test_resume_func));
+
+	int v0 = test_resume();
+	int s0 = runner_thread_state.stack_top();
+	int v1 = test_resume();
+	int s1 = runner_thread_state.stack_top();
+	int v2 = lua.script("return test_resume()");
+	int s2 = runner_thread_state.stack_top();
+	int v3 = lua.script("return test_resume()");
+	int s3 = runner_thread_state.stack_top();
+	int v4 = test_resume_lua();
+	int s4 = runner_thread_state.stack_top();
+	int v5 = lua.script("return test_resume_func(loop_res)");
+	int s5 = runner_thread_state.stack_top();
+	REQUIRE(v0 == 0);
+	REQUIRE(v1 == 1);
+	REQUIRE(v2 == 2);
+	REQUIRE(v3 == 3);
+	REQUIRE(v4 == 4);
+	REQUIRE(v5 == 5);
+
+	REQUIRE(s0 == 0);
+	REQUIRE(s1 == 0);
+	REQUIRE(s2 == 0);
+	REQUIRE(s3 == 0);
+	REQUIRE(s4 == 0);
+	REQUIRE(s5 == 0);
+}
