@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-12-08 03:12:27.695525 UTC
-// This header was generated with sol v2.19.0 (revision 399300f)
+// Generated 2017-12-08 03:30:27.683226 UTC
+// This header was generated with sol v2.19.0 (revision a2e0217)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -115,7 +115,7 @@
 
 #ifndef SOL_IN_DEBUG_DETECTED
 #define SOL_IN_DEBUG_DETECTED 1
-#endif SOL_IN_DEBUG_DETECTED
+#endif
 
 #endif // Not Debug && g++ optimizer flag
 

@@ -80,7 +80,7 @@ or higher should be able to compile without problems. However, the officially su
 - Visual Studio 2015 Community (Visual C++ 14.0)+
 
 Please make sure you use the `-std=c++1y`, `-std=c++14`, `-std=c++1z`, `-std=c++17` or better standard flags 
-(some of these flags are the defaults in later versions of GCC 6+ and better).
+(some of these flags are the defaults in later versions of GCC, such as 6+ and better).
 
 Older compilers (GCC 4.9.x, Clang 3.4.x seem to be the lowest) can work with versions as late 
 as [v2.17.5](https://github.com/ThePhD/sol2/releases/tag/v2.17.5), with the flag `-std=c++14` or `-std=c++1y`.

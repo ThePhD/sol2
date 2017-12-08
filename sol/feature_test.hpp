@@ -75,7 +75,7 @@
 
 #ifndef SOL_IN_DEBUG_DETECTED
 #define SOL_IN_DEBUG_DETECTED 1
-#endif SOL_IN_DEBUG_DETECTED
+#endif
 
 #endif // Not Debug && g++ optimizer flag
 
