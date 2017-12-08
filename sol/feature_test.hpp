@@ -52,14 +52,8 @@
 #ifdef _MSC_VER
 #if defined(_DEBUG) && !defined(NDEBUG)
 
-#if !defined(SOL_SAFE_REFERENCES)
-// Ensure that references are forcefully type-checked upon construction
-#define SOL_SAFE_REFERENCES 1
-#endif 
-
-#if !defined(SOL_SAFE_USERTYPE)
-// Usertypes should be safe no matter what
-#define SOL_SAFE_USERTYPE 1
+#ifndef SOL_IN_DEBUG_DETECTED
+#define SOL_IN_DEBUG_DETECTED 1
 #endif
 
 #endif // VC++ Debug macros
@@ -79,15 +73,9 @@
 
 #if !defined(NDEBUG) && !defined(__OPTIMIZE__)
 
-#if !defined(SOL_SAFE_REFERENCES)
-// Ensure that references are forcefully type-checked upon construction
-#define SOL_SAFE_REFERENCES 1
-#endif 
-
-#if !defined(SOL_SAFE_USERTYPE)
-// Usertypes should be safe no matter what
-#define SOL_SAFE_USERTYPE 1
-#endif
+#ifndef SOL_IN_DEBUG_DETECTED
+#define SOL_IN_DEBUG_DETECTED 1
+#endif SOL_IN_DEBUG_DETECTED
 
 #endif // Not Debug && g++ optimizer flag
 
@@ -114,7 +102,7 @@
 #define SOL_SAFE_GETTER 1
 #endif
 
-// Checks access on usertype functions 
+// Checks access on usertype functions
 // local my_obj = my_type.new()
 // my_obj.my_member_function()
 // -- bad syntax and crash
@@ -129,7 +117,13 @@
 #define SOL_SAFE_REFERENCES 1
 #endif
 
-// Checks function parameters and 
+// Changes all typedefs of sol::function to point to the 
+// protected_function version, instead of unsafe_function
+#if !defined(SOL_SAFE_FUNCTION)
+#define SOL_SAFE_FUNCTION 1
+#endif
+
+// Checks function parameters and
 // returns upon call into/from Lua
 // local a = 1
 // local b = "woof"
@@ -145,12 +139,49 @@
 #define SOL_SAFE_PROXIES 1
 #endif
 
+// Check overflowing number conversions
+// for things like 64 bit integers that don't fit in a typical lua_Number
+// for Lua 5.1 and 5.2
+#if !defined(SOL_SAFE_NUMERICS)
+#define SOL_SAFE_NUMERICS 1
+#endif
+
 #endif // Turn on Safety for all if top-level macro is defined
 
+#ifdef SOL_IN_DEBUG_DETECTED
+
+#if !defined(SOL_SAFE_REFERENCES)
+// Ensure that references are forcefully type-checked upon construction
+#define SOL_SAFE_REFERENCES 1
+#endif
+
+#if !defined(SOL_SAFE_USERTYPE)
+// Usertypes should be safe no matter what
+#define SOL_SAFE_USERTYPE 1
+#endif
+
+#if !defined(SOL_SAFE_FUNCTION_CALLS)
+// Function calls from Lua should be automatically safe in debug mode
+#define SOL_SAFE_FUNCTION_CALLS 1
+#endif
+
+#endif // Turn on all debug safety features for VC++ / g++ / clang++ and similar
+
 #if defined(__MAC_OS_X_VERSION_MAX_ALLOWED) || defined(__OBJC__) || defined(nil)
-#ifndef SOL_NO_NIL
+#if !defined(SOL_NO_NIL)
 #define SOL_NO_NIL 1
 #endif
 #endif // avoiding nil defines / keywords
+
+namespace sol {
+namespace detail {
+	const bool default_safe_function_calls =
+#ifdef SOL_SAFE_FUNCTION_CALLS
+		true;
+#else
+		false;
+#endif
+}
+} // namespace sol::detail
 
 #endif // SOL_FEATURE_TEST_HPP

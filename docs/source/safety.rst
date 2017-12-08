@@ -10,8 +10,65 @@ config
 
 Note that you can obtain safety with regards to functions you bind by using the :doc:`protect<api/protect>` wrapper around function/variable bindings you set into Lua. Additionally, you can have basic boolean checks when using the API by just converting to a :doc:`sol::optional\<T><api/optional>` when necessary for getting things out of Lua and for function arguments.
 
+.. _config-safety:
+
+Safety Config
++++++++++++++
+
+``SOL_SAFE_USERTYPE`` triggers the following change:
+	* If the userdata to a usertype function is nil, will trigger an error instead of letting things go through and letting the system segfault/crash
+	* Turned on by default with clang++, g++ and VC++ if a basic check for building in debug mode is detected (lack of ``_NDEBUG`` or similar compiler-specific checks)
+
+``SOL_SAFE_REFERENCES`` triggers the following changes:
+	* Checks the Lua type to ensure it matches what you expect it to be upon using :doc:`sol::reference<api/reference>` derived types, such as ``sol::thread``, ``sol::function``, etc...
+	* Turned on by default with clang++, g++ and VC++ if a basic check for building in debug mode is detected (lack of ``_NDEBUG`` or similar compiler-specific checks)
+
+``SOL_SAFE_FUNCTION_CALLS`` triggers the following changes:
+	* ``sol::stack::call`` and its variants will, if no templated boolean is specified, check all of the arguments for a function call
+	* All calls from Lua will have their arguments checked
+	* Turned on by default with clang++, g++ and VC++ if a basic check for building in debug mode is detected (lack of ``_NDEBUG`` or similar compiler-specific checks)
+
+``SOL_SAFE_FUNCTION`` triggers the following change:
+	* All uses of ``sol::function`` and ``sol::stack_function`` will default to ``sol::protected_function`` and ``sol::stack_protected_function``, respectively, rather than ``sol::unsafe_function`` and ``sol::stack_unsafe_function``
+	* Will make any ``sol::state_view::script`` calls default to their safe variants if there is no supplied environment or error handler function
+	* **Not** turned on by default under any detectible compiler settings: *this MUST be turned on manually*
+
+``SOL_SAFE_NUMERICS`` triggers the following changes:
+	* Numbers will also be checked to see if they fit within a ``lua_Number`` if there is no ``lua_Integer`` type available that can fit your signed or unsigned number
+	* You can opt-out of this behavior with ``SOL_NO_CHECK_NUMBER_PRECISION``
+	* **Not** turned on by default under any settings: *this MUST be turned on manually*
+
+``SOL_SAFE_GETTER`` triggers the following changes:
+	* ``sol::stack::get`` (used everywhere) defaults to using ``sol::stack::check_get`` and dereferencing the argument. It uses ``sol::type_panic`` as the handler if something goes wrong
+	* Affects nearly the entire library for safety (with some blind spots covered by the other definitions)
+	* **Not** turned on by default under any settings: *this MUST be turned on manually*
+
+``SOL_CHECK_ARGUMENTS`` triggers the following changes:
+	* If ``SOL_SAFE_USERTYPE``, ``SOL_SAFE_REFERENCES``, ``SOL_SAFE_FUNCTION``, ``SOL_SAFE_NUMERICS``, ``SOL_SAFE_GETTER``, and ``SOL_SAFE_FUNCTION_CALLS`` are not defined, they get defined and the effects described above kick in
+	* **Not** turned on by default under any settings: *this MUST be turned on manually*
+
+``SOL_NO_CHECK_NUMBER_PRECISION`` triggers the following changes:
+	* If ``SOL_SAFE_NUMERICS`` is defined, turns off number precision and integer precision fitting when pushing numbers into sol2
+	* **Not** turned on by default under any settings: *this MUST be turned on manually*
+
+``SOL_STRINGS_ARE_NUMBERS`` triggers the following changes:
+	* Allows automatic to-string conversions for numbers
+		- ``lua_tolstring`` conversions are not permitted on numbers through sol2 by default: only actual strings are allowed
+		- This is necessary to allow :doc:`sol::overload<api/overload>` to work properly
+	* ``sol::stack::get`` and ``sol::stack::check_get`` will allow anything that Lua thinks is number-worthy to be number-worthy
+	* This includes: integers, floating-point numbers, and strings
+	* This **does not** include: booleans, types with ``__tostring`` enabled, and everything else
+	* Overrides safety and always applies if it is turned on
+	* **Not** turned on by default under any settings: *this MUST be turned on manually*
+
+.. _config-feature:
+
+Feature Config
+++++++++++++++
+
 ``SOL_USE_BOOST`` triggers the following change:
 	* Attempts to use ``boost::optional`` instead of sol's own ``optional``
+	* **Not** turned on by default under any settings: *this MUST be turned on manually*
 
 ``SOL_ENABLE_INTEROP`` triggers the following change:
 	* Allows the use of ``extensible<T>`` to be used with ``userdata_checker`` and ``userdata_getter`` to retrieve non-sol usertypes
@@ -19,42 +76,22 @@ Note that you can obtain safety with regards to functions you bind by using the 
 		- See the :ref:`stack dcoumentation<userdata-interop>` for details
 	* May come with a slight performance penalty: only recommended for those stuck with non-sol libraries that still need to leverage some of sol's power
 	* **Not** turned on by default under any settings: *this MUST be turned on manually*
-
-``SOL_SAFE_USERTYPE`` triggers the following change:
-	* If the userdata to a usertype function is nil, will trigger an error instead of letting things go through and letting the system segfault/crash
-	* Turned on by default with clang++, g++ and VC++ if a basic check for building in debug mode is detected (lack of ``_NDEBUG`` or similar compiler-specific checks)
-
-``SOL_SAFE_FUNCTION`` triggers the following change:
-	* All uses of ``sol::function`` and ``sol::stack_function`` will default to ``sol::protected_function`` and ``sol::stack_protected_function``, respectively, rather than ``sol::unsafe_function`` and ``sol::stack_unsafe_function``.
-	* Will make any ``sol::state_view::script`` calls default to their safe variants if there is no supplied environment or error handler function
-	* **Not** turned on by default under any detectible compiler settings: *this MUST be turned on manually*
-
-``SOL_STRINGS_ARE_NUMBERS`` triggers the following changes:
-	* ``sol::stack::get`` and ``sol::stack::check_get`` will allow anything that Lua thinks is number-worthy to be number-worthy
-	* This includes: integers, numbers, and strings
-	* Does **not** include: booleans, types with ``__tostring`` enabled, and everything else
-	* Overrides ``SOL_CHECK_ARGUMENTS`` and always applies if it is turned on
-	* **Not** turned on by default under any settings: *this MUST be turned on manually*
-
-``SOL_NO_CHECK_NUMBER_PRECISION`` triggers the following changes:
-	* If ``SOL_CHECK_ARGUMENTS`` is defined, turns off number precision and integer precision fitting when pushing numbers into sol2
-	* **Not** turned on by default under any settings: *this MUST be turned on manually*
-
-``SOL_CHECK_ARGUMENTS`` triggers the following changes:
-	* ``sol::stack::get`` (used everywhere) defaults to using ``sol::stack::check_get`` and dereferencing the argument. It uses ``sol::type_panic`` as the handler if something goes wrong
-	* ``lua_tolstring`` conversions are not permitted on numbers: through the API: only actual strings are allowed. This is necessary to allow :doc:`sol::overload<api/overload>` to work properly
-	* ``sol::stack::call`` and its variants will, if no templated boolean is specified, check all of the arguments for a function call
-	* If ``SOL_SAFE_USERTYPE`` is not defined, it gets defined to turn being on and the effects described above kick in
-	* Numbers will also be checked to see if they fit within a ``lua_Number`` if there is no ``lua_Integer`` type available that can fit your signed or unsigned number. You can opt-out of this behavior with ``SOL_NO_CHECK_NUMBER_PRECISION``
-	* **Not** turned on by default under any settings: *this MUST be turned on manually*
 	
 .. _config-memory:
+
+Memory Config
++++++++++++++
 
 ``SOL_NO_MEMORY_ALIGNMENT`` triggers the following changes:
 	* Memory is no longer aligned and is instead directly sized and allocated
 	* If you need to access underlying userdata memory from sol, please see the :doc:`usertype memory documentation<api/usertype_memory>`
+	* **Not** turned on by default under any settings: *this MUST be turned on manually*
+
 
 .. _config-linker:
+
+Linker Config
++++++++++++++
 
 ``SOL_USING_CXX_LUA`` triggers the following changes:
 	* Lua includes are no longer wrapped in ``extern "C" {}`` blocks
@@ -64,7 +101,8 @@ Note that you can obtain safety with regards to functions you bind by using the 
 ``SOL_USING_CXX_LUA_JIT`` triggers the following changes:
 	* LuaJIT includes are no longer wrapped in ``extern "C" {}`` blocks
 	* Turns on ``SOL_EXCEPTIONS_SAFE_PROPAGATION`` automatically for you
-	* Only use this if you know you've built your LuaJIT with the C++-specific invocations of your compiler (LuaJIT by default builds as C code)
+	* Only use this if you know you've built your LuaJIT with the C++-specific invocations of your compiler
+	* LuaJIT by default builds as C code, but includes hook to handle C++ code unwinding: this should almost never be necessary for regular builds
 
 ``SOL_EXCEPTIONS_ALWAYS_UNSAFE`` triggers the following changes:
 	* If any of the ``SOL_USING_CXX_*`` defines are in play, it **does NOT** automatically turn on ``SOL_EXCEPTIONS_SAFE_PROPAGATION`` automatically
@@ -83,6 +121,8 @@ memory
 Memory safety can be tricky. Lua is handled by a garbage-collected runtime, meaning object deletion is not cleary defined or deterministic. If you need to keep an object from the Lua Runtime alive, use :doc:`sol::reference<api/reference>` or one of its derived types, such as :doc:`sol::table<api/table>`, :doc:`sol::object<api/object>`, or similar. These will pin a reference down to an object controlled in C++, and Lua will not delete an object that you still have a reference to through one of these types. You can then retrieve whatever you need from that Lua slot using object's ``obj.as<T>()`` member function or other things, and work on the memory from there.
 
 The usertype memory layout for all Lua-instantiated userdata and for all objects pushed/set into the Lua Runtime is also described :doc:`here<api/usertype_memory>`. Things before or after that specified memory slot is implementation-defined and no assumptions are to be made about it.
+
+Please be wary of alignment issues. sol2 **aligns memory** by default. If you need to access underlying userdata memory from sol, please see the :doc:`usertype memory documentation<api/usertype_memory>`
 
 functions
 ---------

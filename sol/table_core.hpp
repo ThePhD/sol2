@@ -213,7 +213,7 @@ namespace sol {
 		template <typename T, meta::enable_any<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_table_core(lua_State* L, T&& r)
 		: base_t(L, std::forward<T>(r)) {
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_table_core>(lua_state(), -1, handler);
@@ -227,14 +227,14 @@ namespace sol {
 		}
 		basic_table_core(lua_State* L, int index = -1)
 		: basic_table_core(detail::no_safety, L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_table_core>(L, index, handler);
 #endif // Safety
 		}
 		basic_table_core(lua_State* L, ref_index index)
 		: basic_table_core(detail::no_safety, L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_table_core>(lua_state(), -1, handler);
@@ -243,7 +243,7 @@ namespace sol {
 		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_table_core(T&& r) noexcept
 		: basic_table_core(detail::no_safety, std::forward<T>(r)) {
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_REFERENCES
 			if (!is_table<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				constructor_handler handler{};

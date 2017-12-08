@@ -60,7 +60,7 @@ namespace sol {
 
 		basic_environment(env_t, const stack_reference& extraction_target)
 		: base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<env_t>(this->lua_state(), -1, handler);
 #endif // Safety
@@ -69,7 +69,7 @@ namespace sol {
 		template <bool b>
 		basic_environment(env_t, const basic_reference<b>& extraction_target)
 		: base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<env_t>(this->lua_state(), -1, handler);
 #endif // Safety
@@ -77,14 +77,14 @@ namespace sol {
 		}
 		basic_environment(lua_State* L, int index = -1)
 		: base_t(detail::no_safety, L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_environment>(L, index, handler);
 #endif // Safety
 		}
 		basic_environment(lua_State* L, ref_index index)
 		: base_t(detail::no_safety, L, index) {
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_environment>(L, -1, handler);
@@ -93,7 +93,7 @@ namespace sol {
 		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_environment>>, meta::neg<std::is_same<base_type, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_environment(T&& r) noexcept
 		: base_t(detail::no_safety, std::forward<T>(r)) {
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_REFERENCES
 			if (!is_environment<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				constructor_handler handler{};
@@ -104,7 +104,7 @@ namespace sol {
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_environment(lua_State* L, T&& r) noexcept
 			: base_t(detail::no_safety, L, std::forward<T>(r)) {
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_REFERENCES
 			if (!is_environment<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				constructor_handler handler{};

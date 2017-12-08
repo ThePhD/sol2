@@ -203,7 +203,7 @@ namespace sol {
 		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_protected_function>>, meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>>, meta::neg<std::is_same<base_t, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_protected_function(T&& r) noexcept
 		: base_t(std::forward<T>(r)), error_handler(get_default_handler(r.lua_state())) {
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_REFERENCES
 			if (!is_function<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				constructor_handler handler{};
@@ -260,7 +260,7 @@ namespace sol {
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_protected_function(lua_State* L, T&& r, handler_t eh)
 		: base_t(L, std::forward<T>(r)), error_handler(std::move(eh)) {
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_protected_function>(lua_state(), -1, handler);
@@ -272,7 +272,7 @@ namespace sol {
 		}
 		basic_protected_function(lua_State* L, int index, handler_t eh)
 		: base_t(L, index), error_handler(std::move(eh)) {
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_protected_function>(L, index, handler);
 #endif // Safety
@@ -282,7 +282,7 @@ namespace sol {
 		}
 		basic_protected_function(lua_State* L, absolute_index index, handler_t eh)
 		: base_t(L, index), error_handler(std::move(eh)) {
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_protected_function>(L, index, handler);
 #endif // Safety
@@ -292,7 +292,7 @@ namespace sol {
 		}
 		basic_protected_function(lua_State* L, raw_index index, handler_t eh)
 		: base_t(L, index), error_handler(std::move(eh)) {
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_protected_function>(L, index, handler);
 #endif // Safety
@@ -302,7 +302,7 @@ namespace sol {
 		}
 		basic_protected_function(lua_State* L, ref_index index, handler_t eh)
 		: base_t(L, index), error_handler(std::move(eh)) {
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_protected_function>(lua_state(), -1, handler);

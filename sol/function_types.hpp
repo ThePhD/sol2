@@ -388,7 +388,7 @@ namespace sol {
 		template <typename T, typename... Lists>
 		struct pusher<detail::tagged<T, constructor_list<Lists...>>> {
 			static int push(lua_State* L, detail::tagged<T, constructor_list<Lists...>>) {
-				lua_CFunction cf = call_detail::construct<T, stack_detail::default_check_arguments, true, Lists...>;
+				lua_CFunction cf = call_detail::construct<T, detail::default_safe_function_calls, true, Lists...>;
 				return stack::push(L, cf);
 			}
 		};

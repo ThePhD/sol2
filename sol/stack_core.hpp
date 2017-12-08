@@ -522,13 +522,6 @@ namespace sol {
 			template <typename T>
 			using strip_extensible_t = typename strip_extensible<T>::type;
 
-			const bool default_check_arguments =
-#ifdef SOL_CHECK_ARGUMENTS
-				true;
-#else
-				false;
-#endif
-
 			template <typename C>
 			static int get_size_hint(const C& c) {
 				return static_cast<int>(c.size());
@@ -678,7 +671,7 @@ namespace sol {
 
 		namespace stack_detail {
 
-#ifdef SOL_CHECK_ARGUMENTS
+#ifdef SOL_SAFE_GETTER
 			template <typename T>
 			inline auto tagged_get(types<T>, lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_get<T>(L, index, tracking)) {
 				auto op = check_get<T>(L, index, type_panic_c_str, tracking);

@@ -353,7 +353,7 @@ namespace sol {
 			}
 		};
 
-		template <typename T, typename F, bool is_index, bool is_variable, bool checked = stack::stack_detail::default_check_arguments, int boost = 0, bool clean_stack = true, typename = void>
+		template <typename T, typename F, bool is_index, bool is_variable, bool checked = detail::default_safe_function_calls, int boost = 0, bool clean_stack = true, typename = void>
 		struct lua_call_wrapper : agnostic_lua_call_wrapper<F, is_index, is_variable, checked, boost, clean_stack> {};
 
 		template <typename T, typename F, bool is_index, bool is_variable, bool checked, int boost, bool clean_stack>
@@ -715,12 +715,12 @@ namespace sol {
 			}
 		};
 
-		template <typename T, bool is_index, bool is_variable, int boost = 0, bool checked = stack::stack_detail::default_check_arguments, bool clean_stack = true, typename Fx, typename... Args>
+		template <typename T, bool is_index, bool is_variable, int boost = 0, bool checked = detail::default_safe_function_calls, bool clean_stack = true, typename Fx, typename... Args>
 		inline int call_wrapped(lua_State* L, Fx&& fx, Args&&... args) {
 			return lua_call_wrapper<T, meta::unqualified_t<Fx>, is_index, is_variable, checked, boost, clean_stack>{}.call(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 		}
 
-		template <typename T, bool is_index, bool is_variable, typename F, int start = 1, bool checked = stack::stack_detail::default_check_arguments, bool clean_stack = true>
+		template <typename T, bool is_index, bool is_variable, typename F, int start = 1, bool checked = detail::default_safe_function_calls, bool clean_stack = true>
 		inline int call_user(lua_State* L) {
 			auto& fx = stack::get<user<F>>(L, upvalue_index(start));
 			return call_wrapped<T, is_index, is_variable, 0, checked, clean_stack>(L, fx);

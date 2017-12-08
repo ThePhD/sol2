@@ -287,4 +287,3 @@ matrix:
 
   allow_failures:
     - os: osx
-      osx_image: xcode8.3

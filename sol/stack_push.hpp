@@ -214,7 +214,7 @@ namespace stack {
 				return 1;
 			}
 #endif
-#if defined(SOL_CHECK_ARGUMENTS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
+#if defined(SOL_SAFE_NUMERICS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
 			if (static_cast<T>(llround(static_cast<lua_Number>(value))) != value) {
 #ifdef SOL_NO_EXCEPTIONS
 				// Is this really worth it?
