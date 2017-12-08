@@ -41,9 +41,10 @@ namespace sol {
 
 		template <typename T>
 		decltype(auto) tagged_get(types<optional<T>>, int index_offset) const {
+			typedef decltype(stack::get<optional<T>>(L, index)) ret_t;
 			int target = index + index_offset;
 			if (!valid()) {
-				return optional<T>(nullopt);
+				return ret_t(nullopt);
 			}
 			return stack::get<optional<T>>(L, target);
 		}
