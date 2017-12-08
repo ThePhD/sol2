@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-12-08 03:30:27.683226 UTC
-// This header was generated with sol v2.19.0 (revision a2e0217)
+// Generated 2017-12-08 06:22:13.819358 UTC
+// This header was generated with sol v2.19.0 (revision 36b8d50)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -259,13 +259,12 @@ namespace sol {
 	using function = protected_function;
 	using main_function = main_protected_function;
 	using stack_function = stack_protected_function;
-	using stack_aligned_function = stack_aligned_safe_function;
 #else
 	using function = unsafe_function;
 	using main_function = main_unsafe_function;
 	using stack_function = stack_unsafe_function;
-	using stack_aligned_function = stack_aligned_unsafe_function;
 #endif
+	using stack_aligned_function = stack_aligned_unsafe_function;
 	using stack_aligned_stack_handler_function = basic_protected_function<stack_reference, true, stack_reference>;
 
 	struct unsafe_function_result;

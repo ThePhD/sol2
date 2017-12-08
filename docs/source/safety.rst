@@ -30,6 +30,7 @@ Safety Config
 
 ``SOL_SAFE_FUNCTION`` triggers the following change:
 	* All uses of ``sol::function`` and ``sol::stack_function`` will default to ``sol::protected_function`` and ``sol::stack_protected_function``, respectively, rather than ``sol::unsafe_function`` and ``sol::stack_unsafe_function``
+		- Note this does not apply to ``sol::stack_aligned_function``: this variant must always be unprotected due to stack positioning requirements, especially in use with ``sol::stack_count``
 	* Will make any ``sol::state_view::script`` calls default to their safe variants if there is no supplied environment or error handler function
 	* **Not** turned on by default under any detectible compiler settings: *this MUST be turned on manually*
 
