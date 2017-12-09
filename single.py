@@ -15,10 +15,18 @@ description = "Converts sol to a single file for convenience."
 
 # command line parser
 parser = argparse.ArgumentParser(usage='%(prog)s [options...]', description=description)
-parser.add_argument('--output', '-o', help='name and location of where to place file', metavar='file', default='sol.hpp')
+parser.add_argument('--output', '-o', nargs='+', help='name and location of where to place file (and forward declaration file)', metavar='file', default='sol.hpp')
 parser.add_argument('--quiet', help='suppress all output', action='store_true')
 args = parser.parse_args()
 
+single_file = ''
+forward_single_file = ''
+single_file = args.output[0]
+if len(args.output) > 1:
+	forward_single_file = args.output[1] 
+else:
+	a,b = os.path.splitext(single_file)
+	forward_single_file = a + '_forward' + b
 script_path = os.path.normpath(os.path.dirname(os.path.realpath(__file__)))
 working_dir = os.getcwd()
 os.chdir(script_path)
@@ -142,14 +150,17 @@ def process_file(filename, out):
 version = get_version()
 revision = get_revision()
 include_guard = 'SOL_SINGLE_INCLUDE_HPP'
-
-if not args.quiet:
-    print('Creating single header for sol')
-    print('Current version: {version} (revision {revision})\n'.format(version = version, revision = revision))
-
+forward_include_guard = 'SOL_SINGLE_INCLUDE_FORWARD_HPP'
 
 processed_files = [os.path.join(script_path, x) for x in ['sol.hpp']]
+forward_processed_files = [os.path.join(script_path, x) for x in ['sol/forward.hpp']]
 result = ''
+forward_result = ''
+
+
+if not args.quiet:
+    print('Current version: {version} (revision {revision})\n'.format(version = version, revision = revision))
+    print('Creating single header for sol')
 
 ss = StringIO()
 ss.write(intro.format(time=dt.datetime.utcnow(), revision=revision, version=version, guard=include_guard))
@@ -160,6 +171,27 @@ ss.write('#endif // {}\n'.format(include_guard))
 result = ss.getvalue()
 ss.close()
 
-with open(args.output, 'w', encoding='utf-8') as f:
+if not args.quiet:
+    print('finished creating single header for sol\n')
+
+if not args.quiet:
+    print('Creating single forward declaration header for sol')
+
+includes = set([])
+forward_ss = StringIO()
+forward_ss.write(intro.format(time=dt.datetime.utcnow(), revision=revision, version=version, guard=forward_include_guard))
+for forward_processed_file in forward_processed_files:
+    process_file(forward_processed_file, forward_ss)
+
+forward_ss.write('#endif // {}\n'.format(forward_include_guard))
+forward_result = forward_ss.getvalue()
+forward_ss.close()
+
+if not args.quiet:
+    print('finished creating single forward declaration header for sol\n')
+
+with open(single_file, 'w', encoding='utf-8') as f:
     f.write(result)
 
+with open(forward_single_file, 'w', encoding='utf-8') as f:
+    f.write(forward_result)
