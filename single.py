@@ -191,7 +191,11 @@ if not args.quiet:
     print('finished creating single forward declaration header for sol\n')
 
 with open(single_file, 'w', encoding='utf-8') as f:
+    if not args.quiet:
+        print('writing {}...'.format(single_file))
     f.write(result)
 
 with open(forward_single_file, 'w', encoding='utf-8') as f:
+    if not args.quiet:
+        print('writing {}...'.format(single_file))
     f.write(forward_result)

@@ -99,17 +99,21 @@ namespace stack {
 			int isnum = 0;
 			lua_tointegerx(L, index, &isnum);
 			const bool success = isnum != 0;
+			if (!success) {
+				// expected type, actual type
+				handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
+			}
 #else
 			// this check is precise, does not convert
 			if (lua_isinteger(L, index) == 1) {
 				return true;
 			}
 			const bool success = false;
-#endif // If numbers are enabled, use the imprecise check
 			if (!success) {
 				// expected type, actual type
 				handler(L, index, type::number, type_of(L, index), "not a numeric type");
 			}
+#endif // If numbers are enabled, use the imprecise check
 			return success;
 #else
 #ifndef SOL_STRINGS_ARE_NUMBERS
@@ -408,6 +412,12 @@ namespace stack {
 
 	template <typename T, typename C>
 	struct checker<detail::as_value_tag<T>, type::userdata, C> {
+		template <typename Handler>
+		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+			const type indextype = type_of(L, index);
+			return check(types<T>(), L, index, indextype, handler, tracking);
+		}
+
 		template <typename U, typename Handler>
 		static bool check(types<U>, lua_State* L, int index, type indextype, Handler&& handler, record& tracking) {
 #ifdef SOL_ENABLE_INTEROP
@@ -458,11 +468,28 @@ namespace stack {
 	};
 
 	template <typename T, typename C>
-	struct checker<T, type::userdata, C> {
+	struct checker<detail::as_pointer_tag<T>, type::userdata, C> {
+		template <typename Handler>
+		static bool check(lua_State* L, int index, type indextype, Handler&& handler, record& tracking) {
+			if (indextype == type::lua_nil) {
+				tracking.use(1);
+				return true;
+			}
+			return stack_detail::check_usertype<T>(std::false_type(), L, index, indextype, std::forward<Handler>(handler), tracking);
+		}
+
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			const type indextype = type_of(L, index);
-			return checker<detail::as_value_tag<T>, type::userdata, C>{}.check(types<T>(), L, index, indextype, std::forward<Handler>(handler), tracking);
+			return check(L, index, handler, indextype, tracking);
+		}
+	};
+
+	template <typename T, typename C>
+	struct checker<T, type::userdata, C> {
+		template <typename Handler>
+		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+			return check_usertype<T>(L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
 
@@ -470,13 +497,7 @@ namespace stack {
 	struct checker<T*, type::userdata, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
-			const type indextype = type_of(L, index);
-			// Allow lua_nil to be transformed to nullptr
-			if (indextype == type::lua_nil) {
-				tracking.use(1);
-				return true;
-			}
-			return checker<meta::unqualified_t<T>, type::userdata, C>{}.check(L, index, std::forward<Handler>(handler), tracking);
+			return check_usertype<T*>(L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
 

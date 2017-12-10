@@ -238,6 +238,8 @@ If you don't specify a ``sol::meta_function`` name (or equivalent string metamet
 	- a ``sol::meta_function::pairs`` operator is generated for you
 	- Allows you to iterate using ``for k, v in pairs( obj ) do ... end`` in Lua
 	- **Lua 5.2 and better only: LuaJIT does not allow this, Lua 5.1 does NOT allow this**
+* for cases where ``.size()`` exists on the C++ type
+	- the length operator of Lua (``#my_obj``) operator is generated for you
 * for comparison operations where ``operator <`` and ``operator <=`` exist on the C++ type 
 	- These two ``sol::meta_function::less_than(_or_equal_to)`` are generated for you
 	- ``>`` and ``>=`` operators are generated in Lua based on ``<`` and ``<=`` operators
@@ -264,8 +266,9 @@ Otherwise, the following is used to specify functions to bind on the specific us
 	- Binds a typical variable to ``"{name}"``, but gets and sets using the specified setter and getter functions. Not that if you do not pass a setter function, the variable will be read-only. Also not that if you do not pass a getter function, it will be write-only
 * ``"{name}", sol::var( some_value )`` or ``"{name}", sol::var( std::ref( some_value ) )``
 	- Binds a typical variable to ``"{name}"``, optionally by reference (e.g., refers to the same memory in C++). This is useful for global variables / static class variables and the like
-* ``"{name}", sol::overloaded( Func1, Func2, ... )``
-	- Creates an oveloaded member function that discriminates on number of arguments and types.
+* ``"{name}", sol::overload( Func1, Func2, ... )``
+	- Creates an oveloaded member function that discriminates on number of arguments and types
+	- Dumping multiple functions out with the same name **does not make an overload**: you must use **this syntax** in order for it to work
 * ``sol::base_classes, sol::bases<Bases...>``
 	- Tells a usertype what its base classes are. You need this to have derived-to-base conversions work properly. See :ref:`inheritance<usertype-inheritance>`
 

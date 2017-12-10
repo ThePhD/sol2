@@ -550,6 +550,20 @@ namespace sol {
 					use_reference_tag;
 				return pusher<std::conditional_t<use_reference_tag::value, detail::as_reference_tag, meta::unqualified_t<T>>>{}.push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 			}
+
+			template <typename T, typename Handler>
+			bool check_usertype(std::false_type, lua_State* L, int index, type indextype, Handler&& handler, record& tracking) {
+				typedef meta::unqualified_t<T> Tu;
+				typedef detail::as_value_tag<Tu> detail_t;
+				return checker<detail_t, type::userdata>{}.check(types<meta::unqualified_t<T>>(), L, index, indextype, std::forward<Handler>(handler), tracking);
+			}
+
+			template <typename T, typename Handler>
+			bool check_usertype(std::true_type, lua_State* L, int index, type indextype, Handler&& handler, record& tracking) {
+				typedef meta::unqualified_t<std::remove_pointer_t<meta::unqualified_t<T>>> Tu;
+				typedef detail::as_pointer_tag<Tu> detail_t;
+				return checker<detail_t, type::userdata>{}.check(L, index, indextype, std::forward<Handler>(handler), tracking);
+			}
 		} // namespace stack_detail
 
 		inline bool maybe_indexable(lua_State* L, int index = -1) {
@@ -650,6 +664,24 @@ namespace sol {
 		}
 
 		template <typename T, typename Handler>
+		bool check_usertype(lua_State* L, int index, Handler&& handler, record& tracking) {
+			type indextype = type_of(L, index);
+			return stack_detail::check_usertype<T>(std::is_pointer<T>(), L, index, indextype, std::forward<Handler>(handler), tracking);
+		}
+
+		template <typename T, typename Handler>
+		bool check_usertype(lua_State* L, int index, Handler&& handler) {
+			record tracking{};
+			return check_usertype<T>(L, index, std::forward<Handler>(handler), tracking);
+		}
+
+		template <typename T>
+		bool check_usertype(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
+			auto handler = no_panic;
+			return check_usertype<T>(L, index, handler);
+		}
+
+		template <typename T, typename Handler>
 		inline decltype(auto) check_get(lua_State* L, int index, Handler&& handler, record& tracking) {
 			typedef meta::unqualified_t<T> Tu;
 			check_getter<Tu> cg{};
@@ -677,17 +709,17 @@ namespace sol {
 				auto op = check_get<T>(L, index, type_panic_c_str, tracking);
 				return *std::move(op);
 			}
+
+			template <typename T>
+			inline decltype(auto) tagged_get(types<optional<T>>, lua_State* L, int index, record& tracking) {
+				return stack_detail::unchecked_get<optional<T>>(L, index, tracking);
+			}
 #else
 			template <typename T>
 			inline decltype(auto) tagged_get(types<T>, lua_State* L, int index, record& tracking) {
 				return stack_detail::unchecked_get<T>(L, index, tracking);
 			}
 #endif
-
-			template <typename T>
-			inline decltype(auto) tagged_get(types<optional<T>>, lua_State* L, int index, record& tracking) {
-				return stack_detail::unchecked_get<optional<T>>(L, index, tracking);
-			}
 
 			template <bool b>
 			struct check_types {
@@ -744,6 +776,21 @@ namespace sol {
 		template <typename... Args>
 		bool multi_check(lua_State* L, int index) {
 			return multi_check<true, Args...>(L, index);
+		}
+
+		template <typename T>
+		inline decltype(auto) get_usertype(lua_State* L, int index, record& tracking) {
+#ifdef SOL_SAFE_GETTER
+			return stack_detail::tagged_get(types<std::conditional_t<std::is_pointer<T>::value, detail::as_pointer_tag<std::remove_pointer_t<T>>, detail::as_value_tag<T>>>(), L, index, tracking);
+#else
+			return stack_detail::unchecked_get<std::conditional_t<std::is_pointer<T>::value, detail::as_pointer_tag<std::remove_pointer_t<T>>, detail::as_value_tag<T>>>(L, index, tracking);
+#endif
+		}
+
+		template <typename T>
+		inline decltype(auto) get_usertype(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
+			record tracking{};
+			return get_usertype<T>(L, index, tracking);
 		}
 
 		template <typename T>

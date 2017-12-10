@@ -12,6 +12,10 @@ struct two_things {
 	bool b;
 };
 
+struct number_shim {
+	double num = 0;
+};
+
 namespace sol {
 
 	// First, the expected size
@@ -22,6 +26,10 @@ namespace sol {
 	// Then, the expected type
 	template <>
 	struct lua_type_of<two_things> : std::integral_constant<sol::type, sol::type::poly> {};
+
+	// do note specialize size for this because it is our type
+	template <>
+	struct lua_type_of<number_shim> : std::integral_constant<sol::type, sol::type::poly> {};
 
 	// Now, specialize various stack structures
 	namespace stack {
@@ -62,6 +70,33 @@ namespace sol {
 			}
 		};
 
+		template <>
+		struct checker<number_shim> {
+			template <typename Handler>
+			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+				// check_usertype is a backdoor for directly checking sol2 usertypes
+				if (!check_usertype<number_shim>(L, index) && !stack::check<double>(L, index)) {
+					handler(L, index, type_of(L, index), type::userdata, "expected a number_shim or a number");
+					return false;
+				}
+				tracking.use(1);
+				return true;
+			}
+		};
+
+		template <>
+		struct getter<number_shim> {
+			static number_shim get(lua_State* L, int index, record& tracking) {
+				if (check_usertype<number_shim>(L, index)) {
+					number_shim& ns = get_usertype<number_shim>(L, index, tracking);
+					return ns;
+				}
+				number_shim ns{};
+				ns.num = stack::get<double>(L, index, tracking);
+				return ns;
+			}
+		};
+
 	} // namespace stack
 } // namespace sol
 
@@ -88,4 +123,25 @@ TEST_CASE("customization/split struct", "using the newly documented customizatio
 	REQUIRE(thingsg.a == 27);
 	REQUIRE_FALSE(thingsg.b);
 	REQUIRE(d == 36.5);
+}
+
+TEST_CASE("customization/get_ check_usertype", "using the newly documented customization points to handle different kinds of classes") {
+	sol::state lua;
+
+	// Create a pass-through style of function
+	lua.safe_script("function f ( a ) return a end");
+	lua.set_function("g", [](double a) {
+		number_shim ns;
+		ns.num = a;
+		return ns;
+	});
+
+	auto result = lua.safe_script("vf = f(25) vg = g(35)", sol::script_pass_on_error);
+	REQUIRE(result.valid());
+
+	number_shim thingsf = lua["vf"];
+	number_shim thingsg = lua["vg"];
+	
+	REQUIRE(thingsf.num == 25);
+	REQUIRE(thingsg.num == 35);
 }

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-12-10 06:34:23.982786 UTC
-// This header was generated with sol v2.19.0 (revision 87b4dd6)
+// Generated 2017-12-10 20:56:35.224200 UTC
+// This header was generated with sol v2.19.0 (revision c3c7f42)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -72,7 +72,6 @@
 
 #if defined(__cpp_noexcept_function_type) || ((defined(_MSC_VER) && _MSC_VER > 1911) && ((defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)))
 #ifndef SOL_NOEXCEPT_FUNCTION_TYPE
-#define SOL_NOEXCEPT_FUNCTION_TYPE 1
 #endif // noexcept is part of a function's type
 #endif
 
@@ -4439,6 +4438,11 @@ namespace sol {
 		int static_trampoline_noexcept(lua_State* L) noexcept {
 			return f(L);
 		}
+#else
+		template <lua_CFunction f>
+		int static_trampoline_noexcept(lua_State* L) noexcept {
+			return f(L);
+		}
 #endif
 
 		template <typename Fx, typename... Args>
@@ -7099,6 +7103,20 @@ namespace sol {
 					use_reference_tag;
 				return pusher<std::conditional_t<use_reference_tag::value, detail::as_reference_tag, meta::unqualified_t<T>>>{}.push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 			}
+
+			template <typename T, typename Handler>
+			bool check_usertype(std::false_type, lua_State* L, int index, type indextype, Handler&& handler, record& tracking) {
+				typedef meta::unqualified_t<T> Tu;
+				typedef detail::as_value_tag<Tu> detail_t;
+				return checker<detail_t, type::userdata>{}.check(types<meta::unqualified_t<T>>(), L, index, indextype, std::forward<Handler>(handler), tracking);
+			}
+
+			template <typename T, typename Handler>
+			bool check_usertype(std::true_type, lua_State* L, int index, type indextype, Handler&& handler, record& tracking) {
+				typedef meta::unqualified_t<std::remove_pointer_t<meta::unqualified_t<T>>> Tu;
+				typedef detail::as_pointer_tag<Tu> detail_t;
+				return checker<detail_t, type::userdata>{}.check(L, index, indextype, std::forward<Handler>(handler), tracking);
+			}
 		} // namespace stack_detail
 
 		inline bool maybe_indexable(lua_State* L, int index = -1) {
@@ -7199,6 +7217,24 @@ namespace sol {
 		}
 
 		template <typename T, typename Handler>
+		bool check_usertype(lua_State* L, int index, Handler&& handler, record& tracking) {
+			type indextype = type_of(L, index);
+			return stack_detail::check_usertype<T>(std::is_pointer<T>(), L, index, indextype, std::forward<Handler>(handler), tracking);
+		}
+
+		template <typename T, typename Handler>
+		bool check_usertype(lua_State* L, int index, Handler&& handler) {
+			record tracking{};
+			return check_usertype<T>(L, index, std::forward<Handler>(handler), tracking);
+		}
+
+		template <typename T>
+		bool check_usertype(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
+			auto handler = no_panic;
+			return check_usertype<T>(L, index, handler);
+		}
+
+		template <typename T, typename Handler>
 		inline decltype(auto) check_get(lua_State* L, int index, Handler&& handler, record& tracking) {
 			typedef meta::unqualified_t<T> Tu;
 			check_getter<Tu> cg{};
@@ -7226,17 +7262,17 @@ namespace sol {
 				auto op = check_get<T>(L, index, type_panic_c_str, tracking);
 				return *std::move(op);
 			}
+
+			template <typename T>
+			inline decltype(auto) tagged_get(types<optional<T>>, lua_State* L, int index, record& tracking) {
+				return stack_detail::unchecked_get<optional<T>>(L, index, tracking);
+			}
 #else
 			template <typename T>
 			inline decltype(auto) tagged_get(types<T>, lua_State* L, int index, record& tracking) {
 				return stack_detail::unchecked_get<T>(L, index, tracking);
 			}
 #endif
-
-			template <typename T>
-			inline decltype(auto) tagged_get(types<optional<T>>, lua_State* L, int index, record& tracking) {
-				return stack_detail::unchecked_get<optional<T>>(L, index, tracking);
-			}
 
 			template <bool b>
 			struct check_types {
@@ -7293,6 +7329,21 @@ namespace sol {
 		template <typename... Args>
 		bool multi_check(lua_State* L, int index) {
 			return multi_check<true, Args...>(L, index);
+		}
+
+		template <typename T>
+		inline decltype(auto) get_usertype(lua_State* L, int index, record& tracking) {
+#ifdef SOL_SAFE_GETTER
+			return stack_detail::tagged_get(types<std::conditional_t<std::is_pointer<T>::value, detail::as_pointer_tag<std::remove_pointer_t<T>>, detail::as_value_tag<T>>>(), L, index, tracking);
+#else
+			return stack_detail::unchecked_get<std::conditional_t<std::is_pointer<T>::value, detail::as_pointer_tag<std::remove_pointer_t<T>>, detail::as_value_tag<T>>>(L, index, tracking);
+#endif
+		}
+
+		template <typename T>
+		inline decltype(auto) get_usertype(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
+			record tracking{};
+			return get_usertype<T>(L, index, tracking);
 		}
 
 		template <typename T>
@@ -7578,17 +7629,21 @@ namespace stack {
 			int isnum = 0;
 			lua_tointegerx(L, index, &isnum);
 			const bool success = isnum != 0;
+			if (!success) {
+				// expected type, actual type
+				handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
+			}
 #else
 			// this check is precise, does not convert
 			if (lua_isinteger(L, index) == 1) {
 				return true;
 			}
 			const bool success = false;
-#endif // If numbers are enabled, use the imprecise check
 			if (!success) {
 				// expected type, actual type
 				handler(L, index, type::number, type_of(L, index), "not a numeric type");
 			}
+#endif // If numbers are enabled, use the imprecise check
 			return success;
 #else
 #ifndef SOL_STRINGS_ARE_NUMBERS
@@ -7887,6 +7942,12 @@ namespace stack {
 
 	template <typename T, typename C>
 	struct checker<detail::as_value_tag<T>, type::userdata, C> {
+		template <typename Handler>
+		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+			const type indextype = type_of(L, index);
+			return check(types<T>(), L, index, indextype, handler, tracking);
+		}
+
 		template <typename U, typename Handler>
 		static bool check(types<U>, lua_State* L, int index, type indextype, Handler&& handler, record& tracking) {
 #ifdef SOL_ENABLE_INTEROP
@@ -7937,11 +7998,28 @@ namespace stack {
 	};
 
 	template <typename T, typename C>
-	struct checker<T, type::userdata, C> {
+	struct checker<detail::as_pointer_tag<T>, type::userdata, C> {
+		template <typename Handler>
+		static bool check(lua_State* L, int index, type indextype, Handler&& handler, record& tracking) {
+			if (indextype == type::lua_nil) {
+				tracking.use(1);
+				return true;
+			}
+			return stack_detail::check_usertype<T>(std::false_type(), L, index, indextype, std::forward<Handler>(handler), tracking);
+		}
+
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			const type indextype = type_of(L, index);
-			return checker<detail::as_value_tag<T>, type::userdata, C>{}.check(types<T>(), L, index, indextype, std::forward<Handler>(handler), tracking);
+			return check(L, index, handler, indextype, tracking);
+		}
+	};
+
+	template <typename T, typename C>
+	struct checker<T, type::userdata, C> {
+		template <typename Handler>
+		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+			return check_usertype<T>(L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
 
@@ -7949,13 +8027,7 @@ namespace stack {
 	struct checker<T*, type::userdata, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
-			const type indextype = type_of(L, index);
-			// Allow lua_nil to be transformed to nullptr
-			if (indextype == type::lua_nil) {
-				tracking.use(1);
-				return true;
-			}
-			return checker<meta::unqualified_t<T>, type::userdata, C>{}.check(L, index, std::forward<Handler>(handler), tracking);
+			return check_usertype<T*>(L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
 
@@ -15148,9 +15220,8 @@ namespace sol {
 			};
 
 			static auto& get_src(lua_State* L) {
-				typedef std::remove_pointer_t<meta::unwrap_unqualified_t<X>> Tu;
 #ifdef SOL_SAFE_USERTYPE
-				auto p = stack::check_get<Tu*>(L, 1);
+				auto p = stack::check_get<T*>(L, 1);
 				if (!p) {
 					luaL_error(L, "sol: 'self' is not of type '%s' (pass 'self' as first argument with ':' or call on proper type)", detail::demangle<T>().c_str());
 				}
@@ -17050,14 +17121,21 @@ namespace sol {
 			if (toplevel && stack::get<type>(L, keyidx) != type::string) {
 				return is_index ? f.indexfunc(L) : f.newindexfunc(L);
 			}
-			std::string name = stack::get<std::string>(L, keyidx);
-			auto memberit = f.mapping.find(name);
-			if (memberit != f.mapping.cend()) {
-				const usertype_detail::call_information& ci = memberit->second;
-				const usertype_detail::member_search& member = is_index ? ci.index : ci.new_index;
-				return (member)(L, static_cast<void*>(&f), ci.runtime_target);
+			int runtime_target = 0;
+			usertype_detail::member_search member = nullptr;
+			{
+				std::string name = stack::get<std::string>(L, keyidx);
+				auto memberit = f.mapping.find(name);
+				if (memberit != f.mapping.cend()) {
+					const usertype_detail::call_information& ci = memberit->second;
+					member = is_index ? ci.index : ci.new_index;
+					runtime_target = ci.runtime_target;
+				}
 			}
-			string_view accessor = name;
+			if (member != nullptr) {
+				return (member)(L, static_cast<void*>(&f), runtime_target);
+			}
+			string_view accessor = stack::get<string_view>(L, keyidx);
 			int ret = 0;
 			bool found = false;
 			// Otherwise, we need to do propagating calls through the bases
@@ -17311,7 +17389,7 @@ namespace sol {
 			function_map& functions = sm.functions;
 			static const int keyidx = -2 + static_cast<int>(is_index);
 			if (toplevel) {
-				if (stack::get<type>(L, keyidx) != type::string) {
+				if (type_of(L, keyidx) != type::string) {
 					if (has_indexing) {
 						object& indexingfunc = is_index
 							? sm.index
@@ -17326,33 +17404,42 @@ namespace sol {
 				}
 			}
 			string_view accessor = stack::get<string_view>(L, keyidx);
-			std::string accessorkey = accessor.data();
-			auto vit = variables.find(accessorkey);
-			if (vit != variables.cend()) {
-				auto& varwrap = *(vit->second);
-				if (is_index) {
-					return varwrap.index(L);
+			variable_wrapper* varwrap = nullptr;
+			{
+				std::string accessorkey(accessor.data(), accessor.size());
+				auto vit = variables.find(accessorkey);
+				if (vit != variables.cend()) {
+					varwrap = vit->second.get();
 				}
-				return varwrap.new_index(L);
 			}
-			auto fit = functions.find(accessorkey);
-			if (fit != functions.cend()) {
-				object& func = fit->second;
-				if (is_index) {
-					return stack::push(L, func);
-				}
-				else {
-					if (has_indexing && !is_toplevel(L)) {
-						object& indexingfunc = is_index
-							? sm.index
-							: sm.newindex;
-						return call_indexing_object(L, indexingfunc);
+			if (varwrap != nullptr) {
+				return is_index ? varwrap->index(L) : varwrap->new_index(L);
+			}
+			bool function_failed = false;
+			{
+				std::string accessorkey(accessor.data(), accessor.size());
+				auto fit = functions.find(accessorkey);
+				if (fit != functions.cend()) {
+					object& func = fit->second;
+					if (is_index) {
+						return stack::push(L, func);
 					}
 					else {
-						return is_index
-							? indexing_fail<T, is_index>(L)
-							: metatable_newindex<T, true>(L);
+						function_failed = true;
 					}
+				}
+			}
+			if (function_failed) {
+				if (has_indexing && !is_toplevel(L)) {
+					object& indexingfunc = is_index
+						? sm.index
+						: sm.newindex;
+					return call_indexing_object(L, indexingfunc);
+				}
+				else {
+					return is_index
+						? indexing_fail<T, is_index>(L)
+						: metatable_newindex<T, true>(L);
 				}
 			}
 			/* Check table storage first for a method that works

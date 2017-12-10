@@ -538,9 +538,8 @@ namespace sol {
 			};
 
 			static auto& get_src(lua_State* L) {
-				typedef std::remove_pointer_t<meta::unwrap_unqualified_t<X>> Tu;
 #ifdef SOL_SAFE_USERTYPE
-				auto p = stack::check_get<Tu*>(L, 1);
+				auto p = stack::check_get<T*>(L, 1);
 				if (!p) {
 					luaL_error(L, "sol: 'self' is not of type '%s' (pass 'self' as first argument with ':' or call on proper type)", detail::demangle<T>().c_str());
 				}

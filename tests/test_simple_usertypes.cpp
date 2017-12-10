@@ -635,15 +635,14 @@ end
 			REQUIRE_FALSE(result.valid());
 		}
 
-		REQUIRE_NOTHROW([&lua]() {
+		{
 			auto result = lua.safe_script(R"(
 function t:runtime_func(a)
 	return a + 52
 end
-		)",
-				sol::script_pass_on_error);
+		)", sol::script_pass_on_error);
 			REQUIRE_FALSE(result.valid());
-		}());
+		}
 
 		lua.safe_script("val = t:func(2)");
 		val = lua["val"];

@@ -89,6 +89,32 @@ You may also retrieve an :doc:`sol::optional\<T><optional>` from this as well, t
 Checks if the object at ``index`` is of type ``T``. If it is not, it will call the ``handler`` function with ``lua_State*``, ``int index``, ``type`` expected, and ``type`` actual as arguments. If you do not pass your own handler, a ``no_panic`` handler will be passed.
 
 .. code-block:: cpp
+	:caption: function: get_usertype
+	:name: stack-get-usertype
+
+	template <typename T>
+	auto get_usertype( lua_State* L, int index = -1 )
+	template <typename T>
+	auto get_usertype( lua_State* L, int index, record& tracking )
+
+Directly attempts to rertieve the type ``T`` using sol2's usertype mechanisms. Similar to a regular ``get`` for a user-defined type. Useful when you need to access sol2's usertype getter mechanism while at the same time `providing your own customization`_.
+
+.. code-block:: cpp
+	:caption: function: check_usertype
+	:name: stack-check
+
+	template <typename T>
+	bool check_usertype( lua_State* L, int index = -1 )
+
+	template <typename T, typename Handler>
+	bool check_usertype( lua_State* L, int index, Handler&& handler )
+
+	template <typename T, typename Handler>
+	bool check_usertype( lua_State* L, int index, Handler&& handler, record& tracking )
+
+Checks if the object at ``index`` is of type ``T`` and stored as a sol2 usertype. Useful when you need to access sol2's usertype checker mechanism while at the same time `providing your own customization`_.
+
+.. code-block:: cpp
 	:caption: function: check_get
 	:name: stack-check-get
 
@@ -305,3 +331,4 @@ This is an SFINAE-friendly struct that is meant to expose a function ``get`` tha
 .. _Lua stack works in general: https://www.lua.org/pil/24.2.html
 .. _calling C functions works: https://www.lua.org/pil/26.html
 .. _interop examples: https://github.com/ThePhD/sol2/blob/develop/examples/interop
+.. _providing your own customization: https://github.com/ThePhD/sol2/blob/develop/examples/customization_convert_on_get.cpp

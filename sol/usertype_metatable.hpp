@@ -555,14 +555,21 @@ namespace sol {
 			if (toplevel && stack::get<type>(L, keyidx) != type::string) {
 				return is_index ? f.indexfunc(L) : f.newindexfunc(L);
 			}
-			std::string name = stack::get<std::string>(L, keyidx);
-			auto memberit = f.mapping.find(name);
-			if (memberit != f.mapping.cend()) {
-				const usertype_detail::call_information& ci = memberit->second;
-				const usertype_detail::member_search& member = is_index ? ci.index : ci.new_index;
-				return (member)(L, static_cast<void*>(&f), ci.runtime_target);
+			int runtime_target = 0;
+			usertype_detail::member_search member = nullptr;
+			{
+				std::string name = stack::get<std::string>(L, keyidx);
+				auto memberit = f.mapping.find(name);
+				if (memberit != f.mapping.cend()) {
+					const usertype_detail::call_information& ci = memberit->second;
+					member = is_index ? ci.index : ci.new_index;
+					runtime_target = ci.runtime_target;
+				}
 			}
-			string_view accessor = name;
+			if (member != nullptr) {
+				return (member)(L, static_cast<void*>(&f), runtime_target);
+			}
+			string_view accessor = stack::get<string_view>(L, keyidx);
 			int ret = 0;
 			bool found = false;
 			// Otherwise, we need to do propagating calls through the bases

@@ -772,9 +772,7 @@ y = a.readonly_seq
 	std::list<bar>& seqrefy = lua["y"];
 	REQUIRE(&seqrefx == &seqrefy);
 	REQUIRE(seqrefx.size() == 3);
-	auto result = lua.do_string(R"(
-a.readonly_seq = value;
-)");
+	auto result = lua.safe_script("a.readonly_seq = value", sol::script_pass_on_error);
 	REQUIRE_FALSE(result.valid());
 }
 
@@ -903,7 +901,7 @@ TEST_CASE("containers/non_copyable", "make sure non-copyable types in containers
 
 		lua["v"] = std::vector<non_copyable>{};
 
-		auto pfr = lua.safe_script("t = test.new()\nt.b = v", sol::script_pass_on_error);
+		auto pfr = lua.safe_script("t = test.new() t.b = v", sol::script_pass_on_error);
 		REQUIRE_FALSE(pfr.valid());
 	}
 	SECTION("simple") {
@@ -913,7 +911,7 @@ TEST_CASE("containers/non_copyable", "make sure non-copyable types in containers
 
 		lua["v"] = std::vector<non_copyable>{};
 
-		auto pfr = lua.safe_script("t = test.new()\nt.b = v", sol::script_pass_on_error);
+		auto pfr = lua.safe_script("t = test.new() t.b = v", sol::script_pass_on_error);
 		REQUIRE_FALSE(pfr.valid());
 	}
 }

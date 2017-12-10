@@ -2,7 +2,6 @@
 #include <sol.hpp>
 
 #include <iostream>
-#include <iomanip>
 #include <cassert>
 
 struct two_things {

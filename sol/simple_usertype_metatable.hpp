@@ -51,7 +51,7 @@ namespace sol {
 			function_map& functions = sm.functions;
 			static const int keyidx = -2 + static_cast<int>(is_index);
 			if (toplevel) {
-				if (stack::get<type>(L, keyidx) != type::string) {
+				if (type_of(L, keyidx) != type::string) {
 					if (has_indexing) {
 						object& indexingfunc = is_index
 							? sm.index
@@ -66,33 +66,42 @@ namespace sol {
 				}
 			}
 			string_view accessor = stack::get<string_view>(L, keyidx);
-			std::string accessorkey = accessor.data();
-			auto vit = variables.find(accessorkey);
-			if (vit != variables.cend()) {
-				auto& varwrap = *(vit->second);
-				if (is_index) {
-					return varwrap.index(L);
+			variable_wrapper* varwrap = nullptr;
+			{
+				std::string accessorkey(accessor.data(), accessor.size());
+				auto vit = variables.find(accessorkey);
+				if (vit != variables.cend()) {
+					varwrap = vit->second.get();
 				}
-				return varwrap.new_index(L);
 			}
-			auto fit = functions.find(accessorkey);
-			if (fit != functions.cend()) {
-				object& func = fit->second;
-				if (is_index) {
-					return stack::push(L, func);
-				}
-				else {
-					if (has_indexing && !is_toplevel(L)) {
-						object& indexingfunc = is_index
-							? sm.index
-							: sm.newindex;
-						return call_indexing_object(L, indexingfunc);
+			if (varwrap != nullptr) {
+				return is_index ? varwrap->index(L) : varwrap->new_index(L);
+			}
+			bool function_failed = false;
+			{
+				std::string accessorkey(accessor.data(), accessor.size());
+				auto fit = functions.find(accessorkey);
+				if (fit != functions.cend()) {
+					object& func = fit->second;
+					if (is_index) {
+						return stack::push(L, func);
 					}
 					else {
-						return is_index
-							? indexing_fail<T, is_index>(L)
-							: metatable_newindex<T, true>(L);
+						function_failed = true;
 					}
+				}
+			}
+			if (function_failed) {
+				if (has_indexing && !is_toplevel(L)) {
+					object& indexingfunc = is_index
+						? sm.index
+						: sm.newindex;
+					return call_indexing_object(L, indexingfunc);
+				}
+				else {
+					return is_index
+						? indexing_fail<T, is_index>(L)
+						: metatable_newindex<T, true>(L);
 				}
 			}
 			/* Check table storage first for a method that works
