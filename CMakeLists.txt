@@ -25,6 +25,10 @@ endif()
 option(TESTS "Enable build of tests" ON)
 option(EXAMPLES "Enable build of examples" ON)
 
+if (TESTS)
+enable_testing()
+endif()
+
 include_directories(${LUA_INCLUDE_DIR})
 
 # Features a C++ compiler must have to be used to compile sol2
@@ -65,6 +69,9 @@ if (EXAMPLES)
     add_executable(${example_name} ${example_source_file} ${HEADER_SRCS})
     target_link_libraries(${example_name} ${LUA_LIBRARIES})
     target_compile_features(${example_name} PUBLIC ${CXX_FEATURES})
+    if (TESTS)
+      add_test(${example_name} ${example_name})
+    endif()
     install(TARGETS ${example_name} RUNTIME DESTINATION bin/examples)
   endforeach()
 endif()
@@ -75,6 +82,7 @@ if (TESTS)
 
   add_executable(tests ${TEST_SRC} ${HEADER_SRCS})
   target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR}/Catch/include/)
+  add_test(Tests tests)
 
   find_package(Threads)
   target_link_libraries(tests Threads::Threads ${LUA_LIBRARIES})
