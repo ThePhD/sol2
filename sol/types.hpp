@@ -57,6 +57,11 @@ namespace sol {
 		int static_trampoline_noexcept(lua_State* L) noexcept {
 			return f(L);
 		}
+#else
+		template <lua_CFunction f>
+		int static_trampoline_noexcept(lua_State* L) noexcept {
+			return f(L);
+		}
 #endif
 
 		template <typename Fx, typename... Args>
