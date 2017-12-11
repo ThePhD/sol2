@@ -26,7 +26,7 @@ option(TESTS "Enable build of tests" ON)
 option(EXAMPLES "Enable build of examples" ON)
 
 if (TESTS)
-enable_testing()
+  enable_testing()
 endif()
 
 include_directories(${LUA_INCLUDE_DIR})

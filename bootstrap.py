@@ -4,6 +4,7 @@ import ninja_syntax
 import os, sys, glob, re
 import itertools
 import argparse
+import urllib.request
 
 # utilities
 def flags(*args):
@@ -53,9 +54,15 @@ system is {}""".format(install_dir)
 
 args = parser.parse_args()
 
+# prepare paths and files
+catch_file = os.path.join('external', 'Catch', 'include', 'catch.hpp')
+os.makedirs(os.path.dirname(catch_file), exist_ok=True)
+urllib.request.urlretrieve("https://github.com/catchorg/Catch2/releases/download/v2.0.1/catch.hpp", catch_file)
+
+
 # general variables
 include = [ '.', './include' ]
-depends = [os.path.join('Catch', 'include')]
+depends = [os.path.join('external', 'Catch', 'include')]
 cxxflags = [ '-Wno-unknown-warning', '-Wno-unknown-warning-option', '-Wall', '-Wextra', '-Wpedantic', '-pedantic', '-pedantic-errors', '-Wno-noexcept-type', '-std=c++14', '-ftemplate-depth=1024' ]
 cxxflags.extend([p for p in re.split("( |\\\".*?\\\"|'.*?')", args.cxx_flags) if p.strip()])
 example_cxxflags = [ '-Wno-unknown-warning', '-Wno-unknown-warning-option', '-Wall', '-Wextra', '-Wpedantic', '-pedantic', '-pedantic-errors', '-Wno-noexcept-type', '-std=c++14', '-ftemplate-depth=1024' ]
