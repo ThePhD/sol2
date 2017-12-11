@@ -44,6 +44,8 @@ namespace sol {
 	namespace detail {
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
 		typedef int (*lua_CFunction_noexcept)(lua_State* L) noexcept;
+#else
+		typedef int(*lua_CFunction_noexcept)(lua_State* L);
 #endif // noexcept function type for lua_CFunction
 
 #ifdef SOL_NO_EXCEPTIONS

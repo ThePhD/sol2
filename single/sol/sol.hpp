@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-12-10 20:56:35.224200 UTC
-// This header was generated with sol v2.19.0 (revision c3c7f42)
+// Generated 2017-12-11 17:29:42.822392 UTC
+// This header was generated with sol v2.19.0 (revision cf81d81)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -72,6 +72,7 @@
 
 #if defined(__cpp_noexcept_function_type) || ((defined(_MSC_VER) && _MSC_VER > 1911) && ((defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)))
 #ifndef SOL_NOEXCEPT_FUNCTION_TYPE
+#define SOL_NOEXCEPT_FUNCTION_TYPE 1
 #endif // noexcept is part of a function's type
 #endif
 
@@ -185,17 +186,6 @@
 #define SOL_NO_NIL 1
 #endif
 #endif // avoiding nil defines / keywords
-
-namespace sol {
-namespace detail {
-	const bool default_safe_function_calls =
-#ifdef SOL_SAFE_FUNCTION_CALLS
-		true;
-#else
-		false;
-#endif
-}
-} // namespace sol::detail
 
 // end of sol/feature_test.hpp
 
@@ -4108,6 +4098,15 @@ namespace sol {
 // beginning of sol/forward_detail.hpp
 
 namespace sol {
+	namespace detail {
+		const bool default_safe_function_calls =
+#ifdef SOL_SAFE_FUNCTION_CALLS
+			true;
+#else
+			false;
+#endif
+	} // namespace detail
+
 	namespace meta {
 	namespace meta_detail {
 	}
@@ -4425,6 +4424,8 @@ namespace sol {
 	namespace detail {
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
 		typedef int (*lua_CFunction_noexcept)(lua_State* L) noexcept;
+#else
+		typedef int(*lua_CFunction_noexcept)(lua_State* L);
 #endif // noexcept function type for lua_CFunction
 
 #ifdef SOL_NO_EXCEPTIONS
@@ -12540,12 +12541,12 @@ namespace sol {
 	template <typename F, F fx>
 	inline int c_call(lua_State* L) {
 		typedef meta::unqualified_t<F> Fu;
-		return function_detail::c_call_raw<F, fx>(std::integral_constant < bool, std::is_same<Fu, lua_CFunction>::value
+		typedef std::integral_constant<bool, std::is_same<Fu, lua_CFunction>::value
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
-				|| std::is_same<Fu, detail::lua_CFunction_noexcept>::value
+			|| std::is_same<Fu, detail::lua_CFunction_noexcept>::value
 #endif
-					> (),
-			L);
+		> is_raw;
+		return function_detail::c_call_raw<F, fx>(is_raw(), L);
 	}
 
 	template <typename F, F f>

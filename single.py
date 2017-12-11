@@ -197,5 +197,5 @@ with open(single_file, 'w', encoding='utf-8') as f:
 
 with open(forward_single_file, 'w', encoding='utf-8') as f:
     if not args.quiet:
-        print('writing {}...'.format(single_file))
+        print('writing {}...'.format(forward_single_file))
     f.write(forward_result)

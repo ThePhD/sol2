@@ -117,12 +117,12 @@ namespace sol {
 	template <typename F, F fx>
 	inline int c_call(lua_State* L) {
 		typedef meta::unqualified_t<F> Fu;
-		return function_detail::c_call_raw<F, fx>(std::integral_constant < bool, std::is_same<Fu, lua_CFunction>::value
+		typedef std::integral_constant<bool, std::is_same<Fu, lua_CFunction>::value
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
-				|| std::is_same<Fu, detail::lua_CFunction_noexcept>::value
+			|| std::is_same<Fu, detail::lua_CFunction_noexcept>::value
 #endif
-					> (),
-			L);
+		> is_raw;
+		return function_detail::c_call_raw<F, fx>(is_raw(), L);
 	}
 
 	template <typename F, F f>

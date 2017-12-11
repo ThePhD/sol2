@@ -77,11 +77,16 @@ if (EXAMPLES)
 endif()
 
 if (TESTS)
+  # Catch now has a single header: pull it in directly using CMake's download
+  # catch requires C++ files when built out of its tree now, so we cannot 'just get the git repository' anymore
+  # which sort of sucks, but MEH
+  # this is easiest for now
+  file(download https://github.com/catchorg/Catch2/releases/download/v2.0.1/catch.hpp ${CMAKE_BINARY_DIR}/Catch/include/catch.hpp)
   file(GLOB TEST_SRC tests/test*.cpp)
   source_group(tests FILES ${TEST_SRC})
 
   add_executable(tests ${TEST_SRC} ${HEADER_SRCS})
-  target_include_directories(tests PRIVATE ${CMAKE_SOURCE_DIR}/Catch/include/)
+  target_include_directories(tests PRIVATE ${CMAKE_BINARY_DIR}/Catch/include/)
   add_test(Tests tests)
 
   find_package(Threads)

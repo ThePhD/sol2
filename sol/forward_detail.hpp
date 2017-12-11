@@ -27,6 +27,16 @@
 #include "traits.hpp"
 
 namespace sol {
+	namespace detail {
+		const bool default_safe_function_calls =
+#ifdef SOL_SAFE_FUNCTION_CALLS
+			true;
+#else
+			false;
+#endif
+	} // namespace detail
+
+
 	namespace meta {
 	namespace meta_detail {
 	}

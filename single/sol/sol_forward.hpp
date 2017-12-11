@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-12-10 20:56:35.410742 UTC
-// This header was generated with sol v2.19.0 (revision c3c7f42)
+// Generated 2017-12-11 17:29:42.995868 UTC
+// This header was generated with sol v2.19.0 (revision cf81d81)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -39,6 +39,7 @@
 
 #if defined(__cpp_noexcept_function_type) || ((defined(_MSC_VER) && _MSC_VER > 1911) && ((defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)))
 #ifndef SOL_NOEXCEPT_FUNCTION_TYPE
+#define SOL_NOEXCEPT_FUNCTION_TYPE 1
 #endif // noexcept is part of a function's type
 #endif
 
@@ -152,17 +153,6 @@
 #define SOL_NO_NIL 1
 #endif
 #endif // avoiding nil defines / keywords
-
-namespace sol {
-namespace detail {
-	const bool default_safe_function_calls =
-#ifdef SOL_SAFE_FUNCTION_CALLS
-		true;
-#else
-		false;
-#endif
-}
-} // namespace sol::detail
 
 // end of sol/feature_test.hpp
 

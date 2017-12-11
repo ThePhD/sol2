@@ -9,6 +9,7 @@
 #include <list>
 #include <vector>
 #include <memory>
+#include <set>
 
 TEST_CASE("gc/destructors", "test if destructors are fired properly through gc of unbound usertypes") {
 	struct test;

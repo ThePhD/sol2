@@ -1801,7 +1801,7 @@ TEST_CASE("usertype/meta-key-retrievals", "allow for special meta keys (__index,
 	}
 }
 
-TEST_CASE("usertype/noexcept-methods", "make sure noexcept functinos and methods can be bound to usertypes without issues") {
+TEST_CASE("usertype/noexcept-methods", "make sure noexcept functions and methods can be bound to usertypes without issues") {
 	struct T {
 		static int noexcept_function() noexcept {
 			return 0x61;

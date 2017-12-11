@@ -89,3 +89,4 @@ main_aux.cpp
 main.hpp
 tmp_thingy_user.lua
 tmp_thingy.lua
+external/
