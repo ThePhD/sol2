@@ -15,7 +15,8 @@ script:
 - echo "Configuration info:"
 - export_compiler_vars
 - ninja --version
-- ./bootstrap.py --ci && ninja
+- python3 --version
+- python3 bootstrap.py --ci && ninja
 
 notifications:
     webhooks:
@@ -45,6 +46,7 @@ matrix:
           - g++-4.9
           - ninja-build
           - liblua5.2-dev
+		- python3
 
     # gcc-5
     - os: linux
@@ -59,6 +61,7 @@ matrix:
           - g++-5
           - ninja-build
           - liblua5.2-dev
+		- python3
 
     # gcc-5
     - os: linux
@@ -96,6 +99,7 @@ matrix:
           - gcc-5-multilib
           - g++-5-multilib
           - linux-libc-dev:i386
+		- python3
 
     # clang
     - os: linux
@@ -124,6 +128,7 @@ matrix:
           - g++-4.9
           - ninja-build
           - liblua5.2-dev
+		- python3
 
     - os: linux
       env:
@@ -151,6 +156,7 @@ matrix:
           - g++-4.9
           - ninja-build
           - liblua5.2-dev
+		- python3
 
     - os: linux
       env:
@@ -178,6 +184,7 @@ matrix:
           - g++-4.9
           - ninja-build
           - liblua5.2-dev
+		- python3
 
     - os: linux
       env:
@@ -205,6 +212,7 @@ matrix:
           - g++-4.9
           - ninja-build
           - liblua5.2-dev
+		- python3
 
     - os: linux
       env:
@@ -232,6 +240,7 @@ matrix:
           - g++-4.9
           - ninja-build
           - libluajit-5.1-dev
+		- python3
           
     - os: linux
       env:
@@ -259,6 +268,7 @@ matrix:
           - g++-4.9
           - ninja-build
           - liblua5.2-dev
+		- python3
  
     - os: osx
       osx_image: xcode7.3
