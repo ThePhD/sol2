@@ -219,8 +219,8 @@ namespace sol {
 			stack::check<basic_table_core>(lua_state(), -1, handler);
 #endif // Safety
 		}
-		basic_table_core(lua_State* L, new_table nt)
-		: base_t(L, (lua_createtable(L, nt.sequence_hint, nt.map_hint), -1)) {
+		basic_table_core(lua_State* L, const new_table& nt)
+		: base_t(L, -stack::push(L, nt)) {
 			if (!is_stack_based<meta::unqualified_t<base_type>>::value) {
 				lua_pop(L, 1);
 			}
