@@ -1,3 +1,5 @@
+// sol2 
+
 // The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
@@ -33,14 +35,18 @@ namespace stack {
 	struct popper {
 		inline static decltype(auto) pop(lua_State* L) {
 			record tracking{};
+#ifdef __INTEL_COMPILER
+			auto&& r = get<T>(L, -lua_size<T>::value, tracking);
+#else
 			decltype(auto) r = get<T>(L, -lua_size<T>::value, tracking);
+#endif
 			lua_pop(L, tracking.used);
 			return r;
 		}
 	};
 
 	template <typename T>
-	struct popper<T, std::enable_if_t<std::is_base_of<stack_reference, meta::unqualified_t<T>>::value>> {
+	struct popper<T, std::enable_if_t<is_stack_based<meta::unqualified_t<T>>::value>> {
 		static_assert(meta::neg<std::is_base_of<stack_reference, meta::unqualified_t<T>>>::value, "You cannot pop something that derives from stack_reference: it will not remain on the stack and thusly will go out of scope!");
 	};
 }

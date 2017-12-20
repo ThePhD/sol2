@@ -1,3 +1,5 @@
+// sol2 
+
 // The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
@@ -72,10 +74,10 @@ namespace sol {
 			template <typename T>
 			inline int push_as_upvalues(lua_State* L, T& item) {
 				typedef std::decay_t<T> TValue;
-				const static std::size_t itemsize = sizeof(TValue);
-				const static std::size_t voidsize = sizeof(void*);
-				const static std::size_t voidsizem1 = voidsize - 1;
-				const static std::size_t data_t_count = (sizeof(TValue) + voidsizem1) / voidsize;
+				static const std::size_t itemsize = sizeof(TValue);
+				static const std::size_t voidsize = sizeof(void*);
+				static const std::size_t voidsizem1 = voidsize - 1;
+				static const std::size_t data_t_count = (sizeof(TValue) + voidsizem1) / voidsize;
 				typedef std::array<void*, data_t_count> data_t;
 
 				data_t data{ {} };
@@ -89,7 +91,7 @@ namespace sol {
 
 			template <typename T>
 			inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 2) {
-				const static std::size_t data_t_count = (sizeof(T) + (sizeof(void*) - 1)) / sizeof(void*);
+				static const std::size_t data_t_count = (sizeof(T) + (sizeof(void*) - 1)) / sizeof(void*);
 				typedef std::array<void*, data_t_count> data_t;
 				data_t voiddata{ {} };
 				for (std::size_t i = 0, d = 0; d < sizeof(T); ++i, d += sizeof(void*)) {

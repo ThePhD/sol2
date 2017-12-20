@@ -1,3 +1,5 @@
+// sol2 
+
 // The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
@@ -505,25 +507,36 @@ namespace sol {
 			typedef container_traits<X> deferred_traits;
 			typedef meta::is_associative<T> is_associative;
 			typedef meta::is_lookup<T> is_lookup;
+			typedef meta::is_matched_lookup<T> is_matched_lookup;
 			typedef typename T::iterator iterator;
 			typedef typename T::value_type value_type;
-			typedef std::conditional_t<is_associative::value,
-				value_type,
-				std::conditional_t<is_lookup::value, std::pair<value_type, value_type>, std::pair<std::ptrdiff_t, value_type>>>
-				KV;
+			typedef std::conditional_t<is_matched_lookup::value, 
+				std::pair<value_type, value_type>,
+				std::conditional_t<is_associative::value || is_lookup::value,
+					value_type,
+					std::pair<std::ptrdiff_t, value_type>
+				>
+			> KV;
 			typedef typename KV::first_type K;
 			typedef typename KV::second_type V;
 			typedef decltype(*std::declval<iterator&>()) iterator_return;
+			typedef std::conditional_t<is_associative::value || is_matched_lookup::value,
+				std::add_lvalue_reference_t<V>,
+				std::conditional_t<is_lookup::value,
+					V,
+					iterator_return
+				>
+			> captured_type;
 			typedef typename meta::iterator_tag<iterator>::type iterator_category;
 			typedef std::is_same<iterator_category, std::input_iterator_tag> is_input_iterator;
 			typedef std::conditional_t<is_input_iterator::value,
 				V,
-				decltype(detail::deref(std::declval<std::conditional_t<is_associative::value, std::add_lvalue_reference_t<V>, iterator_return>>()))>
-				push_type;
+				decltype(detail::deref(std::declval<captured_type>()))
+			> push_type;
 			typedef std::is_copy_assignable<V> is_copyable;
 			typedef meta::neg<meta::any<
-				std::is_const<V>, std::is_const<std::remove_reference_t<iterator_return>>, meta::neg<is_copyable>>>
-				is_writable;
+				std::is_const<V>, std::is_const<std::remove_reference_t<iterator_return>>, meta::neg<is_copyable>
+			>> is_writable;
 			typedef meta::unqualified_t<decltype(get_key(is_associative(), std::declval<std::add_lvalue_reference_t<value_type>>()))> key_type;
 			typedef meta::all<std::is_integral<K>, meta::neg<meta::any<is_associative, is_lookup>>> is_linear_integral;
 
@@ -548,7 +561,7 @@ namespace sol {
 				}
 				return *p.value();
 #else
-				return stack::get<Tu>(L, 1);
+				return stack::get<T>(L, 1);
 #endif // Safe getting with error
 			}
 
@@ -1080,7 +1093,8 @@ namespace sol {
 
 			template <bool ip>
 			static int next(lua_State* L) {
-				return next_associative<ip>(is_associative(), L);
+				typedef meta::any<is_associative, meta::all<is_lookup, meta::neg<is_matched_lookup>>> is_assoc;
+				return next_associative<ip>(is_assoc(), L);
 			}
 
 		public:
@@ -1168,11 +1182,13 @@ namespace sol {
 			}
 
 			static int pairs(lua_State* L) {
-				return pairs_associative<false>(is_associative(), L);
+				typedef meta::any<is_associative, meta::all<is_lookup, meta::neg<is_matched_lookup>>> is_assoc;
+				return pairs_associative<false>(is_assoc(), L);
 			}
 
 			static int ipairs(lua_State* L) {
-				return pairs_associative<true>(is_associative(), L);
+				typedef meta::any<is_associative, meta::all<is_lookup, meta::neg<is_matched_lookup>>> is_assoc;
+				return pairs_associative<true>(is_assoc(), L);
 			}
 		};
 

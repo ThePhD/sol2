@@ -1,3 +1,5 @@
+// sol2 
+
 // The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
@@ -245,9 +247,9 @@ namespace sol {
 			struct always_true : std::true_type {};
 			struct is_invokable_tester {
 				template <typename Fun, typename... Args>
-				always_true<decltype(std::declval<Fun>()(std::declval<Args>()...))> static test(int);
+				static always_true<decltype(std::declval<Fun>()(std::declval<Args>()...))> test(int);
 				template <typename...>
-				std::false_type static test(...);
+				static std::false_type test(...);
 			};
 		} // namespace meta_detail
 
@@ -476,6 +478,11 @@ namespace sol {
 			std::true_type supports_adl_to_string(const T&);
 			std::false_type supports_adl_to_string(...);
 #endif
+
+			template <typename T, bool b>
+			struct is_matched_lookup_impl : std::false_type {};
+			template <typename T>
+			struct is_matched_lookup_impl<T, true> : std::is_same<typename T::key_type, typename T::value_type> {};
 		} // namespace meta_detail
 
 #if defined(_MSC_VER) && _MSC_VER <= 1910
@@ -542,6 +549,9 @@ namespace sol {
 
 		template <typename T>
 		struct is_lookup : meta::all<has_key_type<T>, has_value_type<T>> {};
+
+		template <typename T>
+		struct is_matched_lookup : meta_detail::is_matched_lookup_impl<T, meta::all<has_key_type<T>, has_value_type<T>>::value> {};
 
 		template <typename T>
 		using is_string_constructible = any<

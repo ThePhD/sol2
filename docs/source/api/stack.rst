@@ -101,7 +101,7 @@ Directly attempts to rertieve the type ``T`` using sol2's usertype mechanisms. S
 
 .. code-block:: cpp
 	:caption: function: check_usertype
-	:name: stack-check
+	:name: stack-check-usertype
 
 	template <typename T>
 	bool check_usertype( lua_State* L, int index = -1 )

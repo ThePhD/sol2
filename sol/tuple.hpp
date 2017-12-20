@@ -1,3 +1,5 @@
+// sol2 
+
 // The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
@@ -74,10 +76,10 @@ namespace sol {
 		};
 
 		template <std::size_t N, typename Tuple>
-		using tuple_element = std::tuple_element<N, unqualified_t<Tuple>>;
+		using tuple_element = std::tuple_element<N, std::remove_reference_t<Tuple>>;
 
 		template <std::size_t N, typename Tuple>
-		using tuple_element_t = std::tuple_element_t<N, unqualified_t<Tuple>>;
+		using tuple_element_t = std::tuple_element_t<N, std::remove_reference_t<Tuple>>;
 
 		template <std::size_t N, typename Tuple>
 		using unqualified_tuple_element = unqualified<tuple_element_t<N, Tuple>>;

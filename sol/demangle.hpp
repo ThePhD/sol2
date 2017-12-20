@@ -1,3 +1,5 @@
+// sol2 
+
 // The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
@@ -39,7 +41,7 @@ namespace detail {
 	inline std::string ctti_get_type_name() {
 		// cardinal sins from MINGW
 		using namespace std;
-		const static std::array<std::string, 2> removals = {{"{anonymous}", "(anonymous namespace)"}};
+		static const std::array<std::string, 2> removals = {{"{anonymous}", "(anonymous namespace)"}};
 		std::string name = __PRETTY_FUNCTION__;
 		std::size_t start = name.find_first_of('[');
 		start = name.find_first_of('=', start);
@@ -73,7 +75,7 @@ namespace detail {
 #elif defined(_MSC_VER)
 	template <typename T>
 	inline std::string ctti_get_type_name() {
-		const static std::array<std::string, 7> removals = {{"public:", "private:", "protected:", "struct ", "class ", "`anonymous-namespace'", "`anonymous namespace'"}};
+		static const std::array<std::string, 7> removals = {{"public:", "private:", "protected:", "struct ", "class ", "`anonymous-namespace'", "`anonymous namespace'"}};
 		std::string name = __FUNCSIG__;
 		std::size_t start = name.find("get_type_name");
 		if (start == std::string::npos)

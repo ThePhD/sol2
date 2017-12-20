@@ -1,3 +1,5 @@
+// sol2 
+
 // The MIT License (MIT)
 
 // Copyright (c) 2013-2017 Rapptz, ThePhD and contributors
@@ -159,38 +161,38 @@ namespace sol {
 	// workaround for missing traits in GCC and CLANG
 	template <class T>
 	struct is_nothrow_move_constructible {
-		constexpr static bool value = ::std::is_nothrow_constructible<T, T&&>::value;
+		static constexprbool value = ::std::is_nothrow_constructible<T, T&&>::value;
 	};
 
 	template <class T, class U>
 	struct is_assignable {
 		template <class X, class Y>
-		constexpr static bool has_assign(...) {
+		static constexprbool has_assign(...) {
 			return false;
 		}
 
 		template <class X, class Y, size_t S = sizeof((::std::declval<X>() = ::std::declval<Y>(), true))>
 		// the comma operator is necessary for the cases where operator= returns void
-		constexpr static bool has_assign(bool) {
+		static constexprbool has_assign(bool) {
 			return true;
 		}
 
-		constexpr static bool value = has_assign<T, U>(true);
+		static constexprbool value = has_assign<T, U>(true);
 	};
 
 	template <class T>
 	struct is_nothrow_move_assignable {
 		template <class X, bool has_any_move_assign>
 		struct has_nothrow_move_assign {
-			constexpr static bool value = false;
+			static constexprbool value = false;
 		};
 
 		template <class X>
 		struct has_nothrow_move_assign<X, true> {
-			constexpr static bool value = noexcept(::std::declval<X&>() = ::std::declval<X&&>());
+			static constexprbool value = noexcept(::std::declval<X&>() = ::std::declval<X&&>());
 		};
 
-		constexpr static bool value = has_nothrow_move_assign<T, is_assignable<T&, T&&>::value>::value;
+		static constexprbool value = has_nothrow_move_assign<T, is_assignable<T&, T&&>::value>::value;
 	};
 	// end workaround
 
@@ -233,16 +235,16 @@ namespace sol {
 		template <typename T>
 		struct has_overloaded_addressof {
 			template <class X>
-			constexpr static bool has_overload(...) {
+			static constexpr bool has_overload(...) {
 				return false;
 			}
 
 			template <class X, size_t S = sizeof(::std::declval<X&>().operator&())>
-			constexpr static bool has_overload(bool) {
+			static constexpr bool has_overload(bool) {
 				return true;
 			}
 
-			constexpr static bool value = has_overload<T>(true);
+			static constexpr bool value = has_overload<T>(true);
 		};
 
 		template <typename T, TR2_OPTIONAL_REQUIRES(!has_overloaded_addressof<T>)>
