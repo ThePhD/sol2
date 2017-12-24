@@ -32,8 +32,11 @@ image:
 configuration: Release
 
 environment:
+  matrix:
   - LUA_VERSION: 5.3.4
-    
+  - LUA_VERSION: 5.2.4
+  - LUA_VERSION: 5.1.5
+
 platform:
 - x86
 - x64
@@ -51,7 +54,7 @@ init:
 before_build:
 - md build-sol2
 - cd build-sol2
-- cmake .. -G "%CMAKE_GENERATOR%" -DLUA_VERSION=%LUA_VERSION% -DLUA_BUILD=ON -DBUILD_LUA_AS_DLL=ON -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DTESTS_SINGLE=ON
+- cmake .. -G "%CMAKE_GENERATOR%" -DLUA_VERSION=%LUA_VERSION% -DLUA_BUILD=ON -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DTESTS_SINGLE=ON
 
 build:
   project: c:\projects\sol2\build-sol2\sol2.sln
@@ -59,4 +62,13 @@ build:
   parallel: true
 
 test_script:
-- cd c:\projects\sol2\build-sol2 && ctest
+- cd build-sol2
+- ctest
+
+notifications:
+- provider: Webhook
+  url: https://webhooks.gitter.im/e/a66a71642a00d2e50d2e
+  method: POST
+  on_build_success: true
+  on_build_failure: true
+  on_build_status_changed: true
