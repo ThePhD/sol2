@@ -59,7 +59,6 @@ before_build:
 - cmake .. -G %CMAKE_GENERATOR% -DLUA_VERSION=%LUA_VERSION% -DLUA_BUILD=ON -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DTESTS_SINGLE=ON
 
 build_script:
-- cd build-sol2
 - cmake --build .
 
 test_script:
