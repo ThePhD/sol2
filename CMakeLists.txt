@@ -138,21 +138,24 @@ if (PYTHONINTERP_FOUND)
 			DESTINATION include/sol)
 	endif()
 	if (DOCS)
+		set(SOL2_DOCS_FOUND TRUE)
 		add_custom_command(OUTPUT documentation COMMAND "make html" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/docs)
 		add_custom_target(docs DEPENDS documentation)
 		install(DIRECTORY "${CMAKE_SOURCE_DIR}/docs/build/html" DESTINATION bin/docs)
 	endif()
 else()
 	if (SINGLE)
+		set(SOL2_SINGLE_FOUND FALSE)
 		message(STATUS "single_header cannot be generated as python 3 has not been found.")
 	endif()
 	if (DOCS)
+		set(SOL2_DOCS_FOUND FALSE)
 		message(STATUS "documentation cannot be generated as python 3 has not been found.")
 	endif()
 endif()
 
 # # # Tests, Examples and other CI suites that come with sol2
-#if (TESTS OR TESTS_SINGLE OR EXAMPLES)
+if (TESTS OR TESTS_SINGLE OR EXAMPLES OR TESTS_EXAMPLES)
 	# # # Libraries
 	# Here, we pull in all the necessary libraries for building examples and tests
 	# Find threading library
@@ -187,8 +190,8 @@ endif()
 
 	# # # Examples
 	# # Enable examples to be built against the library
-	if (EXAMPLES)
+	if (EXAMPLES OR TESTS_EXAMPLES)
 		# NOTE: will also add to tests if TESTS is defined
 		add_subdirectory(examples "${CMAKE_BINARY_DIR}/examples")
 	endif()
-#endif()
+endif()

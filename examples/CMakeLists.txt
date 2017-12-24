@@ -81,7 +81,7 @@ endfunction(MAKE_EXAMPLE)
 
 foreach(example_source_file ${EXAMPLES_SRC})
 	MAKE_EXAMPLE(${example_source_file} FALSE)
-	if (TESTS_SINGLE)
+	if (TESTS_SINGLE AND SOL2_SINGLE_FOUND)
 		MAKE_EXAMPLE(${example_source_file} TRUE)
 	endif()
 endforeach()

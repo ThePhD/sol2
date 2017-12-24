@@ -70,6 +70,6 @@ function(CREATE_TEST test_target_name test_name is_single)
 endfunction(CREATE_TEST)
 
 CREATE_TEST(tests "tests" FALSE)
-if (TESTS_SINGLE)
+if (TESTS_SINGLE AND SOL2_SINGLE_FOUND)
 	CREATE_TEST(tests_single "tests.single" TRUE)
 endif()
