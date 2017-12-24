@@ -24,24 +24,27 @@
 
 # # Initial and necessary installations
 sudo apt update
-sudo apt install build-essential ninja-build libreadline6 libreadline6-dev python3 zsh wget curl openssl cmake
+sudo apt dist-upgrade
+sudo apt install build-essential ninja-build libreadline6 libreadline6-dev python3 zsh wget curl libcurl3 openssl libexpat1 libexpat1-dev cmake
 
-# # CMake Installation
+# # CMake Installation (from script)
 # This is only necessary if we need cmake of a better version than what's available on the system
 #CMAKE_VERSION_MAJOR_MINOR=3.10
 #CMAKE_VERSION_BUILD=1
 #CMAKE_VERSION=$CMAKE_VERSION_MAJOR_MINOR.$CMAKE_VERSION_BUILD
 #wget https://cmake.org/files/v$CMAKE_VERSION_MAJOR_MINOR/cmake-$CMAKE_VERSION-Linux-x86_64.sh
 #sudo bash cmake-$CMAKE_VERSION-Linux-x86_64.sh --prefix=/usr/local --exclude-subdir --skip-license
-#mkdir -p ~/temp
-#cd ~/temp
+
+# # CMake Installation (from source)
+#mkdir -p cmake-tmp
+#cd cmake-tmp
 #wget https://cmake.org/files/v$CMAKE_VERSION_MAJOR_MINOR/cmake-$CMAKE_VERSION.tar.gz
 #tar -xzvf cmake-$CMAKE_VERSION.tar.gz
 #cd cmake-$CMAKE_VERSION/
-#./bootstrap
-#make -j4
+#./bootstrap --system-libs
+#make
 #sudo make install
-cd ~
+# cd ..
 # refresh the shell, then print the CMake version to make 
 # sure we've got what we need (need to be 3.6 or better: Ubuntu 16.04 rolls 3.5.1 or somethnig)
 #exec bash

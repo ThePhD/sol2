@@ -22,7 +22,7 @@
 
 # # # # sol2
 cmake_minimum_required(VERSION 3.5.0)
-project(sol2 VERSION 2.19.0 LANGUAGES CXX)
+project(sol2 VERSION 2.19.0 LANGUAGES CXX C)
 
 
 # # # General Project Requirements
@@ -61,14 +61,17 @@ include(CMakePackageConfigHelpers)
 
 # # # Configuration
 # # Cached defines, strings, paths and options
-set(LUA_VERSION "5.3.4" CACHE STRING "The version of Lua needed. Can be 5.1, 5.2, 5.3, LuaJIT, or a more specific 3-part version number for plain lua (e.g., 5.3.4 or luajit-2.0.5)")
+set(LUA_VERSION "5.3.4" CACHE STRING "The version of Lua needed. Can be 5.1, 5.2, 5.3, LuaJIT, or a more specific 3-part version number for a specifc Lua (e.g., 5.3.4 or luajit-2.0.5)")
 set(BUILD_LUA TRUE CACHE BOOL "Always build Lua, do not search for it in the system")
+set(BUILD_LUAJIT FALSE CACHE BOOL "Always build LuaJIT, do not search for it in the system")
 option(TESTS "Enable build of tests" OFF)
 option(EXAMPLES "Enable build of examples" OFF)
 option(SINGLE "Enable build of single header files" ON)
 # Single tests will only be turned on if both SINGLE and TESTS are defined
 CMAKE_DEPENDENT_OPTION(TESTS_SINGLE "Enable build of tests using the generated single headers" ON
 	"SINGLE;TESTS" OFF)
+CMAKE_DEPENDENT_OPTION(TESTS_EXAMPLES "Enable build of examples as tests" ON
+	"TESTS;EXAMPLES" ON)
 option(DOCS "Enable build of documentation" OFF)
 
 
@@ -116,40 +119,19 @@ source_group(headers FILES ${SOL2_HEADER_SOURCES})
 file(GLOB SOL2_SINGLE_HEADER_SOURCES single/sol/sol_forward.hpp single/sol/sol.hpp)
 source_group(headers FILES ${SOL2_SINGLE_HEADER_SOURCES})
 
-# # # Libraries
-# Here, we pull in all the necessary libraries
-# Find threading library
-find_package(Threads)
-# Find way to get Lua: build if requested, or attempt to build if no matching version is found
-string(TOLOWER ${LUA_VERSION} LUA_VERSION)
-if (BUILD_LUA)
-	include(LuaBuild)
-elseif (LUA_VERSION MATCHES "5.1")
-	find_package(Lua 5.1 EXACT REQUIRED)
-elseif(LUA_VERSION MATCHES "5.2")
-	find_package(Lua 5.2 EXACT REQUIRED)
-elseif(LUA_VERSION MATCHES "5.3")
-	find_package(Lua 5.3 EXACT REQUIRED)
-elseif(LUA_VERSION MATCHES "luajit")
-	find_package(LuaJIT REQUIRED)
-else()
-	include(LuaBuild)	
-endif()
-
-if (NOT LUA_FOUND)
-	message(FATAL_ERROR "Lua ${LUA_VERSION} not found and could not be targeted for building.")
-endif()
-
+# # # Single header target
 # Find Python3 for single header / forward header generation
 find_package(PythonInterp 3)
+set(SOL2_SINGLE_HEADER_FOUND FALSE)
 if (PYTHONINTERP_FOUND)
 	if (SINGLE)
+		set(SOL2_SINGLE_FOUND TRUE)
 		add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/single/sol/sol_forward.hpp"
 			COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/single.py" --output "${CMAKE_BINARY_DIR}/single/sol/sol.hpp"
-			DEPENDS ${HEADER_SRCS})
-		add_custom_target(single_header 
+			DEPENDS ${SOL2_HEADER_SOURCES})
+		add_custom_target(sol2_single_header 
 			DEPENDS "${CMAKE_BINARY_DIR}/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/single/sol/sol_forward.hpp")
-		set_target_properties(single_header
+		set_target_properties(sol2_single_header
 			PROPERTIES
 			INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/single/sol")
 		install(FILES "${CMAKE_BINARY_DIR}/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/single/sol/sol_forward.hpp" 
@@ -169,17 +151,44 @@ else()
 	endif()
 endif()
 
-# # # Tests
-# # Enable test harness for regular or single tests
-if (TESTS OR TESTS_SINGLE)
-	# enable ctest and add subdir to get going
-	enable_testing()
-	add_subdirectory(tests "${CMAKE_BINARY_DIR}/tests")
-endif()
+# # # Tests, Examples and other CI suites that come with sol2
+#if (TESTS OR TESTS_SINGLE OR EXAMPLES)
+	# # # Libraries
+	# Here, we pull in all the necessary libraries for building examples and tests
+	# Find threading library
+	find_package(Threads)
+	# Find way to get Lua: build if requested, or attempt to build if no matching version is found
+	string(TOLOWER ${LUA_VERSION} NORMALIZED_LUA_VERSION)
+	if (BUILD_LUA OR BUILD_LUAJIT)
+		include(LuaBuild)
+	elseif (NORMALIZED_LUA_VERSION MATCHES "5.1")
+		find_package(Lua 5.1 EXACT REQUIRED)
+	elseif(NORMALIZED_LUA_VERSION MATCHES "5.2")
+		find_package(Lua 5.2 EXACT REQUIRED)
+	elseif(NORMALIZED_LUA_VERSION MATCHES "5.3")
+		find_package(Lua 5.3 EXACT REQUIRED)
+	elseif(NORMALIZED_LUA_VERSION MATCHES "luajit")
+		find_package(LuaJIT REQUIRED)
+	else()
+		include(LuaBuild)	
+	endif()
 
-# # # Examples
-# # Enable examples to be built against the library
-if (EXAMPLES)
-	# NOTE: will also add to tests if TESTS is defined
-	add_subdirectory(examples "${CMAKE_BINARY_DIR}/examples")
-endif()
+	if (NOT LUA_FOUND)
+		message(FATAL_ERROR "Lua ${LUA_VERSION} not found and could not be targeted for building.")
+	endif()
+
+	# # # Tests
+	# # Enable test harness for regular or single tests
+	if (TESTS OR TESTS_SINGLE)
+		# enable ctest and add subdir to get going
+		enable_testing()
+		add_subdirectory(tests "${CMAKE_BINARY_DIR}/tests")
+	endif()
+
+	# # # Examples
+	# # Enable examples to be built against the library
+	if (EXAMPLES)
+		# NOTE: will also add to tests if TESTS is defined
+		add_subdirectory(examples "${CMAKE_BINARY_DIR}/examples")
+	endif()
+#endif()

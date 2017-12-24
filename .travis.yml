@@ -28,7 +28,7 @@ git:
     depth: 5
 
 before_install:
-- source ./scripts/preparations.osx.sh
+- source ./scripts/preparation.osx.sh
 
 install:
 - install_os_deps
@@ -139,7 +139,7 @@ matrix:
        - mkdir $HOME/clang-$LLVM_VERSION
        - tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang-$LLVM_VERSION --strip-components 1
        - export PATH=$HOME/clang+llvm/bin:$PATH
-       - source ./scripts/preparations.osx.sh
+       - source ./scripts/preparation.osx.sh
       compiler: clang
       addons:
         apt:
@@ -167,7 +167,7 @@ matrix:
        - mkdir $HOME/clang-$LLVM_VERSION
        - tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang-$LLVM_VERSION --strip-components 1
        - export PATH=$HOME/clang+llvm/bin:$PATH
-       - source ./scripts/preparations.osx.sh
+       - source ./scripts/preparation.osx.sh
       compiler: clang
       addons:
         apt:
@@ -195,7 +195,7 @@ matrix:
        - mkdir $HOME/clang-$LLVM_VERSION
        - tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang-$LLVM_VERSION --strip-components 1
        - export PATH=$HOME/clang+llvm/bin:$PATH
-       - source ./scripts/preparations.osx.sh
+       - source ./scripts/preparation.osx.sh
       compiler: clang
       addons:
         apt:
@@ -223,7 +223,7 @@ matrix:
        - mkdir $HOME/clang-$LLVM_VERSION
        - tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang-$LLVM_VERSION --strip-components 1
        - export PATH=$HOME/clang+llvm/bin:$PATH
-       - source ./scripts/preparations.osx.sh
+       - source ./scripts/preparation.osx.sh
       compiler: clang
       addons:
         apt:
@@ -251,7 +251,7 @@ matrix:
        - mkdir $HOME/clang-$LLVM_VERSION
        - tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang-$LLVM_VERSION --strip-components 1
        - export PATH=$HOME/clang+llvm/bin:$PATH
-       - source ./scripts/preparations.osx.sh
+       - source ./scripts/preparation.osx.sh
       compiler: clang
       addons:
         apt:
@@ -279,7 +279,7 @@ matrix:
        - mkdir $HOME/clang-$LLVM_VERSION
        - tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang-$LLVM_VERSION --strip-components 1
        - export PATH=$HOME/clang+llvm/bin:$PATH
-       - source ./scripts/preparations.osx.sh
+       - source ./scripts/preparation.osx.sh
       compiler: clang
       addons:
         apt:

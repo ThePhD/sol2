@@ -33,36 +33,43 @@ endif()
 
 file(DOWNLOAD https://github.com/catchorg/Catch2/releases/download/v2.0.1/catch.hpp ${CMAKE_BINARY_DIR}/Catch/include/catch.hpp)
 
-function(CREATE_TEST test_target_name test_name test_includes is_single)
+function(CREATE_TEST test_target_name test_name is_single)
 	if (is_single)
 		set(header_files ${SOL2_SINGLE_HEADER_SOURCES})
 	else()
 		set(header_files ${SOL2_HEADER_SOURCES})
 	endif()
-	add_executable(${test_target_name} ${SOL2_TEST_SOURCES}
-		${header_files})
+	add_executable(${test_target_name} ${SOL2_TEST_SOURCES} ${header_files})
 	set_target_properties(${test_target_name}
 		PROPERTIES
 		ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/tests"
 		LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/tests"
 		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/tests")
-	target_include_directories(${test_target_name}
-		PRIVATE ${test_includes} "${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/Catch/include/")
+	if (is_single)
+		add_dependencies(${test_target_name} sol2_single_header ${lualib})
+		target_include_directories(${test_target_name}
+			PRIVATE "${CMAKE_BINARY_DIR}/single/sol" "${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/Catch/include/")
+	else()
+		target_include_directories(${test_target_name}
+			PRIVATE "${CMAKE_SOURCE_DIR}" "${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/Catch/include/")
+	endif()
+	if (MSVC)
+		target_compile_options(${test_target_name} 
+			PRIVATE /bigobj)
+	endif()
 	target_compile_features(${test_target_name}
 		PRIVATE ${CXX_FEATURES})
 	# if CMAKE_DL_LIBS is empty, then that just resolves to nothingness
 	target_link_libraries(${test_target_name}
 		Threads::Threads ${LUA_LIBRARIES} ${CMAKE_DL_LIBS})
-	if (is_single)
-		add_dependencies(${test_target_name} single_header)
-	endif()
+
 	add_test(NAME ${test_target_name} 
 		COMMAND ${test_target_name})
 	install(TARGETS ${test_target_name}
 		RUNTIME DESTINATION bin)
 endfunction(CREATE_TEST)
 
-CREATE_TEST(tests "tests" "${CMAKE_SOURCE_DIR}" FALSE)
+CREATE_TEST(tests "tests" FALSE)
 if (TESTS_SINGLE)
-	CREATE_TEST(tests_single "tests.single" "${CMAKE_BINARY_DIR}/single/sol" TRUE)
+	CREATE_TEST(tests_single "tests.single" TRUE)
 endif()
