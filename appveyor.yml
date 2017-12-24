@@ -33,9 +33,9 @@ configuration: Release
 
 environment:
   matrix:
-  - LUA_VERSION: "5.3.4"
-  - LUA_VERSION: "5.2.4"
-  - LUA_VERSION: "5.1.5"
+  - LUA_VERSION: 5.3.4
+  - LUA_VERSION: 5.2.4
+  - LUA_VERSION: 5.1.5
 
 platform:
 - x86
@@ -45,10 +45,11 @@ init:
 - set arch=
 - if "%PLATFORM%"=="x64" (set arch= Win64)
 - echo %APPVEYOR_BUILD_WORKER_IMAGE%
-- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" ( set CMAKE_GENERATOR="Visual Studio 15 2017%arch%" )
-- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" ( set CMAKE_GENERATOR="Visual Studio 14 2015%arch%" )
-- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2013" ( set CMAKE_GENERATOR="Visual Studio 12 2013%arch%" )
-- echo %CMAKE_GENERATOR%
+- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" ( set CMAKE_GENERATOR=Visual Studio 15 2017%arch% )
+- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" ( set CMAKE_GENERATOR=Visual Studio 14 2015%arch% )
+- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2013" ( set CMAKE_GENERATOR=Visual Studio 12 2013%arch% )
+- if not "%MINGW_VERSION%"==[""] ( set CMAKE_GENERATOR=MinGW Makefiles )
+- echo "%CMAKE_GENERATOR%"
 
 before_build:
 - set PYTHON_PATH=C:\Python36
@@ -56,7 +57,7 @@ before_build:
 - set PATH=%PYTHON_PATH%;%PATH%
 - md build-sol2
 - cd build-sol2
-- cmake .. -G %CMAKE_GENERATOR% -DLUA_VERSION=%LUA_VERSION% -DLUA_BUILD=ON -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DTESTS_SINGLE=ON
+- cmake .. -G "%CMAKE_GENERATOR%"" -DLUA_VERSION="%LUA_VERSION%" -DLUA_BUILD=ON -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DTESTS_SINGLE=ON
 
 build_script:
 - cmake --build .
