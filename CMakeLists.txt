@@ -24,6 +24,12 @@
 cmake_minimum_required(VERSION 3.5.0)
 project(sol2 VERSION 2.19.0 LANGUAGES CXX C)
 
+if (MSVC)
+	add_definitions(/DUNICODE /D_UNICODE /D_SILENCE_CXX17_UNCAUGHT_EXCEPTION_DEPRECATION_WARNING /D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
+	add_compile_options(/W4 /EHsc /std:c++latest)
+else()
+	add_compile_options(-Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors -Wno-noexcept-type -ftemplate-depth=1024)
+endif()
 
 # # # General Project Requirements
 # Set general standard requirements here

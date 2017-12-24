@@ -25,12 +25,6 @@
 file(GLOB EXAMPLES_SRC *.cpp tutorials/quick_n_dirty/*.cpp)
 source_group(examples FILES ${EXAMPLES_SRC})
 
-if (MSVC)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /EHsc /std:c++latest /D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING=1 /D_SILENCE_CXX17_UNCAUGHT_EXCEPTION_DEPRECATION_WARNING=1")
-else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors -Wno-noexcept-type -ftemplate-depth=1024")
-endif()
-
 function (MAKE_EXAMPLE example_source_file is_single)
 	if (is_single)
 		set(header_files ${SOL2_SINGLE_HEADER_SOURCES})
@@ -64,11 +58,10 @@ function (MAKE_EXAMPLE example_source_file is_single)
 		target_link_libraries(${example_name} ${CMAKE_DL_LIBS})
 	endif()
 	# examples must be built in debug mode to allow assertions to fire
-	target_compile_definitions(${example_name} PRIVATE _DEBUG)
 	if (MSVC)
-		target_compile_options(${example_name} PRIVATE /DDEBUG /UNDEBUG)
+		target_compile_options(${example_name} PRIVATE /UNDEBUG)
 	else()
-		target_compile_options(${example_name} PRIVATE -Og -g -UNDEBUG)
+		target_compile_options(${example_name} PRIVATE -UNDEBUG)
 	endif()
 
 	if (TESTS_EXAMPLES)
