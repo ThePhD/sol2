@@ -51,14 +51,16 @@ init:
 - echo %CMAKE_GENERATOR%
 
 before_build:
+- set PYTHON_PATH=C:\Python36
+- if "%PLATFORM%"=="x64" (set PYTHON_PATH=C:\Python36-x64)
+- set PATH=%PYTHON_PATH%;%PATH%
 - md build-sol2
 - cd build-sol2
 - cmake .. -G %CMAKE_GENERATOR% -DLUA_VERSION=%LUA_VERSION% -DLUA_BUILD=ON -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DTESTS_SINGLE=ON
 
-build:
-  project: c:\projects\sol2\build-sol2\sol2.sln
-  verbosity: minimal
-  parallel: true
+build_script:
+- cd build-sol2
+- cmake --build .
 
 test_script:
 - cd build-sol2
