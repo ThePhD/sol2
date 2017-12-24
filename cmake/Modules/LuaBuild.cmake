@@ -35,7 +35,7 @@ else()
 	set(LUA_BUILD_LIBNAME lua-${LUA_VERSION})
 endif()
 set(LUA_BUILD_TOPLEVEL "${CMAKE_BINARY_DIR}/vendor/${LUA_BUILD_LIBNAME}")
-set(LUA_BUILD_INSTALL_DIR "${LUA_BUILD_TOPLEVEL}/install")
+set(LUA_BUILD_INSTALL_DIR "${LUA_BUILD_TOPLEVEL}")
 # # Misc needed variables
 set(LUA_BUILD_LIBRARY_DESCRIPTION "The base name of the library to build either the static or the dynamic library")
 
@@ -50,10 +50,9 @@ endif()
 
 
 # # # Options
-set(LUA_INCLUDE_PREFIX "${LUA_BUILD_INSTALL_DIR}" CACHE PATH "Directory that prefixes the Lua include directory")
-set(LUA_INCLUDE_DIR "${LUA_INCLUDE_PREFIX}/include" CACHE PATH "Directory with lua include files")
-set(LUA_LIB_DIR "${LUA_BUILD_INSTALL_DIR}/lib" CACHE PATH "Directory with lua library files")
-set(LUA_BIN_DIR "${LUA_BUILD_INSTALL_DIR}/bin" CACHE PATH "Directory with lua executable and dynamic library files")
+set(LUA_INCLUDE_DIR "${LUA_BUILD_INSTALL_DIR}/include" CACHE PATH "Directory with lua include files")
+set(LUA_LIB_DIR "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}" CACHE PATH "Directory with lua library files")
+set(LUA_BIN_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" CACHE PATH "Directory with lua executable and dynamic library files")
 option(BUILD_LUA_AS_DLL ${LUA_BUILD_BUILD_DLL_DEFAULT} "Build Lua or LuaJIT as a Shared/Dynamic Link Library")
 
 STRING(TOLOWER ${LUA_BUILD_LIBNAME} LUA_BUILD_NORMALIZED_LIBNAME)

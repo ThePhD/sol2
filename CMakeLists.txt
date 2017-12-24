@@ -24,13 +24,6 @@
 cmake_minimum_required(VERSION 3.5.0)
 project(sol2 VERSION 2.19.0 LANGUAGES CXX C)
 
-if (MSVC)
-	add_definitions(/DUNICODE /D_UNICODE /D_SILENCE_CXX17_UNCAUGHT_EXCEPTION_DEPRECATION_WARNING /D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
-	add_compile_options(/W4 /EHsc)
-else()
-	add_compile_options(-Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors -Wno-noexcept-type -ftemplate-depth=1024)
-endif()
-
 # # # General Project Requirements
 # Set general standard requirements here
 set(CMAKE_CXX_STANDARD 14)
@@ -57,6 +50,28 @@ set(CXX_FEATURES
 	cxx_variadic_macros
 	cxx_variadic_templates)
 
+# # # General project flags
+if (MSVC)
+	add_definitions(/DUNICODE /D_UNICODE /D_SILENCE_CXX17_UNCAUGHT_EXCEPTION_DEPRECATION_WARNING /D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
+	add_compile_options(/W4 /EHsc)
+else()
+	add_compile_options(-Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors -Wno-noexcept-type -ftemplate-depth=1024)
+endif()
+
+# # # General project output locations
+if (CMAKE_SIZEOF_VOID_P EQUAL 4)
+	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/x86")
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/x86")
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/x86")
+else()
+	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/x64")
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/x64")
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/x64")
+endif()
+
+# # # Modules
+# # Include modules useful to the project, whether locally made in our own cmake DIRECTORY
+# # our from the standard cmake libraries
 # Add home-rolled modules path to front of module path list
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules" "${CMAKE_MODULE_PATH}")
 
@@ -132,22 +147,23 @@ set(SOL2_SINGLE_HEADER_FOUND FALSE)
 if (PYTHONINTERP_FOUND)
 	if (SINGLE)
 		set(SOL2_SINGLE_FOUND TRUE)
-		add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/single/sol/sol_forward.hpp"
-			COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/single.py" --output "${CMAKE_BINARY_DIR}/single/sol/sol.hpp"
+		add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/include/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/include/single/sol/sol_forward.hpp"
+			COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/single.py" --output "${CMAKE_BINARY_DIR}/include/single/sol/sol.hpp"
 			DEPENDS ${SOL2_HEADER_SOURCES})
 		add_custom_target(sol2_single_header 
-			DEPENDS "${CMAKE_BINARY_DIR}/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/single/sol/sol_forward.hpp")
+			DEPENDS "${CMAKE_BINARY_DIR}/include/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/include/single/sol/sol_forward.hpp")
 		set_target_properties(sol2_single_header
 			PROPERTIES
-			INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/single/sol")
-		install(FILES "${CMAKE_BINARY_DIR}/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/single/sol/sol_forward.hpp" 
+			INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/include/single/sol"
+			INTERFACE_INCLUDE_DIRECOTIRES "${CMAKE_BINARY_DIR}/include/single/sol")
+		install(FILES "${CMAKE_BINARY_DIR}/include/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/include/single/sol/sol_forward.hpp" 
 			DESTINATION include/sol)
 	endif()
 	if (DOCS)
 		set(SOL2_DOCS_FOUND TRUE)
 		add_custom_command(OUTPUT documentation COMMAND "make html" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/docs)
 		add_custom_target(docs DEPENDS documentation)
-		install(DIRECTORY "${CMAKE_SOURCE_DIR}/docs/build/html" DESTINATION bin/docs)
+		install(DIRECTORY "${CMAKE_SOURCE_DIR}/docs/build/html" DESTINATION docs)
 	endif()
 else()
 	if (SINGLE)
@@ -156,7 +172,6 @@ else()
 	endif()
 	if (DOCS)
 		set(SOL2_DOCS_FOUND FALSE)
-		message(STATUS "documentation cannot be generated as python 3 has not been found.")
 	endif()
 endif()
 

@@ -34,19 +34,24 @@ function (MAKE_EXAMPLE example_source_file is_single)
 	get_filename_component(example_name ${example_source_file} NAME_WE)
 	file(RELATIVE_PATH example_source_file_relative ${CMAKE_SOURCE_DIR} ${example_source_file})
 	get_filename_component(example_output_relative_dir ${example_source_file_relative} DIRECTORY)
+	file(TO_CMAKE_PATH "${example_output_relative_dir}" example_output_relative_dir_name)
+	STRING(REGEX REPLACE "/" "." example_output_relative_dir_name "${example_output_relative_dir}")
 	if (is_single)
 		set(example_name "${example_name}.single")
+	endif()
+	if (example_output_relative_dir_name STREQUAL "")
+		set(example_output_name "${example_name}")
+	else()
+		set(example_output_name "${example_output_relative_dir_name}.${example_name}")
 	endif()
 
 	add_executable(${example_name} ${example_source_file} ${header_files})
 	set_target_properties(${example_name} 
 		PROPERTIES
-		ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${example_output_relative_dir}"
-		LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${example_output_relative_dir}"
-		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${example_output_relative_dir}")
+		OUTPUT_NAME "${example_output_name}")
 	if (is_single)
 		target_include_directories(${example_name} 
-			PRIVATE "${CMAKE_BINARY_DIR}/single/sol" "${LUA_INCLUDE_DIR}")
+			PRIVATE "${CMAKE_BINARY_DIR}/include/single/sol" "${LUA_INCLUDE_DIR}")
 		add_dependencies(${example_name} sol2_single_header)
 	else()
 		target_include_directories(${example_name} 
@@ -66,10 +71,10 @@ function (MAKE_EXAMPLE example_source_file is_single)
 
 	if (TESTS_EXAMPLES)
 		if ((NOT is_single) OR (is_single AND TESTS_SINGLE))
-			add_test(NAME ${example_name} COMMAND ${example_name})
+			add_test(NAME ${example_output_name} COMMAND ${example_name})
 		endif()
 	endif()
-	install(TARGETS ${example_name} RUNTIME DESTINATION "${example_output_relative_dir}/${example_name}")
+	install(TARGETS ${example_name} RUNTIME DESTINATION bin)
 endfunction(MAKE_EXAMPLE)
 
 foreach(example_source_file ${EXAMPLES_SRC})

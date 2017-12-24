@@ -60,8 +60,8 @@ before_build:
 - cmake .. -G "%CMAKE_GENERATOR%" -DLUA_VERSION="%LUA_VERSION%" -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DTESTS_SINGLE=ON
 
 build_script:
-- cmake --build --config Debug .
-- cmake --build --config Release .
+- cmake --build . --config Debug
+- cmake --build . --config Release
 
 test_script:
 - ctest -C Debug --output-on-failure
@@ -69,8 +69,12 @@ test_script:
 
 notifications:
 - provider: Webhook
-  url: https://webhooks.gitter.im/e/a66a71642a00d2e50d2e
+  url: https://webhooks.gitter.im/e/1af10e654a918bef7f1e
   method: POST
-  on_build_success: true
-  on_build_failure: true
+  on_build_success: false
+  on_build_failure: false
+  on_build_status_changed: true
+- provider: Email
+  on_build_success: false
+  on_build_failure: false
   on_build_status_changed: true

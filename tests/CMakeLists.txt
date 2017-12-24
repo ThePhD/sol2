@@ -34,15 +34,10 @@ function(CREATE_TEST test_target_name test_name is_single)
 		set(header_files ${SOL2_HEADER_SOURCES})
 	endif()
 	add_executable(${test_target_name} ${SOL2_TEST_SOURCES} ${header_files})
-	set_target_properties(${test_target_name}
-		PROPERTIES
-		ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/tests"
-		LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/tests"
-		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/tests")
 	if (is_single)
 		add_dependencies(${test_target_name} sol2_single_header ${lualib})
 		target_include_directories(${test_target_name}
-			PRIVATE "${CMAKE_BINARY_DIR}/single/sol" "${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/Catch/include/")
+			PRIVATE "${CMAKE_BINARY_DIR}/include/single/sol" "${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/Catch/include/")
 	else()
 		target_include_directories(${test_target_name}
 			PRIVATE "${CMAKE_SOURCE_DIR}" "${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/Catch/include/")
@@ -57,10 +52,8 @@ function(CREATE_TEST test_target_name test_name is_single)
 	target_link_libraries(${test_target_name}
 		Threads::Threads ${LUA_LIBRARIES} ${CMAKE_DL_LIBS})
 
-	add_test(NAME ${test_target_name} 
-		COMMAND ${test_target_name})
-	install(TARGETS ${test_target_name}
-		RUNTIME DESTINATION bin)
+	add_test(NAME ${test_target_name} COMMAND ${test_target_name})
+	install(TARGETS ${test_target_name} RUNTIME DESTINATION bin)
 endfunction(CREATE_TEST)
 
 CREATE_TEST(tests "tests" FALSE)
