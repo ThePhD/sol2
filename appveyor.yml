@@ -33,9 +33,9 @@ configuration: Release
 
 environment:
   matrix:
-  - LUA_VERSION: 5.3.4
-  - LUA_VERSION: 5.2.4
-  - LUA_VERSION: 5.1.5
+  - LUA_VERSION: "5.3.4"
+  - LUA_VERSION: "5.2.4"
+  - LUA_VERSION: "5.1.5"
 
 platform:
 - x86
@@ -44,7 +44,6 @@ platform:
 init:
 - set arch=
 - if "%PLATFORM%"=="x64" (set arch= Win64)
-- echo %arch%
 - echo %APPVEYOR_BUILD_WORKER_IMAGE%
 - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" ( set CMAKE_GENERATOR="Visual Studio 15 2017%arch%" )
 - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" ( set CMAKE_GENERATOR="Visual Studio 14 2015%arch%" )
@@ -54,7 +53,7 @@ init:
 before_build:
 - md build-sol2
 - cd build-sol2
-- cmake .. -G "%CMAKE_GENERATOR%" -DLUA_VERSION=%LUA_VERSION% -DLUA_BUILD=ON -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DTESTS_SINGLE=ON
+- cmake .. -G %CMAKE_GENERATOR% -DLUA_VERSION=%LUA_VERSION% -DLUA_BUILD=ON -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DTESTS_SINGLE=ON
 
 build:
   project: c:\projects\sol2\build-sol2\sol2.sln
