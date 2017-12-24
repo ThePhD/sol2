@@ -60,11 +60,11 @@ before_build:
 - cmake .. -G "%CMAKE_GENERATOR%" -DLUA_VERSION="%LUA_VERSION%" -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DTESTS_SINGLE=ON
 
 build_script:
-- cmake --build . --config Debug
+- if "%PLATFORM%"=="x64" (cmake --build . --config Debug)
 - cmake --build . --config Release
 
 test_script:
-- ctest -C Debug --output-on-failure
+- if "%PLATFORM%"=="x64" (ctest -C Debug --output-on-failure)
 - ctest -C Release --output-on-failure
 
 notifications:
