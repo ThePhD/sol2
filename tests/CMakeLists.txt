@@ -35,7 +35,7 @@ function(CREATE_TEST test_target_name test_name is_single)
 	endif()
 	add_executable(${test_target_name} ${SOL2_TEST_SOURCES} ${header_files})
 	if (is_single)
-		add_dependencies(${test_target_name} sol2_single_header ${lualib})
+		add_dependencies(${test_target_name} sol2_single_header ${LUA_LIBRARIES})
 		target_include_directories(${test_target_name}
 			PRIVATE "${CMAKE_BINARY_DIR}/include/single/sol" "${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/Catch/include/")
 	else()
@@ -45,6 +45,13 @@ function(CREATE_TEST test_target_name test_name is_single)
 	if (MSVC)
 		target_compile_options(${test_target_name} 
 			PRIVATE /bigobj)
+	else()
+		target_compile_options(${test_target_name} 
+			PRIVATE -Wno-noexcept-type -ftemplate-depth=1024)
+	endif()
+	if (CI)
+		target_compile_definitions(${test_target_name} 
+			PRIVATE SOL2_CI)
 	endif()
 	target_compile_features(${test_target_name}
 		PRIVATE ${CXX_FEATURES})

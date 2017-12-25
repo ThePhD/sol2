@@ -62,13 +62,17 @@ function (MAKE_EXAMPLE example_source_file is_single)
 	if(CMAKE_DL_LIBS)
 		target_link_libraries(${example_name} ${CMAKE_DL_LIBS})
 	endif()
-	# examples must be built in debug mode to allow assertions to fire
-	if (MSVC)
-		target_compile_options(${example_name} PRIVATE /UNDEBUG)
-	else()
-		target_compile_options(${example_name} PRIVATE -UNDEBUG)
+	if (CI)
+		target_compile_definitions(${example_name} 
+			PRIVATE SOL2_CI)
 	endif()
+	if (MSVC)
 
+	else()
+		target_compile_options(${example_name} 
+			PRIVATE -Wno-noexcept-type)
+	endif()
+	
 	if (TESTS_EXAMPLES)
 		if ((NOT is_single) OR (is_single AND TESTS_SINGLE))
 			add_test(NAME ${example_output_name} COMMAND ${example_name})

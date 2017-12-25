@@ -98,6 +98,15 @@ set(LUA_VANILLA_SHA1_1.1 67209701eec5cc633e829d023fbff62d5d6c8e5e)
 set(LUA_VANILLA_MD5_1.0 96e8399fc508d128badd8ac3aa8f2119)
 set(LUA_VANILLA_SHA1_1.0 6a82d2ae7ce9ad98c7b4824a325b91522c0d6ebb)
 
+# # Prepend function (is there an equivalent in CMake somewhere...?)
+function(prepend var prefix)
+   set(l "")
+   foreach(f ${ARGN})
+      list(APPEND l "${prefix}${f}")
+   endforeach(f)
+   SET(${var} "${l}" PARENT_SCOPE)
+ENDFUNCTION(prepend)
+
 # Clean up some variables
 if (LUA_VERSION MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$")
 	# probably okay!
@@ -143,24 +152,7 @@ else ()
 	set(LUA_VANILLA_DOWNLOAD_SHA1_COMMAND "")
 endif()
 
-function(prepend var prefix)
-   set(l "")
-   foreach(f ${ARGN})
-      list(APPEND l "${prefix}${f}")
-   endforeach(f)
-   SET(${var} "${l}" PARENT_SCOPE)
-ENDFUNCTION(prepend)
-
 # # # Makefile and self-build configurations
-
-# # Final outputs for lib and dll files in the case we're using the makefile directly
-set(LUA_VANILLA_LIB_FILE "${LUA_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}${LUA_LIBRARY}${CMAKE_STATIC_LIBRARY_SUFFIX}")
-set(LUA_VANILLA_DLL_FILE "${LUA_BIN_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}${LUA_LIBRARY}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-if (BUILD_LUA_AS_DLL)
-	set(LUA_VANILLA_BYPRODUCTS ${LUA_VANILLA_LIB_FILE} ${LUA_VANILLA_DLL_FILE})
-else()
-	set(LUA_VANILLA_BYPRODUCTS ${LUA_VANILLA_LIB_FILE})
-endif()
 
 # # Potential compiler variables
 if (MSVC)
@@ -177,7 +169,7 @@ endif()
 
 # # Source files for natural build, if we have to go that far
 # retrieve source files
-if (LUA_VANILLA_VERSION MATCHES "^5.1")
+if (LUA_VANILLA_VERSION MATCHES "^5\\.1")
 	set(LUA_VANILLA_LIB_SOURCES lapi.c lcode.c ldebug.c ldo.c ldump.c lfunc.c 
 		lgc.c llex.c lmem.c lobject.c lopcodes.c lparser.c lstate.c 
 		lstring.c ltable.c ltm.c lundump.c lvm.c lzio.c lauxlib.c 
@@ -186,7 +178,7 @@ if (LUA_VANILLA_VERSION MATCHES "^5.1")
 	set(LUA_VANILLA_LUA_SOURCES lua.c )
 	set(LUA_VANILLA_LUAC_SOURCES luac.c print.c )
 	set(LUA_VANILLA_GENERATE_LUA_HPP true)
-elseif (LUA_VANILLA_VERSION MATCHES "^5.2")
+elseif (LUA_VANILLA_VERSION MATCHES "^5\\.2")
 	set(LUA_VANILLA_LIB_SOURCES lapi.c lcode.c lctype.c ldebug.c ldo.c ldump.c 
 		lfunc.c lgc.c llex.c lmem.c lobject.c lopcodes.c lparser.c 
 		lstate.c lstring.c ltable.c ltm.c lundump.c lvm.c lzio.c
@@ -196,7 +188,7 @@ elseif (LUA_VANILLA_VERSION MATCHES "^5.2")
 	set(LUA_VANILLA_LUAC_SOURCES luac.c )
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
 else()
-	if (NOT LUA_VANILLA_VERSION MATCHES "^5.3")
+	if (NOT LUA_VANILLA_VERSION MATCHES "^5\\.3")
 		message(STATUS "Using the Lua 5.3 sources list for a version of Lua that is not 5.3: may result in an incomplete build or errors later")
 	endif()
 	set(LUA_VANILLA_LIB_SOURCES lapi.c lcode.c lctype.c ldebug.c ldo.c ldump.c 
@@ -243,26 +235,39 @@ ExternalProject_Add(LUA_VANILLA
 	BUILD_COMMAND ""
 	INSTALL_COMMAND ""
 	TEST_COMMAND ""
-	BUILD_BYPRODUCTS ${LUA_VANILLA_BYPRODUCTS} "${LUA_VANILLA_LIB_SOURCES}" "${LUA_VANILLA_LUA_SOURCES}" "${LUA_VANILLA_LUAC_SOURCES}")
+	BUILD_BYPRODUCTS "${LUA_VANILLA_LIB_SOURCES}" "${LUA_VANILLA_LUA_SOURCES}" "${LUA_VANILLA_LUAC_SOURCES}")
 
 # make a quick lua.hpp for 5.1 targets that don't have it
 if (LUA_VANILLA_GENERATE_LUA_HPP)
-	file (WRITE "${LUA_VANILLA_SOURCE_DIR}/lua.hpp" "// lua.hpp
+	message(STATUS "Will generate lua.hpp for this version of Lua...")
+	set(LUA_VANILLA_LUA_HPP_CONTENT "// lua.hpp
 // Lua header files for C++
 // <<extern \"C\">> not supplied automatically because Lua also compiles as C++
 
 extern \"C\" {
 #include \"lua.h\"
-#include \"lualib.h\"
+#include \"liblua.h\"
 #include \"lauxlib.h\"
 }
 ")
+	set(LUA_VANILLA_SOURCE_LUA_HPP "${LUA_BUILD_TOPLEVEL}-tmp/lua.hpp")
+	set(LUA_VANILLA_DESTINATION_LUA_HPP "${LUA_VANILLA_SOURCE_DIR}/lua.hpp")
+	file(WRITE "${LUA_VANILLA_SOURCE_LUA_HPP}" "${LUA_VANILLA_HPP_CONTENT}")
+	file(TO_NATIVE_PATH "${LUA_VANILLA_SOURCE_LUA_HPP}" LUA_VANILLA_SOURCE_LUA_HPP)
+	file(TO_NATIVE_PATH "${LUA_VANILLA_DESTINATION_LUA_HPP}" LUA_VANILLA_DESTINATION_LUA_HPP)
+	ExternalProject_Add_Step(LUA_VANILLA
+		prebuild
+		# after download, before build
+		DEPENDEES download
+		DEPENDERS build
+		BYPRODUCTS "${LUA_VANILLA_TARGET_LUA_HPP}"
+		COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_VANILLA_SOURCE_LUA_HPP}" "${LUA_VANILLA_DESTINATION_LUA_HPP}")
 endif()
 
 # # Target names
-set(lualib "lualib_${LUA_VANILLA_VERSION}")
-set(luainterpreter "lua_${LUA_VANILLA_VERSION}")
-set(luacompiler "luac_${LUA_VANILLA_VERSION}")
+set(liblua "liblua-${LUA_VANILLA_VERSION}")
+set(luainterpreter "lua-${LUA_VANILLA_VERSION}")
+set(luacompiler "luac-${LUA_VANILLA_VERSION}")
 
 # Lua does not out-of-the-box support building 
 # a shared library: http://lua-users.org/lists/lua-l/2006-10/msg00098.html
@@ -273,8 +278,8 @@ set(luacompiler "luac_${LUA_VANILLA_VERSION}")
 
 # make an actual, buildable target
 # that other parts of the code can depend on
-add_library(${lualib} ${LUA_BUILD_LIBRARY_TYPE} "${LUA_VANILLA_LIB_SOURCES}")
-set_target_properties(${lualib}
+add_library(${liblua} ${LUA_BUILD_LIBRARY_TYPE} "${LUA_VANILLA_LIB_SOURCES}")
+set_target_properties(${liblua}
 	PROPERTIES
 	LANGUAGE C
 	LINKER_LANGUAGE C
@@ -289,31 +294,31 @@ set_target_properties(${lualib}
 	RUNTIME_OUTPUT_NAME ${LUA_BUILD_LIBNAME}
 	LIBRARY_OUTPUT_NAME ${LUA_BUILD_LIBNAME}
 	ARCHIVE_OUTPUT_NAME ${LUA_BUILD_LIBNAME})
-target_include_directories(${lualib}
+target_include_directories(${liblua}
 	PRIVATE ${LUA_VANILLA_SOURCE_DIR}
 	PUBLIC ${LUA_VANILLA_SOURCE_DIR})
-target_compile_definitions(${lualib}
+target_compile_definitions(${liblua}
 	PUBLIC LUA_COMPAT_ALL ${LUA_VANILLA_DLL_DEFINE}
 	PRIVATE LUA_COMPAT_ALL ${LUA_VANILLA_DLL_DEFINE})
 if (MSVC)
-	target_compile_options(${lualib}
+	target_compile_options(${liblua}
 		PRIVATE /W1)
 endif()
 if (WIN32)
-	#target_compile_definitions(${lualib} 
+	#target_compile_definitions(${liblua} 
 	#	PRIVATE LUA_USE_WINDOWS)
 else()
-	target_compile_definitions(${lualib} 
+	target_compile_definitions(${liblua} 
 		PRIVATE LUA_USE_LINUX)
 endif()
-target_compile_options(${lualib}
+target_compile_options(${liblua}
 	PRIVATE ${LUA_VANILLA_LUALIB_COMPILER_OPTIONS})
-add_dependencies(${lualib} LUA_VANILLA)
+add_dependencies(${liblua} LUA_VANILLA)
 if (CMAKE_DL_LIBS)
-	target_link_libraries(${lualib} ${CMAKE_DL_LIBS})
+	target_link_libraries(${liblua} ${CMAKE_DL_LIBS})
 endif()
 if (UNIX)
-	target_link_libraries(${lualib} m)
+	target_link_libraries(${liblua} m)
 endif()
 
 # we don't really need this section...
@@ -344,7 +349,7 @@ else()
 endif()
 target_compile_options(${luainterpreter}
 	PRIVATE ${LUA_VANILLA_LUA_LUAC_COMPILER_OPTIONS})
-target_link_libraries(${luainterpreter} ${lualib})
+target_link_libraries(${luainterpreter} ${liblua})
 if (CMAKE_DL_LIBS)
 	target_link_libraries(${luainterpreter} ${CMAKE_DL_LIBS})
 endif()
@@ -353,7 +358,7 @@ if (UNIX)
 endif()
 
 # LuaC Compiler
-add_executable(${luacompiler} ${LUA_VANILLA_LUAC_SOURCES} ${LUA_VANILLA_LIB_SOURCES})
+add_executable(${luacompiler} ${LUA_VANILLA_LUAC_SOURCES})
 set_target_properties(${luacompiler}
 	PROPERTIES
 	LANGUAGE C
@@ -379,7 +384,7 @@ else()
 	target_compile_definitions(${luacompiler} 
 		PRIVATE LUA_USE_LINUX)
 endif()
-target_link_libraries(${luacompiler} ${lualib})
+target_link_libraries(${luacompiler} ${liblua})
 if (CMAKE_DL_LIBS)
 	target_link_libraries(${luacompiler} ${CMAKE_DL_LIBS})
 endif()
@@ -389,6 +394,5 @@ if (UNIX)
 endif()
 
 # set externally-visible target indicator
-set(LUA_LIBRARIES ${lualib})
-
+set(LUA_LIBRARIES ${liblua})
 set(LUA_FOUND TRUE)

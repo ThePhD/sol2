@@ -24,17 +24,23 @@
 #ifndef SOL_FEATURE_TEST_HPP
 #define SOL_FEATURE_TEST_HPP
 
-#if (defined(__cplusplus) && __cplusplus == 201703L) || (defined(_MSC_VER) && _MSC_VER > 1900 && ((defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(_MSVC_LANG) && _MSVC_LANG > 201402L)))
+#if (defined(__cplusplus) && __cplusplus == 201703L) || (defined(_MSC_VER) && _MSC_VER > 1900 && ((defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(_MSVC_LANG) && (_MSVC_LANG > 201402L))))
 #ifndef SOL_CXX17_FEATURES
 #define SOL_CXX17_FEATURES 1
 #endif // C++17 features macro
 #endif // C++17 features check
 
-#if defined(__cpp_noexcept_function_type) || ((defined(_MSC_VER) && _MSC_VER > 1911) && ((defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)))
+#ifdef SOL_CXX17_FEATURES
+// TODO: there is a bug in the VC++ compiler??
+// on /std:c++latest under x86 conditions (VS 15.5.2),
+// compiler errors are tossed for noexcept markings being on function types
+// that are identical in every other way to their non-noexcept marked types function types...
+#if defined(__cpp_noexcept_function_type) || ((defined(_MSC_VER) && _MSC_VER > 1911) && (defined(_MSVC_LANG) && ((_MSVC_LANG >= 201703L) && defined(_WIN64))))
 #ifndef SOL_NOEXCEPT_FUNCTION_TYPE
 #define SOL_NOEXCEPT_FUNCTION_TYPE 1
 #endif // noexcept is part of a function's type
-#endif
+#endif // compiler-specific checks
+#endif // C++17 only
 
 #if defined(_WIN32) || defined(_MSC_VER)
 #ifndef SOL_CODECVT_SUPPORT

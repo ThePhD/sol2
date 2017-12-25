@@ -63,6 +63,8 @@ Boston C++ Meetup November 2017 - CiC, Boston, MA
 
 You can grab a single header (and the single forward header) out of the library [here](https://github.com/ThePhD/sol2/tree/develop/single/sol). For stable version, check the releases tab on github for a provided single header file for maximum ease of use. A script called `single.py` is provided in the repository if there's some bleeding edge change that hasn't been published on the releases page. You can run this script to create a single file version of the library so you can only include that part of it. Check `single.py --help` for more info.
 
+If you use CMake, you can also configure and generate a project that will generate the sol2_single_header for you. You can also include the project using Cmake. Run CMake for more details. Thanks @Nava2, @alkino, @mrgreywater and others for help with making the CMake build a reality.
+
 ## Features
 
 - [Fastest in the land](http://sol2.readthedocs.io/en/latest/benchmarks.html) (see: sol bar in graph).
@@ -81,7 +83,7 @@ You can grab a single header (and the single forward header) out of the library 
 Sol makes use of C++11 **and** C++14 features. GCC 5.x.x and Clang 3.6.x (with `-std=c++1z` and appropriate standard library) 
 or higher should be able to compile without problems. However, the officially supported and CI-tested compilers are:
 
-- GCC 5.x.x+
+- GCC 5.x.x+ (MinGW 5.x.x+)
 - Clang 3.6.x+
 - Visual Studio 2015 Community (Visual C++ 14.0)+
 
@@ -90,6 +92,14 @@ Please make sure you use the `-std=c++1y`, `-std=c++14`, `-std=c++1z`, `-std=c++
 
 Older compilers (GCC 4.9.x, Clang 3.4.x seem to be the lowest) can work with versions as late 
 as [v2.17.5](https://github.com/ThePhD/sol2/releases/tag/v2.17.5), with the flag `-std=c++14` or `-std=c++1y`.
+
+Is checked by-hand for other platforms as well, including Android-based builds with GCC and iOS-based builds out of XCode with Apple-clang. It should work on both of these platforms, so long as you have the proper standards flags.
+
+## Running the Tests
+
+Testing on Travis-CI and Appveyor use CMake. You can generate the tests by running CMake and configuring `TESTS`, `TESTS_SINGLE`, `TESTS_EXAMPLES`, and `EXAMPLES` to be on. Make sure `SINGLE` is also on.
+
+You will need any flavor of python3 and an available compiler. The testing suite will build its own version of Lua and LuaJIT, so you do not have to.
 
 ## Supporting
 

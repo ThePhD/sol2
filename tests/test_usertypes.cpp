@@ -1824,31 +1824,6 @@ TEST_CASE("usertype/meta-key-retrievals", "allow for special meta keys (__index,
 	}
 }
 
-TEST_CASE("usertype/noexcept-methods", "make sure noexcept functions and methods can be bound to usertypes without issues") {
-	struct T {
-		static int noexcept_function() noexcept {
-			return 0x61;
-		}
-
-		int noexcept_method() noexcept {
-			return 0x62;
-		}
-	};
-
-	sol::state lua;
-	lua.new_usertype<T>("T",
-		"nf", &T::noexcept_function,
-		"nm", &T::noexcept_method);
-
-	lua.safe_script("t = T.new()");
-	lua.safe_script("v1 = t.nf()");
-	lua.safe_script("v2 = t:nm()");
-	int v1 = lua["v1"];
-	int v2 = lua["v2"];
-	REQUIRE(v1 == 0x61);
-	REQUIRE(v2 == 0x62);
-}
-
 TEST_CASE("usertype/basic type information", "check that we can query some basic type information") {
 	struct my_thing {};
 
@@ -1879,3 +1854,32 @@ TEST_CASE("usertype/basic type information", "check that we can query some basic
 	lua.safe_script("assert(not getmetatable(obj).__type.is(\"not a thing\"))");
 	lua.safe_script("print(getmetatable(obj).__type.name)");
 }
+
+#if !defined(_MSC_VER) || !(defined(_WIN32) && !defined(_WIN64))
+
+TEST_CASE("usertype/noexcept-methods", "make sure noexcept functions and methods can be bound to usertypes without issues") {
+	struct T {
+		static int noexcept_function() noexcept {
+			return 0x61;
+		}
+
+		int noexcept_method() noexcept {
+			return 0x62;
+		}
+	};
+
+	sol::state lua;
+	lua.new_usertype<T>("T",
+		"nf", &T::noexcept_function,
+		"nm", &T::noexcept_method);
+
+	lua.safe_script("t = T.new()");
+	lua.safe_script("v1 = t.nf()");
+	lua.safe_script("v2 = t:nm()");
+	int v1 = lua["v1"];
+	int v2 = lua["v2"];
+	REQUIRE(v1 == 0x61);
+	REQUIRE(v2 == 0x62);
+}
+
+#endif // VC++ or my path/compiler settings doing strange bullshit (but it happens on Appveyor too???)

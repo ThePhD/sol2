@@ -55,18 +55,18 @@ if (MSVC)
 	add_definitions(/DUNICODE /D_UNICODE /D_SILENCE_CXX17_UNCAUGHT_EXCEPTION_DEPRECATION_WARNING /D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
 	add_compile_options(/W4 /EHsc)
 else()
-	add_compile_options(-Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors -Wno-noexcept-type -ftemplate-depth=1024)
+	add_compile_options(-Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
 endif()
 
 # # # General project output locations
 if (CMAKE_SIZEOF_VOID_P EQUAL 4)
-	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/x86")
-	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/x86")
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/x86")
+	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x86/lib")
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x86/lib")
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x86/bin")
 else()
-	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/x64")
-	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/x64")
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/x64")
+	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x64/lib")
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x64/lib")
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x64/bin")
 endif()
 
 # # # Modules
@@ -85,14 +85,18 @@ include(CMakePackageConfigHelpers)
 set(LUA_VERSION "5.3.4" CACHE STRING "The version of Lua needed. Can be 5.1, 5.2, 5.3, LuaJIT, or a more specific 3-part version number for a specifc Lua (e.g., 5.3.4 or luajit-2.0.5)")
 set(BUILD_LUA TRUE CACHE BOOL "Always build Lua, do not search for it in the system")
 set(BUILD_LUAJIT FALSE CACHE BOOL "Always build LuaJIT, do not search for it in the system")
+option(CI "Enable build of tests" OFF)
 option(TESTS "Enable build of tests" OFF)
 option(EXAMPLES "Enable build of examples" OFF)
 option(SINGLE "Enable build of single header files" ON)
 # Single tests will only be turned on if both SINGLE and TESTS are defined
 CMAKE_DEPENDENT_OPTION(TESTS_SINGLE "Enable build of tests using the generated single headers" ON
 	"SINGLE;TESTS" OFF)
-CMAKE_DEPENDENT_OPTION(TESTS_EXAMPLES "Enable build of examples as tests" ON
-	"TESTS;EXAMPLES" ON)
+if (TESTS AND EXAMPLES)
+	option(TESTS_EXAMPLES "Enable build of examples as tests" ON)
+else()
+	option(TESTS_EXAMPLES "Enable build of examples as tests" OFF)
+endif()
 option(DOCS "Enable build of documentation" OFF)
 
 
@@ -175,6 +179,10 @@ else()
 	endif()
 endif()
 
+if (CI)
+	message(STATUS "Contiguous Integration is on")
+endif()
+
 # # # Tests, Examples and other CI suites that come with sol2
 if (TESTS OR TESTS_SINGLE OR EXAMPLES OR TESTS_EXAMPLES)
 	# # # Libraries
@@ -203,9 +211,14 @@ if (TESTS OR TESTS_SINGLE OR EXAMPLES OR TESTS_EXAMPLES)
 
 	# # # Tests
 	# # Enable test harness for regular or single tests
-	if (TESTS OR TESTS_SINGLE)
-		# enable ctest and add subdir to get going
+	if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES)
+		# enable ctest
 		enable_testing()
+	endif()
+	# # Add tests here
+	if (TESTS OR TESTS_SINGLE)
+		# add subdir to get going
+		message(STATUS "Adding sol2 tests...")
 		add_subdirectory(tests "${CMAKE_BINARY_DIR}/tests")
 	endif()
 
@@ -213,6 +226,7 @@ if (TESTS OR TESTS_SINGLE OR EXAMPLES OR TESTS_EXAMPLES)
 	# # Enable examples to be built against the library
 	if (EXAMPLES OR TESTS_EXAMPLES)
 		# NOTE: will also add to tests if TESTS is defined
+		message(STATUS "Adding sol2 examples...")
 		add_subdirectory(examples "${CMAKE_BINARY_DIR}/examples")
 	endif()
 endif()

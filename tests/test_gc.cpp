@@ -621,7 +621,7 @@ TEST_CASE("gc/alignment", "test that allocation is always on aligned boundaries,
 	struct test {
 		std::function<void()> callback = []() { std::cout << "Hello world!" << std::endl; };
 
-		~test() {
+		void check_alignment() {
 			std::uintptr_t p = reinterpret_cast<std::uintptr_t>(this);
 			std::uintptr_t offset = p % std::alignment_of<test>::value;
 			REQUIRE(offset == 0);
@@ -634,20 +634,52 @@ TEST_CASE("gc/alignment", "test that allocation is always on aligned boundaries,
 
 	test obj{};
 	lua["obj"] = &obj;
+	INFO("obj");
 	lua.script("obj.callback()");
-
+	{
+		// Do not check for stack-created object
+		//test& lobj = lua["obj"];
+		//lobj.check_alignment();
+	}
+	
 	lua["obj0"] = std::ref(obj);
+	INFO("obj0");
 	lua.script("obj0.callback()");
+	{
+		// Do not check for stack-created object
+		//test& lobj = lua["obj0"];
+		//lobj.check_alignment();
+	}
 
 	lua["obj1"] = obj;
+	INFO("obj1");
 	lua.script("obj1.callback()");
+	{
+		test& lobj = lua["obj1"];
+		lobj.check_alignment();
+	}
 
 	lua["obj2"] = test{};
+	INFO("obj2");
 	lua.script("obj2.callback()");
+	{
+		test& lobj = lua["obj2"];
+		lobj.check_alignment();
+	}
 
 	lua["obj3"] = std::make_unique<test>();
+	INFO("obj3");
 	lua.script("obj3.callback()");
+	{
+		test& lobj = lua["obj3"];
+		lobj.check_alignment();
+	}
 
 	lua["obj4"] = std::make_shared<test>();
+	INFO("obj4");
 	lua.script("obj4.callback()");
+	{
+		test& lobj = lua["obj4"];
+		lobj.check_alignment();
+	}
 }

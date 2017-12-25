@@ -1468,6 +1468,8 @@ TEST_CASE("functions/unique_usertype overloading", "make sure overloading can wo
 	};
 }
 
+#if !defined(_MSC_VER) || !(defined(_WIN32) && !defined(_WIN64))
+
 TEST_CASE("functions/noexcept", "allow noexcept functions to be serialized properly into Lua using sol2") {
 	struct T {
 		static int noexcept_function() noexcept {
@@ -1518,3 +1520,5 @@ TEST_CASE("functions/noexcept", "allow noexcept functions to be serialized prope
 	REQUIRE(v7 == 0x63);
 	REQUIRE(v8 == 0x63);
 }
+
+#endif // Strange VC++ stuff
