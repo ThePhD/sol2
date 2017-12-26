@@ -118,9 +118,9 @@ init:
 - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" (set CMAKE_GENERATOR=Visual Studio 15 2017%arch%&&set parallelism=/maxcpucount&&set logger=/logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
 - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" (set CMAKE_GENERATOR=Visual Studio 14 2015%arch%&&set parallelism=/maxcpucount&&set logger=/logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
 - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2013" (set CMAKE_GENERATOR=Visual Studio 12 2013%arch%&&set parallelism=/maxcpucount&&set logger=/logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
-- if "%MINGW_VERSION%"=="5.3.0" (set CMAKE_GENERATOR=Ninja&&set parallelism=&&set logger=&&set build_type=-DCMAKE_BUILD_TYPE=Release&&set build_compiler=-DCMAKE_CXX_COMPILER=g++.exe -DCMAKE_C_COMPILER=gcc.exe)
-- if "%MINGW_VERSION%"=="6.3.0" (set CMAKE_GENERATOR=Ninja&&set parallelism=&&set logger=&&set build_type=-DCMAKE_BUILD_TYPE=Release&&set build_compiler=-DCMAKE_CXX_COMPILER=g++.exe -DCMAKE_C_COMPILER=gcc.exe)
-- if "%LLVM_VERSION%"=="4.0.0"  (set CMAKE_GENERATOR=Ninja&&set parallelism=&&set logger=&&set build_type=-DCMAKE_BUILD_TYPE=Release&&set build_compiler=-DCMAKE_CXX_COMPILER=clang-cl.exe -DCMAKE_C_COMPILER=clang-cl.exe)
+- if "%MINGW_VERSION%"=="5.3.0" (set CMAKE_GENERATOR=Ninja&&set "parallelism="&&set "logger="&&set build_type=-DCMAKE_BUILD_TYPE=Release&&set build_compiler=-DCMAKE_CXX_COMPILER=g++.exe -DCMAKE_C_COMPILER=gcc.exe)
+- if "%MINGW_VERSION%"=="6.3.0" (set CMAKE_GENERATOR=Ninja&&set "parallelism="&&set "logger="&&set build_type=-DCMAKE_BUILD_TYPE=Release&&set build_compiler=-DCMAKE_CXX_COMPILER=g++.exe -DCMAKE_C_COMPILER=gcc.exe)
+- if "%LLVM_VERSION%"=="4.0.0"  (set CMAKE_GENERATOR=Ninja&&set "parallelism="&&set "logger="&&set build_type=-DCMAKE_BUILD_TYPE=Release&&set build_compiler=-DCMAKE_CXX_COMPILER=clang-cl.exe -DCMAKE_C_COMPILER=clang-cl.exe)
 # # Last printouts
   # print out generator information
 - echo cmake generator is `%CMAKE_GENERATOR%` using special flags logger=`%logger%` parallelism=`%parallelism%`
@@ -136,7 +136,7 @@ init:
 before_build:
 - md build-sol2
 - cd build-sol2
-- cmake .. -G "%CMAKE_GENERATOR%" %build_type% -DLUA_VERSION="%LUA_VERSION%" -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DTESTS_SINGLE=ON
+- cmake .. -G "%CMAKE_GENERATOR%" %build_type% %build_compiler% -DLUA_VERSION="%LUA_VERSION%" -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DTESTS_SINGLE=ON
 
 # We do not build the debug versions because the compiler
 # generates too much debug info for MinGW to handle
