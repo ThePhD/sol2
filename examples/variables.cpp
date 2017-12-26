@@ -17,8 +17,8 @@ int main() {
     lua.set("y", "hello");
 
     // assert values are as given
-    lua.script("c_assert(x == 10)");
-    lua.script("c_assert(y == 'hello')");
+    lua.script("assert(x == 10)");
+    lua.script("assert(y == 'hello')");
 
 
     // basic retrieval of a variable

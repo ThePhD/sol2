@@ -21,7 +21,7 @@ int main() {
 	lua.script("print('calling multi_tuple')");
 	lua.script("print(multi_tuple())");
 	lua.script("x, y = multi_tuple()");
-	lua.script("c_assert(x == 10 and y == 'goodbye')");
+	lua.script("assert(x == 10 and y == 'goodbye')");
 
 	auto multi = lua.get<sol::function>("multi_tuple");
 	int first;

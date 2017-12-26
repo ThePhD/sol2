@@ -31,24 +31,19 @@ image:
 - Visual Studio 2017
 - Visual Studio 2015
 
+platform:
+- x86
+- x64
+
 environment:
   matrix:
   - LUA_VERSION: 5.3.4
     MINGW_VERSION: 6.3.0
-    PARALLELISM: 
   - LUA_VERSION: 5.3.4
     MINGW_VERSION: 5.3.0
-    PARALLELISM: 
   - LUA_VERSION: 5.3.4
-    PARALLELISM: -- /maxcpucount
   - LUA_VERSION: 5.2.4
-    PARALLELISM: -- /maxcpucount
   - LUA_VERSION: 5.1.5
-    PARALLELISM: -- /maxcpucount
-
-platform:
-- x86
-- x64
 
 matrix:
   allow_failures:
@@ -90,11 +85,11 @@ init:
 - set arch=
 - if "%PLATFORM%"=="x64" (set arch= Win64)
 - echo %APPVEYOR_BUILD_WORKER_IMAGE%
-- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" (set CMAKE_GENERATOR=Visual Studio 15 2017%arch%)
-- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" (set CMAKE_GENERATOR=Visual Studio 14 2015%arch%)
-- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2013" (set CMAKE_GENERATOR=Visual Studio 12 2013%arch%)
-- if "%MINGW_VERSION%"=="5.3.0" (set CMAKE_GENERATOR=Ninja)
-- if "%MINGW_VERSION%"=="6.3.0" (set CMAKE_GENERATOR=Ninja)
+- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" (set CMAKE_GENERATOR=Visual Studio 15 2017%arch%&&set parallelism=/maxcpucount&&set logger=/logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
+- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" (set CMAKE_GENERATOR=Visual Studio 14 2015%arch%&&set parallelism=/maxcpucount&&set logger=/logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
+- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2013" (set CMAKE_GENERATOR=Visual Studio 12 2013%arch%&&set parallelism=/maxcpucount&&set logger=/logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
+- if "%MINGW_VERSION%"=="5.3.0" (set CMAKE_GENERATOR=Ninja%%set build_type=-DCMAKE_BUILD_TYPE=Release)
+- if "%MINGW_VERSION%"=="6.3.0" (set CMAKE_GENERATOR=Ninja&&set build_type=-DCMAKE_BUILD_TYPE=Release)
 # print out useful information
 - ninja --version
 - cmake --version
@@ -106,10 +101,6 @@ init:
 before_build:
 - set python_path=C:\Python36
 - set mingw_path=
-- set build_type=
-- set parallelism=
-- if "%CMAKE_GENERATOR%"=="MinGW Makefiles" (set build_type=-DCMAKE_BUILD_TYPE=Release)
-- if "%CMAKE_GENERATOR%"=="Ninja" (set build_type=-DCMAKE_BUILD_TYPE=Release)
 - if "%MINGW_VERSION%"=="5.3.0" (set mingw_path=C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0)
 - if "%MINGW_VERSION%"=="6.3.0" ( if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1) else ( set mingw_path=C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1))
 - if "%PLATFORM%"=="x64" (set python_path=C:\Python36-x64)
@@ -123,8 +114,8 @@ before_build:
 # generates too much debug info for MinGW to handle
 # TODO: fix the damn compilation space and time already
 build_script:
-- if NOT "%build_type%"=="-DCMAKE_BUILD_TYPE=Release" (cmake --build . --config Debug %PARALLELISM%)
-- cmake --build . --config Release %PARALLELISM%
+- if NOT "%build_type%"=="-DCMAKE_BUILD_TYPE=Release" (cmake --build . --config Debug -- %parallelism% %logger%)
+- cmake --build . --config Release -- %parallelism% %logger%
 
 test_script:
 - if NOT "%build_type%"=="-DCMAKE_BUILD_TYPE=Release" (ctest -C Debug --output-on-failure)

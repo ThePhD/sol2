@@ -216,6 +216,7 @@ if (TESTS OR TESTS_SINGLE OR EXAMPLES OR TESTS_EXAMPLES)
 	# # Enable test harness for regular or single tests
 	if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES)
 		# enable ctest
+		message(STATUS "Testing enabled...")
 		enable_testing()
 	endif()
 	# # Add tests here

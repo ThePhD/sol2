@@ -96,7 +96,7 @@ int main() {
     lua.script("v = vector.new()\n"
                "v = vector.new(12)\n"
                "v = vector.new(10, 10)\n"
-               "c_assert(not v:is_unit())\n");
+               "assert(not v:is_unit())\n");
 
     // You can even have C++-like member-variable-access
     // just pass is public member variables in the same style as functions
@@ -108,7 +108,7 @@ int main() {
                "assert(not vars.low_gravity)\n"
                "vars.low_gravity = true\n"
                "local x = vars.low_gravity\n"
-               "c_assert(x)");
+               "assert(x)");
 
 	std::cout << std::endl;
 

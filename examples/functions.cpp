@@ -35,10 +35,10 @@ int main() {
 	lua.set_function("mult_by_five", &multiplier::by_five);
 
 	// assert that the functions work
-	lua.script("c_assert(my_add(10, 11) == 21)");
-	lua.script("c_assert(my_mul(4.5, 10) == 45)");
-	lua.script("c_assert(mult_by_ten(50) == 500)");
-	lua.script("c_assert(mult_by_five(10) == 50)");
+	lua.script("assert(my_add(10, 11) == 21)");
+	lua.script("assert(my_mul(4.5, 10) == 45)");
+	lua.script("assert(mult_by_ten(50) == 500)");
+	lua.script("assert(mult_by_five(10) == 50)");
 
 	// using lambdas, functions can have state.
 	int x = 0;
