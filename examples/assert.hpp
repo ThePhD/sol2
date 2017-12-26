@@ -1,7 +1,10 @@
-#ifndef MY_ASSERT_HPP
-#define MY_ASSERT_HPP
+#ifndef EXAMPLES_ASSERT_HPP
+#define EXAMPLES_ASSERT_HPP
 
 #ifndef NDEBUG
+#include <exception>
+#include <iostream>
+
 #   define m_assert(condition, message) \
     do { \
         if (! (condition)) { \
@@ -20,11 +23,8 @@
         } \
     } while (false)
 #else
-#include <exception>
-#include <iostream>
-
 #   define m_c_assert(condition, message) do { (void)sizeof(condition); (void)sizeof(message); } while (false)
 #   define c_assert(condition) do { (void)sizeof(condition); } while (false)
 #endif
 
-#endif // MY_ASSERT_HPP
+#endif // EXAMPLES_ASSERT_HPP

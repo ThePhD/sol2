@@ -5,7 +5,7 @@
 #include <luwra.hpp>
 
 #include <iostream>
-#include "assert.hpp"
+#include "../assert.hpp"
 
 // luwra,
 // another C++ wrapper library:

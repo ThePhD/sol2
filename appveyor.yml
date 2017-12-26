@@ -35,11 +35,16 @@ environment:
   matrix:
   - LUA_VERSION: 5.3.4
     MINGW_VERSION: 6.3.0
+    PARALLELISM: 
   - LUA_VERSION: 5.3.4
     MINGW_VERSION: 5.3.0
+    PARALLELISM: 
   - LUA_VERSION: 5.3.4
+    PARALLELISM: -- /maxcpucount
   - LUA_VERSION: 5.2.4
+    PARALLELISM: -- /maxcpucount
   - LUA_VERSION: 5.1.5
+    PARALLELISM: -- /maxcpucount
 
 platform:
 - x86
@@ -52,22 +57,23 @@ matrix:
     # 32-bit builds are temperamental with exceptions
     - platform: x86
   exclude:
-    - platform: x86
-      LUA_VERSION: 5.2.4
-    - platform: x86
-      LUA_VERSION: 5.1.5
-    - platform: x86
-      MINGW_VERSION: 6.3.0
+    # Necessary: MinGW doesn't exist on VS 2017 images
     - image: Visual Studio 2017
       MINGW_VERSION: 6.3.0
     - image: Visual Studio 2017
       MINGW_VERSION: 5.3.0
+    # Get rid of x86 builds
+    - platform: x86
+      LUA_VERSION: 5.2.4
+    - platform: x86
+      LUA_VERSION: 5.1.5
+    - platform: x86
+      MINGW_VERSION: 5.3.0
+    # Get rid of redundant Visual Studio 2015 builds
     - image: Visual Studio 2015
       LUA_VERSION: 5.1.5
     - image: Visual Studio 2015
       LUA_VERSION: 5.2.4
-    - image: Visual Studio 2015
-      platform: x86
 
 init:
   # make sure we have Ninja
@@ -101,6 +107,7 @@ before_build:
 - set python_path=C:\Python36
 - set mingw_path=
 - set build_type=
+- set parallelism=
 - if "%CMAKE_GENERATOR%"=="MinGW Makefiles" (set build_type=-DCMAKE_BUILD_TYPE=Release)
 - if "%CMAKE_GENERATOR%"=="Ninja" (set build_type=-DCMAKE_BUILD_TYPE=Release)
 - if "%MINGW_VERSION%"=="5.3.0" (set mingw_path=C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0)
@@ -116,8 +123,8 @@ before_build:
 # generates too much debug info for MinGW to handle
 # TODO: fix the damn compilation space and time already
 build_script:
-- if NOT "%build_type%"=="-DCMAKE_BUILD_TYPE=Release" (cmake --build . --config Debug)
-- cmake --build . --config Release
+- if NOT "%build_type%"=="-DCMAKE_BUILD_TYPE=Release" (cmake --build . --config Debug %PARALLELISM%)
+- cmake --build . --config Release %PARALLELISM%
 
 test_script:
 - if NOT "%build_type%"=="-DCMAKE_BUILD_TYPE=Release" (ctest -C Debug --output-on-failure)

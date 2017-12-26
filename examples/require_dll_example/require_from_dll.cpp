@@ -2,7 +2,7 @@
 #include <sol.hpp>
 
 #include "my_object.hpp"
-#include "assert.hpp"
+#include "../assert.hpp"
 
 #include <iostream>
 
