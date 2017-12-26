@@ -51,12 +51,25 @@ matrix:
     - MINGW_VERSION: 5.3.0
     - MINGW_VERSION: 6.3.0
   exclude:
+    - platform: x86
+      LUA_VERSION: 5.2.4
+    - platform: x86
+      LUA_VERSION: 5.1.5
     - image: Visual Studio 2017
       MINGW_VERSION: 6.3.0
     - image: Visual Studio 2017
       MINGW_VERSION: 5.3.0
 
 init:
+  # make sure we have Ninja
+- md tools
+- cd tools
+- set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip"
+- appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
+- 7z x ninja.zip -o%cd%\ninja
+- set PATH=%cd%\ninja;%PATH%
+- cd ..
+# configure the generator appropriately
 - set arch=
 - if "%PLATFORM%"=="x64" (set arch= Win64)
 - echo %APPVEYOR_BUILD_WORKER_IMAGE%
@@ -65,7 +78,10 @@ init:
 - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2013" (set CMAKE_GENERATOR=Visual Studio 12 2013%arch%)
 - if "%MINGW_VERSION%"=="5.3.0" (set CMAKE_GENERATOR=Ninja)
 - if "%MINGW_VERSION%"=="6.3.0" (set CMAKE_GENERATOR=Ninja)
-- echo "%CMAKE_GENERATOR%"
+# print out useful information
+- ninja --version
+- cmake --version
+- echo cmake generator -- "%CMAKE_GENERATOR%"
 
 # We need to use CMAKE_BUILD_TYPE=Release since there are no "configuration"
 # toolsets for Ninja or Makefiles as far as cmake is concerned, so 

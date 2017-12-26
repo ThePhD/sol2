@@ -24,8 +24,8 @@
 
 file(GLOB SOL2_TEST_SOURCES test*.cpp)
 source_group(test_sources FILES ${SOL2_TEST_SOURCES})
-
-file(DOWNLOAD https://github.com/catchorg/Catch2/releases/download/v2.0.1/catch.hpp ${CMAKE_BINARY_DIR}/Catch/include/catch.hpp)
+#file(DOWNLOAD https://github.com/catchorg/Catch2/releases/download/v2.0.1/catch.hpp ${CMAKE_BINARY_DIR}/Catch/include/catch.hpp)
+file(DOWNLOAD https://github.com/catchorg/Catch2/releases/download/v1.11.0/catch.hpp ${CMAKE_BINARY_DIR}/Catch/include/catch.hpp)
 
 function(CREATE_TEST test_target_name test_name is_single)
 	if (is_single)
