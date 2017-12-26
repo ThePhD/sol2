@@ -1,7 +1,7 @@
 #define SOL_CHECK_ARGUMENTS 1
 #include <sol.hpp>
 
-#include <cassert>
+#include "assert.hpp"
 #include <iostream>
 
 struct object {
@@ -35,7 +35,7 @@ obj:print()
 	)");
 
 	object& obj = lua["obj"];
-	assert(obj.value == 1);
+	c_assert(obj.value == 1);
 
 	return 0;
 }

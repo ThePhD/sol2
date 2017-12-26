@@ -5,7 +5,7 @@
 #include <LuaBridge/LuaBridge.h>
 
 #include <iostream>
-#include <cassert>
+#include "assert.hpp"
 
 // LuaBridge,
 // no longer maintained by VinnieFalco:
@@ -79,7 +79,7 @@ void check_with_sol(lua_State* L) {
 	sol::state_view lua(L);
 	A& obj = lua["obj"];
 	(void)obj;
-	assert(obj.value() == 24);
+	c_assert(obj.value() == 24);
 }
 
 int main(int, char* []) {

@@ -1,6 +1,7 @@
 #define SOL_CHECK_ARGUMENTS
 #include <sol.hpp>
 
+#include "assert.hpp"
 #include <iostream>
 
 int main(int, char*[]) {
@@ -41,7 +42,7 @@ int main(int, char*[]) {
 	transferred_into();
 	// check
 	int i = lua["i"];
-	assert(i == 1);
+	c_assert(i == 1);
 
 	std::cout << std::endl;
 

@@ -22,6 +22,8 @@
 
 version: 1.0.{build}
 
+max_jobs: 4
+
 pull_requests:
   do_not_increment_build_number: true
 
@@ -29,18 +31,15 @@ image:
 - Visual Studio 2017
 - Visual Studio 2015
 
-configuration:
-- Release
-
 environment:
   matrix:
-  - LUA_VERSION: 5.3.4
-  - LUA_VERSION: 5.2.4
-  - LUA_VERSION: 5.1.5
   - LUA_VERSION: 5.3.4
     MINGW_VERSION: 6.3.0
   - LUA_VERSION: 5.3.4
     MINGW_VERSION: 5.3.0
+  - LUA_VERSION: 5.3.4
+  - LUA_VERSION: 5.2.4
+  - LUA_VERSION: 5.1.5
 
 platform:
 - x86
@@ -48,8 +47,10 @@ platform:
 
 matrix:
   allow_failures:
+    # oldest compiler is allowed to fail here due to esoteric bugs
     - MINGW_VERSION: 5.3.0
-    - MINGW_VERSION: 6.3.0
+    # 32-bit builds are temperamental with exceptions
+    - platform: x86
   exclude:
     - platform: x86
       LUA_VERSION: 5.2.4
@@ -57,12 +58,16 @@ matrix:
       LUA_VERSION: 5.1.5
     - platform: x86
       MINGW_VERSION: 6.3.0
-    - platform: x86
-      MINGW_VERSION: 5.3.0
     - image: Visual Studio 2017
       MINGW_VERSION: 6.3.0
     - image: Visual Studio 2017
       MINGW_VERSION: 5.3.0
+    - image: Visual Studio 2015
+      LUA_VERSION: 5.1.5
+    - image: Visual Studio 2015
+      LUA_VERSION: 5.2.4
+    - image: Visual Studio 2015
+      platform: x86
 
 init:
   # make sure we have Ninja

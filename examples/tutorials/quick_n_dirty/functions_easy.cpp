@@ -1,7 +1,7 @@
 #define SOL_CHECK_ARGUMENTS 1
 #include <sol.hpp>
 
-#include <cassert>
+#include "assert.hpp"
 
 int main(int, char*[]) {
 	sol::state lua;
@@ -18,15 +18,15 @@ int main(int, char*[]) {
 	std::function<int(int, double, int, std::string)> stdfx = fx;
 
 	int is_one = stdfx(1, 34.5, 3, "bark");
-	assert(is_one == 1);
+	c_assert(is_one == 1);
 	int is_also_one = fx(1, "boop", 3, "bark");
-	assert(is_also_one == 1);
+	c_assert(is_also_one == 1);
 
 	// call through operator[]
 	int is_three = lua["g"](1, 2);
-	assert(is_three == 3);
+	c_assert(is_three == 3);
 	double is_4_8 = lua["g"](2.4, 2.4);
-	assert(is_4_8 == 4.8);
+	c_assert(is_4_8 == 4.8);
 
 	return 0;
 }

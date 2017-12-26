@@ -1,7 +1,7 @@
 #define SOL_CHECK_ARGUMENTS 1
 #include <sol.hpp>
 
-#include <cassert>
+#include "assert.hpp"
 #include <cmath>
 
 struct vec {
@@ -57,8 +57,8 @@ int main() {
 	vec& a1 = lua["a1"];
 	vec& s1 = lua["s1"];
 
-	assert(a1.x == 1 && a1.y == 1);
-	assert(s1.x == 1 && s1.y == -1);
+	c_assert(a1.x == 1 && a1.y == 1);
+	c_assert(s1.x == 1 && s1.y == -1);
 
 	lua["a2"] = lua["a1"];
 

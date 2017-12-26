@@ -1,7 +1,7 @@
 #define SOL_CHECK_ARGUMENTS 1
 #include <sol.hpp>
 
-#include <cassert>
+#include "assert.hpp"
 #include <iostream>
 
 int main(int, char**) {
@@ -20,7 +20,7 @@ int main(int, char**) {
 
 	// the function returns the value from the environment table
 	int result = f();
-	assert(result == 31);
+	c_assert(result == 31);
 
 	
 	// You can also protect from variables
@@ -33,13 +33,13 @@ int main(int, char**) {
 	g();
 	// the value can be retrieved from the env table
 	int test = env_g["test"];
-	assert(test == 5);
+	c_assert(test == 5);
 
 
 	// the global environment
 	// is not polluted at all, despite both functions being used and set
 	sol::object global_test = lua["test"];
-	assert(!global_test.valid());
+	c_assert(!global_test.valid());
 
 
 	// You can retrieve environments in C++
@@ -58,9 +58,9 @@ int main(int, char**) {
 			int test_target_env = target_env["test"];
 			// the environment for f the one gotten from `target`
 			// are the same
-			assert(test_env_f == test_target_env);
-			assert(test_env_f == 31);
-			assert(env_f == target_env);
+			c_assert(test_env_f == test_target_env);
+			c_assert(test_env_f == 31);
+			c_assert(env_f == target_env);
 		}
 	);
 	lua.set_function("check_g_env",
@@ -69,9 +69,9 @@ int main(int, char**) {
 			sol::environment target_env = sol::get_environment(target);
 			int test_env_g = env_g["test"];
 			int test_target_env = target_env["test"];
-			assert(test_env_g == test_target_env);
-			assert(test_env_g == 5);
-			assert(env_g == target_env);
+			c_assert(test_env_g == test_target_env);
+			c_assert(test_env_g == 5);
+			c_assert(env_g == target_env);
 		}
 	);
 

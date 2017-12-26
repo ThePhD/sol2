@@ -30,7 +30,7 @@ before_install:
 - sudo docker ps -a
 
 script:
-- sudo docker 
+- sudo docker run -it ubuntu
 
 notifications:
   webhooks:

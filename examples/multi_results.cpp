@@ -2,7 +2,7 @@
 #include <sol.hpp>
 
 #include <tuple>
-#include <cassert>
+#include "assert.hpp"
 #include <iostream>
 
 int main() {
@@ -21,7 +21,7 @@ int main() {
 	lua.script("print('calling multi_tuple')");
 	lua.script("print(multi_tuple())");
 	lua.script("x, y = multi_tuple()");
-	lua.script("assert(x == 10 and y == 'goodbye')");
+	lua.script("c_assert(x == 10 and y == 'goodbye')");
 
 	auto multi = lua.get<sol::function>("multi_tuple");
 	int first;
@@ -30,8 +30,8 @@ int main() {
 	sol::tie(first, second) = multi();
 
 	// use the values
-	assert(first == 10);
-	assert(second == "goodbye");
+	c_assert(first == 10);
+	c_assert(second == "goodbye");
 
 	// sol::as_returns
 	// works with any iterable, 
@@ -50,9 +50,9 @@ int main() {
 	int b = lua["b"];
 	int c = lua["c"];
 
-	assert(a == 55);
-	assert(b == 66);
-	assert(c == 77);
+	c_assert(a == 55);
+	c_assert(b == 66);
+	c_assert(c == 77);
 
 	// sol::variadic_results
 	// you can push objects of different types
@@ -73,9 +73,9 @@ int main() {
 	bool u = lua["u"];
 	std::string v = lua["v"];
 
-	assert(t == 42);
-	assert(u);
-	assert(v == "awoo");
+	c_assert(t == 42);
+	c_assert(u);
+	c_assert(v == "awoo");
 
 	return 0;
 }

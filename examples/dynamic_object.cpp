@@ -2,7 +2,7 @@
 #include <sol.hpp>
 
 #include <iostream>
-#include <cassert>
+#include "assert.hpp"
 
 // use as-is,
 // add as a member of your class,
@@ -75,7 +75,7 @@ assert(value == 15)
 
 	// does not work on d1: 'run' wasn't added to d1, only d2
 	auto script_result = lua.safe_script("local value = d1:run(5)", sol::script_pass_on_error);
-	assert(!script_result.valid());
+	c_assert(!script_result.valid());
 	sol::error err = script_result;
 	std::cout << "received expected error: " << err.what() << std::endl;
 	std::cout << std::endl;

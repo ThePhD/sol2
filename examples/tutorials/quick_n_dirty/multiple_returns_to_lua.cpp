@@ -1,7 +1,7 @@
 #define SOL_CHECK_ARGUMENTS 1
 #include <sol.hpp>
 
-#include <cassert>
+#include "assert.hpp"
 
 int main(int, char* []) {
 	sol::state lua;
@@ -14,19 +14,19 @@ int main(int, char* []) {
 
 	std::tuple<int, int, int> result = lua["f"](100, 200, 300);
 	const std::tuple<int, int, int> expected(100, 200, 300);
-	assert(result == expected);
+	c_assert(result == expected);
 
 	std::tuple<int, int, std::string> result2;
 	result2 = lua["f"](100, 200, "BARK BARK BARK!");
 	const std::tuple<int, int, std::string> expected2(100, 200, "BARK BARK BARK!");
-	assert(result2 == expected2);
+	c_assert(result2 == expected2);
 
 	int a, b;
 	std::string c;
 	sol::tie(a, b, c) = lua["f"](100, 200, "bark");
-	assert(a == 100);
-	assert(b == 200);
-	assert(c == "bark");
+	c_assert(a == 100);
+	c_assert(b == 200);
+	c_assert(c == "bark");
 
 	lua.script(R"(
 		a, b, c = f(150, 250, "woofbark")

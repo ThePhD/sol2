@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <iostream>
-#include <cassert>
+#include "assert.hpp"
 
 struct holy {
 private:
@@ -61,8 +61,8 @@ print('h2.data is ' .. h2.data)
 )");
 		holy& h1 = lua["h1"];
 		holy& h2 = lua["h2"];
-		assert(h1.data == 50);
-		assert(h2.data == 0);
+		c_assert(h1.data == 50);
+		c_assert(h2.data == 0);
 	}
 	std::cout << std::endl;
 }

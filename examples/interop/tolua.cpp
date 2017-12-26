@@ -9,7 +9,7 @@
 #include "tolua_Player.h"
 
 #include <iostream>
-#include <cassert>
+#include "assert.hpp"
 
 // tolua code lifted from some blog, if the link dies
 // I don't know where else you're gonna find the reference,
@@ -52,7 +52,7 @@ void check_with_sol(lua_State* L) {
 	sol::state_view lua(L);
 	Player& obj = lua["obj"];
 	(void)obj;
-	assert(obj.getHealth() == 4);
+	c_assert(obj.getHealth() == 4);
 }
 
 int main(int, char* []) {

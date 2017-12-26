@@ -1,7 +1,7 @@
 #define SOL_CHECK_ARGUMENTS 1
 #include <sol.hpp>
 
-#include <cassert>
+#include "assert.hpp"
 
 int main(int, char* []) {
 	sol::state lua;
@@ -15,9 +15,9 @@ int main(int, char* []) {
 	int b;
 	std::string c;
 	sol::tie(a, b, c) = lua["f"](100, 200, "bark");
-	assert(a == 100);
-	assert(b == 200);
-	assert(c == "bark");
+	c_assert(a == 100);
+	c_assert(b == 200);
+	c_assert(c == "bark");
 
 	return 0;
 }

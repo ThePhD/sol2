@@ -1,7 +1,7 @@
 #define SOL_CHECK_ARGUMENTS 1
 #include <sol.hpp>
 
-#include <cassert>
+#include "assert.hpp"
 
 // NOTE:
 // There are TWO ways to retrieve the "this"
@@ -22,7 +22,7 @@ int main() {
 
 			// definitely the same
 			thing& self = selfobj.as<thing>();
-			assert(&self == this);
+			c_assert(&self == this);
 		}
 
 		void func(sol::this_state ts) const {
@@ -35,7 +35,7 @@ int main() {
 			thing& self = selfobj.as<thing>();
 
 			// definitely the same
-			assert(&self == this);
+			c_assert(&self == this);
 		}
 	};
 

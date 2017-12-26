@@ -3,7 +3,7 @@
 
 #include <fstream>
 #include <iostream>
-#include <cassert>
+#include "assert.hpp"
 
 int main(int, char*[]) {
 	std::cout << "=== running lua code example ===" << std::endl;
@@ -23,7 +23,7 @@ int main(int, char*[]) {
 
 	// run a script, get the result
 	int value = lua.script("return 54");
-	assert(value == 54);
+	c_assert(value == 54);
 
 	auto bad_code_result = lua.script("123 herp.derp", [](lua_State*, sol::protected_function_result pfr) {
 		// pfr will contain things that went wrong, for either loading or executing the script
@@ -32,7 +32,7 @@ int main(int, char*[]) {
 		return pfr;
 	});
 	// it did not work
-	assert(!bad_code_result.valid());
+	c_assert(!bad_code_result.valid());
 	
 	// the default handler panics or throws, depending on your settings
 	// uncomment for explosions:

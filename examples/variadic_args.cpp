@@ -32,9 +32,9 @@ int main() {
 	// will error: not enough arguments
 	//lua.script("x4 = v(1)");
 
-	lua.script("assert(x == 50)");
-	lua.script("assert(x2 == 600)");
-	lua.script("assert(x3 == 21)");
+	lua.script("c_assert(x == 50)");
+	lua.script("c_assert(x2 == 600)");
+	lua.script("c_assert(x3 == 21)");
 	lua.script("print(x)"); // 50
 	lua.script("print(x2)"); // 600
 	lua.script("print(x3)"); // 21

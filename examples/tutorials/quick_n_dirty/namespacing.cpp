@@ -2,7 +2,7 @@
 #include <sol.hpp>
 
 #include <iostream>
-#include <cassert>
+#include "assert.hpp"
 
 int main() {
 	std::cout << "=== namespacing example ===" << std::endl;
@@ -39,7 +39,7 @@ int main() {
 	// calling this function also works
 	lua.script("bark.print_my_class(obj)");
 	my_class& obj = lua["obj"];
-	assert(obj.b == 25);
+	c_assert(obj.b == 25);
 
 	std::cout << std::endl;
 

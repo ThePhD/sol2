@@ -5,7 +5,7 @@
 #include <kaguya/kaguya.hpp>
 
 #include <iostream>
-#include <cassert>
+#include "assert.hpp"
 
 // kaguya code lifted from README.md,
 // written by satoren:
@@ -98,7 +98,7 @@ void check_with_sol(lua_State* L) {
 	sol::state_view lua(L);
 	ABC& obj = lua["obj"];
 	(void)obj;
-	assert(obj.value() == 24);
+	c_assert(obj.value() == 24);
 }
 
 int main(int, char* []) {

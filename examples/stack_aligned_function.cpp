@@ -1,7 +1,7 @@
 #define SOL_CHECK_ARGUMENTS 1
 #include <sol.hpp>
 
-#include <cassert>
+#include "assert.hpp"
 
 int main(int, char*[]) {
 	sol::state lua;
@@ -27,8 +27,8 @@ int main(int, char*[]) {
 	int result = func(sol::stack_count(2));
 
 	// make sure everything is clean
-	assert(result == 22);
-	assert(lua.stack_top() == 0); // stack is empty/balanced
+	c_assert(result == 22);
+	c_assert(lua.stack_top() == 0); // stack is empty/balanced
 
 	return 0;
 }

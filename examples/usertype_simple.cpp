@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <iostream>
-#include <cassert>
+#include "assert.hpp"
 
 class generator {
 private:
@@ -84,13 +84,13 @@ end
 	std::vector<int>& list1 = lua["list1"];
 	std::vector<int>& list2 = lua["list2"];
 	std::vector<int>& list3 = lua["list3"];
-	assert(list1.size() == 5);
-	assert(list2.size() == 5);
-	assert(list3.size() == 5);
+	c_assert(list1.size() == 5);
+	c_assert(list2.size() == 5);
+	c_assert(list3.size() == 5);
 	for (int i = 1; i <= 5; ++i) {
-		assert(list1[i - 1] == (mdata.first % 10) * i);
-		assert(list2[i - 1] == (mdata.second % 10) * i);
-		assert(list3[i - 1] == (mdata.third % 10) * i);
+		c_assert(list1[i - 1] == (mdata.first % 10) * i);
+		c_assert(list2[i - 1] == (mdata.second % 10) * i);
+		c_assert(list3[i - 1] == (mdata.third % 10) * i);
 	}
 	
 	std::cout << std::endl;

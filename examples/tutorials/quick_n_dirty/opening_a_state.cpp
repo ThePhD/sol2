@@ -2,7 +2,7 @@
 #include <sol.hpp>
 
 #include <iostream>
-#include <cassert>
+#include "assert.hpp"
 
 int main(int, char*[]) {
 	std::cout << "=== opening a state example ===" << std::endl;

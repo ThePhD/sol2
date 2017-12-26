@@ -4,7 +4,7 @@
 #include <vector>
 #include <numeric>
 
-#include <cassert>
+#include "assert.hpp"
 #include <iostream>
 
 class number_storage {
@@ -64,8 +64,8 @@ print("accumulate after :", ns:accumulate())
 
 	number_storage& ns = lua["ns"];
 	number_storage& ns_container = lua["ns_container"];
-	assert(&ns == &ns_container);
-	assert(ns.size() == 3);
+	c_assert(&ns == &ns_container);
+	c_assert(ns.size() == 3);
 
 	std::cout << std::endl;
 

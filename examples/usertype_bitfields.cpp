@@ -95,7 +95,7 @@ namespace itsy_bitsy {
 }
 
 #include <iostream>
-#include <cassert>
+#include "assert.hpp"
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #pragma pack(1)
@@ -154,9 +154,9 @@ int main() {
 	std::cout << "N: " << N << std::endl;
 	std::cout << "D: " << D << std::endl;
 
-	assert(C);
-	assert(N);
-	assert(D == 0xDF);
+	c_assert(C);
+	c_assert(N);
+	c_assert(D == 0xDF);
 
 	std::cout << std::endl;
 

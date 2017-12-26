@@ -92,6 +92,8 @@ option(SINGLE "Enable build of single header files" ON)
 # Single tests will only be turned on if both SINGLE and TESTS are defined
 CMAKE_DEPENDENT_OPTION(TESTS_SINGLE "Enable build of tests using the generated single headers" ON
 	"SINGLE;TESTS" OFF)
+CMAKE_DEPENDENT_OPTION(EXAMPLES_SINGLE "Enable build of tests using the generated single headers" OFF
+	"SINGLE;EXAMPLES" OFF)
 if (TESTS AND EXAMPLES)
 	option(TESTS_EXAMPLES "Enable build of examples as tests" ON)
 else()

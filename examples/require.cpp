@@ -1,7 +1,7 @@
 #define SOL_CHECK_ARGUMENTS 1
 #include <sol.hpp>
 
-#include <cassert>
+#include "assert.hpp"
 #include <iostream>
 
 struct some_class {
@@ -38,7 +38,7 @@ s = my_lib.some_class.new()
 s.bark = 20;
 )");
 	some_class& s = lua["s"];
-	assert(s.bark == 20);
+	c_assert(s.bark == 20);
 	std::cout << "s.bark = " << s.bark << std::endl;
 
 	std::cout << std::endl;

@@ -1,6 +1,7 @@
 #define SOL_CHECK_ARGUMENTS 1
 #include <sol.hpp>
 
+#include "assert.hpp"
 #include <string>
 #include <iostream>
 
@@ -31,9 +32,9 @@ height = 1080
     screen.name = lua.get<std::string>("name");
     screen.width = lua.get<int>("width");
     screen.height = lua.get<int>("height");
-	assert(screen.name == "Asus");
-	assert(screen.width == 1920);
-	assert(screen.height == 1080);
+	c_assert(screen.name == "Asus");
+	c_assert(screen.width == 1920);
+	c_assert(screen.height == 1080);
 
 	std::cout << "=== config example ===" << std::endl;
 	screen.print();

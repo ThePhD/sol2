@@ -1,7 +1,7 @@
 #define SOL_CHECK_ARGUMENTS 1
 #include <sol.hpp>
 
-#include <cassert>
+#include "assert.hpp"
 
 int main(int, char*[]) {
 	sol::state lua;
@@ -44,40 +44,40 @@ int main(int, char*[]) {
 
 	// implicit conversion
 	int number = lua["number"];
-	assert(number == 24);
+	c_assert(number == 24);
 	// explicit get
 	auto number2 = lua.get<double>("number2");
-	assert(number2 == 24.5);
+	c_assert(number2 == 24.5);
 	// strings too
 	std::string important_string = lua["important_string"];
-	assert(important_string == "woof woof");
+	c_assert(important_string == "woof woof");
 	// dig into a table
 	int value = lua["some_table"]["value"];
-	assert(value == 24);
+	c_assert(value == 24);
 	// get a function
 	sol::function a_function = lua["a_function"];
 	int value_is_100 = a_function();
 	// convertible to std::function
 	std::function<int()> a_std_function = a_function;
 	int value_is_still_100 = a_std_function();
-	assert(value_is_100 == 100);
-	assert(value_is_still_100 == 100);
+	c_assert(value_is_100 == 100);
+	c_assert(value_is_still_100 == 100);
 
 	sol::object number_obj = lua.get<sol::object>("number");
 	// sol::type::number
 	sol::type t1 = number_obj.get_type();
-	assert(t1 == sol::type::number);
+	c_assert(t1 == sol::type::number);
 
 	sol::object function_obj = lua["a_function"];
 	// sol::type::function
 	sol::type t2 = function_obj.get_type();
-	assert(t2 == sol::type::function);
+	c_assert(t2 == sol::type::function);
 	bool is_it_really = function_obj.is<std::function<int()>>();
-	assert(is_it_really);
+	c_assert(is_it_really);
 
 	// will not contain data
 	sol::optional<int> check_for_me = lua["a_function"];
-	assert(check_for_me == sol::nullopt);
+	c_assert(check_for_me == sol::nullopt);
 
 	return 0;
 }

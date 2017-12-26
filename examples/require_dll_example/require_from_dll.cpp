@@ -2,9 +2,9 @@
 #include <sol.hpp>
 
 #include "my_object.hpp"
+#include "assert.hpp"
 
 #include <iostream>
-#include <cassert>
 
 int main(int, char*[]) {
 	std::cout << "=== require from DLL example ===" << std::endl;
@@ -20,7 +20,7 @@ print(obj.value)
 )");
 
 	my_object::test& obj = lua["obj"];
-	assert(obj.value == 24);
+	c_assert(obj.value == 24);
 
 	return 0;
 }

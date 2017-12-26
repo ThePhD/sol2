@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <iomanip>
-#include <cassert>
+#include "assert.hpp"
 
 struct number_shim {
 	double num = 0;
@@ -61,8 +61,8 @@ int main() {
 	number_shim thingsf = lua["vf"];
 	number_shim thingsg = lua["vg"];
 
-	assert(thingsf.num == 25);
-	assert(thingsg.num == 35);
+	c_assert(thingsf.num == 25);
+	c_assert(thingsg.num == 35);
 
 	return 0;
 }

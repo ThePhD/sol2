@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <cstdio>
-#include <cassert>
+#include "assert.hpp"
 
 int main(int, char*[]) {
 	std::cout << "=== running lua code (low level) example ===" << std::endl;
@@ -37,7 +37,7 @@ int main(int, char*[]) {
 	sol::load_result script3 = lua.load("return 24");
 	// execute, get return value
 	int value2 = script3();
-	assert(value2 == 24);
+	c_assert(value2 == 24);
 
 	std::cout << std::endl;
 

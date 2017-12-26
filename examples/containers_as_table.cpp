@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <map>
-#include <cassert>
+#include "assert.hpp"
 #include <iostream>
 
 
@@ -15,10 +15,10 @@
 void demo(sol::nested<std::map<std::string, std::vector<std::string>>> src) {
 	std::cout << "demo, sol::nested<...>" << std::endl;
 	const auto& listmap = src.source;
-	assert(listmap.size() == 2);
+	c_assert(listmap.size() == 2);
 	for (const auto& kvp : listmap) {
 		const std::vector<std::string>& strings = kvp.second;
-		assert(strings.size() == 3);
+		c_assert(strings.size() == 3);
 		std::cout << "\t" << kvp.first << " = ";
 		for (const auto& s : strings) {
 			std::cout << "'" << s << "'" << " ";
@@ -39,11 +39,11 @@ void demo_explicit (sol::as_table_t<std::map<std::string, sol::as_table_t<std::v
 	std::cout << "demo, explicit sol::as_table_t<...>" << std::endl;
 	// Have to access the "source" member variable for as_table_t
 	const auto& listmap = src.source;
-	assert(listmap.size() == 2);
+	c_assert(listmap.size() == 2);
 	for (const auto& kvp : listmap) {
 		// Have to access the internal "source" for the inner as_table_t, as well
 		const std::vector<std::string>& strings = kvp.second.source;
-		assert(strings.size() == 3);
+		c_assert(strings.size() == 3);
 		std::cout << "\t" << kvp.first << " = ";
 		for (const auto& s : strings) {
 			std::cout << "'" << s << "'" << " ";

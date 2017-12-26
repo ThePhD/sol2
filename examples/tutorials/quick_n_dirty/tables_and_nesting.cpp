@@ -1,7 +1,7 @@
 #define SOL_CHECK_ARGUMENTS 1
 #include <sol.hpp>
 
-#include <cassert>
+#include "assert.hpp"
 
 int main(int, char*[]) {
 
@@ -24,19 +24,19 @@ int main(int, char*[]) {
 
 	int bark1 = def["ghi"]["bark"];
 	int bark2 = lua["def"]["ghi"]["bark"];
-	assert(bark1 == 50);
-	assert(bark2 == 50);
+	c_assert(bark1 == 50);
+	c_assert(bark2 == 50);
 
 	int abcval1 = abc[0];
 	int abcval2 = ghi["woof"][0];
-	assert(abcval1 == 24);
-	assert(abcval2 == 24);
+	c_assert(abcval1 == 24);
+	c_assert(abcval2 == 24);
 
 	sol::optional<int> will_not_error = lua["abc"]["DOESNOTEXIST"]["ghi"];
-	assert(will_not_error == sol::nullopt);
+	c_assert(will_not_error == sol::nullopt);
 	
 	int also_will_not_error = lua["abc"]["def"]["ghi"]["jklm"].get_or(25);
-	assert(also_will_not_error == 25);
+	c_assert(also_will_not_error == 25);
 
 	// if you don't go safe,
 	// will throw (or do at_panic if no exceptions)

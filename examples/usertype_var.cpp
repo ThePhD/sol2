@@ -1,6 +1,7 @@
 #define SOL_CHECK_ARGUMENTS 1
 #include <sol.hpp>
 
+#include "assert.hpp"
 #include <iostream>
 
 struct test {
@@ -19,21 +20,21 @@ int main() {
 	);
 
 	int direct_value = lua["test"]["direct"];
-	assert(direct_value == 2);
+	c_assert(direct_value == 2);
 	// direct_value == 2
 
 	int number = lua["test"]["number"];
-	assert(number == 25);
+	c_assert(number == 25);
 	int ref_number = lua["test"]["ref_number"];
-	assert(ref_number == 25);
+	c_assert(ref_number == 25);
 	
 	test::number = 542;
 
-	assert(lua["test"]["number"] == 25);
+	c_assert(lua["test"]["number"] == 25);
 	// number is its own memory: was passed by value
 	// So does not change
 
-	assert(lua["test"]["ref_number"] == 542);
+	c_assert(lua["test"]["ref_number"] == 542);
 	// ref_number is just test::number 
 	// passed through std::ref
 	// so, it holds a reference

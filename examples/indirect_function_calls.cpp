@@ -1,6 +1,7 @@
 #define SOL_CHECK_ARGUMENTS 1
 #include <sol.hpp>
 
+#include "assert.hpp"
 #include <iostream>
 
 sol::variadic_results call_it(sol::object function_name, sol::variadic_args args, sol::this_environment env, sol::this_state L) {
@@ -66,8 +67,8 @@ end
 	int subtract_result = lua["subtract_result"];
 	int add_result = lua["add_result"];
 
-	assert(add_result == 6);
-	assert(subtract_result == 4);
+	c_assert(add_result == 6);
+	c_assert(subtract_result == 4);
 
 	std::cout << std::endl;
 	return 0;

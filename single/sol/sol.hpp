@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-12-11 17:29:42.822392 UTC
-// This header was generated with sol v2.19.0 (revision cf81d81)
+// Generated 2017-12-26 04:26:55.295046 UTC
+// This header was generated with sol v2.19.0 (revision acade46)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -64,17 +64,19 @@
 
 // beginning of sol/feature_test.hpp
 
-#if (defined(__cplusplus) && __cplusplus == 201703L) || (defined(_MSC_VER) && _MSC_VER > 1900 && ((defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(_MSVC_LANG) && _MSVC_LANG > 201402L)))
+#if (defined(__cplusplus) && __cplusplus == 201703L) || (defined(_MSC_VER) && _MSC_VER > 1900 && ((defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(_MSVC_LANG) && (_MSVC_LANG > 201402L))))
 #ifndef SOL_CXX17_FEATURES
 #define SOL_CXX17_FEATURES 1
 #endif // C++17 features macro
 #endif // C++17 features check
 
-#if defined(__cpp_noexcept_function_type) || ((defined(_MSC_VER) && _MSC_VER > 1911) && ((defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)))
+#ifdef SOL_CXX17_FEATURES
+#if defined(__cpp_noexcept_function_type) || ((defined(_MSC_VER) && _MSC_VER > 1911) && (defined(_MSVC_LANG) && ((_MSVC_LANG >= 201703L) && defined(_WIN64))))
 #ifndef SOL_NOEXCEPT_FUNCTION_TYPE
 #define SOL_NOEXCEPT_FUNCTION_TYPE 1
 #endif // noexcept is part of a function's type
-#endif
+#endif // compiler-specific checks
+#endif // C++17 only
 
 #if defined(_WIN32) || defined(_MSC_VER)
 #ifndef SOL_CODECVT_SUPPORT
@@ -430,10 +432,10 @@ namespace sol {
 		};
 
 		template <std::size_t N, typename Tuple>
-		using tuple_element = std::tuple_element<N, unqualified_t<Tuple>>;
+		using tuple_element = std::tuple_element<N, std::remove_reference_t<Tuple>>;
 
 		template <std::size_t N, typename Tuple>
-		using tuple_element_t = std::tuple_element_t<N, unqualified_t<Tuple>>;
+		using tuple_element_t = std::tuple_element_t<N, std::remove_reference_t<Tuple>>;
 
 		template <std::size_t N, typename Tuple>
 		using unqualified_tuple_element = unqualified<tuple_element_t<N, Tuple>>;
@@ -1175,9 +1177,9 @@ namespace sol {
 			struct always_true : std::true_type {};
 			struct is_invokable_tester {
 				template <typename Fun, typename... Args>
-				always_true<decltype(std::declval<Fun>()(std::declval<Args>()...))> static test(int);
+				static always_true<decltype(std::declval<Fun>()(std::declval<Args>()...))> test(int);
 				template <typename...>
-				std::false_type static test(...);
+				static std::false_type test(...);
 			};
 		} // namespace meta_detail
 
@@ -1406,6 +1408,11 @@ namespace sol {
 			std::true_type supports_adl_to_string(const T&);
 			std::false_type supports_adl_to_string(...);
 #endif
+
+			template <typename T, bool b>
+			struct is_matched_lookup_impl : std::false_type {};
+			template <typename T>
+			struct is_matched_lookup_impl<T, true> : std::is_same<typename T::key_type, typename T::value_type> {};
 		} // namespace meta_detail
 
 #if defined(_MSC_VER) && _MSC_VER <= 1910
@@ -1472,6 +1479,9 @@ namespace sol {
 
 		template <typename T>
 		struct is_lookup : meta::all<has_key_type<T>, has_value_type<T>> {};
+
+		template <typename T>
+		struct is_matched_lookup : meta_detail::is_matched_lookup_impl<T, meta::all<has_key_type<T>, has_value_type<T>>::value> {};
 
 		template <typename T>
 		using is_string_constructible = any<
@@ -3085,38 +3095,38 @@ namespace sol {
 	// workaround for missing traits in GCC and CLANG
 	template <class T>
 	struct is_nothrow_move_constructible {
-		constexpr static bool value = ::std::is_nothrow_constructible<T, T&&>::value;
+		static constexprbool value = ::std::is_nothrow_constructible<T, T&&>::value;
 	};
 
 	template <class T, class U>
 	struct is_assignable {
 		template <class X, class Y>
-		constexpr static bool has_assign(...) {
+		static constexprbool has_assign(...) {
 			return false;
 		}
 
 		template <class X, class Y, size_t S = sizeof((::std::declval<X>() = ::std::declval<Y>(), true))>
 		// the comma operator is necessary for the cases where operator= returns void
-		constexpr static bool has_assign(bool) {
+		static constexprbool has_assign(bool) {
 			return true;
 		}
 
-		constexpr static bool value = has_assign<T, U>(true);
+		static constexprbool value = has_assign<T, U>(true);
 	};
 
 	template <class T>
 	struct is_nothrow_move_assignable {
 		template <class X, bool has_any_move_assign>
 		struct has_nothrow_move_assign {
-			constexpr static bool value = false;
+			static constexprbool value = false;
 		};
 
 		template <class X>
 		struct has_nothrow_move_assign<X, true> {
-			constexpr static bool value = noexcept(::std::declval<X&>() = ::std::declval<X&&>());
+			static constexprbool value = noexcept(::std::declval<X&>() = ::std::declval<X&&>());
 		};
 
-		constexpr static bool value = has_nothrow_move_assign<T, is_assignable<T&, T&&>::value>::value;
+		static constexprbool value = has_nothrow_move_assign<T, is_assignable<T&, T&&>::value>::value;
 	};
 	// end workaround
 
@@ -3159,16 +3169,16 @@ namespace sol {
 		template <typename T>
 		struct has_overloaded_addressof {
 			template <class X>
-			constexpr static bool has_overload(...) {
+			static constexpr bool has_overload(...) {
 				return false;
 			}
 
 			template <class X, size_t S = sizeof(::std::declval<X&>().operator&())>
-			constexpr static bool has_overload(bool) {
+			static constexpr bool has_overload(bool) {
 				return true;
 			}
 
-			constexpr static bool value = has_overload<T>(true);
+			static constexpr bool value = has_overload<T>(true);
 		};
 
 		template <typename T, TR2_OPTIONAL_REQUIRES(!has_overloaded_addressof<T>)>
@@ -5650,7 +5660,7 @@ namespace detail {
 	inline std::string ctti_get_type_name() {
 		// cardinal sins from MINGW
 		using namespace std;
-		const static std::array<std::string, 2> removals = {{"{anonymous}", "(anonymous namespace)"}};
+		static const std::array<std::string, 2> removals = {{"{anonymous}", "(anonymous namespace)"}};
 		std::string name = __PRETTY_FUNCTION__;
 		std::size_t start = name.find_first_of('[');
 		start = name.find_first_of('=', start);
@@ -5684,7 +5694,7 @@ namespace detail {
 #elif defined(_MSC_VER)
 	template <typename T>
 	inline std::string ctti_get_type_name() {
-		const static std::array<std::string, 7> removals = {{"public:", "private:", "protected:", "struct ", "class ", "`anonymous-namespace'", "`anonymous namespace'"}};
+		static const std::array<std::string, 7> removals = {{"public:", "private:", "protected:", "struct ", "class ", "`anonymous-namespace'", "`anonymous namespace'"}};
 		std::string name = __FUNCSIG__;
 		std::size_t start = name.find("get_type_name");
 		if (start == std::string::npos)
@@ -10070,14 +10080,18 @@ namespace stack {
 	struct popper {
 		inline static decltype(auto) pop(lua_State* L) {
 			record tracking{};
+#ifdef __INTEL_COMPILER
+			auto&& r = get<T>(L, -lua_size<T>::value, tracking);
+#else
 			decltype(auto) r = get<T>(L, -lua_size<T>::value, tracking);
+#endif
 			lua_pop(L, tracking.used);
 			return r;
 		}
 	};
 
 	template <typename T>
-	struct popper<T, std::enable_if_t<std::is_base_of<stack_reference, meta::unqualified_t<T>>::value>> {
+	struct popper<T, std::enable_if_t<is_stack_based<meta::unqualified_t<T>>::value>> {
 		static_assert(meta::neg<std::is_base_of<stack_reference, meta::unqualified_t<T>>>::value, "You cannot pop something that derives from stack_reference: it will not remain on the stack and thusly will go out of scope!");
 	};
 }
@@ -10435,10 +10449,10 @@ namespace sol {
 			template <typename T>
 			inline int push_as_upvalues(lua_State* L, T& item) {
 				typedef std::decay_t<T> TValue;
-				const static std::size_t itemsize = sizeof(TValue);
-				const static std::size_t voidsize = sizeof(void*);
-				const static std::size_t voidsizem1 = voidsize - 1;
-				const static std::size_t data_t_count = (sizeof(TValue) + voidsizem1) / voidsize;
+				static const std::size_t itemsize = sizeof(TValue);
+				static const std::size_t voidsize = sizeof(void*);
+				static const std::size_t voidsizem1 = voidsize - 1;
+				static const std::size_t data_t_count = (sizeof(TValue) + voidsizem1) / voidsize;
 				typedef std::array<void*, data_t_count> data_t;
 
 				data_t data{ {} };
@@ -10452,7 +10466,7 @@ namespace sol {
 
 			template <typename T>
 			inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 2) {
-				const static std::size_t data_t_count = (sizeof(T) + (sizeof(void*) - 1)) / sizeof(void*);
+				static const std::size_t data_t_count = (sizeof(T) + (sizeof(void*) - 1)) / sizeof(void*);
 				typedef std::array<void*, data_t_count> data_t;
 				data_t voiddata{ {} };
 				for (std::size_t i = 0, d = 0; d < sizeof(T); ++i, d += sizeof(void*)) {
@@ -15188,25 +15202,36 @@ namespace sol {
 			typedef container_traits<X> deferred_traits;
 			typedef meta::is_associative<T> is_associative;
 			typedef meta::is_lookup<T> is_lookup;
+			typedef meta::is_matched_lookup<T> is_matched_lookup;
 			typedef typename T::iterator iterator;
 			typedef typename T::value_type value_type;
-			typedef std::conditional_t<is_associative::value,
-				value_type,
-				std::conditional_t<is_lookup::value, std::pair<value_type, value_type>, std::pair<std::ptrdiff_t, value_type>>>
-				KV;
+			typedef std::conditional_t<is_matched_lookup::value, 
+				std::pair<value_type, value_type>,
+				std::conditional_t<is_associative::value || is_lookup::value,
+					value_type,
+					std::pair<std::ptrdiff_t, value_type>
+				>
+			> KV;
 			typedef typename KV::first_type K;
 			typedef typename KV::second_type V;
 			typedef decltype(*std::declval<iterator&>()) iterator_return;
+			typedef std::conditional_t<is_associative::value || is_matched_lookup::value,
+				std::add_lvalue_reference_t<V>,
+				std::conditional_t<is_lookup::value,
+					V,
+					iterator_return
+				>
+			> captured_type;
 			typedef typename meta::iterator_tag<iterator>::type iterator_category;
 			typedef std::is_same<iterator_category, std::input_iterator_tag> is_input_iterator;
 			typedef std::conditional_t<is_input_iterator::value,
 				V,
-				decltype(detail::deref(std::declval<std::conditional_t<is_associative::value, std::add_lvalue_reference_t<V>, iterator_return>>()))>
-				push_type;
+				decltype(detail::deref(std::declval<captured_type>()))
+			> push_type;
 			typedef std::is_copy_assignable<V> is_copyable;
 			typedef meta::neg<meta::any<
-				std::is_const<V>, std::is_const<std::remove_reference_t<iterator_return>>, meta::neg<is_copyable>>>
-				is_writable;
+				std::is_const<V>, std::is_const<std::remove_reference_t<iterator_return>>, meta::neg<is_copyable>
+			>> is_writable;
 			typedef meta::unqualified_t<decltype(get_key(is_associative(), std::declval<std::add_lvalue_reference_t<value_type>>()))> key_type;
 			typedef meta::all<std::is_integral<K>, meta::neg<meta::any<is_associative, is_lookup>>> is_linear_integral;
 
@@ -15231,7 +15256,7 @@ namespace sol {
 				}
 				return *p.value();
 #else
-				return stack::get<Tu>(L, 1);
+				return stack::get<T>(L, 1);
 #endif // Safe getting with error
 			}
 
@@ -15763,7 +15788,8 @@ namespace sol {
 
 			template <bool ip>
 			static int next(lua_State* L) {
-				return next_associative<ip>(is_associative(), L);
+				typedef meta::any<is_associative, meta::all<is_lookup, meta::neg<is_matched_lookup>>> is_assoc;
+				return next_associative<ip>(is_assoc(), L);
 			}
 
 		public:
@@ -15851,11 +15877,13 @@ namespace sol {
 			}
 
 			static int pairs(lua_State* L) {
-				return pairs_associative<false>(is_associative(), L);
+				typedef meta::any<is_associative, meta::all<is_lookup, meta::neg<is_matched_lookup>>> is_assoc;
+				return pairs_associative<false>(is_assoc(), L);
 			}
 
 			static int ipairs(lua_State* L) {
-				return pairs_associative<true>(is_associative(), L);
+				typedef meta::any<is_associative, meta::all<is_lookup, meta::neg<is_matched_lookup>>> is_assoc;
+				return pairs_associative<true>(is_assoc(), L);
 			}
 		};
 
@@ -18352,8 +18380,8 @@ namespace sol {
 			stack::check<basic_table_core>(lua_state(), -1, handler);
 #endif // Safety
 		}
-		basic_table_core(lua_State* L, new_table nt)
-		: base_t(L, (lua_createtable(L, nt.sequence_hint, nt.map_hint), -1)) {
+		basic_table_core(lua_State* L, const new_table& nt)
+		: base_t(L, -stack::push(L, nt)) {
 			if (!is_stack_based<meta::unqualified_t<base_type>>::value) {
 				lua_pop(L, 1);
 			}

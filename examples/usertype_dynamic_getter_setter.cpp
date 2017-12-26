@@ -2,7 +2,7 @@
 #include <sol.hpp>
 
 #include <iostream>
-#include <cassert>
+#include "assert.hpp"
 #include <cmath>
 
 // Note that this is a bunch of if/switch statements
@@ -149,8 +149,8 @@ int main() {
 	sol::userdata v1 = lua["v1"];
 	double v1x = v1["x"];
 	double v1y = v1["y"];
-	assert(v1x == 1.000);
-	assert(v1y == 0.000);
+	c_assert(v1x == 1.000);
+	c_assert(v1y == 0.000);
 	v1[0] = 2.000;
 
 	lua.script(R"(

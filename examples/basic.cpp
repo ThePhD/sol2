@@ -2,6 +2,7 @@
 #include <sol.hpp>
 
 #include <iostream>
+#include "assert.hpp"
 
 int main() {
 	std::cout << "=== basic example ===" << std::endl;
@@ -37,7 +38,7 @@ int main() {
 		if (result.valid()) {
 			std::cout << "the third script worked, and a double-hello statement should appear above this one!" << std::endl;
 			int value = result;
-			assert(value == 24);
+			c_assert(value == 24);
 		}
 		else {
 			std::cout << "the third script failed, check the result type for more information!" << std::endl;
@@ -49,7 +50,7 @@ int main() {
 		if (result.valid()) {
 			std::cout << "the fourth script worked, which it wasn't supposed to! Panic!" << std::endl;
 			int value = result;
-			assert(value == 24);
+			c_assert(value == 24);
 		}
 		else {
 			sol::error err = result;
