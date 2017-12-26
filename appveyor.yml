@@ -113,8 +113,8 @@ before_build:
 - if "%LLVM_VERSION%"=="4.0.0" (set llvm_path=C:\Program Files\LLVM\bin)
 - if "%PLATFORM%"=="x64" (set python_path=C:\Python36-x64)
 - set PATH="%python_path%";%PATH%
-- if DEFINED MINGW_VERSION (set PATH="%mingw_path%";%PATH%)
-- if DEFINED LLVM_VERSION (set PATH="%llvm_path%";%PATH%)
+- set PATH=%mingw_path%;%PATH%
+- set PATH=%llvm_path%;%PATH%
 - echo PATH=%PATH%
 - md build-sol2
 - cd build-sol2
