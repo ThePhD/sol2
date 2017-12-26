@@ -87,6 +87,7 @@ init:
 - cd ..
 - md tools
 - cd tools
+- set ninja_path=%cd%\ninja
 - set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip"
 - appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
 - 7z x ninja.zip -o%cd%\ninja
@@ -103,7 +104,7 @@ init:
 - set PATH="%python_path%";%PATH%
 - set PATH=%mingw_path%;%PATH%
 - set PATH=%llvm_path%;%PATH%
-- set PATH=%top_level%\tools\ninja;%PATH%
+- set PATH=%ninja_path%;%PATH%
 - echo PATH=%PATH%
 # # Generators and CMake arguments
   # configure the generator appropriately
