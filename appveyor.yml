@@ -86,6 +86,8 @@ init:
 - cd "%top_level%"
 # configure the generator appropriately
 - set arch=
+- set parallelism=
+- set logger=
 - if "%PLATFORM%"=="x64" (set arch= Win64)
 - echo %APPVEYOR_BUILD_WORKER_IMAGE%
 - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" (set CMAKE_GENERATOR=Visual Studio 15 2017%arch%&&set parallelism=/maxcpucount&&set logger=/logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
@@ -97,9 +99,9 @@ init:
 # print out useful information
 - ninja --version
 - cmake --version
-- if DEFINED LLVM_VERSION (clang-cl -v)
-- if DEFINED MINGW_VERSION (g++ --version)
-- echo cmake generator is %CMAKE_GENERATOR%
+- if DEFINED LLVM_VERSION (clang-cl.exe -v)
+- if DEFINED MINGW_VERSION (g++.exe --version)
+- echo cmake generator is `%CMAKE_GENERATOR%` using special flags logger=`%logger%` parallelism=`%parallelism%`
 
 # We need to use CMAKE_BUILD_TYPE=Release since there are no "configuration"
 # toolsets for Ninja or Makefiles as far as cmake is concerned, so 
@@ -109,7 +111,7 @@ before_build:
 - set mingw_path=
 - set llvm_path=
 - if "%MINGW_VERSION%"=="5.3.0" (set mingw_path=C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0)
-- if "%MINGW_VERSION%"=="6.3.0" ( if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1) else ( set mingw_path=C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1))
+- if "%MINGW_VERSION%"=="6.3.0" (if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1) else ( set mingw_path=C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1))
 - if "%LLVM_VERSION%"=="4.0.0" (set llvm_path=C:\Program Files\LLVM\bin)
 - if "%PLATFORM%"=="x64" (set python_path=C:\Python36-x64)
 - set PATH="%python_path%";%PATH%
