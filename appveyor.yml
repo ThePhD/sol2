@@ -29,8 +29,9 @@ pull_requests:
 
 environment:
   matrix:
-  - LUA_VERSION: 5.3.4
-    LLVM_VERSION: 4.0.0
+    # apparently, I can't quite make LLVM work right now...
+  #- LUA_VERSION: 5.3.4
+  #  LLVM_VERSION: 4.0.0
   - LUA_VERSION: 5.3.4
     MINGW_VERSION: 6.3.0
   - LUA_VERSION: 5.3.4
@@ -98,7 +99,7 @@ init:
 - cmake --version
 - if DEFINED LLVM_VERSION (clang-cl -v)
 - if DEFINED MINGW_VERSION (g++ --version)
-- echo cmake generator -- "%CMAKE_GENERATOR%"
+- echo cmake generator is %CMAKE_GENERATOR%
 
 # We need to use CMAKE_BUILD_TYPE=Release since there are no "configuration"
 # toolsets for Ninja or Makefiles as far as cmake is concerned, so 
@@ -111,9 +112,9 @@ before_build:
 - if "%MINGW_VERSION%"=="6.3.0" ( if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1) else ( set mingw_path=C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1))
 - if "%LLVM_VERSION%"=="4.0.0" (set llvm_path=C:\Program Files\LLVM\bin)
 - if "%PLATFORM%"=="x64" (set python_path=C:\Python36-x64)
-- set PATH=%python_path%;%PATH%
-- set PATH=%mingw_path%;%PATH%
-- set PATH=%llvm_path%;%PATH%
+- set PATH="%python_path%";%PATH%
+- if DEFINED MINGW_VERSION (set PATH="%mingw_path%";%PATH%)
+- if DEFINED LLVM_VERSION (set PATH="%llvm_path%";%PATH%)
 - echo PATH=%PATH%
 - md build-sol2
 - cd build-sol2
