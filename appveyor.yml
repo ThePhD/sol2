@@ -67,6 +67,9 @@ matrix:
       MINGW_VERSION: 6.3.0
     - image: Visual Studio 2017
       MINGW_VERSION: 5.3.0
+    # LLVM exists in all images, so we only need Visual Studio 2017
+    - image: Visual Studio 2015
+      LLVM_VERSION: 4.0.0
     # Get rid of x86 builds
     - platform: x86
       LUA_VERSION: 5.2.4
