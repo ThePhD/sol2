@@ -55,6 +55,10 @@ matrix:
       LUA_VERSION: 5.2.4
     - platform: x86
       LUA_VERSION: 5.1.5
+    - platform: x86
+      MINGW_VERSION: 6.3.0
+    - platform: x86
+      MINGW_VERSION: 5.3.0
     - image: Visual Studio 2017
       MINGW_VERSION: 6.3.0
     - image: Visual Studio 2017
@@ -62,13 +66,15 @@ matrix:
 
 init:
   # make sure we have Ninja
+- set top_level=%cd%
+- cd ..
 - md tools
 - cd tools
 - set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip"
 - appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
 - 7z x ninja.zip -o%cd%\ninja
 - set PATH=%cd%\ninja;%PATH%
-- cd ..
+- cd "%top_level%"
 # configure the generator appropriately
 - set arch=
 - if "%PLATFORM%"=="x64" (set arch= Win64)
