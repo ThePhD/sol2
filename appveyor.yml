@@ -97,8 +97,8 @@ init:
 - set python_path=C:\Python36
 - set mingw_path=
 - set llvm_path=
-- if "%MINGW_VERSION%"=="5.3.0" (set mingw_path=C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\bin)
-- if "%MINGW_VERSION%"=="6.3.0" (if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\bin) else ( set mingw_path=C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\bin))
+- if "%MINGW_VERSION%"=="5.3.0" (set mingw_path=C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw64\bin)
+- if "%MINGW_VERSION%"=="6.3.0" (if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64\bin) else ( set mingw_path=C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw64\bin))
 - if "%LLVM_VERSION%"=="4.0.0" (set llvm_path=C:\Program Files\LLVM\bin)
 - if "%PLATFORM%"=="x64" (set python_path=C:\Python36-x64)
 - set PATH=%python_path%;%PATH%
