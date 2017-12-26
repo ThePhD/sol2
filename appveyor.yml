@@ -27,6 +27,21 @@ max_jobs: 4
 pull_requests:
   do_not_increment_build_number: true
 
+# Ordering is important!
+# specifying VS 2015 first makes all the 2015 jobs run first
+# we need this so the MinGW jobs can run first
+# In general, the matrix seems to order by appearance of first-order
+# dimensions (Image, Platform, Configuration) and then 
+# the order of whatever elements are in the matrix
+image:
+- Visual Studio 2015
+- Visual Studio 2017
+
+# Run x64 first, x86 second
+platform:
+- x64
+- x86
+
 environment:
   matrix:
     # apparently, I can't quite make LLVM work right now...
@@ -39,14 +54,6 @@ environment:
   - LUA_VERSION: 5.3.4
   - LUA_VERSION: 5.2.4
   - LUA_VERSION: 5.1.5
-
-image:
-- Visual Studio 2017
-- Visual Studio 2015
-
-platform:
-- x86
-- x64
 
 matrix:
   allow_failures:
