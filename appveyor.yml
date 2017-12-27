@@ -50,8 +50,6 @@ environment:
   - LUA_VERSION: 5.3.4
     MINGW_VERSION: 6.3.0
   - LUA_VERSION: 5.3.4
-    MINGW_VERSION: 5.3.0
-  - LUA_VERSION: 5.3.4
   - LUA_VERSION: 5.2.4
   - LUA_VERSION: 5.1.5
 
@@ -63,11 +61,12 @@ matrix:
     - LLVM_VERSION: 4.0.0
   exclude:
     # Necessary: MinGW doesn't exist on VS 2017 images
+    # Also does not have MinGW x64 for 5.3.0
     - image: Visual Studio 2017
       MINGW_VERSION: 6.3.0
-    - image: Visual Studio 2017
-      MINGW_VERSION: 5.3.0
-    # LLVM exists in all images, and we only want the x64 versions
+    - platform: x86
+      MINGW_VERSION: 6.3.0
+    # LLVM exists in all images, and we only want the VS 2017 x64 versions
     - image: Visual Studio 2015
       LLVM_VERSION: 4.0.0
     - platform: x86
