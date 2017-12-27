@@ -45,8 +45,8 @@ platform:
 environment:
   matrix:
     # apparently, I can't quite make LLVM work right now...
-  #- LUA_VERSION: 5.3.4
-  #  LLVM_VERSION: 4.0.0
+  - LUA_VERSION: 5.3.4
+    LLVM_VERSION: 4.0.0
   - LUA_VERSION: 5.3.4
     MINGW_VERSION: 6.3.0
   - LUA_VERSION: 5.3.4
@@ -57,8 +57,6 @@ environment:
 
 matrix:
   allow_failures:
-    # oldest compiler is allowed to fail here due to esoteric bugs
-    - MINGW_VERSION: 5.3.0
     # 32-bit builds are temperamental with exceptions
     - platform: x86
   exclude:
@@ -67,16 +65,14 @@ matrix:
       MINGW_VERSION: 6.3.0
     - image: Visual Studio 2017
       MINGW_VERSION: 5.3.0
-    # LLVM exists in all images, so we only need Visual Studio 2017
-    - image: Visual Studio 2015
+    # LLVM exists in all images, and we only want the x64 versions
+    - platform: x86
       LLVM_VERSION: 4.0.0
     # Get rid of x86 builds
     - platform: x86
       LUA_VERSION: 5.2.4
     - platform: x86
       LUA_VERSION: 5.1.5
-    - platform: x86
-      MINGW_VERSION: 5.3.0
     # Get rid of redundant Visual Studio 2015 builds
     - image: Visual Studio 2015
       LUA_VERSION: 5.1.5
@@ -100,8 +96,8 @@ init:
 - set python_path=C:\Python36
 - set mingw_path=
 - set llvm_path=
-- if "%MINGW_VERSION%"=="5.3.0" (set mingw_path=C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw64\bin)
-- if "%MINGW_VERSION%"=="6.3.0" (if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64\bin) else ( set mingw_path=C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw64\bin))
+- if "%MINGW_VERSION%"=="5.3.0" (set mingw_path=C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin)
+- if "%MINGW_VERSION%"=="6.3.0" (if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64\bin) else ( set mingw_path=C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin))
 - if "%LLVM_VERSION%"=="4.0.0" (set llvm_path=C:\Program Files\LLVM\bin)
 - if "%PLATFORM%"=="x64" (set python_path=C:\Python36-x64)
 - set PATH=%python_path%;%PATH%
@@ -137,6 +133,7 @@ init:
 # toolsets for Ninja or Makefiles as far as cmake is concerned, so 
 # the --config / -C switches on builds do nothing...!
 before_build:
+- if DEFINED LLVM_VERSION (call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat" && cd C:\projects\sol2)
 - md build-sol2
 - cd build-sol2
 - cmake .. -G "%CMAKE_GENERATOR%" %build_type% %build_compiler% -DLUA_VERSION="%LUA_VERSION%" -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DTESTS_SINGLE=ON

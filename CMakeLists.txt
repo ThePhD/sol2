@@ -53,8 +53,11 @@ set(CXX_FEATURES
 # # # General project flags
 if (MSVC)
 	add_definitions(/DUNICODE /D_UNICODE /D_SILENCE_CXX17_UNCAUGHT_EXCEPTION_DEPRECATION_WARNING /D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
-	# Warning level, exceptions, compile-multiple-files
-	add_compile_options(/W4 /EHsc /MP)
+	# Warning level, exceptions
+	add_compile_options(/W4 /EHsc)
+	if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+		add_compile_options(/MP)
+	endif()
 else()
 	add_compile_options(-Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
 endif()
