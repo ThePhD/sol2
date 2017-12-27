@@ -59,6 +59,8 @@ matrix:
   allow_failures:
     # 32-bit builds are temperamental with exceptions
     - platform: x86
+    # LLVM is experimental as all get-out
+    - LLVM_VERSION: 4.0.0
   exclude:
     # Necessary: MinGW doesn't exist on VS 2017 images
     - image: Visual Studio 2017

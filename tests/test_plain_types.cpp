@@ -29,11 +29,11 @@
 
 TEST_CASE("plain/alignment", "test that aligned classes in certain compilers don't trigger compiler errors") {
 #ifdef _MSC_VER
-	__declspec(align(16)) class aligned_class {
+	__declspec(align(16)) struct aligned_class {
 		int var;
 	};
 
-	class A {
+	struct A {
 		aligned_class a;
 	};
 
