@@ -38,7 +38,7 @@ int main() {
 	// passed through std::ref
 	// so, it holds a reference
 	// which can be updated
-	int ref_number_again = lua["test"]["number"];
+	int ref_number_again = lua["test"]["ref_number"];
 	c_assert(ref_number_again == 542);
 	// be careful about referencing local variables,
 	// if they go out of scope but are still reference

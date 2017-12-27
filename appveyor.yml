@@ -45,8 +45,8 @@ platform:
 environment:
   matrix:
     # apparently, I can't quite make LLVM work right now...
-  - LUA_VERSION: 5.3.4
-    LLVM_VERSION: 4.0.0
+  #- LUA_VERSION: 5.3.4
+  #  LLVM_VERSION: 4.0.0
   - LUA_VERSION: 5.3.4
     MINGW_VERSION: 6.3.0
   - LUA_VERSION: 5.3.4
@@ -68,6 +68,8 @@ matrix:
     - image: Visual Studio 2017
       MINGW_VERSION: 5.3.0
     # LLVM exists in all images, and we only want the x64 versions
+    - image: Visual Studio 2015
+      LLVM_VERSION: 4.0.0
     - platform: x86
       LLVM_VERSION: 4.0.0
     # Get rid of x86 builds

@@ -24,8 +24,8 @@
 
 file(GLOB SOL2_TEST_SOURCES test*.cpp)
 source_group(test_sources FILES ${SOL2_TEST_SOURCES})
-#file(DOWNLOAD https://github.com/catchorg/Catch2/releases/download/v2.0.1/catch.hpp ${CMAKE_BINARY_DIR}/Catch/include/catch.hpp)
-file(DOWNLOAD https://github.com/catchorg/Catch2/releases/download/v1.11.0/catch.hpp ${CMAKE_BINARY_DIR}/Catch/include/catch.hpp)
+file(DOWNLOAD https://github.com/catchorg/Catch2/releases/download/v2.0.1/catch.hpp ${CMAKE_BINARY_DIR}/vendor/Catch/include/catch.hpp)
+#file(DOWNLOAD https://github.com/catchorg/Catch2/releases/download/v1.11.0/catch.hpp ${CMAKE_BINARY_DIR}/vendor/Catch/include/catch.hpp)
 
 function(CREATE_TEST test_target_name test_name is_single)
 	if (is_single)
@@ -33,21 +33,25 @@ function(CREATE_TEST test_target_name test_name is_single)
 	else()
 		set(header_files ${SOL2_HEADER_SOURCES})
 	endif()
+
 	add_executable(${test_target_name} ${SOL2_TEST_SOURCES} ${header_files})
+	set_target_properties(${test_target_name}
+		PROPERTIES
+		OUTPUT_NAME ${test_name})
 	if (is_single)
-		add_dependencies(${test_target_name} sol2_single_header ${LUA_LIBRARIES})
+		add_dependencies(${test_target_name} sol2_single_header)
 		target_include_directories(${test_target_name}
-			PRIVATE "${CMAKE_BINARY_DIR}/include/single/sol" "${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/Catch/include/")
+			PRIVATE "${CMAKE_BINARY_DIR}/include/single/sol" "${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/vendor/Catch/include/")
 	else()
 		target_include_directories(${test_target_name}
-			PRIVATE "${CMAKE_SOURCE_DIR}" "${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/Catch/include/")
+			PRIVATE "${CMAKE_SOURCE_DIR}" "${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/vendor/Catch/include/")
 	endif()
 	if (MSVC)
 		target_compile_options(${test_target_name} 
 			PRIVATE /bigobj)
 	else()
 		target_compile_options(${test_target_name} 
-			PRIVATE -Wno-noexcept-type -ftemplate-depth=1024)
+			PRIVATE -Wno-noexcept-type -ftemplate-depth=1024 -pthread)
 	endif()
 	if (CI)
 		target_compile_definitions(${test_target_name} 
@@ -59,7 +63,7 @@ function(CREATE_TEST test_target_name test_name is_single)
 	target_link_libraries(${test_target_name}
 		Threads::Threads ${LUA_LIBRARIES} ${CMAKE_DL_LIBS})
 
-	add_test(NAME ${test_target_name} COMMAND ${test_target_name})
+	add_test(NAME ${test_name} COMMAND ${test_target_name})
 	install(TARGETS ${test_target_name} RUNTIME DESTINATION bin)
 endfunction(CREATE_TEST)
 

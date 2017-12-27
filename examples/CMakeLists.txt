@@ -57,7 +57,8 @@ function (MAKE_EXAMPLE example_source_file is_single)
 		target_include_directories(${example_name} 
 			PRIVATE "${CMAKE_SOURCE_DIR}" "${LUA_INCLUDE_DIR}")
 	endif()
-	target_compile_features(${example_name} PUBLIC ${CXX_FEATURES})
+	target_compile_features(${example_name} 
+		PRIVATE ${CXX_FEATURES})
 	target_link_libraries(${example_name} ${LUA_LIBRARIES})
 	if(CMAKE_DL_LIBS)
 		target_link_libraries(${example_name} ${CMAKE_DL_LIBS})

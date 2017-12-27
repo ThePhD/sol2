@@ -23,7 +23,7 @@
         } \
     } while (false)
 #else
-#   define m_assert(condition, message) do { (void)sizeof(condition); (void)sizeof(message); } while (false)
+#   define m_assert(condition, message) do { if (false) { (void)(condition); (void)sizeof(message); } } while (false)
 #   define c_assert(condition) do { (void)sizeof(condition); } while (false)
 #endif
 

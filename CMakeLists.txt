@@ -96,7 +96,7 @@ option(SINGLE "Enable build of single header files" ON)
 # Single tests will only be turned on if both SINGLE and TESTS are defined
 CMAKE_DEPENDENT_OPTION(TESTS_SINGLE "Enable build of tests using the generated single headers" ON
 	"SINGLE;TESTS" OFF)
-CMAKE_DEPENDENT_OPTION(EXAMPLES_SINGLE "Enable build of tests using the generated single headers" OFF
+CMAKE_DEPENDENT_OPTION(EXAMPLES_SINGLE "Enable build of examples using the generated single headers" OFF
 	"SINGLE;EXAMPLES" OFF)
 if (TESTS AND EXAMPLES)
 	option(TESTS_EXAMPLES "Enable build of examples as tests" ON)
@@ -194,6 +194,9 @@ if (TESTS OR TESTS_SINGLE OR EXAMPLES OR TESTS_EXAMPLES)
 	# # # Libraries
 	# Here, we pull in all the necessary libraries for building examples and tests
 	# Find threading library
+	if (NOT MSVC)
+		set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+	endif()
 	find_package(Threads)
 	# Find way to get Lua: build if requested, or attempt to build if no matching version is found
 	string(TOLOWER ${LUA_VERSION} NORMALIZED_LUA_VERSION)
