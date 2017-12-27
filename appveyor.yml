@@ -112,16 +112,16 @@ init:
 - set logger=
 - set build_type=
 - set build_compiler=
+- set vcvars_script=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat amd64
 - if "%PLATFORM%"=="x64" (set arch= Win64)
-- echo %APPVEYOR_BUILD_WORKER_IMAGE%
-- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" (set CMAKE_GENERATOR=Visual Studio 15 2017%arch%&&set parallelism=/maxcpucount&&set logger=/verbosity:quiet /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
+- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" (set CMAKE_GENERATOR=Visual Studio 15 2017%arch%&&set parallelism=/maxcpucount&&set logger=/verbosity:quiet /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"&&set vcvars_script=C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat)
 - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" (set CMAKE_GENERATOR=Visual Studio 14 2015%arch%&&set parallelism=/maxcpucount&&set logger=/verbosity:quiet /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
-- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2013" (set CMAKE_GENERATOR=Visual Studio 12 2013%arch%&&set parallelism=/maxcpucount&&set logger=/verbosity:quiet /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
 - if "%MINGW_VERSION%"=="5.3.0" (set CMAKE_GENERATOR=Ninja&&set parallelism= &&set logger= &&set build_type=-DCMAKE_BUILD_TYPE=Release&&set build_compiler=-DCMAKE_CXX_COMPILER=g++.exe -DCMAKE_C_COMPILER=gcc.exe)
 - if "%MINGW_VERSION%"=="6.3.0" (set CMAKE_GENERATOR=Ninja&&set parallelism= &&set logger= &&set build_type=-DCMAKE_BUILD_TYPE=Release&&set build_compiler=-DCMAKE_CXX_COMPILER=g++.exe -DCMAKE_C_COMPILER=gcc.exe)
 - if "%LLVM_VERSION%"=="4.0.0"  (set CMAKE_GENERATOR=Ninja&&set parallelism= &&set logger= &&set build_type=-DCMAKE_BUILD_TYPE=Release&&set build_compiler=-DCMAKE_CXX_COMPILER=clang-cl.exe -DCMAKE_C_COMPILER=clang-cl.exe)
 # # Last printouts
   # print out generator information
+- echo Appveyor Image is %APPVEYOR_BUILD_WORKER_IMAGE% (vcvars script is %vcvars_script%)
 - echo cmake generator is %CMAKE_GENERATOR% using build_type=%build_type% and build_compiler=%build_compiler% with special flags logger=%logger% parallelism=%parallelism%
   # print out useful tool information
 - ninja --version
@@ -133,7 +133,7 @@ init:
 # toolsets for Ninja or Makefiles as far as cmake is concerned, so 
 # the --config / -C switches on builds do nothing...!
 before_build:
-- if DEFINED LLVM_VERSION (call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat" && cd C:\projects\sol2)
+- if DEFINED LLVM_VERSION (if call %vcvars_script%" && cd C:\projects\sol2)
 - md build-sol2
 - cd build-sol2
 - cmake .. -G "%CMAKE_GENERATOR%" %build_type% %build_compiler% -DLUA_VERSION="%LUA_VERSION%" -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DTESTS_SINGLE=ON
