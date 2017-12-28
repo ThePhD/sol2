@@ -56,7 +56,7 @@ Lua Workshop 2016 - Mashape, San Francisco, CA
 
 "Wrapping Lua C in C++ - Efficiently, Nicely, and with a Touch of Magic"  
 ThePhD  
-Boston C++ Meetup November 2017 - CiC, Boston, MA
+Boston C++ Meetup November 2017 - CiC, Boston, MA  
 [Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/ThePhD%20-%20Wrapping%20Lua%20C%20in%20C%2B%2B%20-%202017.11.8.pdf)
 
 ## Creating a single header
@@ -93,7 +93,7 @@ Please make sure you use the `-std=c++1y`, `-std=c++14`, `-std=c++1z`, `-std=c++
 Older compilers (GCC 4.9.x, Clang 3.4.x seem to be the lowest) can work with versions as late 
 as [v2.17.5](https://github.com/ThePhD/sol2/releases/tag/v2.17.5), with the flag `-std=c++14` or `-std=c++1y`.
 
-Is checked by-hand for other platforms as well, including Android-based builds with GCC and iOS-based builds out of XCode with Apple-clang. It should work on both of these platforms, so long as you have the proper standards flags.
+sol2 is checked by-hand for other platforms as well, including Android-based builds with GCC and iOS-based builds out of XCode with Apple-clang. It should work on both of these platforms, so long as you have the proper standards flags.
 
 ## Running the Tests
 

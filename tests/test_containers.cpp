@@ -196,6 +196,86 @@ TEST_CASE("containers/returns", "make sure that even references to vectors are b
 	REQUIRE(matching);
 }
 
+TEST_CASE("containers/table conversions (lvalue)", "test table conversions with as_table and nested, when not directly serializing a temporary / new value") {
+	sol::state lua;
+
+	auto f = []() {
+		std::vector<std::string> response_words;
+		response_words.push_back("a");
+		response_words.push_back("b");
+		response_words.push_back("c");
+		return sol::as_table(response_words);
+	};
+	auto g = []() {
+		std::vector<std::string> response_words;
+		response_words.push_back("a");
+		response_words.push_back("b");
+		response_words.push_back("c");
+		return sol::as_nested(response_words);
+	};
+
+	lua["f"] = std::ref(f);
+	lua["g"] = std::ref(g);
+
+	sol::safe_function sff = lua["f"];
+	sol::safe_function sfg = lua["g"];
+	sol::table tf = sff();
+	sol::table tg = sfg();
+
+	std::string af = tf[1];
+	std::string bf = tf[2];
+	std::string cf = tf[3];
+	std::string ag = tf[1];
+	std::string bg = tf[2];
+	std::string cg = tf[3];
+	REQUIRE(tf.size() == 3);
+	REQUIRE(af == "a");
+	REQUIRE(bf == "b");
+	REQUIRE(cf == "c");
+	REQUIRE(tg.size() == 3);
+	REQUIRE(ag == "a");
+	REQUIRE(bg == "b");
+	REQUIRE(cg == "c");
+}
+
+TEST_CASE("containers/table conversions (std::ref)", "test table conversions with as_table and nested, when not directly serializing a temporary / new value") {
+	sol::state lua;
+
+	std::vector<std::string> response_words;
+	response_words.push_back("a");
+	response_words.push_back("b");
+	response_words.push_back("c");
+	auto f = [&response_words]() {
+		return sol::as_table(std::ref(response_words));
+	};
+	auto g = [&response_words]() {
+		return sol::as_nested(std::ref(response_words));
+	};
+
+	lua["f"] = std::ref(f);
+	lua["g"] = std::ref(g);
+
+	sol::safe_function sff = lua["f"];
+	sol::safe_function sfg = lua["g"];
+	sol::table tf = sff();
+	sol::table tg = sfg();
+
+	std::string af = tf[1];
+	std::string bf = tf[2];
+	std::string cf = tf[3];
+	std::string ag = tf[1];
+	std::string bg = tf[2];
+	std::string cg = tf[3];
+	REQUIRE(tf.size() == 3);
+	REQUIRE(af == "a");
+	REQUIRE(bf == "b");
+	REQUIRE(cf == "c");
+	REQUIRE(tg.size() == 3);
+	REQUIRE(ag == "a");
+	REQUIRE(bg == "b");
+	REQUIRE(cg == "c");
+}
+
 TEST_CASE("containers/table conversion", "test table conversions with as_table and nested") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

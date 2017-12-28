@@ -508,13 +508,23 @@ namespace sol {
 	};
 
 	template <typename T>
-	as_table_t<T> as_table(T&& container) {
+	as_table_t<T> as_table_ref(T&& container) {
 		return as_table_t<T>(std::forward<T>(container));
 	}
 
 	template <typename T>
-	nested<T> as_nested(T&& container) {
+	as_table_t<meta::unqualified_t<T>> as_table(T&& container) {
+		return as_table_t<meta::unqualified_t<T>>(std::forward<T>(container));
+	}
+
+	template <typename T>
+	nested<T> as_nested_ref(T&& container) {
 		return nested<T>(std::forward<T>(container));
+	}
+
+	template <typename T>
+	nested<meta::unqualified_t<T>> as_nested(T&& container) {
+		return nested<meta::unqualified_t<T>>(std::forward<T>(container));
 	}
 
 	struct this_state {

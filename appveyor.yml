@@ -73,6 +73,8 @@ matrix:
       LLVM_VERSION: 4.0.0
     # Get rid of x86 builds
     - platform: x86
+      image: Visual Studio 2015
+    - platform: x86
       LUA_VERSION: 5.2.4
     - platform: x86
       LUA_VERSION: 5.1.5
