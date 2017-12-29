@@ -20,28 +20,14 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-sudo: required
-language: cpp
+version: "3"
 
-before_install:
-- sudo apt install -y python3 build-essential git docker.io
-- sudo docker pull ubuntu
-- sudo docker run -d ubuntu
-- sudo docker ps -a
-
-script:
-- sudo docker run -it ubuntu
-
-notifications:
-  webhooks:
-    urls:
-      - https://webhooks.gitter.im/e/b864d553270a069d26c8
-    on_success: change
-    on_failure: always
-    on_start: never
-  email:
-    on_success: change
-    on_failure: change
-    on_start: never
-
-
+services:
+  test:
+    build: .
+    volumes:
+      - .:/sol2
+    environment:
+      - LUA_VERSION
+      - GCC_VERSION
+      - LLVM_VERSION

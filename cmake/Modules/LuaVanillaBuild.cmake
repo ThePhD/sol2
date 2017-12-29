@@ -132,7 +132,7 @@ elseif (LUA_VERSION MATCHES "([0-9]+)\\.([0-9]+)")
 		set(LUA_VANILLA_VERSION ${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.0)
 	endif()
 else()
-	message(FATAL "Cannot deduce the proper Lua version from ${LUA_VERSION}")
+	message(FATAL_ERROR "Cannot deduce the proper Lua version from ${LUA_VERSION}")
 endif()
 
 message(STATUS "Selecting PUC-RIO Lua ${LUA_VANILLA_VERSION} from '${LUA_VERSION}' and building a ${LUA_BUILD_LIBRARY_TYPE} library...")

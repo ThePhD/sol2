@@ -24,8 +24,8 @@
 
 # # Initial and necessary installations
 sudo apt update
-sudo apt dist-upgrade
-sudo apt install build-essential ninja-build libreadline6 libreadline6-dev python3 zsh wget curl libcurl3 openssl libexpat1 libexpat1-dev cmake
+sudo apt -y dist-upgrade
+sudo apt -y install build-essential zsh ninja-build libreadline6 libreadline6-dev python3 zsh wget curl libcurl3 openssl libexpat1 libexpat1-dev cmake git
 
 # # CMake Installation (from script)
 # This is only necessary if we need cmake of a better version than what's available on the system
@@ -66,9 +66,9 @@ elif [ "$GCC_VERSION" ]
 then
 	# get and use GCC version that we desire
 	sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-	sudo apt-get update
-	sudo apt-get dist-upgrade
-	sudo apt-get install gcc-$GCC_VERSION g++-$GCC_VERSION
+	sudo apt update
+	sudo apt dist-upgrade
+	sudo apt install gcc-$GCC_VERSION g++-$GCC_VERSION
 	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$GCC_VERSION 60 --slave /usr/bin/g++ g++ /usr/bin/g++-$GCC_VERSION
 	sudo update-alternatives --config gcc
 	export CC=gcc
