@@ -35,6 +35,8 @@ RUN apt update
 RUN apt -y install sudo zsh
 RUN apt -y dist-upgrade
 RUN mkdir -p build-sol2/Debug build-sol2/Release
+RUN chmod +x /sol2/scripts/preparation.linux.sh
+RUN chmod +x /sol2/scripts/run.linux.sh
 RUN ["/usr/bin/env", "zsh", "-c", "./sol2/scripts/preparation.linux.sh"]
 # CMD/ENTRYPOINT is different from RUN
 # these are done on a per-instantiation and essentially describe
