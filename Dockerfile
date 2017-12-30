@@ -33,9 +33,9 @@ WORKDIR /
 # start from the base after all run commands are executed
 RUN apt update
 RUN apt -y install sudo zsh
+RUN apt -y dist-upgrade
 RUN mkdir -p build-sol2/Debug build-sol2/Release
-RUN ls -lah
-RUN ./sol2/scripts/preparation.linux.sh
+RUN ["/usr/bin/env", "zsh", "-c", "./sol2/scripts/preparation.linux.sh"]
 # CMD/ENTRYPOINT is different from RUN
 # these are done on a per-instantiation and essentially describe
 # the DEFAULT behavior of this container when its started, not what state it

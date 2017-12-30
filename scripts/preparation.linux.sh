@@ -23,8 +23,6 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # # Initial and necessary installations
-sudo apt update
-sudo apt -y dist-upgrade
 sudo apt -y install build-essential zsh ninja-build libreadline6 libreadline6-dev python3 zsh wget curl libcurl3 openssl libexpat1 libexpat1-dev cmake git
 
 # # CMake Installation (from script)
