@@ -30,7 +30,7 @@ before_install:
 - docker-compose --version
 
 script:
-- sudo docker-compose --build
+- sudo docker-compose build
 - sudo docker-compose run -e "LUA_VERSION=$LUA_VERSION" -e "LLVM_VERSION=$LLVM_VERSION" -e "GCC_VERSION=$GCC_VERSION" test
 
 env:
