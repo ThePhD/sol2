@@ -54,6 +54,7 @@ sudo apt -y install build-essential zsh ninja-build libreadline6 libreadline6-de
 if [ "$LLVM_VERSION" ]
 then
 	# get and use LLVM
+	echo "========== detected LLVM_VERSION, attempting to install llvm version $LLVM_VERSION =========="
 	wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-16.04.tar.xz -O $LLVM_ARCHIVE_PATH
 	mkdir ~/clang-$LLVM_VERSION
 	tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang-$LLVM_VERSION --strip-components 1
@@ -63,6 +64,7 @@ then
 elif [ "$GCC_VERSION" ]
 then
 	# get and use GCC version that we desire
+	echo "========== detected GCC_VERSION, attempting to install gcc version $GCC_VERSION =========="
 	sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
 	sudo apt update
 	sudo apt dist-upgrade

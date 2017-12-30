@@ -36,11 +36,11 @@ RUN apt -y install sudo zsh
 RUN apt -y dist-upgrade
 RUN mkdir -p build-sol2/Debug build-sol2/Release
 RUN chmod +x /sol2/scripts/preparation.linux.sh
-RUN ["/usr/bin/env", "zsh", "-c", "./sol2/scripts/preparation.linux.sh"]
+RUN ["/usr/bin/env", "zsh", "-c", "-x", "./sol2/scripts/preparation.linux.sh"]
 # CMD/ENTRYPOINT is different from RUN
 # these are done on a per-instantiation and essentially describe
 # the DEFAULT behavior of this container when its started, not what state it
 # gets "saved" in...
 # it only runs the last CMD/ENTRYPOINT as the default behavior:
 # multiple CMDs will not be respected
-CMD ["/usr/bin/env", "zsh", "-c", "chmod +x /sol2/scripts/run.linux.sh && ./sol2/scripts/run.linux.sh"]
+CMD ["/usr/bin/env", "zsh", "-c", "-x", "chmod +x /sol2/scripts/run.linux.sh && ./sol2/scripts/run.linux.sh"]
