@@ -22,25 +22,31 @@
 
 # Start from the ubuntu:xenial image
 FROM ubuntu:xenial
-# Everything from our current directory (repo toplevel in travis-ci)
-# should be copied into our container at the top-level sol2 directory
-ADD . /sol2
-#VOLUME /sol2
 # We want our working directory to be the toplevel
 WORKDIR /
+# Everything from our current directory (repo toplevel in travis-ci)
+# should be copied into our container at the top-level sol2 directory
+ADD . sol2
+ARG CI=true
+ARG LUA_VERSION=5.3.4
+ARG GCC_VERSION
+ARG LLVM_VERSION
+#VOLUME /sol2
+# Potential environment variables
+ENV LUA_VERSION=${LUA_VERSION} GCC_VERSION=${GCC_VERSION} LLVM_VERSION=${LLVM_VERSION} CI=${CI}
 # RUN is how you write to the image you've pulled down
 # RUN actions are "committed" to the image, and everything will
 # start from the base after all run commands are executed
-RUN apt update
-RUN apt -y install sudo zsh
-RUN apt -y dist-upgrade
-RUN mkdir -p build-sol2/Debug build-sol2/Release
-RUN chmod +x /sol2/scripts/preparation.linux.sh
-RUN ["/usr/bin/env", "zsh", "-c", "-x", "./sol2/scripts/preparation.linux.sh"]
+RUN apt-get update
+RUN apt-get -y install sudo zsh
+RUN apt-get -y dist-upgrade
+RUN mkdir -p /build-sol2/Debug /build-sol2/Release
+RUN chmod +x /sol2/scripts/preparation.linux.sh /sol2/scripts/run.linux.sh
+RUN ["/usr/bin/env", "zsh", "-e", "/sol2/scripts/preparation.linux.sh"]
 # CMD/ENTRYPOINT is different from RUN
 # these are done on a per-instantiation and essentially describe
 # the DEFAULT behavior of this container when its started, not what state it
 # gets "saved" in...
 # it only runs the last CMD/ENTRYPOINT as the default behavior:
 # multiple CMDs will not be respected
-CMD ["/usr/bin/env", "zsh", "-c", "-x", "chmod +x /sol2/scripts/run.linux.sh && ./sol2/scripts/run.linux.sh"]
+ENTRYPOINT ["/usr/bin/env", "zsh", "-x", "-e", "/sol2/scripts/run.linux.sh"]

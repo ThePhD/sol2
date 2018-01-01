@@ -304,6 +304,9 @@ target_compile_definitions(${liblua}
 if (MSVC)
 	target_compile_options(${liblua}
 		PRIVATE /W1)
+else()
+	target_compile_options(${liblua}
+		PRIVATE -w -Wno-implicit-fallthrough)
 endif()
 if (WIN32)
 	#target_compile_definitions(${liblua} 

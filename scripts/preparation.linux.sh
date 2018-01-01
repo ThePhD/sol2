@@ -23,29 +23,7 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # # Initial and necessary installations
-sudo apt -y install build-essential zsh ninja-build libreadline6 libreadline6-dev python3 zsh wget curl libcurl3 openssl libexpat1 libexpat1-dev cmake git
-
-# # CMake Installation (from script)
-# This is only necessary if we need cmake of a better version than what's available on the system
-#CMAKE_VERSION_MAJOR_MINOR=3.10
-#CMAKE_VERSION_BUILD=1
-#CMAKE_VERSION=$CMAKE_VERSION_MAJOR_MINOR.$CMAKE_VERSION_BUILD
-#wget https://cmake.org/files/v$CMAKE_VERSION_MAJOR_MINOR/cmake-$CMAKE_VERSION-Linux-x86_64.sh
-#sudo bash cmake-$CMAKE_VERSION-Linux-x86_64.sh --prefix=/usr/local --exclude-subdir --skip-license
-
-# # CMake Installation (from source)
-#mkdir -p cmake-tmp
-#cd cmake-tmp
-#wget https://cmake.org/files/v$CMAKE_VERSION_MAJOR_MINOR/cmake-$CMAKE_VERSION.tar.gz
-#tar -xzvf cmake-$CMAKE_VERSION.tar.gz
-#cd cmake-$CMAKE_VERSION/
-#./bootstrap --system-libs
-#make
-#sudo make install
-# cd ..
-# refresh the shell, then print the CMake version to make 
-# sure we've got what we need (need to be 3.6 or better: Ubuntu 16.04 rolls 3.5.1 or somethnig)
-#exec bash
+sudo apt-get -y install ninja-build libreadline6 libreadline6-dev python3 wget curl libcurl3 cmake git
 
 # # LLVM and GCC updates
 # Grab LLVM or GCC 
@@ -54,31 +32,26 @@ sudo apt -y install build-essential zsh ninja-build libreadline6 libreadline6-de
 if [ "$LLVM_VERSION" ]
 then
 	# get and use LLVM
-	echo "========== detected LLVM_VERSION, attempting to install llvm version $LLVM_VERSION =========="
-	wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-16.04.tar.xz -O $LLVM_ARCHIVE_PATH
-	mkdir ~/clang-$LLVM_VERSION
-	tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang-$LLVM_VERSION --strip-components 1
-	export PATH=~/clang+llvm/bin:$PATH
+	source /sol2/scripts/preparation.linux.llvm.sh
 	export CC=clang
 	export CXX=clang++
+	wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-16.04.tar.xz -O $LLVM_ARCHIVE_PATH
+	mkdir -p $CLANG_PREFIX
+	tar xf $LLVM_ARCHIVE_PATH -C $CLANG_PREFIX --strip-components 1
 elif [ "$GCC_VERSION" ]
 then
 	# get and use GCC version that we desire
-	echo "========== detected GCC_VERSION, attempting to install gcc version $GCC_VERSION =========="
-	sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-	sudo apt update
-	sudo apt dist-upgrade
-	sudo apt install gcc-$GCC_VERSION g++-$GCC_VERSION
+	sudo apt-get -y install software-properties-common python-software-properties
+	sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+	sudo apt-get -y update
+	sudo apt-get -y dist-upgrade
+	sudo apt-get -y install gcc-$GCC_VERSION g++-$GCC_VERSION
 	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$GCC_VERSION 60 --slave /usr/bin/g++ g++ /usr/bin/g++-$GCC_VERSION
 	sudo update-alternatives --config gcc
-	export CC=gcc
-	export CXX=g++
+	export CC=gcc-$GCC_VERSION
+	export CXX=g++-$GCC_VERSION
 else
-	export CC=gcc
-	export CXX=g++	
+	sudo apt-get -y install build-essential
+	export CC=cc
+	export CXX=c++
 fi
-
-# show the tool and compiler versions we're using
-cmake --version
-$CC --version
-$CXX --version

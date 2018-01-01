@@ -11,6 +11,8 @@
 Debug/
 Release/
 x64/
+x86/
+*.pyproj
 *.vcxproj
 *.vcxproj.filters
 *.tlog
@@ -24,12 +26,19 @@ x64/
 
 # CMake
 build/
+build-sol2/
 CMakeCache.txt
 CMakeFiles/
 
 # Compiler outputs
 obj/*
 bin/*
+main.exe
+main.o
+lua53.dll
+lua-5.3.4.dll
+main.ilk
+main.pdb
 
 # Dropbox interference
 .dropbox*
@@ -42,10 +51,17 @@ bin/*
 *.includes
 
 # Scratchpad Files
+m.lua
+main.lua
+catch_mock.hpp
+main_aux.cpp
+main.hpp
 main2.cpp
 main.cpp
 
 # Local Lua Testbeds
+lua-5.3.4-cxx/
+lua-5.3.4/
 lua-5.3.2/
 lua-5.3.1/
 lua-5.3.0/
@@ -53,40 +69,24 @@ lua-5.2.4/
 lua-5.2.2/
 lua-5.2.3/
 lua-5.1.5/
+LuaJIT-2.1.0/
 luajit-2.0.5/
 luajit-2.0.3/
 include/
 liblua.a
 lib/liblua5.2.a
 
+# Docs Artefacts
+docs/build/
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+
 # Windows Crap
 desktop.ini
-*.sublime-workspace
-docs/build/
-*.sublime-project
-m.lua
-single/sol.hpp
 *.db
-lua53.dll
-main.exe
-main.o
-lua-5.3.4/
-main.lua
-LuaJIT-2.1.0/
-lua-5.3.4-cxx/
-lua-5.3.4.vcxproj-cxx.filters
-sol.pyproj
-lua-5.3.4.dll
-main.ilk
-main.pdb
-lua-5.3.4-cxx/
-lua-5.3.4/
-temp.bad_runtime.lua
-temp.bad_syntax.lua
-temp.good.lua
-catch_mock.hpp
-main_aux.cpp
-main.hpp
-tmp_thingy_user.lua
-tmp_thingy.lua
+
+# Miscellaneous
 external/

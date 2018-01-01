@@ -1,0 +1,91 @@
+# Python (Bytecode)
+*.pyc
+
+# ninja files
+*.ninja
+
+# Visual Studio
+*.props
+*.user
+.vs/
+Debug/
+Release/
+x64/
+x86/
+*.pyproj
+*.vcxproj
+*.vcxproj.filters
+*.tlog
+*.lastbuildstate
+*.idb
+*.sln
+*.gitattributes
+
+# VSCode
+.vscode/
+
+# CMake
+build/
+build-sol2/
+CMakeCache.txt
+CMakeFiles/
+
+# Compiler outputs
+obj/*
+bin/*
+main.exe
+main.o
+lua53.dll
+lua-5.3.4.dll
+main.ilk
+main.pdb
+
+# Dropbox interference
+.dropbox*
+
+# QtCreator
+*.creator.user.*
+*.config
+*.creator
+*.files
+*.includes
+
+# Scratchpad Files
+m.lua
+catch_mock.hpp
+main_aux.cpp
+main.hpp
+main2.cpp
+main.cpp
+
+# Local Lua Testbeds
+lua-5.3.4-cxx/
+lua-5.3.4/
+lua-5.3.2/
+lua-5.3.1/
+lua-5.3.0/
+lua-5.2.4/
+lua-5.2.2/
+lua-5.2.3/
+lua-5.1.5/
+LuaJIT-2.1.0/
+luajit-2.0.5/
+luajit-2.0.3/
+include/
+liblua.a
+lib/liblua5.2.a
+
+# Docs Artefacts
+docs/build/
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+
+# Windows Crap
+desktop.ini
+*.db
+
+# Miscellaneous
+external/

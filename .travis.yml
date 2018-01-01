@@ -23,48 +23,61 @@
 sudo: required
 language: cpp
 
+git:
+  depth: 5
+
 services:
 - docker
 
 before_install:
-- sudo apt install -y git zsh
-- sudo curl -L https://github.com/docker/compose/releases/download/1.18.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
-- sudo chmod +x /usr/local/bin/docker-compose
-- sudo usermod -aG docker ${USER}
-- sudo docker-compose --version
+- sudo apt install -y git
 
 script:
-- sudo docker-compose build
-- sudo docker-compose run -e "LUA_VERSION=$LUA_VERSION" -e "LLVM_VERSION=$LLVM_VERSION" -e "GCC_VERSION=$GCC_VERSION" test
+- sudo docker image build --tag sol2:ci --build-arg "CI=${CI}" --build-arg "LUA_VERSION=${LUA_VERSION}" --build-arg "GCC_VERSION=${GCC_VERSION}" --build-arg "LLVM_VERSION=${LLVM_VERSION}" . 
+- sudo docker run --name "sol2.test" --tty --env "CI=${CI}" --env "LUA_VERSION=${LUA_VERSION}" --env "GCC_VERSION=${GCC_VERSION}" --env "LLVM_VERSION=${LLVM_VERSION}" sol2:ci 
+- sudo docker rm $(sudo docker ps -a -q)
+- sudo docker rmi $(sudo docker image ls -q)
 
 env:
     # GCC 4.9.x, 5.x, 6.x, 7.x
   - LUA_VERSION=5.3.4
     GCC_VERSION=4.9
+    CI=true
   - LUA_VERSION=5.3.4
     GCC_VERSION=5
+    CI=true
   - LUA_VERSION=5.3.4
     GCC_VERSION=6
+    CI=true
   - LUA_VERSION=5.3.4
     GCC_VERSION=7
+    CI=true
     # LLVM 3.6.x -> 5.0.x
   - LUA_VERSION=5.3.4
     LLVM_VERSION=3.6.2
+    CI=true
   - LUA_VERSION=5.3.4
     LLVM_VERSION=3.7.1
+    CI=true
   - LUA_VERSION=5.3.4
     LLVM_VERSION=3.8.1
+    CI=true
   - LUA_VERSION=5.3.4
     LLVM_VERSION=3.9.0
+    CI=true
   - LUA_VERSION=5.3.4
     LLVM_VERSION=4.0.1
+    CI=true
   - LUA_VERSION=5.3.4
     LLVM_VERSION=5.0.1
+    CI=true
     # Lua Versions 5.2.4, 5.1.5, and maybe LuaJIT (as well as x86)
   - LUA_VERSION=5.2.4
     GCC_VERSION=7
+    CI=true
   - LUA_VERSION=5.1.5
     GCC_VERSION=7
+    CI=true
 
 matrix:
   fast_finish: true
