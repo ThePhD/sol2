@@ -62,6 +62,13 @@ else()
 	add_compile_options(-Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
 endif()
 
+if (CI)
+	if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+		include_directories("$ENV{CLANG_PREFIX}/include/c++/v1")
+		#add_compile_options(-lc++)
+	endif()
+endif()
+
 # # # General project output locations
 if (CMAKE_SIZEOF_VOID_P EQUAL 4)
 	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x86/lib")

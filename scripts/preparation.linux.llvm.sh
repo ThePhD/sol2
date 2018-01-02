@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 
 # # # # sol2
 # The MIT License (MIT)
@@ -22,9 +22,8 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-export LLVM_ARCHIVE_PATH=~/clang+llvm.tar.xz
-export CLANG_PREFIX=$HOME/clang-$LLVM_VERSION
-export PATH=$LLVM_ARCHIVE_PATH:$PATH
+top_level_dir="$(pwd)"
+export LLVM_ARCHIVE_PATH=${top_level_dir}/clang+llvm.tar.xz
+export CLANG_PREFIX=${top_level_dir}/clang-$LLVM_VERSION
+export PATH=$CLANG_PREFIX/bin:$PATH
 export LD_LIBRARY_PATH=$CLANG_PREFIX/lib:$LD_LIBRARY_PATH
-export CPPFLAGS="-I $CLANG_PREFIX/include/c++/v1"
-export CXXFLAGS=-lc++

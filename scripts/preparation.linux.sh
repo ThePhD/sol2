@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 
 # # # # sol2
 # The MIT License (MIT)
@@ -22,6 +22,36 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+# https://stackoverflow.com/questions/59895/getting-the-source-directory-of-a-bash-script-from-within
+get_script_dir () {
+	if [ -n "`$SHELL -c 'echo $ZSH_VERSION'`" ]
+	then
+		SOURCE="${(%):-%x}"
+	elif [ -n "`$SHELL -c 'echo $BASH_VERSION'`" ]
+	then
+		SOURCE="${BASH_SOURCE[0]}"
+	else
+		SOURCE="${0}"
+	fi
+     # While $SOURCE is a symlink, resolve it
+     while [ -h "$SOURCE" ]; do
+          DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+          SOURCE="$( readlink "$SOURCE" )"
+          # If $SOURCE was a relative symlink (so no "/" as prefix, need to resolve it relative to the symlink base directory
+          [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+     done
+     DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+     echo "$DIR"
+}
+
+scripts_dir="$(get_script_dir)"
+sol2_dir="${scripts_dir}/.."
+
+mkdir -p build-sol2
+cd build-sol2
+
+top_level_dir="$(pwd)"
+
 # # Initial and necessary installations
 sudo apt-get -y install ninja-build libreadline6 libreadline6-dev python3 wget curl libcurl3 cmake git
 
@@ -32,12 +62,26 @@ sudo apt-get -y install ninja-build libreadline6 libreadline6-dev python3 wget c
 if [ "$LLVM_VERSION" ]
 then
 	# get and use LLVM
-	source /sol2/scripts/preparation.linux.llvm.sh
+	source ${scripts_dir}/preparation.linux.llvm.sh
 	export CC=clang
 	export CXX=clang++
-	wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-16.04.tar.xz -O $LLVM_ARCHIVE_PATH
+	version_nums=(${=LLVM_VERSION//./ })
+	major=$version_nums[1]
+	minor=$version_nums[2]
+	revision=$version_nums[3]
+	#sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+	#sudo apt-get -y update
+	sudo apt-get -y install xz-utils
+	if [ $major -lt 4 ] && [ $minor -lt 8 ];
+	then
+		sudo apt-get -y install libstdc++6
+		wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-14.04.tar.xz -O $LLVM_ARCHIVE_PATH
+	else
+		sudo apt-get -y install clang clang++
+		wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-16.04.tar.xz -O $LLVM_ARCHIVE_PATH
+	fi
 	mkdir -p $CLANG_PREFIX
-	tar xf $LLVM_ARCHIVE_PATH -C $CLANG_PREFIX --strip-components 1
+	tar xf "$LLVM_ARCHIVE_PATH" -C "$CLANG_PREFIX" --strip-components 1
 elif [ "$GCC_VERSION" ]
 then
 	# get and use GCC version that we desire
@@ -55,3 +99,5 @@ else
 	export CC=cc
 	export CXX=c++
 fi
+
+cd ..
