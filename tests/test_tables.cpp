@@ -440,7 +440,7 @@ TEST_CASE("tables/function variables", "Check if tables and function calls work 
 	int breakit = 50;
 	lua.get<sol::table>("os").set_function("fun",
 		[&breakit]() {
-			INFO("stateful lambda()");
+			INFO("stateful lambda() with breakit:" << breakit);
 			return "test";
 		});
 	REQUIRE_NOTHROW(run_script(lua));

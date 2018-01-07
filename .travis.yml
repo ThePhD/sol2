@@ -24,7 +24,7 @@ sudo: required
 language: cpp
 
 git:
-  depth: 5
+  depth: 2
 
 services:
 - docker
@@ -33,8 +33,8 @@ before_install:
 - sudo apt install -y git
 
 script:
-- sudo docker image build --tag sol2:ci --build-arg "CI=${CI}" --build-arg "LUA_VERSION=${LUA_VERSION}" --build-arg "GCC_VERSION=${GCC_VERSION}" --build-arg "LLVM_VERSION=${LLVM_VERSION}" . 
-- sudo docker run --name "sol2.test" --tty --env "CI=${CI}" --env "LUA_VERSION=${LUA_VERSION}" --env "GCC_VERSION=${GCC_VERSION}" --env "LLVM_VERSION=${LLVM_VERSION}" sol2:ci 
+- sudo docker image pull ThePhD/sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
+- sudo docker run --rm --name "sol2.test" --tty --env "CI=${CI}" --env "LUA_VERSION=${LUA_VERSION}" --env "GCC_VERSION=${GCC_VERSION}" --env "LLVM_VERSION=${LLVM_VERSION}" sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
 - sudo docker rm $(sudo docker ps -a -q)
 - sudo docker rmi $(sudo docker image ls -q)
 
@@ -43,45 +43,62 @@ env:
   - LUA_VERSION=5.3.4
     GCC_VERSION=4.9
     CI=true
+
   - LUA_VERSION=5.3.4
     GCC_VERSION=5
     CI=true
+
   - LUA_VERSION=5.3.4
     GCC_VERSION=6
     CI=true
   - LUA_VERSION=5.3.4
     GCC_VERSION=7
     CI=true
+
     # LLVM 3.6.x -> 5.0.x
-  #- LUA_VERSION=5.3.4
-  #  LLVM_VERSION=3.6.2
-  #  CI=true
-  #- LUA_VERSION=5.3.4
-  #  LLVM_VERSION=3.7.1
-  #  CI=true
-  #- LUA_VERSION=5.3.4
-  #  LLVM_VERSION=3.8.1
-  #  CI=true
-  #- LUA_VERSION=5.3.4
-  #  LLVM_VERSION=3.9.0
-  #  CI=true
-  #- LUA_VERSION=5.3.4
-  #  LLVM_VERSION=4.0.1
-  #  CI=true
-  #- LUA_VERSION=5.3.4
-  #  LLVM_VERSION=5.0.1
-  #  CI=true
+  - LUA_VERSION=5.3.4
+    LLVM_VERSION=3.6.2
+    CI=true
+    ALLOW_FAILURE=true
+
+  - LUA_VERSION=5.3.4
+    LLVM_VERSION=3.7.1
+    CI=true
+    ALLOW_FAILURE=true
+
+  - LUA_VERSION=5.3.4
+    LLVM_VERSION=3.8.1
+    CI=true
+    ALLOW_FAILURE=true
+
+  - LUA_VERSION=5.3.4
+    LLVM_VERSION=3.9.0
+    CI=true
+    ALLOW_FAILURE=true
+
+  - LUA_VERSION=5.3.4
+    LLVM_VERSION=4.0.1
+    CI=true
+    ALLOW_FAILURE=true
+
+  - LUA_VERSION=5.3.4
+    LLVM_VERSION=5.0.1
+    CI=true
+    ALLOW_FAILURE=true
+
     # Lua Versions 5.2.4, 5.1.5, and maybe LuaJIT (as well as x86)
   - LUA_VERSION=5.2.4
     GCC_VERSION=7
     CI=true
+    
   - LUA_VERSION=5.1.5
     GCC_VERSION=7
     CI=true
 
 matrix:
   fast_finish: true
-
+  allow_failures:
+    - env: ALLOW_FAILURE=true
 
 notifications:
   webhooks:

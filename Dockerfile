@@ -22,31 +22,44 @@
 
 # Start from the ubuntu:xenial image
 FROM ubuntu:xenial
-# We want our working directory to be the toplevel
-WORKDIR /
-# Everything from our current directory (repo toplevel in travis-ci)
-# should be copied into our container at the top-level sol2 directory
-ADD . sol2
-ARG CI=true
-ARG LUA_VERSION=5.3.4
-ARG GCC_VERSION
-ARG LLVM_VERSION
-#VOLUME /sol2
-# Potential environment variables
-ENV LUA_VERSION=${LUA_VERSION} GCC_VERSION=${GCC_VERSION} LLVM_VERSION=${LLVM_VERSION} CI=${CI}
+# owner
+LABEL maintainer="phdofthehouse@gmail.com"
+# We want our working directory to be the home directory
+WORKDIR /root
+
 # RUN is how you write to the image you've pulled down
 # RUN actions are "committed" to the image, and everything will
 # start from the base after all run commands are executed
-RUN apt-get update
-RUN apt-get -y install sudo zsh
-RUN apt-get -y dist-upgrade
-RUN mkdir -p /build-sol2/Debug /build-sol2/Release
-RUN chmod +x /sol2/scripts/preparation.linux.sh /sol2/scripts/run.linux.sh
-RUN ["/usr/bin/env", "zsh", "-e", "/sol2/scripts/preparation.linux.sh"]
+RUN apt-get update && apt-get install -y \
+    zsh
+
+# Scripts should be added directly to the docker image to get us started
+# We can mount the whole sol2 directory later as a volume
+ADD scripts/ /root/sol2-scripts
+
+RUN mkdir -p /root/build-sol2/Debug /root/build-sol2/Release
+RUN chmod +x /root/sol2-scripts/preparation.linux.sh /root/sol2-scripts/run.linux.sh
+
+VOLUME /root/sol2
+#ADD . /root/sol2
+
+# # Above this is more or less static parts: the rest is non-static
+# # This is ordered like this so making multiple of these
+# # containers is more or less identical up to this point
+# Command line arguments, with default values
+ARG CI=true
+ARG GCC_VERSION=7
+ARG LLVM_VERSION
+
+# Potential environment variables
+ENV GCC_VERSION=${GCC_VERSION} LLVM_VERSION=${LLVM_VERSION} CI=${CI} SOL2_DIR=/root/sol2
+
+RUN ["/usr/bin/env", "zsh", "-e", "/root/sol2-scripts/preparation.linux.sh"]
+
 # CMD/ENTRYPOINT is different from RUN
 # these are done on a per-instantiation and essentially describe
 # the DEFAULT behavior of this container when its started, not what state it
 # gets "saved" in...
 # it only runs the last CMD/ENTRYPOINT as the default behavior:
 # multiple CMDs will not be respected
-ENTRYPOINT ["/usr/bin/env", "zsh", "-x", "-e", "/sol2/scripts/run.linux.sh"]
+ENTRYPOINT ["/usr/bin/env", "zsh", "-x", "-e", "/root/sol2-scripts/run.linux.sh"]
