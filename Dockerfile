@@ -23,7 +23,8 @@
 # Start from the ubuntu:xenial image
 FROM ubuntu:xenial
 # owner
-LABEL maintainer="phdofthehouse@gmail.com"
+LABEL author="ThePhD <phdofthehouse@gmail.com>"
+LABEL maintainer="ThePhD <phdofthehouse@gmail.com>"
 # We want our working directory to be the home directory
 WORKDIR /root
 

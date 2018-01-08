@@ -49,16 +49,16 @@ then
 	download_version=16.04
 	#sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 	#sudo apt-get -y update
-	if [ $major -le 3 ]
+	if [ ${major} -le 3 ]
 	then
-		if [ $minor -le 8 ] && [ $minor -ge 5 ];
+		if [ ${major} -eq 3 ] && [ ${minor} -le 8 ] && [ ${minor} -ge 5 ];
 		then
 			download_llvm=false
 			download_version=16.04
 			apt-get -y install clang-3.${minor}
 			export CC=clang-3.${minor}
 			export CXX=clang++-3.${minor}
-		elif [ $minor -le 4 ]
+		elif [ ${minor} -le 4 ]
 		then
 			download_llvm=true
 			download_version=14.04
@@ -67,7 +67,7 @@ then
 	if [ ${download_llvm} = true ]
 	then
 		export LLVM_ARCHIVE_PATH=${build_dir}/clang+llvm.tar.xz
-		export CLANG_PREFIX=${build_dir}/clang-$LLVM_VERSION
+		export CLANG_PREFIX=${build_dir}/clang-${LLVM_VERSION}
 		export PATH=$CLANG_PREFIX/bin:$PATH
 		export LD_LIBRARY_PATH=$CLANG_PREFIX/lib:$LD_LIBRARY_PATH
 		echo "export LLVM_ARCHIVE_PATH=${build_dir}/clang+llvm.tar.xz\nexport CLANG_PREFIX=${build_dir}/clang-$LLVM_VERSION\nexport PATH=$CLANG_PREFIX/bin:$PATH\nexport LD_LIBRARY_PATH=$CLANG_PREFIX/lib:$LD_LIBRARY_PATH\n" >> "sol2.compiler.vars"

@@ -34,7 +34,7 @@ before_install:
 
 script:
 - sudo docker image pull ThePhD/sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
-- sudo docker run --rm --name "sol2.test" --tty --env "CI=${CI}" --env "LUA_VERSION=${LUA_VERSION}" --env "GCC_VERSION=${GCC_VERSION}" --env "LLVM_VERSION=${LLVM_VERSION}" sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
+- sudo docker run --rm --tty --name "sol2.test" --env "CI=${CI}" --env "LUA_VERSION=${LUA_VERSION}" --env "GCC_VERSION=${GCC_VERSION}" --env "LLVM_VERSION=${LLVM_VERSION}" sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
 - sudo docker rm $(sudo docker ps -a -q)
 - sudo docker rmi $(sudo docker image ls -q)
 
@@ -72,7 +72,7 @@ env:
     ALLOW_FAILURE=true
 
   - LUA_VERSION=5.3.4
-    LLVM_VERSION=3.9.0
+    LLVM_VERSION=3.9.1
     CI=true
     ALLOW_FAILURE=true
 
