@@ -23,7 +23,7 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 echo -en "travis_fold:start:build_preparation.1\r"
-	if [ -z "${SOL2_DIR}"]
+	if [ -z "${SOL2_DIR}" ]
 	then
 		if [ ${CI} = true ]
 		then
@@ -33,7 +33,7 @@ echo -en "travis_fold:start:build_preparation.1\r"
 		fi
 	fi
 
-	if [ -z "${LUA_VERSION}"]
+	if [ -z "${LUA_VERSION}" ]
 	then
 		export LUA_VERSION=5.3.4
 	fi
