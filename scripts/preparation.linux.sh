@@ -80,6 +80,7 @@ then
 		# use || true to ignore potential failures
 		ln -s "clang-${major}.${minor}" "${CLANG_PREFIX}/bin/clang-${major}.${minor}" || true
 		ln -s "clang-${major}.${minor}" "${CLANG_PREFIX}/bin/clang++-${major}.${minor}" || true
+		rm -f "${LLVM_ARCHIVE_PATH}"
 		export CC=clang-${major}.${minor}
 		export CXX=clang++-${major}.${minor}
 	fi
@@ -100,6 +101,8 @@ else
 	export CC=cc
 	export CXX=c++
 fi
+
+apt-get -y autoremove
 
 # show the tool and compiler versions we're using
 echo "=== Compiler and tool variables ==="

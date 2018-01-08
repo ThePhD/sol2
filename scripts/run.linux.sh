@@ -64,13 +64,13 @@ echo build_type_cxx: "${build_type_cxx}"
 
 
 cd Debug
-cmake ${SOL2_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Debug ${build_type_cc} ${build_type_cxx} -DLUA_VERSION="${LUA_VERSION}" -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DTESTS_SINGLE=ON -DCI=ON
+cmake ${SOL2_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Debug ${build_type_cc} ${build_type_cxx} -DLUA_VERSION="${LUA_VERSION}" -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON -DCI=ON
 cmake --build . --config Debug
 ctest --build-config Debug --output-on-failure
 cd ..
 
 cd Release
-cmake ${SOL2_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Release ${build_type_cc} ${build_type_cxx} -DLUA_VERSION="${LUA_VERSION}" -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DTESTS_SINGLE=ON -DCI=ON
+cmake ${SOL2_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Release ${build_type_cc} ${build_type_cxx} -DLUA_VERSION="${LUA_VERSION}" -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON -DCI=ON
 cmake --build . --config Release
 ctest --build-config Release --output-on-failure
 cd ..

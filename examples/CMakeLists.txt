@@ -86,7 +86,7 @@ foreach(example_source_file ${EXAMPLES_SRC})
 	MAKE_EXAMPLE(${example_source_file} FALSE)
 endforeach()
 
-if (EXAMPLES_SINGLE AND SOL2_SINGLE_FOUND)
+if (SOL2_SINGLE_FOUND AND EXAMPLES_SINGLE)
 	foreach(example_source_file ${EXAMPLES_SRC})
 		MAKE_EXAMPLE(${example_source_file} TRUE)
 	endforeach()
