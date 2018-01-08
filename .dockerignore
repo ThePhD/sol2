@@ -24,5 +24,4 @@
 **
 
 # Except the script directory
-!scripts/preparation.*
-!scripts/build.*
+!scripts/preparation*

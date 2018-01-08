@@ -39,7 +39,7 @@ RUN apt-get update && apt-get install -y \
 ADD scripts/ /root/sol2-scripts
 
 RUN mkdir -p /root/build-sol2/Debug /root/build-sol2/Release
-RUN chmod +x /root/sol2-scripts/preparation.linux.sh /root/sol2-scripts/run.linux.sh
+RUN chmod +x /root/sol2-scripts/preparation.linux.sh
 
 VOLUME /root/sol2
 #ADD . /root/sol2

@@ -103,6 +103,8 @@ else
 fi
 
 apt-get -y autoremove
+apt-get -y clean
+apt-get -y autoclean
 
 # show the tool and compiler versions we're using
 echo "=== Compiler and tool variables ==="
