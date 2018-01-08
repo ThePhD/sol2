@@ -22,55 +22,67 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-if [ -z "${SOL2_DIR}"]
-then
-	if [ ${CI} = true ]
+echo -en "travis_fold:start:build_preparation.1\r"
+	if [ -z "${SOL2_DIR}"]
 	then
-		export SOL2_DIR=~/sol2
-	else		
-		export SOL2_DIR=../..
+		if [ ${CI} = true ]
+		then
+			export SOL2_DIR=~/sol2
+		else		
+			export SOL2_DIR=../..
+		fi
 	fi
-fi
 
-if [ -z "${LUA_VERSION}"]
-then
-	export LUA_VERSION=5.3.4
-fi
+	if [ -z "${LUA_VERSION}"]
+	then
+		export LUA_VERSION=5.3.4
+	fi
 
-mkdir -p build-sol2
-cd build-sol2
+	mkdir -p build-sol2
+	cd build-sol2
 
-build_dir=$(pwd)
+	build_dir=$(pwd)
 
-if [ -f "sol2.compiler.vars" ]
-then
-	source ./sol2.compiler.vars
-fi
+	if [ -f "sol2.compiler.vars" ]
+	then
+		source ./sol2.compiler.vars
+	fi
 
-# This script runs the actual project
-mkdir -p Debug Release
+	# This script runs the actual project
+	mkdir -p Debug Release
 
-export build_type_cc=-DCMAKE_C_COMPILER\=${CC}
-export build_type_cxx=-DCMAKE_CXX_COMPILER\=${CXX}
+	export build_type_cc=-DCMAKE_C_COMPILER\=${CC}
+	export build_type_cxx=-DCMAKE_CXX_COMPILER\=${CXX}
+echo -en "travis_fold:end:build_preparation.1\r"
+
 
 # show the tool and compiler versions we're using
-echo "=== Compiler and tool variables ==="
-ninja --version
-cmake --version
-${CC} --version
-${CXX} --version
-echo build_type_cc : "${build_type_cc}"
-echo build_type_cxx: "${build_type_cxx}"
+echo -en "travis_fold:start:build_preparation.2\r"
+	echo "=== Compiler and tool variables ==="
+	ninja --version
+	cmake --version
+	${CC} --version
+	${CXX} --version
+	echo build_type_cc : "${build_type_cc}"
+	echo build_type_cxx: "${build_type_cxx}"
+echo -en "travis_fold:end:build_preparation.2\r"
 
+echo -en "travis_fold:start:build.debug\r"
+	cd Debug
+	cmake ${SOL2_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Debug ${build_type_cc} ${build_type_cxx} -DLUA_VERSION="${LUA_VERSION}" -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON -DCI=ON
+	cmake --build . --config Debug
+echo -en "travis_fold:end:build.debug\r"
+echo -en "travis_fold:start:test.debug\r"
+	ctest --build-config Debug --output-on-failure
+	cd ..
+echo -en "travis_fold:end:test.debug\r"
 
-cd Debug
-cmake ${SOL2_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Debug ${build_type_cc} ${build_type_cxx} -DLUA_VERSION="${LUA_VERSION}" -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON -DCI=ON
-cmake --build . --config Debug
-ctest --build-config Debug --output-on-failure
-cd ..
-
-cd Release
-cmake ${SOL2_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Release ${build_type_cc} ${build_type_cxx} -DLUA_VERSION="${LUA_VERSION}" -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON -DCI=ON
-cmake --build . --config Release
-ctest --build-config Release --output-on-failure
-cd ..
+echo "travis_fold:start:build.release\r"
+	cd Release
+	cmake ${SOL2_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Release ${build_type_cc} ${build_type_cxx} -DLUA_VERSION="${LUA_VERSION}" -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON -DCI=ON
+	cmake --build . --config Release
+echo -en "travis_fold:end:build.release\r"
+echo -en "travis_fold:start:test.release\r"
+	ctest --build-config Release --output-on-failure
+	cd ..
+echo -en "travis_fold:end:test.release\r"

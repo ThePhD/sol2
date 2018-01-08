@@ -63,4 +63,4 @@ RUN ["/usr/bin/env", "zsh", "-e", "/root/sol2-scripts/preparation.linux.sh"]
 # gets "saved" in...
 # it only runs the last CMD/ENTRYPOINT as the default behavior:
 # multiple CMDs will not be respected
-ENTRYPOINT ["/usr/bin/env", "zsh", "-x", "-e", "/root/sol2-scripts/run.linux.sh"]
+ENTRYPOINT ["/usr/bin/env", "zsh", "-e", "/root/sol2-scripts/run.linux.sh"]

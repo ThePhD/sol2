@@ -34,9 +34,8 @@ before_install:
 
 script:
 - export SOL2_DIR=${TRAVIS_BUILD_DIR}
-- sudo docker image pull ThePhD/sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
+- sudo docker image pull thephd/sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
 - sudo docker run --rm --interactive --tty --name "sol2.test" -v "${SOL2_DIR}:/root/sol2" --env "CI=${CI}" --env "LUA_VERSION=${LUA_VERSION}" --env "GCC_VERSION=${GCC_VERSION}" --env "LLVM_VERSION=${LLVM_VERSION}" thephd/sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
-- sudo docker rm $(sudo docker ps -a -q)
 - sudo docker rmi $(sudo docker image ls -q)
 
 matrix:
