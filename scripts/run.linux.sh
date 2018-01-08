@@ -69,7 +69,7 @@ echo -en "travis_fold:end:build_preparation.2\r"
 
 echo -en "travis_fold:start:build.debug\r"
 	cd Debug
-	cmake ${SOL2_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Debug ${build_type_cc} ${build_type_cxx} -DLUA_VERSION="${LUA_VERSION}" -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON -DCI=ON
+	cmake ${SOL2_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Debug ${build_type_cc} ${build_type_cxx} -DLUA_VERSION="${LUA_VERSION}" -DCI=ON -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON
 	cmake --build . --config Debug
 echo -en "travis_fold:end:build.debug\r"
 echo -en "travis_fold:start:test.debug\r"
@@ -79,7 +79,7 @@ echo -en "travis_fold:end:test.debug\r"
 
 echo "travis_fold:start:build.release\r"
 	cd Release
-	cmake ${SOL2_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Release ${build_type_cc} ${build_type_cxx} -DLUA_VERSION="${LUA_VERSION}" -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON -DCI=ON
+	cmake ${SOL2_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Release ${build_type_cc} ${build_type_cxx} -DLUA_VERSION="${LUA_VERSION}" -DCI=ON -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON
 	cmake --build . --config Release
 echo -en "travis_fold:end:build.release\r"
 echo -en "travis_fold:start:test.release\r"
