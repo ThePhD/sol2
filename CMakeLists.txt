@@ -60,12 +60,15 @@ if (MSVC)
 	endif()
 else()
 	add_compile_options(-Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
+	#if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	#	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lc++")
+	#	add_compile_options("$<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-stdlib=libc++>")
+	#endif()
 endif()
 
 if (CI)
 	if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 		include_directories("$ENV{CLANG_PREFIX}/include/c++/v1")
-		#add_compile_options(-lc++)
 	endif()
 endif()
 
@@ -164,16 +167,16 @@ set(SOL2_SINGLE_HEADER_FOUND FALSE)
 if (PYTHONINTERP_FOUND)
 	if (SINGLE)
 		set(SOL2_SINGLE_FOUND TRUE)
-		add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/include/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/include/single/sol/sol_forward.hpp"
-			COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/single.py" --output "${CMAKE_BINARY_DIR}/include/single/sol/sol.hpp"
+		add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol_forward.hpp"
+			COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/single.py" --output "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol.hpp"
 			DEPENDS ${SOL2_HEADER_SOURCES})
 		add_custom_target(sol2_single_header 
-			DEPENDS "${CMAKE_BINARY_DIR}/include/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/include/single/sol/sol_forward.hpp")
+			DEPENDS "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol_forward.hpp")
 		set_target_properties(sol2_single_header
 			PROPERTIES
-			INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/include/single/sol"
-			INTERFACE_INCLUDE_DIRECOTIRES "${CMAKE_BINARY_DIR}/include/single/sol")
-		install(FILES "${CMAKE_BINARY_DIR}/include/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/include/single/sol/sol_forward.hpp" 
+			INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol"
+			INTERFACE_INCLUDE_DIRECOTIRES "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol")
+		install(FILES "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/include/${CMAKE_CFG_INTDIR}/single/sol/sol_forward.hpp" 
 			DESTINATION include/sol)
 	endif()
 	if (DOCS)

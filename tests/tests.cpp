@@ -589,6 +589,8 @@ TEST_CASE("proxy/proper-pushing", "allow proxies to reference other proxies and 
 	REQUIRE(b);
 }
 
+#if !(defined(__clang__) && defined(SOL2_CI))
+
 TEST_CASE("proxy/equality", "check to make sure equality tests work") {
 	sol::state lua;
 	REQUIRE((lua["a"] == sol::lua_nil));
@@ -596,13 +598,26 @@ TEST_CASE("proxy/equality", "check to make sure equality tests work") {
 	REQUIRE_FALSE((lua["a"] == 0));
 	REQUIRE_FALSE((lua["a"] == 2));
 
+	REQUIRE_FALSE((lua["a"] != sol::lua_nil));
+	REQUIRE((lua["a"] != nullptr));
+	REQUIRE((lua["a"] != 0));
+	REQUIRE((lua["a"] != 2));
+
 	lua["a"] = 2;
 
-	REQUIRE_FALSE((lua["a"] == sol::lua_nil)); //0
-	REQUIRE_FALSE((lua["a"] == nullptr));	 //0
-	REQUIRE_FALSE((lua["a"] == 0));		   //0
-	REQUIRE((lua["a"] == 2));			   //1
+	REQUIRE_FALSE((lua["a"] == sol::lua_nil));
+	REQUIRE_FALSE((lua["a"] == nullptr));
+	REQUIRE_FALSE((lua["a"] == 0));
+	REQUIRE((lua["a"] == 2));
+
+	REQUIRE((lua["a"] != sol::lua_nil));
+	REQUIRE((lua["a"] != nullptr));
+	REQUIRE((lua["a"] != 0));
+	REQUIRE_FALSE((lua["a"] != 2));
+
 }
+
+#endif // Clang and Continuous Integration problems...
 
 TEST_CASE("compilation/const regression", "make sure constness in tables is respected all the way down") {
 	struct State {
