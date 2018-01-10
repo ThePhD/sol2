@@ -50,12 +50,9 @@ function (MAKE_EXAMPLE example_source_file is_single)
 		PROPERTIES
 		OUTPUT_NAME "${example_output_name}")
 	if (is_single)
-		target_include_directories(${example_name} 
-			PRIVATE "${CMAKE_BINARY_DIR}/include/single/sol" "${LUA_INCLUDE_DIR}")
-		add_dependencies(${example_name} sol2_single_header)
+		target_link_libraries(${example_name} sol2_single)
 	else()
-		target_include_directories(${example_name} 
-			PRIVATE "${CMAKE_SOURCE_DIR}" "${LUA_INCLUDE_DIR}")
+		target_link_libraries(${example_name} sol2)
 	endif()
 	target_compile_features(${example_name} 
 		PRIVATE ${CXX_FEATURES})

@@ -39,16 +39,18 @@ function(CREATE_TEST test_target_name test_name is_single)
 		PROPERTIES
 		OUTPUT_NAME ${test_name})
 	if (is_single)
-		add_dependencies(${test_target_name} sol2_single_header)
-		target_include_directories(${test_target_name}
-			PRIVATE "${CMAKE_BINARY_DIR}/include/single/sol" "${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/vendor/Catch/include/")
+		target_link_libraries(${test_target_name} sol2_single)
 	else()
-		target_include_directories(${test_target_name}
-			PRIVATE "${CMAKE_SOURCE_DIR}" "${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/vendor/Catch/include/")
+		target_link_libraries(${test_target_name} sol2)
 	endif()
+	
+	target_include_directories(${test_target_name}
+		PRIVATE "${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/vendor/Catch/include/")
 	if (MSVC)
-		target_compile_options(${test_target_name} 
-			PRIVATE /bigobj)
+		if (NOT CMAKE_COMPILER_ID MATCHES "Clang")
+			target_compile_options(${test_target_name} 
+				PRIVATE /bigobj)
+		endif()
 	else()
 		target_compile_options(${test_target_name} 
 			PRIVATE -Wno-noexcept-type -ftemplate-depth=1024 -pthread)

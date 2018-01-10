@@ -49,7 +49,7 @@ VOLUME /root/sol2
 # # containers is more or less identical up to this point
 # Command line arguments, with default values
 ARG CI=true
-ARG GCC_VERSION=7
+ARG GCC_VERSION
 ARG LLVM_VERSION
 
 # Potential environment variables

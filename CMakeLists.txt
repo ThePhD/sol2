@@ -55,7 +55,7 @@ if (MSVC)
 	add_definitions(/DUNICODE /D_UNICODE /D_SILENCE_CXX17_UNCAUGHT_EXCEPTION_DEPRECATION_WARNING /D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
 	# Warning level, exceptions
 	add_compile_options(/W4 /EHsc)
-	if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 		add_compile_options(/MP)
 	endif()
 else()
@@ -67,7 +67,7 @@ else()
 endif()
 
 if (CI)
-	if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 		include_directories("$ENV{CLANG_PREFIX}/include/c++/v1")
 	endif()
 endif()
@@ -103,17 +103,14 @@ option(CI "Enable build of tests" OFF)
 option(TESTS "Enable build of tests" OFF)
 option(EXAMPLES "Enable build of examples" OFF)
 option(SINGLE "Enable build of single header files" ON)
-# Single tests will only be turned on if both SINGLE and TESTS are defined
+option(DOCS "Enable build of documentation" OFF)
+# Single tests and examples tests will only be turned on if both SINGLE and TESTS are defined
 CMAKE_DEPENDENT_OPTION(TESTS_SINGLE "Enable build of tests using the generated single headers" ON
 	"SINGLE;TESTS" OFF)
 CMAKE_DEPENDENT_OPTION(EXAMPLES_SINGLE "Enable build of examples using the generated single headers" OFF
 	"SINGLE;EXAMPLES" OFF)
-if (TESTS AND EXAMPLES)
-	option(TESTS_EXAMPLES "Enable build of examples as tests" ON)
-else()
-	option(TESTS_EXAMPLES "Enable build of examples as tests" OFF)
-endif()
-option(DOCS "Enable build of documentation" OFF)
+CMAKE_DEPENDENT_OPTION(TESTS_EXAMPLES "Enable build of examples as tests" ON
+	"TESTS;EXAMPLES" OFF)
 
 
 # # # sol2 Library
@@ -146,7 +143,7 @@ install(EXPORT sol2
 install(DIRECTORY include/sol2
 	DESTINATION include)
 
-install( FILES
+install(FILES
 	"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config.cmake"
 	"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config-version.cmake"
 	DESTINATION lib/cmake/sol2)
@@ -172,12 +169,13 @@ if (PYTHONINTERP_FOUND)
 			DEPENDS ${SOL2_HEADER_SOURCES})
 		add_custom_target(sol2_single_header 
 			DEPENDS "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol_forward.hpp")
-		set_target_properties(sol2_single_header
+		add_library(sol2_single INTERFACE)
+		set_target_properties(sol2_single
 			PROPERTIES
-			INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol"
-			INTERFACE_INCLUDE_DIRECOTIRES "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol")
+			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol")
+		add_dependencies(sol2_single sol2_single_header)
 		install(FILES "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/include/${CMAKE_CFG_INTDIR}/single/sol/sol_forward.hpp" 
-			DESTINATION include/sol)
+			DESTINATION include/sol/single/sol)
 	endif()
 	if (DOCS)
 		set(SOL2_DOCS_FOUND TRUE)

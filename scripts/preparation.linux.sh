@@ -47,18 +47,16 @@ then
 	revision=$version_nums[3]
 	download_llvm=true
 	download_version=16.04
+	apt_version=${major}.${minor}
 	#sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 	#sudo apt-get -y update
-	if [ ${major} -le 3 ]
+	if [ ${major} -le 5 ] && [ ${major} -ge 4 ];
 	then
-		if [ ${major} -eq 3 ] && [ ${minor} -le 8 ] && [ ${minor} -ge 5 ];
-		then
-			download_llvm=false
-			download_version=16.04
-			apt-get -y install clang-3.${minor}
-			export CC=clang-3.${minor}
-			export CXX=clang++-3.${minor}
-		elif [ ${minor} -le 4 ]
+		download_llvm=false
+	elif [ ${major} -eq 3 ]
+	then
+		download_llvm=false
+		if [ ${minor} -lt 5 ]
 		then
 			download_llvm=true
 			download_version=14.04
@@ -83,6 +81,10 @@ then
 		rm -f "${LLVM_ARCHIVE_PATH}"
 		export CC=clang-${major}.${minor}
 		export CXX=clang++-${major}.${minor}
+	else
+		apt-get -y install clang-${apt_version}
+		export CC=clang-${apt_version}
+		export CXX=clang++-${apt_version}
 	fi
 elif [ "${GCC_VERSION}" ]
 then

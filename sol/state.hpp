@@ -65,13 +65,13 @@ namespace sol {
 		}
 	} // namespace detail
 
-	class state : private std::unique_ptr<lua_State, void (*)(lua_State*)>, public state_view {
+	class state : private std::unique_ptr<lua_State, detail::state_deleter>, public state_view {
 	private:
-		typedef std::unique_ptr<lua_State, void (*)(lua_State*)> unique_base;
+		typedef std::unique_ptr<lua_State, detail::state_deleter> unique_base;
 
 	public:
 		state(lua_CFunction panic = detail::default_at_panic)
-		: unique_base(luaL_newstate(), lua_close), state_view(unique_base::get()) {
+		: unique_base(luaL_newstate()), state_view(unique_base::get()) {
 			set_panic(panic);
 			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
 			protected_function::set_default_handler(object(lua_state(), in_place, f));
@@ -80,7 +80,7 @@ namespace sol {
 		}
 
 		state(lua_CFunction panic, lua_Alloc alfunc, void* alpointer = nullptr)
-		: unique_base(lua_newstate(alfunc, alpointer), lua_close), state_view(unique_base::get()) {
+		: unique_base(lua_newstate(alfunc, alpointer)), state_view(unique_base::get()) {
 			set_panic(panic);
 			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
 			protected_function::set_default_handler(object(lua_state(), in_place, f));

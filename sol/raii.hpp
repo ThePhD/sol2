@@ -64,6 +64,12 @@ namespace sol {
 			}
 		};
 
+		struct state_deleter {
+			void operator()(lua_State* L) const {
+				lua_close(L);
+			}
+		};
+
 		template <typename T, typename Dx, typename... Args>
 		inline std::unique_ptr<T, Dx> make_unique_deleter(Args&&... args) {
 			return std::unique_ptr<T, Dx>(new T(std::forward<Args>(args)...));
