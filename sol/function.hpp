@@ -94,7 +94,7 @@ namespace sol {
 			template <typename... FxArgs>
 			static std::function<Signature> get_std_func(types<void>, types<FxArgs...>, lua_State* L, int index) {
 				unsafe_function f(L, index);
-				auto fx = [f = std::move(f), L, index](FxArgs&&... args) -> void {
+				auto fx = [f = std::move(f)](FxArgs&&... args) -> void {
 					f(std::forward<FxArgs>(args)...);
 				};
 				return std::move(fx);
