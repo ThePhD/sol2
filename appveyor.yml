@@ -158,6 +158,6 @@ notifications:
 - provider: Webhook
   url: https://webhooks.gitter.im/e/1af10e654a918bef7f1e
   method: POST
-  on_build_success: false
-  on_build_failure: false
+  on_build_success: true
+  on_build_failure: true
   on_build_status_changed: true
