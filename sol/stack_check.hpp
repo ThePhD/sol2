@@ -455,7 +455,7 @@ namespace stack {
 				lua_rawget(L, metatableindex);
 				if (type_of(L, -1) != type::lua_nil) {
 					void* basecastdata = lua_touserdata(L, -1);
-					detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
+					detail::inheritance_check_function ic = reinterpret_cast<detail::inheritance_check_function>(basecastdata);
 					success = ic(detail::id_for<T>::value);
 				}
 			}

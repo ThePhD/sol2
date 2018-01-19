@@ -23,6 +23,12 @@
 # import necessary standard modules
 include(ExternalProject)
 
+if(lua_build_included)
+  return()
+endif(lua_build_included)
+set(lua_build_included true)
+
+
 
 # Latest versions for specific sub-versions of Lua
 set(LUA_VANILLA_5.1_LATEST_VERSION 5.1.5)
@@ -201,17 +207,10 @@ else()
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
 endif()
 
-if (BUILD_LUA_AS_DLL)
-	set(LUA_VANILLA_LUAC_SOURCES ${LUA_VANILLA_LUAC_SOURCES} ${LUA_VANILLA_LIB_SOURCES})
-endif()
-
 set(LUA_VANILLA_SOURCE_DIR "${LUA_BUILD_TOPLEVEL}/src")
 prepend(LUA_VANILLA_LIB_SOURCES "${LUA_VANILLA_SOURCE_DIR}/" ${LUA_VANILLA_LIB_SOURCES})
 prepend(LUA_VANILLA_LUA_SOURCES "${LUA_VANILLA_SOURCE_DIR}/" ${LUA_VANILLA_LUA_SOURCES})
 prepend(LUA_VANILLA_LUAC_SOURCES "${LUA_VANILLA_SOURCE_DIR}/" ${LUA_VANILLA_LUAC_SOURCES})
-STRING(REGEX REPLACE "\\.c" ${LUA_BUILD_OBJECT_FILE_SUFFIX} LUA_VANILLA_LIB_OBJECTS ${LUA_VANILLA_LIB_SOURCES})
-STRING(REGEX REPLACE "\\.c" ${LUA_BUILD_OBJECT_FILE_SUFFIX} LUA_VANILLA_LUA_OBJECTS ${LUA_VANILLA_LUA_SOURCES})
-STRING(REGEX REPLACE "\\.c" ${LUA_BUILD_OBJECT_FILE_SUFFIX} LUA_VANILLA_LUAC_OBJECTS ${LUA_VANILLA_LUAC_SOURCES})
 
 # download, just for the sake of download + extract
 # have to use 2 different commands just to have an empty command
@@ -260,7 +259,7 @@ extern \"C\" {
 		# after download, before build
 		DEPENDEES download
 		DEPENDERS build
-		BYPRODUCTS "${LUA_VANILLA_TARGET_LUA_HPP}"
+		BYPRODUCTS "${LUA_VANILLA_DESTINATION_LUA_HPP}"
 		COMMENT "Moving \"${LUA_VANILLA_SOURCE_LUA_HPP}\" to \"${LUA_VANILLA_DESTINATION_LUA_HPP}\"..."
 		COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_VANILLA_SOURCE_LUA_HPP}" "${LUA_VANILLA_DESTINATION_LUA_HPP}")
 endif()
@@ -288,9 +287,6 @@ set_target_properties(${liblua}
 	C_EXTENSIONS TRUE
 	POSITION_INDEPENDENT_CODE TRUE
 	INCLUDE_DIRECTORIES ${LUA_VANILLA_SOURCE_DIR}
-	RUNTIME_OUTPUT_DIRECTORY ${LUA_BIN_DIR}
-	LIBRARY_OUTPUT_DIRECTORY ${LUA_BIN_DIR}
-	ARCHIVE_OUTPUT_DIRECTORY ${LUA_LIB_DIR}
 	OUTPUT_NAME ${LUA_BUILD_LIBNAME}
 	RUNTIME_OUTPUT_NAME ${LUA_BUILD_LIBNAME}
 	LIBRARY_OUTPUT_NAME ${LUA_BUILD_LIBNAME}
@@ -363,6 +359,10 @@ endif()
 
 # LuaC Compiler
 add_executable(${luacompiler} ${LUA_VANILLA_LUAC_SOURCES})
+if (BUILD_LUA_AS_DLL)
+	# TODO: figure out how to make DLL internal symbols for lua public so we don't have to do this
+	target_sources(${luacompiler} PRIVATE ${LUA_VANILLA_LIB_SOURCES})
+endif()
 set_target_properties(${luacompiler}
 	PROPERTIES
 	LANGUAGE C

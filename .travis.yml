@@ -47,69 +47,111 @@ matrix:
     - env:
       - LUA_VERSION=5.3.4
         GCC_VERSION=4.9
+        platform=x64
         CI=true
 
     - env:
       - LUA_VERSION=5.3.4
         GCC_VERSION=5
         CI=true
+        platform=x64
 
     - env:
       - LUA_VERSION=5.3.4
         GCC_VERSION=6
+        platform=x64
         CI=true
 
     - env:
       - LUA_VERSION=5.3.4
         GCC_VERSION=7
+        platform=x64
         CI=true
 
     # LLVM 3.6.x -> 5.0.x
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=3.6.2
+        platform=x64
         CI=true
         ALLOW_FAILURE=true
 
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=3.7.1
+        platform=x64
         CI=true
         ALLOW_FAILURE=true
 
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=3.8.1
+        platform=x64
         CI=true
         ALLOW_FAILURE=true
 
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=3.9.1
+        platform=x64
         CI=true
         ALLOW_FAILURE=true
 
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=4.0.1
+        platform=x64
         CI=true
         ALLOW_FAILURE=true
 
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=5.0.1
+        platform=x64
         CI=true
         ALLOW_FAILURE=true
 
-    # Lua Versions 5.2.4, 5.1.5, and maybe LuaJIT (as well as x86)
+    # Lua Versions 5.2.4, 5.1.5, and LuaJIT (as well as x86)
     - env:
       - LUA_VERSION=5.2.4
         GCC_VERSION=7
+        platform=x64
         CI=true
         
     - env:
       - LUA_VERSION=5.1.5
         GCC_VERSION=7
+        platform=x64
+        CI=true
+        
+    - env:
+      - LUA_VERSION=luajit-2.0.4
+        GCC_VERSION=7
+        platform=x64
+        CI=true
+        
+    - env:
+      - LUA_VERSION=luajit-2.0.5
+        GCC_VERSION=7
+        platform=x64
+        CI=true
+        
+    - env:
+      - LUA_VERSION=luajit-2.1.0-beta3
+        GCC_VERSION=7
+        platform=x64
+        CI=true
+        
+    - env:
+      - LUA_VERSION=luajit-2.0.5
+        GCC_VERSION=7
+        platform=x86
+        CI=true
+
+    - env:
+      - LUA_VERSION=luajit-2.1.0-beta3
+        GCC_VERSION=7
+        platform=x86
         CI=true
 
 notifications:

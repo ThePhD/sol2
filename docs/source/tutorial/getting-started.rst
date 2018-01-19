@@ -36,7 +36,7 @@ Or using your favorite IDE / tool after setting up your include paths and librar
 
 .. note::
 	
-	If you get an avalanche of errors (particularly referring to ``auto``), you may not have enabled C++14 / C++17 mode for your compiler. Add one of ``std=c++14``, ``std=c++1z`` OR ``std=c++1y`` to your compiler options. By default, this is always-on for VC++ compilers in Visual Studio and friends, but g++ and clang++ require a flag (unless you're on `GCC 6.0`_).
+	If you get an avalanche of errors (particularly referring to ``auto``), you may not have enabled C++14 / C++17 mode for your compiler. Add one of ``std=c++14``, ``std=c++1z`` OR ``std=c++1y`` to your compiler options. By default, this is always-on for VC++ compilers in Visual Studio and friends, but g++ and clang++ require a flag (unless you're on `GCC 6.0`_ or better).
 
 If this works, you're ready to start! The first line creates the ``lua_State`` and will hold onto it for the duration of the scope its declared in (e.g., from the opening ``{`` to the closing ``}``). It will automatically close / cleanup that lua state when it gets destructed.
 

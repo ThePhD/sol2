@@ -26,11 +26,6 @@ file(GLOB EXAMPLES_SRC *.cpp tutorials/quick_n_dirty/*.cpp)
 source_group(examples FILES ${EXAMPLES_SRC})
 
 function (MAKE_EXAMPLE example_source_file is_single)
-	if (is_single)
-		set(header_files ${SOL2_SINGLE_HEADER_SOURCES})
-	else()
-		set(header_files ${SOL2_HEADER_SOURCES})
-	endif()
 	get_filename_component(example_name ${example_source_file} NAME_WE)
 	file(RELATIVE_PATH example_source_file_relative ${CMAKE_SOURCE_DIR} ${example_source_file})
 	get_filename_component(example_output_relative_dir ${example_source_file_relative} DIRECTORY)
@@ -45,7 +40,7 @@ function (MAKE_EXAMPLE example_source_file is_single)
 		set(example_output_name "${example_output_relative_dir_name}.${example_name}")
 	endif()
 
-	add_executable(${example_name} ${example_source_file} ${header_files})
+	add_executable(${example_name} ${example_source_file})
 	set_target_properties(${example_name} 
 		PROPERTIES
 		OUTPUT_NAME "${example_output_name}")

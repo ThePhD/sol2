@@ -619,7 +619,7 @@ namespace sol {
 #ifdef SOL_NO_EXCEPTIONS
 							 // we can't abort here
 							 // because there's no constexpr abort
-							 : *(T*)nullptr;
+							 : *static_cast<T*>(nullptr);
 #else
 							 : (throw bad_optional_access("bad optional access"), contained_val());
 #endif
@@ -628,7 +628,7 @@ namespace sol {
 		OPTIONAL_MUTABLE_CONSTEXPR T& value() & {
 			return initialized() ? contained_val()
 #ifdef SOL_NO_EXCEPTIONS
-							 : *(T*)nullptr;
+							 : *static_cast<T*>(nullptr);
 #else
 							 : (throw bad_optional_access("bad optional access"), contained_val());
 #endif
@@ -639,7 +639,7 @@ namespace sol {
 #ifdef SOL_NO_EXCEPTIONS
 							 // we can't abort here
 							 // because there's no constexpr abort
-							 : std::move(*(T*)nullptr);
+							 : std::move(*static_cast<T*>(nullptr));
 #else
 							 : (throw bad_optional_access("bad optional access"), contained_val());
 #endif
@@ -666,7 +666,7 @@ namespace sol {
 #ifdef SOL_NO_EXCEPTIONS
 							 // we can't abort here
 							 // because there's no constexpr abort
-							 : *(T*)nullptr;
+							 : *static_cast<T*>(nullptr);
 #else
 							 : (throw bad_optional_access("bad optional access"), contained_val());
 #endif
@@ -677,7 +677,7 @@ namespace sol {
 #ifdef SOL_NO_EXCEPTIONS
 							 // we can abort here
 							 // but the others are constexpr, so we can't...
-							 : (std::abort(), *(T*)nullptr);
+							 : (std::abort(), *static_cast<T*>(nullptr));
 #else
 							 : (throw bad_optional_access("bad optional access"), contained_val());
 #endif

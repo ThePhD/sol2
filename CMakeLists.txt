@@ -60,16 +60,15 @@ if (MSVC)
 	endif()
 else()
 	add_compile_options(-Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
-	#if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-	#	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lc++")
-	#	add_compile_options("$<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-stdlib=libc++>")
-	#endif()
 endif()
 
 if (CI)
-	if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-		include_directories("$ENV{CLANG_PREFIX}/include/c++/v1")
-	endif()
+	#if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	#	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lc++")
+	#	add_compile_options("$<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-stdlib=libc++>")
+	#	LIST(APPEND CMAKE_LIBRARY_PATH_FLAG "$$ENV{CLANG_PREFIX}/lib")
+	#	include_directories("$ENV{CLANG_PREFIX}/include/c++/v1")
+	#endif()
 endif()
 
 # # # General project output locations
@@ -110,7 +109,7 @@ CMAKE_DEPENDENT_OPTION(TESTS_SINGLE "Enable build of tests using the generated s
 CMAKE_DEPENDENT_OPTION(EXAMPLES_SINGLE "Enable build of examples using the generated single headers" OFF
 	"SINGLE;EXAMPLES" OFF)
 CMAKE_DEPENDENT_OPTION(TESTS_EXAMPLES "Enable build of examples as tests" ON
-	"TESTS;EXAMPLES" OFF)
+	"EXAMPLES" OFF)
 
 
 # # # sol2 Library
@@ -161,6 +160,8 @@ source_group(headers FILES ${SOL2_SINGLE_HEADER_SOURCES})
 # Find Python3 for single header / forward header generation
 find_package(PythonInterp 3)
 set(SOL2_SINGLE_HEADER_FOUND FALSE)
+set(SOL2_SINGLE_FOUND FALSE)
+set(SOL2_DOCS_FOUND FALSE)
 if (PYTHONINTERP_FOUND)
 	if (SINGLE)
 		set(SOL2_SINGLE_FOUND TRUE)
@@ -185,20 +186,16 @@ if (PYTHONINTERP_FOUND)
 	endif()
 else()
 	if (SINGLE)
-		set(SOL2_SINGLE_FOUND FALSE)
-		message(STATUS "single_header cannot be generated as python 3 has not been found.")
-	endif()
-	if (DOCS)
-		set(SOL2_DOCS_FOUND FALSE)
+		message(STATUS "sol2 single_header cannot be generated as python 3 has not been found.")
 	endif()
 endif()
 
 if (CI)
-	message(STATUS "Contiguous Integration is on")
+	message(STATUS "sol2 Contiguous Integration is on")
 endif()
 
 # # # Tests, Examples and other CI suites that come with sol2
-if (TESTS OR TESTS_SINGLE OR EXAMPLES OR TESTS_EXAMPLES)
+if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR EXAMPLES OR EXAMPLES_SINGLE)
 	# # # Libraries
 	# Here, we pull in all the necessary libraries for building examples and tests
 	# Find threading library
@@ -227,28 +224,30 @@ if (TESTS OR TESTS_SINGLE OR EXAMPLES OR TESTS_EXAMPLES)
 	endif()
 
 	if (NOT LUA_FOUND)
-		message(FATAL_ERROR "Lua ${LUA_VERSION} not found and could not be targeted for building.")
+		message(FATAL_ERROR "sol2 Lua \"${LUA_VERSION}\" not found and could not be targeted for building.")
+	endif()
+
+	# # Enable test harness for regular, example or single tests
+	if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES)
+		# enable ctest
+		message(STATUS "sol2 testing enabled")
+		enable_testing()
+	endif()
+	
+	# # # Examples
+	# # Enable examples to be built against the library
+	if (EXAMPLES OR TESTS_EXAMPLES OR EXAMPLES_SINGLE)
+		# NOTE: will also add to tests if TESTS is defined
+		message(STATUS "sol2 adding examples...")
+		add_subdirectory(examples "${CMAKE_BINARY_DIR}/examples")
 	endif()
 
 	# # # Tests
-	# # Enable test harness for regular or single tests
-	if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES)
-		# enable ctest
-		message(STATUS "Testing enabled...")
-		enable_testing()
-	endif()
 	# # Add tests here
 	if (TESTS OR TESTS_SINGLE)
 		# add subdir to get going
-		message(STATUS "Adding sol2 tests...")
+		message(STATUS "sol2 adding tests...")
 		add_subdirectory(tests "${CMAKE_BINARY_DIR}/tests")
 	endif()
 
-	# # # Examples
-	# # Enable examples to be built against the library
-	if (EXAMPLES OR TESTS_EXAMPLES)
-		# NOTE: will also add to tests if TESTS is defined
-		message(STATUS "Adding sol2 examples...")
-		add_subdirectory(examples "${CMAKE_BINARY_DIR}/examples")
-	endif()
 endif()

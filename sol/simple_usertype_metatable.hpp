@@ -326,8 +326,8 @@ namespace sol {
 
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: Please file a bug report.");
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: Please file a bug report.");
-			baseclasscheck = (void*)&detail::inheritance<T, Bases...>::type_check;
-			baseclasscast = (void*)&detail::inheritance<T, Bases...>::type_cast;
+			baseclasscheck = reinterpret_cast<void*>(&detail::inheritance<T, Bases...>::type_check);
+			baseclasscast = reinterpret_cast<void*>(&detail::inheritance<T, Bases...>::type_cast);
 			indexbaseclasspropogation = usertype_detail::walk_all_bases<true, Bases...>;
 			newindexbaseclasspropogation = usertype_detail::walk_all_bases<false, Bases...>;
 		}

@@ -25,11 +25,11 @@
 string(TOLOWER ${LUA_VERSION} LUA_BUILD_NORMALIZED_LUA_VERSION)
 if (LUA_BUILD_NORMALIZED_LUA_VERSION MATCHES "luajit")
 	set(LUA_BUILD_LIBNAME ${LUA_VERSION})
-elseif (LUAJIT_BUILD)
+elseif (BUILD_LUAJIT)
 	set(LUA_BUILD_LIBNAME luajit-${LUA_VERSION})
 elseif (LUA_BUILD_NORMALIZED_LUA_VERSION MATCHES "lua")
 	set(LUA_BUILD_LIBNAME ${LUA_VERSION})
-elseif (LUA_BUILD)
+elseif (BUILD_LUA)
 	set(LUA_BUILD_LIBNAME lua-${LUA_VERSION})
 else()
 	set(LUA_BUILD_LIBNAME lua-${LUA_VERSION})
@@ -50,20 +50,19 @@ endif()
 
 
 # # # Options
-set(LUA_INCLUDE_DIR "${LUA_BUILD_INSTALL_DIR}/include" CACHE PATH "Directory with lua include files")
-set(LUA_LIB_DIR "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}" CACHE PATH "Directory with lua library files")
-set(LUA_BIN_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" CACHE PATH "Directory with lua executable and dynamic library files")
 option(BUILD_LUA_AS_DLL ${LUA_BUILD_BUILD_DLL_DEFAULT} "Build Lua or LuaJIT as a Shared/Dynamic Link Library")
 
 STRING(TOLOWER ${LUA_BUILD_LIBNAME} LUA_BUILD_NORMALIZED_LIBNAME)
-if (LUA_BUILD_NORMALIZED_LIBNAME MATCHES "luajit")
-	set(LUA_LIBRARY luajit
-		CACHE STRING 
-		${LUA_BUILD_LIBRARY_DESCRIPTION})
+if (NOT LUA_LIBRARY_NAME)
+	if (LUA_BUILD_NORMALIZED_LIBNAME MATCHES "luajit")
+		set(LUA_LIBRARY luajit)
+	else()
+		set(LUA_LIBRARY ${LUA_BUILD_LIBNAME})
+	endif()
 else()
-	set(LUA_LIBRARY ${LUA_BUILD_LIBNAME}
+	set(LUA_LIBRARY_NAME ${LUA_LIBRARY_NAME}
 		CACHE STRING 
-		${LUA_BUILD_LIBRARY_DESCRIPTION})
+		${LUA_BUILD_LIBRARY_DESCRIPTION})	
 endif()
 # # Dependent Variables
 # If we're building a DLL, then set the library type to SHARED

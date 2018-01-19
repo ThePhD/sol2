@@ -22,6 +22,8 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+# # This script runs the actual project
+
 echo -en "travis_fold:start:build_preparation.1\r"
 	if [ -z "${SOL2_DIR}" ]
 	then
@@ -48,7 +50,6 @@ echo -en "travis_fold:start:build_preparation.1\r"
 		source ./sol2.compiler.vars
 	fi
 
-	# This script runs the actual project
 	mkdir -p Debug Release
 
 	export build_type_cc=-DCMAKE_C_COMPILER\=${CC}

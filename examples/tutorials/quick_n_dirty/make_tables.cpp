@@ -8,12 +8,16 @@ int main(int, char* []) {
 	lua.open_libraries(sol::lib::base);
 
 	lua["abc_sol2"] = lua.create_table_with(
-		0, 24);
+		0, 24
+	);
 
+	sol::table inner_table = lua.create_table_with("bark", 50,
+		// can reference other existing stuff too
+		"woof", lua["abc_sol2"]
+	);
 	lua.create_named_table("def_sol2",
-		"ghi", lua.create_table_with("bark", 50,
-				  // can reference other existing stuff too
-				  "woof", lua["abc"]));
+		"ghi", inner_table
+	);
 
 	std::string code = R"(
 		abc = { [0] = 24 }

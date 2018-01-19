@@ -3,16 +3,25 @@ tutorial: quick 'n' dirty
 
 These are all the things. Use your browser's search to find things you want.
 
-You'll need to ``#include <sol.hpp>``/``#include "sol.hpp"`` somewhere in your code. Sol is header-only, so you don't need to compile anything.
-
 .. note::
 
-	After you learn the basics of sol, it is usually advised that if you think something can work, you should TRY IT. It will probably work!
-	
+	After you learn the basics of sol, it is usually advised that if you think something can work, you should TRY IT. It will probably work!	
 
 .. note::
 	
 	All of the code below is available at the `sol2 tutorial examples`_.
+
+asserts / prerequisites
+-----------------------
+
+You'll need to ``#include <sol.hpp>``/``#include "sol.hpp"`` somewhere in your code. Sol is header-only, so you don't need to compile anything. However, **Lua must be compiled and available**. See the :doc:`getting started tutorial<getting-started>` for more details.
+
+The implementation for ``assert.hpp`` with ``c_assert`` looks like so:
+
+.. literalinclude:: ../../../examples/assert.hpp
+	:linenos:
+
+This is the assert used in the quick code below.
 
 opening a state
 ---------------
@@ -23,8 +32,8 @@ opening a state
 
 .. _sol-state-on-lua-state:
 
-using sol2 on a lua_State*
---------------------------
+using sol2 on a lua_State\*
+---------------------------
 
 For your system/game that already has Lua or uses an in-house or pre-rolled Lua system (LuaBridge, kaguya, Luwra, etc.), but you'd still like sol2 and nice things:
 
@@ -32,6 +41,7 @@ For your system/game that already has Lua or uses an in-house or pre-rolled Lua 
 .. literalinclude:: ../../../examples/tutorials/quick_n_dirty/opening_state_on_raw_lua.cpp
 	:linenos:
 
+.. _running-lua-code:
 
 running lua code
 ----------------
@@ -44,8 +54,22 @@ To run Lua code but have an error handler in case things go wrong:
 
 .. literalinclude:: ../../../examples/tutorials/quick_n_dirty/running_lua_code.cpp
 	:linenos:
-	:lines: 28-
+	:lines: 28-40
 
+
+running lua code (low-level)
+----------------------------
+
+You can use the individual load and function call operator to load, check, and then subsequently run and check code.
+
+.. warning::
+
+	This is ONLY if you need some sort of fine-grained control: for 99% of cases, :ref:`running lua code<running-lua-code>` is preferred and avoids pitfalls in not understanding the difference between script/load and needing to run a chunk after loading it.
+
+
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/running_lua_code_low_level.cpp
+	:linenos:
+	:lines: 1-10, 16-41
 
 set and get variables
 ---------------------
@@ -90,85 +114,32 @@ Note that if its a :doc:`userdata/usertype<../api/usertype>` for a C++ type, the
 tables
 ------
 
-:doc:`sol::state<../api/state>` is a table too.
+Tables can be manipulated using accessor-syntax. Note that :doc:`sol::state<../api/state>` is a table and all the methods shown here work with ``sol::state``, too.
 
-.. code-block:: cpp
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/tables_and_nesting.cpp
+	:linenos:
+	:lines: 1-34
 
-	sol::state lua;
+If you're going deep, be safe: 
 
-	// Raw string literal for easy multiline
-	lua.script( R"(
-		abc = { [0] = 24 }
-		def = { 
-			ghi = { 
-				bark = 50, 
-				woof = abc 
-			} 
-		}
-	)"
-	);
-
-	sol::table abc = lua["abc"];
-	sol::table def = lua["def"];
-	sol::table ghi = lua["def"]["ghi"];
-
-	int bark1 = def["ghi"]["bark"];
-	int bark2 = lua["def"]["ghi"]["bark"];
-	// bark1 == bark2 == 50
-	
-	int abcval1 = abc[0];
-	int abcval2 = ghi["woof"][0];
-	// abcval1 == abcval2 == 24
-
-If you're going deep, be safe:
-
-.. code-block:: cpp
-
-	sol::state lua;
-
-	sol::optional<int> will_not_error = lua["abc"]["DOESNOTEXIST"]["ghi"];
-	// will_not_error == sol::nullopt
-	int also_will_not_error = lua["abc"]["def"]["ghi"]["jklm"].get_or(25);
-	// is 25
-
-	// if you don't go safe,
-	// will throw (or do at_panic if no exceptions)
-	int aaaahhh = lua["boom"]["the_dynamite"];
-
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/tables_and_nesting.cpp
+	:linenos:
+	:lines: 35-
 
 make tables
 -----------
 
-Make some:
+There are many ways to make a table. Here's an easy way for simple ones:
 
-.. code-block:: cpp
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/make_tables.cpp
+	:linenos:
+	:lines: 1-21
 
-	sol::state lua;
+Equivalent Lua code, and check that they're equivalent:
 
-	lua["abc"] = lua.create_table_with(
-		0, 24
-	);
-
-	lua.create_named_table("def",
-		"ghi", lua.create_table_with(
-			"bark", 50,
-			// can reference other existing stuff too
-			"woof", lua["abc"]
-		)
-	);
-
-Equivalent Lua code:
-
-.. code-block:: lua
-	
-	abc = { [0] = 24 }
-	def = { 
-		ghi = { 
-			bark = 50, 
-			woof = abc 
-		} 
-	}	
-	
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/make_tables.cpp
+	:linenos:
+	:lines: 22-
 
 You can put anything you want in tables as values or keys, including strings, numbers, functions, other tables.
 
@@ -178,190 +149,53 @@ Note that this idea that things can be nested is important and will help later w
 functions
 ---------
 
-They're great. Use them:
+They're easy to use, from Lua and from C++:
 
-.. code-block:: cpp
-	
-	sol::state lua;
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/functions_easy.cpp
+	:linenos:
+	:lines: 1-
 
-	lua.script("function f (a, b, c, d) return 1 end");
-	lua.script("function g (a, b) return a + b end");
-
-	// sol::function is often easier: 
-	// takes a variable number/types of arguments...
-	sol::function fx = lua["f"];
-	// fixed signature std::function<...>
-	// can be used to tie a sol::function down
-	std::function<int(int, double, int, std::string)> stdfx = fx;
-	
-	int is_one = stdfx(1, 34.5, 3, "bark");
-	int is_also_one = fx(1, "boop", 3, "bark");
-
-	// call through operator[]
-	int is_three = lua["g"](1, 2);
-	// is_three == 3
-	double is_4_8 = lua["g"](2.4, 2.4);
-	// is_4_8 == 4.8
-
-If you need to protect against errors and parser problems and you're not ready to deal with Lua's `longjmp` problems (if you compiled with C), use :doc:`sol::protected_function<../api/protected_function>`.
+If you need to protect against errors and parser problems and you're not ready to deal with Lua's ``longjmp`` problems (if you compiled with C), use :doc:`sol::protected_function<../api/protected_function>`.
 
 You can bind member variables as functions too, as well as all KINDS of function-like things:
 
-.. code-block:: cpp
-	
-	void some_function () {
-		std::cout << "some function!" << std::endl;
-	}
-
-	void some_other_function () {
-		std::cout << "some other function!" << std::endl;
-	}
-
-	struct some_class {
-		int variable = 30;
-
-		double member_function () {
-			return 24.5;
-		}
-	};
-
-	sol::state lua;
-	lua.open_libraries(sol::lib::base);
-
-	// put an instance of "some_class" into lua
-	// (we'll go into more detail about this later
-	// just know here that it works and is
-	// put into lua as a userdata
-	lua.set("sc", some_class());
-
-	// binds a plain function
-	lua["f1"] = some_function;
-	lua.set_function("f2", &some_other_function);
-
-	// binds just the member function
-	lua["m1"] = &some_class::member_function;
-	
-	// binds the class to the type
-	lua.set_function("m2", &some_class::member_function, some_class{});
-
-	// binds just the member variable as a function
-	lua["v1"] = &some_class::variable;
-	
-	// binds class with member variable as function
-	lua.set_function("v2", &some_class::variable, some_class{});
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/functions_all.cpp
+	:linenos:
+	:lines: 1-50
 
 The lua code to call these things is:
 
-.. code-block:: lua	
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/functions_all.cpp
+	:linenos:
+	:lines: 51-
 
-	f1() -- some function!
-	f2() -- some other function!
-	
-	-- need class instance if you don't bind it with the function
-	print(m1(sc)) -- 24.5
-	-- does not need class instance: was bound to lua with one 
-	print(m2()) -- 24.5
-	
-	-- need class instance if you 
-	-- don't bind it with the function
-	print(v1(sc)) -- 30
-	-- does not need class instance: 
-	-- it was bound with one 
-	print(v2()) -- 30
-
-	-- can set, still 
-	-- requires instance
-	v1(sc, 212)
-	-- can set, does not need 
-	-- class instance: was bound with one 
-	v2(254)
-
-	print(v1(sc)) -- 212
-	print(v2()) -- 254
-
-Can use ``sol::readonly( &some_class::variable )`` to make a variable readonly and error if someone tries to write to it.
+You can use ``sol::readonly( &some_class::variable )`` to make a variable readonly and error if someone tries to write to it.
 
 
 self call
 ---------
 
-You can pass the 'self' argument through C++ to emulate 'member function' calls in Lua.
+You can pass the ``self`` argument through C++ to emulate 'member function' calls in Lua.
 
-.. code-block:: cpp
-	
-	sol::state lua;
-
-	lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::table);
-
-	// a small script using 'self' syntax
-	lua.script(R"(
-	some_table = { some_val = 100 }
-
-	function some_table:add_to_some_val(value)
-	    self.some_val = self.some_val + value
-	end
-
-	function print_some_val()
-	    print("some_table.some_val = " .. some_table.some_val)
-	end
-	)");
-
-	// do some printing
-	lua["print_some_val"]();
-	// 100
-
-	sol::table self = lua["some_table"];
-	self["add_to_some_val"](self, 10);
-	lua["print_some_val"]();
-
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/self_call.cpp
+	:linenos:
+	:lines: 1-
 
 
 multiple returns from lua
 -------------------------
 
-.. code-block:: cpp
-	
-	sol::state lua;
-
-	lua.script("function f (a, b, c) return a, b, c end");
-	
-	std::tuple<int, int, int> result;
-	result = lua["f"](100, 200, 300); 
-	// result == { 100, 200, 300 }
-	int a;
-	int b;
-	std::string c;
-	sol::tie( a, b, c ) = lua["f"](100, 200, "bark");
-	// a == 100
-	// b == 200
-	// c == "bark"
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/multiple_returns_from_lua.cpp
+	:linenos:
+	:lines: 1-
 
 
 multiple returns to lua
 -----------------------
 
-.. code-block:: cpp
-	
-	sol::state lua;
-
-	lua["f"] = [](int a, int b, sol::object c) {
-		// sol::object can be anything here: just pass it through
-		return std::make_tuple( a, b, c );
-	};
-	
-	std::tuple<int, int, int> result = lua["f"](100, 200, 300); 
-	// result == { 100, 200, 300 }
-	
-	std::tuple<int, int, std::string> result2;
-	result2 = lua["f"](100, 200, "BARK BARK BARK!");
-	// result2 == { 100, 200, "BARK BARK BARK!" }
-
-	int a, b;
-	std::string c;
-	sol::tie( a, b, c ) = lua["f"](100, 200, "bark");
-	// a == 100
-	// b == 200
-	// c == "bark"
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/multiple_returns_to_lua.cpp
+	:linenos:
+	:lines: 1-
 
 
 C++ classes from C++

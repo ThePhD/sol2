@@ -49,9 +49,15 @@ environment:
   #  LLVM_VERSION: 4.0.0
   - LUA_VERSION: 5.3.4
     MINGW_VERSION: 6.3.0
+  - LUA_VERSION: luajit-2.0.5
+    MINGW_VERSION: 6.3.0
+  - LUA_VERSION: luajit-2.1.0-beta3
+    MINGW_VERSION: 6.3.0
   - LUA_VERSION: 5.3.4
   - LUA_VERSION: 5.2.4
   - LUA_VERSION: 5.1.5
+  #- LUA_VERSION: luajit-2.0.5
+  #- LUA_VERSION: luajit-2.1.0-beta3
 
 matrix:
   allow_failures:
@@ -72,8 +78,6 @@ matrix:
     - platform: x86
       LLVM_VERSION: 4.0.0
     # Get rid of x86 builds
-    - platform: x86
-      image: Visual Studio 2015
     - platform: x86
       LUA_VERSION: 5.2.4
     - platform: x86

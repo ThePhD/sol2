@@ -73,7 +73,7 @@ then
 		apt-get -y install xz-utils clang
 		wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-${download_version}.tar.xz -O ${LLVM_ARCHIVE_PATH}
 		mkdir -p "${CLANG_PREFIX}"
-		tar xf "${LLVM_ARCHIVE_PATH}" -C "${CLANG_PREFIX}" --strip-components 1
+		tar xf "${LLVM_ARCHIE_PATH}" -C "${CLANG_PREFIX}" --strip-components 1
 		# make sure a clang(++) of major/minor exists
 		# use || true to ignore potential failures
 		ln -s "clang-${major}.${minor}" "${CLANG_PREFIX}/bin/clang-${major}.${minor}" || true
