@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-01-20 18:42:23.650677 UTC
-// This header was generated with sol v2.19.0 (revision 0afd822)
+// Generated 2018-01-20 19:31:24.245892 UTC
+// This header was generated with sol v2.19.0 (revision cbd7923)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6072,6 +6072,9 @@ namespace sol {
 			if (count < 1)
 				return;
 			int top = lua_gettop(L);
+			if (top < 1) {
+				return;
+			}
 			if (rawindex == -count || top == rawindex) {
 				// Slice them right off the top
 				lua_pop(L, static_cast<int>(count));

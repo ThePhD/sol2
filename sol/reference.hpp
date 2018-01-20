@@ -40,6 +40,9 @@ namespace sol {
 			if (count < 1)
 				return;
 			int top = lua_gettop(L);
+			if (top < 1) {
+				return;
+			}
 			if (rawindex == -count || top == rawindex) {
 				// Slice them right off the top
 				lua_pop(L, static_cast<int>(count));
