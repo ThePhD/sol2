@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2017-12-29 23:58:19.191868 UTC
-// This header was generated with sol v2.19.0 (revision d8b2da2)
+// Generated 2018-01-20 18:42:23.650677 UTC
+// This header was generated with sol v2.19.0 (revision 0afd822)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3553,7 +3553,7 @@ namespace sol {
 #ifdef SOL_NO_EXCEPTIONS
 							 // we can't abort here
 							 // because there's no constexpr abort
-							 : *(T*)nullptr;
+							 : *static_cast<T*>(nullptr);
 #else
 							 : (throw bad_optional_access("bad optional access"), contained_val());
 #endif
@@ -3562,7 +3562,7 @@ namespace sol {
 		OPTIONAL_MUTABLE_CONSTEXPR T& value() & {
 			return initialized() ? contained_val()
 #ifdef SOL_NO_EXCEPTIONS
-							 : *(T*)nullptr;
+							 : *static_cast<T*>(nullptr);
 #else
 							 : (throw bad_optional_access("bad optional access"), contained_val());
 #endif
@@ -3573,7 +3573,7 @@ namespace sol {
 #ifdef SOL_NO_EXCEPTIONS
 							 // we can't abort here
 							 // because there's no constexpr abort
-							 : std::move(*(T*)nullptr);
+							 : std::move(*static_cast<T*>(nullptr));
 #else
 							 : (throw bad_optional_access("bad optional access"), contained_val());
 #endif
@@ -3600,7 +3600,7 @@ namespace sol {
 #ifdef SOL_NO_EXCEPTIONS
 							 // we can't abort here
 							 // because there's no constexpr abort
-							 : *(T*)nullptr;
+							 : *static_cast<T*>(nullptr);
 #else
 							 : (throw bad_optional_access("bad optional access"), contained_val());
 #endif
@@ -3611,7 +3611,7 @@ namespace sol {
 #ifdef SOL_NO_EXCEPTIONS
 							 // we can abort here
 							 // but the others are constexpr, so we can't...
-							 : (std::abort(), *(T*)nullptr);
+							 : (std::abort(), *static_cast<T*>(nullptr));
 #else
 							 : (throw bad_optional_access("bad optional access"), contained_val());
 #endif
@@ -4277,6 +4277,12 @@ namespace sol {
 			template <typename T>
 			void operator()(T* p) const {
 				delete p;
+			}
+		};
+
+		struct state_deleter {
+			void operator()(lua_State* L) const {
+				lua_close(L);
 			}
 		};
 
@@ -8004,7 +8010,7 @@ namespace stack {
 				lua_rawget(L, metatableindex);
 				if (type_of(L, -1) != type::lua_nil) {
 					void* basecastdata = lua_touserdata(L, -1);
-					detail::inheritance_check_function ic = (detail::inheritance_check_function)basecastdata;
+					detail::inheritance_check_function ic = reinterpret_cast<detail::inheritance_check_function>(basecastdata);
 					success = ic(detail::id_for<T>::value);
 				}
 			}
@@ -8812,7 +8818,7 @@ namespace stack {
 		static T* get_no_lua_nil_from(lua_State* L, void* udata, int index, record&) {
 			if (detail::has_derived<T>::value && luaL_getmetafield(L, index, &detail::base_class_cast_key()[0]) != 0) {
 				void* basecastdata = lua_touserdata(L, -1);
-				detail::inheritance_cast_function ic = (detail::inheritance_cast_function)basecastdata;
+				detail::inheritance_cast_function ic = reinterpret_cast<detail::inheritance_cast_function>(basecastdata);
 				// use the casting function to properly adjust the pointer for the desired T
 				udata = ic(udata, detail::id_for<T>::value);
 				lua_pop(L, 1);
@@ -13981,7 +13987,7 @@ namespace sol {
 			template <typename... Args, typename... Ret>
 			static std::function<Signature> get_std_func(types<Ret...>, types<Args...>, lua_State* L, int index) {
 				unsafe_function f(L, index);
-				auto fx = [ f = std::move(f), L, index ](Args && ... args) -> meta::return_type_t<Ret...> {
+				auto fx = [ f = std::move(f) ](Args && ... args) -> meta::return_type_t<Ret...> {
 					return f.call<Ret...>(std::forward<Args>(args)...);
 				};
 				return std::move(fx);
@@ -13990,7 +13996,7 @@ namespace sol {
 			template <typename... FxArgs>
 			static std::function<Signature> get_std_func(types<void>, types<FxArgs...>, lua_State* L, int index) {
 				unsafe_function f(L, index);
-				auto fx = [f = std::move(f), L, index](FxArgs&&... args) -> void {
+				auto fx = [f = std::move(f)](FxArgs&&... args) -> void {
 					f(std::forward<FxArgs>(args)...);
 				};
 				return std::move(fx);
@@ -17701,8 +17707,8 @@ namespace sol {
 
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: Please file a bug report.");
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: Please file a bug report.");
-			baseclasscheck = (void*)&detail::inheritance<T, Bases...>::type_check;
-			baseclasscast = (void*)&detail::inheritance<T, Bases...>::type_cast;
+			baseclasscheck = reinterpret_cast<void*>(&detail::inheritance<T, Bases...>::type_check);
+			baseclasscast = reinterpret_cast<void*>(&detail::inheritance<T, Bases...>::type_cast);
 			indexbaseclasspropogation = usertype_detail::walk_all_bases<true, Bases...>;
 			newindexbaseclasspropogation = usertype_detail::walk_all_bases<false, Bases...>;
 		}
@@ -20014,13 +20020,13 @@ namespace sol {
 		}
 	} // namespace detail
 
-	class state : private std::unique_ptr<lua_State, void (*)(lua_State*)>, public state_view {
+	class state : private std::unique_ptr<lua_State, detail::state_deleter>, public state_view {
 	private:
-		typedef std::unique_ptr<lua_State, void (*)(lua_State*)> unique_base;
+		typedef std::unique_ptr<lua_State, detail::state_deleter> unique_base;
 
 	public:
 		state(lua_CFunction panic = detail::default_at_panic)
-		: unique_base(luaL_newstate(), lua_close), state_view(unique_base::get()) {
+		: unique_base(luaL_newstate()), state_view(unique_base::get()) {
 			set_panic(panic);
 			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
 			protected_function::set_default_handler(object(lua_state(), in_place, f));
@@ -20029,7 +20035,7 @@ namespace sol {
 		}
 
 		state(lua_CFunction panic, lua_Alloc alfunc, void* alpointer = nullptr)
-		: unique_base(lua_newstate(alfunc, alpointer), lua_close), state_view(unique_base::get()) {
+		: unique_base(lua_newstate(alfunc, alpointer)), state_view(unique_base::get()) {
 			set_panic(panic);
 			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
 			protected_function::set_default_handler(object(lua_state(), in_place, f));
