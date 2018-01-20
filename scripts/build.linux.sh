@@ -52,25 +52,24 @@ else
 fi
 
 echo "======  =======  =======  =======  ======"
-echo "======  Pushing All Docker Images  ======"
+echo "======  Building All Docker Images ======"
 echo "======  =======  =======  =======  ======"
 
 for i in $gcc_versions; do
 	GCC_VERSION=$i
 	unset LLVM_VERSION
-	echo "====== Pushing Docker Image: ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} ======="
-	docker push ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
+	echo "====== Building Docker Image: ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} ======="
+	docker build --tag ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} --build-arg GCC_VERSION=${GCC_VERSION} --build-arg LLVM_VERSION=${LLVM_VERSION} --build-arg CI=${CI} "${SOL2_DIR}"
 done
 
 for i in $llvm_versions; do
 	LLVM_VERSION=$i
 	unset GCC_VERSION
-	echo "====== Pushing Docker Image: ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} ======="
-	docker push ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
+	echo "====== Building Docker Image: ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} ======="
+	docker build --tag ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} --build-arg GCC_VERSION=${GCC_VERSION} --build-arg LLVM_VERSION=${LLVM_VERSION} --build-arg CI=${CI} "${SOL2_DIR}"
 done
 
 unset LLVM_VERSION
 unset GCC_VERSION
-echo "====== Pushing Docker Image: ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} ======="
-docker push ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
-
+echo "====== Building Docker Image: ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} ======="
+docker build --tag ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} --build-arg GCC_VERSION=${GCC_VERSION} --build-arg LLVM_VERSION=${LLVM_VERSION} --build-arg CI=${CI} "${SOL2_DIR}"

@@ -35,7 +35,7 @@ before_install:
 script:
 - export SOL2_DIR=${TRAVIS_BUILD_DIR}
 - sudo docker image pull thephd/sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
-- sudo docker run --rm --interactive --tty --name "sol2.test" -v "${SOL2_DIR}:/root/sol2" --env "CI=${CI}" --env "LUA_VERSION=${LUA_VERSION}" --env "GCC_VERSION=${GCC_VERSION}" --env "LLVM_VERSION=${LLVM_VERSION}" thephd/sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
+- sudo docker run --rm --interactive --tty --name "sol2.test" -v "${SOL2_DIR}:/root/sol2" --env "CI=${CI}" --env "PLATFORM=${PLATFORM}" --env "LUA_VERSION=${LUA_VERSION}" --env "GCC_VERSION=${GCC_VERSION}" --env "LLVM_VERSION=${LLVM_VERSION}" thephd/sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
 - sudo docker rmi $(sudo docker image ls -q)
 
 matrix:
@@ -47,67 +47,67 @@ matrix:
     - env:
       - LUA_VERSION=5.3.4
         GCC_VERSION=4.9
-        platform=x64
+        PLATFORM=x64
         CI=true
 
     - env:
       - LUA_VERSION=5.3.4
         GCC_VERSION=5
         CI=true
-        platform=x64
+        PLATFORM=x64
 
     - env:
       - LUA_VERSION=5.3.4
         GCC_VERSION=6
-        platform=x64
+        PLATFORM=x64
         CI=true
 
     - env:
       - LUA_VERSION=5.3.4
         GCC_VERSION=7
-        platform=x64
+        PLATFORM=x64
         CI=true
 
     # LLVM 3.6.x -> 5.0.x
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=3.6.2
-        platform=x64
+        PLATFORM=x64
         CI=true
         ALLOW_FAILURE=true
 
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=3.7.1
-        platform=x64
+        PLATFORM=x64
         CI=true
         ALLOW_FAILURE=true
 
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=3.8.1
-        platform=x64
+        PLATFORM=x64
         CI=true
         ALLOW_FAILURE=true
 
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=3.9.1
-        platform=x64
+        PLATFORM=x64
         CI=true
         ALLOW_FAILURE=true
 
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=4.0.1
-        platform=x64
+        PLATFORM=x64
         CI=true
         ALLOW_FAILURE=true
 
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=5.0.1
-        platform=x64
+        PLATFORM=x64
         CI=true
         ALLOW_FAILURE=true
 
@@ -115,43 +115,43 @@ matrix:
     - env:
       - LUA_VERSION=5.2.4
         GCC_VERSION=7
-        platform=x64
+        PLATFORM=x64
         CI=true
         
     - env:
       - LUA_VERSION=5.1.5
         GCC_VERSION=7
-        platform=x64
+        PLATFORM=x64
         CI=true
         
     - env:
       - LUA_VERSION=luajit-2.0.4
         GCC_VERSION=7
-        platform=x64
+        PLATFORM=x64
         CI=true
         
     - env:
       - LUA_VERSION=luajit-2.0.5
         GCC_VERSION=7
-        platform=x64
+        PLATFORM=x64
         CI=true
         
     - env:
       - LUA_VERSION=luajit-2.1.0-beta3
         GCC_VERSION=7
-        platform=x64
+        PLATFORM=x64
         CI=true
         
     - env:
       - LUA_VERSION=luajit-2.0.5
         GCC_VERSION=7
-        platform=x86
+        PLATFORM=x86
         CI=true
 
     - env:
       - LUA_VERSION=luajit-2.1.0-beta3
         GCC_VERSION=7
-        platform=x86
+        PLATFORM=x86
         CI=true
 
 notifications:

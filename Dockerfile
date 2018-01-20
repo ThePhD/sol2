@@ -51,9 +51,10 @@ VOLUME /root/sol2
 ARG CI=true
 ARG GCC_VERSION
 ARG LLVM_VERSION
+ARG PLATFORM=x64
 
 # Potential environment variables
-ENV GCC_VERSION=${GCC_VERSION} LLVM_VERSION=${LLVM_VERSION} CI=${CI} SOL2_DIR=/root/sol2
+ENV CI=${CI} PLATFORM=${PLATFORM} GCC_VERSION=${GCC_VERSION} LLVM_VERSION=${LLVM_VERSION} SOL2_DIR=/root/sol2
 
 RUN ["/usr/bin/env", "zsh", "-e", "/root/sol2-scripts/preparation.linux.sh"]
 

@@ -70,8 +70,6 @@ matrix:
     # Also does not have MinGW x64 for 5.3.0
     - image: Visual Studio 2017
       MINGW_VERSION: 6.3.0
-    - platform: x86
-      MINGW_VERSION: 6.3.0
     # LLVM exists in all images, and we only want the VS 2017 x64 versions
     - image: Visual Studio 2015
       LLVM_VERSION: 4.0.0

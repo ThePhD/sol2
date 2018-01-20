@@ -32,7 +32,7 @@ build_dir="$(pwd)"
 echo "#\!/usr/bin/env zsh\n\n" > "sol2.compiler.vars"
 
 # # Initial and necessary installations
-apt-get -y install ninja-build libreadline6 libreadline6-dev python3 wget curl libcurl3 cmake git
+apt-get update && apt-get -y install ninja-build libreadline6 libreadline6-dev lib32readline6 lib32readline6-dev python3 wget curl libcurl3 cmake git
 
 # # LLVM and GCC updates
 # Grab LLVM or GCC 
@@ -93,13 +93,13 @@ then
 	add-apt-repository -y ppa:ubuntu-toolchain-r/test
 	apt-get -y update
 	apt-get -y dist-upgrade
-	apt-get -y install gcc-$GCC_VERSION g++-$GCC_VERSION
-	update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$GCC_VERSION 60 --slave /usr/bin/g++ g++ /usr/bin/g++-$GCC_VERSION
+	apt-get -y install gcc-${GCC_VERSION} g++-${GCC_VERSION} gcc-${GCC_VERSION}-multilib g++-${GCC_VERSION}-multilib
+	update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_VERSION} 60 --slave /usr/bin/g++ g++ /usr/bin/g++-${GCC_VERSION}
 	update-alternatives --config gcc
-	export CC=gcc-$GCC_VERSION
-	export CXX=g++-$GCC_VERSION
+	export CC=gcc-${GCC_VERSION}
+	export CXX=g++-${GCC_VERSION}
 else
-	apt-get -y install build-essential
+	apt-get -y install build-essential gcc-multilib g++-multilib
 	export CC=cc
 	export CXX=c++
 fi
