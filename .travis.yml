@@ -41,7 +41,8 @@ script:
 matrix:
   fast_finish: true
   allow_failures:
-    - env: ALLOW_FAILURE=true
+    - env: 
+      - ALLOW_FAILURE=true
   include:
     # GCC 4.9.x, 5.x, 6.x, 7.x
     - env:
@@ -74,42 +75,36 @@ matrix:
         LLVM_VERSION=3.6.2
         PLATFORM=x64
         CI=true
-        ALLOW_FAILURE=true
 
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=3.7.1
         PLATFORM=x64
         CI=true
-        ALLOW_FAILURE=true
 
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=3.8.1
         PLATFORM=x64
         CI=true
-        ALLOW_FAILURE=true
 
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=3.9.1
         PLATFORM=x64
         CI=true
-        ALLOW_FAILURE=true
 
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=4.0.1
         PLATFORM=x64
         CI=true
-        ALLOW_FAILURE=true
 
     - env:
       - LUA_VERSION=5.3.4
         LLVM_VERSION=5.0.1
         PLATFORM=x64
         CI=true
-        ALLOW_FAILURE=true
 
     # Lua Versions 5.2.4, 5.1.5, and LuaJIT (as well as x86)
     - env:
@@ -160,7 +155,7 @@ notifications:
       - https://webhooks.gitter.im/e/b864d553270a069d26c8
     on_success: change
     on_failure: always
-    on_start: never
+    on_start: always
   email:
     on_success: change
     on_failure: change

@@ -197,6 +197,9 @@ else ()
 	if (WIN32)
 		list(APPEND LUA_JIT_MAKE_BUILD_MODIFICATIONS "HOST_SYS=Windows" "TARGET_SYS=Windows")
 	endif()
+	if (PLATFORM MATCHES "x86")
+		list(APPEND LUA_JIT_MAKE_BUILD_MODIFICATIONS "CFLAGS=-m32" "LDFLAGS=-m32")
+	endif()
 
 	set(LUA_JIT_BUILD_COMMAND BUILD_COMMAND "${MAKE_PROGRAM}" ${LUA_JIT_MAKE_BUILD_MODIFICATIONS})
 endif()
@@ -280,7 +283,7 @@ if (MSVC)
 		postbuild.exp
 		DEPENDEES build
 		COMMENT "Libray - Moving \"${LUA_JIT_SOURCE_LUA_LIB_EXP}\" to \"${LUA_JIT_DESTINATION_LUA_LIB_EXP}\"..."
-		COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_LIB_EXP}" "${LUA_JIT_DESTINATION_LUA_LIB_EXP}" && echo "Successfully moved!")
+		COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_LIB_EXP}" "${LUA_JIT_DESTINATION_LUA_LIB_EXP}" && echo Successfully moved!)
 endif()
 if (BUILD_LUA_AS_DLL)
 	if (MSVC)
@@ -291,7 +294,7 @@ if (BUILD_LUA_AS_DLL)
 			DEPENDEES build
 			COMMENT "Libray - Moving \"${LUA_JIT_SOURCE_LUA_IMP_LIB}\" to \"${LUA_JIT_DESTINATION_LUA_IMP_LIB}\"..."
 			COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_IMP_LIB}" "${LUA_JIT_DESTINATION_LUA_IMP_LIB}"
-			COMMAND echo "Successfully moved!")
+			COMMAND echo Successfully moved!)
 	endif()
 	MESSAGE(STATUS ${LUA_JIT_SOURCE_LUA_DLL})
 	MESSAGE(STATUS ${LUA_JIT_DESTINATION_LUA_DLL})
@@ -300,13 +303,13 @@ if (BUILD_LUA_AS_DLL)
 		postbuild.dll
 		DEPENDEES build
 		COMMENT "Dynamic Library - Moving \"${LUA_JIT_SOURCE_LUA_DLL}\" to \"${LUA_JIT_DESTINATION_LUA_DLL}\"..."
-		COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_DLL}" "${LUA_JIT_DESTINATION_LUA_DLL}" && echo "Successfully moved!")
+		COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_DLL}" "${LUA_JIT_DESTINATION_LUA_DLL}" && echo Successfully moved!)
 else()
 	ExternalProject_Add_Step(LUA_JIT
 		postbuild.lib
 		DEPENDEES build
 		COMMENT "Library - Moving \"${LUA_JIT_SOURCE_LUA_LIB}\" to \"${LUA_JIT_DESTINATION_LUA_LIB}\"..."
-		COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_LIB}" "${LUA_JIT_DESTINATION_LUA_LIB}" && echo "Successfully moved!")
+		COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_LIB}" "${LUA_JIT_DESTINATION_LUA_LIB}" && echo Successfully moved!)
 endif()
 # # TODO: 
 # Add additional post-build step to move all necessary headers/lua files
