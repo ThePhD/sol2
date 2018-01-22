@@ -40,6 +40,7 @@
 #include <cstdio>
 #include <sstream>
 #include <cassert>
+#include <bitset>
 
 namespace sol {
 	namespace usertype_detail {
@@ -399,7 +400,7 @@ namespace sol {
 		void* baseclasscheck;
 		void* baseclasscast;
 		bool secondarymeta;
-		std::array<bool, 32> properties;
+		std::bitset<32> properties;
 
 		template <std::size_t Idx, meta::enable<std::is_same<lua_CFunction, meta::unqualified_tuple_element<Idx + 1, RawTuple>>> = meta::enabler>
 		lua_CFunction make_func() const {
@@ -464,12 +465,11 @@ namespace sol {
 			luaL_Reg reg = usertype_detail::make_reg(std::forward<N>(n), make_func<Idx>());
 			for (std::size_t i = 0; i < properties.size(); ++i) {
 				meta_function mf = static_cast<meta_function>(i);
-				bool& prop = properties[i];
 				const std::string& mfname = to_string(mf);
 				if (mfname == reg.name) {
 					switch (mf) {
 					case meta_function::construct:
-						if (prop) {
+						if (properties[i]) {
 #ifndef SOL_NO_EXCEPTIONS
 							throw error("sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
 #else
@@ -490,17 +490,17 @@ namespace sol {
 					case meta_function::index:
 						indexfunc = reg.func;
 						mustindex = true;
-						prop = true;
+						properties.set(i);
 						return;
 					case meta_function::new_index:
 						newindexfunc = reg.func;
 						mustindex = true;
-						prop = true;
+						properties.set(i);
 						return;
 					default:
 						break;
 					}
-					prop = true;
+					properties.set(i);
 					break;
 				}
 			}
@@ -511,7 +511,7 @@ namespace sol {
 		template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == sizeof...(Tn)>>
 		usertype_metatable(Args&&... args)
 		: usertype_metatable_core(&usertype_detail::indexing_fail<T, true>, &usertype_detail::metatable_newindex<T, false>), usertype_detail::registrar(), functions(std::forward<Args>(args)...), destructfunc(nullptr), callconstructfunc(nullptr), indexbase(&core_indexing_call<true>), newindexbase(&core_indexing_call<false>), indexbaseclasspropogation(usertype_detail::walk_all_bases<true>), newindexbaseclasspropogation(usertype_detail::walk_all_bases<false>), baseclasscheck(nullptr), baseclasscast(nullptr), secondarymeta(contains_variable()), properties() {
-			properties.fill(false);
+			properties.reset();
 			std::initializer_list<typename usertype_detail::mapping_t::value_type> ilist{{std::pair<std::string, usertype_detail::call_information>(usertype_detail::make_string(std::get<I * 2>(functions)),
 				usertype_detail::call_information(&usertype_metatable::real_find_call<I * 2, I * 2 + 1, true>,
 					&usertype_metatable::real_find_call<I * 2, I * 2 + 1, false>))}...};
