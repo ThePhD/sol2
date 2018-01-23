@@ -212,13 +212,14 @@ if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR EXAMPLES OR EXAMPLES_SINGLE)
 		set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 	endif()
 	find_package(Threads)
+	
+	string(TOLOWER ${LUA_VERSION} NORMALIZED_LUA_VERSION)
 	# Find way to get Lua: build if requested, or attempt to build if no matching version is found
 	if (BUILD_LUA)
-		find_package(LuaBuild ${LUA_VERSION} REQUIRED)
+		find_package(LuaBuild REQUIRED COMPONENTS ${LUA_VERSION})
 	elseif (NOT LUA_VERSION)
 		find_package(LuaBuild REQUIRED)
 	else()
-		string(TOLOWER ${LUA_VERSION} NORMALIZED_LUA_VERSION)
 		if (NORMALIZED_LUA_VERSION MATCHES "5.1")
 			find_package(Lua 5.1 EXACT REQUIRED)
 		elseif(NORMALIZED_LUA_VERSION MATCHES "5.2")
@@ -233,7 +234,7 @@ if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR EXAMPLES OR EXAMPLES_SINGLE)
 	endif()
 
 	if (NOT LUA_FOUND AND NOT LUABUILD_FOUND)
-		message(FATAL_ERROR "sol2 Lua \"${LUA_VERSION}\" not found and could not be targeted for building.")
+		message(FATAL_ERROR "sol2 Lua \"${LUA_VERSION}\" not found and could not be targeted for building")
 	endif()
 
 	# # Enable test harness for regular, example or single tests

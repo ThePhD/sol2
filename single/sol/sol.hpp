@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-01-23 16:58:47.295340 UTC
-// This header was generated with sol v2.19.0 (revision 6ae78d9)
+// Generated 2018-01-23 21:17:54.182180 UTC
+// This header was generated with sol v2.19.0 (revision 63ec47b)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -7496,8 +7496,6 @@ namespace sol {
 
 // beginning of sol/inheritance.hpp
 
-#include <atomic>
-
 namespace sol {
 	template <typename... Args>
 	struct base_list {};
@@ -7516,19 +7514,6 @@ namespace sol {
 
 		template <typename T>
 		bool has_derived<T>::value = false;
-
-		inline std::size_t unique_id() {
-			static std::atomic<std::size_t> x(0);
-			return ++x;
-		}
-
-		template <typename T>
-		struct id_for {
-			static const std::size_t value;
-		};
-
-		template <typename T>
-		const std::size_t id_for<T>::value = unique_id();
 
 		inline decltype(auto) base_class_check_key() {
 			static const auto& key = "class_check";
@@ -7552,32 +7537,32 @@ namespace sol {
 
 		template <typename T, typename... Bases>
 		struct inheritance {
-			static bool type_check_bases(types<>, std::size_t) {
+			static bool type_check_bases(types<>, const std::string& ti) {
 				return false;
 			}
 
 			template <typename Base, typename... Args>
-			static bool type_check_bases(types<Base, Args...>, std::size_t ti) {
-				return ti == id_for<Base>::value || type_check_bases(types<Args...>(), ti);
+			static bool type_check_bases(types<Base, Args...>, const std::string& ti) {
+				return ti == usertype_traits<Base>::qualified_name() || type_check_bases(types<Args...>(), ti);
 			}
 
-			static bool type_check(std::size_t ti) {
-				return ti == id_for<T>::value || type_check_bases(types<Bases...>(), ti);
+			static bool type_check(const std::string& ti) {
+				return ti == usertype_traits<T>::qualified_name() || type_check_bases(types<Bases...>(), ti);
 			}
 
-			static void* type_cast_bases(types<>, T*, std::size_t) {
+			static void* type_cast_bases(types<>, T*, const std::string&) {
 				return nullptr;
 			}
 
 			template <typename Base, typename... Args>
-			static void* type_cast_bases(types<Base, Args...>, T* data, std::size_t ti) {
+			static void* type_cast_bases(types<Base, Args...>, T* data, const std::string& ti) {
 				// Make sure to convert to T first, and then dynamic cast to the proper type
-				return ti != id_for<Base>::value ? type_cast_bases(types<Args...>(), data, ti) : static_cast<void*>(static_cast<Base*>(data));
+				return ti != usertype_traits<Base>::qualified_name() ? type_cast_bases(types<Args...>(), data, ti) : static_cast<void*>(static_cast<Base*>(data));
 			}
 
-			static void* type_cast(void* voiddata, std::size_t ti) {
+			static void* type_cast(void* voiddata, const std::string& ti) {
 				T* data = static_cast<T*>(voiddata);
-				return static_cast<void*>(ti != id_for<T>::value ? type_cast_bases(types<Bases...>(), data, ti) : data);
+				return static_cast<void*>(ti != usertype_traits<T>::qualified_name() ? type_cast_bases(types<Bases...>(), data, ti) : data);
 			}
 		};
 
@@ -8014,7 +7999,7 @@ namespace stack {
 				if (type_of(L, -1) != type::lua_nil) {
 					void* basecastdata = lua_touserdata(L, -1);
 					detail::inheritance_check_function ic = reinterpret_cast<detail::inheritance_check_function>(basecastdata);
-					success = ic(detail::id_for<T>::value);
+					success = ic(usertype_traits<T>::qualified_name());
 				}
 			}
 			if (!success) {
@@ -8823,7 +8808,7 @@ namespace stack {
 				void* basecastdata = lua_touserdata(L, -1);
 				detail::inheritance_cast_function ic = reinterpret_cast<detail::inheritance_cast_function>(basecastdata);
 				// use the casting function to properly adjust the pointer for the desired T
-				udata = ic(udata, detail::id_for<T>::value);
+				udata = ic(udata, usertype_traits<T>::qualified_name());
 				lua_pop(L, 1);
 			}
 			T* obj = static_cast<T*>(udata);

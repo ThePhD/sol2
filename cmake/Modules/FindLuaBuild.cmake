@@ -96,8 +96,8 @@ function(find_lua_build LUA_VERSION)
 endfunction(find_lua_build)
 
 # Call and then immediately undefine to avoid polluting the global scope
-if (FIND_PACKAGE_VERSION)
-	set(LUA_VERSION ${PACKAGE_FIND_VERSION})
+if (LuaBuild_FIND_COMPONENTS)
+	list(GET LuaBuild_FIND_COMPONENTS 0 LUA_VERSION)
 else()
 	set(LUA_VERSION 5.3.4)
 endif()
