@@ -33,6 +33,7 @@
 #include <chrono>
 #include <thread>
 #include <mutex>
+#include <atomic>
 
 #include "test_stack_guard.hpp"
 

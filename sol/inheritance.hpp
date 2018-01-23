@@ -25,7 +25,6 @@
 #define SOL_INHERITANCE_HPP
 
 #include "types.hpp"
-#include <atomic>
 
 namespace sol {
 	template <typename... Args>
@@ -45,19 +44,6 @@ namespace sol {
 
 		template <typename T>
 		bool has_derived<T>::value = false;
-
-		inline std::size_t unique_id() {
-			static std::atomic<std::size_t> x(0);
-			return ++x;
-		}
-
-		template <typename T>
-		struct id_for {
-			static const std::size_t value;
-		};
-
-		template <typename T>
-		const std::size_t id_for<T>::value = unique_id();
 
 		inline decltype(auto) base_class_check_key() {
 			static const auto& key = "class_check";
@@ -81,32 +67,32 @@ namespace sol {
 
 		template <typename T, typename... Bases>
 		struct inheritance {
-			static bool type_check_bases(types<>, std::size_t) {
+			static bool type_check_bases(types<>, const std::string& ti) {
 				return false;
 			}
 
 			template <typename Base, typename... Args>
-			static bool type_check_bases(types<Base, Args...>, std::size_t ti) {
-				return ti == id_for<Base>::value || type_check_bases(types<Args...>(), ti);
+			static bool type_check_bases(types<Base, Args...>, const std::string& ti) {
+				return ti == usertype_traits<Base>::qualified_name() || type_check_bases(types<Args...>(), ti);
 			}
 
-			static bool type_check(std::size_t ti) {
-				return ti == id_for<T>::value || type_check_bases(types<Bases...>(), ti);
+			static bool type_check(const std::string& ti) {
+				return ti == usertype_traits<T>::qualified_name() || type_check_bases(types<Bases...>(), ti);
 			}
 
-			static void* type_cast_bases(types<>, T*, std::size_t) {
+			static void* type_cast_bases(types<>, T*, const std::string&) {
 				return nullptr;
 			}
 
 			template <typename Base, typename... Args>
-			static void* type_cast_bases(types<Base, Args...>, T* data, std::size_t ti) {
+			static void* type_cast_bases(types<Base, Args...>, T* data, const std::string& ti) {
 				// Make sure to convert to T first, and then dynamic cast to the proper type
-				return ti != id_for<Base>::value ? type_cast_bases(types<Args...>(), data, ti) : static_cast<void*>(static_cast<Base*>(data));
+				return ti != usertype_traits<Base>::qualified_name() ? type_cast_bases(types<Args...>(), data, ti) : static_cast<void*>(static_cast<Base*>(data));
 			}
 
-			static void* type_cast(void* voiddata, std::size_t ti) {
+			static void* type_cast(void* voiddata, const std::string& ti) {
 				T* data = static_cast<T*>(voiddata);
-				return static_cast<void*>(ti != id_for<T>::value ? type_cast_bases(types<Bases...>(), data, ti) : data);
+				return static_cast<void*>(ti != usertype_traits<T>::qualified_name() ? type_cast_bases(types<Bases...>(), data, ti) : data);
 			}
 		};
 

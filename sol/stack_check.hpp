@@ -456,7 +456,7 @@ namespace stack {
 				if (type_of(L, -1) != type::lua_nil) {
 					void* basecastdata = lua_touserdata(L, -1);
 					detail::inheritance_check_function ic = reinterpret_cast<detail::inheritance_check_function>(basecastdata);
-					success = ic(detail::id_for<T>::value);
+					success = ic(usertype_traits<T>::qualified_name());
 				}
 			}
 			if (!success) {

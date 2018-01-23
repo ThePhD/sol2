@@ -20,14 +20,14 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# import necessary standard modules
-include(ExternalProject)
-
 # protect from multiple inclusion
 if(lua_jit_build_included)
-  return()
+	return()
 endif(lua_jit_build_included)
 set(lua_jit_build_included true)
+
+# import necessary standard modules
+include(ExternalProject)
 
 # Latest iterations for specific sub-versions of LuaJIT
 set(LUA_JIT_2.0_LATEST_VERSION 2.0.5)
@@ -117,7 +117,9 @@ else()
 	MESSAGE(FATAL "Cannot deduce LuaJIT version from ${LUA_VERSION}")
 endif()
 
-MESSAGE(STATUS "Selecting LuaJIT ${LUA_JIT_VERSION} from '${LUA_VERSION}' and building a ${LUA_BUILD_LIBRARY_TYPE} library...")
+FIND_PACKAGE_MESSAGE(LUABUILD
+	"Selecting LuaJIT ${LUA_JIT_VERSION} from '${LUA_VERSION}' and building a ${LUA_BUILD_LIBRARY_TYPE} library..."
+	"[${LUA_JIT_VERSION}][${LUA_VERSION}][${LUA_BUILD_LIBRARY_TYPE}]")
 
 # Get hashes for the build
 # LuaJIT unfortunately does not give us SHA1 hashes as well
@@ -156,6 +158,7 @@ set(LUA_JIT_LIB_FILE "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/${LUA_JIT_LIB_FILENAME}"
 set(LUA_JIT_IMP_LIB_FILE "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/${LUA_JIT_IMP_LIB_FILENAME}")
 set(LUA_JIT_LIB_EXP_FILE "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/${LUA_JIT_LIB_EXP_FILENAME}")
 set(LUA_JIT_DLL_FILE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${LUA_JIT_DLL_FILENAME}")
+set(LUA_JIT_EXE_FILE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${LUA_JIT_EXE_FILENAME}")
 
 # # # Do the build
 if (MSVC)
@@ -205,6 +208,7 @@ else ()
 endif()
 
 set(lualib luajitlib_${LUA_JIT_VERSION})
+set(luainterpreter luajit_${LUA_JIT_VERSION})
 
 file(TO_NATIVE_PATH "${LUA_JIT_SOURCE_DIR}/${LUA_JIT_PREBUILT_LIB}" LUA_JIT_SOURCE_LUA_LIB)
 file(TO_NATIVE_PATH "${LUA_JIT_LIB_FILE}" LUA_JIT_DESTINATION_LUA_LIB)
@@ -214,6 +218,8 @@ file(TO_NATIVE_PATH "${LUA_JIT_SOURCE_DIR}/${LUA_JIT_PREBUILT_DLL}" LUA_JIT_SOUR
 file(TO_NATIVE_PATH "${LUA_JIT_DLL_FILE}" LUA_JIT_DESTINATION_LUA_DLL)
 file(TO_NATIVE_PATH "${LUA_JIT_SOURCE_DIR}/${LUA_JIT_PREBUILT_EXP}" LUA_JIT_SOURCE_LUA_LIB_EXP)
 file(TO_NATIVE_PATH "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/${LUA_JIT_LIB_EXP_FILENAME}" LUA_JIT_DESTINATION_LUA_LIB_EXP)
+file(TO_NATIVE_PATH "${LUA_JIT_SOURCE_DIR}/luajit${CMAKE_EXECUTABLE_SUFFIX}" LUA_JIT_SOURCE_LUA_INTERPRETER)
+file(TO_NATIVE_PATH "${LUA_JIT_EXE_FILE}" LUA_JIT_DESTINATION_LUA_INTERPRETER)
 
 if (WIN32 AND NOT MSVC)
 	string(COMPARE EQUAL ${LUA_JIT_VERSION} ${LUA_JIT_2.0_LATEST_VERSION} lua_jit_same_version_20)
@@ -311,10 +317,16 @@ else()
 		COMMENT "Library - Moving \"${LUA_JIT_SOURCE_LUA_LIB}\" to \"${LUA_JIT_DESTINATION_LUA_LIB}\"..."
 		COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_LIB}" "${LUA_JIT_DESTINATION_LUA_LIB}" && echo Successfully moved!)
 endif()
-# # TODO: 
+ExternalProject_Add_Step(LUA_JIT
+	postbuild.exe
+	DEPENDEES build
+	COMMENT "Library - Moving \"${LUA_JIT_SOURCE_LUA_INTERPRETER}\" to \"${LUA_JIT_DESTINATION_LUA_INTERPRETER}\"..."
+	COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_INTERPRETER}" "${LUA_JIT_DESTINATION_LUA_INTERPRETER}" && echo Successfully moved!)
+# # TODO:
 # Add additional post-build step to move all necessary headers/lua files
 # for now, we just point directly to the `src` directory...
 
+# # Lua Library
 add_library(${lualib} ${LUA_BUILD_LIBRARY_TYPE} IMPORTED)
 # make sure the library we export really does depend on Lua JIT's external project
 add_dependencies(${lualib} LUA_JIT)
@@ -344,7 +356,13 @@ if (XCODE)
 		PUBLIC -pagezero_size 10000 -image_base 100000000)
 endif ()
 
+# # Lua Executable
+add_executable(${luainterpreter} IMPORTED)
+# Point EXE to fiel
+set_target_properties(${luainterpreter}
+	PROPERTIES
+	IMPORTED_LOCATION "${LUA_JIT_EXE_FILE}")
+
 # set externally-visible target indicator
 set(LUA_LIBRARIES ${lualib})
-set(LUAJIT_FOUND TRUE)
-set(LUA_FOUND TRUE)
+set(LUA_INTERPRETER ${luainterpreter})

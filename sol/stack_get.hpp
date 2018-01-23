@@ -467,7 +467,7 @@ namespace stack {
 				thread_local std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
 				std::wstring r = convert.from_bytes(str, str + len);
 #if defined(__MINGW32__) && defined(__GNUC__) && __GNUC__ < 7
-				// Fuck you, MinGW, and fuck you libstdc++ for introducing this absolutely asinine bug
+				// Thanks, MinGW and libstdc++, for introducing this absolutely asinine bug
 				// https://sourceforge.net/p/mingw-w64/bugs/538/
 				// http://chat.stackoverflow.com/transcript/message/32271369#32271369
 				for (auto& c : r) {
@@ -664,7 +664,7 @@ namespace stack {
 				void* basecastdata = lua_touserdata(L, -1);
 				detail::inheritance_cast_function ic = reinterpret_cast<detail::inheritance_cast_function>(basecastdata);
 				// use the casting function to properly adjust the pointer for the desired T
-				udata = ic(udata, detail::id_for<T>::value);
+				udata = ic(udata, usertype_traits<T>::qualified_name());
 				lua_pop(L, 1);
 			}
 			T* obj = static_cast<T*>(udata);

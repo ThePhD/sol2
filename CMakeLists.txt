@@ -21,7 +21,10 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # # # # sol2
+# # # Required minimum version statement
 cmake_minimum_required(VERSION 3.5.0)
+
+# # # project declaration
 project(sol2 VERSION 2.19.0 LANGUAGES CXX C)
 
 # # # General Project Requirements
@@ -63,8 +66,6 @@ else()
 		list(APPEND CMAKE_C_FLAGS "-m32")
 		list(APPEND CMAKE_CXX_FLAGS "-m32")
 		list(APPEND CMAKE_EXE_LINKER_FLAGS "-m32")
-		list(APPEND CMAKE_MODULE_LINKER_FLAGS "-m32")
-		list(APPEND CMAKE_STATIC_LINKER_FLAGS "-m32")
 		list(APPEND CMAKE_SHARED_LINKER_FLAGS "-m32")
 	endif()
 	add_compile_options(-Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
@@ -105,7 +106,6 @@ include(CMakePackageConfigHelpers)
 # # Cached defines, strings, paths and options
 set(LUA_VERSION "5.3.4" CACHE STRING "The version of Lua needed. Can be 5.1, 5.2, 5.3, LuaJIT, or a more specific 3-part version number for a specifc Lua (e.g., 5.3.4 or luajit-2.0.5)")
 set(BUILD_LUA TRUE CACHE BOOL "Always build Lua, do not search for it in the system")
-set(BUILD_LUAJIT FALSE CACHE BOOL "Always build LuaJIT, do not search for it in the system")
 set(PLATFORM "x64" CACHE STRING "Target platform to compile for when building binaries (x86, x64)")
 option(CI "Enable build of tests" OFF)
 option(TESTS "Enable build of tests" OFF)
@@ -213,10 +213,10 @@ if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR EXAMPLES OR EXAMPLES_SINGLE)
 	endif()
 	find_package(Threads)
 	# Find way to get Lua: build if requested, or attempt to build if no matching version is found
-	if (BUILD_LUA OR BUILD_LUAJIT)
-		include(LuaBuild)
+	if (BUILD_LUA)
+		find_package(LuaBuild ${LUA_VERSION} REQUIRED)
 	elseif (NOT LUA_VERSION)
-		# can't do anything
+		find_package(LuaBuild REQUIRED)
 	else()
 		string(TOLOWER ${LUA_VERSION} NORMALIZED_LUA_VERSION)
 		if (NORMALIZED_LUA_VERSION MATCHES "5.1")
@@ -228,11 +228,11 @@ if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR EXAMPLES OR EXAMPLES_SINGLE)
 		elseif(NORMALIZED_LUA_VERSION MATCHES "luajit")
 			find_package(LuaJIT REQUIRED)
 		else()
-			include(LuaBuild)	
+			find_package(LuaBuild ${LUA_VERSION} REQUIRED)
 		endif()
 	endif()
 
-	if (NOT LUA_FOUND)
+	if (NOT LUA_FOUND AND NOT LUABUILD_FOUND)
 		message(FATAL_ERROR "sol2 Lua \"${LUA_VERSION}\" not found and could not be targeted for building.")
 	endif()
 

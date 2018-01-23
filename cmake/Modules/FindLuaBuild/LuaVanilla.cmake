@@ -20,15 +20,14 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+# Include guard
+if(_lua_vanilla_build_included)
+	return()
+endif(_lua_vanilla_build_included)
+set(_lua_vanilla_build_included true)
+
 # import necessary standard modules
 include(ExternalProject)
-
-if(lua_build_included)
-  return()
-endif(lua_build_included)
-set(lua_build_included true)
-
-
 
 # Latest versions for specific sub-versions of Lua
 set(LUA_VANILLA_5.1_LATEST_VERSION 5.1.5)
@@ -141,7 +140,9 @@ else()
 	message(FATAL_ERROR "Cannot deduce the proper Lua version from ${LUA_VERSION}")
 endif()
 
-message(STATUS "Selecting PUC-RIO Lua ${LUA_VANILLA_VERSION} from '${LUA_VERSION}' and building a ${LUA_BUILD_LIBRARY_TYPE} library...")
+FIND_PACKAGE_MESSAGE(LUABUILD
+	"Selecting PUC-RIO Lua ${LUA_VANILLA_VERSION} from '${LUA_VERSION}' and building a ${LUA_BUILD_LIBRARY_TYPE} library..."
+	"[${LUA_VANILLA_VERSION}][${LUA_VERSION}][${LUA_BUILD_LIBRARY_TYPE}]")
 
 # Get Hashes to use for download
 set(LUA_VANILLA_SHA1 ${LUA_VANILLA_SHA1_${LUA_VANILLA_VERSION}})
@@ -238,7 +239,6 @@ ExternalProject_Add(LUA_VANILLA
 
 # make a quick lua.hpp for 5.1 targets that don't have it
 if (LUA_VANILLA_GENERATE_LUA_HPP)
-	message(STATUS "Will generate lua.hpp for this version of Lua...")
 	set(LUA_VANILLA_LUA_HPP_CONTENT "// lua.hpp
 // Lua header files for C++
 // <<extern \"C\">> not supplied automatically because Lua also compiles as C++
@@ -399,4 +399,5 @@ endif()
 
 # set externally-visible target indicator
 set(LUA_LIBRARIES ${liblua})
-set(LUA_FOUND TRUE)
+set(LUA_INTERPRETER ${luainterpreter})
+set(LUA_COMPILER ${luacompiler})
