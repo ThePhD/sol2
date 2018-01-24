@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-01-24 00:50:30.722404 UTC
-// This header was generated with sol v2.19.0 (revision db9c5d6)
+// Generated 2018-01-24 05:51:13.838328 UTC
+// This header was generated with sol v2.19.0 (revision 83f4b4a)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1481,7 +1481,7 @@ namespace sol {
 		struct is_lookup : meta::all<has_key_type<T>, has_value_type<T>> {};
 
 		template <typename T>
-		struct is_matched_lookup : meta_detail::is_matched_lookup_impl<T, meta::all<has_key_type<T>, has_value_type<T>>::value> {};
+		struct is_matched_lookup : meta_detail::is_matched_lookup_impl<T, is_lookup<T>::value> {};
 
 		template <typename T>
 		using is_string_constructible = any<
@@ -15218,6 +15218,7 @@ namespace sol {
 			> KV;
 			typedef typename KV::first_type K;
 			typedef typename KV::second_type V;
+			typedef std::conditional_t<is_matched_lookup::value, std::ptrdiff_t, K> next_K;
 			typedef decltype(*std::declval<iterator&>()) iterator_return;
 			typedef std::conditional_t<is_associative::value || is_matched_lookup::value,
 				std::add_lvalue_reference_t<V>,
@@ -15613,7 +15614,7 @@ namespace sol {
 			}
 
 			static error_result insert_has(std::true_type, lua_State* L, T& self, stack_object key, stack_object value) {
-				return insert_lookup(meta::all<is_associative, is_lookup>(), L, self, std::move(key), std::move(value));
+				return insert_lookup(meta::any<is_associative, is_lookup>(), L, self, std::move(key), std::move(value));
 			}
 
 			static error_result insert_has(std::false_type, lua_State* L, T& self, stack_object where, stack_object value) {
@@ -15756,21 +15757,12 @@ namespace sol {
 				return p;
 			}
 
-			template <bool ip>
-			static int pairs_associative(std::true_type, lua_State* L) {
-				auto& src = get_src(L);
-				stack::push(L, next<ip>);
-				stack::push<user<iter>>(L, src, deferred_traits::begin(L, src));
-				stack::push(L, lua_nil);
-				return 3;
-			}
-
 			template <bool>
 			static int next_associative(std::false_type, lua_State* L) {
 				iter& i = stack::get<user<iter>>(L, 1);
 				auto& source = i.source;
 				auto& it = i.it;
-				K k = stack::get<K>(L, 2);
+				next_K k = stack::get<next_K>(L, 2);
 				if (it == deferred_traits::end(L, source)) {
 					return 0;
 				}
@@ -15782,18 +15774,27 @@ namespace sol {
 			}
 
 			template <bool ip>
+			static int next(lua_State* L) {
+				typedef meta::any<is_associative, meta::all<is_lookup, meta::neg<is_matched_lookup>>> is_assoc;
+				return next_associative<ip>(is_assoc(), L);
+			}
+
+			template <bool ip>
+			static int pairs_associative(std::true_type, lua_State* L) {
+				auto& src = get_src(L);
+				stack::push(L, next<ip>);
+				stack::push<user<iter>>(L, src, deferred_traits::begin(L, src));
+				stack::push(L, lua_nil);
+				return 3;
+			}
+
+			template <bool ip>
 			static int pairs_associative(std::false_type, lua_State* L) {
 				auto& src = get_src(L);
 				stack::push(L, next<ip>);
 				stack::push<user<iter>>(L, src, deferred_traits::begin(L, src));
 				stack::push(L, 0);
 				return 3;
-			}
-
-			template <bool ip>
-			static int next(lua_State* L) {
-				typedef meta::any<is_associative, meta::all<is_lookup, meta::neg<is_matched_lookup>>> is_assoc;
-				return next_associative<ip>(is_assoc(), L);
 			}
 
 		public:

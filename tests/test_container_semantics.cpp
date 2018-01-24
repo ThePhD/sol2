@@ -790,6 +790,16 @@ end
 	REQUIRE((v3 == 14));
 }
 
+template <typename T>
+void lookup_container_check(sol::state& lua, T&) {
+	auto result0 = lua.safe_script("assert(c['a'] == 'a')", sol::script_default_on_error);
+	REQUIRE(result0.valid());
+	auto result1 = lua.safe_script("assert(c['b'] == 'b')", sol::script_default_on_error);
+	REQUIRE(result1.valid());
+	auto result2 = lua.safe_script("assert(c['c'] == 'c')", sol::script_default_on_error);
+	REQUIRE(result2.valid());
+}
+
 TEST_CASE("containers/sequence containers", "check all of the functinos for every single container") {
 	SECTION("vector") {
 		sol::state lua;
@@ -869,6 +879,14 @@ TEST_CASE("containers/ordered lookup containers", "check ordered container types
 		lua["c"] = &items;
 		ordered_container_check(lua, items);
 	}
+	SECTION("set string") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		std::set<std::string> items({ "a", "b", "c" });
+		lua["c"] = &items;
+		lookup_container_check(lua, items);
+	}
 	SECTION("multiset") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
@@ -876,6 +894,14 @@ TEST_CASE("containers/ordered lookup containers", "check ordered container types
 		std::multiset<int> items{ 11, 12, 13, 14, 15 };
 		lua["c"] = &items;
 		ordered_container_check(lua, items);
+	}
+	SECTION("multiset string") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		std::multiset<std::string> items({ "a", "b", "c" });
+		lua["c"] = &items;
+		lookup_container_check(lua, items);
 	}
 }
 
@@ -888,6 +914,14 @@ TEST_CASE("containers/unordered lookup containers", "check ordered container typ
 		lua["c"] = &items;
 		unordered_container_check(lua, items);
 	}
+	SECTION("unordered_set string") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		std::unordered_set<std::string> items({ "a", "b", "c" });
+		lua["c"] = &items;
+		lookup_container_check(lua, items);
+	}
 	SECTION("unordered_multiset") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
@@ -895,6 +929,14 @@ TEST_CASE("containers/unordered lookup containers", "check ordered container typ
 		std::unordered_multiset<int> items{ 11, 12, 13, 14, 15 };
 		lua["c"] = &items;
 		unordered_container_check(lua, items);
+	}
+	SECTION("unordered_multiset string") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		std::unordered_multiset<std::string> items({ "a", "b", "c" });
+		lua["c"] = &items;
+		lookup_container_check(lua, items);
 	}
 }
 
@@ -913,6 +955,18 @@ TEST_CASE("containers/associative ordered containers", "check associative (map) 
 		lua["c"] = &items;
 		associative_ordered_container_check(lua, items);
 	}
+	SECTION("map string") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		std::map<std::string, std::string> items{
+			{ "a", "a" },
+			{ "b", "b" },
+			{ "c", "c" }
+		};
+		lua["c"] = &items;
+		lookup_container_check(lua, items);
+	}
 	SECTION("multimap") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
@@ -926,6 +980,18 @@ TEST_CASE("containers/associative ordered containers", "check associative (map) 
 		};
 		lua["c"] = &items;
 		associative_ordered_container_check(lua, items);
+	}
+	SECTION("multimap string") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		std::multimap<std::string, std::string> items{
+			{ "a", "a" },
+			{ "b", "b" },
+			{ "c", "c" }
+		};
+		lua["c"] = &items;
+		lookup_container_check(lua, items);
 	}
 }
 
@@ -944,6 +1010,18 @@ TEST_CASE("containers/associative unordered containers", "check associative (map
 		lua["c"] = &items;
 		associative_unordered_container_check(lua, items);
 	}
+	SECTION("unordered_map string") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		std::unordered_map<std::string, std::string> items{
+			{ "a", "a" },
+			{ "b", "b" },
+			{ "c", "c" }
+		};
+		lua["c"] = &items;
+		lookup_container_check(lua, items);
+	}
 	SECTION("unordered_multimap") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
@@ -957,6 +1035,18 @@ TEST_CASE("containers/associative unordered containers", "check associative (map
 		};
 		lua["c"] = &items;
 		associative_unordered_container_check(lua, items);
+	}
+	SECTION("unordered_multimap string") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		std::unordered_multimap<std::string, std::string> items{
+			{ "a", "a" },
+			{ "b", "b" },
+			{ "c", "c" }
+		};
+		lua["c"] = &items;
+		lookup_container_check(lua, items);
 	}
 }
 

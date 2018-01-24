@@ -551,7 +551,7 @@ namespace sol {
 		struct is_lookup : meta::all<has_key_type<T>, has_value_type<T>> {};
 
 		template <typename T>
-		struct is_matched_lookup : meta_detail::is_matched_lookup_impl<T, meta::all<has_key_type<T>, has_value_type<T>>::value> {};
+		struct is_matched_lookup : meta_detail::is_matched_lookup_impl<T, is_lookup<T>::value> {};
 
 		template <typename T>
 		using is_string_constructible = any<
