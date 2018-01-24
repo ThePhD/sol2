@@ -67,7 +67,7 @@ namespace sol {
 
 		template <typename T, typename... Bases>
 		struct inheritance {
-			static bool type_check_bases(types<>, const std::string& ti) {
+			static bool type_check_bases(types<>, const std::string&) {
 				return false;
 			}
 
