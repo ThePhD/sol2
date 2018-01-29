@@ -98,7 +98,7 @@ namespace sol {
 		}
 
 		operator std::basic_string<Char, Traits>() const {
-			return std::basic_string<Ch, Tr>(data(), size());
+			return std::basic_string<Char, Traits>(data(), size());
 		}
 
 		bool operator==(const basic_string_view& r) const {
@@ -126,7 +126,7 @@ namespace sol {
 		}
 	};
 
-	template <typename Ch, typename Tr = std::char_traits<Tr>>
+	template <typename Ch, typename Tr = std::char_traits<Ch>>
 	struct basic_string_view_hash {
 		typedef basic_string_view<Ch, Tr> argument_type;
 		typedef std::size_t result_type;
