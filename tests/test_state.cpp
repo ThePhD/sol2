@@ -21,10 +21,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define SOL_CHECK_ARGUMENTS 1
-#define SOL_ENABLE_INTEROP 1
-
-#include <sol.hpp>
+#include "test_sol.hpp"
 
 #include <catch.hpp>
 
@@ -34,8 +31,6 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
-
-#include "test_stack_guard.hpp"
 
 template <typename Name, typename Data>
 void write_file_attempt(Name&& filename, Data&& data) {

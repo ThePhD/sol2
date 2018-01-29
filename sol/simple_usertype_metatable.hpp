@@ -70,8 +70,13 @@ namespace sol {
 			string_view accessor = stack::get<string_view>(L, keyidx);
 			variable_wrapper* varwrap = nullptr;
 			{
+#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+				string_view& accessorkey = accessor;
+				auto vit = variables.find(accessorkey, string_view_hash(), std::equal_to<string_view>());
+#else
 				std::string accessorkey(accessor.data(), accessor.size());
 				auto vit = variables.find(accessorkey);
+#endif // Compatible Hash
 				if (vit != variables.cend()) {
 					varwrap = vit->second.get();
 				}
@@ -81,8 +86,13 @@ namespace sol {
 			}
 			bool function_failed = false;
 			{
+#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+				string_view& accessorkey = accessor;
+				auto fit = functions.find(accessorkey, string_view_hash(), std::equal_to<string_view>());
+#else
 				std::string accessorkey(accessor.data(), accessor.size());
 				auto fit = functions.find(accessorkey);
+#endif // Compatible Hash
 				if (fit != functions.cend()) {
 					object& func = fit->second;
 					if (is_index) {

@@ -42,8 +42,20 @@
 #include <cassert>
 #include <bitset>
 
+#ifdef SOL_USE_BOOST
+#include <boost/unordered_map.hpp>
+#endif // Using Boost
+
 namespace sol {
 	namespace usertype_detail {
+#ifdef SOL_USE_BOOST
+		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
+		using map_t = boost::unordered_map<K, V, H, E>;
+#else
+		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
+		using map_t = std::unordered_map<K, V, H, E>;
+#endif // Boost map target
+
 		const int metatable_index = 2;
 		const int metatable_core_index = 3;
 		const int filler_index = 4;
@@ -68,8 +80,8 @@ namespace sol {
 			: index(index), new_index(newindex), runtime_target(runtimetarget) {
 			}
 		};
-
-		typedef std::unordered_map<std::string, call_information> mapping_t;
+		
+		typedef map_t<std::string, call_information> mapping_t;
 
 		struct variable_wrapper {
 			virtual int index(lua_State* L) = 0;
@@ -95,8 +107,8 @@ namespace sol {
 			}
 		};
 
-		typedef std::unordered_map<std::string, std::unique_ptr<variable_wrapper>> variable_map;
-		typedef std::unordered_map<std::string, object> function_map;
+		typedef map_t<std::string, std::unique_ptr<variable_wrapper>> variable_map;
+		typedef map_t<std::string, object> function_map;
 
 		struct simple_map {
 			const char* metakey;
@@ -217,8 +229,8 @@ namespace sol {
 		inline int indexing_fail(lua_State* L) {
 			if (is_index) {
 #if 0 //def SOL_SAFE_USERTYPE
-				auto maybeaccessor = stack::get<optional<string_detail::string_shim>>(L, is_index ? -1 : -2);
-				string_detail::string_shim accessor = maybeaccessor.value_or(string_detail::string_shim("(unknown)"));
+				auto maybeaccessor = stack::get<optional<string_view>>(L, is_index ? -1 : -2);
+				string_view accessor = maybeaccessor.value_or(string_detail::string_shim("(unknown)"));
 				return luaL_error(L, "sol: attempt to index (get) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.data());
 #else
 				if (is_toplevel(L)) {
@@ -248,13 +260,21 @@ namespace sol {
 					if (is_simple) {
 						simple_map& sm = stack::get<user<simple_map>>(L, upvalue_index(simple_metatable_index));
 						function_map& functions = sm.functions;
-						optional<std::string> maybeaccessor = stack::get<optional<std::string>>(L, 2);
+						optional<string_view> maybeaccessor = stack::get<optional<string_view>>(L, 2);
 						if (!maybeaccessor) {
 							return;
 						}
-						std::string& accessor = maybeaccessor.value();
+						string_view& accessor_view = maybeaccessor.value();
+#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+						auto preexistingit = functions.find(accessor_view, string_view_hash(), std::equal_to<string_view>());
+#else
+						std::string accessor(accessor_view.data(), accessor_view.size());
 						auto preexistingit = functions.find(accessor);
+#endif
 						if (preexistingit == functions.cend()) {
+#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+							std::string accessor(accessor_view.data(), accessor_view.size());
+#endif
 							functions.emplace_hint(preexistingit, std::move(accessor), object(L, 3));
 						}
 						else {
@@ -266,18 +286,26 @@ namespace sol {
 					bool mustindex = umc.mustindex;
 					if (!mustindex)
 						return;
-					optional<std::string> maybeaccessor = stack::get<optional<std::string>>(L, 2);
+					optional<string_view> maybeaccessor = stack::get<optional<string_view>>(L, 2);
 					if (!maybeaccessor) {
 						return;
 					}
-					std::string& accessor = maybeaccessor.value();
+					string_view& accessor_view = maybeaccessor.value();
 					mapping_t& mapping = umc.mapping;
 					std::vector<object>& runtime = umc.runtime;
 					int target = static_cast<int>(runtime.size());
+#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+					auto preexistingit = mapping.find(accessor_view, string_view_hash(), std::equal_to<string_view>());
+#else
+					std::string accessor(accessor_view.data(), accessor_view.size());
 					auto preexistingit = mapping.find(accessor);
+#endif
 					if (preexistingit == mapping.cend()) {
+#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+						std::string accessor(accessor_view.data(), accessor_view.size());
+#endif
 						runtime.emplace_back(L, 3);
-						mapping.emplace_hint(mapping.cend(), accessor, call_information(&runtime_object_call, &runtime_new_index, target));
+						mapping.emplace_hint(mapping.cend(), std::move(accessor), call_information(&runtime_object_call, &runtime_new_index, target));
 					}
 					else {
 						target = preexistingit->second.runtime_target;
@@ -560,8 +588,13 @@ namespace sol {
 			int runtime_target = 0;
 			usertype_detail::member_search member = nullptr;
 			{
+#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+				string_view name = stack::get<string_view>(L, keyidx);
+				auto memberit = f.mapping.find(name, string_view_hash(), std::equal_to<string_view>());
+#else
 				std::string name = stack::get<std::string>(L, keyidx);
 				auto memberit = f.mapping.find(name);
+#endif
 				if (memberit != f.mapping.cend()) {
 					const usertype_detail::call_information& ci = memberit->second;
 					member = is_index ? ci.index : ci.new_index;

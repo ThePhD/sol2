@@ -40,6 +40,8 @@ function(CREATE_TEST test_target_name test_name is_single)
 		OUTPUT_NAME ${test_name})
 	if (is_single)
 		target_link_libraries(${test_target_name} sol2_single)
+		target_compile_definitions(${test_target_name} 
+			PRIVATE TEST_SINGLE)
 	else()
 		target_link_libraries(${test_target_name} sol2)
 	endif()

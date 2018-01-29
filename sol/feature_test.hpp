@@ -181,4 +181,10 @@
 #endif
 #endif // avoiding nil defines / keywords
 
+#ifdef SOL_USE_BOOST
+#ifndef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#define SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#endif // SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#endif // Boost has unordered_map with Compatible Key and CompatibleHash
+
 #endif // SOL_FEATURE_TEST_HPP

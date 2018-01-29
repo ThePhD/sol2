@@ -21,10 +21,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define SOL_CHECK_ARGUMENTS 1
-#define SOL_ENABLE_INTEROP 1
-
-#include <sol.hpp>
+#include "test_sol.hpp"
 
 #include <catch.hpp>
 
@@ -77,40 +74,46 @@ TEST_CASE("operators/default", "test that generic equality operators and all sor
 
 	SECTION("plain") {
 		// Can only compare identity here
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(t1 == t1)");
-			lua.safe_script("assert(t2 == t2)");
-			lua.safe_script("assert(t3 == t3)");
-		}());
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(t1 == t2)");
-			lua.safe_script("assert(not (t1 == t3))");
-			lua.safe_script("assert(not (t2 == t3))");
-		}());
+		{
+			auto result1 = lua.safe_script("assert(t1 == t1)"
+				"assert(t2 == t2)"
+				"assert(t3 == t3)", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
+		{
+			auto result1 = lua.safe_script("assert(t1 == t2)"
+				"assert(not (t1 == t3))"
+				"assert(not (t2 == t3))", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
 		// Object should compare equal to themselves
 		// (and not invoke operator==; pointer test should be sufficient)
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(u1 == u1)");
-			lua.safe_script("assert(u2 == u2)");
-			lua.safe_script("assert(u3 == u3)");
-		}());
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(not (u1 == u2))");
-			lua.safe_script("assert(u1 == u3)");
-			lua.safe_script("assert(not (u2 == u3))");
-		}());
+		{
+			auto result1 = lua.safe_script("assert(u1 == u1)"
+				"assert(u2 == u2)"
+				"assert(u3 == u3)", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
+		{
+			auto result1 = lua.safe_script("assert(not (u1 == u2))"
+				"assert(u1 == u3)"
+				"assert(not (u2 == u3))", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
 		// Object should compare equal to themselves
 		// (and not invoke operator==; pointer test should be sufficient)
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(v1 == v1)");
-			lua.safe_script("assert(v2 == v2)");
-			lua.safe_script("assert(v3 == v3)");
-		}());
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(not (v1 == v2))");
-			lua.safe_script("assert(v1 == v3)");
-			lua.safe_script("assert(not (v2 == v3))");
-		}());
+		{
+			auto result1 = lua.safe_script("assert(v1 == v1)"
+				"assert(v2 == v2)"
+				"assert(v3 == v3)", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
+		{
+			auto result1 = lua.safe_script("assert(not (v1 == v2))"
+				"assert(v1 == v3)"
+				"assert(not (v2 == v3))", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
 	}
 	SECTION("regular") {
 		lua.new_usertype<T>("T");
@@ -118,40 +121,46 @@ TEST_CASE("operators/default", "test that generic equality operators and all sor
 		lua.new_usertype<V>("V");
 
 		// Can only compare identity here
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(t1 == t1)");
-			lua.safe_script("assert(t2 == t2)");
-			lua.safe_script("assert(t3 == t3)");
-		}());
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(t1 == t2)");
-			lua.safe_script("assert(not (t1 == t3))");
-			lua.safe_script("assert(not (t2 == t3))");
-		}());
+		{
+			auto result1 = lua.safe_script("assert(t1 == t1)"
+				"assert(t2 == t2)"
+				"assert(t3 == t3)", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
+		{
+			auto result1 = lua.safe_script("assert(t1 == t2)"
+				"assert(not (t1 == t3))"
+				"assert(not (t2 == t3))", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
 		// Object should compare equal to themselves
 		// (and not invoke operator==; pointer test should be sufficient)
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(u1 == u1)");
-			lua.safe_script("assert(u2 == u2)");
-			lua.safe_script("assert(u3 == u3)");
-		}());
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(not (u1 == u2))");
-			lua.safe_script("assert(u1 == u3)");
-			lua.safe_script("assert(not (u2 == u3))");
-		}());
+		{
+			auto result1 = lua.safe_script("assert(u1 == u1)"
+				"assert(u2 == u2)"
+				"assert(u3 == u3)", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
+		{
+			auto result1 = lua.safe_script("assert(not (u1 == u2))"
+				"assert(u1 == u3)"
+				"assert(not (u2 == u3))", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
 		// Object should compare equal to themselves
 		// (and not invoke operator==; pointer test should be sufficient)
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(v1 == v1)");
-			lua.safe_script("assert(v2 == v2)");
-			lua.safe_script("assert(v3 == v3)");
-		}());
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(not (v1 == v2))");
-			lua.safe_script("assert(v1 == v3)");
-			lua.safe_script("assert(not (v2 == v3))");
-		}());
+		{
+			auto result1 = lua.safe_script("assert(v1 == v1)"
+				"assert(v2 == v2)"
+				"assert(v3 == v3)", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
+		{
+			auto result1 = lua.safe_script("assert(not (v1 == v2))"
+				"assert(v1 == v3)"
+				"assert(not (v2 == v3))", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
 	}
 	SECTION("simple") {
 		lua.new_simple_usertype<T>("T");
@@ -159,40 +168,46 @@ TEST_CASE("operators/default", "test that generic equality operators and all sor
 		lua.new_simple_usertype<V>("V");
 
 		// Can only compare identity here
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(t1 == t1)");
-			lua.safe_script("assert(t2 == t2)");
-			lua.safe_script("assert(t3 == t3)");
-		}());
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(t1 == t2)");
-			lua.safe_script("assert(not (t1 == t3))");
-			lua.safe_script("assert(not (t2 == t3))");
-		}());
+		{
+			auto result1 = lua.safe_script("assert(t1 == t1)"
+				"assert(t2 == t2)"
+				"assert(t3 == t3)", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
+		{
+			auto result1 = lua.safe_script("assert(t1 == t2)"
+				"assert(not (t1 == t3))"
+				"assert(not (t2 == t3))", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
 		// Object should compare equal to themselves
 		// (and not invoke operator==; pointer test should be sufficient)
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(u1 == u1)");
-			lua.safe_script("assert(u2 == u2)");
-			lua.safe_script("assert(u3 == u3)");
-		}());
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(not (u1 == u2))");
-			lua.safe_script("assert(u1 == u3)");
-			lua.safe_script("assert(not (u2 == u3))");
-		}());
+		{
+			auto result1 = lua.safe_script("assert(u1 == u1)"
+				"assert(u2 == u2)"
+				"assert(u3 == u3)", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
+		{
+			auto result1 = lua.safe_script("assert(not (u1 == u2))"
+				"assert(u1 == u3)"
+				"assert(not (u2 == u3))", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
 		// Object should compare equal to themselves
 		// (and not invoke operator==; pointer test should be sufficient)
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(v1 == v1)");
-			lua.safe_script("assert(v2 == v2)");
-			lua.safe_script("assert(v3 == v3)");
-		}());
-		REQUIRE_NOTHROW([&] {
-			lua.safe_script("assert(not (v1 == v2))");
-			lua.safe_script("assert(v1 == v3)");
-			lua.safe_script("assert(not (v2 == v3))");
-		}());
+		{
+			auto result1 = lua.safe_script("assert(v1 == v1)"
+				"assert(v2 == v2)"
+				"assert(v3 == v3)", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
+		{
+			auto result1 = lua.safe_script("assert(not (v1 == v2))"
+				"assert(v1 == v3)"
+				"assert(not (v2 == v3))", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
 	}
 }
 
@@ -209,7 +224,8 @@ TEST_CASE("operators/call", "test call operator generation") {
 	SECTION("plain") {
 		{
 			lua.set("obj", callable());
-			lua.safe_script("v = obj(2, 'bark woof')");
+			auto result1 = lua.safe_script("v = obj(2, 'bark woof')", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
 			int v = lua["v"];
 			REQUIRE(v == 11);
 		}
@@ -217,8 +233,9 @@ TEST_CASE("operators/call", "test call operator generation") {
 	SECTION("regular") {
 		lua.new_usertype<callable>("callable");
 		{
-			lua.safe_script("obj = callable.new()");
-			lua.safe_script("v = obj(2, 'bark woof')");
+			auto result1 = lua.safe_script("obj = callable.new()\n"
+				"v = obj(2, 'bark woof')", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
 			int v = lua["v"];
 			REQUIRE(v == 11);
 		}
@@ -283,7 +300,8 @@ TEST_CASE("operators/stringable", "test std::ostream stringability") {
 	SECTION("plain") {
 		{
 			lua["obj"] = stringable();
-			lua.safe_script("print(obj)");
+			auto result1 = lua.safe_script("print(obj)", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
 			stringable& obj = lua["obj"];
 			REQUIRE(stringable::last_print_ptr == &obj);
 		}
@@ -291,8 +309,9 @@ TEST_CASE("operators/stringable", "test std::ostream stringability") {
 	SECTION("regular") {
 		lua.new_usertype<stringable>("stringable");
 		{
-			lua.safe_script("obj = stringable.new()");
-			lua.safe_script("print(obj)");
+			auto result1 = lua.safe_script(R"(obj = stringable.new()
+				print(obj) )", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
 			stringable& obj = lua["obj"];
 			REQUIRE(stringable::last_print_ptr == &obj);
 		}
@@ -300,8 +319,9 @@ TEST_CASE("operators/stringable", "test std::ostream stringability") {
 	SECTION("simple") {
 		lua.new_simple_usertype<stringable>("stringable");
 		{
-			lua.safe_script("obj = stringable.new()");
-			lua.safe_script("print(obj)");
+			auto result1 = lua.safe_script(R"(obj = stringable.new()
+				print(obj))", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
 			stringable& obj = lua["obj"];
 			REQUIRE(stringable::last_print_ptr == &obj);
 		}

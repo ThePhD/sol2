@@ -21,15 +21,12 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define SOL_CHECK_ARGUMENTS 1
-#define SOL_ENABLE_INTEROP 1
 
-#include <sol.hpp>
+#include "test_sol.hpp"
 
 #include <catch.hpp>
 
 #include <iostream>
-#include "test_stack_guard.hpp"
 
 template <typename T>
 T va_func(sol::variadic_args va, T first) {
@@ -73,8 +70,7 @@ void test_free_func(std::function<void()> f) {
 
 void test_free_func2(std::function<int(int)> f, int arg1) {
 	int val = f(arg1);
-	if (val != arg1)
-		throw sol::error("failed function call!");
+	REQUIRE(val == arg1);
 }
 
 int overloaded(int x) {
@@ -137,7 +133,8 @@ static int raw_noexcept_function(lua_State* L) noexcept {
 
 TEST_CASE("functions/tuple returns", "Make sure tuple returns are ordered properly") {
 	sol::state lua;
-	lua.safe_script("function f() return '3', 4 end");
+	auto result1 = lua.safe_script("function f() return '3', 4 end", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 
 	std::tuple<std::string, int> result = lua["f"]();
 	auto s = std::get<0>(result);
@@ -197,7 +194,9 @@ TEST_CASE("functions/return order and multi get", "Check if return order is in t
 	lua.set_function("h", []() {
 		return std::make_tuple(10, 10.0f);
 	});
-	lua.safe_script("function g() return 10, 11, 12 end\nx,y,z = g()");
+	auto result1 = lua.safe_script("function g() return 10, 11, 12 end\nx,y,z = g()", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
+
 	auto tcpp = lua.get<sol::function>("f").call<int, int, int>();
 	auto tlua = lua.get<sol::function>("g").call<int, int, int>();
 	auto tcpp2 = lua.get<sol::function>("h").call<int, float>();
@@ -223,7 +222,9 @@ TEST_CASE("functions/deducing return order and multi get", "Check if return orde
 	lua.set_function("f", [] {
 		return std::make_tuple(10, 11, 12);
 	});
-	lua.safe_script("function g() return 10, 11, 12 end\nx,y,z = g()");
+	auto result1 = lua.safe_script("function g() return 10, 11, 12 end\nx,y,z = g()", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
+
 	std::tuple<int, int, int> tcpp = lua.get<sol::function>("f")();
 	std::tuple<int, int, int> tlua = lua.get<sol::function>("g")();
 	std::tuple<int, int, int> tluaget = lua.get<int, int, int>("x", "y", "z");
@@ -240,9 +241,10 @@ TEST_CASE("functions/optional values", "check if optionals can be passed in to b
 		int v;
 	};
 	sol::state lua;
-	lua.safe_script(R"( function f (a)
+	auto result1 = lua.safe_script(R"( function f (a)
     return a
-end )");
+end )", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 
 	sol::function lua_bark = lua["f"];
 
@@ -260,13 +262,15 @@ TEST_CASE("functions/pair and tuple and proxy tests", "Check if sol::reference a
 	sol::state lua;
 	lua.new_usertype<A>("A",
 		"bark", &A::bark);
-	lua.safe_script(R"( function f (num_value, a)
+	auto result1 = lua.safe_script(R"( function f (num_value, a)
     return num_value * 2, a:bark()
 end 
 function h (num_value, a, b)
     return num_value * 2, a:bark(), b * 3
 end 
-nested = { variables = { no = { problem = 10 } } } )");
+nested = { variables = { no = { problem = 10 } } } )", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
+
 	lua.set_function("g", bark);
 
 	sol::function cpp_bark = lua["g"];
@@ -302,8 +306,8 @@ TEST_CASE("functions/sol::function to std::function", "check if conversion to st
 
 	lua.set_function("testFunc", test_free_func);
 	lua.set_function("testFunc2", test_free_func2);
-	lua.safe_script(
-		"testFunc(function() print(\"hello std::function\") end)");
+	auto result1 = lua.safe_script("testFunc(function() print(\"hello std::function\") end)", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 	{
 		auto result = lua.safe_script(
 			"function m(a)\n"
@@ -326,7 +330,7 @@ TEST_CASE("functions/returning functions from C++", "check to see if returning a
 		auto result = lua.safe_script(
 			"afx = makefn()\n"
 			"print(afx())\n"
-			"takefn(afx)\n");
+			"takefn(afx)\n", sol::script_pass_on_error);
 		REQUIRE(result.valid());
 	}
 }
@@ -357,11 +361,12 @@ TEST_CASE("functions/function_result and protected_function_result", "Function r
 		return handlederrormessage;
 	};
 	lua.set_function("cpphandler", cpphandlerfx);
-	lua.safe_script(
+	auto result1 = lua.safe_script(
 		std::string("function luahandler ( message )")
 		+ "    print('lua handler called with: ' .. message)"
 		+ "    return '" + handlederrormessage + "'"
-		+ "end");
+		+ "end", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 	auto nontrampolinefx = [](lua_State*) -> int { throw "x"; };
 	lua_CFunction c_nontrampolinefx = nontrampolinefx;
 	lua.set("nontrampoline", c_nontrampolinefx);
@@ -499,12 +504,13 @@ TEST_CASE("functions/all kinds", "Register all kinds of functions, make sure the
 	lua.set_function("m", &test_2::a, &t2);
 	lua.set_function("n", sol::c_call<decltype(&non_overloaded), &non_overloaded>);
 
-	lua.safe_script(R"(
+	auto result1 = lua.safe_script(R"(
 o1 = test_1.new()
 o2 = test_2.new()
-)");
+)", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 
-	lua.safe_script(R"(
+	auto result2 = lua.safe_script(R"(
 ob = o1:bark()
 
 A = a()
@@ -516,35 +522,42 @@ G0, G1 = g(2, o1)
 H = h(o1)
 I = i(o1)
 I = i(o1)
-)");
+)", sol::script_pass_on_error);
+	REQUIRE(result2.valid());
 
-	lua.safe_script(R"(
+	auto result3 = lua.safe_script(R"(
 J0 = j()
 j(24)
 J1 = j()
-    )");
+    )", sol::script_pass_on_error);
+	REQUIRE(result3.valid());
 
-	lua.safe_script(R"(
+	auto result4 = lua.safe_script(R"(
 K0 = k(o2)
 k(o2, 1024)
 K1 = k(o2)
-    )");
+    )", sol::script_pass_on_error);
+	REQUIRE(result4.valid());
 
-	lua.safe_script(R"(
+	auto result5 = lua.safe_script(R"(
 L0 = l(o1)
 l(o1, 678)
 L1 = l(o1)
-    )");
+    )", sol::script_pass_on_error);
+	REQUIRE(result5.valid());
 
-	lua.safe_script(R"(
+	auto result6 = lua.safe_script(R"(
 M0 = m()
 m(256)
 M1 = m()
-    )");
+    )", sol::script_pass_on_error);
+	REQUIRE(result6.valid());
 
-	lua.safe_script(R"(
+	auto result7 = lua.safe_script(R"(
 N = n(1, 2, 3)
-    )");
+    )", sol::script_pass_on_error);
+	REQUIRE(result7.valid());
+
 	int ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1, N;
 	std::tie(ob, A, B, C, D, F, G0, G1, H, I, J0, J1, K0, K1, L0, L1, M0, M1, N)
 		= lua.get<int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int>(
@@ -668,7 +681,8 @@ TEST_CASE("simple/call c++ function", "C++ function is called from lua") {
 	sol::state lua;
 
 	lua.set_function("plop_xyz", sep::plop_xyz);
-	lua.safe_script("x = plop_xyz(2, 6, 'hello')");
+	auto result1 = lua.safe_script("x = plop_xyz(2, 6, 'hello')", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 
 	REQUIRE(lua.get<int>("x") == 11);
 }
@@ -680,7 +694,8 @@ TEST_CASE("simple/call lambda", "A C++ lambda is exposed to lua and called") {
 
 	lua.set_function("foo", [&a] { a = 1; });
 
-	lua.safe_script("foo()");
+	auto result1 = lua.safe_script("foo()", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 
 	REQUIRE(a == 1);
 }
@@ -764,7 +779,8 @@ TEST_CASE("advanced/call lambdas", "A C++ lambda is exposed to lua and called") 
 		return 0;
 	});
 
-	lua.safe_script("set_x(9)");
+	auto result1 = lua.safe_script("set_x(9)", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 	REQUIRE(x == 9);
 }
 
@@ -785,8 +801,11 @@ TEST_CASE("advanced/call referenced obj", "A C++ object is passed by pointer/ref
 	};
 	lua.set_function("set_y", &decltype(objy)::operator(), std::ref(objy));
 
-	lua.safe_script("set_x(9)");
-	lua.safe_script("set_y(9)");
+	auto result1 = lua.safe_script("set_x(9)", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
+	auto result2 = lua.safe_script("set_y(9)", sol::script_pass_on_error);
+	REQUIRE(result2.valid());
+
 	REQUIRE(x == 9);
 	REQUIRE(y == 9);
 }
@@ -794,9 +813,10 @@ TEST_CASE("advanced/call referenced obj", "A C++ object is passed by pointer/ref
 TEST_CASE("functions/tie", "make sure advanced syntax with 'tie' works") {
 	sol::state lua;
 
-	lua.safe_script(R"(function f () 
+	auto result1 = lua.safe_script(R"(function f () 
     return 1, 2, 3 
-end)");
+end)", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 	sol::function f = lua["f"];
 
 	int a, b, c;

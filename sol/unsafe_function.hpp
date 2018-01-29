@@ -68,7 +68,7 @@ namespace sol {
 		using base_t::lua_state;
 
 		basic_function() = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_function>>, meta::neg<std::is_same<base_t, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_function>>, meta::neg<std::is_same<base_t, stack_reference>>, meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_function(T&& r) noexcept
 		: base_t(std::forward<T>(r)) {
 #ifdef SOL_SAFE_REFERENCES
@@ -88,6 +88,9 @@ namespace sol {
 		}
 		basic_function(stack_reference&& r)
 		: basic_function(r.lua_state(), r.stack_index()) {
+		}
+		basic_function(lua_nil_t n)
+		: base_t(n) {
 		}
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_function(lua_State* L, T&& r)

@@ -202,7 +202,7 @@ namespace sol {
 		handler_t error_handler;
 
 		basic_protected_function() = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_protected_function>>, meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>>, meta::neg<std::is_same<base_t, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_protected_function>>, meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>>, meta::neg<std::is_same<base_t, stack_reference>>, meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_protected_function(T&& r) noexcept
 		: base_t(std::forward<T>(r)), error_handler(get_default_handler(r.lua_state())) {
 #ifdef SOL_SAFE_REFERENCES
@@ -267,6 +267,10 @@ namespace sol {
 			constructor_handler handler{};
 			stack::check<basic_protected_function>(lua_state(), -1, handler);
 #endif // Safety
+		}
+		
+		basic_protected_function(lua_nil_t n)
+			: base_t(n), error_handler(n) {
 		}
 
 		basic_protected_function(lua_State* L, int index = -1)

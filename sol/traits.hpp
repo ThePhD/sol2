@@ -555,10 +555,11 @@ namespace sol {
 
 		template <typename T>
 		using is_string_constructible = any<
-			std::is_same<unqualified_t<T>, const char*>, std::is_same<unqualified_t<T>, char>, std::is_same<unqualified_t<T>, std::string>, std::is_same<unqualified_t<T>, std::initializer_list<char>>
+			meta::all<std::is_array<unqualified_t<T>>, std::is_same<meta::unqualified_t<std::remove_all_extents_t<meta::unqualified_t<T>>>, char>>,
+			std::is_same<unqualified_t<T>, const char*>, 
+			std::is_same<unqualified_t<T>, char>, std::is_same<unqualified_t<T>, std::string>, std::is_same<unqualified_t<T>, std::initializer_list<char>>
 #ifdef SOL_CXX17_FEATURES
-			,
-			std::is_same<unqualified_t<T>, std::string_view>
+			, std::is_same<unqualified_t<T>, std::string_view>
 #endif
 			>;
 

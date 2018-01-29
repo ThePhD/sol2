@@ -21,10 +21,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define SOL_CHECK_ARGUMENTS 1
-#define SOL_ENABLE_INTEROP 1
+#include "test_sol.hpp"
 
-#include <sol.hpp>
 #include <catch.hpp>
 
 #include <iostream>
@@ -148,16 +146,16 @@ end
 			gc_entity e;
 			target = &e;
 			{
-				f(e);			   // same with std::ref(e)!
-				lua.collect_garbage(); // destroys e for some reason
+				f(e);
+				lua.collect_garbage();
 			}
 			{
-				f(&e);			   // same with std::ref(e)!
-				lua.collect_garbage(); // destroys e for some reason
+				f(&e);
+				lua.collect_garbage();
 			}
 			{
-				f(std::ref(e));	   // same with std::ref(e)!
-				lua.collect_garbage(); // destroys e for some reason
+				f(std::ref(e));
+				lua.collect_garbage();
 			}
 		}
 		REQUIRE(entities.size() == 1);
@@ -293,13 +291,15 @@ TEST_CASE("gc/function storage", "show that proper copies / destruction happens 
 			sol::state lua;
 			x x1;
 			lua.set_function("x1copy", &x::func, x1);
-			lua.safe_script("x1copy()");
+			auto result1 = lua.safe_script("x1copy()", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
 			REQUIRE(created == 2);
 			REQUIRE(destroyed == 0);
 			REQUIRE_FALSE(last_call == &x1);
 
 			lua.set_function("x1ref", &x::func, std::ref(x1));
-			lua.safe_script("x1ref()");
+			auto result2 = lua.safe_script("x1ref()", sol::script_pass_on_error);
+			REQUIRE(result2.valid());
 			REQUIRE(created == 2);
 			REQUIRE(destroyed == 0);
 			REQUIRE(last_call == &x1);
@@ -318,14 +318,16 @@ TEST_CASE("gc/function storage", "show that proper copies / destruction happens 
 			sol::state lua;
 			y y1;
 			lua.set_function("y1copy", y1);
-			lua.safe_script("y1copy()");
+			auto result1 = lua.safe_script("y1copy()", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
 			REQUIRE(created == 1);
 			REQUIRE(destroyed == 0);
 			REQUIRE(last_call == static_call);
 
 			last_call = nullptr;
 			lua.set_function("y1ref", std::ref(y1));
-			lua.safe_script("y1ref()");
+			auto result2 = lua.safe_script("y1ref()", sol::script_pass_on_error);
+			REQUIRE(result2.valid());
 			REQUIRE(created == 1);
 			REQUIRE(destroyed == 0);
 			REQUIRE(last_call == static_call);
@@ -483,11 +485,12 @@ TEST_CASE("gc/double-deletion tests", "make sure usertypes are properly destruct
 		lua.new_usertype<crash_class>("CrashClass",
 			sol::call_constructor, sol::constructors<sol::types<>>());
 
-		lua.safe_script(R"(
+		auto result1 = lua.safe_script(R"(
 		function testCrash()
 			local x = CrashClass()
 		end
-		)");
+		)", sol::script_pass_on_error);
+		REQUIRE(result1.valid());
 
 		for (int i = 0; i < 1000; ++i) {
 			lua["testCrash"]();
@@ -497,11 +500,12 @@ TEST_CASE("gc/double-deletion tests", "make sure usertypes are properly destruct
 		lua.new_simple_usertype<crash_class>("CrashClass",
 			sol::call_constructor, sol::constructors<sol::types<>>());
 
-		lua.safe_script(R"(
+		auto result1 = lua.safe_script(R"(
 		function testCrash()
 			local x = CrashClass()
 			end
-		)");
+		)", sol::script_pass_on_error);
+		REQUIRE(result1.valid());
 
 		for (int i = 0; i < 1000; ++i) {
 			lua["testCrash"]();
@@ -537,7 +541,8 @@ TEST_CASE("gc/shared_ptr regression", "metatables should not screw over unique u
 				});
 			REQUIRE(created == 0);
 			REQUIRE(destroyed == 0);
-			lua.safe_script("x = test.create()");
+			auto result1 = lua.safe_script("x = test.create()", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
 			REQUIRE(created == 1);
 			REQUIRE(destroyed == 0);
 			REQUIRE_FALSE(tests.empty());
@@ -564,7 +569,8 @@ TEST_CASE("gc/shared_ptr regression", "metatables should not screw over unique u
 				});
 			REQUIRE(created == 0);
 			REQUIRE(destroyed == 0);
-			lua.safe_script("x = test.create()");
+			auto result1 = lua.safe_script("x = test.create()", sol::script_pass_on_error);
+			REQUIRE(result1.valid());
 			REQUIRE(created == 1);
 			REQUIRE(destroyed == 0);
 			REQUIRE_FALSE(tests.empty());
@@ -635,7 +641,10 @@ TEST_CASE("gc/alignment", "test that allocation is always on aligned boundaries,
 	test obj{};
 	lua["obj"] = &obj;
 	INFO("obj");
-	lua.script("obj.callback()");
+	{
+		auto r = lua.safe_script("obj.callback()", sol::script_pass_on_error);
+		REQUIRE(r.valid());
+	}
 	{
 		// Do not check for stack-created object
 		//test& lobj = lua["obj"];
@@ -644,7 +653,10 @@ TEST_CASE("gc/alignment", "test that allocation is always on aligned boundaries,
 	
 	lua["obj0"] = std::ref(obj);
 	INFO("obj0");
-	lua.script("obj0.callback()");
+	{
+		auto r = lua.safe_script("obj0.callback()", sol::script_pass_on_error);
+		REQUIRE(r.valid());
+	}
 	{
 		// Do not check for stack-created object
 		//test& lobj = lua["obj0"];
@@ -653,7 +665,10 @@ TEST_CASE("gc/alignment", "test that allocation is always on aligned boundaries,
 
 	lua["obj1"] = obj;
 	INFO("obj1");
-	lua.script("obj1.callback()");
+	{
+		auto r = lua.safe_script("obj1.callback()", sol::script_pass_on_error);
+		REQUIRE(r.valid());
+	}
 	{
 		test& lobj = lua["obj1"];
 		lobj.check_alignment();
@@ -661,7 +676,10 @@ TEST_CASE("gc/alignment", "test that allocation is always on aligned boundaries,
 
 	lua["obj2"] = test{};
 	INFO("obj2");
-	lua.script("obj2.callback()");
+	{
+		auto r = lua.safe_script("obj2.callback()", sol::script_pass_on_error);
+		REQUIRE(r.valid());
+	}
 	{
 		test& lobj = lua["obj2"];
 		lobj.check_alignment();
@@ -669,7 +687,10 @@ TEST_CASE("gc/alignment", "test that allocation is always on aligned boundaries,
 
 	lua["obj3"] = std::make_unique<test>();
 	INFO("obj3");
-	lua.script("obj3.callback()");
+	{
+		auto r = lua.safe_script("obj3.callback()", sol::script_pass_on_error);
+		REQUIRE(r.valid());
+	}
 	{
 		test& lobj = lua["obj3"];
 		lobj.check_alignment();
@@ -677,7 +698,10 @@ TEST_CASE("gc/alignment", "test that allocation is always on aligned boundaries,
 
 	lua["obj4"] = std::make_shared<test>();
 	INFO("obj4");
-	lua.script("obj4.callback()");
+	{
+		auto r = lua.safe_script("obj4.callback()", sol::script_pass_on_error);
+		REQUIRE(r.valid());
+	}
 	{
 		test& lobj = lua["obj4"];
 		lobj.check_alignment();

@@ -21,10 +21,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define SOL_CHECK_ARGUMENTS 1
-#define SOL_ENABLE_INTEROP 1
-
-#include <sol.hpp>
+#include "test_sol.hpp"
 
 #include <catch.hpp>
 
@@ -441,10 +438,11 @@ TEST_CASE("usertype/self-referential usertype", "usertype classes must play nice
 
 	lua.new_usertype<self_test>("test", "g", &self_test::g, "f", &self_test::f);
 
-	lua.safe_script(
+	auto result = lua.safe_script(
 		"local a = test.new()\n"
 		"a:g(\"woof\")\n"
-		"a:f(a)\n");
+		"a:f(a)\n", sol::script_pass_on_error);
+	REQUIRE(result.valid());
 }
 
 TEST_CASE("usertype/issue-number-twenty-five", "Using pointers and references from C++ classes in Lua") {
@@ -525,12 +523,18 @@ TEST_CASE("usertype/issue-number-thirty-five", "using value types created from l
 	sol::usertype<Vec> udata(ctor, "normalized", &Vec::normalized, "length", &Vec::length);
 	lua.set_usertype(udata);
 
-	REQUIRE_NOTHROW(lua.safe_script(
+	{
+		auto result = lua.safe_script(
 		"v = Vec.new(1, 2, 3)\n"
-		"print(v:length())"));
-	REQUIRE_NOTHROW(lua.safe_script(
+		"print(v:length())");
+		REQUIRE(result.valid());
+	}
+	{
+		auto result = lua.safe_script(
 		"v = Vec.new(1, 2, 3)\n"
-		"print(v:normalized():length())"));
+		"print(v:normalized():length())");
+		REQUIRE(result.valid());
+	}
 }
 
 TEST_CASE("usertype/lua-stored-usertype", "ensure usertype values can be stored without keeping usertype object alive") {
@@ -547,14 +551,20 @@ TEST_CASE("usertype/lua-stored-usertype", "ensure usertype values can be stored 
 		// usertype dies, but still usable in lua!
 	}
 
-	REQUIRE_NOTHROW(lua.safe_script(
-		"collectgarbage()\n"
-		"v = Vec.new(1, 2, 3)\n"
-		"print(v:length())"));
+	{
+		auto result = lua.safe_script(
+			"collectgarbage()\n"
+			"v = Vec.new(1, 2, 3)\n"
+			"print(v:length())");
+		REQUIRE(result.valid());
+	}
 
-	REQUIRE_NOTHROW(lua.safe_script(
-		"v = Vec.new(1, 2, 3)\n"
-		"print(v:normalized():length())"));
+	{
+		auto result = lua.safe_script(
+			"v = Vec.new(1, 2, 3)\n"
+			"print(v:normalized():length())");
+		REQUIRE(result.valid());
+	}
 }
 
 TEST_CASE("usertype/member-variables", "allow table-like accessors to behave as member variables for usertype") {
@@ -669,14 +679,18 @@ TEST_CASE("regressions/one", "issue number 48") {
 	sol::state lua;
 	lua.new_usertype<vars>("vars",
 		"boop", &vars::boop);
-	REQUIRE_NOTHROW(lua.safe_script(
-		"beep = vars.new()\n"
-		"beep.boop = 1"));
+	auto code = "beep = vars.new()\n"
+		"beep.boop = 1";
+	auto result1 = lua.safe_script(code, sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 	// test for segfault
 	auto my_var = lua.get<vars>("beep");
+	auto& my_var_ref = lua.get<vars>("beep");
+	auto* my_var_ptr = lua.get<vars*>("beep");
 	REQUIRE(my_var.boop == 1);
-	auto* ptr = &my_var;
-	REQUIRE(ptr->boop == 1);
+	REQUIRE(my_var_ref.boop == 1);
+	REQUIRE(my_var_ptr->boop == 1);
+	REQUIRE(std::addressof(my_var_ref) == my_var_ptr);
 }
 
 TEST_CASE("usertype/get-set-references", "properly get and set with std::ref semantics. Note that to get, we must not use Unqualified<T> on the type...") {
@@ -726,9 +740,10 @@ TEST_CASE("usertype/private-constructible", "Check to make sure special snowflak
 			REQUIRE(result.valid());
 		}
 
-		REQUIRE_NOTHROW(lua.safe_script(
-			"local fresh_f = factory_test:new()\n"
-			"assert(fresh_f.a == true_a)\n"));
+		auto code1 = "local fresh_f = factory_test:new()\n"
+			"assert(fresh_f.a == true_a)\n";
+		auto result1 = lua.safe_script(code1, sol::script_pass_on_error);
+		REQUIRE(result1.valid());
 	}
 	int expectednumsaved = numsaved + 1;
 	int expectednumkilled = numkilled + 1;

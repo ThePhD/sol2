@@ -22,6 +22,7 @@ members
 
 .. code-block:: cpp
 	:caption: constructor: reference
+	:name: reference-constructor
 
 	reference(lua_State* L, int index = -1);
 	reference(lua_State* L, lua_nil_t);
@@ -40,6 +41,8 @@ The first constructor creates a reference from the Lua stack at the specified in
 .. note::
 
 	Note that the last constructor has ``lua_xmove`` safety built into it. You can pin an object to a certain thread (or the main thread) by initializing it with ``sol::reference pinned(state, other_reference_object);``. This ensures that ``other_reference_object`` will exist in the state/thread of ``state``. Also note that copy/move assignment operations will also use pinning semantics if it detects that the state of the object on the right is ``lua_xmove`` compatible. (But, the ``reference`` object on the left must have a valid state as well. You can have a nil ``reference`` with a valid state by using the ``sol::reference pinned(state, sol::lua_nil)`` constructor as well.) This applies for any ``sol::reference`` derived type.
+
+	You can un-pin and null the state by doing ``ref = sol::lua_nil;``. This applies to **all derived types**, including ``sol::(protected_)function``, ``sol::thread``, ``sol::object``, ``sol::table``, and similar.
 
 .. code-block:: cpp
 	:caption: function: push referred-to element from the stack
@@ -82,7 +85,8 @@ non-members
 -----------
 
 .. code-block:: cpp
-	:caption: functions: reference comparators
+	:caption: operators: reference comparators
+	:name: reference-operators-comparators
 
 	bool operator==(const reference&, const reference&);
 	bool operator!=(const reference&, const reference&);

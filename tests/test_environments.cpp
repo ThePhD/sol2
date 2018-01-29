@@ -21,21 +21,19 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define SOL_CHECK_ARGUMENTS 1
-#define SOL_ENABLE_INTEROP 1
-
-#include <sol.hpp>
+#include "test_sol.hpp"
 
 #include <catch.hpp>
+
 #include <iostream>
-#include "test_stack_guard.hpp"
 
 TEST_CASE("environments/get", "Envronments can be taken out of things like Lua functions properly") {
 	sol::state lua;
 	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
 
-	lua.safe_script("f = function() return test end");
+	auto result1 = lua.safe_script("f = function() return test end", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 	sol::function f = lua["f"];
 
 	sol::environment env_f(lua, sol::create);
@@ -45,7 +43,8 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 	int result = f();
 	REQUIRE(result == 31);
 
-	lua.safe_script("g = function() test = 5 end");
+	auto result2 = lua.safe_script("g = function() test = 5 end", sol::script_pass_on_error);
+	REQUIRE(result2.valid());
 	sol::function g = lua["g"];
 	sol::environment env_g(lua, sol::create);
 	env_g.set_on(g);
@@ -58,7 +57,8 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 	sol::object global_test = lua["test"];
 	REQUIRE(!global_test.valid());
 
-	lua.safe_script("h = function() end");
+	auto result3 = lua.safe_script("h = function() end", sol::script_pass_on_error);
+	REQUIRE(result3.valid());
 
 	lua.set_function("check_f_env",
 		[&lua, &env_f](sol::object target) {
@@ -86,11 +86,12 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 			sol::environment target_env = sol::get_environment(target);
 		});
 
-	REQUIRE_NOTHROW([&lua]() {
-		lua.safe_script("check_f_env(f)");
-		lua.safe_script("check_g_env(g)");
-		lua.safe_script("check_h_env(h)");
-	}());
+	auto checkf = lua.safe_script("check_f_env(f)");
+	REQUIRE(checkf.valid());
+	auto checkg = lua.safe_script("check_g_env(g)");
+	REQUIRE(checkg.valid());
+	auto checkh = lua.safe_script("check_h_env(h)");
+	REQUIRE(checkh.valid());
 }
 
 TEST_CASE("environments/shadowing", "Environments can properly shadow and fallback on variables") {
@@ -100,7 +101,8 @@ TEST_CASE("environments/shadowing", "Environments can properly shadow and fallba
 
 	SECTION("no fallback") {
 		sol::environment plain_env(lua, sol::create);
-		lua.safe_script("a = 24", plain_env);
+		auto result1 = lua.safe_script("a = 24", plain_env, sol::script_pass_on_error);
+		REQUIRE(result1.valid());
 		sol::optional<int> maybe_env_a = plain_env["a"];
 		sol::optional<int> maybe_global_a = lua["a"];
 		sol::optional<int> maybe_env_b = plain_env["b"];
@@ -116,7 +118,8 @@ TEST_CASE("environments/shadowing", "Environments can properly shadow and fallba
 	}
 	SECTION("fallback") {
 		sol::environment env_with_fallback(lua, sol::create, lua.globals());
-		lua.safe_script("a = 56", env_with_fallback, sol::script_default_on_error);
+		auto result1 = lua.safe_script("a = 56", env_with_fallback, sol::script_pass_on_error);
+		REQUIRE(result1.valid());
 		sol::optional<int> maybe_env_a = env_with_fallback["a"];
 		sol::optional<int> maybe_global_a = lua["a"];
 		sol::optional<int> maybe_env_b = env_with_fallback["b"];
@@ -135,7 +138,8 @@ TEST_CASE("environments/shadowing", "Environments can properly shadow and fallba
 		sol::environment env_with_fallback(lua, sol::create, lua.globals());
 		lua["env"] = env_with_fallback;
 		sol::environment env = lua["env"];
-		lua.safe_script("a = 56", env, sol::script_default_on_error);
+		auto result1 = lua.safe_script("a = 56", env, sol::script_pass_on_error);
+		REQUIRE(result1.valid());
 		sol::optional<int> maybe_env_a = env["a"];
 		sol::optional<int> maybe_global_a = lua["a"];
 		sol::optional<int> maybe_env_b = env["b"];
@@ -153,7 +157,9 @@ TEST_CASE("environments/shadowing", "Environments can properly shadow and fallba
 	SECTION("name with newtable") {
 		lua["blank_env"] = sol::new_table(0, 1);
 		sol::environment plain_env = lua["blank_env"];
-		lua.safe_script("a = 24", plain_env);
+		auto result1 = lua.safe_script("a = 24", plain_env, sol::script_pass_on_error);
+		REQUIRE(result1.valid());
+
 		sol::optional<int> maybe_env_a = plain_env["a"];
 		sol::optional<int> maybe_global_a = lua["a"];
 		sol::optional<int> maybe_env_b = plain_env["b"];
@@ -174,7 +180,8 @@ TEST_CASE("environments/functions", "see if environments on functions are workin
 	SECTION("basic") {
 		sol::state lua;
 
-		lua.safe_script("a = function() return 5 end");
+		auto result1 = lua.safe_script("a = function() return 5 end", sol::script_pass_on_error);
+		REQUIRE(result1.valid());
 
 		sol::function a = lua["a"];
 
@@ -184,13 +191,14 @@ TEST_CASE("environments/functions", "see if environments on functions are workin
 		sol::environment env(lua, sol::create);
 		sol::set_environment(env, a);
 
-		int result1 = a();
-		REQUIRE(result1 == 5);
+		int value = a();
+		REQUIRE(value == 5);
 	}
 	SECTION("return environment value") {
 		sol::state lua;
 
-		lua.safe_script("a = function() return test end");
+		auto result1 = lua.safe_script("a = function() return test end", sol::script_pass_on_error);
+		REQUIRE(result1.valid());
 
 		sol::function a = lua["a"];
 		sol::environment env(lua, sol::create);
@@ -204,7 +212,8 @@ TEST_CASE("environments/functions", "see if environments on functions are workin
 
 	SECTION("set environment value") {
 		sol::state lua;
-		lua.safe_script("a = function() test = 5 end");
+		auto result1 = lua.safe_script("a = function() test = 5 end", sol::script_pass_on_error);
+		REQUIRE(result1.valid());
 
 		sol::function a = lua["a"];
 		sol::environment env(lua, sol::create);
@@ -240,7 +249,9 @@ TEST_CASE("environments/this_environment", "test various situations of pulling o
 	lua["x"] = 5;
 	e["x"] = 20;
 	SECTION("from Lua script") {
-		int value = lua.safe_script(code, e);
+		auto result1 = lua.safe_script(code, e, sol::script_pass_on_error);
+		REQUIRE(result1.valid());
+		int value = result1;
 		REQUIRE(value == 30);
 	}
 	SECTION("from C++") {

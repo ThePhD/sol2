@@ -92,7 +92,7 @@ namespace sol {
 			stack::check<basic_environment>(L, -1, handler);
 #endif // Safety
 		}
-		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_environment>>, meta::neg<std::is_same<base_type, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_environment>>, meta::neg<std::is_same<base_type, stack_reference>>, meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_environment(T&& r) noexcept
 		: base_t(detail::no_safety, std::forward<T>(r)) {
 #ifdef SOL_SAFE_REFERENCES
@@ -103,6 +103,10 @@ namespace sol {
 			}
 #endif // Safety
 		}
+		basic_environment(lua_nil_t r) noexcept
+		: base_t(detail::no_safety, r) {
+		}
+
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_environment(lua_State* L, T&& r) noexcept
 			: base_t(detail::no_safety, L, std::forward<T>(r)) {

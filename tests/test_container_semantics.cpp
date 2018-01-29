@@ -21,13 +21,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define SOL_CHECK_ARGUMENTS 1
-#define SOL_ENABLE_INTEROP 1
+#include "test_sol.hpp"
 
-#ifdef TEST_SINGLE
-#include <sol_forward.hpp>
-#endif // Single
-#include <sol.hpp>
 #include <catch.hpp>
 
 #include <iterator>
@@ -668,12 +663,13 @@ void associative_ordered_container_key_value_check(sol::state& lua, T& data, T& 
 
 #if SOL_LUA_VERSION > 502
 	lua["val"] = data;
-	lua.script(R"(
+	auto r = lua.safe_script(R"(
 for k, v in pairs(val) do
 	collect(k, v)
 end
 print()
-)");
+)", sol::script_pass_on_error);
+	REQUIRE(r.valid());
 #else
 	reflect = data;
 #endif
@@ -688,8 +684,7 @@ for i=1,#c do
 	v = c[i] 
 	assert(v == (i + 10)) 
 end
-		)",
-			sol::script_pass_on_error);
+		)", sol::script_pass_on_error);
 		REQUIRE(r1.valid());
 	}
 	{
@@ -1077,7 +1072,7 @@ TEST_CASE("containers/auxiliary functions test", "make sure the manipulation fun
 	sol::state lua;
 	lua.open_libraries();
 
-	lua.safe_script(R"(
+	auto result1 = lua.safe_script(R"(
 function g (x)
 	x:add(20)
 end
@@ -1094,8 +1089,8 @@ function sf (x,v)
 	return x:find(v)
 end
 
-)");
-
+)", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 	// Have the function we
 	// just defined in Lua
 	sol::function g = lua["g"];
@@ -1146,13 +1141,12 @@ end
 	REQUIRE(map.empty());
 	REQUIRE(set.empty());
 
-	REQUIRE_NOTHROW([&]() {
-		lua.safe_script(R"(
+	auto result2 = lua.safe_script(R"(
 c_arr[1] = 7
 c_arr[2] = 7
 c_arr[3] = 7
-)");
-	}());
+)", sol::script_pass_on_error);
+	REQUIRE(result2.valid());
 }
 
 TEST_CASE("containers/indices test", "test indices on fixed array types") {
@@ -1190,27 +1184,25 @@ TEST_CASE("containers/as_container reference", "test that we can force a contain
 		});
 
 #if SOL_LUA_VERSION > 501
-	REQUIRE_NOTHROW([&]() {
-		lua.safe_script(R"(
+	auto result1 = lua.safe_script(R"(
 mop = my_object.new(20)
 for i, v in pairs(mop) do
 	assert(i == v)
 end
 print(mop)
-	)");
-	}());
+	)", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 	REQUIRE_NOTHROW([&]() {
 		my_object& mo = lua["mop"];
 		REQUIRE((&mo == my_object::last_printed));
 	}());
 #endif
-	REQUIRE_NOTHROW([&]() {
-		lua.safe_script(R"(
+	auto result2 = lua.safe_script(R"(
 mo = my_object(10)
 c_mo = mo
 c_iterable = mo:iterable()
-)");
-	}());
+)", sol::script_pass_on_error);
+	REQUIRE(result2.valid());
 
 	REQUIRE_NOTHROW([&]() {
 		my_object& mo = lua["c_mo"];
@@ -1219,14 +1211,13 @@ c_iterable = mo:iterable()
 		REQUIRE(mo == mo_iterable);
 	}());
 
-	REQUIRE_NOTHROW([&]() {
-		lua.safe_script(R"(
+	auto result3 = lua.safe_script(R"(
 s1 = c_mo:size()
 s1_len = #c_mo
 s1_iterable = c_iterable:size()
 s1_iterable_len = #c_iterable
 )");
-	}());
+	REQUIRE(result3.valid());
 
 	REQUIRE_NOTHROW([&]() {
 		std::size_t s1 = lua["s1"];
@@ -1239,17 +1230,15 @@ s1_iterable_len = #c_iterable
 		REQUIRE(s1_iterable == s1_iterable_len);
 	}());
 
-	REQUIRE_NOTHROW([&]() {
-		lua.safe_script(R"(
+	auto result4 = lua.safe_script(R"(
 for i=1,#c_mo do
 	v_iterable = c_iterable[i]
 	assert(v_iterable == i)
 end
-)");
-	}());
+)", sol::script_pass_on_error);
+	REQUIRE(result4.valid());
 
-	REQUIRE_NOTHROW([&]() {
-		lua.safe_script(R"(
+	auto result5 = lua.safe_script(R"(
 mo(5, 20)
 c_iterable:insert(1, 100)
 v1 = c_iterable[1]
@@ -1258,25 +1247,22 @@ s2_len = #c_mo
 s2_iterable = c_iterable:size()
 s2_iterable_len = #c_iterable
 print(mo)
-	)");
-	}());
+	)", sol::script_pass_on_error);
+	REQUIRE(result5.valid());
 
-	REQUIRE_NOTHROW([&]() {
-		int v1 = lua["v1"];
-		std::size_t s2 = lua["s2"];
-		std::size_t s2_len = lua["s2_len"];
-		std::size_t s2_iterable = lua["s2_iterable"];
-		std::size_t s2_iterable_len = lua["s2_iterable_len"];
-		REQUIRE(v1 == 100);
-		REQUIRE(s2 == 16);
-		REQUIRE(s2 == s2_len);
-		REQUIRE(s2 == s2_iterable_len);
-		REQUIRE(s2_iterable == s2_iterable_len);
-	}());
-	REQUIRE_NOTHROW([&]() {
-		my_object& mo = lua["mo"];
-		REQUIRE(&mo == my_object::last_printed);
-	}());
+	int v1 = lua["v1"];
+	std::size_t s2 = lua["s2"];
+	std::size_t s2_len = lua["s2_len"];
+	std::size_t s2_iterable = lua["s2_iterable"];
+	std::size_t s2_iterable_len = lua["s2_iterable_len"];
+	REQUIRE(v1 == 100);
+	REQUIRE(s2 == 16);
+	REQUIRE(s2 == s2_len);
+	REQUIRE(s2 == s2_iterable_len);
+	REQUIRE(s2_iterable == s2_iterable_len);
+	
+	my_object& mo = lua["mo"];
+	REQUIRE(&mo == my_object::last_printed);
 }
 
 TEST_CASE("containers/as_container", "test that we can force a container to be treated like one despite the trait being false using the proper marker") {
@@ -1288,21 +1274,19 @@ TEST_CASE("containers/as_container", "test that we can force a container to be t
 	});
 
 #if SOL_LUA_VERSION > 501
-	REQUIRE_NOTHROW([&]() {
-		lua.safe_script(R"(
+	auto result1 = lua.safe_script(R"(
 mop = f(20)
 for i, v in pairs(mop) do
 	assert(i == v)
 end
 	)");
-	}());
+	REQUIRE(result1.valid());
 #endif
-	REQUIRE_NOTHROW([&]() {
-		lua.safe_script(R"(
+	auto result2 = lua.safe_script(R"(
 mo = f(10)
 c_iterable = mo
 )");
-	}());
+	REQUIRE(result2.valid());
 
 	{
 		my_object& mo = lua["mo"];
@@ -1311,12 +1295,11 @@ c_iterable = mo
 		REQUIRE(mo == mo_iterable);
 	}
 
-	REQUIRE_NOTHROW([&]() {
-		lua.safe_script(R"(
+	auto result3 = lua.safe_script(R"(
 s1_iterable = c_iterable:size()
 s1_iterable_len = #c_iterable
 )");
-	}());
+	REQUIRE(result3.valid());
 
 	{
 		std::size_t s1_iterable = lua["s1_iterable"];
@@ -1325,23 +1308,21 @@ s1_iterable_len = #c_iterable
 		REQUIRE(s1_iterable == s1_iterable_len);
 	}
 
-	REQUIRE_NOTHROW([&]() {
-		lua.safe_script(R"(
+	auto result4 = lua.safe_script(R"(
 for i=1,#c_iterable do
 	v_iterable = c_iterable[i]
 	assert(v_iterable == i)
 end
 )");
-	}());
+	REQUIRE(result4.valid());
 
-	REQUIRE_NOTHROW([&]() {
-		lua.safe_script(R"(
+	auto result5 = lua.safe_script(R"(
 c_iterable:insert(1, 100)
 v1 = c_iterable:get(1)
 s2_iterable = c_iterable:size()
 s2_iterable_len = #c_iterable
 	)");
-	}());
+	REQUIRE(result5.valid());
 
 	{
 		int v1 = lua["v1"];

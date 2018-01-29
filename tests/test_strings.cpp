@@ -21,10 +21,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define SOL_CHECK_ARGUMENTS 1
-#define SOL_ENABLE_INTEROP 1
-
-#include <sol.hpp>
+#include "test_sol.hpp"
 
 #include <catch.hpp>
 
@@ -43,6 +40,7 @@ namespace muh_namespace {
 } // namespace muh_namespace
 
 // There isn't a single library roundtripping which codecvt works on. We'll do the nitty-gritty of it later...
+#if (defined(_MSC_VER) || defined(__clang__) || defined(__MINGW64__))
 TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	sol::state lua;
 
@@ -124,6 +122,7 @@ TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	REQUIRE(wide_to_char32 == utf32str[0]);
 #endif // codecvt support
 }
+#endif // MinGW fails with codecvt
 
 TEST_CASE("detail/demangling", "test some basic demangling cases") {
 	std::string teststr = sol::detail::short_demangle<test>();

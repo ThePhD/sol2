@@ -180,13 +180,16 @@ namespace sol {
 		}
 
 	protected:
+		basic_table_core(detail::no_safety_tag, lua_nil_t n)
+		: base_t(n) {
+		}
 		basic_table_core(detail::no_safety_tag, lua_State* L, int index)
 		: base_t(L, index) {
 		}
 		basic_table_core(detail::no_safety_tag, lua_State* L, ref_index index)
 		: base_t(L, index) {
 		}
-		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>, meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_table_core(detail::no_safety_tag, T&& r) noexcept
 		: base_t(std::forward<T>(r)) {
 		}
@@ -242,7 +245,7 @@ namespace sol {
 			stack::check<basic_table_core>(lua_state(), -1, handler);
 #endif // Safety
 		}
-		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>, meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_table_core(T&& r) noexcept
 		: basic_table_core(detail::no_safety, std::forward<T>(r)) {
 #ifdef SOL_SAFE_REFERENCES
@@ -252,6 +255,9 @@ namespace sol {
 				stack::check<basic_table_core>(base_t::lua_state(), -1, handler);
 			}
 #endif // Safety
+		}
+		basic_table_core(lua_nil_t r) noexcept
+		: basic_table_core(detail::no_safety, r) {
 		}
 
 		iterator begin() const {

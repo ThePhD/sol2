@@ -21,11 +21,9 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define SOL_CHECK_ARGUMENTS 1
-#define SOL_ENABLE_INTEROP 1
+#include "test_sol.hpp"
 
 #include <catch.hpp>
-#include <sol.hpp>
 
 TEST_CASE("coroutines/yielding", "ensure calling a coroutine works") {
 	const auto& script = R"(counter = 20
@@ -42,22 +40,21 @@ end
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::coroutine);
-	lua.safe_script(script);
+	auto result1 = lua.safe_script(script);
+	REQUIRE(result1.valid());
 	sol::coroutine cr = lua["loop"];
 
 	int counter;
 	for (counter = 20; counter < 31 && cr; ++counter) {
 		int value = cr();
-		if (counter != value) {
-			throw std::logic_error("fuck");
-		}
+		REQUIRE(counter == value);
 	}
 	counter -= 1;
 	REQUIRE(counter == 30);
 }
 
 TEST_CASE("coroutines/new thread coroutines", "ensure calling a coroutine works when the work is put on a different thread") {
-	const auto& script = R"(counter = 20
+	const auto& code = R"(counter = 20
  
 function loop()
     while counter ~= 30
@@ -71,7 +68,8 @@ end
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::coroutine);
-	lua.safe_script(script);
+	auto result = lua.safe_script(code, sol::script_pass_on_error);
+	REQUIRE(result.valid());
 	sol::thread runner = sol::thread::create(lua.lua_state());
 	sol::state_view runnerstate = runner.state();
 	sol::coroutine cr = runnerstate["loop"];
@@ -79,9 +77,7 @@ end
 	int counter;
 	for (counter = 20; counter < 31 && cr; ++counter) {
 		int value = cr();
-		if (counter != value) {
-			throw std::logic_error("fuck");
-		}
+		REQUIRE(counter == value);
 	}
 	counter -= 1;
 	REQUIRE(counter == 30);
@@ -96,8 +92,8 @@ TEST_CASE("coroutines/transfer", "test that things created inside of a coroutine
 			lua["f"] = [&lua, &f2](sol::object t) {
 				f2 = sol::function(lua, t);
 			};
-
-			lua.script(R"(
+			{
+				auto code = R"(
 i = 0
 function INIT()
 	co = coroutine.create(
@@ -112,13 +108,24 @@ function INIT()
 	co = nil
 	collectgarbage()
 end
-)");
+)";
+				auto result = lua.safe_script(code, sol::script_pass_on_error);
+				REQUIRE(result.valid());
+			}
 			sol::function f3;
 			sol::function f1;
 
-			lua.safe_script("INIT()");
+			{
+				auto code = "INIT()";
+				auto result = lua.safe_script(code, sol::script_pass_on_error);
+				REQUIRE(result.valid());
+			}
 			f2();
-			sol::function update = lua.safe_script("return function() collectgarbage() end");
+			auto updatecode = "return function() collectgarbage() end";
+			auto pfr = lua.safe_script(updatecode);
+			REQUIRE(pfr.valid());
+
+			sol::function update = pfr;
 			update();
 			f3 = f2;
 			f3();
@@ -199,7 +206,7 @@ co = nil
 		"copy_store", &co_test::copy_store,
 		"get", &co_test::get);
 
-	auto r = lua.safe_script(code);
+	auto r = lua.safe_script(code, sol::script_pass_on_error);
 	REQUIRE(r.valid());
 
 	co_test& ct = lua["x"];
@@ -283,7 +290,7 @@ co = nil
 		"copy_store", &co_test_implicit::copy_store,
 		"get", &co_test_implicit::get);
 
-	auto r = lua.safe_script(code);
+	auto r = lua.safe_script(code, sol::script_pass_on_error);
 	REQUIRE(r.valid());
 
 	co_test_implicit& ct = lua["x"];
@@ -370,7 +377,7 @@ collectgarbage()
 		"copy_store", &co_test_implicit::copy_store,
 		"get", &co_test_implicit::get);
 
-	auto r = lua.safe_script(code);
+	auto r = lua.safe_script(code, sol::script_pass_on_error);
 	REQUIRE(r.valid());
 
 	co_test_implicit& ct = lua["x"];
@@ -391,8 +398,7 @@ TEST_CASE("coroutines/coroutine.create protection", "ensure that a thread picked
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::coroutine);
 
-	lua.script(
-		R"(
+	auto code = R"(
 function loop()
 	local i = 0
 	while true do
@@ -403,9 +409,10 @@ function loop()
 	end
 end
 loop_th = coroutine.create(loop)
-)"
-);
+)";
 
+	auto r = lua.safe_script(code, sol::script_pass_on_error);
+	REQUIRE(r.valid());
 	sol::thread runner_thread = lua["loop_th"];
 
 	auto test_resume = [&runner_thread]() {
@@ -419,8 +426,15 @@ loop_th = coroutine.create(loop)
 
 	int v0 = test_resume();
 	int v1 = test_resume();
-	int v2 = lua.script("return test_resume()");
-	int v3 = lua.script("return test_resume()");
+	int v2, v3;
+	{
+		auto r2 = lua.safe_script("return test_resume()", sol::script_pass_on_error);
+		REQUIRE(r2.valid());
+		auto r3 = lua.safe_script("return test_resume()", sol::script_pass_on_error);
+		REQUIRE(r3.valid());
+		v2 = r2;
+		v3 = r3;
+	}
 	REQUIRE(v0 == 0);
 	REQUIRE(v1 == 1);
 	REQUIRE(v2 == 2);
@@ -430,9 +444,8 @@ loop_th = coroutine.create(loop)
 TEST_CASE("coroutines/stack-check", "check that resumed functions consume the entire execution stack") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::table, sol::lib::coroutine);
-
-	lua.script(
-		R"(
+	{
+		auto code = R"(
 unpack = unpack or table.unpack
 
 function loop()
@@ -449,8 +462,10 @@ loop_res = function(...)
 	returns = { coroutine.resume(loop_th, ...) }
 	return unpack(returns, 2)
 end 
-)"
-);
+)";
+		auto result = lua.safe_script(code, sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
 
 	// Resume from lua via thread and coroutine
 	sol::thread runner_thread = lua["loop_th"];
@@ -478,13 +493,28 @@ end
 	int s0 = runner_thread_state.stack_top();
 	int v1 = test_resume();
 	int s1 = runner_thread_state.stack_top();
-	int v2 = lua.script("return test_resume()");
+	int v2;
+	{ 
+		auto result = lua.safe_script("return test_resume()", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+		v2 = result;
+	}
 	int s2 = runner_thread_state.stack_top();
-	int v3 = lua.script("return test_resume()");
+	int v3;
+	{
+		auto result = lua.safe_script("return test_resume()", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+		v3 = result;
+	}
 	int s3 = runner_thread_state.stack_top();
 	int v4 = test_resume_lua();
 	int s4 = runner_thread_state.stack_top();
-	int v5 = lua.script("return test_resume_func(loop_res)");
+	int v5;
+	{
+		auto result = lua.safe_script("return test_resume_func(loop_res)", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+		v5 = result;
+	}
 	int s5 = runner_thread_state.stack_top();
 	REQUIRE(v0 == 0);
 	REQUIRE(v1 == 1);

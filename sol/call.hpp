@@ -210,7 +210,7 @@ namespace sol {
 		inline int construct(lua_State* L) {
 			static const auto& meta = usertype_traits<T>::metatable();
 			int argcount = lua_gettop(L);
-			call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, &usertype_traits<T>::user_metatable()[0], 1) : call_syntax::dot;
+			call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, usertype_traits<T>::user_metatable(), 1) : call_syntax::dot;
 			argcount -= static_cast<int>(syntax);
 
 			T* obj = detail::usertype_allocate<T>(L);
@@ -509,7 +509,7 @@ namespace sol {
 			static int call(lua_State* L, F&) {
 				const auto& metakey = usertype_traits<T>::metatable();
 				int argcount = lua_gettop(L);
-				call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, &usertype_traits<T>::user_metatable()[0], 1) : call_syntax::dot;
+				call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, usertype_traits<T>::user_metatable(), 1) : call_syntax::dot;
 				argcount -= static_cast<int>(syntax);
 
 				T* obj = detail::usertype_allocate<T>(L);
@@ -558,7 +558,7 @@ namespace sol {
 			};
 
 			static int call(lua_State* L, F& f) {
-				call_syntax syntax = stack::get_call_syntax(L, &usertype_traits<T>::user_metatable()[0], 1);
+				call_syntax syntax = stack::get_call_syntax(L, usertype_traits<T>::user_metatable(), 1);
 				int syntaxval = static_cast<int>(syntax);
 				int argcount = lua_gettop(L) - syntaxval;
 				return construct_match<T, meta::pop_front_type_t<meta::function_args_t<Cxs>>...>(onmatch(), L, argcount, 1 + syntaxval, f);

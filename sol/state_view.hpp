@@ -73,14 +73,14 @@ namespace sol {
 		return result;
 	}
 
-	inline protected_function_result script_default_on_error(lua_State* L, protected_function_result pfr) {
-		type t = type_of(L, pfr.stack_index());
+	inline protected_function_result script_throw_on_error(lua_State*L, protected_function_result result) {
+		type t = type_of(L, result.stack_index());
 		std::string err = "sol: ";
-		err += to_string(pfr.status());
+		err += to_string(result.status());
 		err += " error:";
 		if (t == type::string) {
 			err += " ";
-			string_view serr = stack::get<string_view>(L, pfr.stack_index());
+			string_view serr = stack::get<string_view>(L, result.stack_index());
 			err.append(serr.data(), serr.size());
 		}
 #ifdef SOL_NO_EXCEPTIONS
@@ -93,7 +93,15 @@ namespace sol {
 		// just throw our error
 		throw error(detail::direct_error, err);
 #endif
-		return pfr;
+		return result;
+	}
+
+	inline protected_function_result script_default_on_error(lua_State* L, protected_function_result pfr) {
+#ifdef SOL_DEFAULT_PASS_ON_ERROR
+		return script_pass_on_error(L, std::move(pfr));
+#else
+		return script_throw_on_error(L, std::move(pfr));
+#endif
 	}
 
 	class state_view {
@@ -324,7 +332,7 @@ namespace sol {
 			return pf();
 		}
 
-		template <typename Fx, meta::disable<meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
+		template <typename Fx, meta::disable_any<meta::is_string_constructible<meta::unqualified_t<Fx>>, meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
 		protected_function_result safe_script(const string_view& code, Fx&& on_error, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			protected_function_result pfr = do_string(code, chunkname, mode);
 			if (!pfr.valid()) {
@@ -351,7 +359,7 @@ namespace sol {
 			return safe_script(code, script_default_on_error, chunkname, mode);
 		}
 
-		template <typename Fx, meta::disable<meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
+		template <typename Fx, meta::disable_any<meta::is_string_constructible<meta::unqualified_t<Fx>>, meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
 		protected_function_result safe_script_file(const std::string& filename, Fx&& on_error, load_mode mode = load_mode::any) {
 			protected_function_result pfr = do_file(filename, mode);
 			if (!pfr.valid()) {
@@ -426,12 +434,12 @@ namespace sol {
 			return unsafe_function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
 		}
 
-		template <typename Fx, meta::disable<meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
+		template <typename Fx, meta::disable_any<meta::is_string_constructible<meta::unqualified_t<Fx>>, meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
 		protected_function_result script(const string_view& code, Fx&& on_error, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return safe_script(code, std::forward<Fx>(on_error), chunkname, mode);
 		}
 
-		template <typename Fx, meta::disable<meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
+		template <typename Fx, meta::disable_any<meta::is_string_constructible<meta::unqualified_t<Fx>>, meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
 		protected_function_result script_file(const std::string& filename, Fx&& on_error, load_mode mode = load_mode::any) {
 			return safe_script_file(filename, std::forward<Fx>(on_error), mode);
 		}

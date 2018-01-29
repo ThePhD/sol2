@@ -21,10 +21,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define SOL_CHECK_ARGUMENTS 1
-#define SOL_ENABLE_INTEROP 1
+#include "test_sol.hpp"
 
-#include <sol.hpp>
 #include <catch.hpp>
 
 #include <iostream>
@@ -58,8 +56,8 @@ TEST_CASE("filters/self", "ensure we return a direct reference to the lua userda
 		"x", &vec2::x,
 		"y", &vec2::y,
 		"normalize", sol::filters(&vec2::normalize, sol::returns_self()));
-	REQUIRE_NOTHROW([&]() {
-		lua.safe_script(R"(
+
+	auto result1 = lua.safe_script(R"(
 v1 = vec2.new()
 print('v1:', v1.x, v1.y)
 v2 = v1:normalize()
@@ -70,8 +68,8 @@ assert(rawequal(v1, v2))
 v1 = nil
 collectgarbage()
 print(v2) -- v2 points to same, is not destroyed
-		)");
-	}());
+		)", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 }
 
 TEST_CASE("filters/self_dependency", "ensure we can keep a userdata instance alive by attaching it to the lifetime of another userdata") {
@@ -115,32 +113,36 @@ TEST_CASE("filters/self_dependency", "ensure we can keep a userdata instance ali
 			return "{ d: { " + std::to_string(g.d.value) + " } }";
 		});
 
-	lua.safe_script(R"(
+	auto result1 = lua.safe_script(R"(
 g = gc_test.new()
 d = g.d
 print("new gc_test, d = g.d")
 print("", g)
-)");
+)", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 	REQUIRE(deps_destroyed.empty());
 	REQUIRE(gc_tests_destroyed.empty());
 
 	gc_test* g = lua["g"];
 	dep* d = lua["d"];
 
-	lua.safe_script(R"(
+	auto result2 = lua.safe_script(R"(
 print("g = nil, collectgarbage")
 g = nil
 collectgarbage()
 print("", d)
-)");
+)", sol::script_pass_on_error);
+	REQUIRE(result2.valid());
+
 	REQUIRE(deps_destroyed.empty());
 	REQUIRE(gc_tests_destroyed.empty());
 
-	lua.safe_script(R"(
+	auto result3 = lua.safe_script(R"(
 print("d = nil, collectgarbage")
 d = nil
 collectgarbage()
-)");
+)", sol::script_pass_on_error);
+	REQUIRE(result3.valid());
 
 	REQUIRE(deps_destroyed.size() == 1);
 	REQUIRE(gc_tests_destroyed.size() == 1);
@@ -199,11 +201,12 @@ TEST_CASE("filters/stack_dependencies", "ensure we can take dependencies even to
 		"new", sol::filters(sol::constructors<depends_on_reference(holder&)>(), sol::stack_dependencies(-1, 1)),
 		"comp", &depends_on_reference::comp);
 
-	lua.safe_script(R"(
+	auto result1 = lua.safe_script(R"(
 h = holder.new()
 dor = depends_on_reference.new(h)
 c = dor.comp
-)");
+)", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 	REQUIRE(composition_relateds_destroyed.empty());
 	REQUIRE(holders_destroyed.empty());
 	REQUIRE(depends_on_references_destroyed.empty());
@@ -215,27 +218,30 @@ c = dor.comp
 	REQUIRE(h == &dor->href.get());
 	REQUIRE(c == &dor->comp);
 
-	lua.safe_script(R"(
+	auto result2 = lua.safe_script(R"(
 h = nil
 collectgarbage()
 )");
+	REQUIRE(result2.valid());
 	REQUIRE(composition_relateds_destroyed.empty());
 	REQUIRE(holders_destroyed.empty());
 	REQUIRE(depends_on_references_destroyed.empty());
 
-	lua.safe_script(R"(
+	auto result3 = lua.safe_script(R"(
 c = nil
 collectgarbage()
-)");
+)", sol::script_pass_on_error);
+	REQUIRE(result3.valid());
 
 	REQUIRE(composition_relateds_destroyed.empty());
 	REQUIRE(holders_destroyed.empty());
 	REQUIRE(depends_on_references_destroyed.empty());
 
-	lua.safe_script(R"(
+	auto result4 = lua.safe_script(R"(
 dor = nil
 collectgarbage()
-)");
+)", sol::script_pass_on_error);
+	REQUIRE(result4.valid());
 
 	REQUIRE(composition_relateds_destroyed.size() == 1);
 	REQUIRE(holders_destroyed.size() == 1);

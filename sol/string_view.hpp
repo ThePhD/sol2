@@ -30,6 +30,10 @@
 #ifdef SOL_CXX17_FEATURES
 #include <string_view>
 #endif // C++17 features
+#include <functional>
+#ifdef SOL_USE_BOOST
+#include <boost/functional/hash.hpp>
+#endif
 
 namespace sol {
 #ifdef SOL_CXX17_FEATURES
@@ -37,6 +41,7 @@ namespace sol {
 	typedef std::wstring_view wstring_view;
 	typedef std::u16string_view u16string_view;
 	typedef std::u32string_view u32string_view;
+	typedef std::hash<std::string_view> string_view_hash;
 #else
 	template <typename Char, typename Traits = std::char_traits<Char>>
 	struct basic_string_view {
@@ -92,12 +97,16 @@ namespace sol {
 			return size();
 		}
 
+		operator std::basic_string<Char, Traits>() const {
+			return std::basic_string<Ch, Tr>(data(), size());
+		}
+
 		bool operator==(const basic_string_view& r) const {
 			return compare(p, s, r.data(), r.size()) == 0;
 		}
 
 		bool operator==(const Char* r) const {
-			return compare(r, std::char_traits<char>::length(r), p, s) == 0;
+			return compare(r, Traits::length(r), p, s) == 0;
 		}
 
 		bool operator==(const std::basic_string<Char, Traits>& r) const {
@@ -117,10 +126,50 @@ namespace sol {
 		}
 	};
 
+	template <typename Ch, typename Tr = std::char_traits<Tr>>
+	struct basic_string_view_hash {
+		typedef basic_string_view<Ch, Tr> argument_type;
+		typedef std::size_t result_type;
+
+		template <typename Al>
+		result_type operator()(const std::basic_string<Ch, Tr, Al>& r) const {
+			return (*this)(basic_string_view<Ch>(r.c_str(), r.size()));
+		}
+
+		result_type operator()(const argument_type& r) const {
+#ifdef SOL_USE_BOOST
+			return boost::hash_range(r.begin(), r.end());
+#else
+			// Modified, from libstdc++
+			// An implementation attempt at Fowler No Voll, 1a.
+			// Supposedly, used in MSVC,
+			// GCC (libstdc++) uses MurmurHash of some sort for 64-bit though...?
+			// But, well. Can't win them all, right?
+			// This should normally only apply when NOT using boost,
+			// so this should almost never be tapped into...
+			std::size_t hash = 0;
+			const unsigned char* cptr = reinterpret_cast<const unsigned char*>(r.data());
+			for (std::size_t sz = r.size(); sz != 0; --sz) {
+				hash ^= static_cast<size_t>(*cptr++);
+				hash *= static_cast<size_t>(1099511628211ULL);
+			}
+			return hash; 
+#endif
+		}
+	};
+} // namespace sol
+
+namespace std {
+	template <typename Ch, typename Tr>
+	struct hash< ::sol::basic_string_view<Ch, Tr> > : ::sol::basic_string_view_hash<Ch, Tr> {};
+} // namespace std
+
+namespace sol {
 	using string_view = basic_string_view<char>;
 	using wstring_view = basic_string_view<wchar_t>;
 	using u16string_view = basic_string_view<char16_t>;
 	using u32string_view = basic_string_view<char32_t>;
+	using string_view_hash = std::hash<string_view>;
 #endif // C++17 Support
 } // namespace sol
 

@@ -23,14 +23,39 @@
 
 #pragma once
 
+#ifndef SOL_CHECK_ARGUMENTS
+#define SOL_CHECK_ARGUMENTS 1
+#endif // SOL_CHECK_ARGUMENTS
+#ifndef SOL_ENABLE_INTEROP
+#define SOL_ENABLE_INTEROP 1
+#endif // SOL_ENABLE_INTEROP
+// Can't activate until all script/safe_script calls are vetted...
+/*#ifndef SOL_DEFAULT_PASS_ON_ERROR
+#define SOL_DEFAULT_PASS_ON_ERROR 1
+#endif // SOL_DEFAULT_PASS_ON_ERROR
+*/
+
+#ifdef TEST_SINGLE
+#include <sol_forward.hpp>
+#endif // Single
+#include <sol.hpp>
+#include <catch.hpp>
+
+#define CHECK_VALID ( x ) { auto r = x; REQUIRE(r.valid()); }
+
 struct test_stack_guard {
 	lua_State* L;
 	int& begintop;
 	int& endtop;
 	test_stack_guard(lua_State* L, int& begintop, int& endtop)
-	: L(L), begintop(begintop), endtop(endtop) {
+		: L(L), begintop(begintop), endtop(endtop) {
 		begintop = lua_gettop(L);
 	}
+
+	void check() {
+		REQUIRE(begintop == endtop);
+	}
+
 	~test_stack_guard() {
 		endtop = lua_gettop(L);
 	}

@@ -21,10 +21,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define SOL_CHECK_ARGUMENTS 1
-#define SOL_ENABLE_INTEROP 1
+#include "test_sol.hpp"
 
-#include <sol.hpp>
 #include <catch.hpp>
 
 #include <iostream>
@@ -62,14 +60,19 @@ TEST_CASE("inheritance/basic", "test that metatables are properly inherited") {
 		"d", &D::d,
 		sol::base_classes, sol::bases<C, B, A>());
 
-	lua.safe_script("obj = D.new()");
-	lua.safe_script("d = obj:d()");
+	auto result1 = lua.safe_script("obj = D.new()", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
+	auto result2 = lua.safe_script("d = obj:d()", sol::script_pass_on_error);
+	REQUIRE(result2.valid());
 	bool d = lua["d"];
-	lua.safe_script("c = obj.c");
+	auto result3 = lua.safe_script("c = obj.c", sol::script_pass_on_error);
+	REQUIRE(result3.valid());
 	double c = lua["c"];
-	lua.safe_script("b = obj:b()");
+	auto result4 = lua.safe_script("b = obj:b()", sol::script_pass_on_error);
+	REQUIRE(result4.valid());
 	int b = lua["b"];
-	lua.safe_script("a = obj.a");
+	auto result5 = lua.safe_script("a = obj.a", sol::script_pass_on_error);
+	REQUIRE(result5.valid());
 	int a = lua["a"];
 
 	REQUIRE(d);
@@ -160,21 +163,13 @@ TEST_CASE("inheritance/multi base", "test that multiple bases all work and overl
 
 	lua.set_usertype("TestClass03", s_TestUsertype03);
 
-	lua.safe_script(R"(
+	auto result1 = lua.safe_script(R"(
 tc0 = TestClass00()
-)");
-
-	lua.safe_script(R"(
 tc2 = TestClass02(tc0)
-)");
-
-	lua.safe_script(R"(
 tc1 = TestClass01()
-)");
-
-	lua.safe_script(R"(
 tc3 = TestClass03(tc1)
-)");
+)", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 
 	TestClass00& tc0 = lua["tc0"];
 	TestClass01& tc1 = lua["tc1"];
@@ -271,22 +266,13 @@ TEST_CASE("inheritance/simple multi base", "test that multiple bases all work an
 
 	lua.set_usertype("TestClass03", s_TestUsertype03);
 
-	lua.safe_script(R"(
+	auto result1 = lua.safe_script(R"(
 tc0 = TestClass00()
-)");
-
-	lua.safe_script(R"(
 tc2 = TestClass02(tc0)
-)");
-
-	lua.safe_script(R"(
 tc1 = TestClass01()
-)");
-
-	lua.safe_script(R"(
 tc3 = TestClass03(tc1)
-)");
-
+)", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
 	TestClass00& tc0 = lua["tc0"];
 	TestClass01& tc1 = lua["tc1"];
 	TestClass02& tc2 = lua["tc2"];

@@ -21,11 +21,9 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define SOL_CHECK_ARGUMENTS 1
-#define SOL_ENABLE_INTEROP 1
+#include "test_sol.hpp"
 
 #include <catch.hpp>
-#include <sol.hpp>
 
 #include <unordered_map>
 #include <vector>
@@ -127,7 +125,8 @@ TEST_CASE("customization/split struct", "using the newly documented customizatio
 	sol::state lua;
 
 	// Create a pass-through style of function
-	lua.safe_script("function f ( a, b, c ) return a + c, b end");
+	auto result1 = lua.safe_script("function f ( a, b, c ) return a + c, b end");
+	REQUIRE(result1.valid());
 	lua.set_function("g", [](int a, bool b, int c, double d) {
 		return std::make_tuple(a + c, b, d + 2.5);
 	});
@@ -152,15 +151,16 @@ TEST_CASE("customization/get_ check_usertype", "using the newly documented custo
 	sol::state lua;
 
 	// Create a pass-through style of function
-	lua.safe_script("function f ( a ) return a end");
+	auto result1 = lua.safe_script("function f ( a ) return a end");
+	REQUIRE(result1.valid());
 	lua.set_function("g", [](double a) {
 		number_shim ns;
 		ns.num = a;
 		return ns;
 	});
 
-	auto result = lua.safe_script("vf = f(25) vg = g(35)", sol::script_pass_on_error);
-	REQUIRE(result.valid());
+	auto result2 = lua.safe_script("vf = f(25) vg = g(35)", sol::script_pass_on_error);
+	REQUIRE(result2.valid());
 
 	number_shim thingsf = lua["vf"];
 	number_shim thingsg = lua["vg"];

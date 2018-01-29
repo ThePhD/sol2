@@ -199,6 +199,7 @@ namespace sol {
 				return;
 			}
 			if (r.ref == LUA_NOREF) {
+				luastate = r.luastate;
 				ref = LUA_NOREF;
 				return;
 			}
@@ -222,6 +223,7 @@ namespace sol {
 				return;
 			}
 			if (r.ref == LUA_NOREF) {
+				luastate = r.luastate;
 				ref = LUA_NOREF;
 				return;
 			}
@@ -377,6 +379,15 @@ namespace sol {
 
 		basic_reference& operator=(const basic_reference<!main_only>& r) noexcept {
 			copy_assign(r);
+			return *this;
+		}
+
+		basic_reference& operator=(const lua_nil_t&) noexcept {
+			if (valid()) {
+				deref();
+			}
+			luastate = nullptr;
+			ref = LUA_NOREF;
 			return *this;
 		}
 

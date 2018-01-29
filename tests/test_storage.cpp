@@ -36,7 +36,10 @@ end
 )";
 
 	sol::state lua;
-	lua.script(code);
+	{
+		auto r = lua.safe_script(code, sol::script_pass_on_error);
+		REQUIRE(r.valid());
+	}
 	sol::function f = lua["f"];
 	sol::reference r = lua["f"];
 	sol::function regf(lua, f);

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-01-24 05:51:14.129707 UTC
-// This header was generated with sol v2.19.0 (revision 83f4b4a)
+// Generated 2018-01-29 03:18:59.904294 UTC
+// This header was generated with sol v2.19.0 (revision 143c984)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -155,6 +155,12 @@
 #define SOL_NO_NIL 1
 #endif
 #endif // avoiding nil defines / keywords
+
+#ifdef SOL_USE_BOOST
+#ifndef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#define SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#endif // SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#endif // Boost has unordered_map with Compatible Key and CompatibleHash
 
 // end of sol/feature_test.hpp
 

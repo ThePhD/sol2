@@ -21,11 +21,9 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define SOL_CHECK_ARGUMENTS 1
-#define SOL_ENABLE_INTEROP 1
 #define CATCH_CONFIG_MAIN 1
 
-#include <sol.hpp>
+#include "test_sol.hpp"
 
 #include <catch.hpp>
 
@@ -34,8 +32,6 @@
 #include <map>
 #include <unordered_map>
 #include <vector>
-
-#include "test_stack_guard.hpp"
 
 bool func_opt_ret_bool(sol::optional<int> i) {
 	if (i) {
