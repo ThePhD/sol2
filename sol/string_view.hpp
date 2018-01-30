@@ -133,7 +133,7 @@ namespace sol {
 
 		template <typename Al>
 		result_type operator()(const std::basic_string<Ch, Tr, Al>& r) const {
-			return (*this)(basic_string_view<Ch>(r.c_str(), r.size()));
+			return (*this)(argument_type(r.c_str(), r.size()));
 		}
 
 		result_type operator()(const argument_type& r) const {

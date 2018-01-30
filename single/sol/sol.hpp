@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-01-29 03:58:41.319175 UTC
-// This header was generated with sol v2.19.0 (revision 57681ab)
+// Generated 2018-01-30 16:02:31.849348 UTC
+// This header was generated with sol v2.19.0 (revision 54003df)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -71,7 +71,7 @@
 #endif // C++17 features check
 
 #ifdef SOL_CXX17_FEATURES
-#if defined(__cpp_noexcept_function_type) || ((defined(_MSC_VER) && _MSC_VER > 1911) && (defined(_MSVC_LANG) && ((_MSVC_LANG >= 201703L) && defined(_WIN64))))
+#if defined(__cpp_noexcept_function_type) || ((defined(_MSC_VER) && _MSC_VER > 1911) && (defined(_MSVC_LANG) && ((_MSVC_LANG >= 201403L))))
 #ifndef SOL_NOEXCEPT_FUNCTION_TYPE
 #define SOL_NOEXCEPT_FUNCTION_TYPE 1
 #endif // noexcept is part of a function's type
@@ -805,34 +805,36 @@ namespace meta {
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
 
 		template <typename R, typename... Args>
-		struct fx_traits<R(Args...) noexcept, false> : basic_traits<true, false, void, R, Args...> {
+		struct fx_traits<R __stdcall(Args...) noexcept, false> : basic_traits<true, false, void, R, Args...> {
 			typedef R(__stdcall* function_pointer_type)(Args...) noexcept;
 		};
 
 		template <typename R, typename... Args>
-		struct fx_traits<R (*)(Args...) noexcept, false> : basic_traits<true, false, void, R, Args...> {
+		struct fx_traits<R (__stdcall *)(Args...) noexcept, false> : basic_traits<true, false, void, R, Args...> {
 			typedef R(__stdcall* function_pointer_type)(Args...) noexcept;
 		};
 
-		template <typename R, typename... Args>
-		struct fx_traits<R(Args..., ...) noexcept, false> : basic_traits<true, true, void, R, Args...> {
+		/* __stdcall cannot be applied to functions with varargs*/
+		/*template <typename R, typename... Args>
+		struct fx_traits<__stdcall R(Args..., ...) noexcept, false> : basic_traits<true, true, void, R, Args...> {
 			typedef R(__stdcall* function_pointer_type)(Args..., ...) noexcept;
 		};
 
 		template <typename R, typename... Args>
-		struct fx_traits<R (*)(Args..., ...) noexcept, false> : basic_traits<true, true, void, R, Args...> {
+		struct fx_traits<R (__stdcall *)(Args..., ...) noexcept, false> : basic_traits<true, true, void, R, Args...> {
 			typedef R(__stdcall* function_pointer_type)(Args..., ...) noexcept;
-		};
+		};*/
 
 		template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args...) noexcept, false> : basic_traits<true, false, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args...) noexcept;
 		};
 
-		template <typename T, typename R, typename... Args>
+		/* __stdcall does not work with varargs */
+		/*template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args..., ...) noexcept, false> : basic_traits<true, true, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args..., ...) noexcept;
-		};
+		};*/
 
 		/* Const Volatile */
 		template <typename T, typename R, typename... Args>
@@ -840,80 +842,88 @@ namespace meta {
 			typedef R (__stdcall T::*function_pointer_type)(Args...) const noexcept;
 		};
 
-		template <typename T, typename R, typename... Args>
+		/* __stdcall does not work with varargs */
+		/*template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args..., ...) const noexcept, false> : basic_traits<true, true, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args..., ...) const noexcept;
-		};
+		};*/
 
 		template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args...) const volatile noexcept, false> : basic_traits<true, false, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args...) const volatile noexcept;
 		};
 
-		template <typename T, typename R, typename... Args>
+		/* __stdcall does not work with varargs */
+		/*template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args..., ...) const volatile noexcept, false> : basic_traits<true, true, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args..., ...) const volatile noexcept;
-		};
+		};*/
 
 		template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args...) & noexcept, false> : basic_traits<true, false, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args...) & noexcept;
 		};
 
-		template <typename T, typename R, typename... Args>
+		/* __stdcall does not work with varargs */
+		/*template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args..., ...) & noexcept, false> : basic_traits<true, true, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args..., ...) & noexcept;
-		};
+		};*/
 
 		template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args...) const& noexcept, false> : basic_traits<true, false, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args...) const& noexcept;
 		};
 
-		template <typename T, typename R, typename... Args>
+		/* __stdcall does not work with varargs */
+		/*template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args..., ...) const& noexcept, false> : basic_traits<true, true, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args..., ...) const& noexcept;
-		};
+		};*/
 
 		template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args...) const volatile& noexcept, false> : basic_traits<true, false, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args...) const volatile& noexcept;
 		};
 
-		template <typename T, typename R, typename... Args>
+		/* __stdcall does not work with varargs */
+		/*template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args..., ...) const volatile& noexcept, false> : basic_traits<true, true, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args..., ...) const volatile& noexcept;
-		};
+		};*/
 
 		template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args...) && noexcept, false> : basic_traits<true, false, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args...) && noexcept;
 		};
 
-		template <typename T, typename R, typename... Args>
+		/* __stdcall does not work with varargs */
+		/*template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args..., ...) && noexcept, false> : basic_traits<true, true, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args..., ...) && noexcept;
-		};
+		};*/
 
 		template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args...) const&& noexcept, false> : basic_traits<true, false, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args...) const&& noexcept;
 		};
 
-		template <typename T, typename R, typename... Args>
+		/* __stdcall does not work with varargs */
+		/*template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args..., ...) const&& noexcept, false> : basic_traits<true, true, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args..., ...) const&& noexcept;
-		};
+		};*/
 
 		template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args...) const volatile&& noexcept, false> : basic_traits<true, false, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args...) const volatile&& noexcept;
 		};
 
-		template <typename T, typename R, typename... Args>
+		/* __stdcall does not work with varargs */
+		/*template <typename T, typename R, typename... Args>
 		struct fx_traits<R (__stdcall T::*)(Args..., ...) const volatile&& noexcept, false> : basic_traits<true, true, T, R, Args...> {
 			typedef R (__stdcall T::*function_pointer_type)(Args..., ...) const volatile&& noexcept;
-		};
+		};*/
 #endif // noexcept is part of a function's type
 #endif // __stdcall x86 VC++ bug
 
@@ -4255,7 +4265,7 @@ namespace sol {
 
 		template <typename Al>
 		result_type operator()(const std::basic_string<Ch, Tr, Al>& r) const {
-			return (*this)(basic_string_view<Ch>(r.c_str(), r.size()));
+			return (*this)(argument_type(r.c_str(), r.size()));
 		}
 
 		result_type operator()(const argument_type& r) const {
