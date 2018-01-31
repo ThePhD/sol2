@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-01-30 16:02:31.849348 UTC
-// This header was generated with sol v2.19.0 (revision 54003df)
+// Generated 2018-01-31 02:05:24.489928 UTC
+// This header was generated with sol v2.19.0 (revision 49d99d1)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -18744,7 +18744,7 @@ namespace sol {
 
 		template <typename T, bool read_only = true>
 		table new_enum(const string_view& name, std::initializer_list<std::pair<string_view, T>> items) {
-			table target = create(items.size(), 0);
+			table target = create(static_cast<int>(items.size()), static_cast<int>(0));
 			for (const auto& kvp : items) {
 				target.set(kvp.first, kvp.second);
 			}
