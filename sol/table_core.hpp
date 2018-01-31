@@ -454,7 +454,7 @@ namespace sol {
 
 		template <typename T, bool read_only = true>
 		table new_enum(const string_view& name, std::initializer_list<std::pair<string_view, T>> items) {
-			table target = create(items.size(), 0);
+			table target = create(static_cast<int>(items.size()), static_cast<int>(0));
 			for (const auto& kvp : items) {
 				target.set(kvp.first, kvp.second);
 			}
