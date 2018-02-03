@@ -28,10 +28,6 @@
 
 namespace sol {
 	struct stack_proxy : public stack_proxy_base {
-	private:
-		lua_State* L;
-		int index;
-
 	public:
 		stack_proxy()
 		: stack_proxy_base() {

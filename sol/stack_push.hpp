@@ -29,15 +29,12 @@
 #include "optional.hpp"
 #include "usertype_traits.hpp"
 #include "filters.hpp"
+#include "unicode.hpp"
 
 #include <memory>
 #include <type_traits>
 #include <cassert>
 #include <limits>
-#ifdef SOL_CODECVT_SUPPORT
-#include <codecvt>
-#include <locale>
-#endif // codecvt support
 #ifdef SOL_CXX17_FEATURES
 #include <string_view>
 #include <variant>
@@ -388,6 +385,7 @@ namespace stack {
 			return 1;
 		}
 	};
+
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
 	template <>
 	struct pusher<std::remove_pointer_t<detail::lua_CFunction_noexcept>> {
@@ -590,26 +588,26 @@ namespace stack {
 		}
 	};
 
-	template <>
-	struct pusher<std::string> {
-		static int push(lua_State* L, const std::string& str) {
+	template <typename Traits, typename Al>
+	struct pusher<std::basic_string<char, Traits, Al>> {
+		static int push(lua_State* L, const std::basic_string<char, Traits, Al>& str) {
 			lua_pushlstring(L, str.c_str(), str.size());
 			return 1;
 		}
 
-		static int push(lua_State* L, const std::string& str, std::size_t sz) {
+		static int push(lua_State* L, const std::basic_string<char, Traits, Al>& str, std::size_t sz) {
 			lua_pushlstring(L, str.c_str(), sz);
 			return 1;
 		}
 	};
 
-	template <>
-	struct pusher<string_view> {
-		static int push(lua_State* L, const string_view& sv) {
+	template <typename Ch, typename Traits>
+	struct pusher<basic_string_view<Ch, Traits>> {
+		static int push(lua_State* L, const basic_string_view<Ch, Traits>& sv) {
 			return stack::push(L, sv.data(), sv.length());
 		}
 
-		static int push(lua_State* L, const string_view& sv, std::size_t n) {
+		static int push(lua_State* L, const basic_string_view<Ch, Traits>& sv, std::size_t n) {
 			return stack::push(L, sv.data(), n);
 		}
 	};
@@ -647,7 +645,6 @@ namespace stack {
 		}
 	};
 
-#ifdef SOL_CODECVT_SUPPORT
 	template <>
 	struct pusher<const wchar_t*> {
 		static int push(lua_State* L, const wchar_t* wstr) {
@@ -660,13 +657,13 @@ namespace stack {
 
 		static int push(lua_State* L, const wchar_t* strb, const wchar_t* stre) {
 			if (sizeof(wchar_t) == 2) {
-				thread_local std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
-				std::string u8str = convert.to_bytes(strb, stre);
-				return stack::push(L, u8str);
+				const char16_t* sb = reinterpret_cast<const char16_t*>(strb);
+				const char16_t* se = reinterpret_cast<const char16_t*>(stre);
+				return stack::push(L, sb, se);
 			}
-			thread_local std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
-			std::string u8str = convert.to_bytes(strb, stre);
-			return stack::push(L, u8str);
+			const char32_t* sb = reinterpret_cast<const char32_t*>(strb);
+			const char32_t* se = reinterpret_cast<const char32_t*>(stre);
+			return stack::push(L, sb, se);
 		}
 	};
 
@@ -693,6 +690,20 @@ namespace stack {
 
 	template <>
 	struct pusher<const char16_t*> {
+		static int convert_into(lua_State* L, char* start, std::size_t, const char16_t* strb, const char16_t* stre) {
+			char* target = start;
+			for (const char16_t* strtarget = strb; strtarget < stre;) {
+				auto dr = unicode::utf16_to_code_point(strtarget, stre);
+				auto er = unicode::code_point_to_utf8(dr.codepoint);
+				const char* utf8data = er.code_units.data();
+				std::memcpy(target, utf8data, er.code_units_size);
+				target += er.code_units_size;
+				strtarget = dr.next;
+			}
+
+			return stack::push(L, start, target);
+		}
+
 		static int push(lua_State* L, const char16_t* u16str) {
 			return push(L, u16str, std::char_traits<char16_t>::length(u16str));
 		}
@@ -702,14 +713,30 @@ namespace stack {
 		}
 
 		static int push(lua_State* L, const char16_t* strb, const char16_t* stre) {
-#ifdef _MSC_VER
-			thread_local std::wstring_convert<std::codecvt_utf8_utf16<int16_t>, int16_t> convert;
-			std::string u8str = convert.to_bytes(reinterpret_cast<const int16_t*>(strb), reinterpret_cast<const int16_t*>(stre));
-#else
-			thread_local std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
-			std::string u8str = convert.to_bytes(strb, stre);
-#endif // VC++ is a shit
-			return stack::push(L, u8str);
+			// TODO: use new unicode methods
+			// TODO: use new unicode methods
+			char sbo[SOL_STACK_STRING_OPTIMIZATION_SIZE];
+			// if our max string space is small enough, use SBO
+			// right off the bat
+			std::size_t max_possible_code_units = (stre - strb) * 4;
+			if (max_possible_code_units <= SOL_STACK_STRING_OPTIMIZATION_SIZE) {
+				return convert_into(L, sbo, max_possible_code_units, strb, stre);
+			}
+			// otherwise, we must manually count/check size
+			std::size_t needed_size = 0;
+			for (const char16_t* strtarget = strb; strtarget < stre;) {
+				auto dr = unicode::utf16_to_code_point(strtarget, stre);
+				auto er = unicode::code_point_to_utf8(dr.codepoint);
+				needed_size += er.code_units_size;
+				strtarget = dr.next;
+			}
+			if (needed_size < SOL_STACK_STRING_OPTIMIZATION_SIZE) {
+				return convert_into(L, sbo, needed_size, strb, stre);
+			}
+			std::string u8str("", 0);
+			u8str.resize(needed_size);
+			char* target = &u8str[0];
+			return convert_into(L, target, needed_size, strb, stre);
 		}
 	};
 
@@ -736,6 +763,19 @@ namespace stack {
 
 	template <>
 	struct pusher<const char32_t*> {
+		static int convert_into(lua_State* L, char* start, std::size_t, const char32_t* strb, const char32_t* stre) {
+			char* target = start;
+			for (const char32_t* strtarget = strb; strtarget < stre;) {
+				auto dr = unicode::utf32_to_code_point(strtarget, stre);
+				auto er = unicode::code_point_to_utf8(dr.codepoint);
+				const char* data = er.code_units.data();
+				std::memcpy(target, data, er.code_units_size);
+				target += er.code_units_size;
+				strtarget = dr.next;
+			}
+			return stack::push(L, start, target);
+		}
+
 		static int push(lua_State* L, const char32_t* u32str) {
 			return push(L, u32str, u32str + std::char_traits<char32_t>::length(u32str));
 		}
@@ -745,14 +785,29 @@ namespace stack {
 		}
 
 		static int push(lua_State* L, const char32_t* strb, const char32_t* stre) {
-#ifdef _MSC_VER
-			thread_local std::wstring_convert<std::codecvt_utf8<int32_t>, int32_t> convert;
-			std::string u8str = convert.to_bytes(reinterpret_cast<const int32_t*>(strb), reinterpret_cast<const int32_t*>(stre));
-#else
-			thread_local std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> convert;
-			std::string u8str = convert.to_bytes(strb, stre);
-#endif // VC++ is a shit
-			return stack::push(L, u8str);
+			// TODO: use new unicode methods
+			char sbo[SOL_STACK_STRING_OPTIMIZATION_SIZE];
+			// if our max string space is small enough, use SBO
+			// right off the bat
+			std::size_t max_possible_code_units = (stre - strb) * 4;
+			if (max_possible_code_units <= SOL_STACK_STRING_OPTIMIZATION_SIZE) {
+				return convert_into(L, sbo, max_possible_code_units, strb, stre);
+			}
+			// otherwise, we must manually count/check size
+			std::size_t needed_size = 0;
+			for (const char32_t* strtarget = strb; strtarget < stre;) {
+				auto dr = unicode::utf32_to_code_point(strtarget, stre);
+				auto er = unicode::code_point_to_utf8(dr.codepoint);
+				needed_size += er.code_units_size;
+				strtarget = dr.next;
+			}
+			if (needed_size < SOL_STACK_STRING_OPTIMIZATION_SIZE) {
+				return convert_into(L, sbo, needed_size, strb, stre);
+			}
+			std::string u8str("", 0);
+			u8str.resize(needed_size);
+			char* target = &u8str[0];
+			return convert_into(L, target, needed_size, strb, stre);
 		}
 	};
 
@@ -814,7 +869,7 @@ namespace stack {
 	struct pusher<wchar_t> {
 		static int push(lua_State* L, wchar_t c) {
 			const wchar_t str[2] = { c, '\0' };
-			return stack::push(L, str, 1);
+			return stack::push(L, &str[0], 1);
 		}
 	};
 
@@ -822,7 +877,7 @@ namespace stack {
 	struct pusher<char16_t> {
 		static int push(lua_State* L, char16_t c) {
 			const char16_t str[2] = { c, '\0' };
-			return stack::push(L, str, 1);
+			return stack::push(L, &str[0], 1);
 		}
 	};
 
@@ -830,76 +885,42 @@ namespace stack {
 	struct pusher<char32_t> {
 		static int push(lua_State* L, char32_t c) {
 			const char32_t str[2] = { c, '\0' };
-			return stack::push(L, str, 1);
+			return stack::push(L, &str[0], 1);
 		}
 	};
 
-	template <>
-	struct pusher<std::wstring> {
-		static int push(lua_State* L, const std::wstring& wstr) {
-			return push(L, wstr.data(), wstr.size());
+	template <typename Traits, typename Al>
+	struct pusher<std::basic_string<wchar_t, Traits, Al>> {
+		static int push(lua_State* L, const std::basic_string<wchar_t, Traits, Al>& wstr) {
+			return push(L, wstr, wstr.size());
 		}
 
-		static int push(lua_State* L, const std::wstring& wstr, std::size_t sz) {
+		static int push(lua_State* L, const std::basic_string<wchar_t, Traits, Al>& wstr, std::size_t sz) {
 			return stack::push(L, wstr.data(), wstr.data() + sz);
 		}
 	};
 
-	template <>
-	struct pusher<std::u16string> {
-		static int push(lua_State* L, const std::u16string& u16str) {
+	template <typename Traits, typename Al>
+	struct pusher<std::basic_string<char16_t, Traits, Al>> {
+		static int push(lua_State* L, const std::basic_string<char16_t, Traits, Al>& u16str) {
 			return push(L, u16str, u16str.size());
 		}
 
-		static int push(lua_State* L, const std::u16string& u16str, std::size_t sz) {
+		static int push(lua_State* L, const std::basic_string<char16_t, Traits, Al>& u16str, std::size_t sz) {
 			return stack::push(L, u16str.data(), u16str.data() + sz);
 		}
 	};
 
-	template <>
-	struct pusher<std::u32string> {
-		static int push(lua_State* L, const std::u32string& u32str) {
+	template <typename Traits, typename Al>
+	struct pusher<std::basic_string<char32_t, Traits, Al>> {
+		static int push(lua_State* L, const std::basic_string<char32_t, Traits, Al>& u32str) {
 			return push(L, u32str, u32str.size());
 		}
 
-		static int push(lua_State* L, const std::u32string& u32str, std::size_t sz) {
+		static int push(lua_State* L, const std::basic_string<char32_t, Traits, Al>& u32str, std::size_t sz) {
 			return stack::push(L, u32str.data(), u32str.data() + sz);
 		}
 	};
-
-	template <>
-	struct pusher<wstring_view> {
-		static int push(lua_State* L, const wstring_view& sv) {
-			return stack::push(L, sv.data(), sv.length());
-		}
-
-		static int push(lua_State* L, const wstring_view& sv, std::size_t n) {
-			return stack::push(L, sv.data(), n);
-		}
-	};
-
-	template <>
-	struct pusher<u16string_view> {
-		static int push(lua_State* L, const u16string_view& sv) {
-			return stack::push(L, sv.data(), sv.length());
-		}
-
-		static int push(lua_State* L, const u16string_view& sv, std::size_t n) {
-			return stack::push(L, sv.data(), n);
-		}
-	};
-
-	template <>
-	struct pusher<u32string_view> {
-		static int push(lua_State* L, const u32string_view& sv) {
-			return stack::push(L, sv.data(), sv.length());
-		}
-
-		static int push(lua_State* L, const u32string_view& sv, std::size_t n) {
-			return stack::push(L, sv.data(), n);
-		}
-	};
-#endif // codecvt Header Support
 
 	template <typename... Args>
 	struct pusher<std::tuple<Args...>> {

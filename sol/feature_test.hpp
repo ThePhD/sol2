@@ -42,21 +42,6 @@
 #endif // compiler-specific checks
 #endif // C++17 only
 
-#if defined(_WIN32) || defined(_MSC_VER)
-#ifndef SOL_CODECVT_SUPPORT
-#define SOL_CODECVT_SUPPORT 1
-#endif // sol codecvt support
-#elif defined(__GNUC__)
-#if __GNUC__ >= 5
-#ifndef SOL_CODECVT_SUPPORT
-#define SOL_CODECVT_SUPPORT 1
-#endif // codecvt support
-#endif // g++ 5.x.x (MinGW too)
-#else
-// Clang sucks and doesn't really utilize codecvt support,
-// not without checking the library versions explicitly (and we're not gonna do that)
-#endif // Windows/VC++ vs. g++ vs Others
-
 #ifdef _MSC_VER
 #if defined(_DEBUG) && !defined(NDEBUG)
 
@@ -186,5 +171,9 @@
 #define SOL_UNORDERED_MAP_COMPATIBLE_HASH
 #endif // SOL_UNORDERED_MAP_COMPATIBLE_HASH
 #endif // Boost has unordered_map with Compatible Key and CompatibleHash
+
+#ifndef SOL_STACK_STRING_OPTIMIZATION_SIZE
+#define SOL_STACK_STRING_OPTIMIZATION_SIZE 1024
+#endif // Optimized conversion routines using a KB or so off the stack
 
 #endif // SOL_FEATURE_TEST_HPP

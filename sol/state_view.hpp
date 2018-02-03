@@ -647,13 +647,13 @@ namespace sol {
 		}
 
 		template <bool read_only = true, typename... Args>
-		state_view& new_enum(const std::string& name, Args&&... args) {
+		state_view& new_enum(const string_view& name, Args&&... args) {
 			global.new_enum<read_only>(name, std::forward<Args>(args)...);
 			return *this;
 		}
 
 		template <typename T, bool read_only = true>
-		state_view& new_enum(const std::string& name, std::initializer_list<std::pair<string_view, T>> items) {
+		state_view& new_enum(const string_view& name, std::initializer_list<std::pair<string_view, T>> items) {
 			global.new_enum<T, read_only>(name, std::move(items));
 			return *this;
 		}

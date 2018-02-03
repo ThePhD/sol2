@@ -39,8 +39,6 @@ namespace muh_namespace {
 	} // namespace
 } // namespace muh_namespace
 
-// There isn't a single library roundtripping which codecvt works on. We'll do the nitty-gritty of it later...
-#if (defined(_MSC_VER) || defined(__clang__) || defined(__MINGW64__))
 TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	sol::state lua;
 
@@ -59,7 +57,6 @@ TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	static const std::u32string utf32str_s = utf32str;
 	static const std::wstring widestr_s = widestr;
 
-#ifdef SOL_CODECVT_SUPPORT
 	INFO("sizeof(wchar_t): " << sizeof(wchar_t));
 	INFO("sizeof(char16_t): " << sizeof(char16_t));
 	INFO("sizeof(char32_t): " << sizeof(char32_t));
@@ -120,9 +117,17 @@ TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	REQUIRE(utf16_to_char32 == utf32str[0]);
 	REQUIRE(utf32_to_char32 == utf32str[0]);
 	REQUIRE(wide_to_char32 == utf32str[0]);
-#endif // codecvt support
+
+	char16_t utf8_to_char16 = lua["utf8"];
+	char16_t utf16_to_char16 = lua["utf16"];
+	char16_t utf32_to_char16 = lua["utf32"];
+	char16_t wide_to_char16 = lua["wide"];
+
+	REQUIRE(utf8_to_char16 == utf16str[0]);
+	REQUIRE(utf16_to_char16 == utf16str[0]);
+	REQUIRE(utf32_to_char16 == utf16str[0]);
+	REQUIRE(wide_to_char16 == utf16str[0]);
 }
-#endif // MinGW fails with codecvt
 
 TEST_CASE("detail/demangling", "test some basic demangling cases") {
 	std::string teststr = sol::detail::short_demangle<test>();

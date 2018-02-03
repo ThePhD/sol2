@@ -805,35 +805,17 @@ namespace sol {
 		template <typename T>
 		struct is_container<std::initializer_list<T>> : std::false_type {};
 
-		template <>
-		struct is_container<std::string> : std::false_type {};
+		template <typename C, typename T, typename A>
+		struct is_container<std::basic_string<C, T, A>> : std::false_type {};
 
-		template <>
-		struct is_container<std::wstring> : std::false_type {};
-
-		template <>
-		struct is_container<std::u16string> : std::false_type {};
-
-		template <>
-		struct is_container<std::u32string> : std::false_type {};
-
-#ifdef SOL_CXX17_FEATURES
-		template <>
-		struct is_container<std::string_view> : std::false_type {};
-
-		template <>
-		struct is_container<std::wstring_view> : std::false_type {};
-
-		template <>
-		struct is_container<std::u16string_view> : std::false_type {};
-
-		template <>
-		struct is_container<std::u32string_view> : std::false_type {};
-#endif // C++ 17
+		template <typename C, typename T>
+		struct is_container<basic_string_view<C, T>> : std::false_type {};
 
 		template <typename T>
-		struct is_container<T,
-			std::enable_if_t<meta::has_begin_end<meta::unqualified_t<T>>::value && !is_initializer_list<meta::unqualified_t<T>>::value>> : std::true_type {};
+		struct is_container<T, std::enable_if_t<meta::has_begin_end<meta::unqualified_t<T>>::value 
+			&& !is_initializer_list<meta::unqualified_t<T>>::value 
+			&& !meta::is_string_like<meta::unqualified_t<T>>::value
+		>> : std::true_type {};
 
 		template <typename T>
 		struct is_container<T, std::enable_if_t<std::is_array<meta::unqualified_t<T>>::value && !meta::any_same<std::remove_all_extents_t<meta::unqualified_t<T>>, char, wchar_t, char16_t, char32_t>::value>> : std::true_type {};
@@ -849,17 +831,11 @@ namespace sol {
 		template <typename T, typename = void>
 		struct lua_type_of : std::integral_constant<type, type::userdata> {};
 
-		template <>
-		struct lua_type_of<std::string> : std::integral_constant<type, type::string> {};
+		template <typename C, typename T, typename A>
+		struct lua_type_of<std::basic_string<C, T, A>> : std::integral_constant<type, type::string> {};
 
-		template <>
-		struct lua_type_of<std::wstring> : std::integral_constant<type, type::string> {};
-
-		template <>
-		struct lua_type_of<std::u16string> : std::integral_constant<type, type::string> {};
-
-		template <>
-		struct lua_type_of<std::u32string> : std::integral_constant<type, type::string> {};
+		template <typename C, typename T>
+		struct lua_type_of<basic_string_view<C, T>> : std::integral_constant<type, type::string> {};
 
 		template <std::size_t N>
 		struct lua_type_of<char[N]> : std::integral_constant<type, type::string> {};
@@ -1022,18 +998,6 @@ namespace sol {
 
 		template <>
 		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
-
-		template <>
-		struct lua_type_of<string_view> : std::integral_constant<type, type::string> {};
-
-		template <>
-		struct lua_type_of<wstring_view> : std::integral_constant<type, type::string> {};
-
-		template <>
-		struct lua_type_of<u16string_view> : std::integral_constant<type, type::string> {};
-
-		template <>
-		struct lua_type_of<u32string_view> : std::integral_constant<type, type::string> {};
 
 #ifdef SOL_CXX17_FEATURES
 		template <typename... Tn>

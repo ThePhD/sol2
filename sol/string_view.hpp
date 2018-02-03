@@ -37,6 +37,8 @@
 
 namespace sol {
 #ifdef SOL_CXX17_FEATURES
+	template <typename C, typename T = std::char_traits<C>>
+	using basic_string_view = std::basic_string_view<C, T>;
 	typedef std::string_view string_view;
 	typedef std::wstring_view wstring_view;
 	typedef std::u16string_view u16string_view;

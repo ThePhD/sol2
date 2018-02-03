@@ -134,6 +134,30 @@ public:
 	}
 };
 
+struct my_vec : public std::vector<int> {
+	typedef std::vector<int> base_t;
+	using base_t::base_t;
+};
+
+namespace sol {
+	template <>
+	struct is_container<my_vec> : std::true_type {};
+
+	template <>
+	struct container_traits<my_vec> {
+		static auto begin(lua_State*, my_vec& self) {
+			return self.begin();
+		}
+		static auto end(lua_State*, my_vec& self) {
+			return self.end();
+		}
+		static std::ptrdiff_t index_adjustment(lua_State*, my_vec&) {
+			return 0;
+		}
+	};
+
+} // namespace sol
+
 auto test_table_return_one() {
 	return sol::as_table(std::vector<int>{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
 }
@@ -1235,4 +1259,18 @@ end
 		check_unordered_values(src, t1umap.source);
 		check_unordered_values(src, t1ummap.source);
 	}
+}
+
+TEST_CASE("containers/custom indexing", "allow containers to set a custom indexing offset") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua["c"] = my_vec{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+
+	auto result1 = lua.safe_script("for i=0,9 do assert(i == c[i]) end", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
+	auto result2 = lua.safe_script("assert(c[10] == nil)", sol::script_pass_on_error);
+	REQUIRE(result2.valid());
+	auto result3 = lua.safe_script("assert(c[-1] == nil)", sol::script_pass_on_error);
+	REQUIRE(result3.valid());
 }

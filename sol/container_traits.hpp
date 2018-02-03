@@ -576,7 +576,8 @@ namespace sol {
 			}
 
 			static error_result get_category(std::input_iterator_tag, lua_State* L, T& self, K& key) {
-				if (key < 1) {
+				key += deferred_traits::index_adjustment(L, self);
+				if (key < 0) {
 					return stack::push(L, lua_nil);
 				}
 				auto it = deferred_traits::begin(L, self);
@@ -584,7 +585,7 @@ namespace sol {
 				if (it == e) {
 					return stack::push(L, lua_nil);
 				}
-				while (key > 1) {
+				while (key > 0) {
 					--key;
 					++it;
 					if (it == e) {
@@ -596,10 +597,10 @@ namespace sol {
 
 			static error_result get_category(std::random_access_iterator_tag, lua_State* L, T& self, K& key) {
 				std::ptrdiff_t len = static_cast<std::ptrdiff_t>(size_start(L, self));
-				if (key < 1 || key > len) {
+				key += deferred_traits::index_adjustment(L, self);
+				if (key < 0 || key >= len) {
 					return stack::push(L, lua_nil);
 				}
-				--key;
 				auto it = std::next(deferred_traits::begin(L, self), key);
 				return get_associative(is_associative(), L, it);
 			}
@@ -650,14 +651,15 @@ namespace sol {
 
 			static error_result set_category(std::input_iterator_tag, lua_State* L, T& self, stack_object okey, stack_object value) {
 				decltype(auto) key = okey.as<K>();
+				key += deferred_traits::index_adjustment(L, self);
 				auto e = deferred_traits::end(L, self);
 				auto it = deferred_traits::begin(L, self);
 				auto backit = it;
-				for (; key > 1 && it != e; --key, ++it) {
+				for (; key > 0 && it != e; --key, ++it) {
 					backit = it;
 				}
 				if (it == e) {
-					if (key == 1) {
+					if (key == 0) {
 						return add_copyable(is_copyable(), L, self, std::move(value), meta::has_insert_after<T>::value ? backit : it);
 					}
 					return error_result("out of bounds (too big) for set on '%s'", detail::demangle<T>().c_str());
@@ -667,10 +669,10 @@ namespace sol {
 
 			static error_result set_category(std::random_access_iterator_tag, lua_State* L, T& self, stack_object okey, stack_object value) {
 				decltype(auto) key = okey.as<K>();
-				if (key < 1) {
+				if (key <= 0) {
 					return error_result("sol: out of bounds (too small) for set on '%s'", detail::demangle<T>().c_str());
 				}
-				--key;
+				key += deferred_traits::index_adjustment(L, self);
 				std::ptrdiff_t len = static_cast<std::ptrdiff_t>(size_start(L, self));
 				if (key == len) {
 					return add_copyable(is_copyable(), L, self, std::move(value));
@@ -888,7 +890,7 @@ namespace sol {
 			static error_result insert_lookup(std::false_type, lua_State* L, T& self, stack_object where, stack_object value) {
 				auto it = deferred_traits::begin(L, self);
 				auto key = where.as<K>();
-				--key;
+				key += deferred_traits::index_adjustment(L, self);
 				std::advance(it, key);
 				self.insert(it, value.as<V>());
 				return {};
@@ -898,7 +900,7 @@ namespace sol {
 				auto key = where.as<K>();
 				auto backit = self.before_begin();
 				{
-					--key;
+					key += deferred_traits::index_adjustment(L, self);
 					auto e = deferred_traits::end(L, self);
 					for (auto it = deferred_traits::begin(L, self); key > 0; ++backit, ++it, --key) {
 						if (backit == e) {
@@ -932,7 +934,7 @@ namespace sol {
 
 			static error_result erase_integral(std::true_type, lua_State* L, T& self, K& key) {
 				auto it = deferred_traits::begin(L, self);
-				--key;
+				key += deferred_traits::index_adjustment(L, self);
 				std::advance(it, key);
 				self.erase(it);
 
@@ -965,7 +967,7 @@ namespace sol {
 			static error_result erase_after_has(std::true_type, lua_State* L, T& self, K& key) {
 				auto backit = self.before_begin();
 				{
-					--key;
+					key += deferred_traits::index_adjustment(L, self);
 					auto e = deferred_traits::end(L, self);
 					for (auto it = deferred_traits::begin(L, self); key > 0; ++backit, ++it, --key) {
 						if (backit == e) {
@@ -1182,6 +1184,10 @@ namespace sol {
 				return stack::push(L, empty_start(L, self));
 			}
 
+			static std::ptrdiff_t index_adjustment(lua_State*, T&) {
+				return static_cast<std::ptrdiff_t>(-1);
+			}
+
 			static int pairs(lua_State* L) {
 				typedef meta::any<is_associative, meta::all<is_lookup, meta::neg<is_matched_lookup>>> is_assoc;
 				return pairs_associative<false>(is_assoc(), L);
@@ -1275,10 +1281,10 @@ namespace sol {
 			static int get(lua_State* L) {
 				T& self = get_src(L);
 				std::ptrdiff_t idx = stack::get<std::ptrdiff_t>(L, 2);
-				if (idx > static_cast<std::ptrdiff_t>(std::extent<T>::value) || idx < 1) {
+				idx += deferred_traits::index_adjustment(L, self);
+				if (idx >= static_cast<std::ptrdiff_t>(std::extent<T>::value) || idx < 0) {
 					return stack::push(L, lua_nil);
 				}
-				--idx;
 				return stack::push_reference(L, detail::deref(self[idx]));
 			}
 
@@ -1289,13 +1295,13 @@ namespace sol {
 			static int set(lua_State* L) {
 				T& self = get_src(L);
 				std::ptrdiff_t idx = stack::get<std::ptrdiff_t>(L, 2);
-				if (idx > static_cast<std::ptrdiff_t>(std::extent<T>::value)) {
+				idx += deferred_traits::index_adjustment(L, self);
+				if (idx >= static_cast<std::ptrdiff_t>(std::extent<T>::value)) {
 					return luaL_error(L, "sol: index out of bounds (too big) for set on '%s'", detail::demangle<T>().c_str());
 				}
-				if (idx < 1) {
+				if (idx < 0) {
 					return luaL_error(L, "sol: index out of bounds (too small) for set on '%s'", detail::demangle<T>().c_str());
 				}
-				--idx;
 				self[idx] = stack::get<value_type>(L, 3);
 				return 0;
 			}
@@ -1326,6 +1332,10 @@ namespace sol {
 
 			static int ipairs(lua_State* L) {
 				return pairs(L);
+			}
+
+			static std::ptrdiff_t index_adjustment(lua_State*, T&) {
+				return -1;
 			}
 
 			static iterator begin(lua_State*, T& self) {

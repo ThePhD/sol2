@@ -26,6 +26,7 @@
 
 #include "tuple.hpp"
 #include "bind_traits.hpp"
+#include "string_view.hpp"
 
 #include <type_traits>
 #include <cstdint>
@@ -33,9 +34,7 @@
 #include <functional>
 #include <iterator>
 #include <iosfwd>
-#ifdef SOL_CXX17_FEATURES
-#include <string_view>
-#endif
+
 
 namespace sol {
 	template <std::size_t I>
@@ -552,6 +551,13 @@ namespace sol {
 
 		template <typename T>
 		struct is_matched_lookup : meta_detail::is_matched_lookup_impl<T, is_lookup<T>::value> {};
+
+		template <typename T>
+		using is_string_like = any<
+			is_specialization_of<std::basic_string, meta::unqualified_t<T>>,
+			is_specialization_of<basic_string_view, meta::unqualified_t<T>>,
+			meta::all<std::is_array<unqualified_t<T>>, meta::any_same<meta::unqualified_t<std::remove_all_extents_t<meta::unqualified_t<T>>>, char, char16_t, char32_t, wchar_t>>
+		>;
 
 		template <typename T>
 		using is_string_constructible = any<

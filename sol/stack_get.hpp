@@ -29,15 +29,13 @@
 #include "inheritance.hpp"
 #include "overload.hpp"
 #include "error.hpp"
+#include "unicode.hpp"
+
 #include <memory>
 #include <functional>
 #include <utility>
 #include <cstdlib>
 #include <cmath>
-#ifdef SOL_CODECVT_SUPPORT
-#include <codecvt>
-#include <locale>
-#endif // codecvt header support
 #ifdef SOL_CXX17_FEATURES
 #include <string_view>
 #include <variant>
@@ -444,111 +442,136 @@ namespace stack {
 		}
 	};
 
-	template <>
-	struct getter<string_view> {
+	template <typename Traits>
+	struct getter<basic_string_view<char, Traits>> {
 		static string_view get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			size_t sz;
 			const char* str = lua_tolstring(L, index, &sz);
-			return string_view(str, sz);
+			return basic_string_view<char, Traits>(str, sz);
 		}
 	};
 
-#ifdef SOL_CODECVT_SUPPORT
-	template <>
-	struct getter<std::wstring> {
-		static std::wstring get(lua_State* L, int index, record& tracking) {
+	template <typename Traits, typename Al>
+	struct getter<std::basic_string<wchar_t, Traits, Al>> {
+		static std::basic_string<wchar_t, Traits, Al> get(lua_State* L, int index, record& tracking) {
+			typedef std::conditional_t<sizeof(wchar_t) == 2, char16_t, char32_t> Ch;
+			typedef std::allocator_traits<Al>::rebind_alloc<Ch> ChAl;
+			typedef std::char_traits<Ch> ChTraits;
+			getter<std::basic_string<Ch, ChTraits, ChAl>> g;
+			(void)g;
+			return g.get_into<std::basic_string<wchar_t, Traits, Al>>(L, index, tracking);
+		}
+	};
+
+	template <typename Traits, typename Al>
+	struct getter<std::basic_string<char16_t, Traits, Al>> {
+		template <typename S>
+		static S get_into(lua_State* L, int index, record& tracking) {
+			typedef typename S::value_type Ch;
 			tracking.use(1);
 			size_t len;
-			auto str = lua_tolstring(L, index, &len);
+			auto utf8p = lua_tolstring(L, index, &len);
 			if (len < 1)
-				return std::wstring();
-			if (sizeof(wchar_t) == 2) {
-				thread_local std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
-				std::wstring r = convert.from_bytes(str, str + len);
-#if defined(__MINGW32__) && defined(__GNUC__) && __GNUC__ < 7
-				// Thanks, MinGW and libstdc++, for introducing this absolutely asinine bug
-				// https://sourceforge.net/p/mingw-w64/bugs/538/
-				// http://chat.stackoverflow.com/transcript/message/32271369#32271369
-				for (auto& c : r) {
-					uint8_t* b = reinterpret_cast<uint8_t*>(&c);
-					std::swap(b[0], b[1]);
-				}
-#endif
-				return r;
+				return S();
+			std::size_t needed_size = 0;
+			const char* strb = utf8p;
+			const char* stre = utf8p + len;
+			for (const char* strtarget = strb; strtarget < stre;) {
+				auto dr = unicode::utf8_to_code_point(strtarget, stre);
+				auto er = unicode::code_point_to_utf16(dr.codepoint);
+				needed_size += er.code_units_size;
+				strtarget = dr.next;
 			}
-			thread_local std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
-			std::wstring r = convert.from_bytes(str, str + len);
+			S r(needed_size, static_cast<Ch>(0));
+			r.resize(needed_size);
+			Ch* target = &r[0];
+			for (const char* strtarget = strb; strtarget < stre;) {
+				auto dr = unicode::utf8_to_code_point(strtarget, stre);
+				auto er = unicode::code_point_to_utf16(dr.codepoint);
+				std::memcpy(target, er.code_units.data(), er.code_units_size * sizeof(Ch));
+				strtarget = dr.next;
+				target += er.code_units_size;
+			}
 			return r;
+		}
+
+		static std::basic_string<char16_t, Traits, Al> get(lua_State* L, int index, record& tracking) {
+			return get_into<std::basic_string<char16_t, Traits, Al>>(L, index, tracking);
 		}
 	};
 
-	template <>
-	struct getter<std::u16string> {
-		static std::u16string get(lua_State* L, int index, record& tracking) {
+	template <typename Traits, typename Al>
+	struct getter<std::basic_string<char32_t, Traits, Al>> {
+		template <typename S>
+		static S get_into(lua_State* L, int index, record& tracking) {
+			typedef typename S::value_type Ch;
 			tracking.use(1);
 			size_t len;
-			auto str = lua_tolstring(L, index, &len);
+			auto utf8p = lua_tolstring(L, index, &len);
 			if (len < 1)
-				return std::u16string();
-#ifdef _MSC_VER
-			thread_local std::wstring_convert<std::codecvt_utf8_utf16<int16_t>, int16_t> convert;
-			auto intd = convert.from_bytes(str, str + len);
-			std::u16string r(intd.size(), '\0');
-			std::memcpy(&r[0], intd.data(), intd.size() * sizeof(char16_t));
-#else
-			thread_local std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
-			std::u16string r = convert.from_bytes(str, str + len);
-#endif // VC++ is a shit
+				return S();
+			std::size_t needed_size = 0;
+			const char* strb = utf8p;
+			const char* stre = utf8p + len;
+			for (const char* strtarget = strb; strtarget < stre;) {
+				auto dr = unicode::utf8_to_code_point(strtarget, stre);
+				auto er = unicode::code_point_to_utf32(dr.codepoint);
+				needed_size += er.code_units_size;
+				strtarget = dr.next;
+			}
+			S r(needed_size, static_cast<Ch>(0));
+			r.resize(needed_size);
+			Ch* target = &r[0];
+			for (const char* strtarget = strb; strtarget < stre;) {
+				auto dr = unicode::utf8_to_code_point(strtarget, stre);
+				auto er = unicode::code_point_to_utf32(dr.codepoint);
+				std::memcpy(target, er.code_units.data(), er.code_units_size * sizeof(Ch));
+				strtarget = dr.next;
+				target += er.code_units_size;
+			}
 			return r;
 		}
-	};
 
-	template <>
-	struct getter<std::u32string> {
-		static std::u32string get(lua_State* L, int index, record& tracking) {
-			tracking.use(1);
-			size_t len;
-			auto str = lua_tolstring(L, index, &len);
-			if (len < 1)
-				return std::u32string();
-#ifdef _MSC_VER
-			thread_local std::wstring_convert<std::codecvt_utf8<int32_t>, int32_t> convert;
-			auto intd = convert.from_bytes(str, str + len);
-			std::u32string r(intd.size(), '\0');
-			std::memcpy(&r[0], intd.data(), r.size() * sizeof(char32_t));
-#else
-			thread_local std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> convert;
-			std::u32string r = convert.from_bytes(str, str + len);
-#endif // VC++ is a shit
-			return r;
-		}
-	};
-
-	template <>
-	struct getter<wchar_t> {
-		static wchar_t get(lua_State* L, int index, record& tracking) {
-			auto str = getter<std::wstring>{}.get(L, index, tracking);
-			return str.size() > 0 ? str[0] : wchar_t(0);
+		static std::basic_string<char32_t, Traits, Al> get(lua_State* L, int index, record& tracking) {
+			return get_into<std::basic_string<char32_t, Traits, Al>>(L, index, tracking);
 		}
 	};
 
 	template <>
 	struct getter<char16_t> {
 		static char16_t get(lua_State* L, int index, record& tracking) {
-			auto str = getter<std::u16string>{}.get(L, index, tracking);
-			return str.size() > 0 ? str[0] : char16_t(0);
+			string_view utf8 = stack::get<string_view>(L, index, tracking);
+			const char* strb = utf8.data();
+			const char* stre = utf8.data() + utf8.size();
+			auto dr = unicode::utf8_to_code_point(strb, stre);
+			auto er = unicode::code_point_to_utf16(dr.codepoint);
+			return er.code_units[0];
 		}
 	};
 
 	template <>
 	struct getter<char32_t> {
 		static char32_t get(lua_State* L, int index, record& tracking) {
-			auto str = getter<std::u32string>{}.get(L, index, tracking);
-			return str.size() > 0 ? str[0] : char32_t(0);
+			string_view utf8 = stack::get<string_view>(L, index, tracking);
+			const char* strb = utf8.data();
+			const char* stre = utf8.data() + utf8.size();
+			auto dr = unicode::utf8_to_code_point(strb, stre);
+			auto er = unicode::code_point_to_utf32(dr.codepoint);
+			return er.code_units[0];
 		}
 	};
-#endif // codecvt header support
+
+	template <>
+	struct getter<wchar_t> {
+		static wchar_t get(lua_State* L, int index, record& tracking) {
+			typedef std::conditional_t<sizeof(wchar_t) == 2, char16_t, char32_t> Ch;
+			getter<Ch> g;
+			(void)g;
+			auto c = g.get(L, index, tracking);
+			return static_cast<wchar_t>(c);
+		}
+	};
 
 	template <>
 	struct getter<meta_function> {
