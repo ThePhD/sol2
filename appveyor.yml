@@ -63,6 +63,8 @@ matrix:
   allow_failures:
     # 32-bit builds are temperamental with exceptions
     - platform: x86
+    # Visual Studio 2015 builds are allowed to fail, since I have no intention of dealing with bad old builds
+    - image: Visual Studio 2015
     # LLVM is experimental as all get-out
     - LLVM_VERSION: 4.0.0
   exclude:

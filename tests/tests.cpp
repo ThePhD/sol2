@@ -587,23 +587,23 @@ TEST_CASE("proxy/proper-pushing", "allow proxies to reference other proxies and 
 
 TEST_CASE("proxy/equality", "check to make sure equality tests work") {
 	sol::state lua;
+#ifndef __clang__
 	REQUIRE((lua["a"] == sol::lua_nil));
 	REQUIRE_FALSE((lua["a"] == nullptr));
 	REQUIRE_FALSE((lua["a"] != sol::lua_nil));
 	REQUIRE((lua["a"] != nullptr));
-#ifndef __clang__
 	REQUIRE_FALSE((lua["a"] == 0));
 	REQUIRE_FALSE((lua["a"] == 2));
 	REQUIRE((lua["a"] != 0));
 	REQUIRE((lua["a"] != 2));
-#endif // clang screws up by trying to access int128 types that it doesn't support, even when we don't ask for them
 	lua["a"] = 2;
+#endif // clang screws up by trying to access int128 types that it doesn't support, even when we don't ask for them
 
+#ifndef __clang__
 	REQUIRE_FALSE((lua["a"] == sol::lua_nil));
 	REQUIRE_FALSE((lua["a"] == nullptr));
 	REQUIRE((lua["a"] != sol::lua_nil));
 	REQUIRE((lua["a"] != nullptr));
-#ifndef __clang__
 	REQUIRE_FALSE((lua["a"] == 0));
 	REQUIRE((lua["a"] == 2));
 	REQUIRE((lua["a"] != 0));
