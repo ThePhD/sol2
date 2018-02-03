@@ -2,6 +2,7 @@
 
 #include "string_view.hpp"
 #include <array>
+#include <cstring>
 
 namespace sol {
 	// Everything here was lifted pretty much straight out of
@@ -18,7 +19,7 @@ namespace sol {
 		};
 
 		inline const string_view& to_string(error_code ec) {
-			const string_view arr[4] = {
+			static const string_view arr[4] = {
 				"ok",
 				"invalid code points",
 				"invalid code unit",
@@ -172,9 +173,14 @@ namespace sol {
 		}
 
 		template <typename It>
-		inline decoded_result<It> utf8_to_code_point(It it, It) {
+		inline decoded_result<It> utf8_to_code_point(It it, It last) {
 			decoded_result<It> dr;
-			
+			if (it == last) {
+				dr.next = it;
+				dr.error = error_code::sequence_too_short;
+				return dr;
+			}
+
 			unsigned char b0 = *it;
 			std::size_t length = unicode_detail::sequence_length(b0);
 
@@ -200,7 +206,7 @@ namespace sol {
 			++it;
 			std::array<unsigned char, 4> b;
 			b[0] = b0;
-			for (int i = 1; i < length; ++i) {
+			for (std::size_t i = 1; i < length; ++i) {
 				b[i] = *it;
 				if (!is_continuation(b[i])) {
 					dr.error = error_code::invalid_code_unit;
@@ -245,8 +251,13 @@ namespace sol {
 		}
 
 		template <typename It>
-		inline decoded_result<It> utf16_to_code_point(It it, It) {
+		inline decoded_result<It> utf16_to_code_point(It it, It last) {
 			decoded_result<It> dr;
+			if (it == last) {
+				dr.next = it;
+				dr.error = error_code::sequence_too_short;
+				return dr;
+			}
 
 			char16_t lead = static_cast<char16_t>(*it);
 			
@@ -278,8 +289,13 @@ namespace sol {
 		}
 
 		template <typename It>
-		inline decoded_result<It> utf32_to_code_point(It it, It) {
+		inline decoded_result<It> utf32_to_code_point(It it, It last) {
 			decoded_result<It> dr;
+			if (it == last) {
+				dr.next = it;
+				dr.error = error_code::sequence_too_short;
+				return dr;
+			}
 			dr.codepoint = static_cast<char32_t>(*it);
 			dr.next = ++it;
 			dr.error = error_code::ok;

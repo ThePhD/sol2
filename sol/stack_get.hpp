@@ -454,13 +454,14 @@ namespace stack {
 
 	template <typename Traits, typename Al>
 	struct getter<std::basic_string<wchar_t, Traits, Al>> {
-		static std::basic_string<wchar_t, Traits, Al> get(lua_State* L, int index, record& tracking) {
+		typedef std::basic_string<wchar_t, Traits, Al> S;
+		static S get(lua_State* L, int index, record& tracking) {
 			typedef std::conditional_t<sizeof(wchar_t) == 2, char16_t, char32_t> Ch;
-			typedef std::allocator_traits<Al>::rebind_alloc<Ch> ChAl;
+			typedef typename std::allocator_traits<Al>::template rebind_alloc<Ch> ChAl;
 			typedef std::char_traits<Ch> ChTraits;
 			getter<std::basic_string<Ch, ChTraits, ChAl>> g;
 			(void)g;
-			return g.get_into<std::basic_string<wchar_t, Traits, Al>>(L, index, tracking);
+			return g.template get_into<S>(L, index, tracking);
 		}
 	};
 
