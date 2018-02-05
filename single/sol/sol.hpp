@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-02-05 00:23:04.380676 UTC
-// This header was generated with sol v2.19.0 (revision 8f6f12d)
+// Generated 2018-02-05 00:55:01.557255 UTC
+// This header was generated with sol v2.19.0 (revision c9980bf)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -14467,10 +14467,6 @@ namespace sol {
 			return set(std::move(other));
 		}
 
-		int push() const noexcept {
-			return get<reference>().push(L);
-		}
-
 		template <typename T>
 		decltype(auto) get() const {
 			return tuple_get<T>(std::make_index_sequence<std::tuple_size<meta::unqualified_t<key_type>>::value>());
@@ -14520,6 +14516,10 @@ namespace sol {
 			auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(lua_state(), key, lua_gettop(lua_state()));
 			lua_pop(lua_state(), p.levels);
 			return p;
+		}
+
+		int push() const noexcept {
+			return get<reference>().push(lua_state());
 		}
 
 		type get_type() const {

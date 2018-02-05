@@ -94,10 +94,6 @@ namespace sol {
 			return set(std::move(other));
 		}
 
-		int push() const noexcept {
-			return get<reference>().push(L);
-		}
-
 		template <typename T>
 		decltype(auto) get() const {
 			return tuple_get<T>(std::make_index_sequence<std::tuple_size<meta::unqualified_t<key_type>>::value>());
@@ -147,6 +143,10 @@ namespace sol {
 			auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(lua_state(), key, lua_gettop(lua_state()));
 			lua_pop(lua_state(), p.levels);
 			return p;
+		}
+
+		int push() const noexcept {
+			return get<reference>().push(lua_state());
 		}
 
 		type get_type() const {
