@@ -94,6 +94,10 @@ namespace sol {
 			return set(std::move(other));
 		}
 
+		int push() const noexcept {
+			return get<reference>().push(L);
+		}
+
 		template <typename T>
 		decltype(auto) get() const {
 			return tuple_get<T>(std::make_index_sequence<std::tuple_size<meta::unqualified_t<key_type>>::value>());
@@ -126,7 +130,11 @@ namespace sol {
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
+#ifdef SOL_SAFE_FUNCTION
+			return get<protected_function>().template call<Ret...>(std::forward<Args>(args)...);
+#else
 			return get<function>().template call<Ret...>(std::forward<Args>(args)...);
+#endif // Safe function usage
 		}
 
 		template <typename... Args>

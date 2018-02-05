@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-01-31 02:05:24.772464 UTC
-// This header was generated with sol v2.19.0 (revision 49d99d1)
+// Generated 2018-02-05 00:23:04.726719 UTC
+// This header was generated with sol v2.19.0 (revision 8f6f12d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -44,19 +44,6 @@
 #endif // noexcept is part of a function's type
 #endif // compiler-specific checks
 #endif // C++17 only
-
-#if defined(_WIN32) || defined(_MSC_VER)
-#ifndef SOL_CODECVT_SUPPORT
-#define SOL_CODECVT_SUPPORT 1
-#endif // sol codecvt support
-#elif defined(__GNUC__)
-#if __GNUC__ >= 5
-#ifndef SOL_CODECVT_SUPPORT
-#define SOL_CODECVT_SUPPORT 1
-#endif // codecvt support
-#endif // g++ 5.x.x (MinGW too)
-#else
-#endif // Windows/VC++ vs. g++ vs Others
 
 #ifdef _MSC_VER
 #if defined(_DEBUG) && !defined(NDEBUG)
@@ -161,6 +148,10 @@
 #define SOL_UNORDERED_MAP_COMPATIBLE_HASH
 #endif // SOL_UNORDERED_MAP_COMPATIBLE_HASH
 #endif // Boost has unordered_map with Compatible Key and CompatibleHash
+
+#ifndef SOL_STACK_STRING_OPTIMIZATION_SIZE
+#define SOL_STACK_STRING_OPTIMIZATION_SIZE 1024
+#endif // Optimized conversion routines using a KB or so off the stack
 
 // end of sol/feature_test.hpp
 
