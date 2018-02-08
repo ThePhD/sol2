@@ -114,3 +114,5 @@ desktop.ini
 external/
 scratch/
 .idea/
+cmake-build-debug/
+cmake-build-relwithdebinfo/

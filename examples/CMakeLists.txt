@@ -20,7 +20,7 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# # # # sol2 tests
+# # # sol2 Examples
 
 file(GLOB EXAMPLES_SRC *.cpp tutorials/quick_n_dirty/*.cpp)
 source_group(examples FILES ${EXAMPLES_SRC})
@@ -40,7 +40,7 @@ function (MAKE_EXAMPLE example_source_file is_single)
 		set(example_output_name "${example_output_relative_dir_name}.${example_name}")
 	endif()
 
-	add_executable(${example_name} ${example_source_file})
+	add_executable(${example_name} ${example_source_file} assert.hpp)
 	set_target_properties(${example_name} 
 		PROPERTIES
 		OUTPUT_NAME "${example_output_name}")
@@ -62,10 +62,10 @@ function (MAKE_EXAMPLE example_source_file is_single)
 	if (MSVC)
 
 	else()
-		target_compile_options(${example_name} 
+		target_compile_options(${example_name}
 			PRIVATE -Wno-noexcept-type)
 	endif()
-	
+
 	if (TESTS_EXAMPLES)
 		if ((NOT is_single) OR (is_single AND TESTS_SINGLE))
 			add_test(NAME ${example_output_name} COMMAND ${example_name})
@@ -73,6 +73,8 @@ function (MAKE_EXAMPLE example_source_file is_single)
 	endif()
 	install(TARGETS ${example_name} RUNTIME DESTINATION bin)
 endfunction(MAKE_EXAMPLE)
+
+add_subdirectory(require_dll_example)
 
 foreach(example_source_file ${EXAMPLES_SRC})
 	MAKE_EXAMPLE(${example_source_file} FALSE)

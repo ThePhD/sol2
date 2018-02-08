@@ -366,3 +366,4 @@ set_target_properties(${luainterpreter}
 # set externally-visible target indicator
 set(LUA_LIBRARIES ${lualib})
 set(LUA_INTERPRETER ${luainterpreter})
+set(LUA_INCLUDE_DIRS "${LUA_JIT_SOURCE_DIR}")

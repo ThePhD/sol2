@@ -20,6 +20,7 @@ The implementation for ``assert.hpp`` with ``c_assert`` looks like so:
 
 .. literalinclude:: ../../../examples/assert.hpp
 	:linenos:
+	:lines: 1-8, 19-
 
 This is the assert used in the quick code below.
 
@@ -212,93 +213,24 @@ Everything that is not a:
 
 Is set as a :doc:`userdata + usertype<../api/usertype>`.
 
-.. code-block:: cpp
 
-	struct Doge { 
-		int tailwag = 50; 
-	};
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/userdata.cpp
+	:linenos:
+	:lines: 1-57
 
-	Doge dog{};
-	
-	// Copy into lua: destroyed by Lua VM during garbage collection
-	lua["dog"] = dog;
-	// OR: move semantics - will call move constructor if present instead
-	// Again, owned by Lua
-	lua["dog"] = std::move( dog );
-	lua["dog"] = Doge{};
-	lua["dog"] = std::make_unique<Doge>();
-	lua["dog"] = std::make_shared<Doge>();
-	// Identical to above
+``std::unique_ptr``/``std::shared_ptr``'s reference counts / deleters will :doc:`be respected<../api/unique_usertype_traits>`.
 
-	Doge dog2{};
+If you want it to refer to something, whose memory you know won't die in C++ while it is used/exists in Lua, do the following:
 
-	lua.set("dog", dog2);
-	lua.set("dog", std::move(dog2));
-	lua.set("dog", Doge{});
-	lua.set("dog", std::unique_ptr<Doge>(new Doge()));
-	lua.set("dog", std::shared_ptr<Doge>(new Doge()));
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/userdata_memory_reference.cpp
+	:linenos:
+	:lines: 1-45
 
-``std::unique_ptr``/``std::shared_ptr``'s reference counts / deleters will :doc:`be respected<../api/unique_usertype_traits>`. If you want it to refer to something, whose memory you know won't die in C++, do the following:
+You can retrieve the userdata in the same way as everything else. Importantly, note that you can change the data of usertype variables and it will affect things in lua if you get a pointer or a reference:
 
-.. code-block:: cpp
-
-	struct Doge { 
-		int tailwag = 50; 
-	};
-
-	sol::state lua;
-	lua.open_libraries(sol::lib::base);
-
-	Doge dog{}; // Kept alive somehow
-
-	// Later...
-	// The following stores a reference, and does not copy/move
-	// lifetime is same as dog in C++ 
-	// (access after it is destroyed is bad)
-	lua["dog"] = &dog;
-	// Same as above: respects std::reference_wrapper
-	lua["dog"] = std::ref(dog);
-	// These two are identical to above
-	lua.set( "dog", &dog );
-	lua.set( "dog", std::ref( dog ) );
-
-Get userdata in the same way as everything else:
-
-.. code-block:: cpp
-
-	struct Doge { 
-		int tailwag = 50; 
-	};
-
-	sol::state lua;
-	lua.open_libraries(sol::lib::base);
-
-	Doge& dog = lua["dog"]; // References Lua memory
-	Doge* dog_pointer = lua["dog"]; // References Lua memory
-	Doge dog_copy = lua["dog"]; // Copies, will not affect lua
-
-Note that you can change the data of usertype variables and it will affect things in lua if you get a pointer or a reference from Sol:
-
-.. code-block:: cpp
-
-	struct Doge { 
-		int tailwag = 50; 
-	};
-
-	sol::state lua;
-	lua.open_libraries(sol::lib::base);
-
-	Doge& dog = lua["dog"]; // References Lua memory
-	Doge* dog_pointer = lua["dog"]; // References Lua memory
-	Doge dog_copy = lua["dog"]; // Copies, will not affect lua
-
-	dog_copy.tailwag = 525;
-	// Still 50
-	lua.script("assert(dog.tailwag == 50)");
-
-	dog.tailwag = 100;
-	// Now 100
-	lua.script("assert(dog.tailwag == 100)");
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/userdata_memory_reference.cpp
+	:linenos:
+	:lines: 46-
 
 
 C++ classes put into Lua
@@ -314,42 +246,9 @@ namespacing
 
 You can emulate namespacing by having a table and giving it the namespace names you want before registering enums or usertypes:
 
-.. code-block:: cpp
-	
-	struct my_class {
-		int b = 24;
-
-		int f () const {
-			return 24;
-		}
-
-		void g () {
-			++b;
-		}
-	};
-
-	sol::state lua;
-	lua.open_libraries();
-
-	// set up table
-	sol::table bark = lua.create_named_table("bark");
-	
-	bark.new_usertype<my_class>( "my_class", 
-		"f", &my_class::f,
-		"g", &my_class::g
-	); // the usual
-
-	// can add functions, as well (just like the global table)
-	bark.set_function("print_my_class", [](my_class& self) { std::cout << "my_class { b: " << self.b << " }" << std::endl; });
-
-	// 'bark' namespace
-	lua.script("obj = bark.my_class.new()" );
-	lua.script("obj:g()");
-	// access the function on the 'namespace'
-	lua.script("bark.print_my_class(obj)");
-
-	my_class& obj = lua["obj"];
-	// obj.b == 25
+.. literalinclude:: ../../../examples/tutorials/quick_n_dirty/namespacing.cpp
+	:linenos:
+	:lines: 1-
 
 
 This technique can be used to register namespace-like functions and classes. It can be as deep as you want. Just make a table and name it appropriately, in either Lua script or using the equivalent Sol code. As long as the table FIRST exists (e.g., make it using a script or with one of Sol's methods or whatever you like), you can put anything you want specifically into that table using :doc:`sol::table's<../api/table>` abstractions.
