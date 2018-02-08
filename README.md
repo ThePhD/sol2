@@ -52,12 +52,17 @@ More examples are given in the examples directory [here](https://github.com/TheP
 "A Sun For the Moon - A Zero-Overhead Lua Abstraction using C++"  
 ThePhD  
 Lua Workshop 2016 - Mashape, San Francisco, CA  
-[Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/ThePhD%20-%20No%20Overhead%20C%20Abstraction%20-%202016.10.14.pdf)
+[Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/2016.10.14%20-%20ThePhD%20-%20No%20Overhead%20C%20Abstraction.pdf)
 
 "Wrapping Lua C in C++ - Efficiently, Nicely, and with a Touch of Magic"  
 ThePhD  
-Boston C++ Meetup November 2017 - CiC, Boston, MA  
-[Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/ThePhD%20-%20Wrapping%20Lua%20C%20in%20C%2B%2B%20-%202017.11.8.pdf)
+Boston C++ Meetup November 2017 - CiC (Milk Street), Boston, MA  
+[Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/2017.11.08%20-%20ThePhD%20-%20Wrapping%20Lua%20C%20in%20C%2B%2B.pdf)
+
+"Biting the CMake Bullet"  
+ThePhD  
+Boston C++ Meetup February 2018 - CiC (Main Street), Cambridge, MA  
+[Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/2018.02.06%20-%20ThePhD%20-%20Biting%20the%20CMake%20Bullet.pdf)
 
 ## Creating a single header
 
