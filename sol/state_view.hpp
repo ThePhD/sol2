@@ -77,18 +77,48 @@ namespace sol {
 		type t = type_of(L, result.stack_index());
 		std::string err = "sol: ";
 		err += to_string(result.status());
-		err += " error:";
+		err += " error";
+#ifndef SOL_NO_EXCEPTIONS
+		std::exception_ptr eptr = std::current_exception();
+		if (eptr) {
+			err += " with a ";
+			try {
+				std::rethrow_exception(eptr);
+			}
+			catch (const std::exception& ex) {
+				err += "std::exception -- ";
+				err.append(ex.what());
+			}
+			catch (const std::string& message) {
+				err += "thrown message -- ";
+				err.append(message);
+			}
+			catch (const char* message) {
+				err += "thrown message -- ";
+				err.append(message);
+			}
+			catch (...) {
+				err.append("thrown but unknown type, cannot serialize into error message");
+			}
+		}
+#endif // serialize exception information if possible
 		if (t == type::string) {
-			err += " ";
+			err += ": ";
 			string_view serr = stack::get<string_view>(L, result.stack_index());
 			err.append(serr.data(), serr.size());
 		}
 #ifdef SOL_NO_EXCEPTIONS
 		// replacing information of stack error into pfr
-		if (t != type::none) {
-			lua_pop(L, 1);
+		int target = result.stack_index();
+		if (result.pop_count() > 0) {
+			stack::remove(L, target, result.pop_count());
 		}
-		stack::push(L, err);
+		int pushed = stack::push(L, err);
+		int top = lua_gettop(L);
+		int towards = top - target;
+		if (towards != 0) {
+			lua_rotate(L, top, towards);
+		}
 #else
 		// just throw our error
 		throw error(detail::direct_error, err);

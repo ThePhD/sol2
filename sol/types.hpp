@@ -640,7 +640,7 @@ namespace sol {
 	};
 
 	inline const std::string& to_string(call_status c) {
-		static const std::array<std::string, 8> names{ {
+		static const std::array<std::string, 10> names{ {
 			"ok",
 			"yielded",
 			"runtime",
@@ -649,6 +649,8 @@ namespace sol {
 			"gc",
 			"syntax",
 			"file",
+			"CRITICAL_EXCEPTION_FAILURE",
+			"CRITICAL_INDETERMINATE_STATE_FAILURE"
 		} };
 		switch (c) {
 		case call_status::ok:
@@ -668,16 +670,37 @@ namespace sol {
 		case call_status::file:
 			return names[7];
 		}
-		return names[0];
+		if (static_cast<std::ptrdiff_t>(c) == -1) {
+			// One of the many cases where a critical exception error has occurred
+			return names[8];
+		}
+		return names[9];
+	}
+
+	inline bool is_indeterminate_call_failure(call_status c) {
+		switch (c) {
+		case call_status::ok:
+		case call_status::yielded:
+		case call_status::runtime:
+		case call_status::memory:
+		case call_status::handler:
+		case call_status::gc:
+		case call_status::syntax:
+		case call_status::file:
+			return false;
+		}
+		return true;
 	}
 
 	inline const std::string& to_string(load_status c) {
-		static const std::array<std::string, 8> names{ {
+		static const std::array<std::string, 7> names{ {
 			"ok",
 			"memory",
 			"gc",
 			"syntax",
 			"file",
+			"CRITICAL_EXCEPTION_FAILURE",
+			"CRITICAL_INDETERMINATE_STATE_FAILURE"
 		} };
 		switch (c) {
 		case load_status::ok:
@@ -691,7 +714,11 @@ namespace sol {
 		case load_status::file:
 			return names[4];
 		}
-		return names[0];
+		if (static_cast<int>(c) == -1) {
+			// One of the many cases where a critical exception error has occurred
+			return names[5];
+		}
+		return names[6];
 	}
 
 	inline const std::string& to_string(load_mode c) {

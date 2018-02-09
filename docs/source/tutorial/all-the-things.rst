@@ -216,7 +216,7 @@ Is set as a :doc:`userdata + usertype<../api/usertype>`.
 
 .. literalinclude:: ../../../examples/tutorials/quick_n_dirty/userdata.cpp
 	:linenos:
-	:lines: 1-57
+	:lines: 1-57,97-
 
 ``std::unique_ptr``/``std::shared_ptr``'s reference counts / deleters will :doc:`be respected<../api/unique_usertype_traits>`.
 
@@ -236,7 +236,7 @@ You can retrieve the userdata in the same way as everything else. Importantly, n
 C++ classes put into Lua
 ------------------------
 
-See this :doc:`section here<cxx-in-lua>` and after perhaps see if :doc:`simple usertypes suit your needs<../api/simple_usertype>`. Also check out some `a basic example`_, `special functions`_ and  `initializers`_, 
+See this :doc:`section here<cxx-in-lua>`. Also check out a `basic example`_, `special functions example`_ and  `initializers example`_! There are many more examples that show off the usage of classes in C++, so please peruse them all carefully as it can be as simple or as complex as your needs are. 
 
 
 .. _namespacing:

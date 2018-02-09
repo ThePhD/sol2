@@ -22,6 +22,18 @@
 
 # # # sol2 Examples
 
+# # require_from_dll example
+# just add the subdirectory
+add_subdirectory(require_dll_example)
+
+# # interop examples
+#add_subdirectory(interop/kaguya)
+#add_subdirectory(interop/tolua)
+#add_subdirectory(interop/LuaBridge)
+#add_subdirectory(interop/luwra)
+
+# # single-source compilable examples
+
 file(GLOB EXAMPLES_SRC *.cpp tutorials/quick_n_dirty/*.cpp)
 source_group(examples FILES ${EXAMPLES_SRC})
 
@@ -73,8 +85,6 @@ function (MAKE_EXAMPLE example_source_file is_single)
 	endif()
 	install(TARGETS ${example_name} RUNTIME DESTINATION bin)
 endfunction(MAKE_EXAMPLE)
-
-add_subdirectory(require_dll_example)
 
 foreach(example_source_file ${EXAMPLES_SRC})
 	MAKE_EXAMPLE(${example_source_file} FALSE)

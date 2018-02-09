@@ -49,7 +49,7 @@
 namespace sol {
 	namespace usertype_detail {
 #ifdef SOL_USE_BOOST
-		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
+		template <typename K, typename V, typename H = boost::hash<K>, typename E = std::equal_to<>>
 		using map_t = boost::unordered_map<K, V, H, E>;
 #else
 		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
