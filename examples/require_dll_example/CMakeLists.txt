@@ -26,7 +26,7 @@
 # # Also hides variables from directory/global scope
 function(make_require_from_dll_example target_lib is_single)
 	# define sources
-	set(my_object_sources my_object.cpp my_object.hpp my_object_api.hpp assert.hpp)
+	set(my_object_sources my_object.cpp my_object.hpp my_object_api.hpp)
 	set(require_from_dll_sources require_from_dll.cpp)
 
 	# define names

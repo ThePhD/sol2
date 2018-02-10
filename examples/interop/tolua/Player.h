@@ -10,7 +10,7 @@ public:
 	: m_health(0) {
 	}
 	void setHealth(int health) {
-		m_health - health;
+		m_health = health;
 	}
 	int getHealth() const {
 		return m_health;

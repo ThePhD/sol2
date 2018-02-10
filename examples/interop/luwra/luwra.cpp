@@ -5,7 +5,7 @@
 #include <luwra.hpp>
 
 #include <iostream>
-#include "../assert.hpp"
+#include "../../assert.hpp"
 
 // luwra,
 // another C++ wrapper library:
@@ -66,7 +66,6 @@ namespace stack {
 			if (!userdata_checker<extensible<T>>::check(L, index, type::userdata, no_panic, tracking)) {
 				return { false, nullptr };
 			}
-			tracking.use(1);
 			return { true, static_cast<T*>(unadjusted_pointer) };
 		}
 	};
@@ -80,10 +79,13 @@ void register_sol_stuff(lua_State* L) {
 	// bind and set up your things: everything is entirely self-contained
 	lua["f"] = sol::overload(
 		[](ABC& from_luwra) {
-			std::cout << "calling 1-argument version with luwra-created ABC {" << from_luwra.value() << "}" << std::endl;
+			std::cout << "calling 1-argument version with luwra-created ABC { " << from_luwra.value() << " }" << std::endl;
+			c_assert(from_luwra.value() == 24);
 		},
 		[](ABC& from_luwra, int second_arg) {
-			std::cout << "calling 2-argument version with luwra-created ABC {" << from_luwra.value() << "} and integer argument of " << second_arg << std::endl;
+			std::cout << "calling 2-argument version with luwra-created ABC { " << from_luwra.value() << " } and integer argument of " << second_arg << std::endl;
+			c_assert(from_luwra.value() == 24);
+			c_assert(second_arg == 5);
 		});
 }
 

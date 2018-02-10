@@ -3,7 +3,7 @@
 
 #include <fstream>
 #include <iostream>
-#include "assert.hpp"
+#include "../../assert.hpp"
 
 int main(int, char*[]) {
 	std::cout << "=== running lua code example ===" << std::endl;

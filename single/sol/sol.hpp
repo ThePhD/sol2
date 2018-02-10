@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-02-05 00:55:01.557255 UTC
-// This header was generated with sol v2.19.0 (revision c9980bf)
+// Generated 2018-02-10 21:24:10.124152 UTC
+// This header was generated with sol v2.19.0 (revision af7b468)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5097,7 +5097,7 @@ namespace sol {
 	};
 
 	inline const std::string& to_string(call_status c) {
-		static const std::array<std::string, 8> names{ {
+		static const std::array<std::string, 10> names{ {
 			"ok",
 			"yielded",
 			"runtime",
@@ -5106,6 +5106,8 @@ namespace sol {
 			"gc",
 			"syntax",
 			"file",
+			"CRITICAL_EXCEPTION_FAILURE",
+			"CRITICAL_INDETERMINATE_STATE_FAILURE"
 		} };
 		switch (c) {
 		case call_status::ok:
@@ -5125,16 +5127,37 @@ namespace sol {
 		case call_status::file:
 			return names[7];
 		}
-		return names[0];
+		if (static_cast<std::ptrdiff_t>(c) == -1) {
+			// One of the many cases where a critical exception error has occurred
+			return names[8];
+		}
+		return names[9];
+	}
+
+	inline bool is_indeterminate_call_failure(call_status c) {
+		switch (c) {
+		case call_status::ok:
+		case call_status::yielded:
+		case call_status::runtime:
+		case call_status::memory:
+		case call_status::handler:
+		case call_status::gc:
+		case call_status::syntax:
+		case call_status::file:
+			return false;
+		}
+		return true;
 	}
 
 	inline const std::string& to_string(load_status c) {
-		static const std::array<std::string, 8> names{ {
+		static const std::array<std::string, 7> names{ {
 			"ok",
 			"memory",
 			"gc",
 			"syntax",
 			"file",
+			"CRITICAL_EXCEPTION_FAILURE",
+			"CRITICAL_INDETERMINATE_STATE_FAILURE"
 		} };
 		switch (c) {
 		case load_status::ok:
@@ -5148,7 +5171,11 @@ namespace sol {
 		case load_status::file:
 			return names[4];
 		}
-		return names[0];
+		if (static_cast<int>(c) == -1) {
+			// One of the many cases where a critical exception error has occurred
+			return names[5];
+		}
+		return names[6];
 	}
 
 	inline const std::string& to_string(load_mode c) {
@@ -8334,31 +8361,31 @@ namespace sol {
 			er.error = error_code::ok;
 			if (codepoint <= unicode_detail::last_1byte_value) {
 				er.code_units_size = 1;
-				er.code_units = std::array<char, 4>{ static_cast<char>(codepoint) };
+				er.code_units = std::array<char, 4>{ { static_cast<char>(codepoint) } };
 			}
 			else if (codepoint <= unicode_detail::last_2byte_value) {
 				er.code_units_size = 2;
-				er.code_units = std::array<char, 4>{
+				er.code_units = std::array<char, 4>{{
 					static_cast<char>(0xC0 | ((codepoint & 0x7C0) >> 6)),
 					static_cast<char>(0x80 | (codepoint & 0x3F)),
-				};
+				}};
 			}
 			else if (codepoint <= unicode_detail::last_3byte_value) {
 				er.code_units_size = 3;
-				er.code_units = std::array<char, 4>{
+				er.code_units = std::array<char, 4>{{
 					static_cast<char>(0xE0 | ((codepoint & 0xF000) >> 12)),
 					static_cast<char>(0x80 | ((codepoint & 0xFC0) >> 6)),
 					static_cast<char>(0x80 | (codepoint & 0x3F)),
-				};
+				}};
 			}
 			else {
 				er.code_units_size = 4;
-				er.code_units = std::array<char, 4>{
+				er.code_units = std::array<char, 4>{ {
 					static_cast<char>(0xF0 | ((codepoint & 0x1C0000) >> 18)),
 						static_cast<char>(0x80 | ((codepoint & 0x3F000) >> 12)),
 						static_cast<char>(0x80 | ((codepoint & 0xFC0) >> 6)),
 						static_cast<char>(0x80 | (codepoint & 0x3F)),
-				};
+				} };
 			}
 			return er;
 		}
@@ -8375,10 +8402,10 @@ namespace sol {
 				auto normal = codepoint - unicode_detail::normalizing_value;
 				auto lead = unicode_detail::first_lead_surrogate + ((normal & unicode_detail::lead_surrogate_bitmask) >> unicode_detail::lead_shifted_bits);
 				auto trail = unicode_detail::first_trail_surrogate + (normal & unicode_detail::trail_surrogate_bitmask);
-				er.code_units = std::array<char16_t, 4>{
+				er.code_units = std::array<char16_t, 4>{ {
 					static_cast<char16_t>(lead),
 					static_cast<char16_t>(trail)
-				};
+				} };
 				er.code_units_size = 2;
 				er.error = error_code::ok;
 			}
@@ -9155,7 +9182,6 @@ namespace stack {
 	template <typename T>
 	struct getter<detail::as_value_tag<T>> {
 		static T* get_no_lua_nil(lua_State* L, int index, record& tracking) {
-			tracking.use(1);
 			void* memory = lua_touserdata(L, index);
 #ifdef SOL_ENABLE_INTEROP
 			userdata_getter<extensible<T>> ug;
@@ -9165,6 +9191,7 @@ namespace stack {
 				return ugr.second;
 			}
 #endif // interop extensibility
+			tracking.use(1);
 			void* rawdata = detail::align_usertype_pointer(memory);
 			void** pudata = static_cast<void**>(rawdata);
 			void* udata = *pudata;
@@ -17056,7 +17083,7 @@ namespace sol {
 namespace sol {
 	namespace usertype_detail {
 #ifdef SOL_USE_BOOST
-		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
+		template <typename K, typename V, typename H = boost::hash<K>, typename E = std::equal_to<>>
 		using map_t = boost::unordered_map<K, V, H, E>;
 #else
 		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
@@ -19607,18 +19634,48 @@ namespace sol {
 		type t = type_of(L, result.stack_index());
 		std::string err = "sol: ";
 		err += to_string(result.status());
-		err += " error:";
+		err += " error";
+#ifndef SOL_NO_EXCEPTIONS
+		std::exception_ptr eptr = std::current_exception();
+		if (eptr) {
+			err += " with a ";
+			try {
+				std::rethrow_exception(eptr);
+			}
+			catch (const std::exception& ex) {
+				err += "std::exception -- ";
+				err.append(ex.what());
+			}
+			catch (const std::string& message) {
+				err += "thrown message -- ";
+				err.append(message);
+			}
+			catch (const char* message) {
+				err += "thrown message -- ";
+				err.append(message);
+			}
+			catch (...) {
+				err.append("thrown but unknown type, cannot serialize into error message");
+			}
+		}
+#endif // serialize exception information if possible
 		if (t == type::string) {
-			err += " ";
+			err += ": ";
 			string_view serr = stack::get<string_view>(L, result.stack_index());
 			err.append(serr.data(), serr.size());
 		}
 #ifdef SOL_NO_EXCEPTIONS
 		// replacing information of stack error into pfr
-		if (t != type::none) {
-			lua_pop(L, 1);
+		int target = result.stack_index();
+		if (result.pop_count() > 0) {
+			stack::remove(L, target, result.pop_count());
 		}
-		stack::push(L, err);
+		int pushed = stack::push(L, err);
+		int top = lua_gettop(L);
+		int towards = top - target;
+		if (towards != 0) {
+			lua_rotate(L, top, towards);
+		}
 #else
 		// just throw our error
 		throw error(detail::direct_error, err);

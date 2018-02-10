@@ -27,10 +27,10 @@
 add_subdirectory(require_dll_example)
 
 # # interop examples
-#add_subdirectory(interop/kaguya)
-#add_subdirectory(interop/tolua)
-#add_subdirectory(interop/LuaBridge)
-#add_subdirectory(interop/luwra)
+add_subdirectory(interop/kaguya)
+add_subdirectory(interop/tolua)
+add_subdirectory(interop/LuaBridge)
+add_subdirectory(interop/luwra)
 
 # # single-source compilable examples
 

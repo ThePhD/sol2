@@ -1,11 +1,6 @@
 #ifndef EXAMPLES_ASSERT_HPP
 #define EXAMPLES_ASSERT_HPP
 
-#ifndef NDEBUG
-#include <exception>
-#include <iostream>
-#include <cstdlib>
-
 #ifdef SOL2_CI
 struct pre_main {
 	pre_main() {
@@ -15,6 +10,11 @@ struct pre_main {
 	}
 } pm;
 #endif // Prevent lockup when doing Continuous Integration
+
+#ifndef NDEBUG
+#include <exception>
+#include <iostream>
+#include <cstdlib>
 
 #   define m_assert(condition, message) \
     do { \

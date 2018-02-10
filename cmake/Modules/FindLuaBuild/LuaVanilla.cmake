@@ -28,6 +28,8 @@ set(_lua_vanilla_build_included true)
 
 # import necessary standard modules
 include(ExternalProject)
+# import other modules
+include(Common/Core)
 
 # Latest versions for specific sub-versions of Lua
 set(LUA_VANILLA_5.1_LATEST_VERSION 5.1.5)
@@ -102,15 +104,6 @@ set(LUA_VANILLA_MD5_1.1 9f83141cc8ea362497e272071eda5cf6)
 set(LUA_VANILLA_SHA1_1.1 67209701eec5cc633e829d023fbff62d5d6c8e5e)
 set(LUA_VANILLA_MD5_1.0 96e8399fc508d128badd8ac3aa8f2119)
 set(LUA_VANILLA_SHA1_1.0 6a82d2ae7ce9ad98c7b4824a325b91522c0d6ebb)
-
-# # Prepend function (is there an equivalent in CMake somewhere...?)
-function(prepend var prefix)
-   set(l "")
-   foreach(f ${ARGN})
-      list(APPEND l "${prefix}${f}")
-   endforeach(f)
-   SET(${var} "${l}" PARENT_SCOPE)
-ENDFUNCTION(prepend)
 
 # Clean up some variables
 if (LUA_VERSION MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$")
@@ -220,7 +213,7 @@ prepend(LUA_VANILLA_LUAC_SOURCES "${LUA_VANILLA_SOURCE_DIR}/" ${LUA_VANILLA_LUAC
 
 ExternalProject_Add(LUA_VANILLA
 	BUILD_IN_SOURCE TRUE
-	BUILD_ALWAYS TRUE
+	BUILD_ALWAYS FALSE
 	TLS_VERIFY TRUE
 	PREFIX ${LUA_BUILD_TOPLEVEL}
 	SOURCE_DIR ${LUA_BUILD_TOPLEVEL}

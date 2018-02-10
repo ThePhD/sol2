@@ -5,7 +5,7 @@
 #include <LuaBridge/LuaBridge.h>
 
 #include <iostream>
-#include "../assert.hpp"
+#include "../../assert.hpp"
 
 // LuaBridge,
 // no longer maintained, by VinnieFalco:
@@ -53,7 +53,6 @@ namespace stack {
 			if (!userdata_checker<extensible<T>>::check(L, index, type::userdata, no_panic, tracking)) {
 				return { false, nullptr };
 			}
-			tracking.use(1);
 			T* corrected = luabridge::Userdata::get<T>(L, index, true);
 			return { true, corrected };
 		}
@@ -68,10 +67,13 @@ void register_sol_stuff(lua_State* L) {
 	// bind and set up your things: everything is entirely self-contained
 	lua["f"] = sol::overload(
 		[](A& from_luabridge) {
-			std::cout << "calling 1-argument version with luabridge-created A {" << from_luabridge.value() << "}" << std::endl;
+			std::cout << "calling 1-argument version with luabridge-created A { " << from_luabridge.value() << " }" << std::endl;
+			c_assert(from_luabridge.value() == 24);
 		},
 		[](A& from_luabridge, int second_arg) {
-			std::cout << "calling 2-argument version with luabridge-created A {" << from_luabridge.value() << "} and integer argument of " << second_arg << std::endl;
+			std::cout << "calling 2-argument version with luabridge-created A { " << from_luabridge.value() << " } and integer argument of " << second_arg << std::endl;
+			c_assert(from_luabridge.value() == 24);
+			c_assert(second_arg == 5);
 		});
 }
 
@@ -95,7 +97,8 @@ int main(int, char* []) {
 
 	std::unique_ptr<lua_State, closer> state(luaL_newstate());
 	lua_State* L = state.get();
-
+	luaL_openlibs(L);
+	
 	luabridge::getGlobalNamespace(L)
 		.beginNamespace("test")
 		.beginClass<A>("A")

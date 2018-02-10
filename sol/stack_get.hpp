@@ -667,7 +667,6 @@ namespace stack {
 	template <typename T>
 	struct getter<detail::as_value_tag<T>> {
 		static T* get_no_lua_nil(lua_State* L, int index, record& tracking) {
-			tracking.use(1);
 			void* memory = lua_touserdata(L, index);
 #ifdef SOL_ENABLE_INTEROP
 			userdata_getter<extensible<T>> ug;
@@ -677,6 +676,7 @@ namespace stack {
 				return ugr.second;
 			}
 #endif // interop extensibility
+			tracking.use(1);
 			void* rawdata = detail::align_usertype_pointer(memory);
 			void** pudata = static_cast<void**>(rawdata);
 			void* udata = *pudata;

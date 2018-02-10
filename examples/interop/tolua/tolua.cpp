@@ -3,13 +3,13 @@
 #include <sol.hpp>
 
 #include "Player.h"
-// pick or replace the includes
-// with whatever generated file you've created
 #include <tolua++.h>
+// pick or replace the include
+// with whatever generated file you've created
 #include "tolua_Player.h"
 
 #include <iostream>
-#include "../assert.hpp"
+#include "../../assert.hpp"
 
 // tolua code lifted from some blog, if the link dies
 // I don't know where else you're gonna find the reference,
@@ -20,8 +20,8 @@ namespace stack {
 	template <typename T>
 	struct userdata_checker<extensible<T>> {
 		template <typename Handler>
-		static bool check(
-			lua_State* L, int relindex, type index_type, Handler&& handler, record& tracking) {
+		static bool check(lua_State* L, int relindex, type index_type, Handler&& handler, record& tracking) {
+			tracking.use(1);
 			// just marking unused parameters for no compiler warnings
 			(void)index_type;
 			(void)handler;
@@ -41,10 +41,13 @@ void register_sol_stuff(lua_State* L) {
 	// bind and set up your things: everything is entirely self-contained
 	lua["f"] = sol::overload(
 		[](Player& from_tolua) {
-			std::cout << "calling 1-argument version with tolua-created Player { health:" << from_tolua.getHealth() << "}" << std::endl;
+			std::cout << "calling 1-argument version with tolua-created Player { health:" << from_tolua.getHealth() << " }" << std::endl;
+			c_assert(from_tolua.getHealth() == 4);
 		},
 		[](Player& from_tolua, int second_arg) {
-			std::cout << "calling 2-argument version with tolua-created Player { health: " << from_tolua.getHealth() << "} and integer argument of " << second_arg << std::endl;
+			std::cout << "calling 2-argument version with tolua-created Player { health: " << from_tolua.getHealth() << " } and integer argument of " << second_arg << std::endl;
+			c_assert(from_tolua.getHealth() == 4);
+			c_assert(second_arg == 5);
 		});
 }
 

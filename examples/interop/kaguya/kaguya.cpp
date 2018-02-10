@@ -5,7 +5,7 @@
 #include <kaguya/kaguya.hpp>
 
 #include <iostream>
-#include "../assert.hpp"
+#include "../../assert.hpp"
 
 // kaguya code lifted from README.md,
 // written by satoren:
@@ -87,10 +87,13 @@ void register_sol_stuff(lua_State* L) {
 	// bind and set up your things: everything is entirely self-contained
 	lua["f"] = sol::overload(
 		[](ABC& from_kaguya) {
-			std::cout << "calling 1-argument version with kaguya-created ABC {" << from_kaguya.value() << "}" << std::endl;
+			std::cout << "calling 1-argument version with kaguya-created ABC { " << from_kaguya.value() << " }" << std::endl;
+			c_assert(from_kaguya.value() == 24);
 		},
 		[](ABC& from_kaguya, int second_arg) {
-			std::cout << "calling 2-argument version with kaguya-created ABC {" << from_kaguya.value() << "} and integer argument of " << second_arg << std::endl;
+			std::cout << "calling 2-argument version with kaguya-created ABC { " << from_kaguya.value() << " } and integer argument of " << second_arg << std::endl;
+			c_assert(from_kaguya.value() == 24);
+			c_assert(second_arg == 5);
 		});
 }
 
