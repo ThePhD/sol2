@@ -110,8 +110,8 @@ set(PLATFORM "x64" CACHE STRING "Target platform to compile for when building bi
 option(CI "Enable build of tests" OFF)
 option(TESTS "Enable build of tests" OFF)
 option(EXAMPLES "Enable build of examples" OFF)
-option(SINGLE "Enable build of single header files (BROKEN)" OFF)
-option(DOCS "Enable build of documentation (BROKEN)" OFF)
+option(SINGLE "Enable build of single header files" ON)
+option(DOCS "Enable build of documentation" OFF)
 # Single tests and examples tests will only be turned on if both SINGLE and TESTS are defined
 CMAKE_DEPENDENT_OPTION(TESTS_SINGLE "Enable build of tests using the generated single headers" ON
 	"SINGLE;TESTS" OFF)
@@ -152,7 +152,7 @@ install(DIRECTORY sol
 	DESTINATION include)
 
 install(FILES sol.hpp
-  DESTINATION include)
+	DESTINATION include)
 
 install(FILES
 	"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config.cmake"
@@ -177,24 +177,26 @@ set(SOL2_DOCS_FOUND FALSE)
 if (PYTHONINTERP_FOUND)
 	if (SINGLE)
 		set(SOL2_SINGLE_FOUND TRUE)
-		add_custom_command(OUTPUT include/single/sol/sol.hpp "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol_forward.hpp"
-			COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/single.py" --output "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol.hpp"
-			DEPENDS ${SOL2_HEADER_SOURCES})
-		add_custom_target(sol2_single_header 
-			DEPENDS "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol_forward.hpp")
+		add_custom_command(OUTPUT single/sol.hpp single/sol_forward.hpp
+			COMMAND ${CMAKE_COMMAND} -E make_directory single
+			COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/single.py" --output single/sol.hpp)
+		add_custom_target(sol2_single_header
+			DEPENDS single/sol.hpp single/sol_forward.hpp)
 		add_library(sol2_single INTERFACE)
 		set_target_properties(sol2_single
 			PROPERTIES
-			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol")
+			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/include/single/sol")
 		add_dependencies(sol2_single sol2_single_header)
-		install(FILES "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/include/${CMAKE_CFG_INTDIR}/single/sol/sol_forward.hpp" 
+		install(FILES single/sol.hpp single/sol_forward.hpp
 			DESTINATION include/sol/single/sol)
 	endif()
 	if (DOCS)
 		set(SOL2_DOCS_FOUND TRUE)
-		add_custom_command(OUTPUT documentation COMMAND "make html" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/docs)
-		add_custom_target(docs DEPENDS documentation)
-		install(DIRECTORY "${CMAKE_SOURCE_DIR}/docs/build/html" DESTINATION docs)
+		add_custom_command(OUTPUT docs
+			COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/docs" docs
+			COMMAND make -C docs html)
+		add_custom_target(documentation ALL DEPENDS docs)
+		install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs/build/html" DESTINATION docs)
 	endif()
 else()
 	if (SINGLE)
@@ -215,7 +217,7 @@ if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR EXAMPLES OR EXAMPLES_SINGLE)
 		set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 	endif()
 	find_package(Threads)
-	
+
 	string(TOLOWER ${LUA_VERSION} NORMALIZED_LUA_VERSION)
 	# Find way to get Lua: build if requested, or attempt to build if no matching version is found
 	if (BUILD_LUA)
@@ -246,7 +248,7 @@ if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR EXAMPLES OR EXAMPLES_SINGLE)
 		message(STATUS "sol2 testing enabled")
 		enable_testing()
 	endif()
-	
+
 	# # # Examples
 	# # Enable examples to be built against the library
 	if (EXAMPLES OR TESTS_EXAMPLES OR EXAMPLES_SINGLE)
