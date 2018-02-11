@@ -110,8 +110,8 @@ set(PLATFORM "x64" CACHE STRING "Target platform to compile for when building bi
 option(CI "Enable build of tests" OFF)
 option(TESTS "Enable build of tests" OFF)
 option(EXAMPLES "Enable build of examples" OFF)
-option(SINGLE "Enable build of single header files" ON)
-option(DOCS "Enable build of documentation" OFF)
+option(SINGLE "Enable build of single header files (BROKEN)" OFF)
+option(DOCS "Enable build of documentation (BROKEN)" OFF)
 # Single tests and examples tests will only be turned on if both SINGLE and TESTS are defined
 CMAKE_DEPENDENT_OPTION(TESTS_SINGLE "Enable build of tests using the generated single headers" ON
 	"SINGLE;TESTS" OFF)
@@ -148,8 +148,11 @@ install(EXPORT sol2
 	FILE sol2-targets.cmake
 	DESTINATION lib/cmake/sol2)
 
-install(DIRECTORY include/sol2
+install(DIRECTORY sol
 	DESTINATION include)
+
+install(FILES sol.hpp
+  DESTINATION include)
 
 install(FILES
 	"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config.cmake"
