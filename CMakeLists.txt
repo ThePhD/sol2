@@ -143,23 +143,23 @@ write_basic_package_version_file(
 
 export(TARGETS sol2 FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-targets.cmake")
 
-install(TARGETS sol2 
+install(TARGETS sol2
 	EXPORT sol2)
 
 install(EXPORT sol2
 	FILE sol2-targets.cmake
-	DESTINATION lib/cmake/sol2)
+	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sol2")
 
 install(DIRECTORY sol
-	DESTINATION include)
+	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 install(FILES sol.hpp
-	DESTINATION include)
+	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 install(FILES
 	"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config.cmake"
 	"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config-version.cmake"
-	DESTINATION lib/cmake/sol2)
+	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sol2")
 
 # # # Source Groups
 # # Sources everyone is going to need
