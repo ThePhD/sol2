@@ -179,17 +179,17 @@ set(SOL2_DOCS_FOUND FALSE)
 if (PYTHONINTERP_FOUND)
 	if (SINGLE)
 		set(SOL2_SINGLE_FOUND TRUE)
-		add_custom_command(OUTPUT single/sol.hpp single/sol_forward.hpp
-			COMMAND ${CMAKE_COMMAND} -E make_directory single
-			COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/single.py" --output single/sol.hpp)
+		add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/single/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol_forward.hpp"
+			COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/single"
+			COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/single.py" --output "${CMAKE_CURRENT_BINARY_DIR}/single/sol.hpp")
 		add_custom_target(sol2_single_header ALL
-			DEPENDS single/sol.hpp single/sol_forward.hpp)
+			DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/single/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol_forward.hpp")
 		add_library(sol2_single INTERFACE)
 		set_target_properties(sol2_single
 			PROPERTIES
-			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/single/sol")
+			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/single")
 		add_dependencies(sol2_single sol2_single_header)
-		install(FILES single/sol.hpp single/sol_forward.hpp
+		install(FILES "${CMAKE_CURRENT_BINARY_DIR}/single/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol_forward.hpp"
 			DESTINATION include/sol/single/sol)
 	endif()
 	if (DOCS)
