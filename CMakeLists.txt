@@ -206,6 +206,16 @@ else()
 	endif()
 endif()
 
+# pkg-config support, except on Windows
+if(NOT WIN32 OR NOT CMAKE_HOST_SYSTEM_NAME MATCHES Windows)
+  set(PKGCONFIG_INSTALL_DIR
+    "${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig"
+    CACHE PATH "Path where sol2.pc is installed")
+
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/sol2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/sol2.pc" @ONLY)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/sol2.pc" DESTINATION "${PKGCONFIG_INSTALL_DIR}")
+endif()
+
 if (CI)
 	message(STATUS "sol2 Contiguous Integration is on")
 endif()
