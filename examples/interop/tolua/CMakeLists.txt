@@ -40,6 +40,6 @@ function(make_tolua_interop_example target_library is_single)
 endfunction()
 
 make_tolua_interop_example(sol2 FALSE)
-if (TESTS_SINGLE)
+if (SOL2_SINGLE_FOUND AND INTEROP_EXAMPLES_SINGLE)
 	make_tolua_interop_example(sol2_single TRUE)
 endif()

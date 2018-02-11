@@ -63,10 +63,10 @@ if (MSVC)
 	endif()
 else()
 	if (PLATFORM MATCHES "x86")
-		list(APPEND CMAKE_C_FLAGS "-m32")
-		list(APPEND CMAKE_CXX_FLAGS "-m32")
-		list(APPEND CMAKE_EXE_LINKER_FLAGS "-m32")
-		list(APPEND CMAKE_SHARED_LINKER_FLAGS "-m32")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32")
+		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -m32")
 	endif()
 	add_compile_options(-Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
 endif()
@@ -110,6 +110,7 @@ set(PLATFORM "x64" CACHE STRING "Target platform to compile for when building bi
 option(CI "Enable build of tests" OFF)
 option(TESTS "Enable build of tests" OFF)
 option(EXAMPLES "Enable build of examples" OFF)
+option(INTEROP_EXAMPLES "Enable build of interop examples" OFF)
 option(SINGLE "Enable build of single header files" ON)
 option(DOCS "Enable build of documentation" OFF)
 # Single tests and examples tests will only be turned on if both SINGLE and TESTS are defined
@@ -117,8 +118,12 @@ CMAKE_DEPENDENT_OPTION(TESTS_SINGLE "Enable build of tests using the generated s
 	"SINGLE;TESTS" OFF)
 CMAKE_DEPENDENT_OPTION(EXAMPLES_SINGLE "Enable build of examples using the generated single headers" OFF
 	"SINGLE;EXAMPLES" OFF)
+CMAKE_DEPENDENT_OPTION(INTEROP_EXAMPLES_SINGLE "Enable build of examples using the generated single headers" OFF
+	"SINGLE;INTEROP_EXAMPLES" OFF)
 CMAKE_DEPENDENT_OPTION(TESTS_EXAMPLES "Enable build of examples as tests" ON
 	"EXAMPLES" OFF)
+CMAKE_DEPENDENT_OPTION(TESTS_INTEROP_EXAMPLES "Enable build of interop examples as tests" ON
+	"EXAMPLES;INTEROP_EXAMPLES" OFF)
 
 
 # # # sol2 Library
@@ -204,14 +209,14 @@ if (CI)
 endif()
 
 # # # Tests, Examples and other CI suites that come with sol2
-if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR EXAMPLES OR EXAMPLES_SINGLE)
+if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR TESTS_INTEROP_EXAMPLES OR EXAMPLES OR EXAMPLES_SINGLE OR INTEROP_EXAMPLES)
 	# # # Libraries
 	# Here, we pull in all the necessary libraries for building examples and tests
 	# Find threading library
 	if (NOT MSVC)
-		set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+		#set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 	endif()
-	find_package(Threads)
+	find_package(Threads REQUIRED)
 	
 	string(TOLOWER ${LUA_VERSION} NORMALIZED_LUA_VERSION)
 	# Find way to get Lua: build if requested, or attempt to build if no matching version is found
@@ -238,7 +243,7 @@ if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR EXAMPLES OR EXAMPLES_SINGLE)
 	endif()
 
 	# # Enable test harness for regular, example or single tests
-	if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES)
+	if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR TESTS_INTEROP_EXAMPLES)
 		# enable ctest
 		message(STATUS "sol2 testing enabled")
 		enable_testing()
@@ -246,7 +251,7 @@ if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR EXAMPLES OR EXAMPLES_SINGLE)
 	
 	# # # Examples
 	# # Enable examples to be built against the library
-	if (EXAMPLES OR TESTS_EXAMPLES OR EXAMPLES_SINGLE)
+	if (EXAMPLES OR TESTS_EXAMPLES OR EXAMPLES_SINGLE OR INTEROP_EXAMPLES OR INTEROP_EXAMPLES_SINGLE OR TEST_INTEROP_EXAMPLES)
 		# NOTE: will also add to tests if TESTS is defined
 		message(STATUS "sol2 adding examples...")
 		add_subdirectory(examples "${CMAKE_BINARY_DIR}/examples")

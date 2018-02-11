@@ -26,11 +26,13 @@
 # just add the subdirectory
 add_subdirectory(require_dll_example)
 
-# # interop examples
-add_subdirectory(interop/kaguya)
-add_subdirectory(interop/tolua)
-add_subdirectory(interop/LuaBridge)
-add_subdirectory(interop/luwra)
+if (INTEROP_EXAMPLES)
+	# # interop examples
+	add_subdirectory(interop/kaguya)
+	add_subdirectory(interop/tolua)
+	add_subdirectory(interop/LuaBridge)
+	add_subdirectory(interop/luwra)
+endif(INTEROP_EXAMPLES)
 
 # # single-source compilable examples
 
@@ -86,12 +88,14 @@ function (MAKE_EXAMPLE example_source_file is_single)
 	install(TARGETS ${example_name} RUNTIME DESTINATION bin)
 endfunction(MAKE_EXAMPLE)
 
-foreach(example_source_file ${EXAMPLES_SRC})
-	MAKE_EXAMPLE(${example_source_file} FALSE)
-endforeach()
-
-if (SOL2_SINGLE_FOUND AND EXAMPLES_SINGLE)
+if (EXAMPLES)
 	foreach(example_source_file ${EXAMPLES_SRC})
-		MAKE_EXAMPLE(${example_source_file} TRUE)
+		MAKE_EXAMPLE(${example_source_file} FALSE)
 	endforeach()
+
+	if (SOL2_SINGLE_FOUND AND EXAMPLES_SINGLE)
+		foreach(example_source_file ${EXAMPLES_SRC})
+			MAKE_EXAMPLE(${example_source_file} TRUE)
+		endforeach()
+	endif()
 endif()
