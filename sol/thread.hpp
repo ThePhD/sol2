@@ -173,11 +173,15 @@ namespace sol {
 
 		thread_status status() const {
 			lua_State* lthread = thread_state();
-			thread_status lstat = static_cast<thread_status>(lua_status(lthread));
-			int stacksize = lua_gettop(lthread);
-			if (lstat != thread_status::ok && lstat != thread_status::yielded && stacksize == 0) {
-				// No thing on the basic_thread's stack means its dead
-				return thread_status::dead;
+			auto lstat = static_cast<thread_status>(lua_status(lthread));
+			if (lstat == thread_status::ok) {
+				lua_Debug ar;
+				if (lua_getstack(lthread, 0, &ar) > 0)
+					return thread_status::ok;
+				else if (lua_gettop(lthread) == 0)
+					return thread_status::dead;
+				else
+					return thread_status::yielded;
 			}
 			return lstat;
 		}
