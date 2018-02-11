@@ -21,6 +21,8 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 include(ExternalProject)
+include(FindPackageHandleStandardArgs)
+include(Common/Core)
 
 # # Base variables
 set(luabridge_version 1.0.2)

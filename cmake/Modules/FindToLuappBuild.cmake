@@ -23,6 +23,7 @@
 # # Standard CMake Libraries
 include(ExternalProject)
 include(FindPackageHandleStandardArgs)
+include(Common/Core)
 
 # # Base variables
 set(toluapp_version 1.0.93)
