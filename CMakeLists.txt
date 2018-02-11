@@ -27,6 +27,8 @@ cmake_minimum_required(VERSION 3.5.0)
 # # # project declaration
 project(sol2 VERSION 2.19.0 LANGUAGES CXX C)
 
+include(GNUInstallDirs)
+
 # # # General Project Requirements
 # Set general standard requirements here
 set(CMAKE_CXX_STANDARD 14)
@@ -196,7 +198,7 @@ if (PYTHONINTERP_FOUND)
 			COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/docs" docs
 			COMMAND make -C docs html)
 		add_custom_target(documentation ALL DEPENDS docs)
-		install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs/build/html" DESTINATION docs)
+		install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs/build/html" DESTINATION "${CMAKE_INSTALL_DOCDIR}")
 	endif()
 else()
 	if (SINGLE)
