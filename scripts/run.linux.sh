@@ -50,7 +50,7 @@ echo -en "travis_fold:start:build_preparation.1\r"
 		source ./sol2.compiler.vars
 	fi
 
-	if [ ${LUA_VERSION} =~ '5.3' ]
+	if [[ ${LUA_VERSION} =~ "5.3" ]]
 	then
 		export INTEROP_DEFINES=-DINTEROP_EXAMPLES=ON -DTESTS_INTEROP_EXAMPLES=ON -DINTEROP_EXAMPLES_SINGLE=ON
 	else
