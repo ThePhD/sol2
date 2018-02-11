@@ -185,7 +185,7 @@ if (PYTHONINTERP_FOUND)
 		add_library(sol2_single INTERFACE)
 		set_target_properties(sol2_single
 			PROPERTIES
-			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/include/single/sol")
+			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/single/sol")
 		add_dependencies(sol2_single sol2_single_header)
 		install(FILES single/sol.hpp single/sol_forward.hpp
 			DESTINATION include/sol/single/sol)
