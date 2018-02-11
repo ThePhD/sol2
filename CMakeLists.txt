@@ -180,7 +180,7 @@ if (PYTHONINTERP_FOUND)
 		add_custom_command(OUTPUT single/sol.hpp single/sol_forward.hpp
 			COMMAND ${CMAKE_COMMAND} -E make_directory single
 			COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/single.py" --output single/sol.hpp)
-		add_custom_target(sol2_single_header
+		add_custom_target(sol2_single_header ALL
 			DEPENDS single/sol.hpp single/sol_forward.hpp)
 		add_library(sol2_single INTERFACE)
 		set_target_properties(sol2_single
