@@ -62,12 +62,6 @@ if (MSVC)
 		add_compile_options(/MP)
 	endif()
 else()
-	if (PLATFORM MATCHES "x86")
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32")
-		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -m32")
-	endif()
 	add_compile_options(-Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
 endif()
 
@@ -214,10 +208,10 @@ if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR TESTS_INTEROP_EXAMPLES OR EXAMPLE
 	# Here, we pull in all the necessary libraries for building examples and tests
 	# Find threading library
 	if (NOT MSVC)
-		#set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+		set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 	endif()
 	find_package(Threads REQUIRED)
-	
+
 	string(TOLOWER ${LUA_VERSION} NORMALIZED_LUA_VERSION)
 	# Find way to get Lua: build if requested, or attempt to build if no matching version is found
 	if (BUILD_LUA)
