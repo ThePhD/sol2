@@ -121,6 +121,7 @@ init:
 - set logger=
 - set build_type=
 - set build_compiler=
+- set lua_build_type=OFF
 - set vcvars_script="C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
 - if "%PLATFORM%"=="x64" (set arch= Win64)
 - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" (set CMAKE_GENERATOR=Visual Studio 15 2017%arch%&&set parallelism=/maxcpucount&&set logger=/verbosity:quiet /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"&&set vcvars_script="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat")
@@ -145,7 +146,7 @@ before_build:
 - if DEFINED LLVM_VERSION (call %vcvars_script% && cd C:\projects\sol2)
 - md build-sol2
 - cd build-sol2
-- cmake .. -G "%CMAKE_GENERATOR%" %build_type% %build_compiler% -DLUA_VERSION="%LUA_VERSION%" -DCI=ON -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON
+- cmake .. -G "%CMAKE_GENERATOR%" %build_type% %build_compiler% -DLUA_VERSION="%LUA_VERSION%" -DCI=ON -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=%lua_build_type% -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON
 
 # We do not build the debug versions because the compiler
 # generates too much debug info for MinGW to handle

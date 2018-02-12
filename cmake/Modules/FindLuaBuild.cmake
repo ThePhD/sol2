@@ -53,7 +53,6 @@ function(find_lua_build LUA_VERSION)
 		set(LUA_BUILD_OBJECT_FILE_SUFFIX .o)
 	endif()
 
-
 	# # # Options
 	option(BUILD_LUA_AS_DLL ${LUA_BUILD_BUILD_DLL_DEFAULT} "Build Lua or LuaJIT as a Shared/Dynamic Link Library")
 

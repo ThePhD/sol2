@@ -1,8 +1,8 @@
+#include <kaguya/kaguya.hpp>
+
 #define SOL_CHECK_ARGUMENTS 1
 #define SOL_ENABLE_INTEROP 1 // MUST be defined to use interop features
 #include <sol.hpp>
-
-#include <kaguya/kaguya.hpp>
 
 #include <iostream>
 #include "../../assert.hpp"

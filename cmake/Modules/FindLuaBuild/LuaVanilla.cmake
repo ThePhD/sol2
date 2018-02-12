@@ -295,7 +295,7 @@ if (MSVC)
 		PRIVATE /W1)
 else()
 	target_compile_options(${liblua}
-		PRIVATE -w -Wno-implicit-fallthrough)
+		PRIVATE -w)
 endif()
 if (WIN32)
 	#target_compile_definitions(${liblua} 
@@ -332,6 +332,9 @@ target_compile_definitions(${luainterpreter}
 if (MSVC)
 	target_compile_options(${luainterpreter}
 		PRIVATE /W1)
+else()
+	target_compile_options(${luainterpreter}
+		PRIVATE -w)
 endif()
 if (WIN32)
 	#target_compile_definitions(${luainterpreter} 
@@ -373,6 +376,9 @@ target_compile_definitions(${luacompiler}
 if (MSVC)
 	target_compile_options(${luacompiler}
 		PRIVATE /W1)
+else()
+	target_compile_options(${luacompiler}
+		PRIVATE -w)
 endif()
 if (WIN32)
 	#target_compile_definitions(${luacompiler} 

@@ -38,8 +38,9 @@ function(make_require_from_dll_example target_lib is_single)
 	endif()
 
 	# is the lua library a shared or static library?
-	get_target_property(lua_lib_type ${LUA_LIBRARIES} TYPE)
-	
+	list(GET LUA_LIBRARIES 0 lua_lib_target)
+	get_target_property(lua_lib_type ${lua_lib_target} TYPE)
+
 	# add library target my_object for the require_from_dll program
 	add_library(${example_lib_name} SHARED ${my_object_sources})
 	set_target_properties(${example_lib_name} PROPERTIES
@@ -83,7 +84,9 @@ function(make_require_from_dll_example target_lib is_single)
 	target_link_libraries(${example_name} PRIVATE my_object ${target_lib})
 	# avoid multiply defined references due to linking in the same static library
 	# twice over, and get "multiple definition" errors during linking
-	# target_link_libraries(${example_name} PRIVATE ${LUA_LIBRARIES})
+	if (NOT lua_lib_type MATCHES "STATIC")
+		target_link_libraries(${example_name} PRIVATE ${LUA_LIBRARIES})
+	endif()
 	target_include_directories(${example_name} PRIVATE ${LUA_INCLUDE_DIRS})
 	
 	if (TESTS_EXAMPLES)

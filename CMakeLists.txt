@@ -53,6 +53,15 @@ set(CXX_FEATURES
 	cxx_variadic_macros
 	cxx_variadic_templates)
 
+# # #
+if (PLATFORM MATCHES "i686" OR PLATFORM STREQUAL "x86")
+	set(IS_X86 TRUE)
+elseif (PLATFORM MATCHES "ARM")
+	set(IS_ARM TRUE)
+else()
+	set(IS_X64 TRUE)
+endif()
+
 # # # General project flags
 if (MSVC)
 	add_definitions(/DUNICODE /D_UNICODE /D_SILENCE_CXX17_UNCAUGHT_EXCEPTION_DEPRECATION_WARNING /D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
@@ -62,6 +71,10 @@ if (MSVC)
 		add_compile_options(/MP)
 	endif()
 else()
+	if (IS_X86)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
+	endif()
 	add_compile_options(-Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
 endif()
 
@@ -208,6 +221,7 @@ if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR TESTS_INTEROP_EXAMPLES OR EXAMPLE
 	# Here, we pull in all the necessary libraries for building examples and tests
 	# Find threading library
 	if (NOT MSVC)
+		set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 		set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 	endif()
 	find_package(Threads REQUIRED)

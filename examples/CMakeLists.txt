@@ -22,11 +22,11 @@
 
 # # # sol2 Examples
 
-# # require_from_dll example
-# just add the subdirectory
-add_subdirectory(require_dll_example)
-
 if (INTEROP_EXAMPLES)
+	# # require_from_dll example
+	# just add the subdirectory
+	add_subdirectory(require_dll_example)
+	
 	# # interop examples
 	add_subdirectory(interop/kaguya)
 	add_subdirectory(interop/tolua)

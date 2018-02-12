@@ -236,6 +236,9 @@ elseif(LUA_JIT_NORMALIZED_LUA_VERSION MATCHES "latest")
 	set(LUA_JIT_PULL_LATEST TRUE)
 endif()
 
+set(LUA_JIT_BYPRODUCTS "${LUA_JIT_SOURCE_LUA_LIB}" "${LUA_JIT_SOURCE_LUA_LIB_EXP}"
+		"${LUA_JIT_SOURCE_LUA_DLL}" "${LUA_JIT_SOURCE_LUA_IMP_LIB}")
+
 if (LUA_JIT_GIT_COMMIT OR LUA_JIT_PULL_LATEST)
 	if (LUA_JIT_PULL_LATEST)
 		MESSAGE(STATUS "Latest LuaJIT has been requested: pulling from git...")
@@ -261,8 +264,7 @@ if (LUA_JIT_GIT_COMMIT OR LUA_JIT_PULL_LATEST)
 		${LUA_JIT_BUILD_COMMAND}
 		INSTALL_COMMAND ""
 		TEST_COMMAND ""
-		BUILD_BYPRODUCTS "${LUA_JIT_DESTINATION_LUA_LIB}" "${LUA_JIT_DESTINATION_LUA_LIB_EXP}"
-		"${LUA_JIT_DESTINATION_LUA_DLL}" "${LUA_JIT_DESTINATION_LUA_IMP_LIB}")
+		BUILD_BYPRODUCTS "${LUA_JIT_BYPRODUCTS}")
 else()
 	ExternalProject_Add(LUA_JIT
 		BUILD_IN_SOURCE TRUE
@@ -282,50 +284,62 @@ else()
 		${LUA_JIT_BUILD_COMMAND}
 		INSTALL_COMMAND ""
 		TEST_COMMAND ""
-		BUILD_BYPRODUCTS "${LUA_JIT_DESTINATION_LUA_LIB}" "${LUA_JIT_DESTINATION_LUA_LIB_EXP}"
-		"${LUA_JIT_DESTINATION_LUA_DLL}" "${LUA_JIT_DESTINATION_LUA_IMP_LIB}")
+		BUILD_BYPRODUCTS "${LUA_JIT_BYPRODUCTS}")
 endif()
 
 # # Post-Build moving steps for necessary items
 # Add post-step to move library afterwards
+
+set(LUA_JIT_EXTERNAL_PROJECT_DEPS "")
 if (MSVC)
 	ExternalProject_Add_Step(LUA_JIT
 		postbuild.exp
 		DEPENDEES build
 		COMMENT "Libray - Moving \"${LUA_JIT_SOURCE_LUA_LIB_EXP}\" to \"${LUA_JIT_DESTINATION_LUA_LIB_EXP}\"..."
-		COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_LIB_EXP}" "${LUA_JIT_DESTINATION_LUA_LIB_EXP}" && echo Successfully moved!)
+		COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_LIB_EXP}" "${LUA_JIT_DESTINATION_LUA_LIB_EXP}"
+		BYPRODUCTS "${LUA_JIT_DESTINATION_LUA_LIB_EXP}")
+	ExternalProject_Add_StepTargets(LUA_JIT postbuild_exp)
+	list(APPEND LUA_JIT_EXTERNAL_PROJECT_DEPS "LUA_JIT-postbuild_exp")
 endif()
 if (BUILD_LUA_AS_DLL)
 	if (MSVC)
-		MESSAGE(STATUS ${LUA_JIT_SOURCE_LUA_IMP_LIB})
-		MESSAGE(STATUS ${LUA_JIT_DESTINATION_LUA_IMP_LIB})
 		ExternalProject_Add_Step(LUA_JIT
-			postbuild.import.lib
+			postbuild_import_lib
 			DEPENDEES build
 			COMMENT "Libray - Moving \"${LUA_JIT_SOURCE_LUA_IMP_LIB}\" to \"${LUA_JIT_DESTINATION_LUA_IMP_LIB}\"..."
 			COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_IMP_LIB}" "${LUA_JIT_DESTINATION_LUA_IMP_LIB}"
-			COMMAND echo Successfully moved!)
+			BYPRODUCTS "${LUA_JIT_DESTINATION_LUA_IMP_LIB}")
+		ExternalProject_Add_StepTargets(LUA_JIT postbuild_import_lib)
+		list(APPEND LUA_JIT_EXTERNAL_PROJECT_DEPS "LUA_JIT-postbuild_import_lib")
 	endif()
-	MESSAGE(STATUS ${LUA_JIT_SOURCE_LUA_DLL})
-	MESSAGE(STATUS ${LUA_JIT_DESTINATION_LUA_DLL})
-	MESSAGE(STATUS ${LUA_JIT_DLL_FILE})
 	ExternalProject_Add_Step(LUA_JIT
-		postbuild.dll
+		postbuild_dll
 		DEPENDEES build
 		COMMENT "Dynamic Library - Moving \"${LUA_JIT_SOURCE_LUA_DLL}\" to \"${LUA_JIT_DESTINATION_LUA_DLL}\"..."
-		COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_DLL}" "${LUA_JIT_DESTINATION_LUA_DLL}" && echo Successfully moved!)
+		COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_DLL}" "${LUA_JIT_DESTINATION_LUA_DLL}"
+		BYPRODUCTS "${LUA_JIT_DESTINATION_LUA_DLL}")
+	ExternalProject_Add_StepTargets(LUA_JIT postbuild_dll)
+	list(APPEND LUA_JIT_EXTERNAL_PROJECT_DEPS "LUA_JIT-postbuild_dll")
 else()
 	ExternalProject_Add_Step(LUA_JIT
-		postbuild.lib
+		postbuild_lib
 		DEPENDEES build
 		COMMENT "Library - Moving \"${LUA_JIT_SOURCE_LUA_LIB}\" to \"${LUA_JIT_DESTINATION_LUA_LIB}\"..."
-		COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_LIB}" "${LUA_JIT_DESTINATION_LUA_LIB}" && echo Successfully moved!)
+		COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_LIB}" "${LUA_JIT_DESTINATION_LUA_LIB}"
+		BYPRODUCTS "${LUA_JIT_DESTINATION_LUA_LIB}")
+	ExternalProject_Add_StepTargets(LUA_JIT postbuild_lib)
+	list(APPEND LUA_JIT_EXTERNAL_PROJECT_DEPS "LUA_JIT-postbuild_lib")
 endif()
+
 ExternalProject_Add_Step(LUA_JIT
-	postbuild.exe
+	postbuild_exe
 	DEPENDEES build
 	COMMENT "Library - Moving \"${LUA_JIT_SOURCE_LUA_INTERPRETER}\" to \"${LUA_JIT_DESTINATION_LUA_INTERPRETER}\"..."
-	COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_INTERPRETER}" "${LUA_JIT_DESTINATION_LUA_INTERPRETER}" && echo Successfully moved!)
+	COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_INTERPRETER}" "${LUA_JIT_DESTINATION_LUA_INTERPRETER}"
+	BYPRODUCTS "${LUA_JIT_DESTINATION_LUA_INTERPRETER}")
+ExternalProject_Add_StepTargets(LUA_JIT postbuild_exe)
+list(APPEND LUA_JIT_EXTERNAL_PROJECT_DEPS "LUA_JIT-postbuild_exe")
+
 # # TODO:
 # Add additional post-build step to move all necessary headers/lua files
 # for now, we just point directly to the `src` directory...
@@ -333,18 +347,15 @@ ExternalProject_Add_Step(LUA_JIT
 # # Lua Library
 add_library(${lualib} ${LUA_BUILD_LIBRARY_TYPE} IMPORTED)
 # make sure the library we export really does depend on Lua JIT's external project
-add_dependencies(${lualib} LUA_JIT)
+add_dependencies(${lualib} LUA_JIT ${LUA_JIT_EXTERNAL_PROJECT_DEPS})
 if (BUILD_LUA_AS_DLL)
 	if (MSVC)
 		set_target_properties(${lualib}
 			PROPERTIES 
 			IMPORTED_IMPLIB "${LUA_JIT_IMP_LIB_FILE}")
 	endif()
-	MESSAGE(STATUS "${LUA_JIT_DLL_FILE}")
-	MESSAGE(STATUS "${LUA_JIT_DESTINATION_LUA_DLL}")
 	set_target_properties(${lualib}
 		PROPERTIES 
-		#IMPORTED_SONAME "${LUA_BUILD_LIBNAME}"
 		IMPORTED_LOCATION "${LUA_JIT_DLL_FILE}")
 else ()
 	set_target_properties(${lualib}

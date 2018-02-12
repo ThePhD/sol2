@@ -43,7 +43,7 @@ ExternalProject_Add(LUABRIDGE_BUILD_SOURCE
 	# # Use Git to get what we need
 	GIT_SHALLOW TRUE
 	GIT_SUBMODULES ""
-	GIT_REPOSITORY https://github.com/vinniefalco/LuaBridge.git
+	GIT_REPOSITORY https://github.com/ThePhD/LuaBridge.git
 	PREFIX ${luabridge_build_toplevel}
 	SOURCE_DIR ${luabridge_build_toplevel}
 	DOWNLOAD_DIR ${luabridge_build_toplevel}
