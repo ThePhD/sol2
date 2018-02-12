@@ -22,11 +22,13 @@
 
 # # # sol2 Examples
 
-if (INTEROP_EXAMPLES)
+if (DYNAMIC_LOADING_EXAMPLES)
 	# # require_from_dll example
 	# just add the subdirectory
 	add_subdirectory(require_dll_example)
-	
+endif(DYNAMIC_LOADING_EXAMPLES)
+
+if (INTEROP_EXAMPLES)
 	# # interop examples
 	add_subdirectory(interop/kaguya)
 	add_subdirectory(interop/tolua)
