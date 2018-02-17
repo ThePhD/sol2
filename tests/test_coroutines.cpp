@@ -25,7 +25,7 @@
 
 #include <catch.hpp>
 
-TEST_CASE("coroutines/yielding", "ensure calling a coroutine works") {
+TEST_CASE("coroutines/coroutine.yield", "ensure calling a coroutine works") {
 	const auto& script = R"(counter = 20
  
 function loop()

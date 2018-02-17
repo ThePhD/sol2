@@ -253,6 +253,10 @@ if (DO_TESTS OR DO_EXAMPLES)
 	# Here, we pull in all the necessary libraries for building examples and tests
 	# Find threading library
 	if (NOT MSVC)
+		if (IS_X86)
+			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
+		endif()
 		set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 		set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 	endif()

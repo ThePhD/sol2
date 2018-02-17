@@ -54,6 +54,15 @@ function(CREATE_TEST test_target_name test_name is_single)
 	else()
 		target_compile_options(${test_target_name} 
 			PRIVATE -Wno-noexcept-type -ftemplate-depth=1024 -pthread)
+
+		if (IS_X86)
+			target_compile_options(${test_target_name} BEFORE PRIVATE -m32)
+			if(MINGW)
+				#set_target_properties(${test_target_name}
+				#	PROPERTIES
+				#	LINK_FLAGS -static-libstdc++)
+			endif()
+		endif()	
 	endif()
 	if (CI)
 		target_compile_definitions(${test_target_name} 
@@ -68,16 +77,6 @@ function(CREATE_TEST test_target_name test_name is_single)
 	target_link_libraries(${test_target_name}
 		Threads::Threads ${LUA_LIBRARIES} ${CATCH_LIBRARIES})
 	
-	if (IS_X86)
-		target_compile_options(${test_target_name} BEFORE PRIVATE -m32)
-	endif()
-	
-	if(MINGW AND IS_X86)
-		#set_target_properties(${test_target_name}
-		#	PROPERTIES
-		#	LINK_FLAGS -static-libstdc++)
-	endif()
-
 	add_test(NAME ${test_name} COMMAND ${test_target_name})
 	install(TARGETS ${test_target_name} RUNTIME DESTINATION bin)
 endfunction(CREATE_TEST)

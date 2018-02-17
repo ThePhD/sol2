@@ -81,7 +81,10 @@ function (MAKE_EXAMPLE example_source_file is_single)
 		target_compile_options(${example_name}
 			PRIVATE -Wno-noexcept-type)
 	endif()
-
+	if (IS_X86)
+		target_compile_options(${example_name} BEFORE PRIVATE -m32)
+	endif()
+	
 	if (TESTS_EXAMPLES)
 		if ((NOT is_single) OR (is_single AND TESTS_SINGLE))
 			add_test(NAME ${example_output_name} COMMAND ${example_name})
