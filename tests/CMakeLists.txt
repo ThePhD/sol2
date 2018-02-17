@@ -56,11 +56,10 @@ function(CREATE_TEST test_target_name test_name is_single)
 			PRIVATE -Wno-noexcept-type -ftemplate-depth=1024 -pthread)
 
 		if (IS_X86)
-			target_compile_options(${test_target_name} BEFORE PRIVATE -m32)
 			if(MINGW)
-				#set_target_properties(${test_target_name}
-				#	PROPERTIES
-				#	LINK_FLAGS -static-libstdc++)
+				set_target_properties(${test_target_name}
+					PROPERTIES
+					LINK_FLAGS -static-libstdc++)
 			endif()
 		endif()	
 	endif()

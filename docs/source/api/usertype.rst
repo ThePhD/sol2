@@ -286,7 +286,7 @@ usertype arguments - simple usertype
 runtime functions
 -----------------
 
-You can add functions at runtime **to the whole class**. Set a name under the metatable name you bound using ``new_usertype``/``new_simple_usertype`` to an object. For example:
+You can add functions at runtime **to the whole class** (not to individual objects). Set a name under the metatable name you bound using ``new_usertype``/``new_simple_usertype`` to an object. For example:
 
 .. code-block:: cpp
 	:linenos:
@@ -393,6 +393,9 @@ compilation speed
 
 	If you find that compilation times are too long and you're only binding member functions, consider perhaps using :doc:`simple usertypes<simple_usertype>`. This can reduce compile times (but may cost memory size and speed). See the simple usertypes documentation for more details.
 
+.. note::
+
+	MSVC and clang/gcc may need additional compiler flags to handle compiling extensive use of usertypes. See: :ref:`the error documentation<compilation_errors_warnings>` for more details.
 
 performance note
 ----------------
@@ -400,14 +403,6 @@ performance note
 .. note::
 
 	Note that performance for member function calls goes down by a fixed overhead if you also bind variables as well as member functions. This is purely a limitation of the Lua implementation and there is, unfortunately, nothing that can be done about it. If you bind only functions and no variables, however, Sol will automatically optimize the Lua runtime and give you the maximum performance possible. *Please consider ease of use and maintenance of code before you make everything into functions.*
-
-
-MSVC note
----------
-
-.. note::
-
-	When using usertype templates extensively, MSVC may invoke `compiler error C1128 <https://msdn.microsoft.com/en-us/library/8578y171.aspx>`_ , which is solved by using the `/bigobj compilation flag <https://msdn.microsoft.com/en-us/library/ms173499.aspx>`_.
 
 .. _destructible: http://en.cppreference.com/w/cpp/types/is_destructible
 .. _default_constructible: http://en.cppreference.com/w/cpp/types/is_constructible

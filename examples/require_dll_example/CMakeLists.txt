@@ -99,10 +99,6 @@ function(make_require_from_dll_example target_lib is_single)
 		target_link_libraries(${example_name} PRIVATE ${LUA_LIBRARIES})
 	endif()
 	target_include_directories(${example_name} PRIVATE ${LUA_INCLUDE_DIRS})
-	if (IS_X86)
-		target_compile_options(${example_name} BEFORE PRIVATE -m32)
-	endif()
-	
 
 	if (TESTS_DYNAMIC_LOADING_EXAMPLES)
 		if ((NOT is_single) OR (is_single AND DYNAMIC_LOADING_EXAMPLES_SINGLE))

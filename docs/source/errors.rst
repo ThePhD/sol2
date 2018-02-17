@@ -10,6 +10,8 @@ Running Scripts
 
 Scripts can have syntax errors, can load from the file system wrong, or have runtime issues. Knowing which one can be troublesome. There are various small building blocks to load and run code, but to check errors you can use the overloaded :ref:`script/script_file functions on sol::state/sol::state_view<state-script-function>`, specifically the ``safe_script`` variants. These also take an error callback that is called only when something goes wrong, and Sol comes with some default error handlers in the form of ``sol::script_default_on_error`` and ``sol::script_pass_on_error``.
 
+.. _compilation_errors_warnings:
+
 Compiler Errors / Warnings
 --------------------------
 
@@ -18,6 +20,7 @@ A myriad of compiler errors can occur when something goes wrong. Here is some ba
 * If there are a myriad of errors relating to ``std::index_sequence``, type traits, and other ``std::`` members, it is likely you have not turned on your C++14 switch for your compiler. Visual Studio 2015 turns these on by default, but g++ and clang++ do not have them as defaults and you should pass the flag ``--std=c++1y`` or ``--std=c++14``, or similar for your compiler.
 * Sometimes, a generated usertype can be very long if you are binding a lot of member functions. You may end up with a myriad of warnings about debug symbols being cut off or about ``__LINE_VAR`` exceeding maximum length. You can silence these warnings safely for some compilers.
 * Template depth errors may also be a problem on earlier versions of clang++ and g++. Use ``-ftemplate-depth`` compiler flag and specify really high number (something like 2048 or even double that amount) to let the compiler work freely. Also consider potentially using :doc:`simple usertypes<api/simple_usertype>` to save compilation speed.
+* When using usertype templates extensively, MSVC may invoke `compiler error C1128 <https://msdn.microsoft.com/en-us/library/8578y171.aspx>`_ , which is solved by using the `/bigobj compilation flag <https://msdn.microsoft.com/en-us/library/ms173499.aspx>`_.
 * If you have a move-only type, that type may need to be made ``readonly`` if it is bound as a member variable on a usertype or bound using ``state_view::set_function``. See :doc:`sol::readonly<api/readonly>` for more details.
 * Assigning a ``std::string`` or a ``std::pair<T1, T2>`` using ``operator=`` after it's been constructed can result in compiler errors when working with ``sol::function`` and its results. See `this issue for fixes to this behavior`_.
 * Sometimes, using ``__stdcall`` in a 32-bit (x86) environment on VC++ can cause problems binding functions because of a compiler bug. We have a prelimanry fix in, but if it doesn't work and there are still problems: put the function in a ``std::function`` to make the compiler errors and other problems go away. Also see `this __stdcall issue report`_ for more details.
