@@ -41,27 +41,32 @@ set(catch_include_dirs "${catch_build_toplevel}")
 set(catch_sources catch.hpp)
 prepend(catch_sources "${catch_build_toplevel}/" ${catch_sources})
 
+# # !! Catch 3.5 does not have DOWNLOAD_NO_EXTRACT e.e
+# # Now I know why people don't like CMake that much: the earlier versions were kind of garbage
 # # External project to get sources
-ExternalProject_Add(CATCH_BUILD_SOURCE
-	BUILD_IN_SOURCE TRUE
-	BUILD_ALWAYS FALSE
-	DOWNLOAD_NO_EXTRACT TRUE
-	URL https://github.com/catchorg/Catch2/releases/download/v${catch_version}/catch.hpp
-	TLS_VERIFY TRUE
-	PREFIX ${catch_build_toplevel}
-	SOURCE_DIR ${catch_build_toplevel}
-	DOWNLOAD_DIR ${catch_build_toplevel}
-	TMP_DIR "${catch_build_toplevel}-tmp"
-	STAMP_DIR "${catch_build_toplevel}-stamp"
-	INSTALL_DIR "${catch_build_toplevel}/local"
-	CONFIGURE_COMMAND ""
-	BUILD_COMMAND ""
-	INSTALL_COMMAND ""
-	TEST_COMMAND ""
-	BUILD_BYPRODUCTS "${catch_sources}")
+#ExternalProject_Add(CATCH_BUILD_SOURCE
+#	BUILD_IN_SOURCE TRUE
+#	BUILD_ALWAYS FALSE
+#	DOWNLOAD_NO_EXTRACT TRUE
+#	URL https://github.com/catchorg/Catch2/releases/download/v${catch_version}/catch.hpp
+#	TLS_VERIFY TRUE
+#	PREFIX ${catch_build_toplevel}
+#	SOURCE_DIR ${catch_build_toplevel}
+#	DOWNLOAD_DIR ${catch_build_toplevel}
+#	TMP_DIR "${catch_build_toplevel}-tmp"
+#	STAMP_DIR "${catch_build_toplevel}-stamp"
+#	INSTALL_DIR "${catch_build_toplevel}/local"
+#	CONFIGURE_COMMAND ""
+#	BUILD_COMMAND ""
+#	INSTALL_COMMAND ""
+#	TEST_COMMAND ""
+#	BUILD_BYPRODUCTS "${catch_sources}")
+
+file(MAKE_DIRECTORY "${catch_build_toplevel}")
+file(DOWNLOAD https://github.com/catchorg/Catch2/releases/download/v${catch_version}/catch.hpp ${catch_sources})
 
 add_library(${catch_lib} INTERFACE)
-add_dependencies(${catch_lib} CATCH_BUILD_SOURCE)
+# add_dependencies(${catch_lib} CATCH_BUILD_SOURCE)
 target_include_directories(${catch_lib} INTERFACE ${catch_include_dirs})
 
 if (MSVC)
