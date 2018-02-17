@@ -402,6 +402,18 @@ performance note
 	Note that performance for member function calls goes down by a fixed overhead if you also bind variables as well as member functions. This is purely a limitation of the Lua implementation and there is, unfortunately, nothing that can be done about it. If you bind only functions and no variables, however, Sol will automatically optimize the Lua runtime and give you the maximum performance possible. *Please consider ease of use and maintenance of code before you make everything into functions.*
 
 
+MSVC note
+---------
+
+.. note::
+
+	When using usertype templates extensively, MSVC may invoke `compiler error C1128 <https://msdn.microsoft.com/en-us/library/8578y171.aspx>`_ , which is solved by using the `/bigobj compilation flag <https://msdn.microsoft.com/en-us/library/ms173499.aspx>`_.
+
+Please note that, as per MSVC docs, "Linkers that shipped prior to Visual C++ 2005 cannot read .obj files that were produced with /bigobj".
+
+Although you shouldn't be using a pre-2005 compiler for sol2.
+
+
 .. _destructible: http://en.cppreference.com/w/cpp/types/is_destructible
 .. _default_constructible: http://en.cppreference.com/w/cpp/types/is_constructible
 .. _runtime extensible: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_advanced.cpp#L81
