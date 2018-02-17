@@ -409,11 +409,6 @@ MSVC note
 
 	When using usertype templates extensively, MSVC may invoke `compiler error C1128 <https://msdn.microsoft.com/en-us/library/8578y171.aspx>`_ , which is solved by using the `/bigobj compilation flag <https://msdn.microsoft.com/en-us/library/ms173499.aspx>`_.
 
-Please note that, as per MSVC docs, "Linkers that shipped prior to Visual C++ 2005 cannot read .obj files that were produced with /bigobj".
-
-Although you shouldn't be using a pre-2005 compiler for sol2.
-
-
 .. _destructible: http://en.cppreference.com/w/cpp/types/is_destructible
 .. _default_constructible: http://en.cppreference.com/w/cpp/types/is_constructible
 .. _runtime extensible: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_advanced.cpp#L81
