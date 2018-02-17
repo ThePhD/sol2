@@ -22,7 +22,7 @@
 
 # # # # sol2 tests
 
-find_package(CATCH 2.0.1 REQUIRED)
+find_package(Catch 2.0.1 REQUIRED)
 
 file(GLOB SOL2_TEST_SOURCES test*.cpp)
 source_group(test_sources FILES ${SOL2_TEST_SOURCES})
