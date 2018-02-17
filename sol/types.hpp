@@ -200,6 +200,9 @@ namespace sol {
 
 		struct unchecked_t {};
 		const unchecked_t unchecked = unchecked_t{};
+
+		struct yield_tag_t {};
+		const yield_tag_t yield_tag = yield_tag_t{};
 	} // namespace detail
 
 	struct lua_nil_t {};
@@ -223,6 +226,30 @@ namespace sol {
 
 	struct no_metatable_t {};
 	const no_metatable_t no_metatable = {};
+
+	template <typename T>
+	struct yielding_t {
+		T func;
+
+		yielding_t() = default;
+		yielding_t(const yielding_t&) = default;
+		yielding_t(yielding_t&&) = default;
+		yielding_t& operator=(const yielding_t&) = default;
+		yielding_t& operator=(yielding_t&&) = default;
+		template <typename Arg, meta::enable<meta::neg<std::is_same<meta::unqualified_t<Arg>, yielding_t>>, meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<Arg>>>> = meta::enabler>
+		yielding_t(Arg&& arg)
+			: func(std::forward<Arg>(arg)) {
+		}
+		template <typename Arg0, typename Arg1, typename... Args>
+		yielding_t(Arg0&& arg0, Arg1&& arg1, Args&&... args)
+			: func(std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...) {
+		}
+	};
+
+	template <typename F>
+	inline yielding_t<std::decay_t<F>> yielding(F&& f) {
+		return yielding_t<std::decay_t<F>>(std::forward<F>(f));
+	}
 
 	typedef std::remove_pointer_t<lua_CFunction> lua_CFunction_ref;
 

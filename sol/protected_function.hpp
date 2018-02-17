@@ -28,86 +28,23 @@
 #include "stack.hpp"
 #include "protected_function_result.hpp"
 #include "unsafe_function.hpp"
+#include "protected_handler.hpp"
 #include <cstdint>
 #include <algorithm>
 
 namespace sol {
-	namespace detail {
-		inline const char (&default_handler_name())[9] {
-			static const char name[9] = "sol.\xF0\x9F\x94\xA9";
-			return name;
-		}
-
-		template <bool b, typename target_t = reference>
-		struct protected_handler {
-			typedef is_stack_based<target_t> is_stack;
-			const target_t& target;
-			int stackindex;
-
-			protected_handler(std::false_type, const target_t& target)
-			: target(target), stackindex(0) {
-				if (b) {
-					stackindex = lua_gettop(target.lua_state()) + 1;
-					target.push();
-				}
-			}
-
-			protected_handler(std::true_type, const target_t& target)
-			: target(target), stackindex(0) {
-				if (b) {
-					stackindex = target.stack_index();
-				}
-			}
-
-			protected_handler(const target_t& target)
-			: protected_handler(is_stack(), target) {
-			}
-
-			bool valid() const noexcept {
-				return b;
-			}
-
-			~protected_handler() {
-				if (!is_stack::value && stackindex != 0) {
-					lua_remove(target.lua_state(), stackindex);
-				}
-			}
-		};
-
-		template <typename base_t, typename T>
-		basic_function<base_t> force_cast(T& p) {
-			return p;
-		}
-	} // namespace detail
-
 	template <typename base_t, bool aligned = false, typename handler_t = reference>
 	class basic_protected_function : public base_t {
 	public:
 		typedef is_stack_based<handler_t> is_stack_handler;
 
 		static handler_t get_default_handler(lua_State* L) {
-			if (is_stack_handler::value || L == nullptr)
-				return handler_t(L, lua_nil);
-			L = is_main_threaded<base_t>::value ? main_thread(L, L) : L;
-			lua_getglobal(L, detail::default_handler_name());
-			auto pp = stack::pop_n(L, 1);
-			return handler_t(L, -1);
+			return detail::get_default_handler<handler_t, is_main_threaded<base_t>::value>(L);
 		}
 
 		template <typename T>
 		static void set_default_handler(const T& ref) {
-			if (ref.lua_state() == nullptr) {
-				return;
-			}
-			lua_State* L = ref.lua_state();
-			if (!ref.valid()) {
-				lua_pushnil(L);
-				lua_setglobal(L, detail::default_handler_name());
-			}
-			else {
-				ref.push();
-				lua_setglobal(L, detail::default_handler_name());
-			}
+			detail::set_default_handler(ref.lua_state(), ref);
 		}
 
 	private:

@@ -146,7 +146,11 @@ namespace sol {
 		}
 
 		int push() const noexcept {
-			return get<reference>().push(lua_state());
+			return push(this->lua_state());
+		}
+
+		int push(lua_State* L) const noexcept {
+			return get<reference>().push(L);
 		}
 
 		type get_type() const {

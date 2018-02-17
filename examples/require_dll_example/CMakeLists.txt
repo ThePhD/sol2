@@ -65,9 +65,17 @@ function(make_require_from_dll_example target_lib is_single)
 			target_link_libraries(${example_lib_name} PRIVATE ${LUA_LIBRARIES})
 		endif()
 	else()
-		target_link_libraries(${example_lib_name} PUBLIC ${LUA_LIBRARIES})
+		if (lua_lib_type MATCHES "STATIC")
+			target_link_libraries(${example_lib_name} PRIVATE ${LUA_LIBRARIES})
+			set_target_properties(${example_lib_name} PROPERTIES
+				WINDOWS_EXPORT_ALL_SYMBOLS TRUE
+				LINK_FLAGS "/OPT:NOREF /WHOLEARCHIVE:lua-5.2.4.lib")
+		else()
+			target_link_libraries(${example_lib_name} PRIVATE ${LUA_LIBRARIES})
+		endif()
 	endif()
 	target_link_libraries(${example_lib_name} PRIVATE ${target_lib})
+	target_include_directories(${example_lib_name} PUBLIC "${LUA_INCLUDE_DIRS}")
 
 	# add executable target that represents require_from_dll program
 	add_executable(${example_name} ${require_from_dll_sources})

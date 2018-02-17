@@ -30,10 +30,16 @@
 
 namespace sol {
 namespace function_detail {
-	template <typename Fx, int start = 1>
+	template <typename Fx, int start = 1, bool is_yielding = false>
 	inline int call(lua_State* L) {
 		Fx& fx = stack::get<user<Fx>>(L, upvalue_index(start));
-		return fx(L);
+		int nr = fx(L);
+		if (is_yielding) {
+			return lua_yield(L, nr);
+		}
+		else {
+			return nr;
+		}
 	}
 }
 } // namespace sol::function_detail

@@ -28,7 +28,7 @@
 
 namespace sol {
 namespace function_detail {
-	template <typename Function>
+	template <typename Function, bool is_yielding>
 	struct upvalue_free_function {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 		typedef meta::bind_traits<function_type> traits_type;
@@ -40,7 +40,13 @@ namespace function_detail {
 		}
 
 		static int call(lua_State* L) {
-			return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			int nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			if (is_yielding) {
+				return lua_yield(L, nr);
+			}
+			else {
+				return nr;
+			}
 		}
 
 		int operator()(lua_State* L) {
@@ -48,7 +54,7 @@ namespace function_detail {
 		}
 	};
 
-	template <typename T, typename Function>
+	template <typename T, typename Function, bool is_yielding>
 	struct upvalue_member_function {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 		typedef lua_bind_traits<function_type> traits_type;
@@ -67,7 +73,13 @@ namespace function_detail {
 		}
 
 		static int call(lua_State* L) {
-			return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			int nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			if (is_yielding) {
+				return lua_yield(L, nr);
+			}
+			else {
+				return nr;
+			}
 		}
 
 		int operator()(lua_State* L) {
@@ -75,7 +87,7 @@ namespace function_detail {
 		}
 	};
 
-	template <typename T, typename Function>
+	template <typename T, typename Function, bool is_yielding>
 	struct upvalue_member_variable {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 		typedef lua_bind_traits<function_type> traits_type;
@@ -101,7 +113,13 @@ namespace function_detail {
 		}
 
 		static int call(lua_State* L) {
-			return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			int nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			if (is_yielding) {
+				return lua_yield(L, nr);
+			}
+			else {
+				return nr;
+			}
 		}
 
 		int operator()(lua_State* L) {
@@ -109,8 +127,8 @@ namespace function_detail {
 		}
 	};
 
-	template <typename T, typename Function>
-	struct upvalue_member_variable<T, readonly_wrapper<Function>> {
+	template <typename T, typename Function, bool is_yielding>
+	struct upvalue_member_variable<T, readonly_wrapper<Function>, is_yielding> {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 		typedef lua_bind_traits<function_type> traits_type;
 
@@ -133,7 +151,13 @@ namespace function_detail {
 		}
 
 		static int call(lua_State* L) {
-			return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			int nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			if (is_yielding) {
+				return lua_yield(L, nr);
+			}
+			else {
+				return nr;
+			}
 		}
 
 		int operator()(lua_State* L) {
@@ -141,7 +165,7 @@ namespace function_detail {
 		}
 	};
 
-	template <typename T, typename Function>
+	template <typename T, typename Function, bool is_yielding>
 	struct upvalue_this_member_function {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 		typedef lua_bind_traits<function_type> traits_type;
@@ -155,7 +179,13 @@ namespace function_detail {
 		}
 
 		static int call(lua_State* L) {
-			return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			int nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			if (is_yielding) {
+				return lua_yield(L, nr);
+			}
+			else {
+				return nr;
+			}
 		}
 
 		int operator()(lua_State* L) {
@@ -163,7 +193,7 @@ namespace function_detail {
 		}
 	};
 
-	template <typename T, typename Function>
+	template <typename T, typename Function, bool is_yielding>
 	struct upvalue_this_member_variable {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 
@@ -183,7 +213,13 @@ namespace function_detail {
 		}
 
 		static int call(lua_State* L) {
-			return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			int nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			if (is_yielding) {
+				return lua_yield(L, nr);
+			}
+			else {
+				return nr;
+			}
 		}
 
 		int operator()(lua_State* L) {
@@ -191,8 +227,8 @@ namespace function_detail {
 		}
 	};
 
-	template <typename T, typename Function>
-	struct upvalue_this_member_variable<T, readonly_wrapper<Function>> {
+	template <typename T, typename Function, bool is_yielding>
+	struct upvalue_this_member_variable<T, readonly_wrapper<Function>, is_yielding> {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 		typedef lua_bind_traits<function_type> traits_type;
 
@@ -210,7 +246,13 @@ namespace function_detail {
 		}
 
 		static int call(lua_State* L) {
-			return detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			int nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			if (is_yielding) {
+				return lua_yield(L, nr);
+			}
+			else {
+				return nr;
+			}
 		}
 
 		int operator()(lua_State* L) {

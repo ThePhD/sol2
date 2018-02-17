@@ -530,3 +530,55 @@ end
 	REQUIRE(s4 == 0);
 	REQUIRE(s5 == 0);
 }
+
+TEST_CASE("coroutines/yielding", "test that a sol2 bound function can yield when marked yieldable") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::coroutine);
+
+	int i = 0;
+	auto func = [&i]() {
+		++i;
+		return i;
+	};
+
+	struct h {
+		int x = 500;
+		int func() const {
+			return x;
+		}
+	} hobj{};
+
+	lua["f"] = sol::yielding(func);
+	lua["g"] = sol::yielding([]() { return 300; });
+	lua["h"] = sol::yielding(&h::func);
+	lua["hobj"] = &hobj;
+
+	sol::string_view code = R"(
+	co1 = coroutine.create(f)
+	success1, value1 = coroutine.resume(co1)
+	co2 = coroutine.create(g)
+	success2, value2 = coroutine.resume(co2)
+	co3 = coroutine.create(function()
+		h(hobj)
+	end)
+	success3, value3 = coroutine.resume(co3)
+	)";
+
+	auto result = lua.safe_script(code);
+	REQUIRE(result.valid());
+
+	bool success1 = lua["success1"];
+	int value1 = lua["value1"];
+	REQUIRE(success1);
+	REQUIRE(value1 == 1);
+
+	bool success2 = lua["success2"];
+	int value2 = lua["value2"];
+	REQUIRE(success2);
+	REQUIRE(value2 == 300);
+
+	bool success3 = lua["success3"];
+	int value3 = lua["value3"];
+	REQUIRE(success3);
+	REQUIRE(value3 == 500);
+}
