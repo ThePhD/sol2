@@ -23,6 +23,7 @@
 # # Standard CMake Libraries
 include(ExternalProject)
 include(FindPackageHandleStandardArgs)
+include(Common/Core)
 
 # # Base variables
 set(toluapp_version 1.0.93)
@@ -32,7 +33,7 @@ set(toluapp_build_toplevel "${CMAKE_BINARY_DIR}/vendor/toluapp_${toluapp_version
 set(toluapp_include_dirs "${toluapp_build_toplevel}/include")
 
 # # ToLua library sources
-set(toluapp_sources tolua_event.c tolua_event.h tolua_is.c tolua_map.c tolua_push.c tolua_to.c)
+set(toluapp_sources tolua_event.c tolua_event.h tolua_is.c tolua_map.c tolua_push.c tolua_to.c tolua_compat.h tolua_compat.c)
 prepend(toluapp_sources "${toluapp_build_toplevel}/src/lib/" ${toluapp_sources})
 list(APPEND toluapp_sources "${toluapp_build_toplevel}/include/tolua++.h")
 
@@ -43,7 +44,7 @@ ExternalProject_Add(TOLUAPP_BUILD_SOURCE
 	# # Use Git to get what we need
 	#GIT_SUBMODULES ""
 	GIT_SHALLOW TRUE
-	GIT_REPOSITORY https://github.com/waltervn/toluapp.git
+	GIT_REPOSITORY https://github.com/ThePhD/toluapp
 	PREFIX ${toluapp_build_toplevel}
 	SOURCE_DIR ${toluapp_build_toplevel}
 	DOWNLOAD_DIR ${toluapp_build_toplevel}
@@ -64,7 +65,7 @@ set_target_properties(${toluapp_lib} PROPERTIES
 	POSITION_INDEPENDENT_CODE TRUE)
 target_include_directories(${toluapp_lib}
 	PUBLIC ${toluapp_include_dirs})
-target_link_libraries(${toluapp_lib} ${LUA_LIBRARIES})
+target_link_libraries(${toluapp_lib} PRIVATE ${LUA_LIBRARIES})
 if (MSVC)
 	target_compile_options(${toluapp_lib}
 		PRIVATE /W1)
@@ -76,6 +77,9 @@ else()
 		INTERFACE -Wno-noexcept-type
 		PUBLIC -Wno-ignored-qualifiers -Wno-unused-parameter)
 endif()
+# add compatibility define
+target_compile_definitions(${toluapp_lib}
+		PRIVATE COMPAT53_PREFIX=toluapp_compat53)
 
 # # Variables required by ToLuaBuild
 set(TOLUAPP_LIBRARIES ${toluapp_lib})

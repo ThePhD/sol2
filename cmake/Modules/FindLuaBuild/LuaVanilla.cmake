@@ -285,21 +285,19 @@ set_target_properties(${liblua}
 	LIBRARY_OUTPUT_NAME ${LUA_BUILD_LIBNAME}
 	ARCHIVE_OUTPUT_NAME ${LUA_BUILD_LIBNAME})
 target_include_directories(${liblua}
-	PRIVATE ${LUA_VANILLA_SOURCE_DIR}
 	PUBLIC ${LUA_VANILLA_SOURCE_DIR})
 target_compile_definitions(${liblua}
-	PUBLIC LUA_COMPAT_ALL ${LUA_VANILLA_DLL_DEFINE}
-	PRIVATE LUA_COMPAT_ALL ${LUA_VANILLA_DLL_DEFINE})
+	PUBLIC LUA_COMPAT_ALL ${LUA_VANILLA_DLL_DEFINE})
 if (MSVC)
 	target_compile_options(${liblua}
 		PRIVATE /W1)
 else()
 	target_compile_options(${liblua}
-		PRIVATE -w -Wno-implicit-fallthrough)
+		PRIVATE -w)
 endif()
 if (WIN32)
-	#target_compile_definitions(${liblua} 
-	#	PRIVATE LUA_USE_WINDOWS)
+	target_compile_definitions(${liblua}
+		PRIVATE LUA_USE_WINDOWS)
 else()
 	target_compile_definitions(${liblua} 
 		PRIVATE LUA_USE_LINUX)
@@ -332,6 +330,9 @@ target_compile_definitions(${luainterpreter}
 if (MSVC)
 	target_compile_options(${luainterpreter}
 		PRIVATE /W1)
+else()
+	target_compile_options(${luainterpreter}
+		PRIVATE -w)
 endif()
 if (WIN32)
 	#target_compile_definitions(${luainterpreter} 
@@ -373,6 +374,9 @@ target_compile_definitions(${luacompiler}
 if (MSVC)
 	target_compile_options(${luacompiler}
 		PRIVATE /W1)
+else()
+	target_compile_options(${luacompiler}
+		PRIVATE -w)
 endif()
 if (WIN32)
 	#target_compile_definitions(${luacompiler} 

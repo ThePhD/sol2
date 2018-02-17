@@ -46,15 +46,21 @@ matrix:
   include:
     # GCC 4.9.x, 5.x, 6.x, 7.x
     - env:
+      - LUA_VERSION=5.3.4
+        GCC_VERSION=7
+        PLATFORM=i686
+        CI=true
+
+    - env:
       - LUA_VERSION=luajit-2.0.5
         GCC_VERSION=7
-        PLATFORM=x86
+        PLATFORM=i686
         CI=true
 
     - env:
       - LUA_VERSION=luajit-2.1.0-beta3
         GCC_VERSION=7
-        PLATFORM=x86
+        PLATFORM=i686
         CI=true
 
     - env:

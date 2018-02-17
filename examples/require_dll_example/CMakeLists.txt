@@ -38,8 +38,9 @@ function(make_require_from_dll_example target_lib is_single)
 	endif()
 
 	# is the lua library a shared or static library?
-	get_target_property(lua_lib_type ${LUA_LIBRARIES} TYPE)
-	
+	list(GET LUA_LIBRARIES 0 lua_lib_target)
+	get_target_property(lua_lib_type ${lua_lib_target} TYPE)
+
 	# add library target my_object for the require_from_dll program
 	add_library(${example_lib_name} SHARED ${my_object_sources})
 	set_target_properties(${example_lib_name} PROPERTIES
@@ -64,9 +65,17 @@ function(make_require_from_dll_example target_lib is_single)
 			target_link_libraries(${example_lib_name} PRIVATE ${LUA_LIBRARIES})
 		endif()
 	else()
-		target_link_libraries(${example_lib_name} PUBLIC ${LUA_LIBRARIES})
+		if (lua_lib_type MATCHES "STATIC")
+			target_link_libraries(${example_lib_name} PRIVATE ${LUA_LIBRARIES})
+			set_target_properties(${example_lib_name} PROPERTIES
+				WINDOWS_EXPORT_ALL_SYMBOLS TRUE
+				LINK_FLAGS "/OPT:NOREF /WHOLEARCHIVE:lua-5.2.4.lib")
+		else()
+			target_link_libraries(${example_lib_name} PRIVATE ${LUA_LIBRARIES})
+		endif()
 	endif()
 	target_link_libraries(${example_lib_name} PRIVATE ${target_lib})
+	target_include_directories(${example_lib_name} PUBLIC "${LUA_INCLUDE_DIRS}")
 
 	# add executable target that represents require_from_dll program
 	add_executable(${example_name} ${require_from_dll_sources})
@@ -83,11 +92,13 @@ function(make_require_from_dll_example target_lib is_single)
 	target_link_libraries(${example_name} PRIVATE my_object ${target_lib})
 	# avoid multiply defined references due to linking in the same static library
 	# twice over, and get "multiple definition" errors during linking
-	# target_link_libraries(${example_name} PRIVATE ${LUA_LIBRARIES})
+	if (NOT lua_lib_type MATCHES "STATIC")
+		target_link_libraries(${example_name} PRIVATE ${LUA_LIBRARIES})
+	endif()
 	target_include_directories(${example_name} PRIVATE ${LUA_INCLUDE_DIRS})
 	
-	if (TESTS_EXAMPLES)
-		if ((NOT is_single) OR (is_single AND TESTS_SINGLE))
+	if (TESTS_DYNAMIC_LOADING_EXAMPLES)
+		if ((NOT is_single) OR (is_single AND DYNAMIC_LOADING_EXAMPLES_SINGLE))
 			get_target_property(example_working_dir ${example_name} RUNTIME_OUTPUT_DIRECTORY)
 			add_test(NAME ${example_name} COMMAND ${example_name} WORKING_DIRECTORY "${example_working_dir}")
 		endif()
@@ -95,6 +106,6 @@ function(make_require_from_dll_example target_lib is_single)
 endfunction()
 
 make_require_from_dll_example(sol2 FALSE)
-if (EXAMPLES_SINGLE OR TESTS_SINGLE)
+if (SOL2_SINGLE_FOUND AND DYNAMIC_LOADING_EXAMPLES_SINGLE)
 	make_require_from_dll_example(sol2_single TRUE)
 endif()

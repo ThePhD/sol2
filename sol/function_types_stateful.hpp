@@ -28,7 +28,7 @@
 
 namespace sol {
 namespace function_detail {
-	template <typename Func>
+	template <typename Func, bool is_yielding>
 	struct functor_function {
 		typedef std::decay_t<meta::unwrap_unqualified_t<Func>> function_type;
 		function_type fx;
@@ -39,7 +39,13 @@ namespace function_detail {
 		}
 
 		int call(lua_State* L) {
-			return call_detail::call_wrapped<void, true, false>(L, fx);
+			int nr = call_detail::call_wrapped<void, true, false>(L, fx);
+			if (is_yielding) {
+				return lua_yield(L, nr);
+			}
+			else {
+				return nr;
+			}
 		}
 
 		int operator()(lua_State* L) {
@@ -48,7 +54,7 @@ namespace function_detail {
 		}
 	};
 
-	template <typename T, typename Function>
+	template <typename T, typename Function, bool is_yielding>
 	struct member_function {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 		typedef meta::function_return_t<function_type> return_type;
@@ -62,7 +68,13 @@ namespace function_detail {
 		}
 
 		int call(lua_State* L) {
-			return call_detail::call_wrapped<T, true, false, -1>(L, invocation, detail::unwrap(detail::deref(member)));
+			int nr = call_detail::call_wrapped<T, true, false, -1>(L, invocation, detail::unwrap(detail::deref(member)));
+			if (is_yielding) {
+				return lua_yield(L, nr);
+			}
+			else {
+				return nr;
+			}
 		}
 
 		int operator()(lua_State* L) {
@@ -71,7 +83,7 @@ namespace function_detail {
 		}
 	};
 
-	template <typename T, typename Function>
+	template <typename T, typename Function, bool is_yielding>
 	struct member_variable {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 		typedef typename meta::bind_traits<function_type>::return_type return_type;
@@ -86,14 +98,23 @@ namespace function_detail {
 		}
 
 		int call(lua_State* L) {
-			M mem = detail::unwrap(detail::deref(member));
-			switch (lua_gettop(L)) {
-			case 0:
-				return call_detail::call_wrapped<T, true, false, -1>(L, var, mem);
-			case 1:
-				return call_detail::call_wrapped<T, false, false, -1>(L, var, mem);
-			default:
-				return luaL_error(L, "sol: incorrect number of arguments to member variable function");
+			int nr;
+			{
+				M mem = detail::unwrap(detail::deref(member));
+				switch (lua_gettop(L)) {
+				case 0:
+					nr = call_detail::call_wrapped<T, true, false, -1>(L, var, mem);
+				case 1:
+					nr = call_detail::call_wrapped<T, false, false, -1>(L, var, mem);
+				default:
+					nr = luaL_error(L, "sol: incorrect number of arguments to member variable function");
+				}
+			}
+			if (is_yielding) {
+				return lua_yield(L, nr);
+			}
+			else {
+				return nr;
 			}
 		}
 

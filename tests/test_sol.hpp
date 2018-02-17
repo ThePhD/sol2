@@ -23,6 +23,9 @@
 
 #pragma once
 
+#ifndef SOL_TEST_SOL_HPP
+#define SOL_TEST_SOL_HPP
+
 #ifndef SOL_CHECK_ARGUMENTS
 #define SOL_CHECK_ARGUMENTS 1
 #endif // SOL_CHECK_ARGUMENTS
@@ -60,3 +63,5 @@ struct test_stack_guard {
 		endtop = lua_gettop(L);
 	}
 };
+
+#endif // SOL_TEST_SOL_HPP

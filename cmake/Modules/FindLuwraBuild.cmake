@@ -21,6 +21,8 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 include(ExternalProject)
+include(FindPackageHandleStandardArgs)
+include(Common/Core)
 
 # # Base variables
 set(luwra_version 0.5.0)

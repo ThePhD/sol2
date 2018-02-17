@@ -22,10 +22,10 @@
 
 # # # # sol2 tests
 
+find_package(CATCH 2.0.1 REQUIRED)
+
 file(GLOB SOL2_TEST_SOURCES test*.cpp)
 source_group(test_sources FILES ${SOL2_TEST_SOURCES})
-file(DOWNLOAD https://github.com/catchorg/Catch2/releases/download/v2.0.1/catch.hpp ${CMAKE_BINARY_DIR}/vendor/Catch/include/catch.hpp)
-#file(DOWNLOAD https://github.com/catchorg/Catch2/releases/download/v1.11.0/catch.hpp ${CMAKE_BINARY_DIR}/vendor/Catch/include/catch.hpp)
 
 function(CREATE_TEST test_target_name test_name is_single)
 	if (is_single)
@@ -46,8 +46,6 @@ function(CREATE_TEST test_target_name test_name is_single)
 		target_link_libraries(${test_target_name} sol2)
 	endif()
 	
-	target_include_directories(${test_target_name}
-		PRIVATE "${LUA_INCLUDE_DIR}" "${CMAKE_BINARY_DIR}/vendor/Catch/include/")
 	if (MSVC)
 		if (NOT CMAKE_COMPILER_ID MATCHES "Clang")
 			target_compile_options(${test_target_name} 
@@ -63,9 +61,22 @@ function(CREATE_TEST test_target_name test_name is_single)
 	endif()
 	target_compile_features(${test_target_name}
 		PRIVATE ${CXX_FEATURES})
-	# if CMAKE_DL_LIBS is empty, then that just resolves to nothingness
+	if (CMAKE_DL_LIBS)
+		target_link_libraries(${test_target_name}
+			${CMAKE_DL_LIBS})
+	endif()
 	target_link_libraries(${test_target_name}
-		Threads::Threads ${LUA_LIBRARIES} ${CMAKE_DL_LIBS})
+		Threads::Threads ${LUA_LIBRARIES} ${CATCH_LIBRARIES})
+	
+	if (IS_X86)
+		target_compile_options(${test_target_name} BEFORE PRIVATE -m32)
+	endif()
+	
+	if(MINGW AND IS_X86)
+		#set_target_properties(${test_target_name}
+		#	PROPERTIES
+		#	LINK_FLAGS -static-libstdc++)
+	endif()
 
 	add_test(NAME ${test_name} COMMAND ${test_target_name})
 	install(TARGETS ${test_target_name} RUNTIME DESTINATION bin)

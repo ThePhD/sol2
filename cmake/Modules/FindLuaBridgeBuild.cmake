@@ -21,6 +21,8 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 include(ExternalProject)
+include(FindPackageHandleStandardArgs)
+include(Common/Core)
 
 # # Base variables
 set(luabridge_version 1.0.2)
@@ -41,7 +43,7 @@ ExternalProject_Add(LUABRIDGE_BUILD_SOURCE
 	# # Use Git to get what we need
 	GIT_SHALLOW TRUE
 	GIT_SUBMODULES ""
-	GIT_REPOSITORY https://github.com/vinniefalco/LuaBridge.git
+	GIT_REPOSITORY https://github.com/ThePhD/LuaBridge.git
 	PREFIX ${luabridge_build_toplevel}
 	SOURCE_DIR ${luabridge_build_toplevel}
 	DOWNLOAD_DIR ${luabridge_build_toplevel}

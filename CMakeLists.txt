@@ -55,42 +55,41 @@ set(CXX_FEATURES
 	cxx_variadic_macros
 	cxx_variadic_templates)
 
+# # #
+if (PLATFORM MATCHES "i686" OR PLATFORM STREQUAL "x86")
+	set(IS_X86 TRUE)
+elseif (PLATFORM MATCHES "ARM64")
+	set(IS_ARM64 TRUE)
+	set(IS_X64 TRUE)
+elseif (PLATFORM MATCHES "ARM")
+	set(IS_ARM TRUE)
+elseif (PLATFORM MATCHES "x86_64" OR PLATFORM STREQUAL "x64")
+	set(IS_X64 TRUE)
+else()
+	set(IS_X64 TRUE)
+endif()
+
 # # # General project flags
 if (MSVC)
-	add_definitions(/DUNICODE /D_UNICODE /D_SILENCE_CXX17_UNCAUGHT_EXCEPTION_DEPRECATION_WARNING /D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
+	add_definitions(/DUNICODE /D_UNICODE /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
 	# Warning level, exceptions
 	add_compile_options(/W4 /EHsc)
 	if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 		add_compile_options(/MP)
 	endif()
 else()
-	if (PLATFORM MATCHES "x86")
-		list(APPEND CMAKE_C_FLAGS "-m32")
-		list(APPEND CMAKE_CXX_FLAGS "-m32")
-		list(APPEND CMAKE_EXE_LINKER_FLAGS "-m32")
-		list(APPEND CMAKE_SHARED_LINKER_FLAGS "-m32")
-	endif()
 	add_compile_options(-Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
 endif()
 
-if (CI)
-	#if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-	#	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lc++")
-	#	add_compile_options("$<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-stdlib=libc++>")
-	#	LIST(APPEND CMAKE_LIBRARY_PATH_FLAG "$$ENV{CLANG_PREFIX}/lib")
-	#	include_directories("$ENV{CLANG_PREFIX}/include/c++/v1")
-	#endif()
-endif()
-
 # # # General project output locations
-if (PLATFORM MATCHES "x86" OR CMAKE_SIZEOF_VOID_P EQUAL 4)
-	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x86/lib")
-	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x86/bin")
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x86/bin")
+if (IS_X86 OR CMAKE_SIZEOF_VOID_P EQUAL 4)
+	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/lib")
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/bin")
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/bin")
 else()
-	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x64/lib")
-	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x64/bin")
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/x64/bin")
+	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/lib")
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/bin")
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/bin")
 endif()
 
 # # # Modules
@@ -112,6 +111,8 @@ set(PLATFORM "x64" CACHE STRING "Target platform to compile for when building bi
 option(CI "Enable build of tests" OFF)
 option(TESTS "Enable build of tests" OFF)
 option(EXAMPLES "Enable build of examples" OFF)
+option(INTEROP_EXAMPLES "Enable build of interop examples" OFF)
+option(DYNAMIC_LOADING_EXAMPLES "Enable build of interop examples" OFF)
 option(SINGLE "Enable build of single header files" ON)
 option(DOCS "Enable build of documentation" OFF)
 # Single tests and examples tests will only be turned on if both SINGLE and TESTS are defined
@@ -119,8 +120,16 @@ CMAKE_DEPENDENT_OPTION(TESTS_SINGLE "Enable build of tests using the generated s
 	"SINGLE;TESTS" OFF)
 CMAKE_DEPENDENT_OPTION(EXAMPLES_SINGLE "Enable build of examples using the generated single headers" OFF
 	"SINGLE;EXAMPLES" OFF)
+CMAKE_DEPENDENT_OPTION(INTEROP_EXAMPLES_SINGLE "Enable build of interop examples using the generated single headers" OFF
+	"SINGLE;INTEROP_EXAMPLES" OFF)
+CMAKE_DEPENDENT_OPTION(DYNAMIC_LOADING_EXAMPLES_SINGLE "Enable build of dynamic loading examples using the generated single headers" OFF
+	"SINGLE;DYNAMIC_LOADING_EXAMPLES" OFF)
 CMAKE_DEPENDENT_OPTION(TESTS_EXAMPLES "Enable build of examples as tests" ON
 	"EXAMPLES" OFF)
+CMAKE_DEPENDENT_OPTION(TESTS_INTEROP_EXAMPLES "Enable build of interop examples as tests" ON
+	"INTEROP_EXAMPLES" OFF)
+CMAKE_DEPENDENT_OPTION(TESTS_DYNAMIC_LOADING_EXAMPLES "Enable build of dynamic loading examples as tests" ON
+	"DYNAMIC_LOADING_EXAMPLES" OFF)
 
 
 # # # sol2 Library
@@ -220,15 +229,34 @@ if (CI)
 	message(STATUS "sol2 Contiguous Integration is on")
 endif()
 
+if (EXAMPLES OR TESTS_EXAMPLES OR EXAMPLES_SINGLE OR INTEROP_EXAMPLES OR TESTS_INTEROP_EXAMPLES OR INTEROP_EXAMPLES_SINGLE OR DYNAMIC_LOADING_EXAMPLES OR TESTS_DYNAMIC_LOADING_EXAMPLES OR DYNAMIC_LOADING_EXAMPLES_SINGLE)
+	set(DO_EXAMPLES TRUE)
+else()
+	set(DO_EXAMPLES FALSE)
+endif()
+
+if (TESTS OR TESTS_SINGLE)
+	set(DO_TESTS TRUE)
+else()
+	set(DO_TESTS FALSE)
+endif()
+
+if (DO_TESTS OR TESTS_EXAMPLES OR TESTS_INTEROP_EXAMPLES OR TESTS_DYNAMIC_LOADING_EXAMPLES)
+	set(ENABLE_TESTING TRUE)
+else()
+	set(ENABLE_TESTING FALSE)
+endif()
+
 # # # Tests, Examples and other CI suites that come with sol2
-if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR EXAMPLES OR EXAMPLES_SINGLE)
+if (DO_TESTS OR DO_EXAMPLES)
 	# # # Libraries
 	# Here, we pull in all the necessary libraries for building examples and tests
 	# Find threading library
 	if (NOT MSVC)
+		set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 		set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 	endif()
-	find_package(Threads)
+	find_package(Threads REQUIRED)
 
 	string(TOLOWER ${LUA_VERSION} NORMALIZED_LUA_VERSION)
 	# Find way to get Lua: build if requested, or attempt to build if no matching version is found
@@ -255,7 +283,7 @@ if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR EXAMPLES OR EXAMPLES_SINGLE)
 	endif()
 
 	# # Enable test harness for regular, example or single tests
-	if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES)
+	if (ENABLE_TESTING)
 		# enable ctest
 		message(STATUS "sol2 testing enabled")
 		enable_testing()
@@ -263,7 +291,7 @@ if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR EXAMPLES OR EXAMPLES_SINGLE)
 
 	# # # Examples
 	# # Enable examples to be built against the library
-	if (EXAMPLES OR TESTS_EXAMPLES OR EXAMPLES_SINGLE)
+	if (DO_EXAMPLES)
 		# NOTE: will also add to tests if TESTS is defined
 		message(STATUS "sol2 adding examples...")
 		add_subdirectory(examples "${CMAKE_BINARY_DIR}/examples")
@@ -271,10 +299,9 @@ if (TESTS OR TESTS_SINGLE OR TESTS_EXAMPLES OR EXAMPLES OR EXAMPLES_SINGLE)
 
 	# # # Tests
 	# # Add tests here
-	if (TESTS OR TESTS_SINGLE)
+	if (DO_TESTS)
 		# add subdir to get going
 		message(STATUS "sol2 adding tests...")
 		add_subdirectory(tests "${CMAKE_BINARY_DIR}/tests")
 	endif()
-
 endif()
