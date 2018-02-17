@@ -313,14 +313,16 @@ namespace sol {
 		template <typename... Functions>
 		struct pusher<overload_set<Functions...>> {
 			static int push(lua_State* L, overload_set<Functions...>&& set) {
+				// TODO: yielding
 				typedef function_detail::overloaded_function<0, Functions...> F;
-				pusher<function_sig<>>{}.set_fx<F>(L, std::move(set.functions));
+				pusher<function_sig<>>{}.set_fx<false, F>(L, std::move(set.functions));
 				return 1;
 			}
 
 			static int push(lua_State* L, const overload_set<Functions...>& set) {
+				// TODO: yielding
 				typedef function_detail::overloaded_function<0, Functions...> F;
-				pusher<function_sig<>>{}.set_fx<F>(L, set.functions);
+				pusher<function_sig<>>{}.set_fx<false, F>(L, set.functions);
 				return 1;
 			}
 		};

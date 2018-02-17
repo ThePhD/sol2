@@ -104,10 +104,13 @@ namespace function_detail {
 				switch (lua_gettop(L)) {
 				case 0:
 					nr = call_detail::call_wrapped<T, true, false, -1>(L, var, mem);
+					break;
 				case 1:
 					nr = call_detail::call_wrapped<T, false, false, -1>(L, var, mem);
+					break;
 				default:
 					nr = luaL_error(L, "sol: incorrect number of arguments to member variable function");
+					break;
 				}
 			}
 			if (is_yielding) {
