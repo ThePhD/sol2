@@ -27,6 +27,8 @@ cmake_minimum_required(VERSION 3.5.0)
 # # # project declaration
 project(sol2 VERSION 2.19.0 LANGUAGES CXX C)
 
+include(GNUInstallDirs)
+
 # # # General Project Requirements
 # Set general standard requirements here
 set(CMAKE_CXX_STANDARD 14)
@@ -150,20 +152,23 @@ write_basic_package_version_file(
 
 export(TARGETS sol2 FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-targets.cmake")
 
-install(TARGETS sol2 
+install(TARGETS sol2
 	EXPORT sol2)
 
 install(EXPORT sol2
 	FILE sol2-targets.cmake
-	DESTINATION lib/cmake/sol2)
+	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sol2")
 
-install(DIRECTORY include/sol2
-	DESTINATION include)
+install(DIRECTORY sol
+	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
+install(FILES sol.hpp
+	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 install(FILES
 	"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config.cmake"
 	"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config-version.cmake"
-	DESTINATION lib/cmake/sol2)
+	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sol2")
 
 # # # Source Groups
 # # Sources everyone is going to need
@@ -183,29 +188,41 @@ set(SOL2_DOCS_FOUND FALSE)
 if (PYTHONINTERP_FOUND)
 	if (SINGLE)
 		set(SOL2_SINGLE_FOUND TRUE)
-		add_custom_command(OUTPUT include/single/sol/sol.hpp "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol_forward.hpp"
-			COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_SOURCE_DIR}/single.py" --output "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol.hpp"
-			DEPENDS ${SOL2_HEADER_SOURCES})
-		add_custom_target(sol2_single_header 
-			DEPENDS "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol_forward.hpp")
+		add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/single/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol_forward.hpp"
+			COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/single"
+			COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/single.py" --output "${CMAKE_CURRENT_BINARY_DIR}/single/sol.hpp")
+		add_custom_target(sol2_single_header ALL
+			DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/single/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol_forward.hpp")
 		add_library(sol2_single INTERFACE)
 		set_target_properties(sol2_single
 			PROPERTIES
-			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol")
+			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/single")
 		add_dependencies(sol2_single sol2_single_header)
-		install(FILES "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/include/single/sol/sol.hpp" "${CMAKE_BINARY_DIR}/include/${CMAKE_CFG_INTDIR}/single/sol/sol_forward.hpp" 
+		install(FILES "${CMAKE_CURRENT_BINARY_DIR}/single/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol_forward.hpp"
 			DESTINATION include/sol/single/sol)
 	endif()
 	if (DOCS)
 		set(SOL2_DOCS_FOUND TRUE)
-		add_custom_command(OUTPUT documentation COMMAND "make html" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/docs)
-		add_custom_target(docs DEPENDS documentation)
-		install(DIRECTORY "${CMAKE_SOURCE_DIR}/docs/build/html" DESTINATION docs)
+		add_custom_command(OUTPUT docs
+			COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/docs" docs
+			COMMAND make -C docs html)
+		add_custom_target(documentation ALL DEPENDS docs)
+		install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs/build/html" DESTINATION "${CMAKE_INSTALL_DOCDIR}")
 	endif()
 else()
 	if (SINGLE)
 		message(STATUS "sol2 single_header cannot be generated as python 3 has not been found.")
 	endif()
+endif()
+
+# pkg-config support, except on Windows
+if(NOT WIN32 OR NOT CMAKE_HOST_SYSTEM_NAME MATCHES Windows)
+  set(PKGCONFIG_INSTALL_DIR
+    "${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig"
+    CACHE PATH "Path where sol2.pc is installed")
+
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/sol2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/sol2.pc" @ONLY)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/sol2.pc" DESTINATION "${PKGCONFIG_INSTALL_DIR}")
 endif()
 
 if (CI)
@@ -271,7 +288,7 @@ if (DO_TESTS OR DO_EXAMPLES)
 		message(STATUS "sol2 testing enabled")
 		enable_testing()
 	endif()
-	
+
 	# # # Examples
 	# # Enable examples to be built against the library
 	if (DO_EXAMPLES)
