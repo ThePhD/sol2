@@ -373,6 +373,11 @@ set_target_properties(${lualib}
 	PROPERTIES 
 	IMPORTED_LINK_INTERFACE_LANGUAGES C
 	INTERFACE_INCLUDE_DIRECTORIES "${LUA_JIT_SOURCE_DIR}")
+if (CMAKE_DL_LIBS)
+	set_target_properties(${lualib}
+			PROPERTIES
+			INTERFACE_LINK_LIBRARIES ${CMAKE_DL_LIBS})
+endif()
 if (XCODE)
 	target_compile_options(${lualib}
 		PUBLIC -pagezero_size 10000 -image_base 100000000)
@@ -380,7 +385,7 @@ endif ()
 
 # # Lua Executable
 add_executable(${luainterpreter} IMPORTED)
-# Point EXE to fiel
+# Add location pointing to executable
 set_target_properties(${luainterpreter}
 	PROPERTIES
 	IMPORTED_LOCATION "${LUA_JIT_EXE_FILE}")

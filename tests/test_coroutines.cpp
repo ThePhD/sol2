@@ -554,9 +554,9 @@ TEST_CASE("coroutines/yielding", "test that a sol2 bound function can yield when
 	lua["hobj"] = &hobj;
 
 	sol::string_view code = R"(
-	co1 = coroutine.create(f)
+	co1 = coroutine.create(function () return f() end)
 	success1, value1 = coroutine.resume(co1)
-	co2 = coroutine.create(g)
+	co2 = coroutine.create(function () return g() end)
 	success2, value2 = coroutine.resume(co2)
 	co3 = coroutine.create(function()
 		h(hobj)

@@ -645,6 +645,7 @@ TEST_CASE("usertype/nonmember-functions", "let users set non-member functions th
 	}
 	giver& g = lua.get<giver>("t");
 	REQUIRE(g.a == 20);
+	std::cout << "----- end of 1" << std::endl;
 }
 
 TEST_CASE("usertype/unique-shared-ptr", "manage the conversion and use of unique and shared pointers ('unique usertypes')") {
@@ -673,6 +674,7 @@ TEST_CASE("usertype/unique-shared-ptr", "manage the conversion and use of unique
 		REQUIRE(moreref.use_count() == sharedintref.use_count());
 	}
 	REQUIRE(preusecount == sharedint.use_count());
+	std::cout << "----- end of 2" << std::endl;
 }
 
 TEST_CASE("regressions/one", "issue number 48") {
@@ -691,18 +693,24 @@ TEST_CASE("regressions/one", "issue number 48") {
 	REQUIRE(my_var_ref.boop == 1);
 	REQUIRE(my_var_ptr->boop == 1);
 	REQUIRE(std::addressof(my_var_ref) == my_var_ptr);
+	std::cout << "----- end of 3" << std::endl;
 }
 
 TEST_CASE("usertype/get-set-references", "properly get and set with std::ref semantics. Note that to get, we must not use Unqualified<T> on the type...") {
+    std::cout << "----- in 4" << std::endl;
 	sol::state lua;
 
 	lua.new_usertype<vars>("vars",
 		"boop", &vars::boop);
 	vars var{};
 	vars rvar{};
+    std::cout << "setting beep" << std::endl;
 	lua.set("beep", var);
+    std::cout << "setting rbeep" << std::endl;
 	lua.set("rbeep", std::ref(rvar));
+    std::cout << "getting my_var" << std::endl;
 	auto& my_var = lua.get<vars>("beep");
+    std::cout << "setting rbeep" << std::endl;
 	auto& ref_var = lua.get<std::reference_wrapper<vars>>("rbeep");
 	vars& proxy_my_var = lua["beep"];
 	std::reference_wrapper<vars> proxy_ref_var = lua["rbeep"];
@@ -719,6 +727,7 @@ TEST_CASE("usertype/get-set-references", "properly get and set with std::ref sem
 	REQUIRE(std::addressof(proxy_ref_var.get()) == std::addressof(rvar));
 	REQUIRE(rvar.boop == 5);
 	REQUIRE(rvar.boop == ref_var.boop);
+	std::cout << "----- end of 4" << std::endl;
 }
 
 TEST_CASE("usertype/private-constructible", "Check to make sure special snowflake types from Enterprise thingamahjongs work properly.") {
@@ -749,6 +758,7 @@ TEST_CASE("usertype/private-constructible", "Check to make sure special snowflak
 	int expectednumkilled = numkilled + 1;
 	REQUIRE(expectednumsaved == factory_test::num_saved);
 	REQUIRE(expectednumkilled == factory_test::num_killed);
+	std::cout << "----- end of 5" << std::endl;
 }
 
 TEST_CASE("usertype/const-pointer", "Make sure const pointers can be taken") {
@@ -769,6 +779,7 @@ TEST_CASE("usertype/const-pointer", "Make sure const pointers can be taken") {
 	lua.safe_script("x = b:foo(a)");
 	int x = lua["x"];
 	REQUIRE(x == 201);
+	std::cout << "----- end of 6" << std::endl;
 }
 
 TEST_CASE("usertype/overloading", "Check if overloading works properly for usertypes") {
@@ -806,6 +817,7 @@ TEST_CASE("usertype/overloading", "Check if overloading works properly for usert
 	REQUIRE((lua["c"] == bark_58));
 	auto result = lua.safe_script("r:func(1,2,'meow')", sol::script_pass_on_error);
 	REQUIRE_FALSE(result.valid());
+	std::cout << "----- end of 7" << std::endl;
 }
 
 TEST_CASE("usertype/overloading_values", "ensure overloads handle properly") {
@@ -840,6 +852,7 @@ TEST_CASE("usertype/overloading_values", "ensure overloads handle properly") {
 
 	REQUIRE(res3 == 524);
 	REQUIRE(res4 == 524);
+	std::cout << "----- end of 8" << std::endl;
 }
 
 TEST_CASE("usertype/reference-and-constness", "Make sure constness compiles properly and errors out at runtime") {

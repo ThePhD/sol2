@@ -70,7 +70,7 @@ add_library(${catch_lib} INTERFACE)
 target_include_directories(${catch_lib} INTERFACE ${catch_include_dirs})
 
 if (MSVC)
-	target_add_compile_options(${catch_lib} INTERFACE
+	target_compile_options(${catch_lib} INTERFACE
 		/D_SILENCE_CXX17_UNCAUGHT_EXCEPTION_DEPRECATION_WARNING)
 endif()
 

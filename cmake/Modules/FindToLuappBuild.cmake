@@ -77,6 +77,9 @@ else()
 		INTERFACE -Wno-noexcept-type
 		PUBLIC -Wno-ignored-qualifiers -Wno-unused-parameter)
 endif()
+if (CMAKE_DL_LIBS)
+	target_link_libraries(${toluapp_lib} PRIVATE ${CMAKE_DL_LIBS})
+endif()
 # add compatibility define
 target_compile_definitions(${toluapp_lib}
 		PRIVATE COMPAT53_PREFIX=toluapp_compat53)
