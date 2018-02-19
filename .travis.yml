@@ -157,7 +157,11 @@ matrix:
           LLVM_VERSION=5.0.1
       before_install:
         - brew update > /dev/null
-        - brew install zsh git ninja cmake python
+        - brew install zsh || true
+        - brew install git || true
+        - brew install cmake || true
+        - brew install python || true
+        - brew install ninja || true
       script:
         - ./scripts/run.osx.sh
 
@@ -168,7 +172,11 @@ matrix:
           LLVM_VERSION=5.0.1
       before_install:
         - brew update > /dev/null
-        - brew install zsh git ninja cmake python
+        - brew install zsh || true
+        - brew install git || true
+        - brew install cmake || true
+        - brew install python || true
+        - brew install ninja || true
       script:
         - ./scripts/run.osx.sh
 

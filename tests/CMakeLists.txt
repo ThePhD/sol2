@@ -22,7 +22,11 @@
 
 # # # # sol2 tests
 
-find_package(Catch 2.0.1 REQUIRED)
+if (CMAKE_GENERATOR MATCHES "Visual Studio 14 2015")
+	find_package(Catch 1.1.12 REQUIRED)
+else()
+	find_package(Catch 2.1.2 REQUIRED)
+endif()
 
 file(GLOB SOL2_TEST_SOURCES test*.cpp)
 source_group(test_sources FILES ${SOL2_TEST_SOURCES})

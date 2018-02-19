@@ -25,10 +25,10 @@ include(FindPackageHandleStandardArgs)
 include(Common/Core)
 
 # # Base variables
-if (CATCH_VERSION)
-	set(catch_version ${CATCH_VERSION})
+if (Catch_FIND_VERSION)
+	set(catch_version ${Catch_FIND_VERSION})
 else()
-	set(catch_version 2.0.1)
+	set(catch_version 2.1.2)
 endif()
 
 set(catch_lib catch_lib_${catch_version})
@@ -41,7 +41,7 @@ set(catch_include_dirs "${catch_build_toplevel}")
 set(catch_sources catch.hpp)
 prepend(catch_sources "${catch_build_toplevel}/" ${catch_sources})
 
-# # !! Catch 3.5 does not have DOWNLOAD_NO_EXTRACT e.e
+# # !! CMake 3.5 does not have DOWNLOAD_NO_EXTRACT e.e
 # # Now I know why people don't like CMake that much: the earlier versions were kind of garbage
 # # External project to get sources
 #ExternalProject_Add(CATCH_BUILD_SOURCE

@@ -296,8 +296,8 @@ else()
 		PRIVATE -w)
 endif()
 if (WIN32)
-	target_compile_definitions(${liblua}
-		PRIVATE LUA_USE_WINDOWS)
+	#target_compile_definitions(${liblua}
+	#	PRIVATE LUA_USE_WINDOWS)
 else()
 	target_compile_definitions(${liblua} 
 		PRIVATE LUA_USE_LINUX)
