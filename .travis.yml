@@ -156,12 +156,9 @@ matrix:
         - LUA_VERSION=lua-5.3.4
           LLVM_VERSION=5.0.1
       before_install:
-        - brew update > /dev/null
-        - brew install zsh || true
-        - brew install git || true
-        - brew install cmake || true
-        - brew install python || true
-        - brew install ninja || true
+        - chmod +x ./scripts/run.osx.sh
+        - chmod +x ./scripts/preparation.osx.sh
+        - ./scripts/preparation.osx.sh
       script:
         - ./scripts/run.osx.sh
 
@@ -171,12 +168,9 @@ matrix:
         - LUA_VERSION=lua-5.3.4
           LLVM_VERSION=5.0.1
       before_install:
-        - brew update > /dev/null
-        - brew install zsh || true
-        - brew install git || true
-        - brew install cmake || true
-        - brew install python || true
-        - brew install ninja || true
+        - chmod +x ./scripts/run.osx.sh
+        - chmod +x ./scripts/preparation.osx.sh
+        - ./scripts/preparation.osx.sh
       script:
         - ./scripts/run.osx.sh
 

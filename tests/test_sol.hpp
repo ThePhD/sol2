@@ -21,8 +21,6 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#pragma once
-
 #ifndef SOL_TEST_SOL_HPP
 #define SOL_TEST_SOL_HPP
 
@@ -42,6 +40,8 @@
 #include <sol_forward.hpp>
 #endif // Single
 #include <sol.hpp>
+
+#define CATCH_CONFIG_ALL_PARTS 1
 #include <catch.hpp>
 
 #define CHECK_VALID ( x ) { auto r = x; REQUIRE(r.valid()); }
