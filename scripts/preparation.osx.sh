@@ -28,5 +28,5 @@ brew update > /dev/null
 brew install zsh || brew upgrade zsh || true
 brew install git || brew upgrade git || true
 brew install cmake || brew upgrade cmake || true
-brew install python || brew upgrade python || true
+brew install python3 || brew upgrade python3 || true
 brew install ninja || brew upgrade ninja || true
