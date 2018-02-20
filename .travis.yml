@@ -31,10 +31,11 @@ services:
 
 before_install:
 - sudo apt install -y git
+- ls -lah
+- chmod +x ./scripts/ci.linux.sh
 
 script:
-- chmod +x ${TRAVIS_BUILD_DIR}/scripts/ci.linux.sh
-- ${TRAVIS_BUILD_DIR}/scripts/ci.linux.sh
+- ./scripts/ci.linux.sh
 
 matrix:
   fast_finish: true
