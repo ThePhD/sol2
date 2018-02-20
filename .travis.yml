@@ -31,11 +31,12 @@ services:
 
 before_install:
 - sudo apt install -y git
-- ls -lah
-- chmod +x ./scripts/ci.linux.sh
 
 script:
-- ./scripts/ci.linux.sh
+- export SOL2_DIR=${TRAVIS_BUILD_DIR}
+- sudo docker image pull thephd/sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
+- sudo docker run --rm --interactive --tty --name "sol2.test" -v "${SOL2_DIR}:/root/sol2" --env "CI=${CI}" --env "PLATFORM=${PLATFORM}" --env "LUA_VERSION=${LUA_VERSION}" --env "GCC_VERSION=${GCC_VERSION}" --env "LLVM_VERSION=${LLVM_VERSION}" thephd/sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
+- sudo docker rmi $(sudo docker image ls -q)
 
 matrix:
   fast_finish: true
