@@ -113,11 +113,11 @@ elseif (LUA_VERSION MATCHES "([0-9]+)\\.([0-9]+)")
 	# extend version number with prefix
 	if (${CMAKE_MATCH_1} EQUAL 5)
 		if (${CMAKE_MATCH_2} EQUAL 1)
-			set(LUA_VANILLA_VERSION LUA_VANILLA_5.1_LATEST_VERSION)
+			set(LUA_VANILLA_VERSION ${LUA_VANILLA_5.1_LATEST_VERSION})
 		elseif (${CMAKE_MATCH_2} EQUAL 2)
-			set(LUA_VANILLA_VERSION LUA_VANILLA_5.2_LATEST_VERSION)
+			set(LUA_VANILLA_VERSION ${LUA_VANILLA_5.2_LATEST_VERSION})
 		elseif (${CMAKE_MATCH_2} EQUAL 3)
-			set(LUA_VANILLA_VERSION LUA_VANILLA_5.3_LATEST_VERSION)
+			set(LUA_VANILLA_VERSION ${LUA_VANILLA_5.3_LATEST_VERSION})
 		else()			
 			# default to whatever the first two
 			# numbers happen to be, plus build 0
