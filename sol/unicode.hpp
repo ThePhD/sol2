@@ -147,7 +147,7 @@ namespace sol {
 
 			if (codepoint <= unicode_detail::last_bmp_value) {
 				er.code_units_size = 1;
-				er.code_units = std::array<char16_t, 4>{ static_cast<char16_t>(codepoint) };
+				er.code_units = std::array<char16_t, 4>{ { static_cast<char16_t>(codepoint) } };
 				er.error = error_code::ok;
 			}
 			else {
