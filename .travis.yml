@@ -149,9 +149,20 @@ matrix:
         PLATFORM=x64
         CI=true
 
-    # XCode / Mac builds
     - os: osx
-      osx_image: xcode8.3
+      osx_image: xcode9.0
+      env:
+        - LUA_VERSION=lua-5.3.4
+          LLVM_VERSION=5.0.1
+      before_install:
+        - chmod +x ./scripts/run.osx.sh
+        - chmod +x ./scripts/preparation.osx.sh
+        - ./scripts/preparation.osx.sh
+      script:
+        - ./scripts/run.osx.sh
+
+    - os: osx
+      osx_image: xcode9.1
       env:
         - LUA_VERSION=lua-5.3.4
           LLVM_VERSION=5.0.1
