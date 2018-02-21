@@ -1274,3 +1274,55 @@ TEST_CASE("containers/custom indexing", "allow containers to set a custom indexi
 	auto result3 = lua.safe_script("assert(c[-1] == nil)", sol::script_pass_on_error);
 	REQUIRE(result3.valid());
 }
+
+TEST_CASE("containers/containers of pointers", "containers of pointers shouldn't have their value_type's overly stripped") {
+	sol::state lua;
+
+	class MyContainer {
+	public:
+		typedef int** iterator;
+		typedef int* value_type;
+
+		std::vector<value_type> m_vec;
+
+		inline iterator begin() { return m_vec.data(); }
+		inline iterator end() { return m_vec.data() + m_vec.size(); }
+		inline void push_back(value_type v) { m_vec.push_back(v); }
+	};
+	int a = 500;
+	int b = 600;
+
+	MyContainer ctr;
+	ctr.push_back(&a);
+	ctr.push_back(&b);
+	lua["c"] = ctr;
+	{
+		auto result1 = lua.safe_script("ap = c[1]", sol::script_pass_on_error);
+		REQUIRE(result1.valid());
+		auto result2 = lua.safe_script("bp = c[2]", sol::script_pass_on_error);
+		REQUIRE(result2.valid());
+		int* ap = lua["ap"];
+		int* bp = lua["bp"];
+		REQUIRE(ap == &a);
+		REQUIRE(bp == &b);
+		REQUIRE(*ap == 500);
+		REQUIRE(*bp == 600);
+	}
+
+	std::unordered_map<int, int*> ptrs;
+	ptrs[5] = &a;
+	ptrs[6] = &b;
+	lua["c2"] = ptrs;
+	{
+		auto result1 = lua.safe_script("ap = c2[5]", sol::script_pass_on_error);
+		REQUIRE(result1.valid());
+		auto result2 = lua.safe_script("bp = c2[6]", sol::script_pass_on_error);
+		REQUIRE(result2.valid());
+		int* ap = lua["ap"];
+		int* bp = lua["bp"];
+		REQUIRE(ap == &a);
+		REQUIRE(bp == &b);
+		REQUIRE(*ap == 500);
+		REQUIRE(*bp == 600);
+	}
+}

@@ -663,6 +663,16 @@ namespace sol {
 			return *std::forward<T>(item);
 		}
 
+		template <typename T, meta::disable<is_pointer_like<meta::unqualified_t<T>>, meta::neg<std::is_pointer<meta::unqualified_t<T>>>> = meta::enabler>
+		auto deref_non_pointer(T&& item) -> decltype(std::forward<T>(item)) {
+			return std::forward<T>(item);
+		}
+
+		template <typename T, meta::enable<is_pointer_like<meta::unqualified_t<T>>, meta::neg<std::is_pointer<meta::unqualified_t<T>>>> = meta::enabler>
+		inline auto deref_non_pointer(T&& item) -> decltype(*std::forward<T>(item)) {
+			return *std::forward<T>(item);
+		}
+
 		template <typename T>
 		inline T* ptr(T& val) {
 			return std::addressof(val);
