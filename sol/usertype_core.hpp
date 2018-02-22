@@ -151,8 +151,10 @@ namespace sol {
 
 		template <typename T, typename Regs, meta::enable<meta::has_size<T>> = meta::enabler>
 		inline void make_length_op(Regs& l, int& index) {
+			typedef decltype(std::declval<T>().size()) R;
+			using sz_func = R(T::*)()const;
 			const char* name = to_string(meta_function::length).c_str();
-			l[index] = luaL_Reg{ name, &c_call<decltype(&T::size), &T::size> };
+			l[index] = luaL_Reg{ name, &c_call<decltype(static_cast<sz_func>(&T::size)), static_cast<sz_func>(&T::size)> };
 			++index;
 		}
 
@@ -181,7 +183,12 @@ namespace sol {
 			}
 		}
 
-		template <typename T, typename Regs, typename Fx>
+		template <typename T, typename Regs, typename Fx, meta::disable<is_automagical<T>> = meta::enabler>
+		void insert_default_registrations(Regs&, int&, Fx&&) {
+			// no-op
+		}
+
+		template <typename T, typename Regs, typename Fx, meta::enable<is_automagical<T>> = meta::enabler>
 		void insert_default_registrations(Regs& l, int& index, Fx&& fx) {
 			if (fx(meta_function::less_than)) {
 				const char* name = to_string(meta_function::less_than).c_str();

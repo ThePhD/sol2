@@ -208,6 +208,8 @@ If you don't specify anything at all and the type is `destructible`_, then a des
 	You MUST specify ``sol::destructor`` around your destruction function, otherwise it will be ignored.
 
 
+.. _automagical-registration:
+
 usertype automatic meta functions
 +++++++++++++++++++++++++++++++++
 
@@ -380,6 +382,21 @@ Then, to register the base classes explicitly:
 
 	Specify all base class member variables and member functions to avoid current implementation caveats regarding automatic base member lookup. Sol currently attempts to link base class methods and variables with their derived classes with an undocumented, unsupported feature, provided you specify ``sol::bases<...>``. Unfortunately, this can come at the cost of performance, depending on how "far" the base is from the derived class in the bases lookup list. If you do not want to suffer the performance degradation while we iron out the kinks in the implementation (and want it to stay performant forever), please specify all the base methods on the derived class in the method listing you write. In the future, we hope that with reflection we will not have to worry about this.
 
+.. _automagical:
+
+automagical usertypes
+---------------------
+
+Usertypes automatically register special functions, whether or not they're bound using `new(_simple)_usertype`. You can turn this off by specializing the ``sol::is_automagical<T>`` template trait:
+
+.. code-block:: cpp
+
+	struct my_strange_nonconfirming_type { /* ... */ };
+
+	namespace sol {
+		template <>
+		struct is_automagical<my_strange_nonconforming_type> : std::false_type {};
+	}
 
 inheritance + overloading
 -------------------------

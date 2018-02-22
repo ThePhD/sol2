@@ -697,20 +697,20 @@ TEST_CASE("regressions/one", "issue number 48") {
 }
 
 TEST_CASE("usertype/get-set-references", "properly get and set with std::ref semantics. Note that to get, we must not use Unqualified<T> on the type...") {
-    std::cout << "----- in 4" << std::endl;
+	std::cout << "----- in 4" << std::endl;
 	sol::state lua;
 
 	lua.new_usertype<vars>("vars",
 		"boop", &vars::boop);
 	vars var{};
 	vars rvar{};
-    std::cout << "setting beep" << std::endl;
+	std::cout << "setting beep" << std::endl;
 	lua.set("beep", var);
-    std::cout << "setting rbeep" << std::endl;
+	std::cout << "setting rbeep" << std::endl;
 	lua.set("rbeep", std::ref(rvar));
-    std::cout << "getting my_var" << std::endl;
+	std::cout << "getting my_var" << std::endl;
 	auto& my_var = lua.get<vars>("beep");
-    std::cout << "setting rbeep" << std::endl;
+	std::cout << "setting rbeep" << std::endl;
 	auto& ref_var = lua.get<std::reference_wrapper<vars>>("rbeep");
 	vars& proxy_my_var = lua["beep"];
 	std::reference_wrapper<vars> proxy_ref_var = lua["rbeep"];
