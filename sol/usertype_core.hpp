@@ -183,13 +183,13 @@ namespace sol {
 			}
 		}
 
-		template <typename T, typename Regs, typename Fx, meta::disable<is_automagical<T>> = meta::enabler>
-		void insert_default_registrations(Regs&, int&, Fx&&) {
+		template <typename T, typename Regs, typename Fx>
+		void insert_default_registrations(std::false_type, Regs&, int&, Fx&&) {
 			// no-op
 		}
 
-		template <typename T, typename Regs, typename Fx, meta::enable<is_automagical<T>> = meta::enabler>
-		void insert_default_registrations(Regs& l, int& index, Fx&& fx) {
+		template <typename T, typename Regs, typename Fx>
+		void insert_default_registrations(std::true_type, Regs& l, int& index, Fx&& fx) {
 			if (fx(meta_function::less_than)) {
 				const char* name = to_string(meta_function::less_than).c_str();
 				usertype_detail::make_reg_op<T, std::less<>, meta::supports_op_less<T>>(l, index, name);
@@ -216,6 +216,11 @@ namespace sol {
 			if (fx(meta_function::call_function)) {
 				usertype_detail::make_call_op<T>(l, index);
 			}
+		}
+
+		template <typename T, typename Regs, typename Fx>
+		void insert_default_registrations(Regs& l, int& index, Fx&& fx) {
+			insert_default_registrations<T>(is_automagical<T>(), l, index, std::forward<Fx>(fx));
 		}
 	} // namespace usertype_detail
 
