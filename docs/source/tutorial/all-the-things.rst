@@ -274,4 +274,4 @@ Some more things you can do/read about:
 .. _a basic example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype.cpp
 .. _special functions: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_special_functions.cpp
 .. _initializers: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_initializers.cpp
-.. _sol2 tutorial examples: https://github.com/ThePhD/sol2/tree/develop/examples/tutorials/quick 'n' dirty
+.. _sol2 tutorial examples: https://github.com/ThePhD/sol2/tree/develop/examples/tutorials/quick_n_dirty
