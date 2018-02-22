@@ -151,10 +151,15 @@ namespace sol {
 
 		template <typename T, typename Regs, meta::enable<meta::has_size<T>> = meta::enabler>
 		inline void make_length_op(Regs& l, int& index) {
+			const char* name = to_string(meta_function::length).c_str();
+#ifdef __clang__
+			l[index] = luaL_Reg{ name, &c_call<decltype(&T::size), &T::size> };
+#else
 			typedef decltype(std::declval<T>().size()) R;
 			using sz_func = R(T::*)()const;
 			const char* name = to_string(meta_function::length).c_str();
 			l[index] = luaL_Reg{ name, &c_call<decltype(static_cast<sz_func>(&T::size)), static_cast<sz_func>(&T::size)> };
+#endif
 			++index;
 		}
 
