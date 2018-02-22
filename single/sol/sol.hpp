@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-02-21 06:23:41.439083 UTC
-// This header was generated with sol v2.19.0 (revision a56a890)
+// Generated 2018-02-22 19:49:01.759217 UTC
+// This header was generated with sol v2.19.4 (revision f7f94a4)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5697,6 +5697,9 @@ namespace sol {
 
 	template <typename T>
 	struct is_environment : std::integral_constant<bool, is_userdata<T>::value || is_table<T>::value> {};
+
+	template <typename T>
+	struct is_automagical : std::true_type {};
 
 	template <typename T>
 	inline type type_of() {
@@ -17138,8 +17141,10 @@ namespace sol {
 
 		template <typename T, typename Regs, meta::enable<meta::has_size<T>> = meta::enabler>
 		inline void make_length_op(Regs& l, int& index) {
+			typedef decltype(std::declval<T>().size()) R;
+			using sz_func = R(T::*)()const;
 			const char* name = to_string(meta_function::length).c_str();
-			l[index] = luaL_Reg{ name, &c_call<decltype(&T::size), &T::size> };
+			l[index] = luaL_Reg{ name, &c_call<decltype(static_cast<sz_func>(&T::size)), static_cast<sz_func>(&T::size)> };
 			++index;
 		}
 
@@ -17169,7 +17174,12 @@ namespace sol {
 		}
 
 		template <typename T, typename Regs, typename Fx>
-		void insert_default_registrations(Regs& l, int& index, Fx&& fx) {
+		void insert_default_registrations(std::false_type, Regs&, int&, Fx&&) {
+			// no-op
+		}
+
+		template <typename T, typename Regs, typename Fx>
+		void insert_default_registrations(std::true_type, Regs& l, int& index, Fx&& fx) {
 			if (fx(meta_function::less_than)) {
 				const char* name = to_string(meta_function::less_than).c_str();
 				usertype_detail::make_reg_op<T, std::less<>, meta::supports_op_less<T>>(l, index, name);
@@ -17196,6 +17206,11 @@ namespace sol {
 			if (fx(meta_function::call_function)) {
 				usertype_detail::make_call_op<T>(l, index);
 			}
+		}
+
+		template <typename T, typename Regs, typename Fx>
+		void insert_default_registrations(Regs& l, int& index, Fx&& fx) {
+			insert_default_registrations<T>(is_automagical<T>(), l, index, std::forward<Fx>(fx));
 		}
 	} // namespace usertype_detail
 
