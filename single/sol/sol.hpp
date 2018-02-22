@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-02-22 19:49:01.759217 UTC
-// This header was generated with sol v2.19.4 (revision f7f94a4)
+// Generated 2018-02-22 23:33:52.230658 UTC
+// This header was generated with sol v2.19.4 (revision e8a8da0)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -17141,10 +17141,15 @@ namespace sol {
 
 		template <typename T, typename Regs, meta::enable<meta::has_size<T>> = meta::enabler>
 		inline void make_length_op(Regs& l, int& index) {
+			const char* name = to_string(meta_function::length).c_str();
+#ifdef __clang__
+			l[index] = luaL_Reg{ name, &c_call<decltype(&T::size), &T::size> };
+#else
 			typedef decltype(std::declval<T>().size()) R;
 			using sz_func = R(T::*)()const;
 			const char* name = to_string(meta_function::length).c_str();
 			l[index] = luaL_Reg{ name, &c_call<decltype(static_cast<sz_func>(&T::size)), static_cast<sz_func>(&T::size)> };
+#endif
 			++index;
 		}
 
