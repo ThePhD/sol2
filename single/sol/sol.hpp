@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-02-22 23:33:52.230658 UTC
-// This header was generated with sol v2.19.4 (revision e8a8da0)
+// Generated 2018-02-23 02:31:12.878607 UTC
+// This header was generated with sol v2.19.4 (revision 32cadc0)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -17147,7 +17147,6 @@ namespace sol {
 #else
 			typedef decltype(std::declval<T>().size()) R;
 			using sz_func = R(T::*)()const;
-			const char* name = to_string(meta_function::length).c_str();
 			l[index] = luaL_Reg{ name, &c_call<decltype(static_cast<sz_func>(&T::size)), static_cast<sz_func>(&T::size)> };
 #endif
 			++index;

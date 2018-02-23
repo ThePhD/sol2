@@ -157,7 +157,6 @@ namespace sol {
 #else
 			typedef decltype(std::declval<T>().size()) R;
 			using sz_func = R(T::*)()const;
-			const char* name = to_string(meta_function::length).c_str();
 			l[index] = luaL_Reg{ name, &c_call<decltype(static_cast<sz_func>(&T::size)), static_cast<sz_func>(&T::size)> };
 #endif
 			++index;
