@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-02-23 16:30:19.109420 UTC
-// This header was generated with sol v2.19.4 (revision 12139b8)
+// Generated 2018-02-23 21:59:31.750406 UTC
+// This header was generated with sol v2.19.4 (revision b60132e)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -17267,9 +17267,14 @@ namespace sol {
 
 namespace sol {
 	namespace usertype_detail {
-#if defined(SOL_USE_BOOST) && !defined(SOL_CXX17_FEATURES)
+#if defined(SOL_USE_BOOST)
+#if defined(SOL_CXX17_FEATURES)
+		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
+		using map_t = boost::unordered_map<K, V, H, E>;
+#else
 		template <typename K, typename V, typename H = boost::hash<K>, typename E = std::equal_to<>>
 		using map_t = boost::unordered_map<K, V, H, E>;
+#endif // C++17 or not, WITH boost
 #else
 		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
 		using map_t = std::unordered_map<K, V, H, E>;

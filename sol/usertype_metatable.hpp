@@ -48,9 +48,14 @@
 
 namespace sol {
 	namespace usertype_detail {
-#if defined(SOL_USE_BOOST) && !defined(SOL_CXX17_FEATURES)
+#if defined(SOL_USE_BOOST)
+#if defined(SOL_CXX17_FEATURES)
+		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
+		using map_t = boost::unordered_map<K, V, H, E>;
+#else
 		template <typename K, typename V, typename H = boost::hash<K>, typename E = std::equal_to<>>
 		using map_t = boost::unordered_map<K, V, H, E>;
+#endif // C++17 or not, WITH boost
 #else
 		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
 		using map_t = std::unordered_map<K, V, H, E>;
