@@ -157,6 +157,11 @@ Below are the many container operations and their override points for ``containe
 
 	If your type does not adequately support ``begin()`` and ``end()`` and you cannot override it, use the ``sol::is_container`` trait override along with a custom implementation of ``pairs`` on your usertype to get it to work as you want it to. Note that a type not having proper ``begin()`` and ``end()`` will not work if you try to forcefully serialize it as a table (this means avoid using :doc:`sol::as_table<api/as_table>` and :doc:`sol::nested<api/nested>`, otherwise you will have compiler errors). Just set it or get it directly, as shown in the examples, to work with the C++ containers.
 
+.. note::
+
+	Overriding the detection traits and operation traits listed above and then trying to use ``sol::as_table`` or similar can result in compilation failures if you do not have a proper ``begin()`` or ``end()`` function on the type. If you want things to behave with special usertype considerations, please do not wrap the container in one of the special table-converting/forcing abstractions.
+
+
 .. _container-classifications: 
 
 container classifications
@@ -195,6 +200,28 @@ When you serialize a container into sol2, the default container handler deals wi
 |                        |                                        | std::unordered_multimap |                                                                                               |
 +------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
 
+
+a complete example
+------------------
+
+Here's a complete working example of it working for Lua 5.3 and Lua 5.2, and how you can retrieve out the container in all versions:
+
+.. literalinclude:: ../../examples/containers.cpp
+	:name: containers-example
+	:linenos:
+
+
+Note that this will not work well in Lua 5.1, as it has explicit table checks and does not check metamethods, even when ``pairs`` or ``ipairs`` is passed a table. In that case, you will need to use a more manual iteration scheme or you will have to convert it to a table. In C++, you can use :doc:`sol::as_table<api/as_table>` when passing something to the library to get a table out of it: ``lua["arr"] = as_table( std::vector<int>{ ... });``. For manual iteration in Lua code without using ``as_table`` for something with indices, try:
+
+.. code-block:: lua
+	:caption: iteration.lua
+	:linenos:
+
+	for i = 1, #vec do
+		print(i, vec[i]) 
+	end
+
+There are also other ways to iterate over key/values, but they can be difficult AND cost your performance due to not having proper support in Lua 5.1. We recommend that you upgrade to Lua 5.2 or 5.3 if this is integral to your infrastructure.
 
 .. _online version's information: https://www.lua.org/pil/26.html
 .. _reflect changes if you use a reference: https://github.com/ThePhD/sol2/blob/develop/examples/containers.cpp

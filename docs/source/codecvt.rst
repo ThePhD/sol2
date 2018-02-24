@@ -1,29 +1,14 @@
-codecvt + std::(w/u16/u32)string support
-========================================
+unicode transformation format handling
+======================================
 because this is surprisingly hard using standard C++
 ----------------------------------------------------
 
-.. warning::
-
-	This header is no longer used and sol2 now converts utf8, utf16, and utf32 with internal routines. If you have a problem with the transcoding, please file an issue report.
-
-
-Individuals using Visual Studio 2015, or on Windows with the VC++ and MinGW compilers (possibly Clang++ on Windows as well) have ``<codecvt>`` headers, and thusly Sol will attempt to include it. Individuals on GCC 4.9.x, Clang 3.5.x, Clang 3.6.x do not seem to have ``<codecvt>`` shipped with the standard library that comes with installation of these compilers. If you want ``std::wstring``, ``std::u16string``, ``std::u32string`` automatic handling then you need to make sure you have those headers and then define ``SOL_CODECVT_SUPPORT`` on unsupported compilers.
-
-.. _codecvt-deprecation:
-
-Visual C++, in Visual Studio versions 15.5+ (``_MSC_VER >= 1912``), introduced deprecation macros when you are in ``/std:c++latest``, or similar. In order to get rid of codecvt issues, you need to define the silencing macros they ask for (``_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING``).
-
-It must be defined because despite the committee deprecating it, there is no useful standard alternative to perform these conversions (without, saying, including ``<Windows.h>`` on Windows machines, which is unacceptable).
-
 .. note::
 
-	The `standard`_ states the following:
+	The ``<codecvt>`` header is no longer used and sol2 now converts utf8, utf16, and utf32 with internal routines. If you have a problem with the transcoding, please `file an issue report`_.
 
-	| “this library component should be retired to Annex D, along side , 
-	| until a suitable replacement is standardized.”
+``std::(w)string(u16/u32)`` are assumed to be in the platform's native wide (for ``wstring``) or unicode format. Lua canonically stores its string literals as utf8 and embraces utf8, albeit its storage is simply a sequence of bytes that are also null-terminated (it is also counted and the size is kept around, so embedded nulls can be used in the string). Therefore, if you need to interact with the unicode or wide alternatives of strings, runtime conversions are performed from the (assumed) utf8 string data into other forms. These conversions check for well-formed UTF, and will error if they are not when converting.
 
+Note that we cannot give you ``string_view``s to utf16 or utf32 strings: Lua does not hold them in memory this way. You can perhaps do your own customization to provide for this if need be. Remember that Lua stores a counted sequence of bytes: serializing your string as bytes and pushing a string type into Lua's stack will work, though do not except any complex string routines or printing to behave nicely with your code.
 
-In other words, it is totally fine! Just define the silencing macro and leave it at that. sol2 keeps up with the standard, so the moment a suitable replacement is standardized it will be added to sol2 posthaste. For the time being, you will be okay.
-
-.. _standard: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0618r0.html
+.. _file an issue report: https://github.com/ThePhD/sol2/issues

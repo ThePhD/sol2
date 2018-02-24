@@ -23,6 +23,7 @@ Okay, so the features don't convince you, the documentation doesn't convince you
 | |before| | |after| |
 +----------+---------+
 
+* In `High Performance Computing research`_
 * The `Multiple Arcade Machine Emulator (MAME)`_ project switched from using LuaBridge to sol2!
 	- `The pull request`_ in which it was introduced to the master branch.
 * For scripting, in `OpenMPT`_
@@ -61,3 +62,4 @@ Are you using sol2 for something neat? Want it to be featured here or think it's
 .. _Multiple Arcade Machine Emulator (MAME): http://www.mamedev.org/index.php
 .. _The pull request: https://github.com/mamedev/mame/pull/1626
 .. _OpenMPT: https://openmpt.org/
+.. _High Performance Computing research: https://github.com/ThePhD/sol2/issues/568

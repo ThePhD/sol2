@@ -25,7 +25,6 @@ A myriad of compiler errors can occur when something goes wrong. Here is some ba
 * If you have a move-only type, that type may need to be made ``readonly`` if it is bound as a member variable on a usertype or bound using ``state_view::set_function``. See :doc:`sol::readonly<api/readonly>` for more details.
 * Assigning a ``std::string`` or a ``std::pair<T1, T2>`` using ``operator=`` after it's been constructed can result in compiler errors when working with ``sol::function`` and its results. See `this issue for fixes to this behavior`_.
 * Sometimes, using ``__stdcall`` in a 32-bit (x86) environment on VC++ can cause problems binding functions because of a compiler bug. We have a prelimanry fix in, but if it doesn't work and there are still problems: put the function in a ``std::function`` to make the compiler errors and other problems go away. Also see `this __stdcall issue report`_ for more details.
-* If you are using ``/std:c++latest`` on VC++ and get a number of deprecation errors for ``<codecvt>`` and others, please see :ref:`this note here<codecvt-deprecation>`.
 * If you are using ``/std:c++latest`` on VC++ and get a number of errors for ``noexcept`` specifiers on functions, you may need to file an issue or wait for the next release of the VC++ compiler.
 
 Mac OSX Crashes

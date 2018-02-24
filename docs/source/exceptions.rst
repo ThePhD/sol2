@@ -9,30 +9,10 @@ If you turn this off, the default `at_panic`_ function :doc:`state<api/state>` s
 
 To make this not be the case, you can set a panic function directly with ``lua_atpanic( lua, my_panic_function );`` or when you create the ``sol::state`` with ``sol::state lua(my_panic_function);``. Here's an example ``my_panic_function`` you can have that prints out its errors:
 
-.. code-block:: cpp
+.. literalinclude:: ../../examples/docs/my_panic.cpp
 	:caption: regular panic function
 	:name: typical-panic-function
-
-	#include <sol.hpp>
-	#include <iostream>
-
-	inline void my_panic(sol::optional<std::string> maybe_msg) {
-		std::cerr << "Lua is in a panic state and will now abort() the application" << std::endl;
-		if (maybe_msg) {
-			const std::string& msg = maybe_msg.value();
-			std::cerr << "\terror message: " << msg << std::endl;
-		}
-		// When this function exits, Lua will exhibit default behavior and abort()
-	}
-
-	int main () {
-		sol::state lua(sol::c_call<decltype(&my_panic), &my_panic>);
-		// or, if you already have a lua_State* L
-		// lua_atpanic( L, sol::c_call<decltype(&my_panic)>, &my_panic> );
-		// or, with state/state_view:
-		// sol::state_view lua(L);
-		// lua.set_panic( sol::c_call<decltype(&my_panic)>, &my_panic> );
-	}
+	:linenos:
 
 
 Note that ``SOL_NO_EXCEPTIONS`` will also disable :doc:`protected_function<api/protected_function>`'s ability to catch C++ errors you throw from C++ functions bound to Lua that you are calling through that API. So, only turn off exceptions in Sol if you're sure you're never going to use exceptions ever. Of course, if you are ALREADY not using Exceptions, you don't have to particularly worry about this and now you can use Sol!

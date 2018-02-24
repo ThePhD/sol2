@@ -18,6 +18,8 @@ what Sol supports
 	- Implicit conversion to the types you want
 		``double b = table["computed_value"];``
 
+* :doc:`yielding<api/yielding>` support: tag a function as whose return is meant to yield into a coroutine
+
 * :doc:`Optional<api/optional>` support: setting values, getting values of multiple (different) types
 	- :doc:`Lazy evaluation<api/proxy>` for nested/chained queries
 		``optional<int> maybe_number = table["a"]["b"]["invalid_key"];``
@@ -34,7 +36,7 @@ what Sol supports
 * User-Defined Type (:doc:`sol::usertype<api/usertype>` in the API) support:
 	- Set member functions to be called
 	- Set member variables
-	- Set variables on a class that are based on setter/getter functions
+	- Set variables on a class that are based on setter/getter functions using properties
 	- Use free-functions that take the Type as a first argument (pointer or reference)
 	- Support for "Factory" classes that do not expose constructor or destructor
 	- Modifying memory of userdata in C++ directly affects Lua without copying, and
@@ -86,6 +88,7 @@ Explanations for a few categories are below (rest are self-explanatory).
 * overloading: the ability to call overloaded functions, matched based on arity or type (``foo( 1 )`` from lua calls a different function then ``foo( "bark" )``).
 * Lua thread: basic wrapping of the lua thread API; ties in with coroutine.
 * coroutines: allowing a function to be called multiple times, resuming the execution of a Lua coroutine each time
+* yielding C++ functions: allowing a function from C++ to be called multiple times, and yield any results it has back through the C API or into Lua
 * environments: an abstraction for getting, setting and manipulating an environment, using table techniques, functions or otherwise. Typically for the purposes of sandboxing
 
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
@@ -127,6 +130,8 @@ Explanations for a few categories are below (rest are self-explanatory).
 | environments              |      ✗      |     ✗      |     ✗    |    ✗    |     ✗    |     ✔     |     ✗     |        ✗       |     ✗    |     ✗    |     ✗     |        ✗        |    ✗   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
 | coroutines                |      ~      |     ✗      |     ~    |    ✔    |     ✔    |     ✔     |     ✗     |        ✗       |     ✔    |     ✗    |     ✗     |        ✔        |    ✗   |
++---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
+| yielding C++ functions    |      ~      |     ✔      |     ✔    |    ✔    |     ~    |     ✔     |     ~     |        ✗       |     ✔    |     ✗    |     ~     |        ✔        |    ~   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
 | no-rtti support           |      ✔      |     ✗      |     ✔    |    ✗    |     ✗    |     ✔     |     ✔     |        ✗       |     ✔    |     ✔    |     ~     |        ✔        |    ✔   |
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
@@ -241,7 +246,7 @@ SLB3 -
 
 oolua -
 
-* The syntax for this library. `Go read the docs`_ 
+* The syntax for this library is not my favorite... `go read the docs`_, decide for yourself! 
 * The worst in terms of how to use it: may have docs, but the DSL is extraordinarily crappy with thick, hard-to-debug/hard-to-error-check macros
     - Same problem as lua-api-pp: cannot have the declaration macros anywhere but the toplevel namespace because of template declaration macro
 * Supports not having exceptions or rtti turned on (shiny!)
@@ -258,5 +263,6 @@ luwra -
 * When you do manage to set function calls with the macros they are fast (can a template solution do just as good? Sol is going to find out!)
 * No table variable support - get turned into getter/setter functions, similar to kaguya
 * Table variables become class statics (surprising)
+* Tanks in later MSVCs
 
 .. _Go read the docs: https://oolua.org/docs/index.html

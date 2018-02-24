@@ -20,7 +20,7 @@ The implementation for ``assert.hpp`` with ``c_assert`` looks like so:
 
 .. literalinclude:: ../../../examples/assert.hpp
 	:linenos:
-	:lines: 1-8, 19-
+	:lines: 1-3, 19-
 
 This is the assert used in the quick code below.
 

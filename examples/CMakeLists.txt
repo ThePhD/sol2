@@ -38,7 +38,7 @@ endif(INTEROP_EXAMPLES)
 
 # # single-source compilable examples
 
-file(GLOB EXAMPLES_SRC *.cpp tutorials/quick_n_dirty/*.cpp)
+file(GLOB EXAMPLES_SRC *.cpp tutorials/quick_n_dirty/*.cpp docs/*.cpp)
 source_group(examples FILES ${EXAMPLES_SRC})
 
 function (MAKE_EXAMPLE example_source_file is_single)

@@ -63,7 +63,7 @@ We support:
 * Lua 5.3+
 * Lua 5.2
 * Lua 5.1
-* LuaJIT 2.0.4+
+* LuaJIT 2.0.x+
 * LuaJIT 2.1.x-beta3+
 
 

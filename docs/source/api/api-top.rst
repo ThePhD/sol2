@@ -31,6 +31,7 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    function
    protected_function
    coroutine
+   yielding
    error
    object
    thread
