@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-02-23 21:59:31.750406 UTC
-// This header was generated with sol v2.19.4 (revision b60132e)
+// Generated 2018-02-24 23:50:10.791344 UTC
+// This header was generated with sol v2.19.4 (revision 22c41d9)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -8296,7 +8296,7 @@ namespace sol {
 	// Everything here was lifted pretty much straight out of
 	// ogonek, because fuck figuring it out=
 	namespace unicode {
-		enum error_code {
+		enum class error_code {
 			ok = 0,
 			invalid_code_point,
 			invalid_code_unit,
@@ -8388,6 +8388,7 @@ namespace sol {
 			static constexpr int lead_surrogate_bitmask = 0xFFC00;
 			static constexpr int trail_surrogate_bitmask = 0x3FF;
 			static constexpr int lead_shifted_bits = 10;
+			static constexpr char32_t replacement = 0xFFFD;
 
 			static char32_t combine_surrogates(char16_t lead, char16_t trail) {
 				auto hi = lead - first_lead_surrogate;
@@ -9022,6 +9023,24 @@ namespace stack {
 
 	template <typename Traits, typename Al>
 	struct getter<std::basic_string<char16_t, Traits, Al>> {
+		template <typename F>
+		static void convert(const char* strb, const char* stre, F&& f) {
+			char32_t cp = 0;
+			for (const char* strtarget = strb; strtarget < stre;) {
+				auto dr = unicode::utf8_to_code_point(strtarget, stre);
+				if (dr.error != unicode::error_code::ok) {
+					cp = unicode::unicode_detail::replacement;
+					++strtarget;
+				}
+				else {
+					cp = dr.codepoint;
+					strtarget = dr.next;
+				}
+				auto er = unicode::code_point_to_utf16(cp);
+				f(er);
+			}
+		}
+
 		template <typename S>
 		static S get_into(lua_State* L, int index, record& tracking) {
 			typedef typename S::value_type Ch;
@@ -9033,22 +9052,18 @@ namespace stack {
 			std::size_t needed_size = 0;
 			const char* strb = utf8p;
 			const char* stre = utf8p + len;
-			for (const char* strtarget = strb; strtarget < stre;) {
-				auto dr = unicode::utf8_to_code_point(strtarget, stre);
-				auto er = unicode::code_point_to_utf16(dr.codepoint);
+			auto count_units = [&needed_size](const unicode::encoded_result<char16_t> er) {
 				needed_size += er.code_units_size;
-				strtarget = dr.next;
-			}
+			};
+			convert(strb, stre, count_units);
 			S r(needed_size, static_cast<Ch>(0));
 			r.resize(needed_size);
 			Ch* target = &r[0];
-			for (const char* strtarget = strb; strtarget < stre;) {
-				auto dr = unicode::utf8_to_code_point(strtarget, stre);
-				auto er = unicode::code_point_to_utf16(dr.codepoint);
+			auto copy_units = [&target](const unicode::encoded_result<char16_t> er) {
 				std::memcpy(target, er.code_units.data(), er.code_units_size * sizeof(Ch));
-				strtarget = dr.next;
 				target += er.code_units_size;
-			}
+			};
+			convert(strb, stre, copy_units);
 			return r;
 		}
 
@@ -9059,6 +9074,24 @@ namespace stack {
 
 	template <typename Traits, typename Al>
 	struct getter<std::basic_string<char32_t, Traits, Al>> {
+		template <typename F>
+		static void convert(const char* strb, const char* stre, F&& f) {
+			char32_t cp = 0;
+			for (const char* strtarget = strb; strtarget < stre;) {
+				auto dr = unicode::utf8_to_code_point(strtarget, stre);
+				if (dr.error != unicode::error_code::ok) {
+					cp = unicode::unicode_detail::replacement;
+					++strtarget;
+				}
+				else {
+					cp = dr.codepoint;
+					strtarget = dr.next;
+				}
+				auto er = unicode::code_point_to_utf32(cp);
+				f(er);
+			}
+		}
+
 		template <typename S>
 		static S get_into(lua_State* L, int index, record& tracking) {
 			typedef typename S::value_type Ch;
@@ -9070,22 +9103,18 @@ namespace stack {
 			std::size_t needed_size = 0;
 			const char* strb = utf8p;
 			const char* stre = utf8p + len;
-			for (const char* strtarget = strb; strtarget < stre;) {
-				auto dr = unicode::utf8_to_code_point(strtarget, stre);
-				auto er = unicode::code_point_to_utf32(dr.codepoint);
+			auto count_units = [&needed_size](const unicode::encoded_result<char32_t> er) {
 				needed_size += er.code_units_size;
-				strtarget = dr.next;
-			}
+			};
+			convert(strb, stre, count_units);
 			S r(needed_size, static_cast<Ch>(0));
 			r.resize(needed_size);
 			Ch* target = &r[0];
-			for (const char* strtarget = strb; strtarget < stre;) {
-				auto dr = unicode::utf8_to_code_point(strtarget, stre);
-				auto er = unicode::code_point_to_utf32(dr.codepoint);
+			auto copy_units = [&target](const unicode::encoded_result<char32_t> er) {
 				std::memcpy(target, er.code_units.data(), er.code_units_size * sizeof(Ch));
-				strtarget = dr.next;
 				target += er.code_units_size;
-			}
+			};
+			convert(strb, stre, copy_units);
 			return r;
 		}
 
@@ -9100,8 +9129,15 @@ namespace stack {
 			string_view utf8 = stack::get<string_view>(L, index, tracking);
 			const char* strb = utf8.data();
 			const char* stre = utf8.data() + utf8.size();
+			char32_t cp = 0;
 			auto dr = unicode::utf8_to_code_point(strb, stre);
-			auto er = unicode::code_point_to_utf16(dr.codepoint);
+			if (dr.error != unicode::error_code::ok) {
+				cp = unicode::unicode_detail::replacement;
+			}
+			else {
+				cp = dr.codepoint;
+			}
+			auto er = unicode::code_point_to_utf16(cp);
 			return er.code_units[0];
 		}
 	};
@@ -9112,8 +9148,15 @@ namespace stack {
 			string_view utf8 = stack::get<string_view>(L, index, tracking);
 			const char* strb = utf8.data();
 			const char* stre = utf8.data() + utf8.size();
+			char32_t cp = 0;
 			auto dr = unicode::utf8_to_code_point(strb, stre);
-			auto er = unicode::code_point_to_utf32(dr.codepoint);
+			if (dr.error != unicode::error_code::ok) {
+				cp = unicode::unicode_detail::replacement;
+			}
+			else {
+				cp = dr.codepoint;
+			}
+			auto er = unicode::code_point_to_utf32(cp);
 			return er.code_units[0];
 		}
 	};
@@ -10197,9 +10240,16 @@ namespace stack {
 	struct pusher<const char16_t*> {
 		static int convert_into(lua_State* L, char* start, std::size_t, const char16_t* strb, const char16_t* stre) {
 			char* target = start;
+			char32_t cp = 0;
 			for (const char16_t* strtarget = strb; strtarget < stre;) {
 				auto dr = unicode::utf16_to_code_point(strtarget, stre);
-				auto er = unicode::code_point_to_utf8(dr.codepoint);
+				if (dr.error != unicode::error_code::ok) {
+					cp = unicode::unicode_detail::replacement;
+				}
+				else {
+					cp = dr.codepoint;
+				}
+				auto er = unicode::code_point_to_utf8(cp);
 				const char* utf8data = er.code_units.data();
 				std::memcpy(target, utf8data, er.code_units_size);
 				target += er.code_units_size;
@@ -10270,9 +10320,16 @@ namespace stack {
 	struct pusher<const char32_t*> {
 		static int convert_into(lua_State* L, char* start, std::size_t, const char32_t* strb, const char32_t* stre) {
 			char* target = start;
+			char32_t cp = 0;
 			for (const char32_t* strtarget = strb; strtarget < stre;) {
 				auto dr = unicode::utf32_to_code_point(strtarget, stre);
-				auto er = unicode::code_point_to_utf8(dr.codepoint);
+				if (dr.error != unicode::error_code::ok) {
+					cp = unicode::unicode_detail::replacement;
+				}
+				else {
+					cp = dr.codepoint;
+				}
+				auto er = unicode::code_point_to_utf8(cp);
 				const char* data = er.code_units.data();
 				std::memcpy(target, data, er.code_units_size);
 				target += er.code_units_size;

@@ -8,7 +8,7 @@ namespace sol {
 	// Everything here was lifted pretty much straight out of
 	// ogonek, because fuck figuring it out=
 	namespace unicode {
-		enum error_code {
+		enum class error_code {
 			ok = 0,
 			invalid_code_point,
 			invalid_code_unit,
@@ -100,6 +100,7 @@ namespace sol {
 			static constexpr int lead_surrogate_bitmask = 0xFFC00;
 			static constexpr int trail_surrogate_bitmask = 0x3FF;
 			static constexpr int lead_shifted_bits = 10;
+			static constexpr char32_t replacement = 0xFFFD;
 
 			static char32_t combine_surrogates(char16_t lead, char16_t trail) {
 				auto hi = lead - first_lead_surrogate;

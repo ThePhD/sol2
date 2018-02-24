@@ -467,6 +467,24 @@ namespace stack {
 
 	template <typename Traits, typename Al>
 	struct getter<std::basic_string<char16_t, Traits, Al>> {
+		template <typename F>
+		static void convert(const char* strb, const char* stre, F&& f) {
+			char32_t cp = 0;
+			for (const char* strtarget = strb; strtarget < stre;) {
+				auto dr = unicode::utf8_to_code_point(strtarget, stre);
+				if (dr.error != unicode::error_code::ok) {
+					cp = unicode::unicode_detail::replacement;
+					++strtarget;
+				}
+				else {
+					cp = dr.codepoint;
+					strtarget = dr.next;
+				}
+				auto er = unicode::code_point_to_utf16(cp);
+				f(er);
+			}
+		}
+
 		template <typename S>
 		static S get_into(lua_State* L, int index, record& tracking) {
 			typedef typename S::value_type Ch;
@@ -478,22 +496,18 @@ namespace stack {
 			std::size_t needed_size = 0;
 			const char* strb = utf8p;
 			const char* stre = utf8p + len;
-			for (const char* strtarget = strb; strtarget < stre;) {
-				auto dr = unicode::utf8_to_code_point(strtarget, stre);
-				auto er = unicode::code_point_to_utf16(dr.codepoint);
+			auto count_units = [&needed_size](const unicode::encoded_result<char16_t> er) {
 				needed_size += er.code_units_size;
-				strtarget = dr.next;
-			}
+			};
+			convert(strb, stre, count_units);
 			S r(needed_size, static_cast<Ch>(0));
 			r.resize(needed_size);
 			Ch* target = &r[0];
-			for (const char* strtarget = strb; strtarget < stre;) {
-				auto dr = unicode::utf8_to_code_point(strtarget, stre);
-				auto er = unicode::code_point_to_utf16(dr.codepoint);
+			auto copy_units = [&target](const unicode::encoded_result<char16_t> er) {
 				std::memcpy(target, er.code_units.data(), er.code_units_size * sizeof(Ch));
-				strtarget = dr.next;
 				target += er.code_units_size;
-			}
+			};
+			convert(strb, stre, copy_units);
 			return r;
 		}
 
@@ -504,6 +518,24 @@ namespace stack {
 
 	template <typename Traits, typename Al>
 	struct getter<std::basic_string<char32_t, Traits, Al>> {
+		template <typename F>
+		static void convert(const char* strb, const char* stre, F&& f) {
+			char32_t cp = 0;
+			for (const char* strtarget = strb; strtarget < stre;) {
+				auto dr = unicode::utf8_to_code_point(strtarget, stre);
+				if (dr.error != unicode::error_code::ok) {
+					cp = unicode::unicode_detail::replacement;
+					++strtarget;
+				}
+				else {
+					cp = dr.codepoint;
+					strtarget = dr.next;
+				}
+				auto er = unicode::code_point_to_utf32(cp);
+				f(er);
+			}
+		}
+
 		template <typename S>
 		static S get_into(lua_State* L, int index, record& tracking) {
 			typedef typename S::value_type Ch;
@@ -515,22 +547,18 @@ namespace stack {
 			std::size_t needed_size = 0;
 			const char* strb = utf8p;
 			const char* stre = utf8p + len;
-			for (const char* strtarget = strb; strtarget < stre;) {
-				auto dr = unicode::utf8_to_code_point(strtarget, stre);
-				auto er = unicode::code_point_to_utf32(dr.codepoint);
+			auto count_units = [&needed_size](const unicode::encoded_result<char32_t> er) {
 				needed_size += er.code_units_size;
-				strtarget = dr.next;
-			}
+			};
+			convert(strb, stre, count_units);
 			S r(needed_size, static_cast<Ch>(0));
 			r.resize(needed_size);
 			Ch* target = &r[0];
-			for (const char* strtarget = strb; strtarget < stre;) {
-				auto dr = unicode::utf8_to_code_point(strtarget, stre);
-				auto er = unicode::code_point_to_utf32(dr.codepoint);
+			auto copy_units = [&target](const unicode::encoded_result<char32_t> er) {
 				std::memcpy(target, er.code_units.data(), er.code_units_size * sizeof(Ch));
-				strtarget = dr.next;
 				target += er.code_units_size;
-			}
+			};
+			convert(strb, stre, copy_units);
 			return r;
 		}
 
@@ -545,8 +573,15 @@ namespace stack {
 			string_view utf8 = stack::get<string_view>(L, index, tracking);
 			const char* strb = utf8.data();
 			const char* stre = utf8.data() + utf8.size();
+			char32_t cp = 0;
 			auto dr = unicode::utf8_to_code_point(strb, stre);
-			auto er = unicode::code_point_to_utf16(dr.codepoint);
+			if (dr.error != unicode::error_code::ok) {
+				cp = unicode::unicode_detail::replacement;
+			}
+			else {
+				cp = dr.codepoint;
+			}
+			auto er = unicode::code_point_to_utf16(cp);
 			return er.code_units[0];
 		}
 	};
@@ -557,8 +592,15 @@ namespace stack {
 			string_view utf8 = stack::get<string_view>(L, index, tracking);
 			const char* strb = utf8.data();
 			const char* stre = utf8.data() + utf8.size();
+			char32_t cp = 0;
 			auto dr = unicode::utf8_to_code_point(strb, stre);
-			auto er = unicode::code_point_to_utf32(dr.codepoint);
+			if (dr.error != unicode::error_code::ok) {
+				cp = unicode::unicode_detail::replacement;
+			}
+			else {
+				cp = dr.codepoint;
+			}
+			auto er = unicode::code_point_to_utf32(cp);
 			return er.code_units[0];
 		}
 	};

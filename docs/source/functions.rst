@@ -29,17 +29,7 @@ There are a number of examples dealing with functions and how they can be bound 
 working with callables/lambdas
 ------------------------------
 
-To be explicit about wanting a struct to be interpreted as a function, use ``mytable.set_function( key, func_value );``. You can be explicit about wanting a function as well by using the :doc:`sol::as_function<../api/as_function>` call, which will wrap and identify your type as a function.
-
-.. note::
-
-	As of sol 2.18.1, the below 
-
-.. note::
-
-	Function objects ``obj`` -- a struct with a ``return_type operator()( ... )`` member defined on them, like all C++ lambdas -- are not interpreted as functions when you use ``set`` for ``mytable.set( key, value )`` and ``state.create_table(_with)( ... )``. This only happens automagically with ``mytable[key] = obj``.
-
-	Note that this also applies to calling functions, for example: ``my_state["table"]["sort"]( some_table, sorting_object );``.
+To be explicit about wanting a struct to be interpreted as a function, use ``mytable.set_function( key, func_value );``. You can also use the :doc:`sol::as_function<../api/as_function>` call, which will wrap and identify your type as a function.
 
 Furthermore, it is important to know that lambdas without a specified return type (and a non-const, non-reference-qualified ``auto``) will decay return values. To capture or return references explicitly, use ``decltype(auto)`` or specify the return type **exactly** as desired:
 
