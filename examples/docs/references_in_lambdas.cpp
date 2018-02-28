@@ -3,7 +3,7 @@
 
 #include "../assert.hpp"
 
-int main(int argc, char* argv[]) {
+int main(int, char*[]) {
 
 	struct test {
 		int blah = 0;

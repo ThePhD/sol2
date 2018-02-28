@@ -48,7 +48,9 @@ The first takes a table from the Lua stack at the specified index and allows a p
 
 These functions retrieve items from the table. The first one (``get``) can pull out *multiple* values, 1 for each key value passed into the function. In the case of multiple return values, it is returned in a ``std::tuple<Args...>``. It is similar to doing ``return table["a"], table["b"], table["c"]``. Because it returns a ``std::tuple``, you can use ``std::tie``/``std::make_tuple`` on a multi-get to retrieve all of the necessary variables. The second one (``traverse_get``) pulls out a *single* value,	using each successive key provided to do another lookup into the last. It is similar to doing ``x = table["a"]["b"]["c"][...]``.
 
-If the keys within nested queries try to traverse into a table that doesn't exist, the second lookup into the nil-returned variable and belong will cause a panic to be fired by the lua C API. If you need to check for keys, check with ``auto x = table.get<sol::optional<int>>( std::tie("a", "b", "c" ) );``, and then use the :doc:`optional<optional>` interface to check for errors. As a short-hand, easy method for returning a default if a value doesn't exist, you can use ``get_or`` instead.
+If the keys within nested queries try to traverse into a table that doesn't exist, it will first pull out a ``nil`` value. If there are further lookups past a key that do not exist, the additional lookups into the nil-returned variable will cause a panic to be fired by the lua C API. If you need to check for keys, check with ``auto x = table.get<sol::optional<int>>( std::tie("a", "b", "c" ) );``, and then use the :doc:`optional<optional>` interface to check for errors. As a short-hand, easy method for returning a default if a value doesn't exist, you can use ``get_or`` instead.
+
+This function does not create tables where they do not exist.
 
 .. code-block:: cpp
 	:caption: function: raw get / traversing raw get
@@ -67,6 +69,8 @@ If the keys within nested queries try to traverse into a table that doesn't exis
 	decltype(auto) raw_get_or(Key&& key, D&& otherwise) const;
 
 
+Similar to :ref:`get<get-value>`, but it does so "raw" (ignoring metamethods on the table's metatable).
+
 .. code-block:: cpp
 	:caption: function: set / traversing set
 	:name: set-value
@@ -78,6 +82,10 @@ If the keys within nested queries try to traverse into a table that doesn't exis
 	table& traverse_set(Args&&... args);
 
 These functions set items into the table. The first one (``set``) can set  *multiple* values, in the form ``key_a, value_a, key_b, value_b, ...``. It is similar to ``table[key_a] = value_a; table[key_b] = value_b, ...``. The second one (``traverse_set``) sets a *single* value, using all but the last argument as keys to do another lookup into the value retrieved prior to it. It is equivalent to ``table[key_a][key_b][...] = value;``.
+
+If the keys within nested queries try to traverse into a table that doesn't exist, it will first pull out a ``nil`` value. If there are further lookups past a key that do not exist, the additional lookups into the nil-returned variable will cause a panic to be fired by the lua C API.
+
+This function does not create tables where they do not exist.
 
 .. code-block:: cpp
 	:caption: function: raw set / traversing raw set
