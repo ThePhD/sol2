@@ -555,7 +555,11 @@ namespace sol {
 		template <typename T>
 		using is_string_like = any<
 			is_specialization_of<std::basic_string, meta::unqualified_t<T>>,
+#ifdef SOL_CXX17_FEATURES
+			is_specialization_of<std::basic_string_view, meta::unqualified_t<T>>,
+#else
 			is_specialization_of<basic_string_view, meta::unqualified_t<T>>,
+#endif
 			meta::all<std::is_array<unqualified_t<T>>, meta::any_same<meta::unqualified_t<std::remove_all_extents_t<meta::unqualified_t<T>>>, char, char16_t, char32_t, wchar_t>>
 		>;
 

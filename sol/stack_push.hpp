@@ -903,36 +903,14 @@ namespace stack {
 		}
 	};
 
-	template <typename Traits, typename Al>
-	struct pusher<std::basic_string<wchar_t, Traits, Al>> {
-		static int push(lua_State* L, const std::basic_string<wchar_t, Traits, Al>& wstr) {
+	template <typename Ch, typename Traits, typename Al>
+	struct pusher<std::basic_string<Ch, Traits, Al>, std::enable_if_t<!std::is_same<Ch, char>::value>> {
+		static int push(lua_State* L, const std::basic_string<Ch, Traits, Al>& wstr) {
 			return push(L, wstr, wstr.size());
 		}
 
-		static int push(lua_State* L, const std::basic_string<wchar_t, Traits, Al>& wstr, std::size_t sz) {
+		static int push(lua_State* L, const std::basic_string<Ch, Traits, Al>& wstr, std::size_t sz) {
 			return stack::push(L, wstr.data(), wstr.data() + sz);
-		}
-	};
-
-	template <typename Traits, typename Al>
-	struct pusher<std::basic_string<char16_t, Traits, Al>> {
-		static int push(lua_State* L, const std::basic_string<char16_t, Traits, Al>& u16str) {
-			return push(L, u16str, u16str.size());
-		}
-
-		static int push(lua_State* L, const std::basic_string<char16_t, Traits, Al>& u16str, std::size_t sz) {
-			return stack::push(L, u16str.data(), u16str.data() + sz);
-		}
-	};
-
-	template <typename Traits, typename Al>
-	struct pusher<std::basic_string<char32_t, Traits, Al>> {
-		static int push(lua_State* L, const std::basic_string<char32_t, Traits, Al>& u32str) {
-			return push(L, u32str, u32str.size());
-		}
-
-		static int push(lua_State* L, const std::basic_string<char32_t, Traits, Al>& u32str, std::size_t sz) {
-			return stack::push(L, u32str.data(), u32str.data() + sz);
 		}
 	};
 

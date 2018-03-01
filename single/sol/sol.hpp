@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-02-24 23:50:10.791344 UTC
-// This header was generated with sol v2.19.4 (revision 22c41d9)
+// Generated 2018-03-01 00:19:34.880908 UTC
+// This header was generated with sol v2.19.4 (revision b46b106)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1641,7 +1641,11 @@ namespace sol {
 		template <typename T>
 		using is_string_like = any<
 			is_specialization_of<std::basic_string, meta::unqualified_t<T>>,
+#ifdef SOL_CXX17_FEATURES
+			is_specialization_of<std::basic_string_view, meta::unqualified_t<T>>,
+#else
 			is_specialization_of<basic_string_view, meta::unqualified_t<T>>,
+#endif
 			meta::all<std::is_array<unqualified_t<T>>, meta::any_same<meta::unqualified_t<std::remove_all_extents_t<meta::unqualified_t<T>>>, char, char16_t, char32_t, wchar_t>>
 		>;
 
@@ -5326,20 +5330,23 @@ namespace sol {
 		template <typename T>
 		struct is_container<std::initializer_list<T>> : std::false_type {};
 
-		template <typename C, typename T, typename A>
-		struct is_container<std::basic_string<C, T, A>> : std::false_type {};
-
-		template <typename C, typename T>
-		struct is_container<basic_string_view<C, T>> : std::false_type {};
+		template <typename T>
+		struct is_container<T, std::enable_if_t<meta::is_string_like<meta::unqualified_t<T>>::value>> : std::false_type {};
 
 		template <typename T>
-		struct is_container<T, std::enable_if_t<meta::has_begin_end<meta::unqualified_t<T>>::value 
-			&& !is_initializer_list<meta::unqualified_t<T>>::value 
-			&& !meta::is_string_like<meta::unqualified_t<T>>::value
+		struct is_container<T, std::enable_if_t<meta::all<
+			std::is_array<meta::unqualified_t<T>>
+			, meta::neg<meta::any_same<std::remove_all_extents_t<meta::unqualified_t<T>>, char, wchar_t, char16_t, char32_t>>
+			>::value
 		>> : std::true_type {};
 
 		template <typename T>
-		struct is_container<T, std::enable_if_t<std::is_array<meta::unqualified_t<T>>::value && !meta::any_same<std::remove_all_extents_t<meta::unqualified_t<T>>, char, wchar_t, char16_t, char32_t>::value>> : std::true_type {};
+		struct is_container<T, std::enable_if_t<meta::all<
+			meta::has_begin_end<meta::unqualified_t<T>>
+			, meta::neg<is_initializer_list<meta::unqualified_t<T>>> 
+			, meta::neg<meta::is_string_like<meta::unqualified_t<T>>>
+		>::value
+		>> : std::true_type {};
 	} // namespace detail
 
 	template <typename T>
@@ -10451,36 +10458,14 @@ namespace stack {
 		}
 	};
 
-	template <typename Traits, typename Al>
-	struct pusher<std::basic_string<wchar_t, Traits, Al>> {
-		static int push(lua_State* L, const std::basic_string<wchar_t, Traits, Al>& wstr) {
+	template <typename Ch, typename Traits, typename Al>
+	struct pusher<std::basic_string<Ch, Traits, Al>, std::enable_if_t<!std::is_same<Ch, char>::value>> {
+		static int push(lua_State* L, const std::basic_string<Ch, Traits, Al>& wstr) {
 			return push(L, wstr, wstr.size());
 		}
 
-		static int push(lua_State* L, const std::basic_string<wchar_t, Traits, Al>& wstr, std::size_t sz) {
+		static int push(lua_State* L, const std::basic_string<Ch, Traits, Al>& wstr, std::size_t sz) {
 			return stack::push(L, wstr.data(), wstr.data() + sz);
-		}
-	};
-
-	template <typename Traits, typename Al>
-	struct pusher<std::basic_string<char16_t, Traits, Al>> {
-		static int push(lua_State* L, const std::basic_string<char16_t, Traits, Al>& u16str) {
-			return push(L, u16str, u16str.size());
-		}
-
-		static int push(lua_State* L, const std::basic_string<char16_t, Traits, Al>& u16str, std::size_t sz) {
-			return stack::push(L, u16str.data(), u16str.data() + sz);
-		}
-	};
-
-	template <typename Traits, typename Al>
-	struct pusher<std::basic_string<char32_t, Traits, Al>> {
-		static int push(lua_State* L, const std::basic_string<char32_t, Traits, Al>& u32str) {
-			return push(L, u32str, u32str.size());
-		}
-
-		static int push(lua_State* L, const std::basic_string<char32_t, Traits, Al>& u32str, std::size_t sz) {
-			return stack::push(L, u32str.data(), u32str.data() + sz);
 		}
 	};
 

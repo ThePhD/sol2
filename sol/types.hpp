@@ -859,20 +859,23 @@ namespace sol {
 		template <typename T>
 		struct is_container<std::initializer_list<T>> : std::false_type {};
 
-		template <typename C, typename T, typename A>
-		struct is_container<std::basic_string<C, T, A>> : std::false_type {};
-
-		template <typename C, typename T>
-		struct is_container<basic_string_view<C, T>> : std::false_type {};
+		template <typename T>
+		struct is_container<T, std::enable_if_t<meta::is_string_like<meta::unqualified_t<T>>::value>> : std::false_type {};
 
 		template <typename T>
-		struct is_container<T, std::enable_if_t<meta::has_begin_end<meta::unqualified_t<T>>::value 
-			&& !is_initializer_list<meta::unqualified_t<T>>::value 
-			&& !meta::is_string_like<meta::unqualified_t<T>>::value
+		struct is_container<T, std::enable_if_t<meta::all<
+			std::is_array<meta::unqualified_t<T>>
+			, meta::neg<meta::any_same<std::remove_all_extents_t<meta::unqualified_t<T>>, char, wchar_t, char16_t, char32_t>>
+			>::value
 		>> : std::true_type {};
 
 		template <typename T>
-		struct is_container<T, std::enable_if_t<std::is_array<meta::unqualified_t<T>>::value && !meta::any_same<std::remove_all_extents_t<meta::unqualified_t<T>>, char, wchar_t, char16_t, char32_t>::value>> : std::true_type {};
+		struct is_container<T, std::enable_if_t<meta::all<
+			meta::has_begin_end<meta::unqualified_t<T>>
+			, meta::neg<is_initializer_list<meta::unqualified_t<T>>> 
+			, meta::neg<meta::is_string_like<meta::unqualified_t<T>>>
+		>::value
+		>> : std::true_type {};
 	} // namespace detail
 
 	template <typename T>
