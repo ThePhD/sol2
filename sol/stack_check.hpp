@@ -242,7 +242,7 @@ namespace stack {
 			bool success = !lua_isnone(L, index);
 			if (!success) {
 				// expected type, actual type
-				handler(L, index, type::none, type_of(L, index), "");
+				handler(L, index, type::poly, type_of(L, index), "");
 			}
 			return success;
 		}

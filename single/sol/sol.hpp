@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-03-02 02:30:38.238868 UTC
-// This header was generated with sol v2.19.4 (revision 9bddce6)
+// Generated 2018-03-02 15:09:13.996712 UTC
+// This header was generated with sol v2.19.4 (revision 94a6390)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -7902,7 +7902,7 @@ namespace stack {
 			bool success = !lua_isnone(L, index);
 			if (!success) {
 				// expected type, actual type
-				handler(L, index, type::none, type_of(L, index), "");
+				handler(L, index, type::poly, type_of(L, index), "");
 			}
 			return success;
 		}
