@@ -1,7 +1,7 @@
 #define SOL_CHECK_ARGUMENTS 1
 
 #include <sol.hpp>
-#include <cassert>
+#include "../assert.hpp"
 
 struct vars {
 	int boop = 0;
@@ -23,10 +23,10 @@ int main() {
 	vars& beep = lua["beep"];
 	int bopvalue = lua["bopvalue"];
 
-	assert(beep.boop == 1);
-	assert(lua.get<vars>("beep").boop == 1);
-	assert(beep.bop() == 2);
-	assert(bopvalue == 2);
+	c_assert(beep.boop == 1);
+	c_assert(lua.get<vars>("beep").boop == 1);
+	c_assert(beep.bop() == 2);
+	c_assert(bopvalue == 2);
 
 	return 0;
 }

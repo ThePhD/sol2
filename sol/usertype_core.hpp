@@ -149,8 +149,8 @@ namespace sol {
 			// Do nothing if there's no support
 		}
 
-		template <typename T, typename Regs, meta::enable<meta::has_size<T>> = meta::enabler>
-		inline void make_length_op(Regs& l, int& index) {
+		template <typename T, typename Regs>
+		inline void make_length_op_const(std::true_type, Regs& l, int& index) {
 			const char* name = to_string(meta_function::length).c_str();
 #ifdef __clang__
 			l[index] = luaL_Reg{ name, &c_call<decltype(&T::size), &T::size> };
@@ -162,7 +162,25 @@ namespace sol {
 			++index;
 		}
 
-		template <typename T, typename Regs, meta::disable<meta::has_size<T>> = meta::enabler>
+		template <typename T, typename Regs>
+		inline void make_length_op_const(std::false_type, Regs& l, int& index) {
+			const char* name = to_string(meta_function::length).c_str();
+#ifdef __clang__
+			l[index] = luaL_Reg{ name, &c_call<decltype(&T::size), &T::size> };
+#else
+			typedef decltype(std::declval<T>().size()) R;
+			using sz_func = R(T::*)();
+			l[index] = luaL_Reg{ name, &c_call<decltype(static_cast<sz_func>(&T::size)), static_cast<sz_func>(&T::size)> };
+#endif
+			++index;
+		}
+
+		template <typename T, typename Regs, meta::enable<meta::has_size<T>, meta::has_size<const T>> = meta::enabler>
+		inline void make_length_op(Regs& l, int& index) {
+			make_length_op_const<T>(meta::has_size<const T>(), l, index);
+		}
+
+		template <typename T, typename Regs, meta::disable<meta::has_size<T>, meta::has_size<const T>> = meta::enabler>
 		inline void make_length_op(Regs&, int&) {
 			// Do nothing if there's no support
 		}

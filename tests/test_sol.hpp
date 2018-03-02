@@ -41,7 +41,6 @@
 #endif // Single
 #include <sol.hpp>
 
-#define CATCH_CONFIG_ALL_PARTS 1
 #include <catch.hpp>
 
 #define CHECK_VALID ( x ) { auto r = x; REQUIRE(r.valid()); }

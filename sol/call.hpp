@@ -673,9 +673,9 @@ namespace sol {
 				typedef meta::any<
 					std::is_void<U>,
 					std::is_same<U, no_prop>,
-					meta::is_specialization_of<var_wrapper, U>,
-					meta::is_specialization_of<constructor_wrapper, U>,
-					meta::is_specialization_of<constructor_list, U>,
+					meta::is_specialization_of<U, var_wrapper>,
+					meta::is_specialization_of<U, constructor_wrapper>,
+					meta::is_specialization_of<U, constructor_list>,
 					std::is_member_pointer<U>>
 					is_specialized;
 				return defer_call(is_specialized(), L, std::forward<F>(f), std::forward<Args>(args)...);

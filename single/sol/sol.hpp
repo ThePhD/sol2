@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-03-01 00:19:34.880908 UTC
-// This header was generated with sol v2.19.4 (revision b46b106)
+// Generated 2018-03-02 02:30:38.238868 UTC
+// This header was generated with sol v2.19.4 (revision 9bddce6)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1177,10 +1177,15 @@ namespace sol {
 		template <typename T>
 		using remove_member_pointer_t = remove_member_pointer<T>;
 
-		template <template <typename...> class Templ, typename T>
-		struct is_specialization_of : std::false_type {};
-		template <typename... T, template <typename...> class Templ>
-		struct is_specialization_of<Templ, Templ<T...>> : std::true_type {};
+		namespace meta_detail {
+			template <typename T, template <typename...> class Templ>
+			struct is_specialization_of : std::false_type {};
+			template <typename... T, template <typename...> class Templ>
+			struct is_specialization_of<Templ<T...>, Templ> : std::true_type {};
+		}
+
+		template <typename T, template <typename...> class Templ>
+		using is_specialization_of = meta_detail::is_specialization_of<std::remove_cv_t<T>, Templ>;
 
 		template <class T, class...>
 		struct all_same : std::true_type {};
@@ -1234,10 +1239,10 @@ namespace sol {
 		using enable = std::enable_if_t<all<Args...>::value, enable_t>;
 
 		template <typename... Args>
-		using enable_any = std::enable_if_t<any<Args...>::value, enable_t>;
+		using disable = std::enable_if_t<neg<all<Args...>>::value, enable_t>;
 
 		template <typename... Args>
-		using disable = std::enable_if_t<neg<all<Args...>>::value, enable_t>;
+		using enable_any = std::enable_if_t<any<Args...>::value, enable_t>;
 
 		template <typename... Args>
 		using disable_any = std::enable_if_t<neg<any<Args...>>::value, enable_t>;
@@ -1627,7 +1632,7 @@ namespace sol {
 		using has_insert_after = meta::boolean<meta_detail::has_insert_after_test<T>::value>;
 
 		template <typename T>
-		using has_size = meta::boolean<meta_detail::has_size_test<T>::value>;
+		using has_size = meta::boolean<meta_detail::has_size_test<T>::value || meta_detail::has_size_test<const T>::value>;
 
 		template <typename T>
 		struct is_associative : meta::all<has_key_type<T>, has_key_value_pair<T>, has_mapped_type<T>> {};
@@ -1640,11 +1645,11 @@ namespace sol {
 
 		template <typename T>
 		using is_string_like = any<
-			is_specialization_of<std::basic_string, meta::unqualified_t<T>>,
+			is_specialization_of<meta::unqualified_t<T>, std::basic_string>,
 #ifdef SOL_CXX17_FEATURES
-			is_specialization_of<std::basic_string_view, meta::unqualified_t<T>>,
+			is_specialization_of<meta::unqualified_t<T>, std::basic_string_view>,
 #else
-			is_specialization_of<basic_string_view, meta::unqualified_t<T>>,
+			is_specialization_of<meta::unqualified_t<T>, basic_string_view>,
 #endif
 			meta::all<std::is_array<unqualified_t<T>>, meta::any_same<meta::unqualified_t<std::remove_all_extents_t<meta::unqualified_t<T>>>, char, char16_t, char32_t, wchar_t>>
 		>;
@@ -1681,12 +1686,12 @@ namespace sol {
 		using is_not_move_only = neg<is_move_only<T>>;
 
 		namespace meta_detail {
-			template <typename T, meta::disable<meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>> = meta::enabler>
+			template <typename T, meta::disable<meta::is_specialization_of<meta::unqualified_t<T>, std::tuple>> = meta::enabler>
 			decltype(auto) force_tuple(T&& x) {
 				return std::forward_as_tuple(std::forward<T>(x));
 			}
 
-			template <typename T, meta::enable<meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>> = meta::enabler>
+			template <typename T, meta::enable<meta::is_specialization_of<meta::unqualified_t<T>, std::tuple>> = meta::enabler>
 			decltype(auto) force_tuple(T&& x) {
 				return std::forward<T>(x);
 			}
@@ -5585,8 +5590,8 @@ namespace sol {
 								 || std::is_base_of<reference, meta::unqualified_t<T>>::value
 								 || std::is_base_of<main_reference, meta::unqualified_t<T>>::value
 								 || std::is_base_of<stack_reference, meta::unqualified_t<T>>::value
-								 || meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>::value
-								 || meta::is_specialization_of<std::pair, meta::unqualified_t<T>>::value> {};
+								 || meta::is_specialization_of<meta::unqualified_t<T>, std::tuple>::value
+								 || meta::is_specialization_of<meta::unqualified_t<T>, std::pair>::value> {};
 
 	template <typename T>
 	struct is_lua_reference : std::integral_constant<bool,
@@ -5597,7 +5602,7 @@ namespace sol {
 	template <typename T>
 	struct is_lua_reference_or_proxy : std::integral_constant<bool,
 									is_lua_reference<meta::unqualified_t<T>>::value
-										|| meta::is_specialization_of<proxy, meta::unqualified_t<T>>::value> {};
+										|| meta::is_specialization_of<meta::unqualified_t<T>, proxy>::value> {};
 
 	template <typename T>
 	struct is_main_threaded : std::is_base_of<main_reference, T> {};
@@ -12878,9 +12883,9 @@ namespace sol {
 				typedef meta::any<
 					std::is_void<U>,
 					std::is_same<U, no_prop>,
-					meta::is_specialization_of<var_wrapper, U>,
-					meta::is_specialization_of<constructor_wrapper, U>,
-					meta::is_specialization_of<constructor_list, U>,
+					meta::is_specialization_of<U, var_wrapper>,
+					meta::is_specialization_of<U, constructor_wrapper>,
+					meta::is_specialization_of<U, constructor_list>,
 					std::is_member_pointer<U>>
 					is_specialized;
 				return defer_call(is_specialized(), L, std::forward<F>(f), std::forward<Args>(args)...);
@@ -13684,9 +13689,9 @@ namespace sol {
 				select_convertible<is_yielding>(types<Sigs...>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 
-			template <bool is_yielding, typename Fx, typename T, typename... Args, meta::disable<meta::is_specialization_of<function_detail::class_indicator, meta::unqualified_t<T>>> = meta::enabler>
+			template <bool is_yielding, typename Fx, typename T, typename... Args, meta::disable<meta::is_specialization_of<meta::unqualified_t<T>, function_detail::class_indicator>> = meta::enabler>
 			static void select_member_variable(std::true_type, lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
-				typedef meta::boolean<meta::is_specialization_of<std::reference_wrapper, meta::unqualified_t<T>>::value || std::is_pointer<T>::value> is_reference;
+				typedef meta::boolean<meta::is_specialization_of<meta::unqualified_t<T>, std::reference_wrapper>::value || std::is_pointer<T>::value> is_reference;
 				select_reference_member_variable<is_yielding>(is_reference(), L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
 			}
 
@@ -13737,9 +13742,9 @@ namespace sol {
 				select_member_variable<is_yielding>(meta::is_member_object<meta::unqualified_t<Fx>>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 
-			template <bool is_yielding, typename Fx, typename T, typename... Args, meta::disable<meta::is_specialization_of<function_detail::class_indicator, meta::unqualified_t<T>>> = meta::enabler>
+			template <bool is_yielding, typename Fx, typename T, typename... Args, meta::disable<meta::is_specialization_of<meta::unqualified_t<T>, function_detail::class_indicator>> = meta::enabler>
 			static void select_member_function(std::true_type, lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
-				typedef meta::boolean<meta::is_specialization_of<std::reference_wrapper, meta::unqualified_t<T>>::value || std::is_pointer<T>::value> is_reference;
+				typedef meta::boolean<meta::is_specialization_of<meta::unqualified_t<T>, std::reference_wrapper>::value || std::is_pointer<T>::value> is_reference;
 				select_reference_member_function<is_yielding>(is_reference(), L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
 			}
 
@@ -14640,7 +14645,7 @@ namespace sol {
 	template <typename Table, typename Key>
 	struct proxy : public proxy_base<proxy<Table, Key>> {
 	private:
-		typedef meta::condition<meta::is_specialization_of<std::tuple, Key>, Key, std::tuple<meta::condition<std::is_array<meta::unqualified_t<Key>>, Key&, meta::unqualified_t<Key>>>> key_type;
+		typedef meta::condition<meta::is_specialization_of<Key, std::tuple>, Key, std::tuple<meta::condition<std::is_array<meta::unqualified_t<Key>>, Key&, meta::unqualified_t<Key>>>> key_type;
 
 		template <typename T, std::size_t... I>
 		decltype(auto) tuple_get(std::index_sequence<I...>) const {
@@ -17181,8 +17186,8 @@ namespace sol {
 			// Do nothing if there's no support
 		}
 
-		template <typename T, typename Regs, meta::enable<meta::has_size<T>> = meta::enabler>
-		inline void make_length_op(Regs& l, int& index) {
+		template <typename T, typename Regs>
+		inline void make_length_op_const(std::true_type, Regs& l, int& index) {
 			const char* name = to_string(meta_function::length).c_str();
 #ifdef __clang__
 			l[index] = luaL_Reg{ name, &c_call<decltype(&T::size), &T::size> };
@@ -17194,7 +17199,25 @@ namespace sol {
 			++index;
 		}
 
-		template <typename T, typename Regs, meta::disable<meta::has_size<T>> = meta::enabler>
+		template <typename T, typename Regs>
+		inline void make_length_op_const(std::false_type, Regs& l, int& index) {
+			const char* name = to_string(meta_function::length).c_str();
+#ifdef __clang__
+			l[index] = luaL_Reg{ name, &c_call<decltype(&T::size), &T::size> };
+#else
+			typedef decltype(std::declval<T>().size()) R;
+			using sz_func = R(T::*)();
+			l[index] = luaL_Reg{ name, &c_call<decltype(static_cast<sz_func>(&T::size)), static_cast<sz_func>(&T::size)> };
+#endif
+			++index;
+		}
+
+		template <typename T, typename Regs, meta::enable<meta::has_size<T>, meta::has_size<const T>> = meta::enabler>
+		inline void make_length_op(Regs& l, int& index) {
+			make_length_op_const<T>(meta::has_size<const T>(), l, index);
+		}
+
+		template <typename T, typename Regs, meta::disable<meta::has_size<T>, meta::has_size<const T>> = meta::enabler>
 		inline void make_length_op(Regs&, int&) {
 			// Do nothing if there's no support
 		}
@@ -18443,7 +18466,7 @@ namespace sol {
 		: simple_usertype_metatable(L, meta::condition<meta::all<std::is_default_constructible<T>>, decltype(default_constructor), detail::check_destructor_tag>()) {
 		}
 
-		template <typename Arg, typename... Args, meta::disable_any<meta::any_same<meta::unqualified_t<Arg>, detail::verified_tag, detail::add_destructor_tag, detail::check_destructor_tag>, meta::is_specialization_of<constructors, meta::unqualified_t<Arg>>, meta::is_specialization_of<constructor_wrapper, meta::unqualified_t<Arg>>> = meta::enabler>
+		template <typename Arg, typename... Args, meta::disable_any<meta::any_same<meta::unqualified_t<Arg>, detail::verified_tag, detail::add_destructor_tag, detail::check_destructor_tag>, meta::is_specialization_of<meta::unqualified_t<Arg>, constructors>, meta::is_specialization_of<meta::unqualified_t<Arg>, constructor_wrapper>> = meta::enabler>
 		simple_usertype_metatable(lua_State* L, Arg&& arg, Args&&... args)
 		: simple_usertype_metatable(L, meta::condition<meta::all<std::is_default_constructible<T>, meta::neg<detail::has_constructor<Args...>>>, decltype(default_constructor), detail::check_destructor_tag>(), std::forward<Arg>(arg), std::forward<Args>(args)...) {
 		}
@@ -19403,12 +19426,12 @@ namespace sol {
 			set_resolved_function<R(Args...)>(std::forward<Key>(key), std::forward<Fx>(fx));
 		}
 
-		template <typename Fx, typename Key, meta::enable<meta::is_specialization_of<overload_set, meta::unqualified_t<Fx>>> = meta::enabler>
+		template <typename Fx, typename Key, meta::enable<meta::is_specialization_of<meta::unqualified_t<Fx>, overload_set>> = meta::enabler>
 		void set_fx(types<>, Key&& key, Fx&& fx) {
 			set(std::forward<Key>(key), std::forward<Fx>(fx));
 		}
 
-		template <typename Fx, typename Key, typename... Args, meta::disable<meta::is_specialization_of<overload_set, meta::unqualified_t<Fx>>> = meta::enabler>
+		template <typename Fx, typename Key, typename... Args, meta::disable<meta::is_specialization_of<meta::unqualified_t<Fx>, overload_set>> = meta::enabler>
 		void set_fx(types<>, Key&& key, Fx&& fx, Args&&... args) {
 			set(std::forward<Key>(key), as_function_reference(std::forward<Fx>(fx), std::forward<Args>(args)...));
 		}
@@ -20151,7 +20174,7 @@ namespace sol {
 			return pf();
 		}
 
-		template <typename Fx, meta::disable_any<meta::is_string_constructible<meta::unqualified_t<Fx>>, meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
+		template <typename Fx, meta::disable_any<meta::is_string_constructible<meta::unqualified_t<Fx>>, meta::is_specialization_of<meta::unqualified_t<Fx>, basic_environment>> = meta::enabler>
 		protected_function_result safe_script(const string_view& code, Fx&& on_error, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			protected_function_result pfr = do_string(code, chunkname, mode);
 			if (!pfr.valid()) {
@@ -20178,7 +20201,7 @@ namespace sol {
 			return safe_script(code, script_default_on_error, chunkname, mode);
 		}
 
-		template <typename Fx, meta::disable_any<meta::is_string_constructible<meta::unqualified_t<Fx>>, meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
+		template <typename Fx, meta::disable_any<meta::is_string_constructible<meta::unqualified_t<Fx>>, meta::is_specialization_of<meta::unqualified_t<Fx>, basic_environment>> = meta::enabler>
 		protected_function_result safe_script_file(const std::string& filename, Fx&& on_error, load_mode mode = load_mode::any) {
 			protected_function_result pfr = do_file(filename, mode);
 			if (!pfr.valid()) {
@@ -20253,12 +20276,12 @@ namespace sol {
 			return unsafe_function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
 		}
 
-		template <typename Fx, meta::disable_any<meta::is_string_constructible<meta::unqualified_t<Fx>>, meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
+		template <typename Fx, meta::disable_any<meta::is_string_constructible<meta::unqualified_t<Fx>>, meta::is_specialization_of<meta::unqualified_t<Fx>, basic_environment>> = meta::enabler>
 		protected_function_result script(const string_view& code, Fx&& on_error, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return safe_script(code, std::forward<Fx>(on_error), chunkname, mode);
 		}
 
-		template <typename Fx, meta::disable_any<meta::is_string_constructible<meta::unqualified_t<Fx>>, meta::is_specialization_of<basic_environment, meta::unqualified_t<Fx>>> = meta::enabler>
+		template <typename Fx, meta::disable_any<meta::is_string_constructible<meta::unqualified_t<Fx>>, meta::is_specialization_of<meta::unqualified_t<Fx>, basic_environment>> = meta::enabler>
 		protected_function_result script_file(const std::string& filename, Fx&& on_error, load_mode mode = load_mode::any) {
 			return safe_script_file(filename, std::forward<Fx>(on_error), mode);
 		}

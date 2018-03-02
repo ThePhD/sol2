@@ -1114,8 +1114,8 @@ namespace sol {
 								 || std::is_base_of<reference, meta::unqualified_t<T>>::value
 								 || std::is_base_of<main_reference, meta::unqualified_t<T>>::value
 								 || std::is_base_of<stack_reference, meta::unqualified_t<T>>::value
-								 || meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>::value
-								 || meta::is_specialization_of<std::pair, meta::unqualified_t<T>>::value> {};
+								 || meta::is_specialization_of<meta::unqualified_t<T>, std::tuple>::value
+								 || meta::is_specialization_of<meta::unqualified_t<T>, std::pair>::value> {};
 
 	template <typename T>
 	struct is_lua_reference : std::integral_constant<bool,
@@ -1126,7 +1126,7 @@ namespace sol {
 	template <typename T>
 	struct is_lua_reference_or_proxy : std::integral_constant<bool,
 									is_lua_reference<meta::unqualified_t<T>>::value
-										|| meta::is_specialization_of<proxy, meta::unqualified_t<T>>::value> {};
+										|| meta::is_specialization_of<meta::unqualified_t<T>, proxy>::value> {};
 
 	template <typename T>
 	struct is_main_threaded : std::is_base_of<main_reference, T> {};

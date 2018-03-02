@@ -74,6 +74,10 @@ if (MSVC)
 	add_definitions(/DUNICODE /D_UNICODE /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
 	# Warning level, exceptions
 	add_compile_options(/W4 /EHsc)
+	add_compile_options("$<$<CONFIG:Debug>:/MDd>"
+		"$<$<CONFIG:Release>:/MD>"
+		"$<$<CONFIG:RelWithDebInfo>:/MD>"
+		"$<$<CONFIG:MinSizeRel>:/MD>")
 	if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 		add_compile_options(/MP)
 	endif()

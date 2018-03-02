@@ -91,10 +91,15 @@ namespace sol {
 		template <typename T>
 		using remove_member_pointer_t = remove_member_pointer<T>;
 
-		template <template <typename...> class Templ, typename T>
-		struct is_specialization_of : std::false_type {};
-		template <typename... T, template <typename...> class Templ>
-		struct is_specialization_of<Templ, Templ<T...>> : std::true_type {};
+		namespace meta_detail {
+			template <typename T, template <typename...> class Templ>
+			struct is_specialization_of : std::false_type {};
+			template <typename... T, template <typename...> class Templ>
+			struct is_specialization_of<Templ<T...>, Templ> : std::true_type {};
+		}
+
+		template <typename T, template <typename...> class Templ>
+		using is_specialization_of = meta_detail::is_specialization_of<std::remove_cv_t<T>, Templ>;
 
 		template <class T, class...>
 		struct all_same : std::true_type {};
@@ -148,10 +153,10 @@ namespace sol {
 		using enable = std::enable_if_t<all<Args...>::value, enable_t>;
 
 		template <typename... Args>
-		using enable_any = std::enable_if_t<any<Args...>::value, enable_t>;
+		using disable = std::enable_if_t<neg<all<Args...>>::value, enable_t>;
 
 		template <typename... Args>
-		using disable = std::enable_if_t<neg<all<Args...>>::value, enable_t>;
+		using enable_any = std::enable_if_t<any<Args...>::value, enable_t>;
 
 		template <typename... Args>
 		using disable_any = std::enable_if_t<neg<any<Args...>>::value, enable_t>;
@@ -541,7 +546,7 @@ namespace sol {
 		using has_insert_after = meta::boolean<meta_detail::has_insert_after_test<T>::value>;
 
 		template <typename T>
-		using has_size = meta::boolean<meta_detail::has_size_test<T>::value>;
+		using has_size = meta::boolean<meta_detail::has_size_test<T>::value || meta_detail::has_size_test<const T>::value>;
 
 		template <typename T>
 		struct is_associative : meta::all<has_key_type<T>, has_key_value_pair<T>, has_mapped_type<T>> {};
@@ -554,11 +559,11 @@ namespace sol {
 
 		template <typename T>
 		using is_string_like = any<
-			is_specialization_of<std::basic_string, meta::unqualified_t<T>>,
+			is_specialization_of<meta::unqualified_t<T>, std::basic_string>,
 #ifdef SOL_CXX17_FEATURES
-			is_specialization_of<std::basic_string_view, meta::unqualified_t<T>>,
+			is_specialization_of<meta::unqualified_t<T>, std::basic_string_view>,
 #else
-			is_specialization_of<basic_string_view, meta::unqualified_t<T>>,
+			is_specialization_of<meta::unqualified_t<T>, basic_string_view>,
 #endif
 			meta::all<std::is_array<unqualified_t<T>>, meta::any_same<meta::unqualified_t<std::remove_all_extents_t<meta::unqualified_t<T>>>, char, char16_t, char32_t, wchar_t>>
 		>;
@@ -595,12 +600,12 @@ namespace sol {
 		using is_not_move_only = neg<is_move_only<T>>;
 
 		namespace meta_detail {
-			template <typename T, meta::disable<meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>> = meta::enabler>
+			template <typename T, meta::disable<meta::is_specialization_of<meta::unqualified_t<T>, std::tuple>> = meta::enabler>
 			decltype(auto) force_tuple(T&& x) {
 				return std::forward_as_tuple(std::forward<T>(x));
 			}
 
-			template <typename T, meta::enable<meta::is_specialization_of<std::tuple, meta::unqualified_t<T>>> = meta::enabler>
+			template <typename T, meta::enable<meta::is_specialization_of<meta::unqualified_t<T>, std::tuple>> = meta::enabler>
 			decltype(auto) force_tuple(T&& x) {
 				return std::forward<T>(x);
 			}
