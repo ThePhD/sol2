@@ -7899,12 +7899,7 @@ namespace stack {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
-			bool success = !lua_isnone(L, index);
-			if (!success) {
-				// expected type, actual type
-				handler(L, index, type::poly, type_of(L, index), "");
-			}
-			return success;
+			return true;
 		}
 	};
 

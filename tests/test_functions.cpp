@@ -1490,6 +1490,54 @@ TEST_CASE("functions/unique_usertype overloading", "make sure overloading can wo
 	};
 }
 
+TEST_CASE("functions/lua style default arguments", "allow default arguments using sol::reference and sol::object") {
+	auto def_f1 = [](sol::object defaulted) -> int {
+		bool inactive = defaulted == sol::lua_nil; // inactive by default
+		if (inactive) {
+			return 20;
+		}
+		return 10;
+	};
+	auto def_f2 = [](sol::reference defaulted) -> int {
+		bool inactive = defaulted == sol::lua_nil; // inactive by default
+		if (inactive) {
+			return 20;
+		}
+		return 10;
+	};
+	auto def_f3 = [](sol::stack_reference defaulted) -> int {
+		bool inactive = defaulted == sol::lua_nil; // inactive by default
+		if (inactive) {
+			return 20;
+		}
+		return 10;
+	};
+
+	sol::state lua;
+	lua.set_function("f1", def_f1);
+	lua.set_function("f2", def_f2);
+	lua.set_function("f3", def_f3);
+
+	auto result = lua.safe_script(R"(
+		v1d, v1nd = f1(), f1(1)
+		v2d, v2nd = f2(), f2(1)
+		v3d, v3nd = f3(), f3(1)
+	)", sol::script_pass_on_error);
+	REQUIRE(result.valid());
+	int v1d = lua["v1d"];
+	int v1nd = lua["v1nd"];
+	int v2d = lua["v2d"];
+	int v2nd = lua["v2nd"];
+	int v3d = lua["v3d"];
+	int v3nd = lua["v3nd"];
+	REQUIRE(20 == v1d);
+	REQUIRE(20 == v2d);
+	REQUIRE(20 == v3d);
+	REQUIRE(10 == v1nd);
+	REQUIRE(10 == v2nd);
+	REQUIRE(10 == v3nd);
+}
+
 #if !defined(_MSC_VER) || !(defined(_WIN32) && !defined(_WIN64))
 
 TEST_CASE("functions/noexcept", "allow noexcept functions to be serialized properly into Lua using sol2") {

@@ -135,15 +135,16 @@ namespace stack {
 		typedef std::integral_constant<bool, V_size::value == 0> V_is_empty;
 
 		template <typename Handler>
-		static optional<V> get_empty(std::true_type, lua_State* L, int index, Handler&& handler, record& tracking) {
+		static optional<V> get_empty(std::true_type, lua_State*, int, Handler&&, record&) {
 			return nullopt;
 		}
 
 		template <typename Handler>
-		static optional<V> get_empty(std::false_type, lua_State* L, int index, Handler&& handler, record& tracking) {
+		static optional<V> get_empty(std::false_type, lua_State* L, int index, Handler&& handler, record&) {
 			typedef std::variant_alternative_t<0, V> T;
 			// This should never be reached...
 			// please check your code and understand what you did to bring yourself here
+			// maybe file a bug report, or 5
 			handler(L, index, type::poly, type_of(L, index), "this variant code should never be reached: if it has, you have done something so terribly wrong");
 			return nullopt;
 		}
