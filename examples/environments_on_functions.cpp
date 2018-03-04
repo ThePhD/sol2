@@ -77,5 +77,6 @@ int main(int, char**) {
 
 	lua.script("check_f_env(f)");
 	lua.script("check_g_env(g)");
+
 	return 0;
 }

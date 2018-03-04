@@ -52,11 +52,11 @@ namespace stack {
 		template <typename Handler>
 		static optional<T> get(lua_State* L, int index, Handler&& handler, record& tracking) {
 			// actually check if it's none here, otherwise
-			// we'll have a nil object inside an optional!
-			bool success = !lua_isnoneornil(L, index);
+			// we'll have a none object inside an optional!
+			bool success = !lua_isnone(L, index);
 			if (!success) {
 				// expected type, actual type
-				tracking.use(static_cast<int>(!lua_isnone(L, index)));
+				tracking.use(static_cast<int>(success));
 				handler(L, index, type::poly, type_of(L, index), "");
 				return nullopt;
 			}
