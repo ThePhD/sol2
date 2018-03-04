@@ -51,12 +51,12 @@ namespace stack {
 	struct check_getter<T, std::enable_if_t<is_lua_reference<T>::value>> {
 		template <typename Handler>
 		static optional<T> get(lua_State* L, int index, Handler&& handler, record& tracking) {
-			tracking.use(1);
 			// actually check if it's none here, otherwise
 			// we'll have a nil object inside an optional!
 			bool success = !lua_isnoneornil(L, index);
 			if (!success) {
 				// expected type, actual type
+				tracking.use(static_cast<int>(!lua_isnone(L, index)));
 				handler(L, index, type::poly, type_of(L, index), "");
 				return nullopt;
 			}

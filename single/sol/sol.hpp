@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-03-03 20:38:52.222840 UTC
-// This header was generated with sol v2.19.5 (revision 2e1fcd3)
+// Generated 2018-03-04 10:40:19.748536 UTC
+// This header was generated with sol v2.19.5 (revision ab5b417)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -9472,12 +9472,12 @@ namespace stack {
 	struct check_getter<T, std::enable_if_t<is_lua_reference<T>::value>> {
 		template <typename Handler>
 		static optional<T> get(lua_State* L, int index, Handler&& handler, record& tracking) {
-			tracking.use(1);
 			// actually check if it's none here, otherwise
 			// we'll have a nil object inside an optional!
 			bool success = !lua_isnoneornil(L, index);
 			if (!success) {
 				// expected type, actual type
+				tracking.use(static_cast<int>(!lua_isnone(L, index)));
 				handler(L, index, type::poly, type_of(L, index), "");
 				return nullopt;
 			}
