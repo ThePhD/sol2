@@ -10,6 +10,8 @@ config
 
 Note that you can obtain safety with regards to functions you bind by using the :doc:`protect<api/protect>` wrapper around function/variable bindings you set into Lua. Additionally, you can have basic boolean checks when using the API by just converting to a :doc:`sol::optional\<T><api/optional>` when necessary for getting things out of Lua and for function arguments.
 
+Also note that you can have your own states use sol2's safety panics and similar to protect your code from crashes. See :ref:`sol::state automatic handlers<state-automatic-handlers>` for more details.
+
 .. _config-safety:
 
 Safety Config
@@ -43,6 +45,13 @@ Safety Config
 	* ``sol::stack::get`` (used everywhere) defaults to using ``sol::stack::check_get`` and dereferencing the argument. It uses ``sol::type_panic`` as the handler if something goes wrong
 	* Affects nearly the entire library for safety (with some blind spots covered by the other definitions)
 	* **Not** turned on by default under any settings: *this MUST be turned on manually*
+
+``SOL_DEFAULT_PASS_ON_ERROR`` triggers the following changes:
+	* The default error handler for ``sol::state_view::script_`` functions is ``sol::script_pass_on_error`` rather than ``sol::script_throw_on_error``
+	* Passes errors on through: **very dangerous** as you can ignore or never be warned about errors if you don't catch the return value of specific functions
+	* **Not** turned on by default: *this MUST be turned on manually*
+	* Don't turn this on unless you have an extremely good reason
+	* *DON'T TURN THIS ON UNLESS YOU HAVE AN EXTREMELY GOOD REASON*
 
 ``SOL_CHECK_ARGUMENTS`` triggers the following changes:
 	* If ``SOL_SAFE_USERTYPE``, ``SOL_SAFE_REFERENCES``, ``SOL_SAFE_FUNCTION``, ``SOL_SAFE_NUMERICS``, ``SOL_SAFE_GETTER``, and ``SOL_SAFE_FUNCTION_CALLS`` are not defined, they get defined and the effects described above kick in

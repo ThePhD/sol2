@@ -17,12 +17,17 @@ The majority of the members between ``state_view`` and :doc:`sol::table<table>` 
 
 .. _state-automatic-handlers:
 
-One last thing you should understand: constructing a ``sol::state`` does a few things behind-the-scenes for you, mostly to ensure compatibility. They are as follows:
+``sol::state`` automatic handlers
+---------------------------------
+
+One last thing you should understand: constructing a ``sol::state`` does a few things behind-the-scenes for you, mostly to ensure compatibility and good error handler/error handling. The function it uses to do this is ``set_default_state``. They are as follows:
 
 * set a default panic handler with ``state_view::set_panic``
 * set a default ``sol::protected_function`` handler with ``sol::protected_function::set_default_handler``, using a ``sol::reference`` to ``&sol::detail::default_traceback_error_handler`` as the default handler function
 * register the state as the main thread (only does something for Lua 5.1, which does not have a way to get the main thread) using ``sol::stack::register_main_thread(L)``
 * register the LuaJIT C function exception handler with ``stack::luajit_exception_handler(L)``
+
+sol::state_view does none of these things for you. If you want to make sure your self-created or self-managed state has the same properties, please apply this function once to the state. Please note that it will override your panic handler and, if using LuaJIT, your LuaJIT C function handler.
 
 .. warning::
 

@@ -5,7 +5,7 @@ since somebody is going to ask about it...
 
 Yes, you can turn off exceptions in Sol with ``#define SOL_NO_EXCEPTIONS`` before including or by passing the command line argument that defines ``SOL_NO_EXCEPTIONS``. We don't recommend it unless you're playing with a Lua distro that also doesn't play nice with exceptions (like non-x64 versions of :ref:`LuaJIT<LuaJIT and exceptions>` ).
 
-If you turn this off, the default `at_panic`_ function :doc:`state<api/state>` set for you will not throw. Instead, the default Lua behavior of aborting will take place (and give you no chance of escape unless you implement your own at_panic function and decide to try ``longjmp`` out).
+If you turn this off, the default `at_panic`_ function :doc:`state<api/state>` set for you will not throw  (see :ref:`sol::state automatic handlers<state-automatic-handlers>` for more details). Instead, the default Lua behavior of aborting will take place (and give you no chance of escape unless you implement your own at_panic function and decide to try ``longjmp`` out).
 
 To make this not be the case, you can set a panic function directly with ``lua_atpanic( lua, my_panic_function );`` or when you create the ``sol::state`` with ``sol::state lua(my_panic_function);``. Here's an example ``my_panic_function`` you can have that prints out its errors:
 

@@ -29,63 +29,19 @@
 
 namespace sol {
 
-	namespace detail {
-		inline int default_at_panic(lua_State* L) {
-#ifdef SOL_NO_EXCEPTIONS
-			(void)L;
-			return -1;
-#else
-			size_t messagesize;
-			const char* message = lua_tolstring(L, -1, &messagesize);
-			if (message) {
-				std::string err(message, messagesize);
-				lua_settop(L, 0);
-				throw error(err);
-			}
-			lua_settop(L, 0);
-			throw error(std::string("An unexpected error occurred and forced the lua state to call atpanic"));
-#endif
-		}
-
-		inline int default_traceback_error_handler(lua_State* L) {
-			using namespace sol;
-			std::string msg = "An unknown error has triggered the default error handler";
-			optional<string_view> maybetopmsg = stack::check_get<string_view>(L, 1);
-			if (maybetopmsg) {
-				const string_view& topmsg = maybetopmsg.value();
-				msg.assign(topmsg.data(), topmsg.size());
-			}
-			luaL_traceback(L, L, msg.c_str(), 1);
-			optional<string_view> maybetraceback = stack::check_get<string_view>(L, -1);
-			if (maybetraceback) {
-				const string_view& traceback = maybetraceback.value();
-				msg.assign(traceback.data(), traceback.size());
-			}
-			return stack::push(L, msg);
-		}
-	} // namespace detail
-
 	class state : private std::unique_ptr<lua_State, detail::state_deleter>, public state_view {
 	private:
 		typedef std::unique_ptr<lua_State, detail::state_deleter> unique_base;
 
 	public:
-		state(lua_CFunction panic = detail::default_at_panic)
+		state(lua_CFunction panic = default_at_panic)
 		: unique_base(luaL_newstate()), state_view(unique_base::get()) {
-			set_panic(panic);
-			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
-			protected_function::set_default_handler(object(lua_state(), in_place, f));
-			stack::register_main_thread(unique_base::get());
-			stack::luajit_exception_handler(unique_base::get());
+			set_default_state(unique_base::get(), panic);
 		}
 
 		state(lua_CFunction panic, lua_Alloc alfunc, void* alpointer = nullptr)
 		: unique_base(lua_newstate(alfunc, alpointer)), state_view(unique_base::get()) {
-			set_panic(panic);
-			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
-			protected_function::set_default_handler(object(lua_state(), in_place, f));
-			stack::register_main_thread(unique_base::get());
-			stack::luajit_exception_handler(unique_base::get());
+			set_default_state(unique_base::get(), panic);
 		}
 
 		state(const state&) = delete;

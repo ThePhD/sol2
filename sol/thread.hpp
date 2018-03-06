@@ -77,20 +77,6 @@ namespace sol {
 				return lts;
 			}
 		};
-
-		inline void register_main_thread(lua_State* L) {
-#if SOL_LUA_VERSION < 502
-			if (L == nullptr) {
-				lua_pushnil(L);
-				lua_setglobal(L, detail::default_main_thread_name());
-				return;
-			}
-			lua_pushthread(L);
-			lua_setglobal(L, detail::default_main_thread_name());
-#else
-			(void)L;
-#endif
-		}
 	} // namespace stack
 
 	template <typename base_t>
