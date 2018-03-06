@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-03-06 03:55:05.726661 UTC
-// This header was generated with sol v2.19.5 (revision 68738cd)
+// Generated 2018-03-06 22:35:07.056602 UTC
+// This header was generated with sol v2.19.5 (revision 0fe9b16)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -19868,7 +19868,13 @@ namespace sol {
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
+#if defined(_MSC_VER) && _MSC_VER == 1913
+			// This compiler is bananas
+			// B, A N A N A S
+			return get<protected_function>().call<Ret...>(std::forward<Args>(args)...);
+#else
 			return get<protected_function>().template call<Ret...>(std::forward<Args>(args)...);
+#endif
 		}
 
 		template <typename... Args>
