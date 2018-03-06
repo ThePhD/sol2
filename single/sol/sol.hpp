@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-03-04 15:57:05.305097 UTC
-// This header was generated with sol v2.19.5 (revision e8119ec)
+// Generated 2018-03-06 03:55:05.726661 UTC
+// This header was generated with sol v2.19.5 (revision 68738cd)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5083,6 +5083,37 @@ namespace sol {
 		new_table(int sequence_hint, int map_hint = 0)
 		: sequence_hint(sequence_hint), map_hint(map_hint) {
 		}
+	};
+
+	enum class lib : char {
+		// print, assert, and other base functions
+		base,
+		// require and other package functions
+		package,
+		// coroutine functions and utilities
+		coroutine,
+		// string library
+		string,
+		// functionality from the OS
+		os,
+		// all things math
+		math,
+		// the table manipulator and observer functions
+		table,
+		// the debug library
+		debug,
+		// the bit library: different based on which you're using
+		bit32,
+		// input/output library
+		io,
+		// LuaJIT only
+		ffi,
+		// LuaJIT only
+		jit,
+		// library for handling utf8: new to Lua
+		utf8,
+		// do not use
+		count
 	};
 
 	enum class call_syntax {
@@ -19860,37 +19891,62 @@ namespace sol {
 
 // end of sol/load_result.hpp
 
+// beginning of sol/state_handling.hpp
+
 namespace sol {
-	enum class lib : char {
-		// print, assert, and other base functions
-		base,
-		// require and other package functions
-		package,
-		// coroutine functions and utilities
-		coroutine,
-		// string library
-		string,
-		// functionality from the OS
-		os,
-		// all things math
-		math,
-		// the table manipulator and observer functions
-		table,
-		// the debug library
-		debug,
-		// the bit library: different based on which you're using
-		bit32,
-		// input/output library
-		io,
-		// LuaJIT only
-		ffi,
-		// LuaJIT only
-		jit,
-		// library for handling utf8: new to Lua
-		utf8,
-		// do not use
-		count
-	};
+	inline void register_main_thread(lua_State* L) {
+#if SOL_LUA_VERSION < 502
+		if (L == nullptr) {
+			lua_pushnil(L);
+			lua_setglobal(L, detail::default_main_thread_name());
+			return;
+		}
+		lua_pushthread(L);
+		lua_setglobal(L, detail::default_main_thread_name());
+#else
+		(void)L;
+#endif
+	}
+
+	inline int default_at_panic(lua_State* L) {
+#ifdef SOL_NO_EXCEPTIONS
+		(void)L;
+		return -1;
+#else
+		size_t messagesize;
+		const char* message = lua_tolstring(L, -1, &messagesize);
+		if (message) {
+			std::string err(message, messagesize);
+			lua_settop(L, 0);
+			throw error(err);
+		}
+		lua_settop(L, 0);
+		throw error(std::string("An unexpected error occurred and forced the lua state to call atpanic"));
+#endif
+	}
+
+	inline int default_traceback_error_handler(lua_State* L) {
+		std::string msg = "An unknown error has triggered the default error handler";
+		sol::optional<sol::string_view> maybetopmsg = stack::check_get<string_view>(L, 1);
+		if (maybetopmsg) {
+			const string_view& topmsg = maybetopmsg.value();
+			msg.assign(topmsg.data(), topmsg.size());
+		}
+		luaL_traceback(L, L, msg.c_str(), 1);
+		optional<sol::string_view> maybetraceback = stack::check_get<string_view>(L, -1);
+		if (maybetraceback) {
+			const sol::string_view& traceback = maybetraceback.value();
+			msg.assign(traceback.data(), traceback.size());
+		}
+		return stack::push(L, msg);
+	}
+
+	inline void set_default_state(lua_State* L, lua_CFunction panic_function = &default_at_panic, lua_CFunction traceback_function = c_call<decltype(&default_traceback_error_handler), &default_traceback_error_handler>) {
+		lua_atpanic(L, panic_function);
+		protected_function::set_default_handler(object(L, in_place, traceback_function));
+		register_main_thread(L);
+		stack::luajit_exception_handler(L);
+	}
 
 	inline std::size_t total_memory_used(lua_State* L) {
 		std::size_t kb = lua_gc(L, LUA_GCCOUNT, 0);
@@ -19963,6 +20019,11 @@ namespace sol {
 		return script_throw_on_error(L, std::move(pfr));
 #endif
 	}
+} // namespace sol
+
+// end of sol/state_handling.hpp
+
+namespace sol {
 
 	class state_view {
 	private:
@@ -20646,20 +20707,6 @@ namespace sol {
 				return lts;
 			}
 		};
-
-		inline void register_main_thread(lua_State* L) {
-#if SOL_LUA_VERSION < 502
-			if (L == nullptr) {
-				lua_pushnil(L);
-				lua_setglobal(L, detail::default_main_thread_name());
-				return;
-			}
-			lua_pushthread(L);
-			lua_setglobal(L, detail::default_main_thread_name());
-#else
-			(void)L;
-#endif
-		}
 	} // namespace stack
 
 	template <typename base_t>
@@ -20777,63 +20824,19 @@ namespace sol {
 
 namespace sol {
 
-	namespace detail {
-		inline int default_at_panic(lua_State* L) {
-#ifdef SOL_NO_EXCEPTIONS
-			(void)L;
-			return -1;
-#else
-			size_t messagesize;
-			const char* message = lua_tolstring(L, -1, &messagesize);
-			if (message) {
-				std::string err(message, messagesize);
-				lua_settop(L, 0);
-				throw error(err);
-			}
-			lua_settop(L, 0);
-			throw error(std::string("An unexpected error occurred and forced the lua state to call atpanic"));
-#endif
-		}
-
-		inline int default_traceback_error_handler(lua_State* L) {
-			using namespace sol;
-			std::string msg = "An unknown error has triggered the default error handler";
-			optional<string_view> maybetopmsg = stack::check_get<string_view>(L, 1);
-			if (maybetopmsg) {
-				const string_view& topmsg = maybetopmsg.value();
-				msg.assign(topmsg.data(), topmsg.size());
-			}
-			luaL_traceback(L, L, msg.c_str(), 1);
-			optional<string_view> maybetraceback = stack::check_get<string_view>(L, -1);
-			if (maybetraceback) {
-				const string_view& traceback = maybetraceback.value();
-				msg.assign(traceback.data(), traceback.size());
-			}
-			return stack::push(L, msg);
-		}
-	} // namespace detail
-
 	class state : private std::unique_ptr<lua_State, detail::state_deleter>, public state_view {
 	private:
 		typedef std::unique_ptr<lua_State, detail::state_deleter> unique_base;
 
 	public:
-		state(lua_CFunction panic = detail::default_at_panic)
+		state(lua_CFunction panic = default_at_panic)
 		: unique_base(luaL_newstate()), state_view(unique_base::get()) {
-			set_panic(panic);
-			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
-			protected_function::set_default_handler(object(lua_state(), in_place, f));
-			stack::register_main_thread(unique_base::get());
-			stack::luajit_exception_handler(unique_base::get());
+			set_default_state(unique_base::get(), panic);
 		}
 
 		state(lua_CFunction panic, lua_Alloc alfunc, void* alpointer = nullptr)
 		: unique_base(lua_newstate(alfunc, alpointer)), state_view(unique_base::get()) {
-			set_panic(panic);
-			lua_CFunction f = c_call<decltype(&detail::default_traceback_error_handler), &detail::default_traceback_error_handler>;
-			protected_function::set_default_handler(object(lua_state(), in_place, f));
-			stack::register_main_thread(unique_base::get());
-			stack::luajit_exception_handler(unique_base::get());
+			set_default_state(unique_base::get(), panic);
 		}
 
 		state(const state&) = delete;
