@@ -78,15 +78,15 @@ namespace sol {
 			int returncount = 0;
 			call_status code = call_status::ok;
 #ifndef SOL_NO_EXCEPTIONS
-			auto onexcept = [&](const char* error) {
+			auto onexcept = [&](optional<const std::exception&> maybe_ex, const char* error) {
 				h.stackindex = 0;
 				if (b) {
 					h.target.push();
-					stack::push(lua_state(), error);
+					detail::call_exception_handler(lua_state(), maybe_ex, error);
 					lua_call(lua_state(), 1, 1);
 				}
 				else {
-					stack::push(lua_state(), error);
+					detail::call_exception_handler(lua_state(), maybe_ex, error);
 				}
 			};
 #if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || defined(SOL_LUAJIT)
@@ -102,17 +102,17 @@ namespace sol {
 			}
 			// Handle C++ errors thrown from C++ functions bound inside of lua
 			catch (const char* error) {
-				onexcept(error);
+				onexcept(optional<const std::exception&>(nullopt), error);
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}
 			catch (const std::string& error) {
-				onexcept(error.c_str());
+				onexcept(optional<const std::exception&>(nullopt), error.c_str());
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}
 			catch (const std::exception& error) {
-				onexcept(error.what());
+				onexcept(optional<const std::exception&>(error), error.what());
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}
@@ -121,7 +121,7 @@ namespace sol {
 			// but LuaJIT will swallow all C++ errors 
 			// if we don't at least catch std::exception ones
 			catch (...) {
-				onexcept("caught (...) unknown error during protected_function call");
+				onexcept(optional<const std::exception&>(nullopt), "caught (...) unknown error during protected_function call");
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}

@@ -5,7 +5,7 @@ since somebody is going to ask about it...
 
 Yes, you can turn off exceptions in Sol with ``#define SOL_NO_EXCEPTIONS`` before including or by passing the command line argument that defines ``SOL_NO_EXCEPTIONS``. We don't recommend it unless you're playing with a Lua distro that also doesn't play nice with exceptions (like non-x64 versions of :ref:`LuaJIT<LuaJIT and exceptions>` ).
 
-If you turn this off, the default `at_panic`_ function :doc:`state<api/state>` set for you will not throw  (see :ref:`sol::state automatic handlers<state-automatic-handlers>` for more details). Instead, the default Lua behavior of aborting will take place (and give you no chance of escape unless you implement your own at_panic function and decide to try ``longjmp`` out).
+If you turn this off, the default `at_panic`_ function :doc:`state<api/state>` set for you will not throw  (see :ref:`sol::state's automatic handlers<state-automatic-handlers>` for more details). Instead, the default Lua behavior of aborting will take place (and give you no chance of escape unless you implement your own at_panic function and decide to try ``longjmp`` out).
 
 To make this not be the case, you can set a panic function directly with ``lua_atpanic( lua, my_panic_function );`` or when you create the ``sol::state`` with ``sol::state lua(my_panic_function);``. Here's an example ``my_panic_function`` you can have that prints out its errors:
 
@@ -15,9 +15,29 @@ To make this not be the case, you can set a panic function directly with ``lua_a
 	:linenos:
 
 
-Note that ``SOL_NO_EXCEPTIONS`` will also disable :doc:`protected_function<api/protected_function>`'s ability to catch C++ errors you throw from C++ functions bound to Lua that you are calling through that API. So, only turn off exceptions in Sol if you're sure you're never going to use exceptions ever. Of course, if you are ALREADY not using Exceptions, you don't have to particularly worry about this and now you can use Sol!
+Note that ``SOL_NO_EXCEPTIONS`` will also disable :doc:`sol::protected_function<api/protected_function>`'s ability to catch C++ errors you throw from C++ functions bound to Lua that you are calling through that API. So, only turn off exceptions in Sol if you're sure you're never going to use exceptions ever. Of course, if you are ALREADY not using Exceptions, you don't have to particularly worry about this and now you can use Sol!
 
 If there is a place where a throw statement is called or a try/catch is used and it is not hidden behind a ``#ifndef SOL_NO_EXCEPTIONS`` block, please file an issue at `issue`_ or submit your very own pull request so everyone can benefit!
+
+.. _lua-handlers:
+
+various sol and lua handlers
+----------------------------
+
+Lua comes with two kind of built-in handlers that sol provides easy opt-ins for. One is the ``panic`` function, as :ref:`demonstrated above<typical-panic-function>`. Another is the ``pcall`` error handler, used with :doc:`sol::protected_function<api/protected_function>`. It is any function that takes a single argument. The single argument is the error type being passed around: in Lua, this is a single string message:
+
+.. literalinclude:: ../../examples/protected_functions.cpp
+	:caption: regular panic function
+	:name: typical-panic-function
+	:linenos:
+
+
+The other handler is specific to sol2. If you open a ``sol::state``, or open the default state handlers for your ``lua_State*`` (see :ref:`sol::state's automatic handlers<state-automatic-handlers>` for more details), there is a ``sol::exception_handler_function`` type. It allows you to register a function in the event that an exception happens that bubbles out of your functions. The function requires that you push 1 item onto the stack that will be used with a call to `lua_error`_
+
+.. literalinclude:: ../../examples/exception_handler.cpp
+	:caption: exception serialization and hadling
+	:name: typical-panic-function
+	:linenos:
 
 
 .. _LuaJIT and exceptions:
@@ -48,6 +68,7 @@ Currently, the only known platform to do this is the listed "Full" `platforms fo
 
 .. _issue: https://github.com/ThePhD/sol2/issues/
 .. _at_panic: http://www.Lua.org/manual/5.3/manual.html#4.6
+.. _lua_error: https://www.lua.org/manual/5.3/manual.html#lua_error
 .. _caveats regarding exceptions: http://luajit.org/extensions.html#exceptions
 .. _platforms for LuaJIT: http://luajit.org/extensions.html#exceptions
 .. _this closed issue: https://github.com/ThePhD/sol2/issues/28

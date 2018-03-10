@@ -26,6 +26,7 @@
 
 #include "protect.hpp"
 #include "wrapper.hpp"
+#include "trampoline.hpp"
 #include "property.hpp"
 #include "filters.hpp"
 #include "stack.hpp"

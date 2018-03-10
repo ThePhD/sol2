@@ -26,9 +26,7 @@ int main() {
 		)");
 
 	// Get a protected function out of Lua
-	sol::protected_function f = lua["f"];
-	// Set a non-default error handler
-	f.error_handler = lua["handler"];
+	sol::protected_function f(lua["f"], lua["handler"]);
 
 	sol::protected_function_result result = f(-500);
 	if (result.valid()) {

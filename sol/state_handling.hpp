@@ -24,9 +24,14 @@
 #ifndef SOL_STATE_DEFAULT_HPP
 #define SOL_STATE_DEFAULT_HPP
 
+#include "trampoline.hpp"
 #include "stack.hpp"
 #include "function.hpp"
 #include "object.hpp"
+
+#ifdef SOL_PRINT_ERRORS
+#include <iostream>
+#endif
 
 namespace sol {
 	inline void register_main_thread(lua_State* L) {
@@ -53,6 +58,11 @@ namespace sol {
 		if (message) {
 			std::string err(message, messagesize);
 			lua_settop(L, 0);
+#ifdef SOL_PRINT_ERRORS
+			std::cerr << "[sol2] An error occurred and panic has been invoked: ";
+			std::cerr << err;
+			std::cerr << std::endl;
+#endif
 			throw error(err);
 		}
 		lua_settop(L, 0);
@@ -62,23 +72,29 @@ namespace sol {
 
 	inline int default_traceback_error_handler(lua_State* L) {
 		std::string msg = "An unknown error has triggered the default error handler";
-		sol::optional<sol::string_view> maybetopmsg = stack::check_get<string_view>(L, 1);
+		optional<string_view> maybetopmsg = stack::check_get<string_view>(L, 1);
 		if (maybetopmsg) {
 			const string_view& topmsg = maybetopmsg.value();
 			msg.assign(topmsg.data(), topmsg.size());
 		}
 		luaL_traceback(L, L, msg.c_str(), 1);
-		optional<sol::string_view> maybetraceback = stack::check_get<string_view>(L, -1);
+		optional<string_view> maybetraceback = stack::check_get<string_view>(L, -1);
 		if (maybetraceback) {
-			const sol::string_view& traceback = maybetraceback.value();
+			const string_view& traceback = maybetraceback.value();
 			msg.assign(traceback.data(), traceback.size());
 		}
+#ifdef SOL_PRINT_ERRORS
+		std::cerr << "[sol2] An error occurred: ";
+		std::cerr << msg;
+		std::cerr << std::endl;
+#endif
 		return stack::push(L, msg);
 	}
 
-	inline void set_default_state(lua_State* L, lua_CFunction panic_function = &default_at_panic, lua_CFunction traceback_function = c_call<decltype(&default_traceback_error_handler), &default_traceback_error_handler>) {
+	inline void set_default_state(lua_State* L, lua_CFunction panic_function = &default_at_panic, lua_CFunction traceback_function = c_call<decltype(&default_traceback_error_handler), &default_traceback_error_handler>, exception_handler_function exf = detail::default_exception_handler) {
 		lua_atpanic(L, panic_function);
 		protected_function::set_default_handler(object(L, in_place, traceback_function));
+		set_default_exception_handler(L, exf);
 		register_main_thread(L);
 		stack::luajit_exception_handler(L);
 	}
@@ -128,6 +144,11 @@ namespace sol {
 			string_view serr = stack::get<string_view>(L, result.stack_index());
 			err.append(serr.data(), serr.size());
 		}
+#ifdef SOL_PRINT_ERRORS
+		std::cerr << "[sol2] An error occurred and has been passed to an error handler: ";
+		std::cerr << err;
+		std::cerr << std::endl;
+#endif
 #ifdef SOL_NO_EXCEPTIONS
 		// replacing information of stack error into pfr
 		int target = result.stack_index();

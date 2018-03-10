@@ -24,6 +24,7 @@
 #ifndef SOL_STACK_HPP
 #define SOL_STACK_HPP
 
+#include "trampoline.hpp"
 #include "stack_core.hpp"
 #include "stack_reference.hpp"
 #include "stack_check.hpp"

@@ -478,7 +478,11 @@ namespace sol {
 		}
 
 		void set_panic(lua_CFunction panic) {
-			lua_atpanic(L, panic);
+			lua_atpanic(lua_state(), panic);
+		}
+
+		void set_exception_handler(exception_handler_function handler) {
+			set_default_exception_handler(lua_state(), handler);
 		}
 
 		template <typename... Args, typename... Keys>
