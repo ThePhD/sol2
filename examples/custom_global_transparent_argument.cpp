@@ -37,7 +37,6 @@ namespace sol {
 			static GlobalResource* get(lua_State* L, int /*index*/, record& tracking) {
 				// retrieve the (light) userdata for this type
 				tracking.use(0); // not actually pulling anything off the stack
-				(void)index; // unused
 				stack::get_field<true>(L, script_key);
 				GlobalResource* ls = static_cast<GlobalResource*>(lua_touserdata(L, -1));
 				lua_pop(L, 1); // clean up stack value returned by `get_field`
