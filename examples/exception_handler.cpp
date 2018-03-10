@@ -29,7 +29,7 @@ int my_exception_handler(lua_State* L, sol::optional<const std::exception&> mayb
 }
 
 void will_throw() {
-	throw std::exception("oh no not an exception!!!");
+	throw std::runtime_error("oh no not an exception!!!");
 }
 
 int main() {

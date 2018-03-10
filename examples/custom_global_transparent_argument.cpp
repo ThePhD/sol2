@@ -17,19 +17,24 @@ namespace sol {
 		template <>
 		struct checker<GlobalResource*> {
 			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+			static bool check(lua_State* L, int /*index*/, Handler&& handler, record& tracking) {
+				tracking.use(0);
 				// get the field from global storage
 				stack::get_field<true>(L, script_key);
 				// verify type
 				type t = static_cast<type>(lua_type(L, -1));
 				lua_pop(L, 1);
-				return t == type::lightuserdata;
+				if (t != type::lightuserdata) {
+					handler(L, 0, type::lightuserdata, t, "global resource is not present");
+					return false;
+				}
+				return true;
 			}
 		};
 
 		template <>
 		struct getter<GlobalResource*> {
-			static GlobalResource* get(lua_State* L, int index, record& tracking) {
+			static GlobalResource* get(lua_State* L, int /*index*/, record& tracking) {
 				// retrieve the (light) userdata for this type
 				tracking.use(0); // not actually pulling anything off the stack
 				(void)index; // unused

@@ -86,7 +86,7 @@ You may also retrieve an :doc:`sol::optional\<T><optional>` from this as well, t
 	template <typename T, typename Handler>
 	bool check( lua_State* L, int index, Handler&& handler, record& tracking )
 
-Checks if the object at ``index`` is of type ``T``. If it is not, it will call the ``handler`` function with ``lua_State*``, ``int index``, ``type`` expected, and ``type`` actual as arguments. If you do not pass your own handler, a ``no_panic`` handler will be passed.
+Checks if the object at ``index`` is of type ``T``. If it is not, it will call the ``handler`` function with ``lua_State* L``, ``int index``, ``sol::type expected``, and ``sol::type actual`` as arguments (and optionally with a 5th string argument ``sol::string_view message``. If you do not pass your own handler, a ``no_panic`` handler will be passed.
 
 .. code-block:: cpp
 	:caption: function: get_usertype
@@ -266,7 +266,7 @@ This is an SFINAE-friendly struct that is meant to expose static function ``push
 				return true;
 			}
 			// otherwise, call the handler function,
-			// with the required 5 arguments, then return false
+			// with the required 4/5 arguments, then return false
 			//
 			handler(L, index, expected, indextype, "optional message");
 			return false;
