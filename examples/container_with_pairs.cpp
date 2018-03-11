@@ -29,7 +29,7 @@ int main() {
 
 	lua.safe_script("v = f()");
 	lua.safe_script("print('v:', v)");
-	lua.safe_script("print('#v': #v)");
+	lua.safe_script("print('#v:', #v)");
 	// note that using my_obj:pairs() is a
 	// way around pairs(my_obj) not working in Lua 5.1/LuaJIT: try it!
 	lua.safe_script("for k,v1,v2 in v:pairs() do print(k, v1, v2) end");
