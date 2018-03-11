@@ -45,7 +45,9 @@ namespace sol {
 		}
 
 		static int real_index_call(lua_State* L) {
-			static std::unordered_map<std::string, lua_CFunction> calls{
+			typedef usertype_detail::map_t<std::string, lua_CFunction> call_map;
+			static const call_map calls{
+				{ "at", &at_call },
 				{ "get", &real_get_call },
 				{ "set", &real_set_call },
 				{ "size", &real_length_call },
@@ -54,17 +56,36 @@ namespace sol {
 				{ "insert", &real_insert_call },
 				{ "clear", &real_clear_call },
 				{ "find", &real_find_call },
-				{ "erase", &real_erase_call }
+				{ "erase", &real_erase_call },
+				{ "pairs", &pairs_call },
+				{ "next", &next_call },
 			};
-			auto maybename = stack::check_get<std::string>(L, 2);
-			if (maybename) {
-				const std::string& name = *maybename;
+			auto maybenameview = stack::check_get<string_view>(L, 2);
+			if (maybenameview) {
+				const string_view& nameview = *maybenameview;
+#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+				auto it = calls.find(nameview, string_view_hash(), std::equal_to<string_view>());
+#else
+				std::string name(nameview.data(), nameview.size());
 				auto it = calls.find(name);
+#endif
 				if (it != calls.cend()) {
 					return stack::push(L, it->second);
 				}
 			}
 			return real_index_get_traits(container_detail::has_traits_index_get<traits>(), L);
+		}
+
+		static int real_at_traits(std::true_type, lua_State* L) {
+			return traits::at(L);
+		}
+
+		static int real_at_traits(std::false_type, lua_State* L) {
+			return default_traits::at(L);
+		}
+
+		static int real_at_call(lua_State* L) {
+			return real_at_traits(container_detail::has_traits_at<traits>(), L);
 		}
 
 		static int real_get_traits(std::true_type, lua_State* L) {
@@ -125,6 +146,18 @@ namespace sol {
 
 		static int real_ipairs_call(lua_State* L) {
 			return real_ipairs_traits(container_detail::has_traits_ipairs<traits>(), L);
+		}
+
+		static int real_next_traits(std::true_type, lua_State* L) {
+			return traits::next(L);
+		}
+
+		static int real_next_traits(std::false_type, lua_State* L) {
+			return default_traits::next(L);
+		}
+
+		static int real_next_call(lua_State* L) {
+			return real_next_traits(container_detail::has_traits_next<traits>(), L);
 		}
 
 		static int real_size_traits(std::true_type, lua_State* L) {
@@ -247,6 +280,14 @@ namespace sol {
 			return detail::typed_static_trampoline<decltype(&real_ipairs_call), (&real_ipairs_call)>(L);
 		}
 
+		static int next_call(lua_State* L) {
+			return detail::typed_static_trampoline<decltype(&real_next_call), (&real_next_call)>(L);
+		}
+
+		static int at_call(lua_State* L) {
+			return detail::typed_static_trampoline<decltype(&real_at_call), (&real_at_call)>(L);
+		}
+
 		static int get_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_get_call), (&real_get_call)>(L);
 		}
@@ -280,11 +321,15 @@ namespace sol {
 						std::remove_pointer_t<T>>>
 						meta_cumt;
 					static const char* metakey = is_shim ? &usertype_traits<as_container_t<std::remove_pointer_t<T>>>::metatable()[0] : &usertype_traits<T>::metatable()[0];
-					static const std::array<luaL_Reg, 16> reg = { { { "__pairs", &meta_cumt::pairs_call },
+					static const std::array<luaL_Reg, 19> reg = { { 
+						{ "__pairs", &meta_cumt::pairs_call },
 						{ "__ipairs", &meta_cumt::ipairs_call },
 						{ "__len", &meta_cumt::length_call },
 						{ "__index", &meta_cumt::index_call },
 						{ "__newindex", &meta_cumt::new_index_call },
+						{ "pairs", &meta_cumt::pairs_call },
+						{ "next", &meta_cumt::next_call },
+						{ "at", &meta_cumt::at_call },
 						{ "get", &meta_cumt::get_call },
 						{ "set", &meta_cumt::set_call },
 						{ "size", &meta_cumt::length_call },
@@ -295,7 +340,8 @@ namespace sol {
 						{ "find", &meta_cumt::find_call },
 						{ "erase", &meta_cumt::erase_call },
 						std::is_pointer<T>::value ? luaL_Reg{ nullptr, nullptr } : luaL_Reg{ "__gc", &detail::usertype_alloc_destruct<T> },
-						{ nullptr, nullptr } } };
+						{ nullptr, nullptr } 
+					} };
 
 					if (luaL_newmetatable(L, metakey) == 1) {
 						luaL_setfuncs(L, reg.data(), 0);

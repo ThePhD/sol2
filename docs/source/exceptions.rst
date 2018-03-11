@@ -10,7 +10,7 @@ If you turn this off, the default `at_panic`_ function :doc:`state<api/state>` s
 To make this not be the case, you can set a panic function directly with ``lua_atpanic( lua, my_panic_function );`` or when you create the ``sol::state`` with ``sol::state lua(my_panic_function);``. Here's an example ``my_panic_function`` you can have that prints out its errors:
 
 .. literalinclude:: ../../examples/docs/my_panic.cpp
-	:caption: regular panic function
+	:caption: typical panic function
 	:name: typical-panic-function
 	:linenos:
 
@@ -27,16 +27,16 @@ various sol and lua handlers
 Lua comes with two kind of built-in handlers that sol provides easy opt-ins for. One is the ``panic`` function, as :ref:`demonstrated above<typical-panic-function>`. Another is the ``pcall`` error handler, used with :doc:`sol::protected_function<api/protected_function>`. It is any function that takes a single argument. The single argument is the error type being passed around: in Lua, this is a single string message:
 
 .. literalinclude:: ../../examples/protected_functions.cpp
-	:caption: regular panic function
-	:name: typical-panic-function
+	:caption: regular error handling
+	:name: regular-error-handling
 	:linenos:
 
 
 The other handler is specific to sol2. If you open a ``sol::state``, or open the default state handlers for your ``lua_State*`` (see :ref:`sol::state's automatic handlers<state-automatic-handlers>` for more details), there is a ``sol::exception_handler_function`` type. It allows you to register a function in the event that an exception happens that bubbles out of your functions. The function requires that you push 1 item onto the stack that will be used with a call to `lua_error`_
 
 .. literalinclude:: ../../examples/exception_handler.cpp
-	:caption: exception serialization and hadling
-	:name: typical-panic-function
+	:caption: exception handling
+	:name: exception-handling
 	:linenos:
 
 
