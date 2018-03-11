@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-03-10 04:31:26.815848 UTC
-// This header was generated with sol v2.19.5 (revision 623a38e)
+// Generated 2018-03-11 01:45:34.909172 UTC
+// This header was generated with sol v2.19.5 (revision a83091c)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4517,8 +4517,28 @@ namespace sol {
 #ifdef SOL_CXX17_FEATURES
 #include <variant>
 #endif // C++17
+#ifdef SOL_USE_BOOST
+#include <boost/unordered_map.hpp>
+#else
+#include <unordered_map>
+#endif // Using Boost
 
 namespace sol {
+	namespace usertype_detail {
+#if defined(SOL_USE_BOOST)
+#if defined(SOL_CXX17_FEATURES)
+		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
+		using map_t = boost::unordered_map<K, V, H, E>;
+#else
+		template <typename K, typename V, typename H = boost::hash<K>, typename E = std::equal_to<>>
+		using map_t = boost::unordered_map<K, V, H, E>;
+#endif // C++17 or not, WITH boost
+#else
+		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
+		using map_t = std::unordered_map<K, V, H, E>;
+#endif // Boost map target
+	}
+
 	namespace detail {
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
 		typedef int(*lua_CFunction_noexcept)(lua_State* L) noexcept;
@@ -5207,9 +5227,10 @@ namespace sol {
 
 			"__pairs",
 			"__ipairs",
-			"__next",
+			"next",
 			"__type",
-			"__typeinfo" } };
+			"__typeinfo" 
+		} };
 		return names;
 	}
 
@@ -15477,8 +15498,6 @@ namespace sol {
 
 // beginning of sol/container_traits.hpp
 
-#include <unordered_map>
-
 namespace sol {
 
 	template <typename T>
@@ -15717,6 +15736,21 @@ namespace sol {
 		};
 
 		template <typename T>
+		struct has_traits_at_test {
+		private:
+			typedef std::array<char, 1> one;
+			typedef std::array<char, 2> two;
+
+			template <typename C>
+			static one test(decltype(&C::at));
+			template <typename C>
+			static two test(...);
+
+		public:
+			static const bool value = sizeof(test<T>(0)) == sizeof(char);
+		};
+
+		template <typename T>
 		struct has_traits_pairs_test {
 		private:
 			typedef std::array<char, 1> one;
@@ -15739,6 +15773,21 @@ namespace sol {
 
 			template <typename C>
 			static one test(decltype(&C::ipairs));
+			template <typename C>
+			static two test(...);
+
+		public:
+			static const bool value = sizeof(test<T>(0)) == sizeof(char);
+		};
+
+		template <typename T>
+		struct has_traits_next_test {
+		private:
+			typedef std::array<char, 1> one;
+			typedef std::array<char, 2> two;
+
+			template <typename C>
+			static one test(decltype(&C::next));
 			template <typename C>
 			static two test(...);
 
@@ -15780,6 +15829,9 @@ namespace sol {
 		using has_traits_get = meta::boolean<has_traits_get_test<T>::value>;
 
 		template <typename T>
+		using has_traits_at = meta::boolean<has_traits_at_test<T>::value>;
+
+		template <typename T>
 		using has_traits_set = meta::boolean<has_traits_set_test<T>::value>;
 
 		template <typename T>
@@ -15793,6 +15845,9 @@ namespace sol {
 
 		template <typename T>
 		using has_traits_ipairs = meta::boolean<has_traits_ipairs_test<T>::value>;
+
+		template <typename T>
+		using has_traits_next = meta::boolean<has_traits_next_test<T>::value>;
 
 		template <typename T>
 		using has_traits_add = meta::boolean<has_traits_add_test<T>::value>;
@@ -15886,6 +15941,10 @@ namespace sol {
 			typedef lua_nil_t iterator;
 			typedef lua_nil_t value_type;
 
+			static int at(lua_State* L) {
+				return luaL_error(L, "sol: cannot call 'at(index)' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
+			}
+
 			static int get(lua_State* L) {
 				return luaL_error(L, "sol: cannot call 'get(key)' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 			}
@@ -15930,8 +15989,12 @@ namespace sol {
 				return luaL_error(L, "sol: cannot call 'erase' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 			}
 
+			static int next(lua_State* L) {
+				return luaL_error(L, "sol: cannot call 'next' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
+			}
+
 			static int pairs(lua_State* L) {
-				return luaL_error(L, "sol: cannot call '__pairs' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
+				return luaL_error(L, "sol: cannot call '__pairs/pairs' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 			}
 
 			static int ipairs(lua_State* L) {
@@ -16015,6 +16078,40 @@ namespace sol {
 #else
 				return stack::get<T>(L, 1);
 #endif // Safe getting with error
+			}
+
+			static error_result at_category(std::input_iterator_tag, lua_State* L, T& self, std::ptrdiff_t pos) {
+				pos += deferred_traits::index_adjustment(L, self);
+				if (pos < 0) {
+					return stack::push(L, lua_nil);
+				}
+				auto it = deferred_traits::begin(L, self);
+				auto e = deferred_traits::end(L, self);
+				if (it == e) {
+					return stack::push(L, lua_nil);
+				}
+				while (pos > 0) {
+					--pos;
+					++it;
+					if (it == e) {
+						return stack::push(L, lua_nil);
+					}
+				}
+				return get_associative(is_associative(), L, it);
+			}
+
+			static error_result at_category(std::random_access_iterator_tag, lua_State* L, T& self, std::ptrdiff_t pos) {
+				std::ptrdiff_t len = static_cast<std::ptrdiff_t>(size_start(L, self));
+				pos += deferred_traits::index_adjustment(L, self);
+				if (pos < 0 || pos >= len) {
+					return stack::push(L, lua_nil);
+				}
+				auto it = std::next(deferred_traits::begin(L, self), pos);
+				return get_associative(is_associative(), L, it);
+			}
+
+			static error_result at_start(lua_State* L, T& self, std::ptrdiff_t pos) {
+				return at_category(iterator_category(), L, self, pos);
 			}
 
 			static error_result get_associative(std::true_type, lua_State* L, iterator& it) {
@@ -16248,8 +16345,8 @@ namespace sol {
 				return error_result("cannot call 'add' on type '%s': no suitable insert/push_back C++ functions", detail::demangle<T>().data());
 			}
 
-			static error_result add_insert_after(std::true_type, lua_State*, T& self, stack_object value, iterator& at) {
-				self.insert_after(at, value.as<V>());
+			static error_result add_insert_after(std::true_type, lua_State*, T& self, stack_object value, iterator& pos) {
+				self.insert_after(pos, value.as<V>());
 				return {};
 			}
 
@@ -16263,18 +16360,18 @@ namespace sol {
 				return add_insert_after(std::true_type(), L, self, value, backit);
 			}
 
-			static error_result add_insert(std::true_type, lua_State*, T& self, stack_object value, iterator& at) {
-				self.insert(at, value.as<V>());
+			static error_result add_insert(std::true_type, lua_State*, T& self, stack_object value, iterator& pos) {
+				self.insert(pos, value.as<V>());
 				return {};
 			}
 
 			static error_result add_insert(std::true_type, lua_State* L, T& self, stack_object value) {
-				auto at = deferred_traits::end(L, self);
-				return add_insert(std::true_type(), L, self, value, at);
+				auto pos = deferred_traits::end(L, self);
+				return add_insert(std::true_type(), L, self, value, pos);
 			}
 
-			static error_result add_insert(std::false_type, lua_State* L, T& self, stack_object value, iterator& at) {
-				return add_insert_after(meta::has_insert_after<T>(), L, self, std::move(value), at);
+			static error_result add_insert(std::false_type, lua_State* L, T& self, stack_object value, iterator& pos) {
+				return add_insert_after(meta::has_insert_after<T>(), L, self, std::move(value), pos);
 			}
 
 			static error_result add_insert(std::false_type, lua_State* L, T& self, stack_object value) {
@@ -16291,34 +16388,34 @@ namespace sol {
 				return {};
 			}
 
-			static error_result add_push_back(std::false_type, lua_State* L, T& self, stack_object value, iterator& at) {
-				return add_insert(meta::has_insert<T>(), L, self, value, at);
+			static error_result add_push_back(std::false_type, lua_State* L, T& self, stack_object value, iterator& pos) {
+				return add_insert(meta::has_insert<T>(), L, self, value, pos);
 			}
 
 			static error_result add_push_back(std::false_type, lua_State* L, T& self, stack_object value) {
 				return add_insert(meta::has_insert<T>(), L, self, value);
 			}
 
-			static error_result add_associative(std::true_type, lua_State* L, T& self, stack_object key, iterator& at) {
-				self.insert(at, value_type(key.as<K>(), stack::get<V>(L, 3)));
+			static error_result add_associative(std::true_type, lua_State* L, T& self, stack_object key, iterator& pos) {
+				self.insert(pos, value_type(key.as<K>(), stack::get<V>(L, 3)));
 				return {};
 			}
 
 			static error_result add_associative(std::true_type, lua_State* L, T& self, stack_object key) {
-				auto at = deferred_traits::end(L, self);
-				return add_associative(std::true_type(), L, self, std::move(key), at);
+				auto pos = deferred_traits::end(L, self);
+				return add_associative(std::true_type(), L, self, std::move(key), pos);
 			}
 
-			static error_result add_associative(std::false_type, lua_State* L, T& self, stack_object value, iterator& at) {
-				return add_push_back(meta::has_push_back<T>(), L, self, value, at);
+			static error_result add_associative(std::false_type, lua_State* L, T& self, stack_object value, iterator& pos) {
+				return add_push_back(meta::has_push_back<T>(), L, self, value, pos);
 			}
 
 			static error_result add_associative(std::false_type, lua_State* L, T& self, stack_object value) {
 				return add_push_back(meta::has_push_back<T>(), L, self, value);
 			}
 
-			static error_result add_copyable(std::true_type, lua_State* L, T& self, stack_object value, iterator& at) {
-				return add_associative(is_associative(), L, self, std::move(value), at);
+			static error_result add_copyable(std::true_type, lua_State* L, T& self, stack_object value, iterator& pos) {
+				return add_associative(is_associative(), L, self, std::move(value), pos);
 			}
 
 			static error_result add_copyable(std::true_type, lua_State* L, T& self, stack_object value) {
@@ -16528,7 +16625,7 @@ namespace sol {
 			}
 
 			template <bool ip>
-			static int next(lua_State* L) {
+			static int next_iter(lua_State* L) {
 				typedef meta::any<is_associative, meta::all<is_lookup, meta::neg<is_matched_lookup>>> is_assoc;
 				return next_associative<ip>(is_assoc(), L);
 			}
@@ -16536,7 +16633,7 @@ namespace sol {
 			template <bool ip>
 			static int pairs_associative(std::true_type, lua_State* L) {
 				auto& src = get_src(L);
-				stack::push(L, next<ip>);
+				stack::push(L, next_iter<ip>);
 				stack::push<user<iter>>(L, src, deferred_traits::begin(L, src));
 				stack::push(L, lua_nil);
 				return 3;
@@ -16545,13 +16642,23 @@ namespace sol {
 			template <bool ip>
 			static int pairs_associative(std::false_type, lua_State* L) {
 				auto& src = get_src(L);
-				stack::push(L, next<ip>);
+				stack::push(L, next_iter<ip>);
 				stack::push<user<iter>>(L, src, deferred_traits::begin(L, src));
 				stack::push(L, 0);
 				return 3;
 			}
 
 		public:
+			static int at(lua_State* L) {
+				auto& self = get_src(L);
+				error_result er;
+				{
+					std::ptrdiff_t pos = stack::get<std::ptrdiff_t>(L);
+					er = at_start(L, self, pos);
+				}
+				return handle_errors(L, er);
+			}
+
 			static int get(lua_State* L) {
 				auto& self = get_src(L);
 				error_result er;
@@ -16648,6 +16755,10 @@ namespace sol {
 				typedef meta::any<is_associative, meta::all<is_lookup, meta::neg<is_matched_lookup>>> is_assoc;
 				return pairs_associative<true>(is_assoc(), L);
 			}
+
+			static int next(lua_State* L) {
+				return stack::push(L, next_iter<false>);
+			}
 		};
 
 		template <typename X>
@@ -16673,8 +16784,11 @@ namespace sol {
 			static auto& get_src(lua_State* L) {
 				auto p = stack::check_get<T*>(L, 1);
 #ifdef SOL_SAFE_USERTYPE
-				if (!p || p.value() == nullptr) {
-					luaL_error(L, "sol: 'self' argument is nil or not of type '%s' (pass 'self' as first argument with ':' or call on proper type)", detail::demangle<T>().c_str());
+				if (!p) {
+					luaL_error(L, "sol: 'self' is not of type '%s' (pass 'self' as first argument with ':' or call on proper type)", detail::demangle<T>().c_str());
+				}
+				if (p.value() == nullptr) {
+					luaL_error(L, "sol: 'self' argument is nil (pass 'self' as first argument with ':' or call on a '%s' type)", detail::demangle<T>().c_str());
 				}
 #endif // Safe getting with error
 				return *p.value();
@@ -16697,7 +16811,7 @@ namespace sol {
 				return luaL_error(L, "sol: cannot call 'find' on '%s': no supported comparison operator for the value type", detail::demangle<T>().c_str());
 			}
 
-			static int next(lua_State* L) {
+			static int next_iter(lua_State* L) {
 				iter& i = stack::get<user<iter>>(L, 1);
 				auto& source = i.source;
 				auto& it = i.it;
@@ -16727,6 +16841,10 @@ namespace sol {
 
 			static int insert(lua_State* L) {
 				return luaL_error(L, "sol: cannot call 'insert' on type '%s': cannot insert new entries into fixed arrays", detail::demangle<T>().c_str());
+			}
+
+			static int at(lua_State* L) {
+				return get(L);
 			}
 
 			static int get(lua_State* L) {
@@ -16775,7 +16893,7 @@ namespace sol {
 
 			static int pairs(lua_State* L) {
 				auto& src = get_src(L);
-				stack::push(L, next);
+				stack::push(L, next_iter);
 				stack::push<user<iter>>(L, src, deferred_traits::begin(L, src));
 				stack::push(L, 0);
 				return 3;
@@ -16783,6 +16901,10 @@ namespace sol {
 
 			static int ipairs(lua_State* L) {
 				return pairs(L);
+			}
+
+			static int next(lua_State* L) {
+				return stack::push(L, next_iter);
 			}
 
 			static std::ptrdiff_t index_adjustment(lua_State*, T&) {
@@ -16826,7 +16948,9 @@ namespace sol {
 		}
 
 		static int real_index_call(lua_State* L) {
-			static std::unordered_map<std::string, lua_CFunction> calls{
+			typedef usertype_detail::map_t<std::string, lua_CFunction> call_map;
+			static const call_map calls{
+				{ "at", &at_call },
 				{ "get", &real_get_call },
 				{ "set", &real_set_call },
 				{ "size", &real_length_call },
@@ -16835,17 +16959,36 @@ namespace sol {
 				{ "insert", &real_insert_call },
 				{ "clear", &real_clear_call },
 				{ "find", &real_find_call },
-				{ "erase", &real_erase_call }
+				{ "erase", &real_erase_call },
+				{ "pairs", &pairs_call },
+				{ "next", &next_call },
 			};
-			auto maybename = stack::check_get<std::string>(L, 2);
-			if (maybename) {
-				const std::string& name = *maybename;
+			auto maybenameview = stack::check_get<string_view>(L, 2);
+			if (maybenameview) {
+				const string_view& nameview = *maybenameview;
+#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+				auto it = calls.find(nameview, string_view_hash(), std::equal_to<string_view>());
+#else
+				std::string name(nameview.data(), nameview.size());
 				auto it = calls.find(name);
+#endif
 				if (it != calls.cend()) {
 					return stack::push(L, it->second);
 				}
 			}
 			return real_index_get_traits(container_detail::has_traits_index_get<traits>(), L);
+		}
+
+		static int real_at_traits(std::true_type, lua_State* L) {
+			return traits::at(L);
+		}
+
+		static int real_at_traits(std::false_type, lua_State* L) {
+			return default_traits::at(L);
+		}
+
+		static int real_at_call(lua_State* L) {
+			return real_at_traits(container_detail::has_traits_at<traits>(), L);
 		}
 
 		static int real_get_traits(std::true_type, lua_State* L) {
@@ -16906,6 +17049,18 @@ namespace sol {
 
 		static int real_ipairs_call(lua_State* L) {
 			return real_ipairs_traits(container_detail::has_traits_ipairs<traits>(), L);
+		}
+
+		static int real_next_traits(std::true_type, lua_State* L) {
+			return traits::next(L);
+		}
+
+		static int real_next_traits(std::false_type, lua_State* L) {
+			return default_traits::next(L);
+		}
+
+		static int real_next_call(lua_State* L) {
+			return real_next_traits(container_detail::has_traits_next<traits>(), L);
 		}
 
 		static int real_size_traits(std::true_type, lua_State* L) {
@@ -17028,6 +17183,14 @@ namespace sol {
 			return detail::typed_static_trampoline<decltype(&real_ipairs_call), (&real_ipairs_call)>(L);
 		}
 
+		static int next_call(lua_State* L) {
+			return detail::typed_static_trampoline<decltype(&real_next_call), (&real_next_call)>(L);
+		}
+
+		static int at_call(lua_State* L) {
+			return detail::typed_static_trampoline<decltype(&real_at_call), (&real_at_call)>(L);
+		}
+
 		static int get_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_get_call), (&real_get_call)>(L);
 		}
@@ -17061,11 +17224,15 @@ namespace sol {
 						std::remove_pointer_t<T>>>
 						meta_cumt;
 					static const char* metakey = is_shim ? &usertype_traits<as_container_t<std::remove_pointer_t<T>>>::metatable()[0] : &usertype_traits<T>::metatable()[0];
-					static const std::array<luaL_Reg, 16> reg = { { { "__pairs", &meta_cumt::pairs_call },
+					static const std::array<luaL_Reg, 19> reg = { { 
+						{ "__pairs", &meta_cumt::pairs_call },
 						{ "__ipairs", &meta_cumt::ipairs_call },
 						{ "__len", &meta_cumt::length_call },
 						{ "__index", &meta_cumt::index_call },
 						{ "__newindex", &meta_cumt::new_index_call },
+						{ "pairs", &meta_cumt::pairs_call },
+						{ "next", &meta_cumt::next_call },
+						{ "at", &meta_cumt::at_call },
 						{ "get", &meta_cumt::get_call },
 						{ "set", &meta_cumt::set_call },
 						{ "size", &meta_cumt::length_call },
@@ -17076,7 +17243,8 @@ namespace sol {
 						{ "find", &meta_cumt::find_call },
 						{ "erase", &meta_cumt::erase_call },
 						std::is_pointer<T>::value ? luaL_Reg{ nullptr, nullptr } : luaL_Reg{ "__gc", &detail::usertype_alloc_destruct<T> },
-						{ nullptr, nullptr } } };
+						{ nullptr, nullptr } 
+					} };
 
 					if (luaL_newmetatable(L, metakey) == 1) {
 						luaL_setfuncs(L, reg.data(), 0);
@@ -17436,25 +17604,8 @@ namespace sol {
 #include <cstdio>
 #include <bitset>
 
-#ifdef SOL_USE_BOOST
-#include <boost/unordered_map.hpp>
-#endif // Using Boost
-
 namespace sol {
 	namespace usertype_detail {
-#if defined(SOL_USE_BOOST)
-#if defined(SOL_CXX17_FEATURES)
-		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
-		using map_t = boost::unordered_map<K, V, H, E>;
-#else
-		template <typename K, typename V, typename H = boost::hash<K>, typename E = std::equal_to<>>
-		using map_t = boost::unordered_map<K, V, H, E>;
-#endif // C++17 or not, WITH boost
-#else
-		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
-		using map_t = std::unordered_map<K, V, H, E>;
-#endif // Boost map target
-
 		const int metatable_index = 2;
 		const int metatable_core_index = 3;
 		const int filler_index = 4;
