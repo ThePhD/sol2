@@ -158,7 +158,6 @@ namespace stack {
 
 		template <typename Handler>
 		static optional<V> get_empty(std::false_type, lua_State* L, int index, Handler&& handler, record&) {
-			typedef std::variant_alternative_t<0, V> T;
 			// This should never be reached...
 			// please check your code and understand what you did to bring yourself here
 			// maybe file a bug report, or 5

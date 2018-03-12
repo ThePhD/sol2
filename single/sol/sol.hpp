@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-03-11 01:45:34.909172 UTC
-// This header was generated with sol v2.19.5 (revision a83091c)
+// Generated 2018-03-12 00:06:06.950598 UTC
+// This header was generated with sol v2.19.5 (revision 22ecb74)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -9692,7 +9692,6 @@ namespace stack {
 
 		template <typename Handler>
 		static optional<V> get_empty(std::false_type, lua_State* L, int index, Handler&& handler, record&) {
-			typedef std::variant_alternative_t<0, V> T;
 			// This should never be reached...
 			// please check your code and understand what you did to bring yourself here
 			// maybe file a bug report, or 5
