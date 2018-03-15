@@ -4,7 +4,7 @@
 #include <iostream>
 
 int main() {
-	std::cout << "=== protected_functions example ===" << std::endl;
+	std::cout << "=== protected_functions ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

@@ -69,9 +69,9 @@ Equivalently, you can also write:
 	);
 
 	// set usertype explicitly, with the given name
-	lua.set_usertype<ship>( "ship", shiptype );
+	lua.set_usertype( "ship", shiptype );
 
-	// shiptype is now a useless skeleton type, just let it destruct naturally and don't use it again.
+	// the shiptype variable is now a useless skeleton type, just let it destruct naturally and don't use it again.
 
 
 Note that here, because the C++ class is default-constructible, it will automatically generate a creation function that can be called in lua called "new" that takes no arguments. You can use it like this in lua code:
@@ -285,39 +285,17 @@ usertype arguments - simple usertype
 	- Should probably not be used directly. Use ``sol::table::new_usertype`` or ``sol::table::new_simple_usertype`` instead
 
 
+
+
 runtime functions
 -----------------
 
 You can add functions at runtime **to the whole class** (not to individual objects). Set a name under the metatable name you bound using ``new_usertype``/``new_simple_usertype`` to an object. For example:
 
-.. code-block:: cpp
-	:linenos:
+.. literalinclude:: ../../../examples/docs/runtime_extension.cpp
 	:caption: runtime_extension.cpp
-	:name: runtime-extension
-
-	#define SOL_CHECK_ARGUMENTS 1
-	#include <sol.hpp>
-
-	struct object { 
-		int value = 0; 
-	};
-
-	int main (int, char*[]) {
-
-		sol::state lua;
-		lua.open_libraries(sol::lib::base);
-
-		lua.new_usertype<object>( "object" );
-
-		// runtime additions: through the sol API
-		lua["object"]["func"] = [](object& o) { return o.value; };
-		// runtime additions: through a lua script
-		lua.script("function object:print () print(self:func()) end");
-		
-		// see it work
-		lua.script("local obj = object.new() \n obj:print()");
-	}
-
+	:name: runtime-extension-example
+	:linenos:
 
 .. note::
 
@@ -341,34 +319,17 @@ If your class has no complicated™ virtual inheritance or multiple inheritance,
 
 For the rest of us safe individuals out there: You must specify the ``sol::base_classes`` tag with the ``sol::bases<Types...>()`` argument, where ``Types...`` are all the base classes of the single type ``T`` that you are making a usertype out of.
 
+Register the base classes explicitly.
+
 .. note::
 
 	Always specify your bases if you plan to retrieve a base class using the Sol abstraction directly and not casting yourself.
 
-.. code-block:: cpp
-	:linenos:
-
-	struct A { 
-		int a = 10;
-		virtual int call() { return 0; } 
-	};
-	struct B : A { 
-		int b = 11; 
-		virtual int call() override { return 20; } 
-	};
-
-Then, to register the base classes explicitly:
-
-.. code-block:: cpp
+.. literalinclude:: ../../../examples/docs/inheritance.cpp
+	:caption: inheritance.cpp
+	:name: inheritance-example
 	:linenos:
 	:emphasize-lines: 5
-
-	sol::state lua;
-
-	lua.new_usertype<B>( "B",
-		"call", &B::call,
-		sol::base_classes, sol::bases<A>()
-	);
 
 .. note::
 

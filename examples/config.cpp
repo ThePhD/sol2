@@ -36,7 +36,7 @@ height = 1080
 	c_assert(screen.width == 1920);
 	c_assert(screen.height == 1080);
 
-	std::cout << "=== config example ===" << std::endl;
+	std::cout << "=== config ===" << std::endl;
 	screen.print();
 	std::cout << std::endl;
 }

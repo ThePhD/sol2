@@ -4,7 +4,7 @@
 #include <iostream>
 
 int main() {
-	std::cout << "=== variables example ===" << std::endl;
+	std::cout << "=== variables ===" << std::endl;
 
     sol::state lua;
 

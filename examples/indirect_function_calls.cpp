@@ -34,7 +34,7 @@ sol::variadic_results call_it(sol::object function_name, sol::variadic_args args
 }
 
 int main() {
-	std::cout << "=== indirect function calls example ===" << std::endl;
+	std::cout << "=== indirect function calls ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

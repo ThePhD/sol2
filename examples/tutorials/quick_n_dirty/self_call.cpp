@@ -4,7 +4,7 @@
 #include <iostream>
 
 int main() {
-	std::cout << "=== self_call example ===" << std::endl;
+	std::cout << "=== self_call ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::table);

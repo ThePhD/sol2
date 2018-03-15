@@ -97,7 +97,7 @@ struct vec {
 };
 
 int main() {
-	std::cout << "=== usertype dynamic getter/setter example ===" << std::endl;
+	std::cout << "=== usertype dynamic getter/setter ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries();

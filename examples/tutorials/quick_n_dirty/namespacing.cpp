@@ -5,7 +5,7 @@
 #include "../../assert.hpp"
 
 int main() {
-	std::cout << "=== namespacing example ===" << std::endl;
+	std::cout << "=== namespacing ===" << std::endl;
 
 	struct my_class {
 		int b = 24;

@@ -36,7 +36,7 @@ namespace sol {
 }
 
 int main(int, char*[]) {
-	std::cout << "=== container as container example ===" << std::endl;
+	std::cout << "=== container as container ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

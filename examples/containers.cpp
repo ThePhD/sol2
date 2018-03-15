@@ -5,7 +5,7 @@
 #include <iostream>
 
 int main(int, char**) {
-	std::cout << "=== containers example ===" << std::endl;
+	std::cout << "=== containers ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries();

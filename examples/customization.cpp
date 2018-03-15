@@ -72,7 +72,7 @@ namespace sol {
 }
 
 int main() {
-	std::cout << "=== customization example ===" << std::endl;
+	std::cout << "=== customization ===" << std::endl;
 	std::cout << std::boolalpha;
 	
 	sol::state lua;

@@ -13,13 +13,8 @@ as_table
 
 This function serves the purpose of ensuring that an object is pushed -- if possible -- like a table into Lua. The container passed here can be a pointer, a reference, a ``std::reference_wrapper`` around a container, or just a plain container value. It must have a begin/end function, and if it has a ``std::pair<Key, Value>`` as its ``value_type``, it will be pushed as a dictionary. Otherwise, it's pushed as a sequence.
 
-.. code-block:: cpp
-
-	sol::state lua;
-	lua.open_libraries();
-	lua.set("my_table", sol::as_table(std::vector<int>{ 1, 2, 3, 4, 5 }));
-	lua.script("for k, v in ipairs(my_table) do print(k, v) assert(k == v) end");
-	
+.. literalinclude:: ../../../examples/docs/as_table_ipairs.cpp
+	:linenos:
 
 Note that any caveats with Lua tables apply the moment it is serialized, and the data cannot be gotten out back out in C++ as a C++ type. You can deserialize the Lua table into something explicitly using the ``sol::as_table_t`` marker for your get and conversion operations using Sol. At that point, the returned type is deserialized **from** a table, meaning you cannot reference any kind of C++ data directly as you do with regular userdata/usertypes. *All C++ type information is lost upon serialization into Lua.*
 

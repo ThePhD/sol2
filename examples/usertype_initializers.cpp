@@ -41,7 +41,7 @@ public:
 };
 
 int main() {
-	std::cout << "=== usertype_initializers example ===" << std::endl;
+	std::cout << "=== usertype_initializers ===" << std::endl;
 	{ // additional scope to make usertype destroy earlier
 		sol::state lua;
 		lua.open_libraries();

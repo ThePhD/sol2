@@ -25,7 +25,7 @@ struct my_data {
 };
 
 int main() {
-	std::cout << "=== usertype_simple example ===" << std::endl;
+	std::cout << "=== usertype_simple ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries();

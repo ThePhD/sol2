@@ -5,7 +5,7 @@
 #include "../../assert.hpp"
 
 int main(int, char*[]) {
-	std::cout << "=== opening a state example ===" << std::endl;
+	std::cout << "=== opening a state ===" << std::endl;
 
 	sol::state lua;
 	// open some common libraries

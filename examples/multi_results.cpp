@@ -6,7 +6,7 @@
 #include <iostream>
 
 int main() {
-	std::cout << "=== multi results example ===" << std::endl;
+	std::cout << "=== multi results ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

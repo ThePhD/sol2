@@ -221,13 +221,9 @@ namespace sol {
 			construct_match<T, TypeLists...>(constructor_match<T, checked, clean_stack>(obj), L, argcount, 1 + static_cast<int>(syntax));
 
 			userdataref.push();
-			luaL_getmetatable(L, &meta[0]);
-			if (type_of(L, -1) == type::lua_nil) {
-				lua_pop(L, 1);
-				return luaL_error(L, "sol: unable to get usertype metatable");
-			}
+			stack::stack_detail::undefined_metatable<T> umf(L, &meta[0]);
+			umf();
 
-			lua_setmetatable(L, -2);
 			return 1;
 		}
 
@@ -508,7 +504,7 @@ namespace sol {
 			typedef constructor_list<Args...> F;
 
 			static int call(lua_State* L, F&) {
-				const auto& metakey = usertype_traits<T>::metatable();
+				const auto& meta = usertype_traits<T>::metatable();
 				int argcount = lua_gettop(L);
 				call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, usertype_traits<T>::user_metatable(), 1) : call_syntax::dot;
 				argcount -= static_cast<int>(syntax);
@@ -519,13 +515,9 @@ namespace sol {
 				construct_match<T, Args...>(constructor_match<T, false, clean_stack>(obj), L, argcount, boost + 1 + static_cast<int>(syntax));
 
 				userdataref.push();
-				luaL_getmetatable(L, &metakey[0]);
-				if (type_of(L, -1) == type::lua_nil) {
-					lua_pop(L, 1);
-					return luaL_error(L, "sol: unable to get usertype metatable");
-				}
+				stack::stack_detail::undefined_metatable<T> umf(L, &meta[0]);
+				umf();
 
-				lua_setmetatable(L, -2);
 				return 1;
 			}
 		};
@@ -537,7 +529,7 @@ namespace sol {
 			struct onmatch {
 				template <typename Fx, std::size_t I, typename... R, typename... Args>
 				int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start, F& f) {
-					const auto& metakey = usertype_traits<T>::metatable();
+					const auto& meta = usertype_traits<T>::metatable();
 					T* obj = detail::usertype_allocate<T>(L);
 					reference userdataref(L, -1);
 					
@@ -545,14 +537,8 @@ namespace sol {
 					stack::call_into_lua<checked, clean_stack>(r, a, L, boost + start, func, detail::implicit_wrapper<T>(obj));
 
 					userdataref.push();
-					luaL_getmetatable(L, &metakey[0]);
-					if (type_of(L, -1) == type::lua_nil) {
-						lua_pop(L, 1);
-						std::string err = "sol: unable to get usertype metatable for ";
-						err += usertype_traits<T>::name();
-						return luaL_error(L, err.c_str());
-					}
-					lua_setmetatable(L, -2);
+					stack::stack_detail::undefined_metatable<T> umf(L, &meta[0]);
+					umf();
 
 					return 1;
 				}
@@ -579,10 +565,24 @@ namespace sol {
 		struct lua_call_wrapper<T, destructor_wrapper<Fx>, is_index, is_variable, checked, boost, clean_stack, std::enable_if_t<!std::is_void<Fx>::value>> {
 			typedef destructor_wrapper<Fx> F;
 
-			static int call(lua_State* L, const F& f) {
+			static int call_void(std::true_type, lua_State* L, const F& f) {
+				typedef meta::bind_traits<meta::unqualified_t<decltype(f.fx)>> bt;
+				typedef typename bt::template arg_at<0> arg0;
+				typedef meta::unqualified_t<arg0> O;
+
+				O& obj = stack::get<O>(L);
+				f.fx(detail::implicit_wrapper<O>(obj));
+				return 0;
+			}
+
+			static int call_void(std::false_type, lua_State* L, const F& f) {
 				T& obj = stack::get<T>(L);
 				f.fx(detail::implicit_wrapper<T>(obj));
 				return 0;
+			}
+
+			static int call(lua_State* L, const F& f) {
+				return call_void(std::is_void<T>(), L, f);
 			}
 		};
 

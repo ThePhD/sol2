@@ -5,7 +5,7 @@
 #include <iostream>
 
 int main(int, char**) {
-	std::cout << "=== script error handling example ===" << std::endl;
+	std::cout << "=== script error handling ===" << std::endl;
 
 	sol::state lua;
 

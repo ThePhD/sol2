@@ -18,39 +18,8 @@ This type is passed to :ref:`sol::state(_view)::script/do_x<state-script-functio
 
 There are many more uses, including storing state or special dependent variables in an environment that you pre-create using regular table opertions, and then changing at-will:
 
-.. code-block:: cpp
-	:caption: preparing environments
-
-	#define SOL_CHECK_ARGUMENTS 1
-	#include <sol.hpp>
-
-	int main (int, char*[]) {
-		sol::state lua;
-		lua.open_libraries();
-		sol::environment my_env(lua, sol::create);
-		// set value, and we need to explicitly allow for 
-		// access to "print", since a new environment hides 
-		// everything that's not defined inside of it
-		// NOTE: hiding also hides library functions (!!)
-		// BE WARNED
-		my_env["var"] = 50;
-		my_env["print"] = lua["print"];
-
-		sol::environment my_other_env(lua, sol::create, lua.globals());
-		// do not need to explicitly allow access to "print",
-		// since we used the "Set a fallback" version 
-		// of the sol::environment constructor
-		my_other_env["var"] = 443;
-
-		// output: 50
-		lua.script("print(var)", my_env);
-
-		// output: 443
-		lua.script("print(var)", my_other_env);
-
-		return 0;
-	}
-
+.. literalinclude:: ../../../examples/docs/preparing_environments.cpp
+	:linenos:
 
 Also note that ``sol::environment`` derives from ``sol::table``, which also derives from ``sol::reference``: in other words, copying one ``sol::environment`` value to another ``sol::environment`` value **does not** deep-copy the table, just creates a new reference pointing to the same lua object.
 

@@ -19,7 +19,7 @@ struct multiplier {
 };
 
 int main() {
-	std::cout << "=== functions example ===" << std::endl;
+	std::cout << "=== functions ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

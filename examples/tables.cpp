@@ -7,7 +7,7 @@
 // this example shows how to read data in from a lua table
 
 int main() {
-	std::cout << "=== tables example ===" << std::endl;
+	std::cout << "=== tables ===" << std::endl;
 
     sol::state lua;
     // table used as an array

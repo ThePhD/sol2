@@ -54,7 +54,7 @@ void demo_explicit (sol::as_table_t<std::map<std::string, sol::as_table_t<std::v
 }
 
 int main(int, char**) {
-	std::cout << "=== containers retrieved from lua tables example ===" << std::endl;
+	std::cout << "=== containers retrieved from lua tables ===" << std::endl;
 	
 	sol::state lua;
 	// bind the function

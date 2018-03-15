@@ -4,7 +4,7 @@
 #include <iostream>
 
 int main(int, char*[]) {
-	std::cout << "=== usertype call from C++ example ===" << std::endl;
+	std::cout << "=== usertype call from C++ ===" << std::endl;
 	
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

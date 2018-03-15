@@ -39,7 +39,7 @@ int main() {
 	// result3 == 16.5
 	c_assert(result3 == 16.5);
 	
-	std::cout << "=== any_return example ===" << std::endl;
+	std::cout << "=== any_return ===" << std::endl;
 	std::cout << "result : " << result << std::endl;
 	std::cout << "result2: " << result2 << std::endl;
 	std::cout << "result3: " << result3 << std::endl;

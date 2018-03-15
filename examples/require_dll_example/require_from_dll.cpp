@@ -7,7 +7,7 @@
 #include <iostream>
 
 int main(int, char*[]) {
-	std::cout << "=== require from DLL example ===" << std::endl;
+	std::cout << "=== require from DLL ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::package, sol::lib::base);

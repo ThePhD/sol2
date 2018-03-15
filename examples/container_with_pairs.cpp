@@ -18,7 +18,7 @@ int main() {
 
 	using my_set = std::unordered_set<std::pair<std::string, std::string>, hasher>;
 
-	std::cout << "=== containers with std::pair<> example ===" << std::endl;
+	std::cout << "=== containers with std::pair<> ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

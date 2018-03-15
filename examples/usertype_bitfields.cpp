@@ -115,7 +115,7 @@ struct __attribute__((packed, aligned(1))) flags_t {
 } flags{0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 int main() {
-	std::cout << "=== usertype_bitfields example ===" << std::endl;
+	std::cout << "=== usertype_bitfields ===" << std::endl;
 #ifdef __MINGW32__
 	std::cout << "MinGW Detected, packing structs is broken in MinGW and this test may fail" << std::endl;
 #endif

@@ -33,7 +33,7 @@ void will_throw() {
 }
 
 int main() {
-	std::cout << "=== exception_handler example ===" << std::endl;
+	std::cout << "=== exception_handler ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

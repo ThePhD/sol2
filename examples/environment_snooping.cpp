@@ -70,7 +70,7 @@ void complicated(sol::this_state ts) {
 }
 
 int main() {
-	std::cout << "=== environment snooping example ===" << std::endl;
+	std::cout << "=== environment snooping ===" << std::endl;
 	sol::state lua;
 
 	sol::environment freshenv(lua, sol::create, lua.globals());

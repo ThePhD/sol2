@@ -47,7 +47,7 @@ private:
 };
 
 int main() {
-	std::cout << "=== usertype_advanced example ===" << std::endl;
+	std::cout << "=== usertype_advanced ===" << std::endl;
 	sol::state lua;
 
 	lua.open_libraries(sol::lib::base);

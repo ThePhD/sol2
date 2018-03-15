@@ -4,7 +4,7 @@
 #include <iostream>
 
 int main() {
-	std::cout << "=== variadic_args example ===" << std::endl;
+	std::cout << "=== variadic_args ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

@@ -20,7 +20,7 @@ struct Doge {
 };
 
 int main(int, char* []) {
-	std::cout << "=== userdata example ===" << std::endl;
+	std::cout << "=== userdata ===" << std::endl;
 
 	sol::state lua;
 

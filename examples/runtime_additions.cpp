@@ -9,7 +9,7 @@ struct object {
 };
 
 int main(int, char*[]) {
-	std::cout << "=== runtime_additions example ===" << std::endl;
+	std::cout << "=== runtime_additions ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

@@ -12,7 +12,7 @@ Containers are objects that are meant to be inspected and iterated and whose job
 * This means containers **do not automatically serialize as Lua tables**
 	- If you need tables, consider using ``sol::as_table`` and ``sol::nested``
 	- See `this table serialization example`_ for more details
-* Lua 5.1 has different semantics for ``pairs`` and ``ipairs``: see the example for plain containers in the :doc:`api documentation page for containers<api/containers>`
+* Lua 5.1 has different semantics for ``pairs`` and ``ipairs``: be wary. See :ref:`examples down below<containers-pairs-example>` for more details
 * You can override container behavior by overriding :ref:`the detection trait<container-detection>` and :ref:`specializing the container_traits template<container-traits>`
 * You can bind typical C-style arrays, but must follow :ref:`the rules<container-c-array>`
 
@@ -232,7 +232,7 @@ Note that this will not work well in Lua 5.1, as it has explicit table checks an
 
 There are also other ways to iterate over key/values, but they can be difficult AND cost your performance due to not having proper support in Lua 5.1. We recommend that you upgrade to Lua 5.2 or 5.3 if this is integral to your infrastructure.
 
-If you can't upgrade, use the member-function ``my_container:pairs()`` in Lua to perform iteration:
+If you can't upgrade, use the "member" function ``my_container:pairs()`` in Lua to perform iteration:
 
 .. literalinclude:: ../../examples/container_with_pairs.cpp
 	:name: containers-pairs-example

@@ -20,7 +20,7 @@ struct Doge {
 };
 
 int main(int, char* []) {
-	std::cout << "=== userdata memory reference example ===" << std::endl;
+	std::cout << "=== userdata memory reference ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

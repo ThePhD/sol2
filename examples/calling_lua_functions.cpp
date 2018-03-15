@@ -23,7 +23,7 @@ sol::variadic_results fallback(sol::this_state ts, sol::variadic_args args) {
 }
 
 int main(int, char*[]) {
-	std::cout << "=== calling lua functions example ===" << std::endl;
+	std::cout << "=== calling lua functions ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries();

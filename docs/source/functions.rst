@@ -29,7 +29,15 @@ There are a number of examples dealing with functions and how they can be bound 
 working with callables/lambdas
 ------------------------------
 
-To be explicit about wanting a struct to be interpreted as a function, use ``mytable.set_function( key, func_value );``. You can also use the :doc:`sol::as_function<../api/as_function>` call, which will wrap and identify your type as a function.
+To be explicit about wanting a struct to be interpreted as a function, use ``my_table.set_function( key, func_value );``. You can also use the :doc:`sol::as_function<../api/as_function>` call, which will wrap and identify your type as a function.
+
+.. _lambda-registry:
+.. note::
+
+	When you set lambdas/callables through ``my_table.set( ... )`` using the same function signature, you can suffer from ``const static`` data (like string literals) from not "behaving properly". This is because some compilers do not provide unique type names that we can get at in C++ with RTTI disabled, and thusly it will register the first lambda of the specific signature as the one that will be called. The result is that string literals and other data stored in an compiler implementation-defined manner might be folded and the wrong routine run, even if other observable side effects are nice.
+
+	To avoid this problem, register all your lambdas with :ref:`my_table.set_function<set-function>` and `avoid the nightmare altogether`_.
+
 
 Furthermore, it is important to know that lambdas without a specified return type (and a non-const, non-reference-qualified ``auto``) will decay return values. To capture or return references explicitly, use ``decltype(auto)`` or specify the return type **exactly** as desired:
 
@@ -37,7 +45,6 @@ Furthermore, it is important to know that lambdas without a specified return typ
 	:name: refereces-in-lambdas-example
 	:linenos:
 	
-
 .. _function-exception-handling:
 
 exception safety/handling
@@ -97,3 +104,4 @@ Note that stateless lambdas can be converted to a function pointer, so stateless
 
 
 .. _the examples: https://github.com/ThePhD/sol2/blob/develop/examples/functions.cpp
+.. _avoid the nightmare altogether: https://github.com/ThePhD/sol2/issues/608#issuecomment-372876206

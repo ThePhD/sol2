@@ -22,44 +22,24 @@ Function is a correct-assuming version of :doc:`protected_function<protected_fun
 
 Calls the constructor and creates this type, straight from the stack. For example:
 
-.. code-block:: lua
-	:caption: func_barks.lua
+.. literalinclude:: ../../../examples/tie.cpp
+	:caption: funcs.lua
+	:lines: 7-11
 	:linenos:
-
-	bark_power = 11;
-
-	function woof ( bark_energy )
-		return (bark_energy * (bark_power / 4))
-	end
 
 The following C++ code will call this function from this file and retrieve the return value:
 
-.. code-block:: cpp
+.. literalinclude:: ../../../examples/tie.cpp
+	:lines: 16-22
 	:linenos:
-
-	sol::state lua;
-
-	lua.script_file( "func_barks.lua" );
-
-	sol::function woof = lua["woof"];
-	double numwoof = woof(20);
 
 The call ``woof(20)`` generates a :ref:`unsafe_function_result<unsafe-function-result>`, which is then implicitly converted to an ``double`` after being called. The intermediate temporary ``function_result`` is then destructed, popping the Lua function call results off the Lua stack. 
 
 You can also return multiple values by using ``std::tuple``, or if you need to bind them to pre-existing variables use ``sol::tie``:
 
-.. code-block:: cpp
+.. literalinclude:: ../../../examples/tie.cpp
+	:lines: 24-
 	:linenos:
-
-	sol::state lua;
-
-	lua.script( "function f () return 10, 11, 12 end" );
-
-	sol::function f = lua["f"];
-	std::tuple<int, int, int> abc = f(); // 10, 11, 12 from Lua
-	// or
-	int a, b, c;
-	sol::tie(a, b, c) = f(); // a = 10, b = 11, c = 12 from Lua
 
 This makes it much easier to work with multiple return values. Using ``std::tie`` from the C++ standard will result in dangling references or bad behavior because of the very poor way in which C++ tuples/``std::tie`` were specified and implemented: please use ``sol::tie( ... )`` instead to satisfy any multi-return needs.
 

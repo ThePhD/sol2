@@ -431,6 +431,20 @@ namespace sol {
 				lua_CFunction cf = call_detail::construct<T, detail::default_safe_function_calls, true, Lists...>;
 				return stack::push(L, cf);
 			}
+
+			static int push(lua_State* L, constructor_list<Lists...>) {
+				lua_CFunction cf = call_detail::construct<T, detail::default_safe_function_calls, true, Lists...>;
+				return stack::push(L, cf);
+			}
+		};
+
+		template <typename L0, typename... Lists>
+		struct pusher<constructor_list<L0, Lists...>> {
+			typedef constructor_list<L0, Lists...> cl_t;
+			static int push(lua_State* L, cl_t cl) {
+				typedef typename meta::bind_traits<L0>::return_type T;
+				return stack::push<detail::tagged<T, cl_t>>(L, cl);
+			}
 		};
 
 		template <typename T, typename... Fxs>
@@ -445,6 +459,16 @@ namespace sol {
 			}
 		};
 
+		template <typename F, typename... Fxs>
+		struct pusher<constructor_wrapper<F, Fxs...>> {
+			template <typename C>
+			static int push(lua_State* L, C&& c) {
+				typedef typename meta::bind_traits<F>::template arg_at<0> arg0;
+				typedef meta::unqualified_t<std::remove_pointer_t<arg0>> T;
+				return stack::push<detail::tagged<T, constructor_wrapper<F, Fxs...>>>(L, std::forward<C>(c));
+			}
+		};
+
 		template <typename T>
 		struct pusher<detail::tagged<T, destructor_wrapper<void>>> {
 			static int push(lua_State* L, destructor_wrapper<void>) {
@@ -455,11 +479,38 @@ namespace sol {
 
 		template <typename T, typename Fx>
 		struct pusher<detail::tagged<T, destructor_wrapper<Fx>>> {
-			static int push(lua_State* L, destructor_wrapper<Fx> c) {
+			static int push(lua_State* L, destructor_wrapper<Fx>&& c) {
 				lua_CFunction cf = call_detail::call_user<T, false, false, destructor_wrapper<Fx>, 2>;
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
-				upvalues += stack::push<user<T>>(L, std::move(c));
+				upvalues += stack::push<user<destructor_wrapper<Fx>>>(L, std::move(c));
+				return stack::push(L, c_closure(cf, upvalues));
+			}
+
+			static int push(lua_State* L, const destructor_wrapper<Fx>& c) {
+				lua_CFunction cf = call_detail::call_user<T, false, false, destructor_wrapper<Fx>, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<destructor_wrapper<Fx>>>(L, c);
+				return stack::push(L, c_closure(cf, upvalues));
+			}
+		};
+
+		template <typename Fx>
+		struct pusher<destructor_wrapper<Fx>> {
+			static int push(lua_State* L, destructor_wrapper<Fx>&& c) {
+				lua_CFunction cf = call_detail::call_user<void, false, false, destructor_wrapper<Fx>, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<destructor_wrapper<Fx>>>(L, std::move(c));
+				return stack::push(L, c_closure(cf, upvalues));
+			}
+
+			static int push(lua_State* L, const destructor_wrapper<Fx>& c) {
+				lua_CFunction cf = call_detail::call_user<void, false, false, destructor_wrapper<Fx>, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<destructor_wrapper<Fx>>>(L, c);
 				return stack::push(L, c_closure(cf, upvalues));
 			}
 		};

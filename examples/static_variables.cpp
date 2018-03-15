@@ -11,7 +11,7 @@ int test::muh_variable = 25;
 
 
 int main() {
-	std::cout << "=== static_variables example ===" << std::endl;
+	std::cout << "=== static_variables ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries();

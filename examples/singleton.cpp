@@ -40,7 +40,7 @@ std::shared_ptr<SomeLib> SomeLib::getInstance() {
 }
 
 int main(int, char*[]) {
-	std::cout << "=== singleton example ===" << std::endl;
+	std::cout << "=== singleton ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

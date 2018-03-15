@@ -33,7 +33,7 @@ struct dynamic_object {
 
 
 int main() {
-	std::cout << "=== dynamic_object example ===" << std::endl;
+	std::cout << "=== dynamic_object ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

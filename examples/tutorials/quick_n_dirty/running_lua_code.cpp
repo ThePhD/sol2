@@ -6,7 +6,7 @@
 #include "../../assert.hpp"
 
 int main(int, char*[]) {
-	std::cout << "=== running lua code example ===" << std::endl;
+	std::cout << "=== running lua code ===" << std::endl;
 
 	{
 		std::ofstream out("a_lua_script.lua");

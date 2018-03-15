@@ -5,7 +5,7 @@
 #include <iostream>
 
 int main(int, char*[]) {
-	std::cout << "=== lua inheritance example ===" << std::endl;
+	std::cout << "=== lua inheritance ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

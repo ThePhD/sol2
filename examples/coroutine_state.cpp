@@ -5,7 +5,7 @@
 #include <iostream>
 
 int main(int, char*[]) {
-	std::cout << "=== coroutine state transfer example ===" << std::endl;
+	std::cout << "=== coroutine state transfer ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries();

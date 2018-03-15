@@ -19,7 +19,7 @@ struct Doge {
 };
 
 int main(int, char* []) {
-	std::cout << "=== usertypes example ===" << std::endl;
+	std::cout << "=== usertypes ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

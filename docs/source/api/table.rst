@@ -85,6 +85,8 @@ These functions set items into the table. The first one (``set``) can set  *mult
 
 If the keys within nested queries try to traverse into a table that doesn't exist, it will first pull out a ``nil`` value. If there are further lookups past a key that do not exist, the additional lookups into the nil-returned variable will cause a panic to be fired by the lua C API.
 
+Please note how callables and lambdas are serialized, as there may be issues on GCC-based implementations. See this :ref:`note here<lambda-registry>`.
+
 This function does not create tables where they do not exist.
 
 .. code-block:: cpp
@@ -98,6 +100,8 @@ This function does not create tables where they do not exist.
 	table& traverse_raw_set(Args&&... args);
 
 Similar to :ref:`set<set-value>`, but it does so "raw" (ignoring metamethods on the table's metatable).
+
+Please note how callables and lambdas are serialized, as there may be issues on GCC-based implementations. See this :ref:`note here<lambda-registry>`.
 
 .. note::
 
@@ -219,6 +223,8 @@ A functional ``for_each`` loop that calls the desired function. The passed in fu
 	proxy<const table&, T> operator[](T&& key) const;
 
 Generates a :doc:`proxy<proxy>` that is templated on the table type and the key type. Enables lookup of items and their implicit conversion to a desired type. Lookup is done lazily.
+
+Please note how callables and lambdas are serialized, as there may be issues on GCC-based implementations. See this :ref:`note here<lambda-registry>`.
 
 .. code-block:: cpp
 	:caption: function: create a table with defaults

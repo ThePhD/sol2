@@ -7,14 +7,9 @@ new_table
 	
 	struct new_table;
 
-	const new_table create = new_table{};
+	constexpr const new_table create = new_table{};
 
 ``sol::new_table`` serves the purpose of letting you create tables using the constructor of :doc:`sol::table<table>` and :doc:`sol::environment<environment>`. It also disambiguates the other kinds of constructors, so is **necessary** to be specified. Leaving it off will result in the wrong constructor to be called, for either ``sol::table`` or ``sol::environment``.
-
-There are two kinds of tables: the global table and non-global tables: however, both have the exact same interface and all ``sol::global_table`` s are convertible to regular ``sol::table`` s.
-
-Tables are the core of Lua, and they are very much the core of Sol.
-
 
 members
 -------

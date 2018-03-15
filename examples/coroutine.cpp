@@ -5,7 +5,7 @@
 #include <iostream>
 
 int main() {
-	std::cout << "=== coroutine example ===" << std::endl;
+	std::cout << "=== coroutine ===" << std::endl;
 
 	sol::state lua;
 	std::vector<sol::coroutine> tasks;

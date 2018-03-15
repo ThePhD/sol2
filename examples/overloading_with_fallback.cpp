@@ -23,7 +23,7 @@ sol::variadic_results fallback(sol::this_state ts, sol::variadic_args args) {
 }
 
 int main(int, char*[]) {
-	std::cout << "=== overloading with fallback example ===" << std::endl;
+	std::cout << "=== overloading with fallback ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries();

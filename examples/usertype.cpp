@@ -41,7 +41,7 @@ struct variables {
 };
 
 int main() {
-	std::cout << "=== usertype example ===" << std::endl;
+	std::cout << "=== usertype ===" << std::endl;
 
     sol::state lua;
     lua.open_libraries(sol::lib::base, sol::lib::math);

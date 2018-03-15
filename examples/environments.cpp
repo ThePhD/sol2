@@ -21,7 +21,7 @@ void test_environment(std::string key, const sol::environment& env, const sol::s
 }
 
 int main(int, char**) {
-	std::cout << "=== environments example ===" << std::endl;
+	std::cout << "=== environments ===" << std::endl;
 
 	sol::state lua;
 	// A global variable to see if we can "fallback" into it

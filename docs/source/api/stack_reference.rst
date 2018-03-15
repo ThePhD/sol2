@@ -17,43 +17,12 @@ This type is particular to working with the stack. It does not push the function
 
 Furthermore, if you know you have a function in the right place alongside proper arguments on top of it, you can use the ``sol::stack_count`` structure and give its constructor the number of arguments off the top that you want to call your pre-prepared function with:
 
-.. code-block:: cpp
+.. literalinclude:: ../../../examples/stack_aligned_function.cpp
 	:caption: stack_aligned_function.cpp
 	:linenos:
-	:name: stack-top-example
+	:name: stack-aligned-function-example
 
-	#define SOL_CHECK_ARGUMENTS 1
-	#include <sol.hpp>
-
-	#include <cassert>
-
-	int main (int, char*[]) {
-		sol::state lua;
-		lua.set_function("func", [](int a, int b) { return (a + b) * 2;});
-
-		sol::reference func_ref = lua["func"];
-		lua_State* L = lua.lua_state();
-
-		// for some reason, you need to use the low-level API
-		func_ref.push(); // function on stack now
-		
-		// maybe this is in a lua_CFunction you bind,
-		// or maybe you're trying to work with a pre-existing system
-		sol::stack_aligned_function func(L, -1);
-		lua_pushinteger(L, 5); // argument 1
-		lua_pushinteger(L, 6); // argument 2
-		// take 2 arguments from the top, 
-		// and use "stack_aligned_function" to call
-		int result = func(sol::stack_count(2));
-		
-		// make sure everything is clean
-		assert(result == 22);
-		assert(lua.stack_top() == 0); // stack is empty/balanced
-
-		return 0;
-	}
-
-Finally, there is a special abstraction that provides further stack optimizations for ``sol::protected_function`` variants that are aligned, and it is called ``sol::stack_aligned_stack_handler_protected_function``. This typedef expects you to pass a ``stack_reference`` handler to its constructor, meaning that you have already placed an appropriate error-handling function somewhere on the stack before the aligned function. You can use ``sol::stack_count`` with this type as well,
+Finally, there is a special abstraction that provides further stack optimizations for ``sol::protected_function`` variants that are aligned, and it is called ``sol::stack_aligned_stack_handler_protected_function``. This typedef expects you to pass a ``stack_reference`` handler to its constructor, meaning that you have already placed an appropriate error-handling function somewhere on the stack before the aligned function. You can use ``sol::stack_count`` with this type as well.
 
 .. warning::
 

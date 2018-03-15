@@ -21,7 +21,7 @@ struct some_class {
 };
 
 int main(int, char*[]) {
-	std::cout << "=== functions (all) example ===" << std::endl;
+	std::cout << "=== functions (all) ===" << std::endl;
 	
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

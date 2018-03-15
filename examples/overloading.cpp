@@ -13,7 +13,7 @@ inline std::string make_string(std::string input) {
 }
 
 int main() {
-	std::cout << "=== overloading example ===" << std::endl;
+	std::cout << "=== overloading ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

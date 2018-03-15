@@ -29,63 +29,21 @@ Its use is simple: wherever you can pass a function type to Lua, whether its on 
 
 The functions can be any kind of function / function object (lambda). Given these functions and struct:
 
-.. code-block:: cpp
+.. literalinclude:: ../../../examples/overloading_with_members.cpp
 	:linenos:
-
-	struct pup {
-		int barks = 0;
-
-		void bark () {
-			++barks; // bark!
-		}
-
-		bool is_cute () const { 
-			return true;
-		}
-	};
-
-	void ultra_bark( pup& p, int barks) {
-		for (; barks --> 0;) p.bark();
-	}
-
-	void picky_bark( pup& p, std::string s) {
-		if ( s == "bark" )
-		    p.bark();
-	}
+	:lines: 1-27
 
 You then use it just like you would for any other part of the api:
 
-.. code-block:: cpp
+.. literalinclude:: ../../../examples/overloading_with_members.cpp
 	:linenos:
+	:lines: 29-45
 
-	sol::state lua;
+Doing the following in Lua will call the specific overloads chosen, and their associated functions:
 
-	lua.set_function( "bark", sol::overload( 
-		ultra_bark, 
-		[]() { return "the bark from nowhere"; } 
-	) );
-
-	lua.new_usertype<pup>( "pup",
-		// regular function
-		"is_cute", &pup::is_cute,
-		// overloaded function
-		"bark", sol::overload( &pup::bark, &picky_bark )
-	);
-
-Thusly, doing the following in Lua:
-
-.. code-block:: Lua
-	:caption: pup.lua
+.. literalinclude:: ../../../examples/overloading_with_members.cpp
 	:linenos:
-
-	local barker = pup.new()
-	pup:bark() -- calls member function pup::bark
-	pup:bark(20) -- calls ultra_bark
-	pup:bark("meow") -- picky_bark, no bark
-	pup:bark("bark") -- picky_bark, bark
-
-	bark(pup, 20) -- calls ultra_bark
-	local nowherebark = bark() -- calls lambda which returns that string
+	:lines: 47-
 
 .. note::
 

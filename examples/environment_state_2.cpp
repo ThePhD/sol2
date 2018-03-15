@@ -4,7 +4,7 @@
 #include <iostream>
 
 int main(int, char* []) {
-	std::cout << "=== environment state 2 example ===" << std::endl;
+	std::cout << "=== environment state 2 ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries();

@@ -122,13 +122,7 @@ namespace sol {
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
-#if defined(_MSC_VER) && _MSC_VER == 1913
-			// This compiler is bananas
-			// B, A N A N A S
-			return get<protected_function>().call<Ret...>(std::forward<Args>(args)...);
-#else
 			return get<protected_function>().template call<Ret...>(std::forward<Args>(args)...);
-#endif
 		}
 
 		template <typename... Args>

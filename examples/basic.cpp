@@ -5,7 +5,7 @@
 #include "assert.hpp"
 
 int main() {
-	std::cout << "=== basic example ===" << std::endl;
+	std::cout << "=== basic ===" << std::endl;
 	// create an empty lua state
 	sol::state lua;
 

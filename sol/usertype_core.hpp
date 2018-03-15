@@ -25,7 +25,6 @@
 #define SOL_USERTYPE_CORE_HPP
 
 #include "wrapper.hpp"
-#include "call.hpp"
 #include "stack.hpp"
 #include "types.hpp"
 #include "stack_reference.hpp"

@@ -42,7 +42,7 @@ The following C++ code will call this function from this file and retrieve the r
 
 	sol::state lua;
 
-	lua.open_file( "pfunc_barks.lua" );
+	lua.script_file( "pfunc_barks.lua" );
 
 	sol::protected_function problematicwoof = lua["woof"];
 	problematicwoof.error_handler = lua["got_problems"];
@@ -81,7 +81,7 @@ Alternatively, with a bad or good function call, you can use ``sol::optional`` t
 
 	sol::state lua;
 
-	lua.open_file( "pfunc_barks.lua" );
+	lua.script_file( "pfunc_barks.lua" );
 
 	sol::protected_function problematicwoof = lua["woof"];
 	problematicwoof.error_handler = lua["got_problems"];
@@ -104,7 +104,7 @@ If you're confident the result succeeded, you can also just put the type you wan
 
 	sol::state lua;
 
-	lua.open_file( "pfunc_barks.lua" );
+	lua.script_file( "pfunc_barks.lua" );
 
 	// construct with function + error handler
 	// shorter than old syntax
@@ -121,7 +121,7 @@ Finally, it is *important* to note you can set a default handler. The function i
 
 	sol::state lua;
 
-	lua.open_file( "pfunc_barks.lua" );
+	lua.script_file( "pfunc_barks.lua" );
 	// sets got_problems as the default
 	// handler for all protected_function errors
 	sol::protected_function::set_default_handler(lua["got_problems"]);

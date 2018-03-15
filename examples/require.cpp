@@ -25,7 +25,7 @@ sol::table open_mylib(sol::this_state s) {
 }
 
 int main() {
-	std::cout << "=== require example ===" << std::endl;
+	std::cout << "=== require ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::package, sol::lib::base);

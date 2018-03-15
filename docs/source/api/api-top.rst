@@ -19,7 +19,6 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    environment
    this_environment
    proxy
-   containers
    as_container
    nested
    as_table

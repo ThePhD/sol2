@@ -63,7 +63,7 @@ std::ostream& operator<<(std::ostream& os, const automatic& right) {
 }
 
 int main(int, char*[]) {
-	std::cout << "=== usertype automatic operators example ===" << std::endl;
+	std::cout << "=== usertype automatic operators ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

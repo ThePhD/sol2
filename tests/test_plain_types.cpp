@@ -93,3 +93,88 @@ TEST_CASE("plain/indestructible", "test that we error for types that are innatel
 		REQUIRE(result.valid());
 	}
 }
+
+TEST_CASE("plain/constructors and destructors", "Make sure that constructors, destructors, deallocators and others work properly with the desired type") {
+	static int constructed = 0;
+	static int destructed = 0;
+	static int copied = 0;
+	static int moved = 0;
+
+	struct st {
+		int value = 10;
+
+		st() : value(10) {
+			++constructed;
+		}
+
+		st(const st& o) : value(o.value) {
+			++copied;
+			++constructed;
+		}
+
+		st(st&& o) : value(o.value) {
+			++moved;
+			++constructed;
+		}
+
+		~st() {
+			value = 0;
+			++destructed;
+		}
+	};
+
+	struct deallocate_only {
+		void operator()(st* p) const {
+			std::allocator<st> alloc;
+			alloc.deallocate(p, 1);
+		}
+	};
+
+	{
+		sol::state lua;
+
+		lua["f"] = sol::constructors<st()>();
+		lua["g"] = sol::initializers([](st* mem) { std::allocator<st> alloc; std::allocator_traits<std::allocator<st>>::construct(alloc, mem); });
+		lua["h"] = sol::factories([]() { return st(); });
+		lua["d"] = sol::destructor([](st& m) { m.~st(); });
+
+		sol::protected_function_result result1 = lua.safe_script("v = f()", &sol::script_pass_on_error);
+		REQUIRE(result1.valid());
+		st& v = lua["v"];
+		REQUIRE(v.value == 10);
+		REQUIRE(constructed == 1);
+		REQUIRE(destructed == 0);
+		{
+			std::unique_ptr<st, deallocate_only> unsafe(new st());
+			lua["unsafe"] = unsafe.get();
+			sol::protected_function_result result2 = lua.safe_script("d(unsafe)", &sol::script_pass_on_error);
+			REQUIRE(result2.valid());
+			REQUIRE(constructed == 2);
+			REQUIRE(destructed == 1);
+		}
+		REQUIRE(constructed == 2);
+		REQUIRE(destructed == 1);
+
+		{
+			sol::protected_function_result result3 = lua.safe_script("vg = g()", &sol::script_pass_on_error);
+			REQUIRE(result3.valid());
+			st& vg = lua["vg"];
+			REQUIRE(vg.value == 10);
+			REQUIRE(constructed == 3);
+			REQUIRE(destructed == 1);
+		}
+
+		{
+			sol::protected_function_result result4 = lua.safe_script("vh = h()", &sol::script_pass_on_error);
+			REQUIRE(result4.valid());
+			st& vh = lua["vh"];
+			REQUIRE(vh.value == 10);
+		}
+	}
+	int purely_constructed = constructed - moved - copied;
+	int purely_destructed = destructed - moved - copied;
+	REQUIRE(constructed == destructed);
+	REQUIRE(purely_constructed == purely_destructed);
+	REQUIRE(purely_constructed == 4);
+	REQUIRE(purely_destructed == 4);
+}
