@@ -1,6 +1,13 @@
 CMake Script
 ============
 
+sol2 comes with a CMake script in the top level. It is primarily made for building and running the examples and tests, but it includes exported and configured targets (``sol2``, ``sol2_single``) for your use. If you have any problems with it or its targets, please do file a report, or a pull request because CMake is not my forte.
+
+
+.. warning::
+
+	The below is slightly outdated, but will probably still work for you!
+
 Thanks to `Kevin Brightwell`_, you can drop this CMake Script into your CMake Projects to have Sol part of one of its builds:
 
 .. code-block:: cmake

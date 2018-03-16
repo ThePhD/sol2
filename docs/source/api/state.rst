@@ -100,28 +100,9 @@ If your script returns a value, you can capture it from the returned :ref:`sol::
 
 To handle errors when using the second overload, provide a callable function/object that takes a ``lua_State*`` as its first argument and a ``sol::protected_function_result`` as its second argument. ``sol::script_default_on_error`` and ``sol::script_pass_on_error`` are 2 functions provided by sol that will either generate a traceback error to return / throw (if throwing is allowed); or, pass the error on through and return it to the user (respectively). An example of having your:
 
-.. code-block:: cpp
-	:caption: running code safely
+.. literalinclude:: ../../../examples/docs/state_script_safe.cpp
+	:linenos:
 	:name: state-script-safe
-
-	int main () {
-		sol::state lua;
-		// uses sol::script_default_on_error, which either panics or throws, 
-		// depending on your configuration and compiler settings
-		auto result1 = lua.safe_script("bad.code");
-
-		// a custom handler that you write yourself
-		// is only called when an error happens with loading or running the script
-		auto result2 = lua.safe_script("123 bad.code", [](lua_State* L, sol::protected_function_result pfr) {
-			// pfr will contain things that went wrong, for either loading or executing the script
-			// the user can do whatever they like here, including throw. Otherwise...
-			sol::error err = pfr;
-			std::cout << err.what() << std::endl;
-
-			// ... they need to return the protected_function_result
-			return pfr;
-		});
-	}
 
 You can also pass a :doc:`sol::environment<environment>` to ``script``/``script_file`` to have the script have sandboxed / contained in a way inside of a state. This is useful for runnig multiple different "perspectives" or "views" on the same state, and even has fallback support. See the :doc:`sol::environment<environment>` documentation for more details. 
 

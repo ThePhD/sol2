@@ -24,13 +24,13 @@ Calls the constructor and creates this type, straight from the stack. For exampl
 
 .. literalinclude:: ../../../examples/tie.cpp
 	:caption: funcs.lua
-	:lines: 7-11
+	:lines: 9-13
 	:linenos:
 
 The following C++ code will call this function from this file and retrieve the return value:
 
 .. literalinclude:: ../../../examples/tie.cpp
-	:lines: 16-22
+	:lines: 1-7,16-22
 	:linenos:
 
 The call ``woof(20)`` generates a :ref:`unsafe_function_result<unsafe-function-result>`, which is then implicitly converted to an ``double`` after being called. The intermediate temporary ``function_result`` is then destructed, popping the Lua function call results off the Lua stack. 

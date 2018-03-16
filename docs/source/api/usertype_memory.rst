@@ -12,12 +12,12 @@ In general, we always insert a ``T*`` in the first ``sizeof(T*)`` bytes, so the 
 
 .. warning::
 
-	The layout of memory described below does **not** take into account alignment. sol2 now takes alignment into account and aligns memory, which is important for misbehaving allocators and types that do not align well to the size of a pointer on their system. If you need to obtain proper alignments for usertypes stored in userdata pointers, **please** use the detail functions named ``sol::detail::align_usertype_pointer``, ``sol::detail::align_usertype``, and ``sol::detail::align_usertype_unique``. This will shift a ``void*`` pointer by the appropriate amount to reach a certain section in memory. For almost all use cases, please use ``void* memory = lua_touserdata(L, index);``, followed by ``memory = sol::detail::align_usertype_pointer( memory );`` to adjust the pointer to be at the right place.
+	The layout of memory described below does **not** take into account alignment. sol2 now takes alignment into account and aligns memory, which is important for misbehaving allocators and types that do not align well to the size of a pointer on their system. If you need to obtain proper alignments for usertypes stored in userdata pointers, **please** use the detail functions named ``sol::detail::align_usertype_pointer``, ``sol::detail::align_usertype``, and ``sol::detail::align_usertype_unique``. This will shift a ``void*`` pointer by the appropriate amount to reach a certain section in memory. For almost all other use cases, please use ``void* memory = lua_touserdata(L, index);``, followed by ``memory = sol::detail::align_usertype_pointer( memory );`` to adjust the pointer to be at the right place.
 
 
 .. warning::
 
-	The code from below is only guaranteed to work 100% of the time if you define :ref:`SOL_NO_MEMORY_ALIGNMENT<config-memory>`.
+	The diagrams and explanations from below is only guaranteed to work 100% of the time if you define :ref:`SOL_NO_MEMORY_ALIGNMENT<config-memory>`. Be aware that this may result in unaligned reads/writes, which can crash some older processors and trigger static analyzer/instrumentation tool warnings, like Clang's Address Sanitizer (ASan).
 
 
 To retrieve a ``T``

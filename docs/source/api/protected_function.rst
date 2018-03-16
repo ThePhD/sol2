@@ -11,100 +11,32 @@ Inspired by a request from `starwing`_ in the :doc:`old sol repository<../origin
 
 When called without the return types being specified by either a ``sol::types<...>`` list or a ``call<Ret...>( ... )`` template type list, it generates a :doc:`protected_function_result<proxy>` class that gets implicitly converted to the requested return type. For example:
 
-.. code-block:: lua
-	:caption: pfunc_barks.lua
+.. literalinclude:: ../../../examples/error_handler.cpp
 	:linenos:
-
-	bark_power = 11;
-
-	function got_problems( error_msg )
-		return "got_problems handler: " .. error_msg
-	end
-
-	function woof ( bark_energy )
-		if bark_energy < 20
-			error("*whine*")
-		end
-		return (bark_energy * (bark_power / 4))
-	end
-
-	function woofers ( bark_energy )
-		if bark_energy < 10
-			error("*whine*")
-		end
-		return (bark_energy * (bark_power / 4))
-	end
+	:lines: 10-28
 
 The following C++ code will call this function from this file and retrieve the return value, unless an error occurs, in which case you can bind an error handling function like so:
 
-.. code-block:: cpp
+.. literalinclude:: ../../../examples/error_handler.cpp
 	:linenos:
+	:lines: 1-6,30-66
 
-	sol::state lua;
-
-	lua.script_file( "pfunc_barks.lua" );
-
-	sol::protected_function problematicwoof = lua["woof"];
-	problematicwoof.error_handler = lua["got_problems"];
-
-	auto firstwoof = problematic_woof(20);
-	if ( firstwoof.valid() ) {
-		// Can work with contents
-		double numwoof = first_woof;
-	}
-	else{
-		// An error has occured
-		sol::error err = first_woof;
-	}
-
-	// errors, calls handler and then returns a string error from Lua at the top of the stack
-	auto secondwoof = problematic_woof(19);
-	if (secondwoof.valid()) {
-		// Call succeeded
-		double numwoof = secondwoof;
-	}
-	else {
-		// Call failed
-		// Note that if the handler was successfully called, this will include
-		// the additional appended error message information of
-		// "got_problems handler: " ...
-		sol::error err = secondwoof;
-		std::string what = err.what();
-	} 
 
 This code is much more long-winded than its :doc:`function<function>` counterpart but allows a person to check for errors. The type here for ``auto`` are ``sol::protected_function_result``. They are implicitly convertible to result types, like all :doc:`proxy-style<proxy>` types are.
 
 Alternatively, with a bad or good function call, you can use ``sol::optional`` to check if the call succeeded or failed:
 
-.. code-block:: cpp
+.. literalinclude:: ../../../examples/error_handler.cpp
 	:linenos:
+	:lines: 67-
 
-	sol::state lua;
-
-	lua.script_file( "pfunc_barks.lua" );
-
-	sol::protected_function problematicwoof = lua["woof"];
-	problematicwoof.error_handler = lua["got_problems"];
-
-	sol::optional<double> maybevalue = problematicwoof(19);
-	if (maybevalue) {
-		// Have a value, use it
-		double numwoof = maybevalue.value();
-	}
-	else {
-		// No value!		
-	}
 
 That makes the code a bit more concise and easy to reason about if you don't want to bother with reading the error. Thankfully, unlike ``sol::unsafe_function_result``, you can save ``sol::protected_function_result`` in a variable and push/pop things above it on the stack where its returned values are. This makes it a bit more flexible  than the rigid, performant ``sol::unsafe_function_result`` type that comes from calling :doc:`sol::unsafe_function<function>`.
 
-If you're confident the result succeeded, you can also just put the type you want (like ``double`` or ``std::string`` right there and it will get it. But, if it doesn't work out, sol can throw and/or panic if you have the :doc:`safety<../safety>` features turned on:
+If you're confident the result succeeded, you can also just put the type you want (like ``double`` or ``std::string``) right there and it will get it. But, if it doesn't work out, sol can throw and/or panic if you have the :doc:`safety<../safety>` features turned on:
 
 .. code-block:: cpp
 	:linenos:
-
-	sol::state lua;
-
-	lua.script_file( "pfunc_barks.lua" );
 
 	// construct with function + error handler
 	// shorter than old syntax
@@ -119,9 +51,6 @@ Finally, it is *important* to note you can set a default handler. The function i
 .. code-block:: cpp
 	:linenos:
 
-	sol::state lua;
-
-	lua.script_file( "pfunc_barks.lua" );
 	// sets got_problems as the default
 	// handler for all protected_function errors
 	sol::protected_function::set_default_handler(lua["got_problems"]);

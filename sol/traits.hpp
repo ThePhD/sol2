@@ -602,7 +602,7 @@ namespace sol {
 		namespace meta_detail {
 			template <typename T, meta::disable<meta::is_specialization_of<meta::unqualified_t<T>, std::tuple>> = meta::enabler>
 			decltype(auto) force_tuple(T&& x) {
-				return std::forward_as_tuple(std::forward<T>(x));
+				return std::tuple<std::decay_t<T>>(std::forward<T>(x));
 			}
 
 			template <typename T, meta::enable<meta::is_specialization_of<meta::unqualified_t<T>, std::tuple>> = meta::enabler>

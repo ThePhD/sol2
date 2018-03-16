@@ -298,7 +298,7 @@ This is an SFINAE-friendly struct that is meant to expose a function ``check=`` 
 
 .. note::
 
-	You must turn it on with ``SOL_ENABLE_INTEROP``, as described in the :ref:`config and safety section<config>`.
+	You must turn this feature on with ``SOL_ENABLE_INTEROP``, as described in the :ref:`config and safety section<config>`.
 
 
 .. code-block:: cpp

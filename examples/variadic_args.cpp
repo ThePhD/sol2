@@ -38,5 +38,8 @@ int main() {
 	lua.script("print(x)"); // 50
 	lua.script("print(x2)"); // 600
 	lua.script("print(x3)"); // 21
+
 	std::cout << std::endl;
+
+	return 0;
 }

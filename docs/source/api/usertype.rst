@@ -3,92 +3,11 @@ usertype<T>
 *structures and classes from C++ made available to Lua code*
 
 
-*Note: ``T`` refers to the type being turned into a usertype.*
-
-While other frameworks extend lua's syntax or create Data Structure Languages (DSLs) to create classes in Lua, :doc:`Sol<../index>` instead offers the ability to generate easy bindings. These use metatables and userdata in Lua for their implementation. Usertypes are also `runtime extensible`_. If you need a usertype that has less compiler crunch-time to it, try the :doc:`simple version of this after reading these docs<simple_usertype>` Given this C++ class:
-
-.. code-block:: cpp
-	:linenos:
+.. note::
 	
-	struct ship {
-		int bullets = 20;
-		int life = 100;
+	``T`` refers to the type being turned into a usertype.
 
-		bool shoot () {
-			if (bullets > 0) {
-				--bullets;
-				// successfully shot
-				return true;
-			}
-			// cannot shoot
-			return false;
-		}
-
-		bool hurt (int by) {
-			life -= by;
-			// have we died?
-			return life < 1;
-		}
-	};
-
-You can bind the it to Lua using the following C++ code:
-
-.. code-block:: cpp
-	:linenos:
-
-	sol::state lua;
-
-	lua.new_usertype<ship>( "ship", // the name of the class, as you want it to be used in lua
-		// List the member functions you wish to bind:
-		// "name_of_item", &class_name::function_or_variable
-		"shoot", &ship::shoot,
-		"hurt", &ship::hurt,
-		// bind variable types, too
-		"life", &ship::life,
-		// names in lua don't have to be the same as C++,
-		// but it probably helps if they're kept the same,
-		// here we change it just to show its possible
-		"bullet_count", &ship::bullets
-	);
-
-
-Equivalently, you can also write:
-
-.. code-block:: cpp
-	:linenos:
-	:emphasize-lines: 4,12
-
-	sol::state lua;
-
-	// Use constructor directly
-	usertype<ship> shiptype(
-		"shoot", &ship::shoot,
-		"hurt", &ship::hurt,
-		"life", &ship::life,
-		"bullet_count", &ship::bullets
-	);
-
-	// set usertype explicitly, with the given name
-	lua.set_usertype( "ship", shiptype );
-
-	// the shiptype variable is now a useless skeleton type, just let it destruct naturally and don't use it again.
-
-
-Note that here, because the C++ class is default-constructible, it will automatically generate a creation function that can be called in lua called "new" that takes no arguments. You can use it like this in lua code:
-
-.. code-block:: lua
-	:linenos:
-
-	fwoosh = ship.new()
-	-- note the ":" that is there: this is mandatory for member function calls
-	-- ":" means "pass self" in Lua
-	local success = fwoosh:shoot()
-	local is_dead = fwoosh:hurt(20)
-	-- check if it works
-	print(is_dead) -- the ship is not dead at this point
-	print(fwoosh.life .. "life left") -- 80 life left
-	print(fwoosh.bullet_count) -- 19
-
+While other frameworks extend lua's syntax or create Data Structure Languages (DSLs) to create classes in Lua, :doc:`Sol<../index>` instead offers the ability to generate easy bindings that pile on performance. You can see a `small starter example here`_. These use metatables and userdata in Lua for their implementation. Usertypes are also `runtime extensible`_.
 
 There are more advanced use cases for how to create and use a usertype, which are all based on how to use its constructor (see below).
 
@@ -329,7 +248,7 @@ Register the base classes explicitly.
 	:caption: inheritance.cpp
 	:name: inheritance-example
 	:linenos:
-	:emphasize-lines: 5
+	:emphasize-lines: 23
 
 .. note::
 
@@ -384,5 +303,6 @@ performance note
 
 .. _destructible: http://en.cppreference.com/w/cpp/types/is_destructible
 .. _default_constructible: http://en.cppreference.com/w/cpp/types/is_constructible
+.. _small starter example here: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_basics.cpp
 .. _runtime extensible: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_advanced.cpp#L81
 .. _the metamethods in the Lua manual: https://www.lua.org/manual/5.3/manual.html#2.4

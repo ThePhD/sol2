@@ -55,7 +55,7 @@ To run Lua code but have an error handler in case things go wrong:
 
 .. literalinclude:: ../../../examples/tutorials/quick_n_dirty/running_lua_code.cpp
 	:linenos:
-	:lines: 28-40
+	:lines: 28-39,47-49
 
 
 running lua code (low-level)
@@ -70,7 +70,7 @@ You can use the individual load and function call operator to load, check, and t
 
 .. literalinclude:: ../../../examples/tutorials/quick_n_dirty/running_lua_code_low_level.cpp
 	:linenos:
-	:lines: 1-10, 16-41
+	:lines: 1-10, 16-40, 47-49
 
 set and get variables
 ---------------------
