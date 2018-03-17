@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-03-12 00:06:06.950598 UTC
-// This header was generated with sol v2.19.5 (revision 22ecb74)
+// Generated 2018-03-17 13:09:07.758298 UTC
+// This header was generated with sol v2.19.5 (revision 947945d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1688,7 +1688,7 @@ namespace sol {
 		namespace meta_detail {
 			template <typename T, meta::disable<meta::is_specialization_of<meta::unqualified_t<T>, std::tuple>> = meta::enabler>
 			decltype(auto) force_tuple(T&& x) {
-				return std::forward_as_tuple(std::forward<T>(x));
+				return std::tuple<std::decay_t<T>>(std::forward<T>(x));
 			}
 
 			template <typename T, meta::enable<meta::is_specialization_of<meta::unqualified_t<T>, std::tuple>> = meta::enabler>
@@ -12560,13 +12560,9 @@ namespace sol {
 			construct_match<T, TypeLists...>(constructor_match<T, checked, clean_stack>(obj), L, argcount, 1 + static_cast<int>(syntax));
 
 			userdataref.push();
-			luaL_getmetatable(L, &meta[0]);
-			if (type_of(L, -1) == type::lua_nil) {
-				lua_pop(L, 1);
-				return luaL_error(L, "sol: unable to get usertype metatable");
-			}
+			stack::stack_detail::undefined_metatable<T> umf(L, &meta[0]);
+			umf();
 
-			lua_setmetatable(L, -2);
 			return 1;
 		}
 
@@ -12847,7 +12843,7 @@ namespace sol {
 			typedef constructor_list<Args...> F;
 
 			static int call(lua_State* L, F&) {
-				const auto& metakey = usertype_traits<T>::metatable();
+				const auto& meta = usertype_traits<T>::metatable();
 				int argcount = lua_gettop(L);
 				call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, usertype_traits<T>::user_metatable(), 1) : call_syntax::dot;
 				argcount -= static_cast<int>(syntax);
@@ -12858,13 +12854,9 @@ namespace sol {
 				construct_match<T, Args...>(constructor_match<T, false, clean_stack>(obj), L, argcount, boost + 1 + static_cast<int>(syntax));
 
 				userdataref.push();
-				luaL_getmetatable(L, &metakey[0]);
-				if (type_of(L, -1) == type::lua_nil) {
-					lua_pop(L, 1);
-					return luaL_error(L, "sol: unable to get usertype metatable");
-				}
+				stack::stack_detail::undefined_metatable<T> umf(L, &meta[0]);
+				umf();
 
-				lua_setmetatable(L, -2);
 				return 1;
 			}
 		};
@@ -12876,7 +12868,7 @@ namespace sol {
 			struct onmatch {
 				template <typename Fx, std::size_t I, typename... R, typename... Args>
 				int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start, F& f) {
-					const auto& metakey = usertype_traits<T>::metatable();
+					const auto& meta = usertype_traits<T>::metatable();
 					T* obj = detail::usertype_allocate<T>(L);
 					reference userdataref(L, -1);
 					
@@ -12884,14 +12876,8 @@ namespace sol {
 					stack::call_into_lua<checked, clean_stack>(r, a, L, boost + start, func, detail::implicit_wrapper<T>(obj));
 
 					userdataref.push();
-					luaL_getmetatable(L, &metakey[0]);
-					if (type_of(L, -1) == type::lua_nil) {
-						lua_pop(L, 1);
-						std::string err = "sol: unable to get usertype metatable for ";
-						err += usertype_traits<T>::name();
-						return luaL_error(L, err.c_str());
-					}
-					lua_setmetatable(L, -2);
+					stack::stack_detail::undefined_metatable<T> umf(L, &meta[0]);
+					umf();
 
 					return 1;
 				}
@@ -12918,10 +12904,24 @@ namespace sol {
 		struct lua_call_wrapper<T, destructor_wrapper<Fx>, is_index, is_variable, checked, boost, clean_stack, std::enable_if_t<!std::is_void<Fx>::value>> {
 			typedef destructor_wrapper<Fx> F;
 
-			static int call(lua_State* L, const F& f) {
+			static int call_void(std::true_type, lua_State* L, const F& f) {
+				typedef meta::bind_traits<meta::unqualified_t<decltype(f.fx)>> bt;
+				typedef typename bt::template arg_at<0> arg0;
+				typedef meta::unqualified_t<arg0> O;
+
+				O& obj = stack::get<O>(L);
+				f.fx(detail::implicit_wrapper<O>(obj));
+				return 0;
+			}
+
+			static int call_void(std::false_type, lua_State* L, const F& f) {
 				T& obj = stack::get<T>(L);
 				f.fx(detail::implicit_wrapper<T>(obj));
 				return 0;
+			}
+
+			static int call(lua_State* L, const F& f) {
+				return call_void(std::is_void<T>(), L, f);
 			}
 		};
 
@@ -14153,6 +14153,20 @@ namespace sol {
 				lua_CFunction cf = call_detail::construct<T, detail::default_safe_function_calls, true, Lists...>;
 				return stack::push(L, cf);
 			}
+
+			static int push(lua_State* L, constructor_list<Lists...>) {
+				lua_CFunction cf = call_detail::construct<T, detail::default_safe_function_calls, true, Lists...>;
+				return stack::push(L, cf);
+			}
+		};
+
+		template <typename L0, typename... Lists>
+		struct pusher<constructor_list<L0, Lists...>> {
+			typedef constructor_list<L0, Lists...> cl_t;
+			static int push(lua_State* L, cl_t cl) {
+				typedef typename meta::bind_traits<L0>::return_type T;
+				return stack::push<detail::tagged<T, cl_t>>(L, cl);
+			}
 		};
 
 		template <typename T, typename... Fxs>
@@ -14167,6 +14181,16 @@ namespace sol {
 			}
 		};
 
+		template <typename F, typename... Fxs>
+		struct pusher<constructor_wrapper<F, Fxs...>> {
+			template <typename C>
+			static int push(lua_State* L, C&& c) {
+				typedef typename meta::bind_traits<F>::template arg_at<0> arg0;
+				typedef meta::unqualified_t<std::remove_pointer_t<arg0>> T;
+				return stack::push<detail::tagged<T, constructor_wrapper<F, Fxs...>>>(L, std::forward<C>(c));
+			}
+		};
+
 		template <typename T>
 		struct pusher<detail::tagged<T, destructor_wrapper<void>>> {
 			static int push(lua_State* L, destructor_wrapper<void>) {
@@ -14177,11 +14201,38 @@ namespace sol {
 
 		template <typename T, typename Fx>
 		struct pusher<detail::tagged<T, destructor_wrapper<Fx>>> {
-			static int push(lua_State* L, destructor_wrapper<Fx> c) {
+			static int push(lua_State* L, destructor_wrapper<Fx>&& c) {
 				lua_CFunction cf = call_detail::call_user<T, false, false, destructor_wrapper<Fx>, 2>;
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
-				upvalues += stack::push<user<T>>(L, std::move(c));
+				upvalues += stack::push<user<destructor_wrapper<Fx>>>(L, std::move(c));
+				return stack::push(L, c_closure(cf, upvalues));
+			}
+
+			static int push(lua_State* L, const destructor_wrapper<Fx>& c) {
+				lua_CFunction cf = call_detail::call_user<T, false, false, destructor_wrapper<Fx>, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<destructor_wrapper<Fx>>>(L, c);
+				return stack::push(L, c_closure(cf, upvalues));
+			}
+		};
+
+		template <typename Fx>
+		struct pusher<destructor_wrapper<Fx>> {
+			static int push(lua_State* L, destructor_wrapper<Fx>&& c) {
+				lua_CFunction cf = call_detail::call_user<void, false, false, destructor_wrapper<Fx>, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<destructor_wrapper<Fx>>>(L, std::move(c));
+				return stack::push(L, c_closure(cf, upvalues));
+			}
+
+			static int push(lua_State* L, const destructor_wrapper<Fx>& c) {
+				lua_CFunction cf = call_detail::call_user<void, false, false, destructor_wrapper<Fx>, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<destructor_wrapper<Fx>>>(L, c);
 				return stack::push(L, c_closure(cf, upvalues));
 			}
 		};
@@ -14868,11 +14919,12 @@ namespace sol {
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
-#ifdef SOL_SAFE_FUNCTION
-			return get<protected_function>().template call<Ret...>(std::forward<Args>(args)...);
+#if defined(_MSC_FULL_VER) && _MSC_FULL_VER <= 191326128 && _MSC_FULL_VER >= 191200000
+			// MSVC is ass sometimes
+			return get<function>().call<Ret...>(std::forward<Args>(args)...);
 #else
 			return get<function>().template call<Ret...>(std::forward<Args>(args)...);
-#endif // Safe function usage
+#endif
 		}
 
 		template <typename... Args>
@@ -20079,9 +20131,8 @@ namespace sol {
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
-#if defined(_MSC_VER) && _MSC_VER == 1913
-			// This compiler is bananas
-			// B, A N A N A S
+#if defined(_MSC_FULL_VER) && _MSC_FULL_VER <= 191326128 && _MSC_FULL_VER >= 191200000
+			// MSVC is ass sometimes
 			return get<protected_function>().call<Ret...>(std::forward<Args>(args)...);
 #else
 			return get<protected_function>().template call<Ret...>(std::forward<Args>(args)...);

@@ -126,11 +126,12 @@ namespace sol {
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
-#ifdef SOL_SAFE_FUNCTION
-			return get<protected_function>().template call<Ret...>(std::forward<Args>(args)...);
+#if defined(_MSC_FULL_VER) && _MSC_FULL_VER <= 191326128 && _MSC_FULL_VER >= 191200000
+			// MSVC is ass sometimes
+			return get<function>().call<Ret...>(std::forward<Args>(args)...);
 #else
 			return get<function>().template call<Ret...>(std::forward<Args>(args)...);
-#endif // Safe function usage
+#endif
 		}
 
 		template <typename... Args>
