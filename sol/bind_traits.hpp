@@ -510,7 +510,6 @@ namespace meta {
 			typedef std::conditional_t<std::is_array<R>::value, std::add_lvalue_reference_t<T>, R> return_type;
 			typedef return_type Arg;
 			typedef T object_type;
-			typedef std::conditional_t<std::is_array<R>::value, std::add_lvalue_reference_t<T>, R> return_type;
 			using signature_type = R(T::*);
 			static const bool is_noexcept = false;
 			static const bool is_member_function = false;

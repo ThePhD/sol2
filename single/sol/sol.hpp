@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-03-19 03:40:57.438213 UTC
-// This header was generated with sol v2.19.5 (revision d14345f)
+// Generated 2018-03-19 04:19:45.625468 UTC
+// This header was generated with sol v2.19.5 (revision f50d8e2)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -930,7 +930,6 @@ namespace meta {
 			typedef std::conditional_t<std::is_array<R>::value, std::add_lvalue_reference_t<T>, R> return_type;
 			typedef return_type Arg;
 			typedef T object_type;
-			typedef std::conditional_t<std::is_array<R>::value, std::add_lvalue_reference_t<T>, R> return_type;
 			using signature_type = R(T::*);
 			static const bool is_noexcept = false;
 			static const bool is_member_function = false;
