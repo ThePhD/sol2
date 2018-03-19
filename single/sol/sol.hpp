@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-03-17 13:09:07.758298 UTC
-// This header was generated with sol v2.19.5 (revision 947945d)
+// Generated 2018-03-19 03:40:57.438213 UTC
+// This header was generated with sol v2.19.5 (revision d14345f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -927,21 +927,22 @@ namespace meta {
 
 		template <typename R, typename T>
 		struct callable_traits<R(T::*), true> {
-			typedef R Arg;
+			typedef std::conditional_t<std::is_array<R>::value, std::add_lvalue_reference_t<T>, R> return_type;
+			typedef return_type Arg;
 			typedef T object_type;
+			typedef std::conditional_t<std::is_array<R>::value, std::add_lvalue_reference_t<T>, R> return_type;
 			using signature_type = R(T::*);
 			static const bool is_noexcept = false;
 			static const bool is_member_function = false;
 			static const std::size_t arity = 1;
 			static const std::size_t free_arity = 2;
 			typedef std::tuple<Arg> args_tuple;
-			typedef R return_type;
 			typedef types<Arg> args_list;
 			typedef types<T, Arg> free_args_list;
-			typedef meta::tuple_types<R> returns_list;
-			typedef R(function_type)(T&, R);
-			typedef R (*function_pointer_type)(T&, R);
-			typedef R (*free_function_pointer_type)(T&, R);
+			typedef meta::tuple_types<return_type> returns_list;
+			typedef return_type(function_type)(T&, return_type);
+			typedef return_type(*function_pointer_type)(T&, Arg);
+			typedef return_type(*free_function_pointer_type)(T&, Arg);
 			template <std::size_t i>
 			using arg_at = void_tuple_element_t<i, args_tuple>;
 		};
@@ -11944,6 +11945,11 @@ namespace sol {
 
 namespace sol {
 
+	namespace detail {
+		template <typename T>
+		using array_return_type = std::conditional_t<std::is_array<T>::value, std::add_lvalue_reference_t<T>, T>;
+	}
+
 	template <typename F, typename = void>
 	struct wrapper {
 		typedef lua_bind_traits<meta::unqualified_t<F>> traits_type;
@@ -12007,7 +12013,7 @@ namespace sol {
 		typedef typename traits_type::returns_list returns_list;
 
 		template <F fx>
-		static decltype(auto) invoke(object_type& mem) {
+		static auto call(object_type& mem) -> detail::array_return_type<decltype(mem.*fx)> {
 			return mem.*fx;
 		}
 
@@ -12017,8 +12023,8 @@ namespace sol {
 		}
 
 		template <typename Fx>
-		static decltype(auto) call(Fx&& fx, object_type& mem) {
-			return (mem.*fx);
+		static auto call(Fx&& fx, object_type& mem) -> detail::array_return_type<decltype(mem.*fx)> {
+			return mem.*fx;
 		}
 
 		template <typename Fx, typename Arg, typename... Args>

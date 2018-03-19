@@ -28,6 +28,11 @@
 
 namespace sol {
 
+	namespace detail {
+		template <typename T>
+		using array_return_type = std::conditional_t<std::is_array<T>::value, std::add_lvalue_reference_t<T>, T>;
+	}
+
 	template <typename F, typename = void>
 	struct wrapper {
 		typedef lua_bind_traits<meta::unqualified_t<F>> traits_type;
@@ -91,7 +96,7 @@ namespace sol {
 		typedef typename traits_type::returns_list returns_list;
 
 		template <F fx>
-		static decltype(auto) invoke(object_type& mem) {
+		static auto call(object_type& mem) -> detail::array_return_type<decltype(mem.*fx)> {
 			return mem.*fx;
 		}
 
@@ -101,8 +106,8 @@ namespace sol {
 		}
 
 		template <typename Fx>
-		static decltype(auto) call(Fx&& fx, object_type& mem) {
-			return (mem.*fx);
+		static auto call(Fx&& fx, object_type& mem) -> detail::array_return_type<decltype(mem.*fx)> {
+			return mem.*fx;
 		}
 
 		template <typename Fx, typename Arg, typename... Args>

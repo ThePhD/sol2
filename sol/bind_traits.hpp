@@ -507,21 +507,22 @@ namespace meta {
 
 		template <typename R, typename T>
 		struct callable_traits<R(T::*), true> {
-			typedef R Arg;
+			typedef std::conditional_t<std::is_array<R>::value, std::add_lvalue_reference_t<T>, R> return_type;
+			typedef return_type Arg;
 			typedef T object_type;
+			typedef std::conditional_t<std::is_array<R>::value, std::add_lvalue_reference_t<T>, R> return_type;
 			using signature_type = R(T::*);
 			static const bool is_noexcept = false;
 			static const bool is_member_function = false;
 			static const std::size_t arity = 1;
 			static const std::size_t free_arity = 2;
 			typedef std::tuple<Arg> args_tuple;
-			typedef R return_type;
 			typedef types<Arg> args_list;
 			typedef types<T, Arg> free_args_list;
-			typedef meta::tuple_types<R> returns_list;
-			typedef R(function_type)(T&, R);
-			typedef R (*function_pointer_type)(T&, R);
-			typedef R (*free_function_pointer_type)(T&, R);
+			typedef meta::tuple_types<return_type> returns_list;
+			typedef return_type(function_type)(T&, return_type);
+			typedef return_type(*function_pointer_type)(T&, Arg);
+			typedef return_type(*free_function_pointer_type)(T&, Arg);
 			template <std::size_t i>
 			using arg_at = void_tuple_element_t<i, args_tuple>;
 		};
