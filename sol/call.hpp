@@ -641,6 +641,7 @@ namespace sol {
 			static int self_call(std::false_type, lua_State* L, F&& f) {
 				typedef meta::pop_front_type_t<typename traits_type::free_args_list> args_list;
 				typedef T Ta;
+				typedef std::remove_pointer_t<object_type> Oa;
 #ifdef SOL_SAFE_USERTYPE
 				auto maybeo = stack::check_get<Ta*>(L, 1);
 				if (!maybeo || maybeo.value() == nullptr) {
@@ -649,13 +650,13 @@ namespace sol {
 					}
 					return luaL_error(L, "sol: 'self' argument is lua_nil (pass 'self' as first argument)");
 				}
-				object_type* o = static_cast<object_type*>(maybeo.value());
+				Oa* o = static_cast<Oa*>(maybeo.value());
 #else
-				object_type* o = static_cast<object_type*>(stack::get<non_null<Ta*>>(L, 1));
+				Oa* o = static_cast<object_type*>(stack::get<non_null<Ta*>>(L, 1));
 #endif // Safety
 				typedef typename wrap::returns_list returns_list;
 				typedef typename wrap::caller caller;
-				return stack::call_into_lua<checked, clean_stack>(returns_list(), args_list(), L, boost + (is_variable ? 3 : 2), caller(), f, *o);
+				return stack::call_into_lua<checked, clean_stack>(returns_list(), args_list(), L, boost + (is_variable ? 3 : 2), caller(), f, detail::implicit_wrapper<Oa>(*o));
 			}
 
 			template <typename F, typename... Args>
