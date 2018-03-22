@@ -8,7 +8,7 @@ int main () {
 	};
 
 	sol::state lua;
-	lua.open_libraries();
+	lua.open_libraries(sol::lib::base);
 	lua.new_usertype<B>("B", 
 		// bind as variable
 		"b", &B::bvar,
@@ -18,10 +18,11 @@ int main () {
 
 	B b;
 	lua.set("b", &b);
-	lua.script("x = b:f()");
-	lua.script("y = b.b");
-	int x = lua["x"];
-	int y = lua["y"];
-	assert(x == 24);
-	assert(y == 24);
+	lua.script(R"(x = b:f()
+		y = b.b
+		assert(x == 24)
+		assert(y == 24)
+	)");
+
+	return 0;
 }

@@ -335,7 +335,7 @@ TEST_CASE("functions/returning functions from C++", "check to see if returning a
 	}
 }
 
-#if defined(SOL_LUAJIT) || (defined(_WIN32) && (defined(_WIN64)))
+#if !defined(SOL2_CI)
 TEST_CASE("functions/function_result and protected_function_result", "Function result should be the beefy return type for sol::function that allows for error checking and error handlers") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::debug);
