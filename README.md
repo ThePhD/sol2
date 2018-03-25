@@ -73,7 +73,13 @@ If you use CMake, you can also configure and generate a project that will genera
 ## Features
 
 - [Fastest in the land](http://sol2.readthedocs.io/en/latest/benchmarks.html) (see: sol bar in graph).
-- Supports retrieval and setting of multiple types including `std::string` and `std::map/unordered_map`.
+- Supports retrieval and setting of multiple types including: 
+  * `std::string`, `std::wstring`, `std::u16string` and `std::u32string` support (and for views).
+  * understands and works with containers such as `std::map/unordered_map`, c-style arrays, vectors, non-standard custom containers and more.
+  * user-defined types, with or **without** registering that type 
+  * `std::unique_ptr`, `std::shared_ptr`, and optional support of other pointer types like `boost::shared_ptr`.
+  * custom `optional<T>` that works with references.
+  * C++17 support for variants and similar new types.
 - Lambda, function, and member function bindings are supported.
 - Intermediate type for checking if a variable exists.
 - Simple API that completely abstracts away the C stack API, including `protected_function` with the ability to use an error-handling function.
@@ -82,6 +88,7 @@ If you use CMake, you can also configure and generate a project that will genera
 - Customization points to allow your C++ objects to be pushed and retrieved from Lua as multiple consecutive objects, or anything else you desire!
 - Overloaded function calls: `my_function(1); my_function("Hello")` in the same lua script route to different function calls based on parameters
 - Support for tables, nested tables, table iteration with `table.for_each` / `begin()` and `end()` iterators.
+- Zero overhead for usertype function call lookup when using `SOL_USE_BOOST`, safe for critical applications
 
 ## Supported Compilers
 

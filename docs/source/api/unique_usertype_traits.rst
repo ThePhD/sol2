@@ -18,7 +18,7 @@ unique_usertype_traits<T>
 		static type* get (const actual_type&) {...}
 	};
 
-This is a customization point for users who need to *work with special kinds of pointers/handles*. The traits type alerts the library that a certain type is to be pushed as a special userdata with special deletion / destruction semantics, like many smart pointers / custom smart pointers / handles It is already defined for ``std::unique_ptr<T, D>`` and ``std::shared_ptr<T>``. You can specialize this to get ``unique_usertype_traits`` semantics with your code. For example, here is how ``boost::shared_ptr<T>`` would look:
+This is a customization point for users who need to *work with special kinds of pointers/handles*. The traits type alerts the library that a certain type is to be pushed as a special userdata with special deletion / destruction semantics, like many smart pointers / custom smart pointers / handles. It is already defined for ``std::unique_ptr<T, D>`` and ``std::shared_ptr<T>`` and works properly with those types (see `shared_ptr here`_ and `unique_ptr here`_ for examples). You can specialize this to get ``unique_usertype_traits`` semantics with your code. For example, here is how ``boost::shared_ptr<T>`` would look:
 
 .. code-block:: cpp
 	
@@ -44,3 +44,7 @@ This will allow the library to properly handle ``boost::shared_ptr<T>``, with re
 .. note::
 	
 	If ``is_null`` triggers (returns ``true``), a ``nil`` value will be pushed into Lua rather than an empty structure.
+
+
+.. _shared_ptr here: https://github.com/ThePhD/sol2/blob/develop/examples/shared_ptr.cpp
+.. _unique_ptr here: https://github.com/ThePhD/sol2/blob/develop/examples/unique_ptr.cpp
