@@ -1,6 +1,6 @@
 ## Sol 2.19
 
-[![Join the chat at https://gitter.im/chat-sol2/Lobby](https://badges.gitter.im/chat-sol2/Lobby.svg)](https://gitter.im/chat-sol2/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat in Discord: https://discord.gg/buxkYNT](https://img.shields.io/badge/Discord-Chat!-brightgreen.svg)](https://discord.gg/buxkYNT)
 
 [![Linux & Max OSX Build Status](https://travis-ci.org/ThePhD/sol2.svg?branch=develop)](https://travis-ci.org/ThePhD/sol2)
 [![Windows Build status](https://ci.appveyor.com/api/projects/status/n38suofr21e9uk7h?svg=true)](https://ci.appveyor.com/project/ThePhD/sol2)
