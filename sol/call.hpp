@@ -652,7 +652,7 @@ namespace sol {
 				}
 				Oa* o = static_cast<Oa*>(maybeo.value());
 #else
-				Oa* o = static_cast<object_type*>(stack::get<non_null<Ta*>>(L, 1));
+				Oa* o = static_cast<Oa*>(stack::get<non_null<Ta*>>(L, 1));
 #endif // Safety
 				typedef typename wrap::returns_list returns_list;
 				typedef typename wrap::caller caller;

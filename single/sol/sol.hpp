@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-03-21 21:52:05.424739 UTC
-// This header was generated with sol v2.19.5 (revision b447c3d)
+// Generated 2018-03-29 13:24:07.253227 UTC
+// This header was generated with sol v2.19.5 (revision b879eb0)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -12996,7 +12996,7 @@ namespace sol {
 				}
 				Oa* o = static_cast<Oa*>(maybeo.value());
 #else
-				Oa* o = static_cast<object_type*>(stack::get<non_null<Ta*>>(L, 1));
+				Oa* o = static_cast<Oa*>(stack::get<non_null<Ta*>>(L, 1));
 #endif // Safety
 				typedef typename wrap::returns_list returns_list;
 				typedef typename wrap::caller caller;
