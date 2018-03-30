@@ -870,6 +870,24 @@ namespace sol {
 		void raw_set_field(lua_State* L, Key&& key, Value&& value, int tableindex) {
 			set_field<global, true>(L, std::forward<Key>(key), std::forward<Value>(value), tableindex);
 		}
+
+		template <typename T, typename F>
+		inline void modify_unique_usertype_as(stack_object obj, F&& f) {
+			typedef unique_usertype_traits<T> u_traits;
+			void* raw = lua_touserdata(obj.lua_state(), obj.stack_index());
+			void* ptr_memory = detail::align_usertype_pointer(raw);
+			void* uu_memory = detail::align_usertype_unique<T>(raw);
+			T& uu = *static_cast<T*>(uu_memory);
+			f(uu);
+			*static_cast<void**>(ptr_memory) = static_cast<void*>(u_traits::get(uu));
+		}
+
+		template <typename F>
+		inline void modify_unique_usertype(stack_object obj, F&& f) {
+			typedef meta::bind_traits<meta::unqualified_t<F>> bt;
+			typedef typename bt::template arg_at<0> T;
+			modify_unique_usertype_as<meta::unqualified_t<T>>(obj, std::forward<F>(f));
+		}
 	} // namespace stack
 } // namespace sol
 
