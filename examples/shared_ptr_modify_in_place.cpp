@@ -15,21 +15,21 @@ int main() {
 
 	sol::state lua;
 
-	auto new_shared_ptr = [](sol::stack_object obj) {
+	auto new_shared_ptr = [](sol::stack_reference obj) {
 		// works just fine
 		sol::stack::modify_unique_usertype(obj, [](std::shared_ptr<ree>& sptr) {
 			sptr = std::make_shared<ree>(sptr->value + 1);
 		});
 	};
 
-	auto reset_shared_ptr = [](sol::stack_object obj) {
+	auto reset_shared_ptr = [](sol::stack_reference obj) {
 		sol::stack::modify_unique_usertype(obj, [](std::shared_ptr<ree>& sptr) {
 			// THIS IS SUCH A BAD IDEA AAAGH
 			sptr.reset();
 			// DO NOT reset to nullptr:
 			// change it to an actual NEW value...
 			// otherwise you will inject a nullptr into the userdata representation...
-			// which will NOT compare == to nil
+			// which will NOT compare == to Lua's nil
 		});
 	};
 
