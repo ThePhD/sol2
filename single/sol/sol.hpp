@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-03-30 08:50:17.354157 UTC
-// This header was generated with sol v2.19.5 (revision 035c2f8)
+// Generated 2018-04-02 01:52:16.411607 UTC
+// This header was generated with sol v2.19.5 (revision 612c123)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -7685,7 +7685,7 @@ namespace sol {
 		}
 
 		template <typename T, typename F>
-		inline void modify_unique_usertype_as(stack_object obj, F&& f) {
+		inline void modify_unique_usertype_as(const stack_reference& obj, F&& f) {
 			typedef unique_usertype_traits<T> u_traits;
 			void* raw = lua_touserdata(obj.lua_state(), obj.stack_index());
 			void* ptr_memory = detail::align_usertype_pointer(raw);
@@ -7696,7 +7696,7 @@ namespace sol {
 		}
 
 		template <typename F>
-		inline void modify_unique_usertype(stack_object obj, F&& f) {
+		inline void modify_unique_usertype(const stack_reference& obj, F&& f) {
 			typedef meta::bind_traits<meta::unqualified_t<F>> bt;
 			typedef typename bt::template arg_at<0> T;
 			modify_unique_usertype_as<meta::unqualified_t<T>>(obj, std::forward<F>(f));
