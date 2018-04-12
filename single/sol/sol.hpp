@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-04-02 01:52:16.411607 UTC
-// This header was generated with sol v2.19.5 (revision 612c123)
+// Generated 2018-04-12 18:01:15.071442 UTC
+// This header was generated with sol v2.19.5 (revision 80df3fc)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -76,6 +76,13 @@
 #define SOL_NOEXCEPT_FUNCTION_TYPE 1
 #endif // noexcept is part of a function's type
 #endif // compiler-specific checks
+#if defined(__clang__) && defined(__APPLE__)
+#if __has_include && __has_include(<variant>)
+#define SOL_STD_VARIANT 1
+#endif // has include nonsense
+#else
+#define SOL_STD_VARIANT 1
+#endif // Clang screws up variant
 #endif // C++17 only
 
 #ifdef _MSC_VER
@@ -8738,6 +8745,8 @@ namespace sol {
 // end of sol/unicode.hpp
 
 #ifdef SOL_CXX17_FEATURES
+#ifdef SOL_STD_VARIANT
+#endif // Apple clang screwed up
 #endif // C++17
 
 namespace sol {
@@ -9540,6 +9549,7 @@ namespace stack {
 	};
 
 #ifdef SOL_CXX17_FEATURES
+#ifdef SOL_STD_VARIANT
 	template <typename... Tn>
 	struct getter<std::variant<Tn...>> {
 		typedef std::variant<Tn...> V;
@@ -9575,6 +9585,7 @@ namespace stack {
 			return get_one(std::integral_constant<std::size_t, V_size::value>(), L, index, tracking);
 		}
 	};
+#endif // Apple Clang screwed up
 #endif // C++17-wave
 }
 } // namespace sol::stack
@@ -9746,6 +9757,8 @@ namespace stack {
 
 #include <limits>
 #ifdef SOL_CXX17_FEATURES
+#ifdef SOL_STD_VARIANT
+#endif // Can use variant
 #endif // C++17
 
 namespace sol {
@@ -10695,6 +10708,7 @@ namespace stack {
 	};
 
 #ifdef SOL_CXX17_FEATURES
+#ifdef SOL_STD_VARIANT
 	namespace stack_detail {
 
 		struct push_function {
@@ -10722,6 +10736,7 @@ namespace stack {
 			return std::visit(stack_detail::push_function(L), std::move(v));
 		}
 	};
+#endif // Variant because Clang is terrible
 #endif // C++17 Support
 }
 } // namespace sol::stack
@@ -14534,6 +14549,7 @@ namespace sol {
 					detail::call_exception_handler(lua_state(), maybe_ex, error);
 				}
 			};
+			(void)onexcept;
 #if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || defined(SOL_LUAJIT)
 			try {
 #endif // Safe Exception Propagation
@@ -14943,7 +14959,7 @@ namespace sol {
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
-#if defined(_MSC_FULL_VER) && _MSC_FULL_VER <= 191326128 && _MSC_FULL_VER >= 191200000
+#if defined(_MSC_FULL_VER) && _MSC_FULL_VER <= 191326131 && _MSC_FULL_VER >= 191200000
 			// MSVC is ass sometimes
 			return get<function>().call<Ret...>(std::forward<Args>(args)...);
 #else
@@ -20155,7 +20171,7 @@ namespace sol {
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
-#if defined(_MSC_FULL_VER) && _MSC_FULL_VER <= 191326128 && _MSC_FULL_VER >= 191200000
+#if defined(_MSC_FULL_VER) && _MSC_FULL_VER <= 191326131 && _MSC_FULL_VER >= 191200000
 			// MSVC is ass sometimes
 			return get<protected_function>().call<Ret...>(std::forward<Args>(args)...);
 #else
