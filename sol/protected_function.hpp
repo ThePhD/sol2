@@ -89,6 +89,7 @@ namespace sol {
 					detail::call_exception_handler(lua_state(), maybe_ex, error);
 				}
 			};
+			(void)onexcept;
 #if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || defined(SOL_LUAJIT)
 			try {
 #endif // Safe Exception Propagation

@@ -40,6 +40,13 @@
 #define SOL_NOEXCEPT_FUNCTION_TYPE 1
 #endif // noexcept is part of a function's type
 #endif // compiler-specific checks
+#if defined(__clang__) && defined(__APPLE__)
+#if __has_include && __has_include(<variant>)
+#define SOL_STD_VARIANT 1
+#endif // has include nonsense
+#else
+#define SOL_STD_VARIANT 1
+#endif // Clang screws up variant
 #endif // C++17 only
 
 #ifdef _MSC_VER

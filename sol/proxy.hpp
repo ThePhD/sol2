@@ -126,7 +126,7 @@ namespace sol {
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
-#if defined(_MSC_FULL_VER) && _MSC_FULL_VER <= 191326128 && _MSC_FULL_VER >= 191200000
+#if defined(_MSC_FULL_VER) && _MSC_FULL_VER <= 191326131 && _MSC_FULL_VER >= 191200000
 			// MSVC is ass sometimes
 			return get<function>().call<Ret...>(std::forward<Args>(args)...);
 #else

@@ -37,7 +37,9 @@
 #include <limits>
 #ifdef SOL_CXX17_FEATURES
 #include <string_view>
+#ifdef SOL_STD_VARIANT
 #include <variant>
+#endif // Can use variant
 #endif // C++17
 
 namespace sol {
@@ -987,6 +989,7 @@ namespace stack {
 	};
 
 #ifdef SOL_CXX17_FEATURES
+#ifdef SOL_STD_VARIANT
 	namespace stack_detail {
 
 		struct push_function {
@@ -1014,6 +1017,7 @@ namespace stack {
 			return std::visit(stack_detail::push_function(L), std::move(v));
 		}
 	};
+#endif // Variant because Clang is terrible
 #endif // C++17 Support
 }
 } // namespace sol::stack

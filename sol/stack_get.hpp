@@ -38,7 +38,9 @@
 #include <cmath>
 #ifdef SOL_CXX17_FEATURES
 #include <string_view>
+#ifdef SOL_STD_VARIANT
 #include <variant>
+#endif // Apple clang screwed up
 #endif // C++17
 
 namespace sol {
@@ -841,6 +843,7 @@ namespace stack {
 	};
 
 #ifdef SOL_CXX17_FEATURES
+#ifdef SOL_STD_VARIANT
 	template <typename... Tn>
 	struct getter<std::variant<Tn...>> {
 		typedef std::variant<Tn...> V;
@@ -876,6 +879,7 @@ namespace stack {
 			return get_one(std::integral_constant<std::size_t, V_size::value>(), L, index, tracking);
 		}
 	};
+#endif // Apple Clang screwed up
 #endif // C++17-wave
 }
 } // namespace sol::stack
