@@ -32,8 +32,10 @@
 #include <utility>
 #include <cmath>
 #ifdef SOL_CXX17_FEATURES
+#ifdef SOL_STD_VARIANT
 #include <variant>
-#endif // C++17
+#endif // SOL_STD_VARIANT
+#endif // SOL_CXX17_FEATURES
 
 namespace sol {
 namespace stack {
@@ -576,6 +578,7 @@ namespace stack {
 	};
 
 #ifdef SOL_CXX17_FEATURES
+#ifdef SOL_STD_VARIANT
 	template <typename... Tn, typename C>
 	struct checker<std::variant<Tn...>, type::poly, C> {
 		typedef std::variant<Tn...> V;
@@ -606,7 +609,8 @@ namespace stack {
 			return is_one(std::integral_constant<std::size_t, V_size::value>(), L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
-#endif // C++17
+#endif // SOL_STD_VARIANT
+#endif // SOL_CXX17_FEATURES
 }
 } // namespace sol::stack
 

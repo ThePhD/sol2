@@ -145,6 +145,7 @@ namespace stack {
 	};
 
 #ifdef SOL_CXX17_FEATURES
+#ifdef SOL_STD_VARIANT
 	template <typename... Tn>
 	struct check_getter<std::variant<Tn...>> {
 		typedef std::variant<Tn...> V;
@@ -184,7 +185,8 @@ namespace stack {
 			return get_one(std::integral_constant<std::size_t, V_size::value>(), L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
-#endif // C++17
+#endif // SOL_STD_VARIANT
+#endif // SOL_CXX17_FEATURES
 }
 } // namespace sol::stack
 

@@ -879,8 +879,8 @@ namespace stack {
 			return get_one(std::integral_constant<std::size_t, V_size::value>(), L, index, tracking);
 		}
 	};
-#endif // Apple Clang screwed up
-#endif // C++17-wave
+#endif // SOL_STD_VARIANT
+#endif // SOL_CXX17_FEATURES
 }
 } // namespace sol::stack
 
