@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-04-12 18:01:15.385481 UTC
-// This header was generated with sol v2.19.5 (revision 80df3fc)
+// Generated 2018-04-13 06:36:51.034348 UTC
+// This header was generated with sol v2.19.5 (revision 9ad8fd8)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -44,9 +44,11 @@
 #endif // noexcept is part of a function's type
 #endif // compiler-specific checks
 #if defined(__clang__) && defined(__APPLE__)
-#if __has_include && __has_include(<variant>)
+#if defined(__has_include)
+#if __has_include(<variant>)
 #define SOL_STD_VARIANT 1
 #endif // has include nonsense
+#endif // __has_include
 #else
 #define SOL_STD_VARIANT 1
 #endif // Clang screws up variant

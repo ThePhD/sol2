@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-04-12 18:01:15.071442 UTC
-// This header was generated with sol v2.19.5 (revision 80df3fc)
+// Generated 2018-04-13 06:36:50.935900 UTC
+// This header was generated with sol v2.19.5 (revision 9ad8fd8)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -77,9 +77,11 @@
 #endif // noexcept is part of a function's type
 #endif // compiler-specific checks
 #if defined(__clang__) && defined(__APPLE__)
-#if __has_include && __has_include(<variant>)
+#if defined(__has_include)
+#if __has_include(<variant>)
 #define SOL_STD_VARIANT 1
 #endif // has include nonsense
+#endif // __has_include
 #else
 #define SOL_STD_VARIANT 1
 #endif // Clang screws up variant
@@ -4522,7 +4524,9 @@ namespace sol {
 // end of sol/filters.hpp
 
 #ifdef SOL_CXX17_FEATURES
+#ifdef SOL_STD_VARIANT
 #include <variant>
+#endif
 #endif // C++17
 #ifdef SOL_USE_BOOST
 #include <boost/unordered_map.hpp>
@@ -5463,10 +5467,10 @@ namespace sol {
 		template <>
 		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
 
-#ifdef SOL_CXX17_FEATURES
+#ifdef SOL_STD_VARIANT
 		template <typename... Tn>
 		struct lua_type_of<std::variant<Tn...>> : std::integral_constant<type, type::poly> {};
-#endif // C++ 17 (or not) features
+#endif // C++17 variant
 
 		template <typename T>
 		struct lua_type_of<nested<T>, std::enable_if_t<::sol::is_container<T>::value>> : std::integral_constant<type, type::table> {};
@@ -7832,8 +7836,8 @@ namespace sol {
 // end of sol/inheritance.hpp
 
 #include <cmath>
-#ifdef SOL_CXX17_FEATURES
-#endif // C++17
+#ifdef SOL_STD_VARIANT
+#endif // C++17 variant
 
 namespace sol {
 namespace stack {
@@ -8375,7 +8379,7 @@ namespace stack {
 		}
 	};
 
-#ifdef SOL_CXX17_FEATURES
+#ifdef SOL_STD_VARIANT
 	template <typename... Tn, typename C>
 	struct checker<std::variant<Tn...>, type::poly, C> {
 		typedef std::variant<Tn...> V;
@@ -8406,7 +8410,7 @@ namespace stack {
 			return is_one(std::integral_constant<std::size_t, V_size::value>(), L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
-#endif // C++17
+#endif // C++17 variant
 }
 } // namespace sol::stack
 
@@ -9707,7 +9711,7 @@ namespace stack {
 		}
 	};
 
-#ifdef SOL_CXX17_FEATURES
+#ifdef SOL_STD_VARIANT
 	template <typename... Tn>
 	struct check_getter<std::variant<Tn...>> {
 		typedef std::variant<Tn...> V;
@@ -9747,7 +9751,7 @@ namespace stack {
 			return get_one(std::integral_constant<std::size_t, V_size::value>(), L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
-#endif // C++17
+#endif // C++17 variant
 }
 } // namespace sol::stack
 
