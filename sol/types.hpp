@@ -982,10 +982,12 @@ namespace sol {
 		template <>
 		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
 
+#ifdef SOL_CXX17_FEATURES
 #ifdef SOL_STD_VARIANT
 		template <typename... Tn>
 		struct lua_type_of<std::variant<Tn...>> : std::integral_constant<type, type::poly> {};
-#endif // C++17 variant
+#endif // SOL_STD_VARIANT
+#endif // SOL_CXX17_FEATURES
 
 		template <typename T>
 		struct lua_type_of<nested<T>, std::enable_if_t<::sol::is_container<T>::value>> : std::integral_constant<type, type::table> {};
