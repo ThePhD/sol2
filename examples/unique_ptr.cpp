@@ -23,11 +23,13 @@ struct my_type {
 	my_type& operator=(const my_type& other) {
 		value = other.value;
 		std::cout << "my_type at " << static_cast<void*>(this) << " being copy-assigned to!" << std::endl;
+		return *this;
 	}
 
 	my_type& operator=(my_type&& other) {
 		value = other.value;
 		std::cout << "my_type at " << static_cast<void*>(this) << " being move-assigned to!" << std::endl;
+		return *this;
 	}
 
 	~my_type() {

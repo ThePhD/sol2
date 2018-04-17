@@ -42,8 +42,10 @@
 
 #ifdef LUAJIT_VERSION
 #ifndef SOL_LUAJIT
-#define SOL_LUAJIT
+#define SOL_LUAJIT 1
+#ifndef SOL_LUAJIT_VERSION
 #define SOL_LUAJIT_VERSION LUAJIT_VERSION_NUM
+#endif // SOL_LUAJIT_VERSION definition, if not present
 #endif // sol luajit
 #endif // luajit
 
