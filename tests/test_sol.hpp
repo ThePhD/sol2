@@ -41,9 +41,8 @@
 #endif // Single
 #include <sol.hpp>
 
-#include <catch.hpp>
-
-#define CHECK_VALID ( x ) { auto r = x; REQUIRE(r.valid()); }
+#include <iostream>
+#include <cstdlib>
 
 struct test_stack_guard {
 	lua_State* L;
@@ -55,7 +54,9 @@ struct test_stack_guard {
 	}
 
 	void check() {
-		REQUIRE(begintop == endtop);
+		if (begintop != endtop) {
+			std::abort();
+		}
 	}
 
 	~test_stack_guard() {
