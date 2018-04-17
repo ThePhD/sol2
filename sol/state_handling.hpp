@@ -155,7 +155,7 @@ namespace sol {
 		if (result.pop_count() > 0) {
 			stack::remove(L, target, result.pop_count());
 		}
-		int pushed = stack::push(L, err);
+		stack::push(L, err);
 		int top = lua_gettop(L);
 		int towards = top - target;
 		if (towards != 0) {
