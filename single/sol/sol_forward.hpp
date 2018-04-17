@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-04-13 18:36:16.720493 UTC
-// This header was generated with sol v2.19.5 (revision d9aef04)
+// Generated 2018-04-17 16:28:40.359560 UTC
+// This header was generated with sol v2.19.5 (revision 2de6447)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -37,7 +37,7 @@
 #endif // C++17 features macro
 #endif // C++17 features check
 
-#ifdef SOL_CXX17_FEATURES
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #if defined(__cpp_noexcept_function_type) || ((defined(_MSC_VER) && _MSC_VER > 1911) && (defined(_MSVC_LANG) && ((_MSVC_LANG >= 201403L))))
 #ifndef SOL_NOEXCEPT_FUNCTION_TYPE
 #define SOL_NOEXCEPT_FUNCTION_TYPE 1
@@ -54,97 +54,154 @@
 #endif // Clang screws up variant
 #endif // C++17 only
 
+// beginning of sol/config.hpp
+
 #ifdef _MSC_VER
-#if defined(_DEBUG) && !defined(NDEBUG)
+	#if defined(_DEBUG) && !defined(NDEBUG)
 
-#ifndef SOL_IN_DEBUG_DETECTED
-#define SOL_IN_DEBUG_DETECTED 1
-#endif
+	#ifndef SOL_IN_DEBUG_DETECTED
+	#define SOL_IN_DEBUG_DETECTED 1
+	#endif
 
-#endif // VC++ Debug macros
+	#endif // VC++ Debug macros
 
-#ifndef _CPPUNWIND
-#ifndef SOL_NO_EXCEPTIONS
-#define SOL_NO_EXCEPTIONS 1
-#endif
-#endif // Automatic Exceptions
+	#ifndef _CPPUNWIND
+	#ifndef SOL_NO_EXCEPTIONS
+	#define SOL_NO_EXCEPTIONS 1
+	#endif
+	#endif // Automatic Exceptions
 
-#ifndef _CPPRTTI
-#ifndef SOL_NO_RTTI
-#define SOL_NO_RTTI 1
-#endif
-#endif // Automatic RTTI
+	#ifndef _CPPRTTI
+	#ifndef SOL_NO_RTTI
+	#define SOL_NO_RTTI 1
+	#endif
+	#endif // Automatic RTTI
 #elif defined(__GNUC__) || defined(__clang__)
 
-#if !defined(NDEBUG) && !defined(__OPTIMIZE__)
+	#if !defined(NDEBUG) && !defined(__OPTIMIZE__)
 
-#ifndef SOL_IN_DEBUG_DETECTED
-#define SOL_IN_DEBUG_DETECTED 1
-#endif
+	#ifndef SOL_IN_DEBUG_DETECTED
+	#define SOL_IN_DEBUG_DETECTED 1
+	#endif
 
-#endif // Not Debug && g++ optimizer flag
+	#endif // Not Debug && g++ optimizer flag
 
-#ifndef __EXCEPTIONS
-#ifndef SOL_NO_EXCEPTIONS
-#define SOL_NO_EXCEPTIONS 1
-#endif
-#endif // No Exceptions
+	#ifndef __EXCEPTIONS
+	#ifndef SOL_NO_EXCEPTIONS
+	#define SOL_NO_EXCEPTIONS 1
+	#endif
+	#endif // No Exceptions
 
-#ifndef __GXX_RTTI
-#ifndef SOL_NO_RTII
-#define SOL_NO_RTTI 1
-#endif
-#endif // No RTTI
+	#ifndef __GXX_RTTI
+	#ifndef SOL_NO_RTII
+	#define SOL_NO_RTTI 1
+	#endif
+	#endif // No RTTI
 
 #endif // vc++ || clang++/g++
 
-#if defined(SOL_CHECK_ARGUMENTS)
+#if defined(SOL_CHECK_ARGUMENTS) && SOL_CHECK_ARGUMENTS
 
-#if !defined(SOL_SAFE_GETTER)
-#define SOL_SAFE_GETTER 1
-#endif
+	// Checks low-level getter function
+	// (and thusly, affects nearly entire framework)
+	#if !defined(SOL_SAFE_GETTER)
+	#define SOL_SAFE_GETTER 1
+	#endif
 
-#if !defined(SOL_SAFE_USERTYPE)
-#define SOL_SAFE_USERTYPE 1
-#endif
+	// Checks access on usertype functions
+	// local my_obj = my_type.new()
+	// my_obj.my_member_function()
+	// -- bad syntax and crash
+	#if !defined(SOL_SAFE_USERTYPE)
+	#define SOL_SAFE_USERTYPE 1
+	#endif
 
-#if !defined(SOL_SAFE_REFERENCES)
-#define SOL_SAFE_REFERENCES 1
-#endif
+	// Checks sol::reference derived boundaries
+	// sol::function ref(L, 1);
+	// sol::userdata sref(L, 2);
+	#if !defined(SOL_SAFE_REFERENCES)
+	#define SOL_SAFE_REFERENCES 1
+	#endif
 
-#if !defined(SOL_SAFE_FUNCTION)
-#define SOL_SAFE_FUNCTION 1
-#endif
+	// Changes all typedefs of sol::function to point to the 
+	// protected_function version, instead of unsafe_function
+	#if !defined(SOL_SAFE_FUNCTION)
+	#define SOL_SAFE_FUNCTION 1
+	#endif
 
-#if !defined(SOL_SAFE_FUNCTION_CALLS)
-#define SOL_SAFE_FUNCTION_CALLS 1
-#endif
+	// Checks function parameters and
+	// returns upon call into/from Lua
+	// local a = 1
+	// local b = "woof"
+	// my_c_function(a, b)
+	#if !defined(SOL_SAFE_FUNCTION_CALLS)
+	#define SOL_SAFE_FUNCTION_CALLS 1
+	#endif
 
-#if !defined(SOL_SAFE_PROXIES)
-#define SOL_SAFE_PROXIES 1
-#endif
+	// Checks conversions
+	// int v = lua["bark"];
+	// int v2 = my_sol_function();
+	#if !defined(SOL_SAFE_PROXIES)
+	#define SOL_SAFE_PROXIES 1
+	#endif
 
-#if !defined(SOL_SAFE_NUMERICS)
-#define SOL_SAFE_NUMERICS 1
-#endif
+	// Check overflowing number conversions
+	// for things like 64 bit integers that don't fit in a typical lua_Number
+	// for Lua 5.1 and 5.2
+	#if !defined(SOL_SAFE_NUMERICS)
+	#define SOL_SAFE_NUMERICS 1
+	#endif
+
+	// Turn off Number Precision Checks
+	// if this is defined, we do not do range 
+	// checks on integers / unsigned integers that might
+	// be bigger than what Lua can represent
+	#if !defined(SOL_NO_CHECK_NUMBER_PRECISION)
+	// off by default
+	#define SOL_NO_CHECK_NUMBER_PRECISION 0
+	#endif
 
 #endif // Turn on Safety for all if top-level macro is defined
 
-#ifdef SOL_IN_DEBUG_DETECTED
+#if defined(SOL_IN_DEBUG_DETECTED) && SOL_IN_DEBUG_DETECTED
 
-#if !defined(SOL_SAFE_REFERENCES)
-#define SOL_SAFE_REFERENCES 1
+	#if !defined(SOL_SAFE_REFERENCES)
+	// Ensure that references are forcefully type-checked upon construction
+	#define SOL_SAFE_REFERENCES 1
+	#endif
+
+	// Safe usertypes checks for errors such as
+	// obj = my_type.new()
+	// obj.f() -- note the '.' instead of ':'
+	// usertypes should be safe no matter what
+	#if !defined(SOL_SAFE_USERTYPE)
+	#define SOL_SAFE_USERTYPE 1
+	#endif
+
+	#if !defined(SOL_SAFE_FUNCTION_CALLS)
+	// Function calls from Lua should be automatically safe in debug mode
+	#define SOL_SAFE_FUNCTION_CALLS 1
+	#endif
+
+	// Print any exceptions / errors that occur
+	// in debug mode to the default error stream / console
+	#if !defined(SOL_PRINT_ERRORS)
+	#define SOL_PRINT_ERRORS 1
+	#endif
+
+#endif // DEBUG: Turn on all debug safety features for VC++ / g++ / clang++ and similar
+
+#if !defined(SOL_PRINT_ERRORS)
+#define SOL_PRINT_ERRORS 0
 #endif
 
-#if !defined(SOL_SAFE_USERTYPE)
-#define SOL_SAFE_USERTYPE 1
+#if !defined(SOL_DEFAULT_PASS_ON_ERROR)
+#define SOL_DEFAULT_PASS_ON_ERROR 0
 #endif
 
-#if !defined(SOL_SAFE_FUNCTION_CALLS)
-#define SOL_SAFE_FUNCTION_CALLS 1
+#if !defined(SOL_ENABLE_INTEROP)
+#define SOL_ENABLE_INTEROP 0
 #endif
-
-#endif // Turn on all debug safety features for VC++ / g++ / clang++ and similar
 
 #if defined(__MAC_OS_X_VERSION_MAX_ALLOWED) || defined(__OBJC__) || defined(nil)
 #if !defined(SOL_NO_NIL)
@@ -152,15 +209,17 @@
 #endif
 #endif // avoiding nil defines / keywords
 
-#ifdef SOL_USE_BOOST
+#if defined(SOL_USE_BOOST) && SOL_USE_BOOST
 #ifndef SOL_UNORDERED_MAP_COMPATIBLE_HASH
-#define SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#define SOL_UNORDERED_MAP_COMPATIBLE_HASH 1
 #endif // SOL_UNORDERED_MAP_COMPATIBLE_HASH
-#endif // Boost has unordered_map with Compatible Key and CompatibleHash
+#endif 
 
 #ifndef SOL_STACK_STRING_OPTIMIZATION_SIZE
 #define SOL_STACK_STRING_OPTIMIZATION_SIZE 1024
 #endif // Optimized conversion routines using a KB or so off the stack
+
+// end of sol/config.hpp
 
 // end of sol/feature_test.hpp
 
@@ -219,7 +278,7 @@ namespace sol {
 	using main_protected_function = main_safe_function;
 	using stack_protected_function = stack_safe_function;
 	using stack_aligned_protected_function = stack_aligned_safe_function;
-#ifdef SOL_SAFE_FUNCTION
+#if defined(SOL_SAFE_FUNCTION) && SOL_SAFE_FUNCTION
 	using function = protected_function;
 	using main_function = main_protected_function;
 	using stack_function = stack_protected_function;
@@ -234,7 +293,7 @@ namespace sol {
 	struct unsafe_function_result;
 	struct protected_function_result;
 	using safe_function_result = protected_function_result;
-#ifdef SOL_SAFE_FUNCTION
+#if defined(SOL_SAFE_FUNCTION) && SOL_SAFE_FUNCTION
 	using function_result = safe_function_result;
 #else
 	using function_result = unsafe_function_result;

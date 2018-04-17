@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-04-13 18:36:16.622867 UTC
-// This header was generated with sol v2.19.5 (revision d9aef04)
+// Generated 2018-04-17 16:28:40.050022 UTC
+// This header was generated with sol v2.19.5 (revision 2de6447)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -33,24 +33,24 @@
 #define SOL_HPP
 
 #if defined(UE_BUILD_DEBUG) || defined(UE_BUILD_DEVELOPMENT) || defined(UE_BUILD_TEST) || defined(UE_BUILD_SHIPPING) || defined(UE_SERVER)
-#define SOL_INSIDE_UNREAL
+#define SOL_INSIDE_UNREAL 1
 #endif // Unreal Engine 4 bullshit
 
-#ifdef SOL_INSIDE_UNREAL
+#if defined(SOL_INSIDE_UNREAL) && SOL_INSIDE_UNREAL
 #ifdef check
 #define SOL_INSIDE_UNREAL_REMOVED_CHECK
 #undef check
 #endif 
 #endif // Unreal Engine 4 Bullshit
 
-#ifdef __GNUC__
+#if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wconversion"
 #if __GNUC__ > 6
 #pragma GCC diagnostic ignored "-Wnoexcept-type"
 #endif
-#elif defined __clang__
+#elif defined(__clang__)
 #elif defined _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4324 ) // structure was padded due to alignment specifier
@@ -70,7 +70,7 @@
 #endif // C++17 features macro
 #endif // C++17 features check
 
-#ifdef SOL_CXX17_FEATURES
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #if defined(__cpp_noexcept_function_type) || ((defined(_MSC_VER) && _MSC_VER > 1911) && (defined(_MSVC_LANG) && ((_MSVC_LANG >= 201403L))))
 #ifndef SOL_NOEXCEPT_FUNCTION_TYPE
 #define SOL_NOEXCEPT_FUNCTION_TYPE 1
@@ -87,97 +87,154 @@
 #endif // Clang screws up variant
 #endif // C++17 only
 
+// beginning of sol/config.hpp
+
 #ifdef _MSC_VER
-#if defined(_DEBUG) && !defined(NDEBUG)
+	#if defined(_DEBUG) && !defined(NDEBUG)
 
-#ifndef SOL_IN_DEBUG_DETECTED
-#define SOL_IN_DEBUG_DETECTED 1
-#endif
+	#ifndef SOL_IN_DEBUG_DETECTED
+	#define SOL_IN_DEBUG_DETECTED 1
+	#endif
 
-#endif // VC++ Debug macros
+	#endif // VC++ Debug macros
 
-#ifndef _CPPUNWIND
-#ifndef SOL_NO_EXCEPTIONS
-#define SOL_NO_EXCEPTIONS 1
-#endif
-#endif // Automatic Exceptions
+	#ifndef _CPPUNWIND
+	#ifndef SOL_NO_EXCEPTIONS
+	#define SOL_NO_EXCEPTIONS 1
+	#endif
+	#endif // Automatic Exceptions
 
-#ifndef _CPPRTTI
-#ifndef SOL_NO_RTTI
-#define SOL_NO_RTTI 1
-#endif
-#endif // Automatic RTTI
+	#ifndef _CPPRTTI
+	#ifndef SOL_NO_RTTI
+	#define SOL_NO_RTTI 1
+	#endif
+	#endif // Automatic RTTI
 #elif defined(__GNUC__) || defined(__clang__)
 
-#if !defined(NDEBUG) && !defined(__OPTIMIZE__)
+	#if !defined(NDEBUG) && !defined(__OPTIMIZE__)
 
-#ifndef SOL_IN_DEBUG_DETECTED
-#define SOL_IN_DEBUG_DETECTED 1
-#endif
+	#ifndef SOL_IN_DEBUG_DETECTED
+	#define SOL_IN_DEBUG_DETECTED 1
+	#endif
 
-#endif // Not Debug && g++ optimizer flag
+	#endif // Not Debug && g++ optimizer flag
 
-#ifndef __EXCEPTIONS
-#ifndef SOL_NO_EXCEPTIONS
-#define SOL_NO_EXCEPTIONS 1
-#endif
-#endif // No Exceptions
+	#ifndef __EXCEPTIONS
+	#ifndef SOL_NO_EXCEPTIONS
+	#define SOL_NO_EXCEPTIONS 1
+	#endif
+	#endif // No Exceptions
 
-#ifndef __GXX_RTTI
-#ifndef SOL_NO_RTII
-#define SOL_NO_RTTI 1
-#endif
-#endif // No RTTI
+	#ifndef __GXX_RTTI
+	#ifndef SOL_NO_RTII
+	#define SOL_NO_RTTI 1
+	#endif
+	#endif // No RTTI
 
 #endif // vc++ || clang++/g++
 
-#if defined(SOL_CHECK_ARGUMENTS)
+#if defined(SOL_CHECK_ARGUMENTS) && SOL_CHECK_ARGUMENTS
 
-#if !defined(SOL_SAFE_GETTER)
-#define SOL_SAFE_GETTER 1
-#endif
+	// Checks low-level getter function
+	// (and thusly, affects nearly entire framework)
+	#if !defined(SOL_SAFE_GETTER)
+	#define SOL_SAFE_GETTER 1
+	#endif
 
-#if !defined(SOL_SAFE_USERTYPE)
-#define SOL_SAFE_USERTYPE 1
-#endif
+	// Checks access on usertype functions
+	// local my_obj = my_type.new()
+	// my_obj.my_member_function()
+	// -- bad syntax and crash
+	#if !defined(SOL_SAFE_USERTYPE)
+	#define SOL_SAFE_USERTYPE 1
+	#endif
 
-#if !defined(SOL_SAFE_REFERENCES)
-#define SOL_SAFE_REFERENCES 1
-#endif
+	// Checks sol::reference derived boundaries
+	// sol::function ref(L, 1);
+	// sol::userdata sref(L, 2);
+	#if !defined(SOL_SAFE_REFERENCES)
+	#define SOL_SAFE_REFERENCES 1
+	#endif
 
-#if !defined(SOL_SAFE_FUNCTION)
-#define SOL_SAFE_FUNCTION 1
-#endif
+	// Changes all typedefs of sol::function to point to the 
+	// protected_function version, instead of unsafe_function
+	#if !defined(SOL_SAFE_FUNCTION)
+	#define SOL_SAFE_FUNCTION 1
+	#endif
 
-#if !defined(SOL_SAFE_FUNCTION_CALLS)
-#define SOL_SAFE_FUNCTION_CALLS 1
-#endif
+	// Checks function parameters and
+	// returns upon call into/from Lua
+	// local a = 1
+	// local b = "woof"
+	// my_c_function(a, b)
+	#if !defined(SOL_SAFE_FUNCTION_CALLS)
+	#define SOL_SAFE_FUNCTION_CALLS 1
+	#endif
 
-#if !defined(SOL_SAFE_PROXIES)
-#define SOL_SAFE_PROXIES 1
-#endif
+	// Checks conversions
+	// int v = lua["bark"];
+	// int v2 = my_sol_function();
+	#if !defined(SOL_SAFE_PROXIES)
+	#define SOL_SAFE_PROXIES 1
+	#endif
 
-#if !defined(SOL_SAFE_NUMERICS)
-#define SOL_SAFE_NUMERICS 1
-#endif
+	// Check overflowing number conversions
+	// for things like 64 bit integers that don't fit in a typical lua_Number
+	// for Lua 5.1 and 5.2
+	#if !defined(SOL_SAFE_NUMERICS)
+	#define SOL_SAFE_NUMERICS 1
+	#endif
+
+	// Turn off Number Precision Checks
+	// if this is defined, we do not do range 
+	// checks on integers / unsigned integers that might
+	// be bigger than what Lua can represent
+	#if !defined(SOL_NO_CHECK_NUMBER_PRECISION)
+	// off by default
+	#define SOL_NO_CHECK_NUMBER_PRECISION 0
+	#endif
 
 #endif // Turn on Safety for all if top-level macro is defined
 
-#ifdef SOL_IN_DEBUG_DETECTED
+#if defined(SOL_IN_DEBUG_DETECTED) && SOL_IN_DEBUG_DETECTED
 
-#if !defined(SOL_SAFE_REFERENCES)
-#define SOL_SAFE_REFERENCES 1
+	#if !defined(SOL_SAFE_REFERENCES)
+	// Ensure that references are forcefully type-checked upon construction
+	#define SOL_SAFE_REFERENCES 1
+	#endif
+
+	// Safe usertypes checks for errors such as
+	// obj = my_type.new()
+	// obj.f() -- note the '.' instead of ':'
+	// usertypes should be safe no matter what
+	#if !defined(SOL_SAFE_USERTYPE)
+	#define SOL_SAFE_USERTYPE 1
+	#endif
+
+	#if !defined(SOL_SAFE_FUNCTION_CALLS)
+	// Function calls from Lua should be automatically safe in debug mode
+	#define SOL_SAFE_FUNCTION_CALLS 1
+	#endif
+
+	// Print any exceptions / errors that occur
+	// in debug mode to the default error stream / console
+	#if !defined(SOL_PRINT_ERRORS)
+	#define SOL_PRINT_ERRORS 1
+	#endif
+
+#endif // DEBUG: Turn on all debug safety features for VC++ / g++ / clang++ and similar
+
+#if !defined(SOL_PRINT_ERRORS)
+#define SOL_PRINT_ERRORS 0
 #endif
 
-#if !defined(SOL_SAFE_USERTYPE)
-#define SOL_SAFE_USERTYPE 1
+#if !defined(SOL_DEFAULT_PASS_ON_ERROR)
+#define SOL_DEFAULT_PASS_ON_ERROR 0
 #endif
 
-#if !defined(SOL_SAFE_FUNCTION_CALLS)
-#define SOL_SAFE_FUNCTION_CALLS 1
+#if !defined(SOL_ENABLE_INTEROP)
+#define SOL_ENABLE_INTEROP 0
 #endif
-
-#endif // Turn on all debug safety features for VC++ / g++ / clang++ and similar
 
 #if defined(__MAC_OS_X_VERSION_MAX_ALLOWED) || defined(__OBJC__) || defined(nil)
 #if !defined(SOL_NO_NIL)
@@ -185,15 +242,17 @@
 #endif
 #endif // avoiding nil defines / keywords
 
-#ifdef SOL_USE_BOOST
+#if defined(SOL_USE_BOOST) && SOL_USE_BOOST
 #ifndef SOL_UNORDERED_MAP_COMPATIBLE_HASH
-#define SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#define SOL_UNORDERED_MAP_COMPATIBLE_HASH 1
 #endif // SOL_UNORDERED_MAP_COMPATIBLE_HASH
-#endif // Boost has unordered_map with Compatible Key and CompatibleHash
+#endif 
 
 #ifndef SOL_STACK_STRING_OPTIMIZATION_SIZE
 #define SOL_STACK_STRING_OPTIMIZATION_SIZE 1024
 #endif // Optimized conversion routines using a KB or so off the stack
+
+// end of sol/config.hpp
 
 // end of sol/feature_test.hpp
 
@@ -252,7 +311,7 @@ namespace sol {
 	using main_protected_function = main_safe_function;
 	using stack_protected_function = stack_safe_function;
 	using stack_aligned_protected_function = stack_aligned_safe_function;
-#ifdef SOL_SAFE_FUNCTION
+#if defined(SOL_SAFE_FUNCTION) && SOL_SAFE_FUNCTION
 	using function = protected_function;
 	using main_function = main_protected_function;
 	using stack_function = stack_protected_function;
@@ -267,7 +326,7 @@ namespace sol {
 	struct unsafe_function_result;
 	struct protected_function_result;
 	using safe_function_result = protected_function_result;
-#ifdef SOL_SAFE_FUNCTION
+#if defined(SOL_SAFE_FUNCTION) && SOL_SAFE_FUNCTION
 	using function_result = safe_function_result;
 #else
 	using function_result = unsafe_function_result;
@@ -345,7 +404,7 @@ namespace sol {
 
 	class error : public std::runtime_error {
 	private:
-		// Because VC++ is a fuccboi
+		// Because VC++ is upsetting, most of the time!
 		std::string w;
 
 	public:
@@ -629,7 +688,7 @@ namespace meta {
 			typedef R (T::*function_pointer_type)(Args..., ...) const volatile&&;
 		};
 
-#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+#if defined(SOL_NOEXCEPT_FUNCTION_TYPE) && SOL_NOEXCEPT_FUNCTION_TYPE
 
 		template <typename R, typename... Args>
 		struct fx_traits<R(Args...) noexcept, false> : basic_traits<true, false, void, R, Args...> {
@@ -802,7 +861,7 @@ namespace meta {
 			typedef R (__stdcall T::*function_pointer_type)(Args...) const volatile&&;
 		};
 
-#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+#if defined(SOL_NOEXCEPT_FUNCTION_TYPE) && SOL_NOEXCEPT_FUNCTION_TYPE
 
 		template <typename R, typename... Args>
 		struct fx_traits<R __stdcall(Args...) noexcept, false> : basic_traits<true, false, void, R, Args...> {
@@ -975,16 +1034,16 @@ namespace meta {
 
 // beginning of sol/string_view.hpp
 
-#ifdef SOL_CXX17_FEATURES
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #include <string_view>
 #endif // C++17 features
 #include <functional>
-#ifdef SOL_USE_BOOST
+#if defined(SOL_USE_BOOST) && SOL_USE_BOOST
 #include <boost/functional/hash.hpp>
 #endif
 
 namespace sol {
-#ifdef SOL_CXX17_FEATURES
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 	template <typename C, typename T = std::char_traits<C>>
 	using basic_string_view = std::basic_string_view<C, T>;
 	typedef std::string_view string_view;
@@ -1087,7 +1146,7 @@ namespace sol {
 		}
 
 		result_type operator()(const argument_type& r) const {
-#ifdef SOL_USE_BOOST
+#if defined(SOL_USE_BOOST) && SOL_USE_BOOST
 			return boost::hash_range(r.begin(), r.end());
 #else
 			// Modified, from libstdc++
@@ -1655,7 +1714,7 @@ namespace sol {
 		template <typename T>
 		using is_string_like = any<
 			is_specialization_of<meta::unqualified_t<T>, std::basic_string>,
-#ifdef SOL_CXX17_FEATURES
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 			is_specialization_of<meta::unqualified_t<T>, std::basic_string_view>,
 #else
 			is_specialization_of<meta::unqualified_t<T>, basic_string_view>,
@@ -1668,7 +1727,7 @@ namespace sol {
 			meta::all<std::is_array<unqualified_t<T>>, std::is_same<meta::unqualified_t<std::remove_all_extents_t<meta::unqualified_t<T>>>, char>>,
 			std::is_same<unqualified_t<T>, const char*>, 
 			std::is_same<unqualified_t<T>, char>, std::is_same<unqualified_t<T>, std::string>, std::is_same<unqualified_t<T>, std::initializer_list<char>>
-#ifdef SOL_CXX17_FEATURES
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 			, std::is_same<unqualified_t<T>, std::string_view>
 #endif
 			>;
@@ -1810,15 +1869,15 @@ namespace sol {
 
 // beginning of sol/compatibility/version.hpp
 
-#if defined(SOL_USING_CXX_LUA)
+#if defined(SOL_USING_CXX_LUA) && SOL_USING_CXX_LUA
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
-#ifdef SOL_USING_CXX_LUAJIT
+#if defined(SOL_USING_CXX_LUAJIT) && SOL_USING_CXX_LUAJIT
 #include <luajit.h>
 #endif // C++ LuaJIT ... whatever that means
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_EXCEPTIONS_ALWAYS_UNSAFE)
-#define SOL_EXCEPTIONS_SAFE_PROPAGATION
+#if (!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !(SOL_EXCEPTIONS_SAFE_PROPAGATION)) && (!defined(SOL_EXCEPTIONS_ALWAYS_UNSAFE) || !(SOL_EXCEPTIONS_ALWAYS_UNSAFE))
+#define SOL_EXCEPTIONS_SAFE_PROPAGATION 1
 #endif // Exceptions can be propagated safely using C++-compiled Lua
 #else
 #include <lua.hpp>
@@ -1835,7 +1894,7 @@ namespace sol {
 #define SOL_LUA_VERSION LUA_VERSION_NUM
 #elif defined(LUA_VERSION_NUM) && LUA_VERSION_NUM == 501
 #define SOL_LUA_VERSION LUA_VERSION_NUM
-#elif !defined(LUA_VERSION_NUM)
+#elif !defined(LUA_VERSION_NUM) || !(LUA_VERSION_NUM)
 #define SOL_LUA_VERSION 500
 #else
 #define SOL_LUA_VERSION 502
@@ -1843,18 +1902,20 @@ namespace sol {
 
 // end of sol/compatibility/version.hpp
 
-#ifndef SOL_NO_COMPAT
+#if !defined(SOL_NO_COMPAT) || !(SOL_NO_COMPAT)
 
-#if defined(SOL_USING_CXX_LUA)
+#if defined(SOL_USING_CXX_LUA) && SOL_USING_CXX_LUA
 #ifndef COMPAT53_LUA_CPP
 #define COMPAT53_LUA_CPP 1
+#endif // Build Lua Compat layer as C++
 #endif
-#endif
-
+#ifndef COMPAT53_INCLUDE_SOURCE
+#define COMPAT53_INCLUDE_SOURCE 1
+#endif // Build Compat Layer Inline
 // beginning of sol/compatibility/compat-5.3.h
 
-#ifndef COMPAT53_H_
-#define COMPAT53_H_
+#ifndef KEPLER_PROJECT_COMPAT53_H_
+#define KEPLER_PROJECT_COMPAT53_H_
 
 #include <stddef.h>
 #include <limits.h>
@@ -1866,26 +1927,25 @@ extern "C" {
 }
 #endif
 
-#undef COMPAT53_INCLUDE_SOURCE
-#if defined(COMPAT53_PREFIX)
-/* - change the symbol names of functions to avoid linker conflicts
- * - compat-5.3.c needs to be compiled (and linked) separately
- */
-#  if !defined(COMPAT53_API)
-#    define COMPAT53_API extern
-#  endif
-#else /* COMPAT53_PREFIX */
-/* - make all functions static and include the source.
- * - compat-5.3.c doesn't need to be compiled (and linked) separately
- */
-#  define COMPAT53_PREFIX compat53
-#  undef COMPAT53_API
-#  if defined(__GNUC__) || defined(__clang__)
-#    define COMPAT53_API __attribute__((__unused__)) static
-#  else
-#    define COMPAT53_API static
-#  endif
-#  define COMPAT53_INCLUDE_SOURCE
+#ifndef COMPAT53_PREFIX
+/* we chose this name because many other lua bindings / libs have
+* their own compatibility layer, and that use the compat53 declaration
+* frequently, causing all kinds of linker / compiler issues
+*/
+#  define COMPAT53_PREFIX kp_compat53
+#endif // COMPAT53_PREFIX
+
+#ifndef COMPAT53_API
+#  if defined(COMPAT53_INCLUDE_SOURCE) && COMPAT53_INCLUDE_SOURCE
+#    if defined(__GNUC__) || defined(__clang__)
+#      define COMPAT53_API __attribute__((__unused__)) static
+#    else
+#      define COMPAT53_API static
+#    endif /* Clang/GCC */
+#  else /* COMPAT53_INCLUDE_SOURCE */
+/* we are not including source, so everything is extern */
+#      define COMPAT53_API extern
+#  endif /* COMPAT53_INCLUDE_SOURCE */
 #endif /* COMPAT53_PREFIX */
 
 #define COMPAT53_CONCAT_HELPER(a, b) a##b
@@ -1895,12 +1955,12 @@ extern "C" {
 #if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM == 501
 
 /* XXX not implemented:
- * lua_arith (new operators)
- * lua_upvalueid
- * lua_upvaluejoin
- * lua_version
- * lua_yieldk
- */
+* lua_arith (new operators)
+* lua_upvalueid
+* lua_upvaluejoin
+* lua_version
+* lua_yieldk
+*/
 
 #ifndef LUA_OK
 #  define LUA_OK 0
@@ -1937,48 +1997,48 @@ extern "C" {
 #endif
 
 /* LuaJIT/Lua 5.1 does not have the updated
- * error codes for thread status/function returns (but some patched versions do)
- * define it only if it's not found
- */
+* error codes for thread status/function returns (but some patched versions do)
+* define it only if it's not found
+*/
 #if !defined(LUA_ERRGCMM)
 /* Use + 2 because in some versions of Lua (Lua 5.1)
- * LUA_ERRFILE is defined as (LUA_ERRERR+1)
- * so we need to avoid it (LuaJIT might have something at this
- * integer value too)
- */
+* LUA_ERRFILE is defined as (LUA_ERRERR+1)
+* so we need to avoid it (LuaJIT might have something at this
+* integer value too)
+*/
 #  define LUA_ERRGCMM (LUA_ERRERR + 2)
 #endif /* LUA_ERRGCMM define */
 
 typedef size_t lua_Unsigned;
 
 typedef struct luaL_Buffer_53 {
-  luaL_Buffer b; /* make incorrect code crash! */
-  char *ptr;
-  size_t nelems;
-  size_t capacity;
-  lua_State *L2;
+	luaL_Buffer b; /* make incorrect code crash! */
+	char *ptr;
+	size_t nelems;
+	size_t capacity;
+	lua_State *L2;
 } luaL_Buffer_53;
 #define luaL_Buffer luaL_Buffer_53
 
 /* In PUC-Rio 5.1, userdata is a simple FILE*
- * In LuaJIT, it's a struct where the first member is a FILE*
- * We can't support the `closef` member
- */
+* In LuaJIT, it's a struct where the first member is a FILE*
+* We can't support the `closef` member
+*/
 typedef struct luaL_Stream {
-  FILE *f;
+	FILE *f;
 } luaL_Stream;
 
 #define lua_absindex COMPAT53_CONCAT(COMPAT53_PREFIX, _absindex)
-COMPAT53_API int lua_absindex (lua_State *L, int i);
+COMPAT53_API int lua_absindex(lua_State *L, int i);
 
 #define lua_arith COMPAT53_CONCAT(COMPAT53_PREFIX, _arith)
-COMPAT53_API void lua_arith (lua_State *L, int op);
+COMPAT53_API void lua_arith(lua_State *L, int op);
 
 #define lua_compare COMPAT53_CONCAT(COMPAT53_PREFIX, _compare)
-COMPAT53_API int lua_compare (lua_State *L, int idx1, int idx2, int op);
+COMPAT53_API int lua_compare(lua_State *L, int idx1, int idx2, int op);
 
 #define lua_copy COMPAT53_CONCAT(COMPAT53_PREFIX, _copy)
-COMPAT53_API void lua_copy (lua_State *L, int from, int to);
+COMPAT53_API void lua_copy(lua_State *L, int from, int to);
 
 #define lua_getuservalue(L, i) \
   (lua_getfenv((L), (i)), lua_type((L), -1))
@@ -1986,7 +2046,7 @@ COMPAT53_API void lua_copy (lua_State *L, int from, int to);
   (luaL_checktype((L), -1, LUA_TTABLE), lua_setfenv((L), (i)))
 
 #define lua_len COMPAT53_CONCAT(COMPAT53_PREFIX, _len)
-COMPAT53_API void lua_len (lua_State *L, int i);
+COMPAT53_API void lua_len(lua_State *L, int i);
 
 #define lua_pushstring(L, s) \
   (lua_pushstring((L), (s)), lua_tostring((L), -1))
@@ -2007,57 +2067,56 @@ COMPAT53_API void lua_len (lua_State *L, int i);
   lua_pushvalue((L), LUA_GLOBALSINDEX)
 
 #define lua_rawgetp COMPAT53_CONCAT(COMPAT53_PREFIX, _rawgetp)
-COMPAT53_API int lua_rawgetp (lua_State *L, int i, const void *p);
+COMPAT53_API int lua_rawgetp(lua_State *L, int i, const void *p);
 
 #define lua_rawsetp COMPAT53_CONCAT(COMPAT53_PREFIX, _rawsetp)
 COMPAT53_API void lua_rawsetp(lua_State *L, int i, const void *p);
 
 #define lua_rawlen(L, i) lua_objlen((L), (i))
 
-#define lua_tointegerx COMPAT53_CONCAT(COMPAT53_PREFIX, _tointegerx)
-COMPAT53_API lua_Integer lua_tointegerx (lua_State *L, int i, int *isnum);
+#define lua_tointeger(L, i) lua_tointegerx((L), (i), NULL)
 
 #define lua_tonumberx COMPAT53_CONCAT(COMPAT53_PREFIX, _tonumberx)
-COMPAT53_API lua_Number lua_tonumberx (lua_State *L, int i, int *isnum);
+COMPAT53_API lua_Number lua_tonumberx(lua_State *L, int i, int *isnum);
 
 #define luaL_checkversion COMPAT53_CONCAT(COMPAT53_PREFIX, L_checkversion)
-COMPAT53_API void luaL_checkversion (lua_State *L);
+COMPAT53_API void luaL_checkversion(lua_State *L);
 
 #define lua_load COMPAT53_CONCAT(COMPAT53_PREFIX, _load_53)
-COMPAT53_API int lua_load (lua_State *L, lua_Reader reader, void *data, const char* source, const char* mode);
+COMPAT53_API int lua_load(lua_State *L, lua_Reader reader, void *data, const char* source, const char* mode);
 
 #define luaL_loadfilex COMPAT53_CONCAT(COMPAT53_PREFIX, L_loadfilex)
-COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char *mode);
+COMPAT53_API int luaL_loadfilex(lua_State *L, const char *filename, const char *mode);
 
 #define luaL_loadbufferx COMPAT53_CONCAT(COMPAT53_PREFIX, L_loadbufferx)
-COMPAT53_API int luaL_loadbufferx (lua_State *L, const char *buff, size_t sz, const char *name, const char *mode);
+COMPAT53_API int luaL_loadbufferx(lua_State *L, const char *buff, size_t sz, const char *name, const char *mode);
 
 #define luaL_checkstack COMPAT53_CONCAT(COMPAT53_PREFIX, L_checkstack_53)
-COMPAT53_API void luaL_checkstack (lua_State *L, int sp, const char *msg);
+COMPAT53_API void luaL_checkstack(lua_State *L, int sp, const char *msg);
 
 #define luaL_getsubtable COMPAT53_CONCAT(COMPAT53_PREFIX, L_getsubtable)
-COMPAT53_API int luaL_getsubtable (lua_State* L, int i, const char *name);
+COMPAT53_API int luaL_getsubtable(lua_State* L, int i, const char *name);
 
 #define luaL_len COMPAT53_CONCAT(COMPAT53_PREFIX, L_len)
-COMPAT53_API lua_Integer luaL_len (lua_State *L, int i);
+COMPAT53_API lua_Integer luaL_len(lua_State *L, int i);
 
 #define luaL_setfuncs COMPAT53_CONCAT(COMPAT53_PREFIX, L_setfuncs)
-COMPAT53_API void luaL_setfuncs (lua_State *L, const luaL_Reg *l, int nup);
+COMPAT53_API void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup);
 
 #define luaL_setmetatable COMPAT53_CONCAT(COMPAT53_PREFIX, L_setmetatable)
-COMPAT53_API void luaL_setmetatable (lua_State *L, const char *tname);
+COMPAT53_API void luaL_setmetatable(lua_State *L, const char *tname);
 
 #define luaL_testudata COMPAT53_CONCAT(COMPAT53_PREFIX, L_testudata)
-COMPAT53_API void *luaL_testudata (lua_State *L, int i, const char *tname);
+COMPAT53_API void *luaL_testudata(lua_State *L, int i, const char *tname);
 
 #define luaL_traceback COMPAT53_CONCAT(COMPAT53_PREFIX, L_traceback)
-COMPAT53_API void luaL_traceback (lua_State *L, lua_State *L1, const char *msg, int level);
+COMPAT53_API void luaL_traceback(lua_State *L, lua_State *L1, const char *msg, int level);
 
 #define luaL_fileresult COMPAT53_CONCAT(COMPAT53_PREFIX, L_fileresult)
-COMPAT53_API int luaL_fileresult (lua_State *L, int stat, const char *fname);
+COMPAT53_API int luaL_fileresult(lua_State *L, int stat, const char *fname);
 
 #define luaL_execresult COMPAT53_CONCAT(COMPAT53_PREFIX, L_execresult)
-COMPAT53_API int luaL_execresult (lua_State *L, int stat);
+COMPAT53_API int luaL_execresult(lua_State *L, int stat);
 
 #define lua_callk(L, na, nr, ctx, cont) \
   ((void)(ctx), (void)(cont), lua_call((L), (na), (nr)))
@@ -2068,19 +2127,19 @@ COMPAT53_API int luaL_execresult (lua_State *L, int stat);
   ((void)(from), lua_resume((L), (nargs)))
 
 #define luaL_buffinit COMPAT53_CONCAT(COMPAT53_PREFIX, _buffinit_53)
-COMPAT53_API void luaL_buffinit (lua_State *L, luaL_Buffer_53 *B);
+COMPAT53_API void luaL_buffinit(lua_State *L, luaL_Buffer_53 *B);
 
 #define luaL_prepbuffsize COMPAT53_CONCAT(COMPAT53_PREFIX, _prepbufsize_53)
-COMPAT53_API char *luaL_prepbuffsize (luaL_Buffer_53 *B, size_t s);
+COMPAT53_API char *luaL_prepbuffsize(luaL_Buffer_53 *B, size_t s);
 
 #define luaL_addlstring COMPAT53_CONCAT(COMPAT53_PREFIX, _addlstring_53)
-COMPAT53_API void luaL_addlstring (luaL_Buffer_53 *B, const char *s, size_t l);
+COMPAT53_API void luaL_addlstring(luaL_Buffer_53 *B, const char *s, size_t l);
 
 #define luaL_addvalue COMPAT53_CONCAT(COMPAT53_PREFIX, _addvalue_53)
-COMPAT53_API void luaL_addvalue (luaL_Buffer_53 *B);
+COMPAT53_API void luaL_addvalue(luaL_Buffer_53 *B);
 
 #define luaL_pushresult COMPAT53_CONCAT(COMPAT53_PREFIX, _pushresult_53)
-COMPAT53_API void luaL_pushresult (luaL_Buffer_53 *B);
+COMPAT53_API void luaL_pushresult(luaL_Buffer_53 *B);
 
 #undef luaL_buffinitsize
 #define luaL_buffinitsize(L, B, s) \
@@ -2127,7 +2186,7 @@ COMPAT53_API void luaL_pushresult (luaL_Buffer_53 *B);
 
 typedef int lua_KContext;
 
-typedef int (*lua_KFunction)(lua_State *L, int status, lua_KContext ctx);
+typedef int(*lua_KFunction)(lua_State *L, int status, lua_KContext ctx);
 
 #define lua_dump(L, w, d, s) \
   ((void)(s), lua_dump((L), (w), (d)))
@@ -2139,10 +2198,13 @@ typedef int (*lua_KFunction)(lua_State *L, int status, lua_KContext ctx);
   (lua_gettable((L), (i)), lua_type((L), -1))
 
 #define lua_geti COMPAT53_CONCAT(COMPAT53_PREFIX, _geti)
-COMPAT53_API int lua_geti (lua_State *L, int index, lua_Integer i);
+COMPAT53_API int lua_geti(lua_State *L, int index, lua_Integer i);
 
 #define lua_isinteger COMPAT53_CONCAT(COMPAT53_PREFIX, _isinteger)
-COMPAT53_API int lua_isinteger (lua_State *L, int index);
+COMPAT53_API int lua_isinteger(lua_State *L, int index);
+
+#define lua_tointegerx COMPAT53_CONCAT(COMPAT53_PREFIX, _tointegerx_53)
+COMPAT53_API lua_Integer lua_tointegerx(lua_State *L, int i, int *isnum);
 
 #define lua_numbertointeger(n, p) \
   ((*(p) = (lua_Integer)(n)), 1)
@@ -2154,16 +2216,16 @@ COMPAT53_API int lua_isinteger (lua_State *L, int index);
   (lua_rawgeti((L), (i), (n)), lua_type((L), -1))
 
 #define lua_rotate COMPAT53_CONCAT(COMPAT53_PREFIX, _rotate)
-COMPAT53_API void lua_rotate (lua_State *L, int idx, int n);
+COMPAT53_API void lua_rotate(lua_State *L, int idx, int n);
 
 #define lua_seti COMPAT53_CONCAT(COMPAT53_PREFIX, _seti)
-COMPAT53_API void lua_seti (lua_State *L, int index, lua_Integer i);
+COMPAT53_API void lua_seti(lua_State *L, int index, lua_Integer i);
 
 #define lua_stringtonumber COMPAT53_CONCAT(COMPAT53_PREFIX, _stringtonumber)
-COMPAT53_API size_t lua_stringtonumber (lua_State *L, const char *s);
+COMPAT53_API size_t lua_stringtonumber(lua_State *L, const char *s);
 
 #define luaL_tolstring COMPAT53_CONCAT(COMPAT53_PREFIX, L_tolstring)
-COMPAT53_API const char *luaL_tolstring (lua_State *L, int idx, size_t *len);
+COMPAT53_API const char *luaL_tolstring(lua_State *L, int idx, size_t *len);
 
 #define luaL_getmetafield(L, o, e) \
   (luaL_getmetafield((L), (o), (e)) ? lua_type((L), -1) : LUA_TNIL)
@@ -2172,8 +2234,8 @@ COMPAT53_API const char *luaL_tolstring (lua_State *L, int idx, size_t *len);
   (luaL_newmetatable((L), (tn)) ? (lua_pushstring((L), (tn)), lua_setfield((L), -2, "__name"), 1) : 0)
 
 #define luaL_requiref COMPAT53_CONCAT(COMPAT53_PREFIX, L_requiref_53)
-COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
-                                 lua_CFunction openf, int glb );
+COMPAT53_API void luaL_requiref(lua_State *L, const char *modname,
+	lua_CFunction openf, int glb);
 
 #endif /* Lua 5.1 and Lua 5.2 */
 
@@ -2181,11 +2243,11 @@ COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
 #if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM == 502
 
 /* XXX not implemented:
- * lua_isyieldable
- * lua_getextraspace
- * lua_arith (new operators)
- * lua_pushfstring (new formats)
- */
+* lua_isyieldable
+* lua_getextraspace
+* lua_arith (new operators)
+* lua_pushfstring (new formats)
+*/
 
 #define lua_getglobal(L, n) \
   (lua_getglobal((L), (n)), lua_type((L), -1))
@@ -2245,13 +2307,13 @@ COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
 #endif /* other Lua versions except 5.1, 5.2, and 5.3 */
 
 /* helper macro for defining continuation functions (for every version
- * *except* Lua 5.2) */
+* *except* Lua 5.2) */
 #ifndef LUA_KFUNCTION
 #define LUA_KFUNCTION(_name) \
   static int (_name)(lua_State *L, int status, lua_KContext ctx)
 #endif
 
-#if defined(COMPAT53_INCLUDE_SOURCE)
+#if defined(COMPAT53_INCLUDE_SOURCE) && COMPAT53_INCLUDE_SOURCE == 1
 // beginning of sol/compatibility/compat-5.3.c
 
 #include <stdlib.h>
@@ -2260,8 +2322,8 @@ COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
 #include <stdio.h>
 
 /* don't compile it again if it already is included via compat53.h */
-#ifndef COMPAT53_C_
-#define COMPAT53_C_
+#ifndef KEPLER_PROJECT_COMPAT53_C_
+#define KEPLER_PROJECT_COMPAT53_C_
 
 /* definitions for Lua 5.1 only */
 #if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM == 501
@@ -2300,449 +2362,442 @@ COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
 #  define COMPAT53_LUA_FILE_BUFFER_SIZE 4096
 #endif /* Lua File Buffer Size */
 
-static char* compat53_strerror (int en, char* buff, size_t sz) {
+static char* compat53_strerror(int en, char* buff, size_t sz) {
 #if COMPAT53_HAVE_STRERROR_R
-  /* use strerror_r here, because it's available on these specific platforms */
-  if (sz > 0) {
-    buff[0] = '\0';
-    /* we don't care whether the GNU version or the XSI version is used: */
-    if (strerror_r(en, buff, sz)) {
-      /* Yes, we really DO want to ignore the return value!
-       * GCC makes that extra hard, not even a (void) cast will do. */
-    }
-    if (buff[0] == '\0') {
-      /* Buffer is unchanged, so we probably have called GNU strerror_r which
-       * returned a static constant string. Chances are that strerror will
-       * return the same static constant string and therefore be thread-safe. */
-      return strerror(en);
-    }
-  }
-  return buff; /* sz is 0 *or* strerror_r wrote into the buffer */
+	/* use strerror_r here, because it's available on these specific platforms */
+	if (sz > 0) {
+		buff[0] = '\0';
+		/* we don't care whether the GNU version or the XSI version is used: */
+		if (strerror_r(en, buff, sz)) {
+			/* Yes, we really DO want to ignore the return value!
+			* GCC makes that extra hard, not even a (void) cast will do. */
+		}
+		if (buff[0] == '\0') {
+			/* Buffer is unchanged, so we probably have called GNU strerror_r which
+			* returned a static constant string. Chances are that strerror will
+			* return the same static constant string and therefore be thread-safe. */
+			return strerror(en);
+		}
+	}
+	return buff; /* sz is 0 *or* strerror_r wrote into the buffer */
 #elif COMPAT53_HAVE_STRERROR_S
-  /* for MSVC and other C11 implementations, use strerror_s since it's
-   * provided by default by the libraries */
-  strerror_s(buff, sz, en);
-  return buff;
+	/* for MSVC and other C11 implementations, use strerror_s since it's
+	* provided by default by the libraries */
+	strerror_s(buff, sz, en);
+	return buff;
 #else
-  /* fallback, but strerror is not guaranteed to be threadsafe due to modifying
-   * errno itself and some impls not locking a static buffer for it ... but most
-   * known systems have threadsafe errno: this might only change if the locale
-   * is changed out from under someone while this function is being called */
-  (void)buff;
-  (void)sz;
-  return strerror(en);
+	/* fallback, but strerror is not guaranteed to be threadsafe due to modifying
+	* errno itself and some impls not locking a static buffer for it ... but most
+	* known systems have threadsafe errno: this might only change if the locale
+	* is changed out from under someone while this function is being called */
+	(void)buff;
+	(void)sz;
+	return strerror(en);
 #endif
 }
 
-COMPAT53_API int lua_absindex (lua_State *L, int i) {
-  if (i < 0 && i > LUA_REGISTRYINDEX)
-    i += lua_gettop(L) + 1;
-  return i;
+COMPAT53_API int lua_absindex(lua_State *L, int i) {
+	if (i < 0 && i > LUA_REGISTRYINDEX)
+		i += lua_gettop(L) + 1;
+	return i;
 }
 
-static void compat53_call_lua (lua_State *L, char const code[], size_t len,
-                               int nargs, int nret) {
-  lua_rawgetp(L, LUA_REGISTRYINDEX, (void*)code);
-  if (lua_type(L, -1) != LUA_TFUNCTION) {
-    lua_pop(L, 1);
-    if (luaL_loadbuffer(L, code, len, "=none"))
-      lua_error(L);
-    lua_pushvalue(L, -1);
-    lua_rawsetp(L, LUA_REGISTRYINDEX, (void*)code);
-  }
-  lua_insert(L, -nargs-1);
-  lua_call(L, nargs, nret);
+static void compat53_call_lua(lua_State *L, char const code[], size_t len,
+	int nargs, int nret) {
+	lua_rawgetp(L, LUA_REGISTRYINDEX, (void*)code);
+	if (lua_type(L, -1) != LUA_TFUNCTION) {
+		lua_pop(L, 1);
+		if (luaL_loadbuffer(L, code, len, "=none"))
+			lua_error(L);
+		lua_pushvalue(L, -1);
+		lua_rawsetp(L, LUA_REGISTRYINDEX, (void*)code);
+	}
+	lua_insert(L, -nargs - 1);
+	lua_call(L, nargs, nret);
 }
 
 static const char compat53_arith_code[] =
-  "local op,a,b=...\n"
-  "if op==0 then return a+b\n"
-  "elseif op==1 then return a-b\n"
-  "elseif op==2 then return a*b\n"
-  "elseif op==3 then return a/b\n"
-  "elseif op==4 then return a%b\n"
-  "elseif op==5 then return a^b\n"
-  "elseif op==6 then return -a\n"
-  "end\n";
+"local op,a,b=...\n"
+"if op==0 then return a+b\n"
+"elseif op==1 then return a-b\n"
+"elseif op==2 then return a*b\n"
+"elseif op==3 then return a/b\n"
+"elseif op==4 then return a%b\n"
+"elseif op==5 then return a^b\n"
+"elseif op==6 then return -a\n"
+"end\n";
 
-COMPAT53_API void lua_arith (lua_State *L, int op) {
-  if (op < LUA_OPADD || op > LUA_OPUNM)
-    luaL_error(L, "invalid 'op' argument for lua_arith");
-  luaL_checkstack(L, 5, "not enough stack slots");
-  if (op == LUA_OPUNM)
-    lua_pushvalue(L, -1);
-  lua_pushnumber(L, op);
-  lua_insert(L, -3);
-  compat53_call_lua(L, compat53_arith_code,
-                    sizeof(compat53_arith_code)-1, 3, 1);
+COMPAT53_API void lua_arith(lua_State *L, int op) {
+	if (op < LUA_OPADD || op > LUA_OPUNM)
+		luaL_error(L, "invalid 'op' argument for lua_arith");
+	luaL_checkstack(L, 5, "not enough stack slots");
+	if (op == LUA_OPUNM)
+		lua_pushvalue(L, -1);
+	lua_pushnumber(L, op);
+	lua_insert(L, -3);
+	compat53_call_lua(L, compat53_arith_code,
+		sizeof(compat53_arith_code) - 1, 3, 1);
 }
 
 static const char compat53_compare_code[] =
-  "local a,b=...\n"
-  "return a<=b\n";
+"local a,b=...\n"
+"return a<=b\n";
 
-COMPAT53_API int lua_compare (lua_State *L, int idx1, int idx2, int op) {
-  int result = 0;
-  switch (op) {
-    case LUA_OPEQ:
-      return lua_equal(L, idx1, idx2);
-    case LUA_OPLT:
-      return lua_lessthan(L, idx1, idx2);
-    case LUA_OPLE:
-      luaL_checkstack(L, 5, "not enough stack slots");
-      idx1 = lua_absindex(L, idx1);
-      idx2 = lua_absindex(L, idx2);
-      lua_pushvalue(L, idx1);
-      lua_pushvalue(L, idx2);
-      compat53_call_lua(L, compat53_compare_code,
-                        sizeof(compat53_compare_code)-1, 2, 1);
-      result = lua_toboolean(L, -1);
-      lua_pop(L, 1);
-      return result;
-    default:
-      luaL_error(L, "invalid 'op' argument for lua_compare");
-  }
-  return 0;
+COMPAT53_API int lua_compare(lua_State *L, int idx1, int idx2, int op) {
+	int result = 0;
+	switch (op) {
+	case LUA_OPEQ:
+		return lua_equal(L, idx1, idx2);
+	case LUA_OPLT:
+		return lua_lessthan(L, idx1, idx2);
+	case LUA_OPLE:
+		luaL_checkstack(L, 5, "not enough stack slots");
+		idx1 = lua_absindex(L, idx1);
+		idx2 = lua_absindex(L, idx2);
+		lua_pushvalue(L, idx1);
+		lua_pushvalue(L, idx2);
+		compat53_call_lua(L, compat53_compare_code,
+			sizeof(compat53_compare_code) - 1, 2, 1);
+		result = lua_toboolean(L, -1);
+		lua_pop(L, 1);
+		return result;
+	default:
+		luaL_error(L, "invalid 'op' argument for lua_compare");
+	}
+	return 0;
 }
 
-COMPAT53_API void lua_copy (lua_State *L, int from, int to) {
-  int abs_to = lua_absindex(L, to);
-  luaL_checkstack(L, 1, "not enough stack slots");
-  lua_pushvalue(L, from);
-  lua_replace(L, abs_to);
+COMPAT53_API void lua_copy(lua_State *L, int from, int to) {
+	int abs_to = lua_absindex(L, to);
+	luaL_checkstack(L, 1, "not enough stack slots");
+	lua_pushvalue(L, from);
+	lua_replace(L, abs_to);
 }
 
-COMPAT53_API void lua_len (lua_State *L, int i) {
-  switch (lua_type(L, i)) {
-    case LUA_TSTRING:
-      lua_pushnumber(L, (lua_Number)lua_objlen(L, i));
-      break;
-    case LUA_TTABLE:
-      if (!luaL_callmeta(L, i, "__len"))
-        lua_pushnumber(L, (lua_Number)lua_objlen(L, i));
-      break;
-    case LUA_TUSERDATA:
-      if (luaL_callmeta(L, i, "__len"))
-        break;
-      /* FALLTHROUGH */
-    default:
-      luaL_error(L, "attempt to get length of a %s value",
-                 lua_typename(L, lua_type(L, i)));
-  }
+COMPAT53_API void lua_len(lua_State *L, int i) {
+	switch (lua_type(L, i)) {
+	case LUA_TSTRING:
+		lua_pushnumber(L, (lua_Number)lua_objlen(L, i));
+		break;
+	case LUA_TTABLE:
+		if (!luaL_callmeta(L, i, "__len"))
+			lua_pushnumber(L, (lua_Number)lua_objlen(L, i));
+		break;
+	case LUA_TUSERDATA:
+		if (luaL_callmeta(L, i, "__len"))
+			break;
+		/* FALLTHROUGH */
+	default:
+		luaL_error(L, "attempt to get length of a %s value",
+			lua_typename(L, lua_type(L, i)));
+	}
 }
 
-COMPAT53_API int lua_rawgetp (lua_State *L, int i, const void *p) {
-  int abs_i = lua_absindex(L, i);
-  lua_pushlightuserdata(L, (void*)p);
-  lua_rawget(L, abs_i);
-  return lua_type(L, -1);
+COMPAT53_API int lua_rawgetp(lua_State *L, int i, const void *p) {
+	int abs_i = lua_absindex(L, i);
+	lua_pushlightuserdata(L, (void*)p);
+	lua_rawget(L, abs_i);
+	return lua_type(L, -1);
 }
 
-COMPAT53_API void lua_rawsetp (lua_State *L, int i, const void *p) {
-  int abs_i = lua_absindex(L, i);
-  luaL_checkstack(L, 1, "not enough stack slots");
-  lua_pushlightuserdata(L, (void*)p);
-  lua_insert(L, -2);
-  lua_rawset(L, abs_i);
+COMPAT53_API void lua_rawsetp(lua_State *L, int i, const void *p) {
+	int abs_i = lua_absindex(L, i);
+	luaL_checkstack(L, 1, "not enough stack slots");
+	lua_pushlightuserdata(L, (void*)p);
+	lua_insert(L, -2);
+	lua_rawset(L, abs_i);
 }
 
-COMPAT53_API lua_Integer lua_tointegerx (lua_State *L, int i, int *isnum) {
-  lua_Integer n = lua_tointeger(L, i);
-  if (isnum != NULL) {
-    *isnum = (n != 0 || lua_isnumber(L, i));
-  }
-  return n;
+COMPAT53_API lua_Number lua_tonumberx(lua_State *L, int i, int *isnum) {
+	lua_Number n = lua_tonumber(L, i);
+	if (isnum != NULL) {
+		*isnum = (n != 0 || lua_isnumber(L, i));
+	}
+	return n;
 }
 
-COMPAT53_API lua_Number lua_tonumberx (lua_State *L, int i, int *isnum) {
-  lua_Number n = lua_tonumber(L, i);
-  if (isnum != NULL) {
-    *isnum = (n != 0 || lua_isnumber(L, i));
-  }
-  return n;
+COMPAT53_API void luaL_checkversion(lua_State *L) {
+	(void)L;
 }
 
-COMPAT53_API void luaL_checkversion (lua_State *L) {
-  (void)L;
+COMPAT53_API void luaL_checkstack(lua_State *L, int sp, const char *msg) {
+	if (!lua_checkstack(L, sp + LUA_MINSTACK)) {
+		if (msg != NULL)
+			luaL_error(L, "stack overflow (%s)", msg);
+		else {
+			lua_pushliteral(L, "stack overflow");
+			lua_error(L);
+		}
+	}
 }
 
-COMPAT53_API void luaL_checkstack (lua_State *L, int sp, const char *msg) {
-  if (!lua_checkstack(L, sp+LUA_MINSTACK)) {
-    if (msg != NULL)
-      luaL_error(L, "stack overflow (%s)", msg);
-    else {
-      lua_pushliteral(L, "stack overflow");
-      lua_error(L);
-    }
-  }
+COMPAT53_API int luaL_getsubtable(lua_State *L, int i, const char *name) {
+	int abs_i = lua_absindex(L, i);
+	luaL_checkstack(L, 3, "not enough stack slots");
+	lua_pushstring(L, name);
+	lua_gettable(L, abs_i);
+	if (lua_istable(L, -1))
+		return 1;
+	lua_pop(L, 1);
+	lua_newtable(L);
+	lua_pushstring(L, name);
+	lua_pushvalue(L, -2);
+	lua_settable(L, abs_i);
+	return 0;
 }
 
-COMPAT53_API int luaL_getsubtable (lua_State *L, int i, const char *name) {
-  int abs_i = lua_absindex(L, i);
-  luaL_checkstack(L, 3, "not enough stack slots");
-  lua_pushstring(L, name);
-  lua_gettable(L, abs_i);
-  if (lua_istable(L, -1))
-    return 1;
-  lua_pop(L, 1);
-  lua_newtable(L);
-  lua_pushstring(L, name);
-  lua_pushvalue(L, -2);
-  lua_settable(L, abs_i);
-  return 0;
+COMPAT53_API lua_Integer luaL_len(lua_State *L, int i) {
+	lua_Integer res = 0;
+	int isnum = 0;
+	luaL_checkstack(L, 1, "not enough stack slots");
+	lua_len(L, i);
+	res = lua_tointegerx(L, -1, &isnum);
+	lua_pop(L, 1);
+	if (!isnum)
+		luaL_error(L, "object length is not an integer");
+	return res;
 }
 
-COMPAT53_API lua_Integer luaL_len (lua_State *L, int i) {
-  lua_Integer res = 0;
-  int isnum = 0;
-  luaL_checkstack(L, 1, "not enough stack slots");
-  lua_len(L, i);
-  res = lua_tointegerx(L, -1, &isnum);
-  lua_pop(L, 1);
-  if (!isnum)
-    luaL_error(L, "object length is not an integer");
-  return res;
+COMPAT53_API void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup) {
+	luaL_checkstack(L, nup + 1, "too many upvalues");
+	for (; l->name != NULL; l++) {  /* fill the table with given functions */
+		int i;
+		lua_pushstring(L, l->name);
+		for (i = 0; i < nup; i++)  /* copy upvalues to the top */
+			lua_pushvalue(L, -(nup + 1));
+		lua_pushcclosure(L, l->func, nup);  /* closure with those upvalues */
+		lua_settable(L, -(nup + 3)); /* table must be below the upvalues, the name and the closure */
+	}
+	lua_pop(L, nup);  /* remove upvalues */
 }
 
-COMPAT53_API void luaL_setfuncs (lua_State *L, const luaL_Reg *l, int nup) {
-  luaL_checkstack(L, nup+1, "too many upvalues");
-  for (; l->name != NULL; l++) {  /* fill the table with given functions */
-    int i;
-    lua_pushstring(L, l->name);
-    for (i = 0; i < nup; i++)  /* copy upvalues to the top */
-      lua_pushvalue(L, -(nup + 1));
-    lua_pushcclosure(L, l->func, nup);  /* closure with those upvalues */
-    lua_settable(L, -(nup + 3)); /* table must be below the upvalues, the name and the closure */
-  }
-  lua_pop(L, nup);  /* remove upvalues */
+COMPAT53_API void luaL_setmetatable(lua_State *L, const char *tname) {
+	luaL_checkstack(L, 1, "not enough stack slots");
+	luaL_getmetatable(L, tname);
+	lua_setmetatable(L, -2);
 }
 
-COMPAT53_API void luaL_setmetatable (lua_State *L, const char *tname) {
-  luaL_checkstack(L, 1, "not enough stack slots");
-  luaL_getmetatable(L, tname);
-  lua_setmetatable(L, -2);
+COMPAT53_API void *luaL_testudata(lua_State *L, int i, const char *tname) {
+	void *p = lua_touserdata(L, i);
+	luaL_checkstack(L, 2, "not enough stack slots");
+	if (p == NULL || !lua_getmetatable(L, i))
+		return NULL;
+	else {
+		int res = 0;
+		luaL_getmetatable(L, tname);
+		res = lua_rawequal(L, -1, -2);
+		lua_pop(L, 2);
+		if (!res)
+			p = NULL;
+	}
+	return p;
 }
 
-COMPAT53_API void *luaL_testudata (lua_State *L, int i, const char *tname) {
-  void *p = lua_touserdata(L, i);
-  luaL_checkstack(L, 2, "not enough stack slots");
-  if (p == NULL || !lua_getmetatable(L, i))
-    return NULL;
-  else {
-    int res = 0;
-    luaL_getmetatable(L, tname);
-    res = lua_rawequal(L, -1, -2);
-    lua_pop(L, 2);
-    if (!res)
-      p = NULL;
-  }
-  return p;
+static int compat53_countlevels(lua_State *L) {
+	lua_Debug ar;
+	int li = 1, le = 1;
+	/* find an upper bound */
+	while (lua_getstack(L, le, &ar)) { li = le; le *= 2; }
+	/* do a binary search */
+	while (li < le) {
+		int m = (li + le) / 2;
+		if (lua_getstack(L, m, &ar)) li = m + 1;
+		else le = m;
+	}
+	return le - 1;
 }
 
-static int compat53_countlevels (lua_State *L) {
-  lua_Debug ar;
-  int li = 1, le = 1;
-  /* find an upper bound */
-  while (lua_getstack(L, le, &ar)) { li = le; le *= 2; }
-  /* do a binary search */
-  while (li < le) {
-    int m = (li + le)/2;
-    if (lua_getstack(L, m, &ar)) li = m + 1;
-    else le = m;
-  }
-  return le - 1;
+static int compat53_findfield(lua_State *L, int objidx, int level) {
+	if (level == 0 || !lua_istable(L, -1))
+		return 0;  /* not found */
+	lua_pushnil(L);  /* start 'next' loop */
+	while (lua_next(L, -2)) {  /* for each pair in table */
+		if (lua_type(L, -2) == LUA_TSTRING) {  /* ignore non-string keys */
+			if (lua_rawequal(L, objidx, -1)) {  /* found object? */
+				lua_pop(L, 1);  /* remove value (but keep name) */
+				return 1;
+			}
+			else if (compat53_findfield(L, objidx, level - 1)) {  /* try recursively */
+				lua_remove(L, -2);  /* remove table (but keep name) */
+				lua_pushliteral(L, ".");
+				lua_insert(L, -2);  /* place '.' between the two names */
+				lua_concat(L, 3);
+				return 1;
+			}
+		}
+		lua_pop(L, 1);  /* remove value */
+	}
+	return 0;  /* not found */
 }
 
-static int compat53_findfield (lua_State *L, int objidx, int level) {
-  if (level == 0 || !lua_istable(L, -1))
-    return 0;  /* not found */
-  lua_pushnil(L);  /* start 'next' loop */
-  while (lua_next(L, -2)) {  /* for each pair in table */
-    if (lua_type(L, -2) == LUA_TSTRING) {  /* ignore non-string keys */
-      if (lua_rawequal(L, objidx, -1)) {  /* found object? */
-        lua_pop(L, 1);  /* remove value (but keep name) */
-        return 1;
-      }
-      else if (compat53_findfield(L, objidx, level - 1)) {  /* try recursively */
-        lua_remove(L, -2);  /* remove table (but keep name) */
-        lua_pushliteral(L, ".");
-        lua_insert(L, -2);  /* place '.' between the two names */
-        lua_concat(L, 3);
-        return 1;
-      }
-    }
-    lua_pop(L, 1);  /* remove value */
-  }
-  return 0;  /* not found */
+static int compat53_pushglobalfuncname(lua_State *L, lua_Debug *ar) {
+	int top = lua_gettop(L);
+	lua_getinfo(L, "f", ar);  /* push function */
+	lua_pushvalue(L, LUA_GLOBALSINDEX);
+	if (compat53_findfield(L, top + 1, 2)) {
+		lua_copy(L, -1, top + 1);  /* move name to proper place */
+		lua_pop(L, 2);  /* remove pushed values */
+		return 1;
+	}
+	else {
+		lua_settop(L, top);  /* remove function and global table */
+		return 0;
+	}
 }
 
-static int compat53_pushglobalfuncname (lua_State *L, lua_Debug *ar) {
-  int top = lua_gettop(L);
-  lua_getinfo(L, "f", ar);  /* push function */
-  lua_pushvalue(L, LUA_GLOBALSINDEX);
-  if (compat53_findfield(L, top + 1, 2)) {
-    lua_copy(L, -1, top + 1);  /* move name to proper place */
-    lua_pop(L, 2);  /* remove pushed values */
-    return 1;
-  }
-  else {
-    lua_settop(L, top);  /* remove function and global table */
-    return 0;
-  }
-}
-
-static void compat53_pushfuncname (lua_State *L, lua_Debug *ar) {
-  if (*ar->namewhat != '\0')  /* is there a name? */
-    lua_pushfstring(L, "function " LUA_QS, ar->name);
-  else if (*ar->what == 'm')  /* main? */
-      lua_pushliteral(L, "main chunk");
-  else if (*ar->what == 'C') {
-    if (compat53_pushglobalfuncname(L, ar)) {
-      lua_pushfstring(L, "function " LUA_QS, lua_tostring(L, -1));
-      lua_remove(L, -2);  /* remove name */
-    }
-    else
-      lua_pushliteral(L, "?");
-  }
-  else
-    lua_pushfstring(L, "function <%s:%d>", ar->short_src, ar->linedefined);
+static void compat53_pushfuncname(lua_State *L, lua_Debug *ar) {
+	if (*ar->namewhat != '\0')  /* is there a name? */
+		lua_pushfstring(L, "function " LUA_QS, ar->name);
+	else if (*ar->what == 'm')  /* main? */
+		lua_pushliteral(L, "main chunk");
+	else if (*ar->what == 'C') {
+		if (compat53_pushglobalfuncname(L, ar)) {
+			lua_pushfstring(L, "function " LUA_QS, lua_tostring(L, -1));
+			lua_remove(L, -2);  /* remove name */
+		}
+		else
+			lua_pushliteral(L, "?");
+	}
+	else
+		lua_pushfstring(L, "function <%s:%d>", ar->short_src, ar->linedefined);
 }
 
 #define COMPAT53_LEVELS1 12  /* size of the first part of the stack */
 #define COMPAT53_LEVELS2 10  /* size of the second part of the stack */
 
-COMPAT53_API void luaL_traceback (lua_State *L, lua_State *L1,
-                                  const char *msg, int level) {
-  lua_Debug ar;
-  int top = lua_gettop(L);
-  int numlevels = compat53_countlevels(L1);
-  int mark = (numlevels > COMPAT53_LEVELS1 + COMPAT53_LEVELS2) ? COMPAT53_LEVELS1 : 0;
-  if (msg) lua_pushfstring(L, "%s\n", msg);
-  lua_pushliteral(L, "stack traceback:");
-  while (lua_getstack(L1, level++, &ar)) {
-    if (level == mark) {  /* too many levels? */
-      lua_pushliteral(L, "\n\t...");  /* add a '...' */
-      level = numlevels - COMPAT53_LEVELS2;  /* and skip to last ones */
-    }
-    else {
-      lua_getinfo(L1, "Slnt", &ar);
-      lua_pushfstring(L, "\n\t%s:", ar.short_src);
-      if (ar.currentline > 0)
-        lua_pushfstring(L, "%d:", ar.currentline);
-      lua_pushliteral(L, " in ");
-      compat53_pushfuncname(L, &ar);
-      lua_concat(L, lua_gettop(L) - top);
-    }
-  }
-  lua_concat(L, lua_gettop(L) - top);
+COMPAT53_API void luaL_traceback(lua_State *L, lua_State *L1,
+	const char *msg, int level) {
+	lua_Debug ar;
+	int top = lua_gettop(L);
+	int numlevels = compat53_countlevels(L1);
+	int mark = (numlevels > COMPAT53_LEVELS1 + COMPAT53_LEVELS2) ? COMPAT53_LEVELS1 : 0;
+	if (msg) lua_pushfstring(L, "%s\n", msg);
+	lua_pushliteral(L, "stack traceback:");
+	while (lua_getstack(L1, level++, &ar)) {
+		if (level == mark) {  /* too many levels? */
+			lua_pushliteral(L, "\n\t...");  /* add a '...' */
+			level = numlevels - COMPAT53_LEVELS2;  /* and skip to last ones */
+		}
+		else {
+			lua_getinfo(L1, "Slnt", &ar);
+			lua_pushfstring(L, "\n\t%s:", ar.short_src);
+			if (ar.currentline > 0)
+				lua_pushfstring(L, "%d:", ar.currentline);
+			lua_pushliteral(L, " in ");
+			compat53_pushfuncname(L, &ar);
+			lua_concat(L, lua_gettop(L) - top);
+		}
+	}
+	lua_concat(L, lua_gettop(L) - top);
 }
 
-COMPAT53_API int luaL_fileresult (lua_State *L, int stat, const char *fname) {
-  const char *serr = NULL;
-  int en = errno;  /* calls to Lua API may change this value */
-  char buf[512] = { 0 };
-  if (stat) {
-    lua_pushboolean(L, 1);
-    return 1;
-  }
-  else {
-    lua_pushnil(L);
-    serr = compat53_strerror(en, buf, sizeof(buf));
-    if (fname)
-      lua_pushfstring(L, "%s: %s", fname, serr);
-    else
-      lua_pushstring(L, serr);
-    lua_pushnumber(L, (lua_Number)en);
-    return 3;
-  }
+COMPAT53_API int luaL_fileresult(lua_State *L, int stat, const char *fname) {
+	const char *serr = NULL;
+	int en = errno;  /* calls to Lua API may change this value */
+	char buf[512] = { 0 };
+	if (stat) {
+		lua_pushboolean(L, 1);
+		return 1;
+	}
+	else {
+		lua_pushnil(L);
+		serr = compat53_strerror(en, buf, sizeof(buf));
+		if (fname)
+			lua_pushfstring(L, "%s: %s", fname, serr);
+		else
+			lua_pushstring(L, serr);
+		lua_pushnumber(L, (lua_Number)en);
+		return 3;
+	}
 }
 
-static int compat53_checkmode (lua_State *L, const char *mode, const char *modename, int err) {
-  if (mode && strchr(mode, modename[0]) == NULL) {
-    lua_pushfstring(L, "attempt to load a %s chunk (mode is '%s')", modename, mode);
-    return err;
-  }
-  return LUA_OK;
+static int compat53_checkmode(lua_State *L, const char *mode, const char *modename, int err) {
+	if (mode && strchr(mode, modename[0]) == NULL) {
+		lua_pushfstring(L, "attempt to load a %s chunk (mode is '%s')", modename, mode);
+		return err;
+	}
+	return LUA_OK;
 }
 
 typedef struct {
-  lua_Reader reader;
-  void *ud;
-  int has_peeked_data;
-  const char *peeked_data;
-  size_t peeked_data_size;
+	lua_Reader reader;
+	void *ud;
+	int has_peeked_data;
+	const char *peeked_data;
+	size_t peeked_data_size;
 } compat53_reader_data;
 
-static const char *compat53_reader (lua_State *L, void *ud, size_t *size) {
-  compat53_reader_data *data = (compat53_reader_data *)ud;
-  if (data->has_peeked_data) {
-    data->has_peeked_data = 0;
-    *size = data->peeked_data_size;
-    return data->peeked_data;
-  } else
-    return data->reader(L, data->ud, size);
+static const char *compat53_reader(lua_State *L, void *ud, size_t *size) {
+	compat53_reader_data *data = (compat53_reader_data *)ud;
+	if (data->has_peeked_data) {
+		data->has_peeked_data = 0;
+		*size = data->peeked_data_size;
+		return data->peeked_data;
+	}
+	else
+		return data->reader(L, data->ud, size);
 }
 
-COMPAT53_API int lua_load (lua_State *L, lua_Reader reader, void *data, const char *source, const char *mode) {
-  int status = LUA_OK;
-  compat53_reader_data compat53_data = { reader, data, 1, 0, 0 };
-  compat53_data.peeked_data = reader(L, data, &(compat53_data.peeked_data_size));
-  if (compat53_data.peeked_data && compat53_data.peeked_data_size &&
-      compat53_data.peeked_data[0] == LUA_SIGNATURE[0]) /* binary file? */
-      status = compat53_checkmode(L, mode, "binary", LUA_ERRSYNTAX);
-  else
-      status = compat53_checkmode(L, mode, "text", LUA_ERRSYNTAX);
-  if (status != LUA_OK)
-    return status;
-  /* we need to call the original 5.1 version of lua_load! */
+COMPAT53_API int lua_load(lua_State *L, lua_Reader reader, void *data, const char *source, const char *mode) {
+	int status = LUA_OK;
+	compat53_reader_data compat53_data = { reader, data, 1, 0, 0 };
+	compat53_data.peeked_data = reader(L, data, &(compat53_data.peeked_data_size));
+	if (compat53_data.peeked_data && compat53_data.peeked_data_size &&
+		compat53_data.peeked_data[0] == LUA_SIGNATURE[0]) /* binary file? */
+		status = compat53_checkmode(L, mode, "binary", LUA_ERRSYNTAX);
+	else
+		status = compat53_checkmode(L, mode, "text", LUA_ERRSYNTAX);
+	if (status != LUA_OK)
+		return status;
+	/* we need to call the original 5.1 version of lua_load! */
 #undef lua_load
-  return lua_load(L, compat53_reader, &compat53_data, source);
+	return lua_load(L, compat53_reader, &compat53_data, source);
 #define lua_load COMPAT53_CONCAT(COMPAT53_PREFIX, _load_53)
 }
 
 typedef struct {
-  int n;  /* number of pre-read characters */
-  FILE *f;  /* file being read */
-  char buff[COMPAT53_LUA_FILE_BUFFER_SIZE];  /* area for reading file */
+	int n;  /* number of pre-read characters */
+	FILE *f;  /* file being read */
+	char buff[COMPAT53_LUA_FILE_BUFFER_SIZE];  /* area for reading file */
 } compat53_LoadF;
 
-static const char *compat53_getF (lua_State *L, void *ud, size_t *size) {
-  compat53_LoadF *lf = (compat53_LoadF *)ud;
-  (void)L;  /* not used */
-  if (lf->n > 0) {  /* are there pre-read characters to be read? */
-    *size = lf->n;  /* return them (chars already in buffer) */
-    lf->n = 0;  /* no more pre-read characters */
-  }
-  else {  /* read a block from file */
-    /* 'fread' can return > 0 *and* set the EOF flag. If next call to
-       'compat53_getF' called 'fread', it might still wait for user input.
-       The next check avoids this problem. */
-    if (feof(lf->f)) return NULL;
-    *size = fread(lf->buff, 1, sizeof(lf->buff), lf->f);  /* read block */
-  }
-  return lf->buff;
+static const char *compat53_getF(lua_State *L, void *ud, size_t *size) {
+	compat53_LoadF *lf = (compat53_LoadF *)ud;
+	(void)L;  /* not used */
+	if (lf->n > 0) {  /* are there pre-read characters to be read? */
+		*size = lf->n;  /* return them (chars already in buffer) */
+		lf->n = 0;  /* no more pre-read characters */
+	}
+	else {  /* read a block from file */
+		   /* 'fread' can return > 0 *and* set the EOF flag. If next call to
+		   'compat53_getF' called 'fread', it might still wait for user input.
+		   The next check avoids this problem. */
+		if (feof(lf->f)) return NULL;
+		*size = fread(lf->buff, 1, sizeof(lf->buff), lf->f);  /* read block */
+	}
+	return lf->buff;
 }
 
-static int compat53_errfile (lua_State *L, const char *what, int fnameindex) {
-  char buf[512] = {0};
-  const char *serr = compat53_strerror(errno, buf, sizeof(buf));
-  const char *filename = lua_tostring(L, fnameindex) + 1;
-  lua_pushfstring(L, "cannot %s %s: %s", what, filename, serr);
-  lua_remove(L, fnameindex);
-  return LUA_ERRFILE;
+static int compat53_errfile(lua_State *L, const char *what, int fnameindex) {
+	char buf[512] = { 0 };
+	const char *serr = compat53_strerror(errno, buf, sizeof(buf));
+	const char *filename = lua_tostring(L, fnameindex) + 1;
+	lua_pushfstring(L, "cannot %s %s: %s", what, filename, serr);
+	lua_remove(L, fnameindex);
+	return LUA_ERRFILE;
 }
 
-static int compat53_skipBOM (compat53_LoadF *lf) {
-  const char *p = "\xEF\xBB\xBF";  /* UTF-8 BOM mark */
-  int c;
-  lf->n = 0;
-  do {
-    c = getc(lf->f);
-    if (c == EOF || c != *(const unsigned char *)p++) return c;
-    lf->buff[lf->n++] = (char)c;  /* to be read by the parser */
-  } while (*p != '\0');
-  lf->n = 0;  /* prefix matched; discard it */
-  return getc(lf->f);  /* return next character */
+static int compat53_skipBOM(compat53_LoadF *lf) {
+	const char *p = "\xEF\xBB\xBF";  /* UTF-8 BOM mark */
+	int c;
+	lf->n = 0;
+	do {
+		c = getc(lf->f);
+		if (c == EOF || c != *(const unsigned char *)p++) return c;
+		lf->buff[lf->n++] = (char)c;  /* to be read by the parser */
+	} while (*p != '\0');
+	lf->n = 0;  /* prefix matched; discard it */
+	return getc(lf->f);  /* return next character */
 }
 
 /*
@@ -2752,89 +2807,89 @@ static int compat53_skipBOM (compat53_LoadF *lf) {
 ** first "valid" character of the file (after the optional BOM and
 ** a first-line comment).
 */
-static int compat53_skipcomment (compat53_LoadF *lf, int *cp) {
-  int c = *cp = compat53_skipBOM(lf);
-  if (c == '#') {  /* first line is a comment (Unix exec. file)? */
-    do {  /* skip first line */
-      c = getc(lf->f);
-    } while (c != EOF && c != '\n');
-    *cp = getc(lf->f);  /* skip end-of-line, if present */
-    return 1;  /* there was a comment */
-  }
-  else return 0;  /* no comment */
+static int compat53_skipcomment(compat53_LoadF *lf, int *cp) {
+	int c = *cp = compat53_skipBOM(lf);
+	if (c == '#') {  /* first line is a comment (Unix exec. file)? */
+		do {  /* skip first line */
+			c = getc(lf->f);
+		} while (c != EOF && c != '\n');
+		*cp = getc(lf->f);  /* skip end-of-line, if present */
+		return 1;  /* there was a comment */
+	}
+	else return 0;  /* no comment */
 }
 
-COMPAT53_API int luaL_loadfilex (lua_State *L, const char *filename, const char *mode) {
-  compat53_LoadF lf;
-  int status, readstatus;
-  int c;
-  int fnameindex = lua_gettop(L) + 1;  /* index of filename on the stack */
-  if (filename == NULL) {
-    lua_pushliteral(L, "=stdin");
-    lf.f = stdin;
-  }
-  else {
-    lua_pushfstring(L, "@%s", filename);
+COMPAT53_API int luaL_loadfilex(lua_State *L, const char *filename, const char *mode) {
+	compat53_LoadF lf;
+	int status, readstatus;
+	int c;
+	int fnameindex = lua_gettop(L) + 1;  /* index of filename on the stack */
+	if (filename == NULL) {
+		lua_pushliteral(L, "=stdin");
+		lf.f = stdin;
+	}
+	else {
+		lua_pushfstring(L, "@%s", filename);
 #if defined(_MSC_VER)
-    /* This code is here to stop a deprecation error that stops builds
-     * if a certain macro is defined. While normally not caring would
-     * be best, some header-only libraries and builds can't afford to
-     * dictate this to the user. A quick check shows that fopen_s this
-     * goes back to VS 2005, and _fsopen goes back to VS 2003 .NET,
-     * possibly even before that so we don't need to do any version
-     * number checks, since this has been there since forever.  */
+		/* This code is here to stop a deprecation error that stops builds
+		* if a certain macro is defined. While normally not caring would
+		* be best, some header-only libraries and builds can't afford to
+		* dictate this to the user. A quick check shows that fopen_s this
+		* goes back to VS 2005, and _fsopen goes back to VS 2003 .NET,
+		* possibly even before that so we don't need to do any version
+		* number checks, since this has been there since forever.  */
 
-    /* TO USER: if you want the behavior of typical fopen_s/fopen,
-     * which does lock the file on VC++, define the macro used below to 0 */
+		/* TO USER: if you want the behavior of typical fopen_s/fopen,
+		* which does lock the file on VC++, define the macro used below to 0 */
 #if COMPAT53_FOPEN_NO_LOCK
-    lf.f = _fsopen(filename, "r", _SH_DENYNO); /* do not lock the file in any way */
-    if (lf.f == NULL)
-      return compat53_errfile(L, "open", fnameindex);
+		lf.f = _fsopen(filename, "r", _SH_DENYNO); /* do not lock the file in any way */
+		if (lf.f == NULL)
+			return compat53_errfile(L, "open", fnameindex);
 #else /* use default locking version */
-    if (fopen_s(&lf.f, filename, "r") != 0)
-      return compat53_errfile(L, "open", fnameindex);
+		if (fopen_s(&lf.f, filename, "r") != 0)
+			return compat53_errfile(L, "open", fnameindex);
 #endif /* Locking vs. No-locking fopen variants */
 #else
-    lf.f = fopen(filename, "r"); /* default stdlib doesn't forcefully lock files here */
-    if (lf.f == NULL) return compat53_errfile(L, "open", fnameindex);
+		lf.f = fopen(filename, "r"); /* default stdlib doesn't forcefully lock files here */
+		if (lf.f == NULL) return compat53_errfile(L, "open", fnameindex);
 #endif
-  }
-  if (compat53_skipcomment(&lf, &c))  /* read initial portion */
-    lf.buff[lf.n++] = '\n';  /* add line to correct line numbers */
-  if (c == LUA_SIGNATURE[0] && filename) {  /* binary file? */
+	}
+	if (compat53_skipcomment(&lf, &c))  /* read initial portion */
+		lf.buff[lf.n++] = '\n';  /* add line to correct line numbers */
+	if (c == LUA_SIGNATURE[0] && filename) {  /* binary file? */
 #if defined(_MSC_VER)
-    if (freopen_s(&lf.f, filename, "rb", lf.f) != 0)
-      return compat53_errfile(L, "reopen", fnameindex);
+		if (freopen_s(&lf.f, filename, "rb", lf.f) != 0)
+			return compat53_errfile(L, "reopen", fnameindex);
 #else
-    lf.f = freopen(filename, "rb", lf.f);  /* reopen in binary mode */
-    if (lf.f == NULL) return compat53_errfile(L, "reopen", fnameindex);
+		lf.f = freopen(filename, "rb", lf.f);  /* reopen in binary mode */
+		if (lf.f == NULL) return compat53_errfile(L, "reopen", fnameindex);
 #endif
-    compat53_skipcomment(&lf, &c);  /* re-read initial portion */
-  }
-  if (c != EOF)
-    lf.buff[lf.n++] = (char)c;  /* 'c' is the first character of the stream */
-  status = lua_load(L, &compat53_getF, &lf, lua_tostring(L, -1), mode);
-  readstatus = ferror(lf.f);
-  if (filename) fclose(lf.f);  /* close file (even in case of errors) */
-  if (readstatus) {
-    lua_settop(L, fnameindex);  /* ignore results from 'lua_load' */
-    return compat53_errfile(L, "read", fnameindex);
-  }
-  lua_remove(L, fnameindex);
-  return status;
+		compat53_skipcomment(&lf, &c);  /* re-read initial portion */
+	}
+	if (c != EOF)
+		lf.buff[lf.n++] = (char)c;  /* 'c' is the first character of the stream */
+	status = lua_load(L, &compat53_getF, &lf, lua_tostring(L, -1), mode);
+	readstatus = ferror(lf.f);
+	if (filename) fclose(lf.f);  /* close file (even in case of errors) */
+	if (readstatus) {
+		lua_settop(L, fnameindex);  /* ignore results from 'lua_load' */
+		return compat53_errfile(L, "read", fnameindex);
+	}
+	lua_remove(L, fnameindex);
+	return status;
 }
 
-COMPAT53_API int luaL_loadbufferx (lua_State *L, const char *buff, size_t sz, const char *name, const char *mode) {
-  int status = LUA_OK;
-  if (sz > 0 && buff[0] == LUA_SIGNATURE[0]) {
-    status = compat53_checkmode(L, mode, "binary", LUA_ERRSYNTAX);
-  }
-  else {
-    status = compat53_checkmode(L, mode, "text", LUA_ERRSYNTAX);
-  }
-  if (status != LUA_OK)
-    return status;
-  return luaL_loadbuffer(L, buff, sz, name);
+COMPAT53_API int luaL_loadbufferx(lua_State *L, const char *buff, size_t sz, const char *name, const char *mode) {
+	int status = LUA_OK;
+	if (sz > 0 && buff[0] == LUA_SIGNATURE[0]) {
+		status = compat53_checkmode(L, mode, "binary", LUA_ERRSYNTAX);
+	}
+	else {
+		status = compat53_checkmode(L, mode, "text", LUA_ERRSYNTAX);
+	}
+	if (status != LUA_OK)
+		return status;
+	return luaL_loadbuffer(L, buff, sz, name);
 }
 
 #if !defined(l_inspectstat) && \
@@ -2844,7 +2899,7 @@ COMPAT53_API int luaL_loadbufferx (lua_State *L, const char *buff, size_t sz, co
 /* some form of unix; check feature macros in unistd.h for details */
 #  include <unistd.h>
 /* check posix version; the relevant include files and macros probably
- * were available before 2001, but I'm not sure */
+* were available before 2001, but I'm not sure */
 #  if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
 #    include <sys/wait.h>
 #    define l_inspectstat(stat,what) \
@@ -2858,72 +2913,72 @@ COMPAT53_API int luaL_loadbufferx (lua_State *L, const char *buff, size_t sz, co
 #  define l_inspectstat(stat,what) ((void)0)
 #endif
 
-COMPAT53_API int luaL_execresult (lua_State *L, int stat) {
-  const char *what = "exit";
-  if (stat == -1)
-    return luaL_fileresult(L, 0, NULL);
-  else {
-    l_inspectstat(stat, what);
-    if (*what == 'e' && stat == 0)
-      lua_pushboolean(L, 1);
-    else
-      lua_pushnil(L);
-    lua_pushstring(L, what);
-    lua_pushinteger(L, stat);
-    return 3;
-  }
+COMPAT53_API int luaL_execresult(lua_State *L, int stat) {
+	const char *what = "exit";
+	if (stat == -1)
+		return luaL_fileresult(L, 0, NULL);
+	else {
+		l_inspectstat(stat, what);
+		if (*what == 'e' && stat == 0)
+			lua_pushboolean(L, 1);
+		else
+			lua_pushnil(L);
+		lua_pushstring(L, what);
+		lua_pushinteger(L, stat);
+		return 3;
+	}
 }
 
-COMPAT53_API void luaL_buffinit (lua_State *L, luaL_Buffer_53 *B) {
-  /* make it crash if used via pointer to a 5.1-style luaL_Buffer */
-  B->b.p = NULL;
-  B->b.L = NULL;
-  B->b.lvl = 0;
-  /* reuse the buffer from the 5.1-style luaL_Buffer though! */
-  B->ptr = B->b.buffer;
-  B->capacity = LUAL_BUFFERSIZE;
-  B->nelems = 0;
-  B->L2 = L;
+COMPAT53_API void luaL_buffinit(lua_State *L, luaL_Buffer_53 *B) {
+	/* make it crash if used via pointer to a 5.1-style luaL_Buffer */
+	B->b.p = NULL;
+	B->b.L = NULL;
+	B->b.lvl = 0;
+	/* reuse the buffer from the 5.1-style luaL_Buffer though! */
+	B->ptr = B->b.buffer;
+	B->capacity = LUAL_BUFFERSIZE;
+	B->nelems = 0;
+	B->L2 = L;
 }
 
-COMPAT53_API char *luaL_prepbuffsize (luaL_Buffer_53 *B, size_t s) {
-  if (B->capacity - B->nelems < s) { /* needs to grow */
-    char* newptr = NULL;
-    size_t newcap = B->capacity * 2;
-    if (newcap - B->nelems < s)
-      newcap = B->nelems + s;
-    if (newcap < B->capacity) /* overflow */
-      luaL_error(B->L2, "buffer too large");
-    newptr = (char*)lua_newuserdata(B->L2, newcap);
-    memcpy(newptr, B->ptr, B->nelems);
-    if (B->ptr != B->b.buffer)
-      lua_replace(B->L2, -2); /* remove old buffer */
-    B->ptr = newptr;
-    B->capacity = newcap;
-  }
-  return B->ptr+B->nelems;
+COMPAT53_API char *luaL_prepbuffsize(luaL_Buffer_53 *B, size_t s) {
+	if (B->capacity - B->nelems < s) { /* needs to grow */
+		char* newptr = NULL;
+		size_t newcap = B->capacity * 2;
+		if (newcap - B->nelems < s)
+			newcap = B->nelems + s;
+		if (newcap < B->capacity) /* overflow */
+			luaL_error(B->L2, "buffer too large");
+		newptr = (char*)lua_newuserdata(B->L2, newcap);
+		memcpy(newptr, B->ptr, B->nelems);
+		if (B->ptr != B->b.buffer)
+			lua_replace(B->L2, -2); /* remove old buffer */
+		B->ptr = newptr;
+		B->capacity = newcap;
+	}
+	return B->ptr + B->nelems;
 }
 
-COMPAT53_API void luaL_addlstring (luaL_Buffer_53 *B, const char *s, size_t l) {
-  memcpy(luaL_prepbuffsize(B, l), s, l);
-  luaL_addsize(B, l);
+COMPAT53_API void luaL_addlstring(luaL_Buffer_53 *B, const char *s, size_t l) {
+	memcpy(luaL_prepbuffsize(B, l), s, l);
+	luaL_addsize(B, l);
 }
 
-COMPAT53_API void luaL_addvalue (luaL_Buffer_53 *B) {
-  size_t len = 0;
-  const char *s = lua_tolstring(B->L2, -1, &len);
-  if (!s)
-    luaL_error(B->L2, "cannot convert value to string");
-  if (B->ptr != B->b.buffer)
-    lua_insert(B->L2, -2); /* userdata buffer must be at stack top */
-  luaL_addlstring(B, s, len);
-  lua_remove(B->L2, B->ptr != B->b.buffer ? -2 : -1);
+COMPAT53_API void luaL_addvalue(luaL_Buffer_53 *B) {
+	size_t len = 0;
+	const char *s = lua_tolstring(B->L2, -1, &len);
+	if (!s)
+		luaL_error(B->L2, "cannot convert value to string");
+	if (B->ptr != B->b.buffer)
+		lua_insert(B->L2, -2); /* userdata buffer must be at stack top */
+	luaL_addlstring(B, s, len);
+	lua_remove(B->L2, B->ptr != B->b.buffer ? -2 : -1);
 }
 
-void luaL_pushresult (luaL_Buffer_53 *B) {
-  lua_pushlstring(B->L2, B->ptr, B->nelems);
-  if (B->ptr != B->b.buffer)
-    lua_replace(B->L2, -2); /* remove userdata buffer */
+void luaL_pushresult(luaL_Buffer_53 *B) {
+	lua_pushlstring(B->L2, B->ptr, B->nelems);
+	if (B->ptr != B->b.buffer)
+		lua_replace(B->L2, -2); /* remove userdata buffer */
 }
 
 #endif /* Lua 5.1 */
@@ -2931,128 +2986,144 @@ void luaL_pushresult (luaL_Buffer_53 *B) {
 /* definitions for Lua 5.1 and Lua 5.2 */
 #if defined( LUA_VERSION_NUM ) && LUA_VERSION_NUM <= 502
 
-COMPAT53_API int lua_geti (lua_State *L, int index, lua_Integer i) {
-  index = lua_absindex(L, index);
-  lua_pushinteger(L, i);
-  lua_gettable(L, index);
-  return lua_type(L, -1);
+COMPAT53_API int lua_geti(lua_State *L, int index, lua_Integer i) {
+	index = lua_absindex(L, index);
+	lua_pushinteger(L, i);
+	lua_gettable(L, index);
+	return lua_type(L, -1);
 }
 
-COMPAT53_API int lua_isinteger (lua_State *L, int index) {
-  if (lua_type(L, index) == LUA_TNUMBER) {
-    lua_Number n = lua_tonumber(L, index);
-    lua_Integer i = lua_tointeger(L, index);
-    if (i == n)
-      return 1;
-  }
-  return 0;
+COMPAT53_API int lua_isinteger(lua_State *L, int index) {
+	if (lua_type(L, index) == LUA_TNUMBER) {
+		lua_Number n = lua_tonumber(L, index);
+		lua_Integer i = lua_tointeger(L, index);
+		if (i == n)
+			return 1;
+	}
+	return 0;
 }
 
-static void compat53_reverse (lua_State *L, int a, int b) {
-  for (; a < b; ++a, --b) {
-    lua_pushvalue(L, a);
-    lua_pushvalue(L, b);
-    lua_replace(L, a);
-    lua_replace(L, b);
-  }
+COMPAT53_API lua_Integer lua_tointegerx(lua_State *L, int i, int *isnum) {
+	int ok = 0;
+	lua_Number n = lua_tonumberx(L, i, &ok);
+	if (ok) {
+		if (n == (lua_Integer)n) {
+			if (isnum)
+				*isnum = 1;
+			return (lua_Integer)n;
+		}
+	}
+	if (isnum)
+		*isnum = 0;
+	return 0;
 }
 
-COMPAT53_API void lua_rotate (lua_State *L, int idx, int n) {
-  int n_elems = 0;
-  idx = lua_absindex(L, idx);
-  n_elems = lua_gettop(L)-idx+1;
-  if (n < 0)
-    n += n_elems;
-  if ( n > 0 && n < n_elems) {
-    luaL_checkstack(L, 2, "not enough stack slots available");
-    n = n_elems - n;
-    compat53_reverse(L, idx, idx+n-1);
-    compat53_reverse(L, idx+n, idx+n_elems-1);
-    compat53_reverse(L, idx, idx+n_elems-1);
-  }
+static void compat53_reverse(lua_State *L, int a, int b) {
+	for (; a < b; ++a, --b) {
+		lua_pushvalue(L, a);
+		lua_pushvalue(L, b);
+		lua_replace(L, a);
+		lua_replace(L, b);
+	}
 }
 
-COMPAT53_API void lua_seti (lua_State *L, int index, lua_Integer i) {
-  luaL_checkstack(L, 1, "not enough stack slots available");
-  index = lua_absindex(L, index);
-  lua_pushinteger(L, i);
-  lua_insert(L, -2);
-  lua_settable(L, index);
+COMPAT53_API void lua_rotate(lua_State *L, int idx, int n) {
+	int n_elems = 0;
+	idx = lua_absindex(L, idx);
+	n_elems = lua_gettop(L) - idx + 1;
+	if (n < 0)
+		n += n_elems;
+	if (n > 0 && n < n_elems) {
+		luaL_checkstack(L, 2, "not enough stack slots available");
+		n = n_elems - n;
+		compat53_reverse(L, idx, idx + n - 1);
+		compat53_reverse(L, idx + n, idx + n_elems - 1);
+		compat53_reverse(L, idx, idx + n_elems - 1);
+	}
+}
+
+COMPAT53_API void lua_seti(lua_State *L, int index, lua_Integer i) {
+	luaL_checkstack(L, 1, "not enough stack slots available");
+	index = lua_absindex(L, index);
+	lua_pushinteger(L, i);
+	lua_insert(L, -2);
+	lua_settable(L, index);
 }
 
 #if !defined(lua_str2number)
 #  define lua_str2number(s, p)  strtod((s), (p))
 #endif
 
-COMPAT53_API size_t lua_stringtonumber (lua_State *L, const char *s) {
-  char* endptr;
-  lua_Number n = lua_str2number(s, &endptr);
-  if (endptr != s) {
-    while (*endptr != '\0' && isspace((unsigned char)*endptr))
-      ++endptr;
-    if (*endptr == '\0') {
-      lua_pushnumber(L, n);
-      return endptr - s + 1;
-    }
-  }
-  return 0;
+COMPAT53_API size_t lua_stringtonumber(lua_State *L, const char *s) {
+	char* endptr;
+	lua_Number n = lua_str2number(s, &endptr);
+	if (endptr != s) {
+		while (*endptr != '\0' && isspace((unsigned char)*endptr))
+			++endptr;
+		if (*endptr == '\0') {
+			lua_pushnumber(L, n);
+			return endptr - s + 1;
+		}
+	}
+	return 0;
 }
 
-COMPAT53_API const char *luaL_tolstring (lua_State *L, int idx, size_t *len) {
-  if (!luaL_callmeta(L, idx, "__tostring")) {
-    int t = lua_type(L, idx), tt = 0;
-    char const* name = NULL;
-    switch (t) {
-      case LUA_TNIL:
-        lua_pushliteral(L, "nil");
-        break;
-      case LUA_TSTRING:
-      case LUA_TNUMBER:
-        lua_pushvalue(L, idx);
-        break;
-      case LUA_TBOOLEAN:
-        if (lua_toboolean(L, idx))
-          lua_pushliteral(L, "true");
-        else
-          lua_pushliteral(L, "false");
-        break;
-      default:
-        tt = luaL_getmetafield(L, idx, "__name");
-        name = (tt == LUA_TSTRING) ? lua_tostring(L, -1) : lua_typename(L, t);
-        lua_pushfstring(L, "%s: %p", name, lua_topointer(L, idx));
-        if (tt != LUA_TNIL)
-          lua_replace(L, -2);
-        break;
-    }
-  } else {
-    if (!lua_isstring(L, -1))
-      luaL_error(L, "'__tostring' must return a string");
-  }
-  return lua_tolstring(L, -1, len);
+COMPAT53_API const char *luaL_tolstring(lua_State *L, int idx, size_t *len) {
+	if (!luaL_callmeta(L, idx, "__tostring")) {
+		int t = lua_type(L, idx), tt = 0;
+		char const* name = NULL;
+		switch (t) {
+		case LUA_TNIL:
+			lua_pushliteral(L, "nil");
+			break;
+		case LUA_TSTRING:
+		case LUA_TNUMBER:
+			lua_pushvalue(L, idx);
+			break;
+		case LUA_TBOOLEAN:
+			if (lua_toboolean(L, idx))
+				lua_pushliteral(L, "true");
+			else
+				lua_pushliteral(L, "false");
+			break;
+		default:
+			tt = luaL_getmetafield(L, idx, "__name");
+			name = (tt == LUA_TSTRING) ? lua_tostring(L, -1) : lua_typename(L, t);
+			lua_pushfstring(L, "%s: %p", name, lua_topointer(L, idx));
+			if (tt != LUA_TNIL)
+				lua_replace(L, -2);
+			break;
+		}
+	}
+	else {
+		if (!lua_isstring(L, -1))
+			luaL_error(L, "'__tostring' must return a string");
+	}
+	return lua_tolstring(L, -1, len);
 }
 
-COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
-                                 lua_CFunction openf, int glb) {
-  luaL_checkstack(L, 3, "not enough stack slots available");
-  luaL_getsubtable(L, LUA_REGISTRYINDEX, "_LOADED");
-  if (lua_getfield(L, -1, modname) == LUA_TNIL) {
-    lua_pop(L, 1);
-    lua_pushcfunction(L, openf);
-    lua_pushstring(L, modname);
-    lua_call(L, 1, 1);
-    lua_pushvalue(L, -1);
-    lua_setfield(L, -3, modname);
-  }
-  if (glb) {
-    lua_pushvalue(L, -1);
-    lua_setglobal(L, modname);
-  }
-  lua_replace(L, -2);
+COMPAT53_API void luaL_requiref(lua_State *L, const char *modname,
+	lua_CFunction openf, int glb) {
+	luaL_checkstack(L, 3, "not enough stack slots available");
+	luaL_getsubtable(L, LUA_REGISTRYINDEX, "_LOADED");
+	if (lua_getfield(L, -1, modname) == LUA_TNIL) {
+		lua_pop(L, 1);
+		lua_pushcfunction(L, openf);
+		lua_pushstring(L, modname);
+		lua_call(L, 1, 1);
+		lua_pushvalue(L, -1);
+		lua_setfield(L, -3, modname);
+	}
+	if (glb) {
+		lua_pushvalue(L, -1);
+		lua_setglobal(L, modname);
+	}
+	lua_replace(L, -2);
 }
 
 #endif /* Lua 5.1 and 5.2 */
 
-#endif /* COMPAT53_C_ */
+#endif /* KEPLER_PROJECT_COMPAT53_C_ */
 
 /*********************************************************************
 * This file contains parts of Lua 5.2's and Lua 5.3's source code:
@@ -3083,9 +3154,10 @@ COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
 
 #endif
 
-#endif /* COMPAT53_H_ */
+#endif /* KEPLER_PROJECT_COMPAT53_H_ */
 
 // end of sol/compatibility/compat-5.3.h
+
 
 #endif // SOL_NO_COMPAT
 
@@ -3097,7 +3169,7 @@ COMPAT53_API void luaL_requiref (lua_State *L, const char *modname,
 
 namespace sol {
 
-#ifdef SOL_CXX17_FEATURES
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 	using in_place_t = std::in_place_t;
 	constexpr std::in_place_t in_place{};
 	constexpr std::in_place_t in_place_of{};
@@ -3159,14 +3231,14 @@ namespace sol {
 
 // end of sol/in_place.hpp
 
-#if defined(SOL_USE_BOOST)
+#if defined(SOL_USE_BOOST) && SOL_USE_BOOST
 #include <boost/optional.hpp>
 #else
 // beginning of sol/optional_implementation.hpp
 
 #include <initializer_list>
 #include <cassert>
-#ifdef SOL_NO_EXCEPTIONS
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS
 #include <cstdlib>
 #endif // Exceptions
 
@@ -4279,7 +4351,7 @@ namespace std {
 
 namespace sol {
 
-#if defined(SOL_USE_BOOST)
+#if defined(SOL_USE_BOOST) && SOL_USE_BOOST
 	template <typename T>
 	using optional = boost::optional<T>;
 	using nullopt_t = boost::none_t;
@@ -4301,7 +4373,7 @@ namespace sol {
 namespace sol {
 	namespace detail {
 		const bool default_safe_function_calls =
-#ifdef SOL_SAFE_FUNCTION_CALLS
+#if defined(SOL_SAFE_FUNCTION_CALLS) && SOL_SAFE_FUNCTION_CALLS
 			true;
 #else
 			false;
@@ -4523,7 +4595,7 @@ namespace sol {
 
 // end of sol/filters.hpp
 
-#ifdef SOL_CXX17_FEATURES
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #ifdef SOL_STD_VARIANT
 #include <variant>
 #endif
@@ -5467,7 +5539,7 @@ namespace sol {
 		template <>
 		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
 
-#ifdef SOL_CXX17_FEATURES
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #ifdef SOL_STD_VARIANT
 		template <typename... Tn>
 		struct lua_type_of<std::variant<Tn...>> : std::integral_constant<type, type::poly> {};
@@ -6825,7 +6897,7 @@ namespace sol {
 namespace sol {
 	namespace detail {
 		inline void stack_fail(int, int) {
-#ifndef SOL_NO_EXCEPTIONS
+#if !(defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS)
 			throw error(detail::direct_error, "imbalanced stack after operation finish");
 #else
 			// Lol, what do you want, an error printout? :3c
@@ -6914,7 +6986,7 @@ namespace sol {
 
 		inline void* align_usertype_pointer(void* ptr) {
 			typedef std::integral_constant<bool,
-#ifdef SOL_NO_MEMORY_ALIGNMENT
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
 				(std::alignment_of<void*>::value > 1)
@@ -6930,7 +7002,7 @@ namespace sol {
 
 		inline void* align_usertype_unique_destructor(void* ptr) {
 			typedef std::integral_constant<bool,
-#ifdef SOL_NO_MEMORY_ALIGNMENT
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
 				(std::alignment_of<unique_destructor>::value > 1)
@@ -6949,7 +7021,7 @@ namespace sol {
 		template <typename T, bool pre_aligned = false>
 		inline void* align_usertype_unique(void* ptr) {
 			typedef std::integral_constant<bool,
-#ifdef SOL_NO_MEMORY_ALIGNMENT
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
 				(std::alignment_of<T>::value > 1)
@@ -6970,7 +7042,7 @@ namespace sol {
 		template <typename T>
 		inline void* align_user(void* ptr) {
 			typedef std::integral_constant<bool,
-#ifdef SOL_NO_MEMORY_ALIGNMENT
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
 				(std::alignment_of<T>::value > 1)
@@ -6987,7 +7059,7 @@ namespace sol {
 		template <typename T>
 		inline T** usertype_allocate_pointer(lua_State* L) {
 			typedef std::integral_constant<bool,
-#ifdef SOL_NO_MEMORY_ALIGNMENT
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
 				(std::alignment_of<T*>::value > 1)
@@ -7024,7 +7096,7 @@ namespace sol {
 		template <typename T>
 		inline T* usertype_allocate(lua_State* L) {
 			typedef std::integral_constant<bool,
-#ifdef SOL_NO_MEMORY_ALIGNMENT
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
 				(std::alignment_of<T*>::value > 1 || std::alignment_of<T>::value > 1)
@@ -7104,7 +7176,7 @@ namespace sol {
 		template <typename T, typename Real>
 		inline Real* usertype_unique_allocate(lua_State* L, T**& pref, unique_destructor*& dx) {
 			typedef std::integral_constant<bool,
-#ifdef SOL_NO_MEMORY_ALIGNMENT
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
 				(std::alignment_of<T*>::value > 1 || std::alignment_of<unique_destructor>::value > 1 || std::alignment_of<Real>::value > 1)
@@ -7178,7 +7250,7 @@ namespace sol {
 		template <typename T>
 		inline T* user_allocate(lua_State* L) {
 			typedef std::integral_constant<bool,
-#ifdef SOL_NO_MEMORY_ALIGNMENT
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
 				(std::alignment_of<T>::value > 1)
@@ -7531,7 +7603,7 @@ namespace sol {
 
 		namespace stack_detail {
 
-#ifdef SOL_SAFE_GETTER
+#if defined(SOL_SAFE_GETTER) && SOL_SAFE_GETTER
 			template <typename T>
 			inline auto tagged_get(types<T>, lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_get<T>(L, index, tracking)) {
 				auto op = check_get<T>(L, index, type_panic_c_str, tracking);
@@ -7608,7 +7680,7 @@ namespace sol {
 
 		template <typename T>
 		inline decltype(auto) get_usertype(lua_State* L, int index, record& tracking) {
-#ifdef SOL_SAFE_GETTER
+#if defined(SOL_SAFE_GETTER) && SOL_SAFE_GETTER
 			return stack_detail::tagged_get(types<std::conditional_t<std::is_pointer<T>::value, detail::as_pointer_tag<std::remove_pointer_t<T>>, detail::as_value_tag<T>>>(), L, index, tracking);
 #else
 			return stack_detail::unchecked_get<std::conditional_t<std::is_pointer<T>::value, detail::as_pointer_tag<std::remove_pointer_t<T>>, detail::as_value_tag<T>>>(L, index, tracking);
@@ -7905,7 +7977,7 @@ namespace stack {
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
 #if SOL_LUA_VERSION >= 503
-#ifdef SOL_STRINGS_ARE_NUMBERS
+#if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
 			int isnum = 0;
 			lua_tointegerx(L, index, &isnum);
 			const bool success = isnum != 0;
@@ -7913,7 +7985,7 @@ namespace stack {
 				// expected type, actual type
 				handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
 			}
-#else
+#elif (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS) && !(defined(SOL_NO_CHECK_NUMBER_PRECISION) && SOL_NO_CHECK_NUMBER_PRECISION)
 			// this check is precise, does not convert
 			if (lua_isinteger(L, index) == 1) {
 				return true;
@@ -7921,12 +7993,19 @@ namespace stack {
 			const bool success = false;
 			if (!success) {
 				// expected type, actual type
+				handler(L, index, type::number, type_of(L, index), "not a numeric (integral) type");
+			}
+#else
+			type t = type_of(L, index);
+			const bool success = t == type::number;
+#endif // If numbers are enabled, use the imprecise check
+			if (!success) {
+				// expected type, actual type
 				handler(L, index, type::number, type_of(L, index), "not a numeric type");
 			}
-#endif // If numbers are enabled, use the imprecise check
 			return success;
 #else
-#ifndef SOL_STRINGS_ARE_NUMBERS
+#if !defined(SOL_STRINGS_ARE_NUMBERS) || !SOL_STRINGS_ARE_NUMBERS
 			// must pre-check, because it will convert
 			type t = type_of(L, index);
 			if (t != type::number) {
@@ -7937,17 +8016,21 @@ namespace stack {
 #endif // Do not allow strings to be numbers
 			int isnum = 0;
 			const lua_Number v = lua_tonumberx(L, index, &isnum);
-			const bool success = isnum != 0 && static_cast<lua_Number>(llround(v)) == v;
+			const bool success = isnum != 0
+#if (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS) && !(defined(SOL_NO_CHECK_NUMBER_PRECISION) && SOL_NO_CHECK_NUMBER_PRECISION)
+				&& static_cast<lua_Number>(llround(v)) == v
+#endif // Safe numerics and number precision checking
+				;
 			if (!success) {
 				// expected type, actual type
-#ifndef SOL_STRINGS_ARE_NUMBERS
+#if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
 				handler(L, index, type::number, t, "not a numeric type");
 #else
 				handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
 #endif
 			}
 			return success;
-#endif
+#endif // Lua Version 5.3 versus others
 		}
 	};
 
@@ -7956,7 +8039,14 @@ namespace stack {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
-#ifndef SOL_STRINGS_ARE_NUMBERS
+#if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
+			bool success = lua_isnumber(L, index) == 1;
+			if (!success) {
+				// expected type, actual type
+				handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
+			}
+			return success;
+#else
 			type t = type_of(L, index);
 			bool success = t == type::number;
 			if (!success) {
@@ -7964,14 +8054,7 @@ namespace stack {
 				handler(L, index, type::number, t, "not a numeric type");
 			}
 			return success;
-#else
-			bool success = lua_isnumber(L, index) == 1;
-			if (!success) {
-				// expected type, actual type
-				handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
-			}
-			return success;
-#endif
+#endif // Strings are Numbers
 		}
 	};
 
@@ -8230,7 +8313,7 @@ namespace stack {
 
 		template <typename U, typename Handler>
 		static bool check(types<U>, lua_State* L, int index, type indextype, Handler&& handler, record& tracking) {
-#ifdef SOL_ENABLE_INTEROP
+#if defined(SOL_ENABLE_INTEROP) && SOL_ENABLE_INTEROP
 			userdata_checker<extensible<T>> uc;
 			(void)uc;
 			if (uc.check(L, index, indextype, handler, tracking)) {
@@ -8383,8 +8466,8 @@ namespace stack {
 		}
 	};
 
-#ifdef SOL_CXX17_FEATURES
-#ifdef SOL_STD_VARIANT
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	template <typename... Tn, typename C>
 	struct checker<std::variant<Tn...>, type::poly, C> {
 		typedef std::variant<Tn...> V;
@@ -8449,8 +8532,6 @@ namespace sol {
 // end of sol/overload.hpp
 
 // beginning of sol/unicode.hpp
-
-#pragma once
 
 namespace sol {
 	// Everything here was lifted pretty much straight out of
@@ -8754,8 +8835,8 @@ namespace sol {
 }
 // end of sol/unicode.hpp
 
-#ifdef SOL_CXX17_FEATURES
-#ifdef SOL_STD_VARIANT
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 #endif // Apple clang screwed up
 #endif // C++17
 
@@ -9428,7 +9509,7 @@ namespace stack {
 	struct getter<detail::as_value_tag<T>> {
 		static T* get_no_lua_nil(lua_State* L, int index, record& tracking) {
 			void* memory = lua_touserdata(L, index);
-#ifdef SOL_ENABLE_INTEROP
+#if defined(SOL_ENABLE_INTEROP) && SOL_ENABLE_INTEROP
 			userdata_getter<extensible<T>> ug;
 			(void)ug;
 			auto ugr = ug.get(L, index, memory, tracking);
@@ -9558,8 +9639,8 @@ namespace stack {
 		}
 	};
 
-#ifdef SOL_CXX17_FEATURES
-#ifdef SOL_STD_VARIANT
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	template <typename... Tn>
 	struct getter<std::variant<Tn...>> {
 		typedef std::variant<Tn...> V;
@@ -9658,7 +9739,7 @@ namespace stack {
 			int isnum = 0;
 			const lua_Number value = lua_tonumberx(L, index, &isnum);
 			if (isnum != 0) {
-#if defined(SOL_SAFE_NUMERICS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
+#if (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS) && !(defined(SOL_NO_CHECK_NUMBER_PRECISION) && SOL_NO_CHECK_NUMBER_PRECISION)
 				const auto integer_value = llround(value);
 				if (static_cast<lua_Number>(integer_value) == value) {
 					tracking.use(1);
@@ -9717,8 +9798,8 @@ namespace stack {
 		}
 	};
 
-#ifdef SOL_CXX17_FEATURES
-#ifdef SOL_STD_VARIANT
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	template <typename... Tn>
 	struct check_getter<std::variant<Tn...>> {
 		typedef std::variant<Tn...> V;
@@ -9768,8 +9849,8 @@ namespace stack {
 // beginning of sol/stack_push.hpp
 
 #include <limits>
-#ifdef SOL_CXX17_FEATURES
-#ifdef SOL_STD_VARIANT
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 #endif // Can use variant
 #endif // C++17
 
@@ -9945,19 +10026,19 @@ namespace stack {
 				lua_pushinteger(L, static_cast<lua_Integer>(value));
 				return 1;
 			}
-#endif
-#if defined(SOL_SAFE_NUMERICS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
+#endif // Lua 5.3 and above
+#if (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS) && !(defined(SOL_NO_CHECK_NUMBER_PRECISION) && SOL_NO_CHECK_NUMBER_PRECISION)
 			if (static_cast<T>(llround(static_cast<lua_Number>(value))) != value) {
-#ifdef SOL_NO_EXCEPTIONS
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS
 				// Is this really worth it?
 				assert(false && "integer value will be misrepresented in lua");
 				lua_pushnumber(L, static_cast<lua_Number>(value));
 				return 1;
 #else
 				throw error(detail::direct_error, "integer value will be misrepresented in lua");
-#endif
+#endif // No Exceptions
 			}
-#endif
+#endif // Safe Numerics and Number Precision Check
 			lua_pushnumber(L, static_cast<lua_Number>(value));
 			return 1;
 		}
@@ -10019,7 +10100,7 @@ namespace stack {
 					}
 					lua_pop(L, 1 + p);
 				}
-#endif
+#endif // Lua Version 5.3 and others
 			}
 			// TODO: figure out a better way to do this...?
 			//set_field(L, -1, cont.size());
@@ -10119,7 +10200,7 @@ namespace stack {
 		}
 	};
 
-#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+#if defined(SOL_NOEXCEPT_FUNCTION_TYPE) && SOL_NOEXCEPT_FUNCTION_TYPE
 	template <>
 	struct pusher<std::remove_pointer_t<detail::lua_CFunction_noexcept>> {
 		static int push(lua_State* L, detail::lua_CFunction_noexcept func, int n = 0) {
@@ -10719,8 +10800,8 @@ namespace stack {
 		}
 	};
 
-#ifdef SOL_CXX17_FEATURES
-#ifdef SOL_STD_VARIANT
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	namespace stack_detail {
 
 		struct push_function {
@@ -10775,7 +10856,7 @@ namespace stack {
 
 	template <typename T>
 	struct popper<T, std::enable_if_t<is_stack_based<meta::unqualified_t<T>>::value>> {
-		static_assert(meta::neg<std::is_base_of<stack_reference, meta::unqualified_t<T>>>::value, "You cannot pop something that derives from stack_reference: it will not remain on the stack and thusly will go out of scope!");
+		static_assert(meta::neg<is_stack_based<meta::unqualified_t<T>>>::value, "You cannot pop something that lives solely on the stack: it will not remain on the stack when popped and thusly will go out of scope!");
 	};
 }
 } // namespace sol::stack
@@ -11619,7 +11700,7 @@ namespace sol {
 		template <typename T>
 		decltype(auto) tagged_get(types<T>, int index_offset) const {
 			int target = index + index_offset;
-#ifdef SOL_SAFE_PROXIES
+#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES
 			if (!valid()) {
 				type t = type_of(L, target);
 				type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is not an error)");
@@ -11638,7 +11719,7 @@ namespace sol {
 
 		error tagged_get(types<error>, int index_offset) const {
 			int target = index + index_offset;
-#ifdef SOL_SAFE_PROXIES
+#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES
 			if (valid()) {
 				type t = type_of(L, target);
 				type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is an error)");
@@ -12186,7 +12267,8 @@ namespace sol {
 	struct wrapper<R (O::*)(Args..., ...) const volatile&&> : public member_function_wrapper<R (O::*)(Args..., ...) const volatile&, R, O, Args...> {
 	};
 
-#ifdef SOL_NOEXCEPT_FUNCTION_TYPE //noexcept has become a part of a function's type
+#if defined(SOL_NOEXCEPT_FUNCTION_TYPE) && SOL_NOEXCEPT_FUNCTION_TYPE
+	//noexcept has become a part of a function's type
 
 	template <typename R, typename O, typename... Args>
 	struct wrapper<R (O::*)(Args...) noexcept> : public member_function_wrapper<R (O::*)(Args...) noexcept, R, O, Args...> {
@@ -12703,7 +12785,7 @@ namespace sol {
 			}
 		};
 
-#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+#if defined(SOL_NOEXCEPT_FUNCTION_TYPE) && SOL_NOEXCEPT_FUNCTION_TYPE
 		template <bool is_index, bool is_variable, bool checked, int boost, bool clean_stack, typename C>
 		struct agnostic_lua_call_wrapper<detail::lua_CFunction_noexcept, is_index, is_variable, checked, boost, clean_stack, C> {
 			static int call(lua_State* L, detail::lua_CFunction_noexcept f) {
@@ -12760,7 +12842,7 @@ namespace sol {
 			template <typename Fx>
 			static int call(lua_State* L, Fx&& f) {
 				typedef std::conditional_t<std::is_void<T>::value, object_type, T> Ta;
-#ifdef SOL_SAFE_USERTYPE
+#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
 				auto maybeo = stack::check_get<Ta*>(L, 1);
 				if (!maybeo || maybeo.value() == nullptr) {
 					return luaL_error(L, "sol: received nil for 'self' argument (use ':' for accessing member functions, make sure member variables are preceeded by the actual object with '.' syntax)");
@@ -12790,7 +12872,7 @@ namespace sol {
 			template <typename V>
 			static int call_assign(std::true_type, lua_State* L, V&& f) {
 				typedef std::conditional_t<std::is_void<T>::value, object_type, T> Ta;
-#ifdef SOL_SAFE_USERTYPE
+#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
 				auto maybeo = stack::check_get<Ta*>(L, 1);
 				if (!maybeo || maybeo.value() == nullptr) {
 					if (is_variable) {
@@ -12850,7 +12932,7 @@ namespace sol {
 			template <typename V>
 			static int call(lua_State* L, V&& f) {
 				typedef std::conditional_t<std::is_void<T>::value, object_type, T> Ta;
-#ifdef SOL_SAFE_USERTYPE
+#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
 				auto maybeo = stack::check_get<Ta*>(L, 1);
 				if (!maybeo || maybeo.value() == nullptr) {
 					if (is_variable) {
@@ -13031,7 +13113,7 @@ namespace sol {
 				typedef meta::pop_front_type_t<typename traits_type::free_args_list> args_list;
 				typedef T Ta;
 				typedef std::remove_pointer_t<object_type> Oa;
-#ifdef SOL_SAFE_USERTYPE
+#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
 				auto maybeo = stack::check_get<Ta*>(L, 1);
 				if (!maybeo || maybeo.value() == nullptr) {
 					if (is_variable) {
@@ -13245,7 +13327,7 @@ namespace sol {
 	inline int c_call(lua_State* L) {
 		typedef meta::unqualified_t<F> Fu;
 		typedef std::integral_constant<bool, std::is_same<Fu, lua_CFunction>::value
-#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+#if defined(SOL_NOEXCEPT_FUNCTION_TYPE) && SOL_NOEXCEPT_FUNCTION_TYPE
 			|| std::is_same<Fu, detail::lua_CFunction_noexcept>::value
 #endif
 		> is_raw;
@@ -13972,7 +14054,7 @@ namespace sol {
 				stack::push(L, f);
 			}
 
-#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+#if defined(SOL_NOEXCEPT_FUNCTION_TYPE) && SOL_NOEXCEPT_FUNCTION_TYPE
 			template <bool is_yielding>
 			static void select_function(std::true_type, lua_State* L, detail::lua_CFunction_noexcept f) {
 				// TODO: support yielding
@@ -14072,8 +14154,8 @@ namespace sol {
 
 		template <typename Signature>
 		struct pusher<Signature, std::enable_if_t<meta::all<std::is_function<std::remove_pointer_t<Signature>>, meta::neg<std::is_same<Signature, lua_CFunction>>, meta::neg<std::is_same<Signature, std::remove_pointer_t<lua_CFunction>>>
-#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
-								,
+#if defined(SOL_NOEXCEPT_FUNCTION_TYPE) && SOL_NOEXCEPT_FUNCTION_TYPE
+			,
 								meta::neg<std::is_same<Signature, detail::lua_CFunction_noexcept>>, meta::neg<std::is_same<Signature, std::remove_pointer_t<detail::lua_CFunction_noexcept>>>
 #endif // noexcept function types
 								>::value>> {
@@ -14354,7 +14436,7 @@ namespace sol {
 		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_function>>, meta::neg<std::is_same<base_t, stack_reference>>, meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_function(T&& r) noexcept
 		: base_t(std::forward<T>(r)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			if (!is_function<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				constructor_handler handler{};
@@ -14378,7 +14460,7 @@ namespace sol {
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_function(lua_State* L, T&& r)
 		: base_t(L, std::forward<T>(r)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_function>(lua_state(), -1, handler);
@@ -14386,14 +14468,14 @@ namespace sol {
 		}
 		basic_function(lua_State* L, int index = -1)
 		: base_t(L, index) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_function>(L, index, handler);
 #endif // Safety
 		}
 		basic_function(lua_State* L, ref_index index)
 		: base_t(L, index) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_function>(lua_state(), -1, handler);
@@ -14549,7 +14631,7 @@ namespace sol {
 			int firstreturn = 1;
 			int returncount = 0;
 			call_status code = call_status::ok;
-#ifndef SOL_NO_EXCEPTIONS
+#if !defined(SOL_NO_EXCEPTIONS) || !SOL_NO_EXCEPTIONS
 			auto onexcept = [&](optional<const std::exception&> maybe_ex, const char* error) {
 				h.stackindex = 0;
 				if (b) {
@@ -14562,7 +14644,7 @@ namespace sol {
 				}
 			};
 			(void)onexcept;
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || defined(SOL_LUAJIT)
+#if (!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !SOL_NO_EXCEPTIONS_SAFE_PROPAGATION) || (defined(SOL_LUAJIT) && SOL_LUAJIT)
 			try {
 #endif // Safe Exception Propagation
 #endif // No Exceptions
@@ -14571,7 +14653,7 @@ namespace sol {
 				poststacksize = lua_gettop(lua_state()) - static_cast<int>(h.valid());
 				returncount = poststacksize - (firstreturn - 1);
 #ifndef SOL_NO_EXCEPTIONS
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || defined(SOL_LUAJIT)
+#if (!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !SOL_NO_EXCEPTIONS_SAFE_PROPAGATION) || (defined(SOL_LUAJIT) && SOL_LUAJIT)
 			}
 			// Handle C++ errors thrown from C++ functions bound inside of lua
 			catch (const char* error) {
@@ -14589,7 +14671,7 @@ namespace sol {
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+#if (!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !SOL_NO_EXCEPTIONS_SAFE_PROPAGATION)
 			// LuaJIT cannot have the catchall when the safe propagation is on
 			// but LuaJIT will swallow all C++ errors 
 			// if we don't at least catch std::exception ones
@@ -14615,7 +14697,7 @@ namespace sol {
 		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_protected_function>>, meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>>, meta::neg<std::is_same<base_t, stack_reference>>, meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_protected_function(T&& r) noexcept
 		: base_t(std::forward<T>(r)), error_handler(get_default_handler(r.lua_state())) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			if (!is_function<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				constructor_handler handler{};
@@ -14672,7 +14754,7 @@ namespace sol {
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_protected_function(lua_State* L, T&& r, handler_t eh)
 		: base_t(L, std::forward<T>(r)), error_handler(std::move(eh)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_protected_function>(lua_state(), -1, handler);
@@ -14688,7 +14770,7 @@ namespace sol {
 		}
 		basic_protected_function(lua_State* L, int index, handler_t eh)
 		: base_t(L, index), error_handler(std::move(eh)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_protected_function>(L, index, handler);
 #endif // Safety
@@ -14698,7 +14780,7 @@ namespace sol {
 		}
 		basic_protected_function(lua_State* L, absolute_index index, handler_t eh)
 		: base_t(L, index), error_handler(std::move(eh)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_protected_function>(L, index, handler);
 #endif // Safety
@@ -14708,7 +14790,7 @@ namespace sol {
 		}
 		basic_protected_function(lua_State* L, raw_index index, handler_t eh)
 		: base_t(L, index), error_handler(std::move(eh)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_protected_function>(L, index, handler);
 #endif // Safety
@@ -14718,7 +14800,7 @@ namespace sol {
 		}
 		basic_protected_function(lua_State* L, ref_index index, handler_t eh)
 		: base_t(L, index), error_handler(std::move(eh)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_protected_function>(lua_state(), -1, handler);
@@ -15190,7 +15272,7 @@ namespace sol {
 		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_userdata>>, meta::neg<std::is_same<base_t, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_userdata(T&& r) noexcept
 		: base_t(std::forward<T>(r)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			if (!is_userdata<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				type_assert(lua_state(), -1, type::userdata);
@@ -15210,7 +15292,7 @@ namespace sol {
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_userdata(lua_State* L, T&& r)
 		: base_t(L, std::forward<T>(r)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_userdata>(L, -1, handler);
@@ -15218,14 +15300,14 @@ namespace sol {
 		}
 		basic_userdata(lua_State* L, int index = -1)
 		: base_t(detail::no_safety, L, index) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_userdata>(L, index, handler);
 #endif // Safety
 		}
 		basic_userdata(lua_State* L, ref_index index)
 		: base_t(detail::no_safety, L, index) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_userdata>(L, -1, handler);
@@ -15244,7 +15326,7 @@ namespace sol {
 		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_lightuserdata>>, meta::neg<std::is_same<base_t, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_lightuserdata(T&& r) noexcept
 		: base_t(std::forward<T>(r)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			if (!is_lightuserdata<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				type_assert(lua_state(), -1, type::lightuserdata);
@@ -15264,7 +15346,7 @@ namespace sol {
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_lightuserdata(lua_State* L, T&& r)
 		: basic_lightuserdata(L, std::forward<T>(r)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_lightuserdata>(lua_state(), -1, handler);
@@ -15272,14 +15354,14 @@ namespace sol {
 		}
 		basic_lightuserdata(lua_State* L, int index = -1)
 		: base_t(L, index) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_lightuserdata>(L, index, handler);
 #endif // Safety
 		}
 		basic_lightuserdata(lua_State* L, ref_index index)
 		: base_t(L, index) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_lightuserdata>(lua_state(), index, handler);
@@ -16169,7 +16251,7 @@ namespace sol {
 			};
 
 			static auto& get_src(lua_State* L) {
-#ifdef SOL_SAFE_USERTYPE
+#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
 				auto p = stack::check_get<T*>(L, 1);
 				if (!p) {
 					luaL_error(L, "sol: 'self' is not of type '%s' (pass 'self' as first argument with ':' or call on proper type)", detail::demangle<T>().c_str());
@@ -16886,7 +16968,7 @@ namespace sol {
 
 			static auto& get_src(lua_State* L) {
 				auto p = stack::check_get<T*>(L, 1);
-#ifdef SOL_SAFE_USERTYPE
+#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
 				if (!p) {
 					luaL_error(L, "sol: 'self' is not of type '%s' (pass 'self' as first argument with ':' or call on proper type)", detail::demangle<T>().c_str());
 				}
@@ -17011,7 +17093,11 @@ namespace sol {
 			}
 
 			static std::ptrdiff_t index_adjustment(lua_State*, T&) {
+#if defined(SOL_CONTAINERS_START_INDEX)
+				return (SOL_CONTAINERS_START) == 0 ? 0 : -(SOL_CONTAINERS_START);
+#else
 				return -1;
+#endif
 			}
 
 			static iterator begin(lua_State*, T& self) {
@@ -17069,7 +17155,7 @@ namespace sol {
 			auto maybenameview = stack::check_get<string_view>(L, 2);
 			if (maybenameview) {
 				const string_view& nameview = *maybenameview;
-#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
 				auto it = calls.find(nameview, string_view_hash(), std::equal_to<string_view>());
 #else
 				std::string name(nameview.data(), nameview.size());
@@ -17570,7 +17656,7 @@ namespace sol {
 		template <typename T, typename Regs>
 		inline void make_length_op_const(std::true_type, Regs& l, int& index) {
 			const char* name = to_string(meta_function::length).c_str();
-#ifdef __clang__
+#if defined(__clang__)
 			l[index] = luaL_Reg{ name, &c_call<decltype(&T::size), &T::size> };
 #else
 			typedef decltype(std::declval<T>().size()) R;
@@ -17583,7 +17669,7 @@ namespace sol {
 		template <typename T, typename Regs>
 		inline void make_length_op_const(std::false_type, Regs& l, int& index) {
 			const char* name = to_string(meta_function::length).c_str();
-#ifdef __clang__
+#if defined(__clang__)
 			l[index] = luaL_Reg{ name, &c_call<decltype(&T::size), &T::size> };
 #else
 			typedef decltype(std::declval<T>().size()) R;
@@ -17881,7 +17967,7 @@ namespace sol {
 		template <typename T, bool is_index>
 		inline int indexing_fail(lua_State* L) {
 			if (is_index) {
-#if 0 //def SOL_SAFE_USERTYPE
+#if 0 //defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
 				auto maybeaccessor = stack::get<optional<string_view>>(L, is_index ? -1 : -2);
 				string_view accessor = maybeaccessor.value_or(string_detail::string_shim("(unknown)"));
 				return luaL_error(L, "sol: attempt to index (get) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.data());
@@ -17918,14 +18004,14 @@ namespace sol {
 							return;
 						}
 						string_view& accessor_view = maybeaccessor.value();
-#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
 						auto preexistingit = functions.find(accessor_view, string_view_hash(), std::equal_to<string_view>());
 #else
 						std::string accessor(accessor_view.data(), accessor_view.size());
 						auto preexistingit = functions.find(accessor);
 #endif
 						if (preexistingit == functions.cend()) {
-#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
 							std::string accessor(accessor_view.data(), accessor_view.size());
 #endif
 							functions.emplace_hint(preexistingit, std::move(accessor), object(L, 3));
@@ -17947,14 +18033,14 @@ namespace sol {
 					mapping_t& mapping = umc.mapping;
 					std::vector<object>& runtime = umc.runtime;
 					int target = static_cast<int>(runtime.size());
-#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
 					auto preexistingit = mapping.find(accessor_view, string_view_hash(), std::equal_to<string_view>());
 #else
 					std::string accessor(accessor_view.data(), accessor_view.size());
 					auto preexistingit = mapping.find(accessor);
 #endif
 					if (preexistingit == mapping.cend()) {
-#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
 						std::string accessor(accessor_view.data(), accessor_view.size());
 #endif
 						runtime.emplace_back(L, 3);
@@ -18151,7 +18237,7 @@ namespace sol {
 					switch (mf) {
 					case meta_function::construct:
 						if (properties[i]) {
-#ifndef SOL_NO_EXCEPTIONS
+#if !(defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS)
 							throw error("sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
 #else
 							assert(false && "sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
@@ -18160,7 +18246,7 @@ namespace sol {
 						break;
 					case meta_function::garbage_collect:
 						if (destructfunc != nullptr) {
-#ifndef SOL_NO_EXCEPTIONS
+#if !(defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS)
 							throw error("sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
 #else
 							assert(false && "sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
@@ -18241,7 +18327,7 @@ namespace sol {
 			int runtime_target = 0;
 			usertype_detail::member_search member = nullptr;
 			{
-#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
 				string_view name = stack::get<string_view>(L, keyidx);
 				auto memberit = f.mapping.find(name, string_view_hash(), std::equal_to<string_view>());
 #else
@@ -18528,7 +18614,7 @@ namespace sol {
 			string_view accessor = stack::get<string_view>(L, keyidx);
 			variable_wrapper* varwrap = nullptr;
 			{
-#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
 				string_view& accessorkey = accessor;
 				auto vit = variables.find(accessorkey, string_view_hash(), std::equal_to<string_view>());
 #else
@@ -18544,7 +18630,7 @@ namespace sol {
 			}
 			bool function_failed = false;
 			{
-#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
 				string_view& accessorkey = accessor;
 				auto fit = functions.find(accessorkey, string_view_hash(), std::equal_to<string_view>());
 #else
@@ -18911,19 +18997,19 @@ namespace sol {
 						switch (mf) {
 						case meta_function::construct:
 							if (prop) {
-#ifndef SOL_NO_EXCEPTIONS
-								throw error("sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
-#else
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS
 								assert(false && "sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
+#else
+								throw error("sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
 #endif
 							}
 							break;
 						case meta_function::garbage_collect:
 							if (prop) {
-#ifndef SOL_NO_EXCEPTIONS
-								throw error("sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
-#else
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS
 								assert(false && "sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
+#else
+								throw error("sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
 #endif
 							}
 							return;
@@ -19480,7 +19566,7 @@ namespace sol {
 		template <typename T, meta::enable_any<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_table_core(lua_State* L, T&& r)
 		: base_t(L, std::forward<T>(r)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_table_core>(lua_state(), -1, handler);
@@ -19494,14 +19580,14 @@ namespace sol {
 		}
 		basic_table_core(lua_State* L, int index = -1)
 		: basic_table_core(detail::no_safety, L, index) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_table_core>(L, index, handler);
 #endif // Safety
 		}
 		basic_table_core(lua_State* L, ref_index index)
 		: basic_table_core(detail::no_safety, L, index) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_table_core>(lua_state(), -1, handler);
@@ -19510,7 +19596,7 @@ namespace sol {
 		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>, meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_table_core(T&& r) noexcept
 		: basic_table_core(detail::no_safety, std::forward<T>(r)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			if (!is_table<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				constructor_handler handler{};
@@ -19923,7 +20009,7 @@ namespace sol {
 
 		basic_environment(env_t, const stack_reference& extraction_target)
 		: base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<env_t>(this->lua_state(), -1, handler);
 #endif // Safety
@@ -19932,7 +20018,7 @@ namespace sol {
 		template <bool b>
 		basic_environment(env_t, const basic_reference<b>& extraction_target)
 		: base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<env_t>(this->lua_state(), -1, handler);
 #endif // Safety
@@ -19940,14 +20026,14 @@ namespace sol {
 		}
 		basic_environment(lua_State* L, int index = -1)
 		: base_t(detail::no_safety, L, index) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_environment>(L, index, handler);
 #endif // Safety
 		}
 		basic_environment(lua_State* L, ref_index index)
 		: base_t(detail::no_safety, L, index) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_environment>(L, -1, handler);
@@ -19956,7 +20042,7 @@ namespace sol {
 		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_environment>>, meta::neg<std::is_same<base_type, stack_reference>>, meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_environment(T&& r) noexcept
 		: base_t(detail::no_safety, std::forward<T>(r)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			if (!is_environment<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				constructor_handler handler{};
@@ -19971,7 +20057,7 @@ namespace sol {
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_environment(lua_State* L, T&& r) noexcept
 			: base_t(detail::no_safety, L, std::forward<T>(r)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			if (!is_environment<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				constructor_handler handler{};
@@ -20109,7 +20195,7 @@ namespace sol {
 
 		template <typename T>
 		decltype(auto) tagged_get(types<T>) const {
-#ifdef SOL_SAFE_PROXIES
+#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES != 0
 			if (!valid()) {
 				type_panic_c_str(L, index, type_of(L, index), type::none);
 			}
@@ -20125,7 +20211,7 @@ namespace sol {
 		}
 
 		error tagged_get(types<error>) const {
-#ifdef SOL_SAFE_PROXIES
+#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES != 0
 			if (valid()) {
 				type_panic_c_str(L, index, type_of(L, index), type::none, "expecting an error type (a string, from Lua)");
 			}
@@ -20232,7 +20318,7 @@ namespace sol {
 	}
 
 	inline int default_at_panic(lua_State* L) {
-#ifdef SOL_NO_EXCEPTIONS
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS
 		(void)L;
 		return -1;
 #else
@@ -20241,7 +20327,7 @@ namespace sol {
 		if (message) {
 			std::string err(message, messagesize);
 			lua_settop(L, 0);
-#ifdef SOL_PRINT_ERRORS
+#if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
 			std::cerr << "[sol2] An error occurred and panic has been invoked: ";
 			std::cerr << err;
 			std::cerr << std::endl;
@@ -20249,8 +20335,8 @@ namespace sol {
 			throw error(err);
 		}
 		lua_settop(L, 0);
-		throw error(std::string("An unexpected error occurred and forced the lua state to call atpanic"));
-#endif
+		throw error(std::string("An unexpected error occurred and panic has been invoked"));
+#endif // Printing Errors
 	}
 
 	inline int default_traceback_error_handler(lua_State* L) {
@@ -20266,11 +20352,11 @@ namespace sol {
 			const string_view& traceback = maybetraceback.value();
 			msg.assign(traceback.data(), traceback.size());
 		}
-#ifdef SOL_PRINT_ERRORS
-		std::cerr << "[sol2] An error occurred: ";
-		std::cerr << msg;
-		std::cerr << std::endl;
-#endif
+#if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
+		//std::cerr << "[sol2] An error occurred and was caught in traceback: ";
+		//std::cerr << msg;
+		//std::cerr << std::endl;
+#endif // Printing
 		return stack::push(L, msg);
 	}
 
@@ -20298,7 +20384,7 @@ namespace sol {
 		std::string err = "sol: ";
 		err += to_string(result.status());
 		err += " error";
-#ifndef SOL_NO_EXCEPTIONS
+#if !(defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS)
 		std::exception_ptr eptr = std::current_exception();
 		if (eptr) {
 			err += " with a ";
@@ -20327,12 +20413,12 @@ namespace sol {
 			string_view serr = stack::get<string_view>(L, result.stack_index());
 			err.append(serr.data(), serr.size());
 		}
-#ifdef SOL_PRINT_ERRORS
+#if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
 		std::cerr << "[sol2] An error occurred and has been passed to an error handler: ";
 		std::cerr << err;
 		std::cerr << std::endl;
 #endif
-#ifdef SOL_NO_EXCEPTIONS
+#if !(defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS)
 		// replacing information of stack error into pfr
 		int target = result.stack_index();
 		if (result.pop_count() > 0) {
@@ -20352,7 +20438,7 @@ namespace sol {
 	}
 
 	inline protected_function_result script_default_on_error(lua_State* L, protected_function_result pfr) {
-#ifdef SOL_DEFAULT_PASS_ON_ERROR
+#if defined(SOL_DEFAULT_PASS_ON_ERROR) && SOL_DEFAULT_PASS_ON_ERROR
 		return script_pass_on_error(L, std::move(pfr));
 #else
 		return script_throw_on_error(L, std::move(pfr));
@@ -20722,7 +20808,7 @@ namespace sol {
 			return safe_script_file(filename, env, script_default_on_error, mode);
 		}
 
-#ifdef SOL_SAFE_FUNCTION
+#if defined(SOL_SAFE_FUNCTION) && SOL_SAFE_FUNCTION
 		protected_function_result script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return safe_script(code, chunkname, mode);
 		}
@@ -21063,7 +21149,7 @@ namespace sol {
 		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_thread>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_thread(T&& r)
 		: base_t(std::forward<T>(r)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_thread>(lua_state(), -1, handler);
@@ -21078,7 +21164,7 @@ namespace sol {
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_thread(lua_State* L, T&& r)
 		: base_t(L, std::forward<T>(r)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_thread>(lua_state(), -1, handler);
@@ -21086,14 +21172,14 @@ namespace sol {
 		}
 		basic_thread(lua_State* L, int index = -1)
 		: base_t(L, index) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_thread>(L, index, handler);
 #endif // Safety
 		}
 		basic_thread(lua_State* L, ref_index index)
 		: base_t(L, index) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_thread>(lua_state(), -1, handler);
@@ -21107,7 +21193,7 @@ namespace sol {
 		}
 		basic_thread(lua_State* L, lua_thread_state actualthread)
 		: base_t(L, -stack::push(L, actualthread)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_thread>(lua_state(), -1, handler);
 #endif // Safety
@@ -21257,7 +21343,7 @@ namespace sol {
 		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_coroutine>>, meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>>, meta::neg<std::is_same<base_t, stack_reference>>, meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_coroutine(T&& r) noexcept
 			: base_t(std::forward<T>(r)), error_handler(detail::get_default_handler<reference, is_main_threaded<base_t>::value>(r.lua_state())) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			if (!is_function<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				constructor_handler handler{};
@@ -21314,7 +21400,7 @@ namespace sol {
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_coroutine(lua_State* L, T&& r, handler_t eh)
 			: base_t(L, std::forward<T>(r)), error_handler(std::move(eh)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_coroutine>(lua_state(), -1, handler);
@@ -21340,7 +21426,7 @@ namespace sol {
 		}
 		basic_coroutine(lua_State* L, absolute_index index, handler_t eh)
 			: base_t(L, index), error_handler(std::move(eh)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_coroutine>(L, index, handler);
 #endif // Safety
@@ -21350,7 +21436,7 @@ namespace sol {
 		}
 		basic_coroutine(lua_State* L, raw_index index, handler_t eh)
 			: base_t(L, index), error_handler(std::move(eh)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_coroutine>(L, index, handler);
 #endif // Safety
@@ -21360,7 +21446,7 @@ namespace sol {
 		}
 		basic_coroutine(lua_State* L, ref_index index, handler_t eh)
 			: base_t(L, index), error_handler(std::move(eh)) {
-#ifdef SOL_SAFE_REFERENCES
+#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_coroutine>(lua_state(), -1, handler);
@@ -21465,14 +21551,14 @@ namespace sol {
 
 // end of sol/variadic_results.hpp
 
-#ifdef __GNUC__
+#if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #elif defined _MSC_VER
 #pragma warning( push )
 #endif // g++
 
-#ifdef SOL_INSIDE_UNREAL
-#ifdef SOL_INSIDE_UNREAL_REMOVED_CHECK
+#if defined(SOL_INSIDE_UNREAL) && SOL_INSIDE_UNREAL
+#if defined(SOL_INSIDE_UNREAL_REMOVED_CHECK) && SOL_INSIDE_UNREAL_REMOVED_CHECK
 #if DO_CHECK
 #define check(expr) { if(UNLIKELY(!(expr))) { FDebug::LogAssertFailedMessage( #expr, __FILE__, __LINE__ ); _DebugBreakAndPromptForRemote(); FDebug::AssertFailed( #expr, __FILE__, __LINE__ ); CA_ASSUME(false); } }
 #else
