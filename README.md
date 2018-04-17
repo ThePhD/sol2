@@ -1,4 +1,4 @@
-## Sol 2.19
+## Sol 2.20
 
 [![Join the chat in Discord: https://discord.gg/buxkYNT](https://img.shields.io/badge/Discord-Chat!-brightgreen.svg)](https://discord.gg/buxkYNT)
 
