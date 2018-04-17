@@ -49,7 +49,7 @@ namespace sol {
 	}
 
 	inline int default_at_panic(lua_State* L) {
-#ifdef SOL_NO_EXCEPTIONS
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS
 		(void)L;
 		return -1;
 #else
@@ -58,7 +58,7 @@ namespace sol {
 		if (message) {
 			std::string err(message, messagesize);
 			lua_settop(L, 0);
-#ifdef SOL_PRINT_ERRORS
+#if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
 			std::cerr << "[sol2] An error occurred and panic has been invoked: ";
 			std::cerr << err;
 			std::cerr << std::endl;
@@ -66,8 +66,8 @@ namespace sol {
 			throw error(err);
 		}
 		lua_settop(L, 0);
-		throw error(std::string("An unexpected error occurred and forced the lua state to call atpanic"));
-#endif
+		throw error(std::string("An unexpected error occurred and panic has been invoked"));
+#endif // Printing Errors
 	}
 
 	inline int default_traceback_error_handler(lua_State* L) {
@@ -83,11 +83,11 @@ namespace sol {
 			const string_view& traceback = maybetraceback.value();
 			msg.assign(traceback.data(), traceback.size());
 		}
-#ifdef SOL_PRINT_ERRORS
-		std::cerr << "[sol2] An error occurred: ";
-		std::cerr << msg;
-		std::cerr << std::endl;
-#endif
+#if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
+		//std::cerr << "[sol2] An error occurred and was caught in traceback: ";
+		//std::cerr << msg;
+		//std::cerr << std::endl;
+#endif // Printing
 		return stack::push(L, msg);
 	}
 
@@ -115,7 +115,7 @@ namespace sol {
 		std::string err = "sol: ";
 		err += to_string(result.status());
 		err += " error";
-#ifndef SOL_NO_EXCEPTIONS
+#if !(defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS)
 		std::exception_ptr eptr = std::current_exception();
 		if (eptr) {
 			err += " with a ";
@@ -144,12 +144,12 @@ namespace sol {
 			string_view serr = stack::get<string_view>(L, result.stack_index());
 			err.append(serr.data(), serr.size());
 		}
-#ifdef SOL_PRINT_ERRORS
+#if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
 		std::cerr << "[sol2] An error occurred and has been passed to an error handler: ";
 		std::cerr << err;
 		std::cerr << std::endl;
 #endif
-#ifdef SOL_NO_EXCEPTIONS
+#if !(defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS)
 		// replacing information of stack error into pfr
 		int target = result.stack_index();
 		if (result.pop_count() > 0) {
@@ -169,7 +169,7 @@ namespace sol {
 	}
 
 	inline protected_function_result script_default_on_error(lua_State* L, protected_function_result pfr) {
-#ifdef SOL_DEFAULT_PASS_ON_ERROR
+#if defined(SOL_DEFAULT_PASS_ON_ERROR) && SOL_DEFAULT_PASS_ON_ERROR
 		return script_pass_on_error(L, std::move(pfr));
 #else
 		return script_throw_on_error(L, std::move(pfr));

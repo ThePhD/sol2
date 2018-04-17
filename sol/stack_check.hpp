@@ -99,7 +99,7 @@ namespace stack {
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
 #if SOL_LUA_VERSION >= 503
-#ifdef SOL_STRINGS_ARE_NUMBERS
+#if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
 			int isnum = 0;
 			lua_tointegerx(L, index, &isnum);
 			const bool success = isnum != 0;
@@ -107,7 +107,7 @@ namespace stack {
 				// expected type, actual type
 				handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
 			}
-#else
+#elif (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS) && !(defined(SOL_NO_CHECK_NUMBER_PRECISION) && SOL_NO_CHECK_NUMBER_PRECISION)
 			// this check is precise, does not convert
 			if (lua_isinteger(L, index) == 1) {
 				return true;
@@ -115,12 +115,19 @@ namespace stack {
 			const bool success = false;
 			if (!success) {
 				// expected type, actual type
+				handler(L, index, type::number, type_of(L, index), "not a numeric (integral) type");
+			}
+#else
+			type t = type_of(L, index);
+			const bool success = t == type::number;
+#endif // If numbers are enabled, use the imprecise check
+			if (!success) {
+				// expected type, actual type
 				handler(L, index, type::number, type_of(L, index), "not a numeric type");
 			}
-#endif // If numbers are enabled, use the imprecise check
 			return success;
 #else
-#ifndef SOL_STRINGS_ARE_NUMBERS
+#if !defined(SOL_STRINGS_ARE_NUMBERS) || !SOL_STRINGS_ARE_NUMBERS
 			// must pre-check, because it will convert
 			type t = type_of(L, index);
 			if (t != type::number) {
@@ -131,17 +138,21 @@ namespace stack {
 #endif // Do not allow strings to be numbers
 			int isnum = 0;
 			const lua_Number v = lua_tonumberx(L, index, &isnum);
-			const bool success = isnum != 0 && static_cast<lua_Number>(llround(v)) == v;
+			const bool success = isnum != 0
+#if (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS) && !(defined(SOL_NO_CHECK_NUMBER_PRECISION) && SOL_NO_CHECK_NUMBER_PRECISION)
+				&& static_cast<lua_Number>(llround(v)) == v
+#endif // Safe numerics and number precision checking
+				;
 			if (!success) {
 				// expected type, actual type
-#ifndef SOL_STRINGS_ARE_NUMBERS
+#if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
 				handler(L, index, type::number, t, "not a numeric type");
 #else
 				handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
 #endif
 			}
 			return success;
-#endif
+#endif // Lua Version 5.3 versus others
 		}
 	};
 
@@ -150,7 +161,14 @@ namespace stack {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
-#ifndef SOL_STRINGS_ARE_NUMBERS
+#if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
+			bool success = lua_isnumber(L, index) == 1;
+			if (!success) {
+				// expected type, actual type
+				handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
+			}
+			return success;
+#else
 			type t = type_of(L, index);
 			bool success = t == type::number;
 			if (!success) {
@@ -158,14 +176,7 @@ namespace stack {
 				handler(L, index, type::number, t, "not a numeric type");
 			}
 			return success;
-#else
-			bool success = lua_isnumber(L, index) == 1;
-			if (!success) {
-				// expected type, actual type
-				handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
-			}
-			return success;
-#endif
+#endif // Strings are Numbers
 		}
 	};
 
@@ -424,7 +435,7 @@ namespace stack {
 
 		template <typename U, typename Handler>
 		static bool check(types<U>, lua_State* L, int index, type indextype, Handler&& handler, record& tracking) {
-#ifdef SOL_ENABLE_INTEROP
+#if defined(SOL_ENABLE_INTEROP) && SOL_ENABLE_INTEROP
 			userdata_checker<extensible<T>> uc;
 			(void)uc;
 			if (uc.check(L, index, indextype, handler, tracking)) {
@@ -577,8 +588,8 @@ namespace stack {
 		}
 	};
 
-#ifdef SOL_CXX17_FEATURES
-#ifdef SOL_STD_VARIANT
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	template <typename... Tn, typename C>
 	struct checker<std::variant<Tn...>, type::poly, C> {
 		typedef std::variant<Tn...> V;

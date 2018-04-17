@@ -41,7 +41,7 @@
 #include <functional>
 #include <string>
 #include <stdexcept>
-#ifdef SOL_NO_EXCEPTIONS
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS
 #include <cstdlib>
 #endif // Exceptions
 

@@ -54,7 +54,7 @@ namespace sol {
 		template <typename T>
 		decltype(auto) tagged_get(types<T>, int index_offset) const {
 			int target = index + index_offset;
-#ifdef SOL_SAFE_PROXIES
+#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES
 			if (!valid()) {
 				type t = type_of(L, target);
 				type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is not an error)");
@@ -73,7 +73,7 @@ namespace sol {
 
 		error tagged_get(types<error>, int index_offset) const {
 			int target = index + index_offset;
-#ifdef SOL_SAFE_PROXIES
+#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES
 			if (valid()) {
 				type t = type_of(L, target);
 				type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is an error)");

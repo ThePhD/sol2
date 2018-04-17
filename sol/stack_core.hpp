@@ -88,7 +88,7 @@ namespace sol {
 
 		inline void* align_usertype_pointer(void* ptr) {
 			typedef std::integral_constant<bool,
-#ifdef SOL_NO_MEMORY_ALIGNMENT
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
 				(std::alignment_of<void*>::value > 1)
@@ -104,7 +104,7 @@ namespace sol {
 
 		inline void* align_usertype_unique_destructor(void* ptr) {
 			typedef std::integral_constant<bool,
-#ifdef SOL_NO_MEMORY_ALIGNMENT
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
 				(std::alignment_of<unique_destructor>::value > 1)
@@ -123,7 +123,7 @@ namespace sol {
 		template <typename T, bool pre_aligned = false>
 		inline void* align_usertype_unique(void* ptr) {
 			typedef std::integral_constant<bool,
-#ifdef SOL_NO_MEMORY_ALIGNMENT
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
 				(std::alignment_of<T>::value > 1)
@@ -144,7 +144,7 @@ namespace sol {
 		template <typename T>
 		inline void* align_user(void* ptr) {
 			typedef std::integral_constant<bool,
-#ifdef SOL_NO_MEMORY_ALIGNMENT
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
 				(std::alignment_of<T>::value > 1)
@@ -161,7 +161,7 @@ namespace sol {
 		template <typename T>
 		inline T** usertype_allocate_pointer(lua_State* L) {
 			typedef std::integral_constant<bool,
-#ifdef SOL_NO_MEMORY_ALIGNMENT
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
 				(std::alignment_of<T*>::value > 1)
@@ -198,7 +198,7 @@ namespace sol {
 		template <typename T>
 		inline T* usertype_allocate(lua_State* L) {
 			typedef std::integral_constant<bool,
-#ifdef SOL_NO_MEMORY_ALIGNMENT
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
 				(std::alignment_of<T*>::value > 1 || std::alignment_of<T>::value > 1)
@@ -278,7 +278,7 @@ namespace sol {
 		template <typename T, typename Real>
 		inline Real* usertype_unique_allocate(lua_State* L, T**& pref, unique_destructor*& dx) {
 			typedef std::integral_constant<bool,
-#ifdef SOL_NO_MEMORY_ALIGNMENT
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
 				(std::alignment_of<T*>::value > 1 || std::alignment_of<unique_destructor>::value > 1 || std::alignment_of<Real>::value > 1)
@@ -352,7 +352,7 @@ namespace sol {
 		template <typename T>
 		inline T* user_allocate(lua_State* L) {
 			typedef std::integral_constant<bool,
-#ifdef SOL_NO_MEMORY_ALIGNMENT
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
 				(std::alignment_of<T>::value > 1)
@@ -705,7 +705,7 @@ namespace sol {
 
 		namespace stack_detail {
 
-#ifdef SOL_SAFE_GETTER
+#if defined(SOL_SAFE_GETTER) && SOL_SAFE_GETTER
 			template <typename T>
 			inline auto tagged_get(types<T>, lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_get<T>(L, index, tracking)) {
 				auto op = check_get<T>(L, index, type_panic_c_str, tracking);
@@ -782,7 +782,7 @@ namespace sol {
 
 		template <typename T>
 		inline decltype(auto) get_usertype(lua_State* L, int index, record& tracking) {
-#ifdef SOL_SAFE_GETTER
+#if defined(SOL_SAFE_GETTER) && SOL_SAFE_GETTER
 			return stack_detail::tagged_get(types<std::conditional_t<std::is_pointer<T>::value, detail::as_pointer_tag<std::remove_pointer_t<T>>, detail::as_value_tag<T>>>(), L, index, tracking);
 #else
 			return stack_detail::unchecked_get<std::conditional_t<std::is_pointer<T>::value, detail::as_pointer_tag<std::remove_pointer_t<T>>, detail::as_value_tag<T>>>(L, index, tracking);

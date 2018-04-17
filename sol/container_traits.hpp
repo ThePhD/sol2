@@ -596,7 +596,7 @@ namespace sol {
 			};
 
 			static auto& get_src(lua_State* L) {
-#ifdef SOL_SAFE_USERTYPE
+#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
 				auto p = stack::check_get<T*>(L, 1);
 				if (!p) {
 					luaL_error(L, "sol: 'self' is not of type '%s' (pass 'self' as first argument with ':' or call on proper type)", detail::demangle<T>().c_str());
@@ -1313,7 +1313,7 @@ namespace sol {
 
 			static auto& get_src(lua_State* L) {
 				auto p = stack::check_get<T*>(L, 1);
-#ifdef SOL_SAFE_USERTYPE
+#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
 				if (!p) {
 					luaL_error(L, "sol: 'self' is not of type '%s' (pass 'self' as first argument with ':' or call on proper type)", detail::demangle<T>().c_str());
 				}
@@ -1438,7 +1438,11 @@ namespace sol {
 			}
 
 			static std::ptrdiff_t index_adjustment(lua_State*, T&) {
+#if defined(SOL_CONTAINERS_START_INDEX)
+				return (SOL_CONTAINERS_START) == 0 ? 0 : -(SOL_CONTAINERS_START);
+#else
 				return -1;
+#endif
 			}
 
 			static iterator begin(lua_State*, T& self) {

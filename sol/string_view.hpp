@@ -27,16 +27,16 @@
 #include "feature_test.hpp"
 #include <cstddef>
 #include <string>
-#ifdef SOL_CXX17_FEATURES
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #include <string_view>
 #endif // C++17 features
 #include <functional>
-#ifdef SOL_USE_BOOST
+#if defined(SOL_USE_BOOST) && SOL_USE_BOOST
 #include <boost/functional/hash.hpp>
 #endif
 
 namespace sol {
-#ifdef SOL_CXX17_FEATURES
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 	template <typename C, typename T = std::char_traits<C>>
 	using basic_string_view = std::basic_string_view<C, T>;
 	typedef std::string_view string_view;
@@ -139,7 +139,7 @@ namespace sol {
 		}
 
 		result_type operator()(const argument_type& r) const {
-#ifdef SOL_USE_BOOST
+#if defined(SOL_USE_BOOST) && SOL_USE_BOOST
 			return boost::hash_range(r.begin(), r.end());
 #else
 			// Modified, from libstdc++

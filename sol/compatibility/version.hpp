@@ -26,15 +26,15 @@
 
 #include "../feature_test.hpp"
 
-#if defined(SOL_USING_CXX_LUA)
+#if defined(SOL_USING_CXX_LUA) && SOL_USING_CXX_LUA
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
-#ifdef SOL_USING_CXX_LUAJIT
+#if defined(SOL_USING_CXX_LUAJIT) && SOL_USING_CXX_LUAJIT
 #include <luajit.h>
 #endif // C++ LuaJIT ... whatever that means
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_EXCEPTIONS_ALWAYS_UNSAFE)
-#define SOL_EXCEPTIONS_SAFE_PROPAGATION
+#if (!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !(SOL_EXCEPTIONS_SAFE_PROPAGATION)) && (!defined(SOL_EXCEPTIONS_ALWAYS_UNSAFE) || !(SOL_EXCEPTIONS_ALWAYS_UNSAFE))
+#define SOL_EXCEPTIONS_SAFE_PROPAGATION 1
 #endif // Exceptions can be propagated safely using C++-compiled Lua
 #else
 #include <lua.hpp>
@@ -51,7 +51,7 @@
 #define SOL_LUA_VERSION LUA_VERSION_NUM
 #elif defined(LUA_VERSION_NUM) && LUA_VERSION_NUM == 501
 #define SOL_LUA_VERSION LUA_VERSION_NUM
-#elif !defined(LUA_VERSION_NUM)
+#elif !defined(LUA_VERSION_NUM) || !(LUA_VERSION_NUM)
 // Definitely 5.0
 #define SOL_LUA_VERSION 500
 #else

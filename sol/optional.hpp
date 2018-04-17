@@ -26,7 +26,7 @@
 
 #include "compatibility.hpp"
 #include "in_place.hpp"
-#if defined(SOL_USE_BOOST)
+#if defined(SOL_USE_BOOST) && SOL_USE_BOOST
 #include <boost/optional.hpp>
 #else
 #include "optional_implementation.hpp"
@@ -34,7 +34,7 @@
 
 namespace sol {
 
-#if defined(SOL_USE_BOOST)
+#if defined(SOL_USE_BOOST) && SOL_USE_BOOST
 	template <typename T>
 	using optional = boost::optional<T>;
 	using nullopt_t = boost::none_t;

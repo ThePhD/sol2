@@ -32,15 +32,17 @@
 #include "feature_test.hpp"
 #include "compatibility/version.hpp"
 
-#ifndef SOL_NO_COMPAT
+#if !defined(SOL_NO_COMPAT) || !(SOL_NO_COMPAT)
 
-#if defined(SOL_USING_CXX_LUA)
+#if defined(SOL_USING_CXX_LUA) && SOL_USING_CXX_LUA
 #ifndef COMPAT53_LUA_CPP
 #define COMPAT53_LUA_CPP 1
+#endif // Build Lua Compat layer as C++
 #endif
-#endif
-
-#include "compatibility//compat-5.3.h"
+#ifndef COMPAT53_INCLUDE_SOURCE
+#define COMPAT53_INCLUDE_SOURCE 1
+#endif // Build Compat Layer Inline
+#include "compatibility/compat-5.3.h"
 
 #endif // SOL_NO_COMPAT
 

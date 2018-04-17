@@ -31,7 +31,7 @@
 namespace sol {
 	namespace detail {
 		const bool default_safe_function_calls =
-#ifdef SOL_SAFE_FUNCTION_CALLS
+#if defined(SOL_SAFE_FUNCTION_CALLS) && SOL_SAFE_FUNCTION_CALLS
 			true;
 #else
 			false;

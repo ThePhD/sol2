@@ -7,15 +7,23 @@ import datetime as dt
 
 # python 3 compatibility
 try:
-    import cStringIO as sstream
+	import cStringIO as sstream
 except ImportError:
-    from io import StringIO
+	from io import StringIO
 
 description = "Converts sol to a single file for convenience."
 
 # command line parser
-parser = argparse.ArgumentParser(usage='%(prog)s [options...]', description=description)
-parser.add_argument('--output', '-o', nargs='+', help='name and location of where to place file (and forward declaration file)', metavar='file', default='sol.hpp')
+parser = argparse.ArgumentParser(
+    usage='%(prog)s [options...]', description=description)
+parser.add_argument(
+    '--output',
+    '-o',
+    nargs='+',
+    help=
+    'name and location of where to place file (and forward declaration file)',
+    metavar='file',
+    default='sol.hpp')
 parser.add_argument('--quiet', help='suppress all output', action='store_true')
 args = parser.parse_args()
 
@@ -23,9 +31,9 @@ single_file = ''
 forward_single_file = ''
 single_file = args.output[0]
 if len(args.output) > 1:
-	forward_single_file = args.output[1] 
+	forward_single_file = args.output[1]
 else:
-	a,b = os.path.splitext(single_file)
+	a, b = os.path.splitext(single_file)
 	forward_single_file = a + '_forward' + b
 script_path = os.path.normpath(os.path.dirname(os.path.realpath(__file__)))
 working_dir = os.getcwd()
@@ -67,84 +75,100 @@ module_path = os.path.join(script_path)
 includes = set([])
 standard_include = re.compile(r'#include <(.*?)>')
 local_include = re.compile(r'#(\s*?)include "(.*?)"')
+project_include = re.compile(r'#(\s*?)include <sol/(.*?)>')
+pragma_once_cpp = re.compile(r'(\s*)#(\s*)pragma(\s+)once')
 ifndef_cpp = re.compile(r'#ifndef SOL_.*?_HPP')
 define_cpp = re.compile(r'#define SOL_.*?_HPP')
 endif_cpp = re.compile(r'#endif // SOL_.*?_HPP')
 
-def get_include(line, base_path):
-    local_match = local_include.match(line)
-    if local_match:
-        # local include found
-        full_path = os.path.normpath(os.path.join(base_path, local_match.group(2))).replace('\\', '/')
-        return full_path
 
-    return None
+def get_include(line, base_path):
+	local_match = local_include.match(line)
+	if local_match:
+		# local include found
+		full_path = os.path.normpath(
+		    os.path.join(base_path, local_match.group(2))).replace(
+		        '\\', '/')
+		return full_path
+	project_match = project_include.match(line)
+	if project_match:
+		# local include found
+		full_path = os.path.normpath(
+		    os.path.join(base_path, project_match.group(2))).replace(
+		        '\\', '/')
+		return full_path
+	return None
 
 
 def is_include_guard(line):
-    return ifndef_cpp.match(line) or define_cpp.match(line) or endif_cpp.match(line)
+	return ifndef_cpp.match(line) or define_cpp.match(
+	    line) or endif_cpp.match(line) or pragma_once_cpp.match(line)
+
 
 def get_revision():
-    return os.popen('git rev-parse --short HEAD').read().strip()
+	return os.popen('git rev-parse --short HEAD').read().strip()
+
 
 def get_version():
-    return os.popen('git describe --tags --abbrev=0').read().strip()
+	return os.popen('git describe --tags --abbrev=0').read().strip()
+
 
 def process_file(filename, out):
-    global includes
-    filename = os.path.normpath(filename)
-    relativefilename = filename.replace(script_path + os.sep, "").replace("\\", "/")
+	global includes
+	filename = os.path.normpath(filename)
+	relativefilename = filename.replace(script_path + os.sep, "").replace(
+	    "\\", "/")
 
-    if filename in includes:
-        return
+	if filename in includes:
+		return
 
-    includes.add(filename)
+	includes.add(filename)
 
-    if not args.quiet:
-        print('processing {}'.format(filename))
-    
-    out.write('// beginning of {}\n\n'.format(relativefilename))
-    empty_line_state = True
+	if not args.quiet:
+		print('processing {}'.format(filename))
 
-    with open(filename, 'r', encoding='utf-8') as f:
-        for line in f:
-            # skip comments
-            if line.startswith('//'):
-                continue
+	out.write('// beginning of {}\n\n'.format(relativefilename))
+	empty_line_state = True
 
-            # skip include guard non-sense
-            if is_include_guard(line):
-                continue
+	with open(filename, 'r', encoding='utf-8') as f:
+		for line in f:
+			# skip comments
+			if line.startswith('//'):
+				continue
 
-            # get relative directory
-            base_path = os.path.dirname(filename)
+			# skip include guard non-sense
+			if is_include_guard(line):
+				continue
 
-            # check if it's a standard file
-            std = standard_include.search(line)
-            if std:
-                std_file = os.path.join('std', std.group(0))
-                if std_file in includes:
-                    continue
-                includes.add(std_file)
+			# get relative directory
+			base_path = os.path.dirname(filename)
 
-            # see if it's an include file
-            name = get_include(line, base_path)
+			# check if it's a standard file
+			std = standard_include.search(line)
+			if std:
+				std_file = os.path.join('std', std.group(0))
+				if std_file in includes:
+					continue
+				includes.add(std_file)
 
-            if name:
-                process_file(name, out)
-                continue
+			# see if it's an include file
+			name = get_include(line, base_path)
 
-            empty_line = len(line.strip()) == 0
+			if name:
+				process_file(name, out)
+				continue
 
-            if empty_line and empty_line_state:
-                continue
+			empty_line = len(line.strip()) == 0
 
-            empty_line_state = empty_line
+			if empty_line and empty_line_state:
+				continue
 
-            # line is fine
-            out.write(line)
+			empty_line_state = empty_line
 
-    out.write('// end of {}\n\n'.format(relativefilename))
+			# line is fine
+			out.write(line)
+
+	out.write('// end of {}\n\n'.format(relativefilename))
 
 
 version = get_version()
@@ -153,49 +177,61 @@ include_guard = 'SOL_SINGLE_INCLUDE_HPP'
 forward_include_guard = 'SOL_SINGLE_INCLUDE_FORWARD_HPP'
 
 processed_files = [os.path.join(script_path, x) for x in ['sol.hpp']]
-forward_processed_files = [os.path.join(script_path, x) for x in ['sol/forward.hpp']]
+forward_processed_files = [
+    os.path.join(script_path, x) for x in ['sol/forward.hpp']
+]
 result = ''
 forward_result = ''
 
-
 if not args.quiet:
-    print('Current version: {version} (revision {revision})\n'.format(version = version, revision = revision))
-    print('Creating single header for sol')
+	print('Current version: {version} (revision {revision})\n'.format(
+	    version=version, revision=revision))
+	print('Creating single header for sol')
 
 ss = StringIO()
-ss.write(intro.format(time=dt.datetime.utcnow(), revision=revision, version=version, guard=include_guard))
+ss.write(
+    intro.format(
+        time=dt.datetime.utcnow(),
+        revision=revision,
+        version=version,
+        guard=include_guard))
 for processed_file in processed_files:
-    process_file(processed_file, ss)
+	process_file(processed_file, ss)
 
 ss.write('#endif // {}\n'.format(include_guard))
 result = ss.getvalue()
 ss.close()
 
 if not args.quiet:
-    print('finished creating single header for sol\n')
+	print('finished creating single header for sol\n')
 
 if not args.quiet:
-    print('Creating single forward declaration header for sol')
+	print('Creating single forward declaration header for sol')
 
 includes = set([])
 forward_ss = StringIO()
-forward_ss.write(intro.format(time=dt.datetime.utcnow(), revision=revision, version=version, guard=forward_include_guard))
+forward_ss.write(
+    intro.format(
+        time=dt.datetime.utcnow(),
+        revision=revision,
+        version=version,
+        guard=forward_include_guard))
 for forward_processed_file in forward_processed_files:
-    process_file(forward_processed_file, forward_ss)
+	process_file(forward_processed_file, forward_ss)
 
 forward_ss.write('#endif // {}\n'.format(forward_include_guard))
 forward_result = forward_ss.getvalue()
 forward_ss.close()
 
 if not args.quiet:
-    print('finished creating single forward declaration header for sol\n')
+	print('finished creating single forward declaration header for sol\n')
 
 with open(single_file, 'w', encoding='utf-8') as f:
-    if not args.quiet:
-        print('writing {}...'.format(single_file))
-    f.write(result)
+	if not args.quiet:
+		print('writing {}...'.format(single_file))
+	f.write(result)
 
 with open(forward_single_file, 'w', encoding='utf-8') as f:
-    if not args.quiet:
-        print('writing {}...'.format(forward_single_file))
-    f.write(forward_result)
+	if not args.quiet:
+		print('writing {}...'.format(forward_single_file))
+	f.write(forward_result)

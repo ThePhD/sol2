@@ -120,7 +120,7 @@ namespace sol {
 	inline int c_call(lua_State* L) {
 		typedef meta::unqualified_t<F> Fu;
 		typedef std::integral_constant<bool, std::is_same<Fu, lua_CFunction>::value
-#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+#if defined(SOL_NOEXCEPT_FUNCTION_TYPE) && SOL_NOEXCEPT_FUNCTION_TYPE
 			|| std::is_same<Fu, detail::lua_CFunction_noexcept>::value
 #endif
 		> is_raw;

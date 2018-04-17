@@ -29,7 +29,7 @@
 
 namespace sol {
 
-#ifdef SOL_CXX17_FEATURES
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 	using in_place_t = std::in_place_t;
 	constexpr std::in_place_t in_place{};
 	constexpr std::in_place_t in_place_of{};

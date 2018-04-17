@@ -35,9 +35,9 @@
 #include <type_traits>
 #include <cassert>
 #include <limits>
-#ifdef SOL_CXX17_FEATURES
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #include <string_view>
-#ifdef SOL_STD_VARIANT
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 #include <variant>
 #endif // Can use variant
 #endif // C++17
@@ -214,19 +214,19 @@ namespace stack {
 				lua_pushinteger(L, static_cast<lua_Integer>(value));
 				return 1;
 			}
-#endif
-#if defined(SOL_SAFE_NUMERICS) && !defined(SOL_NO_CHECK_NUMBER_PRECISION)
+#endif // Lua 5.3 and above
+#if (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS) && !(defined(SOL_NO_CHECK_NUMBER_PRECISION) && SOL_NO_CHECK_NUMBER_PRECISION)
 			if (static_cast<T>(llround(static_cast<lua_Number>(value))) != value) {
-#ifdef SOL_NO_EXCEPTIONS
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS
 				// Is this really worth it?
 				assert(false && "integer value will be misrepresented in lua");
 				lua_pushnumber(L, static_cast<lua_Number>(value));
 				return 1;
 #else
 				throw error(detail::direct_error, "integer value will be misrepresented in lua");
-#endif
+#endif // No Exceptions
 			}
-#endif
+#endif // Safe Numerics and Number Precision Check
 			lua_pushnumber(L, static_cast<lua_Number>(value));
 			return 1;
 		}
@@ -288,7 +288,7 @@ namespace stack {
 					}
 					lua_pop(L, 1 + p);
 				}
-#endif
+#endif // Lua Version 5.3 and others
 			}
 			// TODO: figure out a better way to do this...?
 			//set_field(L, -1, cont.size());
@@ -388,7 +388,7 @@ namespace stack {
 		}
 	};
 
-#ifdef SOL_NOEXCEPT_FUNCTION_TYPE
+#if defined(SOL_NOEXCEPT_FUNCTION_TYPE) && SOL_NOEXCEPT_FUNCTION_TYPE
 	template <>
 	struct pusher<std::remove_pointer_t<detail::lua_CFunction_noexcept>> {
 		static int push(lua_State* L, detail::lua_CFunction_noexcept func, int n = 0) {
@@ -988,8 +988,8 @@ namespace stack {
 		}
 	};
 
-#ifdef SOL_CXX17_FEATURES
-#ifdef SOL_STD_VARIANT
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	namespace stack_detail {
 
 		struct push_function {

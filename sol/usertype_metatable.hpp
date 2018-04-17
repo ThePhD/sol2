@@ -216,7 +216,7 @@ namespace sol {
 		template <typename T, bool is_index>
 		inline int indexing_fail(lua_State* L) {
 			if (is_index) {
-#if 0 //def SOL_SAFE_USERTYPE
+#if 0 //defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
 				auto maybeaccessor = stack::get<optional<string_view>>(L, is_index ? -1 : -2);
 				string_view accessor = maybeaccessor.value_or(string_detail::string_shim("(unknown)"));
 				return luaL_error(L, "sol: attempt to index (get) nil value \"%s\" on userdata (bad (misspelled?) key name or does not exist)", accessor.data());
@@ -253,14 +253,14 @@ namespace sol {
 							return;
 						}
 						string_view& accessor_view = maybeaccessor.value();
-#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
 						auto preexistingit = functions.find(accessor_view, string_view_hash(), std::equal_to<string_view>());
 #else
 						std::string accessor(accessor_view.data(), accessor_view.size());
 						auto preexistingit = functions.find(accessor);
 #endif
 						if (preexistingit == functions.cend()) {
-#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
 							std::string accessor(accessor_view.data(), accessor_view.size());
 #endif
 							functions.emplace_hint(preexistingit, std::move(accessor), object(L, 3));
@@ -282,14 +282,14 @@ namespace sol {
 					mapping_t& mapping = umc.mapping;
 					std::vector<object>& runtime = umc.runtime;
 					int target = static_cast<int>(runtime.size());
-#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
 					auto preexistingit = mapping.find(accessor_view, string_view_hash(), std::equal_to<string_view>());
 #else
 					std::string accessor(accessor_view.data(), accessor_view.size());
 					auto preexistingit = mapping.find(accessor);
 #endif
 					if (preexistingit == mapping.cend()) {
-#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
 						std::string accessor(accessor_view.data(), accessor_view.size());
 #endif
 						runtime.emplace_back(L, 3);
@@ -486,7 +486,7 @@ namespace sol {
 					switch (mf) {
 					case meta_function::construct:
 						if (properties[i]) {
-#ifndef SOL_NO_EXCEPTIONS
+#if !(defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS)
 							throw error("sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
 #else
 							assert(false && "sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
@@ -495,7 +495,7 @@ namespace sol {
 						break;
 					case meta_function::garbage_collect:
 						if (destructfunc != nullptr) {
-#ifndef SOL_NO_EXCEPTIONS
+#if !(defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS)
 							throw error("sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
 #else
 							assert(false && "sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
@@ -576,7 +576,7 @@ namespace sol {
 			int runtime_target = 0;
 			usertype_detail::member_search member = nullptr;
 			{
-#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
 				string_view name = stack::get<string_view>(L, keyidx);
 				auto memberit = f.mapping.find(name, string_view_hash(), std::equal_to<string_view>());
 #else

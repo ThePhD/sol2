@@ -151,7 +151,7 @@ namespace sol {
 		template <typename T, typename Regs>
 		inline void make_length_op_const(std::true_type, Regs& l, int& index) {
 			const char* name = to_string(meta_function::length).c_str();
-#ifdef __clang__
+#if defined(__clang__)
 			l[index] = luaL_Reg{ name, &c_call<decltype(&T::size), &T::size> };
 #else
 			typedef decltype(std::declval<T>().size()) R;
@@ -164,7 +164,7 @@ namespace sol {
 		template <typename T, typename Regs>
 		inline void make_length_op_const(std::false_type, Regs& l, int& index) {
 			const char* name = to_string(meta_function::length).c_str();
-#ifdef __clang__
+#if defined(__clang__)
 			l[index] = luaL_Reg{ name, &c_call<decltype(&T::size), &T::size> };
 #else
 			typedef decltype(std::declval<T>().size()) R;

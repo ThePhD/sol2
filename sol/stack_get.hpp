@@ -36,9 +36,9 @@
 #include <utility>
 #include <cstdlib>
 #include <cmath>
-#ifdef SOL_CXX17_FEATURES
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #include <string_view>
-#ifdef SOL_STD_VARIANT
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 #include <variant>
 #endif // Apple clang screwed up
 #endif // C++17
@@ -712,7 +712,7 @@ namespace stack {
 	struct getter<detail::as_value_tag<T>> {
 		static T* get_no_lua_nil(lua_State* L, int index, record& tracking) {
 			void* memory = lua_touserdata(L, index);
-#ifdef SOL_ENABLE_INTEROP
+#if defined(SOL_ENABLE_INTEROP) && SOL_ENABLE_INTEROP
 			userdata_getter<extensible<T>> ug;
 			(void)ug;
 			auto ugr = ug.get(L, index, memory, tracking);
@@ -842,8 +842,8 @@ namespace stack {
 		}
 	};
 
-#ifdef SOL_CXX17_FEATURES
-#ifdef SOL_STD_VARIANT
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	template <typename... Tn>
 	struct getter<std::variant<Tn...>> {
 		typedef std::variant<Tn...> V;

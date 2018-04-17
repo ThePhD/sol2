@@ -63,7 +63,7 @@ namespace sol {
 			auto maybenameview = stack::check_get<string_view>(L, 2);
 			if (maybenameview) {
 				const string_view& nameview = *maybenameview;
-#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
 				auto it = calls.find(nameview, string_view_hash(), std::equal_to<string_view>());
 #else
 				std::string name(nameview.data(), nameview.size());

@@ -70,7 +70,7 @@ namespace sol {
 			string_view accessor = stack::get<string_view>(L, keyidx);
 			variable_wrapper* varwrap = nullptr;
 			{
-#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
 				string_view& accessorkey = accessor;
 				auto vit = variables.find(accessorkey, string_view_hash(), std::equal_to<string_view>());
 #else
@@ -86,7 +86,7 @@ namespace sol {
 			}
 			bool function_failed = false;
 			{
-#ifdef SOL_UNORDERED_MAP_COMPATIBLE_HASH
+#if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
 				string_view& accessorkey = accessor;
 				auto fit = functions.find(accessorkey, string_view_hash(), std::equal_to<string_view>());
 #else
@@ -453,19 +453,19 @@ namespace sol {
 						switch (mf) {
 						case meta_function::construct:
 							if (prop) {
-#ifndef SOL_NO_EXCEPTIONS
-								throw error("sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
-#else
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS
 								assert(false && "sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
+#else
+								throw error("sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
 #endif
 							}
 							break;
 						case meta_function::garbage_collect:
 							if (prop) {
-#ifndef SOL_NO_EXCEPTIONS
-								throw error("sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
-#else
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS
 								assert(false && "sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
+#else
+								throw error("sol: 2 separate constructor (new) functions were set on this type. Please specify only 1 sol::meta_function::construct/'new' type AND wrap the function in a sol::factories/initializers call, as shown by the documentation and examples, otherwise you may create problems");
 #endif
 							}
 							return;

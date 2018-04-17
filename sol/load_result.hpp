@@ -48,7 +48,7 @@ namespace sol {
 
 		template <typename T>
 		decltype(auto) tagged_get(types<T>) const {
-#ifdef SOL_SAFE_PROXIES
+#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES != 0
 			if (!valid()) {
 				type_panic_c_str(L, index, type_of(L, index), type::none);
 			}
@@ -64,7 +64,7 @@ namespace sol {
 		}
 
 		error tagged_get(types<error>) const {
-#ifdef SOL_SAFE_PROXIES
+#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES != 0
 			if (valid()) {
 				type_panic_c_str(L, index, type_of(L, index), type::none, "expecting an error type (a string, from Lua)");
 			}

@@ -35,7 +35,7 @@ namespace sol {
 
 	class error : public std::runtime_error {
 	private:
-		// Because VC++ is a fuccboi
+		// Because VC++ is upsetting, most of the time!
 		std::string w;
 
 	public:
