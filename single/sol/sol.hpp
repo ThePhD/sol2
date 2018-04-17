@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-04-17 16:28:40.050022 UTC
-// This header was generated with sol v2.19.5 (revision 2de6447)
+// Generated 2018-04-17 19:24:12.677692 UTC
+// This header was generated with sol v2.19.5 (revision 818f766)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1885,8 +1885,10 @@ namespace sol {
 
 #ifdef LUAJIT_VERSION
 #ifndef SOL_LUAJIT
-#define SOL_LUAJIT
+#define SOL_LUAJIT 1
+#ifndef SOL_LUAJIT_VERSION
 #define SOL_LUAJIT_VERSION LUAJIT_VERSION_NUM
+#endif // SOL_LUAJIT_VERSION definition, if not present
 #endif // sol luajit
 #endif // luajit
 
@@ -20424,7 +20426,7 @@ namespace sol {
 		if (result.pop_count() > 0) {
 			stack::remove(L, target, result.pop_count());
 		}
-		int pushed = stack::push(L, err);
+		stack::push(L, err);
 		int top = lua_gettop(L);
 		int towards = top - target;
 		if (towards != 0) {
