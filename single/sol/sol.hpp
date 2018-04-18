@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-04-17 20:25:14.849991 UTC
-// This header was generated with sol v2.20.0 (revision 97525d8)
+// Generated 2018-04-18 00:09:00.273384 UTC
+// This header was generated with sol v2.19.5 (revision c72a012)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -20420,7 +20420,6 @@ namespace sol {
 		std::cerr << err;
 		std::cerr << std::endl;
 #endif
-#if !(defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS)
 		// replacing information of stack error into pfr
 		int target = result.stack_index();
 		if (result.pop_count() > 0) {
@@ -20432,11 +20431,12 @@ namespace sol {
 		if (towards != 0) {
 			lua_rotate(L, top, towards);
 		}
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS
+		return result;
 #else
 		// just throw our error
 		throw error(detail::direct_error, err);
-#endif
-		return result;
+#endif // If exceptions are allowed
 	}
 
 	inline protected_function_result script_default_on_error(lua_State* L, protected_function_result pfr) {
