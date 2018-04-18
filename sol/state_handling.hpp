@@ -149,7 +149,6 @@ namespace sol {
 		std::cerr << err;
 		std::cerr << std::endl;
 #endif
-#if !(defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS)
 		// replacing information of stack error into pfr
 		int target = result.stack_index();
 		if (result.pop_count() > 0) {
@@ -161,11 +160,12 @@ namespace sol {
 		if (towards != 0) {
 			lua_rotate(L, top, towards);
 		}
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS
+		return result;
 #else
 		// just throw our error
 		throw error(detail::direct_error, err);
-#endif
-		return result;
+#endif // If exceptions are allowed
 	}
 
 	inline protected_function_result script_default_on_error(lua_State* L, protected_function_result pfr) {

@@ -23,7 +23,7 @@
 # # # # sol2 tests
 
 if (CMAKE_GENERATOR MATCHES "Visual Studio 14 2015")
-	find_package(Catch 1.1.12 REQUIRED)
+	find_package(Catch 1.12.1 REQUIRED)
 else()
 	find_package(Catch 2.1.2 REQUIRED)
 endif()
@@ -71,8 +71,6 @@ function(CREATE_TEST test_target_name test_name is_single)
 		target_compile_definitions(${test_target_name} 
 			PRIVATE SOL2_CI)
 	endif()
-	target_compile_features(${test_target_name}
-		PRIVATE ${CXX_FEATURES})
 	if (CMAKE_DL_LIBS)
 		target_link_libraries(${test_target_name}
 			${CMAKE_DL_LIBS})

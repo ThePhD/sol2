@@ -2,7 +2,7 @@
 #include <sol.hpp>
 
 // Something that can't be collided with
-constexpr static const auto& script_key = "GlobalResource.MySpecialIdentifier123";
+static const auto& script_key = "GlobalResource.MySpecialIdentifier123";
 
 struct GlobalResource {
 	int value = 2;
