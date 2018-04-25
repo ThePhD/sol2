@@ -395,6 +395,10 @@ namespace sol {
 		as_table_t(Arg&& arg)
 		: source(std::forward<Arg>(arg)) {
 		}
+		template <typename Arg, size_t N, meta::enable<meta::neg<std::is_same<meta::unqualified_t<Arg>, as_table_t>>, meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<Arg>>>> = meta::enabler>
+		as_table_t(Arg (&arg)[N]) {
+			std::copy(std::begin(arg),std::end(arg),std::begin(source));
+		}
 		template <typename Arg0, typename Arg1, typename... Args>
 		as_table_t(Arg0&& arg0, Arg1&& arg1, Args&&... args)
 		: source(std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...) {

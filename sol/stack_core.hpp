@@ -529,6 +529,11 @@ namespace sol {
 				return static_cast<int>(c.size());
 			}
 
+			template <typename C, size_t N>
+			static int get_size_hint(const C (&c)[N]) {
+				return static_cast<int>(N);
+			}
+
 			template <typename V, typename Al>
 			static int get_size_hint(const std::forward_list<V, Al>&) {
 				// forward_list makes me sad
