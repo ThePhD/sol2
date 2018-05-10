@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-04-18 00:12:41.772355 UTC
-// This header was generated with sol v2.20.0 (revision 8b77411)
+// Generated 2018-05-10 11:31:28.013615 UTC
+// This header was generated with sol v2.19.5 (revision fd58e7f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4667,9 +4667,13 @@ namespace sol {
 		return false;
 	}
 	typedef lua_nil_t nil_t;
-#if !defined(SOL_NO_NIL)
+#if !defined(SOL_NO_NIL) || (SOL_NO_NIL == 0)
 	const nil_t nil{};
 #endif
+
+	namespace detail {
+		struct non_lua_nil_t {};
+	}
 
 	struct metatable_t {};
 	const metatable_t metatable_key = {};
@@ -5420,6 +5424,9 @@ namespace sol {
 
 		template <>
 		struct lua_type_of<nullopt_t> : std::integral_constant<type, type::lua_nil> {};
+
+		template <>
+		struct lua_type_of<detail::non_lua_nil_t> : std::integral_constant<type, type::poly> {};
 
 		template <>
 		struct lua_type_of<std::nullptr_t> : std::integral_constant<type, type::lua_nil> {};
@@ -7350,7 +7357,7 @@ namespace sol {
 
 		template <typename T, bool global = false, bool raw = false, typename = void>
 		struct field_getter;
-		template <typename T, bool global = false, bool raw = false, typename = void>
+		template <typename T, typename P, bool global = false, bool raw = false, typename = void>
 		struct probe_field_getter;
 		template <typename T, bool global = false, bool raw = false, typename = void>
 		struct field_setter;
@@ -7731,24 +7738,24 @@ namespace sol {
 			get_field<global, true>(L, std::forward<Key>(key), tableindex);
 		}
 
-		template <bool global = false, bool raw = false, typename Key>
+		template <bool global = false, bool raw = false, typename C = detail::non_lua_nil_t, typename Key>
 		probe probe_get_field(lua_State* L, Key&& key) {
-			return probe_field_getter<meta::unqualified_t<Key>, global, raw>{}.get(L, std::forward<Key>(key));
+			return probe_field_getter<meta::unqualified_t<Key>, C, global, raw>{}.get(L, std::forward<Key>(key));
 		}
 
-		template <bool global = false, bool raw = false, typename Key>
+		template <bool global = false, bool raw = false, typename C = detail::non_lua_nil_t, typename Key>
 		probe probe_get_field(lua_State* L, Key&& key, int tableindex) {
-			return probe_field_getter<meta::unqualified_t<Key>, global, raw>{}.get(L, std::forward<Key>(key), tableindex);
+			return probe_field_getter<meta::unqualified_t<Key>, C, global, raw>{}.get(L, std::forward<Key>(key), tableindex);
 		}
 
-		template <bool global = false, typename Key>
+		template <bool global = false, typename C = detail::non_lua_nil_t, typename Key>
 		probe probe_raw_get_field(lua_State* L, Key&& key) {
-			return probe_get_field<global, true>(L, std::forward<Key>(key));
+			return probe_get_field<global, true, C>(L, std::forward<Key>(key));
 		}
 
-		template <bool global = false, typename Key>
+		template <bool global = false, typename C = detail::non_lua_nil_t, typename Key>
 		probe probe_raw_get_field(lua_State* L, Key&& key, int tableindex) {
-			return probe_get_field<global, true>(L, std::forward<Key>(key), tableindex);
+			return probe_get_field<global, true, C>(L, std::forward<Key>(key), tableindex);
 		}
 
 		template <bool global = false, bool raw = false, typename Key, typename Value>
@@ -8076,6 +8083,16 @@ namespace stack {
 				handler(L, index, expected, type_of(L, index), "");
 			}
 			return success;
+		}
+	};
+
+	template <typename C>
+	struct checker<detail::non_lua_nil_t, type::poly, C> {
+		template <typename Handler>
+		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+			checker<lua_nil_t, type::lua_nil, C> c{};
+			(void)c;
+			return !c.check(L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
 
@@ -11117,7 +11134,7 @@ namespace stack {
 
 namespace sol {
 namespace stack {
-	template <typename T, bool b, bool raw, typename>
+	template <typename T, typename P, bool b, bool raw, typename>
 	struct probe_field_getter {
 		template <typename Key>
 		probe get(lua_State* L, Key&& key, int tableindex = -2) {
@@ -11125,12 +11142,12 @@ namespace stack {
 				return probe(false, 0);
 			}
 			get_field<b, raw>(L, std::forward<Key>(key), tableindex);
-			return probe(!check<lua_nil_t>(L), 1);
+			return probe(check<P>(L), 1);
 		}
 	};
 
-	template <typename A, typename B, bool b, bool raw, typename C>
-	struct probe_field_getter<std::pair<A, B>, b, raw, C> {
+	template <typename A, typename B, typename P, bool b, bool raw, typename C>
+	struct probe_field_getter<std::pair<A, B>, P, b, raw, C> {
 		template <typename Keys>
 		probe get(lua_State* L, Keys&& keys, int tableindex = -2) {
 			if (!b && !maybe_indexable(L, tableindex)) {
@@ -11141,16 +11158,16 @@ namespace stack {
 				return probe(false, 1);
 			}
 			get_field<false, raw>(L, std::get<1>(keys), tableindex);
-			return probe(!check<lua_nil_t>(L), 2);
+			return probe(check<P>(L), 2);
 		}
 	};
 
-	template <typename... Args, bool b, bool raw, typename C>
-	struct probe_field_getter<std::tuple<Args...>, b, raw, C> {
+	template <typename... Args, typename P, bool b, bool raw, typename C>
+	struct probe_field_getter<std::tuple<Args...>, P, b, raw, C> {
 		template <std::size_t I, typename Keys>
 		probe apply(std::index_sequence<I>, int sofar, lua_State* L, Keys&& keys, int tableindex) {
 			get_field < I<1 && b, raw>(L, std::get<I>(keys), tableindex);
-			return probe(!check<lua_nil_t>(L), sofar);
+			return probe(check<P>(L), sofar);
 		}
 
 		template <std::size_t I, std::size_t I1, std::size_t... In, typename Keys>
@@ -15055,7 +15072,7 @@ namespace sol {
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
-#if defined(_MSC_FULL_VER) && _MSC_FULL_VER <= 191326131 && _MSC_FULL_VER >= 191200000
+#if defined(_MSC_FULL_VER) && _MSC_FULL_VER <= 191426428 && _MSC_FULL_VER >= 191200000
 			// MSVC is ass sometimes
 			return get<function>().call<Ret...>(std::forward<Args>(args)...);
 #else
@@ -19485,7 +19502,7 @@ namespace sol {
 		template <bool global, bool raw, typename T, std::size_t I, typename Key>
 		decltype(auto) traverse_get_deep_optional(int& popcount, Key&& key) const {
 			typedef decltype(stack::get<T>(base_t::lua_state())) R;
-			auto p = stack::probe_get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key), lua_gettop(base_t::lua_state()));
+			auto p = stack::probe_get_field<global, raw, T>(base_t::lua_state(), std::forward<Key>(key), lua_gettop(base_t::lua_state()));
 			popcount += p.levels;
 			if (!p.success)
 				return R(nullopt);
@@ -20271,7 +20288,7 @@ namespace sol {
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
-#if defined(_MSC_FULL_VER) && _MSC_FULL_VER <= 191326131 && _MSC_FULL_VER >= 191200000
+#if defined(_MSC_FULL_VER) && _MSC_FULL_VER <= 191426428 && _MSC_FULL_VER >= 191200000
 			// MSVC is ass sometimes
 			return get<protected_function>().call<Ret...>(std::forward<Args>(args)...);
 #else
