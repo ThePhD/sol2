@@ -51,7 +51,7 @@ ReflowComments: true
 
 # Macros
 AlignEscapedNewlines: Left
-IndentPPDirectives: None
+#IndentPPDirectives: None
 
 # Functions
 AllowShortFunctionsOnASingleLine: None

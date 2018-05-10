@@ -135,7 +135,7 @@ namespace sol {
 		template <bool global, bool raw, typename T, std::size_t I, typename Key>
 		decltype(auto) traverse_get_deep_optional(int& popcount, Key&& key) const {
 			typedef decltype(stack::get<T>(base_t::lua_state())) R;
-			auto p = stack::probe_get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key), lua_gettop(base_t::lua_state()));
+			auto p = stack::probe_get_field<global, raw, T>(base_t::lua_state(), std::forward<Key>(key), lua_gettop(base_t::lua_state()));
 			popcount += p.levels;
 			if (!p.success)
 				return R(nullopt);

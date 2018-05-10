@@ -108,9 +108,13 @@ namespace sol {
 		return false;
 	}
 	typedef lua_nil_t nil_t;
-#if !defined(SOL_NO_NIL)
+#if !defined(SOL_NO_NIL) || (SOL_NO_NIL == 0)
 	const nil_t nil{};
 #endif
+
+	namespace detail {
+		struct non_lua_nil_t {};
+	}
 
 	struct metatable_t {};
 	const metatable_t metatable_key = {};
@@ -861,6 +865,9 @@ namespace sol {
 
 		template <>
 		struct lua_type_of<nullopt_t> : std::integral_constant<type, type::lua_nil> {};
+
+		template <>
+		struct lua_type_of<detail::non_lua_nil_t> : std::integral_constant<type, type::poly> {};
 
 		template <>
 		struct lua_type_of<std::nullptr_t> : std::integral_constant<type, type::lua_nil> {};

@@ -21,8 +21,6 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#define CATCH_CONFIG_MAIN 1
-
 #include "test_sol.hpp"
 
 #include <catch.hpp>
@@ -568,47 +566,6 @@ TEST_CASE("pusher/constness", "Make sure more types can handle being const and j
 	Foo& foo = lua["foo"];
 	int x = foo.f()();
 	REQUIRE(x == 20);
-}
-
-TEST_CASE("proxy/proper-pushing", "allow proxies to reference other proxies and be serialized as the proxy itself and not a function or something") {
-	sol::state lua;
-	lua.open_libraries(sol::lib::base, sol::lib::io);
-
-	class T {};
-	lua.new_usertype<T>("T");
-
-	T t;
-	lua["t1"] = &t;
-	lua["t2"] = lua["t1"];
-	lua.safe_script("b = t1 == t2");
-	bool b = lua["b"];
-	REQUIRE(b);
-}
-
-TEST_CASE("proxy/equality", "check to make sure equality tests work") {
-	sol::state lua;
-#ifndef __clang__
-	REQUIRE((lua["a"] == sol::lua_nil));
-	REQUIRE_FALSE((lua["a"] == nullptr));
-	REQUIRE_FALSE((lua["a"] != sol::lua_nil));
-	REQUIRE((lua["a"] != nullptr));
-	REQUIRE_FALSE((lua["a"] == 0));
-	REQUIRE_FALSE((lua["a"] == 2));
-	REQUIRE((lua["a"] != 0));
-	REQUIRE((lua["a"] != 2));
-	lua["a"] = 2;
-#endif // clang screws up by trying to access int128 types that it doesn't support, even when we don't ask for them
-
-#ifndef __clang__
-	REQUIRE_FALSE((lua["a"] == sol::lua_nil));
-	REQUIRE_FALSE((lua["a"] == nullptr));
-	REQUIRE((lua["a"] != sol::lua_nil));
-	REQUIRE((lua["a"] != nullptr));
-	REQUIRE_FALSE((lua["a"] == 0));
-	REQUIRE((lua["a"] == 2));
-	REQUIRE((lua["a"] != 0));
-	REQUIRE_FALSE((lua["a"] != 2));
-#endif // clang screws up by trying to access int128 types that it doesn't support, even when we don't ask for them
 }
 
 TEST_CASE("compilation/const regression", "make sure constness in tables is respected all the way down") {

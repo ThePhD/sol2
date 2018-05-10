@@ -48,3 +48,52 @@ TEST_CASE("proxy/function results", "make sure that function results return prop
 		REQUIRE(accum == 10);
 	}
 }
+
+TEST_CASE("proxy/optional conversion", "make sure optional conversions out of a table work properly") {
+	sol::state state{};
+	sol::table table = state.create_table_with("func", 42);
+	sol::optional<sol::function> func = table["func"];
+	REQUIRE(func == sol::nullopt);
+}
+
+TEST_CASE("proxy/proper-pushing", "allow proxies to reference other proxies and be serialized as the proxy itself and not a function or something") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::io);
+
+	class T {};
+	lua.new_usertype<T>("T");
+
+	T t;
+	lua["t1"] = &t;
+	lua["t2"] = lua["t1"];
+	lua.safe_script("b = t1 == t2");
+	bool b = lua["b"];
+	REQUIRE(b);
+}
+
+TEST_CASE("proxy/equality", "check to make sure equality tests work") {
+	sol::state lua;
+#ifndef __clang__
+	REQUIRE((lua["a"] == sol::lua_nil));
+	REQUIRE((lua["a"] == nullptr));
+	REQUIRE_FALSE((lua["a"] != sol::lua_nil));
+	REQUIRE_FALSE((lua["a"] != nullptr));
+	REQUIRE_FALSE((lua["a"] == 0));
+	REQUIRE_FALSE((lua["a"] == 2));
+	REQUIRE((lua["a"] != 0));
+	REQUIRE((lua["a"] != 2));
+#endif // clang screws up by trying to access int128 types that it doesn't support, even when we don't ask for them
+
+	lua["a"] = 2;
+
+#ifndef __clang__
+	REQUIRE_FALSE((lua["a"] == sol::lua_nil));
+	REQUIRE_FALSE((lua["a"] == nullptr));
+	REQUIRE((lua["a"] != sol::lua_nil));
+	REQUIRE((lua["a"] != nullptr));
+	REQUIRE_FALSE((lua["a"] == 0));
+	REQUIRE((lua["a"] == 2));
+	REQUIRE((lua["a"] != 0));
+	REQUIRE_FALSE((lua["a"] != 2));
+#endif // clang screws up by trying to access int128 types that it doesn't support, even when we don't ask for them
+}

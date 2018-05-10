@@ -30,7 +30,7 @@
 
 namespace sol {
 namespace stack {
-	template <typename T, bool b, bool raw, typename>
+	template <typename T, typename P, bool b, bool raw, typename>
 	struct probe_field_getter {
 		template <typename Key>
 		probe get(lua_State* L, Key&& key, int tableindex = -2) {
@@ -38,12 +38,12 @@ namespace stack {
 				return probe(false, 0);
 			}
 			get_field<b, raw>(L, std::forward<Key>(key), tableindex);
-			return probe(!check<lua_nil_t>(L), 1);
+			return probe(check<P>(L), 1);
 		}
 	};
 
-	template <typename A, typename B, bool b, bool raw, typename C>
-	struct probe_field_getter<std::pair<A, B>, b, raw, C> {
+	template <typename A, typename B, typename P, bool b, bool raw, typename C>
+	struct probe_field_getter<std::pair<A, B>, P, b, raw, C> {
 		template <typename Keys>
 		probe get(lua_State* L, Keys&& keys, int tableindex = -2) {
 			if (!b && !maybe_indexable(L, tableindex)) {
@@ -54,16 +54,16 @@ namespace stack {
 				return probe(false, 1);
 			}
 			get_field<false, raw>(L, std::get<1>(keys), tableindex);
-			return probe(!check<lua_nil_t>(L), 2);
+			return probe(check<P>(L), 2);
 		}
 	};
 
-	template <typename... Args, bool b, bool raw, typename C>
-	struct probe_field_getter<std::tuple<Args...>, b, raw, C> {
+	template <typename... Args, typename P, bool b, bool raw, typename C>
+	struct probe_field_getter<std::tuple<Args...>, P, b, raw, C> {
 		template <std::size_t I, typename Keys>
 		probe apply(std::index_sequence<I>, int sofar, lua_State* L, Keys&& keys, int tableindex) {
 			get_field < I<1 && b, raw>(L, std::get<I>(keys), tableindex);
-			return probe(!check<lua_nil_t>(L), sofar);
+			return probe(check<P>(L), sofar);
 		}
 
 		template <std::size_t I, std::size_t I1, std::size_t... In, typename Keys>

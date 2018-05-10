@@ -199,6 +199,16 @@ namespace stack {
 		}
 	};
 
+	template <typename C>
+	struct checker<detail::non_lua_nil_t, type::poly, C> {
+		template <typename Handler>
+		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+			checker<lua_nil_t, type::lua_nil, C> c{};
+			(void)c;
+			return !c.check(L, index, std::forward<Handler>(handler), tracking);
+		}
+	};
+
 	template <type expected, typename C>
 	struct checker<nullopt_t, expected, C> : checker<lua_nil_t> {};
 

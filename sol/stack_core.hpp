@@ -450,7 +450,7 @@ namespace sol {
 
 		template <typename T, bool global = false, bool raw = false, typename = void>
 		struct field_getter;
-		template <typename T, bool global = false, bool raw = false, typename = void>
+		template <typename T, typename P, bool global = false, bool raw = false, typename = void>
 		struct probe_field_getter;
 		template <typename T, bool global = false, bool raw = false, typename = void>
 		struct field_setter;
@@ -831,24 +831,24 @@ namespace sol {
 			get_field<global, true>(L, std::forward<Key>(key), tableindex);
 		}
 
-		template <bool global = false, bool raw = false, typename Key>
+		template <bool global = false, bool raw = false, typename C = detail::non_lua_nil_t, typename Key>
 		probe probe_get_field(lua_State* L, Key&& key) {
-			return probe_field_getter<meta::unqualified_t<Key>, global, raw>{}.get(L, std::forward<Key>(key));
+			return probe_field_getter<meta::unqualified_t<Key>, C, global, raw>{}.get(L, std::forward<Key>(key));
 		}
 
-		template <bool global = false, bool raw = false, typename Key>
+		template <bool global = false, bool raw = false, typename C = detail::non_lua_nil_t, typename Key>
 		probe probe_get_field(lua_State* L, Key&& key, int tableindex) {
-			return probe_field_getter<meta::unqualified_t<Key>, global, raw>{}.get(L, std::forward<Key>(key), tableindex);
+			return probe_field_getter<meta::unqualified_t<Key>, C, global, raw>{}.get(L, std::forward<Key>(key), tableindex);
 		}
 
-		template <bool global = false, typename Key>
+		template <bool global = false, typename C = detail::non_lua_nil_t, typename Key>
 		probe probe_raw_get_field(lua_State* L, Key&& key) {
-			return probe_get_field<global, true>(L, std::forward<Key>(key));
+			return probe_get_field<global, true, C>(L, std::forward<Key>(key));
 		}
 
-		template <bool global = false, typename Key>
+		template <bool global = false, typename C = detail::non_lua_nil_t, typename Key>
 		probe probe_raw_get_field(lua_State* L, Key&& key, int tableindex) {
-			return probe_get_field<global, true>(L, std::forward<Key>(key), tableindex);
+			return probe_get_field<global, true, C>(L, std::forward<Key>(key), tableindex);
 		}
 
 		template <bool global = false, bool raw = false, typename Key, typename Value>
