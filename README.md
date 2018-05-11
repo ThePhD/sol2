@@ -64,6 +64,11 @@ ThePhD
 Boston C++ Meetup February 2018 - CiC (Main Street), Cambridge, MA  
 [Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/2018.02.06%20-%20ThePhD%20-%20Biting%20the%20CMake%20Bullet.pdf)
 
+"Compile Fast, Run Faster, Scale Forever: A look into the sol2 Library"
+ThePhD
+C++Now 2018 - Hudson Commons, Aspen Physics Center, Aspen, Colorado
+[Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/2018.05.10%20-%20ThePhD%20-%20Compile%20Fast%2C%20Run%20Faster%2C%20Scale%20Forever.pdf)
+
 ## Creating a single header
 
 You can grab a single header (and the single forward header) out of the library [here](https://github.com/ThePhD/sol2/tree/develop/single/sol). For stable version, check the releases tab on github for a provided single header file for maximum ease of use. A script called `single.py` is provided in the repository if there's some bleeding edge change that hasn't been published on the releases page. You can run this script to create a single file version of the library so you can only include that part of it. Check `single.py --help` for more info.
