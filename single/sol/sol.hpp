@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-05-10 11:31:28.013615 UTC
-// This header was generated with sol v2.19.5 (revision fd58e7f)
+// Generated 2018-05-12 07:57:02.848130 UTC
+// This header was generated with sol v2.20.0 (revision 56fa357)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4731,6 +4731,7 @@ namespace sol {
 	struct unique_usertype_traits<std::shared_ptr<T>> {
 		typedef T type;
 		typedef std::shared_ptr<T> actual_type;
+		
 		static const bool value = true;
 
 		static bool is_null(const actual_type& p) {
@@ -4746,6 +4747,7 @@ namespace sol {
 	struct unique_usertype_traits<std::unique_ptr<T, D>> {
 		typedef T type;
 		typedef std::unique_ptr<T, D> actual_type;
+		
 		static const bool value = true;
 
 		static bool is_null(const actual_type& p) {
@@ -9999,7 +10001,7 @@ namespace stack {
 			*fx = detail::usertype_unique_alloc_destroy<P, Real>;
 			detail::default_construct::construct(mem, std::forward<Args>(args)...);
 			*pref = unique_usertype_traits<T>::get(*mem);
-			if (luaL_newmetatable(L, &usertype_traits<detail::unique_usertype<P>>::metatable()[0]) == 1) {
+			if (luaL_newmetatable(L, &usertype_traits<detail::unique_usertype<std::remove_cv_t<P>>>::metatable()[0]) == 1) {
 				luaL_Reg l[32]{};
 				int index = 0;
 				auto prop_fx = [](meta_function) { return true; };

@@ -172,6 +172,7 @@ namespace sol {
 	struct unique_usertype_traits<std::shared_ptr<T>> {
 		typedef T type;
 		typedef std::shared_ptr<T> actual_type;
+		
 		static const bool value = true;
 
 		static bool is_null(const actual_type& p) {
@@ -187,6 +188,7 @@ namespace sol {
 	struct unique_usertype_traits<std::unique_ptr<T, D>> {
 		typedef T type;
 		typedef std::unique_ptr<T, D> actual_type;
+		
 		static const bool value = true;
 
 		static bool is_null(const actual_type& p) {
