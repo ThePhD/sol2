@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-05-12 07:57:02.848130 UTC
-// This header was generated with sol v2.20.0 (revision 56fa357)
+// Generated 2018-05-12 15:15:35.133726 UTC
+// This header was generated with sol v2.20.0 (revision 9106597)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -18340,7 +18340,7 @@ namespace sol {
 		static int core_indexing_call(lua_State* L) {
 			usertype_metatable& f = toplevel
 				? stack::get<light<usertype_metatable>>(L, upvalue_index(usertype_detail::metatable_index))
-				: stack::pop<light<usertype_metatable>>(L);
+				: stack::pop<user<usertype_metatable>>(L);
 			static const int keyidx = -2 + static_cast<int>(is_index);
 			if (toplevel && stack::get<type>(L, keyidx) != type::string) {
 				return is_index ? f.indexfunc(L) : f.newindexfunc(L);
