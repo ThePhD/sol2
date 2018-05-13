@@ -302,6 +302,12 @@ struct matrix_xi {
 		return m;
 	}
 };
+template <typename SelfType>
+struct alignas(16) weird_aligned_wrapper {
+	void operator()(SelfType& self, sol::object param) const {
+	}
+	std::function<void(SelfType&, float)> lambda;
+};
 
 TEST_CASE("usertype/usertype", "Show that we can create classes from usertype and use them") {
 	sol::state lua;
@@ -1785,6 +1791,24 @@ TEST_CASE("usertype/runtime-replacement", "ensure that functions can be properly
 		REQUIRE(v2 == 2);
 		REQUIRE(v3 == 3);
 	}
+}
+
+TEST_CASE("usertype/alignment", "ensure that alignment does not trigger weird aliasing issues") {
+	struct aligned_base {};
+	struct aligned_derived : aligned_base {};
+
+	sol::state lua;
+
+	lua.new_usertype<aligned_base>("Base",
+		"x", sol::writeonly_property(weird_aligned_wrapper<aligned_base>{}));
+	lua.new_usertype<aligned_derived>("Derived",
+		sol::base_classes, sol::bases<aligned_base>());
+
+	aligned_derived d;
+	lua["d"] = d;
+
+	auto result = lua.safe_script("d.x = 5");
+	REQUIRE(result.valid());
 }
 
 TEST_CASE("usertype/meta-key-retrievals", "allow for special meta keys (__index, __newindex) to trigger methods even if overwritten directly") {
