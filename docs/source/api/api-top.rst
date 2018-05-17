@@ -23,7 +23,6 @@ Browse the various function and classes :doc:`Sol<../index>` utilizes to make yo
    nested
    as_table
    usertype
-   simple_usertype
    usertype_memory
    unique_usertype_traits
    tie

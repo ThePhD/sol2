@@ -1,18 +1,19 @@
-.. Sol documentation master file, created by
+.. sol documentation master file, created by
    sphinx-quickstart on Mon Feb 29 21:49:51 2016.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
 .. image:: media/sol.png
 	:target: https://github.com/ThePhD/sol2
-	:alt: sol2 repository
+	:alt: sol repository
+	:align: center
 
-Sol |version|
+sol |version|
 =============
 *a fast, simple C++ and Lua Binding*
 
 
-When you need to hit the ground running with Lua and C++, `Sol`_ is the go-to framework for high-performance binding with an easy to use API.
+When you need to hit the ground running with Lua and C++, `sol`_ is the go-to framework for high-performance binding with an easy to use API.
 
 get going:
 ----------

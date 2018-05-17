@@ -55,7 +55,7 @@ To run Lua code but have an error handler in case things go wrong:
 
 .. literalinclude:: ../../../examples/tutorials/quick_n_dirty/running_lua_code.cpp
 	:linenos:
-	:lines: 28-39,47-49
+	:lines: 28-39,47-
 
 
 running lua code (low-level)

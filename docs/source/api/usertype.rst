@@ -194,22 +194,10 @@ Otherwise, the following is used to specify functions to bind on the specific us
 	- Tells a usertype what its base classes are. You need this to have derived-to-base conversions work properly. See :ref:`inheritance<usertype-inheritance>`
 
 
-usertype arguments - simple usertype
-++++++++++++++++++++++++++++++++++++
-
-* ``sol::simple``
-	- Only allowed as the first argument to the usertype constructor, must be accompanied by a ``lua_State*``
-	- This tag triggers the :doc:`simple usertype<simple_usertype>` changes / optimizations
-	- Only supported when directly invoking the constructor (e.g. not when calling ``sol::table::new_usertype`` or ``sol::table::new_simple_usertype``)
-	- Should probably not be used directly. Use ``sol::table::new_usertype`` or ``sol::table::new_simple_usertype`` instead
-
-
-
-
 runtime functions
 -----------------
 
-You can add functions at runtime **to the whole class** (not to individual objects). Set a name under the metatable name you bound using ``new_usertype``/``new_simple_usertype`` to an object. For example:
+You can add functions at runtime **to the whole class** (not to individual objects). Set a name under the metatable name you bound using ``new_usertype`` to an object. For example:
 
 .. literalinclude:: ../../../examples/docs/runtime_extension.cpp
 	:caption: runtime_extension.cpp
@@ -267,7 +255,7 @@ Register the base classes explicitly.
 automagical usertypes
 ---------------------
 
-Usertypes automatically register special functions, whether or not they're bound using `new(_simple)_usertype`. You can turn this off by specializing the ``sol::is_automagical<T>`` template trait:
+Usertypes automatically register special functions, whether or not they're bound using `new_usertype`. You can turn this off by specializing the ``sol::is_automagical<T>`` template trait:
 
 .. code-block:: cpp
 
@@ -285,10 +273,6 @@ While overloading is supported regardless of inheritance caveats or not, the cur
 
 compilation speed
 -----------------
-
-.. note::
-
-	If you find that compilation times are too long and you're only binding member functions, consider perhaps using :doc:`simple usertypes<simple_usertype>`. This can reduce compile times (but may cost memory size and speed). See the simple usertypes documentation for more details.
 
 .. note::
 
