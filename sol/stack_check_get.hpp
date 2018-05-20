@@ -53,11 +53,7 @@ namespace stack {
 		static optional<T> get(lua_State* L, int index, Handler&& handler, record& tracking) {
 			// actually check if it's none here, otherwise
 			// we'll have a none object inside an optional!
-#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			bool success = stack::check<T>(L, index, no_panic);
-#else
-			bool success = !lua_isnone(L, index);
-#endif
 			if (!success) {
 				// expected type, actual type
 				tracking.use(static_cast<int>(success));
