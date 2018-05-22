@@ -1273,7 +1273,11 @@ namespace sol {
 			}
 
 			static std::ptrdiff_t index_adjustment(lua_State*, T&) {
+#if defined(SOL_CONTAINERS_START_INDEX)
+				return static_cast<std::ptrdiff_t>((SOL_CONTAINERS_START) == 0 ? 0 : -(SOL_CONTAINERS_START));
+#else
 				return static_cast<std::ptrdiff_t>(-1);
+#endif
 			}
 
 			static int pairs(lua_State* L) {

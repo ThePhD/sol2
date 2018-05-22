@@ -84,6 +84,11 @@ Feature Config
 	* Includes ``<iostream>`` and prints all exceptions and errors to ``std::cerr``, for you to see
 	* **Not** turned on by default under any settings: *this MUST be turned on manually*
 
+``SOL_CONTAINERS_START`` triggers the following change:
+	* If defined and **is an integral value**, is used to adjust the container start value
+	* Applies to C++ containers **only** (not Lua tables or algorithms)
+	* Defaults to 1 (containers in Lua count from 1)
+
 ``SOL_ENABLE_INTEROP`` triggers the following change:
 	* Allows the use of ``extensible<T>`` to be used with ``userdata_checker`` and ``userdata_getter`` to retrieve non-sol usertypes
 		- Particularly enables non-sol usertypes to be used in overloads

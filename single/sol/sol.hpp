@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-05-20 19:25:19.981188 UTC
-// This header was generated with sol v2.20.1 (revision 4f366a1)
+// Generated 2018-05-22 19:42:19.603781 UTC
+// This header was generated with sol v2.20.2 (revision d67c5b7)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -16949,7 +16949,11 @@ namespace sol {
 			}
 
 			static std::ptrdiff_t index_adjustment(lua_State*, T&) {
+#if defined(SOL_CONTAINERS_START_INDEX)
+				return static_cast<std::ptrdiff_t>((SOL_CONTAINERS_START) == 0 ? 0 : -(SOL_CONTAINERS_START));
+#else
 				return static_cast<std::ptrdiff_t>(-1);
+#endif
 			}
 
 			static int pairs(lua_State* L) {
