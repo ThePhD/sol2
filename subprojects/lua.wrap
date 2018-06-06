@@ -7,4 +7,4 @@ source_hash = f681aa518233bc407e23acf0f5887c884f17436f000d453b2491a9f11a52400c
 
 patch_url = https://github.com/OrfeasZ/lua-meson/releases/download/v5.3.4/lua-5.3.4-wrap.zip
 patch_filename = lua-5.3.4-wrap.zip
-patch_hash = 950424da95331eabdbc57afee5e1168ba5890adaf8127f3be507ed4a1b23a876
+patch_hash = 400ca3e7f2a7e2a8363abe7a25f339b87488d56a1351ad843931a4d097624e57

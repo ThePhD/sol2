@@ -117,3 +117,5 @@ scratch/
 cmake-build-debug/
 cmake-build-relwithdebinfo/
 cmake-build-release/
+/subprojects/*
+!/subprojects/*.wrap
