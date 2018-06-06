@@ -30,14 +30,28 @@ args = parser.parse_args()
 single_file = ''
 forward_single_file = ''
 single_file = args.output[0]
+
 if len(args.output) > 1:
 	forward_single_file = args.output[1]
 else:
 	a, b = os.path.splitext(single_file)
 	forward_single_file = a + '_forward' + b
+
+single_file_dir = os.path.dirname(single_file)
+forward_single_file_dir = os.path.dirname(forward_single_file)
+
 script_path = os.path.normpath(os.path.dirname(os.path.realpath(__file__)))
 working_dir = os.getcwd()
 os.chdir(script_path)
+
+# If the user didn't provide absolute paths then construct them based on the current working dir.
+if not os.path.isabs(single_file):
+	single_file = os.path.join(working_dir, single_file)
+	single_file_dir = os.path.join(working_dir, single_file_dir)
+
+if not os.path.isabs(forward_single_file):
+	forward_single_file = os.path.join(working_dir, forward_single_file)
+	forward_single_file_dir = os.path.join(working_dir, forward_single_file_dir)
 
 intro = """// The MIT License (MIT)
 
@@ -69,8 +83,6 @@ intro = """// The MIT License (MIT)
 #define {guard}
 
 """
-
-module_path = os.path.join(script_path)
 
 includes = set([])
 standard_include = re.compile(r'#include <(.*?)>')
@@ -225,6 +237,10 @@ forward_ss.close()
 
 if not args.quiet:
 	print('finished creating single forward declaration header for sol\n')
+
+# Create the output directories if they don't already exist.
+os.makedirs(single_file_dir, exist_ok=True)
+os.makedirs(forward_single_file_dir, exist_ok=True)
 
 with open(single_file, 'w', encoding='utf-8') as f:
 	if not args.quiet:
