@@ -29,7 +29,7 @@
 #include "function.hpp"
 #include "object.hpp"
 
-#ifdef SOL_PRINT_ERRORS
+#if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
 #include <iostream>
 #endif
 
