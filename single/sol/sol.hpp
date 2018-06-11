@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-05-22 19:42:19.603781 UTC
-// This header was generated with sol v2.20.2 (revision d67c5b7)
+// Generated 2018-06-11 18:42:24.238190 UTC
+// This header was generated with sol v2.20.2 (revision ac70911)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5787,7 +5787,7 @@ namespace sol {
 #include <exception>
 #include <cstring>
 
-#ifdef SOL_PRINT_ERRORS
+#if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
 #include <iostream>
 #endif
 
@@ -5805,7 +5805,7 @@ namespace sol {
 
 		// must push at least 1 object on the stack
 		inline int default_exception_handler(lua_State* L, optional<const std::exception&>, string_view what) {
-#ifdef SOL_PRINT_ERRORS
+#if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
 			std::cerr << "[sol2] An exception occurred: ";
 			std::cerr.write(what.data(), what.size());
 			std::cerr << std::endl;
@@ -20324,7 +20324,7 @@ namespace sol {
 
 // beginning of sol/state_handling.hpp
 
-#ifdef SOL_PRINT_ERRORS
+#if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
 #endif
 
 namespace sol {
