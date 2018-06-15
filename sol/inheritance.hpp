@@ -103,7 +103,7 @@ namespace sol {
 
 			template <typename U, typename Base, typename... Args>
 			static bool type_unique_cast_bases(void* source_data, void* target_data, const string_view& ti) {
-				typedef unique_usertype_traits<U>::typename rebind_base<Base> base_ptr;
+				typedef typename unique_usertype_traits<U>::rebind_base<Base> base_ptr;
 				string_view base_ti = usertype_traits<Base>::qualified_name();
 				if (base_ti == ti) {
 					if (target_data != nullptr) {
@@ -119,7 +119,7 @@ namespace sol {
 
 			template <typename U>
 			static bool type_unique_cast(void* source_data, void* target_data, const string_view& ti, const string_view& rebind_ti) {
-				typedef unique_usertype_traits<U>::typename rebind_base<void> rebind_t;
+				typedef typename unique_usertype_traits<U>::rebind_base<void> rebind_t;
 				string_view this_rebind_ti = usertype_traits<rebind_t>::qualified_name();
 				if (rebind_ti != this_rebind_ti) {
 					// this is not even of the same container type

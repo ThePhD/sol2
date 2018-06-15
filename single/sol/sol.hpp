@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-06-15 19:54:27.149295 UTC
-// This header was generated with sol v2.20.2 (revision 92f3330)
+// Generated 2018-06-15 19:59:17.486340 UTC
+// This header was generated with sol v2.20.2 (revision fd52cc1)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6264,7 +6264,7 @@ namespace sol {
 
 			template <typename U, typename Base, typename... Args>
 			static bool type_unique_cast_bases(void* source_data, void* target_data, const string_view& ti) {
-				typedef unique_usertype_traits<U>::typename rebind_base<Base> base_ptr;
+				typedef typename unique_usertype_traits<U>::rebind_base<Base> base_ptr;
 				string_view base_ti = usertype_traits<Base>::qualified_name();
 				if (base_ti == ti) {
 					if (target_data != nullptr) {
@@ -6280,7 +6280,7 @@ namespace sol {
 
 			template <typename U>
 			static bool type_unique_cast(void* source_data, void* target_data, const string_view& ti, const string_view& rebind_ti) {
-				typedef unique_usertype_traits<U>::typename rebind_base<void> rebind_t;
+				typedef typename unique_usertype_traits<U>::rebind_base<void> rebind_t;
 				string_view this_rebind_ti = usertype_traits<rebind_t>::qualified_name();
 				if (rebind_ti != this_rebind_ti) {
 					// this is not even of the same container type
