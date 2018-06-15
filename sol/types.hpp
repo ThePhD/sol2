@@ -319,7 +319,7 @@ namespace sol {
 	struct user {
 		U value;
 
-		user(U x)
+		user(U&& x)
 		: value(std::forward<U>(x)) {
 		}
 		operator std::add_pointer_t<std::remove_reference_t<U>>() {

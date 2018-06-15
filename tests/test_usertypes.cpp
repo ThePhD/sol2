@@ -310,7 +310,7 @@ struct alignas(16) weird_aligned_wrapper {
 	}
 	void operator()(SelfType& self, sol::object param) const {
 		lambda(self, param.as<float>());
-	}
+  }
 	std::function<void(SelfType&, float)> lambda;
 };
 
