@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-06-11 18:42:24.829810 UTC
-// This header was generated with sol v2.20.2 (revision ac70911)
+// Generated 2018-06-15 19:50:08.054132 UTC
+// This header was generated with sol v2.20.2 (revision 2777b6a)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -220,6 +220,10 @@
 #endif // Optimized conversion routines using a KB or so off the stack
 
 // end of sol/config.hpp
+
+// beginning of sol/config_setup.hpp
+
+// end of sol/config_setup.hpp
 
 // end of sol/feature_test.hpp
 

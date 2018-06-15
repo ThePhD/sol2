@@ -252,27 +252,44 @@ namespace stack {
 	struct pusher<detail::as_table_tag<T>> {
 		static int push(lua_State* L, const T& tablecont) {
 			typedef meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>> has_kvp;
-			return push(has_kvp(), L, tablecont);
+			return push(has_kvp(), std::false_type(), L, tablecont);
 		}
 
 		static int push(std::true_type, lua_State* L, const T& tablecont) {
+			typedef meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>> has_kvp;
+			return push(has_kvp(), std::true_type(), L, tablecont);
+		}
+
+		static int push(std::false_type, lua_State* L, const T& tablecont) {
+			typedef meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>> has_kvp;
+			return push(has_kvp(), std::false_type(), L, tablecont);
+		}
+
+		template <bool is_nested>
+		static int push(std::true_type, std::integral_constant<bool, is_nested>, lua_State* L, const T& tablecont) {
 			auto& cont = detail::deref(detail::unwrap(tablecont));
 			lua_createtable(L, static_cast<int>(cont.size()), 0);
 			int tableindex = lua_gettop(L);
 			for (const auto& pair : cont) {
-				set_field(L, pair.first, pair.second, tableindex);
+				if (is_nested) {
+					set_field(L, pair.first, as_nested_ref(pair.second), tableindex);
+				}
+				else {
+					set_field(L, pair.first, pair.second, tableindex);
+				}
 			}
 			return 1;
 		}
 
-		static int push(std::false_type, lua_State* L, const T& tablecont) {
+		template <bool is_nested>
+		static int push(std::false_type, std::integral_constant<bool, is_nested>, lua_State* L, const T& tablecont) {
 			auto& cont = detail::deref(detail::unwrap(tablecont));
 			lua_createtable(L, stack_detail::get_size_hint(cont), 0);
 			int tableindex = lua_gettop(L);
 			std::size_t index = 1;
 			for (const auto& i : cont) {
 #if SOL_LUA_VERSION >= 503
-				int p = stack::push(L, i);
+				int p = is_nested ? stack::push(L, as_nested_ref(i)) : stack::push(L, i);
 				for (int pi = 0; pi < p; ++pi) {
 					lua_seti(L, tableindex, static_cast<lua_Integer>(index++));
 				}
@@ -317,9 +334,19 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct pusher<nested<T>> {
+	struct pusher<nested<T>, std::enable_if_t<is_container<std::remove_pointer_t<meta::unwrap_unqualified_t<T>>>::value>> {
 		static int push(lua_State* L, const T& tablecont) {
-			pusher<as_table_t<T>> p{};
+			pusher<detail::as_table_tag<T>> p{};
+			// silence annoying VC++ warning
+			(void)p;
+			return p.push(std::true_type(), L, tablecont);
+		}
+	};
+
+	template <typename T>
+	struct pusher<nested<T>, std::enable_if_t<!is_container<std::remove_pointer_t<meta::unwrap_unqualified_t<T>>>::value>> {
+		static int push(lua_State* L, const T& tablecont) {
+			pusher<meta::unqualified_t<T>> p{};
 			// silence annoying VC++ warning
 			(void)p;
 			return p.push(L, tablecont);

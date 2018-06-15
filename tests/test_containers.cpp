@@ -346,6 +346,44 @@ TEST_CASE("containers/from table argument conversions", "test table conversions 
 	REQUIRE(passed);
 }
 
+TEST_CASE("containers/deeply nested", "make sure nested works for deeply-nested C++ containers and works as advertised") {
+	typedef std::map<const char *, std::string> info_t;
+	typedef std::vector<info_t> info_vector;
+
+	class ModList {
+	public:
+		info_vector list;
+
+		ModList() {
+			list.push_back(info_t{
+				{"a", "b"}
+				});
+		}
+
+		sol::nested<info_vector> getList () {
+			return sol::nested<info_vector>(list);
+		};
+	};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_usertype<ModList>("ModList",
+		"getList", &ModList::getList	
+		);
+
+	sol::string_view code = R"(
+mods = ModList.new()
+local modlist = mods:getList()
+print(modlist[1])
+assert(type(modlist) == "table")
+assert(type(modlist[1]) == "table")
+)";
+
+	auto result1 = lua.safe_script(code, sol::script_pass_on_error);
+	REQUIRE(result1.valid());
+}
+
 TEST_CASE("containers/vector roundtrip", "make sure vectors can be round-tripped") {
 	sol::state lua;
 	std::vector<int> v{ 1, 2, 3 };

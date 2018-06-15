@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-06-11 18:42:24.238190 UTC
-// This header was generated with sol v2.20.2 (revision ac70911)
+// Generated 2018-06-15 19:50:07.516271 UTC
+// This header was generated with sol v2.20.2 (revision 2777b6a)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -38,7 +38,7 @@
 
 #if defined(SOL_INSIDE_UNREAL) && SOL_INSIDE_UNREAL
 #ifdef check
-#define SOL_INSIDE_UNREAL_REMOVED_CHECK
+#define SOL_INSIDE_UNREAL_REMOVED_CHECK 1
 #undef check
 #endif 
 #endif // Unreal Engine 4 Bullshit
@@ -253,6 +253,10 @@
 #endif // Optimized conversion routines using a KB or so off the stack
 
 // end of sol/config.hpp
+
+// beginning of sol/config_setup.hpp
+
+// end of sol/config_setup.hpp
 
 // end of sol/feature_test.hpp
 
@@ -1195,6 +1199,9 @@ namespace sol {
 	using index_value = std::integral_constant<std::size_t, I>;
 
 	namespace meta {
+		typedef std::array<char, 1> sfinae_yes_t;
+		typedef std::array<char, 2> sfinae_no_t;
+
 		template <typename T>
 		struct identity { typedef T type; };
 
@@ -1532,76 +1539,82 @@ namespace sol {
 			template <typename T>
 			struct has_push_back_test {
 			private:
-				typedef std::array<char, 1> one;
-				typedef std::array<char, 2> two;
-
 				template <typename C>
-				static one test(decltype(std::declval<C>().push_back(std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
+				static sfinae_yes_t test(decltype(std::declval<C>().push_back(std::declval<std::add_rvalue_reference_t<typename C::value_type>>())) *);
 				template <typename C>
-				static two test(...);
+				static sfinae_no_t test(...);
 
 			public:
-				static const bool value = sizeof(test<T>(0)) == sizeof(char);
+				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
 			};
 
 			template <typename T>
 			struct has_insert_test {
 			private:
-				typedef std::array<char, 1> one;
-				typedef std::array<char, 2> two;
-
 				template <typename C>
-				static one test(decltype(std::declval<C>().insert(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>(), std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
+				static sfinae_yes_t test(decltype(std::declval<C>().insert(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>(), std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
 				template <typename C>
-				static two test(...);
+				static sfinae_no_t test(...);
 
 			public:
-				static const bool value = sizeof(test<T>(0)) == sizeof(char);
+				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
 			};
 
 			template <typename T>
 			struct has_insert_after_test {
 			private:
-				typedef std::array<char, 1> one;
-				typedef std::array<char, 2> two;
-
 				template <typename C>
-				static one test(decltype(std::declval<C>().insert_after(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>(), std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
+				static sfinae_yes_t test(decltype(std::declval<C>().insert_after(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>(), std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
 				template <typename C>
-				static two test(...);
+				static sfinae_no_t test(...);
 
 			public:
-				static const bool value = sizeof(test<T>(0)) == sizeof(char);
+				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
 			};
 
 			template <typename T>
 			struct has_size_test {
 			private:
-				typedef std::array<char, 1> one;
-				typedef std::array<char, 2> two;
+				typedef std::array<char, 1> sfinae_yes_t;
+				typedef std::array<char, 2> sfinae_no_t;
 
 				template <typename C>
-				static one test(decltype(std::declval<C>().size())*);
+				static sfinae_yes_t test(decltype(std::declval<C>().size())*);
 				template <typename C>
-				static two test(...);
+				static sfinae_no_t test(...);
 
 			public:
-				static const bool value = sizeof(test<T>(0)) == sizeof(char);
+				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
+			};
+
+			template <typename T>
+			struct has_max_size_test {
+			private:
+				typedef std::array<char, 1> sfinae_yes_t;
+				typedef std::array<char, 2> sfinae_no_t;
+
+				template <typename C>
+				static sfinae_yes_t test(decltype(std::declval<C>().max_size())*);
+				template <typename C>
+				static sfinae_no_t test(...);
+
+			public:
+				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
 			};
 
 			template <typename T>
 			struct has_to_string_test {
 			private:
-				typedef std::array<char, 1> one;
-				typedef std::array<char, 2> two;
+				typedef std::array<char, 1> sfinae_yes_t;
+				typedef std::array<char, 2> sfinae_no_t;
 
 				template <typename C>
-				static one test(decltype(std::declval<C>().to_string())*);
+				static sfinae_yes_t test(decltype(std::declval<C>().to_string())*);
 				template <typename C>
-				static two test(...);
+				static sfinae_no_t test(...);
 
 			public:
-				static const bool value = sizeof(test<T>(0)) == sizeof(char);
+				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
 			};
 #if defined(_MSC_VER) && _MSC_VER <= 1910
 			template <typename T, typename U, typename = decltype(std::declval<T&>() < std::declval<U&>())>
@@ -1692,6 +1705,9 @@ namespace sol {
 
 		template <typename T>
 		using has_push_back = meta::boolean<meta_detail::has_push_back_test<T>::value>;
+
+		template <typename T>
+		using has_max_size = meta::boolean<meta_detail::has_max_size_test<T>::value>;
 
 		template <typename T>
 		using has_insert = meta::boolean<meta_detail::has_insert_test<T>::value>;
@@ -2302,7 +2318,7 @@ COMPAT53_API void luaL_requiref(lua_State *L, const char *modname,
 #endif /* Lua 5.2 only */
 
 /* other Lua versions */
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501 || LUA_VERSION_NUM > 503
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501 || LUA_VERSION_NUM > 504
 
 #  error "unsupported Lua version (i.e. not Lua 5.1, 5.2, or 5.3)"
 
@@ -4714,6 +4730,9 @@ namespace sol {
 	struct unique_usertype_traits {
 		typedef T type;
 		typedef T actual_type;
+		template <typename X>
+		using base_id = void;
+
 		static const bool value = false;
 
 		template <typename U>
@@ -4731,7 +4750,12 @@ namespace sol {
 	struct unique_usertype_traits<std::shared_ptr<T>> {
 		typedef T type;
 		typedef std::shared_ptr<T> actual_type;
-		
+		// rebind is non-void
+		// and tag is a unique integer
+		// if and only if unique usertype
+		// is cast-capable
+		using base_id = std::shared_ptr<void>;
+
 		static const bool value = true;
 
 		static bool is_null(const actual_type& p) {
@@ -4747,7 +4771,9 @@ namespace sol {
 	struct unique_usertype_traits<std::unique_ptr<T, D>> {
 		typedef T type;
 		typedef std::unique_ptr<T, D> actual_type;
-		
+		template <typename X>
+		using base_id = void;
+
 		static const bool value = true;
 
 		static bool is_null(const actual_type& p) {
@@ -4868,7 +4894,7 @@ namespace sol {
 	struct user {
 		U value;
 
-		user(U x)
+		user(U&& x)
 		: value(std::forward<U>(x)) {
 		}
 		operator std::add_pointer_t<std::remove_reference_t<U>>() {
@@ -5337,6 +5363,30 @@ namespace sol {
 		return lua_typename(L, static_cast<int>(t));
 	}
 
+	template <typename T>
+	struct is_lua_reference : std::integral_constant<bool,
+							 std::is_base_of<reference, meta::unqualified_t<T>>::value
+								 || std::is_base_of<main_reference, meta::unqualified_t<T>>::value
+								 || std::is_base_of<stack_reference, meta::unqualified_t<T>>::value> {};
+
+	template <typename T>
+	struct is_lua_reference_or_proxy : std::integral_constant<bool,
+									is_lua_reference<meta::unqualified_t<T>>::value
+										|| meta::is_specialization_of<meta::unqualified_t<T>, proxy>::value> {};
+
+	template <typename T>
+	struct is_transparent_argument : std::false_type {};
+	template <>
+	struct is_transparent_argument<this_state> : std::true_type {};
+	template <>
+	struct is_transparent_argument<this_main_state> : std::true_type {};
+	template <>
+	struct is_transparent_argument<this_environment> : std::true_type {};
+	template <>
+	struct is_transparent_argument<variadic_args> : std::true_type {};
+	template <typename T>
+	struct is_variadic_arguments : std::is_same<meta::unqualified_t<T>, variadic_args> {};
+
 	namespace detail {
 		template <typename T>
 		struct is_initializer_list : std::false_type {};
@@ -5607,22 +5657,9 @@ namespace sol {
 								 || ((type::userdata == lua_type_of<meta::unqualified_t<T>>::value)
 									    && detail::has_internal_marker<lua_type_of<meta::unqualified_t<T>>>::value
 									    && !detail::has_internal_marker<lua_size<meta::unqualified_t<T>>>::value)
-								 || std::is_base_of<reference, meta::unqualified_t<T>>::value
-								 || std::is_base_of<main_reference, meta::unqualified_t<T>>::value
-								 || std::is_base_of<stack_reference, meta::unqualified_t<T>>::value
+								 || is_lua_reference<meta::unqualified_t<T>>::value
 								 || meta::is_specialization_of<meta::unqualified_t<T>, std::tuple>::value
 								 || meta::is_specialization_of<meta::unqualified_t<T>, std::pair>::value> {};
-
-	template <typename T>
-	struct is_lua_reference : std::integral_constant<bool,
-							 std::is_base_of<reference, meta::unqualified_t<T>>::value
-								 || std::is_base_of<main_reference, meta::unqualified_t<T>>::value
-								 || std::is_base_of<stack_reference, meta::unqualified_t<T>>::value> {};
-
-	template <typename T>
-	struct is_lua_reference_or_proxy : std::integral_constant<bool,
-									is_lua_reference<meta::unqualified_t<T>>::value
-										|| meta::is_specialization_of<meta::unqualified_t<T>, proxy>::value> {};
 
 	template <typename T>
 	struct is_main_threaded : std::is_base_of<main_reference, T> {};
@@ -5667,19 +5704,6 @@ namespace sol {
 
 	template <typename T>
 	struct is_proxy_primitive : is_lua_primitive<T> {};
-
-	template <typename T>
-	struct is_transparent_argument : std::false_type {};
-	template <>
-	struct is_transparent_argument<this_state> : std::true_type {};
-	template <>
-	struct is_transparent_argument<this_main_state> : std::true_type {};
-	template <>
-	struct is_transparent_argument<this_environment> : std::true_type {};
-	template <>
-	struct is_transparent_argument<variadic_args> : std::true_type {};
-	template <typename T>
-	struct is_variadic_arguments : std::is_same<meta::unqualified_t<T>, variadic_args> {};
 
 	template <typename T>
 	struct is_lua_index : std::is_integral<T> {};
@@ -5974,6 +5998,118 @@ namespace sol {
 // end of sol/trampoline.hpp
 
 // beginning of sol/stack_core.hpp
+
+// beginning of sol/inheritance.hpp
+
+namespace sol {
+	template <typename... Args>
+	struct base_list {};
+	template <typename... Args>
+	using bases = base_list<Args...>;
+
+	typedef bases<> base_classes_tag;
+	const auto base_classes = base_classes_tag();
+
+	namespace detail {
+
+		template <typename T>
+		struct has_derived {
+			static bool value;
+		};
+
+		template <typename T>
+		bool has_derived<T>::value = false;
+
+		inline decltype(auto) base_class_check_key() {
+			static const auto& key = "class_check";
+			return key;
+		}
+
+		inline decltype(auto) base_class_cast_key() {
+			static const auto& key = "class_cast";
+			return key;
+		}
+
+		inline decltype(auto) base_class_index_propogation_key() {
+			static const auto& key = u8"\xF0\x9F\x8C\xB2.index";
+			return key;
+		}
+
+		inline decltype(auto) base_class_new_index_propogation_key() {
+			static const auto& key = u8"\xF0\x9F\x8C\xB2.new_index";
+			return key;
+		}
+
+		template <typename T, typename... Bases>
+		struct inheritance {
+			static bool type_check_bases(types<>, const std::string&) {
+				return false;
+			}
+
+			template <typename Base, typename... Args>
+			static bool type_check_bases(types<Base, Args...>, const std::string& ti) {
+				return ti == usertype_traits<Base>::qualified_name() || type_check_bases(types<Args...>(), ti);
+			}
+
+			static bool type_check(const std::string& ti) {
+				return ti == usertype_traits<T>::qualified_name() || type_check_bases(types<Bases...>(), ti);
+			}
+
+			static void* type_cast_bases(types<>, T*, const std::string&) {
+				return nullptr;
+			}
+
+			template <typename Base, typename... Args>
+			static void* type_cast_bases(types<Base, Args...>, T* data, const std::string& ti) {
+				// Make sure to convert to T first, and then dynamic cast to the proper type
+				return ti != usertype_traits<Base>::qualified_name() ? type_cast_bases(types<Args...>(), data, ti) : static_cast<void*>(static_cast<Base*>(data));
+			}
+
+			static void* type_cast(void* voiddata, const std::string& ti) {
+				T* data = static_cast<T*>(voiddata);
+				return static_cast<void*>(ti != usertype_traits<T>::qualified_name() ? type_cast_bases(types<Bases...>(), data, ti) : data);
+			}
+
+			template <typename U>
+			static bool type_unique_cast_bases(void*, const string_view&) {
+				return false;
+			}
+
+			template <typename U, typename Base, typename... Args>
+			static bool type_unique_cast_bases(void* source_data, void* target_data, const string_view& ti) {
+				typedef unique_usertype_traits<U>::typename rebind_base<Base> base_ptr;
+				string_view base_ti = usertype_traits<Base>::qualified_name();
+				if (base_ti == ti) {
+					if (target_data != nullptr) {
+						U* source = static_cast<U*>(source_data);
+						base_ptr* target = static_cast<base_ptr*>(target_data);
+						// perform proper derived -> base conversion
+						*target = *source;
+					}
+					return true;
+				}
+				return type_unique_cast_bases<Args...>(source_data, target_data, ti);
+			}
+
+			template <typename U>
+			static bool type_unique_cast(void* source_data, void* target_data, const string_view& ti, const string_view& rebind_ti) {
+				typedef unique_usertype_traits<U>::typename rebind_base<void> rebind_t;
+				string_view this_rebind_ti = usertype_traits<rebind_t>::qualified_name();
+				if (rebind_ti != this_rebind_ti) {
+					// this is not even of the same container type
+					return false;
+				}
+				return type_unique_cast_bases<Bases...>(source_data, target_data, ti);
+			}
+		};
+
+		using inheritance_check_function = decltype(&inheritance<void>::type_check);
+		using inheritance_cast_function = decltype(&inheritance<void>::type_cast);
+		using inheritance_unique_cast_function = decltype(&inheritance<void>::type_unique_cast<void>);
+	} // namespace detail
+} // namespace sol
+
+// end of sol/inheritance.hpp
 
 // beginning of sol/error_handler.hpp
 
@@ -6960,6 +7096,11 @@ namespace sol {
 		struct as_table_tag {};
 
 		using unique_destructor = void (*)(void*);
+#if 0
+		using unique_tag = detail::inheritance_unique_cast_function;
+#else
+		using unique_tag = const char*;
+#endif
 
 		inline void* align(std::size_t alignment, std::size_t size, void*& ptr, std::size_t& space, std::size_t& required_space) {
 			// this handels arbitrary alignments...
@@ -7011,6 +7152,7 @@ namespace sol {
 			return align(std::alignment_of<void*>::value, sizeof(void*), ptr, space);
 		}
 
+		template <bool pre_aligned = false>
 		inline void* align_usertype_unique_destructor(void* ptr) {
 			typedef std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
@@ -7020,15 +7162,37 @@ namespace sol {
 #endif
 				>
 				use_align;
+			if (!pre_aligned) {
+				ptr = align_usertype_pointer(ptr);
+				ptr = static_cast<void*>(static_cast<char*>(ptr) + sizeof(void*));
+			}
 			if (!use_align::value) {
 				return static_cast<void*>(static_cast<void**>(ptr) + 1);
 			}
-			ptr = align_usertype_pointer(ptr);
-			ptr = static_cast<void*>(static_cast<char*>(ptr) + sizeof(void*));
 			std::size_t space = (std::numeric_limits<std::size_t>::max)();
 			return align(std::alignment_of<unique_destructor>::value, sizeof(unique_destructor), ptr, space);
 		}
 
+		template <bool pre_aligned = false>
+		inline void* align_usertype_unique_tag(void* ptr) {
+			typedef std::integral_constant<bool,
+#if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
+				false
+#else
+				(std::alignment_of<unique_tag>::value > 1)
+#endif
+				>
+				use_align;
+			if (!pre_aligned) {
+				ptr = align_usertype_unique_destructor(ptr);
+				ptr = static_cast<void*>(static_cast<char*>(ptr) + sizeof(unique_destructor));
+			}
+			if (!use_align::value) {
+				return ptr;
+			}
+			std::size_t space = (std::numeric_limits<std::size_t>::max)();
+			return align(std::alignment_of<unique_tag>::value, sizeof(unique_tag), ptr, space);
+		}
 		template <typename T, bool pre_aligned = false>
 		inline void* align_usertype_unique(void* ptr) {
 			typedef std::integral_constant<bool,
@@ -7040,8 +7204,8 @@ namespace sol {
 				>
 				use_align;
 			if (!pre_aligned) {
-				ptr = align_usertype_unique_destructor(ptr);
-				ptr = static_cast<void*>(static_cast<char*>(ptr) + sizeof(unique_destructor));
+				ptr = align_usertype_unique_tag(ptr);
+				ptr = static_cast<void*>(static_cast<char*>(ptr) + sizeof(unique_tag));
 			}
 			if (!use_align::value) {
 				return ptr;
@@ -7185,29 +7349,31 @@ namespace sol {
 		}
 
 		template <typename T, typename Real>
-		inline Real* usertype_unique_allocate(lua_State* L, T**& pref, unique_destructor*& dx) {
+		inline Real* usertype_unique_allocate(lua_State* L, T**& pref, unique_destructor*& dx, unique_tag*& id) {
 			typedef std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 				false
 #else
-				(std::alignment_of<T*>::value > 1 || std::alignment_of<unique_destructor>::value > 1 || std::alignment_of<Real>::value > 1)
+				(std::alignment_of<T*>::value > 1 || std::alignment_of<unique_tag>::value > 1 || std::alignment_of<unique_destructor>::value > 1 || std::alignment_of<Real>::value > 1)
 #endif
 				>
 				use_align;
 			if (!use_align::value) {
-				pref = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(detail::unique_destructor) + sizeof(Real)));
+				pref = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(detail::unique_destructor) + sizeof(unique_tag) + sizeof(Real)));
 				dx = static_cast<detail::unique_destructor*>(static_cast<void*>(pref + 1));
-				Real* mem = static_cast<Real*>(static_cast<void*>(dx + 1));
+				id = static_cast<unique_tag*>(static_cast<void*>(dx + 1));
+				Real* mem = static_cast<Real*>(static_cast<void*>(id + 1));
 				return mem;
 			}
 
-			static const std::size_t initial_size = aligned_space_for<T*, unique_destructor, Real>(nullptr);
-			static const std::size_t misaligned_size = aligned_space_for<T*, unique_destructor, Real>(reinterpret_cast<void*>(0x1));
+			static const std::size_t initial_size = aligned_space_for<T*, unique_destructor, unique_tag, Real>(nullptr);
+			static const std::size_t misaligned_size = aligned_space_for<T*, unique_destructor, unique_tag, Real>(reinterpret_cast<void*>(0x1));
 
 			void* pointer_adjusted;
 			void* dx_adjusted;
+			void* id_adjusted;
 			void* data_adjusted;
-			auto attempt_alloc = [](lua_State* L, std::size_t allocated_size, void*& pointer_adjusted, void*& dx_adjusted, void*& data_adjusted) -> bool {
+			auto attempt_alloc = [](lua_State* L, std::size_t allocated_size, void*& pointer_adjusted, void*& dx_adjusted, void*& id_adjusted, void*& data_adjusted) -> bool {
 				void* adjusted = lua_newuserdata(L, allocated_size);
 				pointer_adjusted = align(std::alignment_of<T*>::value, sizeof(T*), adjusted, allocated_size);
 				if (pointer_adjusted == nullptr) {
@@ -7215,6 +7381,7 @@ namespace sol {
 					return false;
 				}
 				allocated_size -= sizeof(T*);
+				
 				adjusted = static_cast<void*>(static_cast<char*>(pointer_adjusted) + sizeof(T*));
 				dx_adjusted = align(std::alignment_of<unique_destructor>::value, sizeof(unique_destructor), adjusted, allocated_size);
 				if (dx_adjusted == nullptr) {
@@ -7222,7 +7389,17 @@ namespace sol {
 					return false;
 				}
 				allocated_size -= sizeof(unique_destructor);
+				
 				adjusted = static_cast<void*>(static_cast<char*>(dx_adjusted) + sizeof(unique_destructor));
+
+				id_adjusted = align(std::alignment_of<unique_tag>::value, sizeof(unique_tag), adjusted, allocated_size);
+				if (id_adjusted == nullptr) {
+					lua_pop(L, 1);
+					return false;
+				}
+				allocated_size -= sizeof(unique_tag);
+				
+				adjusted = static_cast<void*>(static_cast<char*>(id_adjusted) + sizeof(unique_tag));
 				data_adjusted = align(std::alignment_of<Real>::value, sizeof(Real), adjusted, allocated_size);
 				if (data_adjusted == nullptr) {
 					lua_pop(L, 1);
@@ -7230,23 +7407,24 @@ namespace sol {
 				}
 				return true;
 			};
-			bool result = attempt_alloc(L, initial_size, pointer_adjusted, dx_adjusted, data_adjusted);
+			bool result = attempt_alloc(L, initial_size, pointer_adjusted, dx_adjusted, id_adjusted, data_adjusted);
 			if (!result) {
 				// we're likely to get something that fails to perform the proper allocation a second time,
 				// so we use the suggested_new_size bump to help us out here
 				pointer_adjusted = nullptr;
 				dx_adjusted = nullptr;
+				id_adjusted = nullptr;
 				data_adjusted = nullptr;
-				result = attempt_alloc(L, misaligned_size, pointer_adjusted, dx_adjusted, data_adjusted);
+				result = attempt_alloc(L, misaligned_size, pointer_adjusted, dx_adjusted, id_adjusted, data_adjusted);
 				if (!result) {
 					if (pointer_adjusted == nullptr) {
 						luaL_error(L, "aligned allocation of userdata block (pointer section) for '%s' failed", detail::demangle<T>().c_str());
 					}
 					else if (dx_adjusted == nullptr) {
-						luaL_error(L, "aligned allocation of userdata block (deleter section) for '%s' failed", detail::demangle<Real>().c_str());
+						luaL_error(L, "aligned allocation of userdata block (deleter section) for '%s' failed", detail::demangle<T>().c_str());
 					}
 					else {
-						luaL_error(L, "aligned allocation of userdata block (data section) for '%s' failed", detail::demangle<Real>().c_str());
+						luaL_error(L, "aligned allocation of userdata block (data section) for '%s' failed", detail::demangle<T>().c_str());
 					}
 					return nullptr;
 				}
@@ -7254,6 +7432,7 @@ namespace sol {
 
 			pref = static_cast<T**>(pointer_adjusted);
 			dx = static_cast<detail::unique_destructor*>(dx_adjusted);
+			id = static_cast<unique_tag*>(id_adjusted);
 			Real* mem = static_cast<Real*>(data_adjusted);
 			return mem;
 		}
@@ -7310,6 +7489,8 @@ namespace sol {
 			memory = align_usertype_unique_destructor(memory);
 			unique_destructor& dx = *static_cast<unique_destructor*>(memory);
 			memory = static_cast<void*>(static_cast<char*>(memory) + sizeof(unique_destructor));
+			memory = align_usertype_unique_tag<true>(memory);
+			memory = static_cast<void*>(static_cast<char*>(memory) + sizeof(unique_tag));
 			(dx)(memory);
 			return 0;
 		}
@@ -7366,6 +7547,8 @@ namespace sol {
 		template <typename T, typename = void>
 		struct getter;
 		template <typename T, typename = void>
+		struct qualified_getter;
+		template <typename T, typename = void>
 		struct userdata_getter;
 		template <typename T, typename = void>
 		struct popper;
@@ -7373,10 +7556,14 @@ namespace sol {
 		struct pusher;
 		template <typename T, type = lua_type_of<T>::value, typename = void>
 		struct checker;
+		template <typename T, type = lua_type_of<T>::value, typename = void>
+		struct qualified_checker;
 		template <typename T, typename = void>
 		struct userdata_checker;
 		template <typename T, typename = void>
 		struct check_getter;
+		template <typename T, typename = void>
+		struct qualified_check_getter;
 
 		struct probe {
 			bool success;
@@ -7445,8 +7632,16 @@ namespace sol {
 			}
 
 			template <typename T>
+			inline decltype(auto) unchecked_unqualified_get(lua_State* L, int index, record& tracking) {
+				typedef meta::unqualified_t<T> Tu;
+				getter<Tu> g{};
+				(void)g;
+				return g.get(L, index, tracking);
+			}
+
+			template <typename T>
 			inline decltype(auto) unchecked_get(lua_State* L, int index, record& tracking) {
-				getter<meta::unqualified_t<T>> g{};
+				qualified_getter<T> g{};
 				(void)g;
 				return g.get(L, index, tracking);
 			}
@@ -7459,7 +7654,9 @@ namespace sol {
 					meta::neg<is_lua_primitive<meta::unqualified_t<T>>>,
 					meta::neg<is_unique_usertype<meta::unqualified_t<T>>>>
 					use_reference_tag;
-				return pusher<std::conditional_t<use_reference_tag::value, detail::as_reference_tag, meta::unqualified_t<T>>>{}.push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
+				pusher<std::conditional_t<use_reference_tag::value, detail::as_reference_tag, meta::unqualified_t<T>>> p{};
+				(void)p;
+				return p.push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 			}
 
 			template <typename T, typename Handler>
@@ -7555,8 +7752,7 @@ namespace sol {
 
 		template <typename T, typename Handler>
 		bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
-			typedef meta::unqualified_t<T> Tu;
-			checker<Tu> c;
+			qualified_checker<T> c;
 			// VC++ has a bad warning here: shut it up
 			(void)c;
 			return c.check(L, index, std::forward<Handler>(handler), tracking);
@@ -7572,6 +7768,27 @@ namespace sol {
 		bool check(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
 			auto handler = no_panic;
 			return check<T>(L, index, handler);
+		}
+
+		template <typename T, typename Handler>
+		bool unqualified_check(lua_State* L, int index, Handler&& handler, record& tracking) {
+			typedef meta::unqualified_t<T> Tu;
+			checker<Tu> c;
+			// VC++ has a bad warning here: shut it up
+			(void)c;
+			return c.check(L, index, std::forward<Handler>(handler), tracking);
+		}
+
+		template <typename T, typename Handler>
+		bool unqualified_check(lua_State* L, int index, Handler&& handler) {
+			record tracking{};
+			return unqualified_check<T>(L, index, std::forward<Handler>(handler), tracking);
+		}
+
+		template <typename T>
+		bool unqualified_check(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
+			auto handler = no_panic;
+			return unqualified_check<T>(L, index, handler);
 		}
 
 		template <typename T, typename Handler>
@@ -7593,9 +7810,27 @@ namespace sol {
 		}
 
 		template <typename T, typename Handler>
+		inline decltype(auto) unqualified_check_get(lua_State* L, int index, Handler&& handler, record& tracking) {
+			check_getter<T> cg{};
+			(void)cg;
+			return cg.get(L, index, std::forward<Handler>(handler), tracking);
+		}
+
+		template <typename T, typename Handler>
+		inline decltype(auto) unqualified_check_get(lua_State* L, int index, Handler&& handler) {
+			record tracking{};
+			return unqualified_check_get<T>(L, index, handler, tracking);
+		}
+
+		template <typename T>
+		inline decltype(auto) unqualified_check_get(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
+			auto handler = no_panic;
+			return unqualified_check_get<T>(L, index, handler);
+		}
+
+		template <typename T, typename Handler>
 		inline decltype(auto) check_get(lua_State* L, int index, Handler&& handler, record& tracking) {
-			typedef meta::unqualified_t<T> Tu;
-			check_getter<Tu> cg{};
+			qualified_check_getter<T> cg{};
 			(void)cg;
 			return cg.get(L, index, std::forward<Handler>(handler), tracking);
 		}
@@ -7616,6 +7851,17 @@ namespace sol {
 
 #if defined(SOL_SAFE_GETTER) && SOL_SAFE_GETTER
 			template <typename T>
+			inline auto tagged_unqualified_get(types<T>, lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_get<T>(L, index, tracking)) {
+				auto op = unqualified_check_get<T>(L, index, type_panic_c_str, tracking);
+				return *std::move(op);
+			}
+
+			template <typename T>
+			inline decltype(auto) tagged_unqualified_get(types<optional<T>>, lua_State* L, int index, record& tracking) {
+				return stack_detail::unchecked_unqualified_get<optional<T>>(L, index, tracking);
+			}
+
+			template <typename T>
 			inline auto tagged_get(types<T>, lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_get<T>(L, index, tracking)) {
 				auto op = check_get<T>(L, index, type_panic_c_str, tracking);
 				return *std::move(op);
@@ -7626,6 +7872,11 @@ namespace sol {
 				return stack_detail::unchecked_get<optional<T>>(L, index, tracking);
 			}
 #else
+			template <typename T>
+			inline decltype(auto) tagged_unqualified_get(types<T>, lua_State* L, int index, record& tracking) {
+				return stack_detail::unchecked_unqualified_get<T>(L, index, tracking);
+			}
+
 			template <typename T>
 			inline decltype(auto) tagged_get(types<T>, lua_State* L, int index, record& tracking) {
 				return stack_detail::unchecked_get<T>(L, index, tracking);
@@ -7702,6 +7953,17 @@ namespace sol {
 		inline decltype(auto) get_usertype(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
 			record tracking{};
 			return get_usertype<T>(L, index, tracking);
+		}
+
+		template <typename T>
+		inline decltype(auto) unqualified_get(lua_State* L, int index, record& tracking) {
+			return stack_detail::tagged_unqualified_get(types<T>(), L, index, tracking);
+		}
+
+		template <typename T>
+		inline decltype(auto) unqualified_get(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
+			record tracking{};
+			return unqualified_get<T>(L, index, tracking);
 		}
 
 		template <typename T>
@@ -7804,6 +8066,8 @@ namespace sol {
 
 // beginning of sol/stack_check.hpp
 
+// beginning of sol/stack_check_unqualified.hpp
+
 // beginning of sol/usertype_traits.hpp
 
 namespace sol {
@@ -7839,86 +8103,6 @@ namespace sol {
 } // namespace sol
 
 // end of sol/usertype_traits.hpp
-
-// beginning of sol/inheritance.hpp
-
-namespace sol {
-	template <typename... Args>
-	struct base_list {};
-	template <typename... Args>
-	using bases = base_list<Args...>;
-
-	typedef bases<> base_classes_tag;
-	const auto base_classes = base_classes_tag();
-
-	namespace detail {
-
-		template <typename T>
-		struct has_derived {
-			static bool value;
-		};
-
-		template <typename T>
-		bool has_derived<T>::value = false;
-
-		inline decltype(auto) base_class_check_key() {
-			static const auto& key = "class_check";
-			return key;
-		}
-
-		inline decltype(auto) base_class_cast_key() {
-			static const auto& key = "class_cast";
-			return key;
-		}
-
-		inline decltype(auto) base_class_index_propogation_key() {
-			static const auto& key = u8"\xF0\x9F\x8C\xB2.index";
-			return key;
-		}
-
-		inline decltype(auto) base_class_new_index_propogation_key() {
-			static const auto& key = u8"\xF0\x9F\x8C\xB2.new_index";
-			return key;
-		}
-
-		template <typename T, typename... Bases>
-		struct inheritance {
-			static bool type_check_bases(types<>, const std::string&) {
-				return false;
-			}
-
-			template <typename Base, typename... Args>
-			static bool type_check_bases(types<Base, Args...>, const std::string& ti) {
-				return ti == usertype_traits<Base>::qualified_name() || type_check_bases(types<Args...>(), ti);
-			}
-
-			static bool type_check(const std::string& ti) {
-				return ti == usertype_traits<T>::qualified_name() || type_check_bases(types<Bases...>(), ti);
-			}
-
-			static void* type_cast_bases(types<>, T*, const std::string&) {
-				return nullptr;
-			}
-
-			template <typename Base, typename... Args>
-			static void* type_cast_bases(types<Base, Args...>, T* data, const std::string& ti) {
-				// Make sure to convert to T first, and then dynamic cast to the proper type
-				return ti != usertype_traits<Base>::qualified_name() ? type_cast_bases(types<Args...>(), data, ti) : static_cast<void*>(static_cast<Base*>(data));
-			}
-
-			static void* type_cast(void* voiddata, const std::string& ti) {
-				T* data = static_cast<T*>(voiddata);
-				return static_cast<void*>(ti != usertype_traits<T>::qualified_name() ? type_cast_bases(types<Bases...>(), data, ti) : data);
-			}
-		};
-
-		using inheritance_check_function = decltype(&inheritance<void>::type_check);
-		using inheritance_cast_function = decltype(&inheritance<void>::type_cast);
-
-	} // namespace detail
-} // namespace sol
-
-// end of sol/inheritance.hpp
 
 #include <cmath>
 #ifdef SOL_CXX17_FEATURES
@@ -7981,6 +8165,9 @@ namespace stack {
 			return success;
 		}
 	};
+
+	template <typename T, type expected, typename C>
+	struct qualified_checker : checker<meta::unqualified_t<T>, lua_type_of<meta::unqualified_t<T>>::value, C> {};
 
 	template <typename T>
 	struct checker<T, type::number, std::enable_if_t<std::is_integral<T>::value>> {
@@ -8092,9 +8279,7 @@ namespace stack {
 	struct checker<detail::non_lua_nil_t, type::poly, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
-			checker<lua_nil_t, type::lua_nil, C> c{};
-			(void)c;
-			return !c.check(L, index, std::forward<Handler>(handler), tracking);
+			return !stack::unqualified_check<lua_nil_t>(L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
 
@@ -8436,7 +8621,16 @@ namespace stack {
 				detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(memory);
 				bool success = &detail::usertype_unique_alloc_destroy<T, X> == pdx;
 				if (!success) {
-					handler(L, index, type::userdata, indextype, "value is a userdata but is not the correct unique usertype");
+					memory = detail::align_usertype_unique_tag<true>(memory);
+#if 0
+					// New version
+#else
+					const char*& name_tag = *static_cast<const char**>(memory);
+					success = usertype_traits<X>::qualified_name() == name_tag;
+#endif
+					if (!success) {
+						handler(L, index, type::userdata, indextype, "value is a userdata but is not the correct unique usertype");
+					}
 				}
 				return success;
 			}
@@ -8450,7 +8644,7 @@ namespace stack {
 	struct checker<std::reference_wrapper<T>, type::userdata, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
-			return checker<T, type::userdata, C>{}.check(L, index, std::forward<Handler>(handler), tracking);
+			return stack::check<T>(L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
 
@@ -8524,9 +8718,88 @@ namespace stack {
 }
 } // namespace sol::stack
 
+// end of sol/stack_check_unqualified.hpp
+
+// beginning of sol/stack_check_qualified.hpp
+
+namespace sol {
+namespace stack {
+
+#if 0
+	template <typename X>
+	struct qualified_checker<X, type::userdata, std::enable_if_t<is_unique_usertype<X>::value && !std::is_reference<X>::value>> {
+		typedef unique_usertype_traits<meta::unqualified_t<X>> u_traits;
+		typedef typename u_traits::type T;
+		typedef typename u_traits::base_id base_id;
+		
+		template <typename Handler>
+		static bool check(std::false_type, lua_State* L, int index, Handler&& handler, record& tracking) {
+			return stack::unqualified_check<X>(L, index, std::forward<Handler>(handler), tracking);
+		}
+
+		template <typename Handler>
+		static bool check(std::true_type, lua_State* L, int index, Handler&& handler, record& tracking) {
+			// we have a unique pointer type that can be 
+			// rebound to a base/derived type
+			const type indextype = type_of(L, index);
+			tracking.use(1);
+			if (indextype != type::userdata) {
+				handler(L, index, type::userdata, indextype, "value is not a userdata");
+				return false;
+			}
+			if (lua_getmetatable(L, index) == 0) {
+				return true;
+			}
+			int metatableindex = lua_gettop(L);
+			void* basecastdata = lua_touserdata(L, index);
+			void* memory = detail::align_usertype_unique_destructor(basecastdata);
+			detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(memory);
+			if (&detail::usertype_unique_alloc_destroy<T, X> == pdx) {
+				return true;
+			}
+			if (detail::has_derived<T>::value) {
+				memory = detail::align_usertype_unique_cast<true>(memory);
+				detail::inheritance_unique_cast_function ic = reinterpret_cast<detail::inheritance_unique_cast_function>(memory);
+				string_view ti = usertype_traits<T>::qualified_name();
+				string_view rebind_ti = usertype_traits<base_id>::qualified_name();
+				if (ic(nullptr, basecastdata, ti, rebind_ti)) {
+					lua_pop(L, 1);
+				}
+			}
+			handler(L, index, type::userdata, indextype, "value is a userdata but is not the correct unique usertype");
+			return false;
+		}
+		
+		template <typename Handler>
+		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+			return check(meta::neg<std::is_void<typename u_traits::base_id>>(), L, index, std::forward<Handler>(handler), tracking);
+		}
+	};
+
+#endif // Not implemented right now...
+
+	template <typename X>
+	struct qualified_checker<X, type::userdata, std::enable_if_t<is_container<meta::unqualified_t<X>>::value && !std::is_reference<X>::value>> {
+		template <typename Handler>
+		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+			if (type_of(L, index) == type::userdata) {
+				return stack::unqualified_check<X>(L, index, std::forward<Handler>(handler), tracking);
+			}
+			else {
+				return stack::unqualified_check<nested<X>>(L, index, std::forward<Handler>(handler), tracking);
+			}
+		}
+	};
+}
+} // namespace sol::stack
+
+// end of sol/stack_check_qualified.hpp
+
 // end of sol/stack_check.hpp
 
 // beginning of sol/stack_get.hpp
+
+// beginning of sol/stack_get_unqualified.hpp
 
 // beginning of sol/overload.hpp
 
@@ -8880,6 +9153,9 @@ namespace stack {
 		}
 	};
 
+	template <typename T, typename C>
+	struct qualified_getter : getter<meta::unqualified_t<T>, C> {};
+
 	template <typename T>
 	struct getter<T, std::enable_if_t<std::is_floating_point<T>::value>> {
 		static T get(lua_State* L, int index, record& tracking) {
@@ -8934,6 +9210,14 @@ namespace stack {
 			arr[idx] = stack::get<V>(L, -lua_size<V>::value);
 		}
 
+		static bool max_size_check(std::false_type, T&, std::size_t) {
+			return false;
+		}
+
+		static bool max_size_check(std::true_type, T& arr, std::size_t idx) {
+			return idx >= arr.max_size();
+		}
+
 		static T get(lua_State* L, int relindex, record& tracking) {
 			return get(meta::has_key_value_pair<meta::unqualified_t<T>>(), L, relindex, tracking);
 		}
@@ -8952,14 +9236,28 @@ namespace stack {
 			std::size_t idx = 0;
 #if SOL_LUA_VERSION >= 503
 			// This method is HIGHLY performant over regular table iteration thanks to the Lua API changes in 5.3
-			for (lua_Integer i = 0;; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
-				if (idx >= arr.max_size()) {
+			// Questionable in 5.4
+			for (lua_Integer i = 0;; i += lua_size<V>::value) {
+				if (max_size_check(meta::has_max_size<Tu>(), arr, idx)) {
 					return arr;
 				}
 				bool isnil = false;
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
+#if defined(LUA_NILINTABLE) && LUA_NILINTABLE
+					lua_pushinteger(L, static_cast<lua_Integer>(i + vi));
+					if (lua_keyin(L, index) == 0) {
+						// it's time to stop
+						isnil = true;
+					}
+					else {
+						// we have a key, have to get the value
+						lua_geti(L, index, i + vi);
+					}
+#else
 					type vt = static_cast<type>(lua_geti(L, index, i + vi));
-					isnil = vt == type::lua_nil;
+					isnil = vt == type::none
+						|| vt == type::lua_nil;
+#endif
 					if (isnil) {
 						if (i == 0) {
 							break;
@@ -8968,10 +9266,16 @@ namespace stack {
 						return arr;
 					}
 				}
-				if (isnil)
+				if (isnil) {
+#if defined(LUA_NILINTABLE) && LUA_NILINTABLE
+#else
+					lua_pop(L, lua_size<V>::value);
+#endif
 					continue;
+				}
 				push_back_at_end(meta::has_push_back<Tu>(), t, L, arr, idx);
 				++idx;
+				lua_pop(L, lua_size<V>::value);
 			}
 #else
 			// Zzzz slower but necessary thanks to the lower version API and missing functions qq
@@ -9702,23 +10006,72 @@ namespace stack {
 }
 } // namespace sol::stack
 
+// end of sol/stack_get_unqualified.hpp
+
+// beginning of sol/stack_get_qualified.hpp
+
+namespace sol {
+namespace stack {
+
+#if 0 // need static reflection / DERIVED_CLASS macros...
+	template <typename X>
+	struct qualified_getter<X, std::enable_if_t<
+		!std::is_reference<X>::value && is_unique_usertype<meta::unqualified_t<X>>::value
+	>> {
+		typedef typename unique_usertype_traits<meta::unqualified_t<X>>::type P;
+		typedef typename unique_usertype_traits<meta::unqualified_t<X>>::actual_type Real;
+
+		static Real& get(lua_State* L, int index, record& tracking) {
+			tracking.use(1);
+			void* memory = lua_touserdata(L, index);
+			void* del = detail::align_usertype_unique_destructor(memory);
+			memory = detail::align_usertype_unique<Real>(memory);
+			Real* mem = static_cast<Real*>(memory);
+			return *mem;
+		}
+	};
+#endif // need static reflection
+
+	template <typename T>
+	struct qualified_getter<T, std::enable_if_t<
+		!std::is_reference<T>::value 
+		&& is_container<meta::unqualified_t<T>>::value 
+		&& !is_lua_primitive<T>::value 
+		&& !is_transparent_argument<T>::value 
+	>> {
+		static T get(lua_State* L, int index, record& tracking) {
+			if (type_of(L, index) == type::userdata) {
+				return stack_detail::unchecked_unqualified_get<T>(L, index, tracking);
+			}
+			else {
+				return stack_detail::unchecked_unqualified_get<sol::nested<T>>(L, index, tracking);
+			}
+		}
+	};
+}
+} // namespace sol::stack
+
+// end of sol/stack_get_qualified.hpp
+
 // end of sol/stack_get.hpp
 
 // beginning of sol/stack_check_get.hpp
+
+// beginning of sol/stack_check_get_unqualified.hpp
 
 namespace sol {
 namespace stack {
 	template <typename T, typename>
 	struct check_getter {
-		typedef decltype(stack_detail::unchecked_get<T>(nullptr, 0, std::declval<record&>())) R;
+		typedef decltype(stack_detail::unchecked_unqualified_get<T>(nullptr, 0, std::declval<record&>())) R;
 
 		template <typename Handler>
 		static optional<R> get(lua_State* L, int index, Handler&& handler, record& tracking) {
-			if (!check<T>(L, index, std::forward<Handler>(handler))) {
+			if (!unqualified_check<T>(L, index, std::forward<Handler>(handler))) {
 				tracking.use(static_cast<int>(!lua_isnone(L, index)));
 				return nullopt;
 			}
-			return stack_detail::unchecked_get<T>(L, index, tracking);
+			return stack_detail::unchecked_unqualified_get<T>(L, index, tracking);
 		}
 	};
 
@@ -9865,6 +10218,30 @@ namespace stack {
 }
 } // namespace sol::stack
 
+// end of sol/stack_check_get_unqualified.hpp
+
+// beginning of sol/stack_check_get_qualified.hpp
+
+namespace sol {
+namespace stack {
+	template <typename T, typename C>
+	struct qualified_check_getter {
+		typedef decltype(stack_detail::unchecked_get<T>(nullptr, 0, std::declval<record&>())) R;
+
+		template <typename Handler>
+		static optional<R> get(lua_State* L, int index, Handler&& handler, record& tracking) {
+			if (!check<T>(L, index, std::forward<Handler>(handler))) {
+				tracking.use(static_cast<int>(!lua_isnone(L, index)));
+				return nullopt;
+			}
+			return stack_detail::unchecked_get<T>(L, index, tracking);
+		}
+	};
+}
+} // namespace sol::stack
+
+// end of sol/stack_check_get_qualified.hpp
+
 // end of sol/stack_check_get.hpp
 
 // beginning of sol/stack_push.hpp
@@ -9997,8 +10374,14 @@ namespace stack {
 		static int push_deep(lua_State* L, Args&&... args) {
 			P** pref = nullptr;
 			detail::unique_destructor* fx = nullptr;
-			Real* mem = detail::usertype_unique_allocate<P, Real>(L, pref, fx);
+			detail::unique_tag* id = nullptr;
+			Real* mem = detail::usertype_unique_allocate<P, Real>(L, pref, fx, id);
 			*fx = detail::usertype_unique_alloc_destroy<P, Real>;
+#if 0
+			*id = &detail::inheritance<P>::type_unique_cast_bases<Real>;
+#else
+			*id = &usertype_traits<Real>::qualified_name()[0];
+#endif
 			detail::default_construct::construct(mem, std::forward<Args>(args)...);
 			*pref = unique_usertype_traits<T>::get(*mem);
 			if (luaL_newmetatable(L, &usertype_traits<detail::unique_usertype<std::remove_cv_t<P>>>::metatable()[0]) == 1) {
@@ -10079,27 +10462,44 @@ namespace stack {
 	struct pusher<detail::as_table_tag<T>> {
 		static int push(lua_State* L, const T& tablecont) {
 			typedef meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>> has_kvp;
-			return push(has_kvp(), L, tablecont);
+			return push(has_kvp(), std::false_type(), L, tablecont);
 		}
 
 		static int push(std::true_type, lua_State* L, const T& tablecont) {
+			typedef meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>> has_kvp;
+			return push(has_kvp(), std::true_type(), L, tablecont);
+		}
+
+		static int push(std::false_type, lua_State* L, const T& tablecont) {
+			typedef meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>> has_kvp;
+			return push(has_kvp(), std::false_type(), L, tablecont);
+		}
+
+		template <bool is_nested>
+		static int push(std::true_type, std::integral_constant<bool, is_nested>, lua_State* L, const T& tablecont) {
 			auto& cont = detail::deref(detail::unwrap(tablecont));
 			lua_createtable(L, static_cast<int>(cont.size()), 0);
 			int tableindex = lua_gettop(L);
 			for (const auto& pair : cont) {
-				set_field(L, pair.first, pair.second, tableindex);
+				if (is_nested) {
+					set_field(L, pair.first, as_nested_ref(pair.second), tableindex);
+				}
+				else {
+					set_field(L, pair.first, pair.second, tableindex);
+				}
 			}
 			return 1;
 		}
 
-		static int push(std::false_type, lua_State* L, const T& tablecont) {
+		template <bool is_nested>
+		static int push(std::false_type, std::integral_constant<bool, is_nested>, lua_State* L, const T& tablecont) {
 			auto& cont = detail::deref(detail::unwrap(tablecont));
 			lua_createtable(L, stack_detail::get_size_hint(cont), 0);
 			int tableindex = lua_gettop(L);
 			std::size_t index = 1;
 			for (const auto& i : cont) {
 #if SOL_LUA_VERSION >= 503
-				int p = stack::push(L, i);
+				int p = is_nested ? stack::push(L, as_nested_ref(i)) : stack::push(L, i);
 				for (int pi = 0; pi < p; ++pi) {
 					lua_seti(L, tableindex, static_cast<lua_Integer>(index++));
 				}
@@ -10144,9 +10544,19 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct pusher<nested<T>> {
+	struct pusher<nested<T>, std::enable_if_t<is_container<std::remove_pointer_t<meta::unwrap_unqualified_t<T>>>::value>> {
 		static int push(lua_State* L, const T& tablecont) {
-			pusher<as_table_t<T>> p{};
+			pusher<detail::as_table_tag<T>> p{};
+			// silence annoying VC++ warning
+			(void)p;
+			return p.push(std::true_type(), L, tablecont);
+		}
+	};
+
+	template <typename T>
+	struct pusher<nested<T>, std::enable_if_t<!is_container<std::remove_pointer_t<meta::unwrap_unqualified_t<T>>>::value>> {
+		static int push(lua_State* L, const T& tablecont) {
+			pusher<meta::unqualified_t<T>> p{};
 			// silence annoying VC++ warning
 			(void)p;
 			return p.push(L, tablecont);
@@ -12763,7 +13173,7 @@ namespace sol {
 		struct agnostic_lua_call_wrapper<var_wrapper<T>, false, is_variable, checked, boost, clean_stack, C> {
 			template <typename V>
 			static int call_assign(std::true_type, lua_State* L, V&& f) {
-				detail::unwrap(f.value) = stack::get<meta::unwrapped_t<T>>(L, boost + (is_variable ? 3 : 1));
+				detail::unwrap(f.value) = stack::unqualified_get<meta::unwrapped_t<T>>(L, boost + (is_variable ? 3 : 1));
 				if (clean_stack) {
 					lua_settop(L, 0);
 				}
@@ -12864,14 +13274,14 @@ namespace sol {
 			static int call(lua_State* L, Fx&& f) {
 				typedef std::conditional_t<std::is_void<T>::value, object_type, T> Ta;
 #if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
-				auto maybeo = stack::check_get<Ta*>(L, 1);
+				auto maybeo = stack::unqualified_check_get<Ta*>(L, 1);
 				if (!maybeo || maybeo.value() == nullptr) {
 					return luaL_error(L, "sol: received nil for 'self' argument (use ':' for accessing member functions, make sure member variables are preceeded by the actual object with '.' syntax)");
 				}
 				object_type* o = static_cast<object_type*>(maybeo.value());
 				return call(L, std::forward<Fx>(f), *o);
 #else
-				object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
+				object_type& o = static_cast<object_type&>(*stack::unqualified_get<non_null<Ta*>>(L, 1));
 				return call(L, std::forward<Fx>(f), o);
 #endif // Safety
 			}
@@ -13218,7 +13628,7 @@ namespace sol {
 
 		template <typename T, bool is_index, bool is_variable, typename F, int start = 1, bool checked = detail::default_safe_function_calls, bool clean_stack = true>
 		inline int call_user(lua_State* L) {
-			auto& fx = stack::get<user<F>>(L, upvalue_index(start));
+			auto& fx = stack::unqualified_get<user<F>>(L, upvalue_index(start));
 			return call_wrapped<T, is_index, is_variable, 0, checked, clean_stack>(L, fx);
 		}
 
@@ -15074,7 +15484,7 @@ namespace sol {
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
-#if defined(_MSC_FULL_VER) && _MSC_FULL_VER <= 191426428 && _MSC_FULL_VER >= 191200000
+#if defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 191200000
 			// MSVC is ass sometimes
 			return get<function>().call<Ret...>(std::forward<Args>(args)...);
 #else
@@ -16273,7 +16683,7 @@ namespace sol {
 
 			static auto& get_src(lua_State* L) {
 #if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
-				auto p = stack::check_get<T*>(L, 1);
+				auto p = stack::unqualified_check_get<T*>(L, 1);
 				if (!p) {
 					luaL_error(L, "sol: 'self' is not of type '%s' (pass 'self' as first argument with ':' or call on proper type)", detail::demangle<T>().c_str());
 				}
@@ -16282,7 +16692,7 @@ namespace sol {
 				}
 				return *p.value();
 #else
-				return stack::get<T>(L, 1);
+				return stack::unqualified_get<T>(L, 1);
 #endif // Safe getting with error
 			}
 
@@ -16490,7 +16900,7 @@ namespace sol {
 			}
 
 			static error_result find_has_associative_lookup(std::true_type, lua_State* L, T& self) {
-				decltype(auto) key = stack::get<K>(L, 2);
+				decltype(auto) key = stack::unqualified_get<K>(L, 2);
 				auto it = self.find(key);
 				if (it == deferred_traits::end(L, self)) {
 					return stack::push(L, lua_nil);
@@ -16499,7 +16909,7 @@ namespace sol {
 			}
 
 			static error_result find_has_associative_lookup(std::false_type, lua_State* L, T& self) {
-				decltype(auto) value = stack::get<V>(L, 2);
+				decltype(auto) value = stack::unqualified_get<V>(L, 2);
 				auto it = self.find(value);
 				if (it == deferred_traits::end(L, self)) {
 					return stack::push(L, lua_nil);
@@ -16524,7 +16934,7 @@ namespace sol {
 			}
 
 			static error_result find_comparative(std::true_type, lua_State* L, T& self) {
-				decltype(auto) value = stack::get<V>(L, 2);
+				decltype(auto) value = stack::unqualified_get<V>(L, 2);
 				auto it = deferred_traits::begin(L, self);
 				auto e = deferred_traits::end(L, self);
 				std::size_t index = 1;
@@ -16603,7 +17013,7 @@ namespace sol {
 			}
 
 			static error_result add_associative(std::true_type, lua_State* L, T& self, stack_object key, iterator& pos) {
-				self.insert(pos, value_type(key.as<K>(), stack::get<V>(L, 3)));
+				self.insert(pos, value_type(key.as<K>(), stack::unqualified_get<V>(L, 3)));
 				return {};
 			}
 
@@ -16795,7 +17205,7 @@ namespace sol {
 
 			template <bool ip>
 			static int next_associative(std::true_type, lua_State* L) {
-				iter& i = stack::get<user<iter>>(L, 1);
+				iter& i = stack::unqualified_get<user<iter>>(L, 1);
 				auto& source = i.source;
 				auto& it = i.it;
 				if (it == deferred_traits::end(L, source)) {
@@ -16816,10 +17226,10 @@ namespace sol {
 
 			template <bool>
 			static int next_associative(std::false_type, lua_State* L) {
-				iter& i = stack::get<user<iter>>(L, 1);
+				iter& i = stack::unqualified_get<user<iter>>(L, 1);
 				auto& source = i.source;
 				auto& it = i.it;
-				next_K k = stack::get<next_K>(L, 2);
+				next_K k = stack::unqualified_get<next_K>(L, 2);
 				if (it == deferred_traits::end(L, source)) {
 					return 0;
 				}
@@ -16859,7 +17269,7 @@ namespace sol {
 				auto& self = get_src(L);
 				error_result er;
 				{
-					std::ptrdiff_t pos = stack::get<std::ptrdiff_t>(L);
+					std::ptrdiff_t pos = stack::unqualified_get<std::ptrdiff_t>(L);
 					er = at_start(L, self, pos);
 				}
 				return handle_errors(L, er);
@@ -16869,7 +17279,7 @@ namespace sol {
 				auto& self = get_src(L);
 				error_result er;
 				{
-					decltype(auto) key = stack::get<K>(L);
+					decltype(auto) key = stack::unqualified_get<K>(L);
 					er = get_start(L, self, key);
 				}
 				return handle_errors(L, er);
@@ -16937,7 +17347,7 @@ namespace sol {
 				auto& self = get_src(L);
 				error_result er;
 				{
-					decltype(auto) key = stack::get<K>(L, 2);
+					decltype(auto) key = stack::unqualified_get<K>(L, 2);
 					er = erase_start(L, self, key);
 				}
 				return handle_errors(L, er);
@@ -16992,7 +17402,7 @@ namespace sol {
 			};
 
 			static auto& get_src(lua_State* L) {
-				auto p = stack::check_get<T*>(L, 1);
+				auto p = stack::unqualified_check_get<T*>(L, 1);
 #if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
 				if (!p) {
 					luaL_error(L, "sol: 'self' is not of type '%s' (pass 'self' as first argument with ':' or call on proper type)", detail::demangle<T>().c_str());
@@ -17006,7 +17416,7 @@ namespace sol {
 
 			static int find(std::true_type, lua_State* L) {
 				T& self = get_src(L);
-				decltype(auto) value = stack::get<value_type>(L, 2);
+				decltype(auto) value = stack::unqualified_get<value_type>(L, 2);
 				std::size_t N = std::extent<T>::value;
 				for (std::size_t idx = 0; idx < N; ++idx) {
 					const auto& v = self[idx];
@@ -17022,10 +17432,10 @@ namespace sol {
 			}
 
 			static int next_iter(lua_State* L) {
-				iter& i = stack::get<user<iter>>(L, 1);
+				iter& i = stack::unqualified_get<user<iter>>(L, 1);
 				auto& source = i.source;
 				auto& it = i.it;
-				std::size_t k = stack::get<std::size_t>(L, 2);
+				std::size_t k = stack::unqualified_get<std::size_t>(L, 2);
 				if (it == deferred_traits::end(L, source)) {
 					return 0;
 				}
@@ -17059,7 +17469,7 @@ namespace sol {
 
 			static int get(lua_State* L) {
 				T& self = get_src(L);
-				std::ptrdiff_t idx = stack::get<std::ptrdiff_t>(L, 2);
+				std::ptrdiff_t idx = stack::unqualified_get<std::ptrdiff_t>(L, 2);
 				idx += deferred_traits::index_adjustment(L, self);
 				if (idx >= static_cast<std::ptrdiff_t>(std::extent<T>::value) || idx < 0) {
 					return stack::push(L, lua_nil);
@@ -17073,7 +17483,7 @@ namespace sol {
 
 			static int set(lua_State* L) {
 				T& self = get_src(L);
-				std::ptrdiff_t idx = stack::get<std::ptrdiff_t>(L, 2);
+				std::ptrdiff_t idx = stack::unqualified_get<std::ptrdiff_t>(L, 2);
 				idx += deferred_traits::index_adjustment(L, self);
 				if (idx >= static_cast<std::ptrdiff_t>(std::extent<T>::value)) {
 					return luaL_error(L, "sol: index out of bounds (too big) for set on '%s'", detail::demangle<T>().c_str());
@@ -17081,7 +17491,7 @@ namespace sol {
 				if (idx < 0) {
 					return luaL_error(L, "sol: index out of bounds (too small) for set on '%s'", detail::demangle<T>().c_str());
 				}
-				self[idx] = stack::get<value_type>(L, 3);
+				self[idx] = stack::unqualified_get<value_type>(L, 3);
 				return 0;
 			}
 
@@ -17177,7 +17587,7 @@ namespace sol {
 				{ "pairs", &pairs_call },
 				{ "next", &next_call },
 			};
-			auto maybenameview = stack::check_get<string_view>(L, 2);
+			auto maybenameview = stack::unqualified_check_get<string_view>(L, 2);
 			if (maybenameview) {
 				const string_view& nameview = *maybenameview;
 #if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
@@ -17546,14 +17956,14 @@ namespace sol {
 		template <typename T>
 		struct getter<as_container_t<T>> {
 			static decltype(auto) get(lua_State* L, int index, record& tracking) {
-				return stack::get<T>(L, index, tracking);
+				return stack::unqualified_get<T>(L, index, tracking);
 			}
 		};
 
 		template <typename T>
 		struct getter<as_container_t<T>*> {
 			static decltype(auto) get(lua_State* L, int index, record& tracking) {
-				return stack::get<T*>(L, index, tracking);
+				return stack::unqualified_get<T*>(L, index, tracking);
 			}
 		};
 	} // namespace stack
@@ -17606,7 +18016,7 @@ namespace sol {
 		template <typename T>
 		inline int oss_default_to_string(std::true_type, lua_State* L) {
 			std::ostringstream oss;
-			oss << stack::get<T>(L, 1);
+			oss << stack::unqualified_get<T>(L, 1);
 			return stack::push(L, oss.str());
 		}
 
@@ -17622,9 +18032,9 @@ namespace sol {
 
 		template <typename T, typename Op>
 		int comparsion_operator_wrap(lua_State* L) {
-			auto maybel = stack::check_get<T>(L, 1);
+			auto maybel = stack::unqualified_check_get<T>(L, 1);
 			if (maybel) {
-				auto mayber = stack::check_get<T>(L, 2);
+				auto mayber = stack::unqualified_check_get<T&>(L, 2);
 				if (mayber) {
 					auto& l = *maybel;
 					auto& r = *mayber;
@@ -19230,11 +19640,11 @@ namespace sol {
 	template <typename T>
 	class usertype {
 	private:
-		std::unique_ptr<usertype_detail::registrar, detail::deleter> metatableregister;
+		std::unique_ptr<usertype_detail::registrar> metatableregister;
 
 		template <typename... Args>
 		usertype(detail::verified_tag, Args&&... args)
-		: metatableregister(detail::make_unique_deleter<usertype_metatable<T, std::make_index_sequence<sizeof...(Args) / 2>, Args...>, detail::deleter>(std::forward<Args>(args)...)) {
+		: metatableregister(std::make_unique<usertype_metatable<T, std::make_index_sequence<sizeof...(Args) / 2>, Args...>>(std::forward<Args>(args)...)) {
 			static_assert(detail::has_destructor<Args...>::value, "this type does not have an explicit destructor declared; please pass a custom destructor function wrapped in sol::destruct, especially if the type does not have an accessible (private) destructor");
 		}
 
@@ -19266,7 +19676,7 @@ namespace sol {
 
 		template <typename... Args>
 		usertype(simple_tag, lua_State* L, Args&&... args)
-		: metatableregister(detail::make_unique_deleter<simple_usertype_metatable<T>, detail::deleter>(L, std::forward<Args>(args)...)) {
+		: metatableregister(std::make_unique<simple_usertype_metatable<T>>(L, std::forward<Args>(args)...)) {
 		}
 
 		usertype_detail::registrar* registrar_data() {
@@ -20294,7 +20704,7 @@ namespace sol {
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
-#if defined(_MSC_FULL_VER) && _MSC_FULL_VER <= 191426428 && _MSC_FULL_VER >= 191200000
+#if defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 191200000
 			// MSVC is ass sometimes
 			return get<protected_function>().call<Ret...>(std::forward<Args>(args)...);
 #else
@@ -21584,7 +21994,7 @@ namespace sol {
 
 #if defined(SOL_INSIDE_UNREAL) && SOL_INSIDE_UNREAL
 #if defined(SOL_INSIDE_UNREAL_REMOVED_CHECK) && SOL_INSIDE_UNREAL_REMOVED_CHECK
-#if DO_CHECK
+#if defined(DO_CHECK) && DO_CHECK
 #define check(expr) { if(UNLIKELY(!(expr))) { FDebug::LogAssertFailedMessage( #expr, __FILE__, __LINE__ ); _DebugBreakAndPromptForRemote(); FDebug::AssertFailed( #expr, __FILE__, __LINE__ ); CA_ASSUME(false); } }
 #else
 #define check(expr) { CA_ASSUME(expr); }
