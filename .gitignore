@@ -82,6 +82,10 @@ main2.cpp
 main.cpp
 
 # Local Lua Testbeds
+lua-5.4.0-cxx/
+lua-5.4.0/
+lua-5.4.0-work1-cxx/
+lua-5.4.0-work1/
 lua-5.3.4-cxx/
 lua-5.3.4/
 lua-5.3.2/
@@ -117,4 +121,5 @@ scratch/
 cmake-build-debug/
 cmake-build-relwithdebinfo/
 cmake-build-release/
-lua-5.4.0-work1/
+/subprojects/*
+!/subprojects/*.wrap
