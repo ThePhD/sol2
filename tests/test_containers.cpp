@@ -324,6 +324,28 @@ TEST_CASE("containers/table conversion", "test table conversions with as_table a
 	REQUIRE(nested_strings.source == expected_values);
 }
 
+TEST_CASE("containers/from table argument conversions", "test table conversions without as_table and nested for function args") {
+	const std::vector<std::string> expected_values{ "bark", "woof" };
+	
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.set_function("f", [&](std::vector<std::string> t) {
+		return t == expected_values;
+	});
+
+	auto result0 = lua.safe_script("t = { \"bark\", \"woof\" }");
+	REQUIRE(result0.valid());
+
+	auto result1 = lua.safe_script("assert(f(t))", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
+
+	sol::function f = lua["f"];
+	sol::table t = lua["t"];
+	bool passed = f(t);
+	REQUIRE(passed);
+}
+
 TEST_CASE("containers/vector roundtrip", "make sure vectors can be round-tripped") {
 	sol::state lua;
 	std::vector<int> v{ 1, 2, 3 };

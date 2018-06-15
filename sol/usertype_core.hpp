@@ -76,7 +76,7 @@ namespace sol {
 		template <typename T>
 		inline int oss_default_to_string(std::true_type, lua_State* L) {
 			std::ostringstream oss;
-			oss << stack::get<T>(L, 1);
+			oss << stack::unqualified_get<T>(L, 1);
 			return stack::push(L, oss.str());
 		}
 
@@ -92,9 +92,9 @@ namespace sol {
 
 		template <typename T, typename Op>
 		int comparsion_operator_wrap(lua_State* L) {
-			auto maybel = stack::check_get<T>(L, 1);
+			auto maybel = stack::unqualified_check_get<T>(L, 1);
 			if (maybel) {
-				auto mayber = stack::check_get<T>(L, 2);
+				auto mayber = stack::unqualified_check_get<T&>(L, 2);
 				if (mayber) {
 					auto& l = *maybel;
 					auto& r = *mayber;

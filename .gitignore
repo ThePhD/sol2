@@ -117,3 +117,4 @@ scratch/
 cmake-build-debug/
 cmake-build-relwithdebinfo/
 cmake-build-release/
+lua-5.4.0-work1/

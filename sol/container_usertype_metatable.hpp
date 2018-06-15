@@ -60,7 +60,7 @@ namespace sol {
 				{ "pairs", &pairs_call },
 				{ "next", &next_call },
 			};
-			auto maybenameview = stack::check_get<string_view>(L, 2);
+			auto maybenameview = stack::unqualified_check_get<string_view>(L, 2);
 			if (maybenameview) {
 				const string_view& nameview = *maybenameview;
 #if defined(SOL_UNORDERED_MAP_COMPATIBLE_HASH) && SOL_UNORDERED_MAP_COMPATIBLE_HASH
@@ -429,14 +429,14 @@ namespace sol {
 		template <typename T>
 		struct getter<as_container_t<T>> {
 			static decltype(auto) get(lua_State* L, int index, record& tracking) {
-				return stack::get<T>(L, index, tracking);
+				return stack::unqualified_get<T>(L, index, tracking);
 			}
 		};
 
 		template <typename T>
 		struct getter<as_container_t<T>*> {
 			static decltype(auto) get(lua_State* L, int index, record& tracking) {
-				return stack::get<T*>(L, index, tracking);
+				return stack::unqualified_get<T*>(L, index, tracking);
 			}
 		};
 	} // namespace stack
