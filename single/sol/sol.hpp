@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-06-15 20:37:27.879370 UTC
-// This header was generated with sol v2.20.2 (revision 964f8e1)
+// Generated 2018-06-15 21:32:45.597691 UTC
+// This header was generated with sol v2.20.2 (revision ccba856)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -7894,7 +7894,7 @@ namespace sol {
 
 #if defined(SOL_SAFE_GETTER) && SOL_SAFE_GETTER
 			template <typename T>
-			inline auto tagged_unqualified_get(types<T>, lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_get<T>(L, index, tracking)) {
+			inline auto tagged_unqualified_get(types<T>, lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_unqualified_get<T>(L, index, tracking)) {
 				auto op = unqualified_check_get<T>(L, index, type_panic_c_str, tracking);
 				return *std::move(op);
 			}

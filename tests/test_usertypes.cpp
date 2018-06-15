@@ -1806,7 +1806,7 @@ TEST_CASE("usertype/alignment", "ensure that alignment does not trigger weird al
 	struct aligned_derived : aligned_base {};
 
 	sol::state lua;
-	auto f = [](aligned_base& f, float d) {
+	auto f = [](aligned_base&, float d) {
 		REQUIRE(d == 5.0f);
 	};
 	lua.new_usertype<aligned_base>("Base",
