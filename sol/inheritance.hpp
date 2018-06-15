@@ -97,13 +97,14 @@ namespace sol {
 			}
 
 			template <typename U>
-			static bool type_unique_cast_bases(void*, const string_view&) {
+			static bool type_unique_cast_bases(void*, void*, const string_view&) {
 				return false;
 			}
 
 			template <typename U, typename Base, typename... Args>
 			static bool type_unique_cast_bases(void* source_data, void* target_data, const string_view& ti) {
-				typedef typename unique_usertype_traits<U>::rebind_base<Base> base_ptr;
+				typedef unique_usertype_traits<U> uu_traits;
+				typedef typename uu_traits::template rebind_base<Base> base_ptr;
 				string_view base_ti = usertype_traits<Base>::qualified_name();
 				if (base_ti == ti) {
 					if (target_data != nullptr) {
@@ -114,18 +115,19 @@ namespace sol {
 					}
 					return true;
 				}
-				return type_unique_cast_bases<Args...>(source_data, target_data, ti);
+				return type_unique_cast_bases<U, Args...>(source_data, target_data, ti);
 			}
 
 			template <typename U>
 			static bool type_unique_cast(void* source_data, void* target_data, const string_view& ti, const string_view& rebind_ti) {
-				typedef typename unique_usertype_traits<U>::rebind_base<void> rebind_t;
+				typedef unique_usertype_traits<U> uu_traits;
+				typedef typename uu_traits::template rebind_base<T> rebind_t;
 				string_view this_rebind_ti = usertype_traits<rebind_t>::qualified_name();
 				if (rebind_ti != this_rebind_ti) {
 					// this is not even of the same container type
 					return false;
 				}
-				return type_unique_cast_bases<Bases...>(source_data, target_data, ti);
+				return type_unique_cast_bases<U, Bases...>(source_data, target_data, ti);
 			}
 		};
 

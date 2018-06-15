@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-06-15 19:59:17.486340 UTC
-// This header was generated with sol v2.20.2 (revision fd52cc1)
+// Generated 2018-06-15 20:37:27.879370 UTC
+// This header was generated with sol v2.20.2 (revision 964f8e1)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4736,7 +4736,7 @@ namespace sol {
 		typedef T type;
 		typedef T actual_type;
 		template <typename X>
-		using base_id = void;
+		using rebind_base = void;
 
 		static const bool value = false;
 
@@ -4756,10 +4756,10 @@ namespace sol {
 		typedef T type;
 		typedef std::shared_ptr<T> actual_type;
 		// rebind is non-void
-		// and tag is a unique integer
 		// if and only if unique usertype
 		// is cast-capable
-		using base_id = std::shared_ptr<void>;
+		template <typename X>
+		using rebind_base = std::shared_ptr<X>;
 
 		static const bool value = true;
 
@@ -4777,7 +4777,7 @@ namespace sol {
 		typedef T type;
 		typedef std::unique_ptr<T, D> actual_type;
 		template <typename X>
-		using base_id = void;
+		using rebind_base = void;
 
 		static const bool value = true;
 
@@ -6258,13 +6258,14 @@ namespace sol {
 			}
 
 			template <typename U>
-			static bool type_unique_cast_bases(void*, const string_view&) {
+			static bool type_unique_cast_bases(void*, void*, const string_view&) {
 				return false;
 			}
 
 			template <typename U, typename Base, typename... Args>
 			static bool type_unique_cast_bases(void* source_data, void* target_data, const string_view& ti) {
-				typedef typename unique_usertype_traits<U>::rebind_base<Base> base_ptr;
+				typedef unique_usertype_traits<U> uu_traits;
+				typedef typename uu_traits::template rebind_base<Base> base_ptr;
 				string_view base_ti = usertype_traits<Base>::qualified_name();
 				if (base_ti == ti) {
 					if (target_data != nullptr) {
@@ -6275,18 +6276,19 @@ namespace sol {
 					}
 					return true;
 				}
-				return type_unique_cast_bases<Args...>(source_data, target_data, ti);
+				return type_unique_cast_bases<U, Args...>(source_data, target_data, ti);
 			}
 
 			template <typename U>
 			static bool type_unique_cast(void* source_data, void* target_data, const string_view& ti, const string_view& rebind_ti) {
-				typedef typename unique_usertype_traits<U>::rebind_base<void> rebind_t;
+				typedef unique_usertype_traits<U> uu_traits;
+				typedef typename uu_traits::template rebind_base<T> rebind_t;
 				string_view this_rebind_ti = usertype_traits<rebind_t>::qualified_name();
 				if (rebind_ti != this_rebind_ti) {
 					// this is not even of the same container type
 					return false;
 				}
-				return type_unique_cast_bases<Bases...>(source_data, target_data, ti);
+				return type_unique_cast_bases<U, Bases...>(source_data, target_data, ti);
 			}
 		};
 
@@ -8735,7 +8737,6 @@ namespace stack {
 	struct qualified_checker<X, type::userdata, std::enable_if_t<is_unique_usertype<X>::value && !std::is_reference<X>::value>> {
 		typedef unique_usertype_traits<meta::unqualified_t<X>> u_traits;
 		typedef typename u_traits::type T;
-		typedef typename u_traits::base_id base_id;
 		
 		template <typename Handler>
 		static bool check(std::false_type, lua_State* L, int index, Handler&& handler, record& tracking) {

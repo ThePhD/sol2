@@ -34,7 +34,6 @@ namespace stack {
 	struct qualified_checker<X, type::userdata, std::enable_if_t<is_unique_usertype<X>::value && !std::is_reference<X>::value>> {
 		typedef unique_usertype_traits<meta::unqualified_t<X>> u_traits;
 		typedef typename u_traits::type T;
-		typedef typename u_traits::base_id base_id;
 		
 		template <typename Handler>
 		static bool check(std::false_type, lua_State* L, int index, Handler&& handler, record& tracking) {

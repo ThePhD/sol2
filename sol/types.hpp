@@ -156,7 +156,7 @@ namespace sol {
 		typedef T type;
 		typedef T actual_type;
 		template <typename X>
-		using base_id = void;
+		using rebind_base = void;
 
 		static const bool value = false;
 
@@ -176,10 +176,10 @@ namespace sol {
 		typedef T type;
 		typedef std::shared_ptr<T> actual_type;
 		// rebind is non-void
-		// and tag is a unique integer
 		// if and only if unique usertype
 		// is cast-capable
-		using base_id = std::shared_ptr<void>;
+		template <typename X>
+		using rebind_base = std::shared_ptr<X>;
 
 		static const bool value = true;
 
@@ -197,7 +197,7 @@ namespace sol {
 		typedef T type;
 		typedef std::unique_ptr<T, D> actual_type;
 		template <typename X>
-		using base_id = void;
+		using rebind_base = void;
 
 		static const bool value = true;
 
