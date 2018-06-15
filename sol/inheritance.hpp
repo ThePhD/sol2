@@ -25,6 +25,7 @@
 #define SOL_INHERITANCE_HPP
 
 #include "types.hpp"
+#include "usertype_traits.hpp"
 
 namespace sol {
 	template <typename... Args>

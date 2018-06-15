@@ -153,6 +153,11 @@ namespace sol {
 	struct protect_t;
 	template <typename F, typename... Filters>
 	struct filter_wrapper;
+
+	template <typename T>
+	struct usertype_traits;
+	template <typename T>
+	struct unique_usertype_traits;
 } // namespace sol
 
 #endif // SOL_FORWARD_HPP
