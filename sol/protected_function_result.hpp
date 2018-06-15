@@ -30,6 +30,8 @@
 #include "proxy_base.hpp"
 #include "stack_iterator.hpp"
 #include "stack_proxy.hpp"
+#include "error.hpp"
+#include "stack.hpp"
 #include <cstdint>
 
 namespace sol {

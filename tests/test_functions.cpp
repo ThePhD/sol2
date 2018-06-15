@@ -335,7 +335,6 @@ TEST_CASE("functions/returning functions from C++", "check to see if returning a
 	}
 }
 
-#if !defined(SOL2_CI)
 TEST_CASE("functions/function_result and protected_function_result", "Function result should be the beefy return type for sol::function that allows for error checking and error handlers") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::debug);
@@ -345,58 +344,42 @@ TEST_CASE("functions/function_result and protected_function_result", "Function r
 
 	// Some function; just using a lambda to be cheap
 	auto doomfx = []() {
-		INFO("doomfx called");
 		throw std::runtime_error(unhandlederrormessage);
 	};
-	auto luadoomfx = [&lua]() {
-		INFO("luadoomfx called");
-		// Does not bypass error function, will call it
-		luaL_error(lua.lua_state(), unhandlederrormessage);
-	};
 	lua.set_function("doom", doomfx);
-	lua.set_function("luadoom", luadoomfx);
 
 	auto cpphandlerfx = [](std::string x) {
 		INFO("c++ handler called with: " << x);
 		return handlederrormessage;
 	};
 	lua.set_function("cpphandler", cpphandlerfx);
+	
 	auto result1 = lua.safe_script(
 		std::string("function luahandler ( message )")
 		+ "    print('lua handler called with: ' .. message)"
 		+ "    return '" + handlederrormessage + "'"
 		+ "end", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
-	auto nontrampolinefx = [](lua_State*) -> int { throw "x"; };
+	
+	auto nontrampolinefx = [](lua_State* L) -> int {
+		return luaL_error(L, "x");
+	};
 	lua_CFunction c_nontrampolinefx = nontrampolinefx;
 	lua.set("nontrampoline", c_nontrampolinefx);
+	
 	lua.set_function("bark", []() -> int { return 100; });
 
 	sol::function luahandler = lua["luahandler"];
 	sol::function cpphandler = lua["cpphandler"];
 	sol::protected_function doom(lua["doom"], luahandler);
-	sol::protected_function luadoom(lua["luadoom"]);
-	sol::protected_function nontrampoline = lua["nontrampoline"];
+	sol::protected_function nontrampoline(lua["nontrampoline"], cpphandler);
 	sol::protected_function justfine = lua["bark"];
 	sol::protected_function justfinewithhandler = lua["bark"];
-	luadoom.error_handler = cpphandler;
-	nontrampoline.error_handler = cpphandler;
+
 	justfinewithhandler.error_handler = luahandler;
 	bool present = true;
 	{
 		sol::protected_function_result result = doom();
-		REQUIRE_FALSE(result.valid());
-		sol::optional<sol::error> operr = result;
-		sol::optional<int> opvalue = result;
-		present = (bool)operr;
-		REQUIRE(present);
-		present = (bool)opvalue;
-		REQUIRE_FALSE(present);
-		sol::error err = result;
-		REQUIRE(err.what() == handlederrormessage_s);
-	}
-	{
-		sol::protected_function_result result = luadoom();
 		REQUIRE_FALSE(result.valid());
 		sol::optional<sol::error> operr = result;
 		sol::optional<int> opvalue = result;
@@ -444,7 +427,72 @@ TEST_CASE("functions/function_result and protected_function_result", "Function r
 		REQUIRE(value == 100);
 	}
 }
-#endif // x86 VC++ in release mode
+
+#if !defined(SOL2_CI) && ((!defined(_M_IX86) || defined(_M_IA64)) || (defined(_WIN64)) || (defined(__LLP64__) || defined(__LP64__)) )
+TEST_CASE("functions/unsafe protected_function_result handlers", "This test will thrash the stack and allocations on weaker compilers (e.g., non 64-bit ones). Run with caution.") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::debug);
+	static const char unhandlederrormessage[] = "true error message";
+	static const char handlederrormessage[] = "doodle";
+	static const std::string handlederrormessage_s = handlederrormessage;
+
+	auto luadoomfx = [&lua]() {
+		// Does not bypass error function, will call it
+		// however, this bypasses `catch` state
+		// in trampoline entirely...
+		luaL_error(lua.lua_state(), unhandlederrormessage);
+	};
+	lua.set_function("luadoom", luadoomfx);
+
+	auto cpphandlerfx = [](std::string x) {
+		INFO("c++ handler called with: " << x);
+		return handlederrormessage;
+	};
+	lua.set_function("cpphandler", cpphandlerfx);
+	auto nontrampolinefx = [](lua_State*) -> int { 
+		// this code shoots an exception
+		// through the C API, without the trampoline
+		// present.
+		// it is probably guaranteed to kill our code.
+		throw "x"; 
+	};
+	lua_CFunction c_nontrampolinefx = nontrampolinefx;
+	lua.set("nontrampoline", c_nontrampolinefx);
+	lua.set_function("bark", []() -> int { return 100; });
+
+	sol::function cpphandler = lua["cpphandler"];
+	sol::protected_function luadoom(lua["luadoom"]);
+	sol::protected_function nontrampoline = lua["nontrampoline"];
+	luadoom.error_handler = cpphandler;
+	nontrampoline.error_handler = cpphandler;
+	
+	bool present = true;
+	{
+		sol::protected_function_result result = luadoom();
+		REQUIRE_FALSE(result.valid());
+		sol::optional<sol::error> operr = result;
+		sol::optional<int> opvalue = result;
+		present = (bool)operr;
+		REQUIRE(present);
+		present = (bool)opvalue;
+		REQUIRE_FALSE(present);
+		sol::error err = result;
+		REQUIRE(err.what() == handlederrormessage_s);
+	}
+	{
+		sol::protected_function_result result = nontrampoline();
+		REQUIRE_FALSE(result.valid());
+		sol::optional<sol::error> operr = result;
+		sol::optional<int> opvalue = result;
+		present = (bool)operr;
+		REQUIRE(present);
+		present = (bool)opvalue;
+		REQUIRE_FALSE(present);
+		sol::error err = result;
+		REQUIRE(err.what() == handlederrormessage_s);
+	}
+}
+#endif // This test will thrash the stack and allocations on weaker compilers
 
 TEST_CASE("functions/all kinds", "Register all kinds of functions, make sure they all compile and work") {
 	sol::state lua;

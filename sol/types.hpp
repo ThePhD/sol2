@@ -155,6 +155,9 @@ namespace sol {
 	struct unique_usertype_traits {
 		typedef T type;
 		typedef T actual_type;
+		template <typename X>
+		using base_id = void;
+
 		static const bool value = false;
 
 		template <typename U>
@@ -172,7 +175,12 @@ namespace sol {
 	struct unique_usertype_traits<std::shared_ptr<T>> {
 		typedef T type;
 		typedef std::shared_ptr<T> actual_type;
-		
+		// rebind is non-void
+		// and tag is a unique integer
+		// if and only if unique usertype
+		// is cast-capable
+		using base_id = std::shared_ptr<void>;
+
 		static const bool value = true;
 
 		static bool is_null(const actual_type& p) {
@@ -188,7 +196,9 @@ namespace sol {
 	struct unique_usertype_traits<std::unique_ptr<T, D>> {
 		typedef T type;
 		typedef std::unique_ptr<T, D> actual_type;
-		
+		template <typename X>
+		using base_id = void;
+
 		static const bool value = true;
 
 		static bool is_null(const actual_type& p) {
@@ -309,7 +319,7 @@ namespace sol {
 	struct user {
 		U value;
 
-		user(U x)
+		user(U&& x)
 		: value(std::forward<U>(x)) {
 		}
 		operator std::add_pointer_t<std::remove_reference_t<U>>() {
@@ -778,6 +788,30 @@ namespace sol {
 		return lua_typename(L, static_cast<int>(t));
 	}
 
+	template <typename T>
+	struct is_lua_reference : std::integral_constant<bool,
+							 std::is_base_of<reference, meta::unqualified_t<T>>::value
+								 || std::is_base_of<main_reference, meta::unqualified_t<T>>::value
+								 || std::is_base_of<stack_reference, meta::unqualified_t<T>>::value> {};
+
+	template <typename T>
+	struct is_lua_reference_or_proxy : std::integral_constant<bool,
+									is_lua_reference<meta::unqualified_t<T>>::value
+										|| meta::is_specialization_of<meta::unqualified_t<T>, proxy>::value> {};
+
+	template <typename T>
+	struct is_transparent_argument : std::false_type {};
+	template <>
+	struct is_transparent_argument<this_state> : std::true_type {};
+	template <>
+	struct is_transparent_argument<this_main_state> : std::true_type {};
+	template <>
+	struct is_transparent_argument<this_environment> : std::true_type {};
+	template <>
+	struct is_transparent_argument<variadic_args> : std::true_type {};
+	template <typename T>
+	struct is_variadic_arguments : std::is_same<meta::unqualified_t<T>, variadic_args> {};
+
 	namespace detail {
 		template <typename T>
 		struct is_initializer_list : std::false_type {};
@@ -1048,22 +1082,9 @@ namespace sol {
 								 || ((type::userdata == lua_type_of<meta::unqualified_t<T>>::value)
 									    && detail::has_internal_marker<lua_type_of<meta::unqualified_t<T>>>::value
 									    && !detail::has_internal_marker<lua_size<meta::unqualified_t<T>>>::value)
-								 || std::is_base_of<reference, meta::unqualified_t<T>>::value
-								 || std::is_base_of<main_reference, meta::unqualified_t<T>>::value
-								 || std::is_base_of<stack_reference, meta::unqualified_t<T>>::value
+								 || is_lua_reference<meta::unqualified_t<T>>::value
 								 || meta::is_specialization_of<meta::unqualified_t<T>, std::tuple>::value
 								 || meta::is_specialization_of<meta::unqualified_t<T>, std::pair>::value> {};
-
-	template <typename T>
-	struct is_lua_reference : std::integral_constant<bool,
-							 std::is_base_of<reference, meta::unqualified_t<T>>::value
-								 || std::is_base_of<main_reference, meta::unqualified_t<T>>::value
-								 || std::is_base_of<stack_reference, meta::unqualified_t<T>>::value> {};
-
-	template <typename T>
-	struct is_lua_reference_or_proxy : std::integral_constant<bool,
-									is_lua_reference<meta::unqualified_t<T>>::value
-										|| meta::is_specialization_of<meta::unqualified_t<T>, proxy>::value> {};
 
 	template <typename T>
 	struct is_main_threaded : std::is_base_of<main_reference, T> {};
@@ -1108,19 +1129,6 @@ namespace sol {
 
 	template <typename T>
 	struct is_proxy_primitive : is_lua_primitive<T> {};
-
-	template <typename T>
-	struct is_transparent_argument : std::false_type {};
-	template <>
-	struct is_transparent_argument<this_state> : std::true_type {};
-	template <>
-	struct is_transparent_argument<this_main_state> : std::true_type {};
-	template <>
-	struct is_transparent_argument<this_environment> : std::true_type {};
-	template <>
-	struct is_transparent_argument<variadic_args> : std::true_type {};
-	template <typename T>
-	struct is_variadic_arguments : std::is_same<meta::unqualified_t<T>, variadic_args> {};
 
 	template <typename T>
 	struct is_lua_index : std::is_integral<T> {};

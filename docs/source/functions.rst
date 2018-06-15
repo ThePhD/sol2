@@ -13,6 +13,7 @@ There are a number of examples dealing with functions and how they can be bound 
 	- using :doc:`sol::variadic_results<api/variadic_results>`
 * :doc:`Overload function calls with different argument types and count on a single name<api/overload>` (first-bound, first-serve overloading)
 	- Note: because of this feature, automatic number to string conversion from Lua is not permitted for overloads and does not work when safeties are turned on
+	- int/float overloads must have ``SOL_SAFE_NUMERICS`` turned on to differentiate between the two
 	- Use C++ captures and lambdas to bind member functions tied to a single object /
 * You can work with **transparent arguments** that provide you with special information, such as
 	- :doc:`sol::variadic_args<api/variadic_args>`, for handling variable number of arguments at runtime

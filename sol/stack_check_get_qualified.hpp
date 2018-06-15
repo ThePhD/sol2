@@ -1,4 +1,4 @@
-// sol2 
+// sol2
 
 // The MIT License (MIT)
 
@@ -21,10 +21,32 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_STACK_CHECK_GET_HPP
-#define SOL_STACK_CHECK_GET_HPP
+#ifndef SOL_STACK_CHECK_QUALIFIED_GET_HPP
+#define SOL_STACK_CHECK_QUALIFIED_GET_HPP
 
-#include "stack_check_get_unqualified.hpp"
-#include "stack_check_get_qualified.hpp"
+#include "stack_core.hpp"
+#include "stack_get.hpp"
+#include "stack_check.hpp"
+#include "optional.hpp"
+#include <cstdlib>
+#include <cmath>
 
-#endif // SOL_STACK_CHECK_GET_HPP
+namespace sol {
+namespace stack {
+	template <typename T, typename C>
+	struct qualified_check_getter {
+		typedef decltype(stack_detail::unchecked_get<T>(nullptr, 0, std::declval<record&>())) R;
+
+		template <typename Handler>
+		static optional<R> get(lua_State* L, int index, Handler&& handler, record& tracking) {
+			if (!check<T>(L, index, std::forward<Handler>(handler))) {
+				tracking.use(static_cast<int>(!lua_isnone(L, index)));
+				return nullopt;
+			}
+			return stack_detail::unchecked_get<T>(L, index, tracking);
+		}
+	};
+}
+} // namespace sol::stack
+
+#endif // SOL_STACK_CHECK_QUALIFIED_GET_HPP

@@ -63,3 +63,7 @@ It can also be used with :doc:`sol::c_call<c_call>`:
 	
 	lua.script("f(1, 2)");
 
+
+.. note::
+
+	You cannot use ``sol::resolve<...>(...)`` when one function is templated and it has a non-templated overload: it will always fail in this case. To resolve this, please use a manual ``static_cast<R(Args...)>( &func )`` or ``static_cast<R (T::*)(Args...)>( &T::overloaded_member_func )`` (with the right const-ness and volatile-ness and r-value/l-value qualifiers if necessary).

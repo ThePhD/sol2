@@ -1,4 +1,4 @@
-// sol2 
+// sol2
 
 // The MIT License (MIT)
 
@@ -304,8 +304,13 @@ struct matrix_xi {
 };
 template <typename SelfType>
 struct alignas(16) weird_aligned_wrapper {
-	void operator()(SelfType& self, sol::object param) const {
+	template <typename F>
+	weird_aligned_wrapper(F&& f)
+	: lambda(std::forward<F>(f)) {
 	}
+	void operator()(SelfType& self, sol::object param) const {
+		lambda(self, param.as<float>());
+  }
 	std::function<void(SelfType&, float)> lambda;
 };
 
@@ -447,7 +452,8 @@ TEST_CASE("usertype/self-referential usertype", "usertype classes must play nice
 	auto result = lua.safe_script(
 		"local a = test.new()\n"
 		"a:g(\"woof\")\n"
-		"a:f(a)\n", sol::script_pass_on_error);
+		"a:f(a)\n",
+		sol::script_pass_on_error);
 	REQUIRE(result.valid());
 }
 
@@ -531,14 +537,14 @@ TEST_CASE("usertype/issue-number-thirty-five", "using value types created from l
 
 	{
 		auto result = lua.safe_script(
-		"v = Vec.new(1, 2, 3)\n"
-		"print(v:length())");
+			"v = Vec.new(1, 2, 3)\n"
+			"print(v:length())");
 		REQUIRE(result.valid());
 	}
 	{
 		auto result = lua.safe_script(
-		"v = Vec.new(1, 2, 3)\n"
-		"print(v:normalized():length())");
+			"v = Vec.new(1, 2, 3)\n"
+			"print(v:normalized():length())");
 		REQUIRE(result.valid());
 	}
 }
@@ -687,7 +693,8 @@ TEST_CASE("regressions/one", "issue number 48") {
 	sol::state lua;
 	lua.new_usertype<vars>("vars",
 		"boop", &vars::boop);
-	auto code = "beep = vars.new()\n"
+	auto code =
+		"beep = vars.new()\n"
 		"beep.boop = 1";
 	auto result1 = lua.safe_script(code, sol::script_pass_on_error);
 	REQUIRE(result1.valid());
@@ -755,7 +762,8 @@ TEST_CASE("usertype/private-constructible", "Check to make sure special snowflak
 			REQUIRE(result.valid());
 		}
 
-		auto code1 = "local fresh_f = factory_test:new()\n"
+		auto code1 =
+			"local fresh_f = factory_test:new()\n"
 			"assert(fresh_f.a == true_a)\n";
 		auto result1 = lua.safe_script(code1, sol::script_pass_on_error);
 		REQUIRE(result1.valid());
@@ -1798,9 +1806,11 @@ TEST_CASE("usertype/alignment", "ensure that alignment does not trigger weird al
 	struct aligned_derived : aligned_base {};
 
 	sol::state lua;
-
+	auto f = [](aligned_base& f, float d) {
+		REQUIRE(d == 5.0f);
+	};
 	lua.new_usertype<aligned_base>("Base",
-		"x", sol::writeonly_property(weird_aligned_wrapper<aligned_base>{}));
+		"x", sol::writeonly_property(weird_aligned_wrapper<aligned_base>(std::ref(f))));
 	lua.new_usertype<aligned_derived>("Derived",
 		sol::base_classes, sol::bases<aligned_base>());
 

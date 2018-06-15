@@ -94,11 +94,43 @@ namespace sol {
 				T* data = static_cast<T*>(voiddata);
 				return static_cast<void*>(ti != usertype_traits<T>::qualified_name() ? type_cast_bases(types<Bases...>(), data, ti) : data);
 			}
+
+			template <typename U>
+			static bool type_unique_cast_bases(void*, const string_view&) {
+				return false;
+			}
+
+			template <typename U, typename Base, typename... Args>
+			static bool type_unique_cast_bases(void* source_data, void* target_data, const string_view& ti) {
+				typedef unique_usertype_traits<U>::typename rebind_base<Base> base_ptr;
+				string_view base_ti = usertype_traits<Base>::qualified_name();
+				if (base_ti == ti) {
+					if (target_data != nullptr) {
+						U* source = static_cast<U*>(source_data);
+						base_ptr* target = static_cast<base_ptr*>(target_data);
+						// perform proper derived -> base conversion
+						*target = *source;
+					}
+					return true;
+				}
+				return type_unique_cast_bases<Args...>(source_data, target_data, ti);
+			}
+
+			template <typename U>
+			static bool type_unique_cast(void* source_data, void* target_data, const string_view& ti, const string_view& rebind_ti) {
+				typedef unique_usertype_traits<U>::typename rebind_base<void> rebind_t;
+				string_view this_rebind_ti = usertype_traits<rebind_t>::qualified_name();
+				if (rebind_ti != this_rebind_ti) {
+					// this is not even of the same container type
+					return false;
+				}
+				return type_unique_cast_bases<Bases...>(source_data, target_data, ti);
+			}
 		};
 
 		using inheritance_check_function = decltype(&inheritance<void>::type_check);
 		using inheritance_cast_function = decltype(&inheritance<void>::type_cast);
-
+		using inheritance_unique_cast_function = decltype(&inheritance<void>::type_unique_cast<void>);
 	} // namespace detail
 } // namespace sol
 

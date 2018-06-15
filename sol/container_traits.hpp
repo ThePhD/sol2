@@ -597,7 +597,7 @@ namespace sol {
 
 			static auto& get_src(lua_State* L) {
 #if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
-				auto p = stack::check_get<T*>(L, 1);
+				auto p = stack::unqualified_check_get<T*>(L, 1);
 				if (!p) {
 					luaL_error(L, "sol: 'self' is not of type '%s' (pass 'self' as first argument with ':' or call on proper type)", detail::demangle<T>().c_str());
 				}
@@ -606,7 +606,7 @@ namespace sol {
 				}
 				return *p.value();
 #else
-				return stack::get<T>(L, 1);
+				return stack::unqualified_get<T>(L, 1);
 #endif // Safe getting with error
 			}
 
@@ -814,7 +814,7 @@ namespace sol {
 			}
 
 			static error_result find_has_associative_lookup(std::true_type, lua_State* L, T& self) {
-				decltype(auto) key = stack::get<K>(L, 2);
+				decltype(auto) key = stack::unqualified_get<K>(L, 2);
 				auto it = self.find(key);
 				if (it == deferred_traits::end(L, self)) {
 					return stack::push(L, lua_nil);
@@ -823,7 +823,7 @@ namespace sol {
 			}
 
 			static error_result find_has_associative_lookup(std::false_type, lua_State* L, T& self) {
-				decltype(auto) value = stack::get<V>(L, 2);
+				decltype(auto) value = stack::unqualified_get<V>(L, 2);
 				auto it = self.find(value);
 				if (it == deferred_traits::end(L, self)) {
 					return stack::push(L, lua_nil);
@@ -848,7 +848,7 @@ namespace sol {
 			}
 
 			static error_result find_comparative(std::true_type, lua_State* L, T& self) {
-				decltype(auto) value = stack::get<V>(L, 2);
+				decltype(auto) value = stack::unqualified_get<V>(L, 2);
 				auto it = deferred_traits::begin(L, self);
 				auto e = deferred_traits::end(L, self);
 				std::size_t index = 1;
@@ -927,7 +927,7 @@ namespace sol {
 			}
 
 			static error_result add_associative(std::true_type, lua_State* L, T& self, stack_object key, iterator& pos) {
-				self.insert(pos, value_type(key.as<K>(), stack::get<V>(L, 3)));
+				self.insert(pos, value_type(key.as<K>(), stack::unqualified_get<V>(L, 3)));
 				return {};
 			}
 
@@ -1119,7 +1119,7 @@ namespace sol {
 
 			template <bool ip>
 			static int next_associative(std::true_type, lua_State* L) {
-				iter& i = stack::get<user<iter>>(L, 1);
+				iter& i = stack::unqualified_get<user<iter>>(L, 1);
 				auto& source = i.source;
 				auto& it = i.it;
 				if (it == deferred_traits::end(L, source)) {
@@ -1140,10 +1140,10 @@ namespace sol {
 
 			template <bool>
 			static int next_associative(std::false_type, lua_State* L) {
-				iter& i = stack::get<user<iter>>(L, 1);
+				iter& i = stack::unqualified_get<user<iter>>(L, 1);
 				auto& source = i.source;
 				auto& it = i.it;
-				next_K k = stack::get<next_K>(L, 2);
+				next_K k = stack::unqualified_get<next_K>(L, 2);
 				if (it == deferred_traits::end(L, source)) {
 					return 0;
 				}
@@ -1183,7 +1183,7 @@ namespace sol {
 				auto& self = get_src(L);
 				error_result er;
 				{
-					std::ptrdiff_t pos = stack::get<std::ptrdiff_t>(L);
+					std::ptrdiff_t pos = stack::unqualified_get<std::ptrdiff_t>(L);
 					er = at_start(L, self, pos);
 				}
 				return handle_errors(L, er);
@@ -1193,7 +1193,7 @@ namespace sol {
 				auto& self = get_src(L);
 				error_result er;
 				{
-					decltype(auto) key = stack::get<K>(L);
+					decltype(auto) key = stack::unqualified_get<K>(L);
 					er = get_start(L, self, key);
 				}
 				return handle_errors(L, er);
@@ -1261,7 +1261,7 @@ namespace sol {
 				auto& self = get_src(L);
 				error_result er;
 				{
-					decltype(auto) key = stack::get<K>(L, 2);
+					decltype(auto) key = stack::unqualified_get<K>(L, 2);
 					er = erase_start(L, self, key);
 				}
 				return handle_errors(L, er);
@@ -1316,7 +1316,7 @@ namespace sol {
 			};
 
 			static auto& get_src(lua_State* L) {
-				auto p = stack::check_get<T*>(L, 1);
+				auto p = stack::unqualified_check_get<T*>(L, 1);
 #if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
 				if (!p) {
 					luaL_error(L, "sol: 'self' is not of type '%s' (pass 'self' as first argument with ':' or call on proper type)", detail::demangle<T>().c_str());
@@ -1330,7 +1330,7 @@ namespace sol {
 
 			static int find(std::true_type, lua_State* L) {
 				T& self = get_src(L);
-				decltype(auto) value = stack::get<value_type>(L, 2);
+				decltype(auto) value = stack::unqualified_get<value_type>(L, 2);
 				std::size_t N = std::extent<T>::value;
 				for (std::size_t idx = 0; idx < N; ++idx) {
 					const auto& v = self[idx];
@@ -1346,10 +1346,10 @@ namespace sol {
 			}
 
 			static int next_iter(lua_State* L) {
-				iter& i = stack::get<user<iter>>(L, 1);
+				iter& i = stack::unqualified_get<user<iter>>(L, 1);
 				auto& source = i.source;
 				auto& it = i.it;
-				std::size_t k = stack::get<std::size_t>(L, 2);
+				std::size_t k = stack::unqualified_get<std::size_t>(L, 2);
 				if (it == deferred_traits::end(L, source)) {
 					return 0;
 				}
@@ -1383,7 +1383,7 @@ namespace sol {
 
 			static int get(lua_State* L) {
 				T& self = get_src(L);
-				std::ptrdiff_t idx = stack::get<std::ptrdiff_t>(L, 2);
+				std::ptrdiff_t idx = stack::unqualified_get<std::ptrdiff_t>(L, 2);
 				idx += deferred_traits::index_adjustment(L, self);
 				if (idx >= static_cast<std::ptrdiff_t>(std::extent<T>::value) || idx < 0) {
 					return stack::push(L, lua_nil);
@@ -1397,7 +1397,7 @@ namespace sol {
 
 			static int set(lua_State* L) {
 				T& self = get_src(L);
-				std::ptrdiff_t idx = stack::get<std::ptrdiff_t>(L, 2);
+				std::ptrdiff_t idx = stack::unqualified_get<std::ptrdiff_t>(L, 2);
 				idx += deferred_traits::index_adjustment(L, self);
 				if (idx >= static_cast<std::ptrdiff_t>(std::extent<T>::value)) {
 					return luaL_error(L, "sol: index out of bounds (too big) for set on '%s'", detail::demangle<T>().c_str());
@@ -1405,7 +1405,7 @@ namespace sol {
 				if (idx < 0) {
 					return luaL_error(L, "sol: index out of bounds (too small) for set on '%s'", detail::demangle<T>().c_str());
 				}
-				self[idx] = stack::get<value_type>(L, 3);
+				self[idx] = stack::unqualified_get<value_type>(L, 3);
 				return 0;
 			}
 

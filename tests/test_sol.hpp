@@ -36,13 +36,13 @@
 #endif // SOL_DEFAULT_PASS_ON_ERROR
 */
 
+#include <iostream>
+#include <cstdlib>
+
 #ifdef TEST_SINGLE
 #include <sol_forward.hpp>
 #endif // Single
 #include <sol.hpp>
-
-#include <iostream>
-#include <cstdlib>
 
 struct test_stack_guard {
 	lua_State* L;
