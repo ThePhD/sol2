@@ -39,6 +39,7 @@ Safety Config
 ``SOL_SAFE_NUMERICS`` triggers the following changes:
 	* Numbers will also be checked to see if they fit within a ``lua_Number`` if there is no ``lua_Integer`` type available that can fit your signed or unsigned number
 	* You can opt-out of this behavior with ``SOL_NO_CHECK_NUMBER_PRECISION``
+	* **This option is required to differentiate between floats/ints in overloads**
 	* **Not** turned on by default under any settings: *this MUST be turned on manually*
 
 ``SOL_SAFE_GETTER`` triggers the following changes:

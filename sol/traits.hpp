@@ -41,6 +41,9 @@ namespace sol {
 	using index_value = std::integral_constant<std::size_t, I>;
 
 	namespace meta {
+		typedef std::array<char, 1> sfinae_yes_t;
+		typedef std::array<char, 2> sfinae_no_t;
+
 		template <typename T>
 		struct identity { typedef T type; };
 
@@ -378,76 +381,82 @@ namespace sol {
 			template <typename T>
 			struct has_push_back_test {
 			private:
-				typedef std::array<char, 1> one;
-				typedef std::array<char, 2> two;
-
 				template <typename C>
-				static one test(decltype(std::declval<C>().push_back(std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
+				static sfinae_yes_t test(decltype(std::declval<C>().push_back(std::declval<std::add_rvalue_reference_t<typename C::value_type>>())) *);
 				template <typename C>
-				static two test(...);
+				static sfinae_no_t test(...);
 
 			public:
-				static const bool value = sizeof(test<T>(0)) == sizeof(char);
+				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
 			};
 
 			template <typename T>
 			struct has_insert_test {
 			private:
-				typedef std::array<char, 1> one;
-				typedef std::array<char, 2> two;
-
 				template <typename C>
-				static one test(decltype(std::declval<C>().insert(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>(), std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
+				static sfinae_yes_t test(decltype(std::declval<C>().insert(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>(), std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
 				template <typename C>
-				static two test(...);
+				static sfinae_no_t test(...);
 
 			public:
-				static const bool value = sizeof(test<T>(0)) == sizeof(char);
+				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
 			};
 
 			template <typename T>
 			struct has_insert_after_test {
 			private:
-				typedef std::array<char, 1> one;
-				typedef std::array<char, 2> two;
-
 				template <typename C>
-				static one test(decltype(std::declval<C>().insert_after(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>(), std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
+				static sfinae_yes_t test(decltype(std::declval<C>().insert_after(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>(), std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
 				template <typename C>
-				static two test(...);
+				static sfinae_no_t test(...);
 
 			public:
-				static const bool value = sizeof(test<T>(0)) == sizeof(char);
+				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
 			};
 
 			template <typename T>
 			struct has_size_test {
 			private:
-				typedef std::array<char, 1> one;
-				typedef std::array<char, 2> two;
+				typedef std::array<char, 1> sfinae_yes_t;
+				typedef std::array<char, 2> sfinae_no_t;
 
 				template <typename C>
-				static one test(decltype(std::declval<C>().size())*);
+				static sfinae_yes_t test(decltype(std::declval<C>().size())*);
 				template <typename C>
-				static two test(...);
+				static sfinae_no_t test(...);
 
 			public:
-				static const bool value = sizeof(test<T>(0)) == sizeof(char);
+				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
+			};
+
+			template <typename T>
+			struct has_max_size_test {
+			private:
+				typedef std::array<char, 1> sfinae_yes_t;
+				typedef std::array<char, 2> sfinae_no_t;
+
+				template <typename C>
+				static sfinae_yes_t test(decltype(std::declval<C>().max_size())*);
+				template <typename C>
+				static sfinae_no_t test(...);
+
+			public:
+				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
 			};
 
 			template <typename T>
 			struct has_to_string_test {
 			private:
-				typedef std::array<char, 1> one;
-				typedef std::array<char, 2> two;
+				typedef std::array<char, 1> sfinae_yes_t;
+				typedef std::array<char, 2> sfinae_no_t;
 
 				template <typename C>
-				static one test(decltype(std::declval<C>().to_string())*);
+				static sfinae_yes_t test(decltype(std::declval<C>().to_string())*);
 				template <typename C>
-				static two test(...);
+				static sfinae_no_t test(...);
 
 			public:
-				static const bool value = sizeof(test<T>(0)) == sizeof(char);
+				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
 			};
 #if defined(_MSC_VER) && _MSC_VER <= 1910
 			template <typename T, typename U, typename = decltype(std::declval<T&>() < std::declval<U&>())>
@@ -538,6 +547,9 @@ namespace sol {
 
 		template <typename T>
 		using has_push_back = meta::boolean<meta_detail::has_push_back_test<T>::value>;
+
+		template <typename T>
+		using has_max_size = meta::boolean<meta_detail::has_max_size_test<T>::value>;
 
 		template <typename T>
 		using has_insert = meta::boolean<meta_detail::has_insert_test<T>::value>;

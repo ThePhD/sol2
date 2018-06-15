@@ -1,4 +1,4 @@
-// sol2 
+// sol2
 
 // The MIT License (MIT)
 
@@ -52,5 +52,6 @@
 #endif // C++17 only
 
 #include <sol/config.hpp>
+#include "config_setup.hpp"
 
 #endif // SOL_FEATURE_TEST_HPP

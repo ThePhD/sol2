@@ -69,12 +69,16 @@ the basics:
 helping out
 -----------
 
-You can support the library by submitting pull requests to fix anything (the code, typos, even contribute your own examples).
+You can support sol2 development by `donating here`_. This is a time-consuming effort, so individuals who donate get to:
 
-You can support me and my family by `donating a little something here`_.
+- steer the direction and time spent on sol
+- get a role on the Discord server
+- get their name put up in the CONTRIBUTORS list
+- put something of their choice on sol2's README or the documentation's front page
 
-Thank you for using sol2!
+You can also help out the library by submitting pull requests to fix anything or add anything you think would be helpful! This includes making small, useful examples of something you haven't seen, or fixing typos and bad code in the documentation.
 
+Finally, `come join in Discord`_!
 
 Indices and tables
 ==================
@@ -85,4 +89,5 @@ Indices and tables
 .. _Sol: https://github.com/ThePhD/sol2
 .. _issues: https://github.com/ThePhD/sol2/issues
 .. _examples directory: https://github.com/ThePhD/sol2/tree/develop/examples
-.. _donating a little something here: https://www.paypal.me/LMeneide
+.. _donating here: https://www.paypal.me/LMeneide
+.. _come join in Discord: https://discord.gg/buxkYNT

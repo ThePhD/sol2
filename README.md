@@ -47,6 +47,17 @@ int main() {
 
 More examples are given in the examples directory [here](https://github.com/ThePhD/sol2/tree/develop/examples). 
 
+## Supporting
+
+You can [donate to support Sol and the project](https://www.paypal.me/LMeneide), which is always appreciated! This is a time-consuming effort, so individuals who donate get to:
+
+- steer the direction and time spent on sol
+- get a role on the Discord server
+- get their name put up in the CONTRIBUTORS list
+- put something of their choice on sol2's README or the documentation's front page
+
+You can also help out the library by submitting pull requests to fix anything or add anything you think would be helpful! This includes making small, useful examples of something you haven't seen, or fixing typos and bad code in the documentation.
+
 ## Presentations
 
 "A Sun For the Moon - A Zero-Overhead Lua Abstraction using C++"  
@@ -117,12 +128,6 @@ sol2 is checked by-hand for other platforms as well, including Android-based bui
 Testing on Travis-CI and Appveyor use CMake. You can generate the tests by running CMake and configuring `TESTS`, `TESTS_SINGLE`, `TESTS_EXAMPLES`, and `EXAMPLES` to be on. Make sure `SINGLE` is also on.
 
 You will need any flavor of python3 and an available compiler. The testing suite will build its own version of Lua and LuaJIT, so you do not have to.
-
-## Supporting
-
-You can help out the library by submitting pull requests to fix anything or add anything you think would be helpful! This includes making small, useful examples of something you haven't seen, or fixing typos and bad code in the documentation.
-
-You can also [donate to support me and my family](https://www.paypal.me/LMeneide), which is always appreciated!
 
 ## License
 

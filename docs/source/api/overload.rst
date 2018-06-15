@@ -19,6 +19,9 @@ The actual class produced by ``sol::overload`` is essentially a type-wrapper aro
 
 	Please note that default parameters in a function (e.g., ``int func(int a = 20)``) do not exist beyond C++'s compile-time fun. When that function gets bound or serialized into Lua's framework, it is bound as a function taking 1 argument, not 2 functions taking either 0 or 1 argument. If you want to achieve the same effect, then you need to use overloading and explicitly call the version of the function you want. There is no magic in C++ that allows me to retrieve default parameters and set this up automatically.
 
+.. note::
+
+	Overload resolution can be affected by configuration defines in the :doc:`safety pages<../safety>`. For example, it is impossible to differentiate between integers (uint8_t, in32_t, etc.) versus floating-point types (float, double, half) when ``SOL_SAFE_NUMERICS`` is not turned on.
 
 Its use is simple: wherever you can pass a function type to Lua, whether its on a :doc:`usertype<usertype>` or if you are just setting any kind of function with ``set`` or ``set_function`` (for :doc:`table<table>` or :doc:`state(_view)<state>`), simply wrap up the functions you wish to be considered for overload resolution on one function like so:
 
