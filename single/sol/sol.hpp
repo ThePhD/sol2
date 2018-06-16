@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-06-15 21:32:45.597691 UTC
-// This header was generated with sol v2.20.2 (revision ccba856)
+// Generated 2018-06-16 00:24:00.674500 UTC
+// This header was generated with sol v2.20.2 (revision c6bb3c6)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -10511,7 +10511,7 @@ namespace stack {
 				}
 #else
 				lua_pushinteger(L, static_cast<lua_Integer>(index));
-				int p = stack::push(L, i);
+				int p = is_nested ? stack::push(L, as_nested_ref(i)) : stack::push(L, i);
 				if (p == 1) {
 					++index;
 					lua_settable(L, tableindex);

@@ -295,7 +295,7 @@ namespace stack {
 				}
 #else
 				lua_pushinteger(L, static_cast<lua_Integer>(index));
-				int p = stack::push(L, i);
+				int p = is_nested ? stack::push(L, as_nested_ref(i)) : stack::push(L, i);
 				if (p == 1) {
 					++index;
 					lua_settable(L, tableindex);
