@@ -39,6 +39,16 @@ namespace sol {
 	namespace detail {
 
 		template <typename T>
+		struct derive : std::false_type {
+			typedef types<> type;
+		};
+
+		template <typename T>
+		struct base : std::false_type {
+			typedef types<> type;
+		};
+
+		template <typename T>
 		struct has_derived {
 			static bool value;
 		};
