@@ -473,7 +473,7 @@ namespace stack {
 			if (stack_detail::check_metatable<as_container_t<U>>(L, metatableindex))
 				return true;
 			bool success = false;
-			if (detail::has_derived<T>::value) {
+			if (detail::derive<T>::value) {
 				auto pn = stack::pop_n(L, 1);
 				lua_pushstring(L, &detail::base_class_check_key()[0]);
 				lua_rawget(L, metatableindex);

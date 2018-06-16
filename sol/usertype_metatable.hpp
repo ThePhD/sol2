@@ -463,8 +463,7 @@ namespace sol {
 				return;
 			}
 			mustindex = true;
-			(void)detail::swallow{0, ((detail::has_derived<Bases>::value = true), 0)...};
-
+			
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
 			baseclasscheck = (void*)&detail::inheritance<T, Bases...>::type_check;

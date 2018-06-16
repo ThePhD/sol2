@@ -759,7 +759,7 @@ namespace stack {
 		}
 
 		static T* get_no_lua_nil_from(lua_State* L, void* udata, int index, record&) {
-			if (detail::has_derived<T>::value && luaL_getmetafield(L, index, &detail::base_class_cast_key()[0]) != 0) {
+			if (detail::derive<T>::value && luaL_getmetafield(L, index, &detail::base_class_cast_key()[0]) != 0) {
 				void* basecastdata = lua_touserdata(L, -1);
 				detail::inheritance_cast_function ic = reinterpret_cast<detail::inheritance_cast_function>(basecastdata);
 				// use the casting function to properly adjust the pointer for the desired T

@@ -48,14 +48,6 @@ namespace sol {
 			typedef types<> type;
 		};
 
-		template <typename T>
-		struct has_derived {
-			static bool value;
-		};
-
-		template <typename T>
-		bool has_derived<T>::value = false;
-
 		inline decltype(auto) base_class_check_key() {
 			static const auto& key = "class_check";
 			return key;
