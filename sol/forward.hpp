@@ -26,6 +26,8 @@
 
 #include "feature_test.hpp"
 
+#include <utility>
+
 namespace sol {
 
 	template <bool b>
@@ -158,6 +160,24 @@ namespace sol {
 	struct usertype_traits;
 	template <typename T>
 	struct unique_usertype_traits;
+
+	template <typename... Args>
+	struct types {
+		typedef std::make_index_sequence<sizeof...(Args)> indices;
+		static constexpr std::size_t size() {
+			return sizeof...(Args);
+		}
+	};
+
+	template <typename T>
+	struct derive : std::false_type {
+		typedef types<> type;
+	};
+
+	template <typename T>
+	struct base : std::false_type {
+		typedef types<> type;
+	};
 } // namespace sol
 
 #endif // SOL_FORWARD_HPP

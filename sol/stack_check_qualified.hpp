@@ -29,11 +29,14 @@
 namespace sol {
 namespace stack {
 
-#if 0
 	template <typename X>
-	struct qualified_checker<X, type::userdata, std::enable_if_t<is_unique_usertype<X>::value && !std::is_reference<X>::value>> {
+	struct qualified_checker<X, type::userdata, std::enable_if_t<
+		is_unique_usertype<X>::value
+		&& !std::is_reference<X>::value
+	>> {
 		typedef unique_usertype_traits<meta::unqualified_t<X>> u_traits;
 		typedef typename u_traits::type T;
+		typedef typename u_traits::template rebind_base<void> rebind_t;
 		
 		template <typename Handler>
 		static bool check(std::false_type, lua_State* L, int index, Handler&& handler, record& tracking) {
@@ -50,23 +53,19 @@ namespace stack {
 				handler(L, index, type::userdata, indextype, "value is not a userdata");
 				return false;
 			}
-			if (lua_getmetatable(L, index) == 0) {
-				return true;
-			}
-			int metatableindex = lua_gettop(L);
-			void* basecastdata = lua_touserdata(L, index);
-			void* memory = detail::align_usertype_unique_destructor(basecastdata);
+			void* memory = lua_touserdata(L, index);
+			memory = detail::align_usertype_unique_destructor(memory);
 			detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(memory);
 			if (&detail::usertype_unique_alloc_destroy<T, X> == pdx) {
 				return true;
 			}
-			if (detail::has_derived<T>::value) {
-				memory = detail::align_usertype_unique_cast<true>(memory);
-				detail::inheritance_unique_cast_function ic = reinterpret_cast<detail::inheritance_unique_cast_function>(memory);
+			if (derive<T>::value) {
+				memory = detail::align_usertype_unique_tag<true, false>(memory);
+				detail::unique_tag& ic = *reinterpret_cast<detail::unique_tag*>(memory);
 				string_view ti = usertype_traits<T>::qualified_name();
-				string_view rebind_ti = usertype_traits<base_id>::qualified_name();
-				if (ic(nullptr, basecastdata, ti, rebind_ti)) {
-					lua_pop(L, 1);
+				string_view rebind_ti = usertype_traits<rebind_t>::qualified_name();
+				if (ic(nullptr, nullptr, ti, rebind_ti) != 0) {
+					return true;
 				}
 			}
 			handler(L, index, type::userdata, indextype, "value is a userdata but is not the correct unique usertype");
@@ -75,11 +74,9 @@ namespace stack {
 		
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
-			return check(meta::neg<std::is_void<typename u_traits::base_id>>(), L, index, std::forward<Handler>(handler), tracking);
+			return check(meta::neg<std::is_void<rebind_t>>(), L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
-
-#endif // Not implemented right now...
 
 	template <typename X>
 	struct qualified_checker<X, type::userdata, std::enable_if_t<is_container<meta::unqualified_t<X>>::value && !std::is_reference<X>::value>> {

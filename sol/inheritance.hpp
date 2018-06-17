@@ -38,16 +38,6 @@ namespace sol {
 
 	namespace detail {
 
-		template <typename T>
-		struct derive : std::false_type {
-			typedef types<> type;
-		};
-
-		template <typename T>
-		struct base : std::false_type {
-			typedef types<> type;
-		};
-
 		inline decltype(auto) base_class_check_key() {
 			static const auto& key = "class_check";
 			return key;
@@ -68,8 +58,10 @@ namespace sol {
 			return key;
 		}
 
-		template <typename T, typename... Bases>
+		template <typename T>
 		struct inheritance {
+			typedef typename base<T>::type bases_t;
+			
 			static bool type_check_bases(types<>, const std::string&) {
 				return false;
 			}
@@ -80,7 +72,7 @@ namespace sol {
 			}
 
 			static bool type_check(const std::string& ti) {
-				return ti == usertype_traits<T>::qualified_name() || type_check_bases(types<Bases...>(), ti);
+				return ti == usertype_traits<T>::qualified_name() || type_check_bases(bases_t(), ti);
 			}
 
 			static void* type_cast_bases(types<>, T*, const std::string&) {
@@ -95,16 +87,16 @@ namespace sol {
 
 			static void* type_cast(void* voiddata, const std::string& ti) {
 				T* data = static_cast<T*>(voiddata);
-				return static_cast<void*>(ti != usertype_traits<T>::qualified_name() ? type_cast_bases(types<Bases...>(), data, ti) : data);
+				return static_cast<void*>(ti != usertype_traits<T>::qualified_name() ? type_cast_bases(bases_t(), data, ti) : data);
 			}
 
 			template <typename U>
-			static bool type_unique_cast_bases(void*, void*, const string_view&) {
-				return false;
+			static bool type_unique_cast_bases(types<>, void*, void*, const string_view&) {
+				return 0;
 			}
 
 			template <typename U, typename Base, typename... Args>
-			static bool type_unique_cast_bases(void* source_data, void* target_data, const string_view& ti) {
+			static int type_unique_cast_bases(types<Base, Args...>, void* source_data, void* target_data, const string_view& ti) {
 				typedef unique_usertype_traits<U> uu_traits;
 				typedef typename uu_traits::template rebind_base<Base> base_ptr;
 				string_view base_ti = usertype_traits<Base>::qualified_name();
@@ -115,21 +107,26 @@ namespace sol {
 						// perform proper derived -> base conversion
 						*target = *source;
 					}
-					return true;
+					return 2;
 				}
-				return type_unique_cast_bases<U, Args...>(source_data, target_data, ti);
+				return type_unique_cast_bases<U>(types<Args...>(), source_data, target_data, ti);
 			}
 
 			template <typename U>
-			static bool type_unique_cast(void* source_data, void* target_data, const string_view& ti, const string_view& rebind_ti) {
+			static int type_unique_cast(void* source_data, void* target_data, const string_view& ti, const string_view& rebind_ti) {
 				typedef unique_usertype_traits<U> uu_traits;
-				typedef typename uu_traits::template rebind_base<T> rebind_t;
+				typedef typename uu_traits::template rebind_base<void> rebind_t;
 				string_view this_rebind_ti = usertype_traits<rebind_t>::qualified_name();
 				if (rebind_ti != this_rebind_ti) {
-					// this is not even of the same container type
-					return false;
+					// this is not even of the same unique type
+					return 0;
 				}
-				return type_unique_cast_bases<U, Bases...>(source_data, target_data, ti);
+				string_view this_ti = usertype_traits<T>::qualified_name();
+				if (ti == this_ti) {
+					// 
+					return 1;
+				}
+				return type_unique_cast_bases<U>(bases_t(), source_data, target_data, ti);
 			}
 		};
 
@@ -138,5 +135,8 @@ namespace sol {
 		using inheritance_unique_cast_function = decltype(&inheritance<void>::type_unique_cast<void>);
 	} // namespace detail
 } // namespace sol
+
+#define SOL_BASE_CLASSES(T, ...) template <> struct ::sol::base<T> : ::std::true_type { typedef ::sol::types<__VA_ARGS__> type; };
+//#define SOL_DERIVED_CLASSES(T, ...) template <> struct ::sol::derive<T> : ::std::true_type { typedef ::sol::types<__VA_ARGS__> type; };
 
 #endif // SOL_INHERITANCE_HPP

@@ -52,11 +52,7 @@ namespace sol {
 		struct as_table_tag {};
 
 		using unique_destructor = void (*)(void*);
-#if 0
 		using unique_tag = detail::inheritance_unique_cast_function;
-#else
-		using unique_tag = const char*;
-#endif
 
 		inline void* align(std::size_t alignment, std::size_t size, void*& ptr, std::size_t& space, std::size_t& required_space) {
 			// this handels arbitrary alignments...
@@ -108,7 +104,7 @@ namespace sol {
 			return align(std::alignment_of<void*>::value, sizeof(void*), ptr, space);
 		}
 
-		template <bool pre_aligned = false>
+		template <bool pre_aligned = false, bool pre_shifted = false>
 		inline void* align_usertype_unique_destructor(void* ptr) {
 			typedef std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
@@ -120,6 +116,8 @@ namespace sol {
 				use_align;
 			if (!pre_aligned) {
 				ptr = align_usertype_pointer(ptr);
+			}
+			if (!pre_shifted) {
 				ptr = static_cast<void*>(static_cast<char*>(ptr) + sizeof(void*));
 			}
 			if (!use_align::value) {
@@ -129,7 +127,7 @@ namespace sol {
 			return align(std::alignment_of<unique_destructor>::value, sizeof(unique_destructor), ptr, space);
 		}
 
-		template <bool pre_aligned = false>
+		template <bool pre_aligned = false, bool pre_shifted = false>
 		inline void* align_usertype_unique_tag(void* ptr) {
 			typedef std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
@@ -141,6 +139,8 @@ namespace sol {
 				use_align;
 			if (!pre_aligned) {
 				ptr = align_usertype_unique_destructor(ptr);
+			}
+			if (!pre_shifted) {
 				ptr = static_cast<void*>(static_cast<char*>(ptr) + sizeof(unique_destructor));
 			}
 			if (!use_align::value) {
@@ -149,7 +149,8 @@ namespace sol {
 			std::size_t space = (std::numeric_limits<std::size_t>::max)();
 			return align(std::alignment_of<unique_tag>::value, sizeof(unique_tag), ptr, space);
 		}
-		template <typename T, bool pre_aligned = false>
+
+		template <typename T, bool pre_aligned = false, bool pre_shifted = false>
 		inline void* align_usertype_unique(void* ptr) {
 			typedef std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
@@ -161,6 +162,8 @@ namespace sol {
 				use_align;
 			if (!pre_aligned) {
 				ptr = align_usertype_unique_tag(ptr);
+			}
+			if (!pre_shifted) {
 				ptr = static_cast<void*>(static_cast<char*>(ptr) + sizeof(unique_tag));
 			}
 			if (!use_align::value) {

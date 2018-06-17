@@ -167,11 +167,7 @@ namespace stack {
 			detail::unique_tag* id = nullptr;
 			Real* mem = detail::usertype_unique_allocate<P, Real>(L, pref, fx, id);
 			*fx = detail::usertype_unique_alloc_destroy<P, Real>;
-#if 0
-			*id = &detail::inheritance<P>::type_unique_cast_bases<Real>;
-#else
-			*id = &usertype_traits<Real>::qualified_name()[0];
-#endif
+			*id = &detail::inheritance<P>::type_unique_cast<Real>;
 			detail::default_construct::construct(mem, std::forward<Args>(args)...);
 			*pref = unique_usertype_traits<T>::get(*mem);
 			if (luaL_newmetatable(L, &usertype_traits<detail::unique_usertype<std::remove_cv_t<P>>>::metatable()[0]) == 1) {

@@ -29,24 +29,57 @@
 namespace sol {
 namespace stack {
 
-#if 0 // need static reflection / DERIVED_CLASS macros...
 	template <typename X>
 	struct qualified_getter<X, std::enable_if_t<
-		!std::is_reference<X>::value && is_unique_usertype<meta::unqualified_t<X>>::value
+		!std::is_reference<X>::value 
+		&& is_unique_usertype<meta::unqualified_t<X>>::value
 	>> {
-		typedef typename unique_usertype_traits<meta::unqualified_t<X>>::type P;
-		typedef typename unique_usertype_traits<meta::unqualified_t<X>>::actual_type Real;
+		typedef unique_usertype_traits<meta::unqualified_t<X>> u_traits;
+		typedef typename u_traits::type T;
+		typedef typename u_traits::actual_type Real;
+		typedef typename u_traits::template rebind_base<void> rebind_t;
 
-		static Real& get(lua_State* L, int index, record& tracking) {
+		static Real get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			void* memory = lua_touserdata(L, index);
-			void* del = detail::align_usertype_unique_destructor(memory);
-			memory = detail::align_usertype_unique<Real>(memory);
-			Real* mem = static_cast<Real*>(memory);
-			return *mem;
+			memory = detail::align_usertype_unique_destructor(memory);
+			detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(memory);
+			if (&detail::usertype_unique_alloc_destroy<T, X> == pdx) {
+				memory = detail::align_usertype_unique_tag<true, false>(memory);
+				memory = detail::align_usertype_unique<Real, true, false>(memory);
+				Real* mem = static_cast<Real*>(memory);
+				return *mem;
+			}
+			Real r(nullptr);
+			if (!derive<T>::value) {
+				// TODO: abort / terminate, maybe only in debug modes?
+				return r;
+			}
+			memory = detail::align_usertype_unique_tag<true, false>(memory);
+			detail::unique_tag& ic = *reinterpret_cast<detail::unique_tag*>(memory);
+			memory = detail::align_usertype_unique<Real, true, false>(memory);
+			string_view ti = usertype_traits<T>::qualified_name();
+			string_view rebind_ti = usertype_traits<rebind_t>::qualified_name();
+			int cast_operation = ic(memory, &r, ti, rebind_ti);
+			switch (cast_operation) {
+			case 1: {
+				// it's a perfect match,
+				// alias memory directly
+				Real* mem = static_cast<Real*>(memory);
+				return *mem;
+			}
+			case 2:
+				// it's a base match, return the
+				// aliased creation
+				return std::move(r);
+			default:
+				// uh oh..
+				break;
+			}
+			// TODO: abort / terminate, maybe only in debug modes?
+			return r;
 		}
 	};
-#endif // need static reflection
 
 	template <typename T>
 	struct qualified_getter<T, std::enable_if_t<
@@ -68,3 +101,4 @@ namespace stack {
 } // namespace sol::stack
 
 #endif // SOL_STACK_QUALIFIED_GET_HPP
+

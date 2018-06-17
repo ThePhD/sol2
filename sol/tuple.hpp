@@ -32,13 +32,6 @@ namespace sol {
 		using swallow = std::initializer_list<int>;
 	} // namespace detail
 
-	template <typename... Args>
-	struct types {
-		typedef std::make_index_sequence<sizeof...(Args)> indices;
-		static constexpr std::size_t size() {
-			return sizeof...(Args);
-		}
-	};
 	namespace meta {
 		namespace detail {
 			template <typename... Args>
