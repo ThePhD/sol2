@@ -447,9 +447,7 @@ namespace sol {
 			void* memory = lua_touserdata(L, 1);
 			memory = align_usertype_unique_destructor(memory);
 			unique_destructor& dx = *static_cast<unique_destructor*>(memory);
-			memory = static_cast<void*>(static_cast<char*>(memory) + sizeof(unique_destructor));
 			memory = align_usertype_unique_tag<true>(memory);
-			memory = static_cast<void*>(static_cast<char*>(memory) + sizeof(unique_tag));
 			(dx)(memory);
 			return 0;
 		}

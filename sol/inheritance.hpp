@@ -116,6 +116,7 @@ namespace sol {
 			static int type_unique_cast(void* source_data, void* target_data, const string_view& ti, const string_view& rebind_ti) {
 				typedef unique_usertype_traits<U> uu_traits;
 				typedef typename uu_traits::template rebind_base<void> rebind_t;
+				typedef std::conditional_t<std::is_void<rebind_t>::value, types<>, bases_t> cond_bases_t;
 				string_view this_rebind_ti = usertype_traits<rebind_t>::qualified_name();
 				if (rebind_ti != this_rebind_ti) {
 					// this is not even of the same unique type
@@ -123,10 +124,10 @@ namespace sol {
 				}
 				string_view this_ti = usertype_traits<T>::qualified_name();
 				if (ti == this_ti) {
-					// 
+					// direct match, return 1
 					return 1;
 				}
-				return type_unique_cast_bases<U>(bases_t(), source_data, target_data, ti);
+				return type_unique_cast_bases<U>(cond_bases_t(), source_data, target_data, ti);
 			}
 		};
 
@@ -137,6 +138,6 @@ namespace sol {
 } // namespace sol
 
 #define SOL_BASE_CLASSES(T, ...) template <> struct ::sol::base<T> : ::std::true_type { typedef ::sol::types<__VA_ARGS__> type; };
-//#define SOL_DERIVED_CLASSES(T, ...) template <> struct ::sol::derive<T> : ::std::true_type { typedef ::sol::types<__VA_ARGS__> type; };
+#define SOL_DERIVED_CLASSES(T, ...) template <> struct ::sol::derive<T> : ::std::true_type { typedef ::sol::types<__VA_ARGS__> type; };
 
 #endif // SOL_INHERITANCE_HPP

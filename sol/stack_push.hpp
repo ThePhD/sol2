@@ -144,8 +144,10 @@ namespace stack {
 
 	template <typename T>
 	struct pusher<T, std::enable_if_t<is_unique_usertype<T>::value>> {
-		typedef typename unique_usertype_traits<T>::type P;
-		typedef typename unique_usertype_traits<T>::actual_type Real;
+		typedef unique_usertype_traits<T> u_traits;
+		typedef typename u_traits::type P;
+		typedef typename u_traits::actual_type Real;
+		typedef typename u_traits::template rebind_base<void> rebind_t;
 
 		template <typename Arg, meta::enable<std::is_base_of<Real, meta::unqualified_t<Arg>>> = meta::enabler>
 		static int push(lua_State* L, Arg&& arg) {

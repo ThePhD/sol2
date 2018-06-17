@@ -33,6 +33,7 @@ namespace stack {
 	struct qualified_getter<X, std::enable_if_t<
 		!std::is_reference<X>::value 
 		&& is_unique_usertype<meta::unqualified_t<X>>::value
+		&& !std::is_void<typename unique_usertype_traits<meta::unqualified_t<X>>::template rebind_base<void>>::value
 	>> {
 		typedef unique_usertype_traits<meta::unqualified_t<X>> u_traits;
 		typedef typename u_traits::type T;
