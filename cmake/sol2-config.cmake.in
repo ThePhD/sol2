@@ -34,7 +34,7 @@ if (TARGET sol2)
 endif()
 
 if(TARGET sol2_single)
-    get_target_property(SOL_SINGLE_INCLUDE_DIRS
+    get_target_property(SOL2_SINGLE_INCLUDE_DIRS
         sol2_single INTERFACE_INCLUDE_DIRECTORIES)
     set_and_check(SOL2_INCLUDE_DIRS "${SOL2_SINGLE_INCLUDE_DIRS}")
     set(SOL2_LIBRARIES_SINGLE sol2_single)
