@@ -25,27 +25,12 @@
 #define SOL_STACK_CHECK_QUALIFIED_GET_HPP
 
 #include "stack_core.hpp"
-#include "stack_get.hpp"
-#include "stack_check.hpp"
-#include "optional.hpp"
-#include <cstdlib>
-#include <cmath>
+#include "stack_check_get_unqualified.hpp"
 
 namespace sol {
 namespace stack {
 	template <typename T, typename C>
-	struct qualified_check_getter {
-		typedef decltype(stack_detail::unchecked_get<T>(nullptr, 0, std::declval<record&>())) R;
-
-		template <typename Handler>
-		static optional<R> get(lua_State* L, int index, Handler&& handler, record& tracking) {
-			if (!check<T>(L, index, std::forward<Handler>(handler))) {
-				tracking.use(static_cast<int>(!lua_isnone(L, index)));
-				return nullopt;
-			}
-			return stack_detail::unchecked_get<T>(L, index, tracking);
-		}
-	};
+	struct qualified_check_getter : check_getter<meta::unqualified_t<T>, C> {};
 }
 } // namespace sol::stack
 

@@ -767,7 +767,8 @@ namespace sol {
 
 		template <typename T, typename Handler>
 		inline decltype(auto) unqualified_check_get(lua_State* L, int index, Handler&& handler, record& tracking) {
-			check_getter<T> cg{};
+			typedef meta::unqualified_t<T> Tu;
+			check_getter<Tu> cg{};
 			(void)cg;
 			return cg.get(L, index, std::forward<Handler>(handler), tracking);
 		}
