@@ -141,7 +141,7 @@ CMAKE_DEPENDENT_OPTION(TESTS_DYNAMIC_LOADING_EXAMPLES "Enable build of dynamic l
 add_library(sol2 INTERFACE)
 target_include_directories(sol2 INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-	$<INSTALL_INTERFACE:include/sol>)
+	$<INSTALL_INTERFACE:include>)
 
 # # Version configurations
 configure_package_config_file(
