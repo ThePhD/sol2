@@ -1180,7 +1180,7 @@ namespace sol {
 	struct is_environment : std::integral_constant<bool, is_userdata<T>::value || is_table<T>::value> {};
 
 	template <typename T>
-	struct is_automagical : std::true_type {};
+	struct is_automagical : meta::neg<std::is_array<meta::unqualified_t<T>>> {};
 
 	template <typename T>
 	inline type type_of() {

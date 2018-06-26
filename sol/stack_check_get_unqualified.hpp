@@ -53,7 +53,7 @@ namespace stack {
 		static optional<T> get(lua_State* L, int index, Handler&& handler, record& tracking) {
 			// actually check if it's none here, otherwise
 			// we'll have a none object inside an optional!
-			bool success = stack::check<T>(L, index, no_panic);
+			bool success = lua_isnoneornil(L, index) == 0 && stack::check<T>(L, index, no_panic);
 			if (!success) {
 				// expected type, actual type
 				tracking.use(static_cast<int>(success));
@@ -61,14 +61,6 @@ namespace stack {
 				return nullopt;
 			}
 			return stack_detail::unchecked_get<T>(L, index, tracking);
-		}
-	};
-
-	template <typename T>
-	struct check_getter<optional<T>> {
-		template <typename Handler>
-		static decltype(auto) get(lua_State* L, int index, Handler&&, record& tracking) {
-			return check_get<T>(L, index, no_panic, tracking);
 		}
 	};
 

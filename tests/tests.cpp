@@ -542,6 +542,27 @@ TEST_CASE("optional/left out args", "Make sure arguments can be left out of opti
 	}());
 }
 
+TEST_CASE("optional/engaged versus unengaged", "solidify semantics for an engaged and unengaged optional") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.set_function("f", [](sol::optional<sol::object> optional_arg) {
+		if (optional_arg) {
+			return true;
+		}
+		return false;
+	});
+
+	auto valid0 = lua.safe_script("assert(not f())", sol::script_pass_on_error);
+	REQUIRE(valid0.valid());
+	auto valid1 = lua.safe_script("assert(not f(nil))", sol::script_pass_on_error);
+	REQUIRE(valid1.valid());
+	auto valid2 = lua.safe_script("assert(f(1))", sol::script_pass_on_error);
+	REQUIRE(valid2.valid());
+	auto valid3 = lua.safe_script("assert(f('hi'))", sol::script_pass_on_error);
+	REQUIRE(valid3.valid());
+}
+
 TEST_CASE("pusher/constness", "Make sure more types can handle being const and junk") {
 	struct Foo {
 		Foo(const sol::function& f)
