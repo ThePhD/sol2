@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-06-27 11:15:40.545352 UTC
-// This header was generated with sol v2.20.4 (revision 3935dc4)
+// Generated 2018-06-27 15:33:51.932186 UTC
+// This header was generated with sol v2.20.4 (revision 60ee53a)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5531,6 +5531,9 @@ namespace sol {
 		struct lua_type_of<void*> : std::integral_constant<type, type::lightuserdata> {};
 
 		template <>
+		struct lua_type_of<const void*> : std::integral_constant<type, type::lightuserdata> {};
+
+		template <>
 		struct lua_type_of<lightuserdata_value> : std::integral_constant<type, type::lightuserdata> {};
 
 		template <>
@@ -6513,6 +6516,11 @@ namespace sol {
 			return index;
 		}
 
+		const void* pointer() const noexcept {
+			const void* vp = lua_topointer(lua_state(), stack_index());
+			return vp;
+		}
+
 		type get_type() const noexcept {
 			int result = lua_type(lua_state(), index);
 			return static_cast<type>(result);
@@ -6955,6 +6963,12 @@ namespace sol {
 
 		bool valid() const noexcept {
 			return !(ref == LUA_NOREF || ref == LUA_REFNIL);
+		}
+
+		const void* pointer() const noexcept {
+			int si = push();
+			const void* vp = lua_topointer(lua_state(), -si);
+			return vp;
 		}
 
 		explicit operator bool() const noexcept {
@@ -9843,6 +9857,14 @@ namespace stack {
 		}
 	};
 
+	template <>
+	struct getter<const void*> {
+		static const void* get(lua_State* L, int index, record& tracking) {
+			tracking.use(1);
+			return lua_touserdata(L, index);
+		}
+	};
+
 	template <typename T>
 	struct getter<detail::as_value_tag<T>> {
 		static T* get_no_lua_nil(lua_State* L, int index, record& tracking) {
@@ -10669,6 +10691,14 @@ namespace stack {
 	struct pusher<void*> {
 		static int push(lua_State* L, void* userdata) {
 			lua_pushlightuserdata(L, userdata);
+			return 1;
+		}
+	};
+
+	template <>
+	struct pusher<const void*> {
+		static int push(lua_State* L, const void* userdata) {
+			lua_pushlightuserdata(L, const_cast<void*>(userdata));
 			return 1;
 		}
 	};

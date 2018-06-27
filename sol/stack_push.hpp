@@ -470,6 +470,14 @@ namespace stack {
 	};
 
 	template <>
+	struct pusher<const void*> {
+		static int push(lua_State* L, const void* userdata) {
+			lua_pushlightuserdata(L, const_cast<void*>(userdata));
+			return 1;
+		}
+	};
+
+	template <>
 	struct pusher<lightuserdata_value> {
 		static int push(lua_State* L, lightuserdata_value userdata) {
 			lua_pushlightuserdata(L, userdata);

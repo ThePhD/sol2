@@ -951,6 +951,9 @@ namespace sol {
 		struct lua_type_of<void*> : std::integral_constant<type, type::lightuserdata> {};
 
 		template <>
+		struct lua_type_of<const void*> : std::integral_constant<type, type::lightuserdata> {};
+
+		template <>
 		struct lua_type_of<lightuserdata_value> : std::integral_constant<type, type::lightuserdata> {};
 
 		template <>

@@ -113,6 +113,11 @@ namespace sol {
 			return index;
 		}
 
+		const void* pointer() const noexcept {
+			const void* vp = lua_topointer(lua_state(), stack_index());
+			return vp;
+		}
+
 		type get_type() const noexcept {
 			int result = lua_type(lua_state(), index);
 			return static_cast<type>(result);

@@ -134,6 +134,27 @@ TEST_CASE("utility/thread", "fire up lots of threads at the same time to make su
 	}());
 }
 
+TEST_CASE("utility/pointer", "check we can get pointer value from references") {
+	sol::state lua;
+	lua.set_function("f", [](bool aorb, sol::reference a, sol::stack_reference b) {
+		if (aorb) {
+			return a.pointer();
+		}
+		return b.pointer();
+	});
+	auto result0 = lua.safe_script("v0 = 'hi'", sol::script_pass_on_error);
+	REQUIRE(result0.valid());
+	auto result1 = lua.safe_script("v1 = f(true, v0)", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
+	auto result2 = lua.safe_script("v2 = f(false, nil, v0)", sol::script_pass_on_error);
+	REQUIRE(result2.valid());
+	const void* ap = lua["v1"];
+	const void* bp = lua["v2"];
+	REQUIRE(ap != nullptr);
+	REQUIRE(bp != nullptr);
+	REQUIRE(ap == bp);
+}
+
 TEST_CASE("utility/this_state", "Ensure this_state argument can be gotten anywhere in the function.") {
 	struct bark {
 		int with_state(sol::this_state l, int a, int b) {
