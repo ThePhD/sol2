@@ -739,6 +739,14 @@ namespace stack {
 		}
 	};
 
+	template <>
+	struct getter<const void*> {
+		static const void* get(lua_State* L, int index, record& tracking) {
+			tracking.use(1);
+			return lua_touserdata(L, index);
+		}
+	};
+
 	template <typename T>
 	struct getter<detail::as_value_tag<T>> {
 		static T* get_no_lua_nil(lua_State* L, int index, record& tracking) {

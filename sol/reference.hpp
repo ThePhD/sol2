@@ -429,6 +429,12 @@ namespace sol {
 			return !(ref == LUA_NOREF || ref == LUA_REFNIL);
 		}
 
+		const void* pointer() const noexcept {
+			int si = push();
+			const void* vp = lua_topointer(lua_state(), -si);
+			return vp;
+		}
+
 		explicit operator bool() const noexcept {
 			return valid();
 		}
