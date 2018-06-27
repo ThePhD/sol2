@@ -242,7 +242,7 @@ namespace sol {
 		int runtime_new_index(lua_State* L, void*, int runtimetarget);
 
 		template <typename T, bool is_simple>
-		inline int metatable_newindex(lua_State* L) {
+		inline int metatable_new_index(lua_State* L) {
 			if (is_toplevel(L)) {
 				auto non_indexable = [&L]() {
 					if (is_simple) {
@@ -526,7 +526,7 @@ namespace sol {
 
 		template <typename... Args, typename = std::enable_if_t<sizeof...(Args) == sizeof...(Tn)>>
 		usertype_metatable(Args&&... args)
-		: usertype_metatable_core(&usertype_detail::indexing_fail<T, true>, &usertype_detail::metatable_newindex<T, false>), usertype_detail::registrar(), functions(std::forward<Args>(args)...), destructfunc(nullptr), callconstructfunc(nullptr), indexbase(&core_indexing_call<true>), newindexbase(&core_indexing_call<false>), indexbaseclasspropogation(usertype_detail::walk_all_bases<true>), newindexbaseclasspropogation(usertype_detail::walk_all_bases<false>), baseclasscheck(nullptr), baseclasscast(nullptr), secondarymeta(contains_variable()), properties() {
+		: usertype_metatable_core(&usertype_detail::indexing_fail<T, true>, &usertype_detail::metatable_new_index<T, false>), usertype_detail::registrar(), functions(std::forward<Args>(args)...), destructfunc(nullptr), callconstructfunc(nullptr), indexbase(&core_indexing_call<true>), newindexbase(&core_indexing_call<false>), indexbaseclasspropogation(usertype_detail::walk_all_bases<true>), newindexbaseclasspropogation(usertype_detail::walk_all_bases<false>), baseclasscheck(nullptr), baseclasscast(nullptr), secondarymeta(contains_variable()), properties() {
 			properties.reset();
 			std::initializer_list<typename usertype_detail::mapping_t::value_type> ilist{{std::pair<std::string, usertype_detail::call_information>(usertype_detail::make_string(std::get<I * 2>(functions)),
 				usertype_detail::call_information(&usertype_metatable::real_find_call<I * 2, I * 2 + 1, true>,
@@ -564,7 +564,7 @@ namespace sol {
 			return is_index ? f.indexfunc(L) : f.newindexfunc(L);
 		}
 
-		template <bool is_index, bool toplevel = false>
+		template <bool is_index, bool toplevel = false, bool is_meta_bound = false>
 		static int core_indexing_call(lua_State* L) {
 			usertype_metatable& f = toplevel
 				? static_cast<usertype_metatable&>(stack::get<light<usertype_metatable>>(L, upvalue_index(usertype_detail::metatable_index)))
@@ -603,6 +603,9 @@ namespace sol {
 			if (found) {
 				return ret;
 			}
+			if (is_meta_bound) {
+				return is_index ? usertype_detail::indexing_fail<T, is_index>(L) : usertype_detail::metatable_new_index<T, false>(L);
+			}
 			return toplevel ? (is_index ? f.indexfunc(L) : f.newindexfunc(L)) : -1;
 		}
 
@@ -612,6 +615,14 @@ namespace sol {
 
 		static int real_new_index_call(lua_State* L) {
 			return core_indexing_call<false, true>(L);
+		}
+
+		static int real_meta_index_call(lua_State* L) {
+			return core_indexing_call<true, true, true>(L);
+		}
+
+		static int real_meta_new_index_call(lua_State* L) {
+			return core_indexing_call<false, true, true>(L);
 		}
 
 		template <std::size_t Idx, bool is_index = true, bool is_variable = false>
@@ -648,6 +659,14 @@ namespace sol {
 
 		static int new_index_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_new_index_call), (&real_new_index_call)>(L);
+		}
+
+		static int meta_index_call(lua_State* L) {
+			return detail::typed_static_trampoline<decltype(&real_meta_index_call), (&real_meta_index_call)>(L);
+		}
+
+		static int meta_new_index_call(lua_State* L) {
+			return detail::typed_static_trampoline<decltype(&real_meta_new_index_call), (&real_meta_new_index_call)>(L);
 		}
 
 		virtual int push_um(lua_State* L) override {
@@ -803,8 +822,8 @@ namespace sol {
 						stack::set_field(L, meta_function::call_function, make_closure(um.callconstructfunc, nullptr, make_light(um), make_light(umc)), metabehind.stack_index());
 					}
 
-					stack::set_field(L, meta_function::index, make_closure(umt_t::index_call, nullptr, make_light(um), make_light(umc), nullptr, usertype_detail::toplevel_magic), metabehind.stack_index());
-					stack::set_field(L, meta_function::new_index, make_closure(umt_t::new_index_call, nullptr, make_light(um), make_light(umc), nullptr, usertype_detail::toplevel_magic), metabehind.stack_index());
+					stack::set_field(L, meta_function::index, make_closure(umt_t::meta_index_call, nullptr, make_light(um), make_light(umc), nullptr, usertype_detail::toplevel_magic), metabehind.stack_index());
+					stack::set_field(L, meta_function::new_index, make_closure(umt_t::meta_new_index_call, nullptr, make_light(um), make_light(umc), nullptr, usertype_detail::toplevel_magic), metabehind.stack_index());
 					stack::set_field(L, metatable_key, metabehind, t.stack_index());
 					metabehind.pop();
 				}
