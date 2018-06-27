@@ -150,8 +150,6 @@ TEST_CASE("utility/pointer", "check we can get pointer value from references") {
 	REQUIRE(result2.valid());
 	const void* ap = lua["v1"];
 	const void* bp = lua["v2"];
-	REQUIRE(ap != nullptr);
-	REQUIRE(bp != nullptr);
 	REQUIRE(ap == bp);
 }
 
