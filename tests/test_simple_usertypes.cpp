@@ -759,6 +759,26 @@ TEST_CASE("simple_usertype/runtime replacement", "ensure that functions can be p
 	}
 }
 
+TEST_CASE("simple_usertype/runtime additions with newindex", "ensure that additions when new_index is overriden don't hit the specified new_index function") {
+	class newindex_object {};
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+	lua.new_simple_usertype<newindex_object>("object",
+		sol::meta_function::new_index, [](newindex_object& o, sol::object key, sol::object value) {
+			return;
+		});
+
+	lua["object"]["test"] = [](newindex_object& o) {
+		std::cout << "test" << std::endl;
+		return 446;
+	};
+
+	auto result1 = lua.safe_script("o = object.new()", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
+	auto result2 = lua.safe_script("assert(o:test() == 446)", sol::script_pass_on_error);
+	REQUIRE(result2.valid());
+}
+
 TEST_CASE("simple_usertype/meta key retrievals", "allow for special meta keys (__index, __newindex) to trigger methods even if overwritten directly") {
 	SECTION("dynamically") {
 		static int writes = 0;

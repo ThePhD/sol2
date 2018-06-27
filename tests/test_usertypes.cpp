@@ -1801,6 +1801,26 @@ TEST_CASE("usertype/runtime-replacement", "ensure that functions can be properly
 	}
 }
 
+TEST_CASE("usertype/runtime additions with newindex", "ensure that additions when new_index is overriden don't hit the specified new_index function") {
+	class newindex_object {};
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+	lua.new_usertype<newindex_object>("object",
+		sol::meta_function::new_index, [](newindex_object& o, sol::object key, sol::object value) {
+			return;
+		});
+
+	lua["object"]["test"] = [](newindex_object& o) {
+		std::cout << "test" << std::endl;
+		return 446;
+	};
+
+	auto result1 = lua.safe_script("o = object.new()", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
+	auto result2 = lua.safe_script("assert(o:test() == 446)", sol::script_pass_on_error);
+	REQUIRE(result2.valid());
+}
+
 TEST_CASE("usertype/alignment", "ensure that alignment does not trigger weird aliasing issues") {
 	struct aligned_base {};
 	struct aligned_derived : aligned_base {};

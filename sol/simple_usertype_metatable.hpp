@@ -63,7 +63,7 @@ namespace sol {
 					else {
 						return is_index
 							? indexing_fail<T, is_index>(L)
-							: metatable_newindex<T, true>(L);
+							: metatable_new_index<T, true>(L);
 					}
 				}
 			}
@@ -113,7 +113,7 @@ namespace sol {
 				else {
 					return is_index
 						? indexing_fail<T, is_index>(L)
-						: metatable_newindex<T, true>(L);
+						: metatable_new_index<T, true>(L);
 				}
 			}
 			/* Check table storage first for a method that works
@@ -152,7 +152,7 @@ namespace sol {
 				else {
 					return is_index
 						? indexing_fail<T, is_index>(L)
-						: metatable_newindex<T, true>(L);
+						: metatable_new_index<T, true>(L);
 				}
 			}
 			return -1;
