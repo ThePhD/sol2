@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-06-27 15:33:51.932186 UTC
-// This header was generated with sol v2.20.4 (revision 60ee53a)
+// Generated 2018-07-23 14:58:57.359452 UTC
+// This header was generated with sol v2.20.4 (revision d343264)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -16451,6 +16451,21 @@ namespace sol {
 		};
 
 		template <typename T>
+		struct has_traits_size_test {
+		private:
+			typedef std::array<char, 1> one;
+			typedef std::array<char, 2> two;
+
+			template <typename C>
+			static one test(decltype(&C::size));
+			template <typename C>
+			static two test(...);
+
+		public:
+			static const bool value = sizeof(test<T>(0)) == sizeof(char);
+		};
+
+		template <typename T>
 		using has_clear = meta::boolean<has_clear_test<T>::value>;
 
 		template <typename T>
@@ -16493,7 +16508,7 @@ namespace sol {
 		using has_traits_add = meta::boolean<has_traits_add_test<T>::value>;
 
 		template <typename T>
-		using has_traits_size = meta::has_size<T>;
+		using has_traits_size = meta::boolean<has_traits_size_test<T>::value>;
 
 		template <typename T>
 		using has_traits_clear = has_clear<T>;
