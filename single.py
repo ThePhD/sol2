@@ -23,7 +23,7 @@ parser.add_argument(
     help=
     'name and location of where to place file (and forward declaration file)',
     metavar='file',
-    default='sol.hpp')
+    default=['sol.hpp'])
 parser.add_argument('--quiet', help='suppress all output', action='store_true')
 args = parser.parse_args()
 
