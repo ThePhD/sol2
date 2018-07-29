@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <memory>
 #include <functional>
+#include <array>
 #include <iterator>
 #include <iosfwd>
 
