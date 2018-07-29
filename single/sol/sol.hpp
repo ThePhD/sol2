@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-07-23 14:58:57.359452 UTC
-// This header was generated with sol v2.20.4 (revision d343264)
+// Generated 2018-07-29 17:21:21.230864 UTC
+// This header was generated with sol v2.20.4 (revision 71847ff)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1196,6 +1196,7 @@ namespace sol {
 #include <type_traits>
 #include <cstdint>
 #include <memory>
+#include <array>
 #include <iterator>
 #include <iosfwd>
 
@@ -4437,7 +4438,7 @@ namespace sol {
 			static void construct(T&& obj, Args&&... args) {
 				typedef meta::unqualified_t<T> Tu;
 				std::allocator<Tu> alloc{};
-				std::allocator_traits<std::allocator<Tu>>::construct(alloc, obj, std::forward<Args>(args)...);
+				std::allocator_traits<std::allocator<Tu>>::construct(alloc, std::forward<T>(obj), std::forward<Args>(args)...);
 			}
 
 			template <typename T, typename... Args>
@@ -4552,8 +4553,6 @@ namespace sol {
 // end of sol/raii.hpp
 
 // beginning of sol/filters.hpp
-
-#include <array>
 
 namespace sol {
 	namespace detail {
