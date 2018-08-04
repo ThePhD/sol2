@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-06-27 15:33:51.932186 UTC
-// This header was generated with sol v2.20.4 (revision 60ee53a)
+// Generated 2018-08-04 15:02:30.421859 UTC
+// This header was generated with sol v2.20.3 (revision daa9993)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1196,6 +1196,7 @@ namespace sol {
 #include <type_traits>
 #include <cstdint>
 #include <memory>
+#include <array>
 #include <iterator>
 #include <iosfwd>
 
@@ -4437,7 +4438,7 @@ namespace sol {
 			static void construct(T&& obj, Args&&... args) {
 				typedef meta::unqualified_t<T> Tu;
 				std::allocator<Tu> alloc{};
-				std::allocator_traits<std::allocator<Tu>>::construct(alloc, obj, std::forward<Args>(args)...);
+				std::allocator_traits<std::allocator<Tu>>::construct(alloc, std::forward<T>(obj), std::forward<Args>(args)...);
 			}
 
 			template <typename T, typename... Args>
@@ -4552,8 +4553,6 @@ namespace sol {
 // end of sol/raii.hpp
 
 // beginning of sol/filters.hpp
-
-#include <array>
 
 namespace sol {
 	namespace detail {
@@ -5626,6 +5625,12 @@ namespace sol {
 
 		template <typename C, C v, template <typename...> class V, typename T, typename... Args>
 		struct accumulate<C, v, V, T, Args...> : accumulate<C, v + V<T>::value, V, Args...> {};
+
+		template <typename C, C v, template <typename...> class V, typename List>
+		struct accumulate_list;
+
+		template <typename C, C v, template <typename...> class V, typename... Args>
+		struct accumulate_list<C, v, V, types<Args...>> : accumulate<C, v, V, Args...> {};
 	} // namespace detail
 
 	template <typename T>
@@ -5732,9 +5737,9 @@ namespace sol {
 	public:
 		typedef std::integral_constant<bool, meta::count_for<is_variadic_arguments, typename base_t::args_list>::value != 0> runtime_variadics_t;
 		static const std::size_t true_arity = base_t::arity;
-		static const std::size_t arity = base_t::arity - meta::count_for<is_transparent_argument, typename base_t::args_list>::value;
+		static const std::size_t arity = detail::accumulate_list<std::size_t, 0, lua_size, typename base_t::args_list>::value - meta::count_for<is_transparent_argument, typename base_t::args_list>::value;
 		static const std::size_t true_free_arity = base_t::free_arity;
-		static const std::size_t free_arity = base_t::free_arity - meta::count_for<is_transparent_argument, typename base_t::args_list>::value;
+		static const std::size_t free_arity = detail::accumulate_list<std::size_t, 0, lua_size, typename base_t::free_args_list>::value - meta::count_for<is_transparent_argument, typename base_t::args_list>::value;
 	};
 
 	template <typename T>
@@ -8250,9 +8255,9 @@ namespace stack {
 			if (!success) {
 				// expected type, actual type
 #if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
-				handler(L, index, type::number, t, "not a numeric type");
-#else
 				handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
+#else
+				handler(L, index, type::number, t, "not a numeric type");
 #endif
 			}
 			return success;
@@ -16451,6 +16456,21 @@ namespace sol {
 		};
 
 		template <typename T>
+		struct has_traits_size_test {
+		private:
+			typedef std::array<char, 1> one;
+			typedef std::array<char, 2> two;
+
+			template <typename C>
+			static one test(decltype(&C::size));
+			template <typename C>
+			static two test(...);
+
+		public:
+			static const bool value = sizeof(test<T>(0)) == sizeof(char);
+		};
+
+		template <typename T>
 		using has_clear = meta::boolean<has_clear_test<T>::value>;
 
 		template <typename T>
@@ -16493,7 +16513,7 @@ namespace sol {
 		using has_traits_add = meta::boolean<has_traits_add_test<T>::value>;
 
 		template <typename T>
-		using has_traits_size = meta::has_size<T>;
+		using has_traits_size = meta::boolean<has_traits_size_test<T>::value>;
 
 		template <typename T>
 		using has_traits_clear = has_clear<T>;

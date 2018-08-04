@@ -149,9 +149,9 @@ namespace stack {
 			if (!success) {
 				// expected type, actual type
 #if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
-				handler(L, index, type::number, t, "not a numeric type");
-#else
 				handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
+#else
+				handler(L, index, type::number, t, "not a numeric type");
 #endif
 			}
 			return success;
