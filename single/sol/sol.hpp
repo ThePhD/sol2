@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-07-29 18:04:21.688310 UTC
-// This header was generated with sol v2.20.4 (revision d01d49a)
+// Generated 2018-08-04 15:01:07.072485 UTC
+// This header was generated with sol v2.20.4 (revision 92fa032)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5625,6 +5625,12 @@ namespace sol {
 
 		template <typename C, C v, template <typename...> class V, typename T, typename... Args>
 		struct accumulate<C, v, V, T, Args...> : accumulate<C, v + V<T>::value, V, Args...> {};
+
+		template <typename C, C v, template <typename...> class V, typename List>
+		struct accumulate_list;
+
+		template <typename C, C v, template <typename...> class V, typename... Args>
+		struct accumulate_list<C, v, V, types<Args...>> : accumulate<C, v, V, Args...> {};
 	} // namespace detail
 
 	template <typename T>
@@ -5731,9 +5737,9 @@ namespace sol {
 	public:
 		typedef std::integral_constant<bool, meta::count_for<is_variadic_arguments, typename base_t::args_list>::value != 0> runtime_variadics_t;
 		static const std::size_t true_arity = base_t::arity;
-		static const std::size_t arity = base_t::arity - meta::count_for<is_transparent_argument, typename base_t::args_list>::value;
+		static const std::size_t arity = detail::accumulate_list<std::size_t, 0, lua_size, typename base_t::args_list>::value - meta::count_for<is_transparent_argument, typename base_t::args_list>::value;
 		static const std::size_t true_free_arity = base_t::free_arity;
-		static const std::size_t free_arity = base_t::free_arity - meta::count_for<is_transparent_argument, typename base_t::args_list>::value;
+		static const std::size_t free_arity = detail::accumulate_list<std::size_t, 0, lua_size, typename base_t::free_args_list>::value - meta::count_for<is_transparent_argument, typename base_t::args_list>::value;
 	};
 
 	template <typename T>
@@ -8249,9 +8255,9 @@ namespace stack {
 			if (!success) {
 				// expected type, actual type
 #if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
-				handler(L, index, type::number, t, "not a numeric type");
-#else
 				handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
+#else
+				handler(L, index, type::number, t, "not a numeric type");
 #endif
 			}
 			return success;
