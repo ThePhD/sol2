@@ -147,7 +147,7 @@ TEST_CASE("customization/split struct", "using the newly documented customizatio
 	REQUIRE(d == 36.5);
 }
 
-TEST_CASE("customization/get_ check_usertype", "using the newly documented customization points to handle different kinds of classes") {
+TEST_CASE("customization/usertype", "using the newly documented customization points to handle different kinds of classes") {
 	sol::state lua;
 
 	// Create a pass-through style of function
@@ -167,4 +167,18 @@ TEST_CASE("customization/get_ check_usertype", "using the newly documented custo
 	
 	REQUIRE(thingsf.num == 25);
 	REQUIRE(thingsg.num == 35);
+}
+
+TEST_CASE("customization/overloading", "using multi-size customized types in an overload") {
+	bool TwoThingsWorks = false, OverloadWorks = false;
+	sol::state lua;
+	lua["test_two_things"] = [&](two_things) { TwoThingsWorks = true; };
+	lua["test_overload"] = sol::overload([&](two_things) { OverloadWorks = true; }, [] {});
+
+	lua.script(
+		"test_two_things(0, true)\n"
+		"test_overload(0, true)");
+
+	REQUIRE(TwoThingsWorks);
+	REQUIRE(OverloadWorks);
 }

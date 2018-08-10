@@ -72,6 +72,9 @@ You can use the individual load and function call operator to load, check, and t
 	:linenos:
 	:lines: 1-10, 16-40, 47-49
 
+You can also `develop custom loaders`_ that pull from things that are not strings or files.
+
+
 set and get variables
 ---------------------
 
@@ -271,6 +274,7 @@ Some more things you can do/read about:
 	* :doc:`stack references<../api/stack_reference>` to have zero-overhead Sol abstractions while not copying to the Lua registry.
 	* :doc:`resolve<../api/resolve>` overloads in case you have overloaded functions; a cleaner casting utility. You must use this to emulate default parameters.
 
+.. _develop custom loaders: https://github.com/ThePhD/sol2/blob/develop/examples/custom_reader.cpp
 .. _basic example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype.cpp
 .. _special functions example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_special_functions.cpp
 .. _initializers example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_initializers.cpp

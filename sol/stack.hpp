@@ -220,6 +220,14 @@ namespace sol {
 			return call_syntax::colon;
 		}
 
+		inline void script(lua_State* L, lua_Reader reader, void* data, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			detail::typical_chunk_name_t basechunkname = {};
+			const char* chunknametarget = detail::make_chunk_name("lua_Reader", chunkname, basechunkname);
+			if (lua_load(L, reader, data, chunknametarget, to_string(mode).c_str()) || lua_pcall(L, 0, LUA_MULTRET, 0)) {
+				lua_error(L);
+			}
+		}
+
 		inline void script(lua_State* L, const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
