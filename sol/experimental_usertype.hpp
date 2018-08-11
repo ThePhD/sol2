@@ -28,8 +28,8 @@
 
 namespace sol {
 
-	template <typename T>
-	struct metatable : basic_table<T> {
+	template <typename base_type>
+	struct basic_metatable : basic_table<base_type> {
 
 	};
 

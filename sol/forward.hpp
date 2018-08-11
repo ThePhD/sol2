@@ -46,7 +46,7 @@ namespace sol {
 	class usertype;
 	template <typename T>
 	class simple_usertype;
-	template <bool, typename T>
+	template <bool, typename base_type>
 	class basic_table_core;
 	template <bool b>
 	using table_core = basic_table_core<b, reference>;
@@ -54,8 +54,8 @@ namespace sol {
 	using main_table_core = basic_table_core<b, main_reference>;
 	template <bool b>
 	using stack_table_core = basic_table_core<b, stack_reference>;
-	template <typename T>
-	using basic_table = basic_table_core<false, T>;
+	template <typename base_type>
+	using basic_table = basic_table_core<false, base_type>;
 	typedef table_core<false> table;
 	typedef table_core<true> global_table;
 	typedef main_table_core<false> main_table;

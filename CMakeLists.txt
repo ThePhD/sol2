@@ -139,6 +139,11 @@ CMAKE_DEPENDENT_OPTION(TESTS_DYNAMIC_LOADING_EXAMPLES "Enable build of dynamic l
 # # # sol2 Library
 # # Add a target for sol2's library to be included by external users
 add_library(sol2 INTERFACE)
+add_library(sol2::sol2 ALIAS sol2)
+set_target_properties(sol2
+	PROPERTIES
+	EXPORT_NAME sol2::sol2)
+
 target_include_directories(sol2 INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 	$<INSTALL_INTERFACE:include>)
@@ -198,8 +203,10 @@ if (PYTHONINTERP_FOUND)
 		add_custom_target(sol2_single_header ALL
 			DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/single/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol_forward.hpp")
 		add_library(sol2_single INTERFACE)
+		add_library(sol2::sol2_single ALIAS sol2_single)
 		set_target_properties(sol2_single
 			PROPERTIES
+			EXPORT_NAME sol2::sol2_single
 			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/single")
 		add_dependencies(sol2_single sol2_single_header)
 		install(FILES "${CMAKE_CURRENT_BINARY_DIR}/single/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol_forward.hpp"
