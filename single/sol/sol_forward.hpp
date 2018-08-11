@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-08-04 15:02:30.657205 UTC
-// This header was generated with sol v2.20.3 (revision daa9993)
+// Generated 2018-08-11 00:43:06.339513 UTC
+// This header was generated with sol v2.20.4 (revision 0e32127)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -227,6 +227,8 @@
 
 // end of sol/feature_test.hpp
 
+#include <utility>
+
 namespace sol {
 
 	template <bool b>
@@ -245,7 +247,7 @@ namespace sol {
 	class usertype;
 	template <typename T>
 	class simple_usertype;
-	template <bool, typename T>
+	template <bool, typename base_type>
 	class basic_table_core;
 	template <bool b>
 	using table_core = basic_table_core<b, reference>;
@@ -253,8 +255,8 @@ namespace sol {
 	using main_table_core = basic_table_core<b, main_reference>;
 	template <bool b>
 	using stack_table_core = basic_table_core<b, stack_reference>;
-	template <typename T>
-	using basic_table = basic_table_core<false, T>;
+	template <typename base_type>
+	using basic_table = basic_table_core<false, base_type>;
 	typedef table_core<false> table;
 	typedef table_core<true> global_table;
 	typedef main_table_core<false> main_table;
@@ -359,6 +361,24 @@ namespace sol {
 	struct usertype_traits;
 	template <typename T>
 	struct unique_usertype_traits;
+
+	template <typename... Args>
+	struct types {
+		typedef std::make_index_sequence<sizeof...(Args)> indices;
+		static constexpr std::size_t size() {
+			return sizeof...(Args);
+		}
+	};
+
+	template <typename T>
+	struct derive : std::false_type {
+		typedef types<> type;
+	};
+
+	template <typename T>
+	struct base : std::false_type {
+		typedef types<> type;
+	};
 } // namespace sol
 
 // end of sol/forward.hpp

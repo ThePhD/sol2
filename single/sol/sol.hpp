@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-08-04 15:02:30.421859 UTC
-// This header was generated with sol v2.20.3 (revision daa9993)
+// Generated 2018-08-11 00:43:05.672522 UTC
+// This header was generated with sol v2.20.4 (revision 0e32127)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -260,6 +260,8 @@
 
 // end of sol/feature_test.hpp
 
+#include <utility>
+
 namespace sol {
 
 	template <bool b>
@@ -278,7 +280,7 @@ namespace sol {
 	class usertype;
 	template <typename T>
 	class simple_usertype;
-	template <bool, typename T>
+	template <bool, typename base_type>
 	class basic_table_core;
 	template <bool b>
 	using table_core = basic_table_core<b, reference>;
@@ -286,8 +288,8 @@ namespace sol {
 	using main_table_core = basic_table_core<b, main_reference>;
 	template <bool b>
 	using stack_table_core = basic_table_core<b, stack_reference>;
-	template <typename T>
-	using basic_table = basic_table_core<false, T>;
+	template <typename base_type>
+	using basic_table = basic_table_core<false, base_type>;
 	typedef table_core<false> table;
 	typedef table_core<true> global_table;
 	typedef main_table_core<false> main_table;
@@ -392,6 +394,24 @@ namespace sol {
 	struct usertype_traits;
 	template <typename T>
 	struct unique_usertype_traits;
+
+	template <typename... Args>
+	struct types {
+		typedef std::make_index_sequence<sizeof...(Args)> indices;
+		static constexpr std::size_t size() {
+			return sizeof...(Args);
+		}
+	};
+
+	template <typename T>
+	struct derive : std::false_type {
+		typedef types<> type;
+	};
+
+	template <typename T>
+	struct base : std::false_type {
+		typedef types<> type;
+	};
 } // namespace sol
 
 // end of sol/forward.hpp
@@ -462,13 +482,6 @@ namespace sol {
 		using swallow = std::initializer_list<int>;
 	} // namespace detail
 
-	template <typename... Args>
-	struct types {
-		typedef std::make_index_sequence<sizeof...(Args)> indices;
-		static constexpr std::size_t size() {
-			return sizeof...(Args);
-		}
-	};
 	namespace meta {
 		namespace detail {
 			template <typename... Args>
@@ -3188,8 +3201,6 @@ COMPAT53_API void luaL_requiref(lua_State *L, const char *modname,
 // end of sol/compatibility.hpp
 
 // beginning of sol/in_place.hpp
-
-#include <utility>
 
 namespace sol {
 
@@ -6207,14 +6218,6 @@ namespace sol {
 
 	namespace detail {
 
-		template <typename T>
-		struct has_derived {
-			static bool value;
-		};
-
-		template <typename T>
-		bool has_derived<T>::value = false;
-
 		inline decltype(auto) base_class_check_key() {
 			static const auto& key = "class_check";
 			return key;
@@ -6235,8 +6238,10 @@ namespace sol {
 			return key;
 		}
 
-		template <typename T, typename... Bases>
+		template <typename T>
 		struct inheritance {
+			typedef typename base<T>::type bases_t;
+			
 			static bool type_check_bases(types<>, const std::string&) {
 				return false;
 			}
@@ -6247,7 +6252,7 @@ namespace sol {
 			}
 
 			static bool type_check(const std::string& ti) {
-				return ti == usertype_traits<T>::qualified_name() || type_check_bases(types<Bases...>(), ti);
+				return ti == usertype_traits<T>::qualified_name() || type_check_bases(bases_t(), ti);
 			}
 
 			static void* type_cast_bases(types<>, T*, const std::string&) {
@@ -6262,16 +6267,16 @@ namespace sol {
 
 			static void* type_cast(void* voiddata, const std::string& ti) {
 				T* data = static_cast<T*>(voiddata);
-				return static_cast<void*>(ti != usertype_traits<T>::qualified_name() ? type_cast_bases(types<Bases...>(), data, ti) : data);
+				return static_cast<void*>(ti != usertype_traits<T>::qualified_name() ? type_cast_bases(bases_t(), data, ti) : data);
 			}
 
 			template <typename U>
-			static bool type_unique_cast_bases(void*, void*, const string_view&) {
-				return false;
+			static bool type_unique_cast_bases(types<>, void*, void*, const string_view&) {
+				return 0;
 			}
 
 			template <typename U, typename Base, typename... Args>
-			static bool type_unique_cast_bases(void* source_data, void* target_data, const string_view& ti) {
+			static int type_unique_cast_bases(types<Base, Args...>, void* source_data, void* target_data, const string_view& ti) {
 				typedef unique_usertype_traits<U> uu_traits;
 				typedef typename uu_traits::template rebind_base<Base> base_ptr;
 				string_view base_ti = usertype_traits<Base>::qualified_name();
@@ -6282,21 +6287,27 @@ namespace sol {
 						// perform proper derived -> base conversion
 						*target = *source;
 					}
-					return true;
+					return 2;
 				}
-				return type_unique_cast_bases<U, Args...>(source_data, target_data, ti);
+				return type_unique_cast_bases<U>(types<Args...>(), source_data, target_data, ti);
 			}
 
 			template <typename U>
-			static bool type_unique_cast(void* source_data, void* target_data, const string_view& ti, const string_view& rebind_ti) {
+			static int type_unique_cast(void* source_data, void* target_data, const string_view& ti, const string_view& rebind_ti) {
 				typedef unique_usertype_traits<U> uu_traits;
-				typedef typename uu_traits::template rebind_base<T> rebind_t;
+				typedef typename uu_traits::template rebind_base<void> rebind_t;
+				typedef std::conditional_t<std::is_void<rebind_t>::value, types<>, bases_t> cond_bases_t;
 				string_view this_rebind_ti = usertype_traits<rebind_t>::qualified_name();
 				if (rebind_ti != this_rebind_ti) {
-					// this is not even of the same container type
-					return false;
+					// this is not even of the same unique type
+					return 0;
 				}
-				return type_unique_cast_bases<U, Bases...>(source_data, target_data, ti);
+				string_view this_ti = usertype_traits<T>::qualified_name();
+				if (ti == this_ti) {
+					// direct match, return 1
+					return 1;
+				}
+				return type_unique_cast_bases<U>(cond_bases_t(), source_data, target_data, ti);
 			}
 		};
 
@@ -6305,6 +6316,9 @@ namespace sol {
 		using inheritance_unique_cast_function = decltype(&inheritance<void>::type_unique_cast<void>);
 	} // namespace detail
 } // namespace sol
+
+#define SOL_BASE_CLASSES(T, ...) template <> struct ::sol::base<T> : ::std::true_type { typedef ::sol::types<__VA_ARGS__> type; };
+#define SOL_DERIVED_CLASSES(T, ...) template <> struct ::sol::derive<T> : ::std::true_type { typedef ::sol::types<__VA_ARGS__> type; };
 
 // end of sol/inheritance.hpp
 
@@ -7158,11 +7172,7 @@ namespace sol {
 		struct as_table_tag {};
 
 		using unique_destructor = void (*)(void*);
-#if 0
 		using unique_tag = detail::inheritance_unique_cast_function;
-#else
-		using unique_tag = const char*;
-#endif
 
 		inline void* align(std::size_t alignment, std::size_t size, void*& ptr, std::size_t& space, std::size_t& required_space) {
 			// this handels arbitrary alignments...
@@ -7214,7 +7224,7 @@ namespace sol {
 			return align(std::alignment_of<void*>::value, sizeof(void*), ptr, space);
 		}
 
-		template <bool pre_aligned = false>
+		template <bool pre_aligned = false, bool pre_shifted = false>
 		inline void* align_usertype_unique_destructor(void* ptr) {
 			typedef std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
@@ -7226,6 +7236,8 @@ namespace sol {
 				use_align;
 			if (!pre_aligned) {
 				ptr = align_usertype_pointer(ptr);
+			}
+			if (!pre_shifted) {
 				ptr = static_cast<void*>(static_cast<char*>(ptr) + sizeof(void*));
 			}
 			if (!use_align::value) {
@@ -7235,7 +7247,7 @@ namespace sol {
 			return align(std::alignment_of<unique_destructor>::value, sizeof(unique_destructor), ptr, space);
 		}
 
-		template <bool pre_aligned = false>
+		template <bool pre_aligned = false, bool pre_shifted = false>
 		inline void* align_usertype_unique_tag(void* ptr) {
 			typedef std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
@@ -7247,6 +7259,8 @@ namespace sol {
 				use_align;
 			if (!pre_aligned) {
 				ptr = align_usertype_unique_destructor(ptr);
+			}
+			if (!pre_shifted) {
 				ptr = static_cast<void*>(static_cast<char*>(ptr) + sizeof(unique_destructor));
 			}
 			if (!use_align::value) {
@@ -7255,7 +7269,8 @@ namespace sol {
 			std::size_t space = (std::numeric_limits<std::size_t>::max)();
 			return align(std::alignment_of<unique_tag>::value, sizeof(unique_tag), ptr, space);
 		}
-		template <typename T, bool pre_aligned = false>
+
+		template <typename T, bool pre_aligned = false, bool pre_shifted = false>
 		inline void* align_usertype_unique(void* ptr) {
 			typedef std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
@@ -7267,6 +7282,8 @@ namespace sol {
 				use_align;
 			if (!pre_aligned) {
 				ptr = align_usertype_unique_tag(ptr);
+			}
+			if (!pre_shifted) {
 				ptr = static_cast<void*>(static_cast<char*>(ptr) + sizeof(unique_tag));
 			}
 			if (!use_align::value) {
@@ -7550,9 +7567,7 @@ namespace sol {
 			void* memory = lua_touserdata(L, 1);
 			memory = align_usertype_unique_destructor(memory);
 			unique_destructor& dx = *static_cast<unique_destructor*>(memory);
-			memory = static_cast<void*>(static_cast<char*>(memory) + sizeof(unique_destructor));
 			memory = align_usertype_unique_tag<true>(memory);
-			memory = static_cast<void*>(static_cast<char*>(memory) + sizeof(unique_tag));
 			(dx)(memory);
 			return 0;
 		}
@@ -8579,7 +8594,7 @@ namespace stack {
 			if (stack_detail::check_metatable<as_container_t<U>>(L, metatableindex))
 				return true;
 			bool success = false;
-			if (detail::has_derived<T>::value) {
+			if (derive<T>::value) {
 				auto pn = stack::pop_n(L, 1);
 				lua_pushstring(L, &detail::base_class_check_key()[0]);
 				lua_rawget(L, metatableindex);
@@ -8758,11 +8773,14 @@ namespace stack {
 namespace sol {
 namespace stack {
 
-#if 0
 	template <typename X>
-	struct qualified_checker<X, type::userdata, std::enable_if_t<is_unique_usertype<X>::value && !std::is_reference<X>::value>> {
+	struct qualified_checker<X, type::userdata, std::enable_if_t<
+		is_unique_usertype<X>::value
+		&& !std::is_reference<X>::value
+	>> {
 		typedef unique_usertype_traits<meta::unqualified_t<X>> u_traits;
 		typedef typename u_traits::type T;
+		typedef typename u_traits::template rebind_base<void> rebind_t;
 		
 		template <typename Handler>
 		static bool check(std::false_type, lua_State* L, int index, Handler&& handler, record& tracking) {
@@ -8779,23 +8797,19 @@ namespace stack {
 				handler(L, index, type::userdata, indextype, "value is not a userdata");
 				return false;
 			}
-			if (lua_getmetatable(L, index) == 0) {
-				return true;
-			}
-			int metatableindex = lua_gettop(L);
-			void* basecastdata = lua_touserdata(L, index);
-			void* memory = detail::align_usertype_unique_destructor(basecastdata);
+			void* memory = lua_touserdata(L, index);
+			memory = detail::align_usertype_unique_destructor(memory);
 			detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(memory);
 			if (&detail::usertype_unique_alloc_destroy<T, X> == pdx) {
 				return true;
 			}
-			if (detail::has_derived<T>::value) {
-				memory = detail::align_usertype_unique_cast<true>(memory);
-				detail::inheritance_unique_cast_function ic = reinterpret_cast<detail::inheritance_unique_cast_function>(memory);
+			if (derive<T>::value) {
+				memory = detail::align_usertype_unique_tag<true, false>(memory);
+				detail::unique_tag& ic = *reinterpret_cast<detail::unique_tag*>(memory);
 				string_view ti = usertype_traits<T>::qualified_name();
-				string_view rebind_ti = usertype_traits<base_id>::qualified_name();
-				if (ic(nullptr, basecastdata, ti, rebind_ti)) {
-					lua_pop(L, 1);
+				string_view rebind_ti = usertype_traits<rebind_t>::qualified_name();
+				if (ic(nullptr, nullptr, ti, rebind_ti) != 0) {
+					return true;
 				}
 			}
 			handler(L, index, type::userdata, indextype, "value is a userdata but is not the correct unique usertype");
@@ -8804,11 +8818,9 @@ namespace stack {
 		
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
-			return check(meta::neg<std::is_void<typename u_traits::base_id>>(), L, index, std::forward<Handler>(handler), tracking);
+			return check(meta::neg<std::is_void<rebind_t>>(), L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
-
-#endif // Not implemented right now...
 
 	template <typename X>
 	struct qualified_checker<X, type::userdata, std::enable_if_t<is_container<meta::unqualified_t<X>>::value && !std::is_reference<X>::value>> {
@@ -9890,7 +9902,7 @@ namespace stack {
 		}
 
 		static T* get_no_lua_nil_from(lua_State* L, void* udata, int index, record&) {
-			if (detail::has_derived<T>::value && luaL_getmetafield(L, index, &detail::base_class_cast_key()[0]) != 0) {
+			if (derive<T>::value && luaL_getmetafield(L, index, &detail::base_class_cast_key()[0]) != 0) {
 				void* basecastdata = lua_touserdata(L, -1);
 				detail::inheritance_cast_function ic = reinterpret_cast<detail::inheritance_cast_function>(basecastdata);
 				// use the casting function to properly adjust the pointer for the desired T
@@ -10053,24 +10065,58 @@ namespace stack {
 namespace sol {
 namespace stack {
 
-#if 0 // need static reflection / DERIVED_CLASS macros...
 	template <typename X>
 	struct qualified_getter<X, std::enable_if_t<
-		!std::is_reference<X>::value && is_unique_usertype<meta::unqualified_t<X>>::value
+		!std::is_reference<X>::value 
+		&& is_unique_usertype<meta::unqualified_t<X>>::value
+		&& !std::is_void<typename unique_usertype_traits<meta::unqualified_t<X>>::template rebind_base<void>>::value
 	>> {
-		typedef typename unique_usertype_traits<meta::unqualified_t<X>>::type P;
-		typedef typename unique_usertype_traits<meta::unqualified_t<X>>::actual_type Real;
+		typedef unique_usertype_traits<meta::unqualified_t<X>> u_traits;
+		typedef typename u_traits::type T;
+		typedef typename u_traits::actual_type Real;
+		typedef typename u_traits::template rebind_base<void> rebind_t;
 
-		static Real& get(lua_State* L, int index, record& tracking) {
+		static Real get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			void* memory = lua_touserdata(L, index);
-			void* del = detail::align_usertype_unique_destructor(memory);
-			memory = detail::align_usertype_unique<Real>(memory);
-			Real* mem = static_cast<Real*>(memory);
-			return *mem;
+			memory = detail::align_usertype_unique_destructor(memory);
+			detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(memory);
+			if (&detail::usertype_unique_alloc_destroy<T, X> == pdx) {
+				memory = detail::align_usertype_unique_tag<true, false>(memory);
+				memory = detail::align_usertype_unique<Real, true, false>(memory);
+				Real* mem = static_cast<Real*>(memory);
+				return *mem;
+			}
+			Real r(nullptr);
+			if (!derive<T>::value) {
+				// TODO: abort / terminate, maybe only in debug modes?
+				return r;
+			}
+			memory = detail::align_usertype_unique_tag<true, false>(memory);
+			detail::unique_tag& ic = *reinterpret_cast<detail::unique_tag*>(memory);
+			memory = detail::align_usertype_unique<Real, true, false>(memory);
+			string_view ti = usertype_traits<T>::qualified_name();
+			string_view rebind_ti = usertype_traits<rebind_t>::qualified_name();
+			int cast_operation = ic(memory, &r, ti, rebind_ti);
+			switch (cast_operation) {
+			case 1: {
+				// it's a perfect match,
+				// alias memory directly
+				Real* mem = static_cast<Real*>(memory);
+				return *mem;
+			}
+			case 2:
+				// it's a base match, return the
+				// aliased creation
+				return std::move(r);
+			default:
+				// uh oh..
+				break;
+			}
+			// TODO: abort / terminate, maybe only in debug modes?
+			return r;
 		}
 	};
-#endif // need static reflection
 
 	template <typename T>
 	struct qualified_getter<T, std::enable_if_t<
@@ -10375,8 +10421,10 @@ namespace stack {
 
 	template <typename T>
 	struct pusher<T, std::enable_if_t<is_unique_usertype<T>::value>> {
-		typedef typename unique_usertype_traits<T>::type P;
-		typedef typename unique_usertype_traits<T>::actual_type Real;
+		typedef unique_usertype_traits<T> u_traits;
+		typedef typename u_traits::type P;
+		typedef typename u_traits::actual_type Real;
+		typedef typename u_traits::template rebind_base<void> rebind_t;
 
 		template <typename Arg, meta::enable<std::is_base_of<Real, meta::unqualified_t<Arg>>> = meta::enabler>
 		static int push(lua_State* L, Arg&& arg) {
@@ -10398,11 +10446,7 @@ namespace stack {
 			detail::unique_tag* id = nullptr;
 			Real* mem = detail::usertype_unique_allocate<P, Real>(L, pref, fx, id);
 			*fx = detail::usertype_unique_alloc_destroy<P, Real>;
-#if 0
-			*id = &detail::inheritance<P>::type_unique_cast_bases<Real>;
-#else
-			*id = &usertype_traits<Real>::qualified_name()[0];
-#endif
+			*id = &detail::inheritance<P>::template type_unique_cast<Real>;
 			detail::default_construct::construct(mem, std::forward<Args>(args)...);
 			*pref = unique_usertype_traits<T>::get(*mem);
 			if (luaL_newmetatable(L, &usertype_traits<detail::unique_usertype<std::remove_cv_t<P>>>::metatable()[0]) == 1) {
@@ -11814,6 +11858,14 @@ namespace sol {
 				return call_syntax::dot;
 			}
 			return call_syntax::colon;
+		}
+
+		inline void script(lua_State* L, lua_Reader reader, void* data, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			detail::typical_chunk_name_t basechunkname = {};
+			const char* chunknametarget = detail::make_chunk_name("lua_Reader", chunkname, basechunkname);
+			if (lua_load(L, reader, data, chunknametarget, to_string(mode).c_str()) || lua_pcall(L, 0, LUA_MULTRET, 0)) {
+				lua_error(L);
+			}
 		}
 
 		inline void script(lua_State* L, const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
@@ -18693,8 +18745,7 @@ namespace sol {
 				return;
 			}
 			mustindex = true;
-			(void)detail::swallow{0, ((detail::has_derived<Bases>::value = true), 0)...};
-
+			
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
 			baseclasscheck = (void*)&detail::inheritance<T, Bases...>::type_check;
@@ -19374,7 +19425,7 @@ namespace sol {
 				return;
 			}
 			mustindex = true;
-			(void)detail::swallow{0, ((detail::has_derived<Bases>::value = true), 0)...};
+			//(void)detail::swallow{0, ((detail::has_derived<Bases>::value = true), 0)...};
 
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: Please file a bug report.");
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: Please file a bug report.");
@@ -21132,11 +21183,74 @@ namespace sol {
 			return require_core(key, action, create_global);
 		}
 
+		void clear_package_loaders( ) {
+			optional<table> maybe_package = this->global["package"];
+			if (!maybe_package) {
+				// package lib wasn't opened
+				// open package lib
+				return;
+			}
+			table& package = *maybe_package;
+			// yay for version differences...
+			// one day Lua 5.1 will die a peaceful death
+			// and its old bones will find blissful rest
+			auto loaders_proxy = package
+#if SOL_LUA_VERSION < 502
+				["loaders"]
+#else
+				["searchers"]
+#endif
+				;
+			if (!loaders_proxy.valid()) {
+				// nothing to clear
+				return;
+			}
+			// we need to create the table for loaders
+			// table does not exist, so create and move forward
+			loaders_proxy = new_table(1, 0);
+		}
+
+		template <typename Fx>
+		void add_package_loader(Fx&& fx, bool clear_all_package_loaders = false) {
+			optional<table> maybe_package = this->global["package"];
+			if (!maybe_package) {
+				// package lib wasn't opened
+				// open package lib
+				return;
+			}
+			table& package = *maybe_package;
+			// yay for version differences...
+			// one day Lua 5.1 will die a peaceful death
+			// and its old bones will find blissful rest
+			auto loaders_proxy = package
+#if SOL_LUA_VERSION < 502
+			["loaders"]
+#else
+			["searchers"]
+#endif
+			;
+			bool make_new_table = clear_all_package_loaders || !loaders_proxy.valid( );
+			if (make_new_table) {
+				// we need to create the table for loaders
+				// table does not exist, so create and move forward
+				loaders_proxy = new_table(1, 0);
+			}
+			optional<table> maybe_loaders = loaders_proxy;
+			if (!maybe_loaders) {
+				// loaders/searches
+				// thing exists in package, but it
+				// ain't a table or a table-alike...!
+				return;
+			}
+			table loaders = loaders_proxy;
+			loaders.add(std::forward<Fx>(fx));
+		}
+
 		template <typename E>
-		protected_function_result do_string(const string_view& code, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		protected_function_result do_reader(lua_Reader reader, void* data, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			detail::typical_chunk_name_t basechunkname = {};
-			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
-			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str()));
+			const char* chunknametarget = detail::make_chunk_name("lua_Reader", chunkname, basechunkname);
+			load_status x = static_cast<load_status>(lua_load(L, reader, data, chunknametarget, to_string(mode).c_str()));
 			if (x != load_status::ok) {
 				return protected_function_result(L, absolute_index(L, -1), 0, 1, static_cast<call_status>(x));
 			}
@@ -21145,9 +21259,22 @@ namespace sol {
 			return pf();
 		}
 
+		protected_function_result do_reader(lua_Reader reader, void* data, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			detail::typical_chunk_name_t basechunkname = {};
+			const char* chunknametarget = detail::make_chunk_name("lua_Reader", chunkname, basechunkname);
+			load_status x = static_cast<load_status>(lua_load(L, reader, data, chunknametarget, to_string(mode).c_str()));
+			if (x != load_status::ok) {
+				return protected_function_result(L, absolute_index(L, -1), 0, 1, static_cast<call_status>(x));
+			}
+			stack_aligned_protected_function pf(L, -1);
+			return pf();
+		}
+
 		template <typename E>
-		protected_function_result do_file(const std::string& filename, const basic_environment<E>& env, load_mode mode = load_mode::any) {
-			load_status x = static_cast<load_status>(luaL_loadfilex(L, filename.c_str(), to_string(mode).c_str()));
+		protected_function_result do_string(const string_view& code, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			detail::typical_chunk_name_t basechunkname = {};
+			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
+			load_status x = static_cast<load_status>(luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str()));
 			if (x != load_status::ok) {
 				return protected_function_result(L, absolute_index(L, -1), 0, 1, static_cast<call_status>(x));
 			}
@@ -21167,6 +21294,17 @@ namespace sol {
 			return pf();
 		}
 
+		template <typename E>
+		protected_function_result do_file(const std::string& filename, const basic_environment<E>& env, load_mode mode = load_mode::any) {
+			load_status x = static_cast<load_status>(luaL_loadfilex(L, filename.c_str(), to_string(mode).c_str()));
+			if (x != load_status::ok) {
+				return protected_function_result(L, absolute_index(L, -1), 0, 1, static_cast<call_status>(x));
+			}
+			stack_aligned_protected_function pf(L, -1);
+			set_environment(env, pf);
+			return pf();
+		}
+
 		protected_function_result do_file(const std::string& filename, load_mode mode = load_mode::any) {
 			load_status x = static_cast<load_status>(luaL_loadfilex(L, filename.c_str(), to_string(mode).c_str()));
 			if (x != load_status::ok) {
@@ -21174,6 +21312,19 @@ namespace sol {
 			}
 			stack_aligned_protected_function pf(L, -1);
 			return pf();
+		}
+
+		template <typename Fx, meta::disable_any<meta::is_string_constructible<meta::unqualified_t<Fx>>, meta::is_specialization_of<meta::unqualified_t<Fx>, basic_environment>> = meta::enabler>
+		protected_function_result safe_script(lua_Reader reader, void* data, Fx&& on_error, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			protected_function_result pfr = do_reader(reader, data, chunkname, mode);
+			if (!pfr.valid()) {
+				return on_error(L, std::move(pfr));
+			}
+			return pfr;
+		}
+
+		protected_function_result safe_script(lua_Reader reader, void* data, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			return safe_script(reader, data, script_default_on_error, chunkname, mode);
 		}
 
 		template <typename Fx, meta::disable_any<meta::is_string_constructible<meta::unqualified_t<Fx>>, meta::is_specialization_of<meta::unqualified_t<Fx>, basic_environment>> = meta::enabler>
@@ -21228,6 +21379,31 @@ namespace sol {
 
 		protected_function_result safe_script_file(const std::string& filename, load_mode mode = load_mode::any) {
 			return safe_script_file(filename, script_default_on_error, mode);
+		}
+
+		template <typename E>
+		unsafe_function_result unsafe_script(lua_Reader reader, void* data, const basic_environment<E>& env, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			detail::typical_chunk_name_t basechunkname = {};
+			const char* chunknametarget = detail::make_chunk_name("lua_Reader", chunkname, basechunkname);
+			int index = lua_gettop(L);
+			if (lua_load(L, reader, data, chunknametarget, to_string(mode).c_str())) {
+				lua_error(L);
+			}
+			set_environment(env, stack_reference(L, raw_index(index + 1)));
+			if (lua_pcall(L, 0, LUA_MULTRET, 0)) {
+				lua_error(L);
+			}
+			int postindex = lua_gettop(L);
+			int returns = postindex - index;
+			return unsafe_function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
+		}
+
+		unsafe_function_result unsafe_script(lua_Reader reader, void* data, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			int index = lua_gettop(L);
+			stack::script(L, reader, data, chunkname, mode);
+			int postindex = lua_gettop(L);
+			int returns = postindex - index;
+			return unsafe_function_result(L, (std::max)(postindex - (returns - 1), 1), returns);
 		}
 
 		template <typename E>
@@ -21307,6 +21483,10 @@ namespace sol {
 		}
 
 #if defined(SOL_SAFE_FUNCTION) && SOL_SAFE_FUNCTION
+		protected_function_result script(lua_Reader reader, void* data, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			return safe_script(reader, data, chunkname, mode);
+		}
+
 		protected_function_result script(const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return safe_script(code, chunkname, mode);
 		}
@@ -21363,6 +21543,12 @@ namespace sol {
 		}
 
 		global_table globals() const {
+			// if we return a reference 
+			// we'll be screwed a bit
+			return global;
+		}
+
+		global_table& globals() {
 			return global;
 		}
 
