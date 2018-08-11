@@ -228,12 +228,12 @@ endif()
 
 # pkg-config support, except on Windows
 if(NOT WIN32 OR NOT CMAKE_HOST_SYSTEM_NAME MATCHES Windows)
-  set(PKGCONFIG_INSTALL_DIR
-    "${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig"
-    CACHE PATH "Path where sol2.pc is installed")
-
-  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/sol2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/sol2.pc" @ONLY)
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/sol2.pc" DESTINATION "${PKGCONFIG_INSTALL_DIR}")
+	set(PKGCONFIG_INSTALL_DIR
+		"${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig"
+		CACHE PATH "Path where sol2.pc is installed")
+	
+	configure_file("${CMAKE_CURRENT_SOURCE_DIR}/sol2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/sol2.pc" @ONLY)
+	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/sol2.pc" DESTINATION "${PKGCONFIG_INSTALL_DIR}")
 endif()
 
 if (CI)
@@ -274,7 +274,7 @@ if (DO_TESTS OR DO_EXAMPLES)
 		set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 	endif()
 	find_package(Threads REQUIRED)
-
+	
 	string(TOLOWER ${LUA_VERSION} NORMALIZED_LUA_VERSION)
 	# Find way to get Lua: build if requested, or attempt to build if no matching version is found
 	if (BUILD_LUA)
@@ -294,18 +294,18 @@ if (DO_TESTS OR DO_EXAMPLES)
 			find_package(LuaBuild ${LUA_VERSION} REQUIRED)
 		endif()
 	endif()
-
+	
 	if (NOT LUA_FOUND AND NOT LUABUILD_FOUND)
 		message(FATAL_ERROR "sol2 Lua \"${LUA_VERSION}\" not found and could not be targeted for building")
 	endif()
-
+	
 	# # Enable test harness for regular, example or single tests
 	if (ENABLE_TESTING)
 		# enable ctest
 		message(STATUS "sol2 testing enabled")
 		enable_testing()
 	endif()
-
+	
 	# # # Examples
 	# # Enable examples to be built against the library
 	if (DO_EXAMPLES)
@@ -313,7 +313,7 @@ if (DO_TESTS OR DO_EXAMPLES)
 		message(STATUS "sol2 adding examples...")
 		add_subdirectory(examples "${CMAKE_BINARY_DIR}/examples")
 	endif()
-
+	
 	# # # Tests
 	# # Add tests here
 	if (DO_TESTS)
