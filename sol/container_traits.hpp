@@ -1,4 +1,4 @@
-// sol2 
+// sol2
 
 // The MIT License (MIT)
 
@@ -456,25 +456,25 @@ namespace sol {
 
 		struct error_result {
 			int results;
-			const char* fmt;
+			const char* fmt_;
 			std::array<const char*, 4> args;
 
-			error_result() : results(0), fmt(nullptr) {
+			error_result() : results(0), fmt_(nullptr) {
 			}
 
-			error_result(int results) : results(results), fmt(nullptr) {
+			error_result(int results) : results(results), fmt_(nullptr) {
 			}
 
-			error_result(const char* fmt, const char* msg) : results(0), fmt(fmt) {
+			error_result(const char* fmt_, const char* msg) : results(0), fmt_(fmt_) {
 				args[0] = msg;
 			}
 		};
 
 		inline int handle_errors(lua_State* L, const error_result& er) {
-			if (er.fmt == nullptr) {
+			if (er.fmt_ == nullptr) {
 				return er.results;
 			}
-			return luaL_error(L, er.fmt, er.args[0], er.args[1], er.args[2], er.args[3]);
+			return luaL_error(L, er.fmt_, er.args[0], er.args[1], er.args[2], er.args[3]);
 		}
 
 		template <typename X, typename = void>
@@ -569,7 +569,7 @@ namespace sol {
 			typedef meta::is_matched_lookup<T> is_matched_lookup;
 			typedef typename T::iterator iterator;
 			typedef typename T::value_type value_type;
-			typedef std::conditional_t<is_matched_lookup::value, 
+			typedef std::conditional_t<is_matched_lookup::value,
 				std::pair<value_type, value_type>,
 				std::conditional_t<is_associative::value || is_lookup::value,
 					value_type,
@@ -1127,7 +1127,7 @@ namespace sol {
 			static bool empty_start(lua_State* L, T& self) {
 				return empty_has(has_empty<T>(), L, self);
 			}
-			
+
 			static error_result erase_start(lua_State* L, T& self, K& key) {
 				return erase_has(has_erase<T>(), L, self, key);
 			}
