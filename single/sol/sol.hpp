@@ -40,7 +40,7 @@
 #ifdef check
 #define SOL_INSIDE_UNREAL_REMOVED_CHECK 1
 #undef check
-#endif 
+#endif
 #endif // Unreal Engine 4 Bullshit
 
 #if defined(__GNUC__)
@@ -156,7 +156,7 @@
 	#define SOL_SAFE_REFERENCES 1
 	#endif
 
-	// Changes all typedefs of sol::function to point to the 
+	// Changes all typedefs of sol::function to point to the
 	// protected_function version, instead of unsafe_function
 	#if !defined(SOL_SAFE_FUNCTION)
 	#define SOL_SAFE_FUNCTION 1
@@ -186,7 +186,7 @@
 	#endif
 
 	// Turn off Number Precision Checks
-	// if this is defined, we do not do range 
+	// if this is defined, we do not do range
 	// checks on integers / unsigned integers that might
 	// be bigger than what Lua can represent
 	#if !defined(SOL_NO_CHECK_NUMBER_PRECISION)
@@ -246,7 +246,7 @@
 #ifndef SOL_UNORDERED_MAP_COMPATIBLE_HASH
 #define SOL_UNORDERED_MAP_COMPATIBLE_HASH 1
 #endif // SOL_UNORDERED_MAP_COMPATIBLE_HASH
-#endif 
+#endif
 
 #ifndef SOL_STACK_STRING_OPTIMIZATION_SIZE
 #define SOL_STACK_STRING_OPTIMIZATION_SIZE 1024
@@ -1171,7 +1171,7 @@ namespace sol {
 				hash ^= static_cast<size_t>(*cptr++);
 				hash *= static_cast<size_t>(1099511628211ULL);
 			}
-			return hash; 
+			return hash;
 #endif
 		}
 	};
@@ -1435,7 +1435,7 @@ namespace sol {
 			struct is_callable : std::is_function<std::remove_pointer_t<T>> {};
 
 			template <typename T>
-			struct is_callable<T, std::enable_if_t<std::is_final<unqualified_t<T>>::value 
+			struct is_callable<T, std::enable_if_t<std::is_final<unqualified_t<T>>::value
 				&& std::is_class<unqualified_t<T>>::value
 				&&  std::is_same<decltype(void(&T::operator())), void>::value>> {
 
@@ -1747,7 +1747,7 @@ namespace sol {
 		template <typename T>
 		using is_string_constructible = any<
 			meta::all<std::is_array<unqualified_t<T>>, std::is_same<meta::unqualified_t<std::remove_all_extents_t<meta::unqualified_t<T>>>, char>>,
-			std::is_same<unqualified_t<T>, const char*>, 
+			std::is_same<unqualified_t<T>, const char*>,
 			std::is_same<unqualified_t<T>, char>, std::is_same<unqualified_t<T>, std::string>, std::is_same<unqualified_t<T>, std::initializer_list<char>>
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 			, std::is_same<unqualified_t<T>, std::string_view>
@@ -5350,7 +5350,7 @@ namespace sol {
 			"__ipairs",
 			"next",
 			"__type",
-			"__typeinfo" 
+			"__typeinfo"
 		} };
 		return names;
 	}
@@ -5417,7 +5417,7 @@ namespace sol {
 		template <typename T>
 		struct is_container<T, std::enable_if_t<meta::all<
 			meta::has_begin_end<meta::unqualified_t<T>>
-			, meta::neg<is_initializer_list<meta::unqualified_t<T>>> 
+			, meta::neg<is_initializer_list<meta::unqualified_t<T>>>
 			, meta::neg<meta::is_string_like<meta::unqualified_t<T>>>
 		>::value
 		>> : std::true_type {};
@@ -5914,7 +5914,7 @@ namespace sol {
 			}
 #if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			// LuaJIT cannot have the catchall when the safe propagation is on
-			// but LuaJIT will swallow all C++ errors 
+			// but LuaJIT will swallow all C++ errors
 			// if we don't at least catch std::exception ones
 			catch (...) {
 				call_exception_handler(L, optional<const std::exception&>(nullopt), "caught (...) exception");
@@ -5925,7 +5925,7 @@ namespace sol {
 		}
 
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
-#if 0 
+#if 0
 		// impossible: g++/clang++ choke as they think this function is ambiguous:
 		// to fix, wait for template <auto X> and then switch on no-exceptness of the function
 		template <lua_CFunction_noexcept f>
@@ -5968,7 +5968,7 @@ namespace sol {
 			}
 #if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			// LuaJIT cannot have the catchall when the safe propagation is on
-			// but LuaJIT will swallow all C++ errors 
+			// but LuaJIT will swallow all C++ errors
 			// if we don't at least catch std::exception ones
 			catch (...) {
 				call_exception_handler(L, optional<const std::exception&>(nullopt), "caught (...) exception");
@@ -7443,7 +7443,7 @@ namespace sol {
 					return false;
 				}
 				allocated_size -= sizeof(T*);
-				
+
 				adjusted = static_cast<void*>(static_cast<char*>(pointer_adjusted) + sizeof(T*));
 				dx_adjusted = align(std::alignment_of<unique_destructor>::value, sizeof(unique_destructor), adjusted, allocated_size);
 				if (dx_adjusted == nullptr) {
@@ -7451,7 +7451,7 @@ namespace sol {
 					return false;
 				}
 				allocated_size -= sizeof(unique_destructor);
-				
+
 				adjusted = static_cast<void*>(static_cast<char*>(dx_adjusted) + sizeof(unique_destructor));
 
 				id_adjusted = align(std::alignment_of<unique_tag>::value, sizeof(unique_tag), adjusted, allocated_size);
@@ -7460,7 +7460,7 @@ namespace sol {
 					return false;
 				}
 				allocated_size -= sizeof(unique_tag);
-				
+
 				adjusted = static_cast<void*>(static_cast<char*>(id_adjusted) + sizeof(unique_tag));
 				data_adjusted = align(std::alignment_of<Real>::value, sizeof(Real), adjusted, allocated_size);
 				if (data_adjusted == nullptr) {
@@ -8763,7 +8763,7 @@ namespace stack {
 	struct qualified_checker<X, type::userdata, std::enable_if_t<is_unique_usertype<X>::value && !std::is_reference<X>::value>> {
 		typedef unique_usertype_traits<meta::unqualified_t<X>> u_traits;
 		typedef typename u_traits::type T;
-		
+
 		template <typename Handler>
 		static bool check(std::false_type, lua_State* L, int index, Handler&& handler, record& tracking) {
 			return stack::unqualified_check<X>(L, index, std::forward<Handler>(handler), tracking);
@@ -8771,7 +8771,7 @@ namespace stack {
 
 		template <typename Handler>
 		static bool check(std::true_type, lua_State* L, int index, Handler&& handler, record& tracking) {
-			// we have a unique pointer type that can be 
+			// we have a unique pointer type that can be
 			// rebound to a base/derived type
 			const type indextype = type_of(L, index);
 			tracking.use(1);
@@ -8801,7 +8801,7 @@ namespace stack {
 			handler(L, index, type::userdata, indextype, "value is a userdata but is not the correct unique usertype");
 			return false;
 		}
-		
+
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			return check(meta::neg<std::is_void<typename u_traits::base_id>>(), L, index, std::forward<Handler>(handler), tracking);
@@ -9098,7 +9098,7 @@ namespace sol {
 				dr.error = error_code::invalid_code_point;
 				return dr;
 			}
-			
+
 			// then everything is fine
 			dr.codepoint = decoded;
 			dr.error = error_code::ok;
@@ -9116,7 +9116,7 @@ namespace sol {
 			}
 
 			char16_t lead = static_cast<char16_t>(*it);
-			
+
 			if (!unicode_detail::is_surrogate(lead)) {
 				++it;
 				dr.codepoint = static_cast<char32_t>(lead);
@@ -9137,7 +9137,7 @@ namespace sol {
 				dr.next = it;
 				return dr;
 			}
-			
+
 			dr.codepoint = unicode_detail::combine_surrogates(lead, trail);
 			dr.next = ++it;
 			dr.error = error_code::ok;
@@ -10074,10 +10074,10 @@ namespace stack {
 
 	template <typename T>
 	struct qualified_getter<T, std::enable_if_t<
-		!std::is_reference<T>::value 
-		&& is_container<meta::unqualified_t<T>>::value 
-		&& !is_lua_primitive<T>::value 
-		&& !is_transparent_argument<T>::value 
+		!std::is_reference<T>::value
+		&& is_container<meta::unqualified_t<T>>::value
+		&& !is_lua_primitive<T>::value
+		&& !is_transparent_argument<T>::value
 	>> {
 		static T get(lua_State* L, int index, record& tracking) {
 			if (type_of(L, index) == type::userdata) {
@@ -13463,7 +13463,7 @@ namespace sol {
 					const auto& meta = usertype_traits<T>::metatable();
 					T* obj = detail::usertype_allocate<T>(L);
 					reference userdataref(L, -1);
-					
+
 					auto& func = std::get<I>(f.functions);
 					stack::call_into_lua<checked, clean_stack>(r, a, L, boost + start, func, detail::implicit_wrapper<T>(obj));
 
@@ -14421,7 +14421,7 @@ namespace sol {
 			template <bool is_yielding, typename Fx, typename C>
 			static void select_member_variable(std::true_type, lua_State* L, Fx&& fx, function_detail::class_indicator<C>) {
 				lua_CFunction freefunc = &function_detail::upvalue_this_member_variable<C, Fx, is_yielding>::call;
-				
+
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
 				upvalues += stack::stack_detail::push_as_upvalues(L, fx);
@@ -14432,7 +14432,7 @@ namespace sol {
 			static void select_member_variable(std::true_type, lua_State* L, Fx&& fx) {
 				typedef typename meta::bind_traits<meta::unqualified_t<Fx>>::object_type C;
 				lua_CFunction freefunc = &function_detail::upvalue_this_member_variable<C, Fx, is_yielding>::call;
-				
+
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
 				upvalues += stack::stack_detail::push_as_upvalues(L, fx);
@@ -14474,7 +14474,7 @@ namespace sol {
 			template <bool is_yielding, typename Fx, typename C>
 			static void select_member_function(std::true_type, lua_State* L, Fx&& fx, function_detail::class_indicator<C>) {
 				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, Fx, is_yielding>::call;
-				
+
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
 				upvalues += stack::stack_detail::push_as_upvalues(L, fx);
@@ -14485,7 +14485,7 @@ namespace sol {
 			static void select_member_function(std::true_type, lua_State* L, Fx&& fx) {
 				typedef typename meta::bind_traits<meta::unqualified_t<Fx>>::object_type C;
 				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, Fx, is_yielding>::call;
-				
+
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
 				upvalues += stack::stack_detail::push_as_upvalues(L, fx);
@@ -15133,7 +15133,7 @@ namespace sol {
 			}
 #if (!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !SOL_NO_EXCEPTIONS_SAFE_PROPAGATION)
 			// LuaJIT cannot have the catchall when the safe propagation is on
-			// but LuaJIT will swallow all C++ errors 
+			// but LuaJIT will swallow all C++ errors
 			// if we don't at least catch std::exception ones
 			catch (...) {
 				onexcept(optional<const std::exception&>(nullopt), "caught (...) unknown error during protected_function call");
@@ -15220,7 +15220,7 @@ namespace sol {
 			stack::check<basic_protected_function>(lua_state(), -1, handler);
 #endif // Safety
 		}
-		
+
 		basic_protected_function(lua_nil_t n)
 			: base_t(n), error_handler(n) {
 		}
@@ -16571,25 +16571,25 @@ namespace sol {
 
 		struct error_result {
 			int results;
-			const char* fmt;
+			const char* fmt_;
 			std::array<const char*, 4> args;
 
-			error_result() : results(0), fmt(nullptr) {
+			error_result() : results(0), fmt_(nullptr) {
 			}
 
-			error_result(int results) : results(results), fmt(nullptr) {
+			error_result(int results) : results(results), fmt_(nullptr) {
 			}
 
-			error_result(const char* fmt, const char* msg) : results(0), fmt(fmt) {
+			error_result(const char* fmt_, const char* msg) : results(0), fmt_(fmt_) {
 				args[0] = msg;
 			}
 		};
 
 		inline int handle_errors(lua_State* L, const error_result& er) {
-			if (er.fmt == nullptr) {
+			if (er.fmt_ == nullptr) {
 				return er.results;
 			}
-			return luaL_error(L, er.fmt, er.args[0], er.args[1], er.args[2], er.args[3]);
+			return luaL_error(L, er.fmt_, er.args[0], er.args[1], er.args[2], er.args[3]);
 		}
 
 		template <typename X, typename = void>
@@ -16684,7 +16684,7 @@ namespace sol {
 			typedef meta::is_matched_lookup<T> is_matched_lookup;
 			typedef typename T::iterator iterator;
 			typedef typename T::value_type value_type;
-			typedef std::conditional_t<is_matched_lookup::value, 
+			typedef std::conditional_t<is_matched_lookup::value,
 				std::pair<value_type, value_type>,
 				std::conditional_t<is_associative::value || is_lookup::value,
 					value_type,
@@ -17242,7 +17242,7 @@ namespace sol {
 			static bool empty_start(lua_State* L, T& self) {
 				return empty_has(has_empty<T>(), L, self);
 			}
-			
+
 			static error_result erase_start(lua_State* L, T& self, K& key) {
 				return erase_has(has_erase<T>(), L, self, key);
 			}
@@ -17892,7 +17892,7 @@ namespace sol {
 						std::remove_pointer_t<T>>>
 						meta_cumt;
 					static const char* metakey = is_shim ? &usertype_traits<as_container_t<std::remove_pointer_t<T>>>::metatable()[0] : &usertype_traits<T>::metatable()[0];
-					static const std::array<luaL_Reg, 19> reg = { { 
+					static const std::array<luaL_Reg, 19> reg = { {
 						{ "__pairs", &meta_cumt::pairs_call },
 						{ "__ipairs", &meta_cumt::ipairs_call },
 						{ "__len", &meta_cumt::length_call },
@@ -17911,7 +17911,7 @@ namespace sol {
 						{ "find", &meta_cumt::find_call },
 						{ "erase", &meta_cumt::erase_call },
 						std::is_pointer<T>::value ? luaL_Reg{ nullptr, nullptr } : luaL_Reg{ "__gc", &detail::usertype_alloc_destruct<T> },
-						{ nullptr, nullptr } 
+						{ nullptr, nullptr }
 					} };
 
 					if (luaL_newmetatable(L, metakey) == 1) {
@@ -18298,7 +18298,7 @@ namespace sol {
 			: index(index), new_index(newindex), runtime_target(runtimetarget) {
 			}
 		};
-		
+
 		typedef map_t<std::string, call_information> mapping_t;
 
 		struct variable_wrapper {
@@ -22062,7 +22062,7 @@ namespace sol {
 #else
 #define check(expr) { CA_ASSUME(expr); }
 #endif
-#endif 
+#endif
 #endif // Unreal Engine 4 Bullshit
 
 #endif // SOL_HPP
