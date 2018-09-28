@@ -74,13 +74,7 @@ if (MSVC)
 	add_definitions(/DUNICODE /D_UNICODE /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
 	# Warning level, exceptions
 	add_compile_options(/W4 /EHsc)
-	if (MSVC_VERSION GREATER_EQUAL "1900")
-		include(CheckCXXCompilerFlag)
-		CHECK_CXX_COMPILER_FLAG("/std:c++latest" _cpp_latest_flag_supported)
-		if (_cpp_latest_flag_supported)
-			add_compile_options("/std:c++latest")
-		endif()
-	endif()
+	add_compile_options("/std:c++latest")
 	add_compile_options("$<$<CONFIG:Debug>:/MDd>"
 		"$<$<CONFIG:Release>:/MD>"
 		"$<$<CONFIG:RelWithDebInfo>:/MD>"

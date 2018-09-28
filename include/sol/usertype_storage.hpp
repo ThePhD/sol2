@@ -49,7 +49,7 @@ namespace u_detail {
 
 	template <typename K, typename F, typename T = void>
 	struct binding : binding_base {
-		F data_;
+		std::decay_t<F> data_;
 
 		template <typename... Args>
 		binding(Args&&... args)
@@ -225,7 +225,7 @@ namespace u_detail {
 			// retrieve bases and walk through them.
 			bool keep_going = true;
 			int base_result;
-			detail::swallow { 1, (1, base_walk_index<Bases>(L, self, keep_going, base_result))... };
+			detail::swallow{ 1, (base_walk_index<Bases>(L, self, keep_going, base_result), 1)... };
 			if (sizeof...(Bases) > 0 && !keep_going) {
 				return base_result;
 			}
@@ -261,7 +261,7 @@ namespace u_detail {
 					return (target->new_index)(L, target->binding_data);
 				}
 			}
-			else if (k_type != type::nil) {
+			else if (k_type != type::nil && k_type != type::none) {
 				reference* target = nullptr;
 				{
 					stack_reference k = stack::get<stack_reference>(L, 2);
@@ -280,7 +280,7 @@ namespace u_detail {
 			// retrieve bases and walk through them.
 			bool keep_going = true;
 			int base_result;
-			detail::swallow { 1, (1, base_walk_new_index<Bases>(L, self, keep_going, base_result))... };
+			detail::swallow{ 1, (base_walk_new_index<Bases>(L, self, keep_going, base_result), 1)... };
 			if (sizeof...(Bases) > 0 && !keep_going) {
 				return base_result;
 			}

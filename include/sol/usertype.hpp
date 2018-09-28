@@ -32,7 +32,7 @@
 namespace sol {
 
 	template <typename T, typename base_type>
-	struct basic_usertype : private basic_metatable<base_type> {
+	class basic_usertype : private basic_metatable<base_type> {
 	private:
 		using base_t = basic_metatable<base_type>;
 
