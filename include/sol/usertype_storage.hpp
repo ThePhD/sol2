@@ -225,7 +225,7 @@ namespace u_detail {
 			// retrieve bases and walk through them.
 			bool keep_going = true;
 			int base_result;
-			detail::swallow{ 1, (base_walk_index<Bases>(L, self, keep_going, base_result), 1)... };
+			detail::swallow { 1, (base_walk_index<Bases>(L, self, keep_going, base_result), 1)... };
 			if (sizeof...(Bases) > 0 && !keep_going) {
 				return base_result;
 			}
@@ -280,7 +280,7 @@ namespace u_detail {
 			// retrieve bases and walk through them.
 			bool keep_going = true;
 			int base_result;
-			detail::swallow{ 1, (base_walk_new_index<Bases>(L, self, keep_going, base_result), 1)... };
+			detail::swallow { 1, (base_walk_new_index<Bases>(L, self, keep_going, base_result), 1)... };
 			if (sizeof...(Bases) > 0 && !keep_going) {
 				return base_result;
 			}
@@ -441,8 +441,13 @@ namespace u_detail {
 				}
 				int fast_index_table_push = fast_index_table.push();
 				stack_reference t(L, -fast_index_table_push);
-				stack::set_field<false, true>(L, s, make_closure(&b.call<false, is_var_bind::value>, nullptr, ics.binding_data), t.stack_index());
-				if (is_index && is_new_index) {
+				if constexpr (std::is_same_v<ValueU, lua_CFunction> || std::is_same_v<ValueU, lua_CFunction_ref>) {
+					stack::set_field<false, true>(L, s, b.data_, t.stack_index());
+				}
+				else {
+					stack::set_field<false, true>(L, s, make_closure(&b.call<false, is_var_bind::value>, nullptr, ics.binding_data), t.stack_index());
+				}
+				if (is_index || is_new_index) {
 					change_indexing<T>(L, submetatable_type, t);
 				}
 				t.pop();
@@ -733,10 +738,12 @@ namespace u_detail {
 			}
 
 			if (base<T>::value) {
-				stack::set_field(L, detail::base_class_check_key(), &detail::inheritance<T>::type_check, t.stack_index());
+				static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
+				stack::set_field(L, detail::base_class_check_key(), (void*)&detail::inheritance<T>::type_check, t.stack_index());
 			}
 			if (base<T>::value) {
-				stack::set_field(L, detail::base_class_cast_key(), &detail::inheritance<T>::type_cast, t.stack_index());
+				static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function), "The size of this data pointer is too small to fit the inheritance checking function: file a bug report.");
+				stack::set_field(L, detail::base_class_cast_key(), (void*)&detail::inheritance<T>::type_cast, t.stack_index());
 			}
 
 			auto prop_fx = [&](meta_function mf) {
