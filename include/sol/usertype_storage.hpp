@@ -84,13 +84,19 @@ namespace u_detail {
 		template <bool is_index = true, bool is_variable = false>
 		static int index_call_with_(lua_State* L, void* target) {
 			if constexpr (!is_variable) {
-				// set up upvalues
-				// for a chained call
-				int upvalues = 0;
-				upvalues += stack::push(L, nullptr);
-				upvalues += stack::push(L, target);
-				auto cfunc = &call<is_index, is_variable>;
-				return stack::push(L, c_closure(cfunc, upvalues));
+				if constexpr (std::is_same_v<std::decay_t<F>, lua_CFunction> || std::is_same_v<std::decay_t<F>, lua_CFunction_ref>) {
+					auto& f = *static_cast<std::decay_t<F>*>(target);
+					return stack::push(L, f);
+				}
+				else {
+					// set up upvalues
+					// for a chained call
+					int upvalues = 0;
+					upvalues += stack::push(L, nullptr);
+					upvalues += stack::push(L, target);
+					auto cfunc = &call<is_index, is_variable>;
+					return stack::push(L, c_closure(cfunc, upvalues));
+				}
 			}
 			else {
 				constexpr int boost = !detail::is_non_factory_constructor<F>::value
@@ -172,7 +178,7 @@ namespace u_detail {
 			// TODO: get base table, dump it out
 			usertype_storage_base& base_storage = get_usertype_storage<Base>(L);
 			base_result = self_index_call<true>(bases(), L, base_storage);
-			keep_going = base_result != base_walking_failed_index;
+			keep_going = base_result == base_walking_failed_index;
 		}
 
 		template <typename Base>
@@ -185,8 +191,8 @@ namespace u_detail {
 			(void)self;
 			// TODO: get base table, dump it out
 			usertype_storage_base& base_storage = get_usertype_storage<Base>(L);
-			base_result = self_index_call<true>(bases(), L, base_storage);
-			keep_going = base_result != base_walking_failed_index;
+			base_result = self_new_index_call<true>(bases(), L, base_storage);
+			keep_going = base_result == base_walking_failed_index;
 		}
 
 		template <bool base_walking = false, bool from_named_metatable = false, typename... Bases>
