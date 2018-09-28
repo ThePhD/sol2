@@ -72,14 +72,14 @@ namespace sol {
 		: base_t(L, std::forward<T>(r)) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
-			constructor_handler handler {};
+			constructor_handler handler{};
 			stack::check<basic_metatable>(lua_state(), -1, handler);
 #endif // Safety
 		}
 		basic_metatable(lua_State* L, int index = -1)
 		: basic_metatable(detail::no_safety, L, index) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
-			constructor_handler handler {};
+			constructor_handler handler{};
 			stack::check<basic_metatable>(L, index, handler);
 #endif // Safety
 		}
@@ -87,7 +87,7 @@ namespace sol {
 		: basic_metatable(detail::no_safety, L, index) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
-			constructor_handler handler {};
+			constructor_handler handler{};
 			stack::check<basic_metatable>(lua_state(), -1, handler);
 #endif // Safety
 		}
@@ -97,7 +97,7 @@ namespace sol {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			if (!is_table<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
-				constructor_handler handler {};
+				constructor_handler handler{};
 				stack::check<basic_metatable>(base_t::lua_state(), -1, handler);
 			}
 #endif // Safety
@@ -107,18 +107,12 @@ namespace sol {
 		}
 
 		template <typename Key, typename Value>
-		void set(Key&& key, Value&& value) {
-			optional<usertype_storage_base&> maybe_uts = u_detail::maybe_get_usertype_storage_base(this->lua_state());
-			if (maybe_uts) {
-				usertype_storage<T>& uts = *maybe_uts;
-				uts.set(std::forward<Key>(key), std::forward<Value>(value));
-			}
-		}
+		void set(Key&& key, Value&& value);
 
 		void unregister() {
+			lua_State* L = this->lua_state();
 			int x = lua_gettop(L);
 
-			lua_State* L = this->lua_state();
 			auto pp = stack::push_pop(*this);
 			stack_reference mt(L, -1);
 			stack::get_field(L, meta_function::gc_names, mt.stack_index());

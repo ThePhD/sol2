@@ -139,9 +139,9 @@ namespace sol {
 
 #define SOL_BASE_CLASSES(T, ...) \
 	template <>                 \
-	struct ::sol::base<T> : ::std::true_type { typedef ::sol::types<__VA_ARGS__> type; };
+	struct ::sol::base<T> : std::true_type { typedef ::sol::types<__VA_ARGS__> type; };
 #define SOL_DERIVED_CLASSES(T, ...) \
 	template <>                    \
-	struct ::sol::derive<T> : ::std::true_type { typedef ::sol::types<__VA_ARGS__> type; };
+	struct ::sol::derive<T> : std::true_type { typedef ::sol::types<__VA_ARGS__> type; };
 
 #endif // SOL_INHERITANCE_HPP

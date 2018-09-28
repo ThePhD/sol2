@@ -45,8 +45,8 @@ namespace sol {
 		}
 
 		static int real_index_call(lua_State* L) {
-			typedef u_detail::map_t<std::string, lua_CFunction> call_map;
-			static const call_map calls {
+			typedef detail::map_t<std::string, lua_CFunction> call_map;
+			static const call_map calls{
 				{ "at", &at_call },
 				{ "get", &real_get_call },
 				{ "set", &real_set_call },
@@ -338,7 +338,7 @@ namespace sol {
 						{ "add", &meta_cumt::add_call },
 						{ "find", &meta_cumt::find_call },
 						{ "erase", &meta_cumt::erase_call },
-						std::is_pointer<T>::value ? luaL_Reg { nullptr, nullptr } : luaL_Reg { "__gc", &detail::usertype_alloc_destruct<T> },
+						std::is_pointer<T>::value ? luaL_Reg{ nullptr, nullptr } : luaL_Reg{ "__gc", &detail::usertype_alloc_destruct<T> },
 						{ nullptr, nullptr } } };
 
 					if (luaL_newmetatable(L, metakey) == 1) {
@@ -355,17 +355,17 @@ namespace sol {
 
 			static int push_lvalue(std::true_type, lua_State* L, const C& cont) {
 				stack_detail::metatable_setup<C*, true> fx(L);
-				return pusher<detail::as_pointer_tag<const C>> {}.push_fx(L, fx, detail::ptr(cont));
+				return pusher<detail::as_pointer_tag<const C>>{}.push_fx(L, fx, detail::ptr(cont));
 			}
 
 			static int push_lvalue(std::false_type, lua_State* L, const C& cont) {
 				stack_detail::metatable_setup<C, true> fx(L);
-				return pusher<detail::as_value_tag<C>> {}.push_fx(L, fx, cont);
+				return pusher<detail::as_value_tag<C>>{}.push_fx(L, fx, cont);
 			}
 
 			static int push_rvalue(std::true_type, lua_State* L, C&& cont) {
 				stack_detail::metatable_setup<C, true> fx(L);
-				return pusher<detail::as_value_tag<C>> {}.push_fx(L, fx, std::move(cont));
+				return pusher<detail::as_value_tag<C>>{}.push_fx(L, fx, std::move(cont));
 			}
 
 			static int push_rvalue(std::false_type, lua_State* L, const C& cont) {
@@ -387,7 +387,7 @@ namespace sol {
 
 			static int push(lua_State* L, T* cont) {
 				stack_detail::metatable_setup<C> fx(L);
-				return pusher<detail::as_pointer_tag<T>> {}.push_fx(L, fx, cont);
+				return pusher<detail::as_pointer_tag<T>>{}.push_fx(L, fx, cont);
 			}
 		};
 
@@ -397,12 +397,12 @@ namespace sol {
 
 			static int push(lua_State* L, const T& cont) {
 				stack_detail::metatable_setup<C> fx(L);
-				return pusher<detail::as_value_tag<T>> {}.push_fx(L, fx, cont);
+				return pusher<detail::as_value_tag<T>>{}.push_fx(L, fx, cont);
 			}
 
 			static int push(lua_State* L, T&& cont) {
 				stack_detail::metatable_setup<C> fx(L);
-				return pusher<detail::as_value_tag<T>> {}.push_fx(L, fx, std::move(cont));
+				return pusher<detail::as_value_tag<T>>{}.push_fx(L, fx, std::move(cont));
 			}
 		};
 
@@ -412,7 +412,7 @@ namespace sol {
 
 			static int push(lua_State* L, T* cont) {
 				stack_detail::metatable_setup<C> fx(L);
-				return pusher<detail::as_pointer_tag<T>> {}.push_fx(L, fx, cont);
+				return pusher<detail::as_pointer_tag<T>>{}.push_fx(L, fx, cont);
 			}
 		};
 

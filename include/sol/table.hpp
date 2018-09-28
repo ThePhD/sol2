@@ -39,6 +39,16 @@ namespace sol {
 		return mt;
 	}
 
+	template <typename base_type>
+	template <typename Key, typename Value>
+	void basic_metatable<base_type>::set(Key&& key, Value&& value) {
+		optional<u_detail::usertype_storage_base&> maybe_uts = u_detail::maybe_get_usertype_storage_base(this->lua_state());
+		if (maybe_uts) {
+			u_detail::usertype_storage_base& uts = *maybe_uts;
+			uts.set(std::forward<Key>(key), std::forward<Value>(value));
+		}
+	}
+
 	namespace stack {
 		template <>
 		struct getter<metatable_t> {

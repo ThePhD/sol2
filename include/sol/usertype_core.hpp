@@ -36,6 +36,7 @@
 #include "usertype_container.hpp"
 
 #include <sstream>
+#include <type_traits>
 
 namespace sol {
 	namespace u_detail {
@@ -273,15 +274,15 @@ namespace sol {
 
 			void operator()() const {
 				if (luaL_newmetatable(L, key) == 1) {
-					luaL_Reg l[64] {};
+					luaL_Reg l[64]{};
 					int index = 0;
 					auto prop_fx = [](meta_function) { return true; };
 					auto insert_fx = [&l, &index](meta_function mf, lua_CFunction f) {
-						l[index] = luaL_Reg { to_string(mf).c_str(), f };
+						l[index] = luaL_Reg{ to_string(mf).c_str(), f };
 						++index;
 					};
 					u_detail::insert_default_registrations<P>(insert_fx, prop_fx);
-					l[index] = luaL_Reg { to_string(meta_function::garbage_collect).c_str(), u_detail::make_destructor<P>() };
+					l[index] = luaL_Reg{ to_string(meta_function::garbage_collect).c_str(), u_detail::make_destructor<P>() };
 					luaL_setfuncs(L, l, 0);
 
 					// __type table

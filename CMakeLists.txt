@@ -31,7 +31,7 @@ include(GNUInstallDirs)
 
 # # # General Project Requirements
 # Set general standard requirements here
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Features a C++ compiler must have to be used to compile sol2
 # This list is not *complete* as CMake does not support features for
@@ -74,6 +74,13 @@ if (MSVC)
 	add_definitions(/DUNICODE /D_UNICODE /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
 	# Warning level, exceptions
 	add_compile_options(/W4 /EHsc)
+	if (MSVC_VERSION GREATER_EQUAL "1900")
+		include(CheckCXXCompilerFlag)
+		CHECK_CXX_COMPILER_FLAG("/std:c++latest" _cpp_latest_flag_supported)
+		if (_cpp_latest_flag_supported)
+			add_compile_options("/std:c++latest")
+		endif()
+	endif()
 	add_compile_options("$<$<CONFIG:Debug>:/MDd>"
 		"$<$<CONFIG:Release>:/MD>"
 		"$<$<CONFIG:RelWithDebInfo>:/MD>"
