@@ -1,5 +1,5 @@
 #define SOL_CHECK_ARGUMENTS 1
-#include <sol.hpp>
+#include <sol/sol.hpp>
 #include <iostream>
 
 inline void my_panic(sol::optional<std::string> maybe_msg) {

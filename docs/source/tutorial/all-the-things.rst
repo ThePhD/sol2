@@ -14,7 +14,7 @@ These are all the things. Use your browser's search to find things you want.
 asserts / prerequisites
 -----------------------
 
-You'll need to ``#include <sol.hpp>``/``#include "sol.hpp"`` somewhere in your code. Sol is header-only, so you don't need to compile anything. However, **Lua must be compiled and available**. See the :doc:`getting started tutorial<getting-started>` for more details.
+You'll need to ``#include <sol/sol.hpp>``/``#include "sol.hpp"`` somewhere in your code. Sol is header-only, so you don't need to compile anything. However, **Lua must be compiled and available**. See the :doc:`getting started tutorial<getting-started>` for more details.
 
 The implementation for ``assert.hpp`` with ``c_assert`` looks like so:
 

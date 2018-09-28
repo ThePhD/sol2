@@ -1,6 +1,6 @@
 #define SOL_CHECK_ARGUMENTS 1
 #define SOL_ENABLE_INTEROP 1 // MUST be defined to use interop features
-#include <sol.hpp>
+#include <sol/sol.hpp>
 
 #include "Player.h"
 #include <tolua++.h>

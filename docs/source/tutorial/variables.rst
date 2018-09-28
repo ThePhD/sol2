@@ -19,7 +19,7 @@ reading
 	:name: variables-main-cpp
 
 	#define SOL_CHECK_ARGUMENTS 1
-	#include <sol.hpp>
+	#include <sol/sol.hpp>
 	
 	
 	int main () {
@@ -37,7 +37,7 @@ You can interact with the variables like this:
 	:name: extended-variables-main-cpp
 
 	#define SOL_CHECK_ARGUMENTS 1
-	#include <sol.hpp>
+	#include <sol/sol.hpp>
 
 	#include <tuple>
 	#include <utility> // for std::pair
@@ -121,7 +121,7 @@ Writing gets a lot simpler. Even without scripting a file or a string, you can r
 	:name: writing-main-cpp
 
 	#define SOL_CHECK_ARGUMENTS 1
-	#include <sol.hpp>
+	#include <sol/sol.hpp>
 	
 	#include <iostream>
 
@@ -166,7 +166,7 @@ This example pretty much sums up what can be done. Note that the syntax ``lua["n
 	:name: lazy-main-cpp
 
 	#define SOL_CHECK_ARGUMENTS 1
-	#include <sol.hpp>
+	#include <sol/sol.hpp>
 	
 	#include <iostream>
 
@@ -194,7 +194,7 @@ Finally, it's possible to erase a reference/variable by setting it to ``nil``, u
 	:name: erase-main-cpp
 
 	#define SOL_CHECK_ARGUMENTS 1
-	#include <sol.hpp>
+	#include <sol/sol.hpp>
 	
 	int main () {
 

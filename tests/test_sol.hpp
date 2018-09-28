@@ -1,4 +1,4 @@
-// sol2 
+// sol3 
 
 // The MIT License (MIT)
 
@@ -42,7 +42,7 @@
 #ifdef TEST_SINGLE
 #include <sol_forward.hpp>
 #endif // Single
-#include <sol.hpp>
+#include <sol/sol.hpp>
 
 struct test_stack_guard {
 	lua_State* L;

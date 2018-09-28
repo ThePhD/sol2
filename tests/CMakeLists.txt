@@ -1,4 +1,4 @@
-# # # # sol2
+# # # # sol3
 # The MIT License (MIT)
 # 
 # Copyright (c) 2013-2018 Rapptz, ThePhD, and contributors
@@ -20,7 +20,7 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# # # # sol2 tests
+# # # # sol3 tests
 
 if (CMAKE_GENERATOR MATCHES "Visual Studio 14 2015")
 	find_package(Catch 1.12.1 REQUIRED)
@@ -43,11 +43,11 @@ function(CREATE_TEST test_target_name test_name is_single)
 		PROPERTIES
 		OUTPUT_NAME ${test_name})
 	if (is_single)
-		target_link_libraries(${test_target_name} sol2_single)
+		target_link_libraries(${test_target_name} sol2::sol2_single)
 		target_compile_definitions(${test_target_name} 
 			PRIVATE TEST_SINGLE)
 	else()
-		target_link_libraries(${test_target_name} sol2)
+		target_link_libraries(${test_target_name} sol2::sol2)
 	endif()
 	
 	if (MSVC)

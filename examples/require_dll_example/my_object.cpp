@@ -1,7 +1,7 @@
 #include "my_object.hpp"
 
 #define SOL_CHECK_ARGUMENTS 1
-#include <sol.hpp>
+#include <sol/sol.hpp>
 
 namespace my_object {
 

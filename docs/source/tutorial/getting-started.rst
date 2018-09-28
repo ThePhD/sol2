@@ -16,7 +16,7 @@ When you're ready, try compiling this short snippet:
 	:caption: test.cpp: the first snippet
 	:name: the-first-snippet
 
-	#include <sol.hpp> // or #include "sol.hpp", whichever suits your needs
+	#include <sol/sol.hpp> // or #include "sol.hpp", whichever suits your needs
 
 	int main (int argc, char* argv[]) {
 
@@ -47,7 +47,7 @@ The second line opens a single lua-provided library, "base". There are several o
 	:caption: test.cpp: the first snippet
 	:name: the-second-snippet
 
-	#include <sol.hpp>
+	#include <sol/sol.hpp>
 
 	int main (int argc, char* argv[]) {
 

@@ -16,7 +16,7 @@ Find it [here](http://sol2.rtfd.io/). A run-through kind of tutorial is [here](h
 ## Sneak Peek
 
 ```cpp
-#include <sol.hpp>
+#include <sol/sol.hpp>
 #include <cassert>
 
 int main() {
@@ -29,7 +29,7 @@ int main() {
 ```
 
 ```cpp
-#include <sol.hpp>
+#include <sol/sol.hpp>
 #include <cassert>
 
 struct vars {

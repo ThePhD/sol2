@@ -1,5 +1,5 @@
 #define SOL_CHECK_ARGUMENTS 1
-#include <sol.hpp>
+#include <sol/sol.hpp>
 
 // Something that can't be collided with
 static const auto& script_key = "GlobalResource.MySpecialIdentifier123";

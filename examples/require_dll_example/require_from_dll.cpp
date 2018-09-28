@@ -1,5 +1,5 @@
 #define SOL_CHECK_ARGUMENTS 1
-#include <sol.hpp>
+#include <sol/sol.hpp>
 
 #include "my_object.hpp"
 #include "../assert.hpp"

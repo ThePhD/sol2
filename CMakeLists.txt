@@ -1,4 +1,4 @@
-# # # # sol2
+# # # # sol3
 # The MIT License (MIT)
 # 
 # Copyright (c) 2013-2018 Rapptz, ThePhD, and contributors
@@ -20,7 +20,7 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# # # # sol2
+# # # # sol3
 # # # Required minimum version statement
 cmake_minimum_required(VERSION 3.5.0)
 
@@ -145,7 +145,7 @@ set_target_properties(sol2
 	EXPORT_NAME sol2::sol2)
 
 target_include_directories(sol2 INTERFACE
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<INSTALL_INTERFACE:include>)
 
 # # Version configurations
@@ -197,19 +197,19 @@ set(SOL2_DOCS_FOUND FALSE)
 if (PYTHONINTERP_FOUND)
 	if (SINGLE)
 		set(SOL2_SINGLE_FOUND TRUE)
-		add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/single/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol_forward.hpp"
-			COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/single"
-			COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/single.py" --output "${CMAKE_CURRENT_BINARY_DIR}/single/sol.hpp")
+		add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/single/sol/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol/sol_forward.hpp"
+			COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/sol/single"
+			COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/single.py" --output "${CMAKE_CURRENT_BINARY_DIR}/single/sol/sol.hpp")
 		add_custom_target(sol2_single_header ALL
-			DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/single/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol_forward.hpp")
+			DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/single/sol/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol/sol_forward.hpp")
 		add_library(sol2_single INTERFACE)
 		add_library(sol2::sol2_single ALIAS sol2_single)
 		set_target_properties(sol2_single
 			PROPERTIES
 			EXPORT_NAME sol2::sol2_single
-			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/single")
+			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/single/")
 		add_dependencies(sol2_single sol2_single_header)
-		install(FILES "${CMAKE_CURRENT_BINARY_DIR}/single/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol_forward.hpp"
+		install(FILES "${CMAKE_CURRENT_BINARY_DIR}/single/sol/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol/sol_forward.hpp"
 			DESTINATION include/sol/single/sol)
 	endif()
 	if (DOCS)

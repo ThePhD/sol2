@@ -1,7 +1,7 @@
 // Thanks to OrfeasZ for their answer to
 // an issue for this example!
 #define SOL_CHECK_ARGUMENTS 1
-#include <sol.hpp>
+#include <sol/sol.hpp>
 
 #include "assert.hpp"
 

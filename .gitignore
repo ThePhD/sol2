@@ -1,4 +1,4 @@
-# # # # sol2
+# # # # sol3
 # The MIT License (MIT)
 # 
 # Copyright (c) 2013-2018 Rapptz, ThePhD, and contributors
@@ -98,7 +98,6 @@ lua-5.1.5/
 LuaJIT-2.1.0/
 luajit-2.0.5/
 luajit-2.0.3/
-include/
 liblua.a
 lib/liblua5.2.a
 

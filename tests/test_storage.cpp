@@ -1,4 +1,4 @@
-// sol2 
+// sol3 
 
 // The MIT License (MIT)
 
@@ -24,7 +24,7 @@
 #define SOL_CHECK_ARGUMENTS 1
 #define SOL_ENABLE_INTEROP 1
 
-#include <sol.hpp>
+#include <sol/sol.hpp>
 
 #include <catch.hpp>
 

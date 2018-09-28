@@ -18,7 +18,7 @@ endif
 
 # Expose standard dependency.
 sol2_dep = declare_dependency(
-	include_directories: include_directories('.'),
+	include_directories: include_directories('./include'),
 	compile_args: compile_args,
 	dependencies: [ lua_dep ],
 )

@@ -61,9 +61,9 @@ function (MAKE_EXAMPLE example_source_file is_single)
 		PROPERTIES
 		OUTPUT_NAME "${example_output_name}")
 	if (is_single)
-		target_link_libraries(${example_name} sol2_single)
+		target_link_libraries(${example_name} sol2::sol2_single)
 	else()
-		target_link_libraries(${example_name} sol2)
+		target_link_libraries(${example_name} sol2::sol2)
 	endif()
 	target_compile_features(${example_name} 
 		PRIVATE ${CXX_FEATURES})

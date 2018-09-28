@@ -1,10 +1,10 @@
 #define SOL_CHECK_ARGUMENTS 1
-#include <sol.hpp>
+#include <sol/sol.hpp>
 
 int main () {
 	struct callable {
 		int operator()( int a, bool b ) {
-			return a + b ? 10 : 20;
+			return a + (b ? 10 : 20);
 		}
 	};
 
