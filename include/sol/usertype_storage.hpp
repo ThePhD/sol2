@@ -126,12 +126,22 @@ namespace u_detail {
 			stack::get_field(L, stack_reference(L, raw_index(2)), metatarget);
 			return 1;
 		}
-		// With runtime extensibility, we can't hard-error things. They have to return nil, like regular table types
+		// With runtime extensibility, we can't
+		// hard-error things. They have to
+		// return nil, like regular table types
 		return stack::push(L, lua_nil);
+	}
+
+	inline int index_target_fail(lua_State* L, void*) {
+		return index_fail(L);
 	}
 
 	inline int new_index_fail(lua_State* L) {
 		return luaL_error(L, "sol: cannot set (new_index) into this object: no defined new_index operation on usertype");
+	}
+
+	inline int new_index_target_fail(lua_State* L, void*) {
+		return new_index_fail(L);
 	}
 
 	struct usertype_storage_base {
@@ -149,13 +159,19 @@ namespace u_detail {
 		reference gc_names_table;
 		reference metametatable;
 		std::bitset<64> properties;
-		lua_CFunction base_index;
-		lua_CFunction base_new_index;
+		index_call_storage base_index;
+		index_call_storage base_new_index;
 		bool is_using_index;
 		bool is_using_new_index;
 
 		usertype_storage_base(lua_State* L)
-		: storage(), string_keys(), auxiliary_keys(), value_index_table(), reference_index_table(), unique_index_table(), const_reference_index_table(), type_table(make_reference(L, create)), gc_names_table(make_reference(L, create)), metametatable(make_reference(L, create)), properties(), base_index(index_fail), base_new_index(new_index_fail), is_using_index(false), is_using_new_index(false) {
+		: storage(), string_keys(), auxiliary_keys(), value_index_table(), reference_index_table(), unique_index_table(), const_reference_index_table(), type_table(make_reference(L, create)), gc_names_table(make_reference(L, create)), metametatable(make_reference(L, create)), properties(), base_index(), base_new_index(), is_using_index(false), is_using_new_index(false) {
+			base_index.binding_data = nullptr;
+			base_index.index = index_target_fail;
+			base_index.new_index = index_target_fail;
+			base_new_index.binding_data = nullptr;
+			base_new_index.index = new_index_target_fail;
+			base_new_index.new_index = new_index_target_fail;
 		}
 
 		void clear() {
@@ -244,7 +260,7 @@ namespace u_detail {
 				return index_fail(L);
 			}
 			else {
-				return self.base_index(L);
+				return self.base_index.index(L, self.base_index.binding_data);
 			}
 		}
 
@@ -300,7 +316,7 @@ namespace u_detail {
 				return 0;
 			}
 			else {
-				return self.base_new_index(L);
+				return self.base_new_index.new_index(L, self.base_new_index.binding_data);
 			}
 		}
 
@@ -438,7 +454,7 @@ namespace u_detail {
 			ics.new_index = &b.index_call_with_<false, is_var_bind::value>;
 			// need to swap everything to use fast indexing here
 			auto fet = [&](lua_State* L, submetatable submetatable_type, reference& fast_index_table) {
-				if (submetatable_type == submetatable::named && no_use_named) {
+				if (submetatable_type == submetatable::named && (no_use_named || is_index || is_new_index)) {
 					// do not override __call or
 					// other specific meta functions on named metatable:
 					// we need that for call construction
@@ -458,6 +474,12 @@ namespace u_detail {
 				}
 				t.pop();
 			};
+			if (is_index) {
+				this->base_index = ics;
+			}
+			if (is_new_index) {
+				this->base_new_index = ics;
+			}
 			this->for_each_table(L, fet);
 			this->string_keys.insert_or_assign(std::move(s), std::move(ics));
 		}

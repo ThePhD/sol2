@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -277,7 +277,7 @@ TEST_CASE("object/conversions", "make sure all basic reference types can be made
 	struct d {};
 
 	lua.safe_script("function f () print('bark') end");
-	lua["d"] = d{};
+	lua["d"] = d {};
 	lua["l"] = static_cast<void*>(nullptr);
 
 	sol::table t = lua.create_table();
@@ -331,7 +331,7 @@ TEST_CASE("object/main_* conversions", "make sure all basic reference types can 
 	struct d {};
 
 	lua.safe_script("function f () print('bark') end");
-	lua["d"] = d{};
+	lua["d"] = d {};
 	lua["l"] = static_cast<void*>(nullptr);
 
 	sol::main_table t = lua.create_table();
@@ -403,8 +403,11 @@ TEST_CASE("feature/indexing overrides", "make sure index functions can be overri
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<PropertySet>("PropertySet", sol::meta_function::new_index, &PropertySet::set_property_lua, sol::meta_function::index, &PropertySet::get_property_lua);
-	lua.new_usertype<DynamicObject>("DynamicObject", "props", sol::property(&DynamicObject::get_dynamic_props));
+	sol::usertype<PropertySet> utps = lua.new_usertype<PropertySet>("PropertySet");
+	utps[sol::meta_function::new_index] = &PropertySet::set_property_lua;
+	utps[sol::meta_function::index] = &PropertySet::get_property_lua;
+	sol::usertype<DynamicObject> utdo = lua.new_usertype<DynamicObject>("DynamicObject");
+	utdo["props"] = sol::property(&DynamicObject::get_dynamic_props);
 
 	lua.safe_script(R"__(
 obj = DynamicObject:new()
@@ -422,7 +425,7 @@ TEST_CASE("features/indexing numbers", "make sure indexing functions can be over
 		double data[3];
 
 		vector()
-		: data{ 0, 0, 0 } {
+		: data { 0, 0, 0 } {
 		}
 
 		double& operator[](int i) {
@@ -634,7 +637,7 @@ TEST_CASE("object/is", "test whether or not the is abstraction works properly fo
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 		lua.set_function("is_thing", [](sol::stack_object obj) { return obj.is<thing>(); });
-		lua["a"] = thing{};
+		lua["a"] = thing {};
 		{
 			auto result = lua.safe_script("assert(is_thing(a))", sol::script_pass_on_error);
 			REQUIRE(result.valid());
@@ -645,7 +648,7 @@ TEST_CASE("object/is", "test whether or not the is abstraction works properly fo
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 		lua.set_function("is_thing", [](sol::object obj) { return obj.is<thing>(); });
-		lua["a"] = thing{};
+		lua["a"] = thing {};
 		{
 			auto result = lua.safe_script("assert(is_thing(a))", sol::script_pass_on_error);
 			REQUIRE(result.valid());

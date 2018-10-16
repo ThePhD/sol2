@@ -203,13 +203,13 @@ namespace sol {
 		void insert_default_registrations(IFx&& ifx, Fx&& fx) {
 			if constexpr (is_automagical<T>::value) {
 				if (fx(meta_function::less_than)) {
-					if constexpr (meta::supports_op_equal<T>::value) {
+					if constexpr (meta::supports_op_less<T>::value) {
 						lua_CFunction f = &comparsion_operator_wrap<T, std::less<>>;
 						ifx(meta_function::less_than, f);
 					}
 				}
 				if (fx(meta_function::less_than_or_equal_to)) {
-					if constexpr (meta::supports_op_equal<T>::value) {
+					if constexpr (meta::supports_op_less_equal<T>::value) {
 						lua_CFunction f = &comparsion_operator_wrap<T, std::less_equal<>>;
 						ifx(meta_function::less_than_or_equal_to, f);
 					}
