@@ -432,7 +432,7 @@ namespace sol {
 		const void* pointer() const noexcept {
 			int si = push();
 			const void* vp = lua_topointer(lua_state(), -si);
-			pop();
+			lua_pop(this->lua_state(), si);
 			return vp;
 		}
 
