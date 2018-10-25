@@ -16,7 +16,7 @@ Find it [here](http://sol2.rtfd.io/). A run-through kind of tutorial is [here](h
 ## Sneak Peek
 
 ```cpp
-#include <sol.hpp>
+#include <sol/sol.hpp>
 #include <cassert>
 
 int main() {
@@ -29,7 +29,7 @@ int main() {
 ```
 
 ```cpp
-#include <sol.hpp>
+#include <sol/sol.hpp>
 #include <cassert>
 
 struct vars {
@@ -49,12 +49,9 @@ More examples are given in the examples directory [here](https://github.com/TheP
 
 ## Supporting
 
-You can [donate to support Sol and the project](https://www.paypal.me/LMeneide), which is always appreciated! This is a time-consuming effort, so individuals who donate get to:
+Help the project grow on [patreon](https://www.patreon.com/thephd)!
 
-- steer the direction and time spent on sol
-- get a role on the Discord server
-- get their name put up in the CONTRIBUTORS list
-- put something of their choice on sol2's README or the documentation's front page
+You can also [donate to support Sol](https://www.paypal.me/LMeneide), which is always appreciated! There are reward tiers for patrons on patreon, too!
 
 You can also help out the library by submitting pull requests to fix anything or add anything you think would be helpful! This includes making small, useful examples of something you haven't seen, or fixing typos and bad code in the documentation.
 
