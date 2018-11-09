@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-11-09 17:41:04.453384 UTC
-// This header was generated with sol v2.20.4 (revision 47bbe98)
+// Generated 2018-11-09 18:52:51.075276 UTC
+// This header was generated with sol v2.20.4 (revision 1f90b04)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -13141,7 +13141,7 @@ namespace sol {
 		}
 
 		template <typename T, bool checked, bool clean_stack, typename... TypeLists>
-		inline int construct(lua_State* L) {
+		inline int construct_trampolined(lua_State* L) {
 			static const auto& meta = usertype_traits<T>::metatable();
 			int argcount = lua_gettop(L);
 			call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, usertype_traits<T>::user_metatable(), 1) : call_syntax::dot;
@@ -13157,7 +13157,12 @@ namespace sol {
 			stack::stack_detail::undefined_metatable<T> umf(L, &meta[0]);
 			umf();
 
-			return 1;
+			return 1;	
+		}
+
+		template <typename T, bool checked, bool clean_stack, typename... TypeLists>
+		inline int construct(lua_State* L) {
+			return detail::static_trampoline<&construct_trampolined<T, checked, clean_stack, TypeLists...>>(L);
 		}
 
 		template <typename F, bool is_index, bool is_variable, bool checked, int boost, bool clean_stack, typename = void>
