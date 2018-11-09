@@ -40,7 +40,7 @@ get going:
 	exceptions
 	rtti
 	codecvt
-	cmake
+	build
 	licenses
 	origin
 
