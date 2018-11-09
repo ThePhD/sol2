@@ -52,6 +52,7 @@ namespace stack {
 	struct qualified_getter<T, std::enable_if_t<
 		!std::is_reference<T>::value 
 		&& is_container<meta::unqualified_t<T>>::value 
+		&& std::is_default_constructible<meta::unqualified_t<T>>::value
 		&& !is_lua_primitive<T>::value 
 		&& !is_transparent_argument<T>::value 
 	>> {

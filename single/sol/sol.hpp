@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-10-28 14:26:05.925454 UTC
-// This header was generated with sol v2.20.4 (revision a19a5a3)
+// Generated 2018-11-09 17:41:04.453384 UTC
+// This header was generated with sol v2.20.4 (revision 47bbe98)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -10077,6 +10077,7 @@ namespace stack {
 	struct qualified_getter<T, std::enable_if_t<
 		!std::is_reference<T>::value 
 		&& is_container<meta::unqualified_t<T>>::value 
+		&& std::is_default_constructible<meta::unqualified_t<T>>::value
 		&& !is_lua_primitive<T>::value 
 		&& !is_transparent_argument<T>::value 
 	>> {
