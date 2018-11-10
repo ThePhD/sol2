@@ -208,7 +208,7 @@ namespace sol {
 		}
 
 		template <typename T, bool checked, bool clean_stack, typename... TypeLists>
-		inline int construct(lua_State* L) {
+		inline int construct_trampolined(lua_State* L) {
 			static const auto& meta = usertype_traits<T>::metatable();
 			int argcount = lua_gettop(L);
 			call_syntax syntax = argcount > 0 ? stack::get_call_syntax(L, usertype_traits<T>::user_metatable(), 1) : call_syntax::dot;
@@ -224,7 +224,12 @@ namespace sol {
 			stack::stack_detail::undefined_metatable<T> umf(L, &meta[0]);
 			umf();
 
-			return 1;
+			return 1;	
+		}
+
+		template <typename T, bool checked, bool clean_stack, typename... TypeLists>
+		inline int construct(lua_State* L) {
+			return detail::static_trampoline<&construct_trampolined<T, checked, clean_stack, TypeLists...>>(L);
 		}
 
 		template <typename F, bool is_index, bool is_variable, bool checked, int boost, bool clean_stack, typename = void>

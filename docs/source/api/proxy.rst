@@ -78,6 +78,17 @@ Gets the value associated with the keys and converts it to the type ``T``.
 
 Gets the value associated with the keys and converts it to the type ``T``. If it is not of the proper type, it will return a ``sol::nullopt`` instead.
 
+.. code-block:: c++
+	:caption: function: [overloaded] optionally get or create a value
+	:name: regular-get-or-create
+
+	template <typename T>
+	decltype(auto) get_or_create();
+	template <typename T, typename Otherwise>
+	decltype(auto) get_or_create( Otherwise&& other );
+
+Gets the value associated with the keys if it exists. If it does not, it will set it with the value and return the result.
+
 ``operator[]`` proxy-only members
 ---------------------------------
 

@@ -6,7 +6,7 @@ Sol can register all kinds of functions. Many are shown in the :doc:`quick 'n' d
 Setting a new function
 ----------------------
 
-Given a C++ function, you can drop it into Sol in several equivalent ways, working similar to how :ref:`setting variables<writing-main-cpp>` works:
+Given a C++ function, you can drop it into Sol in several equivalent ways, working similar to how :ref:`setting variables<writing-variables-demo>` works:
 
 .. code-block:: cpp
 	:linenos:

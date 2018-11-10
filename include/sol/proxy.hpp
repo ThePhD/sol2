@@ -1,4 +1,4 @@
-// sol3 
+// sol2
 
 // The MIT License (MIT)
 
@@ -118,6 +118,20 @@ namespace sol {
 			return static_cast<T>(std::forward<D>(otherwise));
 		}
 
+		
+		template <typename T>
+		decltype(auto) get_or_create() {
+			return get_or_create<T>(new_table());
+		}
+
+		template <typename T, typename Otherwise>
+		decltype(auto) get_or_create(Otherwise&& other) {
+			if (!this->valid()) {
+				this->set(std::forward<Otherwise>(other));
+			}
+			return get<T>();
+		}
+
 		template <typename K>
 		decltype(auto) operator[](K&& k) const {
 			auto keys = meta::tuplefy(key, std::forward<K>(k));
@@ -167,6 +181,13 @@ namespace sol {
 
 		lua_State* lua_state() const {
 			return tbl.lua_state();
+		}
+
+		proxy& force() {
+			if (this->valid()) {
+				this->set(new_table());
+			}
+			return *this;
 		}
 	};
 
