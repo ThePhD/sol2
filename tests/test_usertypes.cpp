@@ -310,7 +310,7 @@ struct alignas(16) weird_aligned_wrapper {
 	}
 	void operator()(SelfType& self, sol::object param) const {
 		lambda(self, param.as<float>());
-  }
+	}
 	std::function<void(SelfType&, float)> lambda;
 };
 
@@ -1627,6 +1627,16 @@ TEST_CASE("usertype/runtime-extensibility", "Check if usertypes are runtime exte
 	};
 	int val = 0;
 
+	class base_a {
+	public:
+		int x;
+	};
+
+	class derived_b : public base_a {
+	};
+
+		
+
 	SECTION("just functions") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
@@ -1721,6 +1731,24 @@ end
 		lua.safe_script("val = t:runtime_func(2)");
 		val = lua["val"];
 		REQUIRE(val == 3);
+	}
+	SECTION("with bases") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.new_usertype<base_a>("A",
+			"x", &base_a::x //no crash without this
+		);
+
+		lua.new_usertype<derived_b>("B",
+			sol::base_classes, sol::bases<base_a>());
+
+		auto pfr0 = lua.safe_script("function A:c() print('A') return 1 end", sol::script_pass_on_error);
+		REQUIRE(pfr0.valid());
+		auto pfr1 = lua.safe_script("function B:c() print('B') return 2 end", sol::script_pass_on_error);
+		REQUIRE(pfr1.valid());
+		auto pfr2 = lua.safe_script("local obja = A.new() local objb = B.new() assert(obja:c() == 1) assert(objb:c() == 2)", sol::script_pass_on_error);
+		REQUIRE(pfr2.valid());
 	}
 }
 

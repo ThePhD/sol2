@@ -24,7 +24,14 @@ int main() {
 
 	// "bark" namespacing in Lua
 	// namespacing is just putting things in a table
-	sol::table bark = lua.create_named_table("bark");
+	// forces creation if it does not exist
+	auto bark = lua["bark"].get_or_create<sol::table>();
+	// equivalent-ish:
+	//sol::table bark = lua["bark"].force(); // forces table creation
+	// equivalent, and more flexible:
+	//sol::table bark = lua["bark"].get_or_create<sol::table>(sol::new_table());
+	// equivalent, but less efficient/ugly:
+	//sol::table bark = lua["bark"] = lua.get_or("bark", lua.create_table());
 	bark.new_usertype<my_class>("my_class",
 		"f", &my_class::f,
 		"g", &my_class::g); // the usual

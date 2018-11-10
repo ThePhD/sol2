@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-11-09 18:52:51.075276 UTC
-// This header was generated with sol v2.20.4 (revision 1f90b04)
+// Generated 2018-11-10 14:40:45.361811 UTC
+// This header was generated with sol v2.20.5 (revision a7048ae)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -8247,12 +8247,12 @@ namespace stack {
 			}
 #endif // Do not allow strings to be numbers
 			int isnum = 0;
-			const lua_Number v = lua_tonumberx(L, index, &isnum);
-			const bool success = isnum != 0
 #if (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS) && !(defined(SOL_NO_CHECK_NUMBER_PRECISION) && SOL_NO_CHECK_NUMBER_PRECISION)
-				&& static_cast<lua_Number>(llround(v)) == v
+			const lua_Number v = lua_tonumberx(L, index, &isnum);
+			const bool success = isnum != 0 && static_cast<lua_Number>(llround(v)) == v;
+#else
+			const bool success = isnum != 0;
 #endif // Safe numerics and number precision checking
-				;
 			if (!success) {
 				// expected type, actual type
 #if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
@@ -14542,7 +14542,7 @@ namespace sol {
 
 			template <bool is_yielding, typename Fx, typename... Args>
 			static void set_fx(lua_State* L, Args&&... args) {
-				lua_CFunction freefunc = function_detail::call<meta::unqualified_t<Fx>, 2, is_yielding>;
+				lua_CFunction freefunc = detail::static_trampoline<function_detail::call<meta::unqualified_t<Fx>, 2, is_yielding>>;
 
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
@@ -15512,6 +15512,19 @@ namespace sol {
 			return static_cast<T>(std::forward<D>(otherwise));
 		}
 
+		template <typename T>
+		decltype(auto) get_or_create() {
+			return get_or_create<T>(new_table());
+		}
+
+		template <typename T, typename Otherwise>
+		decltype(auto) get_or_create(Otherwise&& other) {
+			if (!this->valid()) {
+				this->set(std::forward<Otherwise>(other));
+			}
+			return get<T>();
+		}
+
 		template <typename K>
 		decltype(auto) operator[](K&& k) const {
 			auto keys = meta::tuplefy(key, std::forward<K>(k));
@@ -15561,6 +15574,13 @@ namespace sol {
 
 		lua_State* lua_state() const {
 			return tbl.lua_state();
+		}
+
+		proxy& force() {
+			if (this->valid()) {
+				this->set(new_table());
+			}
+			return *this;
 		}
 	};
 
@@ -18280,6 +18300,9 @@ namespace sol {
 #include <bitset>
 
 namespace sol {
+
+	struct usertype_metatable_core;
+
 	namespace usertype_detail {
 		const int metatable_index = 2;
 		const int metatable_core_index = 3;
@@ -18291,7 +18314,7 @@ namespace sol {
 		const int newindex_function_index = 4;
 
 		typedef void (*base_walk)(lua_State*, bool&, int&, string_view&);
-		typedef int (*member_search)(lua_State*, void*, int);
+		typedef int (*member_search)(lua_State*, void*, usertype_metatable_core&, int);
 
 		struct call_information {
 			member_search index;
@@ -18443,8 +18466,7 @@ namespace sol {
 			return isnum != 0 && magic == toplevel_magic;
 		}
 
-		inline int runtime_object_call(lua_State* L, void*, int runtimetarget) {
-			usertype_metatable_core& umc = stack::get<light<usertype_metatable_core>>(L, upvalue_index(metatable_core_index));
+		inline int runtime_object_call(lua_State* L, void*, usertype_metatable_core& umc, int runtimetarget) {
 			std::vector<object>& runtime = umc.runtime;
 			object& runtimeobj = runtime[runtimetarget];
 			return stack::push(L, runtimeobj);
@@ -18476,7 +18498,7 @@ namespace sol {
 			}
 		}
 
-		int runtime_new_index(lua_State* L, void*, int runtimetarget);
+		int runtime_new_index(lua_State* L, void*, usertype_metatable_core&, int runtimetarget);
 
 		template <typename T, bool is_simple>
 		inline int metatable_new_index(lua_State* L) {
@@ -18575,8 +18597,7 @@ namespace sol {
 			return indexing_fail<T, false>(L);
 		}
 
-		inline int runtime_new_index(lua_State* L, void*, int runtimetarget) {
-			usertype_metatable_core& umc = stack::get<light<usertype_metatable_core>>(L, upvalue_index(metatable_core_index));
+		inline int runtime_new_index(lua_State* L, void*, usertype_metatable_core& umc, int runtimetarget) {
 			std::vector<object>& runtime = umc.runtime;
 			object& runtimeobj = runtime[runtimetarget];
 			runtimeobj = object(L, 3);
@@ -18781,7 +18802,7 @@ namespace sol {
 		usertype_metatable& operator=(usertype_metatable&&) = default;
 
 		template <std::size_t I0, std::size_t I1, bool is_index>
-		static int real_find_call(lua_State* L, void* um, int) {
+		static int real_find_call(lua_State* L, void* um, usertype_metatable_core&, int) {
 			auto& f = *static_cast<usertype_metatable*>(um);
 			if (is_variable_binding<decltype(std::get<I1>(f.functions))>::value) {
 				return real_call_with<I1, is_index, true>(L, f);
@@ -18827,7 +18848,7 @@ namespace sol {
 				}
 			}
 			if (member != nullptr) {
-				return (member)(L, static_cast<void*>(&f), runtime_target);
+				return (member)(L, static_cast<void*>(&f), static_cast<usertype_metatable_core&>(f), runtime_target);
 			}
 			string_view accessor = stack::get<string_view>(L, keyidx);
 			int ret = 0;

@@ -43,6 +43,9 @@
 #include <bitset>
 
 namespace sol {
+
+	struct usertype_metatable_core;
+
 	namespace usertype_detail {
 		const int metatable_index = 2;
 		const int metatable_core_index = 3;
@@ -54,7 +57,7 @@ namespace sol {
 		const int newindex_function_index = 4;
 
 		typedef void (*base_walk)(lua_State*, bool&, int&, string_view&);
-		typedef int (*member_search)(lua_State*, void*, int);
+		typedef int (*member_search)(lua_State*, void*, usertype_metatable_core&, int);
 
 		struct call_information {
 			member_search index;
@@ -206,8 +209,7 @@ namespace sol {
 			return isnum != 0 && magic == toplevel_magic;
 		}
 
-		inline int runtime_object_call(lua_State* L, void*, int runtimetarget) {
-			usertype_metatable_core& umc = stack::get<light<usertype_metatable_core>>(L, upvalue_index(metatable_core_index));
+		inline int runtime_object_call(lua_State* L, void*, usertype_metatable_core& umc, int runtimetarget) {
 			std::vector<object>& runtime = umc.runtime;
 			object& runtimeobj = runtime[runtimetarget];
 			return stack::push(L, runtimeobj);
@@ -239,7 +241,7 @@ namespace sol {
 			}
 		}
 
-		int runtime_new_index(lua_State* L, void*, int runtimetarget);
+		int runtime_new_index(lua_State* L, void*, usertype_metatable_core&, int runtimetarget);
 
 		template <typename T, bool is_simple>
 		inline int metatable_new_index(lua_State* L) {
@@ -338,8 +340,7 @@ namespace sol {
 			return indexing_fail<T, false>(L);
 		}
 
-		inline int runtime_new_index(lua_State* L, void*, int runtimetarget) {
-			usertype_metatable_core& umc = stack::get<light<usertype_metatable_core>>(L, upvalue_index(metatable_core_index));
+		inline int runtime_new_index(lua_State* L, void*, usertype_metatable_core& umc, int runtimetarget) {
 			std::vector<object>& runtime = umc.runtime;
 			object& runtimeobj = runtime[runtimetarget];
 			runtimeobj = object(L, 3);
@@ -544,7 +545,7 @@ namespace sol {
 		usertype_metatable& operator=(usertype_metatable&&) = default;
 
 		template <std::size_t I0, std::size_t I1, bool is_index>
-		static int real_find_call(lua_State* L, void* um, int) {
+		static int real_find_call(lua_State* L, void* um, usertype_metatable_core&, int) {
 			auto& f = *static_cast<usertype_metatable*>(um);
 			if (is_variable_binding<decltype(std::get<I1>(f.functions))>::value) {
 				return real_call_with<I1, is_index, true>(L, f);
@@ -590,7 +591,7 @@ namespace sol {
 				}
 			}
 			if (member != nullptr) {
-				return (member)(L, static_cast<void*>(&f), runtime_target);
+				return (member)(L, static_cast<void*>(&f), static_cast<usertype_metatable_core&>(f), runtime_target);
 			}
 			string_view accessor = stack::get<string_view>(L, keyidx);
 			int ret = 0;
