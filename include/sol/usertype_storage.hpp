@@ -147,7 +147,8 @@ namespace u_detail {
 	struct usertype_storage_base {
 	public:
 		std::vector<std::unique_ptr<binding_base>> storage;
-		detail::unordered_map<std::string, index_call_storage> string_keys;
+		std::vector<std::vector<char>> string_keys_storage;
+		detail::unordered_map<string_view, index_call_storage> string_keys;
 		detail::unordered_map<reference, reference, reference_hash, reference_equals> auxiliary_keys;
 		reference value_index_table;
 		reference reference_index_table;
@@ -172,6 +173,13 @@ namespace u_detail {
 			base_new_index.binding_data = nullptr;
 			base_new_index.index = new_index_target_fail;
 			base_new_index.new_index = new_index_target_fail;
+		}
+
+		void add_entry(string_view sv, index_call_storage ics) {
+			string_keys_storage.emplace_back(sv.begin(), sv.end());
+			std::vector<char>& sv_storage = string_keys_storage.back();
+			string_view stored_sv(sv_storage.data(), sv_storage.size());
+			string_keys.insert_or_assign(std::move(stored_sv), std::move(ics));
 		}
 
 		void clear() {
@@ -217,7 +225,7 @@ namespace u_detail {
 			if (k_type == type::string) {
 				index_call_storage* target = nullptr;
 				{
-					std::string k = stack::get<std::string>(L, 2);
+					string_view k = stack::get<string_view>(L, 2);
 					auto it = self.string_keys.find(k);
 					if (it != self.string_keys.cend()) {
 						target = &it->second;
@@ -270,7 +278,7 @@ namespace u_detail {
 			if (k_type == type::string) {
 				index_call_storage* target = nullptr;
 				{
-					std::string k = stack::get<std::string>(L, 2);
+					string_view k = stack::get<string_view>(L, 2);
 					auto it = self.string_keys.find(k);
 					if (it != self.string_keys.cend()) {
 						target = &it->second;
@@ -481,7 +489,7 @@ namespace u_detail {
 				this->base_new_index = ics;
 			}
 			this->for_each_table(L, fet);
-			this->string_keys.insert_or_assign(std::move(s), std::move(ics));
+			this->add_entry(s, std::move(ics));
 		}
 		else {
 			// the reference-based implementation might compare poorly and hash
@@ -506,8 +514,7 @@ namespace u_detail {
 					ics.binding_data = b.data();
 					ics.index = &b.index_call_with_<true, true>;
 					ics.new_index = &b.index_call_with_<false, true>;
-
-					this->string_keys.insert_or_assign(std::move(s), ics);
+					this->add_entry(s, std::move(ics));
 				}
 				else {
 					// its auxiliary and must be

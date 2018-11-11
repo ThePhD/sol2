@@ -1208,7 +1208,10 @@ namespace sol {
 		struct is_constructor<filter_wrapper<F, Filters...>> : is_constructor<meta::unqualified_t<F>> {};
 
 		template <typename... Args>
-		using has_constructor = meta::any<is_constructor<meta::unqualified_t<Args>>...>;
+		using any_is_constructor = meta::any<is_constructor<meta::unqualified_t<Args>>...>;
+
+		template <typename... Args>
+		using any_is_constructor_v = any_is_constructor<Args...>::value;
 
 		template <typename T>
 		struct is_destructor : std::false_type {};

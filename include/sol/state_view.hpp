@@ -652,9 +652,9 @@ namespace sol {
 			return *this;
 		}
 
-		template <typename Class>
-		usertype<Class> new_usertype(const std::string& name, optional<no_construction> no_default_constructor = nullopt) {
-			return global.new_usertype<Class>(name, std::move(no_default_constructor));
+		template <typename Class, typename... Args>
+		usertype<Class> new_usertype(const std::string& name, Args&&... args) {
+			return global.new_usertype<Class>(name, std::forward<Args>(args)...);
 		}
 
 		template <bool read_only = true, typename... Args>

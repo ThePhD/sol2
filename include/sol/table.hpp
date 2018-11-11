@@ -31,10 +31,11 @@ namespace sol {
 	typedef table_core<false> table;
 
 	template <bool top_level, typename base_type>
-	template <typename Class, typename Key>
-	usertype<Class> basic_table_core<top_level, base_type>::new_usertype(Key&& key, optional<no_construction> no_default_constructor /* = nullopt*/) {
-		int mt_index = u_detail::register_usertype<Class>(this->lua_state(), std::move(no_default_constructor));
+	template <typename Class, typename Key, typename... Args>
+	usertype<Class> basic_table_core<top_level, base_type>::new_usertype(Key&& key, Args&&... args) {
+		int mt_index = u_detail::register_usertype<Class>(this->lua_state(), detail::any_is_constructor_v<Args...> ? optional<no_construction>() : optional<no_construction>(no_constructor));
 		usertype<Class> mt(this->lua_state(), -mt_index);
+		mt.
 		set(std::forward<Key>(key), mt);
 		return mt;
 	}
