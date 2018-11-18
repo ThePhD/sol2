@@ -1122,16 +1122,6 @@ TEST_CASE("containers/non_copyable", "make sure non-copyable types in containers
 		auto pfr = lua.safe_script("t = test.new() t.b = v", sol::script_pass_on_error);
 		REQUIRE_FALSE(pfr.valid());
 	}
-	SECTION("simple") {
-		sol::state lua;
-		lua.new_simple_usertype<test>("test",
-			"b", sol::readonly(&test::b));
-
-		lua["v"] = std::vector<non_copyable>{};
-
-		auto pfr = lua.safe_script("t = test.new() t.b = v", sol::script_pass_on_error);
-		REQUIRE_FALSE(pfr.valid());
-	}
 }
 
 TEST_CASE("containers/input iterators", "test shitty input iterators that are all kinds of B L E H") {

@@ -191,36 +191,6 @@ end
 		REQUIRE(entities.size() == 1);
 		REQUIRE(entities.back() == target);
 	}
-	SECTION("simple") {
-		entities.clear();
-
-		sol::state lua;
-		lua.open_libraries();
-		lua.new_simple_usertype<gc_entity>("entity");
-		sol::function f = lua.safe_script(R"(
-return function(e)
-end
-)");
-		gc_entity* target = nullptr;
-		{
-			gc_entity e;
-			target = &e;
-			{
-				f(e);			   // same with std::ref(e)!
-				lua.collect_garbage(); // destroys e for some reason
-			}
-			{
-				f(&e);			   // same with std::ref(e)!
-				lua.collect_garbage(); // destroys e for some reason
-			}
-			{
-				f(std::ref(e));	   // same with std::ref(e)!
-				lua.collect_garbage(); // destroys e for some reason
-			}
-		}
-		REQUIRE(entities.size() == 1);
-		REQUIRE(entities.back() == target);
-	}
 }
 
 TEST_CASE("gc/function storage", "show that proper copies / destruction happens for function storage (or not)") {
@@ -443,27 +413,6 @@ TEST_CASE("gc/usertypes", "show that proper copies / destruction happens for use
 		REQUIRE(created == 4);
 		REQUIRE(destroyed == 4);
 	}
-	SECTION("simple") {
-		created = 0;
-		destroyed = 0;
-		{
-			sol::state lua;
-			lua.new_simple_usertype<x>("x");
-			x x1;
-			x x2;
-			lua.set("x1copy", x1, "x2copy", x2, "x1ref", std::ref(x1));
-			x& x1copyref = lua["x1copy"];
-			x& x2copyref = lua["x2copy"];
-			x& x1ref = lua["x1ref"];
-			REQUIRE(created == 4);
-			REQUIRE(destroyed == 0);
-			REQUIRE(std::addressof(x1) == std::addressof(x1ref));
-			REQUIRE(std::addressof(x1copyref) != std::addressof(x1));
-			REQUIRE(std::addressof(x2copyref) != std::addressof(x2));
-		}
-		REQUIRE(created == 4);
-		REQUIRE(destroyed == 4);
-	}
 }
 
 TEST_CASE("gc/double-deletion tests", "make sure usertypes are properly destructed and don't double-delete memory or segfault") {
@@ -489,21 +438,6 @@ TEST_CASE("gc/double-deletion tests", "make sure usertypes are properly destruct
 		function testCrash()
 			local x = CrashClass()
 		end
-		)", sol::script_pass_on_error);
-		REQUIRE(result1.valid());
-
-		for (int i = 0; i < 1000; ++i) {
-			lua["testCrash"]();
-		}
-	}
-	SECTION("simple") {
-		lua.new_simple_usertype<crash_class>("CrashClass",
-			sol::call_constructor, sol::constructors<sol::types<>>());
-
-		auto result1 = lua.safe_script(R"(
-		function testCrash()
-			local x = CrashClass()
-			end
 		)", sol::script_pass_on_error);
 		REQUIRE(result1.valid());
 
@@ -554,34 +488,6 @@ TEST_CASE("gc/shared_ptr regression", "metatables should not screw over unique u
 		REQUIRE(created == 1);
 		REQUIRE(destroyed == 1);
 	}
-	SECTION("simple") {
-		created = 0;
-		destroyed = 0;
-		{
-			std::list<std::shared_ptr<test>> tests;
-			sol::state lua;
-			lua.open_libraries();
-
-			lua.new_simple_usertype<test>("test",
-				"create", [&]() -> std::shared_ptr<test> {
-					tests.push_back(std::make_shared<test>());
-					return tests.back();
-				});
-			REQUIRE(created == 0);
-			REQUIRE(destroyed == 0);
-			auto result1 = lua.safe_script("x = test.create()", sol::script_pass_on_error);
-			REQUIRE(result1.valid());
-			REQUIRE(created == 1);
-			REQUIRE(destroyed == 0);
-			REQUIRE_FALSE(tests.empty());
-			std::shared_ptr<test>& x = lua["x"];
-			std::size_t xuse = x.use_count();
-			std::size_t tuse = tests.back().use_count();
-			REQUIRE(xuse == tuse);
-		}
-		REQUIRE(created == 1);
-		REQUIRE(destroyed == 1);
-	}
 }
 
 TEST_CASE("gc/double deleter guards", "usertype metatables internally must not rely on C++ state") {
@@ -599,24 +505,6 @@ TEST_CASE("gc/double deleter guards", "usertype metatables internally must not r
 			lua = sol::state();
 			lua.new_usertype<c_a>("c_a", "x", &c_a::xv);
 			lua.new_usertype<c_b>("c_b", "y", &c_b::yv);
-			lua = sol::state();
-		};
-		REQUIRE_NOTHROW(routine());
-	}
-	SECTION("simple") {
-		struct sc_a {
-			int xv;
-		};
-		struct sc_b {
-			int yv;
-		};
-		auto routine = []() {
-			sol::state lua;
-			lua.new_simple_usertype<sc_a>("c_a", "x", &sc_a::xv);
-			lua.new_simple_usertype<sc_b>("c_b", "y", &sc_b::yv);
-			lua = sol::state();
-			lua.new_simple_usertype<sc_a>("c_a", "x", &sc_a::xv);
-			lua.new_simple_usertype<sc_b>("c_b", "y", &sc_b::yv);
 			lua = sol::state();
 		};
 		REQUIRE_NOTHROW(routine());

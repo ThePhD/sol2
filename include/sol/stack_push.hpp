@@ -75,7 +75,7 @@ namespace stack {
 			// do the actual object. Things that are std::ref or plain T* are stored as
 			// just the sizeof(T*), and nothing else.
 			T* obj = detail::usertype_allocate<T>(L);
-			std::allocator<T> alloc {};
+			std::allocator<T> alloc{};
 			std::allocator_traits<std::allocator<T>>::construct(alloc, obj, std::forward<Args>(args)...);
 			f();
 			return 1;
@@ -130,7 +130,7 @@ namespace stack {
 	struct pusher {
 		template <typename... Args>
 		static int push(lua_State* L, Args&&... args) {
-			return pusher<detail::as_value_tag<T>> {}.push(L, std::forward<Args>(args)...);
+			return pusher<detail::as_value_tag<T>>{}.push(L, std::forward<Args>(args)...);
 		}
 	};
 
@@ -138,7 +138,7 @@ namespace stack {
 	struct pusher<T*, meta::disable_if_t<meta::any<is_container<meta::unqualified_t<T>>, std::is_function<meta::unqualified_t<T>>, is_lua_reference<meta::unqualified_t<T>>>::value>> {
 		template <typename... Args>
 		static int push(lua_State* L, Args&&... args) {
-			return pusher<detail::as_pointer_tag<T>> {}.push(L, std::forward<Args>(args)...);
+			return pusher<detail::as_pointer_tag<T>>{}.push(L, std::forward<Args>(args)...);
 		}
 	};
 
@@ -173,11 +173,11 @@ namespace stack {
 			detail::default_construct::construct(mem, std::forward<Args>(args)...);
 			*pref = unique_usertype_traits<T>::get(*mem);
 			if (luaL_newmetatable(L, &usertype_traits<detail::unique_usertype<std::remove_cv_t<P>>>::metatable()[0]) == 1) {
-				luaL_Reg l[32] {};
+				detail::lua_reg_table l{};
 				int index = 0;
-				auto prop_fx = [](meta_function) { return true; };
-				u_detail::insert_default_registrations<P>(l, index, prop_fx);
-				u_detail::make_destructor<T>(l, index);
+				detail::indexed_insert insert_fx(l, index);
+				detail::insert_default_registrations<P>(insert_fx, detail::property_always_true);
+				l[index] = { to_string(meta_function::garbage_collect).c_str(), detail::make_destructor<T>() };
 				luaL_setfuncs(L, l, 0);
 			}
 			lua_setmetatable(L, -2);
@@ -334,7 +334,7 @@ namespace stack {
 	template <typename T>
 	struct pusher<nested<T>, std::enable_if_t<is_container<std::remove_pointer_t<meta::unwrap_unqualified_t<T>>>::value>> {
 		static int push(lua_State* L, const T& tablecont) {
-			pusher<detail::as_table_tag<T>> p {};
+			pusher<detail::as_table_tag<T>> p{};
 			// silence annoying VC++ warning
 			(void)p;
 			return p.push(std::true_type(), L, tablecont);
@@ -344,7 +344,7 @@ namespace stack {
 	template <typename T>
 	struct pusher<nested<T>, std::enable_if_t<!is_container<std::remove_pointer_t<meta::unwrap_unqualified_t<T>>>::value>> {
 		static int push(lua_State* L, const T& tablecont) {
-			pusher<meta::unqualified_t<T>> p {};
+			pusher<meta::unqualified_t<T>> p{};
 			// silence annoying VC++ warning
 			(void)p;
 			return p.push(L, tablecont);
@@ -354,7 +354,7 @@ namespace stack {
 	template <typename T>
 	struct pusher<std::initializer_list<T>> {
 		static int push(lua_State* L, const std::initializer_list<T>& il) {
-			pusher<detail::as_table_tag<std::initializer_list<T>>> p {};
+			pusher<detail::as_table_tag<std::initializer_list<T>>> p{};
 			// silence annoying VC++ warning
 			(void)p;
 			return p.push(L, il);
@@ -497,7 +497,7 @@ namespace stack {
 		static int push_with(lua_State* L, Key&& name, Args&&... args) {
 			// A dumb pusher
 			T* data = detail::user_allocate<T>(L);
-			std::allocator<T> alloc {};
+			std::allocator<T> alloc{};
 			std::allocator_traits<std::allocator<T>>::construct(alloc, data, std::forward<Args>(args)...);
 			if (with_meta) {
 				// Make sure we have a plain GC set for this data
@@ -584,25 +584,25 @@ namespace stack {
 	template <>
 	struct pusher<char*> {
 		static int push_sized(lua_State* L, const char* str, std::size_t len) {
-			pusher<const char*> p {};
+			pusher<const char*> p{};
 			(void)p;
 			return p.push_sized(L, str, len);
 		}
 
 		static int push(lua_State* L, const char* str) {
-			pusher<const char*> p {};
+			pusher<const char*> p{};
 			(void)p;
 			return p.push(L, str);
 		}
 
 		static int push(lua_State* L, const char* strb, const char* stre) {
-			pusher<const char*> p {};
+			pusher<const char*> p{};
 			(void)p;
 			return p.push(L, strb, stre);
 		}
 
 		static int push(lua_State* L, const char* str, std::size_t len) {
-			pusher<const char*> p {};
+			pusher<const char*> p{};
 			(void)p;
 			return p.push(L, str, len);
 		}
@@ -711,19 +711,19 @@ namespace stack {
 	template <>
 	struct pusher<wchar_t*> {
 		static int push(lua_State* L, const wchar_t* str) {
-			pusher<const wchar_t*> p {};
+			pusher<const wchar_t*> p{};
 			(void)p;
 			return p.push(L, str);
 		}
 
 		static int push(lua_State* L, const wchar_t* strb, const wchar_t* stre) {
-			pusher<const wchar_t*> p {};
+			pusher<const wchar_t*> p{};
 			(void)p;
 			return p.push(L, strb, stre);
 		}
 
 		static int push(lua_State* L, const wchar_t* str, std::size_t len) {
-			pusher<const wchar_t*> p {};
+			pusher<const wchar_t*> p{};
 			(void)p;
 			return p.push(L, str, len);
 		}
@@ -791,19 +791,19 @@ namespace stack {
 	template <>
 	struct pusher<char16_t*> {
 		static int push(lua_State* L, const char16_t* str) {
-			pusher<const char16_t*> p {};
+			pusher<const char16_t*> p{};
 			(void)p;
 			return p.push(L, str);
 		}
 
 		static int push(lua_State* L, const char16_t* strb, const char16_t* stre) {
-			pusher<const char16_t*> p {};
+			pusher<const char16_t*> p{};
 			(void)p;
 			return p.push(L, strb, stre);
 		}
 
 		static int push(lua_State* L, const char16_t* str, std::size_t len) {
-			pusher<const char16_t*> p {};
+			pusher<const char16_t*> p{};
 			(void)p;
 			return p.push(L, str, len);
 		}
@@ -869,19 +869,19 @@ namespace stack {
 	template <>
 	struct pusher<char32_t*> {
 		static int push(lua_State* L, const char32_t* str) {
-			pusher<const char32_t*> p {};
+			pusher<const char32_t*> p{};
 			(void)p;
 			return p.push(L, str);
 		}
 
 		static int push(lua_State* L, const char32_t* strb, const char32_t* stre) {
-			pusher<const char32_t*> p {};
+			pusher<const char32_t*> p{};
 			(void)p;
 			return p.push(L, strb, stre);
 		}
 
 		static int push(lua_State* L, const char32_t* str, std::size_t len) {
-			pusher<const char32_t*> p {};
+			pusher<const char32_t*> p{};
 			(void)p;
 			return p.push(L, str, len);
 		}
@@ -960,7 +960,7 @@ namespace stack {
 		template <std::size_t... I, typename T>
 		static int push(std::index_sequence<I...>, lua_State* L, T&& t) {
 			int pushcount = 0;
-			(void)detail::swallow { 0, (pushcount += stack::push(L, detail::forward_get<I>(t)), 0)... };
+			(void)detail::swallow{ 0, (pushcount += stack::push(L, detail::forward_get<I>(t)), 0)... };
 			return pushcount;
 		}
 

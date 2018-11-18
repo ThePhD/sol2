@@ -1044,9 +1044,15 @@ namespace sol {
 	struct is_unique_usertype : std::integral_constant<bool, unique_usertype_traits<T>::value> {};
 
 	template <typename T>
+	inline constexpr bool is_unique_usertype_v = is_unique_usertype<T>::value;
+
+	template <typename T>
 	struct lua_type_of : detail::lua_type_of<T> {
 		typedef int SOL_INTERNAL_UNSPECIALIZED_MARKER_;
 	};
+
+	template <typename T>
+	inline constexpr type lua_type_of_v = lua_type_of<T>::value;
 
 	template <typename T>
 	struct lua_size : std::integral_constant<int, 1> {
@@ -1058,6 +1064,9 @@ namespace sol {
 
 	template <typename... Args>
 	struct lua_size<std::tuple<Args...>> : std::integral_constant<int, detail::accumulate<int, 0, lua_size, Args...>::value> {};
+
+	template <typename T>
+	inline constexpr int lua_size_v = lua_size<T>::value;
 
 	namespace detail {
 		template <typename...>
@@ -1211,7 +1220,7 @@ namespace sol {
 		using any_is_constructor = meta::any<is_constructor<meta::unqualified_t<Args>>...>;
 
 		template <typename... Args>
-		using any_is_constructor_v = any_is_constructor<Args...>::value;
+		inline constexpr bool any_is_constructor_v = any_is_constructor<Args...>::value;
 
 		template <typename T>
 		struct is_destructor : std::false_type {};
@@ -1220,13 +1229,30 @@ namespace sol {
 		struct is_destructor<destructor_wrapper<Fx>> : std::true_type {};
 
 		template <typename... Args>
-		using has_destructor = meta::any<is_destructor<meta::unqualified_t<Args>>...>;
+		using any_is_destructor = meta::any<is_destructor<meta::unqualified_t<Args>>...>;
+
+		template <typename... Args>
+		inline constexpr bool any_is_destructor_v = any_is_destructor<Args...>::value;
 
 		struct add_destructor_tag {};
 		struct check_destructor_tag {};
 		struct verified_tag {
 		} const verified {};
 	} // namespace detail
+
+	struct automagic_enrollments {
+		bool default_constructor = true;
+		bool destructor = true;
+		bool pairs_operator = true;
+		bool to_string_operator = true;
+		bool call_operator = true;
+		bool less_than_operator = true;
+		bool less_than_or_equal_to_operator = true;
+		bool length_operator = true;
+		bool equal_to_operator = true;
+	};
+
+
 } // namespace sol
 
 #endif // SOL_TYPES_HPP

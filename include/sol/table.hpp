@@ -30,14 +30,39 @@
 namespace sol {
 	typedef table_core<false> table;
 
-	template <bool top_level, typename base_type>
-	template <typename Class, typename Key, typename... Args>
-	usertype<Class> basic_table_core<top_level, base_type>::new_usertype(Key&& key, Args&&... args) {
-		int mt_index = u_detail::register_usertype<Class>(this->lua_state(), detail::any_is_constructor_v<Args...> ? optional<no_construction>() : optional<no_construction>(no_constructor));
+	template <bool is_global, typename base_type>
+	template <typename Class, typename Key>
+	usertype<Class> basic_table_core<is_global, base_type>::new_usertype(Key&& key) {
+		automagic_enrollments enrollments;
+		return this->new_usertype<Class>(std::forward<Key>(key), std::move(enrollments));
+	}
+
+	template <bool is_global, typename base_type>
+	template <typename Class, typename Key>
+	usertype<Class> basic_table_core<is_global, base_type>::new_usertype(Key&& key, automagic_enrollments enrollments) {
+		int mt_index = u_detail::register_usertype<Class>(this->lua_state(), std::move(enrollments));
 		usertype<Class> mt(this->lua_state(), -mt_index);
-		mt.
 		set(std::forward<Key>(key), mt);
 		return mt;
+	}
+
+	template <bool is_global, typename base_type>
+	template <typename Class, typename Key, typename Arg, typename... Args, typename>
+	usertype<Class> basic_table_core<is_global, base_type>::new_usertype(Key&& key, Arg&& arg, Args&&... args) {
+		automagic_enrollments enrollments;
+		enrollments.default_constructor = !detail::any_is_constructor_v<Arg, Args...>;
+		enrollments.destructor = !detail::any_is_destructor_v<Arg, Args...>;
+		usertype<Class> ut = this->new_usertype<Class>(std::forward<Key>(key), std::move(enrollments));
+		static_assert(sizeof...(Args) % 2 == static_cast<std::size_t>(!detail::any_is_constructor_v<Arg>), 
+			"you must pass an even number of arguments to new_usertype after first passing a constructor");
+		if constexpr (detail::any_is_constructor_v<Arg>) {
+			ut.set(meta_function::construct, std::forward<Arg>(arg));
+			ut.tuple_set(std::make_index_sequence<(sizeof...(Args)) / 2>(), std::forward_as_tuple(std::forward<Args>(args)...));
+		}
+		else {
+			ut.tuple_set(std::make_index_sequence<(sizeof...(Args) + 1) / 2>(), std::forward_as_tuple(std::forward<Arg>(arg), std::forward<Args>(args)...));
+		}
+		return ut;
 	}
 
 	template <typename base_type>
@@ -47,6 +72,9 @@ namespace sol {
 		if (maybe_uts) {
 			u_detail::usertype_storage_base& uts = *maybe_uts;
 			uts.set(std::forward<Key>(key), std::forward<Value>(value));
+		}
+		else {
+			base_t::set(std::forward<Key>(key), std::forward<Value>(value));
 		}
 	}
 

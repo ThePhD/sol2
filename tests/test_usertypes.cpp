@@ -317,8 +317,7 @@ struct alignas(16) weird_aligned_wrapper {
 TEST_CASE("usertype/usertype", "Show that we can create classes from usertype and use them") {
 	sol::state lua;
 
-	sol::usertype<fuser> lc{ "add", &fuser::add, "add2", &fuser::add2 };
-	lua.set_usertype(lc);
+	sol::usertype<fuser> lc = lua.new_usertype<fuser>("fuser", "add", &fuser::add, "add2", &fuser::add2);
 
 	lua.safe_script(
 		"a = fuser:new()\n"
@@ -346,8 +345,10 @@ TEST_CASE("usertype/usertype-constructors", "Show that we can create classes fro
 	sol::state lua;
 
 	sol::constructors<sol::types<>, sol::types<int>, sol::types<int, int>> con;
-	sol::usertype<crapola::fuser> lc(con, "add", &crapola::fuser::add, "add2", &crapola::fuser::add2);
-	lua.set_usertype(lc);
+	sol::usertype<crapola::fuser> lc = lua.new_usertype<crapola::fuser>("fuser",
+		con, 
+		"add", &crapola::fuser::add, 
+		"add2", &crapola::fuser::add2);
 
 	lua.safe_script(
 		"a = fuser.new(2)\n"
@@ -414,9 +415,7 @@ TEST_CASE("usertype/usertype-utility-derived", "usertype classes must play nice 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 	sol::constructors<sol::types<int>> basector;
-	sol::usertype<Base> baseusertype(basector, "get_num", &Base::get_num);
-
-	lua.set_usertype(baseusertype);
+	sol::usertype<Base> baseusertype = lua.new_usertype<Base>("Base", basector, "get_num", &Base::get_num);
 
 	lua.safe_script("base = Base.new(5)");
 	{
@@ -425,11 +424,9 @@ TEST_CASE("usertype/usertype-utility-derived", "usertype classes must play nice 
 	}
 
 	sol::constructors<sol::types<int>> derivedctor;
-	sol::usertype<Derived> derivedusertype(derivedctor,
+	sol::usertype<Derived> derivedusertype = lua.new_usertype<Derived>("Derived", derivedctor,
 		"get_num_10", &Derived::get_num_10,
 		"get_num", &Derived::get_num);
-
-	lua.set_usertype(derivedusertype);
 
 	lua.safe_script("derived = Derived.new(7)");
 	lua.safe_script(
@@ -532,8 +529,7 @@ TEST_CASE("usertype/issue-number-thirty-five", "using value types created from l
 	lua.open_libraries(sol::lib::base);
 
 	sol::constructors<sol::types<float, float, float>> ctor;
-	sol::usertype<Vec> udata(ctor, "normalized", &Vec::normalized, "length", &Vec::length);
-	lua.set_usertype(udata);
+	sol::usertype<Vec> udata = lua.new_usertype<Vec>("Vec", ctor, "normalized", &Vec::normalized, "length", &Vec::length);
 
 	{
 		auto result = lua.safe_script(
@@ -555,11 +551,11 @@ TEST_CASE("usertype/lua-stored-usertype", "ensure usertype values can be stored 
 
 	{
 		sol::constructors<sol::types<float, float, float>> ctor;
-		sol::usertype<Vec> udata(ctor,
+		sol::usertype<Vec> udata = lua.new_usertype<Vec>("Vec",
+			ctor,
 			"normalized", &Vec::normalized,
 			"length", &Vec::length);
 
-		lua.set_usertype(udata);
 		// usertype dies, but still usable in lua!
 	}
 
@@ -583,13 +579,13 @@ TEST_CASE("usertype/member-variables", "allow table-like accessors to behave as 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 	sol::constructors<sol::types<float, float, float>> ctor;
-	sol::usertype<Vec> udata(ctor,
+	sol::usertype<Vec> udata = lua.new_usertype<Vec>("Vec",
+		ctor,
 		"x", &Vec::x,
 		"y", &Vec::y,
 		"z", &Vec::z,
 		"normalized", &Vec::normalized,
 		"length", &Vec::length);
-	lua.set_usertype(udata);
 
 	REQUIRE_NOTHROW(lua.safe_script(
 		"v = Vec.new(1, 2, 3)\n"
@@ -639,9 +635,8 @@ TEST_CASE("usertype/nonmember-functions", "let users set non-member functions th
 		   "gief", &giver::gief,
 		   "__tostring", [](const giver& t) {
 			   return std::to_string(t.a) + ": giving value";
-		   })
-		.get<sol::table>("giver")
-		.set_function("stuff", giver::stuff);
+		   });
+	lua.get<sol::table>("giver").set_function("stuff", giver::stuff);
 
 	{
 		auto result = lua.safe_script("giver.stuff()", sol::script_pass_on_error);

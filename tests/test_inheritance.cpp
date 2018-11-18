@@ -27,6 +27,58 @@
 
 #include <iostream>
 
+class TestClass00 {
+public:
+	int Thing() const {
+		return 123;
+	}
+};
+
+class TestClass01 : public TestClass00 {
+public:
+	TestClass01()
+	: a(1) {
+	}
+	TestClass01(const TestClass00& other)
+	: a(other.Thing()) {
+	}
+
+	int a;
+};
+
+class TestClass02 : public TestClass01 {
+public:
+	TestClass02()
+	: b(2) {
+	}
+	TestClass02(const TestClass01& other)
+	: b(other.a) {
+	}
+	TestClass02(const TestClass00& other)
+	: b(other.Thing()) {
+	}
+
+	int b;
+};
+
+class TestClass03 : public TestClass02 {
+public:
+	TestClass03()
+	: c(2) {
+	}
+	TestClass03(const TestClass02& other)
+	: c(other.b) {
+	}
+	TestClass03(const TestClass01& other)
+	: c(other.a) {
+	}
+	TestClass03(const TestClass00& other)
+	: c(other.Thing()) {
+	}
+
+	int c;
+};
+
 TEST_CASE("inheritance/basic", "test that metatables are properly inherited") {
 	struct A {
 		int a = 5;
@@ -82,86 +134,27 @@ TEST_CASE("inheritance/basic", "test that metatables are properly inherited") {
 }
 
 TEST_CASE("inheritance/multi base", "test that multiple bases all work and overloading for constructors works with them") {
-	class TestClass00 {
-	public:
-		int Thing() const {
-			return 123;
-		}
-	};
-
-	class TestClass01 : public TestClass00 {
-	public:
-		TestClass01()
-		: a(1) {
-		}
-		TestClass01(const TestClass00& other)
-		: a(other.Thing()) {
-		}
-
-		int a;
-	};
-
-	class TestClass02 : public TestClass01 {
-	public:
-		TestClass02()
-		: b(2) {
-		}
-		TestClass02(const TestClass01& other)
-		: b(other.a) {
-		}
-		TestClass02(const TestClass00& other)
-		: b(other.Thing()) {
-		}
-
-		int b;
-	};
-
-	class TestClass03 : public TestClass02 {
-	public:
-		TestClass03()
-		: c(2) {
-		}
-		TestClass03(const TestClass02& other)
-		: c(other.b) {
-		}
-		TestClass03(const TestClass01& other)
-		: c(other.a) {
-		}
-		TestClass03(const TestClass00& other)
-		: c(other.Thing()) {
-		}
-
-		int c;
-	};
 
 	sol::state lua;
 
-	sol::usertype<TestClass00> s_TestUsertype00(
+	sol::usertype<TestClass00> s_TestUsertype00 = lua.new_usertype<TestClass00>("TestClass00",
 		sol::call_constructor, sol::constructors<sol::types<>>(),
 		"Thing", &TestClass00::Thing);
 
-	lua.set_usertype("TestClass00", s_TestUsertype00);
-
-	sol::usertype<TestClass01> s_TestUsertype01(
+	sol::usertype<TestClass01> s_TestUsertype01 = lua.new_usertype<TestClass01>("TestClass01",
 		sol::call_constructor, sol::constructors<sol::types<>, sol::types<const TestClass00&>>(),
 		sol::base_classes, sol::bases<TestClass00>(),
 		"a", &TestClass01::a);
 
-	lua.set_usertype("TestClass01", s_TestUsertype01);
-
-	sol::usertype<TestClass02> s_TestUsertype02(
+	sol::usertype<TestClass02> s_TestUsertype02 = lua.new_usertype<TestClass02>("TestClass02",
 		sol::call_constructor, sol::constructors<sol::types<>, sol::types<const TestClass01&>, sol::types<const TestClass00&>>(),
 		sol::base_classes, sol::bases<TestClass01, TestClass00>(),
 		"b", &TestClass02::b);
 
-	lua.set_usertype("TestClass02", s_TestUsertype02);
-
-	sol::usertype<TestClass03> s_TestUsertype03(
+	sol::usertype<TestClass03> s_TestUsertype03 = lua.new_usertype<TestClass03>("TestClass03",
 		sol::call_constructor, sol::constructors<sol::types<>, sol::types<const TestClass02&>, sol::types<const TestClass01&>, sol::types<const TestClass00&>>(),
 		sol::base_classes, sol::bases<TestClass02, TestClass01, TestClass00>(),
 		"c", &TestClass03::c);
-
-	lua.set_usertype("TestClass03", s_TestUsertype03);
 
 	auto result1 = lua.safe_script(R"(
 tc0 = TestClass00()
@@ -185,86 +178,27 @@ tc3 = TestClass03(tc1)
 }
 
 TEST_CASE("inheritance/simple multi base", "test that multiple bases all work and overloading for constructors works with them") {
-	class TestClass00 {
-	public:
-		int Thing() const {
-			return 123;
-		}
-	};
-
-	class TestClass01 : public TestClass00 {
-	public:
-		TestClass01()
-		: a(1) {
-		}
-		TestClass01(const TestClass00& other)
-		: a(other.Thing()) {
-		}
-
-		int a;
-	};
-
-	class TestClass02 : public TestClass01 {
-	public:
-		TestClass02()
-		: b(2) {
-		}
-		TestClass02(const TestClass01& other)
-		: b(other.a) {
-		}
-		TestClass02(const TestClass00& other)
-		: b(other.Thing()) {
-		}
-
-		int b;
-	};
-
-	class TestClass03 : public TestClass02 {
-	public:
-		TestClass03()
-		: c(2) {
-		}
-		TestClass03(const TestClass02& other)
-		: c(other.b) {
-		}
-		TestClass03(const TestClass01& other)
-		: c(other.a) {
-		}
-		TestClass03(const TestClass00& other)
-		: c(other.Thing()) {
-		}
-
-		int c;
-	};
 
 	sol::state lua;
 
-	sol::simple_usertype<TestClass00> s_TestUsertype00(lua,
+	sol::usertype<TestClass00> s_TestUsertype00 = lua.new_usertype<TestClass00>("TestClass00",
 		sol::call_constructor, sol::constructors<sol::types<>>(),
 		"Thing", &TestClass00::Thing);
 
-	lua.set_usertype("TestClass00", s_TestUsertype00);
-
-	sol::simple_usertype<TestClass01> s_TestUsertype01(lua,
+	sol::usertype<TestClass01> s_TestUsertype01 = lua.new_usertype<TestClass01>("TestClass01", 
 		sol::call_constructor, sol::constructors<sol::types<>, sol::types<const TestClass00&>>(),
 		sol::base_classes, sol::bases<TestClass00>(),
 		"a", &TestClass01::a);
 
-	lua.set_usertype("TestClass01", s_TestUsertype01);
-
-	sol::simple_usertype<TestClass02> s_TestUsertype02(lua,
+	sol::usertype<TestClass02> s_TestUsertype02 = lua.new_usertype<TestClass02>("TestClass02",
 		sol::call_constructor, sol::constructors<sol::types<>, sol::types<const TestClass01&>, sol::types<const TestClass00&>>(),
 		sol::base_classes, sol::bases<TestClass01, TestClass00>(),
 		"b", &TestClass02::b);
 
-	lua.set_usertype("TestClass02", s_TestUsertype02);
-
-	sol::simple_usertype<TestClass03> s_TestUsertype03(lua,
+	sol::usertype<TestClass03> s_TestUsertype03 = lua.new_usertype<TestClass03>("TestClass03",
 		sol::call_constructor, sol::constructors<sol::types<>, sol::types<const TestClass02&>, sol::types<const TestClass01&>, sol::types<const TestClass00&>>(),
 		sol::base_classes, sol::bases<TestClass02, TestClass01, TestClass00>(),
 		"c", &TestClass03::c);
-
-	lua.set_usertype("TestClass03", s_TestUsertype03);
 
 	auto result1 = lua.safe_script(R"(
 tc0 = TestClass00()

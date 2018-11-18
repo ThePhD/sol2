@@ -50,16 +50,6 @@ namespace sol {
 		struct undefined_metatable;
 	}
 	} // namespace stack::stack_detail
-
-	namespace u_detail {
-		template <typename T, typename Regs, typename Fx>
-		void insert_default_registrations(Regs& l, int& index, Fx&& fx);
-
-		template <typename T, typename Regs, meta::enable<meta::neg<std::is_pointer<T>>, std::is_destructible<T>> = meta::enabler>
-		void make_destructor(Regs& l, int& index);
-		template <typename T, typename Regs, meta::disable<meta::neg<std::is_pointer<T>>, std::is_destructible<T>> = meta::enabler>
-		void make_destructor(Regs& l, int& index);
-	} // namespace u_detail
 } // namespace sol
 
 #endif // SOL_FORWARD_DETAIL_HPP

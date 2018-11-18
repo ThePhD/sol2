@@ -550,13 +550,13 @@ namespace sol {
 		using has_insert_after = meta::boolean<meta_detail::has_insert_after_test<T>::value>;
 
 		template <typename T>
-		using has_size = meta::boolean<meta_detail::has_size_test<T>::value || meta_detail::has_size_test<const T>::value>;
+		using has_size = meta::boolean<meta_detail::has_size_test<T>::value>;
 
 		template <typename T>
-		struct is_associative : meta::all<has_key_type<T>, has_key_value_pair<T>, has_mapped_type<T>> {};
+		using is_associative = meta::all<has_key_type<T>, has_key_value_pair<T>, has_mapped_type<T>>;
 
 		template <typename T>
-		struct is_lookup : meta::all<has_key_type<T>, has_value_type<T>> {};
+		using is_lookup = meta::all<has_key_type<T>, has_value_type<T>>;
 
 		template <typename T>
 		struct is_matched_lookup : meta_detail::is_matched_lookup_impl<T, is_lookup<T>::value> {};

@@ -210,15 +210,15 @@ TEST_CASE("variadics/variadic_results", "returning a variable amount of argument
 }
 
 TEST_CASE("variadics/fallback_constructor", "ensure constructor matching behaves properly in the presence of variadic fallbacks") {
-	struct vec2 {
+	struct vec2x {
 		float x = 0, y = 0;
 	};
 
 	sol::state lua;
 
-	lua.new_simple_usertype<vec2>("vec2",
-		sol::call_constructor, sol::factories([]() { return vec2{}; }, [](vec2 const& v) -> vec2 { return v; }, [](sol::variadic_args va) {
-		vec2 res{};
+	lua.new_usertype<vec2x>("vec2x",
+		sol::call_constructor, sol::factories([]() { return vec2x{}; }, [](vec2x const& v) -> vec2x { return v; }, [](sol::variadic_args va) {
+		vec2x res{};
 		if (va.size() == 1) {
 			res.x = va[0].get<float>();
 			res.y = va[0].get<float>();
@@ -233,16 +233,16 @@ TEST_CASE("variadics/fallback_constructor", "ensure constructor matching behaves
 		return res; }));
 
 	REQUIRE_NOTHROW([&]() {
-		lua.safe_script("v0 = vec2();");
-		lua.safe_script("v1 = vec2(1);");
-		lua.safe_script("v2 = vec2(1, 2);");
-		lua.safe_script("v3 = vec2(v2)");
+		lua.safe_script("v0 = vec2x();");
+		lua.safe_script("v1 = vec2x(1);");
+		lua.safe_script("v2 = vec2x(1, 2);");
+		lua.safe_script("v3 = vec2x(v2)");
 	}());
 
-	vec2& v0 = lua["v0"];
-	vec2& v1 = lua["v1"];
-	vec2& v2 = lua["v2"];
-	vec2& v3 = lua["v3"];
+	vec2x& v0 = lua["v0"];
+	vec2x& v1 = lua["v1"];
+	vec2x& v2 = lua["v2"];
+	vec2x& v3 = lua["v3"];
 
 	REQUIRE(v0.x == 0);
 	REQUIRE(v0.y == 0);

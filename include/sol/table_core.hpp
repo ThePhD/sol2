@@ -366,7 +366,13 @@ namespace sol {
 		}
 
 		template <typename Class, typename Key>
-		usertype<Class> new_usertype(Key&& key, optional<no_construction> no_constructor = nullopt);
+		usertype<Class> new_usertype(Key&& key);
+
+		template <typename Class, typename Key>
+		usertype<Class> new_usertype(Key&& key, automagic_enrollments enrollment);
+
+		template <typename Class, typename Key, typename Arg, typename... Args, typename = std::enable_if_t<!std::is_same_v<meta::unqualified_t<Arg>, automagic_enrollments>>>
+		usertype<Class> new_usertype(Key&& key, Arg&& arg, Args&&... args);
 
 		template <bool read_only = true, typename... Args>
 		table new_enum(const string_view& name, Args&&... args) {

@@ -45,7 +45,7 @@ namespace sol {
 		}
 
 		static int real_index_call(lua_State* L) {
-			typedef detail::map_t<std::string, lua_CFunction> call_map;
+			typedef detail::unordered_map<std::string, lua_CFunction> call_map;
 			static const call_map calls{
 				{ "at", &at_call },
 				{ "get", &real_get_call },

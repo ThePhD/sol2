@@ -66,78 +66,6 @@ namespace sol {
 			named
 		};
 
-		struct no_comp {
-			template <typename A, typename B>
-			bool operator()(A&&, B&&) const {
-				return false;
-			}
-		};
-
-		template <typename T>
-		inline int is_check(lua_State* L) {
-			return stack::push(L, stack::check<T>(L, 1, &no_panic));
-		}
-
-		template <typename T>
-		inline int member_default_to_string(std::true_type, lua_State* L) {
-			decltype(auto) ts = stack::get<T>(L, 1).to_string();
-			return stack::push(L, std::forward<decltype(ts)>(ts));
-		}
-
-		template <typename T>
-		inline int member_default_to_string(std::false_type, lua_State* L) {
-			return luaL_error(L, "cannot perform to_string on '%s': no 'to_string' overload in namespace, 'to_string' member function, or operator<<(ostream&, ...) present", detail::demangle<T>().data());
-		}
-
-		template <typename T>
-		inline int adl_default_to_string(std::true_type, lua_State* L) {
-			using namespace std;
-			decltype(auto) ts = to_string(stack::get<T>(L, 1));
-			return stack::push(L, std::forward<decltype(ts)>(ts));
-		}
-
-		template <typename T>
-		inline int adl_default_to_string(std::false_type, lua_State* L) {
-			return member_default_to_string<T>(meta::supports_to_string_member<T>(), L);
-		}
-
-		template <typename T>
-		inline int oss_default_to_string(std::true_type, lua_State* L) {
-			std::ostringstream oss;
-			oss << stack::unqualified_get<T>(L, 1);
-			return stack::push(L, oss.str());
-		}
-
-		template <typename T>
-		inline int oss_default_to_string(std::false_type, lua_State* L) {
-			return adl_default_to_string<T>(meta::supports_adl_to_string<T>(), L);
-		}
-
-		template <typename T>
-		inline int default_to_string(lua_State* L) {
-			return oss_default_to_string<T>(meta::supports_ostream_op<T>(), L);
-		}
-
-		template <typename T, typename Op>
-		int comparsion_operator_wrap(lua_State* L) {
-			auto maybel = stack::unqualified_check_get<T&>(L, 1);
-			if (maybel) {
-				auto mayber = stack::unqualified_check_get<T&>(L, 2);
-				if (mayber) {
-					auto& l = *maybel;
-					auto& r = *mayber;
-					if (std::is_same<no_comp, Op>::value) {
-						return stack::push(L, detail::ptr(l) == detail::ptr(r));
-					}
-					else {
-						Op op;
-						return stack::push(L, (detail::ptr(l) == detail::ptr(r)) || op(detail::deref(l), detail::deref(r)));
-					}
-				}
-			}
-			return stack::push(L, false);
-		}
-
 		inline auto make_string_view(string_view s) {
 			return s;
 		}
@@ -183,81 +111,6 @@ namespace sol {
 		inline int is_indexer(call_construction) {
 			return 0;
 		}
-
-		template <typename T>
-		lua_CFunction make_destructor() {
-			if constexpr (std::is_destructible_v<T>) {
-				if constexpr (is_unique_usertype<T>::value) {
-					return &detail::unique_destruct<T>;
-				}
-				else if constexpr (!std::is_pointer_v<T>) {
-					return &detail::usertype_alloc_destruct<T>;
-				}
-			}
-			else {
-				return &detail::cannot_destruct<T>;
-			}
-		}
-
-		template <typename T, typename IFx, typename Fx>
-		void insert_default_registrations(IFx&& ifx, Fx&& fx) {
-			if constexpr (is_automagical<T>::value) {
-				if (fx(meta_function::less_than)) {
-					if constexpr (meta::supports_op_less<T>::value) {
-						lua_CFunction f = &comparsion_operator_wrap<T, std::less<>>;
-						ifx(meta_function::less_than, f);
-					}
-				}
-				if (fx(meta_function::less_than_or_equal_to)) {
-					if constexpr (meta::supports_op_less_equal<T>::value) {
-						lua_CFunction f = &comparsion_operator_wrap<T, std::less_equal<>>;
-						ifx(meta_function::less_than_or_equal_to, f);
-					}
-				}
-				if (fx(meta_function::equal_to)) {
-					if constexpr (meta::supports_op_equal<T>::value) {
-						lua_CFunction f = &comparsion_operator_wrap<T, std::equal_to<>>;
-						ifx(meta_function::equal_to, f);
-					}
-				}
-				if (fx(meta_function::pairs)) {
-					ifx(meta_function::pairs, &usertype_container<as_container_t<T>>::pairs_call);
-				}
-				if (fx(meta_function::length)) {
-					if constexpr (meta::has_size<T>::value) {
-#if defined(__clang__)
-						ifx(meta_function::length, &c_call<decltype(&T::size), &T::size>);
-#else
-						typedef decltype(std::declval<T>().size()) R;
-						using sz_func = R (T::*)();
-						ifx(meta_function::length, &c_call<decltype(static_cast<sz_func>(&T::size)), static_cast<sz_func>(&T::size)>);
-#endif
-					}
-					else if constexpr (meta::has_size<const T>::value) {
-#if defined(__clang__)
-						ifx(meta_function::length, &c_call<decltype(&T::size), &T::size>);
-#else
-						typedef decltype(std::declval<T>().size()) R;
-						using sz_func = R (T::*)() const;
-						lua_CFunction f = &c_call<decltype(static_cast<sz_func>(&T::size)), static_cast<sz_func>(&T::size)>;
-						ifx(meta_function::length, f);
-#endif
-					}
-				}
-				if (fx(meta_function::to_string)) {
-					if constexpr (is_to_stringable<T>::value) {
-						lua_CFunction f = &detail::static_trampoline<&default_to_string<T>>;
-						ifx(meta_function::to_string, f);
-					}
-				}
-				if (fx(meta_function::call_function)) {
-					if constexpr (meta::has_deducible_signature<T>::value) {
-						lua_CFunction f = &c_call<decltype(&T::operator()), &T::operator()>;
-						ifx(meta_function::call_function, f);
-					}
-				}
-			}
-		}
 	} // namespace u_detail
 
 	namespace stack { namespace stack_detail {
@@ -274,15 +127,11 @@ namespace sol {
 
 			void operator()() const {
 				if (luaL_newmetatable(L, key) == 1) {
-					luaL_Reg l[64] {};
+					detail::lua_reg_table l{};
 					int index = 0;
-					auto prop_fx = [](meta_function) { return true; };
-					auto insert_fx = [&l, &index](meta_function mf, lua_CFunction f) {
-						l[index] = luaL_Reg { to_string(mf).c_str(), f };
-						++index;
-					};
-					u_detail::insert_default_registrations<P>(insert_fx, prop_fx);
-					l[index] = luaL_Reg { to_string(meta_function::garbage_collect).c_str(), u_detail::make_destructor<P>() };
+					detail::indexed_insert insert_fx(l, index);
+					detail::insert_default_registrations<P>(insert_fx, detail::property_always_true);
+					l[index] = luaL_Reg{ to_string(meta_function::garbage_collect).c_str(), detail::make_destructor<P>() };
 					luaL_setfuncs(L, l, 0);
 
 					// __type table
@@ -290,7 +139,7 @@ namespace sol {
 					const std::string& name = detail::demangle<T>();
 					lua_pushlstring(L, name.c_str(), name.size());
 					lua_setfield(L, -2, "name");
-					lua_CFunction is_func = &u_detail::is_check<T>;
+					lua_CFunction is_func = &detail::is_check<T>;
 					lua_pushcclosure(L, is_func, 0);
 					lua_setfield(L, -2, "is");
 					lua_setfield(L, -2, to_string(meta_function::type).c_str());

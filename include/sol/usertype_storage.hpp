@@ -158,7 +158,7 @@ namespace u_detail {
 		reference named_index_table;
 		reference type_table;
 		reference gc_names_table;
-		reference metametatable;
+		reference named_metatable;
 		std::bitset<64> properties;
 		index_call_storage base_index;
 		index_call_storage base_new_index;
@@ -166,7 +166,7 @@ namespace u_detail {
 		bool is_using_new_index;
 
 		usertype_storage_base(lua_State* L)
-		: storage(), string_keys(), auxiliary_keys(), value_index_table(), reference_index_table(), unique_index_table(), const_reference_index_table(), type_table(make_reference(L, create)), gc_names_table(make_reference(L, create)), metametatable(make_reference(L, create)), properties(), base_index(), base_new_index(), is_using_index(false), is_using_new_index(false) {
+		: storage(), string_keys(), auxiliary_keys(), value_index_table(), reference_index_table(), unique_index_table(), const_reference_index_table(), type_table(make_reference(L, create)), gc_names_table(make_reference(L, create)), named_metatable(make_reference(L, create)), properties(), base_index(), base_new_index(), is_using_index(false), is_using_new_index(false) {
 			base_index.binding_data = nullptr;
 			base_index.index = index_target_fail;
 			base_index.new_index = index_target_fail;
@@ -339,8 +339,8 @@ namespace u_detail {
 			}
 			else {
 				if (submetatable_type == submetatable::named) {
-					stack::set_field(L, metatable_key, metametatable, t.stack_index());
-					stack_reference stack_metametatable(L, -metametatable.push());
+					stack::set_field(L, metatable_key, named_metatable, t.stack_index());
+					stack_reference stack_metametatable(L, -named_metatable.push());
 					stack::set_field<false, true>(L, meta_function::index, make_closure(uts::meta_index_call, nullptr, make_light(*this), make_light(this_base), nullptr, toplevel_magic), stack_metametatable.stack_index());
 					stack::set_field<false, true>(L, meta_function::new_index, make_closure(uts::meta_new_index_call, nullptr, make_light(*this), make_light(this_base), nullptr, toplevel_magic), stack_metametatable.stack_index());
 					stack_metametatable.pop();
@@ -433,19 +433,19 @@ namespace u_detail {
 		using KeyU = meta::unwrap_unqualified_t<Key>;
 		using Binding = binding<KeyU, ValueU, T>;
 		using is_var_bind = is_variable_binding<ValueU>;
-		if constexpr (std::is_same_v<Key, call_construction>) {
+		if constexpr (std::is_same_v<KeyU, call_construction>) {
 			std::unique_ptr<Binding> p_binding = std::make_unique<Binding>(std::forward<Value>(value));
 			Binding& b = *p_binding;
 			this->storage.push_back(std::move(p_binding));
 
-			this->named_index_table.push();
+			this->named_metatable.push();
 			absolute_index metametatable_index(L, -1);
 			stack::push(L, nullptr);
 			stack::push(L, b.data());
 			lua_CFunction target_func = &b.call<false, false>;
 			lua_pushcclosure(L, target_func, 2);
 			lua_setfield(L, metametatable_index, to_string(meta_function::call).c_str());
-			this->named_index_table.pop();
+			this->named_metatable.pop();
 		}
 		else if constexpr ((meta::is_string_constructible<KeyU>::value || std::is_same_v<KeyU, meta_function>)&&(!is_lua_reference_or_proxy<ValueU>::value && !is_lua_reference_or_proxy<KeyU>::value)) {
 			std::unique_ptr<Binding> p_binding = std::make_unique<Binding>(std::forward<Value>(value));
@@ -553,7 +553,7 @@ namespace u_detail {
 		int usertype_storage_metatabe_count = stack::push(L, new_table(0, 1));
 		stack_table usertype_storage_metatable(L, -usertype_storage_metatabe_count);
 		// set the destruction routine on the metatable
-		stack::set_field(L, meta_function::garbage_collect, detail::user_alloc_destruct<T>, usertype_storage_metatable.stack_index());
+		stack::set_field(L, meta_function::garbage_collect, detail::user_alloc_destruct<usertype_storage<T>>, usertype_storage_metatable.stack_index());
 		// set the metatable on the usertype storage userdata
 		stack::set_field(L, metatable_key, usertype_storage_metatable, usertype_storage_ref.stack_index());
 		usertype_storage_metatable.pop();
@@ -638,7 +638,7 @@ namespace u_detail {
 	}
 
 	template <typename T>
-	inline int register_usertype(lua_State* L, optional<no_construction> no_default_constructor = nullopt) {
+	inline int register_usertype(lua_State* L, automagic_enrollments enrollments = {}) {
 		using u_traits = usertype_traits<T>;
 		using u_const_traits = usertype_traits<const T>;
 		using u_unique_traits = usertype_traits<detail::unique_usertype<T>>;
@@ -704,7 +704,7 @@ namespace u_detail {
 		// STEP 4: add some useful information to the type table
 		stack_reference stacked_type_table(L, -storage.type_table.push());
 		stack::set_field(L, "name", detail::demangle<T>(), stacked_type_table.stack_index());
-		stack::set_field(L, "is", &u_detail::is_check<T>, stacked_type_table.stack_index());
+		stack::set_field(L, "is", &detail::is_check<T>, stacked_type_table.stack_index());
 		stacked_type_table.pop();
 
 		// STEP 5: create and hook up metatable,
@@ -781,14 +781,12 @@ namespace u_detail {
 				stack::set_field(L, detail::base_class_cast_key(), (void*)&detail::inheritance<T>::type_cast, t.stack_index());
 			}
 
-			auto prop_fx = [&](meta_function mf) {
-				return !storage.properties[static_cast<int>(mf)];
-			};
+			auto prop_fx = properties_enrollment_allowed(storage.properties, enrollments);
 			auto insert_fx = [&](meta_function mf, lua_CFunction reg) {
 				stack::set_field(L, mf, reg, t.stack_index());
 				storage.properties[static_cast<int>(mf)] = true;
 			};
-			u_detail::insert_default_registrations<T>(insert_fx, prop_fx);
+			detail::insert_default_registrations<T>(insert_fx, prop_fx);
 
 			// There are no variables, so serialize the fast function stuff
 			// be sure to reset the index stuff to the non-fast version
@@ -800,8 +798,8 @@ namespace u_detail {
 				stack::set_field(L, meta_function::gc_names, storage.gc_names_table, t.stack_index());
 
 				// fancy new_indexing when using the named table
-				stack::set_field<false, true>(L, metatable_key, storage.metametatable, t.stack_index());
-				stack_reference stack_metametatable(L, -storage.metametatable.push());
+				stack::set_field<false, true>(L, metatable_key, storage.named_metatable, t.stack_index());
+				stack_reference stack_metametatable(L, -storage.named_metatable.push());
 				stack::set_field<false, true>(L, meta_function::index, make_closure(uts::meta_index_call, nullptr, make_light(storage), make_light(base_storage), nullptr, toplevel_magic), stack_metametatable.stack_index());
 				stack::set_field<false, true>(L, meta_function::new_index, make_closure(uts::meta_new_index_call, nullptr, make_light(storage), make_light(base_storage), nullptr, toplevel_magic), stack_metametatable.stack_index());
 				stack_metametatable.pop();
@@ -819,7 +817,7 @@ namespace u_detail {
 
 		// can only use set AFTER we initialize all the metatables
 		if constexpr (std::is_default_constructible_v<T>) {
-			if (no_default_constructor == nullopt) {
+			if (enrollments.default_constructor) {
 				storage.set(L, meta_function::construct, constructors<T()>());
 			}
 		}
