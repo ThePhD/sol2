@@ -502,9 +502,7 @@ namespace sol {
 					return &usertype_alloc_destruct<T>;
 				}
 			}
-			else {
-				return &cannot_destruct<T>;
-			}
+			return &cannot_destruct<T>;
 		}
 
 		struct no_comp {

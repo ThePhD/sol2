@@ -41,6 +41,25 @@ bool func_opt_ret_bool(sol::optional<int> i) {
 	return true;
 }
 
+struct base1 {
+	int a1 = 250;
+};
+
+struct base2 {
+	int a2 = 500;
+};
+
+struct simple : base1 {
+};
+
+struct complex : base1, base2 {
+};
+
+SOL_BASE_CLASSES(complex, base1, base2);
+SOL_BASE_CLASSES(simple, base1);
+SOL_DERIVED_CLASSES(base1, simple, complex);
+SOL_DERIVED_CLASSES(base2, complex);
+
 TEST_CASE("table/traversal", "ensure that we can chain requests and tunnel down into a value if we desire") {
 
 	sol::state lua;
@@ -409,11 +428,12 @@ TEST_CASE("feature/indexing overrides", "make sure index functions can be overri
 	sol::usertype<DynamicObject> utdo = lua.new_usertype<DynamicObject>("DynamicObject");
 	utdo["props"] = sol::property(&DynamicObject::get_dynamic_props);
 
-	lua.safe_script(R"__(
+	auto result = lua.safe_script(R"__(
 obj = DynamicObject:new()
 obj.props.name = 'test name'
 print('name = ' .. obj.props.name)
-)__");
+)__", sol::script_pass_on_error);
+	REQUIRE(result.valid());
 
 	std::string name = lua["obj"]["props"]["name"];
 	REQUIRE(name == "test name");
@@ -459,20 +479,6 @@ TEST_CASE("features/indexing numbers", "make sure indexing functions can be over
 }
 
 TEST_CASE("features/multiple inheritance", "Ensure that multiple inheritance works as advertised") {
-	struct base1 {
-		int a1 = 250;
-	};
-
-	struct base2 {
-		int a2 = 500;
-	};
-
-	struct simple : base1 {
-	};
-
-	struct complex : base1, base2 {
-	};
-
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 	lua.new_usertype<base1>("base1",
@@ -596,14 +602,14 @@ TEST_CASE("compilation/const regression", "make sure constness in tables is resp
 	struct State {
 	public:
 		State() {
-			this->state_.registry()["state"] = this;
+			this->state_.globals()["state"] = this;
 		}
 
 		sol::state state_;
 	};
 
 	State state;
-	State* s = state.state_.registry()["state"];
+	State* s = state.state_.globals()["state"];
 	REQUIRE(s == &state);
 }
 

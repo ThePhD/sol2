@@ -372,15 +372,6 @@ TEST_CASE("operators/container-like", "test that generic begin/end and iterator 
 			REQUIRE(i == 10);
 		}
 	}
-	SECTION("simple") {
-		lua.new_simple_usertype<container>("container");
-		{
-			lua.safe_script("obj = container.new()");
-			lua.safe_script("i = 0 for k, v in pairs(obj) do i = i + 1 assert(k == v) end");
-			std::size_t i = lua["i"];
-			REQUIRE(i == 10);
-		}
-	}
 #else
 	SUCCEED("");
 #endif

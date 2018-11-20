@@ -453,16 +453,17 @@ namespace u_detail {
 			this->storage.push_back(std::move(p_binding));
 
 			std::string s = u_detail::make_string(std::forward<Key>(key));
-			bool is_index = is_var_bind::value || (s == to_string(meta_function::index));
-			bool is_new_index = is_var_bind::value || (s == to_string(meta_function::new_index));
+			bool is_index = (s == to_string(meta_function::index));
+			bool is_new_index = (s == to_string(meta_function::new_index));
 			bool no_use_named = s == to_string(meta_function::call);
+			bool poison_indexing = is_var_bind::value || is_index || is_new_index;
 			index_call_storage ics;
 			ics.binding_data = b.data();
-			ics.index = &b.index_call_with_<true, is_var_bind::value>;
-			ics.new_index = &b.index_call_with_<false, is_var_bind::value>;
+			ics.index = is_index ? &b.call_with_<true, is_var_bind::value> : &b.index_call_with_<true, is_var_bind::value>;
+			ics.new_index = is_new_index ? &b.call_with_<false, is_var_bind::value> : &b.index_call_with_<false, is_var_bind::value>;
 			// need to swap everything to use fast indexing here
 			auto fet = [&](lua_State* L, submetatable submetatable_type, reference& fast_index_table) {
-				if (submetatable_type == submetatable::named && (no_use_named || is_index || is_new_index)) {
+				if (submetatable_type == submetatable::named && (no_use_named || poison_indexing)) {
 					// do not override __call or
 					// other specific meta functions on named metatable:
 					// we need that for call construction
@@ -477,7 +478,7 @@ namespace u_detail {
 				else {
 					stack::set_field<false, true>(L, s, make_closure(&b.call<false, is_var_bind::value>, nullptr, ics.binding_data), t.stack_index());
 				}
-				if (is_index || is_new_index) {
+				if (poison_indexing) {
 					change_indexing<T>(L, submetatable_type, t);
 				}
 				t.pop();
@@ -781,7 +782,7 @@ namespace u_detail {
 				stack::set_field(L, detail::base_class_cast_key(), (void*)&detail::inheritance<T>::type_cast, t.stack_index());
 			}
 
-			auto prop_fx = properties_enrollment_allowed(storage.properties, enrollments);
+			auto prop_fx = detail::properties_enrollment_allowed(storage.properties, enrollments);
 			auto insert_fx = [&](meta_function mf, lua_CFunction reg) {
 				stack::set_field(L, mf, reg, t.stack_index());
 				storage.properties[static_cast<int>(mf)] = true;

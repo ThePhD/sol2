@@ -131,7 +131,9 @@ namespace sol {
 					int index = 0;
 					detail::indexed_insert insert_fx(l, index);
 					detail::insert_default_registrations<P>(insert_fx, detail::property_always_true);
-					l[index] = luaL_Reg{ to_string(meta_function::garbage_collect).c_str(), detail::make_destructor<P>() };
+					if constexpr (!std::is_pointer_v<T>) {
+						l[index] = luaL_Reg{ to_string(meta_function::garbage_collect).c_str(), detail::make_destructor<P>() };
+					}
 					luaL_setfuncs(L, l, 0);
 
 					// __type table
