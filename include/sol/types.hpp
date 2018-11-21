@@ -51,6 +51,21 @@
 #endif // Using Boost
 
 namespace sol {
+	namespace usertype_detail {
+#if defined(SOL_USE_BOOST)
+#if defined(SOL_CXX17_FEATURES)
+		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
+		using map_t = boost::unordered_map<K, V, H, E>;
+#else
+		template <typename K, typename V, typename H = boost::hash<K>, typename E = std::equal_to<>>
+		using map_t = boost::unordered_map<K, V, H, E>;
+#endif // C++17 or not, WITH boost
+#else
+		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
+		using map_t = std::unordered_map<K, V, H, E>;
+#endif // Boost map target
+	} // namespace usertype_detail
+
 	namespace detail {
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
 		typedef int (*lua_CFunction_noexcept)(lua_State* L) noexcept;
@@ -79,14 +94,14 @@ namespace sol {
 		};
 
 		struct unchecked_t {};
-		const unchecked_t unchecked = unchecked_t {};
+		const unchecked_t unchecked = unchecked_t{};
 
 		struct yield_tag_t {};
-		const yield_tag_t yield_tag = yield_tag_t {};
+		const yield_tag_t yield_tag = yield_tag_t{};
 	} // namespace detail
 
 	struct lua_nil_t {};
-	const lua_nil_t lua_nil {};
+	const lua_nil_t lua_nil{};
 	inline bool operator==(lua_nil_t, lua_nil_t) {
 		return true;
 	}
@@ -95,7 +110,7 @@ namespace sol {
 	}
 	typedef lua_nil_t nil_t;
 #if !defined(SOL_NO_NIL) || (SOL_NO_NIL == 0)
-	const nil_t nil {};
+	const nil_t nil{};
 #endif
 
 	namespace detail {
@@ -596,7 +611,7 @@ namespace sol {
 	};
 
 	inline const std::string& to_string(call_status c) {
-		static const std::array<std::string, 10> names { { "ok",
+		static const std::array<std::string, 10> names{ { "ok",
 			"yielded",
 			"runtime",
 			"memory",
@@ -647,7 +662,7 @@ namespace sol {
 	}
 
 	inline const std::string& to_string(load_status c) {
-		static const std::array<std::string, 7> names { { "ok",
+		static const std::array<std::string, 7> names{ { "ok",
 			"memory",
 			"gc",
 			"syntax",
@@ -674,7 +689,7 @@ namespace sol {
 	}
 
 	inline const std::string& to_string(load_mode c) {
-		static const std::array<std::string, 3> names { {
+		static const std::array<std::string, 3> names{ {
 			"bt",
 			"t",
 			"b",
@@ -982,8 +997,10 @@ namespace sol {
 		template <typename T>
 		struct lua_type_of<optional<T>> : std::integral_constant<type, type::poly> {};
 
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 		template <typename T>
 		struct lua_type_of<std::optional<T>> : std::integral_constant<type, type::poly> {};
+#endif // std::optional
 
 		template <>
 		struct lua_type_of<variadic_args> : std::integral_constant<type, type::poly> {};
@@ -1124,6 +1141,10 @@ namespace sol {
 	struct is_lua_primitive<light<T>> : is_lua_primitive<T*> {};
 	template <typename T>
 	struct is_lua_primitive<optional<T>> : std::true_type {};
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+	template <typename T>
+	struct is_lua_primitive<std::optional<T>> : std::true_type {};
+#endif
 	template <typename T>
 	struct is_lua_primitive<as_table_t<T>> : std::true_type {};
 	template <typename T>
@@ -1241,7 +1262,7 @@ namespace sol {
 		struct add_destructor_tag {};
 		struct check_destructor_tag {};
 		struct verified_tag {
-		} const verified {};
+		} const verified{};
 	} // namespace detail
 
 	struct automagic_enrollments {
