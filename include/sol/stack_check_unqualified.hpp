@@ -31,8 +31,9 @@
 #include <functional>
 #include <utility>
 #include <cmath>
-#ifdef SOL_CXX17_FEATURES
-#ifdef SOL_STD_VARIANT
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+#include <optional>
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 #include <variant>
 #endif // SOL_STD_VARIANT
 #endif // SOL_CXX17_FEATURES
@@ -609,7 +610,26 @@ namespace stack {
 	};
 
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+
+	template <typename T, typename C>
+	struct checker<std::optional<T>, type::poly, C> {
+		template <typename Handler>
+		static bool check(lua_State* L, int index, Handler&&, record& tracking) {
+			type t = type_of(L, index);
+			if (t == type::none) {
+				tracking.use(0);
+				return true;
+			}
+			if (t == type::lua_nil) {
+				tracking.use(1);
+				return true;
+			}
+			return stack::check<T>(L, index, no_panic, tracking);
+		}
+	};
+
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+
 	template <typename... Tn, typename C>
 	struct checker<std::variant<Tn...>, type::poly, C> {
 		typedef std::variant<Tn...> V;
@@ -640,7 +660,9 @@ namespace stack {
 			return is_one(std::integral_constant<std::size_t, V_size::value>(), L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
+
 #endif // SOL_STD_VARIANT
+
 #endif // SOL_CXX17_FEATURES
 }
 } // namespace sol::stack
