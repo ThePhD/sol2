@@ -37,6 +37,7 @@
 #include <limits>
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #include <string_view>
+#include <optional>
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 #include <variant>
 #endif // Can use variant
@@ -611,7 +612,7 @@ namespace stack {
 	template <size_t N>
 	struct pusher<char[N]> {
 		static int push(lua_State* L, const char (&str)[N]) {
-			lua_pushlstring(L, str, N - 1);
+			lua_pushlstring(L, str, std::char_traits<char>::length(str));
 			return 1;
 		}
 
@@ -890,7 +891,7 @@ namespace stack {
 	template <size_t N>
 	struct pusher<wchar_t[N]> {
 		static int push(lua_State* L, const wchar_t (&str)[N]) {
-			return push(L, str, N - 1);
+			return push(L, str, std::char_traits<wchar_t>::length(str));
 		}
 
 		static int push(lua_State* L, const wchar_t (&str)[N], std::size_t sz) {
@@ -901,7 +902,7 @@ namespace stack {
 	template <size_t N>
 	struct pusher<char16_t[N]> {
 		static int push(lua_State* L, const char16_t (&str)[N]) {
-			return push(L, str, N - 1);
+			return push(L, str, std::char_traits<char16_t>::length(str));
 		}
 
 		static int push(lua_State* L, const char16_t (&str)[N], std::size_t sz) {
@@ -912,7 +913,7 @@ namespace stack {
 	template <size_t N>
 	struct pusher<char32_t[N]> {
 		static int push(lua_State* L, const char32_t (&str)[N]) {
-			return push(L, str, N - 1);
+			return push(L, str, std::char_traits<char32_t>::length(str));
 		}
 
 		static int push(lua_State* L, const char32_t (&str)[N], std::size_t sz) {
@@ -1028,6 +1029,17 @@ namespace stack {
 	};
 
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+	template <typename O>
+	struct pusher<std::optional<O>> {
+		template <typename T>
+		static int push(lua_State* L, T&& t) {
+			if (t == std::nullopt) {
+				return stack::push(L, nullopt);
+			}
+			return stack::push(L, static_cast<std::conditional_t<std::is_lvalue_reference<T>::value, O&, O&&>>(t.value()));
+		}
+	};
+
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	namespace stack_detail {
 
