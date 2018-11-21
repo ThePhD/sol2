@@ -28,7 +28,7 @@
 
 namespace sol {
 namespace function_detail {
-	template <typename Func, bool is_yielding>
+	template <typename Func, bool is_yielding, bool no_trampoline>
 	struct functor_function {
 		typedef std::decay_t<meta::unwrap_unqualified_t<Func>> function_type;
 		function_type fx;
@@ -49,8 +49,13 @@ namespace function_detail {
 		}
 
 		int operator()(lua_State* L) {
-			auto f = [&](lua_State*) -> int { return this->call(L); };
-			return detail::trampoline(L, f);
+			if (!no_trampoline) {
+				auto f = [&](lua_State*) -> int { return this->call(L); };
+				return detail::trampoline(L, f);
+			}
+			else {
+				return call(L);
+			}
 		}
 	};
 

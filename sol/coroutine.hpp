@@ -1,4 +1,4 @@
-// sol2 
+// sol2
 
 // The MIT License (MIT)
 
@@ -41,7 +41,12 @@ namespace sol {
 		call_status stats = call_status::yielded;
 
 		void luacall(std::ptrdiff_t argcount, std::ptrdiff_t) {
+#if SOL_LUA_VERSION >= 504
+			int nres;
+			stats = static_cast<call_status>(lua_resume(lua_state(), nullptr, static_cast<int>(argcount), &nres));
+#else
 			stats = static_cast<call_status>(lua_resume(lua_state(), nullptr, static_cast<int>(argcount)));
+#endif
 		}
 
 		template <std::size_t... I, typename... Ret>
@@ -84,7 +89,7 @@ namespace sol {
 		basic_coroutine() = default;
 		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_coroutine>>, meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>>, meta::neg<std::is_same<base_t, stack_reference>>, meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_coroutine(T&& r) noexcept
-			: base_t(std::forward<T>(r)), error_handler(detail::get_default_handler<reference, is_main_threaded<base_t>::value>(r.lua_state())) {
+		: base_t(std::forward<T>(r)), error_handler(detail::get_default_handler<reference, is_main_threaded<base_t>::value>(r.lua_state())) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			if (!is_function<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
@@ -98,50 +103,50 @@ namespace sol {
 		basic_coroutine(basic_coroutine&&) = default;
 		basic_coroutine& operator=(basic_coroutine&&) = default;
 		basic_coroutine(const basic_function<base_t>& b)
-			: basic_coroutine(b, detail::get_default_handler<reference, is_main_threaded<base_t>::value>(b.lua_state())) {
+		: basic_coroutine(b, detail::get_default_handler<reference, is_main_threaded<base_t>::value>(b.lua_state())) {
 		}
 		basic_coroutine(basic_function<base_t>&& b)
-			: basic_coroutine(std::move(b), detail::get_default_handler<reference, is_main_threaded<base_t>::value>(b.lua_state())) {
+		: basic_coroutine(std::move(b), detail::get_default_handler<reference, is_main_threaded<base_t>::value>(b.lua_state())) {
 		}
 		basic_coroutine(const basic_function<base_t>& b, handler_t eh)
-			: base_t(b), error_handler(std::move(eh)) {
+		: base_t(b), error_handler(std::move(eh)) {
 		}
 		basic_coroutine(basic_function<base_t>&& b, handler_t eh)
-			: base_t(std::move(b)), error_handler(std::move(eh)) {
+		: base_t(std::move(b)), error_handler(std::move(eh)) {
 		}
 		basic_coroutine(const stack_reference& r)
-			: basic_coroutine(r.lua_state(), r.stack_index(), detail::get_default_handler<reference, is_main_threaded<base_t>::value>(r.lua_state())) {
+		: basic_coroutine(r.lua_state(), r.stack_index(), detail::get_default_handler<reference, is_main_threaded<base_t>::value>(r.lua_state())) {
 		}
 		basic_coroutine(stack_reference&& r)
-			: basic_coroutine(r.lua_state(), r.stack_index(), detail::get_default_handler<reference, is_main_threaded<base_t>::value>(r.lua_state())) {
+		: basic_coroutine(r.lua_state(), r.stack_index(), detail::get_default_handler<reference, is_main_threaded<base_t>::value>(r.lua_state())) {
 		}
 		basic_coroutine(const stack_reference& r, handler_t eh)
-			: basic_coroutine(r.lua_state(), r.stack_index(), std::move(eh)) {
+		: basic_coroutine(r.lua_state(), r.stack_index(), std::move(eh)) {
 		}
 		basic_coroutine(stack_reference&& r, handler_t eh)
-			: basic_coroutine(r.lua_state(), r.stack_index(), std::move(eh)) {
+		: basic_coroutine(r.lua_state(), r.stack_index(), std::move(eh)) {
 		}
 
 		template <typename Super>
 		basic_coroutine(const proxy_base<Super>& p)
-			: basic_coroutine(p, detail::get_default_handler<reference, is_main_threaded<base_t>::value>(p.lua_state())) {
+		: basic_coroutine(p, detail::get_default_handler<reference, is_main_threaded<base_t>::value>(p.lua_state())) {
 		}
 		template <typename Super>
 		basic_coroutine(proxy_base<Super>&& p)
-			: basic_coroutine(std::move(p), detail::get_default_handler<reference, is_main_threaded<base_t>::value>(p.lua_state())) {
+		: basic_coroutine(std::move(p), detail::get_default_handler<reference, is_main_threaded<base_t>::value>(p.lua_state())) {
 		}
 		template <typename Proxy, typename Handler, meta::enable<std::is_base_of<proxy_base_tag, meta::unqualified_t<Proxy>>, meta::neg<is_lua_index<meta::unqualified_t<Handler>>>> = meta::enabler>
 		basic_coroutine(Proxy&& p, Handler&& eh)
-			: basic_coroutine(detail::force_cast<base_t>(p), std::forward<Handler>(eh)) {
+		: basic_coroutine(detail::force_cast<base_t>(p), std::forward<Handler>(eh)) {
 		}
 
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_coroutine(lua_State* L, T&& r)
-			: basic_coroutine(L, std::forward<T>(r), detail::get_default_handler<reference, is_main_threaded<base_t>::value>(L)) {
+		: basic_coroutine(L, std::forward<T>(r), detail::get_default_handler<reference, is_main_threaded<base_t>::value>(L)) {
 		}
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_coroutine(lua_State* L, T&& r, handler_t eh)
-			: base_t(L, std::forward<T>(r)), error_handler(std::move(eh)) {
+		: base_t(L, std::forward<T>(r)), error_handler(std::move(eh)) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
@@ -150,44 +155,44 @@ namespace sol {
 		}
 
 		basic_coroutine(lua_nil_t n)
-			: base_t(n), error_handler(n) {
+		: base_t(n), error_handler(n) {
 		}
 
 		basic_coroutine(lua_State* L, int index = -1)
-			: basic_coroutine(L, index, detail::get_default_handler<reference, is_main_threaded<base_t>::value>(L)) {
+		: basic_coroutine(L, index, detail::get_default_handler<reference, is_main_threaded<base_t>::value>(L)) {
 		}
 		basic_coroutine(lua_State* L, int index, handler_t eh)
-			: base_t(L, index), error_handler(std::move(eh)) {
+		: base_t(L, index), error_handler(std::move(eh)) {
 #ifdef SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_coroutine>(L, index, handler);
 #endif // Safety
 		}
 		basic_coroutine(lua_State* L, absolute_index index)
-			: basic_coroutine(L, index, detail::get_default_handler<reference, is_main_threaded<base_t>::value>(L)) {
+		: basic_coroutine(L, index, detail::get_default_handler<reference, is_main_threaded<base_t>::value>(L)) {
 		}
 		basic_coroutine(lua_State* L, absolute_index index, handler_t eh)
-			: base_t(L, index), error_handler(std::move(eh)) {
+		: base_t(L, index), error_handler(std::move(eh)) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_coroutine>(L, index, handler);
 #endif // Safety
 		}
 		basic_coroutine(lua_State* L, raw_index index)
-			: basic_coroutine(L, index, detail::get_default_handler<reference, is_main_threaded<base_t>::value>(L)) {
+		: basic_coroutine(L, index, detail::get_default_handler<reference, is_main_threaded<base_t>::value>(L)) {
 		}
 		basic_coroutine(lua_State* L, raw_index index, handler_t eh)
-			: base_t(L, index), error_handler(std::move(eh)) {
+		: base_t(L, index), error_handler(std::move(eh)) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_coroutine>(L, index, handler);
 #endif // Safety
 		}
 		basic_coroutine(lua_State* L, ref_index index)
-			: basic_coroutine(L, index, detail::get_default_handler<reference, is_main_threaded<base_t>::value>(L)) {
+		: basic_coroutine(L, index, detail::get_default_handler<reference, is_main_threaded<base_t>::value>(L)) {
 		}
 		basic_coroutine(lua_State* L, ref_index index, handler_t eh)
-			: base_t(L, index), error_handler(std::move(eh)) {
+		: base_t(L, index), error_handler(std::move(eh)) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};

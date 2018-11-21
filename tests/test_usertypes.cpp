@@ -1635,8 +1635,6 @@ TEST_CASE("usertype/runtime-extensibility", "Check if usertypes are runtime exte
 	class derived_b : public base_a {
 	};
 
-		
-
 	SECTION("just functions") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
@@ -1747,8 +1745,12 @@ end
 		REQUIRE(pfr0.valid());
 		auto pfr1 = lua.safe_script("function B:c() print('B') return 2 end", sol::script_pass_on_error);
 		REQUIRE(pfr1.valid());
-		auto pfr2 = lua.safe_script("local obja = A.new() local objb = B.new() assert(obja:c() == 1) assert(objb:c() == 2)", sol::script_pass_on_error);
+		auto pfr2 = lua.safe_script("obja = A.new() objb = B.new()", sol::script_default_on_error);
 		REQUIRE(pfr2.valid());
+		auto pfr3 = lua.safe_script("assert(obja:c() == 1)", sol::script_default_on_error);
+		REQUIRE(pfr3.valid());
+		auto pfr4 = lua.safe_script("assert(objb:c() == 2)", sol::script_default_on_error);
+		REQUIRE(pfr4.valid());
 	}
 }
 

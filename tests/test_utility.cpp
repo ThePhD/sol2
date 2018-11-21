@@ -72,10 +72,14 @@ TEST_CASE("utility/variant", "test that variant can be round-tripped") {
 			return v == 2;
 		});
 		lua["v"] = std::variant<float, int, std::string>(2);
-		REQUIRE_NOTHROW([&]() {
-			lua.safe_script("assert(f(v))");
-			lua.safe_script("assert(g(v))");
-		}());
+		{
+			auto result = lua.safe_script("assert(f(v))", sol::script_pass_on_error);
+			REQUIRE(result.valid());
+		};
+		{
+			auto result = lua.safe_script("assert(g(v))", sol::script_pass_on_error);
+			REQUIRE(result.valid());
+		};
 	}
 	SECTION("throws") {
 		sol::state lua;
@@ -89,6 +93,53 @@ TEST_CASE("utility/variant", "test that variant can be round-tripped") {
 			return v == 2;
 		});
 		lua["v"] = std::variant<float, int, std::string>(std::string("bark"));
+		{
+			auto result = lua.safe_script("assert(f(v))", sol::script_pass_on_error);
+			REQUIRE_FALSE(result.valid());
+		};
+		{
+			auto result = lua.safe_script("assert(g(v))", sol::script_pass_on_error);
+			REQUIRE_FALSE(result.valid());
+		};
+	}
+#else
+	REQUIRE(true);
+#endif // C++17
+}
+
+TEST_CASE("utility/optional", "test that shit optional can be round-tripped") {
+#ifdef SOL_CXX17_FEATURES
+	SECTION("okay") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.set_function("f", [](int v) {
+			return v == 2;
+		});
+		lua.set_function("g", [](std::optional<int> vv) {
+			return vv && *vv == 2;
+		});
+		lua["v"] = std::optional<int>(2);
+		{
+			auto result = lua.safe_script("assert(f(v))", sol::script_pass_on_error);
+			REQUIRE(result.valid());
+		}
+		{
+			auto result = lua.safe_script("assert(g(v))", sol::script_pass_on_error);
+			REQUIRE(result.valid());
+		}
+	}
+	SECTION("throws") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		lua.set_function("f", [](int v) {
+			return v == 2;
+		});
+		lua.set_function("g", [](std::optional<int> vv) {
+			return vv && *vv == 2;
+		});
+		lua["v"] = std::optional<int>(std::nullopt);
 		{
 			auto result = lua.safe_script("assert(f(v))", sol::script_pass_on_error);
 			REQUIRE_FALSE(result.valid());

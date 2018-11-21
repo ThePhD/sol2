@@ -593,6 +593,9 @@ namespace sol {
 			if (member != nullptr) {
 				return (member)(L, static_cast<void*>(&f), static_cast<usertype_metatable_core&>(f), runtime_target);
 			}
+			if (is_meta_bound && toplevel && !is_index) {
+				return usertype_detail::metatable_new_index<T, false>(L);
+			}
 			string_view accessor = stack::get<string_view>(L, keyidx);
 			int ret = 0;
 			bool found = false;

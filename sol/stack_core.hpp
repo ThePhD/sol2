@@ -1,4 +1,4 @@
-// sol2 
+// sol2
 
 // The MIT License (MIT)
 
@@ -40,6 +40,9 @@
 #include <forward_list>
 #include <string>
 #include <algorithm>
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+#include <optional>
+#endif // C++17
 
 namespace sol {
 	namespace detail {
@@ -337,7 +340,7 @@ namespace sol {
 					return false;
 				}
 				allocated_size -= sizeof(T*);
-				
+
 				adjusted = static_cast<void*>(static_cast<char*>(pointer_adjusted) + sizeof(T*));
 				dx_adjusted = align(std::alignment_of<unique_destructor>::value, sizeof(unique_destructor), adjusted, allocated_size);
 				if (dx_adjusted == nullptr) {
@@ -345,7 +348,7 @@ namespace sol {
 					return false;
 				}
 				allocated_size -= sizeof(unique_destructor);
-				
+
 				adjusted = static_cast<void*>(static_cast<char*>(dx_adjusted) + sizeof(unique_destructor));
 
 				id_adjusted = align(std::alignment_of<unique_tag>::value, sizeof(unique_tag), adjusted, allocated_size);
@@ -354,7 +357,7 @@ namespace sol {
 					return false;
 				}
 				allocated_size -= sizeof(unique_tag);
-				
+
 				adjusted = static_cast<void*>(static_cast<char*>(id_adjusted) + sizeof(unique_tag));
 				data_adjusted = align(std::alignment_of<Real>::value, sizeof(Real), adjusted, allocated_size);
 				if (data_adjusted == nullptr) {
@@ -821,6 +824,13 @@ namespace sol {
 				return stack_detail::unchecked_unqualified_get<optional<T>>(L, index, tracking);
 			}
 
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+			template <typename T>
+			inline decltype(auto) tagged_unqualified_get(types<std::optional<T>>, lua_State* L, int index, record& tracking) {
+				return stack_detail::unchecked_unqualified_get<std::optional<T>>(L, index, tracking);
+			}
+#endif // shitty optional
+
 			template <typename T>
 			inline auto tagged_get(types<T>, lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_get<T>(L, index, tracking)) {
 				if (is_lua_reference<T>::value) {
@@ -834,6 +844,14 @@ namespace sol {
 			inline decltype(auto) tagged_get(types<optional<T>>, lua_State* L, int index, record& tracking) {
 				return stack_detail::unchecked_get<optional<T>>(L, index, tracking);
 			}
+
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+			template <typename T>
+			inline decltype(auto) tagged_get(types<std::optional<T>>, lua_State* L, int index, record& tracking) {
+				return stack_detail::unchecked_get<std::optional<T>>(L, index, tracking);
+			}
+#endif // shitty optional
+
 #else
 			template <typename T>
 			inline decltype(auto) tagged_unqualified_get(types<T>, lua_State* L, int index, record& tracking) {

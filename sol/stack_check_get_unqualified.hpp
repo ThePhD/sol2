@@ -28,8 +28,14 @@
 #include "stack_get.hpp"
 #include "stack_check.hpp"
 #include "optional.hpp"
+
 #include <cstdlib>
 #include <cmath>
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+#include <optional>
+#endif // C++17
+
+
 
 namespace sol {
 namespace stack {
@@ -137,6 +143,17 @@ namespace stack {
 	};
 
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+	template <typename T>
+	struct getter<std::optional<T>> {
+		static std::optional<T> get(lua_State* L, int index, record& tracking) {
+			if (!unqualified_check<T>(L, index, no_panic)) {
+				tracking.use(static_cast<int>(!lua_isnone(L, index)));
+				return std::nullopt;
+			}
+			return stack_detail::unchecked_unqualified_get<T>(L, index, tracking);
+		}
+	};
+
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	template <typename... Tn>
 	struct check_getter<std::variant<Tn...>> {
