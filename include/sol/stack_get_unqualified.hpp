@@ -171,7 +171,11 @@ namespace stack {
 						if (i == 0) {
 							break;
 						}
+#if defined(LUA_NILINTABLE) && LUA_NILINTABLE
+						lua_pop(L, vi);
+#else
 						lua_pop(L, (vi + 1));
+#endif
 						return arr;
 					}
 				}
@@ -882,6 +886,8 @@ namespace stack {
 	};
 
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+
+
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	template <typename... Tn>
 	struct getter<std::variant<Tn...>> {
