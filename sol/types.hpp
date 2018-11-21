@@ -1,4 +1,4 @@
-// sol2 
+// sol2
 
 // The MIT License (MIT)
 
@@ -64,13 +64,13 @@ namespace sol {
 		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
 		using map_t = std::unordered_map<K, V, H, E>;
 #endif // Boost map target
-	}
+	} // namespace usertype_detail
 
 	namespace detail {
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
-		typedef int(*lua_CFunction_noexcept)(lua_State* L) noexcept;
+		typedef int (*lua_CFunction_noexcept)(lua_State* L) noexcept;
 #else
-		typedef int(*lua_CFunction_noexcept)(lua_State* L);
+		typedef int (*lua_CFunction_noexcept)(lua_State* L);
 #endif // noexcept function type for lua_CFunction
 
 		template <typename T>
@@ -115,7 +115,7 @@ namespace sol {
 
 	namespace detail {
 		struct non_lua_nil_t {};
-	}
+	} // namespace detail
 
 	struct metatable_t {};
 	const metatable_t metatable_key = {};
@@ -137,11 +137,11 @@ namespace sol {
 		yielding_t& operator=(yielding_t&&) = default;
 		template <typename Arg, meta::enable<meta::neg<std::is_same<meta::unqualified_t<Arg>, yielding_t>>, meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<Arg>>>> = meta::enabler>
 		yielding_t(Arg&& arg)
-			: func(std::forward<Arg>(arg)) {
+		: func(std::forward<Arg>(arg)) {
 		}
 		template <typename Arg0, typename Arg1, typename... Args>
 		yielding_t(Arg0&& arg0, Arg1&& arg1, Args&&... args)
-			: func(std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...) {
+		: func(std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...) {
 		}
 	};
 
@@ -609,8 +609,7 @@ namespace sol {
 	};
 
 	inline const std::string& to_string(call_status c) {
-		static const std::array<std::string, 10> names{ {
-			"ok",
+		static const std::array<std::string, 10> names{ { "ok",
 			"yielded",
 			"runtime",
 			"memory",
@@ -619,8 +618,7 @@ namespace sol {
 			"syntax",
 			"file",
 			"CRITICAL_EXCEPTION_FAILURE",
-			"CRITICAL_INDETERMINATE_STATE_FAILURE"
-		} };
+			"CRITICAL_INDETERMINATE_STATE_FAILURE" } };
 		switch (c) {
 		case call_status::ok:
 			return names[0];
@@ -662,15 +660,13 @@ namespace sol {
 	}
 
 	inline const std::string& to_string(load_status c) {
-		static const std::array<std::string, 7> names{ {
-			"ok",
+		static const std::array<std::string, 7> names{ { "ok",
 			"memory",
 			"gc",
 			"syntax",
 			"file",
 			"CRITICAL_EXCEPTION_FAILURE",
-			"CRITICAL_INDETERMINATE_STATE_FAILURE"
-		} };
+			"CRITICAL_INDETERMINATE_STATE_FAILURE" } };
 		switch (c) {
 		case load_status::ok:
 			return names[0];
@@ -772,8 +768,7 @@ namespace sol {
 			"__ipairs",
 			"next",
 			"__type",
-			"__typeinfo" 
-		} };
+			"__typeinfo" } };
 		return names;
 	}
 
@@ -830,19 +825,10 @@ namespace sol {
 		struct is_container<T, std::enable_if_t<meta::is_string_like<meta::unqualified_t<T>>::value>> : std::false_type {};
 
 		template <typename T>
-		struct is_container<T, std::enable_if_t<meta::all<
-			std::is_array<meta::unqualified_t<T>>
-			, meta::neg<meta::any_same<std::remove_all_extents_t<meta::unqualified_t<T>>, char, wchar_t, char16_t, char32_t>>
-			>::value
-		>> : std::true_type {};
+		struct is_container<T, std::enable_if_t<meta::all<std::is_array<meta::unqualified_t<T>>, meta::neg<meta::any_same<std::remove_all_extents_t<meta::unqualified_t<T>>, char, wchar_t, char16_t, char32_t>>>::value>> : std::true_type {};
 
 		template <typename T>
-		struct is_container<T, std::enable_if_t<meta::all<
-			meta::has_begin_end<meta::unqualified_t<T>>
-			, meta::neg<is_initializer_list<meta::unqualified_t<T>>> 
-			, meta::neg<meta::is_string_like<meta::unqualified_t<T>>>
-		>::value
-		>> : std::true_type {};
+		struct is_container<T, std::enable_if_t<meta::all<meta::has_begin_end<meta::unqualified_t<T>>, meta::neg<is_initializer_list<meta::unqualified_t<T>>>, meta::neg<meta::is_string_like<meta::unqualified_t<T>>>>::value>> : std::true_type {};
 	} // namespace detail
 
 	template <typename T>
@@ -996,8 +982,10 @@ namespace sol {
 		template <typename T>
 		struct lua_type_of<optional<T>> : std::integral_constant<type, type::poly> {};
 
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 		template <typename T>
 		struct lua_type_of<std::optional<T>> : std::integral_constant<type, type::poly> {};
+#endif // std::optional
 
 		template <>
 		struct lua_type_of<variadic_args> : std::integral_constant<type, type::poly> {};
@@ -1129,6 +1117,10 @@ namespace sol {
 	struct is_lua_primitive<light<T>> : is_lua_primitive<T*> {};
 	template <typename T>
 	struct is_lua_primitive<optional<T>> : std::true_type {};
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+	template <typename T>
+	struct is_lua_primitive<std::optional<T>> : std::true_type {};
+#endif
 	template <typename T>
 	struct is_lua_primitive<as_table_t<T>> : std::true_type {};
 	template <typename T>
