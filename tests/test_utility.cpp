@@ -36,7 +36,6 @@
 std::mutex basic_init_require_mutex;
 
 void basic_initialization_and_lib_open() {
-
 	sol::state lua;
 	try {
 		lua.open_libraries();
@@ -148,6 +147,25 @@ TEST_CASE("utility/optional", "test that shit optional can be round-tripped") {
 			auto result = lua.safe_script("assert(g(v))", sol::script_pass_on_error);
 			REQUIRE_FALSE(result.valid());
 		};
+	}
+	SECTION("in classes") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base);
+
+		struct opt_c {
+			std::optional<int> member;
+		};
+
+		auto uto = lua.new_usertype<opt_c>("opt_c",
+			"value", &opt_c::member);
+
+		opt_c obj;
+		lua["obj"] = std::ref(obj);
+
+		lua.safe_script("print(obj.value) obj.value = 20  print(obj.value)");
+		REQUIRE(obj.member == 20);
+		lua.safe_script("print(obj.value) obj.value = nil print(obj.value)");
+		REQUIRE(obj.member == std::nullopt);
 	}
 #else
 	REQUIRE(true);

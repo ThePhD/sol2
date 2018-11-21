@@ -39,6 +39,7 @@
 #include <string>
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #include <string_view>
+#include <optional>
 #ifdef SOL_STD_VARIANT
 #include <variant>
 #endif
@@ -994,6 +995,9 @@ namespace sol {
 
 		template <typename T>
 		struct lua_type_of<optional<T>> : std::integral_constant<type, type::poly> {};
+
+		template <typename T>
+		struct lua_type_of<std::optional<T>> : std::integral_constant<type, type::poly> {};
 
 		template <>
 		struct lua_type_of<variadic_args> : std::integral_constant<type, type::poly> {};

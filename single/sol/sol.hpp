@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-11-21 12:34:11.276133 UTC
-// This header was generated with sol v2.20.5 (revision 157db07)
+// Generated 2018-11-21 20:02:05.860519 UTC
+// This header was generated with sol v2.20.5 (revision 55e9205)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4618,6 +4618,7 @@ namespace sol {
 // end of sol/filters.hpp
 
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+#include <optional>
 #ifdef SOL_STD_VARIANT
 #include <variant>
 #endif
@@ -5573,6 +5574,9 @@ namespace sol {
 
 		template <typename T>
 		struct lua_type_of<optional<T>> : std::integral_constant<type, type::poly> {};
+
+		template <typename T>
+		struct lua_type_of<std::optional<T>> : std::integral_constant<type, type::poly> {};
 
 		template <>
 		struct lua_type_of<variadic_args> : std::integral_constant<type, type::poly> {};
@@ -7148,7 +7152,6 @@ namespace sol {
 #include <forward_list>
 #include <algorithm>
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-#include <optional>
 #endif // C++17
 
 namespace sol {
@@ -8157,8 +8160,8 @@ namespace sol {
 // beginning of sol/stack_check_unqualified.hpp
 
 #include <cmath>
-#ifdef SOL_CXX17_FEATURES
-#ifdef SOL_STD_VARIANT
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 #endif // SOL_STD_VARIANT
 #endif // SOL_CXX17_FEATURES
 
@@ -8734,7 +8737,26 @@ namespace stack {
 	};
 
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+
+	template <typename T, typename C>
+	struct checker<std::optional<T>, type::poly, C> {
+		template <typename Handler>
+		static bool check(lua_State* L, int index, Handler&&, record& tracking) {
+			type t = type_of(L, index);
+			if (t == type::none) {
+				tracking.use(0);
+				return true;
+			}
+			if (t == type::lua_nil) {
+				tracking.use(1);
+				return true;
+			}
+			return stack::check<T>(L, index, no_panic, tracking);
+		}
+	};
+
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+
 	template <typename... Tn, typename C>
 	struct checker<std::variant<Tn...>, type::poly, C> {
 		typedef std::variant<Tn...> V;
@@ -8765,7 +8787,9 @@ namespace stack {
 			return is_one(std::integral_constant<std::size_t, V_size::value>(), L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
+
 #endif // SOL_STD_VARIANT
+
 #endif // SOL_CXX17_FEATURES
 }
 } // namespace sol::stack
