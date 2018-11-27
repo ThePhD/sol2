@@ -649,7 +649,9 @@ namespace stack {
 		template <std::size_t I, typename Handler>
 		static bool is_one(std::integral_constant<std::size_t, I>, lua_State* L, int index, Handler&& handler, record& tracking) {
 			typedef std::variant_alternative_t<I - 1, V> T;
-			if (stack::check<T>(L, index, no_panic, tracking)) {
+			record temp_tracking = tracking;
+			if (stack::check<T>(L, index, no_panic, temp_tracking)) {
+				tracking = temp_tracking;
 				return true;
 			}
 			return is_one(std::integral_constant<std::size_t, I - 1>(), L, index, std::forward<Handler>(handler), tracking);

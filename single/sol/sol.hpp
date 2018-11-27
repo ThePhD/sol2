@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-11-21 20:33:30.118801 UTC
-// This header was generated with sol v2.20.6 (revision c61a434)
+// Generated 2018-11-27 15:20:21.502906 UTC
+// This header was generated with sol v2.20.6 (revision f404395)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -8768,7 +8768,9 @@ namespace stack {
 		template <std::size_t I, typename Handler>
 		static bool is_one(std::integral_constant<std::size_t, I>, lua_State* L, int index, Handler&& handler, record& tracking) {
 			typedef std::variant_alternative_t<I - 1, V> T;
-			if (stack::check<T>(L, index, no_panic, tracking)) {
+			record temp_tracking = tracking;
+			if (stack::check<T>(L, index, no_panic, temp_tracking)) {
+				tracking = temp_tracking;
 				return true;
 			}
 			return is_one(std::integral_constant<std::size_t, I - 1>(), L, index, std::forward<Handler>(handler), tracking);
@@ -10071,7 +10073,9 @@ namespace stack {
 		template <std::size_t I>
 		static V get_one(std::integral_constant<std::size_t, I>, lua_State* L, int index, record& tracking) {
 			typedef std::variant_alternative_t<I - 1, V> T;
-			if (stack::check<T>(L, index, no_panic, tracking)) {
+			record temp_tracking = tracking;
+			if (stack::check<T>(L, index, no_panic, temp_tracking)) {
+				tracking = temp_tracking;
 				return V(std::in_place_index<I - 1>, stack::get<T>(L, index));
 			}
 			return get_one(std::integral_constant<std::size_t, I - 1>(), L, index, tracking);
