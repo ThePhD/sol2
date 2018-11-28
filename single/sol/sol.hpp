@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-11-28 03:18:56.546705 UTC
-// This header was generated with sol v2.20.6 (revision 4a0f382)
+// Generated 2018-11-28 08:50:22.534324 UTC
+// This header was generated with sol v2.20.6 (revision 9b782ff)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -8259,12 +8259,12 @@ namespace stack {
 				return false;
 			}
 #endif // Do not allow strings to be numbers
-			int isnum = 0;
 #if (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS) && !(defined(SOL_NO_CHECK_NUMBER_PRECISION) && SOL_NO_CHECK_NUMBER_PRECISION)
+			int isnum = 0;
 			const lua_Number v = lua_tonumberx(L, index, &isnum);
 			const bool success = isnum != 0 && static_cast<lua_Number>(llround(v)) == v;
 #else
-			const bool success = isnum != 0;
+			const bool success = true;
 #endif // Safe numerics and number precision checking
 			if (!success) {
 				// expected type, actual type
