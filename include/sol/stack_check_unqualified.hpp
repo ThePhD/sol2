@@ -140,12 +140,12 @@ namespace stack {
 				return false;
 			}
 #endif // Do not allow strings to be numbers
-			int isnum = 0;
 #if (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS) && !(defined(SOL_NO_CHECK_NUMBER_PRECISION) && SOL_NO_CHECK_NUMBER_PRECISION)
+			int isnum = 0;
 			const lua_Number v = lua_tonumberx(L, index, &isnum);
 			const bool success = isnum != 0 && static_cast<lua_Number>(llround(v)) == v;
 #else
-			const bool success = isnum != 0;
+			const bool success = true;
 #endif // Safe numerics and number precision checking
 			if (!success) {
 				// expected type, actual type
