@@ -109,7 +109,7 @@ namespace sol {
 			if (keyidx != -1) {
 				stack::remove(ref.lua_state(), keyidx, 1);
 			}
-			if (ref.valid()) {
+			if (ref.lua_state() != nullptr && ref.valid()) {
 				stack::remove(ref.lua_state(), tableidx, 1);
 			}
 		}
