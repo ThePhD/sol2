@@ -152,7 +152,7 @@ before_build:
 - if DEFINED LLVM_VERSION (call %vcvars_script% && cd C:\projects\sol2)
 - md build-sol2
 - cd build-sol2
-- cmake .. -G "%CMAKE_GENERATOR%" %build_type% %build_compiler% -DLUA_VERSION="%LUA_VERSION%" -DCI=ON -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=%lua_build_type% -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON
+- cmake .. -G "%CMAKE_GENERATOR%" %build_type% %build_compiler% -DSOL2_LUA_VERSION="%LUA_VERSION%" -DSOL2_CI=ON -DSOL2_BUILD_LUA=ON -DBUILD_LUA_AS_DLL=%lua_build_type% -DSOL2_TESTS=ON -DSOL2_EXAMPLES=ON -DSOL2_SINGLE_GENERATED=ON -DSOL2_TESTS_EXAMPLES=ON -DSOL2_EXAMPLES_SINGLE_GENERATED=ON -DSOL2_TESTS_SINGLE_GENERATED=ON
 
 # We do not build the debug versions because the compiler
 # generates too much debug info for MinGW to handle
