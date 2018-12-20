@@ -30,6 +30,7 @@
 #include "table_iterator.hpp"
 #include "types.hpp"
 #include "object_base.hpp"
+#include "usertype.hpp"
 
 namespace sol {
 	namespace detail {

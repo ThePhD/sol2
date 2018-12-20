@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\protected_handler.hpp>
+#include <sol/protected_handler.hpp>

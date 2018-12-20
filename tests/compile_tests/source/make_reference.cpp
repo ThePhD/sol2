@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\make_reference.hpp>
+#include <sol/make_reference.hpp>

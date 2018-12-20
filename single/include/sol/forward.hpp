@@ -20,7 +20,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-12-19 15:47:44.640280 UTC
+// Generated 2018-12-19 18:01:44.554823 UTC
 // This header was generated with sol v2.20.6 (revision 9b29277)
 // https://github.com/ThePhD/sol2
 

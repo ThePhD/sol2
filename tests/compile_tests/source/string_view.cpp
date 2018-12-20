@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\string_view.hpp>
+#include <sol/string_view.hpp>

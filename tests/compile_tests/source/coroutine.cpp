@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\coroutine.hpp>
+#include <sol/coroutine.hpp>

@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\error_handler.hpp>
+#include <sol/error_handler.hpp>

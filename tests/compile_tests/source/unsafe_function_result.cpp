@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\unsafe_function_result.hpp>
+#include <sol/unsafe_function_result.hpp>

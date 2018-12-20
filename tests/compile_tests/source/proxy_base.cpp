@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\proxy_base.hpp>
+#include <sol/proxy_base.hpp>

@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\as_args.hpp>
+#include <sol/as_args.hpp>

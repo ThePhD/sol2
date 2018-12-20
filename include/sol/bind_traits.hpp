@@ -24,7 +24,7 @@
 #ifndef SOL_BIND_TRAITS_HPP
 #define SOL_BIND_TRAITS_HPP
 
-#include "feature_test.hpp"
+#include "forward.hpp"
 #include "tuple.hpp"
 
 namespace sol {

@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\table_iterator.hpp>
+#include <sol/table_iterator.hpp>

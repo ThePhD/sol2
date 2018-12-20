@@ -26,6 +26,7 @@
 
 #include "stack.hpp"
 #include "wrapper.hpp"
+
 #include <memory>
 
 namespace sol {

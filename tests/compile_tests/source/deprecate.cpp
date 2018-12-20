@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\deprecate.hpp>
+#include <sol/deprecate.hpp>

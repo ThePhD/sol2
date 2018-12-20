@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\config_setup.hpp>
+#include <sol/config_setup.hpp>

@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\forward_detail.hpp>
+#include <sol/forward_detail.hpp>

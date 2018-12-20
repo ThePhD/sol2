@@ -33,6 +33,7 @@
 #include "raii.hpp"
 #include "deprecate.hpp"
 #include "object.hpp"
+#include "function_types.hpp"
 
 #include <sstream>
 #include <type_traits>

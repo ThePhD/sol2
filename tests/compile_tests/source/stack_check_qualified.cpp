@@ -23,4 +23,5 @@
 
 #include "sol_defines.hpp"
 
-#include <sol/stack_check_qualified.hpp>
+//#include <sol/stack_check_qualified.hpp>
+#include <sol/stack.hpp>

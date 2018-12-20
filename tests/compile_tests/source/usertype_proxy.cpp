@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\usertype_proxy.hpp>
+#include <sol/usertype_proxy.hpp>

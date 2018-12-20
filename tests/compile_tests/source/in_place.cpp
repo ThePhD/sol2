@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\in_place.hpp>
+#include <sol/in_place.hpp>

@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\trampoline.hpp>
+#include <sol/trampoline.hpp>

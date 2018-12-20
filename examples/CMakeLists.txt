@@ -59,7 +59,8 @@ function (MAKE_EXAMPLE example_source_file example_suffix target_sol example_tes
 	add_executable(${example_name} ${example_source_file} source/assert.hpp)
 	set_target_properties(${example_name} 
 		PROPERTIES
-		OUTPUT_NAME "${example_output_name}")
+		OUTPUT_NAME "${example_output_name}"
+		EXPORT_NAME sol2::${example_output_name})
 	target_link_libraries(${example_name} ${target_sol})
 	target_compile_features(${example_name} 
 		PRIVATE ${CXX_FEATURES})
@@ -90,13 +91,13 @@ if (SOL2_EXAMPLES)
 	endforeach()
 endif()
 
-if (SOL2_SINGLE AND SOL2_EXAMPLES_SINGLE)
+if (SOL2_EXAMPLES_SINGLE)
 	foreach(example_source_file ${EXAMPLES_SRC})
 		MAKE_EXAMPLE(${example_source_file} ".single" sol2::sol2_single SOL2_TESTS_EXAMPLES)
 	endforeach()
 endif()
 
-if (SOL2_GENERATE_SINGLE AND SOL2_EXAMPLES_SINGLE_GENERATED)
+if (SOL2_EXAMPLES_SINGLE_GENERATED)
 	foreach(example_source_file ${EXAMPLES_SRC})
 		MAKE_EXAMPLE(${example_source_file} ".single.generated" sol2::sol2_single_generated SOL2_TESTS_EXAMPLES)
 	endforeach()

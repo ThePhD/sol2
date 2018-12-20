@@ -23,4 +23,5 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\stack_pop.hpp>
+//#include <sol/stack_pop.hpp>
+#include <sol/stack.hpp>

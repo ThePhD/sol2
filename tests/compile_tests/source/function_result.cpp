@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\function_result.hpp>
+#include <sol/function_result.hpp>

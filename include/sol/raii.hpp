@@ -25,6 +25,7 @@
 #define SOL_RAII_HPP
 
 #include "traits.hpp"
+#include "compatibility.hpp"
 
 #include <memory>
 

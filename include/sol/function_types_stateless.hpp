@@ -25,6 +25,7 @@
 #define SOL_FUNCTION_TYPES_STATELESS_HPP
 
 #include "stack.hpp"
+#include "call.hpp"
 
 namespace sol {
 namespace function_detail {

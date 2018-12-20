@@ -27,6 +27,7 @@
 #include "traits.hpp"
 #include "stack.hpp"
 #include "map.hpp"
+#include "object.hpp"
 
 namespace sol {
 

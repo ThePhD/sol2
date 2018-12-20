@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\function_types_overloaded.hpp>
+#include <sol/function_types_overloaded.hpp>

@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\variadic_args.hpp>
+#include <sol/variadic_args.hpp>

@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\tie.hpp>
+#include <sol/tie.hpp>

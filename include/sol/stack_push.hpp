@@ -35,6 +35,7 @@
 #include <type_traits>
 #include <cassert>
 #include <limits>
+#include <cmath>
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #include <string_view>
 #include <optional>

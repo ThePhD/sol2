@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\feature_test.hpp>
+#include <sol/feature_test.hpp>

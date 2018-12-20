@@ -22,14 +22,14 @@
 
 # # # # sol3 tests - compilation tests
 
-file(GLOB SOL2_COMPILE_TEST_SOURCES source/**/*.cpp)
-source_group(compile_test_sources FILES ${SOL2_COMPILE_TEST_SOURCES})
+file(GLOB_RECURSE SOL2_COMPILE_TEST_SOURCES source/*.cpp)
+source_group(compile_test_sources FILES "${SOL2_COMPILE_TEST_SOURCES}")
 
 function(CREATE_TEST test_target_name test_name target_sol)
 	if (test_name MATCHES ".single")
-		add_executable(${test_target_name} source/main.cpp source/forward.cpp source/sol.cpp)
+		add_executable(${test_target_name} "source/main.cpp" "source/forward.cpp" "source/sol.cpp")
 	else()
-		add_executable(${test_target_name} ${SOL2_COMPILE_TEST_SOURCES})
+		add_executable(${test_target_name} "${SOL2_COMPILE_TEST_SOURCES}")
 	endif()
 	set_target_properties(${test_target_name}
 		PROPERTIES
@@ -69,10 +69,12 @@ function(CREATE_TEST test_target_name test_name target_sol)
 	install(TARGETS ${test_target_name} RUNTIME DESTINATION bin)
 endfunction(CREATE_TEST)
 
-CREATE_TEST(compile_tests "compile_tests" sol2::sol2)
-if (SOL2_TESTS_SINGLE AND SOL2_SINGLE)
+if (SOL2_TESTS)
+	CREATE_TEST(compile_tests "compile_tests" sol2::sol2)
+endif()
+if (SOL2_TESTS_SINGLE)
 	CREATE_TEST(compile_tests_single "compile_tests.single" sol2::sol2_single)
 endif()
-if (SOL2_TESTS_SINGLE_GENERATED AND SOL2_GENERATE_SINGLE)
+if (SOL2_TESTS_SINGLE_GENERATED)
 	CREATE_TEST(compile_tests_generated_single "compile_tests.single.generated" sol2::sol2_single_generated)
 endif()

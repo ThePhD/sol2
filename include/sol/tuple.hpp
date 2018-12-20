@@ -24,6 +24,8 @@
 #ifndef SOL_TUPLE_HPP
 #define SOL_TUPLE_HPP
 
+#include "forward.hpp"
+
 #include <tuple>
 #include <cstddef>
 

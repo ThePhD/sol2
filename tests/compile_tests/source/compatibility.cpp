@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\compatibility.hpp>
+#include <sol/compatibility.hpp>

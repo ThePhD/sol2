@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\table_core.hpp>
+#include <sol/table_core.hpp>

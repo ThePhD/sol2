@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\bind_traits.hpp>
+#include <sol/bind_traits.hpp>

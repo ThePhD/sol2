@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\stack_iterator.hpp>
+#include <sol/stack_iterator.hpp>

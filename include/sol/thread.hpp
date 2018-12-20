@@ -26,6 +26,7 @@
 
 #include "reference.hpp"
 #include "stack.hpp"
+#include "state_view.hpp"
 
 namespace sol {
 	struct lua_thread_state {

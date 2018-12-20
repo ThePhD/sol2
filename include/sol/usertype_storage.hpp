@@ -579,10 +579,9 @@ namespace sol { namespace u_detail {
 			void* derived_this = static_cast<void*>(static_cast<usertype_storage<T>*>(this));
 			index_call_storage ics;
 			ics.binding_data = b.data();
-			//ics.index = is_index ? static_cast<index_call_function*>(&Binding::call_with_<true, is_var_bind::value>)
-			//	                : static_cast<index_call_function*>(&Binding::index_call_with_<true, is_var_bind::value>);
-			//ics.new_index = is_new_index ? static_cast<index_call_function*>(&Binding::call_with_<false, is_var_bind::value>)
-			//	                        : static_cast<index_call_function*>(&Binding::index_call_with_<false, is_var_bind::value>);
+			ics.index = is_index ? &Binding::template call_with_<true, is_var_bind::value> : &Binding::template index_call_with_<true, is_var_bind::value>;
+			ics.new_index = is_new_index ? &Binding::template call_with_<false, is_var_bind::value>
+				                        : &Binding::template index_call_with_<false, is_var_bind::value>;
 			// need to swap everything to use fast indexing here
 			auto for_each_backing_metatable = [&](lua_State* L, submetatable_type smt, reference& fast_index_table) {
 				if (smt == submetatable_type::named) {
@@ -691,7 +690,7 @@ namespace sol { namespace u_detail {
 		// we create a metatable to attach to the regular gc_table
 		// so that the destructor is called for the usertype storage
 		int usertype_storage_metatabe_count = stack::push(L, new_table(0, 1));
-		stack_table usertype_storage_metatable(L, -usertype_storage_metatabe_count);
+		stack_reference usertype_storage_metatable(L, -usertype_storage_metatabe_count);
 		// set the destruction routine on the metatable
 		stack::set_field(L, meta_function::garbage_collect, detail::user_alloc_destruct<usertype_storage<T>>, usertype_storage_metatable.stack_index());
 		// set the metatable on the usertype storage userdata

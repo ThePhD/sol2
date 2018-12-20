@@ -57,7 +57,9 @@
 #include "protected_function.hpp"
 #include "state.hpp"
 #include "coroutine.hpp"
+#include "thread.hpp"
 #include "userdata.hpp"
+#include "metatable.hpp"
 #include "variadic_args.hpp"
 #include "variadic_results.hpp"
 

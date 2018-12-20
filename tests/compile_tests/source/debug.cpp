@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\debug.hpp>
+#include <sol/debug.hpp>

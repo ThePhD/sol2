@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol\types.hpp>
+#include <sol/types.hpp>
