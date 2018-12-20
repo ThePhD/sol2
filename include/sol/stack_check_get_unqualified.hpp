@@ -41,7 +41,7 @@ namespace sol {
 namespace stack {
 	template <typename T, typename>
 	struct check_getter {
-		typedef decltype(stack_detail::unchecked_unqualified_get<T>(nullptr, 0, std::declval<record&>())) R;
+		typedef decltype(stack_detail::unchecked_unqualified_get<T>(nullptr, -1, std::declval<record&>())) R;
 
 		template <typename Handler>
 		static optional<R> get(lua_State* L, int index, Handler&& handler, record& tracking) {
@@ -136,7 +136,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<optional<T>> {
+	struct unqualified_getter<optional<T>> {
 		static decltype(auto) get(lua_State* L, int index, record& tracking) {
 			return check_get<T>(L, index, no_panic, tracking);
 		}
@@ -144,7 +144,7 @@ namespace stack {
 
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 	template <typename T>
-	struct getter<std::optional<T>> {
+	struct unqualified_getter<std::optional<T>> {
 		static std::optional<T> get(lua_State* L, int index, record& tracking) {
 			if (!unqualified_check<T>(L, index, no_panic)) {
 				tracking.use(static_cast<int>(!lua_isnone(L, index)));

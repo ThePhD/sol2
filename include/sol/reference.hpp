@@ -155,7 +155,7 @@ namespace sol {
 		lua_State* Lmain = lua_tothread(L, -1);
 		lua_pop(L, 1);
 		return Lmain;
-#endif // Lua 5.2+ has the main thread getter
+#endif // Lua 5.2+ has the main thread unqualified_getter
 	}
 
 	namespace detail {
@@ -244,6 +244,9 @@ namespace sol {
 	protected:
 		basic_reference(lua_State* L, detail::global_tag) noexcept
 		: luastate(detail::pick_main_thread<main_only>(L, L)) {
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+			luaL_checkstack(L, 1, "not enough Lua stack space to push this reference value");
+#endif // make sure stack doesn't overflow
 			lua_pushglobaltable(lua_state());
 			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 		}
@@ -326,6 +329,9 @@ namespace sol {
 		basic_reference(lua_State* L, int index = -1) noexcept
 		: luastate(detail::pick_main_thread<main_only>(L, L)) {
 			// use L to stick with that state's execution stack
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+			luaL_checkstack(L, 1, "not enough Lua stack space to push this reference value");
+#endif // make sure stack doesn't overflow
 			lua_pushvalue(L, index);
 			ref = luaL_ref(L, LUA_REGISTRYINDEX);
 		}
@@ -404,6 +410,9 @@ namespace sol {
 		}
 
 		int push(lua_State* Ls) const noexcept {
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+			luaL_checkstack(Ls, 1, "not enough Lua stack space to push this reference value");
+#endif // make sure stack doesn't overflow
 			if (lua_state() == nullptr) {
 				lua_pushnil(Ls);
 				return 1;

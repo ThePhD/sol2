@@ -72,15 +72,6 @@ main.pdb
 *.files
 *.includes
 
-# Scratchpad Files
-m.lua
-main.lua
-catch_mock.hpp
-main_aux.cpp
-main.hpp
-main2.cpp
-main.cpp
-
 # Local Lua Testbeds
 lua-5.4.0-cxx/
 lua-5.4.0/
@@ -122,3 +113,10 @@ cmake-build-relwithdebinfo/
 cmake-build-release/
 /subprojects/*
 !/subprojects/*.wrap
+lua-5.3/
+lua-5.3-cxx/
+lua-5.4/
+LuaJIT-2.0/
+LuaJIT-2.1/
+lua-5.1/
+lua-5.2/

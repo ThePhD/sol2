@@ -79,7 +79,7 @@ namespace sol {
 
 	namespace stack {
 		template <>
-		struct getter<stack_proxy_base> {
+		struct unqualified_getter<stack_proxy_base> {
 			static stack_proxy_base get(lua_State* L, int index = -1) {
 				return stack_proxy_base(L, index);
 			}

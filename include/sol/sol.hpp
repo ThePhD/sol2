@@ -52,12 +52,12 @@
 #endif					  // clang++ vs. g++ vs. VC++
 
 #include "forward.hpp"
-#include "state.hpp"
 #include "object.hpp"
 #include "function.hpp"
 #include "protected_function.hpp"
 #include "state.hpp"
 #include "coroutine.hpp"
+#include "userdata.hpp"
 #include "variadic_args.hpp"
 #include "variadic_results.hpp"
 

@@ -52,7 +52,7 @@ namespace stack {
 				return *mem;
 			}
 			Real r(nullptr);
-			if (!derive<T>::value) {
+			if constexpr (!derive<T>::value) {
 				// TODO: abort / terminate, maybe only in debug modes?
 				return r;
 			}

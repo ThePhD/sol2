@@ -49,6 +49,9 @@ namespace sol {
 			lua_createtable(L, static_cast<int>(sizeof...(In)), 0);
 			stack_reference deps(L, -1);
 			auto per_dep = [&L, &deps](int i) {
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+				luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
+#endif // make sure stack doesn't overflow
 				lua_pushvalue(L, i);
 				luaL_ref(L, deps.stack_index());
 			};
@@ -70,6 +73,9 @@ namespace sol {
 			}
 			lua_createtable(L, static_cast<int>(sdeps.size()), 0);
 			stack_reference deps(L, -1);
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+			luaL_checkstack(L, static_cast<int>(sdeps.size()), detail::not_enough_stack_space_generic);
+#endif // make sure stack doesn't overflow
 			for (std::size_t i = 0; i < sdeps.size(); ++i) {
 				lua_pushvalue(L, sdeps.stack_indices[i]);
 				luaL_ref(L, deps.stack_index());
@@ -119,7 +125,7 @@ namespace sol {
 			}
 
 			template <typename Fx, std::size_t I, typename... R, typename... Args>
-			int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) const {
+			int operator()(types<Fx>, meta::index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) const {
 				detail::default_construct func {};
 				return stack::call_into_lua<checked, clean_stack>(r, a, L, start, func, obj_);
 			}
@@ -137,7 +143,7 @@ namespace sol {
 				typedef meta::tuple_types<typename traits::return_type> return_types;
 				typedef typename traits::free_args_list args_list;
 				// compile-time eliminate any functions that we know ahead of time are of improper arity
-				if (!traits::runtime_variadics_t::value && meta::find_in_pack_v<index_value<traits::free_arity>, index_value<M>...>::value) {
+				if (!traits::runtime_variadics_t::value && meta::find_in_pack_v<meta::index_value<traits::free_arity>, meta::index_value<M>...>::value) {
 					return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
 				}
 				if (!traits::runtime_variadics_t::value && traits::free_arity != fxarity) {
@@ -147,7 +153,7 @@ namespace sol {
 				if (!stack::stack_detail::check_types<true> {}.check(args_list(), L, start, no_panic, tracking)) {
 					return overload_match_arity(types<Fxs...>(), std::index_sequence<In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
 				}
-				return matchfx(types<Fx>(), index_value<I>(), return_types(), args_list(), L, fxarity, start, std::forward<Args>(args)...);
+				return matchfx(types<Fx>(), meta::index_value<I>(), return_types(), args_list(), L, fxarity, start, std::forward<Args>(args)...);
 			}
 
 			template <std::size_t... M, typename Match, typename... Args>
@@ -161,13 +167,13 @@ namespace sol {
 				typedef meta::tuple_types<typename traits::return_type> return_types;
 				typedef typename traits::free_args_list args_list;
 				// compile-time eliminate any functions that we know ahead of time are of improper arity
-				if (!traits::runtime_variadics_t::value && meta::find_in_pack_v<index_value<traits::free_arity>, index_value<M>...>::value) {
+				if (!traits::runtime_variadics_t::value && meta::find_in_pack_v<meta::index_value<traits::free_arity>, meta::index_value<M>...>::value) {
 					return overload_match_arity(types<>(), std::index_sequence<>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
 				}
 				if (!traits::runtime_variadics_t::value && traits::free_arity != fxarity) {
 					return overload_match_arity(types<>(), std::index_sequence<>(), std::index_sequence<traits::free_arity, M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
 				}
-				return matchfx(types<Fx>(), index_value<I>(), return_types(), args_list(), L, fxarity, start, std::forward<Args>(args)...);
+				return matchfx(types<Fx>(), meta::index_value<I>(), return_types(), args_list(), L, fxarity, start, std::forward<Args>(args)...);
 			}
 
 			template <typename Fx, typename Fx1, typename... Fxs, std::size_t I, std::size_t I1, std::size_t... In, std::size_t... M, typename Match, typename... Args>
@@ -176,7 +182,7 @@ namespace sol {
 				typedef meta::tuple_types<typename traits::return_type> return_types;
 				typedef typename traits::free_args_list args_list;
 				// compile-time eliminate any functions that we know ahead of time are of improper arity
-				if (!traits::runtime_variadics_t::value && meta::find_in_pack_v<index_value<traits::free_arity>, index_value<M>...>::value) {
+				if (!traits::runtime_variadics_t::value && meta::find_in_pack_v<meta::index_value<traits::free_arity>, meta::index_value<M>...>::value) {
 					return overload_match_arity(types<Fx1, Fxs...>(), std::index_sequence<I1, In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
 				}
 				if (!traits::runtime_variadics_t::value && traits::free_arity != fxarity) {
@@ -186,7 +192,7 @@ namespace sol {
 				if (!stack::stack_detail::check_types<true> {}.check(args_list(), L, start, no_panic, tracking)) {
 					return overload_match_arity(types<Fx1, Fxs...>(), std::index_sequence<I1, In...>(), std::index_sequence<M...>(), std::forward<Match>(matchfx), L, fxarity, start, std::forward<Args>(args)...);
 				}
-				return matchfx(types<Fx>(), index_value<I>(), return_types(), args_list(), L, fxarity, start, std::forward<Args>(args)...);
+				return matchfx(types<Fx>(), meta::index_value<I>(), return_types(), args_list(), L, fxarity, start, std::forward<Args>(args)...);
 			}
 		} // namespace overload_detail
 
@@ -264,7 +270,13 @@ namespace sol {
 		struct agnostic_lua_call_wrapper<F, is_index, is_variable, checked, boost, clean_stack, std::enable_if_t<is_lua_reference<F>::value>> {
 			template <typename Fx, typename... Args>
 			static int call(lua_State* L, Fx&& f, Args&&... args) {
-				return stack::push(L, std::forward<Fx>(f), std::forward<Args>(args)...);
+				if constexpr(is_index) {
+					return stack::push(L, std::forward<Fx>(f), std::forward<Args>(args)...);
+				}
+				else {
+					std::forward<Fx>(f) = stack::unqualified_get<F>(L, boost + (is_variable ? 3 : 1));
+					return 0;
+				}
 			}
 		};
 
@@ -541,7 +553,7 @@ namespace sol {
 
 			struct onmatch {
 				template <typename Fx, std::size_t I, typename... R, typename... Args>
-				int operator()(types<Fx>, index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start, F& f) {
+				int operator()(types<Fx>, meta::index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start, F& f) {
 					const auto& meta = usertype_traits<T>::metatable();
 					T* obj = detail::usertype_allocate<T>(L);
 					reference userdataref(L, -1);
@@ -605,7 +617,7 @@ namespace sol {
 
 			struct on_match {
 				template <typename Fx, std::size_t I, typename... R, typename... Args>
-				int operator()(types<Fx>, index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int, F& fx) {
+				int operator()(types<Fx>, meta::index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int, F& fx) {
 					auto& f = std::get<I>(fx.functions);
 					return lua_call_wrapper<T, Fx, is_index, is_variable, checked, boost> {}.call(L, f);
 				}
@@ -622,7 +634,7 @@ namespace sol {
 
 			struct on_match {
 				template <typename Fx, std::size_t I, typename... R, typename... Args>
-				int operator()(types<Fx>, index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int, F& fx) {
+				int operator()(types<Fx>, meta::index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int, F& fx) {
 					auto& f = std::get<I>(fx.functions);
 					return lua_call_wrapper<T, Fx, is_index, is_variable, checked, boost, clean_stack> {}.call(L, f);
 				}
@@ -749,6 +761,9 @@ namespace sol {
 		template <typename T>
 		struct is_var_bind<T, std::enable_if_t<std::is_member_object_pointer<T>::value>> : std::true_type {};
 
+		template <typename T>
+		struct is_var_bind<T, std::enable_if_t<is_lua_reference_or_proxy<T>::value>> : std::true_type {};
+
 		template <>
 		struct is_var_bind<no_prop> : std::true_type {};
 
@@ -767,6 +782,9 @@ namespace sol {
 
 	template <typename T>
 	struct is_variable_binding : call_detail::is_var_bind<meta::unqualified_t<T>> {};
+
+	template <typename T>
+	using is_var_wrapper = meta::is_specialization_of<T, var_wrapper>;
 
 	template <typename T>
 	struct is_function_binding : meta::neg<is_variable_binding<T>> {};

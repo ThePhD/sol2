@@ -45,7 +45,7 @@ namespace function_detail {
 		}
 
 		template <typename Fx, std::size_t I, typename... R, typename... Args>
-		int call(types<Fx>, index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int) {
+		int call(types<Fx>, meta::index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int) {
 			auto& func = std::get<I>(overloads);
 			return call_detail::call_wrapped<void, true, false, start_skew>(L, func);
 		}

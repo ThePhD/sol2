@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -94,7 +94,7 @@ namespace sol {
 		template <typename... Fxs>
 		struct c_call_matcher {
 			template <typename Fx, std::size_t I, typename R, typename... Args>
-			int operator()(types<Fx>, index_value<I>, types<R>, types<Args...>, lua_State* L, int, int) const {
+			int operator()(types<Fx>, meta::index_value<I>, types<R>, types<Args...>, lua_State* L, int, int) const {
 				typedef meta::at_in_pack_t<I, Fxs...> target;
 				return target::call(L);
 			}
@@ -119,11 +119,13 @@ namespace sol {
 	template <typename F, F fx>
 	inline int c_call(lua_State* L) {
 		typedef meta::unqualified_t<F> Fu;
-		typedef std::integral_constant<bool, std::is_same<Fu, lua_CFunction>::value
+		typedef std::integral_constant<bool,
+		     std::is_same<Fu, lua_CFunction>::value
 #if defined(SOL_NOEXCEPT_FUNCTION_TYPE) && SOL_NOEXCEPT_FUNCTION_TYPE
-			|| std::is_same<Fu, detail::lua_CFunction_noexcept>::value
+		          || std::is_same<Fu, detail::lua_CFunction_noexcept>::value
 #endif
-		> is_raw;
+		     >
+		     is_raw;
 		return function_detail::c_call_raw<F, fx>(is_raw(), L);
 	}
 

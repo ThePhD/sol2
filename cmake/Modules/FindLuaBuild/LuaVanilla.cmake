@@ -34,10 +34,17 @@ include(Common/Core)
 # Latest versions for specific sub-versions of Lua
 set(LUA_VANILLA_5.1_LATEST_VERSION 5.1.5)
 set(LUA_VANILLA_5.2_LATEST_VERSION 5.2.4)
-set(LUA_VANILLA_5.3_LATEST_VERSION 5.3.4)
+set(LUA_VANILLA_5.3_LATEST_VERSION 5.3.5)
+set(LUA_VANILLA_5.4_LATEST_VERSION 5.4.0-work1)
 
 # exact version, coming from CI: pull directly from Lua and use external project to build
 # list of known md5 / sha1: must update when there are changes
+set(LUA_VANILLA_MD5_5.4.0-work2 3cdf2a4eb84dde6b6aaf5d2d1de07be9)
+set(LUA_VANILLA_SHA1_5.4.0-work2 e8484e61c5c338e3ec2f75dbe0f6703d079fecf9)
+set(LUA_VANILLA_MD5_5.4.0-work1 0ff232b8658884155a43cf72212edbd9)
+set(LUA_VANILLA_SHA1_5.4.0-work1 a8193b14ed3869917d1102cb0418cf9dfb0d9baf)
+set(LUA_VANILLA_MD5_5.3.5 4f4b4f323fd3514a68e0ab3da8ce3455)
+set(LUA_VANILLA_SHA1_5.3.5 112eb10ff04d1b4c9898e121d6bdf54a81482447)
 set(LUA_VANILLA_MD5_5.3.4 53a9c68bcc0eda58bdc2095ad5cdfc63)
 set(LUA_VANILLA_SHA1_5.3.4 79790cfd40e09ba796b01a571d4d63b52b1cd950)
 set(LUA_VANILLA_MD5_5.3.3 703f75caa4fdf4a911c1a72e67a27498)
@@ -118,6 +125,8 @@ elseif (LUA_VERSION MATCHES "([0-9]+)\\.([0-9]+)")
 			set(LUA_VANILLA_VERSION ${LUA_VANILLA_5.2_LATEST_VERSION})
 		elseif (${CMAKE_MATCH_2} EQUAL 3)
 			set(LUA_VANILLA_VERSION ${LUA_VANILLA_5.3_LATEST_VERSION})
+		elseif (${CMAKE_MATCH_2} EQUAL 4)
+			set(LUA_VANILLA_VERSION ${LUA_VANILLA_5.4_LATEST_VERSION})
 		else()			
 			# default to whatever the first two
 			# numbers happen to be, plus build 0
@@ -169,6 +178,7 @@ endif()
 
 # # Source files for natural build, if we have to go that far
 # retrieve source files
+set(LUA_VANILLA_DOWNLOAD_URL https://www.lua.org/ftp/lua-${LUA_VANILLA_VERSION}.tar.gz)
 if (LUA_VANILLA_VERSION MATCHES "^5\\.1")
 	set(LUA_VANILLA_LIB_SOURCES lapi.c lcode.c ldebug.c ldo.c ldump.c lfunc.c 
 		lgc.c llex.c lmem.c lobject.c lopcodes.c lparser.c lstate.c 
@@ -187,15 +197,34 @@ elseif (LUA_VANILLA_VERSION MATCHES "^5\\.2")
 	set(LUA_VANILLA_LUA_SOURCES lua.c )
 	set(LUA_VANILLA_LUAC_SOURCES luac.c )
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
-else()
-	if (NOT LUA_VANILLA_VERSION MATCHES "^5\\.3")
-		message(STATUS "Using the Lua 5.3 sources list for a version of Lua that is not 5.3: may result in an incomplete build or errors later")
-	endif()
+elseif (LUA_VANILLA_VERSION MATCHES "^5\\.3")
 	set(LUA_VANILLA_LIB_SOURCES lapi.c lcode.c lctype.c ldebug.c ldo.c ldump.c 
 		lfunc.c lgc.c llex.c lmem.c lobject.c lopcodes.c lparser.c lstate.c 
 		lstring.c ltable.c ltm.c lundump.c lvm.c lzio.c lauxlib.c 
 		lbaselib.c lbitlib.c lcorolib.c ldblib.c liolib.c lmathlib.c 
 		loslib.c lstrlib.c ltablib.c lutf8lib.c loadlib.c linit.c)
+	set(LUA_VANILLA_LUA_SOURCES lua.c )
+	set(LUA_VANILLA_LUAC_SOURCES luac.c )
+	set(LUA_VANILLA_GENERATE_LUA_HPP false)
+elseif (LUA_VANILLA_VERSION MATCHES "^5\\.4")
+	if (LUA_VANILLA_VERSION MATCHES "work")
+		set(LUA_VANILLA_DOWNLOAD_URL https://www.lua.org/work/lua-${LUA_VANILLA_VERSION}.tar.gz)
+	endif()
+	set(LUA_VANILLA_LIB_SOURCES lapi.c lauxlib.c lbaselib.c lcode.c lcorolib.c 
+		lctype.c ldblib.c ldebug.c ldo.c ldump.c lfunc.c lgc.c linit.c liolib.c
+		llex.c lmathlib.c lmem.c loadlib.c lobject.c lopcodes.c loslib.c
+		lparser.c lstate.c lstring.c lstrlib.c ltable.c ltablib.c ltm.c lundump.c
+		lutf8lib.c lvm.c lzio.c)
+	set(LUA_VANILLA_LUA_SOURCES lua.c )
+	set(LUA_VANILLA_LUAC_SOURCES luac.c )
+	set(LUA_VANILLA_GENERATE_LUA_HPP false)
+else()
+	MESSAGE(WARNING "Using Lua 5.4.0-work1 file list for ${LUA_VERSION} version")
+	set(LUA_VANILLA_LIB_SOURCES lapi.c lauxlib.c lbaselib.c lcode.c lcorolib.c 
+		lctype.c ldblib.c ldebug.c ldo.c ldump.c lfunc.c lgc.c linit.c liolib.c
+		llex.c lmathlib.c lmem.c loadlib.c lobject.c lopcodes.c loslib.c
+		lparser.c lstate.c lstring.c lstrlib.c ltable.c ltablib.c ltm.c lundump.c
+		lutf8lib.c lvm.c lzio.c)
 	set(LUA_VANILLA_LUA_SOURCES lua.c )
 	set(LUA_VANILLA_LUAC_SOURCES luac.c )
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
@@ -221,7 +250,7 @@ ExternalProject_Add(LUA_VANILLA
 	TMP_DIR "${LUA_BUILD_TOPLEVEL}-tmp"
 	STAMP_DIR "${LUA_BUILD_TOPLEVEL}-stamp"
 	INSTALL_DIR "${LUA_BUILD_INSTALL_DIR}"
-	URL https://www.lua.org/ftp/lua-${LUA_VANILLA_VERSION}.tar.gz
+	URL ${LUA_VANILLA_DOWNLOAD_URL}
 	URL_MD5 ${LUA_VANILLA_MD5}
 	URL_HASH SHA1=${LUA_VANILLA_SHA1}
 	CONFIGURE_COMMAND ""

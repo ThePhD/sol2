@@ -25,7 +25,7 @@
 cmake_minimum_required(VERSION 3.5.0)
 
 # # # project declaration
-project(sol2 VERSION 2.20.0 LANGUAGES CXX C)
+project(sol2 VERSION 3.0.0 LANGUAGES CXX C)
 
 include(GNUInstallDirs)
 
@@ -56,14 +56,14 @@ set(CXX_FEATURES
 	cxx_variadic_templates)
 
 # # #
-if (PLATFORM MATCHES "i686" OR PLATFORM STREQUAL "x86")
+if (SOL2_PLATFORM MATCHES "i686" OR SOL2_PLATFORM STREQUAL "x86")
 	set(IS_X86 TRUE)
-elseif (PLATFORM MATCHES "ARM64")
+elseif (SOL2_PLATFORM MATCHES "ARM64")
 	set(IS_ARM64 TRUE)
 	set(IS_X64 TRUE)
-elseif (PLATFORM MATCHES "ARM")
+elseif (SOL2_PLATFORM MATCHES "ARM")
 	set(IS_ARM TRUE)
-elseif (PLATFORM MATCHES "x86_64" OR PLATFORM STREQUAL "x64")
+elseif (SOL2_PLATFORM MATCHES "x86_64" OR SOL2_PLATFORM STREQUAL "x64")
 	set(IS_X64 TRUE)
 else()
 	set(IS_X64 TRUE)
@@ -73,8 +73,7 @@ endif()
 if (MSVC)
 	add_definitions(/DUNICODE /D_UNICODE /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
 	# Warning level, exceptions
-	add_compile_options(/W4 /EHsc)
-	add_compile_options("/std:c++latest")
+	add_compile_options(/EHsc)
 	add_compile_options("$<$<CONFIG:Debug>:/MDd>"
 		"$<$<CONFIG:Release>:/MD>"
 		"$<$<CONFIG:RelWithDebInfo>:/MD>"
@@ -110,44 +109,62 @@ include(CMakePackageConfigHelpers)
 
 # # # Configuration
 # # Cached defines, strings, paths and options
-set(LUA_VERSION "5.3.4" CACHE STRING "The version of Lua needed. Can be 5.1, 5.2, 5.3, LuaJIT, or a more specific 3-part version number for a specifc Lua (e.g., 5.3.4 or luajit-2.0.5)")
-set(BUILD_LUA TRUE CACHE BOOL "Always build Lua, do not search for it in the system")
-set(PLATFORM "x64" CACHE STRING "Target platform to compile for when building binaries (x86, x64)")
-option(CI "Whether or not we are in continguous integration mode" OFF)
-option(TESTS "Enable build of tests" OFF)
-option(EXAMPLES "Enable build of examples" OFF)
-option(INTEROP_EXAMPLES "Enable build of interop examples" OFF)
-option(DYNAMIC_LOADING_EXAMPLES "Enable build of interop examples" OFF)
-option(SINGLE "Enable build of single header files" OFF)
-option(DOCS "Enable build of documentation" OFF)
+set(SOL2_LUA_VERSION "5.3.5" CACHE STRING "The version of Lua needed. Can be 5.1, 5.2, 5.3, 5.4, LuaJIT, or a more specific 3-part version number for a specifc Lua (e.g., 5.3.4 or luajit-2.0.5)")
+set(SOL2_BUILD_LUA TRUE CACHE BOOL "Always build Lua, do not search for it in the system")
+set(SOL2_PLATFORM "x64" CACHE STRING "Target platform to compile for when building binaries (x86, x64)")
+option(SOL2_CI "Whether or not we are in continguous integration mode" OFF)
+option(SOL2_TESTS "Enable build of tests" OFF)
+option(SOL2_EXAMPLES "Enable build of examples" OFF)
+option(SOL2_INTEROP_EXAMPLES "Enable build of interop examples" OFF)
+option(SOL2_DYNAMIC_LOADING_EXAMPLES "Enable build of interop examples" OFF)
+option(SOL2_GENERATE_SINGLE "Enable generation and build of single header files" OFF)
+option(SOL2_SINGLE "Enable use of prepackaged single header files" OFF)
+option(SOL2_DOCS "Enable build of documentation" OFF)
 # Single tests and examples tests will only be turned on if both SINGLE and TESTS are defined
-CMAKE_DEPENDENT_OPTION(TESTS_SINGLE "Enable build of tests using the generated single headers" ON
-	"SINGLE;TESTS" OFF)
-CMAKE_DEPENDENT_OPTION(EXAMPLES_SINGLE "Enable build of examples using the generated single headers" OFF
-	"SINGLE;EXAMPLES" OFF)
-CMAKE_DEPENDENT_OPTION(INTEROP_EXAMPLES_SINGLE "Enable build of interop examples using the generated single headers" OFF
-	"SINGLE;INTEROP_EXAMPLES" OFF)
-CMAKE_DEPENDENT_OPTION(DYNAMIC_LOADING_EXAMPLES_SINGLE "Enable build of dynamic loading examples using the generated single headers" OFF
-	"SINGLE;DYNAMIC_LOADING_EXAMPLES" OFF)
-CMAKE_DEPENDENT_OPTION(TESTS_EXAMPLES "Enable build of examples as tests" ON
-	"EXAMPLES" OFF)
-CMAKE_DEPENDENT_OPTION(TESTS_INTEROP_EXAMPLES "Enable build of interop examples as tests" ON
-	"INTEROP_EXAMPLES" OFF)
-CMAKE_DEPENDENT_OPTION(TESTS_DYNAMIC_LOADING_EXAMPLES "Enable build of dynamic loading examples as tests" ON
-	"DYNAMIC_LOADING_EXAMPLES" OFF)
+CMAKE_DEPENDENT_OPTION(SOL2_TESTS_SINGLE "Enable build of tests using the premade single headers" ON
+	"SOL2_SINGLE;SOL2_TESTS" OFF)
+CMAKE_DEPENDENT_OPTION(SOL2_TESTS_SINGLE_GENERATED "Enable build of tests using the generated single headers" ON
+	"SOL2_GENERATE_SINGLE;SOL2_TESTS" OFF)
+CMAKE_DEPENDENT_OPTION(SOL2_EXAMPLES_SINGLE "Enable build of examples using the generated single headers" OFF
+	"SOL2_SINGLE;SOL2_EXAMPLES" OFF)
+CMAKE_DEPENDENT_OPTION(SOL2_EXAMPLES_SINGLE_GENERATED "Enable build of examples using the premade single headers" OFF
+	"SOL2_GENERATE_SINGLE;SOL2_EXAMPLES" OFF)
+CMAKE_DEPENDENT_OPTION(SOL2_INTEROP_EXAMPLES_SINGLE "Enable build of interop examples using the generated single headers" OFF
+	"SOL2_SINGLE;SOL2_INTEROP_EXAMPLES" OFF)
+CMAKE_DEPENDENT_OPTION(SOL2_INTEROP_EXAMPLES_SINGLE_GENERATED "Enable build of interop examples using the generated single headers" OFF
+	"SOL2_GENERATE_SINGLE;SOL2_INTEROP_EXAMPLES" OFF)
+CMAKE_DEPENDENT_OPTION(SOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE "Enable build of dynamic loading examples using the generated single headers" OFF
+	"SOL2_SINGLE;SOL2_DYNAMIC_LOADING_EXAMPLES" OFF)
+CMAKE_DEPENDENT_OPTION(SOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE_GENERATED "Enable build of dynamic loading examples using the generated single headers" OFF
+	"SOL2_GENERATE_SINGLE;SOL2_DYNAMIC_LOADING_EXAMPLES" OFF)
+CMAKE_DEPENDENT_OPTION(SOL2_TESTS_EXAMPLES "Enable build of examples as tests" ON
+	"SOL2_EXAMPLES" OFF)
+CMAKE_DEPENDENT_OPTION(SOL2_TESTS_INTEROP_EXAMPLES "Enable build of interop examples as tests" ON
+	"SOL2_INTEROP_EXAMPLES" OFF)
+CMAKE_DEPENDENT_OPTION(SOL2_TESTS_DYNAMIC_LOADING_EXAMPLES "Enable build of dynamic loading examples as tests" ON
+	"SOL2_DYNAMIC_LOADING_EXAMPLES" OFF)
+CMAKE_DEPENDENT_OPTION(BUILD_LUA_AS_DLL "Build Lua as a DLL" ON
+	"SOL2_BUILD_LUA" OFF)
 
+
+# # # sol2 Source Groups
+# # Sources everyone is going to need
+# Header files
+file(GLOB SOL2_HEADER_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/sol*.hpp)
+source_group(sol2 FILES ${SOL2_HEADER_SOURCES})
 
 # # # sol2 Library
 # # Add a target for sol2's library to be included by external users
 add_library(sol2 INTERFACE)
 add_library(sol2::sol2 ALIAS sol2)
+target_sources(sol2 INTERFACE ${SOL2_SINGLE_HEADER_SOURCES})
 set_target_properties(sol2
 	PROPERTIES
 	EXPORT_NAME sol2::sol2)
 
 target_include_directories(sol2 INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-	$<INSTALL_INTERFACE:include>)
+	$<INSTALL_INTERFACE:sol/include>)
 
 # # Version configurations
 configure_package_config_file(
@@ -169,62 +186,26 @@ install(EXPORT sol2
 	FILE sol2-targets.cmake
 	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sol2")
 
-install(DIRECTORY sol
-	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-
-install(FILES sol.hpp
-	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+install(DIRECTORY include/
+	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/sol/include")
 
 install(FILES
 	"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config.cmake"
 	"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config-version.cmake"
 	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sol2")
 
-# # # Source Groups
-# # Sources everyone is going to need
-# Header files
-file(GLOB SOL2_HEADER_SOURCES sol*.hpp)
-source_group(headers FILES ${SOL2_HEADER_SOURCES})
-# single header files
-file(GLOB SOL2_SINGLE_HEADER_SOURCES single/sol/sol_forward.hpp single/sol/sol.hpp)
-source_group(headers FILES ${SOL2_SINGLE_HEADER_SOURCES})
-
 # # # Single header target
 # Find Python3 for single header / forward header generation
-find_package(PythonInterp 3)
-set(SOL2_SINGLE_HEADER_FOUND FALSE)
-set(SOL2_SINGLE_FOUND FALSE)
-set(SOL2_DOCS_FOUND FALSE)
-if (PYTHONINTERP_FOUND)
-	if (SINGLE)
-		set(SOL2_SINGLE_FOUND TRUE)
-		add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/single/sol/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol/sol_forward.hpp"
-			COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/sol/single"
-			COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/single.py" --output "${CMAKE_CURRENT_BINARY_DIR}/single/sol/sol.hpp")
-		add_custom_target(sol2_single_header ALL
-			DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/single/sol/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol/sol_forward.hpp")
-		add_library(sol2_single INTERFACE)
-		add_library(sol2::sol2_single ALIAS sol2_single)
-		set_target_properties(sol2_single
-			PROPERTIES
-			EXPORT_NAME sol2::sol2_single
-			INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/single/")
-		add_dependencies(sol2_single sol2_single_header)
-		install(FILES "${CMAKE_CURRENT_BINARY_DIR}/single/sol/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/single/sol/sol_forward.hpp"
-			DESTINATION include/sol/single/sol)
-	endif()
-	if (DOCS)
-		set(SOL2_DOCS_FOUND TRUE)
-		add_custom_command(OUTPUT docs
-			COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/docs" docs
-			COMMAND make -C docs html)
-		add_custom_target(documentation ALL DEPENDS docs)
-		install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs/build/html" DESTINATION "${CMAKE_INSTALL_DOCDIR}")
-	endif()
-else()
-	if (SINGLE)
-		message(STATUS "sol2 single_header cannot be generated as python 3 has not been found.")
-	endif()
+if (SOL2_GENERATE_SINGLE OR SOL2_SINGLE)
+	message(STATUS "sol2 adding single...")
+	add_subdirectory(single)
+endif()
+
+# # # documentation
+# Generates the docs
+if (SOL2_DOCS)
+	message(STATUS "sol2 adding docs...")
+	add_subdirectory(docs)
 endif()
 
 # pkg-config support, except on Windows
@@ -237,23 +218,23 @@ if(NOT WIN32 OR NOT CMAKE_HOST_SYSTEM_NAME MATCHES Windows)
 	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/sol2.pc" DESTINATION "${PKGCONFIG_INSTALL_DIR}")
 endif()
 
-if (CI)
+if (SOL2_CI)
 	message(STATUS "sol2 Contiguous Integration is on")
 endif()
 
-if (EXAMPLES OR TESTS_EXAMPLES OR EXAMPLES_SINGLE OR INTEROP_EXAMPLES OR TESTS_INTEROP_EXAMPLES OR INTEROP_EXAMPLES_SINGLE OR DYNAMIC_LOADING_EXAMPLES OR TESTS_DYNAMIC_LOADING_EXAMPLES OR DYNAMIC_LOADING_EXAMPLES_SINGLE)
+if (SOL2_EXAMPLES OR SOL2_TESTS_EXAMPLES OR SOL2_EXAMPLES_SINGLE OR SOL2_INTEROP_EXAMPLES OR SOL2_TESTS_INTEROP_EXAMPLES OR SOL2_INTEROP_EXAMPLES_SINGLE OR SOL2_DYNAMIC_LOADING_EXAMPLES OR SOL2_TESTS_DYNAMIC_LOADING_EXAMPLES OR SOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE)
 	set(DO_EXAMPLES TRUE)
 else()
 	set(DO_EXAMPLES FALSE)
 endif()
 
-if (TESTS OR TESTS_SINGLE)
+if (SOL2_TESTS OR SOL2_TESTS_SINGLE)
 	set(DO_TESTS TRUE)
 else()
 	set(DO_TESTS FALSE)
 endif()
 
-if (DO_TESTS OR TESTS_EXAMPLES OR TESTS_INTEROP_EXAMPLES OR TESTS_DYNAMIC_LOADING_EXAMPLES)
+if (DO_TESTS OR SOL2_TESTS_EXAMPLES OR SOL2_TESTS_INTEROP_EXAMPLES OR SOL2_TESTS_DYNAMIC_LOADING_EXAMPLES)
 	set(ENABLE_TESTING TRUE)
 else()
 	set(ENABLE_TESTING FALSE)
@@ -276,11 +257,11 @@ if (DO_TESTS OR DO_EXAMPLES)
 	endif()
 	find_package(Threads REQUIRED)
 	
-	string(TOLOWER ${LUA_VERSION} NORMALIZED_LUA_VERSION)
+	string(TOLOWER ${SOL2_LUA_VERSION} NORMALIZED_LUA_VERSION)
 	# Find way to get Lua: build if requested, or attempt to build if no matching version is found
-	if (BUILD_LUA)
-		find_package(LuaBuild REQUIRED COMPONENTS ${LUA_VERSION})
-	elseif (NOT LUA_VERSION)
+	if (SOL2_BUILD_LUA)
+		find_package(LuaBuild REQUIRED COMPONENTS ${SOL2_LUA_VERSION})
+	elseif (NOT SOL2_LUA_VERSION)
 		find_package(LuaBuild REQUIRED)
 	else()
 		if (NORMALIZED_LUA_VERSION MATCHES "5.1")
@@ -289,15 +270,17 @@ if (DO_TESTS OR DO_EXAMPLES)
 			find_package(Lua 5.2 EXACT REQUIRED)
 		elseif(NORMALIZED_LUA_VERSION MATCHES "5.3")
 			find_package(Lua 5.3 EXACT REQUIRED)
+		elseif(NORMALIZED_LUA_VERSION MATCHES "5.4")
+			find_package(Lua 5.4 EXACT REQUIRED)
 		elseif(NORMALIZED_LUA_VERSION MATCHES "luajit")
 			find_package(LuaJIT REQUIRED)
 		else()
-			find_package(LuaBuild ${LUA_VERSION} REQUIRED)
+			find_package(LuaBuild ${SOL2_LUA_VERSION} REQUIRED)
 		endif()
 	endif()
 	
 	if (NOT LUA_FOUND AND NOT LUABUILD_FOUND)
-		message(FATAL_ERROR "sol2 Lua \"${LUA_VERSION}\" not found and could not be targeted for building")
+		message(FATAL_ERROR "sol2 Lua \"${SOL2_LUA_VERSION}\" not found and could not be targeted for building")
 	endif()
 	
 	# # Enable test harness for regular, example or single tests

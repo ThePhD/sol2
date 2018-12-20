@@ -213,6 +213,9 @@ namespace sol {
 		template <>
 		struct pusher<protected_function_result> {
 			static int push(lua_State* L, const protected_function_result& pfr) {
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+				luaL_checkstack(L, static_cast<int>(pfr.pop_count()), detail::not_enough_stack_space_generic);
+#endif // make sure stack doesn't overflow
 				int p = 0;
 				for (int i = 0; i < pfr.pop_count(); ++i) {
 					lua_pushvalue(L, i + pfr.stack_index());

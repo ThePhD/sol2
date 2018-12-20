@@ -74,6 +74,9 @@ namespace sol {
 			}
 			int i = r.stack_index();
 			if (detail::xmovable(lua_state(), r.lua_state())) {
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+				luaL_checkstack(L, 1, "not enough Lua stack space to push a single reference value");
+#endif // make sure stack doesn't overflow
 				lua_pushvalue(r.lua_state(), r.index);
 				lua_xmove(r.lua_state(), luastate, 1);
 				i = absolute_index(luastate, -1);
@@ -90,6 +93,9 @@ namespace sol {
 		}
 
 		int push(lua_State* Ls) const noexcept {
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+			luaL_checkstack(Ls, 1, "not enough Lua stack space to push a single reference value");
+#endif // make sure stack doesn't overflow
 			if (lua_state() == nullptr) {
 				lua_pushnil(Ls);
 				return 1;

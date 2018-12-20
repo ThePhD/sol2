@@ -33,7 +33,6 @@
 #include "raii.hpp"
 #include "deprecate.hpp"
 #include "object.hpp"
-#include "usertype_container.hpp"
 
 #include <sstream>
 #include <type_traits>
@@ -55,7 +54,7 @@ namespace sol {
 		constexpr const int base_walking_failed_index = -32467;
 		constexpr const int lookup_failed_index = -42469;
 
-		enum class submetatable {
+		enum class submetatable_type {
 			// must be sequential
 			value,
 			reference,
@@ -112,6 +111,59 @@ namespace sol {
 			return 0;
 		}
 	} // namespace u_detail
+
+	namespace detail {
+
+		template <typename T, typename IFx, typename Fx>
+		inline void insert_default_registrations(IFx&& ifx, Fx&& fx) {
+			if constexpr (is_automagical<T>::value) {
+				if (fx(meta_function::less_than)) {
+					if constexpr (meta::supports_op_less<T>::value) {
+						lua_CFunction f = &comparsion_operator_wrap<T, std::less<>>;
+						ifx(meta_function::less_than, f);
+					}
+				}
+				if (fx(meta_function::less_than_or_equal_to)) {
+					if constexpr (meta::supports_op_less_equal<T>::value) {
+						lua_CFunction f = &comparsion_operator_wrap<T, std::less_equal<>>;
+						ifx(meta_function::less_than_or_equal_to, f);
+					}
+				}
+				if (fx(meta_function::equal_to)) {
+					if constexpr (meta::supports_op_equal<T>::value) {
+						lua_CFunction f = &comparsion_operator_wrap<T, std::equal_to<>>;
+						ifx(meta_function::equal_to, f);
+					}
+					else {
+						lua_CFunction f = &comparsion_operator_wrap<T, no_comp>;
+						ifx(meta_function::equal_to, f);
+					}
+					if (fx(meta_function::pairs)) {
+						// TODO: fix this
+						//ifx(meta_function::pairs, &usertype_container<as_container_t<T>>::pairs_call);
+					}
+					if (fx(meta_function::length)) {
+						if constexpr (meta::has_size<const T>::value || meta::has_size<T>::value) {
+							auto f = &default_size<T>;
+							ifx(meta_function::length, f);
+						}
+					}
+					if (fx(meta_function::to_string)) {
+						if constexpr (is_to_stringable<T>::value) {
+							auto f = &detail::static_trampoline<&default_to_string<T>>;
+							ifx(meta_function::to_string, f);
+						}
+					}
+					if (fx(meta_function::call_function)) {
+						if constexpr (meta::has_deducible_signature<T>::value) {
+							auto f = &c_call<decltype(&T::operator()), &T::operator()>;
+							ifx(meta_function::call_function, f);
+						}
+					}
+				}
+			}
+		}
+	} // namespace detail
 
 	namespace stack { namespace stack_detail {
 		template <typename T>

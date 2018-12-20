@@ -187,7 +187,7 @@ namespace sol {
 
 	namespace stack {
 		template <>
-		struct getter<env_t> {
+		struct unqualified_getter<env_t> {
 			static environment get(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
 				return get_environment(stack_reference(L, raw_index(index)));
@@ -195,7 +195,7 @@ namespace sol {
 		};
 
 		template <>
-		struct getter<this_environment> {
+		struct unqualified_getter<this_environment> {
 			static this_environment get(lua_State* L, int, record& tracking) {
 				tracking.use(0);
 				lua_Debug info;

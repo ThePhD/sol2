@@ -94,6 +94,9 @@ namespace sol {
 				return;
 			}
 			if (!ref.valid()) {
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+				luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
+#endif // make sure stack doesn't overflow
 				lua_pushnil(L);
 				lua_setglobal(L, default_handler_name());
 			}

@@ -34,6 +34,7 @@
 #include "stack_pop.hpp"
 #include "stack_field.hpp"
 #include "stack_probe.hpp"
+
 #include <cstring>
 #include <array>
 
@@ -209,7 +210,7 @@ namespace sol {
 		}
 
 		inline call_syntax get_call_syntax(lua_State* L, const string_view& key, int index) {
-			if (lua_gettop(L) == 0) {
+			if (lua_gettop(L) < 1) {
 				return call_syntax::dot;
 			}
 			luaL_getmetatable(L, key.data());
@@ -247,6 +248,9 @@ namespace sol {
 			if (L == nullptr) {
 				return;
 			}
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+			luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
+#endif // make sure stack doesn't overflow
 			lua_pushlightuserdata(L, (void*)handler);
 			auto pn = pop_n(L, 1);
 			luaJIT_setmode(L, -1, LUAJIT_MODE_WRAPCFUNC | LUAJIT_MODE_ON);

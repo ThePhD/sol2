@@ -24,10 +24,11 @@
 #ifndef SOL_USERTYPE_HPP
 #define SOL_USERTYPE_HPP
 
-#include "metatable.hpp"
+#include "usertype_core.hpp"
 #include "usertype_container.hpp"
 #include "usertype_storage.hpp"
 #include "usertype_proxy.hpp"
+#include "metatable.hpp"
 
 namespace sol {
 

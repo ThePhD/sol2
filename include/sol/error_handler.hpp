@@ -29,12 +29,26 @@
 
 namespace sol {
 
+	namespace detail {
+		constexpr const char* not_enough_stack_space = "not enough space left on Lua stack";
+		constexpr const char* not_enough_stack_space_floating = "not enough space left on Lua stack for a floating point number";
+		constexpr const char* not_enough_stack_space_integral = "not enough space left on Lua stack for an integral number";
+		constexpr const char* not_enough_stack_space_string = "not enough space left on Lua stack for a string";
+		constexpr const char* not_enough_stack_space_meta_function_name = "not enough space left on Lua stack for the name of a meta_function";
+		constexpr const char* not_enough_stack_space_userdata = "not enough space left on Lua stack to create a sol2 userdata";
+		constexpr const char* not_enough_stack_space_generic = "not enough space left on Lua stack to push valuees";
+		constexpr const char* not_enough_stack_space_environment = "not enough space left on Lua stack to retrieve environment";
+	}
+
 	inline std::string associated_type_name(lua_State* L, int index, type t) {
 		switch (t) {
 		case type::poly:
 			return "anything";
 		case type::userdata:
 		{
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+			luaL_checkstack(L, 2, "not enough space to push get the type name");
+#endif // make sure stack doesn't overflow
 			if (lua_getmetatable(L, index) == 0) {
 				break;
 			}

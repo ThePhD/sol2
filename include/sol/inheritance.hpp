@@ -75,6 +75,11 @@ namespace sol {
 				return ti == usertype_traits<T>::qualified_name() || type_check_bases(bases_t(), ti);
 			}
 
+			template <typename ...Bases>
+			static bool type_check_with(const string_view& ti) {
+				return ti == usertype_traits<T>::qualified_name() || type_check_bases(types<Bases...>(), ti);
+			}
+
 			static void* type_cast_bases(types<>, T*, const string_view&) {
 				return nullptr;
 			}
@@ -88,6 +93,12 @@ namespace sol {
 			static void* type_cast(void* voiddata, const string_view& ti) {
 				T* data = static_cast<T*>(voiddata);
 				return static_cast<void*>(ti != usertype_traits<T>::qualified_name() ? type_cast_bases(bases_t(), data, ti) : data);
+			}
+
+			template <typename... Bases>
+			static void* type_cast_with(void* voiddata, const string_view& ti) {
+				T* data = static_cast<T*>(voiddata);
+				return static_cast<void*>(ti != usertype_traits<T>::qualified_name() ? type_cast_bases(types<Bases...>(), data, ti) : data);
 			}
 
 			template <typename U>
@@ -129,6 +140,25 @@ namespace sol {
 				}
 				return type_unique_cast_bases<U>(cond_bases_t(), source_data, target_data, ti);
 			}
+
+			template <typename U, typename... Bases>
+			static int type_unique_cast_with(void* source_data, void* target_data, const string_view& ti, const string_view& rebind_ti) {
+				using uc_bases_t = types<Bases...>;
+				typedef unique_usertype_traits<U> uu_traits;
+				typedef typename uu_traits::template rebind_base<void> rebind_t;
+				typedef std::conditional_t<std::is_void<rebind_t>::value, types<>, uc_bases_t> cond_bases_t;
+				string_view this_rebind_ti = usertype_traits<rebind_t>::qualified_name();
+				if (rebind_ti != this_rebind_ti) {
+					// this is not even of the same unique type
+					return 0;
+				}
+				string_view this_ti = usertype_traits<T>::qualified_name();
+				if (ti == this_ti) {
+					// direct match, return 1
+					return 1;
+				}
+				return type_unique_cast_bases<U>(cond_bases_t(), source_data, target_data, ti);
+			}
 		};
 
 		using inheritance_check_function = decltype(&inheritance<void>::type_check);
@@ -136,12 +166,5 @@ namespace sol {
 		using inheritance_unique_cast_function = decltype(&inheritance<void>::type_unique_cast<void>);
 	} // namespace detail
 } // namespace sol
-
-#define SOL_BASE_CLASSES(T, ...) \
-	template <>                 \
-	struct ::sol::base<T> : std::true_type { typedef ::sol::types<__VA_ARGS__> type; };
-#define SOL_DERIVED_CLASSES(T, ...) \
-	template <>                    \
-	struct ::sol::derive<T> : std::true_type { typedef ::sol::types<__VA_ARGS__> type; };
 
 #endif // SOL_INHERITANCE_HPP

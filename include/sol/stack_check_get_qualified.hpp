@@ -30,7 +30,12 @@
 namespace sol {
 namespace stack {
 	template <typename T, typename C>
-	struct qualified_check_getter : check_getter<meta::unqualified_t<T>, C> {};
+	struct qualified_check_getter {
+		template <typename Handler>
+		static decltype(auto) get(lua_State* L, int index, Handler&& handler, record& tracking) {
+			return stack::unqualified_check_get<T>(L, index, std::forward<Handler>(handler), tracking);
+		}
+	};
 }
 } // namespace sol::stack
 

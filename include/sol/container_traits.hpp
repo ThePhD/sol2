@@ -26,7 +26,7 @@
 
 #include "traits.hpp"
 #include "stack.hpp"
-#include <unordered_map>
+#include "map.hpp"
 
 namespace sol {
 
@@ -79,7 +79,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -91,7 +91,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -103,7 +103,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T, typename = void>
@@ -115,7 +115,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -127,7 +127,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -139,7 +139,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -151,7 +151,19 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
+		};
+
+		template <typename T>
+		struct has_traits_index_of_test {
+		private:
+			template <typename C>
+			static meta::sfinae_yes_t test(decltype(&C::index_of));
+			template <typename C>
+			static meta::sfinae_no_t test(...);
+
+		public:
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -163,7 +175,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -175,7 +187,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -187,7 +199,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -199,7 +211,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -211,7 +223,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -223,7 +235,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -235,7 +247,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -247,7 +259,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -259,7 +271,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -271,7 +283,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -283,7 +295,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -295,7 +307,7 @@ namespace sol {
 			static meta::sfinae_no_t test(...);
 
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(meta::sfinae_yes_t);
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
 		};
 
 		template <typename T>
@@ -351,6 +363,9 @@ namespace sol {
 
 		template <typename T>
 		using has_traits_find = meta::boolean<has_traits_find_test<T>::value>;
+
+		template <typename T>
+		using has_traits_index_of = meta::boolean<has_traits_index_of_test<T>::value>;
 
 		template <typename T>
 		using has_traits_insert = meta::boolean<has_traits_insert_test<T>::value>;
@@ -746,26 +761,39 @@ namespace sol {
 				return set_associative_find(meta::all<has_find<T>, meta::any<is_associative, is_lookup>>(), L, self, std::move(key), std::move(value));
 			}
 
+			template <bool idx_of = false>
 			static detail::error_result find_has_associative_lookup(std::true_type, lua_State* L, T& self) {
 				decltype(auto) key = stack::unqualified_get<K>(L, 2);
 				auto it = self.find(key);
 				if (it == deferred_traits::end(L, self)) {
 					return stack::push(L, lua_nil);
 				}
-				return get_associative(is_associative(), L, it);
+				if constexpr (idx_of) {
+					return stack::push(L, std::distance(deferred_traits::begin(L, self), it));
+				}
+				else {
+					return get_associative(is_associative(), L, it);
+				}
 			}
 
+			template <bool idx_of = false>
 			static detail::error_result find_has_associative_lookup(std::false_type, lua_State* L, T& self) {
 				decltype(auto) value = stack::unqualified_get<V>(L, 2);
 				auto it = self.find(value);
 				if (it == deferred_traits::end(L, self)) {
 					return stack::push(L, lua_nil);
 				}
-				return get_associative(is_associative(), L, it);
+				if constexpr (idx_of) {
+					return stack::push(L, std::distance(deferred_traits::begin(L, self), it));
+				}
+				else {
+					return get_associative(is_associative(), L, it);
+				}
 			}
 
+			template <bool idx_of = false>
 			static detail::error_result find_has(std::true_type, lua_State* L, T& self) {
-				return find_has_associative_lookup(meta::any<is_lookup, is_associative>(), L, self);
+				return find_has_associative_lookup<idx_of>(meta::any<is_lookup, is_associative>(), L, self);
 			}
 
 			static detail::error_result find_associative_lookup(std::true_type, lua_State* L, iterator& it, std::size_t) {
@@ -776,10 +804,12 @@ namespace sol {
 				return stack::push(L, index);
 			}
 
+			template <bool = false>
 			static detail::error_result find_comparative(std::false_type, lua_State*, T&) {
 				return detail::error_result("cannot call 'find' on '%s': there is no 'find' function and the value_type is not equality comparable", detail::demangle<T>().c_str());
 			}
 
+			template <bool idx_of = false>
 			static detail::error_result find_comparative(std::true_type, lua_State* L, T& self) {
 				decltype(auto) value = stack::unqualified_get<V>(L, 2);
 				auto it = deferred_traits::begin(L, self);
@@ -793,11 +823,12 @@ namespace sol {
 						break;
 					}
 				}
-				return find_associative_lookup(meta::any<is_lookup, is_associative>(), L, it, index);
+				return find_associative_lookup(meta::any<is_lookup, is_associative, meta::boolean<!idx_of>>(), L, it, index);
 			}
 
+			template <bool idx_of = false>
 			static detail::error_result find_has(std::false_type, lua_State* L, T& self) {
-				return find_comparative(meta::supports_op_equal<V>(), L, self);
+				return find_comparative<idx_of>(meta::supports_op_equal<V>(), L, self);
 			}
 
 			static detail::error_result add_insert_after(std::false_type, lua_State* L, T& self, stack_object value, iterator&) {
@@ -1168,6 +1199,12 @@ namespace sol {
 				return handle_errors(L, er);
 			}
 
+			static int index_of(lua_State* L) {
+				auto& self = get_src(L);
+				detail::error_result er = find_has<true>(has_find<T>(), L, self);
+				return handle_errors(L, er);
+			}
+
 			static iterator begin(lua_State*, T& self) {
 				using std::begin;
 				return begin(self);
@@ -1344,6 +1381,10 @@ namespace sol {
 
 			static int index_set(lua_State* L) {
 				return set(L);
+			}
+
+			static int index_of(lua_State* L) {
+				return find(L);
 			}
 
 			static int find(lua_State* L) {

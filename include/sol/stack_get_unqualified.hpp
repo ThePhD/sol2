@@ -43,8 +43,7 @@
 #endif // Apple clang screwed up
 #endif // C++17
 
-namespace sol {
-namespace stack {
+namespace sol { namespace stack {
 
 	template <typename U>
 	struct userdata_getter<U> {
@@ -56,17 +55,21 @@ namespace stack {
 	};
 
 	template <typename T, typename>
-	struct getter {
+	struct unqualified_getter {
 		static T& get(lua_State* L, int index, record& tracking) {
-			return getter<detail::as_value_tag<T>>{}.get(L, index, tracking);
+			return unqualified_getter<detail::as_value_tag<T>>{}.get(L, index, tracking);
 		}
 	};
 
 	template <typename T, typename C>
-	struct qualified_getter : getter<meta::unqualified_t<T>, C> {};
+	struct qualified_getter {
+		static decltype(auto) get(lua_State* L, int index, record& tracking) {
+			return stack::unqualified_get<T>(L, index, tracking);
+		}
+	};
 
 	template <typename T>
-	struct getter<T, std::enable_if_t<std::is_floating_point<T>::value>> {
+	struct unqualified_getter<T, std::enable_if_t<std::is_floating_point<T>::value>> {
 		static T get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			return static_cast<T>(lua_tonumber(L, index));
@@ -74,7 +77,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<T, std::enable_if_t<std::is_integral<T>::value>> {
+	struct unqualified_getter<T, std::enable_if_t<std::is_integral<T>::value>> {
 		static T get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 #if SOL_LUA_VERSION >= 503
@@ -87,7 +90,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<T, std::enable_if_t<std::is_enum<T>::value>> {
+	struct unqualified_getter<T, std::enable_if_t<std::is_enum<T>::value>> {
 		static T get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			return static_cast<T>(lua_tointegerx(L, index, nullptr));
@@ -95,7 +98,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<as_table_t<T>> {
+	struct unqualified_getter<as_table_t<T>> {
 		typedef meta::unqualified_t<T> Tu;
 
 		template <typename V>
@@ -152,7 +155,10 @@ namespace stack {
 				}
 				bool isnil = false;
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
-#if defined(LUA_NILINTABLE) && LUA_NILINTABLE
+#if defined(LUA_NILINTABLE) && LUA_NILINTABLE && SOL_LUA_VERSION >= 600
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+					luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
+#endif // make sure stack doesn't overflow
 					lua_pushinteger(L, static_cast<lua_Integer>(i + vi));
 					if (lua_keyin(L, index) == 0) {
 						// it's time to stop
@@ -164,14 +170,13 @@ namespace stack {
 					}
 #else
 					type vt = static_cast<type>(lua_geti(L, index, i + vi));
-					isnil = vt == type::none
-						|| vt == type::lua_nil;
+					isnil = vt == type::none || vt == type::lua_nil;
 #endif
 					if (isnil) {
 						if (i == 0) {
 							break;
 						}
-#if defined(LUA_NILINTABLE) && LUA_NILINTABLE
+#if defined(LUA_NILINTABLE) && LUA_NILINTABLE && SOL_LUA_VERSION >= 600
 						lua_pop(L, vi);
 #else
 						lua_pop(L, (vi + 1));
@@ -180,7 +185,7 @@ namespace stack {
 					}
 				}
 				if (isnil) {
-#if defined(LUA_NILINTABLE) && LUA_NILINTABLE
+#if defined(LUA_NILINTABLE) && LUA_NILINTABLE && SOL_LUA_VERSION >= 600
 #else
 					lua_pop(L, lua_size<V>::value);
 #endif
@@ -196,6 +201,9 @@ namespace stack {
 				if (idx >= arr.max_size()) {
 					return arr;
 				}
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+				luaL_checkstack(L, 2, detail::not_enough_stack_space_generic);
+#endif // make sure stack doesn't overflow
 				bool isnil = false;
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
 					lua_pushinteger(L, i);
@@ -230,6 +238,10 @@ namespace stack {
 		static T get(types<K, V>, lua_State* L, int relindex, record& tracking) {
 			tracking.use(1);
 
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+			luaL_checkstack(L, 3, detail::not_enough_stack_space_generic);
+#endif // make sure stack doesn't overflow
+
 			T associative;
 			int index = lua_absindex(L, relindex);
 			lua_pushnil(L);
@@ -247,7 +259,7 @@ namespace stack {
 	};
 
 	template <typename T, typename Al>
-	struct getter<as_table_t<std::forward_list<T, Al>>> {
+	struct unqualified_getter<as_table_t<std::forward_list<T, Al>>> {
 		typedef std::forward_list<T, Al> C;
 
 		static C get(lua_State* L, int relindex, record& tracking) {
@@ -269,6 +281,9 @@ namespace stack {
 		template <typename V>
 		static C get(types<V>, lua_State* L, int relindex, record& tracking) {
 			tracking.use(1);
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+			luaL_checkstack(L, 3, detail::not_enough_stack_space_generic);
+#endif // make sure stack doesn't overflow
 
 			int index = lua_absindex(L, relindex);
 			C arr;
@@ -330,6 +345,10 @@ namespace stack {
 		static C get(types<K, V>, lua_State* L, int relindex, record& tracking) {
 			tracking.use(1);
 
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+			luaL_checkstack(L, 3, detail::not_enough_stack_space_generic);
+#endif // make sure stack doesn't overflow
+
 			C associative;
 			auto at = associative.cbefore_begin();
 			int index = lua_absindex(L, relindex);
@@ -348,9 +367,9 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<nested<T>, std::enable_if_t<!is_container<T>::value>> {
+	struct unqualified_getter<nested<T>, std::enable_if_t<!is_container<T>::value>> {
 		static T get(lua_State* L, int index, record& tracking) {
-			getter<T> g;
+			unqualified_getter<T> g;
 			// VC++ has a bad warning here: shut it up
 			(void)g;
 			return g.get(L, index, tracking);
@@ -358,10 +377,12 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<nested<T>, std::enable_if_t<meta::all<is_container<T>, meta::neg<meta::has_key_value_pair<meta::unqualified_t<T>>>>::value>> {
+	struct unqualified_getter<nested<T>,
+		std::enable_if_t<
+			meta::all<is_container<T>, meta::neg<meta::has_key_value_pair<meta::unqualified_t<T>>>>::value>> {
 		static T get(lua_State* L, int index, record& tracking) {
 			typedef typename T::value_type V;
-			getter<as_table_t<T>> g;
+			unqualified_getter<as_table_t<T>> g;
 			// VC++ has a bad warning here: shut it up
 			(void)g;
 			return g.get(types<nested<V>>(), L, index, tracking);
@@ -369,12 +390,13 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<nested<T>, std::enable_if_t<meta::all<is_container<T>, meta::has_key_value_pair<meta::unqualified_t<T>>>::value>> {
+	struct unqualified_getter<nested<T>,
+		std::enable_if_t<meta::all<is_container<T>, meta::has_key_value_pair<meta::unqualified_t<T>>>::value>> {
 		static T get(lua_State* L, int index, record& tracking) {
 			typedef typename T::value_type P;
 			typedef typename P::first_type K;
 			typedef typename P::second_type V;
-			getter<as_table_t<T>> g;
+			unqualified_getter<as_table_t<T>> g;
 			// VC++ has a bad warning here: shut it up
 			(void)g;
 			return g.get(types<K, nested<V>>(), L, index, tracking);
@@ -382,7 +404,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<T, std::enable_if_t<is_lua_reference<T>::value>> {
+	struct unqualified_getter<T, std::enable_if_t<is_lua_reference<T>::value>> {
 		static T get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			return T(L, index);
@@ -390,7 +412,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<userdata_value> {
+	struct unqualified_getter<userdata_value> {
 		static userdata_value get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			return userdata_value(lua_touserdata(L, index));
@@ -398,7 +420,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<lightuserdata_value> {
+	struct unqualified_getter<lightuserdata_value> {
 		static lightuserdata_value get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			return lightuserdata_value(lua_touserdata(L, index));
@@ -406,7 +428,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<light<T>> {
+	struct unqualified_getter<light<T>> {
 		static light<T> get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			void* memory = lua_touserdata(L, index);
@@ -415,7 +437,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<user<T>> {
+	struct unqualified_getter<user<T>> {
 		static std::add_lvalue_reference_t<T> get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			void* memory = lua_touserdata(L, index);
@@ -425,7 +447,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<user<T*>> {
+	struct unqualified_getter<user<T*>> {
 		static T* get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			void* memory = lua_touserdata(L, index);
@@ -435,7 +457,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<type> {
+	struct unqualified_getter<type> {
 		static type get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			return static_cast<type>(lua_type(L, index));
@@ -443,7 +465,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<bool> {
+	struct unqualified_getter<bool> {
 		static bool get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			return lua_toboolean(L, index) != 0;
@@ -451,7 +473,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<std::string> {
+	struct unqualified_getter<std::string> {
 		static std::string get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			std::size_t len;
@@ -461,7 +483,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<const char*> {
+	struct unqualified_getter<const char*> {
 		static const char* get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			size_t sz;
@@ -470,7 +492,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<char> {
+	struct unqualified_getter<char> {
 		static char get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			size_t len;
@@ -480,7 +502,7 @@ namespace stack {
 	};
 
 	template <typename Traits>
-	struct getter<basic_string_view<char, Traits>> {
+	struct unqualified_getter<basic_string_view<char, Traits>> {
 		static string_view get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			size_t sz;
@@ -490,20 +512,20 @@ namespace stack {
 	};
 
 	template <typename Traits, typename Al>
-	struct getter<std::basic_string<wchar_t, Traits, Al>> {
+	struct unqualified_getter<std::basic_string<wchar_t, Traits, Al>> {
 		typedef std::basic_string<wchar_t, Traits, Al> S;
 		static S get(lua_State* L, int index, record& tracking) {
 			typedef std::conditional_t<sizeof(wchar_t) == 2, char16_t, char32_t> Ch;
 			typedef typename std::allocator_traits<Al>::template rebind_alloc<Ch> ChAl;
 			typedef std::char_traits<Ch> ChTraits;
-			getter<std::basic_string<Ch, ChTraits, ChAl>> g;
+			unqualified_getter<std::basic_string<Ch, ChTraits, ChAl>> g;
 			(void)g;
 			return g.template get_into<S>(L, index, tracking);
 		}
 	};
 
 	template <typename Traits, typename Al>
-	struct getter<std::basic_string<char16_t, Traits, Al>> {
+	struct unqualified_getter<std::basic_string<char16_t, Traits, Al>> {
 		template <typename F>
 		static void convert(const char* strb, const char* stre, F&& f) {
 			char32_t cp = 0;
@@ -533,9 +555,8 @@ namespace stack {
 			std::size_t needed_size = 0;
 			const char* strb = utf8p;
 			const char* stre = utf8p + len;
-			auto count_units = [&needed_size](const unicode::encoded_result<char16_t> er) {
-				needed_size += er.code_units_size;
-			};
+			auto count_units
+				= [&needed_size](const unicode::encoded_result<char16_t> er) { needed_size += er.code_units_size; };
 			convert(strb, stre, count_units);
 			S r(needed_size, static_cast<Ch>(0));
 			r.resize(needed_size);
@@ -554,7 +575,7 @@ namespace stack {
 	};
 
 	template <typename Traits, typename Al>
-	struct getter<std::basic_string<char32_t, Traits, Al>> {
+	struct unqualified_getter<std::basic_string<char32_t, Traits, Al>> {
 		template <typename F>
 		static void convert(const char* strb, const char* stre, F&& f) {
 			char32_t cp = 0;
@@ -584,9 +605,8 @@ namespace stack {
 			std::size_t needed_size = 0;
 			const char* strb = utf8p;
 			const char* stre = utf8p + len;
-			auto count_units = [&needed_size](const unicode::encoded_result<char32_t> er) {
-				needed_size += er.code_units_size;
-			};
+			auto count_units
+				= [&needed_size](const unicode::encoded_result<char32_t> er) { needed_size += er.code_units_size; };
 			convert(strb, stre, count_units);
 			S r(needed_size, static_cast<Ch>(0));
 			r.resize(needed_size);
@@ -605,7 +625,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<char16_t> {
+	struct unqualified_getter<char16_t> {
 		static char16_t get(lua_State* L, int index, record& tracking) {
 			string_view utf8 = stack::get<string_view>(L, index, tracking);
 			const char* strb = utf8.data();
@@ -624,7 +644,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<char32_t> {
+	struct unqualified_getter<char32_t> {
 		static char32_t get(lua_State* L, int index, record& tracking) {
 			string_view utf8 = stack::get<string_view>(L, index, tracking);
 			const char* strb = utf8.data();
@@ -643,10 +663,10 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<wchar_t> {
+	struct unqualified_getter<wchar_t> {
 		static wchar_t get(lua_State* L, int index, record& tracking) {
 			typedef std::conditional_t<sizeof(wchar_t) == 2, char16_t, char32_t> Ch;
-			getter<Ch> g;
+			unqualified_getter<Ch> g;
 			(void)g;
 			auto c = g.get(L, index, tracking);
 			return static_cast<wchar_t>(c);
@@ -654,10 +674,10 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<meta_function> {
+	struct unqualified_getter<meta_function> {
 		static meta_function get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
-			const char* name = getter<const char*>{}.get(L, index, tracking);
+			const char* name = unqualified_getter<const char*>{}.get(L, index, tracking);
 			const auto& mfnames = meta_function_names();
 			for (std::size_t i = 0; i < mfnames.size(); ++i)
 				if (mfnames[i] == name)
@@ -667,7 +687,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<lua_nil_t> {
+	struct unqualified_getter<lua_nil_t> {
 		static lua_nil_t get(lua_State*, int, record& tracking) {
 			tracking.use(1);
 			return lua_nil;
@@ -675,7 +695,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<std::nullptr_t> {
+	struct unqualified_getter<std::nullptr_t> {
 		static std::nullptr_t get(lua_State*, int, record& tracking) {
 			tracking.use(1);
 			return nullptr;
@@ -683,7 +703,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<nullopt_t> {
+	struct unqualified_getter<nullopt_t> {
 		static nullopt_t get(lua_State*, int, record& tracking) {
 			tracking.use(1);
 			return nullopt;
@@ -691,7 +711,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<this_state> {
+	struct unqualified_getter<this_state> {
 		static this_state get(lua_State* L, int, record& tracking) {
 			tracking.use(0);
 			return this_state(L);
@@ -699,7 +719,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<this_main_state> {
+	struct unqualified_getter<this_main_state> {
 		static this_main_state get(lua_State* L, int, record& tracking) {
 			tracking.use(0);
 			return this_main_state(main_thread(L, L));
@@ -707,7 +727,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<lua_CFunction> {
+	struct unqualified_getter<lua_CFunction> {
 		static lua_CFunction get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			return lua_tocfunction(L, index);
@@ -715,7 +735,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<c_closure> {
+	struct unqualified_getter<c_closure> {
 		static c_closure get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			return c_closure(lua_tocfunction(L, index), -1);
@@ -723,7 +743,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<error> {
+	struct unqualified_getter<error> {
 		static error get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			size_t sz = 0;
@@ -736,7 +756,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<void*> {
+	struct unqualified_getter<void*> {
 		static void* get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			return lua_touserdata(L, index);
@@ -744,7 +764,7 @@ namespace stack {
 	};
 
 	template <>
-	struct getter<const void*> {
+	struct unqualified_getter<const void*> {
 		static const void* get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			return lua_touserdata(L, index);
@@ -752,7 +772,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<detail::as_value_tag<T>> {
+	struct unqualified_getter<detail::as_value_tag<T>> {
 		static T* get_no_lua_nil(lua_State* L, int index, record& tracking) {
 			void* memory = lua_touserdata(L, index);
 #if defined(SOL_ENABLE_INTEROP) && SOL_ENABLE_INTEROP
@@ -771,12 +791,18 @@ namespace stack {
 		}
 
 		static T* get_no_lua_nil_from(lua_State* L, void* udata, int index, record&) {
-			if (derive<T>::value && luaL_getmetafield(L, index, &detail::base_class_cast_key()[0]) != 0) {
-				void* basecastdata = lua_touserdata(L, -1);
-				detail::inheritance_cast_function ic = reinterpret_cast<detail::inheritance_cast_function>(basecastdata);
-				// use the casting function to properly adjust the pointer for the desired T
-				udata = ic(udata, usertype_traits<T>::qualified_name());
-				lua_pop(L, 1);
+			if (derive<T>::value || weak_derive<T>::value) {
+				if (lua_getmetatable(L, index) == 1) {
+					lua_getfield(L, -1, &detail::base_class_cast_key()[0]);
+					if (type_of(L, -1) != type::lua_nil) {
+						void* basecastdata = lua_touserdata(L, -1);
+						detail::inheritance_cast_function ic
+							= reinterpret_cast<detail::inheritance_cast_function>(basecastdata);
+						// use the casting function to properly adjust the pointer for the desired T
+						udata = ic(udata, usertype_traits<T>::qualified_name());
+					}
+					lua_pop(L, 2);
+				}
 			}
 			T* obj = static_cast<T*>(udata);
 			return obj;
@@ -788,14 +814,14 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<detail::as_pointer_tag<T>> {
+	struct unqualified_getter<detail::as_pointer_tag<T>> {
 		static T* get(lua_State* L, int index, record& tracking) {
 			type t = type_of(L, index);
 			if (t == type::lua_nil) {
 				tracking.use(1);
 				return nullptr;
 			}
-			getter<detail::as_value_tag<T>> g;
+			unqualified_getter<detail::as_value_tag<T>> g;
 			// Avoid VC++ warning
 			(void)g;
 			return g.get_no_lua_nil(L, index, tracking);
@@ -803,9 +829,9 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<non_null<T*>> {
+	struct unqualified_getter<non_null<T*>> {
 		static T* get(lua_State* L, int index, record& tracking) {
-			getter<detail::as_value_tag<T>> g;
+			unqualified_getter<detail::as_value_tag<T>> g;
 			// Avoid VC++ warning
 			(void)g;
 			return g.get_no_lua_nil(L, index, tracking);
@@ -813,9 +839,9 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<T&> {
+	struct unqualified_getter<T&> {
 		static T& get(lua_State* L, int index, record& tracking) {
-			getter<detail::as_value_tag<T>> g;
+			unqualified_getter<detail::as_value_tag<T>> g;
 			// Avoid VC++ warning
 			(void)g;
 			return g.get(L, index, tracking);
@@ -823,9 +849,9 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<std::reference_wrapper<T>> {
+	struct unqualified_getter<std::reference_wrapper<T>> {
 		static T& get(lua_State* L, int index, record& tracking) {
-			getter<T&> g;
+			unqualified_getter<T&> g;
 			// Avoid VC++ warning
 			(void)g;
 			return g.get(L, index, tracking);
@@ -833,9 +859,9 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<T*> {
+	struct unqualified_getter<T*> {
 		static T* get(lua_State* L, int index, record& tracking) {
-			getter<detail::as_pointer_tag<T>> g;
+			unqualified_getter<detail::as_pointer_tag<T>> g;
 			// Avoid VC++ warning
 			(void)g;
 			return g.get(L, index, tracking);
@@ -843,7 +869,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct getter<T, std::enable_if_t<is_unique_usertype<T>::value>> {
+	struct unqualified_getter<T, std::enable_if_t<is_unique_usertype<T>::value>> {
 		typedef typename unique_usertype_traits<T>::type P;
 		typedef typename unique_usertype_traits<T>::actual_type Real;
 
@@ -857,7 +883,7 @@ namespace stack {
 	};
 
 	template <typename... Tn>
-	struct getter<std::tuple<Tn...>> {
+	struct unqualified_getter<std::tuple<Tn...>> {
 		typedef std::tuple<decltype(stack::get<Tn>(nullptr, 0))...> R;
 
 		template <typename... Args>
@@ -870,7 +896,8 @@ namespace stack {
 		static R apply(std::index_sequence<I, Ix...>, lua_State* L, int index, record& tracking, Args&&... args) {
 			// Fuck you too, VC++
 			typedef std::tuple_element_t<I, std::tuple<Tn...>> T;
-			return apply(std::index_sequence<Ix...>(), L, index, tracking, std::forward<Args>(args)..., stack::get<T>(L, index + tracking.used, tracking));
+			return apply(std::index_sequence<Ix...>(), L, index, tracking, std::forward<Args>(args)...,
+				stack::get<T>(L, index + tracking.used, tracking));
 		}
 
 		static R get(lua_State* L, int index, record& tracking) {
@@ -879,9 +906,11 @@ namespace stack {
 	};
 
 	template <typename A, typename B>
-	struct getter<std::pair<A, B>> {
+	struct unqualified_getter<std::pair<A, B>> {
 		static decltype(auto) get(lua_State* L, int index, record& tracking) {
-			return std::pair<decltype(stack::get<A>(L, index)), decltype(stack::get<B>(L, index))>{ stack::get<A>(L, index, tracking), stack::get<B>(L, index + tracking.used, tracking) };
+			return std::pair<decltype(stack::get<A>(L, index)), decltype(stack::get<B>(L, index))>{
+				stack::get<A>(L, index, tracking), stack::get<B>(L, index + tracking.used, tracking)
+			};
 		}
 	};
 
@@ -890,7 +919,7 @@ namespace stack {
 
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	template <typename... Tn>
-	struct getter<std::variant<Tn...>> {
+	struct unqualified_getter<std::variant<Tn...>> {
 		typedef std::variant<Tn...> V;
 		typedef std::variant_size<V> V_size;
 		typedef std::integral_constant<bool, V_size::value == 0> V_is_empty;
@@ -928,7 +957,6 @@ namespace stack {
 	};
 #endif // SOL_STD_VARIANT
 #endif // SOL_CXX17_FEATURES
-}
-} // namespace sol::stack
+}}	// namespace sol::stack
 
 #endif // SOL_STACK_UNQUALIFIED_GET_HPP

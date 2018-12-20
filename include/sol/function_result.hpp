@@ -38,13 +38,13 @@ namespace sol {
 		struct is_speshul<protected_function_result> : std::true_type {};
 
 		template <std::size_t I, typename... Args, typename T>
-		stack_proxy get(types<Args...>, index_value<0>, index_value<I>, const T& fr) {
+		stack_proxy get(types<Args...>, meta::index_value<0>, meta::index_value<I>, const T& fr) {
 			return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
 		}
 
 		template <std::size_t I, std::size_t N, typename Arg, typename... Args, typename T, meta::enable<meta::boolean<(N > 0)>> = meta::enabler>
-		stack_proxy get(types<Arg, Args...>, index_value<N>, index_value<I>, const T& fr) {
-			return get(types<Args...>(), index_value<N - 1>(), index_value<I + lua_size<Arg>::value>(), fr);
+		stack_proxy get(types<Arg, Args...>, meta::index_value<N>, meta::index_value<I>, const T& fr) {
+			return get(types<Args...>(), meta::index_value<N - 1>(), meta::index_value<I + lua_size<Arg>::value>(), fr);
 		}
 	} // namespace detail
 
@@ -61,7 +61,7 @@ namespace sol {
 
 	template <std::size_t I, typename... Args>
 	stack_proxy get(types<Args...> t, const unsafe_function_result& fr) {
-		return detail::get(t, index_value<I>(), index_value<0>(), fr);
+		return detail::get(t, meta::index_value<I>(), meta::index_value<0>(), fr);
 	}
 
 	template <std::size_t I>
@@ -71,7 +71,7 @@ namespace sol {
 
 	template <std::size_t I, typename... Args>
 	stack_proxy get(types<Args...> t, const protected_function_result& fr) {
-		return detail::get(t, index_value<I>(), index_value<0>(), fr);
+		return detail::get(t, meta::index_value<I>(), meta::index_value<0>(), fr);
 	}
 } // namespace sol
 

@@ -27,6 +27,7 @@
 #include "feature_test.hpp"
 
 #include <utility>
+#include <type_traits>
 
 namespace sol {
 
@@ -188,6 +189,32 @@ namespace sol {
 	struct base : std::false_type {
 		typedef types<> type;
 	};
+
+	template <typename T>
+	struct weak_derive {
+		static bool value;
+	};
+
+	template <typename T>
+	bool weak_derive<T>::value = false;
+
 } // namespace sol
+
+#define SOL_BASE_CLASSES(T, ...)                       \
+	namespace sol {                                   \
+		template <>                                  \
+		struct base<T> : std::true_type {            \
+			typedef ::sol::types<__VA_ARGS__> type; \
+		};                                           \
+	}                                                 \
+	void a_sol3_detail_function_decl_please_no_collide()
+#define SOL_DERIVED_CLASSES(T, ...)                    \
+	namespace sol {                                   \
+		template <>                                  \
+		struct derive<T> : std::true_type {          \
+			typedef ::sol::types<__VA_ARGS__> type; \
+		};                                           \
+	}                                                 \
+	void a_sol3_detail_function_decl_please_no_collide()
 
 #endif // SOL_FORWARD_HPP

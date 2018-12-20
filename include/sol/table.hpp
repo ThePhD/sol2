@@ -42,6 +42,7 @@ namespace sol {
 	usertype<Class> basic_table_core<is_global, base_type>::new_usertype(Key&& key, automagic_enrollments enrollments) {
 		int mt_index = u_detail::register_usertype<Class>(this->lua_state(), std::move(enrollments));
 		usertype<Class> mt(this->lua_state(), -mt_index);
+		lua_pop(this->lua_state(), 1);
 		set(std::forward<Key>(key), mt);
 		return mt;
 	}
@@ -80,7 +81,7 @@ namespace sol {
 
 	namespace stack {
 		template <>
-		struct getter<metatable_t> {
+		struct unqualified_getter<metatable_t> {
 			static table get(lua_State* L, int index = -1) {
 				if (lua_getmetatable(L, index) == 0) {
 					return table(L, ref_index(LUA_REFNIL));

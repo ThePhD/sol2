@@ -38,15 +38,32 @@
 
 
 namespace sol {
-	template <std::size_t I>
-	using index_value = std::integral_constant<std::size_t, I>;
-
 	namespace meta {
-		typedef std::array<char, 1> sfinae_yes_t;
-		typedef std::array<char, 2> sfinae_no_t;
+		template <std::size_t I>
+		using index_value = std::integral_constant<std::size_t, I>;
+
+		template <bool>
+		struct conditional {
+			template <typename T, typename U>
+			using type = T;
+		};
+
+		template <>
+		struct conditional<false> {
+			template <typename T, typename U>
+			using type = U;
+		};
+
+		template <bool B, typename T, typename U>
+		using conditional_t = typename conditional<B>::template type<T, U>;
+
+		using sfinae_yes_t = std::true_type;
+		using sfinae_no_t = std::false_type;
 
 		template <typename T>
-		struct identity { typedef T type; };
+		struct identity {
+			typedef T type;
+		};
 
 		template <typename T>
 		using identity_t = typename identity<T>::type;
@@ -105,6 +122,9 @@ namespace sol {
 		template <typename T, template <typename...> class Templ>
 		using is_specialization_of = meta_detail::is_specialization_of<std::remove_cv_t<T>, Templ>;
 
+		template <typename T, template <typename...> class Templ>
+		constexpr bool is_specialization_of_v = is_specialization_of<std::remove_cv_t<T>, Templ>::value;
+
 		template <class T, class...>
 		struct all_same : std::true_type {};
 
@@ -130,7 +150,7 @@ namespace sol {
 		using neg = boolean<!T::value>;
 
 		template <typename Condition, typename Then, typename Else>
-		using condition = std::conditional_t<Condition::value, Then, Else>;
+		using condition = conditional_t<Condition::value, Then, Else>;
 
 		template <typename... Args>
 		struct all : boolean<true> {};
@@ -144,9 +164,7 @@ namespace sol {
 		template <typename T, typename... Args>
 		struct any<T, Args...> : condition<T, boolean<true>, any<Args...>> {};
 
-		enum class enable_t {
-			_
-		};
+		enum class enable_t { _ };
 
 		constexpr const auto enabler = enable_t::_;
 
@@ -176,7 +194,8 @@ namespace sol {
 			struct index_in_pack : std::integral_constant<std::size_t, SIZE_MAX> {};
 
 			template <std::size_t I, typename T, typename T1, typename... Args>
-			struct index_in_pack<I, T, T1, Args...> : std::conditional_t<std::is_same<T, T1>::value, std::integral_constant<std::ptrdiff_t, I>, index_in_pack<I + 1, T, Args...>> {};
+			struct index_in_pack<I, T, T1, Args...>
+			: conditional_t<std::is_same<T, T1>::value, std::integral_constant<std::ptrdiff_t, I>, index_in_pack<I + 1, T, Args...>> {};
 		} // namespace meta_detail
 
 		template <typename T, typename... Args>
@@ -198,23 +217,24 @@ namespace sol {
 		struct at_in_pack<I, Arg, Args...> : std::conditional<I == 0, Arg, at_in_pack_t<I - 1, Args...>> {};
 
 		template <typename Arg, typename... Args>
-		struct at_in_pack<0, Arg, Args...> { typedef Arg type; };
+		struct at_in_pack<0, Arg, Args...> {
+			typedef Arg type;
+		};
 
 		namespace meta_detail {
 			template <std::size_t Limit, std::size_t I, template <typename...> class Pred, typename... Ts>
 			struct count_for_pack : std::integral_constant<std::size_t, 0> {};
 			template <std::size_t Limit, std::size_t I, template <typename...> class Pred, typename T, typename... Ts>
-						struct count_for_pack<Limit, I, Pred, T, Ts...> : std::conditional_t < sizeof...(Ts)
-					== 0
-				|| Limit<2,
-					   std::integral_constant<std::size_t, I + static_cast<std::size_t>(Limit != 0 && Pred<T>::value)>,
-					   count_for_pack<Limit - 1, I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>> {};
+			               struct count_for_pack<Limit, I, Pred, T, Ts...> : conditional_t<sizeof...(Ts)
+			          == 0
+			     || Limit<2, std::integral_constant<std::size_t, I + static_cast<std::size_t>(Limit != 0 && Pred<T>::value)>,
+			             count_for_pack<Limit - 1, I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>> {};
 			template <std::size_t I, template <typename...> class Pred, typename... Ts>
 			struct count_2_for_pack : std::integral_constant<std::size_t, 0> {};
 			template <std::size_t I, template <typename...> class Pred, typename T, typename U, typename... Ts>
-			struct count_2_for_pack<I, Pred, T, U, Ts...> : std::conditional_t<sizeof...(Ts) == 0,
-													   std::integral_constant<std::size_t, I + static_cast<std::size_t>(Pred<T>::value)>,
-													   count_2_for_pack<I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>> {};
+			struct count_2_for_pack<I, Pred, T, U, Ts...>
+			: conditional_t<sizeof...(Ts) == 0, std::integral_constant<std::size_t, I + static_cast<std::size_t>(Pred<T>::value)>,
+			       count_2_for_pack<I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>> {};
 		} // namespace meta_detail
 
 		template <template <typename...> class Pred, typename... Ts>
@@ -272,11 +292,14 @@ namespace sol {
 			struct is_callable : std::is_function<std::remove_pointer_t<T>> {};
 
 			template <typename T>
-			struct is_callable<T, std::enable_if_t<std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value && std::is_same<decltype(void(&T::operator())), void>::value>> {
-			};
+			struct is_callable<T,
+			     std::enable_if_t<std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value
+			          && std::is_same<decltype(void(&T::operator())), void>::value>> {};
 
 			template <typename T>
-			struct is_callable<T, std::enable_if_t<!std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value && std::is_destructible<unqualified_t<T>>::value>> {
+			struct is_callable<T,
+			     std::enable_if_t<!std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value
+			          && std::is_destructible<unqualified_t<T>>::value>> {
 				struct F {
 					void operator()();
 				};
@@ -290,11 +313,13 @@ namespace sol {
 				template <typename>
 				static sfinae_yes_t test(...);
 
-				static const bool value = sizeof(test<Derived>(0)) == sizeof(sfinae_yes_t);
+				static constexpr bool value = std::is_same_v<decltype(test<Derived>(0)), sfinae_yes_t>;
 			};
 
 			template <typename T>
-			struct is_callable<T, std::enable_if_t<!std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value && !std::is_destructible<unqualified_t<T>>::value>> {
+			struct is_callable<T,
+			     std::enable_if_t<!std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value
+			          && !std::is_destructible<unqualified_t<T>>::value>> {
 				struct F {
 					void operator()();
 				};
@@ -310,13 +335,12 @@ namespace sol {
 				template <typename>
 				static sfinae_yes_t test(...);
 
-				static const bool value = sizeof(test<Derived>(0)) == sizeof(sfinae_yes_t);
+				static constexpr bool value = std::is_same_v<decltype(test<Derived>(0)), sfinae_yes_t>;
 			};
 
 			struct has_begin_end_impl {
-				template <typename T, typename U = unqualified_t<T>,
-					typename B = decltype(std::declval<U&>().begin()),
-					typename E = decltype(std::declval<U&>().end())>
+				template <typename T, typename U = unqualified_t<T>, typename B = decltype(std::declval<U&>().begin()),
+				     typename E = decltype(std::declval<U&>().end())>
 				static std::true_type test(int);
 
 				template <typename...>
@@ -324,8 +348,7 @@ namespace sol {
 			};
 
 			struct has_key_type_impl {
-				template <typename T, typename U = unqualified_t<T>,
-					typename V = typename U::key_type>
+				template <typename T, typename U = unqualified_t<T>, typename V = typename U::key_type>
 				static std::true_type test(int);
 
 				template <typename...>
@@ -333,8 +356,7 @@ namespace sol {
 			};
 
 			struct has_mapped_type_impl {
-				template <typename T, typename U = unqualified_t<T>,
-					typename V = typename U::mapped_type>
+				template <typename T, typename U = unqualified_t<T>, typename V = typename U::mapped_type>
 				static std::true_type test(int);
 
 				template <typename...>
@@ -342,8 +364,7 @@ namespace sol {
 			};
 
 			struct has_value_type_impl {
-				template <typename T, typename U = unqualified_t<T>,
-					typename V = typename U::value_type>
+				template <typename T, typename U = unqualified_t<T>, typename V = typename U::value_type>
 				static std::true_type test(int);
 
 				template <typename...>
@@ -351,8 +372,7 @@ namespace sol {
 			};
 
 			struct has_iterator_impl {
-				template <typename T, typename U = unqualified_t<T>,
-					typename V = typename U::iterator>
+				template <typename T, typename U = unqualified_t<T>, typename V = typename U::iterator>
 				static std::true_type test(int);
 
 				template <typename...>
@@ -360,10 +380,8 @@ namespace sol {
 			};
 
 			struct has_key_value_pair_impl {
-				template <typename T, typename U = unqualified_t<T>,
-					typename V = typename U::value_type,
-					typename F = decltype(std::declval<V&>().first),
-					typename S = decltype(std::declval<V&>().second)>
+				template <typename T, typename U = unqualified_t<T>, typename V = typename U::value_type, typename F = decltype(std::declval<V&>().first),
+				     typename S = decltype(std::declval<V&>().second)>
 				static std::true_type test(int);
 
 				template <typename...>
@@ -379,77 +397,71 @@ namespace sol {
 				static sfinae_no_t test(...);
 
 			public:
-				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
+				static constexpr bool value = std::is_same_v<decltype(test<T>(0)), sfinae_yes_t>;
 			};
 
 			template <typename T>
 			struct has_insert_test {
 			private:
 				template <typename C>
-				static sfinae_yes_t test(decltype(std::declval<C>().insert(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>(), std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
+				static sfinae_yes_t test(decltype(std::declval<C>().insert(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>(),
+				     std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
 				template <typename C>
 				static sfinae_no_t test(...);
 
 			public:
-				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
+				static constexpr bool value = std::is_same_v<decltype(test<T>(0)), sfinae_yes_t>;
 			};
 
 			template <typename T>
 			struct has_insert_after_test {
 			private:
 				template <typename C>
-				static sfinae_yes_t test(decltype(std::declval<C>().insert_after(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>(), std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
+				static sfinae_yes_t test(decltype(std::declval<C>().insert_after(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>(),
+				     std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
 				template <typename C>
 				static sfinae_no_t test(...);
 
 			public:
-				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
+				static constexpr bool value = std::is_same_v<decltype(test<T>(0)), sfinae_yes_t>;
 			};
 
 			template <typename T>
 			struct has_size_test {
 			private:
-				typedef std::array<char, 1> sfinae_yes_t;
-				typedef std::array<char, 2> sfinae_no_t;
-
 				template <typename C>
 				static sfinae_yes_t test(decltype(std::declval<C>().size())*);
 				template <typename C>
 				static sfinae_no_t test(...);
 
 			public:
-				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
+				static constexpr bool value = std::is_same_v<decltype(test<T>(0)), sfinae_yes_t>;
 			};
 
 			template <typename T>
 			struct has_max_size_test {
 			private:
-				typedef std::array<char, 1> sfinae_yes_t;
-				typedef std::array<char, 2> sfinae_no_t;
-
 				template <typename C>
 				static sfinae_yes_t test(decltype(std::declval<C>().max_size())*);
 				template <typename C>
 				static sfinae_no_t test(...);
 
 			public:
-				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
+				static constexpr bool value = std::is_same_v<decltype(test<T>(0)), sfinae_yes_t>;
 			};
 
 			template <typename T>
 			struct has_to_string_test {
 			private:
-				typedef std::array<char, 1> sfinae_yes_t;
-				typedef std::array<char, 2> sfinae_no_t;
-
 				template <typename C>
 				static sfinae_yes_t test(decltype(std::declval<C>().to_string())*);
 				template <typename C>
 				static sfinae_no_t test(...);
 
 			public:
-				static const bool value = sizeof(test<T>(0)) == sizeof(sfinae_yes_t);
+				static constexpr bool value = std::is_same_v<decltype(test<T>(0)), sfinae_yes_t>;
 			};
+
 #if defined(_MSC_VER) && _MSC_VER <= 1910
 			template <typename T, typename U, typename = decltype(std::declval<T&>() < std::declval<U&>())>
 			std::true_type supports_op_less_test(std::reference_wrapper<T>, std::reference_wrapper<U>);
@@ -562,25 +574,28 @@ namespace sol {
 		struct is_matched_lookup : meta_detail::is_matched_lookup_impl<T, is_lookup<T>::value> {};
 
 		template <typename T>
-		using is_string_like = any<
-			is_specialization_of<meta::unqualified_t<T>, std::basic_string>,
+		using is_string_like = any<is_specialization_of<meta::unqualified_t<T>, std::basic_string>,
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-			is_specialization_of<meta::unqualified_t<T>, std::basic_string_view>,
+		     is_specialization_of<meta::unqualified_t<T>, std::basic_string_view>,
 #else
-			is_specialization_of<meta::unqualified_t<T>, basic_string_view>,
+		     is_specialization_of<meta::unqualified_t<T>, basic_string_view>,
 #endif
-			meta::all<std::is_array<unqualified_t<T>>, meta::any_same<meta::unqualified_t<std::remove_all_extents_t<meta::unqualified_t<T>>>, char, char16_t, char32_t, wchar_t>>>;
+		     meta::all<std::is_array<unqualified_t<T>>,
+		          meta::any_same<meta::unqualified_t<std::remove_all_extents_t<meta::unqualified_t<T>>>, char, char16_t, char32_t, wchar_t>>>;
 
 		template <typename T>
-		using is_string_constructible = any<
-			meta::all<std::is_array<unqualified_t<T>>, std::is_same<meta::unqualified_t<std::remove_all_extents_t<meta::unqualified_t<T>>>, char>>,
-			std::is_same<unqualified_t<T>, const char*>,
-			std::is_same<unqualified_t<T>, char>, std::is_same<unqualified_t<T>, std::string>, std::is_same<unqualified_t<T>, std::initializer_list<char>>
+		using is_string_constructible
+		     = any<meta::all<std::is_array<unqualified_t<T>>, std::is_same<meta::unqualified_t<std::remove_all_extents_t<meta::unqualified_t<T>>>, char>>,
+		          std::is_same<unqualified_t<T>, const char*>, std::is_same<unqualified_t<T>, char>, std::is_same<unqualified_t<T>, std::string>,
+		          std::is_same<unqualified_t<T>, std::initializer_list<char>>
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-			,
-			std::is_same<unqualified_t<T>, std::string_view>
+		          ,
+		          std::is_same<unqualified_t<T>, std::string_view>
 #endif
-			>;
+		          >;
+
+		template <typename T>
+		using is_string_like_or_constructible = any<is_string_like<T>, is_string_constructible<T>>;
 
 		template <typename T>
 		struct is_pair : std::false_type {};
@@ -589,16 +604,12 @@ namespace sol {
 		struct is_pair<std::pair<T1, T2>> : std::true_type {};
 
 		template <typename T>
-		using is_c_str = any<
-			std::is_same<std::decay_t<unqualified_t<T>>, const char*>,
-			std::is_same<std::decay_t<unqualified_t<T>>, char*>,
-			std::is_same<unqualified_t<T>, std::string>>;
+		using is_c_str = any<std::is_same<std::decay_t<unqualified_t<T>>, const char*>, std::is_same<std::decay_t<unqualified_t<T>>, char*>,
+		     std::is_same<unqualified_t<T>, std::string>>;
 
 		template <typename T>
-		struct is_move_only : all<
-							  neg<std::is_reference<T>>,
-							  neg<std::is_copy_constructible<unqualified_t<T>>>,
-							  std::is_move_constructible<unqualified_t<T>>> {};
+		struct is_move_only
+		: all<neg<std::is_reference<T>>, neg<std::is_copy_constructible<unqualified_t<T>>>, std::is_move_constructible<unqualified_t<T>>> {};
 
 		template <typename T>
 		using is_not_move_only = neg<is_move_only<T>>;
@@ -626,8 +637,8 @@ namespace sol {
 		};
 
 		template <typename T>
-		struct iterator_tag<T, std::conditional_t<false, typename T::iterator_category, void>> {
-			using type = typename T::iterator_category;
+		struct iterator_tag<T, conditional_t<false, typename std::iterator_traits<T>::iterator_category, void>> {
+			using type = typename std::iterator_traits<T>::iterator_category;
 		};
 
 	} // namespace meta
@@ -639,22 +650,6 @@ namespace sol {
 		struct is_pointer_like<std::unique_ptr<T, D>> : std::true_type {};
 		template <typename T>
 		struct is_pointer_like<std::shared_ptr<T>> : std::true_type {};
-
-		template <std::size_t I, typename Tuple>
-		decltype(auto) forward_get(Tuple&& tuple) {
-			return std::forward<meta::tuple_element_t<I, Tuple>>(std::get<I>(tuple));
-		}
-
-		template <std::size_t... I, typename Tuple>
-		auto forward_tuple_impl(std::index_sequence<I...>, Tuple&& tuple) -> decltype(std::tuple<decltype(forward_get<I>(tuple))...>(forward_get<I>(tuple)...)) {
-			return std::tuple<decltype(forward_get<I>(tuple))...>(std::move(std::get<I>(tuple))...);
-		}
-
-		template <typename Tuple>
-		auto forward_tuple(Tuple&& tuple) {
-			auto x = forward_tuple_impl(std::make_index_sequence<std::tuple_size<meta::unqualified_t<Tuple>>::value>(), std::forward<Tuple>(tuple));
-			return x;
-		}
 
 		template <typename T>
 		auto unwrap(T&& item) -> decltype(std::forward<T>(item)) {

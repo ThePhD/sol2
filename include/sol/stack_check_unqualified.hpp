@@ -474,7 +474,10 @@ namespace stack {
 			if (stack_detail::check_metatable<as_container_t<U>>(L, metatableindex))
 				return true;
 			bool success = false;
-			if (derive<T>::value) {
+			if (derive<T>::value || weak_derive<T>::value) {
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+				luaL_checkstack(L, 1, detail::not_enough_stack_space_string);
+#endif // make sure stack doesn't overflow
 				auto pn = stack::pop_n(L, 1);
 				lua_pushstring(L, &detail::base_class_check_key()[0]);
 				lua_rawget(L, metatableindex);
@@ -484,12 +487,11 @@ namespace stack {
 					success = ic(usertype_traits<T>::qualified_name());
 				}
 			}
+			lua_pop(L, 1);
 			if (!success) {
-				lua_pop(L, 1);
 				handler(L, index, type::userdata, indextype, "value at this index does not properly reflect the desired type");
 				return false;
 			}
-			lua_pop(L, 1);
 			return true;
 		}
 	};
@@ -502,13 +504,13 @@ namespace stack {
 				tracking.use(1);
 				return true;
 			}
-			return stack_detail::check_usertype<T>(std::false_type(), L, index, indextype, std::forward<Handler>(handler), tracking);
+			return check_usertype<std::remove_pointer_t<T>>(L, index, std::forward<Handler>(handler), tracking);
 		}
 
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			const type indextype = type_of(L, index);
-			return check(L, index, handler, indextype, tracking);
+			return check(L, index, indextype, handler, tracking);
 		}
 	};
 

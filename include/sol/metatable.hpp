@@ -25,6 +25,7 @@
 #define SOL_METATABLE_HPP
 
 #include "table_core.hpp"
+#include "usertype_core.hpp"
 
 namespace sol {
 
@@ -110,6 +111,8 @@ namespace sol {
 		void set(Key&& key, Value&& value);
 
 		void unregister() {
+			using ustorage_base = u_detail::usertype_storage_base;
+
 			lua_State* L = this->lua_state();
 			int x = lua_gettop(L);
 
@@ -123,13 +126,13 @@ namespace sol {
 			if (type_of(L, -1) != type::lightuserdata) {
 				return;
 			}
-			u_detail::usertype_storage_base& base_storage = stack::get<light<u_detail::usertype_storage_base>>(L, -1);
+			ustorage_base& base_storage = *static_cast<ustorage_base*>(stack::get<void*>(L, -1));
 			base_storage.clear();
 			stack_reference gnt(L, -1);
 			std::array<const char*, 6> registry_traits;
-			for (int i = 0; i < registry_traits.size()++ i) {
-				u_detail::submetatable submetatable_type = static_cast<submetatable>(i);
-				stack::get_field(L, submetatable_type, gnt.stack_index());
+			for (int i = 0; i < registry_traits.size(); ++i) {
+				u_detail::submetatable_type smt = static_cast<u_detail::submetatable_type>(i);
+				stack::get_field(L, smt, gnt.stack_index());
 				registry_traits[i] = stack::get<const char*>(L, -1);
 			}
 			// get the registry
@@ -139,9 +142,9 @@ namespace sol {
 			// in the registry (luaL_newmetatable does
 			// [name] = new table
 			// in registry upon creation)
-			for (int i = 0; i < registry_traits.size()++ i) {
-				u_detail::submetatable submetatable_type = static_cast<submetatable>(i);
-				if (submetatable_type == u_detail::submetatable::named) {
+			for (int i = 0; i < registry_traits.size(); ++i) {
+				u_detail::submetatable_type smt = static_cast<u_detail::submetatable_type>(i);
+				if (smt == u_detail::submetatable_type::named) {
 					const char* gcmetakey = registry_traits[i];
 					stack::set_field<true>(L, gcmetakey, lua_nil);
 				}

@@ -77,7 +77,7 @@ namespace sol {
 
 	namespace stack {
 		template <typename Signature>
-		struct getter<std::function<Signature>> {
+		struct unqualified_getter<std::function<Signature>> {
 			typedef meta::bind_traits<Signature> fx_t;
 			typedef typename fx_t::args_list args_lists;
 			typedef meta::tuple_types<typename fx_t::return_type> return_types;

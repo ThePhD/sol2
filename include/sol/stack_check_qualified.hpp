@@ -59,7 +59,7 @@ namespace stack {
 			if (&detail::usertype_unique_alloc_destroy<T, X> == pdx) {
 				return true;
 			}
-			if (derive<T>::value) {
+			if constexpr (derive<T>::value) {
 				memory = detail::align_usertype_unique_tag<true, false>(memory);
 				detail::unique_tag& ic = *reinterpret_cast<detail::unique_tag*>(memory);
 				string_view ti = usertype_traits<T>::qualified_name();

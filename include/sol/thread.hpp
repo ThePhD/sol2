@@ -56,7 +56,7 @@ namespace sol {
 		};
 
 		template <>
-		struct getter<lua_thread_state> {
+		struct unqualified_getter<lua_thread_state> {
 			lua_thread_state get(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
 				lua_thread_state lts( lua_tothread(L, index) );

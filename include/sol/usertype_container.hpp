@@ -26,7 +26,7 @@
 
 #include "stack.hpp"
 #include "container_traits.hpp"
-#include <unordered_map>
+#include "map.hpp"
 
 namespace sol {
 
@@ -36,15 +36,15 @@ namespace sol {
 		typedef container_traits<T> traits;
 		typedef container_detail::container_traits_default<T> default_traits;
 
-		static int real_index_get_traits(std::true_type, lua_State* L) {
+		static inline int real_index_get_traits(std::true_type, lua_State* L) {
 			return traits::index_get(L);
 		}
 
-		static int real_index_get_traits(std::false_type, lua_State* L) {
+		static inline int real_index_get_traits(std::false_type, lua_State* L) {
 			return default_traits::index_get(L);
 		}
 
-		static int real_index_call(lua_State* L) {
+		static inline int real_index_call(lua_State* L) {
 			typedef detail::unordered_map<std::string, lua_CFunction> call_map;
 			static const call_map calls{
 				{ "at", &at_call },
@@ -56,6 +56,7 @@ namespace sol {
 				{ "insert", &real_insert_call },
 				{ "clear", &real_clear_call },
 				{ "find", &real_find_call },
+				{ "index_of", &real_index_of_call },
 				{ "erase", &real_erase_call },
 				{ "pairs", &pairs_call },
 				{ "next", &next_call },
@@ -76,231 +77,247 @@ namespace sol {
 			return real_index_get_traits(container_detail::has_traits_index_get<traits>(), L);
 		}
 
-		static int real_at_traits(std::true_type, lua_State* L) {
+		static inline int real_at_traits(std::true_type, lua_State* L) {
 			return traits::at(L);
 		}
 
-		static int real_at_traits(std::false_type, lua_State* L) {
+		static inline int real_at_traits(std::false_type, lua_State* L) {
 			return default_traits::at(L);
 		}
 
-		static int real_at_call(lua_State* L) {
+		static inline int real_at_call(lua_State* L) {
 			return real_at_traits(container_detail::has_traits_at<traits>(), L);
 		}
 
-		static int real_get_traits(std::true_type, lua_State* L) {
+		static inline int real_get_traits(std::true_type, lua_State* L) {
 			return traits::get(L);
 		}
 
-		static int real_get_traits(std::false_type, lua_State* L) {
+		static inline int real_get_traits(std::false_type, lua_State* L) {
 			return default_traits::get(L);
 		}
 
-		static int real_get_call(lua_State* L) {
+		static inline int real_get_call(lua_State* L) {
 			return real_get_traits(container_detail::has_traits_get<traits>(), L);
 		}
 
-		static int real_set_traits(std::true_type, lua_State* L) {
+		static inline int real_set_traits(std::true_type, lua_State* L) {
 			return traits::set(L);
 		}
 
-		static int real_set_traits(std::false_type, lua_State* L) {
+		static inline int real_set_traits(std::false_type, lua_State* L) {
 			return default_traits::set(L);
 		}
 
-		static int real_set_call(lua_State* L) {
+		static inline int real_set_call(lua_State* L) {
 			return real_set_traits(container_detail::has_traits_set<traits>(), L);
 		}
 
-		static int real_index_set_traits(std::true_type, lua_State* L) {
+		static inline int real_index_set_traits(std::true_type, lua_State* L) {
 			return traits::index_set(L);
 		}
 
-		static int real_index_set_traits(std::false_type, lua_State* L) {
+		static inline int real_index_set_traits(std::false_type, lua_State* L) {
 			return default_traits::index_set(L);
 		}
 
-		static int real_new_index_call(lua_State* L) {
+		static inline int real_new_index_call(lua_State* L) {
 			return real_index_set_traits(container_detail::has_traits_index_set<traits>(), L);
 		}
 
-		static int real_pairs_traits(std::true_type, lua_State* L) {
+		static inline int real_pairs_traits(std::true_type, lua_State* L) {
 			return traits::pairs(L);
 		}
 
-		static int real_pairs_traits(std::false_type, lua_State* L) {
+		static inline int real_pairs_traits(std::false_type, lua_State* L) {
 			return default_traits::pairs(L);
 		}
 
-		static int real_pairs_call(lua_State* L) {
+		static inline int real_pairs_call(lua_State* L) {
 			return real_pairs_traits(container_detail::has_traits_pairs<traits>(), L);
 		}
 
-		static int real_ipairs_traits(std::true_type, lua_State* L) {
+		static inline int real_ipairs_traits(std::true_type, lua_State* L) {
 			return traits::ipairs(L);
 		}
 
-		static int real_ipairs_traits(std::false_type, lua_State* L) {
+		static inline int real_ipairs_traits(std::false_type, lua_State* L) {
 			return default_traits::ipairs(L);
 		}
 
-		static int real_ipairs_call(lua_State* L) {
+		static inline int real_ipairs_call(lua_State* L) {
 			return real_ipairs_traits(container_detail::has_traits_ipairs<traits>(), L);
 		}
 
-		static int real_next_traits(std::true_type, lua_State* L) {
+		static inline int real_next_traits(std::true_type, lua_State* L) {
 			return traits::next(L);
 		}
 
-		static int real_next_traits(std::false_type, lua_State* L) {
+		static inline int real_next_traits(std::false_type, lua_State* L) {
 			return default_traits::next(L);
 		}
 
-		static int real_next_call(lua_State* L) {
+		static inline int real_next_call(lua_State* L) {
 			return real_next_traits(container_detail::has_traits_next<traits>(), L);
 		}
 
-		static int real_size_traits(std::true_type, lua_State* L) {
+		static inline int real_size_traits(std::true_type, lua_State* L) {
 			return traits::size(L);
 		}
 
-		static int real_size_traits(std::false_type, lua_State* L) {
+		static inline int real_size_traits(std::false_type, lua_State* L) {
 			return default_traits::size(L);
 		}
 
-		static int real_length_call(lua_State* L) {
+		static inline int real_length_call(lua_State* L) {
 			return real_size_traits(container_detail::has_traits_size<traits>(), L);
 		}
 
-		static int real_add_traits(std::true_type, lua_State* L) {
+		static inline int real_add_traits(std::true_type, lua_State* L) {
 			return traits::add(L);
 		}
 
-		static int real_add_traits(std::false_type, lua_State* L) {
+		static inline int real_add_traits(std::false_type, lua_State* L) {
 			return default_traits::add(L);
 		}
 
-		static int real_add_call(lua_State* L) {
+		static inline int real_add_call(lua_State* L) {
 			return real_add_traits(container_detail::has_traits_add<traits>(), L);
 		}
 
-		static int real_insert_traits(std::true_type, lua_State* L) {
+		static inline int real_insert_traits(std::true_type, lua_State* L) {
 			return traits::insert(L);
 		}
 
-		static int real_insert_traits(std::false_type, lua_State* L) {
+		static inline int real_insert_traits(std::false_type, lua_State* L) {
 			return default_traits::insert(L);
 		}
 
-		static int real_insert_call(lua_State* L) {
+		static inline int real_insert_call(lua_State* L) {
 			return real_insert_traits(container_detail::has_traits_insert<traits>(), L);
 		}
 
-		static int real_clear_traits(std::true_type, lua_State* L) {
+		static inline int real_clear_traits(std::true_type, lua_State* L) {
 			return traits::clear(L);
 		}
 
-		static int real_clear_traits(std::false_type, lua_State* L) {
+		static inline int real_clear_traits(std::false_type, lua_State* L) {
 			return default_traits::clear(L);
 		}
 
-		static int real_clear_call(lua_State* L) {
+		static inline int real_clear_call(lua_State* L) {
 			return real_clear_traits(container_detail::has_traits_clear<traits>(), L);
 		}
 
-		static int real_empty_traits(std::true_type, lua_State* L) {
+		static inline int real_empty_traits(std::true_type, lua_State* L) {
 			return traits::empty(L);
 		}
 
-		static int real_empty_traits(std::false_type, lua_State* L) {
+		static inline int real_empty_traits(std::false_type, lua_State* L) {
 			return default_traits::empty(L);
 		}
 
-		static int real_empty_call(lua_State* L) {
+		static inline int real_empty_call(lua_State* L) {
 			return real_empty_traits(container_detail::has_traits_empty<traits>(), L);
 		}
 
-		static int real_erase_traits(std::true_type, lua_State* L) {
+		static inline int real_erase_traits(std::true_type, lua_State* L) {
 			return traits::erase(L);
 		}
 
-		static int real_erase_traits(std::false_type, lua_State* L) {
+		static inline int real_erase_traits(std::false_type, lua_State* L) {
 			return default_traits::erase(L);
 		}
 
-		static int real_erase_call(lua_State* L) {
+		static inline int real_erase_call(lua_State* L) {
 			return real_erase_traits(container_detail::has_traits_erase<traits>(), L);
 		}
 
-		static int real_find_traits(std::true_type, lua_State* L) {
+		static inline int real_find_traits(std::true_type, lua_State* L) {
 			return traits::find(L);
 		}
 
-		static int real_find_traits(std::false_type, lua_State* L) {
+		static inline int real_find_traits(std::false_type, lua_State* L) {
 			return default_traits::find(L);
 		}
 
-		static int real_find_call(lua_State* L) {
+		static inline int real_find_call(lua_State* L) {
 			return real_find_traits(container_detail::has_traits_find<traits>(), L);
 		}
 
-		static int add_call(lua_State* L) {
+		static inline int real_index_of_traits(std::true_type, lua_State* L) {
+			return traits::index_of(L);
+		}
+
+		static inline int real_index_of_traits(std::false_type, lua_State* L) {
+			return default_traits::index_of(L);
+		}
+
+		static inline int real_index_of_call(lua_State* L) {
+			return real_index_of_traits(container_detail::has_traits_index_of<traits>(), L);
+		}
+
+		static inline int add_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_add_call), (&real_add_call)>(L);
 		}
 
-		static int erase_call(lua_State* L) {
+		static inline int erase_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_erase_call), (&real_erase_call)>(L);
 		}
 
-		static int insert_call(lua_State* L) {
+		static inline int insert_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_insert_call), (&real_insert_call)>(L);
 		}
 
-		static int clear_call(lua_State* L) {
+		static inline int clear_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_clear_call), (&real_clear_call)>(L);
 		}
 
-		static int empty_call(lua_State* L) {
+		static inline int empty_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_empty_call), (&real_empty_call)>(L);
 		}
 
-		static int find_call(lua_State* L) {
+		static inline int find_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_find_call), (&real_find_call)>(L);
 		}
 
-		static int length_call(lua_State* L) {
+		static inline int index_of_call(lua_State* L) {
+			return detail::typed_static_trampoline<decltype(&real_index_of_call), (&real_index_of_call)>(L);
+		}
+
+		static inline int length_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_length_call), (&real_length_call)>(L);
 		}
 
-		static int pairs_call(lua_State* L) {
+		static inline int pairs_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_pairs_call), (&real_pairs_call)>(L);
 		}
 
-		static int ipairs_call(lua_State* L) {
+		static inline int ipairs_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_ipairs_call), (&real_ipairs_call)>(L);
 		}
 
-		static int next_call(lua_State* L) {
+		static inline int next_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_next_call), (&real_next_call)>(L);
 		}
 
-		static int at_call(lua_State* L) {
+		static inline int at_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_at_call), (&real_at_call)>(L);
 		}
 
-		static int get_call(lua_State* L) {
+		static inline int get_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_get_call), (&real_get_call)>(L);
 		}
 
-		static int set_call(lua_State* L) {
+		static inline int set_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_set_call), (&real_set_call)>(L);
 		}
 
-		static int index_call(lua_State* L) {
+		static inline int index_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_index_call), (&real_index_call)>(L);
 		}
 
-		static int new_index_call(lua_State* L) {
+		static inline int new_index_call(lua_State* L) {
 			return detail::typed_static_trampoline<decltype(&real_new_index_call), (&real_new_index_call)>(L);
 		}
 	};
@@ -319,25 +336,25 @@ namespace sol {
 					typedef usertype_container<std::conditional_t<is_shim,
 						as_container_t<std::remove_pointer_t<T>>,
 						std::remove_pointer_t<T>>>
-						meta_cumt;
+						meta_usertype_container;
 					static const char* metakey = is_shim ? &usertype_traits<as_container_t<std::remove_pointer_t<T>>>::metatable()[0] : &usertype_traits<T>::metatable()[0];
-					static const std::array<luaL_Reg, 19> reg = { { { "__pairs", &meta_cumt::pairs_call },
-						{ "__ipairs", &meta_cumt::ipairs_call },
-						{ "__len", &meta_cumt::length_call },
-						{ "__index", &meta_cumt::index_call },
-						{ "__newindex", &meta_cumt::new_index_call },
-						{ "pairs", &meta_cumt::pairs_call },
-						{ "next", &meta_cumt::next_call },
-						{ "at", &meta_cumt::at_call },
-						{ "get", &meta_cumt::get_call },
-						{ "set", &meta_cumt::set_call },
-						{ "size", &meta_cumt::length_call },
-						{ "empty", &meta_cumt::empty_call },
-						{ "clear", &meta_cumt::clear_call },
-						{ "insert", &meta_cumt::insert_call },
-						{ "add", &meta_cumt::add_call },
-						{ "find", &meta_cumt::find_call },
-						{ "erase", &meta_cumt::erase_call },
+					static const std::array<luaL_Reg, 19> reg = { { { "__pairs", &meta_usertype_container::pairs_call },
+						{ "__ipairs", &meta_usertype_container::ipairs_call },
+						{ "__len", &meta_usertype_container::length_call },
+						{ "__index", &meta_usertype_container::index_call },
+						{ "__newindex", &meta_usertype_container::new_index_call },
+						{ "pairs", &meta_usertype_container::pairs_call },
+						{ "next", &meta_usertype_container::next_call },
+						{ "at", &meta_usertype_container::at_call },
+						{ "get", &meta_usertype_container::get_call },
+						{ "set", &meta_usertype_container::set_call },
+						{ "size", &meta_usertype_container::length_call },
+						{ "empty", &meta_usertype_container::empty_call },
+						{ "clear", &meta_usertype_container::clear_call },
+						{ "insert", &meta_usertype_container::insert_call },
+						{ "add", &meta_usertype_container::add_call },
+						{ "find", &meta_usertype_container::find_call },
+						{ "erase", &meta_usertype_container::erase_call },
 						std::is_pointer<T>::value ? luaL_Reg{ nullptr, nullptr } : luaL_Reg{ "__gc", &detail::usertype_alloc_destruct<T> },
 						{ nullptr, nullptr } } };
 
@@ -425,14 +442,14 @@ namespace sol {
 		};
 
 		template <typename T>
-		struct getter<as_container_t<T>> {
+		struct unqualified_getter<as_container_t<T>> {
 			static decltype(auto) get(lua_State* L, int index, record& tracking) {
 				return stack::unqualified_get<T>(L, index, tracking);
 			}
 		};
 
 		template <typename T>
-		struct getter<as_container_t<T>*> {
+		struct unqualified_getter<as_container_t<T>*> {
 			static decltype(auto) get(lua_State* L, int index, record& tracking) {
 				return stack::unqualified_get<T*>(L, index, tracking);
 			}
