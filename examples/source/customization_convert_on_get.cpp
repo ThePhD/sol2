@@ -9,41 +9,27 @@ struct number_shim {
 	double num = 0;
 };
 
-namespace sol {
+template <typename Handler>
+bool sol_lua_check(sol::types<number_shim>, lua_State* L, int index, Handler&& handler, sol::stack::record& tracking) {
+	// check_usertype is a backdoor for directly checking sol2 usertypes
+	if (!sol::stack::check_usertype<number_shim>(L, index) 
+		&& !sol::stack::check<double>(L, index)) {
+		handler(L, index, sol::type_of(L, index), sol::type::userdata, "expected a number_shim or a number");
+		return false;
+	}
+	tracking.use(1);
+	return true;
+}
 
-	template <>
-	struct lua_type_of<number_shim> : std::integral_constant<sol::type, sol::type::poly> {};
-
-	namespace stack {
-		template <>
-		struct checker<number_shim> {
-			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
-				// check_usertype is a backdoor for directly checking sol2 usertypes
-				if (!check_usertype<number_shim>(L, index) && !stack::check<double>(L, index)) {
-					handler(L, index, type_of(L, index), type::userdata, "expected a number_shim or a number");
-					return false;
-				}
-				tracking.use(1);
-				return true;
-			}
-		};
-
-		template <>
-		struct unqualified_getter<number_shim> {
-			static number_shim get(lua_State* L, int index, record& tracking) {
-				if (check_usertype<number_shim>(L, index)) {
-					number_shim& ns = get_usertype<number_shim>(L, index, tracking);
-					return ns;
-				}
-				number_shim ns{};
-				ns.num = stack::get<double>(L, index, tracking);
-				return ns;
-			}
-		};
-
-	} // namespace stack
-} // namespace sol
+number_shim sol_lua_get(sol::types<number_shim>, lua_State* L, int index, sol::stack::record& tracking) {
+	if (sol::stack::check_usertype<number_shim>(L, index)) {
+		number_shim& ns = sol::stack::get_usertype<number_shim>(L, index, tracking);
+		return ns;
+	}
+	number_shim ns{};
+	ns.num = sol::stack::get<double>(L, index, tracking);
+	return ns;
+}
 
 int main() {
 	sol::state lua;

@@ -355,8 +355,24 @@ namespace sol {
 				static std::false_type test(...);
 			};
 
+			struct has_key_comp_impl {
+				template <typename T, typename V = decltype(std::declval<unqualified_t<T>>().key_comp())>
+				static std::true_type test(int);
+
+				template <typename...>
+				static std::false_type test(...);
+			};
+
+			struct has_load_factor_impl {
+				template <typename T, typename V = decltype(std::declval<unqualified_t<T>>().load_factor())>
+				static std::true_type test(int);
+
+				template <typename...>
+				static std::false_type test(...);
+			};
+
 			struct has_mapped_type_impl {
-				template <typename T, typename U = unqualified_t<T>, typename V = typename U::mapped_type>
+				template <typename T, typename V = typename unqualified_t<T>::mapped_type>
 				static std::true_type test(int);
 
 				template <typename...>
@@ -364,7 +380,7 @@ namespace sol {
 			};
 
 			struct has_value_type_impl {
-				template <typename T, typename U = unqualified_t<T>, typename V = typename U::value_type>
+				template <typename T, typename V = typename unqualified_t<T>::value_type>
 				static std::true_type test(int);
 
 				template <typename...>
@@ -372,7 +388,7 @@ namespace sol {
 			};
 
 			struct has_iterator_impl {
-				template <typename T, typename U = unqualified_t<T>, typename V = typename U::iterator>
+				template <typename T, typename V = typename unqualified_t<T>::iterator>
 				static std::true_type test(int);
 
 				template <typename...>
@@ -541,6 +557,12 @@ namespace sol {
 		struct has_key_type : decltype(meta_detail::has_key_type_impl::test<T>(0)) {};
 
 		template <typename T>
+		struct has_key_comp : decltype(meta_detail::has_key_comp_impl::test<T>(0)) {};
+
+		template <typename T>
+		struct has_load_factor : decltype(meta_detail::has_load_factor_impl::test<T>(0)) {};
+
+		template <typename T>
 		struct has_mapped_type : decltype(meta_detail::has_mapped_type_impl::test<T>(0)) {};
 
 		template <typename T>
@@ -571,7 +593,10 @@ namespace sol {
 		using is_lookup = meta::all<has_key_type<T>, has_value_type<T>>;
 
 		template <typename T>
-		struct is_matched_lookup : meta_detail::is_matched_lookup_impl<T, is_lookup<T>::value> {};
+		using is_ordered = meta::all<has_key_comp<T>, meta::neg<has_load_factor<T>>>;
+
+		template <typename T>
+		using is_matched_lookup = meta_detail::is_matched_lookup_impl<T, is_lookup<T>::value>;
 
 		template <typename T>
 		using is_string_like = any<is_specialization_of<meta::unqualified_t<T>, std::basic_string>,

@@ -26,8 +26,8 @@
 
 #include "traits.hpp"
 #include "stack.hpp"
-#include "map.hpp"
 #include "object.hpp"
+#include "map.hpp"
 
 namespace sol {
 
@@ -496,15 +496,16 @@ namespace sol {
 		template <typename X>
 		struct container_traits_default<X, std::enable_if_t<meta::all<is_forced_container<meta::unqualified_t<X>>, meta::has_value_type<meta::unqualified_t<container_decay_t<X>>>, meta::has_iterator<meta::unqualified_t<container_decay_t<X>>>>::value>> {
 		private:
-			typedef std::remove_pointer_t<meta::unwrap_unqualified_t<container_decay_t<X>>> T;
+			using T = std::remove_pointer_t<meta::unwrap_unqualified_t<container_decay_t<X>>>;
 
 		private:
-			typedef container_traits<X> deferred_traits;
-			typedef meta::is_associative<T> is_associative;
-			typedef meta::is_lookup<T> is_lookup;
-			typedef meta::is_matched_lookup<T> is_matched_lookup;
-			typedef typename T::iterator iterator;
-			typedef typename T::value_type value_type;
+			using deferred_traits = container_traits<X>;
+			using is_associative = meta::is_associative<T>;
+			using is_lookup = meta::is_lookup<T>;
+			using is_ordered = meta::is_ordered<T>;
+			using is_matched_lookup = meta::is_matched_lookup<T>;
+			using iterator = typename T::iterator;
+			using value_type = typename T::value_type;
 			typedef std::conditional_t<is_matched_lookup::value,
 				std::pair<value_type, value_type>,
 				std::conditional_t<is_associative::value || is_lookup::value,
@@ -764,31 +765,49 @@ namespace sol {
 
 			template <bool idx_of = false>
 			static detail::error_result find_has_associative_lookup(std::true_type, lua_State* L, T& self) {
-				decltype(auto) key = stack::unqualified_get<K>(L, 2);
-				auto it = self.find(key);
-				if (it == deferred_traits::end(L, self)) {
-					return stack::push(L, lua_nil);
-				}
-				if constexpr (idx_of) {
-					return stack::push(L, std::distance(deferred_traits::begin(L, self), it));
+				if constexpr (!is_ordered::value && idx_of) {
+					(void)L;
+					(void)self;
+					return detail::error_result("cannot perform an 'index_of': '%s's is not an ordered container", detail::demangle<T>().data());
 				}
 				else {
-					return get_associative(is_associative(), L, it);
+					decltype(auto) key = stack::unqualified_get<K>(L, 2);
+					auto it = self.find(key);
+					if (it == deferred_traits::end(L, self)) {
+						return stack::push(L, lua_nil);
+					}
+					if constexpr (idx_of) {
+						auto dist = std::distance(deferred_traits::begin(L, self), it);
+						dist -= deferred_traits::index_adjustment(L, self);
+						return stack::push(L, dist);
+					}
+					else {
+						return get_associative(is_associative(), L, it);
+					}
 				}
 			}
 
 			template <bool idx_of = false>
 			static detail::error_result find_has_associative_lookup(std::false_type, lua_State* L, T& self) {
-				decltype(auto) value = stack::unqualified_get<V>(L, 2);
-				auto it = self.find(value);
-				if (it == deferred_traits::end(L, self)) {
-					return stack::push(L, lua_nil);
-				}
-				if constexpr (idx_of) {
-					return stack::push(L, std::distance(deferred_traits::begin(L, self), it));
+				if constexpr (!is_ordered::value && idx_of) {
+					(void)L;
+					(void)self;
+					return detail::error_result("cannot perform an 'index_of': '%s's is not an ordered container", detail::demangle<T>().data());
 				}
 				else {
-					return get_associative(is_associative(), L, it);
+					decltype(auto) value = stack::unqualified_get<V>(L, 2);
+					auto it = self.find(value);
+					if (it == deferred_traits::end(L, self)) {
+						return stack::push(L, lua_nil);
+					}
+					if constexpr (idx_of) {
+						auto dist = std::distance(deferred_traits::begin(L, self), it);
+						dist -= deferred_traits::index_adjustment(L, self);
+						return stack::push(L, dist);
+					}
+					else {
+						return get_associative(is_associative(), L, it);
+					}
 				}
 			}
 
@@ -797,12 +816,13 @@ namespace sol {
 				return find_has_associative_lookup<idx_of>(meta::any<is_lookup, is_associative>(), L, self);
 			}
 
-			static detail::error_result find_associative_lookup(std::true_type, lua_State* L, iterator& it, std::size_t) {
+			static detail::error_result find_associative_lookup(std::true_type, lua_State* L, T&, iterator& it, std::size_t) {
 				return get_associative(is_associative(), L, it);
 			}
 
-			static detail::error_result find_associative_lookup(std::false_type, lua_State* L, iterator&, std::size_t index) {
-				return stack::push(L, index);
+			static detail::error_result find_associative_lookup(std::false_type, lua_State* L, T& self, iterator&, std::size_t idx) {
+				idx -= deferred_traits::index_adjustment(L, self);
+				return stack::push(L, idx);
 			}
 
 			template <bool = false>
@@ -815,8 +835,8 @@ namespace sol {
 				decltype(auto) value = stack::unqualified_get<V>(L, 2);
 				auto it = deferred_traits::begin(L, self);
 				auto e = deferred_traits::end(L, self);
-				std::size_t index = 1;
-				for (;; ++it, ++index) {
+				std::size_t idx = 0;
+				for (;; ++it, ++idx) {
 					if (it == e) {
 						return stack::push(L, lua_nil);
 					}
@@ -824,7 +844,7 @@ namespace sol {
 						break;
 					}
 				}
-				return find_associative_lookup(meta::any<is_lookup, is_associative, meta::boolean<!idx_of>>(), L, it, index);
+				return find_associative_lookup(meta::all<meta::boolean<!idx_of>, meta::any<is_lookup, is_associative>>(), L, self, it, idx);
 			}
 
 			template <bool idx_of = false>
@@ -1306,7 +1326,8 @@ namespace sol {
 				for (std::size_t idx = 0; idx < N; ++idx) {
 					const auto& v = self[idx];
 					if (v == value) {
-						return stack::push(L, idx + 1);
+						idx -= deferred_traits::index_adjustment(L, self);
+						return stack::push(L, idx);
 					}
 				}
 				return stack::push(L, lua_nil);

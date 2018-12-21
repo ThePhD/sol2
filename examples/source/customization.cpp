@@ -25,7 +25,7 @@ namespace sol {
 	namespace stack {
 
 		template <>
-		struct checker<two_things> {
+		struct unqualified_checker<two_things> {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 				// indices can be negative to count backwards from the top of the stack,

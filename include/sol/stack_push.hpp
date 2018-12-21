@@ -862,7 +862,6 @@ namespace sol {
 			}
 
 			static int push(lua_State* L, const char16_t* strb, const char16_t* stre) {
-				// TODO: use new unicode methods
 				char sbo[SOL_STACK_STRING_OPTIMIZATION_SIZE];
 				// if our max string space is small enough, use SBO
 				// right off the bat
@@ -940,7 +939,6 @@ namespace sol {
 			}
 
 			static int push(lua_State* L, const char32_t* strb, const char32_t* stre) {
-				// TODO: use new unicode methods
 				char sbo[SOL_STACK_STRING_OPTIMIZATION_SIZE];
 				// if our max string space is small enough, use SBO
 				// right off the bat

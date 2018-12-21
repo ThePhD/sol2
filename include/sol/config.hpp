@@ -191,7 +191,7 @@
 // Interop allows userdata from external systems 
 // with external memory layout and metatable names
 // to be registered. It costs something to perform 
-// the checker / differentiation for sol2 usertypes versus
+// the unqualified_checker / differentiation for sol2 usertypes versus
 // external ones however, so this is off by default
 #if !defined(SOL_ENABLE_INTEROP)
 // off by default here

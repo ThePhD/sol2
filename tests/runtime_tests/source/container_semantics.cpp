@@ -158,6 +158,12 @@ end
 			auto r2 = lua.safe_script("i2 = c:find(14)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
+		auto findex_of = [&]() {
+			auto r1 = lua.safe_script("io1 = c:index_of(12)", sol::script_pass_on_error);
+			REQUIRE(r1.valid());
+			auto r2 = lua.safe_script("io2 = c:index_of(13)", sol::script_pass_on_error);
+			REQUIRE(r2.valid());
+		};
 		auto fget = [&]() {
 			auto r1 = lua.safe_script("v1 = c:get(1)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
@@ -195,6 +201,7 @@ end
 			REQUIRE(r.valid());
 		};
 		REQUIRE_NOTHROW(ffind());
+		REQUIRE_NOTHROW(findex_of());
 		REQUIRE_NOTHROW(fget());
 		REQUIRE_NOTHROW(fset());
 		REQUIRE_NOTHROW(ferase());
@@ -219,6 +226,8 @@ end
 	const int& last = *backit;
 	std::size_t i1 = lua["i1"];
 	std::size_t i2 = lua["i2"];
+	std::size_t io1 = lua["io1"];
+	std::size_t io2 = lua["io2"];
 	std::size_t s1 = lua["s1"];
 	std::size_t s2 = lua["s2"];
 	std::size_t s3 = lua["s3"];
@@ -244,6 +253,8 @@ end
 	REQUIRE((last == 18));
 	REQUIRE((i1 == 1));
 	REQUIRE((i2 == 4));
+	REQUIRE((io1 == 2));
+	REQUIRE((io2 == 3));
 	REQUIRE((v1 == 11));
 	REQUIRE((v2 == 13));
 	REQUIRE((v3 == 18));
@@ -266,6 +277,12 @@ end
 			auto r1 = lua.safe_script("i1 = c:find(11)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
 			auto r2 = lua.safe_script("i2 = c:find(14)", sol::script_pass_on_error);
+			REQUIRE(r2.valid());
+		};
+		auto findex_of = [&]() {
+			auto r1 = lua.safe_script("io1 = c:index_of(12)", sol::script_pass_on_error);
+			REQUIRE(r1.valid());
+			auto r2 = lua.safe_script("io2 = c:index_of(13)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
 		auto fget = [&]() {
@@ -305,6 +322,7 @@ end
 			REQUIRE(r.valid());
 		};
 		REQUIRE_NOTHROW(ffind());
+		REQUIRE_NOTHROW(findex_of());
 		REQUIRE_NOTHROW(fget());
 		REQUIRE_NOTHROW(fset());
 		REQUIRE_NOTHROW(ferase());
@@ -329,6 +347,8 @@ end
 	const int& last = *backit;
 	int i1 = lua["i1"];
 	int i2 = lua["i2"];
+	int io1 = lua["io1"];
+	int io2 = lua["io2"];
 	std::size_t s1 = lua["s1"];
 	std::size_t s2 = lua["s2"];
 	std::size_t s3 = lua["s3"];
@@ -354,6 +374,8 @@ end
 	REQUIRE((last == 20));
 	REQUIRE((i1 == 11));
 	REQUIRE((i2 == 14));
+	REQUIRE((io1 == 2));
+	REQUIRE((io2 == 3));
 	REQUIRE((v1 == 11));
 	REQUIRE((v2 == 13));
 	REQUIRE((v3 == 20));
@@ -367,6 +389,12 @@ void unordered_container_check(sol::state& lua, T& items) {
 			REQUIRE(r1.valid());
 			auto r2 = lua.safe_script("i2 = c:find(14)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
+		};
+		auto findex_of = [&]() {
+			auto r1 = lua.safe_script("io1 = c:index_of(12)", sol::script_pass_on_error);
+			REQUIRE_FALSE(r1.valid());
+			auto r2 = lua.safe_script("io2 = c:index_of(13)", sol::script_pass_on_error);
+			REQUIRE_FALSE(r2.valid());
 		};
 		auto fget = [&]() {
 			auto r1 = lua.safe_script("v1 = c:get(11)", sol::script_pass_on_error);
@@ -405,6 +433,7 @@ void unordered_container_check(sol::state& lua, T& items) {
 			REQUIRE(r.valid());
 		};
 		REQUIRE_NOTHROW(ffind());
+		REQUIRE_NOTHROW(findex_of());
 		REQUIRE_NOTHROW(fget());
 		REQUIRE_NOTHROW(fset());
 		REQUIRE_NOTHROW(ferase());
@@ -461,6 +490,12 @@ end
 			auto r2 = lua.safe_script("i2 = c:find(14)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
+		auto findex_of = [&]() {
+			auto r1 = lua.safe_script("io1 = c:index_of(12)", sol::script_pass_on_error);
+			REQUIRE(r1.valid());
+			auto r2 = lua.safe_script("io2 = c:index_of(13)", sol::script_pass_on_error);
+			REQUIRE(r2.valid());
+		};
 		auto fget = [&]() {
 			auto r1 = lua.safe_script("v1 = c:get(11)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
@@ -500,6 +535,7 @@ end
 			REQUIRE(r.valid());
 		};
 		REQUIRE_NOTHROW(ffind());
+		REQUIRE_NOTHROW(findex_of());
 		REQUIRE_NOTHROW(fget());
 		REQUIRE_NOTHROW(fset());
 		REQUIRE_NOTHROW(ferase());
@@ -524,6 +560,8 @@ end
 	const std::pair<const short, int>& last = *backit;
 	int i1 = lua["i1"];
 	int i2 = lua["i2"];
+	int io1 = lua["io1"];
+	int io2 = lua["io2"];
 	std::size_t s1 = lua["s1"];
 	std::size_t s2 = lua["s2"];
 	std::size_t s3 = lua["s3"];
@@ -557,6 +595,8 @@ end
 	REQUIRE((last.second == 30));
 	REQUIRE((i1 == 21));
 	REQUIRE((i2 == 24));
+	REQUIRE((io1 == 2));
+	REQUIRE((io2 == 3));
 	REQUIRE((v1 == 21));
 	REQUIRE((v2 == 23));
 	REQUIRE((v3 == 30));
@@ -570,6 +610,12 @@ void associative_unordered_container_check(sol::state& lua, T& items) {
 			REQUIRE(r1.valid());
 			auto r2 = lua.safe_script("i2 = c:find(14)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
+		};
+		auto findex_of = [&]() {
+			auto r1 = lua.safe_script("io1 = c:index_of(12)", sol::script_pass_on_error);
+			REQUIRE_FALSE(r1.valid());
+			auto r2 = lua.safe_script("io2 = c:index_of(13)", sol::script_pass_on_error);
+			REQUIRE_FALSE(r2.valid());
 		};
 		auto fget = [&]() {
 			auto r1 = lua.safe_script("v1 = c:get(11)", sol::script_pass_on_error);
@@ -610,6 +656,7 @@ void associative_unordered_container_check(sol::state& lua, T& items) {
 			REQUIRE(r.valid());
 		};
 		REQUIRE_NOTHROW(ffind());
+		REQUIRE_NOTHROW(findex_of());
 		REQUIRE_NOTHROW(fget());
 		REQUIRE_NOTHROW(fset());
 		REQUIRE_NOTHROW(ferase());
@@ -694,6 +741,12 @@ end
 			auto r2 = lua.safe_script("i2 = c:find(14)", sol::script_pass_on_error);
 			REQUIRE(r2.valid());
 		};
+		auto findex_of = [&]() {
+			auto r1 = lua.safe_script("io1 = c:index_of(11)", sol::script_pass_on_error);
+			REQUIRE(r1.valid());
+			auto r2 = lua.safe_script("io2 = c:index_of(14)", sol::script_pass_on_error);
+			REQUIRE(r2.valid());
+		};
 		auto fget = [&]() {
 			auto r1 = lua.safe_script("v1 = c:get(2)", sol::script_pass_on_error);
 			REQUIRE(r1.valid());
@@ -731,6 +784,7 @@ end
 			REQUIRE(r.valid());
 		};
 		REQUIRE_NOTHROW(ffind());
+		REQUIRE_NOTHROW(findex_of());
 		REQUIRE_NOTHROW(fget());
 		REQUIRE_NOTHROW(fset());
 		REQUIRE_NOTHROW(ferase());

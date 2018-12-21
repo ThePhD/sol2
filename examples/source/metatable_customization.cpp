@@ -34,7 +34,7 @@ void register_thing_type(sol::state& lua) {
 			if (!source.is<thing>()) {
 				return luaL_error(L, "given an incorrect object for this call");
 			}
-			sol::optional<sol::string_view> maybe_svkey = key.as<sol::string_view>();
+			sol::optional<sol::string_view> maybe_svkey = key.as<sol::optional<sol::string_view>>();
 			if (maybe_svkey) {
 				{
 					// functions are different from variables
@@ -77,7 +77,7 @@ void register_thing_type(sol::state& lua) {
 				return luaL_error(L, "given an incorrect object for this call");
 			}
 			// write to member variables, etc. etc...
-			sol::optional<sol::string_view> maybe_svkey = key.as<sol::string_view>();
+			sol::optional<sol::string_view> maybe_svkey = key.as<sol::optional<sol::string_view>>();
 			if (maybe_svkey) {
 				{
 					// variables are different than funtions

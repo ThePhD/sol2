@@ -55,7 +55,9 @@ int main() {
 
     // you must make sure that the name of the function
     // goes before the member function pointer
-    lua.new_usertype<foo, std::string>("foo", "print", &foo::print, "test", &foo::test);
+    lua.new_usertype<foo>("foo", sol::constructors<foo(std::string)>(), 
+        "print", &foo::print, 
+        "test", &foo::test);
 
     // making the class from lua is simple
     // same with calling member functions
@@ -83,7 +85,7 @@ int main() {
         sol::usertype<vector> utype = lua.new_usertype<vector>("vector", ctor);
         
         // add to it as much as you like
-        lua["is_unit"] = &vector::is_unit;
+        utype["is_unit"] = &vector::is_unit;
         // You can throw away the usertype after 
         // you set it: you do NOT
         // have to keep it around
@@ -111,4 +113,5 @@ int main() {
 
 	std::cout << std::endl;
 
+    return 0;
 }

@@ -23,4 +23,4 @@
 
 #include "../sol_defines.hpp"
 
-#include <sol/compatibility\compat-5.3.h>
+#include <sol/compatibility/compat-5.3.h>

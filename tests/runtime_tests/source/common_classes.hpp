@@ -27,6 +27,7 @@
 #include <iostream>
 
 struct non_copyable {
+	non_copyable() = default;
 	non_copyable(non_copyable&& other) noexcept = default;
 	non_copyable& operator=(non_copyable&& other) noexcept = default;
 	non_copyable(const non_copyable& other) noexcept = delete;

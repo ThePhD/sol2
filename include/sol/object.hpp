@@ -28,9 +28,6 @@
 #include "reference.hpp"
 #include "stack.hpp"
 #include "object_base.hpp"
-#include "as_args.hpp"
-#include "variadic_args.hpp"
-#include "optional.hpp"
 
 namespace sol {
 

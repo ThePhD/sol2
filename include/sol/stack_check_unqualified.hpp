@@ -80,7 +80,7 @@ namespace stack {
 	};
 
 	template <typename T, type expected, typename>
-	struct checker {
+	struct unqualified_checker {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
@@ -95,10 +95,10 @@ namespace stack {
 	};
 
 	template <typename T, type expected, typename C>
-	struct qualified_checker : checker<meta::unqualified_t<T>, lua_type_of<meta::unqualified_t<T>>::value, C> {};
+	struct qualified_checker : unqualified_checker<meta::unqualified_t<T>, lua_type_of<meta::unqualified_t<T>>::value, C> {};
 
 	template <typename T>
-	struct checker<T, type::number, std::enable_if_t<std::is_integral<T>::value>> {
+	struct unqualified_checker<T, type::number, std::enable_if_t<std::is_integral<T>::value>> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
@@ -161,7 +161,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct checker<T, type::number, std::enable_if_t<std::is_floating_point<T>::value>> {
+	struct unqualified_checker<T, type::number, std::enable_if_t<std::is_floating_point<T>::value>> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
@@ -185,7 +185,7 @@ namespace stack {
 	};
 
 	template <type expected, typename C>
-	struct checker<lua_nil_t, expected, C> {
+	struct unqualified_checker<lua_nil_t, expected, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			bool success = lua_isnil(L, index);
@@ -204,7 +204,7 @@ namespace stack {
 	};
 
 	template <typename C>
-	struct checker<detail::non_lua_nil_t, type::poly, C> {
+	struct unqualified_checker<detail::non_lua_nil_t, type::poly, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			return !stack::unqualified_check<lua_nil_t>(L, index, std::forward<Handler>(handler), tracking);
@@ -212,10 +212,10 @@ namespace stack {
 	};
 
 	template <type expected, typename C>
-	struct checker<nullopt_t, expected, C> : checker<lua_nil_t> {};
+	struct unqualified_checker<nullopt_t, expected, C> : unqualified_checker<lua_nil_t> {};
 
 	template <typename C>
-	struct checker<this_state, type::poly, C> {
+	struct unqualified_checker<this_state, type::poly, C> {
 		template <typename Handler>
 		static bool check(lua_State*, int, Handler&&, record& tracking) {
 			tracking.use(0);
@@ -224,7 +224,7 @@ namespace stack {
 	};
 
 	template <typename C>
-	struct checker<this_main_state, type::poly, C> {
+	struct unqualified_checker<this_main_state, type::poly, C> {
 		template <typename Handler>
 		static bool check(lua_State*, int, Handler&&, record& tracking) {
 			tracking.use(0);
@@ -233,7 +233,7 @@ namespace stack {
 	};
 
 	template <typename C>
-	struct checker<this_environment, type::poly, C> {
+	struct unqualified_checker<this_environment, type::poly, C> {
 		template <typename Handler>
 		static bool check(lua_State*, int, Handler&&, record& tracking) {
 			tracking.use(0);
@@ -242,7 +242,7 @@ namespace stack {
 	};
 
 	template <typename C>
-	struct checker<variadic_args, type::poly, C> {
+	struct unqualified_checker<variadic_args, type::poly, C> {
 		template <typename Handler>
 		static bool check(lua_State*, int, Handler&&, record& tracking) {
 			tracking.use(0);
@@ -251,7 +251,7 @@ namespace stack {
 	};
 
 	template <typename C>
-	struct checker<type, type::poly, C> {
+	struct unqualified_checker<type, type::poly, C> {
 		template <typename Handler>
 		static bool check(lua_State*, int, Handler&&, record& tracking) {
 			tracking.use(0);
@@ -260,7 +260,7 @@ namespace stack {
 	};
 
 	template <typename T, typename C>
-	struct checker<T, type::poly, C> {
+	struct unqualified_checker<T, type::poly, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
@@ -274,7 +274,7 @@ namespace stack {
 	};
 
 	template <typename T, typename C>
-	struct checker<T, type::lightuserdata, C> {
+	struct unqualified_checker<T, type::lightuserdata, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
@@ -289,7 +289,7 @@ namespace stack {
 	};
 
 	template <typename C>
-	struct checker<userdata_value, type::userdata, C> {
+	struct unqualified_checker<userdata_value, type::userdata, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
@@ -304,7 +304,7 @@ namespace stack {
 	};
 
 	template <typename B, typename C>
-	struct checker<basic_userdata<B>, type::userdata, C> {
+	struct unqualified_checker<basic_userdata<B>, type::userdata, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			return stack::check<userdata_value>(L, index, std::forward<Handler>(handler), tracking);
@@ -312,20 +312,20 @@ namespace stack {
 	};
 
 	template <typename T, typename C>
-	struct checker<user<T>, type::userdata, C> : checker<user<T>, type::lightuserdata, C> {};
+	struct unqualified_checker<user<T>, type::userdata, C> : unqualified_checker<user<T>, type::lightuserdata, C> {};
 
 	template <typename T, typename C>
-	struct checker<non_null<T>, type::userdata, C> : checker<T, lua_type_of<T>::value, C> {};
+	struct unqualified_checker<non_null<T>, type::userdata, C> : unqualified_checker<T, lua_type_of<T>::value, C> {};
 
 	template <typename C>
-	struct checker<lua_CFunction, type::function, C> : stack_detail::basic_check<type::function, lua_iscfunction> {};
+	struct unqualified_checker<lua_CFunction, type::function, C> : stack_detail::basic_check<type::function, lua_iscfunction> {};
 	template <typename C>
-	struct checker<std::remove_pointer_t<lua_CFunction>, type::function, C> : checker<lua_CFunction, type::function, C> {};
+	struct unqualified_checker<std::remove_pointer_t<lua_CFunction>, type::function, C> : unqualified_checker<lua_CFunction, type::function, C> {};
 	template <typename C>
-	struct checker<c_closure, type::function, C> : checker<lua_CFunction, type::function, C> {};
+	struct unqualified_checker<c_closure, type::function, C> : unqualified_checker<lua_CFunction, type::function, C> {};
 
 	template <typename T, typename C>
-	struct checker<T, type::function, C> {
+	struct unqualified_checker<T, type::function, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
@@ -363,7 +363,7 @@ namespace stack {
 	};
 
 	template <typename T, typename C>
-	struct checker<T, type::table, C> {
+	struct unqualified_checker<T, type::table, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
@@ -380,7 +380,7 @@ namespace stack {
 	};
 
 	template <type expected, typename C>
-	struct checker<metatable_t, expected, C> {
+	struct unqualified_checker<metatable_t, expected, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
@@ -402,7 +402,7 @@ namespace stack {
 	};
 
 	template <typename C>
-	struct checker<env_t, type::poly, C> {
+	struct unqualified_checker<env_t, type::poly, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
@@ -416,7 +416,7 @@ namespace stack {
 	};
 
 	template <typename E, typename C>
-	struct checker<basic_environment<E>, type::poly, C> {
+	struct unqualified_checker<basic_environment<E>, type::poly, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
@@ -438,7 +438,7 @@ namespace stack {
 	};
 
 	template <typename T, typename C>
-	struct checker<detail::as_value_tag<T>, type::userdata, C> {
+	struct unqualified_checker<detail::as_value_tag<T>, type::userdata, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			const type indextype = type_of(L, index);
@@ -497,7 +497,7 @@ namespace stack {
 	};
 
 	template <typename T, typename C>
-	struct checker<detail::as_pointer_tag<T>, type::userdata, C> {
+	struct unqualified_checker<detail::as_pointer_tag<T>, type::userdata, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, type indextype, Handler&& handler, record& tracking) {
 			if (indextype == type::lua_nil) {
@@ -515,7 +515,7 @@ namespace stack {
 	};
 
 	template <typename T, typename C>
-	struct checker<T, type::userdata, C> {
+	struct unqualified_checker<T, type::userdata, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			return check_usertype<T>(L, index, std::forward<Handler>(handler), tracking);
@@ -523,7 +523,7 @@ namespace stack {
 	};
 
 	template <typename T, typename C>
-	struct checker<T*, type::userdata, C> {
+	struct unqualified_checker<T*, type::userdata, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			return check_usertype<T*>(L, index, std::forward<Handler>(handler), tracking);
@@ -531,7 +531,7 @@ namespace stack {
 	};
 
 	template <typename X>
-	struct checker<X, type::userdata, std::enable_if_t<is_unique_usertype<X>::value>> {
+	struct unqualified_checker<X, type::userdata, std::enable_if_t<is_unique_usertype<X>::value>> {
 		typedef typename unique_usertype_traits<X>::type T;
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
@@ -571,7 +571,7 @@ namespace stack {
 	};
 
 	template <typename T, typename C>
-	struct checker<std::reference_wrapper<T>, type::userdata, C> {
+	struct unqualified_checker<std::reference_wrapper<T>, type::userdata, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			return stack::check<T>(L, index, std::forward<Handler>(handler), tracking);
@@ -579,7 +579,7 @@ namespace stack {
 	};
 
 	template <typename... Args, typename C>
-	struct checker<std::tuple<Args...>, type::poly, C> {
+	struct unqualified_checker<std::tuple<Args...>, type::poly, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			return stack::multi_check<Args...>(L, index, std::forward<Handler>(handler), tracking);
@@ -587,7 +587,7 @@ namespace stack {
 	};
 
 	template <typename A, typename B, typename C>
-	struct checker<std::pair<A, B>, type::poly, C> {
+	struct unqualified_checker<std::pair<A, B>, type::poly, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			return stack::multi_check<A, B>(L, index, std::forward<Handler>(handler), tracking);
@@ -595,7 +595,7 @@ namespace stack {
 	};
 
 	template <typename T, typename C>
-	struct checker<optional<T>, type::poly, C> {
+	struct unqualified_checker<optional<T>, type::poly, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&&, record& tracking) {
 			type t = type_of(L, index);
@@ -614,7 +614,7 @@ namespace stack {
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 
 	template <typename T, typename C>
-	struct checker<std::optional<T>, type::poly, C> {
+	struct unqualified_checker<std::optional<T>, type::poly, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&&, record& tracking) {
 			type t = type_of(L, index);
@@ -633,7 +633,7 @@ namespace stack {
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 
 	template <typename... Tn, typename C>
-	struct checker<std::variant<Tn...>, type::poly, C> {
+	struct unqualified_checker<std::variant<Tn...>, type::poly, C> {
 		typedef std::variant<Tn...> V;
 		typedef std::variant_size<V> V_size;
 		typedef std::integral_constant<bool, V_size::value == 0> V_is_empty;

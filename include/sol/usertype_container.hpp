@@ -338,7 +338,9 @@ namespace sol {
 						std::remove_pointer_t<T>>>
 						meta_usertype_container;
 					static const char* metakey = is_shim ? &usertype_traits<as_container_t<std::remove_pointer_t<T>>>::metatable()[0] : &usertype_traits<T>::metatable()[0];
-					static const std::array<luaL_Reg, 19> reg = { { { "__pairs", &meta_usertype_container::pairs_call },
+					static const std::array<luaL_Reg, 20> reg = { { 
+						// clang-format off
+						{ "__pairs", &meta_usertype_container::pairs_call },
 						{ "__ipairs", &meta_usertype_container::ipairs_call },
 						{ "__len", &meta_usertype_container::length_call },
 						{ "__index", &meta_usertype_container::index_call },
@@ -354,9 +356,12 @@ namespace sol {
 						{ "insert", &meta_usertype_container::insert_call },
 						{ "add", &meta_usertype_container::add_call },
 						{ "find", &meta_usertype_container::find_call },
+						{ "index_of", &meta_usertype_container::index_of_call },
 						{ "erase", &meta_usertype_container::erase_call },
 						std::is_pointer<T>::value ? luaL_Reg{ nullptr, nullptr } : luaL_Reg{ "__gc", &detail::usertype_alloc_destruct<T> },
-						{ nullptr, nullptr } } };
+						{ nullptr, nullptr }
+						// clang-format on 
+					} };
 
 					if (luaL_newmetatable(L, metakey) == 1) {
 						luaL_setfuncs(L, reg.data(), 0);
@@ -434,7 +439,7 @@ namespace sol {
 		};
 
 		template <typename T, typename C>
-		struct checker<as_container_t<T>, type::userdata, C> {
+		struct unqualified_checker<as_container_t<T>, type::userdata, C> {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 				return stack::check<T>(L, index, std::forward<Handler>(handler), tracking);

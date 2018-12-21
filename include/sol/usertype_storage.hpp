@@ -591,23 +591,8 @@ namespace sol { namespace u_detail {
 					// and other amenities
 					return;
 				}
-				if (is_destruction
-					&& (smt == submetatable_type::reference || smt == submetatable_type::const_reference || smt == submetatable_type::named
-					        || smt == submetatable_type::unique)) {
-					// gc does not apply to us here
-					// for reference types (raw T*, std::ref)
-					// for the named metatable itself,
-					// or for unique_usertypes, which do their own custom destruction
-					return;
-				}
 				int fast_index_table_push = fast_index_table.push();
 				stack_reference t(L, -fast_index_table_push);
-				if constexpr (is_lua_c_function_v<ValueU> || is_lua_reference_or_proxy<ValueU>::value) {
-					stack::set_field<false, true>(L, s, b.data_, t.stack_index());
-				}
-				else {
-					stack::set_field<false, true>(L, s, make_closure(&b.template call<false, is_var_bind::value>, nullptr, ics.binding_data), t.stack_index());
-				}
 				if (poison_indexing) {
 					change_indexing(L,
 						smt,
@@ -617,6 +602,22 @@ namespace sol { namespace u_detail {
 						&usertype_storage<T>::new_index_call,
 						&usertype_storage<T>::meta_index_call,
 						&usertype_storage<T>::meta_new_index_call);
+				}
+				if (is_destruction
+					&& (smt == submetatable_type::reference || smt == submetatable_type::const_reference || smt == submetatable_type::named
+					        || smt == submetatable_type::unique)) {
+					// gc does not apply to us here
+					// for reference types (raw T*, std::ref)
+					// for the named metatable itself,
+					// or for unique_usertypes, which do their own custom destruction
+					t.pop();
+					return;
+				}
+				if constexpr (is_lua_c_function_v<ValueU> || is_lua_reference_or_proxy<ValueU>::value) {
+					stack::set_field<false, true>(L, s, b.data_, t.stack_index());
+				}
+				else {
+					stack::set_field<false, true>(L, s, make_closure(&b.template call<false, is_var_bind::value>, nullptr, ics.binding_data), t.stack_index());
 				}
 				t.pop();
 			};

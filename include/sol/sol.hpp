@@ -60,6 +60,7 @@
 #include "thread.hpp"
 #include "userdata.hpp"
 #include "metatable.hpp"
+#include "as_args.hpp"
 #include "variadic_args.hpp"
 #include "variadic_results.hpp"
 
