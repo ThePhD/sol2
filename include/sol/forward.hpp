@@ -198,6 +198,10 @@ namespace sol {
 	template <typename T>
 	bool weak_derive<T>::value = false;
 
+	namespace stack {
+		struct record;
+	}
+
 } // namespace sol
 
 #define SOL_BASE_CLASSES(T, ...)                       \

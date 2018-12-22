@@ -40,7 +40,7 @@
 namespace sol {
 namespace stack {
 	template <typename T, typename>
-	struct check_getter {
+	struct unqualified_check_getter {
 		typedef decltype(stack_detail::unchecked_unqualified_get<T>(nullptr, -1, std::declval<record&>())) R;
 
 		template <typename Handler>
@@ -54,7 +54,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct check_getter<T, std::enable_if_t<is_lua_reference<T>::value>> {
+	struct unqualified_check_getter<T, std::enable_if_t<is_lua_reference<T>::value>> {
 		template <typename Handler>
 		static optional<T> get(lua_State* L, int index, Handler&& handler, record& tracking) {
 			// actually check if it's none here, otherwise
@@ -71,7 +71,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct check_getter<T, std::enable_if_t<std::is_integral<T>::value && lua_type_of<T>::value == type::number>> {
+	struct unqualified_check_getter<T, std::enable_if_t<std::is_integral<T>::value && lua_type_of<T>::value == type::number>> {
 		template <typename Handler>
 		static optional<T> get(lua_State* L, int index, Handler&& handler, record& tracking) {
 #if SOL_LUA_VERSION >= 503
@@ -102,7 +102,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct check_getter<T, std::enable_if_t<std::is_enum<T>::value && !meta::any_same<T, meta_function, type>::value>> {
+	struct unqualified_check_getter<T, std::enable_if_t<std::is_enum<T>::value && !meta::any_same<T, meta_function, type>::value>> {
 		template <typename Handler>
 		static optional<T> get(lua_State* L, int index, Handler&& handler, record& tracking) {
 			int isnum = 0;
@@ -119,7 +119,7 @@ namespace stack {
 	};
 
 	template <typename T>
-	struct check_getter<T, std::enable_if_t<std::is_floating_point<T>::value>> {
+	struct unqualified_check_getter<T, std::enable_if_t<std::is_floating_point<T>::value>> {
 		template <typename Handler>
 		static optional<T> get(lua_State* L, int index, Handler&& handler, record& tracking) {
 			int isnum = 0;
@@ -156,7 +156,7 @@ namespace stack {
 
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	template <typename... Tn>
-	struct check_getter<std::variant<Tn...>> {
+	struct unqualified_check_getter<std::variant<Tn...>> {
 		typedef std::variant<Tn...> V;
 		typedef std::variant_size<V> V_size;
 		typedef std::integral_constant<bool, V_size::value == 0> V_is_empty;

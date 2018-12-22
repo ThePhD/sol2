@@ -39,7 +39,7 @@ namespace sol {
 
 	namespace stack {
 		template <typename T>
-		struct pusher<as_args_t<T>> {
+		struct unqualified_pusher<as_args_t<T>> {
 			int push(lua_State* L, const as_args_t<T>& e) {
 				int p = 0;
 				for (const auto& i : e.src) {

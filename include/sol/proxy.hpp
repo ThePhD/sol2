@@ -253,7 +253,7 @@ namespace sol {
 
 	namespace stack {
 		template <typename Table, typename Key>
-		struct pusher<proxy<Table, Key>> {
+		struct unqualified_pusher<proxy<Table, Key>> {
 			static int push(lua_State* L, const proxy<Table, Key>& p) {
 				reference r = p;
 				return r.push(L);

@@ -372,22 +372,22 @@ namespace sol {
 		} // namespace stack_detail
 
 		template <typename T>
-		struct pusher<as_container_t<T>> {
+		struct unqualified_pusher<as_container_t<T>> {
 			typedef meta::unqualified_t<T> C;
 
 			static int push_lvalue(std::true_type, lua_State* L, const C& cont) {
 				stack_detail::metatable_setup<C*, true> fx(L);
-				return pusher<detail::as_pointer_tag<const C>>{}.push_fx(L, fx, detail::ptr(cont));
+				return stack::push<detail::as_pointer_tag<const C>>(L, detail::with_function_tag(), fx, detail::ptr(cont));
 			}
 
 			static int push_lvalue(std::false_type, lua_State* L, const C& cont) {
 				stack_detail::metatable_setup<C, true> fx(L);
-				return pusher<detail::as_value_tag<C>>{}.push_fx(L, fx, cont);
+				return stack::push<detail::as_value_tag<C>>(L, detail::with_function_tag(), fx, cont);
 			}
 
 			static int push_rvalue(std::true_type, lua_State* L, C&& cont) {
 				stack_detail::metatable_setup<C, true> fx(L);
-				return pusher<detail::as_value_tag<C>>{}.push_fx(L, fx, std::move(cont));
+				return stack::push<detail::as_value_tag<C>>(L, detail::with_function_tag(), fx, std::move(cont));
 			}
 
 			static int push_rvalue(std::false_type, lua_State* L, const C& cont) {
@@ -404,37 +404,37 @@ namespace sol {
 		};
 
 		template <typename T>
-		struct pusher<as_container_t<T*>> {
+		struct unqualified_pusher<as_container_t<T*>> {
 			typedef std::add_pointer_t<meta::unqualified_t<std::remove_pointer_t<T>>> C;
 
 			static int push(lua_State* L, T* cont) {
 				stack_detail::metatable_setup<C> fx(L);
-				return pusher<detail::as_pointer_tag<T>>{}.push_fx(L, fx, cont);
+				return stack::push<detail::as_pointer_tag<T>>(L, detail::with_function_tag(), fx, cont);
 			}
 		};
 
 		template <typename T>
-		struct pusher<T, std::enable_if_t<meta::all<is_container<meta::unqualified_t<T>>, meta::neg<is_lua_reference<meta::unqualified_t<T>>>>::value>> {
+		struct unqualified_pusher<T, std::enable_if_t<meta::all<is_container<meta::unqualified_t<T>>, meta::neg<is_lua_reference<meta::unqualified_t<T>>>>::value>> {
 			typedef meta::unqualified_t<T> C;
 
 			static int push(lua_State* L, const T& cont) {
 				stack_detail::metatable_setup<C> fx(L);
-				return pusher<detail::as_value_tag<T>>{}.push_fx(L, fx, cont);
+				return stack::push<detail::as_value_tag<T>>(L, detail::with_function_tag(), fx, cont);
 			}
 
 			static int push(lua_State* L, T&& cont) {
 				stack_detail::metatable_setup<C> fx(L);
-				return pusher<detail::as_value_tag<T>>{}.push_fx(L, fx, std::move(cont));
+				return stack::push<detail::as_value_tag<T>>(L, detail::with_function_tag(), fx, std::move(cont));
 			}
 		};
 
 		template <typename T>
-		struct pusher<T*, std::enable_if_t<meta::all<is_container<meta::unqualified_t<T>>, meta::neg<is_lua_reference<meta::unqualified_t<T>>>>::value>> {
+		struct unqualified_pusher<T*, std::enable_if_t<meta::all<is_container<meta::unqualified_t<T>>, meta::neg<is_lua_reference<meta::unqualified_t<T>>>>::value>> {
 			typedef std::add_pointer_t<meta::unqualified_t<std::remove_pointer_t<T>>> C;
 
 			static int push(lua_State* L, T* cont) {
 				stack_detail::metatable_setup<C> fx(L);
-				return pusher<detail::as_pointer_tag<T>>{}.push_fx(L, fx, cont);
+				return stack::push<detail::as_pointer_tag<T>>(L, detail::with_function_tag(), fx, cont);
 			}
 		};
 

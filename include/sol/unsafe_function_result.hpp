@@ -159,7 +159,7 @@ namespace sol {
 
 	namespace stack {
 		template <>
-		struct pusher<unsafe_function_result> {
+		struct unqualified_pusher<unsafe_function_result> {
 			static int push(lua_State* L, const unsafe_function_result& fr) {
 				int p = 0;
 				for (int i = 0; i < fr.return_count(); ++i) {

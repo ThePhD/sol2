@@ -66,19 +66,11 @@ sol::optional<custom> sol_lua_check_get(sol::types<custom> type_tag, lua_State* 
 
 int sol_lua_push(lua_State* L, const custom& c) {
 	++custom::push_calls;
-	// ensure there's enough space for 1 more thing on the stack
-	lua_checkstack(L, 1);
-	// tell Lua we've left something on
-	// the stack: return what comes from pushing an integer
 	return sol::stack::push(L, c.bweh);
 }
 
 int sol_lua_push(sol::types<custom>, lua_State* L, const custom& c) {
 	++custom::exact_push_calls;
-	// ensure there's enough space for 1 more thing on the stack
-	lua_checkstack(L, 1);
-	// tell Lua we've left something on
-	// the stack: return what comes from pushing an integer
 	return sol::stack::push(L, c.bweh);
 }
 
@@ -118,13 +110,9 @@ bool sol_lua_check(sol::types<multi_custom>, lua_State* L, int index, Handler&& 
 
 int sol_lua_push(lua_State* L, const multi_custom& c) {
 	++multi_custom::push_calls;
-	// ensure there's enough space for 1 more thing on the stack
-	lua_checkstack(L, 3);
 	int p = sol::stack::push(L, c.bweh);
 	p += sol::stack::push(L, c.bwuh);
 	p += sol::stack::push(L, c.blah);
-	// tell Lua we've left something on
-	// the stack: return what comes from pushing an integer
 	return p;
 }
 
@@ -136,12 +124,14 @@ struct super_custom {
 	static int check_get_calls;
 	static int push_calls;
 	static int exact_push_calls;
+	static int pointer_push_calls;
 };
 
 int super_custom::get_calls = 0;
 int super_custom::check_calls = 0;
 int super_custom::check_get_calls = 0;
 int super_custom::push_calls = 0;
+int super_custom::pointer_push_calls = 0;
 int super_custom::exact_push_calls = 0;
 
 super_custom* sol_lua_get(sol::types<super_custom*>, lua_State* L, int index, sol::stack::record& tracking) {
@@ -169,6 +159,11 @@ bool sol_lua_check(sol::types<super_custom>, lua_State* L, int index, Handler&& 
 	return true;
 }
 
+template <typename Handler>
+bool sol_lua_check(sol::types<super_custom*>, lua_State* L, int index, Handler&& handler, sol::stack::record& tracking) {
+	return sol_lua_check(sol::types<super_custom>(), L, index, std::forward<Handler>(handler), tracking);
+}
+
 int sol_lua_push(lua_State* L, const super_custom& c) {
 	++super_custom::push_calls;
 	// ensure there's enough space for 1 more thing on the stack
@@ -185,7 +180,7 @@ int sol_lua_push(lua_State* L, const super_custom& c) {
 }
 
 int sol_lua_push(lua_State* L, super_custom* c) {
-	++super_custom::push_calls;
+	++super_custom::pointer_push_calls;
 	// ensure there's enough space for 1 more thing on the stack
 	lua_checkstack(L, 1);
 	// tell Lua we've left something on
@@ -197,7 +192,8 @@ int sol_lua_push(lua_State* L, super_custom* c) {
 	return 1;
 }
 
-int sol_lua_push(lua_State* L, std::reference_wrapper<super_custom> c) {
+int sol_lua_push(sol::types<std::reference_wrapper<super_custom>>, lua_State* L, std::reference_wrapper<super_custom> c) {
+	++super_custom::exact_push_calls;
 	return sol::stack::push(L, std::addressof(c.get()));
 }
 
@@ -248,20 +244,26 @@ TEST_CASE("customization/adl", "using the ADL customization points in various si
 		super_custom::check_calls = 0;
 		super_custom::check_get_calls = 0;
 		super_custom::push_calls = 0;
+		super_custom::pointer_push_calls = 0;
 		super_custom::exact_push_calls = 0;
 
 		super_custom meow_original{ 50 };
 		lua["meow"] = std::ref(meow_original);
 		super_custom& meow = lua["meow"];
+		super_custom* p_meow = lua["meow"];
+		std::reference_wrapper<super_custom> ref_meow = lua["meow"];
 		super_custom meow_copy = lua["meow"];
 
 		REQUIRE(meow.bweh == 50);
 		REQUIRE(&meow == &meow_original);
+		REQUIRE(p_meow == &meow_original);
+		REQUIRE(&ref_meow.get() == &meow_original);
 		REQUIRE(meow_copy.bweh == 50);
 		REQUIRE(super_custom::get_calls > 0);
 		REQUIRE(super_custom::check_calls > 0);
-		REQUIRE(super_custom::push_calls > 0);
 		REQUIRE(super_custom::check_get_calls == 0);
-		REQUIRE(super_custom::exact_push_calls == 0);
+		REQUIRE(super_custom::push_calls == 0);
+		REQUIRE(super_custom::pointer_push_calls > 0);
+		REQUIRE(super_custom::exact_push_calls > 0);
 	}
 }

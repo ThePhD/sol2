@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-12-21 06:03:11.681784 UTC
-// This header was generated with sol v2.20.6 (revision c35c66b)
+// Generated 2018-12-22 20:32:42.897539 UTC
+// This header was generated with sol v2.20.6 (revision 88cafb2)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -413,6 +413,10 @@ namespace sol {
 
 	template <typename T>
 	bool weak_derive<T>::value = false;
+
+	namespace stack {
+		struct record;
+	}
 
 } // namespace sol
 

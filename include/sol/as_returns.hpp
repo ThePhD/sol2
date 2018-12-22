@@ -40,7 +40,7 @@ namespace sol {
 
 	namespace stack {
 		template <typename T>
-		struct pusher<as_returns_t<T>> {
+		struct unqualified_pusher<as_returns_t<T>> {
 			int push(lua_State* L, const as_returns_t<T>& e) {
 				auto& src = detail::unwrap(e.src);
 				int p = 0;

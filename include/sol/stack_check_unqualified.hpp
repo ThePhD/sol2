@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -38,8 +38,7 @@
 #endif // SOL_STD_VARIANT
 #endif // SOL_CXX17_FEATURES
 
-namespace sol {
-namespace stack {
+namespace sol { namespace stack {
 	namespace stack_detail {
 		template <typename T, bool poptable = true>
 		inline bool check_metatable(lua_State* L, int index = -2) {
@@ -95,7 +94,12 @@ namespace stack {
 	};
 
 	template <typename T, type expected, typename C>
-	struct qualified_checker : unqualified_checker<meta::unqualified_t<T>, lua_type_of<meta::unqualified_t<T>>::value, C> {};
+	struct qualified_checker {
+		template <typename Handler>
+		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
+			return stack::unqualified_check<T>(L, index, std::forward<Handler>(handler), tracking);
+		}
+	};
 
 	template <typename T>
 	struct unqualified_checker<T, type::number, std::enable_if_t<std::is_integral<T>::value>> {
@@ -459,7 +463,8 @@ namespace stack {
 				handler(L, index, type::userdata, indextype, "value is not a valid userdata");
 				return false;
 			}
-			if (meta::any<std::is_same<T, lightuserdata_value>, std::is_same<T, userdata_value>, std::is_same<T, userdata>, std::is_same<T, lightuserdata>>::value)
+			if (meta::any<std::is_same<T, lightuserdata_value>, std::is_same<T, userdata_value>, std::is_same<T, userdata>, std::is_same<T, lightuserdata>>::
+				     value)
 				return true;
 			if (lua_getmetatable(L, index) == 0) {
 				return true;
@@ -668,7 +673,6 @@ namespace stack {
 #endif // SOL_STD_VARIANT
 
 #endif // SOL_CXX17_FEATURES
-}
-} // namespace sol::stack
+}}     // namespace sol::stack
 
 #endif // SOL_STACK_CHECK_UNQUALIFIED_HPP

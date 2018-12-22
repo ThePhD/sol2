@@ -37,7 +37,7 @@ GlobalResource* sol_lua_get(sol::types<GlobalResource*>, lua_State* L, int /*ind
 	return ls;
 }
 
-int sol_lua_push(lua_State* L, GlobalResource* ls) {
+int sol_lua_push(sol::types<GlobalResource*>, lua_State* L, GlobalResource* ls) {
 	// push light userdata
 	return sol::stack::push(L, static_cast<void*>(ls));
 }

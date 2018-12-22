@@ -86,7 +86,7 @@ namespace sol {
 		};
 
 		template <>
-		struct pusher<stack_proxy_base> {
+		struct unqualified_pusher<stack_proxy_base> {
 			static int push(lua_State*, const stack_proxy_base& ref) {
 				return ref.push();
 			}

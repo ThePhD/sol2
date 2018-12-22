@@ -37,7 +37,7 @@ namespace sol {
 
 	namespace stack {
 		template <>
-		struct pusher<variadic_results> {
+		struct unqualified_pusher<variadic_results> {
 			int push(lua_State* L, const variadic_results& e) {
 				int p = 0;
 				for (const auto& i : e) {

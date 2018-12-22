@@ -49,7 +49,7 @@ namespace sol {
 
 	namespace stack {
 		template <>
-		struct pusher<lua_thread_state> {
+		struct unqualified_pusher<lua_thread_state> {
 			int push(lua_State*, lua_thread_state lts) {
 				lua_pushthread(lts.L);
 				return 1;
@@ -66,7 +66,7 @@ namespace sol {
 		};
 
 		template <>
-		struct check_getter<lua_thread_state> {
+		struct unqualified_check_getter<lua_thread_state> {
 			template <typename Handler>
 			optional<lua_thread_state> get(lua_State* L, int index, Handler&& handler, record& tracking) {
 				lua_thread_state lts( lua_tothread(L, index) );

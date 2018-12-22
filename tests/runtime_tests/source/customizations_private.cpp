@@ -37,6 +37,15 @@ struct number_shim {
 	double num = 0;
 };
 
+
+// HEY:
+// Don't do this.
+// The code below is for sol3 to specialize things,
+// not for YOU to specialize things.
+// If you customize things in this fashion,
+// I will break your code sometime in the future when fixing things.
+// Do. Not. Use the designated ADL customization points, or file
+// a bug.
 namespace sol {
 
 	template <>
@@ -71,7 +80,7 @@ namespace sol {
 		};
 
 		template <>
-		struct pusher<two_things> {
+		struct unqualified_pusher<two_things> {
 			static int push(lua_State* L, const two_things& things) {
 				int amount = stack::push(L, things.a);
 				amount += stack::push(L, things.b);
@@ -108,7 +117,7 @@ namespace sol {
 	} // namespace stack
 } // namespace sol
 
-TEST_CASE("customization/split struct", "using the newly documented customization points to handle different kinds of classes") {
+TEST_CASE("customization/split struct", "using the old customization points to handle different kinds of classes") {
 	sol::state lua;
 
 	// Create a pass-through style of function
@@ -132,7 +141,7 @@ TEST_CASE("customization/split struct", "using the newly documented customizatio
 	REQUIRE(d == 36.5);
 }
 
-TEST_CASE("customization/usertype", "using the newly documented customization points to handle different kinds of classes") {
+TEST_CASE("customization/usertype", "using the old customization points to handle different kinds of classes") {
 	sol::state lua;
 
 	// Create a pass-through style of function

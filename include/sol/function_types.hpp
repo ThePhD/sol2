@@ -42,7 +42,7 @@ namespace sol {
 
 	namespace stack {
 		template <typename... Sigs>
-		struct pusher<function_sig<Sigs...>> {
+		struct unqualified_pusher<function_sig<Sigs...>> {
 			template <bool is_yielding, typename... Sig, typename Fx, typename... Args>
 			static void select_convertible(std::false_type, types<Sig...>, lua_State* L, Fx&& fx, Args&&... args) {
 				typedef std::remove_pointer_t<std::decay_t<Fx>> clean_fx;
@@ -244,24 +244,24 @@ namespace sol {
 		};
 
 		template <typename T>
-		struct pusher<yielding_t<T>> {
+		struct unqualified_pusher<yielding_t<T>> {
 			template <typename... Args>
 			static int push(lua_State* L, const yielding_t<T>& f, Args&&... args) {
-				pusher<function_sig<>> p{};
+				unqualified_pusher<function_sig<>> p{};
 				(void)p;
 				return p.push(L, detail::yield_tag, f.func, std::forward<Args>(args)...);
 			}
 
 			template <typename... Args>
 			static int push(lua_State* L, yielding_t<T>&& f, Args&&... args) {
-				pusher<function_sig<>> p{};
+				unqualified_pusher<function_sig<>> p{};
 				(void)p;
 				return p.push(L, detail::yield_tag, f.func, std::forward<Args>(args)...);
 			}
 		};
 
 		template <typename T, typename... Args>
-		struct pusher<function_arguments<T, Args...>> {
+		struct unqualified_pusher<function_arguments<T, Args...>> {
 			template <std::size_t... I, typename FP>
 			static int push_func(std::index_sequence<I...>, lua_State* L, FP&& fp) {
 				return stack::push<T>(L, std::get<I>(std::forward<FP>(fp).arguments)...);
@@ -277,28 +277,28 @@ namespace sol {
 		};
 
 		template <typename Signature>
-		struct pusher<std::function<Signature>> {
+		struct unqualified_pusher<std::function<Signature>> {
 			static int push(lua_State* L, const std::function<Signature>& fx) {
-				return pusher<function_sig<Signature>>{}.push(L, fx);
+				return unqualified_pusher<function_sig<Signature>>{}.push(L, fx);
 			}
 
 			static int push(lua_State* L, std::function<Signature>&& fx) {
-				return pusher<function_sig<Signature>>{}.push(L, std::move(fx));
+				return unqualified_pusher<function_sig<Signature>>{}.push(L, std::move(fx));
 			}
 		};
 
 		template <typename Signature>
-		struct pusher<Signature, std::enable_if_t<std::is_member_pointer<Signature>::value>> {
+		struct unqualified_pusher<Signature, std::enable_if_t<std::is_member_pointer<Signature>::value>> {
 			template <typename F, typename... Args>
 			static int push(lua_State* L, F&& f, Args&&... args) {
-				pusher<function_sig<>> p{};
+				unqualified_pusher<function_sig<>> p{};
 				(void)p;
 				return p.push(L, std::forward<F>(f), std::forward<Args>(args)...);
 			}
 		};
 
 		template <typename Signature>
-		struct pusher<Signature, std::enable_if_t<meta::all<std::is_function<std::remove_pointer_t<Signature>>, meta::neg<std::is_same<Signature, lua_CFunction>>, meta::neg<std::is_same<Signature, std::remove_pointer_t<lua_CFunction>>>
+		struct unqualified_pusher<Signature, std::enable_if_t<meta::all<std::is_function<std::remove_pointer_t<Signature>>, meta::neg<std::is_same<Signature, lua_CFunction>>, meta::neg<std::is_same<Signature, std::remove_pointer_t<lua_CFunction>>>
 #if defined(SOL_NOEXCEPT_FUNCTION_TYPE) && SOL_NOEXCEPT_FUNCTION_TYPE
 			,
 								meta::neg<std::is_same<Signature, detail::lua_CFunction_noexcept>>, meta::neg<std::is_same<Signature, std::remove_pointer_t<detail::lua_CFunction_noexcept>>>
@@ -306,29 +306,29 @@ namespace sol {
 								>::value>> {
 			template <typename F>
 			static int push(lua_State* L, F&& f) {
-				return pusher<function_sig<>>{}.push(L, std::forward<F>(f));
+				return unqualified_pusher<function_sig<>>{}.push(L, std::forward<F>(f));
 			}
 		};
 
 		template <typename... Functions>
-		struct pusher<overload_set<Functions...>> {
+		struct unqualified_pusher<overload_set<Functions...>> {
 			static int push(lua_State* L, overload_set<Functions...>&& set) {
 				// TODO: yielding
 				typedef function_detail::overloaded_function<0, Functions...> F;
-				pusher<function_sig<>>{}.set_fx<false, F>(L, std::move(set.functions));
+				unqualified_pusher<function_sig<>>{}.set_fx<false, F>(L, std::move(set.functions));
 				return 1;
 			}
 
 			static int push(lua_State* L, const overload_set<Functions...>& set) {
 				// TODO: yielding
 				typedef function_detail::overloaded_function<0, Functions...> F;
-				pusher<function_sig<>>{}.set_fx<false, F>(L, set.functions);
+				unqualified_pusher<function_sig<>>{}.set_fx<false, F>(L, set.functions);
 				return 1;
 			}
 		};
 
 		template <typename T>
-		struct pusher<protect_t<T>> {
+		struct unqualified_pusher<protect_t<T>> {
 			static int push(lua_State* L, protect_t<T>&& pw) {
 				lua_CFunction cf = call_detail::call_user<void, false, false, protect_t<T>, 2>;
 				int upvalues = 0;
@@ -347,7 +347,7 @@ namespace sol {
 		};
 
 		template <typename F, typename G>
-		struct pusher<property_wrapper<F, G>, std::enable_if_t<!std::is_void<F>::value && !std::is_void<G>::value>> {
+		struct unqualified_pusher<property_wrapper<F, G>, std::enable_if_t<!std::is_void<F>::value && !std::is_void<G>::value>> {
 			static int push(lua_State* L, property_wrapper<F, G>&& pw) {
 				return stack::push(L, overload(std::move(pw.read), std::move(pw.write)));
 			}
@@ -357,7 +357,7 @@ namespace sol {
 		};
 
 		template <typename F>
-		struct pusher<property_wrapper<F, void>> {
+		struct unqualified_pusher<property_wrapper<F, void>> {
 			static int push(lua_State* L, property_wrapper<F, void>&& pw) {
 				return stack::push(L, std::move(pw.read));
 			}
@@ -367,7 +367,7 @@ namespace sol {
 		};
 
 		template <typename F>
-		struct pusher<property_wrapper<void, F>> {
+		struct unqualified_pusher<property_wrapper<void, F>> {
 			static int push(lua_State* L, property_wrapper<void, F>&& pw) {
 				return stack::push(L, std::move(pw.write));
 			}
@@ -377,7 +377,7 @@ namespace sol {
 		};
 
 		template <typename T>
-		struct pusher<var_wrapper<T>> {
+		struct unqualified_pusher<var_wrapper<T>> {
 			static int push(lua_State* L, var_wrapper<T>&& vw) {
 				return stack::push(L, std::move(vw.value));
 			}
@@ -387,34 +387,34 @@ namespace sol {
 		};
 
 		template <typename... Functions>
-		struct pusher<factory_wrapper<Functions...>> {
+		struct unqualified_pusher<factory_wrapper<Functions...>> {
 			static int push(lua_State* L, const factory_wrapper<Functions...>& fw) {
 				typedef function_detail::overloaded_function<0, Functions...> F;
-				pusher<function_sig<>>{}.set_fx<false, F>(L, fw.functions);
+				unqualified_pusher<function_sig<>>{}.set_fx<false, F>(L, fw.functions);
 				return 1;
 			}
 
 			static int push(lua_State* L, factory_wrapper<Functions...>&& fw) {
 				typedef function_detail::overloaded_function<0, Functions...> F;
-				pusher<function_sig<>>{}.set_fx<false, F>(L, std::move(fw.functions));
+				unqualified_pusher<function_sig<>>{}.set_fx<false, F>(L, std::move(fw.functions));
 				return 1;
 			}
 
 			static int push(lua_State* L, const factory_wrapper<Functions...>& set, function_detail::call_indicator) {
 				typedef function_detail::overloaded_function<1, Functions...> F;
-				pusher<function_sig<>>{}.set_fx<false, F>(L, set.functions);
+				unqualified_pusher<function_sig<>>{}.set_fx<false, F>(L, set.functions);
 				return 1;
 			}
 
 			static int push(lua_State* L, factory_wrapper<Functions...>&& set, function_detail::call_indicator) {
 				typedef function_detail::overloaded_function<1, Functions...> F;
-				pusher<function_sig<>>{}.set_fx<false, F>(L, std::move(set.functions));
+				unqualified_pusher<function_sig<>>{}.set_fx<false, F>(L, std::move(set.functions));
 				return 1;
 			}
 		};
 
 		template <>
-		struct pusher<no_construction> {
+		struct unqualified_pusher<no_construction> {
 			static int push(lua_State* L, no_construction) {
 				lua_CFunction cf = &function_detail::no_construction_error;
 				return stack::push(L, cf);
@@ -426,7 +426,7 @@ namespace sol {
 		};
 
 		template <typename T, typename... Lists>
-		struct pusher<detail::tagged<T, constructor_list<Lists...>>> {
+		struct unqualified_pusher<detail::tagged<T, constructor_list<Lists...>>> {
 			static int push(lua_State* L, detail::tagged<T, constructor_list<Lists...>>) {
 				lua_CFunction cf = call_detail::construct<T, detail::default_safe_function_calls, true, Lists...>;
 				return stack::push(L, cf);
@@ -439,7 +439,7 @@ namespace sol {
 		};
 
 		template <typename L0, typename... Lists>
-		struct pusher<constructor_list<L0, Lists...>> {
+		struct unqualified_pusher<constructor_list<L0, Lists...>> {
 			typedef constructor_list<L0, Lists...> cl_t;
 			static int push(lua_State* L, cl_t cl) {
 				typedef typename meta::bind_traits<L0>::return_type T;
@@ -448,7 +448,7 @@ namespace sol {
 		};
 
 		template <typename T, typename... Fxs>
-		struct pusher<detail::tagged<T, constructor_wrapper<Fxs...>>> {
+		struct unqualified_pusher<detail::tagged<T, constructor_wrapper<Fxs...>>> {
 			template <typename C>
 			static int push(lua_State* L, C&& c) {
 				lua_CFunction cf = call_detail::call_user<T, false, false, constructor_wrapper<Fxs...>, 2>;
@@ -460,7 +460,7 @@ namespace sol {
 		};
 
 		template <typename F, typename... Fxs>
-		struct pusher<constructor_wrapper<F, Fxs...>> {
+		struct unqualified_pusher<constructor_wrapper<F, Fxs...>> {
 			template <typename C>
 			static int push(lua_State* L, C&& c) {
 				typedef typename meta::bind_traits<F>::template arg_at<0> arg0;
@@ -470,7 +470,7 @@ namespace sol {
 		};
 
 		template <typename T>
-		struct pusher<detail::tagged<T, destructor_wrapper<void>>> {
+		struct unqualified_pusher<detail::tagged<T, destructor_wrapper<void>>> {
 			static int push(lua_State* L, destructor_wrapper<void>) {
 				lua_CFunction cf = detail::usertype_alloc_destruct<T>;
 				return stack::push(L, cf);
@@ -478,7 +478,7 @@ namespace sol {
 		};
 
 		template <typename T, typename Fx>
-		struct pusher<detail::tagged<T, destructor_wrapper<Fx>>> {
+		struct unqualified_pusher<detail::tagged<T, destructor_wrapper<Fx>>> {
 			static int push(lua_State* L, destructor_wrapper<Fx>&& c) {
 				lua_CFunction cf = call_detail::call_user<T, false, false, destructor_wrapper<Fx>, 2>;
 				int upvalues = 0;
@@ -497,7 +497,7 @@ namespace sol {
 		};
 
 		template <typename Fx>
-		struct pusher<destructor_wrapper<Fx>> {
+		struct unqualified_pusher<destructor_wrapper<Fx>> {
 			static int push(lua_State* L, destructor_wrapper<Fx>&& c) {
 				lua_CFunction cf = call_detail::call_user<void, false, false, destructor_wrapper<Fx>, 2>;
 				int upvalues = 0;
@@ -516,7 +516,7 @@ namespace sol {
 		};
 
 		template <typename F, typename... Filters>
-		struct pusher<filter_wrapper<F, Filters...>> {
+		struct unqualified_pusher<filter_wrapper<F, Filters...>> {
 			typedef filter_wrapper<F, Filters...> P;
 
 			static int push(lua_State* L, const P& p) {

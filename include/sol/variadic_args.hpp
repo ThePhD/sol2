@@ -173,7 +173,7 @@ namespace sol {
 		};
 
 		template <>
-		struct pusher<variadic_args> {
+		struct unqualified_pusher<variadic_args> {
 			static int push(lua_State* L, const variadic_args& ref) {
 				return ref.push(L);
 			}

@@ -48,6 +48,7 @@
 
 namespace sol {
 	namespace detail {
+		struct with_function_tag {};
 		struct as_reference_tag {};
 		template <typename T>
 		struct as_pointer_tag {};
@@ -570,7 +571,7 @@ namespace sol {
 		template <typename T, typename = void>
 		struct popper;
 		template <typename T, typename = void>
-		struct pusher;
+		struct unqualified_pusher;
 		template <typename T, type = lua_type_of<T>::value, typename = void>
 		struct unqualified_checker;
 		template <typename T, type = lua_type_of<T>::value, typename = void>
@@ -578,7 +579,7 @@ namespace sol {
 		template <typename T, typename = void>
 		struct userdata_checker;
 		template <typename T, typename = void>
-		struct check_getter;
+		struct unqualified_check_getter;
 		template <typename T, typename = void>
 		struct qualified_check_getter;
 
@@ -613,7 +614,8 @@ namespace sol {
 		struct is_adl_sol_lua_get {
 		private:
 			template <typename C>
-			static meta::sfinae_yes_t test(decltype(sol_lua_get(types<C>(), static_cast<lua_State*>(nullptr), -1, std::declval<stack::record>()))*);
+			static meta::sfinae_yes_t test(
+				std::remove_reference_t<decltype(sol_lua_get(types<C>(), static_cast<lua_State*>(nullptr), -1, std::declval<stack::record&>()))>*);
 			template <typename C>
 			static meta::sfinae_no_t test(...);
 
@@ -625,8 +627,8 @@ namespace sol {
 		struct is_adl_sol_lua_check {
 		private:
 			template <typename C>
-			static meta::sfinae_yes_t test(
-				decltype(sol_lua_check(types<C>(), static_cast<lua_State*>(nullptr), -1, no_panic, std::declval<stack::record>()))*);
+			static meta::sfinae_yes_t test(std::remove_reference_t<decltype(
+				     sol_lua_check(types<C>(), static_cast<lua_State*>(nullptr), -1, no_panic, std::declval<stack::record&>()))>*);
 			template <typename C>
 			static meta::sfinae_no_t test(...);
 
@@ -638,8 +640,8 @@ namespace sol {
 		struct is_adl_sol_lua_check_get {
 		private:
 			template <typename C>
-			static meta::sfinae_yes_t test(
-				decltype(sol_lua_check_get(types<C>(), static_cast<lua_State*>(nullptr), -1, no_panic, std::declval<stack::record>()))*);
+			static meta::sfinae_yes_t test(std::remove_reference_t<decltype(
+				     sol_lua_check_get(types<C>(), static_cast<lua_State*>(nullptr), -1, no_panic, std::declval<stack::record&>()))>*);
 			template <typename C>
 			static meta::sfinae_no_t test(...);
 
@@ -651,7 +653,7 @@ namespace sol {
 		struct is_adl_sol_lua_push {
 		private:
 			template <typename... C>
-			static meta::sfinae_yes_t test(decltype(sol_lua_push(static_cast<lua_State*>(nullptr), std::declval<C>()...))*);
+			static meta::sfinae_yes_t test(std::remove_reference_t<decltype(sol_lua_push(static_cast<lua_State*>(nullptr), std::declval<C>()...))>*);
 			template <typename... C>
 			static meta::sfinae_no_t test(...);
 
@@ -663,7 +665,8 @@ namespace sol {
 		struct is_adl_sol_lua_push_exact {
 		private:
 			template <typename... C>
-			static meta::sfinae_yes_t test(decltype(sol_lua_push(types<T>(), static_cast<lua_State*>(nullptr), std::declval<C>()...))*);
+			static meta::sfinae_yes_t test(
+				std::remove_reference_t<decltype(sol_lua_push(types<T>(), static_cast<lua_State*>(nullptr), std::declval<C>()...))>*);
 			template <typename... C>
 			static meta::sfinae_no_t test(...);
 
@@ -812,7 +815,7 @@ namespace sol {
 				return sol_lua_push(L, std::forward<T>(t), std::forward<Args>(args)...);
 			}
 			else {
-				pusher<Tu> p{};
+				unqualified_pusher<Tu> p{};
 				(void)p;
 				return p.push(L, std::forward<T>(t), std::forward<Args>(args)...);
 			}
@@ -832,7 +835,7 @@ namespace sol {
 				return sol_lua_push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 			}
 			else {
-				pusher<Tu> p{};
+				unqualified_pusher<Tu> p{};
 				(void)p;
 				return p.push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 			}
@@ -974,7 +977,7 @@ namespace sol {
 				return sol_lua_check_get(types<Tu>(), L, index, std::forward<Handler>(handler), tracking);
 			}
 			else {
-				check_getter<Tu> cg{};
+				unqualified_check_getter<Tu> cg{};
 				(void)cg;
 				return cg.get(L, index, std::forward<Handler>(handler), tracking);
 			}

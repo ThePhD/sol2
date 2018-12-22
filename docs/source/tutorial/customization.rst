@@ -1,7 +1,7 @@
 adding your own types
 =====================
 
-Sometimes, overriding Sol to make it handle certain ``struct``'s and ``class``'es as something other than just userdata is desirable. The way to do this is to take advantage of the 4 customization points for Sol. These are ``sol::lua_size<T>``, ``sol::stack::pusher<T, C>``, ``sol::stack::getter<T, C>``, ``sol::stack::checker<T, sol::type t,  C>``.
+Sometimes, overriding Sol to make it handle certain ``struct``'s and ``class``'es as something other than just userdata is desirable. The way to do this is to take advantage of the 4 customization points for Sol. These are ``sol::lua_size<T>``, ``sol::stack::unqualified_pusher<T, C>``, ``sol::stack::getter<T, C>``, ``sol::stack::checker<T, sol::type t,  C>``.
 
 These are template class/structs, so you'll override them using a technique C++ calls *class/struct specialization*. Below is an example of a struct that gets broken apart into 2 pieces when going in the C++ --> Lua direction, and then pulled back into a struct when going in the Lua --> C++:
 
