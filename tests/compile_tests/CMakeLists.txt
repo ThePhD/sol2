@@ -38,6 +38,21 @@ function(CREATE_TEST test_target_name test_name target_sol)
 	target_link_libraries(${test_target_name} ${target_sol})
 	
 	if (MSVC)
+		target_compile_options(${test_target_name}
+			PRIVATE /std:c++latest /EHsc "$<$<CONFIG:Debug>:/MDd>"
+			"$<$<CONFIG:Release>:/MD>"
+			"$<$<CONFIG:RelWithDebInfo>:/MD>"
+			"$<$<CONFIG:MinSizeRel>:/MD>")
+		target_compile_definitions(${test_target_name}
+			PRIVATE /DUNICODE /D_UNICODE 
+			/D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
+	else()
+		target_compile_options(${test_target_name}
+			PRIVATE -std=c++1z -Wno-unknown-warning -Wno-unknown-warning-option 
+			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
+	endif()
+	
+	if (MSVC)
 		if (NOT CMAKE_COMPILER_ID MATCHES "Clang")
 			target_compile_options(${test_target_name} 
 				PRIVATE /bigobj)

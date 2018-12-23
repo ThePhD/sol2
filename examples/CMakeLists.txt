@@ -22,13 +22,13 @@
 
 # # # sol2 Examples
 
-if (SOL2_DYNAMIC_LOADING_EXAMPLES)
+if (SOL2_DYNAMIC_LOADING_EXAMPLES OR SOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE OR SOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE_GENERATED)
 	# # require_from_dll example
 	# just add the subdirectory
 	add_subdirectory(require_dll_example)
 endif()
 
-if (SOL2_INTEROP_EXAMPLES)
+if (SOL2_INTEROP_EXAMPLES OR SOL2_INTEROP_EXAMPLES_SINGLE OR SOL2_INTEROP_EXAMPLES_SINGLE_GENERATED)
 	# # interop examples
 	add_subdirectory(interop/kaguya)
 	add_subdirectory(interop/tolua)
@@ -61,9 +61,23 @@ function (MAKE_EXAMPLE example_source_file example_suffix target_sol example_tes
 		PROPERTIES
 		OUTPUT_NAME "${example_output_name}"
 		EXPORT_NAME sol2::${example_output_name})
+	
+	if (MSVC)
+		target_compile_options(${example_name}
+			PRIVATE /std:c++latest /EHsc "$<$<CONFIG:Debug>:/MDd>"
+			"$<$<CONFIG:Release>:/MD>"
+			"$<$<CONFIG:RelWithDebInfo>:/MD>"
+			"$<$<CONFIG:MinSizeRel>:/MD>")
+		target_compile_definitions(${example_name}
+			PRIVATE /DUNICODE /D_UNICODE 
+			/D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
+	else()
+		target_compile_options(${example_name}
+			PRIVATE -std=c++1z -Wno-unknown-warning -Wno-unknown-warning-option 
+			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
+	endif()
+	
 	target_link_libraries(${example_name} ${target_sol})
-	target_compile_features(${example_name} 
-		PRIVATE ${CXX_FEATURES})
 	target_link_libraries(${example_name} ${LUA_LIBRARIES})
 	if(CMAKE_DL_LIBS)
 		target_link_libraries(${example_name} ${CMAKE_DL_LIBS})

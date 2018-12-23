@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-12-22 20:32:28.534178 UTC
-// This header was generated with sol v2.20.6 (revision 88cafb2)
+// Generated 2018-12-23 18:17:38.798117 UTC
+// This header was generated with sol v2.20.6 (revision a6abc0a)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3896,7 +3896,7 @@ namespace sol {
 		using is_specialization_of = meta_detail::is_specialization_of<std::remove_cv_t<T>, Templ>;
 
 		template <typename T, template <typename...> class Templ>
-		constexpr bool is_specialization_of_v = is_specialization_of<std::remove_cv_t<T>, Templ>::value;
+		inline constexpr bool is_specialization_of_v = is_specialization_of<std::remove_cv_t<T>, Templ>::value;
 
 		template <class T, class...>
 		struct all_same : std::true_type {};
@@ -5940,7 +5940,7 @@ namespace sol {
 	using is_lua_c_function = meta::any<std::is_same<lua_CFunction, T>, std::is_same<detail::lua_CFunction_noexcept, T>, std::is_same<lua_CFunction_ref, T>>;
 
 	template <typename T>
-	constexpr bool is_lua_c_function_v = is_lua_c_function<T>::value;
+	inline constexpr bool is_lua_c_function_v = is_lua_c_function<T>::value;
 
 	struct automagic_enrollments {
 		bool default_constructor = true;
@@ -8063,19 +8063,19 @@ namespace sol {
 		};
 
 		template <typename T>
-		constexpr bool is_adl_sol_lua_get_v = is_adl_sol_lua_get<T>::value;
+		inline constexpr bool is_adl_sol_lua_get_v = is_adl_sol_lua_get<T>::value;
 
 		template <typename T>
-		constexpr bool is_adl_sol_lua_check_v = is_adl_sol_lua_check<T>::value;
+		inline constexpr bool is_adl_sol_lua_check_v = is_adl_sol_lua_check<T>::value;
 
 		template <typename T>
-		constexpr bool is_adl_sol_lua_check_get_v = is_adl_sol_lua_check_get<T>::value;
+		inline constexpr bool is_adl_sol_lua_check_get_v = is_adl_sol_lua_check_get<T>::value;
 
 		template <typename... Args>
-		constexpr bool is_adl_sol_lua_push_v = is_adl_sol_lua_push<Args...>::value;
+		inline constexpr bool is_adl_sol_lua_push_v = is_adl_sol_lua_push<Args...>::value;
 
 		template <typename T, typename... Args>
-		constexpr bool is_adl_sol_lua_push_exact_v = is_adl_sol_lua_push_exact<T, Args...>::value;
+		inline constexpr bool is_adl_sol_lua_push_exact_v = is_adl_sol_lua_push_exact<T, Args...>::value;
 	}} // namespace meta::meta_detail
 
 	namespace stack {

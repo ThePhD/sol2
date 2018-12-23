@@ -123,7 +123,7 @@ namespace sol {
 		using is_specialization_of = meta_detail::is_specialization_of<std::remove_cv_t<T>, Templ>;
 
 		template <typename T, template <typename...> class Templ>
-		constexpr bool is_specialization_of_v = is_specialization_of<std::remove_cv_t<T>, Templ>::value;
+		inline constexpr bool is_specialization_of_v = is_specialization_of<std::remove_cv_t<T>, Templ>::value;
 
 		template <class T, class...>
 		struct all_same : std::true_type {};

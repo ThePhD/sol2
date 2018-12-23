@@ -46,7 +46,7 @@ matrix:
   include:
     # GCC 4.9.x, 5.x, 6.x, 7.x
     - env:
-      - LUA_VERSION=5.3.4
+      - LUA_VERSION=5.3.5
         GCC_VERSION=7
         PLATFORM=i686
         CI=true
@@ -64,63 +64,51 @@ matrix:
         CI=true
 
     - env:
-      - LUA_VERSION=5.3.4
-        GCC_VERSION=4.9
-        PLATFORM=x64
-        CI=true
-
-    - env:
-      - LUA_VERSION=5.3.4
-        GCC_VERSION=5
-        CI=true
-        PLATFORM=x64
-
-    - env:
-      - LUA_VERSION=5.3.4
-        GCC_VERSION=6
-        PLATFORM=x64
-        CI=true
-
-    - env:
-      - LUA_VERSION=5.3.4
+      - LUA_VERSION=5.3.5
         GCC_VERSION=7
         PLATFORM=x64
         CI=true
 
     # LLVM 3.6.x -> 5.0.x
     - env:
-      - LUA_VERSION=5.3.4
+      - LUA_VERSION=5.3.5
         LLVM_VERSION=3.6.2
         PLATFORM=x64
         CI=true
 
     - env:
-      - LUA_VERSION=5.3.4
+      - LUA_VERSION=5.3.5
         LLVM_VERSION=3.7.1
         PLATFORM=x64
         CI=true
 
     - env:
-      - LUA_VERSION=5.3.4
-        LLVM_VERSION=3.8.1
-        PLATFORM=x64
-        CI=true
-
-    - env:
-      - LUA_VERSION=5.3.4
+      - LUA_VERSION=5.3.5
         LLVM_VERSION=3.9.1
         PLATFORM=x64
         CI=true
 
     - env:
-      - LUA_VERSION=5.3.4
+      - LUA_VERSION=5.3.5
         LLVM_VERSION=4.0.1
         PLATFORM=x64
         CI=true
 
     - env:
-      - LUA_VERSION=5.3.4
-        LLVM_VERSION=5.0.1
+      - LUA_VERSION=5.3.5
+        LLVM_VERSION=5.0.2
+        PLATFORM=x64
+        CI=true
+
+    - env:
+      - LUA_VERSION=5.3.5
+        LLVM_VERSION=6.0.1
+        PLATFORM=x64
+        CI=true
+
+    - env:
+      - LUA_VERSION=5.3.5
+        LLVM_VERSION=7.0.0
         PLATFORM=x64
         CI=true
 
@@ -152,8 +140,8 @@ matrix:
     - os: osx
       osx_image: xcode9.0
       env:
-        - LUA_VERSION=lua-5.3.4
-          LLVM_VERSION=5.0.1
+        - LUA_VERSION=lua-5.3.5
+          LLVM_VERSION=5.0.2
       before_install:
         - chmod +x ./scripts/run.osx.sh
         - chmod +x ./scripts/preparation.osx.sh
@@ -164,8 +152,8 @@ matrix:
     - os: osx
       osx_image: xcode9.1
       env:
-        - LUA_VERSION=lua-5.3.4
-          LLVM_VERSION=5.0.1
+        - LUA_VERSION=lua-5.3.5
+          LLVM_VERSION=5.0.2
       before_install:
         - chmod +x ./scripts/run.osx.sh
         - chmod +x ./scripts/preparation.osx.sh
@@ -176,8 +164,8 @@ matrix:
     - os: osx
       osx_image: xcode9.2
       env:
-        - LUA_VERSION=lua-5.3.4
-          LLVM_VERSION=5.0.1
+        - LUA_VERSION=lua-5.3.5
+          LLVM_VERSION=5.0.2
       before_install:
         - chmod +x ./scripts/run.osx.sh
         - chmod +x ./scripts/preparation.osx.sh

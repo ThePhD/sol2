@@ -29,73 +29,6 @@ project(sol2 VERSION 3.0.0 LANGUAGES CXX C)
 
 include(GNUInstallDirs)
 
-# # # General Project Requirements
-# Set general standard requirements here
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# Features a C++ compiler must have to be used to compile sol2
-# This list is not *complete* as CMake does not support features for
-# all of the advanced features utilized.
-set(CXX_FEATURES
-	cxx_auto_type
-	cxx_constexpr
-	cxx_decltype
-	cxx_decltype_auto
-	cxx_default_function_template_args
-	cxx_final
-	cxx_lambdas
-	cxx_noexcept
-	cxx_nullptr
-	cxx_override
-	cxx_range_for
-	cxx_return_type_deduction
-	cxx_right_angle_brackets
-	cxx_static_assert
-	cxx_strong_enums
-	cxx_variadic_macros
-	cxx_variadic_templates)
-
-# # #
-if (SOL2_PLATFORM MATCHES "i686" OR SOL2_PLATFORM STREQUAL "x86")
-	set(IS_X86 TRUE)
-elseif (SOL2_PLATFORM MATCHES "ARM64")
-	set(IS_ARM64 TRUE)
-	set(IS_X64 TRUE)
-elseif (SOL2_PLATFORM MATCHES "ARM")
-	set(IS_ARM TRUE)
-elseif (SOL2_PLATFORM MATCHES "x86_64" OR SOL2_PLATFORM STREQUAL "x64")
-	set(IS_X64 TRUE)
-else()
-	set(IS_X64 TRUE)
-endif()
-
-# # # General project flags
-if (MSVC)
-	add_definitions(/DUNICODE /D_UNICODE /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
-	# Warning level, exceptions
-	add_compile_options(/EHsc)
-	add_compile_options("$<$<CONFIG:Debug>:/MDd>"
-		"$<$<CONFIG:Release>:/MD>"
-		"$<$<CONFIG:RelWithDebInfo>:/MD>"
-		"$<$<CONFIG:MinSizeRel>:/MD>")
-	if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-		add_compile_options(/MP)
-	endif()
-else()
-	add_compile_options(-Wno-unknown-warning -Wno-unknown-warning-option -Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
-endif()
-
-# # # General project output locations
-if (IS_X86 OR CMAKE_SIZEOF_VOID_P EQUAL 4)
-	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/lib")
-	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/bin")
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/bin")
-else()
-	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/lib")
-	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/bin")
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/bin")
-endif()
-
 # # # Modules
 # # Include modules useful to the project, whether locally made in our own cmake DIRECTORY
 # # our from the standard cmake libraries
@@ -145,6 +78,33 @@ CMAKE_DEPENDENT_OPTION(SOL2_TESTS_DYNAMIC_LOADING_EXAMPLES "Enable build of dyna
 	"SOL2_DYNAMIC_LOADING_EXAMPLES" OFF)
 CMAKE_DEPENDENT_OPTION(BUILD_LUA_AS_DLL "Build Lua as a DLL" ON
 	"SOL2_BUILD_LUA" OFF)
+
+
+# # # Platform
+# Detect x86 and x64 stuff
+if (SOL2_PLATFORM MATCHES "i686" OR SOL2_PLATFORM STREQUAL "x86")
+	set(IS_X86 TRUE)
+elseif (SOL2_PLATFORM MATCHES "ARM64")
+	set(IS_ARM64 TRUE)
+	set(IS_X64 TRUE)
+elseif (SOL2_PLATFORM MATCHES "ARM")
+	set(IS_ARM TRUE)
+elseif (SOL2_PLATFORM MATCHES "x86_64" OR SOL2_PLATFORM STREQUAL "x64")
+	set(IS_X64 TRUE)
+else()
+	set(IS_X64 TRUE)
+endif()
+
+# # # General project output locations
+if (IS_X86 OR CMAKE_SIZEOF_VOID_P EQUAL 4)
+	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/lib")
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/bin")
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/bin")
+else()
+	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/lib")
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/bin")
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/bin")
+endif()
 
 
 # # # sol2 Source Groups

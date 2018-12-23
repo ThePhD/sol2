@@ -1266,7 +1266,7 @@ namespace sol {
 	using is_lua_c_function = meta::any<std::is_same<lua_CFunction, T>, std::is_same<detail::lua_CFunction_noexcept, T>, std::is_same<lua_CFunction_ref, T>>;
 
 	template <typename T>
-	constexpr bool is_lua_c_function_v = is_lua_c_function<T>::value;
+	inline constexpr bool is_lua_c_function_v = is_lua_c_function<T>::value;
 
 	struct automagic_enrollments {
 		bool default_constructor = true;
