@@ -14,7 +14,7 @@ The goal of read-only is to protect a variable set on a usertype or a function. 
 If you are looking to make a read-only table, you need to go through a bit of a complicated song and dance by overriding the ``__index`` metamethod. Here's a complete example on the way to do that using ``sol``:
 
 
-.. literalinclude:: ../../../examples/read_only.cpp
+.. literalinclude:: ../../../examples/source/read_only.cpp
 	:caption: read_only.cpp
 	:linenos:
 

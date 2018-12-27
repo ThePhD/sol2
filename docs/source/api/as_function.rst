@@ -12,7 +12,7 @@ This function serves the purpose of ensuring that a callable struct (like a lamb
 
 This class can also make it so usertypes bind variable types as functions to for usertype bindings.
 
-.. literalinclude:: ../../../examples/docs/as_function.cpp
+.. literalinclude:: ../../../examples/source/docs/as_function.cpp
 	:linenos:
 
 
@@ -20,5 +20,5 @@ Note that if you actually want a userdata, but you want it to be callable, you s
 
 Here's an example of binding a variable as a function to a usertype:
 
-.. literalinclude:: ../../../examples/docs/as_function_usertype_member_variable.cpp
+.. literalinclude:: ../../../examples/source/docs/as_function_usertype_member_variable.cpp
 	:linenos:

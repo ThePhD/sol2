@@ -35,7 +35,8 @@ function(CREATE_TEST test_target_name test_name target_sol)
 		PROPERTIES
 		OUTPUT_NAME ${test_name}
 		EXPORT_NAME sol2::${test_name})
-	target_link_libraries(${test_target_name} ${target_sol})
+	target_link_libraries(${test_target_name} 
+		PUBLIC Threads::Threads ${LUA_LIBRARIES} ${CATCH_LIBRARIES} ${target_sol})
 	
 	if (MSVC)
 		target_compile_options(${test_target_name}
@@ -44,8 +45,8 @@ function(CREATE_TEST test_target_name test_name target_sol)
 			"$<$<CONFIG:RelWithDebInfo>:/MD>"
 			"$<$<CONFIG:MinSizeRel>:/MD>")
 		target_compile_definitions(${test_target_name}
-			PRIVATE /DUNICODE /D_UNICODE 
-			/D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
+			PRIVATE UNICODE _UNICODE 
+			_CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
 	else()
 		target_compile_options(${test_target_name}
 			PRIVATE -std=c++1z -Wno-unknown-warning -Wno-unknown-warning-option 
@@ -74,11 +75,9 @@ function(CREATE_TEST test_target_name test_name target_sol)
 			PRIVATE SOL2_CI)
 	endif()
 	if (CMAKE_DL_LIBS)
-		target_link_libraries(${test_target_name}
+		target_link_libraries(${test_target_name} PUBLIC
 			${CMAKE_DL_LIBS})
 	endif()
-	target_link_libraries(${test_target_name}
-		Threads::Threads ${LUA_LIBRARIES} ${CATCH_LIBRARIES})
 	
 	add_test(NAME ${test_name} COMMAND ${test_target_name})
 	install(TARGETS ${test_target_name} RUNTIME DESTINATION bin)

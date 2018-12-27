@@ -36,12 +36,24 @@ if (SOL2_INTEROP_EXAMPLES OR SOL2_INTEROP_EXAMPLES_SINGLE OR SOL2_INTEROP_EXAMPL
 	add_subdirectory(interop/luwra)
 endif()
 
+# # Utility assert.hpp "library" 
+add_library(sol2_assert INTERFACE)
+add_library(sol2::assert ALIAS sol2_assert)
+set_target_properties(sol2_assert
+	PROPERTIES
+	INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/include"
+	EXPORT_NAME sol2::assert)
+if (SOL2_CI)
+	target_compile_definitions(sol2_assert 
+		PUBLIC SOL2_CI)
+endif()
+
 # # single-source compilable examples
 
 file(GLOB EXAMPLES_SRC source/*.cpp source/tutorials/quick_n_dirty/*.cpp source/docs/*.cpp)
 source_group(examples FILES ${EXAMPLES_SRC})
 
-function (MAKE_EXAMPLE example_source_file example_suffix target_sol example_test_var)
+function (MAKE_EXAMPLE example_source_file example_suffix target_sol)
 	
 	get_filename_component(example_name ${example_source_file} NAME_WE)
 	file(RELATIVE_PATH example_source_file_relative ${CMAKE_SOURCE_DIR} ${example_source_file})
@@ -56,7 +68,7 @@ function (MAKE_EXAMPLE example_source_file example_suffix target_sol example_tes
 		set(example_output_name "${example_output_relative_dir_name}.${example_name}")
 	endif()
 
-	add_executable(${example_name} ${example_source_file} source/assert.hpp)
+	add_executable(${example_name} ${example_source_file})
 	set_target_properties(${example_name} 
 		PROPERTIES
 		OUTPUT_NAME "${example_output_name}"
@@ -69,31 +81,22 @@ function (MAKE_EXAMPLE example_source_file example_suffix target_sol example_tes
 			"$<$<CONFIG:RelWithDebInfo>:/MD>"
 			"$<$<CONFIG:MinSizeRel>:/MD>")
 		target_compile_definitions(${example_name}
-			PRIVATE /DUNICODE /D_UNICODE 
-			/D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
+			PRIVATE UNICODE _UNICODE 
+			_CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE )
 	else()
 		target_compile_options(${example_name}
-			PRIVATE -std=c++1z -Wno-unknown-warning -Wno-unknown-warning-option 
+			PRIVATE -std=c++1z -Wno-noexcept-type -Wno-unknown-warning -Wno-unknown-warning-option 
 			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
 	endif()
 	
-	target_link_libraries(${example_name} ${target_sol})
-	target_link_libraries(${example_name} ${LUA_LIBRARIES})
+	target_link_libraries(${example_name} 
+		PRIVATE ${target_sol} ${LUA_LIBRARIES} sol2::assert)
+	
 	if(CMAKE_DL_LIBS)
 		target_link_libraries(${example_name} ${CMAKE_DL_LIBS})
 	endif()
-	if (SOL2_CI)
-		target_compile_definitions(${example_name} 
-			PRIVATE SOL2_CI)
-	endif()
 	
-	if (MSVC)
-	else()
-		target_compile_options(${example_name}
-			PRIVATE -Wno-noexcept-type)
-	endif()
-	
-	if (${example_test_var})
+	if (SOL2_TESTS_EXAMPLES)
 		add_test(NAME ${example_output_name} COMMAND ${example_name})
 	endif()
 	install(TARGETS ${example_name} RUNTIME DESTINATION bin)
@@ -101,18 +104,18 @@ endfunction(MAKE_EXAMPLE)
 
 if (SOL2_EXAMPLES)
 	foreach(example_source_file ${EXAMPLES_SRC})
-		MAKE_EXAMPLE(${example_source_file} "" sol2::sol2 SOL2_TESTS_EXAMPLES)
+		MAKE_EXAMPLE(${example_source_file} "" sol2::sol2)
 	endforeach()
 endif()
 
 if (SOL2_EXAMPLES_SINGLE)
 	foreach(example_source_file ${EXAMPLES_SRC})
-		MAKE_EXAMPLE(${example_source_file} ".single" sol2::sol2_single SOL2_TESTS_EXAMPLES)
+		MAKE_EXAMPLE(${example_source_file} ".single" sol2::sol2_single)
 	endforeach()
 endif()
 
 if (SOL2_EXAMPLES_SINGLE_GENERATED)
 	foreach(example_source_file ${EXAMPLES_SRC})
-		MAKE_EXAMPLE(${example_source_file} ".single.generated" sol2::sol2_single_generated SOL2_TESTS_EXAMPLES)
+		MAKE_EXAMPLE(${example_source_file} ".single.generated" sol2::sol2_single_generated)
 	endforeach()
 endif()

@@ -23,7 +23,7 @@ It is advisable for the user to consider making a macro to do the necessary ``de
 
 Here's an example below of various ways to use ``sol::c_call``:
 
-.. literalinclude:: ../../../examples/c_call.cpp
+.. literalinclude:: ../../../examples/source/c_call.cpp
 	:linenos:
 
 .. _one similar to this: http://stackoverflow.com/a/5628222/5280922

@@ -29,7 +29,9 @@ function (make_luwra_interop_example target_library example_suffix)
 	set(example_name "${example_name}${example_suffix}")
 	
 	add_executable(${example_name} source/luwra.cpp)
-	target_link_libraries(${example_name} PUBLIC ${LUA_LIBRARIES} PRIVATE ${LUWRA_LIBRARIES} ${target_library})
+	target_link_libraries(${example_name} 
+		PRIVATE ${LUA_LIBRARIES} ${LUWRA_LIBRARIES} 
+		${target_library} sol2::assert)
 
 	if (MSVC)
 		target_compile_options(${example_name}
@@ -38,24 +40,19 @@ function (make_luwra_interop_example target_library example_suffix)
 			"$<$<CONFIG:RelWithDebInfo>:/MD>"
 			"$<$<CONFIG:MinSizeRel>:/MD>")
 		target_compile_definitions(${example_name}
-			PRIVATE /DUNICODE /D_UNICODE 
-			/D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
+			PRIVATE /W1 UNICODE _UNICODE 
+			_CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
 	else()
 		target_compile_options(${example_name}
-			PRIVATE -std=c++1z
+			PRIVATE -std=c++1z -w
 			-Wno-noexcept-type -Wno-unknown-warning -Wno-unknown-warning-option 
 			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
 	endif()
 
-
 	if (CMAKE_DL_LIBS)
 		target_link_libraries(${example_name} PRIVATE ${CMAKE_DL_LIBS})
 	endif()
-	if (MSVC)
-		target_compile_options(${example_name} PRIVATE /W1)
-	else()
-		target_compile_options(${example_name} PRIVATE -w)
-	endif()
+
 	if (SOL2_TESTS_INTEROP_EXAMPLES)
 		add_test(NAME ${example_name} COMMAND ${example_name})
 	endif()

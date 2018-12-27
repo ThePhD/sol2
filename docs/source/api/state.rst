@@ -100,7 +100,7 @@ If your script returns a value, you can capture it from the returned :ref:`sol::
 
 To handle errors when using the second overload, provide a callable function/object that takes a ``lua_State*`` as its first argument and a ``sol::protected_function_result`` as its second argument. ``sol::script_default_on_error`` and ``sol::script_pass_on_error`` are 2 functions provided by sol that will either generate a traceback error to return / throw (if throwing is allowed); or, pass the error on through and return it to the user (respectively). An example of having your:
 
-.. literalinclude:: ../../../examples/docs/state_script_safe.cpp
+.. literalinclude:: ../../../examples/source/docs/state_script_safe.cpp
 	:linenos:
 	:name: state-script-safe
 

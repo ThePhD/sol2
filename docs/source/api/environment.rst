@@ -18,7 +18,7 @@ This type is passed to :ref:`sol::state(_view)::script/do_x<state-script-functio
 
 There are many more uses, including storing state or special dependent variables in an environment that you pre-create using regular table opertions, and then changing at-will:
 
-.. literalinclude:: ../../../examples/docs/preparing_environments.cpp
+.. literalinclude:: ../../../examples/source/docs/preparing_environments.cpp
 	:linenos:
 
 Also note that ``sol::environment`` derives from ``sol::table``, which also derives from ``sol::reference``: in other words, copying one ``sol::environment`` value to another ``sol::environment`` value **does not** deep-copy the table, just creates a new reference pointing to the same lua object.

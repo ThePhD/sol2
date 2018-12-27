@@ -57,11 +57,11 @@ the basics:
 	The code below *and* more examples can be found in the `examples directory`_
 
 
-.. literalinclude:: ../../examples/docs/simple_functions.cpp
+.. literalinclude:: ../../examples/source/docs/simple_functions.cpp
 	:name: simple-functions-example
 	:linenos:
 
-.. literalinclude:: ../../examples/docs/simple_structs.cpp
+.. literalinclude:: ../../examples/source/docs/simple_structs.cpp
 	:name: simple-structs-example
 	:linenos:	
 

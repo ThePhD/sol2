@@ -1,4 +1,4 @@
-#include "my_object.hpp"
+#include <my_object/my_object.hpp>
 
 #define SOL_CHECK_ARGUMENTS 1
 #include <sol/sol.hpp>

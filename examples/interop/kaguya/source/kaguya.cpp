@@ -5,7 +5,7 @@
 #include <sol/sol.hpp>
 
 #include <iostream>
-#include "../../assert.hpp"
+#include <assert.hpp>
 
 // kaguya code lifted from README.md,
 // written by satoren:

@@ -199,7 +199,7 @@ runtime functions
 
 You can add functions at runtime **to the whole class** (not to individual objects). Set a name under the metatable name you bound using ``new_usertype`` to an object. For example:
 
-.. literalinclude:: ../../../examples/docs/runtime_extension.cpp
+.. literalinclude:: ../../../examples/source/docs/runtime_extension.cpp
 	:caption: runtime_extension.cpp
 	:name: runtime-extension-example
 	:linenos:
@@ -232,7 +232,7 @@ Register the base classes explicitly.
 
 	Always specify your bases if you plan to retrieve a base class using the Sol abstraction directly and not casting yourself.
 
-.. literalinclude:: ../../../examples/docs/inheritance.cpp
+.. literalinclude:: ../../../examples/source/docs/inheritance.cpp
 	:caption: inheritance.cpp
 	:name: inheritance-example
 	:linenos:

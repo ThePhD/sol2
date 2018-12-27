@@ -1,6 +1,6 @@
 #pragma once
 
-#include "my_object_api.hpp"
+#include <my_object/my_object_api.hpp>
 
 // forward declare as a C struct 
 // so a pointer to lua_State can be part of a signature

@@ -2,7 +2,7 @@
 #include <sol/sol.hpp>
 
 #include <iostream>
-#include "../../assert.hpp"
+#include <assert.hpp>
 
 int main() {
 	std::cout << "=== namespacing ===" << std::endl;

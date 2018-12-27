@@ -9,7 +9,7 @@
 #include "tolua_Player.h"
 
 #include <iostream>
-#include "../../assert.hpp"
+#include <assert.hpp>
 
 // tolua code lifted from some blog, if the link dies
 // I don't know where else you're gonna find the reference,

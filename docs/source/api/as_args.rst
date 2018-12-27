@@ -15,7 +15,7 @@ as_args
 ``sol::as_args`` is a function that that takes an iterable and turns it into multiple arguments to a function call. It forwards its arguments, and is meant to be used as shown below:
 
 
-.. literalinclude:: ../../../examples/args_from_container.cpp
+.. literalinclude:: ../../../examples/source/args_from_container.cpp
 	:caption: args_from_container.cpp
 	:linenos:
 

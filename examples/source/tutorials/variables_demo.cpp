@@ -2,7 +2,7 @@
 #include <sol.hpp>
 
 #include <tuple>
-#include "../assert.hpp"
+#include <assert.hpp>
 #include <utility> // for std::pair
 
 int main() {

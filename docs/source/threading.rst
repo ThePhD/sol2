@@ -34,6 +34,6 @@ You can mitigate some of the pressure of using coroutines and threading by using
 
 Here's an example of explicit state transferring below:
 
-.. literalinclude:: ../../examples/docs/state_transfer.cpp
+.. literalinclude:: ../../examples/source/docs/state_transfer.cpp
 	:name: state-transfer
 	:linenos:

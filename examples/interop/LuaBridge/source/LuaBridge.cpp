@@ -5,7 +5,7 @@
 #include <LuaBridge/LuaBridge.h>
 
 #include <iostream>
-#include "../../assert.hpp"
+#include <assert.hpp>
 
 // LuaBridge,
 // no longer maintained, by VinnieFalco:

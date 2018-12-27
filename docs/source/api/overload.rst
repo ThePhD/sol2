@@ -32,19 +32,19 @@ Its use is simple: wherever you can pass a function type to Lua, whether its on 
 
 The functions can be any kind of function / function object (lambda). Given these functions and struct:
 
-.. literalinclude:: ../../../examples/overloading_with_members.cpp
+.. literalinclude:: ../../../examples/source/overloading_with_members.cpp
 	:linenos:
 	:lines: 1-27
 
 You then use it just like you would for any other part of the api:
 
-.. literalinclude:: ../../../examples/overloading_with_members.cpp
+.. literalinclude:: ../../../examples/source/overloading_with_members.cpp
 	:linenos:
 	:lines: 29-45
 
 Doing the following in Lua will call the specific overloads chosen, and their associated functions:
 
-.. literalinclude:: ../../../examples/overloading_with_members.cpp
+.. literalinclude:: ../../../examples/source/overloading_with_members.cpp
 	:linenos:
 	:lines: 47-
 

@@ -27,7 +27,7 @@ cmake_minimum_required(VERSION 3.5.0)
 find_package(PythonInterp 3)
 
 if (NOT PYTHONINTERP_FOUND)
-	message(FATAL_ERROR "sol2 documentation cannot be generated as python 3 has not been found: install or set the python 3 interpreter for the docs to find it")
+	message(FATAL_ERROR "sol2 documentation cannot be generated as python 3 has not been found: install or set the python 3 interpreter for the docs to find it and be sure to pip install sphinx")
 endif()
 
 find_program(sol2_make_executable make make.exe mingw32-make mingw32-make.exe)
@@ -35,9 +35,9 @@ if(NOT sol2_make_executable)
     message(FATAL_ERROR "could not find a suitable make executable to build Sphinx documentation")
 endif()
 
-add_custom_command(OUTPUT make_docs
-		COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/docs" ${CMAKE_CURRENT_BINARY_DIR}
-		COMMAND "${sol2_make_executable}" -C "${CMAKE_CURRENT_BINARY_DIR}" html)
-	add_custom_target(docs ALL DEPENDS make_docs)
-	install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs/html" DESTINATION "${CMAKE_INSTALL_DOCDIR}")
-endif()
+add_custom_command(OUTPUT docs_invisible_file_always_generate
+	USES_TERMINAL
+	COMMAND "${sol2_make_executable}" -C "${CMAKE_CURRENT_SOURCE_DIR}" html "BUILDDIR=${CMAKE_CURRENT_BINARY_DIR}")
+add_custom_target(docs 
+	DEPENDS docs_invisible_file_always_generate)
+install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs/html" DESTINATION "${CMAKE_INSTALL_DOCDIR}")

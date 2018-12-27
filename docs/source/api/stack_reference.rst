@@ -17,7 +17,7 @@ This type is particular to working with the stack. It does not push the function
 
 Furthermore, if you know you have a function in the right place alongside proper arguments on top of it, you can use the ``sol::stack_count`` structure and give its constructor the number of arguments off the top that you want to call your pre-prepared function with:
 
-.. literalinclude:: ../../../examples/stack_aligned_function.cpp
+.. literalinclude:: ../../../examples/source/stack_aligned_function.cpp
 	:caption: stack_aligned_function.cpp
 	:linenos:
 	:name: stack-aligned-function-example
