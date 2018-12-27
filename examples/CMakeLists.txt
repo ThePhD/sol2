@@ -44,7 +44,7 @@ set_target_properties(sol2_assert
 	INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/include")
 if (SOL2_CI)
 	target_compile_definitions(sol2_assert 
-		PUBLIC SOL2_CI)
+		INTERFACE SOL2_CI)
 endif()
 
 # # single-source compilable examples
