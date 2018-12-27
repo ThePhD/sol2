@@ -79,7 +79,7 @@ function(CREATE_TEST test_target_name test_name target_sol)
 	
 	if (CMAKE_DL_LIBS)
 		target_link_libraries(${test_target_name}
-			${CMAKE_DL_LIBS})
+			PRIVATE ${CMAKE_DL_LIBS})
 	endif()
 	
 	add_test(NAME ${test_name} COMMAND ${test_target_name})

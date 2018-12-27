@@ -335,10 +335,10 @@ target_compile_options(${liblua}
 	PRIVATE ${LUA_VANILLA_LUALIB_COMPILER_OPTIONS})
 add_dependencies(${liblua} LUA_VANILLA)
 if (CMAKE_DL_LIBS)
-	target_link_libraries(${liblua} ${CMAKE_DL_LIBS})
+	target_link_libraries(${liblua} PRIVATE ${CMAKE_DL_LIBS})
 endif()
 if (UNIX)
-	target_link_libraries(${liblua} m)
+	target_link_libraries(${liblua} PRIVATE m)
 endif()
 
 # we don't really need this section...
@@ -372,12 +372,12 @@ else()
 endif()
 target_compile_options(${luainterpreter}
 	PRIVATE ${LUA_VANILLA_LUA_LUAC_COMPILER_OPTIONS})
-target_link_libraries(${luainterpreter} ${liblua})
+target_link_libraries(${luainterpreter} PRIVATE ${liblua})
 if (CMAKE_DL_LIBS)
-	target_link_libraries(${luainterpreter} ${CMAKE_DL_LIBS})
+	target_link_libraries(${luainterpreter} PRIVATE ${CMAKE_DL_LIBS})
 endif()
 if (UNIX)
-	target_link_libraries(${luainterpreter} m readline)
+	target_link_libraries(${luainterpreter} PRIVATE m readline)
 endif()
 
 # LuaC Compiler
@@ -414,13 +414,13 @@ else()
 	target_compile_definitions(${luacompiler} 
 		PRIVATE LUA_USE_LINUX)
 endif()
-target_link_libraries(${luacompiler} ${liblua})
+target_link_libraries(${luacompiler} PRIVATE ${liblua})
 if (CMAKE_DL_LIBS)
-	target_link_libraries(${luacompiler} ${CMAKE_DL_LIBS})
+	target_link_libraries(${luacompiler} PRIVATE ${CMAKE_DL_LIBS})
 endif()
 if (UNIX)
 	# TODO: make readline optional?
-	target_link_libraries(${luacompiler} m readline)
+	target_link_libraries(${luacompiler} PRIVATE m readline)
 endif()
 
 # set externally-visible target indicator

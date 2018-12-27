@@ -41,8 +41,7 @@ add_library(sol2_assert INTERFACE)
 add_library(sol2::assert ALIAS sol2_assert)
 set_target_properties(sol2_assert
 	PROPERTIES
-	INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/include"
-	EXPORT_NAME sol2::assert)
+	INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/include")
 if (SOL2_CI)
 	target_compile_definitions(sol2_assert 
 		PUBLIC SOL2_CI)
@@ -93,7 +92,7 @@ function (MAKE_EXAMPLE example_source_file example_suffix target_sol)
 		PRIVATE ${target_sol} ${LUA_LIBRARIES} sol2::assert)
 	
 	if(CMAKE_DL_LIBS)
-		target_link_libraries(${example_name} ${CMAKE_DL_LIBS})
+		target_link_libraries(${example_name} PRIVATE ${CMAKE_DL_LIBS})
 	endif()
 	
 	if (SOL2_TESTS_EXAMPLES)
