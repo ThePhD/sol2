@@ -69,19 +69,7 @@ matrix:
         PLATFORM=x64
         CI=true
 
-    # LLVM 3.6.x -> 5.0.x
-    - env:
-      - LUA_VERSION=5.3.5
-        LLVM_VERSION=3.6.2
-        PLATFORM=x64
-        CI=true
-
-    - env:
-      - LUA_VERSION=5.3.5
-        LLVM_VERSION=3.7.1
-        PLATFORM=x64
-        CI=true
-
+    # LLVM 3.9.x -> 5.0.x
     - env:
       - LUA_VERSION=5.3.5
         LLVM_VERSION=3.9.1

@@ -61,7 +61,8 @@ function(make_require_from_dll_example target_lib example_lib_name_suffix)
 			_CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
 	else()
 		target_compile_options(${example_lib_name}
-			PRIVATE -Wno-noexcept-type -Wno-unknown-warning -Wno-unknown-warning-option 
+			PRIVATE -std=c++1z 
+			-Wno-noexcept-type -Wno-unknown-warning -Wno-unknown-warning-option 
 			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
 		if (IS_X86)
 			target_compile_options(${example_lib_name} BEFORE PRIVATE -m32)

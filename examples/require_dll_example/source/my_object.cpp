@@ -10,8 +10,7 @@ namespace my_object {
 		sol::table module = lua.create_table();
 		module.new_usertype<test>("test",
 			sol::constructors<test(), test(int)>(),
-			"value", &test::value
-			);
+			"value", &test::value);
 
 		return module;
 	}
