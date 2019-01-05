@@ -2270,4 +2270,4 @@ namespace std {
 	};
 } // namespace std
 
-#endif
+#endif // SOL_TL_OPTIONAL_HPP

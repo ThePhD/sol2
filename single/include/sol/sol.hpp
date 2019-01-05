@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-01-05 10:49:37.853965 UTC
-// This header was generated with sol v2.20.6 (revision 59174e7)
+// Generated 2019-01-05 18:55:40.295019 UTC
+// This header was generated with sol v2.20.6 (revision d9f973e)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5602,7 +5602,6 @@ namespace std {
 	};
 } // namespace std
 
-#endif
 // end of sol/optional_implementation.hpp
 
 #endif // Boost vs. Better optional

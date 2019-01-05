@@ -294,7 +294,7 @@ extern \"C\" {
 
 	set(LUA_VANILLA_INCLUDE_DIRS ${LUA_VANILLA_SOURCE_DIR})
 endif()
-message(STATUS "${LUA_VANILLA_INCLUDE_DIRS}")
+
 # # Target names
 set(liblua "liblua-${LUA_VANILLA_VERSION}")
 set(luainterpreter "lua-${LUA_VANILLA_VERSION}")
