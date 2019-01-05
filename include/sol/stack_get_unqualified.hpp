@@ -791,7 +791,8 @@ namespace sol { namespace stack {
 		}
 
 		static T* get_no_lua_nil_from(lua_State* L, void* udata, int index, record&) {
-			if (derive<T>::value || weak_derive<T>::value) {
+			bool has_derived = derive<T>::value || weak_derive<T>::value;
+			if (has_derived) {
 				if (lua_getmetatable(L, index) == 1) {
 					lua_getfield(L, -1, &detail::base_class_cast_key()[0]);
 					if (type_of(L, -1) != type::lua_nil) {

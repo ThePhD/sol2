@@ -27,44 +27,61 @@
 #include "../feature_test.hpp"
 
 #if defined(SOL_USING_CXX_LUA) && SOL_USING_CXX_LUA
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-#if defined(SOL_USING_CXX_LUAJIT) && SOL_USING_CXX_LUAJIT
-#include <luajit.h>
-#endif // C++ LuaJIT ... whatever that means
-#if (!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !(SOL_EXCEPTIONS_SAFE_PROPAGATION)) && (!defined(SOL_EXCEPTIONS_ALWAYS_UNSAFE) || !(SOL_EXCEPTIONS_ALWAYS_UNSAFE))
-#define SOL_EXCEPTIONS_SAFE_PROPAGATION 1
-#endif // Exceptions can be propagated safely using C++-compiled Lua
+	#include <lua.h>
+	#include <lualib.h>
+	#include <lauxlib.h>
+	#if defined(SOL_USING_CXX_LUAJIT) && SOL_USING_CXX_LUAJIT
+		#include <luajit.h>
+	#endif // C++ LuaJIT ... whatever that means
+	#if (!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !(SOL_EXCEPTIONS_SAFE_PROPAGATION)) && (!defined(SOL_EXCEPTIONS_ALWAYS_UNSAFE) || !(SOL_EXCEPTIONS_ALWAYS_UNSAFE))
+		#define SOL_EXCEPTIONS_SAFE_PROPAGATION 1
+	#endif // Exceptions can be propagated safely using C++-compiled Lua
 #else
-#include <lua.hpp>
-#endif // C++ Mangling for Lua
+	#if defined(__has_include)
+		#if __has_include(<lua.hpp>)
+			#include <lua.hpp>
+		#else
+			extern "C" {
+				#include <lua.h>
+				#include <lauxlib.h>
+				#include <lualib.h>
+				#if defined(SOL_LUAJIT) && SOL_LUAJIT
+					#include <luajit.h>
+				#endif
+			}
+		#endif // lua.hpp exists or does not
+	#else
+		#include <lua.hpp>
+	#endif // check for lua.hpp safely for Lua 5.1 derps
+#endif // C++ Mangling for Lua vs. Not
 
 #ifdef LUAJIT_VERSION
-#ifndef SOL_LUAJIT
-#define SOL_LUAJIT 1
-#ifndef SOL_LUAJIT_VERSION
-#define SOL_LUAJIT_VERSION LUAJIT_VERSION_NUM
-#endif // SOL_LUAJIT_VERSION definition, if not present
-#endif // sol luajit
+	#ifndef SOL_LUAJIT
+		#define SOL_LUAJIT 1
+	#endif // sol luajit
+	#if defined(SOL_LUAJIT) && SOL_LUAJIT
+		#ifndef SOL_LUAJIT_VERSION
+			#define SOL_LUAJIT_VERSION LUAJIT_VERSION_NUM
+		#endif // SOL_LUAJIT_VERSION definition, if not present
+	#endif
 #endif // luajit
 
 #if SOL_LUAJIT && SOL_LUAJIT_VERSION >= 20100
-#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && (!defined(SOL_EXCEPTIONS_ALWAYS_UNSAFE) && !(SOL_EXCEPTIONS_ALWAYS_UNSAFE))
-#define SOL_EXCEPTIONS_SAFE_PROPAGATION 1
-#endif // Do not catch (...) clauses
+	#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && (!defined(SOL_EXCEPTIONS_ALWAYS_UNSAFE) && !(SOL_EXCEPTIONS_ALWAYS_UNSAFE))
+		#define SOL_EXCEPTIONS_SAFE_PROPAGATION 1
+	#endif // Do not catch (...) clauses
 #endif // LuaJIT beta 02.01.00 have better exception handling on all platforms since beta3
 
 #if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM >= 502
-#define SOL_LUA_VERSION LUA_VERSION_NUM
+	#define SOL_LUA_VERSION LUA_VERSION_NUM
 #elif defined(LUA_VERSION_NUM) && LUA_VERSION_NUM == 501
-#define SOL_LUA_VERSION LUA_VERSION_NUM
+	#define SOL_LUA_VERSION LUA_VERSION_NUM
 #elif !defined(LUA_VERSION_NUM) || !(LUA_VERSION_NUM)
-// Definitely 5.0
-#define SOL_LUA_VERSION 500
+	// Definitely 5.0
+	#define SOL_LUA_VERSION 500
 #else
-// ??? Not sure, assume 502?
-#define SOL_LUA_VERSION 502
-#endif // Lua Version 502, 501 || luajit, 500
+	// ??? Not sure, assume 503?
+	#define SOL_LUA_VERSION 503
+#endif // Lua Version 503, 502, 501 || luajit, 500
 
 #endif // SOL_VERSION_HPP

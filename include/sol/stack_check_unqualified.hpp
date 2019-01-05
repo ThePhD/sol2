@@ -479,7 +479,8 @@ namespace sol { namespace stack {
 			if (stack_detail::check_metatable<as_container_t<U>>(L, metatableindex))
 				return true;
 			bool success = false;
-			if (derive<T>::value || weak_derive<T>::value) {
+			bool has_derived = derive<T>::value || weak_derive<T>::value;
+			if (has_derived) {
 #if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
 				luaL_checkstack(L, 1, detail::not_enough_stack_space_string);
 #endif // make sure stack doesn't overflow

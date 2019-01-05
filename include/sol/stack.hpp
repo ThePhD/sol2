@@ -69,6 +69,21 @@ namespace sol {
 				return chunkname.c_str();
 			}
 		}
+
+		inline void clear_entries(stack_reference r) {
+			stack::push(r.lua_state(), lua_nil);
+			while (lua_next(r.lua_state(), -2)) {
+				absolute_index key(r.lua_state(), -2);
+				auto pn = stack::pop_n(r.lua_state(), 1);
+				stack::set_field<false, true>(r.lua_state(), key, lua_nil, r.stack_index());
+			}
+		}
+
+		inline void clear_entries(const reference& registry_reference) {
+			auto pp = stack::push_pop(registry_reference);
+			stack_reference ref(registry_reference.lua_state(), -1);
+			clear_entries(ref);
+		}
 	} // namespace detail
 
 	namespace stack {
@@ -189,13 +204,9 @@ namespace sol {
 		template <bool check_args = detail::default_safe_function_calls, bool clean_stack = true, typename Ret0, typename... Ret, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<meta::neg<std::is_void<Ret0>>::value>>
 		inline int call_into_lua(types<Ret0, Ret...>, types<Args...> ta, lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs) {
 			decltype(auto) r = call<check_args>(types<meta::return_type_t<Ret0, Ret...>>(), ta, L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
-			typedef meta::unqualified_t<decltype(r)> R;
-			typedef meta::any<is_stack_based<R>,
-				std::is_same<R, absolute_index>,
-				std::is_same<R, ref_index>,
-				std::is_same<R, raw_index>>
-				is_stack;
-			if (clean_stack && !is_stack::value) {
+			using R = meta::unqualified_t<decltype(r)>;
+			using is_stack = meta::any<is_stack_based<R>, std::is_same<R, absolute_index>, std::is_same<R, ref_index>, std::is_same<R, raw_index>>;
+			if constexpr (clean_stack && !is_stack::value) {
 				lua_settop(L, 0);
 			}
 			return push_reference(L, std::forward<decltype(r)>(r));

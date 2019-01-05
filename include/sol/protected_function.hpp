@@ -33,6 +33,7 @@
 #include <algorithm>
 
 namespace sol {
+	
 	template <typename base_t, bool aligned = false, typename handler_t = reference>
 	class basic_protected_function : public base_t {
 	public:

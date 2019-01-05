@@ -36,22 +36,19 @@ namespace sol {
 		friend class state_view;
 
 	protected:
-		basic_metatable(detail::no_safety_tag, lua_nil_t n)
-		: base_t(n) {
+		basic_metatable(detail::no_safety_tag, lua_nil_t n) : base_t(n) {
 		}
-		basic_metatable(detail::no_safety_tag, lua_State* L, int index)
-		: base_t(L, index) {
+		basic_metatable(detail::no_safety_tag, lua_State* L, int index) : base_t(L, index) {
 		}
-		basic_metatable(detail::no_safety_tag, lua_State* L, ref_index index)
-		: base_t(L, index) {
+		basic_metatable(detail::no_safety_tag, lua_State* L, ref_index index) : base_t(L, index) {
 		}
-		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_metatable>>, meta::neg<std::is_same<base_type, stack_reference>>, meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
-		basic_metatable(detail::no_safety_tag, T&& r) noexcept
-		: base_t(std::forward<T>(r)) {
+		template <typename T,
+		     meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_metatable>>, meta::neg<std::is_same<base_type, stack_reference>>,
+		          meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		basic_metatable(detail::no_safety_tag, T&& r) noexcept : base_t(std::forward<T>(r)) {
 		}
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
-		basic_metatable(detail::no_safety_tag, lua_State* L, T&& r) noexcept
-		: base_t(L, std::forward<T>(r)) {
+		basic_metatable(detail::no_safety_tag, lua_State* L, T&& r) noexcept : base_t(L, std::forward<T>(r)) {
 		}
 
 	public:
@@ -62,39 +59,35 @@ namespace sol {
 		basic_metatable(basic_metatable&&) = default;
 		basic_metatable& operator=(const basic_metatable&) = default;
 		basic_metatable& operator=(basic_metatable&&) = default;
-		basic_metatable(const stack_reference& r)
-		: basic_metatable(r.lua_state(), r.stack_index()) {
+		basic_metatable(const stack_reference& r) : basic_metatable(r.lua_state(), r.stack_index()) {
 		}
-		basic_metatable(stack_reference&& r)
-		: basic_metatable(r.lua_state(), r.stack_index()) {
+		basic_metatable(stack_reference&& r) : basic_metatable(r.lua_state(), r.stack_index()) {
 		}
 		template <typename T, meta::enable_any<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
-		basic_metatable(lua_State* L, T&& r)
-		: base_t(L, std::forward<T>(r)) {
+		basic_metatable(lua_State* L, T&& r) : base_t(L, std::forward<T>(r)) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_metatable>(lua_state(), -1, handler);
 #endif // Safety
 		}
-		basic_metatable(lua_State* L, int index = -1)
-		: basic_metatable(detail::no_safety, L, index) {
+		basic_metatable(lua_State* L, int index = -1) : basic_metatable(detail::no_safety, L, index) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
 			stack::check<basic_metatable>(L, index, handler);
 #endif // Safety
 		}
-		basic_metatable(lua_State* L, ref_index index)
-		: basic_metatable(detail::no_safety, L, index) {
+		basic_metatable(lua_State* L, ref_index index) : basic_metatable(detail::no_safety, L, index) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_metatable>(lua_state(), -1, handler);
 #endif // Safety
 		}
-		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_metatable>>, meta::neg<std::is_same<base_type, stack_reference>>, meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
-		basic_metatable(T&& r) noexcept
-		: basic_metatable(detail::no_safety, std::forward<T>(r)) {
+		template <typename T,
+		     meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_metatable>>, meta::neg<std::is_same<base_type, stack_reference>>,
+		          meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		basic_metatable(T&& r) noexcept : basic_metatable(detail::no_safety, std::forward<T>(r)) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			if (!is_table<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
@@ -103,8 +96,7 @@ namespace sol {
 			}
 #endif // Safety
 		}
-		basic_metatable(lua_nil_t r) noexcept
-		: basic_metatable(detail::no_safety, r) {
+		basic_metatable(lua_nil_t r) noexcept : basic_metatable(detail::no_safety, r) {
 		}
 
 		template <typename Key, typename Value>
@@ -128,11 +120,11 @@ namespace sol {
 			}
 			ustorage_base& base_storage = *static_cast<ustorage_base*>(stack::get<void*>(L, -1));
 			base_storage.clear();
-			stack_reference gnt(L, -1);
+			stack_reference gc_names_table(L, -1);
 			std::array<const char*, 6> registry_traits;
 			for (int i = 0; i < registry_traits.size(); ++i) {
 				u_detail::submetatable_type smt = static_cast<u_detail::submetatable_type>(i);
-				stack::get_field(L, smt, gnt.stack_index());
+				stack::get_field(L, smt, gc_names_table.stack_index());
 				registry_traits[i] = stack::get<const char*>(L, -1);
 			}
 			// get the registry

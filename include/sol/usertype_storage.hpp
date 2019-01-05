@@ -44,11 +44,17 @@ namespace sol { namespace u_detail {
 	usertype_storage<T>& get_usertype_storage(lua_State* L);
 
 	using index_call_function = int(lua_State*, void*);
+	using change_indexing_mem_func
+		= void (usertype_storage_base::*)(lua_State*, submetatable_type, void*, stack_reference&, lua_CFunction, lua_CFunction, lua_CFunction, lua_CFunction);
 
 	struct index_call_storage {
 		index_call_function* index;
 		index_call_function* new_index;
 		void* binding_data;
+	};
+
+	struct new_index_call_storage : index_call_storage {
+		void* new_binding_data;
 	};
 
 	struct binding_base {
@@ -148,6 +154,130 @@ namespace sol { namespace u_detail {
 		return new_index_fail(L);
 	}
 
+	struct string_for_each_metatable_func {
+		bool is_destruction = false;
+		bool is_index = false;
+		bool is_new_index = false;
+		bool poison_indexing = false;
+		bool is_unqualified_lua_CFunction = false;
+		bool is_unqualified_lua_reference = false;
+		std::string* p_key = nullptr;
+		reference* p_binding_ref = nullptr;
+		lua_CFunction call_func = nullptr;
+		index_call_storage* p_ics = nullptr;
+		usertype_storage_base* p_usb = nullptr;
+		void* p_derived_usb = nullptr;
+		lua_CFunction idx_call = nullptr, 
+			new_idx_call = nullptr, 
+			meta_idx_call = nullptr, 
+			meta_new_idx_call = nullptr;
+		change_indexing_mem_func change_indexing;
+		
+		void operator()(lua_State* L, submetatable_type smt, reference& fast_index_table) {
+			std::string& key = *p_key;
+			usertype_storage_base& usb = *p_usb;
+			index_call_storage& ics = *p_ics;
+			
+			if (smt == submetatable_type::named) {
+				// do not override __call or
+				// other specific meta functions on named metatable:
+				// we need that for call construction
+				// and other amenities
+				return;
+			}
+			int fast_index_table_push = fast_index_table.push();
+			stack_reference t(L, -fast_index_table_push);
+			if (poison_indexing) {
+				(usb.*change_indexing)(L,
+					smt,
+					p_derived_usb,
+					t,
+					idx_call,
+					new_idx_call,
+					meta_idx_call,
+					meta_new_idx_call);
+			}
+			if (is_destruction
+				&& (smt == submetatable_type::reference || smt == submetatable_type::const_reference || smt == submetatable_type::named
+				        || smt == submetatable_type::unique)) {
+				// gc does not apply to us here
+				// for reference types (raw T*, std::ref)
+				// for the named metatable itself,
+				// or for unique_usertypes, which do their own custom destruction
+				t.pop();
+				return;
+			}
+			if (is_index || is_new_index) {
+				// do not serialize the new_index and index functions here directly
+				// we control those...
+				t.pop();
+				return;
+			}
+			if (is_unqualified_lua_CFunction) {
+				stack::set_field<false, true>(L, key, call_func, t.stack_index());
+			}
+			else if (is_unqualified_lua_reference) {
+				reference& binding_ref = *p_binding_ref;
+				stack::set_field<false, true>(L, key, binding_ref, t.stack_index());
+			}
+			else {
+				stack::set_field<false, true>(L, key, make_closure(call_func, nullptr, ics.binding_data), t.stack_index());
+			}
+			t.pop();
+		}
+	};
+
+	struct lua_reference_func {
+		reference key;
+		reference value;
+
+		void operator()(lua_State* L, submetatable_type smt, reference& fast_index_table) {
+			if (smt == submetatable_type::named) {
+				return;
+			}
+			int fast_index_table_push = fast_index_table.push();
+			stack_reference t(L, -fast_index_table_push);
+			stack::set_field<false, true>(L, key, value, t.stack_index());
+			t.pop();
+		}
+	};
+
+	struct update_bases_func {
+		detail::inheritance_check_function base_class_check_func;
+		detail::inheritance_cast_function base_class_cast_func;
+		lua_CFunction idx_call, new_idx_call, meta_idx_call, meta_new_idx_call;
+		usertype_storage_base* p_usb;
+		void* p_derived_usb;
+		change_indexing_mem_func change_indexing;
+
+		void operator()(lua_State* L, submetatable_type smt, reference& fast_index_table) {
+			int fast_index_table_push = fast_index_table.push();
+			stack_reference t(L, -fast_index_table_push);
+			stack::set_field(L, detail::base_class_check_key(), reinterpret_cast<void*>(base_class_check_func), t.stack_index());
+			stack::set_field(L, detail::base_class_cast_key(), reinterpret_cast<void*>(base_class_cast_func), t.stack_index());
+			// change indexing, forcefully
+			(p_usb->*change_indexing)(L,
+				smt,
+				p_derived_usb,
+				t,
+				idx_call,
+				new_idx_call,
+				meta_idx_call,
+				meta_new_idx_call);
+			t.pop();
+		}
+	};
+
+	struct binding_data_equals {
+		void* binding_data;
+
+		binding_data_equals(void* b) : binding_data(b) {}
+
+		bool operator()(const std::unique_ptr<binding_base>& ptr) const {
+			return binding_data == ptr->data();
+		}
+	};
+
 	struct usertype_storage_base {
 	public:
 		std::vector<std::unique_ptr<binding_base>> storage;
@@ -163,13 +293,10 @@ namespace sol { namespace u_detail {
 		reference type_table;
 		reference gc_names_table;
 		reference named_metatable;
-		std::bitset<64> properties;
-		index_call_storage base_index;
-		index_call_storage base_new_index;
-		lua_CFunction weak_base_index;
-		lua_CFunction weak_base_new_index;
+		new_index_call_storage base_index;
 		bool is_using_index;
 		bool is_using_new_index;
+		std::bitset<64> properties;
 
 		usertype_storage_base(lua_State* L)
 		: storage()
@@ -182,17 +309,14 @@ namespace sol { namespace u_detail {
 		, type_table(make_reference(L, create))
 		, gc_names_table(make_reference(L, create))
 		, named_metatable(make_reference(L, create))
-		, properties()
 		, base_index()
-		, base_new_index()
 		, is_using_index(false)
-		, is_using_new_index(false) {
+		, is_using_new_index(false)
+		, properties() {
 			base_index.binding_data = nullptr;
 			base_index.index = index_target_fail;
-			base_index.new_index = index_target_fail;
-			base_new_index.binding_data = nullptr;
-			base_new_index.index = new_index_target_fail;
-			base_new_index.new_index = new_index_target_fail;
+			base_index.new_index = new_index_target_fail;
+			base_index.new_binding_data = nullptr;
 		}
 
 		template <typename Fx>
@@ -242,7 +366,7 @@ namespace sol { namespace u_detail {
 				"The size of this data pointer is too small to fit the inheritance checking function: Please file "
 				"a bug report.");
 			static_assert(!meta::any_same<T, Bases...>::value, "base classes cannot list the original class as part of the bases");
-			if (sizeof...(Bases) < 1) {
+			if constexpr (sizeof...(Bases) < 1) {
 				return;
 			}
 
@@ -250,31 +374,18 @@ namespace sol { namespace u_detail {
 
 			void* derived_this = static_cast<void*>(static_cast<usertype_storage<T>*>(this));
 
-			auto change_indexing_and_set_weak_derive = [&](lua_State* L, submetatable_type smt, reference& fast_index_table) {
-				int fast_index_table_push = fast_index_table.push();
-				stack_reference t(L, -fast_index_table_push);
-				static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function),
-					"The size of this data pointer is too small to fit the inheritance checking function: file a "
-					"bug report.");
-				static_assert(sizeof(void*) <= sizeof(detail::inheritance_cast_function),
-					"The size of this data pointer is too small to fit the inheritance checking function: file a "
-					"bug report.");
-				auto base_class_check_func = &detail::inheritance<T>::template type_check_with<Bases...>;
-				auto base_class_cast_func = &detail::inheritance<T>::template type_cast_with<Bases...>;
-				stack::set_field(L, detail::base_class_check_key(), reinterpret_cast<void*>(base_class_check_func), t.stack_index());
-				stack::set_field(L, detail::base_class_cast_key(), reinterpret_cast<void*>(base_class_cast_func), t.stack_index());
-				// change indexing, forcefully
-				change_indexing(L,
-					smt,
-					derived_this,
-					t,
-					&usertype_storage<T>::template index_call_with_bases<Bases...>,
-					&usertype_storage<T>::template new_index_call_with_bases<Bases...>,
-					&usertype_storage<T>::template meta_index_call_with_bases<Bases...>,
-					&usertype_storage<T>::template meta_new_index_call_with_bases<Bases...>);
-				t.pop();
-			};
-			this->for_each_table(L, change_indexing_and_set_weak_derive);
+			update_bases_func for_each_fx;
+			for_each_fx.base_class_check_func = &detail::inheritance<T>::template type_check_with<Bases...>;
+			for_each_fx.base_class_cast_func = &detail::inheritance<T>::template type_cast_with<Bases...>;
+			for_each_fx.idx_call = &usertype_storage<T>::template index_call_with_bases<false, Bases...>;
+			for_each_fx.new_idx_call = &usertype_storage<T>::template index_call_with_bases<true, Bases...>;
+			for_each_fx.meta_idx_call = &usertype_storage<T>::template meta_index_call_with_bases<false, Bases...>;
+			for_each_fx.meta_new_idx_call = &usertype_storage<T>::template meta_index_call_with_bases<true, Bases...>;
+			for_each_fx.p_usb = this;
+			for_each_fx.p_derived_usb = derived_this;
+			for_each_fx.change_indexing = &usertype_storage_base::change_indexing;
+			for_each_fx.p_derived_usb = derived_this;
+			this->for_each_table(L, for_each_fx);
 		}
 
 		void clear() {
@@ -286,7 +397,7 @@ namespace sol { namespace u_detail {
 			// then replace unqualified_getter/setter
 		}
 
-		template <typename Base>
+		template <bool is_new_index, typename Base>
 		static void base_walk_index(lua_State* L, usertype_storage_base& self, bool& keep_going, int& base_result) {
 			using bases = typename base<Base>::type;
 			if (!keep_going) {
@@ -296,25 +407,11 @@ namespace sol { namespace u_detail {
 			(void)self;
 			// TODO: get base table, dump it out
 			usertype_storage_base& base_storage = get_usertype_storage<Base>(L);
-			base_result = self_index_call<true>(bases(), L, base_storage);
+			base_result = self_index_call<is_new_index, true>(bases(), L, base_storage);
 			keep_going = base_result == base_walking_failed_index;
 		}
 
-		template <typename Base>
-		static void base_walk_new_index(lua_State* L, usertype_storage_base& self, bool& keep_going, int& base_result) {
-			using bases = typename base<Base>::type;
-			if (!keep_going) {
-				return;
-			}
-			(void)L;
-			(void)self;
-			// TODO: get base table, dump it out
-			usertype_storage_base& base_storage = get_usertype_storage<Base>(L);
-			base_result = self_new_index_call<true>(bases(), L, base_storage);
-			keep_going = base_result == base_walking_failed_index;
-		}
-
-		template <bool base_walking = false, bool from_named_metatable = false, typename... Bases>
+		template <bool is_new_index = false, bool base_walking = false, bool from_named_metatable = false, typename... Bases>
 		static inline int self_index_call(types<Bases...>, lua_State* L, usertype_storage_base& self) {
 			type k_type = stack::get<type>(L, 2);
 			if (k_type == type::string) {
@@ -328,7 +425,12 @@ namespace sol { namespace u_detail {
 				}
 				if (target != nullptr) {
 					// let the target decide what to do
-					return (target->index)(L, target->binding_data);
+					if constexpr (is_new_index) {
+						return (target->new_index)(L, target->binding_data);
+					}
+					else {
+						return (target->index)(L, target->binding_data);
+					}
 				}
 			}
 			else if (k_type != type::nil && k_type != type::none) {
@@ -341,96 +443,63 @@ namespace sol { namespace u_detail {
 					}
 				}
 				if (target != nullptr) {
-					// push target to return
-					// what we found
-					return stack::push(L, *target);
+					if constexpr(is_new_index) {
+						// set value and return
+						*target = reference(L, 3);
+						return 0;
+					}
+					else {
+						// push target to return
+						// what we found
+						return stack::push(L, *target);
+					}
 				}
 			}
 
 			// retrieve bases and walk through them.
 			bool keep_going = true;
 			int base_result;
-			detail::swallow{ 1, (base_walk_index<Bases>(L, self, keep_going, base_result), 1)... };
-			if (sizeof...(Bases) > 0 && !keep_going) {
-				return base_result;
+			(void)keep_going;
+			(void)base_result;
+			detail::swallow{ 1, (base_walk_index<is_new_index, Bases>(L, self, keep_going, base_result), 1)... };
+			if constexpr (sizeof...(Bases) > 0) {
+				if (!keep_going) {
+					return base_result;
+				}
 			}
-			if (base_walking) {
+			if constexpr (base_walking) {
 				// if we're JUST base-walking then don't index-fail, just
 				// return the false bits
 				return base_walking_failed_index;
 			}
-			if constexpr (from_named_metatable) {
-				return index_fail(L);
-			}
-			else {
-				return self.base_index.index(L, self.base_index.binding_data);
-			}
-		}
-
-		template <bool base_walking = false, bool from_named_metatable = false, typename... Bases>
-		static inline int self_new_index_call(types<Bases...>, lua_State* L, usertype_storage_base& self) {
-			type k_type = stack::get<type>(L, 2);
-			if (k_type == type::string) {
-				index_call_storage* target = nullptr;
-				{
-					string_view k = stack::get<string_view>(L, 2);
-					auto it = self.string_keys.find(k);
-					if (it != self.string_keys.cend()) {
-						target = &it->second;
-					}
-				}
-				if (target != nullptr) {
-					// set value through
-					// new_index call, whatever that entails,
-					// and return
-					return (target->new_index)(L, target->binding_data);
-				}
-			}
-			else if (k_type != type::nil && k_type != type::none) {
-				reference* target = nullptr;
-				{
-					stack_reference k = stack::get<stack_reference>(L, 2);
-					auto it = self.auxiliary_keys.find(k);
-					if (it != self.auxiliary_keys.cend()) {
-						target = &it->second;
-					}
-				}
-				if (target != nullptr) {
-					// set value and return
-					*target = reference(L, 3);
+			else if constexpr (from_named_metatable) {
+				if constexpr (is_new_index) {
+					self.set(L, reference(L, raw_index(2)), reference(L, raw_index(3)));
 					return 0;
 				}
-			}
-
-			// retrieve bases and walk through them.
-			bool keep_going = true;
-			int base_result;
-			detail::swallow{ 1, (base_walk_new_index<Bases>(L, self, keep_going, base_result), 1)... };
-			if (sizeof...(Bases) > 0 && !keep_going) {
-				return base_result;
-			}
-			if (base_walking) {
-				// if we're JUST base-walking then don't index-fail, just
-				// return the false bits
-				return base_walking_failed_index;
-			}
-			if constexpr (from_named_metatable) {
-				self.set(L, reference(L, raw_index(2)), reference(L, raw_index(3)));
-				return 0;
+				else {
+					return index_fail(L);
+				}
 			}
 			else {
-				return self.base_new_index.new_index(L, self.base_new_index.binding_data);
+				if constexpr (is_new_index) {
+					return self.base_index.new_index(L, self.base_index.new_binding_data);
+				}
+				else {
+					return self.base_index.index(L, self.base_index.binding_data);
+				}
 			}
 		}
 
-		void change_indexing(lua_State* L, submetatable_type submetatable_type, void* derived_this, stack_reference& t, lua_CFunction index,
+		void change_indexing(lua_State* L, submetatable_type submetatable, void* derived_this, stack_reference& t, lua_CFunction index,
 			lua_CFunction new_index, lua_CFunction meta_index, lua_CFunction meta_new_index) {
 			usertype_storage_base& this_base = *this;
 			void* base_this = static_cast<void*>(&this_base);
 
 			this->is_using_index |= true;
 			this->is_using_new_index |= true;
-			if (submetatable_type == submetatable_type::named) {
+			//detail::clear_entries(t);
+			if (submetatable == submetatable_type::named) {
 				stack::set_field(L, metatable_key, named_index_table, t.stack_index());
 				stack_reference stack_metametatable(L, -named_metatable.push());
 				stack::set_field<false, true>(L,
@@ -460,68 +529,38 @@ namespace sol { namespace u_detail {
 
 		using usertype_storage_base::usertype_storage_base;
 
-		template <bool from_named_metatable>
+		template <bool is_new_index, bool from_named_metatable>
 		static inline int index_call_(lua_State* L) {
 			using bases = typename base<T>::type;
 			usertype_storage_base& self = stack::get<light<usertype_storage_base>>(L, upvalue_index(usertype_storage_index));
-			return self_index_call<false, from_named_metatable>(bases(), L, self);
+			return self_index_call<is_new_index, false, from_named_metatable>(bases(), L, self);
 		}
 
-		template <bool from_named_metatable, typename... Bases>
+		template <bool is_new_index, bool from_named_metatable, typename... Bases>
 		static inline int index_call_with_bases_(lua_State* L) {
 			using bases = types<Bases...>;
 			usertype_storage_base& self = stack::get<light<usertype_storage_base>>(L, upvalue_index(usertype_storage_index));
-			return self_index_call<false, from_named_metatable>(bases(), L, self);
+			return self_index_call<is_new_index, false, from_named_metatable>(bases(), L, self);
 		}
 
-		template <bool from_named_metatable>
-		static inline int new_index_call_(lua_State* L) {
-			using bases = typename base<T>::type;
-			usertype_storage_base& self = stack::get<light<usertype_storage_base>>(L, upvalue_index(usertype_storage_index));
-			return self_new_index_call<false, from_named_metatable>(bases(), L, self);
-		}
-
-		template <bool from_named_metatable, typename... Bases>
-		static inline int new_index_call_with_bases_(lua_State* L) {
-			using bases = types<Bases...>;
-			usertype_storage_base& self = stack::get<light<usertype_storage_base>>(L, upvalue_index(usertype_storage_index));
-			return self_new_index_call<false, from_named_metatable>(bases(), L, self);
-		}
-
+		template <bool is_new_index>
 		static inline int index_call(lua_State* L) {
-			return detail::static_trampoline<&index_call_<false>>(L);
+			return detail::static_trampoline<&index_call_<is_new_index, false>>(L);
 		}
 
-		template <typename... Bases>
+		template <bool is_new_index, typename... Bases>
 		static inline int index_call_with_bases(lua_State* L) {
-			return detail::static_trampoline<&index_call_with_bases_<false, Bases...>>(L);
+			return detail::static_trampoline<&index_call_with_bases_<is_new_index, false, Bases...>>(L);
 		}
 
-		static inline int new_index_call(lua_State* L) {
-			return detail::static_trampoline<&new_index_call_<false>>(L);
-		}
-
-		template <typename... Bases>
-		static inline int new_index_call_with_bases(lua_State* L) {
-			return detail::static_trampoline<&new_index_call_with_bases_<false, Bases...>>(L);
-		}
-
+		template <bool is_new_index>
 		static inline int meta_index_call(lua_State* L) {
-			return detail::static_trampoline<&index_call_<true>>(L);
+			return detail::static_trampoline<&index_call_<is_new_index, true>>(L);
 		}
 
-		template <typename... Bases>
+		template <bool is_new_index, typename... Bases>
 		static inline int meta_index_call_with_bases(lua_State* L) {
-			return detail::static_trampoline<&index_call_with_bases_<true, Bases...>>(L);
-		}
-
-		static inline int meta_new_index_call(lua_State* L) {
-			return detail::static_trampoline<&new_index_call_<true>>(L);
-		}
-
-		template <typename... Bases>
-		static inline int meta_new_index_call_with_bases(lua_State* L) {
-			return detail::static_trampoline<&new_index_call_with_bases_<true, Bases...>>(L);
+			return detail::static_trampoline<&index_call_with_bases_<is_new_index, true, Bases...>>(L);
 		}
 
 		template <typename Key, typename Value>
@@ -557,9 +596,7 @@ namespace sol { namespace u_detail {
 			auto string_it = this->string_keys.find(s);
 			if (string_it != this->string_keys.cend()) {
 				const auto& binding_data = string_it->second.binding_data;
-				storage_it = std::find_if(this->storage.begin(), this->storage.end(), [&binding_data](const std::unique_ptr<binding_base>& b) {
-					return b->data() == binding_data;
-				});
+				storage_it = std::find_if(this->storage.begin(), this->storage.end(), binding_data_equals(binding_data));
 				this->string_keys.erase(string_it);
 			}
 
@@ -580,75 +617,58 @@ namespace sol { namespace u_detail {
 			index_call_storage ics;
 			ics.binding_data = b.data();
 			ics.index = is_index ? &Binding::template call_with_<true, is_var_bind::value> : &Binding::template index_call_with_<true, is_var_bind::value>;
-			ics.new_index = is_new_index ? &Binding::template call_with_<false, is_var_bind::value>
-				                        : &Binding::template index_call_with_<false, is_var_bind::value>;
-			// need to swap everything to use fast indexing here
-			auto for_each_backing_metatable = [&](lua_State* L, submetatable_type smt, reference& fast_index_table) {
-				if (smt == submetatable_type::named) {
-					// do not override __call or
-					// other specific meta functions on named metatable:
-					// we need that for call construction
-					// and other amenities
-					return;
-				}
-				int fast_index_table_push = fast_index_table.push();
-				stack_reference t(L, -fast_index_table_push);
-				if (poison_indexing) {
-					change_indexing(L,
-						smt,
-						derived_this,
-						t,
-						&usertype_storage<T>::index_call,
-						&usertype_storage<T>::new_index_call,
-						&usertype_storage<T>::meta_index_call,
-						&usertype_storage<T>::meta_new_index_call);
-				}
-				if (is_destruction
-					&& (smt == submetatable_type::reference || smt == submetatable_type::const_reference || smt == submetatable_type::named
-					        || smt == submetatable_type::unique)) {
-					// gc does not apply to us here
-					// for reference types (raw T*, std::ref)
-					// for the named metatable itself,
-					// or for unique_usertypes, which do their own custom destruction
-					t.pop();
-					return;
-				}
-				if constexpr (is_lua_c_function_v<ValueU> || is_lua_reference_or_proxy<ValueU>::value) {
-					stack::set_field<false, true>(L, s, b.data_, t.stack_index());
-				}
-				else {
-					stack::set_field<false, true>(L, s, make_closure(&b.template call<false, is_var_bind::value>, nullptr, ics.binding_data), t.stack_index());
-				}
-				t.pop();
-			};
+			ics.new_index
+				= is_new_index ? &Binding::template call_with_<false, is_var_bind::value> : &Binding::template index_call_with_<false, is_var_bind::value>;
+			
+			string_for_each_metatable_func for_each_fx;
+			for_each_fx.is_destruction = is_destruction;
+			for_each_fx.is_index = is_index;
+			for_each_fx.is_new_index = is_new_index;
+			for_each_fx.poison_indexing = poison_indexing;
+			for_each_fx.p_key = &s;
+			for_each_fx.p_ics = &ics;
+			if constexpr (is_lua_c_function_v<ValueU>) {
+				for_each_fx.is_unqualified_lua_CFunction = true;
+				for_each_fx.call_func = *static_cast<lua_CFunction*>(ics.binding_data);				
+			}
+			else if constexpr (is_lua_reference_or_proxy_v<ValueU>) {
+				for_each_fx.is_unqualified_lua_reference = true;
+				for_each_fx.p_binding_ref = static_cast<reference*>(ics.binding_data);
+			}
+			else {
+				for_each_fx.call_func = &b.template call<false, is_var_bind::value>;
+			}
+			for_each_fx.p_usb = this;
+			for_each_fx.p_derived_usb = derived_this;
+			for_each_fx.idx_call = &usertype_storage<T>::template index_call<false>;
+			for_each_fx.new_idx_call = &usertype_storage<T>::template index_call<true>;
+			for_each_fx.meta_idx_call = &usertype_storage<T>::template meta_index_call<false>;
+			for_each_fx.meta_new_idx_call = &usertype_storage<T>::template meta_index_call<true>;
+			for_each_fx.change_indexing = &usertype_storage_base::change_indexing;
+			// set base index and base new_index
+			// functions here
 			if (is_index) {
-				this->base_index = ics;
+				this->base_index.index = ics.index;
+				this->base_index.binding_data = ics.binding_data;
 			}
 			if (is_new_index) {
-				this->base_new_index = ics;
+				this->base_index.new_index = ics.new_index;
+				this->base_index.new_binding_data = ics.binding_data;
 			}
-			this->for_each_table(L, for_each_backing_metatable);
+			this->for_each_table(L, for_each_fx);
 			this->add_entry(s, std::move(ics));
 		}
 		else {
 			// the reference-based implementation might compare poorly and hash
 			// poorly in some cases...
-			if constexpr (is_lua_reference<KeyU>::value && is_lua_reference<ValueU>::value) {
+			if constexpr (is_lua_reference_v<KeyU> && is_lua_reference_v<ValueU>) {
 				if (key.get_type() == type::string) {
 					stack::push(L, key);
 					std::string string_key = stack::pop<std::string>(L);
 					this->set<T>(L, string_key, std::forward<Value>(value));
 				}
 				else {
-					auto ref_additions_fx = [&](lua_State* L, submetatable_type smt, reference& fast_index_table) {
-						if (smt == submetatable_type::named) {
-							return;
-						}
-						int fast_index_table_push = fast_index_table.push();
-						stack_reference t(L, -fast_index_table_push);
-						stack::set_field<false, true>(L, key, value, t.stack_index());
-						t.pop();
-					};
+					lua_reference_func ref_additions_fx{ key, value };
 
 					this->for_each_table(L, ref_additions_fx);
 					this->auxiliary_keys.insert_or_assign(std::forward<Key>(key), std::forward<Value>(value));
@@ -657,15 +677,8 @@ namespace sol { namespace u_detail {
 			else {
 				reference ref_key = make_reference(L, std::forward<Key>(key));
 				reference ref_value = make_reference(L, std::forward<Value>(value));
-				auto ref_additions_fx = [&](lua_State* L, submetatable_type smt, reference& fast_index_table) {
-					if (smt == submetatable_type::named) {
-						return;
-					}
-					int fast_index_table_push = fast_index_table.push();
-					stack_reference t(L, -fast_index_table_push);
-					stack::set_field<false, true>(L, ref_key, ref_value, t.stack_index());
-					t.pop();
-				};
+				lua_reference_func ref_additions_fx{ key, value };
+
 				this->for_each_table(L, ref_additions_fx);
 				this->auxiliary_keys.insert_or_assign(std::move(ref_key), std::move(ref_value));
 			}
@@ -677,7 +690,7 @@ namespace sol { namespace u_detail {
 	void usertype_storage<T>::set(lua_State* L, Key&& key, Value&& value) {
 		static_cast<usertype_storage_base&>(*this).set<T>(L, std::forward<Key>(key), std::forward<Value>(value));
 	}
-	
+
 	template <typename T>
 	inline usertype_storage<T>& create_usertype_storage(lua_State* L) {
 		const char* gcmetakey = &usertype_traits<T>::gc_table()[0];
@@ -952,11 +965,11 @@ namespace sol { namespace u_detail {
 				stack_reference stack_metametatable(L, -storage.named_index_table.push());
 				stack::set_field<false, true>(L,
 					meta_function::index,
-					make_closure(uts::meta_index_call, nullptr, light_storage, light_base_storage, nullptr, toplevel_magic),
+					make_closure(uts::template meta_index_call<false>, nullptr, light_storage, light_base_storage, nullptr, toplevel_magic),
 					stack_metametatable.stack_index());
 				stack::set_field<false, true>(L,
 					meta_function::new_index,
-					make_closure(uts::meta_new_index_call, nullptr, light_storage, light_base_storage, nullptr, toplevel_magic),
+					make_closure(uts::template meta_index_call<true>, nullptr, light_storage, light_base_storage, nullptr, toplevel_magic),
 					stack_metametatable.stack_index());
 				stack_metametatable.pop();
 			}
@@ -966,7 +979,7 @@ namespace sol { namespace u_detail {
 				stack::set_field<false, true>(L, meta_function::index, t, t.stack_index());
 				stack::set_field<false, true>(L,
 					meta_function::new_index,
-					make_closure(uts::new_index_call, nullptr, light_storage, light_base_storage, nullptr, toplevel_magic),
+					make_closure(uts::template index_call<true>, nullptr, light_storage, light_base_storage, nullptr, toplevel_magic),
 					t.stack_index());
 				storage.is_using_new_index = true;
 			}

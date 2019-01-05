@@ -58,7 +58,7 @@ namespace sol {
 			const char* name = lua_tolstring(L, -1, &sz);
 			std::string tn(name, static_cast<std::string::size_type>(sz));
 			lua_pop(L, 2);
-			return name;
+			return std::move(tn);
 		}
 		default:
 			break;

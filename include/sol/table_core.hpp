@@ -66,31 +66,6 @@ namespace sol {
 		template <typename... Args>
 		using is_global = meta::all<meta::boolean<top_level>, meta::is_c_str<Args>...>;
 
-		template <typename Fx>
-		void for_each(std::true_type, Fx&& fx) const {
-			auto pp = stack::push_pop(*this);
-			stack::push(base_t::lua_state(), lua_nil);
-			while (lua_next(base_t::lua_state(), -2)) {
-				object key(base_t::lua_state(), -2);
-				object value(base_t::lua_state(), -1);
-				std::pair<object&, object&> keyvalue(key, value);
-				auto pn = stack::pop_n(base_t::lua_state(), 1);
-				fx(keyvalue);
-			}
-		}
-
-		template <typename Fx>
-		void for_each(std::false_type, Fx&& fx) const {
-			auto pp = stack::push_pop(*this);
-			stack::push(base_t::lua_state(), lua_nil);
-			while (lua_next(base_t::lua_state(), -2)) {
-				object key(base_t::lua_state(), -2);
-				object value(base_t::lua_state(), -1);
-				auto pn = stack::pop_n(base_t::lua_state(), 1);
-				fx(key, value);
-			}
-		}
-
 		template <bool raw, typename Ret0, typename Ret1, typename... Ret, std::size_t... I, typename Keys>
 		auto tuple_get(types<Ret0, Ret1, Ret...>, std::index_sequence<0, 1, I...>, Keys&& keys) const
 		     -> decltype(stack::pop<std::tuple<Ret0, Ret1, Ret...>>(nullptr)) {
@@ -384,7 +359,7 @@ namespace sol {
 			for (const auto& kvp : items) {
 				target.set(kvp.first, kvp.second);
 			}
-			if (read_only) {
+			if constexpr (read_only) {
 				table x = create_with(meta_function::new_index, detail::fail_on_newindex, meta_function::index, target);
 				table shim = create_named(name, metatable_key, x);
 				return shim;
@@ -395,10 +370,29 @@ namespace sol {
 			}
 		}
 
-		template <typename Fx>
+		template <typename Key = object, typename Value = object, typename Fx>
 		void for_each(Fx&& fx) const {
-			typedef meta::is_invokable<Fx(std::pair<object, object>)> is_paired;
-			for_each(is_paired(), std::forward<Fx>(fx));
+			if constexpr (std::is_invocable_v<Fx, Key, Value>) {
+				auto pp = stack::push_pop(*this);
+				stack::push(base_t::lua_state(), lua_nil);
+				while (lua_next(base_t::lua_state(), -2)) {
+					Key key(base_t::lua_state(), -2);
+					Value value(base_t::lua_state(), -1);
+					auto pn = stack::pop_n(base_t::lua_state(), 1);
+					fx(key, value);
+				}
+			}
+			else {
+				auto pp = stack::push_pop(*this);
+				stack::push(base_t::lua_state(), lua_nil);
+				while (lua_next(base_t::lua_state(), -2)) {
+					Key key(base_t::lua_state(), -2);
+					Value value(base_t::lua_state(), -1);
+					auto pn = stack::pop_n(base_t::lua_state(), 1);
+					std::pair<Key&, Value&> keyvalue(key, value);
+					fx(keyvalue);
+				}
+			}
 		}
 
 		size_t size() const {

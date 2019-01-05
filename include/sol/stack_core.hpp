@@ -1244,7 +1244,9 @@ namespace sol {
 			else if constexpr (!std::is_pointer_v<T>) {
 				return &usertype_alloc_destruct<T>;
 			}
-			return &cannot_destruct<T>;
+			else {
+				return &cannot_destruct<T>;
+			}
 		}
 
 		template <typename T>
@@ -1321,27 +1323,30 @@ namespace sol {
 		template <typename T, typename Op>
 		int comparsion_operator_wrap(lua_State* L) {
 			auto maybel = stack::unqualified_check_get<T&>(L, 1);
-			if (maybel) {
-				auto mayber = stack::unqualified_check_get<T&>(L, 2);
-				if (mayber) {
-					auto& l = *maybel;
-					auto& r = *mayber;
-					if constexpr (std::is_same_v<std::equal_to<>, Op> // cf-hack
-					     || std::is_same_v<std::less_equal<>, Op>     //
-					     || std::is_same_v<std::less_equal<>, Op>) {  //
-						if (detail::ptr(l) == detail::ptr(r)) {
-							return stack::push(L, true);
-						}
-					}
-					else if constexpr (std::is_same_v<no_comp, Op>) {
-						std::equal_to<> op;
-						return stack::push(L, op(detail::ptr(l), detail::ptr(r)));
-					}
-					Op op;
-					return stack::push(L, op(detail::deref(l), detail::deref(r)));
-				}
+			if (!maybel) {
+				return stack::push(L, false);
 			}
-			return stack::push(L, false);
+			auto mayber = stack::unqualified_check_get<T&>(L, 2);
+			if (!mayber) {
+				return stack::push(L, false);
+			}
+			decltype(auto) l = *maybel;
+			decltype(auto) r = *mayber;
+			if constexpr (std::is_same_v<no_comp, Op>) {
+				std::equal_to<> op;
+				return stack::push(L, op(detail::ptr(l), detail::ptr(r)));
+			}
+			else {
+				if constexpr (std::is_same_v<std::equal_to<>, Op> // cf-hack
+					|| std::is_same_v<std::less_equal<>, Op>     //
+					|| std::is_same_v<std::less_equal<>, Op>) {  //
+					if (detail::ptr(l) == detail::ptr(r)) {
+						return stack::push(L, true);
+					}
+				}
+				Op op;
+				return stack::push(L, op(detail::deref(l), detail::deref(r)));
+			}
 		}
 
 		template <typename T, typename IFx, typename Fx>

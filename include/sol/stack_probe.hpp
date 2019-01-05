@@ -34,8 +34,10 @@ namespace stack {
 	struct probe_field_getter {
 		template <typename Key>
 		probe get(lua_State* L, Key&& key, int tableindex = -2) {
-			if (!b && !maybe_indexable(L, tableindex)) {
-				return probe(false, 0);
+			if constexpr(!b) {
+				if (!maybe_indexable(L, tableindex)) {
+					return probe(false, 0);
+				}
 			}
 			get_field<b, raw>(L, std::forward<Key>(key), tableindex);
 			return probe(check<P>(L), 1);

@@ -24,13 +24,17 @@
 #ifndef SOL_OPTIONAL_HPP
 #define SOL_OPTIONAL_HPP
 
-#include "compatibility.hpp"
+#include "forward.hpp"
 #include "in_place.hpp"
 #if defined(SOL_USE_BOOST) && SOL_USE_BOOST
 #include <boost/optional.hpp>
 #else
 #include "optional_implementation.hpp"
 #endif // Boost vs. Better optional
+
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+#include <optional>
+#endif
 
 namespace sol {
 
@@ -46,6 +50,10 @@ namespace sol {
 		struct is_optional : std::false_type {};
 		template <typename T>
 		struct is_optional<optional<T>> : std::true_type {};
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+		template <typename T>
+		struct is_optional<std::optional<T>> : std::true_type {};
+#endif
 	} // namespace meta
 } // namespace sol
 

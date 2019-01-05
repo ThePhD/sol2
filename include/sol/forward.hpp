@@ -202,6 +202,14 @@ namespace sol {
 		struct record;
 	}
 
+#if !defined(SOL_USE_BOOST) || (SOL_USE_BOOST == 0)
+	template <class T>
+	class optional;
+
+	template <class T>
+	class optional<T&>;
+#endif
+
 } // namespace sol
 
 #define SOL_BASE_CLASSES(T, ...)                       \

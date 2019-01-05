@@ -46,6 +46,23 @@
 
 namespace sol {
 	namespace stack {
+		namespace stack_detail {
+			template <typename T>
+			inline bool integer_value_fits(const T& value) {
+				if constexpr (sizeof(T) < sizeof(lua_Integer) || (std::is_signed<T>::value && sizeof(T) == sizeof(lua_Integer))) {
+					(void)value;
+					return true;
+				}
+				else {
+					auto u_min = static_cast<std::intmax_t>((std::numeric_limits<lua_Integer>::min)());
+					auto u_max = static_cast<std::uintmax_t>((std::numeric_limits<lua_Integer>::max)());
+					auto t_min = static_cast<std::intmax_t>((std::numeric_limits<T>::min)());
+					auto t_max = static_cast<std::uintmax_t>((std::numeric_limits<T>::max)());
+					return (u_min <= t_min || value >= static_cast<T>(u_min)) && (u_max >= t_max || value <= static_cast<T>(u_max));
+				}
+			}
+		}
+
 		inline int push_environment_of(lua_State* L, int index = -1) {
 #if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_environment);
@@ -241,17 +258,7 @@ namespace sol {
 				luaL_checkstack(L, 1, detail::not_enough_stack_space_integral);
 #endif // make sure stack doesn't overflow
 #if SOL_LUA_VERSION >= 503
-				static auto integer_value_fits = [](T const& value) {
-					if (sizeof(T) < sizeof(lua_Integer) || (std::is_signed<T>::value && sizeof(T) == sizeof(lua_Integer))) {
-						return true;
-					}
-					auto u_min = static_cast<std::intmax_t>((std::numeric_limits<lua_Integer>::min)());
-					auto u_max = static_cast<std::uintmax_t>((std::numeric_limits<lua_Integer>::max)());
-					auto t_min = static_cast<std::intmax_t>((std::numeric_limits<T>::min)());
-					auto t_max = static_cast<std::uintmax_t>((std::numeric_limits<T>::max)());
-					return (u_min <= t_min || value >= static_cast<T>(u_min)) && (u_max >= t_max || value <= static_cast<T>(u_max));
-				};
-				if (integer_value_fits(value)) {
+				if (stack_detail::integer_value_fits<T>(value)) {
 					lua_pushinteger(L, static_cast<lua_Integer>(value));
 					return 1;
 				}
@@ -813,7 +820,7 @@ namespace sol {
 			}
 
 			static int push(lua_State* L, const wchar_t* strb, const wchar_t* stre) {
-				if (sizeof(wchar_t) == 2) {
+				if constexpr (sizeof(wchar_t) == 2) {
 					const char16_t* sb = reinterpret_cast<const char16_t*>(strb);
 					const char16_t* se = reinterpret_cast<const char16_t*>(stre);
 					return stack::push(L, sb, se);

@@ -800,9 +800,14 @@ namespace sol {
 								 || std::is_base_of<stack_reference, meta::unqualified_t<T>>::value> {};
 
 	template <typename T>
-	struct is_lua_reference_or_proxy : std::integral_constant<bool,
-									is_lua_reference<meta::unqualified_t<T>>::value
-										|| meta::is_specialization_of<meta::unqualified_t<T>, proxy>::value> {};
+	inline constexpr bool is_lua_reference_v = is_lua_reference<T>::value;
+
+	template <typename T>
+	struct is_lua_reference_or_proxy
+		: std::integral_constant<bool, is_lua_reference<meta::unqualified_t<T>>::value || meta::is_specialization_of<meta::unqualified_t<T>, proxy>::value> {};
+
+	template <typename T>
+	inline constexpr bool is_lua_reference_or_proxy_v = is_lua_reference_or_proxy<T>::value;
 
 	template <typename T>
 	struct is_transparent_argument : std::false_type {};

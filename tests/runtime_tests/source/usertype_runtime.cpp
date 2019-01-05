@@ -31,6 +31,29 @@
 #include <list>
 #include <memory>
 
+struct new_index_test_object {
+	bool new_indexed = false;
+	bool borf_new_indexed = false;
+
+	float GetLevel(int x) const {
+		return static_cast<float>(x);
+	}
+
+	static void nidx(new_index_test_object& self, std::string_view key, sol::stack_object value) {
+		if (key == "borf" && value.is<double>() && value.as<double>() == 2) {
+			self.borf_new_indexed = true;
+			return;
+		}
+		self.new_indexed = true;
+	}
+
+	static sol::object idx(sol::stack_object self, std::string_view key) {
+		if (key == "bark") {
+			return sol::object(self.lua_state(), sol::in_place, &new_index_test_object::GetLevel);
+		}
+		return sol::lua_nil;
+	}
+};
 
 TEST_CASE("usertype/runtime-extensibility", "Check if usertypes are runtime extensible") {
 	struct thing {
@@ -338,4 +361,45 @@ TEST_CASE("usertype/meta-key-retrievals", "allow for special meta keys (__index,
 		REQUIRE(keys[2] == "__index");
 		REQUIRE(keys[3] == "__call");
 	}
+}
+
+TEST_CASE("usertype/new_index and index", "a custom new_index and index only kicks in after the values pre-ordained on the index and new_index tables are assigned") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_usertype<new_index_test_object>("new_index_test_object",
+	     sol::meta_function::index,
+	     &new_index_test_object::idx,
+	     sol::meta_function::new_index,
+	     &new_index_test_object::nidx,
+	     "Level",
+	     &new_index_test_object::GetLevel);
+
+	const auto& code = R"(a = new_index_test_object.new()
+	                   print(a:Level(1))
+				    print(a:Level(2))
+				    print(a:Level(3)))";
+
+	auto result0 = lua.safe_script(code, sol::script_pass_on_error);
+	REQUIRE(result0.valid());
+	auto result1 = lua.safe_script("print(a:bark(1))", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
+	auto result2 = lua.safe_script("assert(a.Level2 == nil)", sol::script_pass_on_error);
+	REQUIRE(result2.valid());
+	auto result3 = lua.safe_script("a:Level3()", sol::script_pass_on_error);
+	REQUIRE_FALSE(result3.valid());
+
+	new_index_test_object& a = lua["a"];
+	REQUIRE_FALSE(a.borf_new_indexed);
+	REQUIRE_FALSE(a.new_indexed);
+
+	auto resultnormal = lua.safe_script("a.normal = 'foo'", sol::script_pass_on_error);
+	REQUIRE(resultnormal.valid());
+	REQUIRE_FALSE(a.borf_new_indexed);
+	REQUIRE(a.new_indexed);
+
+	auto resultborf = lua.safe_script("a.borf = 2", sol::script_pass_on_error);
+	REQUIRE(resultborf.valid());
+	REQUIRE(a.borf_new_indexed);
+	REQUIRE(a.new_indexed);
 }

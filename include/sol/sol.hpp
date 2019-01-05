@@ -44,17 +44,21 @@
 // we'll just let this alone for now
 #elif defined _MSC_VER
 #pragma warning(push)
-#pragma warning(disable : 4324) // structure was padded due to alignment specifier
-#pragma warning(disable : 4503) // decorated name horse shit
-#pragma warning(disable : 4702) // unreachable code
-#pragma warning(disable : 4127) // 'conditional expression is constant' yeah that's the point your old compilers don't have `if constexpr` you jerk
-#pragma warning(disable : 4505) // some other nonsense warning
+//#pragma warning(disable : 4324) // structure was padded due to alignment specifier
+//#pragma warning(disable : 4503) // decorated name horse shit
+//#pragma warning(disable : 4702) // unreachable code
+//#pragma warning(disable : 4127) // 'conditional expression is constant' yeah that's the point your old compilers don't have `if constexpr` you jerk
+//#pragma warning(disable : 4505) // some other nonsense warning
 #endif					  // clang++ vs. g++ vs. VC++
 
 #include "forward.hpp"
+#include "forward_detail.hpp"
+#include "stack.hpp"
 #include "object.hpp"
 #include "function.hpp"
 #include "protected_function.hpp"
+#include "usertype.hpp"
+#include "table.hpp"
 #include "state.hpp"
 #include "coroutine.hpp"
 #include "thread.hpp"

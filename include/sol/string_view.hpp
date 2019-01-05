@@ -53,11 +53,9 @@ namespace sol {
 		basic_string_view(const std::string& r)
 		: basic_string_view(r.data(), r.size()) {
 		}
-		basic_string_view(const Char* ptr)
-		: basic_string_view(ptr, Traits::length(ptr)) {
+		constexpr basic_string_view(const Char* ptr) : basic_string_view(ptr, Traits::length(ptr)) {
 		}
-		basic_string_view(const Char* ptr, std::size_t sz)
-		: s(sz), p(ptr) {
+		constexpr basic_string_view(const Char* ptr, std::size_t sz) : s(sz), p(ptr) {
 		}
 
 		static int compare(const Char* lhs_p, std::size_t lhs_sz, const Char* rhs_p, std::size_t rhs_sz) {
@@ -71,31 +69,31 @@ namespace sol {
 			return 0;
 		}
 
-		const Char* begin() const {
+		constexpr const Char* begin() const {
 			return p;
 		}
 
-		const Char* end() const {
+		constexpr const Char* end() const {
 			return p + s;
 		}
 
-		const Char* cbegin() const {
+		constexpr const Char* cbegin() const {
 			return p;
 		}
 
-		const Char* cend() const {
+		constexpr const Char* cend() const {
 			return p + s;
 		}
 
-		const Char* data() const {
+		constexpr const Char* data() const {
 			return p;
 		}
 
-		std::size_t size() const {
+		constexpr std::size_t size() const {
 			return s;
 		}
 
-		std::size_t length() const {
+		constexpr std::size_t length() const {
 			return size();
 		}
 
