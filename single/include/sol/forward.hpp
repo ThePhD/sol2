@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2018-12-23 18:17:39.332965 UTC
-// This header was generated with sol v2.20.6 (revision a6abc0a)
+// Generated 2019-01-05 10:49:38.109676 UTC
+// This header was generated with sol v2.20.6 (revision 59174e7)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -417,6 +417,14 @@ namespace sol {
 	namespace stack {
 		struct record;
 	}
+
+#if !defined(SOL_USE_BOOST) || (SOL_USE_BOOST == 0)
+	template <class T>
+	class optional;
+
+	template <class T>
+	class optional<T&>;
+#endif
 
 } // namespace sol
 
