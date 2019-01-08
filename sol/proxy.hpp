@@ -184,7 +184,7 @@ namespace sol {
 		}
 
 		proxy& force() {
-			if (this->valid()) {
+			if (!this->valid()) {
 				this->set(new_table());
 			}
 			return *this;
