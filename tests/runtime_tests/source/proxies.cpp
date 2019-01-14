@@ -97,3 +97,15 @@ TEST_CASE("proxy/equality", "check to make sure equality tests work") {
 	REQUIRE_FALSE((lua["a"] != 2));
 #endif // clang screws up by trying to access int128 types that it doesn't support, even when we don't ask for them
 }
+
+TEST_CASE("proxy/force", "allow proxies to force creation of tables") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::io);
+
+	sol::optional<int> not_there = lua["a"]["b"]["c"];
+	REQUIRE_FALSE(static_cast<bool>(not_there));
+	lua["a"].force()["b"].force()["c"] = 357;
+	sol::optional<int> totally_there = lua["a"]["b"]["c"];
+	REQUIRE(static_cast<bool>(totally_there));
+	REQUIRE(*totally_there == 357);
+}

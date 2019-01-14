@@ -91,7 +91,7 @@ namespace sol { namespace detail {
 }} // namespace sol::detail
 #endif
 
-#define SOL_TL_OPTIONAL_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T) tl::detail::is_trivially_copy_constructible<T>::value
+#define SOL_TL_OPTIONAL_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T) sol::detail::is_trivially_copy_constructible<T>::value
 #define SOL_TL_OPTIONAL_IS_TRIVIALLY_COPY_ASSIGNABLE(T) std::is_trivially_copy_assignable<T>::value
 #define SOL_TL_OPTIONAL_IS_TRIVIALLY_DESTRUCTIBLE(T) std::is_trivially_destructible<T>::value
 #else
@@ -220,7 +220,7 @@ namespace sol {
 		template <class... Ts>
 		using void_t = typename voider<Ts...>::type;
 
-		// Trait for checking if a type is a tl::optional
+		// Trait for checking if a type is a sol::optional
 		template <class T>
 		struct is_optional_impl : std::false_type {};
 		template <class T>
@@ -228,7 +228,7 @@ namespace sol {
 		template <class T>
 		using is_optional = is_optional_impl<decay_t<T>>;
 
-		// Change void to tl::monostate
+		// Change void to sol::monostate
 		template <class U>
 		using fixup_void = conditional_t<std::is_void<U>::value, monostate, U>;
 
@@ -644,9 +644,9 @@ namespace sol {
 	///
 	/// *Examples*:
 	/// ```
-	/// tl::optional<int> a = tl::nullopt;
-	/// void foo (tl::optional<int>);
-	/// foo(tl::nullopt); //pass an empty optional
+	/// sol::optional<int> a = sol::nullopt;
+	/// void foo (sol::optional<int>);
+	/// foo(sol::nullopt); //pass an empty optional
 	/// ```
 	static constexpr nullopt_t nullopt{ nullopt_t::do_not_use{}, nullopt_t::do_not_use{} };
 
@@ -1652,7 +1652,7 @@ namespace sol {
 	///
 	/// ```
 	/// int i = 42;
-	/// tl::optional<int&> o = i;
+	/// sol::optional<int&> o = i;
 	/// *o == 42; //true
 	/// i = 12;
 	/// *o = 12; //true
