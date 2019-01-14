@@ -465,6 +465,39 @@ namespace sol {
 		return nested<meta::unqualified_t<T>>(std::forward<T>(container));
 	}
 
+	template <typename T>
+	struct as_container_t {
+		T source;
+
+		as_container_t(T value) : source(std::move(value)) {
+		}
+
+		operator std::add_rvalue_reference_t<T>() {
+			return std::move(source);
+		}
+
+		operator std::add_lvalue_reference_t<std::add_const_t<T>>() const {
+			return source;
+		}
+	};
+
+	template <typename T>
+	struct as_container_t<T&> {
+		std::reference_wrapper<T> source;
+
+		as_container_t(T& value) : source(value) {
+		}
+
+		operator T&() {
+			return source;
+		}
+	};
+
+	template <typename T>
+	auto as_container(T&& value) {
+		return as_container_t<T>(std::forward<T>(value));
+	}
+
 	struct this_state {
 		lua_State* L;
 

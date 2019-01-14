@@ -25,7 +25,7 @@
 #define SOL_USERTYPE_HPP
 
 #include "usertype_core.hpp"
-#include "usertype_container.hpp"
+#include "usertype_container_launch.hpp"
 #include "usertype_storage.hpp"
 #include "usertype_proxy.hpp"
 #include "metatable.hpp"
@@ -47,9 +47,14 @@ namespace sol {
 		void tuple_set(std::index_sequence<I...>, std::tuple<Args...>&& args) {
 			using args_tuple = std::tuple<Args...>&&;
 			optional<u_detail::usertype_storage<T>&> maybe_uts = u_detail::maybe_get_usertype_storage<T>(this->lua_state());
-			if (maybe_uts) {
-				u_detail::usertype_storage<T>& uts = *maybe_uts;
-				detail::swallow{ 0, (uts.set(this->lua_state(), std::get<I * 2>(std::forward<args_tuple>(args)), std::get<I * 2 + 1>(std::forward<args_tuple>(args))), 0)... };
+			if constexpr(sizeof...(I) > 0) {
+				if (maybe_uts) {
+					u_detail::usertype_storage<T>& uts = *maybe_uts;
+					detail::swallow{ 0, (uts.set(this->lua_state(), std::get<I * 2>(std::forward<args_tuple>(args)), std::get<I * 2 + 1>(std::forward<args_tuple>(args))), 0)... };
+				}
+			}
+			else {
+				(void)args;
 			}
 		}
 

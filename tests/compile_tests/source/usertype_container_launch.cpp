@@ -23,4 +23,4 @@
 
 #include "sol_defines.hpp"
 
-#include <sol/container_traits.hpp>
+#include <sol/usertype_container_launch.hpp>

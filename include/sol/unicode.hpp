@@ -77,6 +77,19 @@ namespace sol {
 			static constexpr auto continuation_mask = 0xC0u;
 			static constexpr auto continuation_signature = 0x80u;
 
+			static constexpr bool is_invalid(unsigned char b) {
+				return b == 0xC0 || b == 0xC1 || b > 0xF4;
+			}
+
+			static constexpr bool is_continuation(unsigned char b) {
+				return (b & unicode_detail::continuation_mask) == unicode_detail::continuation_signature;
+			}
+
+			static constexpr bool is_overlong(char32_t u, std::size_t bytes) {
+				return u <= unicode_detail::last_1byte_value || (u <= unicode_detail::last_2byte_value && bytes > 2)
+				     || (u <= unicode_detail::last_3byte_value && bytes > 3);
+			}
+
 			static constexpr int sequence_length(unsigned char b) {
 				return (b & start_2byte_mask) == 0 ? 1
 					: (b & start_3byte_mask) != start_3byte_mask ? 2
@@ -193,12 +206,7 @@ namespace sol {
 				return dr;
 			}
 
-			auto is_invalid = [](unsigned char b) { return b == 0xC0 || b == 0xC1 || b > 0xF4; };
-			auto is_continuation = [](unsigned char b) {
-				return (b & unicode_detail::continuation_mask) == unicode_detail::continuation_signature;
-			};
-
-			if (is_invalid(b0) || is_continuation(b0)) {
+			if (unicode_detail::is_invalid(b0) || unicode_detail::is_continuation(b0)) {
 				dr.error = error_code::invalid_code_unit;
 				dr.next = it;
 				return dr;
@@ -209,7 +217,7 @@ namespace sol {
 			b[0] = b0;
 			for (std::size_t i = 1; i < length; ++i) {
 				b[i] = *it;
-				if (!is_continuation(b[i])) {
+				if (!unicode_detail::is_continuation(b[i])) {
 					dr.error = error_code::invalid_code_unit;
 					dr.next = it;
 					return dr;
@@ -230,12 +238,7 @@ namespace sol {
 				break;
 			}
 
-			auto is_overlong = [](char32_t u, std::size_t bytes) {
-				return u <= unicode_detail::last_1byte_value
-					|| (u <= unicode_detail::last_2byte_value && bytes > 2)
-					|| (u <= unicode_detail::last_3byte_value && bytes > 3);
-			};
-			if (is_overlong(decoded, length)) {
+			if (unicode_detail::is_overlong(decoded, length)) {
 				dr.error = error_code::overlong_sequence;
 				return dr;
 			}

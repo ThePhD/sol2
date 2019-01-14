@@ -942,7 +942,7 @@ namespace sol { namespace u_detail {
 			stack::set_field<false, true>(L, detail::base_class_cast_key(), reinterpret_cast<void*>(&detail::inheritance<T>::type_cast), t.stack_index());
 
 			auto prop_fx = detail::properties_enrollment_allowed(storage.properties, enrollments);
-			auto insert_fx = [&](meta_function mf, lua_CFunction reg) {
+			auto insert_fx = [&L, &t, &storage](meta_function mf, lua_CFunction reg) {
 				stack::set_field<false, true>(L, mf, reg, t.stack_index());
 				storage.properties[static_cast<int>(mf)] = true;
 			};

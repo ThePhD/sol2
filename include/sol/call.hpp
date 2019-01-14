@@ -63,7 +63,7 @@ namespace sol {
 		template <int... In>
 		inline void handle_filter(returns_self_with<In...>, lua_State* L, int& pushed) {
 			pushed = stack::push(L, raw_index(1));
-			handle_filter(static_stack_dependencies<-1, In...>(), L, pushed);
+			handle_filter(static_stack_dependencies< -1, In...>(), L, pushed);
 		}
 
 		inline void handle_filter(const stack_dependencies& sdeps, lua_State* L, int&) {

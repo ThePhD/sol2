@@ -45,6 +45,77 @@
 
 namespace sol { namespace stack {
 
+	namespace stack_detail {
+		template <typename Ch>
+		struct count_code_units_utf {
+			std::size_t needed_size;
+
+			count_code_units_utf() : needed_size(0) {
+			}
+
+			void operator()(const unicode::encoded_result<Ch> er) {
+				needed_size += er.code_units_size;
+			}
+		};
+
+		template <typename Ch, typename ErCh>
+		struct copy_code_units_utf {
+			Ch* target_;
+
+			copy_code_units_utf(Ch* target) : target_(target) {
+			}
+
+			void operator()(const unicode::encoded_result<ErCh> er) {
+				std::memcpy(target_, er.code_units.data(), er.code_units_size * sizeof(ErCh));
+				target_ += er.code_units_size;
+			}
+		};
+
+		template <typename Ch, typename F>
+		inline void convert(const char* strb, const char* stre, F&& f) {
+			char32_t cp = 0;
+			for (const char* strtarget = strb; strtarget < stre;) {
+				auto dr = unicode::utf8_to_code_point(strtarget, stre);
+				if (dr.error != unicode::error_code::ok) {
+					cp = unicode::unicode_detail::replacement;
+					++strtarget;
+				}
+				else {
+					cp = dr.codepoint;
+					strtarget = dr.next;
+				}
+				if constexpr(std::is_same_v<Ch, char32_t>) {
+					auto er = unicode::code_point_to_utf32(cp);
+					f(er);
+				}
+				else {
+					auto er = unicode::code_point_to_utf16(cp);
+					f(er);
+				}
+			}
+		}
+
+		template <typename BaseCh, typename S>
+		inline S get_into(lua_State* L, int index, record& tracking) {
+			typedef typename S::value_type Ch;
+			tracking.use(1);
+			size_t len;
+			auto utf8p = lua_tolstring(L, index, &len);
+			if (len < 1)
+				return S();
+			const char* strb = utf8p;
+			const char* stre = utf8p + len;
+			stack_detail::count_code_units_utf<BaseCh> count_units;
+			convert<BaseCh>(strb, stre, count_units);
+			S r(count_units.needed_size, static_cast<Ch>(0));
+			r.resize(count_units.needed_size);
+			Ch* target = &r[0];
+			stack_detail::copy_code_units_utf<Ch, BaseCh> copy_units(target);
+			convert<BaseCh>(strb, stre, copy_units);
+			return r;
+		}
+	}
+
 	template <typename U>
 	struct userdata_getter<U> {
 		typedef stack_detail::strip_extensible_t<U> T;
@@ -99,7 +170,7 @@ namespace sol { namespace stack {
 
 	template <typename T>
 	struct unqualified_getter<as_table_t<T>> {
-		typedef meta::unqualified_t<T> Tu;
+		using Tu = meta::unqualified_t<T>;
 
 		template <typename V>
 		static void push_back_at_end(std::true_type, types<V>, lua_State* L, T& arr, std::size_t) {
@@ -113,8 +184,8 @@ namespace sol { namespace stack {
 
 		template <typename V>
 		static void insert_at_end(std::true_type, types<V>, lua_State* L, T& arr, std::size_t) {
-			using std::end;
-			arr.insert(end(arr), stack::get<V>(L, -lua_size<V>::value));
+			using std::cend;
+			arr.insert(cend(arr), stack::get<V>(L, -lua_size<V>::value));
 		}
 
 		template <typename V>
@@ -131,11 +202,11 @@ namespace sol { namespace stack {
 		}
 
 		static T get(lua_State* L, int relindex, record& tracking) {
-			return get(meta::has_key_value_pair<meta::unqualified_t<T>>(), L, relindex, tracking);
+			return get(meta::is_associative<Tu>(), L, relindex, tracking);
 		}
 
 		static T get(std::false_type, lua_State* L, int relindex, record& tracking) {
-			typedef typename T::value_type V;
+			typedef typename Tu::value_type V;
 			return get(types<V>(), L, relindex, tracking);
 		}
 
@@ -143,15 +214,50 @@ namespace sol { namespace stack {
 		static T get(types<V> t, lua_State* L, int relindex, record& tracking) {
 			tracking.use(1);
 
+			// the W4 flag is really great,
+			// so great that it can tell my for loops (2-nested)
+			// below never actually terminate without hitting a "return arr;"
+			// where the goto's are now so it would tell 
+			// me that the return arr at the end of this function
+			// is W4XXX unreachable,
+			// which is fair until other compilers complain
+			// that there isn't a return and that based on
+			// SOME MAGICAL FORCE
+			// control flow falls off the end of a non-void function
+			// so it needs to be there for the compilers that are
+			// too flimsy to analyze the basic blocks...
+			// (I'm sure I should file a bug but those compilers are already
+			// in the wild; it doesn't matter if I fix them,
+			// someone else is still going to get some old-ass compiler
+			// and then bother me about the unclean build for the 30th
+			// time)
+
+			// "Why not an IIFE?"
+			// Because additional lambdas / functions which serve as
+			// capture-all-and-then-invoke bloat binary sizes
+			// by an actually detectable amount
+			// (one user uses sol2 pretty heavily and 22 MB of binary size
+			// was saved by reducing reliance on lambdas in templates)
+
+			// This would really be solved by having break N;
+			// be a real, proper thing...
+			// but instead, we have to use labels and gotos
+			// and earn the universal vitriol of the dogmatic
+			// programming community
+
+			// all in all: W4 is great!~
+
 			int index = lua_absindex(L, relindex);
 			T arr;
 			std::size_t idx = 0;
 #if SOL_LUA_VERSION >= 503
-			// This method is HIGHLY performant over regular table iteration thanks to the Lua API changes in 5.3
+			// This method is HIGHLY performant over regular table iteration 
+			// thanks to the Lua API changes in 5.3
 			// Questionable in 5.4
 			for (lua_Integer i = 0;; i += lua_size<V>::value) {
 				if (max_size_check(meta::has_max_size<Tu>(), arr, idx)) {
-					return arr;
+					// see above comment
+					goto done;
 				}
 				bool isnil = false;
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
@@ -181,7 +287,8 @@ namespace sol { namespace stack {
 #else
 						lua_pop(L, (vi + 1));
 #endif
-						return arr;
+						// see above comment
+						goto done;
 					}
 				}
 				if (isnil) {
@@ -199,7 +306,8 @@ namespace sol { namespace stack {
 			// Zzzz slower but necessary thanks to the lower version API and missing functions qq
 			for (lua_Integer i = 0;; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
 				if (idx >= arr.max_size()) {
-					return arr;
+					// see above comment
+					goto done;
 				}
 #if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
 				luaL_checkstack(L, 2, detail::not_enough_stack_space_generic);
@@ -215,7 +323,8 @@ namespace sol { namespace stack {
 							break;
 						}
 						lua_pop(L, (vi + 1));
-						return arr;
+						// see above comment
+						goto done;
 					}
 				}
 				if (isnil)
@@ -224,11 +333,12 @@ namespace sol { namespace stack {
 				++idx;
 			}
 #endif
+			done:
 			return arr;
 		}
 
 		static T get(std::true_type, lua_State* L, int index, record& tracking) {
-			typedef typename T::value_type P;
+			typedef typename Tu::value_type P;
 			typedef typename P::first_type K;
 			typedef typename P::second_type V;
 			return get(types<K, V>(), L, index, tracking);
@@ -377,29 +487,26 @@ namespace sol { namespace stack {
 	};
 
 	template <typename T>
-	struct unqualified_getter<nested<T>,
-		std::enable_if_t<
-			meta::all<is_container<T>, meta::neg<meta::has_key_value_pair<meta::unqualified_t<T>>>>::value>> {
+	struct unqualified_getter<nested<T>, std::enable_if_t<is_container<T>::value>> {
+		using Tu = meta::unqualified_t<T>;
+		
 		static T get(lua_State* L, int index, record& tracking) {
-			typedef typename T::value_type V;
-			unqualified_getter<as_table_t<T>> g;
-			// VC++ has a bad warning here: shut it up
-			(void)g;
-			return g.get(types<nested<V>>(), L, index, tracking);
-		}
-	};
-
-	template <typename T>
-	struct unqualified_getter<nested<T>,
-		std::enable_if_t<meta::all<is_container<T>, meta::has_key_value_pair<meta::unqualified_t<T>>>::value>> {
-		static T get(lua_State* L, int index, record& tracking) {
-			typedef typename T::value_type P;
-			typedef typename P::first_type K;
-			typedef typename P::second_type V;
-			unqualified_getter<as_table_t<T>> g;
-			// VC++ has a bad warning here: shut it up
-			(void)g;
-			return g.get(types<K, nested<V>>(), L, index, tracking);
+			if constexpr(meta::is_associative<Tu>::value) {
+				typedef typename T::value_type P;
+				typedef typename P::first_type K;
+				typedef typename P::second_type V;
+				unqualified_getter<as_table_t<T>> g;
+				// VC++ has a bad warning here: shut it up
+				(void)g;
+				return g.get(types<K, nested<V>>(), L, index, tracking);
+			}
+			else {
+				typedef typename T::value_type V;
+				unqualified_getter<as_table_t<T>> g;
+				// VC++ has a bad warning here: shut it up
+				(void)g;
+				return g.get(types<nested<V>>(), L, index, tracking);
+			}
 		}
 	};
 
@@ -513,114 +620,24 @@ namespace sol { namespace stack {
 
 	template <typename Traits, typename Al>
 	struct unqualified_getter<std::basic_string<wchar_t, Traits, Al>> {
-		typedef std::basic_string<wchar_t, Traits, Al> S;
+		using S = std::basic_string<wchar_t, Traits, Al>;
 		static S get(lua_State* L, int index, record& tracking) {
-			typedef std::conditional_t<sizeof(wchar_t) == 2, char16_t, char32_t> Ch;
-			typedef typename std::allocator_traits<Al>::template rebind_alloc<Ch> ChAl;
-			typedef std::char_traits<Ch> ChTraits;
-			unqualified_getter<std::basic_string<Ch, ChTraits, ChAl>> g;
-			(void)g;
-			return g.template get_into<S>(L, index, tracking);
+			using Ch = std::conditional_t<sizeof(wchar_t) == 2, char16_t, char32_t>;
+			return stack_detail::get_into<Ch, S>(L, index, tracking);
 		}
 	};
 
 	template <typename Traits, typename Al>
 	struct unqualified_getter<std::basic_string<char16_t, Traits, Al>> {
-		template <typename F>
-		static void convert(const char* strb, const char* stre, F&& f) {
-			char32_t cp = 0;
-			for (const char* strtarget = strb; strtarget < stre;) {
-				auto dr = unicode::utf8_to_code_point(strtarget, stre);
-				if (dr.error != unicode::error_code::ok) {
-					cp = unicode::unicode_detail::replacement;
-					++strtarget;
-				}
-				else {
-					cp = dr.codepoint;
-					strtarget = dr.next;
-				}
-				auto er = unicode::code_point_to_utf16(cp);
-				f(er);
-			}
-		}
-
-		template <typename S>
-		static S get_into(lua_State* L, int index, record& tracking) {
-			typedef typename S::value_type Ch;
-			tracking.use(1);
-			size_t len;
-			auto utf8p = lua_tolstring(L, index, &len);
-			if (len < 1)
-				return S();
-			std::size_t needed_size = 0;
-			const char* strb = utf8p;
-			const char* stre = utf8p + len;
-			auto count_units
-				= [&needed_size](const unicode::encoded_result<char16_t> er) { needed_size += er.code_units_size; };
-			convert(strb, stre, count_units);
-			S r(needed_size, static_cast<Ch>(0));
-			r.resize(needed_size);
-			Ch* target = &r[0];
-			auto copy_units = [&target](const unicode::encoded_result<char16_t> er) {
-				std::memcpy(target, er.code_units.data(), er.code_units_size * sizeof(Ch));
-				target += er.code_units_size;
-			};
-			convert(strb, stre, copy_units);
-			return r;
-		}
-
 		static std::basic_string<char16_t, Traits, Al> get(lua_State* L, int index, record& tracking) {
-			return get_into<std::basic_string<char16_t, Traits, Al>>(L, index, tracking);
+			return stack_detail::get_into<char16_t, std::basic_string<char16_t, Traits, Al>>(L, index, tracking);
 		}
 	};
 
 	template <typename Traits, typename Al>
 	struct unqualified_getter<std::basic_string<char32_t, Traits, Al>> {
-		template <typename F>
-		static void convert(const char* strb, const char* stre, F&& f) {
-			char32_t cp = 0;
-			for (const char* strtarget = strb; strtarget < stre;) {
-				auto dr = unicode::utf8_to_code_point(strtarget, stre);
-				if (dr.error != unicode::error_code::ok) {
-					cp = unicode::unicode_detail::replacement;
-					++strtarget;
-				}
-				else {
-					cp = dr.codepoint;
-					strtarget = dr.next;
-				}
-				auto er = unicode::code_point_to_utf32(cp);
-				f(er);
-			}
-		}
-
-		template <typename S>
-		static S get_into(lua_State* L, int index, record& tracking) {
-			typedef typename S::value_type Ch;
-			tracking.use(1);
-			size_t len;
-			auto utf8p = lua_tolstring(L, index, &len);
-			if (len < 1)
-				return S();
-			std::size_t needed_size = 0;
-			const char* strb = utf8p;
-			const char* stre = utf8p + len;
-			auto count_units
-				= [&needed_size](const unicode::encoded_result<char32_t> er) { needed_size += er.code_units_size; };
-			convert(strb, stre, count_units);
-			S r(needed_size, static_cast<Ch>(0));
-			r.resize(needed_size);
-			Ch* target = &r[0];
-			auto copy_units = [&target](const unicode::encoded_result<char32_t> er) {
-				std::memcpy(target, er.code_units.data(), er.code_units_size * sizeof(Ch));
-				target += er.code_units_size;
-			};
-			convert(strb, stre, copy_units);
-			return r;
-		}
-
 		static std::basic_string<char32_t, Traits, Al> get(lua_State* L, int index, record& tracking) {
-			return get_into<std::basic_string<char32_t, Traits, Al>>(L, index, tracking);
+			return stack_detail::get_into<char32_t, std::basic_string<char32_t, Traits, Al>>(L, index, tracking);
 		}
 	};
 

@@ -150,6 +150,9 @@ namespace sol {
 	struct this_main_state;
 	struct this_environment;
 
+	class state_view;
+	class state;
+
 	template <typename T>
 	struct as_table_t;
 	template <typename T>

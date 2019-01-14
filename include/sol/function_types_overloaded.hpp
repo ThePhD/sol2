@@ -45,14 +45,14 @@ namespace function_detail {
 		}
 
 		template <typename Fx, std::size_t I, typename... R, typename... Args>
-		int call(types<Fx>, meta::index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int) {
-			auto& func = std::get<I>(overloads);
+		static int call(types<Fx>, meta::index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int, overload_list& ol) {
+			auto& func = std::get<I>(ol);
 			return call_detail::call_wrapped<void, true, false, start_skew>(L, func);
 		}
 
 		int operator()(lua_State* L) {
-			auto mfx = [&](auto&&... args) { return this->call(std::forward<decltype(args)>(args)...); };
-			return call_detail::overload_match<Functions...>(mfx, L, 1 + start_skew);
+			auto mfx = [](auto&&... args) { return call(std::forward<decltype(args)>(args)...); };
+			return call_detail::overload_match<Functions...>(mfx, L, 1 + start_skew, overloads);
 		}
 	};
 }

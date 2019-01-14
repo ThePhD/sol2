@@ -34,6 +34,21 @@
 
 namespace sol {
 	
+	namespace detail {
+		template <bool b, typename handler_t>
+		inline void handle_protected_exception(lua_State* L, optional<const std::exception&> maybe_ex, const char* error, detail::protected_handler<b, handler_t>& h) {
+			h.stackindex = 0;
+			if (b) {
+				h.target.push();
+				detail::call_exception_handler(L, maybe_ex, error);
+				lua_call(L, 1, 1);
+			}
+			else {
+				detail::call_exception_handler(L, maybe_ex, error);
+			}
+		}
+	}
+
 	template <typename base_t, bool aligned = false, typename handler_t = reference>
 	class basic_protected_function : public base_t {
 	public:
@@ -79,18 +94,6 @@ namespace sol {
 			int returncount = 0;
 			call_status code = call_status::ok;
 #if !defined(SOL_NO_EXCEPTIONS) || !SOL_NO_EXCEPTIONS
-			auto onexcept = [&](optional<const std::exception&> maybe_ex, const char* error) {
-				h.stackindex = 0;
-				if (b) {
-					h.target.push();
-					detail::call_exception_handler(lua_state(), maybe_ex, error);
-					lua_call(lua_state(), 1, 1);
-				}
-				else {
-					detail::call_exception_handler(lua_state(), maybe_ex, error);
-				}
-			};
-			(void)onexcept;
 #if (!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !SOL_NO_EXCEPTIONS_SAFE_PROPAGATION) || (defined(SOL_LUAJIT) && SOL_LUAJIT)
 			try {
 #endif // Safe Exception Propagation
@@ -104,17 +107,17 @@ namespace sol {
 			}
 			// Handle C++ errors thrown from C++ functions bound inside of lua
 			catch (const char* error) {
-				onexcept(optional<const std::exception&>(nullopt), error);
+				detail::handle_protected_exception(lua_state(), optional<const std::exception&>(nullopt), error, h);
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}
 			catch (const std::string& error) {
-				onexcept(optional<const std::exception&>(nullopt), error.c_str());
+				detail::handle_protected_exception(lua_state(), optional<const std::exception&>(nullopt), error.c_str(), h);
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}
 			catch (const std::exception& error) {
-				onexcept(optional<const std::exception&>(error), error.what());
+				detail::handle_protected_exception(lua_state(), optional<const std::exception&>(error), error.what(), h);
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}
@@ -123,7 +126,7 @@ namespace sol {
 			// but LuaJIT will swallow all C++ errors 
 			// if we don't at least catch std::exception ones
 			catch (...) {
-				onexcept(optional<const std::exception&>(nullopt), "caught (...) unknown error during protected_function call");
+				detail::handle_protected_exception(lua_state(), optional<const std::exception&>(nullopt), detail::protected_function_error, h);
 				firstreturn = lua_gettop(lua_state());
 				return protected_function_result(lua_state(), firstreturn, 0, 1, call_status::runtime);
 			}

@@ -429,7 +429,7 @@ TEST_CASE("functions/function_result and protected_function_result", "Function r
 }
 
 #if !defined(SOL2_CI) && ((!defined(_M_IX86) || defined(_M_IA64)) || (defined(_WIN64)) || (defined(__LLP64__) || defined(__LP64__)) )
-TEST_CASE("functions/unsafe protected_function_result handlers", "This test will thrash the stack and allocations on weaker compilers (e.g., non 64-bit ones). Run with caution.") {
+TEST_CASE("functions/safe protected_function_result handlers", "These tests will (hopefully) not destroy the stack since they are supposed to be mildly safe. Still, run with caution.") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::debug);
 	static const char unhandlederrormessage[] = "true error message";
@@ -449,23 +449,11 @@ TEST_CASE("functions/unsafe protected_function_result handlers", "This test will
 		return handlederrormessage;
 	};
 	lua.set_function("cpphandler", cpphandlerfx);
-	auto nontrampolinefx = [](lua_State*) -> int { 
-		// this code shoots an exception
-		// through the C API, without the trampoline
-		// present.
-		// it is probably guaranteed to kill our code.
-		throw "x"; 
-	};
-	lua_CFunction c_nontrampolinefx = nontrampolinefx;
-	lua.set("nontrampoline", c_nontrampolinefx);
-	lua.set_function("bark", []() -> int { return 100; });
 
 	sol::function cpphandler = lua["cpphandler"];
 	sol::protected_function luadoom(lua["luadoom"]);
-	sol::protected_function nontrampoline = lua["nontrampoline"];
 	luadoom.error_handler = cpphandler;
-	nontrampoline.error_handler = cpphandler;
-	
+
 	bool present = true;
 	{
 		sol::protected_function_result result = luadoom();
@@ -479,12 +467,40 @@ TEST_CASE("functions/unsafe protected_function_result handlers", "This test will
 		sol::error err = result;
 		REQUIRE(err.what() == handlederrormessage_s);
 	}
+}
+
+TEST_CASE("functions/unsafe protected_function_result handlers",
+     "This test will thrash the stack and allocations on weaker compilers (e.g., non 64-bit ones). Run with caution.") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::debug);
+	static const char handlederrormessage[] = "doodle";
+	static const std::string handlederrormessage_s = handlederrormessage;
+
+	auto cpphandlerfx = [](std::string x) {
+		INFO("c++ handler called with: " << x);
+		return handlederrormessage;
+	};
+	lua.set_function("cpphandler", cpphandlerfx);
+	auto nontrampolinefx = [](lua_State*) -> int {
+		// this code shoots an exception
+		// through the C API, without the trampoline
+		// present.
+		// it is probably guaranteed to kill our code.
+		throw "x";
+	};
+	lua_CFunction c_nontrampolinefx = nontrampolinefx;
+	lua.set("nontrampoline", c_nontrampolinefx);
+
+	sol::function cpphandler = lua["cpphandler"];
+	sol::protected_function nontrampoline = lua["nontrampoline"];
+	nontrampoline.error_handler = cpphandler;
+
 	{
 		sol::protected_function_result result = nontrampoline();
 		REQUIRE_FALSE(result.valid());
 		sol::optional<sol::error> operr = result;
 		sol::optional<int> opvalue = result;
-		present = (bool)operr;
+		bool present = (bool)operr;
 		REQUIRE(present);
 		present = (bool)opvalue;
 		REQUIRE_FALSE(present);
@@ -492,7 +508,7 @@ TEST_CASE("functions/unsafe protected_function_result handlers", "This test will
 		REQUIRE(err.what() == handlederrormessage_s);
 	}
 }
-#endif // This test will thrash the stack and allocations on weaker compilers
+#endif // These tests will thrash the stack and allocations on weaker compilers
 
 TEST_CASE("functions/all kinds", "Register all kinds of functions, make sure they all compile and work") {
 	sol::state lua;
@@ -670,12 +686,16 @@ N = n(1, 2, 3)
 	REQUIRE(N == 13);
 
 	// Work that compiler, WORK IT!
+	test_2 test_2_instance;
 	lua.set("o", &test_1::bark);
 	lua.set("p", test_1::x_bark);
 	lua.set("q", sol::c_call<decltype(&test_1::bark_mem), &test_1::bark_mem>);
 	lua.set("r", &test_2::a);
 	lua.set("s", sol::readonly(&test_2::a));
 	lua.set_function("t", sol::readonly(&test_2::a), test_2());
+	lua.set_function("t2", sol::readonly(&test_2::a), &test_2_instance);
+	lua.set_function("t3", sol::readonly(&test_2::a), std::ref(test_2_instance));
+	lua.set_function("t4", sol::readonly(&test_2::a), std::cref(test_2_instance));
 	lua.set_function("u", &nested::i, nested());
 	lua.set("v", &nested::i);
 	lua.set("nested", nested());
@@ -687,6 +707,12 @@ N = n(1, 2, 3)
 	{
 		auto result = lua.safe_script("t(2)", sol::script_pass_on_error);
 		REQUIRE_FALSE(result.valid());
+		auto result2 = lua.safe_script("t2(2)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result2.valid());
+		auto result3 = lua.safe_script("t3(2)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result3.valid());
+		auto result4 = lua.safe_script("t4(2)", sol::script_pass_on_error);
+		REQUIRE_FALSE(result4.valid());
 	}
 	{
 		auto result = lua.safe_script("u(inner)", sol::script_pass_on_error);

@@ -66,14 +66,12 @@ namespace function_detail {
 			// idx n + 1: is the object's void pointer
 			// We don't need to store the size, because the other side is templated
 			// with the same member function pointer type
-			auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L);
-			auto objdata = stack::stack_detail::get_as_upvalues<T*>(L, memberdata.second);
-			function_type& memfx = memberdata.first;
-			auto& item = *objdata.first;
+			function_type& memfx = stack::get<user<function_type>>(L, upvalue_index(2));
+			auto& item = *static_cast<T*>(stack::get<void*>(L, upvalue_index(3)));
 			return call_detail::call_wrapped<T, true, false, -1>(L, memfx, item);
 		}
 
-		static int call(lua_State* L) {
+		static int call(lua_State* L) noexcept(traits_type::is_noexcept) {
 			int nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
 			if (is_yielding) {
 				return lua_yield(L, nr);
@@ -113,7 +111,7 @@ namespace function_detail {
 			}
 		}
 
-		static int call(lua_State* L) {
+		static int call(lua_State* L) noexcept(traits_type::is_noexcept) {
 			int nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
 			if (is_yielding) {
 				return lua_yield(L, nr);
@@ -174,8 +172,7 @@ namespace function_detail {
 		static int real_call(lua_State* L) noexcept(traits_type::is_noexcept) {
 			// Layout:
 			// idx 1...n: verbatim data of member variable pointer
-			auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L);
-			function_type& memfx = memberdata.first;
+			function_type& memfx = stack::get<user<function_type>>(L, upvalue_index(2));
 			return call_detail::call_wrapped<T, false, false>(L, memfx);
 		}
 

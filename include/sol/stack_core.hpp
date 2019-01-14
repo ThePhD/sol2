@@ -84,15 +84,16 @@ namespace sol {
 			return align(alignment, size, ptr, space, required_space);
 		}
 
+		inline void align_one(std::size_t a, std::size_t s, void*& target_alignment) {
+			std::size_t space = (std::numeric_limits<std::size_t>::max)();
+			target_alignment = align(a, s, target_alignment, space);
+			target_alignment = static_cast<void*>(static_cast<char*>(target_alignment) + s);
+		}
+
 		template <typename... Args>
 		inline std::size_t aligned_space_for(void* alignment = nullptr) {
 			char* start = static_cast<char*>(alignment);
-			auto specific_align = [&alignment](std::size_t a, std::size_t s) {
-				std::size_t space = (std::numeric_limits<std::size_t>::max)();
-				alignment = align(a, s, alignment, space);
-				alignment = static_cast<void*>(static_cast<char*>(alignment) + s);
-			};
-			(void)detail::swallow{ int{}, (specific_align(std::alignment_of<Args>::value, sizeof(Args)), int{})... };
+			(void)detail::swallow{ int{}, (align_one(std::alignment_of_v<Args>, sizeof(Args), alignment), int{})... };
 			return static_cast<char*>(alignment) - start;
 		}
 
@@ -236,6 +237,61 @@ namespace sol {
 			return static_cast<T**>(adjusted);
 		}
 
+		inline bool attempt_alloc(lua_State* L, std::size_t ptr_align, std::size_t ptr_size, std::size_t value_align, std::size_t value_size,
+		     std::size_t allocated_size, void*& pointer_adjusted, void*& data_adjusted) {
+			void* adjusted = lua_newuserdata(L, allocated_size);
+			pointer_adjusted = align(ptr_align, ptr_size, adjusted, allocated_size);
+			if (pointer_adjusted == nullptr) {
+				lua_pop(L, 1);
+				return false;
+			}
+			// subtract size of what we're going to allocate there
+			allocated_size -= ptr_size;
+			adjusted = static_cast<void*>(static_cast<char*>(pointer_adjusted) + ptr_size);
+			data_adjusted = align(value_align, value_size, adjusted, allocated_size);
+			if (data_adjusted == nullptr) {
+				lua_pop(L, 1);
+				return false;
+			}
+			return true;
+		}
+
+		inline bool attempt_alloc_unique(lua_State* L, std::size_t ptr_align, std::size_t ptr_size, std::size_t real_align, std::size_t real_size,
+		     std::size_t allocated_size, void*& pointer_adjusted, void*& dx_adjusted, void*& id_adjusted, void*& data_adjusted) {
+			void* adjusted = lua_newuserdata(L, allocated_size);
+			pointer_adjusted = align(ptr_align, ptr_size, adjusted, allocated_size);
+			if (pointer_adjusted == nullptr) {
+				lua_pop(L, 1);
+				return false;
+			}
+			allocated_size -= ptr_size;
+
+			adjusted = static_cast<void*>(static_cast<char*>(pointer_adjusted) + ptr_size);
+			dx_adjusted = align(std::alignment_of_v<unique_destructor>, sizeof(unique_destructor), adjusted, allocated_size);
+			if (dx_adjusted == nullptr) {
+				lua_pop(L, 1);
+				return false;
+			}
+			allocated_size -= sizeof(unique_destructor);
+
+			adjusted = static_cast<void*>(static_cast<char*>(dx_adjusted) + sizeof(unique_destructor));
+
+			id_adjusted = align(std::alignment_of_v<unique_tag>, sizeof(unique_tag), adjusted, allocated_size);
+			if (id_adjusted == nullptr) {
+				lua_pop(L, 1);
+				return false;
+			}
+			allocated_size -= sizeof(unique_tag);
+
+			adjusted = static_cast<void*>(static_cast<char*>(id_adjusted) + sizeof(unique_tag));
+			data_adjusted = align(real_align, real_size, adjusted, allocated_size);
+			if (data_adjusted == nullptr) {
+				lua_pop(L, 1);
+				return false;
+			}
+			return true;
+		}
+
 		template <typename T>
 		inline T* usertype_allocate(lua_State* L) {
 			typedef std::integral_constant<bool,
@@ -274,30 +330,13 @@ namespace sol {
 
 			void* pointer_adjusted;
 			void* data_adjusted;
-			auto attempt_alloc = [](lua_State* L, std::size_t allocated_size, void*& pointer_adjusted, void*& data_adjusted) -> bool {
-				void* adjusted = lua_newuserdata(L, allocated_size);
-				pointer_adjusted = align(std::alignment_of<T*>::value, sizeof(T*), adjusted, allocated_size);
-				if (pointer_adjusted == nullptr) {
-					lua_pop(L, 1);
-					return false;
-				}
-				// subtract size of what we're going to allocate there
-				allocated_size -= sizeof(T*);
-				adjusted = static_cast<void*>(static_cast<char*>(pointer_adjusted) + sizeof(T*));
-				data_adjusted = align(std::alignment_of<T>::value, sizeof(T), adjusted, allocated_size);
-				if (data_adjusted == nullptr) {
-					lua_pop(L, 1);
-					return false;
-				}
-				return true;
-			};
-			bool result = attempt_alloc(L, initial_size, pointer_adjusted, data_adjusted);
+			bool result = attempt_alloc(L, std::alignment_of_v<T*>, sizeof(T*), std::alignment_of_v<T>, sizeof(T), initial_size, pointer_adjusted, data_adjusted);
 			if (!result) {
 				// we're likely to get something that fails to perform the proper allocation a second time,
 				// so we use the suggested_new_size bump to help us out here
 				pointer_adjusted = nullptr;
 				data_adjusted = nullptr;
-				result = attempt_alloc(L, misaligned_size, pointer_adjusted, data_adjusted);
+				result = attempt_alloc(L, std::alignment_of_v<T*>, sizeof(T*), std::alignment_of_v<T>, sizeof(T), misaligned_size, pointer_adjusted, data_adjusted);
 				if (!result) {
 					if (pointer_adjusted == nullptr) {
 						luaL_error(L, "aligned allocation of userdata block (pointer section) for '%s' failed", detail::demangle<T>().c_str());
@@ -342,43 +381,16 @@ namespace sol {
 			void* dx_adjusted;
 			void* id_adjusted;
 			void* data_adjusted;
-			auto attempt_alloc
-			     = [](lua_State* L, std::size_t allocated_size, void*& pointer_adjusted, void*& dx_adjusted, void*& id_adjusted, void*& data_adjusted)
-			     -> bool {
-				void* adjusted = lua_newuserdata(L, allocated_size);
-				pointer_adjusted = align(std::alignment_of<T*>::value, sizeof(T*), adjusted, allocated_size);
-				if (pointer_adjusted == nullptr) {
-					lua_pop(L, 1);
-					return false;
-				}
-				allocated_size -= sizeof(T*);
-
-				adjusted = static_cast<void*>(static_cast<char*>(pointer_adjusted) + sizeof(T*));
-				dx_adjusted = align(std::alignment_of<unique_destructor>::value, sizeof(unique_destructor), adjusted, allocated_size);
-				if (dx_adjusted == nullptr) {
-					lua_pop(L, 1);
-					return false;
-				}
-				allocated_size -= sizeof(unique_destructor);
-
-				adjusted = static_cast<void*>(static_cast<char*>(dx_adjusted) + sizeof(unique_destructor));
-
-				id_adjusted = align(std::alignment_of<unique_tag>::value, sizeof(unique_tag), adjusted, allocated_size);
-				if (id_adjusted == nullptr) {
-					lua_pop(L, 1);
-					return false;
-				}
-				allocated_size -= sizeof(unique_tag);
-
-				adjusted = static_cast<void*>(static_cast<char*>(id_adjusted) + sizeof(unique_tag));
-				data_adjusted = align(std::alignment_of<Real>::value, sizeof(Real), adjusted, allocated_size);
-				if (data_adjusted == nullptr) {
-					lua_pop(L, 1);
-					return false;
-				}
-				return true;
-			};
-			bool result = attempt_alloc(L, initial_size, pointer_adjusted, dx_adjusted, id_adjusted, data_adjusted);
+			bool result = attempt_alloc_unique(L,
+			     std::alignment_of_v<T*>,
+			     sizeof(T*),
+			     std::alignment_of_v<Real>,
+			     sizeof(Real),
+			     initial_size,
+			     pointer_adjusted,
+			     dx_adjusted,
+			     id_adjusted,
+			     data_adjusted);
 			if (!result) {
 				// we're likely to get something that fails to perform the proper allocation a second time,
 				// so we use the suggested_new_size bump to help us out here
@@ -386,7 +398,16 @@ namespace sol {
 				dx_adjusted = nullptr;
 				id_adjusted = nullptr;
 				data_adjusted = nullptr;
-				result = attempt_alloc(L, misaligned_size, pointer_adjusted, dx_adjusted, id_adjusted, data_adjusted);
+				result = attempt_alloc_unique(L,
+				     std::alignment_of_v<T*>,
+				     sizeof(T*),
+				     std::alignment_of_v<Real>,
+				     sizeof(Real),
+				     misaligned_size,
+				     pointer_adjusted,
+				     dx_adjusted,
+				     id_adjusted,
+				     data_adjusted);
 				if (!result) {
 					if (pointer_adjusted == nullptr) {
 						luaL_error(L, "aligned allocation of userdata block (pointer section) for '%s' failed", detail::demangle<T>().c_str());

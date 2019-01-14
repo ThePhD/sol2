@@ -38,6 +38,15 @@ namespace sol {
 		constexpr const char* not_enough_stack_space_userdata = "not enough space left on Lua stack to create a sol2 userdata";
 		constexpr const char* not_enough_stack_space_generic = "not enough space left on Lua stack to push valuees";
 		constexpr const char* not_enough_stack_space_environment = "not enough space left on Lua stack to retrieve environment";
+		constexpr const char* protected_function_error = "caught (...) unknown error during protected_function call";
+
+		inline void accumulate_and_mark(const std::string& n, std::string& addendum, int& marker) {
+			if (marker > 0) {
+				addendum += ", ";
+			}
+			addendum += n;
+			++marker;
+		}
 	}
 
 	inline std::string associated_type_name(lua_State* L, int index, type t) {
@@ -120,14 +129,7 @@ namespace sol {
 			addendum += detail::demangle<R>();
 			addendum += "(";
 			int marker = 0;
-			auto action = [&addendum, &marker](const std::string& n) {
-				if (marker > 0) {
-					addendum += ", ";
-				}
-				addendum += n;
-				++marker;
-			};
-			(void)detail::swallow{int(), (action(detail::demangle<Args>()), int())...};
+			(void)detail::swallow{int(), (detail::accumulate_and_mark(detail::demangle<Args>(), addendum, marker), int())...};
 			addendum += ")')";
 			return type_panic_string(L, index, expected, actual, message.empty() ? addendum : message + " " + addendum);
 		}

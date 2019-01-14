@@ -117,17 +117,15 @@ namespace sol {
 				return std::pair<T, int>(*reinterpret_cast<T*>(static_cast<void*>(voiddata.data())), index);
 			}
 
-			struct evaluator {
-				template <typename Fx, typename... Args>
-				static decltype(auto) eval(types<>, std::index_sequence<>, lua_State*, int, record&, Fx&& fx, Args&&... args) {
-					return std::forward<Fx>(fx)(std::forward<Args>(args)...);
-				}
+			template <typename Fx, typename... Args>
+			static decltype(auto) eval(types<>, std::index_sequence<>, lua_State*, int, record&, Fx&& fx, Args&&... args) {
+				return std::forward<Fx>(fx)(std::forward<Args>(args)...);
+			}
 
-				template <typename Fx, typename Arg, typename... Args, std::size_t I, std::size_t... Is, typename... FxArgs>
-				static decltype(auto) eval(types<Arg, Args...>, std::index_sequence<I, Is...>, lua_State* L, int start, record& tracking, Fx&& fx, FxArgs&&... fxargs) {
-					return eval(types<Args...>(), std::index_sequence<Is...>(), L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)..., stack_detail::unchecked_get<Arg>(L, start + tracking.used, tracking));
-				}
-			};
+			template <typename Fx, typename Arg, typename... Args, std::size_t I, std::size_t... Is, typename... FxArgs>
+			static decltype(auto) eval(types<Arg, Args...>, std::index_sequence<I, Is...>, lua_State* L, int start, record& tracking, Fx&& fx, FxArgs&&... fxargs) {
+				return eval(types<Args...>(), std::index_sequence<Is...>(), L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)..., stack_detail::unchecked_get<Arg>(L, start + tracking.used, tracking));
+			}
 
 			template <bool checkargs = detail::default_safe_function_calls , std::size_t... I, typename R, typename... Args, typename Fx, typename... FxArgs, typename = std::enable_if_t<!std::is_void<R>::value >>
 			inline decltype(auto) call(types<R>, types<Args...> ta, std::index_sequence<I...> tai, lua_State* L, int start, Fx&& fx, FxArgs&&... args) {
@@ -137,7 +135,7 @@ namespace sol {
 				argument_handler<types<R, Args...>> handler{};
 				multi_check<checkargs, Args...>(L, start, handler);
 				record tracking{};
-				return evaluator{}.eval(ta, tai, L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
+				return eval(ta, tai, L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 			}
 
 			template <bool checkargs = detail::default_safe_function_calls, std::size_t... I, typename... Args, typename Fx, typename... FxArgs>
@@ -148,7 +146,7 @@ namespace sol {
 				argument_handler<types<void, Args...>> handler{};
 				multi_check<checkargs, Args...>(L, start, handler);
 				record tracking{};
-				evaluator{}.eval(ta, tai, L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
+				eval(ta, tai, L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 			}
 		} // namespace stack_detail
 

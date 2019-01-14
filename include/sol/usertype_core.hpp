@@ -34,7 +34,7 @@
 #include "deprecate.hpp"
 #include "object.hpp"
 #include "function_types.hpp"
-#include "usertype_container.hpp"
+#include "usertype_container_launch.hpp"
 
 #include <sstream>
 #include <type_traits>
@@ -141,7 +141,7 @@ namespace sol {
 						ifx(meta_function::equal_to, f);
 					}
 					if (fx(meta_function::pairs)) {
-						ifx(meta_function::pairs, &usertype_container<as_container_t<T>>::pairs_call);
+						ifx(meta_function::pairs, &container_detail::u_c_launch<as_container_t<T>>::pairs_call);
 					}
 					if (fx(meta_function::length)) {
 						if constexpr (meta::has_size<const T>::value || meta::has_size<T>::value) {

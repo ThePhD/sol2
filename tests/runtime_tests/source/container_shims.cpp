@@ -36,7 +36,6 @@
 #include <set>
 #include <unordered_set>
 
-
 class int_shim {
 public:
 	int_shim() = default;
@@ -143,7 +142,7 @@ namespace sol {
 	struct is_container<my_vec> : std::true_type {};
 
 	template <>
-	struct container_traits<my_vec> {
+	struct usertype_container<my_vec> {
 		static auto begin(lua_State*, my_vec& self) {
 			return self.begin();
 		}
@@ -156,6 +155,21 @@ namespace sol {
 	};
 
 } // namespace sol
+
+struct order_suit {
+	std::vector<std::pair<int, int64_t>> objs;
+	std::vector<std::pair<int64_t, int>> objs2;
+
+	order_suit(int pairs) {
+		objs.reserve(pairs);
+		objs2.reserve(pairs * 2);
+		for (int i = 0; i < pairs; ++i) {
+			objs.push_back({ i, i * 10 });
+			objs2.push_back({ (i + pairs) * 2, (i * 2) * 50 });
+			objs2.push_back({ ((i + pairs) * 2) + 1, (i * 2 + 1) * 50 });
+		}
+	}
+};
 
 TEST_CASE("containers/input iterators", "test shitty input iterators that are all kinds of B L E H") {
 	sol::state lua;
@@ -254,4 +268,44 @@ TEST_CASE("containers/containers of pointers", "containers of pointers shouldn't
 		REQUIRE(*ap == 500);
 		REQUIRE(*bp == 600);
 	}
+}
+
+TEST_CASE("containers/pair container in usertypes", "make sure containers that use pairs in usertypes do not trigger compiler errors") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	auto orderSuit = lua.new_usertype<order_suit>("order_suit", sol::constructors<order_suit(int)>());
+#define SET_PROP(__PROP__) orderSuit.set(#__PROP__, &order_suit::__PROP__)
+	SET_PROP(objs);
+	SET_PROP(objs2);
+#undef SET_PROP
+
+	auto result1 = lua.safe_script("osobj = order_suit.new(5)", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
+	auto result2 = lua.safe_script("pvec = osobj.objs", sol::script_pass_on_error);
+	REQUIRE(result2.valid());
+	auto result3 = lua.safe_script("pvec2 = osobj.objs2", sol::script_pass_on_error);
+	REQUIRE(result3.valid());
+	using vec_t = std::remove_reference_t<decltype(std::declval<order_suit>().objs)>;
+	using vec2_t = std::remove_reference_t<decltype(std::declval<order_suit>().objs2)>;
+	vec_t& pvec = lua["pvec"];
+	vec2_t& pvec2 = lua["pvec2"];
+	REQUIRE(pvec.size() == 5);
+	REQUIRE(pvec2.size() == 10);
+
+	REQUIRE(pvec[0].first == 0);
+	REQUIRE(pvec[0].second == 0);
+	REQUIRE(pvec[1].first == 1);
+	REQUIRE(pvec[1].second == 10);
+	REQUIRE(pvec[2].first == 2);
+	REQUIRE(pvec[2].second == 20);
+
+	REQUIRE(pvec2[0].first == 10);
+	REQUIRE(pvec2[0].second == 0);
+	REQUIRE(pvec2[1].first == 11);
+	REQUIRE(pvec2[1].second == 50);
+	REQUIRE(pvec2[2].first == 12);
+	REQUIRE(pvec2[2].second == 100);
+	REQUIRE(pvec2[3].first == 13);
+	REQUIRE(pvec2[3].second == 150);
 }

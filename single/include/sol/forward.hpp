@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-01-05 18:55:40.545875 UTC
-// This header was generated with sol v2.20.6 (revision d9f973e)
+// Generated 2019-01-14 02:43:17.627340 UTC
+// This header was generated with sol v2.20.6 (revision 91faa7a)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -365,6 +365,9 @@ namespace sol {
 	struct this_state;
 	struct this_main_state;
 	struct this_environment;
+
+	class state_view;
+	class state;
 
 	template <typename T>
 	struct as_table_t;

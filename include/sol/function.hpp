@@ -75,6 +75,34 @@ namespace sol {
 		return *this;
 	}
 
+	namespace detail {
+		template <typename... R>
+		struct std_shim {
+			unsafe_function lua_func_;
+
+			std_shim(unsafe_function lua_func) : lua_func_(std::move(lua_func)) {
+			}
+
+			template <typename... Args>
+			meta::return_type_t<R...> operator()(Args&&... args) {
+				return lua_func_.call<R...>(std::forward<Args>(args)...);
+			}
+		};
+
+		template <>
+		struct std_shim<void> {
+			unsafe_function lua_func_;
+
+			std_shim(unsafe_function lua_func) : lua_func_(std::move(lua_func)) {
+			}
+
+			template <typename... Args>
+			void operator()(Args&&... args) {
+				lua_func_.call<void>(std::forward<Args>(args)...);
+			}
+		};
+	} // namespace detail
+
 	namespace stack {
 		template <typename Signature>
 		struct unqualified_getter<std::function<Signature>> {
@@ -82,27 +110,10 @@ namespace sol {
 			typedef typename fx_t::args_list args_lists;
 			typedef meta::tuple_types<typename fx_t::return_type> return_types;
 
-			template <typename... Args, typename... Ret>
-			static std::function<Signature> get_std_func(types<Ret...>, types<Args...>, lua_State* L, int index) {
-				unsafe_function f(L, index);
-				auto fx = [ f = std::move(f) ](Args && ... args) -> meta::return_type_t<Ret...> {
-					return f.call<Ret...>(std::forward<Args>(args)...);
-				};
+			template <typename... R>
+			static std::function<Signature> get_std_func(types<R...>, lua_State* L, int index) {
+				detail::std_shim<R...> fx(unsafe_function(L, index));
 				return std::move(fx);
-			}
-
-			template <typename... FxArgs>
-			static std::function<Signature> get_std_func(types<void>, types<FxArgs...>, lua_State* L, int index) {
-				unsafe_function f(L, index);
-				auto fx = [f = std::move(f)](FxArgs&&... args) -> void {
-					f(std::forward<FxArgs>(args)...);
-				};
-				return std::move(fx);
-			}
-
-			template <typename... FxArgs>
-			static std::function<Signature> get_std_func(types<>, types<FxArgs...> t, lua_State* L, int index) {
-				return get_std_func(types<void>(), t, L, index);
 			}
 
 			static std::function<Signature> get(lua_State* L, int index, record& tracking) {
@@ -112,7 +123,7 @@ namespace sol {
 				if (t == type::none || t == type::lua_nil) {
 					return nullptr;
 				}
-				return get_std_func(return_types(), args_lists(), L, index);
+				return get_std_func(return_types(), L, index);
 			}
 		};
 	} // namespace stack

@@ -111,7 +111,7 @@ namespace sol {
 		template <typename... Args>
 		void open_libraries(Args&&... args) {
 			static_assert(meta::all_same<lib, Args...>::value, "all types must be libraries");
-			if (sizeof...(args) == 0) {
+			if constexpr (sizeof...(args) == 0) {
 				luaL_openlibs(L);
 				return;
 			}

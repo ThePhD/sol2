@@ -88,7 +88,7 @@ namespace sol {
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
 				upvalues += stack::stack_detail::push_as_upvalues(L, memfxptr);
-				upvalues += stack::push(L, lightuserdata_value(static_cast<void*>(userptr)));
+				upvalues += stack::push(L, static_cast<void const*>(userptr));
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
@@ -133,14 +133,14 @@ namespace sol {
 
 			template <bool is_yielding, typename Fx, typename T, typename... Args>
 			static void select_reference_member_function(std::true_type, lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
-				typedef std::decay_t<Fx> dFx;
+				using dFx = std::decay_t<Fx>;
 				dFx memfxptr(std::forward<Fx>(fx));
 				auto userptr = detail::ptr(std::forward<T>(obj), std::forward<Args>(args)...);
 				lua_CFunction freefunc = &function_detail::upvalue_member_function<std::decay_t<decltype(*userptr)>, meta::unqualified_t<Fx>, is_yielding>::call;
 
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
-				upvalues += stack::stack_detail::push_as_upvalues(L, memfxptr);
+				upvalues += stack::push<user<dFx>>(L, memfxptr);
 				upvalues += stack::push(L, lightuserdata_value(static_cast<void*>(userptr)));
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
@@ -158,22 +158,24 @@ namespace sol {
 
 			template <bool is_yielding, typename Fx, typename C>
 			static void select_member_function(std::true_type, lua_State* L, Fx&& fx, function_detail::class_indicator<C>) {
-				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, Fx, is_yielding>::call;
+				using dFx = std::decay_t<Fx>;
+				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, dFx, is_yielding>::call;
 				
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
-				upvalues += stack::stack_detail::push_as_upvalues(L, fx);
+				upvalues += stack::push<user<dFx>>(L, fx);
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
 			template <bool is_yielding, typename Fx>
 			static void select_member_function(std::true_type, lua_State* L, Fx&& fx) {
+				using dFx = std::decay_t<Fx>;
 				typedef typename meta::bind_traits<meta::unqualified_t<Fx>>::object_type C;
-				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, Fx, is_yielding>::call;
+				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, dFx, is_yielding>::call;
 				
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
-				upvalues += stack::stack_detail::push_as_upvalues(L, fx);
+				upvalues += stack::push<user<dFx>>(L, fx);
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
