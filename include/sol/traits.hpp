@@ -39,6 +39,9 @@
 
 namespace sol {
 	namespace meta {
+		using sfinae_yes_t = std::true_type;
+		using sfinae_no_t = std::false_type;
+
 		template <std::size_t I>
 		using index_value = std::integral_constant<std::size_t, I>;
 
@@ -57,8 +60,18 @@ namespace sol {
 		template <bool B, typename T, typename U>
 		using conditional_t = typename conditional<B>::template type<T, U>;
 
-		using sfinae_yes_t = std::true_type;
-		using sfinae_no_t = std::false_type;
+		namespace meta_detail {
+			template <typename T, template <typename...> class Templ>
+			struct is_specialization_of : std::false_type {};
+			template <typename... T, template <typename...> class Templ>
+			struct is_specialization_of<Templ<T...>, Templ> : std::true_type {};
+		} // namespace meta_detail
+
+		template <typename T, template <typename...> class Templ>
+		using is_specialization_of = meta_detail::is_specialization_of<std::remove_cv_t<T>, Templ>;
+
+		template <typename T, template <typename...> class Templ>
+		inline constexpr bool is_specialization_of_v = is_specialization_of<std::remove_cv_t<T>, Templ>::value;
 
 		template <typename T>
 		struct identity {
@@ -68,14 +81,14 @@ namespace sol {
 		template <typename T>
 		using identity_t = typename identity<T>::type;
 
-		template <typename... Args>
-		struct is_tuple : std::false_type {};
-
-		template <typename... Args>
-		struct is_tuple<std::tuple<Args...>> : std::true_type {};
+		template <typename T>
+		using is_tuple = is_specialization_of<T, std::tuple>;
 
 		template <typename T>
-		struct is_builtin_type : std::integral_constant<bool, std::is_arithmetic<T>::value || std::is_pointer<T>::value || std::is_array<T>::value> {};
+		constexpr inline bool is_tuple_v = is_tuple<T>::value;
+
+		template <typename T>
+		using is_builtin_type = std::integral_constant<bool, std::is_arithmetic<T>::value || std::is_pointer<T>::value || std::is_array<T>::value>;
 
 		template <typename T>
 		struct unwrapped {
@@ -112,19 +125,6 @@ namespace sol {
 		template <typename T>
 		using remove_member_pointer_t = remove_member_pointer<T>;
 
-		namespace meta_detail {
-			template <typename T, template <typename...> class Templ>
-			struct is_specialization_of : std::false_type {};
-			template <typename... T, template <typename...> class Templ>
-			struct is_specialization_of<Templ<T...>, Templ> : std::true_type {};
-		} // namespace meta_detail
-
-		template <typename T, template <typename...> class Templ>
-		using is_specialization_of = meta_detail::is_specialization_of<std::remove_cv_t<T>, Templ>;
-
-		template <typename T, template <typename...> class Templ>
-		inline constexpr bool is_specialization_of_v = is_specialization_of<std::remove_cv_t<T>, Templ>::value;
-
 		template <class T, class...>
 		struct all_same : std::true_type {};
 
@@ -144,7 +144,7 @@ namespace sol {
 		using invoke_t = typename T::type;
 
 		template <typename T>
-		using invoke_b = boolean<T::value>;
+		using invoke_v = boolean<T::value>;
 
 		template <typename T>
 		using neg = boolean<!T::value>;

@@ -25,6 +25,7 @@
 #define SOL_PROTECTED_FUNCTION_HPP
 
 #include "reference.hpp"
+#include "object.hpp"
 #include "stack.hpp"
 #include "protected_function_result.hpp"
 #include "unsafe_function.hpp"
@@ -49,8 +50,11 @@ namespace sol {
 		}
 	}
 
-	template <typename base_t, bool aligned = false, typename handler_t = reference>
-	class basic_protected_function : public base_t {
+	template <typename ref_t, bool aligned = false, typename handler_t = reference>
+	class basic_protected_function : public basic_object<ref_t> {
+	private:
+		using base_t = basic_object<ref_t>;
+
 	public:
 		typedef is_stack_based<handler_t> is_stack_handler;
 

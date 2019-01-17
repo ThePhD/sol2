@@ -44,6 +44,25 @@ namespace sol {
 			}
 		}
 
+	protected:
+		basic_object(detail::no_safety_tag, lua_nil_t n) : base_t(n) {
+		}
+		basic_object(detail::no_safety_tag, lua_State* L, int index) : base_t(L, index) {
+		}
+		basic_object(lua_State* L, detail::global_tag t) : base_t(L, t) {
+		}
+		basic_object(detail::no_safety_tag, lua_State* L, ref_index index) : base_t(L, index) {
+		}
+		template <typename T,
+		     meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_object>>, meta::neg<std::is_same<base_type, stack_reference>>,
+		          meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		basic_object(detail::no_safety_tag, T&& r) noexcept : base_t(std::forward<T>(r)) {
+		}
+
+		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		basic_object(detail::no_safety_tag, lua_State* L, T&& r) noexcept : base_t(L, std::forward<T>(r)) {
+		}
+
 	public:
 		basic_object() noexcept = default;
 		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_object>>, meta::neg<std::is_same<base_type, stack_reference>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>

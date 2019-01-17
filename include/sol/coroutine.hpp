@@ -25,14 +25,18 @@
 #define SOL_COROUTINE_HPP
 
 #include "reference.hpp"
+#include "object.hpp"
 #include "stack.hpp"
 #include "function_result.hpp"
 #include "thread.hpp"
 #include "protected_handler.hpp"
 
 namespace sol {
-	template <typename base_t>
-	class basic_coroutine : public base_t {
+	template <typename ref_t>
+	class basic_coroutine : public basic_object<ref_t> {
+	private:
+		using base_t = basic_object<ref_t>;
+
 	public:
 		typedef reference handler_t;
 		handler_t error_handler;

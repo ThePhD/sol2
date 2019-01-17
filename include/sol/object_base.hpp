@@ -29,9 +29,11 @@
 
 namespace sol {
 
-	template <typename base_t>
-	class basic_object_base : public base_t {
+	template <typename ref_t>
+	class basic_object_base : public ref_t {
 	private:
+		using base_t = ref_t;
+		
 		template <typename T>
 		decltype(auto) as_stack(std::true_type) const {
 			return stack::get<T>(base_t::lua_state(), base_t::stack_index());

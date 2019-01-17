@@ -498,6 +498,18 @@ namespace sol {
 		return as_container_t<T>(std::forward<T>(value));
 	}
 
+	template <typename T>
+	struct force_t {
+		T arg;
+
+		force_t(T value) : arg(value) {}
+	};
+
+	template <typename T>
+	auto force(T&& value) {
+		return force_t<T>(std::forward<T>(value));
+	}
+
 	struct this_state {
 		lua_State* L;
 

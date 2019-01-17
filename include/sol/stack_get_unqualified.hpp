@@ -215,11 +215,12 @@ namespace sol { namespace stack {
 			tracking.use(1);
 
 			// the W4 flag is really great,
-			// so great that it can tell my for loops (2-nested)
-			// below never actually terminate without hitting a "return arr;"
-			// where the goto's are now so it would tell 
+			// so great that it can tell my for loops (twice nested)
+			// below never actually terminate 
+			// without hitting where the gotos have infested
+
+			// so now I would get the error W4XXX unreachable
 			// me that the return arr at the end of this function
-			// is W4XXX unreachable,
 			// which is fair until other compilers complain
 			// that there isn't a return and that based on
 			// SOME MAGICAL FORCE

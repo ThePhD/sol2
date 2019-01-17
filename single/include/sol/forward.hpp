@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-01-14 02:43:17.627340 UTC
-// This header was generated with sol v2.20.6 (revision 91faa7a)
+// Generated 2019-01-17 06:28:58.332972 UTC
+// This header was generated with sol v2.20.6 (revision 88a089c)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -269,12 +269,12 @@ namespace sol {
 	using stack_table_core = basic_table_core<b, stack_reference>;
 	template <typename base_type>
 	using basic_table = basic_table_core<false, base_type>;
-	typedef table_core<false> table;
-	typedef table_core<true> global_table;
-	typedef main_table_core<false> main_table;
-	typedef main_table_core<true> main_global_table;
-	typedef stack_table_core<false> stack_table;
-	typedef stack_table_core<true> stack_global_table;
+	using table = table_core<false>;
+	using global_table = table_core<true>;
+	using main_table = main_table_core<false>;
+	using main_global_table = main_table_core<true>;
+	using stack_table = stack_table_core<false>;
+	using stack_global_table = stack_table_core<true>;
 
 	template <typename T, typename base_type>
 	class basic_usertype;
@@ -332,6 +332,8 @@ namespace sol {
 #endif
 
 	template <typename base_t>
+	class basic_object_base;
+	template <typename base_t>
 	class basic_object;
 	template <typename base_t>
 	class basic_userdata;
@@ -373,6 +375,8 @@ namespace sol {
 	struct as_table_t;
 	template <typename T>
 	struct as_container_t;
+	template <typename T>
+	struct force_t;
 	template <typename T>
 	struct nested;
 	template <typename T>

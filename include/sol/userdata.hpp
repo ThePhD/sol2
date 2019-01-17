@@ -30,7 +30,8 @@
 namespace sol {
 	template <typename base_type>
 	class basic_userdata : public basic_table<base_type> {
-		typedef basic_table<base_type> base_t;
+	private:
+		using base_t = basic_table<base_type>;
 
 	public:
 		using base_t::lua_state;

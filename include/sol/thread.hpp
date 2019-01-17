@@ -25,6 +25,7 @@
 #define SOL_THREAD_HPP
 
 #include "reference.hpp"
+#include "object.hpp"
 #include "stack.hpp"
 #include "state_view.hpp"
 
@@ -80,8 +81,11 @@ namespace sol {
 		};
 	} // namespace stack
 
-	template <typename base_t>
-	class basic_thread : public base_t {
+	template <typename ref_t>
+	class basic_thread : public basic_object<ref_t> {
+	private:
+		using base_t = basic_object<ref_t>;
+
 	public:
 		using base_t::lua_state;
 

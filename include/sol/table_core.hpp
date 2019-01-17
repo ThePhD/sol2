@@ -29,8 +29,9 @@
 #include "function_types.hpp"
 #include "table_iterator.hpp"
 #include "types.hpp"
-#include "object_base.hpp"
+#include "object.hpp"
 #include "usertype.hpp"
+#include "optional.hpp"
 
 namespace sol {
 	namespace detail {
@@ -55,95 +56,110 @@ namespace sol {
 		inline int fail_on_newindex(lua_State* L) {
 			return luaL_error(L, "sol: cannot modify the elements of an enumeration table");
 		}
+
+		template <bool top_level, typename... Args>
+		using is_global = meta::all<meta::boolean<top_level>, meta::is_c_str<Args>...>;
+
+		template <bool top_level, typename... Args>
+		constexpr inline bool is_global_v = is_global<top_level, Args...>::value;
 	} // namespace detail
 
-	template <bool top_level, typename base_type>
-	class basic_table_core : public basic_object_base<base_type> {
-		typedef basic_object_base<base_type> base_t;
+	template <bool top_level, typename ref_t>
+	class basic_table_core : public basic_object<ref_t> {
+	private:
+		using base_t = basic_object<ref_t>;
+
 		friend class state;
 		friend class state_view;
 
-		template <typename... Args>
-		using is_global = meta::all<meta::boolean<top_level>, meta::is_c_str<Args>...>;
-
-		template <bool raw, typename Ret0, typename Ret1, typename... Ret, std::size_t... I, typename Keys>
-		auto tuple_get(types<Ret0, Ret1, Ret...>, std::index_sequence<0, 1, I...>, Keys&& keys) const
-		     -> decltype(stack::pop<std::tuple<Ret0, Ret1, Ret...>>(nullptr)) {
-			typedef decltype(stack::pop<std::tuple<Ret0, Ret1, Ret...>>(nullptr)) Tup;
-			return Tup(traverse_get_optional<top_level, raw, Ret0>(meta::is_optional<meta::unqualified_t<Ret0>>(), std::get<0>(std::forward<Keys>(keys))),
-			     traverse_get_optional<top_level, raw, Ret1>(meta::is_optional<meta::unqualified_t<Ret1>>(), std::get<1>(std::forward<Keys>(keys))),
-			     traverse_get_optional<top_level, raw, Ret>(meta::is_optional<meta::unqualified_t<Ret>>(), std::get<I>(std::forward<Keys>(keys)))...);
+		template <bool raw, typename... Ret, typename... Keys>
+		decltype(auto) tuple_get(int table_index, Keys&&... keys) const {
+			if constexpr (sizeof...(Ret) < 2) {
+				return traverse_get_single_maybe_tuple<raw, Ret...>(table_index, std::forward<Keys>(keys)...);
+			}
+			else {
+				using multi_ret = decltype(stack::pop<std::tuple<Ret...>>(nullptr));
+				return multi_ret(traverse_get_single_maybe_tuple<raw, Ret>(table_index, std::forward<Keys>(keys))...);
+			}
 		}
 
-		template <bool raw, typename Ret, std::size_t I, typename Keys>
-		decltype(auto) tuple_get(types<Ret>, std::index_sequence<I>, Keys&& keys) const {
-			return traverse_get_optional<top_level, raw, Ret>(meta::is_optional<meta::unqualified_t<Ret>>(), std::get<I>(std::forward<Keys>(keys)));
+		template <bool raw, typename Ret, size_t... I, typename Key>
+		decltype(auto) traverse_get_single_tuple(int table_index, std::index_sequence<I...>, Key&& key) const {
+			return traverse_get_single<raw, Ret>(table_index, std::get<I>(std::forward<Key>(key))...);
+		}
+
+		template <bool raw, typename Ret, typename Key>
+		decltype(auto) traverse_get_single_maybe_tuple(int table_index, Key&& key) const {
+			if constexpr (meta::is_tuple_v<meta::unqualified_t<Key>>) {
+				return traverse_get_single_tuple<raw, Ret>(
+				     table_index, std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<Key>>>(), std::forward<Key>(key));
+			}
+			else {
+				return traverse_get_single<raw, Ret>(table_index, std::forward<Key>(key));
+			}
+		}
+
+		template <bool raw, typename Ret, typename... Keys>
+		decltype(auto) traverse_get_single(int table_index, Keys&&... keys) const {
+			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			if constexpr (meta::is_optional_v<meta::unqualified_t<Ret>>) {
+				int popcount = 0;
+				detail::ref_clean c(base_t::lua_state(), popcount);
+				return traverse_get_deep_optional<global, raw, Ret>(popcount, table_index, std::forward<Keys>(keys)...);
+			}
+			else {
+				detail::clean<sizeof...(Keys)> c(base_t::lua_state());
+				return traverse_get_deep<global, raw, Ret>(table_index, std::forward<Keys>(keys)...);
+			}
 		}
 
 		template <bool raw, typename Pairs, std::size_t... I>
 		void tuple_set(std::index_sequence<I...>, Pairs&& pairs) {
-			auto pp = stack::push_pop < top_level && (is_global<decltype(std::get<I * 2>(std::forward<Pairs>(pairs)))...>::value) > (*this);
+			constexpr bool global = detail::is_global<top_level, decltype(std::get<I * 2>(std::forward<Pairs>(pairs)))...>::value;
+			auto pp = stack::push_pop<global>(*this);
+			int table_index = pp.index_of(*this);
 			void(detail::swallow{ (stack::set_field<top_level, raw>(base_t::lua_state(),
 			                            std::get<I * 2>(std::forward<Pairs>(pairs)),
 			                            std::get<I * 2 + 1>(std::forward<Pairs>(pairs)),
-			                            lua_gettop(base_t::lua_state())),
+			                            table_index),
 			     0)... });
 		}
 
-		template <bool global, bool raw, typename T, typename Key>
-		decltype(auto) traverse_get_deep(Key&& key) const {
-			stack::get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key));
+		template <bool global, bool raw, typename T, typename Key, typename... Keys>
+		decltype(auto) traverse_get_deep(int table_index, Key&& key, Keys&&... keys) const {
+			stack::get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key), table_index);
+			(void)detail::swallow{ 0, (stack::get_field<false, raw>(base_t::lua_state(), std::forward<Keys>(keys), lua_gettop(base_t::lua_state())), 0)... };
 			return stack::get<T>(base_t::lua_state());
 		}
 
 		template <bool global, bool raw, typename T, typename Key, typename... Keys>
-		decltype(auto) traverse_get_deep(Key&& key, Keys&&... keys) const {
-			stack::get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key));
-			return traverse_get_deep<false, raw, T>(std::forward<Keys>(keys)...);
-		}
-
-		template <bool global, bool raw, typename T, std::size_t I, typename Key>
-		decltype(auto) traverse_get_deep_optional(int& popcount, Key&& key) const {
-			typedef decltype(stack::get<T>(base_t::lua_state())) R;
-			auto p = stack::probe_get_field<global, raw, T>(base_t::lua_state(), std::forward<Key>(key), lua_gettop(base_t::lua_state()));
-			popcount += p.levels;
-			if (!p.success)
-				return R(nullopt);
-			return stack::get<T>(base_t::lua_state());
-		}
-
-		template <bool global, bool raw, typename T, std::size_t I, typename Key, typename... Keys>
-		decltype(auto) traverse_get_deep_optional(int& popcount, Key&& key, Keys&&... keys) const {
-			auto p = I > 0 ? stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), -1)
-			               : stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), lua_gettop(base_t::lua_state()));
-			popcount += p.levels;
-			if (!p.success)
-				return T(nullopt);
-			return traverse_get_deep_optional<false, raw, T, I + 1>(popcount, std::forward<Keys>(keys)...);
-		}
-
-		template <bool global, bool raw, typename T, typename... Keys>
-		decltype(auto) traverse_get_optional(std::false_type, Keys&&... keys) const {
-			detail::clean<sizeof...(Keys)> c(base_t::lua_state());
-			return traverse_get_deep<global, raw, T>(std::forward<Keys>(keys)...);
-		}
-
-		template <bool global, bool raw, typename T, typename... Keys>
-		decltype(auto) traverse_get_optional(std::true_type, Keys&&... keys) const {
-			int popcount = 0;
-			detail::ref_clean c(base_t::lua_state(), popcount);
-			return traverse_get_deep_optional<global, raw, T, 0>(popcount, std::forward<Keys>(keys)...);
-		}
-
-		template <bool global, bool raw, typename Key, typename Value>
-		void traverse_set_deep(Key&& key, Value&& value) const {
-			stack::set_field<global, raw>(base_t::lua_state(), std::forward<Key>(key), std::forward<Value>(value));
+		decltype(auto) traverse_get_deep_optional(int& popcount, int table_index, Key&& key, Keys&&... keys) const {
+			if constexpr (sizeof...(Keys) > 0) {
+				auto p = stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), table_index);
+				popcount += p.levels;
+				if (!p.success)
+					return T(nullopt);
+				return traverse_get_deep_optional<false, raw, T>(popcount, lua_gettop(base_t::lua_state()), std::forward<Keys>(keys)...);
+			}
+			else {
+				using R = decltype(stack::get<T>(base_t::lua_state()));
+				auto p = stack::probe_get_field<global, raw, T>(base_t::lua_state(), std::forward<Key>(key), table_index);
+				popcount += p.levels;
+				if (!p.success)
+					return R(nullopt);
+				return stack::get<T>(base_t::lua_state());
+			}
 		}
 
 		template <bool global, bool raw, typename Key, typename... Keys>
-		void traverse_set_deep(Key&& key, Keys&&... keys) const {
-			stack::get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key));
-			traverse_set_deep<false, raw>(std::forward<Keys>(keys)...);
+		void traverse_set_deep(int table_index, Key&& key, Keys&&... keys) const {
+			if constexpr (sizeof...(Keys) == 1) {
+				stack::set_field<global, raw>(base_t::lua_state(), std::forward<Key>(key), std::forward<Keys>(keys)..., table_index);
+			}
+			else {
+				stack::get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key), table_index);
+				traverse_set_deep<false, raw>(lua_gettop(base_t::lua_state()), std::forward<Keys>(keys)...);
+			}
 		}
 
 		basic_table_core(lua_State* L, detail::global_tag t) noexcept : base_t(L, t) {
@@ -157,7 +173,7 @@ namespace sol {
 		basic_table_core(detail::no_safety_tag, lua_State* L, ref_index index) : base_t(L, index) {
 		}
 		template <typename T,
-		     meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>,
+		     meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<ref_t, stack_reference>>,
 		          meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_table_core(detail::no_safety_tag, T&& r) noexcept : base_t(std::forward<T>(r)) {
 		}
@@ -166,8 +182,8 @@ namespace sol {
 		}
 
 	public:
-		typedef basic_table_iterator<base_type> iterator;
-		typedef iterator const_iterator;
+		using iterator = basic_table_iterator<ref_t>;
+		using const_iterator = iterator;
 
 		using base_t::lua_state;
 
@@ -189,7 +205,7 @@ namespace sol {
 #endif // Safety
 		}
 		basic_table_core(lua_State* L, const new_table& nt) : base_t(L, -stack::push(L, nt)) {
-			if (!is_stack_based<meta::unqualified_t<base_type>>::value) {
+			if (!is_stack_based<meta::unqualified_t<ref_t>>::value) {
 				lua_pop(L, 1);
 			}
 		}
@@ -207,7 +223,7 @@ namespace sol {
 #endif // Safety
 		}
 		template <typename T,
-		     meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>,
+		     meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<ref_t, stack_reference>>,
 		          meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_table_core(T&& r) noexcept : basic_table_core(detail::no_safety, std::forward<T>(r)) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
@@ -240,8 +256,10 @@ namespace sol {
 		template <typename... Ret, typename... Keys>
 		decltype(auto) get(Keys&&... keys) const {
 			static_assert(sizeof...(Keys) == sizeof...(Ret), "number of keys and number of return types do not match");
-			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-			return tuple_get<false>(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), std::forward_as_tuple(std::forward<Keys>(keys)...));
+			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			auto pp = stack::push_pop<global>(*this);
+			int table_index = pp.index_of(*this);
+			return tuple_get<false, Ret...>(table_index, std::forward<Keys>(keys)...);
 		}
 
 		template <typename T, typename Key>
@@ -265,29 +283,40 @@ namespace sol {
 
 		template <typename T, typename... Keys>
 		decltype(auto) traverse_get(Keys&&... keys) const {
-			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-			return traverse_get_optional<top_level, false, T>(meta::is_optional<meta::unqualified_t<T>>(), std::forward<Keys>(keys)...);
+			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			auto pp = stack::push_pop<global>(*this);
+			int table_index = pp.index_of(*this);
+			return traverse_get_single<false, T>(table_index, std::forward<Keys>(keys)...);
 		}
 
 		template <typename... Keys>
 		basic_table_core& traverse_set(Keys&&... keys) {
-			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
+			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			auto pp = stack::push_pop<global>(*this);
+			int table_index = pp.index_of(*this);
 			auto pn = stack::pop_n(base_t::lua_state(), static_cast<int>(sizeof...(Keys) - 2));
-			traverse_set_deep<top_level, false>(std::forward<Keys>(keys)...);
+			traverse_set_deep<top_level, false>(table_index, std::forward<Keys>(keys)...);
 			return *this;
 		}
 
 		template <typename... Args>
 		basic_table_core& set(Args&&... args) {
-			tuple_set<false>(std::make_index_sequence<sizeof...(Args) / 2>(), std::forward_as_tuple(std::forward<Args>(args)...));
+			if constexpr(sizeof...(Args) == 2) {
+				traverse_set(std::forward<Args>(args)...);
+			}
+			else {
+				tuple_set<false>(std::make_index_sequence<sizeof...(Args) / 2>(), std::forward_as_tuple(std::forward<Args>(args)...));
+			}
 			return *this;
 		}
 
 		template <typename... Ret, typename... Keys>
 		decltype(auto) raw_get(Keys&&... keys) const {
 			static_assert(sizeof...(Keys) == sizeof...(Ret), "number of keys and number of return types do not match");
-			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-			return tuple_get<true>(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), std::forward_as_tuple(std::forward<Keys>(keys)...));
+			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			auto pp = stack::push_pop<global>(*this);
+			int table_index = pp.index_of(*this);
+			return tuple_get<true, Ret...>(table_index, std::forward<Keys>(keys)...);
 		}
 
 		template <typename T, typename Key>
@@ -311,13 +340,16 @@ namespace sol {
 
 		template <typename T, typename... Keys>
 		decltype(auto) traverse_raw_get(Keys&&... keys) const {
-			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-			return traverse_get_optional<top_level, true, T>(meta::is_optional<meta::unqualified_t<T>>(), std::forward<Keys>(keys)...);
+			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			auto pp = stack::push_pop<global>(*this);
+			int table_index = pp.index_of(*this);
+			return traverse_get_single<true, T>(table_index, std::forward<Keys>(keys)...);
 		}
 
 		template <typename... Keys>
 		basic_table_core& traverse_raw_set(Keys&&... keys) {
-			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
+			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			auto pp = stack::push_pop<global>(*this);
 			auto pn = stack::pop_n(base_t::lua_state(), static_cast<int>(sizeof...(Keys) - 2));
 			traverse_set_deep<top_level, true>(std::forward<Keys>(keys)...);
 			return *this;
@@ -435,7 +467,8 @@ namespace sol {
 		template <typename... Args>
 		basic_table_core& add(Args&&... args) {
 			auto pp = stack::push_pop(*this);
-			(void)detail::swallow{ 0, (stack::set_ref(base_t::lua_state(), std::forward<Args>(args)), 0)... };
+			int table_index = pp.index_of(*this);
+			(void)detail::swallow{ 0, (stack::set_ref(base_t::lua_state(), std::forward<Args>(args), table_index), 0)... };
 			return *this;
 		}
 

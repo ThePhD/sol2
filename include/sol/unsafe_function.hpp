@@ -25,15 +25,18 @@
 #define SOL_UNSAFE_FUNCTION_HPP
 
 #include "reference.hpp"
+#include "object.hpp"
 #include "stack.hpp"
 #include "function_result.hpp"
 #include "function_types.hpp"
 #include <cstdint>
 
 namespace sol {
-	template <typename base_t, bool aligned = false>
-	class basic_function : public base_t {
+	template <typename ref_t, bool aligned = false>
+	class basic_function : public basic_object<ref_t> {
 	private:
+		using base_t = basic_object<ref_t>;
+
 		void luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount) const {
 			lua_call(lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount));
 		}

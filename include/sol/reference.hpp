@@ -91,33 +91,58 @@ namespace sol {
 				lua_pop(L, t);
 			}
 		};
+		
 		template <>
 		struct push_popper_n<true> {
 			push_popper_n(lua_State*, int) {
 			}
 		};
+
 		template <bool, typename T, typename = void>
 		struct push_popper {
+			using Tu = meta::unqualified_t<T>;
 			T t;
+			int idx;
+
 			push_popper(T x)
-			: t(x) {
-				t.push();
+			: t(x), idx(lua_absindex(t.lua_state(), -t.push())) {
+				
 			}
+
+			int index_of(const Tu&) {
+				return idx;
+			}
+
 			~push_popper() {
 				t.pop();
 			}
 		};
+
 		template <typename T, typename C>
 		struct push_popper<true, T, C> {
+			using Tu = meta::unqualified_t<T>;
+
 			push_popper(T) {
 			}
+
+			int index_of(const Tu&) {
+				return -1;
+			}
+
 			~push_popper() {
 			}
 		};
 		template <typename T>
 		struct push_popper<false, T, std::enable_if_t<std::is_base_of<stack_reference, meta::unqualified_t<T>>::value>> {
+			using Tu = meta::unqualified_t<T>;
+			
 			push_popper(T) {
 			}
+
+			int index_of(const Tu& r) {
+				return r.stack_index();
+			}
+
 			~push_popper() {
 			}
 		};
@@ -126,12 +151,14 @@ namespace sol {
 		push_popper<top_level, T> push_pop(T&& x) {
 			return push_popper<top_level, T>(std::forward<T>(x));
 		}
+
 		template <typename T>
 		push_popper_at push_pop_at(T&& x) {
 			int c = x.push();
 			lua_State* L = x.lua_state();
 			return push_popper_at(L, lua_absindex(L, -c), c);
 		}
+		
 		template <bool top_level = false>
 		push_popper_n<top_level> pop_n(lua_State* L, int x) {
 			return push_popper_n<top_level>(L, x);

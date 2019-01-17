@@ -93,8 +93,8 @@ namespace sol {
 		}
 
 	public:
-		typedef global_table::iterator iterator;
-		typedef global_table::const_iterator const_iterator;
+		using iterator = typename global_table::iterator;
+		using const_iterator = typename global_table::const_iterator;
 
 		state_view(lua_State* Ls)
 		: L(Ls), reg(Ls, LUA_REGISTRYINDEX), global(Ls, detail::global_) {

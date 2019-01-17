@@ -84,6 +84,10 @@ TEST_CASE("table/traversal", "ensure that we can chain requests and tunnel down 
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		lua["t1"]["t2"]["t3"] = 64;
+	}
+	REQUIRE(begintop == endtop);
+
+	{
 		int traversex64 = lua.traverse_get<int>("t1", "t2", "t3");
 		REQUIRE(traversex64 == 64);
 	}
@@ -99,6 +103,11 @@ TEST_CASE("table/traversal", "ensure that we can chain requests and tunnel down 
 	{
 		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		lua.traverse_set("t1", "t2", "t3", 13);
+	}
+	REQUIRE(begintop == endtop);
+
+	{
+		test_stack_guard g(lua.lua_state(), begintop, endtop);
 		int traversex13 = lua.traverse_get<int>("t1", "t2", "t3");
 		REQUIRE(traversex13 == 13);
 	}
@@ -659,5 +668,58 @@ TEST_CASE("object/is", "test whether or not the is abstraction works properly fo
 			auto result = lua.safe_script("assert(is_thing(a))", sol::script_pass_on_error);
 			REQUIRE(result.valid());
 		}
+	}
+}
+
+TEST_CASE("object/base_of_things", "make sure that object is the base of things and can be sliced / returned safely") {
+	SECTION("reference") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::coroutine);
+
+		lua["ud"] = base1{};
+
+		lua["f1"] = [](sol::object o) -> sol::object { return o; };
+		lua["f2"] = [](sol::table o) -> sol::object { return o; };
+		lua["f3"] = [](sol::thread o) -> sol::object { return o; };
+		lua["f4"] = [](sol::unsafe_function o) -> sol::object { return o; };
+		lua["f5"] = [](sol::protected_function o) -> sol::object { return o; };
+		lua["f6"] = [](sol::userdata o) -> sol::object { return o; };
+		auto result1 = lua.safe_script("f1(2)", sol::script_pass_on_error);
+		REQUIRE(result1.valid());
+		auto result2 = lua.safe_script("f2({})", sol::script_pass_on_error);
+		REQUIRE(result2.valid());
+		auto result3 = lua.safe_script("f3(coroutine.create( function () end ) )", sol::script_pass_on_error);
+		REQUIRE(result3.valid());
+		auto result4 = lua.safe_script("f4( function () end )", sol::script_pass_on_error);
+		REQUIRE(result4.valid());
+		auto result5 = lua.safe_script("f5( function () end )", sol::script_pass_on_error);
+		REQUIRE(result5.valid());
+		auto result6 = lua.safe_script("f6(ud)", sol::script_pass_on_error);
+		REQUIRE(result6.valid());
+	}
+	SECTION("stack_reference") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::coroutine);
+
+		lua["ud"] = base1{};
+
+		lua["f1"] = [](sol::stack_object o) -> sol::stack_object { return o; };
+		lua["f2"] = [](sol::stack_table o) -> sol::stack_object { return o; };
+		lua["f3"] = [](sol::stack_thread o) -> sol::stack_object { return o; };
+		lua["f4"] = [](sol::stack_unsafe_function o) -> sol::stack_object { return o; };
+		lua["f5"] = [](sol::stack_protected_function o) -> sol::stack_object { return o; };
+		lua["f6"] = [](sol::stack_userdata o) -> sol::stack_object { return o; };
+		auto result1 = lua.safe_script("f1(2)", sol::script_pass_on_error);
+		REQUIRE(result1.valid());
+		auto result2 = lua.safe_script("f2({})", sol::script_pass_on_error);
+		REQUIRE(result2.valid());
+		auto result3 = lua.safe_script("f3(coroutine.create( function () end ) )", sol::script_pass_on_error);
+		REQUIRE(result3.valid());
+		auto result4 = lua.safe_script("f4( function () end )", sol::script_pass_on_error);
+		REQUIRE(result4.valid());
+		auto result5 = lua.safe_script("f5( function () end )", sol::script_pass_on_error);
+		REQUIRE(result5.valid());
+		auto result6 = lua.safe_script("f6(ud)", sol::script_pass_on_error);
+		REQUIRE(result6.valid());
 	}
 }

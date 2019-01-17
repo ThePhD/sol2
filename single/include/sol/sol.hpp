@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-01-14 02:43:17.362011 UTC
-// This header was generated with sol v2.20.6 (revision 91faa7a)
+// Generated 2019-01-17 06:28:58.073560 UTC
+// This header was generated with sol v2.20.6 (revision 88a089c)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -297,12 +297,12 @@ namespace sol {
 	using stack_table_core = basic_table_core<b, stack_reference>;
 	template <typename base_type>
 	using basic_table = basic_table_core<false, base_type>;
-	typedef table_core<false> table;
-	typedef table_core<true> global_table;
-	typedef main_table_core<false> main_table;
-	typedef main_table_core<true> main_global_table;
-	typedef stack_table_core<false> stack_table;
-	typedef stack_table_core<true> stack_global_table;
+	using table = table_core<false>;
+	using global_table = table_core<true>;
+	using main_table = main_table_core<false>;
+	using main_global_table = main_table_core<true>;
+	using stack_table = stack_table_core<false>;
+	using stack_global_table = stack_table_core<true>;
 
 	template <typename T, typename base_type>
 	class basic_usertype;
@@ -360,6 +360,8 @@ namespace sol {
 #endif
 
 	template <typename base_t>
+	class basic_object_base;
+	template <typename base_t>
 	class basic_object;
 	template <typename base_t>
 	class basic_userdata;
@@ -401,6 +403,8 @@ namespace sol {
 	struct as_table_t;
 	template <typename T>
 	struct as_container_t;
+	template <typename T>
+	struct force_t;
 	template <typename T>
 	struct nested;
 	template <typename T>
@@ -1227,6 +1231,9 @@ namespace sol {
 
 namespace sol {
 	namespace meta {
+		using sfinae_yes_t = std::true_type;
+		using sfinae_no_t = std::false_type;
+
 		template <std::size_t I>
 		using index_value = std::integral_constant<std::size_t, I>;
 
@@ -1245,8 +1252,18 @@ namespace sol {
 		template <bool B, typename T, typename U>
 		using conditional_t = typename conditional<B>::template type<T, U>;
 
-		using sfinae_yes_t = std::true_type;
-		using sfinae_no_t = std::false_type;
+		namespace meta_detail {
+			template <typename T, template <typename...> class Templ>
+			struct is_specialization_of : std::false_type {};
+			template <typename... T, template <typename...> class Templ>
+			struct is_specialization_of<Templ<T...>, Templ> : std::true_type {};
+		} // namespace meta_detail
+
+		template <typename T, template <typename...> class Templ>
+		using is_specialization_of = meta_detail::is_specialization_of<std::remove_cv_t<T>, Templ>;
+
+		template <typename T, template <typename...> class Templ>
+		inline constexpr bool is_specialization_of_v = is_specialization_of<std::remove_cv_t<T>, Templ>::value;
 
 		template <typename T>
 		struct identity {
@@ -1256,14 +1273,14 @@ namespace sol {
 		template <typename T>
 		using identity_t = typename identity<T>::type;
 
-		template <typename... Args>
-		struct is_tuple : std::false_type {};
-
-		template <typename... Args>
-		struct is_tuple<std::tuple<Args...>> : std::true_type {};
+		template <typename T>
+		using is_tuple = is_specialization_of<T, std::tuple>;
 
 		template <typename T>
-		struct is_builtin_type : std::integral_constant<bool, std::is_arithmetic<T>::value || std::is_pointer<T>::value || std::is_array<T>::value> {};
+		constexpr inline bool is_tuple_v = is_tuple<T>::value;
+
+		template <typename T>
+		using is_builtin_type = std::integral_constant<bool, std::is_arithmetic<T>::value || std::is_pointer<T>::value || std::is_array<T>::value>;
 
 		template <typename T>
 		struct unwrapped {
@@ -1300,19 +1317,6 @@ namespace sol {
 		template <typename T>
 		using remove_member_pointer_t = remove_member_pointer<T>;
 
-		namespace meta_detail {
-			template <typename T, template <typename...> class Templ>
-			struct is_specialization_of : std::false_type {};
-			template <typename... T, template <typename...> class Templ>
-			struct is_specialization_of<Templ<T...>, Templ> : std::true_type {};
-		} // namespace meta_detail
-
-		template <typename T, template <typename...> class Templ>
-		using is_specialization_of = meta_detail::is_specialization_of<std::remove_cv_t<T>, Templ>;
-
-		template <typename T, template <typename...> class Templ>
-		inline constexpr bool is_specialization_of_v = is_specialization_of<std::remove_cv_t<T>, Templ>::value;
-
 		template <class T, class...>
 		struct all_same : std::true_type {};
 
@@ -1332,7 +1336,7 @@ namespace sol {
 		using invoke_t = typename T::type;
 
 		template <typename T>
-		using invoke_b = boolean<T::value>;
+		using invoke_v = boolean<T::value>;
 
 		template <typename T>
 		using neg = boolean<!T::value>;
@@ -3450,7 +3454,7 @@ namespace sol { namespace detail {
 }} // namespace sol::detail
 #endif
 
-#define SOL_TL_OPTIONAL_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T) tl::detail::is_trivially_copy_constructible<T>::value
+#define SOL_TL_OPTIONAL_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T) sol::detail::is_trivially_copy_constructible<T>::value
 #define SOL_TL_OPTIONAL_IS_TRIVIALLY_COPY_ASSIGNABLE(T) std::is_trivially_copy_assignable<T>::value
 #define SOL_TL_OPTIONAL_IS_TRIVIALLY_DESTRUCTIBLE(T) std::is_trivially_destructible<T>::value
 #else
@@ -3573,7 +3577,7 @@ namespace sol {
 		template <class... Ts>
 		using void_t = typename voider<Ts...>::type;
 
-		// Trait for checking if a type is a tl::optional
+		// Trait for checking if a type is a sol::optional
 		template <class T>
 		struct is_optional_impl : std::false_type {};
 		template <class T>
@@ -3581,7 +3585,7 @@ namespace sol {
 		template <class T>
 		using is_optional = is_optional_impl<decay_t<T>>;
 
-		// Change void to tl::monostate
+		// Change void to sol::monostate
 		template <class U>
 		using fixup_void = conditional_t<std::is_void<U>::value, monostate, U>;
 
@@ -3987,9 +3991,9 @@ namespace sol {
 	///
 	/// *Examples*:
 	/// ```
-	/// tl::optional<int> a = tl::nullopt;
-	/// void foo (tl::optional<int>);
-	/// foo(tl::nullopt); //pass an empty optional
+	/// sol::optional<int> a = sol::nullopt;
+	/// void foo (sol::optional<int>);
+	/// foo(sol::nullopt); //pass an empty optional
 	/// ```
 	static constexpr nullopt_t nullopt{ nullopt_t::do_not_use{}, nullopt_t::do_not_use{} };
 
@@ -4991,7 +4995,7 @@ namespace sol {
 	///
 	/// ```
 	/// int i = 42;
-	/// tl::optional<int&> o = i;
+	/// sol::optional<int&> o = i;
 	/// *o == 42; //true
 	/// i = 12;
 	/// *o = 12; //true
@@ -5624,13 +5628,15 @@ namespace sol {
 
 	namespace meta {
 		template <typename T>
-		struct is_optional : std::false_type {};
-		template <typename T>
-		struct is_optional<optional<T>> : std::true_type {};
+		using is_optional = any<
+			is_specialization_of<T, optional>
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-		template <typename T>
-		struct is_optional<std::optional<T>> : std::true_type {};
+		     , is_specialization_of<T, std::optional>
 #endif
+		>;
+		
+		template <typename T>
+		constexpr inline bool is_optional_v = is_optional<T>::value;
 	} // namespace meta
 } // namespace sol
 
@@ -6282,6 +6288,18 @@ namespace sol {
 	template <typename T>
 	auto as_container(T&& value) {
 		return as_container_t<T>(std::forward<T>(value));
+	}
+
+	template <typename T>
+	struct force_t {
+		T arg;
+
+		force_t(T value) : arg(value) {}
+	};
+
+	template <typename T>
+	auto force(T&& value) {
+		return force_t<T>(std::forward<T>(value));
 	}
 
 	struct this_state {
@@ -8000,33 +8018,58 @@ namespace sol {
 				lua_pop(L, t);
 			}
 		};
+		
 		template <>
 		struct push_popper_n<true> {
 			push_popper_n(lua_State*, int) {
 			}
 		};
+
 		template <bool, typename T, typename = void>
 		struct push_popper {
+			using Tu = meta::unqualified_t<T>;
 			T t;
+			int idx;
+
 			push_popper(T x)
-			: t(x) {
-				t.push();
+			: t(x), idx(lua_absindex(t.lua_state(), -t.push())) {
+				
 			}
+
+			int index_of(const Tu&) {
+				return idx;
+			}
+
 			~push_popper() {
 				t.pop();
 			}
 		};
+
 		template <typename T, typename C>
 		struct push_popper<true, T, C> {
+			using Tu = meta::unqualified_t<T>;
+
 			push_popper(T) {
 			}
+
+			int index_of(const Tu&) {
+				return -1;
+			}
+
 			~push_popper() {
 			}
 		};
 		template <typename T>
 		struct push_popper<false, T, std::enable_if_t<std::is_base_of<stack_reference, meta::unqualified_t<T>>::value>> {
+			using Tu = meta::unqualified_t<T>;
+			
 			push_popper(T) {
 			}
+
+			int index_of(const Tu& r) {
+				return r.stack_index();
+			}
+
 			~push_popper() {
 			}
 		};
@@ -8035,12 +8078,14 @@ namespace sol {
 		push_popper<top_level, T> push_pop(T&& x) {
 			return push_popper<top_level, T>(std::forward<T>(x));
 		}
+
 		template <typename T>
 		push_popper_at push_pop_at(T&& x) {
 			int c = x.push();
 			lua_State* L = x.lua_state();
 			return push_popper_at(L, lua_absindex(L, -c), c);
 		}
+		
 		template <bool top_level = false>
 		push_popper_n<top_level> pop_n(lua_State* L, int x) {
 			return push_popper_n<top_level>(L, x);
@@ -11176,11 +11221,12 @@ namespace sol { namespace stack {
 			tracking.use(1);
 
 			// the W4 flag is really great,
-			// so great that it can tell my for loops (2-nested)
-			// below never actually terminate without hitting a "return arr;"
-			// where the goto's are now so it would tell 
+			// so great that it can tell my for loops (twice nested)
+			// below never actually terminate 
+			// without hitting where the gotos have infested
+
+			// so now I would get the error W4XXX unreachable
 			// me that the return arr at the end of this function
-			// is W4XXX unreachable,
 			// which is fair until other compilers complain
 			// that there isn't a return and that based on
 			// SOME MAGICAL FORCE
@@ -14034,9 +14080,11 @@ namespace sol {
 
 namespace sol {
 
-	template <typename base_t>
-	class basic_object_base : public base_t {
+	template <typename ref_t>
+	class basic_object_base : public ref_t {
 	private:
+		using base_t = ref_t;
+		
 		template <typename T>
 		decltype(auto) as_stack(std::true_type) const {
 			return stack::get<T>(base_t::lua_state(), base_t::stack_index());
@@ -14102,6 +14150,25 @@ namespace sol {
 			if (invert_and_pop) {
 				lua_pop(L, -index);
 			}
+		}
+
+	protected:
+		basic_object(detail::no_safety_tag, lua_nil_t n) : base_t(n) {
+		}
+		basic_object(detail::no_safety_tag, lua_State* L, int index) : base_t(L, index) {
+		}
+		basic_object(lua_State* L, detail::global_tag t) : base_t(L, t) {
+		}
+		basic_object(detail::no_safety_tag, lua_State* L, ref_index index) : base_t(L, index) {
+		}
+		template <typename T,
+		     meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_object>>, meta::neg<std::is_same<base_type, stack_reference>>,
+		          meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		basic_object(detail::no_safety_tag, T&& r) noexcept : base_t(std::forward<T>(r)) {
+		}
+
+		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		basic_object(detail::no_safety_tag, lua_State* L, T&& r) noexcept : base_t(L, std::forward<T>(r)) {
 		}
 
 	public:
@@ -17230,9 +17297,11 @@ namespace sol {
 // end of sol/function_types.hpp
 
 namespace sol {
-	template <typename base_t, bool aligned = false>
-	class basic_function : public base_t {
+	template <typename ref_t, bool aligned = false>
+	class basic_function : public basic_object<ref_t> {
 	private:
+		using base_t = basic_object<ref_t>;
+
 		void luacall(std::ptrdiff_t argcount, std::ptrdiff_t resultcount) const {
 			lua_call(lua_state(), static_cast<int>(argcount), static_cast<int>(resultcount));
 		}
@@ -17440,8 +17509,11 @@ namespace sol {
 		}
 	}
 
-	template <typename base_t, bool aligned = false, typename handler_t = reference>
-	class basic_protected_function : public base_t {
+	template <typename ref_t, bool aligned = false, typename handler_t = reference>
+	class basic_protected_function : public basic_object<ref_t> {
+	private:
+		using base_t = basic_object<ref_t>;
+
 	public:
 		typedef is_stack_based<handler_t> is_stack_handler;
 
@@ -21036,7 +21108,7 @@ namespace sol {
 		}
 
 		proxy& force() {
-			if (this->valid()) {
+			if (!this->valid()) {
 				this->set(new_table());
 			}
 			return *this;
@@ -21233,95 +21305,110 @@ namespace sol {
 		inline int fail_on_newindex(lua_State* L) {
 			return luaL_error(L, "sol: cannot modify the elements of an enumeration table");
 		}
+
+		template <bool top_level, typename... Args>
+		using is_global = meta::all<meta::boolean<top_level>, meta::is_c_str<Args>...>;
+
+		template <bool top_level, typename... Args>
+		constexpr inline bool is_global_v = is_global<top_level, Args...>::value;
 	} // namespace detail
 
-	template <bool top_level, typename base_type>
-	class basic_table_core : public basic_object_base<base_type> {
-		typedef basic_object_base<base_type> base_t;
+	template <bool top_level, typename ref_t>
+	class basic_table_core : public basic_object<ref_t> {
+	private:
+		using base_t = basic_object<ref_t>;
+
 		friend class state;
 		friend class state_view;
 
-		template <typename... Args>
-		using is_global = meta::all<meta::boolean<top_level>, meta::is_c_str<Args>...>;
-
-		template <bool raw, typename Ret0, typename Ret1, typename... Ret, std::size_t... I, typename Keys>
-		auto tuple_get(types<Ret0, Ret1, Ret...>, std::index_sequence<0, 1, I...>, Keys&& keys) const
-		     -> decltype(stack::pop<std::tuple<Ret0, Ret1, Ret...>>(nullptr)) {
-			typedef decltype(stack::pop<std::tuple<Ret0, Ret1, Ret...>>(nullptr)) Tup;
-			return Tup(traverse_get_optional<top_level, raw, Ret0>(meta::is_optional<meta::unqualified_t<Ret0>>(), std::get<0>(std::forward<Keys>(keys))),
-			     traverse_get_optional<top_level, raw, Ret1>(meta::is_optional<meta::unqualified_t<Ret1>>(), std::get<1>(std::forward<Keys>(keys))),
-			     traverse_get_optional<top_level, raw, Ret>(meta::is_optional<meta::unqualified_t<Ret>>(), std::get<I>(std::forward<Keys>(keys)))...);
+		template <bool raw, typename... Ret, typename... Keys>
+		decltype(auto) tuple_get(int table_index, Keys&&... keys) const {
+			if constexpr (sizeof...(Ret) < 2) {
+				return traverse_get_single_maybe_tuple<raw, Ret...>(table_index, std::forward<Keys>(keys)...);
+			}
+			else {
+				using multi_ret = decltype(stack::pop<std::tuple<Ret...>>(nullptr));
+				return multi_ret(traverse_get_single_maybe_tuple<raw, Ret>(table_index, std::forward<Keys>(keys))...);
+			}
 		}
 
-		template <bool raw, typename Ret, std::size_t I, typename Keys>
-		decltype(auto) tuple_get(types<Ret>, std::index_sequence<I>, Keys&& keys) const {
-			return traverse_get_optional<top_level, raw, Ret>(meta::is_optional<meta::unqualified_t<Ret>>(), std::get<I>(std::forward<Keys>(keys)));
+		template <bool raw, typename Ret, size_t... I, typename Key>
+		decltype(auto) traverse_get_single_tuple(int table_index, std::index_sequence<I...>, Key&& key) const {
+			return traverse_get_single<raw, Ret>(table_index, std::get<I>(std::forward<Key>(key))...);
+		}
+
+		template <bool raw, typename Ret, typename Key>
+		decltype(auto) traverse_get_single_maybe_tuple(int table_index, Key&& key) const {
+			if constexpr (meta::is_tuple_v<meta::unqualified_t<Key>>) {
+				return traverse_get_single_tuple<raw, Ret>(
+				     table_index, std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<Key>>>(), std::forward<Key>(key));
+			}
+			else {
+				return traverse_get_single<raw, Ret>(table_index, std::forward<Key>(key));
+			}
+		}
+
+		template <bool raw, typename Ret, typename... Keys>
+		decltype(auto) traverse_get_single(int table_index, Keys&&... keys) const {
+			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			if constexpr (meta::is_optional_v<meta::unqualified_t<Ret>>) {
+				int popcount = 0;
+				detail::ref_clean c(base_t::lua_state(), popcount);
+				return traverse_get_deep_optional<global, raw, Ret>(popcount, table_index, std::forward<Keys>(keys)...);
+			}
+			else {
+				detail::clean<sizeof...(Keys)> c(base_t::lua_state());
+				return traverse_get_deep<global, raw, Ret>(table_index, std::forward<Keys>(keys)...);
+			}
 		}
 
 		template <bool raw, typename Pairs, std::size_t... I>
 		void tuple_set(std::index_sequence<I...>, Pairs&& pairs) {
-			auto pp = stack::push_pop < top_level && (is_global<decltype(std::get<I * 2>(std::forward<Pairs>(pairs)))...>::value) > (*this);
+			constexpr bool global = detail::is_global<top_level, decltype(std::get<I * 2>(std::forward<Pairs>(pairs)))...>::value;
+			auto pp = stack::push_pop<global>(*this);
+			int table_index = pp.index_of(*this);
 			void(detail::swallow{ (stack::set_field<top_level, raw>(base_t::lua_state(),
 			                            std::get<I * 2>(std::forward<Pairs>(pairs)),
 			                            std::get<I * 2 + 1>(std::forward<Pairs>(pairs)),
-			                            lua_gettop(base_t::lua_state())),
+			                            table_index),
 			     0)... });
 		}
 
-		template <bool global, bool raw, typename T, typename Key>
-		decltype(auto) traverse_get_deep(Key&& key) const {
-			stack::get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key));
+		template <bool global, bool raw, typename T, typename Key, typename... Keys>
+		decltype(auto) traverse_get_deep(int table_index, Key&& key, Keys&&... keys) const {
+			stack::get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key), table_index);
+			(void)detail::swallow{ 0, (stack::get_field<false, raw>(base_t::lua_state(), std::forward<Keys>(keys), lua_gettop(base_t::lua_state())), 0)... };
 			return stack::get<T>(base_t::lua_state());
 		}
 
 		template <bool global, bool raw, typename T, typename Key, typename... Keys>
-		decltype(auto) traverse_get_deep(Key&& key, Keys&&... keys) const {
-			stack::get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key));
-			return traverse_get_deep<false, raw, T>(std::forward<Keys>(keys)...);
-		}
-
-		template <bool global, bool raw, typename T, std::size_t I, typename Key>
-		decltype(auto) traverse_get_deep_optional(int& popcount, Key&& key) const {
-			typedef decltype(stack::get<T>(base_t::lua_state())) R;
-			auto p = stack::probe_get_field<global, raw, T>(base_t::lua_state(), std::forward<Key>(key), lua_gettop(base_t::lua_state()));
-			popcount += p.levels;
-			if (!p.success)
-				return R(nullopt);
-			return stack::get<T>(base_t::lua_state());
-		}
-
-		template <bool global, bool raw, typename T, std::size_t I, typename Key, typename... Keys>
-		decltype(auto) traverse_get_deep_optional(int& popcount, Key&& key, Keys&&... keys) const {
-			auto p = I > 0 ? stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), -1)
-			               : stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), lua_gettop(base_t::lua_state()));
-			popcount += p.levels;
-			if (!p.success)
-				return T(nullopt);
-			return traverse_get_deep_optional<false, raw, T, I + 1>(popcount, std::forward<Keys>(keys)...);
-		}
-
-		template <bool global, bool raw, typename T, typename... Keys>
-		decltype(auto) traverse_get_optional(std::false_type, Keys&&... keys) const {
-			detail::clean<sizeof...(Keys)> c(base_t::lua_state());
-			return traverse_get_deep<global, raw, T>(std::forward<Keys>(keys)...);
-		}
-
-		template <bool global, bool raw, typename T, typename... Keys>
-		decltype(auto) traverse_get_optional(std::true_type, Keys&&... keys) const {
-			int popcount = 0;
-			detail::ref_clean c(base_t::lua_state(), popcount);
-			return traverse_get_deep_optional<global, raw, T, 0>(popcount, std::forward<Keys>(keys)...);
-		}
-
-		template <bool global, bool raw, typename Key, typename Value>
-		void traverse_set_deep(Key&& key, Value&& value) const {
-			stack::set_field<global, raw>(base_t::lua_state(), std::forward<Key>(key), std::forward<Value>(value));
+		decltype(auto) traverse_get_deep_optional(int& popcount, int table_index, Key&& key, Keys&&... keys) const {
+			if constexpr (sizeof...(Keys) > 0) {
+				auto p = stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), table_index);
+				popcount += p.levels;
+				if (!p.success)
+					return T(nullopt);
+				return traverse_get_deep_optional<false, raw, T>(popcount, lua_gettop(base_t::lua_state()), std::forward<Keys>(keys)...);
+			}
+			else {
+				using R = decltype(stack::get<T>(base_t::lua_state()));
+				auto p = stack::probe_get_field<global, raw, T>(base_t::lua_state(), std::forward<Key>(key), table_index);
+				popcount += p.levels;
+				if (!p.success)
+					return R(nullopt);
+				return stack::get<T>(base_t::lua_state());
+			}
 		}
 
 		template <bool global, bool raw, typename Key, typename... Keys>
-		void traverse_set_deep(Key&& key, Keys&&... keys) const {
-			stack::get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key));
-			traverse_set_deep<false, raw>(std::forward<Keys>(keys)...);
+		void traverse_set_deep(int table_index, Key&& key, Keys&&... keys) const {
+			if constexpr (sizeof...(Keys) == 1) {
+				stack::set_field<global, raw>(base_t::lua_state(), std::forward<Key>(key), std::forward<Keys>(keys)..., table_index);
+			}
+			else {
+				stack::get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key), table_index);
+				traverse_set_deep<false, raw>(lua_gettop(base_t::lua_state()), std::forward<Keys>(keys)...);
+			}
 		}
 
 		basic_table_core(lua_State* L, detail::global_tag t) noexcept : base_t(L, t) {
@@ -21335,7 +21422,7 @@ namespace sol {
 		basic_table_core(detail::no_safety_tag, lua_State* L, ref_index index) : base_t(L, index) {
 		}
 		template <typename T,
-		     meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>,
+		     meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<ref_t, stack_reference>>,
 		          meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_table_core(detail::no_safety_tag, T&& r) noexcept : base_t(std::forward<T>(r)) {
 		}
@@ -21344,8 +21431,8 @@ namespace sol {
 		}
 
 	public:
-		typedef basic_table_iterator<base_type> iterator;
-		typedef iterator const_iterator;
+		using iterator = basic_table_iterator<ref_t>;
+		using const_iterator = iterator;
 
 		using base_t::lua_state;
 
@@ -21367,7 +21454,7 @@ namespace sol {
 #endif // Safety
 		}
 		basic_table_core(lua_State* L, const new_table& nt) : base_t(L, -stack::push(L, nt)) {
-			if (!is_stack_based<meta::unqualified_t<base_type>>::value) {
+			if (!is_stack_based<meta::unqualified_t<ref_t>>::value) {
 				lua_pop(L, 1);
 			}
 		}
@@ -21385,7 +21472,7 @@ namespace sol {
 #endif // Safety
 		}
 		template <typename T,
-		     meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<base_type, stack_reference>>,
+		     meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<ref_t, stack_reference>>,
 		          meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_table_core(T&& r) noexcept : basic_table_core(detail::no_safety, std::forward<T>(r)) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
@@ -21418,8 +21505,10 @@ namespace sol {
 		template <typename... Ret, typename... Keys>
 		decltype(auto) get(Keys&&... keys) const {
 			static_assert(sizeof...(Keys) == sizeof...(Ret), "number of keys and number of return types do not match");
-			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-			return tuple_get<false>(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), std::forward_as_tuple(std::forward<Keys>(keys)...));
+			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			auto pp = stack::push_pop<global>(*this);
+			int table_index = pp.index_of(*this);
+			return tuple_get<false, Ret...>(table_index, std::forward<Keys>(keys)...);
 		}
 
 		template <typename T, typename Key>
@@ -21443,29 +21532,40 @@ namespace sol {
 
 		template <typename T, typename... Keys>
 		decltype(auto) traverse_get(Keys&&... keys) const {
-			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-			return traverse_get_optional<top_level, false, T>(meta::is_optional<meta::unqualified_t<T>>(), std::forward<Keys>(keys)...);
+			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			auto pp = stack::push_pop<global>(*this);
+			int table_index = pp.index_of(*this);
+			return traverse_get_single<false, T>(table_index, std::forward<Keys>(keys)...);
 		}
 
 		template <typename... Keys>
 		basic_table_core& traverse_set(Keys&&... keys) {
-			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
+			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			auto pp = stack::push_pop<global>(*this);
+			int table_index = pp.index_of(*this);
 			auto pn = stack::pop_n(base_t::lua_state(), static_cast<int>(sizeof...(Keys) - 2));
-			traverse_set_deep<top_level, false>(std::forward<Keys>(keys)...);
+			traverse_set_deep<top_level, false>(table_index, std::forward<Keys>(keys)...);
 			return *this;
 		}
 
 		template <typename... Args>
 		basic_table_core& set(Args&&... args) {
-			tuple_set<false>(std::make_index_sequence<sizeof...(Args) / 2>(), std::forward_as_tuple(std::forward<Args>(args)...));
+			if constexpr(sizeof...(Args) == 2) {
+				traverse_set(std::forward<Args>(args)...);
+			}
+			else {
+				tuple_set<false>(std::make_index_sequence<sizeof...(Args) / 2>(), std::forward_as_tuple(std::forward<Args>(args)...));
+			}
 			return *this;
 		}
 
 		template <typename... Ret, typename... Keys>
 		decltype(auto) raw_get(Keys&&... keys) const {
 			static_assert(sizeof...(Keys) == sizeof...(Ret), "number of keys and number of return types do not match");
-			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-			return tuple_get<true>(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), std::forward_as_tuple(std::forward<Keys>(keys)...));
+			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			auto pp = stack::push_pop<global>(*this);
+			int table_index = pp.index_of(*this);
+			return tuple_get<true, Ret...>(table_index, std::forward<Keys>(keys)...);
 		}
 
 		template <typename T, typename Key>
@@ -21489,13 +21589,16 @@ namespace sol {
 
 		template <typename T, typename... Keys>
 		decltype(auto) traverse_raw_get(Keys&&... keys) const {
-			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
-			return traverse_get_optional<top_level, true, T>(meta::is_optional<meta::unqualified_t<T>>(), std::forward<Keys>(keys)...);
+			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			auto pp = stack::push_pop<global>(*this);
+			int table_index = pp.index_of(*this);
+			return traverse_get_single<true, T>(table_index, std::forward<Keys>(keys)...);
 		}
 
 		template <typename... Keys>
 		basic_table_core& traverse_raw_set(Keys&&... keys) {
-			auto pp = stack::push_pop<is_global<Keys...>::value>(*this);
+			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			auto pp = stack::push_pop<global>(*this);
 			auto pn = stack::pop_n(base_t::lua_state(), static_cast<int>(sizeof...(Keys) - 2));
 			traverse_set_deep<top_level, true>(std::forward<Keys>(keys)...);
 			return *this;
@@ -21613,7 +21716,8 @@ namespace sol {
 		template <typename... Args>
 		basic_table_core& add(Args&&... args) {
 			auto pp = stack::push_pop(*this);
-			(void)detail::swallow{ 0, (stack::set_ref(base_t::lua_state(), std::forward<Args>(args)), 0)... };
+			int table_index = pp.index_of(*this);
+			(void)detail::swallow{ 0, (stack::set_ref(base_t::lua_state(), std::forward<Args>(args), table_index), 0)... };
 			return *this;
 		}
 
@@ -22499,8 +22603,8 @@ namespace sol {
 		}
 
 	public:
-		typedef global_table::iterator iterator;
-		typedef global_table::const_iterator const_iterator;
+		using iterator = typename global_table::iterator;
+		using const_iterator = typename global_table::const_iterator;
 
 		state_view(lua_State* Ls)
 		: L(Ls), reg(Ls, LUA_REGISTRYINDEX), global(Ls, detail::global_) {
@@ -23205,8 +23309,11 @@ namespace sol {
 		};
 	} // namespace stack
 
-	template <typename base_t>
-	class basic_thread : public base_t {
+	template <typename ref_t>
+	class basic_thread : public basic_object<ref_t> {
+	private:
+		using base_t = basic_object<ref_t>;
+
 	public:
 		using base_t::lua_state;
 
@@ -23356,8 +23463,11 @@ namespace sol {
 // beginning of sol/coroutine.hpp
 
 namespace sol {
-	template <typename base_t>
-	class basic_coroutine : public base_t {
+	template <typename ref_t>
+	class basic_coroutine : public basic_object<ref_t> {
+	private:
+		using base_t = basic_object<ref_t>;
+
 	public:
 		typedef reference handler_t;
 		handler_t error_handler;
@@ -23573,7 +23683,8 @@ namespace sol {
 namespace sol {
 	template <typename base_type>
 	class basic_userdata : public basic_table<base_type> {
-		typedef basic_table<base_type> base_t;
+	private:
+		using base_t = basic_table<base_type>;
 
 	public:
 		using base_t::lua_state;

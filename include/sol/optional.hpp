@@ -26,6 +26,7 @@
 
 #include "forward.hpp"
 #include "in_place.hpp"
+#include "traits.hpp"
 #if defined(SOL_USE_BOOST) && SOL_USE_BOOST
 #include <boost/optional.hpp>
 #else
@@ -47,13 +48,15 @@ namespace sol {
 
 	namespace meta {
 		template <typename T>
-		struct is_optional : std::false_type {};
-		template <typename T>
-		struct is_optional<optional<T>> : std::true_type {};
+		using is_optional = any<
+			is_specialization_of<T, optional>
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-		template <typename T>
-		struct is_optional<std::optional<T>> : std::true_type {};
+		     , is_specialization_of<T, std::optional>
 #endif
+		>;
+		
+		template <typename T>
+		constexpr inline bool is_optional_v = is_optional<T>::value;
 	} // namespace meta
 } // namespace sol
 
