@@ -123,3 +123,10 @@ cmake-build-relwithdebinfo/
 cmake-build-release/
 /subprojects/*
 !/subprojects/*.wrap
+LuaJIT-2.1/
+LuaJIT-2.0/
+lua-5.4/
+lua-5.3-cxx/
+lua-5.3/
+lua-5.2/
+lua-5.1/
