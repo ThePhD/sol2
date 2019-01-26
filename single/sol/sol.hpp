@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-01-14 12:36:40.331405 UTC
-// This header was generated with sol v2.20.6 (revision d990958)
+// Generated 2019-01-26 08:24:35.370911 UTC
+// This header was generated with sol v2.20.6 (revision e63f840)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -13714,6 +13714,14 @@ namespace sol {
 			static int call(lua_State* L, P& fx) {
 				typedef typename P::indices indices;
 				return call(indices(), L, fx);
+			}
+		};
+
+		template <typename T, typename Y, bool is_index, bool is_variable, bool checked, int boost, bool clean_stack, typename C>
+		struct lua_call_wrapper<T, yielding_t<Y>, is_index, is_variable, checked, boost, clean_stack, C> {
+			template <typename F>
+			static int call(lua_State* L, F&& f) {
+				return lua_call_wrapper<T, meta::unqualified_t<Y>, is_index, is_variable, checked, boost, clean_stack>{}.call(L, f.func);
 			}
 		};
 
