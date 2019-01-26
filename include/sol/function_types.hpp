@@ -43,53 +43,27 @@ namespace sol {
 	namespace stack {
 		template <typename... Sigs>
 		struct unqualified_pusher<function_sig<Sigs...>> {
-			template <bool is_yielding, typename... Sig, typename Fx, typename... Args>
-			static void select_convertible(std::false_type, types<Sig...>, lua_State* L, Fx&& fx, Args&&... args) {
-				typedef std::remove_pointer_t<std::decay_t<Fx>> clean_fx;
-				typedef function_detail::functor_function<clean_fx, is_yielding, true> F;
-				set_fx<false, F>(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
-			}
-
-			template <bool is_yielding, typename R, typename... A, typename Fx, typename... Args>
-			static void select_convertible(std::true_type, types<R(A...)>, lua_State* L, Fx&& fx, Args&&... args) {
-				using fx_ptr_t = R (*)(A...);
-				fx_ptr_t fxptr = detail::unwrap(std::forward<Fx>(fx));
-				select_function<is_yielding>(std::true_type(), L, fxptr, std::forward<Args>(args)...);
-			}
-
 			template <bool is_yielding, typename R, typename... A, typename Fx, typename... Args>
 			static void select_convertible(types<R(A...)> t, lua_State* L, Fx&& fx, Args&&... args) {
 				typedef std::decay_t<meta::unwrap_unqualified_t<Fx>> raw_fx_t;
 				typedef R (*fx_ptr_t)(A...);
-				typedef std::is_convertible<raw_fx_t, fx_ptr_t> is_convertible;
-				select_convertible<is_yielding>(is_convertible(), t, L, std::forward<Fx>(fx), std::forward<Args>(args)...);
+				constexpr bool is_convertible = std::is_convertible_v<raw_fx_t, fx_ptr_t>;
+				if constexpr (is_convertible) {
+					using fx_ptr_t = R (*)(A...);
+					fx_ptr_t fxptr = detail::unwrap(std::forward<Fx>(fx));
+					select_function<is_yielding>(std::true_type(), L, fxptr, std::forward<Args>(args)...);
+				}
+				else {
+					typedef std::remove_pointer_t<std::decay_t<Fx>> clean_fx;
+					typedef function_detail::functor_function<clean_fx, is_yielding, true> F;
+					set_fx<false, F>(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
+				}
 			}
 
 			template <bool is_yielding, typename Fx, typename... Args>
 			static void select_convertible(types<>, lua_State* L, Fx&& fx, Args&&... args) {
 				typedef meta::function_signature_t<meta::unwrap_unqualified_t<Fx>> Sig;
 				select_convertible<is_yielding>(types<Sig>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
-			}
-
-			template <bool is_yielding, typename Fx, typename T, typename... Args>
-			static void select_reference_member_variable(std::false_type, lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
-				typedef std::remove_pointer_t<std::decay_t<Fx>> clean_fx;
-				typedef function_detail::member_variable<meta::unwrap_unqualified_t<T>, clean_fx, is_yielding> F;
-				set_fx<false, F>(L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
-			}
-
-			template <bool is_yielding, typename Fx, typename T, typename... Args>
-			static void select_reference_member_variable(std::true_type, lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
-				typedef std::decay_t<Fx> dFx;
-				dFx memfxptr(std::forward<Fx>(fx));
-				auto userptr = detail::ptr(std::forward<T>(obj), std::forward<Args>(args)...);
-				lua_CFunction freefunc = &function_detail::upvalue_member_variable<std::decay_t<decltype(*userptr)>, meta::unqualified_t<Fx>, is_yielding>::call;
-
-				int upvalues = 0;
-				upvalues += stack::push(L, nullptr);
-				upvalues += stack::stack_detail::push_as_upvalues(L, memfxptr);
-				upvalues += stack::push(L, static_cast<void const*>(userptr));
-				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
 			template <bool is_yielding, typename Fx, typename... Args>
@@ -99,8 +73,25 @@ namespace sol {
 
 			template <bool is_yielding, typename Fx, typename T, typename... Args, meta::disable<meta::is_specialization_of<meta::unqualified_t<T>, function_detail::class_indicator>> = meta::enabler>
 			static void select_member_variable(std::true_type, lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
-				typedef meta::boolean<meta::is_specialization_of<meta::unqualified_t<T>, std::reference_wrapper>::value || std::is_pointer<T>::value> is_reference;
-				select_reference_member_variable<is_yielding>(is_reference(), L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
+				constexpr bool is_reference = meta::is_specialization_of_v<meta::unqualified_t<T>, std::reference_wrapper> || std::is_pointer_v<T>;
+				if constexpr(is_reference) {
+					typedef std::decay_t<Fx> dFx;
+					dFx memfxptr(std::forward<Fx>(fx));
+					auto userptr = detail::ptr(std::forward<T>(obj), std::forward<Args>(args)...);
+					lua_CFunction freefunc
+					     = &function_detail::upvalue_member_variable<std::decay_t<decltype(*userptr)>, meta::unqualified_t<Fx>, is_yielding>::call;
+
+					int upvalues = 0;
+					upvalues += stack::push(L, nullptr);
+					upvalues += stack::stack_detail::push_as_upvalues(L, memfxptr);
+					upvalues += stack::push(L, static_cast<void const*>(userptr));
+					stack::push(L, c_closure(freefunc, upvalues));
+				}
+				else {
+					using clean_fx = std::remove_pointer_t<std::decay_t<Fx>>;
+					using F = function_detail::member_variable<meta::unwrap_unqualified_t<T>, clean_fx, is_yielding>;
+					set_fx<false, F>(L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
+				}
 			}
 
 			template <bool is_yielding, typename Fx, typename C>
@@ -230,17 +221,20 @@ namespace sol {
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 
-			template <typename Arg0, typename... Args, meta::disable<std::is_same<detail::yield_tag_t, meta::unqualified_t<Arg0>>> = meta::enabler>
+			template <typename Arg0, typename... Args>
 			static int push(lua_State* L, Arg0&& arg0, Args&&... args) {
-				// Set will always place one thing (function) on the stack
-				select<false>(L, std::forward<Arg0>(arg0), std::forward<Args>(args)...);
+				if constexpr(std::is_same_v<meta::unqualified_t<Arg0>, detail::yield_tag_t>) {
+					select<true>(L, std::forward<Args>(args)...);
+				}
+				else {
+					select<false>(L, std::forward<Arg0>(arg0), std::forward<Args>(args)...);
+				}
 				return 1;
 			}
 
 			template <typename... Args>
 			static int push(lua_State* L, detail::yield_tag_t, Args&&... args) {
 				// Set will always place one thing (function) on the stack
-				select<true>(L, std::forward<Args>(args)...);
 				return 1;
 			}
 		};
@@ -258,7 +252,7 @@ namespace sol {
 			static int push(lua_State* L, yielding_t<T>&& f, Args&&... args) {
 				unqualified_pusher<function_sig<>> p{};
 				(void)p;
-				return p.push(L, detail::yield_tag, f.func, std::forward<Args>(args)...);
+				return p.push(L, detail::yield_tag, std::move(f.func), std::forward<Args>(args)...);
 			}
 		};
 

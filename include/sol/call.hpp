@@ -740,13 +740,23 @@ namespace sol {
 		struct lua_call_wrapper<T, function_arguments<Sig, P>, is_index, is_variable, checked, boost, clean_stack, C> {
 			template <typename F>
 			static int call(lua_State* L, F&& f) {
-				return lua_call_wrapper<T, meta::unqualified_t<P>, is_index, is_variable, checked, boost, clean_stack> {}.call(L, std::get<0>(f.arguments));
+				return lua_call_wrapper<T, meta::unqualified_t<P>, is_index, is_variable, checked, boost, clean_stack>{}.call(L, std::get<0>(f.arguments));
 			}
 		};
 
 		template <typename T, bool is_index, bool is_variable, int boost = 0, bool checked = detail::default_safe_function_calls, bool clean_stack = true, typename Fx, typename... Args>
 		inline int call_wrapped(lua_State* L, Fx&& fx, Args&&... args) {
-			return lua_call_wrapper<T, meta::unqualified_t<Fx>, is_index, is_variable, checked, boost, clean_stack> {}.call(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
+			using uFx = meta::unqualified_t<Fx>;
+			if constexpr(meta::is_specialization_of_v<uFx, yielding_t>) {
+				using real_fx = meta::unqualified_t<decltype(std::forward<Fx>(fx).func)>;
+				int nr = lua_call_wrapper<T, real_fx, is_index, is_variable, checked, boost, clean_stack>{}.call(
+				     L, std::forward<Fx>(fx).func, std::forward<Args>(args)...);
+				return lua_yield(L, nr);
+			}
+			else {
+				return lua_call_wrapper<T, uFx, is_index, is_variable, checked, boost, clean_stack>{}.call(
+				     L, std::forward<Fx>(fx), std::forward<Args>(args)...);
+			}
 		}
 
 		template <typename T, bool is_index, bool is_variable, typename F, int start = 1, bool checked = detail::default_safe_function_calls, bool clean_stack = true>
