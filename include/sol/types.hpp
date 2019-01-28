@@ -93,9 +93,6 @@ namespace sol {
 			}
 		};
 
-		struct unchecked_t {};
-		const unchecked_t unchecked = unchecked_t{};
-
 		struct yield_tag_t {};
 		const yield_tag_t yield_tag = yield_tag_t{};
 	} // namespace detail

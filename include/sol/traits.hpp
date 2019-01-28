@@ -38,6 +38,11 @@
 
 
 namespace sol {
+	namespace detail {
+		struct unchecked_t {};
+		const unchecked_t unchecked = unchecked_t{};
+	} // namespace detail
+
 	namespace meta {
 		using sfinae_yes_t = std::true_type;
 		using sfinae_no_t = std::false_type;
@@ -513,39 +518,24 @@ namespace sol {
 			struct is_matched_lookup_impl : std::false_type {};
 			template <typename T>
 			struct is_matched_lookup_impl<T, true> : std::is_same<typename T::key_type, typename T::value_type> {};
+
+			template <typename T>
+			using non_void_t = std::conditional_t<std::is_void_v<T>, ::sol::detail::unchecked_t, T>;
 		} // namespace meta_detail
 
 		template <typename T, typename U = T>
-		struct supports_op_less : decltype(meta_detail::supports_op_less_test(std::declval<T&>(), std::declval<U&>())) {};
-		template <typename T>
-		struct supports_op_less<void, T> : std::false_type {};
-		template <typename T>
-		struct supports_op_less<T, void> : std::false_type {};
+		using supports_op_less = decltype(meta_detail::supports_op_less_test(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
 		template <typename T, typename U = T>
-		struct supports_op_equal : decltype(meta_detail::supports_op_equal_test(std::declval<T&>(), std::declval<U&>())) {};
-		template <typename T>
-		struct supports_op_equal<void, T> : std::false_type {};
-		template <typename T>
-		struct supports_op_equal<T, void> : std::false_type {};
+		using supports_op_equal = decltype(meta_detail::supports_op_equal_test(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
 		template <typename T, typename U = T>
-		struct supports_op_less_equal : decltype(meta_detail::supports_op_less_equal_test(std::declval<T&>(), std::declval<U&>())) {};
-		template <typename T>
-		struct supports_op_less_equal<void, T> : std::false_type {};
-		template <typename T>
-		struct supports_op_less_equal<T, void> : std::false_type {};
+		using supports_op_less_equal = decltype(meta_detail::supports_op_less_equal_test(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
 		template <typename T, typename U = std::ostream>
-		struct supports_ostream_op : decltype(meta_detail::supports_ostream_op(std::declval<T&>(), std::declval<U&>())) {};
+		using supports_ostream_op = decltype(meta_detail::supports_ostream_op(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
 		template <typename T>
-		struct supports_ostream_op<void, T> : std::false_type {};
+		using supports_adl_to_string = decltype(meta_detail::supports_adl_to_string(std::declval<meta_detail::non_void_t<T>&>()));
+		
 		template <typename T>
-		struct supports_ostream_op<T, void> : std::false_type {};
-		template <typename T>
-		struct supports_adl_to_string : decltype(meta_detail::supports_adl_to_string(std::declval<T&>())) {};
-		template <>
-		struct supports_adl_to_string<void> : std::false_type {};
-	
-		template <typename T>
-		using supports_to_string_member = meta::boolean<meta_detail::has_to_string_test<T>::value>;
+		using supports_to_string_member = meta::boolean<meta_detail::has_to_string_test<meta_detail::non_void_t<T>>::value>;
 
 		template <typename T>
 		struct is_callable : boolean<meta_detail::is_callable<T>::value> {};

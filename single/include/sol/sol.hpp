@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-01-28 16:32:19.243332 UTC
-// This header was generated with sol v2.20.6 (revision ad494bd)
+// Generated 2019-01-28 17:33:06.587638 UTC
+// This header was generated with sol v2.20.6 (revision e1f3e5f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1230,6 +1230,11 @@ namespace sol {
 #include <iosfwd>
 
 namespace sol {
+	namespace detail {
+		struct unchecked_t {};
+		const unchecked_t unchecked = unchecked_t{};
+	} // namespace detail
+
 	namespace meta {
 		using sfinae_yes_t = std::true_type;
 		using sfinae_no_t = std::false_type;
@@ -1705,39 +1710,24 @@ namespace sol {
 			struct is_matched_lookup_impl : std::false_type {};
 			template <typename T>
 			struct is_matched_lookup_impl<T, true> : std::is_same<typename T::key_type, typename T::value_type> {};
+
+			template <typename T>
+			using non_void_t = std::conditional_t<std::is_void_v<T>, ::sol::detail::unchecked_t, T>;
 		} // namespace meta_detail
 
 		template <typename T, typename U = T>
-		struct supports_op_less : decltype(meta_detail::supports_op_less_test(std::declval<T&>(), std::declval<U&>())) {};
-		template <typename T>
-		struct supports_op_less<void, T> : std::false_type {};
-		template <typename T>
-		struct supports_op_less<T, void> : std::false_type {};
+		using supports_op_less = decltype(meta_detail::supports_op_less_test(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
 		template <typename T, typename U = T>
-		struct supports_op_equal : decltype(meta_detail::supports_op_equal_test(std::declval<T&>(), std::declval<U&>())) {};
-		template <typename T>
-		struct supports_op_equal<void, T> : std::false_type {};
-		template <typename T>
-		struct supports_op_equal<T, void> : std::false_type {};
+		using supports_op_equal = decltype(meta_detail::supports_op_equal_test(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
 		template <typename T, typename U = T>
-		struct supports_op_less_equal : decltype(meta_detail::supports_op_less_equal_test(std::declval<T&>(), std::declval<U&>())) {};
-		template <typename T>
-		struct supports_op_less_equal<void, T> : std::false_type {};
-		template <typename T>
-		struct supports_op_less_equal<T, void> : std::false_type {};
+		using supports_op_less_equal = decltype(meta_detail::supports_op_less_equal_test(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
 		template <typename T, typename U = std::ostream>
-		struct supports_ostream_op : decltype(meta_detail::supports_ostream_op(std::declval<T&>(), std::declval<U&>())) {};
+		using supports_ostream_op = decltype(meta_detail::supports_ostream_op(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
 		template <typename T>
-		struct supports_ostream_op<void, T> : std::false_type {};
+		using supports_adl_to_string = decltype(meta_detail::supports_adl_to_string(std::declval<meta_detail::non_void_t<T>&>()));
+		
 		template <typename T>
-		struct supports_ostream_op<T, void> : std::false_type {};
-		template <typename T>
-		struct supports_adl_to_string : decltype(meta_detail::supports_adl_to_string(std::declval<T&>())) {};
-		template <>
-		struct supports_adl_to_string<void> : std::false_type {};
-	
-		template <typename T>
-		using supports_to_string_member = meta::boolean<meta_detail::has_to_string_test<T>::value>;
+		using supports_to_string_member = meta::boolean<meta_detail::has_to_string_test<meta_detail::non_void_t<T>>::value>;
 
 		template <typename T>
 		struct is_callable : boolean<meta_detail::is_callable<T>::value> {};
@@ -5888,9 +5878,6 @@ namespace sol {
 			}
 		};
 
-		struct unchecked_t {};
-		const unchecked_t unchecked = unchecked_t{};
-
 		struct yield_tag_t {};
 		const yield_tag_t yield_tag = yield_tag_t{};
 	} // namespace detail
@@ -8923,13 +8910,15 @@ namespace sol {
 
 			void* pointer_adjusted;
 			void* data_adjusted;
-			bool result = attempt_alloc(L, std::alignment_of_v<T*>, sizeof(T*), std::alignment_of_v<T>, sizeof(T), initial_size, pointer_adjusted, data_adjusted);
+			bool result
+			     = attempt_alloc(L, std::alignment_of_v<T*>, sizeof(T*), std::alignment_of_v<T>, sizeof(T), initial_size, pointer_adjusted, data_adjusted);
 			if (!result) {
 				// we're likely to get something that fails to perform the proper allocation a second time,
 				// so we use the suggested_new_size bump to help us out here
 				pointer_adjusted = nullptr;
 				data_adjusted = nullptr;
-				result = attempt_alloc(L, std::alignment_of_v<T*>, sizeof(T*), std::alignment_of_v<T>, sizeof(T), misaligned_size, pointer_adjusted, data_adjusted);
+				result = attempt_alloc(
+				     L, std::alignment_of_v<T*>, sizeof(T*), std::alignment_of_v<T>, sizeof(T), misaligned_size, pointer_adjusted, data_adjusted);
 				if (!result) {
 					if (pointer_adjusted == nullptr) {
 						luaL_error(L, "aligned allocation of userdata block (pointer section) for '%s' failed", detail::demangle<T>().c_str());
@@ -9934,30 +9923,35 @@ namespace sol {
 
 		template <typename T, typename Op>
 		int comparsion_operator_wrap(lua_State* L) {
-			auto maybel = stack::unqualified_check_get<T&>(L, 1);
-			if (!maybel) {
+			if constexpr (std::is_void_v<T>) {
 				return stack::push(L, false);
-			}
-			auto mayber = stack::unqualified_check_get<T&>(L, 2);
-			if (!mayber) {
-				return stack::push(L, false);
-			}
-			decltype(auto) l = *maybel;
-			decltype(auto) r = *mayber;
-			if constexpr (std::is_same_v<no_comp, Op>) {
-				std::equal_to<> op;
-				return stack::push(L, op(detail::ptr(l), detail::ptr(r)));
 			}
 			else {
-				if constexpr (std::is_same_v<std::equal_to<>, Op> // cf-hack
-					|| std::is_same_v<std::less_equal<>, Op>     //
-					|| std::is_same_v<std::less_equal<>, Op>) {  //
-					if (detail::ptr(l) == detail::ptr(r)) {
-						return stack::push(L, true);
-					}
+				auto maybel = stack::unqualified_check_get<T&>(L, 1);
+				if (!maybel) {
+					return stack::push(L, false);
 				}
-				Op op;
-				return stack::push(L, op(detail::deref(l), detail::deref(r)));
+				auto mayber = stack::unqualified_check_get<T&>(L, 2);
+				if (!mayber) {
+					return stack::push(L, false);
+				}
+				decltype(auto) l = *maybel;
+				decltype(auto) r = *mayber;
+				if constexpr (std::is_same_v<no_comp, Op>) {
+					std::equal_to<> op;
+					return stack::push(L, op(detail::ptr(l), detail::ptr(r)));
+				}
+				else {
+					if constexpr (std::is_same_v<std::equal_to<>, Op> // cf-hack
+						|| std::is_same_v<std::less_equal<>, Op>     //
+						|| std::is_same_v<std::less_equal<>, Op>) {  //
+						if (detail::ptr(l) == detail::ptr(r)) {
+							return stack::push(L, true);
+						}
+					}
+					Op op;
+					return stack::push(L, op(detail::deref(l), detail::deref(r)));
+				}
 			}
 		}
 

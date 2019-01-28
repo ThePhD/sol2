@@ -158,3 +158,16 @@ TEST_CASE("usertype/unique_usertype-check", "make sure unique usertypes don't ge
 		my_func(std::make_shared<Entity>());
 	}());
 }
+
+TEST_CASE("usertype/unique void pointers", "can compile shared_ptr<void> types and not trip the compiler or sol2's internals") {
+	sol::state lua;
+	lua.set_function("f", [](std::shared_ptr<void> d) { 
+		int* pi = static_cast<int*>(d.get());
+		REQUIRE(*pi == 567);
+	});
+
+	std::shared_ptr<void> s = std::make_shared<int>(567);
+	lua["s"] = std::move(s);
+	auto result = lua.safe_script("f(s)", sol::script_pass_on_error);
+	REQUIRE(result.valid());
+}

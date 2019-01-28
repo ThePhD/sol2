@@ -330,13 +330,15 @@ namespace sol {
 
 			void* pointer_adjusted;
 			void* data_adjusted;
-			bool result = attempt_alloc(L, std::alignment_of_v<T*>, sizeof(T*), std::alignment_of_v<T>, sizeof(T), initial_size, pointer_adjusted, data_adjusted);
+			bool result
+			     = attempt_alloc(L, std::alignment_of_v<T*>, sizeof(T*), std::alignment_of_v<T>, sizeof(T), initial_size, pointer_adjusted, data_adjusted);
 			if (!result) {
 				// we're likely to get something that fails to perform the proper allocation a second time,
 				// so we use the suggested_new_size bump to help us out here
 				pointer_adjusted = nullptr;
 				data_adjusted = nullptr;
-				result = attempt_alloc(L, std::alignment_of_v<T*>, sizeof(T*), std::alignment_of_v<T>, sizeof(T), misaligned_size, pointer_adjusted, data_adjusted);
+				result = attempt_alloc(
+				     L, std::alignment_of_v<T*>, sizeof(T*), std::alignment_of_v<T>, sizeof(T), misaligned_size, pointer_adjusted, data_adjusted);
 				if (!result) {
 					if (pointer_adjusted == nullptr) {
 						luaL_error(L, "aligned allocation of userdata block (pointer section) for '%s' failed", detail::demangle<T>().c_str());
@@ -1343,30 +1345,35 @@ namespace sol {
 
 		template <typename T, typename Op>
 		int comparsion_operator_wrap(lua_State* L) {
-			auto maybel = stack::unqualified_check_get<T&>(L, 1);
-			if (!maybel) {
+			if constexpr (std::is_void_v<T>) {
 				return stack::push(L, false);
-			}
-			auto mayber = stack::unqualified_check_get<T&>(L, 2);
-			if (!mayber) {
-				return stack::push(L, false);
-			}
-			decltype(auto) l = *maybel;
-			decltype(auto) r = *mayber;
-			if constexpr (std::is_same_v<no_comp, Op>) {
-				std::equal_to<> op;
-				return stack::push(L, op(detail::ptr(l), detail::ptr(r)));
 			}
 			else {
-				if constexpr (std::is_same_v<std::equal_to<>, Op> // cf-hack
-					|| std::is_same_v<std::less_equal<>, Op>     //
-					|| std::is_same_v<std::less_equal<>, Op>) {  //
-					if (detail::ptr(l) == detail::ptr(r)) {
-						return stack::push(L, true);
-					}
+				auto maybel = stack::unqualified_check_get<T&>(L, 1);
+				if (!maybel) {
+					return stack::push(L, false);
 				}
-				Op op;
-				return stack::push(L, op(detail::deref(l), detail::deref(r)));
+				auto mayber = stack::unqualified_check_get<T&>(L, 2);
+				if (!mayber) {
+					return stack::push(L, false);
+				}
+				decltype(auto) l = *maybel;
+				decltype(auto) r = *mayber;
+				if constexpr (std::is_same_v<no_comp, Op>) {
+					std::equal_to<> op;
+					return stack::push(L, op(detail::ptr(l), detail::ptr(r)));
+				}
+				else {
+					if constexpr (std::is_same_v<std::equal_to<>, Op> // cf-hack
+						|| std::is_same_v<std::less_equal<>, Op>     //
+						|| std::is_same_v<std::less_equal<>, Op>) {  //
+						if (detail::ptr(l) == detail::ptr(r)) {
+							return stack::push(L, true);
+						}
+					}
+					Op op;
+					return stack::push(L, op(detail::deref(l), detail::deref(r)));
+				}
 			}
 		}
 
