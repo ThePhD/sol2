@@ -25,9 +25,70 @@
 
 #include <catch.hpp>
 
+struct coro_h {
+	int x = 500;
+	int func() {
+		x += 1;
+		return x;
+	}
+};
+
+struct coro_test {
+	std::string identifier;
+	sol::reference obj;
+
+	coro_test(sol::this_state L, std::string id) : identifier(id), obj(L, sol::lua_nil) {
+	}
+
+	void store(sol::table ref) {
+		// must be explicit
+		obj = sol::reference(obj.lua_state(), ref);
+	}
+
+	void copy_store(sol::table ref) {
+		// must be explicit
+		obj = sol::reference(obj.lua_state(), ref);
+	}
+
+	sol::reference get() {
+		return obj;
+	}
+
+	~coro_test() {
+	}
+};
+
+struct coro_test_implicit {
+	std::string identifier;
+	sol::main_reference obj;
+
+	coro_test_implicit(sol::this_state L, std::string id) : identifier(id), obj(L, sol::lua_nil) {
+	}
+
+	void store(sol::table ref) {
+		// main_reference does the state shift implicitly
+		obj = std::move(ref);
+		lua_State* Lmain = sol::main_thread(ref.lua_state());
+		REQUIRE(obj.lua_state() == Lmain);
+	}
+
+	void copy_store(sol::table ref) {
+		// main_reference does the state shift implicitly
+		obj = ref;
+		lua_State* Lmain = sol::main_thread(ref.lua_state());
+		REQUIRE(obj.lua_state() == Lmain);
+	}
+
+	sol::reference get() {
+		return obj;
+	}
+
+	~coro_test_implicit() {
+	}
+};
+
 TEST_CASE("coroutines/coroutine.yield", "ensure calling a coroutine works") {
 	const auto& script = R"(counter = 20
- 
 function loop()
     while counter ~= 30
     do
@@ -55,7 +116,6 @@ end
 
 TEST_CASE("coroutines/new thread coroutines", "ensure calling a coroutine works when the work is put on a different thread") {
 	const auto& code = R"(counter = 20
- 
 function loop()
     while counter ~= 30
     do
@@ -145,10 +205,10 @@ TEST_CASE("coroutines/explicit transfer", "check that the xmove constructors shi
 -- co - L2
 -- co2 - L3
 
-x = co_test.new("x")
+x = coro_test.new("x")
 local co = coroutine.wrap(
 	function()
-		local t = co_test.new("t")
+		local t = coro_test.new("t")
 		local co2 = coroutine.wrap(
 			function()
 				local t2 = { "SOME_TABLE" }
@@ -171,45 +231,19 @@ collectgarbage()
 co = nil
 )";
 
-	struct co_test {
-		std::string identifier;
-		sol::reference obj;
-
-		co_test(sol::this_state L, std::string id)
-		: identifier(id), obj(L, sol::lua_nil) {
-		}
-
-		void store(sol::table ref) {
-			// must be explicit
-			obj = sol::reference(obj.lua_state(), ref);
-		}
-
-		void copy_store(sol::table ref) {
-			// must be explicit
-			obj = sol::reference(obj.lua_state(), ref);
-		}
-
-		sol::reference get() {
-			return obj;
-		}
-
-		~co_test() {
-		}
-	};
-
 	sol::state lua;
 	lua.open_libraries(sol::lib::coroutine, sol::lib::base);
 
-	lua.new_usertype<co_test>("co_test",
-		sol::constructors<co_test(sol::this_state, std::string)>(),
-		"store", &co_test::store,
-		"copy_store", &co_test::copy_store,
-		"get", &co_test::get);
+	lua.new_usertype<coro_test>("coro_test",
+		sol::constructors<coro_test(sol::this_state, std::string)>(),
+		"store", &coro_test::store,
+		"copy_store", &coro_test::copy_store,
+		"get", &coro_test::get);
 
 	auto r = lua.safe_script(code, sol::script_pass_on_error);
 	REQUIRE(r.valid());
 
-	co_test& ct = lua["x"];
+	coro_test& ct = lua["x"];
 
 	lua_State* Lmain1 = lua.lua_state();
 	lua_State* Lmain2 = sol::main_thread(lua);
@@ -229,10 +263,10 @@ TEST_CASE("coroutines/implicit transfer", "check that copy and move assignment c
 -- co - L2
 -- co2 - L3
 
-x = co_test.new("x")
+x = coro_test.new("x")
 local co = coroutine.wrap(
 	function()
-		local t = co_test.new("t")
+		local t = coro_test.new("t")
 		local co2 = coroutine.wrap(
 			function()
 				local t2 = { "SOME_TABLE" }
@@ -255,11 +289,11 @@ collectgarbage()
 co = nil
 )";
 
-	struct co_test_implicit {
+	struct coro_test_implicit {
 		std::string identifier;
 		sol::reference obj;
 
-		co_test_implicit(sol::this_state L, std::string id)
+		coro_test_implicit(sol::this_state L, std::string id)
 		: identifier(id), obj(L, sol::lua_nil) {
 		}
 
@@ -277,23 +311,23 @@ co = nil
 			return obj;
 		}
 
-		~co_test_implicit() {
+		~coro_test_implicit() {
 		}
 	};
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::coroutine, sol::lib::base);
 
-	lua.new_usertype<co_test_implicit>("co_test",
-		sol::constructors<co_test_implicit(sol::this_state, std::string)>(),
-		"store", &co_test_implicit::store,
-		"copy_store", &co_test_implicit::copy_store,
-		"get", &co_test_implicit::get);
+	lua.new_usertype<coro_test_implicit>("coro_test",
+		sol::constructors<coro_test_implicit(sol::this_state, std::string)>(),
+		"store", &coro_test_implicit::store,
+		"copy_store", &coro_test_implicit::copy_store,
+		"get", &coro_test_implicit::get);
 
 	auto r = lua.safe_script(code, sol::script_pass_on_error);
 	REQUIRE(r.valid());
 
-	co_test_implicit& ct = lua["x"];
+	coro_test_implicit& ct = lua["x"];
 
 	lua_State* Lmain1 = lua.lua_state();
 	lua_State* Lmain2 = sol::main_thread(lua);
@@ -313,10 +347,10 @@ TEST_CASE("coroutines/main transfer", "check that copy and move assignment const
 -- co - L2
 -- co2 - L3
 
-x = co_test.new("x")
+x = coro_test.new("x")
 local co = coroutine.wrap(
 	function()
-		local t = co_test.new("t")
+		local t = coro_test.new("t")
 		local co2 = coroutine.wrap(
 			function()
 				local t2 = { "SOME_TABLE" }
@@ -338,49 +372,19 @@ co = nil
 collectgarbage()
 )";
 
-	struct co_test_implicit {
-		std::string identifier;
-		sol::main_reference obj;
-
-		co_test_implicit(sol::this_state L, std::string id)
-		: identifier(id), obj(L, sol::lua_nil) {
-		}
-
-		void store(sol::table ref) {
-			// main_reference does the state shift implicitly
-			obj = std::move(ref);
-			lua_State* Lmain = sol::main_thread(ref.lua_state());
-			REQUIRE(obj.lua_state() == Lmain);
-		}
-
-		void copy_store(sol::table ref) {
-			// main_reference does the state shift implicitly
-			obj = ref;
-			lua_State* Lmain = sol::main_thread(ref.lua_state());
-			REQUIRE(obj.lua_state() == Lmain);
-		}
-
-		sol::reference get() {
-			return obj;
-		}
-
-		~co_test_implicit() {
-		}
-	};
-
 	sol::state lua;
 	lua.open_libraries(sol::lib::coroutine, sol::lib::base);
 
-	lua.new_usertype<co_test_implicit>("co_test",
-		sol::constructors<co_test_implicit(sol::this_state, std::string)>(),
-		"store", &co_test_implicit::store,
-		"copy_store", &co_test_implicit::copy_store,
-		"get", &co_test_implicit::get);
+	lua.new_usertype<coro_test_implicit>("coro_test",
+		sol::constructors<coro_test_implicit(sol::this_state, std::string)>(),
+		"store", &coro_test_implicit::store,
+		"copy_store", &coro_test_implicit::copy_store,
+		"get", &coro_test_implicit::get);
 
 	auto r = lua.safe_script(code, sol::script_pass_on_error);
 	REQUIRE(r.valid());
 
-	co_test_implicit& ct = lua["x"];
+	coro_test_implicit& ct = lua["x"];
 
 	lua_State* Lmain1 = lua.lua_state();
 	lua_State* Lmain2 = sol::main_thread(lua);
@@ -532,53 +536,95 @@ end
 }
 
 TEST_CASE("coroutines/yielding", "test that a sol2 bound function can yield when marked yieldable") {
-	sol::state lua;
-	lua.open_libraries(sol::lib::base, sol::lib::coroutine);
+	SECTION("regular functions") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base, sol::lib::coroutine);
 
-	int i = 0;
-	auto func = [&i]() {
-		++i;
-		return i;
-	};
+		int i = 0;
+		auto func = [&i]() {
+			++i;
+			return i;
+		};
 
-	struct h {
-		int x = 500;
-		int func() const {
-			return x;
-		}
-	} hobj{};
+		coro_h hobj{};
 
-	lua["f"] = sol::yielding(func);
-	lua["g"] = sol::yielding([]() { return 300; });
-	lua["h"] = sol::yielding(&h::func);
-	lua["hobj"] = &hobj;
+		lua["f"] = sol::yielding(func);
+		lua["g"] = sol::yielding([]() { return 300; });
+		lua["h"] = sol::yielding(&coro_h::func);
+		lua["hobj"] = &hobj;
 
-	sol::string_view code = R"(
-	co1 = coroutine.create(function () return f() end)
-	success1, value1 = coroutine.resume(co1)
-	co2 = coroutine.create(function () return g() end)
-	success2, value2 = coroutine.resume(co2)
-	co3 = coroutine.create(function()
-		h(hobj)
-	end)
-	success3, value3 = coroutine.resume(co3)
-	)";
+		sol::string_view code = R"(
+		co1 = coroutine.create(function () return f() end)
+		success1, value1 = coroutine.resume(co1)
+		co2 = coroutine.create(function () return g() end)
+		success2, value2 = coroutine.resume(co2)
+		co3 = coroutine.create(function()
+			h(hobj)
+		end)
+		success3, value3 = coroutine.resume(co3)
+		)";
 
-	auto result = lua.safe_script(code);
-	REQUIRE(result.valid());
+		auto result = lua.safe_script(code, sol::script_pass_on_error);
+		REQUIRE(result.valid());
 
-	bool success1 = lua["success1"];
-	int value1 = lua["value1"];
-	REQUIRE(success1);
-	REQUIRE(value1 == 1);
+		bool success1 = lua["success1"];
+		int value1 = lua["value1"];
+		REQUIRE(success1);
+		REQUIRE(value1 == 1);
 
-	bool success2 = lua["success2"];
-	int value2 = lua["value2"];
-	REQUIRE(success2);
-	REQUIRE(value2 == 300);
+		bool success2 = lua["success2"];
+		int value2 = lua["value2"];
+		REQUIRE(success2);
+		REQUIRE(value2 == 300);
 
-	bool success3 = lua["success3"];
-	int value3 = lua["value3"];
-	REQUIRE(success3);
-	REQUIRE(value3 == 500);
+		bool success3 = lua["success3"];
+		int value3 = lua["value3"];
+		REQUIRE(success3);
+		REQUIRE(value3 == 501);
+
+		REQUIRE(hobj.x == 501);
+	}
+	SECTION("usertypes") {
+		sol::state lua;
+		lua.open_libraries(sol::lib::base, sol::lib::coroutine);
+
+		coro_h hobj;
+
+		lua["hobj"] = &hobj;
+
+		lua.new_usertype<coro_h>("coro_h",
+			"h", sol::yielding(&coro_h::func)
+		);
+
+		sol::string_view code = R"(
+		co4 = coroutine.create(function()
+			hobj:h()
+			hobj.h(hobj)
+			coro_h.h(hobj)
+		end)
+		success4, value4 = coroutine.resume(co4)
+		success5, value5 = coroutine.resume(co4)
+		success6, value6 = coroutine.resume(co4)
+		)";
+
+		auto result = lua.safe_script(code, sol::script_pass_on_error);
+		REQUIRE(result.valid());
+
+		bool success4 = lua["success4"];
+		int value4 = lua["value4"];
+		REQUIRE(success4);
+		REQUIRE(value4 == 501);
+
+		bool success5 = lua["success5"];
+		int value5 = lua["value5"];
+		REQUIRE(success5);
+		REQUIRE(value5 == 502);
+
+		bool success6 = lua["success6"];
+		int value6 = lua["value6"];
+		REQUIRE(success6);
+		REQUIRE(value6 == 503);
+
+		REQUIRE(hobj.x == 503);
+	}
 }

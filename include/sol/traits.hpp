@@ -523,13 +523,27 @@ namespace sol {
 		struct supports_op_less<T, void> : std::false_type {};
 		template <typename T, typename U = T>
 		struct supports_op_equal : decltype(meta_detail::supports_op_equal_test(std::declval<T&>(), std::declval<U&>())) {};
+		template <typename T>
+		struct supports_op_equal<void, T> : std::false_type {};
+		template <typename T>
+		struct supports_op_equal<T, void> : std::false_type {};
 		template <typename T, typename U = T>
 		struct supports_op_less_equal : decltype(meta_detail::supports_op_less_equal_test(std::declval<T&>(), std::declval<U&>())) {};
+		template <typename T>
+		struct supports_op_less_equal<void, T> : std::false_type {};
+		template <typename T>
+		struct supports_op_less_equal<T, void> : std::false_type {};
 		template <typename T, typename U = std::ostream>
 		struct supports_ostream_op : decltype(meta_detail::supports_ostream_op(std::declval<T&>(), std::declval<U&>())) {};
 		template <typename T>
+		struct supports_ostream_op<void, T> : std::false_type {};
+		template <typename T>
+		struct supports_ostream_op<T, void> : std::false_type {};
+		template <typename T>
 		struct supports_adl_to_string : decltype(meta_detail::supports_adl_to_string(std::declval<T&>())) {};
-
+		template <>
+		struct supports_adl_to_string<void> : std::false_type {};
+	
 		template <typename T>
 		using supports_to_string_member = meta::boolean<meta_detail::has_to_string_test<T>::value>;
 

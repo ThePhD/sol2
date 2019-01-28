@@ -30,7 +30,7 @@
 
 namespace sol {
 namespace function_detail {
-	template <int start_skew = 0, typename... Functions>
+	template <int start_skew, typename... Functions>
 	struct overloaded_function {
 		typedef std::tuple<Functions...> overload_list;
 		typedef std::make_index_sequence<sizeof...(Functions)> indices;
@@ -47,7 +47,8 @@ namespace function_detail {
 		template <typename Fx, std::size_t I, typename... R, typename... Args>
 		static int call(types<Fx>, meta::index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int, overload_list& ol) {
 			auto& func = std::get<I>(ol);
-			return call_detail::call_wrapped<void, true, false, start_skew>(L, func);
+			int nr = call_detail::call_wrapped<void, true, false, start_skew>(L, func);
+			return nr;
 		}
 
 		int operator()(lua_State* L) {

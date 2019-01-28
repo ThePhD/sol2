@@ -44,7 +44,7 @@ namespace sol {
 		} // namespace detail
 
 		template <typename T>
-		using unqualified = std::remove_cv<std::remove_reference_t<T>>;
+		struct unqualified : std::remove_cv<std::remove_reference_t<T>> {};
 
 		template <typename T>
 		using unqualified_t = typename unqualified<T>::type;

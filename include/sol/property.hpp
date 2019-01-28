@@ -136,6 +136,9 @@ namespace sol {
 
 		template <typename T>
 		struct is_member_object<readonly_wrapper<T>> : std::true_type {};
+
+		template <typename T>
+		inline constexpr bool is_member_object_v = is_member_object<T>::value;
 	} // namespace meta
 
 } // namespace sol
