@@ -825,9 +825,11 @@ namespace sol {
 					const char16_t* se = reinterpret_cast<const char16_t*>(stre);
 					return stack::push(L, sb, se);
 				}
-				const char32_t* sb = reinterpret_cast<const char32_t*>(strb);
-				const char32_t* se = reinterpret_cast<const char32_t*>(stre);
-				return stack::push(L, sb, se);
+				else {
+					const char32_t* sb = reinterpret_cast<const char32_t*>(strb);
+					const char32_t* se = reinterpret_cast<const char32_t*>(stre);
+					return stack::push(L, sb, se);
+				}
 			}
 		};
 

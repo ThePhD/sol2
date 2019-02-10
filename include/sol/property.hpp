@@ -25,83 +25,84 @@
 #define SOL_PROPERTY_HPP
 
 #include "types.hpp"
+#include "ebco.hpp"
 #include <type_traits>
 #include <utility>
 
 namespace sol {
-
-	struct no_prop {};
+	namespace detail {
+		struct no_prop {};
+	}
 
 	template <typename R, typename W>
-	struct property_wrapper {
-		typedef std::integral_constant<bool, !std::is_void<R>::value> can_read;
-		typedef std::integral_constant<bool, !std::is_void<W>::value> can_write;
-		typedef std::conditional_t<can_read::value, R, no_prop> Read;
-		typedef std::conditional_t<can_write::value, W, no_prop> Write;
-		Read read;
-		Write write;
-
+	struct property_wrapper : ebco<R>, ebco<W> {
 		template <typename Rx, typename Wx>
 		property_wrapper(Rx&& r, Wx&& w)
-		: read(std::forward<Rx>(r)), write(std::forward<Wx>(w)) {
+		: ebco<R>(std::forward<Rx>(r)), ebco<W>(std::forward<Wx>(w)) {
+		}
+
+		W& write() {
+			return ebco<W>::get_value();
+		}
+
+		const W& write() const {
+			return ebco<W>::get_value();
+		}
+
+		R& read() {
+			return ebco<R>::get_value();
+		}
+
+		const R& read() const {
+			return ebco<R>::get_value();
 		}
 	};
-
-	namespace property_detail {
-		template <typename R, typename W>
-		inline decltype(auto) property(std::true_type, R&& read, W&& write) {
-			return property_wrapper<std::decay_t<R>, std::decay_t<W>>(std::forward<R>(read), std::forward<W>(write));
-		}
-		template <typename W, typename R>
-		inline decltype(auto) property(std::false_type, W&& write, R&& read) {
-			return property_wrapper<std::decay_t<R>, std::decay_t<W>>(std::forward<R>(read), std::forward<W>(write));
-		}
-		template <typename R>
-		inline decltype(auto) property(std::true_type, R&& read) {
-			return property_wrapper<std::decay_t<R>, void>(std::forward<R>(read), no_prop());
-		}
-		template <typename W>
-		inline decltype(auto) property(std::false_type, W&& write) {
-			return property_wrapper<void, std::decay_t<W>>(no_prop(), std::forward<W>(write));
-		}
-	} // namespace property_detail
 
 	template <typename F, typename G>
 	inline decltype(auto) property(F&& f, G&& g) {
 		typedef lua_bind_traits<meta::unqualified_t<F>> left_traits;
 		typedef lua_bind_traits<meta::unqualified_t<G>> right_traits;
-		return property_detail::property(meta::boolean<(left_traits::free_arity < right_traits::free_arity)>(), std::forward<F>(f), std::forward<G>(g));
+		if constexpr (left_traits::free_arity < right_traits::free_arity) {
+			return property_wrapper<std::decay_t<F>, std::decay_t<G>>(std::forward<F>(f), std::forward<G>(g));
+		}
+		else {
+			return property_wrapper<std::decay_t<G>, std::decay_t<F>>(std::forward<G>(g), std::forward<F>(f));
+		}
 	}
 
 	template <typename F>
 	inline decltype(auto) property(F&& f) {
 		typedef lua_bind_traits<meta::unqualified_t<F>> left_traits;
-		return property_detail::property(meta::boolean<(left_traits::free_arity < 2)>(), std::forward<F>(f));
+		if constexpr (left_traits::free_arity < 2) {
+			return property_wrapper<std::decay_t<F>, detail::no_prop>(std::forward<F>(f), detail::no_prop());
+		}
+		else {
+			return property_wrapper<detail::no_prop, std::decay_t<F>>(detail::no_prop(), std::forward<F>(f));
+		}
 	}
 
 	template <typename F>
 	inline decltype(auto) readonly_property(F&& f) {
-		return property_detail::property(std::true_type(), std::forward<F>(f));
+		return property_wrapper<std::decay_t<F>, detail::no_prop>(std::forward<F>(f), detail::no_prop());
 	}
 
 	template <typename F>
 	inline decltype(auto) writeonly_property(F&& f) {
-		return property_detail::property(std::false_type(), std::forward<F>(f));
+		return property_wrapper<detail::no_prop, std::decay_t<F>>(detail::no_prop(), std::forward<F>(f));
 	}
 
 	template <typename T>
-	struct readonly_wrapper {
-		T v;
-
-		readonly_wrapper(T v)
-		: v(std::move(v)) {
-		}
+	struct readonly_wrapper : ebco<T> {
+	private:
+		using base_t = ebco<T>;
+	public:
+		using base_t::base_t;
 
 		operator T&() {
-			return v;
+			return base_t::get_value();
 		}
 		operator const T&() const {
-			return v;
+			return base_t::get_value();
 		}
 	};
 
@@ -112,16 +113,11 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct var_wrapper {
-		T value;
-		template <typename... Args>
-		var_wrapper(Args&&... args)
-		: value(std::forward<Args>(args)...) {
-		}
-		var_wrapper(const var_wrapper&) = default;
-		var_wrapper(var_wrapper&&) = default;
-		var_wrapper& operator=(const var_wrapper&) = default;
-		var_wrapper& operator=(var_wrapper&&) = default;
+	struct var_wrapper : ebco<T> {
+	private:
+		using base_t = ebco<T>;
+	public:
+		using base_t::base_t;
 	};
 
 	template <typename V>

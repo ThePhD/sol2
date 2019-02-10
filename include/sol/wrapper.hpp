@@ -112,7 +112,19 @@ namespace sol {
 
 		template <typename Fx, typename Arg, typename... Args>
 		static void call(Fx&& fx, object_type& mem, Arg&& arg, Args&&...) {
-			(mem.*fx) = std::forward<Arg>(arg);
+			using actual_type = meta::unqualified_t<detail::array_return_type<decltype(mem.*fx)>>;
+			if constexpr (std::is_array_v<actual_type>) {
+				using std::cend;
+				using std::cbegin;
+				auto first = cbegin(arg);
+				auto last = cend(arg);
+				for (std::size_t i = 0; first != last; ++i, ++first) {
+					(mem.*fx)[i] = *first;
+				}
+			}
+			else {
+				(mem.*fx) = std::forward<Arg>(arg);
+			}
 		}
 
 		struct caller {

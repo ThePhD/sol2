@@ -45,8 +45,7 @@ function (make_luwra_interop_example target_library example_suffix)
 	else()
 		target_compile_options(${example_name}
 			PRIVATE -std=c++1z -w
-			-Wno-noexcept-type -Wno-unknown-warning -Wno-unknown-warning-option 
-			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
+			-Wno-unknown-warning -Wno-unknown-warning-option)
 	endif()
 
 	if (CMAKE_DL_LIBS)

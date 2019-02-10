@@ -56,29 +56,31 @@ namespace stack {
 				// TODO: abort / terminate, maybe only in debug modes?
 				return r;
 			}
-			memory = detail::align_usertype_unique_tag<true, false>(memory);
-			detail::unique_tag& ic = *reinterpret_cast<detail::unique_tag*>(memory);
-			memory = detail::align_usertype_unique<Real, true, false>(memory);
-			string_view ti = usertype_traits<T>::qualified_name();
-			string_view rebind_ti = usertype_traits<rebind_t>::qualified_name();
-			int cast_operation = ic(memory, &r, ti, rebind_ti);
-			switch (cast_operation) {
-			case 1: {
-				// it's a perfect match,
-				// alias memory directly
-				Real* mem = static_cast<Real*>(memory);
-				return *mem;
+			else {
+				memory = detail::align_usertype_unique_tag<true, false>(memory);
+				detail::unique_tag& ic = *reinterpret_cast<detail::unique_tag*>(memory);
+				memory = detail::align_usertype_unique<Real, true, false>(memory);
+				string_view ti = usertype_traits<T>::qualified_name();
+				string_view rebind_ti = usertype_traits<rebind_t>::qualified_name();
+				int cast_operation = ic(memory, &r, ti, rebind_ti);
+				switch (cast_operation) {
+				case 1: {
+					// it's a perfect match,
+					// alias memory directly
+					Real* mem = static_cast<Real*>(memory);
+					return *mem;
+				}
+				case 2:
+					// it's a base match, return the
+					// aliased creation
+					return std::move(r);
+				default:
+					// uh oh..
+					break;
+				}
+				// TODO: abort / terminate, maybe only in debug modes?
+				return r;
 			}
-			case 2:
-				// it's a base match, return the
-				// aliased creation
-				return std::move(r);
-			default:
-				// uh oh..
-				break;
-			}
-			// TODO: abort / terminate, maybe only in debug modes?
-			return r;
 		}
 	};
 

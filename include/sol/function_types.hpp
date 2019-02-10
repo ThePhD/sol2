@@ -156,6 +156,7 @@ namespace sol {
 			using dFx = std::decay_t<Fx>;
 			using Tu = meta::unqualified_t<T>;
 			if constexpr (meta::is_specialization_of_v<Tu, function_detail::class_indicator>) {
+				(void)obj;
 				using C = typename Tu::type;
 				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, dFx, is_yielding>::call;
 
@@ -178,7 +179,7 @@ namespace sol {
 				}
 				else {
 					using F = function_detail::member_function<Tu, dFx, is_yielding>;
-					select_set_fx<false, F>(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
+					select_set_fx<false, F>(L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
 				}
 			}
 		}

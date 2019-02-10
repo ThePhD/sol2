@@ -22,13 +22,15 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "sol_test.hpp"
+#include "common_classes.hpp"
 
 #include <sol/sol.hpp>
 #include <catch.hpp>
 
+
 TEST_CASE("plain/alignment", "test that aligned classes in certain compilers don't trigger compiler errors") {
 #ifdef _MSC_VER
-	__declspec(align(16)) struct aligned_class { int var; };
+	__declspec(align(16)) struct aligned_class { __declspec(align(16)) int var; };
 
 	struct A {
 		aligned_class a;
@@ -179,4 +181,18 @@ TEST_CASE("plain/constructors and destructors",
 	REQUIRE(purely_constructed == purely_destructed);
 	REQUIRE(purely_constructed == 4);
 	REQUIRE(purely_destructed == 4);
+}
+
+TEST_CASE("plain/arrays", "make sure c-style arrays don't ruin everything and compile fine as usertype variables") {
+	sol::state lua;
+
+	lua.open_libraries();
+	lua.new_usertype<lua_object>("lua_object", "info", &lua_object::info, "stuck_info", &lua_object::stuck_info);
+
+	auto result0 = lua.safe_script("obj = lua_object.new()", sol::script_pass_on_error);
+	REQUIRE(result0.valid());
+	auto result1 = lua.safe_script("print(obj.info)", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
+	auto result2 = lua.safe_script("print(obj.stuck_info)", sol::script_pass_on_error);
+	REQUIRE(result2.valid());
 }

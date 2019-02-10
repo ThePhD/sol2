@@ -77,7 +77,7 @@ void des(T& e) {
 
 template <typename SelfType>
 struct alignas(16) weird_aligned_wrapper {
-	template <typename F>
+	template <typename F, std::enable_if_t<!std::is_same_v<weird_aligned_wrapper, F>, std::nullptr_t> = nullptr>
 	weird_aligned_wrapper(F&& f) : lambda(std::forward<F>(f)) {
 	}
 	void operator()(SelfType& self, sol::object param) const {

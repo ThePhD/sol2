@@ -646,8 +646,10 @@ namespace sol { namespace stack {
 
 		template <typename Handler>
 		static bool is_one(std::integral_constant<std::size_t, 0>, lua_State* L, int index, Handler&& handler, record& tracking) {
-			if (V_is_empty::value && lua_isnone(L, index)) {
-				return true;
+			if constexpr (V_is_empty::value) {
+				if (lua_isnone(L, index)) {
+					return true;
+				}
 			}
 			tracking.use(1);
 			handler(L, index, type::poly, type_of(L, index), "value does not fit any type present in the variant");

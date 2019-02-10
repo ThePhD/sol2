@@ -95,17 +95,6 @@ else()
 	set(IS_X64 TRUE)
 endif()
 
-# # # General project output locations
-if (IS_X86 OR CMAKE_SIZEOF_VOID_P EQUAL 4)
-	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/lib")
-	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/bin")
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/bin")
-else()
-	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/lib")
-	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/bin")
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/bin")
-endif()
-
 
 # # # sol2 Source Groups
 # # Sources everyone is going to need
@@ -202,6 +191,17 @@ endif()
 
 # # # Tests, Examples and other CI suites that come with sol2
 if (DO_TESTS OR DO_EXAMPLES)
+	# # # General project output locations
+	if (IS_X86 OR CMAKE_SIZEOF_VOID_P EQUAL 4)
+		set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/lib")
+		set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/bin")
+		set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/bin")
+	else()
+		set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/lib")
+		set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/bin")
+		set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64/bin")
+	endif()
+
 	# # # Libraries
 	# Here, we pull in all the necessary libraries for building examples and tests
 	# Find threading library
@@ -214,6 +214,9 @@ if (DO_TESTS OR DO_EXAMPLES)
 		endif()
 		set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 		set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+	else()
+		string(REGEX REPLACE "/W[0-4]" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+		string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 	endif()
 	find_package(Threads REQUIRED)
 	

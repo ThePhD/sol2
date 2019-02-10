@@ -140,8 +140,9 @@ namespace sol {
 
 	template <typename... Fxs>
 	inline int c_call(lua_State* L) {
-		if (sizeof...(Fxs) < 2) {
-			return meta::at_in_pack_t<0, Fxs...>::call(L);
+		if constexpr (sizeof...(Fxs) < 2) {
+			using target = meta::at_in_pack_t<0, Fxs...>;
+			return target::call(L);
 		}
 		else {
 			return call_detail::overload_match_arity<typename Fxs::type...>(function_detail::c_call_matcher<Fxs...>(), L, lua_gettop(L), 1);

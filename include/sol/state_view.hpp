@@ -115,85 +115,86 @@ namespace sol {
 				luaL_openlibs(L);
 				return;
 			}
+			else {
+				lib libraries[1 + sizeof...(args)] = { lib::count, std::forward<Args>(args)... };
 
-			lib libraries[1 + sizeof...(args)] = { lib::count, std::forward<Args>(args)... };
-
-			for (auto&& library : libraries) {
-				switch (library) {
-#if SOL_LUA_VERSION <= 501 && defined(SOL_LUAJIT)
-				case lib::coroutine:
-#endif // luajit opens coroutine base stuff
-				case lib::base:
-					luaL_requiref(L, "base", luaopen_base, 1);
-					lua_pop(L, 1);
-					break;
-				case lib::package:
-					luaL_requiref(L, "package", luaopen_package, 1);
-					lua_pop(L, 1);
-					break;
-#if !defined(SOL_LUAJIT)
-				case lib::coroutine:
-#if SOL_LUA_VERSION > 501
-					luaL_requiref(L, "coroutine", luaopen_coroutine, 1);
-					lua_pop(L, 1);
-#endif // Lua 5.2+ only
-					break;
-#endif // Not LuaJIT - comes builtin
-				case lib::string:
-					luaL_requiref(L, "string", luaopen_string, 1);
-					lua_pop(L, 1);
-					break;
-				case lib::table:
-					luaL_requiref(L, "table", luaopen_table, 1);
-					lua_pop(L, 1);
-					break;
-				case lib::math:
-					luaL_requiref(L, "math", luaopen_math, 1);
-					lua_pop(L, 1);
-					break;
-				case lib::bit32:
-#ifdef SOL_LUAJIT
-					luaL_requiref(L, "bit32", luaopen_bit, 1);
-					lua_pop(L, 1);
-#elif (SOL_LUA_VERSION == 502) || defined(LUA_COMPAT_BITLIB) || defined(LUA_COMPAT_5_2)
-					luaL_requiref(L, "bit32", luaopen_bit32, 1);
-					lua_pop(L, 1);
-#else
-#endif // Lua 5.2 only (deprecated in 5.3 (503)) (Can be turned on with Compat flags)
-					break;
-				case lib::io:
-					luaL_requiref(L, "io", luaopen_io, 1);
-					lua_pop(L, 1);
-					break;
-				case lib::os:
-					luaL_requiref(L, "os", luaopen_os, 1);
-					lua_pop(L, 1);
-					break;
-				case lib::debug:
-					luaL_requiref(L, "debug", luaopen_debug, 1);
-					lua_pop(L, 1);
-					break;
-				case lib::utf8:
-#if SOL_LUA_VERSION > 502 && !defined(SOL_LUAJIT)
-					luaL_requiref(L, "utf8", luaopen_utf8, 1);
-					lua_pop(L, 1);
-#endif // Lua 5.3+ only
-					break;
-				case lib::ffi:
-#ifdef SOL_LUAJIT
-					luaL_requiref(L, "ffi", luaopen_ffi, 1);
-					lua_pop(L, 1);
-#endif // LuaJIT only
-					break;
-				case lib::jit:
-#ifdef SOL_LUAJIT
-					luaL_requiref(L, "jit", luaopen_jit, 0);
-					lua_pop(L, 1);
-#endif // LuaJIT Only
-					break;
-				case lib::count:
-				default:
-					break;
+				for (auto&& library : libraries) {
+					switch (library) {
+	#if SOL_LUA_VERSION <= 501 && defined(SOL_LUAJIT)
+					case lib::coroutine:
+	#endif // luajit opens coroutine base stuff
+					case lib::base:
+						luaL_requiref(L, "base", luaopen_base, 1);
+						lua_pop(L, 1);
+						break;
+					case lib::package:
+						luaL_requiref(L, "package", luaopen_package, 1);
+						lua_pop(L, 1);
+						break;
+	#if !defined(SOL_LUAJIT)
+					case lib::coroutine:
+	#if SOL_LUA_VERSION > 501
+						luaL_requiref(L, "coroutine", luaopen_coroutine, 1);
+						lua_pop(L, 1);
+	#endif // Lua 5.2+ only
+						break;
+	#endif // Not LuaJIT - comes builtin
+					case lib::string:
+						luaL_requiref(L, "string", luaopen_string, 1);
+						lua_pop(L, 1);
+						break;
+					case lib::table:
+						luaL_requiref(L, "table", luaopen_table, 1);
+						lua_pop(L, 1);
+						break;
+					case lib::math:
+						luaL_requiref(L, "math", luaopen_math, 1);
+						lua_pop(L, 1);
+						break;
+					case lib::bit32:
+	#ifdef SOL_LUAJIT
+						luaL_requiref(L, "bit32", luaopen_bit, 1);
+						lua_pop(L, 1);
+	#elif (SOL_LUA_VERSION == 502) || defined(LUA_COMPAT_BITLIB) || defined(LUA_COMPAT_5_2)
+						luaL_requiref(L, "bit32", luaopen_bit32, 1);
+						lua_pop(L, 1);
+	#else
+	#endif // Lua 5.2 only (deprecated in 5.3 (503)) (Can be turned on with Compat flags)
+						break;
+					case lib::io:
+						luaL_requiref(L, "io", luaopen_io, 1);
+						lua_pop(L, 1);
+						break;
+					case lib::os:
+						luaL_requiref(L, "os", luaopen_os, 1);
+						lua_pop(L, 1);
+						break;
+					case lib::debug:
+						luaL_requiref(L, "debug", luaopen_debug, 1);
+						lua_pop(L, 1);
+						break;
+					case lib::utf8:
+	#if SOL_LUA_VERSION > 502 && !defined(SOL_LUAJIT)
+						luaL_requiref(L, "utf8", luaopen_utf8, 1);
+						lua_pop(L, 1);
+	#endif // Lua 5.3+ only
+						break;
+					case lib::ffi:
+	#ifdef SOL_LUAJIT
+						luaL_requiref(L, "ffi", luaopen_ffi, 1);
+						lua_pop(L, 1);
+	#endif // LuaJIT only
+						break;
+					case lib::jit:
+	#ifdef SOL_LUAJIT
+						luaL_requiref(L, "jit", luaopen_jit, 0);
+						lua_pop(L, 1);
+	#endif // LuaJIT Only
+						break;
+					case lib::count:
+					default:
+						break;
+					}
 				}
 			}
 		}

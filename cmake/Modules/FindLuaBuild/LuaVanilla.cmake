@@ -165,7 +165,6 @@ endif()
 
 # # Potential compiler variables
 if (MSVC)
-	set(LUA_VANILLA_LUA_LUAC_COMPILER_OPTIONS "/W1")
 	if (BUILD_LUA_AS_DLL)
 		set(LUA_VANILLA_DLL_DEFINE LUA_BUILD_AS_DLL)
 	else()
@@ -378,8 +377,6 @@ else()
 	target_compile_definitions(${luainterpreter} 
 		PRIVATE LUA_USE_LINUX)
 endif()
-target_compile_options(${luainterpreter}
-	PRIVATE ${LUA_VANILLA_LUA_LUAC_COMPILER_OPTIONS})
 target_link_libraries(${luainterpreter} PRIVATE ${liblua})
 if (CMAKE_DL_LIBS)
 	target_link_libraries(${luainterpreter} PRIVATE ${CMAKE_DL_LIBS})
@@ -403,8 +400,6 @@ set_target_properties(${luacompiler}
 	OUTPUT_NAME luac-${LUA_VANILLA_VERSION})
 target_include_directories(${luacompiler}
 	PRIVATE "${LUA_VANILLA_INCLUDE_DIRS}")
-target_compile_options(${luacompiler}
-	PRIVATE ${LUA_VANILLA_LUA_LUAC_COMPILER_OPTIONS})
 target_compile_definitions(${luacompiler}
 	PUBLIC LUA_COMPAT_ALL ${LUA_VANILLA_DLL_DEFINE}
 	PRIVATE LUA_COMPAT_ALL ${LUA_VANILLA_DLL_DEFINE})

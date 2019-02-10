@@ -62,8 +62,9 @@ function(make_require_from_dll_example target_lib example_lib_name_suffix)
 	else()
 		target_compile_options(${example_lib_name}
 			PRIVATE -std=c++1z 
-			-Wno-noexcept-type -Wno-unknown-warning -Wno-unknown-warning-option 
-			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
+			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors
+			-Wno-noexcept-type 
+			-Wno-unknown-warning -Wno-unknown-warning-option)
 		if (IS_X86)
 			target_compile_options(${example_lib_name} BEFORE PRIVATE -m32)
 		endif()
@@ -92,8 +93,9 @@ function(make_require_from_dll_example target_lib example_lib_name_suffix)
 	else()
 		target_compile_options(${example_name}
 			PRIVATE -std=c++1z
-			-Wno-noexcept-type -Wno-unknown-warning -Wno-unknown-warning-option 
-			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
+			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors
+			-Wno-noexcept-type 
+			-Wno-unknown-warning -Wno-unknown-warning-option)
 	endif()
 
 	if(CMAKE_DL_LIBS)

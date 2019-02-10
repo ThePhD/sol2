@@ -43,11 +43,14 @@ function(CREATE_TEST test_target_name test_name target_sol)
 	if (MSVC)
 		if (NOT CMAKE_COMPILER_ID MATCHES "Clang")
 			target_compile_options(${test_target_name} 
-				PRIVATE /bigobj)
+				PRIVATE /bigobj /W4)
 		endif()
 	else()
 		target_compile_options(${test_target_name} 
-			PRIVATE -Wno-noexcept-type -ftemplate-depth=1024 -pthread)
+			PRIVATE -std=c++1z 
+			-Wall -Wpendatic -Werror -pedantic -pedantic-errors 
+			-Wno-noexcept-type -pthread 
+			-Wno-unknown-warning -Wno-unknown-warning-option)
 
 		if (IS_X86)
 			if(MINGW)

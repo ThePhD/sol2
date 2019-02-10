@@ -44,9 +44,8 @@ function (make_kaguya_interop_example target_library example_suffix)
 			_CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
 	else()
 		target_compile_options(${example_name}
-			PRIVATE -std=c++1z -w 
-			-Wno-noexcept-type -Wno-unknown-warning -Wno-unknown-warning-option 
-			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
+			PRIVATE -std=c++1z -w
+			-Wno-unknown-warning -Wno-unknown-warning-option)
 	endif()
 
 	if (CMAKE_DL_LIBS)

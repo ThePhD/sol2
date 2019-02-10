@@ -1175,6 +1175,9 @@ namespace sol {
 	struct is_stack_based<stack_proxy_base> : std::true_type {};
 
 	template <typename T>
+	constexpr inline bool is_stack_based_v = is_stack_based<T>::value;
+
+	template <typename T>
 	struct is_lua_primitive<T*> : std::true_type {};
 	template <>
 	struct is_lua_primitive<unsafe_function_result> : std::true_type {};

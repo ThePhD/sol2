@@ -151,4 +151,15 @@ struct giver {
 	}
 };
 
+struct lua_object {
+
+#define MAX_INFO_STRING 64
+
+	char info[MAX_INFO_STRING];
+	const char stuck_info[MAX_INFO_STRING];
+
+	lua_object() : info("blah"), stuck_info("solid") {
+	}
+};
+
 #endif // SOL_TESTS_COMMON_CLASSES_HPP

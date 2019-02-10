@@ -64,7 +64,7 @@ namespace stack {
 	struct probe_field_getter<std::tuple<Args...>, P, b, raw, C> {
 		template <std::size_t I, typename Keys>
 		probe apply(std::index_sequence<I>, int sofar, lua_State* L, Keys&& keys, int tableindex) {
-			get_field < I<1 && b, raw>(L, std::get<I>(keys), tableindex);
+			get_field<(I<1) && b, raw>(L, std::get<I>(keys), tableindex);
 			return probe(check<P>(L), sofar);
 		}
 
@@ -79,10 +79,15 @@ namespace stack {
 
 		template <typename Keys>
 		probe get(lua_State* L, Keys&& keys, int tableindex = -2) {
-			if (!b && !maybe_indexable(L, tableindex)) {
-				return probe(false, 0);
+			if constexpr (!b) {
+				if (!maybe_indexable(L, tableindex)) {
+					return probe(false, 0);
+				}
+				return apply(std::index_sequence_for<Args...>(), 1, L, std::forward<Keys>(keys), tableindex);
 			}
-			return apply(std::index_sequence_for<Args...>(), 1, L, std::forward<Keys>(keys), tableindex);
+			else {
+				return apply(std::index_sequence_for<Args...>(), 1, L, std::forward<Keys>(keys), tableindex);
+			}
 		}
 	};
 }

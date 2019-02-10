@@ -85,8 +85,9 @@ function (MAKE_EXAMPLE example_source_file example_suffix target_sol)
 	else()
 		target_compile_options(${example_name}
 			PRIVATE -std=c++1z 
-			-Wno-noexcept-type -Wno-unknown-warning -Wno-unknown-warning-option 
-			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
+			-Wall -Wpendatic -Werror -pedantic -pedantic-errors
+			-Wno-noexcept-type 
+			-Wno-unknown-warning -Wno-unknown-warning-option)
 	endif()
 	
 	target_link_libraries(${example_name} 

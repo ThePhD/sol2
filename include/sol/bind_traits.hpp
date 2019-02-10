@@ -507,7 +507,7 @@ namespace meta {
 
 		template <typename R, typename T>
 		struct callable_traits<R(T::*), true> {
-			typedef std::conditional_t<std::is_array<R>::value, std::add_lvalue_reference_t<T>, R> return_type;
+			typedef std::conditional_t<std::is_array_v<R>, std::add_lvalue_reference_t<R>, R> return_type;
 			typedef return_type Arg;
 			typedef T object_type;
 			using signature_type = R(T::*);

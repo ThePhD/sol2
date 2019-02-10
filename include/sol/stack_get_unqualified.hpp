@@ -404,7 +404,7 @@ namespace sol { namespace stack {
 			// This method is HIGHLY performant over regular table iteration thanks to the Lua API changes in 5.3
 			for (lua_Integer i = 0;; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
 				if (idx >= arr.max_size()) {
-					return arr;
+					goto done;
 				}
 				bool isnil = false;
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
@@ -415,7 +415,7 @@ namespace sol { namespace stack {
 							break;
 						}
 						lua_pop(L, (vi + 1));
-						return arr;
+						goto done;
 					}
 				}
 				if (isnil)
@@ -427,7 +427,7 @@ namespace sol { namespace stack {
 			// Zzzz slower but necessary thanks to the lower version API and missing functions qq
 			for (lua_Integer i = 0;; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
 				if (idx >= arr.max_size()) {
-					return arr;
+					goto done;
 				}
 				bool isnil = false;
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
@@ -440,7 +440,7 @@ namespace sol { namespace stack {
 							break;
 						}
 						lua_pop(L, (vi + 1));
-						return arr;
+						goto done;
 					}
 				}
 				if (isnil)
@@ -449,6 +449,7 @@ namespace sol { namespace stack {
 				++idx;
 			}
 #endif
+			done:
 			return arr;
 		}
 
@@ -939,24 +940,20 @@ namespace sol { namespace stack {
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	template <typename... Tn>
 	struct unqualified_getter<std::variant<Tn...>> {
-		typedef std::variant<Tn...> V;
-		typedef std::variant_size<V> V_size;
-		typedef std::integral_constant<bool, V_size::value == 0> V_is_empty;
-
-		static V get_empty(std::true_type, lua_State*, int, record&) {
-			return V();
-		}
-
-		static V get_empty(std::false_type, lua_State* L, int index, record& tracking) {
-			typedef std::variant_alternative_t<0, V> T;
-			// This should never be reached...
-			// please check your code and understand what you did to bring yourself here
-			std::abort();
-			return V(std::in_place_index<0>, stack::get<T>(L, index, tracking));
-		}
-
+		using V =  std::variant<Tn...>;
+		
 		static V get_one(std::integral_constant<std::size_t, 0>, lua_State* L, int index, record& tracking) {
-			return get_empty(V_is_empty(), L, index, tracking);
+			(void)L;
+			(void)index;
+			(void)tracking;
+			if constexpr (std::variant_size_v<V> == 0) {
+				return V();
+			}
+			else {
+				using T = std::variant_alternative_t<0, V>;
+				std::abort();
+				/*return V(std::in_place_index<0>, stack::get<T>(L, index, tracking));*/
+			}
 		}
 
 		template <std::size_t I>
@@ -971,7 +968,7 @@ namespace sol { namespace stack {
 		}
 
 		static V get(lua_State* L, int index, record& tracking) {
-			return get_one(std::integral_constant<std::size_t, V_size::value>(), L, index, tracking);
+			return get_one(std::integral_constant<std::size_t, std::variant_size_v<V>>(), L, index, tracking);
 		}
 	};
 #endif // SOL_STD_VARIANT

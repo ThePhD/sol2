@@ -705,14 +705,14 @@ N = n(1, 2, 3)
 		REQUIRE_FALSE(result.valid());
 	}
 	{
-		auto result = lua.safe_script("t(2)", sol::script_pass_on_error);
-		REQUIRE_FALSE(result.valid());
-		auto result2 = lua.safe_script("t2(2)", sol::script_pass_on_error);
-		REQUIRE_FALSE(result2.valid());
-		auto result3 = lua.safe_script("t3(2)", sol::script_pass_on_error);
-		REQUIRE_FALSE(result3.valid());
-		auto result4 = lua.safe_script("t4(2)", sol::script_pass_on_error);
-		REQUIRE_FALSE(result4.valid());
+		auto tresult = lua.safe_script("t(2)", sol::script_pass_on_error);
+		REQUIRE_FALSE(tresult.valid());
+		auto tresult2 = lua.safe_script("t2(2)", sol::script_pass_on_error);
+		REQUIRE_FALSE(tresult2.valid());
+		auto tresult3 = lua.safe_script("t3(2)", sol::script_pass_on_error);
+		REQUIRE_FALSE(tresult3.valid());
+		auto tresult4 = lua.safe_script("t4(2)", sol::script_pass_on_error);
+		REQUIRE_FALSE(tresult4.valid());
 	}
 	{
 		auto result = lua.safe_script("u(inner)", sol::script_pass_on_error);
