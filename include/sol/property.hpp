@@ -35,26 +35,31 @@ namespace sol {
 	}
 
 	template <typename R, typename W>
-	struct property_wrapper : ebco<R>, ebco<W> {
+	struct property_wrapper : detail::ebco<R, 0>, detail::ebco<W, 1> {
+	private:
+		using read_base_t = detail::ebco<R, 0>;
+		using write_base_t = detail::ebco<W, 1>;
+
+	public:
 		template <typename Rx, typename Wx>
 		property_wrapper(Rx&& r, Wx&& w)
-		: ebco<R>(std::forward<Rx>(r)), ebco<W>(std::forward<Wx>(w)) {
+		: read_base_t(std::forward<Rx>(r)), write_base_t(std::forward<Wx>(w)) {
 		}
 
 		W& write() {
-			return ebco<W>::get_value();
+			return write_base_t::value();
 		}
 
 		const W& write() const {
-			return ebco<W>::get_value();
+			return write_base_t::value();
 		}
 
 		R& read() {
-			return ebco<R>::get_value();
+			return read_base_t::value();
 		}
 
 		const R& read() const {
-			return ebco<R>::get_value();
+			return read_base_t::value();
 		}
 	};
 
@@ -92,17 +97,18 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct readonly_wrapper : ebco<T> {
+	struct readonly_wrapper : detail::ebco<T> {
 	private:
-		using base_t = ebco<T>;
+		using base_t = detail::ebco<T>;
+
 	public:
 		using base_t::base_t;
 
 		operator T&() {
-			return base_t::get_value();
+			return base_t::value();
 		}
 		operator const T&() const {
-			return base_t::get_value();
+			return base_t::value();
 		}
 	};
 
@@ -113,9 +119,10 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct var_wrapper : ebco<T> {
+	struct var_wrapper : detail::ebco<T> {
 	private:
-		using base_t = ebco<T>;
+		using base_t = detail::ebco<T>;
+
 	public:
 		using base_t::base_t;
 	};

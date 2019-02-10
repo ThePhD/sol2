@@ -299,6 +299,7 @@ namespace sol { namespace stack {
 #endif
 					continue;
 				}
+				
 				push_back_at_end(meta::has_push_back<Tu>(), t, L, arr, idx);
 				++idx;
 				lua_pop(L, lua_size<V>::value);

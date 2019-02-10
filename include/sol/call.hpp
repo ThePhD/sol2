@@ -368,11 +368,11 @@ namespace sol {
 			template <typename F>
 			static int call(lua_State* L, F&& f) {
 				if constexpr (is_index) {
-					constexpr bool is_stack = is_stack_based_v<meta::unqualified_t<decltype(detail::unwrap(f.get_value()))>>;
+					constexpr bool is_stack = is_stack_based_v<meta::unqualified_t<decltype(detail::unwrap(f.value()))>>;
 					if constexpr (clean_stack && !is_stack) {
 						lua_settop(L, 0);
 					}
-					return stack::push_reference(L, detail::unwrap(f.get_value()));
+					return stack::push_reference(L, detail::unwrap(f.value()));
 				}
 				else {
 					if constexpr (std::is_const_v<meta::unwrapped_t<T>>) {
@@ -381,7 +381,7 @@ namespace sol {
 					else {
 						using R = meta::unwrapped_t<T>;
 						if constexpr (std::is_assignable_v<std::add_lvalue_reference_t<meta::unqualified_t<R>>, R>) {
-							detail::unwrap(f.get_value()) = stack::unqualified_get<meta::unwrapped_t<T>>(L, boost + (is_variable ? 3 : 1));
+							detail::unwrap(f.value()) = stack::unqualified_get<meta::unwrapped_t<T>>(L, boost + (is_variable ? 3 : 1));
 							if (clean_stack) {
 								lua_settop(L, 0);
 							}
@@ -482,54 +482,81 @@ namespace sol {
 					}
 				}
 				else if constexpr (std::is_member_object_pointer_v<F>) {
-					using traits_type = lua_bind_traits<F>;
 					using wrap = wrapper<F>;
 					using object_type = typename wrap::object_type;
-					using return_type = typename traits_type::return_type;
-					constexpr bool is_const = std::is_const_v<std::remove_reference_t<return_type>>;
-					if constexpr (is_const) {
-						(void)fx;
-						(void)detail::swallow{ 0, (static_cast<void>(args), 0)... };
-						return luaL_error(L, "sol: cannot write to a readonly (const) variable");
-					}
-					else {
-						using u_return_type = meta::unqualified_t<return_type>;
-						constexpr bool is_assignable = std::is_copy_assignable_v<u_return_type> || std::is_array_v<u_return_type>;
-						if constexpr (!is_assignable) {
-							(void)fx;
-							(void)detail::swallow{ 0, ((void)args, 0)... };
-							return luaL_error(L, "sol: cannot write to this variable: copy assignment/constructor not available");
+					if constexpr (is_index) {
+						if constexpr (sizeof...(Args) < 1) {
+							using Ta = std::conditional_t<std::is_void_v<T>, object_type, T>;
+#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
+							auto maybeo = stack::check_get<Ta*>(L, 1);
+							if (!maybeo || maybeo.value() == nullptr) {
+								if (is_variable) {
+									return luaL_error(L, "sol: 'self' argument is lua_nil (bad '.' access?)");
+								}
+								return luaL_error(L, "sol: 'self' argument is lua_nil (pass 'self' as first argument)");
+							}
+							object_type* o = static_cast<object_type*>(maybeo.value());
+							return call(L, std::forward<Fx>(fx), *o);
+#else
+							object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
+							return call(L, std::forward<Fx>(fx), o);
+#endif // Safety
 						}
 						else {
-							using args_list = typename wrap::args_list;
+							using returns_list = typename wrap::returns_list;
 							using caller = typename wrap::caller;
-							if constexpr (sizeof...(Args) > 0) {
-								return stack::call_into_lua<checked, clean_stack>(types<void>(),
-								     args_list(),
-								     L,
-								     boost + (is_variable ? 3 : 2),
-								     caller(),
-								     std::forward<Fx>(fx),
-								     std::forward<Args>(args)...);
+							return stack::call_into_lua<checked, clean_stack>(
+							     returns_list(), types<>(), L, boost + (is_variable ? 3 : 2), caller(), std::forward<Fx>(fx), std::forward<Args>(args)...);
+						}
+					}
+					else {
+						using traits_type = lua_bind_traits<F>;
+						using return_type = typename traits_type::return_type;
+						constexpr bool is_const = std::is_const_v<std::remove_reference_t<return_type>>;
+						if constexpr (is_const) {
+							(void)fx;
+							(void)detail::swallow{ 0, (static_cast<void>(args), 0)... };
+							return luaL_error(L, "sol: cannot write to a readonly (const) variable");
+						}
+						else {
+							using u_return_type = meta::unqualified_t<return_type>;
+							constexpr bool is_assignable = std::is_copy_assignable_v<u_return_type> || std::is_array_v<u_return_type>;
+							if constexpr (!is_assignable) {
+								(void)fx;
+								(void)detail::swallow{ 0, ((void)args, 0)... };
+								return luaL_error(L, "sol: cannot write to this variable: copy assignment/constructor not available");
 							}
 							else {
-								using Ta = std::conditional_t<std::is_void_v<T>, object_type, T>;
-#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
-								auto maybeo = stack::check_get<Ta*>(L, 1);
-								if (!maybeo || maybeo.value() == nullptr) {
-									if (is_variable) {
-										return luaL_error(L, "sol: received nil for 'self' argument (bad '.' access?)");
-									}
-									return luaL_error(L, "sol: received nil for 'self' argument (pass 'self' as first argument)");
+								using args_list = typename wrap::args_list;
+								using caller = typename wrap::caller;
+								if constexpr (sizeof...(Args) > 0) {
+									return stack::call_into_lua<checked, clean_stack>(types<void>(),
+										args_list(),
+										L,
+										boost + (is_variable ? 3 : 2),
+										caller(),
+										std::forward<Fx>(fx),
+										std::forward<Args>(args)...);
 								}
-								object_type* po = static_cast<object_type*>(maybeo.value());
-								object_type& o = *po;
-#else
-								object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
-#endif // Safety
+								else {
+									using Ta = std::conditional_t<std::is_void_v<T>, object_type, T>;
+	#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
+									auto maybeo = stack::check_get<Ta*>(L, 1);
+									if (!maybeo || maybeo.value() == nullptr) {
+										if (is_variable) {
+											return luaL_error(L, "sol: received nil for 'self' argument (bad '.' access?)");
+										}
+										return luaL_error(L, "sol: received nil for 'self' argument (pass 'self' as first argument)");
+									}
+									object_type* po = static_cast<object_type*>(maybeo.value());
+									object_type& o = *po;
+	#else
+									object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
+	#endif // Safety
 
-								return stack::call_into_lua<checked, clean_stack>(
-								     types<void>(), args_list(), L, boost + (is_variable ? 3 : 2), caller(), std::forward<Fx>(fx), o);
+									return stack::call_into_lua<checked, clean_stack>(
+										types<void>(), args_list(), L, boost + (is_variable ? 3 : 2), caller(), std::forward<Fx>(fx), o);
+								}
 							}
 						}
 					}
@@ -538,55 +565,6 @@ namespace sol {
 					agnostic_lua_call_wrapper<F, is_index, is_variable, checked, boost, clean_stack> alcw{};
 					return alcw.call(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 				}
-			}
-		};
-
-		template <typename T, typename F, bool is_variable, bool checked, int boost, bool clean_stack>
-		struct lua_call_wrapper<T, F, true, is_variable, checked, boost, clean_stack, std::enable_if_t<std::is_member_object_pointer<F>::value>> {
-			using traits_type = lua_bind_traits<F>;
-			using wrap = wrapper<F>;
-			using object_type = typename wrap::object_type;
-
-			template <typename V>
-			static int call(lua_State* L, V&& v, object_type& o) {
-				using returns_list = typename wrap::returns_list;
-				using caller = typename wrap::caller;
-				F f(std::forward<V>(v));
-				return stack::call_into_lua<checked, clean_stack>(returns_list(), types<>(), L, boost + (is_variable ? 3 : 2), caller(), f, o);
-			}
-
-			template <typename V>
-			static int call(lua_State* L, V&& f) {
-				using Ta = std::conditional_t<std::is_void<T>::value, object_type, T>;
-#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
-				auto maybeo = stack::check_get<Ta*>(L, 1);
-				if (!maybeo || maybeo.value() == nullptr) {
-					if (is_variable) {
-						return luaL_error(L, "sol: 'self' argument is lua_nil (bad '.' access?)");
-					}
-					return luaL_error(L, "sol: 'self' argument is lua_nil (pass 'self' as first argument)");
-				}
-				object_type* o = static_cast<object_type*>(maybeo.value());
-				return call(L, f, *o);
-#else
-				object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
-				return call(L, f, o);
-#endif // Safety
-			}
-		};
-
-		template <typename T, typename F, bool is_variable, bool checked, int boost, bool clean_stack, typename C>
-		struct lua_call_wrapper<T, readonly_wrapper<F>, false, is_variable, checked, boost, clean_stack, C> {
-			using traits_type = lua_bind_traits<F>;
-			using wrap = wrapper<F>;
-			using object_type = typename wrap::object_type;
-
-			static int call(lua_State* L, const readonly_wrapper<F>&) {
-				return luaL_error(L, "sol: cannot write to a sol::readonly variable");
-			}
-
-			static int call(lua_State* L, const readonly_wrapper<F>& rw, object_type&) {
-				return call(L, rw);
 			}
 		};
 
@@ -603,7 +581,7 @@ namespace sol {
 				}
 				else {
 					lua_call_wrapper<T, F, true, is_variable, checked, boost, clean_stack, C> lcw;
-					return lcw.call(L, std::move(rw.get_value()), o);
+					return lcw.call(L, std::move(rw.value()), o);
 				}
 			}
 
@@ -614,7 +592,7 @@ namespace sol {
 				}
 				else {
 					lua_call_wrapper<T, F, true, is_variable, checked, boost, clean_stack, C> lcw;
-					return lcw.call(L, rw.get_value(), o);
+					return lcw.call(L, rw.value(), o);
 				}
 			}
 
@@ -625,7 +603,7 @@ namespace sol {
 				}
 				else {
 					lua_call_wrapper<T, F, true, is_variable, checked, boost, clean_stack, C> lcw;
-					return lcw.call(L, rw.get_value());
+					return lcw.call(L, rw.value());
 				}
 			}
 
@@ -636,7 +614,7 @@ namespace sol {
 				}
 				else {
 					lua_call_wrapper<T, F, true, is_variable, checked, boost, clean_stack, C> lcw;
-					return lcw.call(L, rw.get_value(), o);
+					return lcw.call(L, rw.value(), o);
 				}
 			}
 		};

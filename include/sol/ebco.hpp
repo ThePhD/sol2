@@ -24,43 +24,44 @@
 #ifndef SOL_EBCO_HPP
 #define SOL_EBCO_HPP
 
+#include <type_traits>
 #include <utility>
 
-namespace sol {
+namespace sol { namespace detail {
 
-	template <typename T, typename = void>
+	template <typename T, std::size_t tag = 0, typename = void>
 	struct ebco {
-		T value;
+		T value_;
 
 		ebco() = default;
 		ebco(const ebco&) = default;
 		ebco(ebco&&) = default;
 		ebco& operator=(const ebco&) = default;
 		ebco& operator=(ebco&&) = default;
-		ebco(const T& v) : value(v){};
-		ebco(T&& v) : value(std::move(v)){};
+		ebco(const T& v) : value_(v){};
+		ebco(T&& v) : value_(std::move(v)){};
 		ebco& operator=(const T& v) {
 			value = v;
 		}
 		ebco& operator=(T&& v) {
-			value = std::move(v);
+			value_ = std::move(v);
 		};
 		template <typename Arg, typename... Args,
 		     typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
 		                                      ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T>>>
 		ebco(Arg&& arg, Args&&... args) : T(std::forward<Arg>(arg), std::forward<Args>(args)...){};
 
-		T& get_value() {
-			return value;
+		T& value() {
+			return value_;
 		}
 
-		T const& get_value() const {
-			return value;
+		T const& value() const {
+			return value_;
 		}
 	};
 
-	template <typename T>
-	struct ebco<T, std::enable_if_t<std::is_class_v<T> && !std::is_final_v<T>>> : T {
+	template <typename T, std::size_t tag>
+	struct ebco<T, tag, std::enable_if_t<!std::is_reference_v<T> && std::is_class_v<T> && !std::is_final_v<T>>> : T {
 		ebco() = default;
 		ebco(const ebco&) = default;
 		ebco(ebco&&) = default;
@@ -80,15 +81,15 @@ namespace sol {
 			static_cast<T&>(*this) = std::move(v);
 		};
 
-		T& get_value() {
+		T& value() {
 			return static_cast<T&>(*this);
 		}
 
-		T const& get_value() const {
+		T const& value() const {
 			return static_cast<T const&>(*this);
 		}
 	};
 
-} // namespace sol
+}} // namespace sol::detail
 
 #endif // SOL_EBCO_HPP

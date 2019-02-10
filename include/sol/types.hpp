@@ -33,6 +33,7 @@
 #include "string_view.hpp"
 #include "raii.hpp"
 #include "filters.hpp"
+#include "ebco.hpp"
 
 #include <array>
 #include <initializer_list>
@@ -496,10 +497,11 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct force_t {
-		T arg;
-
-		force_t(T value) : arg(value) {}
+	struct force_t : detail::ebco<T> {
+	private:
+		using base_t = detail::ebco<T>;
+	public:
+		using base_t::base_t;
 	};
 
 	template <typename T>
@@ -1083,7 +1085,7 @@ namespace sol {
 		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
 
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-#ifdef SOL_STD_VARIANT
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 		template <typename... Tn>
 		struct lua_type_of<std::variant<Tn...>> : std::integral_constant<type, type::poly> {};
 #endif // SOL_STD_VARIANT
