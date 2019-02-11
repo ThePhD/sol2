@@ -177,7 +177,7 @@ namespace sol {
 				call<check_args>(tr,
 				     ta,
 				     L,
-				     (std::max)(static_cast<int>(lua_gettop(L) - expected_count::value), static_cast<int>(0)),
+				     (std::max)(static_cast<int>(lua_gettop(L) - expected_count_t::value), static_cast<int>(0)),
 				     std::forward<Fx>(fx),
 				     std::forward<FxArgs>(args)...);
 			}

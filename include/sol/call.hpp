@@ -581,7 +581,7 @@ namespace sol {
 				}
 				else {
 					lua_call_wrapper<T, F, true, is_variable, checked, boost, clean_stack, C> lcw;
-					return lcw.call(L, std::move(rw.value()), o);
+					return lcw.call(L, std::move(rw.value()));
 				}
 			}
 

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-02-10 18:04:01.131525 UTC
-// This header was generated with sol v2.20.6 (revision fbf5b48)
+// Generated 2019-02-11 10:50:18.478770 UTC
+// This header was generated with sol v2.20.6 (revision 4fd197d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5823,6 +5823,75 @@ namespace sol {
 
 // end of sol/filters.hpp
 
+// beginning of sol/ebco.hpp
+
+namespace sol { namespace detail {
+
+	template <typename T, std::size_t tag = 0, typename = void>
+	struct ebco {
+		T value_;
+
+		ebco() = default;
+		ebco(const ebco&) = default;
+		ebco(ebco&&) = default;
+		ebco& operator=(const ebco&) = default;
+		ebco& operator=(ebco&&) = default;
+		ebco(const T& v) : value_(v){};
+		ebco(T&& v) : value_(std::move(v)){};
+		ebco& operator=(const T& v) {
+			value = v;
+		}
+		ebco& operator=(T&& v) {
+			value_ = std::move(v);
+		};
+		template <typename Arg, typename... Args,
+		     typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
+		                                      ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T>>>
+		ebco(Arg&& arg, Args&&... args) : T(std::forward<Arg>(arg), std::forward<Args>(args)...){};
+
+		T& value() {
+			return value_;
+		}
+
+		T const& value() const {
+			return value_;
+		}
+	};
+
+	template <typename T, std::size_t tag>
+	struct ebco<T, tag, std::enable_if_t<!std::is_reference_v<T> && std::is_class_v<T> && !std::is_final_v<T>>> : T {
+		ebco() = default;
+		ebco(const ebco&) = default;
+		ebco(ebco&&) = default;
+		ebco(const T& v) : T(v){};
+		ebco(T&& v) : T(std::move(v)){};
+		template <typename Arg, typename... Args,
+		     typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
+		                                      ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T>>>
+		ebco(Arg&& arg, Args&&... args) : T(std::forward<Arg>(arg), std::forward<Args>(args)...){};
+
+		ebco& operator=(const ebco&) = default;
+		ebco& operator=(ebco&&) = default;
+		ebco& operator=(const T& v) {
+			static_cast<T&>(*this) = v;
+		}
+		ebco& operator=(T&& v) {
+			static_cast<T&>(*this) = std::move(v);
+		};
+
+		T& value() {
+			return static_cast<T&>(*this);
+		}
+
+		T const& value() const {
+			return static_cast<T const&>(*this);
+		}
+	};
+
+}} // namespace sol::detail
+
+// end of sol/ebco.hpp
+
 #include <initializer_list>
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #ifdef SOL_STD_VARIANT
@@ -6281,10 +6350,11 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct force_t {
-		T arg;
-
-		force_t(T value) : arg(value) {}
+	struct force_t : detail::ebco<T> {
+	private:
+		using base_t = detail::ebco<T>;
+	public:
+		using base_t::base_t;
 	};
 
 	template <typename T>
@@ -6868,7 +6938,7 @@ namespace sol {
 		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
 
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-#ifdef SOL_STD_VARIANT
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 		template <typename... Tn>
 		struct lua_type_of<std::variant<Tn...>> : std::integral_constant<type, type::poly> {};
 #endif // SOL_STD_VARIANT
@@ -11307,6 +11377,7 @@ namespace sol { namespace stack {
 #endif
 					continue;
 				}
+				
 				push_back_at_end(meta::has_push_back<Tu>(), t, L, arr, idx);
 				++idx;
 				lua_pop(L, lua_size<V>::value);
@@ -13947,7 +14018,7 @@ namespace sol {
 				call<check_args>(tr,
 				     ta,
 				     L,
-				     (std::max)(static_cast<int>(lua_gettop(L) - expected_count::value), static_cast<int>(0)),
+				     (std::max)(static_cast<int>(lua_gettop(L) - expected_count_t::value), static_cast<int>(0)),
 				     std::forward<Fx>(fx),
 				     std::forward<FxArgs>(args)...);
 			}
@@ -15246,101 +15317,37 @@ namespace function_detail {
 
 // beginning of sol/property.hpp
 
-// beginning of sol/ebco.hpp
-
-namespace sol {
-
-	template <typename T, typename = void>
-	struct ebco {
-		T value;
-
-		ebco() = default;
-		ebco(const ebco&) = default;
-		ebco(ebco&&) = default;
-		ebco& operator=(const ebco&) = default;
-		ebco& operator=(ebco&&) = default;
-		ebco(const T& v) : value(v){};
-		ebco(T&& v) : value(std::move(v)){};
-		ebco& operator=(const T& v) {
-			value = v;
-		}
-		ebco& operator=(T&& v) {
-			value = std::move(v);
-		};
-		template <typename Arg, typename... Args,
-		     typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
-		                                      ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T>>>
-		ebco(Arg&& arg, Args&&... args) : T(std::forward<Arg>(arg), std::forward<Args>(args)...){};
-
-		T& get_value() {
-			return value;
-		}
-
-		T const& get_value() const {
-			return value;
-		}
-	};
-
-	template <typename T>
-	struct ebco<T, std::enable_if_t<std::is_class_v<T> && !std::is_final_v<T>>> : T {
-		ebco() = default;
-		ebco(const ebco&) = default;
-		ebco(ebco&&) = default;
-		ebco(const T& v) : T(v){};
-		ebco(T&& v) : T(std::move(v)){};
-		template <typename Arg, typename... Args,
-		     typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
-		                                      ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T>>>
-		ebco(Arg&& arg, Args&&... args) : T(std::forward<Arg>(arg), std::forward<Args>(args)...){};
-
-		ebco& operator=(const ebco&) = default;
-		ebco& operator=(ebco&&) = default;
-		ebco& operator=(const T& v) {
-			static_cast<T&>(*this) = v;
-		}
-		ebco& operator=(T&& v) {
-			static_cast<T&>(*this) = std::move(v);
-		};
-
-		T& get_value() {
-			return static_cast<T&>(*this);
-		}
-
-		T const& get_value() const {
-			return static_cast<T const&>(*this);
-		}
-	};
-
-} // namespace sol
-
-// end of sol/ebco.hpp
-
 namespace sol {
 	namespace detail {
 		struct no_prop {};
 	}
 
 	template <typename R, typename W>
-	struct property_wrapper : ebco<R>, ebco<W> {
+	struct property_wrapper : detail::ebco<R, 0>, detail::ebco<W, 1> {
+	private:
+		using read_base_t = detail::ebco<R, 0>;
+		using write_base_t = detail::ebco<W, 1>;
+
+	public:
 		template <typename Rx, typename Wx>
 		property_wrapper(Rx&& r, Wx&& w)
-		: ebco<R>(std::forward<Rx>(r)), ebco<W>(std::forward<Wx>(w)) {
+		: read_base_t(std::forward<Rx>(r)), write_base_t(std::forward<Wx>(w)) {
 		}
 
 		W& write() {
-			return ebco<W>::get_value();
+			return write_base_t::value();
 		}
 
 		const W& write() const {
-			return ebco<W>::get_value();
+			return write_base_t::value();
 		}
 
 		R& read() {
-			return ebco<R>::get_value();
+			return read_base_t::value();
 		}
 
 		const R& read() const {
-			return ebco<R>::get_value();
+			return read_base_t::value();
 		}
 	};
 
@@ -15378,17 +15385,18 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct readonly_wrapper : ebco<T> {
+	struct readonly_wrapper : detail::ebco<T> {
 	private:
-		using base_t = ebco<T>;
+		using base_t = detail::ebco<T>;
+
 	public:
 		using base_t::base_t;
 
 		operator T&() {
-			return base_t::get_value();
+			return base_t::value();
 		}
 		operator const T&() const {
-			return base_t::get_value();
+			return base_t::value();
 		}
 	};
 
@@ -15399,9 +15407,10 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct var_wrapper : ebco<T> {
+	struct var_wrapper : detail::ebco<T> {
 	private:
-		using base_t = ebco<T>;
+		using base_t = detail::ebco<T>;
+
 	public:
 		using base_t::base_t;
 	};
@@ -15792,11 +15801,11 @@ namespace sol {
 			template <typename F>
 			static int call(lua_State* L, F&& f) {
 				if constexpr (is_index) {
-					constexpr bool is_stack = is_stack_based_v<meta::unqualified_t<decltype(detail::unwrap(f.get_value()))>>;
+					constexpr bool is_stack = is_stack_based_v<meta::unqualified_t<decltype(detail::unwrap(f.value()))>>;
 					if constexpr (clean_stack && !is_stack) {
 						lua_settop(L, 0);
 					}
-					return stack::push_reference(L, detail::unwrap(f.get_value()));
+					return stack::push_reference(L, detail::unwrap(f.value()));
 				}
 				else {
 					if constexpr (std::is_const_v<meta::unwrapped_t<T>>) {
@@ -15805,7 +15814,7 @@ namespace sol {
 					else {
 						using R = meta::unwrapped_t<T>;
 						if constexpr (std::is_assignable_v<std::add_lvalue_reference_t<meta::unqualified_t<R>>, R>) {
-							detail::unwrap(f.get_value()) = stack::unqualified_get<meta::unwrapped_t<T>>(L, boost + (is_variable ? 3 : 1));
+							detail::unwrap(f.value()) = stack::unqualified_get<meta::unwrapped_t<T>>(L, boost + (is_variable ? 3 : 1));
 							if (clean_stack) {
 								lua_settop(L, 0);
 							}
@@ -15906,54 +15915,81 @@ namespace sol {
 					}
 				}
 				else if constexpr (std::is_member_object_pointer_v<F>) {
-					using traits_type = lua_bind_traits<F>;
 					using wrap = wrapper<F>;
 					using object_type = typename wrap::object_type;
-					using return_type = typename traits_type::return_type;
-					constexpr bool is_const = std::is_const_v<std::remove_reference_t<return_type>>;
-					if constexpr (is_const) {
-						(void)fx;
-						(void)detail::swallow{ 0, (static_cast<void>(args), 0)... };
-						return luaL_error(L, "sol: cannot write to a readonly (const) variable");
-					}
-					else {
-						using u_return_type = meta::unqualified_t<return_type>;
-						constexpr bool is_assignable = std::is_copy_assignable_v<u_return_type> || std::is_array_v<u_return_type>;
-						if constexpr (!is_assignable) {
-							(void)fx;
-							(void)detail::swallow{ 0, ((void)args, 0)... };
-							return luaL_error(L, "sol: cannot write to this variable: copy assignment/constructor not available");
+					if constexpr (is_index) {
+						if constexpr (sizeof...(Args) < 1) {
+							using Ta = std::conditional_t<std::is_void_v<T>, object_type, T>;
+#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
+							auto maybeo = stack::check_get<Ta*>(L, 1);
+							if (!maybeo || maybeo.value() == nullptr) {
+								if (is_variable) {
+									return luaL_error(L, "sol: 'self' argument is lua_nil (bad '.' access?)");
+								}
+								return luaL_error(L, "sol: 'self' argument is lua_nil (pass 'self' as first argument)");
+							}
+							object_type* o = static_cast<object_type*>(maybeo.value());
+							return call(L, std::forward<Fx>(fx), *o);
+#else
+							object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
+							return call(L, std::forward<Fx>(fx), o);
+#endif // Safety
 						}
 						else {
-							using args_list = typename wrap::args_list;
+							using returns_list = typename wrap::returns_list;
 							using caller = typename wrap::caller;
-							if constexpr (sizeof...(Args) > 0) {
-								return stack::call_into_lua<checked, clean_stack>(types<void>(),
-								     args_list(),
-								     L,
-								     boost + (is_variable ? 3 : 2),
-								     caller(),
-								     std::forward<Fx>(fx),
-								     std::forward<Args>(args)...);
+							return stack::call_into_lua<checked, clean_stack>(
+							     returns_list(), types<>(), L, boost + (is_variable ? 3 : 2), caller(), std::forward<Fx>(fx), std::forward<Args>(args)...);
+						}
+					}
+					else {
+						using traits_type = lua_bind_traits<F>;
+						using return_type = typename traits_type::return_type;
+						constexpr bool is_const = std::is_const_v<std::remove_reference_t<return_type>>;
+						if constexpr (is_const) {
+							(void)fx;
+							(void)detail::swallow{ 0, (static_cast<void>(args), 0)... };
+							return luaL_error(L, "sol: cannot write to a readonly (const) variable");
+						}
+						else {
+							using u_return_type = meta::unqualified_t<return_type>;
+							constexpr bool is_assignable = std::is_copy_assignable_v<u_return_type> || std::is_array_v<u_return_type>;
+							if constexpr (!is_assignable) {
+								(void)fx;
+								(void)detail::swallow{ 0, ((void)args, 0)... };
+								return luaL_error(L, "sol: cannot write to this variable: copy assignment/constructor not available");
 							}
 							else {
-								using Ta = std::conditional_t<std::is_void_v<T>, object_type, T>;
-#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
-								auto maybeo = stack::check_get<Ta*>(L, 1);
-								if (!maybeo || maybeo.value() == nullptr) {
-									if (is_variable) {
-										return luaL_error(L, "sol: received nil for 'self' argument (bad '.' access?)");
-									}
-									return luaL_error(L, "sol: received nil for 'self' argument (pass 'self' as first argument)");
+								using args_list = typename wrap::args_list;
+								using caller = typename wrap::caller;
+								if constexpr (sizeof...(Args) > 0) {
+									return stack::call_into_lua<checked, clean_stack>(types<void>(),
+										args_list(),
+										L,
+										boost + (is_variable ? 3 : 2),
+										caller(),
+										std::forward<Fx>(fx),
+										std::forward<Args>(args)...);
 								}
-								object_type* po = static_cast<object_type*>(maybeo.value());
-								object_type& o = *po;
-#else
-								object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
-#endif // Safety
+								else {
+									using Ta = std::conditional_t<std::is_void_v<T>, object_type, T>;
+	#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
+									auto maybeo = stack::check_get<Ta*>(L, 1);
+									if (!maybeo || maybeo.value() == nullptr) {
+										if (is_variable) {
+											return luaL_error(L, "sol: received nil for 'self' argument (bad '.' access?)");
+										}
+										return luaL_error(L, "sol: received nil for 'self' argument (pass 'self' as first argument)");
+									}
+									object_type* po = static_cast<object_type*>(maybeo.value());
+									object_type& o = *po;
+	#else
+									object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
+	#endif // Safety
 
-								return stack::call_into_lua<checked, clean_stack>(
-								     types<void>(), args_list(), L, boost + (is_variable ? 3 : 2), caller(), std::forward<Fx>(fx), o);
+									return stack::call_into_lua<checked, clean_stack>(
+										types<void>(), args_list(), L, boost + (is_variable ? 3 : 2), caller(), std::forward<Fx>(fx), o);
+								}
 							}
 						}
 					}
@@ -15962,55 +15998,6 @@ namespace sol {
 					agnostic_lua_call_wrapper<F, is_index, is_variable, checked, boost, clean_stack> alcw{};
 					return alcw.call(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 				}
-			}
-		};
-
-		template <typename T, typename F, bool is_variable, bool checked, int boost, bool clean_stack>
-		struct lua_call_wrapper<T, F, true, is_variable, checked, boost, clean_stack, std::enable_if_t<std::is_member_object_pointer<F>::value>> {
-			using traits_type = lua_bind_traits<F>;
-			using wrap = wrapper<F>;
-			using object_type = typename wrap::object_type;
-
-			template <typename V>
-			static int call(lua_State* L, V&& v, object_type& o) {
-				using returns_list = typename wrap::returns_list;
-				using caller = typename wrap::caller;
-				F f(std::forward<V>(v));
-				return stack::call_into_lua<checked, clean_stack>(returns_list(), types<>(), L, boost + (is_variable ? 3 : 2), caller(), f, o);
-			}
-
-			template <typename V>
-			static int call(lua_State* L, V&& f) {
-				using Ta = std::conditional_t<std::is_void<T>::value, object_type, T>;
-#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
-				auto maybeo = stack::check_get<Ta*>(L, 1);
-				if (!maybeo || maybeo.value() == nullptr) {
-					if (is_variable) {
-						return luaL_error(L, "sol: 'self' argument is lua_nil (bad '.' access?)");
-					}
-					return luaL_error(L, "sol: 'self' argument is lua_nil (pass 'self' as first argument)");
-				}
-				object_type* o = static_cast<object_type*>(maybeo.value());
-				return call(L, f, *o);
-#else
-				object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
-				return call(L, f, o);
-#endif // Safety
-			}
-		};
-
-		template <typename T, typename F, bool is_variable, bool checked, int boost, bool clean_stack, typename C>
-		struct lua_call_wrapper<T, readonly_wrapper<F>, false, is_variable, checked, boost, clean_stack, C> {
-			using traits_type = lua_bind_traits<F>;
-			using wrap = wrapper<F>;
-			using object_type = typename wrap::object_type;
-
-			static int call(lua_State* L, const readonly_wrapper<F>&) {
-				return luaL_error(L, "sol: cannot write to a sol::readonly variable");
-			}
-
-			static int call(lua_State* L, const readonly_wrapper<F>& rw, object_type&) {
-				return call(L, rw);
 			}
 		};
 
@@ -16027,7 +16014,7 @@ namespace sol {
 				}
 				else {
 					lua_call_wrapper<T, F, true, is_variable, checked, boost, clean_stack, C> lcw;
-					return lcw.call(L, std::move(rw.get_value()), o);
+					return lcw.call(L, std::move(rw.value()));
 				}
 			}
 
@@ -16038,7 +16025,7 @@ namespace sol {
 				}
 				else {
 					lua_call_wrapper<T, F, true, is_variable, checked, boost, clean_stack, C> lcw;
-					return lcw.call(L, rw.get_value(), o);
+					return lcw.call(L, rw.value(), o);
 				}
 			}
 
@@ -16049,7 +16036,7 @@ namespace sol {
 				}
 				else {
 					lua_call_wrapper<T, F, true, is_variable, checked, boost, clean_stack, C> lcw;
-					return lcw.call(L, rw.get_value());
+					return lcw.call(L, rw.value());
 				}
 			}
 
@@ -16060,7 +16047,7 @@ namespace sol {
 				}
 				else {
 					lua_call_wrapper<T, F, true, is_variable, checked, boost, clean_stack, C> lcw;
-					return lcw.call(L, rw.get_value(), o);
+					return lcw.call(L, rw.value(), o);
 				}
 			}
 		};
