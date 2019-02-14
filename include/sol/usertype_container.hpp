@@ -508,6 +508,10 @@ namespace sol {
 				iter(T& source, iterator it)
 				: source(source), it(std::move(it)), i(0) {
 				}
+
+				~iter() {
+					
+				}
 			};
 
 			static auto& get_src(lua_State* L) {
@@ -1073,7 +1077,7 @@ namespace sol {
 				auto& source = i.source;
 				auto& it = i.it;
 				if (it == deferred_uc::end(L, source)) {
-					return 0;
+					return stack::push(L, lua_nil);
 				}
 				int p;
 				if (ip) {
@@ -1095,7 +1099,7 @@ namespace sol {
 				auto& it = i.it;
 				next_K k = stack::unqualified_get<next_K>(L, 2);
 				if (it == deferred_uc::end(L, source)) {
-					return 0;
+					return stack::push(L, lua_nil);
 				}
 				int p;
 				p = stack::push_reference(L, k + 1);

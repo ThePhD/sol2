@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-02-14 07:36:40.566598 UTC
-// This header was generated with sol v2.20.6 (revision ffe77cc)
+// Generated 2019-02-14 09:52:13.459443 UTC
+// This header was generated with sol v2.20.6 (revision b938e42)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -33,12 +33,9 @@
 #define SOL_HPP
 
 #if defined(UE_BUILD_DEBUG) || defined(UE_BUILD_DEVELOPMENT) || defined(UE_BUILD_TEST) || defined(UE_BUILD_SHIPPING) || defined(UE_SERVER)
-#define SOL_INSIDE_UNREAL 1
-#endif // Unreal Engine 4 bullshit
-
-#if defined(SOL_INSIDE_UNREAL) && SOL_INSIDE_UNREAL
+#define SOL_INSIDE_UNREAL
 #ifdef check
-#define SOL_INSIDE_UNREAL_REMOVED_CHECK 1
+#pragma push_macro("check")
 #undef check
 #endif
 #endif // Unreal Engine 4 Bullshit
@@ -18758,6 +18755,10 @@ namespace sol {
 				iter(T& source, iterator it)
 				: source(source), it(std::move(it)), i(0) {
 				}
+
+				~iter() {
+					
+				}
 			};
 
 			static auto& get_src(lua_State* L) {
@@ -19323,7 +19324,7 @@ namespace sol {
 				auto& source = i.source;
 				auto& it = i.it;
 				if (it == deferred_uc::end(L, source)) {
-					return 0;
+					return stack::push(L, lua_nil);
 				}
 				int p;
 				if (ip) {
@@ -19345,7 +19346,7 @@ namespace sol {
 				auto& it = i.it;
 				next_K k = stack::unqualified_get<next_K>(L, 2);
 				if (it == deferred_uc::end(L, source)) {
-					return 0;
+					return stack::push(L, lua_nil);
 				}
 				int p;
 				p = stack::push_reference(L, k + 1);
@@ -24383,23 +24384,9 @@ namespace sol {
 #pragma warning(push)
 #endif // g++
 
-#if defined(SOL_INSIDE_UNREAL) && SOL_INSIDE_UNREAL
-#if defined(SOL_INSIDE_UNREAL_REMOVED_CHECK) && SOL_INSIDE_UNREAL_REMOVED_CHECK
-#if defined(DO_CHECK) && DO_CHECK
-#define check(expr)                                                       \
-	{                                                                    \
-		if (UNLIKELY(!(expr))) {                                        \
-			FDebug::LogAssertFailedMessage(#expr, __FILE__, __LINE__); \
-			_DebugBreakAndPromptForRemote();                           \
-			FDebug::AssertFailed(#expr, __FILE__, __LINE__);           \
-			CA_ASSUME(false);                                          \
-		}                                                               \
-	}
-#else
-#define check(expr) \
-	{ CA_ASSUME(expr); }
-#endif
-#endif
+#if defined(SOL_INSIDE_UNREAL)
+#undef check
+#pragma pop_macro("check")
 #endif // Unreal Engine 4 Bullshit
 
 #endif // SOL_HPP
