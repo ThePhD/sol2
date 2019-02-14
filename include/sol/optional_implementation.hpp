@@ -1149,20 +1149,26 @@ namespace sol {
 		/// \synopsis template <class U> optional(const optional<U> &rhs);
 		template <class U, detail::enable_from_other<T, U, const U&>* = nullptr, detail::enable_if_t<std::is_convertible<const U&, T>::value>* = nullptr>
 		optional(const optional<U>& rhs) {
-			this->construct(*rhs);
+			if (rhs.has_value()) {
+				this->construct(*rhs);
+			}
 		}
 
 		/// \exclude
 		template <class U, detail::enable_from_other<T, U, const U&>* = nullptr, detail::enable_if_t<!std::is_convertible<const U&, T>::value>* = nullptr>
 		explicit optional(const optional<U>& rhs) {
-			this->construct(*rhs);
+			if (rhs.has_value()) {
+				this->construct(*rhs);
+			}
 		}
 
 		/// Converting move constructor.
 		/// \synopsis template <class U> optional(optional<U> &&rhs);
 		template <class U, detail::enable_from_other<T, U, U&&>* = nullptr, detail::enable_if_t<std::is_convertible<U&&, T>::value>* = nullptr>
 		optional(optional<U>&& rhs) {
-			this->construct(std::move(*rhs));
+			if (rhs.has_value()) {
+				this->construct(std::move(*rhs));
+			}
 		}
 
 		/// \exclude

@@ -22,6 +22,7 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "sol_test.hpp"
+#include "common_classes.hpp"
 
 #include <catch.hpp>
 
@@ -106,7 +107,25 @@ TEST_CASE("utility/variant", "test that variant can be round-tripped") {
 #endif // C++17
 }
 
-TEST_CASE("utility/optional", "test that shit optional can be round-tripped") {
+TEST_CASE("utility/optional-conversion", "test that regular optional will properly catch certain types") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_usertype<vars>("vars");
+
+	lua["test"] = [](sol::optional<vars> x) {
+		return static_cast<bool>(x);
+	};
+
+	const auto result = lua.safe_script(R"(
+		assert(test(vars:new()))
+		assert(not test(3))
+		assert(not test(nil))
+	)", sol::script_pass_on_error);
+	REQUIRE(result.valid());
+}
+
+TEST_CASE("utility/std optional", "test that shit optional can be round-tripped") {
 #ifdef SOL_CXX17_FEATURES
 	SECTION("okay") {
 		sol::state lua;

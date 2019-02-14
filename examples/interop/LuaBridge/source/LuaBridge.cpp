@@ -29,36 +29,27 @@ private:
 	int v_ = 50;
 };
 
-namespace sol {
-namespace stack {
-	template <typename T>
-	struct userdata_checker<extensible<T>> {
-		template <typename Handler>
-		static bool check(lua_State* L, int relindex, type index_type, Handler&& handler, record& tracking) {
-			// just marking unused parameters for no compiler warnings
-			(void)index_type;
-			(void)handler;
-			tracking.use(1);
-			int index = lua_absindex(L, relindex);
-			T* corrected = luabridge::Userdata::get<T>(L, index, true);
-			return corrected != nullptr;
-		}
-	};
-
-	template <typename T>
-	struct userdata_getter<extensible<T>> {
-		static std::pair<bool, T*> get(lua_State* L, int relindex, void* unadjusted_pointer, record& tracking) {
-			(void)unadjusted_pointer;
-			int index = lua_absindex(L, relindex);
-			if (!userdata_checker<extensible<T>>::check(L, index, type::userdata, no_panic, tracking)) {
-				return { false, nullptr };
-			}
-			T* corrected = luabridge::Userdata::get<T>(L, index, true);
-			return { true, corrected };
-		}
-	};
+template <typename T, typename Handler>
+inline bool sol_lua_interop_check(sol::types<T>, lua_State* L, int relindex, sol::type index_type, Handler&& handler, sol::stack::record& tracking) {
+	// just marking unused parameters for no compiler warnings
+	(void)index_type;
+	(void)handler;
+	tracking.use(1);
+	int index = lua_absindex(L, relindex);
+	T* corrected = luabridge::Userdata::get<T>(L, index, true);
+	return corrected != nullptr;
 }
-} // namespace sol::stack
+
+template <typename T>
+inline std::pair<bool, T*> sol_lua_interop_get(sol::types<T> t, lua_State* L, int relindex, void* unadjusted_pointer, sol::stack::record& tracking) {
+	(void)unadjusted_pointer;
+	int index = lua_absindex(L, relindex);
+	if (!sol_lua_interop_check(t, L, index, sol::type::userdata, sol::no_panic, tracking)) {
+		return { false, nullptr };
+	}
+	T* corrected = luabridge::Userdata::get<T>(L, index, true);
+	return { true, corrected };
+}
 
 void register_sol_stuff(lua_State* L) {
 	// grab raw state and put into state_view

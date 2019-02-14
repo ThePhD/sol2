@@ -71,10 +71,18 @@ namespace sol { namespace stack {
 	} // namespace stack_detail
 
 	template <typename T, typename>
-	struct userdata_checker {
+	struct unqualified_interop_checker {
 		template <typename Handler>
 		static bool check(lua_State*, int, type, Handler&&, record&) {
 			return false;
+		}
+	};
+
+	template <typename T, typename>
+	struct qualified_interop_checker {
+		template <typename Handler>
+		static bool check(lua_State* L, int index, type index_type, Handler&& handler, record& tracking) {
+			return stack_detail::unqualified_interop_check<T>(L, index, index_type, std::forward<Handler>(handler), tracking);
 		}
 	};
 
@@ -446,15 +454,13 @@ namespace sol { namespace stack {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			const type indextype = type_of(L, index);
-			return check(types<T>(), L, index, indextype, handler, tracking);
+			return check(types<T>(), L, index, indextype, std::forward<Handler>(handler), tracking);
 		}
 
 		template <typename U, typename Handler>
 		static bool check(types<U>, lua_State* L, int index, type indextype, Handler&& handler, record& tracking) {
 #if defined(SOL_ENABLE_INTEROP) && SOL_ENABLE_INTEROP
-			userdata_checker<extensible<T>> uc;
-			(void)uc;
-			if (uc.check(L, index, indextype, handler, tracking)) {
+			if (stack_detail::interop_check<U>(L, index, indextype, handler, tracking)) {
 				return true;
 			}
 #endif // interop extensibility
@@ -463,8 +469,7 @@ namespace sol { namespace stack {
 				handler(L, index, type::userdata, indextype, "value is not a valid userdata");
 				return false;
 			}
-			if (meta::any<std::is_same<T, lightuserdata_value>, std::is_same<T, userdata_value>, std::is_same<T, userdata>, std::is_same<T, lightuserdata>>::
-				     value)
+			if (meta::any<std::is_same<T, lightuserdata_value>, std::is_same<T, userdata_value>, std::is_same<T, userdata>, std::is_same<T, lightuserdata>>::value)
 				return true;
 			if (lua_getmetatable(L, index) == 0) {
 				return true;

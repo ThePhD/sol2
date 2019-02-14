@@ -98,14 +98,13 @@ namespace sol {
 		}
 
 		inline void* align_usertype_pointer(void* ptr) {
-			typedef std::integral_constant<bool,
+			using use_align = std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 			     false
 #else
 			     (std::alignment_of<void*>::value > 1)
 #endif
-			     >
-			     use_align;
+			     >;
 			if (!use_align::value) {
 				return ptr;
 			}
@@ -115,14 +114,13 @@ namespace sol {
 
 		template <bool pre_aligned = false, bool pre_shifted = false>
 		inline void* align_usertype_unique_destructor(void* ptr) {
-			typedef std::integral_constant<bool,
+			using use_align = std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 			     false
 #else
 			     (std::alignment_of<unique_destructor>::value > 1)
 #endif
-			     >
-			     use_align;
+			     >;
 			if (!pre_aligned) {
 				ptr = align_usertype_pointer(ptr);
 			}
@@ -138,14 +136,13 @@ namespace sol {
 
 		template <bool pre_aligned = false, bool pre_shifted = false>
 		inline void* align_usertype_unique_tag(void* ptr) {
-			typedef std::integral_constant<bool,
+			using use_align = std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 			     false
 #else
 			     (std::alignment_of<unique_tag>::value > 1)
 #endif
-			     >
-			     use_align;
+			     >;
 			if (!pre_aligned) {
 				ptr = align_usertype_unique_destructor(ptr);
 			}
@@ -590,7 +587,9 @@ namespace sol {
 		template <typename T, typename = void>
 		struct qualified_getter;
 		template <typename T, typename = void>
-		struct userdata_getter;
+		struct qualified_interop_getter;
+		template <typename T, typename = void>
+		struct unqualified_interop_getter;
 		template <typename T, typename = void>
 		struct popper;
 		template <typename T, typename = void>
@@ -600,7 +599,9 @@ namespace sol {
 		template <typename T, type = lua_type_of<T>::value, typename = void>
 		struct qualified_checker;
 		template <typename T, typename = void>
-		struct userdata_checker;
+		struct qualified_interop_checker;
+		template <typename T, typename = void>
+		struct unqualified_interop_checker;
 		template <typename T, typename = void>
 		struct unqualified_check_getter;
 		template <typename T, typename = void>
@@ -647,11 +648,37 @@ namespace sol {
 		};
 
 		template <typename T>
+		struct is_adl_sol_lua_interop_get {
+		private:
+			template <typename C>
+			static meta::sfinae_yes_t test(
+				std::remove_reference_t<decltype(sol_lua_interop_get(types<C>(), static_cast<lua_State*>(nullptr), -1, static_cast<void*>(nullptr), std::declval<stack::record&>()))>*);
+			template <typename C>
+			static meta::sfinae_no_t test(...);
+
+		public:
+			static constexpr bool value = std::is_same_v<decltype(test<T>(nullptr)), meta::sfinae_yes_t>;
+		};
+
+		template <typename T>
 		struct is_adl_sol_lua_check {
 		private:
 			template <typename C>
 			static meta::sfinae_yes_t test(std::remove_reference_t<decltype(
 				     sol_lua_check(types<C>(), static_cast<lua_State*>(nullptr), -1, no_panic, std::declval<stack::record&>()))>*);
+			template <typename C>
+			static meta::sfinae_no_t test(...);
+
+		public:
+			static constexpr bool value = std::is_same_v<decltype(test<T>(nullptr)), meta::sfinae_yes_t>;
+		};
+
+		template <typename T>
+		struct is_adl_sol_lua_interop_check {
+		private:
+			template <typename C>
+			static meta::sfinae_yes_t test(std::remove_reference_t<decltype(
+				     sol_lua_interop_check(types<C>(), static_cast<lua_State*>(nullptr), -1, type::none, no_panic, std::declval<stack::record&>()))>*);
 			template <typename C>
 			static meta::sfinae_no_t test(...);
 
@@ -701,7 +728,13 @@ namespace sol {
 		inline constexpr bool is_adl_sol_lua_get_v = is_adl_sol_lua_get<T>::value;
 
 		template <typename T>
+		inline constexpr bool is_adl_sol_lua_interop_get_v = is_adl_sol_lua_interop_get<T>::value;
+
+		template <typename T>
 		inline constexpr bool is_adl_sol_lua_check_v = is_adl_sol_lua_check<T>::value;
+
+		template <typename T>
+		inline constexpr bool is_adl_sol_lua_interop_check_v = is_adl_sol_lua_interop_check<T>::value;
 
 		template <typename T>
 		inline constexpr bool is_adl_sol_lua_check_get_v = is_adl_sol_lua_check_get<T>::value;
@@ -792,6 +825,58 @@ namespace sol {
 					return g.get(L, index, tracking);
 				}
 			}
+
+			template <typename T>
+			inline decltype(auto) unqualified_interop_get(lua_State* L, int index, void* unadjusted_pointer, record& tracking) {
+				using Tu = meta::unqualified_t<T>;
+				if constexpr (meta::meta_detail::is_adl_sol_lua_interop_get_v<Tu>) {
+					return sol_lua_interop_get(types<Tu>(), L, index, unadjusted_pointer, tracking);
+				}
+				else {
+					unqualified_interop_getter<Tu> g{};
+					(void)g;
+					return g.get(L, index, unadjusted_pointer, tracking);
+				}
+			}
+
+			template <typename T>
+			inline decltype(auto) interop_get(lua_State* L, int index, void* unadjusted_pointer, record& tracking) {
+				if constexpr (meta::meta_detail::is_adl_sol_lua_interop_get_v<T>) {
+					return sol_lua_interop_get(types<T>(), L, index, unadjusted_pointer, tracking);
+				}
+				else {
+					qualified_interop_getter<T> g{};
+					(void)g;
+					return g.get(L, index, unadjusted_pointer, tracking);
+				}
+			}
+
+			template <typename T, typename Handler>
+			bool unqualified_interop_check(lua_State* L, int index, type index_type, Handler&& handler, record& tracking) {
+				using Tu = meta::unqualified_t<T>;
+				if constexpr (meta::meta_detail::is_adl_sol_lua_interop_check_v<Tu>) {
+					return sol_lua_interop_check(types<Tu>(), L, index, index_type, std::forward<Handler>(handler), tracking);
+				}
+				else {
+					unqualified_interop_checker<Tu> c;
+					// VC++ has a bad warning here: shut it up
+					(void)c;
+					return c.check(L, index, index_type, std::forward<Handler>(handler), tracking);
+				}
+			}
+
+			template <typename T, typename Handler>
+			bool interop_check(lua_State* L, int index, type index_type, Handler&& handler, record& tracking) {
+				if constexpr (meta::meta_detail::is_adl_sol_lua_interop_check_v<T>) {
+					return sol_lua_interop_check(types<T>(), L, index, index_type, std::forward<Handler>(handler), tracking);
+				}
+				else {
+					qualified_interop_checker<T> c;
+					// VC++ has a bad warning here: shut it up
+					(void)c;
+					return c.check(L, index, index_type, std::forward<Handler>(handler), tracking);
+				}
+			}
 		} // namespace stack_detail
 
 		inline bool maybe_indexable(lua_State* L, int index = -1) {
@@ -868,11 +953,10 @@ namespace sol {
 
 			template <typename T, typename Arg, typename... Args>
 			inline int push_reference(lua_State* L, Arg&& arg, Args&&... args) {
-				typedef meta::all<std::is_lvalue_reference<T>,
+				using use_reference_tag = meta::all<std::is_lvalue_reference<T>,
 				     meta::neg<std::is_const<T>>,
 				     meta::neg<is_lua_primitive<meta::unqualified_t<T>>>,
-				     meta::neg<is_unique_usertype<meta::unqualified_t<T>>>>
-				     use_reference_tag;
+				     meta::neg<is_unique_usertype<meta::unqualified_t<T>>>>;
 				using Tr = meta::conditional_t<use_reference_tag::value, detail::as_reference_tag, meta::unqualified_t<T>>;
 				return stack::push<Tr>(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 			}
@@ -914,6 +998,32 @@ namespace sol {
 		}
 
 		template <typename T, typename Handler>
+		bool unqualified_check(lua_State* L, int index, Handler&& handler, record& tracking) {
+			using Tu = meta::unqualified_t<T>;
+			if constexpr (meta::meta_detail::is_adl_sol_lua_check_v<Tu>) {
+				return sol_lua_check(types<Tu>(), L, index, std::forward<Handler>(handler), tracking);
+			}
+			else {
+				unqualified_checker<Tu> c;
+				// VC++ has a bad warning here: shut it up
+				(void)c;
+				return c.check(L, index, std::forward<Handler>(handler), tracking);
+			}
+		}
+
+		template <typename T, typename Handler>
+		bool unqualified_check(lua_State* L, int index, Handler&& handler) {
+			record tracking{};
+			return unqualified_check<T>(L, index, std::forward<Handler>(handler), tracking);
+		}
+
+		template <typename T>
+		bool unqualified_check(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
+			auto handler = no_panic;
+			return unqualified_check<T>(L, index, handler);
+		}
+
+		template <typename T, typename Handler>
 		bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			if constexpr (meta::meta_detail::is_adl_sol_lua_check_v<T>) {
 				return sol_lua_check(types<T>(), L, index, std::forward<Handler>(handler), tracking);
@@ -936,32 +1046,6 @@ namespace sol {
 		bool check(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
 			auto handler = no_panic;
 			return check<T>(L, index, handler);
-		}
-
-		template <typename T, typename Handler>
-		bool unqualified_check(lua_State* L, int index, Handler&& handler, record& tracking) {
-			typedef meta::unqualified_t<T> Tu;
-			if constexpr (meta::meta_detail::is_adl_sol_lua_check_v<Tu>) {
-				return sol_lua_check(types<Tu>(), L, index, std::forward<Handler>(handler), tracking);
-			}
-			else {
-				unqualified_checker<Tu> c;
-				// VC++ has a bad warning here: shut it up
-				(void)c;
-				return c.check(L, index, std::forward<Handler>(handler), tracking);
-			}
-		}
-
-		template <typename T, typename Handler>
-		bool unqualified_check(lua_State* L, int index, Handler&& handler) {
-			record tracking{};
-			return unqualified_check<T>(L, index, std::forward<Handler>(handler), tracking);
-		}
-
-		template <typename T>
-		bool unqualified_check(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
-			auto handler = no_panic;
-			return unqualified_check<T>(L, index, handler);
 		}
 
 		template <typename T, typename Handler>
@@ -1067,6 +1151,8 @@ namespace sol {
 				}
 			};
 
+
+
 		} // namespace stack_detail
 
 		template <bool b, typename... Args, typename Handler>
@@ -1159,7 +1245,6 @@ namespace sol {
 			return get<T>(L, index, tracking);
 		}
 
-
 		template <typename T>
 		inline decltype(auto) get_usertype(lua_State* L, int index, record& tracking) {
 			using UT = meta::conditional_t<std::is_pointer<T>::value, detail::as_pointer_tag<std::remove_pointer_t<T>>, detail::as_value_tag<T>>;
@@ -1239,7 +1324,7 @@ namespace sol {
 
 		template <typename T, typename F>
 		inline void modify_unique_usertype_as(const stack_reference& obj, F&& f) {
-			typedef unique_usertype_traits<T> u_traits;
+			using u_traits = unique_usertype_traits<T>;
 			void* raw = lua_touserdata(obj.lua_state(), obj.stack_index());
 			void* ptr_memory = detail::align_usertype_pointer(raw);
 			void* uu_memory = detail::align_usertype_unique<T>(raw);
@@ -1250,9 +1335,10 @@ namespace sol {
 
 		template <typename F>
 		inline void modify_unique_usertype(const stack_reference& obj, F&& f) {
-			typedef meta::bind_traits<meta::unqualified_t<F>> bt;
-			typedef typename bt::template arg_at<0> T;
-			modify_unique_usertype_as<meta::unqualified_t<T>>(obj, std::forward<F>(f));
+			using bt = meta::bind_traits<meta::unqualified_t<F>>;
+			using T = typename bt::template arg_at<0>;
+			using Tu = meta::unqualified_t<T>;
+			modify_unique_usertype_as<Tu>(obj, std::forward<F>(f));
 		}
 
 	} // namespace stack

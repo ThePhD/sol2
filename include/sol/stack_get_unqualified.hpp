@@ -97,7 +97,7 @@ namespace sol { namespace stack {
 
 		template <typename BaseCh, typename S>
 		inline S get_into(lua_State* L, int index, record& tracking) {
-			typedef typename S::value_type Ch;
+			using Ch = typename S::value_type;
 			tracking.use(1);
 			size_t len;
 			auto utf8p = lua_tolstring(L, index, &len);
@@ -114,16 +114,7 @@ namespace sol { namespace stack {
 			convert<BaseCh>(strb, stre, copy_units);
 			return r;
 		}
-	}
-
-	template <typename U>
-	struct userdata_getter<U> {
-		typedef stack_detail::strip_extensible_t<U> T;
-
-		static std::pair<bool, T*> get(lua_State*, int, void*, record&) {
-			return { false, nullptr };
-		}
-	};
+	} // namespace stack_detail
 
 	template <typename T, typename>
 	struct unqualified_getter {
@@ -136,6 +127,22 @@ namespace sol { namespace stack {
 	struct qualified_getter {
 		static decltype(auto) get(lua_State* L, int index, record& tracking) {
 			return stack::unqualified_get<T>(L, index, tracking);
+		}
+	};
+
+	template <typename U, typename>
+	struct unqualified_interop_getter {
+		using T = stack_detail::strip_extensible_t<U>;
+
+		static std::pair<bool, T*> get(lua_State*, int, void*, record&) {
+			return { false, nullptr };
+		}
+	};
+
+	template <typename T, typename>
+	struct qualified_interop_getter {
+		static decltype(auto) get(lua_State* L, int index, void* unadjusted_pointer, record& tracking) {
+			return stack_detail::unqualified_interop_get<T>(L, index, unadjusted_pointer, tracking);
 		}
 	};
 
@@ -796,9 +803,7 @@ namespace sol { namespace stack {
 		static T* get_no_lua_nil(lua_State* L, int index, record& tracking) {
 			void* memory = lua_touserdata(L, index);
 #if defined(SOL_ENABLE_INTEROP) && SOL_ENABLE_INTEROP
-			userdata_getter<extensible<T>> ug;
-			(void)ug;
-			auto ugr = ug.get(L, index, memory, tracking);
+			auto ugr = stack_detail::interop_get<T>(L, index, memory, tracking);
 			if (ugr.first) {
 				return ugr.second;
 			}
@@ -951,9 +956,9 @@ namespace sol { namespace stack {
 				return V();
 			}
 			else {
-				using T = std::variant_alternative_t<0, V>;
+				//using T = std::variant_alternative_t<0, V>;
 				std::abort();
-				/*return V(std::in_place_index<0>, stack::get<T>(L, index, tracking));*/
+				//return V(std::in_place_index<0>, stack::get<T>(L, index, tracking));
 			}
 		}
 

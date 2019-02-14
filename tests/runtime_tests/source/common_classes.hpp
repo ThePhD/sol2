@@ -26,6 +26,31 @@
 
 #include <iostream>
 
+struct woof {
+	int var;
+
+	int func(int x) {
+		return var + x;
+	}
+
+	double func2(int x, int y) {
+		return var + x + y + 0.5;
+	}
+
+	std::string func2s(int x, std::string y) {
+		return y + " " + std::to_string(x);
+	}
+};
+
+struct thing {
+	int v = 100;
+
+	thing() {
+	}
+	thing(int x) : v(x) {
+	}
+};
+
 struct non_copyable {
 	non_copyable() = default;
 	non_copyable(non_copyable&& other) noexcept = default;

@@ -48,7 +48,7 @@ function(CREATE_TEST test_target_name test_name target_sol)
 	else()
 		target_compile_options(${test_target_name} 
 			PRIVATE -std=c++1z 
-			-Wall -Wpendatic -Werror -pedantic -pedantic-errors 
+			-Wall -Wpedantic -Werror -pedantic -pedantic-errors 
 			-Wno-noexcept-type -pthread 
 			-Wno-unknown-warning -Wno-unknown-warning-option)
 

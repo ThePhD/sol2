@@ -15,24 +15,23 @@
 // I don't know where else you're gonna find the reference,
 // http://usefulgamedev.weebly.com/tolua-example.html
 
-namespace sol {
-namespace stack {
-	template <typename T>
-	struct userdata_checker<extensible<T>> {
-		template <typename Handler>
-		static bool check(lua_State* L, int relindex, type index_type, Handler&& handler, record& tracking) {
-			tracking.use(1);
-			// just marking unused parameters for no compiler warnings
-			(void)index_type;
-			(void)handler;
-			int index = lua_absindex(L, relindex);
-			std::string name = sol::detail::short_demangle<T>();
-			tolua_Error tolua_err;
-			return tolua_isusertype(L, index, name.c_str(), 0, &tolua_err);
-		}
-	};
+
+/* NOTE: there is no sol_lua_interop_get here,
+ because tolua types are -- thankfully -- memory-compatible
+ in most cases with sol.
+ Please check other examples like kaguya or LuaBribe for an example
+ of how to also write the getter for your type*/
+template <typename T, typename Handler>
+inline bool sol_lua_interop_check(sol::types<T>, lua_State* L, int relindex, sol::type index_type, Handler&& handler, sol::stack::record& tracking) {
+	tracking.use(1);
+	// just marking unused parameters for no compiler warnings
+	(void)index_type;
+	(void)handler;
+	int index = lua_absindex(L, relindex);
+	std::string name = sol::detail::short_demangle<T>();
+	tolua_Error tolua_err;
+	return tolua_isusertype(L, index, name.c_str(), 0, &tolua_err);
 }
-} // namespace sol::stack
 
 void register_sol_stuff(lua_State* L) {
 	// grab raw state and put into state_view

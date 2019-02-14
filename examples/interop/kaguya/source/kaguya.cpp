@@ -39,46 +39,37 @@ private:
 	int v_;
 };
 
-namespace sol {
-namespace stack {
-	template <typename T>
-	struct userdata_checker<extensible<T>> {
-		template <typename Handler>
-		static bool check(lua_State* L, int relindex, type index_type, Handler&& handler, record& tracking) {
-			// just marking unused parameters for no compiler warnings
-			(void)index_type;
-			(void)handler;
-			// using 1 element
-			tracking.use(1);
-			int index = lua_absindex(L, relindex);
-			// use kaguya's own detail wrapper check to see if it's correct
-			bool is_correct_type = kaguya::detail::object_wrapper_type_check(L, index);
-			return is_correct_type;
-		}
-	};
-
-	template <typename T>
-	struct userdata_getter<extensible<T>> {
-		static std::pair<bool, T*> get(lua_State* L, int relindex, void* unadjusted_pointer, record& tracking) {
-			// you may not need to specialize this method every time:
-			// some libraries are compatible with sol2's layout
-
-			// kaguya's storage of data is incompatible with sol's
-			// it stores the data directly in the pointer, not a pointer inside of the `void*`
-			// therefore, leave the raw userdata pointer as-is,
-			// if it's of the right type
-			int index = lua_absindex(L, relindex);
-			if (!kaguya::detail::object_wrapper_type_check(L, index)) {
-				return { false, nullptr };
-			}
-			// using 1 element
-			tracking.use(1);
-			kaguya::ObjectWrapperBase* base = kaguya::object_wrapper(L, index);
-			return { true, static_cast<T*>(base->get()) };
-		}
-	};
+template <typename T, typename Handler>
+inline bool sol_lua_interop_check(sol::types<T>, lua_State* L, int relindex, sol::type index_type, Handler&& handler, sol::stack::record& tracking) {
+	// just marking unused parameters for no compiler warnings
+	(void)index_type;
+	(void)handler;
+	// using 1 element
+	tracking.use(1);
+	int index = lua_absindex(L, relindex);
+	// use kaguya's own detail wrapper check to see if it's correct
+	bool is_correct_type = kaguya::detail::object_wrapper_type_check(L, index);
+	return is_correct_type;
 }
-} // namespace sol::stack
+
+template <typename T>
+inline std::pair<bool, T*> sol_lua_interop_get(sol::types<T>, lua_State* L, int relindex, void* unadjusted_pointer, sol::stack::record& tracking) {
+	// you may not need to specialize this method every time:
+	// some libraries are compatible with sol2's layout
+
+	// kaguya's storage of data is incompatible with sol's
+	// it stores the data directly in the pointer, not a pointer inside of the `void*`
+	// therefore, leave the raw userdata pointer as-is,
+	// if it's of the right type
+	int index = lua_absindex(L, relindex);
+	if (!kaguya::detail::object_wrapper_type_check(L, index)) {
+		return { false, nullptr };
+	}
+	// using 1 element
+	tracking.use(1);
+	kaguya::ObjectWrapperBase* base = kaguya::object_wrapper(L, index);
+	return { true, static_cast<T*>(base->get()) };
+}
 
 void register_sol_stuff(lua_State* L) {
 	// grab raw state and put into state_view

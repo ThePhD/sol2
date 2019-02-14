@@ -23,6 +23,8 @@
 
 #include "sol_test.hpp"
 
+#include "common_classes.hpp"
+
 #include <catch.hpp>
 
 #include <iostream>
@@ -256,4 +258,32 @@ TEST_CASE("inheritance/runtime multi base", "test that multiple bases all work a
 	REQUIRE(b_obj.b2 == 46);
 	runtime_A& a_obj = lua["obj"];
 	REQUIRE(a_obj.a == 5);
+}
+
+TEST_CASE("inheritance/usertype derived non-hiding", "usertype classes must play nice when a derived class does not overload a publically visible base function") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+	sol::constructors<sol::types<int>> basector;
+	sol::usertype<Base> baseusertype = lua.new_usertype<Base>("Base", basector, "get_num", &Base::get_num);
+
+	lua.safe_script("base = Base.new(5)");
+	{
+		auto result = lua.safe_script("print(base:get_num())", sol::script_pass_on_error);
+		REQUIRE(result.valid());
+	}
+
+	sol::constructors<sol::types<int>> derivedctor;
+	sol::usertype<Derived> derivedusertype
+	     = lua.new_usertype<Derived>("Derived", derivedctor, "get_num_10", &Derived::get_num_10, "get_num", &Derived::get_num);
+
+	lua.safe_script("derived = Derived.new(7)");
+	lua.safe_script(
+	     "dgn = derived:get_num()\n"
+	     "print(dgn)");
+	lua.safe_script(
+	     "dgn10 = derived:get_num_10()\n"
+	     "print(dgn10)");
+
+	REQUIRE((lua.get<int>("dgn10") == 70));
+	REQUIRE((lua.get<int>("dgn") == 7));
 }
