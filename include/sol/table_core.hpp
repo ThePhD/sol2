@@ -118,7 +118,8 @@ namespace sol {
 			constexpr bool global = detail::is_global<top_level, decltype(std::get<I * 2>(std::forward<Pairs>(pairs)))...>::value;
 			auto pp = stack::push_pop<global>(*this);
 			int table_index = pp.index_of(*this);
-			void(detail::swallow{ (stack::set_field<top_level, raw>(base_t::lua_state(),
+			lua_State* L = base_t::lua_state();
+			void(detail::swallow{ (stack::set_field<top_level, raw>(L,
 			                            std::get<I * 2>(std::forward<Pairs>(pairs)),
 			                            std::get<I * 2 + 1>(std::forward<Pairs>(pairs)),
 			                            table_index),
@@ -127,38 +128,58 @@ namespace sol {
 
 		template <bool global, bool raw, typename T, typename Key, typename... Keys>
 		decltype(auto) traverse_get_deep(int table_index, Key&& key, Keys&&... keys) const {
-			stack::get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key), table_index);
-			(void)detail::swallow{ 0, (stack::get_field<false, raw>(base_t::lua_state(), std::forward<Keys>(keys), lua_gettop(base_t::lua_state())), 0)... };
-			return stack::get<T>(base_t::lua_state());
+			lua_State* L = base_t::lua_state();
+			stack::get_field<global, raw>(L, std::forward<Key>(key), table_index);
+			(void)detail::swallow{ 0, (stack::get_field<false, raw>(L, std::forward<Keys>(keys), lua_gettop(L)), 0)... };
+			return stack::get<T>(L);
 		}
 
 		template <bool global, bool raw, typename T, typename Key, typename... Keys>
 		decltype(auto) traverse_get_deep_optional(int& popcount, int table_index, Key&& key, Keys&&... keys) const {
+			lua_State* L = base_t::lua_state();
 			if constexpr (sizeof...(Keys) > 0) {
-				auto p = stack::probe_get_field<global>(base_t::lua_state(), std::forward<Key>(key), table_index);
+				auto p = stack::probe_get_field<global>(L, std::forward<Key>(key), table_index);
 				popcount += p.levels;
 				if (!p.success)
 					return T(nullopt);
-				return traverse_get_deep_optional<false, raw, T>(popcount, lua_gettop(base_t::lua_state()), std::forward<Keys>(keys)...);
+				return traverse_get_deep_optional<false, raw, T>(popcount, lua_gettop(L), std::forward<Keys>(keys)...);
 			}
 			else {
-				using R = decltype(stack::get<T>(base_t::lua_state()));
-				auto p = stack::probe_get_field<global, raw, T>(base_t::lua_state(), std::forward<Key>(key), table_index);
+				using R = decltype(stack::get<T>(L));
+				auto p = stack::probe_get_field<global, raw, T>(L, std::forward<Key>(key), table_index);
 				popcount += p.levels;
 				if (!p.success)
 					return R(nullopt);
-				return stack::get<T>(base_t::lua_state());
+				return stack::get<T>(L);
 			}
 		}
 
-		template <bool global, bool raw, typename Key, typename... Keys>
+		template <bool global, bool raw, bool forced, typename Key, typename... Keys>
 		void traverse_set_deep(int table_index, Key&& key, Keys&&... keys) const {
-			if constexpr (sizeof...(Keys) == 1) {
-				stack::set_field<global, raw>(base_t::lua_state(), std::forward<Key>(key), std::forward<Keys>(keys)..., table_index);
+			using KeyU = meta::unqualified_t<Key>;
+			lua_State* L = base_t::lua_state();
+			if constexpr(std::is_same_v<KeyU, force_t>) {
+				(void)key;
+				traverse_set_deep<false, raw, true>(table_index, std::forward<Keys>(keys)...);
 			}
 			else {
-				stack::get_field<global, raw>(base_t::lua_state(), std::forward<Key>(key), table_index);
-				traverse_set_deep<false, raw>(lua_gettop(base_t::lua_state()), std::forward<Keys>(keys)...);
+				if constexpr (sizeof...(Keys) == 1) {
+					stack::set_field<global, raw>(L, std::forward<Key>(key), std::forward<Keys>(keys)..., table_index);
+				}
+				else {
+					if constexpr (forced) {
+						stack::probe p = stack::probe_get_field<global, raw>(L, key, table_index);
+						if (!p.success) {
+							constexpr bool is_seq = std::is_integral_v<KeyU>;
+							stack::set_field<global, raw>(L, key, new_table(static_cast<int>(is_seq), !static_cast<int>(is_seq)), table_index);
+							stack::get_field<global, raw>(L, std::forward<Key>(key), table_index);
+						}
+					}
+					else {
+						stack::get_field<global, raw>(L, std::forward<Key>(key), table_index);
+					}
+					traverse_set_deep<false, raw, forced>(lua_gettop(L), std::forward<Keys>(keys)...);
+				}
 			}
 		}
 
@@ -230,7 +251,7 @@ namespace sol {
 			if (!is_table<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				constructor_handler handler{};
-				stack::check<basic_table_core>(base_t::lua_state(), -1, handler);
+				stack::check<basic_table_core>(L, -1, handler);
 			}
 #endif // Safety
 		}
@@ -294,8 +315,9 @@ namespace sol {
 			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
 			auto pp = stack::push_pop<global>(*this);
 			int table_index = pp.index_of(*this);
-			auto pn = stack::pop_n(base_t::lua_state(), static_cast<int>(sizeof...(Keys) - 2));
-			traverse_set_deep<top_level, false>(table_index, std::forward<Keys>(keys)...);
+			lua_State* L = base_t::lua_state();
+			auto pn = stack::pop_n(L, static_cast<int>(sizeof...(Keys) - 2));
+			traverse_set_deep<top_level, false, false>(table_index, std::forward<Keys>(keys)...);
 			return *this;
 		}
 
@@ -350,8 +372,9 @@ namespace sol {
 		basic_table_core& traverse_raw_set(Keys&&... keys) {
 			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
 			auto pp = stack::push_pop<global>(*this);
-			auto pn = stack::pop_n(base_t::lua_state(), static_cast<int>(sizeof...(Keys) - 2));
-			traverse_set_deep<top_level, true>(std::forward<Keys>(keys)...);
+			lua_State* L = base_t::lua_state();
+			auto pn = stack::pop_n(L, static_cast<int>(sizeof...(Keys) - 2));
+			traverse_set_deep<top_level, true, false>(std::forward<Keys>(keys)...);
 			return *this;
 		}
 
@@ -404,23 +427,24 @@ namespace sol {
 
 		template <typename Key = object, typename Value = object, typename Fx>
 		void for_each(Fx&& fx) const {
+			lua_State* L = base_t::lua_state();
 			if constexpr (std::is_invocable_v<Fx, Key, Value>) {
 				auto pp = stack::push_pop(*this);
-				stack::push(base_t::lua_state(), lua_nil);
-				while (lua_next(base_t::lua_state(), -2)) {
-					Key key(base_t::lua_state(), -2);
-					Value value(base_t::lua_state(), -1);
-					auto pn = stack::pop_n(base_t::lua_state(), 1);
+				stack::push(L, lua_nil);
+				while (lua_next(L, -2)) {
+					Key key(L, -2);
+					Value value(L, -1);
+					auto pn = stack::pop_n(L, 1);
 					fx(key, value);
 				}
 			}
 			else {
 				auto pp = stack::push_pop(*this);
-				stack::push(base_t::lua_state(), lua_nil);
-				while (lua_next(base_t::lua_state(), -2)) {
-					Key key(base_t::lua_state(), -2);
-					Value value(base_t::lua_state(), -1);
-					auto pn = stack::pop_n(base_t::lua_state(), 1);
+				stack::push(L, lua_nil);
+				while (lua_next(L, -2)) {
+					Key key(L, -2);
+					Value value(L, -1);
+					auto pn = stack::pop_n(L, 1);
 					std::pair<Key&, Value&> keyvalue(key, value);
 					fx(keyvalue);
 				}
@@ -429,8 +453,9 @@ namespace sol {
 
 		size_t size() const {
 			auto pp = stack::push_pop(*this);
-			lua_len(base_t::lua_state(), -1);
-			return stack::pop<size_t>(base_t::lua_state());
+			lua_State* L = base_t::lua_state();
+			lua_len(L, -1);
+			return stack::pop<size_t>(L);
 		}
 
 		bool empty() const {
@@ -468,7 +493,8 @@ namespace sol {
 		basic_table_core& add(Args&&... args) {
 			auto pp = stack::push_pop(*this);
 			int table_index = pp.index_of(*this);
-			(void)detail::swallow{ 0, (stack::set_ref(base_t::lua_state(), std::forward<Args>(args), table_index), 0)... };
+			lua_State* L = base_t::lua_state();
+			(void)detail::swallow{ 0, (stack::set_ref(L, std::forward<Args>(args), table_index), 0)... };
 			return *this;
 		}
 

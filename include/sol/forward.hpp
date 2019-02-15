@@ -160,8 +160,6 @@ namespace sol {
 	template <typename T>
 	struct as_container_t;
 	template <typename T>
-	struct force_t;
-	template <typename T>
 	struct nested;
 	template <typename T>
 	struct light;

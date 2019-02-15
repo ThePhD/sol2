@@ -496,18 +496,8 @@ namespace sol {
 		return as_container_t<T>(std::forward<T>(value));
 	}
 
-	template <typename T>
-	struct force_t : detail::ebco<T> {
-	private:
-		using base_t = detail::ebco<T>;
-	public:
-		using base_t::base_t;
-	};
-
-	template <typename T>
-	auto force(T&& value) {
-		return force_t<T>(std::forward<T>(value));
-	}
+	struct force_t {};
+	constexpr inline force_t force = force_t();
 
 	struct this_state {
 		lua_State* L;
