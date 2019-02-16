@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-02-14 09:52:13.841439 UTC
-// This header was generated with sol v2.20.6 (revision b938e42)
+// Generated 2019-02-16 22:26:16.417718 UTC
+// This header was generated with sol v3.0.0 (revision 95ffd10)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -375,8 +375,6 @@ namespace sol {
 	struct as_table_t;
 	template <typename T>
 	struct as_container_t;
-	template <typename T>
-	struct force_t;
 	template <typename T>
 	struct nested;
 	template <typename T>

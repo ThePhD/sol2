@@ -31,87 +31,68 @@
 
 namespace sol {
 namespace stack {
-	template <typename T, bool, bool, typename>
+	template <typename T, bool global, bool raw, typename>
 	struct field_getter {
+		static constexpr int default_table_index = std::conditional_t<meta::is_c_str_v<T> || (std::is_integral_v<T> && !std::is_same_v<T, bool>)
+			|| (std::is_integral_v<T> && !std::is_same_v<T, bool>) || (raw && std::is_void_v<std::remove_pointer_t<T>>),
+			         std::integral_constant<int, -1>, std::integral_constant<int, -2>> ::value;
+
 		template <typename Key>
-		void get(lua_State* L, Key&& key, int tableindex = -2) {
-			push(L, std::forward<Key>(key));
-			lua_gettable(L, tableindex);
-		}
-	};
-
-	template <typename T, bool global, typename C>
-	struct field_getter<T, global, true, C> {
-		template <typename Key>
-		void get(lua_State* L, Key&& key, int tableindex = -2) {
-			push(L, std::forward<Key>(key));
-			lua_rawget(L, tableindex);
-		}
-	};
-
-	template <bool b, bool raw, typename C>
-	struct field_getter<metatable_t, b, raw, C> {
-		void get(lua_State* L, metatable_t, int tableindex = -1) {
-			if (lua_getmetatable(L, tableindex) == 0)
-				push(L, lua_nil);
-		}
-	};
-
-	template <bool b, bool raw, typename C>
-	struct field_getter<env_t, b, raw, C> {
-		void get(lua_State* L, env_t, int tableindex = -1) {
-#if SOL_LUA_VERSION < 502
-			// Use lua_setfenv
-			lua_getfenv(L, tableindex);
-#else
-			// Use upvalues as explained in Lua 5.2 and beyond's manual
-			if (lua_getupvalue(L, tableindex, 1) == nullptr) {
-				push(L, lua_nil);
+		void get(lua_State* L, Key&& key, int tableindex = default_table_index) {
+			if constexpr (std::is_same_v<T, update_if_empty_t> || std::is_same_v<T, override_value_t>) {
+				(void)L;
+				(void)key;
+				(void)tableindex;
 			}
+			else if constexpr (std::is_same_v<T, env_key_t>) {
+#if SOL_LUA_VERSION < 502
+				// Use lua_setfenv
+				lua_getfenv(L, tableindex);
+#else
+				// Use upvalues as explained in Lua 5.2 and beyond's manual
+				if (lua_getupvalue(L, tableindex, 1) == nullptr) {
+					push(L, lua_nil);
+				}
 #endif
-		}
-	};
-
-	template <typename T, bool raw>
-	struct field_getter<T, true, raw, std::enable_if_t<meta::is_c_str<T>::value>> {
-		template <typename Key>
-		void get(lua_State* L, Key&& key, int = -1) {
-			lua_getglobal(L, &key[0]);
-		}
-	};
-
-	template <typename T>
-	struct field_getter<T, false, false, std::enable_if_t<meta::is_c_str<T>::value>> {
-		template <typename Key>
-		void get(lua_State* L, Key&& key, int tableindex = -1) {
-			lua_getfield(L, tableindex, &key[0]);
-		}
-	};
-
-#if SOL_LUA_VERSION >= 503
-	template <typename T>
-	struct field_getter<T, false, false, std::enable_if_t<std::is_integral<T>::value && !std::is_same<bool, T>::value>> {
-		template <typename Key>
-		void get(lua_State* L, Key&& key, int tableindex = -1) {
-			lua_geti(L, tableindex, static_cast<lua_Integer>(key));
-		}
-	};
-#endif // Lua 5.3.x
-
+			}
+			else if constexpr (std::is_same_v<T, metatable_key_t>) {
+				if (lua_getmetatable(L, tableindex) == 0)
+					push(L, lua_nil);
+			}
+			else if constexpr(raw) {
+				if constexpr (std::is_integral_v<T> && !std::is_same_v<bool, T>) {
+					lua_rawgeti(L, tableindex, static_cast<lua_Integer>(key));
+				}
 #if SOL_LUA_VERSION >= 502
-	template <typename C>
-	struct field_getter<void*, false, true, C> {
-		void get(lua_State* L, void* key, int tableindex = -1) {
-			lua_rawgetp(L, tableindex, key);
-		}
-	};
+				else if constexpr (std::is_void_v<std::remove_pointer_t<T>>) {
+					lua_rawgetp(L, tableindex, key);
+				}
 #endif // Lua 5.3.x
-
-	template <typename T>
-	struct field_getter<T, false, true, std::enable_if_t<std::is_integral<T>::value && !std::is_same<bool, T>::value>> {
-		template <typename Key>
-		void get(lua_State* L, Key&& key, int tableindex = -1) {
-			lua_rawgeti(L, tableindex, static_cast<lua_Integer>(key));
+				else {
+					push(L, std::forward<Key>(key));
+					lua_rawget(L, tableindex);
+				}
+			}
+			else {
+				if constexpr (meta::is_c_str_v<T>) {
+					if constexpr (global) {
+						(void)tableindex;
+						lua_getglobal(L, &key[0]);
+					}
+					else {
+						lua_getfield(L, tableindex, &key[0]);
+					}
+				}
+#if SOL_LUA_VERSION >= 503
+				else if constexpr (std::is_integral_v<T> && !std::is_same_v<bool, T>) {
+					lua_geti(L, tableindex, static_cast<lua_Integer>(key));
+				}
+#endif // Lua 5.3.x
+				else {
+					push(L, std::forward<Key>(key));
+					lua_gettable(L, tableindex);
+				}
+			}
 		}
 	};
 
@@ -158,83 +139,67 @@ namespace stack {
 		}
 	};
 
-	template <typename T, bool, bool, typename>
+	template <typename T, bool global, bool raw, typename>
 	struct field_setter {
+		static constexpr int default_table_index = std::conditional_t < meta::is_c_str_v<T> || (std::is_integral_v<T> && !std::is_same_v<T, bool>)
+			|| (std::is_integral_v<T> && !std::is_same_v<T, bool>) || (raw && std::is_void_v<std::remove_pointer_t<T>>),
+			         std::integral_constant<int, -2>, std::integral_constant<int, -3>> ::value;
+
 		template <typename Key, typename Value>
-		void set(lua_State* L, Key&& key, Value&& value, int tableindex = -3) {
-			push(L, std::forward<Key>(key));
-			push(L, std::forward<Value>(value));
-			lua_settable(L, tableindex);
-		}
-	};
-
-	template <typename T, bool b>
-	struct field_setter<T, b, true, std::enable_if_t<!std::is_same<metatable_t, meta::unqualified_t<T>>::value>> {
-		template <typename Key, typename Value>
-		void set(lua_State* L, Key&& key, Value&& value, int tableindex = -3) {
-			push(L, std::forward<Key>(key));
-			push(L, std::forward<Value>(value));
-			lua_rawset(L, tableindex);
-		}
-	};
-
-	template <bool b, bool raw, typename C>
-	struct field_setter<metatable_t, b, raw, C> {
-		template <typename Value>
-		void set(lua_State* L, metatable_t, Value&& value, int tableindex = -2) {
-			push(L, std::forward<Value>(value));
-			lua_setmetatable(L, tableindex);
-		}
-	};
-
-	template <typename T, bool raw>
-	struct field_setter<T, true, raw, std::enable_if_t<meta::is_c_str<T>::value>> {
-		template <typename Key, typename Value>
-		void set(lua_State* L, Key&& key, Value&& value, int = -2) {
-			push(L, std::forward<Value>(value));
-			lua_setglobal(L, &key[0]);
-		}
-	};
-
-	template <typename T>
-	struct field_setter<T, false, false, std::enable_if_t<meta::is_c_str<T>::value>> {
-		template <typename Key, typename Value>
-		void set(lua_State* L, Key&& key, Value&& value, int tableindex = -2) {
-			push(L, std::forward<Value>(value));
-			lua_setfield(L, tableindex, &key[0]);
-		}
-	};
-
-#if SOL_LUA_VERSION >= 503
-	template <typename T>
-	struct field_setter<T, false, false, std::enable_if_t<std::is_integral<T>::value && !std::is_same<bool, T>::value>> {
-		template <typename Key, typename Value>
-		void set(lua_State* L, Key&& key, Value&& value, int tableindex = -2) {
-			push(L, std::forward<Value>(value));
-			lua_seti(L, tableindex, static_cast<lua_Integer>(key));
-		}
-	};
-#endif // Lua 5.3.x
-
-	template <typename T>
-	struct field_setter<T, false, true, std::enable_if_t<std::is_integral<T>::value && !std::is_same<bool, T>::value>> {
-		template <typename Key, typename Value>
-		void set(lua_State* L, Key&& key, Value&& value, int tableindex = -2) {
-			push(L, std::forward<Value>(value));
-			lua_rawseti(L, tableindex, static_cast<lua_Integer>(key));
-		}
-	};
-
+		void set(lua_State* L, Key&& key, Value&& value, int tableindex = default_table_index) {
+			if constexpr (std::is_same_v<T, update_if_empty_t> || std::is_same_v<T, override_value_t>) {
+				(void)L;
+				(void)key;
+				(void)value;
+				(void)tableindex;
+			}
+			else if constexpr (std::is_same_v<T, metatable_key_t>) {
+				push(L, std::forward<Value>(value));
+				lua_setmetatable(L, tableindex);
+			}
+			else if constexpr (raw) {
+				if constexpr (std::is_integral_v<T> && !std::is_same_v<bool, T>) {
+					push(L, std::forward<Value>(value));
+					lua_rawseti(L, tableindex, static_cast<lua_Integer>(key));
+				}
 #if SOL_LUA_VERSION >= 502
-	template <typename C>
-	struct field_setter<void*, false, true, C> {
-		template <typename Key, typename Value>
-		void set(lua_State* L, void* key, Value&& value, int tableindex = -2) {
-			push(L, std::forward<Value>(value));
-			lua_rawsetp(L, tableindex, key);
+				else if constexpr (std::is_void_v<std::remove_pointer_t<T>>) {
+					push(L, std::forward<Value>(value));
+					lua_rawsetp(L, tableindex, key);
+				}
+#endif // Lua 5.2.x
+				else {
+					push(L, std::forward<Key>(key));
+					push(L, std::forward<Value>(value));
+					lua_rawset(L, tableindex);
+				}
+			}
+			else {
+				if constexpr (meta::is_c_str_v<T>) {
+					if constexpr (global) {
+						push(L, std::forward<Value>(value));
+						lua_setglobal(L, &key[0]);
+						(void)tableindex;
+					}
+					else {
+						push(L, std::forward<Value>(value));
+						lua_setfield(L, tableindex, &key[0]);
+					}
+				}
+#if SOL_LUA_VERSION >= 503
+				else if constexpr(std::is_integral_v<T> && !std::is_same_v<bool, T>) {
+					push(L, std::forward<Value>(value));
+					lua_seti(L, tableindex, static_cast<lua_Integer>(key));
+				}
+#endif // Lua 5.3.x
+				else {
+					push(L, std::forward<Key>(key));
+					push(L, std::forward<Value>(value));
+					lua_settable(L, tableindex);
+				}
+			}
 		}
 	};
-#endif // Lua 5.2.x
 
 	template <typename... Args, bool b, bool raw, typename C>
 	struct field_setter<std::tuple<Args...>, b, raw, C> {
@@ -268,7 +233,7 @@ namespace stack {
 		template <typename Keys, typename Value>
 		void set(lua_State* L, Keys&& keys, Value&& value, int tableindex = -1) {
 			get_field<b, raw>(L, std::get<0>(std::forward<Keys>(keys)), tableindex);
-			set_field<false, raw>(L, std::get<1>(std::forward<Keys>(keys)), std::forward<Value>(value));
+			set_field<false, raw>(L, std::get<1>(std::forward<Keys>(keys)), std::forward<Value>(value), lua_gettop(L));
 			lua_pop(L, 1);
 		}
 	};

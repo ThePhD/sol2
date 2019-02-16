@@ -44,6 +44,7 @@ namespace sol {
 				lua_pop(L, static_cast<int>(n));
 			}
 		};
+
 		struct ref_clean {
 			lua_State* L;
 			int& n;
@@ -53,6 +54,7 @@ namespace sol {
 				lua_pop(L, static_cast<int>(n));
 			}
 		};
+
 		inline int fail_on_newindex(lua_State* L) {
 			return luaL_error(L, "sol: cannot modify the elements of an enumeration table");
 		}
@@ -62,6 +64,7 @@ namespace sol {
 
 		template <bool top_level, typename... Args>
 		constexpr inline bool is_global_v = is_global<top_level, Args...>::value;
+
 	} // namespace detail
 
 	template <bool top_level, typename ref_t>
@@ -154,20 +157,33 @@ namespace sol {
 			}
 		}
 
-		template <bool global, bool raw, bool forced, typename Key, typename... Keys>
+		template <bool global, bool raw, detail::insert_mode mode, typename Key, typename... Keys>
 		void traverse_set_deep(int table_index, Key&& key, Keys&&... keys) const {
 			using KeyU = meta::unqualified_t<Key>;
-			lua_State* L = base_t::lua_state();
-			if constexpr(std::is_same_v<KeyU, force_t>) {
+			if constexpr (std::is_same_v<KeyU, update_if_empty_t>) {
 				(void)key;
-				traverse_set_deep<false, raw, true>(table_index, std::forward<Keys>(keys)...);
+				traverse_set_deep<false, raw, detail::insert_mode::update_if_empty>(table_index, std::forward<Keys>(keys)...);
+			}
+			else if constexpr (std::is_same_v<KeyU, override_value_t>) {
+				(void)key;
+				traverse_set_deep<false, raw, detail::insert_mode::override_value>(table_index, std::forward<Keys>(keys)...);
 			}
 			else {
+				lua_State* L = base_t::lua_state();
 				if constexpr (sizeof...(Keys) == 1) {
-					stack::set_field<global, raw>(L, std::forward<Key>(key), std::forward<Keys>(keys)..., table_index);
+					if constexpr ((mode & detail::insert_mode::update_if_empty) == detail::insert_mode::update_if_empty) {
+						stack::get_field<global, raw>(L, key, table_index);
+						type vt = type_of(L, -1);
+						if (vt == type::lua_nil || vt == type::none) {
+							stack::set_field<global, raw>(L, std::forward<Key>(key), std::forward<Keys>(keys)..., table_index);
+						}
+					}
+					else {
+						stack::set_field<global, raw>(L, std::forward<Key>(key), std::forward<Keys>(keys)..., table_index);
+					}
 				}
 				else {
-					if constexpr (forced) {
+					if constexpr ((mode & detail::insert_mode::override_value) == detail::insert_mode::override_value) {
 						stack::probe p = stack::probe_get_field<global, raw>(L, key, table_index);
 						if (!p.success) {
 							constexpr bool is_seq = std::is_integral_v<KeyU>;
@@ -175,10 +191,20 @@ namespace sol {
 							stack::get_field<global, raw>(L, std::forward<Key>(key), table_index);
 						}
 					}
+					else if constexpr((mode & detail::insert_mode::update_if_empty) == detail::insert_mode::update_if_empty) {
+						stack::get_field<global, raw>(L, key, table_index);
+						type vt = type_of(L, -1);
+						if (vt == type::lua_nil || vt == type::none) {
+							constexpr bool is_seq = std::is_integral_v<KeyU>;
+							lua_pop(L, 1);
+							stack::set_field<global, raw>(L, key, new_table(static_cast<int>(is_seq), !static_cast<int>(is_seq)), table_index);
+							stack::get_field<global, raw>(L, std::forward<Key>(key), table_index);
+						}
+					}
 					else {
 						stack::get_field<global, raw>(L, std::forward<Key>(key), table_index);
 					}
-					traverse_set_deep<false, raw, forced>(lua_gettop(L), std::forward<Keys>(keys)...);
+					traverse_set_deep<false, raw, mode>(lua_gettop(L), std::forward<Keys>(keys)...);
 				}
 			}
 		}
@@ -251,7 +277,7 @@ namespace sol {
 			if (!is_table<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				constructor_handler handler{};
-				stack::check<basic_table_core>(L, -1, handler);
+				stack::check<basic_table_core>(lua_state(), -1, handler);
 			}
 #endif // Safety
 		}
@@ -317,7 +343,7 @@ namespace sol {
 			int table_index = pp.index_of(*this);
 			lua_State* L = base_t::lua_state();
 			auto pn = stack::pop_n(L, static_cast<int>(sizeof...(Keys) - 2));
-			traverse_set_deep<top_level, false, false>(table_index, std::forward<Keys>(keys)...);
+			traverse_set_deep<top_level, false, detail::insert_mode::none>(table_index, std::forward<Keys>(keys)...);
 			return *this;
 		}
 

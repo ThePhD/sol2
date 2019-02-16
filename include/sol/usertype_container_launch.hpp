@@ -387,11 +387,11 @@ namespace sol {
 			}
 
 			static int push(lua_State* L, const as_container_t<T>& as_cont) {
-				return push_lvalue(std::is_lvalue_reference<T>(), L, as_cont.source);
+				return push_lvalue(std::is_lvalue_reference<T>(), L, as_cont.value());
 			}
 
 			static int push(lua_State* L, as_container_t<T>&& as_cont) {
-				return push_rvalue(meta::all<std::is_rvalue_reference<T>, meta::neg<std::is_lvalue_reference<T>>>(), L, std::forward<T>(as_cont.source));
+				return push_rvalue(meta::all<std::is_rvalue_reference<T>, meta::neg<std::is_lvalue_reference<T>>>(), L, std::forward<T>(as_cont.value()));
 			}
 		};
 

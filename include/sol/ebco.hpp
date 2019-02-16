@@ -42,9 +42,11 @@ namespace sol { namespace detail {
 		ebco(T&& v) : value_(std::move(v)){};
 		ebco& operator=(const T& v) {
 			value = v;
+			return *this;
 		}
 		ebco& operator=(T&& v) {
 			value_ = std::move(v);
+			return *this;
 		};
 		template <typename Arg, typename... Args,
 		     typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
@@ -68,17 +70,20 @@ namespace sol { namespace detail {
 		ebco(const T& v) : T(v){};
 		ebco(T&& v) : T(std::move(v)){};
 		template <typename Arg, typename... Args,
-		     typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
-		                                      ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T>>>
-		ebco(Arg&& arg, Args&&... args) : T(std::forward<Arg>(arg), std::forward<Args>(args)...){}
+			typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
+			                                 ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T>>>
+		ebco(Arg&& arg, Args&&... args) : T(std::forward<Arg>(arg), std::forward<Args>(args)...) {
+		}
 
 		ebco& operator=(const ebco&) = default;
 		ebco& operator=(ebco&&) = default;
 		ebco& operator=(const T& v) {
 			static_cast<T&>(*this) = v;
+			return *this;
 		}
 		ebco& operator=(T&& v) {
 			static_cast<T&>(*this) = std::move(v);
+			return *this;
 		};
 
 		T& value() {
@@ -87,6 +92,48 @@ namespace sol { namespace detail {
 
 		T const& value() const {
 			return static_cast<T const&>(*this);
+		}
+	};
+
+	template <typename T, std::size_t tag>
+	struct ebco<T&, tag> {
+		T& ref;
+
+		ebco() = default;
+		ebco(const ebco&) = default;
+		ebco(ebco&&) = default;
+		ebco(T& v) : ref(v){};
+
+		ebco& operator=(const ebco&) = default;
+		ebco& operator=(ebco&&) = default;
+		ebco& operator=(T& v) {
+			ref = v;
+			return *this;
+		}
+
+		T& value() const {
+			return const_cast<ebco<T&, tag>&>(*this).ref;
+		}
+	};
+
+	template <typename T, std::size_t tag>
+	struct ebco<T&&, tag> {
+		T&& ref;
+
+		ebco() = default;
+		ebco(const ebco&) = default;
+		ebco(ebco&&) = default;
+		ebco(T&& v) : ref(v){};
+
+		ebco& operator=(const ebco&) = default;
+		ebco& operator=(ebco&&) = default;
+		ebco& operator=(T&& v) {
+			ref = v;
+			return *this;
+		}
+
+		T&& value() && {
+			return std::move(ref);
 		}
 	};
 

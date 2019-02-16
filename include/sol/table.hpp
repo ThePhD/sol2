@@ -81,7 +81,7 @@ namespace sol {
 
 	namespace stack {
 		template <>
-		struct unqualified_getter<metatable_t> {
+		struct unqualified_getter<metatable_key_t> {
 			static table get(lua_State* L, int index = -1) {
 				if (lua_getmetatable(L, index) == 0) {
 					return table(L, ref_index(LUA_REFNIL));

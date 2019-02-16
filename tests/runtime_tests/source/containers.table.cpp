@@ -201,11 +201,11 @@ end
 		sol::as_table_t<std::forward_list<int>> t1flist = lua["c"];
 		sol::as_table_t<std::set<int>> t1set = lua["c"];
 		const int src[5] = { 1, 2, 3, 4, 5 };
-		check_ordered_values(src, t1vector.source);
-		check_ordered_values(src, t1deque.source);
-		check_ordered_values(src, t1list.source);
-		check_ordered_values(src, t1flist.source);
-		check_ordered_values(src, t1set.source);
+		check_ordered_values(src, t1vector.value());
+		check_ordered_values(src, t1deque.value());
+		check_ordered_values(src, t1list.value());
+		check_ordered_values(src, t1flist.value());
+		check_ordered_values(src, t1set.value());
 	}
 	SECTION("map-like") {
 		sol::state lua;
@@ -216,7 +216,7 @@ end
 
 		sol::as_table_t<std::unordered_map<std::string, int>> t1umap = lua["c"];
 		sol::as_table_t<std::unordered_multimap<std::string, int>> t1ummap = lua["c"];
-		table_check_unordered_values(src, t1umap.source);
-		table_check_unordered_values(src, t1ummap.source);
+		table_check_unordered_values(src, t1umap.value());
+		table_check_unordered_values(src, t1ummap.value());
 	}
 }

@@ -60,20 +60,20 @@ namespace sol {
 			mt.pop();
 		}
 
-		basic_environment(env_t, const stack_reference& extraction_target)
+		basic_environment(env_key_t, const stack_reference& extraction_target)
 		: base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
-			stack::check<env_t>(this->lua_state(), -1, handler);
+			stack::check<env_key_t>(this->lua_state(), -1, handler);
 #endif // Safety
 			lua_pop(this->lua_state(), 2);
 		}
 		template <bool b>
-		basic_environment(env_t, const basic_reference<b>& extraction_target)
+		basic_environment(env_key_t, const basic_reference<b>& extraction_target)
 		: base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			constructor_handler handler{};
-			stack::check<env_t>(this->lua_state(), -1, handler);
+			stack::check<env_key_t>(this->lua_state(), -1, handler);
 #endif // Safety
 			lua_pop(this->lua_state(), 2);
 		}
@@ -187,7 +187,7 @@ namespace sol {
 
 	namespace stack {
 		template <>
-		struct unqualified_getter<env_t> {
+		struct unqualified_getter<env_key_t> {
 			static environment get(lua_State* L, int index, record& tracking) {
 				tracking.use(1);
 				return get_environment(stack_reference(L, raw_index(index)));

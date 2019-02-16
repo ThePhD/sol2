@@ -47,7 +47,7 @@ TEST_CASE("containers/vector table roundtrip", "make sure vectors can be round-t
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 	sol::as_table_t<std::vector<int>> x = lua["x"];
-	bool areequal = x.source == v;
+	bool areequal = x.value() == v;
 	REQUIRE(areequal);
 }
 
@@ -60,7 +60,7 @@ TEST_CASE("containers/deque table roundtrip", "make sure deques can be round-tri
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 	sol::as_table_t<std::deque<int>> x = lua["x"];
-	bool areequal = x.source == v;
+	bool areequal = x.value() == v;
 	REQUIRE(areequal);
 }
 
@@ -73,7 +73,7 @@ TEST_CASE("containers/array table roundtrip", "make sure arrays can be round-tri
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 	sol::as_table_t<std::array<int, 3>> x = lua["x"];
-	bool areequal = x.source == v;
+	bool areequal = x.value() == v;
 	REQUIRE(areequal);
 }
 
@@ -86,7 +86,7 @@ TEST_CASE("containers/list table roundtrip", "make sure lists can be round-tripp
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 	sol::as_table_t<std::list<int>> x = lua["x"];
-	bool areequal = x.source == v;
+	bool areequal = x.value() == v;
 	REQUIRE(areequal);
 }
 
@@ -99,7 +99,7 @@ TEST_CASE("containers/forward_list table roundtrip", "make sure forward_lists ca
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 	sol::as_table_t<std::forward_list<int>> x = lua["x"];
-	bool areequal = x.source == v;
+	bool areequal = x.value() == v;
 	REQUIRE(areequal);
 }
 
@@ -112,7 +112,7 @@ TEST_CASE("containers/map table roundtrip", "make sure maps can be round-tripped
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 	sol::as_table_t<std::map<std::string, int>> x = lua["x"];
-	bool areequal = x.source == v;
+	bool areequal = x.value() == v;
 	REQUIRE(areequal);
 }
 
@@ -125,7 +125,7 @@ TEST_CASE("containers/unordered_map table roundtrip", "make sure unordered_maps 
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 	sol::as_table_t<std::unordered_map<std::string, int>> x = lua["x"];
-	bool areequal = x.source == v;
+	bool areequal = x.value() == v;
 	REQUIRE(areequal);
 }
 
@@ -138,7 +138,7 @@ TEST_CASE("containers/unordered_set table roundtrip", "make sure unordered_sets 
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 	sol::as_table_t<std::unordered_set<int>> x = lua["x"];
-	bool areequal = x.source == v;
+	bool areequal = x.value() == v;
 	REQUIRE(areequal);
 }
 
@@ -151,7 +151,7 @@ TEST_CASE("containers/set table roundtrip", "make sure sets can be round-tripped
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 	sol::as_table_t<std::set<int>> x = lua["x"];
-	bool areequal = x.source == v;
+	bool areequal = x.value() == v;
 	REQUIRE(areequal);
 }
 
@@ -248,8 +248,8 @@ TEST_CASE("containers/table conversion", "test table conversions with as_table a
 	sol::nested<std::vector<std::string>> nested_strings = lua["v2"];
 
 	std::vector<std::string> expected_values{ "bark", "woof" };
-	REQUIRE(as_table_strings.source == expected_values);
-	REQUIRE(nested_strings.source == expected_values);
+	REQUIRE(as_table_strings.value() == expected_values);
+	REQUIRE(nested_strings.value() == expected_values);
 }
 
 TEST_CASE("containers/from table argument conversions", "test table conversions without as_table and nested for function args") {

@@ -14,7 +14,7 @@
 // where someone wants to handle a nested table
 void demo(sol::nested<std::map<std::string, std::vector<std::string>>> src) {
 	std::cout << "demo, sol::nested<...>" << std::endl;
-	const auto& listmap = src.source;
+	const auto& listmap = src.value();
 	c_assert(listmap.size() == 2);
 	for (const auto& kvp : listmap) {
 		const std::vector<std::string>& strings = kvp.second;
@@ -38,11 +38,11 @@ void demo(sol::nested<std::map<std::string, std::vector<std::string>>> src) {
 void demo_explicit (sol::as_table_t<std::map<std::string, sol::as_table_t<std::vector<std::string>>>> src) {
 	std::cout << "demo, explicit sol::as_table_t<...>" << std::endl;
 	// Have to access the "source" member variable for as_table_t
-	const auto& listmap = src.source;
+	const auto& listmap = src.value();
 	c_assert(listmap.size() == 2);
 	for (const auto& kvp : listmap) {
 		// Have to access the internal "source" for the inner as_table_t, as well
-		const std::vector<std::string>& strings = kvp.second.source;
+		const std::vector<std::string>& strings = kvp.second.value();
 		c_assert(strings.size() == 3);
 		std::cout << "\t" << kvp.first << " = ";
 		for (const auto& s : strings) {

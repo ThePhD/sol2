@@ -534,7 +534,7 @@ namespace sol {
 
 		template <typename F, typename... Filters>
 		struct unqualified_pusher<filter_wrapper<F, Filters...>> {
-			typedef filter_wrapper<F, Filters...> P;
+			using P = filter_wrapper<F, Filters...>;
 
 			static int push(lua_State* L, const P& p) {
 				lua_CFunction cf = call_detail::call_user<void, false, false, P, 2>;
@@ -550,6 +550,27 @@ namespace sol {
 				upvalues += stack::push(L, nullptr);
 				upvalues += stack::push<user<P>>(L, std::move(p));
 				return stack::push(L, c_closure(cf, upvalues));
+			}
+		};
+
+		template <typename T>
+		struct unqualified_pusher<push_invoke_t<T>> {
+			static int push(lua_State* L, push_invoke_t<T>&& pi) {
+				if constexpr (std::is_invocable_v<std::add_rvalue_reference_t<T>, lua_State*>) {
+					return stack::push(L, std::move(pi.value())(L));
+				}
+				else {
+					return stack::push(L, std::move(pi.value())());
+				}
+			}
+
+			static int push(lua_State* L, const push_invoke_t<T>& pi) {
+				if constexpr (std::is_invocable_v<const T, lua_State*>) {
+					return stack::push(L, pi.value()(L));
+				}
+				else {
+					return stack::push(L, pi.value()());
+				}
 			}
 		};
 	} // namespace stack

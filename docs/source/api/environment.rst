@@ -56,14 +56,14 @@ members
 
 	environment(lua_State* L, sol::new_table nt);
 	environment(lua_State* L, sol::new_table nt, const sol::reference& fallback);
-	environment(sol::env_t, const sol::reference& object_that_has_environment);
-	environment(sol::env_t, const sol::stack_reference& object_that_has_environment);
+	environment(sol::env_key_t, const sol::reference& object_that_has_environment);
+	environment(sol::env_key_t, const sol::stack_reference& object_that_has_environment);
 
 The ones from table are used here (of particular note is the ability to use ``sol::environment(my_lua_state, sol::create);`` to make a fresh, unnamed environment), plus the three unique constructors shown above.
 
 The first constructor is generally used as ``sol::environment my_env(my_lua_state, sol::create, my_fallback_table);``. The fallback table serves as the backup to lookup attempts on the environment table being created. It is achieved by simply creating a metatable for the ``sol::environment`` being created, and then doing ``env_metatable["__index"] = fallback;``. You can achieve fancier effects by changing the metatable of the environment to your liking, by creating it in some fashion and then setting the metatable explicitly and populating it with data, particularly with :doc:`sol::metatable_key<metatable_key>`.
 
-The second and third unique constructors take a special empty type that serves as a key to trigger this constructor and serves no other purpose, ``sol::env_t``. The shortcut value so you don't have to create one is called ``sol::env_key``. It is used like ``sol::environment my_env(sol::env_key, some_object);``. It will extract the environment out of whatever the second argument is that may or may not have an environment. If it does not have an environment, the constructor will complete but the object will have ``env.valid() == false``, since it will reference Lua's ``nil``.
+The second and third unique constructors take a special empty type that serves as a key to trigger this constructor and serves no other purpose, ``sol::env_key_t``. The shortcut value so you don't have to create one is called ``sol::env_key``. It is used like ``sol::environment my_env(sol::env_key, some_object);``. It will extract the environment out of whatever the second argument is that may or may not have an environment. If it does not have an environment, the constructor will complete but the object will have ``env.valid() == false``, since it will reference Lua's ``nil``.
 
 
 .. code-block:: cpp

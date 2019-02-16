@@ -626,6 +626,9 @@ namespace sol {
 		     std::is_same<unqualified_t<T>, std::string>>;
 
 		template <typename T>
+		constexpr inline bool is_c_str_v = is_c_str<T>::value;
+
+		template <typename T>
 		struct is_move_only
 		: all<neg<std::is_reference<T>>, neg<std::is_copy_constructible<unqualified_t<T>>>, std::is_move_constructible<unqualified_t<T>>> {};
 

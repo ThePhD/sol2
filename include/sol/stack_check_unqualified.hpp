@@ -392,7 +392,7 @@ namespace sol { namespace stack {
 	};
 
 	template <type expected, typename C>
-	struct unqualified_checker<metatable_t, expected, C> {
+	struct unqualified_checker<metatable_key_t, expected, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
@@ -414,7 +414,7 @@ namespace sol { namespace stack {
 	};
 
 	template <typename C>
-	struct unqualified_checker<env_t, type::poly, C> {
+	struct unqualified_checker<env_key_t, type::poly, C> {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			tracking.use(1);
