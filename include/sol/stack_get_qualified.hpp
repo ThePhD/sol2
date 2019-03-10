@@ -29,6 +29,10 @@
 namespace sol {
 namespace stack {
 
+	// There are no more enable_ifs that can be used here,
+	// so this is just for posterity, I guess?
+	// maybe I'll fill this file in later.
+
 }
 } // namespace sol::stack
 

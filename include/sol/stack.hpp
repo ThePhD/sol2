@@ -130,13 +130,14 @@ namespace sol {
 			template <bool checkargs = detail::default_safe_function_calls , std::size_t... I, typename R, typename... Args, typename Fx, typename... FxArgs>
 			inline decltype(auto) call(types<R>, types<Args...> ta, std::index_sequence<I...> tai, lua_State* L, int start, Fx&& fx, FxArgs&&... args) {
 				static_assert(meta::all<meta::is_not_move_only<Args>...>::value, "One of the arguments being bound is a move-only type, and it is not being taken by reference: this will break your code. Please take a reference and std::move it manually if this was your intention.");
-				argument_handler<types<R, Args...>> handler{};
-				multi_check<checkargs, Args...>(L, start, handler);
+				if constexpr (checkargs) {
+					argument_handler<types<R, Args...>> handler{};
+					multi_check<Args...>(L, start, handler);
+				}
 				record tracking{};
 				if constexpr (std::is_void_v<R>) {
 					eval(ta, tai, L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 				}
-				
 				else {
 					return eval(ta, tai, L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 				}

@@ -454,6 +454,9 @@ namespace sol {
 		}
 	};
 
+	struct nested_tag_t {};
+	constexpr inline nested_tag_t nested_tag{};
+
 	template <typename T>
 	as_table_t<T> as_table_ref(T&& container) {
 		return as_table_t<T>(std::forward<T>(container));

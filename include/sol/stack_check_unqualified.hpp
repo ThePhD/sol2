@@ -86,7 +86,7 @@ namespace sol { namespace stack {
 		}
 	};
 
-	template <typename T, type expected, typename>
+	template <typename T, type expected = lua_type_of_v<T>, typename = void>
 	struct unqualified_checker {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
@@ -99,7 +99,10 @@ namespace sol { namespace stack {
 				}
 				return success;
 			}
-			else if constexpr (std::is_integral_v<T> && !std::is_same_v<T, bool>) {
+			else if constexpr (meta::any_same_v<T, char /* , char8_t*/, char16_t, char32_t>) {
+				return stack::check<std::basic_string<T>>(L, index, std::forward<Handler>(handler), tracking);
+			}
+			else if constexpr (std::is_integral_v<T>) {
 				tracking.use(1);
 #if SOL_LUA_VERSION >= 503
 #if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
@@ -177,6 +180,9 @@ namespace sol { namespace stack {
 #endif // Strings are Numbers
 			}
 			else if constexpr(meta::any_same_v<T, type, this_state, this_main_state, this_environment, variadic_args>) {
+				(void)L;
+				(void)index;
+				(void)handler;
 				tracking.use(0);
 				return true;
 			}
@@ -471,7 +477,7 @@ namespace sol { namespace stack {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 			const type indextype = type_of(L, index);
-			return check(L, index, indextype, handler, tracking);
+			return check(L, index, indextype, std::forward<Handler>(handler), tracking);
 		}
 	};
 

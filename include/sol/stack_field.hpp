@@ -45,6 +45,7 @@ namespace stack {
 				(void)tableindex;
 			}
 			else if constexpr (std::is_same_v<T, env_key_t>) {
+				(void)key;
 #if SOL_LUA_VERSION < 502
 				// Use lua_setfenv
 				lua_getfenv(L, tableindex);
@@ -56,6 +57,7 @@ namespace stack {
 #endif
 			}
 			else if constexpr (std::is_same_v<T, metatable_key_t>) {
+				(void)key;
 				if (lua_getmetatable(L, tableindex) == 0)
 					push(L, lua_nil);
 			}
@@ -154,6 +156,7 @@ namespace stack {
 				(void)tableindex;
 			}
 			else if constexpr (std::is_same_v<T, metatable_key_t>) {
+				(void)key;
 				push(L, std::forward<Value>(value));
 				lua_setmetatable(L, tableindex);
 			}
@@ -165,7 +168,7 @@ namespace stack {
 #if SOL_LUA_VERSION >= 502
 				else if constexpr (std::is_void_v<std::remove_pointer_t<T>>) {
 					push(L, std::forward<Value>(value));
-					lua_rawsetp(L, tableindex, key);
+					lua_rawsetp(L, tableindex, std::forward<Key>(key));
 				}
 #endif // Lua 5.2.x
 				else {

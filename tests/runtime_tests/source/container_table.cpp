@@ -284,9 +284,9 @@ TEST_CASE("containers/deeply nested", "make sure nested works for deeply-nested 
 			list.push_back(info_t{ { "a", "b" } });
 		}
 
-		sol::nested<info_vector> getList() {
-			return sol::nested<info_vector>(list);
-		};
+		sol::nested<info_vector&> getList() {
+			return sol::nested<info_vector&>(list);
+		}
 	};
 
 	sol::state lua;

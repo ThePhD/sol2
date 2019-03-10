@@ -58,11 +58,8 @@ namespace stack {
 					}
 					return stack_detail::unchecked_get<T>(L, index, tracking);
 				}
-				else if constexpr (std::is_same_v<T, bool>) {
-					return lua_toboolean(L, index) != 0;
-				}
 				else if constexpr (std::is_integral_v<T> && !std::is_same_v<T, bool>) {
-	#if SOL_LUA_VERSION >= 503
+#if SOL_LUA_VERSION >= 503
 					if (lua_isinteger(L, index) != 0) {
 						tracking.use(1);
 						return static_cast<T>(lua_tointeger(L, index));

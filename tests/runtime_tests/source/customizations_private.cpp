@@ -121,7 +121,7 @@ TEST_CASE("customization/split struct", "using the old customization points to h
 	sol::state lua;
 
 	// Create a pass-through style of function
-	auto result1 = lua.safe_script("function f ( a, b, c ) return a + c, b end");
+	auto result1 = lua.safe_script("function f ( a, b, c ) return a + c, b end", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 	lua.set_function("g", [](int a, bool b, int c, double d) { return std::make_tuple(a + c, b, d + 2.5); });
 
@@ -130,12 +130,12 @@ TEST_CASE("customization/split struct", "using the old customization points to h
 	sol::function g = lua["g"];
 
 	two_things thingsf = f(two_things{ 24, true }, 1);
-	two_things thingsg;
-	double d;
-	sol::tie(thingsg, d) = g(two_things{ 25, false }, 2, 34.0);
 	REQUIRE(thingsf.a == 25);
 	REQUIRE(thingsf.b);
 
+	two_things thingsg;
+	double d;
+	sol::tie(thingsg, d) = g(two_things{ 25, false }, 2, 34.0);
 	REQUIRE(thingsg.a == 27);
 	REQUIRE_FALSE(thingsg.b);
 	REQUIRE(d == 36.5);

@@ -64,8 +64,13 @@ namespace sol {
 
 			template <typename T>
 			int msvc_is_ass_with_if_constexpr_push_enum(std::true_type, lua_State* L, const T& value) {
-				if constexpr (std::is_same_v<std::underlying_type_t<T>, char>) {
-					return stack::push(L, static_cast<int>(value));
+				if constexpr (meta::any_same_v<std::underlying_type_t<T>, char/*, char8_t*/, char16_t, char32_t>) {
+					if constexpr (std::is_signed_v<T>) {
+						return stack::push(L, static_cast<std::int_least32_t>(value));
+					}
+					else {
+						return stack::push(L, static_cast<std::uint_least32_t>(value));
+					}
 				}
 				else {
 					return stack::push(L, static_cast<std::underlying_type_t<T>>(value));
@@ -130,6 +135,7 @@ namespace sol {
 			template <typename Arg, typename... Args>
 			static int push(lua_State* L, Arg&& arg, Args&&... args) {
 				if constexpr (std::is_same_v<meta::unqualified_t<Arg>, detail::with_function_tag>) {
+					(void)arg;
 					return push_fx(L, std::forward<Args>(args)...);
 				}
 				else {
@@ -168,6 +174,7 @@ namespace sol {
 			template <typename Arg, typename... Args>
 			static int push(lua_State* L, Arg&& arg, Args&&... args) {
 				if constexpr (std::is_same_v<meta::unqualified_t<Arg>, detail::with_function_tag>) {
+					(void)arg;
 					return push_fx(L, std::forward<Args>(args)...);
 				}
 				else {
@@ -309,9 +316,13 @@ namespace sol {
 		template <typename T>
 		struct unqualified_pusher<detail::as_table_tag<T>> {
 			using has_kvp = meta::has_key_value_pair<meta::unqualified_t<std::remove_pointer_t<T>>>;
-			
+
 			static int push(lua_State* L, const T& tablecont) {
 				return push(has_kvp(), std::false_type(), L, tablecont);
+			}
+
+			static int push(lua_State* L, const T& tablecont, nested_tag_t) {
+				return push(has_kvp(), std::true_type(), L, tablecont);
 			}
 
 			static int push(std::true_type, lua_State* L, const T& tablecont) {
@@ -400,7 +411,7 @@ namespace sol {
 			static int push(lua_State* L, const T& tablecont) {
 				using inner_t = std::remove_pointer_t<meta::unwrap_unqualified_t<T>>;
 				if constexpr (is_container_v<inner_t>) {
-					return stack::push<detail::as_table_tag<T>>(L, tablecont);
+					return stack::push<detail::as_table_tag<T>>(L, tablecont, nested_tag);
 				}
 				else {
 					return stack::push<inner_t>(L, tablecont);
@@ -596,6 +607,7 @@ namespace sol {
 					return push_with<true>(L, name, std::forward<Args>(args)...);
 				}
 				else if constexpr (std::is_same_v<meta::unqualified_t<Arg>, no_metatable_t>) {
+					(void)arg;
 					const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable()[0];
 					return push_with<false>(L, name, std::forward<Args>(args)...);
 				}

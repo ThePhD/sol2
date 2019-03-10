@@ -573,31 +573,35 @@ namespace sol {
 
 	namespace stack {
 
-		template <typename T>
-		struct extensible {};
-
 		template <typename T, bool global = false, bool raw = false, typename = void>
 		struct field_getter;
 		template <typename T, typename P, bool global = false, bool raw = false, typename = void>
 		struct probe_field_getter;
+
 		template <typename T, bool global = false, bool raw = false, typename = void>
 		struct field_setter;
+
 		template <typename T, typename = void>
 		struct unqualified_getter;
 		template <typename T, typename = void>
 		struct qualified_getter;
+
 		template <typename T, typename = void>
 		struct qualified_interop_getter;
 		template <typename T, typename = void>
 		struct unqualified_interop_getter;
+
 		template <typename T, typename = void>
 		struct popper;
+
 		template <typename T, typename = void>
 		struct unqualified_pusher;
-		template <typename X, type t = lua_type_of_v<X>, typename C = void>
+
+		template <typename T, type t, typename>
 		struct unqualified_checker;
-		template <typename X, type t = lua_type_of_v<X>, typename C = void>
+		template <typename T, type t, typename>
 		struct qualified_checker;
+
 		template <typename T, typename = void>
 		struct unqualified_check_getter;
 		template <typename T, typename = void>
@@ -707,19 +711,6 @@ namespace sol {
 			template <typename T>
 			using strip_t = typename strip<T>::type;
 
-			template <typename T>
-			struct strip_extensible {
-				typedef T type;
-			};
-
-			template <typename T>
-			struct strip_extensible<extensible<T>> {
-				typedef T type;
-			};
-
-			template <typename T>
-			using strip_extensible_t = typename strip_extensible<T>::type;
-
 			template <typename C>
 			static int get_size_hint(C& c) {
 				return static_cast<int>(c.size());
@@ -767,7 +758,7 @@ namespace sol {
 					(void)index;
 					(void)unadjusted_pointer;
 					(void)tracking;
-					using Ti = stack_detail::strip_extensible_t<Tu>;
+					using Ti = stack_detail::strip_t<Tu>;
 					return std::pair<bool, Ti*>{ false, nullptr };
 				}
 			}
@@ -1058,63 +1049,39 @@ namespace sol {
 
 		namespace stack_detail {
 
-			template <bool b>
-			struct check_types {
-				template <typename T, typename... Args, typename Handler>
-				static bool check(types<T, Args...>, lua_State* L, int firstargument, Handler&& handler, record& tracking) {
-					if (!stack::check<T>(L, firstargument + tracking.used, handler, tracking))
-						return false;
-					return check(types<Args...>(), L, firstargument, std::forward<Handler>(handler), tracking);
-				}
+			template <typename T, typename... Args, typename Handler>
+			inline bool check_types(lua_State* L, int firstargument, Handler&& handler, record& tracking) {
+				if (!stack::check<T>(L, firstargument + tracking.used, handler, tracking))
+					return false;
+				return check_types<Args...>(L, firstargument, std::forward<Handler>(handler), tracking);
+			}
 
-				template <typename Handler>
-				static bool check(types<>, lua_State*, int, Handler&&, record&) {
-					return true;
-				}
-			};
+			template <typename Handler>
+			static bool check_types(lua_State*, int, Handler&&, record&) {
+				return true;
+			}
 
-			template <>
-			struct check_types<false> {
-				template <typename... Args, typename Handler>
-				static bool check(types<Args...>, lua_State*, int, Handler&&, record&) {
-					return true;
-				}
-			};
-
-
+			template <typename... Args, typename Handler>
+			bool check_types(types<Args...>, lua_State* L, int index, Handler&& handler, record& tracking) {
+				return check_types<Args...>(L, index, std::forward<Handler>(handler), tracking);
+			}
 
 		} // namespace stack_detail
 
-		template <bool b, typename... Args, typename Handler>
+		template <typename... Args, typename Handler>
 		bool multi_check(lua_State* L, int index, Handler&& handler, record& tracking) {
-			return stack_detail::check_types<b>{}.check(types<meta::unqualified_t<Args>...>(), L, index, std::forward<Handler>(handler), tracking);
+			return stack_detail::check_types<Args...>(L, index, std::forward<Handler>(handler), tracking);
 		}
 
-		template <bool b, typename... Args, typename Handler>
+		template <typename... Args, typename Handler>
 		bool multi_check(lua_State* L, int index, Handler&& handler) {
 			record tracking{};
-			return multi_check<b, Args...>(L, index, std::forward<Handler>(handler), tracking);
-		}
-
-		template <bool b, typename... Args>
-		bool multi_check(lua_State* L, int index) {
-			auto handler = no_panic;
-			return multi_check<b, Args...>(L, index, handler);
-		}
-
-		template <typename... Args, typename Handler>
-		bool multi_check(lua_State* L, int index, Handler&& handler, record& tracking) {
-			return multi_check<true, Args...>(L, index, std::forward<Handler>(handler), tracking);
-		}
-
-		template <typename... Args, typename Handler>
-		bool multi_check(lua_State* L, int index, Handler&& handler) {
-			return multi_check<true, Args...>(L, index, std::forward<Handler>(handler));
+			return multi_check<Args...>(L, index, std::forward<Handler>(handler), tracking);
 		}
 
 		template <typename... Args>
 		bool multi_check(lua_State* L, int index) {
-			return multi_check<true, Args...>(L, index);
+			return multi_check<Args...>(L, index);
 		}
 
 		template <typename T>

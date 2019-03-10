@@ -163,8 +163,10 @@ namespace sol { namespace stack {
 	struct qualified_getter {
 		static decltype(auto) get(lua_State* L, int index, record& tracking) {
 			using Tu = meta::unqualified_t<X>;
-			if constexpr (!std::is_reference_v<X> && is_container_v<Tu>
-				&& std::is_default_constructible_v<Tu> && !is_lua_primitive_v<Tu> && !is_transparent_argument_v<Tu>) {
+			static constexpr bool is_userdata_of_some_kind
+				= !std::is_reference_v<
+				       X> && is_container_v<Tu> && std::is_default_constructible_v<Tu> && !is_lua_primitive_v<Tu> && !is_transparent_argument_v<Tu>;
+			if constexpr (is_userdata_of_some_kind) {
 				if (type_of(L, index) == type::userdata) {
 					return static_cast<Tu>(stack_detail::unchecked_unqualified_get<Tu>(L, index, tracking));
 				}
@@ -172,8 +174,8 @@ namespace sol { namespace stack {
 					return stack_detail::unchecked_unqualified_get<sol::nested<Tu>>(L, index, tracking);
 				}
 			}
-			else if constexpr (!std::is_reference_v<X> && is_unique_usertype_v<Tu>
-				&& !std::is_void_v<typename unique_usertype_traits<Tu>::template rebind_base<void>>) {
+			else if constexpr (!std::is_reference_v<
+				                   X> && is_unique_usertype_v<Tu> && !std::is_void_v<typename unique_usertype_traits<Tu>::template rebind_base<void>>) {
 				using u_traits = unique_usertype_traits<Tu>;
 				using T = typename u_traits::type;
 				using Real = typename u_traits::actual_type;
@@ -220,7 +222,7 @@ namespace sol { namespace stack {
 				}
 			}
 			else {
-				return stack::unqualified_get<Tu>(L, index, tracking);
+				return stack_detail::unchecked_unqualified_get<Tu>(L, index, tracking);
 			}
 		}
 	};

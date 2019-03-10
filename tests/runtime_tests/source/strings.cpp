@@ -68,65 +68,83 @@ TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	lua["utf32"] = utf32str;
 	lua["wide"] = widestr;
 
-	std::string utf8_to_utf8 = lua["utf8"];
-	std::string utf16_to_utf8 = lua["utf16"];
-	std::string utf32_to_utf8 = lua["utf32"];
-	std::string wide_to_utf8 = lua["wide"];
+	SECTION("to_utf8") {
+		std::string utf8_to_utf8 = lua["utf8"];
+		std::string utf16_to_utf8 = lua["utf16"];
+		std::string utf32_to_utf8 = lua["utf32"];
+		std::string wide_to_utf8 = lua["wide"];
 
-	REQUIRE(utf8_to_utf8 == utf8str_s);
-	REQUIRE(utf16_to_utf8 == utf8str_s);
-	REQUIRE(utf32_to_utf8 == utf8str_s);
-	REQUIRE(wide_to_utf8 == utf8str_s);
+		REQUIRE(utf8_to_utf8 == utf8str_s);
+		REQUIRE(utf16_to_utf8 == utf8str_s);
+		REQUIRE(utf32_to_utf8 == utf8str_s);
+		REQUIRE(wide_to_utf8 == utf8str_s);
+	}
+	SECTION("to_wide") {
+		std::wstring utf8_to_wide = lua["utf8"];
+		std::wstring utf16_to_wide = lua["utf16"];
+		std::wstring utf32_to_wide = lua["utf32"];
+		std::wstring wide_to_wide = lua["wide"];
 
-	std::wstring utf8_to_wide = lua["utf8"];
-	std::wstring utf16_to_wide = lua["utf16"];
-	std::wstring utf32_to_wide = lua["utf32"];
-	std::wstring wide_to_wide = lua["wide"];
+		REQUIRE(utf8_to_wide == widestr_s);
+		REQUIRE(utf16_to_wide == widestr_s);
+		REQUIRE(utf32_to_wide == widestr_s);
+		REQUIRE(wide_to_wide == widestr_s);
+	}
+	SECTION("to_utf16") {
+		std::u16string utf8_to_utf16 = lua["utf8"];
+		std::u16string utf16_to_utf16 = lua["utf16"];
+		std::u16string utf32_to_utf16 = lua["utf32"];
+		std::u16string wide_to_utf16 = lua["wide"];
 
-	REQUIRE(utf8_to_wide == widestr_s);
-	REQUIRE(utf16_to_wide == widestr_s);
-	REQUIRE(utf32_to_wide == widestr_s);
-	REQUIRE(wide_to_wide == widestr_s);
+		REQUIRE(utf8_to_utf16 == utf16str_s);
+		REQUIRE(utf16_to_utf16 == utf16str_s);
+		REQUIRE(utf32_to_utf16 == utf16str_s);
+		REQUIRE(wide_to_utf16 == utf16str_s);
+	}
+	SECTION("to_utf32") {
+		std::u32string utf8_to_utf32 = lua["utf8"];
+		std::u32string utf16_to_utf32 = lua["utf16"];
+		std::u32string utf32_to_utf32 = lua["utf32"];
+		std::u32string wide_to_utf32 = lua["wide"];
 
-	std::u16string utf8_to_utf16 = lua["utf8"];
-	std::u16string utf16_to_utf16 = lua["utf16"];
-	std::u16string utf32_to_utf16 = lua["utf32"];
-	std::u16string wide_to_utf16 = lua["wide"];
+		REQUIRE(utf8_to_utf32 == utf32str_s);
+		REQUIRE(utf16_to_utf32 == utf32str_s);
+		REQUIRE(utf32_to_utf32 == utf32str_s);
+		REQUIRE(wide_to_utf32 == utf32str_s);
+	}
+	SECTION("to_char32_t") {
+		char32_t utf8_to_char32 = lua["utf8"];
+		char32_t utf16_to_char32 = lua["utf16"];
+		char32_t utf32_to_char32 = lua["utf32"];
+		char32_t wide_to_char32 = lua["wide"];
 
-	REQUIRE(utf8_to_utf16 == utf16str_s);
-	REQUIRE(utf16_to_utf16 == utf16str_s);
-	REQUIRE(utf32_to_utf16 == utf16str_s);
-	REQUIRE(wide_to_utf16 == utf16str_s);
+		REQUIRE(utf8_to_char32 == utf32str[0]);
+		REQUIRE(utf16_to_char32 == utf32str[0]);
+		REQUIRE(utf32_to_char32 == utf32str[0]);
+		REQUIRE(wide_to_char32 == utf32str[0]);
+	}
+	SECTION("to_char16_t") {
+		char16_t utf8_to_char16 = lua["utf8"];
+		char16_t utf16_to_char16 = lua["utf16"];
+		char16_t utf32_to_char16 = lua["utf32"];
+		char16_t wide_to_char16 = lua["wide"];
 
-	std::u32string utf8_to_utf32 = lua["utf8"];
-	std::u32string utf16_to_utf32 = lua["utf16"];
-	std::u32string utf32_to_utf32 = lua["utf32"];
-	std::u32string wide_to_utf32 = lua["wide"];
+		REQUIRE(utf8_to_char16 == utf16str[0]);
+		REQUIRE(utf16_to_char16 == utf16str[0]);
+		REQUIRE(utf32_to_char16 == utf16str[0]);
+		REQUIRE(wide_to_char16 == utf16str[0]);
+	}
+	SECTION("to_char") {
+		char utf8_to_char = lua["utf8"].get<char>();
+		char utf16_to_char = lua["utf16"].get<char>();
+		char utf32_to_char = lua["utf32"].get<char>();
+		char wide_to_char = lua["wide"].get<char>();
 
-	REQUIRE(utf8_to_utf32 == utf32str_s);
-	REQUIRE(utf16_to_utf32 == utf32str_s);
-	REQUIRE(utf32_to_utf32 == utf32str_s);
-	REQUIRE(wide_to_utf32 == utf32str_s);
-
-	char32_t utf8_to_char32 = lua["utf8"];
-	char32_t utf16_to_char32 = lua["utf16"];
-	char32_t utf32_to_char32 = lua["utf32"];
-	char32_t wide_to_char32 = lua["wide"];
-
-	REQUIRE(utf8_to_char32 == utf32str[0]);
-	REQUIRE(utf16_to_char32 == utf32str[0]);
-	REQUIRE(utf32_to_char32 == utf32str[0]);
-	REQUIRE(wide_to_char32 == utf32str[0]);
-
-	char16_t utf8_to_char16 = lua["utf8"];
-	char16_t utf16_to_char16 = lua["utf16"];
-	char16_t utf32_to_char16 = lua["utf32"];
-	char16_t wide_to_char16 = lua["wide"];
-
-	REQUIRE(utf8_to_char16 == utf16str[0]);
-	REQUIRE(utf16_to_char16 == utf16str[0]);
-	REQUIRE(utf32_to_char16 == utf16str[0]);
-	REQUIRE(wide_to_char16 == utf16str[0]);
+		REQUIRE(utf8_to_char == utf8str[0]);
+		REQUIRE(utf16_to_char == utf8str[0]);
+		REQUIRE(utf32_to_char == utf8str[0]);
+		REQUIRE(wide_to_char == utf8str[0]);
+	}
 }
 
 TEST_CASE("detail/demangling", "test some basic demangling cases") {
