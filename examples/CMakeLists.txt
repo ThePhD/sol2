@@ -85,6 +85,7 @@ function (MAKE_EXAMPLE example_source_file example_suffix target_sol)
 	else()
 		target_compile_options(${example_name}
 			PRIVATE -std=c++1z 
+			-ftemplate-backtrace-limit=0
 			-Wall -Wpedantic -Werror -pedantic -pedantic-errors
 			-Wno-noexcept-type 
 			-Wno-unknown-warning -Wno-unknown-warning-option)

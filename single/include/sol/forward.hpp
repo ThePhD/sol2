@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-02-16 22:26:16.417718 UTC
-// This header was generated with sol v3.0.0 (revision 95ffd10)
+// Generated 2019-03-10 01:57:28.833449 UTC
+// This header was generated with sol v3.0.0 (revision b6f4093)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -244,6 +244,14 @@
 
 #include <utility>
 #include <type_traits>
+
+#if defined(SOL_USING_CXX_LUA) && SOL_USING_CXX_LUA
+struct lua_State;
+#else
+extern "C" {
+	struct lua_State;
+}
+#endif // C++ Mangling for Lua vs. Not
 
 namespace sol {
 

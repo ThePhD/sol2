@@ -29,6 +29,14 @@
 #include <utility>
 #include <type_traits>
 
+#if defined(SOL_USING_CXX_LUA) && SOL_USING_CXX_LUA
+struct lua_State;
+#else
+extern "C" {
+	struct lua_State;
+}
+#endif // C++ Mangling for Lua vs. Not
+
 namespace sol {
 
 	template <bool b>

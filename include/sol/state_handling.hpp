@@ -72,13 +72,13 @@ namespace sol {
 
 	inline int default_traceback_error_handler(lua_State* L) {
 		std::string msg = "An unknown error has triggered the default error handler";
-		optional<string_view> maybetopmsg = stack::check_get<string_view>(L, 1);
+		optional<string_view> maybetopmsg = stack::unqualified_check_get<string_view>(L, 1, no_panic);
 		if (maybetopmsg) {
 			const string_view& topmsg = maybetopmsg.value();
 			msg.assign(topmsg.data(), topmsg.size());
 		}
 		luaL_traceback(L, L, msg.c_str(), 1);
-		optional<string_view> maybetraceback = stack::check_get<string_view>(L, -1);
+		optional<string_view> maybetraceback = stack::unqualified_check_get<string_view>(L, -1, no_panic);
 		if (maybetraceback) {
 			const string_view& traceback = maybetraceback.value();
 			msg.assign(traceback.data(), traceback.size());
@@ -141,7 +141,7 @@ namespace sol {
 #endif // serialize exception information if possible
 		if (t == type::string) {
 			err += ": ";
-			string_view serr = stack::get<string_view>(L, result.stack_index());
+			string_view serr = stack::unqualified_get<string_view>(L, result.stack_index());
 			err.append(serr.data(), serr.size());
 		}
 #if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS

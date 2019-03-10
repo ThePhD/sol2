@@ -44,4 +44,6 @@ int main() {
 	std::cout << "result2: " << result2 << std::endl;
 	std::cout << "result3: " << result3 << std::endl;
 	std::cout << std::endl;
+
+	return 0;
 }

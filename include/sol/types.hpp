@@ -480,6 +480,8 @@ namespace sol {
 		T value_;
 	
 	public:
+		using type = T;
+
 		as_container_t() = default;
 		as_container_t(const as_container_t&) = default;
 		as_container_t(as_container_t&&) = default;
@@ -909,21 +911,25 @@ namespace sol {
 
 	template <typename T>
 	struct is_lua_reference : std::integral_constant<bool,
-	                               std::is_base_of<reference, meta::unqualified_t<T>>::value || std::is_base_of<main_reference, meta::unqualified_t<T>>::value
-	                                    || std::is_base_of<stack_reference, meta::unqualified_t<T>>::value> {};
+	                               std::is_base_of_v<reference, T> || std::is_base_of_v<main_reference, T>
+	                                    || std::is_base_of_v<stack_reference, T>> {};
 
 	template <typename T>
 	inline constexpr bool is_lua_reference_v = is_lua_reference<T>::value;
 
 	template <typename T>
 	struct is_lua_reference_or_proxy
-	: std::integral_constant<bool, is_lua_reference<meta::unqualified_t<T>>::value || meta::is_specialization_of<meta::unqualified_t<T>, proxy>::value> {};
+	: std::integral_constant<bool, is_lua_reference_v<T> || meta::is_specialization_of_v<T, proxy>> {};
 
 	template <typename T>
 	inline constexpr bool is_lua_reference_or_proxy_v = is_lua_reference_or_proxy<T>::value;
 
 	template <typename T>
 	struct is_transparent_argument : std::false_type {};
+
+	template <typename T>
+	constexpr inline bool is_transparent_argument_v = is_transparent_argument<T>::value;
+
 	template <>
 	struct is_transparent_argument<this_state> : std::true_type {};
 	template <>
@@ -933,38 +939,13 @@ namespace sol {
 	template <>
 	struct is_transparent_argument<variadic_args> : std::true_type {};
 	template <typename T>
-	struct is_variadic_arguments : std::is_same<meta::unqualified_t<T>, variadic_args> {};
-
-	namespace detail {
-		template <typename T>
-		struct is_initializer_list : std::false_type {};
-
-		template <typename T>
-		struct is_initializer_list<std::initializer_list<T>> : std::true_type {};
-
-		template <typename T, typename C = void>
-		struct is_container : std::false_type {};
-
-		template <typename T>
-		struct is_container<std::initializer_list<T>> : std::false_type {};
-
-		template <typename T>
-		struct is_container<T, std::enable_if_t<meta::is_string_like<meta::unqualified_t<T>>::value>> : std::false_type {};
-
-		template <typename T>
-		struct is_container<T,
-		     std::enable_if_t<meta::all<std::is_array<meta::unqualified_t<T>>,
-		          meta::neg<meta::any_same<std::remove_all_extents_t<meta::unqualified_t<T>>, char, wchar_t, char16_t, char32_t>>>::value>> : std::true_type {
-		};
-
-		template <typename T>
-		struct is_container<T,
-		     std::enable_if_t<meta::all<meta::has_begin_end<meta::unqualified_t<T>>, meta::neg<is_initializer_list<meta::unqualified_t<T>>>,
-		          meta::neg<meta::is_string_like<meta::unqualified_t<T>>>>::value>> : std::true_type {};
-	} // namespace detail
+	struct is_variadic_arguments : std::is_same<T, variadic_args> {};
 
 	template <typename T>
-	struct is_container : detail::is_container<T> {};
+	struct is_container : std::integral_constant<bool, !meta::is_initializer_list_v<T> && !meta::is_string_like_v<T> && !meta::is_string_literal_array_v<T> && !is_transparent_argument_v<T> && !is_lua_reference_v<T> && (meta::has_begin_end_v<T> || std::is_array_v<T>)> {};
+	
+	template <typename T>
+	constexpr inline bool is_container_v = is_container<T>::value;
 
 	template <typename T>
 	struct is_to_stringable : meta::any<meta::supports_to_string_member<meta::unqualified_t<T>>, meta::supports_adl_to_string<meta::unqualified_t<T>>,
@@ -1224,17 +1205,23 @@ namespace sol {
 		struct has_internal_marker_impl<T, typename void_<typename T::SOL_INTERNAL_UNSPECIALIZED_MARKER_>::type> : std::true_type {};
 
 		template <typename T>
-		struct has_internal_marker : has_internal_marker_impl<T> {};
+		using has_internal_marker = has_internal_marker_impl<T>;
+
+		template <typename T>
+		constexpr inline bool has_internal_marker_v = has_internal_marker<T>::value;
 	} // namespace detail
 
 	template <typename T>
 	struct is_lua_primitive
 	: std::integral_constant<bool,
-	       type::userdata != lua_type_of<meta::unqualified_t<T>>::value
-	            || ((type::userdata == lua_type_of<meta::unqualified_t<T>>::value) && detail::has_internal_marker<lua_type_of<meta::unqualified_t<T>>>::value
-	                    && !detail::has_internal_marker<lua_size<meta::unqualified_t<T>>>::value)
-	            || is_lua_reference<meta::unqualified_t<T>>::value || meta::is_specialization_of<meta::unqualified_t<T>, std::tuple>::value
-	            || meta::is_specialization_of<meta::unqualified_t<T>, std::pair>::value> {};
+	       type::userdata != lua_type_of_v<T>
+	            || ((type::userdata == lua_type_of_v<T>) && detail::has_internal_marker_v<lua_type_of<T>>
+	                    && !detail::has_internal_marker_v<lua_size<T>>)
+	            || is_lua_reference_v<T> || meta::is_specialization_of_v<T, std::tuple>
+	            || meta::is_specialization_of_v<T, std::pair>> {};
+
+	template <typename T>
+	constexpr inline bool is_lua_primitive_v = is_lua_primitive<T>::value;
 
 	template <typename T>
 	struct is_main_threaded : std::is_base_of<main_reference, T> {};

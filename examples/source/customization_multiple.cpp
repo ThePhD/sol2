@@ -10,7 +10,7 @@ struct two_things {
 };
 
 template <typename Handler>
-bool check(sol::types<two_things>, lua_State* L, int index, Handler&& handler, sol::stack::record& tracking) {
+bool sol_lua_check(sol::types<two_things>, lua_State* L, int index, Handler&& handler, sol::stack::record& tracking) {
 	// indices can be negative to count backwards from the top of the stack,
 	// rather than the bottom up
 	// to deal with this, we adjust the index to
@@ -22,7 +22,7 @@ bool check(sol::types<two_things>, lua_State* L, int index, Handler&& handler, s
 	return success;
 }
 
-two_things get(sol::types<two_things>, lua_State* L, int index, sol::stack::record& tracking) {
+two_things sol_lua_get(sol::types<two_things>, lua_State* L, int index, sol::stack::record& tracking) {
 	int absolute_index = lua_absindex(L, index);
 	// Get the first element
 	int a = sol::stack::get<int>(L, absolute_index);
@@ -34,7 +34,7 @@ two_things get(sol::types<two_things>, lua_State* L, int index, sol::stack::reco
 	return two_things{ a, b };
 }
 
-int push(sol::types<two_things>, lua_State* L, const two_things& things) {
+int sol_lua_push(sol::types<two_things>, lua_State* L, const two_things& things) {
 	int amount = sol::stack::push(L, things.a);
 	// amount will be 1: int pushes 1 item
 	amount += sol::stack::push(L, things.b);

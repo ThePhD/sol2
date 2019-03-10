@@ -1080,7 +1080,7 @@ namespace sol {
 					return stack::push(L, lua_nil);
 				}
 				int p;
-				if (ip) {
+				if constexpr (ip) {
 					++i.i;
 					p = stack::push_reference(L, i.i);
 				}
@@ -1102,7 +1102,12 @@ namespace sol {
 					return stack::push(L, lua_nil);
 				}
 				int p;
-				p = stack::push_reference(L, k + 1);
+				if constexpr (std::is_integral_v<next_K>) {
+					p = stack::push_reference(L, k + 1);
+				}
+				else {
+					p = stack::stack_detail::push_reference(L, k + 1);
+				}
 				p += stack::stack_detail::push_reference<push_type>(L, detail::deref_non_pointer(*it));
 				std::advance(it, 1);
 				return p;
@@ -1137,7 +1142,7 @@ namespace sol {
 				auto& self = get_src(L);
 				detail::error_result er;
 				{
-					std::ptrdiff_t pos = stack::unqualified_get<std::ptrdiff_t>(L);
+					std::ptrdiff_t pos = stack::unqualified_get<std::ptrdiff_t>(L, 2);
 					er = at_start(L, self, pos);
 				}
 				return handle_errors(L, er);
@@ -1315,7 +1320,7 @@ namespace sol {
 					return 0;
 				}
 				int p;
-				p = stack::push_reference(L, k + 1);
+				p = stack::push(L, k + 1);
 				p += stack::push_reference(L, detail::deref_non_pointer(*it));
 				std::advance(it, 1);
 				return p;

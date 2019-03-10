@@ -594,14 +594,10 @@ namespace sol {
 		struct popper;
 		template <typename T, typename = void>
 		struct unqualified_pusher;
-		template <typename T, type = lua_type_of<T>::value, typename = void>
+		template <typename X, type t = lua_type_of_v<X>, typename C = void>
 		struct unqualified_checker;
-		template <typename T, type = lua_type_of<T>::value, typename = void>
+		template <typename X, type t = lua_type_of_v<X>, typename C = void>
 		struct qualified_checker;
-		template <typename T, typename = void>
-		struct qualified_interop_checker;
-		template <typename T, typename = void>
-		struct unqualified_interop_checker;
 		template <typename T, typename = void>
 		struct unqualified_check_getter;
 		template <typename T, typename = void>
@@ -634,116 +630,50 @@ namespace sol {
 	} // namespace stack
 
 	namespace meta { namespace meta_detail {
-		template <typename T>
-		struct is_adl_sol_lua_get {
-		private:
-			template <typename C>
-			static meta::sfinae_yes_t test(
-				std::remove_reference_t<decltype(sol_lua_get(types<C>(), static_cast<lua_State*>(nullptr), -1, std::declval<stack::record&>()))>*);
-			template <typename C>
-			static meta::sfinae_no_t test(...);
-
-		public:
-			static constexpr bool value = std::is_same_v<decltype(test<T>(nullptr)), meta::sfinae_yes_t>;
-		};
 
 		template <typename T>
-		struct is_adl_sol_lua_interop_get {
-		private:
-			template <typename C>
-			static meta::sfinae_yes_t test(
-				std::remove_reference_t<decltype(sol_lua_interop_get(types<C>(), static_cast<lua_State*>(nullptr), -1, static_cast<void*>(nullptr), std::declval<stack::record&>()))>*);
-			template <typename C>
-			static meta::sfinae_no_t test(...);
-
-		public:
-			static constexpr bool value = std::is_same_v<decltype(test<T>(nullptr)), meta::sfinae_yes_t>;
-		};
+		using adl_sol_lua_get_test_t = decltype(sol_lua_get(types<T>(), static_cast<lua_State*>(nullptr), -1, std::declval<stack::record&>()));
 
 		template <typename T>
-		struct is_adl_sol_lua_check {
-		private:
-			template <typename C>
-			static meta::sfinae_yes_t test(std::remove_reference_t<decltype(
-				     sol_lua_check(types<C>(), static_cast<lua_State*>(nullptr), -1, no_panic, std::declval<stack::record&>()))>*);
-			template <typename C>
-			static meta::sfinae_no_t test(...);
-
-		public:
-			static constexpr bool value = std::is_same_v<decltype(test<T>(nullptr)), meta::sfinae_yes_t>;
-		};
+		using adl_sol_lua_interop_get_test_t
+			= decltype(sol_lua_interop_get(types<T>(), static_cast<lua_State*>(nullptr), -1, static_cast<void*>(nullptr), std::declval<stack::record&>()));
 
 		template <typename T>
-		struct is_adl_sol_lua_interop_check {
-		private:
-			template <typename C>
-			static meta::sfinae_yes_t test(std::remove_reference_t<decltype(
-				     sol_lua_interop_check(types<C>(), static_cast<lua_State*>(nullptr), -1, type::none, no_panic, std::declval<stack::record&>()))>*);
-			template <typename C>
-			static meta::sfinae_no_t test(...);
-
-		public:
-			static constexpr bool value = std::is_same_v<decltype(test<T>(nullptr)), meta::sfinae_yes_t>;
-		};
+		using adl_sol_lua_check_test_t = decltype(sol_lua_check(types<T>(), static_cast<lua_State*>(nullptr), -1, no_panic, std::declval<stack::record&>()));
 
 		template <typename T>
-		struct is_adl_sol_lua_check_get {
-		private:
-			template <typename C>
-			static meta::sfinae_yes_t test(std::remove_reference_t<decltype(
-				     sol_lua_check_get(types<C>(), static_cast<lua_State*>(nullptr), -1, no_panic, std::declval<stack::record&>()))>*);
-			template <typename C>
-			static meta::sfinae_no_t test(...);
+		using adl_sol_lua_interop_check_test_t
+			= decltype(sol_lua_interop_check(types<T>(), static_cast<lua_State*>(nullptr), -1, type::none, no_panic, std::declval<stack::record&>()));
 
-		public:
-			static constexpr bool value = std::is_same_v<decltype(test<T>(nullptr)), meta::sfinae_yes_t>;
-		};
+		template <typename T>
+		using adl_sol_lua_check_get_test_t = decltype(sol_lua_check_get(types<T>(), static_cast<lua_State*>(nullptr), -1, no_panic, std::declval<stack::record&>()));
 
 		template <typename... Args>
-		struct is_adl_sol_lua_push {
-		private:
-			template <typename... C>
-			static meta::sfinae_yes_t test(std::remove_reference_t<decltype(sol_lua_push(static_cast<lua_State*>(nullptr), std::declval<C>()...))>*);
-			template <typename... C>
-			static meta::sfinae_no_t test(...);
-
-		public:
-			static constexpr bool value = std::is_same_v<decltype(test<Args...>(nullptr)), meta::sfinae_yes_t>;
-		};
+		using adl_sol_lua_push_test_t = decltype(sol_lua_push(static_cast<lua_State*>(nullptr), std::declval<Args>()...));
 
 		template <typename T, typename... Args>
-		struct is_adl_sol_lua_push_exact {
-		private:
-			template <typename... C>
-			static meta::sfinae_yes_t test(
-				std::remove_reference_t<decltype(sol_lua_push(types<T>(), static_cast<lua_State*>(nullptr), std::declval<C>()...))>*);
-			template <typename... C>
-			static meta::sfinae_no_t test(...);
-
-		public:
-			static constexpr bool value = std::is_same_v<decltype(test<Args...>(nullptr)), meta::sfinae_yes_t>;
-		};
+		using adl_sol_lua_push_exact_test_t = decltype(sol_lua_push(types<T>(), static_cast<lua_State*>(nullptr), std::declval<Args>()...));
 
 		template <typename T>
-		inline constexpr bool is_adl_sol_lua_get_v = is_adl_sol_lua_get<T>::value;
+		inline constexpr bool is_adl_sol_lua_get_v = meta::is_detected_v<adl_sol_lua_get_test_t, T>;
 
 		template <typename T>
-		inline constexpr bool is_adl_sol_lua_interop_get_v = is_adl_sol_lua_interop_get<T>::value;
+		inline constexpr bool is_adl_sol_lua_interop_get_v = meta::is_detected_v<adl_sol_lua_interop_get_test_t, T>;
 
 		template <typename T>
-		inline constexpr bool is_adl_sol_lua_check_v = is_adl_sol_lua_check<T>::value;
+		inline constexpr bool is_adl_sol_lua_check_v = meta::is_detected_v<adl_sol_lua_check_test_t, T>;
 
 		template <typename T>
-		inline constexpr bool is_adl_sol_lua_interop_check_v = is_adl_sol_lua_interop_check<T>::value;
+		inline constexpr bool is_adl_sol_lua_interop_check_v = meta::is_detected_v<adl_sol_lua_interop_check_test_t, T>;
 
 		template <typename T>
-		inline constexpr bool is_adl_sol_lua_check_get_v = is_adl_sol_lua_check_get<T>::value;
+		inline constexpr bool is_adl_sol_lua_check_get_v = meta::is_detected_v<adl_sol_lua_check_get_test_t, T>;
 
 		template <typename... Args>
-		inline constexpr bool is_adl_sol_lua_push_v = is_adl_sol_lua_push<Args...>::value;
+		inline constexpr bool is_adl_sol_lua_push_v = meta::is_detected_v<adl_sol_lua_push_test_t, Args...>;
 
 		template <typename T, typename... Args>
-		inline constexpr bool is_adl_sol_lua_push_exact_v = is_adl_sol_lua_push_exact<T, Args...>::value;
+		inline constexpr bool is_adl_sol_lua_push_exact_v = meta::is_detected_v<adl_sol_lua_push_exact_test_t, T, Args...>;
 	}} // namespace meta::meta_detail
 
 
@@ -791,7 +721,7 @@ namespace sol {
 			using strip_extensible_t = typename strip_extensible<T>::type;
 
 			template <typename C>
-			static int get_size_hint(const C& c) {
+			static int get_size_hint(C& c) {
 				return static_cast<int>(c.size());
 			}
 
@@ -833,9 +763,12 @@ namespace sol {
 					return sol_lua_interop_get(types<Tu>(), L, index, unadjusted_pointer, tracking);
 				}
 				else {
-					unqualified_interop_getter<Tu> g{};
-					(void)g;
-					return g.get(L, index, unadjusted_pointer, tracking);
+					(void)L;
+					(void)index;
+					(void)unadjusted_pointer;
+					(void)tracking;
+					using Ti = stack_detail::strip_extensible_t<Tu>;
+					return std::pair<bool, Ti*>{ false, nullptr };
 				}
 			}
 
@@ -845,9 +778,7 @@ namespace sol {
 					return sol_lua_interop_get(types<T>(), L, index, unadjusted_pointer, tracking);
 				}
 				else {
-					qualified_interop_getter<T> g{};
-					(void)g;
-					return g.get(L, index, unadjusted_pointer, tracking);
+					return unqualified_interop_get<T>(L, index, unadjusted_pointer, tracking);
 				}
 			}
 
@@ -858,10 +789,12 @@ namespace sol {
 					return sol_lua_interop_check(types<Tu>(), L, index, index_type, std::forward<Handler>(handler), tracking);
 				}
 				else {
-					unqualified_interop_checker<Tu> c;
-					// VC++ has a bad warning here: shut it up
-					(void)c;
-					return c.check(L, index, index_type, std::forward<Handler>(handler), tracking);
+					(void)L;
+					(void)index;
+					(void)index_type;
+					(void)handler;
+					(void)tracking;
+					return false;
 				}
 			}
 
@@ -871,10 +804,7 @@ namespace sol {
 					return sol_lua_interop_check(types<T>(), L, index, index_type, std::forward<Handler>(handler), tracking);
 				}
 				else {
-					qualified_interop_checker<T> c;
-					// VC++ has a bad warning here: shut it up
-					(void)c;
-					return c.check(L, index, index_type, std::forward<Handler>(handler), tracking);
+					return unqualified_interop_check<T>(L, index, index_type, std::forward<Handler>(handler), tracking);
 				}
 			}
 		} // namespace stack_detail
@@ -1435,11 +1365,11 @@ namespace sol {
 				return stack::push(L, false);
 			}
 			else {
-				auto maybel = stack::unqualified_check_get<T&>(L, 1);
+				auto maybel = stack::unqualified_check_get<T>(L, 1);
 				if (!maybel) {
 					return stack::push(L, false);
 				}
-				auto mayber = stack::unqualified_check_get<T&>(L, 2);
+				auto mayber = stack::unqualified_check_get<T>(L, 2);
 				if (!mayber) {
 					return stack::push(L, false);
 				}

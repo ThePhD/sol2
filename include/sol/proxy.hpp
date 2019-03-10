@@ -46,14 +46,14 @@ namespace sol {
 		}
 
 		auto setup_table(std::true_type) {
-			auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(lua_state(), key, tbl.stack_index());
+			auto p = stack::probe_get_field<std::is_same_v<meta::unqualified_t<Table>, global_table>>(lua_state(), key, tbl.stack_index());
 			lua_pop(lua_state(), p.levels);
 			return p;
 		}
 
 		bool is_valid(std::false_type) {
 			auto pp = stack::push_pop(tbl);
-			auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(lua_state(), key, lua_gettop(lua_state()));
+			auto p = stack::probe_get_field<std::is_same_v<meta::unqualified_t<Table>, global_table>>(lua_state(), key, lua_gettop(lua_state()));
 			lua_pop(lua_state(), p.levels);
 			return p;
 		}
@@ -69,7 +69,7 @@ namespace sol {
 
 		template <typename T>
 		proxy& set(T&& item) {
-			tuple_set(std::make_index_sequence<std::tuple_size<meta::unqualified_t<key_type>>::value>(), std::forward<T>(item));
+			tuple_set(std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>(), std::forward<T>(item));
 			return *this;
 		}
 
@@ -79,14 +79,15 @@ namespace sol {
 			return *this;
 		}
 
-		template <typename U, meta::enable<meta::neg<is_lua_reference_or_proxy<meta::unwrap_unqualified_t<U>>>, meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
+		template <typename U>
 		proxy& operator=(U&& other) {
-			return set_function(std::forward<U>(other));
-		}
-
-		template <typename U, meta::disable<meta::neg<is_lua_reference_or_proxy<meta::unwrap_unqualified_t<U>>>, meta::is_callable<meta::unwrap_unqualified_t<U>>> = meta::enabler>
-		proxy& operator=(U&& other) {
-			return set(std::forward<U>(other));
+			using uTu = meta::unwrap_unqualified_t<U>;
+			if constexpr (!is_lua_reference_or_proxy_v<uTu> && meta::is_callable_v<uTu>) {
+				return set_function(std::forward<U>(other));
+			}
+			else {
+				return set(std::forward<U>(other));
+			}
 		}
 
 		template <typename T>
@@ -193,26 +194,26 @@ namespace sol {
 
 	template <typename Table, typename Key, typename T>
 	inline bool operator==(T&& left, const proxy<Table, Key>& right) {
-		typedef decltype(stack::get<T>(nullptr, 0)) U;
-		return right.template get<optional<U>>() == left;
+		using G = decltype(stack::get<T>(nullptr, 0));
+		return right.template get<optional<G>>() == left;
 	}
 
 	template <typename Table, typename Key, typename T>
 	inline bool operator==(const proxy<Table, Key>& right, T&& left) {
-		typedef decltype(stack::get<T>(nullptr, 0)) U;
-		return right.template get<optional<U>>() == left;
+		using G = decltype(stack::get<T>(nullptr, 0));
+		return right.template get<optional<G>>() == left;
 	}
 
 	template <typename Table, typename Key, typename T>
 	inline bool operator!=(T&& left, const proxy<Table, Key>& right) {
-		typedef decltype(stack::get<T>(nullptr, 0)) U;
-		return right.template get<optional<U>>() != left;
+		using G = decltype(stack::get<T>(nullptr, 0));
+		return right.template get<optional<G>>() != left;
 	}
 
 	template <typename Table, typename Key, typename T>
 	inline bool operator!=(const proxy<Table, Key>& right, T&& left) {
-		typedef decltype(stack::get<T>(nullptr, 0)) U;
-		return right.template get<optional<U>>() != left;
+		using G = decltype(stack::get<T>(nullptr, 0));
+		return right.template get<optional<G>>() != left;
 	}
 
 	template <typename Table, typename Key>

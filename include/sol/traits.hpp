@@ -47,6 +47,23 @@ namespace sol {
 		using sfinae_yes_t = std::true_type;
 		using sfinae_no_t = std::false_type;
 
+		template <typename T>
+		using void_t = void;
+
+		namespace meta_detail {
+			template <template <class...> class Test, class, class... Args>
+			struct is_detected : std::false_type {};
+
+			template <template <class...> class Test, class... Args>
+			struct is_detected<Test, void_t<Test<Args...>>, Args...> : std::true_type {};
+		} // namespace detail
+
+		template <template <class...> class Trait, class... Args>
+		using is_detected = typename meta_detail::is_detected<Trait, void, Args...>::type;
+
+		template <template <class...> class Trait, class... Args>
+		constexpr inline bool is_detected_v = is_detected<Trait, Args...>::value;
+
 		template <std::size_t I>
 		using index_value = std::integral_constant<std::size_t, I>;
 
@@ -130,17 +147,20 @@ namespace sol {
 		template <typename T>
 		using remove_member_pointer_t = remove_member_pointer<T>;
 
-		template <class T, class...>
+		template <typename T, typename...>
 		struct all_same : std::true_type {};
 
-		template <class T, class U, class... Args>
+		template <typename T, typename U, typename... Args>
 		struct all_same<T, U, Args...> : std::integral_constant<bool, std::is_same<T, U>::value && all_same<T, Args...>::value> {};
 
-		template <class T, class...>
+		template <typename T, typename...>
 		struct any_same : std::false_type {};
 
-		template <class T, class U, class... Args>
+		template <typename T, typename U, typename... Args>
 		struct any_same<T, U, Args...> : std::integral_constant<bool, std::is_same<T, U>::value || any_same<T, Args...>::value> {};
+
+		template <typename T, typename...Args>
+		constexpr inline bool any_same_v = any_same<T, Args...>::value;
 
 		template <bool B>
 		using boolean = std::integral_constant<bool, B>;
@@ -150,6 +170,9 @@ namespace sol {
 
 		template <typename T>
 		using neg = boolean<!T::value>;
+
+		template <typename T>
+		constexpr inline bool neg_v = neg<T>::value;
 
 		template <typename Condition, typename Then, typename Else>
 		using condition = conditional_t<Condition::value, Then, Else>;
@@ -165,6 +188,12 @@ namespace sol {
 
 		template <typename T, typename... Args>
 		struct any<T, Args...> : condition<T, boolean<true>, any<Args...>> {};
+
+		template <typename T, typename... Args>
+		constexpr inline bool all_v = all<T, Args...>::value;
+
+		template <typename T, typename... Args>
+		constexpr inline bool any_v = any<T, Args...>::value;
 
 		enum class enable_t { _ };
 
@@ -538,10 +567,16 @@ namespace sol {
 		using supports_to_string_member = meta::boolean<meta_detail::has_to_string_test<meta_detail::non_void_t<T>>::value>;
 
 		template <typename T>
-		struct is_callable : boolean<meta_detail::is_callable<T>::value> {};
+		using is_callable = boolean<meta_detail::is_callable<T>::value>;
+
+		template <typename T>
+		constexpr inline bool is_callable_v = is_callable<T>::value;
 
 		template <typename T>
 		struct has_begin_end : decltype(meta_detail::has_begin_end_impl::test<T>(0)) {};
+
+		template <typename T>
+		constexpr inline bool has_begin_end_v = has_begin_end<T>::value;
 
 		template <typename T>
 		struct has_key_value_pair : decltype(meta_detail::has_key_value_pair_impl::test<T>(0)) {};
@@ -592,28 +627,76 @@ namespace sol {
 		using is_matched_lookup = meta_detail::is_matched_lookup_impl<T, is_lookup<T>::value>;
 
 		template <typename T>
-		using is_string_like = any<is_specialization_of<meta::unqualified_t<T>, std::basic_string>,
+		using is_initializer_list = meta::is_specialization_of<T, std::initializer_list>;
+
+		template <typename T>
+		constexpr inline bool is_initializer_list_v = is_initializer_list<T>::value;
+
+		template <typename T, typename CharT = char>
+		using is_string_literal_array_of = boolean<std::is_array_v<T> && std::is_same_v<std::remove_all_extents_t<T>, CharT>>;
+
+		template <typename T, typename CharT = char>
+		constexpr inline bool is_string_literal_array_of_v = is_string_literal_array_of<T, CharT>::value;
+
+		template <typename T>
+		using is_string_literal_array = boolean<std::is_array_v<T> && any_same_v<std::remove_all_extents_t<T>, char, char16_t, char32_t, wchar_t>>;
+
+		template <typename T>
+		constexpr inline bool is_string_literal_array_v = is_string_literal_array<T>::value;
+
+		template <typename T, typename CharT>
+		struct is_string_of : std::false_type {};
+
+		template <typename CharT, typename CharTargetT, typename TraitsT, typename AllocT>
+		struct is_string_of<std::basic_string<CharT, TraitsT, AllocT>, CharTargetT> : std::is_same<CharT, CharTargetT> {};
+
+		template <typename T, typename CharT>
+		constexpr inline bool is_string_of_v = is_string_of<T, CharT>::value;
+
+		template <typename T, typename CharT>
+		struct is_string_view_of : std::false_type {};
+
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-		     is_specialization_of<meta::unqualified_t<T>, std::basic_string_view>,
+		template <typename CharT, typename CharTargetT, typename TraitsT>
+		struct is_string_view_of<std::basic_string_view<CharT, TraitsT>, CharTargetT> : std::is_same<CharT, CharTargetT> {};
 #else
-		     is_specialization_of<meta::unqualified_t<T>, basic_string_view>,
+		template <typename CharT, typename CharTargetT, typename TraitsT>
+		struct is_string_view_of<basic_string_view<CharT, TraitsT>, CharTargetT> : std::is_same<CharT, CharTargetT> {};
 #endif
-		     meta::all<std::is_array<unqualified_t<T>>,
-		          meta::any_same<meta::unqualified_t<std::remove_all_extents_t<meta::unqualified_t<T>>>, char, char16_t, char32_t, wchar_t>>>;
+
+		template <typename T, typename CharT>
+		constexpr inline bool is_string_view_of_v = is_string_view_of<T, CharT>::value;
 
 		template <typename T>
-		using is_string_constructible
-		     = any<meta::all<std::is_array<unqualified_t<T>>, std::is_same<meta::unqualified_t<std::remove_all_extents_t<meta::unqualified_t<T>>>, char>>,
-		          std::is_same<unqualified_t<T>, const char*>, std::is_same<unqualified_t<T>, char>, std::is_same<unqualified_t<T>, std::string>,
-		          std::is_same<unqualified_t<T>, std::initializer_list<char>>
+		using is_string_like = meta::boolean<
+			is_specialization_of_v<T, std::basic_string>
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-		          ,
-		          std::is_same<unqualified_t<T>, std::string_view>
+		     || is_specialization_of_v<T, std::basic_string_view>
+#else
+		     || is_specialization_of_v<T, basic_string_view>
 #endif
-		          >;
+		     || is_string_literal_array_v<T>>;
 
 		template <typename T>
-		using is_string_like_or_constructible = any<is_string_like<T>, is_string_constructible<T>>;
+		constexpr inline bool is_string_like_v = is_string_like<T>::value;
+
+		template <typename T, typename CharT = char>
+		using is_string_constructible = meta::boolean<
+		     is_string_literal_array_of_v<T, CharT> 
+			|| std::is_same_v<T, const CharT*> 
+			|| std::is_same_v<T, CharT> 
+			|| is_string_of_v<T, CharT> 
+			|| std::is_same_v<T, std::initializer_list<CharT>>
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+		     || is_string_view_of_v<T, CharT>
+#endif
+		     >;
+
+		template <typename T, typename CharT = char>
+		constexpr inline bool is_string_constructible_v = is_string_constructible<T, CharT>::value;
+
+		template <typename T>
+		using is_string_like_or_constructible = meta::boolean<is_string_like_v<T> || is_string_constructible_v<T>>;
 
 		template <typename T>
 		struct is_pair : std::false_type {};

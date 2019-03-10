@@ -118,60 +118,110 @@ namespace sol { namespace stack {
 
 	template <typename T, typename>
 	struct unqualified_getter {
-		static T& get(lua_State* L, int index, record& tracking) {
-			return unqualified_getter<detail::as_value_tag<T>>{}.get(L, index, tracking);
+		static decltype(auto) get(lua_State* L, int index, record& tracking) {
+			if constexpr (std::is_same_v<T, bool>) {
+				tracking.use(1);
+				return lua_toboolean(L, index) != 0;
+			}
+			else if constexpr (std::is_enum_v<T>) {
+				tracking.use(1);
+				return static_cast<T>(lua_tointegerx(L, index, nullptr));
+			}
+			else if constexpr (std::is_integral_v<T>) {
+				tracking.use(1);
+#if SOL_LUA_VERSION >= 503
+				if (lua_isinteger(L, index) != 0) {
+					return static_cast<T>(lua_tointeger(L, index));
+				}
+#endif
+				return static_cast<T>(llround(lua_tonumber(L, index)));
+			}
+			else if constexpr (std::is_floating_point_v<T>) {
+				tracking.use(1);
+				return static_cast<T>(lua_tonumber(L, index));
+			}
+			else if constexpr (is_lua_reference_v<T>) {
+				tracking.use(1);
+				return T(L, index);
+			}
+			else if constexpr (is_unique_usertype_v<T>) {
+				using Real = typename unique_usertype_traits<T>::actual_type;
+
+				tracking.use(1);
+				void* memory = lua_touserdata(L, index);
+				memory = detail::align_usertype_unique<Real>(memory);
+				Real* mem = static_cast<Real*>(memory);
+				return *mem;
+			}
+			else {
+				return stack_detail::unchecked_unqualified_get<detail::as_value_tag<T>>(L, index, tracking);
+			}
 		}
 	};
 
-	template <typename T, typename C>
+	template <typename X, typename>
 	struct qualified_getter {
 		static decltype(auto) get(lua_State* L, int index, record& tracking) {
-			return stack::unqualified_get<T>(L, index, tracking);
-		}
-	};
-
-	template <typename U, typename>
-	struct unqualified_interop_getter {
-		using T = stack_detail::strip_extensible_t<U>;
-
-		static std::pair<bool, T*> get(lua_State*, int, void*, record&) {
-			return { false, nullptr };
-		}
-	};
-
-	template <typename T, typename>
-	struct qualified_interop_getter {
-		static decltype(auto) get(lua_State* L, int index, void* unadjusted_pointer, record& tracking) {
-			return stack_detail::unqualified_interop_get<T>(L, index, unadjusted_pointer, tracking);
-		}
-	};
-
-	template <typename T>
-	struct unqualified_getter<T, std::enable_if_t<std::is_floating_point<T>::value>> {
-		static T get(lua_State* L, int index, record& tracking) {
-			tracking.use(1);
-			return static_cast<T>(lua_tonumber(L, index));
-		}
-	};
-
-	template <typename T>
-	struct unqualified_getter<T, std::enable_if_t<std::is_integral<T>::value>> {
-		static T get(lua_State* L, int index, record& tracking) {
-			tracking.use(1);
-#if SOL_LUA_VERSION >= 503
-			if (lua_isinteger(L, index) != 0) {
-				return static_cast<T>(lua_tointeger(L, index));
+			using Tu = meta::unqualified_t<X>;
+			if constexpr (!std::is_reference_v<X> && is_container_v<Tu>
+				&& std::is_default_constructible_v<Tu> && !is_lua_primitive_v<Tu> && !is_transparent_argument_v<Tu>) {
+				if (type_of(L, index) == type::userdata) {
+					return static_cast<Tu>(stack_detail::unchecked_unqualified_get<Tu>(L, index, tracking));
+				}
+				else {
+					return stack_detail::unchecked_unqualified_get<sol::nested<Tu>>(L, index, tracking);
+				}
 			}
-#endif
-			return static_cast<T>(llround(lua_tonumber(L, index)));
-		}
-	};
-
-	template <typename T>
-	struct unqualified_getter<T, std::enable_if_t<std::is_enum<T>::value>> {
-		static T get(lua_State* L, int index, record& tracking) {
-			tracking.use(1);
-			return static_cast<T>(lua_tointegerx(L, index, nullptr));
+			else if constexpr (!std::is_reference_v<X> && is_unique_usertype_v<Tu>
+				&& !std::is_void_v<typename unique_usertype_traits<Tu>::template rebind_base<void>>) {
+				using u_traits = unique_usertype_traits<Tu>;
+				using T = typename u_traits::type;
+				using Real = typename u_traits::actual_type;
+				using rebind_t = typename u_traits::template rebind_base<void>;
+				tracking.use(1);
+				void* memory = lua_touserdata(L, index);
+				memory = detail::align_usertype_unique_destructor(memory);
+				detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(memory);
+				if (&detail::usertype_unique_alloc_destroy<T, X> == pdx) {
+					memory = detail::align_usertype_unique_tag<true, false>(memory);
+					memory = detail::align_usertype_unique<Real, true, false>(memory);
+					Real* mem = static_cast<Real*>(memory);
+					return static_cast<Real>(*mem);
+				}
+				Real r(nullptr);
+				if constexpr (!derive<T>::value) {
+					// TODO: abort / terminate, maybe only in debug modes?
+					return static_cast<Real>(r);
+				}
+				else {
+					memory = detail::align_usertype_unique_tag<true, false>(memory);
+					detail::unique_tag& ic = *reinterpret_cast<detail::unique_tag*>(memory);
+					memory = detail::align_usertype_unique<Real, true, false>(memory);
+					string_view ti = usertype_traits<T>::qualified_name();
+					string_view rebind_ti = usertype_traits<rebind_t>::qualified_name();
+					int cast_operation = ic(memory, &r, ti, rebind_ti);
+					switch (cast_operation) {
+					case 1: {
+						// it's a perfect match,
+						// alias memory directly
+						Real* mem = static_cast<Real*>(memory);
+						return static_cast<Real>(*mem);
+					}
+					case 2:
+						// it's a base match, return the
+						// aliased creation
+						return static_cast<Real>(std::move(r));
+					default:
+						// uh oh..
+						break;
+					}
+					// TODO: abort / terminate, maybe only in debug modes?
+					return static_cast<Real>(r);
+				}
+			}
+			else {
+				return stack::unqualified_get<Tu>(L, index, tracking);
+			}
 		}
 	};
 
@@ -487,44 +537,47 @@ namespace sol { namespace stack {
 	};
 
 	template <typename T>
-	struct unqualified_getter<nested<T>, std::enable_if_t<!is_container<T>::value>> {
+	struct unqualified_getter<nested<T>> {
 		static T get(lua_State* L, int index, record& tracking) {
-			unqualified_getter<T> g;
-			// VC++ has a bad warning here: shut it up
-			(void)g;
-			return g.get(L, index, tracking);
-		}
-	};
-
-	template <typename T>
-	struct unqualified_getter<nested<T>, std::enable_if_t<is_container<T>::value>> {
-		using Tu = meta::unqualified_t<T>;
-		
-		static T get(lua_State* L, int index, record& tracking) {
-			if constexpr(meta::is_associative<Tu>::value) {
-				typedef typename T::value_type P;
-				typedef typename P::first_type K;
-				typedef typename P::second_type V;
-				unqualified_getter<as_table_t<T>> g;
-				// VC++ has a bad warning here: shut it up
-				(void)g;
-				return g.get(types<K, nested<V>>(), L, index, tracking);
+			using Tu = meta::unqualified_t<T>;
+			if constexpr (is_container_v<Tu>) {
+				if constexpr (meta::is_associative<Tu>::value) {
+					typedef typename T::value_type P;
+					typedef typename P::first_type K;
+					typedef typename P::second_type V;
+					unqualified_getter<as_table_t<T>> g;
+					// VC++ has a bad warning here: shut it up
+					(void)g;
+					return g.get(types<K, nested<V>>(), L, index, tracking);
+				}
+				else {
+					typedef typename T::value_type V;
+					unqualified_getter<as_table_t<T>> g;
+					// VC++ has a bad warning here: shut it up
+					(void)g;
+					return g.get(types<nested<V>>(), L, index, tracking);
+				}
 			}
 			else {
-				typedef typename T::value_type V;
-				unqualified_getter<as_table_t<T>> g;
+				unqualified_getter<Tu> g;
 				// VC++ has a bad warning here: shut it up
 				(void)g;
-				return g.get(types<nested<V>>(), L, index, tracking);
+				return g.get(L, index, tracking);
 			}
 		}
 	};
 
 	template <typename T>
-	struct unqualified_getter<T, std::enable_if_t<is_lua_reference<T>::value>> {
-		static T get(lua_State* L, int index, record& tracking) {
-			tracking.use(1);
-			return T(L, index);
+	struct unqualified_getter<as_container_t<T>> {
+		static decltype(auto) get(lua_State* L, int index, record& tracking) {
+			return stack::unqualified_get<T>(L, index, tracking);
+		}
+	};
+
+	template <typename T>
+	struct unqualified_getter<as_container_t<T>*> {
+		static decltype(auto) get(lua_State* L, int index, record& tracking) {
+			return stack::unqualified_get<T*>(L, index, tracking);
 		}
 	};
 
@@ -578,14 +631,6 @@ namespace sol { namespace stack {
 		static type get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
 			return static_cast<type>(lua_type(L, index));
-		}
-	};
-
-	template <>
-	struct unqualified_getter<bool> {
-		static bool get(lua_State* L, int index, record& tracking) {
-			tracking.use(1);
-			return lua_toboolean(L, index) != 0;
 		}
 	};
 
@@ -891,20 +936,6 @@ namespace sol { namespace stack {
 			// Avoid VC++ warning
 			(void)g;
 			return g.get(L, index, tracking);
-		}
-	};
-
-	template <typename T>
-	struct unqualified_getter<T, std::enable_if_t<is_unique_usertype<T>::value>> {
-		typedef typename unique_usertype_traits<T>::type P;
-		typedef typename unique_usertype_traits<T>::actual_type Real;
-
-		static Real& get(lua_State* L, int index, record& tracking) {
-			tracking.use(1);
-			void* memory = lua_touserdata(L, index);
-			memory = detail::align_usertype_unique<Real>(memory);
-			Real* mem = static_cast<Real*>(memory);
-			return *mem;
 		}
 	};
 

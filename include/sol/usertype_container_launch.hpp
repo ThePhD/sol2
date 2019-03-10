@@ -365,7 +365,7 @@ namespace sol {
 
 		template <typename T>
 		struct unqualified_pusher<as_container_t<T>> {
-			typedef meta::unqualified_t<T> C;
+			using C = meta::unqualified_t<T>;
 
 			static int push_lvalue(std::true_type, lua_State* L, const C& cont) {
 				stack_detail::metatable_setup<C*, true> fx(L);
@@ -397,7 +397,7 @@ namespace sol {
 
 		template <typename T>
 		struct unqualified_pusher<as_container_t<T*>> {
-			typedef std::add_pointer_t<meta::unqualified_t<std::remove_pointer_t<T>>> C;
+			using C = std::add_pointer_t<meta::unqualified_t<std::remove_pointer_t<T>>>;
 
 			static int push(lua_State* L, T* cont) {
 				stack_detail::metatable_setup<C> fx(L);
@@ -406,8 +406,8 @@ namespace sol {
 		};
 
 		template <typename T>
-		struct unqualified_pusher<T, std::enable_if_t<meta::all<is_container<meta::unqualified_t<T>>, meta::neg<is_lua_reference<meta::unqualified_t<T>>>>::value>> {
-			typedef meta::unqualified_t<T> C;
+		struct unqualified_pusher<T, std::enable_if_t<is_container_v<T>>> {
+			using C = T;
 
 			static int push(lua_State* L, const T& cont) {
 				stack_detail::metatable_setup<C> fx(L);
@@ -421,34 +421,12 @@ namespace sol {
 		};
 
 		template <typename T>
-		struct unqualified_pusher<T*, std::enable_if_t<meta::all<is_container<meta::unqualified_t<T>>, meta::neg<is_lua_reference<meta::unqualified_t<T>>>>::value>> {
-			typedef std::add_pointer_t<meta::unqualified_t<std::remove_pointer_t<T>>> C;
+		struct unqualified_pusher<T*, std::enable_if_t<is_container_v<T>>> {
+			using C = std::add_pointer_t<meta::unqualified_t<std::remove_pointer_t<T>>>;
 
 			static int push(lua_State* L, T* cont) {
 				stack_detail::metatable_setup<C> fx(L);
 				return stack::push<detail::as_pointer_tag<T>>(L, detail::with_function_tag(), fx, cont);
-			}
-		};
-
-		template <typename T, typename C>
-		struct unqualified_checker<as_container_t<T>, type::userdata, C> {
-			template <typename Handler>
-			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
-				return stack::check<T>(L, index, std::forward<Handler>(handler), tracking);
-			}
-		};
-
-		template <typename T>
-		struct unqualified_getter<as_container_t<T>> {
-			static decltype(auto) get(lua_State* L, int index, record& tracking) {
-				return stack::unqualified_get<T>(L, index, tracking);
-			}
-		};
-
-		template <typename T>
-		struct unqualified_getter<as_container_t<T>*> {
-			static decltype(auto) get(lua_State* L, int index, record& tracking) {
-				return stack::unqualified_get<T*>(L, index, tracking);
 			}
 		};
 	} // namespace stack
