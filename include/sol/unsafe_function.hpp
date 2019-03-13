@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2018 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2019 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -29,6 +29,8 @@
 #include "stack.hpp"
 #include "function_result.hpp"
 #include "function_types.hpp"
+#include "bytecode.hpp"
+#include "dump_handler.hpp"
 #include <cstdint>
 
 namespace sol {
@@ -118,6 +120,26 @@ namespace sol {
 			constructor_handler handler{};
 			stack::check<basic_function>(lua_state(), -1, handler);
 #endif // Safety
+		}
+
+		template <typename Fx>
+		int dump(lua_Writer writer, void* userdata, bool strip, Fx&& on_error) const {
+			auto pp = stack::push_pop(*this);
+			int r = lua_dump(this->lua_state(), writer, userdata, strip ? 1 : 0);
+			if (r != 0) {
+				return on_error(r, writer, userdata, strip);
+			}
+			return r;
+		}
+
+		int dump(lua_Writer writer, void* userdata, bool strip = false) const {
+			return dump(writer, userdata, strip, &dump_throw_on_error);
+		}
+
+		bytecode dump() const {
+			bytecode bc;
+			(void)dump(&bytecode_dump_writer, static_cast<void*>(&bc), strip, &dump_throw_on_error);
+			return bc;
 		}
 
 		template <typename... Args>

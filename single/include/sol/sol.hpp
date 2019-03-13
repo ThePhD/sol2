@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2018 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2019 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-03-10 15:09:32.355673 UTC
-// This header was generated with sol v3.0.0 (revision ee13a78)
+// Generated 2019-03-13 09:17:33.583517 UTC
+// This header was generated with sol v3.0.0 (revision 466e21b)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -17558,6 +17558,111 @@ namespace sol {
 
 // end of sol/function_types.hpp
 
+// beginning of sol/bytecode.hpp
+
+namespace sol {
+
+	template <typename Allocator = std::allocator<std::byte>>
+	class basic_bytecode : private std::vector<std::byte, Allocator> {
+	private:
+		using base_t = std::vector<std::byte, Allocator>;
+
+	public:
+		using base_t::value_type;
+
+		using base_t::base_t;
+		using base_t::operator=;
+
+		using base_t::data;
+		using base_t::empty;
+		using base_t::max_size;
+		using base_t::size;
+
+		using base_t::at;
+		using base_t::operator[];
+		using base_t::back;
+		using base_t::front;
+
+		using base_t::begin;
+		using base_t::cbegin;
+		using base_t::cend;
+		using base_t::end;
+
+		using base_t::crbegin;
+		using base_t::crend;
+		using base_t::rbegin;
+		using base_t::rend;
+
+		using base_t::swap;
+		using base_t::get_allocator;
+
+		using base_t::emplace;
+		using base_t::emplace_back;
+		using base_t::insert;
+		using base_t::pop_back;
+		using base_t::push_back;
+		using base_t::reserve;
+		using base_t::resize;
+		using base_t::shrink_to_fit;
+
+		string_view as_string_view () const {
+			return string_view(reinterpret_cast<const char*>(this->data()), this->size());
+		}
+	};
+
+	using bytecode = basic_bytecode<>;
+
+	inline int bytecode_dump_writer(lua_State*, const void* memory, size_t memory_size, void* userdata) {
+		const std::byte* p_code = static_cast<const std::byte*>(memory);
+		bytecode& bc = *static_cast<bytecode*>(userdata);
+		try {
+			bc.insert(bc.cend(), p_code, p_code + memory_size);
+		}
+		catch ( ... ) {
+			return -1;
+		}
+		return 0;
+	}
+
+} // namespace sol
+
+// end of sol/bytecode.hpp
+
+// beginning of sol/dump_handler.hpp
+
+namespace sol {
+
+	class dump_error : public error {
+		private:
+		     int ec_;
+
+		public:
+		     dump_error(int error_code_) : error("dump returned non-zero error of " + std::to_string(error_code_)), ec_(error_code_) {
+		     }
+
+		     int error_code () const {
+			     return ec_;
+		     }
+	};
+
+	int dump_pass_on_error(int result_code, lua_Writer writer_function, void* userdata, bool strip) {
+		(void)writer_function;
+		(void)userdata;
+		(void)strip;
+		return result_code;
+	}
+
+	int dump_throw_on_error(int result_code, lua_Writer writer_function, void* userdata, bool strip) {
+		(void)writer_function;
+		(void)userdata;
+		(void)strip;
+		throw dump_error(result_code);
+	}	
+
+} // namespace sol
+
+// end of sol/dump_handler.hpp
+
 namespace sol {
 	template <typename ref_t, bool aligned = false>
 	class basic_function : public basic_object<ref_t> {
@@ -17645,6 +17750,26 @@ namespace sol {
 			constructor_handler handler{};
 			stack::check<basic_function>(lua_state(), -1, handler);
 #endif // Safety
+		}
+
+		template <typename Fx>
+		int dump(lua_Writer writer, void* userdata, bool strip, Fx&& on_error) const {
+			auto pp = stack::push_pop(*this);
+			int r = lua_dump(this->lua_state(), writer, userdata, strip ? 1 : 0);
+			if (r != 0) {
+				return on_error(r, writer, userdata, strip);
+			}
+			return r;
+		}
+
+		int dump(lua_Writer writer, void* userdata, bool strip = false) const {
+			return dump(writer, userdata, strip, &dump_throw_on_error);
+		}
+
+		bytecode dump() const {
+			bytecode bc;
+			(void)dump(&bytecode_dump_writer, static_cast<void*>(&bc), strip, &dump_throw_on_error);
+			return bc;
 		}
 
 		template <typename... Args>
@@ -17980,6 +18105,26 @@ namespace sol {
 			constructor_handler handler{};
 			stack::check<basic_protected_function>(lua_state(), -1, handler);
 #endif // Safety
+		}
+
+		template <typename Fx>
+		int dump(lua_Writer writer, void* userdata, bool strip, Fx&& on_error) const {
+			auto pp = stack::push_pop(*this);
+			int r = lua_dump(this->lua_state(), writer, userdata, strip ? 1 : 0);
+			if (r != 0) {
+				return on_error(r, writer, userdata, strip);
+			}
+			return r;
+		}
+
+		int dump(lua_Writer writer, void* userdata, bool strip = false) const {
+			return dump(writer, userdata, strip, &dump_pass_on_error);
+		}
+
+		bytecode dump() const {
+			bytecode bc;
+			(void)dump(&bytecode_dump_writer, static_cast<void*>(&bc), false, &dump_throw_on_error);
+			return bc;
 		}
 
 		template <typename... Args>
@@ -23359,6 +23504,10 @@ namespace sol {
 
 		load_result load_buffer(const char* buff, size_t size, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			return load(string_view(buff, size), chunkname, mode);
+		}
+
+		load_result load_buffer(const std::byte* buff, size_t size, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+			return load(string_view(reinterpret_cast<const char*>(buff), size), chunkname, mode);
 		}
 
 		load_result load_file(const std::string& filename, load_mode mode = load_mode::any) {

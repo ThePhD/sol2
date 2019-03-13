@@ -21,14 +21,23 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_TESTS_SOL_DEFINES_HPP
-#define SOL_TESTS_SOL_DEFINES_HPP
+#include "sol_test.hpp"
 
-#if !defined(SOL_CHECK_ARGUMENTS)
-#define SOL_CHECK_ARGUMENTS 1
-#endif // SOL_CHECK_ARGUMENTS
-#if !defined(SOL_ENABLE_INTEROP)
-#define SOL_ENABLE_INTEROP 1
-#endif // SOL_ENABLE_INTEROP
+#include <catch.hpp>
 
-#endif // SOL_TESTS_SOL_DEFINES_HPP
+TEST_CASE("dump/dump transfer", "test that a function can be transferred from one place to another") {
+	sol::state lua;
+	sol::state lua2;
+	lua2.open_libraries(sol::lib::base);
+
+	sol::load_result lr = lua.load("a = function (v) print(v) return v end");
+	REQUIRE(lr.valid());
+	sol::protected_function target = lr;
+	sol::bytecode target_bc = target.dump();
+
+	auto result2 = lua2.safe_script(target_bc.as_string_view(), sol::script_pass_on_error);
+	REQUIRE(result2.valid());
+	sol::protected_function pf = lua2["a"];
+	int v = pf(25557);
+	REQUIRE(v == 25557);
+}
