@@ -21,41 +21,6 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_DUMP_HANDLER_HPP
-#define SOL_DUMP_HANDLER_HPP
+#include "sol_defines.hpp"
 
-#include <cstdint>
-#include <exception>
-
-namespace sol {
-
-	class dump_error : public error {
-	private:
-		int ec_;
-
-	public:
-		dump_error(int error_code_) : error("dump returned non-zero error of " + std::to_string(error_code_)), ec_(error_code_) {
-		}
-
-		int error_code () const {
-			return ec_;
-		}
-	};
-
-	inline int dump_pass_on_error(int result_code, lua_Writer writer_function, void* userdata, bool strip) {
-		(void)writer_function;
-		(void)userdata;
-		(void)strip;
-		return result_code;
-	}
-
-	inline int dump_throw_on_error(int result_code, lua_Writer writer_function, void* userdata, bool strip) {
-		(void)writer_function;
-		(void)userdata;
-		(void)strip;
-		throw dump_error(result_code);
-	}	
-
-} // namespace sol
-
-#endif // SOL_DUMP_HANDLER_HPP
+#include <sol/bytecode.hpp>

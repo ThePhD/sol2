@@ -26,6 +26,7 @@
 
 #include "tuple.hpp"
 #include "bind_traits.hpp"
+#include "base_traits.hpp"
 #include "string_view.hpp"
 
 #include <type_traits>
@@ -38,80 +39,7 @@
 
 
 namespace sol {
-	namespace detail {
-		struct unchecked_t {};
-		const unchecked_t unchecked = unchecked_t{};
-	} // namespace detail
-
 	namespace meta {
-		using sfinae_yes_t = std::true_type;
-		using sfinae_no_t = std::false_type;
-
-		template <typename T>
-		using void_t = void;
-
-		namespace meta_detail {
-			template <template <class...> class Test, class, class... Args>
-			struct is_detected : std::false_type {};
-
-			template <template <class...> class Test, class... Args>
-			struct is_detected<Test, void_t<Test<Args...>>, Args...> : std::true_type {};
-		} // namespace detail
-
-		template <template <class...> class Trait, class... Args>
-		using is_detected = typename meta_detail::is_detected<Trait, void, Args...>::type;
-
-		template <template <class...> class Trait, class... Args>
-		constexpr inline bool is_detected_v = is_detected<Trait, Args...>::value;
-
-		template <std::size_t I>
-		using index_value = std::integral_constant<std::size_t, I>;
-
-		template <bool>
-		struct conditional {
-			template <typename T, typename U>
-			using type = T;
-		};
-
-		template <>
-		struct conditional<false> {
-			template <typename T, typename U>
-			using type = U;
-		};
-
-		template <bool B, typename T, typename U>
-		using conditional_t = typename conditional<B>::template type<T, U>;
-
-		namespace meta_detail {
-			template <typename T, template <typename...> class Templ>
-			struct is_specialization_of : std::false_type {};
-			template <typename... T, template <typename...> class Templ>
-			struct is_specialization_of<Templ<T...>, Templ> : std::true_type {};
-		} // namespace meta_detail
-
-		template <typename T, template <typename...> class Templ>
-		using is_specialization_of = meta_detail::is_specialization_of<std::remove_cv_t<T>, Templ>;
-
-		template <typename T, template <typename...> class Templ>
-		inline constexpr bool is_specialization_of_v = is_specialization_of<std::remove_cv_t<T>, Templ>::value;
-
-		template <typename T>
-		struct identity {
-			typedef T type;
-		};
-
-		template <typename T>
-		using identity_t = typename identity<T>::type;
-
-		template <typename T>
-		using is_tuple = is_specialization_of<T, std::tuple>;
-
-		template <typename T>
-		constexpr inline bool is_tuple_v = is_tuple<T>::value;
-
-		template <typename T>
-		using is_builtin_type = std::integral_constant<bool, std::is_arithmetic<T>::value || std::is_pointer<T>::value || std::is_array<T>::value>;
-
 		template <typename T>
 		struct unwrapped {
 			typedef T type;
@@ -159,7 +87,7 @@ namespace sol {
 		template <typename T, typename U, typename... Args>
 		struct any_same<T, U, Args...> : std::integral_constant<bool, std::is_same<T, U>::value || any_same<T, Args...>::value> {};
 
-		template <typename T, typename...Args>
+		template <typename T, typename... Args>
 		constexpr inline bool any_same_v = any_same<T, Args...>::value;
 
 		template <bool B>
@@ -174,20 +102,17 @@ namespace sol {
 		template <typename T>
 		constexpr inline bool neg_v = neg<T>::value;
 
-		template <typename Condition, typename Then, typename Else>
-		using condition = conditional_t<Condition::value, Then, Else>;
-
 		template <typename... Args>
 		struct all : boolean<true> {};
 
 		template <typename T, typename... Args>
-		struct all<T, Args...> : condition<T, all<Args...>, boolean<false>> {};
+		struct all<T, Args...> : conditional_t<T::value, all<Args...>, boolean<false>> {};
 
 		template <typename... Args>
 		struct any : boolean<false> {};
 
 		template <typename T, typename... Args>
-		struct any<T, Args...> : condition<T, boolean<true>, any<Args...>> {};
+		struct any<T, Args...> : conditional_t<T::value, boolean<true>, any<Args...>> {};
 
 		template <typename T, typename... Args>
 		constexpr inline bool all_v = all<T, Args...>::value;
@@ -256,7 +181,7 @@ namespace sol {
 			template <std::size_t Limit, std::size_t I, template <typename...> class Pred, typename... Ts>
 			struct count_for_pack : std::integral_constant<std::size_t, 0> {};
 			template <std::size_t Limit, std::size_t I, template <typename...> class Pred, typename T, typename... Ts>
-			               struct count_for_pack<Limit, I, Pred, T, Ts...> : conditional_t<sizeof...(Ts)
+			               struct count_for_pack<Limit, I, Pred, T, Ts...> : conditional_t < sizeof...(Ts)
 			          == 0
 			     || Limit<2, std::integral_constant<std::size_t, I + static_cast<std::size_t>(Limit != 0 && Pred<T>::value)>,
 			             count_for_pack<Limit - 1, I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>> {};
@@ -549,20 +474,24 @@ namespace sol {
 			struct is_matched_lookup_impl<T, true> : std::is_same<typename T::key_type, typename T::value_type> {};
 
 			template <typename T>
-			using non_void_t = std::conditional_t<std::is_void_v<T>, ::sol::detail::unchecked_t, T>;
+			using non_void_t = meta::conditional_t<std::is_void_v<T>, ::sol::detail::unchecked_t, T>;
 		} // namespace meta_detail
 
 		template <typename T, typename U = T>
-		using supports_op_less = decltype(meta_detail::supports_op_less_test(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
+		using supports_op_less
+		     = decltype(meta_detail::supports_op_less_test(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
 		template <typename T, typename U = T>
-		using supports_op_equal = decltype(meta_detail::supports_op_equal_test(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
+		using supports_op_equal
+		     = decltype(meta_detail::supports_op_equal_test(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
 		template <typename T, typename U = T>
-		using supports_op_less_equal = decltype(meta_detail::supports_op_less_equal_test(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
+		using supports_op_less_equal
+		     = decltype(meta_detail::supports_op_less_equal_test(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
 		template <typename T, typename U = std::ostream>
-		using supports_ostream_op = decltype(meta_detail::supports_ostream_op(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
+		using supports_ostream_op
+		     = decltype(meta_detail::supports_ostream_op(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
 		template <typename T>
 		using supports_adl_to_string = decltype(meta_detail::supports_adl_to_string(std::declval<meta_detail::non_void_t<T>&>()));
-		
+
 		template <typename T>
 		using supports_to_string_member = meta::boolean<meta_detail::has_to_string_test<meta_detail::non_void_t<T>>::value>;
 
@@ -668,8 +597,7 @@ namespace sol {
 		constexpr inline bool is_string_view_of_v = is_string_view_of<T, CharT>::value;
 
 		template <typename T>
-		using is_string_like = meta::boolean<
-			is_specialization_of_v<T, std::basic_string>
+		using is_string_like = meta::boolean<is_specialization_of_v<T, std::basic_string>
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 		     || is_specialization_of_v<T, std::basic_string_view>
 #else
@@ -682,11 +610,8 @@ namespace sol {
 
 		template <typename T, typename CharT = char>
 		using is_string_constructible = meta::boolean<
-		     is_string_literal_array_of_v<T, CharT> 
-			|| std::is_same_v<T, const CharT*> 
-			|| std::is_same_v<T, CharT> 
-			|| is_string_of_v<T, CharT> 
-			|| std::is_same_v<T, std::initializer_list<CharT>>
+		     is_string_literal_array_of_v<T,
+		          CharT> || std::is_same_v<T, const CharT*> || std::is_same_v<T, CharT> || is_string_of_v<T, CharT> || std::is_same_v<T, std::initializer_list<CharT>>
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 		     || is_string_view_of_v<T, CharT>
 #endif
@@ -719,14 +644,14 @@ namespace sol {
 		using is_not_move_only = neg<is_move_only<T>>;
 
 		namespace meta_detail {
-			template <typename T, meta::disable<meta::is_specialization_of<meta::unqualified_t<T>, std::tuple>> = meta::enabler>
+			template <typename T>
 			decltype(auto) force_tuple(T&& x) {
-				return std::tuple<std::decay_t<T>>(std::forward<T>(x));
-			}
-
-			template <typename T, meta::enable<meta::is_specialization_of<meta::unqualified_t<T>, std::tuple>> = meta::enabler>
-			decltype(auto) force_tuple(T&& x) {
-				return std::forward<T>(x);
+				if constexpr (meta::is_specialization_of_v<meta::unqualified_t<T>, std::tuple>) {
+					return std::forward<T>(x);
+				}
+				else {
+					return std::tuple<T>(std::forward<T>(x));
+				}
 			}
 		} // namespace meta_detail
 
@@ -745,15 +670,20 @@ namespace sol {
 			using type = typename std::iterator_traits<T>::iterator_category;
 		};
 
+		namespace meta_detail {
+			template <typename T>
+			using is_dereferenceable_test = decltype(*std::declval<T>());
+		}
+
+		template <typename T>
+		using is_pointer_like = meta::boolean<!std::is_array_v<T> && ( std::is_pointer_v<T> || meta::is_detected_v<meta_detail::is_dereferenceable_test, T>)>;
+
+		template <typename T>
+		constexpr inline bool is_pointer_like_v = is_pointer_like<T>::value;
+
 	} // namespace meta
 
 	namespace detail {
-		template <typename T>
-		struct is_pointer_like : std::is_pointer<T> {};
-		template <typename T, typename D>
-		struct is_pointer_like<std::unique_ptr<T, D>> : std::true_type {};
-		template <typename T>
-		struct is_pointer_like<std::shared_ptr<T>> : std::true_type {};
 
 		template <typename T>
 		auto unwrap(T&& item) -> decltype(std::forward<T>(item)) {
@@ -765,24 +695,26 @@ namespace sol {
 			return arg.get();
 		}
 
-		template <typename T, meta::enable<meta::neg<is_pointer_like<meta::unqualified_t<T>>>> = meta::enabler>
-		auto deref(T&& item) -> decltype(std::forward<T>(item)) {
-			return std::forward<T>(item);
+		template <typename T>
+		inline decltype(auto) deref(T&& item) {
+			using Tu = meta::unqualified_t<T>;
+			if constexpr (meta::is_pointer_like_v<Tu>) {
+				return *std::forward<T>(item);
+			}
+			else {
+				return std::forward<T>(item);
+			}
 		}
 
-		template <typename T, meta::enable<is_pointer_like<meta::unqualified_t<T>>> = meta::enabler>
-		inline auto deref(T&& item) -> decltype(*std::forward<T>(item)) {
-			return *std::forward<T>(item);
-		}
-
-		template <typename T, meta::disable<is_pointer_like<meta::unqualified_t<T>>, meta::neg<std::is_pointer<meta::unqualified_t<T>>>> = meta::enabler>
-		auto deref_non_pointer(T&& item) -> decltype(std::forward<T>(item)) {
-			return std::forward<T>(item);
-		}
-
-		template <typename T, meta::enable<is_pointer_like<meta::unqualified_t<T>>, meta::neg<std::is_pointer<meta::unqualified_t<T>>>> = meta::enabler>
-		inline auto deref_non_pointer(T&& item) -> decltype(*std::forward<T>(item)) {
-			return *std::forward<T>(item);
+		template <typename T>
+		inline decltype(auto) deref_non_pointer(T&& item) {
+			using Tu = meta::unqualified_t<T>;
+			if constexpr (meta::is_pointer_like_v<Tu> && !std::is_pointer_v<Tu>) {
+				return *std::forward<T>(item);
+			}
+			else {
+				return std::forward<T>(item);
+			}
 		}
 
 		template <typename T>

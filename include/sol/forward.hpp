@@ -45,6 +45,9 @@ namespace sol {
 	using main_reference = basic_reference<true>;
 	class stack_reference;
 
+	template <typename A>
+	class basic_bytecode;
+
 	struct proxy_base_tag;
 	template <typename Super>
 	struct proxy_base;

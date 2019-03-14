@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-03-13 09:17:33.930555 UTC
-// This header was generated with sol v3.0.0 (revision 466e21b)
+// Generated 2019-03-14 20:15:14.754895 UTC
+// This header was generated with sol v3.0.0 (revision c1a8cb1)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -260,6 +260,9 @@ namespace sol {
 	using reference = basic_reference<false>;
 	using main_reference = basic_reference<true>;
 	class stack_reference;
+
+	template <typename A>
+	class basic_bytecode;
 
 	struct proxy_base_tag;
 	template <typename Super>

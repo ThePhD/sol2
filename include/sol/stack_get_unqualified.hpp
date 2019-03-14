@@ -679,7 +679,7 @@ namespace sol { namespace stack {
 	struct unqualified_getter<std::basic_string<wchar_t, Traits, Al>> {
 		using S = std::basic_string<wchar_t, Traits, Al>;
 		static S get(lua_State* L, int index, record& tracking) {
-			using Ch = std::conditional_t<sizeof(wchar_t) == 2, char16_t, char32_t>;
+			using Ch = meta::conditional_t<sizeof(wchar_t) == 2, char16_t, char32_t>;
 			return stack_detail::get_into<Ch, S>(L, index, tracking);
 		}
 	};
@@ -739,7 +739,7 @@ namespace sol { namespace stack {
 	template <>
 	struct unqualified_getter<wchar_t> {
 		static wchar_t get(lua_State* L, int index, record& tracking) {
-			typedef std::conditional_t<sizeof(wchar_t) == 2, char16_t, char32_t> Ch;
+			typedef meta::conditional_t<sizeof(wchar_t) == 2, char16_t, char32_t> Ch;
 			unqualified_getter<Ch> g;
 			(void)g;
 			auto c = g.get(L, index, tracking);

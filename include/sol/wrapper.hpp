@@ -30,7 +30,7 @@ namespace sol {
 
 	namespace detail {
 		template <typename T>
-		using array_return_type = std::conditional_t<std::is_array<T>::value, std::add_lvalue_reference_t<T>, T>;
+		using array_return_type = meta::conditional_t<std::is_array<T>::value, std::add_lvalue_reference_t<T>, T>;
 	}
 
 	template <typename F, typename = void>

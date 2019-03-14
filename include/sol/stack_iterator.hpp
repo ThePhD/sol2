@@ -31,8 +31,8 @@
 namespace sol {
 	template <typename proxy_t, bool is_const>
 	struct stack_iterator {
-		typedef std::conditional_t<is_const, const proxy_t, proxy_t> reference;
-		typedef std::conditional_t<is_const, const proxy_t*, proxy_t*> pointer;
+		typedef meta::conditional_t<is_const, const proxy_t, proxy_t> reference;
+		typedef meta::conditional_t<is_const, const proxy_t*, proxy_t*> pointer;
 		typedef proxy_t value_type;
 		typedef std::ptrdiff_t difference_type;
 		typedef std::random_access_iterator_tag iterator_category;

@@ -33,7 +33,7 @@ namespace sol {
 namespace stack {
 	template <typename T, bool global, bool raw, typename>
 	struct field_getter {
-		static constexpr int default_table_index = std::conditional_t<meta::is_c_str_v<T> || (std::is_integral_v<T> && !std::is_same_v<T, bool>)
+		static constexpr int default_table_index = meta::conditional_t<meta::is_c_str_v<T> || (std::is_integral_v<T> && !std::is_same_v<T, bool>)
 			|| (std::is_integral_v<T> && !std::is_same_v<T, bool>) || (raw && std::is_void_v<std::remove_pointer_t<T>>),
 			         std::integral_constant<int, -1>, std::integral_constant<int, -2>> ::value;
 
@@ -143,7 +143,7 @@ namespace stack {
 
 	template <typename T, bool global, bool raw, typename>
 	struct field_setter {
-		static constexpr int default_table_index = std::conditional_t < meta::is_c_str_v<T> || (std::is_integral_v<T> && !std::is_same_v<T, bool>)
+		static constexpr int default_table_index = meta::conditional_t < meta::is_c_str_v<T> || (std::is_integral_v<T> && !std::is_same_v<T, bool>)
 			|| (std::is_integral_v<T> && !std::is_same_v<T, bool>) || (raw && std::is_void_v<std::remove_pointer_t<T>>),
 			         std::integral_constant<int, -2>, std::integral_constant<int, -3>> ::value;
 

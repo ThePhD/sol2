@@ -489,18 +489,18 @@ namespace sol {
 		}
 
 		template <typename T>
-		proxy<basic_table_core&, T> operator[](T&& key) & {
-			return proxy<basic_table_core&, T>(*this, std::forward<T>(key));
+		auto operator[](T&& key) & {
+			return proxy<basic_table_core&, detail::proxy_key_t<T>>(*this, std::forward<T>(key));
 		}
 
 		template <typename T>
-		proxy<const basic_table_core&, T> operator[](T&& key) const& {
-			return proxy<const basic_table_core&, T>(*this, std::forward<T>(key));
+		auto operator[](T&& key) const& {
+			return proxy<const basic_table_core&, detail::proxy_key_t<T>>(*this, std::forward<T>(key));
 		}
 
 		template <typename T>
-		proxy<basic_table_core, T> operator[](T&& key) && {
-			return proxy<basic_table_core, T>(*this, std::forward<T>(key));
+		auto operator[](T&& key) && {
+			return proxy<basic_table_core, detail::proxy_key_t<T>>(std::move(*this), std::forward<T>(key));
 		}
 
 		template <typename Sig, typename Key, typename... Args>

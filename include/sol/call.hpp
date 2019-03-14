@@ -455,7 +455,7 @@ namespace sol {
 					using wrap = wrapper<F>;
 					using object_type = typename wrap::object_type;
 					if constexpr (sizeof...(Args) < 1) {
-						using Ta = std::conditional_t<std::is_void_v<T>, object_type, T>;
+						using Ta = meta::conditional_t<std::is_void_v<T>, object_type, T>;
 #if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
 						auto maybeo = stack::check_get<Ta*>(L, 1);
 						if (!maybeo || maybeo.value() == nullptr) {
@@ -484,7 +484,7 @@ namespace sol {
 					using object_type = typename wrap::object_type;
 					if constexpr (is_index) {
 						if constexpr (sizeof...(Args) < 1) {
-							using Ta = std::conditional_t<std::is_void_v<T>, object_type, T>;
+							using Ta = meta::conditional_t<std::is_void_v<T>, object_type, T>;
 #if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
 							auto maybeo = stack::check_get<Ta*>(L, 1);
 							if (!maybeo || maybeo.value() == nullptr) {
@@ -537,7 +537,7 @@ namespace sol {
 										std::forward<Args>(args)...);
 								}
 								else {
-									using Ta = std::conditional_t<std::is_void_v<T>, object_type, T>;
+									using Ta = meta::conditional_t<std::is_void_v<T>, object_type, T>;
 	#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
 									auto maybeo = stack::check_get<Ta*>(L, 1);
 									if (!maybeo || maybeo.value() == nullptr) {
@@ -732,7 +732,7 @@ namespace sol {
 
 		template <typename T, typename R, typename W, bool is_index, bool is_variable, bool checked, int boost, bool clean_stack, typename C>
 		struct lua_call_wrapper<T, property_wrapper<R, W>, is_index, is_variable, checked, boost, clean_stack, C> {
-			typedef std::conditional_t<is_index, R, W> P;
+			typedef meta::conditional_t<is_index, R, W> P;
 			typedef meta::unqualified_t<P> U;
 			typedef wrapper<U> wrap;
 			typedef lua_bind_traits<U> traits_type;

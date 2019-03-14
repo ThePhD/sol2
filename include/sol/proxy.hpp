@@ -30,10 +30,21 @@
 #include "proxy_base.hpp"
 
 namespace sol {
+
+	namespace detail {
+		template <typename T>
+		using proxy_key_t = meta::conditional_t<meta::is_specialization_of_v<meta::unqualified_t<T>, std::tuple>, 
+			T,
+		     std::tuple<meta::conditional_t<
+				std::is_array_v<meta::unqualified_t<T>>, std::remove_reference_t<T>&, meta::unqualified_t<T>
+			>>
+		>;
+	}
+
 	template <typename Table, typename Key>
 	struct proxy : public proxy_base<proxy<Table, Key>> {
 	private:
-		typedef meta::condition<meta::is_specialization_of<Key, std::tuple>, Key, std::tuple<meta::condition<std::is_array<meta::unqualified_t<Key>>, Key&, meta::unqualified_t<Key>>>> key_type;
+		using key_type = detail::proxy_key_t<Key>;
 
 		template <typename T, std::size_t... I>
 		decltype(auto) tuple_get(std::index_sequence<I...>) const {
@@ -79,14 +90,14 @@ namespace sol {
 			return *this;
 		}
 
-		template <typename U>
-		proxy& operator=(U&& other) {
-			using uTu = meta::unwrap_unqualified_t<U>;
-			if constexpr (!is_lua_reference_or_proxy_v<uTu> && meta::is_callable_v<uTu>) {
-				return set_function(std::forward<U>(other));
+		template <typename T>
+		proxy& operator=(T&& other) {
+			using Tu = meta::unwrap_unqualified_t<T>;
+			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_callable_v<Tu>) {
+				return set_function(std::forward<T>(other));
 			}
 			else {
-				return set(std::forward<U>(other));
+				return set(std::forward<T>(other));
 			}
 		}
 
@@ -134,8 +145,20 @@ namespace sol {
 		}
 
 		template <typename K>
-		decltype(auto) operator[](K&& k) const {
+		decltype(auto) operator[](K&& k) const& {
 			auto keys = meta::tuplefy(key, std::forward<K>(k));
+			return proxy<Table, decltype(keys)>(tbl, std::move(keys));
+		}
+
+		template <typename K>
+		decltype(auto) operator[](K&& k) & {
+			auto keys = meta::tuplefy(key, std::forward<K>(k));
+			return proxy<Table, decltype(keys)>(tbl, std::move(keys));
+		}
+
+		template <typename K>
+		decltype(auto) operator[](K&& k) && {
+			auto keys = meta::tuplefy(std::move(key), std::forward<K>(k));
 			return proxy<Table, decltype(keys)>(tbl, std::move(keys));
 		}
 
