@@ -60,7 +60,7 @@ namespace sol {
 	namespace stack {
 
 		template <>
-		struct unqualified_checker<two_things> {
+		struct unqualified_checker<two_things, type::poly> {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 				bool success = stack::check<int>(L, index, handler) && stack::check<bool>(L, index + 1, handler);
@@ -89,7 +89,7 @@ namespace sol {
 		};
 
 		template <>
-		struct unqualified_checker<number_shim> {
+		struct unqualified_checker<number_shim, type::poly> {
 			template <typename Handler>
 			static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
 				if (!check_usertype<number_shim>(L, index) && !stack::check<double>(L, index)) {

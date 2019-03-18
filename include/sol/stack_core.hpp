@@ -597,9 +597,9 @@ namespace sol {
 		template <typename T, typename = void>
 		struct unqualified_pusher;
 
-		template <typename T, type t, typename>
+		template <typename T, type t, typename = void>
 		struct unqualified_checker;
-		template <typename T, type t, typename>
+		template <typename T, type t, typename = void>
 		struct qualified_checker;
 
 		template <typename T, typename = void>
@@ -925,7 +925,7 @@ namespace sol {
 				return sol_lua_check(types<Tu>(), L, index, std::forward<Handler>(handler), tracking);
 			}
 			else {
-				unqualified_checker<Tu> c;
+				unqualified_checker<Tu, lua_type_of_v<Tu>> c;
 				// VC++ has a bad warning here: shut it up
 				(void)c;
 				return c.check(L, index, std::forward<Handler>(handler), tracking);
@@ -950,7 +950,8 @@ namespace sol {
 				return sol_lua_check(types<T>(), L, index, std::forward<Handler>(handler), tracking);
 			}
 			else {
-				qualified_checker<T> c;
+				using Tu = meta::unqualified_t<T>;
+				qualified_checker<T, lua_type_of_v<Tu>> c;
 				// VC++ has a bad warning here: shut it up
 				(void)c;
 				return c.check(L, index, std::forward<Handler>(handler), tracking);
@@ -1049,6 +1050,11 @@ namespace sol {
 
 		namespace stack_detail {
 
+			template <typename Handler>
+			inline bool check_types(lua_State*, int, Handler&&, record&) {
+				return true;
+			}
+
 			template <typename T, typename... Args, typename Handler>
 			inline bool check_types(lua_State* L, int firstargument, Handler&& handler, record& tracking) {
 				if (!stack::check<T>(L, firstargument + tracking.used, handler, tracking))
@@ -1056,13 +1062,8 @@ namespace sol {
 				return check_types<Args...>(L, firstargument, std::forward<Handler>(handler), tracking);
 			}
 
-			template <typename Handler>
-			static bool check_types(lua_State*, int, Handler&&, record&) {
-				return true;
-			}
-
 			template <typename... Args, typename Handler>
-			bool check_types(types<Args...>, lua_State* L, int index, Handler&& handler, record& tracking) {
+			inline bool check_types(types<Args...>, lua_State* L, int index, Handler&& handler, record& tracking) {
 				return check_types<Args...>(L, index, std::forward<Handler>(handler), tracking);
 			}
 

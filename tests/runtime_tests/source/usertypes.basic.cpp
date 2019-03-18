@@ -30,6 +30,7 @@
 
 TEST_CASE("usertype/usertype", "Show that we can create classes from usertype and use them") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 
 	sol::usertype<fuser> lc = lua.new_usertype<fuser>("fuser", "add", &fuser::add, "add2", &fuser::add2);
 
@@ -56,6 +57,7 @@ TEST_CASE("usertype/usertype", "Show that we can create classes from usertype an
 
 TEST_CASE("usertype/usertype fundamentals", "Verify new_usertype registers basic member functions and a constructor") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 
 	lua.new_usertype<fuser>("fuser", "add", &fuser::add, "add2", &fuser::add2);
 

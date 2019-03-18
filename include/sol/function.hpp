@@ -27,6 +27,7 @@
 #include "stack.hpp"
 #include "unsafe_function.hpp"
 #include "protected_function.hpp"
+#include "bytecode.hpp"
 #include <functional>
 
 namespace sol {
@@ -117,13 +118,21 @@ namespace sol {
 			}
 
 			static std::function<Signature> get(lua_State* L, int index, record& tracking) {
-				tracking.last = 1;
-				tracking.used += 1;
+				tracking.use(1);
 				type t = type_of(L, index);
 				if (t == type::none || t == type::lua_nil) {
 					return nullptr;
 				}
 				return get_std_func(return_types(), L, index);
+			}
+		};
+
+		template <typename Allocator>
+		struct unqualified_getter<basic_bytecode<Allocator>> {
+			static basic_bytecode<Allocator> get(lua_State* L, int index, record& tracking) {
+				tracking.use(1);
+				stack_function sf(L, index);
+				return sf.dump(&dump_panic_on_error);
 			}
 		};
 	} // namespace stack

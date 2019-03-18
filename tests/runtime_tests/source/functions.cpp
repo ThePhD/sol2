@@ -145,6 +145,8 @@ TEST_CASE("functions/tuple returns", "Make sure tuple returns are ordered proper
 
 TEST_CASE("functions/overload resolution", "Check if overloaded function resolution templates compile/work") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
+
 	lua.open_libraries(sol::lib::base);
 
 	lua.set_function("non_overloaded", non_overloaded);
@@ -188,9 +190,9 @@ TEST_CASE("functions/return order and multi get", "Check if return order is in t
 	const static std::tuple<int, int, int> triple = std::make_tuple(10, 11, 12);
 	const static std::tuple<int, float> paired = std::make_tuple(10, 10.f);
 	sol::state lua;
-	lua.set_function("f", [] {
-		return std::make_tuple(10, 11, 12);
-	});
+	sol::stack_guard luasg(lua);
+	
+	lua.set_function("f", [] { return std::make_tuple(10, 11, 12); });
 	lua.set_function("h", []() {
 		return std::make_tuple(10, 10.0f);
 	});
@@ -260,8 +262,9 @@ end )", sol::script_pass_on_error);
 
 TEST_CASE("functions/pair and tuple and proxy tests", "Check if sol::reference and sol::proxy can be passed to functions as arguments") {
 	sol::state lua;
-	lua.new_usertype<A>("A",
-		"bark", &A::bark);
+	sol::stack_guard luasg(lua);
+	
+	lua.new_usertype<A>("A", "bark", &A::bark);
 	auto result1 = lua.safe_script(R"( function f (num_value, a)
     return num_value * 2, a:bark()
 end 
@@ -302,6 +305,8 @@ nested = { variables = { no = { problem = 10 } } } )", sol::script_pass_on_error
 
 TEST_CASE("functions/sol::function to std::function", "check if conversion to std::function works properly and calls with correct arguments") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
+
 	lua.open_libraries(sol::lib::base);
 
 	lua.set_function("testFunc", test_free_func);
@@ -336,11 +341,13 @@ TEST_CASE("functions/returning functions from C++", "check to see if returning a
 }
 
 TEST_CASE("functions/function_result and protected_function_result", "Function result should be the beefy return type for sol::function that allows for error checking and error handlers") {
-	sol::state lua;
-	lua.open_libraries(sol::lib::base, sol::lib::debug);
 	static const char unhandlederrormessage[] = "true error message";
 	static const char handlederrormessage[] = "doodle";
 	static const std::string handlederrormessage_s = handlederrormessage;
+
+	sol::state lua;
+	sol::stack_guard luasg(lua);
+	lua.open_libraries(sol::lib::base, sol::lib::debug);
 
 	// Some function; just using a lambda to be cheap
 	auto doomfx = []() {
@@ -512,6 +519,7 @@ TEST_CASE("functions/unsafe protected_function_result handlers",
 
 TEST_CASE("functions/all kinds", "Register all kinds of functions, make sure they all compile and work") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 
 	struct test_1 {
 		int a = 0xA;
@@ -972,14 +980,14 @@ TEST_CASE("functions/stack atomic", "make sure functions don't impede on the sta
 	//test protected_function
 	sol::protected_function Stringtest(lua["stringtest"]);
 	Stringtest.error_handler = lua["ErrorHandler"];
-	sol::stack_guard sg(lua);
+	sol::stack_guard luasg(lua);
 	{
 		sol::protected_function_result stringresult = Stringtest("protected test");
 		REQUIRE(stringresult.valid());
 		std::string s = stringresult;
 		INFO("Back in C++, protected result is : " << s);
 	}
-	REQUIRE(sg.check_stack());
+	REQUIRE(luasg.check_stack());
 
 	//test optional
 	{
@@ -994,7 +1002,7 @@ TEST_CASE("functions/stack atomic", "make sure functions don't impede on the sta
 			INFO("opt_result failed");
 		}
 	}
-	REQUIRE(sg.check_stack());
+	REQUIRE(luasg.check_stack());
 
 	{
 		sol::protected_function_result errresult = Stringtest(sol::lua_nil);
@@ -1003,7 +1011,7 @@ TEST_CASE("functions/stack atomic", "make sure functions don't impede on the sta
 		std::string msg = err.what();
 		INFO("error :" << msg);
 	}
-	REQUIRE(sg.check_stack());
+	REQUIRE(luasg.check_stack());
 }
 
 TEST_CASE("functions/stack multi-return", "Make sure the stack is protected after multi-returns") {
@@ -1011,7 +1019,7 @@ TEST_CASE("functions/stack multi-return", "Make sure the stack is protected afte
 	lua.safe_script("function f () return 1, 2, 3, 4, 5 end");
 
 	{
-		sol::stack_guard sg(lua);
+		sol::stack_guard luasg(lua);
 		sol::stack::push(lua, double(256.78));
 		{
 			int a, b, c, d, e;
@@ -1034,7 +1042,7 @@ TEST_CASE("functions/protected stack multi-return", "Make sure the stack is prot
 	lua.safe_script("function f () return 1, 2, 3, 4, 5 end");
 
 	{
-		sol::stack_guard sg(lua);
+		sol::stack_guard luasg(lua);
 		sol::stack::push(lua, double(256.78));
 		{
 			int a, b, c, d, e;
@@ -1060,7 +1068,7 @@ TEST_CASE("functions/function_result as arguments", "ensure that function_result
 	lua.safe_script("function g (a, b, c, d, e) assert(a == 1) assert(b == 2) assert(c == 3) assert(d == 4) assert(e == 5) end");
 
 	{
-		sol::stack_guard sg(lua);
+		sol::stack_guard luasg(lua);
 		sol::stack::push(lua, double(256.78));
 		{
 			int a, b, c, d, e;
@@ -1089,7 +1097,7 @@ TEST_CASE("functions/protected_function_result as arguments", "ensure that prote
 	lua.safe_script("function g (a, b, c, d, e) assert(a == 1) assert(b == 2) assert(c == 3) assert(d == 4) assert(e == 5) end");
 
 	{
-		sol::stack_guard sg(lua);
+		sol::stack_guard luasg(lua);
 		sol::stack::push(lua, double(256.78));
 		{
 			int a, b, c, d, e;

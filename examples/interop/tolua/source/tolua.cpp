@@ -29,8 +29,16 @@ inline bool sol_lua_interop_check(sol::types<T>, lua_State* L, int relindex, sol
 	(void)handler;
 	int index = lua_absindex(L, relindex);
 	std::string name = sol::detail::short_demangle<T>();
-	tolua_Error tolua_err;
-	return tolua_isusertype(L, index, name.c_str(), 0, &tolua_err);
+	tolua_Error tolua_err{};
+	int r = tolua_isusertype(L, index, name.c_str(), 0, &tolua_err);
+	if (r == 0) {
+		// tolua seems to leave garbage on the stack
+		// when the check fails
+		// thanks, tolua
+		lua_pop(L, 2);
+		return false;
+	}
+	return true;
 }
 
 void register_sol_stuff(lua_State* L) {

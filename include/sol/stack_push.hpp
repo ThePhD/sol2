@@ -1146,6 +1146,24 @@ namespace sol {
 			}
 		};
 
+		template <typename Allocator>
+		struct unqualified_pusher<basic_bytecode<Allocator>> {
+			template <typename T>
+			static int push(lua_State* L, T&& bc, const char* bytecode_name) {
+				const auto first = bc.data();
+				const auto bcsize = bc.size();
+				// pushes either the function, or an error
+				// if it errors, shit goes south, and people can test that upstream
+				(void)luaL_loadbuffer(L, reinterpret_cast<const char*>(first), static_cast<std::size_t>(bcsize * (sizeof(*first) / sizeof(const char))), bytecode_name);
+				return 1;
+			}
+
+			template <typename T>
+			static int push(lua_State* L, T&& bc) {
+				return push(L, std::forward<bc>(bc), "bytecode");
+			}
+		};
+
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 		template <typename O>
 		struct unqualified_pusher<std::optional<O>> {

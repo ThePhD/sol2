@@ -48,13 +48,15 @@ namespace sol {
 	template <typename A>
 	class basic_bytecode;
 
+	struct lua_value;
+
 	struct proxy_base_tag;
-	template <typename Super>
+	template <typename>
 	struct proxy_base;
-	template <typename Table, typename Key>
+	template <typename, typename>
 	struct proxy;
 
-	template <bool, typename base_type>
+	template <bool, typename>
 	class basic_table_core;
 	template <bool b>
 	using table_core = basic_table_core<b, reference>;
@@ -70,6 +72,11 @@ namespace sol {
 	using main_global_table = main_table_core<true>;
 	using stack_table = stack_table_core<false>;
 	using stack_global_table = stack_table_core<true>;
+
+	template <typename>
+	struct basic_lua_table;
+	using lua_table = basic_lua_table<reference>;
+	using stack_lua_table = basic_lua_table<stack_reference>;
 
 	template <typename T, typename base_type>
 	class basic_usertype;

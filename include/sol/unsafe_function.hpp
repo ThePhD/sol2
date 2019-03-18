@@ -124,10 +124,11 @@ namespace sol {
 
 		template <typename Fx>
 		int dump(lua_Writer writer, void* userdata, bool strip, Fx&& on_error) const {
-			auto pp = stack::push_pop(*this);
+			this->push();
+			auto ppn = stack::push_popper_n<false>(this->lua_state(), 1);
 			int r = lua_dump(this->lua_state(), writer, userdata, strip ? 1 : 0);
 			if (r != 0) {
-				return on_error(r, writer, userdata, strip);
+				return on_error(this->lua_state(), r, writer, userdata, strip);
 			}
 			return r;
 		}
@@ -136,9 +137,17 @@ namespace sol {
 			return dump(writer, userdata, strip, &dump_throw_on_error);
 		}
 
-		bytecode dump() const {
-			bytecode bc;
-			(void)dump(&bytecode_dump_writer, static_cast<void*>(&bc), strip, &dump_throw_on_error);
+		template <typename Container = bytecode>
+		Container dump() const {
+			Container bc;
+			(void)dump(static_cast<lua_Writer>(&basic_insert_dump_writer<Container>), static_cast<void*>(&bc), false, &dump_panic_on_error);
+			return bc;
+		}
+
+		template <typename Container = bytecode, typename Fx>
+		Container dump(Fx&& on_error) const {
+			Container bc;
+			(void)dump(static_cast<lua_Writer>(&basic_insert_dump_writer<Container>), static_cast<void*>(&bc), false, std::forward<Fx>(on_error));
 			return bc;
 		}
 

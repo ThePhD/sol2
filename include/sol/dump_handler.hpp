@@ -24,6 +24,8 @@
 #ifndef SOL_DUMP_HANDLER_HPP
 #define SOL_DUMP_HANDLER_HPP
 
+#include "compatibility.hpp"
+
 #include <cstdint>
 #include <exception>
 
@@ -42,19 +44,29 @@ namespace sol {
 		}
 	};
 
-	inline int dump_pass_on_error(int result_code, lua_Writer writer_function, void* userdata, bool strip) {
+	inline int dump_pass_on_error(lua_State* L, int result_code, lua_Writer writer_function, void* userdata, bool strip) {
+		(void)L;
 		(void)writer_function;
 		(void)userdata;
 		(void)strip;
 		return result_code;
 	}
 
-	inline int dump_throw_on_error(int result_code, lua_Writer writer_function, void* userdata, bool strip) {
+	inline int dump_throw_on_error(lua_State* L, int result_code, lua_Writer writer_function, void* userdata, bool strip) {
+		(void)L;
 		(void)writer_function;
 		(void)userdata;
 		(void)strip;
 		throw dump_error(result_code);
-	}	
+	}
+
+	inline int dump_panic_on_error(lua_State* L, int result_code, lua_Writer writer_function, void* userdata, bool strip) {
+		(void)L;
+		(void)writer_function;
+		(void)userdata;
+		(void)strip;
+		return luaL_error(L, "a non-zero error code (%d) was returned by the lua_Writer for the dump function", result_code);
+	}
 
 } // namespace sol
 

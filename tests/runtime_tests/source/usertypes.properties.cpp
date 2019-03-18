@@ -105,7 +105,9 @@ TEST_CASE("usertype/properties", "Check if member properties/variables work") {
 	};
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
+
 	lua.new_usertype<bark>("bark",
 	     "var",
 	     &bark::var,
@@ -172,6 +174,8 @@ TEST_CASE("usertype/copyability", "make sure user can write to a class variable 
 	};
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
+
 	lua.new_usertype<NoCopy>("NoCopy", "val", sol::property(&NoCopy::get, &NoCopy::set));
 
 	REQUIRE_NOTHROW(lua.safe_script(R"__(
@@ -217,6 +221,7 @@ TEST_CASE("usertype/static-properties", "allow for static functions to get and s
 	test_t manager;
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 
 	lua.new_usertype<test_t>(
 	     "test", "f", std::function<std::size_t()>(std::bind(std::mem_fn(&test_t::func), &manager)), "g", sol::property(&test_t::s_func, &test_t::g_func));
@@ -241,6 +246,7 @@ TEST_CASE("usertype/var-and-property", "make sure const vars are readonly and pr
 	};
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.open_libraries();
 
 	lua.new_usertype<test>(
@@ -394,6 +400,8 @@ TEST_CASE("usertype/alignment", "ensure that alignment does not trigger weird al
 	struct aligned_derived : aligned_base {};
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
+
 	auto f = [](aligned_base&, float d) { REQUIRE(d == 5.0f); };
 	lua.new_usertype<aligned_base>("Base", "x", sol::writeonly_property(weird_aligned_wrapper<aligned_base>(std::ref(f))));
 	lua.new_usertype<aligned_derived>("Derived", sol::base_classes, sol::bases<aligned_base>());

@@ -41,6 +41,7 @@ namespace muh_namespace {
 
 TEST_CASE("stack/strings", "test that strings can be roundtripped") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 
 	static const char utf8str[] = "\xF0\x9F\x8D\x8C\x20\xE6\x99\xA5\x20\x46\x6F\x6F\x20\xC2\xA9\x20\x62\x61\x72\x20\xF0\x9D\x8C\x86\x20\x62\x61\x7A\x20\xE2\x98\x83\x20\x71\x75\x78";
 	static const char16_t utf16str[] = { 0xD83C, 0xDF4C, 0x20, 0x6665, 0x20, 0x46, 0x6F, 0x6F, 0x20, 0xA9, 0x20, 0x62, 0x61, 0x72, 0x20, 0xD834, 0xDF06, 0x20, 0x62, 0x61, 0x7A, 0x20, 0x2603, 0x20, 0x71, 0x75, 0x78, 0x00 };

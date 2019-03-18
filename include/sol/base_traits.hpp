@@ -39,7 +39,16 @@ namespace sol {
 		template <typename T>
 		using void_t = void;
 
+		template <typename T>
+		using unqualified = std::remove_cv<std::remove_reference_t<T>>;
+
+		template <typename T>
+		using unqualified_t = typename unqualified<T>::type;
+
 		namespace meta_detail {
+			template <typename T>
+			struct unqualified_non_alias : unqualified<T> {};
+
 			template <template <class...> class Test, class, class... Args>
 			struct is_detected : std::false_type {};
 
@@ -91,12 +100,6 @@ namespace sol {
 
 		template <typename T>
 		using identity_t = typename identity<T>::type;
-
-		template <typename T>
-		using is_tuple = is_specialization_of<T, std::tuple>;
-
-		template <typename T>
-		constexpr inline bool is_tuple_v = is_tuple<T>::value;
 
 		template <typename T>
 		using is_builtin_type = std::integral_constant<bool, std::is_arithmetic<T>::value || std::is_pointer<T>::value || std::is_array<T>::value>;

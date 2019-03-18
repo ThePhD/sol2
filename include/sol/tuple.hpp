@@ -25,6 +25,7 @@
 #define SOL_TUPLE_HPP
 
 #include "forward.hpp"
+#include "base_traits.hpp"
 
 #include <tuple>
 #include <cstddef>
@@ -35,6 +36,12 @@ namespace sol {
 	} // namespace detail
 
 	namespace meta {
+		template <typename T>
+		using is_tuple = is_specialization_of<T, std::tuple>;
+
+		template <typename T>
+		constexpr inline bool is_tuple_v = is_tuple<T>::value;
+
 		namespace detail {
 			template <typename... Args>
 			struct tuple_types_ { typedef types<Args...> type; };
@@ -42,12 +49,6 @@ namespace sol {
 			template <typename... Args>
 			struct tuple_types_<std::tuple<Args...>> { typedef types<Args...> type; };
 		} // namespace detail
-
-		template <typename T>
-		struct unqualified : std::remove_cv<std::remove_reference_t<T>> {};
-
-		template <typename T>
-		using unqualified_t = typename unqualified<T>::type;
 
 		template <typename... Args>
 		using tuple_types = typename detail::tuple_types_<Args...>::type;

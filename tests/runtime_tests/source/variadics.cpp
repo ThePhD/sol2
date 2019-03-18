@@ -37,7 +37,9 @@ TEST_CASE("variadics/variadic_args", "Check to see we can receive multiple argum
 	};
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
+
 	lua.set_function("v", [](sol::this_state, sol::variadic_args va) -> structure {
 		int r = 0;
 		for (auto v : va) {
@@ -83,6 +85,7 @@ TEST_CASE("variadics/required with variadic_args", "Check if a certain number of
 
 TEST_CASE("variadics/variadic_args get type", "Make sure we can inspect types proper from variadic_args") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 
 	lua.set_function("f", [](sol::variadic_args va) {
 		sol::type types[] = {
@@ -108,6 +111,7 @@ TEST_CASE("variadics/variadic_args get type", "Make sure we can inspect types pr
 TEST_CASE("variadics/variadic_results", "returning a variable amount of arguments from C++") {
 	SECTION("as_returns - containers") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 
 		lua.set_function("f", []() {
 			std::set<std::string> results{ "arf", "bark", "woof" };
@@ -139,17 +143,17 @@ TEST_CASE("variadics/variadic_results", "returning a variable amount of argument
 	}
 	SECTION("variadic_results - variadic_args") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 
 		lua.set_function("f", [](sol::variadic_args args) {
 			return sol::variadic_results(args.cbegin(), args.cend());
 		});
 
-		REQUIRE_NOTHROW([&]() {
-			lua.safe_script(R"(
-	v1, v2, v3 = f(1, 'bark', true)
-	v4, v5 = f(25, 82)
-)");
-		}());
+		auto result1 = lua.safe_script(R"(
+			v1, v2, v3 = f(1, 'bark', true)
+			v4, v5 = f(25, 82)
+		)", sol::script_pass_on_error);
+		REQUIRE(result1.valid());
 
 		int v1 = lua["v1"];
 		std::string v2 = lua["v2"];
@@ -165,6 +169,7 @@ TEST_CASE("variadics/variadic_results", "returning a variable amount of argument
 	}
 	SECTION("variadic_results") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 
 		lua.set_function("f", [](sol::this_state ts, bool maybe) {
 			if (maybe) {
@@ -184,12 +189,11 @@ TEST_CASE("variadics/variadic_results", "returning a variable amount of argument
 			}
 		});
 
-		REQUIRE_NOTHROW([&]() {
-			lua.safe_script(R"(
-	v1, v2, v3 = f(true)
-	v4, v5, v6, v7 = f(false)
-)");
-		}());
+		auto result1 = lua.safe_script(R"(
+			v1, v2, v3 = f(true)
+			v4, v5, v6, v7 = f(false)
+		)", sol::script_pass_on_error);
+		REQUIRE(result1.valid());
 
 		int v1 = lua["v1"];
 		int v2 = lua["v2"];
@@ -232,13 +236,15 @@ TEST_CASE("variadics/fallback_constructor", "ensure constructor matching behaves
 		}
 		return res; }));
 
-	REQUIRE_NOTHROW([&]() {
-		lua.safe_script("v0 = vec2x();");
-		lua.safe_script("v1 = vec2x(1);");
-		lua.safe_script("v2 = vec2x(1, 2);");
-		lua.safe_script("v3 = vec2x(v2)");
-	}());
-
+	auto result1 = lua.safe_script("v0 = vec2x();", sol::script_pass_on_error);
+	auto result2 = lua.safe_script("v1 = vec2x(1);", sol::script_pass_on_error);
+	auto result3 = lua.safe_script("v2 = vec2x(1, 2);", sol::script_pass_on_error);
+	auto result4 = lua.safe_script("v3 = vec2x(v2)", sol::script_pass_on_error);
+	REQUIRE(result1.valid());
+	REQUIRE(result2.valid());
+	REQUIRE(result3.valid());
+	REQUIRE(result4.valid());
+	
 	vec2x& v0 = lua["v0"];
 	vec2x& v1 = lua["v1"];
 	vec2x& v2 = lua["v2"];

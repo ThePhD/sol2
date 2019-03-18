@@ -255,6 +255,7 @@ end
 TEST_CASE("containers/sequence containers", "check all of the functinos for every single container") {
 	SECTION("vector") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 		lua.open_libraries(sol::lib::base);
 
 		std::vector<int> items{ 11, 12, 13, 14, 15 };
@@ -263,6 +264,7 @@ TEST_CASE("containers/sequence containers", "check all of the functinos for ever
 	}
 	SECTION("list") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 		lua.open_libraries(sol::lib::base);
 
 		std::list<int> items{ 11, 12, 13, 14, 15 };
@@ -271,6 +273,7 @@ TEST_CASE("containers/sequence containers", "check all of the functinos for ever
 	}
 	SECTION("forward_list") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 		lua.open_libraries(sol::lib::base);
 
 		std::forward_list<int> items{ 11, 12, 13, 14, 15 };
@@ -279,6 +282,7 @@ TEST_CASE("containers/sequence containers", "check all of the functinos for ever
 	}
 	SECTION("deque") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 		lua.open_libraries(sol::lib::base);
 
 		std::deque<int> items{ 11, 12, 13, 14, 15 };
@@ -290,6 +294,7 @@ TEST_CASE("containers/sequence containers", "check all of the functinos for ever
 TEST_CASE("containers/fixed containers", "check immutable container types") {
 	SECTION("array") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 		lua.open_libraries(sol::lib::base);
 
 		std::array<int, 5> items{ { 11, 12, 13, 14, 15 } };
@@ -298,6 +303,7 @@ TEST_CASE("containers/fixed containers", "check immutable container types") {
 	}
 	SECTION("array ref") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 		lua.open_libraries(sol::lib::base);
 
 		std::array<int, 5> items{ { 11, 12, 13, 14, 15 } };
@@ -306,6 +312,7 @@ TEST_CASE("containers/fixed containers", "check immutable container types") {
 	}
 	SECTION("c array") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 		lua.open_libraries(sol::lib::base);
 
 		int items[5] = { 11, 12, 13, 14, 15 };
@@ -314,6 +321,7 @@ TEST_CASE("containers/fixed containers", "check immutable container types") {
 	}
 	SECTION("c array ref") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 		lua.open_libraries(sol::lib::base);
 
 		int items[5] = { 11, 12, 13, 14, 15 };
@@ -324,6 +332,7 @@ TEST_CASE("containers/fixed containers", "check immutable container types") {
 
 TEST_CASE("containers/auxiliary functions test", "make sure the manipulation functions are present and usable and working across various container types") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.open_libraries();
 
 	auto result1 = lua.safe_script(R"(
@@ -407,6 +416,8 @@ TEST_CASE("containers/indices test", "test indices on fixed array types") {
 #if 0
 	SECTION("zero index test") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
+
 		lua["c_arr"] = std::array<int, 5>{ { 2, 4, 6, 8, 10 } };
 		auto result = lua.safe_script(R"(
 c_arr[0] = 7
@@ -416,6 +427,8 @@ c_arr[0] = 7
 
 	SECTION("negative index test") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
+
 		lua["c_arr"] = std::array<int, 5>{ { 2, 4, 6, 8, 10 } };
 		auto result = lua.safe_script(R"(
 c_arr[-1] = 7

@@ -36,6 +36,8 @@ end
 )";
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
+
 	{
 		auto r = lua.safe_script(code, sol::script_pass_on_error);
 		REQUIRE(r.valid());

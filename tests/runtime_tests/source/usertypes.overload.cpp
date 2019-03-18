@@ -40,6 +40,7 @@ struct overloading_test {
 
 TEST_CASE("usertype/overloading", "Check if overloading works properly for usertypes") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
 
 	lua.new_usertype<woof>("woof", "var", &woof::var, "func", sol::overload(&woof::func, &woof::func2, &woof::func2s));
@@ -61,6 +62,7 @@ TEST_CASE("usertype/overloading", "Check if overloading works properly for usert
 
 TEST_CASE("usertype/overloading_values", "ensure overloads handle properly") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.new_usertype<overloading_test>("overloading_test",
 	     sol::constructors<>(),
 	     "print",

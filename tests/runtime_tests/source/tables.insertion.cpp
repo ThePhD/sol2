@@ -29,6 +29,7 @@
 
 TEST_CASE("tables/proxy override_value", "allow override_value by way of key") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base, sol::lib::io);
 
 	sol::optional<int> not_there = lua["a"]["b"]["c"];
@@ -42,6 +43,7 @@ TEST_CASE("tables/proxy override_value", "allow override_value by way of key") {
 TEST_CASE("tables/insertion override", "allow override all non-table values plus final value") {
 	SECTION("traverse") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 
 		sol::optional<int> not_there = lua["a"]["b"]["c"];
 		REQUIRE_FALSE(static_cast<bool>(not_there));
@@ -59,6 +61,7 @@ TEST_CASE("tables/insertion override", "allow override all non-table values plus
 	}
 	SECTION("proxy") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 
 		sol::optional<int> not_there = lua["a"]["b"]["c"];
 		REQUIRE_FALSE(static_cast<bool>(not_there));
@@ -76,6 +79,7 @@ TEST_CASE("tables/insertion override", "allow override all non-table values plus
 	}
 	SECTION("complex proxy") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 
 		sol::optional<int> not_there = lua["a"]["b"]["c"];
 		REQUIRE_FALSE(static_cast<bool>(not_there));
@@ -91,6 +95,7 @@ TEST_CASE("tables/insertion override", "allow override all non-table values plus
 TEST_CASE("tables/insertion update_if_empty", "allow updating a value only if it's missing") {
 	SECTION("traverse") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 
 		sol::optional<int> not_there = lua["a"]["b"]["c"];
 		REQUIRE_FALSE(static_cast<bool>(not_there));
@@ -101,6 +106,7 @@ TEST_CASE("tables/insertion update_if_empty", "allow updating a value only if it
 	}
 	SECTION("proxy") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 
 		sol::optional<int> not_there = lua["a"]["b"]["c"];
 		REQUIRE_FALSE(static_cast<bool>(not_there));
@@ -116,6 +122,7 @@ TEST_CASE("tables/insertion update_if_empty", "allow updating a value only if it
 	}
 	SECTION("proxy invoker") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 
 		sol::optional<int> not_there = lua["a"]["b"]["c"];
 		REQUIRE_FALSE(static_cast<bool>(not_there));

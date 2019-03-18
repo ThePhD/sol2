@@ -1007,6 +1007,9 @@ namespace sol {
 		struct lua_type_of<nullopt_t> : std::integral_constant<type, type::lua_nil> {};
 
 		template <>
+		struct lua_type_of<lua_value> : std::integral_constant<type, type::poly> {};
+
+		template <>
 		struct lua_type_of<detail::non_lua_nil_t> : std::integral_constant<type, type::poly> {};
 
 		template <>
@@ -1017,6 +1020,9 @@ namespace sol {
 
 		template <bool b, typename Base>
 		struct lua_type_of<basic_table_core<b, Base>> : std::integral_constant<type, type::table> {};
+
+		template <typename Base>
+		struct lua_type_of<basic_lua_table<Base>> : std::integral_constant<type, type::table> {};
 
 		template <typename Base>
 		struct lua_type_of<basic_metatable<Base>> : std::integral_constant<type, type::table> {};

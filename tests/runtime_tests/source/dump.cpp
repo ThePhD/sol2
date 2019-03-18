@@ -25,19 +25,97 @@
 
 #include <catch.hpp>
 
+#include <list>
+#include <vector>
+#include <deque>
+
+int dump_always_fail_number = -32;
+
+int dump_always_fail(lua_State*, const void*, size_t, void*) {
+	return dump_always_fail_number;
+}
+
 TEST_CASE("dump/dump transfer", "test that a function can be transferred from one place to another") {
-	sol::state lua;
-	sol::state lua2;
-	lua2.open_libraries(sol::lib::base);
+	SECTION("safe") {
+		sol::state lua;
+		sol::state lua2;
+		lua2.open_libraries(sol::lib::base);
 
-	sol::load_result lr = lua.load("a = function (v) print(v) return v end");
-	REQUIRE(lr.valid());
-	sol::protected_function target = lr;
-	sol::bytecode target_bc = target.dump();
+		sol::load_result lr = lua.load("a = function (v) print(v) return v end");
+		REQUIRE(lr.valid());
+		sol::protected_function target = lr;
+		sol::bytecode target_bc = target.dump();
 
-	auto result2 = lua2.safe_script(target_bc.as_string_view(), sol::script_pass_on_error);
-	REQUIRE(result2.valid());
-	sol::protected_function pf = lua2["a"];
-	int v = pf(25557);
-	REQUIRE(v == 25557);
+		auto result2 = lua2.safe_script(target_bc.as_string_view(), sol::script_pass_on_error);
+		REQUIRE(result2.valid());
+		sol::protected_function pf = lua2["a"];
+		int v = pf(25557);
+		REQUIRE(v == 25557);
+	}
+	SECTION("unsafe") {
+		sol::state lua;
+		sol::state lua2;
+		lua2.open_libraries(sol::lib::base);
+
+		sol::load_result lr = lua.load("a = function (v) print(v) return v end");
+		REQUIRE(lr.valid());
+		sol::unsafe_function target = lr;
+		sol::bytecode target_bc = target.dump();
+
+		auto result2 = lua2.safe_script(target_bc.as_string_view(), sol::script_pass_on_error);
+		REQUIRE(result2.valid());
+		sol::unsafe_function pf = lua2["a"];
+		int v = pf(25557);
+		REQUIRE(v == 25557);
+	}
+}
+
+TEST_CASE("dump/failure", "test that failure is properly propagated") {
+	SECTION("safe") {
+		sol::state lua;
+		sol::load_result lr = lua.load("a = function (v) print(v) return v end");
+		REQUIRE(lr.valid());
+		sol::protected_function target = lr;
+		int err = target.dump(&dump_always_fail, nullptr, false, sol::dump_pass_on_error);
+		REQUIRE(err == dump_always_fail_number);
+	}
+	SECTION("unsafe") {
+		sol::state lua;
+		sol::load_result lr = lua.load("a = function (v) print(v) return v end");
+		REQUIRE(lr.valid());
+		sol::unsafe_function target = lr;
+		int err = target.dump(&dump_always_fail, nullptr, false, sol::dump_pass_on_error);
+		REQUIRE(err == dump_always_fail_number);
+	}
+}
+
+TEST_CASE("dump/different containers", "test that dump inserter works for various kinds of containers") {
+	SECTION("safe") {
+		sol::state lua;
+
+		sol::load_result lr = lua.load("a = function (v) print(v) return v end");
+		REQUIRE(lr.valid());
+		sol::protected_function target = lr;
+		sol::bytecode bytecode_dump = target.dump();
+		std::list<std::byte> list_dump = target.dump<std::list<std::byte>>();
+		std::vector<std::byte> vector_dump = target.dump<std::vector<std::byte>>();
+		std::deque<std::byte> deque_dump = target.dump<std::deque<std::byte>>();
+		REQUIRE(std::equal(bytecode_dump.cbegin(), bytecode_dump.cend(), vector_dump.cbegin(), vector_dump.cend()));
+		REQUIRE(std::equal(bytecode_dump.cbegin(), bytecode_dump.cend(), list_dump.cbegin(), list_dump.cend()));
+		REQUIRE(std::equal(bytecode_dump.cbegin(), bytecode_dump.cend(), deque_dump.cbegin(), deque_dump.cend()));
+	}
+	SECTION("unsafe") {
+		sol::state lua;
+
+		sol::load_result lr = lua.load("a = function (v) print(v) return v end");
+		REQUIRE(lr.valid());
+		sol::unsafe_function target = lr;
+		sol::bytecode bytecode_dump = target.dump();
+		std::list<std::byte> list_dump = target.dump<std::list<std::byte>>();
+		std::vector<std::byte> vector_dump = target.dump<std::vector<std::byte>>();
+		std::deque<std::byte> deque_dump = target.dump<std::deque<std::byte>>();
+		REQUIRE(std::equal(bytecode_dump.cbegin(), bytecode_dump.cend(), vector_dump.cbegin(), vector_dump.cend()));
+		REQUIRE(std::equal(bytecode_dump.cbegin(), bytecode_dump.cend(), list_dump.cbegin(), list_dump.cend()));
+		REQUIRE(std::equal(bytecode_dump.cbegin(), bytecode_dump.cend(), deque_dump.cbegin(), deque_dump.cend()));
+	}
 }

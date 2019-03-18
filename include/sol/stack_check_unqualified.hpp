@@ -86,7 +86,7 @@ namespace sol { namespace stack {
 		}
 	};
 
-	template <typename T, type expected = lua_type_of_v<T>, typename = void>
+	template <typename T, type expected, typename>
 	struct unqualified_checker {
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&& handler, record& tracking) {
@@ -251,6 +251,24 @@ namespace sol { namespace stack {
 			else if constexpr (std::is_same_v<T, detail::non_lua_nil_t>) {
 				return !stack::unqualified_check<lua_nil_t>(L, index, std::forward<Handler>(handler), tracking);
 			}
+			else if constexpr (meta::is_specialization_of_v<T, basic_lua_table>) {
+				tracking.use(1);
+				type t = type_of(L, index);
+				if (t != type::table) {
+					handler(L, index, type::table, t, "value is not a table");
+					return false;
+				}
+				return true;
+			}
+			else if constexpr (meta::is_specialization_of_v<T, basic_bytecode>) {
+				tracking.use(1);
+				type t = type_of(L, index);
+				if (t != type::function) {
+					handler(L, index, type::function, t, "value is not a function that can be dumped");
+					return false;
+				}
+				return true;
+			}
 			else if constexpr(meta::is_specialization_of_v<T, basic_environment>) {
 				tracking.use(1);
 				if (lua_getmetatable(L, index) == 0) {
@@ -297,7 +315,7 @@ namespace sol { namespace stack {
 					return success;
 				}
 				else if constexpr (meta::is_specialization_of_v<T, user>) {
-					unqualified_checker<lightuserdata_value> c;
+					unqualified_checker<lightuserdata_value, type::userdata> c;
 					(void)c;
 					return c.check(L, index, std::forward<Handler>(handler), tracking);
 				}
@@ -415,51 +433,59 @@ namespace sol { namespace stack {
 
 		template <typename U, typename Handler>
 		static bool check(types<U>, lua_State* L, int index, type indextype, Handler&& handler, record& tracking) {
-#if defined(SOL_ENABLE_INTEROP) && SOL_ENABLE_INTEROP
-			if (stack_detail::interop_check<U>(L, index, indextype, handler, tracking)) {
-				return true;
-			}
-#endif // interop extensibility
-			tracking.use(1);
-			if (indextype != type::userdata) {
-				handler(L, index, type::userdata, indextype, "value is not a valid userdata");
-				return false;
-			}
-			if (meta::any<std::is_same<T, lightuserdata_value>, std::is_same<T, userdata_value>, std::is_same<T, userdata>, std::is_same<T, lightuserdata>>::value)
-				return true;
-			if (lua_getmetatable(L, index) == 0) {
-				return true;
-			}
-			int metatableindex = lua_gettop(L);
-			if (stack_detail::check_metatable<U>(L, metatableindex))
-				return true;
-			if (stack_detail::check_metatable<U*>(L, metatableindex))
-				return true;
-			if (stack_detail::check_metatable<detail::unique_usertype<U>>(L, metatableindex))
-				return true;
-			if (stack_detail::check_metatable<as_container_t<U>>(L, metatableindex))
-				return true;
-			bool success = false;
-			bool has_derived = derive<T>::value || weak_derive<T>::value;
-			if (has_derived) {
-#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
-				luaL_checkstack(L, 1, detail::not_enough_stack_space_string);
-#endif // make sure stack doesn't overflow
-				auto pn = stack::pop_n(L, 1);
-				lua_pushstring(L, &detail::base_class_check_key()[0]);
-				lua_rawget(L, metatableindex);
-				if (type_of(L, -1) != type::lua_nil) {
-					void* basecastdata = lua_touserdata(L, -1);
-					detail::inheritance_check_function ic = reinterpret_cast<detail::inheritance_check_function>(basecastdata);
-					success = ic(usertype_traits<T>::qualified_name());
+			if constexpr (std::is_same_v<T, lightuserdata_value> || std::is_same_v<T, userdata_value> || std::is_same_v<T, userdata> || std::is_same_v<T, lightuserdata>) {
+				tracking.use(1);
+				if (indextype != type::userdata) {
+					handler(L, index, type::userdata, indextype, "value is not a valid userdata");
+					return false;
 				}
+				return true;
 			}
-			lua_pop(L, 1);
-			if (!success) {
-				handler(L, index, type::userdata, indextype, "value at this index does not properly reflect the desired type");
-				return false;
+			else {
+#if defined(SOL_ENABLE_INTEROP) && SOL_ENABLE_INTEROP
+				if (stack_detail::interop_check<U>(L, index, indextype, handler, tracking)) {
+					return true;
+				}
+#endif // interop extensibility
+				tracking.use(1);
+				if (indextype != type::userdata) {
+					handler(L, index, type::userdata, indextype, "value is not a valid userdata");
+					return false;
+				}
+				if (lua_getmetatable(L, index) == 0) {
+					return true;
+				}
+				int metatableindex = lua_gettop(L);
+				if (stack_detail::check_metatable<U>(L, metatableindex))
+					return true;
+				if (stack_detail::check_metatable<U*>(L, metatableindex))
+					return true;
+				if (stack_detail::check_metatable<detail::unique_usertype<U>>(L, metatableindex))
+					return true;
+				if (stack_detail::check_metatable<as_container_t<U>>(L, metatableindex))
+					return true;
+				bool success = false;
+				bool has_derived = derive<T>::value || weak_derive<T>::value;
+				if (has_derived) {
+	#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+					luaL_checkstack(L, 1, detail::not_enough_stack_space_string);
+	#endif // make sure stack doesn't overflow
+					auto pn = stack::pop_n(L, 1);
+					lua_pushstring(L, &detail::base_class_check_key()[0]);
+					lua_rawget(L, metatableindex);
+					if (type_of(L, -1) != type::lua_nil) {
+						void* basecastdata = lua_touserdata(L, -1);
+						detail::inheritance_check_function ic = reinterpret_cast<detail::inheritance_check_function>(basecastdata);
+						success = ic(usertype_traits<T>::qualified_name());
+					}
+				}
+				lua_pop(L, 1);
+				if (!success) {
+					handler(L, index, type::userdata, indextype, "value at this index does not properly reflect the desired type");
+					return false;
+				}
+				return true;
 			}
-			return true;
 		}
 	};
 

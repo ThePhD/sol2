@@ -28,6 +28,7 @@
 #include "stack.hpp"
 #include "function.hpp"
 #include "object.hpp"
+#include "lua_value.hpp"
 
 #if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
 #include <iostream>
@@ -97,6 +98,7 @@ namespace sol {
 		set_default_exception_handler(L, exf);
 		register_main_thread(L);
 		stack::luajit_exception_handler(L);
+		lua_value::set_lua_state(L);
 	}
 
 	inline std::size_t total_memory_used(lua_State* L) {

@@ -54,6 +54,7 @@ struct self_test {
 
 TEST_CASE("usertype/self-referential usertype", "usertype classes must play nice when C++ object types are requested for C++ code") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
 
 	lua.new_usertype<self_test>("test", "g", &self_test::g, "f", &self_test::f);
@@ -68,6 +69,7 @@ TEST_CASE("usertype/self-referential usertype", "usertype classes must play nice
 
 TEST_CASE("usertype/nonmember-functions", "let users set non-member functions that take unqualified T as first parameter to usertype") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
 
 	lua.new_usertype<giver>("giver",
@@ -97,6 +99,8 @@ TEST_CASE("usertype/nonmember-functions", "let users set non-member functions th
 
 TEST_CASE("usertype/abstract-base-class", "Ensure that abstract base classes and such can be registered") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
+
 	lua.new_usertype<abstract_A>("A", "a", &abstract_A::a);
 	lua.new_usertype<abstract_B>("B", sol::base_classes, sol::bases<abstract_A>());
 	REQUIRE_NOTHROW([&]() {
@@ -114,7 +118,9 @@ TEST_CASE("usertype/as_function", "Ensure that variables can be turned into func
 	};
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.open_libraries();
+
 	lua.new_usertype<B>("B", "b", &B::bvar, "f", sol::as_function(&B::bvar));
 
 	B b;
@@ -137,6 +143,7 @@ TEST_CASE("usertype/call-initializers", "Ensure call constructors with initializ
 	};
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.open_libraries();
 
 	lua.new_usertype<A>("A",
@@ -153,6 +160,7 @@ TEST_CASE("usertype/missing-key", "make sure a missing key returns nil") {
 	struct thing {};
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
 
 	lua.new_usertype<thing>("thing");
@@ -169,6 +177,7 @@ TEST_CASE("usertype/basic type information", "check that we can query some basic
 	struct my_thing {};
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
 
 	lua.new_usertype<my_thing>("my_thing");
@@ -210,9 +219,8 @@ TEST_CASE("usertype/noexcept-methods", "make sure noexcept functions and methods
 	};
 
 	sol::state lua;
-	lua.new_usertype<T>("T",
-		"nf", &T::noexcept_function,
-		"nm", &T::noexcept_method);
+	sol::stack_guard luasg(lua);
+	lua.new_usertype<T>("T", "nf", &T::noexcept_function, "nm", &T::noexcept_method);
 
 	lua.safe_script("t = T.new()");
 	lua.safe_script("v1 = t.nf()");

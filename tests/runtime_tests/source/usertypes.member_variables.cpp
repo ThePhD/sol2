@@ -30,6 +30,7 @@
 
 TEST_CASE("usertype/member-variables", "allow table-like accessors to behave as member variables for usertype") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
 	sol::constructors<sol::types<float, float, float>> ctor;
 	sol::usertype<Vec> udata
@@ -57,7 +58,6 @@ TEST_CASE("usertype/member-variables", "allow table-like accessors to behave as 
 		sol::function f;
 	};
 
-	lua.open_libraries(sol::lib::base);
 	lua.set("b", breaks());
 	lua.new_usertype<breaks>("breaks", "f", &breaks::f);
 
@@ -90,6 +90,8 @@ TEST_CASE("usertype/reference-and-constness", "Make sure constness compiles prop
 	};
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
+
 	lua.new_usertype<woof>("woof", "b", &woof::b);
 	lua.new_usertype<bark>("bark", "var", &bark::var);
 	lua.new_usertype<outer>("outer", "n", &outer::n);

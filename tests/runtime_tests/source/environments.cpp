@@ -30,6 +30,7 @@
 TEST_CASE("environments/get", "Envronments can be taken out of things like Lua functions properly") {
 	sol::state lua;
 	sol::stack_guard luasg(lua);
+
 	lua.open_libraries(sol::lib::base);
 
 	auto result1 = lua.safe_script("f = function() return test end", sol::script_pass_on_error);
@@ -62,7 +63,7 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 
 	lua.set_function("check_f_env",
 		[&lua, &env_f](sol::object target) {
-			sol::stack_guard sg(lua);
+			sol::stack_guard luasg(lua);
 			sol::environment target_env(sol::env_key, target);
 			int test_env_f = env_f["test"];
 			int test_target_env = target_env["test"];
@@ -72,7 +73,7 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 		});
 	lua.set_function("check_g_env",
 		[&lua, &env_g](sol::function target) {
-			sol::stack_guard sg(lua);
+			sol::stack_guard luasg(lua);
 			sol::environment target_env = sol::get_environment(target);
 			int test_env_g = env_g["test"];
 			int test_target_env = target_env["test"];
@@ -82,7 +83,7 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 		});
 	lua.set_function("check_h_env",
 		[&lua](sol::function target) {
-			sol::stack_guard sg(lua);
+			sol::stack_guard luasg(lua);
 			sol::environment target_env = sol::get_environment(target);
 		});
 
@@ -97,6 +98,8 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 TEST_CASE("environments/shadowing", "Environments can properly shadow and fallback on variables") {
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
+
 	lua["b"] = 2142;
 
 	SECTION("no fallback") {
@@ -179,6 +182,7 @@ TEST_CASE("environments/functions", "see if environments on functions are workin
 
 	SECTION("basic") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 
 		auto result1 = lua.safe_script("a = function() return 5 end", sol::script_pass_on_error);
 		REQUIRE(result1.valid());
@@ -196,6 +200,7 @@ TEST_CASE("environments/functions", "see if environments on functions are workin
 	}
 	SECTION("return environment value") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 
 		auto result1 = lua.safe_script("a = function() return test end", sol::script_pass_on_error);
 		REQUIRE(result1.valid());
@@ -212,6 +217,8 @@ TEST_CASE("environments/functions", "see if environments on functions are workin
 
 	SECTION("set environment value") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
+
 		auto result1 = lua.safe_script("a = function() test = 5 end", sol::script_pass_on_error);
 		REQUIRE(result1.valid());
 
@@ -235,6 +242,7 @@ TEST_CASE("environments/this_environment", "test various situations of pulling o
 	static std::string code = "return (f(10))";
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 
 	lua["f"] = [](sol::this_environment te, int x, sol::this_state ts) {
 		if (te) {

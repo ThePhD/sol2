@@ -50,6 +50,7 @@
 
 #include "forward.hpp"
 #include "forward_detail.hpp"
+#include "bytecode.hpp"
 #include "stack.hpp"
 #include "object.hpp"
 #include "function.hpp"
@@ -64,6 +65,7 @@
 #include "as_args.hpp"
 #include "variadic_args.hpp"
 #include "variadic_results.hpp"
+#include "lua_value.hpp"
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop

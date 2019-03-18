@@ -25,6 +25,7 @@
 #define SOL_TABLE_HPP
 
 #include "table_core.hpp"
+#include "lua_table.hpp"
 #include "usertype.hpp"
 
 namespace sol {

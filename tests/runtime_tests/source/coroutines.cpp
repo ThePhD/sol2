@@ -100,6 +100,8 @@ end
 )";
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
+
 	lua.open_libraries(sol::lib::base, sol::lib::coroutine);
 	auto result1 = lua.safe_script(script);
 	REQUIRE(result1.valid());
@@ -127,6 +129,8 @@ end
 )";
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
+
 	lua.open_libraries(sol::lib::base, sol::lib::coroutine);
 	auto result = lua.safe_script(code, sol::script_pass_on_error);
 	REQUIRE(result.valid());
@@ -146,6 +150,8 @@ end
 TEST_CASE("coroutines/transfer", "test that things created inside of a coroutine can have their state transferred using lua_xmove constructors") {
 	for (std::size_t tries = 0; tries < 200; ++tries) {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
+	
 		lua.open_libraries();
 		{
 			sol::function f2;

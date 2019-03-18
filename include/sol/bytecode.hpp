@@ -38,6 +38,17 @@ namespace sol {
 		using base_t = std::vector<std::byte, Allocator>;
 
 	public:
+		using base_t::allocator_type;
+		using base_t::const_iterator;
+		using base_t::const_pointer;
+		using base_t::const_reference;
+		using base_t::const_reverse_iterator;
+		using base_t::difference_type;
+		using base_t::iterator;
+		using base_t::pointer;
+		using base_t::reference;
+		using base_t::reverse_iterator;
+		using base_t::size_type;
 		using base_t::value_type;
 
 		using base_t::base_t;
@@ -81,11 +92,11 @@ namespace sol {
 		}
 	};
 
-	using bytecode = basic_bytecode<>;
-
-	inline int bytecode_dump_writer(lua_State*, const void* memory, size_t memory_size, void* userdata) {
+	template <typename Container>
+	inline int basic_insert_dump_writer(lua_State*, const void* memory, size_t memory_size, void* userdata) {
+		using storage_t = Container;
 		const std::byte* p_code = static_cast<const std::byte*>(memory);
-		bytecode& bc = *static_cast<bytecode*>(userdata);
+		storage_t& bc = *static_cast<storage_t*>(userdata);
 		try {
 			bc.insert(bc.cend(), p_code, p_code + memory_size);
 		}
@@ -94,6 +105,10 @@ namespace sol {
 		}
 		return 0;
 	}
+
+	using bytecode = basic_bytecode<>;
+
+	constexpr inline auto bytecode_dump_writer = &basic_insert_dump_writer<bytecode>;
 
 } // namespace sol
 

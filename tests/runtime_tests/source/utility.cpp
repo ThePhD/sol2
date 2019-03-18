@@ -29,10 +29,10 @@
 #include <mutex>
 #include <thread>
 
-#ifdef SOL_CXX17_FEATURES
+#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #include <string_view>
 #include <variant>
-#endif
+#endif // C++17
 
 std::mutex basic_init_require_mutex;
 
@@ -109,6 +109,7 @@ TEST_CASE("utility/variant", "test that variant can be round-tripped") {
 
 TEST_CASE("utility/optional-conversion", "test that regular optional will properly catch certain types") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
 
 	lua.new_usertype<vars>("vars");
@@ -129,6 +130,7 @@ TEST_CASE("utility/std optional", "test that shit optional can be round-tripped"
 #ifdef SOL_CXX17_FEATURES
 	SECTION("okay") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 		lua.open_libraries(sol::lib::base);
 
 		lua.set_function("f", [](int v) {
@@ -149,6 +151,7 @@ TEST_CASE("utility/std optional", "test that shit optional can be round-tripped"
 	}
 	SECTION("throws") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
 		lua.open_libraries(sol::lib::base);
 
 		lua.set_function("f", [](int v) {
@@ -169,6 +172,8 @@ TEST_CASE("utility/std optional", "test that shit optional can be round-tripped"
 	}
 	SECTION("in classes") {
 		sol::state lua;
+		sol::stack_guard luasg(lua);
+
 		lua.open_libraries(sol::lib::base);
 
 		struct opt_c {
@@ -194,6 +199,7 @@ TEST_CASE("utility/std optional", "test that shit optional can be round-tripped"
 TEST_CASE("utility/string_view", "test that string_view can be taken as an argument") {
 #ifdef SOL_CXX17_FEATURES
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
 
 	lua.set_function("f", [](std::string_view v) {
@@ -224,6 +230,8 @@ TEST_CASE("utility/thread", "fire up lots of threads at the same time to make su
 
 TEST_CASE("utility/pointer", "check we can get pointer value from references") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
+
 	lua.set_function("f", [](bool aorb, sol::reference a, sol::stack_reference b) {
 		if (aorb) {
 			return a.pointer();
@@ -259,6 +267,8 @@ TEST_CASE("utility/this_state", "Ensure this_state argument can be gotten anywhe
 	};
 
 	sol::state lua;
+	sol::stack_guard luasg(lua);
+
 	INFO("created lua state");
 	lua.open_libraries(sol::lib::base);
 	lua.new_usertype<bark>("bark",
@@ -290,6 +300,7 @@ TEST_CASE("utility/this_state", "Ensure this_state argument can be gotten anywhe
 
 TEST_CASE("safety/check_stack", "check to make sure that if we overflow the stack in safety mode, we get the appropriate error thrown") {
 	sol::state lua;
+	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
 
 	lua["okay"] = []() {
