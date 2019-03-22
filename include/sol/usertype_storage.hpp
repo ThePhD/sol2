@@ -389,12 +389,53 @@ namespace sol { namespace u_detail {
 		}
 
 		void clear() {
+			if (value_index_table.valid()) {
+				stack::clear(value_index_table);
+			}
+			if (reference_index_table.valid()) {
+				stack::clear(reference_index_table);
+			}
+			if (unique_index_table.valid()) {
+				stack::clear(unique_index_table);
+			}
+			if (const_reference_index_table.valid()) {
+				stack::clear(const_reference_index_table);
+			}
+			if (const_value_index_table.valid()) {
+				stack::clear(const_value_index_table);
+			}
+			if (named_index_table.valid()) {
+				stack::clear(named_index_table);
+			}
+			if (type_table.valid()) {
+				stack::clear(type_table);
+			}
+			if (gc_names_table.valid()) {
+				stack::clear(gc_names_table);
+			}
+			if (named_metatable.valid()) {
+				lua_State* L = named_metatable.lua_state();
+				auto pp = stack::push_pop(named_metatable);
+				int named_metatable_index = pp.index_of(named_metatable);
+				if (lua_getmetatable(L, named_metatable_index) == 1) {
+					stack::clear(L, absolute_index(L, -1));
+				}
+				stack::clear(named_metatable);
+			}
+
+			value_index_table = lua_nil;
+			reference_index_table = lua_nil;
+			unique_index_table = lua_nil;
+			const_reference_index_table = lua_nil;
+			const_value_index_table = lua_nil;
+			named_index_table = lua_nil;
+			type_table = lua_nil;
+			gc_names_table = lua_nil;
+			named_metatable = lua_nil;
+			
 			storage.clear();
 			string_keys.clear();
 			auxiliary_keys.clear();
-			// TODO: also nuke individual lua tables,
-			// one by one,
-			// then replace unqualified_getter/setter
 		}
 
 		template <bool is_new_index, typename Base>
@@ -433,7 +474,7 @@ namespace sol { namespace u_detail {
 					}
 				}
 			}
-			else if (k_type != type::nil && k_type != type::none) {
+			else if (k_type != type::lua_nil && k_type != type::none) {
 				reference* target = nullptr;
 				{
 					stack_reference k = stack::get<stack_reference>(L, 2);
@@ -461,7 +502,7 @@ namespace sol { namespace u_detail {
 			int base_result;
 			(void)keep_going;
 			(void)base_result;
-			detail::swallow{ 1, (base_walk_index<is_new_index, Bases>(L, self, keep_going, base_result), 1)... };
+			(void)detail::swallow{ 1, (base_walk_index<is_new_index, Bases>(L, self, keep_going, base_result), 1)... };
 			if constexpr (sizeof...(Bases) > 0) {
 				if (!keep_going) {
 					return base_result;
@@ -498,7 +539,6 @@ namespace sol { namespace u_detail {
 
 			this->is_using_index |= true;
 			this->is_using_new_index |= true;
-			//detail::clear_entries(t);
 			if (submetatable == submetatable_type::named) {
 				stack::set_field(L, metatable_key, named_index_table, t.stack_index());
 				stack_reference stack_metametatable(L, -named_metatable.push());
@@ -566,6 +606,11 @@ namespace sol { namespace u_detail {
 		template <typename Key, typename Value>
 		inline void set(lua_State* L, Key&& key, Value&& value);
 	};
+
+	template <typename T>
+	inline int destruct_usertype_storage (lua_State* L) {
+		return detail::user_alloc_destruct<usertype_storage<T>>(L);
+	}
 
 	template <typename T, typename Key, typename Value>
 	void usertype_storage_base::set(lua_State* L, Key&& key, Value&& value) {
@@ -706,7 +751,7 @@ namespace sol { namespace u_detail {
 		int usertype_storage_metatabe_count = stack::push(L, new_table(0, 1));
 		stack_reference usertype_storage_metatable(L, -usertype_storage_metatabe_count);
 		// set the destruction routine on the metatable
-		stack::set_field(L, meta_function::garbage_collect, detail::user_alloc_destruct<usertype_storage<T>>, usertype_storage_metatable.stack_index());
+		stack::set_field(L, meta_function::garbage_collect, &destruct_usertype_storage<T>, usertype_storage_metatable.stack_index());
 		// set the metatable on the usertype storage userdata
 		stack::set_field(L, metatable_key, usertype_storage_metatable, usertype_storage_ref.stack_index());
 		usertype_storage_metatable.pop();
@@ -759,10 +804,12 @@ namespace sol { namespace u_detail {
 	template <typename T>
 	inline void delete_usertype_storage(lua_State* L) {
 		using u_traits = usertype_traits<T>;
+#if 0
 		using u_const_traits = usertype_traits<const T>;
 		using u_unique_traits = usertype_traits<detail::unique_usertype<T>>;
 		using u_ref_traits = usertype_traits<T*>;
 		using u_const_ref_traits = usertype_traits<T const*>;
+#endif
 		using uts = usertype_storage<T>;
 
 		const char* gcmetakey = &u_traits::gc_table()[0];
@@ -771,9 +818,11 @@ namespace sol { namespace u_detail {
 			lua_pop(L, 1);
 			return;
 		}
-		lua_pop(L, 1);
+		usertype_storage<T>& target_umt = stack::pop<user<usertype_storage<T>>>(L);
+		target_umt.clear();
 
 		// get the registry
+#if 0
 		stack_reference registry(L, raw_index(LUA_REGISTRYINDEX));
 		registry.push();
 		// eliminate all named entries for this usertype
@@ -786,6 +835,7 @@ namespace sol { namespace u_detail {
 		stack::set_field(L, &u_ref_traits::metatable()[0], lua_nil, registry.stack_index());
 		stack::set_field(L, &u_unique_traits::metatable()[0], lua_nil, registry.stack_index());
 		registry.pop();
+#endif // Registry Cleanout
 
 		stack::set_field<true>(L, gcmetakey, lua_nil);
 	}

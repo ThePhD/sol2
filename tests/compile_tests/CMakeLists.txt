@@ -49,10 +49,18 @@ function(CREATE_TEST test_target_name test_name target_sol)
 			_CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
 	else()
 		target_compile_options(${test_target_name}
-			PRIVATE -std=c++1z 
+			PRIVATE -std=c++1z
+			-Wno-unknown-warning -Wno-unknown-warning-option
 			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors
-			-Wno-noexcept-type 
-			-Wno-unknown-warning -Wno-unknown-warning-option)
+			-Wno-noexcept-type)
+
+		if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+			# For another day, when C++ is not so crap
+			# and we have time to audit the entire lib
+			# for all uses of `detail::swallow`...
+			#target_compile_options(${test_target_name}
+			#	PRIVATE -Wcomma)		
+		endif()
 	endif()
 	
 	if (MSVC)

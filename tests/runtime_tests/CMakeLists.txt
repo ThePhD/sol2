@@ -47,10 +47,18 @@ function(CREATE_TEST test_target_name test_name target_sol)
 		endif()
 	else()
 		target_compile_options(${test_target_name} 
-			PRIVATE -std=c++1z 
-			-Wall -Wpedantic -Werror -pedantic -pedantic-errors 
-			-Wno-noexcept-type -pthread 
-			-Wno-unknown-warning -Wno-unknown-warning-option)
+			PRIVATE -std=c++1z -pthread
+			-Wno-unknown-warning -Wno-unknown-warning-option
+			-Wall -Wpedantic -Werror -pedantic -pedantic-errors
+			-Wno-noexcept-type)
+
+		if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+			# For another day, when C++ is not so crap
+			# and we have time to audit the entire lib
+			# for all uses of `detail::swallow`...
+			#target_compile_options(${test_target_name}
+			#	PRIVATE -Wcomma)		
+		endif()
 
 		if (IS_X86)
 			if(MINGW)

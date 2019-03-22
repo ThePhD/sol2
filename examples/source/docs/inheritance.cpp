@@ -3,7 +3,8 @@
 
 struct A { 
 	int a = 10;
-	virtual int call() { return 0; } 
+	virtual int call() { return 0; }
+	virtual ~A(){}
 };
 struct B : A { 
 	int b = 11; 

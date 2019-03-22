@@ -128,7 +128,7 @@ namespace sol {
 
 			template <typename K, typename... Args>
 			static int push_keyed(lua_State* L, K&& k, Args&&... args) {
-				stack_detail::undefined_metatable<T> fx(L, &k[0]);
+				stack_detail::undefined_metatable fx(L, &k[0], &stack::stack_detail::set_undefined_methods_on<T>);
 				return push_fx(L, fx, std::forward<Args>(args)...);
 			}
 
@@ -167,7 +167,7 @@ namespace sol {
 
 			template <typename K>
 			static int push_keyed(lua_State* L, K&& k, T* obj) {
-				stack_detail::undefined_metatable<U*> fx(L, &k[0]);
+				stack_detail::undefined_metatable fx(L, &k[0], &stack::stack_detail::set_undefined_methods_on<U*>);
 				return push_fx(L, fx, obj);
 			}
 

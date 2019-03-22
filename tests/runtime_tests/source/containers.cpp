@@ -487,6 +487,7 @@ TEST_CASE("containers/pairs", "test how well pairs work with the underlying syst
 TEST_CASE("containers/pointer types", "check that containers with unique usertypes and pointers or something") {
 	struct base_t {
 		virtual int get() const = 0;
+		virtual ~base_t(){}
 	};
 
 	struct derived_1_t : base_t {

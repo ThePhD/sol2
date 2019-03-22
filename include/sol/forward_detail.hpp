@@ -46,7 +46,11 @@ namespace sol {
 
 	namespace stack {
 	namespace stack_detail {
+		using undefined_method_func = void (*)(stack_reference);
+
 		template <typename T>
+		void set_undefined_methods_on(stack_reference);
+
 		struct undefined_metatable;
 	}
 	} // namespace stack::stack_detail

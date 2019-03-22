@@ -704,11 +704,11 @@ TEST_CASE("object/base_of_things", "make sure that object is the base of things 
 		lua["ud"] = base1{};
 
 		lua["f1"] = [](sol::stack_object o) -> sol::stack_object { return o; };
-		lua["f2"] = [](sol::stack_table o) -> sol::stack_object { return o; };
-		lua["f3"] = [](sol::stack_thread o) -> sol::stack_object { return o; };
-		lua["f4"] = [](sol::stack_unsafe_function o) -> sol::stack_object { return o; };
-		lua["f5"] = [](sol::stack_protected_function o) -> sol::stack_object { return o; };
-		lua["f6"] = [](sol::stack_userdata o) -> sol::stack_object { return o; };
+		lua["f2"] = [](sol::stack_table o) -> sol::stack_object { return std::move(o); };
+		lua["f3"] = [](sol::stack_thread o) -> sol::stack_object { return std::move(o); };
+		lua["f4"] = [](sol::stack_unsafe_function o) -> sol::stack_object { return std::move(o); };
+		lua["f5"] = [](sol::stack_protected_function o) -> sol::stack_object { return std::move(o); };
+		lua["f6"] = [](sol::stack_userdata o) -> sol::stack_object { return std::move(o); };
 		auto result1 = lua.safe_script("f1(2)", sol::script_pass_on_error);
 		REQUIRE(result1.valid());
 		auto result2 = lua.safe_script("f2({})", sol::script_pass_on_error);

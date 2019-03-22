@@ -232,32 +232,32 @@ namespace sol { namespace stack {
 		using Tu = meta::unqualified_t<T>;
 
 		template <typename V>
-		static void push_back_at_end(std::true_type, types<V>, lua_State* L, T& arr, std::size_t) {
-			arr.push_back(stack::get<V>(L, -lua_size<V>::value));
+		static void push_back_at_end(std::true_type, types<V>, lua_State* L, T& cont, std::size_t) {
+			cont.push_back(stack::get<V>(L, -lua_size<V>::value));
 		}
 
 		template <typename V>
-		static void push_back_at_end(std::false_type, types<V> t, lua_State* L, T& arr, std::size_t idx) {
-			insert_at_end(meta::has_insert<Tu>(), t, L, arr, idx);
+		static void push_back_at_end(std::false_type, types<V> t, lua_State* L, T& cont, std::size_t idx) {
+			insert_at_end(meta::has_insert<Tu>(), t, L, cont, idx);
 		}
 
 		template <typename V>
-		static void insert_at_end(std::true_type, types<V>, lua_State* L, T& arr, std::size_t) {
+		static void insert_at_end(std::true_type, types<V>, lua_State* L, T& cont, std::size_t) {
 			using std::cend;
-			arr.insert(cend(arr), stack::get<V>(L, -lua_size<V>::value));
+			cont.insert(cend(cont), stack::get<V>(L, -lua_size<V>::value));
 		}
 
 		template <typename V>
-		static void insert_at_end(std::false_type, types<V>, lua_State* L, T& arr, std::size_t idx) {
-			arr[idx] = stack::get<V>(L, -lua_size<V>::value);
+		static void insert_at_end(std::false_type, types<V>, lua_State* L, T& cont, std::size_t idx) {
+			cont[idx] = stack::get<V>(L, -lua_size<V>::value);
 		}
 
 		static bool max_size_check(std::false_type, T&, std::size_t) {
 			return false;
 		}
 
-		static bool max_size_check(std::true_type, T& arr, std::size_t idx) {
-			return idx >= arr.max_size();
+		static bool max_size_check(std::true_type, T& cont, std::size_t idx) {
+			return idx >= cont.max_size();
 		}
 
 		static T get(lua_State* L, int relindex, record& tracking) {
@@ -279,7 +279,7 @@ namespace sol { namespace stack {
 			// without hitting where the gotos have infested
 
 			// so now I would get the error W4XXX unreachable
-			// me that the return arr at the end of this function
+			// me that the return cont at the end of this function
 			// which is fair until other compilers complain
 			// that there isn't a return and that based on
 			// SOME MAGICAL FORCE
@@ -308,14 +308,14 @@ namespace sol { namespace stack {
 			// all in all: W4 is great!~
 
 			int index = lua_absindex(L, relindex);
-			T arr;
+			T cont;
 			std::size_t idx = 0;
 #if SOL_LUA_VERSION >= 503
 			// This method is HIGHLY performant over regular table iteration 
 			// thanks to the Lua API changes in 5.3
 			// Questionable in 5.4
 			for (lua_Integer i = 0;; i += lua_size<V>::value) {
-				if (max_size_check(meta::has_max_size<Tu>(), arr, idx)) {
+				if (max_size_check(meta::has_max_size<Tu>(), cont, idx)) {
 					// see above comment
 					goto done;
 				}
@@ -359,14 +359,14 @@ namespace sol { namespace stack {
 					continue;
 				}
 				
-				push_back_at_end(meta::has_push_back<Tu>(), t, L, arr, idx);
+				push_back_at_end(meta::has_push_back<Tu>(), t, L, cont, idx);
 				++idx;
 				lua_pop(L, lua_size<V>::value);
 			}
 #else
 			// Zzzz slower but necessary thanks to the lower version API and missing functions qq
 			for (lua_Integer i = 0;; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
-				if (idx >= arr.max_size()) {
+				if (idx >= cont.max_size()) {
 					// see above comment
 					goto done;
 				}
@@ -390,12 +390,12 @@ namespace sol { namespace stack {
 				}
 				if (isnil)
 					continue;
-				push_back_at_end(meta::has_push_back<Tu>(), t, L, arr, idx);
+				push_back_at_end(meta::has_push_back<Tu>(), t, L, cont, idx);
 				++idx;
 			}
 #endif
 			done:
-			return arr;
+			return cont;
 		}
 
 		static T get(std::true_type, lua_State* L, int index, record& tracking) {
@@ -457,13 +457,13 @@ namespace sol { namespace stack {
 #endif // make sure stack doesn't overflow
 
 			int index = lua_absindex(L, relindex);
-			C arr;
-			auto at = arr.cbefore_begin();
+			C cont;
+			auto at = cont.cbefore_begin();
 			std::size_t idx = 0;
 #if SOL_LUA_VERSION >= 503
 			// This method is HIGHLY performant over regular table iteration thanks to the Lua API changes in 5.3
 			for (lua_Integer i = 0;; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
-				if (idx >= arr.max_size()) {
+				if (idx >= cont.max_size()) {
 					goto done;
 				}
 				bool isnil = false;
@@ -480,13 +480,13 @@ namespace sol { namespace stack {
 				}
 				if (isnil)
 					continue;
-				at = arr.insert_after(at, stack::get<V>(L, -lua_size<V>::value));
+				at = cont.insert_after(at, stack::get<V>(L, -lua_size<V>::value));
 				++idx;
 			}
 #else
 			// Zzzz slower but necessary thanks to the lower version API and missing functions qq
 			for (lua_Integer i = 0;; i += lua_size<V>::value, lua_pop(L, lua_size<V>::value)) {
-				if (idx >= arr.max_size()) {
+				if (idx >= cont.max_size()) {
 					goto done;
 				}
 				bool isnil = false;
@@ -505,12 +505,12 @@ namespace sol { namespace stack {
 				}
 				if (isnil)
 					continue;
-				at = arr.insert_after(at, stack::get<V>(L, -lua_size<V>::value));
+				at = cont.insert_after(at, stack::get<V>(L, -lua_size<V>::value));
 				++idx;
 			}
 #endif
 			done:
-			return arr;
+			return cont;
 		}
 
 		template <typename K, typename V>

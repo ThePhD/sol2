@@ -37,26 +37,37 @@ namespace sol {
 	private:
 		using base_t = basic_metatable<base_type>;
 
-	public:
-		using base_t::base_t;
+		template <typename>
+		friend class basic_metatable;
 
-		using base_t::pop;
-		using base_t::push;
+		template <bool, typename>
+		friend class basic_table_core;
 
 		template <std::size_t... I, typename... Args>
 		void tuple_set(std::index_sequence<I...>, std::tuple<Args...>&& args) {
 			using args_tuple = std::tuple<Args...>&&;
 			optional<u_detail::usertype_storage<T>&> maybe_uts = u_detail::maybe_get_usertype_storage<T>(this->lua_state());
-			if constexpr(sizeof...(I) > 0) {
+			if constexpr (sizeof...(I) > 0) {
 				if (maybe_uts) {
 					u_detail::usertype_storage<T>& uts = *maybe_uts;
-					detail::swallow{ 0, (uts.set(this->lua_state(), std::get<I * 2>(std::forward<args_tuple>(args)), std::get<I * 2 + 1>(std::forward<args_tuple>(args))), 0)... };
+					(void)detail::swallow{ 0,
+						(uts.set(this->lua_state(), std::get<I * 2>(std::forward<args_tuple>(args)), std::get<I * 2 + 1>(std::forward<args_tuple>(args))),
+						     0)... };
 				}
 			}
 			else {
 				(void)args;
 			}
 		}
+
+	public:
+		using base_t::base_t;
+
+		using base_t::pop;
+		using base_t::push;
+		using base_t::lua_state;
+		using base_t::get;
+		using base_t::unregister;
 
 		template <typename Key, typename Value>
 		void set(Key&& key, Value&& value) {

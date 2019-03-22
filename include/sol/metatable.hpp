@@ -106,27 +106,28 @@ namespace sol {
 			using ustorage_base = u_detail::usertype_storage_base;
 
 			lua_State* L = this->lua_state();
-			int x = lua_gettop(L);
 
 			auto pp = stack::push_pop(*this);
+			int top = lua_gettop(L);
+
 			stack_reference mt(L, -1);
 			stack::get_field(L, meta_function::gc_names, mt.stack_index());
 			if (type_of(L, -1) != type::table) {
 				return;
 			}
+			stack_reference gc_names_table(L, -1);
 			stack::get_field(L, meta_function::storage, mt.stack_index());
 			if (type_of(L, -1) != type::lightuserdata) {
 				return;
 			}
 			ustorage_base& base_storage = *static_cast<ustorage_base*>(stack::get<void*>(L, -1));
-			base_storage.clear();
-			stack_reference gc_names_table(L, -1);
-			std::array<const char*, 6> registry_traits;
-			for (int i = 0; i < registry_traits.size(); ++i) {
+			std::array<string_view, 6> registry_traits;
+			for (std::size_t i = 0; i < registry_traits.size(); ++i) {
 				u_detail::submetatable_type smt = static_cast<u_detail::submetatable_type>(i);
-				stack::get_field(L, smt, gc_names_table.stack_index());
-				registry_traits[i] = stack::get<const char*>(L, -1);
+				stack::get_field<false, true>(L, smt, gc_names_table.stack_index());
+				registry_traits[i] = stack::get<string_view>(L, -1);
 			}
+
 			// get the registry
 			stack_reference registry(L, raw_index(LUA_REGISTRYINDEX));
 			registry.push();
@@ -134,26 +135,31 @@ namespace sol {
 			// in the registry (luaL_newmetatable does
 			// [name] = new table
 			// in registry upon creation)
-			for (int i = 0; i < registry_traits.size(); ++i) {
+			for (std::size_t i = 0; i < registry_traits.size(); ++i) {
 				u_detail::submetatable_type smt = static_cast<u_detail::submetatable_type>(i);
+				const string_view& gcmetakey = registry_traits[i];
 				if (smt == u_detail::submetatable_type::named) {
-					const char* gcmetakey = registry_traits[i];
-					stack::set_field<true>(L, gcmetakey, lua_nil);
+					// use .data() to make it treat it like a c string,
+					// which it is...
+					stack::set_field<true>(L, gcmetakey.data(), lua_nil);
 				}
 				else {
-					stack::set_field(L, registry_traits[i], lua_nil, registry.stack_index());
+					// do not change the values in the registry: they need to be present
+					// no matter what, for safety's sake
+					//stack::set_field(L, gcmetakey, lua_nil, registry.stack_index());
 				}
 			}
+
+			// destroy all storage and tables
+			base_storage.clear();
 
 			// 6 strings from gc_names table,
 			// + 1 registry,
 			// + 1 gc_names table
 			// + 1 light userdata of storage
-			// 8 total
-			int y = lua_gettop(L);
-			lua_pop(L, 9);
-			int z = lua_gettop(L);
-			int a = x + y + z;
+			// + 1 registry
+			// 10 total, 4 left since popping off 6 gc_names tables
+			lua_settop(L, top);
 		}
 	};
 

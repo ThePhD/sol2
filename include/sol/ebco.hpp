@@ -41,7 +41,7 @@ namespace sol { namespace detail {
 		ebco(const T& v) : value_(v){};
 		ebco(T&& v) : value_(std::move(v)){};
 		ebco& operator=(const T& v) {
-			value = v;
+			value_ = v;
 			return *this;
 		}
 		ebco& operator=(T&& v) {
@@ -53,12 +53,16 @@ namespace sol { namespace detail {
 		                                      ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T>>>
 		ebco(Arg&& arg, Args&&... args) : T(std::forward<Arg>(arg), std::forward<Args>(args)...){}
 
-		T& value() {
+		T& value() & {
 			return value_;
 		}
 
-		T const& value() const {
+		T const& value() const & {
 			return value_;
+		}
+
+		T&& value() && {
+			return std::move(value_);
 		}
 	};
 
@@ -86,12 +90,16 @@ namespace sol { namespace detail {
 			return *this;
 		};
 
-		T& value() {
+		T& value() & {
 			return static_cast<T&>(*this);
 		}
 
-		T const& value() const {
+		T const& value() const & {
 			return static_cast<T const&>(*this);
+		}
+
+		T&& value() && {
+			return std::move(static_cast<T&>(*this));
 		}
 	};
 
@@ -128,8 +136,16 @@ namespace sol { namespace detail {
 		ebco& operator=(const ebco&) = default;
 		ebco& operator=(ebco&&) = default;
 		ebco& operator=(T&& v) {
-			ref = v;
+			ref = std::move(v);
 			return *this;
+		}
+
+		T& value() & {
+			return ref;
+		}
+
+		const T& value() const & {
+			return ref;
 		}
 
 		T&& value() && {

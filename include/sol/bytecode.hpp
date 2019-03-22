@@ -38,18 +38,18 @@ namespace sol {
 		using base_t = std::vector<std::byte, Allocator>;
 
 	public:
-		using base_t::allocator_type;
-		using base_t::const_iterator;
-		using base_t::const_pointer;
-		using base_t::const_reference;
-		using base_t::const_reverse_iterator;
-		using base_t::difference_type;
-		using base_t::iterator;
-		using base_t::pointer;
-		using base_t::reference;
-		using base_t::reverse_iterator;
-		using base_t::size_type;
-		using base_t::value_type;
+		using typename base_t::allocator_type;
+		using typename base_t::const_iterator;
+		using typename base_t::const_pointer;
+		using typename base_t::const_reference;
+		using typename base_t::const_reverse_iterator;
+		using typename base_t::difference_type;
+		using typename base_t::iterator;
+		using typename base_t::pointer;
+		using typename base_t::reference;
+		using typename base_t::reverse_iterator;
+		using typename base_t::size_type;
+		using typename base_t::value_type;
 
 		using base_t::base_t;
 		using base_t::operator=;

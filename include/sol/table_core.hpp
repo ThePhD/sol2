@@ -300,6 +300,12 @@ namespace sol {
 			return end();
 		}
 
+		void clear () {
+			auto pp = stack::push_pop<false>(*this);
+			int table_index = pp.index_of(*this);
+			stack::clear(lua_state(), table_index);
+		}
+
 		template <typename... Ret, typename... Keys>
 		decltype(auto) get(Keys&&... keys) const {
 			static_assert(sizeof...(Keys) == sizeof...(Ret), "number of keys and number of return types do not match");

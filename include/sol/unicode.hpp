@@ -19,13 +19,13 @@ namespace sol {
 		};
 
 		inline const string_view& to_string(error_code ec) {
-			static const string_view arr[4] = {
+			static const string_view storage[4] = {
 				"ok",
 				"invalid code points",
 				"invalid code unit",
 				"overlong sequence"
 			};
-			return arr[static_cast<std::size_t>(ec)];
+			return storage[static_cast<std::size_t>(ec)];
 		}
 
 		template <typename It>

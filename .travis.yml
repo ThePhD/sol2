@@ -35,8 +35,16 @@ before_install:
 script:
 - export SOL2_DIR=${TRAVIS_BUILD_DIR}
 - sudo docker image pull thephd/sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
-- sudo docker run --rm --interactive --tty --name "sol2.test" -v "${SOL2_DIR}:/root/sol2" --env "CI=${CI}" --env "PLATFORM=${PLATFORM}" --env "LUA_VERSION=${LUA_VERSION}" --env "GCC_VERSION=${GCC_VERSION}" --env "LLVM_VERSION=${LLVM_VERSION}" thephd/sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
-- sudo docker rmi $(sudo docker image ls -q)
+- sudo docker run --rm --interactive --tty --name "sol2.test" -v "${SOL2_DIR}:/root/sol2" --env "SOL2_CI=${SOL2_CI}" --env "SOL2_PLATFORM=${SOL2_PLATFORM}" --env "SOL2_LUA_VERSION=${SOL2_LUA_VERSION}"  --env "SOL2_TEST_SINGLE=${SOL2_TEST_SINGLE}"  --env "SOL2_TEST_INTEROP=${SOL2_TEST_INTEROP}" --env "GCC_VERSION=${GCC_VERSION}" --env "LLVM_VERSION=${LLVM_VERSION}" thephd/sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
+
+after_success:
+- wget https://raw.githubusercontent.com/DiscordHooks/travis-ci-discord-webhook/master/send.sh
+- chmod +x send.sh
+- ./send.sh success ${DISORD_WEBHOOK_URL}
+after_failure:
+- wget https://raw.githubusercontent.com/DiscordHooks/travis-ci-discord-webhook/master/send.sh
+- chmod +x send.sh
+- ./send.sh failure ${DISORD_WEBHOOK_URL}
 
 matrix:
   fast_finish: true
@@ -44,91 +52,108 @@ matrix:
     - os: osx
 
   include:
-    # GCC 4.9.x, 5.x, 6.x, 7.x
+    # LLVM 5.0.x -> 8.0.x
     - env:
-      - LUA_VERSION=5.3.5
-        GCC_VERSION=7
-        PLATFORM=i686
-        CI=true
-
-    - env:
-      - LUA_VERSION=luajit-2.0.5
-        GCC_VERSION=7
-        PLATFORM=i686
-        CI=true
-
-    - env:
-      - LUA_VERSION=luajit-2.1.0-beta3
-        GCC_VERSION=7
-        PLATFORM=i686
-        CI=true
-
-    - env:
-      - LUA_VERSION=5.3.5
-        GCC_VERSION=7
-        PLATFORM=x64
-        CI=true
-
-    # LLVM 3.9.x -> 5.0.x
-    - env:
-      - LUA_VERSION=5.3.5
-        LLVM_VERSION=3.9.1
-        PLATFORM=x64
-        CI=true
-
-    - env:
-      - LUA_VERSION=5.3.5
-        LLVM_VERSION=4.0.1
-        PLATFORM=x64
-        CI=true
-
-    - env:
-      - LUA_VERSION=5.3.5
+      - SOL2_LUA_VERSION=5.3.5
         LLVM_VERSION=5.0.2
-        PLATFORM=x64
-        CI=true
+        SOL2_PLATFORM=x64
+        SOL2_CI=true
 
     - env:
-      - LUA_VERSION=5.3.5
+      - SOL2_LUA_VERSION=5.3.5
         LLVM_VERSION=6.0.1
-        PLATFORM=x64
-        CI=true
+        SOL2_PLATFORM=x64
+        SOL2_CI=true
 
     - env:
-      - LUA_VERSION=5.3.5
-        LLVM_VERSION=7.0.0
-        PLATFORM=x64
-        CI=true
+      - LLVM_VERSION=7.0.1
+        SOL2_LUA_VERSION=5.3.5
+        SOL2_PLATFORM=x64
+        SOL2_CI=true
 
-    # Lua Versions 5.2.4, 5.1.5, and LuaJIT (as well as x86)
     - env:
-      - LUA_VERSION=5.2.4
+      - LLVM_VERSION=8.0.0
+        SOL2_LUA_VERSION=5.3.5
+        SOL2_PLATFORM=x64
+        SOL2_CI=true
+
+    # GCC 7.x, 8.x
+    - env:
+      - SOL2_LUA_VERSION=5.3.5
+        GCC_VERSION=8
+        SOL2_PLATFORM=i686
+        SOL2_CI=true
+
+    - env:
+      - SOL2_LUA_VERSION=5.3.5
         GCC_VERSION=7
-        PLATFORM=x64
-        CI=true
+        SOL2_PLATFORM=x64
+        SOL2_CI=true
+
+    - env:
+      - SOL2_LUA_VERSION=5.3.5
+        GCC_VERSION=8
+        SOL2_PLATFORM=x64
+        SOL2_CI=true
+
+    # Lua Versions 5.2.4, 5.1.5, and LuaJIT
+    - env:
+      - SOL2_LUA_VERSION=5.1.5
+        GCC_VERSION=8
+        SOL2_PLATFORM=x64
+        SOL2_CI=true
         
     - env:
-      - LUA_VERSION=5.1.5
-        GCC_VERSION=7
-        PLATFORM=x64
-        CI=true
+      - SOL2_LUA_VERSION=5.2.4
+        GCC_VERSION=8
+        SOL2_PLATFORM=x64
+        SOL2_CI=true
         
     - env:
-      - LUA_VERSION=luajit-2.0.4
-        GCC_VERSION=7
-        PLATFORM=x64
-        CI=true
+      - SOL2_LUA_VERSION=luajit-2.0.4
+        GCC_VERSION=8
+        SOL2_PLATFORM=x64
+        SOL2_CI=true
         
     - env:
-      - LUA_VERSION=luajit-2.0.5
-        GCC_VERSION=7
-        PLATFORM=x64
-        CI=true
+      - SOL2_LUA_VERSION=luajit-2.0.5
+        GCC_VERSION=8
+        SOL2_PLATFORM=x64
+        SOL2_CI=true
+
+    - env:
+      - SOL2_LUA_VERSION=luajit-2.0.5
+        GCC_VERSION=8
+        SOL2_PLATFORM=i686
+        SOL2_CI=true
+
+    - env:
+      - SOL2_LUA_VERSION=luajit-2.1.0-beta3
+        GCC_VERSION=8
+        SOL2_PLATFORM=i686
+        SOL2_CI=true
+
+    # Test Single, Interop, Etc.
+    - env:
+      - LLVM_VERSION=7.0.0
+        SOL2_LUA_VERSION=5.3.5
+        SOL2_PLATFORM=x64
+        SOL2_CI=true
+        SOL2_TEST_SINGLE=true
+        SOL2_TEST_INTEROP=true
+
+    - env:
+      - SOL2_LUA_VERSION=5.3.5
+        GCC_VERSION=8
+        SOL2_PLATFORM=x64
+        SOL2_CI=true
+        SOL2_TEST_SINGLE=true
+        SOL2_TEST_INTEROP=true
 
     - os: osx
       osx_image: xcode9.0
       env:
-        - LUA_VERSION=lua-5.3.5
+        - SOL2_LUA_VERSION=lua-5.3.5
           LLVM_VERSION=5.0.2
       before_install:
         - chmod +x ./scripts/run.osx.sh
@@ -140,7 +165,7 @@ matrix:
     - os: osx
       osx_image: xcode9.1
       env:
-        - LUA_VERSION=lua-5.3.5
+        - SOL2_LUA_VERSION=lua-5.3.5
           LLVM_VERSION=5.0.2
       before_install:
         - chmod +x ./scripts/run.osx.sh
@@ -152,7 +177,7 @@ matrix:
     - os: osx
       osx_image: xcode9.2
       env:
-        - LUA_VERSION=lua-5.3.5
+        - SOL2_LUA_VERSION=lua-5.3.5
           LLVM_VERSION=5.0.2
       before_install:
         - chmod +x ./scripts/run.osx.sh
@@ -164,7 +189,7 @@ matrix:
 notifications:
   webhooks:
     urls:
-      - https://webhooks.gitter.im/e/b864d553270a069d26c8
+      - https://skyhook.glitch.me/api/webhooks/427786348108185611/y2nTmghqltv1SKX2DclEMEKyZtRcwKFlwfZpB_mL1A0nZTVS5MSfumqDKq30-gvWgeL5/travis
     on_success: change
     on_failure: always
     on_start: always

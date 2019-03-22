@@ -62,9 +62,19 @@ function(make_require_from_dll_example target_lib example_lib_name_suffix)
 	else()
 		target_compile_options(${example_lib_name}
 			PRIVATE -std=c++1z 
+			-Wno-unknown-warning -Wno-unknown-warning-option
 			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors
-			-Wno-noexcept-type 
-			-Wno-unknown-warning -Wno-unknown-warning-option)
+			-Wno-noexcept-type)
+
+		if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+			# For another day, when C++ is not so crap
+			# and we have time to audit the entire lib
+			# for all uses of `detail::swallow`...
+			#target_compile_options(${test_target_name}
+			#	PRIVATE -Wcomma)		
+		endif()
+
+
 		if (IS_X86)
 			target_compile_options(${example_lib_name} BEFORE PRIVATE -m32)
 		endif()
@@ -93,9 +103,17 @@ function(make_require_from_dll_example target_lib example_lib_name_suffix)
 	else()
 		target_compile_options(${example_name}
 			PRIVATE -std=c++1z
+			-Wno-unknown-warning -Wno-unknown-warning-option
 			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors
-			-Wno-noexcept-type 
-			-Wno-unknown-warning -Wno-unknown-warning-option)
+			-Wno-noexcept-type)
+
+		if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+			# For another day, when C++ is not so crap
+			# and we have time to audit the entire lib
+			# for all uses of `detail::swallow`...
+			#target_compile_options(${test_target_name}
+			#	PRIVATE -Wcomma)		
+		endif()
 	endif()
 
 	if(CMAKE_DL_LIBS)

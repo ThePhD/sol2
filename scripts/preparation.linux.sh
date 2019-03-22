@@ -32,7 +32,7 @@ build_dir="$(pwd)"
 echo "#\!/usr/bin/env zsh\n\n" > "sol2.compiler.vars"
 
 # # Initial and necessary installations
-apt-get update && apt-get -y install ninja-build libreadline6 libreadline6-dev lib32readline6 lib32readline6-dev python3 wget curl libcurl3 cmake git
+apt-get update && apt-get -y install lsb-release ninja-build libreadline7 libreadline-dev lib32readline7 lib32readline-dev python3 wget curl libcurl4 cmake git
 
 # # LLVM and GCC updates
 # Grab LLVM or GCC 
@@ -46,13 +46,17 @@ then
 	minor=$version_nums[2]
 	revision=$version_nums[3]
 	download_llvm=true
-	download_version=16.04
+	image_version=$(lsb_release -rs)
+	download_version=${image_version}
 	apt_version=${major}.${minor}
-	#sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-	#sudo apt-get -y update
-	if [ ${major} -le 5 ] && [ ${major} -ge 4 ];
+	if [ ${major} -le 6 ];
 	then
-		download_llvm=false
+		download_llvm=true
+		download_version=16.04
+	elif [ ${major} -eq 4 ]
+	then
+		download_llvm=true
+		download_version=16.04
 	elif [ ${major} -eq 3 ]
 	then
 		download_llvm=false
@@ -60,27 +64,43 @@ then
 		then
 			download_llvm=true
 			download_version=14.04
+		elif [ ${minor} -lt 10 ]
+		then
+			download_llvm=true
+			download_version=16.04
 		fi
 	fi
 	if [ ${download_llvm} = true ]
 	then
-		export LLVM_ARCHIVE_PATH=${build_dir}/clang+llvm.tar.xz
-		export CLANG_PREFIX=${build_dir}/clang-${LLVM_VERSION}
+		export LLVM_ARCHIVE_PATH=${build_dir}/clang-llvm.tar.xz
+		export CLANG_PREFIX=${build_dir}/clang-llvm-${LLVM_VERSION}
 		export PATH=$CLANG_PREFIX/bin:$PATH
 		export LD_LIBRARY_PATH=$CLANG_PREFIX/lib:$LD_LIBRARY_PATH
 		echo "export LLVM_ARCHIVE_PATH=${build_dir}/clang+llvm.tar.xz\nexport CLANG_PREFIX=${build_dir}/clang-$LLVM_VERSION\nexport PATH=$CLANG_PREFIX/bin:$PATH\nexport LD_LIBRARY_PATH=$CLANG_PREFIX/lib:$LD_LIBRARY_PATH\n" >> "sol2.compiler.vars"
 		
 		apt-get -y install xz-utils clang
+		#if [${major} -le 5]
+		#then
+		#	wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-${download_version}.tar.xz -O ${LLVM_ARCHIVE_PATH}
+		#	http://releases.llvm.org/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-${download_version}.tar.xz
+		#else
+		#	wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-${download_version}.tar.xz -O ${LLVM_ARCHIVE_PATH}
+		#fi
 		wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-${download_version}.tar.xz -O ${LLVM_ARCHIVE_PATH}
 		mkdir -p "${CLANG_PREFIX}"
-		tar xf "${LLVM_ARCHIE_PATH}" -C "${CLANG_PREFIX}" --strip-components 1
-		# make sure a clang(++) of major/minor exists
-		# use || true to ignore potential failures
-		ln -s "clang-${major}.${minor}" "${CLANG_PREFIX}/bin/clang-${major}.${minor}" || true
-		ln -s "clang-${major}.${minor}" "${CLANG_PREFIX}/bin/clang++-${major}.${minor}" || true
-		rm -f "${LLVM_ARCHIVE_PATH}"
-		export CC=clang-${major}.${minor}
-		export CXX=clang++-${major}.${minor}
+		tar xf "${LLVM_ARCHIVE_PATH}" -C "${CLANG_PREFIX}" --strip-components 1
+		if [ -f "${CLANG_PREFIX}/bin/clang" ]
+		then
+			export CC="${CLANG_PREFIX}/bin/clang"
+		else
+			export CC="${CLANG_PREFIX}/bin/clang-${major}"
+		fi
+		if [ -f "${CLANG_PREFIX}/bin/clang++-${major}" ]
+		then
+			export CXX="${CLANG_PREFIX}/bin/clang++-${major}"
+		else
+			export CXX="${CLANG_PREFIX}/bin/clang++"
+		fi
 	else
 		apt-get -y install clang-${apt_version}
 		export CC=clang-${apt_version}
@@ -89,11 +109,15 @@ then
 elif [ "${GCC_VERSION}" ]
 then
 	# get and use GCC version that we desire
-	apt-get -y install software-properties-common python-software-properties
+	# python-software-properties is no longer needed in 18.04, it 
+	# comes with software-properties-common
+	apt-get -y install software-properties-common
 	add-apt-repository -y ppa:ubuntu-toolchain-r/test
 	apt-get -y update
 	apt-get -y dist-upgrade
 	apt-get -y install gcc-${GCC_VERSION} g++-${GCC_VERSION} gcc-${GCC_VERSION}-multilib g++-${GCC_VERSION}-multilib
+	#update-alternatives --remove-all gcc
+	#update-alternatives --remove-all g++
 	update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${GCC_VERSION} 60 --slave /usr/bin/g++ g++ /usr/bin/g++-${GCC_VERSION}
 	update-alternatives --config gcc
 	export CC=gcc-${GCC_VERSION}
@@ -112,8 +136,8 @@ apt-get -y autoclean
 echo "=== Compiler and tool variables ==="
 ninja --version
 cmake --version
-$CC --version
-$CXX --version
+${CC} --version
+${CXX} --version
 
 echo "export CC=$CC\nexport CXX=$CXX\n" >> "sol2.compiler.vars"
 

@@ -140,26 +140,26 @@ namespace sol {
 						lua_CFunction f = &comparsion_operator_wrap<T, no_comp>;
 						ifx(meta_function::equal_to, f);
 					}
-					if (fx(meta_function::pairs)) {
-						ifx(meta_function::pairs, &container_detail::u_c_launch<as_container_t<T>>::pairs_call);
+				}
+				if (fx(meta_function::pairs)) {
+					ifx(meta_function::pairs, &container_detail::u_c_launch<as_container_t<T>>::pairs_call);
+				}
+				if (fx(meta_function::length)) {
+					if constexpr (meta::has_size<const T>::value || meta::has_size<T>::value) {
+						auto f = &default_size<T>;
+						ifx(meta_function::length, f);
 					}
-					if (fx(meta_function::length)) {
-						if constexpr (meta::has_size<const T>::value || meta::has_size<T>::value) {
-							auto f = &default_size<T>;
-							ifx(meta_function::length, f);
-						}
+				}
+				if (fx(meta_function::to_string)) {
+					if constexpr (is_to_stringable<T>::value) {
+						auto f = &detail::static_trampoline<&default_to_string<T>>;
+						ifx(meta_function::to_string, f);
 					}
-					if (fx(meta_function::to_string)) {
-						if constexpr (is_to_stringable<T>::value) {
-							auto f = &detail::static_trampoline<&default_to_string<T>>;
-							ifx(meta_function::to_string, f);
-						}
-					}
-					if (fx(meta_function::call_function)) {
-						if constexpr (meta::has_deducible_signature<T>::value) {
-							auto f = &c_call<decltype(&T::operator()), &T::operator()>;
-							ifx(meta_function::call_function, f);
-						}
+				}
+				if (fx(meta_function::call_function)) {
+					if constexpr (meta::has_deducible_signature<T>::value) {
+						auto f = &c_call<decltype(&T::operator()), &T::operator()>;
+						ifx(meta_function::call_function, f);
 					}
 				}
 			}
@@ -167,43 +167,36 @@ namespace sol {
 	} // namespace detail
 
 	namespace stack { namespace stack_detail {
-		template <typename T>
-		struct undefined_metatable {
-			typedef meta::all<meta::neg<std::is_pointer<T>>, std::is_destructible<T>> is_destructible;
-			typedef std::remove_pointer_t<T> P;
-			lua_State* L;
-			const char* key;
-
-			undefined_metatable(lua_State* l, const char* k)
-			: L(l), key(k) {
+		template <typename X>
+		void set_undefined_methods_on(stack_reference t) {
+			using T = std::remove_pointer_t<X>;
+			
+			lua_State* L = t.lua_state();
+			
+			t.push();
+			
+			detail::lua_reg_table l{};
+			int index = 0;
+			detail::indexed_insert insert_fx(l, index);
+			detail::insert_default_registrations<T>(insert_fx, detail::property_always_true);
+			if constexpr (!std::is_pointer_v<X>) {
+				l[index] = luaL_Reg{ to_string(meta_function::garbage_collect).c_str(), detail::make_destructor<T>() };
 			}
+			luaL_setfuncs(L, l, 0);
+			
+			// __type table
+			lua_createtable(L, 0, 2);
+			const std::string& name = detail::demangle<T>();
+			lua_pushlstring(L, name.c_str(), name.size());
+			lua_setfield(L, -2, "name");
+			lua_CFunction is_func = &detail::is_check<T>;
+			lua_pushcclosure(L, is_func, 0);
+			lua_setfield(L, -2, "is");
+			lua_setfield(L, t.stack_index(), to_string(meta_function::type).c_str());
 
-			void operator()() const {
-				if (luaL_newmetatable(L, key) == 1) {
-					detail::lua_reg_table l{};
-					int index = 0;
-					detail::indexed_insert insert_fx(l, index);
-					detail::insert_default_registrations<P>(insert_fx, detail::property_always_true);
-					if constexpr (!std::is_pointer_v<T>) {
-						l[index] = luaL_Reg{ to_string(meta_function::garbage_collect).c_str(), detail::make_destructor<P>() };
-					}
-					luaL_setfuncs(L, l, 0);
-
-					// __type table
-					lua_createtable(L, 0, 2);
-					const std::string& name = detail::demangle<T>();
-					lua_pushlstring(L, name.c_str(), name.size());
-					lua_setfield(L, -2, "name");
-					lua_CFunction is_func = &detail::is_check<T>;
-					lua_pushcclosure(L, is_func, 0);
-					lua_setfield(L, -2, "is");
-					lua_setfield(L, -2, to_string(meta_function::type).c_str());
-				}
-				lua_setmetatable(L, -2);
-			}
-		};
-	}
-	} // namespace stack::stack_detail
+			t.pop();
+		}
+	}} // namespace stack::stack_detail
 } // namespace sol
 
 #endif // SOL_USERTYPE_CORE_HPP

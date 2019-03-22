@@ -534,6 +534,9 @@ TEST_CASE("functions/all kinds", "Register all kinds of functions, make sure the
 		static std::tuple<int, int> x_bark(int num_value, test_1* a) {
 			return std::tuple<int, int>(num_value * 2, a->a);
 		}
+
+		virtual ~test_1() {
+		}
 	};
 
 	struct test_2 {

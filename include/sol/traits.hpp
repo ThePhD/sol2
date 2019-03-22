@@ -630,8 +630,7 @@ namespace sol {
 		struct is_pair<std::pair<T1, T2>> : std::true_type {};
 
 		template <typename T>
-		using is_c_str = any<std::is_same<std::decay_t<unqualified_t<T>>, const char*>, std::is_same<std::decay_t<unqualified_t<T>>, char*>,
-		     std::is_same<unqualified_t<T>, std::string>>;
+		using is_c_str = any<std::is_same<T, const char*>, std::is_same<T, char const* const>, std::is_same<T, char*>, is_string_of<T, char>, is_string_literal_array_of<T, char>>;
 
 		template <typename T>
 		constexpr inline bool is_c_str_v = is_c_str<T>::value;

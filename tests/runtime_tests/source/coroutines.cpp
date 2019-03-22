@@ -480,7 +480,7 @@ end
 	// Resume from lua via thread and coroutine
 	sol::thread runner_thread = lua["loop_th"];
 	sol::state_view runner_thread_state = runner_thread.state();
-	auto test_resume = [&runner_thread, &runner_thread_state]() {
+	auto test_resume = [&runner_thread_state]() {
 		sol::coroutine cr = runner_thread_state["loop"];
 		sol::stack::push(runner_thread_state, 50);
 		sol::stack::push(runner_thread_state, 25);

@@ -516,13 +516,13 @@ namespace sol {
 		}
 
 		template <typename T, typename Al>
-		void reserve(std::vector<T, Al>& arr, std::size_t hint) {
-			arr.reserve(hint);
+		void reserve(std::vector<T, Al>& vec, std::size_t hint) {
+			vec.reserve(hint);
 		}
 
 		template <typename T, typename Tr, typename Al>
-		void reserve(std::basic_string<T, Tr, Al>& arr, std::size_t hint) {
-			arr.reserve(hint);
+		void reserve(std::basic_string<T, Tr, Al>& str, std::size_t hint) {
+			str.reserve(hint);
 		}
 
 		inline bool property_always_true(meta_function) {
@@ -798,6 +798,24 @@ namespace sol {
 					return unqualified_interop_check<T>(L, index, index_type, std::forward<Handler>(handler), tracking);
 				}
 			}
+			
+			using undefined_method_func = void (*)(stack_reference);
+
+			struct undefined_metatable {
+				lua_State* L;
+				const char* key;
+				undefined_method_func on_new_table;
+
+				undefined_metatable(lua_State* l, const char* k, undefined_method_func umf) : L(l), key(k), on_new_table(umf) {
+				}
+
+				void operator()() const {
+					if (luaL_newmetatable(L, key) == 1) {
+						on_new_table(stack_reference(L, -1));
+					}
+					lua_setmetatable(L, -2);
+				}
+			};
 		} // namespace stack_detail
 
 		inline bool maybe_indexable(lua_State* L, int index = -1) {
@@ -829,6 +847,30 @@ namespace sol {
 			// well now we're screwed...
 			// we can clean the stack and pray it doesn't destroy anything?
 			lua_pop(L, stacksize);
+		}
+
+		inline void clear(lua_State* L, int table_index) {
+			lua_pushnil(L);
+			while (lua_next(L, table_index) != 0) {
+				// remove value
+				lua_pop(L, 1);
+				// duplicate key to protect form rawset
+				lua_pushvalue(L, -1);
+				// push new value
+				lua_pushnil(L);
+				// table_index%[key] = nil
+				lua_rawset(L, table_index);
+			}
+		}
+
+		inline void clear(reference& r) {
+			auto pp = push_pop<false>(r);
+			int stack_index = pp.index_of(r);
+			clear(r.lua_state(), stack_index);
+		}
+
+		inline void clear(stack_reference& r) {
+			clear(r.lua_state(), r.stack_index());
 		}
 
 		template <typename T, typename... Args>
@@ -971,7 +1013,7 @@ namespace sol {
 		}
 
 		template <typename T, typename Handler>
-		bool check_usertype(lua_State* L, int index, type index_type, Handler&& handler, record& tracking) {
+		bool check_usertype(lua_State* L, int index, type, Handler&& handler, record& tracking) {
 			using Tu = meta::unqualified_t<T>;
 			using detail_t = meta::conditional_t<std::is_pointer_v<T>, detail::as_pointer_tag<Tu>, detail::as_value_tag<Tu>>;
 			return check<detail_t>(L, index, std::forward<Handler>(handler), tracking);

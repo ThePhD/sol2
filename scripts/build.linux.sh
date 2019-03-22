@@ -23,26 +23,25 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-CI=true
 declare -a gcc_versions
 gcc_versions=(
-	4.9
-	5
-	6
-	7
+#	7
+#	8
 )
 declare -r gcc_versions
 
 declare -a llvm_versions
 llvm_versions=(
-	3.6.2
-	3.7.1
-	3.8.1
 	3.9.1
-	4.0.1
-	5.0.1
+	4.0.0
+#	5.0.2
+#	6.0.1
+#	7.0.1
+#	8.0.0
 )
 declare -r llvm_versions
+
+build_generic=false
 
 if [ -z "${DOCKER_USERNAME}" ]
 then
@@ -50,26 +49,34 @@ then
 else
 	docker_username=${DOCKER_USERNAME}/
 fi
+if [ -z "${SOL2_CI}"]
+then
+	SOL2_CI=true
+fi
 
 echo "======  =======  =======  =======  ======"
 echo "======  Building All Docker Images ======"
 echo "======  =======  =======  =======  ======"
+echo "For: ${DOCKER_USERNAME} from Dockerfile in ${SOL2_DIR}\n"
 
 for i in $gcc_versions; do
 	GCC_VERSION=$i
 	unset LLVM_VERSION
 	echo "====== Building Docker Image: ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} ======="
-	docker build --tag ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} --build-arg GCC_VERSION=${GCC_VERSION} --build-arg LLVM_VERSION=${LLVM_VERSION} --build-arg CI=${CI} "${SOL2_DIR}"
+	docker build --tag ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} --build-arg GCC_VERSION=${GCC_VERSION} --build-arg LLVM_VERSION=${LLVM_VERSION} --build-arg SOL2_CI=${SOL2_CI} "${SOL2_DIR}"
 done
 
 for i in $llvm_versions; do
 	LLVM_VERSION=$i
 	unset GCC_VERSION
 	echo "====== Building Docker Image: ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} ======="
-	docker build --tag ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} --build-arg GCC_VERSION=${GCC_VERSION} --build-arg LLVM_VERSION=${LLVM_VERSION} --build-arg CI=${CI} "${SOL2_DIR}"
+	docker build --tag ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} --build-arg GCC_VERSION=${GCC_VERSION} --build-arg LLVM_VERSION=${LLVM_VERSION} --build-arg SOL2_CI=${SOL2_CI} "${SOL2_DIR}"
 done
 
-unset LLVM_VERSION
-unset GCC_VERSION
-echo "====== Building Docker Image: ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} ======="
-docker build --tag ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} --build-arg GCC_VERSION=${GCC_VERSION} --build-arg LLVM_VERSION=${LLVM_VERSION} --build-arg CI=${CI} "${SOL2_DIR}"
+if [ "${build_generic}" = true ]
+then
+	unset LLVM_VERSION
+	unset GCC_VERSION
+	echo "====== Building Docker Image: ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} ======="
+	docker build --tag ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} --build-arg GCC_VERSION=${GCC_VERSION} --build-arg LLVM_VERSION=${LLVM_VERSION} --build-arg SOL2_CI=${SOL2_CI} "${SOL2_DIR}"
+fi

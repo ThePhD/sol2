@@ -86,9 +86,17 @@ function (MAKE_EXAMPLE example_source_file example_suffix target_sol)
 		target_compile_options(${example_name}
 			PRIVATE -std=c++1z 
 			-ftemplate-backtrace-limit=0
+			-Wno-unknown-warning -Wno-unknown-warning-option
 			-Wall -Wpedantic -Werror -pedantic -pedantic-errors
-			-Wno-noexcept-type 
-			-Wno-unknown-warning -Wno-unknown-warning-option)
+			-Wno-noexcept-type)
+
+		if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+			# For another day, when C++ is not so crap
+			# and we have time to audit the entire lib
+			# for all uses of `detail::swallow`...
+			#target_compile_options(${example_name}
+			#	PRIVATE -Wcomma)		
+		endif()
 	endif()
 	
 	target_link_libraries(${example_name} 

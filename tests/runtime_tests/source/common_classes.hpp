@@ -131,6 +131,8 @@ public:
 class abstract_A {
 public:
 	virtual void a() = 0;
+	virtual ~abstract_A() {
+	}
 };
 
 class abstract_B : public abstract_A {
