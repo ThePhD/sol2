@@ -98,6 +98,8 @@ To do this, you bind things using the ``new_usertype`` and ``set_usertype`` meth
 	int main () {
 		sol::state lua;
 
+		lua.open_libraries(sol::lib::base);
+
 		// note that you can set a 
 		// userdata before you register a usertype,
 		// and it will still carry 
