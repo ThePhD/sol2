@@ -112,8 +112,8 @@ init:
 - set python_path=C:\Python36
 - set mingw_path=
 - set llvm_path=
-- if "%MINGW_VERSION%"=="7.3.0" (if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev1\mingw64\bin) else ( set mingw_path=C:\mingw-w64\i686-7.3.0-posix-seh-rt_v5-rev1\mingw32\bin))
-- if "%MINGW_VERSION%"=="8.1.0" (if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v5-rev1\mingw64\bin) else ( set mingw_path=C:\mingw-w64\i686-8.1.0-posix-seh-rt_v5-rev1\mingw32\bin))
+- if "%MINGW_VERSION%"=="7.3.0" (if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\mingw64\bin) else ( set mingw_path=C:\mingw-w64\i686-7.3.0-posix-seh-rt_v5-rev0\mingw32\bin))
+- if "%MINGW_VERSION%"=="8.1.0" (if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v5-rev0\mingw64\bin) else ( set mingw_path=C:\mingw-w64\i686-8.1.0-posix-seh-rt_v5-rev0\mingw32\bin))
 - if "%PLATFORM%"=="x64" (set python_path=C:\Python36-x64)
 - set PATH=%python_path%;%PATH%
 - set PATH=%mingw_path%;%PATH%
@@ -143,21 +143,13 @@ init:
 
 before_build:
 - md build-sol2
-- md buid-sol2\Debug
-- md buid-sol2\Release
 - cd build-sol2
-- if not defined %MINGW_VERSION% (cmake .. -G "%CMAKE_GENERATOR%" %build_compiler% -DSOL2_LUA_VERSION="%SOL2_LUA_VERSION%" -DSOL2_CI=ON -DSOL2_BUILD_LUA=ON -DBUILD_LUA_AS_DLL=%lua_build_type% -DSOL2_TESTS=ON -DSOL2_EXAMPLES=ON -DSOL2_GENERATE_SINGLE=ON -DSOL2_TESTS_EXAMPLES=ON -DSOL2_EXAMPLES_SINGLE_GENERATED=ON -DSOL2_TESTS_SINGLE_GENERATED=ON)
-- if defined %MINGW_VERSION% (cmake ..\.. -G "%CMAKE_GENERATOR%" %build_compiler% -DSOL2_LUA_VERSION="%SOL2_LUA_VERSION%" -DSOL2_CI=ON -DSOL2_BUILD_LUA=ON -DBUILD_LUA_AS_DLL=%lua_build_type% -DSOL2_TESTS=ON -DSOL2_EXAMPLES=ON -DSOL2_GENERATE_SINGLE=ON -DSOL2_TESTS_EXAMPLES=ON -DSOL2_EXAMPLES_SINGLE_GENERATED=ON -DSOL2_TESTS_SINGLE_GENERATED=ON)
-- if defined %MINGW_VERSION% (cmake ..\.. -G "%CMAKE_GENERATOR%" %build_compiler% -DSOL2_LUA_VERSION="%SOL2_LUA_VERSION%" -DSOL2_CI=ON -DSOL2_BUILD_LUA=ON -DBUILD_LUA_AS_DLL=%lua_build_type% -DSOL2_TESTS=ON -DSOL2_EXAMPLES=ON -DSOL2_GENERATE_SINGLE=ON -DSOL2_TESTS_EXAMPLES=ON -DSOL2_EXAMPLES_SINGLE_GENERATED=ON -DSOL2_TESTS_SINGLE_GENERATED=ON)
+- cmake .. -G "%CMAKE_GENERATOR%" %build_compiler% "-DSOL2_LUA_VERSION=%SOL2_LUA_VERSION%" -DSOL2_CI=ON -DSOL2_BUILD_LUA=ON -DBUILD_LUA_AS_DLL=%lua_build_type% -DSOL2_TESTS=ON -DSOL2_EXAMPLES=ON -DSOL2_TESTS_EXAMPLES=ON 
 
-# We do not build the debug versions because the compiler
-# generates too much debug info for MinGW to handle
 build_script:
-- cmake --build . --config Debug -- %parallelism% %logger%
 - cmake --build . --config Release -- %parallelism% %logger%
 
 test_script:
-- ctest -C Debug --output-on-failure
 - ctest -C Release --output-on-failure
 
 notifications:
