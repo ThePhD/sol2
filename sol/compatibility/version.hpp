@@ -1,4 +1,4 @@
-// sol2 
+// sol2
 
 // The MIT License (MIT)
 
@@ -27,18 +27,21 @@
 #include "../feature_test.hpp"
 
 #if defined(SOL_USING_CXX_LUA) && SOL_USING_CXX_LUA
+#if (!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !(SOL_EXCEPTIONS_SAFE_PROPAGATION)) && (!defined(SOL_EXCEPTIONS_ALWAYS_UNSAFE) || !(SOL_EXCEPTIONS_ALWAYS_UNSAFE))
+#define SOL_EXCEPTIONS_SAFE_PROPAGATION 1
+#endif // Exceptions can be propagated safely using C++-compiled Lua
+#else
+extern "C" {
+#endif
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
 #if defined(SOL_USING_CXX_LUAJIT) && SOL_USING_CXX_LUAJIT
 #include <luajit.h>
 #endif // C++ LuaJIT ... whatever that means
-#if (!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !(SOL_EXCEPTIONS_SAFE_PROPAGATION)) && (!defined(SOL_EXCEPTIONS_ALWAYS_UNSAFE) || !(SOL_EXCEPTIONS_ALWAYS_UNSAFE))
-#define SOL_EXCEPTIONS_SAFE_PROPAGATION 1
-#endif // Exceptions can be propagated safely using C++-compiled Lua
-#else
-#include <lua.hpp>
-#endif // C++ Mangling for Lua
+#if !(defined(SOL_USING_CXX_LUA) && SOL_USING_CXX_LUA)
+} // extern "C"
+#endif
 
 #ifdef LUAJIT_VERSION
 #ifndef SOL_LUAJIT
