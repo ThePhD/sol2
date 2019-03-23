@@ -114,12 +114,6 @@ matrix:
         SOL2_CI=true
 
     - env:
-      - SOL2_LUA_VERSION=5.3.5
-        LLVM_VERSION=8.0.0
-        SOL2_PLATFORM=i686
-        SOL2_CI=true
-
-    - env:
       - SOL2_LUA_VERSION=luajit-2.0.5
         GCC_VERSION=8
         SOL2_PLATFORM=i686
