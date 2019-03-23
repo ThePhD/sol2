@@ -41,7 +41,7 @@ struct ext_getset {
 	}
 	ext_getset(ext_getset&&) = default;
 	ext_getset(const ext_getset&) = delete;
-	ext_getset& operator=(ext_getset&&) = default;
+	ext_getset& operator=(ext_getset&&) = delete;
 	ext_getset& operator=(const ext_getset&) = delete;
 	~ext_getset() {
 	}
