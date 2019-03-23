@@ -37,15 +37,6 @@ script:
 - sudo docker image pull thephd/sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
 - sudo docker run --rm --interactive --tty --name "sol2.test" -v "${SOL2_DIR}:/root/sol2" --env "SOL2_CI=${SOL2_CI}" --env "SOL2_PLATFORM=${SOL2_PLATFORM}" --env "SOL2_LUA_VERSION=${SOL2_LUA_VERSION}"  --env "SOL2_TEST_SINGLE=${SOL2_TEST_SINGLE}"  --env "SOL2_TEST_INTEROP=${SOL2_TEST_INTEROP}" --env "GCC_VERSION=${GCC_VERSION}" --env "LLVM_VERSION=${LLVM_VERSION}" thephd/sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
 
-after_success:
-- wget https://raw.githubusercontent.com/DiscordHooks/travis-ci-discord-webhook/master/send.sh
-- chmod +x send.sh
-- ./send.sh success ${DISORD_WEBHOOK_URL}
-after_failure:
-- wget https://raw.githubusercontent.com/DiscordHooks/travis-ci-discord-webhook/master/send.sh
-- chmod +x send.sh
-- ./send.sh failure ${DISORD_WEBHOOK_URL}
-
 matrix:
   fast_finish: true
   allow_failures:
@@ -66,24 +57,18 @@ matrix:
         SOL2_CI=true
 
     - env:
-      - LLVM_VERSION=7.0.1
-        SOL2_LUA_VERSION=5.3.5
+      - SOL2_LUA_VERSION=5.3.5
+        LLVM_VERSION=7.0.1
         SOL2_PLATFORM=x64
         SOL2_CI=true
 
     - env:
-      - LLVM_VERSION=8.0.0
-        SOL2_LUA_VERSION=5.3.5
+      - SOL2_LUA_VERSION=5.3.5
+        LLVM_VERSION=8.0.0
         SOL2_PLATFORM=x64
         SOL2_CI=true
 
     # GCC 7.x, 8.x
-    - env:
-      - SOL2_LUA_VERSION=5.3.5
-        GCC_VERSION=8
-        SOL2_PLATFORM=i686
-        SOL2_CI=true
-
     - env:
       - SOL2_LUA_VERSION=5.3.5
         GCC_VERSION=7
@@ -121,6 +106,19 @@ matrix:
         SOL2_PLATFORM=x64
         SOL2_CI=true
 
+    # x86 builds
+    - env:
+      - SOL2_LUA_VERSION=5.3.5
+        GCC_VERSION=8
+        SOL2_PLATFORM=i686
+        SOL2_CI=true
+
+    - env:
+      - SOL2_LUA_VERSION=5.3.5
+        LLVM_VERSION=8.0.0
+        SOL2_PLATFORM=i686
+        SOL2_CI=true
+
     - env:
       - SOL2_LUA_VERSION=luajit-2.0.5
         GCC_VERSION=8
@@ -135,26 +133,25 @@ matrix:
 
     # Test Single, Interop, Etc.
     - env:
-      - LLVM_VERSION=7.0.0
-        SOL2_LUA_VERSION=5.3.5
-        SOL2_PLATFORM=x64
-        SOL2_CI=true
+      - SOL2_LUA_VERSION=5.3.5
         SOL2_TEST_SINGLE=true
         SOL2_TEST_INTEROP=true
+        LLVM_VERSION=8.0.0
+        SOL2_PLATFORM=x64
+        SOL2_CI=true
 
     - env:
       - SOL2_LUA_VERSION=5.3.5
+        SOL2_TEST_SINGLE=true
+        SOL2_TEST_INTEROP=true
         GCC_VERSION=8
         SOL2_PLATFORM=x64
         SOL2_CI=true
-        SOL2_TEST_SINGLE=true
-        SOL2_TEST_INTEROP=true
 
     - os: osx
-      osx_image: xcode9.0
+      osx_image: xcode10.1
       env:
         - SOL2_LUA_VERSION=lua-5.3.5
-          LLVM_VERSION=5.0.2
       before_install:
         - chmod +x ./scripts/run.osx.sh
         - chmod +x ./scripts/preparation.osx.sh
@@ -163,10 +160,20 @@ matrix:
         - ./scripts/run.osx.sh
 
     - os: osx
-      osx_image: xcode9.1
+      osx_image: xcode9.4
       env:
         - SOL2_LUA_VERSION=lua-5.3.5
-          LLVM_VERSION=5.0.2
+      before_install:
+        - chmod +x ./scripts/run.osx.sh
+        - chmod +x ./scripts/preparation.osx.sh
+        - ./scripts/preparation.osx.sh
+      script:
+        - ./scripts/run.osx.sh
+
+    - os: osx
+      osx_image: xcode9.3
+      env:
+        - SOL2_LUA_VERSION=lua-5.3.5
       before_install:
         - chmod +x ./scripts/run.osx.sh
         - chmod +x ./scripts/preparation.osx.sh
@@ -178,7 +185,6 @@ matrix:
       osx_image: xcode9.2
       env:
         - SOL2_LUA_VERSION=lua-5.3.5
-          LLVM_VERSION=5.0.2
       before_install:
         - chmod +x ./scripts/run.osx.sh
         - chmod +x ./scripts/preparation.osx.sh

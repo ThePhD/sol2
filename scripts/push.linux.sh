@@ -26,13 +26,15 @@
 CI=true
 declare -a gcc_versions
 gcc_versions=(
-	7
-	8
+#	7
+#	8
 )
 declare -r gcc_versions
 
 declare -a llvm_versions
 llvm_versions=(
+	3.9.1
+	4.0.0
 #	5.0.2
 #	6.0.1
 #	7.0.1

@@ -106,13 +106,13 @@ namespace sol {
 		struct all : boolean<true> {};
 
 		template <typename T, typename... Args>
-		struct all<T, Args...> : conditional_t<T::value, all<Args...>, boolean<false>> {};
+		struct all<T, Args...> : std::conditional_t<T::value, all<Args...>, boolean<false>> {};
 
 		template <typename... Args>
 		struct any : boolean<false> {};
 
 		template <typename T, typename... Args>
-		struct any<T, Args...> : conditional_t<T::value, boolean<true>, any<Args...>> {};
+		struct any<T, Args...> : std::conditional_t<T::value, boolean<true>, any<Args...>> {};
 
 		template <typename T, typename... Args>
 		constexpr inline bool all_v = all<T, Args...>::value;

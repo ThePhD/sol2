@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-03-21 16:10:16.112045 UTC
-// This header was generated with sol v3.0.0-beta (revision 04b36f1)
+// Generated 2019-03-23 16:07:47.653951 UTC
+// This header was generated with sol v3.0.0-beta (revision e846733)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -50,6 +50,7 @@
 #elif defined(__clang__)
 #elif defined _MSC_VER
 #pragma warning(push)
+#pragma warning(disable : 4505) // unreferenced local function has been removed GEE THANKS
 #endif					  // clang++ vs. g++ vs. VC++
 
 // beginning of sol/forward.hpp
@@ -1395,13 +1396,13 @@ namespace sol {
 		struct all : boolean<true> {};
 
 		template <typename T, typename... Args>
-		struct all<T, Args...> : conditional_t<T::value, all<Args...>, boolean<false>> {};
+		struct all<T, Args...> : std::conditional_t<T::value, all<Args...>, boolean<false>> {};
 
 		template <typename... Args>
 		struct any : boolean<false> {};
 
 		template <typename T, typename... Args>
-		struct any<T, Args...> : conditional_t<T::value, boolean<true>, any<Args...>> {};
+		struct any<T, Args...> : std::conditional_t<T::value, boolean<true>, any<Args...>> {};
 
 		template <typename T, typename... Args>
 		constexpr inline bool all_v = all<T, Args...>::value;
@@ -1919,8 +1920,7 @@ namespace sol {
 		struct is_pair<std::pair<T1, T2>> : std::true_type {};
 
 		template <typename T>
-		using is_c_str = any<std::is_same<std::decay_t<unqualified_t<T>>, const char*>, std::is_same<std::decay_t<unqualified_t<T>>, char*>,
-		     std::is_same<unqualified_t<T>, std::string>>;
+		using is_c_str = any<std::is_same<T, const char*>, std::is_same<T, char const* const>, std::is_same<T, char*>, is_string_of<T, char>, is_string_literal_array_of<T, char>>;
 
 		template <typename T>
 		constexpr inline bool is_c_str_v = is_c_str<T>::value;
@@ -8471,6 +8471,7 @@ namespace sol {
 			~push_popper() {
 			}
 		};
+		
 		template <typename T>
 		struct push_popper<false, T, std::enable_if_t<std::is_base_of<stack_reference, meta::unqualified_t<T>>::value>> {
 			using Tu = meta::unqualified_t<T>;
@@ -10013,7 +10014,7 @@ namespace sol {
 		}
 
 		template <typename T, typename Handler>
-		bool check_usertype(lua_State* L, int index, type index_type, Handler&& handler, record& tracking) {
+		bool check_usertype(lua_State* L, int index, type, Handler&& handler, record& tracking) {
 			using Tu = meta::unqualified_t<T>;
 			using detail_t = meta::conditional_t<std::is_pointer_v<T>, detail::as_pointer_tag<Tu>, detail::as_value_tag<Tu>>;
 			return check<detail_t>(L, index, std::forward<Handler>(handler), tracking);
@@ -13933,7 +13934,7 @@ namespace stack {
 
 	template <typename T, bool global, bool raw, typename>
 	struct field_setter {
-		static constexpr int default_table_index = meta::conditional_t < meta::is_c_str_v<T> || (std::is_integral_v<T> && !std::is_same_v<T, bool>)
+		static constexpr int default_table_index = meta::conditional_t<(meta::is_c_str_v<T> || meta::is_string_of_v<T, char>) || (std::is_integral_v<T> && !std::is_same_v<T, bool>)
 			|| (std::is_integral_v<T> && !std::is_same_v<T, bool>) || (raw && std::is_void_v<std::remove_pointer_t<T>>),
 			         std::integral_constant<int, -2>, std::integral_constant<int, -3>> ::value;
 
@@ -13968,7 +13969,7 @@ namespace stack {
 				}
 			}
 			else {
-				if constexpr (meta::is_c_str_v<T>) {
+				if constexpr (meta::is_c_str_v<T> || meta::is_string_of_v<T, char>) {
 					if constexpr (global) {
 						push(L, std::forward<Value>(value));
 						lua_setglobal(L, &key[0]);
@@ -20899,6 +20900,12 @@ namespace sol { namespace u_detail {
 				stack::clear(gc_names_table);
 			}
 			if (named_metatable.valid()) {
+				lua_State* L = named_metatable.lua_state();
+				auto pp = stack::push_pop(named_metatable);
+				int named_metatable_index = pp.index_of(named_metatable);
+				if (lua_getmetatable(L, named_metatable_index) == 1) {
+					stack::clear(L, absolute_index(L, -1));
+				}
 				stack::clear(named_metatable);
 			}
 
@@ -20911,7 +20918,7 @@ namespace sol { namespace u_detail {
 			type_table = lua_nil;
 			gc_names_table = lua_nil;
 			named_metatable = lua_nil;
-
+			
 			storage.clear();
 			string_keys.clear();
 			auxiliary_keys.clear();
@@ -20981,7 +20988,7 @@ namespace sol { namespace u_detail {
 			int base_result;
 			(void)keep_going;
 			(void)base_result;
-			detail::swallow{ 1, (base_walk_index<is_new_index, Bases>(L, self, keep_going, base_result), 1)... };
+			(void)detail::swallow{ 1, (base_walk_index<is_new_index, Bases>(L, self, keep_going, base_result), 1)... };
 			if constexpr (sizeof...(Bases) > 0) {
 				if (!keep_going) {
 					return base_result;
@@ -21954,12 +21961,6 @@ namespace sol {
 			return luaL_error(L, "sol: cannot modify the elements of an enumeration table");
 		}
 
-		template <bool top_level, typename... Args>
-		using is_global = meta::all<meta::boolean<top_level>, meta::is_c_str<Args>...>;
-
-		template <bool top_level, typename... Args>
-		constexpr inline bool is_global_v = is_global<top_level, Args...>::value;
-
 	} // namespace detail
 
 	template <bool top_level, typename ref_t>
@@ -21999,7 +22000,7 @@ namespace sol {
 
 		template <bool raw, typename Ret, typename... Keys>
 		decltype(auto) traverse_get_single(int table_index, Keys&&... keys) const {
-			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			constexpr static bool global = meta::all<meta::boolean<top_level>, meta::is_c_str<meta::unqualified_t<Keys>>...>::value;
 			if constexpr (meta::is_optional_v<meta::unqualified_t<Ret>>) {
 				int popcount = 0;
 				detail::ref_clean c(base_t::lua_state(), popcount);
@@ -22013,7 +22014,7 @@ namespace sol {
 
 		template <bool raw, typename Pairs, std::size_t... I>
 		void tuple_set(std::index_sequence<I...>, Pairs&& pairs) {
-			constexpr bool global = detail::is_global<top_level, decltype(std::get<I * 2>(std::forward<Pairs>(pairs)))...>::value;
+			constexpr bool global = meta::all<meta::boolean<top_level>, meta::is_c_str<decltype(std::get<I * 2>(std::forward<Pairs>(pairs)))>...>::value;
 			auto pp = stack::push_pop<global>(*this);
 			int table_index = pp.index_of(*this);
 			lua_State* L = base_t::lua_state();
@@ -22204,7 +22205,7 @@ namespace sol {
 		template <typename... Ret, typename... Keys>
 		decltype(auto) get(Keys&&... keys) const {
 			static_assert(sizeof...(Keys) == sizeof...(Ret), "number of keys and number of return types do not match");
-			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			constexpr static bool global = meta::all<meta::boolean<top_level>, meta::is_c_str<meta::unqualified_t<Keys>>...>::value;
 			auto pp = stack::push_pop<global>(*this);
 			int table_index = pp.index_of(*this);
 			return tuple_get<false, Ret...>(table_index, std::forward<Keys>(keys)...);
@@ -22231,7 +22232,7 @@ namespace sol {
 
 		template <typename T, typename... Keys>
 		decltype(auto) traverse_get(Keys&&... keys) const {
-			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			constexpr static bool global = meta::all<meta::boolean<top_level>, meta::is_c_str<meta::unqualified_t<Keys>>...>::value;
 			auto pp = stack::push_pop<global>(*this);
 			int table_index = pp.index_of(*this);
 			return traverse_get_single<false, T>(table_index, std::forward<Keys>(keys)...);
@@ -22239,7 +22240,7 @@ namespace sol {
 
 		template <typename... Keys>
 		basic_table_core& traverse_set(Keys&&... keys) {
-			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			constexpr static bool global = meta::all<meta::boolean<top_level>, meta::is_c_str<meta::unqualified_t<Keys>>...>::value;
 			auto pp = stack::push_pop<global>(*this);
 			int table_index = pp.index_of(*this);
 			lua_State* L = base_t::lua_state();
@@ -22262,7 +22263,7 @@ namespace sol {
 		template <typename... Ret, typename... Keys>
 		decltype(auto) raw_get(Keys&&... keys) const {
 			static_assert(sizeof...(Keys) == sizeof...(Ret), "number of keys and number of return types do not match");
-			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			constexpr static bool global = meta::all<meta::boolean<top_level>, meta::is_c_str<meta::unqualified_t<Keys>>...>::value;
 			auto pp = stack::push_pop<global>(*this);
 			int table_index = pp.index_of(*this);
 			return tuple_get<true, Ret...>(table_index, std::forward<Keys>(keys)...);
@@ -22289,7 +22290,7 @@ namespace sol {
 
 		template <typename T, typename... Keys>
 		decltype(auto) traverse_raw_get(Keys&&... keys) const {
-			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			constexpr static bool global = meta::all<meta::boolean<top_level>, meta::is_c_str<meta::unqualified_t<Keys>>...>::value;
 			auto pp = stack::push_pop<global>(*this);
 			int table_index = pp.index_of(*this);
 			return traverse_get_single<true, T>(table_index, std::forward<Keys>(keys)...);
@@ -22297,7 +22298,7 @@ namespace sol {
 
 		template <typename... Keys>
 		basic_table_core& traverse_raw_set(Keys&&... keys) {
-			constexpr static bool global = detail::is_global_v<top_level, Keys...>;
+			constexpr static bool global = meta::all<meta::boolean<top_level>, meta::is_c_str<meta::unqualified_t<Keys>>...>::value;
 			auto pp = stack::push_pop<global>(*this);
 			lua_State* L = base_t::lua_state();
 			auto pn = stack::pop_n(L, static_cast<int>(sizeof...(Keys) - 2));
@@ -22589,9 +22590,9 @@ namespace sol {
 
 			lua_State* L = this->lua_state();
 
+			auto pp = stack::push_pop(*this);
 			int top = lua_gettop(L);
 
-			auto pp = stack::push_pop(*this);
 			stack_reference mt(L, -1);
 			stack::get_field(L, meta_function::gc_names, mt.stack_index());
 			if (type_of(L, -1) != type::table) {
@@ -22604,7 +22605,7 @@ namespace sol {
 			}
 			ustorage_base& base_storage = *static_cast<ustorage_base*>(stack::get<void*>(L, -1));
 			std::array<string_view, 6> registry_traits;
-			for (int i = 0; i < registry_traits.size(); ++i) {
+			for (std::size_t i = 0; i < registry_traits.size(); ++i) {
 				u_detail::submetatable_type smt = static_cast<u_detail::submetatable_type>(i);
 				stack::get_field<false, true>(L, smt, gc_names_table.stack_index());
 				registry_traits[i] = stack::get<string_view>(L, -1);
@@ -22617,11 +22618,13 @@ namespace sol {
 			// in the registry (luaL_newmetatable does
 			// [name] = new table
 			// in registry upon creation)
-			for (int i = 0; i < registry_traits.size(); ++i) {
+			for (std::size_t i = 0; i < registry_traits.size(); ++i) {
 				u_detail::submetatable_type smt = static_cast<u_detail::submetatable_type>(i);
 				const string_view& gcmetakey = registry_traits[i];
 				if (smt == u_detail::submetatable_type::named) {
-					stack::set_field<true>(L, gcmetakey, lua_nil);
+					// use .data() to make it treat it like a c string,
+					// which it is...
+					stack::set_field<true>(L, gcmetakey.data(), lua_nil);
 				}
 				else {
 					// do not change the values in the registry: they need to be present
@@ -22667,7 +22670,7 @@ namespace sol {
 			if constexpr (sizeof...(I) > 0) {
 				if (maybe_uts) {
 					u_detail::usertype_storage<T>& uts = *maybe_uts;
-					detail::swallow{ 0,
+					(void)detail::swallow{ 0,
 						(uts.set(this->lua_state(), std::get<I * 2>(std::forward<args_tuple>(args)), std::get<I * 2 + 1>(std::forward<args_tuple>(args))),
 						     0)... };
 				}

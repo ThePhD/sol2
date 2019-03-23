@@ -674,7 +674,7 @@ TEST_CASE("object/is", "test whether or not the is abstraction works properly fo
 TEST_CASE("object/base_of_things", "make sure that object is the base of things and can be sliced / returned safely") {
 	SECTION("reference") {
 		sol::state lua;
-		lua.open_libraries(sol::lib::coroutine);
+		lua.open_libraries(sol::lib::base, sol::lib::coroutine);
 
 		lua["ud"] = base1{};
 
@@ -699,7 +699,7 @@ TEST_CASE("object/base_of_things", "make sure that object is the base of things 
 	}
 	SECTION("stack_reference") {
 		sol::state lua;
-		lua.open_libraries(sol::lib::coroutine);
+		lua.open_libraries(sol::lib::base, sol::lib::coroutine);
 
 		lua["ud"] = base1{};
 

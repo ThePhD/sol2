@@ -132,6 +132,7 @@ namespace sol {
 			~push_popper() {
 			}
 		};
+		
 		template <typename T>
 		struct push_popper<false, T, std::enable_if_t<std::is_base_of<stack_reference, meta::unqualified_t<T>>::value>> {
 			using Tu = meta::unqualified_t<T>;

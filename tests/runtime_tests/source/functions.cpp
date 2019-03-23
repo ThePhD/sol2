@@ -435,7 +435,7 @@ TEST_CASE("functions/function_result and protected_function_result", "Function r
 	}
 }
 
-#if !defined(SOL2_CI) && ((!defined(_M_IX86) || defined(_M_IA64)) || (defined(_WIN64)) || (defined(__LLP64__) || defined(__LP64__)) )
+#if !defined(SOL2_CI) && !(SOL2_CI) && ((!defined(_M_IX86) || defined(_M_IA64)) || (defined(_WIN64)) || (defined(__LLP64__) || defined(__LP64__)) )
 TEST_CASE("functions/safe protected_function_result handlers", "These tests will (hopefully) not destroy the stack since they are supposed to be mildly safe. Still, run with caution.") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::debug);
@@ -512,7 +512,15 @@ TEST_CASE("functions/unsafe protected_function_result handlers",
 		present = (bool)opvalue;
 		REQUIRE_FALSE(present);
 		sol::error err = result;
+#ifdef SOL_LUAJIT
+#if !((!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !(SOL_EXCEPTIONS_SAFE_PROPAGATION)))
+		REQUIRE(err.what() == std::string("C++ exception"));
+#else
 		REQUIRE(err.what() == handlederrormessage_s);
+#endif
+#else
+		REQUIRE(err.what() == handlederrormessage_s);
+#endif
 	}
 }
 #endif // These tests will thrash the stack and allocations on weaker compilers

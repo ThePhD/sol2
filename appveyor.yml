@@ -45,19 +45,24 @@ platform:
 environment:
   matrix:
     # apparently, I can't quite make LLVM work right now...
-  - LUA_VERSION: 5.3.5
+  - SOL2_LUA_VERSION: 5.3.5
     MINGW_VERSION: 7.3.0
-  - LUA_VERSION: 5.3.5
+  - SOL2_LUA_VERSION: 5.3.5
     MINGW_VERSION: 8.1.0
-  - LUA_VERSION: luajit-2.0.5
+  - SOL2_LUA_VERSION: luajit-2.0.5
     MINGW_VERSION: 8.1.0
-  - LUA_VERSION: luajit-2.1.0-beta3
+  - SOL2_LUA_VERSION: luajit-2.1.0-beta3
     MINGW_VERSION: 8.1.0
-  - LUA_VERSION: 5.3.5
-  - LUA_VERSION: 5.2.4
-  - LUA_VERSION: 5.1.5
-  - LUA_VERSION: luajit-2.0.5
-  - LUA_VERSION: luajit-2.1.0-beta3
+  - SOL2_LUA_VERSION: 5.3.5
+    SOL2_NO_2015: true
+  - SOL2_LUA_VERSION: 5.2.4
+    SOL2_NO_2015: true
+  - SOL2_LUA_VERSION: 5.1.5
+    SOL2_NO_2015: true
+  - SOL2_LUA_VERSION: luajit-2.0.5
+    SOL2_NO_2015: true
+  - SOL2_LUA_VERSION: luajit-2.1.0-beta3
+    SOL2_NO_2015: true
 
 matrix:
   allow_failures:
@@ -74,11 +79,20 @@ matrix:
       platform: x86
     - MINGW_VERSION: 8.1.0
       platform: x86
+    # Get rid of Visual Studio 2015 builds (unsupported)
+    - image: Visual Studio 2015
+      SOL_NO_2015: true
+    - platform: x86
+      SOL2_LUA_VERSION: 5.2.4
+    - platform: x86
+      SOL2_LUA_VERSION: 5.1.5
     # Get rid of x86 builds for non-latest (no reason to redo that work)
     - platform: x86
-      LUA_VERSION: 5.2.4
+      SOL2_LUA_VERSION: 5.3.5
     - platform: x86
-      LUA_VERSION: 5.1.5
+      SOL2_LUA_VERSION: 5.2.4
+    - platform: x86
+      SOL2_LUA_VERSION: 5.1.5
 
 init:
 # # Ninja
@@ -131,9 +145,9 @@ before_build:
 - md buid-sol2\Debug
 - md buid-sol2\Release
 - cd build-sol2
-- if not defined %MINGW_VERSION% (cmake .. -G "%CMAKE_GENERATOR%" %build_compiler% -DSOL2_LUA_VERSION="%LUA_VERSION%" -DSOL2_CI=ON -DSOL2_BUILD_LUA=ON -DBUILD_LUA_AS_DLL=%lua_build_type% -DSOL2_TESTS=ON -DSOL2_EXAMPLES=ON -DSOL2_GENERATE_SINGLE=ON -DSOL2_TESTS_EXAMPLES=ON -DSOL2_EXAMPLES_SINGLE_GENERATED=ON -DSOL2_TESTS_SINGLE_GENERATED=ON)
-- if defined %MINGW_VERSION% (cmake ..\.. -G "%CMAKE_GENERATOR%" %build_compiler% -DSOL2_LUA_VERSION="%LUA_VERSION%" -DSOL2_CI=ON -DSOL2_BUILD_LUA=ON -DBUILD_LUA_AS_DLL=%lua_build_type% -DSOL2_TESTS=ON -DSOL2_EXAMPLES=ON -DSOL2_GENERATE_SINGLE=ON -DSOL2_TESTS_EXAMPLES=ON -DSOL2_EXAMPLES_SINGLE_GENERATED=ON -DSOL2_TESTS_SINGLE_GENERATED=ON)
-- if defined %MINGW_VERSION% (cmake ..\.. -G "%CMAKE_GENERATOR%" %build_compiler% -DSOL2_LUA_VERSION="%LUA_VERSION%" -DSOL2_CI=ON -DSOL2_BUILD_LUA=ON -DBUILD_LUA_AS_DLL=%lua_build_type% -DSOL2_TESTS=ON -DSOL2_EXAMPLES=ON -DSOL2_GENERATE_SINGLE=ON -DSOL2_TESTS_EXAMPLES=ON -DSOL2_EXAMPLES_SINGLE_GENERATED=ON -DSOL2_TESTS_SINGLE_GENERATED=ON)
+- if not defined %MINGW_VERSION% (cmake .. -G "%CMAKE_GENERATOR%" %build_compiler% -DSOL2_LUA_VERSION="%SOL2_LUA_VERSION%" -DSOL2_CI=ON -DSOL2_BUILD_LUA=ON -DBUILD_LUA_AS_DLL=%lua_build_type% -DSOL2_TESTS=ON -DSOL2_EXAMPLES=ON -DSOL2_GENERATE_SINGLE=ON -DSOL2_TESTS_EXAMPLES=ON -DSOL2_EXAMPLES_SINGLE_GENERATED=ON -DSOL2_TESTS_SINGLE_GENERATED=ON)
+- if defined %MINGW_VERSION% (cmake ..\.. -G "%CMAKE_GENERATOR%" %build_compiler% -DSOL2_LUA_VERSION="%SOL2_LUA_VERSION%" -DSOL2_CI=ON -DSOL2_BUILD_LUA=ON -DBUILD_LUA_AS_DLL=%lua_build_type% -DSOL2_TESTS=ON -DSOL2_EXAMPLES=ON -DSOL2_GENERATE_SINGLE=ON -DSOL2_TESTS_EXAMPLES=ON -DSOL2_EXAMPLES_SINGLE_GENERATED=ON -DSOL2_TESTS_SINGLE_GENERATED=ON)
+- if defined %MINGW_VERSION% (cmake ..\.. -G "%CMAKE_GENERATOR%" %build_compiler% -DSOL2_LUA_VERSION="%SOL2_LUA_VERSION%" -DSOL2_CI=ON -DSOL2_BUILD_LUA=ON -DBUILD_LUA_AS_DLL=%lua_build_type% -DSOL2_TESTS=ON -DSOL2_EXAMPLES=ON -DSOL2_GENERATE_SINGLE=ON -DSOL2_TESTS_EXAMPLES=ON -DSOL2_EXAMPLES_SINGLE_GENERATED=ON -DSOL2_TESTS_SINGLE_GENERATED=ON)
 
 # We do not build the debug versions because the compiler
 # generates too much debug info for MinGW to handle
