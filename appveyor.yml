@@ -113,7 +113,7 @@ init:
 - set mingw_path=
 - set llvm_path=
 - if "%MINGW_VERSION%"=="7.3.0" (if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\mingw64\bin) else ( set mingw_path=C:\mingw-w64\i686-7.3.0-posix-seh-rt_v5-rev0\mingw32\bin))
-- if "%MINGW_VERSION%"=="8.1.0" (if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v5-rev0\mingw64\bin) else ( set mingw_path=C:\mingw-w64\i686-8.1.0-posix-seh-rt_v5-rev0\mingw32\bin))
+- if "%MINGW_VERSION%"=="8.1.0" (if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin) else ( set mingw_path=C:\mingw-w64\i686-8.1.0-posix-seh-rt_v6-rev0\mingw32\bin))
 - if "%PLATFORM%"=="x64" (set python_path=C:\Python36-x64)
 - set PATH=%python_path%;%PATH%
 - set PATH=%mingw_path%;%PATH%
