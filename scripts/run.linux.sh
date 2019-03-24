@@ -101,11 +101,7 @@ echo -e "travis_fold:start:build_preparation\r"
 	fi
 
 	mkdir -p Debug Release
-echo -e "travis_fold:end:build_preparation\r"
 
-
-# show the tool and compiler versions we're using
-echo -e "travis_fold:start:build_preparation\r"
 	echo "=== Compiler and tool variables ==="
 	ninja --version
 	cmake --version
