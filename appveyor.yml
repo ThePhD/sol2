@@ -61,17 +61,16 @@ environment:
     SOL2_NO_2015: 1
   - SOL2_LUA_VERSION: luajit-2.0.5
     SOL2_NO_2015: 1
+    SOL2_BUILD_NINJA: 1
   - SOL2_LUA_VERSION: luajit-2.1.0-beta3
     SOL2_NO_2015: 1
+    SOL2_BUILD_NINJA: 1
 
 matrix:
   #fast_finish: true
   allow_failures:
     # 32-bit builds are temperamental with exceptions
     - platform: x86
-    # Visual Studio building with LuaJIT is a goddamn nightmare!!
-    - SOL2_LUA_VERSION: luajit-2.0.5
-    - SOL2_LUA_VERSION: luajit-2.1.0-beta3
   exclude:
     # Necessary: MinGW doesn't exist on VS 2017 images
     - image: Visual Studio 2017
@@ -125,17 +124,19 @@ init:
 - echo PATH=%PATH%
 # # Generators and CMake arguments
   # configure the generator appropriately
-- set arch=
-- set parallelism=
-- set logger=
-- set build_compiler=
-- set lua_build_type=ON
-- set vcvars_script="C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
+- set CMAKE_GENERATOR=Ninja
+- set arch= x86
+- set parallelism= 
 - if "%PLATFORM%"=="x64" (set arch= Win64)
-- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" (set CMAKE_GENERATOR=Visual Studio 15 2017%arch%&&set parallelism=/maxcpucount&&set logger=/verbosity:quiet /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"&&set vcvars_script="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat")
-- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" (set CMAKE_GENERATOR=Visual Studio 14 2015%arch%&&set parallelism=/maxcpucount&&set logger=/verbosity:quiet /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll")
-- if "%MINGW_VERSION%"=="7.3.0" (set CMAKE_GENERATOR=Ninja&&set parallelism= &&set logger= &&set build_compiler=-DCMAKE_CXX_COMPILER=g++.exe -DCMAKE_C_COMPILER=gcc.exe)
-- if "%MINGW_VERSION%"=="8.1.0" (set CMAKE_GENERATOR=Ninja&&set parallelism= &&set logger= &&set build_compiler=-DCMAKE_CXX_COMPILER=g++.exe -DCMAKE_C_COMPILER=gcc.exe)
+- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" (set CMAKE_GENERATOR=Visual Studio 15 2017%arch%&&set parallelism=/maxcpucount)
+- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" (set CMAKE_GENERATOR=Visual Studio 14 2015%arch%&&set parallelism=/maxcpucount)
+- if "%SOL2_BUILD_NINJA%"=="1"(set CMAKE_GENERATOR=Ninja)
+- set lua_build_type=ON
+- set build_compiler=-DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_C_COMPILER=cl.exe
+- set vcvars_script="C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
+- if "%PLATFORM%"=="x86" (vcvars_script="C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86)
+- if "%MINGW_VERSION%"=="7.3.0" (set CMAKE_GENERATOR=Ninja&&set build_compiler=-DCMAKE_CXX_COMPILER=g++.exe -DCMAKE_C_COMPILER=gcc.exe)
+- if "%MINGW_VERSION%"=="8.1.0" (set CMAKE_GENERATOR=Ninja&&set build_compiler=-DCMAKE_CXX_COMPILER=g++.exe -DCMAKE_C_COMPILER=gcc.exe)
 # # Last printouts
   # print out generator information
 - echo Appveyor Image is %APPVEYOR_BUILD_WORKER_IMAGE% (vcvars script is %vcvars_script%)
@@ -147,10 +148,11 @@ init:
 before_build:
 - md build-sol2
 - cd build-sol2
-- cmake .. -G "%CMAKE_GENERATOR%" %build_compiler% "-DSOL2_LUA_VERSION=%SOL2_LUA_VERSION%" -DSOL2_CI=ON -DSOL2_BUILD_LUA=ON -DBUILD_LUA_AS_DLL=%lua_build_type% -DSOL2_TESTS=ON -DSOL2_EXAMPLES=ON -DSOL2_TESTS_EXAMPLES=ON 
+- if "%MINGW_VERSION%"=="" ( %vcvars_script% )
+- cmake .. -G "%CMAKE_GENERATOR%" %build_compiler% -DCMAKE_BUILD_TYPE=Release "-DSOL2_LUA_VERSION=%SOL2_LUA_VERSION%" -DSOL2_PLATFORM=%PLATFORM% -DSOL2_CI=ON -DSOL2_BUILD_LUA=ON -DBUILD_LUA_AS_DLL=%lua_build_type% -DSOL2_TESTS=ON -DSOL2_EXAMPLES=ON -DSOL2_TESTS_EXAMPLES=ON 
 
 build_script:
-- cmake --build . --config Release -- %parallelism% %logger%
+- cmake --build . --config Release -- %parallelism%
 
 test_script:
 - ctest -C Release --output-on-failure
