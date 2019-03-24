@@ -37,22 +37,33 @@
 		#define SOL_EXCEPTIONS_SAFE_PROPAGATION 1
 	#endif // Exceptions can be propagated safely using C++-compiled Lua
 #else
-	#if defined(__has_include)
-		#if __has_include(<lua.hpp>)
-			#include <lua.hpp>
-		#else
-			extern "C" {
-				#include <lua.h>
-				#include <lauxlib.h>
-				#include <lualib.h>
-				#if defined(SOL_LUAJIT) && SOL_LUAJIT
-					#include <luajit.h>
-				#endif
-			}
-		#endif // lua.hpp exists or does not
+	#if defined(SOL_NO_LUA_HPP) && SOL_NO_LUA_HPP
+		extern "C" {
+			#include <lua.h>
+			#include <lauxlib.h>
+			#include <lualib.h>
+			#if defined(LUAJIT_VERSION) && LUAJIT_VERSION
+				#include <luajit.h>
+			#endif
+		}
 	#else
-		#include <lua.hpp>
-	#endif // check for lua.hpp safely for Lua 5.1 derps
+		#if defined(__has_include)
+			#if __has_include(<lua.hpp>)
+				#include <lua.hpp>
+			#else
+				extern "C" {
+					#include <lua.h>
+					#include <lauxlib.h>
+					#include <lualib.h>
+					#if defined(LUAJIT_VERSION) && LUAJIT_VERSION
+						#include <luajit.h>
+					#endif
+				}
+			#endif // lua.hpp exists or does not
+		#else
+			#include <lua.hpp>
+		#endif // check for lua.hpp safely for Lua 5.1 derps
+	#endif // Manual - have lua.hpp or not
 #endif // C++ Mangling for Lua vs. Not
 
 #ifdef LUAJIT_VERSION

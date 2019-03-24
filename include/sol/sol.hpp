@@ -66,7 +66,7 @@
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #elif defined _MSC_VER
-#pragma warning(push)
+#pragma warning(pop)
 #endif // g++
 
 #if defined(SOL_INSIDE_UNREAL)

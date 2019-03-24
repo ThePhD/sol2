@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-03-23 18:56:05.596914 UTC
-// This header was generated with sol v3.0.1-beta (revision 9a0a27a)
+// Generated 2019-03-24 01:49:03.378490 UTC
+// This header was generated with sol v3.0.0-beta (revision 4aac17c)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -2072,17 +2072,24 @@ namespace sol {
 		#define SOL_EXCEPTIONS_SAFE_PROPAGATION 1
 	#endif // Exceptions can be propagated safely using C++-compiled Lua
 #else
-	#if defined(__has_include)
-		#if __has_include(<lua.hpp>)
-			#include <lua.hpp>
-		#else
-			extern "C" {
-				#if defined(SOL_LUAJIT) && SOL_LUAJIT
-				#endif
-			}
-		#endif // lua.hpp exists or does not
+	#if defined(SOL_NO_LUA_HPP) && SOL_NO_LUA_HPP
+		extern "C" {
+			#if defined(LUAJIT_VERSION) && LUAJIT_VERSION
+			#endif
+		}
 	#else
-	#endif // check for lua.hpp safely for Lua 5.1 derps
+		#if defined(__has_include)
+			#if __has_include(<lua.hpp>)
+				#include <lua.hpp>
+			#else
+				extern "C" {
+					#if defined(LUAJIT_VERSION) && LUAJIT_VERSION
+					#endif
+				}
+			#endif // lua.hpp exists or does not
+		#else
+		#endif // check for lua.hpp safely for Lua 5.1 derps
+	#endif // Manual - have lua.hpp or not
 #endif // C++ Mangling for Lua vs. Not
 
 #ifdef LUAJIT_VERSION
@@ -2528,7 +2535,7 @@ COMPAT53_API void luaL_requiref(lua_State *L, const char *modname,
 #endif
 
 #if defined(COMPAT53_INCLUDE_SOURCE) && COMPAT53_INCLUDE_SOURCE == 1
-// beginning of sol/compatibility/compat-5.3.c
+// beginning of sol/compatibility/compat-5.3.c.h
 
 #include <stdlib.h>
 #include <ctype.h>
@@ -3364,7 +3371,7 @@ COMPAT53_API void luaL_requiref(lua_State *L, const char *modname,
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *********************************************************************/
 
-// end of sol/compatibility/compat-5.3.c
+// end of sol/compatibility/compat-5.3.c.h
 
 #endif
 
@@ -12673,7 +12680,6 @@ namespace sol {
 #if SOL_LUA_VERSION < 502
 			// Use lua_getfenv
 			lua_getfenv(L, index);
-			return 1;
 #else
 			// Use upvalues as explained in Lua 5.2 and beyond's manual
 			if (lua_getupvalue(L, index, 1) == nullptr) {
@@ -24964,7 +24970,7 @@ namespace sol {
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #elif defined _MSC_VER
-#pragma warning(push)
+#pragma warning(pop)
 #endif // g++
 
 #if defined(SOL_INSIDE_UNREAL)

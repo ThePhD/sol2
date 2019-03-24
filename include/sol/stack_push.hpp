@@ -90,7 +90,6 @@ namespace sol {
 #if SOL_LUA_VERSION < 502
 			// Use lua_getfenv
 			lua_getfenv(L, index);
-			return 1;
 #else
 			// Use upvalues as explained in Lua 5.2 and beyond's manual
 			if (lua_getupvalue(L, index, 1) == nullptr) {

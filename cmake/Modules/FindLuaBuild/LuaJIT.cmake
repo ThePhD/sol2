@@ -165,11 +165,40 @@ set(LUA_JIT_EXE_FILE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${LUA_JIT_EXE_FILENAME}"
 if (MSVC)
 	# Visual C++ is predicated off running msvcbuild.bat
 	# which requires a Visual Studio Command Prompt
-	if (BUILD_LUA_AS_DLL)
-		set(LUA_JIT_MAKE_COMMAND cd src && msvcbuild.bat)
-	else()
-		set(LUA_JIT_MAKE_COMMAND cd src && msvcbuild.bat static)
+	# make sure to find the right one
+	find_file(VCVARS_ALL_BAT NAMES vcvarsall.bat
+		HINTS "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2017/Professional/VC/Auxiliary/Build"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2017/Professional/VC/Auxiliary"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2017/Professional/VC"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary/Build"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/VC"
+
+		"C:/Program Files/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build"
+		"C:/Program Files/Microsoft Visual Studio/2017/Community/VC/Auxiliary"
+		"C:/Program Files/Microsoft Visual Studio/2017/Community/VC"
+		"C:/Program Files/Microsoft Visual Studio/2017/Professional/VC/Auxiliary/Build"
+		"C:/Program Files/Microsoft Visual Studio/2017/Professional/VC/Auxiliary"
+		"C:/Program Files/Microsoft Visual Studio/2017/Professional/VC"
+		"C:/Program Files/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary/Build"
+		"C:/Program Files/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary"
+		"C:/Program Files/Microsoft Visual Studio/2017/Enterprise/VC")
+	if (VCVARS_ALL_BAT MATCHES "VCVARS_ALL_BAT-NOTFOUND")
+		MESSAGE(FATAL_ERROR "Cannot find 'vcvarsall.bat' file or similar needed to build LuaJIT ${LUA_VERSION} on Windows")
 	endif()
+	if (CMAKE_SIZEOF_VOID_P LESS_EQUAL 4)
+		set(LUA_JIT_MAKE_COMMAND "${VCVARS_ALL_BAT}" x86)
+	else()
+		set(LUA_JIT_MAKE_COMMAND "${VCVARS_ALL_BAT}" x64)
+	endif()
+	set(LUA_JIT_MAKE_COMMAND ${LUA_JIT_MAKE_COMMAND} && cd src && msvcbuild.bat)
+	if (NOT BUILD_LUA_AS_DLL)
+		set(LUA_JIT_MAKE_COMMAND ${LUA_JIT_MAKE_COMMAND} static)
+	endif()
+
 	set(LUA_JIT_PREBUILT_LIB "lua51.lib")
 	set(LUA_JIT_PREBUILT_IMP_LIB "lua51.lib")
 	set(LUA_JIT_PREBUILT_DLL "lua51.dll")

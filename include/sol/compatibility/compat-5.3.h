@@ -413,7 +413,7 @@ COMPAT53_API void luaL_requiref(lua_State *L, const char *modname,
 
 
 #if defined(COMPAT53_INCLUDE_SOURCE) && COMPAT53_INCLUDE_SOURCE == 1
-#  include "compat-5.3.c"
+#  include "compat-5.3.c.h"
 #endif
 
 
