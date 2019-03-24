@@ -47,12 +47,16 @@ environment:
     # apparently, I can't quite make LLVM work right now...
   - SOL2_LUA_VERSION: 5.3.5
     MINGW_VERSION: 7.3.0
+    SOL2_BUILD_NINJA: 1
   - SOL2_LUA_VERSION: 5.3.5
     MINGW_VERSION: 8.1.0
+    SOL2_BUILD_NINJA: 1
   - SOL2_LUA_VERSION: luajit-2.0.5
     MINGW_VERSION: 8.1.0
+    SOL2_BUILD_NINJA: 1
   - SOL2_LUA_VERSION: luajit-2.1.0-beta3
     MINGW_VERSION: 8.1.0
+    SOL2_BUILD_NINJA: 1
   - SOL2_LUA_VERSION: 5.3.5
     SOL2_NO_2015: 1
   - SOL2_LUA_VERSION: 5.2.4
@@ -139,7 +143,7 @@ init:
 # # Last printouts
   # print out generator information
 - echo Appveyor Image is %APPVEYOR_BUILD_WORKER_IMAGE% (vcvars script is %vcvars_script%)
-- echo cmake generator is %CMAKE_GENERATOR% using build_compiler=%build_compiler% with special flags logger=%logger% parallelism=%parallelism%
+- echo cmake generator is %CMAKE_GENERATOR% using build_compiler=%build_compiler% with special flags parallelism=%parallelism%
   # print out useful tool information
 - ninja --version
 - cmake --version
