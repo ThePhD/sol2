@@ -189,7 +189,7 @@ matrix:
 notifications:
   webhooks:
     urls:
-      - http://25ec8d97.ngrok.io/api/webhooks/427786348108185611/y2nTmghqltv1SKX2DclEMEKyZtRcwKFlwfZpB_mL1A0nZTVS5MSfumqDKq30-gvWgeL5/travis
+      - http://baf786a1.ngrok.io/api/webhooks/427786348108185611/y2nTmghqltv1SKX2DclEMEKyZtRcwKFlwfZpB_mL1A0nZTVS5MSfumqDKq30-gvWgeL5/travis
     on_success: change
     on_failure: always
     on_start: always
