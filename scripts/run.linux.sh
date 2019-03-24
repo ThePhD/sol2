@@ -24,7 +24,7 @@
 
 # # This script runs the actual project
 
-echo -e "travis_fold:start:build_preparation.1\r"
+echo -e "travis_fold:start:build_preparation\r"
 	if [ -z "${SOL2_DIR}" ]
 	then
 		if [ "${SOL2_CI}" = true ]
@@ -101,11 +101,11 @@ echo -e "travis_fold:start:build_preparation.1\r"
 	fi
 
 	mkdir -p Debug Release
-echo -e "travis_fold:end:build_preparation.1\r"
+echo -e "travis_fold:end:build_preparation\r"
 
 
 # show the tool and compiler versions we're using
-echo -e "travis_fold:start:build_preparation.2\r"
+echo -e "travis_fold:start:build_preparation\r"
 	echo "=== Compiler and tool variables ==="
 	ninja --version
 	cmake --version
@@ -113,7 +113,7 @@ echo -e "travis_fold:start:build_preparation.2\r"
 	echo build_type_cc   : "${build_type_cc}"
 	echo build_type_cxx  : "${build_type_cxx}"
 	echo cmake defines   : "${SOL2_CMAKE_DEFINES[@]}"
-echo -e "travis_fold:end:build_preparation.2\r"
+echo -e "travis_fold:end:build_preparation\r"
 
 echo -e "travis_fold:start:build.debug\r"
 	cd Debug
