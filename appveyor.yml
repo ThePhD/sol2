@@ -44,7 +44,12 @@ platform:
 
 environment:
   matrix:
-    # apparently, I can't quite make LLVM work right now...
+  - SOL2_LUA_VERSION: luajit-2.0.5
+    SOL2_NO_2015: 1
+    SOL2_BUILD_NINJA: 1
+  - SOL2_LUA_VERSION: luajit-2.1.0-beta3
+    SOL2_NO_2015: 1
+    SOL2_BUILD_NINJA: 1
   - SOL2_LUA_VERSION: 5.3.5
     MINGW_VERSION: 7.3.0
     SOL2_BUILD_NINJA: 1
@@ -63,12 +68,6 @@ environment:
     SOL2_NO_2015: 1
   - SOL2_LUA_VERSION: 5.1.5
     SOL2_NO_2015: 1
-  - SOL2_LUA_VERSION: luajit-2.0.5
-    SOL2_NO_2015: 1
-    SOL2_BUILD_NINJA: 1
-  - SOL2_LUA_VERSION: luajit-2.1.0-beta3
-    SOL2_NO_2015: 1
-    SOL2_BUILD_NINJA: 1
 
 matrix:
   #fast_finish: true
@@ -131,19 +130,23 @@ init:
 - set CMAKE_GENERATOR=Ninja
 - set arch= x86
 - set parallelism= 
-- set build_compiler=-DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_C_COMPILER=cl.exe
+- set build_compiler=
 - if "%PLATFORM%"=="x64" (set arch= Win64)
 - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" (set CMAKE_GENERATOR=Visual Studio 15 2017%arch%)
 - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" (set CMAKE_GENERATOR=Visual Studio 14 2015%arch%)
 - if "%SOL2_BUILD_NINJA%"=="1" (set CMAKE_GENERATOR=Ninja) else (set parallelism=/maxcpucount)
+- if "%SOL2_BUILD_NINJA%"=="1" (set build_compiler=-DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_C_COMPILER=cl.exe) else ()
 - set vcvars_script="C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
-- if "%PLATFORM%"=="x86" (vcvars_script="C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86)
+- if "%PLATFORM%"=="x86" (set vcvars_script="C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86)
 - if "%MINGW_VERSION%"=="7.3.0" (set CMAKE_GENERATOR=Ninja&&set build_compiler=-DCMAKE_CXX_COMPILER=g++.exe -DCMAKE_C_COMPILER=gcc.exe)
 - if "%MINGW_VERSION%"=="8.1.0" (set CMAKE_GENERATOR=Ninja&&set build_compiler=-DCMAKE_CXX_COMPILER=g++.exe -DCMAKE_C_COMPILER=gcc.exe)
 # # Last printouts
   # print out generator information
-- echo Appveyor Image is %APPVEYOR_BUILD_WORKER_IMAGE% (vcvars script is %vcvars_script%)
-- echo cmake generator is %CMAKE_GENERATOR% using build_compiler=%build_compiler% with special flags parallelism=%parallelism%
+- echo Appveyor Image is %APPVEYOR_BUILD_WORKER_IMAGE%
+- echo vcvars_script is %vcvars_script%
+- echo cmake generator is %CMAKE_GENERATOR%
+- echo build_compiler is %build_compiler%
+- echo parallelism is %parallelism%
   # print out useful tool information
 - ninja --version
 - cmake --version
