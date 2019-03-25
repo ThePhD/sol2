@@ -74,6 +74,8 @@ matrix:
   allow_failures:
     # 32-bit builds are temperamental with exceptions
     - platform: x86
+    - SOL2_LUA_VERSION: luajit-2.0.5
+    - SOL2_LUA_VERSION: luajit-2.1.0-beta3
   exclude:
     # Necessary: MinGW doesn't exist on VS 2017 images
     - image: Visual Studio 2017
