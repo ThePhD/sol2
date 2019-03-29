@@ -672,26 +672,16 @@ namespace sol {
 
 		template <typename T, typename Fx, bool is_index, bool is_variable, bool checked, int boost, bool clean_stack, typename C>
 		struct lua_call_wrapper<T, destructor_wrapper<Fx>, is_index, is_variable, checked, boost, clean_stack, C> {
-			typedef destructor_wrapper<Fx> F;
 
-			static int call(lua_State* L, const F& f) {
+			template <typename F>
+			static int call(lua_State* L, F&& f) {
 				if constexpr (std::is_void_v<Fx>) {
 					return detail::usertype_alloc_destruct<T>(L);
 				}
 				else {
-					if constexpr (std::is_void_v<T>) {
-						using bt = meta::bind_traits<meta::unqualified_t<decltype(f.fx)>>;
-						using arg0_t = typename bt::template arg_at<0>;
-						
-						decltype(auto) obj = stack::get<arg0_t>(L, -1);
-						f.fx(detail::implicit_wrapper<std::remove_reference_t<decltype(obj)>>(obj));
-						return 0;
-					}
-					else {
-						T& obj = stack::get<T>(L, -1);
-						f.fx(detail::implicit_wrapper<T>(obj));
-						return 0;
-					}
+					using uFx = meta::unqualified_t<Fx>;
+					lua_call_wrapper<T, uFx, is_index, is_variable, checked, boost, clean_stack> lcw{};
+					return lcw.call(L, std::forward<F>(f).fx);
 				}
 			}
 		};

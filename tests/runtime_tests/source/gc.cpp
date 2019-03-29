@@ -595,3 +595,29 @@ TEST_CASE("gc/alignment", "test that allocation is always on aligned boundaries,
 		lobj.check_alignment();
 	}
 }
+
+TEST_CASE("gc/multi-argument destructors", "make sure transparent arguments come along for the ride") {
+	static int transparent_foos_destroyed = 0;
+
+	struct transparent_foo {
+		~transparent_foo() {
+			++transparent_foos_destroyed;
+		}
+	};
+
+	lua_State* lua_state = nullptr;
+	lua_State* call_state = nullptr;
+	auto call_des = [&call_state](transparent_foo* f, sol::this_state s) {
+		call_state = s;
+		return f->~transparent_foo();
+	};
+	{
+		sol::state lua;
+		lua_state = lua;
+		lua.new_usertype<transparent_foo>("foo", sol::meta_function::garbage_collect, sol::destructor(std::move(call_des)));
+
+		lua.script("foo.new()");
+	}
+	REQUIRE(transparent_foos_destroyed == 1);
+	REQUIRE(call_state == lua_state);
+}
