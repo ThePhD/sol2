@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-03-24 01:49:03.378490 UTC
-// This header was generated with sol v3.0.0-beta (revision 4aac17c)
+// Generated 2019-03-29 03:22:11.072530 UTC
+// This header was generated with sol v3.0.1-beta2 (revision 7218151)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -16338,26 +16338,16 @@ namespace sol {
 
 		template <typename T, typename Fx, bool is_index, bool is_variable, bool checked, int boost, bool clean_stack, typename C>
 		struct lua_call_wrapper<T, destructor_wrapper<Fx>, is_index, is_variable, checked, boost, clean_stack, C> {
-			typedef destructor_wrapper<Fx> F;
 
-			static int call(lua_State* L, const F& f) {
+			template <typename F>
+			static int call(lua_State* L, F&& f) {
 				if constexpr (std::is_void_v<Fx>) {
 					return detail::usertype_alloc_destruct<T>(L);
 				}
 				else {
-					if constexpr (std::is_void_v<T>) {
-						using bt = meta::bind_traits<meta::unqualified_t<decltype(f.fx)>>;
-						using arg0_t = typename bt::template arg_at<0>;
-						
-						decltype(auto) obj = stack::get<arg0_t>(L, -1);
-						f.fx(detail::implicit_wrapper<std::remove_reference_t<decltype(obj)>>(obj));
-						return 0;
-					}
-					else {
-						T& obj = stack::get<T>(L, -1);
-						f.fx(detail::implicit_wrapper<T>(obj));
-						return 0;
-					}
+					using uFx = meta::unqualified_t<Fx>;
+					lua_call_wrapper<T, uFx, is_index, is_variable, checked, boost, clean_stack> lcw{};
+					return lcw.call(L, std::forward<F>(f).fx);
 				}
 			}
 		};
