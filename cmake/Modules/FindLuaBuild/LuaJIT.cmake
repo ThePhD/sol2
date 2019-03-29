@@ -1,7 +1,7 @@
 # # # # sol2
 # The MIT License (MIT)
 # 
-# Copyright (c) 2013-2018 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2019 Rapptz, ThePhD, and contributors
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -145,6 +145,7 @@ endif()
 
 set(LUA_JIT_SOURCE_DIR "${LUA_BUILD_TOPLEVEL}/src")
 set(LUA_JIT_INSTALL_DIR "${LUA_BUILD_TOPLEVEL}/install")
+set(LUA_JIT_INCLUDE_DIRS "${LUA_JIT_SOURCE_DIR}")
 file(MAKE_DIRECTORY ${LUA_JIT_SOURCE_DIR})
 file(MAKE_DIRECTORY ${LUA_JIT_INSTALL_DIR})
 
@@ -164,11 +165,40 @@ set(LUA_JIT_EXE_FILE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${LUA_JIT_EXE_FILENAME}"
 if (MSVC)
 	# Visual C++ is predicated off running msvcbuild.bat
 	# which requires a Visual Studio Command Prompt
-	if (BUILD_LUA_AS_DLL)
-		set(LUA_JIT_BUILD_COMMAND BUILD_COMMAND cd src && msvcbuild.bat)
-	else()
-		set(LUA_JIT_BUILD_COMMAND BUILD_COMMAND cd src && msvcbuild.bat static)
+	# make sure to find the right one
+	find_file(VCVARS_ALL_BAT NAMES vcvarsall.bat
+		HINTS "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2017/Professional/VC/Auxiliary/Build"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2017/Professional/VC/Auxiliary"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2017/Professional/VC"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary/Build"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/VC"
+
+		"C:/Program Files/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build"
+		"C:/Program Files/Microsoft Visual Studio/2017/Community/VC/Auxiliary"
+		"C:/Program Files/Microsoft Visual Studio/2017/Community/VC"
+		"C:/Program Files/Microsoft Visual Studio/2017/Professional/VC/Auxiliary/Build"
+		"C:/Program Files/Microsoft Visual Studio/2017/Professional/VC/Auxiliary"
+		"C:/Program Files/Microsoft Visual Studio/2017/Professional/VC"
+		"C:/Program Files/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary/Build"
+		"C:/Program Files/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary"
+		"C:/Program Files/Microsoft Visual Studio/2017/Enterprise/VC")
+	if (VCVARS_ALL_BAT MATCHES "VCVARS_ALL_BAT-NOTFOUND")
+		MESSAGE(FATAL_ERROR "Cannot find 'vcvarsall.bat' file or similar needed to build LuaJIT ${LUA_VERSION} on Windows")
 	endif()
+	if (CMAKE_SIZEOF_VOID_P LESS_EQUAL 4)
+		set(LUA_JIT_MAKE_COMMAND "${VCVARS_ALL_BAT}" x86)
+	else()
+		set(LUA_JIT_MAKE_COMMAND "${VCVARS_ALL_BAT}" x64)
+	endif()
+	set(LUA_JIT_MAKE_COMMAND ${LUA_JIT_MAKE_COMMAND} && cd src && msvcbuild.bat)
+	if (NOT BUILD_LUA_AS_DLL)
+		set(LUA_JIT_MAKE_COMMAND ${LUA_JIT_MAKE_COMMAND} static)
+	endif()
+
 	set(LUA_JIT_PREBUILT_LIB "lua51.lib")
 	set(LUA_JIT_PREBUILT_IMP_LIB "lua51.lib")
 	set(LUA_JIT_PREBUILT_DLL "lua51.dll")
@@ -189,13 +219,12 @@ else ()
 	list(APPEND LUA_JIT_MAKE_BUILD_MODIFICATIONS "LUAJIT_A=${LUA_JIT_LIB_FILENAME}")
 	set(LUA_JIT_MAKE_CFLAGS_MODIFICATIONS "")
 	set(LUA_JIT_MAKE_HOST_CFLAGS_MODIFICATIONS "")
-	set(LUA_JIT_MAKE_TARGET_CFLAGS_MODIFICATIONS "")
+	set(LUA_JIT_MAKE_TARGET_CFLAGS_MODIFICATIONS "-fPIC")
 	if (BUILD_LUA_AS_DLL)
 		list(APPEND LUA_JIT_MAKE_BUILD_MODIFICATIONS "LUAJIT_SO=${LUA_JIT_DLL_FILENAME}" "TARGET_SONAME=${LUA_JIT_DLL_FILENAME}" "TARGET_DYLIBNAME=${LUA_JIT_DLL_FILENAME}" "TARGET_DLLNAME=${LUA_JIT_DLL_FILENAME}")
 		list(APPEND LUA_JIT_MAKE_BUILD_MODIFICATIONS "BUILDMODE=dynamic")
 	else()
 		list(APPEND LUA_JIT_MAKE_BUILD_MODIFICATIONS "BUILDMODE=static")
-		set(LUA_JIT_MAKE_TARGET_CFLAGS_MODIFICATIONS "${LUA_JIT_MAKE_TARGET_CFLAGS_MODIFICATIONS} -fPIC")
 	endif()
 	if (IS_X86)
 		list(APPEND LUA_JIT_MAKE_BUILD_MODIFICATIONS "CC=${CMAKE_C_COMPILER} -m32")
@@ -217,9 +246,10 @@ else ()
 	list(APPEND LUA_JIT_MAKE_BUILD_MODIFICATIONS "CFLAGS=${LUA_JIT_MAKE_CFLAGS_MODIFICATIONS}")
 	list(APPEND LUA_JIT_MAKE_BUILD_MODIFICATIONS "TARGET_CFLAGS=${LUA_JIT_MAKE_TARGET_CFLAGS_MODIFICATIONS}")
 	list(APPEND LUA_JIT_MAKE_BUILD_MODIFICATIONS "HOST_CFLAGS=${LUA_JIT_MAKE_HOST_CFLAGS_MODIFICATIONS}")
-
-	set(LUA_JIT_BUILD_COMMAND BUILD_COMMAND "${MAKE_PROGRAM}" ${LUA_JIT_MAKE_BUILD_MODIFICATIONS})
+	set(LUA_JIT_MAKE_COMMAND "${MAKE_PROGRAM}" ${LUA_JIT_MAKE_BUILD_MODIFICATIONS})
 endif()
+
+set(LUA_JIT_BUILD_COMMAND BUILD_COMMAND ${LUA_JIT_MAKE_COMMAND})
 
 set(lualib luajit_lib_${LUA_JIT_VERSION})
 set(luainterpreter luajit_${LUA_JIT_VERSION})
@@ -247,15 +277,20 @@ elseif(LUA_JIT_NORMALIZED_LUA_VERSION MATCHES "latest")
 	set(LUA_JIT_PULL_LATEST TRUE)
 endif()
 
-set(LUA_JIT_BYPRODUCTS "${LUA_JIT_SOURCE_LUA_LIB}" "${LUA_JIT_SOURCE_LUA_LIB_EXP}"
-	"${LUA_JIT_SOURCE_LUA_DLL}" "${LUA_JIT_SOURCE_LUA_INTERPRETER}")
+set(LUA_JIT_BYPRODUCTS "${LUA_JIT_SOURCE_LUA_DLL}" "${LUA_JIT_SOURCE_LUA_INTERPRETER}")
+set(LUA_JIT_INSTALL_BYPRODUCTS "${LUA_JIT_DESTINATION_LUA_DLL}" "${LUA_JIT_DESTINATION_LUA_INTERPRETER}")
 
-set(LUA_JIT_INSTALL_BYPRODUCTS "${LUA_JIT_DESTINATION_LUA_LIB}" "${LUA_JIT_DESTINATION_LUA_LIB_EXP}"
-	"${LUA_JIT_DESTINATION_LUA_DLL}" "${LUA_JIT_DESTINATION_LUA_INTERPRETER}")
+if (BUILD_LUA_AS_DLL AND MSVC)
+	set(LUA_JIT_BYPRODUCTS ${LUA_JIT_BYPRODUCTS} "${LUA_JIT_SOURCE_LUA_LIB_EXP}")
+	set(LUA_JIT_INSTALL_BYPRODUCTS ${LUA_JIT_INSTALL_BYPRODUCTS} "${LUA_JIT_DESTINATION_LUA_LIB_EXP}")
+endif()
 
-if (CMAKE_IMPORT_LIBRARY_SUFFIX)
-	set(LUA_JIT_BYPRODUCTS "${LUA_JIT_BYPRODUCTS}" "${LUA_JIT_SOURCE_LUA_IMP_LIB}")
+if (CMAKE_IMPORT_LIBRARY_SUFFIX AND BUILD_LUA_AS_DLL)
+	set(LUA_JIT_BYPRODUCTS ${LUA_JIT_BYPRODUCTS} "${LUA_JIT_SOURCE_LUA_IMP_LIB}")
 	set(LUA_JIT_INSTALL_BYPRODUCTS "${LUA_JIT_INSTALL_BYPRODUCTS}" "${LUA_JIT_DESTINATION_LUA_IMP_LIB}")
+else()
+	set(LUA_JIT_BYPRODUCTS ${LUA_JIT_BYPRODUCTS} "${LUA_JIT_SOURCE_LUA_LIB}")
+	set(LUA_JIT_INSTALL_BYPRODUCTS ${LUA_JIT_INSTALL_BYPRODUCTS} "${LUA_JIT_DESTINATION_LUA_LIB}")
 endif()
 
 # # Post-Build moving steps for necessary items
@@ -264,20 +299,37 @@ set(LUA_JIT_POSTBUILD_COMMENTS "Executable - Moving \"${LUA_JIT_SOURCE_LUA_INTER
 set(LUA_JIT_POSTBUILD_COMMANDS COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_INTERPRETER}" "${LUA_JIT_DESTINATION_LUA_INTERPRETER}")
 if (BUILD_LUA_AS_DLL)
 	if (MSVC)
-		set(LUA_JIT_POSTBUILD_COMMENTS "${LUA_JIT_POSTBUILD_COMMENTS}\nImport Library - Moving \"${LUA_JIT_SOURCE_LUA_IMP_LIB}\" to \"${LUA_JIT_DESTINATION_LUA_IMP_LIB}\"...")
+		set(LUA_JIT_POSTBUILD_COMMENTS "${LUA_JIT_POSTBUILD_COMMENTS} | Import Library - Moving \"${LUA_JIT_SOURCE_LUA_IMP_LIB}\" to \"${LUA_JIT_DESTINATION_LUA_IMP_LIB}\"...")
 		set(LUA_JIT_POSTBUILD_COMMANDS ${LUA_JIT_POSTBUILD_COMMANDS} COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_IMP_LIB}" "${LUA_JIT_DESTINATION_LUA_IMP_LIB}")
 		
-		set(LUA_JIT_POSTBUILD_COMMENTS "${LUA_JIT_POSTBUILD_COMMENTS}\nLibrary - Moving \"${LUA_JIT_SOURCE_LUA_LIB_EXP}\" to \"${LUA_JIT_DESTINATION_LUA_LIB_EXP}\"...")
+		set(LUA_JIT_POSTBUILD_COMMENTS "${LUA_JIT_POSTBUILD_COMMENTS} | Library - Moving \"${LUA_JIT_SOURCE_LUA_LIB_EXP}\" to \"${LUA_JIT_DESTINATION_LUA_LIB_EXP}\"...")
 		set(LUA_JIT_POSTBUILD_COMMANDS ${LUA_JIT_POSTBUILD_COMMANDS} && "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_LIB_EXP}" "${LUA_JIT_DESTINATION_LUA_LIB_EXP}")
 	endif()
-	set(LUA_JIT_POSTBUILD_COMMENTS "${LUA_JIT_POSTBUILD_COMMENTS}\nDynamic Library - Moving \"${LUA_JIT_SOURCE_LUA_DLL}\" to \"${LUA_JIT_DESTINATION_LUA_DLL}\"...")
+	set(LUA_JIT_POSTBUILD_COMMENTS "${LUA_JIT_POSTBUILD_COMMENTS} | Dynamic Library - Moving \"${LUA_JIT_SOURCE_LUA_DLL}\" to \"${LUA_JIT_DESTINATION_LUA_DLL}\"...")
 	set(LUA_JIT_POSTBUILD_COMMANDS ${LUA_JIT_POSTBUILD_COMMANDS} COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_DLL}" "${LUA_JIT_DESTINATION_LUA_DLL}")
 else()
-	set(LUA_JIT_POSTBUILD_COMMENTS "${LUA_JIT_POSTBUILD_COMMENTS}\nLibrary - Moving \"${LUA_JIT_SOURCE_LUA_LIB}\" to \"${LUA_JIT_DESTINATION_LUA_LIB}\"...")
+	set(LUA_JIT_POSTBUILD_COMMENTS "${LUA_JIT_POSTBUILD_COMMENTS} | Library - Moving \"${LUA_JIT_SOURCE_LUA_LIB}\" to \"${LUA_JIT_DESTINATION_LUA_LIB}\"...")
 	set(LUA_JIT_POSTBUILD_COMMANDS ${LUA_JIT_POSTBUILD_COMMANDS} COMMAND "${CMAKE_COMMAND}" -E copy "${LUA_JIT_SOURCE_LUA_LIB}" "${LUA_JIT_DESTINATION_LUA_LIB}")
 endif()
 
-if (LUA_JIT_GIT_COMMIT OR LUA_JIT_PULL_LATEST)
+if (LUA_LOCAL_DIR)
+	file(COPY "${LUA_LOCAL_DIR}/"
+		DESTINATION "${LUA_BUILD_TOPLEVEL}"
+		FILES_MATCHING REGEX ".*"
+	)
+	add_custom_command(OUTPUT ${LUA_JIT_BYPRODUCTS}
+		COMMAND ${LUA_JIT_MAKE_COMMAND}
+		WORKING_DIRECTORY "${LUA_BUILD_TOPLEVEL}"
+		DEPENDS "${LUA_BUILD_TOPLEVEL}/Makefile" "${LUA_BUILD_TOPLEVEL}/src/msvcbuild.bat"
+		COMMENT "Building LuaJIT ${LUA_JIT_VERSION}..."
+	)
+	add_custom_target(LUA_JIT-move
+		${LUA_JIT_POSTBUILD_COMMANDS}
+		COMMENT ${LUA_JIT_POSTBUILD_COMMENTS}
+		BYPRODUCTS ${LUA_JIT_INSTALL_BYPRODUCTS}
+		DEPENDS ${LUA_JIT_BYPRODUCTS}
+	)
+elseif (LUA_JIT_GIT_COMMIT OR LUA_JIT_PULL_LATEST)
 	if (LUA_JIT_PULL_LATEST)
 		MESSAGE(STATUS "Latest LuaJIT has been requested: pulling from git...")
 	elseif (LUA_JIT_GIT_COMMIT)
@@ -304,7 +356,7 @@ if (LUA_JIT_GIT_COMMIT OR LUA_JIT_PULL_LATEST)
 else()
 	ExternalProject_Add(LUA_JIT
 		BUILD_IN_SOURCE TRUE
-		BUILD_ALWAYS FALSE
+		BUILD_ALWAYS TRUE
 		# LuaJIT does not offer a TLS/SSL port
 		TLS_VERIFY FALSE
 		PREFIX "${LUA_BUILD_TOPLEVEL}"
@@ -323,58 +375,46 @@ else()
 		BUILD_BYPRODUCTS ${LUA_JIT_BYPRODUCTS})
 endif()
 
-# # MAYBE?:
-# Add additional post-build step to move all necessary headers/lua files
-# for now, we just point directly to the `src` directory...
-
-add_custom_command(TARGET LUA_JIT
-	POST_BUILD
-	${LUA_JIT_POSTBUILD_COMMANDS}
-	COMMENT ${LUA_JIT_POSTBUILD_COMMENTS}
-	BYPRODUCTS ${LUA_JIT_INSTALL_BYPRODUCTS})
+if (NOT LUA_LOCAL_DIR)
+	ExternalProject_Add_Step(LUA_JIT move
+		ALWAYS TRUE
+		${LUA_JIT_POSTBUILD_COMMANDS}
+		WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}" 
+		COMMENT ${LUA_JIT_POSTBUILD_COMMENTS}
+		DEPENDEES build
+		DEPENDS ${LUA_JIT_BYPRODUCTS}
+		BYPRODUCTS ${LUA_JIT_INSTALL_BYPRODUCTS})
+	ExternalProject_Add_StepTargets(LUA_JIT move)
+endif()
 
 # # Lua Library
-add_library(${lualib} ${LUA_BUILD_LIBRARY_TYPE} IMPORTED)
-# make sure the library we export really does depend on Lua JIT's external project
-add_dependencies(${lualib} LUA_JIT)
-# Configure properties
+add_library(${lualib} INTERFACE)
+add_dependencies(${lualib} LUA_JIT-move)
+target_include_directories(${lualib}
+	INTERFACE "${LUA_JIT_SOURCE_DIR}")
 if (BUILD_LUA_AS_DLL)
 	if (MSVC)
-		set_target_properties(${lualib}
-			PROPERTIES 
-			IMPORTED_IMPLIB "${LUA_JIT_DESTINATION_LUA_IMP_LIB}")
+		target_link_libraries(${lualib}
+			INTERFACE "${LUA_JIT_DESTINATION_LUA_LIB}")
+	else()
+		target_link_libraries(${lualib}
+			INTERFACE "${LUA_JIT_DESTINATION_LUA_DLL}")
 	endif()
-	set_target_properties(${lualib}
-		PROPERTIES 
-		IMPORTED_LOCATION "${LUA_JIT_DESTINATION_LUA_DLL}")
-else ()
-	set_target_properties(${lualib}
-		PROPERTIES 
-		IMPORTED_LOCATION "${LUA_JIT_DESTINATION_LUA_LIB}")
+else()
+	target_link_libraries(${lualib}
+		INTERFACE "${LUA_JIT_DESTINATION_LUA_LIB}")
 endif()
-set_target_properties(${lualib}
-	PROPERTIES 
-	IMPORTED_LINK_INTERFACE_LANGUAGES C
-	INTERFACE_INCLUDE_DIRECTORIES "${LUA_JIT_SOURCE_DIR}")
+
 if (CMAKE_DL_LIBS)
-	set_target_properties(${lualib}
-			PROPERTIES
-			INTERFACE_LINK_LIBRARIES ${CMAKE_DL_LIBS})
+	target_link_libraries(${lualib}
+		INTERFACE ${CMAKE_DL_LIBS})
 endif()
 if (XCODE)
 	target_compile_options(${lualib}
-		PUBLIC -pagezero_size 10000 -image_base 100000000)
+		INTERFACE -pagezero_size 10000 -image_base 100000000)
 endif ()
-
-# # Lua Executable
-add_executable(${luainterpreter} IMPORTED)
-# Add location pointing to executable
-set_target_properties(${luainterpreter}
-	PROPERTIES
-	IMPORTED_LOCATION "${LUA_JIT_DESTINATION_LUA_INTERPRETER}")
-add_dependencies(${luainterpreter} LUA_JIT)
-
+	
 # # set externally-visible target indicator
 set(LUA_LIBRARIES ${lualib})
-set(LUA_INTERPRETER ${luainterpreter})
-set(LUA_INCLUDE_DIRS "${LUA_JIT_SOURCE_DIR}")
+set(LUA_INTERPRETER "")
+set(LUA_INCLUDE_DIRS "${LUA_JIT_INCLUDE_DIRS}")

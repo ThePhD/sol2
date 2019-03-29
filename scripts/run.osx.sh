@@ -3,7 +3,7 @@
 # # # # sol2
 # The MIT License (MIT)
 #
-# Copyright (c) 2013-2018 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2019 Rapptz, ThePhD, and contributors
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -32,13 +32,13 @@ ninja --version
 cmake --version
 
 cd Debug
-	cmake ${SOL2_DIR} -G Xcode -DCMAKE_BUILD_TYPE=Debug -DLUA_VERSION="${LUA_VERSION}" -DCI=ON -DPLATFORM=${PLATFORM} -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON
+	cmake "${SOL2_DIR}" -G Xcode -DCMAKE_BUILD_TYPE=Debug -DSOL2_LUA_VERSION="${SOL2_LUA_VERSION}" -DSOL2_CI=ON -DSOL2_PLATFORM=${SOL2_PLATFORM} -DSOL2_BUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DSOL2_TESTS=ON -DSOL2_EXAMPLES=ON -DSOL2_GENERATE_SINGLE=ON -DSOL2_TESTS_EXAMPLES=ON -DSOL2_EXAMPLES_SINGLE_GENERATED=ON -DSOL2_TESTS_SINGLE_GENERATED=ON
 	cmake --build . --config Debug
 	ctest --build-config Debug --output-on-failure
 cd ..
 
 cd Release
-	cmake ${SOL2_DIR} -G Xcode -DCMAKE_BUILD_TYPE=Release -DLUA_VERSION="${LUA_VERSION}" -DCI=ON -DPLATFORM=${PLATFORM} -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON
+	cmake "${SOL2_DIR}" -G Xcode -DCMAKE_BUILD_TYPE=Release -DSOL2_LUA_VERSION="${SOL2_LUA_VERSION}" -DSOL2_CI=ON -DSOL2_PLATFORM=${SOL2_PLATFORM} -DSOL2_BUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DSOL2_TESTS=ON -DSOL2_EXAMPLES=ON -DSOL2_GENERATE_SINGLE=ON -DSOL2_TESTS_EXAMPLES=ON -DSOL2_EXAMPLES_SINGLE=ON -DSOL2_TESTS_SINGLE_GENERATED=ON
 	cmake --build . --config Release
 	ctest --build-config Release --output-on-failure
 cd ..

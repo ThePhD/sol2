@@ -13,7 +13,7 @@ Given a C++ function, you can drop it into Sol in several equivalent ways, worki
 	:caption: Registering C++ functions
 	:name: writing-functions
 
-	#include <sol.hpp>
+	#include <sol/sol.hpp>
 
 	std::string my_function( int a, std::string b ) {
 		// Create a string with the letter 'D' "a" times,

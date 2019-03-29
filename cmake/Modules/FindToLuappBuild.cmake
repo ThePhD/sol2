@@ -1,7 +1,7 @@
-# # # # sol2
+# # # # sol3
 # The MIT License (MIT)
 #
-# Copyright (c) 2013-2018 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2019 Rapptz, ThePhD, and contributors
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -57,7 +57,7 @@ ExternalProject_Add(TOLUAPP_BUILD_SOURCE
 	TEST_COMMAND ""
 	BUILD_BYPRODUCTS "${toluapp_sources}")
 
-set(toluapp_lib toluapp_lib_5.2.4)
+set(toluapp_lib toluapp_lib_${toluapp_version})
 add_library(${toluapp_lib} SHARED ${toluapp_sources})
 add_dependencies(${toluapp_lib} TOLUAPP_BUILD_SOURCE)
 set_target_properties(${toluapp_lib} PROPERTIES
@@ -70,7 +70,7 @@ if (MSVC)
 	target_compile_options(${toluapp_lib}
 		PRIVATE /W1)
 	target_compile_definitions(${toluapp_lib}
-		PRIVATE TOLUA_API=__declspec(dllexport))
+		PRIVATE "TOLUA_API=__declspec(dllexport)")
 else()
 	target_compile_options(${toluapp_lib}
 		PRIVATE -w

@@ -1,7 +1,7 @@
-# # # # sol2
+# # # # sol3
 # The MIT License (MIT)
 #
-# Copyright (c) 2013-2018 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2019 Rapptz, ThePhD, and contributors
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -107,7 +107,7 @@ if (LuaBuild_FIND_VERSION)
 	endif()
 endif()
 if (NOT LUA_VERSION)
-	set(LUA_VERSION 5.3.4)
+	set(LUA_VERSION 5.3.5)
 endif()
 find_lua_build(${LUA_VERSION})
 unset(find_lua_build)
@@ -116,5 +116,5 @@ unset(find_lua_build)
 # all listed variables are TRUE
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(LuaBuild
 	FOUND_VAR LUABUILD_FOUND
-	REQUIRED_VARS LUA_LIBRARIES LUA_INTERPRETER LUA_INCLUDE_DIRS
+	REQUIRED_VARS LUA_LIBRARIES LUA_INCLUDE_DIRS
 	VERSION_VAR LUA_VERSION_STRING)

@@ -1,7 +1,7 @@
-# # # # sol2
+# # # # sol3
 # The MIT License (MIT)
 # 
-# Copyright (c) 2013-2018 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2019 Rapptz, ThePhD, and contributors
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,7 @@ BasedOnStyle: WebKit
 IndentWidth: 5
 TabWidth: 5
 ContinuationIndentWidth: 5
-UseTab: Always
+UseTab: ForIndentation
 
 # Namespaces
 NamespaceIndentation: All
@@ -33,7 +33,7 @@ CompactNamespaces: true
 FixNamespaceComments: true
 
 # Overall Alignment
-ColumnLimit: 0
+ColumnLimit: 160
 AlignAfterOpenBracket: DontAlign # uses ContinuationIndentWidth for this instead
 AccessModifierOffset: -5 # do not push public: or private: around
 #AlignConsecutiveAssignments: true # affects more than what's expected: do not use
@@ -59,7 +59,7 @@ AlwaysBreakAfterReturnType: None
 BreakConstructorInitializers: BeforeComma
 ConstructorInitializerIndentWidth: 0
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
-BinPackArguments: true
+BinPackArguments: false
 BinPackParameters: true
 
 # Classes

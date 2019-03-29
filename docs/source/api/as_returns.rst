@@ -15,5 +15,5 @@ as_returns
 This allows you to wrap up a source that has ``begin`` and ``end`` iterator-returning functions on it and return it as multiple results into Lua. To have more control over the returns, use :doc:`sol::variadic_results<variadic_results>`.
 
 
-.. literalinclude:: ../../../examples/as_returns.cpp
+.. literalinclude:: ../../../examples/source/as_returns.cpp
 	:linenos:

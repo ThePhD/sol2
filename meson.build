@@ -18,7 +18,7 @@ endif
 
 # Expose standard dependency.
 sol2_dep = declare_dependency(
-	include_directories: include_directories('.'),
+	include_directories: include_directories('./include'),
 	compile_args: compile_args,
 	dependencies: [ lua_dep ],
 )
@@ -38,7 +38,7 @@ if get_option('single')
 	endif
 
 	# List all headers that the single header comprises of.
-	cmd = run_command(python, 'list-headers.py')
+	cmd = run_command(python, 'list_headers.py')
 
 	if cmd.returncode() != 0
 		error('Could not list sol2 header files.')
@@ -48,7 +48,7 @@ if get_option('single')
 	sol2_single = custom_target('sol2_single',
 		input: cmd.stdout().strip().split('\n'),
 		output: 'sol.hpp',
-		command: [ python, files('single.py'), '--output', '@OUTPUT@' ]
+		command: [ python, files('single/single.py'), '--input', './include'. '--output', '@OUTPUT@' ]
 	)
 
 	# Expose the dependency.

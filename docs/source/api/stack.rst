@@ -241,7 +241,7 @@ This is an SFINAE-friendly struct that is meant to expose static function ``get`
 	:name: pusher
 
 	template <typename X, typename = void>
-	struct pusher {
+	struct unqualified_pusher {
 		template <typename T>
 		static int push ( lua_State* L, T&&, ... ) {
 			// can optionally take more than just 1 argument

@@ -1,7 +1,7 @@
 # # # # sol2
 # The MIT License (MIT)
 #
-# Copyright (c) 2013-2018 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2019 Rapptz, ThePhD, and contributors
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -24,27 +24,46 @@
 
 find_package(LuaBridgeBuild)
 
-function (make_luabridge_interop_example target_library is_single)
+function (make_luabridge_interop_example target_library example_suffix)
 	set(example_name luabridge_interop_example)
-	if (is_single)
-		set(example_name "${example_name}.single")
-	endif(is_single)
-	add_executable(${example_name} LuaBridge.cpp)
-	target_link_libraries(${example_name} PUBLIC ${LUA_LIBRARIES} PRIVATE ${LUABRIDGE_LIBRARIES} ${target_library})
+	set(example_name "${example_name}${example_suffix}")
+	
+	add_executable(${example_name} source/LuaBridge.cpp)
+	target_link_libraries(${example_name} 
+		PRIVATE ${LUA_LIBRARIES} ${LUABRIDGE_LIBRARIES} 
+		${target_library} sol2::assert)
+
+	if (MSVC)
+		target_compile_options(${example_name}
+			PRIVATE /std:c++latest /EHsc "$<$<CONFIG:Debug>:/MDd>"
+			"$<$<CONFIG:Release>:/MD>"
+			"$<$<CONFIG:RelWithDebInfo>:/MD>"
+			"$<$<CONFIG:MinSizeRel>:/MD>")
+		target_compile_definitions(${example_name}
+			PRIVATE /W1
+			UNICODE _UNICODE 
+			_CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+	else()
+		target_compile_options(${example_name}
+			PRIVATE -std=c++1z -w
+			-Wno-unknown-warning -Wno-unknown-warning-option)
+	endif()
+
 	if (CMAKE_DL_LIBS)
 		target_link_libraries(${example_name} PRIVATE ${CMAKE_DL_LIBS})
 	endif()
-	if (MSVC)
-		target_compile_options(${example_name} PRIVATE /W1)
-	else()
-		target_compile_options(${example_name} PRIVATE -w)
-	endif()
-	if (TESTS_EXAMPLES)
+
+	if (SOL2_TESTS_INTEROP_EXAMPLES)
 		add_test(NAME ${example_name} COMMAND ${example_name})
 	endif()
 endfunction()
 
-make_luabridge_interop_example(sol2 FALSE)
-if (SOL2_SINGLE_FOUND AND INTEROP_EXAMPLES_SINGLE)
-	make_luabridge_interop_example(sol2_single TRUE)
+if (SOL2_INTEROP_EXAMPLES)
+	make_luabridge_interop_example(sol2::sol2 "")
+endif()
+if (SOL2_INTEROP_EXAMPLES_SINGLE)
+	make_luabridge_interop_example(sol2::sol2_single ".single")
+endif()
+if (SOL2_INTEROP_EXAMPLES_SINGLE_GENERATED)
+	make_luabridge_interop_example(sol2::sol2_single_generated ".single.generated")
 endif()

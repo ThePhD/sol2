@@ -3,7 +3,7 @@
 # # # # sol2
 # The MIT License (MIT)
 # 
-# Copyright (c) 2013-2018 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2019 Rapptz, ThePhD, and contributors
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -24,10 +24,10 @@
 
 # # This script runs the actual project
 
-echo -en "travis_fold:start:build_preparation.1\r"
+echo -e "travis_fold:start:build_preparation\r"
 	if [ -z "${SOL2_DIR}" ]
 	then
-		if [ ${CI} = true ]
+		if [ "${SOL2_CI}" = true ]
 		then
 			export SOL2_DIR=~/sol2
 		else		
@@ -35,9 +35,14 @@ echo -en "travis_fold:start:build_preparation.1\r"
 		fi
 	fi
 
-	if [ -z "${LUA_VERSION}" ]
+	if [ -z "${SOL2_LUA_VERSION}" ]
 	then
-		export LUA_VERSION=5.3.4
+		export SOL2_LUA_VERSION=5.3.5
+	fi
+
+	if [ -z "${SOL2_PLATFORM}" ]
+	then
+		export SOL2_PLATFORM=x64
 	fi
 
 	mkdir -p build-sol2
@@ -50,47 +55,78 @@ echo -en "travis_fold:start:build_preparation.1\r"
 		source ./sol2.compiler.vars
 	fi
 
-	if [[ ${LUA_VERSION} =~ "5.3" ]]
+	if [ ! -z "${CC}" ]
 	then
-		export INTEROP_DEFINES="-DINTEROP_EXAMPLES=ON -DTESTS_INTEROP_EXAMPLES=ON -DINTEROP_EXAMPLES_SINGLE=ON -DDYNAMIC_LOADING_EXAMPLES=ON -DDYNAMIC_LOADING_EXAMPLES_SINGLE=ON -DTESTS_DYNAMIC_LOADING_EXAMPLES=ON"
+		build_type_cc="-DCMAKE_CXX_COMPILER=${CC}"
 	else
-		export INTEROP_DEFINES=
+		build_type_cc=
+	fi
+
+	if [ ! -z "${CXX}" ]
+	then
+		build_type_cxx="-DCMAKE_CXX_COMPILER=${CXX}"
+	else
+		build_type_cxx=
+	fi
+
+	SOL2_CMAKE_DEFINES=("-DSOL2_LUA_VERSION=${SOL2_LUA_VERSION}")
+	SOL2_CMAKE_DEFINES+=("-DSOL2_PLATFORM=${SOL2_PLATFORM}")
+	SOL2_CMAKE_DEFINES+=('-DSOL2_CI=ON')
+	SOL2_CMAKE_DEFINES+=('-DSOL2_BUILD_LUA=ON')
+	SOL2_CMAKE_DEFINES+=('-DBUILD_LUA_AS_DLL=ON')
+	SOL2_CMAKE_DEFINES+=('-DSOL2_TESTS=ON')
+	SOL2_CMAKE_DEFINES+=('-DSOL2_EXAMPLES=ON')
+	SOL2_CMAKE_DEFINES+=('-DSOL2_TESTS_EXAMPLES=ON')
+	if [[ ! -z ${SOL2_TEST_SINGLE} ]]
+	then
+		SOL2_CMAKE_DEFINES+=('-DSOL2_GENERATE_SINGLE=ON')
+		SOL2_CMAKE_DEFINES+=('-DSOL2_EXAMPLES_SINGLE=ON')
+		SOL2_CMAKE_DEFINES+=('-DSOL2_EXAMPLES_SINGLE_GENERATED=ON')
+		SOL2_CMAKE_DEFINES+=('-DSOL2_TESTS_SINGLE=ON')
+		SOL2_CMAKE_DEFINES+=('-DSOL2_TESTS_SINGLE_GENERATED=ON')
+	fi
+	if [[ ! -z ${SOL2_TEST_INTEROP} ]]
+	then
+		SOL2_CMAKE_DEFINES+=('-DSOL2_INTEROP_EXAMPLES=ON')
+		SOL2_CMAKE_DEFINES+=('-DSOL2_TESTS_INTEROP_EXAMPLES=ON')
+		SOL2_CMAKE_DEFINES+=('-DSOL2_DYNAMIC_LOADING_EXAMPLES=ON')
+		SOL2_CMAKE_DEFINES+=('-DSOL2_TESTS_DYNAMIC_LOADING_EXAMPLES=ON')	
+		if [[ ! -z ${SOL2_TEST_SINGLE} ]]
+		then
+			SOL2_CMAKE_DEFINES+=('-DSOL2_INTEROP_EXAMPLES_SINGLE=ON')
+			SOL2_CMAKE_DEFINES+=('-DSOL2_INTEROP_EXAMPLES_SINGLE_GENERATED=ON')
+			SOL2_CMAKE_DEFINES+=('-DSOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE=ON')
+			SOL2_CMAKE_DEFINES+=('-DSOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE_GENERATED=ON')
+		fi
 	fi
 
 	mkdir -p Debug Release
 
-	export build_type_cc=-DCMAKE_C_COMPILER\=${CC}
-	export build_type_cxx=-DCMAKE_CXX_COMPILER\=${CXX}
-echo -en "travis_fold:end:build_preparation.1\r"
-
-
-# show the tool and compiler versions we're using
-echo -en "travis_fold:start:build_preparation.2\r"
 	echo "=== Compiler and tool variables ==="
 	ninja --version
 	cmake --version
-	${CC} --version
-	${CXX} --version
-	echo build_type_cc : "${build_type_cc}"
-	echo build_type_cxx: "${build_type_cxx}"
-echo -en "travis_fold:end:build_preparation.2\r"
+	echo sol2 source dir : "${SOL2_DIR}"
+	echo build_type_cc   : "${build_type_cc}"
+	echo build_type_cxx  : "${build_type_cxx}"
+	echo cmake defines   : "${SOL2_CMAKE_DEFINES[@]}"
+echo -e "travis_fold:end:build_preparation\r"
 
-echo -en "travis_fold:start:build.debug\r"
+echo -e "travis_fold:start:build.debug\r"
 	cd Debug
-	cmake ${SOL2_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Debug   ${build_type_cc} ${build_type_cxx} -DLUA_VERSION="${LUA_VERSION}" -DCI=ON -DPLATFORM=${PLATFORM} -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON ${INTEROP_DEFINES}
+	cmake "${SOL2_DIR}" -G Ninja -DCMAKE_BUILD_TYPE=Debug ${build_type_cc} ${build_type_cxx} "${SOL2_CMAKE_DEFINES[@]}"
 	cmake --build . --config Debug
-echo -en "travis_fold:end:build.debug\r"
-echo -en "travis_fold:start:test.debug\r"
+echo -e "travis_fold:end:build.debug\r"
+echo -e "travis_fold:start:test.debug\r"
 	ctest --build-config Debug --output-on-failure
 	cd ..
-echo -en "travis_fold:end:test.debug\r"
+echo -e "travis_fold:end:test.debug\r"
 
-echo "travis_fold:start:build.release\r"
+echo -e "travis_fold:start:build.release\r"
 	cd Release
-	cmake ${SOL2_DIR} -G Ninja -DCMAKE_BUILD_TYPE=Release ${build_type_cc} ${build_type_cxx} -DLUA_VERSION="${LUA_VERSION}" -DCI=ON -DPLATFORM=${PLATFORM} -DBUILD_LUA=ON -DBUILD_LUA_AS_DLL=OFF -DTESTS=ON -DEXAMPLES=ON -DSINGLE=ON -DTESTS_EXAMPLES=ON -DEXAMPLES_SINGLE=ON -DTESTS_SINGLE=ON ${INTEROP_DEFINES}
+	cmake "${SOL2_DIR}" -G Ninja -DCMAKE_BUILD_TYPE=Release ${build_type_cc} ${build_type_cxx} "${SOL2_CMAKE_DEFINES[@]}"
 	cmake --build . --config Release
-echo -en "travis_fold:end:build.release\r"
-echo -en "travis_fold:start:test.release\r"
+echo -e "travis_fold:end:build.release\r"
+echo -e "travis_fold:start:test.release\r"
 	ctest --build-config Release --output-on-failure
 	cd ..
-echo -en "travis_fold:end:test.release\r"
+echo -e "travis_fold:end:test.release\r"

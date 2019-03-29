@@ -20,8 +20,8 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# Start from the ubuntu:xenial image
-FROM ubuntu:xenial
+# Start from the ubuntu:bionic image
+FROM ubuntu:bionic
 # owner
 LABEL author="ThePhD <phdofthehouse@gmail.com>"
 LABEL maintainer="ThePhD <phdofthehouse@gmail.com>"
@@ -48,13 +48,17 @@ VOLUME /root/sol2
 # # This is ordered like this so making multiple of these
 # # containers is more or less identical up to this point
 # Command line arguments, with default values
-ARG CI=true
+ARG SOL2_PLATFORM=x64
+ARG SOL2_LUA_VERSION=x64
+ARG SOL2_LUA_VERSION=5.3.5
+ARG SOL2_TEST_SINGLE=false
+ARG SOL2_TEST_INTEROP=false
+ARG SOL2_CI=true
 ARG GCC_VERSION
 ARG LLVM_VERSION
-ARG PLATFORM=x64
 
 # Potential environment variables
-ENV CI=${CI} PLATFORM=${PLATFORM} GCC_VERSION=${GCC_VERSION} LLVM_VERSION=${LLVM_VERSION} SOL2_DIR=/root/sol2
+ENV SOL2_LUA_VERSION=${SOL2_LUA_VERSION} SOL2_TEST_SINGLE=${SOL2_TEST_SINGLE} SOL2_TEST_INTEROP=${SOL2_TEST_INTEROP} SOL2_CI=${SOL2_CI} SOL2_PLATFORM=${SOL2_PLATFORM} GCC_VERSION=${GCC_VERSION} LLVM_VERSION=${LLVM_VERSION} SOL2_DIR=/root/sol2
 
 RUN ["/usr/bin/env", "zsh", "-e", "/root/sol2-scripts/preparation.linux.sh"]
 

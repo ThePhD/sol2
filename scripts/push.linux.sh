@@ -3,7 +3,7 @@
 # # # # sol2
 # The MIT License (MIT)
 # 
-# Copyright (c) 2013-2018 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2019 Rapptz, ThePhD, and contributors
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -26,23 +26,23 @@
 CI=true
 declare -a gcc_versions
 gcc_versions=(
-	4.9
-	5
-	6
-	7
+#	7
+#	8
 )
 declare -r gcc_versions
 
 declare -a llvm_versions
 llvm_versions=(
-	3.6.2
-	3.7.1
-	3.8.1
 	3.9.1
-	4.0.1
-	5.0.1
+	4.0.0
+#	5.0.2
+#	6.0.1
+#	7.0.1
+#	8.0.0
 )
 declare -r llvm_versions
+
+push_generic=false
 
 if [ -z "${DOCKER_USERNAME}" ]
 then
@@ -69,8 +69,10 @@ for i in $llvm_versions; do
 	docker push ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
 done
 
-unset LLVM_VERSION
-unset GCC_VERSION
-echo "====== Pushing Docker Image: ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} ======="
-docker push ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
-
+if [ "${push_generic}" = true ]
+then
+	unset LLVM_VERSION
+	unset GCC_VERSION
+	echo "====== Pushing Docker Image: ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION} ======="
+	docker push ${docker_username}sol2:gcc-${GCC_VERSION}_llvm-${LLVM_VERSION}
+fi

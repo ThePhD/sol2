@@ -1,7 +1,7 @@
-# # # # sol2
+# # # # sol3
 # The MIT License (MIT)
 # 
-# Copyright (c) 2013-2018 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2019 Rapptz, ThePhD, and contributors
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -72,15 +72,6 @@ main.pdb
 *.files
 *.includes
 
-# Scratchpad Files
-m.lua
-main.lua
-catch_mock.hpp
-main_aux.cpp
-main.hpp
-main2.cpp
-main.cpp
-
 # Local Lua Testbeds
 lua-5.4.0-cxx/
 lua-5.4.0/
@@ -98,7 +89,6 @@ lua-5.1.5/
 LuaJIT-2.1.0/
 luajit-2.0.5/
 luajit-2.0.3/
-include/
 liblua.a
 lib/liblua5.2.a
 
@@ -109,6 +99,9 @@ docs/build/
 *.sublime-workspace
 *.sublime-project
 
+
+# MacOS Garbage
+.DS_Store
 
 # Windows Crap
 desktop.ini
@@ -123,10 +116,10 @@ cmake-build-relwithdebinfo/
 cmake-build-release/
 /subprojects/*
 !/subprojects/*.wrap
-LuaJIT-2.1/
-LuaJIT-2.0/
-lua-5.4/
-lua-5.3-cxx/
 lua-5.3/
-lua-5.2/
+lua-5.3-cxx/
+lua-5.4/
+LuaJIT-2.0/
+LuaJIT-2.1/
 lua-5.1/
+lua-5.2/

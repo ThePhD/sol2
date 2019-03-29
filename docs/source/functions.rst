@@ -42,7 +42,7 @@ To be explicit about wanting a struct to be interpreted as a function, use ``my_
 
 Furthermore, it is important to know that lambdas without a specified return type (and a non-const, non-reference-qualified ``auto``) will decay return values. To capture or return references explicitly, use ``decltype(auto)`` or specify the return type **exactly** as desired:
 
-.. literalinclude:: ../../examples/docs/references_in_lambdas.cpp
+.. literalinclude:: ../../examples/source/docs/references_in_lambdas.cpp
 	:name: refereces-in-lambdas-example
 	:linenos:
 	

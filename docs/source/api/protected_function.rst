@@ -11,13 +11,13 @@ Inspired by a request from `starwing`_ in the :doc:`old sol repository<../origin
 
 When called without the return types being specified by either a ``sol::types<...>`` list or a ``call<Ret...>( ... )`` template type list, it generates a :doc:`protected_function_result<proxy>` class that gets implicitly converted to the requested return type. For example:
 
-.. literalinclude:: ../../../examples/error_handler.cpp
+.. literalinclude:: ../../../examples/source/error_handler.cpp
 	:linenos:
 	:lines: 10-28
 
 The following C++ code will call this function from this file and retrieve the return value, unless an error occurs, in which case you can bind an error handling function like so:
 
-.. literalinclude:: ../../../examples/error_handler.cpp
+.. literalinclude:: ../../../examples/source/error_handler.cpp
 	:linenos:
 	:lines: 1-6,30-66
 
@@ -26,7 +26,7 @@ This code is much more long-winded than its :doc:`function<function>` counterpar
 
 Alternatively, with a bad or good function call, you can use ``sol::optional`` to check if the call succeeded or failed:
 
-.. literalinclude:: ../../../examples/error_handler.cpp
+.. literalinclude:: ../../../examples/source/error_handler.cpp
 	:linenos:
 	:lines: 67-
 

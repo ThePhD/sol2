@@ -1,7 +1,7 @@
 # # # # sol2
 # The MIT License (MIT)
 # 
-# Copyright (c) 2013-2018 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2019 Rapptz, ThePhD, and contributors
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -22,82 +22,110 @@
 
 # # # sol2 Examples
 
-if (DYNAMIC_LOADING_EXAMPLES)
+if (SOL2_DYNAMIC_LOADING_EXAMPLES OR SOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE OR SOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE_GENERATED)
 	# # require_from_dll example
 	# just add the subdirectory
 	add_subdirectory(require_dll_example)
-endif(DYNAMIC_LOADING_EXAMPLES)
+endif()
 
-if (INTEROP_EXAMPLES)
+if (SOL2_INTEROP_EXAMPLES OR SOL2_INTEROP_EXAMPLES_SINGLE OR SOL2_INTEROP_EXAMPLES_SINGLE_GENERATED)
 	# # interop examples
 	add_subdirectory(interop/kaguya)
 	add_subdirectory(interop/tolua)
 	add_subdirectory(interop/LuaBridge)
 	add_subdirectory(interop/luwra)
-endif(INTEROP_EXAMPLES)
+endif()
+
+# # Utility assert.hpp "library" 
+add_library(sol2_assert INTERFACE)
+add_library(sol2::assert ALIAS sol2_assert)
+set_target_properties(sol2_assert
+	PROPERTIES
+	INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/include")
+if (SOL2_CI)
+	target_compile_definitions(sol2_assert 
+		INTERFACE SOL2_CI)
+endif()
 
 # # single-source compilable examples
 
-file(GLOB EXAMPLES_SRC *.cpp tutorials/quick_n_dirty/*.cpp docs/*.cpp)
+file(GLOB EXAMPLES_SRC source/*.cpp source/tutorials/quick_n_dirty/*.cpp source/docs/*.cpp)
 source_group(examples FILES ${EXAMPLES_SRC})
 
-function (MAKE_EXAMPLE example_source_file is_single)
+function (MAKE_EXAMPLE example_source_file example_suffix target_sol)
+	
 	get_filename_component(example_name ${example_source_file} NAME_WE)
 	file(RELATIVE_PATH example_source_file_relative ${CMAKE_SOURCE_DIR} ${example_source_file})
 	get_filename_component(example_output_relative_dir ${example_source_file_relative} DIRECTORY)
 	file(TO_CMAKE_PATH "${example_output_relative_dir}" example_output_relative_dir_name)
 	STRING(REGEX REPLACE "/" "." example_output_relative_dir_name "${example_output_relative_dir}")
-	if (is_single)
-		set(example_name "${example_name}.single")
-	endif()
+	set(example_name "${example_name}${example_suffix}")
+	
 	if (example_output_relative_dir_name STREQUAL "")
 		set(example_output_name "${example_name}")
 	else()
 		set(example_output_name "${example_output_relative_dir_name}.${example_name}")
 	endif()
 
-	add_executable(${example_name} ${example_source_file} assert.hpp)
+	add_executable(${example_name} ${example_source_file})
 	set_target_properties(${example_name} 
 		PROPERTIES
-		OUTPUT_NAME "${example_output_name}")
-	if (is_single)
-		target_link_libraries(${example_name} sol2_single)
-	else()
-		target_link_libraries(${example_name} sol2)
-	endif()
-	target_compile_features(${example_name} 
-		PRIVATE ${CXX_FEATURES})
-	target_link_libraries(${example_name} ${LUA_LIBRARIES})
-	if(CMAKE_DL_LIBS)
-		target_link_libraries(${example_name} ${CMAKE_DL_LIBS})
-	endif()
-	if (CI)
-		target_compile_definitions(${example_name} 
-			PRIVATE SOL2_CI)
-	endif()
+		OUTPUT_NAME "${example_output_name}"
+		EXPORT_NAME sol2::${example_output_name})
+	
 	if (MSVC)
-
+		target_compile_options(${example_name}
+			PRIVATE /std:c++latest /EHsc "$<$<CONFIG:Debug>:/MDd>"
+			"$<$<CONFIG:Release>:/MD>"
+			"$<$<CONFIG:RelWithDebInfo>:/MD>"
+			"$<$<CONFIG:MinSizeRel>:/MD>")
+		target_compile_definitions(${example_name}
+			PRIVATE UNICODE _UNICODE 
+			_CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE )
 	else()
 		target_compile_options(${example_name}
-			PRIVATE -Wno-noexcept-type)
+			PRIVATE -std=c++1z 
+			-ftemplate-backtrace-limit=0
+			-Wno-unknown-warning -Wno-unknown-warning-option
+			-Wall -Wpedantic -Werror -pedantic -pedantic-errors
+			-Wno-noexcept-type)
+
+		if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+			# For another day, when C++ is not so crap
+			# and we have time to audit the entire lib
+			# for all uses of `detail::swallow`...
+			#target_compile_options(${example_name}
+			#	PRIVATE -Wcomma)		
+		endif()
 	endif()
 	
-	if (TESTS_EXAMPLES)
-		if ((NOT is_single) OR (is_single AND TESTS_SINGLE))
-			add_test(NAME ${example_output_name} COMMAND ${example_name})
-		endif()
+	target_link_libraries(${example_name} 
+		PRIVATE ${target_sol} ${LUA_LIBRARIES} sol2::assert)
+	
+	if(CMAKE_DL_LIBS)
+		target_link_libraries(${example_name} PRIVATE ${CMAKE_DL_LIBS})
+	endif()
+	
+	if (SOL2_TESTS_EXAMPLES)
+		add_test(NAME ${example_output_name} COMMAND ${example_name})
 	endif()
 	install(TARGETS ${example_name} RUNTIME DESTINATION bin)
 endfunction(MAKE_EXAMPLE)
 
-if (EXAMPLES)
+if (SOL2_EXAMPLES)
 	foreach(example_source_file ${EXAMPLES_SRC})
-		MAKE_EXAMPLE(${example_source_file} FALSE)
+		MAKE_EXAMPLE(${example_source_file} "" sol2::sol2)
 	endforeach()
+endif()
 
-	if (SOL2_SINGLE_FOUND AND EXAMPLES_SINGLE)
-		foreach(example_source_file ${EXAMPLES_SRC})
-			MAKE_EXAMPLE(${example_source_file} TRUE)
-		endforeach()
-	endif()
+if (SOL2_EXAMPLES_SINGLE)
+	foreach(example_source_file ${EXAMPLES_SRC})
+		MAKE_EXAMPLE(${example_source_file} ".single" sol2::sol2_single)
+	endforeach()
+endif()
+
+if (SOL2_EXAMPLES_SINGLE_GENERATED)
+	foreach(example_source_file ${EXAMPLES_SRC})
+		MAKE_EXAMPLE(${example_source_file} ".single.generated" sol2::sol2_single_generated)
+	endforeach()
 endif()

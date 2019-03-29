@@ -13,6 +13,6 @@ property
 
 These set of functions create a type which allows a setter and getter pair (or a single getter, or a single setter) to be used to create a variable that is either read-write, read-only, or write-only. When used during :doc:`usertype<usertype>` construction, it will create a variable that uses the setter/getter member function specified.
 
-.. literalinclude:: ../../../examples/property.cpp
+.. literalinclude:: ../../../examples/source/property.cpp
 	:linenos:
 

@@ -9,7 +9,7 @@ Sometimes in C++ it's useful to know where a Lua call is coming from and what :d
 	:linenos:
 
 	#define SOL_CHECK_ARGUMENTS
-	#include <sol.hpp>
+	#include <sol/sol.hpp>
 
 	#include <iostream>
 

@@ -217,7 +217,7 @@ a complete example
 
 Here's a complete working example of it working for Lua 5.3 and Lua 5.2, and how you can retrieve out the container in all versions:
 
-.. literalinclude:: ../../examples/containers.cpp
+.. literalinclude:: ../../examples/source/containers.cpp
 	:name: containers-example
 	:linenos:
 
@@ -236,7 +236,7 @@ There are also other ways to iterate over key/values, but they can be difficult 
 
 If you can't upgrade, use the "member" function ``my_container:pairs()`` in Lua to perform iteration:
 
-.. literalinclude:: ../../examples/container_with_pairs.cpp
+.. literalinclude:: ../../examples/source/container_with_pairs.cpp
 	:name: containers-pairs-example
 	:linenos:
 

@@ -93,7 +93,7 @@ To do this, you bind things using the ``new_usertype`` and ``set_usertype`` meth
 .. code-block:: cpp
 	:caption: player_script.cpp
 
-	#include <sol.hpp>
+	#include <sol/sol.hpp>
 
 	int main () {
 		sol::state lua;
