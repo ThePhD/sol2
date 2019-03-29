@@ -1,4 +1,4 @@
-## Sol 2.20
+## sol2 (Sol v3.0.0-beta2)
 
 [![Join the chat in Discord: https://discord.gg/buxkYNT](https://img.shields.io/badge/Discord-Chat!-brightgreen.svg)](https://discord.gg/buxkYNT)
 
@@ -49,9 +49,9 @@ More examples are given in the examples directory [here](https://github.com/TheP
 
 ## Supporting
 
-Help the project grow on [patreon](https://www.patreon.com/thephd)!
+Help the project grow on [Patreon](https://www.patreon.com/thephd)!
 
-You can also [donate to support Sol](https://www.paypal.me/LMeneide), which is always appreciated! There are reward tiers for patrons on patreon, too!
+You can also [donate to support Sol](https://www.paypal.me/LMeneide), which is always appreciated! There are reward tiers for patrons on Patreon, too!
 
 You can also help out the library by submitting pull requests to fix anything or add anything you think would be helpful! This includes making small, useful examples of something you haven't seen, or fixing typos and bad code in the documentation.
 
@@ -84,9 +84,9 @@ CppCon 2018 - 404 Keystone, Meydenbauer Center, Aspen, Colorado
 
 ## Creating a single header
 
-You can grab a single header (and the single forward header) out of the library [here](https://github.com/ThePhD/sol2/tree/develop/single/sol). For stable version, check the releases tab on github for a provided single header file for maximum ease of use. A script called `single.py` is provided in the repository if there's some bleeding edge change that hasn't been published on the releases page. You can run this script to create a single file version of the library so you can only include that part of it. Check `single.py --help` for more info.
+You can grab a single header (and the single forward header) out of the library [here](https://github.com/ThePhD/sol2/tree/develop/single). For stable version, check the releases tab on GitHub for a provided single header file for maximum ease of use. A script called [`single.py`](https://github.com/ThePhD/sol2/blob/develop/single/single.py) is provided in the repository if there's some bleeding edge change that hasn't been published on the releases page. You can run this script to create a single file version of the library so you can only include that part of it. Check `single.py --help` for more info.
 
-If you use CMake, you can also configure and generate a project that will generate the sol2_single_header for you. You can also include the project using Cmake. Run CMake for more details. Thanks @Nava2, @alkino, @mrgreywater and others for help with making the CMake build a reality.
+If you use CMake, you can also configure and generate a project that will generate the sol2_single_header for you. You can also include the project using CMake. Run CMake for more details. Thanks @Nava2, @alkino, @mrgreywater and others for help with making the CMake build a reality.
 
 ## Features
 
@@ -96,41 +96,42 @@ If you use CMake, you can also configure and generate a project that will genera
   * understands and works with containers such as `std::map/unordered_map`, c-style arrays, vectors, non-standard custom containers and more.
   * user-defined types, with or **without** registering that type 
   * `std::unique_ptr`, `std::shared_ptr`, and optional support of other pointer types like `boost::shared_ptr`.
-  * custom `optional<T>` that works with references.
+  * custom `optional<T>` that works with references, and support for the inferior `std::optional`.
   * C++17 support for variants and similar new types.
 - Lambda, function, and member function bindings are supported.
 - Intermediate type for checking if a variable exists.
 - Simple API that completely abstracts away the C stack API, including `protected_function` with the ability to use an error-handling function.
 - `operator[]`-style manipulation of tables
-- C++ type representations in lua userdata as `usertype`s with guaranteed cleanup.
+- C++ type representations in Lua userdata as `usertype`s with guaranteed cleanup.
 - Customization points to allow your C++ objects to be pushed and retrieved from Lua as multiple consecutive objects, or anything else you desire!
-- Overloaded function calls: `my_function(1); my_function("Hello")` in the same lua script route to different function calls based on parameters
+- Overloaded function calls: `my_function(1); my_function("Hello")` in the same Lua script route to different function calls based on parameters
 - Support for tables, nested tables, table iteration with `table.for_each` / `begin()` and `end()` iterators.
-- Zero overhead for usertype function call lookup when using `SOL_USE_BOOST`, safe for critical applications
+- Zero string overhead for usertype function lookup.
 
 ## Supported Compilers
 
-Sol makes use of C++11 **and** C++14 features. GCC 5.x.x and Clang 3.6.x (with `-std=c++1z` and appropriate standard library) 
+Sol makes use of C++17 features. GCC 7.x.x and Clang 3.9.x (with `-std=c++1z` and appropriate standard library) 
 or higher should be able to compile without problems. However, the officially supported and CI-tested compilers are:
 
-- GCC 5.x.x+ (MinGW 5.x.x+)
-- Clang 3.6.x+
-- Visual Studio 2015 Community (Visual C++ 14.0)+
+- GCC 7.x.x+ (MinGW 7.x.x+)
+- Clang 3.9.x+
+- Visual Studio 2017 Community (Visual C++ 15.0)+
 
-Please make sure you use the `-std=c++1y`, `-std=c++14`, `-std=c++1z`, `-std=c++17` or better standard flags 
-(some of these flags are the defaults in later versions of GCC, such as 6+ and better).
+Please make sure you use the `-std=c++2a`, `-std=c++1z`, `-std=c++17` or better standard flags 
+(some of these flags are the defaults in later versions of GCC, such as 7+ and better).
 
-Older compilers (GCC 4.9.x, Clang 3.4.x seem to be the lowest) can work with versions as late 
-as [v2.17.5](https://github.com/ThePhD/sol2/releases/tag/v2.17.5), with the flag `-std=c++14` or `-std=c++1y`.
+If you would like support for an older compiler (at the cost of some features), use the latest tagged sol2 branch. If you would like support for an even older compiler, feel free to contact me for a Custom Solution.
 
 sol2 is checked by-hand for other platforms as well, including Android-based builds with GCC and iOS-based builds out of XCode with Apple-clang. It should work on both of these platforms, so long as you have the proper standards flags.
 
 ## Running the Tests
 
-Testing on Travis-CI and Appveyor use CMake. You can generate the tests by running CMake and configuring `TESTS`, `TESTS_SINGLE`, `TESTS_EXAMPLES`, and `EXAMPLES` to be on. Make sure `SINGLE` is also on.
+Testing on Travis-CI and Appveyor use CMake. You can generate the tests by running CMake and configuring `SOL2_TESTS`, `SOL2_TESTS_SINGLE`, `SOL2_TESTS_EXAMPLES`, and `SOL2_EXAMPLES` to be on. Make sure `SOL2_SINGLE` is also on.
 
-You will need any flavor of python3 and an available compiler. The testing suite will build its own version of Lua and LuaJIT, so you do not have to.
+You will need any flavor of python3 and an available compiler. The testing suite will build its own version of Lua and LuaJIT, so you do not have to provide one (you may provide one with the `LUA_LOCAL_DIR` variable).
 
 ## License
 
 Sol is distributed with an MIT License. You can see LICENSE.txt for more info.
+
+If you need a custom solution, feel free to contact me.
