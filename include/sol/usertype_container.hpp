@@ -1298,7 +1298,7 @@ namespace sol {
 				decltype(auto) value = stack::unqualified_get<value_type>(L, 2);
 				std::size_t N = std::extent<T>::value;
 				for (std::size_t idx = 0; idx < N; ++idx) {
-					using v_t = std::add_const_t<decltype(self[index])>;
+					using v_t = std::add_const_t<decltype(self[idx])>;
 					v_t v = self[idx];
 					if (v == value) {
 						idx -= deferred_uc::index_adjustment(L, self);

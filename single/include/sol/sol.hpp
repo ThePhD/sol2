@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-03-31 18:38:28.701189 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 26cbadc)
+// Generated 2019-03-31 19:17:35.706908 UTC
+// This header was generated with sol v3.0.1-beta2 (revision 20a0b08)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -19793,7 +19793,7 @@ namespace sol {
 				decltype(auto) value = stack::unqualified_get<value_type>(L, 2);
 				std::size_t N = std::extent<T>::value;
 				for (std::size_t idx = 0; idx < N; ++idx) {
-					using v_t = std::add_const_t<decltype(self[index])>;
+					using v_t = std::add_const_t<decltype(self[idx])>;
 					v_t v = self[idx];
 					if (v == value) {
 						idx -= deferred_uc::index_adjustment(L, self);
