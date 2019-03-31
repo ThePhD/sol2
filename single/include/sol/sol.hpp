@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-03-31 03:30:35.378291 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 6017f63)
+// Generated 2019-03-31 18:38:28.701189 UTC
+// This header was generated with sol v3.0.1-beta2 (revision 26cbadc)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -19059,7 +19059,7 @@ namespace sol {
 			}
 
 			static detail::error_result get_associative(std::true_type, lua_State* L, iterator& it) {
-				auto& v = *it;
+				decltype(auto) v = *it;
 				return stack::stack_detail::push_reference<push_type>(L, detail::deref_non_pointer(v.second));
 			}
 
@@ -19122,13 +19122,13 @@ namespace sol {
 			}
 
 			static detail::error_result set_associative(std::true_type, iterator& it, stack_object value) {
-				auto& v = *it;
+				decltype(auto) v = *it;
 				v.second = value.as<V>();
 				return {};
 			}
 
 			static detail::error_result set_associative(std::false_type, iterator& it, stack_object value) {
-				auto& v = *it;
+				decltype(auto) v = *it;
 				v = value.as<V>();
 				return {};
 			}
@@ -19793,7 +19793,8 @@ namespace sol {
 				decltype(auto) value = stack::unqualified_get<value_type>(L, 2);
 				std::size_t N = std::extent<T>::value;
 				for (std::size_t idx = 0; idx < N; ++idx) {
-					const auto& v = self[idx];
+					using v_t = std::add_const_t<decltype(self[index])>;
+					v_t v = self[idx];
 					if (v == value) {
 						idx -= deferred_uc::index_adjustment(L, self);
 						return stack::push(L, idx);
