@@ -34,6 +34,10 @@
 #include <variant>
 #endif // C++17
 
+struct optional_ref_t {
+	int x = 0;
+};
+
 std::mutex basic_init_require_mutex;
 
 void basic_initialization_and_lib_open() {
@@ -114,16 +118,35 @@ TEST_CASE("utility/optional-conversion", "test that regular optional will proper
 
 	lua.new_usertype<vars>("vars");
 
-	lua["test"] = [](sol::optional<vars> x) {
-		return static_cast<bool>(x);
-	};
+	lua["test"] = [](sol::optional<vars> x) { return static_cast<bool>(x); };
 
 	const auto result = lua.safe_script(R"(
 		assert(test(vars:new()))
 		assert(not test(3))
 		assert(not test(nil))
-	)", sol::script_pass_on_error);
+	)",
+	     sol::script_pass_on_error);
 	REQUIRE(result.valid());
+}
+
+TEST_CASE("utility/optional-value-or", "test that regular optional will properly handle value_or") {
+	sol::optional<std::string> str;
+	auto x = str.value_or("!");
+
+	sol::optional<unsigned int> un;
+	auto y = un.value_or(64);
+
+	optional_ref_t def_custom;
+	sol::optional<optional_ref_t&> custom;
+	auto z = custom.value_or(def_custom);
+	const auto& z_ref = custom.value_or(def_custom);
+
+	REQUIRE(x == "!");
+
+	REQUIRE(y == 64);
+
+	REQUIRE(&def_custom == &z_ref);
+	REQUIRE(&z != &def_custom);
 }
 
 TEST_CASE("utility/std optional", "test that shit optional can be round-tripped") {

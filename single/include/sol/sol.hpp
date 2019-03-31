@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-03-29 03:22:11.072530 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 7218151)
+// Generated 2019-03-31 03:30:35.378291 UTC
+// This header was generated with sol v3.0.1-beta2 (revision 6017f63)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4945,14 +4945,14 @@ namespace sol {
 		/// \returns the stored value if there is one, otherwise returns `u`
 		/// \group value_or
 		template <class U>
-		constexpr T& value_or(U&& u) const& {
+		constexpr T value_or(U&& u) const& {
 			static_assert(std::is_copy_constructible<T>::value && std::is_convertible<U&&, T>::value, "T must be copy constructible and convertible from U");
 			return has_value() ? **this : static_cast<T>(std::forward<U>(u));
 		}
 
 		/// \group value_or
 		template <class U>
-		SOL_TL_OPTIONAL_11_CONSTEXPR T& value_or(U&& u) && {
+		SOL_TL_OPTIONAL_11_CONSTEXPR T value_or(U&& u) && {
 			static_assert(std::is_move_constructible<T>::value && std::is_convertible<U&&, T>::value, "T must be move constructible and convertible from U");
 			return has_value() ? **this : static_cast<T>(std::forward<U>(u));
 		}
@@ -5785,16 +5785,9 @@ namespace sol {
 		/// \returns the stored value if there is one, otherwise returns `u`
 		/// \group value_or
 		template <class U>
-		constexpr T& value_or(U&& u) const& {
-			static_assert(std::is_copy_constructible<T>::value && std::is_convertible<U&&, T>::value, "T must be copy constructible and convertible from U");
-			return has_value() ? **this : static_cast<T>(std::forward<U>(u));
-		}
-
-		/// \group value_or
-		template <class U>
-		SOL_TL_OPTIONAL_11_CONSTEXPR T& value_or(U&& u) && {
-			static_assert(std::is_move_constructible<T>::value && std::is_convertible<U&&, T>::value, "T must be move constructible and convertible from U");
-			return has_value() ? **this : static_cast<T>(std::forward<U>(u));
+		constexpr T& value_or(U&& u) const {
+			static_assert(std::is_convertible<U&&, T&>::value, "T must be convertible from U");
+			return has_value() ? const_cast<T&>(**this) : static_cast<T&>(std::forward<U>(u));
 		}
 
 		/// Destroys the stored value if one exists, making the optional empty
