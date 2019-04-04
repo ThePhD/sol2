@@ -134,6 +134,16 @@ int super_custom::push_calls = 0;
 int super_custom::pointer_push_calls = 0;
 int super_custom::exact_push_calls = 0;
 
+
+
+int destroy_super_custom(lua_State* L) {
+	void* memory = lua_touserdata(L, 1);
+	super_custom* data = static_cast<super_custom*>(memory);
+	std::allocator<super_custom> alloc{};
+	std::allocator_traits<std::allocator<super_custom>>::destroy(alloc, data);
+	return 0;
+}
+
 super_custom* sol_lua_get(sol::types<super_custom*>, lua_State* L, int index, sol::stack::record& tracking) {
 	++super_custom::get_calls;
 	tracking.use(1);
@@ -173,8 +183,12 @@ int sol_lua_push(lua_State* L, const super_custom& c) {
 	void* ud = lua_newuserdata(L, sizeof(super_custom*) + sizeof(super_custom));
 	super_custom* tud = static_cast<super_custom*>(static_cast<void*>(static_cast<char*>(ud) + sizeof(super_custom*)));
 	*static_cast<super_custom**>(ud) = tud;
-	*tud = c;
-	luaL_newmetatable(L, "super_custom!");
+	new(tud)super_custom(c);
+	if (luaL_newmetatable(L, "super_custom!") == 1) {
+		luaL_Reg l[2]{};
+		l[0] = { sol::to_string(sol::meta_function::garbage_collect).c_str(), &destroy_super_custom };
+		luaL_setfuncs(L, l, 0);
+	}
 	lua_setmetatable(L, -2);
 	return 1;
 }

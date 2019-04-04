@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-03-31 19:17:35.706908 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 20a0b08)
+// Generated 2019-04-04 13:37:22.264979 UTC
+// This header was generated with sol v3.0.1-beta2 (revision 39e18b4)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -2159,9 +2159,9 @@ extern "C" {
 #ifndef COMPAT53_API
 #  if defined(COMPAT53_INCLUDE_SOURCE) && COMPAT53_INCLUDE_SOURCE
 #    if defined(__GNUC__) || defined(__clang__)
-#      define COMPAT53_API __attribute__((__unused__)) static
+#      define COMPAT53_API __attribute__((__unused__)) static inline 
 #    else
-#      define COMPAT53_API static
+#      define COMPAT53_API static inline 
 #    endif /* Clang/GCC */
 #  else /* COMPAT53_INCLUDE_SOURCE */
 /* we are not including source, so everything is extern */
@@ -12702,9 +12702,9 @@ namespace sol {
 				// do the actual object. Things that are std::ref or plain T* are stored as
 				// just the sizeof(T*), and nothing else.
 				T* obj = detail::usertype_allocate<T>(L);
+				f();
 				std::allocator<T> alloc{};
 				std::allocator_traits<std::allocator<T>>::construct(alloc, obj, std::forward<Args>(args)...);
-				f();
 				return 1;
 			}
 
@@ -12742,8 +12742,8 @@ namespace sol {
 				luaL_checkstack(L, 1, detail::not_enough_stack_space_userdata);
 #endif // make sure stack doesn't overflow
 				T** pref = detail::usertype_allocate_pointer<T>(L);
-				*pref = obj;
 				f();
+				*pref = obj;
 				return 1;
 			}
 
@@ -12803,10 +12803,6 @@ namespace sol {
 					detail::unique_destructor* fx = nullptr;
 					detail::unique_tag* id = nullptr;
 					Real* mem = detail::usertype_unique_allocate<P, Real>(L, pref, fx, id);
-					*fx = detail::usertype_unique_alloc_destroy<P, Real>;
-					*id = &detail::inheritance<P>::template type_unique_cast<Real>;
-					detail::default_construct::construct(mem, std::forward<Args>(args)...);
-					*pref = unique_usertype_traits<T>::get(*mem);
 					if (luaL_newmetatable(L, &usertype_traits<detail::unique_usertype<std::remove_cv_t<P>>>::metatable()[0]) == 1) {
 						detail::lua_reg_table l{};
 						int index = 0;
@@ -12816,6 +12812,10 @@ namespace sol {
 						luaL_setfuncs(L, l, 0);
 					}
 					lua_setmetatable(L, -2);
+					*fx = detail::usertype_unique_alloc_destroy<P, Real>;
+					*id = &detail::inheritance<P>::template type_unique_cast<Real>;
+					detail::default_construct::construct(mem, std::forward<Args>(args)...);
+					*pref = unique_usertype_traits<T>::get(*mem);
 					return 1;
 				}
 			};
@@ -13165,8 +13165,6 @@ namespace sol {
 #endif // make sure stack doesn't overflow
 				// A dumb pusher
 				T* data = detail::user_allocate<T>(L);
-				std::allocator<T> alloc{};
-				std::allocator_traits<std::allocator<T>>::construct(alloc, data, std::forward<Args>(args)...);
 				if (with_meta) {
 					// Make sure we have a plain GC set for this data
 #if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
@@ -13179,6 +13177,8 @@ namespace sol {
 					}
 					lua_setmetatable(L, -2);
 				}
+				std::allocator<T> alloc{};
+				std::allocator_traits<std::allocator<T>>::construct(alloc, data, std::forward<Args>(args)...);
 				return 1;
 			}
 
@@ -15968,14 +15968,12 @@ namespace sol {
 
 			T* obj = detail::usertype_allocate<T>(L);
 			reference userdataref(L, -1);
-			userdataref.pop();
+			stack::stack_detail::undefined_metatable umf(L, &meta[0], &stack::stack_detail::set_undefined_methods_on<T>);
+			umf();
 
 			construct_match<T, TypeLists...>(constructor_match<T, checked, clean_stack>(obj), L, argcount, 1 + static_cast<int>(syntax));
 
 			userdataref.push();
-			stack::stack_detail::undefined_metatable umf(L, &meta[0], &stack::stack_detail::set_undefined_methods_on<T>);
-			umf();
-
 			return 1;
 		}
 
@@ -16288,13 +16286,12 @@ namespace sol {
 
 				T* obj = detail::usertype_allocate<T>(L);
 				reference userdataref(L, -1);
+				stack::stack_detail::undefined_metatable umf(L, &meta[0], &stack::stack_detail::set_undefined_methods_on<T>);
+				umf();
 
 				construct_match<T, Args...>(constructor_match<T, false, clean_stack>(obj), L, argcount, boost + 1 + static_cast<int>(syntax));
 
 				userdataref.push();
-				stack::stack_detail::undefined_metatable umf(L, &meta[0], &stack::stack_detail::set_undefined_methods_on<T>);
-				umf();
-
 				return 1;
 			}
 		};
@@ -16309,14 +16306,13 @@ namespace sol {
 					const auto& meta = usertype_traits<T>::metatable();
 					T* obj = detail::usertype_allocate<T>(L);
 					reference userdataref(L, -1);
+					stack::stack_detail::undefined_metatable umf(L, &meta[0], &stack::stack_detail::set_undefined_methods_on<T>);
+					umf();
 
 					auto& func = std::get<I>(f.functions);
 					stack::call_into_lua<checked, clean_stack>(r, a, L, boost + start, func, detail::implicit_wrapper<T>(obj));
 
 					userdataref.push();
-					stack::stack_detail::undefined_metatable umf(L, &meta[0], &stack::stack_detail::set_undefined_methods_on<T>);
-					umf();
-
 					return 1;
 				}
 			};

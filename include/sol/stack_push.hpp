@@ -119,9 +119,9 @@ namespace sol {
 				// do the actual object. Things that are std::ref or plain T* are stored as
 				// just the sizeof(T*), and nothing else.
 				T* obj = detail::usertype_allocate<T>(L);
+				f();
 				std::allocator<T> alloc{};
 				std::allocator_traits<std::allocator<T>>::construct(alloc, obj, std::forward<Args>(args)...);
-				f();
 				return 1;
 			}
 
@@ -159,8 +159,8 @@ namespace sol {
 				luaL_checkstack(L, 1, detail::not_enough_stack_space_userdata);
 #endif // make sure stack doesn't overflow
 				T** pref = detail::usertype_allocate_pointer<T>(L);
-				*pref = obj;
 				f();
+				*pref = obj;
 				return 1;
 			}
 
@@ -220,10 +220,6 @@ namespace sol {
 					detail::unique_destructor* fx = nullptr;
 					detail::unique_tag* id = nullptr;
 					Real* mem = detail::usertype_unique_allocate<P, Real>(L, pref, fx, id);
-					*fx = detail::usertype_unique_alloc_destroy<P, Real>;
-					*id = &detail::inheritance<P>::template type_unique_cast<Real>;
-					detail::default_construct::construct(mem, std::forward<Args>(args)...);
-					*pref = unique_usertype_traits<T>::get(*mem);
 					if (luaL_newmetatable(L, &usertype_traits<detail::unique_usertype<std::remove_cv_t<P>>>::metatable()[0]) == 1) {
 						detail::lua_reg_table l{};
 						int index = 0;
@@ -233,6 +229,10 @@ namespace sol {
 						luaL_setfuncs(L, l, 0);
 					}
 					lua_setmetatable(L, -2);
+					*fx = detail::usertype_unique_alloc_destroy<P, Real>;
+					*id = &detail::inheritance<P>::template type_unique_cast<Real>;
+					detail::default_construct::construct(mem, std::forward<Args>(args)...);
+					*pref = unique_usertype_traits<T>::get(*mem);
 					return 1;
 				}
 			};
@@ -582,8 +582,6 @@ namespace sol {
 #endif // make sure stack doesn't overflow
 				// A dumb pusher
 				T* data = detail::user_allocate<T>(L);
-				std::allocator<T> alloc{};
-				std::allocator_traits<std::allocator<T>>::construct(alloc, data, std::forward<Args>(args)...);
 				if (with_meta) {
 					// Make sure we have a plain GC set for this data
 #if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
@@ -596,6 +594,8 @@ namespace sol {
 					}
 					lua_setmetatable(L, -2);
 				}
+				std::allocator<T> alloc{};
+				std::allocator_traits<std::allocator<T>>::construct(alloc, data, std::forward<Args>(args)...);
 				return 1;
 			}
 
