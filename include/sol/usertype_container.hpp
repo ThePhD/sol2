@@ -419,6 +419,10 @@ namespace sol {
 				return luaL_error(L, "sol: cannot call 'find' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 			}
 
+			static int index_of(lua_State* L) {
+				return luaL_error(L, "sol: cannot call 'index_of' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
+			}
+
 			static int size(lua_State* L) {
 				return luaL_error(L, "sol: cannot call 'end' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 			}

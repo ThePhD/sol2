@@ -945,8 +945,11 @@ namespace sol {
 	struct is_variadic_arguments : std::is_same<T, variadic_args> {};
 
 	template <typename T>
-	struct is_container : std::integral_constant<bool, !meta::is_initializer_list_v<T> && !meta::is_string_like_v<T> && !meta::is_string_literal_array_v<T> && !is_transparent_argument_v<T> && !is_lua_reference_v<T> && (meta::has_begin_end_v<T> || std::is_array_v<T>)> {};
-	
+	struct is_container
+	: std::integral_constant<bool,
+	       !std::is_same_v<state_view, T> && !std::is_same_v<state, T> && !meta::is_initializer_list_v<T> && !meta::is_string_like_v<T> && !meta::is_string_literal_array_v<T> && !is_transparent_argument_v<T> && !is_lua_reference_v<T> && (meta::has_begin_end_v<T> || std::is_array_v<T>)> {
+	};
+
 	template <typename T>
 	constexpr inline bool is_container_v = is_container<T>::value;
 
@@ -1157,10 +1160,8 @@ namespace sol {
 #endif // SOL_CXX17_FEATURES
 
 		template <typename T>
-		struct lua_type_of<nested<T>, std::enable_if_t<::sol::is_container<T>::value>> : std::integral_constant<type, type::table> {};
-
-		template <typename T>
-		struct lua_type_of<nested<T>, std::enable_if_t<!::sol::is_container<T>::value>> : lua_type_of<T> {};
+		struct lua_type_of<nested<T>>
+		: meta::conditional_t<::sol::is_container<T>::value, std::integral_constant<type, type::table>, lua_type_of<T>> {};
 
 		template <typename C, C v, template <typename...> class V, typename... Args>
 		struct accumulate : std::integral_constant<C, v> {};
@@ -1332,7 +1333,9 @@ namespace sol {
 	struct is_environment : std::integral_constant<bool, is_userdata<T>::value || is_table<T>::value> {};
 
 	template <typename T>
-	struct is_automagical : meta::neg<std::is_array<meta::unqualified_t<T>>> {};
+	struct is_automagical
+	: std::integral_constant<bool,
+	       std::is_array_v<meta::unqualified_t<T>> && !std::is_same_v<meta::unqualified_t<T>, state> && !std::is_same_v<meta::unqualified_t<T>, state_view>> {};
 
 	template <typename T>
 	inline type type_of() {

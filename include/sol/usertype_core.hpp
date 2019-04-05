@@ -118,6 +118,8 @@ namespace sol {
 
 		template <typename T, typename IFx, typename Fx>
 		inline void insert_default_registrations(IFx&& ifx, Fx&& fx) {
+			(void)ifx;
+			(void)fx;
 			if constexpr (is_automagical<T>::value) {
 				if (fx(meta_function::less_than)) {
 					if constexpr (meta::supports_op_less<T>::value) {

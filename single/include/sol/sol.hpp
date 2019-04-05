@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-04-04 13:37:22.264979 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 39e18b4)
+// Generated 2019-04-05 01:32:35.413302 UTC
+// This header was generated with sol v3.0.1-beta2 (revision 7e71897)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -7073,8 +7073,11 @@ namespace sol {
 	struct is_variadic_arguments : std::is_same<T, variadic_args> {};
 
 	template <typename T>
-	struct is_container : std::integral_constant<bool, !meta::is_initializer_list_v<T> && !meta::is_string_like_v<T> && !meta::is_string_literal_array_v<T> && !is_transparent_argument_v<T> && !is_lua_reference_v<T> && (meta::has_begin_end_v<T> || std::is_array_v<T>)> {};
-	
+	struct is_container
+	: std::integral_constant<bool,
+	       !std::is_same_v<state_view, T> && !std::is_same_v<state, T> && !meta::is_initializer_list_v<T> && !meta::is_string_like_v<T> && !meta::is_string_literal_array_v<T> && !is_transparent_argument_v<T> && !is_lua_reference_v<T> && (meta::has_begin_end_v<T> || std::is_array_v<T>)> {
+	};
+
 	template <typename T>
 	constexpr inline bool is_container_v = is_container<T>::value;
 
@@ -7285,10 +7288,8 @@ namespace sol {
 #endif // SOL_CXX17_FEATURES
 
 		template <typename T>
-		struct lua_type_of<nested<T>, std::enable_if_t<::sol::is_container<T>::value>> : std::integral_constant<type, type::table> {};
-
-		template <typename T>
-		struct lua_type_of<nested<T>, std::enable_if_t<!::sol::is_container<T>::value>> : lua_type_of<T> {};
+		struct lua_type_of<nested<T>>
+		: meta::conditional_t<::sol::is_container<T>::value, std::integral_constant<type, type::table>, lua_type_of<T>> {};
 
 		template <typename C, C v, template <typename...> class V, typename... Args>
 		struct accumulate : std::integral_constant<C, v> {};
@@ -7460,7 +7461,9 @@ namespace sol {
 	struct is_environment : std::integral_constant<bool, is_userdata<T>::value || is_table<T>::value> {};
 
 	template <typename T>
-	struct is_automagical : meta::neg<std::is_array<meta::unqualified_t<T>>> {};
+	struct is_automagical
+	: std::integral_constant<bool,
+	       std::is_array_v<meta::unqualified_t<T>> && !std::is_same_v<meta::unqualified_t<T>, state> && !std::is_same_v<meta::unqualified_t<T>, state_view>> {};
 
 	template <typename T>
 	inline type type_of() {
@@ -10391,7 +10394,7 @@ namespace sol {
 					return stack::push(L, op(detail::ptr(l), detail::ptr(r)));
 				}
 				else {
-					if constexpr (std::is_same_v<std::equal_to<>, Op> // cf-hack
+					if constexpr (std::is_same_v<std::equal_to<>, Op> // clang-format hack
 						|| std::is_same_v<std::less_equal<>, Op>     //
 						|| std::is_same_v<std::less_equal<>, Op>) {  //
 						if (detail::ptr(l) == detail::ptr(r)) {
@@ -18910,6 +18913,10 @@ namespace sol {
 				return luaL_error(L, "sol: cannot call 'find' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 			}
 
+			static int index_of(lua_State* L) {
+				return luaL_error(L, "sol: cannot call 'index_of' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
+			}
+
 			static int size(lua_State* L) {
 				return luaL_error(L, "sol: cannot call 'end' on type '%s': it is not recognized as a container", detail::demangle<T>().c_str());
 			}
@@ -20417,6 +20424,8 @@ namespace sol {
 
 		template <typename T, typename IFx, typename Fx>
 		inline void insert_default_registrations(IFx&& ifx, Fx&& fx) {
+			(void)ifx;
+			(void)fx;
 			if constexpr (is_automagical<T>::value) {
 				if (fx(meta_function::less_than)) {
 					if constexpr (meta::supports_op_less<T>::value) {

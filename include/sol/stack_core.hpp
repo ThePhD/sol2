@@ -1390,7 +1390,7 @@ namespace sol {
 					return stack::push(L, op(detail::ptr(l), detail::ptr(r)));
 				}
 				else {
-					if constexpr (std::is_same_v<std::equal_to<>, Op> // cf-hack
+					if constexpr (std::is_same_v<std::equal_to<>, Op> // clang-format hack
 						|| std::is_same_v<std::less_equal<>, Op>     //
 						|| std::is_same_v<std::less_equal<>, Op>) {  //
 						if (detail::ptr(l) == detail::ptr(r)) {
