@@ -287,3 +287,113 @@ TEST_CASE("inheritance/usertype derived non-hiding", "usertype classes must play
 	REQUIRE((lua.get<int>("dgn10") == 70));
 	REQUIRE((lua.get<int>("dgn") == 7));
 }
+
+TEST_CASE("inheritance/bad_base-class", "check to make sure bad/unregistered base classes do not blow up usertypes") {
+	struct a {
+		a(sol::this_state ts, sol::this_environment te) {
+			lua_State* L = ts;
+			ud = sol::userdata(L, -2);
+		}
+
+
+		sol::object get_property_lua(const char* name, sol::this_state s) {
+			return props[name];
+		}
+
+		void set_property_lua(const char* name, sol::stack_object object) {
+			props[name] = object.as<sol::object>();
+		}
+
+		std::unordered_map<std::string, sol::object> props;
+		sol::userdata ud;
+	};
+
+	struct nofun {
+		nofun() {
+		}
+	};
+
+	struct b : public a, public nofun {
+		b(sol::this_state ts, sol::this_environment te, int ab) : a(ts, te) {
+			sol::state_view lua = ts;
+			lua.script("function break_crap(b_obj) b_obj.test3 = {} end");
+
+			sol::protected_function pf = lua["break_crap"];
+			sol::optional<sol::error> result = pf(this);
+			REQUIRE_FALSE(result.has_value());
+		}
+
+		b(sol::this_state ts, sol::this_environment te, int ab, int bc) : a(ts, te) {
+		}
+		~b() {
+		}
+	};
+
+	struct c : public b {
+		c(sol::this_state ts, sol::this_environment te, int ab) : b(ts, te, ab) {
+		}
+
+		c(sol::this_state ts, sol::this_environment te, int ab, int bc) : b(ts, te, ab, bc) {
+		}
+		~c() {
+		}
+	};
+
+	sol::state lua;
+
+	lua.open_libraries(sol::lib::base, sol::lib::os, sol::lib::string, sol::lib::math, sol::lib::table, sol::lib::package, sol::lib::debug);
+
+	lua.new_usertype<a>("a", sol::meta_function::new_index, &a::set_property_lua, sol::meta_function::index, &a::get_property_lua);
+
+	lua.new_usertype<b>("b",
+	     sol::constructors<b(sol::this_state, sol::this_environment, int), b(sol::this_state, sol::this_environment, int, int)>(),
+	     sol::meta_function::new_index,
+	     &b::set_property_lua,
+	     sol::meta_function::index,
+	     &b::get_property_lua,
+	     sol::base_classes,
+	     sol::bases<a, nofun>());
+
+
+	lua.new_usertype<c>("c",
+	     sol::constructors<c(sol::this_state, sol::this_environment, int), c(sol::this_state, sol::this_environment, int, int)>(),
+	     sol::meta_function::new_index,
+	     &c::set_property_lua,
+	     sol::meta_function::index,
+	     &c::get_property_lua,
+	     sol::base_classes,
+	     sol::bases<b>());
+
+
+	lua.script(R"(
+		function init_entity(e)
+	   init_entity_properties(e)
+	   return true
+	   end
+
+	   function init_entity_properties(e)
+	   e._internal_entity_properties_ = {}
+
+	   function e : GetName()
+	   return self._internal_entity_properties_['name']
+	   end
+
+	   function e : SetName(s)
+	   self._internal_entity_properties_['name'] = s
+	   end
+	   --return e
+	   end
+
+		)");
+
+	sol::optional<sol::error> result = lua.safe_script("b_tmp = b.new(1)", sol::script_pass_on_error);
+	REQUIRE_FALSE(result.has_value());
+
+	a* b_base = lua["b_tmp"]; // get the base...
+	sol::protected_function pf = lua["init_entity"];
+	sol::optional<sol::error> result1 = pf(b_base);
+	REQUIRE_FALSE(result1.has_value());
+
+	sol::optional<sol::error> result2 = lua.script("c_tmp = c.new(1)", sol::script_pass_on_error);
+	REQUIRE_FALSE(result2.has_value());
+}

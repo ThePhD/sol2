@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-04-05 02:47:39.333872 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 83f702b)
+// Generated 2019-04-05 22:56:19.784998 UTC
+// This header was generated with sol v3.0.1-beta2 (revision fbf9484)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -20927,10 +20927,16 @@ namespace sol { namespace u_detail {
 			}
 			(void)L;
 			(void)self;
-			// TODO: get base table, dump it out
+#if defined(SOL_UNSAFE_BASE_LOOKUP) && SOL_UNSAFE_BASE_LOOKUP
 			usertype_storage_base& base_storage = get_usertype_storage<Base>(L);
 			base_result = self_index_call<is_new_index, true>(bases(), L, base_storage);
-			keep_going = base_result == base_walking_failed_index;
+#else
+			optional<usertype_storage<Base>&> maybe_base_storage = maybe_get_usertype_storage<Base>(L);
+			if (maybe_base_storage.has_value()) {
+				base_result = self_index_call<is_new_index, true>(bases(), L, *maybe_base_storage);				
+				keep_going = base_result == base_walking_failed_index;
+			}
+#endif // Fast versus slow, safe base lookup
 		}
 
 		template <bool is_new_index = false, bool base_walking = false, bool from_named_metatable = false, typename... Bases>
