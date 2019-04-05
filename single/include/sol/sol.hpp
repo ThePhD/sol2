@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-04-05 01:32:35.413302 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 7e71897)
+// Generated 2019-04-05 02:47:39.333872 UTC
+// This header was generated with sol v3.0.1-beta2 (revision 83f702b)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -7463,7 +7463,7 @@ namespace sol {
 	template <typename T>
 	struct is_automagical
 	: std::integral_constant<bool,
-	       std::is_array_v<meta::unqualified_t<T>> && !std::is_same_v<meta::unqualified_t<T>, state> && !std::is_same_v<meta::unqualified_t<T>, state_view>> {};
+	       std::is_array_v<meta::unqualified_t<T>> || !std::is_same_v<meta::unqualified_t<T>, state> || !std::is_same_v<meta::unqualified_t<T>, state_view>> {};
 
 	template <typename T>
 	inline type type_of() {

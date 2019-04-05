@@ -1335,7 +1335,7 @@ namespace sol {
 	template <typename T>
 	struct is_automagical
 	: std::integral_constant<bool,
-	       std::is_array_v<meta::unqualified_t<T>> && !std::is_same_v<meta::unqualified_t<T>, state> && !std::is_same_v<meta::unqualified_t<T>, state_view>> {};
+	       std::is_array_v<meta::unqualified_t<T>> || !std::is_same_v<meta::unqualified_t<T>, state> || !std::is_same_v<meta::unqualified_t<T>, state_view>> {};
 
 	template <typename T>
 	inline type type_of() {
