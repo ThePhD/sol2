@@ -290,13 +290,13 @@ TEST_CASE("inheritance/usertype derived non-hiding", "usertype classes must play
 
 TEST_CASE("inheritance/bad_base-class", "check to make sure bad/unregistered base classes do not blow up usertypes") {
 	struct a {
-		a(sol::this_state ts, sol::this_environment te) {
+		a(sol::this_state ts, sol::this_environment) {
 			lua_State* L = ts;
 			ud = sol::userdata(L, -2);
 		}
 
 
-		sol::object get_property_lua(const char* name, sol::this_state s) {
+		sol::object get_property_lua(const char* name, sol::this_state) {
 			return props[name];
 		}
 
@@ -314,7 +314,7 @@ TEST_CASE("inheritance/bad_base-class", "check to make sure bad/unregistered bas
 	};
 
 	struct b : public a, public nofun {
-		b(sol::this_state ts, sol::this_environment te, int ab) : a(ts, te) {
+		b(sol::this_state ts, sol::this_environment te, int) : a(ts, te) {
 			sol::state_view lua = ts;
 			lua.script("function break_crap(b_obj) b_obj.test3 = {} end");
 
@@ -323,7 +323,7 @@ TEST_CASE("inheritance/bad_base-class", "check to make sure bad/unregistered bas
 			REQUIRE_FALSE(result.has_value());
 		}
 
-		b(sol::this_state ts, sol::this_environment te, int ab, int bc) : a(ts, te) {
+		b(sol::this_state ts, sol::this_environment te, int, int) : a(ts, te) {
 		}
 		~b() {
 		}
