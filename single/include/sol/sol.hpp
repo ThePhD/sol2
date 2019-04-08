@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-04-06 01:26:37.624327 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 2f76078)
+// Generated 2019-04-08 03:11:10.821035 UTC
+// This header was generated with sol v3.0.1-beta2 (revision 7cce3e4)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -11118,10 +11118,13 @@ namespace sol {
 		};
 
 		inline const string_view& to_string(error_code ec) {
-			static const string_view storage[4] = {
+			static const string_view storage[7] = {
 				"ok",
 				"invalid code points",
 				"invalid code unit",
+				"invalid leading surrogate",
+				"invalid trailing surrogate",
+				"sequence too short",
 				"overlong sequence"
 			};
 			return storage[static_cast<std::size_t>(ec)];

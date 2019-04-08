@@ -19,10 +19,13 @@ namespace sol {
 		};
 
 		inline const string_view& to_string(error_code ec) {
-			static const string_view storage[4] = {
+			static const string_view storage[7] = {
 				"ok",
 				"invalid code points",
 				"invalid code unit",
+				"invalid leading surrogate",
+				"invalid trailing surrogate",
+				"sequence too short",
 				"overlong sequence"
 			};
 			return storage[static_cast<std::size_t>(ec)];
