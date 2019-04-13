@@ -174,12 +174,10 @@ namespace sol { namespace stack {
 					return stack_detail::unchecked_unqualified_get<sol::nested<Tu>>(L, index, tracking);
 				}
 			}
-			else if constexpr (!std::is_reference_v<
-				                   X> && is_unique_usertype_v<Tu> && !std::is_void_v<typename unique_usertype_traits<Tu>::template rebind_base<void>>) {
+			else if constexpr (!std::is_reference_v<X> && is_unique_usertype_v<Tu> && !is_base_rebindable_non_void_v<unique_usertype_traits<Tu>>) {
 				using u_traits = unique_usertype_traits<Tu>;
 				using T = typename u_traits::type;
 				using Real = typename u_traits::actual_type;
-				using rebind_t = typename u_traits::template rebind_base<void>;
 				tracking.use(1);
 				void* memory = lua_touserdata(L, index);
 				memory = detail::align_usertype_unique_destructor(memory);
@@ -193,15 +191,23 @@ namespace sol { namespace stack {
 				Real r(nullptr);
 				if constexpr (!derive<T>::value) {
 					// TODO: abort / terminate, maybe only in debug modes?
-					return static_cast<Real>(r);
+					return static_cast<Real>(std::move(r));
 				}
 				else {
 					memory = detail::align_usertype_unique_tag<true, false>(memory);
 					detail::unique_tag& ic = *reinterpret_cast<detail::unique_tag*>(memory);
 					memory = detail::align_usertype_unique<Real, true, false>(memory);
 					string_view ti = usertype_traits<T>::qualified_name();
-					string_view rebind_ti = usertype_traits<rebind_t>::qualified_name();
-					int cast_operation = ic(memory, &r, ti, rebind_ti);
+					int cast_operation;
+					if constexpr (is_base_rebindable_v<u_traits>) {
+						using rebind_t = typename u_traits::template rebind_base<void>;
+						string_view rebind_ti = usertype_traits<rebind_t>::qualified_name();
+						cast_operation = ic(memory, &r, ti, rebind_ti);
+					}
+					else {
+						string_view rebind_ti("");
+						cast_operation = ic(memory, &r, ti, rebind_ti);
+					}
 					switch (cast_operation) {
 					case 1: {
 						// it's a perfect match,
@@ -974,8 +980,6 @@ namespace sol { namespace stack {
 	};
 
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-
-
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	template <typename... Tn>
 	struct unqualified_getter<std::variant<Tn...>> {
@@ -1012,6 +1016,7 @@ namespace sol { namespace stack {
 	};
 #endif // SOL_STD_VARIANT
 #endif // SOL_CXX17_FEATURES
+
 }}	// namespace sol::stack
 
 #endif // SOL_STACK_UNQUALIFIED_GET_HPP

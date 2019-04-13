@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-04-08 03:11:10.821035 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 7cce3e4)
+// Generated 2019-04-13 08:04:48.327520 UTC
+// This header was generated with sol v3.0.1-beta2 (revision d17f967)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6277,65 +6277,6 @@ namespace sol {
 	typedef std::remove_pointer_t<lua_CFunction> lua_CFunction_ref;
 
 	template <typename T>
-	struct unique_usertype_traits {
-		typedef T type;
-		typedef T actual_type;
-		template <typename X>
-		using rebind_base = void;
-
-		static const bool value = false;
-
-		template <typename U>
-		static bool is_null(U&&) {
-			return false;
-		}
-
-		template <typename U>
-		static auto get(U&& value) {
-			return std::addressof(detail::deref(value));
-		}
-	};
-
-	template <typename T>
-	struct unique_usertype_traits<std::shared_ptr<T>> {
-		typedef T type;
-		typedef std::shared_ptr<T> actual_type;
-		// rebind is non-void
-		// if and only if unique usertype
-		// is cast-capable
-		template <typename X>
-		using rebind_base = std::shared_ptr<X>;
-
-		static const bool value = true;
-
-		static bool is_null(const actual_type& p) {
-			return p == nullptr;
-		}
-
-		static type* get(const actual_type& p) {
-			return p.get();
-		}
-	};
-
-	template <typename T, typename D>
-	struct unique_usertype_traits<std::unique_ptr<T, D>> {
-		typedef T type;
-		typedef std::unique_ptr<T, D> actual_type;
-		template <typename X>
-		using rebind_base = void;
-
-		static const bool value = true;
-
-		static bool is_null(const actual_type& p) {
-			return p == nullptr;
-		}
-
-		static type* get(const actual_type& p) {
-			return p.get();
-		}
-	};
-
-	template <typename T>
 	struct non_null {};
 
 	template <typename... Args>
@@ -7305,12 +7246,6 @@ namespace sol {
 	} // namespace detail
 
 	template <typename T>
-	struct is_unique_usertype : std::integral_constant<bool, unique_usertype_traits<T>::value> {};
-
-	template <typename T>
-	inline constexpr bool is_unique_usertype_v = is_unique_usertype<T>::value;
-
-	template <typename T>
 	struct lua_type_of : detail::lua_type_of<T> {
 		typedef int SOL_INTERNAL_UNSPECIALIZED_MARKER_;
 	};
@@ -7923,6 +7858,103 @@ namespace sol {
 
 // end of sol/usertype_traits.hpp
 
+// beginning of sol/unique_usertype_traits.hpp
+
+namespace sol {
+
+	template <typename T>
+	struct unique_usertype_traits {
+		typedef T type;
+		typedef T actual_type;
+		template <typename X>
+		using rebind_base = void;
+
+		static const bool value = false;
+
+		template <typename U>
+		static bool is_null(U&&) {
+			return false;
+		}
+
+		template <typename U>
+		static auto get(U&& value) {
+			return std::addressof(detail::deref(value));
+		}
+	};
+
+	template <typename T>
+	struct unique_usertype_traits<std::shared_ptr<T>> {
+		typedef T type;
+		typedef std::shared_ptr<T> actual_type;
+		// rebind is non-void
+		// if and only if unique usertype
+		// is cast-capable
+		template <typename X>
+		using rebind_base = std::shared_ptr<X>;
+
+		static const bool value = true;
+
+		static bool is_null(const actual_type& p) {
+			return p == nullptr;
+		}
+
+		static type* get(const actual_type& p) {
+			return p.get();
+		}
+	};
+
+	template <typename T, typename D>
+	struct unique_usertype_traits<std::unique_ptr<T, D>> {
+		using type = T;
+		using actual_type = std::unique_ptr<T, D>;
+
+		static const bool value = true;
+
+		static bool is_null(const actual_type& p) {
+			return p == nullptr;
+		}
+
+		static type* get(const actual_type& p) {
+			return p.get();
+		}
+	};
+
+	template <typename T>
+	struct is_unique_usertype : std::integral_constant<bool, unique_usertype_traits<T>::value> {};
+
+	template <typename T>
+	inline constexpr bool is_unique_usertype_v = is_unique_usertype<T>::value;
+
+	namespace detail {
+		template <typename T>
+		using is_base_rebindable_test = decltype(T::rebind_base);
+	}
+
+	template <typename T>
+	using is_base_rebindable = meta::is_detected<detail::is_base_rebindable_test, T>;
+
+	template <typename T>
+	inline constexpr bool is_base_rebindable_v = is_base_rebindable<T>::value;
+
+	namespace detail {
+		template <typename T, typename>
+		struct is_base_rebindable_non_void_sfinae : std::false_type {};
+
+		template <typename T>
+		struct is_base_rebindable_non_void_sfinae<T, std::enable_if_t<is_base_rebindable_v<T>>>
+		: std::integral_constant<bool, !std::is_void_v<typename T::template rebind_base<void>>> {};
+	} // namespace detail
+
+	template <typename T>
+	using is_base_rebindable_non_void = meta::is_detected<detail::is_base_rebindable_test, T>;
+
+	template <typename T>
+	inline constexpr bool is_base_rebindable_non_void_v = is_base_rebindable_non_void<T>::value;
+
+} // namespace sol
+
+// end of sol/unique_usertype_traits.hpp
+
 namespace sol {
 	template <typename... Args>
 	struct base_list {};
@@ -8004,8 +8036,8 @@ namespace sol {
 
 			template <typename U, typename Base, typename... Args>
 			static int type_unique_cast_bases(types<Base, Args...>, void* source_data, void* target_data, const string_view& ti) {
-				typedef unique_usertype_traits<U> uu_traits;
-				typedef typename uu_traits::template rebind_base<Base> base_ptr;
+				using uu_traits = unique_usertype_traits<U>;
+				using base_ptr = typename uu_traits::template rebind_base<Base>;
 				string_view base_ti = usertype_traits<Base>::qualified_name();
 				if (base_ti == ti) {
 					if (target_data != nullptr) {
@@ -8022,38 +8054,60 @@ namespace sol {
 			template <typename U>
 			static int type_unique_cast(void* source_data, void* target_data, const string_view& ti, const string_view& rebind_ti) {
 				typedef unique_usertype_traits<U> uu_traits;
-				typedef typename uu_traits::template rebind_base<void> rebind_t;
-				typedef meta::conditional_t<std::is_void<rebind_t>::value, types<>, bases_t> cond_bases_t;
-				string_view this_rebind_ti = usertype_traits<rebind_t>::qualified_name();
-				if (rebind_ti != this_rebind_ti) {
-					// this is not even of the same unique type
-					return 0;
+				if constexpr (is_base_rebindable_v<uu_traits>) {
+					typedef typename uu_traits::template rebind_base<void> rebind_t;
+					typedef meta::conditional_t<std::is_void<rebind_t>::value, types<>, bases_t> cond_bases_t;
+					string_view this_rebind_ti = usertype_traits<rebind_t>::qualified_name();
+					if (rebind_ti != this_rebind_ti) {
+						// this is not even of the same unique type
+						return 0;
+					}
+					string_view this_ti = usertype_traits<T>::qualified_name();
+					if (ti == this_ti) {
+						// direct match, return 1
+						return 1;
+					}
+					return type_unique_cast_bases<U>(cond_bases_t(), source_data, target_data, ti);
 				}
-				string_view this_ti = usertype_traits<T>::qualified_name();
-				if (ti == this_ti) {
-					// direct match, return 1
-					return 1;
+				else {
+					(void)rebind_ti;
+					string_view this_ti = usertype_traits<T>::qualified_name();
+					if (ti == this_ti) {
+						// direct match, return 1
+						return 1;
+					}
+					return type_unique_cast_bases<U>(types<>(), source_data, target_data, ti);
 				}
-				return type_unique_cast_bases<U>(cond_bases_t(), source_data, target_data, ti);
 			}
 
 			template <typename U, typename... Bases>
 			static int type_unique_cast_with(void* source_data, void* target_data, const string_view& ti, const string_view& rebind_ti) {
 				using uc_bases_t = types<Bases...>;
 				typedef unique_usertype_traits<U> uu_traits;
-				typedef typename uu_traits::template rebind_base<void> rebind_t;
-				typedef meta::conditional_t<std::is_void<rebind_t>::value, types<>, uc_bases_t> cond_bases_t;
-				string_view this_rebind_ti = usertype_traits<rebind_t>::qualified_name();
-				if (rebind_ti != this_rebind_ti) {
-					// this is not even of the same unique type
-					return 0;
+				if constexpr (is_base_rebindable_v<uu_traits>) {
+					using rebind_t = typename uu_traits::template rebind_base<void>;
+					using cond_bases_t = meta::conditional_t<std::is_void<rebind_t>::value, types<>, uc_bases_t>;
+					string_view this_rebind_ti = usertype_traits<rebind_t>::qualified_name();
+					if (rebind_ti != this_rebind_ti) {
+						// this is not even of the same unique type
+						return 0;
+					}
+					string_view this_ti = usertype_traits<T>::qualified_name();
+					if (ti == this_ti) {
+						// direct match, return 1
+						return 1;
+					}
+					return type_unique_cast_bases<U>(cond_bases_t(), source_data, target_data, ti);
 				}
-				string_view this_ti = usertype_traits<T>::qualified_name();
-				if (ti == this_ti) {
-					// direct match, return 1
-					return 1;
+				else {
+					(void)rebind_ti;
+					string_view this_ti = usertype_traits<T>::qualified_name();
+					if (ti == this_ti) {
+						// direct match, return 1
+						return 1;
+					}
+					return type_unique_cast_bases<U>(types<>(), source_data, target_data, ti);
 				}
-				return type_unique_cast_bases<U>(cond_bases_t(), source_data, target_data, ti);
 			}
 		};
 
@@ -11548,12 +11602,10 @@ namespace sol { namespace stack {
 					return stack_detail::unchecked_unqualified_get<sol::nested<Tu>>(L, index, tracking);
 				}
 			}
-			else if constexpr (!std::is_reference_v<
-				                   X> && is_unique_usertype_v<Tu> && !std::is_void_v<typename unique_usertype_traits<Tu>::template rebind_base<void>>) {
+			else if constexpr (!std::is_reference_v<X> && is_unique_usertype_v<Tu> && !is_base_rebindable_non_void_v<unique_usertype_traits<Tu>>) {
 				using u_traits = unique_usertype_traits<Tu>;
 				using T = typename u_traits::type;
 				using Real = typename u_traits::actual_type;
-				using rebind_t = typename u_traits::template rebind_base<void>;
 				tracking.use(1);
 				void* memory = lua_touserdata(L, index);
 				memory = detail::align_usertype_unique_destructor(memory);
@@ -11567,15 +11619,23 @@ namespace sol { namespace stack {
 				Real r(nullptr);
 				if constexpr (!derive<T>::value) {
 					// TODO: abort / terminate, maybe only in debug modes?
-					return static_cast<Real>(r);
+					return static_cast<Real>(std::move(r));
 				}
 				else {
 					memory = detail::align_usertype_unique_tag<true, false>(memory);
 					detail::unique_tag& ic = *reinterpret_cast<detail::unique_tag*>(memory);
 					memory = detail::align_usertype_unique<Real, true, false>(memory);
 					string_view ti = usertype_traits<T>::qualified_name();
-					string_view rebind_ti = usertype_traits<rebind_t>::qualified_name();
-					int cast_operation = ic(memory, &r, ti, rebind_ti);
+					int cast_operation;
+					if constexpr (is_base_rebindable_v<u_traits>) {
+						using rebind_t = typename u_traits::template rebind_base<void>;
+						string_view rebind_ti = usertype_traits<rebind_t>::qualified_name();
+						cast_operation = ic(memory, &r, ti, rebind_ti);
+					}
+					else {
+						string_view rebind_ti("");
+						cast_operation = ic(memory, &r, ti, rebind_ti);
+					}
 					switch (cast_operation) {
 					case 1: {
 						// it's a perfect match,
@@ -12348,7 +12408,6 @@ namespace sol { namespace stack {
 	};
 
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	template <typename... Tn>
 	struct unqualified_getter<std::variant<Tn...>> {
@@ -12385,6 +12444,7 @@ namespace sol { namespace stack {
 	};
 #endif // SOL_STD_VARIANT
 #endif // SOL_CXX17_FEATURES
+
 }}	// namespace sol::stack
 
 // end of sol/stack_get_unqualified.hpp
@@ -12410,6 +12470,8 @@ namespace stack {
 // beginning of sol/stack_check_get_unqualified.hpp
 
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#endif // variant
 #endif // C++17
 
 namespace sol {
@@ -12439,20 +12501,20 @@ namespace stack {
 						tracking.use(1);
 						return static_cast<T>(lua_tointeger(L, index));
 					}
-	#endif
+#endif
 					int isnum = 0;
 					const lua_Number value = lua_tonumberx(L, index, &isnum);
 					if (isnum != 0) {
-	#if (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS) && !(defined(SOL_NO_CHECK_NUMBER_PRECISION) && SOL_NO_CHECK_NUMBER_PRECISION)
+#if (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS) && !(defined(SOL_NO_CHECK_NUMBER_PRECISION) && SOL_NO_CHECK_NUMBER_PRECISION)
 						const auto integer_value = llround(value);
 						if (static_cast<lua_Number>(integer_value) == value) {
 							tracking.use(1);
 							return static_cast<T>(integer_value);
 						}
-	#else
+#else
 						tracking.use(1);
 						return static_cast<T>(value);
-	#endif
+#endif
 					}
 					const type t = type_of(L, index);
 					tracking.use(static_cast<int>(t != type::none));
@@ -12521,8 +12583,8 @@ namespace stack {
 	};
 
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
-	template <typename... Tn>
-	struct unqualified_check_getter<std::variant<Tn...>> {
+	template <typename... Tn, typename C>
+	struct unqualified_check_getter<std::variant<Tn...>, C> {
 		typedef std::variant<Tn...> V;
 		typedef std::variant_size<V> V_size;
 		typedef std::integral_constant<bool, V_size::value == 0> V_is_empty;
@@ -12785,7 +12847,6 @@ namespace sol {
 				using u_traits = unique_usertype_traits<T>;
 				using P = typename u_traits::type;
 				using Real = typename u_traits::actual_type;
-				using rebind_t = typename u_traits::template rebind_base<void>;
 
 				template <typename Arg, typename... Args>
 				static int push(lua_State* L, Arg&& arg, Args&&... args) {

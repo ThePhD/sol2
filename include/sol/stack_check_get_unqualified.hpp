@@ -33,6 +33,9 @@
 #include <cmath>
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #include <optional>
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#include <variant>
+#endif // variant
 #endif // C++17
 
 
@@ -64,20 +67,20 @@ namespace stack {
 						tracking.use(1);
 						return static_cast<T>(lua_tointeger(L, index));
 					}
-	#endif
+#endif
 					int isnum = 0;
 					const lua_Number value = lua_tonumberx(L, index, &isnum);
 					if (isnum != 0) {
-	#if (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS) && !(defined(SOL_NO_CHECK_NUMBER_PRECISION) && SOL_NO_CHECK_NUMBER_PRECISION)
+#if (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS) && !(defined(SOL_NO_CHECK_NUMBER_PRECISION) && SOL_NO_CHECK_NUMBER_PRECISION)
 						const auto integer_value = llround(value);
 						if (static_cast<lua_Number>(integer_value) == value) {
 							tracking.use(1);
 							return static_cast<T>(integer_value);
 						}
-	#else
+#else
 						tracking.use(1);
 						return static_cast<T>(value);
-	#endif
+#endif
 					}
 					const type t = type_of(L, index);
 					tracking.use(static_cast<int>(t != type::none));
@@ -146,8 +149,8 @@ namespace stack {
 	};
 
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
-	template <typename... Tn>
-	struct unqualified_check_getter<std::variant<Tn...>> {
+	template <typename... Tn, typename C>
+	struct unqualified_check_getter<std::variant<Tn...>, C> {
 		typedef std::variant<Tn...> V;
 		typedef std::variant_size<V> V_size;
 		typedef std::integral_constant<bool, V_size::value == 0> V_is_empty;

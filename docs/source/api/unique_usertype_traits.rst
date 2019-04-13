@@ -29,14 +29,14 @@ This is a customization point for users who need to *work with special kinds of 
 			typedef boost::shared_ptr<T> actual_type;
 			static const bool value = true;
     
-			static bool is_null(const actual_type& value) {
-				return value == nullptr;
+			static bool is_null(const actual_type& ptr) {
+				return ptr == nullptr;
 			}
 
-			static type* get (const actual_type& p) {
-				return p.get();
+			static type* get (const actual_type& ptr) {
+				return ptr.get();
 			}
-		}
+		};
 	}
 
 This will allow the library to properly handle ``boost::shared_ptr<T>``, with ref-counting and all. The ``type`` is the type that lua and sol will interact with, and will allow you to pull out a non-owning reference / pointer to the data when you just ask for a plain ``T*`` or ``T&`` or ``T`` using the getter functions and properties of Sol. The ``actual_type`` is just the "real type" that controls the semantics (shared, unique, ``CComPtr``, ``ComPtr``, OpenGL handles, DirectX objects, the list goes on).

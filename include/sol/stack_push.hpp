@@ -196,7 +196,6 @@ namespace sol {
 				using u_traits = unique_usertype_traits<T>;
 				using P = typename u_traits::type;
 				using Real = typename u_traits::actual_type;
-				using rebind_t = typename u_traits::template rebind_base<void>;
 
 				template <typename Arg, typename... Args>
 				static int push(lua_State* L, Arg&& arg, Args&&... args) {

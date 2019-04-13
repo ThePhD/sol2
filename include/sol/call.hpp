@@ -30,6 +30,7 @@
 #include "trampoline.hpp"
 #include "filters.hpp"
 #include "stack.hpp"
+#include "unique_usertype_traits.hpp"
 
 namespace sol {
 	namespace u_detail {
