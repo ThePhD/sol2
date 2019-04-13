@@ -36,8 +36,8 @@ namespace stack {
 			if constexpr (!std::is_reference_v<X> && is_unique_usertype_v<X>) {
 				using u_traits = unique_usertype_traits<meta::unqualified_t<X>>;
 				using T = typename u_traits::type;
-				using rebind_t = typename u_traits::template rebind_base<void>;
-				if constexpr (!std::is_void_v<rebind_t>) {
+				if constexpr (!is_base_rebindable_non_void_v<u_traits>) {
+					using rebind_t = typename u_traits::template rebind_base<void>;
 					// we have a unique pointer type that can be
 					// rebound to a base/derived type
 					const type indextype = type_of(L, index);
