@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-04-13 09:58:41.191654 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 3adac34)
+// Generated 2019-04-13 14:14:41.437059 UTC
+// This header was generated with sol v3.0.1-beta2 (revision caa71f2)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1171,6 +1171,76 @@ namespace meta {
 
 // end of sol/bind_traits.hpp
 
+// beginning of sol/pointer_like.hpp
+
+namespace sol {
+
+	namespace meta {
+		namespace meta_detail {
+			template <typename T>
+			using is_dereferenceable_test = decltype(*std::declval<T>());
+		}
+
+		template <typename T>
+		using is_pointer_like = std::integral_constant<bool, !std::is_array_v<T> && (std::is_pointer_v<T> || is_detected_v<meta_detail::is_dereferenceable_test, T>)>;
+
+		template <typename T>
+		constexpr inline bool is_pointer_like_v = is_pointer_like<T>::value;
+	} // namespace meta
+
+	namespace detail {
+
+		template <typename T>
+		auto unwrap(T&& item) -> decltype(std::forward<T>(item)) {
+			return std::forward<T>(item);
+		}
+
+		template <typename T>
+		T& unwrap(std::reference_wrapper<T> arg) {
+			return arg.get();
+		}
+
+		template <typename T>
+		inline decltype(auto) deref(T&& item) {
+			using Tu = meta::unqualified_t<T>;
+			if constexpr (meta::is_pointer_like_v<Tu>) {
+				return *std::forward<T>(item);
+			}
+			else {
+				return std::forward<T>(item);
+			}
+		}
+
+		template <typename T>
+		inline decltype(auto) deref_non_pointer(T&& item) {
+			using Tu = meta::unqualified_t<T>;
+			if constexpr (meta::is_pointer_like_v<Tu> && !std::is_pointer_v<Tu>) {
+				return *std::forward<T>(item);
+			}
+			else {
+				return std::forward<T>(item);
+			}
+		}
+
+		template <typename T>
+		inline T* ptr(T& val) {
+			return std::addressof(val);
+		}
+
+		template <typename T>
+		inline T* ptr(std::reference_wrapper<T> val) {
+			return std::addressof(val.get());
+		}
+
+		template <typename T>
+		inline T* ptr(T* val) {
+			return val;
+		}
+	} // namespace detail
+} // namespace sol
+
+// end of sol/pointer_like.hpp
+
 // beginning of sol/string_view.hpp
 
 #include <string>
@@ -1959,68 +2029,7 @@ namespace sol {
 			using type = typename std::iterator_traits<T>::iterator_category;
 		};
 
-		namespace meta_detail {
-			template <typename T>
-			using is_dereferenceable_test = decltype(*std::declval<T>());
-		}
-
-		template <typename T>
-		using is_pointer_like = meta::boolean<!std::is_array_v<T> && ( std::is_pointer_v<T> || meta::is_detected_v<meta_detail::is_dereferenceable_test, T>)>;
-
-		template <typename T>
-		constexpr inline bool is_pointer_like_v = is_pointer_like<T>::value;
-
 	} // namespace meta
-
-	namespace detail {
-
-		template <typename T>
-		auto unwrap(T&& item) -> decltype(std::forward<T>(item)) {
-			return std::forward<T>(item);
-		}
-
-		template <typename T>
-		T& unwrap(std::reference_wrapper<T> arg) {
-			return arg.get();
-		}
-
-		template <typename T>
-		inline decltype(auto) deref(T&& item) {
-			using Tu = meta::unqualified_t<T>;
-			if constexpr (meta::is_pointer_like_v<Tu>) {
-				return *std::forward<T>(item);
-			}
-			else {
-				return std::forward<T>(item);
-			}
-		}
-
-		template <typename T>
-		inline decltype(auto) deref_non_pointer(T&& item) {
-			using Tu = meta::unqualified_t<T>;
-			if constexpr (meta::is_pointer_like_v<Tu> && !std::is_pointer_v<Tu>) {
-				return *std::forward<T>(item);
-			}
-			else {
-				return std::forward<T>(item);
-			}
-		}
-
-		template <typename T>
-		inline T* ptr(T& val) {
-			return std::addressof(val);
-		}
-
-		template <typename T>
-		inline T* ptr(std::reference_wrapper<T> val) {
-			return std::addressof(val.get());
-		}
-
-		template <typename T>
-		inline T* ptr(T* val) {
-			return val;
-		}
-	} // namespace detail
 } // namespace sol
 
 // end of sol/traits.hpp
