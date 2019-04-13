@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-04-13 08:51:53.095601 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 6282ed4)
+// Generated 2019-04-13 09:58:41.191654 UTC
+// This header was generated with sol v3.0.1-beta2 (revision 3adac34)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -11075,7 +11075,7 @@ namespace stack {
 			if constexpr (!std::is_reference_v<X> && is_unique_usertype_v<X>) {
 				using u_traits = unique_usertype_traits<meta::unqualified_t<X>>;
 				using T = typename u_traits::type;
-				if constexpr (!is_base_rebindable_non_void_v<u_traits>) {
+				if constexpr (is_base_rebindable_non_void_v<u_traits>) {
 					using rebind_t = typename u_traits::template rebind_base<void>;
 					// we have a unique pointer type that can be
 					// rebound to a base/derived type
