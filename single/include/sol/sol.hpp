@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-04-13 14:14:41.437059 UTC
-// This header was generated with sol v3.0.1-beta2 (revision caa71f2)
+// Generated 2019-04-14 14:15:43.586702 UTC
+// This header was generated with sol v3.0.1-beta2 (revision b47997f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -19134,12 +19134,14 @@ namespace sol {
 				return at_category(iterator_category(), L, self, pos);
 			}
 
-			static detail::error_result get_associative(std::true_type, lua_State* L, iterator& it) {
+			template <typename Iter>
+			static detail::error_result get_associative(std::true_type, lua_State* L, Iter& it) {
 				decltype(auto) v = *it;
 				return stack::stack_detail::push_reference<push_type>(L, detail::deref_non_pointer(v.second));
 			}
 
-			static detail::error_result get_associative(std::false_type, lua_State* L, iterator& it) {
+			template <typename Iter>
+			static detail::error_result get_associative(std::false_type, lua_State* L, Iter& it) {
 				return stack::stack_detail::push_reference<push_type>(L, detail::deref_non_pointer(*it));
 			}
 
@@ -19272,12 +19274,14 @@ namespace sol {
 				return detail::error_result("cannot set this value on '%s': no suitable way to increment iterator or compare to '%s' key", detail::demangle<T>().data(), detail::demangle<K>().data());
 			}
 
-			static detail::error_result set_associative_insert(std::true_type, lua_State*, T& self, iterator& it, K& key, stack_object value) {
+			template <typename Iter>
+			static detail::error_result set_associative_insert(std::true_type, lua_State*, T& self, Iter& it, K& key, stack_object value) {
 				self.insert(it, value_type(key, value.as<V>()));
 				return {};
 			}
 
-			static detail::error_result set_associative_insert(std::false_type, lua_State*, T& self, iterator& it, K& key, stack_object) {
+			template <typename Iter>
+			static detail::error_result set_associative_insert(std::false_type, lua_State*, T& self, Iter& it, K& key, stack_object) {
 				self.insert(it, key);
 				return {};
 			}
@@ -19356,11 +19360,13 @@ namespace sol {
 				return find_has_associative_lookup<idx_of>(meta::any<is_lookup, is_associative>(), L, self);
 			}
 
-			static detail::error_result find_associative_lookup(std::true_type, lua_State* L, T&, iterator& it, std::size_t) {
+			template <typename Iter>
+			static detail::error_result find_associative_lookup(std::true_type, lua_State* L, T&, Iter& it, std::size_t) {
 				return get_associative(is_associative(), L, it);
 			}
 
-			static detail::error_result find_associative_lookup(std::false_type, lua_State* L, T& self, iterator&, std::size_t idx) {
+			template <typename Iter>
+			static detail::error_result find_associative_lookup(std::false_type, lua_State* L, T& self, Iter&, std::size_t idx) {
 				idx -= deferred_uc::index_adjustment(L, self);
 				return stack::push(L, idx);
 			}
@@ -19392,7 +19398,8 @@ namespace sol {
 				return find_comparative<idx_of>(meta::supports_op_equal<V>(), L, self);
 			}
 
-			static detail::error_result add_insert_after(std::false_type, lua_State* L, T& self, stack_object value, iterator&) {
+			template <typename Iter>
+			static detail::error_result add_insert_after(std::false_type, lua_State* L, T& self, stack_object value, Iter&) {
 				return add_insert_after(std::false_type(), L, self, value);
 			}
 
@@ -19400,7 +19407,8 @@ namespace sol {
 				return detail::error_result("cannot call 'add' on type '%s': no suitable insert/push_back C++ functions", detail::demangle<T>().data());
 			}
 
-			static detail::error_result add_insert_after(std::true_type, lua_State*, T& self, stack_object value, iterator& pos) {
+			template <typename Iter>
+			static detail::error_result add_insert_after(std::true_type, lua_State*, T& self, stack_object value, Iter& pos) {
 				self.insert_after(pos, value.as<V>());
 				return {};
 			}
@@ -19415,7 +19423,8 @@ namespace sol {
 				return add_insert_after(std::true_type(), L, self, value, backit);
 			}
 
-			static detail::error_result add_insert(std::true_type, lua_State*, T& self, stack_object value, iterator& pos) {
+			template <typename Iter>
+			static detail::error_result add_insert(std::true_type, lua_State*, T& self, stack_object value, Iter& pos) {
 				self.insert(pos, value.as<V>());
 				return {};
 			}
@@ -19425,7 +19434,8 @@ namespace sol {
 				return add_insert(std::true_type(), L, self, value, pos);
 			}
 
-			static detail::error_result add_insert(std::false_type, lua_State* L, T& self, stack_object value, iterator& pos) {
+			template <typename Iter>
+			static detail::error_result add_insert(std::false_type, lua_State* L, T& self, stack_object value, Iter& pos) {
 				return add_insert_after(meta::has_insert_after<T>(), L, self, std::move(value), pos);
 			}
 
@@ -19433,7 +19443,8 @@ namespace sol {
 				return add_insert_after(meta::has_insert_after<T>(), L, self, std::move(value));
 			}
 
-			static detail::error_result add_push_back(std::true_type, lua_State*, T& self, stack_object value, iterator&) {
+			template <typename Iter>
+			static detail::error_result add_push_back(std::true_type, lua_State*, T& self, stack_object value, Iter&) {
 				self.push_back(value.as<V>());
 				return {};
 			}
@@ -19443,7 +19454,8 @@ namespace sol {
 				return {};
 			}
 
-			static detail::error_result add_push_back(std::false_type, lua_State* L, T& self, stack_object value, iterator& pos) {
+			template <typename Iter>
+			static detail::error_result add_push_back(std::false_type, lua_State* L, T& self, stack_object value, Iter& pos) {
 				return add_insert(meta::has_insert<T>(), L, self, value, pos);
 			}
 
@@ -19451,7 +19463,8 @@ namespace sol {
 				return add_insert(meta::has_insert<T>(), L, self, value);
 			}
 
-			static detail::error_result add_associative(std::true_type, lua_State* L, T& self, stack_object key, iterator& pos) {
+			template <typename Iter>
+			static detail::error_result add_associative(std::true_type, lua_State* L, T& self, stack_object key, Iter& pos) {
 				self.insert(pos, value_type(key.as<K>(), stack::unqualified_get<V>(L, 3)));
 				return {};
 			}
@@ -19461,7 +19474,8 @@ namespace sol {
 				return add_associative(std::true_type(), L, self, std::move(key), pos);
 			}
 
-			static detail::error_result add_associative(std::false_type, lua_State* L, T& self, stack_object value, iterator& pos) {
+			template <typename Iter>
+			static detail::error_result add_associative(std::false_type, lua_State* L, T& self, stack_object value, Iter& pos) {
 				return add_push_back(meta::has_push_back<T>(), L, self, value, pos);
 			}
 
@@ -19469,7 +19483,8 @@ namespace sol {
 				return add_push_back(meta::has_push_back<T>(), L, self, value);
 			}
 
-			static detail::error_result add_copyable(std::true_type, lua_State* L, T& self, stack_object value, iterator& pos) {
+			template <typename Iter>
+			static detail::error_result add_copyable(std::true_type, lua_State* L, T& self, stack_object value, Iter& pos) {
 				return add_associative(is_associative(), L, self, std::move(value), pos);
 			}
 
@@ -19477,7 +19492,8 @@ namespace sol {
 				return add_associative(is_associative(), L, self, value);
 			}
 
-			static detail::error_result add_copyable(std::false_type, lua_State* L, T& self, stack_object value, iterator&) {
+			template <typename Iter>
+			static detail::error_result add_copyable(std::false_type, lua_State* L, T& self, stack_object value, Iter&) {
 				return add_copyable(std::false_type(), L, self, std::move(value));
 			}
 
