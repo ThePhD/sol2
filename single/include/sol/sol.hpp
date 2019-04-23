@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-04-23 14:18:30.519015 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 47bc7f6)
+// Generated 2019-04-23 14:29:43.637794 UTC
+// This header was generated with sol v3.0.1-beta2 (revision 468ac36)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -11590,10 +11590,6 @@ namespace sol { namespace stack {
 				Real* mem = static_cast<Real*>(memory);
 				return *mem;
 			}
-			else if constexpr(std::is_pointer_v<T> && std::is_void_v<std::remove_pointer_t<T>>) {
-				tracking.use(1);
-				return lua_touserdata(L, index);
-			}
 			else {
 				return stack_detail::unchecked_unqualified_get<detail::as_value_tag<T>>(L, index, tracking);
 			}
@@ -12273,6 +12269,22 @@ namespace sol { namespace stack {
 				return error(detail::direct_error, "");
 			}
 			return error(detail::direct_error, std::string(err, sz));
+		}
+	};
+
+	template <>
+	struct unqualified_getter<void*> {
+		static void* get(lua_State* L, int index, record& tracking) {
+			tracking.use(1);
+			return lua_touserdata(L, index);
+		}
+	};
+
+	template <>
+	struct unqualified_getter<const void*> {
+		static const void* get(lua_State* L, int index, record& tracking) {
+			tracking.use(1);
+			return lua_touserdata(L, index);
 		}
 	};
 
