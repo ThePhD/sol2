@@ -451,7 +451,7 @@ namespace sol { namespace u_detail {
 			base_result = self_index_call<is_new_index, true>(bases(), L, base_storage);
 #else
 			optional<usertype_storage<Base>&> maybe_base_storage = maybe_get_usertype_storage<Base>(L);
-			if (maybe_base_storage.has_value()) {
+			if (static_cast<bool>(maybe_base_storage)) {
 				base_result = self_index_call<is_new_index, true>(bases(), L, *maybe_base_storage);				
 				keep_going = base_result == base_walking_failed_index;
 			}

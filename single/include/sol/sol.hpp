@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-04-14 14:15:43.586702 UTC
-// This header was generated with sol v3.0.1-beta2 (revision b47997f)
+// Generated 2019-04-23 14:18:30.519015 UTC
+// This header was generated with sol v3.0.1-beta2 (revision 47bc7f6)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -11590,6 +11590,10 @@ namespace sol { namespace stack {
 				Real* mem = static_cast<Real*>(memory);
 				return *mem;
 			}
+			else if constexpr(std::is_pointer_v<T> && std::is_void_v<std::remove_pointer_t<T>>) {
+				tracking.use(1);
+				return lua_touserdata(L, index);
+			}
 			else {
 				return stack_detail::unchecked_unqualified_get<detail::as_value_tag<T>>(L, index, tracking);
 			}
@@ -12269,22 +12273,6 @@ namespace sol { namespace stack {
 				return error(detail::direct_error, "");
 			}
 			return error(detail::direct_error, std::string(err, sz));
-		}
-	};
-
-	template <>
-	struct unqualified_getter<void*> {
-		static void* get(lua_State* L, int index, record& tracking) {
-			tracking.use(1);
-			return lua_touserdata(L, index);
-		}
-	};
-
-	template <>
-	struct unqualified_getter<const void*> {
-		static const void* get(lua_State* L, int index, record& tracking) {
-			tracking.use(1);
-			return lua_touserdata(L, index);
 		}
 	};
 
@@ -21021,7 +21009,7 @@ namespace sol { namespace u_detail {
 			base_result = self_index_call<is_new_index, true>(bases(), L, base_storage);
 #else
 			optional<usertype_storage<Base>&> maybe_base_storage = maybe_get_usertype_storage<Base>(L);
-			if (maybe_base_storage.has_value()) {
+			if (static_cast<bool>(maybe_base_storage)) {
 				base_result = self_index_call<is_new_index, true>(bases(), L, *maybe_base_storage);				
 				keep_going = base_result == base_walking_failed_index;
 			}
