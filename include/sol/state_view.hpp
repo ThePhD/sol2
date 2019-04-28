@@ -29,7 +29,9 @@
 #include "environment.hpp"
 #include "load_result.hpp"
 #include "state_handling.hpp"
+
 #include <memory>
+#include <cstddef>
 
 namespace sol {
 

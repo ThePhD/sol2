@@ -1291,6 +1291,9 @@ namespace sol {
 		struct is_non_factory_constructor<no_construction> : std::true_type {};
 
 		template <typename T>
+		inline constexpr bool is_non_factory_constructor_v = is_non_factory_constructor<T>::value;
+
+		template <typename T>
 		struct is_constructor : is_non_factory_constructor<T> {};
 
 		template <typename... Args>
@@ -1301,6 +1304,9 @@ namespace sol {
 
 		template <typename F, typename... Filters>
 		struct is_constructor<filter_wrapper<F, Filters...>> : is_constructor<meta::unqualified_t<F>> {};
+
+		template <typename T>
+		inline constexpr bool is_constructor_v = is_constructor<T>::value;
 
 		template <typename... Args>
 		using any_is_constructor = meta::any<is_constructor<meta::unqualified_t<Args>>...>;
@@ -1319,11 +1325,6 @@ namespace sol {
 
 		template <typename... Args>
 		inline constexpr bool any_is_destructor_v = any_is_destructor<Args...>::value;
-
-		struct add_destructor_tag {};
-		struct check_destructor_tag {};
-		struct verified_tag {
-		} const verified{};
 	} // namespace detail
 
 	template <typename T>

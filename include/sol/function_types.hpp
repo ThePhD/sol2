@@ -370,13 +370,13 @@ namespace sol {
 		struct unqualified_pusher<property_wrapper<F, G>> {
 			static int push(lua_State* L, property_wrapper<F, G>&& pw) {
 				if constexpr (std::is_void_v<F>) {
-					return stack::push(L, std::move(pw.write));
+					return stack::push(L, std::move(pw.write()));
 				}
 				else if constexpr (std::is_void_v<G>) {
-					return stack::push(L, std::move(pw.read));
+					return stack::push(L, std::move(pw.read()));
 				}
 				else {
-					return stack::push(L, overload(std::move(pw.read), std::move(pw.write)));
+					return stack::push(L, overload(std::move(pw.read()), std::move(pw.write())));
 				}
 			}
 
@@ -396,10 +396,10 @@ namespace sol {
 		template <typename T>
 		struct unqualified_pusher<var_wrapper<T>> {
 			static int push(lua_State* L, var_wrapper<T>&& vw) {
-				return stack::push(L, std::move(vw.value));
+				return stack::push(L, std::move(vw.value()));
 			}
 			static int push(lua_State* L, const var_wrapper<T>& vw) {
-				return stack::push(L, vw.value);
+				return stack::push(L, vw.value());
 			}
 		};
 
@@ -442,6 +442,18 @@ namespace sol {
 			}
 		};
 
+		template <typename T>
+		struct unqualified_pusher<detail::tagged<T, no_construction>> {
+			static int push(lua_State* L, no_construction) {
+				lua_CFunction cf = &function_detail::no_construction_error;
+				return stack::push(L, cf);
+			}
+
+			static int push(lua_State* L, no_construction c, function_detail::call_indicator) {
+				return push(L, c);
+			}
+		};
+
 		template <typename T, typename... Lists>
 		struct unqualified_pusher<detail::tagged<T, constructor_list<Lists...>>> {
 			static int push(lua_State* L, detail::tagged<T, constructor_list<Lists...>>) {
@@ -466,23 +478,43 @@ namespace sol {
 
 		template <typename T, typename... Fxs>
 		struct unqualified_pusher<detail::tagged<T, constructor_wrapper<Fxs...>>> {
-			template <typename C>
-			static int push(lua_State* L, C&& c) {
+			static int push(lua_State* L, detail::tagged<T, constructor_wrapper<Fxs...>>&& c) {
+				return push(L, std::move(c.value()));
+			}
+
+			static int push(lua_State* L, const detail::tagged<T, const constructor_wrapper<Fxs...>>& c) {
+				return push(L, c.value());
+			}
+
+			static int push(lua_State* L, constructor_wrapper<Fxs...>&& c) {
 				lua_CFunction cf = call_detail::call_user<T, false, false, constructor_wrapper<Fxs...>, 2>;
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
-				upvalues += stack::push<user<constructor_wrapper<Fxs...>>>(L, std::forward<C>(c));
+				upvalues += stack::push<user<constructor_wrapper<Fxs...>>>(L, std::move(c));
+				return stack::push(L, c_closure(cf, upvalues));
+			}
+
+			static int push(lua_State* L, const constructor_wrapper<Fxs...>& c) {
+				lua_CFunction cf = call_detail::call_user<T, false, false, constructor_wrapper<Fxs...>, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<constructor_wrapper<Fxs...>>>(L, c);
 				return stack::push(L, c_closure(cf, upvalues));
 			}
 		};
 
 		template <typename F, typename... Fxs>
 		struct unqualified_pusher<constructor_wrapper<F, Fxs...>> {
-			template <typename C>
-			static int push(lua_State* L, C&& c) {
+			static int push(lua_State* L, const constructor_wrapper<F, Fxs...>& c) {
 				typedef typename meta::bind_traits<F>::template arg_at<0> arg0;
 				typedef meta::unqualified_t<std::remove_pointer_t<arg0>> T;
-				return stack::push<detail::tagged<T, constructor_wrapper<F, Fxs...>>>(L, std::forward<C>(c));
+				return stack::push<detail::tagged<T, constructor_wrapper<F, Fxs...>>>(L, c);
+			}
+
+			static int push(lua_State* L, constructor_wrapper<F, Fxs...>&& c) {
+				typedef typename meta::bind_traits<F>::template arg_at<0> arg0;
+				typedef meta::unqualified_t<std::remove_pointer_t<arg0>> T;
+				return stack::push<detail::tagged<T, constructor_wrapper<F, Fxs...>>>(L, std::move(c));
 			}
 		};
 
@@ -549,6 +581,28 @@ namespace sol {
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
 				upvalues += stack::push<user<P>>(L, std::move(p));
+				return stack::push(L, c_closure(cf, upvalues));
+			}
+		};
+
+		template <typename T, typename F, typename... Filters>
+		struct unqualified_pusher<detail::tagged<T, filter_wrapper<F, Filters...>>> {
+			using P = filter_wrapper<F, Filters...>;
+			using Tagged = detail::tagged<T, P>;
+
+			static int push(lua_State* L, const Tagged& p) {
+				lua_CFunction cf = call_detail::call_user<T, false, false, P, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<P>>(L, p.value());
+				return stack::push(L, c_closure(cf, upvalues));
+			}
+
+			static int push(lua_State* L, Tagged&& p) {
+				lua_CFunction cf = call_detail::call_user<T, false, false, P, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<P>>(L, std::move(p.value()));
 				return stack::push(L, c_closure(cf, upvalues));
 			}
 		};

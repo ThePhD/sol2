@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-04-28 13:40:08.534101 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 2d47085)
+// Generated 2019-04-28 20:45:14.470847 UTC
+// This header was generated with sol v3.0.1-beta2 (revision 3426947)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -5900,10 +5900,25 @@ namespace sol {
 
 		template <typename Tag, typename T>
 		struct tagged {
-			T value;
+		private:
+			T value_;
+		
+		public:
 			template <typename Arg, typename... Args, meta::disable<std::is_same<meta::unqualified_t<Arg>, tagged>> = meta::enabler>
 			tagged(Arg&& arg, Args&&... args)
-			: value(std::forward<Arg>(arg), std::forward<Args>(args)...) {
+			: value_(std::forward<Arg>(arg), std::forward<Args>(args)...) {
+			}
+
+			T& value() & {
+				return value_;
+			}
+
+			T const& value() const& {
+				return value_;
+			}
+
+			T&& value() && {
+				return std::move(value_);
 			}
 		};
 	} // namespace detail
@@ -6032,6 +6047,14 @@ namespace sol {
 	template <typename F, typename... Args>
 	auto filters(F&& f, Args&&... args) {
 		return filter_wrapper<std::decay_t<F>, std::decay_t<Args>...>(std::forward<F>(f), std::forward<Args>(args)...);
+	}
+
+	namespace detail {
+		template <typename T>
+		using is_filter = meta::is_specialization_of<T, filter_wrapper>;
+		
+		template <typename T>
+		inline constexpr bool is_filter_v = is_filter<T>::value;
 	}
 } // namespace sol
 
@@ -7421,6 +7444,9 @@ namespace sol {
 		struct is_non_factory_constructor<no_construction> : std::true_type {};
 
 		template <typename T>
+		inline constexpr bool is_non_factory_constructor_v = is_non_factory_constructor<T>::value;
+
+		template <typename T>
 		struct is_constructor : is_non_factory_constructor<T> {};
 
 		template <typename... Args>
@@ -7431,6 +7457,9 @@ namespace sol {
 
 		template <typename F, typename... Filters>
 		struct is_constructor<filter_wrapper<F, Filters...>> : is_constructor<meta::unqualified_t<F>> {};
+
+		template <typename T>
+		inline constexpr bool is_constructor_v = is_constructor<T>::value;
 
 		template <typename... Args>
 		using any_is_constructor = meta::any<is_constructor<meta::unqualified_t<Args>>...>;
@@ -7449,11 +7478,6 @@ namespace sol {
 
 		template <typename... Args>
 		inline constexpr bool any_is_destructor_v = any_is_destructor<Args...>::value;
-
-		struct add_destructor_tag {};
-		struct check_destructor_tag {};
-		struct verified_tag {
-		} const verified{};
 	} // namespace detail
 
 	template <typename T>
@@ -17636,13 +17660,13 @@ namespace sol {
 		struct unqualified_pusher<property_wrapper<F, G>> {
 			static int push(lua_State* L, property_wrapper<F, G>&& pw) {
 				if constexpr (std::is_void_v<F>) {
-					return stack::push(L, std::move(pw.write));
+					return stack::push(L, std::move(pw.write()));
 				}
 				else if constexpr (std::is_void_v<G>) {
-					return stack::push(L, std::move(pw.read));
+					return stack::push(L, std::move(pw.read()));
 				}
 				else {
-					return stack::push(L, overload(std::move(pw.read), std::move(pw.write)));
+					return stack::push(L, overload(std::move(pw.read()), std::move(pw.write())));
 				}
 			}
 
@@ -17662,10 +17686,10 @@ namespace sol {
 		template <typename T>
 		struct unqualified_pusher<var_wrapper<T>> {
 			static int push(lua_State* L, var_wrapper<T>&& vw) {
-				return stack::push(L, std::move(vw.value));
+				return stack::push(L, std::move(vw.value()));
 			}
 			static int push(lua_State* L, const var_wrapper<T>& vw) {
-				return stack::push(L, vw.value);
+				return stack::push(L, vw.value());
 			}
 		};
 
@@ -17708,6 +17732,18 @@ namespace sol {
 			}
 		};
 
+		template <typename T>
+		struct unqualified_pusher<detail::tagged<T, no_construction>> {
+			static int push(lua_State* L, no_construction) {
+				lua_CFunction cf = &function_detail::no_construction_error;
+				return stack::push(L, cf);
+			}
+
+			static int push(lua_State* L, no_construction c, function_detail::call_indicator) {
+				return push(L, c);
+			}
+		};
+
 		template <typename T, typename... Lists>
 		struct unqualified_pusher<detail::tagged<T, constructor_list<Lists...>>> {
 			static int push(lua_State* L, detail::tagged<T, constructor_list<Lists...>>) {
@@ -17732,23 +17768,43 @@ namespace sol {
 
 		template <typename T, typename... Fxs>
 		struct unqualified_pusher<detail::tagged<T, constructor_wrapper<Fxs...>>> {
-			template <typename C>
-			static int push(lua_State* L, C&& c) {
+			static int push(lua_State* L, detail::tagged<T, constructor_wrapper<Fxs...>>&& c) {
+				return push(L, std::move(c.value()));
+			}
+
+			static int push(lua_State* L, const detail::tagged<T, const constructor_wrapper<Fxs...>>& c) {
+				return push(L, c.value());
+			}
+
+			static int push(lua_State* L, constructor_wrapper<Fxs...>&& c) {
 				lua_CFunction cf = call_detail::call_user<T, false, false, constructor_wrapper<Fxs...>, 2>;
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
-				upvalues += stack::push<user<constructor_wrapper<Fxs...>>>(L, std::forward<C>(c));
+				upvalues += stack::push<user<constructor_wrapper<Fxs...>>>(L, std::move(c));
+				return stack::push(L, c_closure(cf, upvalues));
+			}
+
+			static int push(lua_State* L, const constructor_wrapper<Fxs...>& c) {
+				lua_CFunction cf = call_detail::call_user<T, false, false, constructor_wrapper<Fxs...>, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<constructor_wrapper<Fxs...>>>(L, c);
 				return stack::push(L, c_closure(cf, upvalues));
 			}
 		};
 
 		template <typename F, typename... Fxs>
 		struct unqualified_pusher<constructor_wrapper<F, Fxs...>> {
-			template <typename C>
-			static int push(lua_State* L, C&& c) {
+			static int push(lua_State* L, const constructor_wrapper<F, Fxs...>& c) {
 				typedef typename meta::bind_traits<F>::template arg_at<0> arg0;
 				typedef meta::unqualified_t<std::remove_pointer_t<arg0>> T;
-				return stack::push<detail::tagged<T, constructor_wrapper<F, Fxs...>>>(L, std::forward<C>(c));
+				return stack::push<detail::tagged<T, constructor_wrapper<F, Fxs...>>>(L, c);
+			}
+
+			static int push(lua_State* L, constructor_wrapper<F, Fxs...>&& c) {
+				typedef typename meta::bind_traits<F>::template arg_at<0> arg0;
+				typedef meta::unqualified_t<std::remove_pointer_t<arg0>> T;
+				return stack::push<detail::tagged<T, constructor_wrapper<F, Fxs...>>>(L, std::move(c));
 			}
 		};
 
@@ -17815,6 +17871,28 @@ namespace sol {
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
 				upvalues += stack::push<user<P>>(L, std::move(p));
+				return stack::push(L, c_closure(cf, upvalues));
+			}
+		};
+
+		template <typename T, typename F, typename... Filters>
+		struct unqualified_pusher<detail::tagged<T, filter_wrapper<F, Filters...>>> {
+			using P = filter_wrapper<F, Filters...>;
+			using Tagged = detail::tagged<T, P>;
+
+			static int push(lua_State* L, const Tagged& p) {
+				lua_CFunction cf = call_detail::call_user<T, false, false, P, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<P>>(L, p.value());
+				return stack::push(L, c_closure(cf, upvalues));
+			}
+
+			static int push(lua_State* L, Tagged&& p) {
+				lua_CFunction cf = call_detail::call_user<T, false, false, P, 2>;
+				int upvalues = 0;
+				upvalues += stack::push(L, nullptr);
+				upvalues += stack::push<user<P>>(L, std::move(p.value()));
 				return stack::push(L, c_closure(cf, upvalues));
 			}
 		};
@@ -22928,25 +23006,10 @@ namespace sol {
 		friend class basic_table_core;
 
 		template <std::size_t... I, typename... Args>
-		void tuple_set(std::index_sequence<I...> indices, std::tuple<Args...>&& args) {
-			using args_tuple = std::tuple<Args...>&&;
-			lua_State* L = this->lua_state();
-			optional<u_detail::usertype_storage<T>&> maybe_uts = u_detail::maybe_get_usertype_storage<T>(L);
-			if constexpr (sizeof...(I) > 0) {
-				if (maybe_uts) {
-					u_detail::usertype_storage<T>& uts = *maybe_uts;
-					(void)detail::swallow{ 0,
-						(uts.set(L, std::get<I * 2>(std::forward<args_tuple>(args)), std::get<I * 2 + 1>(std::forward<args_tuple>(args))),
-						     0)... };
-				}
-				else {
-					table_base_t::template tuple_set<false>(indices, std::move(args));
-				}
-			}
-			else {
-				(void)indices;
-				(void)args;
-			}
+		void tuple_set(std::index_sequence<I...>, std::tuple<Args...>&& args) {
+			(void)args;
+			(void)detail::swallow{ 0,
+				(this->set(std::get<I * 2>(std::move(args)), std::get<I * 2 + 1>(std::move(args))), 0)... };
 		}
 
 	public:
@@ -22969,7 +23032,15 @@ namespace sol {
 				uts.set(this->lua_state(), std::forward<Key>(key), std::forward<Value>(value));
 			}
 			else {
-				base_t::set(std::forward<Key>(key), std::forward<Value>(value));
+				using ValueU = meta::unqualified_t<Value>;
+				// cannot get metatable: try regular table set?
+				if constexpr (detail::is_non_factory_constructor_v<ValueU> || detail::is_filter_v<ValueU>) {
+					// tag constructors so we don't get destroyed by lack of info
+					table_base_t::set(std::forward<Key>(key), detail::tagged<T, Value>(std::forward<Value>(value)));
+				}
+				else {
+					table_base_t::set(std::forward<Key>(key), std::forward<Value>(value));
+				}
 			}
 		}
 

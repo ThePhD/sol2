@@ -25,6 +25,7 @@
 #define SOL_FILTERS_HPP
 
 #include "traits.hpp"
+
 #include <array>
 
 namespace sol {
@@ -85,6 +86,14 @@ namespace sol {
 	template <typename F, typename... Args>
 	auto filters(F&& f, Args&&... args) {
 		return filter_wrapper<std::decay_t<F>, std::decay_t<Args>...>(std::forward<F>(f), std::forward<Args>(args)...);
+	}
+
+	namespace detail {
+		template <typename T>
+		using is_filter = meta::is_specialization_of<T, filter_wrapper>;
+		
+		template <typename T>
+		inline constexpr bool is_filter_v = is_filter<T>::value;
 	}
 } // namespace sol
 

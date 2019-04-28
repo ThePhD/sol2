@@ -78,10 +78,25 @@ namespace sol {
 
 		template <typename Tag, typename T>
 		struct tagged {
-			T value;
+		private:
+			T value_;
+		
+		public:
 			template <typename Arg, typename... Args, meta::disable<std::is_same<meta::unqualified_t<Arg>, tagged>> = meta::enabler>
 			tagged(Arg&& arg, Args&&... args)
-			: value(std::forward<Arg>(arg), std::forward<Args>(args)...) {
+			: value_(std::forward<Arg>(arg), std::forward<Args>(args)...) {
+			}
+
+			T& value() & {
+				return value_;
+			}
+
+			T const& value() const& {
+				return value_;
+			}
+
+			T&& value() && {
+				return std::move(value_);
 			}
 		};
 	} // namespace detail

@@ -45,25 +45,10 @@ namespace sol {
 		friend class basic_table_core;
 
 		template <std::size_t... I, typename... Args>
-		void tuple_set(std::index_sequence<I...> indices, std::tuple<Args...>&& args) {
-			using args_tuple = std::tuple<Args...>&&;
-			lua_State* L = this->lua_state();
-			optional<u_detail::usertype_storage<T>&> maybe_uts = u_detail::maybe_get_usertype_storage<T>(L);
-			if constexpr (sizeof...(I) > 0) {
-				if (maybe_uts) {
-					u_detail::usertype_storage<T>& uts = *maybe_uts;
-					(void)detail::swallow{ 0,
-						(uts.set(L, std::get<I * 2>(std::forward<args_tuple>(args)), std::get<I * 2 + 1>(std::forward<args_tuple>(args))),
-						     0)... };
-				}
-				else {
-					table_base_t::template tuple_set<false>(indices, std::move(args));
-				}
-			}
-			else {
-				(void)indices;
-				(void)args;
-			}
+		void tuple_set(std::index_sequence<I...>, std::tuple<Args...>&& args) {
+			(void)args;
+			(void)detail::swallow{ 0,
+				(this->set(std::get<I * 2>(std::move(args)), std::get<I * 2 + 1>(std::move(args))), 0)... };
 		}
 
 	public:
@@ -86,7 +71,15 @@ namespace sol {
 				uts.set(this->lua_state(), std::forward<Key>(key), std::forward<Value>(value));
 			}
 			else {
-				base_t::set(std::forward<Key>(key), std::forward<Value>(value));
+				using ValueU = meta::unqualified_t<Value>;
+				// cannot get metatable: try regular table set?
+				if constexpr (detail::is_non_factory_constructor_v<ValueU> || detail::is_filter_v<ValueU>) {
+					// tag constructors so we don't get destroyed by lack of info
+					table_base_t::set(std::forward<Key>(key), detail::tagged<T, Value>(std::forward<Value>(value)));
+				}
+				else {
+					table_base_t::set(std::forward<Key>(key), std::forward<Value>(value));
+				}
 			}
 		}
 
