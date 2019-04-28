@@ -36,6 +36,7 @@ namespace sol {
 	class basic_usertype : private basic_metatable<base_type> {
 	private:
 		using base_t = basic_metatable<base_type>;
+		using table_base_t = basic_table<base_type>;
 
 		template <typename>
 		friend class basic_metatable;
@@ -44,18 +45,23 @@ namespace sol {
 		friend class basic_table_core;
 
 		template <std::size_t... I, typename... Args>
-		void tuple_set(std::index_sequence<I...>, std::tuple<Args...>&& args) {
+		void tuple_set(std::index_sequence<I...> indices, std::tuple<Args...>&& args) {
 			using args_tuple = std::tuple<Args...>&&;
-			optional<u_detail::usertype_storage<T>&> maybe_uts = u_detail::maybe_get_usertype_storage<T>(this->lua_state());
+			lua_State* L = this->lua_state();
+			optional<u_detail::usertype_storage<T>&> maybe_uts = u_detail::maybe_get_usertype_storage<T>(L);
 			if constexpr (sizeof...(I) > 0) {
 				if (maybe_uts) {
 					u_detail::usertype_storage<T>& uts = *maybe_uts;
 					(void)detail::swallow{ 0,
-						(uts.set(this->lua_state(), std::get<I * 2>(std::forward<args_tuple>(args)), std::get<I * 2 + 1>(std::forward<args_tuple>(args))),
+						(uts.set(L, std::get<I * 2>(std::forward<args_tuple>(args)), std::get<I * 2 + 1>(std::forward<args_tuple>(args))),
 						     0)... };
+				}
+				else {
+					table_base_t::template tuple_set<false>(indices, std::move(args));
 				}
 			}
 			else {
+				(void)indices;
 				(void)args;
 			}
 		}
@@ -67,6 +73,9 @@ namespace sol {
 		using base_t::push;
 		using base_t::lua_state;
 		using base_t::get;
+		using base_t::set_function;
+		using base_t::traverse_set;
+		using base_t::traverse_get;
 		using base_t::unregister;
 
 		template <typename Key, typename Value>
@@ -75,6 +84,9 @@ namespace sol {
 			if (maybe_uts) {
 				u_detail::usertype_storage<T>& uts = *maybe_uts;
 				uts.set(this->lua_state(), std::forward<Key>(key), std::forward<Value>(value));
+			}
+			else {
+				base_t::set(std::forward<Key>(key), std::forward<Value>(value));
 			}
 		}
 

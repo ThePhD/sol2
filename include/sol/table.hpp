@@ -70,10 +70,14 @@ namespace sol {
 	template <typename base_type>
 	template <typename Key, typename Value>
 	void basic_metatable<base_type>::set(Key&& key, Value&& value) {
-		optional<u_detail::usertype_storage_base&> maybe_uts = u_detail::maybe_get_usertype_storage_base(this->lua_state());
+		this->push();
+		lua_State* L = this->lua_state();
+		int target = lua_gettop(L);
+		optional<u_detail::usertype_storage_base&> maybe_uts = u_detail::maybe_get_usertype_storage_base(L, target);
+		lua_pop(L, 1);
 		if (maybe_uts) {
 			u_detail::usertype_storage_base& uts = *maybe_uts;
-			uts.set(std::forward<Key>(key), std::forward<Value>(value));
+			uts.set(L, std::forward<Key>(key), std::forward<Value>(value));
 		}
 		else {
 			base_t::set(std::forward<Key>(key), std::forward<Value>(value));

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-04-23 14:29:43.637794 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 468ac36)
+// Generated 2019-04-28 13:40:08.534101 UTC
+// This header was generated with sol v3.0.1-beta2 (revision 2d47085)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3491,23 +3491,20 @@ namespace sol {
 namespace sol {
 	namespace detail {
 		struct direct_error_tag {};
-		const auto direct_error = direct_error_tag {};
+		const auto direct_error = direct_error_tag{};
 
 		struct error_result {
 			int results;
 			const char* format_string;
 			std::array<const char*, 4> args_strings;
 
-			error_result()
-			: results(0), format_string(nullptr) {
+			error_result() : results(0), format_string(nullptr) {
 			}
 
-			error_result(int results)
-			: results(results), format_string(nullptr) {
+			error_result(int results) : results(results), format_string(nullptr) {
 			}
 
-			error_result(const char* fmt, const char* msg)
-			: results(0), format_string(fmt) {
+			error_result(const char* fmt, const char* msg) : results(0), format_string(fmt) {
 				args_strings[0] = msg;
 			}
 		};
@@ -3523,20 +3520,16 @@ namespace sol {
 	class error : public std::runtime_error {
 	private:
 		// Because VC++ is upsetting, most of the time!
-		std::string w;
+		std::string what_reason;
 
 	public:
-		error(const std::string& str)
-		: error(detail::direct_error, "lua: error: " + str) {
+		error(const std::string& str) : error(detail::direct_error, "lua: error: " + str) {
 		}
-		error(std::string&& str)
-		: error(detail::direct_error, "lua: error: " + std::move(str)) {
+		error(std::string&& str) : error(detail::direct_error, "lua: error: " + std::move(str)) {
 		}
-		error(detail::direct_error_tag, const std::string& str)
-		: std::runtime_error(""), w(str) {
+		error(detail::direct_error_tag, const std::string& str) : std::runtime_error(""), what_reason(str) {
 		}
-		error(detail::direct_error_tag, std::string&& str)
-		: std::runtime_error(""), w(std::move(str)) {
+		error(detail::direct_error_tag, std::string&& str) : std::runtime_error(""), what_reason(std::move(str)) {
 		}
 
 		error(const error& e) = default;
@@ -3545,7 +3538,7 @@ namespace sol {
 		error& operator=(error&& e) = default;
 
 		virtual const char* what() const noexcept override {
-			return w.c_str();
+			return what_reason.c_str();
 		}
 	};
 
@@ -14654,6 +14647,12 @@ namespace sol {
 namespace sol {
 	struct proxy_base_tag {};
 
+	namespace detail {
+		template <typename T>
+		using proxy_key_t = meta::conditional_t<meta::is_specialization_of_v<meta::unqualified_t<T>, std::tuple>, T,
+		     std::tuple<meta::conditional_t<std::is_array_v<meta::unqualified_t<T>>, std::remove_reference_t<T>&, meta::unqualified_t<T>>>>;
+	}
+
 	template <typename Super>
 	struct proxy_base : proxy_base_tag {
 		operator std::string() const {
@@ -21344,17 +21343,27 @@ namespace sol { namespace u_detail {
 		return target_umt;
 	}
 
-	inline optional<usertype_storage_base&> maybe_get_usertype_storage_base(lua_State* L, const char* gcmetakey) {
-		stack::get_field<true>(L, gcmetakey);
+	inline optional<usertype_storage_base&> maybe_get_usertype_storage_base(lua_State* L, int index) {
 		stack::record tracking;
+		if (!stack::check<user<usertype_storage_base>>(L, index)) {
+			return nullopt;
+		}
 		usertype_storage_base& target_umt = stack::stack_detail::unchecked_unqualified_get<user<usertype_storage_base>>(L, -1, tracking);
 		return target_umt;
+	}
+
+	inline optional<usertype_storage_base&> maybe_get_usertype_storage_base(lua_State* L, const char* gcmetakey) {
+		stack::get_field<true>(L, gcmetakey);
+		auto maybe_storage = maybe_get_usertype_storage_base(L, lua_gettop(L));
+		lua_pop(L, 1);
+		return maybe_storage;
 	}
 
 	inline usertype_storage_base& get_usertype_storage_base(lua_State* L, const char* gcmetakey) {
 		stack::get_field<true>(L, gcmetakey);
 		stack::record tracking;
 		usertype_storage_base& target_umt = stack::stack_detail::unchecked_unqualified_get<user<usertype_storage_base>>(L, -1, tracking);
+		lua_pop(L, 1);
 		return target_umt;
 	}
 
@@ -21362,7 +21371,8 @@ namespace sol { namespace u_detail {
 	inline optional<usertype_storage<T>&> maybe_get_usertype_storage(lua_State* L) {
 		const char* gcmetakey = &usertype_traits<T>::gc_table()[0];
 		stack::get_field<true>(L, gcmetakey);
-		if (!stack::check<user<usertype_storage<T>>>(L)) {
+		int target = lua_gettop(L);
+		if (!stack::check<user<usertype_storage<T>>>(L, target)) {
 			return nullopt;
 		}
 		usertype_storage<T>& target_umt = stack::pop<user<usertype_storage<T>>>(L);
@@ -21634,9 +21644,42 @@ namespace sol { namespace u_detail {
 namespace sol {
 	template <typename Table, typename Key>
 	struct usertype_proxy : public proxy_base<usertype_proxy<Table, Key>> {
+	private:
+		using key_type = detail::proxy_key_t<Key>;
+
+		template <typename T, std::size_t... I>
+		decltype(auto) tuple_get(std::index_sequence<I...>) const & {
+			return tbl.template traverse_get<T>(std::get<I>(key)...);
+		}
+
+		template <typename T, std::size_t... I>
+		decltype(auto) tuple_get(std::index_sequence<I...>) && {
+			return tbl.template traverse_get<T>(std::get<I>(std::move(key))...);
+		}
+
+		template <std::size_t... I, typename T>
+		void tuple_set(std::index_sequence<I...>, T&& value) & {
+			if constexpr (sizeof...(I) > 1) {
+				tbl.traverse_set(std::get<I>(key)..., std::forward<T>(value));
+			}
+			else {
+				tbl.set(std::get<I>(key)..., std::forward<T>(value));
+			}
+		}
+
+		template <std::size_t... I, typename T>
+		void tuple_set(std::index_sequence<I...>, T&& value) && {
+			if constexpr (sizeof...(I) > 1) {
+				tbl.traverse_set(std::get<I>(std::move(key))..., std::forward<T>(value));
+			}
+			else {
+				tbl.set(std::get<I>(std::move(key))..., std::forward<T>(value));
+			}
+		}
+
 	public:
 		Table tbl;
-		Key key;
+		key_type key;
 
 		template <typename T>
 		usertype_proxy(Table table, T&& k)
@@ -21644,19 +21687,108 @@ namespace sol {
 		}
 
 		template <typename T>
-		usertype_proxy& set(T&& value) {
-			tbl.set(key, std::forward<T>(value));
+		usertype_proxy& set(T&& item) & {
+			using idx_seq = std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>;
+			tuple_set(idx_seq(), std::forward<T>(item));
 			return *this;
 		}
 
-		template <typename U>
-		usertype_proxy& operator=(U&& other) {
-			return set(std::forward<U>(other));
+		template <typename T>
+		usertype_proxy&& set(T&& item) && {
+			using idx_seq = std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>;
+			std::move(*this).tuple_set(idx_seq(), std::forward<T>(item));
+			return std::move(*this);
 		}
 
 		template <typename T>
-		usertype_proxy& operator=(std::initializer_list<T> other) {
+		usertype_proxy& operator=(T&& other) & {
+			return set(std::forward<T>(other));
+		}
+
+		template <typename T>
+		usertype_proxy&& operator=(T&& other) && {
+			return std::move(*this).set(std::forward<T>(other));
+		}
+
+		template <typename T>
+		usertype_proxy& operator=(std::initializer_list<T> other) & {
 			return set(std::move(other));
+		}
+
+		template <typename T>
+		usertype_proxy&& operator=(std::initializer_list<T> other) && {
+			return std::move(*this).set(std::move(other));
+		}
+
+		template <typename T>
+		decltype(auto) get() const& {
+			using idx_seq = std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>;
+			return tuple_get<T>(idx_seq());
+		}
+
+		template <typename T>
+		decltype(auto) get() && {
+			using idx_seq = std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>;
+			return std::move(*this).template tuple_get<T>(idx_seq());
+		}
+
+		template <typename K>
+		decltype(auto) operator[](K&& k) const& {
+			auto keys = meta::tuplefy(key, std::forward<K>(k));
+			return usertype_proxy<Table, decltype(keys)>(tbl, std::move(keys));
+		}
+
+		template <typename K>
+		decltype(auto) operator[](K&& k) & {
+			auto keys = meta::tuplefy(key, std::forward<K>(k));
+			return usertype_proxy<Table, decltype(keys)>(tbl, std::move(keys));
+		}
+
+		template <typename K>
+		decltype(auto) operator[](K&& k) && {
+			auto keys = meta::tuplefy(std::move(key), std::forward<K>(k));
+			return usertype_proxy<Table, decltype(keys)>(tbl, std::move(keys));
+		}
+
+		template <typename... Ret, typename... Args>
+		decltype(auto) call(Args&&... args) {
+#if !defined(__clang__) && defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 191200000
+			// MSVC is ass sometimes
+			return get<function>().call<Ret...>(std::forward<Args>(args)...);
+#else
+			return get<function>().template call<Ret...>(std::forward<Args>(args)...);
+#endif
+		}
+
+		template <typename... Args>
+		decltype(auto) operator()(Args&&... args) {
+			return call<>(std::forward<Args>(args)...);
+		}
+
+		bool valid() const {
+			auto pp = stack::push_pop(tbl);
+			auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(lua_state(), key, lua_gettop(lua_state()));
+			lua_pop(lua_state(), p.levels);
+			return p;
+		}
+
+		int push() const noexcept {
+			return push(this->lua_state());
+		}
+
+		int push(lua_State* L) const noexcept {
+			return get<reference>().push(L);
+		}
+
+		type get_type() const {
+			type t = type::none;
+			auto pp = stack::push_pop(tbl);
+			auto p = stack::probe_get_field<std::is_same<meta::unqualified_t<Table>, global_table>::value>(lua_state(), key, lua_gettop(lua_state()));
+			if (p) {
+				t = type_of(lua_state(), -1);
+			}
+			lua_pop(lua_state(), p.levels);
+			return t;
 		}
 
 		lua_State* lua_state() const {
@@ -21675,29 +21807,29 @@ namespace sol {
 
 namespace sol {
 
-	namespace detail {
-		template <typename T>
-		using proxy_key_t = meta::conditional_t<meta::is_specialization_of_v<meta::unqualified_t<T>, std::tuple>, 
-			T,
-		     std::tuple<meta::conditional_t<
-				std::is_array_v<meta::unqualified_t<T>>, std::remove_reference_t<T>&, meta::unqualified_t<T>
-			>>
-		>;
-	}
-
 	template <typename Table, typename Key>
 	struct proxy : public proxy_base<proxy<Table, Key>> {
 	private:
 		using key_type = detail::proxy_key_t<Key>;
 
 		template <typename T, std::size_t... I>
-		decltype(auto) tuple_get(std::index_sequence<I...>) const {
+		decltype(auto) tuple_get(std::index_sequence<I...>) const & {
 			return tbl.template traverse_get<T>(std::get<I>(key)...);
 		}
 
+		template <typename T, std::size_t... I>
+		decltype(auto) tuple_get(std::index_sequence<I...>) && {
+			return tbl.template traverse_get<T>(std::get<I>(std::move(key))...);
+		}
+
 		template <std::size_t... I, typename T>
-		void tuple_set(std::index_sequence<I...>, T&& value) {
+		void tuple_set(std::index_sequence<I...>, T&& value) & {
 			tbl.traverse_set(std::get<I>(key)..., std::forward<T>(value));
+		}
+
+		template <std::size_t... I, typename T>
+		void tuple_set(std::index_sequence<I...>, T&& value) && {
+			tbl.traverse_set(std::get<I>(std::move(key))..., std::forward<T>(value));
 		}
 
 		auto setup_table(std::true_type) {
@@ -21723,19 +21855,31 @@ namespace sol {
 		}
 
 		template <typename T>
-		proxy& set(T&& item) {
+		proxy& set(T&& item) & {
 			tuple_set(std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>(), std::forward<T>(item));
 			return *this;
 		}
 
+		template <typename T>
+		proxy&& set(T&& item) && {
+			tuple_set(std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>(), std::forward<T>(item));
+			return std::move(*this);
+		}
+
 		template <typename... Args>
-		proxy& set_function(Args&&... args) {
+		proxy& set_function(Args&&... args) & {
 			tbl.set_function(key, std::forward<Args>(args)...);
 			return *this;
 		}
 
+		template <typename... Args>
+		proxy&& set_function(Args&&... args) && {
+			tbl.set_function(std::move(key), std::forward<Args>(args)...);
+			return std::move(*this);
+		}
+
 		template <typename T>
-		proxy& operator=(T&& other) {
+		proxy& operator=(T&& other) & {
 			using Tu = meta::unwrap_unqualified_t<T>;
 			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_callable_v<Tu>) {
 				return set_function(std::forward<T>(other));
@@ -21746,13 +21890,36 @@ namespace sol {
 		}
 
 		template <typename T>
-		proxy& operator=(std::initializer_list<T> other) {
+		proxy&& operator=(T&& other) && {
+			using Tu = meta::unwrap_unqualified_t<T>;
+			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_callable_v<Tu>) {
+				return std::move(*this).set_function(std::forward<T>(other));
+			}
+			else {
+				return std::move(*this).set(std::forward<T>(other));
+			}
+		}
+
+		template <typename T>
+		proxy& operator=(std::initializer_list<T> other) & {
 			return set(std::move(other));
 		}
 
 		template <typename T>
-		decltype(auto) get() const {
-			return tuple_get<T>(std::make_index_sequence<std::tuple_size<meta::unqualified_t<key_type>>::value>());
+		proxy&& operator=(std::initializer_list<T> other) && {
+			return std::move(*this).set(std::move(other));
+		}
+
+		template <typename T>
+		decltype(auto) get() const & {
+			using idx_seq = std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>;
+			return tuple_get<T>(idx_seq());
+		}
+
+		template <typename T>
+		decltype(auto) get() && {
+			using idx_seq = std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>;
+			return std::move(*this).template tuple_get<T>(idx_seq());
 		}
 
 		template <typename T>
@@ -22060,6 +22227,10 @@ namespace sol {
 
 		friend class state;
 		friend class state_view;
+		template <typename, typename>
+		friend class basic_usertype;
+		template <typename>
+		friend class basic_metatable;
 
 		template <bool raw, typename... Ret, typename... Keys>
 		decltype(auto) tuple_get(int table_index, Keys&&... keys) const {
@@ -22108,6 +22279,8 @@ namespace sol {
 			auto pp = stack::push_pop<global>(*this);
 			int table_index = pp.index_of(*this);
 			lua_State* L = base_t::lua_state();
+			(void)table_index;
+			(void)L;
 			void(detail::swallow{ (stack::set_field<top_level, raw>(L,
 			                            std::get<I * 2>(std::forward<Pairs>(pairs)),
 			                            std::get<I * 2 + 1>(std::forward<Pairs>(pairs)),
@@ -22746,6 +22919,7 @@ namespace sol {
 	class basic_usertype : private basic_metatable<base_type> {
 	private:
 		using base_t = basic_metatable<base_type>;
+		using table_base_t = basic_table<base_type>;
 
 		template <typename>
 		friend class basic_metatable;
@@ -22754,18 +22928,23 @@ namespace sol {
 		friend class basic_table_core;
 
 		template <std::size_t... I, typename... Args>
-		void tuple_set(std::index_sequence<I...>, std::tuple<Args...>&& args) {
+		void tuple_set(std::index_sequence<I...> indices, std::tuple<Args...>&& args) {
 			using args_tuple = std::tuple<Args...>&&;
-			optional<u_detail::usertype_storage<T>&> maybe_uts = u_detail::maybe_get_usertype_storage<T>(this->lua_state());
+			lua_State* L = this->lua_state();
+			optional<u_detail::usertype_storage<T>&> maybe_uts = u_detail::maybe_get_usertype_storage<T>(L);
 			if constexpr (sizeof...(I) > 0) {
 				if (maybe_uts) {
 					u_detail::usertype_storage<T>& uts = *maybe_uts;
 					(void)detail::swallow{ 0,
-						(uts.set(this->lua_state(), std::get<I * 2>(std::forward<args_tuple>(args)), std::get<I * 2 + 1>(std::forward<args_tuple>(args))),
+						(uts.set(L, std::get<I * 2>(std::forward<args_tuple>(args)), std::get<I * 2 + 1>(std::forward<args_tuple>(args))),
 						     0)... };
+				}
+				else {
+					table_base_t::template tuple_set<false>(indices, std::move(args));
 				}
 			}
 			else {
+				(void)indices;
 				(void)args;
 			}
 		}
@@ -22777,6 +22956,9 @@ namespace sol {
 		using base_t::push;
 		using base_t::lua_state;
 		using base_t::get;
+		using base_t::set_function;
+		using base_t::traverse_set;
+		using base_t::traverse_get;
 		using base_t::unregister;
 
 		template <typename Key, typename Value>
@@ -22785,6 +22967,9 @@ namespace sol {
 			if (maybe_uts) {
 				u_detail::usertype_storage<T>& uts = *maybe_uts;
 				uts.set(this->lua_state(), std::forward<Key>(key), std::forward<Value>(value));
+			}
+			else {
+				base_t::set(std::forward<Key>(key), std::forward<Value>(value));
 			}
 		}
 
@@ -22917,10 +23102,14 @@ namespace sol {
 	template <typename base_type>
 	template <typename Key, typename Value>
 	void basic_metatable<base_type>::set(Key&& key, Value&& value) {
-		optional<u_detail::usertype_storage_base&> maybe_uts = u_detail::maybe_get_usertype_storage_base(this->lua_state());
+		this->push();
+		lua_State* L = this->lua_state();
+		int target = lua_gettop(L);
+		optional<u_detail::usertype_storage_base&> maybe_uts = u_detail::maybe_get_usertype_storage_base(L, target);
+		lua_pop(L, 1);
 		if (maybe_uts) {
 			u_detail::usertype_storage_base& uts = *maybe_uts;
-			uts.set(std::forward<Key>(key), std::forward<Value>(value));
+			uts.set(L, std::forward<Key>(key), std::forward<Value>(value));
 		}
 		else {
 			base_t::set(std::forward<Key>(key), std::forward<Value>(value));

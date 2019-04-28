@@ -33,23 +33,20 @@
 namespace sol {
 	namespace detail {
 		struct direct_error_tag {};
-		const auto direct_error = direct_error_tag {};
+		const auto direct_error = direct_error_tag{};
 
 		struct error_result {
 			int results;
 			const char* format_string;
 			std::array<const char*, 4> args_strings;
 
-			error_result()
-			: results(0), format_string(nullptr) {
+			error_result() : results(0), format_string(nullptr) {
 			}
 
-			error_result(int results)
-			: results(results), format_string(nullptr) {
+			error_result(int results) : results(results), format_string(nullptr) {
 			}
 
-			error_result(const char* fmt, const char* msg)
-			: results(0), format_string(fmt) {
+			error_result(const char* fmt, const char* msg) : results(0), format_string(fmt) {
 				args_strings[0] = msg;
 			}
 		};
@@ -65,20 +62,16 @@ namespace sol {
 	class error : public std::runtime_error {
 	private:
 		// Because VC++ is upsetting, most of the time!
-		std::string w;
+		std::string what_reason;
 
 	public:
-		error(const std::string& str)
-		: error(detail::direct_error, "lua: error: " + str) {
+		error(const std::string& str) : error(detail::direct_error, "lua: error: " + str) {
 		}
-		error(std::string&& str)
-		: error(detail::direct_error, "lua: error: " + std::move(str)) {
+		error(std::string&& str) : error(detail::direct_error, "lua: error: " + std::move(str)) {
 		}
-		error(detail::direct_error_tag, const std::string& str)
-		: std::runtime_error(""), w(str) {
+		error(detail::direct_error_tag, const std::string& str) : std::runtime_error(""), what_reason(str) {
 		}
-		error(detail::direct_error_tag, std::string&& str)
-		: std::runtime_error(""), w(std::move(str)) {
+		error(detail::direct_error_tag, std::string&& str) : std::runtime_error(""), what_reason(std::move(str)) {
 		}
 
 		error(const error& e) = default;
@@ -87,7 +80,7 @@ namespace sol {
 		error& operator=(error&& e) = default;
 
 		virtual const char* what() const noexcept override {
-			return w.c_str();
+			return what_reason.c_str();
 		}
 	};
 

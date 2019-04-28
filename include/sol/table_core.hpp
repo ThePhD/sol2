@@ -68,6 +68,10 @@ namespace sol {
 
 		friend class state;
 		friend class state_view;
+		template <typename, typename>
+		friend class basic_usertype;
+		template <typename>
+		friend class basic_metatable;
 
 		template <bool raw, typename... Ret, typename... Keys>
 		decltype(auto) tuple_get(int table_index, Keys&&... keys) const {
@@ -116,6 +120,8 @@ namespace sol {
 			auto pp = stack::push_pop<global>(*this);
 			int table_index = pp.index_of(*this);
 			lua_State* L = base_t::lua_state();
+			(void)table_index;
+			(void)L;
 			void(detail::swallow{ (stack::set_field<top_level, raw>(L,
 			                            std::get<I * 2>(std::forward<Pairs>(pairs)),
 			                            std::get<I * 2 + 1>(std::forward<Pairs>(pairs)),

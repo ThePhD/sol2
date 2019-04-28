@@ -31,6 +31,12 @@
 namespace sol {
 	struct proxy_base_tag {};
 
+	namespace detail {
+		template <typename T>
+		using proxy_key_t = meta::conditional_t<meta::is_specialization_of_v<meta::unqualified_t<T>, std::tuple>, T,
+		     std::tuple<meta::conditional_t<std::is_array_v<meta::unqualified_t<T>>, std::remove_reference_t<T>&, meta::unqualified_t<T>>>>;
+	}
+
 	template <typename Super>
 	struct proxy_base : proxy_base_tag {
 		operator std::string() const {

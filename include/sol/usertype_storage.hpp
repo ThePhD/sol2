@@ -774,17 +774,27 @@ namespace sol { namespace u_detail {
 		return target_umt;
 	}
 
-	inline optional<usertype_storage_base&> maybe_get_usertype_storage_base(lua_State* L, const char* gcmetakey) {
-		stack::get_field<true>(L, gcmetakey);
+	inline optional<usertype_storage_base&> maybe_get_usertype_storage_base(lua_State* L, int index) {
 		stack::record tracking;
+		if (!stack::check<user<usertype_storage_base>>(L, index)) {
+			return nullopt;
+		}
 		usertype_storage_base& target_umt = stack::stack_detail::unchecked_unqualified_get<user<usertype_storage_base>>(L, -1, tracking);
 		return target_umt;
+	}
+
+	inline optional<usertype_storage_base&> maybe_get_usertype_storage_base(lua_State* L, const char* gcmetakey) {
+		stack::get_field<true>(L, gcmetakey);
+		auto maybe_storage = maybe_get_usertype_storage_base(L, lua_gettop(L));
+		lua_pop(L, 1);
+		return maybe_storage;
 	}
 
 	inline usertype_storage_base& get_usertype_storage_base(lua_State* L, const char* gcmetakey) {
 		stack::get_field<true>(L, gcmetakey);
 		stack::record tracking;
 		usertype_storage_base& target_umt = stack::stack_detail::unchecked_unqualified_get<user<usertype_storage_base>>(L, -1, tracking);
+		lua_pop(L, 1);
 		return target_umt;
 	}
 
@@ -792,7 +802,8 @@ namespace sol { namespace u_detail {
 	inline optional<usertype_storage<T>&> maybe_get_usertype_storage(lua_State* L) {
 		const char* gcmetakey = &usertype_traits<T>::gc_table()[0];
 		stack::get_field<true>(L, gcmetakey);
-		if (!stack::check<user<usertype_storage<T>>>(L)) {
+		int target = lua_gettop(L);
+		if (!stack::check<user<usertype_storage<T>>>(L, target)) {
 			return nullopt;
 		}
 		usertype_storage<T>& target_umt = stack::pop<user<usertype_storage<T>>>(L);

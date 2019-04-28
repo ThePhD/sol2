@@ -30,6 +30,28 @@
 #include <iostream>
 #include <list>
 #include <memory>
+#include <unordered_map>
+
+struct special_property_object {
+	struct obj_hash {
+		std::size_t operator()(const sol::object& obj) const noexcept {
+			return std::hash<const void*>()(obj.pointer());
+		}
+	};
+
+	std::unordered_map<sol::object, sol::object, obj_hash> props;
+
+	sol::object get_property_lua(sol::stack_object key) const {
+		if (auto it = props.find(key); it != props.cend()) {
+			return it->second;
+		}
+		return sol::lua_nil;
+	}
+
+	void set_property_lua(sol::stack_object key, sol::stack_object value) {
+		props.insert_or_assign(key, sol::object(value));
+	}
+};
 
 struct new_index_test_object {
 	bool new_indexed = false;
@@ -402,4 +424,47 @@ TEST_CASE("usertype/new_index and index", "a custom new_index and index only kic
 	REQUIRE(resultborf.valid());
 	REQUIRE(a.borf_new_indexed);
 	REQUIRE(a.new_indexed);
+}
+
+TEST_CASE("usertype/object and class extensible", "make sure that a class which override new_index and friends can still work properly") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_usertype<special_property_object>("special_property_object", sol::meta_function::new_index, &special_property_object::set_property_lua, sol::meta_function::index, &special_property_object::get_property_lua);
+
+	lua["add_class_func"] = [](sol::this_state L, special_property_object&) {
+		sol::stack_userdata self = sol::stack::get<sol::stack_userdata>(L, 1);
+		sol::usertype<special_property_object> mt = self[sol::metatable_key];
+		std::string s = mt["__name"];
+		mt["additional_function"] = []() { return 24; };
+	};
+
+	lua["add_object_func"] = [](sol::this_state L, special_property_object&) {
+		sol::stack_userdata self = sol::stack::get<sol::stack_userdata>(L, 1);
+		self["specific_function"] = []() { return 23; };
+	};
+
+	sol::optional<sol::error> result0 = lua.safe_script(R"(
+		s = special_property_object.new()
+		s2 = special_property_object.new()
+		add_class_func(s)
+		add_object_func(s)
+		value = s:additional_function()
+		assert(value == 24)
+		value2 = s:specific_function()
+		assert(value2 == 23) 
+	)",
+	     sol::script_pass_on_error);
+	REQUIRE_FALSE(result0.has_value());
+	int value = lua["value"];
+	REQUIRE(value == 24);
+	int value2 = lua["value2"];
+	REQUIRE(value2 == 23);
+
+	sol::optional<sol::error> result1 = lua.safe_script(R"(
+		value3 = s2:specific_function()
+		assert(value3 == 23)
+	)",
+	     sol::script_pass_on_error);
+	REQUIRE(result1.has_value());
 }

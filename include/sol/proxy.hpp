@@ -31,29 +31,29 @@
 
 namespace sol {
 
-	namespace detail {
-		template <typename T>
-		using proxy_key_t = meta::conditional_t<meta::is_specialization_of_v<meta::unqualified_t<T>, std::tuple>, 
-			T,
-		     std::tuple<meta::conditional_t<
-				std::is_array_v<meta::unqualified_t<T>>, std::remove_reference_t<T>&, meta::unqualified_t<T>
-			>>
-		>;
-	}
-
 	template <typename Table, typename Key>
 	struct proxy : public proxy_base<proxy<Table, Key>> {
 	private:
 		using key_type = detail::proxy_key_t<Key>;
 
 		template <typename T, std::size_t... I>
-		decltype(auto) tuple_get(std::index_sequence<I...>) const {
+		decltype(auto) tuple_get(std::index_sequence<I...>) const & {
 			return tbl.template traverse_get<T>(std::get<I>(key)...);
 		}
 
+		template <typename T, std::size_t... I>
+		decltype(auto) tuple_get(std::index_sequence<I...>) && {
+			return tbl.template traverse_get<T>(std::get<I>(std::move(key))...);
+		}
+
 		template <std::size_t... I, typename T>
-		void tuple_set(std::index_sequence<I...>, T&& value) {
+		void tuple_set(std::index_sequence<I...>, T&& value) & {
 			tbl.traverse_set(std::get<I>(key)..., std::forward<T>(value));
+		}
+
+		template <std::size_t... I, typename T>
+		void tuple_set(std::index_sequence<I...>, T&& value) && {
+			tbl.traverse_set(std::get<I>(std::move(key))..., std::forward<T>(value));
 		}
 
 		auto setup_table(std::true_type) {
@@ -79,19 +79,31 @@ namespace sol {
 		}
 
 		template <typename T>
-		proxy& set(T&& item) {
+		proxy& set(T&& item) & {
 			tuple_set(std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>(), std::forward<T>(item));
 			return *this;
 		}
 
+		template <typename T>
+		proxy&& set(T&& item) && {
+			tuple_set(std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>(), std::forward<T>(item));
+			return std::move(*this);
+		}
+
 		template <typename... Args>
-		proxy& set_function(Args&&... args) {
+		proxy& set_function(Args&&... args) & {
 			tbl.set_function(key, std::forward<Args>(args)...);
 			return *this;
 		}
 
+		template <typename... Args>
+		proxy&& set_function(Args&&... args) && {
+			tbl.set_function(std::move(key), std::forward<Args>(args)...);
+			return std::move(*this);
+		}
+
 		template <typename T>
-		proxy& operator=(T&& other) {
+		proxy& operator=(T&& other) & {
 			using Tu = meta::unwrap_unqualified_t<T>;
 			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_callable_v<Tu>) {
 				return set_function(std::forward<T>(other));
@@ -102,13 +114,36 @@ namespace sol {
 		}
 
 		template <typename T>
-		proxy& operator=(std::initializer_list<T> other) {
+		proxy&& operator=(T&& other) && {
+			using Tu = meta::unwrap_unqualified_t<T>;
+			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_callable_v<Tu>) {
+				return std::move(*this).set_function(std::forward<T>(other));
+			}
+			else {
+				return std::move(*this).set(std::forward<T>(other));
+			}
+		}
+
+		template <typename T>
+		proxy& operator=(std::initializer_list<T> other) & {
 			return set(std::move(other));
 		}
 
 		template <typename T>
-		decltype(auto) get() const {
-			return tuple_get<T>(std::make_index_sequence<std::tuple_size<meta::unqualified_t<key_type>>::value>());
+		proxy&& operator=(std::initializer_list<T> other) && {
+			return std::move(*this).set(std::move(other));
+		}
+
+		template <typename T>
+		decltype(auto) get() const & {
+			using idx_seq = std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>;
+			return tuple_get<T>(idx_seq());
+		}
+
+		template <typename T>
+		decltype(auto) get() && {
+			using idx_seq = std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>;
+			return std::move(*this).template tuple_get<T>(idx_seq());
 		}
 
 		template <typename T>
