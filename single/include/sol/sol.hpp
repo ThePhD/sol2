@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-04-29 05:20:05.284047 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 67231f7)
+// Generated 2019-04-29 09:16:12.648677 UTC
+// This header was generated with sol v3.0.1-beta2 (revision c442c6c)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -18153,8 +18153,10 @@ namespace sol {
 			}
 
 			~protected_handler() {
-				if (!is_stack::value && stackindex != 0) {
-					lua_remove(target.lua_state(), stackindex);
+				if constexpr (!is_stack::value) {
+					if (stackindex != 0) {
+						lua_remove(target.lua_state(), stackindex);
+					}
 				}
 			}
 		};
@@ -18219,7 +18221,7 @@ namespace sol {
 		using base_t = basic_object<ref_t>;
 
 	public:
-		typedef is_stack_based<handler_t> is_stack_handler;
+		using is_stack_handler = is_stack_based<handler_t>;
 
 		static handler_t get_default_handler(lua_State* L) {
 			return detail::get_default_handler<handler_t, is_main_threaded<base_t>::value>(L);
@@ -18265,9 +18267,9 @@ namespace sol {
 			try {
 #endif // Safe Exception Propagation
 #endif // No Exceptions
-				firstreturn = (std::max)(1, static_cast<int>(stacksize - n - static_cast<int>(h.valid())));
+				firstreturn = (std::max)(1, static_cast<int>(stacksize - n - static_cast<int>(h.valid() && !is_stack_handler::value)));
 				code = luacall(n, LUA_MULTRET, h);
-				poststacksize = lua_gettop(lua_state()) - static_cast<int>(h.valid());
+				poststacksize = lua_gettop(lua_state()) - static_cast<int>(h.valid() && !is_stack_handler::value);
 				returncount = poststacksize - (firstreturn - 1);
 #ifndef SOL_NO_EXCEPTIONS
 #if (!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !SOL_NO_EXCEPTIONS_SAFE_PROPAGATION) || (defined(SOL_LUAJIT) && SOL_LUAJIT)
@@ -18465,7 +18467,7 @@ namespace sol {
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) const {
-			if (!aligned) {
+			if constexpr (!aligned) {
 				// we do not expect the function to already be on the stack: push it
 				if (error_handler.valid()) {
 					detail::protected_handler<true, handler_t> h(error_handler);
@@ -18486,12 +18488,12 @@ namespace sol {
 					// the handler will be pushed onto the stack manually,
 					// since it's not already on the stack this means we need to push our own
 					// function on the stack too and swap things to be in-place
-					if (!is_stack_handler::value) {
+					if constexpr (!is_stack_handler::value) {
 						// so, we need to remove the function at the top and then dump the handler out ourselves
 						base_t::push();
 					}
 					detail::protected_handler<true, handler_t> h(error_handler);
-					if (!is_stack_handler::value) {
+					if constexpr (!is_stack_handler::value) {
 						lua_replace(lua_state(), -3);
 						h.stackindex = lua_absindex(lua_state(), -2);
 					}

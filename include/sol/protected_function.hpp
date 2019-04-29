@@ -59,7 +59,7 @@ namespace sol {
 		using base_t = basic_object<ref_t>;
 
 	public:
-		typedef is_stack_based<handler_t> is_stack_handler;
+		using is_stack_handler = is_stack_based<handler_t>;
 
 		static handler_t get_default_handler(lua_State* L) {
 			return detail::get_default_handler<handler_t, is_main_threaded<base_t>::value>(L);
@@ -105,9 +105,9 @@ namespace sol {
 			try {
 #endif // Safe Exception Propagation
 #endif // No Exceptions
-				firstreturn = (std::max)(1, static_cast<int>(stacksize - n - static_cast<int>(h.valid())));
+				firstreturn = (std::max)(1, static_cast<int>(stacksize - n - static_cast<int>(h.valid() && !is_stack_handler::value)));
 				code = luacall(n, LUA_MULTRET, h);
-				poststacksize = lua_gettop(lua_state()) - static_cast<int>(h.valid());
+				poststacksize = lua_gettop(lua_state()) - static_cast<int>(h.valid() && !is_stack_handler::value);
 				returncount = poststacksize - (firstreturn - 1);
 #ifndef SOL_NO_EXCEPTIONS
 #if (!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !SOL_NO_EXCEPTIONS_SAFE_PROPAGATION) || (defined(SOL_LUAJIT) && SOL_LUAJIT)
@@ -305,7 +305,7 @@ namespace sol {
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) const {
-			if (!aligned) {
+			if constexpr (!aligned) {
 				// we do not expect the function to already be on the stack: push it
 				if (error_handler.valid()) {
 					detail::protected_handler<true, handler_t> h(error_handler);
@@ -326,12 +326,12 @@ namespace sol {
 					// the handler will be pushed onto the stack manually,
 					// since it's not already on the stack this means we need to push our own
 					// function on the stack too and swap things to be in-place
-					if (!is_stack_handler::value) {
+					if constexpr (!is_stack_handler::value) {
 						// so, we need to remove the function at the top and then dump the handler out ourselves
 						base_t::push();
 					}
 					detail::protected_handler<true, handler_t> h(error_handler);
-					if (!is_stack_handler::value) {
+					if constexpr (!is_stack_handler::value) {
 						lua_replace(lua_state(), -3);
 						h.stackindex = lua_absindex(lua_state(), -2);
 					}

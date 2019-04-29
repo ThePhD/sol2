@@ -67,8 +67,10 @@ namespace sol {
 			}
 
 			~protected_handler() {
-				if (!is_stack::value && stackindex != 0) {
-					lua_remove(target.lua_state(), stackindex);
+				if constexpr (!is_stack::value) {
+					if (stackindex != 0) {
+						lua_remove(target.lua_state(), stackindex);
+					}
 				}
 			}
 		};
