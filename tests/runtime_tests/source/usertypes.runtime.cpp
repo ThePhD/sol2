@@ -31,6 +31,44 @@
 #include <list>
 #include <memory>
 #include <unordered_map>
+#include <string_view>
+
+struct static_special_property_object {
+	static int named_set_calls;
+	static int named_get_calls;
+
+	struct obj_hash {
+		std::size_t operator()(const sol::object& obj) const noexcept {
+			return std::hash<const void*>()(obj.pointer());
+		}
+	};
+
+	std::unordered_map<sol::object, sol::object, obj_hash> props;
+
+	sol::object get_property_lua(sol::stack_object key) const {
+		if (auto it = props.find(key); it != props.cend()) {
+			return it->second;
+		}
+		return sol::lua_nil;
+	}
+
+	void set_property_lua(sol::stack_object key, sol::stack_object value) {
+		props.insert_or_assign(key, sol::object(value));
+	}
+
+	static void named_get_property_lua(sol::this_state L) {
+		++named_get_calls;
+		luaL_error(L, "absolutely not");
+	}
+
+	static void named_set_property_lua(sol::this_state L) {
+		++named_set_calls;
+		luaL_error(L, "absolutely not");
+	}
+};
+
+int static_special_property_object::named_get_calls = 0;
+int static_special_property_object::named_set_calls = 0;
 
 struct special_property_object {
 	struct obj_hash {
@@ -435,7 +473,6 @@ TEST_CASE("usertype/object and class extensible", "make sure that a class which 
 	lua["add_class_func"] = [](sol::this_state L, special_property_object&) {
 		sol::stack_userdata self = sol::stack::get<sol::stack_userdata>(L, 1);
 		sol::usertype<special_property_object> mt = self[sol::metatable_key];
-		std::string s = mt["__name"];
 		mt["additional_function"] = []() { return 24; };
 	};
 
@@ -467,4 +504,64 @@ TEST_CASE("usertype/object and class extensible", "make sure that a class which 
 	)",
 	     sol::script_pass_on_error);
 	REQUIRE(result1.has_value());
+}
+
+TEST_CASE("usertypes/static new index and static index", "ensure static index and static new index provide the proper interface") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_usertype<static_special_property_object>("static_special_property_object",
+	     sol::meta_function::index,
+	     &static_special_property_object::get_property_lua,
+	     sol::meta_function::new_index,
+	     &static_special_property_object::set_property_lua,
+	     sol::meta_function::static_index,
+	     &static_special_property_object::named_get_property_lua,
+	     sol::meta_function::static_new_index,
+	     &static_special_property_object::named_set_property_lua);
+
+	lua["add_object_func"] = [](sol::this_state L, static_special_property_object&) {
+		sol::stack_userdata self = sol::stack::get<sol::stack_userdata>(L, 1);
+		self["specific_function"] = []() { return 23; };
+	};
+
+	sol::optional<sol::error> result0 = lua.safe_script(R"(
+		s = static_special_property_object.new()
+		s2 = static_special_property_object.new()		
+		add_object_func(s)
+		value2 = s:specific_function()
+		assert(value2 == 23)
+	)",
+	     sol::script_pass_on_error);
+	REQUIRE_FALSE(result0.has_value());
+	int value2 = lua["value2"];
+	REQUIRE(value2 == 23);
+
+	sol::optional<sol::error> result1 = lua.safe_script(R"(
+		function static_special_property_object:additional_function ()
+			return 24
+		end
+		value = s:additional_function()
+		assert(value == 24)
+	)",
+	     sol::script_pass_on_error);
+	REQUIRE(result1.has_value());
+	bool is_value_valid = lua["value"].valid();
+	REQUIRE_FALSE(is_value_valid);
+
+	sol::optional<sol::error> result2 = lua.safe_script(R"(
+		value3 = s2:specific_function()
+		assert(value3 == 23)
+	)",
+	     sol::script_pass_on_error);
+	REQUIRE(result2.has_value());
+
+	sol::optional<sol::error> result3 = lua.safe_script(R"(
+		assert(static_special_property_object.non_existent == nil)
+	)",
+	     sol::script_pass_on_error);
+	REQUIRE(result3.has_value());
+
+	REQUIRE(static_special_property_object::named_get_calls == 1);
+	REQUIRE(static_special_property_object::named_set_calls == 1);
 }

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-04-28 20:45:14.470847 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 3426947)
+// Generated 2019-04-29 05:20:05.284047 UTC
+// This header was generated with sol v3.0.1-beta2 (revision 67231f7)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6948,12 +6948,14 @@ namespace sol {
 		call_construct,
 		storage,
 		gc_names,
+		static_index,
+		static_new_index,
 	};
 
 	typedef meta_function meta_method;
 
-	inline const std::array<std::string, 35>& meta_function_names() {
-		static const std::array<std::string, 35> names = { { "new",
+	inline const std::array<std::string, 37>& meta_function_names() {
+		static const std::array<std::string, 37> names = { { "new",
 			"__index",
 			"__newindex",
 			"__mode",
@@ -6990,7 +6992,9 @@ namespace sol {
 			"__typeinfo",
 			"__sol.call_new",
 			"__sol.storage",
-			"__sol.gc_names" } };
+			"__sol.gc_names",
+			"__sol.static_index",
+			"__sol.static_new_index" } };
 		return names;
 	}
 
@@ -20683,7 +20687,7 @@ namespace sol { namespace u_detail {
 	template <typename T>
 	struct usertype_storage;
 
-	optional<usertype_storage_base&> maybe_get_usertype_storage_base(lua_State* L, const char* gcmetakey);
+	optional<usertype_storage_base&> maybe_get_usertype_storage_base(lua_State* L, int index);
 	usertype_storage_base& get_usertype_storage_base(lua_State* L, const char* gcmetakey);
 	template <typename T>
 	optional<usertype_storage<T>&> maybe_get_usertype_storage(lua_State* L);
@@ -20805,6 +20809,8 @@ namespace sol { namespace u_detail {
 		bool is_destruction = false;
 		bool is_index = false;
 		bool is_new_index = false;
+		bool is_static_index = false;
+		bool is_static_new_index = false;
 		bool poison_indexing = false;
 		bool is_unqualified_lua_CFunction = false;
 		bool is_unqualified_lua_reference = false;
@@ -20854,7 +20860,7 @@ namespace sol { namespace u_detail {
 				t.pop();
 				return;
 			}
-			if (is_index || is_new_index) {
+			if (is_index || is_new_index || is_static_index || is_static_new_index) {
 				// do not serialize the new_index and index functions here directly
 				// we control those...
 				t.pop();
@@ -20941,6 +20947,7 @@ namespace sol { namespace u_detail {
 		reference gc_names_table;
 		reference named_metatable;
 		new_index_call_storage base_index;
+		new_index_call_storage static_base_index;
 		bool is_using_index;
 		bool is_using_new_index;
 		std::bitset<64> properties;
@@ -20957,6 +20964,7 @@ namespace sol { namespace u_detail {
 		, gc_names_table(make_reference(L, create))
 		, named_metatable(make_reference(L, create))
 		, base_index()
+		, static_base_index()
 		, is_using_index(false)
 		, is_using_new_index(false)
 		, properties() {
@@ -20964,6 +20972,10 @@ namespace sol { namespace u_detail {
 			base_index.index = index_target_fail;
 			base_index.new_index = new_index_target_fail;
 			base_index.new_binding_data = nullptr;
+			static_base_index.binding_data = nullptr;
+			static_base_index.index = index_target_fail;
+			static_base_index.new_binding_data = this;
+			static_base_index.new_index = new_index_target_set;
 		}
 
 		template <typename Fx>
@@ -21168,11 +21180,10 @@ namespace sol { namespace u_detail {
 			}
 			else if constexpr (from_named_metatable) {
 				if constexpr (is_new_index) {
-					self.set(L, reference(L, raw_index(2)), reference(L, raw_index(3)));
-					return 0;
+					return self.static_base_index.new_index(L, self.static_base_index.new_binding_data);
 				}
 				else {
-					return index_fail(L);
+					return self.static_base_index.index(L, self.static_base_index.binding_data);
 				}
 			}
 			else {
@@ -21215,6 +21226,12 @@ namespace sol { namespace u_detail {
 
 		template <typename T = void, typename Key, typename Value>
 		void set(lua_State* L, Key&& key, Value&& value);
+
+		static int new_index_target_set(lua_State* L, void* target) {
+			usertype_storage_base& self = *static_cast<usertype_storage_base*>(target);
+			self.set(L, reference(L, raw_index(2)), reference(L, raw_index(3)));
+			return 0;
+		}
 	};
 
 	template <typename T>
@@ -21309,19 +21326,23 @@ namespace sol { namespace u_detail {
 
 			bool is_index = (s == to_string(meta_function::index));
 			bool is_new_index = (s == to_string(meta_function::new_index));
+			bool is_static_index = (s == to_string(meta_function::static_index));
+			bool is_static_new_index = (s == to_string(meta_function::static_new_index));
 			bool is_destruction = s == to_string(meta_function::garbage_collect);
 			bool poison_indexing = (!is_using_index || !is_using_new_index) && (is_var_bind::value || is_index || is_new_index);
 			void* derived_this = static_cast<void*>(static_cast<usertype_storage<T>*>(this));
 			index_call_storage ics;
 			ics.binding_data = b.data();
-			ics.index = is_index ? &Binding::template call_with_<true, is_var_bind::value> : &Binding::template index_call_with_<true, is_var_bind::value>;
+			ics.index = is_index || is_static_index ? &Binding::template call_with_<true, is_var_bind::value> : &Binding::template index_call_with_<true, is_var_bind::value>;
 			ics.new_index
-				= is_new_index ? &Binding::template call_with_<false, is_var_bind::value> : &Binding::template index_call_with_<false, is_var_bind::value>;
+				= is_new_index || is_static_new_index ? &Binding::template call_with_<false, is_var_bind::value> : &Binding::template index_call_with_<false, is_var_bind::value>;
 			
 			string_for_each_metatable_func for_each_fx;
 			for_each_fx.is_destruction = is_destruction;
 			for_each_fx.is_index = is_index;
 			for_each_fx.is_new_index = is_new_index;
+			for_each_fx.is_static_index = is_static_index;
+			for_each_fx.is_static_new_index = is_static_new_index;
 			for_each_fx.poison_indexing = poison_indexing;
 			for_each_fx.p_key = &s;
 			for_each_fx.p_ics = &ics;
@@ -21352,6 +21373,14 @@ namespace sol { namespace u_detail {
 			if (is_new_index) {
 				this->base_index.new_index = ics.new_index;
 				this->base_index.new_binding_data = ics.binding_data;
+			}
+			if (is_static_index) {
+				this->static_base_index.index = ics.index;
+				this->static_base_index.binding_data = ics.binding_data;
+			}
+			if (is_static_new_index) {
+				this->static_base_index.new_index = ics.new_index;
+				this->static_base_index.new_binding_data = ics.binding_data;
 			}
 			this->for_each_table(L, for_each_fx);
 			this->add_entry(s, std::move(ics));

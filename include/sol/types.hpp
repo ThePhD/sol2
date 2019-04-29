@@ -795,12 +795,14 @@ namespace sol {
 		call_construct,
 		storage,
 		gc_names,
+		static_index,
+		static_new_index,
 	};
 
 	typedef meta_function meta_method;
 
-	inline const std::array<std::string, 35>& meta_function_names() {
-		static const std::array<std::string, 35> names = { { "new",
+	inline const std::array<std::string, 37>& meta_function_names() {
+		static const std::array<std::string, 37> names = { { "new",
 			"__index",
 			"__newindex",
 			"__mode",
@@ -837,7 +839,9 @@ namespace sol {
 			"__typeinfo",
 			"__sol.call_new",
 			"__sol.storage",
-			"__sol.gc_names" } };
+			"__sol.gc_names",
+			"__sol.static_index",
+			"__sol.static_new_index" } };
 		return names;
 	}
 
