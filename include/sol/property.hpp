@@ -129,7 +129,7 @@ namespace sol {
 
 	template <typename V>
 	inline auto var(V&& v) {
-		typedef meta::unqualified_t<V> T;
+		typedef std::decay_t<V> T;
 		return var_wrapper<T>(std::forward<V>(v));
 	}
 
