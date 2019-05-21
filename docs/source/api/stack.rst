@@ -58,7 +58,7 @@ members
 	template<bool check_args = stack_detail::default_check_arguments, bool clean_stack = true, typename Fx, typename... FxArgs>
 	inline int call_lua(lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs);
 
-This function is helpful for when you bind to a raw C function but need sol's abstractions to save you the agony of setting up arguments and know how `calling C functions works`_. The ``start`` parameter tells the function where to start pulling arguments from. The parameter ``fx``  is what's supposed to be called. Extra arguments are passed to the function directly. There are intermediate versions of this (``sol::stack::call_into_lua`` and similar) for more advanced users, but they are not documented as they are subject to change to improve performance or adjust the API accordingly in later iterations of sol2. Use the more advanced versions at your own peril.
+This function is helpful for when you bind to a raw C function but need sol's abstractions to save you the agony of setting up arguments and know how `calling C functions works`_. The ``start`` parameter tells the function where to start pulling arguments from. The parameter ``fx``  is what's supposed to be called. Extra arguments are passed to the function directly. There are intermediate versions of this (``sol::stack::call_into_lua`` and similar) for more advanced users, but they are not documented as they are subject to change to improve performance or adjust the API accordingly in later iterations of sol3. Use the more advanced versions at your own peril.
 
 .. code-block:: cpp
 	:caption: function: get
@@ -97,7 +97,7 @@ Checks if the object at ``index`` is of type ``T``. If it is not, it will call t
 	template <typename T>
 	auto get_usertype( lua_State* L, int index, record& tracking )
 
-Directly attempts to rertieve the type ``T`` using sol2's usertype mechanisms. Similar to a regular ``get`` for a user-defined type. Useful when you need to access sol2's usertype getter mechanism while at the same time `providing your own customization`_.
+Directly attempts to rertieve the type ``T`` using sol3's usertype mechanisms. Similar to a regular ``get`` for a user-defined type. Useful when you need to access sol3's usertype getter mechanism while at the same time `providing your own customization`_.
 
 .. code-block:: cpp
 	:caption: function: check_usertype
@@ -112,7 +112,7 @@ Directly attempts to rertieve the type ``T`` using sol2's usertype mechanisms. S
 	template <typename T, typename Handler>
 	bool check_usertype( lua_State* L, int index, Handler&& handler, record& tracking )
 
-Checks if the object at ``index`` is of type ``T`` and stored as a sol2 usertype. Useful when you need to access sol2's usertype checker mechanism while at the same time `providing your own customization`_.
+Checks if the object at ``index`` is of type ``T`` and stored as a sol3 usertype. Useful when you need to access sol3's usertype checker mechanism while at the same time `providing your own customization`_.
 
 .. code-block:: cpp
 	:caption: function: check_get
@@ -160,7 +160,7 @@ Based on how it is called, pushes a variable amount of objects onto the stack. i
 	int multi_push_reference( lua_State* L, Args&&... args )
 
 
-These functinos behave similarly to the ones above, but they check for specific criteria and instead attempt to push a reference rather than forcing a copy if appropriate. Use cautiously as sol2 uses this mainly as a return from usertype functions and variables to preserve chaining/variable semantics from that a class object. Its internals are updated to fit the needs of sol2 and while it generally does the "right thing" and has not needed to be changed for a while, sol2 reserves the right to change its internal detection mechanisms to suit its users needs at any time, generally without breaking backwards compatibility and expectations but not exactly guaranteed.
+These functinos behave similarly to the ones above, but they check for specific criteria and instead attempt to push a reference rather than forcing a copy if appropriate. Use cautiously as sol3 uses this mainly as a return from usertype functions and variables to preserve chaining/variable semantics from that a class object. Its internals are updated to fit the needs of sol3 and while it generally does the "right thing" and has not needed to be changed for a while, sol3 reserves the right to change its internal detection mechanisms to suit its users needs at any time, generally without breaking backwards compatibility and expectations but not exactly guaranteed.
 
 .. code-block:: cpp
 	:caption: function: pop
@@ -294,7 +294,7 @@ This is an SFINAE-friendly struct that is meant to expose static function ``chec
 		}
 	};
 
-This is an SFINAE-friendly struct that is meant to expose a function ``check=`` that returns ``true`` if a type meets some custom userdata specifiction, and ``false`` if it does not. The default implementation just returns ``false`` to let the original sol2 handlers take care of everything. If you want to implement your own usertype checking; e.g., for messing with ``toLua`` or ``OOLua`` or ``kaguya`` or some other libraries. Note that the library must have a with a :doc:`memory compatible layout<usertype_memory>` if you **want to specialize this checker method but not the subsequent getter method**. You can specialize it as shown in the `interop examples`_.
+This is an SFINAE-friendly struct that is meant to expose a function ``check=`` that returns ``true`` if a type meets some custom userdata specifiction, and ``false`` if it does not. The default implementation just returns ``false`` to let the original sol3 handlers take care of everything. If you want to implement your own usertype checking; e.g., for messing with ``toLua`` or ``OOLua`` or ``kaguya`` or some other libraries. Note that the library must have a with a :doc:`memory compatible layout<usertype_memory>` if you **want to specialize this checker method but not the subsequent getter method**. You can specialize it as shown in the `interop examples`_.
 
 .. note::
 
@@ -308,18 +308,18 @@ This is an SFINAE-friendly struct that is meant to expose a function ``check=`` 
 	template <typename T, typename = void>
 	struct userdata_getter {
 		static std::pair<bool, T*> get ( lua_State* L, int index, void* unadjusted_pointer, record& tracking ) {
-			// implement custom getting here for non-sol2 userdatas:
+			// implement custom getting here for non-sol3 userdatas:
 			// if it doesn't match, return "false" and regular 
 			// sol userdata checks will kick in
 			return { false, nullptr };
 		}
 	};
 
-This is an SFINAE-friendly struct that is meant to expose a function ``get`` that returns ``true`` and an adjusted pointer if a type meets some custom userdata specifiction (from, say, another library or an internal framework). The default implementation just returns ``{ false, nullptr }`` to let the original sol2 getter take care of everything. If you want to implement your own usertype getter; e.g., for messing with ``kaguya`` or some other libraries. You can specialize it as shown in the `interop examples`_.
+This is an SFINAE-friendly struct that is meant to expose a function ``get`` that returns ``true`` and an adjusted pointer if a type meets some custom userdata specifiction (from, say, another library or an internal framework). The default implementation just returns ``{ false, nullptr }`` to let the original sol3 getter take care of everything. If you want to implement your own usertype getter; e.g., for messing with ``kaguya`` or some other libraries. You can specialize it as shown in the `interop examples`_.
 
 .. note::
 
-	You do NOT need to use this method in particular if the :doc:`memory layout<usertype_memory>` is compatible. (For example, ``toLua`` stores userdata in a sol2-compatible way.)
+	You do NOT need to use this method in particular if the :doc:`memory layout<usertype_memory>` is compatible. (For example, ``toLua`` stores userdata in a sol3-compatible way.)
 
 
 .. note::

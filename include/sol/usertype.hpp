@@ -73,7 +73,7 @@ namespace sol {
 			else {
 				using ValueU = meta::unqualified_t<Value>;
 				// cannot get metatable: try regular table set?
-				if constexpr (detail::is_non_factory_constructor_v<ValueU> || detail::is_filter_v<ValueU>) {
+				if constexpr (detail::is_non_factory_constructor_v<ValueU> || detail::is_policy_v<ValueU>) {
 					// tag constructors so we don't get destroyed by lack of info
 					table_base_t::set(std::forward<Key>(key), detail::tagged<T, Value>(std::forward<Value>(value)));
 				}

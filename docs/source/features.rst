@@ -92,7 +92,7 @@ Explanations for a few categories are below (rest are self-explanatory).
 * environments: an abstraction for getting, setting and manipulating an environment, using table techniques, functions or otherwise. Typically for the purposes of sandboxing
 
 +---------------------------+-------------+------------+----------+---------+----------+-----------+-----------+----------------+----------+----------+-----------+-----------------+--------+
-|                           |   plain C   | luawrapper | lua-intf | luabind |  Selene  |    Sol2   |   oolua   |   lua-api-pp   |  kaguya  |   SLB3   |    SWIG   | luacppinterface | luwra  |
+|                           |   plain C   | luawrapper | lua-intf | luabind |  Selene  |    Sol3   |   oolua   |   lua-api-pp   |  kaguya  |   SLB3   |    SWIG   | luacppinterface | luwra  |
 |                           |             |            |          |         |          |           |           |                |          |          |           |                 |        |
 +===========================+=============+============+==========+=========+==========+===========+===========+================+==========+==========+===========+=================+========+
 | optional                  |      ~      |     ✗      |     ✔    |    ✗    |     ✗    |     ✔     |     ✗     |        ✗       |     ✔    |     ✗    |     ✗     |        ✗        |    ✗   |

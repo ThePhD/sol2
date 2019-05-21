@@ -132,7 +132,7 @@ If you don't specify anything at all and the type is `destructible`_, then a des
 usertype automatic meta functions
 +++++++++++++++++++++++++++++++++
 
-If you don't specify a ``sol::meta_function`` name (or equivalent string metamethod name) and the type ``T`` supports certain operations, sol2 will generate the following operations provided it can find a good default implementation:
+If you don't specify a ``sol::meta_function`` name (or equivalent string metamethod name) and the type ``T`` supports certain operations, sol3 will generate the following operations provided it can find a good default implementation:
 
 * for ``to_string`` operations where ``std::ostream& operator<<( std::ostream&, const T& )``, ``obj.to_string()``, or ``to_string( const T& )`` (in the namespace) exists on the C++ type
 	- a ``sol::meta_function::to_string`` operator will be generated

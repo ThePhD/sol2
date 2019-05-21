@@ -32,7 +32,7 @@
 #include "traits.hpp"
 #include "string_view.hpp"
 #include "raii.hpp"
-#include "filters.hpp"
+#include "policies.hpp"
 #include "ebco.hpp"
 
 #include <array>
@@ -1332,8 +1332,8 @@ namespace sol {
 		template <typename T>
 		struct is_constructor<protect_t<T>> : is_constructor<meta::unqualified_t<T>> {};
 
-		template <typename F, typename... Filters>
-		struct is_constructor<filter_wrapper<F, Filters...>> : is_constructor<meta::unqualified_t<F>> {};
+		template <typename F, typename... Policies>
+		struct is_constructor<policy_wrapper<F, Policies...>> : is_constructor<meta::unqualified_t<F>> {};
 
 		template <typename T>
 		inline constexpr bool is_constructor_v = is_constructor<T>::value;

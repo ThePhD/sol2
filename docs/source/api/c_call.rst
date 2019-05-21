@@ -17,7 +17,7 @@ The goal of ``sol::c_call<...>`` is to provide a way to wrap a function and tran
 
 	This can also be placed into the argument list for a :doc:`usertype<usertype>` as well. 
 
-This pushes a raw ``lua_CFunction`` into whatever you pass the resulting ``c_call`` function pointer into, whether it be a table or a userdata or whatever else using sol2's API. The resulting ``lua_CFunction`` can also be used directly with the lua API, just like many of sol2's types can be intermingled with Lua's API if you know what you're doing.
+This pushes a raw ``lua_CFunction`` into whatever you pass the resulting ``c_call`` function pointer into, whether it be a table or a userdata or whatever else using sol3's API. The resulting ``lua_CFunction`` can also be used directly with the lua API, just like many of sol3's types can be intermingled with Lua's API if you know what you're doing.
 
 It is advisable for the user to consider making a macro to do the necessary ``decltype( &function_name, ), function_name``. Sol does not provide one because many codebases already have `one similar to this`_.
 

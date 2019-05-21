@@ -171,5 +171,5 @@ on function objects and proxies
 
 .. note::
 
-	As of recent versions of sol2 (2.18.2 and above), this is no longer an issue, as even bound classes will have any detectable function call operator automatically bound to the object, to allow this to work without having to use ``.set`` or ``.set_function``. The note here is kept for posterity and information for older versions. There are only some small caveats, see: :ref:`this note here<binding-callable-objects>`.
+	As of recent versions of sol3 (2.18.2 and above), this is no longer an issue, as even bound classes will have any detectable function call operator automatically bound to the object, to allow this to work without having to use ``.set`` or ``.set_function``. The note here is kept for posterity and information for older versions. There are only some small caveats, see: :ref:`this note here<binding-callable-objects>`.
 

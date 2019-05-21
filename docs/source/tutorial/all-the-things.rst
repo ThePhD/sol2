@@ -9,16 +9,16 @@ These are all the things. Use your browser's search to find things you want.
 
 .. note::
 	
-	All of the code below is available at the `sol2 tutorial examples`_.
+	All of the code below is available at the `sol3 tutorial examples`_.
 
 asserts / prerequisites
 -----------------------
 
-You'll need to ``#include <sol/sol.hpp>``/``#include "sol.hpp"`` somewhere in your code. Sol is header-only, so you don't need to compile anything. However, **Lua must be compiled and available**. See the :doc:`getting started tutorial<getting-started>` for more details.
+You'll need to ``#include <sol/sol.hpp>`` somewhere in your code. Sol is header-only, so you don't need to compile anything. However, **Lua must be compiled and available**. See the :doc:`getting started tutorial<getting-started>` for more details.
 
 The implementation for ``assert.hpp`` with ``c_assert`` looks like so:
 
-.. literalinclude:: ../../../examples/source/assert.hpp
+.. literalinclude:: ../../../examples/include/assert.hpp
 	:linenos:
 	:lines: 1-3, 19-
 
@@ -33,10 +33,10 @@ opening a state
 
 .. _sol-state-on-lua-state:
 
-using sol2 on a lua_State\*
+using sol3 on a lua_State\*
 ---------------------------
 
-For your system/game that already has Lua or uses an in-house or pre-rolled Lua system (LuaBridge, kaguya, Luwra, etc.), but you'd still like sol2 and nice things:
+For your system/game that already has Lua or uses an in-house or pre-rolled Lua system (LuaBridge, kaguya, Luwra, etc.), but you'd still like sol3 and nice things:
 
 
 .. literalinclude:: ../../../examples/source/tutorials/quick_n_dirty/opening_state_on_raw_lua.cpp
@@ -278,4 +278,4 @@ Some more things you can do/read about:
 .. _basic example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype.cpp
 .. _special functions example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_special_functions.cpp
 .. _initializers example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_initializers.cpp
-.. _sol2 tutorial examples: https://github.com/ThePhD/sol2/tree/develop/examples/tutorials/quick_n_dirty
+.. _sol3 tutorial examples: https://github.com/ThePhD/sol2/tree/develop/examples/tutorials/quick_n_dirty

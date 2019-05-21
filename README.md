@@ -1,10 +1,12 @@
-## sol2 (Sol v3.0.0-beta2)
+## sol3 (sol2 v3.0.2)
 
 [![Join the chat in Discord: https://discord.gg/buxkYNT](https://img.shields.io/badge/Discord-Chat!-brightgreen.svg)](https://discord.gg/buxkYNT)
 
 [![Linux & Max OSX Build Status](https://travis-ci.org/ThePhD/sol2.svg?branch=develop)](https://travis-ci.org/ThePhD/sol2)
 [![Windows Build status](https://ci.appveyor.com/api/projects/status/n38suofr21e9uk7h?svg=true)](https://ci.appveyor.com/project/ThePhD/sol2)
 [![Documentation Status](https://readthedocs.org/projects/sol2/badge/?version=latest)](http://sol2.readthedocs.io/en/latest/?badge=latest)
+
+![Liberapay patrons](https://img.shields.io/liberapay/patrons/ThePhD.svg) ![Patrons](https://shieldsio-patreon.herokuapp.com/ThePhD/pledges) [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/W7W8Q619) [![Support via PayPal](https://cdn.rawgit.com/twolfson/paypal-github-button/1.0.0/dist/button.svg)](https://www.paypal.me/thephd)
 
 Sol is a C++ library binding to Lua. It currently supports all Lua versions 5.1+ (LuaJIT 2.x included). Sol aims to be easy to use and easy to add to a project.
 The library is header-only for easy integration with projects.
@@ -49,9 +51,7 @@ More examples are given in the examples directory [here](https://github.com/TheP
 
 ## Supporting
 
-Help the project grow on [Patreon](https://www.patreon.com/thephd)!
-
-You can also [donate to support Sol](https://www.paypal.me/LMeneide), which is always appreciated! There are reward tiers for patrons on Patreon, too!
+Please use the buttons above and help this project grow.
 
 You can also help out the library by submitting pull requests to fix anything or add anything you think would be helpful! This includes making small, useful examples of something you haven't seen, or fixing typos and bad code in the documentation.
 
@@ -86,7 +86,7 @@ CppCon 2018 - 404 Keystone, Meydenbauer Center, Aspen, Colorado
 
 You can grab a single header (and the single forward header) out of the library [here](https://github.com/ThePhD/sol2/tree/develop/single). For stable version, check the releases tab on GitHub for a provided single header file for maximum ease of use. A script called [`single.py`](https://github.com/ThePhD/sol2/blob/develop/single/single.py) is provided in the repository if there's some bleeding edge change that hasn't been published on the releases page. You can run this script to create a single file version of the library so you can only include that part of it. Check `single.py --help` for more info.
 
-If you use CMake, you can also configure and generate a project that will generate the sol2_single_header for you. You can also include the project using CMake. Run CMake for more details. Thanks @Nava2, @alkino, @mrgreywater and others for help with making the CMake build a reality.
+If you use CMake, you can also configure and generate a project that will generate the `sol2_single_header` for you. You can also include the project using CMake. Run CMake for more details. Thanks @Nava2, @alkino, @mrgreywater and others for help with making the CMake build a reality.
 
 ## Features
 
@@ -122,7 +122,7 @@ Please make sure you use the `-std=c++2a`, `-std=c++1z`, `-std=c++17` or better 
 
 If you would like support for an older compiler (at the cost of some features), use the latest tagged sol2 branch. If you would like support for an even older compiler, feel free to contact me for a Custom Solution.
 
-sol2 is checked by-hand for other platforms as well, including Android-based builds with GCC and iOS-based builds out of XCode with Apple-clang. It should work on both of these platforms, so long as you have the proper standards flags.
+sol3 is checked by-hand for other platforms as well, including Android-based builds with GCC and iOS-based builds out of XCode with Apple-clang. It should work on both of these platforms, so long as you have the proper standards flags.
 
 ## Running the Tests
 

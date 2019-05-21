@@ -30,17 +30,17 @@
 
 namespace sol {
 	namespace detail {
-		struct filter_base_tag {};
+		struct policy_base_tag {};
 	} // namespace detail
 
 	template <int Target, int... In>
-	struct static_stack_dependencies : detail::filter_base_tag {};
+	struct static_stack_dependencies : detail::policy_base_tag {};
 	typedef static_stack_dependencies<-1, 1> self_dependency;
 	template <int... In>
-	struct returns_self_with : detail::filter_base_tag {};
+	struct returns_self_with : detail::policy_base_tag {};
 	typedef returns_self_with<> returns_self;
 
-	struct stack_dependencies : detail::filter_base_tag {
+	struct stack_dependencies : detail::policy_base_tag {
 		int target;
 		std::array<int, 64> stack_indices;
 		std::size_t len;
@@ -65,35 +65,35 @@ namespace sol {
 		}
 	};
 
-	template <typename F, typename... Filters>
-	struct filter_wrapper {
-		typedef std::index_sequence_for<Filters...> indices;
+	template <typename F, typename... Policies>
+	struct policy_wrapper {
+		typedef std::index_sequence_for<Policies...> indices;
 
 		F value;
-		std::tuple<Filters...> filters;
+		std::tuple<Policies...> policies;
 
-		template <typename Fx, typename... Args, meta::enable<meta::neg<std::is_same<meta::unqualified_t<Fx>, filter_wrapper>>> = meta::enabler>
-		filter_wrapper(Fx&& fx, Args&&... args)
-		: value(std::forward<Fx>(fx)), filters(std::forward<Args>(args)...) {
+		template <typename Fx, typename... Args, meta::enable<meta::neg<std::is_same<meta::unqualified_t<Fx>, policy_wrapper>>> = meta::enabler>
+		policy_wrapper(Fx&& fx, Args&&... args)
+		: value(std::forward<Fx>(fx)), policies(std::forward<Args>(args)...) {
 		}
 
-		filter_wrapper(const filter_wrapper&) = default;
-		filter_wrapper& operator=(const filter_wrapper&) = default;
-		filter_wrapper(filter_wrapper&&) = default;
-		filter_wrapper& operator=(filter_wrapper&&) = default;
+		policy_wrapper(const policy_wrapper&) = default;
+		policy_wrapper& operator=(const policy_wrapper&) = default;
+		policy_wrapper(policy_wrapper&&) = default;
+		policy_wrapper& operator=(policy_wrapper&&) = default;
 	};
 
 	template <typename F, typename... Args>
-	auto filters(F&& f, Args&&... args) {
-		return filter_wrapper<std::decay_t<F>, std::decay_t<Args>...>(std::forward<F>(f), std::forward<Args>(args)...);
+	auto policies(F&& f, Args&&... args) {
+		return policy_wrapper<std::decay_t<F>, std::decay_t<Args>...>(std::forward<F>(f), std::forward<Args>(args)...);
 	}
 
 	namespace detail {
 		template <typename T>
-		using is_filter = meta::is_specialization_of<T, filter_wrapper>;
+		using is_policy = meta::is_specialization_of<T, policy_wrapper>;
 		
 		template <typename T>
-		inline constexpr bool is_filter_v = is_filter<T>::value;
+		inline constexpr bool is_policy_v = is_policy<T>::value;
 	}
 } // namespace sol
 

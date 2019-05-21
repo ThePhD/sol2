@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-05-21 06:26:29.108703 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 5dee45c)
+// Generated 2019-05-21 07:55:59.916335 UTC
+// This header was generated with sol v3.0.1-beta2 (revision ad1b966)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -403,8 +403,8 @@ namespace sol {
 	struct as_args_t;
 	template <typename T>
 	struct protect_t;
-	template <typename F, typename... Filters>
-	struct filter_wrapper;
+	template <typename F, typename... Policies>
+	struct policy_wrapper;
 
 	template <typename T>
 	struct usertype_traits;

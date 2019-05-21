@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-05-21 06:26:28.717749 UTC
-// This header was generated with sol v3.0.1-beta2 (revision 5dee45c)
+// Generated 2019-05-21 07:55:59.198915 UTC
+// This header was generated with sol v3.0.1-beta2 (revision ad1b966)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -429,8 +429,8 @@ namespace sol {
 	struct as_args_t;
 	template <typename T>
 	struct protect_t;
-	template <typename F, typename... Filters>
-	struct filter_wrapper;
+	template <typename F, typename... Policies>
+	struct policy_wrapper;
 
 	template <typename T>
 	struct usertype_traits;
@@ -6019,21 +6019,21 @@ namespace sol {
 
 // end of sol/raii.hpp
 
-// beginning of sol/filters.hpp
+// beginning of sol/policies.hpp
 
 namespace sol {
 	namespace detail {
-		struct filter_base_tag {};
+		struct policy_base_tag {};
 	} // namespace detail
 
 	template <int Target, int... In>
-	struct static_stack_dependencies : detail::filter_base_tag {};
+	struct static_stack_dependencies : detail::policy_base_tag {};
 	typedef static_stack_dependencies<-1, 1> self_dependency;
 	template <int... In>
-	struct returns_self_with : detail::filter_base_tag {};
+	struct returns_self_with : detail::policy_base_tag {};
 	typedef returns_self_with<> returns_self;
 
-	struct stack_dependencies : detail::filter_base_tag {
+	struct stack_dependencies : detail::policy_base_tag {
 		int target;
 		std::array<int, 64> stack_indices;
 		std::size_t len;
@@ -6058,39 +6058,39 @@ namespace sol {
 		}
 	};
 
-	template <typename F, typename... Filters>
-	struct filter_wrapper {
-		typedef std::index_sequence_for<Filters...> indices;
+	template <typename F, typename... Policies>
+	struct policy_wrapper {
+		typedef std::index_sequence_for<Policies...> indices;
 
 		F value;
-		std::tuple<Filters...> filters;
+		std::tuple<Policies...> policies;
 
-		template <typename Fx, typename... Args, meta::enable<meta::neg<std::is_same<meta::unqualified_t<Fx>, filter_wrapper>>> = meta::enabler>
-		filter_wrapper(Fx&& fx, Args&&... args)
-		: value(std::forward<Fx>(fx)), filters(std::forward<Args>(args)...) {
+		template <typename Fx, typename... Args, meta::enable<meta::neg<std::is_same<meta::unqualified_t<Fx>, policy_wrapper>>> = meta::enabler>
+		policy_wrapper(Fx&& fx, Args&&... args)
+		: value(std::forward<Fx>(fx)), policies(std::forward<Args>(args)...) {
 		}
 
-		filter_wrapper(const filter_wrapper&) = default;
-		filter_wrapper& operator=(const filter_wrapper&) = default;
-		filter_wrapper(filter_wrapper&&) = default;
-		filter_wrapper& operator=(filter_wrapper&&) = default;
+		policy_wrapper(const policy_wrapper&) = default;
+		policy_wrapper& operator=(const policy_wrapper&) = default;
+		policy_wrapper(policy_wrapper&&) = default;
+		policy_wrapper& operator=(policy_wrapper&&) = default;
 	};
 
 	template <typename F, typename... Args>
-	auto filters(F&& f, Args&&... args) {
-		return filter_wrapper<std::decay_t<F>, std::decay_t<Args>...>(std::forward<F>(f), std::forward<Args>(args)...);
+	auto policies(F&& f, Args&&... args) {
+		return policy_wrapper<std::decay_t<F>, std::decay_t<Args>...>(std::forward<F>(f), std::forward<Args>(args)...);
 	}
 
 	namespace detail {
 		template <typename T>
-		using is_filter = meta::is_specialization_of<T, filter_wrapper>;
+		using is_policy = meta::is_specialization_of<T, policy_wrapper>;
 		
 		template <typename T>
-		inline constexpr bool is_filter_v = is_filter<T>::value;
+		inline constexpr bool is_policy_v = is_policy<T>::value;
 	}
 } // namespace sol
 
-// end of sol/filters.hpp
+// end of sol/policies.hpp
 
 // beginning of sol/ebco.hpp
 
@@ -7516,8 +7516,8 @@ namespace sol {
 		template <typename T>
 		struct is_constructor<protect_t<T>> : is_constructor<meta::unqualified_t<T>> {};
 
-		template <typename F, typename... Filters>
-		struct is_constructor<filter_wrapper<F, Filters...>> : is_constructor<meta::unqualified_t<F>> {};
+		template <typename F, typename... Policies>
+		struct is_constructor<policy_wrapper<F, Policies...>> : is_constructor<meta::unqualified_t<F>> {};
 
 		template <typename T>
 		inline constexpr bool is_constructor_v = is_constructor<T>::value;
@@ -15856,9 +15856,9 @@ namespace sol {
 
 	} // namespace u_detail
 
-	namespace filter_detail {
+	namespace policy_detail {
 		template <int I, int... In>
-		inline void handle_filter(static_stack_dependencies<I, In...>, lua_State* L, int&) {
+		inline void handle_policy(static_stack_dependencies<I, In...>, lua_State* L, int&) {
 			if constexpr (sizeof...(In) == 0) {
 				(void)L;
 				return;
@@ -15884,12 +15884,12 @@ namespace sol {
 		}
 
 		template <int... In>
-		inline void handle_filter(returns_self_with<In...>, lua_State* L, int& pushed) {
+		inline void handle_policy(returns_self_with<In...>, lua_State* L, int& pushed) {
 			pushed = stack::push(L, raw_index(1));
-			handle_filter(static_stack_dependencies<-1, In...>(), L, pushed);
+			handle_policy(static_stack_dependencies<-1, In...>(), L, pushed);
 		}
 
-		inline void handle_filter(const stack_dependencies& sdeps, lua_State* L, int&) {
+		inline void handle_policy(const stack_dependencies& sdeps, lua_State* L, int&) {
 			absolute_index ai(L, sdeps.target);
 			if (type_of(L, ai) != type::userdata) {
 				return;
@@ -15906,11 +15906,11 @@ namespace sol {
 			lua_setuservalue(L, ai);
 		}
 
-		template <typename P, meta::disable<std::is_base_of<detail::filter_base_tag, meta::unqualified_t<P>>> = meta::enabler>
-		inline void handle_filter(P&& p, lua_State* L, int& pushed) {
+		template <typename P, meta::disable<std::is_base_of<detail::policy_base_tag, meta::unqualified_t<P>>> = meta::enabler>
+		inline void handle_policy(P&& p, lua_State* L, int& pushed) {
 			pushed = std::forward<P>(p)(L, pushed);
 		}
-	} // namespace filter_detail
+	} // namespace policy_detail
 
 	namespace function_detail {
 		inline int no_construction_error(lua_State* L) {
@@ -16626,14 +16626,14 @@ namespace sol {
 			}
 		};
 
-		template <typename T, typename F, typename... Filters, bool is_index, bool is_variable, bool checked, int boost, bool clean_stack, typename C>
-		struct lua_call_wrapper<T, filter_wrapper<F, Filters...>, is_index, is_variable, checked, boost, clean_stack, C> {
-			typedef filter_wrapper<F, Filters...> P;
+		template <typename T, typename F, typename... Policies, bool is_index, bool is_variable, bool checked, int boost, bool clean_stack, typename C>
+		struct lua_call_wrapper<T, policy_wrapper<F, Policies...>, is_index, is_variable, checked, boost, clean_stack, C> {
+			typedef policy_wrapper<F, Policies...> P;
 
 			template <std::size_t... In>
 			static int call(std::index_sequence<In...>, lua_State* L, P& fx) {
 				int pushed = lua_call_wrapper<T, F, is_index, is_variable, checked, boost, false, C>{}.call(L, fx.value);
-				(void)detail::swallow{ int(), (filter_detail::handle_filter(std::get<In>(fx.filters), L, pushed), int())... };
+				(void)detail::swallow{ int(), (policy_detail::handle_policy(std::get<In>(fx.policies), L, pushed), int())... };
 				return pushed;
 			}
 
@@ -16707,8 +16707,8 @@ namespace sol {
 		template <typename T>
 		struct is_var_bind<readonly_wrapper<T>> : is_var_bind<meta::unqualified_t<T>> {};
 
-		template <typename F, typename... Filters>
-		struct is_var_bind<filter_wrapper<F, Filters...>> : is_var_bind<meta::unqualified_t<F>> {};
+		template <typename F, typename... Policies>
+		struct is_var_bind<policy_wrapper<F, Policies...>> : is_var_bind<meta::unqualified_t<F>> {};
 	} // namespace call_detail
 
 	template <typename T>
@@ -17916,9 +17916,9 @@ namespace sol {
 			}
 		};
 
-		template <typename F, typename... Filters>
-		struct unqualified_pusher<filter_wrapper<F, Filters...>> {
-			using P = filter_wrapper<F, Filters...>;
+		template <typename F, typename... Policies>
+		struct unqualified_pusher<policy_wrapper<F, Policies...>> {
+			using P = policy_wrapper<F, Policies...>;
 
 			static int push(lua_State* L, const P& p) {
 				lua_CFunction cf = call_detail::call_user<void, false, false, P, 2>;
@@ -17937,9 +17937,9 @@ namespace sol {
 			}
 		};
 
-		template <typename T, typename F, typename... Filters>
-		struct unqualified_pusher<detail::tagged<T, filter_wrapper<F, Filters...>>> {
-			using P = filter_wrapper<F, Filters...>;
+		template <typename T, typename F, typename... Policies>
+		struct unqualified_pusher<detail::tagged<T, policy_wrapper<F, Policies...>>> {
+			using P = policy_wrapper<F, Policies...>;
 			using Tagged = detail::tagged<T, P>;
 
 			static int push(lua_State* L, const Tagged& p) {
@@ -22806,7 +22806,7 @@ namespace sol {
 			constexpr static bool global = top_level && (meta::count_for_to_pack_v<1, meta::is_c_str, meta::unqualified_t<Keys>...> > 0);
 			auto pp = stack::push_pop<global>(*this);
 			lua_State* L = base_t::lua_state();
-			auto pn = stack::pop_n(L, static_cast<int>(sizeof...(Keys) - 2 - meta::count_for_pack<detail::is_insert_mode, meta::unqualified_t<Keys>...>));
+			auto pn = stack::pop_n(L, static_cast<int>(sizeof...(Keys) - 2 - meta::count_for_pack_v<detail::is_insert_mode, meta::unqualified_t<Keys>...>));
 			traverse_set_deep<top_level, true, false>(std::forward<Keys>(keys)...);
 			return *this;
 		}
@@ -23198,7 +23198,7 @@ namespace sol {
 			else {
 				using ValueU = meta::unqualified_t<Value>;
 				// cannot get metatable: try regular table set?
-				if constexpr (detail::is_non_factory_constructor_v<ValueU> || detail::is_filter_v<ValueU>) {
+				if constexpr (detail::is_non_factory_constructor_v<ValueU> || detail::is_policy_v<ValueU>) {
 					// tag constructors so we don't get destroyed by lack of info
 					table_base_t::set(std::forward<Key>(key), detail::tagged<T, Value>(std::forward<Value>(value)));
 				}

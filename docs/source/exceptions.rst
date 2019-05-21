@@ -32,7 +32,7 @@ Lua comes with two kind of built-in handlers that sol provides easy opt-ins for.
 	:linenos:
 
 
-The other handler is specific to sol2. If you open a ``sol::state``, or open the default state handlers for your ``lua_State*`` (see :ref:`sol::state's automatic handlers<state-automatic-handlers>` for more details), there is a ``sol::exception_handler_function`` type. It allows you to register a function in the event that an exception happens that bubbles out of your functions. The function requires that you push 1 item onto the stack that will be used with a call to `lua_error`_
+The other handler is specific to sol3. If you open a ``sol::state``, or open the default state handlers for your ``lua_State*`` (see :ref:`sol::state's automatic handlers<state-automatic-handlers>` for more details), there is a ``sol::exception_handler_function`` type. It allows you to register a function in the event that an exception happens that bubbles out of your functions. The function requires that you push 1 item onto the stack that will be used with a call to `lua_error`_
 
 .. literalinclude:: ../../examples/source/exception_handler.cpp
 	:caption: exception handling

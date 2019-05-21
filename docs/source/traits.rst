@@ -1,7 +1,7 @@
 customization traits
 ====================
 
-These are customization points within the library to help you make sol2 work for the types in your framework and types. 
+These are customization points within the library to help you make sol3 work for the types in your framework and types. 
 
 To learn more about various customizable traits, visit:
 

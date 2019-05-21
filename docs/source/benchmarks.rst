@@ -8,7 +8,7 @@ Here are measurements of the *overhead that libraries impose around the Lua C AP
 
 These are some informal and formal benchmarks done by both the developers of sol and other library developers / users. We leave you to interpret the data as you see fit.
 
-* `lua_binding_benchmarks`_ by satoren (developer of `kaguya`_) (`sol`_ is the "sol2" entry)
+* `lua_binding_benchmarks`_ by satoren (developer of `kaguya`_) (`sol`_ is the "sol3" entry)
 * `lua-bindings-shootout`_ by ThePhD (developer of `sol`_)
 
 As of the writing of this documentation (May 17th, 2018), :doc:`sol<index>` seems to take the cake in most categories for speed! Below are some graphs from `lua-bindings-shootout`_. You can read the benchmarking code there if you think something was done wrong, and submit a pull requests or comment on something to make sure that ThePhD is being honest about his work. All categories are the performance of things described at the top of the :doc:`feature table<features>`.

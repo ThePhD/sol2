@@ -28,7 +28,7 @@
 #include <iostream>
 #include <string>
 
-TEST_CASE("filters/self", "ensure we return a direct reference to the lua userdata rather than creating a new one") {
+TEST_CASE("policies/self", "ensure we return a direct reference to the lua userdata rather than creating a new one") {
 	struct vec2 {
 		float x = 20.f;
 		float y = 20.f;
@@ -55,7 +55,7 @@ TEST_CASE("filters/self", "ensure we return a direct reference to the lua userda
 	lua.new_usertype<vec2>("vec2",
 		"x", &vec2::x,
 		"y", &vec2::y,
-		"normalize", sol::filters(&vec2::normalize, sol::returns_self()));
+		"normalize", sol::policies(&vec2::normalize, sol::returns_self()));
 
 	auto result1 = lua.safe_script(R"(
 v1 = vec2.new()
@@ -72,7 +72,7 @@ print(v2) -- v2 points to same, is not destroyed
 	REQUIRE(result1.valid());
 }
 
-TEST_CASE("filters/self_dependency", "ensure we can keep a userdata instance alive by attaching it to the lifetime of another userdata") {
+TEST_CASE("policies/self_dependency", "ensure we can keep a userdata instance alive by attaching it to the lifetime of another userdata") {
 	struct dep;
 	struct gc_test;
 	static std::vector<dep*> deps_destroyed;
@@ -108,7 +108,7 @@ TEST_CASE("filters/self_dependency", "ensure we can keep a userdata instance ali
 			return "{ " + std::to_string(d.value) + " }";
 		});
 	lua.new_usertype<gc_test>("gc_test",
-		"d", sol::filters(&gc_test::d, sol::self_dependency()),
+		"d", sol::policies(&gc_test::d, sol::self_dependency()),
 		sol::meta_function::to_string, [](gc_test& g) {
 			return "{ d: { " + std::to_string(g.d.value) + " } }";
 		});
@@ -150,7 +150,7 @@ collectgarbage()
 	REQUIRE(gc_tests_destroyed[0] == g);
 }
 
-TEST_CASE("filters/stack_dependencies", "ensure we can take dependencies even to arguments pushed on the stack") {
+TEST_CASE("policies/stack_dependencies", "ensure we can take dependencies even to arguments pushed on the stack") {
 	struct holder;
 	struct depends_on_reference;
 	struct composition_related;
@@ -198,7 +198,7 @@ TEST_CASE("filters/stack_dependencies", "ensure we can take dependencies even to
 	lua.new_usertype<holder>("holder",
 		"value", &holder::value);
 	lua.new_usertype<depends_on_reference>("depends_on_reference",
-		"new", sol::filters(sol::constructors<depends_on_reference(holder&)>(), sol::stack_dependencies(-1, 1)),
+		"new", sol::policies(sol::constructors<depends_on_reference(holder&)>(), sol::stack_dependencies(-1, 1)),
 		"comp", &depends_on_reference::comp);
 
 	auto result1 = lua.safe_script(R"(
@@ -255,10 +255,10 @@ int always_return_24(lua_State* L, int) {
 	return sol::stack::push(L, 24);
 }
 
-TEST_CASE("filters/custom", "ensure we can return dependencies on multiple things in the stack") {
+TEST_CASE("policies/custom", "ensure we can return dependencies on multiple things in the stack") {
 
 	sol::state lua;
-	lua.set_function("f", sol::filters([]() { return std::string("hi there"); }, always_return_24));
+	lua.set_function("f", sol::policies([]() { return std::string("hi there"); }, always_return_24));
 
 	int value = lua["f"]();
 	REQUIRE(value == 24);

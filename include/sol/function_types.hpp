@@ -564,9 +564,9 @@ namespace sol {
 			}
 		};
 
-		template <typename F, typename... Filters>
-		struct unqualified_pusher<filter_wrapper<F, Filters...>> {
-			using P = filter_wrapper<F, Filters...>;
+		template <typename F, typename... Policies>
+		struct unqualified_pusher<policy_wrapper<F, Policies...>> {
+			using P = policy_wrapper<F, Policies...>;
 
 			static int push(lua_State* L, const P& p) {
 				lua_CFunction cf = call_detail::call_user<void, false, false, P, 2>;
@@ -585,9 +585,9 @@ namespace sol {
 			}
 		};
 
-		template <typename T, typename F, typename... Filters>
-		struct unqualified_pusher<detail::tagged<T, filter_wrapper<F, Filters...>>> {
-			using P = filter_wrapper<F, Filters...>;
+		template <typename T, typename F, typename... Policies>
+		struct unqualified_pusher<detail::tagged<T, policy_wrapper<F, Policies...>>> {
+			using P = policy_wrapper<F, Policies...>;
 			using Tagged = detail::tagged<T, P>;
 
 			static int push(lua_State* L, const Tagged& p) {

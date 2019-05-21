@@ -478,7 +478,7 @@ namespace sol {
 			constexpr static bool global = top_level && (meta::count_for_to_pack_v<1, meta::is_c_str, meta::unqualified_t<Keys>...> > 0);
 			auto pp = stack::push_pop<global>(*this);
 			lua_State* L = base_t::lua_state();
-			auto pn = stack::pop_n(L, static_cast<int>(sizeof...(Keys) - 2 - meta::count_for_pack<detail::is_insert_mode, meta::unqualified_t<Keys>...>));
+			auto pn = stack::pop_n(L, static_cast<int>(sizeof...(Keys) - 2 - meta::count_for_pack_v<detail::is_insert_mode, meta::unqualified_t<Keys>...>));
 			traverse_set_deep<top_level, true, false>(std::forward<Keys>(keys)...);
 			return *this;
 		}

@@ -187,8 +187,8 @@ namespace sol {
 	struct as_args_t;
 	template <typename T>
 	struct protect_t;
-	template <typename F, typename... Filters>
-	struct filter_wrapper;
+	template <typename F, typename... Policies>
+	struct policy_wrapper;
 
 	template <typename T>
 	struct usertype_traits;

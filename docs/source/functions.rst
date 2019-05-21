@@ -1,13 +1,13 @@
 functions
 =========
-*working with functions in sol2*
+*working with functions in sol3*
 
 
-There are a number of examples dealing with functions and how they can be bound to sol2:
+There are a number of examples dealing with functions and how they can be bound to sol3:
 
 * For a quicker walkthrough that demonstrates almost everything, see `the examples`_ and the :doc:`the quick and dirty tutorial<tutorial/all-the-things>`
 * For a full explanation, :doc:`read the tutorial<tutorial/functions>` and consult the subjects below
-* If you have bindings and set-ups that want to leverage the C API without sol2's interference, you can push a raw function, which has certain implications (noted :ref:`below<raw-function-note>`)
+* If you have bindings and set-ups that want to leverage the C API without sol3's interference, you can push a raw function, which has certain implications (noted :ref:`below<raw-function-note>`)
 * Return multiple values into Lua by:
 	- returning a ``std::tuple``
 	- using :doc:`sol::variadic_results<api/variadic_results>`
@@ -21,7 +21,7 @@ There are a number of examples dealing with functions and how they can be bound 
 	- :doc:`sol::this_environment<api/this_environment>`, for potentially retrieving the current Lua environment
 * Control serialization of arguments and return types with :doc:`sol::nested<api/nested>`, :doc:`sol::as_table<api/nested>`, :doc:`sol::as_args<api/as_args>` and :doc:`sol::as_function<api/as_function>`
 * Set environments for Lua functions and scripts with :doc:`sol::environment<api/environment>`
-* You can use :doc:`filters<api/filters>` to control dependencies and streamline return values, as well as apply custom behavior to a functions return
+* You can use :doc:`policies<api/policies>` to control dependencies and streamline return values, as well as apply custom behavior to a functions return
 
 
 
@@ -51,7 +51,7 @@ Furthermore, it is important to know that lambdas without a specified return typ
 exception safety/handling
 -------------------------
 
-All functions bound to sol2 set up an exception trampoline around the function (unless you are working with a :ref:`raw lua_CFunction you pushed yourself<raw-function-note>`). :doc:`protected_function<api/protected_function>` also has an error handler member and an exception trampoline around its internals, but it is not guaranteed safe if an exception bubbles outside of it. Catching that exception is not safe either: if an exception has exploded out from the sol2 API somehow, you must assume the VM is in some indeterminate and/or busted state.
+All functions bound to sol3 set up an exception trampoline around the function (unless you are working with a :ref:`raw lua_CFunction you pushed yourself<raw-function-note>`). :doc:`protected_function<api/protected_function>` also has an error handler member and an exception trampoline around its internals, but it is not guaranteed safe if an exception bubbles outside of it. Catching that exception is not safe either: if an exception has exploded out from the sol3 API somehow, you must assume the VM is in some indeterminate and/or busted state.
 
 Please read the :doc:`error page<errors>` and :doc:`exception page<exceptions>` for more details about what to do with exceptions that explode out from the API.
 
@@ -68,11 +68,11 @@ All arguments are forwarded. Unlike :doc:`get/set/operator[] on sol::state<api/s
 	This also means that you should pass and receive arguments in certain ways to maximize efficiency. For example, ``sol::table``, ``sol::object``, ``sol::userdata`` and friends are cheap to copy, and should simply by taken as values. This includes primitive types like ``int`` and ``double``. However, C++ types -- if you do not want copies -- should be taken as ``const type&`` or ``type&``, to save on copies if it's important. Note that taking references from Lua also means you can modify the data inside of Lua directly, so be careful. Lua by default deals with things mostly by reference (save for primitive types).
 
 
-When you bind a function to Lua, please take any pointer arguments as ``T*``, unless you specifically know you are going to match the exact type of the unique/shared pointer and the class it wraps. sol2 cannot support "implicit wrapped pointer casting", such as taking a ``std::shared_ptr<MySecondBaseClass>`` when the function is passed a ``std::shared_ptr<MyDerivedClass>``. Sometimes it may work because the compiler might be able to line up your classes in such a way that raw casts work, but this is undefined behavior through and through and sol2 has no mechanisms by which it can make this safe and not blow up in the user's face.
+When you bind a function to Lua, please take any pointer arguments as ``T*``, unless you specifically know you are going to match the exact type of the unique/shared pointer and the class it wraps. sol3 cannot support "implicit wrapped pointer casting", such as taking a ``std::shared_ptr<MySecondBaseClass>`` when the function is passed a ``std::shared_ptr<MyDerivedClass>``. Sometimes it may work because the compiler might be able to line up your classes in such a way that raw casts work, but this is undefined behavior through and through and sol3 has no mechanisms by which it can make this safe and not blow up in the user's face.
 
 .. note::
 
-	Please avoid taking special unique_usertype arguments, by either reference or value. In many cases, by-value does not work (e.g., with ``std::unique_ptr``) because many types are move-only and Lua has no concept of "move" semantics. By-reference is dangerous because sol2 will hand you a reference to the original data: but, any pointers stored in Lua can be invalidated if you call ``.reset()`` or similar on the core pointer. Please take a pointer (``T*``) if you anticipate ``nil``/``nullptr`` being passed to your function, or a reference (``const T&`` or ``T&``) if you do not. As a side note, if you write a small wrapping class that holds a base pointer type, and interact using the wrapper, then when you get the wrapper as an argument in a C++-function bound to Lua you can cast the internal object freely. It is simply a direct cast as an argument to a function that is the problem.
+	Please avoid taking special unique_usertype arguments, by either reference or value. In many cases, by-value does not work (e.g., with ``std::unique_ptr``) because many types are move-only and Lua has no concept of "move" semantics. By-reference is dangerous because sol3 will hand you a reference to the original data: but, any pointers stored in Lua can be invalidated if you call ``.reset()`` or similar on the core pointer. Please take a pointer (``T*``) if you anticipate ``nil``/``nullptr`` being passed to your function, or a reference (``const T&`` or ``T&``) if you do not. As a side note, if you write a small wrapping class that holds a base pointer type, and interact using the wrapper, then when you get the wrapper as an argument in a C++-function bound to Lua you can cast the internal object freely. It is simply a direct cast as an argument to a function that is the problem.
 
 
 .. note::

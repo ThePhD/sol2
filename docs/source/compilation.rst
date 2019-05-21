@@ -26,7 +26,7 @@ GCC 7.x is now out alongside Visual Studio 2018. This means that `sol release v2
 	- v3.6.x
 	- Note: this applies to XCode's Apple Clang as well, but that compiler packs its own deficiencies and problems as well
 
-**This does not mean we are immediately abandoning older compilers.** We will update this page as relevant bugfixes are backported to the v2.x.x releases. Remember that sol2 is feature-complete: there is nothing more we can add to the library at this time with C++11/C++14 compiler support, so your code will be covered for a long time to come.
+**This does not mean we are immediately abandoning older compilers.** We will update this page as relevant bugfixes are backported to the v2.x.x releases. Remember that sol3 is feature-complete: there is nothing more we can add to the library at this time with C++11/C++14 compiler support, so your code will be covered for a long time to come.
 
 Newer features will be targeted at the following compilers:
 
@@ -47,9 +47,9 @@ Note that Visual Studio's 2018 Community Edition is absolutely free now, and ins
 
 MinGW's GCC version 7.x of the compiler fixes a long-standing derp in the <codecvt> header that swapped the endianness of utf16 and utf32 strings.
 
-Clang 3.4, 3.5 and 3.6 have many bugs we have run into when developing sol2 and that have negatively impacted users for a long time now.
+Clang 3.4, 3.5 and 3.6 have many bugs we have run into when developing sol3 and that have negatively impacted users for a long time now.
 
-We encourage all users to upgrade immediately. If you need old code for some reason, use `sol release v2.20.1`_: otherwise, always grab sol2's latest.
+We encourage all users to upgrade immediately. If you need old code for some reason, use `sol release v2.20.1`_: otherwise, always grab sol3's latest.
 
 
 feature support
@@ -84,7 +84,7 @@ Here are some notes on achieving better compile times without sacrificing too mu
 * Consider placing groups of bindings in multiple different translation units (multiple C++ source files) so that only part of the bindings are recompiled when you have to change the bindings.
 	- Avoid putting your bindings into headers: it *will* slow down your compilation
 * If you are developing a shared library, restrict your overall surface area by specifically and explicitly marking functions as visible and exported and leaving everything else as hidden or invisible by default
-* For people who already have a tool that retrieves function signatures and arguments, it might be in your best interest to hook into that tool or generator and dump out the information once using sol2's lower-level abstractions. An `issue describing preliminary steps can be found here`_.
+* For people who already have a tool that retrieves function signatures and arguments, it might be in your best interest to hook into that tool or generator and dump out the information once using sol3's lower-level abstractions. An `issue describing preliminary steps can be found here`_.
 
 
 next steps
