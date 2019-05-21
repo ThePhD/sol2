@@ -52,11 +52,13 @@ int main() {
 
 More examples are given in the examples directory [here](https://github.com/ThePhD/sol2/tree/develop/examples). 
 
+
 ## Supporting
 
 Please use the buttons above and help this project grow.
 
 You can also help out the library by submitting pull requests to fix anything or add anything you think would be helpful! This includes making small, useful examples of something you haven't seen, or fixing typos and bad code in the documentation.
+
 
 ## Presentations
 
@@ -85,11 +87,11 @@ ThePhD
 CppCon 2018 - 404 Keystone, Meydenbauer Center, Aspen, Colorado  
 [Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/2018.09.28%20-%20ThePhD%20-%20Scripting%20at%20the%20Speed%20of%20Thought.pdf)
 
-## Creating a single header
+"The Plan for Tomorrow: Compile-Time Extension Points in C++"
+ThePhD
+C++Now 2019 - Flug Auditorium, Aspen Physics Center, Aspen, Colorado
+[Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/2019.05.10%20-%20ThePhD%20-%20The%20Plan%20for%20Tomorrow%20-%20Compile-Time%20Extension%20Points%20in%20C%2b%2b.pdf)
 
-You can grab a single header (and the single forward header) out of the library [here](https://github.com/ThePhD/sol2/tree/develop/single). For stable version, check the releases tab on GitHub for a provided single header file for maximum ease of use. A script called [`single.py`](https://github.com/ThePhD/sol2/blob/develop/single/single.py) is provided in the repository if there's some bleeding edge change that hasn't been published on the releases page. You can run this script to create a single file version of the library so you can only include that part of it. Check `single.py --help` for more info.
-
-If you use CMake, you can also configure and generate a project that will generate the `sol2_single_header` for you. You can also include the project using CMake. Run CMake for more details. Thanks @Nava2, @alkino, @mrgreywater and others for help with making the CMake build a reality.
 
 ## Features
 
@@ -111,6 +113,7 @@ If you use CMake, you can also configure and generate a project that will genera
 - Support for tables, nested tables, table iteration with `table.for_each` / `begin()` and `end()` iterators.
 - Zero string overhead for usertype function lookup.
 
+
 ## Supported Compilers
 
 Sol makes use of C++17 features. GCC 7.x.x and Clang 3.9.x (with `-std=c++1z` and appropriate standard library) 
@@ -127,11 +130,20 @@ If you would like support for an older compiler (at the cost of some features), 
 
 sol3 is checked by-hand for other platforms as well, including Android-based builds with GCC and iOS-based builds out of XCode with Apple-clang. It should work on both of these platforms, so long as you have the proper standards flags.
 
+
+## Creating a single header
+
+You can grab a single header (and the single forward header) out of the library [here](https://github.com/ThePhD/sol2/tree/develop/single). For stable version, check the releases tab on GitHub for a provided single header file for maximum ease of use. A script called [`single.py`](https://github.com/ThePhD/sol2/blob/develop/single/single.py) is provided in the repository if there's some bleeding edge change that hasn't been published on the releases page. You can run this script to create a single file version of the library so you can only include that part of it. Check `single.py --help` for more info.
+
+If you use CMake, you can also configure and generate a project that will generate the `sol2_single_header` for you. You can also include the project using CMake. Run CMake for more details. Thanks @Nava2, @alkino, @mrgreywater and others for help with making the CMake build a reality.
+
+
 ## Running the Tests
 
 Testing on Travis-CI and Appveyor use CMake. You can generate the tests by running CMake and configuring `SOL2_TESTS`, `SOL2_TESTS_SINGLE`, `SOL2_TESTS_EXAMPLES`, and `SOL2_EXAMPLES` to be on. Make sure `SOL2_SINGLE` is also on.
 
 You will need any flavor of python3 and an available compiler. The testing suite will build its own version of Lua and LuaJIT, so you do not have to provide one (you may provide one with the `LUA_LOCAL_DIR` variable).
+
 
 ## License
 
