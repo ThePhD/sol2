@@ -116,7 +116,7 @@ Indices and tables
 	
 .. |lp| image:: media/liberapay_logo.png
 	:height: 50
-	:target: https://ko-fi.com/thephd
+	:target: https://liberapay.com/ThePhD/
 	:alt: sol3 ko-fi
 	:align: middle
 

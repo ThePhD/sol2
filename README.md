@@ -9,7 +9,7 @@
 [![Support via PayPal](https://cdn.rawgit.com/twolfson/paypal-github-button/1.0.0/dist/button.svg)](https://www.paypal.me/thephd)
 [![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/W7W8Q619) 
 [![Support via Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.herokuapp.com%2FThePhD%2Fpledgesssss&style=for-the-badge)](https://patreon.com/thephd)
-![Liberapay patrons](https://img.shields.io/liberapay/patrons/ThePhD.svg) 
+[![Liberapay patrons](https://img.shields.io/liberapay/patrons/ThePhD.svg)](https://liberapay.com/ThePhD/)
 
 Sol is a C++ library binding to Lua. It currently supports all Lua versions 5.1+ (LuaJIT 2.x included). Sol aims to be easy to use and easy to add to a project.
 The library is header-only for easy integration with projects.
