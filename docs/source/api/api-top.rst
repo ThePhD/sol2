@@ -1,16 +1,17 @@
 api reference manual
 ====================
 
-Browse the various function and classes :doc:`Sol<../index>` utilizes to make your life easier when working with Lua.
+Browse the various function and classes :doc:`sol<../index>` utilizes to make your life easier when working with Lua.
 
 
 .. toctree::
-   :caption: Sol API
+   :caption: sol API
    :name: apitoc
    :maxdepth: 2
 
    state
    this_state
+   lua_value
    reference
    stack_reference
    make_reference

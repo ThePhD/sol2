@@ -60,7 +60,7 @@ namespace sol {
 			std::string err(message, messagesize);
 			lua_settop(L, 0);
 #if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
-			std::cerr << "[sol2] An error occurred and panic has been invoked: ";
+			std::cerr << "[sol3] An error occurred and panic has been invoked: ";
 			std::cerr << err;
 			std::cerr << std::endl;
 #endif
@@ -85,7 +85,7 @@ namespace sol {
 			msg.assign(traceback.data(), traceback.size());
 		}
 #if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
-		//std::cerr << "[sol2] An error occurred and was caught in traceback: ";
+		//std::cerr << "[sol3] An error occurred and was caught in traceback: ";
 		//std::cerr << msg;
 		//std::cerr << std::endl;
 #endif // Printing
@@ -147,7 +147,7 @@ namespace sol {
 			err.append(serr.data(), serr.size());
 		}
 #if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
-		std::cerr << "[sol2] An error occurred and has been passed to an error handler: ";
+		std::cerr << "[sol3] An error occurred and has been passed to an error handler: ";
 		std::cerr << err;
 		std::cerr << std::endl;
 #endif

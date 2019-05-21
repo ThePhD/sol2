@@ -9,7 +9,7 @@ If you're already using lua and you just want to use ``sol`` in some places, you
 	:name: state-view-snippet
 
 	int something_in_my_system (lua_State* L) {
-		// start using Sol with a pre-existing system
+		// start using sol with a pre-existing system
 		sol::state_view lua(L); // non-owning
 
 		lua.script("print('bark bark bark!')");
@@ -21,13 +21,13 @@ If you're already using lua and you just want to use ``sol`` in some places, you
 		return 0; // or whatever you require of working with a raw function
 	}
 
-:doc:`sol::state_view<../api/state>` is exactly like ``sol::state``, but it doesn't manage the lifetime of a ``lua_State*``. Therefore, you get all the goodies that come with a ``sol::state`` without any of  the ownership implications. Sol has no initialization components that need to deliberately remain alive for the duration of the program. It's entirely self-containing and uses lua's garbage collectors and various implementation techniques to require no state C++-side. After you do that, all of the power of `Sol` is available to you, and then some!
+:doc:`sol::state_view<../api/state>` is exactly like ``sol::state``, but it doesn't manage the lifetime of a ``lua_State*``. Therefore, you get all the goodies that come with a ``sol::state`` without any of  the ownership implications. sol has no initialization components that need to deliberately remain alive for the duration of the program. It's entirely self-containing and uses lua's garbage collectors and various implementation techniques to require no state C++-side. After you do that, all of the power of `sol` is available to you, and then some!
 
 ``sol::state_view`` is also helpful when you want to `create a DLL that loads some Lua module`_ via requires.
 
 You may also want to call ``require`` and supply a string of a script file or something that returns an object that you set equal to something in C++. For that, you can use the :ref:`require functionality<state-require-function>`.
 
-Remember that Sol can be as lightweight as you want it: almost all of Sol's Lua types take the ``lua_State*`` argument and then a second ``int index`` stack index argument, meaning you can use :doc:`tables<../api/table>`, :doc:`lua functions<../api/function>`, :doc:`coroutines<../api/coroutine>`, and other reference-derived objects that expose the proper constructor for your use. You can also set :doc:`usertypes<../api/usertype>` and other things you need without changing your entire architecture in one go.
+Remember that sol can be as lightweight as you want it: almost all of sol's Lua types take the ``lua_State*`` argument and then a second ``int index`` stack index argument, meaning you can use :doc:`tables<../api/table>`, :doc:`lua functions<../api/function>`, :doc:`coroutines<../api/coroutine>`, and other reference-derived objects that expose the proper constructor for your use. You can also set :doc:`usertypes<../api/usertype>` and other things you need without changing your entire architecture in one go.
 
 You can even customize it to `work with an external Lua wrapper/framework/library`_.
 

@@ -3,12 +3,12 @@ errors
 how to handle exceptions or other errors 
 ----------------------------------------
 
-Here is some advice and some tricks for common errors about iteration, compile time / linker errors, and other pitfalls, especially when dealing with thrown exceptions, error conditions and the like in Sol.
+Here is some advice and some tricks for common errors about iteration, compile time / linker errors, and other pitfalls, especially when dealing with thrown exceptions, error conditions and the like in sol.
 
 Running Scripts
 ---------------
 
-Scripts can have syntax errors, can load from the file system wrong, or have runtime issues. Knowing which one can be troublesome. There are various small building blocks to load and run code, but to check errors you can use the overloaded :ref:`script/script_file functions on sol::state/sol::state_view<state-script-function>`, specifically the ``safe_script`` variants. These also take an error callback that is called only when something goes wrong, and Sol comes with some default error handlers in the form of ``sol::script_default_on_error`` and ``sol::script_pass_on_error``.
+Scripts can have syntax errors, can load from the file system wrong, or have runtime issues. Knowing which one can be troublesome. There are various small building blocks to load and run code, but to check errors you can use the overloaded :ref:`script/script_file functions on sol::state/sol::state_view<state-script-function>`, specifically the ``safe_script`` variants. These also take an error callback that is called only when something goes wrong, and sol comes with some default error handlers in the form of ``sol::script_default_on_error`` and ``sol::script_pass_on_error``.
 
 .. _compilation_errors_warnings:
 
@@ -53,7 +53,7 @@ This should use the 64-bit tools by default, and increase your maximum heap spac
 Linker Errors
 -------------
 
-There are lots of reasons for compiler linker errors. A common one is not knowing that you've compiled the Lua library as C++: when building with C++, it is important to note that every typical (static or dynamic) library expects the C calling convention to be used and that Sol includes the code using ``extern 'C'`` where applicable.
+There are lots of reasons for compiler linker errors. A common one is not knowing that you've compiled the Lua library as C++: when building with C++, it is important to note that every typical (static or dynamic) library expects the C calling convention to be used and that sol includes the code using ``extern 'C'`` where applicable.
 
 However, when the target Lua library is compiled with C++, one must change the calling convention and name mangling scheme by getting rid of the ``extern 'C'`` block. This can be achieved by adding ``#define SOL_USING_CXX_LUA`` before including sol3, or by adding it to your compilation's command line. If you build LuaJIT in C++ mode (how you would even, is beyond me), then you need to ``#define SOL_USING_CXX_LUAJIT`` as well. Typically, there is never a need to use this last one.
 
@@ -69,9 +69,9 @@ Please make sure to use the ``SOL_EXCEPTIONS_SAFE_PROPAGATION`` define before in
 Catch and CRASH!
 ----------------
 
-By default, Sol will add a ``default_at_panic`` handler to states opened by Sol (see :ref:`sol::state automatic handlers<state-automatic-handlers>` for more details). If exceptions are not turned off, this handler will throw to allow the user a chance to recover. However, in almost all cases, when Lua calls ``lua_atpanic`` and hits this function, it means that something *irreversibly wrong* occured in your code or the Lua code and the VM is in an unpredictable or dead state. Catching an error thrown from the default handler and then proceeding as if things are cleaned up or okay is NOT the best idea. Unexpected bugs in optimized and release mode builds can result, among other serious issues.
+By default, sol will add a ``default_at_panic`` handler to states opened by sol (see :ref:`sol::state automatic handlers<state-automatic-handlers>` for more details). If exceptions are not turned off, this handler will throw to allow the user a chance to recover. However, in almost all cases, when Lua calls ``lua_atpanic`` and hits this function, it means that something *irreversibly wrong* occured in your code or the Lua code and the VM is in an unpredictable or dead state. Catching an error thrown from the default handler and then proceeding as if things are cleaned up or okay is NOT the best idea. Unexpected bugs in optimized and release mode builds can result, among other serious issues.
 
-It is preferred if you catch an error that you log what happened, terminate the Lua VM as soon as possible, and then crash if your application cannot handle spinning up a new Lua state. Catching can be done, but you should understand the risks of what you're doing when you do it. For more information about catching exceptions, the potentials, not turning off exceptions and other tricks and caveats, read about :doc:`exceptions in Sol here<exceptions>`.
+It is preferred if you catch an error that you log what happened, terminate the Lua VM as soon as possible, and then crash if your application cannot handle spinning up a new Lua state. Catching can be done, but you should understand the risks of what you're doing when you do it. For more information about catching exceptions, the potentials, not turning off exceptions and other tricks and caveats, read about :doc:`exceptions in sol here<exceptions>`.
 
 Lua is a C API first and foremost: exceptions bubbling out of it is essentially last-ditch, terminal behavior that the VM does not expect. You can see an example of handling a panic on the exceptions page :ref:`here<typical-panic-function>`. This means that setting up a ``try { ... } catch (...) {}`` around an unprotected sol3 function or script call is **NOT** enough to keep the VM in a clean state. Lua does not understand exceptions and throwing them results in undefined behavior if they bubble through the C API once and then the state is used again. Please catch, and crash.
 

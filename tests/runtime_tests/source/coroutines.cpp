@@ -541,7 +541,7 @@ end
 	REQUIRE(s5 == 0);
 }
 
-TEST_CASE("coroutines/yielding", "test that a sol2 bound function can yield when marked yieldable") {
+TEST_CASE("coroutines/yielding", "test that a sol3 bound function can yield when marked yieldable") {
 	SECTION("regular functions") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base, sol::lib::coroutine);

@@ -1,4 +1,4 @@
-# # # # sol2
+# # # # sol3
 # The MIT License (MIT)
 #
 # Copyright (c) 2013-2019 Rapptz, ThePhD, and contributors
@@ -20,7 +20,7 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# # # sol2 Examples - require_from_dll
+# # # sol3 Examples - require_from_dll
 
 # # Reusable function to call for single target
 # # Also hides variables from directory/global scope

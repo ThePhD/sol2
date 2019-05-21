@@ -6,7 +6,11 @@ as_table
 .. code-block:: cpp
 	
 	template <typename T>
-	as_table_t { ... };
+	as_table_t {
+		T& value() &;
+		const T& value() & const;
+		T&& value() &&;
+	};
 
 	template <typename T>
 	as_table_t<T> as_function ( T&& container );
@@ -16,12 +20,14 @@ This function serves the purpose of ensuring that an object is pushed -- if poss
 .. literalinclude:: ../../../examples/source/docs/as_table_ipairs.cpp
 	:linenos:
 
-Note that any caveats with Lua tables apply the moment it is serialized, and the data cannot be gotten out back out in C++ as a C++ type. You can deserialize the Lua table into something explicitly using the ``sol::as_table_t`` marker for your get and conversion operations using Sol. At that point, the returned type is deserialized **from** a table, meaning you cannot reference any kind of C++ data directly as you do with regular userdata/usertypes. *All C++ type information is lost upon serialization into Lua.*
+Note that any caveats with Lua tables apply the moment it is serialized, and the data cannot be gotten out back out in C++ as a C++ type. You can deserialize the Lua table into something explicitly using the ``sol::as_table_t`` marker for your get and conversion operations using sol. At that point, the returned type is deserialized **from** a table, meaning you cannot reference any kind of C++ data directly as you do with regular userdata/usertypes. *All C++ type information is lost upon serialization into Lua.*
 
 If you need this functionality with a member variable, use a :doc:`property on a getter function<property>` that returns the result of ``sol::as_table``.
 
 This marker does NOT apply to :doc:`usertypes<usertype>`.
 
-You can also use this to nest types and retrieve tables within tables as shown by `this example`_.
+You can also use this to nest types and retrieve tables within tables as shown by this example.
 
-.. _this example: https://github.com/ThePhD/sol2/blob/develop/examples/containers_as_table.cpp
+.. literalinclude:: ../../../examples/source/containers_as_table.cpp
+	:linenos:
+	:lines: 1-8,31-60,62-68,70-

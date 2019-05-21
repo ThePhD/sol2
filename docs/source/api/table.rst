@@ -11,11 +11,15 @@ table
 	typedef table_core<false> table;
 	typedef table_core<true> global_table;
 
-``sol::table`` is an extremely efficient manipulator of state that brings most of the magic of the Sol abstraction. Capable of doing multiple sets at once, multiple gets into a ``std::tuple``, being indexed into using ``[key]`` syntax and setting keys with a similar syntax (see: :doc:`here<proxy>`), ``sol::table`` is the corner of the interaction between Lua and C++.
+	class lua_table;
+
+``sol::table`` is an extremely efficient manipulator of state that brings most of the magic of the sol abstraction. Capable of doing multiple sets at once, multiple gets into a ``std::tuple``, being indexed into using ``[key]`` syntax and setting keys with a similar syntax (see: :doc:`here<proxy>`), ``sol::table`` is the corner of the interaction between Lua and C++.
 
 There are two kinds of tables: the global table and non-global tables: however, both have the exact same interface and all ``sol::global_table`` s are convertible to regular ``sol::table`` s.
 
-Tables are the core of Lua, and they are very much the core of Sol.
+Tables are the core of Lua, and they are very much the core of sol.
+
+``sol::lua_table`` is specifically useful for specifying you want **exactly** a Lua table, and not something that can masquerade like a table (e.g., a userdata with a metatable that has overriden `__index` and `__new_index` fields).
 
 
 members

@@ -1,4 +1,4 @@
-#define SOL_CHECK_ARGUMENTS 1
+#define SOL_ALL_SAFETIES_ON 1
 #include <sol.hpp>
 
 #include <iostream>
@@ -21,7 +21,7 @@ int main() {
 		lua["bark"], "the key is 50 and this string is its value!");
 
 	// Run a plain ol' string of lua code
-	// Note you can interact with things set through Sol in C++ with lua!
+	// Note you can interact with things set through sol in C++ with lua!
 	// Using a "Raw String Literal" to have multi-line goodness: 
 	// http://en.cppreference.com/w/cpp/language/string_literal
 	lua.script(R"(

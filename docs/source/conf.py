@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Sol documentation build configuration file, created by
+# sol documentation build configuration file, created by
 # sphinx-quickstart on Mon Feb 29 21:49:51 2016.
 #
 # This file is execfile()d with the current directory set to its
@@ -46,7 +46,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Sol'
+project = 'sol'
 copyright = '2019, ThePhD'
 author = 'ThePhD'
 
@@ -226,7 +226,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Sol.tex', 'Sol Documentation', 'ThePhD', 'manual'),
+    (master_doc, 'sol.tex', 'sol Documentation', 'ThePhD', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -253,7 +253,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, 'sol', 'Sol Documentation', [author], 1)]
+man_pages = [(master_doc, 'sol', 'sol Documentation', [author], 1)]
 
 # If true, show URL addresses after external links.
 #man_show_urls = False
@@ -264,7 +264,7 @@ man_pages = [(master_doc, 'sol', 'Sol Documentation', [author], 1)]
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'Sol', 'Sol Documentation', author, 'Sol',
+    (master_doc, 'sol', 'sol Documentation', author, 'sol',
      'One line description of project.', 'Miscellaneous'),
 ]
 

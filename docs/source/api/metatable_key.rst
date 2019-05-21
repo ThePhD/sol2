@@ -8,7 +8,7 @@ metatable_key
 	struct metatable_key_t {};
 	const metatable_key_t metatable_key;
 
-You can use this in conjunction with :doc:`sol::table<table>` to set/get a metatable. Lua metatables are powerful ways to override default behavior of objects for various kinds of operators, among other things. Here is an entirely complete example, showing getting and working with a :doc:`usertype<usertype>`'s metatable defined by Sol:
+You can use this in conjunction with :doc:`sol::table<table>` to set/get a metatable. Lua metatables are powerful ways to override default behavior of objects for various kinds of operators, among other things. Here is an entirely complete example, showing getting and working with a :doc:`usertype<usertype>`'s metatable defined by sol:
 
 .. literalinclude:: ../../../examples/source/metatable_key_low_level.cpp
 	:caption: messing with metatables

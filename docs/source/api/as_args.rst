@@ -19,6 +19,6 @@ as_args
 	:caption: args_from_container.cpp
 	:linenos:
 
-It is basically implemented as a `one-way customization point`_. For more information about customization points, see the :doc:`tutorial on how to customize Sol to work with your types<../tutorial/customization>`.
+It is basically implemented as a `one-way customization point`_. For more information about customization points, see the :doc:`tutorial on how to customize sol to work with your types<../tutorial/customization>`.
 
 .. _one-way customization point: https://github.com/ThePhD/sol2/blob/develop/sol/as_args.hpp

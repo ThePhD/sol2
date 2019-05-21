@@ -8,7 +8,7 @@ Sometimes in C++ it's useful to know where a Lua call is coming from and what :d
 .. code-block:: cpp
 	:linenos:
 
-	#define SOL_CHECK_ARGUMENTS
+	#define SOL_ALL_SAFETIES_ON
 	#include <sol/sol.hpp>
 
 	#include <iostream>

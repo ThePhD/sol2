@@ -928,7 +928,7 @@ namespace sol { namespace u_detail {
 
 		// we then let typical definitions potentially override these intrinsics
 		// it's the user's fault if they override things or screw them up:
-		// these names have been reserved and documented since sol2
+		// these names have been reserved and documented since sol3
 
 		// STEP 0: tell the old usertype (if it exists)
 		// to fuck off

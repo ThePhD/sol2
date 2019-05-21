@@ -64,8 +64,15 @@
 
 #endif // vc++ || clang++/g++
 
-// If this is defined, turn on all the safety checks automatically
+// Compatibility Define
 #if defined(SOL_CHECK_ARGUMENTS) && SOL_CHECK_ARGUMENTS
+	#if defined(SOL_ALL_SAFETIES_ON)
+		#define SOL_ALL_SAFETIES_ON 1
+	#endif // turn all the safeties on
+#endif // Compatibility define
+
+// If this is defined, turn on all the safety checks automatically
+#if defined(SOL_ALL_SAFETIES_ON) && SOL_ALL_SAFETIES_ON
 
 	// Checks low-level getter function
 	// (and thusly, affects nearly entire framework)
@@ -191,7 +198,7 @@
 // Interop allows userdata from external systems 
 // with external memory layout and metatable names
 // to be registered. It costs something to perform 
-// the interop_checker / differentiation for sol2 usertypes versus
+// the interop_checker / differentiation for sol3 usertypes versus
 // external ones however, so this is off by default
 #if !defined(SOL_ENABLE_INTEROP)
 // off by default here
@@ -230,7 +237,7 @@
 
 // This macro ensures that we check the stack
 // on every push of a value.
-// This is only for sol2: if you want safety in your customization
+// This is only for sol3: if you want safety in your customization
 // points, you need to build it into each and every customization point you use,
 // by using luaL_checkstack or lua_checkstack
 // this is off by default,

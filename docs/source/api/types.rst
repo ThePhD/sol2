@@ -2,7 +2,7 @@ types
 =====
 *nil, lua_primitive type traits, and other fundamentals*
 
-The ``types.hpp`` header contains various fundamentals and utilities of Sol.
+The ``types.hpp`` header contains various fundamentals and utilities of sol.
 
 
 enumerations
@@ -83,7 +83,7 @@ This enumeration contains the status of a load operation from :ref:`state::load(
 	                    table  | boolean | function | userdata | lightuserdata
 	};
 
-The base types that Lua natively communicates in and understands. Note that "poly" isn't really a true type, it's just a symbol used in Sol for something whose type hasn't been checked (and you should almost never see it).
+The base types that Lua natively communicates in and understands. Note that "poly" isn't really a true type, it's just a symbol used in sol for something whose type hasn't been checked (and you should almost never see it).
 
 
 type traits
@@ -142,7 +142,7 @@ A tag type that, when used with :doc:`stack::get\<non_null\<T*>><stack>`, does n
 	template <typename... Args>
 	struct types;
 
-A type list that, unlike ``std::tuple<Args...>``, does not actually contain anything. Used to indicate types and groups of types all over Sol.
+A type list that, unlike ``std::tuple<Args...>``, does not actually contain anything. Used to indicate types and groups of types all over sol.
 
 
 functions

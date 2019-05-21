@@ -1,11 +1,11 @@
-#define SOL_CHECK_ARGUMENTS 1
+#define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
 #include <string>
 #include <memory>
 #include <iostream>
 
-int main(int, char**) {
+int main(int, char* []) {
 	std::cout << "=== optional with iteration ===" << std::endl;
 
 	struct thing {

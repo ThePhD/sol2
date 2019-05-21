@@ -1,4 +1,4 @@
-#define SOL_CHECK_ARGUMENTS 1
+#define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
 #include <iostream>
@@ -13,7 +13,8 @@ int deny(lua_State* L) {
     return luaL_error(L, "HAH! Deniiiiied!");
 }
 
-int main() {
+int main(int, char*[]) {
+
     sol::state lua;
     lua.open_libraries(sol::lib::base);
 

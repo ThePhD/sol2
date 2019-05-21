@@ -12,7 +12,7 @@ function
 	class unsafe_function : public reference;
 	typedef unsafe_function function;
 
-Function is a correct-assuming version of :doc:`protected_function<protected_function>`, omitting the need for typechecks and error handling (thus marginally increasing speed in some cases). It is the default function type of Sol. Grab a function directly off the stack using the constructor:
+Function is a correct-assuming version of :doc:`protected_function<protected_function>`, omitting the need for typechecks and error handling (thus marginally increasing speed in some cases). It is the default function type of sol. Grab a function directly off the stack using the constructor:
 
 .. code-block:: cpp
 	:caption: constructor: unsafe_function

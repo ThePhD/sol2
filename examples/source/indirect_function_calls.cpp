@@ -1,4 +1,4 @@
-#define SOL_CHECK_ARGUMENTS 1
+#define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
 #include "assert.hpp"
@@ -33,7 +33,7 @@ sol::variadic_results call_it(sol::object function_name, sol::variadic_args args
 	return results;
 }
 
-int main() {
+int main(int, char* []) {
 	std::cout << "=== indirect function calls ===" << std::endl;
 
 	sol::state lua;

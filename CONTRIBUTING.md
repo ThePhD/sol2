@@ -1,6 +1,6 @@
-## Contributing to Sol
+## Contributing to sol
 
-Looking to contribute to Sol? Well, first thing I want to mention is thank you!
+Looking to contribute to sol? Well, first thing I want to mention is thank you!
 Second of all, this is probably where you should look :)
 
 ## Reporting Issues

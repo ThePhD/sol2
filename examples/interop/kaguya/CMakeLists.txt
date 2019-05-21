@@ -1,4 +1,4 @@
-# # # # sol2
+# # # # sol3
 # The MIT License (MIT)
 #
 # Copyright (c) 2013-2019 Rapptz, ThePhD, and contributors
@@ -20,7 +20,7 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# # # sol2 interop Examples - kaguya
+# # # sol3 interop Examples - kaguya
 
 find_package(KaguyaBuild)
 

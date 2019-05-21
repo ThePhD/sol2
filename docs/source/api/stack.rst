@@ -7,11 +7,11 @@ stack namespace
 
 	namespace stack
 
-If you find that the higher level abstractions are not meeting your needs, you may want to delve into the ``stack`` namespace to try and get more out of Sol. ``stack.hpp`` and the ``stack`` namespace define several utilities to work with Lua, including pushing / popping utilities, getters, type checkers, Lua call helpers and more. This namespace is not thoroughly documented as the majority of its interface is mercurial and subject to change between releases to either heavily boost performance or improve the Sol :doc:`api<api-top>`.
+If you find that the higher level abstractions are not meeting your needs, you may want to delve into the ``stack`` namespace to try and get more out of sol. ``stack.hpp`` and the ``stack`` namespace define several utilities to work with Lua, including pushing / popping utilities, getters, type checkers, Lua call helpers and more. This namespace is not thoroughly documented as the majority of its interface is mercurial and subject to change between releases to either heavily boost performance or improve the sol :doc:`api<api-top>`.
 
 Working at this level of the stack can be enhanced by understanding how the `Lua stack works in general`_ and then supplementing it with the objects and items here.
 
-There are, however, a few :ref:`template customization points<extension_points>` that you may use for your purposes and a handful of potentially handy functions. These may help if you're trying to slim down the code you have to write, or if you want to make your types behave differently throughout the Sol stack. Note that overriding the defaults **can** throw out many of the safety guarantees Sol provides: therefore, modify the :ref:`extension points<extension_points>` at your own discretion.
+There are, however, a few :ref:`ADL customization points<extension_points>` that you may use for your purposes and a handful of potentially handy functions. These may help if you're trying to slim down the code you have to write, or if you want to make your types behave differently throughout the sol stack. Note that overriding the defaults **can** throw out many of the safety guarantees sol provides: therefore, modify the :ref:`extension points<extension_points>` at your own discretion.
 
 structures
 ----------
@@ -69,7 +69,7 @@ This function is helpful for when you bind to a raw C function but need sol's ab
 	template <typename T>
 	auto get( lua_State* L, int index, record& tracking )
 
-Retrieves the value of the object at ``index`` in the stack. The return type varies based on ``T``: with primitive types, it is usually ``T``: for all unrecognized ``T``, it is generally a ``T&`` or whatever the extension point :ref:`stack::getter\<T><getter>` implementation returns. The type ``T`` has top-level ``const`` qualifiers and reference modifiers removed before being forwarded to the extension point :ref:`stack::getter\<T><getter>` struct. ``stack::get`` will default to forwarding all arguments to the :ref:`stack::check_get<stack-check-get>` function with a handler of ``type_panic`` to strongly alert for errors, if you ask for the :doc:`safety<../safety>`.
+Retrieves the value of the object at ``index`` in the stack. The return type varies based on ``T``: with primitive types, it is usually ``T``: for all unrecognized ``T``, it is generally a ``T&`` or whatever the extension point :ref:`sol_lua_get\<T><sol_lua_get>` implementation returns. The type ``T`` is tried once as it is (with ``const`` and reference qualifiers left alone) and then once more once it has top-level ``const`` qualifiers and reference modifiers removed before being forwarded to the extension point :ref:`sol_lua_get\<T><sol_lua_get>` function. ``stack::get`` will default to forwarding all arguments to the :ref:`stack::check_get<stack-check-get>` function with a handler of ``type_panic`` to strongly alert for errors, if you ask for the :doc:`safety<../safety>`.
 
 You may also retrieve an :doc:`sol::optional\<T><optional>` from this as well, to have it attempt to not throw errors when performing the get and the type is not correct.
 
@@ -123,7 +123,7 @@ Checks if the object at ``index`` is of type ``T`` and stored as a sol3 usertype
 	template <typename T, typename Handler>
 	auto check_get( lua_State* L, int index, Handler&& handler, record& tracking )
 
-Retrieves the value of the object at ``index`` in the stack, but does so safely. It returns an ``optional<U>``, where ``U`` in this case is the return type deduced from ``stack::get<T>``. This allows a person to properly check if the type they're getting is what they actually want, and gracefully handle errors when working with the stack if they so choose to. You can define ``SOL_CHECK_ARGUMENTS`` to turn on additional :doc:`safety<../safety>`, in which ``stack::get`` will default to calling this version of the function with some variant on a handler of ``sol::type_panic_string`` to strongly alert for errors and help you track bugs if you suspect something might be going wrong in your system.
+Retrieves the value of the object at ``index`` in the stack, but does so safely. It returns an ``optional<U>``, where ``U`` in this case is the return type deduced from ``stack::get<T>``. This allows a person to properly check if the type they're getting is what they actually want, and gracefully handle errors when working with the stack if they so choose to. You can define ``SOL_ALL_SAFETIES_ON`` to turn on additional :doc:`safety<../safety>`, in which ``stack::get`` will default to calling this version of the function with some variant on a handler of ``sol::type_panic_string`` to strongly alert for errors and help you track bugs if you suspect something might be going wrong in your system.
 
 .. code-block:: cpp
 	:caption: function: push
@@ -141,7 +141,7 @@ Retrieves the value of the object at ``index`` in the stack, but does so safely.
 	template <typename... Args>
 	int multi_push( lua_State* L, Args&&... args )
 
-Based on how it is called, pushes a variable amount of objects onto the stack. in 99% of cases, returns for 1 object pushed onto the stack. For the case of a ``std::tuple<...>``, it recursively pushes each object contained inside the tuple, from left to right, resulting in a variable number of things pushed onto the stack (this enables multi-valued returns when binding a C++ function to a Lua). Can be called with ``sol::stack::push<T>( L, args... )`` to have arguments different from the type that wants to be pushed, or ``sol::stack::push( L, arg, args... )`` where ``T`` will be inferred from ``arg``. The final form of this function is ``sol::stack::multi_push``, which will call one ``sol::stack::push`` for each argument. The ``T`` that describes what to push is first sanitized by removing top-level ``const`` qualifiers and reference qualifiers before being forwarded to the extension point :ref:`stack::pusher\<T><pusher>` struct.
+Based on how it is called, pushes a variable amount of objects onto the stack. in 99% of cases, returns for 1 object pushed onto the stack. For the case of a ``std::tuple<...>``, it recursively pushes each object contained inside the tuple, from left to right, resulting in a variable number of things pushed onto the stack (this enables multi-valued returns when binding a C++ function to a Lua). Can be called with ``sol::stack::push<T>( L, args... )`` to have arguments different from the type that wants to be pushed, or ``sol::stack::push( L, arg, args... )`` where ``T`` will be inferred from ``arg``. The final form of this function is ``sol::stack::multi_push``, which will call one ``sol::stack::push`` for each argument. The ``T`` that describes what to push is first sanitized by removing top-level ``const`` qualifiers and reference qualifiers before being forwarded to the extension point :ref:`sol_lua_push\<T><sol_lua_push>`.
 
 .. code-block:: cpp
 	:caption: function: push_reference
@@ -216,85 +216,81 @@ This function leaves the retrieved value on the stack.
 objects (extension points)
 --------------------------
 
-You can customize the way Sol handles different structures and classes by following the information provided in the :doc:`adding your own types<../tutorial/customization>`.
+You can customize the way sol handles different structures and classes by following the information provided in the :doc:`adding your own types<../tutorial/customization>`.
 
 Below is more extensive information for the curious.
 
-The structs below are already overriden for a handful of types. If you try to mess with them for the types ``sol`` has already overriden them for, you're in for a world of thick template error traces and headaches. Overriding them for your own user defined types should be just fine, however.
+.. code-block:: cpp
+	:caption: ADL Extension Point sol_lua_get
+	:name: sol_lua_get
+
+	MyType sol_lua_get ( sol::types<MyType>, lua_State* L, int index, sol::stack::record& tracking ) {
+		// do work 
+		// ...
+		
+		return MyType{}; // return value
+	}
+
+This extension point is to ``get`` an object (or reference or pointer or whatever) of type ``T``, or something convertible to it. The default internal getter implementation assumes ``T`` is a usertype and pulls out a userdata from Lua before attempting to cast it to the desired ``T``.
+
+Interally, there are implementations for getting numbers (``std::is_floating``, ``std::is_integral``-matching types), getting ``std::string`` and ``const char*`` plus wide string and unicode variants, getting raw userdata with :doc:`userdata_value<types>` and anything as upvalues with :doc:`upvalue_index<types>`, getting raw `lua_CFunction`_ s, and finally pulling out Lua functions into ``std::function<R(Args...)>``. It is also defined for anything that derives from :doc:`sol::reference<reference>`. It also has a special implementation for the 2 standard library smart pointers (see :doc:`usertype memory<usertype_memory>`) that can be more specifically extended.
 
 .. code-block:: cpp
-	:caption: struct: getter
-	:name: getter
+	:caption: ADL Extension Point sol_lua_push
+	:name: sol_lua_push
 
-	template <typename T, typename = void>
-	struct getter {
-		static T get (lua_State* L, int index, record& tracking) {
-			// ...
-			return // T, or something related to T.
-		}
-	};
+	int push ( sol::types<MyType>, lua_State* L, MyType&& value ) {
+		// can optionally take more than just 1 argument
+		// to "construct" in-place and similar
+		// use them however you like!
+		// ...
+		return N; // number of things pushed onto the stack
+	}
 
-This is an SFINAE-friendly struct that is meant to expose static function ``get`` that returns a ``T``, or something convertible to it. The default implementation assumes ``T`` is a usertype and pulls out a userdata from Lua before attempting to cast it to the desired ``T``. There are implementations for getting numbers (``std::is_floating``, ``std::is_integral``-matching types), getting ``std::string`` and ``const char*``, getting raw userdata with :doc:`userdata_value<types>` and anything as upvalues with :doc:`upvalue_index<types>`, getting raw `lua_CFunction`_ s, and finally pulling out Lua functions into ``std::function<R(Args...)>``. It is also defined for anything that derives from :doc:`sol::reference<reference>`. It also has a special implementation for the 2 standard library smart pointers (see :doc:`usertype memory<usertype_memory>`).
 
-.. code-block:: cpp
-	:caption: struct: pusher
-	:name: pusher
-
-	template <typename X, typename = void>
-	struct unqualified_pusher {
-		template <typename T>
-		static int push ( lua_State* L, T&&, ... ) {
-			// can optionally take more than just 1 argument
-			// ...
-			return // number of things pushed onto the stack
-		}
-	};
-
-This is an SFINAE-friendly struct that is meant to expose static function ``push`` that returns the number of things pushed onto the stack. The default implementation assumes ``T`` is a usertype and pushes a userdata into Lua with a class-specific, state-wide metatable associated with it. There are implementations for pushing numbers (``std::is_floating``, ``std::is_integral``-matching types), getting ``std::string`` and ``const char*``, getting raw userdata with :doc:`userdata<types>` and raw upvalues with :doc:`upvalue<types>`, getting raw `lua_CFunction`_ s, and finally pulling out Lua functions into ``sol::function``. It is also defined for anything that derives from :doc:`sol::reference<reference>`. It also has a special implementation for the 2 standard library smart pointers (see :doc:`usertype memory<usertype_memory>`).
+This extension point is to ``push`` a value into Lua. It returns the number of things pushed onto the stack. The default implementation assumes ``T`` is a usertype and pushes a userdata into Lua with a class-specific, state-wide metatable associated with it. There are implementations for pushing numbers (``std::is_floating``, ``std::is_integral``-matching types), getting ``std::string`` and ``const char*``, getting raw userdata with :doc:`userdata<types>` and raw upvalues with :doc:`upvalue<types>`, getting raw `lua_CFunction`_ s, and finally pulling out Lua functions into ``sol::function``. It is also defined for anything that derives from :doc:`sol::reference<reference>`. It also has a special implementation for the 2 standard library smart pointers (see :doc:`usertype memory<usertype_memory>`).
 
 .. code-block:: cpp
-	:caption: struct: checker
-	:name: checker
+	:caption: ADL Extension Point sol_lua_check
+	:name: sol_lua_check
 
-	template <typename T, type expected = lua_type_of<T>, typename = void>
-	struct checker {
-		template <typename Handler>
-		static bool check ( lua_State* L, int index, Handler&& handler, record& tracking ) {
-			// if the object in the Lua stack at index is a T, return true
-			if ( ... ) { 
-				tracking.use(1); // or however many you use
-				return true;
-			}
-			// otherwise, call the handler function,
-			// with the required 4/5 arguments, then return false
-			//
-			handler(L, index, expected, indextype, "optional message");
-			return false;
+	template <typename Handler>
+	bool sol_lua_check ( sol::types<MyType>, lua_State* L, int index, Handler&& handler, sol::stack::record& tracking ) {
+		// if the object in the Lua stack at index is a T, return true
+		if ( ... ) { 
+			tracking.use(1); // or however many you use
+			return true;
 		}
-	};
+		// otherwise, call the handler function,
+		// with the required 4/5 arguments, then return false
+		//
+		handler(L, index, expected, indextype, "message");
+		return false;
+	}
 
-This is an SFINAE-friendly struct that is meant to expose static function ``check`` that returns whether or not a type at a given index is what its supposed to be. The default implementation simply checks whether the expected type passed in through the template is equal to the type of the object at the specified index in the Lua stack. The default implementation for types which are considered ``userdata`` go through a myriad of checks to support checking if a type is *actually* of type ``T`` or if its the base class of what it actually stored as a userdata in that index. Down-casting from a base class to a more derived type is, unfortunately, impossible to do.
+
+This extension point is to ``check`` whether or not a type at a given index is what its supposed to be. The default implementation simply checks whether the expected type passed in through the template is equal to the type of the object at the specified index in the Lua stack. The default implementation for types which are considered ``userdata`` go through a myriad of checks to support checking if a type is *actually* of type ``T`` or if its the base class of what it actually stored as a userdata in that index.
+
+Note that you may 
 
 .. _userdata-interop:
 
 .. code-block:: cpp
-	:caption: struct: userdata_checker
-	:name: userdata_checker
+	:caption: ADL Extension Point sol_lua_interop_check
+	:name: sol_lua_interop_check
 
-	template <typename T, typename = void>
-	struct userdata_checker {
-		template <typename Handler>
-		static bool check ( lua_State* L, int index, type indextype, Handler&& handler, record& tracking ) {
-			// implement custom checking here for a userdata:
-			// if it doesn't match, return "false" and regular 
-			// sol userdata checks will kick in
-			return false;
-			// returning true will skip sol's
-			// default checks
-		}
-	};
+	template <typename T, typename Handler>
+	bool sol_lua_interop_check(sol::types<T>, lua_State* L, int relindex, sol::type index_type, Handler&& handler, sol::stack::record& tracking) {
+		// implement custom checking here for a userdata:
+		// if it doesn't match, return "false" and regular 
+		// sol userdata checks will kick in
+		return false;
+		// returning true will skip sol's
+		// default checks
+	}
 
-This is an SFINAE-friendly struct that is meant to expose a function ``check=`` that returns ``true`` if a type meets some custom userdata specifiction, and ``false`` if it does not. The default implementation just returns ``false`` to let the original sol3 handlers take care of everything. If you want to implement your own usertype checking; e.g., for messing with ``toLua`` or ``OOLua`` or ``kaguya`` or some other libraries. Note that the library must have a with a :doc:`memory compatible layout<usertype_memory>` if you **want to specialize this checker method but not the subsequent getter method**. You can specialize it as shown in the `interop examples`_.
+
+This extension point is to ``check`` a foreign userdata. It should return ``true`` if a type meets some custom userdata specifiction (from, say, another library or an internal framework), and ``false`` if it does not. The default implementation just returns ``false`` to let the original sol3 handlers take care of everything. If you want to implement your own usertype checking; e.g., for messing with ``toLua`` or ``OOLua`` or ``kaguya`` or some other libraries. Note that the library must have a with a :doc:`memory compatible layout<usertype_memory>` if you **want to specialize this checker method but not the subsequent getter method**. You can specialize it as shown in the `interop examples`_.
 
 .. note::
 
@@ -302,29 +298,28 @@ This is an SFINAE-friendly struct that is meant to expose a function ``check=`` 
 
 
 .. code-block:: cpp
-	:caption: struct: userdata_getter
-	:name: userdata_getter
+	:caption: ADL Extension Point sol_lua_interop_get
+	:name: sol_lua_interop_get
 
-	template <typename T, typename = void>
-	struct userdata_getter {
-		static std::pair<bool, T*> get ( lua_State* L, int index, void* unadjusted_pointer, record& tracking ) {
-			// implement custom getting here for non-sol3 userdatas:
-			// if it doesn't match, return "false" and regular 
-			// sol userdata checks will kick in
-			return { false, nullptr };
-		}
-	};
+	template <typename T>
+	std::pair<bool, T*> sol_lua_interop_get(sol::types<T> t, lua_State* L, int relindex, void* unadjusted_pointer, sol::stack::record& tracking) {			
+		// implement custom getting here for non-sol3 userdatas:
+		// if it doesn't match, return "false" and regular 
+		// sol userdata getters will kick in
+		return { false, nullptr };
+	}
 
-This is an SFINAE-friendly struct that is meant to expose a function ``get`` that returns ``true`` and an adjusted pointer if a type meets some custom userdata specifiction (from, say, another library or an internal framework). The default implementation just returns ``{ false, nullptr }`` to let the original sol3 getter take care of everything. If you want to implement your own usertype getter; e.g., for messing with ``kaguya`` or some other libraries. You can specialize it as shown in the `interop examples`_.
 
-.. note::
-
-	You do NOT need to use this method in particular if the :doc:`memory layout<usertype_memory>` is compatible. (For example, ``toLua`` stores userdata in a sol3-compatible way.)
-
+This extension point is to ``get`` a foreign userdata. It should return both ``true`` and an adjusted pointer if a type meets some custom userdata specifiction (from, say, another library or an internal framework). The default implementation just returns ``{ false, nullptr }`` to let the default sol3 implementation take care of everything. You can use it to interop with other frameworks that are not sol3 but still include their power; e.g., for messing with ``kaguya`` or some other libraries. You can specialize it as shown in the `interop examples`_.
 
 .. note::
 
 	You must turn it on with ``SOL_ENABLE_INTEROP``, as described in the :ref:`config and safety section<config>`.
+
+
+.. note::
+
+	You do NOT need to use this method in particular if the :doc:`memory layout<usertype_memory>` is compatible. (For example, ``toLua`` stores userdata in a sol3-compatible way.)
 
 
 .. _lua_CFunction: http://www.Lua.org/manual/5.3/manual.html#lua_CFunction

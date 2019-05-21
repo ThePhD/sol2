@@ -1,10 +1,10 @@
-#define SOL_CHECK_ARGUMENTS 1
+#define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
 #include "assert.hpp"
 #include <iostream>
 
-// Simple sol2 version of the below
+// Simple sol3 version of the below
 void simple(sol::this_state ts, sol::this_environment te) {
 	sol::state_view lua = ts;
 	if (te) {

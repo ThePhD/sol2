@@ -34,7 +34,7 @@ You can take a reference to something that exists in Lua by pulling out a :doc:`
 	lua["say"](keep_alive);
 
 
-Sol will not take ownership of raw pointers: raw pointers do not own anything. Sol will not delete raw pointers, because they do not (and are not supposed to) own anything:
+sol will not take ownership of raw pointers: raw pointers do not own anything. sol will not delete raw pointers, because they do not (and are not supposed to) own anything:
 
 .. code-block:: cpp
 
@@ -96,7 +96,7 @@ If you have something you know is going to last and you just want to give it to 
 	};
 
 
-Sol can detect ``nullptr``, so if you happen to return it there won't be any dangling because a ``sol::nil`` will be pushed.
+sol can detect ``nullptr``, so if you happen to return it there won't be any dangling because a ``sol::nil`` will be pushed.
 
 .. code-block:: cpp
 

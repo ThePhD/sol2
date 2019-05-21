@@ -1,9 +1,9 @@
 licenses
 ========
 
-The following licenses cover all of the code in Sol. Spoiler: they're all `MIT`_ (and ``CC0``) and it's safe to use in commercial code: feel free to copy/paste the below right into your own attributions / licenses file.
+The following licenses cover all of the code in sol. Spoiler: they're all `MIT`_ (and ``CC0``) and it's safe to use in commercial code: feel free to copy/paste the below right into your own attributions / licenses file.
 
-Sol - ThePhD/sol2:
+sol - ThePhD/sol2:
 ------------------
 
 .. code-block:: none

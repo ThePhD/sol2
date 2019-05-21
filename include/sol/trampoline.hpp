@@ -48,7 +48,7 @@ namespace sol {
 		// must push at least 1 object on the stack
 		inline int default_exception_handler(lua_State* L, optional<const std::exception&>, string_view what) {
 #if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
-			std::cerr << "[sol2] An exception occurred: ";
+			std::cerr << "[sol3] An exception occurred: ";
 			std::cerr.write(what.data(), what.size());
 			std::cerr << std::endl;
 #endif

@@ -1633,7 +1633,7 @@ TEST_CASE("functions/lua style default arguments", "allow default arguments usin
 
 #if !defined(_MSC_VER) || !(defined(_WIN32) && !defined(_WIN64))
 
-TEST_CASE("functions/noexcept", "allow noexcept functions to be serialized properly into Lua using sol2") {
+TEST_CASE("functions/noexcept", "allow noexcept functions to be serialized properly into Lua using sol3") {
 	struct T {
 		static int noexcept_function() noexcept {
 			return 0x61;

@@ -1,4 +1,4 @@
-#define SOL_CHECK_ARGUMENTS 1
+#define SOL_ALL_SAFETIES_ON 1
 #define SOL_ENABLE_INTEROP 1 // MUST be defined to use interop features
 #include <sol/sol.hpp>
 

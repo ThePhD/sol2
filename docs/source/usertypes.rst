@@ -58,8 +58,8 @@ Here are some other general advice and tips for understanding and dealing with u
 	- Work on a copy by taking arguments or returning by value.
 	- Do not use r-value references: they do not mean anything in Lua code.
 	- Move-only types can only be taken by reference: sol3 cannot know if/when to move a value (except when serializing with perfect forwarding *into* Lua, but not calling a C++ function from Lua)
-* The actual metatable associated with the usertype has a long name and is defined to be opaque by the Sol implementation.
-* The actual metatable inner workings is opaque and defined by the Sol implementation, and there are no internal docs because optimizations on the operations are applied based on heuristics we discover from performance testing the system.
+* The actual metatable associated with the usertype has a long name and is defined to be opaque by the sol implementation.
+* The actual metatable inner workings is opaque and defined by the sol implementation, and there are no internal docs because optimizations on the operations are applied based on heuristics we discover from performance testing the system.
 
 .. _here, that uses a few tricks: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_bitfields.cpp
 .. _Lua: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_advanced.cpp#L81

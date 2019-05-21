@@ -1143,7 +1143,7 @@ namespace sol {
 		/// \exclude
 		constexpr optional(const T& u) : base(in_place, u) {
 		}
-#endif // sol2 modification
+#endif // sol3 modification
 
 		/// Converting copy constructor.
 		/// \synopsis template <class U> optional(const optional<U> &rhs);

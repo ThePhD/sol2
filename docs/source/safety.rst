@@ -1,7 +1,7 @@
 config and safety
 =================
 
-Sol was designed to be correct and fast, and in the pursuit of both uses the regular ``lua_to{x}`` functions of Lua rather than the checking versions (``lua_check{X}``) functions. The API defaults to paranoidly-safe alternatives if you have a ``#define SOL_CHECK_ARGUMENTS`` before you include Sol, or if you pass the ``SOL_CHECK_ARGUMENTS`` define on the build command for your build system. By default, it is off and remains off unless you define this, even in debug mode.
+sol was designed to be correct and fast, and in the pursuit of both uses the regular ``lua_to{x}`` functions of Lua rather than the checking versions (``lua_check{X}``) functions. The API defaults to paranoidly-safe alternatives if you have a ``#define SOL_ALL_SAFETIES_ON`` before you include sol, or if you pass the ``SOL_ALL_SAFETIES_ON`` define on the build command for your build system. By default, it is off and remains off unless you define this, even in debug mode.
 
 .. _config:
 
@@ -54,7 +54,7 @@ Safety Config
 	* Don't turn this on unless you have an extremely good reason
 	* *DON'T TURN THIS ON UNLESS YOU HAVE AN EXTREMELY GOOD REASON*
 
-``SOL_CHECK_ARGUMENTS`` triggers the following changes:
+``SOL_ALL_SAFETIES_ON`` triggers the following changes:
 	* If ``SOL_SAFE_USERTYPE``, ``SOL_SAFE_REFERENCES``, ``SOL_SAFE_FUNCTION``, ``SOL_SAFE_NUMERICS``, ``SOL_SAFE_GETTER``, and ``SOL_SAFE_FUNCTION_CALLS`` are not defined, they get defined and the effects described above kick in
 	* **Not** turned on by default under any settings: *this MUST be turned on manually*
 

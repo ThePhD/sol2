@@ -11,10 +11,14 @@ These are all the things. Use your browser's search to find things you want.
 	
 	All of the code below is available at the `sol3 tutorial examples`_.
 
+.. note::
+	
+	Make sure to add ``SOL_ALL_SAFETIES_ON`` preprocessor define to your build configuration to turn safety on.
+
 asserts / prerequisites
 -----------------------
 
-You'll need to ``#include <sol/sol.hpp>`` somewhere in your code. Sol is header-only, so you don't need to compile anything. However, **Lua must be compiled and available**. See the :doc:`getting started tutorial<getting-started>` for more details.
+You'll need to ``#include <sol/sol.hpp>`` somewhere in your code. sol is header-only, so you don't need to compile anything. However, **Lua must be compiled and available**. See the :doc:`getting started tutorial<getting-started>` for more details.
 
 The implementation for ``assert.hpp`` with ``c_assert`` looks like so:
 
@@ -57,6 +61,13 @@ To run Lua code but have an error handler in case things go wrong:
 	:linenos:
 	:lines: 28-39,47-
 
+You can see more use of safety by employing the use of `.safe_script`_, which returns a protected result you can use to properly check for errors and similar.
+
+
+.. note::
+
+	If you have the safety definitions on, `.script` will call into the `.safe_script` versions automatically. Otherwise, it will call into the `.unsafe_script` versions.
+
 
 running lua code (low-level)
 ----------------------------
@@ -73,6 +84,24 @@ You can use the individual load and function call operator to load, check, and t
 	:lines: 1-10, 16-40, 47-49
 
 You can also `develop custom loaders`_ that pull from things that are not strings or files.
+
+
+passing arguments to scripts
+----------------------------
+
+Arguments to Lua scripts can be passed by first loading the file or script blob, and then calling it using sol's abstractions. Then, in the script, access the variables with a `...` on the left hand side of an assignment:
+
+.. literalinclude:: ../../../examples/source/tutorials/quick_n_dirty/arguments_to_scripts.cpp
+	:linenos:
+
+
+transferring functions (dumping bytecode)
+-----------------------------------------
+
+You can dump the bytecode of a function, which allows you to transfer it to another state (or save it, or load it). Note that bytecode is *typically specific to the Lua version*!
+
+.. literalinclude:: ../../../examples/source//dump.cpp
+	:linenos:
 
 
 set and get variables
@@ -254,14 +283,14 @@ You can emulate namespacing by having a table and giving it the namespace names 
 	:lines: 1-
 
 
-This technique can be used to register namespace-like functions and classes. It can be as deep as you want. Just make a table and name it appropriately, in either Lua script or using the equivalent Sol code. As long as the table FIRST exists (e.g., make it using a script or with one of Sol's methods or whatever you like), you can put anything you want specifically into that table using :doc:`sol::table's<../api/table>` abstractions.
+This technique can be used to register namespace-like functions and classes. It can be as deep as you want. Just make a table and name it appropriately, in either Lua script or using the equivalent sol code. As long as the table FIRST exists (e.g., make it using a script or with one of sol's methods or whatever you like), you can put anything you want specifically into that table using :doc:`sol::table's<../api/table>` abstractions.
 
 there is a LOT more
 -------------------
 
 Some more things you can do/read about:
 	* :doc:`the usertypes page<../usertypes>` lists the huge amount of features for functions
-		- :doc:`unique usertype traits<../api/unique_usertype_traits>` allows you to specialize handle/RAII types from other libraries frameworks, like boost and Unreal, to work with Sol. Allows custom smart pointers, custom handles and others
+		- :doc:`unique usertype traits<../api/unique_usertype_traits>` allows you to specialize handle/RAII types from other libraries frameworks, like boost and Unreal, to work with sol. Allows custom smart pointers, custom handles and others
 	* :doc:`the containers page<../containers>` gives full information about handling everything about container-like usertypes
 	* :doc:`the functions page<../functions>` lists a myriad of features for functions
 		- :doc:`variadic arguments<../api/variadic_args>` in functions with ``sol::variadic_args``.
@@ -271,11 +300,12 @@ Some more things you can do/read about:
 	* :doc:`ownership semantics<ownership>` are described for how Lua deals with its own internal references and (raw) pointers.
 	* :doc:`stack manipulation<../api/stack>` to safely play with the stack. You can also define customization points for ``stack::get``/``stack::check``/``stack::push`` for your type.
 	* :doc:`make_reference/make_object convenience function<../api/make_reference>` to get the same benefits and conveniences as the low-level stack API but put into objects you can specify.
-	* :doc:`stack references<../api/stack_reference>` to have zero-overhead Sol abstractions while not copying to the Lua registry.
+	* :doc:`stack references<../api/stack_reference>` to have zero-overhead sol abstractions while not copying to the Lua registry.
 	* :doc:`resolve<../api/resolve>` overloads in case you have overloaded functions; a cleaner casting utility. You must use this to emulate default parameters.
 
+.. _.safe_script: https://github.com/ThePhD/sol2/tree/develop/examples/source/tutorials/quick_n_dirty/running_lua_code_safely.cpp
 .. _develop custom loaders: https://github.com/ThePhD/sol2/blob/develop/examples/custom_reader.cpp
 .. _basic example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype.cpp
 .. _special functions example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_special_functions.cpp
 .. _initializers example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_initializers.cpp
-.. _sol3 tutorial examples: https://github.com/ThePhD/sol2/tree/develop/examples/tutorials/quick_n_dirty
+.. _sol3 tutorial examples: https://github.com/ThePhD/sol2/tree/develop/examples/source/tutorials/quick_n_dirty

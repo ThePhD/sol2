@@ -1,10 +1,10 @@
-#define SOL_CHECK_ARGUMENTS 1
+#define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
 #include <iostream>
 #include "assert.hpp"
 
-// Uses some of the fancier bits of sol2, including the "transparent argument",
+// Uses some of the fancier bits of sol3, including the "transparent argument",
 // sol::this_state, which gets the current state and does not increment
 // function arguments
 sol::object fancy_func(sol::object a, sol::object b, sol::this_state s) {

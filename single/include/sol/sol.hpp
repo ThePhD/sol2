@@ -7584,7 +7584,7 @@ namespace sol {
 		// must push at least 1 object on the stack
 		inline int default_exception_handler(lua_State* L, optional<const std::exception&>, string_view what) {
 #if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
-			std::cerr << "[sol2] An exception occurred: ";
+			std::cerr << "[sol3] An exception occurred: ";
 			std::cerr.write(what.data(), what.size());
 			std::cerr << std::endl;
 #endif
@@ -8216,7 +8216,7 @@ namespace sol {
 		constexpr const char* not_enough_stack_space_integral = "not enough space left on Lua stack for an integral number";
 		constexpr const char* not_enough_stack_space_string = "not enough space left on Lua stack for a string";
 		constexpr const char* not_enough_stack_space_meta_function_name = "not enough space left on Lua stack for the name of a meta_function";
-		constexpr const char* not_enough_stack_space_userdata = "not enough space left on Lua stack to create a sol2 userdata";
+		constexpr const char* not_enough_stack_space_userdata = "not enough space left on Lua stack to create a sol3 userdata";
 		constexpr const char* not_enough_stack_space_generic = "not enough space left on Lua stack to push valuees";
 		constexpr const char* not_enough_stack_space_environment = "not enough space left on Lua stack to retrieve environment";
 		constexpr const char* protected_function_error = "caught (...) unknown error during protected_function call";
@@ -9834,7 +9834,7 @@ namespace sol {
 			constexpr const char* not_enough_stack_space_integral = "not enough space left on Lua stack for an integral number";
 			constexpr const char* not_enough_stack_space_string = "not enough space left on Lua stack for a string";
 			constexpr const char* not_enough_stack_space_meta_function_name = "not enough space left on Lua stack for the name of a meta_function";
-			constexpr const char* not_enough_stack_space_userdata = "not enough space left on Lua stack to create a sol2 userdata";
+			constexpr const char* not_enough_stack_space_userdata = "not enough space left on Lua stack to create a sol3 userdata";
 			constexpr const char* not_enough_stack_space_generic = "not enough space left on Lua stack to push valuees";
 			constexpr const char* not_enough_stack_space_environment = "not enough space left on Lua stack to retrieve environment";
 
@@ -11818,7 +11818,7 @@ namespace sol { namespace stack {
 			// Because additional lambdas / functions which serve as
 			// capture-all-and-then-invoke bloat binary sizes
 			// by an actually detectable amount
-			// (one user uses sol2 pretty heavily and 22 MB of binary size
+			// (one user uses sol3 pretty heavily and 22 MB of binary size
 			// was saved by reducing reliance on lambdas in templates)
 
 			// This would really be solved by having break N;
@@ -21634,7 +21634,7 @@ namespace sol { namespace u_detail {
 
 		// we then let typical definitions potentially override these intrinsics
 		// it's the user's fault if they override things or screw them up:
-		// these names have been reserved and documented since sol2
+		// these names have been reserved and documented since sol3
 
 		// STEP 0: tell the old usertype (if it exists)
 		// to fuck off
@@ -23857,7 +23857,7 @@ namespace sol {
 			std::string err(message, messagesize);
 			lua_settop(L, 0);
 #if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
-			std::cerr << "[sol2] An error occurred and panic has been invoked: ";
+			std::cerr << "[sol3] An error occurred and panic has been invoked: ";
 			std::cerr << err;
 			std::cerr << std::endl;
 #endif
@@ -23882,7 +23882,7 @@ namespace sol {
 			msg.assign(traceback.data(), traceback.size());
 		}
 #if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
-		//std::cerr << "[sol2] An error occurred and was caught in traceback: ";
+		//std::cerr << "[sol3] An error occurred and was caught in traceback: ";
 		//std::cerr << msg;
 		//std::cerr << std::endl;
 #endif // Printing
@@ -23944,7 +23944,7 @@ namespace sol {
 			err.append(serr.data(), serr.size());
 		}
 #if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
-		std::cerr << "[sol2] An error occurred and has been passed to an error handler: ";
+		std::cerr << "[sol3] An error occurred and has been passed to an error handler: ";
 		std::cerr << err;
 		std::cerr << std::endl;
 #endif

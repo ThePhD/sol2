@@ -34,7 +34,7 @@ There are 4 kinds of constructors here. One allows construction of an object fro
 	template<typename T>
 	decltype(auto) as() const;
 
-Performs a cast of the item this reference refers to into the type ``T`` and returns it. It obeys the same rules as :ref:`sol::stack::get\<T><getter>`.
+Performs a cast of the item this reference refers to into the type ``T`` and returns it. It obeys the same rules as :ref:`sol::stack::get\<T><stack-get>`.
 
 .. code-block:: cpp
 	:caption: function: type check
@@ -42,7 +42,7 @@ Performs a cast of the item this reference refers to into the type ``T`` and ret
 	template<typename T>
 	bool is() const;
 
-Performs a type check using the :ref:`sol::stack::check<checker>` api, after checking if the reference is valid.
+Performs a type check using the :ref:`sol::stack::check<stack-check>` api, after checking if the internally stored reference is valid.
 
 
 non-members
@@ -63,8 +63,6 @@ These allow a person to compare an ``sol::object`` against :ref:`nil<nil>`, whic
 	if (myobj == sol::nil) {
 		// doesn't have anything...
 	}
-
-Use this to check objects.
 
 
 .. _any_return example: https://github.com/ThePhD/sol2/blob/develop/examples/any_return.cpp

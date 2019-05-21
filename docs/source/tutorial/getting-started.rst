@@ -1,7 +1,7 @@
 getting started
 ===============
 
-Let's get you going with Sol! To start, you'll need to use a lua distribution of some sort. Sol doesn't provide that: it only wraps the API that comes with it, so you can pick whatever distribution you like for your application. There are lots, but the two popular ones are `vanilla Lua`_ and speedy `LuaJIT`_ . We recommend vanilla Lua if you're getting started, LuaJIT if you need speed and can handle some caveats: the interface for Sol doesn't change no matter what Lua version you're using.
+Let's get you going with sol! To start, you'll need to use a lua distribution of some sort. sol doesn't provide that: it only wraps the API that comes with it, so you can pick whatever distribution you like for your application. There are lots, but the two popular ones are `vanilla Lua`_ and speedy `LuaJIT`_ . We recommend vanilla Lua if you're getting started, LuaJIT if you need speed and can handle some caveats: the interface for sol doesn't change no matter what Lua version you're using.
 
 If you need help getting or building Lua, check out the `Lua page on getting started`_. Note that for Visual Studio, one can simply download the sources, include all the Lua library files in that project, and then build for debug/release, x86/x64/ARM rather easily and with minimal interference. Just make sure to adjust the Project Property page to build as a static library (or a DLL with the proper define set in the ``Preprocessor`` step).
 
@@ -59,7 +59,7 @@ The second line opens a single lua-provided library, "base". There are several o
 		return 0;
 	}
 
-If you're interested in integrating Sol with a project that already uses some other library or Lua in the codebase, check out the :doc:`existing example<existing>` to see how to work with Sol when you add it to a project (the existing example covers ``require`` as well)!
+If you're interested in integrating sol with a project that already uses some other library or Lua in the codebase, check out the :doc:`existing example<existing>` to see how to work with sol when you add it to a project (the existing example covers ``require`` as well)!
 
 .. note::
 

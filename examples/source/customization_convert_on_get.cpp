@@ -1,4 +1,4 @@
-#define SOL_CHECK_ARGUMENTS 1
+#define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
 #include <iostream>
@@ -11,7 +11,7 @@ struct number_shim {
 
 template <typename Handler>
 bool sol_lua_check(sol::types<number_shim>, lua_State* L, int index, Handler&& handler, sol::stack::record& tracking) {
-	// check_usertype is a backdoor for directly checking sol2 usertypes
+	// check_usertype is a backdoor for directly checking sol3 usertypes
 	if (!sol::stack::check_usertype<number_shim>(L, index) 
 		&& !sol::stack::check<double>(L, index)) {
 		handler(L, index, sol::type_of(L, index), sol::type::userdata, "expected a number_shim or a number");

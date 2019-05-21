@@ -7,9 +7,16 @@ usertype<T>
 	
 	``T`` refers to the type being turned into a usertype.
 
-While other frameworks extend lua's syntax or create Data Structure Languages (DSLs) to create classes in Lua, :doc:`Sol<../index>` instead offers the ability to generate easy bindings that pile on performance. You can see a `small starter example here`_. These use metatables and userdata in Lua for their implementation. Usertypes are also `runtime extensible`_.
+.. code-block:: cpp
 
-There are more advanced use cases for how to create and use a usertype, which are all based on how to use its constructor (see below).
+	class metatable : public table;
+
+	template <typename T>
+	class usertype : public metatable;
+
+While other frameworks extend lua's syntax or create Data Structure Languages (DSLs) to create classes in Lua, :doc:`sol<../index>` instead offers the ability to generate easy bindings that pile on performance. You can see a `small starter example here`_. These use metatables and userdata in Lua for their implementation. Usertypes are also `runtime extensible`_.
+
+There are more advanced use cases for how to create and use a usertype, which are all based on how to use its `.set()` function and its initial construction (see below).
 
 enumerations
 ------------
@@ -55,31 +62,55 @@ enumerations
 		next,
 		type,
 		type_info,
+		call_construct,
+		storage,
+		gc_names,
+		static_index,
+		static_new_index,
 	};
 
 	typedef meta_function meta_method;
 
-
 Use this enumeration to specify names in a manner friendlier than memorizing the special lua metamethod names for each of these. Each binds to a specific operation indicated by the descriptive name of the enum. You can read more about `the metamethods in the Lua manual`_ and learn about how they work and are supposed to be implemented there. Each of the names here (except for the ones used as shortcuts to other names like ``meta_function::call_function`` and ``meta_function::involution`` and not including ``construct``, which just maps to the name ``new``) link directly to the Lua name for the operation. ``meta_function::pairs`` is only available in Lua 5.2 and above (does not include LuaJIT or Lua 5.1) and ``meta_function::ipairs`` is only available in Lua 5.2 exactly (disregarding compatibiltiy flags).
 
-members
+Some are also sol2 specific, for example ``meta_function::type_info``, ``meta_function::call_construct``, ``meta_function::static_index`` and ``meta_function::static_new_index`` are sol2-specific and usable by users. The entries ``meta_function::storage`` and ``meta_function::gc_names`` are sol2-internal but still in the enumeration; **please** do not use them.
+
+``meta_function::index`` and ``meta_function::new_index`` apply strictly to when an object in Lua is called with a key *it does not already know* (e.g., was not bound by the C++ programmer with ``.set(...)`` or ``.new_usertype<...>(...);``. ``meta_function::static_index`` and `meta_function::static_new_index`` functions get called when the the key is not found and the user is calling the new function from the named metatable itself.
+
+structs
 -------
 
+.. _automagic_enrollments:
+
 .. code-block:: cpp
-	:caption: function: usertype<T> constructor
-	:name: usertype-constructor
+	:caption: automagic_enrollments for special members defined on a class
+	:linenos:	
 
-	template<typename... Args>
-	usertype<T>(Args&&... args);
+	struct automagic_enrollments {
+		bool default_constructor = true;
+		bool destructor = true;
+		bool pairs_operator = true;
+		bool to_string_operator = true;
+		bool call_operator = true;
+		bool less_than_operator = true;
+		bool less_than_or_equal_to_operator = true;
+		bool length_operator = true;
+		bool equal_to_operator = true;
+	};
+
+This structure is used with ``new_usertype`` to specifically ordain certain special member functions to be bound to Lua, whether it is capable of them or not.
 
 
-The constructor of usertype takes a variable number of arguments. It takes an even number of arguments (except in the case where the very first argument is passed as the :ref:`constructor list type<constructor>`). Names can either be strings, :ref:`special meta_function enumerations<meta_function_enum>`, or one of the special indicators for initializers.
+new_usertype/set
+----------------
+
+``sol::usertype<T>`` is a specialized version of ``sol::metatable``s, which are a specialized version of ``sol::table``. ``sol::metatable``s attempt to treat the table like either a Lua or a sol2 metatable. ``sol::usertype<T>`` demands that a usertype is a specific metatable for a specific class. Both of them are `sol::reference derived types<reference>`, meaning they take in the ``lua_State*``. For example...
 
 
-usertype constructor options
-++++++++++++++++++++++++++++
+new_usertype/set options
+++++++++++++++++++++++++
 
-If you don't specify any constructor options at all and the type is `default_constructible`_, Sol will generate a ``new`` for you. Otherwise, the following are special ways to handle the construction of a usertype:
+If  the type is `default_constructible`_, sol will generate a ``"new"`` member on the usertype for you. Otherwise, use ``my_table.new_usertype<MyType>("name", sol::no_constructor);`` to prevent the constructor or pass in a ``sol::automagic_enrollments enrollments; /* modify members here */;`` when calling ``.new_usertype<MyType>("name", enrollments);``. Otherwise, the following are special ways to handle the construction of a usertype:
  
 ..  _constructor:
 
@@ -108,7 +139,11 @@ If you don't specify any constructor options at all and the type is `default_con
 	- This is compatible with luabind, kaguya and other Lua library syntaxes and looks similar to C++ syntax, but the general consensus in Programming with Lua and other places is to use a function named ``new``
 	- Note that with the ``sol::call_constructor`` key, a construct type above must be specified. A free function without it will pass in the metatable describing this object as the first argument without that distinction, which can cause strange runtime errors.
 * ``{anything}, sol::no_constructor``
-	- Specifically tells Sol not to create a ``.new()`` if one is not specified and the type is default-constructible
+	- Specifically tells sol not to create a ``.new()`` if one is not specified and the type is default-constructible
+	- When the key ``{anything}`` is called on the table, it will result in an error. The error might be that the type is not-constructible. 
+	- *Use this plus some of the above to allow a factory function for your function type but prevent other types of constructor idioms in Lua*
+* ``{anything}, sol::no_constructor``
+	- Specifically tells sol not to create a ``.new()`` if one is not specified and the type is default-constructible
 	- When the key ``{anything}`` is called on the table, it will result in an error. The error might be that the type is not-constructible. 
 	- *Use this plus some of the above to allow a factory function for your function type but prevent other types of constructor idioms in Lua*
 
@@ -129,8 +164,8 @@ If you don't specify anything at all and the type is `destructible`_, then a des
 
 .. _automagical-registration:
 
-usertype automatic meta functions
-+++++++++++++++++++++++++++++++++
+usertype automatic (automagic) meta functions
++++++++++++++++++++++++++++++++++++++++++++++
 
 If you don't specify a ``sol::meta_function`` name (or equivalent string metamethod name) and the type ``T`` supports certain operations, sol3 will generate the following operations provided it can find a good default implementation:
 
@@ -194,6 +229,11 @@ Otherwise, the following is used to specify functions to bind on the specific us
 	- Tells a usertype what its base classes are. You need this to have derived-to-base conversions work properly. See :ref:`inheritance<usertype-inheritance>`
 
 
+unregister
+----------
+
+You can unlink and kill a usertype and its associated functionality by calling ``.unregister()`` on a ``sol::usertype<T>`` or ``sol::metatable`` pointed at a proper sol3 metatable. This will entirely unlink and clean out sol3's internal lookup structures and key information.
+
 runtime functions
 -----------------
 
@@ -220,7 +260,7 @@ Functions set on a usertype support overloading. See :doc:`here<overload>` for a
 inheritance
 -----------
 
-Sol can adjust pointers from derived classes to base classes at runtime, but it has some caveats based on what you compile with:
+sol can adjust pointers from derived classes to base classes at runtime, but it has some caveats based on what you compile with:
 
 If your class has no complicated™ virtual inheritance or multiple inheritance, than you can try to sneak away with a performance boost from not specifying any base classes and doing any casting checks. (What does "complicated™" mean? Ask your compiler's documentation, if you're in that deep.)
 
@@ -230,7 +270,7 @@ Register the base classes explicitly.
 
 .. note::
 
-	Always specify your bases if you plan to retrieve a base class using the Sol abstraction directly and not casting yourself.
+	Always specify your bases if you plan to retrieve a base class using the sol abstraction directly and not casting yourself.
 
 .. literalinclude:: ../../../examples/source/docs/inheritance.cpp
 	:caption: inheritance.cpp
@@ -240,15 +280,15 @@ Register the base classes explicitly.
 
 .. note::
 
-	You must list ALL base classes, including (if there were any) the base classes of A, and the base classes of those base classes, etc. if you want Sol/Lua to handle them automagically.
+	You must list ALL base classes, including (if there were any) the base classes of A, and the base classes of those base classes, etc. if you want sol/Lua to handle them automagically.
 
 .. note::
 	
-	Sol does not support down-casting from a base class to a derived class at runtime.
+	sol does not support down-casting from a base class to a derived class at runtime.
 
 .. warning::
 
-	Specify all base class member variables and member functions to avoid current implementation caveats regarding automatic base member lookup. Sol currently attempts to link base class methods and variables with their derived classes with an undocumented, unsupported feature, provided you specify ``sol::bases<...>``. Unfortunately, this can come at the cost of performance, depending on how "far" the base is from the derived class in the bases lookup list. If you do not want to suffer the performance degradation while we iron out the kinks in the implementation (and want it to stay performant forever), please specify all the base methods on the derived class in the method listing you write. In the future, we hope that with reflection we will not have to worry about this.
+	Specify all base class member variables and member functions to avoid current implementation caveats regarding automatic base member lookup. sol currently attempts to link base class methods and variables with their derived classes with an undocumented, unsupported feature, provided you specify ``sol::bases<...>``. Unfortunately, this can come at the cost of performance, depending on how "far" the base is from the derived class in the bases lookup list. If you do not want to suffer the performance degradation while we iron out the kinks in the implementation (and want it to stay performant forever), please specify all the base methods on the derived class in the method listing you write. In the future, we hope that with reflection we will not have to worry about this.
 
 .. _automagical:
 
@@ -269,7 +309,7 @@ Usertypes automatically register special functions, whether or not they're bound
 inheritance + overloading
 -------------------------
 
-While overloading is supported regardless of inheritance caveats or not, the current version of Sol has a first-match, first-call style of overloading when it comes to inheritance. Put the functions with the most derived arguments first to get the kind of matching you expect or cast inside of an intermediary C++ function and call the function you desire.
+While overloading is supported regardless of inheritance caveats or not, the current version of sol has a first-match, first-call style of overloading when it comes to inheritance. Put the functions with the most derived arguments first to get the kind of matching you expect or cast inside of an intermediary C++ function and call the function you desire.
 
 compilation speed
 -----------------
@@ -283,7 +323,7 @@ performance note
 
 .. note::
 
-	Note that performance for member function calls goes down by a fixed overhead if you also bind variables as well as member functions. This is purely a limitation of the Lua implementation and there is, unfortunately, nothing that can be done about it. If you bind only functions and no variables, however, Sol will automatically optimize the Lua runtime and give you the maximum performance possible. *Please consider ease of use and maintenance of code before you make everything into functions.*
+	Note that performance for member function calls goes down by a fixed overhead if you also bind variables as well as member functions. This is purely a limitation of the Lua implementation and there is, unfortunately, nothing that can be done about it. If you bind only functions and no variables, however, sol will automatically optimize the Lua runtime and give you the maximum performance possible. *Please consider ease of use and maintenance of code before you make everything into functions.*
 
 .. _destructible: http://en.cppreference.com/w/cpp/types/is_destructible
 .. _default_constructible: http://en.cppreference.com/w/cpp/types/is_constructible

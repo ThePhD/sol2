@@ -87,7 +87,7 @@ When you bind a function to Lua, please take any pointer arguments as ``T*``, un
 function call safety
 --------------------
 
-You can have functions here and on usertypes check to definitely make sure that the types passed to C++ functions are what they're supposed to be by adding a ``#define SOL_CHECK_ARGUMENTS`` before including Sol, or passing it on the command line. Otherwise, for speed reasons, these checks are only used where absolutely necessary (like discriminating between :doc:`overloads<api/overload>`). See :doc:`safety<../safety>` for more information.
+You can have functions here and on usertypes check to definitely make sure that the types passed to C++ functions are what they're supposed to be by adding a ``#define SOL_ALL_SAFETIES_ON`` before including sol, or passing it on the command line. Otherwise, for speed reasons, these checks are only used where absolutely necessary (like discriminating between :doc:`overloads<api/overload>`). See :doc:`safety<../safety>` for more information.
 
 
 .. _raw-function-note:
@@ -95,7 +95,7 @@ You can have functions here and on usertypes check to definitely make sure that 
 raw functions (``lua_CFunction``)
 ---------------------------------
 
-When you push a function into Lua using Sol using any methods and that function exactly matches the signature ``int( lua_State* );``, it will be treated as a *raw C function* (a ``lua_CFunction``). This means that the usual exception trampoline Sol wraps your other function calls in will not be present. You will be responsible for catching exceptions and handling them before they explode into the C API (and potentially destroy your code). Sol in all other cases adds an exception-handling trampoline that turns exceptions into Lua errors that can be caught by the above-mentioned protected functions and accessors.
+When you push a function into Lua using sol using any methods and that function exactly matches the signature ``int( lua_State* );``, it will be treated as a *raw C function* (a ``lua_CFunction``). This means that the usual exception trampoline sol wraps your other function calls in will not be present. You will be responsible for catching exceptions and handling them before they explode into the C API (and potentially destroy your code). sol in all other cases adds an exception-handling trampoline that turns exceptions into Lua errors that can be caught by the above-mentioned protected functions and accessors.
 
 Note that stateless lambdas can be converted to a function pointer, so stateless lambdas similar to the form ``[](lua_State*) -> int { ... }`` will also be pushed as raw functions. If you need to get the Lua state that is calling a function, use :doc:`sol::this_state<api/this_state>`.
 

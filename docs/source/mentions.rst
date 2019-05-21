@@ -4,7 +4,7 @@ mentions
 
 First off, feel free to `tell me about your uses!`_
 
-Okay, so the features don't convince you, the documentation doesn't convince you, you want to see what *other* people think about Sol? Well, aside from the well-wishes that come through in the issue tracker, here's a few things floating around about sol3 that I occasionally get pinged about:
+Okay, so the features don't convince you, the documentation doesn't convince you, you want to see what *other* people think about sol? Well, aside from the well-wishes that come through in the issue tracker, here's a few things floating around about sol3 that I occasionally get pinged about:
 
 `eevee`_ demonstrating the sheer code reduction by using sol3:
 

@@ -26,7 +26,7 @@
 
 // The various pieces of the compatibility layer
 // comes from https://github.com/keplerproject/lua-compat-5.3
-// but has been modified in many places for use with Sol and luajit,
+// but has been modified in many places for use with sol and luajit,
 // though the core abstractions remain the same
 
 #include "feature_test.hpp"

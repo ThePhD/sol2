@@ -28,8 +28,8 @@ cmake_minimum_required(VERSION 3.5.0)
 file(GLOB SOL2_SINGLE_HEADER_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/**/*.hpp)
 source_group(sol2_single FILES ${SOL2_SINGLE_HEADER_SOURCES})
 
-# # # sol2 Library, single
-# # Add a target for sol2's library to be included by external users
+# # # sol3 Library, single
+# # Add a target for sol3's library to be included by external users
 # # single version
 add_library(sol2_single INTERFACE)
 add_library(sol2::sol2_single ALIAS sol2_single)
@@ -41,7 +41,7 @@ target_include_directories(sol2_single INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<INSTALL_INTERFACE:sol/single/include>)
 
-# # # sol2 single generation header
+# # # sol3 single generation header
 # generate the single header if we can find the python3 interpreter
 if (SOL2_GENERATE_SINGLE)
 	find_package(PythonInterp 3)
@@ -62,7 +62,7 @@ if (SOL2_GENERATE_SINGLE)
 		"${CMAKE_CURRENT_BINARY_DIR}/include/sol/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/include/sol/forward.hpp" 
 		"${sol2_generated_header_sources}")
 	
-	# # # sol2 generated single header library
+	# # # sol3 generated single header library
 	add_library(sol2_single_generated INTERFACE)
 	add_library(sol2::sol2_single_generated ALIAS sol2_single_generated)
 	set_target_properties(sol2_single_generated

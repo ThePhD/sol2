@@ -11,7 +11,7 @@
 [![Support via Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.herokuapp.com%2FThePhD)](https://patreon.com/thephd)
 [![Liberapay patrons](https://img.shields.io/liberapay/patrons/ThePhD.svg)](https://liberapay.com/ThePhD/)
 
-Sol is a C++ library binding to Lua. It currently supports all Lua versions 5.1+ (LuaJIT 2.x included). Sol aims to be easy to use and easy to add to a project.
+sol is a C++ library binding to Lua. It currently supports all Lua versions 5.1+ (LuaJIT 2.x included). sol aims to be easy to use and easy to add to a project.
 The library is header-only for easy integration with projects.
 
 ## Documentation
@@ -116,7 +116,7 @@ C++Now 2019 - Flug Auditorium, Aspen Physics Center, Aspen, Colorado
 
 ## Supported Compilers
 
-Sol makes use of C++17 features. GCC 7.x.x and Clang 3.9.x (with `-std=c++1z` and appropriate standard library) 
+sol makes use of C++17 features. GCC 7.x.x and Clang 3.9.x (with `-std=c++1z` and appropriate standard library) 
 or higher should be able to compile without problems. However, the officially supported and CI-tested compilers are:
 
 - GCC 7.x.x+ (MinGW 7.x.x+)
@@ -147,6 +147,6 @@ You will need any flavor of python3 and an available compiler. The testing suite
 
 ## License
 
-Sol is distributed with an MIT License. You can see LICENSE.txt for more info.
+sol is distributed with an MIT License. You can see LICENSE.txt for more info.
 
 If you need a custom solution, feel free to contact me.

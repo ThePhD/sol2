@@ -99,7 +99,7 @@
 
 #endif // vc++ || clang++/g++
 
-#if defined(SOL_CHECK_ARGUMENTS) && SOL_CHECK_ARGUMENTS
+#if defined(SOL_ALL_SAFETIES_ON) && SOL_ALL_SAFETIES_ON
 
 	// Checks low-level getter function
 	// (and thusly, affects nearly entire framework)

@@ -1,6 +1,6 @@
 // Thanks to OrfeasZ for their answer to
 // an issue for this example!
-#define SOL_CHECK_ARGUMENTS 1
+#define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
 #include "assert.hpp"
@@ -12,7 +12,7 @@
 // -- this is called a "raw C function",
 // and matches the type for lua_CFunction
 int LoadFileRequire(lua_State* L) {
-	// use sol2 stack API to pull
+	// use sol3 stack API to pull
 	// "first argument"
 	std::string path = sol::stack::get<std::string>(L, 1);
 
@@ -64,7 +64,7 @@ int main() {
 		c_assert(!b_result.valid());
 	}
 	catch (const std::exception& ex) {
-		// Whenever sol2 throws an exception from panic,
+		// Whenever sol3 throws an exception from panic,
 		// catch
 		std::cout << "Something went wrong, as expected:\n" << ex.what() << std::endl;
 		// and CRASH / exit the application

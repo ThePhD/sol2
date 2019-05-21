@@ -1,4 +1,4 @@
-#define SOL_CHECK_ARGUMENTS 1
+#define SOL_ALL_SAFETIES_ON 1
 #define SOL_ENABLE_INTEROP 1 // MUST be defined to use interop features
 #include <sol/sol.hpp>
 
@@ -55,7 +55,7 @@ inline bool sol_lua_interop_check(sol::types<T>, lua_State* L, int relindex, sol
 template <typename T>
 inline std::pair<bool, T*> sol_lua_interop_get(sol::types<T> t, lua_State* L, int relindex, void* unadjusted_pointer, sol::stack::record& tracking) {
 	// you may not need to specialize this method every time:
-	// some libraries are compatible with sol2's layout
+	// some libraries are compatible with sol3's layout
 	int index = lua_absindex(L, relindex);
 	if (!sol_lua_interop_check(t, L, index, sol::type::userdata, sol::no_panic, tracking)) {
 		return { false, nullptr };
