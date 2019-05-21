@@ -409,14 +409,10 @@ namespace sol {
 		struct unqualified_pusher<T, std::enable_if_t<is_container_v<T>>> {
 			using C = T;
 
-			static int push(lua_State* L, const T& cont) {
+			template <typename... Args>
+			static int push(lua_State* L, Args&&... args) {
 				stack_detail::metatable_setup<C> fx(L);
-				return stack::push<detail::as_value_tag<T>>(L, detail::with_function_tag(), fx, cont);
-			}
-
-			static int push(lua_State* L, T&& cont) {
-				stack_detail::metatable_setup<C> fx(L);
-				return stack::push<detail::as_value_tag<T>>(L, detail::with_function_tag(), fx, std::move(cont));
+				return stack::push<detail::as_value_tag<T>>(L, detail::with_function_tag(), fx, std::forward<Args>(args)...);
 			}
 		};
 

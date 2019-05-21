@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-05-21 06:13:47.481002 UTC
-// This header was generated with sol v3.0.1-beta2 (revision bd17c83)
+// Generated 2019-05-21 06:26:28.717749 UTC
+// This header was generated with sol v3.0.1-beta2 (revision 5dee45c)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -14514,7 +14514,7 @@ namespace sol {
 
 namespace sol {
 
-	template <typename R = reference, bool should_pop = !is_stack_based<R>::value, typename T>
+	template <typename R = reference, bool should_pop = !is_stack_based_v<R>, typename T>
 	R make_reference(lua_State* L, T&& value) {
 		int backpedal = stack::push(L, std::forward<T>(value));
 		R r = stack::get<R>(L, -backpedal);
@@ -14524,7 +14524,7 @@ namespace sol {
 		return r;
 	}
 
-	template <typename T, typename R = reference, bool should_pop = !is_stack_based<R>::value, typename... Args>
+	template <typename T, typename R = reference, bool should_pop = !is_stack_based_v<R>, typename... Args>
 	R make_reference(lua_State* L, Args&&... args) {
 		int backpedal = stack::push<T>(L, std::forward<Args>(args)...);
 		R r = stack::get<R>(L, -backpedal);
@@ -20549,14 +20549,10 @@ namespace sol {
 		struct unqualified_pusher<T, std::enable_if_t<is_container_v<T>>> {
 			using C = T;
 
-			static int push(lua_State* L, const T& cont) {
+			template <typename... Args>
+			static int push(lua_State* L, Args&&... args) {
 				stack_detail::metatable_setup<C> fx(L);
-				return stack::push<detail::as_value_tag<T>>(L, detail::with_function_tag(), fx, cont);
-			}
-
-			static int push(lua_State* L, T&& cont) {
-				stack_detail::metatable_setup<C> fx(L);
-				return stack::push<detail::as_value_tag<T>>(L, detail::with_function_tag(), fx, std::move(cont));
+				return stack::push<detail::as_value_tag<T>>(L, detail::with_function_tag(), fx, std::forward<Args>(args)...);
 			}
 		};
 

@@ -29,7 +29,7 @@
 
 namespace sol {
 
-	template <typename R = reference, bool should_pop = !is_stack_based<R>::value, typename T>
+	template <typename R = reference, bool should_pop = !is_stack_based_v<R>, typename T>
 	R make_reference(lua_State* L, T&& value) {
 		int backpedal = stack::push(L, std::forward<T>(value));
 		R r = stack::get<R>(L, -backpedal);
@@ -39,7 +39,7 @@ namespace sol {
 		return r;
 	}
 
-	template <typename T, typename R = reference, bool should_pop = !is_stack_based<R>::value, typename... Args>
+	template <typename T, typename R = reference, bool should_pop = !is_stack_based_v<R>, typename... Args>
 	R make_reference(lua_State* L, Args&&... args) {
 		int backpedal = stack::push<T>(L, std::forward<Args>(args)...);
 		R r = stack::get<R>(L, -backpedal);
