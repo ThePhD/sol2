@@ -238,6 +238,20 @@ TEST_CASE("usertype/static-properties", "allow for static functions to get and s
 	REQUIRE(v2a == 60.5);
 }
 
+TEST_CASE("usertype/var with string literals", "String literals are the bane of my existence and one day C++ will make them not be fucking arrays") {
+	struct blah {};
+
+	sol::state lua;
+	sol::usertype<blah> x = lua.new_usertype<blah>("blah");
+	x["__className"] = sol::var("Entity");
+
+	std::string cxx_name = x["__className"];
+	std::string lua_name = lua.script("return blah.__className");
+	REQUIRE(cxx_name == lua_name);
+	REQUIRE(cxx_name == "Entity");
+	REQUIRE(lua_name == "Entity");
+}
+
 TEST_CASE("usertype/var-and-property", "make sure const vars are readonly and properties can handle lambdas") {
 	const static int arf = 20;
 

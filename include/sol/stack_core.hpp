@@ -91,7 +91,7 @@ namespace sol {
 		}
 
 		template <typename... Args>
-		inline std::size_t aligned_space_for(void* alignment = nullptr) {
+		std::size_t aligned_space_for(void* alignment = nullptr) {
 			char* start = static_cast<char*>(alignment);
 			(void)detail::swallow{ int{}, (align_one(std::alignment_of_v<Args>, sizeof(Args), alignment), int{})... };
 			return static_cast<char*>(alignment) - start;
@@ -113,7 +113,7 @@ namespace sol {
 		}
 
 		template <bool pre_aligned = false, bool pre_shifted = false>
-		inline void* align_usertype_unique_destructor(void* ptr) {
+		void* align_usertype_unique_destructor(void* ptr) {
 			using use_align = std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 			     false
@@ -135,7 +135,7 @@ namespace sol {
 		}
 
 		template <bool pre_aligned = false, bool pre_shifted = false>
-		inline void* align_usertype_unique_tag(void* ptr) {
+		void* align_usertype_unique_tag(void* ptr) {
 			using use_align = std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 			     false
@@ -157,7 +157,7 @@ namespace sol {
 		}
 
 		template <typename T, bool pre_aligned = false, bool pre_shifted = false>
-		inline void* align_usertype_unique(void* ptr) {
+		void* align_usertype_unique(void* ptr) {
 			typedef std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 			     false
@@ -180,7 +180,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		inline void* align_user(void* ptr) {
+		void* align_user(void* ptr) {
 			typedef std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 			     false
@@ -197,7 +197,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		inline T** usertype_allocate_pointer(lua_State* L) {
+		T** usertype_allocate_pointer(lua_State* L) {
 			typedef std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 			     false
@@ -290,7 +290,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		inline T* usertype_allocate(lua_State* L) {
+		T* usertype_allocate(lua_State* L) {
 			typedef std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 			     false
@@ -355,7 +355,7 @@ namespace sol {
 		}
 
 		template <typename T, typename Real>
-		inline Real* usertype_unique_allocate(lua_State* L, T**& pref, unique_destructor*& dx, unique_tag*& id) {
+		Real* usertype_unique_allocate(lua_State* L, T**& pref, unique_destructor*& dx, unique_tag*& id) {
 			typedef std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 			     false
@@ -429,7 +429,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		inline T* user_allocate(lua_State* L) {
+		T* user_allocate(lua_State* L) {
 			typedef std::integral_constant<bool,
 #if defined(SOL_NO_MEMORY_ALIGNMENT) && SOL_NO_MEMORY_ALIGNMENT
 			     false
@@ -464,7 +464,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		inline int usertype_alloc_destruct(lua_State* L) {
+		int usertype_alloc_destruct(lua_State* L) {
 			void* memory = lua_touserdata(L, 1);
 			memory = align_usertype_pointer(memory);
 			T** pdata = static_cast<T**>(memory);
@@ -475,7 +475,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		inline int unique_destruct(lua_State* L) {
+		int unique_destruct(lua_State* L) {
 			void* memory = lua_touserdata(L, 1);
 			memory = align_usertype_unique_destructor(memory);
 			unique_destructor& dx = *static_cast<unique_destructor*>(memory);
@@ -485,7 +485,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		inline int user_alloc_destruct(lua_State* L) {
+		int user_alloc_destruct(lua_State* L) {
 			void* memory = lua_touserdata(L, 1);
 			memory = align_user<T>(memory);
 			T* data = static_cast<T*>(memory);
@@ -495,7 +495,7 @@ namespace sol {
 		}
 
 		template <typename T, typename Real>
-		inline void usertype_unique_alloc_destroy(void* memory) {
+		void usertype_unique_alloc_destroy(void* memory) {
 			memory = align_usertype_unique<Real, true>(memory);
 			Real* target = static_cast<Real*>(memory);
 			std::allocator<Real> alloc;
@@ -503,7 +503,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		inline int cannot_destruct(lua_State* L) {
+		int cannot_destruct(lua_State* L) {
 			return luaL_error(L,
 			     "cannot call the destructor for '%s': it is either hidden (protected/private) or removed with '= "
 			     "delete' and thusly this type is being destroyed without properly destructing, invoking undefined "
@@ -650,7 +650,8 @@ namespace sol {
 			= decltype(sol_lua_interop_check(types<T>(), static_cast<lua_State*>(nullptr), -1, type::none, no_panic, std::declval<stack::record&>()));
 
 		template <typename T>
-		using adl_sol_lua_check_get_test_t = decltype(sol_lua_check_get(types<T>(), static_cast<lua_State*>(nullptr), -1, no_panic, std::declval<stack::record&>()));
+		using adl_sol_lua_check_get_test_t
+			= decltype(sol_lua_check_get(types<T>(), static_cast<lua_State*>(nullptr), -1, no_panic, std::declval<stack::record&>()));
 
 		template <typename... Args>
 		using adl_sol_lua_push_test_t = decltype(sol_lua_push(static_cast<lua_State*>(nullptr), std::declval<Args>()...));
@@ -723,7 +724,7 @@ namespace sol {
 			}
 
 			template <typename T>
-			inline decltype(auto) unchecked_unqualified_get(lua_State* L, int index, record& tracking) {
+			decltype(auto) unchecked_unqualified_get(lua_State* L, int index, record& tracking) {
 				using Tu = meta::unqualified_t<T>;
 				if constexpr (meta::meta_detail::is_adl_sol_lua_get_v<Tu>) {
 					return sol_lua_get(types<Tu>(), L, index, tracking);
@@ -736,7 +737,7 @@ namespace sol {
 			}
 
 			template <typename T>
-			inline decltype(auto) unchecked_get(lua_State* L, int index, record& tracking) {
+			decltype(auto) unchecked_get(lua_State* L, int index, record& tracking) {
 				if constexpr (meta::meta_detail::is_adl_sol_lua_get_v<T>) {
 					return sol_lua_get(types<T>(), L, index, tracking);
 				}
@@ -748,7 +749,7 @@ namespace sol {
 			}
 
 			template <typename T>
-			inline decltype(auto) unqualified_interop_get(lua_State* L, int index, void* unadjusted_pointer, record& tracking) {
+			decltype(auto) unqualified_interop_get(lua_State* L, int index, void* unadjusted_pointer, record& tracking) {
 				using Tu = meta::unqualified_t<T>;
 				if constexpr (meta::meta_detail::is_adl_sol_lua_interop_get_v<Tu>) {
 					return sol_lua_interop_get(types<Tu>(), L, index, unadjusted_pointer, tracking);
@@ -764,7 +765,7 @@ namespace sol {
 			}
 
 			template <typename T>
-			inline decltype(auto) interop_get(lua_State* L, int index, void* unadjusted_pointer, record& tracking) {
+			decltype(auto) interop_get(lua_State* L, int index, void* unadjusted_pointer, record& tracking) {
 				if constexpr (meta::meta_detail::is_adl_sol_lua_interop_get_v<T>) {
 					return sol_lua_interop_get(types<T>(), L, index, unadjusted_pointer, tracking);
 				}
@@ -798,7 +799,7 @@ namespace sol {
 					return unqualified_interop_check<T>(L, index, index_type, std::forward<Handler>(handler), tracking);
 				}
 			}
-			
+
 			using undefined_method_func = void (*)(stack_reference);
 
 			struct undefined_metatable {
@@ -874,7 +875,7 @@ namespace sol {
 		}
 
 		template <typename T, typename... Args>
-		inline int push(lua_State* L, T&& t, Args&&... args) {
+		int push(lua_State* L, T&& t, Args&&... args) {
 			using Tu = meta::unqualified_t<T>;
 			if constexpr (meta::meta_detail::is_adl_sol_lua_push_exact_v<T, T, Args...>) {
 				return sol_lua_push(types<T>(), L, std::forward<T>(t), std::forward<Args>(args)...);
@@ -894,7 +895,7 @@ namespace sol {
 
 		// overload allows to use a pusher of a specific type, but pass in any kind of args
 		template <typename T, typename Arg, typename... Args, typename = std::enable_if_t<!std::is_same<T, Arg>::value>>
-		inline int push(lua_State* L, Arg&& arg, Args&&... args) {
+		int push(lua_State* L, Arg&& arg, Args&&... args) {
 			using Tu = meta::unqualified_t<T>;
 			if constexpr (meta::meta_detail::is_adl_sol_lua_push_exact_v<T, Arg, Args...>) {
 				return sol_lua_push(types<T>(), L, std::forward<Arg>(arg), std::forward<Args>(args)...);
@@ -915,7 +916,7 @@ namespace sol {
 		namespace stack_detail {
 
 			template <typename T, typename Arg, typename... Args>
-			inline int push_reference(lua_State* L, Arg&& arg, Args&&... args) {
+			int push_reference(lua_State* L, Arg&& arg, Args&&... args) {
 				using use_reference_tag = meta::all<std::is_lvalue_reference<T>,
 				     meta::neg<std::is_const<T>>,
 				     meta::neg<is_lua_primitive<meta::unqualified_t<T>>>,
@@ -927,12 +928,12 @@ namespace sol {
 		} // namespace stack_detail
 
 		template <typename T, typename... Args>
-		inline int push_reference(lua_State* L, T&& t, Args&&... args) {
+		int push_reference(lua_State* L, T&& t, Args&&... args) {
 			return stack_detail::push_reference<T>(L, std::forward<T>(t), std::forward<Args>(args)...);
 		}
 
 		template <typename T, typename Arg, typename... Args>
-		inline int push_reference(lua_State* L, Arg&& arg, Args&&... args) {
+		int push_reference(lua_State* L, Arg&& arg, Args&&... args) {
 			return stack_detail::push_reference<T>(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 		}
 
@@ -942,7 +943,7 @@ namespace sol {
 		}
 
 		template <typename T, typename... Args>
-		inline int multi_push(lua_State* L, T&& t, Args&&... args) {
+		int multi_push(lua_State* L, T&& t, Args&&... args) {
 			int pushcount = push(L, std::forward<T>(t));
 			void(detail::swallow{ (pushcount += stack::push(L, std::forward<Args>(args)), 0)... });
 			return pushcount;
@@ -954,7 +955,7 @@ namespace sol {
 		}
 
 		template <typename T, typename... Args>
-		inline int multi_push_reference(lua_State* L, T&& t, Args&&... args) {
+		int multi_push_reference(lua_State* L, T&& t, Args&&... args) {
 			int pushcount = push_reference(L, std::forward<T>(t));
 			void(detail::swallow{ (pushcount += stack::push_reference(L, std::forward<Args>(args)), 0)... });
 			return pushcount;
@@ -1039,7 +1040,7 @@ namespace sol {
 		}
 
 		template <typename T, typename Handler>
-		inline decltype(auto) unqualified_check_get(lua_State* L, int index, Handler&& handler, record& tracking) {
+		decltype(auto) unqualified_check_get(lua_State* L, int index, Handler&& handler, record& tracking) {
 			using Tu = meta::unqualified_t<T>;
 			if constexpr (meta::meta_detail::is_adl_sol_lua_check_get_v<T>) {
 				return sol_lua_check_get(types<T>(), L, index, std::forward<Handler>(handler), tracking);
@@ -1055,19 +1056,19 @@ namespace sol {
 		}
 
 		template <typename T, typename Handler>
-		inline decltype(auto) unqualified_check_get(lua_State* L, int index, Handler&& handler) {
+		decltype(auto) unqualified_check_get(lua_State* L, int index, Handler&& handler) {
 			record tracking{};
 			return unqualified_check_get<T>(L, index, handler, tracking);
 		}
 
 		template <typename T>
-		inline decltype(auto) unqualified_check_get(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
+		decltype(auto) unqualified_check_get(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
 			auto handler = no_panic;
 			return unqualified_check_get<T>(L, index, handler);
 		}
 
 		template <typename T, typename Handler>
-		inline decltype(auto) check_get(lua_State* L, int index, Handler&& handler, record& tracking) {
+		decltype(auto) check_get(lua_State* L, int index, Handler&& handler, record& tracking) {
 			if constexpr (meta::meta_detail::is_adl_sol_lua_check_get_v<T>) {
 				return sol_lua_check_get(types<T>(), L, index, std::forward<Handler>(handler), tracking);
 			}
@@ -1079,13 +1080,13 @@ namespace sol {
 		}
 
 		template <typename T, typename Handler>
-		inline decltype(auto) check_get(lua_State* L, int index, Handler&& handler) {
+		decltype(auto) check_get(lua_State* L, int index, Handler&& handler) {
 			record tracking{};
 			return check_get<T>(L, index, handler, tracking);
 		}
 
 		template <typename T>
-		inline decltype(auto) check_get(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
+		decltype(auto) check_get(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
 			auto handler = no_panic;
 			return check_get<T>(L, index, handler);
 		}
@@ -1093,19 +1094,19 @@ namespace sol {
 		namespace stack_detail {
 
 			template <typename Handler>
-			inline bool check_types(lua_State*, int, Handler&&, record&) {
+			bool check_types(lua_State*, int, Handler&&, record&) {
 				return true;
 			}
 
 			template <typename T, typename... Args, typename Handler>
-			inline bool check_types(lua_State* L, int firstargument, Handler&& handler, record& tracking) {
+			bool check_types(lua_State* L, int firstargument, Handler&& handler, record& tracking) {
 				if (!stack::check<T>(L, firstargument + tracking.used, handler, tracking))
 					return false;
 				return check_types<Args...>(L, firstargument, std::forward<Handler>(handler), tracking);
 			}
 
 			template <typename... Args, typename Handler>
-			inline bool check_types(types<Args...>, lua_State* L, int index, Handler&& handler, record& tracking) {
+			bool check_types(types<Args...>, lua_State* L, int index, Handler&& handler, record& tracking) {
 				return check_types<Args...>(L, index, std::forward<Handler>(handler), tracking);
 			}
 
@@ -1128,7 +1129,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		inline auto unqualified_get(lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_unqualified_get<T>(L, index, tracking)) {
+		auto unqualified_get(lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_unqualified_get<T>(L, index, tracking)) {
 #if defined(SOL_SAFE_GETTER) && SOL_SAFE_GETTER
 			static constexpr bool is_op = meta::is_specialization_of_v<T, optional>
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
@@ -1151,13 +1152,13 @@ namespace sol {
 		}
 
 		template <typename T>
-		inline decltype(auto) unqualified_get(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
+		decltype(auto) unqualified_get(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
 			record tracking{};
 			return unqualified_get<T>(L, index, tracking);
 		}
 
 		template <typename T>
-		inline auto get(lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_get<T>(L, index, tracking)) {
+		auto get(lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_get<T>(L, index, tracking)) {
 #if defined(SOL_SAFE_GETTER) && SOL_SAFE_GETTER
 			static constexpr bool is_op = meta::is_specialization_of_v<T, optional>
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
@@ -1180,25 +1181,25 @@ namespace sol {
 		}
 
 		template <typename T>
-		inline decltype(auto) get(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
+		decltype(auto) get(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
 			record tracking{};
 			return get<T>(L, index, tracking);
 		}
 
 		template <typename T>
-		inline decltype(auto) get_usertype(lua_State* L, int index, record& tracking) {
+		decltype(auto) get_usertype(lua_State* L, int index, record& tracking) {
 			using UT = meta::conditional_t<std::is_pointer<T>::value, detail::as_pointer_tag<std::remove_pointer_t<T>>, detail::as_value_tag<T>>;
 			return get<UT>(L, index, tracking);
 		}
 
 		template <typename T>
-		inline decltype(auto) get_usertype(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
+		decltype(auto) get_usertype(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
 			record tracking{};
 			return get_usertype<T>(L, index, tracking);
 		}
 
 		template <typename T>
-		inline decltype(auto) pop(lua_State* L) {
+		decltype(auto) pop(lua_State* L) {
 			return popper<meta::unqualified_t<T>>{}.pop(L);
 		}
 
@@ -1263,7 +1264,7 @@ namespace sol {
 		}
 
 		template <typename T, typename F>
-		inline void modify_unique_usertype_as(const stack_reference& obj, F&& f) {
+		void modify_unique_usertype_as(const stack_reference& obj, F&& f) {
 			using u_traits = unique_usertype_traits<T>;
 			void* raw = lua_touserdata(obj.lua_state(), obj.stack_index());
 			void* ptr_memory = detail::align_usertype_pointer(raw);
@@ -1274,7 +1275,7 @@ namespace sol {
 		}
 
 		template <typename F>
-		inline void modify_unique_usertype(const stack_reference& obj, F&& f) {
+		void modify_unique_usertype(const stack_reference& obj, F&& f) {
 			using bt = meta::bind_traits<meta::unqualified_t<F>>;
 			using T = typename bt::template arg_at<0>;
 			using Tu = meta::unqualified_t<T>;
@@ -1286,7 +1287,7 @@ namespace sol {
 	namespace detail {
 
 		template <typename T>
-		inline lua_CFunction make_destructor(std::true_type) {
+		lua_CFunction make_destructor(std::true_type) {
 			if constexpr (is_unique_usertype_v<T>) {
 				return &unique_destruct<T>;
 			}
@@ -1299,12 +1300,12 @@ namespace sol {
 		}
 
 		template <typename T>
-		inline lua_CFunction make_destructor(std::false_type) {
+		lua_CFunction make_destructor(std::false_type) {
 			return &cannot_destruct<T>;
 		}
 
 		template <typename T>
-		inline lua_CFunction make_destructor() {
+		lua_CFunction make_destructor() {
 			return make_destructor<T>(std::is_destructible<T>());
 		}
 
@@ -1316,18 +1317,18 @@ namespace sol {
 		};
 
 		template <typename T>
-		inline int is_check(lua_State* L) {
+		int is_check(lua_State* L) {
 			return stack::push(L, stack::check<T>(L, 1, &no_panic));
 		}
 
 		template <typename T>
-		inline int member_default_to_string(std::true_type, lua_State* L) {
+		int member_default_to_string(std::true_type, lua_State* L) {
 			decltype(auto) ts = stack::get<T>(L, 1).to_string();
 			return stack::push(L, std::forward<decltype(ts)>(ts));
 		}
 
 		template <typename T>
-		inline int member_default_to_string(std::false_type, lua_State* L) {
+		int member_default_to_string(std::false_type, lua_State* L) {
 			return luaL_error(L,
 			     "cannot perform to_string on '%s': no 'to_string' overload in namespace, 'to_string' member "
 			     "function, or operator<<(ostream&, ...) present",
@@ -1335,36 +1336,36 @@ namespace sol {
 		}
 
 		template <typename T>
-		inline int adl_default_to_string(std::true_type, lua_State* L) {
+		int adl_default_to_string(std::true_type, lua_State* L) {
 			using namespace std;
 			decltype(auto) ts = to_string(stack::get<T>(L, 1));
 			return stack::push(L, std::forward<decltype(ts)>(ts));
 		}
 
 		template <typename T>
-		inline int adl_default_to_string(std::false_type, lua_State* L) {
+		int adl_default_to_string(std::false_type, lua_State* L) {
 			return member_default_to_string<T>(meta::supports_to_string_member<T>(), L);
 		}
 
 		template <typename T>
-		inline int oss_default_to_string(std::true_type, lua_State* L) {
+		int oss_default_to_string(std::true_type, lua_State* L) {
 			std::ostringstream oss;
 			oss << stack::unqualified_get<T>(L, 1);
 			return stack::push(L, oss.str());
 		}
 
 		template <typename T>
-		inline int oss_default_to_string(std::false_type, lua_State* L) {
+		int oss_default_to_string(std::false_type, lua_State* L) {
 			return adl_default_to_string<T>(meta::supports_adl_to_string<T>(), L);
 		}
 
 		template <typename T>
-		inline int default_to_string(lua_State* L) {
+		int default_to_string(lua_State* L) {
 			return oss_default_to_string<T>(meta::supports_ostream_op<T>(), L);
 		}
 
 		template <typename T>
-		inline int default_size(lua_State* L) {
+		int default_size(lua_State* L) {
 			decltype(auto) self = stack::unqualified_get<T>(L, 1);
 			return stack::push(L, self.size());
 		}
@@ -1391,8 +1392,8 @@ namespace sol {
 				}
 				else {
 					if constexpr (std::is_same_v<std::equal_to<>, Op> // clang-format hack
-						|| std::is_same_v<std::less_equal<>, Op>     //
-						|| std::is_same_v<std::less_equal<>, Op>) {  //
+					     || std::is_same_v<std::less_equal<>, Op>     //
+					     || std::is_same_v<std::less_equal<>, Op>) {  //
 						if (detail::ptr(l) == detail::ptr(r)) {
 							return stack::push(L, true);
 						}

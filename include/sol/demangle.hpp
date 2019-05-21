@@ -85,7 +85,7 @@ namespace detail {
 	}
 #elif defined(_MSC_VER)
 	template <typename T>
-	inline std::string ctti_get_type_name() {
+	std::string ctti_get_type_name() {
 		std::string name = __FUNCSIG__;
 		std::size_t start = name.find("get_type_name");
 		if (start == std::string::npos)
@@ -122,13 +122,13 @@ namespace detail {
 #endif // compilers
 
 	template <typename T>
-	inline std::string demangle_once() {
+	std::string demangle_once() {
 		std::string realname = ctti_get_type_name<T>();
 		return realname;
 	}
 
 	template <typename T>
-	inline std::string short_demangle_once() {
+	std::string short_demangle_once() {
 		std::string realname = ctti_get_type_name<T>();
 		// This isn't the most complete but it'll do for now...?
 		static const std::array<std::string, 10> ops = {{"operator<", "operator<<", "operator<<=", "operator<=", "operator>", "operator>>", "operator>>=", "operator>=", "operator->", "operator->*"}};
@@ -166,13 +166,13 @@ namespace detail {
 	}
 
 	template <typename T>
-	inline const std::string& demangle() {
+	const std::string& demangle() {
 		static const std::string d = demangle_once<T>();
 		return d;
 	}
 
 	template <typename T>
-	inline const std::string& short_demangle() {
+	const std::string& short_demangle() {
 		static const std::string d = short_demangle_once<T>();
 		return d;
 	}

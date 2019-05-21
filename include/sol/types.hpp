@@ -530,10 +530,19 @@ namespace sol {
 	constexpr inline override_value_t override_value = override_value_t();
 	struct update_if_empty_t {};
 	constexpr inline update_if_empty_t update_if_empty = update_if_empty_t();
+	struct create_if_nil_t {};
+	constexpr inline create_if_nil_t create_if_nil = create_if_nil_t();
 
 	namespace detail {
-		enum insert_mode { none = 0x0, update_if_empty = 0x01, override_value = 0x02 };
-	}
+		enum insert_mode { none = 0x0, update_if_empty = 0x01, override_value = 0x02, create_if_nil = 0x04 };
+
+		template <typename T, typename...>
+		using is_insert_mode = std::integral_constant<bool,
+		     std::is_same_v<T, override_value_t> || std::is_same_v<T, update_if_empty_t> || std::is_same_v<T, create_if_nil_t>>;
+
+		template <typename T, typename...>
+		using is_not_insert_mode = meta::neg<is_insert_mode<T>>;
+	} // namespace detail
 
 	struct this_state {
 		lua_State* L;
@@ -1250,6 +1259,11 @@ namespace sol {
 	struct is_table : std::false_type {};
 	template <bool x, typename T>
 	struct is_table<basic_table_core<x, T>> : std::true_type {};
+	template <typename T>
+	struct is_table<basic_lua_table<T>> : std::true_type {};
+
+	template <typename T>
+	inline constexpr bool is_table_v = is_table<T>::value;
 
 	template <typename T>
 	struct is_function : std::false_type {};
@@ -1258,18 +1272,30 @@ namespace sol {
 	template <typename T, bool aligned, typename Handler>
 	struct is_function<basic_protected_function<T, aligned, Handler>> : std::true_type {};
 
-	template <typename T>
-	struct is_lightuserdata : std::false_type {};
-	template <typename T>
-	struct is_lightuserdata<basic_lightuserdata<T>> : std::true_type {};
 
 	template <typename T>
-	struct is_userdata : std::false_type {};
-	template <typename T>
-	struct is_userdata<basic_userdata<T>> : std::true_type {};
+	using is_lightuserdata = meta::is_specialization_of<T, basic_lightuserdata>;
 
 	template <typename T>
-	struct is_environment : std::integral_constant<bool, is_userdata<T>::value || is_table<T>::value> {};
+	inline constexpr bool is_lightuserdata_v = is_lightuserdata<T>::value;
+
+	template <typename T>
+	using is_userdata = meta::is_specialization_of<T, basic_userdata>;
+
+	template <typename T>
+	inline constexpr bool is_userdata_v = is_userdata<T>::value;
+
+	template <typename T>
+	using is_environment = std::integral_constant<bool, is_userdata_v<T> || is_table_v<T> || meta::is_specialization_of_v<T, basic_environment>>;
+
+	template <typename T>
+	inline constexpr bool is_environment_v = is_environment<T>::value;
+
+	template <typename T>
+	using is_table_like = std::integral_constant<bool, is_table_v<T> || is_environment_v<T> || is_userdata_v<T>>;
+
+	template <typename T>
+	inline constexpr bool is_table_like_v = is_table_like<T>::value;
 
 	template <typename T>
 	struct is_automagical

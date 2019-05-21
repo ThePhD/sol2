@@ -179,23 +179,30 @@ namespace sol {
 		};
 
 		namespace meta_detail {
-			template <std::size_t Limit, std::size_t I, template <typename...> class Pred, typename... Ts>
-			struct count_for_pack : std::integral_constant<std::size_t, 0> {};
-			template <std::size_t Limit, std::size_t I, template <typename...> class Pred, typename T, typename... Ts>
-			               struct count_for_pack<Limit, I, Pred, T, Ts...> : conditional_t < sizeof...(Ts)
-			          == 0
-			     || Limit<2, std::integral_constant<std::size_t, I + static_cast<std::size_t>(Limit != 0 && Pred<T>::value)>,
-			             count_for_pack<Limit - 1, I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>> {};
-			template <std::size_t I, template <typename...> class Pred, typename... Ts>
-			struct count_2_for_pack : std::integral_constant<std::size_t, 0> {};
-			template <std::size_t I, template <typename...> class Pred, typename T, typename U, typename... Ts>
-			struct count_2_for_pack<I, Pred, T, U, Ts...>
-			: conditional_t<sizeof...(Ts) == 0, std::integral_constant<std::size_t, I + static_cast<std::size_t>(Pred<T>::value)>,
-			       count_2_for_pack<I + static_cast<std::size_t>(Pred<T>::value), Pred, Ts...>> {};
+			template <typename, typename TI>
+			using on_even = meta::boolean<(TI::value % 2) == 0>;
+
+			template <typename, typename TI>
+			using on_odd = meta::boolean<(TI::value % 2) == 1>;
+
+			template <typename, typename>
+			using on_always = std::true_type;
+
+			template <template <typename...> class When, std::size_t Limit, std::size_t I, template <typename...> class Pred, typename... Ts>
+			struct count_when_for_pack : std::integral_constant<std::size_t, 0> {};
+			template <template <typename...> class When, std::size_t Limit, std::size_t I, template <typename...> class Pred, typename T, typename... Ts>
+			struct count_when_for_pack<When, Limit, I, Pred, T, Ts...> : conditional_t<
+				sizeof...(Ts) == 0 || Limit < 2,
+					std::integral_constant<std::size_t, I + static_cast<std::size_t>(Limit != 0 && Pred<T>::value)>,
+			     	count_when_for_pack<When, Limit - static_cast<std::size_t>(When<T, std::integral_constant<std::size_t, I>>::value), I + static_cast<std::size_t>(When<T, std::integral_constant<std::size_t, I>>::value && Pred<T>::value), Pred, Ts...>
+			> {};
 		} // namespace meta_detail
 
 		template <template <typename...> class Pred, typename... Ts>
-		struct count_for_pack : meta_detail::count_for_pack<sizeof...(Ts), 0, Pred, Ts...> {};
+		struct count_for_pack : meta_detail::count_when_for_pack<meta_detail::on_always, sizeof...(Ts), 0, Pred, Ts...> {};
+
+		template <template <typename...> class Pred, typename... Ts>
+		inline constexpr std::size_t count_for_pack_v = count_for_pack<Pred, Ts...>::value;
 
 		template <template <typename...> class Pred, typename List>
 		struct count_for;
@@ -204,10 +211,28 @@ namespace sol {
 		struct count_for<Pred, types<Args...>> : count_for_pack<Pred, Args...> {};
 
 		template <std::size_t Limit, template <typename...> class Pred, typename... Ts>
-		struct count_for_to_pack : meta_detail::count_for_pack<Limit, 0, Pred, Ts...> {};
+		struct count_for_to_pack : meta_detail::count_when_for_pack<meta_detail::on_always, Limit, 0, Pred, Ts...> {};
+
+		template <std::size_t Limit, template <typename...> class Pred, typename... Ts>
+		inline constexpr std::size_t count_for_to_pack_v = count_for_to_pack<Limit, Pred, Ts...>::value;
+
+		template <template <typename...> class When, std::size_t Limit, template <typename...> class Pred, typename... Ts>
+		struct count_when_for_to_pack : meta_detail::count_when_for_pack<When, Limit, 0, Pred, Ts...> {};
+
+		template <template <typename...> class When, std::size_t Limit, template <typename...> class Pred, typename... Ts>
+		inline constexpr std::size_t count_when_for_to_pack_v = count_when_for_to_pack<When, Limit, Pred, Ts...>::value;
 
 		template <template <typename...> class Pred, typename... Ts>
-		struct count_2_for_pack : meta_detail::count_2_for_pack<0, Pred, Ts...> {};
+		using count_even_for_pack = count_when_for_to_pack<meta_detail::on_even, sizeof...(Ts), Pred, Ts...>;
+
+		template <template <typename...> class Pred, typename... Ts>
+		inline constexpr std::size_t count_even_for_pack_v = count_even_for_pack<Pred, Ts...>::value;
+
+		template <template <typename...> class Pred, typename... Ts>
+		using count_odd_for_pack = count_when_for_to_pack<meta_detail::on_odd, sizeof...(Ts), Pred, Ts...>;
+
+		template <template <typename...> class Pred, typename... Ts>
+		inline constexpr std::size_t count_odd_for_pack_v = count_odd_for_pack<Pred, Ts...>::value;
 
 		template <typename... Args>
 		struct return_type {

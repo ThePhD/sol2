@@ -137,3 +137,59 @@ TEST_CASE("tables/insertion update_if_empty", "allow updating a value only if it
 		REQUIRE(*totally_there_still == 357);
 	}
 }
+
+TEST_CASE("tables/get create_if_nil", "create tables all the way down") {
+	SECTION("traverse non-optional") {
+		sol::state lua;
+		sol::stack_guard luasg_outer(lua);
+
+		{
+			sol::stack_guard luasg_inner_1(lua);
+			sol::optional<sol::table> not_there = lua["a"]["b"]["c"];
+			REQUIRE_FALSE(static_cast<bool>(not_there));
+		}
+		{
+			sol::stack_guard luasg_inner_2(lua);
+			sol::table totally_created = lua.traverse_get<sol::table>(sol::create_if_nil, "a", "b", "c");
+			REQUIRE(totally_created.size() == 0);
+		}
+	}
+	SECTION("traverse") {
+		sol::state lua;
+		sol::stack_guard luasg(lua);
+
+		sol::optional<sol::table> not_there = lua["a"]["b"]["c"];
+		REQUIRE_FALSE(static_cast<bool>(not_there));
+		sol::optional<sol::table> totally_created = lua.traverse_get<sol::optional<sol::table>>(sol::create_if_nil, "a", "b", "c");
+		sol::optional<sol::table> totally_there = lua["a"]["b"]["c"];
+		REQUIRE(static_cast<bool>(totally_created));
+		REQUIRE(static_cast<bool>(totally_there));
+	}
+	SECTION("proxy non-optional") {
+		sol::state lua;
+		sol::stack_guard luasg_outer(lua);
+
+		{
+			sol::stack_guard luasg_inner_1(lua);
+			sol::optional<sol::table> not_there = lua["a"]["b"]["c"];
+			REQUIRE_FALSE(static_cast<bool>(not_there));
+		}
+		{
+			sol::stack_guard luasg_inner_2(lua);
+			sol::table totally_created = lua[sol::create_if_nil]["a"]["b"]["c"];
+			REQUIRE(totally_created.size() == 0);
+		}
+	}
+
+	SECTION("proxy") {
+		sol::state lua;
+		sol::stack_guard luasg(lua);
+
+		sol::optional<sol::table> not_there = lua["a"]["b"]["c"];
+		REQUIRE_FALSE(static_cast<bool>(not_there));
+		sol::optional<sol::table> totally_created = lua[sol::create_if_nil]["a"]["b"]["c"];
+		sol::optional<sol::table> totally_there = lua["a"]["b"]["c"];
+		REQUIRE(static_cast<bool>(totally_created));
+		REQUIRE(static_cast<bool>(totally_there));
+	}
+}

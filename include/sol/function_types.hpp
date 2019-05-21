@@ -42,7 +42,7 @@ namespace sol {
 		struct call_indicator {};
 
 		template <bool yielding>
-		inline int lua_c_wrapper(lua_State* L) {
+		int lua_c_wrapper(lua_State* L) {
 			lua_CFunction cf = lua_tocfunction(L, lua_upvalueindex(2));
 			int nr = cf(L);
 			if constexpr (yielding) {
@@ -54,7 +54,7 @@ namespace sol {
 		}
 
 		template <bool yielding>
-		inline int lua_c_noexcept_wrapper(lua_State* L) noexcept {
+		int lua_c_noexcept_wrapper(lua_State* L) noexcept {
 			detail::lua_CFunction_noexcept cf = reinterpret_cast<detail::lua_CFunction_noexcept>(lua_tocfunction(L, lua_upvalueindex(2)));
 			int nr = cf(L);
 			if constexpr (yielding) {
@@ -68,10 +68,10 @@ namespace sol {
 		struct c_function_invocation {};
 
 		template <bool is_yielding, typename Fx, typename... Args>
-		inline void select(lua_State* L, Fx&& fx, Args&&... args);
+		void select(lua_State* L, Fx&& fx, Args&&... args);
 
 		template <bool is_yielding, typename Fx, typename... Args>
-		inline void select_set_fx(lua_State* L, Args&&... args) {
+		void select_set_fx(lua_State* L, Args&&... args) {
 			lua_CFunction freefunc = detail::static_trampoline<function_detail::call<meta::unqualified_t<Fx>, 2, is_yielding>>;
 
 			int upvalues = 0;
@@ -81,7 +81,7 @@ namespace sol {
 		}
 
 		template <bool is_yielding, typename R, typename... A, typename Fx, typename... Args>
-		inline void select_convertible(types<R(A...)>, lua_State* L, Fx&& fx, Args&&... args) {
+		void select_convertible(types<R(A...)>, lua_State* L, Fx&& fx, Args&&... args) {
 			using dFx = std::decay_t<meta::unwrap_unqualified_t<Fx>>;
 			using fx_ptr_t = R (*)(A...);
 			constexpr bool is_convertible = std::is_convertible_v<dFx, fx_ptr_t>;
@@ -96,13 +96,13 @@ namespace sol {
 		}
 
 		template <bool is_yielding, typename Fx, typename... Args>
-		inline void select_convertible(types<>, lua_State* L, Fx&& fx, Args&&... args) {
+		void select_convertible(types<>, lua_State* L, Fx&& fx, Args&&... args) {
 			typedef meta::function_signature_t<meta::unwrap_unqualified_t<Fx>> Sig;
 			select_convertible<is_yielding>(types<Sig>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 		}
 
 		template <bool is_yielding, typename Fx, typename... Args>
-		inline void select_member_variable(lua_State* L, Fx&& fx, Args&&... args) {
+		void select_member_variable(lua_State* L, Fx&& fx, Args&&... args) {
 			using uFx = meta::unqualified_t<Fx>;
 			if constexpr (sizeof...(Args) < 1) {
 				using C = typename meta::bind_traits<uFx>::object_type;
@@ -152,7 +152,7 @@ namespace sol {
 		}
 
 		template <bool is_yielding, typename Fx, typename T, typename... Args>
-		inline void select_member_function_with(lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
+		void select_member_function_with(lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
 			using dFx = std::decay_t<Fx>;
 			using Tu = meta::unqualified_t<T>;
 			if constexpr (meta::is_specialization_of_v<Tu, function_detail::class_indicator>) {
@@ -185,7 +185,7 @@ namespace sol {
 		}
 
 		template <bool is_yielding, typename Fx, typename... Args>
-		inline void select_member_function(lua_State* L, Fx&& fx, Args&&... args) {
+		void select_member_function(lua_State* L, Fx&& fx, Args&&... args) {
 			using dFx = std::decay_t<Fx>;
 			if constexpr (sizeof...(Args) < 1) {
 				using C = typename meta::bind_traits<meta::unqualified_t<Fx>>::object_type;
@@ -202,7 +202,7 @@ namespace sol {
 		}
 
 		template <bool is_yielding, typename Fx, typename... Args>
-		inline void select(lua_State* L, Fx&& fx, Args&&... args) {
+		void select(lua_State* L, Fx&& fx, Args&&... args) {
 			using uFx = meta::unqualified_t<Fx>;
 			if constexpr (is_lua_reference_v<uFx>) {
 				// TODO: hoist into lambda in this case for yielding???

@@ -32,7 +32,7 @@
 namespace sol {
 namespace function_detail {
 	template <typename Fx, int start = 1, bool is_yielding = false>
-	inline int call(lua_State* L) {
+	int call(lua_State* L) {
 		Fx& fx = stack::get<user<Fx>>(L, upvalue_index(start));
 		int nr = fx(L);
 		if (is_yielding) {
