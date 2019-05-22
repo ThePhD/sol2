@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-05-21 07:55:59.198915 UTC
-// This header was generated with sol v3.0.1-beta2 (revision ad1b966)
+// Generated 2019-05-21 23:28:10.673891 UTC
+// This header was generated with sol v3.0.2 (revision f701fd2)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -126,6 +126,12 @@
 #endif // vc++ || clang++/g++
 
 #if defined(SOL_CHECK_ARGUMENTS) && SOL_CHECK_ARGUMENTS
+	#if defined(SOL_ALL_SAFETIES_ON)
+		#define SOL_ALL_SAFETIES_ON 1
+	#endif // turn all the safeties on
+#endif // Compatibility define
+
+#if defined(SOL_ALL_SAFETIES_ON) && SOL_ALL_SAFETIES_ON
 
 	// Checks low-level getter function
 	// (and thusly, affects nearly entire framework)
@@ -4726,7 +4732,7 @@ namespace sol {
 		/// \exclude
 		constexpr optional(const T& u) : base(in_place, u) {
 		}
-#endif // sol2 modification
+#endif // sol3 modification
 
 		/// Converting copy constructor.
 		/// \synopsis template <class U> optional(const optional<U> &rhs);
@@ -11818,7 +11824,7 @@ namespace sol { namespace stack {
 			// Because additional lambdas / functions which serve as
 			// capture-all-and-then-invoke bloat binary sizes
 			// by an actually detectable amount
-			// (one user uses sol3 pretty heavily and 22 MB of binary size
+			// (one user uses sol2 pretty heavily and 22 MB of binary size
 			// was saved by reducing reliance on lambdas in templates)
 
 			// This would really be solved by having break N;

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-05-21 07:55:59.916335 UTC
-// This header was generated with sol v3.0.1-beta2 (revision ad1b966)
+// Generated 2019-05-21 23:28:10.944171 UTC
+// This header was generated with sol v3.0.2 (revision f701fd2)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -98,6 +98,12 @@
 	#endif // No RTTI
 
 #endif // vc++ || clang++/g++
+
+#if defined(SOL_CHECK_ARGUMENTS) && SOL_CHECK_ARGUMENTS
+	#if defined(SOL_ALL_SAFETIES_ON)
+		#define SOL_ALL_SAFETIES_ON 1
+	#endif // turn all the safeties on
+#endif // Compatibility define
 
 #if defined(SOL_ALL_SAFETIES_ON) && SOL_ALL_SAFETIES_ON
 

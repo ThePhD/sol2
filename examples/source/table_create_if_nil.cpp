@@ -2,6 +2,7 @@
 #include <sol/sol.hpp>
 
 #include "assert.hpp"
+#include <iostream>
 
 void create_namespace_sf(sol::state& lua) {
 	// this would explode

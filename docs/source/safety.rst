@@ -47,16 +47,16 @@ Safety Config
 	* Affects nearly the entire library for safety (with some blind spots covered by the other definitions)
 	* **Not** turned on by default under any settings: *this MUST be turned on manually*
 
+``SOL_ALL_SAFETIES_ON`` triggers the following changes:
+	* If ``SOL_SAFE_USERTYPE``, ``SOL_SAFE_REFERENCES``, ``SOL_SAFE_FUNCTION``, ``SOL_SAFE_NUMERICS``, ``SOL_SAFE_GETTER``, and ``SOL_SAFE_FUNCTION_CALLS`` are not defined, they get defined and the effects described above kick in
+	* **Not** turned on by default under any settings: *this MUST be turned on manually*
+
 ``SOL_DEFAULT_PASS_ON_ERROR`` triggers the following changes:
 	* The default error handler for ``sol::state_view::script_`` functions is ``sol::script_pass_on_error`` rather than ``sol::script_throw_on_error``
 	* Passes errors on through: **very dangerous** as you can ignore or never be warned about errors if you don't catch the return value of specific functions
 	* **Not** turned on by default: *this MUST be turned on manually*
 	* Don't turn this on unless you have an extremely good reason
 	* *DON'T TURN THIS ON UNLESS YOU HAVE AN EXTREMELY GOOD REASON*
-
-``SOL_ALL_SAFETIES_ON`` triggers the following changes:
-	* If ``SOL_SAFE_USERTYPE``, ``SOL_SAFE_REFERENCES``, ``SOL_SAFE_FUNCTION``, ``SOL_SAFE_NUMERICS``, ``SOL_SAFE_GETTER``, and ``SOL_SAFE_FUNCTION_CALLS`` are not defined, they get defined and the effects described above kick in
-	* **Not** turned on by default under any settings: *this MUST be turned on manually*
 
 ``SOL_NO_CHECK_NUMBER_PRECISION`` triggers the following changes:
 	* If ``SOL_SAFE_NUMERICS`` is defined, turns off number precision and integer precision fitting when pushing numbers into sol2
@@ -71,6 +71,10 @@ Safety Config
 	* This **does not** include: booleans, types with ``__tostring`` enabled, and everything else
 	* Overrides safety and always applies if it is turned on
 	* **Not** turned on by default under any settings: *this MUST be turned on manually*
+
+``SOL_CHECK_ARGUMENTS`` is a deprecated define that will be removed soon:
+	* It is simply an alias for ``SOL_ALL_SAFETIES_ON``
+	* Please change all your code to use ``SOL_ALL_SAFETIES_ON``
 
 .. _config-feature:
 
