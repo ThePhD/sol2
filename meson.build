@@ -48,7 +48,7 @@ if get_option('single')
 	sol2_single = custom_target('sol2_single',
 		input: cmd.stdout().strip().split('\n'),
 		output: 'sol.hpp',
-		command: [ python, files('single/single.py'), '--input', './include'. '--output', '@OUTPUT@' ]
+		command: [ python, files('single/single.py'), '--input', './include', '--output', '@OUTPUT@' ]
 	)
 
 	# Expose the dependency.
