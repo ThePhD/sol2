@@ -122,7 +122,7 @@ Indices and tables
 
 .. |pp| image:: media/pp_cc_mark_111x69.jpg
 	:height: 50
-	:target: https://www.paypal.me/thephd
+	:target: https://www.paypal.me/LMeneide
 	:alt: sol3 PayPal
 	:align: middle
 
