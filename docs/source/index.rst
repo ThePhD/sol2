@@ -92,10 +92,9 @@ the basics:
 	:linenos:
 
 
-Indices and tables
-==================
+Search
+======
 
-* :ref:`genindex`
 * :ref:`search`
 
 .. _Sol: https://github.com/ThePhD/sol2
