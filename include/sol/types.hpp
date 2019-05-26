@@ -97,7 +97,7 @@ namespace sol {
 	} // namespace detail
 
 	struct lua_nil_t {};
-	constexpr lua_nil_t lua_nil{};
+	inline constexpr lua_nil_t lua_nil{};
 	inline bool operator==(lua_nil_t, lua_nil_t) {
 		return true;
 	}
@@ -106,7 +106,7 @@ namespace sol {
 	}
 #if !defined(SOL_NO_NIL) || (SOL_NO_NIL == 0)
 	using nil_t = lua_nil_t;
-	constexpr const nil_t& nil = lua_nil;
+	inline constexpr const nil_t& nil = lua_nil;
 #endif
 
 	namespace detail {
