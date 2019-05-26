@@ -26,6 +26,7 @@
 
 #include "trampoline.hpp"
 #include "stack.hpp"
+#include "error.hpp"
 #include "function.hpp"
 #include "object.hpp"
 #include "lua_value.hpp"
@@ -176,6 +177,14 @@ namespace sol {
 #else
 		return script_throw_on_error(L, std::move(pfr));
 #endif
+	}
+
+	namespace stack {
+		inline error get_traceback_or_errors(lua_State* L) {
+			int p = default_traceback_error_handler(L);
+			sol::error err = stack::get<sol::error>(L, -p);
+			return std::move(err);
+		}
 	}
 } // namespace sol
 
