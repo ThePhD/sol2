@@ -106,7 +106,7 @@ namespace sol {
 	}
 #if !defined(SOL_NO_NIL) || (SOL_NO_NIL == 0)
 	using nil_t = lua_nil_t;
-	constexpr nil_t& nil = lua_nil;
+	constexpr const nil_t& nil = lua_nil;
 #endif
 
 	namespace detail {

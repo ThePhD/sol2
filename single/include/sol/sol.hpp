@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-05-26 17:32:11.338294 UTC
-// This header was generated with sol v3.0.2 (revision 4fd5d34)
+// Generated 2019-05-26 17:50:20.845211 UTC
+// This header was generated with sol v3.0.2 (revision a49fbc2)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6297,7 +6297,7 @@ namespace sol {
 	}
 #if !defined(SOL_NO_NIL) || (SOL_NO_NIL == 0)
 	using nil_t = lua_nil_t;
-	constexpr nil_t& nil = lua_nil;
+	constexpr const nil_t& nil = lua_nil;
 #endif
 
 	namespace detail {
