@@ -17,7 +17,7 @@ sol::object fancy_func(sol::object a, sol::object b, sol::this_state s) {
 		return sol::object(lua, sol::in_place_type<double>, b.as<double>() * (do_triple ? 3 : 1));
 	}
 	// Can also use make_object
-	return sol::make_object(lua, sol::nil);
+	return sol::make_object(lua, sol::lua_nil);
 }
 
 int main() {

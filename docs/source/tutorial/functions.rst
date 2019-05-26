@@ -318,7 +318,7 @@ It can be used like so, inconjunction with ``sol::this_state``:
 			bool do_triple = a.as<bool>();
 			return sol::make_object(lua, b.as<double>() * ( do_triple ? 3 : 1 ) );
 		}
-		return sol::make_object(lua, sol::nil);
+		return sol::make_object(lua, sol::lua_nil);
 	}
 
 	int main () {

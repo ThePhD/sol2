@@ -142,7 +142,7 @@ namespace sol {
 				if constexpr (sizeof...(Keys) > 0) {
 					if constexpr ((mode & detail::insert_mode::create_if_nil) == detail::insert_mode::create_if_nil) {
 						type t = type_of(L, -1);
-						if (t == type::nil || t == type::none) {
+						if (t == type::lua_nil || t == type::none) {
 							lua_pop(L, 1);
 							stack::push(L, new_table(0, 0));
 						}
@@ -152,7 +152,7 @@ namespace sol {
 				else {
 					if constexpr ((mode & detail::insert_mode::create_if_nil) == detail::insert_mode::create_if_nil) {
 						type t = type_of(L, -1);
-						if ((t == type::nil || t == type::none) && (is_table_like_v<T>)) {
+						if ((t == type::lua_nil || t == type::none) && (is_table_like_v<T>)) {
 							lua_pop(L, 1);
 							stack::push(L, new_table(0, 0));
 						}

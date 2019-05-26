@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-05-23 08:33:02.664806 UTC
-// This header was generated with sol v3.0.2 (revision cda8e02)
+// Generated 2019-05-26 17:32:11.338294 UTC
+// This header was generated with sol v3.0.2 (revision 4fd5d34)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6288,16 +6288,16 @@ namespace sol {
 	} // namespace detail
 
 	struct lua_nil_t {};
-	const lua_nil_t lua_nil{};
+	constexpr lua_nil_t lua_nil{};
 	inline bool operator==(lua_nil_t, lua_nil_t) {
 		return true;
 	}
 	inline bool operator!=(lua_nil_t, lua_nil_t) {
 		return false;
 	}
-	typedef lua_nil_t nil_t;
 #if !defined(SOL_NO_NIL) || (SOL_NO_NIL == 0)
-	const nil_t nil{};
+	using nil_t = lua_nil_t;
+	constexpr nil_t& nil = lua_nil;
 #endif
 
 	namespace detail {
@@ -22476,7 +22476,7 @@ namespace sol {
 				if constexpr (sizeof...(Keys) > 0) {
 					if constexpr ((mode & detail::insert_mode::create_if_nil) == detail::insert_mode::create_if_nil) {
 						type t = type_of(L, -1);
-						if (t == type::nil || t == type::none) {
+						if (t == type::lua_nil || t == type::none) {
 							lua_pop(L, 1);
 							stack::push(L, new_table(0, 0));
 						}
@@ -22486,7 +22486,7 @@ namespace sol {
 				else {
 					if constexpr ((mode & detail::insert_mode::create_if_nil) == detail::insert_mode::create_if_nil) {
 						type t = type_of(L, -1);
-						if ((t == type::nil || t == type::none) && (is_table_like_v<T>)) {
+						if ((t == type::lua_nil || t == type::none) && (is_table_like_v<T>)) {
 							lua_pop(L, 1);
 							stack::push(L, new_table(0, 0));
 						}

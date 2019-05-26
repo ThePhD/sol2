@@ -61,7 +61,7 @@ This example pretty much sums up what can be done. Note that the syntax ``lua["n
 	:linenos:
 
 
-Finally, it's possible to erase a reference/variable by setting it to ``nil``, using the constant ``sol::nil`` in C++:
+Finally, it's possible to erase a reference/variable by setting it to ``nil``, using the constant ``sol::lua_nil`` in C++:
 
 .. literalinclude:: ../../../examples/source/tutorials/erase_demo.cpp
 	:linenos:

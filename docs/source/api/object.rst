@@ -60,7 +60,7 @@ These allow a person to compare an ``sol::object`` against :ref:`nil<nil>`, whic
 
 .. code-block:: cpp
 
-	if (myobj == sol::nil) {
+	if (myobj == sol::lua_nil) {
 		// doesn't have anything...
 	}
 

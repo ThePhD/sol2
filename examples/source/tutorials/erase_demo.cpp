@@ -8,7 +8,7 @@ int main() {
 	sol::optional<int> x = lua["bark"];
 	// x will have a value
 
-	lua["bark"] = sol::nil;
+	lua["bark"] = sol::lua_nil;
 	sol::optional<int> y = lua["bark"];
 	// y will not have a value
 
