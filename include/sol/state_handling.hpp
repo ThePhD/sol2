@@ -183,7 +183,8 @@ namespace sol {
 		inline error get_traceback_or_errors(lua_State* L) {
 			int p = default_traceback_error_handler(L);
 			sol::error err = stack::get<sol::error>(L, -p);
-			return std::move(err);
+			lua_pop(L, p);
+			return err;
 		}
 	}
 } // namespace sol

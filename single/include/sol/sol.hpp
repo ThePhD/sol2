@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-05-26 20:12:01.997640 UTC
-// This header was generated with sol v3.0.2 (revision ca293c7)
+// Generated 2019-05-27 05:35:29.780976 UTC
+// This header was generated with sol v3.0.2 (revision e814868)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -23985,7 +23985,8 @@ namespace sol {
 		inline error get_traceback_or_errors(lua_State* L) {
 			int p = default_traceback_error_handler(L);
 			sol::error err = stack::get<sol::error>(L, -p);
-			return std::move(err);
+			lua_pop(L, p);
+			return err;
 		}
 	}
 } // namespace sol
