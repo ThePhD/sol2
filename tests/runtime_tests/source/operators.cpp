@@ -193,6 +193,7 @@ TEST_CASE("operators/default with pointers", "test that default operations still
 
 	lua.new_usertype<T>("T");
 
+
 	T test;
 
 	lua["t1"] = &test;
@@ -201,15 +202,19 @@ TEST_CASE("operators/default with pointers", "test that default operations still
 	lua["t4"] = std::unique_ptr<T, no_delete>(&test);
 
 	lua.script("ptr_test = t1 == t2");
-	lua.script("ptr_unique_test = t1 == t3");
 	lua.script("unique_test = t3 == t4");
 
 	bool ptr_test = lua["ptr_test"];
-	bool ptr_unique_test = lua["ptr_unique_test"];
 	bool unique_test = lua["unique_test"];
 	REQUIRE(ptr_test);
-	REQUIRE(ptr_unique_test);
 	REQUIRE(unique_test);
+
+#if SOL_LUA_VERSION > 502
+	lua.script("ptr_unique_test = t1 == t3");
+
+	bool ptr_unique_test = lua["ptr_unique_test"];
+	REQUIRE(ptr_unique_test);
+#endif
 }
 
 TEST_CASE("operators/call", "test call operator generation") {
