@@ -29,8 +29,9 @@
 #include <numeric>
 #include <iostream>
 
+struct T {};
+
 TEST_CASE("operators/default", "test that generic equality operators and all sorts of equality tests can be used") {
-	struct T {};
 	struct U {
 		int a;
 		U(int x = 20) : a(x) {
@@ -184,6 +185,31 @@ TEST_CASE("operators/default", "test that generic equality operators and all sor
 			REQUIRE(result1.valid());
 		}
 	}
+}
+
+TEST_CASE("operators/default with pointers", "test that default operations still work when working with reference (pointer) types") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_usertype<T>("T");
+
+	T test;
+
+	lua["t1"] = &test;
+	lua["t2"] = &test;
+	lua["t3"] = std::unique_ptr<T, no_delete>(&test);
+	lua["t4"] = std::unique_ptr<T, no_delete>(&test);
+
+	lua.script("ptr_test = t1 == t2");
+	lua.script("ptr_unique_test = t1 == t3");
+	lua.script("unique_test = t3 == t4");
+
+	bool ptr_test = lua["ptr_test"];
+	bool ptr_unique_test = lua["ptr_unique_test"];
+	bool unique_test = lua["unique_test"];
+	REQUIRE(ptr_test);
+	REQUIRE(ptr_unique_test);
+	REQUIRE(unique_test);
 }
 
 TEST_CASE("operators/call", "test call operator generation") {

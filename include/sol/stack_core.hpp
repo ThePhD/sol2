@@ -530,14 +530,18 @@ namespace sol {
 		}
 
 		struct properties_enrollment_allowed {
+			int& times_through;
 			std::bitset<64>& properties;
 			automagic_enrollments& enrollments;
 
-			properties_enrollment_allowed(std::bitset<64>& props, automagic_enrollments& enroll) : properties(props), enrollments(enroll) {
+			properties_enrollment_allowed(int& times, std::bitset<64>& props, automagic_enrollments& enroll) : times_through(times), properties(props), enrollments(enroll) {
 			}
 
 			bool operator()(meta_function mf) const {
 				bool p = properties[static_cast<int>(mf)];
+				if (times_through > 0) {
+					return p;
+				}
 				switch (mf) {
 				case meta_function::length:
 					return enrollments.length_operator && !p;

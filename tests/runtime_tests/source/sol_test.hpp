@@ -65,4 +65,11 @@ struct test_stack_guard {
 	}
 };
 
+struct no_delete {
+	template <typename P>
+	void operator()(P) const noexcept {
+
+	}
+};
+
 #endif // SOL_TESTS_SOL_TEST_HPP

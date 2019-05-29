@@ -965,7 +965,7 @@ namespace sol { namespace u_detail {
 		// add intrinsics
 		// this one is the actual meta-handling table,
 		// the next one will be the one for
-
+		int for_each_backing_metatable_calls = 0;
 		auto for_each_backing_metatable = [&](lua_State* L, submetatable_type smt, reference& fast_index_table) {
 			// Pointer types, AKA "references" from C++
 			const char* metakey = nullptr;
@@ -1039,8 +1039,8 @@ namespace sol { namespace u_detail {
 			stack::set_field<false, true>(L, detail::base_class_check_key(), reinterpret_cast<void*>(&detail::inheritance<T>::type_check), t.stack_index());
 			stack::set_field<false, true>(L, detail::base_class_cast_key(), reinterpret_cast<void*>(&detail::inheritance<T>::type_cast), t.stack_index());
 
-			auto prop_fx = detail::properties_enrollment_allowed(storage.properties, enrollments);
-			auto insert_fx = [&L, &t, &storage](meta_function mf, lua_CFunction reg) {
+			auto prop_fx = detail::properties_enrollment_allowed(for_each_backing_metatable_calls, storage.properties, enrollments);
+			auto insert_fx = [&L, &t, &storage, &smt](meta_function mf, lua_CFunction reg) {
 				stack::set_field<false, true>(L, mf, reg, t.stack_index());
 				storage.properties[static_cast<int>(mf)] = true;
 			};
@@ -1082,6 +1082,7 @@ namespace sol { namespace u_detail {
 				storage.is_using_new_index = true;
 			}
 
+			++for_each_backing_metatable_calls;
 			fast_index_table = reference(L, t);
 			t.pop();
 		};
