@@ -304,8 +304,8 @@ Some more things you can do/read about:
 	* :doc:`resolve<../api/resolve>` overloads in case you have overloaded functions; a cleaner casting utility. You must use this to emulate default parameters.
 
 .. _.safe_script: https://github.com/ThePhD/sol2/tree/develop/examples/source/tutorials/quick_n_dirty/running_lua_code_safely.cpp
-.. _develop custom loaders: https://github.com/ThePhD/sol2/blob/develop/examples/custom_reader.cpp
-.. _basic example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype.cpp
-.. _special functions example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_special_functions.cpp
-.. _initializers example: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_initializers.cpp
+.. _develop custom loaders: https://github.com/ThePhD/sol2/blob/develop/examples/source/custom_reader.cpp
+.. _basic example: https://github.com/ThePhD/sol2/blob/develop/examples/source/usertype.cpp
+.. _special functions example: https://github.com/ThePhD/sol2/blob/develop/examples/source/usertype_special_functions.cpp
+.. _initializers example: https://github.com/ThePhD/sol2/blob/develop/examples/source/usertype_initializers.cpp
 .. _sol3 tutorial examples: https://github.com/ThePhD/sol2/tree/develop/examples/source/tutorials/quick_n_dirty

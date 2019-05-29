@@ -16,6 +16,7 @@ Browse the various function and classes :doc:`sol<../index>` utilizes to make yo
    stack_reference
    make_reference
    table
+   table_traversal_keys
    userdata
    environment
    this_environment
