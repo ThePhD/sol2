@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-05-29 23:31:17.933001 UTC
-// This header was generated with sol v3.0.2 (revision 5a4d7dc)
+// Generated 2019-05-30 02:01:01.136993 UTC
+// This header was generated with sol v3.0.2 (revision 3dd617d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -21754,7 +21754,7 @@ namespace sol { namespace u_detail {
 			stack::set_field<false, true>(L, detail::base_class_cast_key(), reinterpret_cast<void*>(&detail::inheritance<T>::type_cast), t.stack_index());
 
 			auto prop_fx = detail::properties_enrollment_allowed(for_each_backing_metatable_calls, storage.properties, enrollments);
-			auto insert_fx = [&L, &t, &storage, &smt](meta_function mf, lua_CFunction reg) {
+			auto insert_fx = [&L, &t, &storage](meta_function mf, lua_CFunction reg) {
 				stack::set_field<false, true>(L, mf, reg, t.stack_index());
 				storage.properties[static_cast<int>(mf)] = true;
 			};
