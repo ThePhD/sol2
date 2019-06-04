@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-05-30 02:01:01.136993 UTC
-// This header was generated with sol v3.0.2 (revision 3dd617d)
+// Generated 2019-06-04 18:14:04.496190 UTC
+// This header was generated with sol v3.0.2 (revision cbb0575)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -13479,7 +13479,7 @@ namespace sol {
 		struct unqualified_pusher<std::basic_string<Ch, Traits, Al>> {
 			static int push(lua_State* L, const std::basic_string<Ch, Traits, Al>& str) {
 				if constexpr (!std::is_same_v<Ch, char>) {
-					return stack::push(str.data(), str.size());
+					return stack::push(L, str.data(), str.size());
 				}
 				else {
 #if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
@@ -13492,7 +13492,7 @@ namespace sol {
 
 			static int push(lua_State* L, const std::basic_string<Ch, Traits, Al>& str, std::size_t sz) {
 				if constexpr (!std::is_same_v<Ch, char>) {
-					return stack::push(str.data(), sz);
+					return stack::push(L, str.data(), sz);
 				}
 				else {
 #if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
@@ -21741,7 +21741,20 @@ namespace sol { namespace u_detail {
 				// not destructible: serialize a
 				// "hey you messed up"
 				// destructor
-				stack::set_field<false, true>(L, meta_function::garbage_collect, &detail::cannot_destruct<T>, t.stack_index());
+				switch (smt) {
+				case submetatable_type::const_reference:
+				case submetatable_type::reference:
+				case submetatable_type::named:
+					break;
+				case submetatable_type::unique:
+					stack::set_field<false, true>(L, meta_function::garbage_collect, &detail::cannot_destruct<T>, t.stack_index());
+					break;
+				case submetatable_type::value:
+				case submetatable_type::const_value:
+				default:
+					stack::set_field<false, true>(L, meta_function::garbage_collect, &detail::cannot_destruct<T>, t.stack_index());
+					break;
+				}
 			}
 
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function),

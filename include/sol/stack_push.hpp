@@ -731,7 +731,7 @@ namespace sol {
 		struct unqualified_pusher<std::basic_string<Ch, Traits, Al>> {
 			static int push(lua_State* L, const std::basic_string<Ch, Traits, Al>& str) {
 				if constexpr (!std::is_same_v<Ch, char>) {
-					return stack::push(str.data(), str.size());
+					return stack::push(L, str.data(), str.size());
 				}
 				else {
 #if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
@@ -744,7 +744,7 @@ namespace sol {
 
 			static int push(lua_State* L, const std::basic_string<Ch, Traits, Al>& str, std::size_t sz) {
 				if constexpr (!std::is_same_v<Ch, char>) {
-					return stack::push(str.data(), sz);
+					return stack::push(L, str.data(), sz);
 				}
 				else {
 #if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK

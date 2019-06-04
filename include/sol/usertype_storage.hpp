@@ -1027,7 +1027,20 @@ namespace sol { namespace u_detail {
 				// not destructible: serialize a
 				// "hey you messed up"
 				// destructor
-				stack::set_field<false, true>(L, meta_function::garbage_collect, &detail::cannot_destruct<T>, t.stack_index());
+				switch (smt) {
+				case submetatable_type::const_reference:
+				case submetatable_type::reference:
+				case submetatable_type::named:
+					break;
+				case submetatable_type::unique:
+					stack::set_field<false, true>(L, meta_function::garbage_collect, &detail::cannot_destruct<T>, t.stack_index());
+					break;
+				case submetatable_type::value:
+				case submetatable_type::const_value:
+				default:
+					stack::set_field<false, true>(L, meta_function::garbage_collect, &detail::cannot_destruct<T>, t.stack_index());
+					break;
+				}
 			}
 
 			static_assert(sizeof(void*) <= sizeof(detail::inheritance_check_function),
