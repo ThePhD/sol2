@@ -220,3 +220,52 @@ end
 		table_check_unordered_values(src, t1ummap.value());
 	}
 }
+
+TEST_CASE("containers/as_table with pointers", "test to make sure pointers are respected in as_table work") {
+	using EHandle = std::uint32_t;
+
+	struct Entity {
+	public:
+		Entity(EHandle handle) : handle_(handle) {}
+		Entity(const Entity&) = default;
+		Entity(Entity&&) = default;
+		Entity& operator=(const Entity&) = default;
+		Entity& operator=(Entity&&) = default;
+
+	private:
+		EHandle handle_;
+	};
+
+	auto test_func_vec = []() -> std::vector<Entity*> {
+		return { reinterpret_cast<Entity*>(0x01), reinterpret_cast<Entity*>(0x02), reinterpret_cast<Entity*>(0x03) };
+	};
+	
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+	lua.new_usertype<Entity>("Entity");
+
+	lua["f"] = [&test_func_vec]() { return sol::as_table(test_func_vec()); };
+
+	lua["g"] = [&test_func_vec]() { return sol::as_nested(test_func_vec()); };
+
+	sol::optional<sol::error> maybe_err0 = lua.safe_script("t = f()");
+	sol::optional<sol::error> maybe_err1 = lua.safe_script("u = g()");
+	REQUIRE_FALSE(maybe_err0.has_value());
+	REQUIRE_FALSE(maybe_err1.has_value());
+
+	sol::table t = lua["t"];
+	Entity* e1 = t[1];
+	Entity* e2 = t[2];
+	Entity* e3 = t[3];
+	REQUIRE(e1 == reinterpret_cast<Entity*>(0x01));
+	REQUIRE(e2 == reinterpret_cast<Entity*>(0x02));
+	REQUIRE(e3 == reinterpret_cast<Entity*>(0x03));
+
+	sol::table u = lua["u"];
+	Entity* f1 = u[1];
+	Entity* f2 = u[2];
+	Entity* f3 = u[3];
+	REQUIRE(f1 == reinterpret_cast<Entity*>(0x01));
+	REQUIRE(f2 == reinterpret_cast<Entity*>(0x02));
+	REQUIRE(f3 == reinterpret_cast<Entity*>(0x03));
+}

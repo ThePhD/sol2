@@ -407,12 +407,13 @@ namespace sol {
 		template <typename T>
 		struct unqualified_pusher<nested<T>> {
 			static int push(lua_State* L, const T& tablecont) {
-				using inner_t = std::remove_pointer_t<meta::unwrap_unqualified_t<T>>;
+				using Tu = meta::unwrap_unqualified_t<T>;
+				using inner_t = std::remove_pointer_t<Tu>;
 				if constexpr (is_container_v<inner_t>) {
 					return stack::push<detail::as_table_tag<T>>(L, tablecont, nested_tag);
 				}
 				else {
-					return stack::push<inner_t>(L, tablecont);
+					return stack::push<Tu>(L, tablecont);
 				}
 			}
 		};

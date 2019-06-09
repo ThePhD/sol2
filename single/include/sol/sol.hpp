@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-06-04 18:14:04.496190 UTC
-// This header was generated with sol v3.0.2 (revision cbb0575)
+// Generated 2019-06-09 01:46:15.617622 UTC
+// This header was generated with sol v3.0.2 (revision d63ba49)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -8366,6 +8366,67 @@ namespace sol {
 		}
 	} // namespace detail
 
+	class stateless_stack_reference {
+	protected:
+		int index = 0;
+
+		int registry_index() const noexcept {
+			return LUA_NOREF;
+		}
+
+	public:
+		stateless_stack_reference() noexcept = default;
+		stateless_stack_reference(lua_nil_t) noexcept : stateless_stack_reference(){};
+		stateless_stack_reference(lua_State* L, int i) noexcept : stateless_stack_reference(absolute_index(L, i)) {
+		}
+		stateless_stack_reference(lua_State*, absolute_index i) noexcept : stateless_stack_reference(i) {
+		}
+		stateless_stack_reference(lua_State*, raw_index i) noexcept : stateless_stack_reference(i) {
+		}
+		stateless_stack_reference(absolute_index i) noexcept : index(i) {
+		}
+		stateless_stack_reference(raw_index i) noexcept : index(i) {
+		}
+		stateless_stack_reference(lua_State*, ref_index) noexcept = delete;
+		stateless_stack_reference(ref_index) noexcept = delete;
+		stateless_stack_reference(const reference&) noexcept = delete;
+		stateless_stack_reference(const stateless_stack_reference&) noexcept = default;
+		stateless_stack_reference(stateless_stack_reference&& o) noexcept = default;
+		stateless_stack_reference& operator=(stateless_stack_reference&&) noexcept = default;
+		stateless_stack_reference& operator=(const stateless_stack_reference&) noexcept = default;
+
+		int push(lua_State* L) const noexcept {
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+			luaL_checkstack(L, 1, "not enough Lua stack space to push a single reference value");
+#endif // make sure stack doesn't overflow
+			lua_pushvalue(L, index);
+			return 1;
+		}
+
+		void pop(lua_State* L, int n = 1) const noexcept {
+			lua_pop(L, n);
+		}
+
+		int stack_index() const noexcept {
+			return index;
+		}
+
+		const void* pointer(lua_State* L) const noexcept {
+			const void* vp = lua_topointer(L, stack_index());
+			return vp;
+		}
+
+		type get_type(lua_State* L) const noexcept {
+			int result = lua_type(L, index);
+			return static_cast<type>(result);
+		}
+
+		bool valid(lua_State* L) const noexcept {
+			type t = get_type(L);
+			return t != type::lua_nil && t != type::none;
+		}
+	};
+
 	class stack_reference {
 	private:
 		lua_State* luastate = nullptr;
@@ -13155,12 +13216,13 @@ namespace sol {
 		template <typename T>
 		struct unqualified_pusher<nested<T>> {
 			static int push(lua_State* L, const T& tablecont) {
-				using inner_t = std::remove_pointer_t<meta::unwrap_unqualified_t<T>>;
+				using Tu = meta::unwrap_unqualified_t<T>;
+				using inner_t = std::remove_pointer_t<Tu>;
 				if constexpr (is_container_v<inner_t>) {
 					return stack::push<detail::as_table_tag<T>>(L, tablecont, nested_tag);
 				}
 				else {
-					return stack::push<inner_t>(L, tablecont);
+					return stack::push<Tu>(L, tablecont);
 				}
 			}
 		};
