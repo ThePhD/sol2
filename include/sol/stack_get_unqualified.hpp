@@ -127,7 +127,7 @@ namespace sol { namespace stack {
 				tracking.use(1);
 				return static_cast<T>(lua_tointegerx(L, index, nullptr));
 			}
-			else if constexpr (std::is_integral_v<T>) {
+			else if constexpr (std::is_integral_v<T> || std::is_same_v<T, lua_Integer>) {
 				tracking.use(1);
 #if SOL_LUA_VERSION >= 503
 				if (lua_isinteger(L, index) != 0) {
@@ -136,7 +136,7 @@ namespace sol { namespace stack {
 #endif
 				return static_cast<T>(llround(lua_tonumber(L, index)));
 			}
-			else if constexpr (std::is_floating_point_v<T>) {
+			else if constexpr (std::is_floating_point_v<T> || std::is_same_v<T, lua_Number>) {
 				tracking.use(1);
 				return static_cast<T>(lua_tonumber(L, index));
 			}

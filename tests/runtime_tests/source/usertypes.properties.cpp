@@ -21,6 +21,10 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+// we have a test for weirdly aligned wrappers
+// do not make lots of noise about it
+#pragma warning(disable : 4324)
+
 #include "sol_test.hpp"
 
 #include "common_classes.hpp"

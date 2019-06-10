@@ -39,10 +39,12 @@ extern "C" {
 
 namespace sol {
 
+	class stateless_reference;
 	template <bool b>
 	class basic_reference;
 	using reference = basic_reference<false>;
 	using main_reference = basic_reference<true>;
+	class stateless_stack_reference;
 	class stack_reference;
 
 	template <typename A>

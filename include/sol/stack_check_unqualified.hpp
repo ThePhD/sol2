@@ -102,7 +102,7 @@ namespace sol { namespace stack {
 			else if constexpr (meta::any_same_v<T, char /* , char8_t*/, char16_t, char32_t>) {
 				return stack::check<std::basic_string<T>>(L, index, std::forward<Handler>(handler), tracking);
 			}
-			else if constexpr (std::is_integral_v<T>) {
+			else if constexpr (std::is_integral_v<T> || std::is_same_v<T, lua_Integer>) {
 				tracking.use(1);
 #if SOL_LUA_VERSION >= 503
 #if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
@@ -160,7 +160,7 @@ namespace sol { namespace stack {
 				return success;
 #endif // Lua Version 5.3 versus others
 			}
-			else if constexpr (std::is_floating_point_v<T>) {
+			else if constexpr (std::is_floating_point_v<T> || std::is_same_v<T, lua_Number>) {
 				tracking.use(1);
 #if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
 				bool success = lua_isnumber(L, index) == 1;

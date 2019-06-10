@@ -226,14 +226,11 @@ TEST_CASE("containers/as_table with pointers", "test to make sure pointers are r
 
 	struct Entity {
 	public:
-		Entity(EHandle handle) : handle_(handle) {}
+		Entity(EHandle) {}
 		Entity(const Entity&) = default;
 		Entity(Entity&&) = default;
 		Entity& operator=(const Entity&) = default;
 		Entity& operator=(Entity&&) = default;
-
-	private:
-		EHandle handle_;
 	};
 
 	auto test_func_vec = []() -> std::vector<Entity*> {

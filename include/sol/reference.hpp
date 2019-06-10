@@ -134,7 +134,7 @@ namespace sol {
 		};
 		
 		template <typename T>
-		struct push_popper<false, T, std::enable_if_t<std::is_base_of<stack_reference, meta::unqualified_t<T>>::value>> {
+		struct push_popper<false, T, std::enable_if_t<is_stack_based_v<meta::unqualified_t<T>>>> {
 			using Tu = meta::unqualified_t<T>;
 			
 			push_popper(T) {
@@ -203,20 +203,183 @@ namespace sol {
 		}
 	} // namespace detail
 
+	class stateless_reference {
+	private:
+		template <bool o_main_only>
+		friend class basic_reference;
+
+		int ref = LUA_NOREF;
+
+		int copy(lua_State* L) const noexcept {
+			if (ref == LUA_NOREF)
+				return LUA_NOREF;
+			push(L);
+			return luaL_ref(L, LUA_REGISTRYINDEX);
+		}
+
+		lua_State* copy_assign(lua_State* L, lua_State* rL, const stateless_reference& r) {
+			if (valid(L)) {
+				deref(L);
+			}
+			ref = r.copy(L);
+			return rL;
+		}
+
+		lua_State* move_assign(lua_State* L, lua_State* rL, stateless_reference&& r) {
+			if (valid(L)) {
+				deref(L);
+			}
+			ref = r.ref;
+			r.ref = LUA_NOREF;
+			return rL;
+		}
+
+	protected:
+		int stack_index () const noexcept {
+			return -1;
+		}
+
+		stateless_reference(lua_State* L, detail::global_tag) noexcept {
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+			luaL_checkstack(L, 1, "not enough Lua stack space to push this reference value");
+#endif // make sure stack doesn't overflow
+			lua_pushglobaltable(L);
+			ref = luaL_ref(L, LUA_REGISTRYINDEX);
+		}
+
+		stateless_reference(int raw_ref_index) noexcept : ref(raw_ref_index) {
+		}
+
+	public:
+		stateless_reference() noexcept = default;
+		stateless_reference(lua_nil_t) noexcept : stateless_reference() {
+		}
+		stateless_reference(const stack_reference& r) noexcept : stateless_reference(r.lua_state(), r.stack_index()) {
+		}
+		stateless_reference(stack_reference&& r) noexcept : stateless_reference(r.lua_state(), r.stack_index()) {
+		}
+		stateless_reference(lua_State* L, const stateless_reference& r) noexcept {
+			if (r.ref == LUA_REFNIL) {
+				ref = LUA_REFNIL;
+				return;
+			}
+			if (r.ref == LUA_NOREF || L == nullptr) {
+				ref = LUA_NOREF;
+				return;
+			}
+			ref = r.copy(L);
+		}
+
+		stateless_reference(lua_State* L, stateless_reference&& r) noexcept {
+			if (r.ref == LUA_REFNIL) {
+				ref = LUA_REFNIL;
+				return;
+			}
+			if (r.ref == LUA_NOREF || L == nullptr) {
+				ref = LUA_NOREF;
+				return;
+			}
+			ref = r.ref;
+			r.ref = LUA_NOREF;
+		}
+
+		stateless_reference(lua_State* L, const stack_reference& r) noexcept {
+			if (L == nullptr || r.lua_state() == nullptr || r.get_type() == type::none) {
+				ref = LUA_NOREF;
+				return;
+			}
+			if (r.get_type() == type::lua_nil) {
+				ref = LUA_REFNIL;
+				return;
+			}
+			if (L != r.lua_state() && !detail::xmovable(L, r.lua_state())) {
+				return;
+			}
+			r.push(L);
+			ref = luaL_ref(L, LUA_REGISTRYINDEX);
+		}
+
+		stateless_reference(lua_State* L, int index = -1) noexcept {
+			// use L to stick with that state's execution stack
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+			luaL_checkstack(L, 1, "not enough Lua stack space to push this reference value");
+#endif // make sure stack doesn't overflow
+			lua_pushvalue(L, index);
+			ref = luaL_ref(L, LUA_REGISTRYINDEX);
+		}
+		stateless_reference(lua_State* L, ref_index index) noexcept {
+			lua_rawgeti(L, LUA_REGISTRYINDEX, index.index);
+			ref = luaL_ref(L, LUA_REGISTRYINDEX);
+		}
+		stateless_reference(lua_State*, lua_nil_t) noexcept {
+		}
+
+		~stateless_reference() noexcept = default;
+
+		stateless_reference(const stateless_reference& o) noexcept = delete;
+		stateless_reference& operator=(const stateless_reference& r) noexcept = delete;
+
+		stateless_reference(stateless_reference&& o) noexcept
+		: ref(o.ref) {
+			o.ref = LUA_NOREF;
+		}
+
+		stateless_reference& operator=(stateless_reference&& o) noexcept {
+			ref = o.ref;
+			o.ref = LUA_NOREF;
+			return *this;
+		}
+
+
+		int push(lua_State* L) const noexcept {
+#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+			luaL_checkstack(L, 1, "not enough Lua stack space to push this reference value");
+#endif // make sure stack doesn't overflow
+			lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+			return 1;
+		}
+
+		void pop(lua_State* L, int n = 1) const noexcept {
+			lua_pop(L, n);
+		}
+
+		int registry_index() const noexcept {
+			return ref;
+		}
+
+		bool valid(lua_State*) const noexcept {
+			return !(ref == LUA_NOREF || ref == LUA_REFNIL);
+		}
+
+		const void* pointer(lua_State* L) const noexcept {
+			int si = push(L);
+			const void* vp = lua_topointer(L, -si);
+			lua_pop(L, si);
+			return vp;
+		}
+
+		type get_type(lua_State* L) const noexcept {
+			int p = push(L);
+			int result = lua_type(L, -1);
+			pop(L, p);
+			return static_cast<type>(result);
+		}
+
+		void abandon(lua_State* = nullptr) {
+			ref = LUA_NOREF;
+		}
+
+		void deref(lua_State* L) const noexcept {
+			luaL_unref(L, LUA_REGISTRYINDEX, ref);
+		}
+	};
+
 	template <bool main_only = false>
-	class basic_reference {
+	class basic_reference : public stateless_reference {
 	private:
 		template <bool o_main_only>
 		friend class basic_reference;
 		lua_State* luastate = nullptr; // non-owning
-		int ref = LUA_NOREF;
-
-		int copy() const noexcept {
-			if (ref == LUA_NOREF)
-				return LUA_NOREF;
-			push();
-			return luaL_ref(lua_state(), LUA_REGISTRYINDEX);
-		}
 
 		template <bool r_main_only>
 		void copy_assign(const basic_reference<r_main_only>& r) {
@@ -271,20 +434,26 @@ namespace sol {
 
 	protected:
 		basic_reference(lua_State* L, detail::global_tag) noexcept
-		: luastate(detail::pick_main_thread<main_only>(L, L)) {
-#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
-			luaL_checkstack(L, 1, "not enough Lua stack space to push this reference value");
-#endif // make sure stack doesn't overflow
-			lua_pushglobaltable(lua_state());
-			ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
+		: basic_reference(detail::pick_main_thread<main_only>(L, L), detail::global_, detail::global_) {
 		}
 
-		int stack_index() const noexcept {
-			return -1;
+		basic_reference(lua_State* L, detail::global_tag, detail::global_tag) noexcept
+		: stateless_reference(L, detail::global_), luastate(L) {
+		}
+
+		basic_reference(lua_State* oL, const basic_reference<!main_only>& o) noexcept : stateless_reference(oL, o), luastate(oL) {
 		}
 
 		void deref() const noexcept {
-			luaL_unref(lua_state(), LUA_REGISTRYINDEX, ref);
+			return stateless_reference::deref(lua_state());
+		}
+
+		int copy() const noexcept {
+			return copy(lua_state());
+		}
+
+		int copy(lua_State* L) const noexcept {
+			return stateless_reference::copy(L);
 		}
 
 	public:
@@ -379,21 +548,20 @@ namespace sol {
 		}
 
 		basic_reference(const basic_reference& o) noexcept
-		: luastate(o.lua_state()), ref(o.copy()) {
+		: stateless_reference(o.copy()), luastate(o.lua_state()) {
 		}
 
 		basic_reference(basic_reference&& o) noexcept
-		: luastate(o.lua_state()), ref(o.ref) {
+		: stateless_reference(std::move(o)), luastate(o.lua_state()) {
 			o.luastate = nullptr;
-			o.ref = LUA_NOREF;
 		}
 
 		basic_reference(const basic_reference<!main_only>& o) noexcept
-		: luastate(detail::pick_main_thread < main_only && !main_only > (o.lua_state(), o.lua_state())), ref(o.copy()) {
+		: basic_reference(detail::pick_main_thread < main_only && !main_only > (o.lua_state(), o.lua_state()), o) {
 		}
 
 		basic_reference(basic_reference<!main_only>&& o) noexcept
-		: luastate(detail::pick_main_thread < main_only && !main_only > (o.lua_state(), o.lua_state())), ref(o.ref) {
+		: stateless_reference(std::move(o)), luastate(detail::pick_main_thread<main_only && !main_only>(o.lua_state(), o.lua_state())) {
 			o.luastate = nullptr;
 			o.ref = LUA_NOREF;
 		}
@@ -437,17 +605,17 @@ namespace sol {
 			return push(lua_state());
 		}
 
-		int push(lua_State* Ls) const noexcept {
+		int push(lua_State* L) const noexcept {
 #if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
-			luaL_checkstack(Ls, 1, "not enough Lua stack space to push this reference value");
+			luaL_checkstack(L, 1, "not enough Lua stack space to push this reference value");
 #endif // make sure stack doesn't overflow
 			if (lua_state() == nullptr) {
-				lua_pushnil(Ls);
+				lua_pushnil(L);
 				return 1;
 			}
 			lua_rawgeti(lua_state(), LUA_REGISTRYINDEX, ref);
-			if (Ls != lua_state()) {
-				lua_xmove(lua_state(), Ls, 1);
+			if (L != lua_state()) {
+				lua_xmove(lua_state(), L, 1);
 			}
 			return 1;
 		}
@@ -456,23 +624,20 @@ namespace sol {
 			pop(lua_state());
 		}
 
-		void pop(lua_State* Ls, int n = 1) const noexcept {
-			lua_pop(Ls, n);
+		void pop(lua_State* L, int n = 1) const noexcept {
+			stateless_reference::pop(L, n);
 		}
 
 		int registry_index() const noexcept {
-			return ref;
+			return stateless_reference::registry_index();
 		}
 
 		bool valid() const noexcept {
-			return !(ref == LUA_NOREF || ref == LUA_REFNIL);
+			return stateless_reference::valid(lua_state());
 		}
 
 		const void* pointer() const noexcept {
-			int si = push();
-			const void* vp = lua_topointer(lua_state(), -si);
-			lua_pop(this->lua_state(), si);
-			return vp;
+			return stateless_reference::pointer(lua_state());
 		}
 
 		explicit operator bool() const noexcept {
@@ -480,9 +645,7 @@ namespace sol {
 		}
 
 		type get_type() const noexcept {
-			auto pp = stack::push_pop(*this);
-			int result = lua_type(lua_state(), -1);
-			return static_cast<type>(result);
+			return stateless_reference::get_type(lua_state());
 		}
 
 		lua_State* lua_state() const noexcept {

@@ -61,7 +61,7 @@ namespace stack {
 					}
 					return stack_detail::unchecked_get<T>(L, index, tracking);
 				}
-				else if constexpr (std::is_integral_v<T> && !std::is_same_v<T, bool>) {
+				else if constexpr ((std::is_integral_v<T> || std::is_same_v<T, lua_Integer>) && !std::is_same_v<T, bool>) {
 #if SOL_LUA_VERSION >= 503
 					if (lua_isinteger(L, index) != 0) {
 						tracking.use(1);
@@ -87,7 +87,7 @@ namespace stack {
 					handler(L, index, type::number, t, "not an integer");
 					return nullopt;
 				}
-				else if constexpr(std::is_floating_point_v<T>) {
+				else if constexpr (std::is_floating_point_v<T> || std::is_same_v<T, lua_Number>) {
 					int isnum = 0;
 					lua_Number value = lua_tonumberx(L, index, &isnum);
 					if (isnum == 0) {
