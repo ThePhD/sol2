@@ -23,7 +23,9 @@
 
 // we have a test for weirdly aligned wrappers
 // do not make lots of noise about it
+#ifdef _MSC_VER
 #pragma warning(disable : 4324)
+#endif
 
 #include "sol_test.hpp"
 
