@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-06-10 08:21:46.618479 UTC
-// This header was generated with sol v3.0.2 (revision ef1c0e7)
+// Generated 2019-06-10 17:07:43.270577 UTC
+// This header was generated with sol v3.0.2 (revision dafb184)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -13209,7 +13209,7 @@ namespace sol {
 					lua_pushboolean(L, std::forward<Args>(args)...);
 					return 1;
 				}
-				else if constexpr (std::is_integral_v<Tu> || std::is_same_v<T, lua_Integer>) {
+				else if constexpr (std::is_integral_v<Tu> || std::is_same_v<Tu, lua_Integer>) {
 					const Tu& value(std::forward<Args>(args)...);
 #if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
 					luaL_checkstack(L, 1, detail::not_enough_stack_space_integral);
@@ -13235,7 +13235,7 @@ namespace sol {
 					lua_pushnumber(L, static_cast<lua_Number>(value));
 					return 1;
 				}
-				else if constexpr (std::is_floating_point_v<Tu> || std::is_same_v<T, lua_Number>) {
+				else if constexpr (std::is_floating_point_v<Tu> || std::is_same_v<Tu, lua_Number>) {
 #if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
 					luaL_checkstack(L, 1, detail::not_enough_stack_space_floating);
 #endif // make sure stack doesn't overflow
