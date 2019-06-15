@@ -65,4 +65,4 @@ These allow a person to compare an ``sol::object`` against :ref:`nil<nil>`, whic
 	}
 
 
-.. _any_return example: https://github.com/ThePhD/sol2/blob/develop/examples/any_return.cpp
+.. _any_return example: https://github.com/ThePhD/sol2/blob/develop/examples/source/any_return.cpp

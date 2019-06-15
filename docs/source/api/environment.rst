@@ -75,5 +75,5 @@ The second and third unique constructors take a special empty type that serves a
 
 This function applies the environment to the desired target. Not that lua 5.1 only tolerates the application of environments to userdata, threads and functions, while 5.2+ has different (more relaxed) rules. It is called by the free function ``sol::set_environment( env, target );``.
 
-.. _script calls: https://github.com/ThePhD/sol2/blob/develop/examples/environments.cpp
-.. _set on functions: https://github.com/ThePhD/sol2/blob/develop/examples/environments_on_functions.cpp
+.. _script calls: https://github.com/ThePhD/sol2/blob/develop/examples/source/environments.cpp
+.. _set on functions: https://github.com/ThePhD/sol2/blob/develop/examples/source/environments_on_functions.cpp

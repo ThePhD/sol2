@@ -43,4 +43,4 @@ Sometimes in C++ it's useful to know where a Lua call is coming from and what :d
 
 Also see `this example`_ for more details.
 
-.. _this example: https://github.com/ThePhD/sol2/blob/develop/examples/environment_snooping.cpp
+.. _this example: https://github.com/ThePhD/sol2/blob/develop/examples/source/environment_snooping.cpp

@@ -79,5 +79,5 @@ Next, let's start :doc:`reading/writing some variables<variables>` from Lua into
 .. _single/sol/sol.hpp: https://github.com/ThePhD/sol2/blob/develop/single/sol/sol.hpp
 .. _github repository here: https://github.com/ThePhD/sol2
 .. _Lua page on getting started: https://www.lua.org/start.html
-.. _in this example: https://github.com/ThePhD/sol2/blob/develop/examples/basic.cpp
+.. _in this example: https://github.com/ThePhD/sol2/blob/develop/examples/source/basic.cpp
 .. _example of loading a DLL: https://github.com/ThePhD/sol2/tree/develop/examples/require_dll_example

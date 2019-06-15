@@ -17,7 +17,7 @@ Whatever the case is, you need it to be returned to Lua and have many of the tra
 
 See `this container example`_ to see how it works.
 
-.. _this container example: https://github.com/ThePhD/sol2/blob/develop/examples/container_usertype_as_container.cpp
+.. _this container example: https://github.com/ThePhD/sol2/blob/develop/examples/source/container_usertype_as_container.cpp
 .. _Container requirements: http://en.cppreference.com/w/cpp/concept/Container
 .. _Sequence Container requirements: http://en.cppreference.com/w/cpp/concept/SequenceContainer
 .. _forward_list: http://en.cppreference.com/w/cpp/container/forward_list

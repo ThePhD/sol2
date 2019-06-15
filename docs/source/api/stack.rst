@@ -326,4 +326,4 @@ This extension point is to ``get`` a foreign userdata. It should return both ``t
 .. _Lua stack works in general: https://www.lua.org/pil/24.2.html
 .. _calling C functions works: https://www.lua.org/pil/26.html
 .. _interop examples: https://github.com/ThePhD/sol2/blob/develop/examples/interop
-.. _providing your own customization: https://github.com/ThePhD/sol2/blob/develop/examples/customization_convert_on_get.cpp
+.. _providing your own customization: https://github.com/ThePhD/sol2/blob/develop/examples/source/customization_convert_on_get.cpp

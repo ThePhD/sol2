@@ -327,6 +327,6 @@ performance note
 
 .. _destructible: http://en.cppreference.com/w/cpp/types/is_destructible
 .. _default_constructible: http://en.cppreference.com/w/cpp/types/is_constructible
-.. _small starter example here: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_basics.cpp
-.. _runtime extensible: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_advanced.cpp#L81
+.. _small starter example here: https://github.com/ThePhD/sol2/blob/develop/examples/source/usertype_basics.cpp
+.. _runtime extensible: https://github.com/ThePhD/sol2/blob/develop/examples/source/usertype_advanced.cpp#L81
 .. _the metamethods in the Lua manual: https://www.lua.org/manual/5.3/manual.html#2.4

@@ -6,4 +6,4 @@ This is an implemention of `optional from the standard library`_. If it detects 
 See `this example here`_ for a demonstration on how to use it and other features!
 
 .. _optional from the standard library: http://en.cppreference.com/w/cpp/utility/optional
-.. _this example here: https://github.com/ThePhD/sol2/blob/develop/examples/optional_with_iteration.cpp
+.. _this example here: https://github.com/ThePhD/sol2/blob/develop/examples/source/optional_with_iteration.cpp

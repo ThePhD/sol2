@@ -61,9 +61,9 @@ Here are some other general advice and tips for understanding and dealing with u
 * The actual metatable associated with the usertype has a long name and is defined to be opaque by the sol implementation.
 * The actual metatable inner workings is opaque and defined by the sol implementation, and there are no internal docs because optimizations on the operations are applied based on heuristics we discover from performance testing the system.
 
-.. _here, that uses a few tricks: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_bitfields.cpp
-.. _Lua: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_advanced.cpp#L81
-.. _C++: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_simple.cpp#L51
-.. _Certain operators: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_automatic_operators.cpp
-.. _dynamic_object example: https://github.com/ThePhD/sol2/blob/develop/examples/dynamic_object.cpp
-.. _as shown in the pairs example: https://github.com/ThePhD/sol2/blob/develop/examples/pairs.cpp
+.. _here, that uses a few tricks: https://github.com/ThePhD/sol2/blob/develop/examples/source/usertype_bitfields.cpp
+.. _Lua: https://github.com/ThePhD/sol2/blob/develop/examples/source/usertype_advanced.cpp#L81
+.. _C++: https://github.com/ThePhD/sol2/blob/develop/examples/source/usertype_simple.cpp#L51
+.. _Certain operators: https://github.com/ThePhD/sol2/blob/develop/examples/source/usertype_automatic_operators.cpp
+.. _dynamic_object example: https://github.com/ThePhD/sol2/blob/develop/examples/source/dynamic_object.cpp
+.. _as shown in the pairs example: https://github.com/ThePhD/sol2/blob/develop/examples/source/pairs.cpp

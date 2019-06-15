@@ -104,5 +104,5 @@ Note that stateless lambdas can be converted to a function pointer, so stateless
 	Do NOT assume that building Lua as C++ will allow you to throw directly from a raw function. If an exception is raised and it bubbles into the Lua framework, even if you compile as C++, Lua does not recognize exceptions other than the ones that it uses with ``lua_error``. In other words, it will return some completely bogus result, potentially leave your Lua stack thrashed, and the rest of your VM *can* be in a semi-trashed state. Please avoid this!
 
 
-.. _the examples: https://github.com/ThePhD/sol2/blob/develop/examples/functions.cpp
+.. _the examples: https://github.com/ThePhD/sol2/blob/develop/examples/source/functions.cpp
 .. _avoid the nightmare altogether: https://github.com/ThePhD/sol2/issues/608#issuecomment-372876206

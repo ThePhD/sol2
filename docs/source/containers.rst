@@ -241,5 +241,5 @@ If you can't upgrade, use the "member" function ``my_container:pairs()`` in Lua 
 	:linenos:
 
 .. _online version's information: https://www.lua.org/pil/26.html
-.. _reflect changes if you use a reference: https://github.com/ThePhD/sol2/blob/develop/examples/containers.cpp
-.. _this table serialization example: https://github.com/ThePhD/sol2/blob/develop/examples/containers_as_table.cpp
+.. _reflect changes if you use a reference: https://github.com/ThePhD/sol2/blob/develop/examples/source/containers.cpp
+.. _this table serialization example: https://github.com/ThePhD/sol2/blob/develop/examples/source/containers_as_table.cpp

@@ -59,4 +59,4 @@ Note that because of this system, you can use :doc:`sol::variadic_args<variadic_
 	Please keep in mind that doing this bears a runtime cost to find the proper overload. The cost scales directly not exactly with the number of overloads, but the number of functions that have the same argument count as each other (sol will early-eliminate any functions that do not match the argument count).
 
 .. _luaL_check{number/udata/string}: http://www.Lua.org/manual/5.3/manual.html#luaL_checkinteger
-.. _This example shows how: https://github.com/ThePhD/sol2/blob/develop/examples/overloading_with_fallback.cpp
+.. _This example shows how: https://github.com/ThePhD/sol2/blob/develop/examples/source/overloading_with_fallback.cpp

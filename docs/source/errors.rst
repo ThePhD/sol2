@@ -104,4 +104,4 @@ Tables may have other junk on them that makes iterating through their numeric pa
 .. _OrfeasZ in this issue: https://github.com/ThePhD/sol2/issues/329#issuecomment-276824983
 .. _this issue for fixes to this behavior: https://github.com/ThePhD/sol2/issues/414#issuecomment-306839439
 .. _this __stdcall issue report: https://github.com/ThePhD/sol2/issues/463
-.. _the simple usertype example here: https://github.com/ThePhD/sol2/blob/develop/examples/usertype_simple.cpp#L45
+.. _the simple usertype example here: https://github.com/ThePhD/sol2/blob/develop/examples/source/usertype_simple.cpp#L45

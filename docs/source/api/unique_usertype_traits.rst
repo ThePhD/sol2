@@ -46,5 +46,5 @@ This will allow the library to properly handle ``boost::shared_ptr<T>``, with re
 	If ``is_null`` triggers (returns ``true``), a ``nil`` value will be pushed into Lua rather than an empty structure.
 
 
-.. _shared_ptr here: https://github.com/ThePhD/sol2/blob/develop/examples/shared_ptr.cpp
-.. _unique_ptr here: https://github.com/ThePhD/sol2/blob/develop/examples/unique_ptr.cpp
+.. _shared_ptr here: https://github.com/ThePhD/sol2/blob/develop/examples/source/shared_ptr.cpp
+.. _unique_ptr here: https://github.com/ThePhD/sol2/blob/develop/examples/source/unique_ptr.cpp
