@@ -113,7 +113,7 @@ set_target_properties(sol2
 
 target_include_directories(sol2 INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-	$<INSTALL_INTERFACE:sol/include>)
+	$<INSTALL_INTERFACE:include>)
 
 # # Version configurations
 configure_package_config_file(
@@ -136,7 +136,7 @@ install(EXPORT sol2
 	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sol2")
 
 install(DIRECTORY include/
-	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/sol/include")
+	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/sol")
 
 install(FILES
 	"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config.cmake"
