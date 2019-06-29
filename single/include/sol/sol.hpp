@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-06-10 17:07:43.270577 UTC
-// This header was generated with sol v3.0.2 (revision dafb184)
+// Generated 2019-06-29 13:51:15.029920 UTC
+// This header was generated with sol v3.0.2 (revision da789b0)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -25694,13 +25694,43 @@ namespace sol {
 
 namespace sol {
 
-	struct variadic_results : public std::vector<object> {
-		using std::vector<object>::vector;
+	template <typename Al = typename std::allocator<object>>
+	struct basic_variadic_results : public std::vector<object, Al> {
+	private:
+		using base_t = std::vector<object, Al>;
+
+	public:
+		basic_variadic_results(function_result fr) : base_t() {
+			this->reserve(fr.return_count());
+			this->insert(this->cend(), fr.begin(), fr.end());
+		}
+
+		basic_variadic_results(protected_function_result fr) : base_t() {
+			this->reserve(fr.return_count());
+			this->insert(this->cend(), fr.begin(), fr.end());
+		}
+
+		template <typename Arg0, typename... Args,
+		     meta::disable_any<std::is_same<meta::unqualified_t<Arg0>, basic_variadic_results>, std::is_same<meta::unqualified_t<Arg0>, function_result>,
+		          std::is_same<meta::unqualified_t<Arg0>, protected_function_result>> = meta::enabler>
+		basic_variadic_results(Arg0&& arg0, Args&&... args) : base_t(std::forward<Arg0>(arg0), std::forward<Args>(args)...) {
+		}
+
+		basic_variadic_results(const basic_variadic_results&) = default;
+		basic_variadic_results(basic_variadic_results&&) = default;
+	};
+
+	struct variadic_results : public basic_variadic_results<> {
+	private:
+		using base_t = basic_variadic_results<>;
+
+	public:
+		using base_t::base_t;
 	};
 
 	namespace stack {
-		template <>
-		struct unqualified_pusher<variadic_results> {
+		template <typename Al>
+		struct unqualified_pusher<basic_variadic_results<Al>> {
 			int push(lua_State* L, const variadic_results& e) {
 				int p = 0;
 				for (const auto& i : e) {

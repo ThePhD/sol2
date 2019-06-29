@@ -27,17 +27,50 @@
 #include "stack.hpp"
 #include "object.hpp"
 #include "as_returns.hpp"
+#include "function_result.hpp"
+#include "protected_function_result.hpp"
+
 #include <vector>
 
 namespace sol {
 
-	struct variadic_results : public std::vector<object> {
-		using std::vector<object>::vector;
+	template <typename Al = typename std::allocator<object>>
+	struct basic_variadic_results : public std::vector<object, Al> {
+	private:
+		using base_t = std::vector<object, Al>;
+
+	public:
+		basic_variadic_results(function_result fr) : base_t() {
+			this->reserve(fr.return_count());
+			this->insert(this->cend(), fr.begin(), fr.end());
+		}
+
+		basic_variadic_results(protected_function_result fr) : base_t() {
+			this->reserve(fr.return_count());
+			this->insert(this->cend(), fr.begin(), fr.end());
+		}
+
+		template <typename Arg0, typename... Args,
+		     meta::disable_any<std::is_same<meta::unqualified_t<Arg0>, basic_variadic_results>, std::is_same<meta::unqualified_t<Arg0>, function_result>,
+		          std::is_same<meta::unqualified_t<Arg0>, protected_function_result>> = meta::enabler>
+		basic_variadic_results(Arg0&& arg0, Args&&... args) : base_t(std::forward<Arg0>(arg0), std::forward<Args>(args)...) {
+		}
+
+		basic_variadic_results(const basic_variadic_results&) = default;
+		basic_variadic_results(basic_variadic_results&&) = default;
+	};
+
+	struct variadic_results : public basic_variadic_results<> {
+	private:
+		using base_t = basic_variadic_results<>;
+
+	public:
+		using base_t::base_t;
 	};
 
 	namespace stack {
-		template <>
-		struct unqualified_pusher<variadic_results> {
+		template <typename Al>
+		struct unqualified_pusher<basic_variadic_results<Al>> {
 			int push(lua_State* L, const variadic_results& e) {
 				int p = 0;
 				for (const auto& i : e) {
