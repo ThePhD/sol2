@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-06-29 13:51:15.029920 UTC
-// This header was generated with sol v3.0.2 (revision da789b0)
+// Generated 2019-07-01 06:13:07.719429 UTC
+// This header was generated with sol v3.0.2 (revision b08387d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1187,10 +1187,13 @@ namespace sol {
 		namespace meta_detail {
 			template <typename T>
 			using is_dereferenceable_test = decltype(*std::declval<T>());
+
+			template <typename T>
+			using is_explicitly_dereferenceable_test = decltype(std::declval<T>().operator*());
 		}
 
 		template <typename T>
-		using is_pointer_like = std::integral_constant<bool, !std::is_array_v<T> && (std::is_pointer_v<T> || is_detected_v<meta_detail::is_dereferenceable_test, T>)>;
+		using is_pointer_like = std::integral_constant<bool, !std::is_array_v<T> && (std::is_pointer_v<T> || is_detected_v<meta_detail::is_explicitly_dereferenceable_test, T>)>;
 
 		template <typename T>
 		constexpr inline bool is_pointer_like_v = is_pointer_like<T>::value;
@@ -25700,7 +25703,9 @@ namespace sol {
 		using base_t = std::vector<object, Al>;
 
 	public:
-		basic_variadic_results(function_result fr) : base_t() {
+		basic_variadic_results() : base_t() {}
+
+		basic_variadic_results(unsafe_function_result fr) : base_t() {
 			this->reserve(fr.return_count());
 			this->insert(this->cend(), fr.begin(), fr.end());
 		}

@@ -40,7 +40,9 @@ namespace sol {
 		using base_t = std::vector<object, Al>;
 
 	public:
-		basic_variadic_results(function_result fr) : base_t() {
+		basic_variadic_results() : base_t() {}
+
+		basic_variadic_results(unsafe_function_result fr) : base_t() {
 			this->reserve(fr.return_count());
 			this->insert(this->cend(), fr.begin(), fr.end());
 		}

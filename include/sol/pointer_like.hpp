@@ -35,10 +35,13 @@ namespace sol {
 		namespace meta_detail {
 			template <typename T>
 			using is_dereferenceable_test = decltype(*std::declval<T>());
+
+			template <typename T>
+			using is_explicitly_dereferenceable_test = decltype(std::declval<T>().operator*());
 		}
 
 		template <typename T>
-		using is_pointer_like = std::integral_constant<bool, !std::is_array_v<T> && (std::is_pointer_v<T> || is_detected_v<meta_detail::is_dereferenceable_test, T>)>;
+		using is_pointer_like = std::integral_constant<bool, !std::is_array_v<T> && (std::is_pointer_v<T> || is_detected_v<meta_detail::is_explicitly_dereferenceable_test, T>)>;
 
 		template <typename T>
 		constexpr inline bool is_pointer_like_v = is_pointer_like<T>::value;
