@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-07-01 06:13:07.719429 UTC
-// This header was generated with sol v3.0.2 (revision b08387d)
+// Generated 2019-07-01 09:44:30.937884 UTC
+// This header was generated with sol v3.0.2 (revision 1ab57fc)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -25733,15 +25733,29 @@ namespace sol {
 		using base_t::base_t;
 	};
 
+	template <typename Al>
+	struct is_container<basic_variadic_results<Al>> : std::false_type {};
+
+	template <>
+	struct is_container<variadic_results> : std::false_type {};
+
 	namespace stack {
 		template <typename Al>
 		struct unqualified_pusher<basic_variadic_results<Al>> {
-			int push(lua_State* L, const variadic_results& e) {
+			int push(lua_State* L, const basic_variadic_results<Al>& e) {
 				int p = 0;
 				for (const auto& i : e) {
 					p += stack::push(L, i);
 				}
 				return p;
+			}
+		};
+
+		template <>
+		struct unqualified_pusher<variadic_results> {
+			int push(lua_State* L, const variadic_results& r) {
+				using base_t = basic_variadic_results<>;
+				return stack::push(L, static_cast<const base_t&>(r));
 			}
 		};
 	} // namespace stack
