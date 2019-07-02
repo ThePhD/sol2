@@ -982,9 +982,9 @@ namespace sol { namespace stack {
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	template <typename... Tn>
 	struct unqualified_getter<std::variant<Tn...>> {
-		using V =  std::variant<Tn...>;
-		
-		static V get_one(std::integral_constant<std::size_t, 0>, lua_State* L, int index, record& tracking) {
+		using V = std::variant<Tn...>;
+
+		static V get_one(std::integral_constant<std::size_t, std::variant_size_v<V>>, lua_State* L, int index, record& tracking) {
 			(void)L;
 			(void)index;
 			(void)tracking;
@@ -1000,17 +1000,17 @@ namespace sol { namespace stack {
 
 		template <std::size_t I>
 		static V get_one(std::integral_constant<std::size_t, I>, lua_State* L, int index, record& tracking) {
-			typedef std::variant_alternative_t<I - 1, V> T;
+			typedef std::variant_alternative_t<I, V> T;
 			record temp_tracking = tracking;
 			if (stack::check<T>(L, index, no_panic, temp_tracking)) {
 				tracking = temp_tracking;
-				return V(std::in_place_index<I - 1>, stack::get<T>(L, index));
+				return V(std::in_place_index<I>, stack::get<T>(L, index));
 			}
-			return get_one(std::integral_constant<std::size_t, I - 1>(), L, index, tracking);
+			return get_one(std::integral_constant<std::size_t, I + 1>(), L, index, tracking);
 		}
 
 		static V get(lua_State* L, int index, record& tracking) {
-			return get_one(std::integral_constant<std::size_t, std::variant_size_v<V>>(), L, index, tracking);
+			return get_one(std::integral_constant<std::size_t, 0>(), L, index, tracking);
 		}
 	};
 #endif // SOL_STD_VARIANT

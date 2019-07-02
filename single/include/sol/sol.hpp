@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-07-01 09:44:30.937884 UTC
-// This header was generated with sol v3.0.2 (revision 1ab57fc)
+// Generated 2019-07-02 03:24:22.412862 UTC
+// This header was generated with sol v3.0.2 (revision 52dc19a)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -12718,9 +12718,9 @@ namespace sol { namespace stack {
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	template <typename... Tn>
 	struct unqualified_getter<std::variant<Tn...>> {
-		using V =  std::variant<Tn...>;
-		
-		static V get_one(std::integral_constant<std::size_t, 0>, lua_State* L, int index, record& tracking) {
+		using V = std::variant<Tn...>;
+
+		static V get_one(std::integral_constant<std::size_t, std::variant_size_v<V>>, lua_State* L, int index, record& tracking) {
 			(void)L;
 			(void)index;
 			(void)tracking;
@@ -12736,17 +12736,17 @@ namespace sol { namespace stack {
 
 		template <std::size_t I>
 		static V get_one(std::integral_constant<std::size_t, I>, lua_State* L, int index, record& tracking) {
-			typedef std::variant_alternative_t<I - 1, V> T;
+			typedef std::variant_alternative_t<I, V> T;
 			record temp_tracking = tracking;
 			if (stack::check<T>(L, index, no_panic, temp_tracking)) {
 				tracking = temp_tracking;
-				return V(std::in_place_index<I - 1>, stack::get<T>(L, index));
+				return V(std::in_place_index<I>, stack::get<T>(L, index));
 			}
-			return get_one(std::integral_constant<std::size_t, I - 1>(), L, index, tracking);
+			return get_one(std::integral_constant<std::size_t, I + 1>(), L, index, tracking);
 		}
 
 		static V get(lua_State* L, int index, record& tracking) {
-			return get_one(std::integral_constant<std::size_t, std::variant_size_v<V>>(), L, index, tracking);
+			return get_one(std::integral_constant<std::size_t, 0>(), L, index, tracking);
 		}
 	};
 #endif // SOL_STD_VARIANT
@@ -18265,7 +18265,7 @@ namespace sol {
 			return stack::pop<std::tuple<Ret...>>(lua_state());
 		}
 
-		template <std::size_t I, typename Ret>
+		template <std::size_t I, typename Ret, meta::enable<meta::neg<std::is_void<Ret>>> = meta::enabler>
 		Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n) const {
 			luacall(n, lua_size<Ret>::value);
 			return stack::pop<Ret>(lua_state());
@@ -18383,7 +18383,7 @@ namespace sol {
 				base_t::push();
 			}
 			int pushcount = stack::multi_push_reference(lua_state(), std::forward<Args>(args)...);
-			return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount);
+			return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), static_cast<std::ptrdiff_t>(pushcount));
 		}
 	};
 } // namespace sol

@@ -49,7 +49,7 @@ namespace sol {
 			return stack::pop<std::tuple<Ret...>>(lua_state());
 		}
 
-		template <std::size_t I, typename Ret>
+		template <std::size_t I, typename Ret, meta::enable<meta::neg<std::is_void<Ret>>> = meta::enabler>
 		Ret invoke(types<Ret>, std::index_sequence<I>, std::ptrdiff_t n) const {
 			luacall(n, lua_size<Ret>::value);
 			return stack::pop<Ret>(lua_state());
@@ -167,7 +167,7 @@ namespace sol {
 				base_t::push();
 			}
 			int pushcount = stack::multi_push_reference(lua_state(), std::forward<Args>(args)...);
-			return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), pushcount);
+			return invoke(types<Ret...>(), std::make_index_sequence<sizeof...(Ret)>(), static_cast<std::ptrdiff_t>(pushcount));
 		}
 	};
 } // namespace sol
