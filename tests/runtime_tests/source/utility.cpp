@@ -71,11 +71,11 @@ TEST_CASE("utility/variant", "test that variant can be round-tripped") {
 		lua.set_function("f", [](int v) {
 			return v == 2;
 		});
-		lua.set_function("g", [](std::variant<float, int, std::string> vv) {
+		lua.set_function("g", [](std::variant<int, float, std::string> vv) {
 			int v = std::get<int>(vv);
 			return v == 2;
 		});
-		lua["v"] = std::variant<float, int, std::string>(2);
+		lua["v"] = std::variant<int, float, std::string>(2);
 		{
 			auto result = lua.safe_script("assert(f(v))", sol::script_pass_on_error);
 			REQUIRE(result.valid());
