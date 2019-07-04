@@ -1,6 +1,10 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
+/*
+#include "player.hpp"
+*/
+
 #include <iostream>
 
 struct player {
@@ -78,7 +82,7 @@ int main() {
 		"speed", &player::speed,
 		// can only read from, not write to
 		"bullets", sol::readonly(&player::bullets)
-		);
+	);
 	
 	// You can also add members to the code, defined in Lua!
 	// This lets you have a high degree of flexibility in the code
@@ -127,8 +131,11 @@ p1:brake()
 	// Uncomment and use the file to try that out, too!
 	// Make sure it's in the local directory of the executable after you build, or adjust the filename path
 	// Or whatever else you like!
-	//lua.script_file("prelude_script.lua");
-	//lua.script_file("player_script.lua");
+	//
+	/*
+	lua.script_file("prelude_script.lua");
+	lua.script_file("player_script.lua");
+	*/
 	lua.script(prelude_script);
 	lua.script(player_script);
 	std::cout << std::endl;

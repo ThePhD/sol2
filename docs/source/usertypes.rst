@@ -27,11 +27,6 @@ The examples folder also has a number of really great examples for you to see. T
 * (Advanced) Interop with ``toLua``, ``kaguya``, ``OOLua``, ``LuaBind``, ``luwra``, and all other existing libraries by using the stack API's ``sol::stack::userdata_checker`` and ``sol::stack::userdata_getter`` :ref:`extension points<extension_points>`
     - Must turn on ``SOL_ENABLE_INTEROP``, as defined in the :ref:`configuration and safety documentation<config>`, to use
 
-.. _usertype-special-features:
-.. note::
-
-	Note that to use many of sol3's features, such as automatic constructor creation, ``sol::property``, and similar, one must pass these things to the usertype as part of its initial creation and grouping of arguments. Attempting to do so afterwards will result in unexpected and wrong behavior, as the system will be missing information it needs. This is because many of these features rely on ``__index`` and ``__newindex`` Lua metamethods being overridden and handled in a special way!
-
 Here are some other general advice and tips for understanding and dealing with usertypes:
 
 * Please note that the colon is necessary to "automatically" pass the ``this``/``self`` argument to Lua methods

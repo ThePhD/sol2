@@ -49,7 +49,7 @@ endif()
 
 # # single-source compilable examples
 
-file(GLOB EXAMPLES_SRC source/*.cpp source/tutorials/quick_n_dirty/*.cpp source/docs/*.cpp)
+file(GLOB EXAMPLES_SRC source/*.cpp source/tutorials/*.cpp source/tutorials/quick_n_dirty/*.cpp source/docs/*.cpp)
 source_group(examples FILES ${EXAMPLES_SRC})
 
 function (MAKE_EXAMPLE example_source_file example_suffix target_sol)

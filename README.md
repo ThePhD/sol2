@@ -1,4 +1,4 @@
-## sol3 (sol2 v3.0.2)
+## sol3 (sol2 v3.0.3)
 
 [![Join the chat in Discord: https://discord.gg/buxkYNT](https://img.shields.io/badge/Discord-Chat!-brightgreen.svg)](https://discord.gg/buxkYNT)
 

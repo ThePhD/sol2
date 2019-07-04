@@ -5,131 +5,34 @@ Using user defined types ("usertype"s, or just "udt"s) is simple with sol. If yo
 
 Take this ``player`` struct in C++ in a header file:
 
-.. code-block:: cpp
-	:caption: test_player.hpp
-
-	struct player {
-	public:
-		int bullets;
-		int speed;
-
-		player() 
-		: player(3, 100) {
-
-		}
-
-		player(int ammo) 
-		: player(ammo, 100) {
-
-		}
-
-		player(int ammo, int hitpoints) 
-		: bullets(ammo), hp(hitpoints) {
-
-		}
-
-		void boost () {
-			speed += 10;
-		}
-
-		bool shoot () {
-			if (bullets < 1)
-				return false;
-			--bullets;
-			return true;
-		}
-
-		void set_hp(int value) {
-			hp = value;
-		}
-
-		int get_hp() const {
-			return hp;
-		}
-
-	private:
-		int hp;
-	};
-
+.. literalinclude:: ../../../examples/source/usertype_advanced.cpp
+	:caption: player.hpp
+	:linenos:
+	:lines: 1-48
 
 It's a fairly minimal class, but we don't want to have to rewrite this with metatables in Lua. We want this to be part of Lua easily. The following is the Lua code that we'd like to have work properly:
 
-.. code-block:: lua
+.. literalinclude:: ../../../examples/source/usertype_advanced.cpp
 	:caption: player_script.lua
-	
-	-- call single argument integer constructor
-	p1 = player.new(2)
+	:language: lua
+	:linenos:
+	:lines: 93-124
 
-	-- p2 is still here from being 
-	-- set with lua["p2"] = player(0);
-	-- in cpp file
-	local p2shoots = p2:shoot()
-	assert(not p2shoots)
-	-- had 0 ammo
-	
-	-- set variable property setter
-	p1.hp = 545;
-	-- get variable through property getter
-	print(p1.hp);
+To do this, you bind things using the ``new_usertype`` and method as shown below. These methods are on both :doc:`table<../api/table>` and :doc:`state(_view)<../api/state>`, but we're going to just use it on ``state``:
 
-	local did_shoot_1 = p1:shoot()
-	print(did_shoot_1)
-	print(p1.bullets)
-	local did_shoot_2 = p1:shoot()
-	print(did_shoot_2)
-	print(p1.bullets)
-	local did_shoot_3 = p1:shoot()
-	print(did_shoot_3)
-	
-	-- can read
-	print(p1.bullets)
-	-- would error: is a readonly variable, cannot write
-	-- p1.bullets = 20
+.. literalinclude:: ../../../examples/source/usertype_advanced.cpp
+	:caption: main.cpp
+	:language: cpp
+	:linenos:
+	:lines: 1-3,5,7-9,53,55-86,136-137,142
 
-	p1:boost()
+There is one more method used in the script that is not in C++ or defined on the C++ code to bind a usertype, called ``brake``. Even if a method does not exist in C++, you can add methods to the *class table* in Lua:
 
-To do this, you bind things using the ``new_usertype`` and ``set_usertype`` methods as shown below. These methods are on both :doc:`table<../api/table>` and :doc:`state(_view)<../api/state>`, but we're going to just use it on ``state``:
-
-.. code-block:: cpp
-	:caption: player_script.cpp
-
-	#include <sol/sol.hpp>
-
-	int main () {
-		sol::state lua;
-
-		lua.open_libraries(sol::lib::base);
-
-		// note that you can set a 
-		// userdata before you register a usertype,
-		// and it will still carry 
-		// the right metatable if you register it later
-		
-		// set a variable "p2" of type "player" with 0 ammo
-		lua["p2"] = player(0);
-
-		// make usertype metatable
-		lua.new_usertype<player>( "player",
-			
-			// 3 constructors
-			sol::constructors<player(), player(int), player(int, int)>(),
-			
-			// typical member function that returns a variable
-			"shoot", &player::shoot,
-			// typical member function
-			"boost", &player::boost,
-			
-			// gets or set the value using member variable syntax
-			"hp", sol::property(&player::get_hp, &player::set_hp),
-			
-			// read and write variable
-			"speed", &player::speed,
-			// can only read from, not write to
-			"bullets", sol::readonly( &player::bullets )
-		);
-
-		lua.script_file("player_script.lua");
-	}
+.. literalinclude:: ../../../examples/source/usertype_advanced.cpp
+	:caption: prelude_script.lua
+	:language: lua
+	:linenos:
+	:lines: 90-93
 
 That script should run fine now, and you can observe and play around with the values. Even more stuff :doc:`you can do<../api/usertype>` is described elsewhere, like initializer functions (private constructors / destructors support), "static" functions callable with ``name.my_function( ... )``, and overloaded member functions. You can even bind global variables (even by reference with ``std::ref``) with ``sol::var``. There's a lot to try out!
 

@@ -1,5 +1,5 @@
 #define SOL_ALL_SAFETIES_ON 1
-#include <sol.hpp>
+#include <sol/sol.hpp>
 
 #include <iostream>
 

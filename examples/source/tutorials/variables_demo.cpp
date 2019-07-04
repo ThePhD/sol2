@@ -1,5 +1,5 @@
 #define SOL_ALL_SAFETIES_ON 1
-#include <sol.hpp>
+#include <sol/sol.hpp>
 
 #include <tuple>
 #include <assert.hpp>
@@ -21,7 +21,7 @@ config = {
 	// exactly like a table!
 	bool isfullscreen = lua["config"]["fullscreen"]; // can get nested variables
 	sol::table config = lua["config"];
-	c_assert(isfullscreen);
+	c_assert(!isfullscreen);
 
 	// can also get it using the "get" member function
 	// auto replaces the unqualified type name
