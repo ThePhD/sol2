@@ -135,8 +135,8 @@ install(EXPORT sol2
 	FILE sol2-targets.cmake
 	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sol2")
 
-install(DIRECTORY include/
-	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/sol/")
+install(DIRECTORY include/sol
+	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
 install(FILES
 	"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config.cmake"
