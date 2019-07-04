@@ -121,7 +121,7 @@ namespace sol { namespace stack {
 				const bool success = false;
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::number, type_of(L, index), "not a numeric (integral) type");
+					handler(L, index, type::number, type_of(L, index), "not a numeric type that fits  exactly an integer (has significant decimals)");
 				}
 #else
 				type t = type_of(L, index);
@@ -153,6 +153,8 @@ namespace sol { namespace stack {
 					// expected type, actual type
 #if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
 					handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
+#elif (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS)
+					handler(L, index, type::number, t, "not a numeric type that fits  exactly an integer (has significant decimals)");
 #else
 					handler(L, index, type::number, t, "not a numeric type");
 #endif

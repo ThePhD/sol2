@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-07-02 03:24:22.412862 UTC
-// This header was generated with sol v3.0.2 (revision 52dc19a)
+// Generated 2019-07-04 13:41:56.267639 UTC
+// This header was generated with sol v3.0.2 (revision e440d7a)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -10889,7 +10889,7 @@ namespace sol { namespace stack {
 				const bool success = false;
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::number, type_of(L, index), "not a numeric (integral) type");
+					handler(L, index, type::number, type_of(L, index), "not a numeric type that fits  exactly an integer (has significant decimals)");
 				}
 #else
 				type t = type_of(L, index);
@@ -10921,6 +10921,8 @@ namespace sol { namespace stack {
 					// expected type, actual type
 #if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
 					handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
+#elif (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS)
+					handler(L, index, type::number, t, "not a numeric type that fits  exactly an integer (has significant decimals)");
 #else
 					handler(L, index, type::number, t, "not a numeric type");
 #endif
