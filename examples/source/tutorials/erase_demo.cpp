@@ -10,10 +10,10 @@ int main() {
 	sol::optional<int> x = lua["bark"];
 	// x will have a value
 	if (x) {
-		return -1;
+		std::cout << "x has no value, as expected" << std::endl;
 	}
 	else {
-		std::cout << "x has no value, as expected" << std::endl;
+		return -1;
 	}
 
 	lua["bark"] = sol::lua_nil;
