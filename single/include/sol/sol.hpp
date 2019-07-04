@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-07-04 15:29:43.969662 UTC
-// This header was generated with sol v3.0.3 (revision d83e1a5)
+// Generated 2019-07-04 20:10:26.552076 UTC
+// This header was generated with sol v3.0.3 (revision 56c7150)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -8222,6 +8222,12 @@ namespace sol {
 namespace sol {
 
 	namespace detail {
+		constexpr const char* not_a_number = "not a numeric type";
+		constexpr const char* not_a_number_or_number_string = "not a numeric type or numeric string";
+		constexpr const char* not_a_number_integral = "not a numeric type that fits exactly an integer (has significant decimals)";
+		constexpr const char* not_a_number_or_number_string_integral
+		     = "not a numeric type or a numeric string that fits exactly an integer (has significant decimals)";
+
 		constexpr const char* not_enough_stack_space = "not enough space left on Lua stack";
 		constexpr const char* not_enough_stack_space_floating = "not enough space left on Lua stack for a floating point number";
 		constexpr const char* not_enough_stack_space_integral = "not enough space left on Lua stack for an integral number";
@@ -10879,7 +10885,7 @@ namespace sol { namespace stack {
 				const bool success = isnum != 0;
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
+					handler(L, index, type::number, type_of(L, index), detail::not_a_number_or_number_string_integral);
 				}
 #elif (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS) && !(defined(SOL_NO_CHECK_NUMBER_PRECISION) && SOL_NO_CHECK_NUMBER_PRECISION)
 				// this check is precise, does not convert
@@ -10889,7 +10895,7 @@ namespace sol { namespace stack {
 				const bool success = false;
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::number, type_of(L, index), "not a numeric type that fits  exactly an integer (has significant decimals)");
+					handler(L, index, type::number, type_of(L, index), detail::not_a_number_integral);
 				}
 #else
 				type t = type_of(L, index);
@@ -10897,7 +10903,7 @@ namespace sol { namespace stack {
 #endif // If numbers are enabled, use the imprecise check
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::number, type_of(L, index), "not a numeric type");
+					handler(L, index, type::number, type_of(L, index), detail::not_a_number);
 				}
 				return success;
 #else
@@ -10906,7 +10912,7 @@ namespace sol { namespace stack {
 				type t = type_of(L, index);
 				if (t != type::number) {
 					// expected type, actual type
-					handler(L, index, type::number, t, "not a numeric type");
+					handler(L, index, type::number, t, detail::not_a_number);
 					return false;
 				}
 #endif // Do not allow strings to be numbers
@@ -10920,11 +10926,11 @@ namespace sol { namespace stack {
 				if (!success) {
 					// expected type, actual type
 #if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
-					handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
+					handler(L, index, type::number, type_of(L, index), detail::not_a_number_or_number_string);
 #elif (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS)
-					handler(L, index, type::number, t, "not a numeric type that fits  exactly an integer (has significant decimals)");
+					handler(L, index, type::number, t, detail::not_a_number_or_number_string;
 #else
-					handler(L, index, type::number, t, "not a numeric type");
+					handler(L, index, type::number, t, detail::not_a_number);
 #endif
 				}
 				return success;
@@ -10936,7 +10942,7 @@ namespace sol { namespace stack {
 				bool success = lua_isnumber(L, index) == 1;
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::number, type_of(L, index), "not a numeric type or numeric string");
+					handler(L, index, type::number, type_of(L, index), detail::not_a_number_or_number_string);
 				}
 				return success;
 #else
@@ -10944,7 +10950,7 @@ namespace sol { namespace stack {
 				bool success = t == type::number;
 				if (!success) {
 					// expected type, actual type
-					handler(L, index, type::number, t, "not a numeric type");
+					handler(L, index, type::number, t, detail::not_a_number);
 				}
 				return success;
 #endif // Strings are Numbers

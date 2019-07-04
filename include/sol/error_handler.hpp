@@ -30,6 +30,12 @@
 namespace sol {
 
 	namespace detail {
+		constexpr const char* not_a_number = "not a numeric type";
+		constexpr const char* not_a_number_or_number_string = "not a numeric type or numeric string";
+		constexpr const char* not_a_number_integral = "not a numeric type that fits exactly an integer (has significant decimals)";
+		constexpr const char* not_a_number_or_number_string_integral
+		     = "not a numeric type or a numeric string that fits exactly an integer (has significant decimals)";
+
 		constexpr const char* not_enough_stack_space = "not enough space left on Lua stack";
 		constexpr const char* not_enough_stack_space_floating = "not enough space left on Lua stack for a floating point number";
 		constexpr const char* not_enough_stack_space_integral = "not enough space left on Lua stack for an integral number";

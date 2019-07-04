@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-07-04 15:29:44.250905 UTC
-// This header was generated with sol v3.0.3 (revision d83e1a5)
+// Generated 2019-07-04 20:10:27.302200 UTC
+// This header was generated with sol v3.0.3 (revision 56c7150)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
