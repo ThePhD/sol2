@@ -8,7 +8,7 @@ Take this ``player`` struct in C++ in a header file:
 .. literalinclude:: ../../../examples/source/usertype_advanced.cpp
 	:caption: player.hpp
 	:linenos:
-	:lines: 1-48
+	:lines: 8-51
 
 It's a fairly minimal class, but we don't want to have to rewrite this with metatables in Lua. We want this to be part of Lua easily. The following is the Lua code that we'd like to have work properly:
 
@@ -16,7 +16,7 @@ It's a fairly minimal class, but we don't want to have to rewrite this with meta
 	:caption: player_script.lua
 	:language: lua
 	:linenos:
-	:lines: 93-124
+	:lines: 97-127
 
 To do this, you bind things using the ``new_usertype`` and method as shown below. These methods are on both :doc:`table<../api/table>` and :doc:`state(_view)<../api/state>`, but we're going to just use it on ``state``:
 
@@ -24,7 +24,7 @@ To do this, you bind things using the ``new_usertype`` and method as shown below
 	:caption: main.cpp
 	:language: cpp
 	:linenos:
-	:lines: 1-3,5,7-9,53,55-86,136-137,142
+	:lines: 1-3,5,7-9,53,55-85,135-136,143-
 
 There is one more method used in the script that is not in C++ or defined on the C++ code to bind a usertype, called ``brake``. Even if a method does not exist in C++, you can add methods to the *class table* in Lua:
 
@@ -32,7 +32,7 @@ There is one more method used in the script that is not in C++ or defined on the
 	:caption: prelude_script.lua
 	:language: lua
 	:linenos:
-	:lines: 90-93
+	:lines: 89-92
 
 That script should run fine now, and you can observe and play around with the values. Even more stuff :doc:`you can do<../api/usertype>` is described elsewhere, like initializer functions (private constructors / destructors support), "static" functions callable with ``name.my_function( ... )``, and overloaded member functions. You can even bind global variables (even by reference with ``std::ref``) with ``sol::var``. There's a lot to try out!
 

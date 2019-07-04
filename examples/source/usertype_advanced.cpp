@@ -65,25 +65,24 @@ int main() {
 	lua["p2"] = player(0);
 
 	// make usertype metatable
-	lua.new_usertype<player>("player",
-
+	sol::usertype<player> player_type = lua.new_usertype<player>("player",
 		// 3 constructors
-		sol::constructors<player(), player(int), player(int, int)>(),
+		sol::constructors<player(), player(int), player(int, int)>());
 
-		// typical member function that returns a variable
-		"shoot", &player::shoot,
-		// typical member function
-		"boost", &player::boost,
+	// typical member function that returns a variable
+	player_type["shoot"] = &player::shoot;
+	// typical member function
+	player_type["boost"] = &player::boost;
 
-		// gets or set the value using member variable syntax
-		"hp", sol::property(&player::get_hp, &player::set_hp),
+	// gets or set the value using member variable syntax
+	player_type["hp"] = sol::property(&player::get_hp, &player::set_hp);
 
-		// read and write variable
-		"speed", &player::speed,
-		// can only read from, not write to
-		"bullets", sol::readonly(&player::bullets)
-	);
-	
+	// read and write variable
+	player_type["speed"] = &player::speed;
+	// can only read from, not write to
+	// .set(foo, bar) is the same as [foo] = bar;
+	player_type.set("bullets", sol::readonly(&player::bullets));
+
 	// You can also add members to the code, defined in Lua!
 	// This lets you have a high degree of flexibility in the code
 	std::string prelude_script = R"(
@@ -138,5 +137,8 @@ p1:brake()
 	*/
 	lua.script(prelude_script);
 	lua.script(player_script);
+
 	std::cout << std::endl;
+
+	return 0;
 }
