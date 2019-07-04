@@ -19,7 +19,7 @@ int main() {
 	lua["bark"] = sol::lua_nil;
 	sol::optional<int> y = lua["bark"];
 	// y will not have a value
-	if (x) {
+	if (y) {
 		return -1;
 	}
 	else {
