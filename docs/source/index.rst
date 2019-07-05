@@ -58,17 +58,15 @@ support
 
 You can support the project and other related endeavors in various ways.
 
-|pa| |kf| |lp| |pp|  
+|gs| |pa| |kf| |lp| |pp|  
 
 
-You can support sol3 development by using any of the above. This is a time-consuming effort, so individuals who donate get to:
+GitHub Sponsors is matching all sponsorships 100% and they also do not charge fees on either end of the transaction as well until sometime in June 2020. Still, you can support sol3 development by using any of the above. This is a time-consuming effort, so individuals who donate get to:
 
 - steer the direction and time spent on sol
 - get a role on the Discord server
 - get their name put up in the CONTRIBUTORS list
 - put something of their choice on sol3's README or the documentation's front page
-
-You can also help out the library by submitting pull requests to fix anything or add anything you think would be helpful! This includes making small, useful examples of something you haven't seen, or fixing typos and bad code in the documentation.
 
 
 "I need feature X, maybe you have it?"
@@ -134,3 +132,8 @@ Search
 	:height: 75
 	:target: https://github.com/ThePhD/sol2/issues
 	:alt: sol3 Github Issues Page
+
+.. |gs| image:: media/github_sponsors_logo.png
+	:height: 55
+	:target: https://github.com/users/ThePhD/sponsorship
+	:alt: sol3 Sponsors Page
