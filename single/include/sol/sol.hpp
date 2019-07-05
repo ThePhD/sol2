@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-07-04 20:10:26.552076 UTC
-// This header was generated with sol v3.0.3 (revision 56c7150)
+// Generated 2019-07-05 02:52:13.070165 UTC
+// This header was generated with sol v3.0.3 (revision fd4ba95)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -10928,7 +10928,7 @@ namespace sol { namespace stack {
 #if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
 					handler(L, index, type::number, type_of(L, index), detail::not_a_number_or_number_string);
 #elif (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS)
-					handler(L, index, type::number, t, detail::not_a_number_or_number_string;
+					handler(L, index, type::number, t, detail::not_a_number_or_number_string);
 #else
 					handler(L, index, type::number, t, detail::not_a_number);
 #endif
