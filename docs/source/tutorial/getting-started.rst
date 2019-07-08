@@ -49,8 +49,8 @@ Next, let's start :doc:`reading/writing some variables<variables>` from Lua into
 .. _LuaJIT: http://luajit.org/
 .. _GCC 6.0: https://gcc.gnu.org/gcc-6/changes.html
 .. _single header file release: https://github.com/ThePhD/sol2/releases
-.. _repository as well: https://github.com/ThePhD/sol2/blob/develop/single/sol/sol.hpp
-.. _single/sol/sol.hpp: https://github.com/ThePhD/sol2/blob/develop/single/sol/sol.hpp
+.. _repository as well: https://github.com/ThePhD/sol2/blob/develop/single/include/sol/sol.hpp
+.. _single/sol/sol.hpp: https://github.com/ThePhD/sol2/blob/develop/single/include/sol/sol.hpp
 .. _github repository here: https://github.com/ThePhD/sol2
 .. _Lua page on getting started: https://www.lua.org/start.html
 .. _in this example: https://github.com/ThePhD/sol2/blob/develop/examples/source/basic.cpp
