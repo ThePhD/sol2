@@ -14,6 +14,7 @@ When you're ready, try compiling this short snippet:
 .. literalinclude:: ../../../examples/source/tutorials/first_snippet.cpp
 	:linenos:
 	:caption: hello_lua.cpp
+	:name: hello-lua
 
 Using this simple command line:
 
@@ -32,6 +33,7 @@ The second line opens a single lua-provided library, "base". There are several o
 .. literalinclude:: ../../../examples/source/tutorials/open_multiple_libraries.cpp
 	:linenos:
 	:caption: multiple_libraries.cpp
+	:name: open-multiple-libraries
 
 If you're interested in integrating sol with a project that already uses some other library or Lua in the codebase, check out the :doc:`existing example<existing>` to see how to work with sol when you add it to a project (the existing example covers ``require`` as well)!
 

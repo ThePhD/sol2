@@ -16,6 +16,7 @@ members
 
 .. code-block:: cpp
 	:caption: constructor: new_table
+	:name: sol-new_table-constructor
 
 	new_table(int sequence_hint = 0, int map_hint = 0);
 	

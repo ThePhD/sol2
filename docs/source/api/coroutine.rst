@@ -11,6 +11,7 @@ For example, you can work with a coroutine like this:
 
 .. code-block:: lua
     :caption: co.lua
+    :name: co-lua
 
         function loop()
             while counter ~= 30
@@ -25,6 +26,7 @@ This is a function that yields:
 
 .. code-block:: cpp
     :caption: main.cpp
+    :name: yield-main
 
     sol::state lua;
     lua.open_libraries(sol::lib::base, sol::lib::coroutine);
@@ -43,6 +45,7 @@ Note that this code doesn't check for errors: to do so, you can call the functio
 
 .. code-block:: cpp
     :caption: main_with_thread.cpp
+    :name: yield-main-thread
 
     sol::state lua;
     lua.open_libraries(sol::lib::base, sol::lib::coroutine);
@@ -63,6 +66,7 @@ members
 
 .. code-block:: cpp
     :caption: function: constructor
+    :name: sol-coroutine-constructor
 
     coroutine(lua_State* L, int index = -1);
 
@@ -70,7 +74,7 @@ Grabs the coroutine at the specified index given a ``lua_State*``.
 
 .. code-block:: cpp
 	:caption: returning the coroutine's status
-	:name: status
+    :name: sol-coroutine-status
 
 	call_status status() const noexcept;
 
@@ -79,6 +83,7 @@ Returns the status of a coroutine.
 
 .. code-block:: cpp
 	:caption: checks for an error
+    :name: sol-coroutine-error
 
 	bool error() const noexcept;
 
@@ -88,6 +93,7 @@ Checks if an error occured when the coroutine was run.
 
 .. code-block:: cpp
 	:caption: runnable and explicit operator bool
+    :name: sol-coroutine-runnable
 
 	bool runnable () const noexcept;
 	explicit operator bool() const noexcept;
@@ -96,6 +102,7 @@ These functions allow you to check if a coroutine can still be called (has more 
 
 .. code-block:: cpp
 	:caption: calling a coroutine
+    :name: sol-coroutine-operator-call
 
 	template<typename... Args>
 	protected_function_result operator()( Args&&... args );

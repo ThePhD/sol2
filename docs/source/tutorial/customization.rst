@@ -7,6 +7,7 @@ These are template class/structs, so you'll override them using a technique C++ 
 
 .. literalinclude:: ../../../examples/source/customization_multiple.cpp
 	:name: customization-overriding
+	:caption: main.cpp
 	:linenos:
 	:lines: 1-52
 
@@ -14,6 +15,7 @@ This is the base formula that you can follow to extend to your own classes. Usin
 
 .. literalinclude:: ../../../examples/source/customization_multiple.cpp
 	:name: customization-overriding-use
+	:caption: main.cpp
 	:linenos:
 	:lines: 52-
 

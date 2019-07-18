@@ -12,4 +12,5 @@ You can use this in conjunction with :doc:`sol::table<table>` to set/get a metat
 
 .. literalinclude:: ../../../examples/source/metatable_key_low_level.cpp
 	:caption: messing with metatables
+	:name: sol-metatable_key-eg
 	:linenos:

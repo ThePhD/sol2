@@ -5,6 +5,7 @@ environment
 
 .. code-block:: cpp
 	:caption: environment
+	:name: sol-environment
 
 	class environment : public table;
 
@@ -32,6 +33,7 @@ free functions
 
 .. code-block:: cpp
 	:caption: function: set_environment
+	:name: sol-environment-set_environment
 
 	template <typename T>
 	void set_environment( const environment& env, const T& target );
@@ -41,6 +43,7 @@ See :ref:`environment::set_on<environment-set-on>`.
 
 .. code-block:: cpp
 	:caption: function: get_environment
+	:name: sol-environment-set_environment
 
 	template <typename E = reference, typename T>
 	basic_environment<E> get_environment( const T& target );
@@ -53,6 +56,7 @@ members
 
 .. code-block:: cpp
 	:caption: constructor: environment
+	:name: sol-environment-constructor
 
 	environment(lua_State* L, sol::new_table nt);
 	environment(lua_State* L, sol::new_table nt, const sol::reference& fallback);
@@ -68,7 +72,7 @@ The second and third unique constructors take a special empty type that serves a
 
 .. code-block:: cpp
 	:caption: function: set_on
-	:name: environment-set-on
+	:name: sol-environment-set_on
 	
 	template <typename T>
 	void set_on(const T& target);

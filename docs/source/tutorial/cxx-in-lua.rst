@@ -7,6 +7,7 @@ Take this ``player`` struct in C++ in a header file:
 
 .. literalinclude:: ../../../examples/source/usertype_advanced.cpp
 	:caption: player.hpp
+	:name: tutorial-player-class
 	:linenos:
 	:lines: 8-51
 
@@ -14,6 +15,7 @@ It's a fairly minimal class, but we don't want to have to rewrite this with meta
 
 .. literalinclude:: ../../../examples/source/usertype_advanced.cpp
 	:caption: player_script.lua
+	:name: tutorial-player-script
 	:language: lua
 	:linenos:
 	:lines: 97-127
@@ -22,6 +24,7 @@ To do this, you bind things using the ``new_usertype`` and method as shown below
 
 .. literalinclude:: ../../../examples/source/usertype_advanced.cpp
 	:caption: main.cpp
+	:name: tutorial-player-usertype
 	:language: cpp
 	:linenos:
 	:lines: 1-3,5,7-9,53,55-85,135-136,143-
@@ -30,6 +33,7 @@ There is one more method used in the script that is not in C++ or defined on the
 
 .. literalinclude:: ../../../examples/source/usertype_advanced.cpp
 	:caption: prelude_script.lua
+	:name: tutorial-prelude-script
 	:language: lua
 	:linenos:
 	:lines: 89-92

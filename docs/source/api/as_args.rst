@@ -17,6 +17,7 @@ as_args
 
 .. literalinclude:: ../../../examples/source/args_from_container.cpp
 	:caption: args_from_container.cpp
+	:name: args-from-container
 	:linenos:
 
 It is basically implemented as a `one-way customization point`_. For more information about customization points, see the :doc:`tutorial on how to customize sol to work with your types<../tutorial/customization>`.

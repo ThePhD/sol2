@@ -25,6 +25,7 @@ sol will not take ownership of raw pointers: raw pointers do not own anything. s
 .. literalinclude:: ../../../examples/source/tutorials/pointer_lifetime.cpp
 	:linenos:
 	:caption: pointer_lifetime.cpp
+	:name: pointer-lifetime-raw-ptr
 	:lines: 1-11,14-22, 74-
 
 Use/return a ``unique_ptr`` or ``shared_ptr`` instead or just return a value:
@@ -32,6 +33,7 @@ Use/return a ``unique_ptr`` or ``shared_ptr`` instead or just return a value:
 .. literalinclude:: ../../../examples/source/tutorials/pointer_lifetime.cpp
 	:linenos:
 	:caption: (smart pointers) pointer_lifetime.cpp
+	:name: pointer-lifetime-smart-ptr
 	:lines: 1-11,14-22, 74-
 
 If you have something you know is going to last and you just want to give it to Lua as a reference, then it's fine too:
@@ -39,6 +41,7 @@ If you have something you know is going to last and you just want to give it to 
 .. literalinclude:: ../../../examples/source/tutorials/pointer_lifetime.cpp
 	:linenos:
 	:caption: (static) pointer_lifetime.cpp
+	:name: pointer-lifetime-static
 	:lines: 1-11,46-49,74-
 
 
@@ -47,6 +50,7 @@ sol can detect ``nullptr``, so if you happen to return it there won't be any dan
 .. literalinclude:: ../../../examples/source/tutorials/pointer_lifetime.cpp
 	:linenos:
 	:caption: (nil/nullptr) pointer_lifetime.cpp
+	:name: pointer-lifetime-nil
 	:lines: 1-11,51-
 
 
