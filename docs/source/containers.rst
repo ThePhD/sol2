@@ -10,6 +10,7 @@ Containers are objects that are meant to be inspected and iterated and whose job
 	- You must push containers into C++ by returning them directly and getting/setting them directly, and they will have a type of ``sol::type::userdata`` and treated like a usertype
 * Containers can be manipulated from both C++ and Lua, and, like userdata, will `reflect changes if you use a reference`_ to the data.
 * This means containers **do not automatically serialize as Lua tables**
+	- Either stores the container (copies/moves the container in) or hold a reference to it (when using ``std::reference_wrapper<...>``/``std::ref(...)``)
 	- If you need tables, consider using ``sol::as_table`` and ``sol::nested``
 	- See `this table serialization example`_ for more details
 * Lua 5.1 has different semantics for ``pairs`` and ``ipairs``: be wary. See :ref:`examples down below<containers-pairs-example>` for more details
@@ -101,7 +102,7 @@ Below are the many container operations and their override points for ``usertype
 |           |                                           | extension point                                  |                      |                                                                                                                                                                                              |
 +-----------+-------------------------------------------+--------------------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | set       | ``c:set(key, value)``                     | ``static int set(lua_State*);``                  | 1 self               | - if ``value`` is nil, it performs an erase in default implementation                                                                                                                        |
-|           |                                           |                                                  | 2 key                | - if this is a container that supports insertion and``key`` is an index equal to the (size of the container) + 1, it will insert the value at the end of the container (this is a Lua idiom) |
+|           |                                           |                                                  | 2 key                | - if this is a container that supports insertion and ``key`` is an index equal to the (size of container) + 1, it will insert the value at the end of the container (this is a Lua idiom)    |
 |           |                                           |                                                  | 3 value              | - default implementation uses ``.insert`` or `operator[]` for c arrays                                                                                                                       |
 +-----------+-------------------------------------------+--------------------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | index_set | ``c[key] = value``                        | ``static int index_set(lua_State*);``            | 1 self               | - default implementation defers work to "set"                                                                                                                                                |
@@ -178,7 +179,7 @@ Below are the many container operations and their override points for ``usertype
 container classifications
 -------------------------
 
-When you serialize a container into sol3, the default container handler deals with the containers by inspecting various properties, functions, and typedefs on them. Here are the broad implications of containers sol3's defaults will recognize, and which already-known containers fall into their categories:
+When you push a container into sol3, the default container handler deals with the containers by inspecting various properties, functions, and typedefs on them. Here are the broad implications of containers sol3's defaults will recognize, and which already-known containers fall into their categories:
 
 +------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
 | container type         | requirements                           | known containers        | notes/caveats                                                                                 |
@@ -189,7 +190,7 @@ When you serialize a container into sol3, the default container handler deals wi
 |                        |                                        | std::forward_list       |                                                                                               |
 +------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
 | fixed                  | lacking ``push_back``/``insert``       | std::array<T, n>        | - regular c-style arrays must be set with ``std::ref( arr )`` or ``&arr`` to be usable        |
-|                        | lacking ``erase``                      | T[n] (fixed arrays)     | - C++ implementation inserts using operator[]                                                 |
+|                        | lacking ``erase``                      | T[n] (fixed arrays)     | - default implementation sets values using operator[]                                         |
 |                        |                                        |                         |                                                                                               |
 +------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
 | ordered                | ``key_type`` typedef                   | std::set                | - ``container[key] = stuff`` operation erases when ``stuff`` is nil, inserts/sets when not    |
@@ -204,10 +205,10 @@ When you serialize a container into sol3, the default container handler deals wi
 +------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
 | unordered              | same as ordered                        | std::unordered_set      | - ``container[key] = stuff`` operation erases when ``stuff`` is nil, inserts/sets when not    |
 |                        |                                        | std::unordered_multiset | - ``container.get(key)`` returns the key itself                                               |
-|                        |                                        |                         | - iteration not guaranteed to be in order of insertion, just like in C++ container            |
+|                        |                                        |                         | - iteration not guaranteed to be in order of insertion, just like the C++ container           |
 |                        |                                        |                         |                                                                                               |
 +------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
-| unordered, associative | same as ordered, associative           | std::unordered_map      | - iteration not guaranteed to be in order of insertion, just like in C++ container            |
+| unordered, associative | same as ordered, associative           | std::unordered_map      | - iteration not guaranteed to be in order of insertion, just like the C++ container           |
 |                        |                                        | std::unordered_multimap |                                                                                               |
 +------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
 

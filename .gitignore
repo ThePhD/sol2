@@ -110,6 +110,7 @@ desktop.ini
 # Miscellaneous
 external/
 scratch/
+vendor/
 .idea/
 cmake-build-debug/
 cmake-build-relwithdebinfo/
