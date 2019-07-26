@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-07-05 02:52:13.070165 UTC
-// This header was generated with sol v3.0.3 (revision fd4ba95)
+// Generated 2019-07-26 02:13:25.052030 UTC
+// This header was generated with sol v3.0.3 (revision eb5c442)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1653,7 +1653,7 @@ namespace sol {
 			     std::enable_if_t<!std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value
 			          && std::is_destructible<unqualified_t<T>>::value>> {
 				struct F {
-					void operator()();
+					void operator()() {};
 				};
 				struct Derived : T, F {};
 				template <typename U, U>
@@ -1673,7 +1673,7 @@ namespace sol {
 			     std::enable_if_t<!std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value
 			          && !std::is_destructible<unqualified_t<T>>::value>> {
 				struct F {
-					void operator()();
+					void operator()() {};
 				};
 				struct Derived : T, F {
 					~Derived() = delete;

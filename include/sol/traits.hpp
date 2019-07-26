@@ -283,7 +283,7 @@ namespace sol {
 			     std::enable_if_t<!std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value
 			          && std::is_destructible<unqualified_t<T>>::value>> {
 				struct F {
-					void operator()();
+					void operator()() {};
 				};
 				struct Derived : T, F {};
 				template <typename U, U>
@@ -303,7 +303,7 @@ namespace sol {
 			     std::enable_if_t<!std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value
 			          && !std::is_destructible<unqualified_t<T>>::value>> {
 				struct F {
-					void operator()();
+					void operator()() {};
 				};
 				struct Derived : T, F {
 					~Derived() = delete;
