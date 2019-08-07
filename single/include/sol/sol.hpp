@@ -2572,6 +2572,10 @@ COMPAT53_API void luaL_requiref(lua_State *L, const char *modname,
 
 #endif /* Lua 5.2 only */
 
+#if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM == 504
+#  define LUA_ERRGCMM -1
+#endif /* Lua 5.4 only */
+
 /* other Lua versions */
 #if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501 || LUA_VERSION_NUM > 504
 
