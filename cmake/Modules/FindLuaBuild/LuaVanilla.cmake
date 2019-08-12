@@ -185,7 +185,9 @@ if (LUA_VANILLA_VERSION MATCHES "^5\\.1")
 		lbaselib.c ldblib.c liolib.c lmathlib.c loslib.c ltablib.c 
 		lstrlib.c loadlib.c linit.c)
 	set(LUA_VANILLA_LUA_SOURCES lua.c )
+if (LUA_BUILD_LUA_COMPILER)
 	set(LUA_VANILLA_LUAC_SOURCES luac.c print.c )
+endif()
 	set(LUA_VANILLA_GENERATE_LUA_HPP true)
 elseif (LUA_VANILLA_VERSION MATCHES "^5\\.2")
 	set(LUA_VANILLA_LIB_SOURCES lapi.c lcode.c lctype.c ldebug.c ldo.c ldump.c 
@@ -194,7 +196,9 @@ elseif (LUA_VANILLA_VERSION MATCHES "^5\\.2")
 		lauxlib.c lbaselib.c lbitlib.c lcorolib.c ldblib.c liolib.c 
 		lmathlib.c loslib.c lstrlib.c ltablib.c loadlib.c linit.c)
 	set(LUA_VANILLA_LUA_SOURCES lua.c )
+if (LUA_BUILD_LUA_COMPILER)
 	set(LUA_VANILLA_LUAC_SOURCES luac.c )
+endif()
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
 elseif (LUA_VANILLA_VERSION MATCHES "^5\\.3")
 	set(LUA_VANILLA_LIB_SOURCES lapi.c lcode.c lctype.c ldebug.c ldo.c ldump.c 
@@ -203,7 +207,9 @@ elseif (LUA_VANILLA_VERSION MATCHES "^5\\.3")
 		lbaselib.c lbitlib.c lcorolib.c ldblib.c liolib.c lmathlib.c 
 		loslib.c lstrlib.c ltablib.c lutf8lib.c loadlib.c linit.c)
 	set(LUA_VANILLA_LUA_SOURCES lua.c )
+if (LUA_BUILD_LUA_COMPILER)
 	set(LUA_VANILLA_LUAC_SOURCES luac.c )
+endif()
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
 elseif (LUA_VANILLA_VERSION MATCHES "^5\\.4")
 	if (LUA_VANILLA_VERSION MATCHES "work")
@@ -215,7 +221,9 @@ elseif (LUA_VANILLA_VERSION MATCHES "^5\\.4")
 		lparser.c lstate.c lstring.c lstrlib.c ltable.c ltablib.c ltm.c lundump.c
 		lutf8lib.c lvm.c lzio.c)
 	set(LUA_VANILLA_LUA_SOURCES lua.c )
+if (LUA_BUILD_LUA_COMPILER)
 	set(LUA_VANILLA_LUAC_SOURCES luac.c )
+endif()
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
 else()
 	MESSAGE(WARNING "Using Lua 5.4.0-work1 file list for ${LUA_VERSION} version")
@@ -225,14 +233,15 @@ else()
 		lparser.c lstate.c lstring.c lstrlib.c ltable.c ltablib.c ltm.c lundump.c
 		lutf8lib.c lvm.c lzio.c)
 	set(LUA_VANILLA_LUA_SOURCES lua.c )
+if (LUA_BUILD_LUA_COMPILER)
 	set(LUA_VANILLA_LUAC_SOURCES luac.c )
+endif()
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
 endif()
 
 set(LUA_VANILLA_SOURCE_DIR "${LUA_BUILD_TOPLEVEL}/src")
 prepend(LUA_VANILLA_LIB_SOURCES "${LUA_VANILLA_SOURCE_DIR}/" ${LUA_VANILLA_LIB_SOURCES})
 prepend(LUA_VANILLA_LUA_SOURCES "${LUA_VANILLA_SOURCE_DIR}/" ${LUA_VANILLA_LUA_SOURCES})
-prepend(LUA_VANILLA_LUAC_SOURCES "${LUA_VANILLA_SOURCE_DIR}/" ${LUA_VANILLA_LUAC_SOURCES})
 
 # download, just for the sake of download + extract
 # or pull from local folder
@@ -242,7 +251,7 @@ if (LUA_LOCAL_DIR)
 	file(COPY "${LUA_LOCAL_DIR}/include"
 		DESTINATION "${LUA_BUILD_TOPLEVEL}")
 	add_custom_target(LUA_VANILLA
-		DEPENDS "${LUA_VANILLA_LIB_SOURCES}" "${LUA_VANILLA_LUA_SOURCES}" "${LUA_VANILLA_LUAC_SOURCES}")
+		DEPENDS "${LUA_VANILLA_LIB_SOURCES}" "${LUA_VANILLA_LUA_SOURCES}")
 	set(LUA_VANILLA_INCLUDE_DIRS ${LUA_VANILLA_INCLUDE_DIRS} "${LUA_VANILLA_SOURCE_DIR}" "${LUA_BUILD_TOPLEVEL}/include")
 else()
 	ExternalProject_Add(LUA_VANILLA
@@ -262,7 +271,7 @@ else()
 		BUILD_COMMAND ""
 		INSTALL_COMMAND ""
 		TEST_COMMAND ""
-		BUILD_BYPRODUCTS "${LUA_VANILLA_LIB_SOURCES}" "${LUA_VANILLA_LUA_SOURCES}" "${LUA_VANILLA_LUAC_SOURCES}")
+		BUILD_BYPRODUCTS "${LUA_VANILLA_LIB_SOURCES}" "${LUA_VANILLA_LUA_SOURCES}")
 
 	# make a quick lua.hpp for 5.1 targets that don't have it
 	if (LUA_VANILLA_GENERATE_LUA_HPP)
@@ -386,48 +395,47 @@ if (UNIX)
 endif()
 
 # LuaC Compiler
-add_executable(${luacompiler} ${LUA_VANILLA_LUAC_SOURCES})
-if (BUILD_LUA_AS_DLL)
-	# TODO: figure out how to make DLL internal symbols for lua public so we don't have to do this
-	target_sources(${luacompiler} PRIVATE ${LUA_VANILLA_LIB_SOURCES})
-endif()
-set_target_properties(${luacompiler}
-	PROPERTIES
-	LANGUAGE C
-	LINKER_LANGUAGE C
-	C_STANDARD 99
-	C_EXTENSIONS TRUE
-	OUTPUT_NAME luac-${LUA_VANILLA_VERSION})
-target_include_directories(${luacompiler}
-	PRIVATE "${LUA_VANILLA_INCLUDE_DIRS}")
-target_compile_definitions(${luacompiler}
-	PUBLIC LUA_COMPAT_ALL ${LUA_VANILLA_DLL_DEFINE}
-	PRIVATE LUA_COMPAT_ALL ${LUA_VANILLA_DLL_DEFINE})
-if (MSVC)
-	target_compile_options(${luacompiler}
-		PRIVATE /W1)
-else()
-	target_compile_options(${luacompiler}
-		PRIVATE -w)
-endif()
-if (WIN32)
-	#target_compile_definitions(${luacompiler} 
-	#	PRIVATE LUA_USE_WINDOWS)
-else()
-	target_compile_definitions(${luacompiler} 
-		PRIVATE LUA_USE_LINUX)
-endif()
-target_link_libraries(${luacompiler} PRIVATE ${liblua})
-if (CMAKE_DL_LIBS)
-	target_link_libraries(${luacompiler} PRIVATE ${CMAKE_DL_LIBS})
-endif()
-if (UNIX)
-	# TODO: make readline optional?
-	target_link_libraries(${luacompiler} PRIVATE m readline)
+if (LUA_BUILD_LUA_COMPILER)
+	set_target_properties(${luacompiler}
+		PROPERTIES
+		LANGUAGE C
+		LINKER_LANGUAGE C
+		C_STANDARD 99
+		C_EXTENSIONS TRUE
+		OUTPUT_NAME luac-${LUA_VANILLA_VERSION})
+	target_include_directories(${luacompiler}
+		PRIVATE "${LUA_VANILLA_INCLUDE_DIRS}")
+	target_compile_definitions(${luacompiler}
+		PUBLIC LUA_COMPAT_ALL ${LUA_VANILLA_DLL_DEFINE}
+		PRIVATE LUA_COMPAT_ALL ${LUA_VANILLA_DLL_DEFINE})
+	if (MSVC)
+		target_compile_options(${luacompiler}
+			PRIVATE /W1)
+	else()
+		target_compile_options(${luacompiler}
+			PRIVATE -w)
+	endif()
+	if (WIN32)
+		#target_compile_definitions(${luacompiler} 
+		#	PRIVATE LUA_USE_WINDOWS)
+	else()
+		target_compile_definitions(${luacompiler} 
+			PRIVATE LUA_USE_LINUX)
+	endif()
+	target_link_libraries(${luacompiler} PRIVATE ${liblua})
+	if (CMAKE_DL_LIBS)
+		target_link_libraries(${luacompiler} PRIVATE ${CMAKE_DL_LIBS})
+	endif()
+	if (UNIX)
+		# TODO: make readline optional?
+		target_link_libraries(${luacompiler} PRIVATE m readline)
+	endif()
 endif()
 
 # set externally-visible target indicator
 set(LUA_LIBRARIES ${liblua})
 set(LUA_INTERPRETER ${luainterpreter})
-set(LUA_COMPILER ${luacompiler})
+if (LUA_BUILD_LUA_COMPILER)
+	set(LUA_COMPILER ${luacompiler})
+endif()
 set(LUA_INCLUDE_DIRS "${LUA_VANILLA_SOURCE_DIR}")
