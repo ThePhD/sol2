@@ -38,12 +38,12 @@ free functions
 	template <typename T>
 	void set_environment( const environment& env, const T& target );
 
-See :ref:`environment::set_on<environment-set-on>`.
+See :ref:`environment::set_on<sol-environment-set_on>`.
 
 
 .. code-block:: cpp
 	:caption: function: get_environment
-	:name: sol-environment-set_environment
+	:name: sol-environment-get_environment
 
 	template <typename E = reference, typename T>
 	basic_environment<E> get_environment( const T& target );

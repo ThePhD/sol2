@@ -5,9 +5,9 @@ Lua has no thread safety. sol does not force thread safety bottlenecks anywhere.
 
 Assume any access or any call on Lua affects the whole ``sol::state``/``lua_State*`` (because it does, in a fair bit of cases). Therefore, every call to a state should be blocked off in C++ with some kind of access control (when you're working with multiple C++ threads). When you start hitting the same state from multiple threads, race conditions (data or instruction) can happen.
 
-Individual Lua coroutines might be able to run on separate C++-created threads without tanking the state utterly, since each Lua coroutine has the capability to run on an independent Lua execution stack (Lua confusingly calls it a ``thread`` in the C API, but it really just means a separate execution stack) as well as some other associated bits and pieces that won't quite interfere with the global state.
+To handle multithreaded environments, it is encouraged to either spawn a Lua state (``sol::state``) for each thread you are working with and keep inter-state communication to synchronized serialization points. This means that 3 C++ threads should have 3 Lua states, and access between them should be controlled using some kind of synchronized C++ mechanism (actual transfer between states must be done by serializing the value into C++ and then re-pushing it into the other state).
 
-To handle multithreaded environments, it is encouraged to either spawn a Lua state (``sol::state``) for each thread you are working with and keep inter-state communication to synchronized serialization points. This means that 3 C++ threads should each have their own Lua state, and access between them should be controlled using some kind of synchronized C++ mechanism (actual transfer between states must be done by serializing the value into C++ and then re-pushing it into the other state).
+`Here is an example of a processor that explicitly serializes`_ Lua returns into C++ values, and Lua functions into state-transferrable byte code to do work.
 
 Using coroutines and Lua's threads might also buy you some concurrency and parallelism (**unconfirmed and likely untrue, do not gamble on this**), but remember that Lua's 'threading' technique is ultimately cooperative and requires explicit yielding and resuming (simplified as function calls for :doc:`sol::coroutine<api/coroutine>`).
 
@@ -37,3 +37,5 @@ Here's an example of explicit state transferring below:
 .. literalinclude:: ../../examples/source/docs/state_transfer.cpp
 	:name: state-transfer
 	:linenos:
+
+.. _Here is an example of a processor that explicitly serializes: https://github.com/ThePhD/sol2/blob/develop/examples/source/docs/std_thread.cpp

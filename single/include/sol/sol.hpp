@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-08-12 18:06:53.939935 UTC
-// This header was generated with sol v3.0.3 (revision 5799084)
+// Generated 2019-08-15 05:26:10.095950 UTC
+// This header was generated with sol v3.0.3 (revision 09f5e86)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3507,11 +3507,13 @@ namespace sol {
 		using base_t::rbegin;
 		using base_t::rend;
 
-		using base_t::swap;
 		using base_t::get_allocator;
+		using base_t::swap;
 
+		using base_t::clear;
 		using base_t::emplace;
 		using base_t::emplace_back;
+		using base_t::erase;
 		using base_t::insert;
 		using base_t::pop_back;
 		using base_t::push_back;
@@ -3519,7 +3521,7 @@ namespace sol {
 		using base_t::resize;
 		using base_t::shrink_to_fit;
 
-		string_view as_string_view () const {
+		string_view as_string_view() const {
 			return string_view(reinterpret_cast<const char*>(this->data()), this->size());
 		}
 	};
@@ -3532,7 +3534,7 @@ namespace sol {
 		try {
 			bc.insert(bc.cend(), p_code, p_code + memory_size);
 		}
-		catch ( ... ) {
+		catch (...) {
 			return -1;
 		}
 		return 0;

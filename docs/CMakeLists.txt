@@ -24,9 +24,9 @@
 # # # Required minimum version statement
 cmake_minimum_required(VERSION 3.5.0)
 	
-find_package(PythonInterp 3)
+find_package(Python3 COMPONENTS Interpreter)
 
-if (NOT PYTHONINTERP_FOUND)
+if (NOT Python3_Interpreter_FOUND)
 	message(FATAL_ERROR "sol2 documentation cannot be generated as python 3 has not been found: install or set the python 3 interpreter for the docs to find it and be sure to pip install sphinx")
 endif()
 

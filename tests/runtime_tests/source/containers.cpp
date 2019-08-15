@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -40,9 +40,11 @@
 TEST_CASE("containers/returns", "make sure that even references to vectors are being serialized as tables") {
 	sol::state lua;
 	std::vector<int> v{ 1, 2, 3 };
-	lua.set_function("f", [&]() -> std::vector<int>& {
+	auto f = [&]() -> std::vector<int>& {
+		REQUIRE(v.size() == 3);
 		return v;
-	});
+	};
+	lua.set_function("f", f);
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 	sol::object x = lua["x"];
@@ -64,10 +66,14 @@ TEST_CASE("containers/custom usertype", "make sure container usertype metatables
 	sol::state lua;
 	lua.open_libraries();
 	lua.new_usertype<bark>("bark",
-		"something", [](const bark& b) {
-			INFO("It works: " << b.at(24));
-		},
-		"size", &bark::size, "at", sol::resolve<const int&>(&bark::at), "clear", &bark::clear);
+	     "something",
+	     [](const bark& b) { INFO("It works: " << b.at(24)); },
+	     "size",
+	     &bark::size,
+	     "at",
+	     sol::resolve<const int&>(&bark::at),
+	     "clear",
+	     &bark::clear);
 	bark obj{ { 24, 50 } };
 	lua.set("a", &obj);
 	{
@@ -175,7 +181,8 @@ func = function(vecs)
         print(i, ":", vec.x, vec.y, vec.z)
     end
 end
-)", sol::script_pass_on_error);
+)",
+	     sol::script_pass_on_error);
 	REQUIRE(result0.valid());
 
 	sol::protected_function f(lua["func"]);
@@ -185,12 +192,12 @@ end
 	REQUIRE(pfr2.valid());
 }
 
-TEST_CASE("containers/usertype transparency", "Make sure containers pass their arguments through transparently and push the results as references, not new values") {
+TEST_CASE(
+     "containers/usertype transparency", "Make sure containers pass their arguments through transparently and push the results as references, not new values") {
 	class A {
 	public:
 		int a;
-		A(int b = 2)
-		: a(b){};
+		A(int b = 2) : a(b){};
 
 		void func() {
 		}
@@ -208,13 +215,13 @@ TEST_CASE("containers/usertype transparency", "Make sure containers pass their a
 	};
 
 	sol::state lua;
-	lua.new_usertype<B>("B",
-		"a_list", &B::a_list);
+	lua.new_usertype<B>("B", "a_list", &B::a_list);
 
 	auto result = lua.safe_script(R"(
 b = B.new()
 a_ref = b.a_list[2]
-)", sol::script_pass_on_error);
+)",
+	     sol::script_pass_on_error);
 	REQUIRE(result.valid());
 
 	B& b = lua["b"];
@@ -265,13 +272,10 @@ TEST_CASE("containers/is container", "make sure the is_container trait behaves p
 	sol::state lua;
 	lua.open_libraries();
 
-	lua.new_usertype<options>("options_type",
-		"output_help", &options::output_help);
+	lua.new_usertype<options>("options_type", "output_help", &options::output_help);
 
-	lua.new_usertype<machine>("machine_type",
-		"new", sol::no_constructor,
-		"opt", [](machine& m) { return &m.opt; },
-		"copy_opt", [](machine& m) { return m.opt; });
+	lua.new_usertype<machine>(
+	     "machine_type", "new", sol::no_constructor, "opt", [](machine& m) { return &m.opt; }, "copy_opt", [](machine& m) { return m.opt; });
 
 	{
 		machine m;
@@ -279,7 +283,8 @@ TEST_CASE("containers/is container", "make sure the is_container trait behaves p
 
 		auto result0 = lua.safe_script(R"(
 			machine:opt():output_help()
-		)", sol::script_pass_on_error);
+		)",
+		     sol::script_pass_on_error);
 		REQUIRE(result0.valid());
 
 		REQUIRE(options::last == &m.opt);
@@ -300,10 +305,11 @@ TEST_CASE("containers/readonly", "make sure readonly members are stored appropri
 		std::list<bar> seq;
 	};
 
-	lua.new_usertype<foo>(
-		"foo",
-		"seq", &foo::seq,					 // this one works
-		"readonly_seq", sol::readonly(&foo::seq) // this one does not work
+	lua.new_usertype<foo>("foo",
+	     "seq",
+	     &foo::seq, // this one works
+	     "readonly_seq",
+	     sol::readonly(&foo::seq) // this one does not work
 	);
 	lua["value"] = std::list<bar>{ {}, {}, {} };
 
@@ -312,7 +318,8 @@ a = foo.new()
 x = a.seq
 a.seq = value
 y = a.readonly_seq
-)", sol::script_pass_on_error);
+)",
+	     sol::script_pass_on_error);
 	REQUIRE(result0.valid());
 	std::list<bar>& seqrefx = lua["x"];
 	std::list<bar>& seqrefy = lua["y"];
@@ -357,9 +364,9 @@ TEST_CASE("containers/to_args", "Test that the to_args abstractions works") {
 TEST_CASE("containers/append idiom", "ensure the append-idiom works as intended") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
-	
+
 	auto result1 = lua.safe_script(
-		R"(
+	     R"(
 function f_fill(vec)
 	print("#vec in lua: " .. #vec)
 	for k = 1, #vec do
@@ -373,7 +380,8 @@ function f_append(vec)
 	vec[#vec + 1] = -54
 	print("#vec in lua: " .. #vec)
 end
-)", sol::script_pass_on_error);
+)",
+	     sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 
 	std::vector<int> fill_cmp{ 1, 2, 3 };
@@ -397,8 +405,7 @@ TEST_CASE("containers/non_copyable", "make sure non-copyable types in containers
 	struct test {
 		std::vector<non_copyable> b;
 
-		test()
-		: b() {
+		test() : b() {
 		}
 		test(test&&) = default;
 		test& operator=(test&&) = default;
@@ -408,8 +415,7 @@ TEST_CASE("containers/non_copyable", "make sure non-copyable types in containers
 
 	SECTION("normal") {
 		sol::state lua;
-		lua.new_usertype<test>("test",
-			"b", sol::readonly(&test::b));
+		lua.new_usertype<test>("test", "b", sol::readonly(&test::b));
 
 		lua["v"] = std::vector<non_copyable>{};
 
@@ -487,7 +493,8 @@ TEST_CASE("containers/pairs", "test how well pairs work with the underlying syst
 TEST_CASE("containers/pointer types", "check that containers with unique usertypes and pointers or something") {
 	struct base_t {
 		virtual int get() const = 0;
-		virtual ~base_t(){}
+		virtual ~base_t() {
+		}
 	};
 
 	struct derived_1_t : base_t {
@@ -516,7 +523,7 @@ TEST_CASE("containers/pointer types", "check that containers with unique usertyp
 	v2.push_back(&d2);
 	lua["c1"] = std::move(v1);
 	lua["c2"] = &v2;
-	
+
 	auto result1 = lua.safe_script("b1 = c1[1]", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 	base_t* b1 = lua["b1"];

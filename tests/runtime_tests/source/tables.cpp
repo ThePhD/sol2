@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -137,15 +137,12 @@ TEST_CASE("tables/create-with-local", "Check if creating a table is kosher") {
 TEST_CASE("tables/function variables", "Check if tables and function calls work as intended") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::os);
-	auto run_script = [](sol::state& lua) -> void {
-		lua.safe_script("assert(os.fun() == \"test\")");
-	};
+	auto run_script = [](sol::state& lua) -> void { lua.safe_script("assert(os.fun() == \"test\")"); };
 
-	lua.get<sol::table>("os").set_function("fun",
-		[]() {
-			INFO("stateless lambda()");
-			return "test";
-		});
+	lua.get<sol::table>("os").set_function("fun", []() {
+		INFO("stateless lambda()");
+		return "test";
+	});
 	REQUIRE_NOTHROW(run_script(lua));
 
 	lua.get<sol::table>("os").set_function("fun", &free_function);
@@ -165,11 +162,10 @@ TEST_CASE("tables/function variables", "Check if tables and function calls work 
 
 	// stateful lambda: non-convertible, cannot be optimised
 	int breakit = 50;
-	lua.get<sol::table>("os").set_function("fun",
-		[&breakit]() {
-			INFO("stateful lambda() with breakit:" << breakit);
-			return "test";
-		});
+	lua.get<sol::table>("os").set_function("fun", [&breakit]() {
+		INFO("stateful lambda() with breakit:" << breakit);
+		return "test";
+	});
 	REQUIRE_NOTHROW(run_script(lua));
 
 	// r-value, cannot optimise
@@ -203,9 +199,10 @@ TEST_CASE("tables/add", "Basic test to make sure the 'add' feature works") {
 TEST_CASE("tables/raw set and raw get", "ensure raw setting and getting works through metatables") {
 	sol::state lua;
 	sol::table t = lua.create_table();
-	t[sol::metatable_key] = lua.create_table_with(
-		sol::meta_function::new_index, [](lua_State* L) { return luaL_error(L, "nay"); },
-		sol::meta_function::index, [](lua_State* L) { return luaL_error(L, "nay"); });
+	t[sol::metatable_key] = lua.create_table_with(sol::meta_function::new_index,
+	     [](lua_State* L) { return luaL_error(L, "nay"); },
+	     sol::meta_function::index,
+	     [](lua_State* L) { return luaL_error(L, "nay"); });
 	t.raw_set("a", 2.5);
 	double la = t.raw_get<double>("a");
 	REQUIRE(la == 2.5);
@@ -241,9 +238,13 @@ TEST_CASE("tables/optional move", "ensure pushing a sol::optional<T> rvalue corr
 	sol::state sol_state;
 	struct move_only {
 		int secret_code;
+		move_only(int sc) : secret_code(sc) {}
+
 		move_only(const move_only&) = delete;
 		move_only(move_only&&) = default;
+		move_only& operator=(const move_only&) = delete;
+		move_only& operator=(move_only&&) = default;
 	};
-	sol_state["requires_move"] = sol::optional<move_only>{ move_only{ 0x4D } };
+	sol_state["requires_move"] = sol::optional<move_only>(move_only(0x4D));
 	REQUIRE(sol_state["requires_move"].get<move_only>().secret_code == 0x4D);
 }
