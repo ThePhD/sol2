@@ -100,7 +100,7 @@ function (MAKE_EXAMPLE example_source_file example_suffix target_sol)
 	endif()
 	
 	target_link_libraries(${example_name} 
-		PRIVATE ${target_sol} ${LUA_LIBRARIES} sol2::assert)
+		PRIVATE Threads::Threads ${target_sol} ${LUA_LIBRARIES} sol2::assert)
 	
 	if(CMAKE_DL_LIBS)
 		target_link_libraries(${example_name} PRIVATE ${CMAKE_DL_LIBS})
