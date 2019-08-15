@@ -709,14 +709,30 @@ namespace sol {
 
 			template <typename Iter>
 			static detail::error_result set_associative_insert(std::true_type, lua_State*, T& self, Iter& it, K& key, stack_object value) {
-				self.insert(it, value_type(key, value.as<V>()));
-				return {};
+				if constexpr(meta::has_insert<T>::value) {
+					self.insert(it, value_type(key, value.as<V>()));
+					return {};
+				}
+				else {
+					(void)self;
+					(void)it;
+					(void)key;
+					return detail::error_result("cannot call 'set' on '%s': there is no 'insert' function on this associative type", detail::demangle<T>().c_str());
+				}
 			}
 
 			template <typename Iter>
 			static detail::error_result set_associative_insert(std::false_type, lua_State*, T& self, Iter& it, K& key, stack_object) {
-				self.insert(it, key);
-				return {};
+				if constexpr(has_insert<T>::value) {
+					self.insert(it, key);
+					return {};
+				}
+				else {
+					(void)self;
+					(void)it;
+					(void)key;
+					return detail::error_result("cannot call 'set' on '%s': there is no 'insert' function on this non-associative type", detail::demangle<T>().c_str());
+				}
 			}
 
 			static detail::error_result set_associative_find(std::true_type, lua_State* L, T& self, stack_object okey, stack_object value) {
@@ -898,8 +914,17 @@ namespace sol {
 
 			template <typename Iter>
 			static detail::error_result add_associative(std::true_type, lua_State* L, T& self, stack_object key, Iter& pos) {
-				self.insert(pos, value_type(key.as<K>(), stack::unqualified_get<V>(L, 3)));
-				return {};
+				if constexpr(meta::has_insert<T>::value) {
+					self.insert(pos, value_type(key.as<K>(), stack::unqualified_get<V>(L, 3)));
+					return {};
+				}
+				else {
+					(void)L;
+					(void)self;
+					(void)key;
+					(void)pos;
+					return detail::error_result("cannot call 'insert' on '%s': there is no 'insert' function on this associative type", detail::demangle<T>().c_str());
+				}
 			}
 
 			static detail::error_result add_associative(std::true_type, lua_State* L, T& self, stack_object key) {
@@ -1067,8 +1092,21 @@ namespace sol {
 				return deferred_uc::begin(L, self) == deferred_uc::end(L, self);
 			}
 
-			static detail::error_result get_start(lua_State* L, T& self, K& key) {
+			static detail::error_result get_associative_find(std::true_type, lua_State* L, T& self, K& key) {
+				auto it = self.find(key);
+				if (it == deferred_uc::end(L, self)) {
+					stack::push(L, lua_nil);
+					return {};
+				}
+				return get_associative(std::true_type(), L, it);
+			}
+
+			static detail::error_result get_associative_find(std::false_type, lua_State* L, T& self, K& key) {
 				return get_it(is_linear_integral(), L, self, key);
+			}
+
+			static detail::error_result get_start(lua_State* L, T& self, K& key) {
+				return get_associative_find(std::integral_constant<bool, is_associative::value && has_find<T>::value>(), L, self, key);
 			}
 
 			static detail::error_result set_start(lua_State* L, T& self, stack_object key, stack_object value) {
