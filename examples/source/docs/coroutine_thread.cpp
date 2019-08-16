@@ -30,6 +30,7 @@ end
 	for (int counter = 0; counter < 10 && loop_coroutine; ++counter) {
 		// Call the coroutine, does the computation and then suspends
 		int value = loop_coroutine();
+		std::cout << "value is " << value << std::endl;
 	}
 
 	return 0;
