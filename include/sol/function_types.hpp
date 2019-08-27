@@ -129,7 +129,7 @@ namespace sol {
 					dFx memfxptr(std::forward<Fx>(fx));
 					auto userptr = detail::ptr(std::forward<Args>(args)...);
 					lua_CFunction freefunc
-						= &function_detail::upvalue_member_variable<std::decay_t<decltype(*userptr)>, meta::unqualified_t<Fx>, is_yielding>::call;
+					     = &function_detail::upvalue_member_variable<std::decay_t<decltype(*userptr)>, meta::unqualified_t<Fx>, is_yielding>::call;
 
 					int upvalues = 0;
 					upvalues += stack::push(L, nullptr);
@@ -296,13 +296,19 @@ namespace sol {
 		template <typename Signature>
 		struct unqualified_pusher<std::function<Signature>> {
 			static int push(lua_State* L, const std::function<Signature>& fx) {
-				function_detail::select<false>(L, fx);
-				return 1;
+				if (fx) {
+					function_detail::select<false>(L, fx);
+					return 1;
+				}
+				return stack::push(L, lua_nil);
 			}
 
 			static int push(lua_State* L, std::function<Signature>&& fx) {
-				function_detail::select<false>(L, std::move(fx));
-				return 1;
+				if (fx) {
+					function_detail::select<false>(L, std::move(fx));
+					return 1;
+				}
+				return stack::push(L, lua_nil);
 			}
 		};
 
