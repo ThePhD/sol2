@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-08-28 00:04:08.251517 UTC
-// This header was generated with sol v3.0.3 (revision a2e01ad)
+// Generated 2019-08-28 04:16:58.879902 UTC
+// This header was generated with sol  (revision )
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -17860,13 +17860,29 @@ namespace sol {
 	namespace stack {
 		template <typename... Sigs>
 		struct unqualified_pusher<function_sig<Sigs...>> {
+			template <bool is_yielding, typename Arg0, typename... Args>
+			static int push(lua_State* L, Arg0&& arg0, Args&&... args) {
+				if constexpr (meta::is_specialization_of_v<meta::unqualified_t<Arg0>, std::function>) {
+					if constexpr (is_yielding) {
+						return stack::push<meta::unqualified_t<Arg0>>(L, detail::yield_tag, std::forward<Arg0>(arg0), std::forward<Args>(args)...);
+					}
+					else {
+						return stack::push(L, std::forward<Arg0>(arg0), std::forward<Args>(args)...);
+					}
+				}
+				else {
+					function_detail::select<is_yielding>(L, std::forward<Arg0>(arg0), std::forward<Args>(args)...);
+					return 1;
+				}
+			}
+
 			template <typename Arg0, typename... Args>
 			static int push(lua_State* L, Arg0&& arg0, Args&&... args) {
 				if constexpr (std::is_same_v<meta::unqualified_t<Arg0>, detail::yield_tag_t>) {
-					function_detail::select<true>(L, std::forward<Args>(args)...);
+					push<true>(L, std::forward<Args>(args)...);
 				}
 				else {
-					function_detail::select<false>(L, std::forward<Arg0>(arg0), std::forward<Args>(args)...);
+					push<false>(L, std::forward<Arg0>(arg0), std::forward<Args>(args)...);
 				}
 				return 1;
 			}
@@ -17876,14 +17892,24 @@ namespace sol {
 		struct unqualified_pusher<yielding_t<T>> {
 			template <typename... Args>
 			static int push(lua_State* L, const yielding_t<T>& f, Args&&... args) {
-				function_detail::select<true>(L, f.func, std::forward<Args>(args)...);
-				return 1;
+				if constexpr (meta::is_specialization_of_v<meta::unqualified_t<T>, std::function>) {
+					return stack::push<T>(L, detail::yield_tag, f.func, std::forward<Args>(args)...);
+				}
+				else {
+					function_detail::select<true>(L, f.func, std::forward<Args>(args)...);
+					return 1;
+				}
 			}
 
 			template <typename... Args>
 			static int push(lua_State* L, yielding_t<T>&& f, Args&&... args) {
-				function_detail::select<true>(L, std::move(f.func), std::forward<Args>(args)...);
-				return 1;
+				if constexpr (meta::is_specialization_of_v<meta::unqualified_t<T>, std::function>) {
+					return stack::push<T>(L, detail::yield_tag, std::move(f.func), std::forward<Args>(args)...);
+				}
+				else {
+					function_detail::select<true>(L, std::move(f.func), std::forward<Args>(args)...);
+					return 1;
+				}
 			}
 		};
 
@@ -17905,6 +17931,22 @@ namespace sol {
 
 		template <typename Signature>
 		struct unqualified_pusher<std::function<Signature>> {
+			static int push(lua_State* L, detail::yield_tag_t, const std::function<Signature>& fx) {
+				if (fx) {
+					function_detail::select<true>(L, fx);
+					return 1;
+				}
+				return stack::push(L, lua_nil);
+			}
+
+			static int push(lua_State* L, detail::yield_tag_t, std::function<Signature>&& fx) {
+				if (fx) {
+					function_detail::select<true>(L, std::move(fx));
+					return 1;
+				}
+				return stack::push(L, lua_nil);
+			}
+
 			static int push(lua_State* L, const std::function<Signature>& fx) {
 				if (fx) {
 					function_detail::select<false>(L, fx);

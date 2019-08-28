@@ -48,6 +48,7 @@ void takefn(std::function<int()> purr) {
 
 TEST_CASE("functions/empty std functions", "std::function is allowed to be empty, so it should be serialized to nil") {
 	sol::state lua;
+	lua.open_libraries(sol::lib::base);
 	std::function<void()> foo = nullptr;
 	sol::function bar;
 
@@ -64,8 +65,14 @@ TEST_CASE("functions/empty std functions", "std::function is allowed to be empty
 	then
 		Foo()
 	end
-	)SCR");
+	)SCR",
+	     sol::script_pass_on_error);
 	REQUIRE_FALSE(result.has_value());
+
+	sol::optional<sol::error> result0 = lua.safe_script(R"SCR(Foo())SCR", sol::script_pass_on_error);
+	REQUIRE(result0.has_value());
+	sol::optional<sol::error> result1 = lua.safe_script(R"SCR(Bar())SCR", sol::script_pass_on_error);
+	REQUIRE(result1.has_value());
 }
 
 TEST_CASE("functions/sol::function to std::function", "check if conversion to std::function works properly and calls with correct arguments") {
