@@ -37,6 +37,9 @@ namespace sol {
 	typedef bases<> base_classes_tag;
 	const auto base_classes = base_classes_tag();
 
+	template <typename... Args>
+	struct is_to_stringable<base_list<Args...>> : std::false_type {};
+
 	namespace detail {
 
 		inline decltype(auto) base_class_check_key() {

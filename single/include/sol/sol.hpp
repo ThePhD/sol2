@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-08-27 23:54:42.782874 UTC
-// This header was generated with sol v3.0.3 (revision 683d139)
+// Generated 2019-08-28 00:04:08.251517 UTC
+// This header was generated with sol v3.0.3 (revision a2e01ad)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -7134,9 +7134,6 @@ namespace sol {
 	struct is_to_stringable : meta::any<meta::supports_to_string_member<meta::unqualified_t<T>>, meta::supports_adl_to_string<meta::unqualified_t<T>>,
 	                               meta::supports_ostream_op<meta::unqualified_t<T>>> {};
 
-	template <typename... Args>
-	struct is_to_stringable<base_list<Args...>> : std::false_type {};
-
 	namespace detail {
 		template <typename T, typename = void>
 		struct lua_type_of : std::integral_constant<type, type::userdata> {};
@@ -8091,6 +8088,9 @@ namespace sol {
 
 	typedef bases<> base_classes_tag;
 	const auto base_classes = base_classes_tag();
+
+	template <typename... Args>
+	struct is_to_stringable<base_list<Args...>> : std::false_type {};
 
 	namespace detail {
 
