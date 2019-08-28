@@ -60,7 +60,7 @@ TEST_CASE("functions/empty std functions", "std::function is allowed to be empty
 		Bar()
 	end
 
-	if Foo ~= nil or type(Foo) ~= 'function'
+	if Foo ~= nil or type(Foo) == 'function'
 	then
 		Foo()
 	end
