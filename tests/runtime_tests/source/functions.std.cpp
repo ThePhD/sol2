@@ -54,7 +54,7 @@ TEST_CASE("functions/empty std functions", "std::function is allowed to be empty
 	lua["Foo"] = foo;
 	lua["Bar"] = bar;
 
-	sol::optional<sol::error> result = lua.script(R"SCR(
+	sol::optional<sol::error> result = lua.safe_script(R"SCR(
 	if Bar ~= nil
 	then
 		Bar()
