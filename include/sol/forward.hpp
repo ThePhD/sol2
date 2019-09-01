@@ -28,16 +28,19 @@
 
 #include <utility>
 #include <type_traits>
+#include <string_view>
 
 #if defined(SOL_USING_CXX_LUA) && SOL_USING_CXX_LUA
 struct lua_State;
 #else
 extern "C" {
-	struct lua_State;
+struct lua_State;
 }
 #endif // C++ Mangling for Lua vs. Not
 
 namespace sol {
+
+	enum class type;
 
 	class stateless_reference;
 	template <bool b>
@@ -234,6 +237,8 @@ namespace sol {
 	template <class T>
 	class optional<T&>;
 #endif
+
+	using check_handler_type = int(lua_State*, int, type, type, const char*);
 
 } // namespace sol
 

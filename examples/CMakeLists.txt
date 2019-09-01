@@ -36,6 +36,9 @@ if (SOL2_INTEROP_EXAMPLES OR SOL2_INTEROP_EXAMPLES_SINGLE OR SOL2_INTEROP_EXAMPL
 	add_subdirectory(interop/luwra)
 endif()
 
+# # In-depth customization example
+add_subdirectory(customization)
+
 # # Utility assert.hpp "library" 
 add_library(sol2_assert INTERFACE)
 add_library(sol2::assert ALIAS sol2_assert)
@@ -95,7 +98,7 @@ function (MAKE_EXAMPLE example_source_file example_suffix target_sol)
 			# and we have time to audit the entire lib
 			# for all uses of `detail::swallow`...
 			#target_compile_options(${example_name}
-			#	PRIVATE -Wcomma)		
+			#	PRIVATE -Wcomma)
 		endif()
 	endif()
 	
