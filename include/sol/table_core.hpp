@@ -318,8 +318,9 @@ namespace sol {
 		basic_table_core(lua_State* L, T&& r) : base_t(L, std::forward<T>(r)) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
+			int table_index = pp.index_of(*this);
 			constructor_handler handler{};
-			stack::check<basic_table_core>(lua_state(), -1, handler);
+			stack::check<basic_table_core>(lua_state(), table_index, handler);
 #endif // Safety
 		}
 		basic_table_core(lua_State* L, const new_table& nt) : base_t(L, -stack::push(L, nt)) {
@@ -336,8 +337,9 @@ namespace sol {
 		basic_table_core(lua_State* L, ref_index index) : basic_table_core(detail::no_safety, L, index) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
+			int table_index = pp.index_of(*this);
 			constructor_handler handler{};
-			stack::check<basic_table_core>(lua_state(), -1, handler);
+			stack::check<basic_table_core>(lua_state(), table_index, handler);
 #endif // Safety
 		}
 		template <typename T,
@@ -347,8 +349,9 @@ namespace sol {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			if (!is_table<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
+				int table_index = pp.index_of(*this);
 				constructor_handler handler{};
-				stack::check<basic_table_core>(lua_state(), -1, handler);
+				stack::check<basic_table_core>(lua_state(), table_index, handler);
 			}
 #endif // Safety
 		}
@@ -535,8 +538,9 @@ namespace sol {
 			lua_State* L = base_t::lua_state();
 			if constexpr (std::is_invocable_v<Fx, Key, Value>) {
 				auto pp = stack::push_pop(*this);
+				int table_index = pp.index_of(*this);
 				stack::push(L, lua_nil);
-				while (lua_next(L, -2)) {
+				while (lua_next(L, table_index)) {
 					Key key(L, -2);
 					Value value(L, -1);
 					auto pn = stack::pop_n(L, 1);
@@ -545,8 +549,9 @@ namespace sol {
 			}
 			else {
 				auto pp = stack::push_pop(*this);
+				int table_index = pp.index_of(*this);
 				stack::push(L, lua_nil);
-				while (lua_next(L, -2)) {
+				while (lua_next(L, table_index)) {
 					Key key(L, -2);
 					Value value(L, -1);
 					auto pn = stack::pop_n(L, 1);
@@ -558,8 +563,9 @@ namespace sol {
 
 		size_t size() const {
 			auto pp = stack::push_pop(*this);
+			int table_index = pp.index_of(*this);
 			lua_State* L = base_t::lua_state();
-			lua_len(L, -1);
+			lua_len(L, table_index);
 			return stack::pop<size_t>(L);
 		}
 
