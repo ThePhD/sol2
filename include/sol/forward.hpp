@@ -59,7 +59,7 @@ namespace sol {
 	template <typename>
 	struct proxy_base;
 	template <typename, typename>
-	struct proxy;
+	struct table_proxy;
 
 	template <bool, typename>
 	class basic_table_core;

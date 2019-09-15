@@ -238,7 +238,8 @@ TEST_CASE("tables/optional move", "ensure pushing a sol::optional<T> rvalue corr
 	sol::state sol_state;
 	struct move_only {
 		int secret_code;
-		move_only(int sc) : secret_code(sc) {}
+		move_only(int sc) : secret_code(sc) {
+		}
 
 		move_only(const move_only&) = delete;
 		move_only(move_only&&) = default;
@@ -247,4 +248,37 @@ TEST_CASE("tables/optional move", "ensure pushing a sol::optional<T> rvalue corr
 	};
 	sol_state["requires_move"] = sol::optional<move_only>(move_only(0x4D));
 	REQUIRE(sol_state["requires_move"].get<move_only>().secret_code == 0x4D);
+}
+
+TEST_CASE("table/stack table size", "make sure size() works correctly on stack tables") {
+	sol::state lua;
+	sol::stack_guard luasg(lua);
+	sol::stack_table t(lua, sol::create);
+	t[1] = 42;
+	auto sz1 = t.size();
+	REQUIRE(sz1 == 1);
+	sol::stack::push(lua, "some string");
+	auto sz2 = t.size();
+	REQUIRE(sz2 == 1);
+	std::string s = sol::stack::pop<std::string>(lua);
+	REQUIRE(s == "some string");
+	sol::table t2 = sol::stack::pop<sol::table>(lua);
+	auto sz3 = t2.size();
+	REQUIRE(sz1 == sz3);
+	REQUIRE(sz1 == sz2);
+}
+
+TEST_CASE("table/proxy call", "test proxy calls put the variable in the right place") {
+	sol::state lua;
+	sol::stack_guard luasg(lua);
+	{
+		sol::stack_guard tsg(lua);
+		lua["t"] = std::initializer_list<std::pair<int, std::string_view>>{ { 1, "borf" }, { 2, "bjork" }, { 3, "waf" } };
+	}
+	{
+		sol::stack_guard fsg(lua);
+		lua["f"] = [](std::string bjork) { REQUIRE(bjork == std::string("borf")); };
+	}
+	auto prox = lua["t"][1];
+	lua["f"](prox);
 }

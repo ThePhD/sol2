@@ -24,7 +24,7 @@
 #ifndef SOL_TABLE_CORE_HPP
 #define SOL_TABLE_CORE_HPP
 
-#include "proxy.hpp"
+#include "table_proxy.hpp"
 #include "stack.hpp"
 #include "function_types.hpp"
 #include "table_iterator.hpp"
@@ -575,17 +575,17 @@ namespace sol {
 
 		template <typename T>
 		auto operator[](T&& key) & {
-			return proxy<basic_table_core&, detail::proxy_key_t<T>>(*this, std::forward<T>(key));
+			return table_proxy<basic_table_core&, detail::proxy_key_t<T>>(*this, std::forward<T>(key));
 		}
 
 		template <typename T>
 		auto operator[](T&& key) const& {
-			return proxy<const basic_table_core&, detail::proxy_key_t<T>>(*this, std::forward<T>(key));
+			return table_proxy<const basic_table_core&, detail::proxy_key_t<T>>(*this, std::forward<T>(key));
 		}
 
 		template <typename T>
 		auto operator[](T&& key) && {
-			return proxy<basic_table_core, detail::proxy_key_t<T>>(std::move(*this), std::forward<T>(key));
+			return table_proxy<basic_table_core, detail::proxy_key_t<T>>(std::move(*this), std::forward<T>(key));
 		}
 
 		template <typename Sig, typename Key, typename... Args>

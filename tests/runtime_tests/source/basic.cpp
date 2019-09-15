@@ -217,7 +217,7 @@ TEST_CASE("simple/get_or", "check if table.get_or works correctly") {
 	REQUIRE(bark == 55.6);
 }
 
-TEST_CASE("simple/proxy get_or", "check if proxy.get_or works correctly") {
+TEST_CASE("simple/table_proxy get_or", "check if table_proxy.get_or works correctly") {
 	sol::state lua;
 
 	auto bob_table = lua.create_table("bob");

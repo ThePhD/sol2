@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -26,6 +26,64 @@
 #include <catch.hpp>
 
 #include <iostream>
+
+inline namespace sol2_test_environments {
+	struct check_g_env {
+		sol::state* plua;
+		sol::environment* penv_g;
+
+		check_g_env(sol::state& lua, sol::environment& env_g) : plua(&lua), penv_g(&env_g) {
+		}
+
+		void operator()(sol::function target) const {
+			sol::state& lua = *plua;
+			sol::environment& env_g = *penv_g;
+			sol::stack_guard luasg(lua);
+			sol::environment target_env = sol::get_environment(target);
+			int test_env_g = env_g["test"];
+			int test_target_env = target_env["test"];
+			REQUIRE(test_env_g == test_target_env);
+			REQUIRE(test_env_g == 5);
+			REQUIRE(env_g == target_env);
+		}
+	};
+
+	struct check_f_env {
+		sol::state* plua;
+		sol::environment* penv_f;
+
+		check_f_env(sol::state& lua, sol::environment& env_f) : plua(&lua), penv_f(&env_f) {
+		}
+
+		void operator()(sol::function target) const {
+			sol::state& lua = *plua;
+			sol::environment& env_f = *penv_f;
+			sol::stack_guard luasg(lua);
+			sol::environment target_env(sol::env_key, target);
+			int test_env_f = env_f["test"];
+			int test_target_env = target_env["test"];
+			REQUIRE(test_env_f == test_target_env);
+			REQUIRE(test_env_f == 31);
+			REQUIRE(env_f == target_env);
+		}
+	};
+
+	struct check_h_env {
+		sol::state* plua;
+
+		check_h_env(sol::state& lua) : plua(&lua) {
+		}
+
+		void operator()(sol::function target) const {
+			sol::state& lua = *plua;
+			sol::stack_guard luasg(lua);
+			sol::environment target_env = sol::get_environment(target);
+			// cannot strictly test
+			// if it's the global table, because different lua runtimes
+			// give different envs when there is no env
+		}
+	};
+} // namespace sol2_test_environments
 
 TEST_CASE("environments/get", "Envronments can be taken out of things like Lua functions properly") {
 	sol::state lua;
@@ -61,37 +119,15 @@ TEST_CASE("environments/get", "Envronments can be taken out of things like Lua f
 	auto result3 = lua.safe_script("h = function() end", sol::script_pass_on_error);
 	REQUIRE(result3.valid());
 
-	lua.set_function("check_f_env",
-		[&lua, &env_f](sol::object target) {
-			sol::stack_guard luasg(lua);
-			sol::environment target_env(sol::env_key, target);
-			int test_env_f = env_f["test"];
-			int test_target_env = target_env["test"];
-			REQUIRE(test_env_f == test_target_env);
-			REQUIRE(test_env_f == 31);
-			REQUIRE(env_f == target_env);
-		});
-	lua.set_function("check_g_env",
-		[&lua, &env_g](sol::function target) {
-			sol::stack_guard luasg(lua);
-			sol::environment target_env = sol::get_environment(target);
-			int test_env_g = env_g["test"];
-			int test_target_env = target_env["test"];
-			REQUIRE(test_env_g == test_target_env);
-			REQUIRE(test_env_g == 5);
-			REQUIRE(env_g == target_env);
-		});
-	lua.set_function("check_h_env",
-		[&lua](sol::function target) {
-			sol::stack_guard luasg(lua);
-			sol::environment target_env = sol::get_environment(target);
-		});
+	lua.set_function("check_f_env", check_f_env(lua, env_f));
+	lua.set_function("check_g_env", check_g_env(lua, env_g));
+	lua.set_function("check_h_env", check_h_env(lua));
 
-	auto checkf = lua.safe_script("check_f_env(f)");
+	auto checkf = lua.safe_script("check_f_env(f)", sol::script_pass_on_error);
 	REQUIRE(checkf.valid());
-	auto checkg = lua.safe_script("check_g_env(g)");
+	auto checkg = lua.safe_script("check_g_env(g)", sol::script_pass_on_error);
 	REQUIRE(checkg.valid());
-	auto checkh = lua.safe_script("check_h_env(h)");
+	auto checkh = lua.safe_script("check_h_env(h)", sol::script_pass_on_error);
 	REQUIRE(checkh.valid());
 }
 

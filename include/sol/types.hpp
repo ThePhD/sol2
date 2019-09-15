@@ -422,7 +422,7 @@ namespace sol {
 	struct as_container_t {
 	private:
 		T value_;
-	
+
 	public:
 		using type = T;
 
@@ -504,7 +504,7 @@ namespace sol {
 			return std::move(value_);
 		}
 
-		const T& value() const & {
+		const T& value() const& {
 			return value_;
 		}
 	};
@@ -867,16 +867,14 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct is_lua_reference : std::integral_constant<bool,
-	                               std::is_base_of_v<reference, T> || std::is_base_of_v<main_reference, T>
-	                                    || std::is_base_of_v<stack_reference, T>> {};
+	struct is_lua_reference
+	: std::integral_constant<bool, std::is_base_of_v<reference, T> || std::is_base_of_v<main_reference, T> || std::is_base_of_v<stack_reference, T>> {};
 
 	template <typename T>
 	inline constexpr bool is_lua_reference_v = is_lua_reference<T>::value;
 
 	template <typename T>
-	struct is_lua_reference_or_proxy
-	: std::integral_constant<bool, is_lua_reference_v<T> || meta::is_specialization_of_v<T, proxy>> {};
+	struct is_lua_reference_or_proxy : std::integral_constant<bool, is_lua_reference_v<T> || meta::is_specialization_of_v<T, table_proxy>> {};
 
 	template <typename T>
 	inline constexpr bool is_lua_reference_or_proxy_v = is_lua_reference_or_proxy<T>::value;
@@ -901,7 +899,8 @@ namespace sol {
 	template <typename T>
 	struct is_container
 	: std::integral_constant<bool,
-	       !std::is_same_v<state_view, T> && !std::is_same_v<state, T> && !meta::is_initializer_list_v<T> && !meta::is_string_like_v<T> && !meta::is_string_literal_array_v<T> && !is_transparent_argument_v<T> && !is_lua_reference_v<T> && (meta::has_begin_end_v<T> || std::is_array_v<T>)> {
+	       !std::is_same_v<state_view,
+	            T> && !std::is_same_v<state, T> && !meta::is_initializer_list_v<T> && !meta::is_string_like_v<T> && !meta::is_string_literal_array_v<T> && !is_transparent_argument_v<T> && !is_lua_reference_v<T> && (meta::has_begin_end_v<T> || std::is_array_v<T>)> {
 	};
 
 	template <typename T>
@@ -1098,7 +1097,8 @@ namespace sol {
 		struct lua_type_of<T*> : std::integral_constant<type, type::userdata> {};
 
 		template <typename T>
-		struct lua_type_of<T, std::enable_if_t<std::is_arithmetic_v<T> || std::is_same_v<T, lua_Number>  || std::is_same_v<T, lua_Integer>>> : std::integral_constant<type, type::number> {};
+		struct lua_type_of<T, std::enable_if_t<std::is_arithmetic_v<T> || std::is_same_v<T, lua_Number> || std::is_same_v<T, lua_Integer>>>
+		: std::integral_constant<type, type::number> {};
 
 		template <typename T>
 		struct lua_type_of<T, std::enable_if_t<std::is_enum_v<T>>> : std::integral_constant<type, type::number> {};
@@ -1114,8 +1114,7 @@ namespace sol {
 #endif // SOL_CXX17_FEATURES
 
 		template <typename T>
-		struct lua_type_of<nested<T>>
-		: meta::conditional_t<::sol::is_container_v<T>, std::integral_constant<type, type::table>, lua_type_of<T>> {};
+		struct lua_type_of<nested<T>> : meta::conditional_t<::sol::is_container_v<T>, std::integral_constant<type, type::table>, lua_type_of<T>> {};
 
 		template <typename C, C v, template <typename...> class V, typename... Args>
 		struct accumulate : std::integral_constant<C, v> {};
@@ -1172,11 +1171,10 @@ namespace sol {
 	template <typename T>
 	struct is_lua_primitive
 	: std::integral_constant<bool,
-	       type::userdata != lua_type_of_v<T>
-	            || ((type::userdata == lua_type_of_v<T>) && detail::has_internal_marker_v<lua_type_of<T>>
-	                    && !detail::has_internal_marker_v<lua_size<T>>)
-	            || is_lua_reference_v<T> || meta::is_specialization_of_v<T, std::tuple>
-	            || meta::is_specialization_of_v<T, std::pair>> {};
+	       type::userdata
+	                 != lua_type_of_v<
+	                         T> || ((type::userdata == lua_type_of_v<T>)&&detail::has_internal_marker_v<lua_type_of<T>> && !detail::has_internal_marker_v<lua_size<T>>)
+	            || is_lua_reference_or_proxy_v<T> || meta::is_specialization_of_v<T, std::tuple> || meta::is_specialization_of_v<T, std::pair>> {};
 
 	template <typename T>
 	constexpr inline bool is_lua_primitive_v = is_lua_primitive<T>::value;
@@ -1266,6 +1264,16 @@ namespace sol {
 	inline constexpr bool is_table_v = is_table<T>::value;
 
 	template <typename T>
+	struct is_stack_table : std::false_type {};
+	template <bool x, typename T>
+	struct is_stack_table<basic_table_core<x, T>> : std::integral_constant<bool, std::is_base_of_v<stack_reference, T>> {};
+	template <typename T>
+	struct is_stack_table<basic_lua_table<T>> : std::integral_constant<bool, std::is_base_of_v<stack_reference, T>> {};
+
+	template <typename T>
+	inline constexpr bool is_stack_table_v = is_stack_table<T>::value;
+
+	template <typename T>
 	struct is_function : std::false_type {};
 	template <typename T, bool aligned>
 	struct is_function<basic_function<T, aligned>> : std::true_type {};
@@ -1300,7 +1308,8 @@ namespace sol {
 	template <typename T>
 	struct is_automagical
 	: std::integral_constant<bool,
-	       std::is_array_v<meta::unqualified_t<T>> || !std::is_same_v<meta::unqualified_t<T>, state> || !std::is_same_v<meta::unqualified_t<T>, state_view>> {};
+	       std::is_array_v<meta::unqualified_t<T>> || !std::is_same_v<meta::unqualified_t<T>, state> || !std::is_same_v<meta::unqualified_t<T>, state_view>> {
+	};
 
 	template <typename T>
 	inline type type_of() {

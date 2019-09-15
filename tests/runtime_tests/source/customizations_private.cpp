@@ -117,6 +117,21 @@ namespace sol {
 	} // namespace stack
 } // namespace sol
 
+inline namespace sol2_test_customizations_private {
+
+	struct boolean_set_true {
+		bool* pTwoThingsWorks;
+
+		boolean_set_true(bool& ref_) : pTwoThingsWorks(&ref_) {
+		}
+
+		void operator()(two_things) const {
+			bool& TwoThingsWorks = *pTwoThingsWorks;
+			TwoThingsWorks = true;
+		}
+	};
+} // namespace sol2_test_customizations_private
+
 TEST_CASE("customization/split struct", "using the old customization points to handle different kinds of classes") {
 	sol::state lua;
 
@@ -166,8 +181,8 @@ TEST_CASE("customization/usertype", "using the old customization points to handl
 TEST_CASE("customization/overloading", "using multi-size customized types in an overload") {
 	bool TwoThingsWorks = false, OverloadWorks = false;
 	sol::state lua;
-	lua["test_two_things"] = [&](two_things) { TwoThingsWorks = true; };
-	lua["test_overload"] = sol::overload([&](two_things) { OverloadWorks = true; }, [] {});
+	lua["test_two_things"] = boolean_set_true(TwoThingsWorks);
+	lua["test_overload"] = sol::overload(boolean_set_true(OverloadWorks), [] {});
 
 	lua.script(
 	     "test_two_things(0, true)\n"

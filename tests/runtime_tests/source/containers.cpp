@@ -37,13 +37,24 @@
 #include <set>
 #include <unordered_set>
 
+inline namespace sol2_test_containers {
+	struct returns_callable {
+		std::vector<int>* ptr;
+
+		returns_callable(std::vector<int>& ref_) : ptr(&ref_) {
+		}
+
+		std::vector<int>& operator()() const {
+			REQUIRE(ptr->size() == 3);
+			return *ptr;
+		}
+	};
+} // namespace sol2_test_containers
+
 TEST_CASE("containers/returns", "make sure that even references to vectors are being serialized as tables") {
 	sol::state lua;
 	std::vector<int> v{ 1, 2, 3 };
-	auto f = [&]() -> std::vector<int>& {
-		REQUIRE(v.size() == 3);
-		return v;
-	};
+	returns_callable f(v);
 	lua.set_function("f", f);
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());

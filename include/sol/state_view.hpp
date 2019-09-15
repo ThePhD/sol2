@@ -682,12 +682,12 @@ namespace sol {
 		}
 
 		template <typename T>
-		proxy<global_table&, detail::proxy_key_t<T>> operator[](T&& key) {
+		table_proxy<global_table&, detail::proxy_key_t<T>> operator[](T&& key) {
 			return global[std::forward<T>(key)];
 		}
 
 		template <typename T>
-		proxy<const global_table&, detail::proxy_key_t<T>> operator[](T&& key) const {
+		table_proxy<const global_table&, detail::proxy_key_t<T>> operator[](T&& key) const {
 			return global[std::forward<T>(key)];
 		}
 

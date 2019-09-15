@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-09-08 23:53:47.830273 UTC
-// This header was generated with sol v3.0.3 (revision 29c03ea)
+// Generated 2019-09-15 04:36:35.549872 UTC
+// This header was generated with sol v3.0.3 (revision b2c22ea)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -307,7 +307,7 @@ namespace sol {
 	template <typename>
 	struct proxy_base;
 	template <typename, typename>
-	struct proxy;
+	struct table_proxy;
 
 	template <bool, typename>
 	class basic_table_core;
@@ -6649,7 +6649,7 @@ namespace sol {
 	struct as_container_t {
 	private:
 		T value_;
-	
+
 	public:
 		using type = T;
 
@@ -6731,7 +6731,7 @@ namespace sol {
 			return std::move(value_);
 		}
 
-		const T& value() const & {
+		const T& value() const& {
 			return value_;
 		}
 	};
@@ -7094,16 +7094,14 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct is_lua_reference : std::integral_constant<bool,
-	                               std::is_base_of_v<reference, T> || std::is_base_of_v<main_reference, T>
-	                                    || std::is_base_of_v<stack_reference, T>> {};
+	struct is_lua_reference
+	: std::integral_constant<bool, std::is_base_of_v<reference, T> || std::is_base_of_v<main_reference, T> || std::is_base_of_v<stack_reference, T>> {};
 
 	template <typename T>
 	inline constexpr bool is_lua_reference_v = is_lua_reference<T>::value;
 
 	template <typename T>
-	struct is_lua_reference_or_proxy
-	: std::integral_constant<bool, is_lua_reference_v<T> || meta::is_specialization_of_v<T, proxy>> {};
+	struct is_lua_reference_or_proxy : std::integral_constant<bool, is_lua_reference_v<T> || meta::is_specialization_of_v<T, table_proxy>> {};
 
 	template <typename T>
 	inline constexpr bool is_lua_reference_or_proxy_v = is_lua_reference_or_proxy<T>::value;
@@ -7128,7 +7126,8 @@ namespace sol {
 	template <typename T>
 	struct is_container
 	: std::integral_constant<bool,
-	       !std::is_same_v<state_view, T> && !std::is_same_v<state, T> && !meta::is_initializer_list_v<T> && !meta::is_string_like_v<T> && !meta::is_string_literal_array_v<T> && !is_transparent_argument_v<T> && !is_lua_reference_v<T> && (meta::has_begin_end_v<T> || std::is_array_v<T>)> {
+	       !std::is_same_v<state_view,
+	            T> && !std::is_same_v<state, T> && !meta::is_initializer_list_v<T> && !meta::is_string_like_v<T> && !meta::is_string_literal_array_v<T> && !is_transparent_argument_v<T> && !is_lua_reference_v<T> && (meta::has_begin_end_v<T> || std::is_array_v<T>)> {
 	};
 
 	template <typename T>
@@ -7325,7 +7324,8 @@ namespace sol {
 		struct lua_type_of<T*> : std::integral_constant<type, type::userdata> {};
 
 		template <typename T>
-		struct lua_type_of<T, std::enable_if_t<std::is_arithmetic_v<T> || std::is_same_v<T, lua_Number>  || std::is_same_v<T, lua_Integer>>> : std::integral_constant<type, type::number> {};
+		struct lua_type_of<T, std::enable_if_t<std::is_arithmetic_v<T> || std::is_same_v<T, lua_Number> || std::is_same_v<T, lua_Integer>>>
+		: std::integral_constant<type, type::number> {};
 
 		template <typename T>
 		struct lua_type_of<T, std::enable_if_t<std::is_enum_v<T>>> : std::integral_constant<type, type::number> {};
@@ -7341,8 +7341,7 @@ namespace sol {
 #endif // SOL_CXX17_FEATURES
 
 		template <typename T>
-		struct lua_type_of<nested<T>>
-		: meta::conditional_t<::sol::is_container_v<T>, std::integral_constant<type, type::table>, lua_type_of<T>> {};
+		struct lua_type_of<nested<T>> : meta::conditional_t<::sol::is_container_v<T>, std::integral_constant<type, type::table>, lua_type_of<T>> {};
 
 		template <typename C, C v, template <typename...> class V, typename... Args>
 		struct accumulate : std::integral_constant<C, v> {};
@@ -7399,11 +7398,10 @@ namespace sol {
 	template <typename T>
 	struct is_lua_primitive
 	: std::integral_constant<bool,
-	       type::userdata != lua_type_of_v<T>
-	            || ((type::userdata == lua_type_of_v<T>) && detail::has_internal_marker_v<lua_type_of<T>>
-	                    && !detail::has_internal_marker_v<lua_size<T>>)
-	            || is_lua_reference_v<T> || meta::is_specialization_of_v<T, std::tuple>
-	            || meta::is_specialization_of_v<T, std::pair>> {};
+	       type::userdata
+	                 != lua_type_of_v<
+	                         T> || ((type::userdata == lua_type_of_v<T>)&&detail::has_internal_marker_v<lua_type_of<T>> && !detail::has_internal_marker_v<lua_size<T>>)
+	            || is_lua_reference_or_proxy_v<T> || meta::is_specialization_of_v<T, std::tuple> || meta::is_specialization_of_v<T, std::pair>> {};
 
 	template <typename T>
 	constexpr inline bool is_lua_primitive_v = is_lua_primitive<T>::value;
@@ -7493,6 +7491,16 @@ namespace sol {
 	inline constexpr bool is_table_v = is_table<T>::value;
 
 	template <typename T>
+	struct is_stack_table : std::false_type {};
+	template <bool x, typename T>
+	struct is_stack_table<basic_table_core<x, T>> : std::integral_constant<bool, std::is_base_of_v<stack_reference, T>> {};
+	template <typename T>
+	struct is_stack_table<basic_lua_table<T>> : std::integral_constant<bool, std::is_base_of_v<stack_reference, T>> {};
+
+	template <typename T>
+	inline constexpr bool is_stack_table_v = is_stack_table<T>::value;
+
+	template <typename T>
 	struct is_function : std::false_type {};
 	template <typename T, bool aligned>
 	struct is_function<basic_function<T, aligned>> : std::true_type {};
@@ -7526,7 +7534,8 @@ namespace sol {
 	template <typename T>
 	struct is_automagical
 	: std::integral_constant<bool,
-	       std::is_array_v<meta::unqualified_t<T>> || !std::is_same_v<meta::unqualified_t<T>, state> || !std::is_same_v<meta::unqualified_t<T>, state_view>> {};
+	       std::is_array_v<meta::unqualified_t<T>> || !std::is_same_v<meta::unqualified_t<T>, state> || !std::is_same_v<meta::unqualified_t<T>, state_view>> {
+	};
 
 	template <typename T>
 	inline type type_of() {
@@ -22335,17 +22344,17 @@ namespace sol {
 
 // beginning of sol/table_core.hpp
 
-// beginning of sol/proxy.hpp
+// beginning of sol/table_proxy.hpp
 
 namespace sol {
 
 	template <typename Table, typename Key>
-	struct proxy : public proxy_base<proxy<Table, Key>> {
+	struct table_proxy : public proxy_base<table_proxy<Table, Key>> {
 	private:
 		using key_type = detail::proxy_key_t<Key>;
 
 		template <typename T, std::size_t... I>
-		decltype(auto) tuple_get(std::index_sequence<I...>) const & {
+		decltype(auto) tuple_get(std::index_sequence<I...>) const& {
 			return tbl.template traverse_get<T>(std::get<I>(key)...);
 		}
 
@@ -22382,36 +22391,35 @@ namespace sol {
 		key_type key;
 
 		template <typename T>
-		proxy(Table table, T&& k)
-		: tbl(table), key(std::forward<T>(k)) {
+		table_proxy(Table table, T&& k) : tbl(table), key(std::forward<T>(k)) {
 		}
 
 		template <typename T>
-		proxy& set(T&& item) & {
+		table_proxy& set(T&& item) & {
 			tuple_set(std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>(), std::forward<T>(item));
 			return *this;
 		}
 
 		template <typename T>
-		proxy&& set(T&& item) && {
+		table_proxy&& set(T&& item) && {
 			tuple_set(std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>(), std::forward<T>(item));
 			return std::move(*this);
 		}
 
 		template <typename... Args>
-		proxy& set_function(Args&&... args) & {
+		table_proxy& set_function(Args&&... args) & {
 			tbl.set_function(key, std::forward<Args>(args)...);
 			return *this;
 		}
 
 		template <typename... Args>
-		proxy&& set_function(Args&&... args) && {
+		table_proxy&& set_function(Args&&... args) && {
 			tbl.set_function(std::move(key), std::forward<Args>(args)...);
 			return std::move(*this);
 		}
 
 		template <typename T>
-		proxy& operator=(T&& other) & {
+		table_proxy& operator=(T&& other) & {
 			using Tu = meta::unwrap_unqualified_t<T>;
 			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_callable_v<Tu>) {
 				return set_function(std::forward<T>(other));
@@ -22422,7 +22430,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		proxy&& operator=(T&& other) && {
+		table_proxy&& operator=(T&& other) && {
 			using Tu = meta::unwrap_unqualified_t<T>;
 			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_callable_v<Tu>) {
 				return std::move(*this).set_function(std::forward<T>(other));
@@ -22433,17 +22441,17 @@ namespace sol {
 		}
 
 		template <typename T>
-		proxy& operator=(std::initializer_list<T> other) & {
+		table_proxy& operator=(std::initializer_list<T> other) & {
 			return set(std::move(other));
 		}
 
 		template <typename T>
-		proxy&& operator=(std::initializer_list<T> other) && {
+		table_proxy&& operator=(std::initializer_list<T> other) && {
 			return std::move(*this).set(std::move(other));
 		}
 
 		template <typename T>
-		decltype(auto) get() const & {
+		decltype(auto) get() const& {
 			using idx_seq = std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>;
 			return tuple_get<T>(idx_seq());
 		}
@@ -22489,29 +22497,28 @@ namespace sol {
 		template <typename K>
 		decltype(auto) operator[](K&& k) const& {
 			auto keys = meta::tuplefy(key, std::forward<K>(k));
-			return proxy<Table, decltype(keys)>(tbl, std::move(keys));
+			return table_proxy<Table, decltype(keys)>(tbl, std::move(keys));
 		}
 
 		template <typename K>
 		decltype(auto) operator[](K&& k) & {
 			auto keys = meta::tuplefy(key, std::forward<K>(k));
-			return proxy<Table, decltype(keys)>(tbl, std::move(keys));
+			return table_proxy<Table, decltype(keys)>(tbl, std::move(keys));
 		}
 
 		template <typename K>
 		decltype(auto) operator[](K&& k) && {
 			auto keys = meta::tuplefy(std::move(key), std::forward<K>(k));
-			return proxy<Table, decltype(keys)>(tbl, std::move(keys));
+			return table_proxy<Table, decltype(keys)>(tbl, std::move(keys));
 		}
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
-#if !defined(__clang__) && defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 191200000
-			// MSVC is ass sometimes
-			return get<function>().call<Ret...>(std::forward<Args>(args)...);
-#else
-			return get<function>().template call<Ret...>(std::forward<Args>(args)...);
-#endif
+			lua_State* L = this->lua_state();
+			push(L);
+			int idx = lua_gettop(L);
+			stack_aligned_function func(L, idx);
+			return func.call<Ret...>(std::forward<Args>(args)...);
 		}
 
 		template <typename... Args>
@@ -22531,7 +22538,22 @@ namespace sol {
 		}
 
 		int push(lua_State* L) const noexcept {
-			return get<reference>().push(L);
+			if constexpr (std::is_same_v<meta::unqualified_t<Table>, global_table> || is_stack_table_v<meta::unqualified_t<Table>>) {
+				auto pp = stack::push_pop<true>(tbl);
+				int top_index = lua_gettop(L);
+				stack::get_field<true>(lua_state(), key, -1);
+				lua_replace(L, top_index + 1);
+				lua_settop(L, top_index + 1);
+			}
+			else {
+				auto pp = stack::push_pop<false>(tbl);
+				int tableindex = pp.index_of(tbl);
+				int aftertableindex = lua_gettop(L);
+				stack::get_field<false>(lua_state(), key, tableindex);
+				lua_replace(L, tableindex);
+				lua_settop(L, aftertableindex + 1);
+			}
+			return 1;
 		}
 
 		type get_type() const {
@@ -22549,7 +22571,7 @@ namespace sol {
 			return tbl.lua_state();
 		}
 
-		proxy& force() {
+		table_proxy& force() {
 			if (!this->valid()) {
 				this->set(new_table());
 			}
@@ -22558,46 +22580,46 @@ namespace sol {
 	};
 
 	template <typename Table, typename Key, typename T>
-	inline bool operator==(T&& left, const proxy<Table, Key>& right) {
+	inline bool operator==(T&& left, const table_proxy<Table, Key>& right) {
 		using G = decltype(stack::get<T>(nullptr, 0));
 		return right.template get<optional<G>>() == left;
 	}
 
 	template <typename Table, typename Key, typename T>
-	inline bool operator==(const proxy<Table, Key>& right, T&& left) {
+	inline bool operator==(const table_proxy<Table, Key>& right, T&& left) {
 		using G = decltype(stack::get<T>(nullptr, 0));
 		return right.template get<optional<G>>() == left;
 	}
 
 	template <typename Table, typename Key, typename T>
-	inline bool operator!=(T&& left, const proxy<Table, Key>& right) {
+	inline bool operator!=(T&& left, const table_proxy<Table, Key>& right) {
 		using G = decltype(stack::get<T>(nullptr, 0));
 		return right.template get<optional<G>>() != left;
 	}
 
 	template <typename Table, typename Key, typename T>
-	inline bool operator!=(const proxy<Table, Key>& right, T&& left) {
+	inline bool operator!=(const table_proxy<Table, Key>& right, T&& left) {
 		using G = decltype(stack::get<T>(nullptr, 0));
 		return right.template get<optional<G>>() != left;
 	}
 
 	template <typename Table, typename Key>
-	inline bool operator==(lua_nil_t, const proxy<Table, Key>& right) {
+	inline bool operator==(lua_nil_t, const table_proxy<Table, Key>& right) {
 		return !right.valid();
 	}
 
 	template <typename Table, typename Key>
-	inline bool operator==(const proxy<Table, Key>& right, lua_nil_t) {
+	inline bool operator==(const table_proxy<Table, Key>& right, lua_nil_t) {
 		return !right.valid();
 	}
 
 	template <typename Table, typename Key>
-	inline bool operator!=(lua_nil_t, const proxy<Table, Key>& right) {
+	inline bool operator!=(lua_nil_t, const table_proxy<Table, Key>& right) {
 		return right.valid();
 	}
 
 	template <typename Table, typename Key>
-	inline bool operator!=(const proxy<Table, Key>& right, lua_nil_t) {
+	inline bool operator!=(const table_proxy<Table, Key>& right, lua_nil_t) {
 		return right.valid();
 	}
 
@@ -22619,16 +22641,15 @@ namespace sol {
 
 	namespace stack {
 		template <typename Table, typename Key>
-		struct unqualified_pusher<proxy<Table, Key>> {
-			static int push(lua_State* L, const proxy<Table, Key>& p) {
-				reference r = p;
-				return r.push(L);
+		struct unqualified_pusher<table_proxy<Table, Key>> {
+			static int push(lua_State* L, const table_proxy<Table, Key>& p) {
+				return p.push(L);
 			}
 		};
 	} // namespace stack
 } // namespace sol
 
-// end of sol/proxy.hpp
+// end of sol/table_proxy.hpp
 
 // beginning of sol/table_iterator.hpp
 
@@ -23266,17 +23287,17 @@ namespace sol {
 
 		template <typename T>
 		auto operator[](T&& key) & {
-			return proxy<basic_table_core&, detail::proxy_key_t<T>>(*this, std::forward<T>(key));
+			return table_proxy<basic_table_core&, detail::proxy_key_t<T>>(*this, std::forward<T>(key));
 		}
 
 		template <typename T>
 		auto operator[](T&& key) const& {
-			return proxy<const basic_table_core&, detail::proxy_key_t<T>>(*this, std::forward<T>(key));
+			return table_proxy<const basic_table_core&, detail::proxy_key_t<T>>(*this, std::forward<T>(key));
 		}
 
 		template <typename T>
 		auto operator[](T&& key) && {
-			return proxy<basic_table_core, detail::proxy_key_t<T>>(std::move(*this), std::forward<T>(key));
+			return table_proxy<basic_table_core, detail::proxy_key_t<T>>(std::move(*this), std::forward<T>(key));
 		}
 
 		template <typename Sig, typename Key, typename... Args>
@@ -25005,12 +25026,12 @@ namespace sol {
 		}
 
 		template <typename T>
-		proxy<global_table&, detail::proxy_key_t<T>> operator[](T&& key) {
+		table_proxy<global_table&, detail::proxy_key_t<T>> operator[](T&& key) {
 			return global[std::forward<T>(key)];
 		}
 
 		template <typename T>
-		proxy<const global_table&, detail::proxy_key_t<T>> operator[](T&& key) const {
+		table_proxy<const global_table&, detail::proxy_key_t<T>> operator[](T&& key) const {
 			return global[std::forward<T>(key)];
 		}
 

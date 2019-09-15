@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -24,6 +24,39 @@
 #include "sol_test.hpp"
 
 #include <catch.hpp>
+
+inline namespace sol2_test_coroutines {
+	struct coroutine_thread_runner_state {
+		sol::state_view* prunner_thread_state;
+
+		coroutine_thread_runner_state(sol::state_view& ref_) : prunner_thread_state(&ref_) {
+		}
+
+		auto operator()() const {
+			sol::state_view& runner_thread_state = *prunner_thread_state;
+			sol::coroutine cr = runner_thread_state["loop"];
+			sol::stack::push(runner_thread_state, 50);
+			sol::stack::push(runner_thread_state, 25);
+			int r = cr();
+			return r;
+		}
+	};
+
+	struct coroutine_thread_runner {
+		sol::thread* prunner_thread;
+
+		coroutine_thread_runner(sol::thread& ref_) : prunner_thread(&ref_) {
+		}
+
+		auto operator()() const {
+			sol::thread& runner_thread = *prunner_thread;
+			sol::state_view th_state = runner_thread.state();
+			sol::coroutine cr = th_state["loop"];
+			int r = cr();
+			return r;
+		}
+	};
+} // namespace sol2_test_coroutines
 
 struct coro_h {
 	int x = 500;
@@ -151,13 +184,11 @@ TEST_CASE("coroutines/transfer", "test that things created inside of a coroutine
 	for (std::size_t tries = 0; tries < 200; ++tries) {
 		sol::state lua;
 		sol::stack_guard luasg(lua);
-	
+
 		lua.open_libraries();
 		{
 			sol::function f2;
-			lua["f"] = [&lua, &f2](sol::object t) {
-				f2 = sol::function(lua, t);
-			};
+			lua["f"] = [&lua, &f2](sol::object t) { f2 = sol::function(lua, t); };
 			{
 				auto code = R"(
 i = 0
@@ -241,10 +272,13 @@ co = nil
 	lua.open_libraries(sol::lib::coroutine, sol::lib::base);
 
 	lua.new_usertype<coro_test>("coro_test",
-		sol::constructors<coro_test(sol::this_state, std::string)>(),
-		"store", &coro_test::store,
-		"copy_store", &coro_test::copy_store,
-		"get", &coro_test::get);
+	     sol::constructors<coro_test(sol::this_state, std::string)>(),
+	     "store",
+	     &coro_test::store,
+	     "copy_store",
+	     &coro_test::copy_store,
+	     "get",
+	     &coro_test::get);
 
 	auto r = lua.safe_script(code, sol::script_pass_on_error);
 	REQUIRE(r.valid());
@@ -299,8 +333,7 @@ co = nil
 		std::string identifier;
 		sol::reference obj;
 
-		coro_test_implicit(sol::this_state L, std::string id)
-		: identifier(id), obj(L, sol::lua_nil) {
+		coro_test_implicit(sol::this_state L, std::string id) : identifier(id), obj(L, sol::lua_nil) {
 		}
 
 		void store(sol::table ref) {
@@ -325,10 +358,13 @@ co = nil
 	lua.open_libraries(sol::lib::coroutine, sol::lib::base);
 
 	lua.new_usertype<coro_test_implicit>("coro_test",
-		sol::constructors<coro_test_implicit(sol::this_state, std::string)>(),
-		"store", &coro_test_implicit::store,
-		"copy_store", &coro_test_implicit::copy_store,
-		"get", &coro_test_implicit::get);
+	     sol::constructors<coro_test_implicit(sol::this_state, std::string)>(),
+	     "store",
+	     &coro_test_implicit::store,
+	     "copy_store",
+	     &coro_test_implicit::copy_store,
+	     "get",
+	     &coro_test_implicit::get);
 
 	auto r = lua.safe_script(code, sol::script_pass_on_error);
 	REQUIRE(r.valid());
@@ -382,10 +418,13 @@ collectgarbage()
 	lua.open_libraries(sol::lib::coroutine, sol::lib::base);
 
 	lua.new_usertype<coro_test_implicit>("coro_test",
-		sol::constructors<coro_test_implicit(sol::this_state, std::string)>(),
-		"store", &coro_test_implicit::store,
-		"copy_store", &coro_test_implicit::copy_store,
-		"get", &coro_test_implicit::get);
+	     sol::constructors<coro_test_implicit(sol::this_state, std::string)>(),
+	     "store",
+	     &coro_test_implicit::store,
+	     "copy_store",
+	     &coro_test_implicit::copy_store,
+	     "get",
+	     &coro_test_implicit::get);
 
 	auto r = lua.safe_script(code, sol::script_pass_on_error);
 	REQUIRE(r.valid());
@@ -404,7 +443,8 @@ collectgarbage()
 	REQUIRE(s == "SOME_TABLE");
 }
 
-TEST_CASE("coroutines/coroutine.create protection", "ensure that a thread picked up from coroutine.create does not throw off the lua stack entirely when called from C++") {
+TEST_CASE("coroutines/coroutine.create protection",
+     "ensure that a thread picked up from coroutine.create does not throw off the lua stack entirely when called from C++") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::coroutine);
 
@@ -425,12 +465,7 @@ loop_th = coroutine.create(loop)
 	REQUIRE(r.valid());
 	sol::thread runner_thread = lua["loop_th"];
 
-	auto test_resume = [&runner_thread]() {
-		sol::state_view th_state = runner_thread.state();
-		sol::coroutine cr = th_state["loop"];
-		int r = cr();
-		return r;
-	};
+	coroutine_thread_runner test_resume(runner_thread);
 
 	lua.set_function("test_resume", std::ref(test_resume));
 
@@ -480,13 +515,7 @@ end
 	// Resume from lua via thread and coroutine
 	sol::thread runner_thread = lua["loop_th"];
 	sol::state_view runner_thread_state = runner_thread.state();
-	auto test_resume = [&runner_thread_state]() {
-		sol::coroutine cr = runner_thread_state["loop"];
-		sol::stack::push(runner_thread_state, 50);
-		sol::stack::push(runner_thread_state, 25);
-		int r = cr();
-		return r;
-	};
+	coroutine_thread_runner_state test_resume(runner_thread_state);
 	lua.set_function("test_resume", std::ref(test_resume));
 
 	// Resume via getting a sol::function from the state
@@ -504,7 +533,7 @@ end
 	int v1 = test_resume();
 	int s1 = runner_thread_state.stack_top();
 	int v2;
-	{ 
+	{
 		auto result = lua.safe_script("return test_resume()", sol::script_pass_on_error);
 		REQUIRE(result.valid());
 		v2 = result;
@@ -598,9 +627,7 @@ TEST_CASE("coroutines/yielding", "test that a sol3 bound function can yield when
 
 		lua["hobj"] = &hobj;
 
-		lua.new_usertype<coro_h>("coro_h",
-			"h", sol::yielding(&coro_h::func)
-		);
+		lua.new_usertype<coro_h>("coro_h", "h", sol::yielding(&coro_h::func));
 
 		sol::string_view code = R"(
 		co4 = coroutine.create(function()

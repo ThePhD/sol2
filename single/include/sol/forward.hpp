@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-09-08 23:53:48.445628 UTC
-// This header was generated with sol v3.0.3 (revision 29c03ea)
+// Generated 2019-09-15 04:36:38.687873 UTC
+// This header was generated with sol v3.0.3 (revision b2c22ea)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -281,7 +281,7 @@ namespace sol {
 	template <typename>
 	struct proxy_base;
 	template <typename, typename>
-	struct proxy;
+	struct table_proxy;
 
 	template <bool, typename>
 	class basic_table_core;

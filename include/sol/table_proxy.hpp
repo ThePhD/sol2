@@ -21,8 +21,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_PROXY_HPP
-#define SOL_PROXY_HPP
+#ifndef SOL_TABLE_PROXY_HPP
+#define SOL_TABLE_PROXY_HPP
 
 #include "traits.hpp"
 #include "function.hpp"
@@ -32,12 +32,12 @@
 namespace sol {
 
 	template <typename Table, typename Key>
-	struct proxy : public proxy_base<proxy<Table, Key>> {
+	struct table_proxy : public proxy_base<table_proxy<Table, Key>> {
 	private:
 		using key_type = detail::proxy_key_t<Key>;
 
 		template <typename T, std::size_t... I>
-		decltype(auto) tuple_get(std::index_sequence<I...>) const & {
+		decltype(auto) tuple_get(std::index_sequence<I...>) const& {
 			return tbl.template traverse_get<T>(std::get<I>(key)...);
 		}
 
@@ -74,36 +74,35 @@ namespace sol {
 		key_type key;
 
 		template <typename T>
-		proxy(Table table, T&& k)
-		: tbl(table), key(std::forward<T>(k)) {
+		table_proxy(Table table, T&& k) : tbl(table), key(std::forward<T>(k)) {
 		}
 
 		template <typename T>
-		proxy& set(T&& item) & {
+		table_proxy& set(T&& item) & {
 			tuple_set(std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>(), std::forward<T>(item));
 			return *this;
 		}
 
 		template <typename T>
-		proxy&& set(T&& item) && {
+		table_proxy&& set(T&& item) && {
 			tuple_set(std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>(), std::forward<T>(item));
 			return std::move(*this);
 		}
 
 		template <typename... Args>
-		proxy& set_function(Args&&... args) & {
+		table_proxy& set_function(Args&&... args) & {
 			tbl.set_function(key, std::forward<Args>(args)...);
 			return *this;
 		}
 
 		template <typename... Args>
-		proxy&& set_function(Args&&... args) && {
+		table_proxy&& set_function(Args&&... args) && {
 			tbl.set_function(std::move(key), std::forward<Args>(args)...);
 			return std::move(*this);
 		}
 
 		template <typename T>
-		proxy& operator=(T&& other) & {
+		table_proxy& operator=(T&& other) & {
 			using Tu = meta::unwrap_unqualified_t<T>;
 			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_callable_v<Tu>) {
 				return set_function(std::forward<T>(other));
@@ -114,7 +113,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		proxy&& operator=(T&& other) && {
+		table_proxy&& operator=(T&& other) && {
 			using Tu = meta::unwrap_unqualified_t<T>;
 			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_callable_v<Tu>) {
 				return std::move(*this).set_function(std::forward<T>(other));
@@ -125,17 +124,17 @@ namespace sol {
 		}
 
 		template <typename T>
-		proxy& operator=(std::initializer_list<T> other) & {
+		table_proxy& operator=(std::initializer_list<T> other) & {
 			return set(std::move(other));
 		}
 
 		template <typename T>
-		proxy&& operator=(std::initializer_list<T> other) && {
+		table_proxy&& operator=(std::initializer_list<T> other) && {
 			return std::move(*this).set(std::move(other));
 		}
 
 		template <typename T>
-		decltype(auto) get() const & {
+		decltype(auto) get() const& {
 			using idx_seq = std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>;
 			return tuple_get<T>(idx_seq());
 		}
@@ -165,7 +164,7 @@ namespace sol {
 			return static_cast<T>(std::forward<D>(otherwise));
 		}
 
-		
+
 		template <typename T>
 		decltype(auto) get_or_create() {
 			return get_or_create<T>(new_table());
@@ -182,29 +181,28 @@ namespace sol {
 		template <typename K>
 		decltype(auto) operator[](K&& k) const& {
 			auto keys = meta::tuplefy(key, std::forward<K>(k));
-			return proxy<Table, decltype(keys)>(tbl, std::move(keys));
+			return table_proxy<Table, decltype(keys)>(tbl, std::move(keys));
 		}
 
 		template <typename K>
 		decltype(auto) operator[](K&& k) & {
 			auto keys = meta::tuplefy(key, std::forward<K>(k));
-			return proxy<Table, decltype(keys)>(tbl, std::move(keys));
+			return table_proxy<Table, decltype(keys)>(tbl, std::move(keys));
 		}
 
 		template <typename K>
 		decltype(auto) operator[](K&& k) && {
 			auto keys = meta::tuplefy(std::move(key), std::forward<K>(k));
-			return proxy<Table, decltype(keys)>(tbl, std::move(keys));
+			return table_proxy<Table, decltype(keys)>(tbl, std::move(keys));
 		}
 
 		template <typename... Ret, typename... Args>
 		decltype(auto) call(Args&&... args) {
-#if !defined(__clang__) && defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 191200000
-			// MSVC is ass sometimes
-			return get<function>().call<Ret...>(std::forward<Args>(args)...);
-#else
-			return get<function>().template call<Ret...>(std::forward<Args>(args)...);
-#endif
+			lua_State* L = this->lua_state();
+			push(L);
+			int idx = lua_gettop(L);
+			stack_aligned_function func(L, idx);
+			return func.call<Ret...>(std::forward<Args>(args)...);
 		}
 
 		template <typename... Args>
@@ -224,7 +222,22 @@ namespace sol {
 		}
 
 		int push(lua_State* L) const noexcept {
-			return get<reference>().push(L);
+			if constexpr (std::is_same_v<meta::unqualified_t<Table>, global_table> || is_stack_table_v<meta::unqualified_t<Table>>) {
+				auto pp = stack::push_pop<true>(tbl);
+				int top_index = lua_gettop(L);
+				stack::get_field<true>(lua_state(), key, -1);
+				lua_replace(L, top_index + 1);
+				lua_settop(L, top_index + 1);
+			}
+			else {
+				auto pp = stack::push_pop<false>(tbl);
+				int tableindex = pp.index_of(tbl);
+				int aftertableindex = lua_gettop(L);
+				stack::get_field<false>(lua_state(), key, tableindex);
+				lua_replace(L, tableindex);
+				lua_settop(L, aftertableindex + 1);
+			}
+			return 1;
 		}
 
 		type get_type() const {
@@ -242,7 +255,7 @@ namespace sol {
 			return tbl.lua_state();
 		}
 
-		proxy& force() {
+		table_proxy& force() {
 			if (!this->valid()) {
 				this->set(new_table());
 			}
@@ -251,46 +264,46 @@ namespace sol {
 	};
 
 	template <typename Table, typename Key, typename T>
-	inline bool operator==(T&& left, const proxy<Table, Key>& right) {
+	inline bool operator==(T&& left, const table_proxy<Table, Key>& right) {
 		using G = decltype(stack::get<T>(nullptr, 0));
 		return right.template get<optional<G>>() == left;
 	}
 
 	template <typename Table, typename Key, typename T>
-	inline bool operator==(const proxy<Table, Key>& right, T&& left) {
+	inline bool operator==(const table_proxy<Table, Key>& right, T&& left) {
 		using G = decltype(stack::get<T>(nullptr, 0));
 		return right.template get<optional<G>>() == left;
 	}
 
 	template <typename Table, typename Key, typename T>
-	inline bool operator!=(T&& left, const proxy<Table, Key>& right) {
+	inline bool operator!=(T&& left, const table_proxy<Table, Key>& right) {
 		using G = decltype(stack::get<T>(nullptr, 0));
 		return right.template get<optional<G>>() != left;
 	}
 
 	template <typename Table, typename Key, typename T>
-	inline bool operator!=(const proxy<Table, Key>& right, T&& left) {
+	inline bool operator!=(const table_proxy<Table, Key>& right, T&& left) {
 		using G = decltype(stack::get<T>(nullptr, 0));
 		return right.template get<optional<G>>() != left;
 	}
 
 	template <typename Table, typename Key>
-	inline bool operator==(lua_nil_t, const proxy<Table, Key>& right) {
+	inline bool operator==(lua_nil_t, const table_proxy<Table, Key>& right) {
 		return !right.valid();
 	}
 
 	template <typename Table, typename Key>
-	inline bool operator==(const proxy<Table, Key>& right, lua_nil_t) {
+	inline bool operator==(const table_proxy<Table, Key>& right, lua_nil_t) {
 		return !right.valid();
 	}
 
 	template <typename Table, typename Key>
-	inline bool operator!=(lua_nil_t, const proxy<Table, Key>& right) {
+	inline bool operator!=(lua_nil_t, const table_proxy<Table, Key>& right) {
 		return right.valid();
 	}
 
 	template <typename Table, typename Key>
-	inline bool operator!=(const proxy<Table, Key>& right, lua_nil_t) {
+	inline bool operator!=(const table_proxy<Table, Key>& right, lua_nil_t) {
 		return right.valid();
 	}
 
@@ -312,13 +325,12 @@ namespace sol {
 
 	namespace stack {
 		template <typename Table, typename Key>
-		struct unqualified_pusher<proxy<Table, Key>> {
-			static int push(lua_State* L, const proxy<Table, Key>& p) {
-				reference r = p;
-				return r.push(L);
+		struct unqualified_pusher<table_proxy<Table, Key>> {
+			static int push(lua_State* L, const table_proxy<Table, Key>& p) {
+				return p.push(L);
 			}
 		};
 	} // namespace stack
 } // namespace sol
 
-#endif // SOL_PROXY_HPP
+#endif // SOL_TABLE_PROXY_HPP

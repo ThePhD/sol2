@@ -27,7 +27,7 @@
 
 #include <iostream>
 
-TEST_CASE("tables/proxy override_value", "allow override_value by way of key") {
+TEST_CASE("tables/table_proxy override_value", "allow override_value by way of key") {
 	sol::state lua;
 	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base, sol::lib::io);
@@ -59,7 +59,7 @@ TEST_CASE("tables/insertion override", "allow override all non-table values plus
 		REQUIRE(*b_totally_there == 500);
 		REQUIRE_FALSE(static_cast<bool>(totally_not_there));
 	}
-	SECTION("proxy") {
+	SECTION("table_proxy") {
 		sol::state lua;
 		sol::stack_guard luasg(lua);
 
@@ -77,7 +77,7 @@ TEST_CASE("tables/insertion override", "allow override all non-table values plus
 		REQUIRE(*b_totally_there == 500);
 		REQUIRE_FALSE(static_cast<bool>(totally_not_there));
 	}
-	SECTION("complex proxy") {
+	SECTION("complex table_proxy") {
 		sol::state lua;
 		sol::stack_guard luasg(lua);
 
@@ -104,7 +104,7 @@ TEST_CASE("tables/insertion update_if_empty", "allow updating a value only if it
 		REQUIRE(static_cast<bool>(totally_there));
 		REQUIRE(*totally_there == 357);
 	}
-	SECTION("proxy") {
+	SECTION("table_proxy") {
 		sol::state lua;
 		sol::stack_guard luasg(lua);
 
@@ -120,7 +120,7 @@ TEST_CASE("tables/insertion update_if_empty", "allow updating a value only if it
 		REQUIRE(static_cast<bool>(totally_there_still));
 		REQUIRE(*totally_there_still == 357);
 	}
-	SECTION("proxy invoker") {
+	SECTION("table_proxy invoker") {
 		sol::state lua;
 		sol::stack_guard luasg(lua);
 
@@ -165,7 +165,7 @@ TEST_CASE("tables/get create_if_nil", "create tables all the way down") {
 		REQUIRE(static_cast<bool>(totally_created));
 		REQUIRE(static_cast<bool>(totally_there));
 	}
-	SECTION("proxy non-optional") {
+	SECTION("table_proxy non-optional") {
 		sol::state lua;
 		sol::stack_guard luasg_outer(lua);
 
@@ -181,7 +181,7 @@ TEST_CASE("tables/get create_if_nil", "create tables all the way down") {
 		}
 	}
 
-	SECTION("proxy") {
+	SECTION("table_proxy") {
 		sol::state lua;
 		sol::stack_guard luasg(lua);
 

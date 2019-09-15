@@ -239,7 +239,7 @@ end )",
 	REQUIRE(v->v == 29);
 }
 
-TEST_CASE("functions/pair and tuple and proxy tests", "Check if sol::reference and sol::proxy can be passed to functions as arguments") {
+TEST_CASE("functions/pair and tuple and table_proxy tests", "Check if sol::reference and sol::table_proxy can be passed to functions as arguments") {
 	sol::state lua;
 	sol::stack_guard luasg(lua);
 
