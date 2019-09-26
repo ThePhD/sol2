@@ -16,14 +16,16 @@ Okay, so the features don't convince you, the documentation doesn't convince you
 
 .. |after| image:: media/eevee_code_after.jpg
 	:target: https://twitter.com/eevee/status/762039984085798913
-	:alt: Now with sol3!
+	:alt: Now with sol2!
 	:align: middle
 
 +----------+---------+
 | |before| | |after| |
 +----------+---------+
 
+* In `Perforce`_
 * In `High Performance Computing research`_
+	- `Published research, too!`_
 * The `Multiple Arcade Machine Emulator (MAME)`_ project switched from using LuaBridge to sol3!
 	- `The pull request`_ in which it was introduced to the master branch.
 * For scripting, in `OpenMPT`_
@@ -50,16 +52,18 @@ Are you using sol3 for something neat? Want it to be featured here or think it's
 .. _tell me about your uses!: https://github.com/ThePhD/sol2/issues/189
 .. _eevee: https://twitter.com/eevee
 .. _eevee's blog: https://eev.ee/dev/2016/08/07/weekly-roundup-three-big-things/
-.. _Jason Turner's presentation: https://github.com/lefticus/presentations/blob/master/HowAndWhyToAddScripting.md
+.. _Jason Turner's presentation: https://github.com/lefticus/presentations/blob/master/WhyAndHowToAddScripting.md
 .. _Elias Daler's blog: https://eliasdaler.github.io/cppcast#read-more
 .. _CppCast: http://cppcast.com/2016/07/elias-daler/
 .. _tweeted out by eevee: https://twitter.com/eevee/status/762039984085798913
 .. _"I heartily recommend sol3": https://twitter.com/eevee/status/762040086540144644
-.. _"from outdated LuaBridge to superior #sol3": https://twitter.com/racodslair/status/754031870640267264
-.. _sol3's initial reddit release: https://www.reddit.com/r/cpp/comments/4a8gy7/sol2_lua_c_binding_framework/
+.. _"from outdated LuaBridge to superior #sol2": https://twitter.com/racodslair/status/754031870640267264
+.. _sol2's initial reddit release: https://www.reddit.com/r/cpp/comments/4a8gy7/sol2_lua_c_binding_framework/
 .. _Benchmarking Discussing: https://www.reddit.com/r/cpp/comments/4x82hd/plain_c_versus_lua_libraries_benchmarking_speed/
-.. _"sol3 saved my life.": https://twitter.com/EliasDaler/status/739215685264494593
+.. _"After spending hours with sol2, it wins. Amazing lib.": https://twitter.com/EliasDaler/status/739215685264494593
 .. _Multiple Arcade Machine Emulator (MAME): http://www.mamedev.org/index.php
 .. _The pull request: https://github.com/mamedev/mame/pull/1626
 .. _OpenMPT: https://openmpt.org/
 .. _High Performance Computing research: https://github.com/ThePhD/sol2/issues/568
+.. _Published research, too!: https://twitter.com/thephantomderp/status/1090194999025778688
+.. _Perforce: https://swarm.workshop.perforce.com/projects/perforce_software-p4/files/2018-2/script
