@@ -557,11 +557,11 @@ namespace sol {
 		}
 
 		basic_reference(const basic_reference<!main_only>& o) noexcept
-		: basic_reference(detail::pick_main_thread < main_only && !main_only > (o.lua_state(), o.lua_state()), o) {
+		: basic_reference(detail::pick_main_thread<main_only>(o.lua_state(), o.lua_state()), o) {
 		}
 
 		basic_reference(basic_reference<!main_only>&& o) noexcept
-		: stateless_reference(std::move(o)), luastate(detail::pick_main_thread<main_only && !main_only>(o.lua_state(), o.lua_state())) {
+		: stateless_reference(std::move(o)), luastate(detail::pick_main_thread<main_only>(o.lua_state(), o.lua_state())) {
 			o.luastate = nullptr;
 			o.ref = LUA_NOREF;
 		}
