@@ -13,4 +13,6 @@ As shown by the :doc:`benchmarks<benchmarks>`, sol is very performant with its a
 * Member variables can sometimes cost an extra lookup to occur within the Lua system (as mentioned :doc:`bottom of the usertype page<api/usertype>`); until we find out a safe way around this, member variables will always incur that extra lookup cost
 
 
-That's it as far as different performance options are avilable to make sol run faster. Again, please make sure to invoke these only when you know sol is the bottleneck. If you find some form of the performance unacceptable to you, also feel free to open an issue at the github.
+Working with things that are already on the stack can also boost performance. Last time regular, call overhead was measured, it was around 5-11 nanoseconds for a single C++ call on a recent (2015) machine. The range is for how slim you make the call, what kind of arguments, et cetera.
+
+If you find some form of the performance unacceptable to you, also feel free to open an issue at the github.

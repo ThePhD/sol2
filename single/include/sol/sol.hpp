@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-09-15 04:36:35.549872 UTC
-// This header was generated with sol v3.0.3 (revision b2c22ea)
+// Generated 2019-10-02 06:37:26.989637 UTC
+// This header was generated with sol v3.0.3 (revision 3768063)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -60,7 +60,7 @@
 
 // beginning of sol/feature_test.hpp
 
-#if (defined(__cplusplus) && __cplusplus == 201703L) || (defined(_MSC_VER) && _MSC_VER > 1900 && ((defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(_MSVC_LANG) && (_MSVC_LANG > 201402L))))
+#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSC_VER) && _MSC_VER > 1900 && ((defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(_MSVC_LANG) && (_MSVC_LANG > 201402L))))
 #ifndef SOL_CXX17_FEATURES
 #define SOL_CXX17_FEATURES 1
 #endif // C++17 features macro
@@ -3752,6 +3752,7 @@ namespace sol { namespace detail {
 #if (__cplusplus == 201103L || defined(SOL_TL_OPTIONAL_MSVC2015) || defined(SOL_TL_OPTIONAL_GCC49))
 #define SOL_TL_OPTIONAL_11_CONSTEXPR
 #else
+   /// \exclude
 #define SOL_TL_OPTIONAL_11_CONSTEXPR constexpr
 #endif
 
@@ -4087,10 +4088,12 @@ namespace sol {
 		// This specialization is for when T is not trivially copy constructible
 		template <class T>
 		struct optional_copy_base<T, false> : optional_operations_base<T> {
-			using optional_operations_base<T>::optional_operations_base;
+			using base_t = optional_operations_base<T>;
+
+			using base_t::base_t;
 
 			optional_copy_base() = default;
-			optional_copy_base(const optional_copy_base& rhs) {
+			optional_copy_base(const optional_copy_base& rhs) : base_t() {
 				if (rhs.has_value()) {
 					this->construct(rhs.get());
 				}
@@ -4134,7 +4137,8 @@ namespace sol {
 
 		// This class manages conditionally having a trivial copy assignment operator
 		template <class T,
-		     bool = SOL_TL_OPTIONAL_IS_TRIVIALLY_COPY_ASSIGNABLE(T) && SOL_TL_OPTIONAL_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T) && SOL_TL_OPTIONAL_IS_TRIVIALLY_DESTRUCTIBLE(T)>
+		     bool = SOL_TL_OPTIONAL_IS_TRIVIALLY_COPY_ASSIGNABLE(T) && SOL_TL_OPTIONAL_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T)
+		          && SOL_TL_OPTIONAL_IS_TRIVIALLY_DESTRUCTIBLE(T)>
 		struct optional_copy_assign_base : optional_move_base<T> {
 			using optional_move_base<T>::optional_move_base;
 		};
@@ -4749,8 +4753,8 @@ namespace sol {
 		}
 
 #if 0 // SOL_MODIFICATION
-		/// Constructs the stored value with `u`.
-		/// \synopsis template <class U=T> constexpr optional(U &&u);
+      /// Constructs the stored value with `u`.
+      /// \synopsis template <class U=T> constexpr optional(U &&u);
 		template <class U = T, detail::enable_if_t<std::is_convertible<U&&, T>::value>* = nullptr, detail::enable_forward_value<T, U>* = nullptr>
 		constexpr optional(U&& u) : base(in_place, std::forward<U>(u)) {
 		}
@@ -5880,12 +5884,12 @@ namespace sol {
 namespace std {
 	// TODO SFINAE
 	template <class T>
-	struct hash< ::sol::optional<T> > {
+	struct hash<::sol::optional<T>> {
 		::std::size_t operator()(const ::sol::optional<T>& o) const {
 			if (!o.has_value())
 				return 0;
 
-			return ::std::hash< ::sol::detail::remove_const_t<T>>()(*o);
+			return ::std::hash<::sol::detail::remove_const_t<T>>()(*o);
 		}
 	};
 } // namespace std
@@ -8064,8 +8068,8 @@ namespace sol {
 	inline constexpr bool is_unique_usertype_v = is_unique_usertype<T>::value;
 
 	namespace detail {
-		template <typename T>
-		using is_base_rebindable_test = decltype(T::rebind_base);
+		template <typename T, typename Rebind = void>
+		using is_base_rebindable_test = typename T::template rebind_base<Rebind>;
 	}
 
 	template <typename T>
@@ -8075,7 +8079,7 @@ namespace sol {
 	inline constexpr bool is_base_rebindable_v = is_base_rebindable<T>::value;
 
 	namespace detail {
-		template <typename T, typename>
+		template <typename T, typename = void>
 		struct is_base_rebindable_non_void_sfinae : std::false_type {};
 
 		template <typename T>
@@ -18973,7 +18977,7 @@ namespace sol {
 			template <typename... R>
 			static std::function<Signature> get_std_func(types<R...>, lua_State* L, int index) {
 				detail::std_shim<R...> fx(unsafe_function(L, index));
-				return std::move(fx);
+				return fx;
 			}
 
 			static std::function<Signature> get(lua_State* L, int index, record& tracking) {
@@ -20285,13 +20289,23 @@ namespace sol {
 			}
 
 			static iterator begin(lua_State*, T& self) {
-				using std::begin;
-				return begin(self);
+				if constexpr (meta::has_begin_end_v<T>) {
+					return self.begin();
+				}
+				else {
+					using std::begin;
+					return begin(self);
+				}
 			}
 
 			static iterator end(lua_State*, T& self) {
-				using std::end;
-				return end(self);
+				if constexpr (meta::has_begin_end_v<T>) {
+					return self.end();
+				}
+				else {
+					using std::end;
+					return end(self);
+				}
 			}
 
 			static int size(lua_State* L) {
@@ -21723,6 +21737,7 @@ namespace sol { namespace u_detail {
 			this->named_index_table.pop();
 		}
 		else if constexpr (std::is_same_v<KeyU, base_classes_tag>) {
+			(void)key;
 			this->update_bases<T>(L, std::forward<Value>(value));
 		}
 		else if constexpr ((meta::is_string_like_or_constructible<KeyU>::value || std::is_same_v<KeyU, meta_function>)) {

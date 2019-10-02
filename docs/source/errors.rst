@@ -47,7 +47,16 @@ Typical of Visual Studio, the compiler will complain that it is out of heap spac
 	</PropertyGroup>
 
 
-This should use the 64-bit tools by default, and increase your maximum heap space to whatever a 64-bit windows machine can handle. If you do not have more than 4 GB of RAM, or you still encounter issues, you should look into using ``create_simple_usertype`` and adding functions 1 by 1 using ``.set( ... )``, as shown in `the simple usertype example here`_.
+This should use the 64-bit tools by default, and increase your maximum heap space to whatever a 64-bit windows machine can handle. If you do not have more than 4 GB of RAM, or you still encounter issues, you should look into breaking up your usertype across C++ files. Also, it is imperative to not put all the functions inside single calls to the `new_usertype(...)` function directly: instead, use `my_usertype["func"] = func;` like so:
+
+.. code-block:: cpp
+	
+	auto my_usertype = lua.new_usertype<my_class>("my_class");
+	my_usertype["talkin"] = &about;
+	my_usertype["this"] = &my_class::that;
+	my_usertype["and_the"] = sol::property(&my_class::third);
+
+
 
 
 Linker Errors

@@ -95,8 +95,8 @@ namespace sol {
 	inline constexpr bool is_unique_usertype_v = is_unique_usertype<T>::value;
 
 	namespace detail {
-		template <typename T>
-		using is_base_rebindable_test = decltype(T::rebind_base);
+		template <typename T, typename Rebind = void>
+		using is_base_rebindable_test = typename T::template rebind_base<Rebind>;
 	}
 
 	template <typename T>
@@ -106,7 +106,7 @@ namespace sol {
 	inline constexpr bool is_base_rebindable_v = is_base_rebindable<T>::value;
 
 	namespace detail {
-		template <typename T, typename>
+		template <typename T, typename = void>
 		struct is_base_rebindable_non_void_sfinae : std::false_type {};
 
 		template <typename T>

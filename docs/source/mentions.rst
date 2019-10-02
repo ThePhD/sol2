@@ -23,7 +23,7 @@ Okay, so the features don't convince you, the documentation doesn't convince you
 | |before| | |after| |
 +----------+---------+
 
-* In `Perforce`_
+* In `Perforce`_ (later versions of the code using sol2 more directly can be requested by e-mailing support@perforce.com !)
 * In `High Performance Computing research`_
 	- `Published research, too!`_
 * The `Multiple Arcade Machine Emulator (MAME)`_ project switched from using LuaBridge to sol3!
@@ -42,7 +42,7 @@ Okay, so the features don't convince you, the documentation doesn't convince you
 	- Elias Daler: `"sol3 saved my life."`_
 	- Racod's Lair: `"from outdated LuaBridge to superior #sol3"`_
 * (Reddit) Posts on reddit about it!
-	- `sol3's initial reddit release`_
+	- `sol2's initial reddit release`_
 	- `Benchmarking Discussing`_
 * Somehow landed on a Torque3D thread...
 	- http://forums.torque3d.org/viewtopic.php?f=32&t=629&p=5246&sid=8e759990ab1ce38a48e896fc9fd62653#p5241

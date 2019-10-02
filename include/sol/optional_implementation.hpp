@@ -109,7 +109,7 @@ namespace sol { namespace detail {
 /// \exclude
 #define SOL_TL_OPTIONAL_11_CONSTEXPR
 #else
-/// \exclude
+   /// \exclude
 #define SOL_TL_OPTIONAL_11_CONSTEXPR constexpr
 #endif
 
@@ -448,10 +448,12 @@ namespace sol {
 		// This specialization is for when T is not trivially copy constructible
 		template <class T>
 		struct optional_copy_base<T, false> : optional_operations_base<T> {
-			using optional_operations_base<T>::optional_operations_base;
+			using base_t = optional_operations_base<T>;
+
+			using base_t::base_t;
 
 			optional_copy_base() = default;
-			optional_copy_base(const optional_copy_base& rhs) {
+			optional_copy_base(const optional_copy_base& rhs) : base_t() {
 				if (rhs.has_value()) {
 					this->construct(rhs.get());
 				}
@@ -500,7 +502,8 @@ namespace sol {
 
 		// This class manages conditionally having a trivial copy assignment operator
 		template <class T,
-		     bool = SOL_TL_OPTIONAL_IS_TRIVIALLY_COPY_ASSIGNABLE(T) && SOL_TL_OPTIONAL_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T) && SOL_TL_OPTIONAL_IS_TRIVIALLY_DESTRUCTIBLE(T)>
+		     bool = SOL_TL_OPTIONAL_IS_TRIVIALLY_COPY_ASSIGNABLE(T) && SOL_TL_OPTIONAL_IS_TRIVIALLY_COPY_CONSTRUCTIBLE(T)
+		          && SOL_TL_OPTIONAL_IS_TRIVIALLY_DESTRUCTIBLE(T)>
 		struct optional_copy_assign_base : optional_move_base<T> {
 			using optional_move_base<T>::optional_move_base;
 		};
@@ -1124,8 +1127,8 @@ namespace sol {
 		}
 
 #if 0 // SOL_MODIFICATION
-		/// Constructs the stored value with `u`.
-		/// \synopsis template <class U=T> constexpr optional(U &&u);
+      /// Constructs the stored value with `u`.
+      /// \synopsis template <class U=T> constexpr optional(U &&u);
 		template <class U = T, detail::enable_if_t<std::is_convertible<U&&, T>::value>* = nullptr, detail::enable_forward_value<T, U>* = nullptr>
 		constexpr optional(U&& u) : base(in_place, std::forward<U>(u)) {
 		}
@@ -2259,12 +2262,12 @@ namespace sol {
 namespace std {
 	// TODO SFINAE
 	template <class T>
-	struct hash< ::sol::optional<T> > {
+	struct hash<::sol::optional<T>> {
 		::std::size_t operator()(const ::sol::optional<T>& o) const {
 			if (!o.has_value())
 				return 0;
 
-			return ::std::hash< ::sol::detail::remove_const_t<T>>()(*o);
+			return ::std::hash<::sol::detail::remove_const_t<T>>()(*o);
 		}
 	};
 } // namespace std
