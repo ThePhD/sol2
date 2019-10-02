@@ -631,7 +631,7 @@ namespace sol {
 				stack::stack_detail::undefined_metatable umf(L, &meta[0], &stack::stack_detail::set_undefined_methods_on<T>);
 				umf();
 
-				construct_match<T, Args...>(constructor_match<T, false, clean_stack>(obj), L, argcount, boost + 1 + static_cast<int>(syntax));
+				construct_match<T, Args...>(constructor_match<T, checked, clean_stack>(obj), L, argcount, boost + 1 + static_cast<int>(syntax));
 
 				userdataref.push();
 				return 1;

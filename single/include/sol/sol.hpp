@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-10-02 06:37:26.989637 UTC
-// This header was generated with sol v3.0.3 (revision 3768063)
+// Generated 2019-10-02 08:43:38.869924 UTC
+// This header was generated with sol v3.0.3 (revision 908074e)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -16725,7 +16725,7 @@ namespace sol {
 				stack::stack_detail::undefined_metatable umf(L, &meta[0], &stack::stack_detail::set_undefined_methods_on<T>);
 				umf();
 
-				construct_match<T, Args...>(constructor_match<T, false, clean_stack>(obj), L, argcount, boost + 1 + static_cast<int>(syntax));
+				construct_match<T, Args...>(constructor_match<T, checked, clean_stack>(obj), L, argcount, boost + 1 + static_cast<int>(syntax));
 
 				userdataref.push();
 				return 1;
