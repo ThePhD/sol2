@@ -71,9 +71,9 @@ namespace sol {
 		}
 
 		template <typename T>
-		inline decltype(auto) deref_non_pointer(T&& item) {
+		inline decltype(auto) deref_move_only(T&& item) {
 			using Tu = meta::unqualified_t<T>;
-			if constexpr (meta::is_pointer_like_v<Tu> && !std::is_pointer_v<Tu>) {
+			if constexpr (meta::is_pointer_like_v<Tu> && !std::is_pointer_v<Tu> && !std::is_copy_constructible_v<Tu>) {
 				return *std::forward<T>(item);
 			}
 			else {

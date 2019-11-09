@@ -147,7 +147,8 @@ namespace sol {
 				typedef meta::tuple_types<typename traits::return_type> return_types;
 				typedef typename traits::free_args_list args_list;
 				// compile-time eliminate any functions that we know ahead of time are of improper arity
-				if constexpr (!traits::runtime_variadics_t::value && meta::find_in_pack_v<meta::index_value<traits::free_arity>, meta::index_value<M>...>::value) {
+				if constexpr (!traits::runtime_variadics_t::value
+				     && meta::find_in_pack_v<meta::index_value<traits::free_arity>, meta::index_value<M>...>::value) {
 					return overload_match_arity(types<Fxs...>(),
 					     std::index_sequence<In...>(),
 					     std::index_sequence<M...>(),
@@ -161,25 +162,25 @@ namespace sol {
 					if constexpr (!traits::runtime_variadics_t::value) {
 						if (traits::free_arity != fxarity) {
 							return overload_match_arity(types<Fxs...>(),
-								std::index_sequence<In...>(),
-								std::index_sequence<traits::free_arity, M...>(),
-								std::forward<Match>(matchfx),
-								L,
-								fxarity,
-								start,
-								std::forward<Args>(args)...);
+							     std::index_sequence<In...>(),
+							     std::index_sequence<traits::free_arity, M...>(),
+							     std::forward<Match>(matchfx),
+							     L,
+							     fxarity,
+							     start,
+							     std::forward<Args>(args)...);
 						}
 					}
 					stack::record tracking{};
 					if (!stack::stack_detail::check_types(args_list(), L, start, no_panic, tracking)) {
 						return overload_match_arity(types<Fxs...>(),
-							std::index_sequence<In...>(),
-							std::index_sequence<M...>(),
-							std::forward<Match>(matchfx),
-							L,
-							fxarity,
-							start,
-							std::forward<Args>(args)...);
+						     std::index_sequence<In...>(),
+						     std::index_sequence<M...>(),
+						     std::forward<Match>(matchfx),
+						     L,
+						     fxarity,
+						     start,
+						     std::forward<Args>(args)...);
 					}
 					return matchfx(types<Fx>(), meta::index_value<I>(), return_types(), args_list(), L, fxarity, start, std::forward<Args>(args)...);
 				}
@@ -237,7 +238,8 @@ namespace sol {
 				typedef meta::tuple_types<typename traits::return_type> return_types;
 				typedef typename traits::free_args_list args_list;
 				// compile-time eliminate any functions that we know ahead of time are of improper arity
-				if constexpr (!traits::runtime_variadics_t::value && meta::find_in_pack_v<meta::index_value<traits::free_arity>, meta::index_value<M>...>::value) {
+				if constexpr (!traits::runtime_variadics_t::value
+				     && meta::find_in_pack_v<meta::index_value<traits::free_arity>, meta::index_value<M>...>::value) {
 					return overload_match_arity(types<Fx1, Fxs...>(),
 					     std::index_sequence<I1, In...>(),
 					     std::index_sequence<M...>(),
@@ -251,25 +253,25 @@ namespace sol {
 					if constexpr (!traits::runtime_variadics_t::value) {
 						if (traits::free_arity != fxarity) {
 							return overload_match_arity(types<Fx1, Fxs...>(),
-								std::index_sequence<I1, In...>(),
-								std::index_sequence<traits::free_arity, M...>(),
-								std::forward<Match>(matchfx),
-								L,
-								fxarity,
-								start,
-								std::forward<Args>(args)...);
+							     std::index_sequence<I1, In...>(),
+							     std::index_sequence<traits::free_arity, M...>(),
+							     std::forward<Match>(matchfx),
+							     L,
+							     fxarity,
+							     start,
+							     std::forward<Args>(args)...);
 						}
 					}
 					stack::record tracking{};
 					if (!stack::stack_detail::check_types(args_list(), L, start, no_panic, tracking)) {
-						 return overload_match_arity(types<Fx1, Fxs...>(),
-						      std::index_sequence<I1, In...>(),
-						      std::index_sequence<M...>(),
-						      std::forward<Match>(matchfx),
-						      L,
-						      fxarity,
-						      start,
-						      std::forward<Args>(args)...);
+						return overload_match_arity(types<Fx1, Fxs...>(),
+						     std::index_sequence<I1, In...>(),
+						     std::index_sequence<M...>(),
+						     std::forward<Match>(matchfx),
+						     L,
+						     fxarity,
+						     start,
+						     std::forward<Args>(args)...);
 					}
 					return matchfx(types<Fx>(), meta::index_value<I>(), return_types(), args_list(), L, fxarity, start, std::forward<Args>(args)...);
 				}
@@ -330,7 +332,7 @@ namespace sol {
 
 			template <typename Fx, typename... Args>
 			static int call(lua_State* L, Fx&& f, Args&&... args) {
-				if constexpr(is_lua_reference_v<meta::unqualified_t<Fx>>) {
+				if constexpr (is_lua_reference_v<meta::unqualified_t<Fx>>) {
 					if constexpr (is_index) {
 						return stack::push(L, std::forward<Fx>(f), std::forward<Args>(args)...);
 					}
@@ -373,6 +375,7 @@ namespace sol {
 				}
 				else {
 					if constexpr (std::is_const_v<meta::unwrapped_t<T>>) {
+						(void)f;
 						return luaL_error(L, "sol: cannot write to a readonly (const) variable");
 					}
 					else {
@@ -502,8 +505,13 @@ namespace sol {
 						else {
 							using returns_list = typename wrap::returns_list;
 							using caller = typename wrap::caller;
-							return stack::call_into_lua<checked, clean_stack>(
-							     returns_list(), types<>(), L, boost + (is_variable ? 3 : 2), caller(), std::forward<Fx>(fx), std::forward<Args>(args)...);
+							return stack::call_into_lua<checked, clean_stack>(returns_list(),
+							     types<>(),
+							     L,
+							     boost + (is_variable ? 3 : 2),
+							     caller(),
+							     std::forward<Fx>(fx),
+							     std::forward<Args>(args)...);
 						}
 					}
 					else {
@@ -528,16 +536,16 @@ namespace sol {
 								using caller = typename wrap::caller;
 								if constexpr (sizeof...(Args) > 0) {
 									return stack::call_into_lua<checked, clean_stack>(types<void>(),
-										args_list(),
-										L,
-										boost + (is_variable ? 3 : 2),
-										caller(),
-										std::forward<Fx>(fx),
-										std::forward<Args>(args)...);
+									     args_list(),
+									     L,
+									     boost + (is_variable ? 3 : 2),
+									     caller(),
+									     std::forward<Fx>(fx),
+									     std::forward<Args>(args)...);
 								}
 								else {
 									using Ta = meta::conditional_t<std::is_void_v<T>, object_type, T>;
-	#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
+#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
 									auto maybeo = stack::check_get<Ta*>(L, 1);
 									if (!maybeo || maybeo.value() == nullptr) {
 										if (is_variable) {
@@ -547,12 +555,12 @@ namespace sol {
 									}
 									object_type* po = static_cast<object_type*>(maybeo.value());
 									object_type& o = *po;
-	#else
+#else
 									object_type& o = static_cast<object_type&>(*stack::get<non_null<Ta*>>(L, 1));
-	#endif // Safety
+#endif // Safety
 
 									return stack::call_into_lua<checked, clean_stack>(
-										types<void>(), args_list(), L, boost + (is_variable ? 3 : 2), caller(), std::forward<Fx>(fx), o);
+									     types<void>(), args_list(), L, boost + (is_variable ? 3 : 2), caller(), std::forward<Fx>(fx), o);
 								}
 							}
 						}
@@ -727,8 +735,7 @@ namespace sol {
 
 			template <typename F, typename... Args>
 			static int call(lua_State* L, F&& f, Args&&... args) {
-				constexpr bool is_specialized = meta::any<
-					std::is_same<U, detail::no_prop>,
+				constexpr bool is_specialized = meta::any<std::is_same<U, detail::no_prop>,
 				     meta::is_specialization_of<U, var_wrapper>,
 				     meta::is_specialization_of<U, constructor_wrapper>,
 				     meta::is_specialization_of<U, constructor_list>,
@@ -747,7 +754,7 @@ namespace sol {
 				}
 				else {
 					constexpr bool non_class_object_type = meta::any<std::is_void<object_type>,
-						meta::boolean<lua_type_of<meta::unwrap_unqualified_t<object_type>>::value != type::userdata>>::value;
+					     meta::boolean<lua_type_of<meta::unwrap_unqualified_t<object_type>>::value != type::userdata>>::value;
 					if constexpr (non_class_object_type) {
 						// The type being void means we don't have any arguments, so it might be a free functions?
 						using args_list = typename traits_type::free_args_list;
@@ -861,7 +868,8 @@ namespace sol {
 			}
 		}
 
-		template <typename T, bool is_index, bool is_variable, typename F, int start = 1, bool checked = detail::default_safe_function_calls, bool clean_stack = true>
+		template <typename T, bool is_index, bool is_variable, typename F, int start = 1, bool checked = detail::default_safe_function_calls,
+		     bool clean_stack = true>
 		inline int call_user(lua_State* L) {
 			auto& fx = stack::unqualified_get<user<F>>(L, upvalue_index(start));
 			return call_wrapped<T, is_index, is_variable, 0, checked, clean_stack>(L, fx);

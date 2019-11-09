@@ -27,6 +27,17 @@
 
 #include <catch.hpp>
 
+struct unique_user_Display {
+	int value = 5;
+};
+
+std::vector<std::shared_ptr<unique_user_Display>> unique_user_foo() {
+	return { std::make_shared<unique_user_Display>(), std::make_shared<unique_user_Display>(), std::make_shared<unique_user_Display>() };
+}
+
+int unique_user_bar(std::shared_ptr<unique_user_Display> item) {
+	return item->value;
+}
 
 struct factory_test {
 private:
@@ -161,7 +172,7 @@ TEST_CASE("usertype/unique_usertype-check", "make sure unique usertypes don't ge
 
 TEST_CASE("usertype/unique void pointers", "can compile shared_ptr<void> types and not trip the compiler or sol3's internals") {
 	sol::state lua;
-	lua.set_function("f", [](std::shared_ptr<void> d) { 
+	lua.set_function("f", [](std::shared_ptr<void> d) {
 		int* pi = static_cast<int*>(d.get());
 		REQUIRE(*pi == 567);
 	});
@@ -170,4 +181,16 @@ TEST_CASE("usertype/unique void pointers", "can compile shared_ptr<void> types a
 	lua["s"] = std::move(s);
 	auto result = lua.safe_script("f(s)", sol::script_pass_on_error);
 	REQUIRE(result.valid());
+}
+
+TEST_CASE("usertype/unique containers", "copyable unique usertypes in containers are just fine and do not deref/decay") {
+	sol::state lua;
+	lua.open_libraries();
+
+	lua["foo"] = unique_user_foo;
+	lua["bar"] = unique_user_bar;
+	sol::optional<sol::error> err0 = lua.safe_script("v3 = foo()");
+	REQUIRE_FALSE(err0.has_value());
+	sol::optional<sol::error> err1 = lua.safe_script("assert(bar(v3[1]) == 5)");
+	REQUIRE_FALSE(err1.has_value());
 }

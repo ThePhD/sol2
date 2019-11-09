@@ -491,7 +491,7 @@ namespace sol {
 			     captured_type;
 			typedef typename meta::iterator_tag<iterator>::type iterator_category;
 			typedef std::is_same<iterator_category, std::input_iterator_tag> is_input_iterator;
-			typedef meta::conditional_t<is_input_iterator::value, V, decltype(detail::deref_non_pointer(std::declval<captured_type>()))> push_type;
+			typedef meta::conditional_t<is_input_iterator::value, V, decltype(detail::deref_move_only(std::declval<captured_type>()))> push_type;
 			typedef std::is_copy_assignable<V> is_copyable;
 			typedef meta::neg<meta::any<std::is_const<V>, std::is_const<std::remove_reference_t<iterator_return>>, meta::neg<is_copyable>>> is_writable;
 			typedef meta::unqualified_t<decltype(get_key(is_associative(), std::declval<std::add_lvalue_reference_t<value_type>>()))> key_type;
@@ -564,12 +564,12 @@ namespace sol {
 			template <typename Iter>
 			static detail::error_result get_associative(std::true_type, lua_State* L, Iter& it) {
 				decltype(auto) v = *it;
-				return stack::stack_detail::push_reference<push_type>(L, detail::deref_non_pointer(v.second));
+				return stack::stack_detail::push_reference<push_type>(L, detail::deref_move_only(v.second));
 			}
 
 			template <typename Iter>
 			static detail::error_result get_associative(std::false_type, lua_State* L, Iter& it) {
-				return stack::stack_detail::push_reference<push_type>(L, detail::deref_non_pointer(*it));
+				return stack::stack_detail::push_reference<push_type>(L, detail::deref_move_only(*it));
 			}
 
 			static detail::error_result get_category(std::input_iterator_tag, lua_State* L, T& self, K& key) {
@@ -1144,7 +1144,7 @@ namespace sol {
 				else {
 					p = stack::push_reference(L, it->first);
 				}
-				p += stack::stack_detail::push_reference<push_type>(L, detail::deref_non_pointer(it->second));
+				p += stack::stack_detail::push_reference<push_type>(L, detail::deref_move_only(it->second));
 				std::advance(it, 1);
 				return p;
 			}
@@ -1165,7 +1165,7 @@ namespace sol {
 				else {
 					p = stack::stack_detail::push_reference(L, k + 1);
 				}
-				p += stack::stack_detail::push_reference<push_type>(L, detail::deref_non_pointer(*it));
+				p += stack::stack_detail::push_reference<push_type>(L, detail::deref_move_only(*it));
 				std::advance(it, 1);
 				return p;
 			}
@@ -1391,7 +1391,7 @@ namespace sol {
 				}
 				int p;
 				p = stack::push(L, k + 1);
-				p += stack::push_reference(L, detail::deref_non_pointer(*it));
+				p += stack::push_reference(L, detail::deref_move_only(*it));
 				std::advance(it, 1);
 				return p;
 			}
@@ -1424,7 +1424,7 @@ namespace sol {
 				if (idx >= static_cast<std::ptrdiff_t>(std::extent<T>::value) || idx < 0) {
 					return stack::push(L, lua_nil);
 				}
-				return stack::push_reference(L, detail::deref_non_pointer(self[idx]));
+				return stack::push_reference(L, detail::deref_move_only(self[idx]));
 			}
 
 			static int index_get(lua_State* L) {

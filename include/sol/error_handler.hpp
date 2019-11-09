@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -27,6 +27,8 @@
 #include "types.hpp"
 #include "demangle.hpp"
 
+#include <cstdio>
+
 namespace sol {
 
 	namespace detail {
@@ -46,21 +48,20 @@ namespace sol {
 		constexpr const char* not_enough_stack_space_environment = "not enough space left on Lua stack to retrieve environment";
 		constexpr const char* protected_function_error = "caught (...) unknown error during protected_function call";
 
-		inline void accumulate_and_mark(const std::string& n, std::string& addendum, int& marker) {
+		inline void accumulate_and_mark(const std::string& n, std::string& aux_message, int& marker) {
 			if (marker > 0) {
-				addendum += ", ";
+				aux_message += ", ";
 			}
-			addendum += n;
+			aux_message += n;
 			++marker;
 		}
-	}
+	} // namespace detail
 
 	inline std::string associated_type_name(lua_State* L, int index, type t) {
 		switch (t) {
 		case type::poly:
 			return "anything";
-		case type::userdata:
-		{
+		case type::userdata: {
 #if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
 			luaL_checkstack(L, 2, "not enough space to push get the type name");
 #endif // make sure stack doesn't overflow
@@ -81,63 +82,67 @@ namespace sol {
 		return lua_typename(L, static_cast<int>(t));
 	}
 
-	inline int type_panic_string(lua_State* L, int index, type expected, type actual, const std::string& message = "") noexcept(false) {
-		const char* err = message.empty() ? "stack index %d, expected %s, received %s" : "stack index %d, expected %s, received %s: %s";
-		std::string actualname = associated_type_name(L, index, actual);
-		return luaL_error(L, err, index,
-			expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected)),
-			actualname.c_str(),
-			message.c_str());
+	inline int push_type_panic_string(lua_State* L, int index, type expected, type actual, string_view message, string_view aux_message) noexcept {
+		const char* err = message.size() == 0
+		     ? (aux_message.size() == 0 ? "stack index %d, expected %s, received %s" : "stack index %d, expected %s, received %s: %s")
+		     : "stack index %d, expected %s, received %s: %s %s";
+		const char* type_name = expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected));
+		{
+			std::string actual_name = associated_type_name(L, index, actual);
+			lua_pushfstring(L, err, index, type_name, actual_name.c_str(), message.data(), aux_message.data());
+		}
+		return 1;
+	}
+
+	inline int type_panic_string(lua_State* L, int index, type expected, type actual, string_view message = "") noexcept(false) {
+		push_type_panic_string(L, index, expected, actual, message, "");
+		return lua_error(L);
 	}
 
 	inline int type_panic_c_str(lua_State* L, int index, type expected, type actual, const char* message = nullptr) noexcept(false) {
-		const char* err = message == nullptr || (std::char_traits<char>::length(message) == 0) ? "stack index %d, expected %s, received %s" : "stack index %d, expected %s, received %s: %s";
-		std::string actualname = associated_type_name(L, index, actual);
-		return luaL_error(L, err, index,
-			expected == type::poly ? "anything" : lua_typename(L, static_cast<int>(expected)),
-			actualname.c_str(),
-			message);
+		push_type_panic_string(L, index, expected, actual, message == nullptr ? "" : message, "");
+		return lua_error(L);
 	}
 
 	struct type_panic_t {
 		int operator()(lua_State* L, int index, type expected, type actual) const noexcept(false) {
 			return type_panic_c_str(L, index, expected, actual, nullptr);
 		}
-		int operator()(lua_State* L, int index, type expected, type actual, const char* message) const noexcept(false) {
-			return type_panic_c_str(L, index, expected, actual, message);
-		}
-		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
-			return type_panic_string(L, index, expected, actual, message);
+		int operator()(lua_State* L, int index, type expected, type actual, string_view message) const noexcept(false) {
+			return type_panic_c_str(L, index, expected, actual, message.data());
 		}
 	};
 
 	const type_panic_t type_panic = {};
 
 	struct constructor_handler {
-		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
-			std::string str = "(type check failed in constructor)";
-			return type_panic_string(L, index, expected, actual, message.empty() ? str : message + " " + str);
+		int operator()(lua_State* L, int index, type expected, type actual, string_view message) const noexcept(false) {
+			push_type_panic_string(L, index, expected, actual, message, "(type check failed in constructor)");
+			return lua_error(L);
 		}
 	};
 
 	template <typename F = void>
 	struct argument_handler {
-		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
-			std::string str = "(bad argument to variable or function call)";
-			return type_panic_string(L, index, expected, actual, message.empty() ? str : message + " " + str );
+		int operator()(lua_State* L, int index, type expected, type actual, string_view message) const noexcept(false) {
+			push_type_panic_string(L, index, expected, actual, message, "(bad argument to variable or function call)");
+			return lua_error(L);
 		}
 	};
 
 	template <typename R, typename... Args>
 	struct argument_handler<types<R, Args...>> {
-		int operator()(lua_State* L, int index, type expected, type actual, const std::string& message) const noexcept(false) {
-			std::string addendum = "(bad argument into '";
-			addendum += detail::demangle<R>();
-			addendum += "(";
-			int marker = 0;
-			(void)detail::swallow{int(), (detail::accumulate_and_mark(detail::demangle<Args>(), addendum, marker), int())...};
-			addendum += ")')";
-			return type_panic_string(L, index, expected, actual, message.empty() ? addendum : message + " " + addendum);
+		int operator()(lua_State* L, int index, type expected, type actual, string_view message) const noexcept(false) {
+			{
+				std::string aux_message = "(bad argument into '";
+				aux_message += detail::demangle<R>();
+				aux_message += "(";
+				int marker = 0;
+				(void)detail::swallow{ int(), (detail::accumulate_and_mark(detail::demangle<Args>(), aux_message, marker), int())... };
+				aux_message += ")')";
+				push_type_panic_string(L, index, expected, actual, message, aux_message);
+			}
+			return lua_error(L);
 		}
 	};
 
