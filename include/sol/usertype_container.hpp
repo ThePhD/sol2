@@ -110,6 +110,18 @@ namespace sol {
 		};
 
 		template <typename T>
+		struct has_erase_key_test {
+		private:
+			template <typename C>
+			static meta::sfinae_yes_t test(decltype(std::declval<C>().erase(std::declval<typename C::key_type>()))*);
+			template <typename C>
+			static meta::sfinae_no_t test(...);
+
+		public:
+			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), meta::sfinae_yes_t>;
+		};
+
+		template <typename T>
 		struct has_traits_find_test {
 		private:
 			template <typename C>
@@ -288,6 +300,9 @@ namespace sol {
 
 		template <typename T>
 		using has_erase = meta::boolean<has_erase_test<T>::value>;
+
+		template <typename T>
+		using has_erase_key = meta::boolean<has_erase_key_test<T>::value>;
 
 		template <typename T>
 		using has_erase_after = meta::boolean<has_erase_after_test<T>::value>;
@@ -1059,12 +1074,20 @@ namespace sol {
 				return detail::error_result("sol: cannot call erase on '%s'", detail::demangle<T>().c_str());
 			}
 
+			static detail::error_result erase_key_has(std::true_type, lua_State* L, T& self, K& key) {
+				return erase_associative_lookup(meta::any<is_associative, is_lookup>(), L, self, key);
+			}
+
+			static detail::error_result erase_key_has(std::false_type, lua_State* L, T& self, K& key) {
+				return erase_after_has(has_erase_after<T>(), L, self, key);
+			}
+
 			static detail::error_result erase_has(std::true_type, lua_State* L, T& self, K& key) {
 				return erase_associative_lookup(meta::any<is_associative, is_lookup>(), L, self, key);
 			}
 
 			static detail::error_result erase_has(std::false_type, lua_State* L, T& self, K& key) {
-				return erase_after_has(has_erase_after<T>(), L, self, key);
+				return erase_key_has(has_erase_key<T>(), L, self, key);
 			}
 
 			static auto size_has(std::false_type, lua_State* L, T& self) {

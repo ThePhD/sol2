@@ -90,6 +90,45 @@ The various operations provided by ``usertype_container<T>`` are expected to be 
 
 	Exception handling **WILL** be provided around these particular raw C functions, so you do not need to worry about exceptions or errors bubbling through and handling that part. It is specifically handled for you in this specific instance, and **ONLY** in this specific instance. The raw note still applies to every other raw C function you make manually.
 
+.. _container-classifications: 
+
+container classifications
+-------------------------
+
+When you push a container into sol3, the default container handler deals with the containers by inspecting various properties, functions, and type definitions on them. Here are the broad implications of containers sol3's defaults will recognize, and which already-known containers fall into their categories:
+
++------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
+| container type         | requirements                           | known containers        | notes/caveats                                                                                 |
++------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
+| sequence               | ``erase(iterator)``                    | std::vector             | - ``find`` operation is linear in size of list (searches all elements)                        |
+|                        | ``push_back``/``insert(value_type)``   | std::deque              | - std::forward_list has forward-only iterators: set/find is a linear operation                |
+|                        |                                        | std::list               | - std::forward_list uses "insert_after" idiom, requires special handling internally           |
+|                        |                                        | std::forward_list       |                                                                                               |
++------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
+| fixed                  | lacking ``push_back``/``insert``       | std::array<T, n>        | - regular c-style arrays must be set with ``std::ref( arr )`` or ``&arr`` to be usable        |
+|                        | lacking ``erase``                      | T[n] (fixed arrays)     | - default implementation sets values using operator[]                                         |
+|                        |                                        |                         |                                                                                               |
++------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
+| ordered                | ``key_type`` typedef                   | std::set                | - ``container[key] = stuff`` operation erases when ``stuff`` is nil, inserts/sets when not    |
+|                        | ``erase(key)``                         | std::multi_set          | - ``container.get(key)`` returns the key itself                                               |
+|                        | ``find(key)``                          |                         |                                                                                               |
+|                        | ``insert(key)``                        |                         |                                                                                               |
++------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
+| associative, ordered   | ``key_type``, ``mapped_type`` typedefs | std::map                |                                                                                               |
+|                        | ``erase(key)``                         | std::multi_map          |                                                                                               |
+|                        | ``find(key)``                          |                         |                                                                                               |
+|                        | ``insert({ key, value })``             |                         |                                                                                               |
++------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
+| unordered              | same as ordered                        | std::unordered_set      | - ``container[key] = stuff`` operation erases when ``stuff`` is nil, inserts/sets when not    |
+|                        |                                        | std::unordered_multiset | - ``container.get(key)`` returns the key itself                                               |
+|                        |                                        |                         | - iteration not guaranteed to be in order of insertion, just like the C++ container           |
+|                        |                                        |                         |                                                                                               |
++------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
+| unordered, associative | same as ordered, associative           | std::unordered_map      | - iteration not guaranteed to be in order of insertion, just like the C++ container           |
+|                        |                                        | std::unordered_multimap |                                                                                               |
++------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
+
+
 .. _container-operations:
 
 container operations
@@ -126,7 +165,7 @@ Below are the many container operations and their override points for ``usertype
 | erase     | ``c:erase(target)``                       | ``static int erase(lua_State*);``                | 1 self               | - for sequence containers, ``target`` is an index to erase                                                                                                                                   |
 |           |                                           |                                                  | 2 target             | - for lookup containers, ``target`` is the key type                                                                                                                                          |
 |           |                                           |                                                  |                      | - uses linear incrementation to spot for sequence containers that do not have random access iterators (``std::list``, ``std::forward_list``, and similar)                                    |
-|           |                                           |                                                  |                      | - can invalidates iteration                                                                                                                                                                  |
+|           |                                           |                                                  |                      | - can invalidate iteration                                                                                                                                                                   |
 +-----------+-------------------------------------------+--------------------------------------------------+----------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | insert    | ``c:insert(target, value)``               |                                                  | 1 self               | - for sequence containers, ``target`` is an index, otherwise it is the key type                                                                                                              |
 |           |                                           |                                                  | 2 target             | - inserts into a container if possible at the specified location                                                                                                                             |
@@ -172,45 +211,6 @@ Below are the many container operations and their override points for ``usertype
 .. note::
 
 	Overriding the detection traits and operation traits listed above and then trying to use ``sol::as_table`` or similar can result in compilation failures if you do not have a proper ``begin()`` or ``end()`` function on the type. If you want things to behave with special usertype considerations, please do not wrap the container in one of the special table-converting/forcing abstractions.
-
-
-.. _container-classifications: 
-
-container classifications
--------------------------
-
-When you push a container into sol3, the default container handler deals with the containers by inspecting various properties, functions, and typedefs on them. Here are the broad implications of containers sol3's defaults will recognize, and which already-known containers fall into their categories:
-
-+------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
-| container type         | requirements                           | known containers        | notes/caveats                                                                                 |
-+------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
-| sequence               | ``erase(iterator)``                    | std::vector             | - ``find`` operation is linear in size of list (searches all elements)                        |
-|                        | ``push_back``/``insert(value_type)``   | std::deque              | - std::forward_list has forward-only iterators: set/find is a linear operation                |
-|                        |                                        | std::list               | - std::forward_list uses "insert_after" idiom, requires special handling internally           |
-|                        |                                        | std::forward_list       |                                                                                               |
-+------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
-| fixed                  | lacking ``push_back``/``insert``       | std::array<T, n>        | - regular c-style arrays must be set with ``std::ref( arr )`` or ``&arr`` to be usable        |
-|                        | lacking ``erase``                      | T[n] (fixed arrays)     | - default implementation sets values using operator[]                                         |
-|                        |                                        |                         |                                                                                               |
-+------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
-| ordered                | ``key_type`` typedef                   | std::set                | - ``container[key] = stuff`` operation erases when ``stuff`` is nil, inserts/sets when not    |
-|                        | ``erase(key)``                         | std::multi_set          | - ``container.get(key)`` returns the key itself                                               |
-|                        | ``find(key)``                          |                         |                                                                                               |
-|                        | ``insert(key)``                        |                         |                                                                                               |
-+------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
-| associative, ordered   | ``key_type``, ``mapped_type`` typedefs | std::map                |                                                                                               |
-|                        | ``erase(key)``                         | std::multi_map          |                                                                                               |
-|                        | ``find(key)``                          |                         |                                                                                               |
-|                        | ``insert({ key, value })``             |                         |                                                                                               |
-+------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
-| unordered              | same as ordered                        | std::unordered_set      | - ``container[key] = stuff`` operation erases when ``stuff`` is nil, inserts/sets when not    |
-|                        |                                        | std::unordered_multiset | - ``container.get(key)`` returns the key itself                                               |
-|                        |                                        |                         | - iteration not guaranteed to be in order of insertion, just like the C++ container           |
-|                        |                                        |                         |                                                                                               |
-+------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
-| unordered, associative | same as ordered, associative           | std::unordered_map      | - iteration not guaranteed to be in order of insertion, just like the C++ container           |
-|                        |                                        | std::unordered_multimap |                                                                                               |
-+------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
 
 
 a complete example
