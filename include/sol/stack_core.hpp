@@ -1396,7 +1396,6 @@ namespace sol {
 				}
 				else {
 					if constexpr (std::is_same_v<std::equal_to<>, Op> // clang-format hack
-					     || std::is_same_v<std::less_equal<>, Op>     //
 					     || std::is_same_v<std::less_equal<>, Op>) {  //
 						if (detail::ptr(l) == detail::ptr(r)) {
 							return stack::push(L, true);

@@ -382,7 +382,6 @@ namespace sol { namespace u_detail {
 			for_each_fx.p_usb = this;
 			for_each_fx.p_derived_usb = derived_this;
 			for_each_fx.change_indexing = &usertype_storage_base::change_indexing;
-			for_each_fx.p_derived_usb = derived_this;
 			this->for_each_table(L, for_each_fx);
 		}
 
