@@ -156,9 +156,8 @@ init:
 before_build:
 - md build-sol2
 - cd build-sol2
-- cd
 - echo %vcvars_script%
-- %vcvars_script%
+- cd && %vcvars_script%
 - cmake .. -G "%CMAKE_GENERATOR%" %build_compiler% -DCMAKE_BUILD_TYPE=Release "-DSOL2_LUA_VERSION=%SOL2_LUA_VERSION%" -DSOL2_PLATFORM=%PLATFORM% -DSOL2_CI=ON -DSOL2_BUILD_LUA=ON -DBUILD_LUA_AS_DLL=ON -DSOL2_TESTS=ON -DSOL2_EXAMPLES=ON -DSOL2_TESTS_EXAMPLES=ON 
 
 build_script:
