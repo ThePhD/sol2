@@ -110,6 +110,9 @@ int main() {
 
 	std::cout << "=== memory tracker ===" << std::endl;
 
+#if defined(SOL_LUAJIT) && SOL_LUA_VERSION < 20100 && (UINTPTR_MAX > 0xFFFFFFFF)
+	std::cout << "LuaJIT in x64 mode on LuaJIT 2.0.X versions does not support using a custom allocator!" << std::endl;
+#else
 	memory_tracker box;
 	std::cout << "memory at start: " << box.currently_used() << " bytes / " << box.memory_limit() << " bytes" << std::endl;
 	sol::state lua(&sol::default_at_panic, &memory_tracker::allocate, &box);
@@ -127,6 +130,6 @@ int main() {
 	lua.safe_script("local obj = my_type.new() print(obj.a, obj.b, obj.c) obj.b = true print(obj.a, obj.b, obj.c)");
 
 	std::cout << "memory at end: " << box.currently_used() << " bytes / " << box.memory_limit() << " bytes" << std::endl;
-
+#endif
 	return 0;
 }

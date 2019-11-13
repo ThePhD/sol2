@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-11-12 17:52:53.422846 UTC
-// This header was generated with sol v3.0.3 (revision ce32549)
+// Generated 2019-11-13 04:15:36.384800 UTC
+// This header was generated with sol v3.0.3 (revision 2ca27ee)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -14254,13 +14254,15 @@ namespace stack {
 
 // beginning of sol/stack_field.hpp
 
-namespace sol {
-namespace stack {
+namespace sol { namespace stack {
 	template <typename T, bool global, bool raw, typename>
 	struct field_getter {
-		static constexpr int default_table_index = meta::conditional_t<meta::is_c_str_v<T> || (std::is_integral_v<T> && !std::is_same_v<T, bool>)
-			|| (std::is_integral_v<T> && !std::is_same_v<T, bool>) || (raw && std::is_void_v<std::remove_pointer_t<T>>),
-			         std::integral_constant<int, -1>, std::integral_constant<int, -2>> ::value;
+		static constexpr int default_table_index = meta::conditional_t < meta::is_c_str_v<T>
+#if SOL_LUA_VERSION >= 503
+			|| (std::is_integral_v<T> && !std::is_same_v<T, bool>)
+#endif // integer  global keys 5.3 or better
+			|| (raw && std::is_void_v<std::remove_pointer_t<T>>),
+			                std::integral_constant<int, -1>, std::integral_constant<int, -2>> ::value;
 
 		template <typename Key>
 		void get(lua_State* L, Key&& key, int tableindex = default_table_index) {
@@ -14286,7 +14288,7 @@ namespace stack {
 				if (lua_getmetatable(L, tableindex) == 0)
 					push(L, lua_nil);
 			}
-			else if constexpr(raw) {
+			else if constexpr (raw) {
 				if constexpr (std::is_integral_v<T> && !std::is_same_v<bool, T>) {
 					lua_rawgeti(L, tableindex, static_cast<lua_Integer>(key));
 				}
@@ -14294,7 +14296,7 @@ namespace stack {
 				else if constexpr (std::is_void_v<std::remove_pointer_t<T>>) {
 					lua_rawgetp(L, tableindex, key);
 				}
-#endif // Lua 5.3.x
+#endif // Lua 5.2.x+
 				else {
 					push(L, std::forward<Key>(key));
 					lua_rawget(L, tableindex);
@@ -14314,7 +14316,7 @@ namespace stack {
 				else if constexpr (std::is_integral_v<T> && !std::is_same_v<bool, T>) {
 					lua_geti(L, tableindex, static_cast<lua_Integer>(key));
 				}
-#endif // Lua 5.3.x
+#endif // Lua 5.3.x+
 				else {
 					push(L, std::forward<Key>(key));
 					lua_gettable(L, tableindex);
@@ -14328,7 +14330,7 @@ namespace stack {
 		template <std::size_t... I, typename Keys>
 		void apply(std::index_sequence<0, I...>, lua_State* L, Keys&& keys, int tableindex) {
 			get_field<b, raw>(L, std::get<0>(std::forward<Keys>(keys)), tableindex);
-			void(detail::swallow { (get_field<false, raw>(L, std::get<I>(std::forward<Keys>(keys))), 0)... });
+			void(detail::swallow{ (get_field<false, raw>(L, std::get<I>(std::forward<Keys>(keys))), 0)... });
 			reference saved(L, -1);
 			lua_pop(L, static_cast<int>(sizeof...(I)));
 			saved.push();
@@ -14368,9 +14370,10 @@ namespace stack {
 
 	template <typename T, bool global, bool raw, typename>
 	struct field_setter {
-		static constexpr int default_table_index = meta::conditional_t<(meta::is_c_str_v<T> || meta::is_string_of_v<T, char>) || (std::is_integral_v<T> && !std::is_same_v<T, bool>)
+		static constexpr int default_table_index
+			= meta::conditional_t < (meta::is_c_str_v<T> || meta::is_string_of_v<T, char>) || (std::is_integral_v<T> && !std::is_same_v<T, bool>)
 			|| (std::is_integral_v<T> && !std::is_same_v<T, bool>) || (raw && std::is_void_v<std::remove_pointer_t<T>>),
-			         std::integral_constant<int, -2>, std::integral_constant<int, -3>> ::value;
+			std::integral_constant<int, -2>, std::integral_constant<int, -3>> ::value;
 
 		template <typename Key, typename Value>
 		void set(lua_State* L, Key&& key, Value&& value, int tableindex = default_table_index) {
@@ -14415,7 +14418,7 @@ namespace stack {
 					}
 				}
 #if SOL_LUA_VERSION >= 503
-				else if constexpr(std::is_integral_v<T> && !std::is_same_v<bool, T>) {
+				else if constexpr (std::is_integral_v<T> && !std::is_same_v<bool, T>) {
 					push(L, std::forward<Value>(value));
 					lua_seti(L, tableindex, static_cast<lua_Integer>(key));
 				}
@@ -14465,8 +14468,7 @@ namespace stack {
 			lua_pop(L, 1);
 		}
 	};
-}
-} // namespace sol::stack
+}} // namespace sol::stack
 
 // end of sol/stack_field.hpp
 
@@ -22577,8 +22579,9 @@ namespace sol {
 		int push(lua_State* L) const noexcept {
 			if constexpr (std::is_same_v<meta::unqualified_t<Table>, global_table> || is_stack_table_v<meta::unqualified_t<Table>>) {
 				auto pp = stack::push_pop<true>(tbl);
+				int tableindex = pp.index_of(tbl);
 				int top_index = lua_gettop(L);
-				stack::get_field<true>(lua_state(), key, -1);
+				stack::get_field<true>(lua_state(), key, tableindex);
 				lua_replace(L, top_index + 1);
 				lua_settop(L, top_index + 1);
 			}

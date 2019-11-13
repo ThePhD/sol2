@@ -224,8 +224,9 @@ namespace sol {
 		int push(lua_State* L) const noexcept {
 			if constexpr (std::is_same_v<meta::unqualified_t<Table>, global_table> || is_stack_table_v<meta::unqualified_t<Table>>) {
 				auto pp = stack::push_pop<true>(tbl);
+				int tableindex = pp.index_of(tbl);
 				int top_index = lua_gettop(L);
-				stack::get_field<true>(lua_state(), key, -1);
+				stack::get_field<true>(lua_state(), key, tableindex);
 				lua_replace(L, top_index + 1);
 				lua_settop(L, top_index + 1);
 			}
