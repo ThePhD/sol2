@@ -39,7 +39,7 @@ namespace sol {
 		dump_error(int error_code_) : error("dump returned non-zero error of " + std::to_string(error_code_)), ec_(error_code_) {
 		}
 
-		int error_code () const {
+		int error_code() const {
 			return ec_;
 		}
 	};
@@ -53,11 +53,15 @@ namespace sol {
 	}
 
 	inline int dump_throw_on_error(lua_State* L, int result_code, lua_Writer writer_function, void* userdata, bool strip) {
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+		return dump_panic_on_error(L, result_code, writer_function, userdata, strip);
+#else
 		(void)L;
 		(void)writer_function;
 		(void)userdata;
 		(void)strip;
 		throw dump_error(result_code);
+#endif // no exceptions stuff
 	}
 
 	inline int dump_panic_on_error(lua_State* L, int result_code, lua_Writer writer_function, void* userdata, bool strip) {

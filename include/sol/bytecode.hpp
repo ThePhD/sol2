@@ -99,12 +99,16 @@ namespace sol {
 		using storage_t = Container;
 		const std::byte* p_code = static_cast<const std::byte*>(memory);
 		storage_t& bc = *static_cast<storage_t*>(userdata);
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+		bc.insert(bc.cend(), p_code, p_code + memory_size);
+#else
 		try {
 			bc.insert(bc.cend(), p_code, p_code + memory_size);
 		}
 		catch (...) {
 			return -1;
 		}
+#endif
 		return 0;
 	}
 

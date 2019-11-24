@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-11-13 04:15:36.384800 UTC
-// This header was generated with sol v3.0.3 (revision 2ca27ee)
+// Generated 2019-11-24 05:21:54.660860 UTC
+// This header was generated with sol v3.0.3 (revision fd9e282)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3535,12 +3535,16 @@ namespace sol {
 		using storage_t = Container;
 		const std::byte* p_code = static_cast<const std::byte*>(memory);
 		storage_t& bc = *static_cast<storage_t*>(userdata);
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+		bc.insert(bc.cend(), p_code, p_code + memory_size);
+#else
 		try {
 			bc.insert(bc.cend(), p_code, p_code + memory_size);
 		}
 		catch (...) {
 			return -1;
 		}
+#endif
 		return 0;
 	}
 
@@ -3698,6 +3702,7 @@ namespace sol {
 
 #include <exception>
 #include <new>
+#include <cstdlib>
 
 #if (defined(_MSC_VER) && _MSC_VER == 1900)
 #define SOL_TL_OPTIONAL_MSVC2015
@@ -4997,20 +5002,32 @@ namespace sol {
 		SOL_TL_OPTIONAL_11_CONSTEXPR T& value() & {
 			if (has_value())
 				return this->m_value;
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+			std::abort();
+#else
 			throw bad_optional_access();
+#endif // No exceptions allowed
 		}
 		/// \group value
 		/// \synopsis constexpr const T &value() const;
 		SOL_TL_OPTIONAL_11_CONSTEXPR const T& value() const& {
 			if (has_value())
 				return this->m_value;
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+			std::abort();
+#else
 			throw bad_optional_access();
+#endif // No exceptions allowed
 		}
 		/// \exclude
 		SOL_TL_OPTIONAL_11_CONSTEXPR T&& value() && {
 			if (has_value())
 				return std::move(this->m_value);
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+			std::abort();
+#else
 			throw bad_optional_access();
+#endif // No exceptions allowed
 		}
 
 #ifndef SOL_TL_OPTIONAL_NO_CONSTRR
@@ -5018,7 +5035,11 @@ namespace sol {
 		SOL_TL_OPTIONAL_11_CONSTEXPR const T&& value() const&& {
 			if (has_value())
 				return std::move(this->m_value);
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+			std::abort();
+#else
 			throw bad_optional_access();
+#endif // No exceptions allowed
 		}
 #endif
 
@@ -5852,14 +5873,22 @@ namespace sol {
 		SOL_TL_OPTIONAL_11_CONSTEXPR T& value() {
 			if (has_value())
 				return *m_value;
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+			std::abort();
+#else
 			throw bad_optional_access();
+#endif // No exceptions allowed
 		}
 		/// \group value
 		/// \synopsis constexpr const T &value() const;
 		SOL_TL_OPTIONAL_11_CONSTEXPR const T& value() const {
 			if (has_value())
 				return *m_value;
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+			std::abort();
+#else
 			throw bad_optional_access();
+#endif // No exceptions allowed
 		}
 
 		/// \returns the stored value if there is one, otherwise returns `u`
@@ -11833,7 +11862,6 @@ namespace sol {
 }
 // end of sol/unicode.hpp
 
-#include <cstdlib>
 #if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 #endif // Apple clang screwed up
@@ -18334,7 +18362,7 @@ namespace sol {
 		dump_error(int error_code_) : error("dump returned non-zero error of " + std::to_string(error_code_)), ec_(error_code_) {
 		}
 
-		int error_code () const {
+		int error_code() const {
 			return ec_;
 		}
 	};
@@ -18348,11 +18376,15 @@ namespace sol {
 	}
 
 	inline int dump_throw_on_error(lua_State* L, int result_code, lua_Writer writer_function, void* userdata, bool strip) {
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+		return dump_panic_on_error(L, result_code, writer_function, userdata, strip);
+#else
 		(void)L;
 		(void)writer_function;
 		(void)userdata;
 		(void)strip;
 		throw dump_error(result_code);
+#endif // no exceptions stuff
 	}
 
 	inline int dump_panic_on_error(lua_State* L, int result_code, lua_Writer writer_function, void* userdata, bool strip) {

@@ -48,6 +48,7 @@
 #include <new>
 #include <type_traits>
 #include <utility>
+#include <cstdlib>
 
 #if (defined(_MSC_VER) && _MSC_VER == 1900)
 #define SOL_TL_OPTIONAL_MSVC2015
@@ -1371,20 +1372,32 @@ namespace sol {
 		SOL_TL_OPTIONAL_11_CONSTEXPR T& value() & {
 			if (has_value())
 				return this->m_value;
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+			std::abort();
+#else
 			throw bad_optional_access();
+#endif // No exceptions allowed
 		}
 		/// \group value
 		/// \synopsis constexpr const T &value() const;
 		SOL_TL_OPTIONAL_11_CONSTEXPR const T& value() const& {
 			if (has_value())
 				return this->m_value;
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+			std::abort();
+#else
 			throw bad_optional_access();
+#endif // No exceptions allowed
 		}
 		/// \exclude
 		SOL_TL_OPTIONAL_11_CONSTEXPR T&& value() && {
 			if (has_value())
 				return std::move(this->m_value);
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+			std::abort();
+#else
 			throw bad_optional_access();
+#endif // No exceptions allowed
 		}
 
 #ifndef SOL_TL_OPTIONAL_NO_CONSTRR
@@ -1392,7 +1405,11 @@ namespace sol {
 		SOL_TL_OPTIONAL_11_CONSTEXPR const T&& value() const&& {
 			if (has_value())
 				return std::move(this->m_value);
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+			std::abort();
+#else
 			throw bad_optional_access();
+#endif // No exceptions allowed
 		}
 #endif
 
@@ -2230,14 +2247,22 @@ namespace sol {
 		SOL_TL_OPTIONAL_11_CONSTEXPR T& value() {
 			if (has_value())
 				return *m_value;
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+			std::abort();
+#else
 			throw bad_optional_access();
+#endif // No exceptions allowed
 		}
 		/// \group value
 		/// \synopsis constexpr const T &value() const;
 		SOL_TL_OPTIONAL_11_CONSTEXPR const T& value() const {
 			if (has_value())
 				return *m_value;
+#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+			std::abort();
+#else
 			throw bad_optional_access();
+#endif // No exceptions allowed
 		}
 
 		/// \returns the stored value if there is one, otherwise returns `u`
