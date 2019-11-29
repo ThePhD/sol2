@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-11-24 05:21:55.164513 UTC
-// This header was generated with sol v3.0.3 (revision fd9e282)
+// Generated 2019-11-29 18:08:19.653548 UTC
+// This header was generated with sol v3.0.3 (revision 21c0309)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -99,13 +99,13 @@
 
 #endif // vc++ || clang++/g++
 
-#if defined(SOL_CHECK_ARGUMENTS) && SOL_CHECK_ARGUMENTS
+#if defined(SOL_CHECK_ARGUMENTS) && SOL_CHECK_ARGUMENTS != 0
 	#if defined(SOL_ALL_SAFETIES_ON)
 		#define SOL_ALL_SAFETIES_ON 1
 	#endif // turn all the safeties on
-#endif // Compatibility define
+#endif // Compatibility Define for Safety
 
-#if defined(SOL_ALL_SAFETIES_ON) && SOL_ALL_SAFETIES_ON
+#if defined(SOL_ALL_SAFETIES_ON) && SOL_ALL_SAFETIES_ON != 0
 
 	// Checks low-level getter function
 	// (and thusly, affects nearly entire framework)
@@ -174,7 +174,7 @@
 
 #endif // Turn on Safety for all if top-level macro is defined
 
-#if defined(SOL_IN_DEBUG_DETECTED) && SOL_IN_DEBUG_DETECTED
+#if defined(SOL_IN_DEBUG_DETECTED) && SOL_IN_DEBUG_DETECTED != 0
 
 	#if !defined(SOL_SAFE_REFERENCES)
 	// Ensure that references are forcefully type-checked upon construction

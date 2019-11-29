@@ -226,7 +226,7 @@ TEST_CASE("inheritance/bad_base-class", "check to make sure bad/unregistered bas
 	struct a {
 		a(sol::this_state ts, sol::this_environment) {
 			lua_State* L = ts;
-			ud = sol::userdata(L, -2);
+			ud = sol::userdata(L, 1);
 		}
 
 

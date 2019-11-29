@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -52,10 +52,7 @@ TEST_CASE("policies/self", "ensure we return a direct reference to the lua userd
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<vec2>("vec2",
-		"x", &vec2::x,
-		"y", &vec2::y,
-		"normalize", sol::policies(&vec2::normalize, sol::returns_self()));
+	lua.new_usertype<vec2>("vec2", "x", &vec2::x, "y", &vec2::y, "normalize", sol::policies(&vec2::normalize, sol::returns_self()));
 
 	auto result1 = lua.safe_script(R"(
 v1 = vec2.new()
@@ -68,7 +65,8 @@ assert(rawequal(v1, v2))
 v1 = nil
 collectgarbage()
 print(v2) -- v2 points to same, is not destroyed
-		)", sol::script_pass_on_error);
+		)",
+	     sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 }
 
@@ -82,7 +80,7 @@ TEST_CASE("policies/self_dependency", "ensure we can keep a userdata instance al
 		int value = 20;
 		~dep() {
 			std::cout << "\t"
-					<< "[C++] ~dep" << std::endl;
+			          << "[C++] ~dep" << std::endl;
 			value = std::numeric_limits<int>::max();
 			deps_destroyed.push_back(this);
 		}
@@ -94,7 +92,7 @@ TEST_CASE("policies/self_dependency", "ensure we can keep a userdata instance al
 
 		~gc_test() {
 			std::cout << "\t"
-					<< "[C++] ~gc_test" << std::endl;
+			          << "[C++] ~gc_test" << std::endl;
 			gc_tests_destroyed.push_back(this);
 		}
 	};
@@ -102,23 +100,18 @@ TEST_CASE("policies/self_dependency", "ensure we can keep a userdata instance al
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<dep>("dep",
-		"value", &dep::value,
-		sol::meta_function::to_string, [](dep& d) {
-			return "{ " + std::to_string(d.value) + " }";
-		});
-	lua.new_usertype<gc_test>("gc_test",
-		"d", sol::policies(&gc_test::d, sol::self_dependency()),
-		sol::meta_function::to_string, [](gc_test& g) {
-			return "{ d: { " + std::to_string(g.d.value) + " } }";
-		});
+	lua.new_usertype<dep>("dep", "value", &dep::value, sol::meta_function::to_string, [](dep& d) { return "{ " + std::to_string(d.value) + " }"; });
+	lua.new_usertype<gc_test>("gc_test", "d", sol::policies(&gc_test::d, sol::self_dependency()), sol::meta_function::to_string, [](gc_test& g) {
+		return "{ d: { " + std::to_string(g.d.value) + " } }";
+	});
 
 	auto result1 = lua.safe_script(R"(
 g = gc_test.new()
 d = g.d
 print("new gc_test, d = g.d")
 print("", g)
-)", sol::script_pass_on_error);
+)",
+	     sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 	REQUIRE(deps_destroyed.empty());
 	REQUIRE(gc_tests_destroyed.empty());
@@ -131,7 +124,8 @@ print("g = nil, collectgarbage")
 g = nil
 collectgarbage()
 print("", d)
-)", sol::script_pass_on_error);
+)",
+	     sol::script_pass_on_error);
 	REQUIRE(result2.valid());
 
 	REQUIRE(deps_destroyed.empty());
@@ -141,7 +135,8 @@ print("", d)
 print("d = nil, collectgarbage")
 d = nil
 collectgarbage()
-)", sol::script_pass_on_error);
+)",
+	     sol::script_pass_on_error);
 	REQUIRE(result3.valid());
 
 	REQUIRE(deps_destroyed.size() == 1);
@@ -182,8 +177,7 @@ TEST_CASE("policies/stack_dependencies", "ensure we can take dependencies even t
 		std::reference_wrapper<holder> href;
 		composition_related comp;
 
-		depends_on_reference(holder& h)
-		: href(h) {
+		depends_on_reference(holder& h) : href(h) {
 		}
 
 		~depends_on_reference() {
@@ -195,17 +189,19 @@ TEST_CASE("policies/stack_dependencies", "ensure we can take dependencies even t
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<holder>("holder",
-		"value", &holder::value);
+	lua.new_usertype<holder>("holder", "value", &holder::value);
 	lua.new_usertype<depends_on_reference>("depends_on_reference",
-		"new", sol::policies(sol::constructors<depends_on_reference(holder&)>(), sol::stack_dependencies(-1, 1)),
-		"comp", &depends_on_reference::comp);
+	     "new",
+	     sol::policies(sol::constructors<depends_on_reference(holder&)>(), sol::stack_dependencies(-1, 2)),
+	     "comp",
+	     &depends_on_reference::comp);
 
 	auto result1 = lua.safe_script(R"(
 h = holder.new()
 dor = depends_on_reference.new(h)
 c = dor.comp
-)", sol::script_pass_on_error);
+)",
+	     sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 	REQUIRE(composition_relateds_destroyed.empty());
 	REQUIRE(holders_destroyed.empty());
@@ -230,7 +226,8 @@ collectgarbage()
 	auto result3 = lua.safe_script(R"(
 c = nil
 collectgarbage()
-)", sol::script_pass_on_error);
+)",
+	     sol::script_pass_on_error);
 	REQUIRE(result3.valid());
 
 	REQUIRE(composition_relateds_destroyed.empty());
@@ -240,7 +237,8 @@ collectgarbage()
 	auto result4 = lua.safe_script(R"(
 dor = nil
 collectgarbage()
-)", sol::script_pass_on_error);
+)",
+	     sol::script_pass_on_error);
 	REQUIRE(result4.valid());
 
 	REQUIRE(composition_relateds_destroyed.size() == 1);

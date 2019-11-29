@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -29,6 +29,46 @@
 #include <set>
 #include <functional>
 #include <string>
+
+struct self_cons_0 {
+	self_cons_0(sol::variadic_args args, sol::this_state thisL) {
+		lua_State* L = thisL;
+		self_cons_0* pself = sol::stack::get<self_cons_0*>(L);
+		REQUIRE(pself == this);
+		REQUIRE(args.size() == 0);
+	}
+};
+
+struct self_cons_1 {
+	self_cons_1(sol::variadic_args args, sol::this_state thisL) {
+		lua_State* L = thisL;
+		self_cons_1* pself = sol::stack::get<self_cons_1*>(L, 1);
+		REQUIRE(pself == this);
+		REQUIRE(args.size() == 1);
+	}
+};
+
+struct self_cons_2 {
+	static void init_self_cons_2(self_cons_2& mem, sol::variadic_args args, sol::this_state thisL) {
+		lua_State* L = thisL;
+		self_cons_2* pself = sol::stack::get<self_cons_2*>(L, 1);
+		std::allocator<self_cons_2> alloc{};
+		std::allocator_traits<std::allocator<self_cons_2>>::construct(alloc, &mem);
+		REQUIRE(pself == &mem);
+		REQUIRE(args.size() == 2);
+	}
+};
+
+struct self_cons_3 {
+	static void init_self_cons_3(self_cons_3* mem, sol::variadic_args args, sol::this_state thisL) {
+		lua_State* L = thisL;
+		self_cons_3* pself = sol::stack::get<self_cons_3*>(L, 1);
+		std::allocator<self_cons_3> alloc{};
+		std::allocator_traits<std::allocator<self_cons_3>>::construct(alloc, mem);
+		REQUIRE(pself == mem);
+		REQUIRE(args.size() == 3);
+	}
+};
 
 TEST_CASE("variadics/variadic_args", "Check to see we can receive multiple arguments through a variadic") {
 	struct structure {
@@ -66,9 +106,7 @@ TEST_CASE("variadics/variadic_args", "Check to see we can receive multiple argum
 
 TEST_CASE("variadics/required with variadic_args", "Check if a certain number of arguments can still be required even when using variadic_args") {
 	sol::state lua;
-	lua.set_function("v",
-		[](sol::this_state, sol::variadic_args, int, int) {
-		});
+	lua.set_function("v", [](sol::this_state, sol::variadic_args, int, int) {});
 	{
 		auto result = lua.safe_script("v(20, 25, 30)", sol::script_pass_on_error);
 		REQUIRE(result.valid());
@@ -88,11 +126,7 @@ TEST_CASE("variadics/variadic_args get type", "Make sure we can inspect types pr
 	sol::stack_guard luasg(lua);
 
 	lua.set_function("f", [](sol::variadic_args va) {
-		sol::type types[] = {
-			sol::type::number,
-			sol::type::string,
-			sol::type::boolean
-		};
+		sol::type types[] = { sol::type::number, sol::type::string, sol::type::boolean };
 		bool working = true;
 		auto b = va.begin();
 		for (std::size_t i = 0; i < va.size(); ++i, ++b) {
@@ -145,14 +179,13 @@ TEST_CASE("variadics/variadic_results", "returning a variable amount of argument
 		sol::state lua;
 		sol::stack_guard luasg(lua);
 
-		lua.set_function("f", [](sol::variadic_args args) {
-			return sol::variadic_results(args.cbegin(), args.cend());
-		});
+		lua.set_function("f", [](sol::variadic_args args) { return sol::variadic_results(args.cbegin(), args.cend()); });
 
 		auto result1 = lua.safe_script(R"(
 			v1, v2, v3 = f(1, 'bark', true)
 			v4, v5 = f(25, 82)
-		)", sol::script_pass_on_error);
+		)",
+		     sol::script_pass_on_error);
 		REQUIRE(result1.valid());
 
 		int v1 = lua["v1"];
@@ -192,7 +225,8 @@ TEST_CASE("variadics/variadic_results", "returning a variable amount of argument
 		auto result1 = lua.safe_script(R"(
 			v1, v2, v3 = f(true)
 			v4, v5, v6, v7 = f(false)
-		)", sol::script_pass_on_error);
+		)",
+		     sol::script_pass_on_error);
 		REQUIRE(result1.valid());
 
 		int v1 = lua["v1"];
@@ -221,20 +255,24 @@ TEST_CASE("variadics/fallback_constructor", "ensure constructor matching behaves
 	sol::state lua;
 
 	lua.new_usertype<vec2x>("vec2x",
-		sol::call_constructor, sol::factories([]() { return vec2x{}; }, [](vec2x const& v) -> vec2x { return v; }, [](sol::variadic_args va) {
-		vec2x res{};
-		if (va.size() == 1) {
-			res.x = va[0].get<float>();
-			res.y = va[0].get<float>();
-		}
-		else if (va.size() == 2) {
-			res.x = va[0].get<float>();
-			res.y = va[1].get<float>();
-		}
-		else {
-			throw sol::error("invalid args");
-		}
-		return res; }));
+	     sol::call_constructor,
+	     sol::factories([]() { return vec2x{}; },
+	          [](vec2x const& v) -> vec2x { return v; },
+	          [](sol::variadic_args va) {
+		          vec2x res{};
+		          if (va.size() == 1) {
+			          res.x = va[0].get<float>();
+			          res.y = va[0].get<float>();
+		          }
+		          else if (va.size() == 2) {
+			          res.x = va[0].get<float>();
+			          res.y = va[1].get<float>();
+		          }
+		          else {
+			          throw sol::error("invalid args");
+		          }
+		          return res;
+	          }));
 
 	auto result1 = lua.safe_script("v0 = vec2x();", sol::script_pass_on_error);
 	auto result2 = lua.safe_script("v1 = vec2x(1);", sol::script_pass_on_error);
@@ -244,7 +282,7 @@ TEST_CASE("variadics/fallback_constructor", "ensure constructor matching behaves
 	REQUIRE(result2.valid());
 	REQUIRE(result3.valid());
 	REQUIRE(result4.valid());
-	
+
 	vec2x& v0 = lua["v0"];
 	vec2x& v1 = lua["v1"];
 	vec2x& v2 = lua["v2"];
@@ -258,4 +296,24 @@ TEST_CASE("variadics/fallback_constructor", "ensure constructor matching behaves
 	REQUIRE(v2.y == 2);
 	REQUIRE(v3.x == v2.x);
 	REQUIRE(v3.y == v2.y);
+}
+
+TEST_CASE("variadics/self_test", "test argument count and self object reference") {
+
+	sol::state lua;
+
+	lua.open_libraries();
+	lua.new_usertype<self_cons_0>("foo0", sol::constructors<self_cons_0(sol::variadic_args, sol::this_state)>());
+	lua.new_usertype<self_cons_1>("foo1", sol::constructors<self_cons_1(sol::variadic_args, sol::this_state)>());
+	lua.new_usertype<self_cons_2>("foo2", "new", sol::initializers(&self_cons_2::init_self_cons_2));
+	lua.new_usertype<self_cons_3>("foo3", "new", sol::initializers(&self_cons_3::init_self_cons_3));
+
+	sol::optional<sol::error> maybe_err = lua.safe_script(R"(
+local obj0 = foo0.new()
+local obj1 = foo1.new(0)
+local obj2 = foo2.new(0, 1)
+local obj3 = foo3.new(0, 1, 2)
+)",
+	     sol::script_pass_on_error);
+	REQUIRE_FALSE(maybe_err.has_value());
 }

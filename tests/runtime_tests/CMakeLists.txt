@@ -25,7 +25,7 @@
 if (CMAKE_GENERATOR MATCHES "Visual Studio 14 2015")
 	find_package(Catch 1.12.1 REQUIRED)
 else()
-	find_package(Catch 2.1.2 REQUIRED)
+	find_package(Catch REQUIRED)
 endif()
 
 file(GLOB SOL2_RUNTIME_TEST_SOURCES source/*.cpp)
@@ -70,10 +70,7 @@ function(CREATE_TEST test_target_name test_name target_sol)
 	endif()
 	if (MSVC)
 		target_compile_options(${test_target_name}
-			PRIVATE /EHsc /std:c++latest "$<$<CONFIG:Debug>:/MDd>"
-			"$<$<CONFIG:Release>:/MD>"
-			"$<$<CONFIG:RelWithDebInfo>:/MD>"
-			"$<$<CONFIG:MinSizeRel>:/MD>")
+			PRIVATE /EHsc /std:c++latest)
 		target_compile_definitions(${test_target_name}
 			PRIVATE UNICODE _UNICODE 
 			_CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)

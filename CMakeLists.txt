@@ -95,6 +95,9 @@ else()
 	set(IS_X64 TRUE)
 endif()
 
+if (PROJECT_SOURCE_DIR MATCHES ${CMAKE_SOURCE_DIR})
+	set(SOL2_IS_TOP_LEVEL TRUE)
+endif()
 
 # # # sol2 Source Groups
 # # Sources everyone is going to need
@@ -190,7 +193,7 @@ else()
 endif()
 
 # # # Tests, Examples and other CI suites that come with sol2
-if (DO_TESTS OR DO_EXAMPLES)
+if (SOL2_IS_TOP_LEVEL)
 	# # # General project output locations
 	if (IS_X86 OR CMAKE_SIZEOF_VOID_P EQUAL 4)
 		set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/lib")
@@ -217,6 +220,8 @@ if (DO_TESTS OR DO_EXAMPLES)
 	else()
 		string(REGEX REPLACE "/W[0-4]" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
 		string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+		string(REGEX REPLACE "/MT" "/MD" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+		string(REGEX REPLACE "/MT" "/MD" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 	endif()
 	find_package(Threads REQUIRED)
 	

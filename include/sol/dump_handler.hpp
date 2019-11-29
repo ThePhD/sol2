@@ -52,6 +52,14 @@ namespace sol {
 		return result_code;
 	}
 
+	inline int dump_panic_on_error(lua_State* L, int result_code, lua_Writer writer_function, void* userdata, bool strip) {
+		(void)L;
+		(void)writer_function;
+		(void)userdata;
+		(void)strip;
+		return luaL_error(L, "a non-zero error code (%d) was returned by the lua_Writer for the dump function", result_code);
+	}
+
 	inline int dump_throw_on_error(lua_State* L, int result_code, lua_Writer writer_function, void* userdata, bool strip) {
 #if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
 		return dump_panic_on_error(L, result_code, writer_function, userdata, strip);
@@ -62,14 +70,6 @@ namespace sol {
 		(void)strip;
 		throw dump_error(result_code);
 #endif // no exceptions stuff
-	}
-
-	inline int dump_panic_on_error(lua_State* L, int result_code, lua_Writer writer_function, void* userdata, bool strip) {
-		(void)L;
-		(void)writer_function;
-		(void)userdata;
-		(void)strip;
-		return luaL_error(L, "a non-zero error code (%d) was returned by the lua_Writer for the dump function", result_code);
 	}
 
 } // namespace sol

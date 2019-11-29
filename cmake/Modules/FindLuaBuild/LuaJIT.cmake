@@ -185,7 +185,27 @@ if (MSVC)
 		"C:/Program Files/Microsoft Visual Studio/2017/Professional/VC"
 		"C:/Program Files/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary/Build"
 		"C:/Program Files/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary"
-		"C:/Program Files/Microsoft Visual Studio/2017/Enterprise/VC")
+		"C:/Program Files/Microsoft Visual Studio/2017/Enterprise/VC"
+
+		"C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/VC/Auxiliary/Build"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/VC/Auxiliary"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/VC"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary"
+		"C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC"
+
+		"C:/Program Files/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build"
+		"C:/Program Files/Microsoft Visual Studio/2019/Community/VC/Auxiliary"
+		"C:/Program Files/Microsoft Visual Studio/2019/Community/VC"
+		"C:/Program Files/Microsoft Visual Studio/2019/Professional/VC/Auxiliary/Build"
+		"C:/Program Files/Microsoft Visual Studio/2019/Professional/VC/Auxiliary"
+		"C:/Program Files/Microsoft Visual Studio/2019/Professional/VC"
+		"C:/Program Files/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build"
+		"C:/Program Files/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary"
+		"C:/Program Files/Microsoft Visual Studio/2019/Enterprise/VC")
 	if (VCVARS_ALL_BAT MATCHES "VCVARS_ALL_BAT-NOTFOUND")
 		MESSAGE(FATAL_ERROR "Cannot find 'vcvarsall.bat' file or similar needed to build LuaJIT ${LUA_VERSION} on Windows")
 	endif()
@@ -195,6 +215,9 @@ if (MSVC)
 		set(LUA_JIT_MAKE_COMMAND "${VCVARS_ALL_BAT}" x64)
 	endif()
 	set(LUA_JIT_MAKE_COMMAND ${LUA_JIT_MAKE_COMMAND} && cd src && msvcbuild.bat)
+	if (CMAKE_BUILD_TYPE MATCHES "Debug")
+		set(LUA_JIT_MAKE_COMMAND ${LUA_JIT_MAKE_COMMAND} debug)
+	endif()
 	if (NOT BUILD_LUA_AS_DLL)
 		set(LUA_JIT_MAKE_COMMAND ${LUA_JIT_MAKE_COMMAND} static)
 	endif()

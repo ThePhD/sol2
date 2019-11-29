@@ -69,33 +69,34 @@ TEST_CASE("plain/indestructible", "test that we error for types that are innatel
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		std::unique_ptr<indestructible, indestructible::insider> i
-			= sol::detail::make_unique_deleter<indestructible, indestructible::insider>();
+		std::unique_ptr<indestructible, indestructible::insider> i = sol::detail::make_unique_deleter<indestructible, indestructible::insider>();
 		lua["i"] = *i;
 		lua.safe_script("i = nil");
-		auto result = lua.safe_script("collectgarbage()", sol::script_pass_on_error);
+		auto result = lua.safe_script("collectgarbage() collectgarbage()", sol::script_pass_on_error);
+#if SOL_LUA_VERSION > 503
+		REQUIRE(result.valid());
+#else
 		REQUIRE_FALSE(result.valid());
+#endif
 	}
 	SECTION("saved") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		std::unique_ptr<indestructible, indestructible::insider> i
-			= sol::detail::make_unique_deleter<indestructible, indestructible::insider>();
+		std::unique_ptr<indestructible, indestructible::insider> i = sol::detail::make_unique_deleter<indestructible, indestructible::insider>();
 		lua["i"] = *i;
-		lua.new_usertype<indestructible>("indestructible", sol::default_constructor,
-			sol::meta_function::garbage_collect, sol::destructor([](indestructible& i) {
-				indestructible::insider del;
-				del(&i);
-			}));
+		lua.new_usertype<indestructible>(
+		     "indestructible", sol::default_constructor, sol::meta_function::garbage_collect, sol::destructor([](indestructible& i) {
+			     indestructible::insider del;
+			     del(&i);
+		     }));
 		lua.safe_script("i = nil");
 		auto result = lua.safe_script("collectgarbage()", sol::script_pass_on_error);
 		REQUIRE(result.valid());
 	}
 }
 
-TEST_CASE("plain/constructors and destructors",
-	"Make sure that constructors, destructors, deallocators and others work properly with the desired type") {
+TEST_CASE("plain/constructors and destructors", "Make sure that constructors, destructors, deallocators and others work properly with the desired type") {
 	static int constructed = 0;
 	static int destructed = 0;
 	static int copied = 0;

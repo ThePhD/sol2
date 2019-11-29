@@ -15,10 +15,7 @@ int main() {
 			lua_State* L = ts;
 			// references the object that called this function
 			// in constructors:
-			sol::stack_object selfobj(L, -1);
-			// the -1 (NEGATIVE one) above 
-			// means "off the top fo the stack"
-			// (-1 is the top, -2 is one below, etc...)
+			sol::stack_object selfobj(L, 1);
 
 			// definitely the same
 			thing& self = selfobj.as<thing>();
@@ -42,10 +39,7 @@ int main() {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<thing>("thing",
-		sol::constructors<thing(sol::this_state)>(),
-		"func", &thing::func
-	);
+	lua.new_usertype<thing>("thing", sol::constructors<thing(sol::this_state)>(), "func", &thing::func);
 
 	lua.script(R"(
 obj = thing.new()

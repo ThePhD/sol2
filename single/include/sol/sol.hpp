@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2019-11-24 05:21:54.660860 UTC
-// This header was generated with sol v3.0.3 (revision fd9e282)
+// Generated 2019-11-29 18:08:19.142496 UTC
+// This header was generated with sol v3.0.3 (revision 21c0309)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -125,13 +125,13 @@
 
 #endif // vc++ || clang++/g++
 
-#if defined(SOL_CHECK_ARGUMENTS) && SOL_CHECK_ARGUMENTS
+#if defined(SOL_CHECK_ARGUMENTS) && SOL_CHECK_ARGUMENTS != 0
 	#if defined(SOL_ALL_SAFETIES_ON)
 		#define SOL_ALL_SAFETIES_ON 1
 	#endif // turn all the safeties on
-#endif // Compatibility define
+#endif // Compatibility Define for Safety
 
-#if defined(SOL_ALL_SAFETIES_ON) && SOL_ALL_SAFETIES_ON
+#if defined(SOL_ALL_SAFETIES_ON) && SOL_ALL_SAFETIES_ON != 0
 
 	// Checks low-level getter function
 	// (and thusly, affects nearly entire framework)
@@ -200,7 +200,7 @@
 
 #endif // Turn on Safety for all if top-level macro is defined
 
-#if defined(SOL_IN_DEBUG_DETECTED) && SOL_IN_DEBUG_DETECTED
+#if defined(SOL_IN_DEBUG_DETECTED) && SOL_IN_DEBUG_DETECTED != 0
 
 	#if !defined(SOL_SAFE_REFERENCES)
 	// Ensure that references are forcefully type-checked upon construction
@@ -6114,10 +6114,9 @@ namespace sol {
 		std::size_t len;
 
 		template <typename... Args>
-		stack_dependencies(int stack_target, Args&&... args)
-		: target(stack_target), stack_indices(), len(sizeof...(Args)) {
+		stack_dependencies(int stack_target, Args&&... args) : target(stack_target), stack_indices(), len(sizeof...(Args)) {
 			std::size_t i = 0;
-			(void)detail::swallow{int(), (stack_indices[i++] = static_cast<int>(std::forward<Args>(args)), int())...};
+			(void)detail::swallow{ int(), (stack_indices[i++] = static_cast<int>(std::forward<Args>(args)), int())... };
 		}
 
 		int& operator[](std::size_t i) {
@@ -6141,8 +6140,7 @@ namespace sol {
 		std::tuple<Policies...> policies;
 
 		template <typename Fx, typename... Args, meta::enable<meta::neg<std::is_same<meta::unqualified_t<Fx>, policy_wrapper>>> = meta::enabler>
-		policy_wrapper(Fx&& fx, Args&&... args)
-		: value(std::forward<Fx>(fx)), policies(std::forward<Args>(args)...) {
+		policy_wrapper(Fx&& fx, Args&&... args) : value(std::forward<Fx>(fx)), policies(std::forward<Args>(args)...) {
 		}
 
 		policy_wrapper(const policy_wrapper&) = default;
@@ -6159,10 +6157,10 @@ namespace sol {
 	namespace detail {
 		template <typename T>
 		using is_policy = meta::is_specialization_of<T, policy_wrapper>;
-		
+
 		template <typename T>
 		inline constexpr bool is_policy_v = is_policy<T>::value;
-	}
+	} // namespace detail
 } // namespace sol
 
 // end of sol/policies.hpp
@@ -16346,15 +16344,17 @@ namespace sol {
 					     start,
 					     std::forward<Args>(args)...);
 				}
-				if (!traits::runtime_variadics_t::value && traits::free_arity != fxarity) {
-					return overload_match_arity(types<>(),
-					     std::index_sequence<>(),
-					     std::index_sequence<traits::free_arity, M...>(),
-					     std::forward<Match>(matchfx),
-					     L,
-					     fxarity,
-					     start,
-					     std::forward<Args>(args)...);
+				if constexpr (!traits::runtime_variadics_t::value) {
+					if (traits::free_arity != fxarity) {
+						return overload_match_arity(types<>(),
+						     std::index_sequence<>(),
+						     std::index_sequence<traits::free_arity, M...>(),
+						     std::forward<Match>(matchfx),
+						     L,
+						     fxarity,
+						     start,
+						     std::forward<Args>(args)...);
+					}
 				}
 				return matchfx(types<Fx>(), meta::index_value<I>(), return_types(), args_list(), L, fxarity, start, std::forward<Args>(args)...);
 			}
@@ -16444,6 +16444,8 @@ namespace sol {
 			stack::stack_detail::undefined_metatable umf(L, &meta[0], &stack::stack_detail::set_undefined_methods_on<T>);
 			umf();
 
+			// put userdata at the first index
+			lua_insert(L, 1);
 			construct_match<T, TypeLists...>(constructor_match<T, checked, clean_stack>(obj), L, argcount, 1 + static_cast<int>(syntax));
 
 			userdataref.push();
@@ -16768,7 +16770,9 @@ namespace sol {
 				stack::stack_detail::undefined_metatable umf(L, &meta[0], &stack::stack_detail::set_undefined_methods_on<T>);
 				umf();
 
-				construct_match<T, Args...>(constructor_match<T, checked, clean_stack>(obj), L, argcount, boost + 1 + static_cast<int>(syntax));
+				// put userdata at the first index
+				lua_insert(L, 1);
+				construct_match<T, Args...>(constructor_match<T, checked, clean_stack>(obj), L, argcount, boost + 1 + 1 + static_cast<int>(syntax));
 
 				userdataref.push();
 				return 1;
@@ -16789,7 +16793,9 @@ namespace sol {
 					umf();
 
 					auto& func = std::get<I>(f.functions);
-					stack::call_into_lua<checked, clean_stack>(r, a, L, boost + start, func, detail::implicit_wrapper<T>(obj));
+					// put userdata at the first index
+					lua_insert(L, 1);
+					stack::call_into_lua<checked, clean_stack>(r, a, L, boost + 1 + start, func, detail::implicit_wrapper<T>(obj));
 
 					userdataref.push();
 					return 1;
@@ -18375,6 +18381,14 @@ namespace sol {
 		return result_code;
 	}
 
+	inline int dump_panic_on_error(lua_State* L, int result_code, lua_Writer writer_function, void* userdata, bool strip) {
+		(void)L;
+		(void)writer_function;
+		(void)userdata;
+		(void)strip;
+		return luaL_error(L, "a non-zero error code (%d) was returned by the lua_Writer for the dump function", result_code);
+	}
+
 	inline int dump_throw_on_error(lua_State* L, int result_code, lua_Writer writer_function, void* userdata, bool strip) {
 #if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
 		return dump_panic_on_error(L, result_code, writer_function, userdata, strip);
@@ -18385,14 +18399,6 @@ namespace sol {
 		(void)strip;
 		throw dump_error(result_code);
 #endif // no exceptions stuff
-	}
-
-	inline int dump_panic_on_error(lua_State* L, int result_code, lua_Writer writer_function, void* userdata, bool strip) {
-		(void)L;
-		(void)writer_function;
-		(void)userdata;
-		(void)strip;
-		return luaL_error(L, "a non-zero error code (%d) was returned by the lua_Writer for the dump function", result_code);
 	}
 
 } // namespace sol

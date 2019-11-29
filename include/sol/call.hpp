@@ -217,15 +217,17 @@ namespace sol {
 					     start,
 					     std::forward<Args>(args)...);
 				}
-				if (!traits::runtime_variadics_t::value && traits::free_arity != fxarity) {
-					return overload_match_arity(types<>(),
-					     std::index_sequence<>(),
-					     std::index_sequence<traits::free_arity, M...>(),
-					     std::forward<Match>(matchfx),
-					     L,
-					     fxarity,
-					     start,
-					     std::forward<Args>(args)...);
+				if constexpr (!traits::runtime_variadics_t::value) {
+					if (traits::free_arity != fxarity) {
+						return overload_match_arity(types<>(),
+						     std::index_sequence<>(),
+						     std::index_sequence<traits::free_arity, M...>(),
+						     std::forward<Match>(matchfx),
+						     L,
+						     fxarity,
+						     start,
+						     std::forward<Args>(args)...);
+					}
 				}
 				return matchfx(types<Fx>(), meta::index_value<I>(), return_types(), args_list(), L, fxarity, start, std::forward<Args>(args)...);
 			}
@@ -315,6 +317,8 @@ namespace sol {
 			stack::stack_detail::undefined_metatable umf(L, &meta[0], &stack::stack_detail::set_undefined_methods_on<T>);
 			umf();
 
+			// put userdata at the first index
+			lua_insert(L, 1);
 			construct_match<T, TypeLists...>(constructor_match<T, checked, clean_stack>(obj), L, argcount, 1 + static_cast<int>(syntax));
 
 			userdataref.push();
@@ -639,7 +643,9 @@ namespace sol {
 				stack::stack_detail::undefined_metatable umf(L, &meta[0], &stack::stack_detail::set_undefined_methods_on<T>);
 				umf();
 
-				construct_match<T, Args...>(constructor_match<T, checked, clean_stack>(obj), L, argcount, boost + 1 + static_cast<int>(syntax));
+				// put userdata at the first index
+				lua_insert(L, 1);
+				construct_match<T, Args...>(constructor_match<T, checked, clean_stack>(obj), L, argcount, boost + 1 + 1 + static_cast<int>(syntax));
 
 				userdataref.push();
 				return 1;
@@ -660,7 +666,9 @@ namespace sol {
 					umf();
 
 					auto& func = std::get<I>(f.functions);
-					stack::call_into_lua<checked, clean_stack>(r, a, L, boost + start, func, detail::implicit_wrapper<T>(obj));
+					// put userdata at the first index
+					lua_insert(L, 1);
+					stack::call_into_lua<checked, clean_stack>(r, a, L, boost + 1 + start, func, detail::implicit_wrapper<T>(obj));
 
 					userdataref.push();
 					return 1;
