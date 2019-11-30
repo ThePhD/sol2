@@ -25,7 +25,7 @@
 cmake_minimum_required(VERSION 3.5.0)
 
 # # # project declaration
-project(sol2 VERSION 3.0.0 LANGUAGES CXX C)
+project(sol2 VERSION 3.2.0 LANGUAGES CXX C)
 
 include(GNUInstallDirs)
 
@@ -83,7 +83,7 @@ CMAKE_DEPENDENT_OPTION(BUILD_LUA_AS_DLL "Build Lua as a DLL" ON
 # # # Platform
 # Detect x86 and x64 stuff
 if (SOL2_PLATFORM MATCHES "i686" OR SOL2_PLATFORM STREQUAL "x86")
-	set(IS_X86 TRUE)
+	set(SOL2_IS_X86 TRUE)
 elseif (SOL2_PLATFORM MATCHES "ARM64")
 	set(IS_ARM64 TRUE)
 	set(IS_X64 TRUE)
@@ -95,8 +95,9 @@ else()
 	set(IS_X64 TRUE)
 endif()
 
-if (PROJECT_SOURCE_DIR MATCHES ${CMAKE_SOURCE_DIR})
+if (PROJECT_SOURCE_DIR STREQUAL ${CMAKE_SOURCE_DIR})
 	set(SOL2_IS_TOP_LEVEL TRUE)
+	message(STATUS "sol2 is the top-level directory...")
 endif()
 
 # # # sol2 Source Groups
@@ -175,27 +176,21 @@ if (SOL2_CI)
 endif()
 
 if (SOL2_EXAMPLES OR SOL2_TESTS_EXAMPLES OR SOL2_EXAMPLES_SINGLE OR SOL2_INTEROP_EXAMPLES OR SOL2_TESTS_INTEROP_EXAMPLES OR SOL2_INTEROP_EXAMPLES_SINGLE OR SOL2_DYNAMIC_LOADING_EXAMPLES OR SOL2_TESTS_DYNAMIC_LOADING_EXAMPLES OR SOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE)
-	set(DO_EXAMPLES TRUE)
+	set(SOL2_DO_EXAMPLES TRUE)
 else()
-	set(DO_EXAMPLES FALSE)
+	set(SOL2_DO_EXAMPLES FALSE)
 endif()
 
 if (SOL2_TESTS OR SOL2_TESTS_SINGLE)
-	set(DO_TESTS TRUE)
+	set(SOL2_DO_TESTS TRUE)
 else()
-	set(DO_TESTS FALSE)
-endif()
-
-if (DO_TESTS OR SOL2_TESTS_EXAMPLES OR SOL2_TESTS_INTEROP_EXAMPLES OR SOL2_TESTS_DYNAMIC_LOADING_EXAMPLES)
-	set(ENABLE_TESTING TRUE)
-else()
-	set(ENABLE_TESTING FALSE)
+	set(SOL2_DO_TESTS FALSE)
 endif()
 
 # # # Tests, Examples and other CI suites that come with sol2
-if (SOL2_IS_TOP_LEVEL)
+if (SOL2_IS_TOP_LEVEL AND (SOL2_DO_TESTS OR SOL2_DO_EXAMPLES))
 	# # # General project output locations
-	if (IS_X86 OR CMAKE_SIZEOF_VOID_P EQUAL 4)
+	if (SOL2_IS_X86 OR CMAKE_SIZEOF_VOID_P EQUAL 4)
 		set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/lib")
 		set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/bin")
 		set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86/bin")
@@ -209,7 +204,7 @@ if (SOL2_IS_TOP_LEVEL)
 	# Here, we pull in all the necessary libraries for building examples and tests
 	# Find threading library
 	if (NOT MSVC)
-		if (IS_X86)
+		if (SOL2_IS_X86)
 			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
 			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
 			set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -m32")
@@ -220,18 +215,23 @@ if (SOL2_IS_TOP_LEVEL)
 	else()
 		string(REGEX REPLACE "/W[0-4]" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
 		string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-		string(REGEX REPLACE "/MT" "/MD" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-		string(REGEX REPLACE "/MT" "/MD" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+		if (BUILD_LUA_AS_DLL)
+			string(REGEX REPLACE "/MT" "/MD" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+			string(REGEX REPLACE "/MT" "/MD" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+		else ()
+			string(REGEX REPLACE "/MD" "/MT" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+			string(REGEX REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+		endif()
 	endif()
 	find_package(Threads REQUIRED)
-	
+
 	string(TOLOWER ${SOL2_LUA_VERSION} NORMALIZED_LUA_VERSION)
 	# Find way to get Lua: build if requested, or attempt to build if no matching version is found
 	if (SOL2_BUILD_LUA)
 		find_package(LuaBuild REQUIRED COMPONENTS ${SOL2_LUA_VERSION})
 	elseif (NOT SOL2_LUA_VERSION)
 		find_package(LuaBuild REQUIRED)
-	else()
+	else ()
 		if (NORMALIZED_LUA_VERSION MATCHES "5.1")
 			set(CREATE_LUALIB_TARGET TRUE)
 			find_package(Lua 5.1 EXACT REQUIRED)
@@ -251,7 +251,7 @@ if (SOL2_IS_TOP_LEVEL)
 			find_package(LuaBuild ${SOL2_LUA_VERSION} REQUIRED)
 		endif()
 	endif()
-	
+
 	if (CREATE_LUALIB_TARGET AND LUA_FOUND)
 		set(lualib lua_imported_lib_${SOL2_LUA_VERSION})
 		foreach(lua_search_lib ${LUA_LIBRARIES})
@@ -287,15 +287,15 @@ if (SOL2_IS_TOP_LEVEL)
 	endif()
 	
 	# # Enable test harness for regular, example or single tests
-	if (ENABLE_TESTING)
+	if (SOL2_DO_TESTS OR (SOL2_TESTS_EXAMPLES AND SOL2_DO_EXAMPLES))
 		# enable ctest
-		message(STATUS "sol2 testing enabled")
+		message(STATUS "sol2 testing enabled...")
 		enable_testing()
 	endif()
 	
 	# # # Examples
 	# # Enable examples to be built against the library
-	if (DO_EXAMPLES)
+	if (SOL2_DO_EXAMPLES)
 		# NOTE: will also add to tests if TESTS is defined
 		message(STATUS "sol2 adding examples...")
 		add_subdirectory(examples "${CMAKE_BINARY_DIR}/examples")
@@ -303,7 +303,7 @@ if (SOL2_IS_TOP_LEVEL)
 	
 	# # # Tests
 	# # Add tests here
-	if (DO_TESTS)
+	if (SOL2_DO_TESTS)
 		# add subdir to get going
 		message(STATUS "sol2 adding tests...")
 		add_subdirectory(tests "${CMAKE_BINARY_DIR}/tests")
