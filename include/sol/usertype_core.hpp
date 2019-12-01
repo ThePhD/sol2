@@ -172,11 +172,11 @@ namespace sol {
 		template <typename X>
 		void set_undefined_methods_on(stack_reference t) {
 			using T = std::remove_pointer_t<X>;
-			
+
 			lua_State* L = t.lua_state();
-			
+
 			t.push();
-			
+
 			detail::lua_reg_table l{};
 			int index = 0;
 			detail::indexed_insert insert_fx(l, index);
@@ -185,7 +185,7 @@ namespace sol {
 				l[index] = luaL_Reg{ to_string(meta_function::garbage_collect).c_str(), detail::make_destructor<T>() };
 			}
 			luaL_setfuncs(L, l, 0);
-			
+
 			// __type table
 			lua_createtable(L, 0, 2);
 			const std::string& name = detail::demangle<T>();
