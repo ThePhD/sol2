@@ -37,6 +37,9 @@
 #include <array>
 #include <iterator>
 #include <iosfwd>
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT != 0
+#include <variant>
+#endif // variant is weird on XCode, thanks XCode
 
 
 namespace sol { namespace meta {
@@ -459,39 +462,30 @@ namespace sol { namespace meta {
 			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), sfinae_yes_t>;
 		};
 
-#if defined(_MSC_VER) && _MSC_VER <= 1910
-		template <typename T, typename U, typename = decltype(std::declval<T&>() < std::declval<U&>())>
-		std::true_type supports_op_less_test(std::reference_wrapper<T>, std::reference_wrapper<U>);
-		std::false_type supports_op_less_test(...);
-		template <typename T, typename U, typename = decltype(std::declval<T&>() == std::declval<U&>())>
-		std::true_type supports_op_equal_test(std::reference_wrapper<T>, std::reference_wrapper<U>);
-		std::false_type supports_op_equal_test(...);
-		template <typename T, typename U, typename = decltype(std::declval<T&>() <= std::declval<U&>())>
-		std::true_type supports_op_less_equal_test(std::reference_wrapper<T>, std::reference_wrapper<U>);
-		std::false_type supports_op_less_equal_test(...);
-		template <typename T, typename OS, typename = decltype(std::declval<OS&>() << std::declval<const T&>())>
-		std::true_type supports_ostream_op(std::reference_wrapper<const T>, std::reference_wrapper<OS>);
-		std::false_type supports_ostream_op(...);
-		template <typename T, typename = decltype(to_string(std::declval<T&>()))>
-		std::true_type supports_adl_to_string(std::reference_wrapper<T>);
-		std::false_type supports_adl_to_string(...);
-#else
-		template <typename T, typename U, typename = decltype(std::declval<T&>() < std::declval<U&>())>
-		std::true_type supports_op_less_test(const T&, const U&);
-		std::false_type supports_op_less_test(...);
-		template <typename T, typename U, typename = decltype(std::declval<T&>() == std::declval<U&>())>
-		std::true_type supports_op_equal_test(const T&, const U&);
-		std::false_type supports_op_equal_test(...);
-		template <typename T, typename U, typename = decltype(std::declval<T&>() <= std::declval<U&>())>
-		std::true_type supports_op_less_equal_test(const T&, const U&);
-		std::false_type supports_op_less_equal_test(...);
-		template <typename T, typename OS, typename = decltype(std::declval<OS&>() << std::declval<const T&>())>
-		std::true_type supports_ostream_op(const T&, const OS&);
-		std::false_type supports_ostream_op(...);
-		template <typename T, typename = decltype(to_string(std::declval<T&>()))>
-		std::true_type supports_adl_to_string(const T&);
-		std::false_type supports_adl_to_string(...);
-#endif
+		template <typename T, typename U, typename = void>
+		class supports_op_less_test : public std::false_type {};
+		template <typename T, typename U>
+		class supports_op_less_test<T, U, void_t<decltype(std::declval<T&>() < std::declval<U&>())>>  : public std::integral_constant<bool, !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> {};
+		
+		template <typename T, typename U, typename = void>
+		class supports_op_equal_test : public std::false_type {};
+		template <typename T, typename U>
+		class supports_op_equal_test<T, U, void_t<decltype(std::declval<T&>() == std::declval<U&>())>> : public std::integral_constant<bool, !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> {};
+		
+		template <typename T, typename U, typename = void>
+		class supports_op_less_equal_test : public std::false_type {};
+		template <typename T, typename U>
+		class supports_op_less_equal_test<T, U, void_t<decltype(std::declval<T&>() <= std::declval<U&>())>> : public std::integral_constant<bool, !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> {};
+		
+		template <typename T, typename U, typename = void>
+		class supports_op_ostream_test : public std::false_type {};
+		template <typename T, typename U>
+		class supports_op_ostream_test<T, U, void_t<decltype(std::declval<T&>() << std::declval<U&>())>> : public std::integral_constant<bool, !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> {};
+		
+		template <typename T, typename = void>
+		class supports_adl_to_string_test : public std::false_type {};
+		template <typename T>
+		class supports_adl_to_string_test<T, void_t<decltype(to_string(std::declval<const T&>()))>> : public std::true_type {};
 
 		template <typename T, bool b>
 		struct is_matched_lookup_impl : std::false_type {};
@@ -503,22 +497,22 @@ namespace sol { namespace meta {
 	} // namespace meta_detail
 
 	template <typename T, typename U = T>
-	using supports_op_less
-		= decltype(meta_detail::supports_op_less_test(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
+	class supports_op_less : public meta_detail::supports_op_less_test<T, U> {};
+	
 	template <typename T, typename U = T>
-	using supports_op_equal
-		= decltype(meta_detail::supports_op_equal_test(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
+	class supports_op_equal : public meta_detail::supports_op_equal_test<T, U> {};
+	
 	template <typename T, typename U = T>
-	using supports_op_less_equal
-		= decltype(meta_detail::supports_op_less_equal_test(std::declval<meta_detail::non_void_t<T>&>(), std::declval<meta_detail::non_void_t<U>&>()));
-	template <typename T, typename U = std::ostream>
-	using supports_ostream_op
-		= decltype(meta_detail::supports_ostream_op(std::declval<meta_detail::non_void_t<T>&>(), std::declval<const meta_detail::non_void_t<U>&>()));
-	template <typename T>
-	using supports_adl_to_string = decltype(meta_detail::supports_adl_to_string(std::declval<meta_detail::non_void_t<T>&>()));
+	class supports_op_less_equal : public meta_detail::supports_op_less_equal_test<T, U> {};
 
+	template <typename T, typename U = T>
+	class supports_op_ostream : public meta_detail::supports_op_ostream_test<T, U> {};
+	
 	template <typename T>
-	using supports_to_string_member = meta::boolean<meta_detail::has_to_string_test<meta_detail::non_void_t<T>>::value>;
+	class supports_adl_to_string : public meta_detail::supports_adl_to_string_test<T> {};
+	
+	template <typename T>
+	class supports_to_string_member : public meta::boolean<meta_detail::has_to_string_test<meta_detail::non_void_t<T>>::value> {};
 
 	template <typename T>
 	using is_callable = boolean<meta_detail::is_callable<T>::value>;

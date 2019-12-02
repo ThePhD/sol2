@@ -908,7 +908,7 @@ namespace sol {
 
 	template <typename T>
 	struct is_to_stringable : meta::any<meta::supports_to_string_member<meta::unqualified_t<T>>, meta::supports_adl_to_string<meta::unqualified_t<T>>,
-	                               meta::supports_ostream_op<meta::unqualified_t<T>>> {};
+	                               meta::supports_op_ostream<meta::unqualified_t<T>>> {};
 
 	namespace detail {
 		template <typename T, typename = void>
@@ -1307,14 +1307,7 @@ namespace sol {
 
 	template <typename T>
 	struct is_automagical
-	: std::integral_constant<bool,
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT != 0
-	       !meta::is_specialization_of_v<meta::unqualified_t<T>, std::variant> &&
-#endif // std::variant borked in places
-#endif // C++17 Features
-	                 std::is_array_v<
-	                      meta::unqualified_t<T>> || (!std::is_same_v<meta::unqualified_t<T>, state> && !std::is_same_v<meta::unqualified_t<T>, state_view>)> {
+	: std::integral_constant<bool, std::is_array_v<meta::unqualified_t<T>> || (!std::is_same_v<meta::unqualified_t<T>, state> && !std::is_same_v<meta::unqualified_t<T>, state_view>)> {
 	};
 
 	template <typename T>

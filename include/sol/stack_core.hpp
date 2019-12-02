@@ -1365,7 +1365,7 @@ namespace sol {
 
 		template <typename T>
 		int default_to_string(lua_State* L) {
-			return oss_default_to_string<T>(meta::supports_ostream_op<T>(), L);
+			return oss_default_to_string<T>(meta::supports_op_ostream<T>(), L);
 		}
 
 		template <typename T>
