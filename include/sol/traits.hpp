@@ -465,23 +465,29 @@ namespace sol { namespace meta {
 		template <typename T, typename U, typename = void>
 		class supports_op_less_test : public std::false_type {};
 		template <typename T, typename U>
-		class supports_op_less_test<T, U, void_t<decltype(std::declval<T&>() < std::declval<U&>())>>  : public std::integral_constant<bool, !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> {};
-		
+		class supports_op_less_test<T, U, void_t<decltype(std::declval<T&>() < std::declval<U&>())>>
+		: public std::integral_constant<bool,
+			  !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> {};
+
 		template <typename T, typename U, typename = void>
 		class supports_op_equal_test : public std::false_type {};
 		template <typename T, typename U>
-		class supports_op_equal_test<T, U, void_t<decltype(std::declval<T&>() == std::declval<U&>())>> : public std::integral_constant<bool, !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> {};
-		
+		class supports_op_equal_test<T, U, void_t<decltype(std::declval<T&>() == std::declval<U&>())>>
+		: public std::integral_constant<bool,
+			  !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> {};
+
 		template <typename T, typename U, typename = void>
 		class supports_op_less_equal_test : public std::false_type {};
 		template <typename T, typename U>
-		class supports_op_less_equal_test<T, U, void_t<decltype(std::declval<T&>() <= std::declval<U&>())>> : public std::integral_constant<bool, !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> {};
-		
+		class supports_op_less_equal_test<T, U, void_t<decltype(std::declval<T&>() <= std::declval<U&>())>>
+		: public std::integral_constant<bool,
+			  !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> {};
+
 		template <typename T, typename U, typename = void>
-		class supports_op_ostream_test : public std::false_type {};
+		class supports_op_left_shift_test : public std::false_type {};
 		template <typename T, typename U>
-		class supports_op_ostream_test<T, U, void_t<decltype(std::declval<T&>() << std::declval<U&>())>> : public std::integral_constant<bool, !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> {};
-		
+		class supports_op_left_shift_test<T, U, void_t<decltype(std::declval<T&>() << std::declval<U&>())>> : public std::true_type {};
+
 		template <typename T, typename = void>
 		class supports_adl_to_string_test : public std::false_type {};
 		template <typename T>
@@ -498,19 +504,19 @@ namespace sol { namespace meta {
 
 	template <typename T, typename U = T>
 	class supports_op_less : public meta_detail::supports_op_less_test<T, U> {};
-	
+
 	template <typename T, typename U = T>
 	class supports_op_equal : public meta_detail::supports_op_equal_test<T, U> {};
-	
+
 	template <typename T, typename U = T>
 	class supports_op_less_equal : public meta_detail::supports_op_less_equal_test<T, U> {};
 
 	template <typename T, typename U = T>
-	class supports_op_ostream : public meta_detail::supports_op_ostream_test<T, U> {};
-	
+	class supports_op_left_shift : public meta_detail::supports_op_left_shift_test<T, U> {};
+
 	template <typename T>
 	class supports_adl_to_string : public meta_detail::supports_adl_to_string_test<T> {};
-	
+
 	template <typename T>
 	class supports_to_string_member : public meta::boolean<meta_detail::has_to_string_test<meta_detail::non_void_t<T>>::value> {};
 

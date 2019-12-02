@@ -128,7 +128,7 @@ TEST_CASE("plain/constructors and destructors", "Make sure that constructors, de
 	struct deallocate_only {
 		void operator()(st* p) const {
 			std::allocator<st> alloc;
-			alloc.deallocate(p, 1);
+			std::allocator_traits<std::allocator<st>>::deallocate(alloc, p, 1);
 		}
 	};
 
