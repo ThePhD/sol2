@@ -144,9 +144,17 @@ else()
 	message(FATAL_ERROR "Cannot deduce the proper Lua version from ${LUA_VERSION}")
 endif()
 
+if (BUILD_LUA_AS_CXX)
+	set(LUA_VANILLA_LANGUAGE CXX)
+	set(LUA_VANILLA_LANGUAGE_STANDARD 98)
+else()
+	set(LUA_VANILLA_LANGUAGE C)
+	set(LUA_VANILLA_LANGUAGE_STANDARD 99)
+endif()
+
 FIND_PACKAGE_MESSAGE(LUABUILD
-	"Selecting PUC-RIO Lua ${LUA_VANILLA_VERSION} from '${LUA_VERSION}' and building a ${LUA_BUILD_LIBRARY_TYPE} library..."
-	"[${LUA_VANILLA_VERSION}][${LUA_VERSION}][${LUA_BUILD_LIBRARY_TYPE}]")
+	"Selecting PUC-RIO Lua ${LUA_VANILLA_VERSION} from '${LUA_VERSION}' and building a ${LUA_BUILD_LIBRARY_TYPE} library with ${LUA_VANILLA_LANGUAGE} linkage..."
+	"[${LUA_VANILLA_VERSION}][${LUA_VERSION}][${LUA_BUILD_LIBRARY_TYPE}][${LUA_VANILLA_LANGUAGE}]")
 
 # Get Hashes to use for download
 set(LUA_VANILLA_SHA1 ${LUA_VANILLA_SHA1_${LUA_VANILLA_VERSION}})
@@ -322,15 +330,17 @@ set(luacompiler "luac-${LUA_VANILLA_VERSION}")
 add_library(${liblua} ${LUA_BUILD_LIBRARY_TYPE} "${LUA_VANILLA_LIB_SOURCES}")
 set_target_properties(${liblua}
 	PROPERTIES
-	LANGUAGE C
-	LINKER_LANGUAGE C
-	C_STANDARD 99
-	C_EXTENSIONS TRUE
+	LANGUAGE ${LUA_VANILLA_LANGUAGE}
+	LINKER_LANGUAGE ${LUA_VANILLA_LANGUAGE}
+	${LUA_VANILLA_LANGUAGE}_STANDARD ${LUA_VANILLA_LANGUAGE_STANDARD}
+	${LUA_VANILLA_LANGUAGE}_EXTENSIONS TRUE
 	POSITION_INDEPENDENT_CODE TRUE
 	OUTPUT_NAME ${LUA_BUILD_LIBNAME}
 	RUNTIME_OUTPUT_NAME ${LUA_BUILD_LIBNAME}
 	LIBRARY_OUTPUT_NAME ${LUA_BUILD_LIBNAME}
 	ARCHIVE_OUTPUT_NAME ${LUA_BUILD_LIBNAME})
+set_source_files_properties(${LUA_VANILLA_LIB_SOURCES}
+	PROPERTIES LANGUAGE ${LUA_VANILLA_LANGUAGE})
 target_include_directories(${liblua}
 	PUBLIC "${LUA_VANILLA_INCLUDE_DIRS}")
 target_compile_definitions(${liblua}
@@ -361,50 +371,55 @@ endif()
 
 # we don't really need this section...
 # Lua Interpreter
-add_executable(${luainterpreter} ${LUA_VANILLA_LUA_SOURCES})
-set_target_properties(${luainterpreter}
-	PROPERTIES
-	LANGUAGE C
-	LINKER_LANGUAGE C
-	C_STANDARD 99
-	C_EXTENSIONS TRUE
-	OUTPUT_NAME lua-${LUA_VANILLA_VERSION})
-target_include_directories(${luainterpreter}
-	PRIVATE "${LUA_VANILLA_INCLUDE_DIRS}")
-target_compile_definitions(${luainterpreter}
-	PUBLIC LUA_COMPAT_ALL ${LUA_VANILLA_DLL_DEFINE}
-	PRIVATE LUA_COMPAT_ALL ${LUA_VANILLA_DLL_DEFINE})
-if (MSVC)
-	target_compile_options(${luainterpreter}
-		PRIVATE /W1)
-else()
-	target_compile_options(${luainterpreter}
-		PRIVATE -w)
-endif()
-if (WIN32)
-	#target_compile_definitions(${luainterpreter} 
-	#	PRIVATE LUA_USE_WINDOWS)
-else()
-	target_compile_definitions(${luainterpreter} 
-		PRIVATE LUA_USE_LINUX)
-endif()
-target_link_libraries(${luainterpreter} PRIVATE ${liblua})
-if (CMAKE_DL_LIBS)
-	target_link_libraries(${luainterpreter} PRIVATE ${CMAKE_DL_LIBS})
-endif()
-if (UNIX)
-	target_link_libraries(${luainterpreter} PRIVATE m readline)
+if (LUA_BUILD_LUA_INTERPRETER)
+	add_executable(${luainterpreter} ${LUA_VANILLA_LUA_SOURCES})
+	set_target_properties(${luainterpreter}
+		PROPERTIES
+		LANGUAGE ${LUA_VANILLA_LANGUAGE}
+		LINKER_LANGUAGE ${LUA_VANILLA_LANGUAGE}
+		${LUA_VANILLA_LANGUAGE}_STANDARD ${LUA_VANILLA_LANGUAGE_STANDARD}
+		${LUA_VANILLA_LANGUAGE}_EXTENSIONS TRUE
+		OUTPUT_NAME lua-${LUA_VANILLA_VERSION})
+	set_source_files_properties(${LUA_VANILLA_LUA_SOURCES}
+		PROPERTIES LANGUAGE ${LUA_VANILLA_LANGUAGE})
+	target_include_directories(${luainterpreter}
+		PRIVATE "${LUA_VANILLA_INCLUDE_DIRS}")
+	target_compile_definitions(${luainterpreter}
+		PUBLIC LUA_COMPAT_ALL ${LUA_VANILLA_DLL_DEFINE}
+		PRIVATE LUA_COMPAT_ALL ${LUA_VANILLA_DLL_DEFINE})
+	if (MSVC)
+		target_compile_options(${luainterpreter}
+			PRIVATE /W1)
+	else()
+		target_compile_options(${luainterpreter}
+			PRIVATE -w)
+	endif()
+	if (WIN32)
+		#target_compile_definitions(${luainterpreter} 
+		#	PRIVATE LUA_USE_WINDOWS)
+	else()
+		target_compile_definitions(${luainterpreter} 
+			PRIVATE LUA_USE_LINUX)
+	endif()
+	target_link_libraries(${luainterpreter} PRIVATE ${liblua})
+	if (CMAKE_DL_LIBS)
+		target_link_libraries(${luainterpreter} PRIVATE ${CMAKE_DL_LIBS})
+	endif()
+	if (UNIX)
+		target_link_libraries(${luainterpreter} PRIVATE m readline)
+	endif()
 endif()
 
 # LuaC Compiler
 if (LUA_BUILD_LUA_COMPILER)
+	add_executable(${luainterpreter} ${LUA_VANILLA_LUA_SOURCES})
 	set_target_properties(${luacompiler}
 		PROPERTIES
-		LANGUAGE C
-		LINKER_LANGUAGE C
-		C_STANDARD 99
-		C_EXTENSIONS TRUE
+		LANGUAGE ${LUA_VANILLA_LANGUAGE}
+		LINKER_LANGUAGE ${LUA_VANILLA_LANGUAGE}
 		OUTPUT_NAME luac-${LUA_VANILLA_VERSION})
+	set_source_files_properties(${LUA_VANILLA_LIB_SOURCES}
+		PROPERTIES LANGUAGE ${LUA_VANILLA_LANGUAGE})
 	target_include_directories(${luacompiler}
 		PRIVATE "${LUA_VANILLA_INCLUDE_DIRS}")
 	target_compile_definitions(${luacompiler}
