@@ -3,7 +3,7 @@
 
 #include "assert.hpp"
 
-int main(int, char*[]) {
+int main(int, char* []) {
 	sol::state lua;
 	lua.script("function func (a, b) return (a + b) * 2 end");
 
@@ -18,11 +18,11 @@ int main(int, char*[]) {
 	// with state_view's load(lua_Reader, ...) call...
 	// here's a little bit of how you can work with the stack
 	lua_State* L = lua.lua_state();
-	sol::stack_aligned_function func(L, -1);
+	sol::stack_aligned_unsafe_function func(L, -1);
 	lua_pushinteger(L, 5); // argument 1, using plain API
 	lua_pushinteger(L, 6); // argument 2
-	
-	// take 2 arguments from the top, 
+
+	// take 2 arguments from the top,
 	// and use "stack_aligned_function" to call
 	int result = func(sol::stack_count(2));
 
