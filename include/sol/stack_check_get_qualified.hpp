@@ -59,8 +59,25 @@ namespace sol { namespace stack {
 
 	template <typename T>
 	struct qualified_getter<optional<T>> {
-		static decltype(auto) get(lua_State* L, int index, record& tracking) {
-			return check_get<T>(L, index, no_panic, tracking);
+		static optional<T> get(lua_State* L, int index, record& tracking) {
+			if constexpr (is_lua_reference_v<T>) {
+				// actually check if it's none here, otherwise
+				// we'll have a none object inside an optional!
+				bool success = lua_isnoneornil(L, index) == 0 && stack::check<T>(L, index, no_panic);
+				if (!success) {
+					// expected type, actual type
+					tracking.use(static_cast<int>(success));
+					return nullopt;
+				}
+				return stack_detail::unchecked_get<T>(L, index, tracking);
+			}
+			else {
+				if (!check<T>(L, index, &no_panic)) {
+					tracking.use(static_cast<int>(!lua_isnone(L, index)));
+					return nullopt;
+				}
+				return stack_detail::unchecked_get<T>(L, index, tracking);
+			}
 		}
 	};
 

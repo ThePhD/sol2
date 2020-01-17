@@ -867,8 +867,7 @@ namespace sol {
 			if constexpr (meta::is_specialization_of_v<uFx, yielding_t>) {
 				using real_fx = meta::unqualified_t<decltype(std::forward<Fx>(fx).func)>;
 				lua_call_wrapper<T, real_fx, is_index, is_variable, checked, boost, clean_stack> lcw{};
-				int nr = lcw.call(L, std::forward<Fx>(fx).func, std::forward<Args>(args)...);
-				return lua_yield(L, nr);
+				return lcw.call(L, std::forward<Fx>(fx).func, std::forward<Args>(args)...);
 			}
 			else {
 				lua_call_wrapper<T, uFx, is_index, is_variable, checked, boost, clean_stack> lcw{};
@@ -880,7 +879,14 @@ namespace sol {
 		     bool clean_stack = true>
 		inline int call_user(lua_State* L) {
 			auto& fx = stack::unqualified_get<user<F>>(L, upvalue_index(start));
-			return call_wrapped<T, is_index, is_variable, 0, checked, clean_stack>(L, fx);
+			using uFx = meta::unqualified_t<F>;
+			int nr = call_wrapped<T, is_index, is_variable, 0, checked, clean_stack>(L, fx);
+			if constexpr (meta::is_specialization_of_v<uFx, yielding_t>) {
+				return lua_yield(L, nr);
+			}
+			else {
+				return nr;
+			}
 		}
 
 		template <typename T, typename = void>

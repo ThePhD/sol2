@@ -97,7 +97,13 @@ namespace sol { namespace u_detail {
 
 		template <bool is_index = true, bool is_variable = false>
 		static inline int call(lua_State* L) {
-			return detail::typed_static_trampoline<decltype(&call_<is_index, is_variable>), (&call_<is_index, is_variable>)>(L);
+			int r = detail::typed_static_trampoline<decltype(&call_<is_index, is_variable>), (&call_<is_index, is_variable>)>(L);
+			if constexpr (meta::is_specialization_of_v<uF, yielding_t>) {
+				return lua_yield(L, r);
+			}
+			else {
+				return r;
+			}
 		}
 
 		template <bool is_index = true, bool is_variable = false>
@@ -132,7 +138,13 @@ namespace sol { namespace u_detail {
 
 		template <bool is_index = true, bool is_variable = false>
 		static inline int index_call(lua_State* L) {
-			return detail::typed_static_trampoline<decltype(&index_call_<is_index, is_variable>), (&index_call_<is_index, is_variable>)>(L);
+			int r = detail::typed_static_trampoline<decltype(&index_call_<is_index, is_variable>), (&index_call_<is_index, is_variable>)>(L);
+			if constexpr (meta::is_specialization_of_v<uF, yielding_t>) {
+				return lua_yield(L, r);
+			}
+			else {
+				return r;
+			}
 		}
 	};
 
