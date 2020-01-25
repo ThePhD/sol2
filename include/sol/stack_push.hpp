@@ -119,7 +119,7 @@ namespace sol { namespace stack {
        // just the sizeof(T*), and nothing else.
 			T* obj = detail::usertype_allocate<T>(L);
 			f();
-			std::allocator<T> alloc{};
+			std::allocator<T> alloc {};
 			std::allocator_traits<std::allocator<T>>::construct(alloc, obj, std::forward<Args>(args)...);
 			return 1;
 		}
@@ -189,16 +189,6 @@ namespace sol { namespace stack {
 		}
 	};
 
-	template <typename T>
-	struct unqualified_pusher<detail::as_unique_tag<T>> {
-		template <typename... Args>
-		static int push (lua_State* L, Args&&... args) {
-			stack_detail::uu_pusher<T> p;
-			(void)p;
-			return p.push(L, std::forward<Args>(args)...);
-		}
-	};
-
 	namespace stack_detail {
 		template <typename T>
 		struct uu_pusher {
@@ -229,7 +219,7 @@ namespace sol { namespace stack {
 				detail::unique_tag* id = nullptr;
 				Real* mem = detail::usertype_unique_allocate<P, Real>(L, pref, fx, id);
 				if (luaL_newmetatable(L, &usertype_traits<detail::unique_usertype<std::remove_cv_t<P>>>::metatable()[0]) == 1) {
-					detail::lua_reg_table l{};
+					detail::lua_reg_table l {};
 					int index = 0;
 					detail::indexed_insert insert_fx(l, index);
 					detail::insert_default_registrations<P>(insert_fx, detail::property_always_true);
@@ -246,6 +236,16 @@ namespace sol { namespace stack {
 		};
 	} // namespace stack_detail
 
+	template <typename T>
+	struct unqualified_pusher<detail::as_unique_tag<T>> {
+		template <typename... Args>
+		static int push(lua_State* L, Args&&... args) {
+			stack_detail::uu_pusher<T> p;
+			(void)p;
+			return p.push(L, std::forward<Args>(args)...);
+		}
+	};
+
 	template <typename T, typename>
 	struct unqualified_pusher {
 		template <typename... Args>
@@ -253,7 +253,7 @@ namespace sol { namespace stack {
 			using Tu = meta::unqualified_t<T>;
 			if constexpr (is_lua_reference_v<Tu>) {
 				using int_arr = int[];
-				int_arr p{ (std::forward<Args>(args).push(L))... };
+				int_arr p { (std::forward<Args>(args).push(L))... };
 				return p[0];
 			}
 			else if constexpr (std::is_same_v<Tu, bool>) {
@@ -428,7 +428,7 @@ namespace sol { namespace stack {
 	template <typename T>
 	struct unqualified_pusher<std::initializer_list<T>> {
 		static int push(lua_State* L, const std::initializer_list<T>& il) {
-			unqualified_pusher<detail::as_table_tag<std::initializer_list<T>>> p{};
+			unqualified_pusher<detail::as_table_tag<std::initializer_list<T>>> p {};
 			// silence annoying VC++ warning
 			(void)p;
 			return p.push(L, il);
@@ -601,7 +601,7 @@ namespace sol { namespace stack {
 				}
 				lua_setmetatable(L, -2);
 			}
-			std::allocator<T> alloc{};
+			std::allocator<T> alloc {};
 			std::allocator_traits<std::allocator<T>>::construct(alloc, data, std::forward<Args>(args)...);
 			return 1;
 		}
@@ -684,25 +684,25 @@ namespace sol { namespace stack {
 	template <>
 	struct unqualified_pusher<char*> {
 		static int push_sized(lua_State* L, const char* str, std::size_t len) {
-			unqualified_pusher<const char*> p{};
+			unqualified_pusher<const char*> p {};
 			(void)p;
 			return p.push_sized(L, str, len);
 		}
 
 		static int push(lua_State* L, const char* str) {
-			unqualified_pusher<const char*> p{};
+			unqualified_pusher<const char*> p {};
 			(void)p;
 			return p.push(L, str);
 		}
 
 		static int push(lua_State* L, const char* strb, const char* stre) {
-			unqualified_pusher<const char*> p{};
+			unqualified_pusher<const char*> p {};
 			(void)p;
 			return p.push(L, strb, stre);
 		}
 
 		static int push(lua_State* L, const char* str, std::size_t len) {
-			unqualified_pusher<const char*> p{};
+			unqualified_pusher<const char*> p {};
 			(void)p;
 			return p.push(L, str, len);
 		}
@@ -847,19 +847,19 @@ namespace sol { namespace stack {
 	template <>
 	struct unqualified_pusher<wchar_t*> {
 		static int push(lua_State* L, const wchar_t* str) {
-			unqualified_pusher<const wchar_t*> p{};
+			unqualified_pusher<const wchar_t*> p {};
 			(void)p;
 			return p.push(L, str);
 		}
 
 		static int push(lua_State* L, const wchar_t* strb, const wchar_t* stre) {
-			unqualified_pusher<const wchar_t*> p{};
+			unqualified_pusher<const wchar_t*> p {};
 			(void)p;
 			return p.push(L, strb, stre);
 		}
 
 		static int push(lua_State* L, const wchar_t* str, std::size_t len) {
-			unqualified_pusher<const wchar_t*> p{};
+			unqualified_pusher<const wchar_t*> p {};
 			(void)p;
 			return p.push(L, str, len);
 		}
@@ -925,19 +925,19 @@ namespace sol { namespace stack {
 	template <>
 	struct unqualified_pusher<char16_t*> {
 		static int push(lua_State* L, const char16_t* str) {
-			unqualified_pusher<const char16_t*> p{};
+			unqualified_pusher<const char16_t*> p {};
 			(void)p;
 			return p.push(L, str);
 		}
 
 		static int push(lua_State* L, const char16_t* strb, const char16_t* stre) {
-			unqualified_pusher<const char16_t*> p{};
+			unqualified_pusher<const char16_t*> p {};
 			(void)p;
 			return p.push(L, strb, stre);
 		}
 
 		static int push(lua_State* L, const char16_t* str, std::size_t len) {
-			unqualified_pusher<const char16_t*> p{};
+			unqualified_pusher<const char16_t*> p {};
 			(void)p;
 			return p.push(L, str, len);
 		}
@@ -1002,19 +1002,19 @@ namespace sol { namespace stack {
 	template <>
 	struct unqualified_pusher<char32_t*> {
 		static int push(lua_State* L, const char32_t* str) {
-			unqualified_pusher<const char32_t*> p{};
+			unqualified_pusher<const char32_t*> p {};
 			(void)p;
 			return p.push(L, str);
 		}
 
 		static int push(lua_State* L, const char32_t* strb, const char32_t* stre) {
-			unqualified_pusher<const char32_t*> p{};
+			unqualified_pusher<const char32_t*> p {};
 			(void)p;
 			return p.push(L, strb, stre);
 		}
 
 		static int push(lua_State* L, const char32_t* str, std::size_t len) {
-			unqualified_pusher<const char32_t*> p{};
+			unqualified_pusher<const char32_t*> p {};
 			(void)p;
 			return p.push(L, str, len);
 		}
@@ -1085,7 +1085,7 @@ namespace sol { namespace stack {
 			luaL_checkstack(L, static_cast<int>(sizeof...(I)), detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
 			int pushcount = 0;
-			(void)detail::swallow{ 0, (pushcount += stack::push(L, std::get<I>(std::forward<T>(t))), 0)... };
+			(void)detail::swallow { 0, (pushcount += stack::push(L, std::get<I>(std::forward<T>(t))), 0)... };
 			return pushcount;
 		}
 
