@@ -296,6 +296,20 @@ namespace sol { namespace stack {
 				lua_pushnumber(L, std::forward<Args>(args)...);
 				return 1;
 			}
+			else if constexpr (std::is_same<Tu, luaL_Stream*>) {
+				luaL_Stream* source(std::forward<Args>(args)...);
+				luaL_Stream* stream = static_cast<luaL_Stream*>(lua_newuserdata(L, sizeof(luaL_Stream)));
+				stream->f = source->f;
+				stream->closef = source->closef;
+				return 1;
+			}
+			else if constexpr (std::is_same<Tu, luaL_Stream>) {
+				luaL_Stream& source(std::forward<Args>(args)...);
+				luaL_Stream* stream = static_cast<luaL_Stream*>(lua_newuserdata(L, sizeof(luaL_Stream)));
+				stream->f = source.f;
+				stream->closef = source.closef;
+				return 1;
+			}
 			else if constexpr (std::is_enum_v<Tu>) {
 				return stack_detail::msvc_is_ass_with_if_constexpr_push_enum(std::true_type(), L, std::forward<Args>(args)...);
 			}

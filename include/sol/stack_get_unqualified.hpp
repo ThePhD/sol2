@@ -84,7 +84,7 @@ namespace sol { namespace stack {
 					cp = dr.codepoint;
 					strtarget = dr.next;
 				}
-				if constexpr(std::is_same_v<Ch, char32_t>) {
+				if constexpr (std::is_same_v<Ch, char32_t>) {
 					auto er = unicode::code_point_to_utf32(cp);
 					f(er);
 				}
@@ -153,6 +153,14 @@ namespace sol { namespace stack {
 				Real* mem = static_cast<Real*>(memory);
 				return *mem;
 			}
+			else if constexpr (std::is_same_v<T, luaL_Stream*>) {
+				luaL_Stream* pstream = static_cast<luaL_Stream*>(lua_touserdata(L, index));
+				return pstream;
+			}
+			else if constexpr (std::is_same_v<T, luaL_Stream>) {
+				luaL_Stream* pstream = static_cast<luaL_Stream*>(lua_touserdata(L, index));
+				return *pstream;
+			}
 			else {
 				return stack_detail::unchecked_unqualified_get<detail::as_value_tag<T>>(L, index, tracking);
 			}
@@ -164,7 +172,8 @@ namespace sol { namespace stack {
 		static decltype(auto) get(lua_State* L, int index, record& tracking) {
 			using Tu = meta::unqualified_t<X>;
 			static constexpr bool is_userdata_of_some_kind
-				= !std::is_reference_v<X> && is_container_v<Tu> && std::is_default_constructible_v<Tu> && !is_lua_primitive_v<Tu> && !is_transparent_argument_v<Tu>;
+				= !std::is_reference_v<
+				       X> && is_container_v<Tu> && std::is_default_constructible_v<Tu> && !is_lua_primitive_v<Tu> && !is_transparent_argument_v<Tu>;
 			if constexpr (is_userdata_of_some_kind) {
 				if (type_of(L, index) == type::userdata) {
 					return static_cast<Tu>(stack_detail::unchecked_unqualified_get<Tu>(L, index, tracking));
@@ -280,7 +289,7 @@ namespace sol { namespace stack {
 
 			// the W4 flag is really great,
 			// so great that it can tell my for loops (twice nested)
-			// below never actually terminate 
+			// below never actually terminate
 			// without hitting where the gotos have infested
 
 			// so now I would get the error W4XXX unreachable
@@ -316,7 +325,7 @@ namespace sol { namespace stack {
 			T cont;
 			std::size_t idx = 0;
 #if SOL_LUA_VERSION >= 503
-			// This method is HIGHLY performant over regular table iteration 
+			// This method is HIGHLY performant over regular table iteration
 			// thanks to the Lua API changes in 5.3
 			// Questionable in 5.4
 			for (lua_Integer i = 0;; i += lua_size<V>::value) {
@@ -363,7 +372,7 @@ namespace sol { namespace stack {
 #endif
 					continue;
 				}
-				
+
 				push_back_at_end(meta::has_push_back<Tu>(), t, L, cont, idx);
 				++idx;
 				lua_pop(L, lua_size<V>::value);
@@ -399,7 +408,7 @@ namespace sol { namespace stack {
 				++idx;
 			}
 #endif
-			done:
+		done:
 			return cont;
 		}
 
@@ -514,7 +523,7 @@ namespace sol { namespace stack {
 				++idx;
 			}
 #endif
-			done:
+		done:
 			return cont;
 		}
 
@@ -756,7 +765,7 @@ namespace sol { namespace stack {
 	struct unqualified_getter<meta_function> {
 		static meta_function get(lua_State* L, int index, record& tracking) {
 			tracking.use(1);
-			const char* name = unqualified_getter<const char*>{}.get(L, index, tracking);
+			const char* name = unqualified_getter<const char*> {}.get(L, index, tracking);
 			const auto& mfnames = meta_function_names();
 			for (std::size_t i = 0; i < mfnames.size(); ++i)
 				if (mfnames[i] == name)
@@ -874,8 +883,7 @@ namespace sol { namespace stack {
 					lua_getfield(L, -1, &detail::base_class_cast_key()[0]);
 					if (type_of(L, -1) != type::lua_nil) {
 						void* basecastdata = lua_touserdata(L, -1);
-						detail::inheritance_cast_function ic
-							= reinterpret_cast<detail::inheritance_cast_function>(basecastdata);
+						detail::inheritance_cast_function ic = reinterpret_cast<detail::inheritance_cast_function>(basecastdata);
 						// use the casting function to properly adjust the pointer for the desired T
 						udata = ic(udata, usertype_traits<T>::qualified_name());
 					}
@@ -953,15 +961,14 @@ namespace sol { namespace stack {
 		template <typename... Args>
 		static R apply(std::index_sequence<>, lua_State*, int, record&, Args&&... args) {
 			// Fuck you too, VC++
-			return R{ std::forward<Args>(args)... };
+			return R { std::forward<Args>(args)... };
 		}
 
 		template <std::size_t I, std::size_t... Ix, typename... Args>
 		static R apply(std::index_sequence<I, Ix...>, lua_State* L, int index, record& tracking, Args&&... args) {
 			// Fuck you too, VC++
 			typedef std::tuple_element_t<I, std::tuple<Tn...>> T;
-			return apply(std::index_sequence<Ix...>(), L, index, tracking, std::forward<Args>(args)...,
-				stack::get<T>(L, index + tracking.used, tracking));
+			return apply(std::index_sequence<Ix...>(), L, index, tracking, std::forward<Args>(args)..., stack::get<T>(L, index + tracking.used, tracking));
 		}
 
 		static R get(lua_State* L, int index, record& tracking) {
@@ -972,9 +979,8 @@ namespace sol { namespace stack {
 	template <typename A, typename B>
 	struct unqualified_getter<std::pair<A, B>> {
 		static decltype(auto) get(lua_State* L, int index, record& tracking) {
-			return std::pair<decltype(stack::get<A>(L, index)), decltype(stack::get<B>(L, index))>{
-				stack::get<A>(L, index, tracking), stack::get<B>(L, index + tracking.used, tracking)
-			};
+			return std::pair<decltype(stack::get<A>(L, index)), decltype(stack::get<B>(L, index))> { stack::get<A>(L, index, tracking),
+				stack::get<B>(L, index + tracking.used, tracking) };
 		}
 	};
 
@@ -992,9 +998,9 @@ namespace sol { namespace stack {
 				return V();
 			}
 			else {
-				//using T = std::variant_alternative_t<0, V>;
+				// using T = std::variant_alternative_t<0, V>;
 				std::abort();
-				//return V(std::in_place_index<0>, stack::get<T>(L, index, tracking));
+				// return V(std::in_place_index<0>, stack::get<T>(L, index, tracking));
 			}
 		}
 
@@ -1016,6 +1022,6 @@ namespace sol { namespace stack {
 #endif // SOL_STD_VARIANT
 #endif // SOL_CXX17_FEATURES
 
-}}	// namespace sol::stack
+}} // namespace sol::stack
 
 #endif // SOL_STACK_UNQUALIFIED_GET_HPP
