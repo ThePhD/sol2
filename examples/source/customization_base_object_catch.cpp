@@ -92,9 +92,16 @@ sol::object BaseObject::getAsRetyped(lua_State* L, BaseObjectLifetime Lifetime) 
 			return sol::make_object(L, std::make_shared<Weapon>(*static_cast<const Weapon*>(this)));
 		}
 	default:
-		// we have a normal type here, so that means we
-		// must bypass customization points
 		std::cout << "Unknown type: falling back to base object." << std::endl;
+		// we have a normal type here, so that means we
+		// must bypass typical customization points by using
+		// sol::make_object_userdata/sol::make_reference_userdata
+		// WARNING: IF THIS TYPE IS IN FACT NOT A BASE OBJECT,
+		// BUT SOME DERIVED OBJECT, THEN RUNNING THIS CODE FOR
+		// VALUE TYPES AND SHARED TYPES WILL "SLICE"
+		// THE DERIVED BITS OFF THE BASE BITS PERMANENTLY
+		// NEVER FORGET TO UPDATE THE SWITCH IF YOU ADD
+		// NEW TYPES!!
 		switch (Lifetime) {
 		case BaseObjectLifetime::Value:
 			return sol::make_object_userdata(L, *this);
@@ -123,8 +130,8 @@ int sol_lua_push(sol::types<std::shared_ptr<BaseObject>>, lua_State* L, const st
 }
 
 int main() {
-    // test our customization points out
-    std::cout << "=== Base object customization points ===" << std::endl;
+	// test our customization points out
+	std::cout << "=== Base object customization points ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::string, sol::lib::table);
@@ -157,6 +164,7 @@ int main() {
 
 	// Same objects but as base objects to test mapping.
 	std::cout << "Base-cast pointers..." << std::endl;
+	lua["ptrBaseAsBase"] = static_cast<BaseObject*>(&base);
 	lua["ptrArmorAsBase"] = static_cast<BaseObject*>(&armor);
 	lua["ptrWeaponAsBase"] = static_cast<BaseObject*>(&weapon);
 	std::cout << std::endl;
@@ -168,6 +176,7 @@ int main() {
 	std::cout << std::endl;
 
 	std::cout << "Smart pointers put as the base class..." << std::endl;
+	lua["sharedBaseAsBase"] = (std::shared_ptr<BaseObject>)std::make_shared<BaseObject>();
 	lua["sharedArmorAsBase"] = (std::shared_ptr<BaseObject>)std::make_shared<Armor>();
 	lua["sharedArmorAsBase"] = (std::shared_ptr<BaseObject>)std::make_shared<Weapon>();
 	std::cout << std::endl;
