@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-01-17 10:21:30.504542 UTC
-// This header was generated with sol v3.2.0 (revision 1c89390)
+// Generated 2020-01-25 00:57:44.490128 UTC
+// This header was generated with sol v3.2.0 (revision c77b5b4)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -9499,6 +9499,8 @@ namespace sol {
 		template <typename T>
 		struct as_value_tag {};
 		template <typename T>
+		struct as_unique_tag {};
+		template <typename T>
 		struct as_table_tag {};
 
 		using lua_reg_table = luaL_Reg[64];
@@ -10364,14 +10366,26 @@ namespace sol {
 		template <typename T, typename... Args>
 		int push_userdata(lua_State* L, T&& t, Args&&... args) {
 			using U = meta::unqualified_t<T>;
-			using Tr = meta::conditional_t<std::is_pointer<U>::value, detail::as_pointer_tag<std::remove_pointer_t<U>>, detail::as_value_tag<U>>;
+			using Tr = meta::conditional_t<std::is_pointer_v<U>,
+				detail::as_pointer_tag<std::remove_pointer_t<U>>,
+				meta::conditional_t<is_unique_usertype_v<U>,
+					detail::as_unique_tag<U>,
+					detail::as_value_tag<U>
+				>
+			>;
 			return stack::push<Tr>(L, std::forward<T>(t), std::forward<Args>(args)...);
 		}
 
 		template <typename T, typename Arg, typename... Args>
 		int push_userdata(lua_State* L, Arg&& arg, Args&&... args) {
 			using U = meta::unqualified_t<T>;
-			using Tr = meta::conditional_t<std::is_pointer<U>::value, detail::as_pointer_tag<std::remove_pointer_t<U>>, detail::as_value_tag<U>>;
+			using Tr = meta::conditional_t<std::is_pointer_v<U>,
+				detail::as_pointer_tag<std::remove_pointer_t<U>>,
+				meta::conditional_t<is_unique_usertype_v<U>,
+					detail::as_unique_tag<U>,
+					detail::as_value_tag<U>
+				>
+			>;
 			return stack::push<Tr>(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 		}
 
@@ -13262,6 +13276,16 @@ namespace sol { namespace stack {
 		}
 	};
 
+	template <typename T>
+	struct unqualified_pusher<detail::as_unique_tag<T>> {
+		template <typename... Args>
+		static int push (lua_State* L, Args&&... args) {
+			stack_detail::uu_pusher<T> p;
+			(void)p;
+			return p.push(L, std::forward<Args>(args)...);
+		}
+	};
+
 	namespace stack_detail {
 		template <typename T>
 		struct uu_pusher {
@@ -13366,9 +13390,7 @@ namespace sol { namespace stack {
 				return stack::push<detail::as_pointer_tag<std::remove_pointer_t<T>>>(L, std::forward<Args>(args)...);
 			}
 			else if constexpr (is_unique_usertype_v<Tu>) {
-				stack_detail::uu_pusher<T> p;
-				(void)p;
-				return p.push(L, std::forward<Args>(args)...);
+				return stack::push<detail::as_unique_tag<T>>(L, std::forward<Args>(args)...);
 			}
 			else {
 				return stack::push<detail::as_value_tag<T>>(L, std::forward<Args>(args)...);
@@ -14870,6 +14892,26 @@ namespace sol {
 		return r;
 	}
 
+	template <typename R = reference, bool should_pop = !is_stack_based_v<R>, typename T>
+	R make_reference_userdata(lua_State* L, T&& value) {
+		int backpedal = stack::push_userdata(L, std::forward<T>(value));
+		R r = stack::get<R>(L, -backpedal);
+		if (should_pop) {
+			lua_pop(L, backpedal);
+		}
+		return r;
+	}
+
+	template <typename T, typename R = reference, bool should_pop = !is_stack_based_v<R>, typename... Args>
+	R make_reference_userdata(lua_State* L, Args&&... args) {
+		int backpedal = stack::push_userdata<T>(L, std::forward<Args>(args)...);
+		R r = stack::get<R>(L, -backpedal);
+		if (should_pop) {
+			lua_pop(L, backpedal);
+		}
+		return r;
+	}
+
 } // namespace sol
 
 // end of sol/make_reference.hpp
@@ -15051,6 +15093,16 @@ namespace sol {
 	template <typename T, typename... Args>
 	object make_object(lua_State* L, Args&&... args) {
 		return make_reference<T, object, true>(L, std::forward<Args>(args)...);
+	}
+
+	template <typename T>
+	object make_object_userdata(lua_State* L, T&& value) {
+		return make_reference_userdata<object, true>(L, std::forward<T>(value));
+	}
+
+	template <typename T, typename... Args>
+	object make_object_userdata(lua_State* L, Args&&... args) {
+		return make_reference_userdata<T, object, true>(L, std::forward<Args>(args)...);
 	}
 } // namespace sol
 

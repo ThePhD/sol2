@@ -189,6 +189,16 @@ namespace sol { namespace stack {
 		}
 	};
 
+	template <typename T>
+	struct unqualified_pusher<detail::as_unique_tag<T>> {
+		template <typename... Args>
+		static int push (lua_State* L, Args&&... args) {
+			stack_detail::uu_pusher<T> p;
+			(void)p;
+			return p.push(L, std::forward<Args>(args)...);
+		}
+	};
+
 	namespace stack_detail {
 		template <typename T>
 		struct uu_pusher {
@@ -293,9 +303,7 @@ namespace sol { namespace stack {
 				return stack::push<detail::as_pointer_tag<std::remove_pointer_t<T>>>(L, std::forward<Args>(args)...);
 			}
 			else if constexpr (is_unique_usertype_v<Tu>) {
-				stack_detail::uu_pusher<T> p;
-				(void)p;
-				return p.push(L, std::forward<Args>(args)...);
+				return stack::push<detail::as_unique_tag<T>>(L, std::forward<Args>(args)...);
 			}
 			else {
 				return stack::push<detail::as_value_tag<T>>(L, std::forward<Args>(args)...);

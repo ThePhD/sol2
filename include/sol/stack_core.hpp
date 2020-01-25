@@ -55,6 +55,8 @@ namespace sol {
 		template <typename T>
 		struct as_value_tag {};
 		template <typename T>
+		struct as_unique_tag {};
+		template <typename T>
 		struct as_table_tag {};
 
 		using lua_reg_table = luaL_Reg[64];
@@ -921,14 +923,26 @@ namespace sol {
 		template <typename T, typename... Args>
 		int push_userdata(lua_State* L, T&& t, Args&&... args) {
 			using U = meta::unqualified_t<T>;
-			using Tr = meta::conditional_t<std::is_pointer<U>::value, detail::as_pointer_tag<std::remove_pointer_t<U>>, detail::as_value_tag<U>>;
+			using Tr = meta::conditional_t<std::is_pointer_v<U>,
+				detail::as_pointer_tag<std::remove_pointer_t<U>>,
+				meta::conditional_t<is_unique_usertype_v<U>,
+					detail::as_unique_tag<U>,
+					detail::as_value_tag<U>
+				>
+			>;
 			return stack::push<Tr>(L, std::forward<T>(t), std::forward<Args>(args)...);
 		}
 
 		template <typename T, typename Arg, typename... Args>
 		int push_userdata(lua_State* L, Arg&& arg, Args&&... args) {
 			using U = meta::unqualified_t<T>;
-			using Tr = meta::conditional_t<std::is_pointer<U>::value, detail::as_pointer_tag<std::remove_pointer_t<U>>, detail::as_value_tag<U>>;
+			using Tr = meta::conditional_t<std::is_pointer_v<U>,
+				detail::as_pointer_tag<std::remove_pointer_t<U>>,
+				meta::conditional_t<is_unique_usertype_v<U>,
+					detail::as_unique_tag<U>,
+					detail::as_value_tag<U>
+				>
+			>;
 			return stack::push<Tr>(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 		}
 
