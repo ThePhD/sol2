@@ -34,7 +34,7 @@ Use/return a ``unique_ptr`` or ``shared_ptr`` instead or just return a value:
 	:linenos:
 	:caption: (smart pointers) pointer_lifetime.cpp
 	:name: pointer-lifetime-smart-ptr
-	:lines: 1-11,14-22, 74-
+	:lines: 1-11,25-44, 74-
 
 If you have something you know is going to last and you just want to give it to Lua as a reference, then it's fine too:
 

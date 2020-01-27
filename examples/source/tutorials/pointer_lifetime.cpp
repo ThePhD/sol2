@@ -6,8 +6,8 @@ struct my_type {
 	}
 };
 
-int main () {
-	
+int main() {
+
 	sol::state lua;
 
 	/*

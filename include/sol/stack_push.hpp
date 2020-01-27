@@ -296,14 +296,14 @@ namespace sol { namespace stack {
 				lua_pushnumber(L, std::forward<Args>(args)...);
 				return 1;
 			}
-			else if constexpr (std::is_same<Tu, luaL_Stream*>) {
-				luaL_Stream* source(std::forward<Args>(args)...);
+			else if constexpr (std::is_same_v<Tu, luaL_Stream*>) {
+				luaL_Stream* source { std::forward<Args>(args)... };
 				luaL_Stream* stream = static_cast<luaL_Stream*>(lua_newuserdata(L, sizeof(luaL_Stream)));
 				stream->f = source->f;
 				stream->closef = source->closef;
 				return 1;
 			}
-			else if constexpr (std::is_same<Tu, luaL_Stream>) {
+			else if constexpr (std::is_same_v<Tu, luaL_Stream>) {
 				luaL_Stream& source(std::forward<Args>(args)...);
 				luaL_Stream* stream = static_cast<luaL_Stream*>(lua_newuserdata(L, sizeof(luaL_Stream)));
 				stream->f = source.f;

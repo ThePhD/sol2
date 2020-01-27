@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-01-25 17:11:19.283779 UTC
-// This header was generated with sol v3.2.0 (revision 2beb13b)
+// Generated 2020-01-27 19:13:10.728559 UTC
+// This header was generated with sol v3.2.0 (revision 0c38fd1)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -11187,11 +11187,13 @@ namespace sol { namespace stack {
 			}
 			else if constexpr (std::is_same_v<T, luaL_Stream*> || std::is_same_v<T, luaL_Stream>) {
 				if (lua_getmetatable(L, index) == 0) {
+					type t = type_of(L, index);
 					handler(L, index, expected, t, "value is not a valid luaL_Stream (has no metatable/is not a valid value)");
 					return false;
 				}
 				luaL_getmetatable(L, LUA_FILEHANDLE);
 				if (type_of(L, index) != type::table) {
+					type t = type_of(L, index);
 					lua_pop(L, 1);
 					handler(L,
 						index,
@@ -11204,6 +11206,7 @@ namespace sol { namespace stack {
 				int is_stream_table = lua_compare(L, -1, -2, LUA_OPEQ);
 				lua_pop(L, 2);
 				if (is_stream_table == 0) {
+					type t = type_of(L, index);
 					handler(L, index, expected, t, "value is not a valid luaL_Stream (incorrect metatable)");
 					return false;
 				}
@@ -13416,15 +13419,15 @@ namespace sol { namespace stack {
 				lua_pushnumber(L, std::forward<Args>(args)...);
 				return 1;
 			}
-			else if constexpr (std::is_same<Tu, luaL_Stream*>) {
-				luaL_Stream* source(std::forward<Args>(Args)...);
+			else if constexpr (std::is_same_v<Tu, luaL_Stream*>) {
+				luaL_Stream* source { std::forward<Args>(args)... };
 				luaL_Stream* stream = static_cast<luaL_Stream*>(lua_newuserdata(L, sizeof(luaL_Stream)));
 				stream->f = source->f;
 				stream->closef = source->closef;
 				return 1;
 			}
-			else if constexpr (std::is_same<Tu, luaL_Stream>) {
-				luaL_Stream& source(std::forward<Args>(Args)...);
+			else if constexpr (std::is_same_v<Tu, luaL_Stream>) {
+				luaL_Stream& source(std::forward<Args>(args)...);
 				luaL_Stream* stream = static_cast<luaL_Stream*>(lua_newuserdata(L, sizeof(luaL_Stream)));
 				stream->f = source.f;
 				stream->closef = source.closef;
