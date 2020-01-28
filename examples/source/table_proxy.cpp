@@ -3,9 +3,7 @@
 
 #include "assert.hpp"
 
-#include <iostream>
-
-int main () {
+int main() {
 
 	const auto& code = R"(
 	bark = { 
@@ -40,7 +38,7 @@ int main () {
 	lua.script("assert(bark.woof[2] == 20)");
 
 	lua["a_new_value"] = 24;
-	lua["chase_tail"] = [](int chasing) { 
+	lua["chase_tail"] = [](int chasing) {
 		int r = 2;
 		for (int i = 0; i < chasing; ++i) {
 			r *= r;
