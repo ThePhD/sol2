@@ -31,12 +31,9 @@
 #include <functional>
 #include <utility>
 #include <cmath>
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-#include <optional>
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 #include <variant>
 #endif // SOL_STD_VARIANT
-#endif // SOL_CXX17_FEATURES
 
 namespace sol { namespace stack {
 	namespace stack_detail {
@@ -555,8 +552,9 @@ namespace sol { namespace stack {
 		}
 	};
 
-	template <typename T>
-	struct unqualified_checker<optional<T>, type::poly> {
+	template <typename O>
+	struct unqualified_checker<O, type::poly, std::enable_if_t<meta::is_optional_v<O>>> {
+		using T = typename O::value_type;
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&&, record& tracking) {
 			type t = type_of(L, index);
@@ -569,25 +567,6 @@ namespace sol { namespace stack {
 				return true;
 			}
 			return stack::unqualified_check<T>(L, index, no_panic, tracking);
-		}
-	};
-
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-
-	template <typename T>
-	struct unqualified_checker<std::optional<T>, type::poly> {
-		template <typename Handler>
-		static bool check(lua_State* L, int index, Handler&&, record& tracking) {
-			type t = type_of(L, index);
-			if (t == type::none) {
-				tracking.use(0);
-				return true;
-			}
-			if (t == type::lua_nil) {
-				tracking.use(1);
-				return true;
-			}
-			return stack::check<T>(L, index, no_panic, tracking);
 		}
 	};
 
@@ -629,8 +608,6 @@ namespace sol { namespace stack {
 	};
 
 #endif // SOL_STD_VARIANT
-
-#endif // SOL_CXX17_FEATURES
 }}     // namespace sol::stack
 
 #endif // SOL_STACK_CHECK_UNQUALIFIED_HPP

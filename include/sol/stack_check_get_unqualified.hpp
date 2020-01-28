@@ -31,12 +31,9 @@
 
 #include <cstdlib>
 #include <cmath>
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-#include <optional>
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 #include <variant>
 #endif // variant
-#endif // C++17
 
 
 
@@ -129,22 +126,11 @@ namespace stack {
 		}
 	};
 
-	template <typename T>
-	struct unqualified_getter<optional<T>> {
-		static decltype(auto) get(lua_State* L, int index, record& tracking) {
+	template <typename O>
+	struct unqualified_getter<O, std::enable_if_t<meta::is_optional_v<O>>> {
+		static O get(lua_State* L, int index, record& tracking) {
+			using T = typename O::value_type;
 			return stack::unqualified_check_get<T>(L, index, no_panic, tracking);
-		}
-	};
-
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-	template <typename T>
-	struct unqualified_getter<std::optional<T>> {
-		static std::optional<T> get(lua_State* L, int index, record& tracking) {
-			if (!unqualified_check<T>(L, index, no_panic)) {
-				tracking.use(static_cast<int>(!lua_isnone(L, index)));
-				return std::nullopt;
-			}
-			return stack_detail::unchecked_unqualified_get<T>(L, index, tracking);
 		}
 	};
 
@@ -189,7 +175,6 @@ namespace stack {
 		}
 	};
 #endif // SOL_STD_VARIANT
-#endif // SOL_CXX17_FEATURES
 }
 } // namespace sol::stack
 

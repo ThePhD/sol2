@@ -111,14 +111,36 @@ TEST_CASE("utility/variant", "test that variant can be round-tripped") {
 #endif // C++17
 }
 
-TEST_CASE("utility/optional-conversion", "test that regular optional will properly catch certain types") {
+namespace detail {
+	template <typename T>
+	struct optional_rebinder;
+
+	template <template <class> class Optional, typename T>
+	struct optional_rebinder<Optional<T>> {
+		template <typename U>
+		using type = Optional<U>;
+	};
+
+	struct dummy {};
+}
+
+#define Optional typename detail::optional_rebinder<TestType>::template type
+
+using OptionalsToTest = std::tuple<
+		sol::optional<detail::dummy>
+#ifdef SOL_CXX17_FEATURES
+		, std::optional<detail::dummy>
+#endif
+>;
+
+TEMPLATE_LIST_TEST_CASE("utility/optional-conversion", "test that regular optional will properly catch certain types", OptionalsToTest) {
 	sol::state lua;
 	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
 
 	lua.new_usertype<vars>("vars");
 
-	lua["test"] = [](sol::optional<vars> x) { return static_cast<bool>(x); };
+	lua["test"] = [](Optional<vars> x) { return static_cast<bool>(x); };
 
 	const auto result = lua.safe_script(R"(
 		assert(test(vars:new()))
@@ -129,11 +151,11 @@ TEST_CASE("utility/optional-conversion", "test that regular optional will proper
 	REQUIRE(result.valid());
 }
 
-TEST_CASE("utility/optional-value-or", "test that regular optional will properly handle value_or") {
-	sol::optional<std::string> str;
+TEMPLATE_LIST_TEST_CASE("utility/optional-value-or", "test that regular optional will properly handle value_or", OptionalsToTest) {
+	Optional<std::string> str;
 	auto x = str.value_or("!");
 
-	sol::optional<unsigned int> un;
+	Optional<unsigned int> un;
 	auto y = un.value_or(64);
 
 	optional_ref_t def_custom;
@@ -149,20 +171,22 @@ TEST_CASE("utility/optional-value-or", "test that regular optional will properly
 	REQUIRE(&z != &def_custom);
 }
 
-TEST_CASE("utility/std optional", "test that shit optional can be round-tripped") {
-#ifdef SOL_CXX17_FEATURES
-	SECTION("okay") {
-		sol::state lua;
-		sol::stack_guard luasg(lua);
-		lua.open_libraries(sol::lib::base);
+TEMPLATE_LIST_TEST_CASE("utility/optional", "test that shit optional can be round-tripped", OptionalsToTest) {
+	sol::state lua;
+	sol::stack_guard luasg(lua);
+	lua.open_libraries(sol::lib::base);
 
+	SECTION("okay") {
 		lua.set_function("f", [](int v) {
 			return v == 2;
 		});
-		lua.set_function("g", [](std::optional<int> vv) {
+		lua.set_function("g", [](Optional<int> vv) {
 			return vv && *vv == 2;
 		});
-		lua["v"] = std::optional<int>(2);
+		lua.set_function("h", [](Optional<sol::object> v) {
+			return !v;
+		});
+		lua["v"] = Optional<int>(2);
 		{
 			auto result = lua.safe_script("assert(f(v))", sol::script_pass_on_error);
 			REQUIRE(result.valid());
@@ -171,19 +195,19 @@ TEST_CASE("utility/std optional", "test that shit optional can be round-tripped"
 			auto result = lua.safe_script("assert(g(v))", sol::script_pass_on_error);
 			REQUIRE(result.valid());
 		}
+		{
+			auto result = lua.safe_script("assert(h())", sol::script_pass_on_error);
+			REQUIRE(result.valid());
+		}
 	}
 	SECTION("throws") {
-		sol::state lua;
-		sol::stack_guard luasg(lua);
-		lua.open_libraries(sol::lib::base);
-
 		lua.set_function("f", [](int v) {
 			return v == 2;
 		});
-		lua.set_function("g", [](std::optional<int> vv) {
+		lua.set_function("g", [](Optional<int> vv) {
 			return vv && *vv == 2;
 		});
-		lua["v"] = std::optional<int>(std::nullopt);
+		lua["v"] = Optional<int>{};
 		{
 			auto result = lua.safe_script("assert(f(v))", sol::script_pass_on_error);
 			REQUIRE_FALSE(result.valid());
@@ -194,13 +218,8 @@ TEST_CASE("utility/std optional", "test that shit optional can be round-tripped"
 		};
 	}
 	SECTION("in classes") {
-		sol::state lua;
-		sol::stack_guard luasg(lua);
-
-		lua.open_libraries(sol::lib::base);
-
 		struct opt_c {
-			std::optional<int> member;
+			Optional<int> member;
 		};
 
 		auto uto = lua.new_usertype<opt_c>("opt_c",
@@ -212,12 +231,32 @@ TEST_CASE("utility/std optional", "test that shit optional can be round-tripped"
 		lua.safe_script("print(obj.value) obj.value = 20  print(obj.value)");
 		REQUIRE(obj.member == 20);
 		lua.safe_script("print(obj.value) obj.value = nil print(obj.value)");
-		REQUIRE(obj.member == std::nullopt);
+		REQUIRE(!obj.member);
 	}
-#else
-	REQUIRE(true);
-#endif // C++17
+	SECTION("accepts nil") {
+		lua.set_function("f_int", [](Optional<int> v) { return !v; });
+		lua.set_function("f_object", [](Optional<sol::object> v) { return !v; });
+		lua.set_function("f_table", [](Optional<sol::table> v) { return !v; });
+		lua.set_function("f_function", [](Optional<sol::function> v) { return !v; });
+
+		REQUIRE(lua.safe_script("assert(f_int())").valid());
+		REQUIRE(lua.safe_script("assert(f_object())").valid());
+		REQUIRE(lua.safe_script("assert(f_table())").valid());
+		REQUIRE(lua.safe_script("assert(f_function())").valid());
+	}
+	SECTION("returns nil") {
+		lua.set_function("f_int", []{ return Optional<int>{}; });
+		lua.set_function("f_object", []{ return Optional<sol::object>{}; });
+		lua.set_function("f_table", []{ return Optional<sol::table>{}; });
+		lua.set_function("f_function", []{ return Optional<sol::function>{}; });
+
+		REQUIRE(lua.safe_script("assert(not f_int())").valid());
+		REQUIRE(lua.safe_script("assert(not f_object())").valid());
+		REQUIRE(lua.safe_script("assert(not f_table())").valid());
+		REQUIRE(lua.safe_script("assert(not f_function())").valid());
+	}
 }
+#undef Optional
 
 TEST_CASE("utility/string_view", "test that string_view can be taken as an argument") {
 #ifdef SOL_CXX17_FEATURES

@@ -35,6 +35,7 @@
 #include "stack_guard.hpp"
 #include "demangle.hpp"
 #include "forward_detail.hpp"
+#include "optional.hpp"
 
 #include <vector>
 #include <bitset>
@@ -42,9 +43,6 @@
 #include <string>
 #include <algorithm>
 #include <sstream>
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-#include <optional>
-#endif // C++17
 
 namespace sol {
 	namespace detail {
@@ -1193,12 +1191,7 @@ namespace sol {
 		template <typename T>
 		auto get(lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_get<T>(L, index, tracking)) {
 #if defined(SOL_SAFE_GETTER) && SOL_SAFE_GETTER
-			static constexpr bool is_op = meta::is_specialization_of_v<T, optional>
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-			     || meta::is_specialization_of_v<T, std::optional>
-#endif
-			     ;
-			if constexpr (is_op) {
+			if constexpr (meta::is_optional_v<T>) {
 				return stack_detail::unchecked_get<T>(L, index, tracking);
 			}
 			else {

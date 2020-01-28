@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-01-27 19:13:10.728559 UTC
-// This header was generated with sol v3.2.0 (revision 0c38fd1)
+// Generated 2020-01-28 20:44:48.187355 UTC
+// This header was generated with sol v3.2.0 (revision 903f4db0)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -9487,8 +9487,6 @@ namespace sol {
 #include <forward_list>
 #include <algorithm>
 #include <sstream>
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-#endif // C++17
 
 namespace sol {
 	namespace detail {
@@ -10636,12 +10634,7 @@ namespace sol {
 		template <typename T>
 		auto get(lua_State* L, int index, record& tracking) -> decltype(stack_detail::unchecked_get<T>(L, index, tracking)) {
 #if defined(SOL_SAFE_GETTER) && SOL_SAFE_GETTER
-			static constexpr bool is_op = meta::is_specialization_of_v<T, optional>
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-			     || meta::is_specialization_of_v<T, std::optional>
-#endif
-			     ;
-			if constexpr (is_op) {
+			if constexpr (meta::is_optional_v<T>) {
 				return stack_detail::unchecked_get<T>(L, index, tracking);
 			}
 			else {
@@ -10912,10 +10905,8 @@ namespace sol {
 // beginning of sol/stack_check_unqualified.hpp
 
 #include <cmath>
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 #endif // SOL_STD_VARIANT
-#endif // SOL_CXX17_FEATURES
 
 namespace sol { namespace stack {
 	namespace stack_detail {
@@ -11434,8 +11425,9 @@ namespace sol { namespace stack {
 		}
 	};
 
-	template <typename T>
-	struct unqualified_checker<optional<T>, type::poly> {
+	template <typename O>
+	struct unqualified_checker<O, type::poly, std::enable_if_t<meta::is_optional_v<O>>> {
+		using T = typename O::value_type;
 		template <typename Handler>
 		static bool check(lua_State* L, int index, Handler&&, record& tracking) {
 			type t = type_of(L, index);
@@ -11448,25 +11440,6 @@ namespace sol { namespace stack {
 				return true;
 			}
 			return stack::unqualified_check<T>(L, index, no_panic, tracking);
-		}
-	};
-
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-
-	template <typename T>
-	struct unqualified_checker<std::optional<T>, type::poly> {
-		template <typename Handler>
-		static bool check(lua_State* L, int index, Handler&&, record& tracking) {
-			type t = type_of(L, index);
-			if (t == type::none) {
-				tracking.use(0);
-				return true;
-			}
-			if (t == type::lua_nil) {
-				tracking.use(1);
-				return true;
-			}
-			return stack::check<T>(L, index, no_panic, tracking);
 		}
 	};
 
@@ -11508,8 +11481,6 @@ namespace sol { namespace stack {
 	};
 
 #endif // SOL_STD_VARIANT
-
-#endif // SOL_CXX17_FEATURES
 }}     // namespace sol::stack
 
 // end of sol/stack_check_unqualified.hpp
@@ -12924,10 +12895,8 @@ namespace stack {
 
 // beginning of sol/stack_check_get_unqualified.hpp
 
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 #endif // variant
-#endif // C++17
 
 namespace sol {
 namespace stack {
@@ -13018,22 +12987,11 @@ namespace stack {
 		}
 	};
 
-	template <typename T>
-	struct unqualified_getter<optional<T>> {
-		static decltype(auto) get(lua_State* L, int index, record& tracking) {
+	template <typename O>
+	struct unqualified_getter<O, std::enable_if_t<meta::is_optional_v<O>>> {
+		static O get(lua_State* L, int index, record& tracking) {
+			using T = typename O::value_type;
 			return stack::unqualified_check_get<T>(L, index, no_panic, tracking);
-		}
-	};
-
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-	template <typename T>
-	struct unqualified_getter<std::optional<T>> {
-		static std::optional<T> get(lua_State* L, int index, record& tracking) {
-			if (!unqualified_check<T>(L, index, no_panic)) {
-				tracking.use(static_cast<int>(!lua_isnone(L, index)));
-				return std::nullopt;
-			}
-			return stack_detail::unchecked_unqualified_get<T>(L, index, tracking);
 		}
 	};
 
@@ -13078,7 +13036,6 @@ namespace stack {
 		}
 	};
 #endif // SOL_STD_VARIANT
-#endif // SOL_CXX17_FEATURES
 }
 } // namespace sol::stack
 
@@ -13115,9 +13072,10 @@ namespace sol { namespace stack {
 		}
 	};
 
-	template <typename T>
-	struct qualified_getter<optional<T>> {
-		static optional<T> get(lua_State* L, int index, record& tracking) {
+	template <typename O>
+	struct qualified_getter<O, std::enable_if_t<meta::is_optional_v<O>>> {
+		static O get(lua_State* L, int index, record& tracking) {
+			using T = typename O::value_type;
 			if constexpr (is_lua_reference_v<T>) {
 				// actually check if it's none here, otherwise
 				// we'll have a none object inside an optional!
@@ -13125,33 +13083,19 @@ namespace sol { namespace stack {
 				if (!success) {
 					// expected type, actual type
 					tracking.use(static_cast<int>(success));
-					return nullopt;
+					return {};
 				}
 				return stack_detail::unchecked_get<T>(L, index, tracking);
 			}
 			else {
 				if (!check<T>(L, index, &no_panic)) {
 					tracking.use(static_cast<int>(!lua_isnone(L, index)));
-					return nullopt;
+					return {};
 				}
 				return stack_detail::unchecked_get<T>(L, index, tracking);
 			}
 		}
 	};
-
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-	template <typename T>
-	struct qualified_getter<std::optional<T>> {
-		static std::optional<T> get(lua_State* L, int index, record& tracking) {
-			if (!check<T>(L, index, no_panic)) {
-				tracking.use(static_cast<int>(!lua_isnone(L, index)));
-				return std::nullopt;
-			}
-			return stack_detail::unchecked_get<T>(L, index, tracking);
-		}
-	};
-#endif // C++17 features
-
 }} // namespace sol::stack
 
 // end of sol/stack_check_get_qualified.hpp
@@ -14243,13 +14187,14 @@ namespace sol { namespace stack {
 	};
 
 	template <typename O>
-	struct unqualified_pusher<optional<O>> {
-		template <typename T>
-		static int push(lua_State* L, T&& t) {
-			if (t == nullopt) {
+	struct unqualified_pusher<O, std::enable_if_t<meta::is_optional_v<O>>> {
+		using T = typename O::value_type;
+		template <typename U>
+		static int push(lua_State* L, U&& t) {
+			if (!t) {
 				return stack::push(L, nullopt);
 			}
-			return stack::push(L, static_cast<meta::conditional_t<std::is_lvalue_reference<T>::value, O&, O&&>>(t.value()));
+			return stack::push(L, static_cast<meta::conditional_t<std::is_lvalue_reference<U>::value, T&, T&&>>(t.value()));
 		}
 	};
 
@@ -14308,18 +14253,6 @@ namespace sol { namespace stack {
 		}
 	};
 
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-	template <typename O>
-	struct unqualified_pusher<std::optional<O>> {
-		template <typename T>
-		static int push(lua_State* L, T&& t) {
-			if (t == std::nullopt) {
-				return stack::push(L, nullopt);
-			}
-			return stack::push(L, static_cast<meta::conditional_t<std::is_lvalue_reference<T>::value, O&, O&&>>(t.value()));
-		}
-	};
-
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	namespace stack_detail {
 
@@ -14348,7 +14281,6 @@ namespace sol { namespace stack {
 		}
 	};
 #endif // Variant because Clang is terrible
-#endif // C++17 Support
 }}     // namespace sol::stack
 
 // end of sol/stack_push.hpp
