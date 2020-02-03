@@ -12,7 +12,7 @@
 [![Support via Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.herokuapp.com%2FThePhD)](https://patreon.com/thephd)
 [![Support via Liberapay](https://img.shields.io/liberapay/patrons/ThePhD.svg)](https://liberapay.com/ThePhD/)
 
-sol is a C++ library binding to Lua. It currently supports all Lua versions 5.1+ (LuaJIT 2.x included). sol aims to be easy to use and easy to add to a project.
+sol2 is a C++ library binding to Lua. It currently supports all Lua versions 5.1+ (LuaJIT 2.x included). sol2 aims to be easy to use and easy to add to a project.
 The library is header-only for easy integration with projects.
 
 ## Documentation
@@ -96,7 +96,7 @@ C++Now 2019 - Flug Auditorium, Aspen Physics Center, Aspen, Colorado
 
 ## Features
 
-- [Fastest in the land](http://sol2.readthedocs.io/en/latest/benchmarks.html) (see: sol bar in graph).
+- [Fastest in the land](http://sol2.readthedocs.io/en/latest/benchmarks.html) (see: sol3 bar in graph).
 - Supports retrieval and setting of multiple types including: 
   * `std::string`, `std::wstring`, `std::u16string` and `std::u32string` support (and for views).
   * understands and works with containers such as `std::map/unordered_map`, c-style arrays, vectors, non-standard custom containers and more.
@@ -117,7 +117,7 @@ C++Now 2019 - Flug Auditorium, Aspen Physics Center, Aspen, Colorado
 
 ## Supported Compilers
 
-sol makes use of C++17 features. GCC 7.x.x and Clang 3.9.x (with `-std=c++1z` and appropriate standard library) 
+sol2 makes use of C++17 features. GCC 7.x.x and Clang 3.9.x (with `-std=c++1z` and appropriate standard library) 
 or higher should be able to compile without problems. However, the officially supported and CI-tested compilers are:
 
 - GCC 7.x.x+ (MinGW 7.x.x+)
@@ -148,6 +148,6 @@ You will need any flavor of python3 and an available compiler. The testing suite
 
 ## License
 
-sol is distributed with an MIT License. You can see LICENSE.txt for more info.
+sol2 is distributed with an MIT License. You can see LICENSE.txt for more info.
 
 If you need a custom solution, feel free to contact me.
