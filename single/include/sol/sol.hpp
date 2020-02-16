@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-01-28 18:44:17.872076 UTC
-// This header was generated with sol v3.2.0 (revision 903f4db)
+// Generated 2020-02-16 15:49:14.208571 UTC
+// This header was generated with sol v3.2.0 (revision 47fbab3)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -13429,14 +13429,18 @@ namespace sol { namespace stack {
 				luaL_Stream* source { std::forward<Args>(args)... };
 				luaL_Stream* stream = static_cast<luaL_Stream*>(lua_newuserdata(L, sizeof(luaL_Stream)));
 				stream->f = source->f;
+#if !defined(SOL_LUAJIT) && (SOL_LUA_VERSION > 501)
 				stream->closef = source->closef;
+#endif // LuaJIT and Lua 5.1 and below do not have
 				return 1;
 			}
 			else if constexpr (std::is_same_v<Tu, luaL_Stream>) {
 				luaL_Stream& source(std::forward<Args>(args)...);
 				luaL_Stream* stream = static_cast<luaL_Stream*>(lua_newuserdata(L, sizeof(luaL_Stream)));
 				stream->f = source.f;
+#if !defined(SOL_LUAJIT) && (SOL_LUA_VERSION > 501)
 				stream->closef = source.closef;
+#endif // LuaJIT and Lua 5.1 and below do not have
 				return 1;
 			}
 			else if constexpr (std::is_enum_v<Tu>) {
@@ -22890,7 +22894,7 @@ namespace sol {
 namespace sol {
 
 	template <typename reference_type>
-	class basic_table_iterator : public std::iterator<std::input_iterator_tag, std::pair<object, object>> {
+	class basic_table_iterator {
 	public:
 		typedef object key_type;
 		typedef object mapped_type;
@@ -22909,12 +22913,10 @@ namespace sol {
 		std::ptrdiff_t idx = 0;
 
 	public:
-		basic_table_iterator()
-		: keyidx(-1), idx(-1) {
+		basic_table_iterator() : keyidx(-1), idx(-1) {
 		}
 
-		basic_table_iterator(reference_type x)
-		: ref(std::move(x)) {
+		basic_table_iterator(reference_type x) : ref(std::move(x)) {
 			ref.push();
 			tableidx = lua_gettop(ref.lua_state());
 			stack::push(ref.lua_state(), lua_nil);

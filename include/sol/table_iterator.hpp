@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -30,7 +30,7 @@
 namespace sol {
 
 	template <typename reference_type>
-	class basic_table_iterator : public std::iterator<std::input_iterator_tag, std::pair<object, object>> {
+	class basic_table_iterator {
 	public:
 		typedef object key_type;
 		typedef object mapped_type;
@@ -49,12 +49,10 @@ namespace sol {
 		std::ptrdiff_t idx = 0;
 
 	public:
-		basic_table_iterator()
-		: keyidx(-1), idx(-1) {
+		basic_table_iterator() : keyidx(-1), idx(-1) {
 		}
 
-		basic_table_iterator(reference_type x)
-		: ref(std::move(x)) {
+		basic_table_iterator(reference_type x) : ref(std::move(x)) {
 			ref.push();
 			tableidx = lua_gettop(ref.lua_state());
 			stack::push(ref.lua_state(), lua_nil);

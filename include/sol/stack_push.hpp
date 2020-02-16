@@ -300,14 +300,18 @@ namespace sol { namespace stack {
 				luaL_Stream* source { std::forward<Args>(args)... };
 				luaL_Stream* stream = static_cast<luaL_Stream*>(lua_newuserdata(L, sizeof(luaL_Stream)));
 				stream->f = source->f;
+#if !defined(SOL_LUAJIT) && (SOL_LUA_VERSION > 501)
 				stream->closef = source->closef;
+#endif // LuaJIT and Lua 5.1 and below do not have
 				return 1;
 			}
 			else if constexpr (std::is_same_v<Tu, luaL_Stream>) {
 				luaL_Stream& source(std::forward<Args>(args)...);
 				luaL_Stream* stream = static_cast<luaL_Stream*>(lua_newuserdata(L, sizeof(luaL_Stream)));
 				stream->f = source.f;
+#if !defined(SOL_LUAJIT) && (SOL_LUA_VERSION > 501)
 				stream->closef = source.closef;
+#endif // LuaJIT and Lua 5.1 and below do not have
 				return 1;
 			}
 			else if constexpr (std::is_enum_v<Tu>) {
