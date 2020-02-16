@@ -189,8 +189,9 @@ If you don't specify a ``sol::meta_function`` name (or equivalent string metamet
 	- a ``sol::meta_function::call`` operator will be generated
 	- the function call operator in C++ must not be overloaded, otherwise sol will be unable to bind it automagically
 	- the function call operator in C++ must not be templated, otherwise sol will be unable to bind it automagically
-	- if it is overloaded or templated, it is your reponsibility to bind it properly
-* for automatic iteration where ``begin()`` and ``end()`` exist on the C++ type
+	- if it is overloaded or templated, it is your responsibility to bind it properly
+* for automatic iteration where ``begin()`` and ``end()`` functions exist on the C++ type
+	- the type **must** have a ``value_type``, ``iterator``, and `similar Container typedefs`_.
 	- a ``sol::meta_function::pairs`` operator is generated for you
 	- Allows you to iterate using ``for k, v in pairs( obj ) do ... end`` in Lua
 	- **Lua 5.2 and better only: LuaJIT does not allow this, Lua 5.1 does NOT allow this**
@@ -330,3 +331,4 @@ performance note
 .. _small starter example here: https://github.com/ThePhD/sol2/blob/develop/examples/source/usertype_basics.cpp
 .. _runtime extensible: https://github.com/ThePhD/sol2/blob/develop/examples/source/usertype_advanced.cpp#L81
 .. _the metamethods in the Lua manual: https://www.lua.org/manual/5.3/manual.html#2.4
+.. _similar Container typedefs: http://eel.is/c++draft/container.requirements.general#4
