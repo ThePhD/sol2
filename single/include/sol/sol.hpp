@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2019 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-02-16 15:49:14.208571 UTC
-// This header was generated with sol v3.2.0 (revision 47fbab3)
+// Generated 2020-03-10 01:17:31.438685 UTC
+// This header was generated with sol v3.2.0 (revision f1ad1de)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6348,11 +6348,11 @@ namespace sol {
 		};
 
 		struct yield_tag_t {};
-		const yield_tag_t yield_tag = yield_tag_t{};
+		const yield_tag_t yield_tag = yield_tag_t {};
 	} // namespace detail
 
 	struct lua_nil_t {};
-	inline constexpr lua_nil_t lua_nil{};
+	inline constexpr lua_nil_t lua_nil {};
 	inline bool operator==(lua_nil_t, lua_nil_t) {
 		return true;
 	}
@@ -6653,7 +6653,7 @@ namespace sol {
 	};
 
 	struct nested_tag_t {};
-	constexpr inline nested_tag_t nested_tag{};
+	constexpr inline nested_tag_t nested_tag {};
 
 	template <typename T>
 	as_table_t<T> as_table_ref(T&& container) {
@@ -6941,7 +6941,7 @@ namespace sol {
 	};
 
 	inline const std::string& to_string(call_status c) {
-		static const std::array<std::string, 10> names{ { "ok",
+		static const std::array<std::string, 10> names { { "ok",
 			"yielded",
 			"runtime",
 			"memory",
@@ -6992,7 +6992,7 @@ namespace sol {
 	}
 
 	inline const std::string& to_string(load_status c) {
-		static const std::array<std::string, 7> names{
+		static const std::array<std::string, 7> names {
 			{ "ok", "memory", "gc", "syntax", "file", "CRITICAL_EXCEPTION_FAILURE", "CRITICAL_INDETERMINATE_STATE_FAILURE" }
 		};
 		switch (c) {
@@ -7015,7 +7015,7 @@ namespace sol {
 	}
 
 	inline const std::string& to_string(load_mode c) {
-		static const std::array<std::string, 3> names{ {
+		static const std::array<std::string, 3> names { {
 			"bt",
 			"t",
 			"b",
@@ -7073,7 +7073,7 @@ namespace sol {
 			"__newindex",
 			"__mode",
 			"__call",
-			"__mt",
+			"__metatable",
 			"__tostring",
 			"__len",
 			"__unm",
@@ -7430,7 +7430,7 @@ namespace sol {
 	: std::integral_constant<bool,
 	       type::userdata
 	                 != lua_type_of_v<
-	                         T> || ((type::userdata == lua_type_of_v<T>)&&detail::has_internal_marker_v<lua_type_of<T>> && !detail::has_internal_marker_v<lua_size<T>>)
+	                      T> || ((type::userdata == lua_type_of_v<T>)&&detail::has_internal_marker_v<lua_type_of<T>> && !detail::has_internal_marker_v<lua_size<T>>)
 	            || is_lua_reference_or_proxy_v<T> || meta::is_specialization_of_v<T, std::tuple> || meta::is_specialization_of_v<T, std::pair>> {};
 
 	template <typename T>
@@ -13606,7 +13606,7 @@ namespace sol { namespace stack {
 #if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
-			lua_pushlstring(L, "__mt", 4);
+			lua_pushlstring(L, to_string(meta_function::metatable).c_str(), 4);
 			return 1;
 		}
 	};

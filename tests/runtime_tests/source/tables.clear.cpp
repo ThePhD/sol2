@@ -44,8 +44,8 @@ TEST_CASE("tables/stack clear", "stack-based clear method works and does not clo
 		sol::stack_guard luasg(lua);
 		lua["t"] = sol::lua_value({ { "a", "b" }, { "c", "d" } });
 		sol::table t = lua["t"];
-		REQUIRE(t["a"] == std::string("b"));
-		REQUIRE(t["c"] == std::string("d"));
+		REQUIRE((t["a"] == std::string("b")));
+		REQUIRE((t["c"] == std::string("d")));
 		{
 			sol::stack_guard clearsg(lua);
 			sol::stack::clear(t);
@@ -57,8 +57,8 @@ TEST_CASE("tables/stack clear", "stack-based clear method works and does not clo
 		sol::stack_guard luasg(lua);
 		lua["t"] = sol::lua_value({ { "a", "b" }, { "c", "d" } });
 		sol::table t = lua["t"];
-		REQUIRE(t["a"] == std::string("b"));
-		REQUIRE(t["c"] == std::string("d"));
+		REQUIRE((t["a"] == std::string("b")));
+		REQUIRE((t["c"] == std::string("d")));
 		{
 			sol::stack_guard ppclearsg(lua);
 			auto pp = sol::stack::push_pop(t);

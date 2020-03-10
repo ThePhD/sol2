@@ -477,7 +477,7 @@ namespace sol { namespace stack {
 #if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
-			lua_pushlstring(L, "__mt", 4);
+			lua_pushlstring(L, to_string(meta_function::metatable).c_str(), 4);
 			return 1;
 		}
 	};
