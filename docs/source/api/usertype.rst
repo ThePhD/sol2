@@ -104,7 +104,7 @@ This structure is used with ``new_usertype`` to specifically ordain certain spec
 new_usertype/set
 ----------------
 
-``sol::usertype<T>`` is a specialized version of ``sol::metatable``s, which are a specialized version of ``sol::table``. ``sol::metatable``s attempt to treat the table like either a Lua or a sol2 metatable. ``sol::usertype<T>`` demands that a usertype is a specific metatable for a specific class. Both of them are `sol::reference derived types<reference>`, meaning they take in the ``lua_State*``. For example...
+``sol::usertype<T>`` is a specialized version of ``sol::metatable``\s, which are a specialized version of ``sol::table``. ``sol::metatable``\s attempt to treat the table like either a Lua or a sol2 metatable. ``sol::usertype<T>`` demands that a usertype is a specific metatable for a specific class. Both of them are `sol::reference derived types<reference>`, meaning they take in the ``lua_State*``. For example...
 
 
 new_usertype/set options
