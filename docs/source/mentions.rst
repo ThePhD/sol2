@@ -57,7 +57,7 @@ Are you using sol3 for something neat? Want it to be featured here or think it's
 .. _CppCast: http://cppcast.com/2016/07/elias-daler/
 .. _tweeted out by eevee: https://twitter.com/eevee/status/762039984085798913
 .. _"I heartily recommend sol3": https://twitter.com/eevee/status/762040086540144644
-.. _"from outdated LuaBridge to superior #sol2": https://twitter.com/racodslair/status/754031870640267264
+.. _"from outdated LuaBridge to superior #sol3": https://twitter.com/racodslair/status/754031870640267264
 .. _sol2's initial reddit release: https://www.reddit.com/r/cpp/comments/4a8gy7/sol2_lua_c_binding_framework/
 .. _Benchmarking Discussing: https://www.reddit.com/r/cpp/comments/4x82hd/plain_c_versus_lua_libraries_benchmarking_speed/
 .. _"After spending hours with sol2, it wins. Amazing lib.": https://twitter.com/EliasDaler/status/739215685264494593
