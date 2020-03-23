@@ -24,7 +24,7 @@ end
 	lua.script(co_lua_script);
 	sol::thread runner = sol::thread::create(lua.lua_state());
 	sol::state_view runnerstate = runner.state();
-	sol::coroutine loop_coroutine = lua["loop"];
+	sol::coroutine loop_coroutine = runnerstate["loop"];
 	lua["counter"] = 20;
 
 	for (int counter = 0; counter < 10 && loop_coroutine; ++counter) {
