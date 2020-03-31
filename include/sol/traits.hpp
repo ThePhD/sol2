@@ -196,8 +196,8 @@ namespace sol { namespace meta {
 			          struct count_when_for_pack<When, Limit, I, Pred, T, Ts...> : conditional_t < sizeof...(Ts)
 			     == 0
 			|| Limit<2, std::integral_constant<std::size_t, I + static_cast<std::size_t>(Limit != 0 && Pred<T>::value)>,
-			        count_when_for_pack<When, Limit - static_cast<std::size_t>(When<T, std::integral_constant<std::size_t, I>>::value),
-			             I + static_cast<std::size_t>(When<T, std::integral_constant<std::size_t, I>>::value&& Pred<T>::value), Pred, Ts...>> {};
+			     count_when_for_pack<When, Limit - static_cast<std::size_t>(When<T, std::integral_constant<std::size_t, I>>::value),
+			          I + static_cast<std::size_t>(When<T, std::integral_constant<std::size_t, I>>::value&& Pred<T>::value), Pred, Ts...>> {};
 	} // namespace meta_detail
 
 	template <template <typename...> class Pred, typename... Ts>
@@ -285,7 +285,7 @@ namespace sol { namespace meta {
 			std::enable_if_t<!std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value
 			     && std::is_destructible<unqualified_t<T>>::value>> {
 			struct F {
-				void operator()(){};
+				void operator()() {};
 			};
 			struct Derived : T, F {};
 			template <typename U, U>
@@ -305,7 +305,7 @@ namespace sol { namespace meta {
 			std::enable_if_t<!std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value
 			     && !std::is_destructible<unqualified_t<T>>::value>> {
 			struct F {
-				void operator()(){};
+				void operator()() {};
 			};
 			struct Derived : T, F {
 				~Derived() = delete;
@@ -610,25 +610,15 @@ namespace sol { namespace meta {
 	template <typename T, typename CharT>
 	struct is_string_view_of : std::false_type {};
 
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 	template <typename CharT, typename CharTargetT, typename TraitsT>
 	struct is_string_view_of<std::basic_string_view<CharT, TraitsT>, CharTargetT> : std::is_same<CharT, CharTargetT> {};
-#else
-	template <typename CharT, typename CharTargetT, typename TraitsT>
-	struct is_string_view_of<basic_string_view<CharT, TraitsT>, CharTargetT> : std::is_same<CharT, CharTargetT> {};
-#endif
 
 	template <typename T, typename CharT>
 	constexpr inline bool is_string_view_of_v = is_string_view_of<T, CharT>::value;
 
 	template <typename T>
-	using is_string_like = meta::boolean<is_specialization_of_v<T, std::basic_string>
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-		|| is_specialization_of_v<T, std::basic_string_view>
-#else
-		|| is_specialization_of_v<T, basic_string_view>
-#endif
-		|| is_string_literal_array_v<T>>;
+	using is_string_like
+		= meta::boolean<is_specialization_of_v<T, std::basic_string> || is_specialization_of_v<T, std::basic_string_view> || is_string_literal_array_v<T>>;
 
 	template <typename T>
 	constexpr inline bool is_string_like_v = is_string_like<T>::value;
@@ -636,11 +626,7 @@ namespace sol { namespace meta {
 	template <typename T, typename CharT = char>
 	using is_string_constructible = meta::boolean<
 		is_string_literal_array_of_v<T,
-		     CharT> || std::is_same_v<T, const CharT*> || std::is_same_v<T, CharT> || is_string_of_v<T, CharT> || std::is_same_v<T, std::initializer_list<CharT>>
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-		|| is_string_view_of_v<T, CharT>
-#endif
-		>;
+		     CharT> || std::is_same_v<T, const CharT*> || std::is_same_v<T, CharT> || is_string_of_v<T, CharT> || std::is_same_v<T, std::initializer_list<CharT>> || is_string_view_of_v<T, CharT>>;
 
 	template <typename T, typename CharT = char>
 	constexpr inline bool is_string_constructible_v = is_string_constructible<T, CharT>::value;

@@ -57,6 +57,8 @@ function(make_tolua_interop_example target_library example_suffix)
 	endif()
 endfunction()
 
+MESSAGE(STATUS ${SOL2_LUA_VERSION})
+
 if (SOL2_INTEROP_EXAMPLES)
 	make_tolua_interop_example(sol2::sol2 "")
 endif()

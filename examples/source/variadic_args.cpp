@@ -18,8 +18,8 @@ int main() {
 		int r = 0;
 		for (auto v : va) {
 			int value = v; // get argument out (implicit conversion)
-						// can also do int v = v.as<int>();
-						// can also do int v = va.get<int>(i); with index i
+			               // can also do int v = v.as<int>();
+			               // can also do int v = va.get<int>(i); with index i
 			r += value;
 		}
 		// Only have to add a, b was included from variadic_args and beyond
@@ -29,13 +29,13 @@ int main() {
 	lua.script("x = v(25, 25)");
 	lua.script("x2 = v(25, 25, 100, 50, 250, 150)");
 	lua.script("x3 = v(1, 2, 3, 4, 5, 6)");
-	// will error: not enough arguments
-	//lua.script("x4 = v(1)");
+	// will error: not enough arguments!
+	// lua.script("x4 = v(1)");
 
 	lua.script("assert(x == 50)");
 	lua.script("assert(x2 == 600)");
 	lua.script("assert(x3 == 21)");
-	lua.script("print(x)"); // 50
+	lua.script("print(x)");  // 50
 	lua.script("print(x2)"); // 600
 	lua.script("print(x3)"); // 21
 

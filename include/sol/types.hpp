@@ -34,39 +34,18 @@
 #include "raii.hpp"
 #include "policies.hpp"
 #include "ebco.hpp"
+#include "map.hpp"
 
 #include <array>
 #include <initializer_list>
 #include <string>
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #include <string_view>
 #include <optional>
 #ifdef SOL_STD_VARIANT
 #include <variant>
 #endif
-#endif // C++17
-#ifdef SOL_USE_BOOST
-#include <boost/unordered_map.hpp>
-#else
-#include <unordered_map>
-#endif // Using Boost
 
 namespace sol {
-	namespace usertype_detail {
-#if defined(SOL_USE_BOOST)
-#if defined(SOL_CXX17_FEATURES)
-		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
-		using map_t = boost::unordered_map<K, V, H, E>;
-#else
-		template <typename K, typename V, typename H = boost::hash<K>, typename E = std::equal_to<>>
-		using map_t = boost::unordered_map<K, V, H, E>;
-#endif // C++17 or not, WITH boost
-#else
-		template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
-		using map_t = std::unordered_map<K, V, H, E>;
-#endif // Boost map target
-	} // namespace usertype_detail
-
 	namespace detail {
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
 		typedef int (*lua_CFunction_noexcept)(lua_State* L) noexcept;
@@ -1069,10 +1048,8 @@ namespace sol {
 		template <typename T>
 		struct lua_type_of<optional<T>> : std::integral_constant<type, type::poly> {};
 
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 		template <typename T>
 		struct lua_type_of<std::optional<T>> : std::integral_constant<type, type::poly> {};
-#endif // std::optional
 
 		template <>
 		struct lua_type_of<variadic_args> : std::integral_constant<type, type::poly> {};
@@ -1108,12 +1085,10 @@ namespace sol {
 		template <>
 		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
 
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 		template <typename... Tn>
 		struct lua_type_of<std::variant<Tn...>> : std::integral_constant<type, type::poly> {};
 #endif // SOL_STD_VARIANT
-#endif // SOL_CXX17_FEATURES
 
 		template <typename T>
 		struct lua_type_of<nested<T>> : meta::conditional_t<::sol::is_container_v<T>, std::integral_constant<type, type::table>, lua_type_of<T>> {};
@@ -1196,6 +1171,8 @@ namespace sol {
 	struct is_stack_based<stack_proxy> : std::true_type {};
 	template <>
 	struct is_stack_based<stack_proxy_base> : std::true_type {};
+	template <>
+	struct is_stack_based<stack_count> : std::true_type {};
 
 	template <typename T>
 	constexpr inline bool is_stack_based_v = is_stack_based<T>::value;
@@ -1214,10 +1191,8 @@ namespace sol {
 	struct is_lua_primitive<light<T>> : is_lua_primitive<T*> {};
 	template <typename T>
 	struct is_lua_primitive<optional<T>> : std::true_type {};
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 	template <typename T>
 	struct is_lua_primitive<std::optional<T>> : std::true_type {};
-#endif
 	template <typename T>
 	struct is_lua_primitive<as_table_t<T>> : std::true_type {};
 	template <typename T>
@@ -1226,6 +1201,10 @@ namespace sol {
 	struct is_lua_primitive<userdata_value> : std::true_type {};
 	template <>
 	struct is_lua_primitive<lightuserdata_value> : std::true_type {};
+	template <>
+	struct is_lua_primitive<stack_proxy> : std::true_type {};
+	template <>
+	struct is_lua_primitive<stack_proxy_base> : std::true_type {};
 	template <typename T>
 	struct is_lua_primitive<non_null<T>> : is_lua_primitive<T*> {};
 

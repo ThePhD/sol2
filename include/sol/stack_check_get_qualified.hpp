@@ -58,41 +58,29 @@ namespace sol { namespace stack {
 	};
 
 	template <typename T>
-	struct qualified_getter<optional<T>> {
-		static optional<T> get(lua_State* L, int index, record& tracking) {
-			if constexpr (is_lua_reference_v<T>) {
+	struct qualified_getter<T, std::enable_if_t<meta::is_optional_v<T>>> {
+		static T get(lua_State* L, int index, record& tracking) {
+			using ValueType = typename meta::unqualified_t<T>::value_type;
+			if constexpr (is_lua_reference_v<ValueType>) {
 				// actually check if it's none here, otherwise
 				// we'll have a none object inside an optional!
-				bool success = lua_isnoneornil(L, index) == 0 && stack::check<T>(L, index, no_panic);
+				bool success = lua_isnoneornil(L, index) == 0 && stack::check<ValueType>(L, index, no_panic);
 				if (!success) {
 					// expected type, actual type
 					tracking.use(static_cast<int>(success));
-					return nullopt;
+					return {};
 				}
-				return stack_detail::unchecked_get<T>(L, index, tracking);
+				return stack_detail::unchecked_get<ValueType>(L, index, tracking);
 			}
 			else {
-				if (!check<T>(L, index, &no_panic)) {
+				if (!check<ValueType>(L, index, &no_panic)) {
 					tracking.use(static_cast<int>(!lua_isnone(L, index)));
-					return nullopt;
+					return {};
 				}
-				return stack_detail::unchecked_get<T>(L, index, tracking);
+				return stack_detail::unchecked_get<ValueType>(L, index, tracking);
 			}
 		}
 	};
-
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-	template <typename T>
-	struct qualified_getter<std::optional<T>> {
-		static std::optional<T> get(lua_State* L, int index, record& tracking) {
-			if (!check<T>(L, index, no_panic)) {
-				tracking.use(static_cast<int>(!lua_isnone(L, index)));
-				return std::nullopt;
-			}
-			return stack_detail::unchecked_get<T>(L, index, tracking);
-		}
-	};
-#endif // C++17 features
 
 }} // namespace sol::stack
 

@@ -34,8 +34,8 @@ pull_requests:
 # dimensions (Image, Platform, Configuration) and then 
 # the order of whatever elements are in the matrix
 image:
-- Visual Studio 2015
 - Visual Studio 2017
+- Visual Studio 2019
 
 # Run x64 first, x86 second
 platform:
@@ -46,10 +46,8 @@ environment:
   matrix:
   - SOL2_LUA_VERSION: luajit-2.0.5
     SOL2_BUILD_NINJA: 1
-    SOL2_NO_2015: 1
   - SOL2_LUA_VERSION: luajit-2.1.0-beta3
     SOL2_BUILD_NINJA: 1
-    SOL2_NO_2015: 1
   - SOL2_LUA_VERSION: 5.3.5
     SOL2_BUILD_NINJA: 1
     MINGW_VERSION: 7.3.0
@@ -62,12 +60,10 @@ environment:
   - SOL2_LUA_VERSION: luajit-2.1.0-beta3
     SOL2_BUILD_NINJA: 1
     MINGW_VERSION: 8.1.0
+  - SOL2_LUA_VERSION: 5.4.0-beta
   - SOL2_LUA_VERSION: 5.3.5
-    SOL2_NO_2015: 1
   - SOL2_LUA_VERSION: 5.2.4
-    SOL2_NO_2015: 1
   - SOL2_LUA_VERSION: 5.1.5
-    SOL2_NO_2015: 1
 
 matrix:
   #fast_finish: true
@@ -77,24 +73,9 @@ matrix:
     - SOL2_LUA_VERSION: luajit-2.0.5
     - SOL2_LUA_VERSION: luajit-2.1.0-beta3
   exclude:
-    # Necessary: MinGW doesn't exist on VS 2017 images
-    - image: Visual Studio 2017
-      MINGW_VERSION: 7.3.0
-    - image: Visual Studio 2017
-      MINGW_VERSION: 8.1.0
-    # There are no recent i686 compilers on the VS2015/2017 images
-    - MINGW_VERSION: 7.3.0
-      platform: x86
-    - MINGW_VERSION: 8.1.0
-      platform: x86
-    # Get rid of Visual Studio 2015 builds (unsupported)
-    - image: Visual Studio 2015
-      SOL2_NO_2015: 1
-    - platform: x86
-      SOL2_LUA_VERSION: 5.2.4
-    - platform: x86
-      SOL2_LUA_VERSION: 5.1.5
     # Get rid of x86 builds for non-latest (no reason to redo that work)
+    - platform: x86
+      SOL2_LUA_VERSION: 5.4.0-beta
     - platform: x86
       SOL2_LUA_VERSION: 5.3.5
     - platform: x86
@@ -120,7 +101,7 @@ init:
 - set mingw_path=
 - set llvm_path=
 - if "%MINGW_VERSION%"=="7.3.0" (if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\mingw64\bin) else ( set mingw_path=C:\mingw-w64\i686-7.3.0-posix-seh-rt_v5-rev0\mingw32\bin))
-- if "%MINGW_VERSION%"=="8.1.0" (if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin) else ( set mingw_path=C:\mingw-w64\i686-8.1.0-posix-seh-rt_v6-rev0\mingw32\bin))
+- if "%MINGW_VERSION%"=="8.1.0" (if "%PLATFORM%"=="x64" (set mingw_path=C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin) else ( set mingw_path=C:\mingw-w64\i686-8.1.0-posix-dwarf-rt_v6-rev0\mingw32\bin))
 - if "%PLATFORM%"=="x64" (set python_path=C:\Python36-x64)
 - set PATH=%python_path%;%PATH%
 - set PATH=%mingw_path%;%PATH%
@@ -134,6 +115,7 @@ init:
 - set parallelism= 
 - set build_compiler=
 - if "%PLATFORM%"=="x64" (set arch= Win64)
+- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2019" (set CMAKE_GENERATOR=Visual Studio 16 2019%arch%)
 - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2017" (set CMAKE_GENERATOR=Visual Studio 15 2017%arch%)
 - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2015" (set CMAKE_GENERATOR=Visual Studio 14 2015%arch%)
 - if "%SOL2_BUILD_NINJA%"=="1" (set CMAKE_GENERATOR=Ninja) else (set parallelism=/maxcpucount)

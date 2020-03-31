@@ -31,12 +31,10 @@
 #include <functional>
 #include <utility>
 #include <cmath>
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #include <optional>
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 #include <variant>
 #endif // SOL_STD_VARIANT
-#endif // SOL_CXX17_FEATURES
 
 namespace sol { namespace stack {
 	namespace stack_detail {
@@ -333,6 +331,20 @@ namespace sol { namespace stack {
 				}
 				return true;
 			}
+			else if constexpr (meta::is_optional_v<T>) {
+				using ValueType = typename T::value_type;
+				(void)handler;
+				type t = type_of(L, index);
+				if (t == type::none) {
+					tracking.use(0);
+					return true;
+				}
+				if (t == type::lua_nil) {
+					tracking.use(1);
+					return true;
+				}
+				return stack::unqualified_check<ValueType>(L, index, no_panic, tracking);
+			}
 			else if constexpr (expected == type::userdata) {
 				if constexpr (meta::any_same_v<T, userdata_value> || meta::is_specialization_of_v<T, basic_userdata>) {
 					tracking.use(1);
@@ -555,42 +567,6 @@ namespace sol { namespace stack {
 		}
 	};
 
-	template <typename T>
-	struct unqualified_checker<optional<T>, type::poly> {
-		template <typename Handler>
-		static bool check(lua_State* L, int index, Handler&&, record& tracking) {
-			type t = type_of(L, index);
-			if (t == type::none) {
-				tracking.use(0);
-				return true;
-			}
-			if (t == type::lua_nil) {
-				tracking.use(1);
-				return true;
-			}
-			return stack::unqualified_check<T>(L, index, no_panic, tracking);
-		}
-	};
-
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-
-	template <typename T>
-	struct unqualified_checker<std::optional<T>, type::poly> {
-		template <typename Handler>
-		static bool check(lua_State* L, int index, Handler&&, record& tracking) {
-			type t = type_of(L, index);
-			if (t == type::none) {
-				tracking.use(0);
-				return true;
-			}
-			if (t == type::lua_nil) {
-				tracking.use(1);
-				return true;
-			}
-			return stack::check<T>(L, index, no_panic, tracking);
-		}
-	};
-
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 
 	template <typename... Tn>
@@ -630,7 +606,6 @@ namespace sol { namespace stack {
 
 #endif // SOL_STD_VARIANT
 
-#endif // SOL_CXX17_FEATURES
-}}     // namespace sol::stack
+}} // namespace sol::stack
 
 #endif // SOL_STACK_CHECK_UNQUALIFIED_HPP

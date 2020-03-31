@@ -25,26 +25,19 @@
 #define SOL_MAP_HPP
 
 #include <unordered_map>
+
 #if defined(SOL_USE_BOOST)
 #include <boost/unordered_map.hpp>
-#endif // SOL_USE_BOOST
+#endif // Use boost here: transparent hash ability is good
 
-namespace sol {
-namespace detail {
+namespace sol { namespace detail {
 #if defined(SOL_USE_BOOST)
-#if defined(SOL_CXX17_FEATURES)
-	template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
-	using unordered_map = boost::unordered_map<K, V, H, E>;
-#else
 	template <typename K, typename V, typename H = boost::hash<K>, typename E = std::equal_to<>>
 	using unordered_map = boost::unordered_map<K, V, H, E>;
-#endif // C++17 or not, WITH boost
 #else
 	template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
 	using unordered_map = std::unordered_map<K, V, H, E>;
 #endif // Boost map target
-}
-
-} // namespace sol::detail
+}}     // namespace sol::detail
 
 #endif // SOL_MAP_HPP

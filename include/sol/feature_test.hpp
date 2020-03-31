@@ -24,17 +24,15 @@
 #ifndef SOL_FEATURE_TEST_HPP
 #define SOL_FEATURE_TEST_HPP
 
-#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSC_VER) && _MSC_VER > 1900 && ((defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(_MSVC_LANG) && (_MSVC_LANG > 201402L))))
-#ifndef SOL_CXX17_FEATURES
-#define SOL_CXX17_FEATURES 1
-#endif // C++17 features macro
+#if (defined(__cplusplus) && __cplusplus >= 201703L) \
+     || (defined(_MSC_VER) && _MSC_VER > 1900 && ((defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(_MSVC_LANG) && (_MSVC_LANG > 201402L))))
 #endif // C++17 features check
 
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-// TODO: there is a bug in the VC++ compiler??
+// There is a bug in the VC++ compiler??
 // on /std:c++latest under x86 conditions (VS 15.5.2),
 // compiler errors are tossed for noexcept markings being on function types
 // that are identical in every other way to their non-noexcept marked types function types...
+// 2020: There is absolutely a bug.
 #if defined(__cpp_noexcept_function_type) || ((defined(_MSC_VER) && _MSC_VER > 1911) && (defined(_MSVC_LANG) && ((_MSVC_LANG >= 201403L))))
 #ifndef SOL_NOEXCEPT_FUNCTION_TYPE
 #define SOL_NOEXCEPT_FUNCTION_TYPE 1
@@ -49,7 +47,6 @@
 #else
 #define SOL_STD_VARIANT 1
 #endif // Clang screws up variant
-#endif // C++17 only
 
 #include <sol/config.hpp>
 #include "config_setup.hpp"

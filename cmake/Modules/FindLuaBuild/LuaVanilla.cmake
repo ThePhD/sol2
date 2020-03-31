@@ -35,10 +35,12 @@ include(Common/Core)
 set(LUA_VANILLA_5.1_LATEST_VERSION 5.1.5)
 set(LUA_VANILLA_5.2_LATEST_VERSION 5.2.4)
 set(LUA_VANILLA_5.3_LATEST_VERSION 5.3.5)
-set(LUA_VANILLA_5.4_LATEST_VERSION 5.4.0-alpha)
+set(LUA_VANILLA_5.4_LATEST_VERSION 5.4.0-beta)
 
 # exact version, coming from CI: pull directly from Lua and use external project to build
 # list of known md5 / sha1: must update when there are changes
+set(LUA_VANILLA_MD5_5.4.0-beta 961e2692a10a4a3c6fe80086e4cbefd5)
+set(LUA_VANILLA_SHA1_5.4.0-beta 5d018de9b1f69b7e334dc3fa43b815669e103880)
 set(LUA_VANILLA_MD5_5.4.0-alpha d49d30b394794b96ffad53513ac647a5)
 set(LUA_VANILLA_SHA1_5.4.0-alpha cf3559dc43cad35463740c6fbedeb1ea501e5e23)
 set(LUA_VANILLA_MD5_5.4.0-work2 3cdf2a4eb84dde6b6aaf5d2d1de07be9)
@@ -222,7 +224,7 @@ if (LUA_BUILD_LUA_COMPILER)
 endif()
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
 elseif (LUA_VANILLA_VERSION MATCHES "^5\\.4")
-	if (LUA_VANILLA_VERSION MATCHES "work" OR LUA_VANILLA_VERSION MATCHES "alpha")
+	if (LUA_VANILLA_VERSION MATCHES "work" OR LUA_VANILLA_VERSION MATCHES "alpha"  OR LUA_VANILLA_VERSION MATCHES "beta")
 		set(LUA_VANILLA_DOWNLOAD_URL https://www.lua.org/work/lua-${LUA_VANILLA_VERSION}.tar.gz)
 	endif()
 	set(LUA_VANILLA_LIB_SOURCES lapi.c lauxlib.c lbaselib.c lcode.c lcorolib.c 

@@ -36,13 +36,10 @@
 #include <cassert>
 #include <limits>
 #include <cmath>
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #include <string_view>
-#include <optional>
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 #include <variant>
 #endif // Can use variant
-#endif // C++17
 
 namespace sol { namespace stack {
 	namespace stack_detail {
@@ -1123,14 +1120,17 @@ namespace sol { namespace stack {
 		}
 	};
 
-	template <typename O>
-	struct unqualified_pusher<optional<O>> {
-		template <typename T>
-		static int push(lua_State* L, T&& t) {
-			if (t == nullopt) {
+	template <typename T>
+	struct unqualified_pusher<T, std::enable_if_t<meta::is_optional_v<T>>> {
+		using ValueType = typename meta::unqualified_t<T>::value_type;
+
+		template <typename Optional>
+		static int push(lua_State* L, Optional&& op) {
+			using QualifiedValueType = meta::conditional_t<std::is_lvalue_reference_v<Optional>, ValueType&, ValueType&&>;
+			if (!op) {
 				return stack::push(L, nullopt);
 			}
-			return stack::push(L, static_cast<meta::conditional_t<std::is_lvalue_reference<T>::value, O&, O&&>>(t.value()));
+			return stack::push(L, static_cast<QualifiedValueType>(op.value()));
 		}
 	};
 
@@ -1189,18 +1189,6 @@ namespace sol { namespace stack {
 		}
 	};
 
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-	template <typename O>
-	struct unqualified_pusher<std::optional<O>> {
-		template <typename T>
-		static int push(lua_State* L, T&& t) {
-			if (t == std::nullopt) {
-				return stack::push(L, nullopt);
-			}
-			return stack::push(L, static_cast<meta::conditional_t<std::is_lvalue_reference<T>::value, O&, O&&>>(t.value()));
-		}
-	};
-
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	namespace stack_detail {
 
@@ -1229,7 +1217,7 @@ namespace sol { namespace stack {
 		}
 	};
 #endif // Variant because Clang is terrible
-#endif // C++17 Support
-}}     // namespace sol::stack
+
+}} // namespace sol::stack
 
 #endif // SOL_STACK_PUSH_HPP

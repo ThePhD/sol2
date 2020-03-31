@@ -81,7 +81,7 @@ matrix:
         SOL2_PLATFORM=x64
         SOL2_CI=true
 
-    # Lua Versions 5.2.4, 5.1.5, and LuaJIT
+    # Lua Versions 5.4.0-beta, 5.2.4, 5.1.5, and LuaJIT
     - env:
       - SOL2_LUA_VERSION=5.1.5
         GCC_VERSION=8
@@ -90,6 +90,12 @@ matrix:
         
     - env:
       - SOL2_LUA_VERSION=5.2.4
+        GCC_VERSION=8
+        SOL2_PLATFORM=x64
+        SOL2_CI=true
+        
+    - env:
+      - SOL2_LUA_VERSION=5.4.0-beta
         GCC_VERSION=8
         SOL2_PLATFORM=x64
         SOL2_CI=true

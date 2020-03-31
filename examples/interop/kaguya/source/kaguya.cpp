@@ -1,8 +1,8 @@
-#include <kaguya/kaguya.hpp>
-
 #define SOL_ALL_SAFETIES_ON 1
 #define SOL_ENABLE_INTEROP 1 // MUST be defined to use interop features
 #include <sol/sol.hpp>
+
+#include <kaguya/kaguya.hpp>
 
 #include <iostream>
 #include <assert.hpp>
@@ -16,11 +16,9 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 
 struct ABC {
-	ABC()
-	: v_(0) {
+	ABC() : v_(0) {
 	}
-	ABC(int value)
-	: v_(value) {
+	ABC(int value) : v_(value) {
 	}
 	int value() const {
 		return v_;
@@ -77,15 +75,16 @@ void register_sol_stuff(lua_State* L) {
 	sol::state_view lua(L);
 	// bind and set up your things: everything is entirely self-contained
 	lua["f"] = sol::overload(
-		[](ABC& from_kaguya) {
-			std::cout << "calling 1-argument version with kaguya-created ABC { " << from_kaguya.value() << " }" << std::endl;
-			c_assert(from_kaguya.value() == 24);
-		},
-		[](ABC& from_kaguya, int second_arg) {
-			std::cout << "calling 2-argument version with kaguya-created ABC { " << from_kaguya.value() << " } and integer argument of " << second_arg << std::endl;
-			c_assert(from_kaguya.value() == 24);
-			c_assert(second_arg == 5);
-		});
+	     [](ABC& from_kaguya) {
+		     std::cout << "calling 1-argument version with kaguya-created ABC { " << from_kaguya.value() << " }" << std::endl;
+		     c_assert(from_kaguya.value() == 24);
+	     },
+	     [](ABC& from_kaguya, int second_arg) {
+		     std::cout << "calling 2-argument version with kaguya-created ABC { " << from_kaguya.value() << " } and integer argument of " << second_arg
+		               << std::endl;
+		     c_assert(from_kaguya.value() == 24);
+		     c_assert(second_arg == 5);
+	     });
 }
 
 void check_with_sol(lua_State* L) {
@@ -95,7 +94,7 @@ void check_with_sol(lua_State* L) {
 	c_assert(obj.value() == 24);
 }
 
-int main(int, char* []) {
+int main(int, char*[]) {
 
 	std::cout << "=== interop example (kaguya) ===" << std::endl;
 	std::cout << "(code lifted from kaguya's README examples: https://github.com/satoren/kaguya)" << std::endl;
@@ -103,11 +102,11 @@ int main(int, char* []) {
 	kaguya::State state;
 
 	state["ABC"].setClass(kaguya::UserdataMetatable<ABC>()
-						  .setConstructors<ABC(), ABC(int)>()
-						  .addFunction("get_value", &ABC::value)
-						  .addFunction("set_value", &ABC::setValue)
-						  .addOverloadedFunctions("overload", &ABC::overload1, &ABC::overload2)
-						  .addStaticFunction("nonmemberfun", [](ABC* self, int) { return 1; }));
+	                           .setConstructors<ABC(), ABC(int)>()
+	                           .addFunction("get_value", &ABC::value)
+	                           .addFunction("set_value", &ABC::setValue)
+	                           .addOverloadedFunctions("overload", &ABC::overload1, &ABC::overload2)
+	                           .addStaticFunction("nonmemberfun", [](ABC* self, int) { return 1; }));
 
 
 	register_sol_stuff(state.state());

@@ -36,12 +36,10 @@
 #include <utility>
 #include <cstdlib>
 #include <cmath>
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #include <string_view>
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 #include <variant>
 #endif // Apple clang screwed up
-#endif // C++17
 
 namespace sol { namespace stack {
 
@@ -152,6 +150,10 @@ namespace sol { namespace stack {
 				memory = detail::align_usertype_unique<Real>(memory);
 				Real* mem = static_cast<Real*>(memory);
 				return *mem;
+			}
+			else if constexpr (meta::is_optional_v<T>) {
+				using ValueType = typename T::value_type;
+				return stack::unqualified_check_get<ValueType>(L, index, no_panic, tracking);
 			}
 			else if constexpr (std::is_same_v<T, luaL_Stream*>) {
 				luaL_Stream* pstream = static_cast<luaL_Stream*>(lua_touserdata(L, index));
@@ -984,7 +986,6 @@ namespace sol { namespace stack {
 		}
 	};
 
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
 	template <typename... Tn>
 	struct unqualified_getter<std::variant<Tn...>> {
@@ -1020,7 +1021,6 @@ namespace sol { namespace stack {
 		}
 	};
 #endif // SOL_STD_VARIANT
-#endif // SOL_CXX17_FEATURES
 
 }} // namespace sol::stack
 

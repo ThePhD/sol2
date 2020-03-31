@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -139,7 +139,7 @@ namespace sol {
 			return tagged_get(types<meta::unqualified_t<T>>(), index_offset);
 		}
 
-		type get_type(difference_type index_offset = 0) const noexcept {
+		type get_type(int index_offset = 0) const noexcept {
 			return type_of(L, index + static_cast<int>(index_offset));
 		}
 
@@ -198,7 +198,7 @@ namespace sol {
 			return popcount;
 		};
 		void abandon() noexcept {
-			//L = nullptr;
+			// L = nullptr;
 			index = 0;
 			returncount = 0;
 			popcount = 0;

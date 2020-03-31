@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -33,9 +33,7 @@
 #include "optional_implementation.hpp"
 #endif // Boost vs. Better optional
 
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
 #include <optional>
-#endif
 
 namespace sol {
 
@@ -48,13 +46,8 @@ namespace sol {
 
 	namespace meta {
 		template <typename T>
-		using is_optional = any<
-			is_specialization_of<T, optional>
-#if defined(SOL_CXX17_FEATURES) && SOL_CXX17_FEATURES
-		     , is_specialization_of<T, std::optional>
-#endif
-		>;
-		
+		using is_optional = any<is_specialization_of<T, optional>, is_specialization_of<T, std::optional>>;
+
 		template <typename T>
 		constexpr inline bool is_optional_v = is_optional<T>::value;
 	} // namespace meta

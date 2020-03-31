@@ -359,7 +359,10 @@ namespace sol {
 		}
 
 		iterator begin() const {
-			return iterator(*this);
+			if (this->get_type() == type::table) {
+				return iterator(*this);
+			}
+			return iterator();
 		}
 
 		iterator end() const {
