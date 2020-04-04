@@ -14,6 +14,7 @@ Thank you to all patrons, donators and contributors who help keep sol3 amazing.
 
 Beyond just a one-time donation, patrons make a continued commitment to help keep sol3 supported and bug-free. Thank you for your patronage! Here are the supporters that wanted to be featured as sol3 contributors.
 
+- Joel Falcou
 - Michael Caisse
 - Joshua Fisher
 - Ορφέας Ζαφείρης
