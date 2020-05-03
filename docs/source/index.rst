@@ -101,25 +101,25 @@ Search
 
 .. |pa| image:: media/become_a_patron_button.png
 	:height: 50
-	:target: https://www.patreon.com/thephd
+	:target: https://www.patreon.com/soasis
 	:alt: sol3 Patreon
 	:align: middle
 	
 .. |kf| image:: media/Ko-fi_Blue.png
 	:height: 50
-	:target: https://ko-fi.com/thephd
+	:target: https://ko-fi.com/soasis
 	:alt: sol3 ko-fi
 	:align: middle
 	
 .. |lp| image:: media/liberapay_logo.png
 	:height: 50
-	:target: https://liberapay.com/ThePhD/
+	:target: https://liberapay.com/Soasis
 	:alt: sol3 ko-fi
 	:align: middle
 
 .. |pp| image:: media/pp_cc_mark_111x69.jpg
 	:height: 50
-	:target: https://www.paypal.me/LMeneide
+	:target: https://www.paypal.me/Soasis
 	:alt: sol3 PayPal
 	:align: middle
 

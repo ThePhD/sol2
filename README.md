@@ -7,10 +7,10 @@
 [![Documentation Status](https://readthedocs.org/projects/sol2/badge/?version=latest)](http://sol2.readthedocs.io/en/latest/?badge=latest)
 
 [![Support via Github Sponsors](https://img.shields.io/badge/Github-Become%20a%20Sponsor-ff69b4.svg?style=flat&logo=GitHub)](https://github.com/users/ThePhD/sponsorship)
-[![Support via PayPal](https://cdn.rawgit.com/twolfson/paypal-github-button/1.0.0/dist/button.svg)](https://www.paypal.me/LMeneide)
-[![Support via Ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/W7W8Q619) 
-[![Support via Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.herokuapp.com%2FThePhD)](https://patreon.com/thephd)
-[![Support via Liberapay](https://img.shields.io/liberapay/patrons/ThePhD.svg)](https://liberapay.com/ThePhD/)
+[![Support via PayPal](https://cdn.rawgit.com/twolfson/paypal-github-button/1.0.0/dist/button.svg)](https://www.paypal.me/Soasis)
+[![Support via Ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Soasis) 
+[![Support via Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.herokuapp.com%2FSoasis)](https://patreon.com/soasis)
+[![Support via Liberapay](https://img.shields.io/liberapay/patrons/ThePhD.svg)](https://liberapay.com/Soasis/)
 
 sol2 is a C++ library binding to Lua. It currently supports all Lua versions 5.1+ (LuaJIT 2.x included). sol2 aims to be easy to use and easy to add to a project.
 The library is header-only for easy integration with projects.
