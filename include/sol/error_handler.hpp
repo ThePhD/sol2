@@ -34,9 +34,9 @@ namespace sol {
 	namespace detail {
 		constexpr const char* not_a_number = "not a numeric type";
 		constexpr const char* not_a_number_or_number_string = "not a numeric type or numeric string";
-		constexpr const char* not_a_number_integral = "not a numeric type that fits exactly an integer (has significant decimals)";
+		constexpr const char* not_a_number_integral = "not a numeric type that fits exactly an integer (number maybe has significant decimals)";
 		constexpr const char* not_a_number_or_number_string_integral
-		     = "not a numeric type or a numeric string that fits exactly an integer (has significant decimals)";
+		     = "not a numeric type or a numeric string that fits exactly an integer (e.g. number maybe has significant decimals)";
 
 		constexpr const char* not_enough_stack_space = "not enough space left on Lua stack";
 		constexpr const char* not_enough_stack_space_floating = "not enough space left on Lua stack for a floating point number";
@@ -138,7 +138,7 @@ namespace sol {
 				aux_message += detail::demangle<R>();
 				aux_message += "(";
 				int marker = 0;
-				(void)detail::swallow{ int(), (detail::accumulate_and_mark(detail::demangle<Args>(), aux_message, marker), int())... };
+				(void)detail::swallow { int(), (detail::accumulate_and_mark(detail::demangle<Args>(), aux_message, marker), int())... };
 				aux_message += ")')";
 				push_type_panic_string(L, index, expected, actual, message, aux_message);
 			}

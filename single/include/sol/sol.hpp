@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-03-31 04:18:51.740568 UTC
-// This header was generated with sol v3.2.0 (revision 82812c5)
+// Generated 2020-05-07 02:16:42.137643 UTC
+// This header was generated with sol v3.2.0 (revision 890cdd3)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -8054,9 +8054,9 @@ namespace sol {
 	namespace detail {
 		constexpr const char* not_a_number = "not a numeric type";
 		constexpr const char* not_a_number_or_number_string = "not a numeric type or numeric string";
-		constexpr const char* not_a_number_integral = "not a numeric type that fits exactly an integer (has significant decimals)";
+		constexpr const char* not_a_number_integral = "not a numeric type that fits exactly an integer (number maybe has significant decimals)";
 		constexpr const char* not_a_number_or_number_string_integral
-		     = "not a numeric type or a numeric string that fits exactly an integer (has significant decimals)";
+		     = "not a numeric type or a numeric string that fits exactly an integer (e.g. number maybe has significant decimals)";
 
 		constexpr const char* not_enough_stack_space = "not enough space left on Lua stack";
 		constexpr const char* not_enough_stack_space_floating = "not enough space left on Lua stack for a floating point number";
@@ -8158,7 +8158,7 @@ namespace sol {
 				aux_message += detail::demangle<R>();
 				aux_message += "(";
 				int marker = 0;
-				(void)detail::swallow{ int(), (detail::accumulate_and_mark(detail::demangle<Args>(), aux_message, marker), int())... };
+				(void)detail::swallow { int(), (detail::accumulate_and_mark(detail::demangle<Args>(), aux_message, marker), int())... };
 				aux_message += ")')";
 				push_type_panic_string(L, index, expected, actual, message, aux_message);
 			}
@@ -19231,10 +19231,10 @@ namespace sol {
 		using has_traits_erase = meta::boolean<has_traits_erase_test<T>::value>;
 
 		template <typename T>
-		struct is_forced_container : is_container<T> {};
+		struct is_forced_container : is_container<T> { };
 
 		template <typename T>
-		struct is_forced_container<as_container_t<T>> : std::true_type {};
+		struct is_forced_container<as_container_t<T>> : std::true_type { };
 
 		template <typename T>
 		struct container_decay {
@@ -19755,8 +19755,7 @@ namespace sol {
 				auto backit = self.before_begin();
 				{
 					auto e = deferred_uc::end(L, self);
-					for (auto it = deferred_uc::begin(L, self); it != e; ++backit, ++it) {
-					}
+					for (auto it = deferred_uc::begin(L, self); it != e; ++backit, ++it) { }
 				}
 				return add_insert_after(std::true_type(), L, self, value, backit);
 			}
@@ -20119,8 +20118,22 @@ namespace sol {
 
 			static int set(lua_State* L) {
 				stack_object value = stack_object(L, raw_index(3));
-				if (type_of(L, 3) == type::lua_nil) {
-					return erase(L);
+				if constexpr (is_linear_integral::value) {
+					// for non-associative containers,
+					// erasure only happens if it is the
+					// last index in the container
+					auto key = stack::get<K>(L, 2);
+					auto self_size = deferred_uc::size(L);
+					if (key == static_cast<K>(self_size)) {
+						if (type_of(L, 3) == type::lua_nil) {
+							return erase(L);
+						}
+					}
+				}
+				else {
+					if (type_of(L, 3) == type::lua_nil) {
+						return erase(L);
+					}
 				}
 				auto& self = get_src(L);
 				detail::error_result er = set_start(L, self, stack_object(L, raw_index(2)), std::move(value));
@@ -20397,11 +20410,11 @@ namespace sol {
 		};
 
 		template <typename X>
-		struct usertype_container_default<usertype_container<X>> : usertype_container_default<X> {};
+		struct usertype_container_default<usertype_container<X>> : usertype_container_default<X> { };
 	} // namespace container_detail
 
 	template <typename T>
-	struct usertype_container : container_detail::usertype_container_default<T> {};
+	struct usertype_container : container_detail::usertype_container_default<T> { };
 
 } // namespace sol
 

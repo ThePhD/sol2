@@ -139,7 +139,7 @@ struct my_vec : public std::vector<int> {
 
 namespace sol {
 	template <>
-	struct is_container<my_vec> : std::true_type {};
+	struct is_container<my_vec> : std::true_type { };
 
 	template <>
 	struct usertype_container<my_vec> {
@@ -149,6 +149,12 @@ namespace sol {
 		static auto end(lua_State*, my_vec& self) {
 			return self.end();
 		}
+
+		static std::size_t size(lua_State* L) {
+			my_vec& v = sol::stack::get<my_vec&>(L, 1);
+			return v.size();
+		}
+
 		static std::ptrdiff_t index_adjustment(lua_State*, my_vec&) {
 			return 0;
 		}
@@ -202,7 +208,7 @@ TEST_CASE("containers/custom indexing", "allow containers to set a custom indexi
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua["c"] = my_vec{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+	lua["c"] = my_vec { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
 	auto result1 = lua.safe_script("for i=0,9 do assert(i == c[i]) end", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
