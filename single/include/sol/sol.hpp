@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-05-07 02:16:42.137643 UTC
-// This header was generated with sol v3.2.0 (revision 890cdd3)
+// Generated 2020-05-17 22:16:42.038395 UTC
+// This header was generated with sol v3.2.0 (revision 5022c4d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -216,6 +216,10 @@
 #if !defined(SOL_SAFE_STACK_CHECK)
 #define SOL_SAFE_STACK_CHECK 0
 #endif // use luaL_checkstack to check stack overflow / overrun
+
+#if !defined(SOL_AUTOMAGICAL_TYPES_BY_DEFAULT)
+#define SOL_AUTOMAGICAL_TYPES_BY_DEFAULT 1
+#endif // make is_automagical on/off by default
 
 // end of sol/config.hpp
 
@@ -7319,8 +7323,10 @@ namespace sol {
 	template <typename T>
 	struct is_automagical
 	: std::integral_constant<bool,
-	       std::is_array_v<
-	            meta::unqualified_t<T>> || (!std::is_same_v<meta::unqualified_t<T>, state> && !std::is_same_v<meta::unqualified_t<T>, state_view>)> {};
+	       (SOL_AUTOMAGICAL_TYPES_BY_DEFAULT != 0)
+	            || (std::is_array_v<
+	                     meta::unqualified_t<T>> || (!std::is_same_v<meta::unqualified_t<T>, state> && !std::is_same_v<meta::unqualified_t<T>, state_view>))> {
+	};
 
 	template <typename T>
 	inline type type_of() {

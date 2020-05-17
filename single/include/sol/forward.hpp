@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-05-07 02:16:42.603409 UTC
-// This header was generated with sol v3.2.0 (revision 890cdd3)
+// Generated 2020-05-17 22:16:45.211397 UTC
+// This header was generated with sol v3.2.0 (revision 5022c4d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -190,6 +190,10 @@
 #if !defined(SOL_SAFE_STACK_CHECK)
 #define SOL_SAFE_STACK_CHECK 0
 #endif // use luaL_checkstack to check stack overflow / overrun
+
+#if !defined(SOL_AUTOMAGICAL_TYPES_BY_DEFAULT)
+#define SOL_AUTOMAGICAL_TYPES_BY_DEFAULT 1
+#endif // make is_automagical on/off by default
 
 // end of sol/config.hpp
 

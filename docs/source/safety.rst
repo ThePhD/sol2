@@ -101,6 +101,12 @@ Feature Config
 	* May come with a slight performance penalty: only recommended for those stuck with non-sol libraries that still need to leverage some of sol's power
 	* **Not** turned on by default under any settings: *this MUST be turned on manually*
 	
+``SOL_AUTOMAGICAL_TYPES_BY_DEFAULT`` triggers the following change:
+	* Either turns on (``!= 0``) or turns off (``== 0``) automagical usertype detection by default.
+	* Automagical usertypes search for specific C++ conventions to define common methods for the end-user.
+	* Some automagical methods might cause huge compiler errors, and some people have code bases with different conventions.
+	* Turned on by default. This *must be turned off manually*.
+
 .. _config-memory:
 
 Memory Config

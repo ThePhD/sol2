@@ -234,4 +234,12 @@
 #define SOL_SAFE_STACK_CHECK 0
 #endif // use luaL_checkstack to check stack overflow / overrun
 
+// This macro gives automagic type checks by default.
+// Some types don't quite conform to this, so a few people
+// want it to be turned off globally, all the time.
+// the trait can still be specialized to help with that.
+#if !defined(SOL_AUTOMAGICAL_TYPES_BY_DEFAULT)
+#define SOL_AUTOMAGICAL_TYPES_BY_DEFAULT 1
+#endif // make is_automagical on/off by default
+
 #endif // SOL_CONFIG_HPP
