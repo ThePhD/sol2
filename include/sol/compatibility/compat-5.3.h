@@ -99,7 +99,9 @@ extern "C" {
 #  define LUA_ERRGCMM (LUA_ERRERR + 2)
 #endif /* LUA_ERRGCMM define */
 
+#if !defined(MOONJIT_VERSION)
 typedef size_t lua_Unsigned;
+#endif
 
 typedef struct luaL_Buffer_53 {
 	luaL_Buffer b; /* make incorrect code crash! */
@@ -153,9 +155,10 @@ COMPAT53_API void lua_len(lua_State *L, int i);
   (luaL_newlibtable((L), (l)), luaL_register((L), NULL, (l)))
 #endif
 
-#define lua_pushglobaltable(L) \
+#ifndef lua_pushglobaltable
+#  define lua_pushglobaltable(L) \
   lua_pushvalue((L), LUA_GLOBALSINDEX)
-
+#endif
 #define lua_rawgetp COMPAT53_CONCAT(COMPAT53_PREFIX, _rawgetp)
 COMPAT53_API int lua_rawgetp(lua_State *L, int i, const void *p);
 

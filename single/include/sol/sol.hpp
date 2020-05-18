@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-05-17 22:16:42.038395 UTC
-// This header was generated with sol v3.2.0 (revision 5022c4d)
+// Generated 2020-05-18 03:20:22.790628 UTC
+// This header was generated with sol v3.2.0 (revision c5f6680)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -2097,7 +2097,9 @@ extern "C" {
 #  define LUA_ERRGCMM (LUA_ERRERR + 2)
 #endif /* LUA_ERRGCMM define */
 
+#if !defined(MOONJIT_VERSION)
 typedef size_t lua_Unsigned;
+#endif
 
 typedef struct luaL_Buffer_53 {
 	luaL_Buffer b; /* make incorrect code crash! */
@@ -2151,9 +2153,10 @@ COMPAT53_API void lua_len(lua_State *L, int i);
   (luaL_newlibtable((L), (l)), luaL_register((L), NULL, (l)))
 #endif
 
-#define lua_pushglobaltable(L) \
+#ifndef lua_pushglobaltable
+#  define lua_pushglobaltable(L) \
   lua_pushvalue((L), LUA_GLOBALSINDEX)
-
+#endif
 #define lua_rawgetp COMPAT53_CONCAT(COMPAT53_PREFIX, _rawgetp)
 COMPAT53_API int lua_rawgetp(lua_State *L, int i, const void *p);
 
