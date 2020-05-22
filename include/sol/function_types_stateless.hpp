@@ -26,13 +26,14 @@
 
 #include "stack.hpp"
 #include "call.hpp"
+#include "bind_traits.hpp"
 
 namespace sol {
 namespace function_detail {
 	template <typename Function, bool is_yielding>
 	struct upvalue_free_function {
-		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-		typedef meta::bind_traits<function_type> traits_type;
+		using function_type = std::remove_pointer_t<std::decay_t<Function>>;
+		using traits_type = meta::bind_traits<function_type>;
 
 		static int real_call(lua_State* L) noexcept(traits_type::is_noexcept) {
 			auto udata = stack::stack_detail::get_as_upvalues<function_type*>(L);

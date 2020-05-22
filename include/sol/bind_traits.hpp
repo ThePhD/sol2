@@ -64,11 +64,11 @@ namespace meta {
 			using first_type = meta::conditional_t<std::is_void<T>::value, int, T>&;
 
 		public:
-			static const bool is_noexcept = it_is_noexcept;
-			static const bool is_member_function = std::is_void<T>::value;
-			static const bool has_c_var_arg = has_c_variadic;
-			static const std::size_t arity = sizeof...(Args);
-			static const std::size_t free_arity = sizeof...(Args) + static_cast<std::size_t>(!std::is_void<T>::value);
+			inline static constexpr const bool is_noexcept = it_is_noexcept;
+			inline static constexpr bool is_member_function = std::is_void<T>::value;
+			inline static constexpr bool has_c_var_arg = has_c_variadic;
+			inline static constexpr std::size_t arity = sizeof...(Args);
+			inline static constexpr std::size_t free_arity = sizeof...(Args) + static_cast<std::size_t>(!std::is_void<T>::value);
 			typedef types<Args...> args_list;
 			typedef std::tuple<Args...> args_tuple;
 			typedef T object_type;
@@ -512,10 +512,10 @@ namespace meta {
 			typedef return_type Arg;
 			typedef T object_type;
 			using signature_type = R(T::*);
-			static const bool is_noexcept = false;
-			static const bool is_member_function = false;
-			static const std::size_t arity = 1;
-			static const std::size_t free_arity = 2;
+			inline static constexpr bool is_noexcept = false;
+			inline static constexpr bool is_member_function = false;
+			inline static constexpr std::size_t arity = 1;
+			inline static constexpr std::size_t free_arity = 2;
 			typedef std::tuple<Arg> args_tuple;
 			typedef types<Arg> args_list;
 			typedef types<T, Arg> free_args_list;

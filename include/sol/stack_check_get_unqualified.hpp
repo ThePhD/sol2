@@ -41,8 +41,8 @@ namespace sol { namespace stack {
 	struct unqualified_check_getter {
 		typedef decltype(stack_detail::unchecked_unqualified_get<T>(nullptr, -1, std::declval<record&>())) R;
 
-		template <typename Handler>
-		static optional<R> get(lua_State* L, int index, Handler&& handler, record& tracking) {
+		template <typename Optional, typename Handler>
+		static Optional get_using(lua_State* L, int index, Handler&& handler, record& tracking) {
 			if constexpr (!meta::meta_detail::is_adl_sol_lua_check_v<T> && !meta::meta_detail::is_adl_sol_lua_get_v<T>) {
 				if constexpr (is_lua_reference_v<T>) {
 					// actually check if it's none here, otherwise
@@ -52,7 +52,7 @@ namespace sol { namespace stack {
 						// expected type, actual type
 						tracking.use(static_cast<int>(success));
 						handler(L, index, type::poly, type_of(L, index), "");
-						return nullopt;
+						return std::nullopt;
 					}
 					return stack_detail::unchecked_get<T>(L, index, tracking);
 				}
@@ -80,7 +80,7 @@ namespace sol { namespace stack {
 					const type t = type_of(L, index);
 					tracking.use(static_cast<int>(t != type::none));
 					handler(L, index, type::number, t, "not an integer");
-					return nullopt;
+					return std::nullopt;
 				}
 				else if constexpr (std::is_floating_point_v<T> || std::is_same_v<T, lua_Number>) {
 					int isnum = 0;
@@ -89,7 +89,7 @@ namespace sol { namespace stack {
 						type t = type_of(L, index);
 						tracking.use(static_cast<int>(t != type::none));
 						handler(L, index, type::number, t, "not a valid floating point number");
-						return nullopt;
+						return std::nullopt;
 					}
 					tracking.use(1);
 					return static_cast<T>(value);
@@ -101,7 +101,7 @@ namespace sol { namespace stack {
 						type t = type_of(L, index);
 						tracking.use(static_cast<int>(t != type::none));
 						handler(L, index, type::number, t, "not a valid enumeration value");
-						return nullopt;
+						return std::nullopt;
 					}
 					tracking.use(1);
 					return static_cast<T>(value);
@@ -109,7 +109,7 @@ namespace sol { namespace stack {
 				else {
 					if (!unqualified_check<T>(L, index, std::forward<Handler>(handler))) {
 						tracking.use(static_cast<int>(!lua_isnone(L, index)));
-						return nullopt;
+						return std::nullopt;
 					}
 					return stack_detail::unchecked_unqualified_get<T>(L, index, tracking);
 				}
@@ -117,10 +117,15 @@ namespace sol { namespace stack {
 			else {
 				if (!unqualified_check<T>(L, index, std::forward<Handler>(handler))) {
 					tracking.use(static_cast<int>(!lua_isnone(L, index)));
-					return nullopt;
+					return std::nullopt;
 				}
 				return stack_detail::unchecked_unqualified_get<T>(L, index, tracking);
 			}
+		}
+
+		template <typename Handler>
+		static optional<R> get(lua_State* L, int index, Handler&& handler, record& tracking) {
+			return get_using<optional<R>>(L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
 

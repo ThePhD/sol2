@@ -43,47 +43,6 @@ namespace sol {
 		int popcount;
 		call_status err;
 
-		template <typename T>
-		decltype(auto) tagged_get(types<optional<T>>, int index_offset) const {
-			typedef decltype(stack::get<optional<T>>(L, index)) ret_t;
-			int target = index + index_offset;
-			if (!valid()) {
-				return ret_t(nullopt);
-			}
-			return stack::get<optional<T>>(L, target);
-		}
-
-		template <typename T>
-		decltype(auto) tagged_get(types<T>, int index_offset) const {
-			int target = index + index_offset;
-#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES
-			if (!valid()) {
-				type t = type_of(L, target);
-				type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is not an error)");
-			}
-#endif // Check Argument Safety
-			return stack::get<T>(L, target);
-		}
-
-		optional<error> tagged_get(types<optional<error>>, int index_offset) const {
-			int target = index + index_offset;
-			if (valid()) {
-				return nullopt;
-			}
-			return error(detail::direct_error, stack::get<std::string>(L, target));
-		}
-
-		error tagged_get(types<error>, int index_offset) const {
-			int target = index + index_offset;
-#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES
-			if (valid()) {
-				type t = type_of(L, target);
-				type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is an error)");
-			}
-#endif // Check Argument Safety
-			return error(detail::direct_error, stack::get<std::string>(L, target));
-		}
-
 	public:
 		typedef stack_proxy reference_type;
 		typedef stack_proxy value_type;
@@ -136,7 +95,43 @@ namespace sol {
 
 		template <typename T>
 		decltype(auto) get(int index_offset = 0) const {
-			return tagged_get(types<meta::unqualified_t<T>>(), index_offset);
+			using UT = meta::unqualified_t<T>;
+			int target = index + index_offset;
+			if constexpr (meta::is_optional_v<UT>) {
+				using ValueType = typename UT::value_type;
+				if constexpr (std::is_same_v<ValueType, error>) {
+					if (valid()) {
+						return UT(nullopt);
+					}
+					return UT(error(detail::direct_error, stack::get<std::string>(L, target)));
+				}
+				else {
+					if (!valid()) {
+						return UT();
+					}
+					return UT(stack::get<ValueType>(L, target));
+				}
+			}
+			else {
+				if constexpr (std::is_same_v<T, error>) {
+#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES
+					if (valid()) {
+						type t = type_of(L, target);
+						type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is an error)");
+					}
+#endif // Check Argument Safety
+					return error(detail::direct_error, stack::get<std::string>(L, target));
+				}
+				else {
+#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES
+					if (!valid()) {
+						type t = type_of(L, target);
+						type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is not an error)");
+					}
+#endif // Check Argument Safety
+					return stack::get<T>(L, target);
+				}
+			}
 		}
 
 		type get_type(int index_offset = 0) const noexcept {

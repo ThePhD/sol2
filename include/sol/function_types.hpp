@@ -273,6 +273,9 @@ namespace sol {
 				if constexpr (std::is_same_v<meta::unqualified_t<Arg0>, detail::yield_tag_t>) {
 					push<true>(L, std::forward<Args>(args)...);
 				}
+				else if constexpr (meta::is_specialization_of_v<meta::unqualified_t<Arg0>, yielding_t>) {
+					push<true>(L, std::forward<Arg0>(arg0).func, std::forward<Args>(args)...);
+				}
 				else {
 					push<false>(L, std::forward<Arg0>(arg0), std::forward<Args>(args)...);
 				}

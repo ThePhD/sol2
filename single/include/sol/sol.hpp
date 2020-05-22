@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-05-18 03:20:22.790628 UTC
-// This header was generated with sol v3.2.0 (revision c5f6680)
+// Generated 2020-05-22 13:37:38.805887 UTC
+// This header was generated with sol v3.2.0 (revision d9c034d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -659,11 +659,11 @@ namespace meta {
 			using first_type = meta::conditional_t<std::is_void<T>::value, int, T>&;
 
 		public:
-			static const bool is_noexcept = it_is_noexcept;
-			static const bool is_member_function = std::is_void<T>::value;
-			static const bool has_c_var_arg = has_c_variadic;
-			static const std::size_t arity = sizeof...(Args);
-			static const std::size_t free_arity = sizeof...(Args) + static_cast<std::size_t>(!std::is_void<T>::value);
+			inline static constexpr const bool is_noexcept = it_is_noexcept;
+			inline static constexpr bool is_member_function = std::is_void<T>::value;
+			inline static constexpr bool has_c_var_arg = has_c_variadic;
+			inline static constexpr std::size_t arity = sizeof...(Args);
+			inline static constexpr std::size_t free_arity = sizeof...(Args) + static_cast<std::size_t>(!std::is_void<T>::value);
 			typedef types<Args...> args_list;
 			typedef std::tuple<Args...> args_tuple;
 			typedef T object_type;
@@ -1107,10 +1107,10 @@ namespace meta {
 			typedef return_type Arg;
 			typedef T object_type;
 			using signature_type = R(T::*);
-			static const bool is_noexcept = false;
-			static const bool is_member_function = false;
-			static const std::size_t arity = 1;
-			static const std::size_t free_arity = 2;
+			inline static constexpr bool is_noexcept = false;
+			inline static constexpr bool is_member_function = false;
+			inline static constexpr std::size_t arity = 1;
+			inline static constexpr std::size_t free_arity = 2;
 			typedef std::tuple<Arg> args_tuple;
 			typedef types<Arg> args_list;
 			typedef types<T, Arg> free_args_list;
@@ -3472,6 +3472,7 @@ namespace sol {
 #include <exception>
 #include <new>
 #include <cstdlib>
+#include <optional>
 
 #if (defined(_MSC_VER) && _MSC_VER == 1900)
 #define SOL_TL_OPTIONAL_MSVC2015
@@ -3734,7 +3735,7 @@ namespace sol {
 		struct is_swappable : std::integral_constant<bool,
 		                           decltype(detail::swap_adl_tests::can_swap<T, U>(0))::value
 		                                && (!decltype(detail::swap_adl_tests::uses_std<T, U>(0))::value
-		                                        || (std::is_move_assignable<T>::value && std::is_move_constructible<T>::value))> {};
+		                                     || (std::is_move_assignable<T>::value && std::is_move_constructible<T>::value))> {};
 
 		template <class T, std::size_t N>
 		struct is_swappable<T[N], T[N]> : std::integral_constant<bool,
@@ -3746,7 +3747,7 @@ namespace sol {
 		: std::integral_constant<bool,
 		       is_swappable<T, U>::value
 		            && ((decltype(detail::swap_adl_tests::uses_std<T, U>(0))::value&& detail::swap_adl_tests::is_std_swap_noexcept<T>::value)
-		                    || (!decltype(detail::swap_adl_tests::uses_std<T, U>(0))::value&& detail::swap_adl_tests::is_adl_swap_noexcept<T, U>::value))> {};
+		                 || (!decltype(detail::swap_adl_tests::uses_std<T, U>(0))::value&& detail::swap_adl_tests::is_adl_swap_noexcept<T, U>::value))> {};
 #endif
 
 		// The storage base manages the actual storage, and correctly propagates
@@ -4041,11 +4042,8 @@ namespace sol {
 	} // namespace detail
 
 	/// \brief A tag type to represent an empty optional
-	struct nullopt_t {
-		struct do_not_use {};
-		constexpr explicit nullopt_t(do_not_use, do_not_use) noexcept {
-		}
-	};
+	using nullopt_t = std::nullopt_t;
+
 	/// \brief Represents an empty optional
 	/// \synopsis static constexpr nullopt_t nullopt;
 	///
@@ -4055,7 +4053,7 @@ namespace sol {
 	/// void foo (sol::optional<int>);
 	/// foo(sol::nullopt); //pass an empty optional
 	/// ```
-	static constexpr nullopt_t nullopt{ nullopt_t::do_not_use{}, nullopt_t::do_not_use{} };
+	using std::nullopt;
 
 	class bad_optional_access : public std::exception {
 	public:
@@ -4409,7 +4407,7 @@ namespace sol {
 		template <class U>
 		constexpr optional<typename std::decay<U>::type> conjunction(U&& u) const {
 			using result = optional<detail::decay_t<U>>;
-			return has_value() ? result{ u } : result{ nullopt };
+			return has_value() ? result { u } : result { nullopt };
 		}
 
 		/// \returns `rhs` if `*this` is empty, otherwise the current value.
@@ -5043,7 +5041,7 @@ namespace sol {
 		auto optional_map_impl(Opt&& opt, F&& f) {
 			if (opt.has_value()) {
 				detail::invoke(std::forward<F>(f), *std::forward<Opt>(opt));
-				return make_optional(monostate{});
+				return make_optional(monostate {});
 			}
 
 			return optional<monostate>(nullopt);
@@ -5062,7 +5060,7 @@ namespace sol {
 		auto optional_map_impl(Opt&& opt, F&& f) -> optional<monostate> {
 			if (opt.has_value()) {
 				detail::invoke(std::forward<F>(f), *std::forward<Opt>(opt));
-				return monostate{};
+				return monostate {};
 			}
 
 			return nullopt;
@@ -5422,7 +5420,7 @@ namespace sol {
 		template <class U>
 		constexpr optional<typename std::decay<U>::type> conjunction(U&& u) const {
 			using result = optional<detail::decay_t<U>>;
-			return has_value() ? result{ u } : result{ nullopt };
+			return has_value() ? result { u } : result { nullopt };
 		}
 
 		/// \returns `rhs` if `*this` is empty, otherwise the current value.
@@ -5695,8 +5693,6 @@ namespace std {
 // end of sol/optional_implementation.hpp
 
 #endif // Boost vs. Better optional
-
-#include <optional>
 
 namespace sol {
 
@@ -11758,7 +11754,7 @@ namespace sol { namespace stack {
 			}
 			else if constexpr (meta::is_optional_v<T>) {
 				using ValueType = typename T::value_type;
-				return stack::unqualified_check_get<ValueType>(L, index, no_panic, tracking);
+				return unqualified_check_getter<ValueType>::template get_using<T>(L, index, no_panic, tracking);
 			}
 			else if constexpr (std::is_same_v<T, luaL_Stream*>) {
 				luaL_Stream* pstream = static_cast<luaL_Stream*>(lua_touserdata(L, index));
@@ -12659,8 +12655,8 @@ namespace sol { namespace stack {
 	struct unqualified_check_getter {
 		typedef decltype(stack_detail::unchecked_unqualified_get<T>(nullptr, -1, std::declval<record&>())) R;
 
-		template <typename Handler>
-		static optional<R> get(lua_State* L, int index, Handler&& handler, record& tracking) {
+		template <typename Optional, typename Handler>
+		static Optional get_using(lua_State* L, int index, Handler&& handler, record& tracking) {
 			if constexpr (!meta::meta_detail::is_adl_sol_lua_check_v<T> && !meta::meta_detail::is_adl_sol_lua_get_v<T>) {
 				if constexpr (is_lua_reference_v<T>) {
 					// actually check if it's none here, otherwise
@@ -12670,7 +12666,7 @@ namespace sol { namespace stack {
 						// expected type, actual type
 						tracking.use(static_cast<int>(success));
 						handler(L, index, type::poly, type_of(L, index), "");
-						return nullopt;
+						return std::nullopt;
 					}
 					return stack_detail::unchecked_get<T>(L, index, tracking);
 				}
@@ -12698,7 +12694,7 @@ namespace sol { namespace stack {
 					const type t = type_of(L, index);
 					tracking.use(static_cast<int>(t != type::none));
 					handler(L, index, type::number, t, "not an integer");
-					return nullopt;
+					return std::nullopt;
 				}
 				else if constexpr (std::is_floating_point_v<T> || std::is_same_v<T, lua_Number>) {
 					int isnum = 0;
@@ -12707,7 +12703,7 @@ namespace sol { namespace stack {
 						type t = type_of(L, index);
 						tracking.use(static_cast<int>(t != type::none));
 						handler(L, index, type::number, t, "not a valid floating point number");
-						return nullopt;
+						return std::nullopt;
 					}
 					tracking.use(1);
 					return static_cast<T>(value);
@@ -12719,7 +12715,7 @@ namespace sol { namespace stack {
 						type t = type_of(L, index);
 						tracking.use(static_cast<int>(t != type::none));
 						handler(L, index, type::number, t, "not a valid enumeration value");
-						return nullopt;
+						return std::nullopt;
 					}
 					tracking.use(1);
 					return static_cast<T>(value);
@@ -12727,7 +12723,7 @@ namespace sol { namespace stack {
 				else {
 					if (!unqualified_check<T>(L, index, std::forward<Handler>(handler))) {
 						tracking.use(static_cast<int>(!lua_isnone(L, index)));
-						return nullopt;
+						return std::nullopt;
 					}
 					return stack_detail::unchecked_unqualified_get<T>(L, index, tracking);
 				}
@@ -12735,10 +12731,15 @@ namespace sol { namespace stack {
 			else {
 				if (!unqualified_check<T>(L, index, std::forward<Handler>(handler))) {
 					tracking.use(static_cast<int>(!lua_isnone(L, index)));
-					return nullopt;
+					return std::nullopt;
 				}
 				return stack_detail::unchecked_unqualified_get<T>(L, index, tracking);
 			}
+		}
+
+		template <typename Handler>
+		static optional<R> get(lua_State* L, int index, Handler&& handler, record& tracking) {
+			return get_using<optional<R>>(L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
 
@@ -15138,47 +15139,6 @@ namespace sol {
 		int popcount;
 		call_status err;
 
-		template <typename T>
-		decltype(auto) tagged_get(types<optional<T>>, int index_offset) const {
-			typedef decltype(stack::get<optional<T>>(L, index)) ret_t;
-			int target = index + index_offset;
-			if (!valid()) {
-				return ret_t(nullopt);
-			}
-			return stack::get<optional<T>>(L, target);
-		}
-
-		template <typename T>
-		decltype(auto) tagged_get(types<T>, int index_offset) const {
-			int target = index + index_offset;
-#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES
-			if (!valid()) {
-				type t = type_of(L, target);
-				type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is not an error)");
-			}
-#endif // Check Argument Safety
-			return stack::get<T>(L, target);
-		}
-
-		optional<error> tagged_get(types<optional<error>>, int index_offset) const {
-			int target = index + index_offset;
-			if (valid()) {
-				return nullopt;
-			}
-			return error(detail::direct_error, stack::get<std::string>(L, target));
-		}
-
-		error tagged_get(types<error>, int index_offset) const {
-			int target = index + index_offset;
-#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES
-			if (valid()) {
-				type t = type_of(L, target);
-				type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is an error)");
-			}
-#endif // Check Argument Safety
-			return error(detail::direct_error, stack::get<std::string>(L, target));
-		}
-
 	public:
 		typedef stack_proxy reference_type;
 		typedef stack_proxy value_type;
@@ -15231,7 +15191,43 @@ namespace sol {
 
 		template <typename T>
 		decltype(auto) get(int index_offset = 0) const {
-			return tagged_get(types<meta::unqualified_t<T>>(), index_offset);
+			using UT = meta::unqualified_t<T>;
+			int target = index + index_offset;
+			if constexpr (meta::is_optional_v<UT>) {
+				using ValueType = typename UT::value_type;
+				if constexpr (std::is_same_v<ValueType, error>) {
+					if (valid()) {
+						return UT(nullopt);
+					}
+					return UT(error(detail::direct_error, stack::get<std::string>(L, target)));
+				}
+				else {
+					if (!valid()) {
+						return UT();
+					}
+					return UT(stack::get<ValueType>(L, target));
+				}
+			}
+			else {
+				if constexpr (std::is_same_v<T, error>) {
+#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES
+					if (valid()) {
+						type t = type_of(L, target);
+						type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is an error)");
+					}
+#endif // Check Argument Safety
+					return error(detail::direct_error, stack::get<std::string>(L, target));
+				}
+				else {
+#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES
+					if (!valid()) {
+						type t = type_of(L, target);
+						type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is not an error)");
+					}
+#endif // Check Argument Safety
+					return stack::get<T>(L, target);
+				}
+			}
 		}
 
 		type get_type(int index_offset = 0) const noexcept {
@@ -17004,8 +17000,8 @@ namespace sol {
 namespace function_detail {
 	template <typename Function, bool is_yielding>
 	struct upvalue_free_function {
-		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
-		typedef meta::bind_traits<function_type> traits_type;
+		using function_type = std::remove_pointer_t<std::decay_t<Function>>;
+		using traits_type = meta::bind_traits<function_type>;
 
 		static int real_call(lua_State* L) noexcept(traits_type::is_noexcept) {
 			auto udata = stack::stack_detail::get_as_upvalues<function_type*>(L);
@@ -17771,6 +17767,9 @@ namespace sol {
 			static int push(lua_State* L, Arg0&& arg0, Args&&... args) {
 				if constexpr (std::is_same_v<meta::unqualified_t<Arg0>, detail::yield_tag_t>) {
 					push<true>(L, std::forward<Args>(args)...);
+				}
+				else if constexpr (meta::is_specialization_of_v<meta::unqualified_t<Arg0>, yielding_t>) {
+					push<true>(L, std::forward<Arg0>(arg0).func, std::forward<Args>(args)...);
 				}
 				else {
 					push<false>(L, std::forward<Arg0>(arg0), std::forward<Args>(args)...);
@@ -23878,40 +23877,6 @@ namespace sol {
 		int popcount;
 		load_status err;
 
-		template <typename T>
-		decltype(auto) tagged_get(types<optional<T>>) const {
-			if (!valid()) {
-				return optional<T>(nullopt);
-			}
-			return stack::get<optional<T>>(L, index);
-		}
-
-		template <typename T>
-		decltype(auto) tagged_get(types<T>) const {
-#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES != 0
-			if (!valid()) {
-				type_panic_c_str(L, index, type_of(L, index), type::none);
-			}
-#endif // Check Argument Safety
-			return stack::get<T>(L, index);
-		}
-
-		optional<error> tagged_get(types<optional<error>>) const {
-			if (valid()) {
-				return nullopt;
-			}
-			return error(detail::direct_error, stack::get<std::string>(L, index));
-		}
-
-		error tagged_get(types<error>) const {
-#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES != 0
-			if (valid()) {
-				type_panic_c_str(L, index, type_of(L, index), type::none, "expecting an error type (a string, from Lua)");
-			}
-#endif // Check Argument Safety
-			return error(detail::direct_error, stack::get<std::string>(L, index));
-		}
-
 	public:
 		load_result() = default;
 		load_result(lua_State* Ls, int stackindex = -1, int retnum = 0, int popnum = 0, load_status lerr = load_status::ok) noexcept
@@ -23919,8 +23884,7 @@ namespace sol {
 		}
 		load_result(const load_result&) = default;
 		load_result& operator=(const load_result&) = default;
-		load_result(load_result&& o) noexcept
-		: L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
+		load_result(load_result&& o) noexcept : L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
 			// Must be manual, otherwise destructor will screw us
 			// return count being 0 is enough to keep things clean
 			// but we will be thorough
@@ -23957,7 +23921,40 @@ namespace sol {
 
 		template <typename T>
 		T get() const {
-			return tagged_get(types<meta::unqualified_t<T>>());
+			using UT = meta::unqualified_t<T>;
+			if constexpr (meta::is_optional_v<UT>) {
+				using ValueType = typename UT::value_type;
+				if constexpr (std::is_same_v<ValueType, error>) {
+					if (valid()) {
+						return UT(nullopt);
+					}
+					return error(detail::direct_error, stack::get<std::string>(L, index));
+				}
+				else {
+					if (!valid()) {
+						return UT(nullopt);
+					}
+					return stack::get<UT>(L, index);
+				}
+			}
+			else {
+				if constexpr (std::is_same_v<T, error>) {
+#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES != 0
+					if (valid()) {
+						type_panic_c_str(L, index, type_of(L, index), type::none, "expecting an error type (a string, from Lua)");
+					}
+#endif // Check proxy type's safety
+					return error(detail::direct_error, stack::get<std::string>(L, index));
+				}
+				else {
+#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES != 0
+					if (!valid()) {
+						type_panic_c_str(L, index, type_of(L, index), type::none);
+					}
+#endif // Check proxy type's safety
+					return stack::get<T>(L, index);
+				}
+			}
 		}
 
 		template <typename... Ret, typename... Args>
