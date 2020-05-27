@@ -101,7 +101,7 @@ namespace sol {
 				using ValueType = typename UT::value_type;
 				if constexpr (std::is_same_v<ValueType, error>) {
 					if (valid()) {
-						return UT(nullopt);
+						return UT();
 					}
 					return UT(error(detail::direct_error, stack::get<std::string>(L, target)));
 				}
@@ -109,7 +109,7 @@ namespace sol {
 					if (!valid()) {
 						return UT();
 					}
-					return UT(stack::get<ValueType>(L, target));
+					return stack::get<UT>(L, target);
 				}
 			}
 			else {

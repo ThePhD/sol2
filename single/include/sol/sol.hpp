@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-05-22 13:37:38.805887 UTC
-// This header was generated with sol v3.2.0 (revision d9c034d)
+// Generated 2020-05-27 00:07:00.664617 UTC
+// This header was generated with sol v3.2.0 (revision 465b472)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -15197,7 +15197,7 @@ namespace sol {
 				using ValueType = typename UT::value_type;
 				if constexpr (std::is_same_v<ValueType, error>) {
 					if (valid()) {
-						return UT(nullopt);
+						return UT();
 					}
 					return UT(error(detail::direct_error, stack::get<std::string>(L, target)));
 				}
@@ -15205,7 +15205,7 @@ namespace sol {
 					if (!valid()) {
 						return UT();
 					}
-					return UT(stack::get<ValueType>(L, target));
+					return stack::get<UT>(L, target);
 				}
 			}
 			else {

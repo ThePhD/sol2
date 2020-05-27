@@ -143,16 +143,18 @@ namespace sol {
 
 	template <>
 	struct usertype_container<my_vec> {
+		// Hooks Lua's syntax for #c
+		static int size(lua_State* L) {
+			my_vec& v = sol::stack::get<my_vec&>(L, 1);
+			return stack::push(L, v.size());
+		}
+
+		// Used by default implementation
 		static auto begin(lua_State*, my_vec& self) {
 			return self.begin();
 		}
 		static auto end(lua_State*, my_vec& self) {
 			return self.end();
-		}
-
-		static std::size_t size(lua_State* L) {
-			my_vec& v = sol::stack::get<my_vec&>(L, 1);
-			return v.size();
 		}
 
 		static std::ptrdiff_t index_adjustment(lua_State*, my_vec&) {
@@ -216,6 +218,8 @@ TEST_CASE("containers/custom indexing", "allow containers to set a custom indexi
 	REQUIRE(result2.valid());
 	auto result3 = lua.safe_script("assert(c[-1] == nil)", sol::script_pass_on_error);
 	REQUIRE(result3.valid());
+	auto result4 = lua.safe_script("assert(#c == 10)", sol::script_pass_on_error);
+	REQUIRE(result4.valid());
 }
 
 TEST_CASE("containers/containers of pointers", "containers of pointers shouldn't have their value_type's overly stripped") {
