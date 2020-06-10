@@ -17,7 +17,7 @@ struct vec {
 };
 
 double dot(const vec& left, const vec& right) {
-	return left.x * right.x + left.x * right.x;
+	return left.x * right.x + left.y * right.y;
 }
 
 vec operator+(const vec& left, const vec& right) {
