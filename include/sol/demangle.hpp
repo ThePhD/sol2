@@ -186,6 +186,7 @@ namespace detail {
 		static const std::string d = short_demangle_once<T>();
 		return d;
 	}
-}} // namespace sol::detail
+}
+} // namespace sol::detail
 
 #endif // SOL_DEMANGLE_HPP

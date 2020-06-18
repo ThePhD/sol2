@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-06-18 21:54:34.347814 UTC
-// This header was generated with sol v3.2.1 (revision 62a831cd)
+// Generated 2020-06-18 22:17:10.286043 UTC
+// This header was generated with sol v3.2.1 (revision 162fdd74)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -7757,7 +7757,8 @@ namespace detail {
 		static const std::string d = short_demangle_once<T>();
 		return d;
 	}
-}} // namespace sol::detail
+}
+} // namespace sol::detail
 
 // end of sol/demangle.hpp
 
