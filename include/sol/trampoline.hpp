@@ -99,8 +99,8 @@ namespace sol {
 			return trampoline(L, f);
 		}
 #else
-		template <lua_CFunction f>
-		int static_trampoline(lua_State* L) {
+
+		inline int impl_static_trampoline(lua_State* L, lua_CFunction f) {
 #if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_LUAJIT)
 			return f(L);
 
@@ -119,7 +119,7 @@ namespace sol {
 			}
 #if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			// LuaJIT cannot have the catchall when the safe propagation is on
-			// but LuaJIT will swallow all C++ errors 
+			// but LuaJIT will swallow all C++ errors
 			// if we don't at least catch std::exception ones
 			catch (...) {
 				call_exception_handler(L, optional<const std::exception&>(nullopt), "caught (...) exception");
@@ -127,6 +127,11 @@ namespace sol {
 #endif // LuaJIT cannot have the catchall, but we must catch std::exceps for it
 			return lua_error(L);
 #endif // Safe exceptions
+		}
+
+		template <lua_CFunction f>
+		int static_trampoline(lua_State* L) {
+			return impl_static_trampoline(L, f);
 		}
 
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE

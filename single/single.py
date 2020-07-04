@@ -39,7 +39,7 @@ forward_single_file = ''
 single_file = os.path.normpath(args.output[0])
 
 if len(args.output) > 1:
-	forward_single_file = args.output[1]
+	forward_single_file = os.path.normpath(args.output[1])
 else:
 	a, b = os.path.splitext(single_file)
 	a = os.path.dirname(single_file)
@@ -49,7 +49,7 @@ else:
 single_file_dir = os.path.dirname(single_file)
 forward_single_file_dir = os.path.dirname(forward_single_file)
 
-script_path = args.input
+script_path = os.path.normpath(args.input)
 working_dir = os.getcwd()
 os.chdir(script_path)
 

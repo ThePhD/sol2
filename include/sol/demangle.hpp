@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -49,11 +49,9 @@ namespace detail {
 
 
 #if defined(__GNUC__) || defined(__clang__)
-	template <typename T, class seperator_mark = int>
-	inline std::string ctti_get_type_name() {
+	inline std::string ctti_get_type_name_from_sig(std::string name) {
 		// cardinal sins from MINGW
 		using namespace std;
-		std::string name = __PRETTY_FUNCTION__;
 		std::size_t start = name.find_first_of('[');
 		start = name.find_first_of('=', start);
 		std::size_t end = name.find_last_of(']');
@@ -83,10 +81,13 @@ namespace detail {
 
 		return name;
 	}
+
+	template <typename T, class seperator_mark = int>
+	inline std::string ctti_get_type_name() {
+		return ctti_get_type_name_from_sig(__PRETTY_FUNCTION__);
+	}
 #elif defined(_MSC_VER)
-	template <typename T>
-	std::string ctti_get_type_name() {
-		std::string name = __FUNCSIG__;
+	inline std::string ctti_get_type_name_from_sig(std::string name) {
 		std::size_t start = name.find("get_type_name");
 		if (start == std::string::npos)
 			start = 0;
@@ -117,6 +118,11 @@ namespace detail {
 
 		return name;
 	}
+
+	template <typename T>
+	std::string ctti_get_type_name() {
+		return ctti_get_type_name_from_sig(__FUNCSIG__);
+	}
 #else
 #error Compiler not supported for demangling
 #endif // compilers
@@ -127,9 +133,7 @@ namespace detail {
 		return realname;
 	}
 
-	template <typename T>
-	std::string short_demangle_once() {
-		std::string realname = ctti_get_type_name<T>();
+	inline std::string short_demangle_from_type_name(std::string realname) {
 		// This isn't the most complete but it'll do for now...?
 		static const std::array<std::string, 10> ops = {{"operator<", "operator<<", "operator<<=", "operator<=", "operator>", "operator>>", "operator>>=", "operator>=", "operator->", "operator->*"}};
 		int level = 0;
@@ -163,6 +167,12 @@ namespace detail {
 			realname.erase(0, realname.length() < static_cast<std::size_t>(idx) ? realname.length() : idx + 1);
 		}
 		return realname;
+	}
+
+	template <typename T>
+	std::string short_demangle_once() {
+		std::string realname = ctti_get_type_name<T>();
+		return short_demangle_from_type_name(realname);
 	}
 
 	template <typename T>
