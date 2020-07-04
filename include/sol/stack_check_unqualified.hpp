@@ -32,9 +32,9 @@
 #include <utility>
 #include <cmath>
 #include <optional>
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#if SOL_ON(SOL_STD_VARIANT_)
 #include <variant>
-#endif // SOL_STD_VARIANT
+#endif // variant shenanigans
 
 namespace sol { namespace stack {
 	namespace stack_detail {
@@ -463,7 +463,7 @@ namespace sol { namespace stack {
 	};
 
 	template <typename T>
-	struct unqualified_checker<non_null<T>, type::userdata> : unqualified_checker<T, lua_type_of_v<T>> {};
+	struct unqualified_checker<non_null<T>, type::userdata> : unqualified_checker<T, lua_type_of_v<T>> { };
 
 	template <typename T>
 	struct unqualified_checker<detail::as_value_tag<T>, type::userdata> {
@@ -567,7 +567,7 @@ namespace sol { namespace stack {
 		}
 	};
 
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#if SOL_ON(SOL_STD_VARIANT_)
 
 	template <typename... Tn>
 	struct unqualified_checker<std::variant<Tn...>, type::poly> {
@@ -604,7 +604,7 @@ namespace sol { namespace stack {
 		}
 	};
 
-#endif // SOL_STD_VARIANT
+#endif // variant shenanigans
 
 }} // namespace sol::stack
 

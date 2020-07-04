@@ -49,6 +49,6 @@
 #endif // Clang screws up variant
 
 #include <sol/config.hpp>
-#include "config_setup.hpp"
+#include "version.hpp"
 
 #endif // SOL_FEATURE_TEST_HPP

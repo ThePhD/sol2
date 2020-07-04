@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -21,10 +21,12 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_VERSION_HPP
-#define SOL_VERSION_HPP
+#ifndef SOL_COMPATIBILITY_VERSION_HPP
+#define SOL_COMPATIBILITY_VERSION_HPP
 
 #include "../feature_test.hpp"
+
+// clang-format off
 
 #if defined(SOL_USING_CXX_LUA) && SOL_USING_CXX_LUA
 	#include <lua.h>
@@ -95,4 +97,6 @@
 	#define SOL_LUA_VERSION 503
 #endif // Lua Version 503, 502, 501 || luajit, 500
 
-#endif // SOL_VERSION_HPP
+// clang-format on
+
+#endif // SOL_COMPATIBILITY_VERSION_HPP

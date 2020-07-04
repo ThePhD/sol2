@@ -37,7 +37,7 @@
 #include <limits>
 #include <cmath>
 #include <string_view>
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#if SOL_ON(SOL_STD_VARIANT_)
 #include <variant>
 #endif // Can use variant
 
@@ -1189,7 +1189,7 @@ namespace sol { namespace stack {
 		}
 	};
 
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#if SOL_ON(SOL_STD_VARIANT_)
 	namespace stack_detail {
 
 		struct push_function {

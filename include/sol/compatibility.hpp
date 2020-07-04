@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -30,7 +30,8 @@
 // though the core abstractions remain the same
 
 #include "feature_test.hpp"
-#include "compatibility/version.hpp"
+#include "compatibility/lua_version.hpp"
+#include "version.hpp"
 
 #if !defined(SOL_NO_COMPAT) || !(SOL_NO_COMPAT)
 

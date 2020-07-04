@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-06-06 16:05:12.150007 UTC
-// This header was generated with sol v3.2.1 (revision e09d2ff)
+// Generated 2020-07-04 07:55:34.972735 UTC
+// This header was generated with sol v3.2.1 (revision 62a831c)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -223,9 +223,42 @@
 
 // end of sol/config.hpp
 
-// beginning of sol/config_setup.hpp
+// beginning of sol/version.hpp
 
-// end of sol/config_setup.hpp
+#define SOL_ON(X) ((X + X) != 0)
+#define SOL_OFF(X) ((X + X) == 0)
+
+#if defined(SOL_IN_DEBUG_DETECTED) && (SOL_IN_DEBUG_DETECTED != 0)
+	#define SOL_IN_DEBUG_DETECTED_ 1
+#else
+	#define SOL_IN_DEBUG_DETECTED_ 0
+#endif // We are in a debug mode of some sort
+
+#if defined(SOL_NO_THREAD_LOCAL) && (SOL_NO_THREAD_LOCAL != 0)
+	#define SOL_USE_THREAD_LOCAL_ 0
+#else
+	#define SOL_USE_THREAD_LOCAL_ 1
+#endif // thread_local keyword is bjorked on some platforms
+
+#if defined(SOL_USERTYPE_TYPE_BINDING_INFO) && (SOL_USERTYPE_TYPE_BINDING_INFO != 0)
+	#define SOL_USERTYPE_TYPE_BINDING_INFO_ 1
+#else
+	#define SOL_USERTYPE_TYPE_BINDING_INFO_ 0
+#endif // We should generate a my_type.__type table with lots of class information for usertypes
+
+#if defined(SOL_AUTOMAGICAL_TYPES_BY_DEFAULT) && SOL_AUTOMAGICAL_TYPES_BY_DEFAULT != 0
+	#define SOL_AUTOMAGICAL_TYPES_BY_DEFAULT_ 1
+#else
+	#define SOL_AUTOMAGICAL_TYPES_BY_DEFAULT_ 1
+#endif // make is_automagical on/off by default
+
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT != 0
+	#define SOL_STD_VARIANT_ 1
+#else
+	#define SOL_STD_VARIANT_ 0
+#endif // make is_automagical on/off by default
+
+// end of sol/version.hpp
 
 // end of sol/feature_test.hpp
 
@@ -1239,7 +1272,7 @@ namespace sol {
 #include <array>
 #include <iterator>
 #include <iosfwd>
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT != 0
+#if SOL_ON(SOL_STD_VARIANT_)
 #include <variant>
 #endif // variant is weird on XCode, thanks XCode
 
@@ -1258,7 +1291,7 @@ namespace sol { namespace meta {
 	using unwrapped_t = typename unwrapped<T>::type;
 
 	template <typename T>
-	struct unwrap_unqualified : unwrapped<unqualified_t<T>> {};
+	struct unwrap_unqualified : unwrapped<unqualified_t<T>> { };
 
 	template <typename T>
 	using unwrap_unqualified_t = typename unwrap_unqualified<T>::type;
@@ -1280,16 +1313,16 @@ namespace sol { namespace meta {
 	using remove_member_pointer_t = remove_member_pointer<T>;
 
 	template <typename T, typename...>
-	struct all_same : std::true_type {};
+	struct all_same : std::true_type { };
 
 	template <typename T, typename U, typename... Args>
-	struct all_same<T, U, Args...> : std::integral_constant<bool, std::is_same<T, U>::value && all_same<T, Args...>::value> {};
+	struct all_same<T, U, Args...> : std::integral_constant<bool, std::is_same<T, U>::value && all_same<T, Args...>::value> { };
 
 	template <typename T, typename...>
-	struct any_same : std::false_type {};
+	struct any_same : std::false_type { };
 
 	template <typename T, typename U, typename... Args>
-	struct any_same<T, U, Args...> : std::integral_constant<bool, std::is_same<T, U>::value || any_same<T, Args...>::value> {};
+	struct any_same<T, U, Args...> : std::integral_constant<bool, std::is_same<T, U>::value || any_same<T, Args...>::value> { };
 
 	template <typename T, typename... Args>
 	constexpr inline bool any_same_v = any_same<T, Args...>::value;
@@ -1307,16 +1340,16 @@ namespace sol { namespace meta {
 	constexpr inline bool neg_v = neg<T>::value;
 
 	template <typename... Args>
-	struct all : boolean<true> {};
+	struct all : boolean<true> { };
 
 	template <typename T, typename... Args>
-	struct all<T, Args...> : std::conditional_t<T::value, all<Args...>, boolean<false>> {};
+	struct all<T, Args...> : std::conditional_t<T::value, all<Args...>, boolean<false>> { };
 
 	template <typename... Args>
-	struct any : boolean<false> {};
+	struct any : boolean<false> { };
 
 	template <typename T, typename... Args>
-	struct any<T, Args...> : std::conditional_t<T::value, boolean<true>, any<Args...>> {};
+	struct any<T, Args...> : std::conditional_t<T::value, boolean<true>, any<Args...>> { };
 
 	template <typename T, typename... Args>
 	constexpr inline bool all_v = all<T, Args...>::value;
@@ -1344,37 +1377,37 @@ namespace sol { namespace meta {
 	using disable_any = std::enable_if_t<neg<any<Args...>>::value, enable_t>;
 
 	template <typename V, typename... Vs>
-	struct find_in_pack_v : boolean<false> {};
+	struct find_in_pack_v : boolean<false> { };
 
 	template <typename V, typename Vs1, typename... Vs>
-	struct find_in_pack_v<V, Vs1, Vs...> : any<boolean<(V::value == Vs1::value)>, find_in_pack_v<V, Vs...>> {};
+	struct find_in_pack_v<V, Vs1, Vs...> : any<boolean<(V::value == Vs1::value)>, find_in_pack_v<V, Vs...>> { };
 
 	namespace meta_detail {
 		template <std::size_t I, typename T, typename... Args>
-		struct index_in_pack : std::integral_constant<std::size_t, SIZE_MAX> {};
+		struct index_in_pack : std::integral_constant<std::size_t, SIZE_MAX> { };
 
 		template <std::size_t I, typename T, typename T1, typename... Args>
 		struct index_in_pack<I, T, T1, Args...>
-		: conditional_t<std::is_same<T, T1>::value, std::integral_constant<std::ptrdiff_t, I>, index_in_pack<I + 1, T, Args...>> {};
+		: conditional_t<std::is_same<T, T1>::value, std::integral_constant<std::ptrdiff_t, I>, index_in_pack<I + 1, T, Args...>> { };
 	} // namespace meta_detail
 
 	template <typename T, typename... Args>
-	struct index_in_pack : meta_detail::index_in_pack<0, T, Args...> {};
+	struct index_in_pack : meta_detail::index_in_pack<0, T, Args...> { };
 
 	template <typename T, typename List>
-	struct index_in : meta_detail::index_in_pack<0, T, List> {};
+	struct index_in : meta_detail::index_in_pack<0, T, List> { };
 
 	template <typename T, typename... Args>
-	struct index_in<T, types<Args...>> : meta_detail::index_in_pack<0, T, Args...> {};
+	struct index_in<T, types<Args...>> : meta_detail::index_in_pack<0, T, Args...> { };
 
 	template <std::size_t I, typename... Args>
-	struct at_in_pack {};
+	struct at_in_pack { };
 
 	template <std::size_t I, typename... Args>
 	using at_in_pack_t = typename at_in_pack<I, Args...>::type;
 
 	template <std::size_t I, typename Arg, typename... Args>
-	struct at_in_pack<I, Arg, Args...> : std::conditional<I == 0, Arg, at_in_pack_t<I - 1, Args...>> {};
+	struct at_in_pack<I, Arg, Args...> : std::conditional<I == 0, Arg, at_in_pack_t<I - 1, Args...>> { };
 
 	template <typename Arg, typename... Args>
 	struct at_in_pack<0, Arg, Args...> {
@@ -1392,17 +1425,17 @@ namespace sol { namespace meta {
 		using on_always = std::true_type;
 
 		template <template <typename...> class When, std::size_t Limit, std::size_t I, template <typename...> class Pred, typename... Ts>
-		struct count_when_for_pack : std::integral_constant<std::size_t, 0> {};
+		struct count_when_for_pack : std::integral_constant<std::size_t, 0> { };
 		template <template <typename...> class When, std::size_t Limit, std::size_t I, template <typename...> class Pred, typename T, typename... Ts>
 			          struct count_when_for_pack<When, Limit, I, Pred, T, Ts...> : conditional_t < sizeof...(Ts)
 			     == 0
 			|| Limit<2, std::integral_constant<std::size_t, I + static_cast<std::size_t>(Limit != 0 && Pred<T>::value)>,
 			     count_when_for_pack<When, Limit - static_cast<std::size_t>(When<T, std::integral_constant<std::size_t, I>>::value),
-			          I + static_cast<std::size_t>(When<T, std::integral_constant<std::size_t, I>>::value&& Pred<T>::value), Pred, Ts...>> {};
+			          I + static_cast<std::size_t>(When<T, std::integral_constant<std::size_t, I>>::value&& Pred<T>::value), Pred, Ts...>> { };
 	} // namespace meta_detail
 
 	template <template <typename...> class Pred, typename... Ts>
-	struct count_for_pack : meta_detail::count_when_for_pack<meta_detail::on_always, sizeof...(Ts), 0, Pred, Ts...> {};
+	struct count_for_pack : meta_detail::count_when_for_pack<meta_detail::on_always, sizeof...(Ts), 0, Pred, Ts...> { };
 
 	template <template <typename...> class Pred, typename... Ts>
 	inline constexpr std::size_t count_for_pack_v = count_for_pack<Pred, Ts...>::value;
@@ -1411,16 +1444,16 @@ namespace sol { namespace meta {
 	struct count_for;
 
 	template <template <typename...> class Pred, typename... Args>
-	struct count_for<Pred, types<Args...>> : count_for_pack<Pred, Args...> {};
+	struct count_for<Pred, types<Args...>> : count_for_pack<Pred, Args...> { };
 
 	template <std::size_t Limit, template <typename...> class Pred, typename... Ts>
-	struct count_for_to_pack : meta_detail::count_when_for_pack<meta_detail::on_always, Limit, 0, Pred, Ts...> {};
+	struct count_for_to_pack : meta_detail::count_when_for_pack<meta_detail::on_always, Limit, 0, Pred, Ts...> { };
 
 	template <std::size_t Limit, template <typename...> class Pred, typename... Ts>
 	inline constexpr std::size_t count_for_to_pack_v = count_for_to_pack<Limit, Pred, Ts...>::value;
 
 	template <template <typename...> class When, std::size_t Limit, template <typename...> class Pred, typename... Ts>
-	struct count_when_for_to_pack : meta_detail::count_when_for_pack<When, Limit, 0, Pred, Ts...> {};
+	struct count_when_for_to_pack : meta_detail::count_when_for_pack<When, Limit, 0, Pred, Ts...> { };
 
 	template <template <typename...> class When, std::size_t Limit, template <typename...> class Pred, typename... Ts>
 	inline constexpr std::size_t count_when_for_to_pack_v = count_when_for_to_pack<When, Limit, Pred, Ts...>::value;
@@ -1457,7 +1490,7 @@ namespace sol { namespace meta {
 
 	namespace meta_detail {
 		template <typename>
-		struct always_true : std::true_type {};
+		struct always_true : std::true_type { };
 		struct is_invokable_tester {
 			template <typename Fun, typename... Args>
 			static always_true<decltype(std::declval<Fun>()(std::declval<Args>()...))> test(int);
@@ -1469,17 +1502,17 @@ namespace sol { namespace meta {
 	template <typename T>
 	struct is_invokable;
 	template <typename Fun, typename... Args>
-	struct is_invokable<Fun(Args...)> : decltype(meta_detail::is_invokable_tester::test<Fun, Args...>(0)) {};
+	struct is_invokable<Fun(Args...)> : decltype(meta_detail::is_invokable_tester::test<Fun, Args...>(0)) { };
 
 	namespace meta_detail {
 
 		template <typename T, typename = void>
-		struct is_callable : std::is_function<std::remove_pointer_t<T>> {};
+		struct is_callable : std::is_function<std::remove_pointer_t<T>> { };
 
 		template <typename T>
 		struct is_callable<T,
 			std::enable_if_t<std::is_final<unqualified_t<T>>::value && std::is_class<unqualified_t<T>>::value
-			     && std::is_same<decltype(void(&T::operator())), void>::value>> {};
+			     && std::is_same<decltype(void(&T::operator())), void>::value>> { };
 
 		template <typename T>
 		struct is_callable<T,
@@ -1488,7 +1521,7 @@ namespace sol { namespace meta {
 			struct F {
 				void operator()() {};
 			};
-			struct Derived : T, F {};
+			struct Derived : T, F { };
 			template <typename U, U>
 			struct Check;
 
@@ -1664,62 +1697,62 @@ namespace sol { namespace meta {
 		};
 
 		template <typename T, typename U, typename = void>
-		class supports_op_less_test : public std::false_type {};
+		class supports_op_less_test : public std::false_type { };
 		template <typename T, typename U>
 		class supports_op_less_test<T, U, void_t<decltype(std::declval<T&>() < std::declval<U&>())>>
 		: public std::integral_constant<bool,
-			  !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> {};
+			  !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> { };
 
 		template <typename T, typename U, typename = void>
-		class supports_op_equal_test : public std::false_type {};
+		class supports_op_equal_test : public std::false_type { };
 		template <typename T, typename U>
 		class supports_op_equal_test<T, U, void_t<decltype(std::declval<T&>() == std::declval<U&>())>>
 		: public std::integral_constant<bool,
-			  !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> {};
+			  !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> { };
 
 		template <typename T, typename U, typename = void>
-		class supports_op_less_equal_test : public std::false_type {};
+		class supports_op_less_equal_test : public std::false_type { };
 		template <typename T, typename U>
 		class supports_op_less_equal_test<T, U, void_t<decltype(std::declval<T&>() <= std::declval<U&>())>>
 		: public std::integral_constant<bool,
-			  !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> {};
+			  !is_specialization_of_v<unqualified_t<T>, std::variant> && !is_specialization_of_v<unqualified_t<U>, std::variant>> { };
 
 		template <typename T, typename U, typename = void>
-		class supports_op_left_shift_test : public std::false_type {};
+		class supports_op_left_shift_test : public std::false_type { };
 		template <typename T, typename U>
-		class supports_op_left_shift_test<T, U, void_t<decltype(std::declval<T&>() << std::declval<U&>())>> : public std::true_type {};
+		class supports_op_left_shift_test<T, U, void_t<decltype(std::declval<T&>() << std::declval<U&>())>> : public std::true_type { };
 
 		template <typename T, typename = void>
-		class supports_adl_to_string_test : public std::false_type {};
+		class supports_adl_to_string_test : public std::false_type { };
 		template <typename T>
-		class supports_adl_to_string_test<T, void_t<decltype(to_string(std::declval<const T&>()))>> : public std::true_type {};
+		class supports_adl_to_string_test<T, void_t<decltype(to_string(std::declval<const T&>()))>> : public std::true_type { };
 
 		template <typename T, bool b>
-		struct is_matched_lookup_impl : std::false_type {};
+		struct is_matched_lookup_impl : std::false_type { };
 		template <typename T>
-		struct is_matched_lookup_impl<T, true> : std::is_same<typename T::key_type, typename T::value_type> {};
+		struct is_matched_lookup_impl<T, true> : std::is_same<typename T::key_type, typename T::value_type> { };
 
 		template <typename T>
 		using non_void_t = meta::conditional_t<std::is_void_v<T>, ::sol::detail::unchecked_t, T>;
 	} // namespace meta_detail
 
 	template <typename T, typename U = T>
-	class supports_op_less : public meta_detail::supports_op_less_test<T, U> {};
+	class supports_op_less : public meta_detail::supports_op_less_test<T, U> { };
 
 	template <typename T, typename U = T>
-	class supports_op_equal : public meta_detail::supports_op_equal_test<T, U> {};
+	class supports_op_equal : public meta_detail::supports_op_equal_test<T, U> { };
 
 	template <typename T, typename U = T>
-	class supports_op_less_equal : public meta_detail::supports_op_less_equal_test<T, U> {};
+	class supports_op_less_equal : public meta_detail::supports_op_less_equal_test<T, U> { };
 
 	template <typename T, typename U = T>
-	class supports_op_left_shift : public meta_detail::supports_op_left_shift_test<T, U> {};
+	class supports_op_left_shift : public meta_detail::supports_op_left_shift_test<T, U> { };
 
 	template <typename T>
-	class supports_adl_to_string : public meta_detail::supports_adl_to_string_test<T> {};
+	class supports_adl_to_string : public meta_detail::supports_adl_to_string_test<T> { };
 
 	template <typename T>
-	class supports_to_string_member : public meta::boolean<meta_detail::has_to_string_test<meta_detail::non_void_t<T>>::value> {};
+	class supports_to_string_member : public meta::boolean<meta_detail::has_to_string_test<meta_detail::non_void_t<T>>::value> { };
 
 	template <typename T>
 	using is_callable = boolean<meta_detail::is_callable<T>::value>;
@@ -1728,31 +1761,31 @@ namespace sol { namespace meta {
 	constexpr inline bool is_callable_v = is_callable<T>::value;
 
 	template <typename T>
-	struct has_begin_end : decltype(meta_detail::has_begin_end_impl::test<T>(0)) {};
+	struct has_begin_end : decltype(meta_detail::has_begin_end_impl::test<T>(0)) { };
 
 	template <typename T>
 	constexpr inline bool has_begin_end_v = has_begin_end<T>::value;
 
 	template <typename T>
-	struct has_key_value_pair : decltype(meta_detail::has_key_value_pair_impl::test<T>(0)) {};
+	struct has_key_value_pair : decltype(meta_detail::has_key_value_pair_impl::test<T>(0)) { };
 
 	template <typename T>
-	struct has_key_type : decltype(meta_detail::has_key_type_impl::test<T>(0)) {};
+	struct has_key_type : decltype(meta_detail::has_key_type_impl::test<T>(0)) { };
 
 	template <typename T>
-	struct has_key_comp : decltype(meta_detail::has_key_comp_impl::test<T>(0)) {};
+	struct has_key_comp : decltype(meta_detail::has_key_comp_impl::test<T>(0)) { };
 
 	template <typename T>
-	struct has_load_factor : decltype(meta_detail::has_load_factor_impl::test<T>(0)) {};
+	struct has_load_factor : decltype(meta_detail::has_load_factor_impl::test<T>(0)) { };
 
 	template <typename T>
-	struct has_mapped_type : decltype(meta_detail::has_mapped_type_impl::test<T>(0)) {};
+	struct has_mapped_type : decltype(meta_detail::has_mapped_type_impl::test<T>(0)) { };
 
 	template <typename T>
-	struct has_iterator : decltype(meta_detail::has_iterator_impl::test<T>(0)) {};
+	struct has_iterator : decltype(meta_detail::has_iterator_impl::test<T>(0)) { };
 
 	template <typename T>
-	struct has_value_type : decltype(meta_detail::has_value_type_impl::test<T>(0)) {};
+	struct has_value_type : decltype(meta_detail::has_value_type_impl::test<T>(0)) { };
 
 	template <typename T>
 	using has_push_back = meta::boolean<meta_detail::has_push_back_test<T>::value>;
@@ -1800,19 +1833,19 @@ namespace sol { namespace meta {
 	constexpr inline bool is_string_literal_array_v = is_string_literal_array<T>::value;
 
 	template <typename T, typename CharT>
-	struct is_string_of : std::false_type {};
+	struct is_string_of : std::false_type { };
 
 	template <typename CharT, typename CharTargetT, typename TraitsT, typename AllocT>
-	struct is_string_of<std::basic_string<CharT, TraitsT, AllocT>, CharTargetT> : std::is_same<CharT, CharTargetT> {};
+	struct is_string_of<std::basic_string<CharT, TraitsT, AllocT>, CharTargetT> : std::is_same<CharT, CharTargetT> { };
 
 	template <typename T, typename CharT>
 	constexpr inline bool is_string_of_v = is_string_of<T, CharT>::value;
 
 	template <typename T, typename CharT>
-	struct is_string_view_of : std::false_type {};
+	struct is_string_view_of : std::false_type { };
 
 	template <typename CharT, typename CharTargetT, typename TraitsT>
-	struct is_string_view_of<std::basic_string_view<CharT, TraitsT>, CharTargetT> : std::is_same<CharT, CharTargetT> {};
+	struct is_string_view_of<std::basic_string_view<CharT, TraitsT>, CharTargetT> : std::is_same<CharT, CharTargetT> { };
 
 	template <typename T, typename CharT>
 	constexpr inline bool is_string_view_of_v = is_string_view_of<T, CharT>::value;
@@ -1836,10 +1869,10 @@ namespace sol { namespace meta {
 	using is_string_like_or_constructible = meta::boolean<is_string_like_v<T> || is_string_constructible_v<T>>;
 
 	template <typename T>
-	struct is_pair : std::false_type {};
+	struct is_pair : std::false_type { };
 
 	template <typename T1, typename T2>
-	struct is_pair<std::pair<T1, T2>> : std::true_type {};
+	struct is_pair<std::pair<T1, T2>> : std::true_type { };
 
 	template <typename T, typename Char>
 	using is_c_str_of = any<std::is_same<T, const Char*>, std::is_same<T, Char const* const>, std::is_same<T, Char*>, is_string_of<T, Char>,
@@ -1855,7 +1888,7 @@ namespace sol { namespace meta {
 	constexpr inline bool is_c_str_v = is_c_str<T>::value;
 
 	template <typename T>
-	struct is_move_only : all<neg<std::is_reference<T>>, neg<std::is_copy_constructible<unqualified_t<T>>>, std::is_move_constructible<unqualified_t<T>>> {};
+	struct is_move_only : all<neg<std::is_reference<T>>, neg<std::is_copy_constructible<unqualified_t<T>>>, std::is_move_constructible<unqualified_t<T>>> { };
 
 	template <typename T>
 	using is_not_move_only = neg<is_move_only<T>>;
@@ -1925,7 +1958,7 @@ namespace sol {
 
 // beginning of sol/compatibility.hpp
 
-// beginning of sol/compatibility/version.hpp
+// beginning of sol/compatibility/lua_version.hpp
 
 #if defined(SOL_USING_CXX_LUA) && SOL_USING_CXX_LUA
 	#include <lua.h>
@@ -1987,7 +2020,7 @@ namespace sol {
 	#define SOL_LUA_VERSION 503
 #endif // Lua Version 503, 502, 501 || luajit, 500
 
-// end of sol/compatibility/version.hpp
+// end of sol/compatibility/lua_version.hpp
 
 #if !defined(SOL_NO_COMPAT) || !(SOL_NO_COMPAT)
 
@@ -6076,8 +6109,8 @@ namespace sol { namespace detail {
 // end of sol/map.hpp
 
 #include <initializer_list>
-#ifdef SOL_STD_VARIANT
-#endif
+#if SOL_ON(SOL_STD_VARIANT_)
+#endif // variant shenanigans (thanks, Mac OSX)
 
 namespace sol {
 	namespace detail {
@@ -6088,7 +6121,7 @@ namespace sol {
 #endif // noexcept function type for lua_CFunction
 
 		template <typename T>
-		struct unique_usertype {};
+		struct unique_usertype { };
 
 		template <typename T>
 		struct implicit_wrapper {
@@ -6105,11 +6138,11 @@ namespace sol {
 			}
 		};
 
-		struct yield_tag_t {};
+		struct yield_tag_t { };
 		const yield_tag_t yield_tag = yield_tag_t {};
 	} // namespace detail
 
-	struct lua_nil_t {};
+	struct lua_nil_t { };
 	inline constexpr lua_nil_t lua_nil {};
 	inline bool operator==(lua_nil_t, lua_nil_t) {
 		return true;
@@ -6123,16 +6156,16 @@ namespace sol {
 #endif
 
 	namespace detail {
-		struct non_lua_nil_t {};
+		struct non_lua_nil_t { };
 	} // namespace detail
 
-	struct metatable_key_t {};
+	struct metatable_key_t { };
 	const metatable_key_t metatable_key = {};
 
-	struct env_key_t {};
+	struct env_key_t { };
 	const env_key_t env_key = {};
 
-	struct no_metatable_t {};
+	struct no_metatable_t { };
 	const no_metatable_t no_metatable = {};
 
 	template <typename T>
@@ -6162,10 +6195,10 @@ namespace sol {
 	typedef std::remove_pointer_t<lua_CFunction> lua_CFunction_ref;
 
 	template <typename T>
-	struct non_null {};
+	struct non_null { };
 
 	template <typename... Args>
-	struct function_sig {};
+	struct function_sig { };
 
 	struct upvalue_index {
 		int index;
@@ -6268,7 +6301,7 @@ namespace sol {
 		operator std::add_lvalue_reference_t<U>() {
 			return value;
 		}
-		operator std::add_const_t<std::add_lvalue_reference_t<U>>&() const {
+		operator std::add_const_t<std::add_lvalue_reference_t<U>> &() const {
 			return value;
 		}
 	};
@@ -6410,7 +6443,7 @@ namespace sol {
 		}
 	};
 
-	struct nested_tag_t {};
+	struct nested_tag_t { };
 	constexpr inline nested_tag_t nested_tag {};
 
 	template <typename T>
@@ -6541,11 +6574,11 @@ namespace sol {
 		return push_invoke_t<Fx>(std::forward<Fx>(fx));
 	}
 
-	struct override_value_t {};
+	struct override_value_t { };
 	constexpr inline override_value_t override_value = override_value_t();
-	struct update_if_empty_t {};
+	struct update_if_empty_t { };
 	constexpr inline update_if_empty_t update_if_empty = update_if_empty_t();
-	struct create_if_nil_t {};
+	struct create_if_nil_t { };
 	constexpr inline create_if_nil_t create_if_nil = create_if_nil_t();
 
 	namespace detail {
@@ -6883,33 +6916,33 @@ namespace sol {
 
 	template <typename T>
 	struct is_lua_reference
-	: std::integral_constant<bool, std::is_base_of_v<reference, T> || std::is_base_of_v<main_reference, T> || std::is_base_of_v<stack_reference, T>> {};
+	: std::integral_constant<bool, std::is_base_of_v<reference, T> || std::is_base_of_v<main_reference, T> || std::is_base_of_v<stack_reference, T>> { };
 
 	template <typename T>
 	inline constexpr bool is_lua_reference_v = is_lua_reference<T>::value;
 
 	template <typename T>
-	struct is_lua_reference_or_proxy : std::integral_constant<bool, is_lua_reference_v<T> || meta::is_specialization_of_v<T, table_proxy>> {};
+	struct is_lua_reference_or_proxy : std::integral_constant<bool, is_lua_reference_v<T> || meta::is_specialization_of_v<T, table_proxy>> { };
 
 	template <typename T>
 	inline constexpr bool is_lua_reference_or_proxy_v = is_lua_reference_or_proxy<T>::value;
 
 	template <typename T>
-	struct is_transparent_argument : std::false_type {};
+	struct is_transparent_argument : std::false_type { };
 
 	template <typename T>
 	constexpr inline bool is_transparent_argument_v = is_transparent_argument<T>::value;
 
 	template <>
-	struct is_transparent_argument<this_state> : std::true_type {};
+	struct is_transparent_argument<this_state> : std::true_type { };
 	template <>
-	struct is_transparent_argument<this_main_state> : std::true_type {};
+	struct is_transparent_argument<this_main_state> : std::true_type { };
 	template <>
-	struct is_transparent_argument<this_environment> : std::true_type {};
+	struct is_transparent_argument<this_environment> : std::true_type { };
 	template <>
-	struct is_transparent_argument<variadic_args> : std::true_type {};
+	struct is_transparent_argument<variadic_args> : std::true_type { };
 	template <typename T>
-	struct is_variadic_arguments : std::is_same<T, variadic_args> {};
+	struct is_variadic_arguments : std::is_same<T, variadic_args> { };
 
 	template <typename T>
 	struct is_container
@@ -6923,221 +6956,221 @@ namespace sol {
 
 	template <typename T>
 	struct is_to_stringable : meta::any<meta::supports_to_string_member<meta::unqualified_t<T>>, meta::supports_adl_to_string<meta::unqualified_t<T>>,
-	                               meta::supports_op_left_shift<std::ostream, meta::unqualified_t<T>>> {};
+	                               meta::supports_op_left_shift<std::ostream, meta::unqualified_t<T>>> { };
 
 	namespace detail {
 		template <typename T, typename = void>
-		struct lua_type_of : std::integral_constant<type, type::userdata> {};
+		struct lua_type_of : std::integral_constant<type, type::userdata> { };
 
 		template <typename C, typename T, typename A>
-		struct lua_type_of<std::basic_string<C, T, A>> : std::integral_constant<type, type::string> {};
+		struct lua_type_of<std::basic_string<C, T, A>> : std::integral_constant<type, type::string> { };
 
 		template <typename C, typename T>
-		struct lua_type_of<basic_string_view<C, T>> : std::integral_constant<type, type::string> {};
+		struct lua_type_of<basic_string_view<C, T>> : std::integral_constant<type, type::string> { };
 
 		template <std::size_t N>
-		struct lua_type_of<char[N]> : std::integral_constant<type, type::string> {};
+		struct lua_type_of<char[N]> : std::integral_constant<type, type::string> { };
 
 		template <std::size_t N>
-		struct lua_type_of<wchar_t[N]> : std::integral_constant<type, type::string> {};
+		struct lua_type_of<wchar_t[N]> : std::integral_constant<type, type::string> { };
 
 		template <std::size_t N>
-		struct lua_type_of<char16_t[N]> : std::integral_constant<type, type::string> {};
+		struct lua_type_of<char16_t[N]> : std::integral_constant<type, type::string> { };
 
 		template <std::size_t N>
-		struct lua_type_of<char32_t[N]> : std::integral_constant<type, type::string> {};
+		struct lua_type_of<char32_t[N]> : std::integral_constant<type, type::string> { };
 
 		template <>
-		struct lua_type_of<char> : std::integral_constant<type, type::string> {};
+		struct lua_type_of<char> : std::integral_constant<type, type::string> { };
 
 		template <>
-		struct lua_type_of<wchar_t> : std::integral_constant<type, type::string> {};
+		struct lua_type_of<wchar_t> : std::integral_constant<type, type::string> { };
 
 		template <>
-		struct lua_type_of<char16_t> : std::integral_constant<type, type::string> {};
+		struct lua_type_of<char16_t> : std::integral_constant<type, type::string> { };
 
 		template <>
-		struct lua_type_of<char32_t> : std::integral_constant<type, type::string> {};
+		struct lua_type_of<char32_t> : std::integral_constant<type, type::string> { };
 
 		template <>
-		struct lua_type_of<const char*> : std::integral_constant<type, type::string> {};
+		struct lua_type_of<const char*> : std::integral_constant<type, type::string> { };
 
 		template <>
-		struct lua_type_of<const char16_t*> : std::integral_constant<type, type::string> {};
+		struct lua_type_of<const char16_t*> : std::integral_constant<type, type::string> { };
 
 		template <>
-		struct lua_type_of<const char32_t*> : std::integral_constant<type, type::string> {};
+		struct lua_type_of<const char32_t*> : std::integral_constant<type, type::string> { };
 
 		template <>
-		struct lua_type_of<bool> : std::integral_constant<type, type::boolean> {};
+		struct lua_type_of<bool> : std::integral_constant<type, type::boolean> { };
 
 		template <>
-		struct lua_type_of<lua_nil_t> : std::integral_constant<type, type::lua_nil> {};
+		struct lua_type_of<lua_nil_t> : std::integral_constant<type, type::lua_nil> { };
 
 		template <>
-		struct lua_type_of<nullopt_t> : std::integral_constant<type, type::lua_nil> {};
+		struct lua_type_of<nullopt_t> : std::integral_constant<type, type::lua_nil> { };
 
 		template <>
-		struct lua_type_of<lua_value> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<lua_value> : std::integral_constant<type, type::poly> { };
 
 		template <>
-		struct lua_type_of<detail::non_lua_nil_t> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<detail::non_lua_nil_t> : std::integral_constant<type, type::poly> { };
 
 		template <>
-		struct lua_type_of<std::nullptr_t> : std::integral_constant<type, type::lua_nil> {};
+		struct lua_type_of<std::nullptr_t> : std::integral_constant<type, type::lua_nil> { };
 
 		template <>
-		struct lua_type_of<error> : std::integral_constant<type, type::string> {};
+		struct lua_type_of<error> : std::integral_constant<type, type::string> { };
 
 		template <bool b, typename Base>
-		struct lua_type_of<basic_table_core<b, Base>> : std::integral_constant<type, type::table> {};
+		struct lua_type_of<basic_table_core<b, Base>> : std::integral_constant<type, type::table> { };
 
 		template <typename Base>
-		struct lua_type_of<basic_lua_table<Base>> : std::integral_constant<type, type::table> {};
+		struct lua_type_of<basic_lua_table<Base>> : std::integral_constant<type, type::table> { };
 
 		template <typename Base>
-		struct lua_type_of<basic_metatable<Base>> : std::integral_constant<type, type::table> {};
+		struct lua_type_of<basic_metatable<Base>> : std::integral_constant<type, type::table> { };
 
 		template <typename T, typename Base>
-		struct lua_type_of<basic_usertype<T, Base>> : std::integral_constant<type, type::table> {};
+		struct lua_type_of<basic_usertype<T, Base>> : std::integral_constant<type, type::table> { };
 
 		template <>
-		struct lua_type_of<metatable_key_t> : std::integral_constant<type, type::table> {};
+		struct lua_type_of<metatable_key_t> : std::integral_constant<type, type::table> { };
 
 		template <typename B>
-		struct lua_type_of<basic_environment<B>> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<basic_environment<B>> : std::integral_constant<type, type::poly> { };
 
 		template <>
-		struct lua_type_of<env_key_t> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<env_key_t> : std::integral_constant<type, type::poly> { };
 
 		template <>
-		struct lua_type_of<new_table> : std::integral_constant<type, type::table> {};
+		struct lua_type_of<new_table> : std::integral_constant<type, type::table> { };
 
 		template <typename T>
-		struct lua_type_of<as_table_t<T>> : std::integral_constant<type, type::table> {};
+		struct lua_type_of<as_table_t<T>> : std::integral_constant<type, type::table> { };
 
 		template <typename T>
-		struct lua_type_of<std::initializer_list<T>> : std::integral_constant<type, type::table> {};
+		struct lua_type_of<std::initializer_list<T>> : std::integral_constant<type, type::table> { };
 
 		template <bool b>
-		struct lua_type_of<basic_reference<b>> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<basic_reference<b>> : std::integral_constant<type, type::poly> { };
 
 		template <>
-		struct lua_type_of<stack_reference> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<stack_reference> : std::integral_constant<type, type::poly> { };
 
 		template <typename Base>
-		struct lua_type_of<basic_object<Base>> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<basic_object<Base>> : std::integral_constant<type, type::poly> { };
 
 		template <typename... Args>
-		struct lua_type_of<std::tuple<Args...>> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<std::tuple<Args...>> : std::integral_constant<type, type::poly> { };
 
 		template <typename A, typename B>
-		struct lua_type_of<std::pair<A, B>> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<std::pair<A, B>> : std::integral_constant<type, type::poly> { };
 
 		template <>
-		struct lua_type_of<void*> : std::integral_constant<type, type::lightuserdata> {};
+		struct lua_type_of<void*> : std::integral_constant<type, type::lightuserdata> { };
 
 		template <>
-		struct lua_type_of<const void*> : std::integral_constant<type, type::lightuserdata> {};
+		struct lua_type_of<const void*> : std::integral_constant<type, type::lightuserdata> { };
 
 		template <>
-		struct lua_type_of<lightuserdata_value> : std::integral_constant<type, type::lightuserdata> {};
+		struct lua_type_of<lightuserdata_value> : std::integral_constant<type, type::lightuserdata> { };
 
 		template <>
-		struct lua_type_of<userdata_value> : std::integral_constant<type, type::userdata> {};
+		struct lua_type_of<userdata_value> : std::integral_constant<type, type::userdata> { };
 
 		template <typename T>
-		struct lua_type_of<light<T>> : std::integral_constant<type, type::lightuserdata> {};
+		struct lua_type_of<light<T>> : std::integral_constant<type, type::lightuserdata> { };
 
 		template <typename T>
-		struct lua_type_of<user<T>> : std::integral_constant<type, type::userdata> {};
+		struct lua_type_of<user<T>> : std::integral_constant<type, type::userdata> { };
 
 		template <typename Base>
-		struct lua_type_of<basic_lightuserdata<Base>> : std::integral_constant<type, type::lightuserdata> {};
+		struct lua_type_of<basic_lightuserdata<Base>> : std::integral_constant<type, type::lightuserdata> { };
 
 		template <typename Base>
-		struct lua_type_of<basic_userdata<Base>> : std::integral_constant<type, type::userdata> {};
+		struct lua_type_of<basic_userdata<Base>> : std::integral_constant<type, type::userdata> { };
 
 		template <>
-		struct lua_type_of<lua_CFunction> : std::integral_constant<type, type::function> {};
+		struct lua_type_of<lua_CFunction> : std::integral_constant<type, type::function> { };
 
 		template <>
-		struct lua_type_of<std::remove_pointer_t<lua_CFunction>> : std::integral_constant<type, type::function> {};
+		struct lua_type_of<std::remove_pointer_t<lua_CFunction>> : std::integral_constant<type, type::function> { };
 
 		template <typename Base, bool aligned>
-		struct lua_type_of<basic_function<Base, aligned>> : std::integral_constant<type, type::function> {};
+		struct lua_type_of<basic_function<Base, aligned>> : std::integral_constant<type, type::function> { };
 
 		template <typename Base, bool aligned, typename Handler>
-		struct lua_type_of<basic_protected_function<Base, aligned, Handler>> : std::integral_constant<type, type::function> {};
+		struct lua_type_of<basic_protected_function<Base, aligned, Handler>> : std::integral_constant<type, type::function> { };
 
 		template <typename Base>
-		struct lua_type_of<basic_coroutine<Base>> : std::integral_constant<type, type::function> {};
+		struct lua_type_of<basic_coroutine<Base>> : std::integral_constant<type, type::function> { };
 
 		template <typename Base>
-		struct lua_type_of<basic_thread<Base>> : std::integral_constant<type, type::thread> {};
+		struct lua_type_of<basic_thread<Base>> : std::integral_constant<type, type::thread> { };
 
 		template <typename Signature>
-		struct lua_type_of<std::function<Signature>> : std::integral_constant<type, type::function> {};
+		struct lua_type_of<std::function<Signature>> : std::integral_constant<type, type::function> { };
 
 		template <typename T>
-		struct lua_type_of<optional<T>> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<optional<T>> : std::integral_constant<type, type::poly> { };
 
 		template <typename T>
-		struct lua_type_of<std::optional<T>> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<std::optional<T>> : std::integral_constant<type, type::poly> { };
 
 		template <>
-		struct lua_type_of<variadic_args> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<variadic_args> : std::integral_constant<type, type::poly> { };
 
 		template <>
-		struct lua_type_of<variadic_results> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<variadic_results> : std::integral_constant<type, type::poly> { };
 
 		template <>
-		struct lua_type_of<stack_count> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<stack_count> : std::integral_constant<type, type::poly> { };
 
 		template <>
-		struct lua_type_of<this_state> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<this_state> : std::integral_constant<type, type::poly> { };
 
 		template <>
-		struct lua_type_of<this_main_state> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<this_main_state> : std::integral_constant<type, type::poly> { };
 
 		template <>
-		struct lua_type_of<this_environment> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<this_environment> : std::integral_constant<type, type::poly> { };
 
 		template <>
-		struct lua_type_of<type> : std::integral_constant<type, type::poly> {};
+		struct lua_type_of<type> : std::integral_constant<type, type::poly> { };
 
 		template <typename T>
-		struct lua_type_of<T*> : std::integral_constant<type, type::userdata> {};
+		struct lua_type_of<T*> : std::integral_constant<type, type::userdata> { };
 
 		template <typename T>
 		struct lua_type_of<T, std::enable_if_t<std::is_arithmetic_v<T> || std::is_same_v<T, lua_Number> || std::is_same_v<T, lua_Integer>>>
-		: std::integral_constant<type, type::number> {};
+		: std::integral_constant<type, type::number> { };
 
 		template <typename T>
-		struct lua_type_of<T, std::enable_if_t<std::is_enum_v<T>>> : std::integral_constant<type, type::number> {};
+		struct lua_type_of<T, std::enable_if_t<std::is_enum_v<T>>> : std::integral_constant<type, type::number> { };
 
 		template <>
-		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> {};
+		struct lua_type_of<meta_function> : std::integral_constant<type, type::string> { };
 
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#if SOL_ON(SOL_STD_VARIANT_)
 		template <typename... Tn>
-		struct lua_type_of<std::variant<Tn...>> : std::integral_constant<type, type::poly> {};
-#endif // SOL_STD_VARIANT
+		struct lua_type_of<std::variant<Tn...>> : std::integral_constant<type, type::poly> { };
+#endif // std::variant deployment sucks on Clang
 
 		template <typename T>
-		struct lua_type_of<nested<T>> : meta::conditional_t<::sol::is_container_v<T>, std::integral_constant<type, type::table>, lua_type_of<T>> {};
+		struct lua_type_of<nested<T>> : meta::conditional_t<::sol::is_container_v<T>, std::integral_constant<type, type::table>, lua_type_of<T>> { };
 
 		template <typename C, C v, template <typename...> class V, typename... Args>
-		struct accumulate : std::integral_constant<C, v> {};
+		struct accumulate : std::integral_constant<C, v> { };
 
 		template <typename C, C v, template <typename...> class V, typename T, typename... Args>
-		struct accumulate<C, v, V, T, Args...> : accumulate<C, v + V<T>::value, V, Args...> {};
+		struct accumulate<C, v, V, T, Args...> : accumulate<C, v + V<T>::value, V, Args...> { };
 
 		template <typename C, C v, template <typename...> class V, typename List>
 		struct accumulate_list;
 
 		template <typename C, C v, template <typename...> class V, typename... Args>
-		struct accumulate_list<C, v, V, types<Args...>> : accumulate<C, v, V, Args...> {};
+		struct accumulate_list<C, v, V, types<Args...>> : accumulate<C, v, V, Args...> { };
 	} // namespace detail
 
 	template <typename T>
@@ -7154,10 +7187,10 @@ namespace sol {
 	};
 
 	template <typename A, typename B>
-	struct lua_size<std::pair<A, B>> : std::integral_constant<int, lua_size<A>::value + lua_size<B>::value> {};
+	struct lua_size<std::pair<A, B>> : std::integral_constant<int, lua_size<A>::value + lua_size<B>::value> { };
 
 	template <typename... Args>
-	struct lua_size<std::tuple<Args...>> : std::integral_constant<int, detail::accumulate<int, 0, lua_size, Args...>::value> {};
+	struct lua_size<std::tuple<Args...>> : std::integral_constant<int, detail::accumulate<int, 0, lua_size, Args...>::value> { };
 
 	template <typename T>
 	inline constexpr int lua_size_v = lua_size<T>::value;
@@ -7168,9 +7201,9 @@ namespace sol {
 			typedef void type;
 		};
 		template <typename T, typename = void>
-		struct has_internal_marker_impl : std::false_type {};
+		struct has_internal_marker_impl : std::false_type { };
 		template <typename T>
-		struct has_internal_marker_impl<T, typename void_<typename T::SOL_INTERNAL_UNSPECIALIZED_MARKER_>::type> : std::true_type {};
+		struct has_internal_marker_impl<T, typename void_<typename T::SOL_INTERNAL_UNSPECIALIZED_MARKER_>::type> : std::true_type { };
 
 		template <typename T>
 		using has_internal_marker = has_internal_marker_impl<T>;
@@ -7185,73 +7218,73 @@ namespace sol {
 	       type::userdata
 	                 != lua_type_of_v<
 	                      T> || ((type::userdata == lua_type_of_v<T>)&&detail::has_internal_marker_v<lua_type_of<T>> && !detail::has_internal_marker_v<lua_size<T>>)
-	            || is_lua_reference_or_proxy_v<T> || meta::is_specialization_of_v<T, std::tuple> || meta::is_specialization_of_v<T, std::pair>> {};
+	            || is_lua_reference_or_proxy_v<T> || meta::is_specialization_of_v<T, std::tuple> || meta::is_specialization_of_v<T, std::pair>> { };
 
 	template <typename T>
 	constexpr inline bool is_lua_primitive_v = is_lua_primitive<T>::value;
 
 	template <typename T>
-	struct is_main_threaded : std::is_base_of<main_reference, T> {};
+	struct is_main_threaded : std::is_base_of<main_reference, T> { };
 
 	template <typename T>
-	struct is_stack_based : std::is_base_of<stack_reference, T> {};
+	struct is_stack_based : std::is_base_of<stack_reference, T> { };
 	template <>
-	struct is_stack_based<variadic_args> : std::true_type {};
+	struct is_stack_based<variadic_args> : std::true_type { };
 	template <>
-	struct is_stack_based<unsafe_function_result> : std::true_type {};
+	struct is_stack_based<unsafe_function_result> : std::true_type { };
 	template <>
-	struct is_stack_based<protected_function_result> : std::true_type {};
+	struct is_stack_based<protected_function_result> : std::true_type { };
 	template <>
-	struct is_stack_based<stack_proxy> : std::true_type {};
+	struct is_stack_based<stack_proxy> : std::true_type { };
 	template <>
-	struct is_stack_based<stack_proxy_base> : std::true_type {};
+	struct is_stack_based<stack_proxy_base> : std::true_type { };
 	template <>
-	struct is_stack_based<stack_count> : std::true_type {};
+	struct is_stack_based<stack_count> : std::true_type { };
 
 	template <typename T>
 	constexpr inline bool is_stack_based_v = is_stack_based<T>::value;
 
 	template <typename T>
-	struct is_lua_primitive<T*> : std::true_type {};
+	struct is_lua_primitive<T*> : std::true_type { };
 	template <>
-	struct is_lua_primitive<unsafe_function_result> : std::true_type {};
+	struct is_lua_primitive<unsafe_function_result> : std::true_type { };
 	template <>
-	struct is_lua_primitive<protected_function_result> : std::true_type {};
+	struct is_lua_primitive<protected_function_result> : std::true_type { };
 	template <typename T>
-	struct is_lua_primitive<std::reference_wrapper<T>> : std::true_type {};
+	struct is_lua_primitive<std::reference_wrapper<T>> : std::true_type { };
 	template <typename T>
-	struct is_lua_primitive<user<T>> : std::true_type {};
+	struct is_lua_primitive<user<T>> : std::true_type { };
 	template <typename T>
-	struct is_lua_primitive<light<T>> : is_lua_primitive<T*> {};
+	struct is_lua_primitive<light<T>> : is_lua_primitive<T*> { };
 	template <typename T>
-	struct is_lua_primitive<optional<T>> : std::true_type {};
+	struct is_lua_primitive<optional<T>> : std::true_type { };
 	template <typename T>
-	struct is_lua_primitive<std::optional<T>> : std::true_type {};
+	struct is_lua_primitive<std::optional<T>> : std::true_type { };
 	template <typename T>
-	struct is_lua_primitive<as_table_t<T>> : std::true_type {};
+	struct is_lua_primitive<as_table_t<T>> : std::true_type { };
 	template <typename T>
-	struct is_lua_primitive<nested<T>> : std::true_type {};
+	struct is_lua_primitive<nested<T>> : std::true_type { };
 	template <>
-	struct is_lua_primitive<userdata_value> : std::true_type {};
+	struct is_lua_primitive<userdata_value> : std::true_type { };
 	template <>
-	struct is_lua_primitive<lightuserdata_value> : std::true_type {};
+	struct is_lua_primitive<lightuserdata_value> : std::true_type { };
 	template <>
-	struct is_lua_primitive<stack_proxy> : std::true_type {};
+	struct is_lua_primitive<stack_proxy> : std::true_type { };
 	template <>
-	struct is_lua_primitive<stack_proxy_base> : std::true_type {};
+	struct is_lua_primitive<stack_proxy_base> : std::true_type { };
 	template <typename T>
-	struct is_lua_primitive<non_null<T>> : is_lua_primitive<T*> {};
+	struct is_lua_primitive<non_null<T>> : is_lua_primitive<T*> { };
 
 	template <typename T>
-	struct is_lua_index : std::is_integral<T> {};
+	struct is_lua_index : std::is_integral<T> { };
 	template <>
-	struct is_lua_index<raw_index> : std::true_type {};
+	struct is_lua_index<raw_index> : std::true_type { };
 	template <>
-	struct is_lua_index<absolute_index> : std::true_type {};
+	struct is_lua_index<absolute_index> : std::true_type { };
 	template <>
-	struct is_lua_index<ref_index> : std::true_type {};
+	struct is_lua_index<ref_index> : std::true_type { };
 	template <>
-	struct is_lua_index<upvalue_index> : std::true_type {};
+	struct is_lua_index<upvalue_index> : std::true_type { };
 
 	template <typename Signature>
 	struct lua_bind_traits : meta::bind_traits<Signature> {
@@ -7269,31 +7302,31 @@ namespace sol {
 	};
 
 	template <typename T>
-	struct is_table : std::false_type {};
+	struct is_table : std::false_type { };
 	template <bool x, typename T>
-	struct is_table<basic_table_core<x, T>> : std::true_type {};
+	struct is_table<basic_table_core<x, T>> : std::true_type { };
 	template <typename T>
-	struct is_table<basic_lua_table<T>> : std::true_type {};
+	struct is_table<basic_lua_table<T>> : std::true_type { };
 
 	template <typename T>
 	inline constexpr bool is_table_v = is_table<T>::value;
 
 	template <typename T>
-	struct is_stack_table : std::false_type {};
+	struct is_stack_table : std::false_type { };
 	template <bool x, typename T>
-	struct is_stack_table<basic_table_core<x, T>> : std::integral_constant<bool, std::is_base_of_v<stack_reference, T>> {};
+	struct is_stack_table<basic_table_core<x, T>> : std::integral_constant<bool, std::is_base_of_v<stack_reference, T>> { };
 	template <typename T>
-	struct is_stack_table<basic_lua_table<T>> : std::integral_constant<bool, std::is_base_of_v<stack_reference, T>> {};
+	struct is_stack_table<basic_lua_table<T>> : std::integral_constant<bool, std::is_base_of_v<stack_reference, T>> { };
 
 	template <typename T>
 	inline constexpr bool is_stack_table_v = is_stack_table<T>::value;
 
 	template <typename T>
-	struct is_function : std::false_type {};
+	struct is_function : std::false_type { };
 	template <typename T, bool aligned>
-	struct is_function<basic_function<T, aligned>> : std::true_type {};
+	struct is_function<basic_function<T, aligned>> : std::true_type { };
 	template <typename T, bool aligned, typename Handler>
-	struct is_function<basic_protected_function<T, aligned, Handler>> : std::true_type {};
+	struct is_function<basic_protected_function<T, aligned, Handler>> : std::true_type { };
 
 	template <typename T>
 	using is_lightuserdata = meta::is_specialization_of<T, basic_lightuserdata>;
@@ -7322,7 +7355,7 @@ namespace sol {
 	template <typename T>
 	struct is_automagical
 	: std::integral_constant<bool,
-	       (SOL_AUTOMAGICAL_TYPES_BY_DEFAULT != 0)
+	       (SOL_ON(SOL_AUTOMAGICAL_TYPES_BY_DEFAULT))
 	            || (std::is_array_v<
 	                     meta::unqualified_t<T>> || (!std::is_same_v<meta::unqualified_t<T>, state> && !std::is_same_v<meta::unqualified_t<T>, state_view>))> {
 	};
@@ -7334,31 +7367,31 @@ namespace sol {
 
 	namespace detail {
 		template <typename T>
-		struct is_non_factory_constructor : std::false_type {};
+		struct is_non_factory_constructor : std::false_type { };
 
 		template <typename... Args>
-		struct is_non_factory_constructor<constructors<Args...>> : std::true_type {};
+		struct is_non_factory_constructor<constructors<Args...>> : std::true_type { };
 
 		template <typename... Args>
-		struct is_non_factory_constructor<constructor_wrapper<Args...>> : std::true_type {};
+		struct is_non_factory_constructor<constructor_wrapper<Args...>> : std::true_type { };
 
 		template <>
-		struct is_non_factory_constructor<no_construction> : std::true_type {};
+		struct is_non_factory_constructor<no_construction> : std::true_type { };
 
 		template <typename T>
 		inline constexpr bool is_non_factory_constructor_v = is_non_factory_constructor<T>::value;
 
 		template <typename T>
-		struct is_constructor : is_non_factory_constructor<T> {};
+		struct is_constructor : is_non_factory_constructor<T> { };
 
 		template <typename... Args>
-		struct is_constructor<factory_wrapper<Args...>> : std::true_type {};
+		struct is_constructor<factory_wrapper<Args...>> : std::true_type { };
 
 		template <typename T>
-		struct is_constructor<protect_t<T>> : is_constructor<meta::unqualified_t<T>> {};
+		struct is_constructor<protect_t<T>> : is_constructor<meta::unqualified_t<T>> { };
 
 		template <typename F, typename... Policies>
-		struct is_constructor<policy_wrapper<F, Policies...>> : is_constructor<meta::unqualified_t<F>> {};
+		struct is_constructor<policy_wrapper<F, Policies...>> : is_constructor<meta::unqualified_t<F>> { };
 
 		template <typename T>
 		inline constexpr bool is_constructor_v = is_constructor<T>::value;
@@ -7370,10 +7403,10 @@ namespace sol {
 		inline constexpr bool any_is_constructor_v = any_is_constructor<Args...>::value;
 
 		template <typename T>
-		struct is_destructor : std::false_type {};
+		struct is_destructor : std::false_type { };
 
 		template <typename Fx>
-		struct is_destructor<destructor_wrapper<Fx>> : std::true_type {};
+		struct is_destructor<destructor_wrapper<Fx>> : std::true_type { };
 
 		template <typename... Args>
 		using any_is_destructor = meta::any<is_destructor<meta::unqualified_t<Args>>...>;
@@ -9223,11 +9256,9 @@ namespace sol {
 		int top;
 		std::function<void(int, int)> on_mismatch;
 
-		stack_guard(lua_State* L)
-		: stack_guard(L, lua_gettop(L)) {
+		stack_guard(lua_State* L) : stack_guard(L, lua_gettop(L)) {
 		}
-		stack_guard(lua_State* L, int top, std::function<void(int, int)> fx = detail::stack_fail)
-		: L(L), top(top), on_mismatch(std::move(fx)) {
+		stack_guard(lua_State* L, int top, std::function<void(int, int)> fx = detail::stack_fail) : L(L), top(top), on_mismatch(std::move(fx)) {
 		}
 		bool check_stack(int modification = 0) const {
 			int bottom = lua_gettop(L) + modification;
@@ -10656,8 +10687,8 @@ namespace sol {
 // beginning of sol/stack_check_unqualified.hpp
 
 #include <cmath>
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
-#endif // SOL_STD_VARIANT
+#if SOL_ON(SOL_STD_VARIANT_)
+#endif // variant shenanigans
 
 namespace sol { namespace stack {
 	namespace stack_detail {
@@ -11086,7 +11117,7 @@ namespace sol { namespace stack {
 	};
 
 	template <typename T>
-	struct unqualified_checker<non_null<T>, type::userdata> : unqualified_checker<T, lua_type_of_v<T>> {};
+	struct unqualified_checker<non_null<T>, type::userdata> : unqualified_checker<T, lua_type_of_v<T>> { };
 
 	template <typename T>
 	struct unqualified_checker<detail::as_value_tag<T>, type::userdata> {
@@ -11190,7 +11221,7 @@ namespace sol { namespace stack {
 		}
 	};
 
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#if SOL_ON(SOL_STD_VARIANT_)
 
 	template <typename... Tn>
 	struct unqualified_checker<std::variant<Tn...>, type::poly> {
@@ -11227,7 +11258,7 @@ namespace sol { namespace stack {
 		}
 	};
 
-#endif // SOL_STD_VARIANT
+#endif // variant shenanigans
 
 }} // namespace sol::stack
 
@@ -11639,7 +11670,7 @@ namespace sol {
 }
 // end of sol/unicode.hpp
 
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#if SOL_ON(SOL_STD_VARIANT_)
 #endif // Apple clang screwed up
 
 namespace sol { namespace stack {
@@ -12587,7 +12618,8 @@ namespace sol { namespace stack {
 		}
 	};
 
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#if SOL_ON(SOL_STD_VARIANT_)
+
 	template <typename... Tn>
 	struct unqualified_getter<std::variant<Tn...>> {
 		using V = std::variant<Tn...>;
@@ -12621,7 +12653,7 @@ namespace sol { namespace stack {
 			return get_one(std::integral_constant<std::size_t, 0>(), L, index, tracking);
 		}
 	};
-#endif // SOL_STD_VARIANT
+#endif // variant
 
 }} // namespace sol::stack
 
@@ -12647,8 +12679,8 @@ namespace stack {
 
 // beginning of sol/stack_check_get_unqualified.hpp
 
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
-#endif // variant
+#if SOL_ON(SOL_STD_VARIANT_)
+#endif // variant shenanigans (thanks, Mac OSX)
 
 namespace sol { namespace stack {
 	template <typename T, typename>
@@ -12743,7 +12775,7 @@ namespace sol { namespace stack {
 		}
 	};
 
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#if SOL_ON(SOL_STD_VARIANT_)
 	template <typename... Tn, typename C>
 	struct unqualified_check_getter<std::variant<Tn...>, C> {
 		typedef std::variant<Tn...> V;
@@ -12784,7 +12816,7 @@ namespace sol { namespace stack {
 			return get_one(std::integral_constant<std::size_t, V_size::value>(), L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
-#endif // SOL_STD_VARIANT
+#endif // standard variant
 }}     // namespace sol::stack
 
 // end of sol/stack_check_get_unqualified.hpp
@@ -12855,7 +12887,7 @@ namespace sol { namespace stack {
 
 #include <cassert>
 #include <limits>
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#if SOL_ON(SOL_STD_VARIANT_)
 #endif // Can use variant
 
 namespace sol { namespace stack {
@@ -14006,7 +14038,7 @@ namespace sol { namespace stack {
 		}
 	};
 
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#if SOL_ON(SOL_STD_VARIANT_)
 	namespace stack_detail {
 
 		struct push_function {
@@ -17386,7 +17418,7 @@ namespace sol {
 	// constexpr is fine for not-clang
 
 	namespace detail {
-		template <typename R, typename... Args, typename F, typename = std::result_of_t<meta::unqualified_t<F>(Args...)>>
+		template <typename R, typename... Args, typename F, typename = std::invoke_result_t<meta::unqualified_t<F>, Args...>>
 		inline constexpr auto resolve_i(types<R(Args...)>, F &&) -> R (meta::unqualified_t<F>::*)(Args...) {
 			using Sig = R(Args...);
 			typedef meta::unqualified_t<F> Fu;
@@ -17395,22 +17427,22 @@ namespace sol {
 
 		template <typename F, typename U = meta::unqualified_t<F>>
 		inline constexpr auto resolve_f(std::true_type, F&& f)
-			-> decltype(resolve_i(types<meta::function_signature_t<decltype(&U::operator())>>(), std::forward<F>(f))) {
+		     -> decltype(resolve_i(types<meta::function_signature_t<decltype(&U::operator())>>(), std::forward<F>(f))) {
 			return resolve_i(types<meta::function_signature_t<decltype(&U::operator())>>(), std::forward<F>(f));
 		}
 
 		template <typename F>
 		inline constexpr void resolve_f(std::false_type, F&&) {
-			static_assert(meta::has_deducible_signature<F>::value,
-				"Cannot use no-template-parameter call with an overloaded functor: specify the signature");
+			static_assert(
+			     meta::has_deducible_signature<F>::value, "Cannot use no-template-parameter call with an overloaded functor: specify the signature");
 		}
 
 		template <typename F, typename U = meta::unqualified_t<F>>
 		inline constexpr auto resolve_i(types<>, F&& f) -> decltype(resolve_f(meta::has_deducible_signature<U>(), std::forward<F>(f))) {
-			return resolve_f(meta::has_deducible_signature<U>{}, std::forward<F>(f));
+			return resolve_f(meta::has_deducible_signature<U> {}, std::forward<F>(f));
 		}
 
-		template <typename... Args, typename F, typename R = std::result_of_t<F&(Args...)>>
+		template <typename... Args, typename F, typename R = std::invoke_result_t<F&, Args...>>
 		inline constexpr auto resolve_i(types<Args...>, F&& f) -> decltype(resolve_i(types<R(Args...)>(), std::forward<F>(f))) {
 			return resolve_i(types<R(Args...)>(), std::forward<F>(f));
 		}
@@ -17456,7 +17488,7 @@ namespace sol {
 	// so don't use the constexpr versions inside of clang.
 
 	namespace detail {
-		template <typename R, typename... Args, typename F, typename = std::result_of_t<meta::unqualified_t<F>(Args...)>>
+		template <typename R, typename... Args, typename F, typename = std::invoke_result_t<meta::unqualified_t<F>, Args...>>
 		inline auto resolve_i(types<R(Args...)>, F &&) -> R (meta::unqualified_t<F>::*)(Args...) {
 			using Sig = R(Args...);
 			typedef meta::unqualified_t<F> Fu;
@@ -17465,22 +17497,22 @@ namespace sol {
 
 		template <typename F, typename U = meta::unqualified_t<F>>
 		inline auto resolve_f(std::true_type, F&& f)
-			-> decltype(resolve_i(types<meta::function_signature_t<decltype(&U::operator())>>(), std::forward<F>(f))) {
+		     -> decltype(resolve_i(types<meta::function_signature_t<decltype(&U::operator())>>(), std::forward<F>(f))) {
 			return resolve_i(types<meta::function_signature_t<decltype(&U::operator())>>(), std::forward<F>(f));
 		}
 
 		template <typename F>
 		inline void resolve_f(std::false_type, F&&) {
-			static_assert(meta::has_deducible_signature<F>::value,
-				"Cannot use no-template-parameter call with an overloaded functor: specify the signature");
+			static_assert(
+			     meta::has_deducible_signature<F>::value, "Cannot use no-template-parameter call with an overloaded functor: specify the signature");
 		}
 
 		template <typename F, typename U = meta::unqualified_t<F>>
 		inline auto resolve_i(types<>, F&& f) -> decltype(resolve_f(meta::has_deducible_signature<U>(), std::forward<F>(f))) {
-			return resolve_f(meta::has_deducible_signature<U>{}, std::forward<F>(f));
+			return resolve_f(meta::has_deducible_signature<U> {}, std::forward<F>(f));
 		}
 
-		template <typename... Args, typename F, typename R = std::result_of_t<F&(Args...)>>
+		template <typename... Args, typename F, typename R = std::invoke_result_t<F&, Args...>>
 		inline auto resolve_i(types<Args...>, F&& f) -> decltype(resolve_i(types<R(Args...)>(), std::forward<F>(f))) {
 			return resolve_i(types<R(Args...)>(), std::forward<F>(f));
 		}
@@ -22728,16 +22760,15 @@ namespace sol {
 
 		template <bool raw, typename Pairs, std::size_t... I>
 		void tuple_set(std::index_sequence<I...>, Pairs&& pairs) {
-			constexpr static bool global = top_level && (meta::count_even_for_pack_v<meta::is_c_str, meta::unqualified_t<decltype(std::get<I * 2>(std::forward<Pairs>(pairs)))>...> > 0);
+			constexpr static bool global = top_level
+			     && (meta::count_even_for_pack_v<meta::is_c_str, meta::unqualified_t<decltype(std::get<I * 2>(std::forward<Pairs>(pairs)))>...> > 0);
 			auto pp = stack::push_pop<global>(*this);
 			int table_index = pp.index_of(*this);
 			lua_State* L = base_t::lua_state();
 			(void)table_index;
 			(void)L;
-			void(detail::swallow{ (stack::set_field<(top_level), raw>(L,
-			                            std::get<I * 2>(std::forward<Pairs>(pairs)),
-			                            std::get<I * 2 + 1>(std::forward<Pairs>(pairs)),
-			                            table_index),
+			void(detail::swallow { (stack::set_field<(top_level), raw>(
+			                             L, std::get<I * 2>(std::forward<Pairs>(pairs)), std::get<I * 2 + 1>(std::forward<Pairs>(pairs)), table_index),
 			     0)... });
 		}
 
@@ -22836,7 +22867,8 @@ namespace sol {
 			using KeyU = meta::unqualified_t<Key>;
 			if constexpr (std::is_same_v<KeyU, update_if_empty_t>) {
 				(void)key;
-				traverse_set_deep<global, raw, static_cast<detail::insert_mode>(mode | detail::insert_mode::update_if_empty)>(table_index, std::forward<Keys>(keys)...);
+				traverse_set_deep<global, raw, static_cast<detail::insert_mode>(mode | detail::insert_mode::update_if_empty)>(
+				     table_index, std::forward<Keys>(keys)...);
 			}
 			else if constexpr (std::is_same_v<KeyU, create_if_nil_t>) {
 				(void)key;
@@ -22931,7 +22963,7 @@ namespace sol {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			int table_index = pp.index_of(*this);
-			constructor_handler handler{};
+			constructor_handler handler {};
 			stack::check<basic_table_core>(lua_state(), table_index, handler);
 #endif // Safety
 		}
@@ -22942,7 +22974,7 @@ namespace sol {
 		}
 		basic_table_core(lua_State* L, int index = -1) : basic_table_core(detail::no_safety, L, index) {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
-			constructor_handler handler{};
+			constructor_handler handler {};
 			stack::check<basic_table_core>(L, index, handler);
 #endif // Safety
 		}
@@ -22950,7 +22982,7 @@ namespace sol {
 #if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
 			auto pp = stack::push_pop(*this);
 			int table_index = pp.index_of(*this);
-			constructor_handler handler{};
+			constructor_handler handler {};
 			stack::check<basic_table_core>(lua_state(), table_index, handler);
 #endif // Safety
 		}
@@ -22962,7 +22994,7 @@ namespace sol {
 			if (!is_table<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				int table_index = pp.index_of(*this);
-				constructor_handler handler{};
+				constructor_handler handler {};
 				stack::check<basic_table_core>(lua_state(), table_index, handler);
 			}
 #endif // Safety
@@ -22989,7 +23021,7 @@ namespace sol {
 			return end();
 		}
 
-		void clear () {
+		void clear() {
 			auto pp = stack::push_pop<false>(*this);
 			int table_index = pp.index_of(*this);
 			stack::clear(lua_state(), table_index);
@@ -23035,7 +23067,8 @@ namespace sol {
 		template <typename... Keys>
 		basic_table_core& traverse_set(Keys&&... keys) {
 			static_assert(sizeof...(Keys) > 1, "must pass at least 1 key and 1 value to set");
-			constexpr static bool global = top_level && (meta::count_when_for_to_pack_v<detail::is_not_insert_mode, 1, meta::is_c_str, meta::unqualified_t<Keys>...> > 0);
+			constexpr static bool global
+			     = top_level && (meta::count_when_for_to_pack_v<detail::is_not_insert_mode, 1, meta::is_c_str, meta::unqualified_t<Keys>...> > 0);
 			auto pp = stack::push_pop<global>(*this);
 			int table_index = pp.index_of(*this);
 			lua_State* L = base_t::lua_state();
@@ -23046,7 +23079,7 @@ namespace sol {
 
 		template <typename... Args>
 		basic_table_core& set(Args&&... args) {
-			if constexpr(sizeof...(Args) == 2) {
+			if constexpr (sizeof...(Args) == 2) {
 				traverse_set(std::forward<Args>(args)...);
 			}
 			else {
@@ -23220,12 +23253,12 @@ namespace sol {
 			auto pp = stack::push_pop(*this);
 			int table_index = pp.index_of(*this);
 			lua_State* L = base_t::lua_state();
-			(void)detail::swallow{ 0, (stack::set_ref(L, std::forward<Args>(args), table_index), 0)... };
+			(void)detail::swallow { 0, (stack::set_ref(L, std::forward<Args>(args), table_index), 0)... };
 			return *this;
 		}
 
 	private:
-		template <typename R, typename... Args, typename Fx, typename Key, typename = std::result_of_t<Fx(Args...)>>
+		template <typename R, typename... Args, typename Fx, typename Key, typename = std::invoke_result_t<Fx, Args...>>
 		void set_fx(types<R(Args...)>, Key&& key, Fx&& fx) {
 			set_resolved_function<R(Args...)>(std::forward<Key>(key), std::forward<Fx>(fx));
 		}
@@ -23997,7 +24030,8 @@ namespace sol {
 		struct arr : detail::ebco<std::initializer_list<lua_value>> {
 		private:
 			using base_t = detail::ebco<std::initializer_list<lua_value>>;
-		public: 
+
+		public:
 			using base_t::base_t;
 		};
 
@@ -24008,9 +24042,13 @@ namespace sol {
 
 		template <typename T>
 		using is_lua_value_single_constructible = meta::any<std::is_same<T, lua_value>, is_reference_or_lua_value_init_list<T>>;
-	
+
 		static lua_State*& thread_local_lua_state() {
+#if SOL_ON(SOL_USE_THREAD_LOCAL_)
 			static thread_local lua_State* L = nullptr;
+#else
+			static lua_State* L = nullptr;
+#endif
 			return L;
 		}
 
@@ -24114,7 +24152,7 @@ namespace sol {
 				return lua_value(L, stack::get<reference>(L, index, tracking));
 			}
 		};
-	}
+	} // namespace stack
 } // namespace sol
 
 // end of sol/lua_value.hpp

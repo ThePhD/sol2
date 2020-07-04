@@ -32,9 +32,10 @@
 #include <cstdlib>
 #include <cmath>
 #include <optional>
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#if SOL_ON(SOL_STD_VARIANT_)
 #include <variant>
-#endif // variant
+#endif // variant shenanigans (thanks, Mac OSX)
+
 
 namespace sol { namespace stack {
 	template <typename T, typename>
@@ -129,7 +130,7 @@ namespace sol { namespace stack {
 		}
 	};
 
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#if SOL_ON(SOL_STD_VARIANT_)
 	template <typename... Tn, typename C>
 	struct unqualified_check_getter<std::variant<Tn...>, C> {
 		typedef std::variant<Tn...> V;
@@ -170,7 +171,7 @@ namespace sol { namespace stack {
 			return get_one(std::integral_constant<std::size_t, V_size::value>(), L, index, std::forward<Handler>(handler), tracking);
 		}
 	};
-#endif // SOL_STD_VARIANT
+#endif // standard variant
 }}     // namespace sol::stack
 
 #endif // SOL_STACK_CHECK_UNQUALIFIED_GET_HPP

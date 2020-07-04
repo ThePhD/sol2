@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-06-06 16:05:17.750133 UTC
-// This header was generated with sol v3.2.1 (revision e09d2ff)
+// Generated 2020-07-04 07:55:36.492765 UTC
+// This header was generated with sol v3.2.1 (revision 62a831c)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -197,9 +197,42 @@
 
 // end of sol/config.hpp
 
-// beginning of sol/config_setup.hpp
+// beginning of sol/version.hpp
 
-// end of sol/config_setup.hpp
+#define SOL_ON(X) ((X + X) != 0)
+#define SOL_OFF(X) ((X + X) == 0)
+
+#if defined(SOL_IN_DEBUG_DETECTED) && (SOL_IN_DEBUG_DETECTED != 0)
+	#define SOL_IN_DEBUG_DETECTED_ 1
+#else
+	#define SOL_IN_DEBUG_DETECTED_ 0
+#endif // We are in a debug mode of some sort
+
+#if defined(SOL_NO_THREAD_LOCAL) && (SOL_NO_THREAD_LOCAL != 0)
+	#define SOL_USE_THREAD_LOCAL_ 0
+#else
+	#define SOL_USE_THREAD_LOCAL_ 1
+#endif // thread_local keyword is bjorked on some platforms
+
+#if defined(SOL_USERTYPE_TYPE_BINDING_INFO) && (SOL_USERTYPE_TYPE_BINDING_INFO != 0)
+	#define SOL_USERTYPE_TYPE_BINDING_INFO_ 1
+#else
+	#define SOL_USERTYPE_TYPE_BINDING_INFO_ 0
+#endif // We should generate a my_type.__type table with lots of class information for usertypes
+
+#if defined(SOL_AUTOMAGICAL_TYPES_BY_DEFAULT) && SOL_AUTOMAGICAL_TYPES_BY_DEFAULT != 0
+	#define SOL_AUTOMAGICAL_TYPES_BY_DEFAULT_ 1
+#else
+	#define SOL_AUTOMAGICAL_TYPES_BY_DEFAULT_ 1
+#endif // make is_automagical on/off by default
+
+#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT != 0
+	#define SOL_STD_VARIANT_ 1
+#else
+	#define SOL_STD_VARIANT_ 0
+#endif // make is_automagical on/off by default
+
+// end of sol/version.hpp
 
 // end of sol/feature_test.hpp
 

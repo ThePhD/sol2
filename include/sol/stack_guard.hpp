@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -24,7 +24,7 @@
 #ifndef SOL_STACK_GUARD_HPP
 #define SOL_STACK_GUARD_HPP
 
-#include "compatibility/version.hpp"
+#include "compatibility/lua_version.hpp"
 #include "error.hpp"
 #include <functional>
 
@@ -46,11 +46,9 @@ namespace sol {
 		int top;
 		std::function<void(int, int)> on_mismatch;
 
-		stack_guard(lua_State* L)
-		: stack_guard(L, lua_gettop(L)) {
+		stack_guard(lua_State* L) : stack_guard(L, lua_gettop(L)) {
 		}
-		stack_guard(lua_State* L, int top, std::function<void(int, int)> fx = detail::stack_fail)
-		: L(L), top(top), on_mismatch(std::move(fx)) {
+		stack_guard(lua_State* L, int top, std::function<void(int, int)> fx = detail::stack_fail) : L(L), top(top), on_mismatch(std::move(fx)) {
 		}
 		bool check_stack(int modification = 0) const {
 			int bottom = lua_gettop(L) + modification;
