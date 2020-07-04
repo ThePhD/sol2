@@ -29,19 +29,19 @@ proxy
 
 .. literalinclude:: ../../../examples/source/table_proxy.cpp
 	:linenos:
-	:lines: 11-15
+	:lines: 9-13
 
 After loading that file in or putting it in a string and reading the string directly in lua (see :doc:`state`), you can start kicking around with it in C++ like so:
 
 .. literalinclude:: ../../../examples/source/table_proxy.cpp
 	:linenos:
-	:lines: 1-8,18-40
+	:lines: 1-6,16-38
 
 We don't recommend using ``proxy`` lazy evaluation the above to be used across classes or between function: it's more of something you can do to save a reference to a value you like, call a script or run a lua function, and then get it afterwards. You can also set functions (and function objects) this way, and retrieve them as well:
 
 .. literalinclude:: ../../../examples/source/table_proxy.cpp
 	:linenos:
-	:lines: 41-
+	:lines: 40-
 
 members
 -------

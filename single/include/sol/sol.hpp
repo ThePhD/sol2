@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-07-04 07:55:34.972735 UTC
-// This header was generated with sol v3.2.1 (revision 62a831c)
+// Generated 2020-07-04 08:02:02.484853 UTC
+// This header was generated with sol v3.2.1 (revision 7d8532b)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -7509,8 +7509,8 @@ namespace sol {
 			return trampoline(L, f);
 		}
 #else
-		template <lua_CFunction f>
-		int static_trampoline(lua_State* L) {
+
+		inline int impl_static_trampoline(lua_State* L, lua_CFunction f) {
 #if defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && !defined(SOL_LUAJIT)
 			return f(L);
 
@@ -7529,7 +7529,7 @@ namespace sol {
 			}
 #if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
 			// LuaJIT cannot have the catchall when the safe propagation is on
-			// but LuaJIT will swallow all C++ errors 
+			// but LuaJIT will swallow all C++ errors
 			// if we don't at least catch std::exception ones
 			catch (...) {
 				call_exception_handler(L, optional<const std::exception&>(nullopt), "caught (...) exception");
@@ -7537,6 +7537,11 @@ namespace sol {
 #endif // LuaJIT cannot have the catchall, but we must catch std::exceps for it
 			return lua_error(L);
 #endif // Safe exceptions
+		}
+
+		template <lua_CFunction f>
+		int static_trampoline(lua_State* L) {
+			return impl_static_trampoline(L, f);
 		}
 
 #ifdef SOL_NOEXCEPT_FUNCTION_TYPE
@@ -7653,11 +7658,9 @@ namespace detail {
 		"`anonymous namespace'" } };
 
 #if defined(__GNUC__) || defined(__clang__)
-	template <typename T, class seperator_mark = int>
-	inline std::string ctti_get_type_name() {
+	inline std::string ctti_get_type_name_from_sig(std::string name) {
 		// cardinal sins from MINGW
 		using namespace std;
-		std::string name = __PRETTY_FUNCTION__;
 		std::size_t start = name.find_first_of('[');
 		start = name.find_first_of('=', start);
 		std::size_t end = name.find_last_of(']');
@@ -7687,10 +7690,13 @@ namespace detail {
 
 		return name;
 	}
+
+	template <typename T, class seperator_mark = int>
+	inline std::string ctti_get_type_name() {
+		return ctti_get_type_name_from_sig(__PRETTY_FUNCTION__);
+	}
 #elif defined(_MSC_VER)
-	template <typename T>
-	std::string ctti_get_type_name() {
-		std::string name = __FUNCSIG__;
+	inline std::string ctti_get_type_name_from_sig(std::string name) {
 		std::size_t start = name.find("get_type_name");
 		if (start == std::string::npos)
 			start = 0;
@@ -7721,6 +7727,11 @@ namespace detail {
 
 		return name;
 	}
+
+	template <typename T>
+	std::string ctti_get_type_name() {
+		return ctti_get_type_name_from_sig(__FUNCSIG__);
+	}
 #else
 #error Compiler not supported for demangling
 #endif // compilers
@@ -7731,9 +7742,7 @@ namespace detail {
 		return realname;
 	}
 
-	template <typename T>
-	std::string short_demangle_once() {
-		std::string realname = ctti_get_type_name<T>();
+	inline std::string short_demangle_from_type_name(std::string realname) {
 		// This isn't the most complete but it'll do for now...?
 		static const std::array<std::string, 10> ops = {{"operator<", "operator<<", "operator<<=", "operator<=", "operator>", "operator>>", "operator>>=", "operator>=", "operator->", "operator->*"}};
 		int level = 0;
@@ -7767,6 +7776,12 @@ namespace detail {
 			realname.erase(0, realname.length() < static_cast<std::size_t>(idx) ? realname.length() : idx + 1);
 		}
 		return realname;
+	}
+
+	template <typename T>
+	std::string short_demangle_once() {
+		std::string realname = ctti_get_type_name<T>();
+		return short_demangle_from_type_name(realname);
 	}
 
 	template <typename T>
@@ -10692,9 +10707,7 @@ namespace sol {
 
 namespace sol { namespace stack {
 	namespace stack_detail {
-		template <typename T, bool poptable = true>
-		inline bool check_metatable(lua_State* L, int index = -2) {
-			const auto& metakey = usertype_traits<T>::metatable();
+		inline bool impl_check_metatable(lua_State* L, int index, const std::string& metakey, bool poptable) {
 			luaL_getmetatable(L, &metakey[0]);
 			const type expectedmetatabletype = static_cast<type>(lua_type(L, -1));
 			if (expectedmetatabletype != type::lua_nil) {
@@ -10705,6 +10718,11 @@ namespace sol { namespace stack {
 			}
 			lua_pop(L, 1);
 			return false;
+		}
+
+		template <typename T, bool poptable = true>
+		inline bool check_metatable(lua_State* L, int index = -2) {
+			return impl_check_metatable(L, index, usertype_traits<T>::metatable(), poptable);
 		}
 
 		template <type expected, int (*check_func)(lua_State*, int)>
