@@ -24,7 +24,7 @@ You can mitigate some of the pressure of using coroutines and threading by using
 
 .. note::
 
-	Advanced used: Furthermore, for every single ``sol::reference`` derived type, there exists a version prefixed with the word ``main_``, such as ``sol::main_table``, ``sol::main_function``, ``sol::main_object`` and similar. These classes, on construction, assignment and other operations, forcibly obtain the ``lua_State*`` associated with the main thread, if possible. Using these classes will allow your code to be immune when a wrapped coroutine or a lua thread is set to ``nil`` and then garbage-collected.
+	Advanced: For every single ``sol::reference`` derived type, there exists a version prefixed with the word ``main_``, such as ``sol::main_table``, ``sol::main_function``, ``sol::main_object`` and similar. These classes, on construction, assignment and other operations, forcibly obtain the ``lua_State*`` associated with the main thread, if possible. Using these classes will allow your code to be immune when a wrapped coroutine or a lua thread is set to ``nil`` and then garbage-collected.
 
 
 .. note::

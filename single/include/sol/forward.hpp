@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-07-04 08:02:02.982843 UTC
-// This header was generated with sol v3.2.1 (revision 7d8532b)
+// Generated 2020-07-15 13:23:11.320974 UTC
+// This header was generated with sol v3.2.1 (revision 6869ad3)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -231,6 +231,20 @@
 #else
 	#define SOL_STD_VARIANT_ 0
 #endif // make is_automagical on/off by default
+
+#if defined(SOL_ID_SIZE) && SOL_ID_SIZE > 0
+	#define SOL_ID_SIZE_ SOL_ID_SIZE
+#else
+	#define SOL_ID_SIZE_ 512
+#endif
+
+#if defined(LUA_IDSIZE) && LUA_IDSIZE > 0
+	#define SOL_FILE_ID_SIZE_ LUA_IDSIZE
+#elif defined(SOL_ID_SIZE) && SOL_ID_SIZE > 0
+	#define SOL_FILE_ID_SIZE_ SOL_FILE_ID_SIZE
+#else
+	#define SOL_FILE_ID_SIZE_ 2048
+#endif
 
 // end of sol/version.hpp
 

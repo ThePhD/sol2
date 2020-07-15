@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -40,7 +40,8 @@
 
 namespace sol {
 	namespace detail {
-		using typical_chunk_name_t = char[32];
+		using typical_chunk_name_t = char[SOL_ID_SIZE_];
+		using typical_file_chunk_name_t = char[SOL_FILE_ID_SIZE_];
 
 		inline const std::string& default_chunk_name() {
 			static const std::string name = "";
@@ -97,7 +98,7 @@ namespace sol {
 				static const std::size_t data_t_count = (sizeof(TValue) + voidsizem1) / voidsize;
 				typedef std::array<void*, data_t_count> data_t;
 
-				data_t data{ {} };
+				data_t data { {} };
 				std::memcpy(&data[0], std::addressof(item), itemsize);
 				int pushcount = 0;
 				for (auto&& v : data) {
@@ -110,7 +111,7 @@ namespace sol {
 			inline std::pair<T, int> get_as_upvalues(lua_State* L, int index = 2) {
 				static const std::size_t data_t_count = (sizeof(T) + (sizeof(void*) - 1)) / sizeof(void*);
 				typedef std::array<void*, data_t_count> data_t;
-				data_t voiddata{ {} };
+				data_t voiddata { {} };
 				for (std::size_t i = 0, d = 0; d < sizeof(T); ++i, d += sizeof(void*)) {
 					voiddata[i] = get<lightuserdata_value>(L, upvalue_index(index++));
 				}
@@ -123,18 +124,28 @@ namespace sol {
 			}
 
 			template <typename Fx, typename Arg, typename... Args, std::size_t I, std::size_t... Is, typename... FxArgs>
-			static decltype(auto) eval(types<Arg, Args...>, std::index_sequence<I, Is...>, lua_State* L, int start, record& tracking, Fx&& fx, FxArgs&&... fxargs) {
-				return eval(types<Args...>(), std::index_sequence<Is...>(), L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)..., stack_detail::unchecked_get<Arg>(L, start + tracking.used, tracking));
+			static decltype(auto) eval(
+			     types<Arg, Args...>, std::index_sequence<I, Is...>, lua_State* L, int start, record& tracking, Fx&& fx, FxArgs&&... fxargs) {
+				return eval(types<Args...>(),
+				     std::index_sequence<Is...>(),
+				     L,
+				     start,
+				     tracking,
+				     std::forward<Fx>(fx),
+				     std::forward<FxArgs>(fxargs)...,
+				     stack_detail::unchecked_get<Arg>(L, start + tracking.used, tracking));
 			}
 
-			template <bool checkargs = detail::default_safe_function_calls , std::size_t... I, typename R, typename... Args, typename Fx, typename... FxArgs>
+			template <bool checkargs = detail::default_safe_function_calls, std::size_t... I, typename R, typename... Args, typename Fx, typename... FxArgs>
 			inline decltype(auto) call(types<R>, types<Args...> ta, std::index_sequence<I...> tai, lua_State* L, int start, Fx&& fx, FxArgs&&... args) {
-				static_assert(meta::all<meta::is_not_move_only<Args>...>::value, "One of the arguments being bound is a move-only type, and it is not being taken by reference: this will break your code. Please take a reference and std::move it manually if this was your intention.");
+				static_assert(meta::all<meta::is_not_move_only<Args>...>::value,
+				     "One of the arguments being bound is a move-only type, and it is not being taken by reference: this will break your code. Please take "
+				     "a reference and std::move it manually if this was your intention.");
 				if constexpr (checkargs) {
-					argument_handler<types<R, Args...>> handler{};
+					argument_handler<types<R, Args...>> handler {};
 					multi_check<Args...>(L, start, handler);
 				}
-				record tracking{};
+				record tracking {};
 				if constexpr (std::is_void_v<R>) {
 					eval(ta, tai, L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 				}
@@ -163,7 +174,7 @@ namespace sol {
 
 		template <bool check_args = detail::default_safe_function_calls, typename R, typename... Args, typename Fx, typename... FxArgs>
 		inline decltype(auto) call(types<R> tr, types<Args...> ta, lua_State* L, Fx&& fx, FxArgs&&... args) {
-			if constexpr(std::is_void_v<R>) {
+			if constexpr (std::is_void_v<R>) {
 				call<check_args>(tr, ta, L, 1, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
 			}
 			else {
@@ -192,7 +203,8 @@ namespace sol {
 			}
 		}
 
-		template <bool check_args = detail::default_safe_function_calls, bool clean_stack = true, typename Ret0, typename... Ret, typename... Args, typename Fx, typename... FxArgs>
+		template <bool check_args = detail::default_safe_function_calls, bool clean_stack = true, typename Ret0, typename... Ret, typename... Args,
+		     typename Fx, typename... FxArgs>
 		inline int call_into_lua(types<Ret0, Ret...> tr, types<Args...> ta, lua_State* L, int start, Fx&& fx, FxArgs&&... fxargs) {
 			if constexpr (std::is_void_v<Ret0>) {
 				call<check_args>(tr, ta, L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
@@ -203,7 +215,8 @@ namespace sol {
 			}
 			else {
 				(void)tr;
-				decltype(auto) r = call<check_args>(types<meta::return_type_t<Ret0, Ret...>>(), ta, L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
+				decltype(auto) r
+				     = call<check_args>(types<meta::return_type_t<Ret0, Ret...>>(), ta, L, start, std::forward<Fx>(fx), std::forward<FxArgs>(fxargs)...);
 				using R = meta::unqualified_t<decltype(r)>;
 				using is_stack = meta::any<is_stack_based<R>, std::is_same<R, absolute_index>, std::is_same<R, ref_index>, std::is_same<R, raw_index>>;
 				if constexpr (clean_stack && !is_stack::value) {
@@ -233,7 +246,8 @@ namespace sol {
 			return call_syntax::colon;
 		}
 
-		inline void script(lua_State* L, lua_Reader reader, void* data, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		inline void script(
+		     lua_State* L, lua_Reader reader, void* data, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
 			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name("lua_Reader", chunkname, basechunkname);
 			if (lua_load(L, reader, data, chunknametarget, to_string(mode).c_str()) || lua_pcall(L, 0, LUA_MULTRET, 0)) {
@@ -241,7 +255,9 @@ namespace sol {
 			}
 		}
 
-		inline void script(lua_State* L, const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+		inline void script(
+		     lua_State* L, const string_view& code, const std::string& chunkname = detail::default_chunk_name(), load_mode mode = load_mode::any) {
+
 			detail::typical_chunk_name_t basechunkname = {};
 			const char* chunknametarget = detail::make_chunk_name(code, chunkname, basechunkname);
 			if (luaL_loadbufferx(L, code.data(), code.size(), chunknametarget, to_string(mode).c_str()) || lua_pcall(L, 0, LUA_MULTRET, 0)) {

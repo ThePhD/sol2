@@ -53,7 +53,7 @@ namespace sol { namespace stack {
 						// expected type, actual type
 						tracking.use(static_cast<int>(success));
 						handler(L, index, type::poly, type_of(L, index), "");
-						return std::nullopt;
+						return detail::associated_nullopt_v<Optional>;
 					}
 					return stack_detail::unchecked_get<T>(L, index, tracking);
 				}
@@ -81,7 +81,7 @@ namespace sol { namespace stack {
 					const type t = type_of(L, index);
 					tracking.use(static_cast<int>(t != type::none));
 					handler(L, index, type::number, t, "not an integer");
-					return std::nullopt;
+					return detail::associated_nullopt_v<Optional>;
 				}
 				else if constexpr (std::is_floating_point_v<T> || std::is_same_v<T, lua_Number>) {
 					int isnum = 0;
@@ -90,7 +90,7 @@ namespace sol { namespace stack {
 						type t = type_of(L, index);
 						tracking.use(static_cast<int>(t != type::none));
 						handler(L, index, type::number, t, "not a valid floating point number");
-						return std::nullopt;
+						return detail::associated_nullopt_v<Optional>;
 					}
 					tracking.use(1);
 					return static_cast<T>(value);
@@ -102,7 +102,7 @@ namespace sol { namespace stack {
 						type t = type_of(L, index);
 						tracking.use(static_cast<int>(t != type::none));
 						handler(L, index, type::number, t, "not a valid enumeration value");
-						return std::nullopt;
+						return detail::associated_nullopt_v<Optional>;
 					}
 					tracking.use(1);
 					return static_cast<T>(value);
@@ -110,7 +110,7 @@ namespace sol { namespace stack {
 				else {
 					if (!unqualified_check<T>(L, index, std::forward<Handler>(handler))) {
 						tracking.use(static_cast<int>(!lua_isnone(L, index)));
-						return std::nullopt;
+						return detail::associated_nullopt_v<Optional>;
 					}
 					return stack_detail::unchecked_unqualified_get<T>(L, index, tracking);
 				}
@@ -118,7 +118,7 @@ namespace sol { namespace stack {
 			else {
 				if (!unqualified_check<T>(L, index, std::forward<Handler>(handler))) {
 					tracking.use(static_cast<int>(!lua_isnone(L, index)));
-					return std::nullopt;
+					return detail::associated_nullopt_v<Optional>;
 				}
 				return stack_detail::unchecked_unqualified_get<T>(L, index, tracking);
 			}

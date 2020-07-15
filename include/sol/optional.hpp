@@ -51,6 +51,23 @@ namespace sol {
 		template <typename T>
 		constexpr inline bool is_optional_v = is_optional<T>::value;
 	} // namespace meta
+
+	namespace detail {
+		template <typename T>
+		struct associated_nullopt {
+			inline static constexpr std::nullopt_t value = std::nullopt;
+		};
+
+#if defined(SOL_USE_BOOST) && SOL_USE_BOOST
+		template <typename T>
+		struct associated_nullopt<boost::optional<T>> {
+			inline static constexpr std::nullopt_t value = boost::nullopt;
+		};
+#endif // Boost nullopt
+
+		template <typename T>
+		inline constexpr auto associated_nullopt_v = associated_nullopt<T>::value;
+	} // namespace detail
 } // namespace sol
 
 #endif // SOL_OPTIONAL_HPP

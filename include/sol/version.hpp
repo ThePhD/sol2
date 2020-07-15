@@ -62,6 +62,20 @@
 	#define SOL_STD_VARIANT_ 0
 #endif // make is_automagical on/off by default
 
+#if defined(SOL_ID_SIZE) && SOL_ID_SIZE > 0
+	#define SOL_ID_SIZE_ SOL_ID_SIZE
+#else
+	#define SOL_ID_SIZE_ 512
+#endif
+
+#if defined(LUA_IDSIZE) && LUA_IDSIZE > 0
+	#define SOL_FILE_ID_SIZE_ LUA_IDSIZE
+#elif defined(SOL_ID_SIZE) && SOL_ID_SIZE > 0
+	#define SOL_FILE_ID_SIZE_ SOL_FILE_ID_SIZE
+#else
+	#define SOL_FILE_ID_SIZE_ 2048
+#endif
+
 
 // clang-format on
 

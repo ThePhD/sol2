@@ -97,7 +97,7 @@ Feature Config
 ``SOL_ENABLE_INTEROP`` triggers the following change:
 	* Allows the use of ``extensible<T>`` to be used with ``userdata_checker`` and ``userdata_getter`` to retrieve non-sol usertypes
 		- Particularly enables non-sol usertypes to be used in overloads
-		- See the :ref:`stack dcoumentation<userdata-interop>` for details
+		- See the :ref:`stack documentation<userdata-interop>` for details
 	* May come with a slight performance penalty: only recommended for those stuck with non-sol libraries that still need to leverage some of sol's power
 	* **Not** turned on by default under any settings: *this MUST be turned on manually*
 	
@@ -106,6 +106,15 @@ Feature Config
 	* Automagical usertypes search for specific C++ conventions to define common methods for the end-user.
 	* Some automagical methods might cause huge compiler errors, and some people have code bases with different conventions.
 	* Turned on by default. This *must be turned off manually*.
+
+``SOL_NO_THREAD_LOCAL`` triggers the following change:
+	* If this is turned on, simply removes all usages of the ``thread_local`` keyword in sol2.
+	* This is useful for lower versions of iOS and Android, which do not have threading capabilities at all and so the use of the keyword provides no additional guarantees. 
+	* **Not** turned on by default under any settings: *this MUST be turned on manually*
+
+``SOL_ID_SIZE`` triggers the following change:
+	* If this is defined to a numeric value, it uses that numeric value for the number of bytes of input to be put into the error message blurb in standard tracebacks and ``chunkname`` descriptions for ``.script``/``.script_file`` usage.
+	* Defaults to the ``LUA_ID_SIZE`` macro if defined, or some basic internal value like 2048.
 
 .. _config-memory:
 
