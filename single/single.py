@@ -171,12 +171,17 @@ def process_file(filename, out):
 			base_path = os.path.dirname(filename)
 
 			# check if it's a standard file
-			std = standard_include.search(line)
-			if std:
-				std_file = os.path.join('std', std.group(0))
-				if std_file in includes:
-					continue
-				includes.add(std_file)
+			# TODO: this is FAR too aggressive and catches
+			# includes and files not part of the standard (C includes)
+			# and friends.
+			# we should add a list of standard includes here??
+			# or handle behavior differently...
+			#std = standard_include.search(line)
+			#if std:
+			#	std_file = os.path.join('std', std.group(0))
+			#	if std_file in includes:
+			#		continue
+			#	includes.add(std_file)
 
 			# see if it's an include file
 			name = get_include(line, base_path)

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-07-15 13:23:10.917866 UTC
-// This header was generated with sol v3.2.1 (revision 6869ad3)
+// Generated 2020-07-16 23:44:55.472351 UTC
+// This header was generated with sol v3.2.1 (revision 4a16979)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -523,6 +523,8 @@ namespace sol {
 // beginning of sol/tuple.hpp
 
 // beginning of sol/base_traits.hpp
+
+#include <type_traits>
 
 namespace sol {
 	namespace detail {
@@ -1189,6 +1191,9 @@ namespace meta {
 
 // beginning of sol/pointer_like.hpp
 
+#include <utility>
+#include <type_traits>
+
 namespace sol {
 
 	namespace meta {
@@ -1262,7 +1267,9 @@ namespace sol {
 
 // beginning of sol/string_view.hpp
 
+#include <cstddef>
 #include <string>
+#include <string_view>
 #include <functional>
 #if defined(SOL_USE_BOOST) && SOL_USE_BOOST
 #include <boost/functional/hash.hpp>
@@ -1281,8 +1288,10 @@ namespace sol {
 
 // end of sol/string_view.hpp
 
+#include <type_traits>
 #include <cstdint>
 #include <memory>
+#include <functional>
 #include <array>
 #include <iterator>
 #include <iosfwd>
@@ -1987,7 +1996,11 @@ namespace sol {
 #else
 	#if defined(SOL_NO_LUA_HPP) && SOL_NO_LUA_HPP
 		extern "C" {
+			#include <lua.h>
+			#include <lauxlib.h>
+			#include <lualib.h>
 			#if defined(LUAJIT_VERSION) && LUAJIT_VERSION
+				#include <luajit.h>
 			#endif
 		}
 	#else
@@ -1996,11 +2009,16 @@ namespace sol {
 				#include <lua.hpp>
 			#else
 				extern "C" {
+					#include <lua.h>
+					#include <lauxlib.h>
+					#include <lualib.h>
 					#if defined(LUAJIT_VERSION) && LUAJIT_VERSION
+						#include <luajit.h>
 					#endif
 				}
 			#endif // lua.hpp exists or does not
 		#else
+			#include <lua.hpp>
 		#endif // check for lua.hpp safely for Lua 5.1 derps
 	#endif // Manual - have lua.hpp or not
 #endif // C++ Mangling for Lua vs. Not
@@ -2058,6 +2076,9 @@ namespace sol {
 #if defined(__cplusplus) && !defined(COMPAT53_LUA_CPP)
 extern "C" {
 #endif
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 #if defined(__cplusplus) && !defined(COMPAT53_LUA_CPP)
 }
 #endif
@@ -2440,9 +2461,9 @@ COMPAT53_API void luaL_requiref(lua_State *L, const char *modname,
 /* other Lua versions */
 #if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501 || LUA_VERSION_NUM > 504
 
-#  error "unsupported Lua version (i.e. not Lua 5.1, 5.2, or 5.3)"
+#  error "unsupported Lua version (i.e. not Lua 5.1, 5.2, 5.3, or 5.4)"
 
-#endif /* other Lua versions except 5.1, 5.2, and 5.3 */
+#endif /* other Lua versions except 5.1, 5.2, 5.3, and 5.4 */
 
 /* helper macro for defining continuation functions (for every version
 * *except* Lua 5.2) */
@@ -2454,7 +2475,9 @@ COMPAT53_API void luaL_requiref(lua_State *L, const char *modname,
 #if defined(COMPAT53_INCLUDE_SOURCE) && COMPAT53_INCLUDE_SOURCE == 1
 // beginning of sol/compatibility/compat-5.3.c.h
 
+#include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -3304,6 +3327,9 @@ COMPAT53_API void luaL_requiref(lua_State *L, const char *modname,
 #if defined(__cplusplus) && !defined(COMPAT53_LUA_CPP)
 extern "C" {
 #endif
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 #if defined(__cplusplus) && !defined(COMPAT53_LUA_CPP)
 }
 #endif
@@ -3326,6 +3352,8 @@ extern "C" {
 // end of sol/compatibility.hpp
 
 #include <vector>
+#include <cstdint>
+#include <cstddef>
 
 namespace sol {
 
@@ -3425,6 +3453,8 @@ namespace sol {
 // beginning of sol/error.hpp
 
 #include <stdexcept>
+#include <string>
+#include <array>
 
 namespace sol {
 	namespace detail {
@@ -3488,6 +3518,9 @@ namespace sol {
 
 // beginning of sol/in_place.hpp
 
+#include <cstddef>
+#include <utility>
+
 namespace sol {
 
 	using in_place_t = std::in_place_t;
@@ -3517,7 +3550,10 @@ namespace sol {
 #define SOL_TL_OPTIONAL_VERSION_MINOR 5
 
 #include <exception>
+#include <functional>
 #include <new>
+#include <type_traits>
+#include <utility>
 #include <cstdlib>
 #include <optional>
 
@@ -5741,6 +5777,8 @@ namespace std {
 
 #endif // Boost vs. Better optional
 
+#include <optional>
+
 namespace sol {
 
 #if defined(SOL_USE_BOOST) && SOL_USE_BOOST
@@ -5779,6 +5817,8 @@ namespace sol {
 // end of sol/optional.hpp
 
 // beginning of sol/raii.hpp
+
+#include <memory>
 
 namespace sol {
 	namespace detail {
@@ -5918,6 +5958,8 @@ namespace sol {
 
 // beginning of sol/policies.hpp
 
+#include <array>
+
 namespace sol {
 	namespace detail {
 		struct policy_base_tag {};
@@ -5988,6 +6030,9 @@ namespace sol {
 // end of sol/policies.hpp
 
 // beginning of sol/ebco.hpp
+
+#include <type_traits>
+#include <utility>
 
 namespace sol { namespace detail {
 
@@ -6139,8 +6184,13 @@ namespace sol { namespace detail {
 
 // end of sol/map.hpp
 
+#include <array>
 #include <initializer_list>
+#include <string>
+#include <string_view>
+#include <optional>
 #if SOL_ON(SOL_STD_VARIANT_)
+#include <variant>
 #endif // variant shenanigans (thanks, Mac OSX)
 
 namespace sol {
@@ -7468,6 +7518,7 @@ namespace sol {
 
 // end of sol/types.hpp
 
+#include <exception>
 #include <cstring>
 
 #if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
@@ -7669,9 +7720,12 @@ namespace sol {
 
 // beginning of sol/demangle.hpp
 
+#include <string>
+#include <array>
 #include <cctype>
 #if defined(__GNUC__) && defined(__MINGW32__) && (__GNUC__ < 6)
 extern "C" {
+#include <ctype.h>
 }
 #endif // MinGW is on some stuff
 #include <locale>
@@ -7866,6 +7920,8 @@ namespace sol {
 // end of sol/usertype_traits.hpp
 
 // beginning of sol/unique_usertype_traits.hpp
+
+#include <memory>
 
 namespace sol {
 
@@ -8488,6 +8544,8 @@ namespace sol {
 } // namespace sol
 
 // end of sol/stack_reference.hpp
+
+#include <functional>
 
 namespace sol {
 	namespace detail {
@@ -9284,6 +9342,8 @@ namespace sol {
 
 // beginning of sol/stack_guard.hpp
 
+#include <functional>
+
 namespace sol {
 	namespace detail {
 		inline void stack_fail(int, int) {
@@ -9322,10 +9382,13 @@ namespace sol {
 
 // end of sol/stack_guard.hpp
 
+#include <vector>
 #include <bitset>
 #include <forward_list>
+#include <string>
 #include <algorithm>
 #include <sstream>
+#include <optional>
 
 namespace sol {
 	namespace detail {
@@ -10732,8 +10795,13 @@ namespace sol {
 
 // beginning of sol/stack_check_unqualified.hpp
 
+#include <memory>
+#include <functional>
+#include <utility>
 #include <cmath>
+#include <optional>
 #if SOL_ON(SOL_STD_VARIANT_)
+#include <variant>
 #endif // variant shenanigans
 
 namespace sol { namespace stack {
@@ -11387,6 +11455,8 @@ namespace stack {
 
 // beginning of sol/overload.hpp
 
+#include <utility>
+
 namespace sol {
 	template <typename... Functions>
 	struct overload_set {
@@ -11410,6 +11480,9 @@ namespace sol {
 // end of sol/overload.hpp
 
 // beginning of sol/unicode.hpp
+
+#include <array>
+#include <cstring>
 
 namespace sol {
 	// Everything here was lifted pretty much straight out of
@@ -11719,7 +11792,14 @@ namespace sol {
 }
 // end of sol/unicode.hpp
 
+#include <memory>
+#include <functional>
+#include <utility>
+#include <cstdlib>
+#include <cmath>
+#include <string_view>
 #if SOL_ON(SOL_STD_VARIANT_)
+#include <variant>
 #endif // Apple clang screwed up
 
 namespace sol { namespace stack {
@@ -12728,7 +12808,11 @@ namespace stack {
 
 // beginning of sol/stack_check_get_unqualified.hpp
 
+#include <cstdlib>
+#include <cmath>
+#include <optional>
 #if SOL_ON(SOL_STD_VARIANT_)
+#include <variant>
 #endif // variant shenanigans (thanks, Mac OSX)
 
 namespace sol { namespace stack {
@@ -12934,9 +13018,14 @@ namespace sol { namespace stack {
 
 // beginning of sol/stack_push.hpp
 
+#include <memory>
+#include <type_traits>
 #include <cassert>
 #include <limits>
+#include <cmath>
+#include <string_view>
 #if SOL_ON(SOL_STD_VARIANT_)
+#include <variant>
 #endif // Can use variant
 
 namespace sol { namespace stack {
@@ -14122,6 +14211,9 @@ namespace sol { namespace stack {
 
 // beginning of sol/stack_pop.hpp
 
+#include <utility>
+#include <tuple>
+
 namespace sol {
 namespace stack {
 	template <typename T, typename>
@@ -14433,6 +14525,9 @@ namespace stack {
 } // namespace sol::stack
 
 // end of sol/stack_probe.hpp
+
+#include <cstring>
+#include <array>
 
 namespace sol {
 	namespace detail {
@@ -14990,6 +15085,9 @@ namespace sol {
 
 // beginning of sol/stack_iterator.hpp
 
+#include <limits>
+#include <iterator>
+
 namespace sol {
 	template <typename proxy_t, bool is_const>
 	struct stack_iterator {
@@ -15227,6 +15325,8 @@ namespace sol {
 
 // end of sol/stack_proxy.hpp
 
+#include <cstdint>
+
 namespace sol {
 	struct protected_function_result : public proxy_base<protected_function_result> {
 	private:
@@ -15419,6 +15519,8 @@ namespace sol {
 
 // beginning of sol/unsafe_function_result.hpp
 
+#include <cstdint>
+
 namespace sol {
 	struct unsafe_function_result : public proxy_base<unsafe_function_result> {
 	private:
@@ -15560,6 +15662,8 @@ namespace sol {
 } // namespace sol
 
 // end of sol/unsafe_function_result.hpp
+
+#include <cstdint>
 
 namespace sol {
 
@@ -15895,6 +15999,8 @@ namespace sol {
 
 // end of sol/wrapper.hpp
 
+#include <memory>
+
 namespace sol {
 namespace function_detail {
 	template <typename Fx, int start = 1, bool is_yielding = false>
@@ -15918,6 +16024,9 @@ namespace function_detail {
 // beginning of sol/call.hpp
 
 // beginning of sol/property.hpp
+
+#include <type_traits>
+#include <utility>
 
 namespace sol {
 	namespace detail {
@@ -16039,6 +16148,8 @@ namespace sol {
 // end of sol/property.hpp
 
 // beginning of sol/protect.hpp
+
+#include <utility>
 
 namespace sol {
 
@@ -18279,6 +18390,9 @@ namespace sol {
 
 // beginning of sol/dump_handler.hpp
 
+#include <cstdint>
+#include <exception>
+
 namespace sol {
 
 	class dump_error : public error {
@@ -18325,6 +18439,8 @@ namespace sol {
 } // namespace sol
 
 // end of sol/dump_handler.hpp
+
+#include <cstdint>
 
 namespace sol {
 	template <typename ref_t, bool aligned = false>
@@ -18471,6 +18587,8 @@ namespace sol {
 
 // beginning of sol/protected_handler.hpp
 
+#include <cstdint>
+
 namespace sol {
 	namespace detail {
 		inline const char(&default_handler_name())[9]{
@@ -18552,6 +18670,9 @@ namespace sol {
 } // namespace sol
 
 // end of sol/protected_handler.hpp
+
+#include <cstdint>
+#include <algorithm>
 
 namespace sol {
 	
@@ -18866,6 +18987,8 @@ namespace sol {
 } // namespace sol
 
 // end of sol/protected_function.hpp
+
+#include <functional>
 
 namespace sol {
 	template <typename... Ret, typename... Args>
@@ -20928,6 +21051,9 @@ namespace sol {
 
 // end of sol/usertype_container_launch.hpp
 
+#include <sstream>
+#include <type_traits>
+
 namespace sol {
 	namespace u_detail {
 		constexpr const lua_Integer toplevel_magic = static_cast<lua_Integer>(0xCCC2CCC1);
@@ -21093,6 +21219,8 @@ namespace sol {
 // end of sol/usertype_core.hpp
 
 // beginning of sol/usertype_storage.hpp
+
+#include <bitset>
 
 namespace sol { namespace u_detail {
 
@@ -22652,6 +22780,8 @@ namespace sol {
 
 // beginning of sol/table_iterator.hpp
 
+#include <iterator>
+
 namespace sol {
 
 	template <typename reference_type>
@@ -23966,6 +24096,8 @@ namespace sol {
 
 // beginning of sol/load_result.hpp
 
+#include <cstdint>
+
 namespace sol {
 	struct load_result : public proxy_base<load_result> {
 	private:
@@ -24223,6 +24355,7 @@ namespace sol {
 // end of sol/lua_value.hpp
 
 #if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
+#include <iostream>
 #endif
 
 namespace sol {
@@ -24380,6 +24513,9 @@ namespace sol {
 } // namespace sol
 
 // end of sol/state_handling.hpp
+
+#include <memory>
+#include <cstddef>
 
 namespace sol {
 
@@ -25670,6 +25806,9 @@ namespace sol {
 
 // beginning of sol/variadic_args.hpp
 
+#include <limits>
+#include <iterator>
+
 namespace sol {
 	struct variadic_args {
 	private:
@@ -25854,6 +25993,8 @@ namespace sol {
 } // namespace sol
 
 // end of sol/as_returns.hpp
+
+#include <vector>
 
 namespace sol {
 

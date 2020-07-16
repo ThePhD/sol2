@@ -401,9 +401,9 @@ COMPAT53_API void luaL_requiref(lua_State *L, const char *modname,
 /* other Lua versions */
 #if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501 || LUA_VERSION_NUM > 504
 
-#  error "unsupported Lua version (i.e. not Lua 5.1, 5.2, or 5.3)"
+#  error "unsupported Lua version (i.e. not Lua 5.1, 5.2, 5.3, or 5.4)"
 
-#endif /* other Lua versions except 5.1, 5.2, and 5.3 */
+#endif /* other Lua versions except 5.1, 5.2, 5.3, and 5.4 */
 
 
 
