@@ -24,10 +24,10 @@
 #ifndef SOL_OBJECT_HPP
 #define SOL_OBJECT_HPP
 
-#include "make_reference.hpp"
-#include "reference.hpp"
-#include "stack.hpp"
-#include "object_base.hpp"
+#include <sol/make_reference.hpp>
+#include <sol/reference.hpp>
+#include <sol/stack.hpp>
+#include <sol/object_base.hpp>
 
 namespace sol {
 

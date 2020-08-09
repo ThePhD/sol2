@@ -24,8 +24,8 @@
 #ifndef SOL_METATABLE_HPP
 #define SOL_METATABLE_HPP
 
-#include "table_core.hpp"
-#include "usertype.hpp"
+#include <sol/table_core.hpp>
+#include <sol/usertype.hpp>
 
 namespace sol {
 
@@ -65,20 +65,20 @@ namespace sol {
 		}
 		template <typename T, meta::enable_any<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_metatable(lua_State* L, T&& r) : base_t(L, std::forward<T>(r)) {
-#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
+#if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_metatable>(lua_state(), -1, handler);
 #endif // Safety
 		}
 		basic_metatable(lua_State* L, int index = -1) : basic_metatable(detail::no_safety, L, index) {
-#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
+#if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			constructor_handler handler{};
 			stack::check<basic_metatable>(L, index, handler);
 #endif // Safety
 		}
 		basic_metatable(lua_State* L, ref_index index) : basic_metatable(detail::no_safety, L, index) {
-#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
+#if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_metatable>(lua_state(), -1, handler);
@@ -88,7 +88,7 @@ namespace sol {
 		     meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_metatable>>, meta::neg<std::is_same<base_type, stack_reference>>,
 		          meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_metatable(T&& r) noexcept : basic_metatable(detail::no_safety, std::forward<T>(r)) {
-#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
+#if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			if (!is_table<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				constructor_handler handler{};

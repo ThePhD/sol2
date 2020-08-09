@@ -24,8 +24,8 @@
 #ifndef SOL_REFERENCE_HPP
 #define SOL_REFERENCE_HPP
 
-#include "types.hpp"
-#include "stack_reference.hpp"
+#include <sol/types.hpp>
+#include <sol/stack_reference.hpp>
 
 #include <functional>
 
@@ -240,7 +240,7 @@ namespace sol {
 		}
 
 		stateless_reference(lua_State* L, detail::global_tag) noexcept {
-#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+#if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, "not enough Lua stack space to push this reference value");
 #endif // make sure stack doesn't overflow
 			lua_pushglobaltable(L);
@@ -301,7 +301,7 @@ namespace sol {
 
 		stateless_reference(lua_State* L, int index = -1) noexcept {
 			// use L to stick with that state's execution stack
-#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+#if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, "not enough Lua stack space to push this reference value");
 #endif // make sure stack doesn't overflow
 			lua_pushvalue(L, index);
@@ -332,7 +332,7 @@ namespace sol {
 
 
 		int push(lua_State* L) const noexcept {
-#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+#if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, "not enough Lua stack space to push this reference value");
 #endif // make sure stack doesn't overflow
 			lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
@@ -526,7 +526,7 @@ namespace sol {
 		basic_reference(lua_State* L, int index = -1) noexcept
 		: luastate(detail::pick_main_thread<main_only>(L, L)) {
 			// use L to stick with that state's execution stack
-#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+#if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, "not enough Lua stack space to push this reference value");
 #endif // make sure stack doesn't overflow
 			lua_pushvalue(L, index);
@@ -606,7 +606,7 @@ namespace sol {
 		}
 
 		int push(lua_State* L) const noexcept {
-#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+#if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, "not enough Lua stack space to push this reference value");
 #endif // make sure stack doesn't overflow
 			if (lua_state() == nullptr) {

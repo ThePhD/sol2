@@ -24,7 +24,7 @@
 #ifndef SOL_ERROR_HPP
 #define SOL_ERROR_HPP
 
-#include "compatibility.hpp"
+#include <sol/compatibility.hpp>
 
 #include <stdexcept>
 #include <string>

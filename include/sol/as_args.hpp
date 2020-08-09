@@ -24,7 +24,7 @@
 #ifndef SOL_AS_ARGS_HPP
 #define SOL_AS_ARGS_HPP
 
-#include "stack.hpp"
+#include <sol/stack.hpp>
 
 namespace sol {
 	template <typename T>

@@ -24,8 +24,8 @@
 #ifndef SOL_STACK_POP_HPP
 #define SOL_STACK_POP_HPP
 
-#include "stack_core.hpp"
-#include "stack_get.hpp"
+#include <sol/stack_core.hpp>
+#include <sol/stack_get.hpp>
 #include <utility>
 #include <tuple>
 

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-07-16 23:44:56.005352 UTC
-// This header was generated with sol v3.2.1 (revision 4a16979)
+// Generated 2020-08-02 22:15:17.497014 UTC
+// This header was generated with sol v3.2.1 (revision 7be51eb)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -32,229 +32,510 @@
 #ifndef SOL_FORWARD_HPP
 #define SOL_FORWARD_HPP
 
-// beginning of sol/feature_test.hpp
-
-#if (defined(__cplusplus) && __cplusplus >= 201703L) \
-     || (defined(_MSC_VER) && _MSC_VER > 1900 && ((defined(_HAS_CXX17) && _HAS_CXX17 == 1) || (defined(_MSVC_LANG) && (_MSVC_LANG > 201402L))))
-#endif // C++17 features check
-
-#if defined(__cpp_noexcept_function_type) || ((defined(_MSC_VER) && _MSC_VER > 1911) && (defined(_MSVC_LANG) && ((_MSVC_LANG >= 201403L))))
-#ifndef SOL_NOEXCEPT_FUNCTION_TYPE
-#define SOL_NOEXCEPT_FUNCTION_TYPE 1
-#endif // noexcept is part of a function's type
-#endif // compiler-specific checks
-#if defined(__clang__) && defined(__APPLE__)
-#if defined(__has_include)
-#if __has_include(<variant>)
-#define SOL_STD_VARIANT 1
-#endif // has include nonsense
-#endif // __has_include
-#else
-#define SOL_STD_VARIANT 1
-#endif // Clang screws up variant
-
-// beginning of sol/config.hpp
-
-#ifdef _MSC_VER
-#if defined(_DEBUG) && !defined(NDEBUG)
-#ifndef SOL_IN_DEBUG_DETECTED
-#define SOL_IN_DEBUG_DETECTED 1
-#endif
-#endif // VC++ Debug macros
-
-#if !defined(_CPPUNWIND)
-#if !defined(SOL_NO_EXCEPTIONS)
-#define SOL_NO_EXCEPTIONS 1
-#endif
-#endif // Automatic Exceptions
-
-#if !defined(_CPPRTTI)
-#if !defined(SOL_NO_RTTI)
-#define SOL_NO_RTTI 1
-#endif
-#endif // Automatic RTTI
-#elif defined(__GNUC__) || defined(__clang__)
-
-#if !defined(NDEBUG) && !defined(__OPTIMIZE__)
-#if !defined(SOL_IN_DEBUG_DETECTED)
-#define SOL_IN_DEBUG_DETECTED 1
-#endif
-#endif // Not Debug && g++ optimizer flag
-
-#if !defined(__EXCEPTIONS)
-#if !defined(SOL_NO_EXCEPTIONS)
-#define SOL_NO_EXCEPTIONS 1
-#endif
-#endif // No Exceptions
-
-#if !defined(__GXX_RTTI)
-#if !defined(SOL_NO_RTTI)
-#define SOL_NO_RTTI 1
-#endif
-#endif // No RTTI
-
-#endif // vc++ || clang++/g++
-
-#if defined(SOL_CHECK_ARGUMENTS) && SOL_CHECK_ARGUMENTS != 0
-#if defined(SOL_ALL_SAFETIES_ON)
-#define SOL_ALL_SAFETIES_ON 1
-#endif // turn all the safeties on
-#endif // Compatibility Define for Safety
-
-#if defined(SOL_ALL_SAFETIES_ON) && SOL_ALL_SAFETIES_ON != 0
-
-#if !defined(SOL_SAFE_GETTER)
-#define SOL_SAFE_GETTER 1
-#endif
-
-#if !defined(SOL_SAFE_USERTYPE)
-#define SOL_SAFE_USERTYPE 1
-#endif
-
-#if !defined(SOL_SAFE_REFERENCES)
-#define SOL_SAFE_REFERENCES 1
-#endif
-
-#if !defined(SOL_SAFE_FUNCTION)
-#define SOL_SAFE_FUNCTION 1
-#endif
-
-#if !defined(SOL_SAFE_FUNCTION_CALLS)
-#define SOL_SAFE_FUNCTION_CALLS 1
-#endif
-
-#if !defined(SOL_SAFE_PROXIES)
-#define SOL_SAFE_PROXIES 1
-#endif
-
-#if !defined(SOL_SAFE_NUMERICS)
-#define SOL_SAFE_NUMERICS 1
-#endif
-
-#if !defined(SOL_NO_CHECK_NUMBER_PRECISION)
-#define SOL_NO_CHECK_NUMBER_PRECISION 0
-#endif
-
-#if !defined(SOL_SAFE_STACK_CHECK)
-#define SOL_SAFE_STACK_CHECK 1
-#endif
-
-#endif // Turn on Safety for all if top-level macro is defined
-
-#if defined(SOL_IN_DEBUG_DETECTED) && SOL_IN_DEBUG_DETECTED != 0
-
-#if !defined(SOL_SAFE_REFERENCES)
-#define SOL_SAFE_REFERENCES 1
-#endif
-
-#if !defined(SOL_SAFE_USERTYPE)
-#define SOL_SAFE_USERTYPE 1
-#endif
-
-#if !defined(SOL_SAFE_FUNCTION_CALLS)
-#define SOL_SAFE_FUNCTION_CALLS 1
-#endif
-
-#if !defined(SOL_PRINT_ERRORS)
-#define SOL_PRINT_ERRORS 1
-#endif
-
-#if !defined(SOL_SAFE_STACK_CHECK)
-#define SOL_SAFE_STACK_CHECK 1
-#endif
-
-#endif // DEBUG: Turn on all debug safety features for VC++ / g++ / clang++ and similar
-
-#if !defined(SOL_PRINT_ERRORS)
-#define SOL_PRINT_ERRORS 0
-#endif
-
-#if !defined(SOL_DEFAULT_PASS_ON_ERROR)
-#define SOL_DEFAULT_PASS_ON_ERROR 0
-#endif
-
-#if !defined(SOL_ENABLE_INTEROP)
-#define SOL_ENABLE_INTEROP 0
-#endif
-
-#if defined(__MAC_OS_X_VERSION_MAX_ALLOWED) || defined(__OBJC__) || defined(nil)
-#if !defined(SOL_NO_NIL)
-#define SOL_NO_NIL 1
-#endif
-#endif // avoiding nil defines / keywords
-
-#ifndef SOL_STACK_STRING_OPTIMIZATION_SIZE
-#define SOL_STACK_STRING_OPTIMIZATION_SIZE 1024
-#endif // Optimized conversion routines using a KB or so off the stack
-
-#if !defined(SOL_SAFE_STACK_CHECK)
-#define SOL_SAFE_STACK_CHECK 0
-#endif // use luaL_checkstack to check stack overflow / overrun
-
-#if !defined(SOL_AUTOMAGICAL_TYPES_BY_DEFAULT)
-#define SOL_AUTOMAGICAL_TYPES_BY_DEFAULT 1
-#endif // make is_automagical on/off by default
-
-// end of sol/config.hpp
-
 // beginning of sol/version.hpp
 
-#define SOL_ON(X) ((X + X) != 0)
-#define SOL_OFF(X) ((X + X) == 0)
+#include <sol/config.hpp>
 
-#if defined(SOL_IN_DEBUG_DETECTED) && (SOL_IN_DEBUG_DETECTED != 0)
-	#define SOL_IN_DEBUG_DETECTED_ 1
+#include <cstdint>
+
+#define SOL_VERSION_MAJOR 3
+#define SOL_VERSION_MINOR 5
+#define SOL_VERSION_PATCH 0
+#define SOL_VERSION_STRING "3.5.0"
+#define SOL_VERSION ((SOL_VERSION_MAJOR * 100000) + (SOL_VERSION_MINOR * 100) + (SOL_VERSION_PATCH))
+
+#define SOL_IS_ON(OP_SYMBOL) ((3 OP_SYMBOL 3) != 0)
+#define SOL_IS_OFF(OP_SYMBOL) ((3 OP_SYMBOL 3) == 0)
+#define SOL_IS_DEFAULT_ON(OP_SYMBOL) ((3 OP_SYMBOL 3) == 1)
+
+#define SOL_ON          +
+#define SOL_OFF         -
+#define SOL_DEFAULT_ON  /
+
+#if defined(_MSC_VER)
+	#define SOL_COMPILER_CLANG_I_ SOL_OFF
+	#define SOL_COMPILER_GCC_I_   SOL_OFF
+	#define SOL_COMPILER_EDG_I_   SOL_OFF
+	#define SOL_COMPILER_VCXX_I_  SOL_ON
+#elif defined(__clang__)
+	#define SOL_COMPILER_CLANG_I_ SOL_ON
+	#define SOL_COMPILER_GCC_I_   SOL_OFF
+	#define SOL_COMPILER_EDG_I_   SOL_OFF
+	#define SOL_COMPILER_VCXX_I_  SOL_OFF
+#elif defined(__GNUC__)
+	#define SOL_COMPILER_CLANG_I_ SOL_OFF
+	#define SOL_COMPILER_GCC_I_   SOL_ON
+	#define SOL_COMPILER_EDG_I_   SOL_OFF
+	#define SOL_COMPILER_VCXX_I_  SOL_OFF
 #else
-	#define SOL_IN_DEBUG_DETECTED_ 0
+	#define SOL_COMPILER_CLANG_I_ SOL_OFF
+	#define SOL_COMPILER_GCC_I_   SOL_OFF
+	#define SOL_COMPILER_EDG_I_   SOL_OFF
+	#define SOL_COMPILER_VCXX_I_  SOL_OFF
+#endif
+
+#if SIZE_MAX <= 0xFFFFULL
+	#define SOL_PLATFORM_X16_I_ SOL_ON
+	#define SOL_PLATFORM_X86_I_ SOL_OFF
+	#define SOL_PLATFORM_X64_I_ SOL_OFF
+#elif SIZE_MAX <= 0xFFFFFFFFULL
+	#define SOL_PLATFORM_X16_I_ SOL_OFF
+	#define SOL_PLATFORM_X86_I_ SOL_ON
+	#define SOL_PLATFORM_X64_I_ SOL_OFF
+#else
+	#define SOL_PLATFORM_X16_I_ SOL_OFF
+	#define SOL_PLATFORM_X86_I_ SOL_OFF
+	#define SOL_PLATFORM_X64_I_ SOL_ON
+#endif
+
+#define SOL_PLATFORM_ARM32_I_ SOL_OFF
+#define SOL_PLATFORM_ARM64_I_ SOL_OFF
+
+#if defined(_WIN32)
+	#define SOL_PLATFORM_WINDOWS_I_ SOL_ON
+#else
+	#define SOL_PLATFORM_WINDOWS_I_ SOL_OFF
+#endif
+#if defined(__APPLE__)
+	#define SOL_PLATFORM_APPLE_I_ SOL_ON
+#else
+	#define SOL_PLATFORM_APPLE_I_ SOL_OFF
+#endif
+#if defined(__unix__)
+	#define SOL_PLATFORM_UNIXLIKE_I_ SOL_ON
+#else
+	#define SOL_PLATFORM_UNIXLIKE_I_ SOL_OFF
+#endif
+#if defined(__linux__)
+	#define SOL_PLATFORM_LINUXLIKE_I_ SOL_ON
+#else
+	#define SOL_PLATFORM_LINUXLIKE_I_ SOL_OFF
+#endif
+
+#define SOL_PLATFORM_APPLE_IPHONE_I_ SOL_OFF
+#define SOL_PLATFORM_BSDLIKE_I_      SOL_OFF
+
+#if defined(SOL_IN_DEBUG_DETECTED)
+	#if SOL_IN_DEBUG_DETECTED != 0
+		#define SOL_DEBUG_BUILD_I_ SOL_ON
+	#else
+		#define SOL_DEBUG_BUILD_I_ SOL_OFF
+	#endif
+#elif !defined(NDEBUG)
+	#if SOL_IS_ON(SOL_COMPILER_VCXX_I_) && defined(_DEBUG)
+		#define SOL_DEBUG_BUILD_I_ SOL_ON
+	#elif (SOL_IS_ON(SOL_COMPILER_CLANG_I_) || SOL_IS_ON(SOL_COMPILER_GCC_I_)) && !defined(__OPTIMIZE__)
+		#define SOL_DEBUG_BUILD_I_ SOL_ON
+	#else
+		#define SOL_DEBUG_BUILD_I_ SOL_OFF
+	#endif
+#else
+	#define SOL_DEBUG_BUILD_I_ SOL_OFF
 #endif // We are in a debug mode of some sort
 
-#if defined(SOL_NO_THREAD_LOCAL) && (SOL_NO_THREAD_LOCAL != 0)
-	#define SOL_USE_THREAD_LOCAL_ 0
+#if defined(SOL_NO_EXCEPTIONS)
+	#if (SOL_NO_EXCEPTIONS != 0)
+		#define SOL_EXCEPTIONS_I_ SOL_OFF
+	#else
+		#define SOL_EXCEPTIONS_I_ SOL_ON
+	#endif
+#elif SOL_IS_ON(SOL_COMPILER_VCXX_I_)
+	#if !defined(_CPPUNWIND)
+		#define SOL_EXCEPTIONS_I_ SOL_OFF
+	#else
+		#define SOL_EXCEPTIONS_I_ SOL_ON
+	#endif
+#elif SOL_IS_ON(SOL_COMPILER_CLANG_I_) || SOL_IS_ON(SOL_COMPILER_GCC_I_)
+	#if !defined(__EXCEPTIONS)
+		#define SOL_EXCEPTIONS_I_ SOL_OFF
+	#else
+		#define SOL_EXCEPTIONS_I_ SOL_ON
+	#endif
 #else
-	#define SOL_USE_THREAD_LOCAL_ 1
+	#define SOL_EXCEPTIONS_I_ SOL_ON
+#endif
+
+#if defined(SOL_NO_RTTI)
+	#if (SOL_NO_RTTI != 0)
+		#define SOL_RTTI_I_ SOL_OFF
+	#else
+		#define SOL_RTTI_I_ SOL_ON
+	#endif
+#elif SOL_IS_ON(SOL_COMPILER_VCXX_I_)
+	#if !defined(_CPPRTTI)
+		#define SOL_RTTI_I_ SOL_OFF
+	#else
+		#define SOL_RTTI_I_ SOL_ON
+	#endif
+#elif SOL_IS_ON(SOL_COMPILER_CLANG_I_) || SOL_IS_ON(SOL_COMPILER_GCC_I_)
+	#if !defined(__GXX_RTTI)
+		#define SOL_RTTI_I_ SOL_OFF
+	#else
+		#define SOL_RTTI_I_ SOL_ON
+	#endif
+#else
+	#define SOL_EXCEPTIONS_I_ SOL_ON
+#endif
+
+#if defined(SOL_NO_THREAD_LOCAL) && (SOL_NO_THREAD_LOCAL != 0)
+	#define SOL_USE_THREAD_LOCAL_I_ SOL_OFF
+#else
+	#define SOL_USE_THREAD_LOCAL_I_ SOL_DEFAULT_ON
 #endif // thread_local keyword is bjorked on some platforms
 
-#if defined(SOL_USERTYPE_TYPE_BINDING_INFO) && (SOL_USERTYPE_TYPE_BINDING_INFO != 0)
-	#define SOL_USERTYPE_TYPE_BINDING_INFO_ 1
+#if defined(SOL_ALL_SAFETIES_ON) && (SOL_ALL_SAFETIES_ON != 0)
+	#define SOL_ALL_SAFETIES_ON_I_ SOL_ON
 #else
-	#define SOL_USERTYPE_TYPE_BINDING_INFO_ 0
+	#define SOL_ALL_SAFETIES_ON_I_ SOL_OFF
+#endif
+
+#if defined(SOL_SAFE_GETTER) && (SOL_SAFE_GETTER != 0)
+	#define SOL_SAFE_GETTER_I_ SOL_ON
+#else
+	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
+		#define SOL_SAFE_GETTER_I_ SOL_ON
+	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+		#define SOL_SAFE_GETTER_I_ SOL_DEFAULT_ON
+	#else
+		#define SOL_SAFE_GETTER_I_ SOL_OFF
+	#endif
+#endif
+
+#if defined(SOL_SAFE_USERTYPE) && (SOL_SAFE_USERTYPE != 0)
+	#define SOL_SAFE_USERTYPE_I_ SOL_ON
+#else
+	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
+		#define SOL_SAFE_USERTYPE_I_ SOL_ON
+	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+		#define SOL_SAFE_USERTYPE_I_ SOL_DEFAULT_ON
+	#else
+		#define SOL_SAFE_USERTYPE_I_ SOL_OFF
+	#endif
+#endif
+
+#if defined(SOL_SAFE_REFERENCES) && (SOL_SAFE_REFERENCES != 0)
+	#define SOL_SAFE_REFERENCES_I_ SOL_ON
+#else
+	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
+		#define SOL_SAFE_REFERENCES_I_ SOL_ON
+	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+		#define SOL_SAFE_REFERENCES_I_ SOL_DEFAULT_ON
+	#else
+		#define SOL_SAFE_REFERENCES_I_ SOL_OFF
+	#endif
+#endif
+
+#if (defined(SOL_SAFE_FUNCTIONS) && (SOL_SAFE_FUNCTIONS != 0)) \
+    || (defined(SOL_SAFE_FUNCTION_OBJECTS) && (SOL_SAFE_FUNCTION_OBJECTS != 0))
+	#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_ON
+#else
+	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
+		#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_ON
+	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+		#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_DEFAULT_ON
+	#else
+		#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_OFF
+	#endif
+#endif
+
+#if defined(SOL_SAFE_FUNCTION_CALLS) && (SOL_SAFE_FUNCTION_CALLS != 0)
+	#define SOL_SAFE_FUNCTION_CALLS_I_ SOL_ON
+#else
+	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
+		#define SOL_SAFE_FUNCTION_CALLS_I_ SOL_ON
+	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+		#define SOL_SAFE_FUNCTION_CALLS_I_ SOL_DEFAULT_ON
+	#else
+		#define SOL_SAFE_FUNCTION_CALLS_I_ SOL_OFF
+	#endif
+#endif
+
+#if defined(SOL_SAFE_PROXIES) && (SOL_SAFE_PROXIES != 0)
+	#define SOL_SAFE_PROXIES_I_ SOL_ON
+#else
+	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
+		#define SOL_SAFE_PROXIES_I_ SOL_ON
+	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+		#define SOL_SAFE_PROXIES_I_ SOL_DEFAULT_ON
+	#else
+		#define SOL_SAFE_PROXIES_I_ SOL_OFF
+	#endif
+#endif
+
+#if defined(SOL_SAFE_NUMERICS) && (SOL_SAFE_NUMERICS != 0)
+	#define SOL_SAFE_NUMERICS_I_ SOL_ON
+#else
+	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
+		#define SOL_SAFE_NUMERICS_I_ SOL_ON
+	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+		#define SOL_SAFE_NUMERICS_I_ SOL_DEFAULT_ON
+	#else
+		#define SOL_SAFE_NUMERICS_I_ SOL_OFF
+	#endif
+#endif
+
+#if defined(SOL_SAFE_STACK_CHECK) && (SOL_SAFE_STACK_CHECK != 0)
+	#define SOL_SAFE_STACK_CHECK_I_ SOL_ON
+#else
+	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
+		#define SOL_SAFE_STACK_CHECK_I_ SOL_ON
+	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+		#define SOL_SAFE_STACK_CHECK_I_ SOL_DEFAULT_ON
+	#else
+		#define SOL_SAFE_STACK_CHECK_I_ SOL_OFF
+	#endif
+#endif
+
+#if (defined(SOL_NO_CHECK_NUMBER_PRECISION) && (SOL_NO_CHECK_NUMBER_PRECISION != 0)) \
+    || (defined(SOL_NO_CHECKING_NUMBER_PRECISION) && (SOL_NO_CHECKING_NUMBER_PRECISION != 0))
+	#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_OFF
+#else
+	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
+		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_ON
+	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_DEFAULT_ON
+	#else
+		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_OFF
+	#endif
+#endif
+
+#if defined(SOL_STRINGS_ARE_NUMBERS)
+	#if (SOL_STRINGS_ARE_NUMBERS != 0)
+		#define SOL_STRINGS_ARE_NUMBERS_I_ SOL_ON
+	#else
+		#define SOL_STRINGS_ARE_NUMBERS_I_ SOL_OFF
+	#endif
+#else
+	#define SOL_STRINGS_ARE_NUMBERS_I_ SOL_OFF
+#endif
+
+#if defined(SOL_ENABLE_INTEROP) && (SOL_ENABLE_INTEROP != 0) \
+    || defined(SOL_USE_INTEROP) && (SOL_USE_INTEROP != 0)
+	#define SOL_USE_INTEROP_I_ SOL_ON
+#else
+	#define SOL_USE_INTEROP_I_ SOL_OFF
+#endif
+
+#if defined(SOL_NO_NIL)
+	#if (SOL_NO_NIL != 0)
+		#define SOL_NIL_I_ SOL_OFF
+	#else
+		#define SOL_NIL_I_ SOL_ON
+	#endif
+#elif defined(__MAC_OS_X_VERSION_MAX_ALLOWED) || defined(__OBJC__) || defined(nil)
+	#define SOL_NIL_I_ SOL_OFF
+#else
+	#define SOL_NIL_I_ SOL_DEFAULT_ON
+#endif
+
+#if defined(SOL_USERTYPE_TYPE_BINDING_INFO)
+	#if (SOL_USERTYPE_TYPE_BINDING_INFO != 0)
+		#define SOL_USERTYPE_TYPE_BINDING_INFO_I_ SOL_ON
+	#else
+		#define SOL_USERTYPE_TYPE_BINDING_INFO_I_ SOL_OFF
+	#endif
+#else
+	#define SOL_USERTYPE_TYPE_BINDING_INFO_I_ SOL_DEFAULT_ON
 #endif // We should generate a my_type.__type table with lots of class information for usertypes
 
-#if defined(SOL_AUTOMAGICAL_TYPES_BY_DEFAULT) && SOL_AUTOMAGICAL_TYPES_BY_DEFAULT != 0
-	#define SOL_AUTOMAGICAL_TYPES_BY_DEFAULT_ 1
+#if defined(SOL_AUTOMAGICAL_TYPES_BY_DEFAULT)
+	#if (SOL_AUTOMAGICAL_TYPES_BY_DEFAULT != 0)
+		#define SOL_DEFAULT_AUTOMAGICAL_USERTYPES_I_ SOL_ON
+	#else
+		#define SOL_DEFAULT_AUTOMAGICAL_USERTYPES_I_ SOL_OFF
+	#endif
+#elif defined(SOL_DEFAULT_AUTOMAGICAL_USERTYPES)
+	#if (SOL_DEFAULT_AUTOMAGICAL_USERTYPES != 0)
+		#define SOL_DEFAULT_AUTOMAGICAL_USERTYPES_I_ SOL_ON
+	#else
+		#define SOL_DEFAULT_AUTOMAGICAL_USERTYPES_I_ SOL_OFF
+	#endif
 #else
-	#define SOL_AUTOMAGICAL_TYPES_BY_DEFAULT_ 1
+	#define SOL_DEFAULT_AUTOMAGICAL_USERTYPES_I_ SOL_DEFAULT_ON
 #endif // make is_automagical on/off by default
 
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT != 0
-	#define SOL_STD_VARIANT_ 1
+#if defined(SOL_STD_VARIANT)
+	#if (SOL_STD_VARIANT != 0)
+		#define SOL_STD_VARIANT_I_ SOL_ON
+	#else
+		#define SOL_STD_VARIANT_I_ SOL_OFF
+	#endif
 #else
-	#define SOL_STD_VARIANT_ 0
+	#if SOL_IS_ON(SOL_COMPILER_CLANG_I_) && SOL_IS_ON(SOL_PLATFORM_APPLE_I_)
+		#if defined(__has_include)
+			#if __has_include(<variant>)
+				#define SOL_STD_VARIANT_I_ SOL_ON
+			#else
+				#define SOL_STD_VARIANT_I_ SOL_OFF
+			#endif
+		#else
+			#define SOL_STD_VARIANT_I_ SOL_OFF
+		#endif
+	#else
+		#define SOL_STD_VARIANT_I_ SOL_DEFAULT_ON
+	#endif
 #endif // make is_automagical on/off by default
+
+#if defined(SOL_NOEXCEPT_FUNCTION_TYPE)
+	#if (SOL_NOEXCEPT_FUNCTION_TYPE != 0)
+		#define SOL_USE_NOEXCEPT_FUNCTION_TYPE_I_ SOL_ON
+	#else
+		#define SOL_USE_NOEXCEPT_FUNCTION_TYPE_I_ SOL_OFF
+	#endif
+#else
+	#if defined(__cpp_noexcept_function_type)
+		#define SOL_USE_NOEXCEPT_FUNCTION_TYPE_I_ SOL_ON
+	#elif SOL_IS_ON(SOL_COMPILER_VCXX_I_) && (defined(_MSVC_LANG) && (_MSVC_LANG < 201403L))
+		// There is a bug in the VC++ compiler??
+		// on /std:c++latest under x86 conditions (VS 15.5.2),
+		// compiler errors are tossed for noexcept markings being on function types
+		// that are identical in every other way to their non-noexcept marked types function types...
+		// VS 2019: There is absolutely a bug.
+		#define SOL_USE_NOEXCEPT_FUNCTION_TYPE_I_ SOL_OFF
+	#else
+		#define SOL_USE_NOEXCEPT_FUNCTION_TYPE_I_ SOL_DEFAULT_ON
+	#endif
+#endif // noexcept is part of a function's type
+
+#if defined(SOL_STACK_STRING_OPTIMIZATION_SIZE) && SOL_STACK_STRING_OPTIMIZATION_SIZE > 0
+	#define SOL_OPTIMIZATION_STRING_CONVERSION_STACK_SIZE_I_ SOL_STACK_STRING_OPTIMIZATION_SIZE
+#else
+	#define SOL_OPTIMIZATION_STRING_CONVERSION_STACK_SIZE_I_ 1024
+#endif
 
 #if defined(SOL_ID_SIZE) && SOL_ID_SIZE > 0
-	#define SOL_ID_SIZE_ SOL_ID_SIZE
+	#define SOL_ID_SIZE_I_ SOL_ID_SIZE
 #else
-	#define SOL_ID_SIZE_ 512
+	#define SOL_ID_SIZE_I_ 512
 #endif
 
 #if defined(LUA_IDSIZE) && LUA_IDSIZE > 0
-	#define SOL_FILE_ID_SIZE_ LUA_IDSIZE
+	#define SOL_FILE_ID_SIZE_I_ LUA_IDSIZE
 #elif defined(SOL_ID_SIZE) && SOL_ID_SIZE > 0
-	#define SOL_FILE_ID_SIZE_ SOL_FILE_ID_SIZE
+	#define SOL_FILE_ID_SIZE_I_ SOL_FILE_ID_SIZE
 #else
-	#define SOL_FILE_ID_SIZE_ 2048
+	#define SOL_FILE_ID_SIZE_I_ 2048
+#endif
+
+#if defined(SOL_PRINT_ERRORS) && (SOL_PRINT_ERRORS != 0)
+	#define SOL_PRINT_ERRORS_I_ SOL_ON
+#else
+	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
+		#define SOL_PRINT_ERRORS_I_ SOL_ON
+	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+		#define SOL_PRINT_ERRORS_I_ SOL_DEFAULT_ON
+	#else
+		#define SOL_PRINT_ERRORS_I_ SOL_OFF
+	#endif
+#endif
+
+#if defined(SOL_DEFAULT_PASS_ON_ERROR) && (SOL_DEFAULT_PASS_ON_ERROR != 0)
+	#define SOL_DEFAULT_PASS_ON_ERROR_I_ SOL_ON
+#else
+	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
+		#define SOL_DEFAULT_PASS_ON_ERROR_I_ SOL_ON
+	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+		#define SOL_DEFAULT_PASS_ON_ERROR_I_ SOL_DEFAULT_ON
+	#else
+		#define SOL_DEFAULT_PASS_ON_ERROR_I_ SOL_OFF
+	#endif
+#endif
+
+#if defined(SOL_USING_CXX_LUA)
+	#if (SOL_USING_CXX_LUA != 0)
+		#define SOL_USE_CXX_LUA_I_ SOL_ON
+	#else
+		#define SOL_USE_CXX_LUA_I_ SOL_OFF
+	#endif
+#elif defined(SOL_USE_CXX_LUA)
+	#if (SOL_USE_CXX_LUA != 0)
+		#define SOL_USE_CXX_LUA_I_ SOL_ON
+	#else
+		#define SOL_USE_CXX_LUA_I_ SOL_OFF
+	#endif
+#else
+	#define SOL_USE_CXX_LUA_I_ SOL_OFF
+#endif
+
+#if defined(SOL_USING_CXX_LUAJIT)
+	#if (SOL_USING_CXX_LUA != 0)
+		#define SOL_USE_CXX_LUAJIT_I_ SOL_ON
+	#else
+		#define SOL_USE_CXX_LUAJIT_I_ SOL_OFF
+	#endif
+#elif defined(SOL_USE_CXX_LUAJIT)
+	#if (SOL_USE_CXX_LUA != 0)
+		#define SOL_USE_CXX_LUAJIT_I_ SOL_ON
+	#else
+		#define SOL_USE_CXX_LUAJIT_I_ SOL_OFF
+	#endif
+#else
+	#define SOL_USE_CXX_LUAJIT_I_ SOL_OFF
+#endif
+
+#if defined(SOL_NO_LUA_HPP)
+	#if (SOL_NO_LUA_HPP != 0)
+		#define SOL_USE_LUA_HPP_I_ SOL_OFF
+	#else
+		#define SOL_USE_LUA_HPP_I_ SOL_ON
+	#endif
+#elif defined(__has_include)
+	#if __has_include(<lua.hpp>)
+		#define SOL_USE_LUA_HPP_I_ SOL_ON
+	#else
+		#define SOL_USE_LUA_HPP_I_ SOL_OFF
+	#endif
+#else
+	#define SOL_USE_LUA_HPP_I_ SOL_DEFAULT_ON
+#endif
+
+#if defined(SOL_CONTAINERS_START)
+	#define SOL_CONTAINER_START_INDEX_I_ SOL_CONTAINERS_START
+#elif defined(SOL_CONTAINERS_START_INDEX)
+	#define SOL_CONTAINER_START_INDEX_I_ SOL_CONTAINERS_START_INDEX
+#elif defined(SOL_CONTAINER_START_INDEX)
+	#define SOL_CONTAINER_START_INDEX_I_ SOL_CONTAINER_START_INDEX
+#else
+	#define SOL_CONTAINER_START_INDEX_I_ 1
+#endif
+
+#if defined (SOL_NO_MEMORY_ALIGNMENT)
+	#if (SOL_NO_MEMORY_ALIGNMENT != 0)
+		#define SOL_ALIGN_MEMORY_I_ SOL_OFF
+	#else
+		#define SOL_ALIGN_MEMORY_I_ SOL_ON
+	#endif
+#else
+	#define SOL_ALIGN_MEMORY_I_ SOL_DEFAULT_ON
+#endif
+
+#if defined(SOL_USE_BOOST)
+	#if (SOL_USE_BOOST != 0)
+		#define SOL_USE_BOOST_I_ SOL_ON
+	#else
+		#define SOL_USE_BOOST_I_ SOL_OFF
+	#endif
+#else
+		#define SOL_USE_BOOST_I_ SOL_OFF
+#endif
+
+#if defined(SOL_USE_UNSAFE_BASE_LOOKUP)
+	#if (SOL_USE_UNSAFE_BASE_LOOKUP != 0)
+		#define SOL_USE_UNSAFE_BASE_LOOKUP_I_ SOL_ON
+	#else
+		#define SOL_USE_UNSAFE_BASE_LOOKUP_I_ SOL_OFF
+	#endif
+#else
+	#define SOL_USE_UNSAFE_BASE_LOOKUP_I_ SOL_OFF
 #endif
 
 // end of sol/version.hpp
-
-// end of sol/feature_test.hpp
 
 #include <utility>
 #include <type_traits>
 #include <string_view>
 
-#if defined(SOL_USING_CXX_LUA) && SOL_USING_CXX_LUA
+#if SOL_IS_ON(SOL_USE_CXX_LUA_I_) || SOL_IS_ON(SOL_USE_CXX_LUAJIT_I_)
 struct lua_State;
 #else
 extern "C" {
@@ -341,7 +622,7 @@ namespace sol {
 	using main_protected_function = main_safe_function;
 	using stack_protected_function = stack_safe_function;
 	using stack_aligned_protected_function = stack_aligned_safe_function;
-#if defined(SOL_SAFE_FUNCTION) && SOL_SAFE_FUNCTION
+#if SOL_IS_ON(SOL_SAFE_FUNCTION_OBJECTS_I_)
 	using function = protected_function;
 	using main_function = main_protected_function;
 	using stack_function = stack_protected_function;
@@ -357,7 +638,7 @@ namespace sol {
 	struct unsafe_function_result;
 	struct protected_function_result;
 	using safe_function_result = protected_function_result;
-#if defined(SOL_SAFE_FUNCTION) && SOL_SAFE_FUNCTION
+#if SOL_IS_ON(SOL_SAFE_FUNCTION_OBJECTS_I_)
 	using function_result = safe_function_result;
 #else
 	using function_result = unsafe_function_result;
@@ -455,7 +736,7 @@ namespace sol {
 		struct record;
 	}
 
-#if !defined(SOL_USE_BOOST) || (SOL_USE_BOOST == 0)
+#if SOL_IS_OFF(SOL_USE_BOOST_I_)
 	template <class T>
 	class optional;
 

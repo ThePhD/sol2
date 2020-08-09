@@ -24,7 +24,7 @@
 #ifndef SOL_DEBUG_HPP
 #define SOL_DEBUG_HPP
 
-#include "stack.hpp"
+#include <sol/stack.hpp>
 #include <iostream>
 
 namespace sol {

@@ -24,7 +24,7 @@
 #ifndef SOL_STACK_CHECK_QUALIFIED_HPP
 #define SOL_STACK_CHECK_QUALIFIED_HPP
 
-#include "stack_check_unqualified.hpp"
+#include <sol/stack_check_unqualified.hpp>
 
 namespace sol {
 namespace stack {

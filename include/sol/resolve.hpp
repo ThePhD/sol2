@@ -24,8 +24,8 @@
 #ifndef SOL_RESOLVE_HPP
 #define SOL_RESOLVE_HPP
 
-#include "traits.hpp"
-#include "tuple.hpp"
+#include <sol/traits.hpp>
+#include <sol/tuple.hpp>
 
 namespace sol {
 

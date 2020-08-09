@@ -24,7 +24,7 @@
 #ifndef SOL_TIE_HPP
 #define SOL_TIE_HPP
 
-#include "traits.hpp"
+#include <sol/traits.hpp>
 
 namespace sol {
 

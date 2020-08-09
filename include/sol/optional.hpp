@@ -24,20 +24,20 @@
 #ifndef SOL_OPTIONAL_HPP
 #define SOL_OPTIONAL_HPP
 
-#include "forward.hpp"
-#include "in_place.hpp"
-#include "traits.hpp"
-#if defined(SOL_USE_BOOST) && SOL_USE_BOOST
+#include <sol/forward.hpp>
+#include <sol/in_place.hpp>
+#include <sol/traits.hpp>
+#if SOL_IS_ON(SOL_USE_BOOST_I_)
 #include <boost/optional.hpp>
 #else
-#include "optional_implementation.hpp"
+#include <sol/optional_implementation.hpp>
 #endif // Boost vs. Better optional
 
 #include <optional>
 
 namespace sol {
 
-#if defined(SOL_USE_BOOST) && SOL_USE_BOOST
+#if SOL_IS_ON(SOL_USE_BOOST_I_)
 	template <typename T>
 	using optional = boost::optional<T>;
 	using nullopt_t = boost::none_t;
@@ -58,7 +58,7 @@ namespace sol {
 			inline static constexpr std::nullopt_t value = std::nullopt;
 		};
 
-#if defined(SOL_USE_BOOST) && SOL_USE_BOOST
+#if SOL_IS_ON(SOL_USE_BOOST_I_)
 		template <typename T>
 		struct associated_nullopt<boost::optional<T>> {
 			inline static constexpr std::nullopt_t value = boost::nullopt;

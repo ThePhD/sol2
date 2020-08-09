@@ -24,7 +24,7 @@
 #ifndef SOL_DUMP_HANDLER_HPP
 #define SOL_DUMP_HANDLER_HPP
 
-#include "compatibility.hpp"
+#include <sol/compatibility.hpp>
 
 #include <cstdint>
 #include <exception>
@@ -61,7 +61,7 @@ namespace sol {
 	}
 
 	inline int dump_throw_on_error(lua_State* L, int result_code, lua_Writer writer_function, void* userdata, bool strip) {
-#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+#if SOL_IS_OFF(SOL_EXCEPTIONS_I_)
 		return dump_panic_on_error(L, result_code, writer_function, userdata, strip);
 #else
 		(void)L;

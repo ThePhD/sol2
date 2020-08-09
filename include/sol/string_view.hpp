@@ -24,14 +24,12 @@
 #ifndef SOL_STRING_VIEW_HPP
 #define SOL_STRING_VIEW_HPP
 
-#include "feature_test.hpp"
+#include <sol/version.hpp>
+
 #include <cstddef>
 #include <string>
 #include <string_view>
 #include <functional>
-#if defined(SOL_USE_BOOST) && SOL_USE_BOOST
-#include <boost/functional/hash.hpp>
-#endif
 
 namespace sol {
 	template <typename C, typename T = std::char_traits<C>>

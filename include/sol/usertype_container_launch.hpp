@@ -24,9 +24,8 @@
 #ifndef SOL_USERTYPE_CONTAINER_LAUNCH_HPP
 #define SOL_USERTYPE_CONTAINER_LAUNCH_HPP
 
-#include "stack.hpp"
-#include "usertype_container.hpp"
-#include "map.hpp"
+#include <sol/stack.hpp>
+#include <sol/usertype_container.hpp>
 
 namespace sol {
 
@@ -46,8 +45,7 @@ namespace sol {
 			}
 
 			static inline int real_index_call(lua_State* L) {
-				typedef detail::unordered_map<string_view, lua_CFunction> call_map;
-				static const call_map calls{
+				static const std::unordered_map<string_view, lua_CFunction> calls {
 					{ "at", &real_at_call },
 					{ "get", &real_get_call },
 					{ "set", &real_set_call },
@@ -242,7 +240,7 @@ namespace sol {
 			}
 
 			static inline int real_index_of_call(lua_State* L) {
-				if constexpr(container_detail::has_traits_index_of<uc>()) {
+				if constexpr (container_detail::has_traits_index_of<uc>()) {
 					return uc::index_of(L);
 				}
 				else {
@@ -322,15 +320,15 @@ namespace sol {
 			struct metatable_setup {
 				lua_State* L;
 
-				metatable_setup(lua_State* L)
-				: L(L) {
+				metatable_setup(lua_State* L) : L(L) {
 				}
 
 				void operator()() {
-					using meta_usertype_container = container_detail::u_c_launch<
-					     meta::conditional_t<is_shim, as_container_t<std::remove_pointer_t<T>>, std::remove_pointer_t<T>>>;
-					static const char* metakey = is_shim ? &usertype_traits<as_container_t<std::remove_pointer_t<T>>>::metatable()[0] : &usertype_traits<T>::metatable()[0];
-					static const std::array<luaL_Reg, 20> reg = { { 
+					using meta_usertype_container
+					     = container_detail::u_c_launch<meta::conditional_t<is_shim, as_container_t<std::remove_pointer_t<T>>, std::remove_pointer_t<T>>>;
+					static const char* metakey
+					     = is_shim ? &usertype_traits<as_container_t<std::remove_pointer_t<T>>>::metatable()[0] : &usertype_traits<T>::metatable()[0];
+					static const std::array<luaL_Reg, 20> reg = { {
 						// clang-format off
 						{ "__pairs", &meta_usertype_container::pairs_call },
 						{ "__ipairs", &meta_usertype_container::ipairs_call },

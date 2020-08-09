@@ -71,7 +71,7 @@ void lua_value_construct_race() {
 }
 
 TEST_CASE("lua_value/nested", "make nested values can be put in lua_value properly") {
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#if SOL_IS_ON(SOL_STD_VARIANT_I_)
 	using mixed_table_entry = std::variant<int, int_entry, std::string>;
 	using nested_entry = std::variant<int, int_entry, std::string, std::vector<mixed_table_entry>>;
 
@@ -144,7 +144,7 @@ TEST_CASE("lua_value/nested", "make nested values can be put in lua_value proper
 }
 
 TEST_CASE("lua_value/nested key value", "make nested values (key value) can be put in lua_value properly") {
-#if defined(SOL_STD_VARIANT) && SOL_STD_VARIANT
+#if SOL_IS_ON(SOL_STD_VARIANT_I_)
 	using mixed_table_entry = std::variant<int, int_entry, std::string>;
 	using nested_entry = std::variant<int, int_entry, std::string, std::vector<mixed_table_entry>>;
 

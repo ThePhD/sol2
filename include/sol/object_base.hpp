@@ -24,8 +24,8 @@
 #ifndef SOL_OBJECT_BASE_HPP
 #define SOL_OBJECT_BASE_HPP
 
-#include "reference.hpp"
-#include "stack.hpp"
+#include <sol/reference.hpp>
+#include <sol/stack.hpp>
 
 namespace sol {
 

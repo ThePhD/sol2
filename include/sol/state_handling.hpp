@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -24,14 +24,14 @@
 #ifndef SOL_STATE_DEFAULT_HPP
 #define SOL_STATE_DEFAULT_HPP
 
-#include "trampoline.hpp"
-#include "stack.hpp"
-#include "error.hpp"
-#include "function.hpp"
-#include "object.hpp"
-#include "lua_value.hpp"
+#include <sol/trampoline.hpp>
+#include <sol/stack.hpp>
+#include <sol/error.hpp>
+#include <sol/function.hpp>
+#include <sol/object.hpp>
+#include <sol/lua_value.hpp>
 
-#if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
+#if SOL_IS_ON(SOL_PRINT_ERRORS_I_)
 #include <iostream>
 #endif
 
@@ -51,7 +51,7 @@ namespace sol {
 	}
 
 	inline int default_at_panic(lua_State* L) {
-#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS
+#if SOL_IS_OFF(SOL_EXCEPTIONS_I_)
 		(void)L;
 		return -1;
 #else
@@ -60,7 +60,7 @@ namespace sol {
 		if (message) {
 			std::string err(message, messagesize);
 			lua_settop(L, 0);
-#if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
+#if SOL_IS_ON(SOL_PRINT_ERRORS_I_)
 			std::cerr << "[sol3] An error occurred and panic has been invoked: ";
 			std::cerr << err;
 			std::cerr << std::endl;
@@ -85,15 +85,17 @@ namespace sol {
 			const string_view& traceback = maybetraceback.value();
 			msg.assign(traceback.data(), traceback.size());
 		}
-#if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
-		//std::cerr << "[sol3] An error occurred and was caught in traceback: ";
-		//std::cerr << msg;
-		//std::cerr << std::endl;
+#if SOL_IS_ON(SOL_PRINT_ERRORS_I_)
+		// std::cerr << "[sol3] An error occurred and was caught in traceback: ";
+		// std::cerr << msg;
+		// std::cerr << std::endl;
 #endif // Printing
 		return stack::push(L, msg);
 	}
 
-	inline void set_default_state(lua_State* L, lua_CFunction panic_function = &default_at_panic, lua_CFunction traceback_function = c_call<decltype(&default_traceback_error_handler), &default_traceback_error_handler>, exception_handler_function exf = detail::default_exception_handler) {
+	inline void set_default_state(lua_State* L, lua_CFunction panic_function = &default_at_panic,
+	     lua_CFunction traceback_function = c_call<decltype(&default_traceback_error_handler), &default_traceback_error_handler>,
+	     exception_handler_function exf = detail::default_exception_handler) {
 		lua_atpanic(L, panic_function);
 		protected_function::set_default_handler(object(L, in_place, traceback_function));
 		set_default_exception_handler(L, exf);
@@ -113,7 +115,7 @@ namespace sol {
 		return result;
 	}
 
-	inline protected_function_result script_throw_on_error(lua_State*L, protected_function_result result) {
+	inline protected_function_result script_throw_on_error(lua_State* L, protected_function_result result) {
 		type t = type_of(L, result.stack_index());
 		std::string err = "sol: ";
 		err += to_string(result.status());
@@ -147,7 +149,7 @@ namespace sol {
 			string_view serr = stack::unqualified_get<string_view>(L, result.stack_index());
 			err.append(serr.data(), serr.size());
 		}
-#if defined(SOL_PRINT_ERRORS) && SOL_PRINT_ERRORS
+#if SOL_IS_ON(SOL_PRINT_ERRORS_I_)
 		std::cerr << "[sol3] An error occurred and has been passed to an error handler: ";
 		std::cerr << err;
 		std::cerr << std::endl;
@@ -163,7 +165,7 @@ namespace sol {
 		if (towards != 0) {
 			lua_rotate(L, top, towards);
 		}
-#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS
+#if SOL_IS_OFF(SOL_EXCEPTIONS_I_)
 		return result;
 #else
 		// just throw our error
@@ -172,7 +174,7 @@ namespace sol {
 	}
 
 	inline protected_function_result script_default_on_error(lua_State* L, protected_function_result pfr) {
-#if defined(SOL_DEFAULT_PASS_ON_ERROR) && SOL_DEFAULT_PASS_ON_ERROR
+#if SOL_IS_ON(SOL_DEFAULT_PASS_ON_ERROR_I_)
 		return script_pass_on_error(L, std::move(pfr));
 #else
 		return script_throw_on_error(L, std::move(pfr));
@@ -186,7 +188,7 @@ namespace sol {
 			lua_pop(L, p);
 			return err;
 		}
-	}
+	} // namespace stack
 } // namespace sol
 
 #endif // SOL_STATE_DEFAULT_HPP

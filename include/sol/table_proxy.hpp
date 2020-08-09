@@ -24,10 +24,10 @@
 #ifndef SOL_TABLE_PROXY_HPP
 #define SOL_TABLE_PROXY_HPP
 
-#include "traits.hpp"
-#include "function.hpp"
-#include "protected_function.hpp"
-#include "proxy_base.hpp"
+#include <sol/traits.hpp>
+#include <sol/function.hpp>
+#include <sol/protected_function.hpp>
+#include <sol/proxy_base.hpp>
 
 namespace sol {
 

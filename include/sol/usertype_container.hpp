@@ -24,10 +24,9 @@
 #ifndef SOL_USERTYPE_CONTAINER_HPP
 #define SOL_USERTYPE_CONTAINER_HPP
 
-#include "traits.hpp"
-#include "stack.hpp"
-#include "object.hpp"
-#include "map.hpp"
+#include <sol/traits.hpp>
+#include <sol/stack.hpp>
+#include <sol/object.hpp>
 
 namespace sol {
 
@@ -356,10 +355,10 @@ namespace sol {
 		using has_traits_erase = meta::boolean<has_traits_erase_test<T>::value>;
 
 		template <typename T>
-		struct is_forced_container : is_container<T> { };
+		struct is_forced_container : is_container<T> {};
 
 		template <typename T>
-		struct is_forced_container<as_container_t<T>> : std::true_type { };
+		struct is_forced_container<as_container_t<T>> : std::true_type {};
 
 		template <typename T>
 		struct container_decay {
@@ -525,7 +524,7 @@ namespace sol {
 			};
 
 			static auto& get_src(lua_State* L) {
-#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
+#if SOL_IS_ON(SOL_SAFE_USERTYPE_I_)
 				auto p = stack::unqualified_check_get<T*>(L, 1);
 				if (!p) {
 					luaL_error(L,
@@ -880,7 +879,8 @@ namespace sol {
 				auto backit = self.before_begin();
 				{
 					auto e = deferred_uc::end(L, self);
-					for (auto it = deferred_uc::begin(L, self); it != e; ++backit, ++it) { }
+					for (auto it = deferred_uc::begin(L, self); it != e; ++backit, ++it) {
+					}
 				}
 				return add_insert_after(std::true_type(), L, self, value, backit);
 			}
@@ -1341,11 +1341,7 @@ namespace sol {
 			}
 
 			static std::ptrdiff_t index_adjustment(lua_State*, T&) {
-#if defined(SOL_CONTAINERS_START_INDEX)
-				return static_cast<std::ptrdiff_t>((SOL_CONTAINERS_START) == 0 ? 0 : -(SOL_CONTAINERS_START));
-#else
-				return static_cast<std::ptrdiff_t>(-1);
-#endif
+				return static_cast<std::ptrdiff_t>((SOL_CONTAINER_START_INDEX_I_) == 0 ? 0 : -(SOL_CONTAINER_START_INDEX_I_));
 			}
 
 			static int pairs(lua_State* L) {
@@ -1384,7 +1380,7 @@ namespace sol {
 
 			static auto& get_src(lua_State* L) {
 				auto p = stack::unqualified_check_get<T*>(L, 1);
-#if defined(SOL_SAFE_USERTYPE) && SOL_SAFE_USERTYPE
+#if SOL_IS_ON(SOL_SAFE_USERTYPE_I_)
 				if (!p) {
 					luaL_error(L,
 					     "sol: 'self' is not of type '%s' (pass 'self' as first argument with ':' or call on proper type)",
@@ -1518,11 +1514,7 @@ namespace sol {
 			}
 
 			static std::ptrdiff_t index_adjustment(lua_State*, T&) {
-#if defined(SOL_CONTAINERS_START_INDEX)
-				return (SOL_CONTAINERS_START) == 0 ? 0 : -(SOL_CONTAINERS_START);
-#else
-				return -1;
-#endif
+				return (SOL_CONTAINER_START_INDEX_I_) == 0 ? 0 : -(SOL_CONTAINER_START_INDEX_I_);
 			}
 
 			static iterator begin(lua_State*, T& self) {
@@ -1535,11 +1527,11 @@ namespace sol {
 		};
 
 		template <typename X>
-		struct usertype_container_default<usertype_container<X>> : usertype_container_default<X> { };
+		struct usertype_container_default<usertype_container<X>> : usertype_container_default<X> {};
 	} // namespace container_detail
 
 	template <typename T>
-	struct usertype_container : container_detail::usertype_container_default<T> { };
+	struct usertype_container : container_detail::usertype_container_default<T> {};
 
 } // namespace sol
 

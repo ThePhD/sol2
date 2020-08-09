@@ -24,24 +24,24 @@
 #ifndef SOL_STACK_HPP
 #define SOL_STACK_HPP
 
-#include "trampoline.hpp"
-#include "stack_core.hpp"
-#include "stack_reference.hpp"
-#include "stack_check.hpp"
-#include "stack_get.hpp"
-#include "stack_check_get.hpp"
-#include "stack_push.hpp"
-#include "stack_pop.hpp"
-#include "stack_field.hpp"
-#include "stack_probe.hpp"
+#include <sol/trampoline.hpp>
+#include <sol/stack_core.hpp>
+#include <sol/stack_reference.hpp>
+#include <sol/stack_check.hpp>
+#include <sol/stack_get.hpp>
+#include <sol/stack_check_get.hpp>
+#include <sol/stack_push.hpp>
+#include <sol/stack_pop.hpp>
+#include <sol/stack_field.hpp>
+#include <sol/stack_probe.hpp>
 
 #include <cstring>
 #include <array>
 
 namespace sol {
 	namespace detail {
-		using typical_chunk_name_t = char[SOL_ID_SIZE_];
-		using typical_file_chunk_name_t = char[SOL_FILE_ID_SIZE_];
+		using typical_chunk_name_t = char[SOL_ID_SIZE_I_];
+		using typical_file_chunk_name_t = char[SOL_FILE_ID_SIZE_I_];
 
 		inline const std::string& default_chunk_name() {
 			static const std::string name = "";
@@ -276,7 +276,7 @@ namespace sol {
 			if (L == nullptr) {
 				return;
 			}
-#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+#if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
 			lua_pushlightuserdata(L, (void*)handler);

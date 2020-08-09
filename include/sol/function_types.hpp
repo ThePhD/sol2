@@ -24,13 +24,13 @@
 #ifndef SOL_FUNCTION_TYPES_HPP
 #define SOL_FUNCTION_TYPES_HPP
 
-#include "function_types_core.hpp"
-#include "function_types_templated.hpp"
-#include "function_types_stateless.hpp"
-#include "function_types_stateful.hpp"
-#include "function_types_overloaded.hpp"
-#include "resolve.hpp"
-#include "call.hpp"
+#include <sol/function_types_core.hpp>
+#include <sol/function_types_templated.hpp>
+#include <sol/function_types_stateless.hpp>
+#include <sol/function_types_stateful.hpp>
+#include <sol/function_types_overloaded.hpp>
+#include <sol/resolve.hpp>
+#include <sol/call.hpp>
 
 namespace sol {
 	namespace function_detail {
@@ -214,7 +214,7 @@ namespace sol {
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
 				upvalues += stack::push(L, std::forward<Fx>(fx));
-#if defined(SOL_NOEXCEPT_FUNCTION_TYPE) && SOL_NOEXCEPT_FUNCTION_TYPE
+#if SOL_IS_ON(SOL_USE_NOEXCEPT_FUNCTION_TYPE_I_)
 				if constexpr (std::is_nothrow_invocable_r_v<int, uFx, lua_State*>) {
 					detail::lua_CFunction_noexcept cf = &lua_c_noexcept_wrapper<is_yielding>;
 					lua_pushcclosure(L, reinterpret_cast<lua_CFunction>(cf), 2);
@@ -372,7 +372,7 @@ namespace sol {
 		struct unqualified_pusher<Signature,
 		     std::enable_if_t<meta::all<std::is_function<std::remove_pointer_t<Signature>>, meta::neg<std::is_same<Signature, lua_CFunction>>,
 		          meta::neg<std::is_same<Signature, std::remove_pointer_t<lua_CFunction>>>
-#if defined(SOL_NOEXCEPT_FUNCTION_TYPE) && SOL_NOEXCEPT_FUNCTION_TYPE
+#if SOL_IS_ON(SOL_USE_NOEXCEPT_FUNCTION_TYPE_I_)
 		          ,
 		          meta::neg<std::is_same<Signature, detail::lua_CFunction_noexcept>>,
 		          meta::neg<std::is_same<Signature, std::remove_pointer_t<detail::lua_CFunction_noexcept>>>

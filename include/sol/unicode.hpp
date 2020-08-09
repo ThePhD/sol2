@@ -1,6 +1,6 @@
 #pragma once
 
-#include "string_view.hpp"
+#include <sol/string_view.hpp>
 #include <array>
 #include <cstring>
 

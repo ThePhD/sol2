@@ -24,7 +24,7 @@
 #ifndef SOL_USERTYPE_TRAITS_HPP
 #define SOL_USERTYPE_TRAITS_HPP
 
-#include "demangle.hpp"
+#include <sol/demangle.hpp>
 
 namespace sol {
 

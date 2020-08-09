@@ -24,9 +24,9 @@
 #ifndef SOL_FUNCTION_TYPES_STATELESS_HPP
 #define SOL_FUNCTION_TYPES_STATELESS_HPP
 
-#include "stack.hpp"
-#include "call.hpp"
-#include "bind_traits.hpp"
+#include <sol/stack.hpp>
+#include <sol/call.hpp>
+#include <sol/bind_traits.hpp>
 
 namespace sol {
 namespace function_detail {

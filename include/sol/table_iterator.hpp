@@ -24,7 +24,7 @@
 #ifndef SOL_TABLE_ITERATOR_HPP
 #define SOL_TABLE_ITERATOR_HPP
 
-#include "object.hpp"
+#include <sol/object.hpp>
 #include <iterator>
 
 namespace sol {

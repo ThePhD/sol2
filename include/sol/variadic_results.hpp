@@ -24,11 +24,11 @@
 #ifndef SOL_VARIADIC_RESULTS_HPP
 #define SOL_VARIADIC_RESULTS_HPP
 
-#include "stack.hpp"
-#include "object.hpp"
-#include "as_returns.hpp"
-#include "function_result.hpp"
-#include "protected_function_result.hpp"
+#include <sol/stack.hpp>
+#include <sol/object.hpp>
+#include <sol/as_returns.hpp>
+#include <sol/function_result.hpp>
+#include <sol/protected_function_result.hpp>
 
 #include <vector>
 

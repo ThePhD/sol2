@@ -24,7 +24,7 @@
 #ifndef SOL_FILTERS_HPP
 #define SOL_FILTERS_HPP
 
-#include "traits.hpp"
+#include <sol/traits.hpp>
 
 #include <array>
 

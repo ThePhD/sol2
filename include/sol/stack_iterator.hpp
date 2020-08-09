@@ -24,7 +24,7 @@
 #ifndef SOL_STACK_ITERATOR_HPP
 #define SOL_STACK_ITERATOR_HPP
 
-#include "stack.hpp"
+#include <sol/stack.hpp>
 #include <limits>
 #include <iterator>
 

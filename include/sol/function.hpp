@@ -24,10 +24,10 @@
 #ifndef SOL_FUNCTION_HPP
 #define SOL_FUNCTION_HPP
 
-#include "stack.hpp"
-#include "unsafe_function.hpp"
-#include "protected_function.hpp"
-#include "bytecode.hpp"
+#include <sol/stack.hpp>
+#include <sol/unsafe_function.hpp>
+#include <sol/protected_function.hpp>
+#include <sol/bytecode.hpp>
 #include <functional>
 
 namespace sol {

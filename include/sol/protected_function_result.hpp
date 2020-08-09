@@ -24,14 +24,14 @@
 #ifndef SOL_PROTECTED_FUNCTION_RESULT_HPP
 #define SOL_PROTECTED_FUNCTION_RESULT_HPP
 
-#include "reference.hpp"
-#include "tuple.hpp"
-#include "stack.hpp"
-#include "proxy_base.hpp"
-#include "stack_iterator.hpp"
-#include "stack_proxy.hpp"
-#include "error.hpp"
-#include "stack.hpp"
+#include <sol/reference.hpp>
+#include <sol/tuple.hpp>
+#include <sol/stack.hpp>
+#include <sol/proxy_base.hpp>
+#include <sol/stack_iterator.hpp>
+#include <sol/stack_proxy.hpp>
+#include <sol/error.hpp>
+#include <sol/stack.hpp>
 #include <cstdint>
 
 namespace sol {
@@ -114,7 +114,7 @@ namespace sol {
 			}
 			else {
 				if constexpr (std::is_same_v<T, error>) {
-#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES
+#if SOL_IS_ON(SOL_SAFE_PROXIES_I_)
 					if (valid()) {
 						type t = type_of(L, target);
 						type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is an error)");
@@ -123,7 +123,7 @@ namespace sol {
 					return error(detail::direct_error, stack::get<std::string>(L, target));
 				}
 				else {
-#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES
+#if SOL_IS_ON(SOL_SAFE_PROXIES_I_)
 					if (!valid()) {
 						type t = type_of(L, target);
 						type_panic_c_str(L, target, t, type::none, "bad get from protected_function_result (is not an error)");
@@ -208,7 +208,7 @@ namespace sol {
 		template <>
 		struct unqualified_pusher<protected_function_result> {
 			static int push(lua_State* L, const protected_function_result& pfr) {
-#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+#if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 				luaL_checkstack(L, static_cast<int>(pfr.pop_count()), detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
 				int p = 0;

@@ -24,8 +24,8 @@
 #ifndef SOL_STACK_GUARD_HPP
 #define SOL_STACK_GUARD_HPP
 
-#include "compatibility/lua_version.hpp"
-#include "error.hpp"
+#include <sol/compatibility/lua_version.hpp>
+#include <sol/error.hpp>
 #include <functional>
 
 namespace sol {

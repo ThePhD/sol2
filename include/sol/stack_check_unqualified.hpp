@@ -24,15 +24,15 @@
 #ifndef SOL_STACK_CHECK_UNQUALIFIED_HPP
 #define SOL_STACK_CHECK_UNQUALIFIED_HPP
 
-#include "stack_core.hpp"
-#include "usertype_traits.hpp"
-#include "inheritance.hpp"
+#include <sol/stack_core.hpp>
+#include <sol/usertype_traits.hpp>
+#include <sol/inheritance.hpp>
 #include <memory>
 #include <functional>
 #include <utility>
 #include <cmath>
 #include <optional>
-#if SOL_ON(SOL_STD_VARIANT_)
+#if SOL_IS_ON(SOL_STD_VARIANT_I_)
 #include <variant>
 #endif // variant shenanigans
 
@@ -106,7 +106,7 @@ namespace sol { namespace stack {
 			else if constexpr (std::is_integral_v<T> || std::is_same_v<T, lua_Integer>) {
 				tracking.use(1);
 #if SOL_LUA_VERSION >= 503
-#if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
+#if SOL_IS_ON(SOL_STRINGS_ARE_NUMBERS_I_)
 				int isnum = 0;
 				lua_tointegerx(L, index, &isnum);
 				const bool success = isnum != 0;
@@ -152,7 +152,7 @@ namespace sol { namespace stack {
 #endif // Safe numerics and number precision checking
 				if (!success) {
 					// expected type, actual type
-#if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
+#if SOL_IS_ON(SOL_STRINGS_ARE_NUMBERS_I_)
 					handler(L, index, type::number, type_of(L, index), detail::not_a_number_or_number_string);
 #elif (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS)
 					handler(L, index, type::number, t, detail::not_a_number_or_number_string);
@@ -165,7 +165,7 @@ namespace sol { namespace stack {
 			}
 			else if constexpr (std::is_floating_point_v<T> || std::is_same_v<T, lua_Number>) {
 				tracking.use(1);
-#if defined(SOL_STRINGS_ARE_NUMBERS) && SOL_STRINGS_ARE_NUMBERS
+#if SOL_IS_ON(SOL_STRINGS_ARE_NUMBERS_I_)
 				bool success = lua_isnumber(L, index) == 1;
 				if (!success) {
 					// expected type, actual type
@@ -224,12 +224,7 @@ namespace sol { namespace stack {
 				handler(L, index, type::userdata, indextype, "unrecognized userdata (not pushed by sol?)");
 				return false;
 			}
-			else if constexpr (meta::any_same_v<T,
-				                   lua_nil_t,
-#if defined(SOL_CXX_17_FEATURES) && SOL_CXX_17_FEATURES
-				                   std::nullopt_t,
-#endif
-				                   nullopt_t>) {
+			else if constexpr (meta::any_same_v<T, lua_nil_t, std::nullopt_t, nullopt_t>) {
 				bool success = lua_isnil(L, index);
 				if (success) {
 					tracking.use(1);
@@ -466,7 +461,7 @@ namespace sol { namespace stack {
 	};
 
 	template <typename T>
-	struct unqualified_checker<non_null<T>, type::userdata> : unqualified_checker<T, lua_type_of_v<T>> { };
+	struct unqualified_checker<non_null<T>, type::userdata> : unqualified_checker<T, lua_type_of_v<T>> {};
 
 	template <typename T>
 	struct unqualified_checker<detail::as_value_tag<T>, type::userdata> {
@@ -489,7 +484,7 @@ namespace sol { namespace stack {
 				return true;
 			}
 			else {
-#if defined(SOL_ENABLE_INTEROP) && SOL_ENABLE_INTEROP
+#if SOL_IS_ON(SOL_USE_INTEROP_I_)
 				if (stack_detail::interop_check<U>(L, index, indextype, handler, tracking)) {
 					return true;
 				}
@@ -514,7 +509,7 @@ namespace sol { namespace stack {
 				bool success = false;
 				bool has_derived = derive<T>::value || weak_derive<T>::value;
 				if (has_derived) {
-#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+#if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 					luaL_checkstack(L, 1, detail::not_enough_stack_space_string);
 #endif // make sure stack doesn't overflow
 					auto pn = stack::pop_n(L, 1);
@@ -570,7 +565,7 @@ namespace sol { namespace stack {
 		}
 	};
 
-#if SOL_ON(SOL_STD_VARIANT_)
+#if SOL_IS_ON(SOL_STD_VARIANT_I_)
 
 	template <typename... Tn>
 	struct unqualified_checker<std::variant<Tn...>, type::poly> {

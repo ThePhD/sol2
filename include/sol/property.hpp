@@ -24,8 +24,8 @@
 #ifndef SOL_PROPERTY_HPP
 #define SOL_PROPERTY_HPP
 
-#include "types.hpp"
-#include "ebco.hpp"
+#include <sol/types.hpp>
+#include <sol/ebco.hpp>
 #include <type_traits>
 #include <utility>
 

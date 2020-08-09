@@ -24,8 +24,8 @@
 #ifndef SOL_ERROR_HANDLER_HPP
 #define SOL_ERROR_HANDLER_HPP
 
-#include "types.hpp"
-#include "demangle.hpp"
+#include <sol/types.hpp>
+#include <sol/demangle.hpp>
 
 #include <cstdio>
 
@@ -62,7 +62,7 @@ namespace sol {
 		case type::poly:
 			return "anything";
 		case type::userdata: {
-#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+#if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 2, "not enough space to push get the type name");
 #endif // make sure stack doesn't overflow
 			if (lua_getmetatable(L, index) == 0) {

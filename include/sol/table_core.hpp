@@ -24,14 +24,14 @@
 #ifndef SOL_TABLE_CORE_HPP
 #define SOL_TABLE_CORE_HPP
 
-#include "table_proxy.hpp"
-#include "stack.hpp"
-#include "function_types.hpp"
-#include "table_iterator.hpp"
-#include "types.hpp"
-#include "object.hpp"
-#include "usertype.hpp"
-#include "optional.hpp"
+#include <sol/table_proxy.hpp>
+#include <sol/stack.hpp>
+#include <sol/function_types.hpp>
+#include <sol/table_iterator.hpp>
+#include <sol/types.hpp>
+#include <sol/object.hpp>
+#include <sol/usertype.hpp>
+#include <sol/optional.hpp>
 
 namespace sol {
 	namespace detail {
@@ -316,7 +316,7 @@ namespace sol {
 		}
 		template <typename T, meta::enable_any<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_table_core(lua_State* L, T&& r) : base_t(L, std::forward<T>(r)) {
-#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
+#if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			auto pp = stack::push_pop(*this);
 			int table_index = pp.index_of(*this);
 			constructor_handler handler {};
@@ -329,13 +329,13 @@ namespace sol {
 			}
 		}
 		basic_table_core(lua_State* L, int index = -1) : basic_table_core(detail::no_safety, L, index) {
-#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
+#if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			constructor_handler handler {};
 			stack::check<basic_table_core>(L, index, handler);
 #endif // Safety
 		}
 		basic_table_core(lua_State* L, ref_index index) : basic_table_core(detail::no_safety, L, index) {
-#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
+#if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			auto pp = stack::push_pop(*this);
 			int table_index = pp.index_of(*this);
 			constructor_handler handler {};
@@ -346,7 +346,7 @@ namespace sol {
 		     meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_table_core>>, meta::neg<std::is_same<ref_t, stack_reference>>,
 		          meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_table_core(T&& r) noexcept : basic_table_core(detail::no_safety, std::forward<T>(r)) {
-#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
+#if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			if (!is_table<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				int table_index = pp.index_of(*this);

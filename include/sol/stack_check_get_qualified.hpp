@@ -24,9 +24,9 @@
 #ifndef SOL_STACK_CHECK_QUALIFIED_GET_HPP
 #define SOL_STACK_CHECK_QUALIFIED_GET_HPP
 
-#include "stack_core.hpp"
-#include "stack_check_get_unqualified.hpp"
-#include "optional.hpp"
+#include <sol/stack_core.hpp>
+#include <sol/stack_check_get_unqualified.hpp>
+#include <sol/optional.hpp>
 
 namespace sol { namespace stack {
 	template <typename T, typename C>

@@ -24,9 +24,9 @@
 #ifndef SOL_LUA_VALUE_HPP
 #define SOL_LUA_VALUE_HPP
 
-#include "stack.hpp"
-#include "reference.hpp"
-#include "make_reference.hpp"
+#include <sol/stack.hpp>
+#include <sol/reference.hpp>
+#include <sol/make_reference.hpp>
 
 namespace sol {
 	struct lua_value {
@@ -48,7 +48,7 @@ namespace sol {
 		using is_lua_value_single_constructible = meta::any<std::is_same<T, lua_value>, is_reference_or_lua_value_init_list<T>>;
 
 		static lua_State*& thread_local_lua_state() {
-#if SOL_ON(SOL_USE_THREAD_LOCAL_)
+#if SOL_IS_ON(SOL_USE_THREAD_LOCAL_I_)
 			static thread_local lua_State* L = nullptr;
 #else
 			static lua_State* L = nullptr;

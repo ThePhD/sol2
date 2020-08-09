@@ -24,8 +24,8 @@
 #ifndef SOL_MAKE_REFERENCE_HPP
 #define SOL_MAKE_REFERENCE_HPP
 
-#include "reference.hpp"
-#include "stack.hpp"
+#include <sol/reference.hpp>
+#include <sol/stack.hpp>
 
 namespace sol {
 

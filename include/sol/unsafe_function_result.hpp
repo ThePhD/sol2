@@ -24,12 +24,12 @@
 #ifndef SOL_UNSAFE_FUNCTION_RESULT_HPP
 #define SOL_UNSAFE_FUNCTION_RESULT_HPP
 
-#include "reference.hpp"
-#include "tuple.hpp"
-#include "stack.hpp"
-#include "proxy_base.hpp"
-#include "stack_iterator.hpp"
-#include "stack_proxy.hpp"
+#include <sol/reference.hpp>
+#include <sol/tuple.hpp>
+#include <sol/stack.hpp>
+#include <sol/proxy_base.hpp>
+#include <sol/stack_iterator.hpp>
+#include <sol/stack_proxy.hpp>
 #include <cstdint>
 
 namespace sol {

@@ -24,7 +24,7 @@
 #ifndef SOL_PROTECT_HPP
 #define SOL_PROTECT_HPP
 
-#include "traits.hpp"
+#include <sol/traits.hpp>
 #include <utility>
 
 namespace sol {

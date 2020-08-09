@@ -24,7 +24,7 @@
 #ifndef SOL_OVERLOAD_HPP
 #define SOL_OVERLOAD_HPP
 
-#include "traits.hpp"
+#include <sol/traits.hpp>
 #include <utility>
 
 namespace sol {

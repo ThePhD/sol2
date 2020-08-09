@@ -24,7 +24,7 @@
 #ifndef SOL_STACK_PROXY_HPP
 #define SOL_STACK_PROXY_HPP
 
-#include "stack_proxy_base.hpp"
+#include <sol/stack_proxy_base.hpp>
 
 namespace sol {
 	struct stack_proxy : public stack_proxy_base {

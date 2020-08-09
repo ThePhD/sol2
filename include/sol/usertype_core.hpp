@@ -24,17 +24,17 @@
 #ifndef SOL_USERTYPE_CORE_HPP
 #define SOL_USERTYPE_CORE_HPP
 
-#include "wrapper.hpp"
-#include "stack.hpp"
-#include "types.hpp"
-#include "stack_reference.hpp"
-#include "usertype_traits.hpp"
-#include "inheritance.hpp"
-#include "raii.hpp"
-#include "deprecate.hpp"
-#include "object.hpp"
-#include "function_types.hpp"
-#include "usertype_container_launch.hpp"
+#include <sol/wrapper.hpp>
+#include <sol/stack.hpp>
+#include <sol/types.hpp>
+#include <sol/stack_reference.hpp>
+#include <sol/usertype_traits.hpp>
+#include <sol/inheritance.hpp>
+#include <sol/raii.hpp>
+#include <sol/deprecate.hpp>
+#include <sol/object.hpp>
+#include <sol/function_types.hpp>
+#include <sol/usertype_container_launch.hpp>
 
 #include <sstream>
 #include <type_traits>

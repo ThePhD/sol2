@@ -24,8 +24,8 @@
 #ifndef SOL_TUPLE_HPP
 #define SOL_TUPLE_HPP
 
-#include "forward.hpp"
-#include "base_traits.hpp"
+#include <sol/forward.hpp>
+#include <sol/base_traits.hpp>
 
 #include <tuple>
 #include <cstddef>

@@ -24,9 +24,9 @@
 #ifndef SOL_FUNCTION_TYPES_OVERLOAD_HPP
 #define SOL_FUNCTION_TYPES_OVERLOAD_HPP
 
-#include "overload.hpp"
-#include "call.hpp"
-#include "function_types_core.hpp"
+#include <sol/overload.hpp>
+#include <sol/call.hpp>
+#include <sol/function_types_core.hpp>
 
 namespace sol {
 namespace function_detail {

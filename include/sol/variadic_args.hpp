@@ -24,9 +24,9 @@
 #ifndef SOL_VARIADIC_ARGS_HPP
 #define SOL_VARIADIC_ARGS_HPP
 
-#include "stack.hpp"
-#include "stack_proxy.hpp"
-#include "stack_iterator.hpp"
+#include <sol/stack.hpp>
+#include <sol/stack_proxy.hpp>
+#include <sol/stack_iterator.hpp>
 #include <limits>
 #include <iterator>
 

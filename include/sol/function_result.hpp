@@ -24,8 +24,8 @@
 #ifndef SOL_FUNCTION_RESULT_HPP
 #define SOL_FUNCTION_RESULT_HPP
 
-#include "protected_function_result.hpp"
-#include "unsafe_function_result.hpp"
+#include <sol/protected_function_result.hpp>
+#include <sol/unsafe_function_result.hpp>
 
 #include <cstdint>
 

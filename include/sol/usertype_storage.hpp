@@ -24,9 +24,8 @@
 #ifndef SOL_USERTYPE_STORAGE_HPP
 #define SOL_USERTYPE_STORAGE_HPP
 
-#include "usertype_core.hpp"
-#include "make_reference.hpp"
-#include "map.hpp"
+#include <sol/usertype_core.hpp>
+#include <sol/make_reference.hpp>
 
 #include <bitset>
 
@@ -209,7 +208,7 @@ namespace sol { namespace u_detail {
 			}
 			if (is_destruction
 				&& (smt == submetatable_type::reference || smt == submetatable_type::const_reference || smt == submetatable_type::named
-				        || smt == submetatable_type::unique)) {
+				     || smt == submetatable_type::unique)) {
 				// gc does not apply to us here
 				// for reference types (raw T*, std::ref)
 				// for the named metatable itself,
@@ -286,8 +285,8 @@ namespace sol { namespace u_detail {
 	public:
 		std::vector<std::unique_ptr<binding_base>> storage;
 		std::vector<std::unique_ptr<char[]>> string_keys_storage;
-		detail::unordered_map<string_view, index_call_storage> string_keys;
-		detail::unordered_map<reference, reference, reference_hash, reference_equals> auxiliary_keys;
+		std::unordered_map<string_view, index_call_storage> string_keys;
+		std::unordered_map<reference, reference, reference_hash, reference_equals> auxiliary_keys;
 		reference value_index_table;
 		reference reference_index_table;
 		reference unique_index_table;
@@ -380,7 +379,7 @@ namespace sol { namespace u_detail {
 				return;
 			}
 
-			(void)detail::swallow{ 0, ((weak_derive<Bases>::value = true), 0)... };
+			(void)detail::swallow { 0, ((weak_derive<Bases>::value = true), 0)... };
 
 			void* derived_this = static_cast<void*>(static_cast<usertype_storage<T>*>(this));
 
@@ -456,7 +455,7 @@ namespace sol { namespace u_detail {
 			}
 			(void)L;
 			(void)self;
-#if defined(SOL_UNSAFE_BASE_LOOKUP) && SOL_UNSAFE_BASE_LOOKUP
+#if SOL_IS_ON(SOL_USE_UNSAFE_BASE_LOOKUP_I_)
 			usertype_storage_base& base_storage = get_usertype_storage<Base>(L);
 			base_result = self_index_call<is_new_index, true>(bases(), L, base_storage);
 #else
@@ -518,7 +517,7 @@ namespace sol { namespace u_detail {
 			int base_result;
 			(void)keep_going;
 			(void)base_result;
-			(void)detail::swallow{ 1, (base_walk_index<is_new_index, Bases>(L, self, keep_going, base_result), 1)... };
+			(void)detail::swallow { 1, (base_walk_index<is_new_index, Bases>(L, self, keep_going, base_result), 1)... };
 			if constexpr (sizeof...(Bases) > 0) {
 				if (!keep_going) {
 					return base_result;
@@ -749,7 +748,7 @@ namespace sol { namespace u_detail {
 					this->set<T>(L, string_key, std::forward<Value>(value));
 				}
 				else {
-					lua_reference_func ref_additions_fx{ key, value };
+					lua_reference_func ref_additions_fx { key, value };
 
 					this->for_each_table(L, ref_additions_fx);
 					this->auxiliary_keys.insert_or_assign(std::forward<Key>(key), std::forward<Value>(value));
@@ -758,7 +757,7 @@ namespace sol { namespace u_detail {
 			else {
 				reference ref_key = make_reference(L, std::forward<Key>(key));
 				reference ref_value = make_reference(L, std::forward<Value>(value));
-				lua_reference_func ref_additions_fx{ key, value };
+				lua_reference_func ref_additions_fx { key, value };
 
 				this->for_each_table(L, ref_additions_fx);
 				this->auxiliary_keys.insert_or_assign(std::move(ref_key), std::move(ref_value));

@@ -24,78 +24,100 @@
 #ifndef SOL_COMPATIBILITY_VERSION_HPP
 #define SOL_COMPATIBILITY_VERSION_HPP
 
-#include "../feature_test.hpp"
+#include <sol/version.hpp>
 
 // clang-format off
 
-#if defined(SOL_USING_CXX_LUA) && SOL_USING_CXX_LUA
+#if SOL_IS_ON(SOL_USE_CXX_LUA_I_)
 	#include <lua.h>
 	#include <lualib.h>
 	#include <lauxlib.h>
-	#if (defined(SOL_USING_CXX_LUAJIT) && SOL_USING_CXX_LUAJIT) || (defined(LUAJIT_VERSION) && LUAJIT_VERSION)
-		#include <luajit.h>
-	#endif // C++ LuaJIT ... whatever that means
-	#if (!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !(SOL_EXCEPTIONS_SAFE_PROPAGATION)) && (!defined(SOL_EXCEPTIONS_ALWAYS_UNSAFE) || !(SOL_EXCEPTIONS_ALWAYS_UNSAFE))
-		#define SOL_EXCEPTIONS_SAFE_PROPAGATION 1
-	#endif // Exceptions can be propagated safely using C++-compiled Lua
+#elif SOL_IS_ON(SOL_USE_LUA_HPP_I_)
+	#include <lua.hpp>
 #else
-	#if defined(SOL_NO_LUA_HPP) && SOL_NO_LUA_HPP
-		extern "C" {
-			#include <lua.h>
-			#include <lauxlib.h>
-			#include <lualib.h>
-			#if defined(LUAJIT_VERSION) && LUAJIT_VERSION
-				#include <luajit.h>
-			#endif
-		}
-	#else
-		#if defined(__has_include)
-			#if __has_include(<lua.hpp>)
-				#include <lua.hpp>
-			#else
-				extern "C" {
-					#include <lua.h>
-					#include <lauxlib.h>
-					#include <lualib.h>
-					#if defined(LUAJIT_VERSION) && LUAJIT_VERSION
-						#include <luajit.h>
-					#endif
-				}
-			#endif // lua.hpp exists or does not
-		#else
-			#include <lua.hpp>
-		#endif // check for lua.hpp safely for Lua 5.1 derps
-	#endif // Manual - have lua.hpp or not
+	extern "C" {
+		#include <lua.h>
+		#include <lauxlib.h>
+		#include <lualib.h>
+	}
 #endif // C++ Mangling for Lua vs. Not
 
-#ifdef LUAJIT_VERSION
-	#ifndef SOL_LUAJIT
-		#define SOL_LUAJIT 1
-	#endif // sol luajit
-	#if defined(SOL_LUAJIT) && SOL_LUAJIT
-		#ifndef SOL_LUAJIT_VERSION
-			#define SOL_LUAJIT_VERSION LUAJIT_VERSION_NUM
-		#endif // SOL_LUAJIT_VERSION definition, if not present
+#if defined(SOL_LUAJIT)
+	#if (SOL_LUAJIT != 0)
+		#define SOL_USE_LUAJIT_I_ SOL_ON
+	#else
+		#define SOL_USE_LUAJIT_I_ SOL_OFF
 	#endif
+#elif defined(LUAJIT_VERSION)
+	#define SOL_USE_LUAJIT_I_ SOL_OFF
+#else
+	#define SOL_USE_LUAJIT_I_ SOL_OFF
 #endif // luajit
 
-#if SOL_LUAJIT && SOL_LUAJIT_VERSION >= 20100
-	#if !defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && (!defined(SOL_EXCEPTIONS_ALWAYS_UNSAFE) && !(SOL_EXCEPTIONS_ALWAYS_UNSAFE))
-		#define SOL_EXCEPTIONS_SAFE_PROPAGATION 1
-	#endif // Do not catch (...) clauses
-#endif // LuaJIT beta 02.01.00 have better exception handling on all platforms since beta3
+#if SOL_IS_ON(SOL_USE_CXX_LUAJIT_I_)
+	#include <luajit.h>
+#elif SOL_IS_ON(SOL_USE_LUAJIT_I_)
+	extern "C" {
+		#include <luajit.h>
+	}
+#endif // C++ LuaJIT ... whatever that means
 
-#if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM >= 502
-	#define SOL_LUA_VERSION LUA_VERSION_NUM
-#elif defined(LUA_VERSION_NUM) && LUA_VERSION_NUM == 501
-	#define SOL_LUA_VERSION LUA_VERSION_NUM
-#elif !defined(LUA_VERSION_NUM) || !(LUA_VERSION_NUM)
-	// Definitely 5.0
-	#define SOL_LUA_VERSION 500
+#if defined(SOL_LUAJIT_VERSION)
+	#define SOL_LUAJIT_VERSION_I_ SOL_LUAJIT_VERSION
+#elif SOL_IS_ON(SOL_USE_LUAJIT_I_)
+	#define SOL_LUAJIT_VERSION_I_ LUAJIT_VERSION_NUM
 #else
-	// ??? Not sure, assume 503?
-	#define SOL_LUA_VERSION 503
-#endif // Lua Version 503, 502, 501 || luajit, 500
+	#define SOL_LUAJIT_VERSION_I_ 0
+#endif
+
+#if defined(MOONJIT_VERSION)
+	#define SOL_MOONJIT_I_ SOL_ON
+#else
+	#define SOL_MOONJIT_I_ SOL_OFF
+#endif
+
+#if !defined(SOL_LUA_VERSION)
+	#if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM >= 502
+		#define SOL_LUA_VERSION LUA_VERSION_NUM
+	#elif defined(LUA_VERSION_NUM) && LUA_VERSION_NUM == 501
+		#define SOL_LUA_VERSION LUA_VERSION_NUM
+	#elif !defined(LUA_VERSION_NUM) || !(LUA_VERSION_NUM)
+		// Definitely 5.0
+		#define SOL_LUA_VERSION 500
+	#else
+		// ??? Not sure, assume latest?
+		#define SOL_LUA_VERSION 504
+	#endif // Lua Version 503, 502, 501 || luajit, 500
+#endif // SOL_LUA_VERSION
+
+#if defined(SOL_LUA_VERSION)
+	#define SOL_LUA_VESION_I_ SOL_LUA_VERSION
+#else
+	#define SOL_LUA_VESION_I_ 504
+#endif
+
+// Exception safety / propagation, according to Lua information
+// and user defines. Note this can sometimes change based on version information...
+#if defined(SOL_EXCEPTIONS_ALWAYS_UNSAFE) && (SOL_EXCEPTIONS_ALWAYS_UNSAFE != 0)
+	#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_OFF
+#elif defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && (SOL_EXCEPTIONS_SAFE_PROPAGATION != 0)
+	#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_ON
+#elif SOL_LUAJIT_VERSION_I_ >= 20100
+	// LuaJIT 2.1.0-beta3 and better have exception support locked in for all platforms (mostly)
+	#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_DEFAULT_ON
+#elif SOL_LUAJIT_VERSION_I_ >= 20000
+	// LuaJIT 2.0.x have exception support only on x64 builds
+	#if SOL_IS_ON(SOL_PLATFORM_X64_I_)
+		#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_DEFAULT_ON
+	#else
+		#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_OFF
+	#endif
+#else
+	// otherwise, there is no exception safety for
+	// shoving exceptions through Lua and errors should
+	// always be serialized
+	#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_OFF
+#endif // LuaJIT beta 02.01.00 have better exception handling on all platforms since beta3
 
 // clang-format on
 

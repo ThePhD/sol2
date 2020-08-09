@@ -24,7 +24,7 @@
 #ifndef SOL_DEMANGLE_HPP
 #define SOL_DEMANGLE_HPP
 
-#include "string_view.hpp"
+#include <sol/string_view.hpp>
 #include <string>
 #include <array>
 #include <cctype>

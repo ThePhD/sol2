@@ -24,7 +24,7 @@
 #ifndef SOL_FUNCTION_TYPES_TEMPLATED_HPP
 #define SOL_FUNCTION_TYPES_TEMPLATED_HPP
 
-#include "call.hpp"
+#include <sol/call.hpp>
 
 namespace sol {
 	namespace function_detail {
@@ -121,7 +121,7 @@ namespace sol {
 		typedef meta::unqualified_t<F> Fu;
 		typedef std::integral_constant<bool,
 		     std::is_same<Fu, lua_CFunction>::value
-#if defined(SOL_NOEXCEPT_FUNCTION_TYPE) && SOL_NOEXCEPT_FUNCTION_TYPE
+#if SOL_IS_ON(SOL_USE_NOEXCEPT_FUNCTION_TYPE_I_)
 		          || std::is_same<Fu, detail::lua_CFunction_noexcept>::value
 #endif
 		     >

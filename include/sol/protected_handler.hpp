@@ -24,10 +24,10 @@
 #ifndef SOL_PROTECTED_HANDLER_HPP
 #define SOL_PROTECTED_HANDLER_HPP
 
-#include "reference.hpp"
-#include "stack.hpp"
-#include "protected_function_result.hpp"
-#include "unsafe_function.hpp"
+#include <sol/reference.hpp>
+#include <sol/stack.hpp>
+#include <sol/protected_function_result.hpp>
+#include <sol/unsafe_function.hpp>
 #include <cstdint>
 
 namespace sol {
@@ -96,7 +96,7 @@ namespace sol {
 				return;
 			}
 			if (!ref.valid()) {
-#if defined(SOL_SAFE_STACK_CHECK) && SOL_SAFE_STACK_CHECK
+#if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 				luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
 				lua_pushnil(L);

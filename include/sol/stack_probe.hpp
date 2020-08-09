@@ -24,9 +24,9 @@
 #ifndef SOL_STACK_PROBE_HPP
 #define SOL_STACK_PROBE_HPP
 
-#include "stack_core.hpp"
-#include "stack_field.hpp"
-#include "stack_check.hpp"
+#include <sol/stack_core.hpp>
+#include <sol/stack_field.hpp>
+#include <sol/stack_check.hpp>
 
 namespace sol {
 namespace stack {

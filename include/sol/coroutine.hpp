@@ -24,12 +24,12 @@
 #ifndef SOL_COROUTINE_HPP
 #define SOL_COROUTINE_HPP
 
-#include "reference.hpp"
-#include "object.hpp"
-#include "stack.hpp"
-#include "function_result.hpp"
-#include "thread.hpp"
-#include "protected_handler.hpp"
+#include <sol/reference.hpp>
+#include <sol/object.hpp>
+#include <sol/stack.hpp>
+#include <sol/function_result.hpp>
+#include <sol/thread.hpp>
+#include <sol/protected_handler.hpp>
 
 namespace sol {
 	template <typename ref_t>
@@ -94,7 +94,7 @@ namespace sol {
 		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_coroutine>>, meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<T>>>, meta::neg<std::is_same<base_t, stack_reference>>, meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_coroutine(T&& r) noexcept
 		: base_t(std::forward<T>(r)), error_handler(detail::get_default_handler<reference, is_main_threaded<base_t>::value>(r.lua_state())) {
-#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
+#if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			if (!is_function<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
 				constructor_handler handler{};
@@ -151,7 +151,7 @@ namespace sol {
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_coroutine(lua_State* L, T&& r, handler_t eh)
 		: base_t(L, std::forward<T>(r)), error_handler(std::move(eh)) {
-#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
+#if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_coroutine>(lua_state(), -1, handler);
@@ -177,7 +177,7 @@ namespace sol {
 		}
 		basic_coroutine(lua_State* L, absolute_index index, handler_t eh)
 		: base_t(L, index), error_handler(std::move(eh)) {
-#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
+#if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			constructor_handler handler{};
 			stack::check<basic_coroutine>(L, index, handler);
 #endif // Safety
@@ -187,7 +187,7 @@ namespace sol {
 		}
 		basic_coroutine(lua_State* L, raw_index index, handler_t eh)
 		: base_t(L, index), error_handler(std::move(eh)) {
-#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
+#if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			constructor_handler handler{};
 			stack::check<basic_coroutine>(L, index, handler);
 #endif // Safety
@@ -197,7 +197,7 @@ namespace sol {
 		}
 		basic_coroutine(lua_State* L, ref_index index, handler_t eh)
 		: base_t(L, index), error_handler(std::move(eh)) {
-#if defined(SOL_SAFE_REFERENCES) && SOL_SAFE_REFERENCES
+#if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			auto pp = stack::push_pop(*this);
 			constructor_handler handler{};
 			stack::check<basic_coroutine>(lua_state(), -1, handler);

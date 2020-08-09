@@ -24,9 +24,9 @@
 #ifndef SOL_LOAD_RESULT_HPP
 #define SOL_LOAD_RESULT_HPP
 
-#include "stack.hpp"
-#include "function.hpp"
-#include "proxy_base.hpp"
+#include <sol/stack.hpp>
+#include <sol/function.hpp>
+#include <sol/proxy_base.hpp>
 #include <cstdint>
 
 namespace sol {
@@ -100,7 +100,7 @@ namespace sol {
 			}
 			else {
 				if constexpr (std::is_same_v<T, error>) {
-#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES != 0
+#if SOL_IS_ON(SOL_SAFE_PROXIES_I_)
 					if (valid()) {
 						type_panic_c_str(L, index, type_of(L, index), type::none, "expecting an error type (a string, from Lua)");
 					}
@@ -108,7 +108,7 @@ namespace sol {
 					return error(detail::direct_error, stack::get<std::string>(L, index));
 				}
 				else {
-#if defined(SOL_SAFE_PROXIES) && SOL_SAFE_PROXIES != 0
+#if SOL_IS_ON(SOL_SAFE_PROXIES_I_)
 					if (!valid()) {
 						type_panic_c_str(L, index, type_of(L, index), type::none);
 					}

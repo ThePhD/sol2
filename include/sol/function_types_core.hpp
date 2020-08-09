@@ -24,8 +24,8 @@
 #ifndef SOL_FUNCTION_TYPES_CORE_HPP
 #define SOL_FUNCTION_TYPES_CORE_HPP
 
-#include "stack.hpp"
-#include "wrapper.hpp"
+#include <sol/stack.hpp>
+#include <sol/wrapper.hpp>
 
 #include <memory>
 

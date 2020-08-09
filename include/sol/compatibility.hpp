@@ -29,13 +29,12 @@
 // but has been modified in many places for use with sol and luajit,
 // though the core abstractions remain the same
 
-#include "feature_test.hpp"
-#include "compatibility/lua_version.hpp"
-#include "version.hpp"
+#include <sol/version.hpp>
+#include <sol/compatibility/lua_version.hpp>
 
 #if !defined(SOL_NO_COMPAT) || !(SOL_NO_COMPAT)
 
-#if defined(SOL_USING_CXX_LUA) && SOL_USING_CXX_LUA
+#if SOL_IS_ON(SOL_USE_CXX_LUA_I_) || SOL_IS_ON(SOL_USE_CXX_LUAJIT_I_)
 #ifndef COMPAT53_LUA_CPP
 #define COMPAT53_LUA_CPP 1
 #endif // Build Lua Compat layer as C++
@@ -44,8 +43,8 @@
 #define COMPAT53_INCLUDE_SOURCE 1
 #endif // Build Compat Layer Inline
 
-#include "compatibility/compat-5.3.h"
-#include "compatibility/compat-5.4.h"
+#include <sol/compatibility/compat-5.3.h>
+#include <sol/compatibility/compat-5.4.h>
 
 #endif // SOL_NO_COMPAT
 

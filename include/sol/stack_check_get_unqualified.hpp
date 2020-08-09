@@ -24,15 +24,15 @@
 #ifndef SOL_STACK_CHECK_UNQUALIFIED_GET_HPP
 #define SOL_STACK_CHECK_UNQUALIFIED_GET_HPP
 
-#include "stack_core.hpp"
-#include "stack_get.hpp"
-#include "stack_check.hpp"
-#include "optional.hpp"
+#include <sol/stack_core.hpp>
+#include <sol/stack_get.hpp>
+#include <sol/stack_check.hpp>
+#include <sol/optional.hpp>
 
 #include <cstdlib>
 #include <cmath>
 #include <optional>
-#if SOL_ON(SOL_STD_VARIANT_)
+#if SOL_IS_ON(SOL_STD_VARIANT_I_)
 #include <variant>
 #endif // variant shenanigans (thanks, Mac OSX)
 
@@ -130,7 +130,7 @@ namespace sol { namespace stack {
 		}
 	};
 
-#if SOL_ON(SOL_STD_VARIANT_)
+#if SOL_IS_ON(SOL_STD_VARIANT_I_)
 	template <typename... Tn, typename C>
 	struct unqualified_check_getter<std::variant<Tn...>, C> {
 		typedef std::variant<Tn...> V;

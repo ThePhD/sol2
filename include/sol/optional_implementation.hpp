@@ -38,7 +38,9 @@
 #ifndef SOL_TL_OPTIONAL_HPP
 #define SOL_TL_OPTIONAL_HPP
 
-#include "in_place.hpp"
+#include <sol/version.hpp>
+
+#include <sol/in_place.hpp>
 
 #define SOL_TL_OPTIONAL_VERSION_MAJOR 0
 #define SOL_TL_OPTIONAL_VERSION_MINOR 5
@@ -1370,7 +1372,7 @@ namespace sol {
 		SOL_TL_OPTIONAL_11_CONSTEXPR T& value() & {
 			if (has_value())
 				return this->m_value;
-#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+#if SOL_IS_OFF(SOL_EXCEPTIONS_I_)
 			std::abort();
 #else
 			throw bad_optional_access();
@@ -1381,7 +1383,7 @@ namespace sol {
 		SOL_TL_OPTIONAL_11_CONSTEXPR const T& value() const& {
 			if (has_value())
 				return this->m_value;
-#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+#if SOL_IS_OFF(SOL_EXCEPTIONS_I_)
 			std::abort();
 #else
 			throw bad_optional_access();
@@ -1391,7 +1393,7 @@ namespace sol {
 		SOL_TL_OPTIONAL_11_CONSTEXPR T&& value() && {
 			if (has_value())
 				return std::move(this->m_value);
-#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+#if SOL_IS_OFF(SOL_EXCEPTIONS_I_)
 			std::abort();
 #else
 			throw bad_optional_access();
@@ -1403,7 +1405,7 @@ namespace sol {
 		SOL_TL_OPTIONAL_11_CONSTEXPR const T&& value() const&& {
 			if (has_value())
 				return std::move(this->m_value);
-#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+#if SOL_IS_OFF(SOL_EXCEPTIONS_I_)
 			std::abort();
 #else
 			throw bad_optional_access();
@@ -2245,7 +2247,7 @@ namespace sol {
 		SOL_TL_OPTIONAL_11_CONSTEXPR T& value() {
 			if (has_value())
 				return *m_value;
-#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+#if SOL_IS_OFF(SOL_EXCEPTIONS_I_)
 			std::abort();
 #else
 			throw bad_optional_access();
@@ -2256,7 +2258,7 @@ namespace sol {
 		SOL_TL_OPTIONAL_11_CONSTEXPR const T& value() const {
 			if (has_value())
 				return *m_value;
-#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+#if SOL_IS_OFF(SOL_EXCEPTIONS_I_)
 			std::abort();
 #else
 			throw bad_optional_access();

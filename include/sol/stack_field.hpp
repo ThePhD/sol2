@@ -24,10 +24,10 @@
 #ifndef SOL_STACK_FIELD_HPP
 #define SOL_STACK_FIELD_HPP
 
-#include "stack_core.hpp"
-#include "stack_push.hpp"
-#include "stack_get.hpp"
-#include "stack_check_get.hpp"
+#include <sol/stack_core.hpp>
+#include <sol/stack_push.hpp>
+#include <sol/stack_get.hpp>
+#include <sol/stack_check_get.hpp>
 
 namespace sol { namespace stack {
 	template <typename T, bool global, bool raw, typename>

@@ -1,8 +1,6 @@
-// sol3
-
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2019 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -21,23 +19,35 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef SOL_MAP_HPP
-#define SOL_MAP_HPP
+// This file was generated with a script.
+// Generated 2020-08-02 22:15:17.519015 UTC
+// This header was generated with sol v3.2.1 (revision 7be51eb)
+// https://github.com/ThePhD/sol2
 
-#include <unordered_map>
+#ifndef SOL_SINGLE_CONFIG_HPP
+#define SOL_SINGLE_CONFIG_HPP
 
-#if defined(SOL_USE_BOOST)
-#include <boost/unordered_map.hpp>
-#endif // Use boost here: transparent hash ability is good
+// beginning of sol/config.hpp
 
-namespace sol { namespace detail {
-#if defined(SOL_USE_BOOST)
-	template <typename K, typename V, typename H = boost::hash<K>, typename E = std::equal_to<>>
-	using unordered_map = boost::unordered_map<K, V, H, E>;
-#else
-	template <typename K, typename V, typename H = std::hash<K>, typename E = std::equal_to<>>
-	using unordered_map = std::unordered_map<K, V, H, E>;
-#endif // Boost map target
-}}     // namespace sol::detail
+/* Base, empty configuration file!
 
-#endif // SOL_MAP_HPP
+     To override, place a file in your include paths of the form:
+
+. (your include path here)
+| sol (directory, or equivalent)
+  | config.hpp (your config.hpp file)
+
+     So that when sol2 includes the file
+
+#include <sol/config.hpp>
+
+     it gives you the configuration values you desire. Configuration values can be
+seen in the safety.rst of the doc/src, or at
+https://sol2.readthedocs.io/en/latest/safety.html ! You can also pass them through
+the build system, or the command line options of your compiler.
+
+*/
+
+// end of sol/config.hpp
+
+#endif // SOL_SINGLE_CONFIG_HPP

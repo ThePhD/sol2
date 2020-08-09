@@ -24,8 +24,8 @@
 #ifndef SOL_FUNCTION_TYPES_STATEFUL_HPP
 #define SOL_FUNCTION_TYPES_STATEFUL_HPP
 
-#include "function_types_core.hpp"
-#include "call.hpp"
+#include <sol/function_types_core.hpp>
+#include <sol/call.hpp>
 
 namespace sol {
 namespace function_detail {

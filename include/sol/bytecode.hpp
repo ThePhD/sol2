@@ -24,8 +24,8 @@
 #ifndef SOL_BYTECODE_HPP
 #define SOL_BYTECODE_HPP
 
-#include "compatibility.hpp"
-#include "string_view.hpp"
+#include <sol/compatibility.hpp>
+#include <sol/string_view.hpp>
 #include <vector>
 #include <cstdint>
 #include <cstddef>
@@ -99,7 +99,7 @@ namespace sol {
 		using storage_t = Container;
 		const std::byte* p_code = static_cast<const std::byte*>(memory);
 		storage_t& bc = *static_cast<storage_t*>(userdata);
-#if defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS != 0
+#if SOL_IS_OFF(SOL_EXCEPTIONS_I_)
 		bc.insert(bc.cend(), p_code, p_code + memory_size);
 #else
 		try {

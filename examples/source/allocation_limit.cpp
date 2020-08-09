@@ -110,7 +110,7 @@ int main() {
 
 	std::cout << "=== memory tracker ===" << std::endl;
 
-#if defined(SOL_LUAJIT) && SOL_LUA_VERSION < 20100 && (UINTPTR_MAX > 0xFFFFFFFF)
+#if SOL_LUAJIT_VERSION < 20100 && (UINTPTR_MAX > 0xFFFFFFFF)
 	std::cout << "LuaJIT in x64 mode on LuaJIT 2.0.X versions does not support using a custom allocator!" << std::endl;
 #else
 	memory_tracker box;

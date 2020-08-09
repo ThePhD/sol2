@@ -24,9 +24,9 @@
 #ifndef SOL_PROXY_BASE_HPP
 #define SOL_PROXY_BASE_HPP
 
-#include "reference.hpp"
-#include "tuple.hpp"
-#include "stack.hpp"
+#include <sol/reference.hpp>
+#include <sol/tuple.hpp>
+#include <sol/stack.hpp>
 
 namespace sol {
 	struct proxy_base_tag {};

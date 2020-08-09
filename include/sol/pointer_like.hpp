@@ -24,7 +24,7 @@
 #ifndef SOL_POINTER_LIKE_HPP
 #define SOL_POINTER_LIKE_HPP
 
-#include "base_traits.hpp"
+#include <sol/base_traits.hpp>
 
 #include <utility>
 #include <type_traits>

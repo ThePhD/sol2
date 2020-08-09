@@ -24,9 +24,9 @@
 #ifndef SOL_INHERITANCE_HPP
 #define SOL_INHERITANCE_HPP
 
-#include "types.hpp"
-#include "usertype_traits.hpp"
-#include "unique_usertype_traits.hpp"
+#include <sol/types.hpp>
+#include <sol/usertype_traits.hpp>
+#include <sol/unique_usertype_traits.hpp>
 
 namespace sol {
 	template <typename... Args>

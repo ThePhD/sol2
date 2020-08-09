@@ -24,8 +24,8 @@
 #ifndef SOL_RAII_HPP
 #define SOL_RAII_HPP
 
-#include "traits.hpp"
-#include "compatibility.hpp"
+#include <sol/traits.hpp>
+#include <sol/compatibility.hpp>
 
 #include <memory>
 

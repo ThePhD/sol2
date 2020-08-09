@@ -24,8 +24,8 @@
 #ifndef SOL_STATE_HPP
 #define SOL_STATE_HPP
 
-#include "state_view.hpp"
-#include "thread.hpp"
+#include <sol/state_view.hpp>
+#include <sol/thread.hpp>
 
 namespace sol {
 
