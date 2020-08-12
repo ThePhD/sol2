@@ -38,11 +38,13 @@
 
 #define SOL_IS_ON(OP_SYMBOL) ((3 OP_SYMBOL 3) != 0)
 #define SOL_IS_OFF(OP_SYMBOL) ((3 OP_SYMBOL 3) == 0)
-#define SOL_IS_DEFAULT_ON(OP_SYMBOL) ((3 OP_SYMBOL 3) == 1)
+#define SOL_IS_DEFAULT_ON(OP_SYMBOL) ((3 OP_SYMBOL 3) > 3)
+#define SOL_IS_DEFAULT_OFF(OP_SYMBOL) ((3 OP_SYMBOL 3 OP_SYMBOL 3) < 0)
 
-#define SOL_ON          +
-#define SOL_OFF         -
-#define SOL_DEFAULT_ON  /
+#define SOL_ON          |
+#define SOL_OFF         ^
+#define SOL_DEFAULT_ON  +
+#define SOL_DEFAULT_OFF -
 
 #if defined(_MSC_VER)
 	#define SOL_COMPILER_CLANG_I_ SOL_OFF
@@ -473,6 +475,8 @@
 	#else
 		#define SOL_USE_LUA_HPP_I_ SOL_ON
 	#endif
+#elif defined(SOL_USING_CXX_LUA)
+	#define SOL_USE_LUA_HPP_I_ SOL_OFF
 #elif defined(__has_include)
 	#if __has_include(<lua.hpp>)
 		#define SOL_USE_LUA_HPP_I_ SOL_ON

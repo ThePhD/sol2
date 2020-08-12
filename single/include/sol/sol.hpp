@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-08-02 22:15:16.995707 UTC
-// This header was generated with sol v3.2.1 (revision 7be51eb)
+// Generated 2020-08-12 23:04:25.317593 UTC
+// This header was generated with sol v3.2.1 (revision 5bbc095)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -72,11 +72,13 @@
 
 #define SOL_IS_ON(OP_SYMBOL) ((3 OP_SYMBOL 3) != 0)
 #define SOL_IS_OFF(OP_SYMBOL) ((3 OP_SYMBOL 3) == 0)
-#define SOL_IS_DEFAULT_ON(OP_SYMBOL) ((3 OP_SYMBOL 3) == 1)
+#define SOL_IS_DEFAULT_ON(OP_SYMBOL) ((3 OP_SYMBOL 3) > 3)
+#define SOL_IS_DEFAULT_OFF(OP_SYMBOL) ((3 OP_SYMBOL 3 OP_SYMBOL 3) < 0)
 
-#define SOL_ON          +
-#define SOL_OFF         -
-#define SOL_DEFAULT_ON  /
+#define SOL_ON          |
+#define SOL_OFF         ^
+#define SOL_DEFAULT_ON  +
+#define SOL_DEFAULT_OFF -
 
 #if defined(_MSC_VER)
 	#define SOL_COMPILER_CLANG_I_ SOL_OFF
@@ -505,6 +507,8 @@
 	#else
 		#define SOL_USE_LUA_HPP_I_ SOL_ON
 	#endif
+#elif defined(SOL_USING_CXX_LUA)
+	#define SOL_USE_LUA_HPP_I_ SOL_OFF
 #elif defined(__has_include)
 	#if __has_include(<lua.hpp>)
 		#define SOL_USE_LUA_HPP_I_ SOL_ON
@@ -1242,7 +1246,7 @@ namespace sol { namespace meta {
 
 #endif // noexcept is part of a function's type
 
-#if defined(_MSC_VER) && defined(_M_IX86)
+#if SOL_IS_ON(SOL_COMPILER_VCXX_I_) && SOL_IS_ON(SOL_PLATFORM_X86_I_)
 		template <typename R, typename... Args>
 		struct fx_traits<R __stdcall(Args...), false> : basic_traits<false, false, void, R, Args...> {
 			typedef R(__stdcall* function_pointer_type)(Args...);
@@ -1426,10 +1430,12 @@ namespace sol { namespace meta {
 #endif // __stdcall x86 VC++ bug
 
 		template <typename Signature>
-		struct fx_traits<Signature, true> : fx_traits<typename fx_traits<decltype(&Signature::operator())>::function_type, false> {};
+		struct fx_traits<Signature, true>
+		: public fx_traits<typename fx_traits<decltype(&Signature::operator())>::function_type, false> {};
 
 		template <typename Signature, bool b = std::is_member_object_pointer<Signature>::value>
-		struct callable_traits : fx_traits<std::decay_t<Signature>> {};
+		struct callable_traits
+		: public fx_traits<std::decay_t<Signature>> {};
 
 		template <typename R, typename T>
 		struct callable_traits<R(T::*), true> {
@@ -16914,8 +16920,8 @@ namespace sol {
 					else {
 						using traits_type = lua_bind_traits<F>;
 						using return_type = typename traits_type::return_type;
-						constexpr bool is_const = std::is_const_v<std::remove_reference_t<return_type>>;
-						if constexpr (is_const) {
+						constexpr bool ret_is_const = std::is_const_v<std::remove_reference_t<return_type>>;
+						if constexpr (ret_is_const) {
 							(void)fx;
 							(void)detail::swallow{ 0, (static_cast<void>(args), 0)... };
 							return luaL_error(L, "sol: cannot write to a readonly (const) variable");
@@ -18445,7 +18451,7 @@ namespace sol {
 
 		template <typename T>
 		struct unqualified_pusher<detail::tagged<T, no_construction>> {
-			static int push(lua_State* L, no_construction) {
+			static int push(lua_State* L, detail::tagged<T, no_construction>) {
 				lua_CFunction cf = &function_detail::no_construction_error;
 				return stack::push(L, cf);
 			}

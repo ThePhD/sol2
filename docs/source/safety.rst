@@ -134,6 +134,7 @@ Linker Config
 
 ``SOL_USING_CXX_LUA`` triggers the following changes:
 	* Lua includes are no longer wrapped in ``extern "C" {}`` blocks
+	* ``SOL_NO_LUA_HPP`` takes less precedence if this is explicitly turned on
 	* Turns on ``SOL_EXCEPTIONS_SAFE_PROPAGATION`` automatically for you
 	* Only use this if you know you've built your LuaJIT with the C++-specific invocations of your compiler (Lua by default builds as C code and is not distributed as a C++ library, but a C one with C symbols)
 

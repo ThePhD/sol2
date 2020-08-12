@@ -24,3 +24,4 @@
 
 add_subdirectory(runtime_tests)
 add_subdirectory(compile_tests)
+add_subdirectory(regression_tests)

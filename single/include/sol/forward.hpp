@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-08-02 22:15:17.497014 UTC
-// This header was generated with sol v3.2.1 (revision 7be51eb)
+// Generated 2020-08-12 23:04:25.839654 UTC
+// This header was generated with sol v3.2.1 (revision 5bbc095)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -46,11 +46,13 @@
 
 #define SOL_IS_ON(OP_SYMBOL) ((3 OP_SYMBOL 3) != 0)
 #define SOL_IS_OFF(OP_SYMBOL) ((3 OP_SYMBOL 3) == 0)
-#define SOL_IS_DEFAULT_ON(OP_SYMBOL) ((3 OP_SYMBOL 3) == 1)
+#define SOL_IS_DEFAULT_ON(OP_SYMBOL) ((3 OP_SYMBOL 3) > 3)
+#define SOL_IS_DEFAULT_OFF(OP_SYMBOL) ((3 OP_SYMBOL 3 OP_SYMBOL 3) < 0)
 
-#define SOL_ON          +
-#define SOL_OFF         -
-#define SOL_DEFAULT_ON  /
+#define SOL_ON          |
+#define SOL_OFF         ^
+#define SOL_DEFAULT_ON  +
+#define SOL_DEFAULT_OFF -
 
 #if defined(_MSC_VER)
 	#define SOL_COMPILER_CLANG_I_ SOL_OFF
@@ -479,6 +481,8 @@
 	#else
 		#define SOL_USE_LUA_HPP_I_ SOL_ON
 	#endif
+#elif defined(SOL_USING_CXX_LUA)
+	#define SOL_USE_LUA_HPP_I_ SOL_OFF
 #elif defined(__has_include)
 	#if __has_include(<lua.hpp>)
 		#define SOL_USE_LUA_HPP_I_ SOL_ON
