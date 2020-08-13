@@ -1,8 +1,8 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2019 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -40,7 +40,8 @@ namespace sol {
 		using base_t = std::vector<object, Al>;
 
 	public:
-		basic_variadic_results() : base_t() {}
+		basic_variadic_results() : base_t() {
+		}
 
 		basic_variadic_results(unsafe_function_result fr) : base_t() {
 			this->reserve(fr.return_count());
@@ -71,10 +72,10 @@ namespace sol {
 	};
 
 	template <typename Al>
-	struct is_container<basic_variadic_results<Al>> : std::false_type {};
+	struct is_container<basic_variadic_results<Al>> : std::false_type { };
 
 	template <>
-	struct is_container<variadic_results> : std::false_type {};
+	struct is_container<variadic_results> : std::false_type { };
 
 	namespace stack {
 		template <typename Al>
