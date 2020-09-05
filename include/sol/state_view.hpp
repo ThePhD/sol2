@@ -637,8 +637,86 @@ namespace sol {
 			return s;
 		}
 
+		bool supports_gc_mode(gc_mode mode) const noexcept {
+#if SOL_LUA_VERSION >= 504
+			// supports all modes
+			(void)mode;
+			return true;
+#endif
+			return mode == gc_mode::default;
+		}
+
+		bool is_gc_on() const {
+			return lua_gc(lua_state(), LUA_GCISRUNNING, 0) == 1;
+		}
+
 		void collect_garbage() {
 			lua_gc(lua_state(), LUA_GCCOLLECT, 0);
+		}
+
+		void collect_gc() {
+			collect_garbage();
+		}
+
+		bool step_gc(int step_size_kilobytes) {
+			// THOUGHT: std::chrono-alikes to map "kilobyte size" here...?
+			// Make it harder to give MB or KB to a B parameter...?
+			// Probably overkill for now.
+#if SOL_LUA_VERSION >= 504
+			// The manual implies that this function is almost always successful...
+			// is it?? It could depend on the GC mode...
+			return lua_gc(lua_state(), LUA_GCSTEP, step_size_kilobytes) != 0;
+#else
+			return lua_gc(lua_state(), LUA_GCSTEP, step_size_kilobytes) == 1;
+#endif
+		}
+
+		void restart_gc() {
+			lua_gc(lua_state(), LUA_GCRESTART, 0);
+		}
+
+		void stop_gc() {
+			lua_gc(lua_state(), LUA_GCSTOP, 0);
+		}
+
+		// Returns the old GC mode. Check support using the supports_gc_mode function.
+		gc_mode change_gc_mode_incremental(int pause, int step_multiplier, int step_byte_size) {
+			// "What the fuck does any of this mean??"
+			// http://www.lua.org/manual/5.4/manual.html#2.5.1
+
+			// THOUGHT: std::chrono-alikes to map "byte size" here...?
+			// Make it harder to give MB or KB to a B parameter...?
+			// Probably overkill for now.
+#if SOL_LUA_VERSION >= 504
+			int old_mode = lua_gc(lua_state(), LUA_GCINC, pause, step_multiplier, step_byte_size);
+			if (old_mode == LUA_GCGEN) {
+				return gc_mode::generational;
+			}
+			else if (old_mode == LUA_GCINC) {
+				return gc_mode::incremental;
+			}
+#else
+			lua_gc(lua_state(), LUA_GCSETPAUSE, pause);
+			lua_gc(lua_state(), LUA_GCSETSTEPMUL, step_multiplier);
+			(void)step_byte_size; // means nothing in older versions
+#endif
+			return gc_mode::default;
+		}
+
+		// Returns the old GC mode. Check support using the supports_gc_mode function.
+		gc_mode change_gc_mode_generational(int minor_multiplier, int major_multiplier) {
+#if SOL_LUA_VERSION >= 504
+			// "What does this shit mean?"
+			// http://www.lua.org/manual/5.4/manual.html#2.5.2
+			int old_mode = lua_gc(lua_state(), LUA_GCGEN, minor_multiplier, major_multiplier);
+			if (old_mode == LUA_GCGEN) {
+				return gc_mode::generational;
+			}
+			else if (old_mode == LUA_GCINC) {
+				return gc_mode::incremental;
+			}
+#endif
+			return gc_mode::default;
 		}
 
 		operator lua_State*() const {
