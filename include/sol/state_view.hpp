@@ -643,7 +643,7 @@ namespace sol {
 			(void)mode;
 			return true;
 #endif
-			return mode == gc_mode::default;
+			return mode == gc_mode::default_value;
 		}
 
 		bool is_gc_on() const {
@@ -700,7 +700,7 @@ namespace sol {
 			lua_gc(lua_state(), LUA_GCSETSTEPMUL, step_multiplier);
 			(void)step_byte_size; // means nothing in older versions
 #endif
-			return gc_mode::default;
+			return gc_mode::default_value;
 		}
 
 		// Returns the old GC mode. Check support using the supports_gc_mode function.
@@ -716,7 +716,7 @@ namespace sol {
 				return gc_mode::incremental;
 			}
 #endif
-			return gc_mode::default;
+			return gc_mode::default_value;
 		}
 
 		operator lua_State*() const {
