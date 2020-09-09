@@ -649,7 +649,7 @@ namespace sol {
 	enum class gc_mode : int {
 		incremental = 0,
 		generational = 1,
-		default = incremental,
+		default_value = incremental,
 	};
 
 	enum class type : int {
