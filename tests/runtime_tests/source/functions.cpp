@@ -30,13 +30,12 @@
 
 template <typename T>
 T va_func(sol::variadic_args va, T first) {
+	(void)first;
 	T s = 0;
 	for (auto arg : va) {
 		T v = arg;
 		s += v;
 	}
-	std::cout << first << std::endl;
-	std::cout << s << std::endl;
 
 	return s;
 }
@@ -231,7 +230,7 @@ end )",
 	REQUIRE((bool)testv);
 	REQUIRE_FALSE((bool)testn);
 	REQUIRE(testv.value() == 29);
-	sol::optional<thing> v = lua_bark(sol::optional<thing>(thing{ 29 }));
+	sol::optional<thing> v = lua_bark(sol::optional<thing>(thing { 29 }));
 	REQUIRE_NOTHROW([&] {
 		sol::lua_nil_t n = lua_bark(sol::nullopt);
 		return n;

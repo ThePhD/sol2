@@ -272,7 +272,7 @@ namespace sol {
 		}
 
 		inline void luajit_exception_handler(lua_State* L, int (*handler)(lua_State*, lua_CFunction) = detail::c_trampoline) {
-#if defined(SOL_LUAJIT) && (!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !(SOL_EXCEPTIONS_SAFE_PROPAGATION))
+#if SOL_IS_ON(SOL_USE_LUAJIT_EXCEPTION_TRAMPOLINE_I_)
 			if (L == nullptr) {
 				return;
 			}
@@ -289,7 +289,7 @@ namespace sol {
 		}
 
 		inline void luajit_exception_off(lua_State* L) {
-#if defined(SOL_LUAJIT)
+#if SOL_IS_ON(SOL_USE_LUAJIT_EXCEPTION_TRAMPOLINE_I_)
 			if (L == nullptr) {
 				return;
 			}

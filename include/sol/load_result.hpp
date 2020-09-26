@@ -39,12 +39,18 @@ namespace sol {
 		load_status err;
 
 	public:
-		load_result() = default;
+		load_result() noexcept = default;
 		load_result(lua_State* Ls, int stackindex = -1, int retnum = 0, int popnum = 0, load_status lerr = load_status::ok) noexcept
 		: L(Ls), index(stackindex), returncount(retnum), popcount(popnum), err(lerr) {
 		}
-		load_result(const load_result&) = default;
-		load_result& operator=(const load_result&) = default;
+
+		// We do not want anyone to copy these around willy-nilly
+		// Will likely break people, but also will probably get rid of quiet bugs that have
+		// been lurking. (E.g., Vanilla Lua will just quietly discard over-pops and under-pops:
+		// LuaJIT and other Lua engines will implode and segfault at random later times.)
+		load_result(const load_result&) = delete;
+		load_result& operator=(const load_result&) = delete;
+
 		load_result(load_result&& o) noexcept : L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
 			// Must be manual, otherwise destructor will screw us
 			// return count being 0 is enough to keep things clean

@@ -54,12 +54,18 @@ namespace sol {
 		typedef std::reverse_iterator<iterator> reverse_iterator;
 		typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-		protected_function_result() = default;
+		protected_function_result() noexcept = default;
 		protected_function_result(lua_State* Ls, int idx = -1, int retnum = 0, int popped = 0, call_status pferr = call_status::ok) noexcept
 		: L(Ls), index(idx), returncount(retnum), popcount(popped), err(pferr) {
 		}
-		protected_function_result(const protected_function_result&) = default;
-		protected_function_result& operator=(const protected_function_result&) = default;
+
+		// We do not want anyone to copy these around willy-nilly
+		// Will likely break people, but also will probably get rid of quiet bugs that have
+		// been lurking. (E.g., Vanilla Lua will just quietly discard over-pops and under-pops:
+		// LuaJIT and other Lua engines will implode and segfault at random later times.)
+		protected_function_result(const protected_function_result&) = delete;
+		protected_function_result& operator=(const protected_function_result&) = delete;
+
 		protected_function_result(protected_function_result&& o) noexcept
 		: L(o.L), index(o.index), returncount(o.returncount), popcount(o.popcount), err(o.err) {
 			// Must be manual, otherwise destructor will screw us

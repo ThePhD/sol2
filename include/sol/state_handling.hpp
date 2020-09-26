@@ -37,7 +37,7 @@
 
 namespace sol {
 	inline void register_main_thread(lua_State* L) {
-#if SOL_LUA_VERSION < 502
+#if SOL_LUA_VESION_I_ < 502
 		if (L == nullptr) {
 			lua_pushnil(L);
 			lua_setglobal(L, detail::default_main_thread_name());
@@ -120,7 +120,7 @@ namespace sol {
 		std::string err = "sol: ";
 		err += to_string(result.status());
 		err += " error";
-#if !(defined(SOL_NO_EXCEPTIONS) && SOL_NO_EXCEPTIONS)
+#if SOL_IS_ON(SOL_EXCEPTIONS_I_)
 		std::exception_ptr eptr = std::current_exception();
 		if (eptr) {
 			err += " with a ";

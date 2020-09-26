@@ -51,7 +51,7 @@
 #elif defined(LUAJIT_VERSION)
 	#define SOL_USE_LUAJIT_I_ SOL_OFF
 #else
-	#define SOL_USE_LUAJIT_I_ SOL_OFF
+	#define SOL_USE_LUAJIT_I_ SOL_DEFAULT_OFF
 #endif // luajit
 
 #if SOL_IS_ON(SOL_USE_CXX_LUAJIT_I_)
@@ -71,9 +71,9 @@
 #endif
 
 #if defined(MOONJIT_VERSION)
-	#define SOL_MOONJIT_I_ SOL_ON
+	#define SOL_USE_MOONJIT_I_ SOL_ON
 #else
-	#define SOL_MOONJIT_I_ SOL_OFF
+	#define SOL_USE_MOONJIT_I_ SOL_OFF
 #endif
 
 #if !defined(SOL_LUA_VERSION)
@@ -98,10 +98,18 @@
 
 // Exception safety / propagation, according to Lua information
 // and user defines. Note this can sometimes change based on version information...
-#if defined(SOL_EXCEPTIONS_ALWAYS_UNSAFE) && (SOL_EXCEPTIONS_ALWAYS_UNSAFE != 0)
-	#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_OFF
-#elif defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) && (SOL_EXCEPTIONS_SAFE_PROPAGATION != 0)
-	#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_ON
+#if defined(SOL_EXCEPTIONS_ALWAYS_UNSAFE)
+	#if (SOL_EXCEPTIONS_ALWAYS_UNSAFE != 0)
+		#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_OFF
+	#else
+		#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_ON
+	#endif
+#elif defined(SOL_EXCEPTIONS_SAFE_PROPAGATION)
+	#if (SOL_EXCEPTIONS_SAFE_PROPAGATION != 0)
+		#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_ON
+	#else
+		#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_OFF
+	#endif
 #elif SOL_LUAJIT_VERSION_I_ >= 20100
 	// LuaJIT 2.1.0-beta3 and better have exception support locked in for all platforms (mostly)
 	#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_DEFAULT_ON
@@ -116,8 +124,36 @@
 	// otherwise, there is no exception safety for
 	// shoving exceptions through Lua and errors should
 	// always be serialized
-	#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_OFF
+	#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_DEFAULT_OFF
 #endif // LuaJIT beta 02.01.00 have better exception handling on all platforms since beta3
+
+#if defined(SOL_LUAJIT_USE_EXCEPTION_TRAMPOLINE)
+	#if (SOL_LUAJIT_USE_EXCEPTION_TRAMPOLINE != 0)
+		#define SOL_USE_LUAJIT_EXCEPTION_TRAMPOLINE_I_ SOL_ON
+	#else
+		#define SOL_USE_LUAJIT_EXCEPTION_TRAMPOLINE_I_ SOL_OFF
+	#endif
+#else
+	#if SOL_IS_OFF(SOL_PROPAGATE_EXCEPTIONS_I_) && SOL_IS_ON(SOL_USE_LUAJIT_I_)
+		#define SOL_USE_LUAJIT_EXCEPTION_TRAMPOLINE_I_ SOL_ON
+	#else
+		#define SOL_USE_LUAJIT_EXCEPTION_TRAMPOLINE_I_ SOL_DEFAULT_OFF
+	#endif
+#endif
+
+#if defined(SOL_LUAL_STREAM_HAS_CLOSE_FUNCTION)
+	#if (SOL_LUAL_STREAM_HAS_CLOSE_FUNCTION != 0)
+		#define SOL_LUAL_STREAM_USE_CLOSE_FUNCTION_I_ SOL_ON
+	#else
+		#define SOL_LUAL_STREAM_USE_CLOSE_FUNCTION_I_ SOL_OFF
+	#endif
+#else
+	#if SOL_IS_OFF(SOL_USE_LUAJIT_I_) && (SOL_LUA_VERSION > 501)
+		#define SOL_LUAL_STREAM_USE_CLOSE_FUNCTION_I_ SOL_ON
+	#else
+		#define SOL_LUAL_STREAM_USE_CLOSE_FUNCTION_I_ SOL_DEFAULT_OFF
+	#endif
+#endif
 
 // clang-format on
 

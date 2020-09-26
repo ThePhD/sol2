@@ -22,27 +22,28 @@
 #ifndef SOL_HPP
 #define SOL_HPP
 
-#if defined(UE_BUILD_DEBUG) || defined(UE_BUILD_DEVELOPMENT) || defined(UE_BUILD_TEST) || defined(UE_BUILD_SHIPPING) || defined(UE_SERVER)
-#define SOL_INSIDE_UNREAL
+#include <sol/version.hpp>
+
+#if SOL_IS_ON(SOL_INSIDE_UNREAL_ENGINE_I_)
 #ifdef check
 #pragma push_macro("check")
 #undef check
 #endif
 #endif // Unreal Engine 4 Bullshit
 
-#if defined(__GNUC__)
+#if SOL_IS_ON(SOL_COMPILER_GCC_I_)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wconversion"
 #if __GNUC__ > 6
 #pragma GCC diagnostic ignored "-Wnoexcept-type"
 #endif
-#elif defined(__clang__)
+#elif SOL_IS_ON(SOL_COMPILER_CLANG_I_)
 // we'll just let this alone for now
-#elif defined _MSC_VER
+#elif SOL_IS_ON(SOL_COMPILER_VCXX_I_)
 #pragma warning(push)
 #pragma warning(disable : 4505) // unreferenced local function has been removed GEE THANKS
-#endif					  // clang++ vs. g++ vs. VC++
+#endif                          // clang++ vs. g++ vs. VC++
 
 #include <sol/forward.hpp>
 #include <sol/forward_detail.hpp>
@@ -63,13 +64,13 @@
 #include <sol/variadic_results.hpp>
 #include <sol/lua_value.hpp>
 
-#if defined(__GNUC__)
+#if SOL_IS_ON(SOL_COMPILER_GCC_I_)
 #pragma GCC diagnostic pop
-#elif defined _MSC_VER
+#elif SOL_IS_ON(SOL_COMPILER_VCXX_I_)
 #pragma warning(pop)
 #endif // g++
 
-#if defined(SOL_INSIDE_UNREAL)
+#if SOL_IS_ON(SOL_INSIDE_UNREAL_ENGINE_I_)
 #undef check
 #pragma pop_macro("check")
 #endif // Unreal Engine 4 Bullshit

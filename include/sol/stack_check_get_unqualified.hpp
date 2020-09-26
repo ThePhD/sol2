@@ -58,7 +58,7 @@ namespace sol { namespace stack {
 					return stack_detail::unchecked_get<T>(L, index, tracking);
 				}
 				else if constexpr ((std::is_integral_v<T> || std::is_same_v<T, lua_Integer>)&&!std::is_same_v<T, bool>) {
-#if SOL_LUA_VERSION >= 503
+#if SOL_LUA_VESION_I_ >= 503
 					if (lua_isinteger(L, index) != 0) {
 						tracking.use(1);
 						return static_cast<T>(lua_tointeger(L, index));
@@ -67,7 +67,7 @@ namespace sol { namespace stack {
 					int isnum = 0;
 					const lua_Number value = lua_tonumberx(L, index, &isnum);
 					if (isnum != 0) {
-#if (defined(SOL_SAFE_NUMERICS) && SOL_SAFE_NUMERICS) && !(defined(SOL_NO_CHECK_NUMBER_PRECISION) && SOL_NO_CHECK_NUMBER_PRECISION)
+#if SOL_IS_ON(SOL_NUMBER_PRECISION_CHECKS_I_)
 						const auto integer_value = llround(value);
 						if (static_cast<lua_Number>(integer_value) == value) {
 							tracking.use(1);

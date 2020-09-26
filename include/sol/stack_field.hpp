@@ -33,11 +33,11 @@ namespace sol { namespace stack {
 	template <typename T, bool global, bool raw, typename>
 	struct field_getter {
 		static constexpr int default_table_index = meta::conditional_t < meta::is_c_str_v<T>
-#if SOL_LUA_VERSION >= 503
+#if SOL_LUA_VESION_I_ >= 503
 			|| (std::is_integral_v<T> && !std::is_same_v<T, bool>)
 #endif // integer  global keys 5.3 or better
 			|| (raw && std::is_void_v<std::remove_pointer_t<T>>),
-			                std::integral_constant<int, -1>, std::integral_constant<int, -2>> ::value;
+			                std::integral_constant<int, -1>, std::integral_constant<int, -2> > ::value;
 
 		template <typename Key>
 		void get(lua_State* L, Key&& key, int tableindex = default_table_index) {
@@ -48,7 +48,7 @@ namespace sol { namespace stack {
 			}
 			else if constexpr (std::is_same_v<T, env_key_t>) {
 				(void)key;
-#if SOL_LUA_VERSION < 502
+#if SOL_LUA_VESION_I_ < 502
 				// Use lua_setfenv
 				lua_getfenv(L, tableindex);
 #else
@@ -67,7 +67,7 @@ namespace sol { namespace stack {
 				if constexpr (std::is_integral_v<T> && !std::is_same_v<bool, T>) {
 					lua_rawgeti(L, tableindex, static_cast<lua_Integer>(key));
 				}
-#if SOL_LUA_VERSION >= 502
+#if SOL_LUA_VESION_I_ >= 502
 				else if constexpr (std::is_void_v<std::remove_pointer_t<T>>) {
 					lua_rawgetp(L, tableindex, key);
 				}
@@ -87,7 +87,7 @@ namespace sol { namespace stack {
 						lua_getfield(L, tableindex, &key[0]);
 					}
 				}
-#if SOL_LUA_VERSION >= 503
+#if SOL_LUA_VESION_I_ >= 503
 				else if constexpr (std::is_integral_v<T> && !std::is_same_v<bool, T>) {
 					lua_geti(L, tableindex, static_cast<lua_Integer>(key));
 				}
@@ -105,7 +105,7 @@ namespace sol { namespace stack {
 		template <std::size_t... I, typename Keys>
 		void apply(std::index_sequence<0, I...>, lua_State* L, Keys&& keys, int tableindex) {
 			get_field<b, raw>(L, std::get<0>(std::forward<Keys>(keys)), tableindex);
-			void(detail::swallow{ (get_field<false, raw>(L, std::get<I>(std::forward<Keys>(keys))), 0)... });
+			void(detail::swallow { (get_field<false, raw>(L, std::get<I>(std::forward<Keys>(keys))), 0)... });
 			reference saved(L, -1);
 			lua_pop(L, static_cast<int>(sizeof...(I)));
 			saved.push();
@@ -148,7 +148,7 @@ namespace sol { namespace stack {
 		static constexpr int default_table_index
 			= meta::conditional_t < (meta::is_c_str_v<T> || meta::is_string_of_v<T, char>) || (std::is_integral_v<T> && !std::is_same_v<T, bool>)
 			|| (std::is_integral_v<T> && !std::is_same_v<T, bool>) || (raw && std::is_void_v<std::remove_pointer_t<T>>),
-			std::integral_constant<int, -2>, std::integral_constant<int, -3>> ::value;
+			std::integral_constant<int, -2>, std::integral_constant<int, -3> > ::value;
 
 		template <typename Key, typename Value>
 		void set(lua_State* L, Key&& key, Value&& value, int tableindex = default_table_index) {
@@ -168,7 +168,7 @@ namespace sol { namespace stack {
 					push(L, std::forward<Value>(value));
 					lua_rawseti(L, tableindex, static_cast<lua_Integer>(key));
 				}
-#if SOL_LUA_VERSION >= 502
+#if SOL_LUA_VESION_I_ >= 502
 				else if constexpr (std::is_void_v<std::remove_pointer_t<T>>) {
 					push(L, std::forward<Value>(value));
 					lua_rawsetp(L, tableindex, std::forward<Key>(key));
@@ -192,7 +192,7 @@ namespace sol { namespace stack {
 						lua_setfield(L, tableindex, &key[0]);
 					}
 				}
-#if SOL_LUA_VERSION >= 503
+#if SOL_LUA_VESION_I_ >= 503
 				else if constexpr (std::is_integral_v<T> && !std::is_same_v<bool, T>) {
 					push(L, std::forward<Value>(value));
 					lua_seti(L, tableindex, static_cast<lua_Integer>(key));

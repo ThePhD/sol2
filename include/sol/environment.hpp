@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -41,19 +41,15 @@ namespace sol {
 		basic_environment(basic_environment&&) = default;
 		basic_environment& operator=(const basic_environment&) = default;
 		basic_environment& operator=(basic_environment&&) = default;
-		basic_environment(const stack_reference& r)
-		: basic_environment(r.lua_state(), r.stack_index()) {
+		basic_environment(const stack_reference& r) : basic_environment(r.lua_state(), r.stack_index()) {
 		}
-		basic_environment(stack_reference&& r)
-		: basic_environment(r.lua_state(), r.stack_index()) {
+		basic_environment(stack_reference&& r) : basic_environment(r.lua_state(), r.stack_index()) {
 		}
 
-		basic_environment(lua_State* L, new_table nt)
-		: base_t(L, std::move(nt)) {
+		basic_environment(lua_State* L, new_table nt) : base_t(L, std::move(nt)) {
 		}
 		template <bool b>
-		basic_environment(lua_State* L, new_table t, const basic_reference<b>& fallback)
-		: basic_environment(L, std::move(t)) {
+		basic_environment(lua_State* L, new_table t, const basic_reference<b>& fallback) : basic_environment(L, std::move(t)) {
 			stack_table mt(L, new_table(0, 1));
 			mt.set(meta_function::index, fallback);
 			this->set(metatable_key, mt);
@@ -63,7 +59,7 @@ namespace sol {
 		basic_environment(env_key_t, const stack_reference& extraction_target)
 		: base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
-			constructor_handler handler{};
+			constructor_handler handler {};
 			stack::check<env_key_t>(this->lua_state(), -1, handler);
 #endif // Safety
 			lua_pop(this->lua_state(), 2);
@@ -72,48 +68,45 @@ namespace sol {
 		basic_environment(env_key_t, const basic_reference<b>& extraction_target)
 		: base_t(detail::no_safety, extraction_target.lua_state(), (stack::push_environment_of(extraction_target), -1)) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
-			constructor_handler handler{};
+			constructor_handler handler {};
 			stack::check<env_key_t>(this->lua_state(), -1, handler);
 #endif // Safety
 			lua_pop(this->lua_state(), 2);
 		}
-		basic_environment(lua_State* L, int index = -1)
-		: base_t(detail::no_safety, L, index) {
+		basic_environment(lua_State* L, int index = -1) : base_t(detail::no_safety, L, index) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
-			constructor_handler handler{};
+			constructor_handler handler {};
 			stack::check<basic_environment>(L, index, handler);
 #endif // Safety
 		}
-		basic_environment(lua_State* L, ref_index index)
-		: base_t(detail::no_safety, L, index) {
+		basic_environment(lua_State* L, ref_index index) : base_t(detail::no_safety, L, index) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			auto pp = stack::push_pop(*this);
-			constructor_handler handler{};
+			constructor_handler handler {};
 			stack::check<basic_environment>(L, -1, handler);
 #endif // Safety
 		}
-		template <typename T, meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_environment>>, meta::neg<std::is_same<base_type, stack_reference>>, meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
-		basic_environment(T&& r) noexcept
-		: base_t(detail::no_safety, std::forward<T>(r)) {
+		template <typename T,
+		     meta::enable<meta::neg<meta::any_same<meta::unqualified_t<T>, basic_environment>>, meta::neg<std::is_same<base_type, stack_reference>>,
+		          meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		basic_environment(T&& r) noexcept : base_t(detail::no_safety, std::forward<T>(r)) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			if (!is_environment<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
-				constructor_handler handler{};
+				constructor_handler handler {};
 				stack::check<basic_environment>(lua_state(), -1, handler);
 			}
 #endif // Safety
 		}
-		basic_environment(lua_nil_t r) noexcept
-		: base_t(detail::no_safety, r) {
+		basic_environment(lua_nil_t r) noexcept : base_t(detail::no_safety, r) {
 		}
 
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
-		basic_environment(lua_State* L, T&& r) noexcept
-			: base_t(detail::no_safety, L, std::forward<T>(r)) {
+		basic_environment(lua_State* L, T&& r) noexcept : base_t(detail::no_safety, L, std::forward<T>(r)) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			if (!is_environment<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
-				constructor_handler handler{};
+				constructor_handler handler {};
 				stack::check<basic_environment>(lua_state(), -1, handler);
 			}
 #endif // Safety
@@ -123,7 +116,7 @@ namespace sol {
 		void set_on(const T& target) const {
 			lua_State* L = target.lua_state();
 			auto pp = stack::push_pop(target);
-#if SOL_LUA_VERSION < 502
+#if SOL_LUA_VESION_I_ < 502
 			// Use lua_setfenv
 			this->push();
 			lua_setfenv(L, -2);
@@ -153,11 +146,9 @@ namespace sol {
 	struct this_environment {
 		optional<environment> env;
 
-		this_environment()
-		: env(nullopt) {
+		this_environment() : env(nullopt) {
 		}
-		this_environment(environment e)
-		: env(std::move(e)) {
+		this_environment(environment e) : env(std::move(e)) {
 		}
 		this_environment(const this_environment&) = default;
 		this_environment(this_environment&&) = default;
@@ -168,11 +159,11 @@ namespace sol {
 			return static_cast<bool>(env);
 		}
 
-		operator optional<environment>&() {
+		operator optional<environment> &() {
 			return env;
 		}
 
-		operator const optional<environment>&() const {
+		operator const optional<environment> &() const {
 			return env;
 		}
 

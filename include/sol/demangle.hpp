@@ -28,16 +28,15 @@
 #include <string>
 #include <array>
 #include <cctype>
-#if defined(__GNUC__) && defined(__MINGW32__) && (__GNUC__ < 6)
+#if SOL_IS_ON(SOL_MINGW_CCTYPE_IS_POISONED_I_)
 extern "C" {
 #include <ctype.h>
 }
 #endif // MinGW is on some stuff
 #include <locale>
 
-namespace sol {
-namespace detail {
-	inline constexpr std::array<string_view, 9> removals{ { "{anonymous}",
+namespace sol { namespace detail {
+	inline constexpr std::array<string_view, 9> removals { { "{anonymous}",
 		"(anonymous namespace)",
 		"public:",
 		"private:",
@@ -48,7 +47,7 @@ namespace detail {
 		"`anonymous namespace'" } };
 
 
-#if defined(__GNUC__) || defined(__clang__)
+#if SOL_IS_ON(SOL_COMPILER_GCC_I_) || SOL_IS_ON(SOL_COMPILER_CLANG_I_)
 	inline std::string ctti_get_type_name_from_sig(std::string name) {
 		// cardinal sins from MINGW
 		using namespace std;
@@ -86,7 +85,7 @@ namespace detail {
 	inline std::string ctti_get_type_name() {
 		return ctti_get_type_name_from_sig(__PRETTY_FUNCTION__);
 	}
-#elif defined(_MSC_VER)
+#elif SOL_IS_ON(SOL_COMPILER_VCXX_I_)
 	inline std::string ctti_get_type_name_from_sig(std::string name) {
 		std::size_t start = name.find("get_type_name");
 		if (start == std::string::npos)
@@ -135,7 +134,9 @@ namespace detail {
 
 	inline std::string short_demangle_from_type_name(std::string realname) {
 		// This isn't the most complete but it'll do for now...?
-		static const std::array<std::string, 10> ops = {{"operator<", "operator<<", "operator<<=", "operator<=", "operator>", "operator>>", "operator>>=", "operator>=", "operator->", "operator->*"}};
+		static const std::array<std::string, 10> ops = {
+			{ "operator<", "operator<<", "operator<<=", "operator<=", "operator>", "operator>>", "operator>>=", "operator>=", "operator->", "operator->*" }
+		};
 		int level = 0;
 		std::ptrdiff_t idx = 0;
 		for (idx = static_cast<std::ptrdiff_t>(realname.empty() ? 0 : realname.size() - 1); idx > 0; --idx) {
@@ -186,7 +187,6 @@ namespace detail {
 		static const std::string d = short_demangle_once<T>();
 		return d;
 	}
-}
-} // namespace sol::detail
+}} // namespace sol::detail
 
 #endif // SOL_DEMANGLE_HPP

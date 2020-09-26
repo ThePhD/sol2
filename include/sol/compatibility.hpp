@@ -32,7 +32,7 @@
 #include <sol/version.hpp>
 #include <sol/compatibility/lua_version.hpp>
 
-#if !defined(SOL_NO_COMPAT) || !(SOL_NO_COMPAT)
+#if SOL_IS_ON(SOL_USE_COMPATIBILITY_LAYER_I_)
 
 #if SOL_IS_ON(SOL_USE_CXX_LUA_I_) || SOL_IS_ON(SOL_USE_CXX_LUAJIT_I_)
 #ifndef COMPAT53_LUA_CPP
@@ -46,6 +46,6 @@
 #include <sol/compatibility/compat-5.3.h>
 #include <sol/compatibility/compat-5.4.h>
 
-#endif // SOL_NO_COMPAT
+#endif
 
 #endif // SOL_COMPATIBILITY_HPP

@@ -68,6 +68,12 @@
 	#define SOL_COMPILER_VCXX_I_  SOL_OFF
 #endif
 
+#if defined(__MINGW32__)
+	#define SOL_COMPILER_FRONTEND_MINGW_I_ SOL_ON
+#else
+	#define SOL_COMPILER_FRONTEND_MINGW_I_ SOL_OFF
+#endif
+
 #if SIZE_MAX <= 0xFFFFULL
 	#define SOL_PLATFORM_X16_I_ SOL_ON
 	#define SOL_PLATFORM_X86_I_ SOL_OFF
@@ -125,7 +131,7 @@
 		#define SOL_DEBUG_BUILD_I_ SOL_OFF
 	#endif
 #else
-	#define SOL_DEBUG_BUILD_I_ SOL_OFF
+	#define SOL_DEBUG_BUILD_I_ SOL_DEFAULT_OFF
 #endif // We are in a debug mode of some sort
 
 #if defined(SOL_NO_EXCEPTIONS)
@@ -147,7 +153,7 @@
 		#define SOL_EXCEPTIONS_I_ SOL_ON
 	#endif
 #else
-	#define SOL_EXCEPTIONS_I_ SOL_ON
+	#define SOL_EXCEPTIONS_I_ SOL_DEFAULT_ON
 #endif
 
 
@@ -170,7 +176,7 @@
 		#define SOL_RTTI_I_ SOL_ON
 	#endif
 #else
-	#define SOL_EXCEPTIONS_I_ SOL_ON
+	#define SOL_RTTI_I_ SOL_DEFAULT_ON
 #endif
 
 #if defined(SOL_NO_THREAD_LOCAL) && (SOL_NO_THREAD_LOCAL != 0)
@@ -182,7 +188,7 @@
 #if defined(SOL_ALL_SAFETIES_ON) && (SOL_ALL_SAFETIES_ON != 0)
 	#define SOL_ALL_SAFETIES_ON_I_ SOL_ON
 #else
-	#define SOL_ALL_SAFETIES_ON_I_ SOL_OFF
+	#define SOL_ALL_SAFETIES_ON_I_ SOL_DEFAULT_OFF
 #endif
 
 #if defined(SOL_SAFE_GETTER) && (SOL_SAFE_GETTER != 0)
@@ -193,7 +199,7 @@
 	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
 		#define SOL_SAFE_GETTER_I_ SOL_DEFAULT_ON
 	#else
-		#define SOL_SAFE_GETTER_I_ SOL_OFF
+		#define SOL_SAFE_GETTER_I_ SOL_DEFAULT_OFF
 	#endif
 #endif
 
@@ -205,7 +211,7 @@
 	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
 		#define SOL_SAFE_USERTYPE_I_ SOL_DEFAULT_ON
 	#else
-		#define SOL_SAFE_USERTYPE_I_ SOL_OFF
+		#define SOL_SAFE_USERTYPE_I_ SOL_DEFAULT_OFF
 	#endif
 #endif
 
@@ -217,7 +223,7 @@
 	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
 		#define SOL_SAFE_REFERENCES_I_ SOL_DEFAULT_ON
 	#else
-		#define SOL_SAFE_REFERENCES_I_ SOL_OFF
+		#define SOL_SAFE_REFERENCES_I_ SOL_DEFAULT_OFF
 	#endif
 #endif
 
@@ -230,7 +236,7 @@
 	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
 		#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_DEFAULT_ON
 	#else
-		#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_OFF
+		#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_DEFAULT_OFF
 	#endif
 #endif
 
@@ -242,7 +248,7 @@
 	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
 		#define SOL_SAFE_FUNCTION_CALLS_I_ SOL_DEFAULT_ON
 	#else
-		#define SOL_SAFE_FUNCTION_CALLS_I_ SOL_OFF
+		#define SOL_SAFE_FUNCTION_CALLS_I_ SOL_DEFAULT_OFF
 	#endif
 #endif
 
@@ -254,7 +260,7 @@
 	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
 		#define SOL_SAFE_PROXIES_I_ SOL_DEFAULT_ON
 	#else
-		#define SOL_SAFE_PROXIES_I_ SOL_OFF
+		#define SOL_SAFE_PROXIES_I_ SOL_DEFAULT_OFF
 	#endif
 #endif
 
@@ -266,7 +272,7 @@
 	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
 		#define SOL_SAFE_NUMERICS_I_ SOL_DEFAULT_ON
 	#else
-		#define SOL_SAFE_NUMERICS_I_ SOL_OFF
+		#define SOL_SAFE_NUMERICS_I_ SOL_DEFAULT_OFF
 	#endif
 #endif
 
@@ -278,7 +284,7 @@
 	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
 		#define SOL_SAFE_STACK_CHECK_I_ SOL_DEFAULT_ON
 	#else
-		#define SOL_SAFE_STACK_CHECK_I_ SOL_OFF
+		#define SOL_SAFE_STACK_CHECK_I_ SOL_DEFAULT_OFF
 	#endif
 #endif
 
@@ -288,10 +294,12 @@
 #else
 	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
 		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_ON
+	#elif SOL_IS_ON(SOL_SAFE_NUMERICS_I_)
+		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_ON
 	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
 		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_DEFAULT_ON
 	#else
-		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_OFF
+		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_DEFAULT_OFF
 	#endif
 #endif
 
@@ -302,14 +310,14 @@
 		#define SOL_STRINGS_ARE_NUMBERS_I_ SOL_OFF
 	#endif
 #else
-	#define SOL_STRINGS_ARE_NUMBERS_I_ SOL_OFF
+	#define SOL_STRINGS_ARE_NUMBERS_I_ SOL_DEFAULT_OFF
 #endif
 
 #if defined(SOL_ENABLE_INTEROP) && (SOL_ENABLE_INTEROP != 0) \
     || defined(SOL_USE_INTEROP) && (SOL_USE_INTEROP != 0)
 	#define SOL_USE_INTEROP_I_ SOL_ON
 #else
-	#define SOL_USE_INTEROP_I_ SOL_OFF
+	#define SOL_USE_INTEROP_I_ SOL_DEFAULT_OFF
 #endif
 
 #if defined(SOL_NO_NIL)
@@ -319,7 +327,7 @@
 		#define SOL_NIL_I_ SOL_ON
 	#endif
 #elif defined(__MAC_OS_X_VERSION_MAX_ALLOWED) || defined(__OBJC__) || defined(nil)
-	#define SOL_NIL_I_ SOL_OFF
+	#define SOL_NIL_I_ SOL_DEFAULT_OFF
 #else
 	#define SOL_NIL_I_ SOL_DEFAULT_ON
 #endif
@@ -413,8 +421,12 @@
 	#define SOL_FILE_ID_SIZE_I_ 2048
 #endif
 
-#if defined(SOL_PRINT_ERRORS) && (SOL_PRINT_ERRORS != 0)
-	#define SOL_PRINT_ERRORS_I_ SOL_ON
+#if defined(SOL_PRINT_ERRORS)
+	#if (SOL_PRINT_ERRORS != 0)
+		#define SOL_PRINT_ERRORS_I_ SOL_ON
+	#else
+		#define SOL_PRINT_ERRORS_I_ SOL_OFF
+	#endif
 #else
 	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
 		#define SOL_PRINT_ERRORS_I_ SOL_ON
@@ -525,6 +537,37 @@
 	#endif
 #else
 	#define SOL_USE_UNSAFE_BASE_LOOKUP_I_ SOL_OFF
+#endif
+
+#if defined(SOL_INSIDE_UNREAL)
+	#if (SOL_INSIDE_UNREAL != 0)
+		#define SOL_INSIDE_UNREAL_ENGINE_I_ SOL_ON
+	#else
+		#define SOL_INSIDE_UNREAL_ENGINE_I_ SOL_OFF
+	#endif
+#else
+	#if defined(UE_BUILD_DEBUG) || defined(UE_BUILD_DEVELOPMENT) || defined(UE_BUILD_TEST) || defined(UE_BUILD_SHIPPING) || defined(UE_SERVER)
+		#define SOL_INSIDE_UNREAL_ENGINE_I_ SOL_ON
+	#else
+		#define SOL_INSIDE_UNREAL_ENGINE_I_ SOL_DEFAULT_OFF
+	#endif
+#endif
+
+#if defined(SOL_NO_COMPAT)
+	#if (SOL_NO_COMPAT != 0)
+		#define SOL_USE_COMPATIBILITY_LAYER_I_ SOL_OFF
+	#else
+		#define SOL_USE_COMPATIBILITY_LAYER_I_ SOL_ON
+	#endif
+#else
+	#define SOL_USE_COMPATIBILITY_LAYER_I_ SOL_DEFAULT_ON
+#endif
+
+#if SOL_IS_ON(SOL_COMPILER_FRONTEND_MINGW_I_) && defined(__GNUC__) && (__GNUC__ < 6)
+	// MinGW is off its rocker in some places...
+	#define SOL_MINGW_CCTYPE_IS_POISONED_I_ SOL_ON
+#else
+	#define SOL_MINGW_CCTYPE_IS_POISONED_I_ SOL_DEFAULT_OFF
 #endif
 // clang-format on
 
