@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-09-26 10:47:52.207756 UTC
-// This header was generated with sol v3.2.1 (revision 000fa31)
+// Generated 2020-09-26 13:38:14.123663 UTC
+// This header was generated with sol v3.2.1 (revision 1fb483d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -567,6 +567,16 @@
 	#endif
 #else
 	#define SOL_USE_COMPATIBILITY_LAYER_I_ SOL_DEFAULT_ON
+#endif
+
+#if defined(SOL_GET_FUNCTION_POINTER_UNSAFE)
+	#if (SOL_GET_FUNCTION_POINTER_UNSAFE != 0)
+		#define SOL_GET_FUNCTION_POINTER_UNSAFE_I_ SOL_ON
+	#else
+		#define SOL_GET_FUNCTION_POINTER_UNSAFE_I_ SOL_OFF
+	#endif
+#else
+	#define SOL_GET_FUNCTION_POINTER_UNSAFE_I_ SOL_DEFAULT_OFF
 #endif
 
 #if SOL_IS_ON(SOL_COMPILER_FRONTEND_MINGW_I_) && defined(__GNUC__) && (__GNUC__ < 6)

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-09-26 10:47:51.277755 UTC
-// This header was generated with sol v3.2.1 (revision 000fa31)
+// Generated 2020-09-26 13:38:13.096661 UTC
+// This header was generated with sol v3.2.1 (revision 1fb483d)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -567,6 +567,16 @@
 	#endif
 #else
 	#define SOL_USE_COMPATIBILITY_LAYER_I_ SOL_DEFAULT_ON
+#endif
+
+#if defined(SOL_GET_FUNCTION_POINTER_UNSAFE)
+	#if (SOL_GET_FUNCTION_POINTER_UNSAFE != 0)
+		#define SOL_GET_FUNCTION_POINTER_UNSAFE_I_ SOL_ON
+	#else
+		#define SOL_GET_FUNCTION_POINTER_UNSAFE_I_ SOL_OFF
+	#endif
+#else
+	#define SOL_GET_FUNCTION_POINTER_UNSAFE_I_ SOL_DEFAULT_OFF
 #endif
 
 #if SOL_IS_ON(SOL_COMPILER_FRONTEND_MINGW_I_) && defined(__GNUC__) && (__GNUC__ < 6)
@@ -7588,12 +7598,20 @@ namespace sol {
 		template <>
 		struct lua_type_of<type> : std::integral_constant<type, type::poly> { };
 
+#if SOL_IS_ON(SOL_GET_FUNCTION_POINTER_UNSAFE_I_)
+		template <typename T>
+		struct lua_type_of<T*> : std::integral_constant<type, std::is_function_v<T> ? type::function : type::userdata> { };
+#else
 		template <typename T>
 		struct lua_type_of<T*> : std::integral_constant<type, type::userdata> { };
+#endif
 
 		template <typename T>
 		struct lua_type_of<T, std::enable_if_t<std::is_arithmetic_v<T> || std::is_same_v<T, lua_Number> || std::is_same_v<T, lua_Integer>>>
 		: std::integral_constant<type, type::number> { };
+
+		template <typename T>
+		struct lua_type_of<T, std::enable_if_t<std::is_function_v<T>>> : std::integral_constant<type, type::function> { };
 
 		template <typename T>
 		struct lua_type_of<T, std::enable_if_t<std::is_enum_v<T>>> : std::integral_constant<type, type::number> { };
@@ -9849,7 +9867,7 @@ namespace sol {
 #if SOL_IS_OFF(SOL_ALIGN_MEMORY_I_)
 			     false
 #else
-			     (std::alignment_of<T>::value > 1)
+			     (std::alignment_of_v<T> > 1)
 #endif
 			     >
 			     use_align;
@@ -9863,7 +9881,7 @@ namespace sol {
 				return ptr;
 			}
 			std::size_t space = (std::numeric_limits<std::size_t>::max)();
-			return align(std::alignment_of<T>::value, sizeof(T), ptr, space);
+			return align(std::alignment_of_v<T>, sizeof(T), ptr, space);
 		}
 
 		template <typename T>
@@ -9872,7 +9890,7 @@ namespace sol {
 #if SOL_IS_OFF(SOL_ALIGN_MEMORY_I_)
 			     false
 #else
-			     (std::alignment_of<T>::value > 1)
+			     (std::alignment_of_v<T> > 1)
 #endif
 			     >
 			     use_align;
@@ -9880,7 +9898,7 @@ namespace sol {
 				return ptr;
 			}
 			std::size_t space = (std::numeric_limits<std::size_t>::max)();
-			return align(std::alignment_of<T>::value, sizeof(T), ptr, space);
+			return align(std::alignment_of_v<T>, sizeof(T), ptr, space);
 		}
 
 		template <typename T>
@@ -9982,7 +10000,7 @@ namespace sol {
 #if SOL_IS_OFF(SOL_ALIGN_MEMORY_I_)
 			     false
 #else
-			     (std::alignment_of<T*>::value > 1 || std::alignment_of<T>::value > 1)
+			     (std::alignment_of<T*>::value > 1 || std::alignment_of_v<T> > 1)
 #endif
 			     >
 			     use_align;
@@ -10121,7 +10139,7 @@ namespace sol {
 #if SOL_IS_OFF(SOL_ALIGN_MEMORY_I_)
 			     false
 #else
-			     (std::alignment_of<T>::value > 1)
+			     (std::alignment_of_v<T> > 1)
 #endif
 			     >
 			     use_align;
@@ -10135,13 +10153,13 @@ namespace sol {
 
 			std::size_t allocated_size = initial_size;
 			void* unadjusted = lua_newuserdata(L, allocated_size);
-			void* adjusted = align(std::alignment_of<T>::value, sizeof(T), unadjusted, allocated_size);
+			void* adjusted = align(std::alignment_of_v<T>, sizeof(T), unadjusted, allocated_size);
 			if (adjusted == nullptr) {
 				lua_pop(L, 1);
 				// try again, add extra space for alignment padding
 				allocated_size = misaligned_size;
 				unadjusted = lua_newuserdata(L, allocated_size);
-				adjusted = align(std::alignment_of<T>::value, sizeof(T), unadjusted, allocated_size);
+				adjusted = align(std::alignment_of_v<T>, sizeof(T), unadjusted, allocated_size);
 				if (adjusted == nullptr) {
 					lua_pop(L, 1);
 					luaL_error(L, "cannot properly align memory for '%s'", detail::demangle<T>().data());
@@ -10315,13 +10333,20 @@ namespace sol {
 			int last;
 			int used;
 
-			record() : last(), used() {
+			record() noexcept : last(), used() {
 			}
-			void use(int count) {
+			void use(int count) noexcept {
 				last = count;
 				used += count;
 			}
 		};
+
+		namespace stack_detail {
+			template <typename Function>
+			Function* get_function_pointer(lua_State*, int, record&) noexcept;
+			template <typename Function, typename Handler>
+			bool check_function_pointer(lua_State* L, int index, Handler&& handler, record& tracking) noexcept;
+		} // namespace stack_detail
 
 	} // namespace stack
 
@@ -11457,6 +11482,11 @@ namespace sol { namespace stack {
 				}
 				return stack::unqualified_check<ValueType>(L, index, no_panic, tracking);
 			}
+#if SOL_IS_ON(SOL_GET_FUNCTION_POINTER_UNSAFE_I_)
+			else if constexpr (std::is_function_v<T> || (std::is_pointer_v<T> && std::is_function_v<std::remove_pointer_t<T>>)) {
+				return stack_detail::check_function_pointer<std::remove_pointer_t<T>>(L, index, std::forward<Handler>(handler), tracking);
+			}
+#endif
 			else if constexpr (expected == type::userdata) {
 				if constexpr (meta::any_same_v<T, userdata_value> || meta::is_specialization_of_v<T, basic_userdata>) {
 					tracking.use(1);
@@ -12265,6 +12295,11 @@ namespace sol { namespace stack {
 				luaL_Stream* pstream = static_cast<luaL_Stream*>(lua_touserdata(L, index));
 				return *pstream;
 			}
+#if SOL_IS_ON(SOL_GET_FUNCTION_POINTER_UNSAFE_I_)
+			else if constexpr (std::is_function_v<T> || (std::is_pointer_v<T> && std::is_function_v<std::remove_pointer_t<T>>)) {
+				return stack_detail::get_function_pointer<std::remove_pointer_t<T>>(L, index, tracking);
+			}
+#endif
 			else {
 				return stack_detail::unchecked_unqualified_get<detail::as_value_tag<T>>(L, index, tracking);
 			}
@@ -13051,10 +13086,22 @@ namespace sol { namespace stack {
 	template <typename T>
 	struct unqualified_getter<T*> {
 		static T* get(lua_State* L, int index, record& tracking) {
+#if SOL_IS_ON(SOL_GET_FUNCTION_POINTER_UNSAFE_I_)
+			if constexpr (std::is_function_v<T>) {
+				return stack_detail::get_function_pointer<T>(L, index, tracking);
+			}
+			else {
+				unqualified_getter<detail::as_pointer_tag<T>> g;
+				// Avoid VC++ warning
+				(void)g;
+				return g.get(L, index, tracking);
+			}
+#else
 			unqualified_getter<detail::as_pointer_tag<T>> g;
 			// Avoid VC++ warning
 			(void)g;
 			return g.get(L, index, tracking);
+#endif
 		}
 	};
 
@@ -14936,8 +14983,9 @@ namespace sol {
 				data_t data { {} };
 				std::memcpy(&data[0], std::addressof(item), itemsize);
 				int pushcount = 0;
-				for (auto&& v : data) {
-					pushcount += push(L, lightuserdata_value(v));
+				for (const auto& v : data) {
+					lua_pushlightuserdata(L, v);
+					pushcount += 1;
 				}
 				return pushcount;
 			}
@@ -14948,8 +14996,30 @@ namespace sol {
 				typedef std::array<void*, data_t_count> data_t;
 				data_t voiddata { {} };
 				for (std::size_t i = 0, d = 0; d < sizeof(T); ++i, d += sizeof(void*)) {
-					voiddata[i] = get<lightuserdata_value>(L, upvalue_index(index++));
+					voiddata[i] = lua_touserdata(L, upvalue_index(index++));
 				}
+				return std::pair<T, int>(*reinterpret_cast<T*>(static_cast<void*>(voiddata.data())), index);
+			}
+
+			template <typename T>
+			inline std::pair<T, int> get_as_upvalues_using_function(lua_State* L, int function_index = -1) {
+				static const std::size_t data_t_count = (sizeof(T) + (sizeof(void*) - 1)) / sizeof(void*);
+				typedef std::array<void*, data_t_count> data_t;
+				function_index = lua_absindex(L, function_index);
+				int index = 0;
+				data_t voiddata { {} };
+				for (std::size_t d = 0; d < sizeof(T); d += sizeof(void*)) {
+					// first upvalue is nullptr to respect environment shenanigans
+					// So +2 instead of +1
+					const char* upvalue_name = lua_getupvalue(L, function_index, index + 2);
+					if (upvalue_name == nullptr) {
+						// We should freak out here...
+						break;
+					}
+					voiddata[index] = lua_touserdata(L, -1);
+					++index;
+				}
+				lua_pop(L, index);
 				return std::pair<T, int>(*reinterpret_cast<T*>(static_cast<void*>(voiddata.data())), index);
 			}
 
@@ -18120,7 +18190,7 @@ namespace sol {
 			using type = T;
 		};
 
-		struct call_indicator {};
+		struct call_indicator { };
 
 		template <bool yielding>
 		int lua_c_wrapper(lua_State* L) {
@@ -18146,16 +18216,15 @@ namespace sol {
 			}
 		}
 
-		struct c_function_invocation {};
+		struct c_function_invocation { };
 
 		template <bool is_yielding, typename Fx, typename... Args>
 		void select(lua_State* L, Fx&& fx, Args&&... args);
 
 		template <bool is_yielding, bool no_trampoline, typename Fx, typename... Args>
 		void select_set_fx(lua_State* L, Args&&... args) {
-			lua_CFunction freefunc = no_trampoline ?
-				detail::static_trampoline<function_detail::call<meta::unqualified_t<Fx>, 2, is_yielding>>
-				: function_detail::call<meta::unqualified_t<Fx>, 2, is_yielding>;
+			lua_CFunction freefunc = no_trampoline ? detail::static_trampoline<function_detail::call<meta::unqualified_t<Fx>, 2, is_yielding>>
+			                                       : function_detail::call<meta::unqualified_t<Fx>, 2, is_yielding>;
 
 			int upvalues = 0;
 			upvalues += stack::push(L, nullptr);
@@ -18761,7 +18830,56 @@ namespace sol {
 				}
 			}
 		};
-	} // namespace stack
+
+		namespace stack_detail {
+			template <typename Function, typename Handler>
+			bool check_function_pointer(lua_State* L, int index, Handler&& handler, record& tracking) noexcept {
+#if SOL_IS_ON(SOL_GET_FUNCTION_POINTER_UNSAFE_I_)
+				tracking.use(1);
+				bool success = lua_iscfunction(L, index) == 1;
+				if (success) {
+					// there must be at LEAST 2 upvalues; otherwise, we didn't serialize it.
+					const char* upvalue_name = lua_getupvalue(L, index, 2);
+					lua_pop(L, 1);
+					success = upvalue_name != nullptr;
+				}
+				if (!success) {
+					// expected type, actual type
+					handler(
+					     L, index, type::function, type_of(L, index), "type must be a Lua C Function gotten from a function pointer serialized by sol2");
+				}
+				return success;
+#else
+				return false;
+#endif
+			}
+
+			template <typename Function>
+			Function* get_function_pointer(lua_State* L, int index, record& tracking) noexcept {
+#if SOL_IS_ON(SOL_GET_FUNCTION_POINTER_UNSAFE_I_)
+				tracking.use(1);
+				auto udata = stack::stack_detail::get_as_upvalues_using_function<Function*>(L, index);
+				Function* fx = udata.first;
+				return fx;
+#else
+				static_assert(meta::meta_detail::always_true<Function>::value,
+#if SOL_IS_DEFAULT_OFF(SOL_GET_FUNCTION_POINTER_UNSAFE_I_)
+				     "You are attempting to retrieve a function pointer type. "
+				     "This is inherently unsafe in sol2. In order to do this, you must turn on the "
+				     "SOL_GET_FUNCTION_POINTER_UNSAFE configuration macro, as detailed in the documentation. "
+				     "Please be careful!"
+#else
+				     "You are attempting to retrieve a function pointer type. "
+				     "You explicitly turned off the ability to do this by defining "
+				     "SOL_GET_FUNCTION_POINTER_UNSAFE or similar to be off. "
+				     "Please reconsider this!"
+#endif
+				);
+				return nullptr;
+#endif
+			}
+		} // namespace stack_detail
+	}      // namespace stack
 } // namespace sol
 
 // end of sol/function_types.hpp

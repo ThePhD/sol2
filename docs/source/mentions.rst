@@ -24,6 +24,7 @@ Okay, so the features don't convince you, the documentation doesn't convince you
 +----------+---------+
 
 * In `Perforce`_ (later versions of the code using sol2 more directly can be requested by e-mailing support@perforce.com !)
+* For Sandboxing `Fun`_!
 * In `High Performance Computing research`_
 	- `Published research, too!`_
 * The `Multiple Arcade Machine Emulator (MAME)`_ project switched from using LuaBridge to sol3!
@@ -39,7 +40,7 @@ Okay, so the features don't convince you, the documentation doesn't convince you
 * (Twitter) Twitter has some people that link it:
 	- The image above, `tweeted out by eevee`_
 	- Eevee: `"I heartily recommend sol3"`_
-	- Elias Daler: `"sol3 saved my life."`_
+	- Elias Daler: `"sol2 is making usertypes in Lua so awesome <3"`_
 	- Racod's Lair: `"from outdated LuaBridge to superior #sol3"`_
 * (Reddit) Posts on reddit about it!
 	- `sol2's initial reddit release`_
@@ -52,12 +53,14 @@ Are you using sol3 for something neat? Want it to be featured here or think it's
 .. _tell me about your uses!: https://github.com/ThePhD/sol2/issues/189
 .. _eevee: https://twitter.com/eevee
 .. _eevee's blog: https://eev.ee/dev/2016/08/07/weekly-roundup-three-big-things/
+.. _Fun: https://blog.rubenwardy.com/2020/07/26/sol3-script-sandbox/
 .. _Jason Turner's presentation: https://github.com/lefticus/presentations/blob/master/WhyAndHowToAddScripting.md
 .. _Elias Daler's blog: https://eliasdaler.github.io/cppcast#read-more
 .. _CppCast: http://cppcast.com/2016/07/elias-daler/
 .. _tweeted out by eevee: https://twitter.com/eevee/status/762039984085798913
 .. _"I heartily recommend sol3": https://twitter.com/eevee/status/762040086540144644
 .. _"from outdated LuaBridge to superior #sol3": https://twitter.com/racodslair/status/754031870640267264
+.. _"sol2 is making usertypes in Lua so awesome <3": https://twitter.com/EliasDaler/status/778708299029946368
 .. _sol2's initial reddit release: https://www.reddit.com/r/cpp/comments/4a8gy7/sol2_lua_c_binding_framework/
 .. _Benchmarking Discussing: https://www.reddit.com/r/cpp/comments/4x82hd/plain_c_versus_lua_libraries_benchmarking_speed/
 .. _"After spending hours with sol2, it wins. Amazing lib.": https://twitter.com/EliasDaler/status/739215685264494593

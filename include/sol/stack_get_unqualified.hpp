@@ -163,6 +163,11 @@ namespace sol { namespace stack {
 				luaL_Stream* pstream = static_cast<luaL_Stream*>(lua_touserdata(L, index));
 				return *pstream;
 			}
+#if SOL_IS_ON(SOL_GET_FUNCTION_POINTER_UNSAFE_I_)
+			else if constexpr (std::is_function_v<T> || (std::is_pointer_v<T> && std::is_function_v<std::remove_pointer_t<T>>)) {
+				return stack_detail::get_function_pointer<std::remove_pointer_t<T>>(L, index, tracking);
+			}
+#endif
 			else {
 				return stack_detail::unchecked_unqualified_get<detail::as_value_tag<T>>(L, index, tracking);
 			}
@@ -949,10 +954,22 @@ namespace sol { namespace stack {
 	template <typename T>
 	struct unqualified_getter<T*> {
 		static T* get(lua_State* L, int index, record& tracking) {
+#if SOL_IS_ON(SOL_GET_FUNCTION_POINTER_UNSAFE_I_)
+			if constexpr (std::is_function_v<T>) {
+				return stack_detail::get_function_pointer<T>(L, index, tracking);
+			}
+			else {
+				unqualified_getter<detail::as_pointer_tag<T>> g;
+				// Avoid VC++ warning
+				(void)g;
+				return g.get(L, index, tracking);
+			}
+#else
 			unqualified_getter<detail::as_pointer_tag<T>> g;
 			// Avoid VC++ warning
 			(void)g;
 			return g.get(L, index, tracking);
+#endif
 		}
 	};
 

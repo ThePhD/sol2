@@ -101,8 +101,9 @@ namespace sol {
 				data_t data { {} };
 				std::memcpy(&data[0], std::addressof(item), itemsize);
 				int pushcount = 0;
-				for (auto&& v : data) {
-					pushcount += push(L, lightuserdata_value(v));
+				for (const auto& v : data) {
+					lua_pushlightuserdata(L, v);
+					pushcount += 1;
 				}
 				return pushcount;
 			}
@@ -113,8 +114,30 @@ namespace sol {
 				typedef std::array<void*, data_t_count> data_t;
 				data_t voiddata { {} };
 				for (std::size_t i = 0, d = 0; d < sizeof(T); ++i, d += sizeof(void*)) {
-					voiddata[i] = get<lightuserdata_value>(L, upvalue_index(index++));
+					voiddata[i] = lua_touserdata(L, upvalue_index(index++));
 				}
+				return std::pair<T, int>(*reinterpret_cast<T*>(static_cast<void*>(voiddata.data())), index);
+			}
+
+			template <typename T>
+			inline std::pair<T, int> get_as_upvalues_using_function(lua_State* L, int function_index = -1) {
+				static const std::size_t data_t_count = (sizeof(T) + (sizeof(void*) - 1)) / sizeof(void*);
+				typedef std::array<void*, data_t_count> data_t;
+				function_index = lua_absindex(L, function_index);
+				int index = 0;
+				data_t voiddata { {} };
+				for (std::size_t d = 0; d < sizeof(T); d += sizeof(void*)) {
+					// first upvalue is nullptr to respect environment shenanigans
+					// So +2 instead of +1
+					const char* upvalue_name = lua_getupvalue(L, function_index, index + 2);
+					if (upvalue_name == nullptr) {
+						// We should freak out here...
+						break;
+					}
+					voiddata[index] = lua_touserdata(L, -1);
+					++index;
+				}
+				lua_pop(L, index);
 				return std::pair<T, int>(*reinterpret_cast<T*>(static_cast<void*>(voiddata.data())), index);
 			}
 
