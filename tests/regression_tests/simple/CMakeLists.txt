@@ -33,35 +33,7 @@ function(CREATE_TEST test_target_name test_name target_sol)
 		EXPORT_NAME sol2::${test_name})
 	target_link_libraries(${test_target_name} 
 		PUBLIC Threads::Threads ${LUA_LIBRARIES} ${target_sol})
-	
-	if (MSVC)
-		if (NOT CMAKE_COMPILER_ID MATCHES "Clang")
-			target_compile_options(${test_target_name} 
-				PRIVATE /bigobj /W4)
-		endif()
-	else()
-		target_compile_options(${test_target_name} 
-			PRIVATE -std=c++1z -pthread
-			-Wno-unknown-warning -Wno-unknown-warning-option
-			-Wall -Wpedantic -Werror -pedantic -pedantic-errors
-			-Wno-noexcept-type)
 
-		if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-			# For another day, when C++ is not so crap
-			# and we have time to audit the entire lib
-			# for all uses of `detail::swallow`...
-			#target_compile_options(${test_target_name}
-			#	PRIVATE -Wcomma)		
-		endif()
-
-		if (IS_X86)
-			if(MINGW)
-				set_target_properties(${test_target_name}
-					PROPERTIES
-					LINK_FLAGS -static-libstdc++)
-			endif()
-		endif()	
-	endif()
 	if (MSVC)
 		target_compile_options(${test_target_name}
 			PRIVATE /EHsc /std:c++latest)

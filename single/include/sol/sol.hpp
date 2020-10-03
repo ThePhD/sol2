@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-09-26 13:38:13.096661 UTC
-// This header was generated with sol v3.2.1 (revision 1fb483d)
+// Generated 2020-10-03 21:34:24.496436 UTC
+// This header was generated with sol v3.2.1 (revision 48eea7b5)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -21137,6 +21137,8 @@ namespace sol {
 
 // end of sol/usertype_container.hpp
 
+#include <unordered_map>
+
 namespace sol {
 
 	namespace container_detail {
@@ -21709,6 +21711,7 @@ namespace sol {
 // beginning of sol/usertype_storage.hpp
 
 #include <bitset>
+#include <unordered_map>
 
 namespace sol { namespace u_detail {
 

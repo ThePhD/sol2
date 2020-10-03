@@ -2,7 +2,9 @@
 #include <sol/sol.hpp>
 
 int main(int argc, char* argv[]) {
-
+	// silence unused warnings
+	(void)argc;
+	(void)argv;
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::coroutine, sol::lib::string, sol::lib::io);
 

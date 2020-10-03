@@ -2,6 +2,7 @@
 #include <sol/sol.hpp>
 
 #include <iostream>
+#include <unordered_map>
 #include "assert.hpp"
 
 // use as-is,
@@ -39,12 +40,12 @@ int main() {
 	lua.open_libraries(sol::lib::base);
 
 	lua.new_usertype<dynamic_object>("dynamic_object",
-		sol::meta_function::index, &dynamic_object::dynamic_get,
-		sol::meta_function::new_index, &dynamic_object::dynamic_set,
-		sol::meta_function::length, [](dynamic_object& d) {
-		return d.entries.size();
-	}
-	);
+	     sol::meta_function::index,
+	     &dynamic_object::dynamic_get,
+	     sol::meta_function::new_index,
+	     &dynamic_object::dynamic_set,
+	     sol::meta_function::length,
+	     [](dynamic_object& d) { return d.entries.size(); });
 
 	lua.safe_script(R"(
 d1 = dynamic_object.new()

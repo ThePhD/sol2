@@ -12,6 +12,7 @@ After that, make sure you grab either the `single header file release`_, or just
 When you're ready, try compiling this short snippet:
 
 .. literalinclude:: ../../../examples/source/tutorials/first_snippet.cpp
+	:lines: 1-4, 8-
 	:linenos:
 	:caption: hello_lua.cpp
 	:name: hello-lua
@@ -31,6 +32,7 @@ If this works, you're ready to start! The first line creates the ``lua_State`` a
 The second line opens a single lua-provided library, "base". There are several other libraries that come with lua that you can open by default, and those are included in the :ref:`sol::lib<lib-enum>` enumeration. You can open multiple base libraries by specifying multiple ``sol::lib`` arguments:
 
 .. literalinclude:: ../../../examples/source/tutorials/open_multiple_libraries.cpp
+	:lines: 1-4, 8-
 	:linenos:
 	:caption: multiple_libraries.cpp
 	:name: open-multiple-libraries
@@ -40,7 +42,7 @@ If you're interested in integrating sol with a project that already uses some ot
 .. note::
 
 	After you learn the basics of sol, it is usually advised that if you think something can work, you should TRY IT. It will probably work!
-	
+
 
 Some more ways of loading scripts and handling errors is shown `in this example`_! There is also a full, cross-platform `example of loading a DLL`_.
 

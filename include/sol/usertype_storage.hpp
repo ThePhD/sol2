@@ -28,6 +28,7 @@
 #include <sol/make_reference.hpp>
 
 #include <bitset>
+#include <unordered_map>
 
 namespace sol { namespace u_detail {
 

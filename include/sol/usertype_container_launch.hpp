@@ -27,6 +27,8 @@
 #include <sol/stack.hpp>
 #include <sol/usertype_container.hpp>
 
+#include <unordered_map>
+
 namespace sol {
 
 	namespace container_detail {
