@@ -48,9 +48,9 @@ get going:
 connect
 --------
 
-Come to the Github Issues or the Discord! We've got a friendly community, and they can help you out or you can come just to talk about the things you are working on!
+Come to the Github Issues! We've got a friendly community, and they can help you out or you can come just to talk about the things you are working on!
 
-|ds| |gh|
+|gh|
 
 
 support
@@ -61,10 +61,9 @@ You can support the project and other related endeavors in various ways.
 |gs| |pa| |kf| |lp| |pp|  
 
 
-GitHub Sponsors is matching all sponsorships 100% and they also do not charge fees on either end of the transaction as well until sometime in June 2020. Still, you can support sol3 development by using any of the above. This is a time-consuming effort, so individuals who donate get to:
+This is a time-consuming effort, so individuals who donate get to:
 
 - steer the direction and time spent on sol
-- get a role on the Discord server
 - get their name put up in the CONTRIBUTORS list
 - put something of their choice on sol3's README or the documentation's front page
 
@@ -122,11 +121,6 @@ Search
 	:target: https://www.paypal.me/Soasis
 	:alt: sol3 PayPal
 	:align: middle
-
-.. |ds| image:: media/discord_logo_wordmark.png
-	:height: 75
-	:target: https://discord.gg/buxkYNT
-	:alt: sol3 Discord
 
 .. |gh| image:: media/github_logo.png
 	:height: 75
