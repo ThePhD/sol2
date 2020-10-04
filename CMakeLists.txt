@@ -25,7 +25,7 @@
 cmake_minimum_required(VERSION 3.5.0)
 
 # # # project declaration
-project(sol2 VERSION 3.2.0 LANGUAGES CXX C)
+project(sol2 VERSION 3.2.2 LANGUAGES CXX C)
 
 include(GNUInstallDirs)
 

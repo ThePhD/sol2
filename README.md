@@ -1,4 +1,4 @@
-## sol3 (sol2 v3.0.3)
+## sol3 (sol2 v3.2.2)
 
 [![Linux & Max OSX Build Status](https://travis-ci.org/ThePhD/sol2.svg?branch=develop)](https://travis-ci.org/ThePhD/sol2)
 [![Windows Build status](https://ci.appveyor.com/api/projects/status/n38suofr21e9uk7h?svg=true)](https://ci.appveyor.com/project/ThePhD/sol2)
