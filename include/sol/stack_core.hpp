@@ -40,9 +40,11 @@
 #include <bitset>
 #include <forward_list>
 #include <string>
+#include <limits>
 #include <algorithm>
 #include <sstream>
 #include <optional>
+#include <type_traits>
 
 namespace sol {
 	namespace detail {

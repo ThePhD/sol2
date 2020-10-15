@@ -31,9 +31,9 @@
 // clang-format off
 
 #define SOL_VERSION_MAJOR 3
-#define SOL_VERSION_MINOR 5
-#define SOL_VERSION_PATCH 0
-#define SOL_VERSION_STRING "3.5.0"
+#define SOL_VERSION_MINOR 2
+#define SOL_VERSION_PATCH 3
+#define SOL_VERSION_STRING "3.2.3"
 #define SOL_VERSION ((SOL_VERSION_MAJOR * 100000) + (SOL_VERSION_MINOR * 100) + (SOL_VERSION_PATCH))
 
 #define SOL_IS_ON(OP_SYMBOL) ((3 OP_SYMBOL 3) != 0)
@@ -179,20 +179,32 @@
 	#define SOL_RTTI_I_ SOL_DEFAULT_ON
 #endif
 
-#if defined(SOL_NO_THREAD_LOCAL) && (SOL_NO_THREAD_LOCAL != 0)
-	#define SOL_USE_THREAD_LOCAL_I_ SOL_OFF
+#if defined(SOL_NO_THREAD_LOCAL)
+	#if SOL_NO_THREAD_LOCAL != 0
+		#define SOL_USE_THREAD_LOCAL_I_ SOL_OFF
+	#else
+		#define SOL_USE_THREAD_LOCAL_I_ SOL_ON
+	#endif
 #else
 	#define SOL_USE_THREAD_LOCAL_I_ SOL_DEFAULT_ON
 #endif // thread_local keyword is bjorked on some platforms
 
-#if defined(SOL_ALL_SAFETIES_ON) && (SOL_ALL_SAFETIES_ON != 0)
-	#define SOL_ALL_SAFETIES_ON_I_ SOL_ON
+#if defined(SOL_ALL_SAFETIES_ON)
+	#if SOL_ALL_SAFETIES_ON != 0
+		#define SOL_ALL_SAFETIES_ON_I_ SOL_ON
+	#else
+		#define SOL_ALL_SAFETIES_ON_I_ SOL_FF
+	#endif
 #else
 	#define SOL_ALL_SAFETIES_ON_I_ SOL_DEFAULT_OFF
 #endif
 
-#if defined(SOL_SAFE_GETTER) && (SOL_SAFE_GETTER != 0)
-	#define SOL_SAFE_GETTER_I_ SOL_ON
+#if defined(SOL_SAFE_GETTER)
+	#if SOL_SAFE_GETTER != 0
+		#define SOL_SAFE_GETTER_I_ SOL_ON
+	#else
+		#define SOL_SAFE_GETTER_I_ SOL_OFF
+	#endif
 #else
 	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
 		#define SOL_SAFE_GETTER_I_ SOL_ON
@@ -203,8 +215,12 @@
 	#endif
 #endif
 
-#if defined(SOL_SAFE_USERTYPE) && (SOL_SAFE_USERTYPE != 0)
-	#define SOL_SAFE_USERTYPE_I_ SOL_ON
+#if defined(SOL_SAFE_USERTYPE)
+	#if SOL_SAFE_USERTYPE != 0
+		#define SOL_SAFE_USERTYPE_I_ SOL_ON
+	#else
+		#define SOL_SAFE_USERTYPE_I_ SOL_OFF
+	#endif
 #else
 	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
 		#define SOL_SAFE_USERTYPE_I_ SOL_ON
@@ -215,8 +231,12 @@
 	#endif
 #endif
 
-#if defined(SOL_SAFE_REFERENCES) && (SOL_SAFE_REFERENCES != 0)
-	#define SOL_SAFE_REFERENCES_I_ SOL_ON
+#if defined(SOL_SAFE_REFERENCES)
+	#if SOL_SAFE_REFERENCES != 0
+		#define SOL_SAFE_REFERENCES_I_ SOL_ON
+	#else
+		#define SOL_SAFE_REFERENCES_I_ SOL_OFF
+	#endif
 #else
 	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
 		#define SOL_SAFE_REFERENCES_I_ SOL_ON
@@ -227,9 +247,18 @@
 	#endif
 #endif
 
-#if (defined(SOL_SAFE_FUNCTIONS) && (SOL_SAFE_FUNCTIONS != 0)) \
-    || (defined(SOL_SAFE_FUNCTION_OBJECTS) && (SOL_SAFE_FUNCTION_OBJECTS != 0))
-	#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_ON
+#if defined(SOL_SAFE_FUNCTIONS)
+	#if SOL_SAFE_FUNCTIONS != 0
+		#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_ON
+	#else
+		#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_OFF
+	#endif
+#elif defined (SOL_SAFE_FUNCTION_OBJECTS)
+	#if SOL_SAFE_FUNCTION_OBJECTS != 0
+		#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_ON
+	#else
+		#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_OFF
+	#endif
 #else
 	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
 		#define SOL_SAFE_FUNCTION_OBJECTS_I_ SOL_ON
@@ -240,8 +269,12 @@
 	#endif
 #endif
 
-#if defined(SOL_SAFE_FUNCTION_CALLS) && (SOL_SAFE_FUNCTION_CALLS != 0)
-	#define SOL_SAFE_FUNCTION_CALLS_I_ SOL_ON
+#if defined(SOL_SAFE_FUNCTION_CALLS)
+	#if SOL_SAFE_FUNCTION_CALLS != 0
+		#define SOL_SAFE_FUNCTION_CALLS_I_ SOL_ON
+	#else
+		#define SOL_SAFE_FUNCTION_CALLS_I_ SOL_OFF
+	#endif
 #else
 	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
 		#define SOL_SAFE_FUNCTION_CALLS_I_ SOL_ON
@@ -252,8 +285,12 @@
 	#endif
 #endif
 
-#if defined(SOL_SAFE_PROXIES) && (SOL_SAFE_PROXIES != 0)
-	#define SOL_SAFE_PROXIES_I_ SOL_ON
+#if defined(SOL_SAFE_PROXIES)
+	#if SOL_SAFE_PROXIES != 0
+		#define SOL_SAFE_PROXIES_I_ SOL_ON
+	#else
+		#define SOL_SAFE_PROXIES_I_ SOL_OFF
+	#endif
 #else
 	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
 		#define SOL_SAFE_PROXIES_I_ SOL_ON
@@ -264,8 +301,12 @@
 	#endif
 #endif
 
-#if defined(SOL_SAFE_NUMERICS) && (SOL_SAFE_NUMERICS != 0)
-	#define SOL_SAFE_NUMERICS_I_ SOL_ON
+#if defined(SOL_SAFE_NUMERICS)
+	#if SOL_SAFE_NUMERICS != 0
+		#define SOL_SAFE_NUMERICS_I_ SOL_ON
+	#else
+		#define SOL_SAFE_NUMERICS_I_ SOL_OFF
+	#endif
 #else
 	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
 		#define SOL_SAFE_NUMERICS_I_ SOL_ON
@@ -276,8 +317,12 @@
 	#endif
 #endif
 
-#if defined(SOL_SAFE_STACK_CHECK) && (SOL_SAFE_STACK_CHECK != 0)
-	#define SOL_SAFE_STACK_CHECK_I_ SOL_ON
+#if defined(SOL_SAFE_STACK_CHECK)
+	#if SOL_SAFE_STACK_CHECK != 0
+		#define SOL_SAFE_STACK_CHECK_I_ SOL_ON
+	#else
+		#define SOL_SAFE_STACK_CHECK_I_ SOL_OFF
+	#endif
 #else
 	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
 		#define SOL_SAFE_STACK_CHECK_I_ SOL_ON
@@ -288,9 +333,18 @@
 	#endif
 #endif
 
-#if (defined(SOL_NO_CHECK_NUMBER_PRECISION) && (SOL_NO_CHECK_NUMBER_PRECISION != 0)) \
-    || (defined(SOL_NO_CHECKING_NUMBER_PRECISION) && (SOL_NO_CHECKING_NUMBER_PRECISION != 0))
-	#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_OFF
+#if defined(SOL_NO_CHECK_NUMBER_PRECISION)
+	#if SOL_NO_CHECK_NUMBER_PRECISION != 0
+		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_OFF
+	#else
+		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_ON
+	#endif
+#elif defined(SOL_NO_CHECKING_NUMBER_PRECISION)
+	#if SOL_NO_CHECKING_NUMBER_PRECISION != 0
+		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_OFF
+	#else
+		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_ON
+	#endif
 #else
 	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
 		#define SOL_NUMBER_PRECISION_CHECKS_I_ SOL_ON
@@ -313,9 +367,18 @@
 	#define SOL_STRINGS_ARE_NUMBERS_I_ SOL_DEFAULT_OFF
 #endif
 
-#if defined(SOL_ENABLE_INTEROP) && (SOL_ENABLE_INTEROP != 0) \
-    || defined(SOL_USE_INTEROP) && (SOL_USE_INTEROP != 0)
-	#define SOL_USE_INTEROP_I_ SOL_ON
+#if defined(SOL_ENABLE_INTEROP)
+	#if SOL_ENABLE_INTEROP != 0
+		#define SOL_USE_INTEROP_I_ SOL_ON
+	#else
+		#define SOL_USE_INTEROP_I_ SOL_OFF
+	#endif
+#elif defined(SOL_USE_INTEROP)
+	#if SOL_USE_INTEROP != 0
+		#define SOL_USE_INTEROP_I_ SOL_ON
+	#else
+		#define SOL_USE_INTEROP_I_ SOL_OFF
+	#endif
 #else
 	#define SOL_USE_INTEROP_I_ SOL_DEFAULT_OFF
 #endif
@@ -437,16 +500,14 @@
 	#endif
 #endif
 
-#if defined(SOL_DEFAULT_PASS_ON_ERROR) && (SOL_DEFAULT_PASS_ON_ERROR != 0)
-	#define SOL_DEFAULT_PASS_ON_ERROR_I_ SOL_ON
-#else
-	#if SOL_IS_ON(SOL_ALL_SAFETIES_ON_I_)
+#if defined(SOL_DEFAULT_PASS_ON_ERROR)
+	#if (SOL_DEFAULT_PASS_ON_ERROR != 0)
 		#define SOL_DEFAULT_PASS_ON_ERROR_I_ SOL_ON
-	#elif SOL_IS_ON(SOL_DEBUG_BUILD_I_)
-		#define SOL_DEFAULT_PASS_ON_ERROR_I_ SOL_DEFAULT_ON
 	#else
 		#define SOL_DEFAULT_PASS_ON_ERROR_I_ SOL_OFF
 	#endif
+#else
+	#define SOL_DEFAULT_PASS_ON_ERROR_I_ SOL_DEFAULT_OFF
 #endif
 
 #if defined(SOL_USING_CXX_LUA)
