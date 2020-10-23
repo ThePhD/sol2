@@ -61,7 +61,7 @@ namespace sol {
 #if SOL_IS_ON(SOL_USE_BOOST_I_)
 		template <typename T>
 		struct associated_nullopt<boost::optional<T>> {
-			inline static constexpr std::nullopt_t value = boost::nullopt;
+			inline static constexpr boost::none_t value = boost::none;
 		};
 #endif // Boost nullopt
 

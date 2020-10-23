@@ -677,7 +677,11 @@ COMPAT53_API char* luaL_prepbuffsize(luaL_Buffer_53* B, size_t s) {
 			newcap = B->nelems + s;
 		if (newcap < B->capacity) /* overflow */
 			luaL_error(B->L2, "buffer too large");
+#if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM >= 504
+		newptr = (char*)lua_newuserdatauv(B->L2, newcap, 0);
+#else
 		newptr = (char*)lua_newuserdata(B->L2, newcap);
+#endif
 		memcpy(newptr, B->ptr, B->nelems);
 		if (B->ptr != B->b.buffer)
 			lua_replace(B->L2, -2); /* remove old buffer */

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-10-15 05:19:08.128139 UTC
-// This header was generated with sol v3.2.3 (revision e5e6466e)
+// Generated 2020-10-23 22:58:30.755052 UTC
+// This header was generated with sol v3.2.3 (revision c068aefb)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -3565,7 +3565,11 @@ COMPAT53_API char* luaL_prepbuffsize(luaL_Buffer_53* B, size_t s) {
 			newcap = B->nelems + s;
 		if (newcap < B->capacity) /* overflow */
 			luaL_error(B->L2, "buffer too large");
+#if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM >= 504
+		newptr = (char*)lua_newuserdatauv(B->L2, newcap, 0);
+#else
 		newptr = (char*)lua_newuserdata(B->L2, newcap);
+#endif
 		memcpy(newptr, B->ptr, B->nelems);
 		if (B->ptr != B->b.buffer)
 			lua_replace(B->L2, -2); /* remove old buffer */
@@ -6258,7 +6262,7 @@ namespace sol {
 #if SOL_IS_ON(SOL_USE_BOOST_I_)
 		template <typename T>
 		struct associated_nullopt<boost::optional<T>> {
-			inline static constexpr std::nullopt_t value = boost::nullopt;
+			inline static constexpr boost::none_t value = boost::none;
 		};
 #endif // Boost nullopt
 
@@ -9828,6 +9832,14 @@ namespace sol {
 		using unique_destructor = void (*)(void*);
 		using unique_tag = detail::inheritance_unique_cast_function;
 
+		inline void* alloc_newuserdata(lua_State* L, std::size_t bytesize) {
+#if SOL_LUA_VERSION >= 504
+			return lua_newuserdatauv(L, bytesize, 0);
+#else
+			return lua_newuserdata(L, bytesize);
+#endif
+		}
+
 		inline void* align(std::size_t alignment, std::size_t size, void*& ptr, std::size_t& space, std::size_t& required_space) {
 			// this handels arbitrary alignments...
 			// make this into a power-of-2-only?
@@ -9975,21 +9987,21 @@ namespace sol {
 			     >
 			     use_align;
 			if (!use_align::value) {
-				T** pointerpointer = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
+				T** pointerpointer = static_cast<T**>(alloc_newuserdata(L, sizeof(T*)));
 				return pointerpointer;
 			}
 			static const std::size_t initial_size = aligned_space_for<T*>(nullptr);
 			static const std::size_t misaligned_size = aligned_space_for<T*>(reinterpret_cast<void*>(0x1));
 
 			std::size_t allocated_size = initial_size;
-			void* unadjusted = lua_newuserdata(L, initial_size);
+			void* unadjusted = alloc_newuserdata(L, initial_size);
 			void* adjusted = align(std::alignment_of<T*>::value, sizeof(T*), unadjusted, allocated_size);
 			if (adjusted == nullptr) {
 				lua_pop(L, 1);
 				// what kind of absolute garbage trash allocator are we dealing with?
 				// whatever, add some padding in the case of MAXIMAL alignment waste...
 				allocated_size = misaligned_size;
-				unadjusted = lua_newuserdata(L, allocated_size);
+				unadjusted = alloc_newuserdata(L, allocated_size);
 				adjusted = align(std::alignment_of<T*>::value, sizeof(T*), unadjusted, allocated_size);
 				if (adjusted == nullptr) {
 					// trash allocator can burn in hell
@@ -10004,7 +10016,7 @@ namespace sol {
 
 		inline bool attempt_alloc(lua_State* L, std::size_t ptr_align, std::size_t ptr_size, std::size_t value_align, std::size_t value_size,
 		     std::size_t allocated_size, void*& pointer_adjusted, void*& data_adjusted) {
-			void* adjusted = lua_newuserdata(L, allocated_size);
+			void* adjusted = alloc_newuserdata(L, allocated_size);
 			pointer_adjusted = align(ptr_align, ptr_size, adjusted, allocated_size);
 			if (pointer_adjusted == nullptr) {
 				lua_pop(L, 1);
@@ -10023,7 +10035,7 @@ namespace sol {
 
 		inline bool attempt_alloc_unique(lua_State* L, std::size_t ptr_align, std::size_t ptr_size, std::size_t real_align, std::size_t real_size,
 		     std::size_t allocated_size, void*& pointer_adjusted, void*& dx_adjusted, void*& id_adjusted, void*& data_adjusted) {
-			void* adjusted = lua_newuserdata(L, allocated_size);
+			void* adjusted = alloc_newuserdata(L, allocated_size);
 			pointer_adjusted = align(ptr_align, ptr_size, adjusted, allocated_size);
 			if (pointer_adjusted == nullptr) {
 				lua_pop(L, 1);
@@ -10068,14 +10080,14 @@ namespace sol {
 			     >
 			     use_align;
 			if (!use_align::value) {
-				T** pointerpointer = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(T)));
+				T** pointerpointer = static_cast<T**>(alloc_newuserdata(L, sizeof(T*) + sizeof(T)));
 				T*& pointerreference = *pointerpointer;
 				T* allocationtarget = reinterpret_cast<T*>(pointerpointer + 1);
 				pointerreference = allocationtarget;
 				return allocationtarget;
 			}
 
-			/* the assumption is that `lua_newuserdata` -- unless someone
+			/* the assumption is that `alloc_newuserdata` -- unless someone
 			passes a specific lua_Alloc that gives us bogus, un-aligned pointers
 			-- uses malloc, which tends to hand out more or less aligned pointers to memory
 			(most of the time, anyhow)
@@ -10134,7 +10146,7 @@ namespace sol {
 			     >
 			     use_align;
 			if (!use_align::value) {
-				pref = static_cast<T**>(lua_newuserdata(L, sizeof(T*) + sizeof(detail::unique_destructor) + sizeof(unique_tag) + sizeof(Real)));
+				pref = static_cast<T**>(alloc_newuserdata(L, sizeof(T*) + sizeof(detail::unique_destructor) + sizeof(unique_tag) + sizeof(Real)));
 				dx = static_cast<detail::unique_destructor*>(static_cast<void*>(pref + 1));
 				id = static_cast<unique_tag*>(static_cast<void*>(dx + 1));
 				Real* mem = static_cast<Real*>(static_cast<void*>(id + 1));
@@ -10207,7 +10219,7 @@ namespace sol {
 			     >
 			     use_align;
 			if (!use_align::value) {
-				T* pointer = static_cast<T*>(lua_newuserdata(L, sizeof(T)));
+				T* pointer = static_cast<T*>(alloc_newuserdata(L, sizeof(T)));
 				return pointer;
 			}
 
@@ -10215,13 +10227,13 @@ namespace sol {
 			static const std::size_t misaligned_size = aligned_space_for<T>(reinterpret_cast<void*>(0x1));
 
 			std::size_t allocated_size = initial_size;
-			void* unadjusted = lua_newuserdata(L, allocated_size);
+			void* unadjusted = alloc_newuserdata(L, allocated_size);
 			void* adjusted = align(std::alignment_of_v<T>, sizeof(T), unadjusted, allocated_size);
 			if (adjusted == nullptr) {
 				lua_pop(L, 1);
 				// try again, add extra space for alignment padding
 				allocated_size = misaligned_size;
-				unadjusted = lua_newuserdata(L, allocated_size);
+				unadjusted = alloc_newuserdata(L, allocated_size);
 				adjusted = align(std::alignment_of_v<T>, sizeof(T), unadjusted, allocated_size);
 				if (adjusted == nullptr) {
 					lua_pop(L, 1);
@@ -13733,7 +13745,7 @@ namespace sol { namespace stack {
 			}
 			else if constexpr (std::is_same_v<Tu, luaL_Stream*>) {
 				luaL_Stream* source { std::forward<Args>(args)... };
-				luaL_Stream* stream = static_cast<luaL_Stream*>(lua_newuserdata(L, sizeof(luaL_Stream)));
+				luaL_Stream* stream = static_cast<luaL_Stream*>(alloc_newuserdata(L, sizeof(luaL_Stream)));
 				stream->f = source->f;
 #if SOL_IS_ON(SOL_LUAL_STREAM_USE_CLOSE_FUNCTION_I_)
 				stream->closef = source->closef;
@@ -13742,7 +13754,7 @@ namespace sol { namespace stack {
 			}
 			else if constexpr (std::is_same_v<Tu, luaL_Stream>) {
 				luaL_Stream& source(std::forward<Args>(args)...);
-				luaL_Stream* stream = static_cast<luaL_Stream*>(lua_newuserdata(L, sizeof(luaL_Stream)));
+				luaL_Stream* stream = static_cast<luaL_Stream*>(alloc_newuserdata(L, sizeof(luaL_Stream)));
 				stream->f = source.f;
 #if SOL_IS_ON(SOL_LUAL_STREAM_USE_CLOSE_FUNCTION_I_)
 				stream->closef = source.closef;
