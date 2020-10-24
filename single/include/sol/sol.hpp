@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-10-23 22:58:30.755052 UTC
-// This header was generated with sol v3.2.3 (revision c068aefb)
+// Generated 2020-10-24 08:52:45.802426 UTC
+// This header was generated with sol v3.2.3 (revision 651b90ba)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6262,12 +6262,17 @@ namespace sol {
 #if SOL_IS_ON(SOL_USE_BOOST_I_)
 		template <typename T>
 		struct associated_nullopt<boost::optional<T>> {
-			inline static constexpr boost::none_t value = boost::none;
+			inline static const boost::none_t value = boost::none;
 		};
 #endif // Boost nullopt
 
+#if SOL_IS_ON(SOL_USE_BOOST_I_)
+		template <typename T>
+		inline const auto associated_nullopt_v = associated_nullopt<T>::value;
+#else
 		template <typename T>
 		inline constexpr auto associated_nullopt_v = associated_nullopt<T>::value;
+#endif // Boost continues to lag behind, to not many people's surprise...
 	} // namespace detail
 } // namespace sol
 
@@ -13745,7 +13750,7 @@ namespace sol { namespace stack {
 			}
 			else if constexpr (std::is_same_v<Tu, luaL_Stream*>) {
 				luaL_Stream* source { std::forward<Args>(args)... };
-				luaL_Stream* stream = static_cast<luaL_Stream*>(alloc_newuserdata(L, sizeof(luaL_Stream)));
+				luaL_Stream* stream = static_cast<luaL_Stream*>(detail::alloc_newuserdata(L, sizeof(luaL_Stream)));
 				stream->f = source->f;
 #if SOL_IS_ON(SOL_LUAL_STREAM_USE_CLOSE_FUNCTION_I_)
 				stream->closef = source->closef;
@@ -13754,7 +13759,7 @@ namespace sol { namespace stack {
 			}
 			else if constexpr (std::is_same_v<Tu, luaL_Stream>) {
 				luaL_Stream& source(std::forward<Args>(args)...);
-				luaL_Stream* stream = static_cast<luaL_Stream*>(alloc_newuserdata(L, sizeof(luaL_Stream)));
+				luaL_Stream* stream = static_cast<luaL_Stream*>(detail::alloc_newuserdata(L, sizeof(luaL_Stream)));
 				stream->f = source.f;
 #if SOL_IS_ON(SOL_LUAL_STREAM_USE_CLOSE_FUNCTION_I_)
 				stream->closef = source.closef;

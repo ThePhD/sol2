@@ -61,12 +61,17 @@ namespace sol {
 #if SOL_IS_ON(SOL_USE_BOOST_I_)
 		template <typename T>
 		struct associated_nullopt<boost::optional<T>> {
-			inline static constexpr boost::none_t value = boost::none;
+			inline static const boost::none_t value = boost::none;
 		};
 #endif // Boost nullopt
 
+#if SOL_IS_ON(SOL_USE_BOOST_I_)
+		template <typename T>
+		inline const auto associated_nullopt_v = associated_nullopt<T>::value;
+#else
 		template <typename T>
 		inline constexpr auto associated_nullopt_v = associated_nullopt<T>::value;
+#endif // Boost continues to lag behind, to not many people's surprise...
 	} // namespace detail
 } // namespace sol
 

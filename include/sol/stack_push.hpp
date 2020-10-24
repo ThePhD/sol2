@@ -295,7 +295,7 @@ namespace sol { namespace stack {
 			}
 			else if constexpr (std::is_same_v<Tu, luaL_Stream*>) {
 				luaL_Stream* source { std::forward<Args>(args)... };
-				luaL_Stream* stream = static_cast<luaL_Stream*>(alloc_newuserdata(L, sizeof(luaL_Stream)));
+				luaL_Stream* stream = static_cast<luaL_Stream*>(detail::alloc_newuserdata(L, sizeof(luaL_Stream)));
 				stream->f = source->f;
 #if SOL_IS_ON(SOL_LUAL_STREAM_USE_CLOSE_FUNCTION_I_)
 				stream->closef = source->closef;
@@ -304,7 +304,7 @@ namespace sol { namespace stack {
 			}
 			else if constexpr (std::is_same_v<Tu, luaL_Stream>) {
 				luaL_Stream& source(std::forward<Args>(args)...);
-				luaL_Stream* stream = static_cast<luaL_Stream*>(alloc_newuserdata(L, sizeof(luaL_Stream)));
+				luaL_Stream* stream = static_cast<luaL_Stream*>(detail::alloc_newuserdata(L, sizeof(luaL_Stream)));
 				stream->f = source.f;
 #if SOL_IS_ON(SOL_LUAL_STREAM_USE_CLOSE_FUNCTION_I_)
 				stream->closef = source.closef;
