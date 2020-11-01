@@ -32,7 +32,7 @@ endif()
 
 find_program(sol2_make_executable make make.exe mingw32-make mingw32-make.exe)
 if(NOT sol2_make_executable)
-    message(FATAL_ERROR "could not find a suitable make executable to build Sphinx documentation")
+	message(FATAL_ERROR "could not find a suitable make executable to build Sphinx documentation")
 endif()
 
 add_custom_command(OUTPUT docs_invisible_file_always_generate
@@ -40,4 +40,7 @@ add_custom_command(OUTPUT docs_invisible_file_always_generate
 	COMMAND "${sol2_make_executable}" -C "${CMAKE_CURRENT_SOURCE_DIR}" html "BUILDDIR=${CMAKE_CURRENT_BINARY_DIR}")
 add_custom_target(docs 
 	DEPENDS docs_invisible_file_always_generate)
-install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs/html" DESTINATION "${CMAKE_INSTALL_DOCDIR}")
+
+if(SOL2_ENABLE_INSTALL)
+	install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs/html" DESTINATION "${CMAKE_INSTALL_DOCDIR}")
+endif()

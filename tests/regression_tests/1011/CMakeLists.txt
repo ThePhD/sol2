@@ -85,7 +85,9 @@ function(CREATE_TEST test_target_name test_name target_sol)
 	endif()
 	
 	add_test(NAME ${test_name} COMMAND ${test_target_name})
-	install(TARGETS ${test_target_name} RUNTIME DESTINATION bin)
+	if(SOL2_ENABLE_INSTALL)
+		install(TARGETS ${test_target_name} RUNTIME DESTINATION bin)
+	endif()
 endfunction(CREATE_TEST)
 
 if (SOL2_TESTS)

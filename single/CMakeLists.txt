@@ -70,6 +70,8 @@ if (SOL2_GENERATE_SINGLE)
 		EXPORT_NAME sol2::sol2_single_generated
 		INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/include")
 	add_dependencies(sol2_single_generated sol2_single_header_generator)
-	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/include/sol/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/include/sol/forward.hpp"
-		DESTINATION include/sol/single/sol)
+	if(SOL2_ENABLE_INSTALL)
+		install(FILES "${CMAKE_CURRENT_BINARY_DIR}/include/sol/sol.hpp" "${CMAKE_CURRENT_BINARY_DIR}/include/sol/forward.hpp"
+			DESTINATION include/sol/single/sol)
+	endif()
 endif()
