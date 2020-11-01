@@ -53,6 +53,7 @@ option(SOL2_DYNAMIC_LOADING_EXAMPLES "Enable build of interop examples" OFF)
 option(SOL2_GENERATE_SINGLE "Enable generation and build of single header files" OFF)
 option(SOL2_SINGLE "Enable use of prepackaged single header files" OFF)
 option(SOL2_DOCS "Enable build of documentation" OFF)
+option(SOL2_ENABLE_INSTALL "Enable installation of Sol2" ON)
 # Single tests and examples tests will only be turned on if both SINGLE and TESTS are defined
 CMAKE_DEPENDENT_OPTION(SOL2_TESTS_SINGLE "Enable build of tests using the premade single headers" ON
 	"SOL2_SINGLE;SOL2_TESTS" OFF)
@@ -132,20 +133,22 @@ write_basic_package_version_file(
 
 export(TARGETS sol2 FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-targets.cmake")
 
-install(TARGETS sol2
-	EXPORT sol2)
+if(SOL2_ENABLE_INSTALL)
+	install(TARGETS sol2
+		EXPORT sol2)
 
-install(EXPORT sol2
-	FILE sol2-targets.cmake
-	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sol2")
+	install(EXPORT sol2
+		FILE sol2-targets.cmake
+		DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sol2")
 
-install(DIRECTORY include/sol
-	DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+	install(DIRECTORY include/sol
+		DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
-install(FILES
-	"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config.cmake"
-	"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config-version.cmake"
-	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sol2")
+	install(FILES
+		"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config.cmake"
+		"${CMAKE_CURRENT_BINARY_DIR}/cmake/sol2-config-version.cmake"
+		DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sol2")
+endif()
 
 # # # Single header target
 # Find Python3 for single header / forward header generation
@@ -161,14 +164,16 @@ if (SOL2_DOCS)
 	add_subdirectory(docs)
 endif()
 
-# pkg-config support, except on Windows
-if(NOT WIN32 OR NOT CMAKE_HOST_SYSTEM_NAME MATCHES Windows)
-	set(PKGCONFIG_INSTALL_DIR
-		"${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig"
-		CACHE PATH "Path where sol2.pc is installed")
-	
-	configure_file("${CMAKE_CURRENT_SOURCE_DIR}/sol2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/sol2.pc" @ONLY)
-	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/sol2.pc" DESTINATION "${PKGCONFIG_INSTALL_DIR}")
+if(SOL2_ENABLE_INSTALL)
+	# pkg-config support, except on Windows
+	if(NOT WIN32 OR NOT CMAKE_HOST_SYSTEM_NAME MATCHES Windows)
+		set(PKGCONFIG_INSTALL_DIR
+			"${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig"
+			CACHE PATH "Path where sol2.pc is installed")
+
+		configure_file("${CMAKE_CURRENT_SOURCE_DIR}/sol2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/sol2.pc" @ONLY)
+		install(FILES "${CMAKE_CURRENT_BINARY_DIR}/sol2.pc" DESTINATION "${PKGCONFIG_INSTALL_DIR}")
+	endif()
 endif()
 
 if (SOL2_CI)
