@@ -66,7 +66,7 @@ namespace sol {
 
 		inline void* alloc_newuserdata(lua_State* L, std::size_t bytesize) {
 #if SOL_LUA_VERSION >= 504
-			return lua_newuserdatauv(L, bytesize, 0);
+			return lua_newuserdatauv(L, bytesize, 1);
 #else
 			return lua_newuserdata(L, bytesize);
 #endif
