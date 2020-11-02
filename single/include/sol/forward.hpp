@@ -199,7 +199,7 @@
 	#if SOL_ALL_SAFETIES_ON != 0
 		#define SOL_ALL_SAFETIES_ON_I_ SOL_ON
 	#else
-		#define SOL_ALL_SAFETIES_ON_I_ SOL_FF
+		#define SOL_ALL_SAFETIES_ON_I_ SOL_OFF
 	#endif
 #else
 	#define SOL_ALL_SAFETIES_ON_I_ SOL_DEFAULT_OFF
