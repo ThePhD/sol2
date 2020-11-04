@@ -39,7 +39,9 @@
 #pragma GCC diagnostic ignored "-Wnoexcept-type"
 #endif
 #elif SOL_IS_ON(SOL_COMPILER_CLANG_I_)
-// we'll just let this alone for now
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshadow"
+#pragma clang diagnostic ignored "-Wconversion"
 #elif SOL_IS_ON(SOL_COMPILER_VCXX_I_)
 #pragma warning(push)
 #pragma warning(disable : 4505) // unreferenced local function has been removed GEE THANKS
@@ -66,6 +68,8 @@
 
 #if SOL_IS_ON(SOL_COMPILER_GCC_I_)
 #pragma GCC diagnostic pop
+#elif SOL_IS_ON(SOL_COMPILER_CLANG_I_)
+#pragma clang diagnostic pop
 #elif SOL_IS_ON(SOL_COMPILER_VCXX_I_)
 #pragma warning(pop)
 #endif // g++
