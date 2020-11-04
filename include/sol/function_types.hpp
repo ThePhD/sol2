@@ -699,6 +699,10 @@ namespace sol {
 				}
 				return success;
 #else
+				(void)L;
+				(void)index;
+				(void)handler;
+				(void)tracking;
 				return false;
 #endif
 			}
@@ -711,6 +715,9 @@ namespace sol {
 				Function* fx = udata.first;
 				return fx;
 #else
+				(void)L;
+				(void)index;
+				(void)tracking;
 				static_assert(meta::meta_detail::always_true<Function>::value,
 #if SOL_IS_DEFAULT_OFF(SOL_GET_FUNCTION_POINTER_UNSAFE_I_)
 				     "You are attempting to retrieve a function pointer type. "
