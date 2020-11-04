@@ -720,6 +720,9 @@ namespace sol {
 			else if (old_mode == LUA_GCINC) {
 				return gc_mode::incremental;
 			}
+#else
+			(void)minor_multiplier;
+			(void)major_multiplier;
 #endif
 			return gc_mode::default_value;
 		}
