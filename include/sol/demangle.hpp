@@ -47,7 +47,7 @@ namespace sol { namespace detail {
 		"`anonymous namespace'" } };
 
 
-#if SOL_IS_ON(SOL_COMPILER_GCC_I_) || SOL_IS_ON(SOL_COMPILER_CLANG_I_)
+#if SOL_IS_ON(SOL_COMPILER_GCC_I_) || SOL_IS_ON(SOL_COMPILER_CLANG_I_) || SOL_IS_ON(SOL_COMPILER_VCXX_CLANG_I_)
 	inline std::string ctti_get_type_name_from_sig(std::string name) {
 		// cardinal sins from MINGW
 		using namespace std;
@@ -138,8 +138,8 @@ namespace sol { namespace detail {
 			{ "operator<", "operator<<", "operator<<=", "operator<=", "operator>", "operator>>", "operator>>=", "operator>=", "operator->", "operator->*" }
 		};
 		int level = 0;
-		std::ptrdiff_t idx = 0;
-		for (idx = static_cast<std::ptrdiff_t>(realname.empty() ? 0 : realname.size() - 1); idx > 0; --idx) {
+		std::size_t idx = 0;
+		for (idx = static_cast<std::size_t>(realname.empty() ? 0 : realname.size() - 1); idx > 0; --idx) {
 			if (level == 0 && realname[idx] == ':') {
 				break;
 			}

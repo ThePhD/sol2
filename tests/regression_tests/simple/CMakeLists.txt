@@ -36,7 +36,7 @@ function(CREATE_TEST test_target_name test_name target_sol)
 
 	if (MSVC)
 		target_compile_options(${test_target_name}
-			PRIVATE /EHsc /std:c++latest)
+			PRIVATE /EHsc /std:c++latest /W4)
 		target_compile_definitions(${test_target_name}
 			PRIVATE UNICODE _UNICODE 
 			_CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)

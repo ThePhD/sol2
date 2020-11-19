@@ -19,7 +19,7 @@ return 24
 	// Handling code like this can be robust
 	// If you disable exceptions, then obviously you would remove
 	// the try-catch branches,
-	// and then rely on the `lua_atpanic` function being called 
+	// and then rely on the `lua_atpanic` function being called
 	// and trapping errors there before exiting the application
 	{
 		// script_default_on_error throws / panics when the code is bad: trap the error
@@ -30,7 +30,8 @@ return 24
 			c_assert(value == 24);
 		}
 		catch (const sol::error& err) {
-			std::cout << "Something went horribly wrong: thrown error" << "\n\t" << err.what() << std::endl;
+			std::cout << "Something went horribly wrong: thrown error"
+			          << "\n\t" << err.what() << std::endl;
 		}
 	}
 
@@ -45,7 +46,8 @@ return 24
 		if (!result.valid()) {
 			sol::error err = result;
 			sol::call_status status = result.status();
-			std::cout << "Something went horribly wrong: " << sol::to_string(status) << " error" << "\n\t" << err.what() << std::endl;
+			std::cout << "Something went horribly wrong: " << sol::to_string(status) << " error"
+			          << "\n\t" << err.what() << std::endl;
 		}
 	}
 
@@ -63,19 +65,21 @@ return 24
 		if (!loaded_chunk.valid()) {
 			sol::error err = loaded_chunk;
 			sol::load_status status = loaded_chunk.status();
-			std::cout << "Something went horribly wrong loading the code: " << sol::to_string(status) << " error" << "\n\t" << err.what() << std::endl;
+			std::cout << "Something went horribly wrong loading the code: " << sol::to_string(status) << " error"
+			          << "\n\t" << err.what() << std::endl;
 		}
 		else {
 			// Because the syntax is bad, this will never be reached
 			c_assert(false);
 			// If there is a runtime error (lua GC memory error, nil access, etc.)
 			// it will be caught here
-			sol::protected_function script_func = loaded_chunk;
+			sol::protected_function script_func = loaded_chunk.get<sol::protected_function>();
 			sol::protected_function_result result = script_func();
 			if (!result.valid()) {
 				sol::error err = result;
 				sol::call_status status = result.status();
-				std::cout << "Something went horribly wrong running the code: " << sol::to_string(status) << " error" << "\n\t" << err.what() << std::endl;
+				std::cout << "Something went horribly wrong running the code: " << sol::to_string(status) << " error"
+				          << "\n\t" << err.what() << std::endl;
 			}
 		}
 	}

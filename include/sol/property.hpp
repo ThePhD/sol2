@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -31,8 +31,8 @@
 
 namespace sol {
 	namespace detail {
-		struct no_prop {};
-	}
+		struct no_prop { };
+	} // namespace detail
 
 	template <typename R, typename W>
 	struct property_wrapper : detail::ebco<R, 0>, detail::ebco<W, 1> {
@@ -42,8 +42,7 @@ namespace sol {
 
 	public:
 		template <typename Rx, typename Wx>
-		property_wrapper(Rx&& r, Wx&& w)
-		: read_base_t(std::forward<Rx>(r)), write_base_t(std::forward<Wx>(w)) {
+		property_wrapper(Rx&& r, Wx&& w) : read_base_t(std::forward<Rx>(r)), write_base_t(std::forward<Wx>(w)) {
 		}
 
 		W& write() {
@@ -135,13 +134,16 @@ namespace sol {
 
 	namespace meta {
 		template <typename T>
-		struct is_member_object : std::is_member_object_pointer<T> {};
-
-		template <typename T>
-		struct is_member_object<readonly_wrapper<T>> : std::true_type {};
+		using is_member_object = std::integral_constant<bool, std::is_member_object_pointer_v<T> || is_specialization_of_v<T, readonly_wrapper>>;
 
 		template <typename T>
 		inline constexpr bool is_member_object_v = is_member_object<T>::value;
+
+		template <typename T>
+		using is_member_object_or_function = std::integral_constant<bool, is_member_object_v<T> || std::is_member_pointer_v<T>>;
+
+		template <typename T>
+		inline constexpr bool is_member_object_or_function_v = is_member_object_or_function<T>::value;
 	} // namespace meta
 
 } // namespace sol

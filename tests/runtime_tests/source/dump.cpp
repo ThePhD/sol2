@@ -43,7 +43,7 @@ TEST_CASE("dump/dump transfer", "test that a function can be transferred from on
 
 		sol::load_result lr = lua.load("a = function (v) print(v) return v end");
 		REQUIRE(lr.valid());
-		sol::protected_function target = lr;
+		sol::protected_function target = lr.get<sol::protected_function>();
 		sol::bytecode target_bc = target.dump();
 
 		auto result2 = lua2.safe_script(target_bc.as_string_view(), sol::script_pass_on_error);
@@ -75,7 +75,7 @@ TEST_CASE("dump/failure", "test that failure is properly propagated") {
 		sol::state lua;
 		sol::load_result lr = lua.load("a = function (v) print(v) return v end");
 		REQUIRE(lr.valid());
-		sol::protected_function target = lr;
+		sol::protected_function target = lr.get<sol::protected_function>();
 		int err = target.dump(&dump_always_fail, nullptr, false, sol::dump_pass_on_error);
 		REQUIRE(err == dump_always_fail_number);
 	}
@@ -95,7 +95,7 @@ TEST_CASE("dump/different containers", "test that dump inserter works for variou
 
 		sol::load_result lr = lua.load("a = function (v) print(v) return v end");
 		REQUIRE(lr.valid());
-		sol::protected_function target = lr;
+		sol::protected_function target = lr.get<sol::protected_function>();
 		sol::bytecode bytecode_dump = target.dump();
 		std::list<std::byte> list_dump = target.dump<std::list<std::byte>>();
 		std::vector<std::byte> vector_dump = target.dump<std::vector<std::byte>>();

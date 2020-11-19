@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -65,8 +65,7 @@ struct string_reader_load {
 	const std::string& str;
 	std::size_t reads;
 
-	string_reader_load(const std::string& s)
-	: str(s), reads(0) {
+	string_reader_load(const std::string& s) : str(s), reads(0) {
 	}
 };
 
@@ -101,8 +100,7 @@ TEST_CASE("state/require_file", "opening files as 'requires'") {
 
 	SECTION("with usertypes") {
 		struct foo {
-			foo(int bar)
-			: bar(bar) {
+			foo(int bar) : bar(bar) {
 			}
 
 			const int bar;
@@ -111,9 +109,7 @@ TEST_CASE("state/require_file", "opening files as 'requires'") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		lua.new_usertype<foo>("foo",
-			sol::constructors<sol::types<int>>{},
-			"bar", &foo::bar);
+		lua.new_usertype<foo>("foo", sol::constructors<sol::types<int>> {}, "bar", &foo::bar);
 
 		const sol::table thingy1 = lua.require_file("thingy", file_require_file_user);
 
@@ -208,9 +204,9 @@ TEST_CASE("state/multi require", "make sure that requires transfers across hand-
 	REQUIRE(val3 == 221);
 	// must have loaded the same table
 	// Lua is not obliged to give a shit. Thanks, Lua
-	//REQUIRE(thingy1 == thingy2);
+	// REQUIRE(thingy1 == thingy2);
 	// But we care, thankfully
-	//REQUIRE(thingy1 == thingy3);
+	// REQUIRE(thingy1 == thingy3);
 	REQUIRE((thingy2 == thingy3));
 }
 
@@ -280,7 +276,7 @@ end
 
 TEST_CASE("state/script returns", "make sure script returns are done properly") {
 	std::string script =
-		R"(
+	     R"(
 local example = 
 {
 	str = "this is a string",
@@ -458,13 +454,13 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 
 		sol::load_result errbrload = lua.load(bad_runtime);
 		REQUIRE(errbrload.valid());
-		sol::protected_function errbrpf = errbrload;
+		sol::protected_function errbrpf = errbrload.get<sol::protected_function>();
 		auto errbr = errbrpf();
 		REQUIRE(!errbr.valid());
 
 		sol::load_result resultload = lua.load(good);
 		REQUIRE(resultload.valid());
-		sol::protected_function resultpf = resultload;
+		sol::protected_function resultpf = resultload.get<sol::protected_function>();
 		auto result = resultpf();
 		int a = lua["a"];
 		int ar = result;
@@ -485,7 +481,7 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 		void* vpbrsrl = static_cast<void*>(&brsrl);
 		sol::load_result errbrload = lua.load(&string_reader, vpbrsrl, bad_runtime);
 		REQUIRE(errbrload.valid());
-		sol::protected_function errbrpf = errbrload;
+		sol::protected_function errbrpf = errbrload.get<sol::protected_function>();
 		auto errbr = errbrpf();
 		REQUIRE(!errbr.valid());
 
@@ -493,7 +489,7 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 		void* vpgsrl = static_cast<void*>(&gsrl);
 		sol::load_result resultload = lua.load(&string_reader, vpgsrl, good);
 		REQUIRE(resultload.valid());
-		sol::protected_function resultpf = resultload;
+		sol::protected_function resultpf = resultload.get<sol::protected_function>();
 		auto result = resultpf();
 		int a = lua["a"];
 		int ar = result;
@@ -510,13 +506,13 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 
 		sol::load_result errbrload = lua.load(bad_runtime, bad_runtime, sol::load_mode::text);
 		REQUIRE(errbrload.valid());
-		sol::protected_function errbrpf = errbrload;
+		sol::protected_function errbrpf = errbrload.get<sol::protected_function>();
 		auto errbr = errbrpf();
 		REQUIRE(!errbr.valid());
 
 		sol::load_result resultload = lua.load(good, good, sol::load_mode::text);
 		REQUIRE(resultload.valid());
-		sol::protected_function resultpf = resultload;
+		sol::protected_function resultpf = resultload.get<sol::protected_function>();
 		auto result = resultpf();
 		int a = lua["a"];
 		int ar = result;
@@ -537,7 +533,7 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 		void* vpbrsrl = static_cast<void*>(&brsrl);
 		sol::load_result errbrload = lua.load(&string_reader, vpbrsrl, bad_runtime, sol::load_mode::text);
 		REQUIRE(errbrload.valid());
-		sol::protected_function errbrpf = errbrload;
+		sol::protected_function errbrpf = errbrload.get<sol::protected_function>();
 		auto errbr = errbrpf();
 		REQUIRE(!errbr.valid());
 
@@ -545,7 +541,7 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 		void* vpgsrl = static_cast<void*>(&gsrl);
 		sol::load_result resultload = lua.load(&string_reader, vpgsrl, good, sol::load_mode::text);
 		REQUIRE(resultload.valid());
-		sol::protected_function resultpf = resultload;
+		sol::protected_function resultpf = resultload.get<sol::protected_function>();
 		auto result = resultpf();
 		int a = lua["a"];
 		int ar = result;
@@ -631,13 +627,13 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 
 		sol::load_result errbrload = lua.load_file(file_bad_runtime);
 		REQUIRE(errbrload.valid());
-		sol::protected_function errbrpf = errbrload;
+		sol::protected_function errbrpf = errbrload.get<sol::protected_function>();
 		auto errbr = errbrpf();
 		REQUIRE(!errbr.valid());
 
 		sol::load_result resultload = lua.load_file(file_good);
 		REQUIRE(resultload.valid());
-		sol::protected_function resultpf = resultload;
+		sol::protected_function resultpf = resultload.get<sol::protected_function>();
 		auto result = resultpf();
 		int a = lua["a"];
 		int ar = result;
@@ -654,13 +650,13 @@ TEST_CASE("state/script, do, and load", "test success and failure cases for load
 
 		sol::load_result errbrload = lua.load_file(file_bad_runtime, sol::load_mode::text);
 		REQUIRE(errbrload.valid());
-		sol::protected_function errbrpf = errbrload;
+		sol::protected_function errbrpf = errbrload.get<sol::protected_function>();
 		auto errbr = errbrpf();
 		REQUIRE(!errbr.valid());
 
 		sol::load_result resultload = lua.load_file(file_good, sol::load_mode::text);
 		REQUIRE(resultload.valid());
-		sol::protected_function resultpf = resultload;
+		sol::protected_function resultpf = resultload.get<sol::protected_function>();
 		auto result = resultpf();
 		int a = lua["a"];
 		int ar = result;
@@ -699,7 +695,7 @@ TEST_CASE("state/script function returns", "make sure that returned functions ar
 		sol::protected_function_result r1 = lua.safe_script("return function () return 1 end", sol::script_pass_on_error);
 		REQUIRE(r1.valid());
 
-		sol::protected_function pf = r1;
+		sol::protected_function pf = r1.get<sol::protected_function>();
 		int v1 = pf();
 		REQUIRE(v1 == 1);
 	}

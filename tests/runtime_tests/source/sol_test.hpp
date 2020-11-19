@@ -24,22 +24,6 @@
 #ifndef SOL_TESTS_SOL_TEST_HPP
 #define SOL_TESTS_SOL_TEST_HPP
 
-#if !defined(SOL_ALL_SAFETIES_ON)
-	#define SOL_ALL_SAFETIES_ON 1
-#endif // SOL_ALL_SAFETIES_ON
-#if !defined(SOL_PRINT_ERRORS)
-	#define SOL_PRINT_ERRORS 1
-#endif // SOL_ALL_SAFETIES_ON
-#if !defined(SOL_ENABLE_INTEROP)
-	#define SOL_ENABLE_INTEROP 1
-#endif // SOL_ENABLE_INTEROP
-
-// Can't activate until all script/safe_script calls are vetted...
-/*#ifndef SOL_DEFAULT_PASS_ON_ERROR
-#define SOL_DEFAULT_PASS_ON_ERROR 1
-#endif // SOL_DEFAULT_PASS_ON_ERROR
-*/
-
 #include <iostream>
 #include <cstdlib>
 
@@ -68,7 +52,6 @@ struct test_stack_guard {
 struct no_delete {
 	template <typename P>
 	void operator()(P) const noexcept {
-
 	}
 };
 

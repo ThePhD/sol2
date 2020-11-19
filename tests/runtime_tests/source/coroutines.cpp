@@ -25,6 +25,8 @@
 
 #include <catch.hpp>
 
+#include <vector>
+
 inline namespace sol2_test_coroutines {
 	struct coroutine_thread_runner_state {
 		sol::state_view* prunner_thread_state;
@@ -56,69 +58,107 @@ inline namespace sol2_test_coroutines {
 			return r;
 		}
 	};
+
+	struct coroutine_storage {
+		coroutine_storage(sol::state& luaContext) {
+			mLuaState = &luaContext;
+			mThread = sol::thread::create(luaContext);
+			sol::state_view luaThreadState = mThread.state();
+			mThreadEnvironment = sol::environment(luaThreadState, sol::create, luaThreadState.globals());
+			sol::set_environment(mThreadEnvironment, mThread);
+
+			sol::optional<sol::table> actionTable = luaThreadState["aTable"];
+			if (actionTable) {
+				mThreadTick = actionTable.value()["Tick"];
+			}
+		}
+
+		coroutine_storage& operator=(coroutine_storage&& r) noexcept {
+			mThread = std::move(r.mThread);
+			mThreadEnvironment = std::move(r.mThreadEnvironment);
+			mThreadTick = std::move(r.mThreadTick);
+			return *this;
+		}
+
+		coroutine_storage(coroutine_storage&& r) noexcept
+		: mLuaState(std::move(r.mLuaState))
+		, mThread(std::move(r.mThread))
+		, mThreadEnvironment(std::move(r.mThreadEnvironment))
+		, mThreadTick(std::move(r.mThreadTick)) {
+		}
+
+		coroutine_storage& operator=(const coroutine_storage& r) = delete;
+
+		coroutine_storage(const coroutine_storage& r) = delete;
+
+		sol::state* mLuaState;
+		sol::thread mThread;
+		sol::environment mThreadEnvironment;
+		sol::coroutine mThreadTick;
+	};
+
+	struct coro_h {
+		int x = 500;
+		int func() {
+			x += 1;
+			return x;
+		}
+	};
+
+	struct coro_test {
+		std::string identifier;
+		sol::reference obj;
+
+		coro_test(sol::this_state L, std::string id) : identifier(id), obj(L, sol::lua_nil) {
+		}
+
+		void store(sol::table ref) {
+			// must be explicit
+			obj = sol::reference(obj.lua_state(), ref);
+		}
+
+		void copy_store(sol::table ref) {
+			// must be explicit
+			obj = sol::reference(obj.lua_state(), ref);
+		}
+
+		sol::reference get() {
+			return obj;
+		}
+
+		~coro_test() {
+		}
+	};
+
+	struct coro_test_implicit {
+		std::string identifier;
+		sol::main_reference obj;
+
+		coro_test_implicit(sol::this_state L, std::string id) : identifier(id), obj(L, sol::lua_nil) {
+		}
+
+		void store(sol::table ref) {
+			// main_reference does the state shift implicitly
+			obj = std::move(ref);
+			lua_State* Lmain = sol::main_thread(ref.lua_state());
+			REQUIRE(obj.lua_state() == Lmain);
+		}
+
+		void copy_store(sol::table ref) {
+			// main_reference does the state shift implicitly
+			obj = ref;
+			lua_State* Lmain = sol::main_thread(ref.lua_state());
+			REQUIRE(obj.lua_state() == Lmain);
+		}
+
+		sol::reference get() {
+			return obj;
+		}
+
+		~coro_test_implicit() {
+		}
+	};
 } // namespace sol2_test_coroutines
-
-struct coro_h {
-	int x = 500;
-	int func() {
-		x += 1;
-		return x;
-	}
-};
-
-struct coro_test {
-	std::string identifier;
-	sol::reference obj;
-
-	coro_test(sol::this_state L, std::string id) : identifier(id), obj(L, sol::lua_nil) {
-	}
-
-	void store(sol::table ref) {
-		// must be explicit
-		obj = sol::reference(obj.lua_state(), ref);
-	}
-
-	void copy_store(sol::table ref) {
-		// must be explicit
-		obj = sol::reference(obj.lua_state(), ref);
-	}
-
-	sol::reference get() {
-		return obj;
-	}
-
-	~coro_test() {
-	}
-};
-
-struct coro_test_implicit {
-	std::string identifier;
-	sol::main_reference obj;
-
-	coro_test_implicit(sol::this_state L, std::string id) : identifier(id), obj(L, sol::lua_nil) {
-	}
-
-	void store(sol::table ref) {
-		// main_reference does the state shift implicitly
-		obj = std::move(ref);
-		lua_State* Lmain = sol::main_thread(ref.lua_state());
-		REQUIRE(obj.lua_state() == Lmain);
-	}
-
-	void copy_store(sol::table ref) {
-		// main_reference does the state shift implicitly
-		obj = ref;
-		lua_State* Lmain = sol::main_thread(ref.lua_state());
-		REQUIRE(obj.lua_state() == Lmain);
-	}
-
-	sol::reference get() {
-		return obj;
-	}
-
-	~coro_test_implicit() {
-	}
-};
 
 TEST_CASE("coroutines/coroutine.yield", "ensure calling a coroutine works") {
 	const auto& script = R"(counter = 20
@@ -222,7 +262,7 @@ end
 			auto pfr = lua.safe_script(updatecode);
 			REQUIRE(pfr.valid());
 
-			sol::function update = pfr;
+			sol::function update = pfr.get<sol::function>();
 			update();
 			f3 = f2;
 			f3();
@@ -581,7 +621,7 @@ TEST_CASE("coroutines/yielding", "test that a sol3 bound function can yield when
 			return i;
 		};
 
-		coro_h hobj{};
+		coro_h hobj {};
 
 		lua["f"] = sol::yielding(func);
 		lua["g"] = sol::yielding([]() { return 300; });
@@ -659,5 +699,29 @@ TEST_CASE("coroutines/yielding", "test that a sol3 bound function can yield when
 		REQUIRE(value6 == 503);
 
 		REQUIRE(hobj.x == 503);
+	}
+}
+
+TEST_CASE("coroutines/error_handler_state_transfer", "test that sol3 coroutines with their error handlers are properly sourced") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::coroutine);
+
+	sol::optional<sol::error> maybe_result = lua.safe_script(R"(
+		aTable = {}
+		aTable["Tick"] = function()
+			coroutine.yield()
+		end
+		)");
+	REQUIRE_FALSE(maybe_result.has_value());
+	int begintop = 0, endtop = 0;
+	{
+		test_stack_guard g(lua.lua_state(), begintop, endtop);
+		std::vector<coroutine_storage> luaCoroutines;
+
+		luaCoroutines.emplace_back(lua);
+		luaCoroutines.emplace_back(lua);
+
+		luaCoroutines[0] = std::move(luaCoroutines.back());
+		luaCoroutines.pop_back();
 	}
 }

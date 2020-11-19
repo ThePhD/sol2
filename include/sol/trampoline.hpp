@@ -103,7 +103,6 @@ namespace sol {
 		inline int lua_cfunction_trampoline(lua_State* L, lua_CFunction f) {
 #if SOL_IS_ON(SOL_PROPAGATE_EXCEPTIONS_I_)
 			return f(L);
-
 #else
 			try {
 				return f(L);
@@ -117,7 +116,7 @@ namespace sol {
 			catch (const std::exception& e) {
 				call_exception_handler(L, optional<const std::exception&>(e), e.what());
 			}
-#if SOL_IS_OFF(SOL_USE_LUAJIT_I_)
+#if SOL_IS_ON(SOL_EXCEPTIONS_CATCH_ALL_I_)
 			// LuaJIT cannot have the catchall when the safe propagation is on
 			// but LuaJIT will swallow all C++ errors
 			// if we don't at least catch std::exception ones
@@ -167,7 +166,7 @@ namespace sol {
 				catch (const std::exception& e) {
 					call_exception_handler(L, optional<const std::exception&>(e), e.what());
 				}
-#if SOL_IS_OFF(SOL_USE_LUAJIT_I_)
+#if SOL_IS_ON(SOL_EXCEPTIONS_CATCH_ALL_I_)
 				// LuaJIT cannot have the catchall when the safe propagation is on
 				// but LuaJIT will swallow all C++ errors
 				// if we don't at least catch std::exception ones

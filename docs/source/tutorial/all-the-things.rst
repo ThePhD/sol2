@@ -100,7 +100,7 @@ transferring functions (dumping bytecode)
 
 You can dump the bytecode of a function, which allows you to transfer it to another state (or save it, or load it). Note that bytecode is *typically specific to the Lua version*!
 
-.. literalinclude:: ../../../examples/source//dump.cpp
+.. literalinclude:: ../../../examples/source/dump.cpp
 	:linenos:
 
 

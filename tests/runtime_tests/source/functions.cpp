@@ -372,7 +372,8 @@ TEST_CASE("functions/function_result and protected_function_result",
 	}
 }
 
-#if !defined(SOL2_CI) && !(SOL2_CI) && ((!defined(_M_IX86) || defined(_M_IA64)) || (defined(_WIN64)) || (defined(__LLP64__) || defined(__LP64__)))
+#if SOL_IS_OFF(SOL_COMPILER_VCXX_CLANG_I_) \
+     && (!defined(SOL2_CI) && !(SOL2_CI) && ((!defined(_M_IX86) || defined(_M_IA64)) || (defined(_WIN64)) || (defined(__LLP64__) || defined(__LP64__))))
 TEST_CASE("functions/safe protected_function_result handlers",
      "These tests will (hopefully) not destroy the stack since they are supposed to be mildly safe. Still, run with caution.") {
 	sol::state lua;
@@ -426,7 +427,7 @@ TEST_CASE("functions/unsafe protected_function_result handlers",
 		return handlederrormessage;
 	};
 	lua.set_function("cpphandler", cpphandlerfx);
-	auto nontrampolinefx = [](lua_State*) -> int {
+	auto nontrampolinefx = [](lua_State*) noexcept(false) -> int {
 		// this code shoots an exception
 		// through the C API, without the trampoline
 		// present.

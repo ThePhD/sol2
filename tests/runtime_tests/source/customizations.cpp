@@ -139,7 +139,7 @@ int super_custom::exact_push_calls = 0;
 int destroy_super_custom(lua_State* L) {
 	void* memory = lua_touserdata(L, 1);
 	super_custom* data = static_cast<super_custom*>(memory);
-	std::allocator<super_custom> alloc{};
+	std::allocator<super_custom> alloc {};
 	std::allocator_traits<std::allocator<super_custom>>::destroy(alloc, data);
 	return 0;
 }
@@ -183,9 +183,9 @@ int sol_lua_push(lua_State* L, const super_custom& c) {
 	void* ud = lua_newuserdata(L, sizeof(super_custom*) + sizeof(super_custom));
 	super_custom* tud = static_cast<super_custom*>(static_cast<void*>(static_cast<char*>(ud) + sizeof(super_custom*)));
 	*static_cast<super_custom**>(ud) = tud;
-	new(tud)super_custom(c);
+	new (tud) super_custom(c);
 	if (luaL_newmetatable(L, "super_custom!") == 1) {
-		luaL_Reg l[2]{};
+		luaL_Reg l[2] {};
 		l[0] = { sol::to_string(sol::meta_function::garbage_collect).c_str(), &destroy_super_custom };
 		luaL_setfuncs(L, l, 0);
 	}
@@ -222,7 +222,7 @@ TEST_CASE("customization/adl", "using the ADL customization points in various si
 		custom::push_calls = 0;
 		custom::exact_push_calls = 0;
 
-		lua["meow"] = custom{ 25 };
+		lua["meow"] = custom { 25 };
 		custom meow = lua["meow"];
 
 		REQUIRE(meow.bweh == 25);
@@ -241,8 +241,8 @@ TEST_CASE("customization/adl", "using the ADL customization points in various si
 
 		auto result = lua.safe_script("return function (a, b, c) return a, b, c end", sol::script_pass_on_error);
 		REQUIRE(result.valid());
-		sol::protected_function f = result;
-		multi_custom pass_through = f(multi_custom{ 22, false, "miao" });
+		sol::protected_function f = result.get<sol::protected_function>();
+		multi_custom pass_through = f(multi_custom { 22, false, "miao" });
 		REQUIRE(pass_through.bweh == 22);
 		REQUIRE_FALSE(pass_through.bwuh);
 		REQUIRE(pass_through.blah == "miao");
@@ -261,7 +261,7 @@ TEST_CASE("customization/adl", "using the ADL customization points in various si
 		super_custom::pointer_push_calls = 0;
 		super_custom::exact_push_calls = 0;
 
-		super_custom meow_original{ 50 };
+		super_custom meow_original { 50 };
 		lua["meow"] = std::ref(meow_original);
 		super_custom& meow = lua["meow"];
 		super_custom* p_meow = lua["meow"];

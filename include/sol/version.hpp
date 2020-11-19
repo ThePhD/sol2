@@ -47,25 +47,38 @@
 #define SOL_DEFAULT_OFF -
 
 #if defined(_MSC_VER)
-	#define SOL_COMPILER_CLANG_I_ SOL_OFF
-	#define SOL_COMPILER_GCC_I_   SOL_OFF
-	#define SOL_COMPILER_EDG_I_   SOL_OFF
-	#define SOL_COMPILER_VCXX_I_  SOL_ON
+	#if defined(__clang__)
+		#define SOL_COMPILER_CLANG_I_      SOL_OFF
+		#define SOL_COMPILER_GCC_I_        SOL_OFF
+		#define SOL_COMPILER_EDG_I_        SOL_OFF
+		#define SOL_COMPILER_VCXX_I_       SOL_ON
+		#define SOL_COMPILER_VCXX_CLANG_I_ SOL_ON
+	#else
+		#define SOL_COMPILER_VCXX_CLANG_I_ SOL_OFF
+		#define SOL_COMPILER_CLANG_I_      SOL_OFF
+		#define SOL_COMPILER_GCC_I_        SOL_OFF
+		#define SOL_COMPILER_EDG_I_        SOL_OFF
+		#define SOL_COMPILER_VCXX_I_       SOL_ON
+		#define SOL_COMPILER_VCXX_CLANG_I_ SOL_OFF
+	#endif
 #elif defined(__clang__)
 	#define SOL_COMPILER_CLANG_I_ SOL_ON
 	#define SOL_COMPILER_GCC_I_   SOL_OFF
 	#define SOL_COMPILER_EDG_I_   SOL_OFF
 	#define SOL_COMPILER_VCXX_I_  SOL_OFF
+	#define SOL_COMPILER_VCXX_CLANG_I_ SOL_OFF
 #elif defined(__GNUC__)
 	#define SOL_COMPILER_CLANG_I_ SOL_OFF
 	#define SOL_COMPILER_GCC_I_   SOL_ON
 	#define SOL_COMPILER_EDG_I_   SOL_OFF
 	#define SOL_COMPILER_VCXX_I_  SOL_OFF
+	#define SOL_COMPILER_VCXX_CLANG_I_ SOL_OFF
 #else
 	#define SOL_COMPILER_CLANG_I_ SOL_OFF
 	#define SOL_COMPILER_GCC_I_   SOL_OFF
 	#define SOL_COMPILER_EDG_I_   SOL_OFF
 	#define SOL_COMPILER_VCXX_I_  SOL_OFF
+	#define SOL_COMPILER_VCXX_CLANG_I_ SOL_OFF
 #endif
 
 #if defined(__MINGW32__)
