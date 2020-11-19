@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-11-02 10:53:04.990407 UTC
-// This header was generated with sol v3.2.3 (revision 63e396b9)
+// Generated 2020-11-19 20:04:06.378005 UTC
+// This header was generated with sol v3.2.3 (revision b8aa189e)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -55,25 +55,38 @@
 #define SOL_DEFAULT_OFF -
 
 #if defined(_MSC_VER)
-	#define SOL_COMPILER_CLANG_I_ SOL_OFF
-	#define SOL_COMPILER_GCC_I_   SOL_OFF
-	#define SOL_COMPILER_EDG_I_   SOL_OFF
-	#define SOL_COMPILER_VCXX_I_  SOL_ON
+	#if defined(__clang__)
+		#define SOL_COMPILER_CLANG_I_      SOL_OFF
+		#define SOL_COMPILER_GCC_I_        SOL_OFF
+		#define SOL_COMPILER_EDG_I_        SOL_OFF
+		#define SOL_COMPILER_VCXX_I_       SOL_ON
+		#define SOL_COMPILER_VCXX_CLANG_I_ SOL_ON
+	#else
+		#define SOL_COMPILER_VCXX_CLANG_I_ SOL_OFF
+		#define SOL_COMPILER_CLANG_I_      SOL_OFF
+		#define SOL_COMPILER_GCC_I_        SOL_OFF
+		#define SOL_COMPILER_EDG_I_        SOL_OFF
+		#define SOL_COMPILER_VCXX_I_       SOL_ON
+		#define SOL_COMPILER_VCXX_CLANG_I_ SOL_OFF
+	#endif
 #elif defined(__clang__)
 	#define SOL_COMPILER_CLANG_I_ SOL_ON
 	#define SOL_COMPILER_GCC_I_   SOL_OFF
 	#define SOL_COMPILER_EDG_I_   SOL_OFF
 	#define SOL_COMPILER_VCXX_I_  SOL_OFF
+	#define SOL_COMPILER_VCXX_CLANG_I_ SOL_OFF
 #elif defined(__GNUC__)
 	#define SOL_COMPILER_CLANG_I_ SOL_OFF
 	#define SOL_COMPILER_GCC_I_   SOL_ON
 	#define SOL_COMPILER_EDG_I_   SOL_OFF
 	#define SOL_COMPILER_VCXX_I_  SOL_OFF
+	#define SOL_COMPILER_VCXX_CLANG_I_ SOL_OFF
 #else
 	#define SOL_COMPILER_CLANG_I_ SOL_OFF
 	#define SOL_COMPILER_GCC_I_   SOL_OFF
 	#define SOL_COMPILER_EDG_I_   SOL_OFF
 	#define SOL_COMPILER_VCXX_I_  SOL_OFF
+	#define SOL_COMPILER_VCXX_CLANG_I_ SOL_OFF
 #endif
 
 #if defined(__MINGW32__)

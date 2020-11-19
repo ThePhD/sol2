@@ -153,13 +153,13 @@ namespace sol {
 					}
 				}
 				if (fx(meta_function::to_string)) {
-					if constexpr (is_to_stringable<T>::value) {
+					if constexpr (is_to_stringable<T>::value && !meta::is_probably_stateless_lambda_v<T> && !std::is_member_pointer_v<T>) {
 						auto f = &detail::static_trampoline<&default_to_string<T>>;
 						ifx(meta_function::to_string, f);
 					}
 				}
 				if (fx(meta_function::call_function)) {
-					if constexpr (meta::has_deducible_signature<T>::value) {
+					if constexpr (meta::call_operator_deducible_v<T>) {
 						auto f = &c_call<decltype(&T::operator()), &T::operator()>;
 						ifx(meta_function::call_function, f);
 					}
@@ -177,12 +177,12 @@ namespace sol {
 
 			t.push();
 
-			detail::lua_reg_table l{};
+			detail::lua_reg_table l {};
 			int index = 0;
 			detail::indexed_insert insert_fx(l, index);
 			detail::insert_default_registrations<T>(insert_fx, detail::property_always_true);
 			if constexpr (!std::is_pointer_v<X>) {
-				l[index] = luaL_Reg{ to_string(meta_function::garbage_collect).c_str(), detail::make_destructor<T>() };
+				l[index] = luaL_Reg { to_string(meta_function::garbage_collect).c_str(), detail::make_destructor<T>() };
 			}
 			luaL_setfuncs(L, l, 0);
 

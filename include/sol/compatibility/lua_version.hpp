@@ -125,7 +125,23 @@
 	// shoving exceptions through Lua and errors should
 	// always be serialized
 	#define SOL_PROPAGATE_EXCEPTIONS_I_ SOL_DEFAULT_OFF
-#endif // LuaJIT beta 02.01.00 have better exception handling on all platforms since beta3
+#endif
+
+// Some configurations work with exceptions,
+// but cannot catch-all everything...
+#if defined(SOL_EXCEPTIONS_CATCH_ALL)
+	#if (SOL_EXCEPTIONS_CATCH_ALL != 0)
+		#define SOL_EXCEPTIONS_CATCH_ALL_I_ SOL_ON
+	#else
+		#define SOL_EXCEPTIONS_CATCH_ALL_I_ SOL_OFF
+	#endif
+#else
+	#if SOL_IS_ON(SOL_USE_LUAJIT_I_)
+		#define SOL_EXCEPTIONS_CATCH_ALL_I_ SOL_DEFAULT_OFF
+	#else
+		#define SOL_EXCEPTIONS_CATCH_ALL_I_ SOL_DEFAULT_ON
+	#endif
+#endif
 
 #if defined(SOL_LUAJIT_USE_EXCEPTION_TRAMPOLINE)
 	#if (SOL_LUAJIT_USE_EXCEPTION_TRAMPOLINE != 0)

@@ -53,7 +53,7 @@ inline namespace sol2_test_containers {
 
 TEST_CASE("containers/returns", "make sure that even references to vectors are being serialized as tables") {
 	sol::state lua;
-	std::vector<int> v{ 1, 2, 3 };
+	std::vector<int> v { 1, 2, 3 };
 	returns_callable f(v);
 	lua.set_function("f", f);
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
@@ -76,7 +76,8 @@ TEST_CASE("containers/custom usertype", "make sure container usertype metatables
 
 	sol::state lua;
 	lua.open_libraries();
-	lua.new_usertype<bark>("bark",
+	lua.new_usertype<bark>(
+	     "bark",
 	     "something",
 	     [](const bark& b) { INFO("It works: " << b.at(24)); },
 	     "size",
@@ -85,7 +86,7 @@ TEST_CASE("containers/custom usertype", "make sure container usertype metatables
 	     sol::resolve<const int&>(&bark::at),
 	     "clear",
 	     &bark::clear);
-	bark obj{ { 24, 50 } };
+	bark obj { { 24, 50 } };
 	lua.set("a", &obj);
 	{
 		auto result0 = lua.safe_script("assert(a:at(24) == 50)", sol::script_pass_on_error);
@@ -110,7 +111,7 @@ TEST_CASE("containers/const serialization kvp", "make sure const keys / values a
 	sol::state lua;
 	lua.open_libraries();
 	{
-		bark obj{ { 24, 50 } };
+		bark obj { { 24, 50 } };
 		lua.set("a", std::ref(obj));
 		auto result0 = lua.safe_script("assert(a[24] == 50)", sol::script_pass_on_error);
 		REQUIRE(result0.valid());
@@ -125,12 +126,12 @@ TEST_CASE("containers/basic serialization", "make sure containers are turned int
 	typedef std::vector<int> woof;
 	sol::state lua;
 	lua.open_libraries();
-	lua.set("b", woof{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 });
+	lua.set("b", woof { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 });
 	{
 		auto result = lua.safe_script("for k = 1, #b do assert(k == b[k]) end", sol::script_pass_on_error);
 		REQUIRE(result.valid());
 	}
-	woof w{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
+	woof w { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
 	lua.set("b", w);
 	{
 		auto result = lua.safe_script("for k = 1, #b do assert(k == b[k]) end", sol::script_pass_on_error);
@@ -208,7 +209,7 @@ TEST_CASE(
 	class A {
 	public:
 		int a;
-		A(int b = 2) : a(b){};
+		A(int b = 2) : a(b) {};
 
 		void func() {
 		}
@@ -276,7 +277,7 @@ struct machine {
 
 namespace sol {
 	template <>
-	struct is_container<options> : std::false_type {};
+	struct is_container<options> : std::false_type { };
 } // namespace sol
 
 TEST_CASE("containers/is container", "make sure the is_container trait behaves properly") {
@@ -320,9 +321,8 @@ TEST_CASE("containers/readonly", "make sure readonly members are stored appropri
 	     "seq",
 	     &foo::seq, // this one works
 	     "readonly_seq",
-	     sol::readonly(&foo::seq) // this one does not work
-	);
-	lua["value"] = std::list<bar>{ {}, {}, {} };
+	     sol::readonly(&foo::seq));
+	lua["value"] = std::list<bar> { {}, {}, {} };
 
 	auto result0 = lua.safe_script(R"(
 a = foo.new()
@@ -350,14 +350,14 @@ TEST_CASE("containers/to_args", "Test that the to_args abstractions works") {
 	sol::function f = lua["f"];
 	int a, b, c, d;
 
-	std::vector<int> v2{ 3, 4 };
+	std::vector<int> v2 { 3, 4 };
 	sol::tie(a, b, c, d) = f(1, 2, sol::as_args(v2));
 	REQUIRE(a == 1);
 	REQUIRE(b == 2);
 	REQUIRE(c == 3);
 	REQUIRE(d == 4);
 
-	std::set<int> v4{ 7, 6, 8, 5 };
+	std::set<int> v4 { 7, 6, 8, 5 };
 	sol::tie(a, b, c, d) = f(sol::as_args(v4));
 	REQUIRE(a == 5);
 	REQUIRE(b == 6);
@@ -395,11 +395,11 @@ end
 	     sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 
-	std::vector<int> fill_cmp{ 1, 2, 3 };
-	std::vector<int> append_cmp{ -1, -1, -10456407, -54 };
+	std::vector<int> fill_cmp { 1, 2, 3 };
+	std::vector<int> append_cmp { -1, -1, -10456407, -54 };
 
-	std::vector<int> vec1{ -1, -1, -1 };
-	std::vector<int> vec2{ -1, -1, -1 };
+	std::vector<int> vec1 { -1, -1, -1 };
+	std::vector<int> vec2 { -1, -1, -1 };
 
 	REQUIRE(vec1.size() == 3);
 	lua["f_fill"](vec1);
@@ -428,7 +428,7 @@ TEST_CASE("containers/non_copyable", "make sure non-copyable types in containers
 		sol::state lua;
 		lua.new_usertype<test>("test", "b", sol::readonly(&test::b));
 
-		lua["v"] = std::vector<non_copyable>{};
+		lua["v"] = std::vector<non_copyable> {};
 
 		auto pfr = lua.safe_script("t = test.new() t.b = v", sol::script_pass_on_error);
 		REQUIRE_FALSE(pfr.valid());
@@ -443,9 +443,9 @@ TEST_CASE("containers/pairs", "test how well pairs work with the underlying syst
 
 	lua.open_libraries(sol::lib::base);
 
-	std::vector<std::pair<std::string, int>> a{ { "one", 1 }, { "two", 2 }, { "three", 3 }, { "four", 4 }, { "five", 5 } };
-	std::array<std::pair<std::string, int>, 5> b{ { { "one", 1 }, { "two", 2 }, { "three", 3 }, { "four", 4 }, { "five", 5 } } };
-	pair_arr_t c{ { "one", 1 }, { "two", 2 }, { "three", 3 }, { "four", 4 }, { "five", 5 } };
+	std::vector<std::pair<std::string, int>> a { { "one", 1 }, { "two", 2 }, { "three", 3 }, { "four", 4 }, { "five", 5 } };
+	std::array<std::pair<std::string, int>, 5> b { { { "one", 1 }, { "two", 2 }, { "three", 3 }, { "four", 4 }, { "five", 5 } } };
+	pair_arr_t c { { "one", 1 }, { "two", 2 }, { "three", 3 }, { "four", 4 }, { "five", 5 } };
 	arr_t d = { 1, 2, 3, 4, 5 };
 
 	lua["a"] = std::ref(a);

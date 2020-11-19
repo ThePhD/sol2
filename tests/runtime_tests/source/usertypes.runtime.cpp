@@ -129,7 +129,7 @@ TEST_CASE("usertype/runtime-extensibility", "Check if usertypes are runtime exte
 		int x;
 	};
 
-	class derived_b : public base_a {};
+	class derived_b : public base_a { };
 
 	SECTION("just functions") {
 		sol::state lua;
@@ -246,7 +246,7 @@ end
 }
 
 TEST_CASE("usertype/runtime-replacement", "ensure that functions can be properly replaced at runtime for non-indexed things") {
-	struct heart_base_t {};
+	struct heart_base_t { };
 	struct heart_t : heart_base_t {
 		int x = 0;
 		void func() {
@@ -342,7 +342,7 @@ TEST_CASE("usertype/runtime-replacement", "ensure that functions can be properly
 }
 
 TEST_CASE("usertype/runtime additions with newindex", "ensure that additions when new_index is overriden don't hit the specified new_index function") {
-	class newindex_object {};
+	class newindex_object { };
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 	lua.new_usertype<newindex_object>("object", sol::meta_function::new_index, [](newindex_object&, sol::object, sol::object) { return; });
@@ -377,11 +377,16 @@ TEST_CASE("usertype/meta-key-retrievals", "allow for special meta keys (__index,
 		s[sol::metatable_key][sol::meta_function::new_index] = &d_sample::foo;
 		lua["var"] = s;
 
-		lua.safe_script("var = sample.new()");
-		lua.safe_script("var.key = 2");
-		lua.safe_script("var.__newindex = 4");
-		lua.safe_script("var.__index = 3");
-		lua.safe_script("var.__call = 1");
+		sol::optional<sol::error> maybe_error0 = lua.safe_script("var = sample.new()", sol::script_pass_on_error);
+		REQUIRE_FALSE(maybe_error0.has_value());
+		sol::optional<sol::error> maybe_error1 = lua.safe_script("var.key = 2", sol::script_pass_on_error);
+		REQUIRE_FALSE(maybe_error1.has_value());
+		sol::optional<sol::error> maybe_error2 = lua.safe_script("var.__newindex = 4", sol::script_pass_on_error);
+		REQUIRE_FALSE(maybe_error2.has_value());
+		sol::optional<sol::error> maybe_error3 = lua.safe_script("var.__index = 3", sol::script_pass_on_error);
+		REQUIRE_FALSE(maybe_error3.has_value());
+		sol::optional<sol::error> maybe_error4 = lua.safe_script("var.__call = 1", sol::script_pass_on_error);
+		REQUIRE_FALSE(maybe_error4.has_value());
 		REQUIRE(values[0] == 2);
 		REQUIRE(values[1] == 4);
 		REQUIRE(values[2] == 3);
@@ -423,7 +428,8 @@ TEST_CASE("usertype/meta-key-retrievals", "allow for special meta keys (__index,
 	}
 }
 
-TEST_CASE("usertype/new_index and index", "a custom new_index and index only kicks in after the values pre-ordained on the index and new_index tables are assigned") {
+TEST_CASE("usertype/new_index and index",
+     "a custom new_index and index only kicks in after the values pre-ordained on the index and new_index tables are assigned") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -468,7 +474,11 @@ TEST_CASE("usertype/object and class extensible", "make sure that a class which 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<special_property_object>("special_property_object", sol::meta_function::new_index, &special_property_object::set_property_lua, sol::meta_function::index, &special_property_object::get_property_lua);
+	lua.new_usertype<special_property_object>("special_property_object",
+	     sol::meta_function::new_index,
+	     &special_property_object::set_property_lua,
+	     sol::meta_function::index,
+	     &special_property_object::get_property_lua);
 
 	lua["add_class_func"] = [](sol::this_state L, special_property_object&) {
 		sol::stack_userdata self = sol::stack::get<sol::stack_userdata>(L, 1);

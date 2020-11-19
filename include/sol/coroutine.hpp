@@ -105,29 +105,40 @@ namespace sol {
 			}
 #endif // Safety
 		}
-		basic_coroutine(const basic_coroutine&) = default;
+
+		basic_coroutine(const basic_coroutine& other) = default;
 		basic_coroutine& operator=(const basic_coroutine&) = default;
-		basic_coroutine(basic_coroutine&&) = default;
-		basic_coroutine& operator=(basic_coroutine&&) = default;
-		basic_coroutine(const basic_function<base_t>& b)
+
+		basic_coroutine(basic_coroutine&& other) noexcept : base_t(std::move(other)), error_handler(this->lua_state(), std::move(other.error_handler)) {
+		}
+
+		basic_coroutine& operator=(basic_coroutine&& other) noexcept {
+			base_t::operator=(std::move(other));
+			// must change the state, since it could change on the coroutine type
+			error_handler.abandon();
+			error_handler = handler_t(this->lua_state(), std::move(other.error_handler));
+			return *this;
+		}
+
+		basic_coroutine(const basic_function<base_t>& b) noexcept
 		: basic_coroutine(b, detail::get_default_handler<reference, is_main_threaded<base_t>::value>(b.lua_state())) {
 		}
-		basic_coroutine(basic_function<base_t>&& b)
+		basic_coroutine(basic_function<base_t>&& b) noexcept
 		: basic_coroutine(std::move(b), detail::get_default_handler<reference, is_main_threaded<base_t>::value>(b.lua_state())) {
 		}
-		basic_coroutine(const basic_function<base_t>& b, handler_t eh) : base_t(b), error_handler(std::move(eh)) {
+		basic_coroutine(const basic_function<base_t>& b, handler_t eh) noexcept : base_t(b), error_handler(std::move(eh)) {
 		}
-		basic_coroutine(basic_function<base_t>&& b, handler_t eh) : base_t(std::move(b)), error_handler(std::move(eh)) {
+		basic_coroutine(basic_function<base_t>&& b, handler_t eh) noexcept : base_t(std::move(b)), error_handler(std::move(eh)) {
 		}
-		basic_coroutine(const stack_reference& r)
+		basic_coroutine(const stack_reference& r) noexcept
 		: basic_coroutine(r.lua_state(), r.stack_index(), detail::get_default_handler<reference, is_main_threaded<base_t>::value>(r.lua_state())) {
 		}
-		basic_coroutine(stack_reference&& r)
+		basic_coroutine(stack_reference&& r) noexcept
 		: basic_coroutine(r.lua_state(), r.stack_index(), detail::get_default_handler<reference, is_main_threaded<base_t>::value>(r.lua_state())) {
 		}
-		basic_coroutine(const stack_reference& r, handler_t eh) : basic_coroutine(r.lua_state(), r.stack_index(), std::move(eh)) {
+		basic_coroutine(const stack_reference& r, handler_t eh) noexcept : basic_coroutine(r.lua_state(), r.stack_index(), std::move(eh)) {
 		}
-		basic_coroutine(stack_reference&& r, handler_t eh) : basic_coroutine(r.lua_state(), r.stack_index(), std::move(eh)) {
+		basic_coroutine(stack_reference&& r, handler_t eh) noexcept : basic_coroutine(r.lua_state(), r.stack_index(), std::move(eh)) {
 		}
 
 		template <typename Super>
@@ -144,7 +155,7 @@ namespace sol {
 		}
 
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
-		basic_coroutine(lua_State* L, T&& r)
+		basic_coroutine(lua_State* L, T&& r) noexcept
 		: basic_coroutine(L, std::forward<T>(r), detail::get_default_handler<reference, is_main_threaded<base_t>::value>(L)) {
 		}
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>

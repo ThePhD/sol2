@@ -35,10 +35,12 @@ include(Common/Core)
 set(LUA_VANILLA_5.1_LATEST_VERSION 5.1.5)
 set(LUA_VANILLA_5.2_LATEST_VERSION 5.2.4)
 set(LUA_VANILLA_5.3_LATEST_VERSION 5.3.5)
-set(LUA_VANILLA_5.4_LATEST_VERSION 5.4.0)
+set(LUA_VANILLA_5.4_LATEST_VERSION 5.4.1)
 
 # exact version, coming from CI: pull directly from Lua and use external project to build
 # list of known md5 / sha1: must update when there are changes
+set(LUA_VANILLA_MD5_5.4.1 1d575faef1c907292edd79e7a2784d30)
+set(LUA_VANILLA_SHA1_5.4.1 88961e7d4fda58ca2c6163938fd48db8880e803d)
 set(LUA_VANILLA_MD5_5.4.0 dbf155764e5d433fc55ae80ea7060b60)
 set(LUA_VANILLA_SHA1_5.4.0 8cdbffa8a214a23d190d7c45f38c19518ae62e89)
 set(LUA_VANILLA_MD5_5.3.5 4f4b4f323fd3514a68e0ab3da8ce3455)

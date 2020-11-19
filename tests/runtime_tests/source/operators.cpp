@@ -29,17 +29,27 @@
 #include <numeric>
 #include <iostream>
 
-struct T { };
+inline namespace sol2_test_operators {
+	struct T { };
 
-TEST_CASE("operators/default", "test that generic equality operators and all sorts of equality tests can be used") {
 	struct U {
 		int a;
 		U(int x = 20) : a(x) {
 		}
-		bool operator==(const U& r) {
+		bool operator==(U& r) {
 			return a == r.a;
 		}
 	};
+
+	struct U_cpp_non_20 {
+		int a;
+		U_cpp_non_20(int x = 20) : a(x) {
+		}
+		bool operator==(const U_cpp_non_20& r) {
+			return a == r.a;
+		}
+	};
+
 	struct V {
 		int a;
 		V(int x = 20) : a(x) {
@@ -49,6 +59,51 @@ TEST_CASE("operators/default", "test that generic equality operators and all sor
 		}
 	};
 
+
+	struct stringable {
+		static const void* last_print_ptr;
+	};
+	const void* stringable::last_print_ptr = nullptr;
+
+	std::ostream& operator<<(std::ostream& ostr, const stringable& o) {
+		stringable::last_print_ptr = static_cast<const void*>(&o);
+		return ostr << "{ stringable, std::ostream! }";
+	}
+
+	struct adl_stringable {
+		static const void* last_print_ptr;
+	};
+	const void* adl_stringable::last_print_ptr = nullptr;
+
+	std::string to_string(const adl_stringable& o) {
+		adl_stringable::last_print_ptr = static_cast<const void*>(&o);
+		return "{ adl_stringable, to_string! }";
+	}
+
+	namespace inside {
+		struct adl_stringable2 {
+			static const void* last_print_ptr;
+		};
+		const void* adl_stringable2::last_print_ptr = nullptr;
+
+		std::string to_string(const adl_stringable2& o) {
+			adl_stringable2::last_print_ptr = static_cast<const void*>(&o);
+			return "{ inside::adl_stringable2, inside::to_string! }";
+		}
+	} // namespace inside
+
+	struct member_stringable {
+		static const void* last_print_ptr;
+
+		std::string to_string() const {
+			member_stringable::last_print_ptr = static_cast<const void*>(this);
+			return "{ member_stringable, to_string! }";
+		}
+	};
+	const void* member_stringable::last_print_ptr = nullptr;
+} // namespace sol2_test_operators
+
+TEST_CASE("operators/default", "test that generic equality operators and all sorts of equality tests can be used") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -61,12 +116,18 @@ TEST_CASE("operators/default", "test that generic equality operators and all sor
 	V v1;
 	V v2 { 30 };
 	V v3;
+	U_cpp_non_20 u20_1;
+	U_cpp_non_20 u20_2 { 30 };
+	U_cpp_non_20 u20_3;
 	lua["t1"] = &t1;
 	lua["t2"] = &t2;
 	lua["t3"] = &t3;
 	lua["u1"] = &u1;
 	lua["u2"] = &u2;
 	lua["u3"] = &u3;
+	lua["u20_1"] = &u20_1;
+	lua["u20_2"] = &u20_2;
+	lua["u20_3"] = &u20_3;
 	lua["v1"] = &v1;
 	lua["v2"] = &v2;
 	lua["v3"] = &v3;
@@ -99,13 +160,25 @@ TEST_CASE("operators/default", "test that generic equality operators and all sor
 			     sol::script_pass_on_error);
 			REQUIRE(result1.valid());
 		}
+#if __cplusplus < 202000L
+		// C++20 changed object rewrite
+		// rules, so only test on versions below that
 		{
 			auto result1 = lua.safe_script(
+			     "assert(u20_1 == u20_1)"
+			     "assert(u20_2 == u20_2)"
+			     "assert(u20_3 == u20_3)",
+			     sol::script_pass_on_error);
+			REQUIRE(result1.valid());
+		}
+#endif
+		{
+			sol::optional<sol::error> result1 = lua.safe_script(
 			     "assert(not (u1 == u2))"
 			     "assert(u1 == u3)"
 			     "assert(not (u2 == u3))",
 			     sol::script_pass_on_error);
-			REQUIRE(result1.valid());
+			REQUIRE_FALSE(result1.has_value());
 		}
 		// Object should compare equal to themselves
 		// (and not invoke operator==; pointer test should be sufficient)
@@ -249,48 +322,6 @@ TEST_CASE("operators/call", "test call operator generation") {
 		}
 	}
 }
-
-struct stringable {
-	static const void* last_print_ptr;
-};
-const void* stringable::last_print_ptr = nullptr;
-
-std::ostream& operator<<(std::ostream& ostr, const stringable& o) {
-	stringable::last_print_ptr = static_cast<const void*>(&o);
-	return ostr << "{ stringable, std::ostream! }";
-}
-
-struct adl_stringable {
-	static const void* last_print_ptr;
-};
-const void* adl_stringable::last_print_ptr = nullptr;
-
-std::string to_string(const adl_stringable& o) {
-	adl_stringable::last_print_ptr = static_cast<const void*>(&o);
-	return "{ adl_stringable, to_string! }";
-}
-
-namespace inside {
-	struct adl_stringable2 {
-		static const void* last_print_ptr;
-	};
-	const void* adl_stringable2::last_print_ptr = nullptr;
-
-	std::string to_string(const adl_stringable2& o) {
-		adl_stringable2::last_print_ptr = static_cast<const void*>(&o);
-		return "{ inside::adl_stringable2, inside::to_string! }";
-	}
-} // namespace inside
-
-struct member_stringable {
-	static const void* last_print_ptr;
-
-	std::string to_string() const {
-		member_stringable::last_print_ptr = static_cast<const void*>(this);
-		return "{ member_stringable, to_string! }";
-	}
-};
-const void* member_stringable::last_print_ptr = nullptr;
 
 TEST_CASE("operators/stringable", "test std::ostream stringability") {
 	sol::state lua;

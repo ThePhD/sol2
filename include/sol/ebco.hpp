@@ -38,8 +38,8 @@ namespace sol { namespace detail {
 		ebco(ebco&&) = default;
 		ebco& operator=(const ebco&) = default;
 		ebco& operator=(ebco&&) = default;
-		ebco(const T& v) : value_(v){};
-		ebco(T&& v) : value_(std::move(v)){};
+		ebco(const T& v) : value_(v) {};
+		ebco(T&& v) : value_(std::move(v)) {};
 		ebco& operator=(const T& v) {
 			value_ = v;
 			return *this;
@@ -49,15 +49,16 @@ namespace sol { namespace detail {
 			return *this;
 		};
 		template <typename Arg, typename... Args,
-		     typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
-		                                      ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T>>>
-		ebco(Arg&& arg, Args&&... args) : T(std::forward<Arg>(arg), std::forward<Args>(args)...){}
+			typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
+			                                 ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T>>>
+		ebco(Arg&& arg, Args&&... args) : value_(std::forward<Arg>(arg), std::forward<Args>(args)...) {
+		}
 
 		T& value() & {
 			return value_;
 		}
 
-		T const& value() const & {
+		T const& value() const& {
 			return value_;
 		}
 
@@ -71,8 +72,8 @@ namespace sol { namespace detail {
 		ebco() = default;
 		ebco(const ebco&) = default;
 		ebco(ebco&&) = default;
-		ebco(const T& v) : T(v){};
-		ebco(T&& v) : T(std::move(v)){};
+		ebco(const T& v) : T(v) {};
+		ebco(T&& v) : T(std::move(v)) {};
 		template <typename Arg, typename... Args,
 			typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
 			                                 ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T>>>
@@ -94,7 +95,7 @@ namespace sol { namespace detail {
 			return static_cast<T&>(*this);
 		}
 
-		T const& value() const & {
+		T const& value() const& {
 			return static_cast<T const&>(*this);
 		}
 
@@ -110,7 +111,7 @@ namespace sol { namespace detail {
 		ebco() = default;
 		ebco(const ebco&) = default;
 		ebco(ebco&&) = default;
-		ebco(T& v) : ref(v){};
+		ebco(T& v) : ref(v) {};
 
 		ebco& operator=(const ebco&) = default;
 		ebco& operator=(ebco&&) = default;
@@ -131,7 +132,7 @@ namespace sol { namespace detail {
 		ebco() = default;
 		ebco(const ebco&) = default;
 		ebco(ebco&&) = default;
-		ebco(T&& v) : ref(v){};
+		ebco(T&& v) : ref(v) {};
 
 		ebco& operator=(const ebco&) = default;
 		ebco& operator=(ebco&&) = default;
@@ -144,7 +145,7 @@ namespace sol { namespace detail {
 			return ref;
 		}
 
-		const T& value() const & {
+		const T& value() const& {
 			return ref;
 		}
 

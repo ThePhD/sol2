@@ -359,7 +359,7 @@ namespace sol {
 		};
 
 		template <typename Signature>
-		struct unqualified_pusher<Signature, std::enable_if_t<std::is_member_pointer<Signature>::value>> {
+		struct unqualified_pusher<Signature, std::enable_if_t<meta::is_member_object_or_function_v<Signature>>> {
 			template <typename... Args>
 			static int push(lua_State* L, Args&&... args) {
 				function_detail::select<false>(L, std::forward<Args>(args)...);

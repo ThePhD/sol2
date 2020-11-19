@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -44,7 +44,7 @@ for i=1,#c do
 	assert(v == (i + 10)) 
 end
 		)",
-			sol::script_pass_on_error);
+		     sol::script_pass_on_error);
 		REQUIRE(r1.valid());
 	}
 	{
@@ -120,9 +120,7 @@ end
 	int v1 = lua["v1"];
 	int v2 = lua["v2"];
 	int v3 = lua["v3"];
-	int values[6] = {
-		20, 13, 14, 16, 17, 18
-	};
+	int values[6] = { 20, 13, 14, 16, 17, 18 };
 	{
 		std::size_t idx = 0;
 		for (const auto& i : items) {
@@ -154,7 +152,8 @@ for i=1,#c do
 	v = c[i] 
 	assert(v == (i + 10)) 
 end
-		)", sol::script_pass_on_error);
+		)",
+		     sol::script_pass_on_error);
 		REQUIRE(r1.valid());
 	}
 	{
@@ -228,9 +227,7 @@ end
 	int v1 = lua["v1"];
 	int v2 = lua["v2"];
 	int v3 = lua["v3"];
-	int values[] = {
-		11, 20, 13, 14, 18
-	};
+	int values[] = { 11, 20, 13, 14, 18 };
 	{
 		std::size_t idx = 0;
 		for (const auto& i : items) {
@@ -258,7 +255,7 @@ TEST_CASE("containers/sequence containers", "check all of the functinos for ever
 		sol::stack_guard luasg(lua);
 		lua.open_libraries(sol::lib::base);
 
-		std::vector<int> items{ 11, 12, 13, 14, 15 };
+		std::vector<int> items { 11, 12, 13, 14, 15 };
 		lua["c"] = &items;
 		sequence_container_check(lua, items);
 	}
@@ -267,7 +264,7 @@ TEST_CASE("containers/sequence containers", "check all of the functinos for ever
 		sol::stack_guard luasg(lua);
 		lua.open_libraries(sol::lib::base);
 
-		std::list<int> items{ 11, 12, 13, 14, 15 };
+		std::list<int> items { 11, 12, 13, 14, 15 };
 		lua["c"] = &items;
 		sequence_container_check(lua, items);
 	}
@@ -276,7 +273,7 @@ TEST_CASE("containers/sequence containers", "check all of the functinos for ever
 		sol::stack_guard luasg(lua);
 		lua.open_libraries(sol::lib::base);
 
-		std::forward_list<int> items{ 11, 12, 13, 14, 15 };
+		std::forward_list<int> items { 11, 12, 13, 14, 15 };
 		lua["c"] = &items;
 		sequence_container_check(lua, items);
 	}
@@ -285,7 +282,7 @@ TEST_CASE("containers/sequence containers", "check all of the functinos for ever
 		sol::stack_guard luasg(lua);
 		lua.open_libraries(sol::lib::base);
 
-		std::deque<int> items{ 11, 12, 13, 14, 15 };
+		std::deque<int> items { 11, 12, 13, 14, 15 };
 		lua["c"] = &items;
 		sequence_container_check(lua, items);
 	}
@@ -297,7 +294,7 @@ TEST_CASE("containers/fixed containers", "check immutable container types") {
 		sol::stack_guard luasg(lua);
 		lua.open_libraries(sol::lib::base);
 
-		std::array<int, 5> items{ { 11, 12, 13, 14, 15 } };
+		std::array<int, 5> items { { 11, 12, 13, 14, 15 } };
 		lua["c"] = &items;
 		fixed_container_check(lua, items);
 	}
@@ -306,7 +303,7 @@ TEST_CASE("containers/fixed containers", "check immutable container types") {
 		sol::stack_guard luasg(lua);
 		lua.open_libraries(sol::lib::base);
 
-		std::array<int, 5> items{ { 11, 12, 13, 14, 15 } };
+		std::array<int, 5> items { { 11, 12, 13, 14, 15 } };
 		lua["c"] = std::ref(items);
 		fixed_container_check(lua, items);
 	}
@@ -352,7 +349,8 @@ function sf (x,v)
 	return x:find(v)
 end
 
-)", sol::script_pass_on_error);
+)",
+	     sol::script_pass_on_error);
 	REQUIRE(result1.valid());
 	// Have the function we
 	// just defined in Lua
@@ -363,10 +361,10 @@ end
 
 	// Set a global variable called
 	// "arr" to be a vector of 5 lements
-	lua["c_arr"] = std::array<int, 5>{ { 2, 4, 6, 8, 10 } };
-	lua["arr"] = std::vector<int>{ 2, 4, 6, 8, 10 };
-	lua["map"] = std::map<int, int>{ { 1, 2 }, { 2, 4 }, { 3, 6 }, { 4, 8 }, { 5, 10 } };
-	lua["set"] = std::set<int>{ 2, 4, 6, 8, 10 };
+	lua["c_arr"] = std::array<int, 5> { { 2, 4, 6, 8, 10 } };
+	lua["arr"] = std::vector<int> { 2, 4, 6, 8, 10 };
+	lua["map"] = std::map<int, int> { { 1, 2 }, { 2, 4 }, { 3, 6 }, { 4, 8 }, { 5, 10 } };
+	lua["set"] = std::set<int> { 2, 4, 6, 8, 10 };
 	std::array<int, 5>& c_arr = lua["c_arr"];
 	std::vector<int>& arr = lua["arr"];
 	std::map<int, int>& map = lua["map"];
@@ -396,7 +394,6 @@ end
 		sol::object rn = sf(map, 9);
 		REQUIRE(rn == sol::lua_nil);
 	}
-
 	i(lua["arr"]);
 	i(lua["map"]);
 	i(lua["set"]);
@@ -408,7 +405,8 @@ end
 c_arr[1] = 7
 c_arr[2] = 7
 c_arr[3] = 7
-)", sol::script_pass_on_error);
+)",
+	     sol::script_pass_on_error);
 	REQUIRE(result2.valid());
 }
 

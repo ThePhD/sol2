@@ -39,11 +39,15 @@ function(CREATE_TEST test_target_name test_name target_sol)
 		EXPORT_NAME sol2::${test_name})
 	target_link_libraries(${test_target_name} 
 		PUBLIC Threads::Threads ${LUA_LIBRARIES} ${CATCH_LIBRARIES} ${target_sol})
-	
+	target_compile_definitions(${test_target_name}
+		PUBLIC SOL_ALL_SAFETIES_ON=1 SOL_PRINT_ERRORS=1 SOL_ENABLE_INTEROP=1)
 	if (MSVC)
 		if (NOT CMAKE_COMPILER_ID MATCHES "Clang")
 			target_compile_options(${test_target_name} 
-				PRIVATE /bigobj /W4)
+				PRIVATE /bigobj /W4 /w44800)
+		else()
+			target_compile_options(${test_target_name}
+				PRIVATE -ftemplate-backtrace-limit=0)
 		endif()
 	else()
 		target_compile_options(${test_target_name} 
@@ -53,11 +57,8 @@ function(CREATE_TEST test_target_name test_name target_sol)
 			-Wno-noexcept-type)
 
 		if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-			# For another day, when C++ is not so crap
-			# and we have time to audit the entire lib
-			# for all uses of `detail::swallow`...
-			#target_compile_options(${test_target_name}
-			#	PRIVATE -Wcomma)		
+			target_compile_options(${test_target_name}
+				PRIVATE -Wno-microsoft-cast)
 		endif()
 
 		if (IS_X86)
