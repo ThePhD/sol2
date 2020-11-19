@@ -5,13 +5,13 @@
 #include "assert.hpp"
 
 
-int main () {
+int main() {
 	std::cout << "=== dump (serialize between states) ===" << std::endl;
 
 	// 2 states, transferring function from 1 to another
 	sol::state lua;
 	sol::state lua2;
-	
+
 	// we're not going to run the code on the first
 	// state, so we only actually need
 	// the base lib on the second state
@@ -24,10 +24,10 @@ int main () {
 	c_assert(lr.valid());
 
 	// turn it into a function, then dump the bytecode
-	sol::protected_function target = lr;
+	sol::protected_function target = lr.get<sol::protected_function>();
 	sol::bytecode target_bc = target.dump();
 
-	// reload the byte code 
+	// reload the byte code
 	// in the SECOND state
 	auto result2 = lua2.safe_script(target_bc.as_string_view(), sol::script_pass_on_error);
 	// check if it was done properly

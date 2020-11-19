@@ -234,7 +234,7 @@ if (LUA_BUILD_LUA_COMPILER)
 endif()
 	set(LUA_VANILLA_GENERATE_LUA_HPP false)
 else()
-	MESSAGE(WARNING "Using Lua 5.4.0-work1 file list for ${LUA_VERSION} version")
+	MESSAGE(WARNING "Using Lua 5.4.1 file list for ${LUA_VERSION} version")
 	set(LUA_VANILLA_LIB_SOURCES lapi.c lauxlib.c lbaselib.c lcode.c lcorolib.c 
 		lctype.c ldblib.c ldebug.c ldo.c ldump.c lfunc.c lgc.c linit.c liolib.c
 		llex.c lmathlib.c lmem.c loadlib.c lobject.c lopcodes.c loslib.c
