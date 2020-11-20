@@ -104,7 +104,7 @@ namespace sol {
 		std::size_t aligned_space_for(void* alignment = nullptr) {
 			// use temporary storage to prevent strict UB shenanigans
 			char alignment_shim[(std::max)({ sizeof(Args)... }) + (std::max)({ alignof(Args)... })] {};
-			char* start = alignment == nullptr ? static_cast<char*>(alignment) : alignment_shim;
+			char* start = alignment != nullptr ? static_cast<char*>(alignment) : alignment_shim;
 			(void)detail::swallow { int {}, (align_one(std::alignment_of_v<Args>, sizeof(Args), alignment), int {})... };
 			return static_cast<char*>(alignment) - start;
 		}
