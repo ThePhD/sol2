@@ -18,7 +18,7 @@ print(a,b,c)
 	sol::load_result fx = lua.load(my_script);
 	if (!fx.valid()) {
 		sol::error err = fx;
-		std::cerr << "failde to load string-based script in the program" << err.what() << std::endl;
+		std::cerr << "failed to load string-based script into the program" << err.what() << std::endl;
 	}
 	
 	// prints "your arguments here"
