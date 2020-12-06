@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-11-19 21:39:27.514445 UTC
-// This header was generated with sol v3.2.3 (revision 62804667)
+// Generated 2020-11-20 22:05:33.695273 UTC
+// This header was generated with sol v3.2.3 (revision d0eba0a7)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -786,6 +786,8 @@ namespace sol {
 	template <typename base_t>
 	class basic_coroutine;
 	template <typename base_t>
+	class basic_packaged_coroutine;
+	template <typename base_t>
 	class basic_thread;
 
 	using object = basic_object<reference>;
@@ -793,6 +795,7 @@ namespace sol {
 	using lightuserdata = basic_lightuserdata<reference>;
 	using thread = basic_thread<reference>;
 	using coroutine = basic_coroutine<reference>;
+	using packaged_coroutine = basic_packaged_coroutine<reference>;
 	using main_object = basic_object<main_reference>;
 	using main_userdata = basic_userdata<main_reference>;
 	using main_lightuserdata = basic_lightuserdata<main_reference>;

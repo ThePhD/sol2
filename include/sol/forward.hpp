@@ -150,6 +150,8 @@ namespace sol {
 	template <typename base_t>
 	class basic_coroutine;
 	template <typename base_t>
+	class basic_packaged_coroutine;
+	template <typename base_t>
 	class basic_thread;
 
 	using object = basic_object<reference>;
@@ -157,6 +159,7 @@ namespace sol {
 	using lightuserdata = basic_lightuserdata<reference>;
 	using thread = basic_thread<reference>;
 	using coroutine = basic_coroutine<reference>;
+	using packaged_coroutine = basic_packaged_coroutine<reference>;
 	using main_object = basic_object<main_reference>;
 	using main_userdata = basic_userdata<main_reference>;
 	using main_lightuserdata = basic_lightuserdata<main_reference>;

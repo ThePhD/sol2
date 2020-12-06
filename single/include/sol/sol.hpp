@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-11-19 21:39:26.848444 UTC
-// This header was generated with sol v3.2.3 (revision 62804667)
+// Generated 2020-11-20 22:05:32.729267 UTC
+// This header was generated with sol v3.2.3 (revision d0eba0a7)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -811,6 +811,8 @@ namespace sol {
 	template <typename base_t>
 	class basic_coroutine;
 	template <typename base_t>
+	class basic_packaged_coroutine;
+	template <typename base_t>
 	class basic_thread;
 
 	using object = basic_object<reference>;
@@ -818,6 +820,7 @@ namespace sol {
 	using lightuserdata = basic_lightuserdata<reference>;
 	using thread = basic_thread<reference>;
 	using coroutine = basic_coroutine<reference>;
+	using packaged_coroutine = basic_packaged_coroutine<reference>;
 	using main_object = basic_object<main_reference>;
 	using main_userdata = basic_userdata<main_reference>;
 	using main_lightuserdata = basic_lightuserdata<main_reference>;
@@ -9910,7 +9913,7 @@ namespace sol {
 		std::size_t aligned_space_for(void* alignment = nullptr) {
 			// use temporary storage to prevent strict UB shenanigans
 			char alignment_shim[(std::max)({ sizeof(Args)... }) + (std::max)({ alignof(Args)... })] {};
-			char* start = alignment == nullptr ? static_cast<char*>(alignment) : alignment_shim;
+			char* start = alignment != nullptr ? static_cast<char*>(alignment) : alignment_shim;
 			(void)detail::swallow { int {}, (align_one(std::alignment_of_v<Args>, sizeof(Args), alignment), int {})... };
 			return static_cast<char*>(alignment) - start;
 		}
