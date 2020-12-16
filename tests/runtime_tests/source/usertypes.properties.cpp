@@ -245,7 +245,7 @@ TEST_CASE("usertype/static-properties", "allow for static functions to get and s
 }
 
 TEST_CASE("usertype/var with string literals", "String literals are the bane of my existence and one day C++ will make them not be fucking arrays") {
-	struct blah {};
+	struct blah { };
 
 	sol::state lua;
 	sol::usertype<blah> x = lua.new_usertype<blah>("blah");
@@ -303,7 +303,7 @@ TEST_CASE("usertype/coverage", "try all the things") {
 	     sol::meta_function::garbage_collect,
 	     sol::destructor(des<ext_getset>),
 	     "x",
-	     sol::overload(&ext_getset::x, &ext_getset::x2, [](ext_getset& m, std::string x, int y) { return m.meow + 50 + y + x.length(); }),
+	     sol::overload(&ext_getset::x, &ext_getset::x2, [](ext_getset& m, std::string x, int y) { return m.meow + 50 + y + static_cast<int>(x.length()); }),
 	     "bark",
 	     &ext_getset::bark,
 	     "meow",
@@ -416,8 +416,8 @@ print(e.bark)
 }
 
 TEST_CASE("usertype/alignment", "ensure that alignment does not trigger weird aliasing issues") {
-	struct aligned_base {};
-	struct aligned_derived : aligned_base {};
+	struct aligned_base { };
+	struct aligned_derived : aligned_base { };
 
 	sol::state lua;
 	sol::stack_guard luasg(lua);
@@ -454,7 +454,8 @@ TEST_CASE("usertype/readonly-and-static-functions", "Check if static functions c
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
-	lua.new_usertype<bark>("bark",
+	lua.new_usertype<bark>(
+	     "bark",
 	     "var",
 	     &bark::var,
 	     "var2",
@@ -537,7 +538,7 @@ TEST_CASE("usertype/vars", "usertype vars can bind various class items") {
 
 	sol::state lua;
 	lua.open_libraries();
-	struct test {};
+	struct test { };
 	lua.new_usertype<test>("test",
 	     "straight",
 	     sol::var(2),

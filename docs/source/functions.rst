@@ -63,6 +63,8 @@ functions and argument passing
 
 All arguments are forwarded. Unlike :doc:`get/set/operator[] on sol::state<api/state>` or :doc:`sol::table<api/table>`, value semantics are not used here. It is forwarding reference semantics, which do not copy/move unless it is specifically done by the receiving functions / specifically done by the user.
 
+You can change this behavior by defining ``SOL_FUNCTION_CALL_VALUE_SEMANTICS``, as defined in the :doc:`safety configuration page<safety>`.
+
 .. note::
 
 	This also means that you should pass and receive arguments in certain ways to maximize efficiency. For example, ``sol::table``, ``sol::object``, ``sol::userdata`` and friends are cheap to copy, and should simply by taken as values. This includes primitive types like ``int`` and ``double``. However, C++ types -- if you do not want copies -- should be taken as ``const type&`` or ``type&``, to save on copies if it's important. Note that taking references from Lua also means you can modify the data inside of Lua directly, so be careful. Lua by default deals with things mostly by reference (save for primitive types).

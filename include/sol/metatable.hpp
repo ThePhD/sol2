@@ -67,20 +67,20 @@ namespace sol {
 		basic_metatable(lua_State* L, T&& r) : base_t(L, std::forward<T>(r)) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			auto pp = stack::push_pop(*this);
-			constructor_handler handler{};
+			constructor_handler handler {};
 			stack::check<basic_metatable>(lua_state(), -1, handler);
 #endif // Safety
 		}
 		basic_metatable(lua_State* L, int index = -1) : basic_metatable(detail::no_safety, L, index) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
-			constructor_handler handler{};
+			constructor_handler handler {};
 			stack::check<basic_metatable>(L, index, handler);
 #endif // Safety
 		}
 		basic_metatable(lua_State* L, ref_index index) : basic_metatable(detail::no_safety, L, index) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			auto pp = stack::push_pop(*this);
-			constructor_handler handler{};
+			constructor_handler handler {};
 			stack::check<basic_metatable>(lua_state(), -1, handler);
 #endif // Safety
 		}
@@ -91,7 +91,7 @@ namespace sol {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			if (!is_table<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
-				constructor_handler handler{};
+				constructor_handler handler {};
 				stack::check<basic_metatable>(base_t::lua_state(), -1, handler);
 			}
 #endif // Safety
@@ -146,7 +146,7 @@ namespace sol {
 				else {
 					// do not change the values in the registry: they need to be present
 					// no matter what, for safety's sake
-					//stack::set_field(L, gcmetakey, lua_nil, registry.stack_index());
+					// stack::set_field(L, gcmetakey, lua_nil, registry.stack_index());
 				}
 			}
 

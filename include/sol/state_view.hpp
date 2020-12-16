@@ -120,7 +120,7 @@ namespace sol {
 
 				for (auto&& library : libraries) {
 					switch (library) {
-#if SOL_LUA_VESION_I_ <= 501 && defined(SOL_LUAJIT)
+#if SOL_LUA_VESION_I_ <= 501 && SOL_IS_ON(SOL_USE_LUAJIT_I_)
 					case lib::coroutine:
 #endif // luajit opens coroutine base stuff
 					case lib::base:
@@ -131,7 +131,7 @@ namespace sol {
 						luaL_requiref(L, "package", luaopen_package, 1);
 						lua_pop(L, 1);
 						break;
-#if !defined(SOL_LUAJIT)
+#if SOL_IS_OFF(SOL_USE_LUAJIT_I_)
 					case lib::coroutine:
 #if SOL_LUA_VESION_I_ > 501
 						luaL_requiref(L, "coroutine", luaopen_coroutine, 1);
@@ -152,14 +152,14 @@ namespace sol {
 						lua_pop(L, 1);
 						break;
 					case lib::bit32:
-#ifdef SOL_LUAJIT
+#if SOL_IS_ON(SOL_USE_LUAJIT_I_)
 						luaL_requiref(L, "bit32", luaopen_bit, 1);
 						lua_pop(L, 1);
-#elif (SOL_LUA_VESION_I_ == 502) || defined(LUA_COMPAT_BITLIB) || defined(LUA_COMPAT_5_2)
+#elif SOL_IS_ON(SOL_LUA_BIT32_LIB_I_)
 						luaL_requiref(L, "bit32", luaopen_bit32, 1);
 						lua_pop(L, 1);
 #else
-#endif // Lua 5.2 only (deprecated in 5.3 (503)) (Can be turned on with Compat flags)
+#endif
 						break;
 					case lib::io:
 						luaL_requiref(L, "io", luaopen_io, 1);
@@ -174,19 +174,19 @@ namespace sol {
 						lua_pop(L, 1);
 						break;
 					case lib::utf8:
-#if SOL_LUA_VESION_I_ > 502 && !defined(SOL_LUAJIT)
+#if SOL_LUA_VESION_I_ > 502 && SOL_IS_OFF(SOL_USE_LUAJIT_I_)
 						luaL_requiref(L, "utf8", luaopen_utf8, 1);
 						lua_pop(L, 1);
 #endif // Lua 5.3+ only
 						break;
 					case lib::ffi:
-#ifdef SOL_LUAJIT
+#if SOL_IS_ON(SOL_USE_LUAJIT_I_)
 						luaL_requiref(L, "ffi", luaopen_ffi, 1);
 						lua_pop(L, 1);
 #endif // LuaJIT only
 						break;
 					case lib::jit:
-#ifdef SOL_LUAJIT
+#if SOL_IS_ON(SOL_USE_LUAJIT_I_)
 						luaL_requiref(L, "jit", luaopen_jit, 0);
 						lua_pop(L, 1);
 #endif // LuaJIT Only

@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -34,11 +34,9 @@ namespace sol {
 		int index;
 
 	public:
-		stack_proxy_base()
-			: L(nullptr), index(0) {
+		stack_proxy_base() : L(nullptr), index(0) {
 		}
-		stack_proxy_base(lua_State* L, int index)
-			: L(L), index(index) {
+		stack_proxy_base(lua_State* L, int index) : L(L), index(index) {
 		}
 
 		template <typename T>

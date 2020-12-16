@@ -30,7 +30,7 @@
 
 namespace sol {
 	template <typename... Args>
-	struct base_list {};
+	struct base_list { };
 	template <typename... Args>
 	using bases = base_list<Args...>;
 
@@ -38,7 +38,7 @@ namespace sol {
 	const auto base_classes = base_classes_tag();
 
 	template <typename... Args>
-	struct is_to_stringable<base_list<Args...>> : std::false_type {};
+	struct is_to_stringable<base_list<Args...>> : std::false_type { };
 
 	namespace detail {
 
@@ -79,7 +79,7 @@ namespace sol {
 				return ti == usertype_traits<T>::qualified_name() || type_check_bases(bases_t(), ti);
 			}
 
-			template <typename ...Bases>
+			template <typename... Bases>
 			static bool type_check_with(const string_view& ti) {
 				return ti == usertype_traits<T>::qualified_name() || type_check_bases(types<Bases...>(), ti);
 			}
@@ -91,7 +91,8 @@ namespace sol {
 			template <typename Base, typename... Args>
 			static void* type_cast_bases(types<Base, Args...>, T* data, const string_view& ti) {
 				// Make sure to convert to T first, and then dynamic cast to the proper type
-				return ti != usertype_traits<Base>::qualified_name() ? type_cast_bases(types<Args...>(), data, ti) : static_cast<void*>(static_cast<Base*>(data));
+				return ti != usertype_traits<Base>::qualified_name() ? type_cast_bases(types<Args...>(), data, ti)
+				                                                     : static_cast<void*>(static_cast<Base*>(data));
 			}
 
 			static void* type_cast(void* voiddata, const string_view& ti) {

@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -33,13 +33,13 @@ namespace sol {
 
 	namespace detail {
 		template <>
-		struct is_speshul<unsafe_function_result> : std::true_type {};
+		struct is_speshul<unsafe_function_result> : std::true_type { };
 		template <>
-		struct is_speshul<protected_function_result> : std::true_type {};
+		struct is_speshul<protected_function_result> : std::true_type { };
 
 		template <std::size_t I, typename... Args, typename T>
 		stack_proxy get(types<Args...>, meta::index_value<0>, meta::index_value<I>, const T& fr) {
-			return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
+			return stack_proxy(fr.lua_state(), fr.stack_index() + static_cast<int>(I));
 		}
 
 		template <std::size_t I, std::size_t N, typename Arg, typename... Args, typename T, meta::enable<meta::boolean<(N > 0)>> = meta::enabler>
@@ -49,14 +49,14 @@ namespace sol {
 	} // namespace detail
 
 	template <>
-	struct tie_size<unsafe_function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
+	struct tie_size<unsafe_function_result> : std::integral_constant<std::size_t, SIZE_MAX> { };
 
 	template <>
-	struct tie_size<protected_function_result> : std::integral_constant<std::size_t, SIZE_MAX> {};
+	struct tie_size<protected_function_result> : std::integral_constant<std::size_t, SIZE_MAX> { };
 
 	template <std::size_t I>
 	stack_proxy get(const unsafe_function_result& fr) {
-		return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
+		return stack_proxy(fr.lua_state(), fr.stack_index() + static_cast<int>(I));
 	}
 
 	template <std::size_t I, typename... Args>
@@ -66,7 +66,7 @@ namespace sol {
 
 	template <std::size_t I>
 	stack_proxy get(const protected_function_result& fr) {
-		return stack_proxy(fr.lua_state(), static_cast<int>(fr.stack_index() + I));
+		return stack_proxy(fr.lua_state(), fr.stack_index() + static_cast<int>(I));
 	}
 
 	template <std::size_t I, typename... Args>

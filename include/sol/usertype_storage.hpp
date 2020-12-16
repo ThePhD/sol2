@@ -1054,7 +1054,7 @@ namespace sol { namespace u_detail {
 			auto prop_fx = detail::properties_enrollment_allowed(for_each_backing_metatable_calls, storage.properties, enrollments);
 			auto insert_fx = [&L, &t, &storage](meta_function mf, lua_CFunction reg) {
 				stack::set_field<false, true>(L, mf, reg, t.stack_index());
-				storage.properties[static_cast<int>(mf)] = true;
+				storage.properties[static_cast<std::size_t>(mf)] = true;
 			};
 			detail::insert_default_registrations<T>(insert_fx, prop_fx);
 

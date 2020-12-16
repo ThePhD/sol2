@@ -41,7 +41,7 @@ namespace sol {
 	class stateless_stack_reference {
 	private:
 		friend class stack_reference;
-		
+
 		int index = 0;
 
 		int registry_index() const noexcept {
@@ -50,7 +50,7 @@ namespace sol {
 
 	public:
 		stateless_stack_reference() noexcept = default;
-		stateless_stack_reference(lua_nil_t) noexcept : stateless_stack_reference(){};
+		stateless_stack_reference(lua_nil_t) noexcept : stateless_stack_reference() {};
 		stateless_stack_reference(lua_State* L, int i) noexcept : stateless_stack_reference(absolute_index(L, i)) {
 		}
 		stateless_stack_reference(lua_State*, absolute_index i) noexcept : stateless_stack_reference(i) {
@@ -111,8 +111,7 @@ namespace sol {
 
 	public:
 		stack_reference() noexcept = default;
-		stack_reference(lua_nil_t) noexcept
-		: stack_reference() {};
+		stack_reference(lua_nil_t) noexcept : stack_reference() {};
 		stack_reference(lua_State* L, lua_nil_t) noexcept : stateless_stack_reference(L, 0), luastate(L) {
 		}
 		stack_reference(lua_State* L, int i) noexcept : stateless_stack_reference(L, i), luastate(L) {
@@ -123,8 +122,7 @@ namespace sol {
 		}
 		stack_reference(lua_State* L, ref_index i) noexcept = delete;
 		stack_reference(lua_State* L, const reference& r) noexcept = delete;
-		stack_reference(lua_State* L, const stack_reference& r) noexcept
-		: luastate(L) {
+		stack_reference(lua_State* L, const stack_reference& r) noexcept : luastate(L) {
 			if (!r.valid()) {
 				index = 0;
 				return;
@@ -177,7 +175,7 @@ namespace sol {
 			return stateless_stack_reference::valid(lua_state());
 		}
 
-		void abandon () {
+		void abandon() {
 			stateless_stack_reference::abandon(lua_state());
 		}
 	};

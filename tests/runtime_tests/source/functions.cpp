@@ -451,8 +451,8 @@ TEST_CASE("functions/unsafe protected_function_result handlers",
 		present = (bool)opvalue;
 		REQUIRE_FALSE(present);
 		sol::error err = result;
-#ifdef SOL_LUAJIT
-#if !((!defined(SOL_EXCEPTIONS_SAFE_PROPAGATION) || !(SOL_EXCEPTIONS_SAFE_PROPAGATION)))
+#if SOL_IS_ON(SOL_USE_LUAJIT_I_)
+#if SOL_IS_OFF(SOL_PROPAGATE_EXCEPTIONS_I_)
 		REQUIRE(err.what() == std::string("C++ exception"));
 #else
 		REQUIRE(err.what() == handlederrormessage_s);

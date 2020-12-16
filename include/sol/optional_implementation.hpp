@@ -87,10 +87,10 @@
 #define SOL_TL_GCC_LESS_8_TRIVIALLY_COPY_CONSTRUCTIBLE_MUTEX
 namespace sol { namespace detail {
 	template <class T>
-	struct is_trivially_copy_constructible : std::is_trivially_copy_constructible<T> {};
+	struct is_trivially_copy_constructible : std::is_trivially_copy_constructible<T> { };
 #ifdef _GLIBCXX_VECTOR
 	template <class T, class A>
-	struct is_trivially_copy_constructible<std::vector<T, A>> : std::is_trivially_copy_constructible<T> {};
+	struct is_trivially_copy_constructible<std::vector<T, A>> : std::is_trivially_copy_constructible<T> { };
 #endif
 }} // namespace sol::detail
 #endif
@@ -121,7 +121,7 @@ namespace sol {
 #ifndef SOL_TL_MONOSTATE_INPLACE_MUTEX
 #define SOL_TL_MONOSTATE_INPLACE_MUTEX
 	/// \brief Used to represent an optional with no data; essentially a bool
-	class monostate {};
+	class monostate { };
 #endif
 
 	template <class T>
@@ -145,11 +145,11 @@ namespace sol {
 
 		// std::conjunction from C++17
 		template <class...>
-		struct conjunction : std::true_type {};
+		struct conjunction : std::true_type { };
 		template <class B>
-		struct conjunction<B> : B {};
+		struct conjunction<B> : B { };
 		template <class B, class... Bs>
-		struct conjunction<B, Bs...> : std::conditional<bool(B::value), conjunction<Bs...>, B>::type {};
+		struct conjunction<B, Bs...> : std::conditional<bool(B::value), conjunction<Bs...>, B>::type { };
 
 #if defined(_LIBCPP_VERSION) && __cplusplus == 201103L
 #define SOL_TL_OPTIONAL_LIBCXX_MEM_FN_WORKAROUND
@@ -160,26 +160,26 @@ namespace sol {
 // in some cases. This is a check to workaround the common failing case.
 #ifdef SOL_TL_OPTIONAL_LIBCXX_MEM_FN_WORKAROUND
 		template <class T>
-		struct is_pointer_to_non_const_member_func : std::false_type {};
+		struct is_pointer_to_non_const_member_func : std::false_type { };
 		template <class T, class Ret, class... Args>
-		struct is_pointer_to_non_const_member_func<Ret (T::*)(Args...)> : std::true_type {};
+		struct is_pointer_to_non_const_member_func<Ret (T::*)(Args...)> : std::true_type { };
 		template <class T, class Ret, class... Args>
-		struct is_pointer_to_non_const_member_func<Ret (T::*)(Args...)&> : std::true_type {};
+		struct is_pointer_to_non_const_member_func<Ret (T::*)(Args...)&> : std::true_type { };
 		template <class T, class Ret, class... Args>
-		struct is_pointer_to_non_const_member_func<Ret (T::*)(Args...) &&> : std::true_type {};
+		struct is_pointer_to_non_const_member_func<Ret (T::*)(Args...) &&> : std::true_type { };
 		template <class T, class Ret, class... Args>
-		struct is_pointer_to_non_const_member_func<Ret (T::*)(Args...) volatile> : std::true_type {};
+		struct is_pointer_to_non_const_member_func<Ret (T::*)(Args...) volatile> : std::true_type { };
 		template <class T, class Ret, class... Args>
-		struct is_pointer_to_non_const_member_func<Ret (T::*)(Args...) volatile&> : std::true_type {};
+		struct is_pointer_to_non_const_member_func<Ret (T::*)(Args...) volatile&> : std::true_type { };
 		template <class T, class Ret, class... Args>
-		struct is_pointer_to_non_const_member_func<Ret (T::*)(Args...) volatile&&> : std::true_type {};
+		struct is_pointer_to_non_const_member_func<Ret (T::*)(Args...) volatile&&> : std::true_type { };
 
 		template <class T>
-		struct is_const_or_const_ref : std::false_type {};
+		struct is_const_or_const_ref : std::false_type { };
 		template <class T>
-		struct is_const_or_const_ref<T const&> : std::true_type {};
+		struct is_const_or_const_ref<T const&> : std::true_type { };
 		template <class T>
-		struct is_const_or_const_ref<T const> : std::true_type {};
+		struct is_const_or_const_ref<T const> : std::true_type { };
 #endif
 
 		// std::invoke from C++17
@@ -226,9 +226,9 @@ namespace sol {
 
 		// Trait for checking if a type is a sol::optional
 		template <class T>
-		struct is_optional_impl : std::false_type {};
+		struct is_optional_impl : std::false_type { };
 		template <class T>
-		struct is_optional_impl<optional<T>> : std::true_type {};
+		struct is_optional_impl<optional<T>> : std::true_type { };
 		template <class T>
 		using is_optional = is_optional_impl<decay_t<T>>;
 
@@ -243,7 +243,7 @@ namespace sol {
 		template <class F, class = void, class... U>
 		struct returns_void_impl;
 		template <class F, class... U>
-		struct returns_void_impl<F, void_t<invoke_result_t<F, U...>>, U...> : std::is_void<invoke_result_t<F, U...>> {};
+		struct returns_void_impl<F, void_t<invoke_result_t<F, U...>>, U...> : std::is_void<invoke_result_t<F, U...>> { };
 		template <class F, class... U>
 		using returns_void = returns_void_impl<F, void, U...>;
 
@@ -281,16 +281,16 @@ namespace sol {
 #ifdef _MSC_VER
 		// TODO make a version which works with MSVC
 		template <class T, class U = T>
-		struct is_swappable : std::true_type {};
+		struct is_swappable : std::true_type { };
 
 		template <class T, class U = T>
-		struct is_nothrow_swappable : std::true_type {};
+		struct is_nothrow_swappable : std::true_type { };
 #else
 		// https://stackoverflow.com/questions/26744589/what-is-a-proper-way-to-implement-is-swappable-to-test-for-the-swappable-concept
 		namespace swap_adl_tests {
 			// if swap ADL finds this then it would call std::swap otherwise (same
 			// signature)
-			struct tag {};
+			struct tag { };
 
 			template <class T>
 			tag swap(T&, T&);
@@ -311,32 +311,32 @@ namespace sol {
 
 			template <class T>
 			struct is_std_swap_noexcept
-			: std::integral_constant<bool, std::is_nothrow_move_constructible<T>::value && std::is_nothrow_move_assignable<T>::value> {};
+			: std::integral_constant<bool, std::is_nothrow_move_constructible<T>::value && std::is_nothrow_move_assignable<T>::value> { };
 
 			template <class T, std::size_t N>
-			struct is_std_swap_noexcept<T[N]> : is_std_swap_noexcept<T> {};
+			struct is_std_swap_noexcept<T[N]> : is_std_swap_noexcept<T> { };
 
 			template <class T, class U>
-			struct is_adl_swap_noexcept : std::integral_constant<bool, noexcept(can_swap<T, U>(0))> {};
+			struct is_adl_swap_noexcept : std::integral_constant<bool, noexcept(can_swap<T, U>(0))> { };
 		} // namespace swap_adl_tests
 
 		template <class T, class U = T>
 		struct is_swappable : std::integral_constant<bool,
 		                           decltype(detail::swap_adl_tests::can_swap<T, U>(0))::value
 		                                && (!decltype(detail::swap_adl_tests::uses_std<T, U>(0))::value
-		                                     || (std::is_move_assignable<T>::value && std::is_move_constructible<T>::value))> {};
+		                                     || (std::is_move_assignable<T>::value && std::is_move_constructible<T>::value))> { };
 
 		template <class T, std::size_t N>
 		struct is_swappable<T[N], T[N]> : std::integral_constant<bool,
 		                                       decltype(detail::swap_adl_tests::can_swap<T[N], T[N]>(0))::value
-		                                            && (!decltype(detail::swap_adl_tests::uses_std<T[N], T[N]>(0))::value || is_swappable<T, T>::value)> {};
+		                                            && (!decltype(detail::swap_adl_tests::uses_std<T[N], T[N]>(0))::value || is_swappable<T, T>::value)> { };
 
 		template <class T, class U = T>
 		struct is_nothrow_swappable
 		: std::integral_constant<bool,
 		       is_swappable<T, U>::value
 		            && ((decltype(detail::swap_adl_tests::uses_std<T, U>(0))::value&& detail::swap_adl_tests::is_std_swap_noexcept<T>::value)
-		                 || (!decltype(detail::swap_adl_tests::uses_std<T, U>(0))::value&& detail::swap_adl_tests::is_adl_swap_noexcept<T, U>::value))> {};
+		                 || (!decltype(detail::swap_adl_tests::uses_std<T, U>(0))::value&& detail::swap_adl_tests::is_adl_swap_noexcept<T, U>::value))> { };
 #endif
 
 		// The storage base manages the actual storage, and correctly propagates
@@ -358,7 +358,7 @@ namespace sol {
 				}
 			}
 
-			struct dummy {};
+			struct dummy { };
 			union {
 				dummy m_dummy;
 				T m_value;
@@ -379,7 +379,7 @@ namespace sol {
 
 			// No destructor, so this class is trivially destructible
 
-			struct dummy {};
+			struct dummy { };
 			union {
 				dummy m_dummy;
 				T m_value;
@@ -1608,7 +1608,7 @@ namespace sol {
 	}
 
 	namespace detail {
-		struct i_am_secret {};
+		struct i_am_secret { };
 	} // namespace detail
 
 	template <class T = detail::i_am_secret, class U, class Ret = detail::conditional_t<std::is_same<T, detail::i_am_secret>::value, detail::decay_t<U>, T>>
@@ -1627,7 +1627,7 @@ namespace sol {
 
 #if __cplusplus >= 201703L
 	template <class T>
-	optional(T)->optional<T>;
+	optional(T) -> optional<T>;
 #endif
 
 	/// \exclude

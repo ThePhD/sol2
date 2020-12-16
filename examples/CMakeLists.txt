@@ -63,7 +63,6 @@ function (MAKE_EXAMPLE example_source_file example_suffix target_sol)
 	file(TO_CMAKE_PATH "${example_output_relative_dir}" example_output_relative_dir_name)
 	STRING(REGEX REPLACE "/" "." example_output_relative_dir_name "${example_output_relative_dir}")
 	set(example_name "${example_name}${example_suffix}")
-	
 	if (example_output_relative_dir_name STREQUAL "")
 		set(example_output_name "${example_name}")
 	else()
@@ -88,7 +87,7 @@ function (MAKE_EXAMPLE example_source_file example_suffix target_sol)
 			-ftemplate-backtrace-limit=0
 			-Wno-unknown-warning -Wno-unknown-warning-option
 			-Wall -Wpedantic -Werror -pedantic -pedantic-errors
-			-Wno-noexcept-type)
+			-Wno-noexcept-type -Wshadow -Wconversion)
 
 		if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 			# For another day, when C++ is not so crap

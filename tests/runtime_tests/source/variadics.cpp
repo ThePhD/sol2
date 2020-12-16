@@ -52,7 +52,7 @@ struct self_cons_2 {
 	static void init_self_cons_2(self_cons_2& mem, sol::variadic_args args, sol::this_state thisL) {
 		lua_State* L = thisL;
 		self_cons_2* pself = sol::stack::get<self_cons_2*>(L, 1);
-		std::allocator<self_cons_2> alloc{};
+		std::allocator<self_cons_2> alloc {};
 		std::allocator_traits<std::allocator<self_cons_2>>::construct(alloc, &mem);
 		REQUIRE(pself == &mem);
 		REQUIRE(args.size() == 2);
@@ -63,7 +63,7 @@ struct self_cons_3 {
 	static void init_self_cons_3(self_cons_3* mem, sol::variadic_args args, sol::this_state thisL) {
 		lua_State* L = thisL;
 		self_cons_3* pself = sol::stack::get<self_cons_3*>(L, 1);
-		std::allocator<self_cons_3> alloc{};
+		std::allocator<self_cons_3> alloc {};
 		std::allocator_traits<std::allocator<self_cons_3>>::construct(alloc, mem);
 		REQUIRE(pself == mem);
 		REQUIRE(args.size() == 3);
@@ -130,7 +130,7 @@ TEST_CASE("variadics/variadic_args get type", "Make sure we can inspect types pr
 		bool working = true;
 		auto b = va.begin();
 		for (std::size_t i = 0; i < va.size(); ++i, ++b) {
-			sol::type t1 = va.get_type(i);
+			sol::type t1 = va.get_type(static_cast<std::ptrdiff_t>(i));
 			sol::type t2 = b->get_type();
 			working &= types[i] == t1;
 			working &= types[i] == t2;
@@ -148,11 +148,11 @@ TEST_CASE("variadics/variadic_results", "returning a variable amount of argument
 		sol::stack_guard luasg(lua);
 
 		lua.set_function("f", []() {
-			std::set<std::string> results{ "arf", "bark", "woof" };
+			std::set<std::string> results { "arf", "bark", "woof" };
 			return sol::as_returns(std::move(results));
 		});
 		lua.set_function("g", []() {
-			static const std::deque<int> results{ 25, 82 };
+			static const std::deque<int> results { 25, 82 };
 			return sol::as_returns(std::ref(results));
 		});
 
@@ -256,10 +256,10 @@ TEST_CASE("variadics/fallback_constructor", "ensure constructor matching behaves
 
 	lua.new_usertype<vec2x>("vec2x",
 	     sol::call_constructor,
-	     sol::factories([]() { return vec2x{}; },
+	     sol::factories([]() { return vec2x {}; },
 	          [](vec2x const& v) -> vec2x { return v; },
 	          [](sol::variadic_args va) {
-		          vec2x res{};
+		          vec2x res {};
 		          if (va.size() == 1) {
 			          res.x = va[0].get<float>();
 			          res.y = va[0].get<float>();

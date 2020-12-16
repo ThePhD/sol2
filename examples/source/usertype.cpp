@@ -16,7 +16,7 @@ public:
     }
 
     int test(int x) {
-        return static_cast<int>(name.length() + x);
+        return static_cast<int>(name.length()) + x;
     }
 };
 

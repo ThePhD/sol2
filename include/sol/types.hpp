@@ -233,7 +233,7 @@ namespace sol {
 		operator std::add_lvalue_reference_t<U>() {
 			return value;
 		}
-		operator std::add_const_t<std::add_lvalue_reference_t<U>> &() const {
+		operator std::add_const_t<std::add_lvalue_reference_t<U>>&() const {
 			return value;
 		}
 	};
@@ -578,7 +578,7 @@ namespace sol {
 
 	const new_table create = {};
 
-	enum class lib : char {
+	enum class lib : unsigned char {
 		// print, assert, and other base functions
 		base,
 		// require and other package functions
@@ -752,7 +752,7 @@ namespace sol {
 		return names[static_cast<std::size_t>(c)];
 	}
 
-	enum class meta_function {
+	enum class meta_function : unsigned {
 		construct,
 		index,
 		new_index,
@@ -841,7 +841,7 @@ namespace sol {
 	}
 
 	inline const std::string& to_string(meta_function mf) {
-		return meta_function_names()[static_cast<int>(mf)];
+		return meta_function_names()[static_cast<std::size_t>(mf)];
 	}
 
 	inline type type_of(lua_State* L, int index) {
@@ -1168,6 +1168,19 @@ namespace sol {
 
 	template <typename T>
 	constexpr inline bool is_lua_primitive_v = is_lua_primitive<T>::value;
+
+	template <typename T>
+	struct is_value_semantic_for_function
+#if SOL_IS_ON(SOL_FUNCTION_CALL_VALUE_SEMANTICS_I_)
+	: std::true_type {
+	};
+#else
+	: std::false_type {
+	};
+#endif
+
+	template <typename T>
+	constexpr inline bool is_value_semantic_for_function_v = is_value_semantic_for_function<T>::value;
 
 	template <typename T>
 	struct is_main_threaded : std::is_base_of<main_reference, T> { };

@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -33,7 +33,7 @@ namespace sol {
 	class basic_object_base : public ref_t {
 	private:
 		using base_t = ref_t;
-		
+
 		template <typename T>
 		decltype(auto) as_stack(std::true_type) const {
 			return stack::get<T>(base_t::lua_state(), base_t::stack_index());
@@ -68,8 +68,7 @@ namespace sol {
 		basic_object_base& operator=(const basic_object_base&) = default;
 		basic_object_base& operator=(basic_object_base&&) = default;
 		template <typename T, typename... Args, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_object_base>>> = meta::enabler>
-		basic_object_base(T&& arg, Args&&... args)
-		: base_t(std::forward<T>(arg), std::forward<Args>(args)...) {
+		basic_object_base(T&& arg, Args&&... args) : base_t(std::forward<T>(arg), std::forward<Args>(args)...) {
 		}
 
 		template <typename T>

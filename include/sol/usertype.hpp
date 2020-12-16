@@ -47,20 +47,19 @@ namespace sol {
 		template <std::size_t... I, typename... Args>
 		void tuple_set(std::index_sequence<I...>, std::tuple<Args...>&& args) {
 			(void)args;
-			(void)detail::swallow{ 0,
-				(this->set(std::get<I * 2>(std::move(args)), std::get<I * 2 + 1>(std::move(args))), 0)... };
+			(void)detail::swallow { 0, (this->set(std::get<I * 2>(std::move(args)), std::get<I * 2 + 1>(std::move(args))), 0)... };
 		}
 
 	public:
 		using base_t::base_t;
 
+		using base_t::get;
+		using base_t::lua_state;
 		using base_t::pop;
 		using base_t::push;
-		using base_t::lua_state;
-		using base_t::get;
 		using base_t::set_function;
-		using base_t::traverse_set;
 		using base_t::traverse_get;
+		using base_t::traverse_set;
 		using base_t::unregister;
 
 		template <typename Key, typename Value>

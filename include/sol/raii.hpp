@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -35,7 +35,7 @@ namespace sol {
 			template <typename T, typename... Args>
 			static void construct(T&& obj, Args&&... args) {
 				typedef meta::unqualified_t<T> Tu;
-				std::allocator<Tu> alloc{};
+				std::allocator<Tu> alloc {};
 				std::allocator_traits<std::allocator<Tu>>::construct(alloc, std::forward<T>(obj), std::forward<Args>(args)...);
 			}
 
@@ -48,7 +48,7 @@ namespace sol {
 		struct default_destruct {
 			template <typename T>
 			static void destroy(T&& obj) {
-				std::allocator<meta::unqualified_t<T>> alloc{};
+				std::allocator<meta::unqualified_t<T>> alloc {};
 				alloc.destroy(obj);
 			}
 
@@ -80,11 +80,10 @@ namespace sol {
 		struct tagged {
 		private:
 			T value_;
-		
+
 		public:
 			template <typename Arg, typename... Args, meta::disable<std::is_same<meta::unqualified_t<Arg>, tagged>> = meta::enabler>
-			tagged(Arg&& arg, Args&&... args)
-			: value_(std::forward<Arg>(arg), std::forward<Args>(args)...) {
+			tagged(Arg&& arg, Args&&... args) : value_(std::forward<Arg>(arg), std::forward<Args>(args)...) {
 			}
 
 			T& value() & {
@@ -102,25 +101,24 @@ namespace sol {
 	} // namespace detail
 
 	template <typename... Args>
-	struct constructor_list {};
+	struct constructor_list { };
 
 	template <typename... Args>
 	using constructors = constructor_list<Args...>;
 
-	const auto default_constructor = constructors<types<>>{};
+	const auto default_constructor = constructors<types<>> {};
 
-	struct no_construction {};
-	const auto no_constructor = no_construction{};
+	struct no_construction { };
+	const auto no_constructor = no_construction {};
 
-	struct call_construction {};
-	const auto call_constructor = call_construction{};
+	struct call_construction { };
+	const auto call_constructor = call_construction {};
 
 	template <typename... Functions>
 	struct constructor_wrapper {
 		std::tuple<Functions...> functions;
 		template <typename Arg, typename... Args, meta::disable<std::is_same<meta::unqualified_t<Arg>, constructor_wrapper>> = meta::enabler>
-		constructor_wrapper(Arg&& arg, Args&&... args)
-		: functions(std::forward<Arg>(arg), std::forward<Args>(args)...) {
+		constructor_wrapper(Arg&& arg, Args&&... args) : functions(std::forward<Arg>(arg), std::forward<Args>(args)...) {
 		}
 	};
 
@@ -133,8 +131,7 @@ namespace sol {
 	struct factory_wrapper {
 		std::tuple<Functions...> functions;
 		template <typename Arg, typename... Args, meta::disable<std::is_same<meta::unqualified_t<Arg>, factory_wrapper>> = meta::enabler>
-		factory_wrapper(Arg&& arg, Args&&... args)
-		: functions(std::forward<Arg>(arg), std::forward<Args>(args)...) {
+		factory_wrapper(Arg&& arg, Args&&... args) : functions(std::forward<Arg>(arg), std::forward<Args>(args)...) {
 		}
 	};
 
@@ -146,15 +143,14 @@ namespace sol {
 	template <typename Function>
 	struct destructor_wrapper {
 		Function fx;
-		destructor_wrapper(Function f)
-		: fx(std::move(f)) {
+		destructor_wrapper(Function f) : fx(std::move(f)) {
 		}
 	};
 
 	template <>
-	struct destructor_wrapper<void> {};
+	struct destructor_wrapper<void> { };
 
-	const destructor_wrapper<void> default_destructor{};
+	const destructor_wrapper<void> default_destructor {};
 
 	template <typename Fx>
 	inline auto destructor(Fx&& fx) {

@@ -105,8 +105,9 @@ namespace sol {
 			// use temporary storage to prevent strict UB shenanigans
 			char alignment_shim[(std::max)({ sizeof(Args)... }) + (std::max)({ alignof(Args)... })] {};
 			char* start = alignment != nullptr ? static_cast<char*>(alignment) : alignment_shim;
+			alignment = start;
 			(void)detail::swallow { int {}, (align_one(std::alignment_of_v<Args>, sizeof(Args), alignment), int {})... };
-			return static_cast<char*>(alignment) - start;
+			return static_cast<std::size_t>(static_cast<char*>(alignment) - start);
 		}
 
 		inline void* align_usertype_pointer(void* ptr) {
@@ -551,7 +552,7 @@ namespace sol {
 			}
 
 			bool operator()(meta_function mf) const {
-				bool p = properties[static_cast<int>(mf)];
+				bool p = properties[static_cast<std::size_t>(mf)];
 				if (times_through > 0) {
 					return p;
 				}
@@ -959,10 +960,18 @@ namespace sol {
 
 			template <typename T, typename Arg, typename... Args>
 			int push_reference(lua_State* L, Arg&& arg, Args&&... args) {
-				using use_reference_tag = meta::all<std::is_lvalue_reference<T>,
-				     meta::neg<std::is_const<std::remove_reference_t<T>>>,
-				     meta::neg<is_lua_primitive<meta::unqualified_t<T>>>,
-				     meta::neg<is_unique_usertype<meta::unqualified_t<T>>>>;
+				// clang-format off
+				using use_reference_tag =
+				meta::all<
+					meta::neg<is_value_semantic_for_function<T>>
+#if SOL_IS_OFF(SOL_FUNCTION_CALL_VALUE_SEMANTICS_I_)
+					, std::is_lvalue_reference<T>,
+					meta::neg<std::is_const<std::remove_reference_t<T>>>,
+					meta::neg<is_lua_primitive<meta::unqualified_t<T>>>,
+					meta::neg<is_unique_usertype<meta::unqualified_t<T>>>
+#endif
+				>;
+				// clang-format on
 				using Tr = meta::conditional_t<use_reference_tag::value, detail::as_reference_tag, meta::unqualified_t<T>>;
 				return stack::push<Tr>(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 			}
@@ -998,7 +1007,7 @@ namespace sol {
 
 		template <typename T, typename... Args>
 		int multi_push_reference(lua_State* L, T&& t, Args&&... args) {
-			int pushcount = push_reference(L, std::forward<T>(t));
+			int pushcount = stack::push_reference(L, std::forward<T>(t));
 			void(detail::swallow { (pushcount += stack::push_reference(L, std::forward<Args>(args)), 0)... });
 			return pushcount;
 		}

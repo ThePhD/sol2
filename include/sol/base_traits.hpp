@@ -28,8 +28,8 @@
 
 namespace sol {
 	namespace detail {
-		struct unchecked_t {};
-		const unchecked_t unchecked = unchecked_t{};
+		struct unchecked_t { };
+		const unchecked_t unchecked = unchecked_t {};
 	} // namespace detail
 
 	namespace meta {
@@ -47,13 +47,13 @@ namespace sol {
 
 		namespace meta_detail {
 			template <typename T>
-			struct unqualified_non_alias : unqualified<T> {};
+			struct unqualified_non_alias : unqualified<T> { };
 
 			template <template <class...> class Test, class, class... Args>
-			struct is_detected : std::false_type {};
+			struct is_detected : std::false_type { };
 
 			template <template <class...> class Test, class... Args>
-			struct is_detected<Test, void_t<Test<Args...>>, Args...> : std::true_type {};
+			struct is_detected<Test, void_t<Test<Args...>>, Args...> : std::true_type { };
 		} // namespace meta_detail
 
 		template <template <class...> class Trait, class... Args>
@@ -82,9 +82,9 @@ namespace sol {
 
 		namespace meta_detail {
 			template <typename T, template <typename...> class Templ>
-			struct is_specialization_of : std::false_type {};
+			struct is_specialization_of : std::false_type { };
 			template <typename... T, template <typename...> class Templ>
-			struct is_specialization_of<Templ<T...>, Templ> : std::true_type {};
+			struct is_specialization_of<Templ<T...>, Templ> : std::true_type { };
 		} // namespace meta_detail
 
 		template <typename T, template <typename...> class Templ>

@@ -49,7 +49,7 @@ namespace sol {
 		inline int default_exception_handler(lua_State* L, optional<const std::exception&>, string_view what) {
 #if SOL_IS_ON(SOL_PRINT_ERRORS_I_)
 			std::cerr << "[sol3] An exception occurred: ";
-			std::cerr.write(what.data(), what.size());
+			std::cerr.write(what.data(), static_cast<std::streamsize>(what.size()));
 			std::cerr << std::endl;
 #endif
 			lua_pushlstring(L, what.data(), what.size());

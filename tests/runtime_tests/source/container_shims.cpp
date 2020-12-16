@@ -169,8 +169,8 @@ struct order_suit {
 	std::vector<std::pair<int64_t, int>> objs2;
 
 	order_suit(int pairs) {
-		objs.reserve(pairs);
-		objs2.reserve(pairs * 2);
+		objs.reserve(static_cast<std::size_t>(pairs));
+		objs2.reserve(static_cast<std::size_t>(pairs * 2));
 		for (int i = 0; i < pairs; ++i) {
 			objs.push_back({ i, i * 10 });
 			objs2.push_back({ (i + pairs) * 2, (i * 2) * 50 });

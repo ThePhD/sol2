@@ -17,11 +17,11 @@ int my_exception_handler(lua_State* L, sol::optional<const std::exception&> mayb
 	}
 	else {
 		std::cout << "(from the description parameter): ";
-		std::cout.write(description.data(), description.size());
+		std::cout.write(description.data(), static_cast<std::streamsize>(description.size()));
 		std::cout << std::endl;
 	}
 
-	// you must push 1 element onto the stack to be 
+	// you must push 1 element onto the stack to be
 	// transported through as the error object in Lua
 	// note that Lua -- and 99.5% of all Lua users and libraries -- expects a string
 	// so we push a single string (in our case, the description of the error)
@@ -44,7 +44,7 @@ int main() {
 	sol::protected_function_result pfr = lua.safe_script("will_throw()", &sol::script_pass_on_error);
 
 	c_assert(!pfr.valid());
-	
+
 	sol::error err = pfr;
 	std::cout << err.what() << std::endl;
 

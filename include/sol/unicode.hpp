@@ -19,15 +19,13 @@ namespace sol {
 		};
 
 		inline const string_view& to_string(error_code ec) {
-			static const string_view storage[7] = {
-				"ok",
+			static const string_view storage[7] = { "ok",
 				"invalid code points",
 				"invalid code unit",
 				"invalid leading surrogate",
 				"invalid trailing surrogate",
 				"sequence too short",
-				"overlong sequence"
-			};
+				"overlong sequence" };
 			return storage[static_cast<std::size_t>(ec)];
 		}
 
@@ -95,19 +93,18 @@ namespace sol {
 
 			static constexpr int sequence_length(unsigned char b) {
 				return (b & start_2byte_mask) == 0 ? 1
-					: (b & start_3byte_mask) != start_3byte_mask ? 2
-					: (b & start_4byte_mask) != start_4byte_mask ? 3
-					: 4;
+				                                   : (b & start_3byte_mask) != start_3byte_mask ? 2 : (b & start_4byte_mask) != start_4byte_mask ? 3 : 4;
 			}
 
 			static constexpr char32_t decode(unsigned char b0, unsigned char b1) {
-				return ((b0 & 0x1F) << 6) | (b1 & 0x3F);
+				return (static_cast<char32_t>((b0 & 0x1Fu) << 6u) | static_cast<char32_t>(b1 & 0x3Fu));
 			}
 			static constexpr char32_t decode(unsigned char b0, unsigned char b1, unsigned char b2) {
-				return ((b0 & 0x0F) << 12) | ((b1 & 0x3F) << 6) | (b2 & 0x3F);
+				return static_cast<char32_t>((b0 & 0x0Fu) << 12u) | static_cast<char32_t>((b1 & 0x3Fu) << 6u) | static_cast<char32_t>(b2 & 0x3Fu);
 			}
 			static constexpr char32_t decode(unsigned char b0, unsigned char b1, unsigned char b2, unsigned char b3) {
-				return ((b0 & 0x07) << 18) | ((b1 & 0x3F) << 12) | ((b2 & 0x3F) << 6) | (b3 & 0x3F);
+				return static_cast<char32_t>(static_cast<char32_t>((b0 & 0x07u) << 18u) | static_cast<char32_t>((b1 & 0x3F) << 12)
+				     | static_cast<char32_t>((b2 & 0x3Fu) << 6u) | static_cast<char32_t>(b3 & 0x3Fu));
 			}
 
 			// utf16 related
@@ -130,30 +127,30 @@ namespace sol {
 			er.error = error_code::ok;
 			if (codepoint <= unicode_detail::last_1byte_value) {
 				er.code_units_size = 1;
-				er.code_units = std::array<char, 4>{ { static_cast<char>(codepoint) } };
+				er.code_units = std::array<char, 4> { { static_cast<char>(codepoint) } };
 			}
 			else if (codepoint <= unicode_detail::last_2byte_value) {
 				er.code_units_size = 2;
-				er.code_units = std::array<char, 4>{{
+				er.code_units = std::array<char, 4> { {
 					static_cast<char>(0xC0 | ((codepoint & 0x7C0) >> 6)),
 					static_cast<char>(0x80 | (codepoint & 0x3F)),
-				}};
+				} };
 			}
 			else if (codepoint <= unicode_detail::last_3byte_value) {
 				er.code_units_size = 3;
-				er.code_units = std::array<char, 4>{{
+				er.code_units = std::array<char, 4> { {
 					static_cast<char>(0xE0 | ((codepoint & 0xF000) >> 12)),
 					static_cast<char>(0x80 | ((codepoint & 0xFC0) >> 6)),
 					static_cast<char>(0x80 | (codepoint & 0x3F)),
-				}};
+				} };
 			}
 			else {
 				er.code_units_size = 4;
-				er.code_units = std::array<char, 4>{ {
+				er.code_units = std::array<char, 4> { {
 					static_cast<char>(0xF0 | ((codepoint & 0x1C0000) >> 18)),
-						static_cast<char>(0x80 | ((codepoint & 0x3F000) >> 12)),
-						static_cast<char>(0x80 | ((codepoint & 0xFC0) >> 6)),
-						static_cast<char>(0x80 | (codepoint & 0x3F)),
+					static_cast<char>(0x80 | ((codepoint & 0x3F000) >> 12)),
+					static_cast<char>(0x80 | ((codepoint & 0xFC0) >> 6)),
+					static_cast<char>(0x80 | (codepoint & 0x3F)),
 				} };
 			}
 			return er;
@@ -164,17 +161,14 @@ namespace sol {
 
 			if (codepoint <= unicode_detail::last_bmp_value) {
 				er.code_units_size = 1;
-				er.code_units = std::array<char16_t, 4>{ { static_cast<char16_t>(codepoint) } };
+				er.code_units = std::array<char16_t, 4> { { static_cast<char16_t>(codepoint) } };
 				er.error = error_code::ok;
 			}
 			else {
 				auto normal = codepoint - unicode_detail::normalizing_value;
 				auto lead = unicode_detail::first_lead_surrogate + ((normal & unicode_detail::lead_surrogate_bitmask) >> unicode_detail::lead_shifted_bits);
 				auto trail = unicode_detail::first_trail_surrogate + (normal & unicode_detail::trail_surrogate_bitmask);
-				er.code_units = std::array<char16_t, 4>{ {
-					static_cast<char16_t>(lead),
-					static_cast<char16_t>(trail)
-				} };
+				er.code_units = std::array<char16_t, 4> { { static_cast<char16_t>(lead), static_cast<char16_t>(trail) } };
 				er.code_units_size = 2;
 				er.error = error_code::ok;
 			}
@@ -198,8 +192,8 @@ namespace sol {
 				return dr;
 			}
 
-			unsigned char b0 = *it;
-			std::size_t length = unicode_detail::sequence_length(b0);
+			unsigned char b0 = static_cast<unsigned char>(*it);
+			std::size_t length = static_cast<std::size_t>(unicode_detail::sequence_length(b0));
 
 			if (length == 1) {
 				dr.codepoint = static_cast<char32_t>(b0);
@@ -219,7 +213,7 @@ namespace sol {
 			std::array<unsigned char, 4> b;
 			b[0] = b0;
 			for (std::size_t i = 1; i < length; ++i) {
-				b[i] = *it;
+				b[i] = static_cast<unsigned char>(*it);
 				if (!unicode_detail::is_continuation(b[i])) {
 					dr.error = error_code::invalid_code_unit;
 					dr.next = it;
@@ -249,7 +243,7 @@ namespace sol {
 				dr.error = error_code::invalid_code_point;
 				return dr;
 			}
-			
+
 			// then everything is fine
 			dr.codepoint = decoded;
 			dr.error = error_code::ok;
@@ -267,7 +261,7 @@ namespace sol {
 			}
 
 			char16_t lead = static_cast<char16_t>(*it);
-			
+
 			if (!unicode_detail::is_surrogate(lead)) {
 				++it;
 				dr.codepoint = static_cast<char32_t>(lead);
@@ -288,7 +282,7 @@ namespace sol {
 				dr.next = it;
 				return dr;
 			}
-			
+
 			dr.codepoint = unicode_detail::combine_surrogates(lead, trail);
 			dr.next = ++it;
 			dr.error = error_code::ok;
@@ -308,5 +302,5 @@ namespace sol {
 			dr.error = error_code::ok;
 			return dr;
 		}
-	}
-}
+	} // namespace unicode
+} // namespace sol

@@ -34,7 +34,7 @@ struct test_stack_guard {
 	lua_State* L;
 	int& begintop;
 	int& endtop;
-	test_stack_guard(lua_State* L, int& begintop, int& endtop) : L(L), begintop(begintop), endtop(endtop) {
+	test_stack_guard(lua_State* L, int& begintop_, int& endtop_) : L(L), begintop(begintop_), endtop(endtop_) {
 		begintop = lua_gettop(L);
 	}
 

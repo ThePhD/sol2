@@ -62,6 +62,11 @@ Safety Config
 	* If ``SOL_SAFE_NUMERICS`` is defined, turns off number precision and integer precision fitting when pushing numbers into sol2
 	* **Not** turned on by default under any settings: *this MUST be turned on manually*
 
+``SOL_FUNCTION_CALL_VALUE_SEMANTICS`` triggers the following changes:
+	* Function arguments and returns into Lua (``sol:function`` and similar) do not pass their arguments by reference: they get copied
+	* Individual types can be blessed by template specializing ``sol::is_value_semantic_for_function<T>``
+	* **Not** turned on by default under any settings: *this MUST be turned on manually*
+
 ``SOL_STRINGS_ARE_NUMBERS`` triggers the following changes:
 	* Allows automatic to-string conversions for numbers
 		- ``lua_tolstring`` conversions are not permitted on numbers through sol3 by default: only actual strings are allowed
@@ -123,6 +128,10 @@ Feature Config
 ``SOL_ID_SIZE`` triggers the following change:
 	* If this is defined to a numeric value, it uses that numeric value for the number of bytes of input to be put into the error message blurb in standard tracebacks and ``chunkname`` descriptions for ``.script``/``.script_file`` usage.
 	* Defaults to the ``LUA_ID_SIZE`` macro if defined, or some basic internal value like 2048.
+
+``SOL_LUAJIT`` triggers the following change:
+	* Has sol2 expect LuaJIT, and all of its quirks.
+	* Turns on by default if the macro ``LUAJIT_VERSION`` is detected from including Lua headers without any work on your part. Can also be manually defined.
 
 .. _config-memory:
 

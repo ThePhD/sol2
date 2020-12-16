@@ -52,7 +52,7 @@ namespace sol {
 		basic_lua_table(lua_State* L, T&& r) : base_t(L, std::forward<T>(r)) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			auto pp = stack::push_pop(*this);
-			constructor_handler handler{};
+			constructor_handler handler {};
 			stack::check<basic_lua_table>(lua_state(), -1, handler);
 #endif // Safety
 		}
@@ -63,14 +63,14 @@ namespace sol {
 		}
 		basic_lua_table(lua_State* L, int index = -1) : base_t(detail::no_safety, L, index) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
-			constructor_handler handler{};
+			constructor_handler handler {};
 			stack::check<basic_lua_table>(L, index, handler);
 #endif // Safety
 		}
 		basic_lua_table(lua_State* L, ref_index index) : base_t(detail::no_safety, L, index) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			auto pp = stack::push_pop(*this);
-			constructor_handler handler{};
+			constructor_handler handler {};
 			stack::check<basic_lua_table>(lua_state(), -1, handler);
 #endif // Safety
 		}
@@ -81,7 +81,7 @@ namespace sol {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			if (!is_table<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
-				constructor_handler handler{};
+				constructor_handler handler {};
 				stack::check<basic_lua_table>(lua_state(), -1, handler);
 			}
 #endif // Safety
@@ -90,6 +90,6 @@ namespace sol {
 		}
 	};
 
-}
+} // namespace sol
 
 #endif // SOL_LUA_TABLE_HPP

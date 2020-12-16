@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -44,10 +44,14 @@ namespace sol {
 
 		namespace detail {
 			template <typename... Args>
-			struct tuple_types_ { typedef types<Args...> type; };
+			struct tuple_types_ {
+				typedef types<Args...> type;
+			};
 
 			template <typename... Args>
-			struct tuple_types_<std::tuple<Args...>> { typedef types<Args...> type; };
+			struct tuple_types_<std::tuple<Args...>> {
+				typedef types<Args...> type;
+			};
 		} // namespace detail
 
 		template <typename... Args>

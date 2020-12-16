@@ -59,7 +59,7 @@ namespace sol {
 					luaL_ref(L, deps.stack_index());
 				};
 				(void)per_dep;
-				(void)detail::swallow{ int(), (per_dep(In), int())... };
+				(void)detail::swallow { int(), (per_dep(In), int())... };
 				lua_setuservalue(L, ai);
 			}
 		}
@@ -112,7 +112,7 @@ namespace sol {
 		}
 
 		template <typename T, typename List>
-		struct void_call : void_call<T, meta::function_args_t<List>> {};
+		struct void_call : void_call<T, meta::function_args_t<List>> { };
 
 		template <typename T, typename... Args>
 		struct void_call<T, types<Args...>> {
@@ -129,7 +129,7 @@ namespace sol {
 
 			template <typename Fx, std::size_t I, typename... R, typename... Args>
 			int operator()(types<Fx>, meta::index_value<I>, types<R...> r, types<Args...> a, lua_State* L, int, int start) const {
-				detail::default_construct func{};
+				detail::default_construct func {};
 				return stack::call_into_lua<checked, clean_stack>(r, a, L, start, func, obj_);
 			}
 		};
@@ -171,7 +171,7 @@ namespace sol {
 							     std::forward<Args>(args)...);
 						}
 					}
-					stack::record tracking{};
+					stack::record tracking {};
 					if (!stack::stack_detail::check_types(args_list(), L, start, no_panic, tracking)) {
 						return overload_match_arity(types<Fxs...>(),
 						     std::index_sequence<In...>(),
@@ -264,7 +264,7 @@ namespace sol {
 							     std::forward<Args>(args)...);
 						}
 					}
-					stack::record tracking{};
+					stack::record tracking {};
 					if (!stack::stack_detail::check_types(args_list(), L, start, no_panic, tracking)) {
 						return overload_match_arity(types<Fx1, Fxs...>(),
 						     std::index_sequence<I1, In...>(),
@@ -349,11 +349,10 @@ namespace sol {
 					using wrap = wrapper<uFx>;
 					using traits_type = typename wrap::traits_type;
 					using fp_t = typename traits_type::function_pointer_type;
-					constexpr bool is_function_pointer_convertible
-					     = std::is_class_v<uFx> && std::is_convertible_v<std::decay_t<Fx>, fp_t>;
+					constexpr bool is_function_pointer_convertible = std::is_class_v<uFx> && std::is_convertible_v<std::decay_t<Fx>, fp_t>;
 					if constexpr (is_function_pointer_convertible) {
 						fp_t fx = f;
-						return agnostic_lua_call_wrapper<fp_t, is_index, is_variable, checked, boost, clean_stack>{}.call(
+						return agnostic_lua_call_wrapper<fp_t, is_index, is_variable, checked, boost, clean_stack> {}.call(
 						     L, fx, std::forward<Args>(args)...);
 					}
 					else {
@@ -448,7 +447,7 @@ namespace sol {
 		template <typename T, bool is_index, bool is_variable, bool checked, int boost, bool clean_stack, typename C>
 		struct agnostic_lua_call_wrapper<std::reference_wrapper<T>, is_index, is_variable, checked, boost, clean_stack, C> {
 			static int call(lua_State* L, std::reference_wrapper<T> f) {
-				agnostic_lua_call_wrapper<T, is_index, is_variable, checked, boost, clean_stack> alcw{};
+				agnostic_lua_call_wrapper<T, is_index, is_variable, checked, boost, clean_stack> alcw {};
 				return alcw.call(L, f.get());
 			}
 		};
@@ -463,7 +462,10 @@ namespace sol {
 					using object_type = typename wrap::object_type;
 					if constexpr (sizeof...(Args) < 1) {
 						using Ta = meta::conditional_t<std::is_void_v<T>, object_type, T>;
-						static_assert(std::is_base_of_v<object_type, Ta>, "It seems like you might have accidentally bound a class type with a member function method that does not correspond to the class. For example, there could be a small type in your new_usertype<T>(...) binding, where you specify one class \"T\" but then bind member methods from a complete unrelated class. Check things over!");
+						static_assert(std::is_base_of_v<object_type, Ta>,
+						     "It seems like you might have accidentally bound a class type with a member function method that does not correspond to the "
+						     "class. For example, there could be a small type in your new_usertype<T>(...) binding, where you specify one class \"T\" "
+						     "but then bind member methods from a complete unrelated class. Check things over!");
 #if SOL_IS_ON(SOL_SAFE_USERTYPE_I_)
 						auto maybeo = stack::check_get<Ta*>(L, 1);
 						if (!maybeo || maybeo.value() == nullptr) {
@@ -493,7 +495,10 @@ namespace sol {
 					if constexpr (is_index) {
 						if constexpr (sizeof...(Args) < 1) {
 							using Ta = meta::conditional_t<std::is_void_v<T>, object_type, T>;
-							static_assert(std::is_base_of_v<object_type, Ta>, "It seems like you might have accidentally bound a class type with a member function method that does not correspond to the class. For example, there could be a small type in your new_usertype<T>(...) binding, where you specify one class \"T\" but then bind member methods from a complete unrelated class. Check things over!");
+							static_assert(std::is_base_of_v<object_type, Ta>,
+							     "It seems like you might have accidentally bound a class type with a member function method that does not correspond "
+							     "to the class. For example, there could be a small type in your new_usertype<T>(...) binding, where you specify one "
+							     "class \"T\" but then bind member methods from a complete unrelated class. Check things over!");
 #if SOL_IS_ON(SOL_SAFE_USERTYPE_I_)
 							auto maybeo = stack::check_get<Ta*>(L, 1);
 							if (!maybeo || maybeo.value() == nullptr) {
@@ -527,7 +532,7 @@ namespace sol {
 						constexpr bool ret_is_const = std::is_const_v<std::remove_reference_t<return_type>>;
 						if constexpr (ret_is_const) {
 							(void)fx;
-							(void)detail::swallow{ 0, (static_cast<void>(args), 0)... };
+							(void)detail::swallow { 0, (static_cast<void>(args), 0)... };
 							return luaL_error(L, "sol: cannot write to a readonly (const) variable");
 						}
 						else {
@@ -535,7 +540,7 @@ namespace sol {
 							constexpr bool is_assignable = std::is_copy_assignable_v<u_return_type> || std::is_array_v<u_return_type>;
 							if constexpr (!is_assignable) {
 								(void)fx;
-								(void)detail::swallow{ 0, ((void)args, 0)... };
+								(void)detail::swallow { 0, ((void)args, 0)... };
 								return luaL_error(L, "sol: cannot write to this variable: copy assignment/constructor not available");
 							}
 							else {
@@ -574,7 +579,7 @@ namespace sol {
 					}
 				}
 				else {
-					agnostic_lua_call_wrapper<F, is_index, is_variable, checked, boost, clean_stack> alcw{};
+					agnostic_lua_call_wrapper<F, is_index, is_variable, checked, boost, clean_stack> alcw {};
 					return alcw.call(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 				}
 			}
@@ -696,7 +701,7 @@ namespace sol {
 				}
 				else {
 					using uFx = meta::unqualified_t<Fx>;
-					lua_call_wrapper<T, uFx, is_index, is_variable, checked, boost, clean_stack> lcw{};
+					lua_call_wrapper<T, uFx, is_index, is_variable, checked, boost, clean_stack> lcw {};
 					return lcw.call(L, std::forward<F>(f).fx);
 				}
 			}
@@ -710,7 +715,7 @@ namespace sol {
 				template <typename Fx, std::size_t I, typename... R, typename... Args>
 				int operator()(types<Fx>, meta::index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int, F& fx) {
 					auto& f = std::get<I>(fx.functions);
-					return lua_call_wrapper<T, Fx, is_index, is_variable, checked, boost>{}.call(L, f);
+					return lua_call_wrapper<T, Fx, is_index, is_variable, checked, boost> {}.call(L, f);
 				}
 			};
 
@@ -727,7 +732,7 @@ namespace sol {
 				template <typename Fx, std::size_t I, typename... R, typename... Args>
 				int operator()(types<Fx>, meta::index_value<I>, types<R...>, types<Args...>, lua_State* L, int, int, F& fx) {
 					auto& f = std::get<I>(fx.functions);
-					return lua_call_wrapper<T, Fx, is_index, is_variable, checked, boost, clean_stack>{}.call(L, f);
+					return lua_call_wrapper<T, Fx, is_index, is_variable, checked, boost, clean_stack> {}.call(L, f);
 				}
 			};
 
@@ -754,12 +759,12 @@ namespace sol {
 				if constexpr (is_specialized) {
 					if constexpr (is_index) {
 						decltype(auto) p = f.read();
-						lua_call_wrapper<T, meta::unqualified_t<decltype(p)>, is_index, is_variable, checked, boost, clean_stack> lcw{};
+						lua_call_wrapper<T, meta::unqualified_t<decltype(p)>, is_index, is_variable, checked, boost, clean_stack> lcw {};
 						return lcw.call(L, p, std::forward<Args>(args)...);
 					}
 					else {
 						decltype(auto) p = f.write();
-						lua_call_wrapper<T, meta::unqualified_t<decltype(p)>, is_index, is_variable, checked, boost, clean_stack> lcw{};
+						lua_call_wrapper<T, meta::unqualified_t<decltype(p)>, is_index, is_variable, checked, boost, clean_stack> lcw {};
 						return lcw.call(L, p, std::forward<Args>(args)...);
 					}
 				}
@@ -821,7 +826,7 @@ namespace sol {
 
 			template <typename... Args>
 			static int call(lua_State* L, F& fx, Args&&... args) {
-				return lua_call_wrapper<T, V, is_index, is_variable, true, boost, clean_stack>{}.call(L, fx.value, std::forward<Args>(args)...);
+				return lua_call_wrapper<T, V, is_index, is_variable, true, boost, clean_stack> {}.call(L, fx.value, std::forward<Args>(args)...);
 			}
 		};
 
@@ -831,8 +836,8 @@ namespace sol {
 
 			template <std::size_t... In>
 			static int call(std::index_sequence<In...>, lua_State* L, P& fx) {
-				int pushed = lua_call_wrapper<T, F, is_index, is_variable, checked, boost, false, C>{}.call(L, fx.value);
-				(void)detail::swallow{ int(), (policy_detail::handle_policy(std::get<In>(fx.policies), L, pushed), int())... };
+				int pushed = lua_call_wrapper<T, F, is_index, is_variable, checked, boost, false, C> {}.call(L, fx.value);
+				(void)detail::swallow { int(), (policy_detail::handle_policy(std::get<In>(fx.policies), L, pushed), int())... };
 				return pushed;
 			}
 
@@ -846,19 +851,19 @@ namespace sol {
 		struct lua_call_wrapper<T, yielding_t<Y>, is_index, is_variable, checked, boost, clean_stack, C> {
 			template <typename F>
 			static int call(lua_State* L, F&& f) {
-				return lua_call_wrapper<T, meta::unqualified_t<Y>, is_index, is_variable, checked, boost, clean_stack>{}.call(L, f.func);
+				return lua_call_wrapper<T, meta::unqualified_t<Y>, is_index, is_variable, checked, boost, clean_stack> {}.call(L, f.func);
 			}
 		};
 
 		template <typename T, typename Sig, typename P, bool is_index, bool is_variable, bool checked, int boost, bool clean_stack, typename C>
 		struct lua_call_wrapper<T, function_arguments<Sig, P>, is_index, is_variable, checked, boost, clean_stack, C> {
 			static int call(lua_State* L, const function_arguments<Sig, P>& f) {
-				lua_call_wrapper<T, meta::unqualified_t<P>, is_index, is_variable, checked, boost, clean_stack> lcw{};
+				lua_call_wrapper<T, meta::unqualified_t<P>, is_index, is_variable, checked, boost, clean_stack> lcw {};
 				return lcw.call(L, std::get<0>(f.arguments));
 			}
 
 			static int call(lua_State* L, function_arguments<Sig, P>&& f) {
-				lua_call_wrapper<T, meta::unqualified_t<P>, is_index, is_variable, checked, boost, clean_stack> lcw{};
+				lua_call_wrapper<T, meta::unqualified_t<P>, is_index, is_variable, checked, boost, clean_stack> lcw {};
 				return lcw.call(L, std::get<0>(std::move(f.arguments)));
 			}
 		};
@@ -869,11 +874,11 @@ namespace sol {
 			using uFx = meta::unqualified_t<Fx>;
 			if constexpr (meta::is_specialization_of_v<uFx, yielding_t>) {
 				using real_fx = meta::unqualified_t<decltype(std::forward<Fx>(fx).func)>;
-				lua_call_wrapper<T, real_fx, is_index, is_variable, checked, boost, clean_stack> lcw{};
+				lua_call_wrapper<T, real_fx, is_index, is_variable, checked, boost, clean_stack> lcw {};
 				return lcw.call(L, std::forward<Fx>(fx).func, std::forward<Args>(args)...);
 			}
 			else {
-				lua_call_wrapper<T, uFx, is_index, is_variable, checked, boost, clean_stack> lcw{};
+				lua_call_wrapper<T, uFx, is_index, is_variable, checked, boost, clean_stack> lcw {};
 				return lcw.call(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 		}
@@ -893,38 +898,38 @@ namespace sol {
 		}
 
 		template <typename T, typename = void>
-		struct is_var_bind : std::false_type {};
+		struct is_var_bind : std::false_type { };
 
 		template <typename T>
-		struct is_var_bind<T, std::enable_if_t<std::is_member_object_pointer<T>::value>> : std::true_type {};
+		struct is_var_bind<T, std::enable_if_t<std::is_member_object_pointer<T>::value>> : std::true_type { };
 
 		template <typename T>
-		struct is_var_bind<T, std::enable_if_t<is_lua_reference_or_proxy<T>::value>> : std::true_type {};
+		struct is_var_bind<T, std::enable_if_t<is_lua_reference_or_proxy<T>::value>> : std::true_type { };
 
 		template <>
-		struct is_var_bind<detail::no_prop> : std::true_type {};
+		struct is_var_bind<detail::no_prop> : std::true_type { };
 
 		template <typename R, typename W>
-		struct is_var_bind<property_wrapper<R, W>> : std::true_type {};
+		struct is_var_bind<property_wrapper<R, W>> : std::true_type { };
 
 		template <typename T>
-		struct is_var_bind<var_wrapper<T>> : std::true_type {};
+		struct is_var_bind<var_wrapper<T>> : std::true_type { };
 
 		template <typename T>
-		struct is_var_bind<readonly_wrapper<T>> : is_var_bind<meta::unqualified_t<T>> {};
+		struct is_var_bind<readonly_wrapper<T>> : is_var_bind<meta::unqualified_t<T>> { };
 
 		template <typename F, typename... Policies>
-		struct is_var_bind<policy_wrapper<F, Policies...>> : is_var_bind<meta::unqualified_t<F>> {};
+		struct is_var_bind<policy_wrapper<F, Policies...>> : is_var_bind<meta::unqualified_t<F>> { };
 	} // namespace call_detail
 
 	template <typename T>
-	struct is_variable_binding : call_detail::is_var_bind<meta::unqualified_t<T>> {};
+	struct is_variable_binding : call_detail::is_var_bind<meta::unqualified_t<T>> { };
 
 	template <typename T>
 	using is_var_wrapper = meta::is_specialization_of<T, var_wrapper>;
 
 	template <typename T>
-	struct is_function_binding : meta::neg<is_variable_binding<T>> {};
+	struct is_function_binding : meta::neg<is_variable_binding<T>> { };
 
 } // namespace sol
 

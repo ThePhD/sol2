@@ -105,9 +105,9 @@ namespace sol {
 	}
 
 	inline std::size_t total_memory_used(lua_State* L) {
-		std::size_t kb = lua_gc(L, LUA_GCCOUNT, 0);
+		std::size_t kb = static_cast<std::size_t>(lua_gc(L, LUA_GCCOUNT, 0));
 		kb *= 1024;
-		kb += lua_gc(L, LUA_GCCOUNTB, 0);
+		kb += static_cast<std::size_t>(lua_gc(L, LUA_GCCOUNTB, 0));
 		return kb;
 	}
 

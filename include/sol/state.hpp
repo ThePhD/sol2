@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -34,8 +34,7 @@ namespace sol {
 		typedef std::unique_ptr<lua_State, detail::state_deleter> unique_base;
 
 	public:
-		state(lua_CFunction panic = default_at_panic)
-		: unique_base(luaL_newstate()), state_view(unique_base::get()) {
+		state(lua_CFunction panic = default_at_panic) : unique_base(luaL_newstate()), state_view(unique_base::get()) {
 			set_default_state(unique_base::get(), panic);
 		}
 

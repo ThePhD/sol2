@@ -154,7 +154,7 @@ namespace sol { namespace detail {
 					continue;
 				std::size_t nisopidx = idx - op.size() + 1;
 				if (nisop == nisopidx) {
-					idx = static_cast<std::ptrdiff_t>(nisopidx);
+					idx = static_cast<std::size_t>(nisopidx);
 					earlybreak = true;
 				}
 				break;

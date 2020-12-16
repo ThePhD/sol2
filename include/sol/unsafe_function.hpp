@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -73,13 +73,14 @@ namespace sol {
 		using base_t::lua_state;
 
 		basic_function() = default;
-		template <typename T, meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_function>>, meta::neg<std::is_same<base_t, stack_reference>>, meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
-		basic_function(T&& r) noexcept
-		: base_t(std::forward<T>(r)) {
+		template <typename T,
+		     meta::enable<meta::neg<std::is_same<meta::unqualified_t<T>, basic_function>>, meta::neg<std::is_same<base_t, stack_reference>>,
+		          meta::neg<std::is_same<lua_nil_t, meta::unqualified_t<T>>>, is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
+		basic_function(T&& r) noexcept : base_t(std::forward<T>(r)) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			if (!is_function<meta::unqualified_t<T>>::value) {
 				auto pp = stack::push_pop(*this);
-				constructor_handler handler{};
+				constructor_handler handler {};
 				stack::check<basic_function>(lua_state(), -1, handler);
 			}
 #endif // Safety
@@ -88,36 +89,30 @@ namespace sol {
 		basic_function& operator=(const basic_function&) = default;
 		basic_function(basic_function&&) = default;
 		basic_function& operator=(basic_function&&) = default;
-		basic_function(const stack_reference& r)
-		: basic_function(r.lua_state(), r.stack_index()) {
+		basic_function(const stack_reference& r) : basic_function(r.lua_state(), r.stack_index()) {
 		}
-		basic_function(stack_reference&& r)
-		: basic_function(r.lua_state(), r.stack_index()) {
+		basic_function(stack_reference&& r) : basic_function(r.lua_state(), r.stack_index()) {
 		}
-		basic_function(lua_nil_t n)
-		: base_t(n) {
+		basic_function(lua_nil_t n) : base_t(n) {
 		}
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
-		basic_function(lua_State* L, T&& r)
-		: base_t(L, std::forward<T>(r)) {
+		basic_function(lua_State* L, T&& r) : base_t(L, std::forward<T>(r)) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			auto pp = stack::push_pop(*this);
-			constructor_handler handler{};
+			constructor_handler handler {};
 			stack::check<basic_function>(lua_state(), -1, handler);
 #endif // Safety
 		}
-		basic_function(lua_State* L, int index = -1)
-		: base_t(L, index) {
+		basic_function(lua_State* L, int index = -1) : base_t(L, index) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
-			constructor_handler handler{};
+			constructor_handler handler {};
 			stack::check<basic_function>(L, index, handler);
 #endif // Safety
 		}
-		basic_function(lua_State* L, ref_index index)
-		: base_t(L, index) {
+		basic_function(lua_State* L, ref_index index) : base_t(L, index) {
 #if SOL_IS_ON(SOL_SAFE_REFERENCES_I_)
 			auto pp = stack::push_pop(*this);
-			constructor_handler handler{};
+			constructor_handler handler {};
 			stack::check<basic_function>(lua_state(), -1, handler);
 #endif // Safety
 		}

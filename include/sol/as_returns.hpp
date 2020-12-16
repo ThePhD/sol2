@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -35,7 +35,7 @@ namespace sol {
 
 	template <typename Source>
 	auto as_returns(Source&& source) {
-		return as_returns_t<std::decay_t<Source>>{ std::forward<Source>(source) };
+		return as_returns_t<std::decay_t<Source>> { std::forward<Source>(source) };
 	}
 
 	namespace stack {

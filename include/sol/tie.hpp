@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -30,14 +30,14 @@ namespace sol {
 
 	namespace detail {
 		template <typename T>
-		struct is_speshul : std::false_type {};
+		struct is_speshul : std::false_type { };
 	} // namespace detail
 
 	template <typename T>
-	struct tie_size : std::tuple_size<T> {};
+	struct tie_size : std::tuple_size<T> { };
 
 	template <typename T>
-	struct is_tieable : std::integral_constant<bool, (::sol::tie_size<T>::value > 0)> {};
+	struct is_tieable : std::integral_constant<bool, (::sol::tie_size<T>::value > 0)> { };
 
 	template <typename... Tn>
 	struct tie_t : public std::tuple<std::add_lvalue_reference_t<Tn>...> {
@@ -61,15 +61,13 @@ namespace sol {
 		template <std::size_t... I, typename T>
 		void set_extra(std::true_type, std::index_sequence<I...>, T&& target) {
 			using std::get;
-			(void)detail::swallow{0,
-				(get<I>(static_cast<base_t&>(*this)) = get<I>(types<Tn...>(), target), 0)..., 0};
+			(void)detail::swallow { 0, (get<I>(static_cast<base_t&>(*this)) = get<I>(types<Tn...>(), target), 0)..., 0 };
 		}
 
 		template <std::size_t... I, typename T>
 		void set_extra(std::false_type, std::index_sequence<I...>, T&& target) {
 			using std::get;
-			(void)detail::swallow{0,
-				(get<I>(static_cast<base_t&>(*this)) = get<I>(target), 0)..., 0};
+			(void)detail::swallow { 0, (get<I>(static_cast<base_t&>(*this)) = get<I>(target), 0)..., 0 };
 		}
 
 	public:
@@ -84,7 +82,7 @@ namespace sol {
 	};
 
 	template <typename... Tn>
-	struct tie_size<tie_t<Tn...>> : std::tuple_size<std::tuple<Tn...>> {};
+	struct tie_size<tie_t<Tn...>> : std::tuple_size<std::tuple<Tn...>> { };
 
 	namespace adl_barrier_detail {
 		template <typename... Tn>

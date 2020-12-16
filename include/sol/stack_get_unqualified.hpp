@@ -342,7 +342,7 @@ namespace sol { namespace stack {
 				}
 				bool isnil = false;
 				for (int vi = 0; vi < lua_size<V>::value; ++vi) {
-#if defined(LUA_NILINTABLE) && LUA_NILINTABLE && SOL_LUA_VESION_I_ >= 600
+#if SOL_IS_ON(SOL_LUA_NIL_IN_TABLES_I_) && SOL_LUA_VESION_I_ >= 600
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 					luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
@@ -363,7 +363,7 @@ namespace sol { namespace stack {
 						if (i == 0) {
 							break;
 						}
-#if defined(LUA_NILINTABLE) && LUA_NILINTABLE && SOL_LUA_VESION_I_ >= 600
+#if SOL_IS_ON(SOL_LUA_NIL_IN_TABLES_I_) && SOL_LUA_VESION_I_ >= 600
 						lua_pop(L, vi);
 #else
 						lua_pop(L, (vi + 1));
@@ -373,7 +373,7 @@ namespace sol { namespace stack {
 					}
 				}
 				if (isnil) {
-#if defined(LUA_NILINTABLE) && LUA_NILINTABLE && SOL_LUA_VESION_I_ >= 600
+#if SOL_IS_ON(SOL_LUA_NIL_IN_TABLES_I_) && SOL_LUA_VESION_I_ >= 600
 #else
 					lua_pop(L, lua_size<V>::value);
 #endif

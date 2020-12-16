@@ -46,8 +46,8 @@ namespace sol {
 		}
 
 		template <typename U>
-		static auto get(U&& value) {
-			return std::addressof(detail::deref(value));
+		static auto get(U&& value_) {
+			return std::addressof(detail::deref(value_));
 		}
 	};
 
@@ -89,7 +89,7 @@ namespace sol {
 	};
 
 	template <typename T>
-	struct is_unique_usertype : std::integral_constant<bool, unique_usertype_traits<T>::value> {};
+	struct is_unique_usertype : std::integral_constant<bool, unique_usertype_traits<T>::value> { };
 
 	template <typename T>
 	inline constexpr bool is_unique_usertype_v = is_unique_usertype<T>::value;
@@ -107,11 +107,11 @@ namespace sol {
 
 	namespace detail {
 		template <typename T, typename = void>
-		struct is_base_rebindable_non_void_sfinae : std::false_type {};
+		struct is_base_rebindable_non_void_sfinae : std::false_type { };
 
 		template <typename T>
 		struct is_base_rebindable_non_void_sfinae<T, std::enable_if_t<is_base_rebindable_v<T>>>
-		: std::integral_constant<bool, !std::is_void_v<typename T::template rebind_base<void>>> {};
+		: std::integral_constant<bool, !std::is_void_v<typename T::template rebind_base<void>>> { };
 	} // namespace detail
 
 	template <typename T>

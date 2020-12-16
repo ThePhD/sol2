@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -27,16 +27,14 @@
 #include <sol/function_types_core.hpp>
 #include <sol/call.hpp>
 
-namespace sol {
-namespace function_detail {
+namespace sol { namespace function_detail {
 	template <typename Func, bool is_yielding, bool no_trampoline>
 	struct functor_function {
 		typedef std::decay_t<meta::unwrap_unqualified_t<Func>> function_type;
 		function_type fx;
 
 		template <typename... Args>
-		functor_function(function_type f, Args&&... args)
-		: fx(std::move(f), std::forward<Args>(args)...) {
+		functor_function(function_type f, Args&&... args) : fx(std::move(f), std::forward<Args>(args)...) {
 		}
 
 		int call(lua_State* L) {
@@ -69,8 +67,7 @@ namespace function_detail {
 		T member;
 
 		template <typename... Args>
-		member_function(function_type f, Args&&... args)
-		: invocation(std::move(f)), member(std::forward<Args>(args)...) {
+		member_function(function_type f, Args&&... args) : invocation(std::move(f)), member(std::forward<Args>(args)...) {
 		}
 
 		int call(lua_State* L) {
@@ -99,8 +96,7 @@ namespace function_detail {
 		typedef std::add_lvalue_reference_t<meta::unwrapped_t<std::remove_reference_t<decltype(detail::deref(member))>>> M;
 
 		template <typename... Args>
-		member_variable(function_type v, Args&&... args)
-		: var(std::move(v)), member(std::forward<Args>(args)...) {
+		member_variable(function_type v, Args&&... args) : var(std::move(v)), member(std::forward<Args>(args)...) {
 		}
 
 		int call(lua_State* L) {
@@ -132,7 +128,6 @@ namespace function_detail {
 			return detail::trampoline(L, f);
 		}
 	};
-}
-} // namespace sol::function_detail
+}} // namespace sol::function_detail
 
 #endif // SOL_FUNCTION_TYPES_STATEFUL_HPP

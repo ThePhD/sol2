@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -46,7 +46,7 @@ TEST_CASE("gc/destructors", "test if destructors are fired properly through gc o
 	{
 		sol::state lua;
 
-		lua["t"] = test{};
+		lua["t"] = test {};
 		pt = lua["t"];
 	}
 
@@ -176,15 +176,15 @@ end
 			gc_entity e;
 			target = &e;
 			{
-				f(e);			   // same with std::ref(e)!
+				f(e);                  // same with std::ref(e)!
 				lua.collect_garbage(); // destroys e for some reason
 			}
 			{
-				f(&e);			   // same with std::ref(e)!
+				f(&e);                 // same with std::ref(e)!
 				lua.collect_garbage(); // destroys e for some reason
 			}
 			{
-				f(std::ref(e));	   // same with std::ref(e)!
+				f(std::ref(e));        // same with std::ref(e)!
 				lua.collect_garbage(); // destroys e for some reason
 			}
 		}
@@ -315,8 +315,7 @@ TEST_CASE("gc/same type closures", "make sure destructions are per-object, not p
 	struct my_closure {
 		int& n;
 
-		my_closure(int& n)
-		: n(n) {
+		my_closure(int& n) : n(n) {
 		}
 		~my_closure() noexcept(false) {
 			if (!checking_closures)
@@ -431,14 +430,14 @@ TEST_CASE("gc/double-deletion tests", "make sure usertypes are properly destruct
 	sol::state lua;
 
 	SECTION("regular") {
-		lua.new_usertype<crash_class>("CrashClass",
-			sol::call_constructor, sol::constructors<sol::types<>>());
+		lua.new_usertype<crash_class>("CrashClass", sol::call_constructor, sol::constructors<sol::types<>>());
 
 		auto result1 = lua.safe_script(R"(
 		function testCrash()
 			local x = CrashClass()
 		end
-		)", sol::script_pass_on_error);
+		)",
+		     sol::script_pass_on_error);
 		REQUIRE(result1.valid());
 
 		for (int i = 0; i < 1000; ++i) {
@@ -468,11 +467,10 @@ TEST_CASE("gc/shared_ptr regression", "metatables should not screw over unique u
 			sol::state lua;
 			lua.open_libraries();
 
-			lua.new_usertype<test>("test",
-				"create", [&]() -> std::shared_ptr<test> {
-					tests.push_back(std::make_shared<test>());
-					return tests.back();
-				});
+			lua.new_usertype<test>("test", "create", [&]() -> std::shared_ptr<test> {
+				tests.push_back(std::make_shared<test>());
+				return tests.back();
+			});
 			REQUIRE(created == 0);
 			REQUIRE(destroyed == 0);
 			auto result1 = lua.safe_script("x = test.create()", sol::script_pass_on_error);
@@ -481,8 +479,8 @@ TEST_CASE("gc/shared_ptr regression", "metatables should not screw over unique u
 			REQUIRE(destroyed == 0);
 			REQUIRE_FALSE(tests.empty());
 			std::shared_ptr<test>& x = lua["x"];
-			std::size_t xuse = x.use_count();
-			std::size_t tuse = tests.back().use_count();
+			std::size_t xuse = static_cast<std::size_t>(x.use_count());
+			std::size_t tuse = static_cast<std::size_t>(tests.back().use_count());
 			REQUIRE(xuse == tuse);
 		}
 		REQUIRE(created == 1);
@@ -523,10 +521,9 @@ TEST_CASE("gc/alignment", "test that allocation is always on aligned boundaries,
 	};
 
 	sol::state lua;
-	lua.new_usertype<test>("test",
-		"callback", &test::callback);
+	lua.new_usertype<test>("test", "callback", &test::callback);
 
-	test obj{};
+	test obj {};
 	lua["obj"] = &obj;
 	INFO("obj");
 	{
@@ -535,10 +532,10 @@ TEST_CASE("gc/alignment", "test that allocation is always on aligned boundaries,
 	}
 	{
 		// Do not check for stack-created object
-		//test& lobj = lua["obj"];
-		//lobj.check_alignment();
+		// test& lobj = lua["obj"];
+		// lobj.check_alignment();
 	}
-	
+
 	lua["obj0"] = std::ref(obj);
 	INFO("obj0");
 	{
@@ -547,8 +544,8 @@ TEST_CASE("gc/alignment", "test that allocation is always on aligned boundaries,
 	}
 	{
 		// Do not check for stack-created object
-		//test& lobj = lua["obj0"];
-		//lobj.check_alignment();
+		// test& lobj = lua["obj0"];
+		// lobj.check_alignment();
 	}
 
 	lua["obj1"] = obj;
@@ -562,7 +559,7 @@ TEST_CASE("gc/alignment", "test that allocation is always on aligned boundaries,
 		lobj.check_alignment();
 	}
 
-	lua["obj2"] = test{};
+	lua["obj2"] = test {};
 	INFO("obj2");
 	{
 		auto r = lua.safe_script("obj2.callback()", sol::script_pass_on_error);

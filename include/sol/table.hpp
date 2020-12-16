@@ -55,8 +55,8 @@ namespace sol {
 		enrollments.default_constructor = !detail::any_is_constructor_v<Arg, Args...>;
 		enrollments.destructor = !detail::any_is_destructor_v<Arg, Args...>;
 		usertype<Class> ut = this->new_usertype<Class>(std::forward<Key>(key), std::move(enrollments));
-		static_assert(sizeof...(Args) % 2 == static_cast<std::size_t>(!detail::any_is_constructor_v<Arg>), 
-			"you must pass an even number of arguments to new_usertype after first passing a constructor");
+		static_assert(sizeof...(Args) % 2 == static_cast<std::size_t>(!detail::any_is_constructor_v<Arg>),
+		     "you must pass an even number of arguments to new_usertype after first passing a constructor");
 		if constexpr (detail::any_is_constructor_v<Arg>) {
 			ut.set(meta_function::construct, std::forward<Arg>(arg));
 			ut.tuple_set(std::make_index_sequence<(sizeof...(Args)) / 2>(), std::forward_as_tuple(std::forward<Args>(args)...));

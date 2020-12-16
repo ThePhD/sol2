@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -26,8 +26,7 @@
 
 #include <sol/stack_check_unqualified.hpp>
 
-namespace sol {
-namespace stack {
+namespace sol { namespace stack {
 
 	template <typename X, type expected, typename>
 	struct qualified_checker {
@@ -85,7 +84,6 @@ namespace stack {
 			}
 		}
 	};
-}
-} // namespace sol::stack
+}} // namespace sol::stack
 
 #endif // SOL_STACK_CHECK_HPP

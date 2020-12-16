@@ -1,4 +1,4 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
@@ -28,20 +28,17 @@
 #include <sol/call.hpp>
 #include <sol/function_types_core.hpp>
 
-namespace sol {
-namespace function_detail {
+namespace sol { namespace function_detail {
 	template <int start_skew, typename... Functions>
 	struct overloaded_function {
 		typedef std::tuple<Functions...> overload_list;
 		typedef std::make_index_sequence<sizeof...(Functions)> indices;
 		overload_list overloads;
 
-		overloaded_function(overload_list set)
-		: overloads(std::move(set)) {
+		overloaded_function(overload_list set) : overloads(std::move(set)) {
 		}
 
-		overloaded_function(Functions... fxs)
-		: overloads(fxs...) {
+		overloaded_function(Functions... fxs) : overloads(fxs...) {
 		}
 
 		template <typename Fx, std::size_t I, typename... R, typename... Args>
@@ -56,7 +53,6 @@ namespace function_detail {
 			return call_detail::overload_match<Functions...>(mfx, L, 1 + start_skew, overloads);
 		}
 	};
-}
-} // namespace sol::function_detail
+}} // namespace sol::function_detail
 
 #endif // SOL_FUNCTION_TYPES_OVERLOAD_HPP

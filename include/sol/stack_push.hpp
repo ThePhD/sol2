@@ -688,7 +688,7 @@ namespace sol { namespace stack {
 		}
 
 		static int push(lua_State* L, const char* strb, const char* stre) {
-			return push_sized(L, strb, stre - strb);
+			return push_sized(L, strb, static_cast<std::size_t>(stre - strb));
 		}
 
 		static int push(lua_State* L, const char* str, std::size_t len) {
@@ -746,7 +746,7 @@ namespace sol { namespace stack {
 	struct unqualified_pusher<char> {
 		static int push(lua_State* L, char c) {
 			const char str[2] = { c, '\0' };
-			return stack::push(L, static_cast<const char*>(str), 1);
+			return stack::push(L, static_cast<const char*>(str), 1u);
 		}
 	};
 
@@ -915,7 +915,7 @@ namespace sol { namespace stack {
 			char sbo[SOL_OPTIMIZATION_STRING_CONVERSION_STACK_SIZE_I_];
 			// if our max string space is small enough, use SBO
 			// right off the bat
-			std::size_t max_possible_code_units = (stre - strb) * 4;
+			std::size_t max_possible_code_units = static_cast<std::size_t>(static_cast<std::size_t>(stre - strb) * static_cast<std::size_t>(4));
 			if (max_possible_code_units <= SOL_OPTIMIZATION_STRING_CONVERSION_STACK_SIZE_I_) {
 				return convert_into(L, sbo, max_possible_code_units, strb, stre);
 			}
@@ -992,7 +992,7 @@ namespace sol { namespace stack {
 			char sbo[SOL_OPTIMIZATION_STRING_CONVERSION_STACK_SIZE_I_];
 			// if our max string space is small enough, use SBO
 			// right off the bat
-			std::size_t max_possible_code_units = (stre - strb) * 4;
+			std::size_t max_possible_code_units = static_cast<std::size_t>(static_cast<std::size_t>(stre - strb) * static_cast<std::size_t>(4));
 			if (max_possible_code_units <= SOL_OPTIMIZATION_STRING_CONVERSION_STACK_SIZE_I_) {
 				return convert_into(L, sbo, max_possible_code_units, strb, stre);
 			}
@@ -1075,7 +1075,7 @@ namespace sol { namespace stack {
 	struct unqualified_pusher<wchar_t> {
 		static int push(lua_State* L, wchar_t c) {
 			const wchar_t str[2] = { c, '\0' };
-			return stack::push(L, static_cast<const wchar_t*>(str), 1);
+			return stack::push(L, static_cast<const wchar_t*>(str), 1u);
 		}
 	};
 
@@ -1083,7 +1083,7 @@ namespace sol { namespace stack {
 	struct unqualified_pusher<char16_t> {
 		static int push(lua_State* L, char16_t c) {
 			const char16_t str[2] = { c, '\0' };
-			return stack::push(L, static_cast<const char16_t*>(str), 1);
+			return stack::push(L, static_cast<const char16_t*>(str), 1u);
 		}
 	};
 
@@ -1091,7 +1091,7 @@ namespace sol { namespace stack {
 	struct unqualified_pusher<char32_t> {
 		static int push(lua_State* L, char32_t c) {
 			const char32_t str[2] = { c, '\0' };
-			return stack::push(L, static_cast<const char32_t*>(str), 1);
+			return stack::push(L, static_cast<const char32_t*>(str), 1u);
 		}
 	};
 
