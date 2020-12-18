@@ -647,11 +647,13 @@ namespace sol { namespace u_detail {
 
 			this->named_index_table.push();
 			absolute_index metametatable_index(L, -1);
+			std::string_view call_metamethod_name = to_string(meta_function::call);
+			lua_pushlstring(L, call_metamethod_name.data(), call_metamethod_name.size());
 			stack::push(L, nullptr);
 			stack::push(L, b.data());
 			lua_CFunction target_func = &b.template call<false, false>;
 			lua_pushcclosure(L, target_func, 2);
-			lua_setfield(L, metametatable_index, to_string(meta_function::call).c_str());
+			lua_rawset(L, metametatable_index);
 			this->named_index_table.pop();
 		}
 		else if constexpr (std::is_same_v<KeyU, base_classes_tag>) {

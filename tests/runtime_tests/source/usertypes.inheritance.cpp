@@ -29,25 +29,44 @@
 
 #include <iostream>
 
-struct inh_test_A {
-	int a = 5;
-};
+inline namespace sol2_test_usertypes_inheritance {
+	struct inh_test_A {
+		int a = 5;
+	};
 
-struct inh_test_B {
-	int b() {
-		return 10;
-	}
-};
+	struct inh_test_B {
+		int b() {
+			return 10;
+		}
+	};
 
-struct inh_test_C : inh_test_B, inh_test_A {
-	double c = 2.4;
-};
+	struct inh_test_C : inh_test_B, inh_test_A {
+		double c = 2.4;
+	};
 
-struct inh_test_D : inh_test_C {
-	bool d() const {
-		return true;
-	}
-};
+	struct inh_test_D : inh_test_C {
+		bool d() const {
+			return true;
+		}
+	};
+
+	class A {
+	public:
+		void hello() { std::cout << "This is class A" << std::endl; }
+		virtual void vhello() { std::cout << "A::vhello" << std::endl; }
+		virtual ~A() {}
+	public:
+		int a = 1;
+	};
+
+	class B : public A {
+	public:
+		virtual void vhello() override { std::cout << "B::vhello" << std::endl; }
+		virtual ~B() override {}
+	public:
+		int b = 2;
+	};
+}
 
 SOL_BASE_CLASSES(inh_test_D, inh_test_C);
 SOL_BASE_CLASSES(inh_test_C, inh_test_B, inh_test_A);
@@ -112,4 +131,38 @@ TEST_CASE("inheritance/usertype derived non-hiding", "usertype classes must play
 
 	REQUIRE((lua.get<int>("dgn10") == 70));
 	REQUIRE((lua.get<int>("dgn") == 7));
+}
+
+TEST_CASE("inheritance/usertype metatable interference", "usertypes with overriden index/new_index methods (from e.g. base classes) were intercepting calls to the named metatable") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::coroutine, sol::lib::string, sol::lib::os, sol::lib::math, sol::lib::table, sol::lib::io, sol::lib::debug);
+
+	sol::usertype<A> uta = lua.new_usertype<A>("A", sol::base_classes, sol::base_list<>());
+	uta.set(sol::call_constructor, sol::constructors<A()>());
+	uta.set("a", &A::a);
+	uta.set("hello", &A::hello);
+	uta.set("vhello", &A::vhello);
+
+	sol::usertype<B> utb = lua.new_usertype<B>("B", sol::base_classes, sol::base_list<A>());
+	utb.set(sol::call_constructor, sol::constructors<B()>());
+	utb.set("b", &B::b);
+	utb.set("vhello", &B::vhello);
+
+	sol::optional<sol::error> maybe_error0 = lua.safe_script(R"(
+	local aa = A()
+	aa:hello()
+	)", sol::script_pass_on_error);
+	REQUIRE_FALSE(maybe_error0.has_value());
+
+	sol::optional<sol::error> maybe_error1 = lua.safe_script(R"(
+	local bb0 = B.new()
+	bb0:hello()
+	)", sol::script_pass_on_error);
+	REQUIRE_FALSE(maybe_error1.has_value());
+
+	sol::optional<sol::error> maybe_error2 = lua.safe_script(R"(
+	local bb1 = B()
+	bb1:hello()
+	)", sol::script_pass_on_error);
+	REQUIRE_FALSE(maybe_error2.has_value());
 }

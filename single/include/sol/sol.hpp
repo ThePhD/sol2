@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-12-18 04:17:09.361797 UTC
-// This header was generated with sol v3.2.3 (revision 561c90ab)
+// Generated 2020-12-18 15:03:35.924132 UTC
+// This header was generated with sol v3.2.3 (revision 9c4e2d10)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -7803,7 +7803,7 @@ namespace sol {
 		template <typename T>
 		using is_msvc_callable_rigged = meta::any<meta::is_specialization_of<T, push_invoke_t>, meta::is_specialization_of<T, as_table_t>,
 		     meta::is_specialization_of<T, forward_as_value_t>, meta::is_specialization_of<T, as_container_t>, meta::is_specialization_of<T, nested>,
-		     meta::is_specialization_of<T, yielding_t>, meta::is_specialization_of<T, ebco>>;
+		     meta::is_specialization_of<T, yielding_t>>;
 
 		template <typename T>
 		inline constexpr bool is_msvc_callable_rigged_v = is_msvc_callable_rigged<T>::value;
@@ -22583,11 +22583,13 @@ namespace sol { namespace u_detail {
 
 			this->named_index_table.push();
 			absolute_index metametatable_index(L, -1);
+			std::string_view call_metamethod_name = to_string(meta_function::call);
+			lua_pushlstring(L, call_metamethod_name.data(), call_metamethod_name.size());
 			stack::push(L, nullptr);
 			stack::push(L, b.data());
 			lua_CFunction target_func = &b.template call<false, false>;
 			lua_pushcclosure(L, target_func, 2);
-			lua_setfield(L, metametatable_index, to_string(meta_function::call).c_str());
+			lua_rawset(L, metametatable_index);
 			this->named_index_table.pop();
 		}
 		else if constexpr (std::is_same_v<KeyU, base_classes_tag>) {

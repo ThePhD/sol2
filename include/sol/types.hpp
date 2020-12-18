@@ -1136,7 +1136,7 @@ namespace sol {
 		template <typename T>
 		using is_msvc_callable_rigged = meta::any<meta::is_specialization_of<T, push_invoke_t>, meta::is_specialization_of<T, as_table_t>,
 		     meta::is_specialization_of<T, forward_as_value_t>, meta::is_specialization_of<T, as_container_t>, meta::is_specialization_of<T, nested>,
-		     meta::is_specialization_of<T, yielding_t>, meta::is_specialization_of<T, ebco>>;
+		     meta::is_specialization_of<T, yielding_t>>;
 
 		template <typename T>
 		inline constexpr bool is_msvc_callable_rigged_v = is_msvc_callable_rigged<T>::value;
