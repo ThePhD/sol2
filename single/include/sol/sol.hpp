@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-12-16 20:25:13.917292 UTC
-// This header was generated with sol v3.2.3 (revision 5b7cf9ad)
+// Generated 2020-12-18 04:17:09.361797 UTC
+// This header was generated with sol v3.2.3 (revision 561c90ab)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -6576,39 +6576,40 @@ namespace sol { namespace detail {
 
 	template <typename T, std::size_t tag = 0, typename = void>
 	struct ebco {
-		T value_;
+		T m_value;
 
 		ebco() = default;
 		ebco(const ebco&) = default;
 		ebco(ebco&&) = default;
 		ebco& operator=(const ebco&) = default;
 		ebco& operator=(ebco&&) = default;
-		ebco(const T& v) : value_(v) {};
-		ebco(T&& v) : value_(std::move(v)) {};
-		ebco& operator=(const T& v) {
-			value_ = v;
+		ebco(const T& v) noexcept(std::is_nothrow_copy_constructible_v<T>) : m_value(v) {};
+		ebco(T&& v) noexcept(std::is_nothrow_move_constructible_v<T>) : m_value(std::move(v)) {};
+		ebco& operator=(const T& v) noexcept(std::is_nothrow_copy_assignable_v<T>) {
+			m_value = v;
 			return *this;
 		}
-		ebco& operator=(T&& v) {
-			value_ = std::move(v);
+		ebco& operator=(T&& v) noexcept(std::is_nothrow_move_assignable_v<T>) {
+			m_value = std::move(v);
 			return *this;
 		};
 		template <typename Arg, typename... Args,
 			typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
-			                                 ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T>>>
-		ebco(Arg&& arg, Args&&... args) : value_(std::forward<Arg>(arg), std::forward<Args>(args)...) {
+			                                 ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T> && (sizeof...(Args) > 0 || !std::is_convertible_v<Arg, T>)>>
+		ebco(Arg&& arg, Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Arg, Args...>)
+		: m_value(std::forward<Arg>(arg), std::forward<Args>(args)...) {
 		}
 
-		T& value() & {
-			return value_;
+		T& value() & noexcept {
+			return m_value;
 		}
 
-		T const& value() const& {
-			return value_;
+		T const& value() const& noexcept {
+			return m_value;
 		}
 
-		T&& value() && {
-			return std::move(value_);
+		T&& value() && noexcept {
+			return std::move(m_value);
 		}
 	};
 
@@ -6617,56 +6618,58 @@ namespace sol { namespace detail {
 		ebco() = default;
 		ebco(const ebco&) = default;
 		ebco(ebco&&) = default;
-		ebco(const T& v) : T(v) {};
-		ebco(T&& v) : T(std::move(v)) {};
+		ebco(const T& v) noexcept(std::is_nothrow_copy_constructible_v<T>) : T(v) {};
+		ebco(T&& v) noexcept(std::is_nothrow_move_constructible_v<T>) : T(std::move(v)) {};
 		template <typename Arg, typename... Args,
 			typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
-			                                 ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T>>>
-		ebco(Arg&& arg, Args&&... args) : T(std::forward<Arg>(arg), std::forward<Args>(args)...) {
+			                                 ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T> && (sizeof...(Args) > 0 || !std::is_convertible_v<Arg, T>)>>
+		ebco(Arg&& arg, Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Arg, Args...>) : T(std::forward<Arg>(arg), std::forward<Args>(args)...) {
 		}
 
 		ebco& operator=(const ebco&) = default;
 		ebco& operator=(ebco&&) = default;
-		ebco& operator=(const T& v) {
+		ebco& operator=(const T& v) noexcept(std::is_nothrow_copy_assignable_v<T>) {
 			static_cast<T&>(*this) = v;
 			return *this;
 		}
-		ebco& operator=(T&& v) {
+		ebco& operator=(T&& v) noexcept(std::is_nothrow_move_assignable_v<T>) {
 			static_cast<T&>(*this) = std::move(v);
 			return *this;
 		};
 
-		T& value() & {
+		T& value() & noexcept {
 			return static_cast<T&>(*this);
 		}
 
-		T const& value() const& {
+		T const& value() const& noexcept {
 			return static_cast<T const&>(*this);
 		}
 
-		T&& value() && {
+		T&& value() && noexcept {
 			return std::move(static_cast<T&>(*this));
 		}
 	};
 
 	template <typename T, std::size_t tag>
 	struct ebco<T&, tag> {
-		T& ref;
+	private:
+		T* m_ref;
 
+	public:
 		ebco() = default;
 		ebco(const ebco&) = default;
 		ebco(ebco&&) = default;
-		ebco(T& v) : ref(v) {};
+		ebco(T& v) noexcept : m_ref(std::addressof(v)) {};
 
 		ebco& operator=(const ebco&) = default;
 		ebco& operator=(ebco&&) = default;
-		ebco& operator=(T& v) {
-			ref = v;
+		ebco& operator=(T& v) noexcept {
+			m_ref = std::addressof(v);
 			return *this;
 		}
 
-		T& value() const {
-			return const_cast<ebco<T&, tag>&>(*this).ref;
+		T& value() const noexcept {
+			return *(const_cast<ebco<T&, tag>&>(*this).m_ref);
 		}
 	};
 
@@ -6675,26 +6678,22 @@ namespace sol { namespace detail {
 		T&& ref;
 
 		ebco() = default;
-		ebco(const ebco&) = default;
+		ebco(const ebco&) = delete;
 		ebco(ebco&&) = default;
-		ebco(T&& v) : ref(v) {};
+		ebco(T&& v) noexcept : ref(v) {};
 
-		ebco& operator=(const ebco&) = default;
-		ebco& operator=(ebco&&) = default;
-		ebco& operator=(T&& v) {
-			ref = std::move(v);
-			return *this;
-		}
+		ebco& operator=(const ebco&) = delete;
+		ebco& operator=(ebco&&) = delete;
 
-		T& value() & {
+		T& value() & noexcept {
 			return ref;
 		}
 
-		const T& value() const& {
+		const T& value() const& noexcept {
 			return ref;
 		}
 
-		T&& value() && {
+		T&& value() && noexcept {
 			return std::move(ref);
 		}
 	};
@@ -6857,29 +6856,49 @@ namespace sol {
 	};
 
 	struct userdata_value {
-		void* value;
-		userdata_value(void* data) : value(data) {
+	private:
+		void* m_value;
+
+	public:
+		userdata_value(void* data) : m_value(data) {
 		}
+
+		void* value() const {
+			return m_value;
+		}
+
 		operator void*() const {
-			return value;
+			return value();
 		}
 	};
 
-	template <typename L>
+	template <typename T>
 	struct light {
-		L* value;
+	private:
+		static_assert(!std::is_void_v<T>, "the type for light will never be void");
+		T* m_value;
 
-		light(L& x) : value(std::addressof(x)) {
+	public:
+		light(T& x) : m_value(std::addressof(x)) {
 		}
-		light(L* x) : value(x) {
+		light(T* x) : m_value(x) {
 		}
-		light(void* x) : value(static_cast<L*>(x)) {
+		explicit light(void* x) : m_value(static_cast<T*>(x)) {
 		}
-		operator L*() const {
-			return value;
+
+		T* value() const {
+			return m_value;
 		}
-		operator L&() const {
-			return *value;
+
+		operator T*() const {
+			return m_value;
+		}
+		operator T&() const {
+			return *m_value;
+		}
+
+		void* void_value() const {
+			return m_value;
 		}
 	};
 
@@ -6889,20 +6908,30 @@ namespace sol {
 		return light<L>(l);
 	}
 
-	template <typename U>
-	struct user {
-		U value;
+	template <typename T>
+	struct user : private detail::ebco<T> {
+	private:
+		using base_t = detail::ebco<T>;
 
-		user(U&& x) : value(std::forward<U>(x)) {
+	public:
+		using base_t::base_t;
+
+		using base_t::value;
+
+		operator std::add_pointer_t<std::remove_reference_t<T>>() {
+			return std::addressof(this->base_t::value());
 		}
-		operator std::add_pointer_t<std::remove_reference_t<U>>() {
-			return std::addressof(value);
+
+		operator std::add_pointer_t<std::add_const_t<std::remove_reference_t<T>>>() const {
+			return std::addressof(this->base_t::value());
 		}
-		operator std::add_lvalue_reference_t<U>() {
-			return value;
+
+		operator std::add_lvalue_reference_t<T>() {
+			return this->base_t::value();
 		}
-		operator std::add_const_t<std::add_lvalue_reference_t<U>>&() const {
-			return value;
+
+		operator std::add_const_t<std::add_lvalue_reference_t<T>>&() const {
+			return this->base_t::value();
 		}
 	};
 
@@ -6913,11 +6942,14 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct metatable_registry_key {
-		T key;
+	struct metatable_registry_key : private detail::ebco<T> {
+	private:
+		using base_t = detail::ebco<T>;
 
-		metatable_registry_key(T key) : key(std::forward<T>(key)) {
-		}
+	public:
+		using base_t::base_t;
+
+		using base_t::value;
 	};
 
 	template <typename T>
@@ -6968,9 +7000,9 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct as_table_t {
+	struct as_table_t : private detail::ebco<T> {
 	private:
-		T value_;
+		using base_t = detail::ebco<T>;
 
 	public:
 		as_table_t() = default;
@@ -6978,36 +7010,24 @@ namespace sol {
 		as_table_t(as_table_t&&) = default;
 		as_table_t& operator=(const as_table_t&) = default;
 		as_table_t& operator=(as_table_t&&) = default;
-		template <typename Arg,
-		     meta::enable<meta::neg<std::is_same<meta::unqualified_t<Arg>, as_table_t>>,
-		          meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<Arg>>>> = meta::enabler>
-		as_table_t(Arg&& arg) : value_(std::forward<Arg>(arg)) {
-		}
-		template <typename Arg0, typename Arg1, typename... Args>
-		as_table_t(Arg0&& arg0, Arg1&& arg1, Args&&... args) : value_(std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...) {
-		}
 
-		T& value() & {
-			return value_;
-		}
+		using base_t::base_t;
 
-		T&& value() && {
-			return std::move(value_);
-		}
-
-		const T& value() const& {
-			return value_;
-		}
+		using base_t::value;
 
 		operator std::add_lvalue_reference_t<T>() {
-			return value_;
+			return this->base_t::value();
+		}
+
+		operator std::add_const_t<std::add_lvalue_reference_t<T>>() const {
+			return this->base_t::value();
 		}
 	};
 
 	template <typename T>
-	struct nested {
+	struct nested : private detail::ebco<T> {
 	private:
-		T value_;
+		using base_t = detail::ebco<T>;
 
 	public:
 		using nested_type = T;
@@ -7017,29 +7037,17 @@ namespace sol {
 		nested(nested&&) = default;
 		nested& operator=(const nested&) = default;
 		nested& operator=(nested&&) = default;
-		template <typename Arg,
-		     meta::enable<meta::neg<std::is_same<meta::unqualified_t<Arg>, nested>>,
-		          meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<Arg>>>> = meta::enabler>
-		nested(Arg&& arg) : value_(std::forward<Arg>(arg)) {
-		}
-		template <typename Arg0, typename Arg1, typename... Args>
-		nested(Arg0&& arg0, Arg1&& arg1, Args&&... args) : value_(std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...) {
-		}
 
-		T& value() & {
-			return value_;
-		}
+		using base_t::base_t;
 
-		T&& value() && {
-			return std::move(value_);
-		}
-
-		const T& value() const& {
-			return value_;
-		}
+		using base_t::value;
 
 		operator std::add_lvalue_reference_t<T>() {
-			return value_;
+			return this->base_t::value();
+		}
+
+		operator std::add_const_t<std::add_lvalue_reference_t<T>>() const {
+			return this->base_t::value();
 		}
 	};
 
@@ -7067,9 +7075,9 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct as_container_t {
+	struct as_container_t : private detail::ebco<T> {
 	private:
-		T value_;
+		using base_t = detail::ebco<T>;
 
 	public:
 		using type = T;
@@ -7079,42 +7087,12 @@ namespace sol {
 		as_container_t(as_container_t&&) = default;
 		as_container_t& operator=(const as_container_t&) = default;
 		as_container_t& operator=(as_container_t&&) = default;
-		template <typename Arg,
-		     meta::enable<meta::neg<std::is_same<meta::unqualified_t<Arg>, as_container_t>>,
-		          meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<Arg>>>> = meta::enabler>
-		as_container_t(Arg&& arg) : value_(std::forward<Arg>(arg)) {
-		}
-		template <typename Arg0, typename Arg1, typename... Args>
-		as_container_t(Arg0&& arg0, Arg1&& arg1, Args&&... args) : value_(std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...) {
-		}
 
-		T& value() & {
-			return value_;
-		}
+		using base_t::base_t;
 
-		T&& value() && {
-			return std::move(value_);
-		}
+		using base_t::value;
 
-		const T& value() const& {
-			return value_;
-		}
-	};
-
-	template <typename T>
-	struct as_container_t<T&> {
-	private:
-		std::reference_wrapper<T> value_;
-
-	public:
-		as_container_t(T& value) : value_(value) {
-		}
-
-		T& value() {
-			return value_;
-		}
-
-		operator T&() {
+		operator std::add_lvalue_reference_t<T>() {
 			return value();
 		}
 	};
@@ -7125,9 +7103,9 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct push_invoke_t {
+	struct push_invoke_t : private detail::ebco<T> {
 	private:
-		T value_;
+		using base_t = detail::ebco<T>;
 
 	public:
 		push_invoke_t() = default;
@@ -7135,43 +7113,37 @@ namespace sol {
 		push_invoke_t(push_invoke_t&&) = default;
 		push_invoke_t& operator=(const push_invoke_t&) = default;
 		push_invoke_t& operator=(push_invoke_t&&) = default;
-		template <typename Arg,
-		     meta::enable<meta::neg<std::is_same<meta::unqualified_t<Arg>, push_invoke_t>>,
-		          meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<Arg>>>> = meta::enabler>
-		push_invoke_t(Arg&& arg) : value_(std::forward<Arg>(arg)) {
-		}
-		template <typename Arg0, typename Arg1, typename... Args>
-		push_invoke_t(Arg0&& arg0, Arg1&& arg1, Args&&... args) : value_(std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...) {
-		}
 
-		T& value() & {
-			return value_;
-		}
+		using base_t::base_t;
 
-		T&& value() && {
-			return std::move(value_);
-		}
-
-		const T& value() const& {
-			return value_;
-		}
-	};
-
-	template <typename T>
-	struct push_invoke_t<T&> {
-		std::reference_wrapper<T> value_;
-
-		push_invoke_t(T& value) : value_(value) {
-		}
-
-		T& value() {
-			return value_;
-		}
+		using base_t::value;
 	};
 
 	template <typename Fx>
 	auto push_invoke(Fx&& fx) {
 		return push_invoke_t<Fx>(std::forward<Fx>(fx));
+	}
+
+	template <typename T>
+	struct forward_as_value_t : private detail::ebco<T> {
+	private:
+		using base_t = detail::ebco<T>;
+
+	public:
+		forward_as_value_t() = default;
+		forward_as_value_t(const forward_as_value_t&) = default;
+		forward_as_value_t(forward_as_value_t&&) = default;
+		forward_as_value_t& operator=(const forward_as_value_t&) = default;
+		forward_as_value_t& operator=(forward_as_value_t&&) = default;
+
+		using base_t::base_t;
+
+		using base_t::value;
+	};
+
+	template <typename T>
+	auto pass_as_value(T& value_ref_) {
+		return forward_as_value_t<T>(value_ref_);
 	}
 
 	struct override_value_t { };
@@ -7824,6 +7796,17 @@ namespace sol {
 
 		template <typename T>
 		constexpr inline bool has_internal_marker_v = has_internal_marker<T>::value;
+
+		// MSVC's decltype detection is broken, which breaks other
+		// parts of the code. So we add more workarounds. The moment it's fixed,
+		// we take it away and break everyone that doesn't upgrade.
+		template <typename T>
+		using is_msvc_callable_rigged = meta::any<meta::is_specialization_of<T, push_invoke_t>, meta::is_specialization_of<T, as_table_t>,
+		     meta::is_specialization_of<T, forward_as_value_t>, meta::is_specialization_of<T, as_container_t>, meta::is_specialization_of<T, nested>,
+		     meta::is_specialization_of<T, yielding_t>, meta::is_specialization_of<T, ebco>>;
+
+		template <typename T>
+		inline constexpr bool is_msvc_callable_rigged_v = is_msvc_callable_rigged<T>::value;
 	} // namespace detail
 
 	template <typename T>
@@ -13954,34 +13937,55 @@ namespace sol { namespace stack {
 
 	template <typename T>
 	struct unqualified_pusher<as_table_t<T>> {
-		static int push(lua_State* L, const T& v) {
+		static int push(lua_State* L, const as_table_t<T>& value_) {
 			using inner_t = std::remove_pointer_t<meta::unwrap_unqualified_t<T>>;
 			if constexpr (is_container_v<inner_t>) {
-				return stack::push<detail::as_table_tag<T>>(L, v);
+				return stack::push<detail::as_table_tag<T>>(L, value_.value());
 			}
 			else {
-				return stack::push(L, v);
+				return stack::push(L, value_.value());
+			}
+		}
+
+		static int push(lua_State* L, const T& value_) {
+			using inner_t = std::remove_pointer_t<meta::unwrap_unqualified_t<T>>;
+			if constexpr (is_container_v<inner_t>) {
+				return stack::push<detail::as_table_tag<T>>(L, value_);
+			}
+			else {
+				return stack::push(L, value_);
 			}
 		}
 	};
 
 	template <typename T>
 	struct unqualified_pusher<nested<T>> {
-		static int push(lua_State* L, const T& tablecont) {
+		static int push(lua_State* L, const T& nested_value) noexcept {
 			using Tu = meta::unwrap_unqualified_t<T>;
 			using inner_t = std::remove_pointer_t<Tu>;
 			if constexpr (is_container_v<inner_t>) {
-				return stack::push<detail::as_table_tag<T>>(L, tablecont, nested_tag);
+				return stack::push<detail::as_table_tag<T>>(L, nested_value, nested_tag);
 			}
 			else {
-				return stack::push<Tu>(L, tablecont);
+				return stack::push<Tu>(L, nested_value);
+			}
+		}
+
+		static int push(lua_State* L, const nested<T>& nested_wrapper_) noexcept {
+			using Tu = meta::unwrap_unqualified_t<T>;
+			using inner_t = std::remove_pointer_t<Tu>;
+			if constexpr (is_container_v<inner_t>) {
+				return stack::push<detail::as_table_tag<T>>(L, nested_wrapper_.value(), nested_tag);
+			}
+			else {
+				return stack::push<Tu>(L, nested_wrapper_.value());
 			}
 		}
 	};
 
 	template <typename T>
 	struct unqualified_pusher<std::initializer_list<T>> {
-		static int push(lua_State* L, const std::initializer_list<T>& il) {
+		static int push(lua_State* L, const std::initializer_list<T>& il) noexcept {
 			unqualified_pusher<detail::as_table_tag<std::initializer_list<T>>> p {};
 			// silence annoying VC++ warning
 			(void)p;
@@ -13991,7 +13995,7 @@ namespace sol { namespace stack {
 
 	template <>
 	struct unqualified_pusher<lua_nil_t> {
-		static int push(lua_State* L, lua_nil_t) {
+		static int push(lua_State* L, lua_nil_t) noexcept {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
@@ -14002,7 +14006,7 @@ namespace sol { namespace stack {
 
 	template <>
 	struct unqualified_pusher<stack_count> {
-		static int push(lua_State*, stack_count st) {
+		static int push(lua_State*, stack_count st) noexcept {
 			return st.count;
 		}
 	};
@@ -14020,7 +14024,7 @@ namespace sol { namespace stack {
 
 	template <>
 	struct unqualified_pusher<std::remove_pointer_t<lua_CFunction>> {
-		static int push(lua_State* L, lua_CFunction func, int n = 0) {
+		static int push(lua_State* L, lua_CFunction func, int n = 0) noexcept {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
@@ -14092,7 +14096,7 @@ namespace sol { namespace stack {
 
 	template <>
 	struct unqualified_pusher<void*> {
-		static int push(lua_State* L, void* userdata) {
+		static int push(lua_State* L, void* userdata) noexcept {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
@@ -14103,7 +14107,7 @@ namespace sol { namespace stack {
 
 	template <>
 	struct unqualified_pusher<const void*> {
-		static int push(lua_State* L, const void* userdata) {
+		static int push(lua_State* L, const void* userdata) noexcept {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
@@ -14114,7 +14118,7 @@ namespace sol { namespace stack {
 
 	template <>
 	struct unqualified_pusher<lightuserdata_value> {
-		static int push(lua_State* L, lightuserdata_value userdata) {
+		static int push(lua_State* L, lightuserdata_value userdata) noexcept {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
@@ -14125,7 +14129,7 @@ namespace sol { namespace stack {
 
 	template <typename T>
 	struct unqualified_pusher<light<T>> {
-		static int push(lua_State* L, light<T> l) {
+		static int push(lua_State* L, light<T> l) noexcept {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
@@ -14184,17 +14188,17 @@ namespace sol { namespace stack {
 
 		static int push(lua_State* L, user<T>&& u) {
 			const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable()[0];
-			return push_with(L, name, std::move(u.value));
+			return push_with(L, name, std::move(u.value()));
 		}
 
 		static int push(lua_State* L, no_metatable_t, const user<T>& u) {
 			const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable()[0];
-			return push_with<false>(L, name, u.value);
+			return push_with<false>(L, name, u.value());
 		}
 
 		static int push(lua_State* L, no_metatable_t, user<T>&& u) {
 			const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable()[0];
-			return push_with<false>(L, name, std::move(u.value));
+			return push_with<false>(L, name, std::move(u.value()));
 		}
 	};
 
@@ -14205,7 +14209,7 @@ namespace sol { namespace stack {
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_userdata);
 #endif // make sure stack doesn't overflow
 			void** ud = detail::usertype_allocate_pointer<void>(L);
-			*ud = data.value;
+			*ud = data.value();
 			return 1;
 		}
 	};
@@ -14676,30 +14680,41 @@ namespace sol { namespace stack {
 		}
 	};
 
+	template <typename T>
+	struct unqualified_pusher<forward_as_value_t<T>> {
+		static int push(lua_State* L, const forward_as_value_t<T>& value_) {
+			return stack::push<T>(L, value_.value());
+		}
+
+		static int push(lua_State* L, forward_as_value_t<T>&& value_) {
+			return stack::push<T>(L, std::move(value_).value());
+		}
+	};
+
 	template <>
 	struct unqualified_pusher<nullopt_t> {
-		static int push(lua_State* L, nullopt_t) {
+		static int push(lua_State* L, nullopt_t) noexcept {
 			return stack::push(L, lua_nil);
 		}
 	};
 
 	template <>
 	struct unqualified_pusher<std::nullptr_t> {
-		static int push(lua_State* L, std::nullptr_t) {
+		static int push(lua_State* L, std::nullptr_t) noexcept {
 			return stack::push(L, lua_nil);
 		}
 	};
 
 	template <>
 	struct unqualified_pusher<this_state> {
-		static int push(lua_State*, const this_state&) {
+		static int push(lua_State*, const this_state&) noexcept {
 			return 0;
 		}
 	};
 
 	template <>
 	struct unqualified_pusher<this_main_state> {
-		static int push(lua_State*, const this_main_state&) {
+		static int push(lua_State*, const this_main_state&) noexcept {
 			return 0;
 		}
 	};
@@ -14737,7 +14752,7 @@ namespace sol { namespace stack {
 		struct push_function {
 			lua_State* L;
 
-			push_function(lua_State* L) : L(L) {
+			push_function(lua_State* L) noexcept : L(L) {
 			}
 
 			template <typename T>
@@ -17732,7 +17747,7 @@ namespace sol {
 	struct wrap {
 		typedef F type;
 
-		static int call(lua_State* L) {
+		static int call(lua_State* L) noexcept(noexcept(c_call<type, f>(L))) {
 			return c_call<type, f>(L);
 		}
 	};
@@ -17755,7 +17770,7 @@ namespace sol {
 // beginning of sol/function_types_stateless.hpp
 
 namespace sol { namespace function_detail {
-	template <typename Function, bool is_yielding>
+	template <typename Function>
 	struct upvalue_free_function {
 		using function_type = std::remove_pointer_t<std::decay_t<Function>>;
 		using traits_type = meta::bind_traits<function_type>;
@@ -17772,8 +17787,15 @@ namespace sol { namespace function_detail {
 			return call_detail::call_wrapped<void, true, false>(L, fx);
 		}
 
+		template <bool is_yielding, bool no_trampoline>
 		static int call(lua_State* L) {
-			int nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			int nr;
+			if constexpr (no_trampoline) {
+				nr = real_call(L);
+			}
+			else {
+				nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			}
 			if (is_yielding) {
 				return lua_yield(L, nr);
 			}
@@ -17787,7 +17809,7 @@ namespace sol { namespace function_detail {
 		}
 	};
 
-	template <typename T, typename Function, bool is_yielding>
+	template <typename T, typename Function>
 	struct upvalue_member_function {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 		typedef lua_bind_traits<function_type> traits_type;
@@ -17809,6 +17831,7 @@ namespace sol { namespace function_detail {
 			return call_detail::call_wrapped<T, true, false, -1>(L, memfx, item);
 		}
 
+		template <bool is_yielding, bool no_trampoline>
 		static int call(lua_State* L)
 #if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
 		// MSVC is broken, what a surprise...
@@ -17816,7 +17839,13 @@ namespace sol { namespace function_detail {
 			noexcept(traits_type::is_noexcept)
 #endif
 		{
-			int nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			int nr;
+			if constexpr (no_trampoline) {
+				nr = real_call(L);
+			}
+			else {
+				nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			}
 			if (is_yielding) {
 				return lua_yield(L, nr);
 			}
@@ -17825,12 +17854,18 @@ namespace sol { namespace function_detail {
 			}
 		}
 
-		int operator()(lua_State* L) {
+		int operator()(lua_State* L)
+#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
+		// MSVC is broken, what a surprise...
+#else
+			noexcept(traits_type::is_noexcept)
+#endif
+		{
 			return call(L);
 		}
 	};
 
-	template <typename T, typename Function, bool is_yielding>
+	template <typename T, typename Function>
 	struct upvalue_member_variable {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 		typedef lua_bind_traits<function_type> traits_type;
@@ -17861,6 +17896,7 @@ namespace sol { namespace function_detail {
 			}
 		}
 
+		template <bool is_yielding, bool no_trampoline>
 		static int call(lua_State* L)
 #if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
 		// MSVC is broken, what a surprise...
@@ -17868,7 +17904,13 @@ namespace sol { namespace function_detail {
 			noexcept(traits_type::is_noexcept)
 #endif
 		{
-			int nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			int nr;
+			if constexpr (no_trampoline) {
+				nr = real_call(L);
+			}
+			else {
+				nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			}
 			if (is_yielding) {
 				return lua_yield(L, nr);
 			}
@@ -17877,13 +17919,19 @@ namespace sol { namespace function_detail {
 			}
 		}
 
-		int operator()(lua_State* L) {
+		int operator()(lua_State* L)
+#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
+		// MSVC is broken, what a surprise...
+#else
+			noexcept(traits_type::is_noexcept)
+#endif
+		{
 			return call(L);
 		}
 	};
 
-	template <typename T, typename Function, bool is_yielding>
-	struct upvalue_member_variable<T, readonly_wrapper<Function>, is_yielding> {
+	template <typename T, typename Function>
+	struct upvalue_member_variable<T, readonly_wrapper<Function>> {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 		typedef lua_bind_traits<function_type> traits_type;
 
@@ -17911,6 +17959,7 @@ namespace sol { namespace function_detail {
 			}
 		}
 
+		template <bool is_yielding, bool no_trampoline>
 		static int call(lua_State* L)
 #if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
 		// MSVC is broken, what a surprise...
@@ -17918,7 +17967,13 @@ namespace sol { namespace function_detail {
 			noexcept(traits_type::is_noexcept)
 #endif
 		{
-			int nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			int nr;
+			if constexpr (no_trampoline) {
+				nr = real_call(L);
+			}
+			else {
+				nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			}
 			if (is_yielding) {
 				return lua_yield(L, nr);
 			}
@@ -17927,12 +17982,18 @@ namespace sol { namespace function_detail {
 			}
 		}
 
-		int operator()(lua_State* L) {
+		int operator()(lua_State* L)
+#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
+		// MSVC is broken, what a surprise...
+#else
+			noexcept(traits_type::is_noexcept)
+#endif
+		{
 			return call(L);
 		}
 	};
 
-	template <typename T, typename Function, bool is_yielding>
+	template <typename T, typename Function>
 	struct upvalue_this_member_function {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 		typedef lua_bind_traits<function_type> traits_type;
@@ -17950,6 +18011,7 @@ namespace sol { namespace function_detail {
 			return call_detail::call_wrapped<T, false, false>(L, memfx);
 		}
 
+		template <bool is_yielding, bool no_trampoline>
 		static int call(lua_State* L)
 #if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
 		// MSVC is broken, what a surprise...
@@ -17957,7 +18019,13 @@ namespace sol { namespace function_detail {
 			noexcept(traits_type::is_noexcept)
 #endif
 		{
-			int nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			int nr;
+			if constexpr (no_trampoline) {
+				nr = real_call(L);
+			}
+			else {
+				nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			}
 			if (is_yielding) {
 				return lua_yield(L, nr);
 			}
@@ -17966,16 +18034,22 @@ namespace sol { namespace function_detail {
 			}
 		}
 
-		int operator()(lua_State* L) {
+		int operator()(lua_State* L)
+#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
+		// MSVC is broken, what a surprise...
+#else
+			noexcept(traits_type::is_noexcept)
+#endif
+		{
 			return call(L);
 		}
 	};
 
-	template <typename T, typename Function, bool is_yielding>
+	template <typename T, typename Function>
 	struct upvalue_this_member_variable {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 
-		static int real_call(lua_State* L) noexcept(false) {
+		static int real_call(lua_State* L) noexcept(std::is_nothrow_copy_assignable_v<T>) {
 			// Layout:
 			// idx 1...n: verbatim data of member variable pointer
 			auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L);
@@ -17990,8 +18064,15 @@ namespace sol { namespace function_detail {
 			}
 		}
 
-		static int call(lua_State* L) {
-			int nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+		template <bool is_yielding, bool no_trampoline>
+		static int call(lua_State* L) noexcept(std::is_nothrow_copy_assignable_v<T>) {
+			int nr;
+			if constexpr (no_trampoline) {
+				nr = real_call(L);
+			}
+			else {
+				nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			}
 			if (is_yielding) {
 				return lua_yield(L, nr);
 			}
@@ -18000,17 +18081,17 @@ namespace sol { namespace function_detail {
 			}
 		}
 
-		int operator()(lua_State* L) {
+		int operator()(lua_State* L) noexcept(std::is_nothrow_copy_assignable_v<T>) {
 			return call(L);
 		}
 	};
 
-	template <typename T, typename Function, bool is_yielding>
-	struct upvalue_this_member_variable<T, readonly_wrapper<Function>, is_yielding> {
+	template <typename T, typename Function>
+	struct upvalue_this_member_variable<T, readonly_wrapper<Function>> {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 		typedef lua_bind_traits<function_type> traits_type;
 
-		static int real_call(lua_State* L) noexcept(false) {
+		static int real_call(lua_State* L) noexcept(std::is_nothrow_copy_assignable_v<T>) {
 			// Layout:
 			// idx 1...n: verbatim data of member variable pointer
 			auto memberdata = stack::stack_detail::get_as_upvalues<function_type>(L);
@@ -18023,8 +18104,15 @@ namespace sol { namespace function_detail {
 			}
 		}
 
-		static int call(lua_State* L) {
-			int nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+		template <bool is_yielding, bool no_trampoline>
+		static int call(lua_State* L) noexcept(std::is_nothrow_copy_assignable_v<T>) {
+			int nr;
+			if constexpr (no_trampoline) {
+				nr = real_call(L);
+			}
+			else {
+				nr = detail::typed_static_trampoline<decltype(&real_call), (&real_call)>(L);
+			}
 			if (is_yielding) {
 				return lua_yield(L, nr);
 			}
@@ -18033,7 +18121,7 @@ namespace sol { namespace function_detail {
 			}
 		}
 
-		int operator()(lua_State* L) {
+		int operator()(lua_State* L) noexcept(std::is_nothrow_copy_assignable_v<T>) {
 			return call(L);
 		}
 	};
@@ -18047,14 +18135,15 @@ namespace sol { namespace function_detail {
 	template <typename Func, bool is_yielding, bool no_trampoline>
 	struct functor_function {
 		typedef std::decay_t<meta::unwrap_unqualified_t<Func>> function_type;
-		function_type fx;
+		function_type invocation;
 
 		template <typename... Args>
-		functor_function(function_type f, Args&&... args) : fx(std::move(f), std::forward<Args>(args)...) {
+		functor_function(function_type f, Args&&... args) noexcept(std::is_nothrow_constructible_v<function_type, function_type, Args...>)
+		: invocation(std::move(f), std::forward<Args>(args)...) {
 		}
 
-		int call(lua_State* L) {
-			int nr = call_detail::call_wrapped<void, true, false>(L, fx);
+		static int call(lua_State* L, functor_function& self) noexcept(noexcept(call_detail::call_wrapped<void, true, false>(L, self.invocation))) {
+			int nr = call_detail::call_wrapped<void, true, false>(L, self.invocation);
 			if (is_yielding) {
 				return lua_yield(L, nr);
 			}
@@ -18063,31 +18152,39 @@ namespace sol { namespace function_detail {
 			}
 		}
 
-		int operator()(lua_State* L) {
-			if (!no_trampoline) {
-				auto f = [&](lua_State*) -> int { return this->call(L); };
-				return detail::trampoline(L, f);
+		int operator()(lua_State* L) noexcept(noexcept(call_detail::call_wrapped<void, true, false>(L, invocation))) {
+			if constexpr (no_trampoline) {
+				return call(L, *this);
 			}
 			else {
-				return call(L);
+				return detail::trampoline(L, &call, *this);
 			}
 		}
 	};
 
-	template <typename T, typename Function, bool is_yielding>
+	template <typename T, typename Function, bool is_yielding, bool no_trampoline>
 	struct member_function {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 		typedef meta::function_return_t<function_type> return_type;
 		typedef meta::function_args_t<function_type> args_lists;
+		using traits_type = meta::bind_traits<function_type>;
 		function_type invocation;
 		T member;
 
 		template <typename... Args>
-		member_function(function_type f, Args&&... args) : invocation(std::move(f)), member(std::forward<Args>(args)...) {
+		member_function(function_type f, Args&&... args) noexcept(
+			std::is_nothrow_constructible_v<function_type, function_type>&& std::is_nothrow_constructible_v<T, Args...>)
+		: invocation(std::move(f)), member(std::forward<Args>(args)...) {
 		}
 
-		int call(lua_State* L) {
-			int nr = call_detail::call_wrapped<T, true, false, -1>(L, invocation, detail::unwrap(detail::deref(member)));
+		static int call(lua_State* L, member_function& self)
+#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
+		// MSVC is broken, what a surprise...
+#else
+			noexcept(traits_type::is_noexcept)
+#endif
+		{
+			int nr = call_detail::call_wrapped<T, true, false, -1>(L, self.invocation, detail::unwrap(detail::deref(self.member)));
 			if (is_yielding) {
 				return lua_yield(L, nr);
 			}
@@ -18096,13 +18193,23 @@ namespace sol { namespace function_detail {
 			}
 		}
 
-		int operator()(lua_State* L) {
-			auto f = [&](lua_State*) -> int { return this->call(L); };
-			return detail::trampoline(L, f);
+		int operator()(lua_State* L)
+#if SOL_IS_ON(SOL_COMPILER_VCXX_I_)
+		// MSVC is broken, what a surprise...
+#else
+			noexcept(traits_type::is_noexcept)
+#endif
+		{
+			if constexpr (no_trampoline) {
+				return call(L, *this);
+			}
+			else {
+				return detail::trampoline(L, &call, *this);
+			}
 		}
 	};
 
-	template <typename T, typename Function, bool is_yielding>
+	template <typename T, typename Function, bool is_yielding, bool no_trampoline>
 	struct member_variable {
 		typedef std::remove_pointer_t<std::decay_t<Function>> function_type;
 		typedef typename meta::bind_traits<function_type>::return_type return_type;
@@ -18112,19 +18219,21 @@ namespace sol { namespace function_detail {
 		typedef std::add_lvalue_reference_t<meta::unwrapped_t<std::remove_reference_t<decltype(detail::deref(member))>>> M;
 
 		template <typename... Args>
-		member_variable(function_type v, Args&&... args) : var(std::move(v)), member(std::forward<Args>(args)...) {
+		member_variable(function_type v, Args&&... args) noexcept(
+			std::is_nothrow_constructible_v<function_type, function_type>&& std::is_nothrow_constructible_v<T, Args...>)
+		: var(std::move(v)), member(std::forward<Args>(args)...) {
 		}
 
-		int call(lua_State* L) {
+		static int call(lua_State* L, member_variable& self) noexcept(std::is_nothrow_copy_assignable_v<T>) {
 			int nr;
 			{
-				M mem = detail::unwrap(detail::deref(member));
+				M mem = detail::unwrap(detail::deref(self.member));
 				switch (lua_gettop(L)) {
 				case 0:
-					nr = call_detail::call_wrapped<T, true, false, -1>(L, var, mem);
+					nr = call_detail::call_wrapped<T, true, false, -1>(L, self.var, mem);
 					break;
 				case 1:
-					nr = call_detail::call_wrapped<T, false, false, -1>(L, var, mem);
+					nr = call_detail::call_wrapped<T, false, false, -1>(L, self.var, mem);
 					break;
 				default:
 					nr = luaL_error(L, "sol: incorrect number of arguments to member variable function");
@@ -18139,9 +18248,13 @@ namespace sol { namespace function_detail {
 			}
 		}
 
-		int operator()(lua_State* L) {
-			auto f = [&](lua_State*) -> int { return this->call(L); };
-			return detail::trampoline(L, f);
+		int operator()(lua_State* L) noexcept(std::is_nothrow_copy_assignable_v<T>) {
+			if constexpr (no_trampoline) {
+				return call(L, *this);
+			}
+			else {
+				return detail::trampoline(L, &call, *this);
+			}
 		}
 	};
 }} // namespace sol::function_detail
@@ -18361,7 +18474,7 @@ namespace sol {
 
 		struct c_function_invocation { };
 
-		template <bool is_yielding, typename Fx, typename... Args>
+		template <bool is_yielding, bool no_trampoline, typename Fx, typename... Args>
 		void select(lua_State* L, Fx&& fx, Args&&... args);
 
 		template <bool is_yielding, bool no_trampoline, typename Fx, typename... Args>
@@ -18375,33 +18488,33 @@ namespace sol {
 			stack::push(L, c_closure(freefunc, upvalues));
 		}
 
-		template <bool is_yielding, typename R, typename... A, typename Fx, typename... Args>
+		template <bool is_yielding, bool no_trampoline, typename R, typename... A, typename Fx, typename... Args>
 		void select_convertible(types<R(A...)>, lua_State* L, Fx&& fx, Args&&... args) {
 			using dFx = std::decay_t<meta::unwrap_unqualified_t<Fx>>;
 			using fx_ptr_t = R (*)(A...);
 			constexpr bool is_convertible = std::is_convertible_v<dFx, fx_ptr_t>;
 			if constexpr (is_convertible) {
 				fx_ptr_t fxptr = detail::unwrap(std::forward<Fx>(fx));
-				select<is_yielding>(L, std::move(fxptr), std::forward<Args>(args)...);
+				select<is_yielding, no_trampoline>(L, std::move(fxptr), std::forward<Args>(args)...);
 			}
 			else {
 				using F = function_detail::functor_function<dFx, false, true>;
-				select_set_fx<is_yielding, false, F>(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
+				select_set_fx<is_yielding, no_trampoline, F>(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 		}
 
-		template <bool is_yielding, typename Fx, typename... Args>
+		template <bool is_yielding, bool no_trampoline, typename Fx, typename... Args>
 		void select_convertible(types<>, lua_State* L, Fx&& fx, Args&&... args) {
 			typedef meta::function_signature_t<meta::unwrap_unqualified_t<Fx>> Sig;
-			select_convertible<is_yielding>(types<Sig>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
+			select_convertible<is_yielding, no_trampoline>(types<Sig>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 		}
 
-		template <bool is_yielding, typename Fx, typename... Args>
+		template <bool is_yielding, bool no_trampoline, typename Fx, typename... Args>
 		void select_member_variable(lua_State* L, Fx&& fx, Args&&... args) {
 			using uFx = meta::unqualified_t<Fx>;
 			if constexpr (sizeof...(Args) < 1) {
 				using C = typename meta::bind_traits<uFx>::object_type;
-				lua_CFunction freefunc = &function_detail::upvalue_this_member_variable<C, Fx, is_yielding>::call;
+				lua_CFunction freefunc = &function_detail::upvalue_this_member_variable<C, Fx>::template call<is_yielding, no_trampoline>;
 
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
@@ -18412,7 +18525,8 @@ namespace sol {
 				using Tu = typename meta::meta_detail::unqualified_non_alias<Args...>::type;
 				constexpr bool is_reference = meta::is_specialization_of_v<Tu, std::reference_wrapper> || std::is_pointer_v<Tu>;
 				if constexpr (meta::is_specialization_of_v<Tu, function_detail::class_indicator>) {
-					lua_CFunction freefunc = &function_detail::upvalue_this_member_variable<typename Tu::type, Fx, is_yielding>::call;
+					lua_CFunction freefunc
+					     = &function_detail::upvalue_this_member_variable<typename Tu::type, Fx>::template call<is_yielding, no_trampoline>;
 
 					int upvalues = 0;
 					upvalues += stack::push(L, nullptr);
@@ -18423,8 +18537,8 @@ namespace sol {
 					typedef std::decay_t<Fx> dFx;
 					dFx memfxptr(std::forward<Fx>(fx));
 					auto userptr = detail::ptr(std::forward<Args>(args)...);
-					lua_CFunction freefunc
-					     = &function_detail::upvalue_member_variable<std::decay_t<decltype(*userptr)>, meta::unqualified_t<Fx>, is_yielding>::call;
+					lua_CFunction freefunc = &function_detail::upvalue_member_variable<std::decay_t<decltype(*userptr)>,
+					     meta::unqualified_t<Fx>>::template call<is_yielding, no_trampoline>;
 
 					int upvalues = 0;
 					upvalues += stack::push(L, nullptr);
@@ -18434,26 +18548,26 @@ namespace sol {
 				}
 				else {
 					using clean_fx = std::remove_pointer_t<std::decay_t<Fx>>;
-					using F = function_detail::member_variable<Tu, clean_fx, is_yielding>;
-					select_set_fx<false, false, F>(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
+					using F = function_detail::member_variable<Tu, clean_fx, is_yielding, no_trampoline>;
+					select_set_fx<is_yielding, no_trampoline, F>(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 				}
 			}
 			else {
 				using C = typename meta::bind_traits<uFx>::object_type;
 				using clean_fx = std::remove_pointer_t<std::decay_t<Fx>>;
-				using F = function_detail::member_variable<C, clean_fx, is_yielding>;
-				select_set_fx<false, false, F>(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
+				using F = function_detail::member_variable<C, clean_fx, is_yielding, no_trampoline>;
+				select_set_fx<is_yielding, no_trampoline, F>(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 		}
 
-		template <bool is_yielding, typename Fx, typename T, typename... Args>
+		template <bool is_yielding, bool no_trampoline, typename Fx, typename T, typename... Args>
 		void select_member_function_with(lua_State* L, Fx&& fx, T&& obj, Args&&... args) {
 			using dFx = std::decay_t<Fx>;
 			using Tu = meta::unqualified_t<T>;
 			if constexpr (meta::is_specialization_of_v<Tu, function_detail::class_indicator>) {
 				(void)obj;
 				using C = typename Tu::type;
-				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, dFx, is_yielding>::call;
+				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, dFx>::template call<is_yielding, no_trampoline>;
 
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
@@ -18464,7 +18578,8 @@ namespace sol {
 				constexpr bool is_reference = meta::is_specialization_of_v<Tu, std::reference_wrapper> || std::is_pointer_v<Tu>;
 				if constexpr (is_reference) {
 					auto userptr = detail::ptr(std::forward<T>(obj));
-					lua_CFunction freefunc = &function_detail::upvalue_member_function<std::decay_t<decltype(*userptr)>, dFx, is_yielding>::call;
+					lua_CFunction freefunc
+					     = &function_detail::upvalue_member_function<std::decay_t<decltype(*userptr)>, dFx>::template call<is_yielding, no_trampoline>;
 
 					int upvalues = 0;
 					upvalues += stack::push(L, nullptr);
@@ -18473,18 +18588,18 @@ namespace sol {
 					stack::push(L, c_closure(freefunc, upvalues));
 				}
 				else {
-					using F = function_detail::member_function<Tu, dFx, is_yielding>;
-					select_set_fx<false, false, F>(L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
+					using F = function_detail::member_function<Tu, dFx, is_yielding, no_trampoline>;
+					select_set_fx<is_yielding, no_trampoline, F>(L, std::forward<Fx>(fx), std::forward<T>(obj), std::forward<Args>(args)...);
 				}
 			}
 		}
 
-		template <bool is_yielding, typename Fx, typename... Args>
+		template <bool is_yielding, bool no_trampoline, typename Fx, typename... Args>
 		void select_member_function(lua_State* L, Fx&& fx, Args&&... args) {
 			using dFx = std::decay_t<Fx>;
 			if constexpr (sizeof...(Args) < 1) {
 				using C = typename meta::bind_traits<meta::unqualified_t<Fx>>::object_type;
-				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, dFx, is_yielding>::call;
+				lua_CFunction freefunc = &function_detail::upvalue_this_member_function<C, dFx>::template call<is_yielding, no_trampoline>;
 
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
@@ -18492,11 +18607,11 @@ namespace sol {
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 			else {
-				select_member_function_with<is_yielding>(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
+				select_member_function_with<is_yielding, no_trampoline>(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 		}
 
-		template <bool is_yielding, typename Fx, typename... Args>
+		template <bool is_yielding, bool no_trampoline, typename Fx, typename... Args>
 		void select(lua_State* L, Fx&& fx, Args&&... args) {
 			using uFx = meta::unqualified_t<Fx>;
 			if constexpr (is_lua_reference_v<uFx>) {
@@ -18504,26 +18619,49 @@ namespace sol {
 				stack::push(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 			else if constexpr (is_lua_c_function_v<uFx>) {
-				int upvalues = 0;
-				upvalues += stack::push(L, nullptr);
-				upvalues += stack::push(L, std::forward<Fx>(fx));
+				if constexpr (no_trampoline) {
+					if (is_yielding) {
+						int upvalues = 0;
+						upvalues += stack::push(L, nullptr);
+						upvalues += stack::push(L, std::forward<Fx>(fx));
 #if SOL_IS_ON(SOL_USE_NOEXCEPT_FUNCTION_TYPE_I_)
-				if constexpr (std::is_nothrow_invocable_r_v<int, uFx, lua_State*>) {
-					detail::lua_CFunction_noexcept cf = &lua_c_noexcept_wrapper<is_yielding>;
-					lua_pushcclosure(L, reinterpret_cast<lua_CFunction>(cf), 2);
+						if constexpr (std::is_nothrow_invocable_r_v<int, uFx, lua_State*>) {
+							detail::lua_CFunction_noexcept cf = &lua_c_noexcept_wrapper<true>;
+							lua_pushcclosure(L, reinterpret_cast<lua_CFunction>(cf), upvalues);
+						}
+						else
+#endif
+						{
+							lua_CFunction cf = &function_detail::lua_c_wrapper<true>;
+							lua_pushcclosure(L, cf, upvalues);
+						}
+					}
+					else {
+						lua_pushcclosure(L, std::forward<Fx>(fx), 0);
+					}
 				}
 				else {
-					lua_CFunction cf = &lua_c_wrapper<is_yielding>;
-					lua_pushcclosure(L, cf, 2);
-				}
+					int upvalues = 0;
+					upvalues += stack::push(L, nullptr);
+					upvalues += stack::push(L, std::forward<Fx>(fx));
+#if SOL_IS_ON(SOL_USE_NOEXCEPT_FUNCTION_TYPE_I_)
+					if constexpr (std::is_nothrow_invocable_r_v<int, uFx, lua_State*>) {
+						detail::lua_CFunction_noexcept cf = &lua_c_noexcept_wrapper<is_yielding>;
+						lua_pushcclosure(L, reinterpret_cast<lua_CFunction>(cf), upvalues);
+					}
+					else {
+						lua_CFunction cf = &function_detail::lua_c_wrapper<is_yielding>;
+						lua_pushcclosure(L, cf, upvalues);
+					}
 #else
-				lua_CFunction cf = &function_detail::lua_c_wrapper<is_yielding>;
-				lua_pushcclosure(L, cf, 2);
+					lua_CFunction cf = &function_detail::lua_c_wrapper<is_yielding>;
+					lua_pushcclosure(L, cf, upvalues);
 #endif
+				}
 			}
 			else if constexpr (std::is_function_v<std::remove_pointer_t<uFx>>) {
 				std::decay_t<Fx> target(std::forward<Fx>(fx), std::forward<Args>(args)...);
-				lua_CFunction freefunc = &function_detail::upvalue_free_function<Fx, is_yielding>::call;
+				lua_CFunction freefunc = &function_detail::upvalue_free_function<Fx>::template call<is_yielding, no_trampoline>;
 
 				int upvalues = 0;
 				upvalues += stack::push(L, nullptr);
@@ -18531,13 +18669,13 @@ namespace sol {
 				stack::push(L, c_closure(freefunc, upvalues));
 			}
 			else if constexpr (std::is_member_function_pointer_v<uFx>) {
-				select_member_function<is_yielding>(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
+				select_member_function<is_yielding, no_trampoline>(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 			else if constexpr (meta::is_member_object_v<uFx>) {
-				select_member_variable<is_yielding>(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
+				select_member_variable<is_yielding, no_trampoline>(L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 			else {
-				select_convertible<is_yielding>(types<>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
+				select_convertible<is_yielding, no_trampoline>(types<>(), L, std::forward<Fx>(fx), std::forward<Args>(args)...);
 			}
 		}
 	} // namespace function_detail
@@ -18556,7 +18694,7 @@ namespace sol {
 					}
 				}
 				else {
-					function_detail::select<is_yielding>(L, std::forward<Arg0>(arg0), std::forward<Args>(args)...);
+					function_detail::select<is_yielding, true>(L, std::forward<Arg0>(arg0), std::forward<Args>(args)...);
 					return 1;
 				}
 			}
@@ -18584,7 +18722,7 @@ namespace sol {
 					return stack::push<T>(L, detail::yield_tag, f.func, std::forward<Args>(args)...);
 				}
 				else {
-					function_detail::select<true>(L, f.func, std::forward<Args>(args)...);
+					function_detail::select<true, true>(L, f.func, std::forward<Args>(args)...);
 					return 1;
 				}
 			}
@@ -18595,7 +18733,7 @@ namespace sol {
 					return stack::push<T>(L, detail::yield_tag, std::move(f.func), std::forward<Args>(args)...);
 				}
 				else {
-					function_detail::select<true>(L, std::move(f.func), std::forward<Args>(args)...);
+					function_detail::select<true, true>(L, std::move(f.func), std::forward<Args>(args)...);
 					return 1;
 				}
 			}
@@ -18621,7 +18759,7 @@ namespace sol {
 		struct unqualified_pusher<std::function<Signature>> {
 			static int push(lua_State* L, detail::yield_tag_t, const std::function<Signature>& fx) {
 				if (fx) {
-					function_detail::select<true>(L, fx);
+					function_detail::select<true, true>(L, fx);
 					return 1;
 				}
 				return stack::push(L, lua_nil);
@@ -18629,7 +18767,7 @@ namespace sol {
 
 			static int push(lua_State* L, detail::yield_tag_t, std::function<Signature>&& fx) {
 				if (fx) {
-					function_detail::select<true>(L, std::move(fx));
+					function_detail::select<true, true>(L, std::move(fx));
 					return 1;
 				}
 				return stack::push(L, lua_nil);
@@ -18637,7 +18775,7 @@ namespace sol {
 
 			static int push(lua_State* L, const std::function<Signature>& fx) {
 				if (fx) {
-					function_detail::select<false>(L, fx);
+					function_detail::select<false, true>(L, fx);
 					return 1;
 				}
 				return stack::push(L, lua_nil);
@@ -18645,7 +18783,7 @@ namespace sol {
 
 			static int push(lua_State* L, std::function<Signature>&& fx) {
 				if (fx) {
-					function_detail::select<false>(L, std::move(fx));
+					function_detail::select<false, true>(L, std::move(fx));
 					return 1;
 				}
 				return stack::push(L, lua_nil);
@@ -18656,7 +18794,7 @@ namespace sol {
 		struct unqualified_pusher<Signature, std::enable_if_t<meta::is_member_object_or_function_v<Signature>>> {
 			template <typename... Args>
 			static int push(lua_State* L, Args&&... args) {
-				function_detail::select<false>(L, std::forward<Args>(args)...);
+				function_detail::select<false, true>(L, std::forward<Args>(args)...);
 				return 1;
 			}
 		};
@@ -18673,7 +18811,7 @@ namespace sol {
 		          >::value>> {
 			template <typename F>
 			static int push(lua_State* L, F&& f) {
-				function_detail::select<false>(L, std::forward<F>(f));
+				function_detail::select<false, true>(L, std::forward<F>(f));
 				return 1;
 			}
 		};
@@ -20544,7 +20682,7 @@ namespace sol {
 
 			template <typename Iter>
 			static detail::error_result find_associative_lookup(std::false_type, lua_State* L, T& self, Iter&, std::size_t idx) {
-				idx = static_cast<std::size_t>(static_cast<std::ptrdiff_t>(idx) + deferred_uc::index_adjustment(L, self));
+				idx = static_cast<std::size_t>(static_cast<std::ptrdiff_t>(idx) - deferred_uc::index_adjustment(L, self));
 				return stack::push(L, idx);
 			}
 
@@ -21117,7 +21255,7 @@ namespace sol {
 					using v_t = std::add_const_t<decltype(self[idx])>;
 					v_t v = self[idx];
 					if (v == value) {
-						idx = static_cast<std::size_t>(static_cast<std::ptrdiff_t>(idx) + deferred_uc::index_adjustment(L, self));
+						idx = static_cast<std::size_t>(static_cast<std::ptrdiff_t>(idx) - deferred_uc::index_adjustment(L, self));
 						return stack::push(L, idx);
 					}
 				}
@@ -23163,7 +23301,7 @@ namespace sol {
 		template <typename T>
 		table_proxy&& operator=(T&& other) && {
 			using Tu = meta::unwrap_unqualified_t<T>;
-			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_callable_v<Tu>) {
+			if constexpr (!is_lua_reference_or_proxy_v<Tu> && meta::is_callable_v<Tu> && !detail::is_msvc_callable_rigged_v<T>) {
 				return std::move(*this).set_function(std::forward<T>(other));
 			}
 			else {

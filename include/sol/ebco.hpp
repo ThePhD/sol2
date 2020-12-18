@@ -31,39 +31,40 @@ namespace sol { namespace detail {
 
 	template <typename T, std::size_t tag = 0, typename = void>
 	struct ebco {
-		T value_;
+		T m_value;
 
 		ebco() = default;
 		ebco(const ebco&) = default;
 		ebco(ebco&&) = default;
 		ebco& operator=(const ebco&) = default;
 		ebco& operator=(ebco&&) = default;
-		ebco(const T& v) : value_(v) {};
-		ebco(T&& v) : value_(std::move(v)) {};
-		ebco& operator=(const T& v) {
-			value_ = v;
+		ebco(const T& v) noexcept(std::is_nothrow_copy_constructible_v<T>) : m_value(v) {};
+		ebco(T&& v) noexcept(std::is_nothrow_move_constructible_v<T>) : m_value(std::move(v)) {};
+		ebco& operator=(const T& v) noexcept(std::is_nothrow_copy_assignable_v<T>) {
+			m_value = v;
 			return *this;
 		}
-		ebco& operator=(T&& v) {
-			value_ = std::move(v);
+		ebco& operator=(T&& v) noexcept(std::is_nothrow_move_assignable_v<T>) {
+			m_value = std::move(v);
 			return *this;
 		};
 		template <typename Arg, typename... Args,
 			typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
-			                                 ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T>>>
-		ebco(Arg&& arg, Args&&... args) : value_(std::forward<Arg>(arg), std::forward<Args>(args)...) {
+			                                 ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T> && (sizeof...(Args) > 0 || !std::is_convertible_v<Arg, T>)>>
+		ebco(Arg&& arg, Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Arg, Args...>)
+		: m_value(std::forward<Arg>(arg), std::forward<Args>(args)...) {
 		}
 
-		T& value() & {
-			return value_;
+		T& value() & noexcept {
+			return m_value;
 		}
 
-		T const& value() const& {
-			return value_;
+		T const& value() const& noexcept {
+			return m_value;
 		}
 
-		T&& value() && {
-			return std::move(value_);
+		T&& value() && noexcept {
+			return std::move(m_value);
 		}
 	};
 
@@ -72,56 +73,58 @@ namespace sol { namespace detail {
 		ebco() = default;
 		ebco(const ebco&) = default;
 		ebco(ebco&&) = default;
-		ebco(const T& v) : T(v) {};
-		ebco(T&& v) : T(std::move(v)) {};
+		ebco(const T& v) noexcept(std::is_nothrow_copy_constructible_v<T>) : T(v) {};
+		ebco(T&& v) noexcept(std::is_nothrow_move_constructible_v<T>) : T(std::move(v)) {};
 		template <typename Arg, typename... Args,
 			typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
-			                                 ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T>>>
-		ebco(Arg&& arg, Args&&... args) : T(std::forward<Arg>(arg), std::forward<Args>(args)...) {
+			                                 ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T> && (sizeof...(Args) > 0 || !std::is_convertible_v<Arg, T>)>>
+		ebco(Arg&& arg, Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Arg, Args...>) : T(std::forward<Arg>(arg), std::forward<Args>(args)...) {
 		}
 
 		ebco& operator=(const ebco&) = default;
 		ebco& operator=(ebco&&) = default;
-		ebco& operator=(const T& v) {
+		ebco& operator=(const T& v) noexcept(std::is_nothrow_copy_assignable_v<T>) {
 			static_cast<T&>(*this) = v;
 			return *this;
 		}
-		ebco& operator=(T&& v) {
+		ebco& operator=(T&& v) noexcept(std::is_nothrow_move_assignable_v<T>) {
 			static_cast<T&>(*this) = std::move(v);
 			return *this;
 		};
 
-		T& value() & {
+		T& value() & noexcept {
 			return static_cast<T&>(*this);
 		}
 
-		T const& value() const& {
+		T const& value() const& noexcept {
 			return static_cast<T const&>(*this);
 		}
 
-		T&& value() && {
+		T&& value() && noexcept {
 			return std::move(static_cast<T&>(*this));
 		}
 	};
 
 	template <typename T, std::size_t tag>
 	struct ebco<T&, tag> {
-		T& ref;
+	private:
+		T* m_ref;
 
+	public:
 		ebco() = default;
 		ebco(const ebco&) = default;
 		ebco(ebco&&) = default;
-		ebco(T& v) : ref(v) {};
+		ebco(T& v) noexcept : m_ref(std::addressof(v)) {};
 
 		ebco& operator=(const ebco&) = default;
 		ebco& operator=(ebco&&) = default;
-		ebco& operator=(T& v) {
-			ref = v;
+		ebco& operator=(T& v) noexcept {
+			m_ref = std::addressof(v);
 			return *this;
 		}
 
-		T& value() const {
-			return const_cast<ebco<T&, tag>&>(*this).ref;
+		T& value() const noexcept {
+			return *(const_cast<ebco<T&, tag>&>(*this).m_ref);
 		}
 	};
 
@@ -130,26 +133,22 @@ namespace sol { namespace detail {
 		T&& ref;
 
 		ebco() = default;
-		ebco(const ebco&) = default;
+		ebco(const ebco&) = delete;
 		ebco(ebco&&) = default;
-		ebco(T&& v) : ref(v) {};
+		ebco(T&& v) noexcept : ref(v) {};
 
-		ebco& operator=(const ebco&) = default;
-		ebco& operator=(ebco&&) = default;
-		ebco& operator=(T&& v) {
-			ref = std::move(v);
-			return *this;
-		}
+		ebco& operator=(const ebco&) = delete;
+		ebco& operator=(ebco&&) = delete;
 
-		T& value() & {
+		T& value() & noexcept {
 			return ref;
 		}
 
-		const T& value() const& {
+		const T& value() const& noexcept {
 			return ref;
 		}
 
-		T&& value() && {
+		T&& value() && noexcept {
 			return std::move(ref);
 		}
 	};

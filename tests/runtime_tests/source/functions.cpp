@@ -836,10 +836,10 @@ TEST_CASE("advanced/call referenced obj", "A C++ object is passed by pointer/ref
 	};
 	lua.set_function("set_y", &decltype(objy)::operator(), std::ref(objy));
 
-	auto result1 = lua.safe_script("set_x(9)", sol::script_pass_on_error);
-	REQUIRE(result1.valid());
-	auto result2 = lua.safe_script("set_y(9)", sol::script_pass_on_error);
-	REQUIRE(result2.valid());
+	sol::optional<sol::error> result1 = lua.safe_script("set_x(9)", sol::script_pass_on_error);
+	REQUIRE_FALSE(result1.has_value());
+	sol::optional<sol::error> result2 = lua.safe_script("set_y(9)", sol::script_pass_on_error);
+	REQUIRE_FALSE(result2.has_value());
 
 	REQUIRE(x == 9);
 	REQUIRE(y == 9);

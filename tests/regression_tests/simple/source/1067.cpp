@@ -1,5 +1,3 @@
-#define SOL_ALL_SAFETIES_ON 1
-
 #include <sol/sol.hpp>
 
 int regression_1067() {
@@ -7,7 +5,7 @@ int regression_1067() {
 
 	lua.open_libraries(sol::lib::base);
 	lua["fct"] = std::function<int()> { []() { return 42; } };
-	lua.script("print(fct())");
+	sol::optional<sol::error> maybe_error = lua.safe_script("print(fct())");
 
-	return 0;
+	return maybe_error.has_value() ? 1 : 0;
 }

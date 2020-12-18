@@ -828,7 +828,7 @@ namespace sol {
 
 			template <typename Iter>
 			static detail::error_result find_associative_lookup(std::false_type, lua_State* L, T& self, Iter&, std::size_t idx) {
-				idx = static_cast<std::size_t>(static_cast<std::ptrdiff_t>(idx) + deferred_uc::index_adjustment(L, self));
+				idx = static_cast<std::size_t>(static_cast<std::ptrdiff_t>(idx) - deferred_uc::index_adjustment(L, self));
 				return stack::push(L, idx);
 			}
 
@@ -1401,7 +1401,7 @@ namespace sol {
 					using v_t = std::add_const_t<decltype(self[idx])>;
 					v_t v = self[idx];
 					if (v == value) {
-						idx = static_cast<std::size_t>(static_cast<std::ptrdiff_t>(idx) + deferred_uc::index_adjustment(L, self));
+						idx = static_cast<std::size_t>(static_cast<std::ptrdiff_t>(idx) - deferred_uc::index_adjustment(L, self));
 						return stack::push(L, idx);
 					}
 				}

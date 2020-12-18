@@ -33,7 +33,8 @@ function(CREATE_TEST test_target_name test_name target_sol)
 		EXPORT_NAME sol2::${test_name})
 	target_link_libraries(${test_target_name} 
 		PUBLIC Threads::Threads ${LUA_LIBRARIES} ${target_sol})
-
+	target_compile_definitions(${test_target_name} 
+			PRIVATE SOL_ALL_SAFETIES_ON)
 	if (MSVC)
 		target_compile_options(${test_target_name}
 			PRIVATE /EHsc /std:c++latest /W4)

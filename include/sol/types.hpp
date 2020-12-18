@@ -189,29 +189,49 @@ namespace sol {
 	};
 
 	struct userdata_value {
-		void* value;
-		userdata_value(void* data) : value(data) {
+	private:
+		void* m_value;
+
+	public:
+		userdata_value(void* data) : m_value(data) {
 		}
+
+		void* value() const {
+			return m_value;
+		}
+
 		operator void*() const {
-			return value;
+			return value();
 		}
 	};
 
-	template <typename L>
+	template <typename T>
 	struct light {
-		L* value;
+	private:
+		static_assert(!std::is_void_v<T>, "the type for light will never be void");
+		T* m_value;
 
-		light(L& x) : value(std::addressof(x)) {
+	public:
+		light(T& x) : m_value(std::addressof(x)) {
 		}
-		light(L* x) : value(x) {
+		light(T* x) : m_value(x) {
 		}
-		light(void* x) : value(static_cast<L*>(x)) {
+		explicit light(void* x) : m_value(static_cast<T*>(x)) {
 		}
-		operator L*() const {
-			return value;
+
+		T* value() const {
+			return m_value;
 		}
-		operator L&() const {
-			return *value;
+
+		operator T*() const {
+			return m_value;
+		}
+		operator T&() const {
+			return *m_value;
+		}
+
+		void* void_value() const {
+			return m_value;
 		}
 	};
 
@@ -221,20 +241,30 @@ namespace sol {
 		return light<L>(l);
 	}
 
-	template <typename U>
-	struct user {
-		U value;
+	template <typename T>
+	struct user : private detail::ebco<T> {
+	private:
+		using base_t = detail::ebco<T>;
 
-		user(U&& x) : value(std::forward<U>(x)) {
+	public:
+		using base_t::base_t;
+
+		using base_t::value;
+
+		operator std::add_pointer_t<std::remove_reference_t<T>>() {
+			return std::addressof(this->base_t::value());
 		}
-		operator std::add_pointer_t<std::remove_reference_t<U>>() {
-			return std::addressof(value);
+
+		operator std::add_pointer_t<std::add_const_t<std::remove_reference_t<T>>>() const {
+			return std::addressof(this->base_t::value());
 		}
-		operator std::add_lvalue_reference_t<U>() {
-			return value;
+
+		operator std::add_lvalue_reference_t<T>() {
+			return this->base_t::value();
 		}
-		operator std::add_const_t<std::add_lvalue_reference_t<U>>&() const {
-			return value;
+
+		operator std::add_const_t<std::add_lvalue_reference_t<T>>&() const {
+			return this->base_t::value();
 		}
 	};
 
@@ -245,11 +275,14 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct metatable_registry_key {
-		T key;
+	struct metatable_registry_key : private detail::ebco<T> {
+	private:
+		using base_t = detail::ebco<T>;
 
-		metatable_registry_key(T key) : key(std::forward<T>(key)) {
-		}
+	public:
+		using base_t::base_t;
+
+		using base_t::value;
 	};
 
 	template <typename T>
@@ -300,9 +333,9 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct as_table_t {
+	struct as_table_t : private detail::ebco<T> {
 	private:
-		T value_;
+		using base_t = detail::ebco<T>;
 
 	public:
 		as_table_t() = default;
@@ -310,36 +343,24 @@ namespace sol {
 		as_table_t(as_table_t&&) = default;
 		as_table_t& operator=(const as_table_t&) = default;
 		as_table_t& operator=(as_table_t&&) = default;
-		template <typename Arg,
-		     meta::enable<meta::neg<std::is_same<meta::unqualified_t<Arg>, as_table_t>>,
-		          meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<Arg>>>> = meta::enabler>
-		as_table_t(Arg&& arg) : value_(std::forward<Arg>(arg)) {
-		}
-		template <typename Arg0, typename Arg1, typename... Args>
-		as_table_t(Arg0&& arg0, Arg1&& arg1, Args&&... args) : value_(std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...) {
-		}
 
-		T& value() & {
-			return value_;
-		}
+		using base_t::base_t;
 
-		T&& value() && {
-			return std::move(value_);
-		}
-
-		const T& value() const& {
-			return value_;
-		}
+		using base_t::value;
 
 		operator std::add_lvalue_reference_t<T>() {
-			return value_;
+			return this->base_t::value();
+		}
+
+		operator std::add_const_t<std::add_lvalue_reference_t<T>>() const {
+			return this->base_t::value();
 		}
 	};
 
 	template <typename T>
-	struct nested {
+	struct nested : private detail::ebco<T> {
 	private:
-		T value_;
+		using base_t = detail::ebco<T>;
 
 	public:
 		using nested_type = T;
@@ -349,29 +370,17 @@ namespace sol {
 		nested(nested&&) = default;
 		nested& operator=(const nested&) = default;
 		nested& operator=(nested&&) = default;
-		template <typename Arg,
-		     meta::enable<meta::neg<std::is_same<meta::unqualified_t<Arg>, nested>>,
-		          meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<Arg>>>> = meta::enabler>
-		nested(Arg&& arg) : value_(std::forward<Arg>(arg)) {
-		}
-		template <typename Arg0, typename Arg1, typename... Args>
-		nested(Arg0&& arg0, Arg1&& arg1, Args&&... args) : value_(std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...) {
-		}
 
-		T& value() & {
-			return value_;
-		}
+		using base_t::base_t;
 
-		T&& value() && {
-			return std::move(value_);
-		}
-
-		const T& value() const& {
-			return value_;
-		}
+		using base_t::value;
 
 		operator std::add_lvalue_reference_t<T>() {
-			return value_;
+			return this->base_t::value();
+		}
+
+		operator std::add_const_t<std::add_lvalue_reference_t<T>>() const {
+			return this->base_t::value();
 		}
 	};
 
@@ -399,9 +408,9 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct as_container_t {
+	struct as_container_t : private detail::ebco<T> {
 	private:
-		T value_;
+		using base_t = detail::ebco<T>;
 
 	public:
 		using type = T;
@@ -411,42 +420,12 @@ namespace sol {
 		as_container_t(as_container_t&&) = default;
 		as_container_t& operator=(const as_container_t&) = default;
 		as_container_t& operator=(as_container_t&&) = default;
-		template <typename Arg,
-		     meta::enable<meta::neg<std::is_same<meta::unqualified_t<Arg>, as_container_t>>,
-		          meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<Arg>>>> = meta::enabler>
-		as_container_t(Arg&& arg) : value_(std::forward<Arg>(arg)) {
-		}
-		template <typename Arg0, typename Arg1, typename... Args>
-		as_container_t(Arg0&& arg0, Arg1&& arg1, Args&&... args) : value_(std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...) {
-		}
 
-		T& value() & {
-			return value_;
-		}
+		using base_t::base_t;
 
-		T&& value() && {
-			return std::move(value_);
-		}
+		using base_t::value;
 
-		const T& value() const& {
-			return value_;
-		}
-	};
-
-	template <typename T>
-	struct as_container_t<T&> {
-	private:
-		std::reference_wrapper<T> value_;
-
-	public:
-		as_container_t(T& value) : value_(value) {
-		}
-
-		T& value() {
-			return value_;
-		}
-
-		operator T&() {
+		operator std::add_lvalue_reference_t<T>() {
 			return value();
 		}
 	};
@@ -457,9 +436,9 @@ namespace sol {
 	}
 
 	template <typename T>
-	struct push_invoke_t {
+	struct push_invoke_t : private detail::ebco<T> {
 	private:
-		T value_;
+		using base_t = detail::ebco<T>;
 
 	public:
 		push_invoke_t() = default;
@@ -467,43 +446,37 @@ namespace sol {
 		push_invoke_t(push_invoke_t&&) = default;
 		push_invoke_t& operator=(const push_invoke_t&) = default;
 		push_invoke_t& operator=(push_invoke_t&&) = default;
-		template <typename Arg,
-		     meta::enable<meta::neg<std::is_same<meta::unqualified_t<Arg>, push_invoke_t>>,
-		          meta::neg<std::is_base_of<proxy_base_tag, meta::unqualified_t<Arg>>>> = meta::enabler>
-		push_invoke_t(Arg&& arg) : value_(std::forward<Arg>(arg)) {
-		}
-		template <typename Arg0, typename Arg1, typename... Args>
-		push_invoke_t(Arg0&& arg0, Arg1&& arg1, Args&&... args) : value_(std::forward<Arg0>(arg0), std::forward<Arg1>(arg1), std::forward<Args>(args)...) {
-		}
 
-		T& value() & {
-			return value_;
-		}
+		using base_t::base_t;
 
-		T&& value() && {
-			return std::move(value_);
-		}
-
-		const T& value() const& {
-			return value_;
-		}
-	};
-
-	template <typename T>
-	struct push_invoke_t<T&> {
-		std::reference_wrapper<T> value_;
-
-		push_invoke_t(T& value) : value_(value) {
-		}
-
-		T& value() {
-			return value_;
-		}
+		using base_t::value;
 	};
 
 	template <typename Fx>
 	auto push_invoke(Fx&& fx) {
 		return push_invoke_t<Fx>(std::forward<Fx>(fx));
+	}
+
+	template <typename T>
+	struct forward_as_value_t : private detail::ebco<T> {
+	private:
+		using base_t = detail::ebco<T>;
+
+	public:
+		forward_as_value_t() = default;
+		forward_as_value_t(const forward_as_value_t&) = default;
+		forward_as_value_t(forward_as_value_t&&) = default;
+		forward_as_value_t& operator=(const forward_as_value_t&) = default;
+		forward_as_value_t& operator=(forward_as_value_t&&) = default;
+
+		using base_t::base_t;
+
+		using base_t::value;
+	};
+
+	template <typename T>
+	auto pass_as_value(T& value_ref_) {
+		return forward_as_value_t<T>(value_ref_);
 	}
 
 	struct override_value_t { };
@@ -1156,6 +1129,17 @@ namespace sol {
 
 		template <typename T>
 		constexpr inline bool has_internal_marker_v = has_internal_marker<T>::value;
+
+		// MSVC's decltype detection is broken, which breaks other
+		// parts of the code. So we add more workarounds. The moment it's fixed,
+		// we take it away and break everyone that doesn't upgrade.
+		template <typename T>
+		using is_msvc_callable_rigged = meta::any<meta::is_specialization_of<T, push_invoke_t>, meta::is_specialization_of<T, as_table_t>,
+		     meta::is_specialization_of<T, forward_as_value_t>, meta::is_specialization_of<T, as_container_t>, meta::is_specialization_of<T, nested>,
+		     meta::is_specialization_of<T, yielding_t>, meta::is_specialization_of<T, ebco>>;
+
+		template <typename T>
+		inline constexpr bool is_msvc_callable_rigged_v = is_msvc_callable_rigged<T>::value;
 	} // namespace detail
 
 	template <typename T>

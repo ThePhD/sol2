@@ -415,34 +415,55 @@ namespace sol { namespace stack {
 
 	template <typename T>
 	struct unqualified_pusher<as_table_t<T>> {
-		static int push(lua_State* L, const T& v) {
+		static int push(lua_State* L, const as_table_t<T>& value_) {
 			using inner_t = std::remove_pointer_t<meta::unwrap_unqualified_t<T>>;
 			if constexpr (is_container_v<inner_t>) {
-				return stack::push<detail::as_table_tag<T>>(L, v);
+				return stack::push<detail::as_table_tag<T>>(L, value_.value());
 			}
 			else {
-				return stack::push(L, v);
+				return stack::push(L, value_.value());
+			}
+		}
+
+		static int push(lua_State* L, const T& value_) {
+			using inner_t = std::remove_pointer_t<meta::unwrap_unqualified_t<T>>;
+			if constexpr (is_container_v<inner_t>) {
+				return stack::push<detail::as_table_tag<T>>(L, value_);
+			}
+			else {
+				return stack::push(L, value_);
 			}
 		}
 	};
 
 	template <typename T>
 	struct unqualified_pusher<nested<T>> {
-		static int push(lua_State* L, const T& tablecont) {
+		static int push(lua_State* L, const T& nested_value) noexcept {
 			using Tu = meta::unwrap_unqualified_t<T>;
 			using inner_t = std::remove_pointer_t<Tu>;
 			if constexpr (is_container_v<inner_t>) {
-				return stack::push<detail::as_table_tag<T>>(L, tablecont, nested_tag);
+				return stack::push<detail::as_table_tag<T>>(L, nested_value, nested_tag);
 			}
 			else {
-				return stack::push<Tu>(L, tablecont);
+				return stack::push<Tu>(L, nested_value);
+			}
+		}
+
+		static int push(lua_State* L, const nested<T>& nested_wrapper_) noexcept {
+			using Tu = meta::unwrap_unqualified_t<T>;
+			using inner_t = std::remove_pointer_t<Tu>;
+			if constexpr (is_container_v<inner_t>) {
+				return stack::push<detail::as_table_tag<T>>(L, nested_wrapper_.value(), nested_tag);
+			}
+			else {
+				return stack::push<Tu>(L, nested_wrapper_.value());
 			}
 		}
 	};
 
 	template <typename T>
 	struct unqualified_pusher<std::initializer_list<T>> {
-		static int push(lua_State* L, const std::initializer_list<T>& il) {
+		static int push(lua_State* L, const std::initializer_list<T>& il) noexcept {
 			unqualified_pusher<detail::as_table_tag<std::initializer_list<T>>> p {};
 			// silence annoying VC++ warning
 			(void)p;
@@ -452,7 +473,7 @@ namespace sol { namespace stack {
 
 	template <>
 	struct unqualified_pusher<lua_nil_t> {
-		static int push(lua_State* L, lua_nil_t) {
+		static int push(lua_State* L, lua_nil_t) noexcept {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
@@ -463,7 +484,7 @@ namespace sol { namespace stack {
 
 	template <>
 	struct unqualified_pusher<stack_count> {
-		static int push(lua_State*, stack_count st) {
+		static int push(lua_State*, stack_count st) noexcept {
 			return st.count;
 		}
 	};
@@ -481,7 +502,7 @@ namespace sol { namespace stack {
 
 	template <>
 	struct unqualified_pusher<std::remove_pointer_t<lua_CFunction>> {
-		static int push(lua_State* L, lua_CFunction func, int n = 0) {
+		static int push(lua_State* L, lua_CFunction func, int n = 0) noexcept {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
@@ -553,7 +574,7 @@ namespace sol { namespace stack {
 
 	template <>
 	struct unqualified_pusher<void*> {
-		static int push(lua_State* L, void* userdata) {
+		static int push(lua_State* L, void* userdata) noexcept {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
@@ -564,7 +585,7 @@ namespace sol { namespace stack {
 
 	template <>
 	struct unqualified_pusher<const void*> {
-		static int push(lua_State* L, const void* userdata) {
+		static int push(lua_State* L, const void* userdata) noexcept {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
@@ -575,7 +596,7 @@ namespace sol { namespace stack {
 
 	template <>
 	struct unqualified_pusher<lightuserdata_value> {
-		static int push(lua_State* L, lightuserdata_value userdata) {
+		static int push(lua_State* L, lightuserdata_value userdata) noexcept {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
@@ -586,7 +607,7 @@ namespace sol { namespace stack {
 
 	template <typename T>
 	struct unqualified_pusher<light<T>> {
-		static int push(lua_State* L, light<T> l) {
+		static int push(lua_State* L, light<T> l) noexcept {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
@@ -645,17 +666,17 @@ namespace sol { namespace stack {
 
 		static int push(lua_State* L, user<T>&& u) {
 			const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable()[0];
-			return push_with(L, name, std::move(u.value));
+			return push_with(L, name, std::move(u.value()));
 		}
 
 		static int push(lua_State* L, no_metatable_t, const user<T>& u) {
 			const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable()[0];
-			return push_with<false>(L, name, u.value);
+			return push_with<false>(L, name, u.value());
 		}
 
 		static int push(lua_State* L, no_metatable_t, user<T>&& u) {
 			const auto name = &usertype_traits<meta::unqualified_t<T>>::user_gc_metatable()[0];
-			return push_with<false>(L, name, std::move(u.value));
+			return push_with<false>(L, name, std::move(u.value()));
 		}
 	};
 
@@ -666,7 +687,7 @@ namespace sol { namespace stack {
 			luaL_checkstack(L, 1, detail::not_enough_stack_space_userdata);
 #endif // make sure stack doesn't overflow
 			void** ud = detail::usertype_allocate_pointer<void>(L);
-			*ud = data.value;
+			*ud = data.value();
 			return 1;
 		}
 	};
@@ -1137,30 +1158,41 @@ namespace sol { namespace stack {
 		}
 	};
 
+	template <typename T>
+	struct unqualified_pusher<forward_as_value_t<T>> {
+		static int push(lua_State* L, const forward_as_value_t<T>& value_) {
+			return stack::push<T>(L, value_.value());
+		}
+
+		static int push(lua_State* L, forward_as_value_t<T>&& value_) {
+			return stack::push<T>(L, std::move(value_).value());
+		}
+	};
+
 	template <>
 	struct unqualified_pusher<nullopt_t> {
-		static int push(lua_State* L, nullopt_t) {
+		static int push(lua_State* L, nullopt_t) noexcept {
 			return stack::push(L, lua_nil);
 		}
 	};
 
 	template <>
 	struct unqualified_pusher<std::nullptr_t> {
-		static int push(lua_State* L, std::nullptr_t) {
+		static int push(lua_State* L, std::nullptr_t) noexcept {
 			return stack::push(L, lua_nil);
 		}
 	};
 
 	template <>
 	struct unqualified_pusher<this_state> {
-		static int push(lua_State*, const this_state&) {
+		static int push(lua_State*, const this_state&) noexcept {
 			return 0;
 		}
 	};
 
 	template <>
 	struct unqualified_pusher<this_main_state> {
-		static int push(lua_State*, const this_main_state&) {
+		static int push(lua_State*, const this_main_state&) noexcept {
 			return 0;
 		}
 	};
@@ -1198,7 +1230,7 @@ namespace sol { namespace stack {
 		struct push_function {
 			lua_State* L;
 
-			push_function(lua_State* L) : L(L) {
+			push_function(lua_State* L) noexcept : L(L) {
 			}
 
 			template <typename T>

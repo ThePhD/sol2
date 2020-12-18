@@ -63,7 +63,7 @@ functions and argument passing
 
 All arguments are forwarded. Unlike :doc:`get/set/operator[] on sol::state<api/state>` or :doc:`sol::table<api/table>`, value semantics are not used here. It is forwarding reference semantics, which do not copy/move unless it is specifically done by the receiving functions / specifically done by the user.
 
-You can change this behavior by defining ``SOL_FUNCTION_CALL_VALUE_SEMANTICS``, as defined in the :doc:`safety configuration page<safety>`.
+You can change this behavior by defining ``SOL_FUNCTION_CALL_VALUE_SEMANTICS``, as defined in the :doc:`safety configuration page<safety>`. You can also change it for specific types using the ``sol::is_value_semantic_for_function<T>`` template and _partially specializing_ it to make either ``std::true_type``, ``std::false_type``, or equivalent ``true``/``false`` functionality.
 
 .. note::
 

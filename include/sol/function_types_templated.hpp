@@ -133,7 +133,7 @@ namespace sol {
 	struct wrap {
 		typedef F type;
 
-		static int call(lua_State* L) {
+		static int call(lua_State* L) noexcept(noexcept(c_call<type, f>(L))) {
 			return c_call<type, f>(L);
 		}
 	};
