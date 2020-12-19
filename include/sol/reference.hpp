@@ -171,7 +171,7 @@ namespace sol {
 		if (type_of(L_, -1) == type::thread) {
 			return lua_tothread(L_, -1);
 		}
-		return backup_if_unsupported;
+		return backup_if_unsupported_;
 #else
 		if (L_ == nullptr)
 			return backup_if_unsupported_;
