@@ -45,7 +45,20 @@ TEST_CASE("plain/alignment", "test that aligned classes in certain compilers don
 	A& la = lua["a"];
 	REQUIRE(&a == &la);
 #else
-	REQUIRE(true);
+	alignof(16) struct aligned_class { alignof(16) int var; };
+
+	struct A {
+		aligned_class a;
+	};
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base, sol::lib::math);
+
+	lua.new_usertype<A>("A");
+	A a;
+	lua["a"] = &a;
+	A& la = lua["a"];
+	REQUIRE(&a == &la);
 #endif // VC++ stuff
 }
 

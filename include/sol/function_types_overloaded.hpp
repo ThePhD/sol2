@@ -48,9 +48,16 @@ namespace sol { namespace function_detail {
 			return nr;
 		}
 
+		struct on_success {
+			template <typename... Args>
+			int operator()(Args&&... args) const {
+				return call(std::forward<Args>(args)...);
+			}
+		};
+
 		int operator()(lua_State* L) {
-			auto mfx = [](auto&&... args) { return call(std::forward<decltype(args)>(args)...); };
-			return call_detail::overload_match<Functions...>(mfx, L, 1 + start_skew, overloads);
+			on_success call_obj {};
+			return call_detail::overload_match<Functions...>(call_obj, L, 1 + start_skew, overloads);
 		}
 	};
 }} // namespace sol::function_detail

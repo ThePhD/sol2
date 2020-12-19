@@ -70,14 +70,14 @@ namespace sol { namespace stack {
 					tracking.use(static_cast<int>(success));
 					return {};
 				}
-				return stack_detail::unchecked_get<ValueType>(L, index, tracking);
+				return T(stack_detail::unchecked_get<ValueType>(L, index, tracking));
 			}
 			else {
 				if (!check<ValueType>(L, index, &no_panic)) {
 					tracking.use(static_cast<int>(!lua_isnone(L, index)));
 					return {};
 				}
-				return stack_detail::unchecked_get<ValueType>(L, index, tracking);
+				return T(stack_detail::unchecked_get<ValueType>(L, index, tracking));
 			}
 		}
 	};
