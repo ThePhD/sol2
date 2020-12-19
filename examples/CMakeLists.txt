@@ -87,7 +87,7 @@ function (MAKE_EXAMPLE example_source_file example_suffix target_sol)
 			-ftemplate-backtrace-limit=0
 			-Wno-unknown-warning -Wno-unknown-warning-option
 			-Wall -Wpedantic -Werror -pedantic -pedantic-errors
-			-Wno-noexcept-type -Wshadow -Wconversion)
+			-Wno-noexcept-type)
 
 		if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 			# For another day, when C++ is not so crap

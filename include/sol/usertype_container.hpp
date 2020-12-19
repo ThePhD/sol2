@@ -514,9 +514,9 @@ namespace sol {
 			struct iter {
 				T& source;
 				iterator it;
-				std::size_t i;
+				std::size_t index;
 
-				iter(T& source, iterator it) : source(source), it(std::move(it)), i(0) {
+				iter(T& source_, iterator it_) : source(source_), it(std::move(it_)), index(0) {
 				}
 
 				~iter() {
@@ -1159,8 +1159,8 @@ namespace sol {
 				}
 				int p;
 				if constexpr (ip) {
-					++i.i;
-					p = stack::push_reference(L, i.i);
+					++i.index;
+					p = stack::push_reference(L, i.index);
 				}
 				else {
 					p = stack::push_reference(L, it->first);

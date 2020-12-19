@@ -54,7 +54,7 @@ function(CREATE_TEST test_target_name test_name target_sol)
 			PRIVATE -std=c++1z -pthread
 			-Wno-unknown-warning -Wno-unknown-warning-option
 			-Wall -Wpedantic -Werror -pedantic -pedantic-errors
-			-Wno-noexcept-type -Wshadow -Wconversion)
+			-Wno-noexcept-type)
 
 		if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 			target_compile_options(${test_target_name}

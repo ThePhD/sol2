@@ -95,10 +95,10 @@ namespace sol {
 	};
 
 	template <typename Container>
-	inline int basic_insert_dump_writer(lua_State*, const void* memory, size_t memory_size, void* userdata) {
+	inline int basic_insert_dump_writer(lua_State*, const void* memory, size_t memory_size, void* userdata_pointer) {
 		using storage_t = Container;
 		const std::byte* p_code = static_cast<const std::byte*>(memory);
-		storage_t& bc = *static_cast<storage_t*>(userdata);
+		storage_t& bc = *static_cast<storage_t*>(userdata_pointer);
 #if SOL_IS_OFF(SOL_EXCEPTIONS_I_)
 		bc.insert(bc.cend(), p_code, p_code + memory_size);
 #else

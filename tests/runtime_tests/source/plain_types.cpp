@@ -45,7 +45,9 @@ TEST_CASE("plain/alignment", "test that aligned classes in certain compilers don
 	A& la = lua["a"];
 	REQUIRE(&a == &la);
 #else
-	alignof(16) struct aligned_class { alignof(16) int var; };
+	struct alignas(16) aligned_class {
+		alignas(16) int var;
+	};
 
 	struct A {
 		aligned_class a;

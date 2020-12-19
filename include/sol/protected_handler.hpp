@@ -40,22 +40,22 @@ namespace sol { namespace detail {
 	struct protected_handler {
 		typedef is_stack_based<target_t> is_stack;
 		const target_t& target;
-		int stackindex;
+		int stack_index;
 
-		protected_handler(std::false_type, const target_t& target) : target(target), stackindex(0) {
+		protected_handler(std::false_type, const target_t& target_) : target(target_), stack_index(0) {
 			if (b) {
-				stackindex = lua_gettop(target.lua_state()) + 1;
+				stack_index = lua_gettop(target.lua_state()) + 1;
 				target.push();
 			}
 		}
 
-		protected_handler(std::true_type, const target_t& target) : target(target), stackindex(0) {
+		protected_handler(std::true_type, const target_t& target_) : target(target_), stack_index(0) {
 			if (b) {
-				stackindex = target.stack_index();
+				stack_index = target.stack_index();
 			}
 		}
 
-		protected_handler(const target_t& target) : protected_handler(is_stack(), target) {
+		protected_handler(const target_t& target_) : protected_handler(is_stack(), target_) {
 		}
 
 		bool valid() const noexcept {
@@ -64,8 +64,8 @@ namespace sol { namespace detail {
 
 		~protected_handler() {
 			if constexpr (!is_stack::value) {
-				if (stackindex != 0) {
-					lua_remove(target.lua_state(), stackindex);
+				if (stack_index != 0) {
+					lua_remove(target.lua_state(), stack_index);
 				}
 			}
 		}

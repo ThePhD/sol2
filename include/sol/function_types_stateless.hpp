@@ -62,10 +62,6 @@ namespace sol { namespace function_detail {
 				return nr;
 			}
 		}
-
-		int operator()(lua_State* L) {
-			return call(L);
-		}
 	};
 
 	template <typename T, typename Function>
