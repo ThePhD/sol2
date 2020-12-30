@@ -317,3 +317,35 @@ local obj3 = foo3.new(0, 1, 2)
 	     sol::script_pass_on_error);
 	REQUIRE_FALSE(maybe_err.has_value());
 }
+
+TEST_CASE("variadics/overloads with fallbacks",
+     "Test that 'fuzzy' types like optional and variadic_args can coexist and have optional numbers of arguments passed to them") {
+
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	auto test = lua[u8"test"].get_or_create<sol::table>();
+	auto derp = test[u8"derp"].get_or_create<sol::table>();
+
+	derp[u8"herp"]
+	     = sol::overload([](sol::this_state, const std::string_view&, const std::string_view&, const std::string_view&, sol::optional<uint32_t>) { return 1; },
+	          [](const std::string_view&, const std::string_view&, sol::function, sol::optional<uint32_t>) { return 2; },
+	          [](sol::this_state, sol::variadic_args) { return 3; });
+
+	const std::string_view code = R"(
+assert(test.derp.herp('str1', 'str2', 'str3') == 1);
+assert(test.derp.herp('str1', 'str2', 'str3', 42) == 1);
+assert(test.derp.herp('str1', 'str2', 'str3', nil) == 1);
+
+assert(test.derp.herp('str1', 'str2', function(r) end) == 2);
+assert(test.derp.herp('str1', 'str2', function(r) end, 42) == 2);
+assert(test.derp.herp('str1', 'str2', function(r) end, nil) == 2);
+
+assert(test.derp.herp('str1', 'str2', 'str3', {}) == 3);
+assert(test.derp.herp('str1', 'str2', function(r) end, {}) == 3);
+assert(test.derp.herp(1, 2, 3, 4, 5, 6, 7) == 3);
+assert(test.derp.herp('str1', 'str2', 'str3', 'str4') == 3);
+)";
+	sol::optional<sol::error> maybe_error = lua.safe_script(code, sol::script_pass_on_error);
+	REQUIRE_FALSE(maybe_error.has_value());
+}

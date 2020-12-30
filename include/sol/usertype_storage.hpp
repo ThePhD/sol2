@@ -444,6 +444,7 @@ namespace sol { namespace u_detail {
 			storage.clear();
 			string_keys.clear();
 			auxiliary_keys.clear();
+			string_keys_storage.clear();
 		}
 
 		template <bool is_new_index, typename Base>
