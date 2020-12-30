@@ -1,6 +1,6 @@
 #include <sol/sol.hpp>
 
-int regression_1008() {
+unsigned int regression_1008() {
 
 	sol::state lua;
 	lua.create_named_table("t");
