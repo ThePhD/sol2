@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2020-12-30 02:46:21.039049 UTC
-// This header was generated with sol v3.2.3 (revision 6a77d5cf)
+// Generated 2020-12-30 02:56:53.623397 UTC
+// This header was generated with sol v3.2.3 (revision b9115623)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -681,11 +681,12 @@
 
 #if SOL_IS_ON(SOL_COMPILER_GCC_I_)
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wconversion"
 #if __GNUC__ > 6
 #pragma GCC diagnostic ignored "-Wnoexcept-type"
 #endif
 #elif SOL_IS_ON(SOL_COMPILER_CLANG_I_)
-#pragma clang diagnostic push
 #elif SOL_IS_ON(SOL_COMPILER_VCXX_I_)
 #pragma warning(push)
 #pragma warning(disable : 4505) // unreferenced local function has been removed GEE THANKS
@@ -3102,18 +3103,18 @@ static void compat53_call_lua(lua_State* L, char const code[], size_t len, int n
 	lua_call(L, nargs, nret);
 }
 
-static const char compat53_arith_code[]
-     = "local op,a,b=...\n"
-       "if op==0 then return a+b\n"
-       "elseif op==1 then return a-b\n"
-       "elseif op==2 then return a*b\n"
-       "elseif op==3 then return a/b\n"
-       "elseif op==4 then return a%b\n"
-       "elseif op==5 then return a^b\n"
-       "elseif op==6 then return -a\n"
-       "end\n";
-
 COMPAT53_API void lua_arith(lua_State* L, int op) {
+	static const char compat53_arith_code[]
+	     = "local op,a,b=...\n"
+	       "if op==0 then return a+b\n"
+	       "elseif op==1 then return a-b\n"
+	       "elseif op==2 then return a*b\n"
+	       "elseif op==3 then return a/b\n"
+	       "elseif op==4 then return a%b\n"
+	       "elseif op==5 then return a^b\n"
+	       "elseif op==6 then return -a\n"
+	       "end\n";
+
 	if (op < LUA_OPADD || op > LUA_OPUNM)
 		luaL_error(L, "invalid 'op' argument for lua_arith");
 	luaL_checkstack(L, 5, "not enough stack slots");
@@ -3124,11 +3125,11 @@ COMPAT53_API void lua_arith(lua_State* L, int op) {
 	compat53_call_lua(L, compat53_arith_code, sizeof(compat53_arith_code) - 1, 3, 1);
 }
 
-static const char compat53_compare_code[]
-     = "local a,b=...\n"
-       "return a<=b\n";
-
 COMPAT53_API int lua_compare(lua_State* L, int idx1, int idx2, int op) {
+	static const char compat53_compare_code[]
+	     = "local a,b=...\n"
+	       "return a<=b\n";
+
 	int result = 0;
 	switch (op) {
 	case LUA_OPEQ:
@@ -22345,26 +22346,24 @@ namespace sol { namespace u_detail {
 				"The size of this data pointer is too small to fit the inheritance checking function: Please file "
 				"a bug report.");
 			static_assert(!meta::any_same<T, Bases...>::value, "base classes cannot list the original class as part of the bases");
-			if constexpr (sizeof...(Bases) < 1) {
-				return;
+			if constexpr (sizeof...(Bases) > 0) {
+				(void)detail::swallow { 0, ((weak_derive<Bases>::value = true), 0)... };
+
+				void* derived_this = static_cast<void*>(static_cast<usertype_storage<T>*>(this));
+
+				update_bases_func for_each_fx;
+				for_each_fx.base_class_check_func = &detail::inheritance<T>::template type_check_with<Bases...>;
+				for_each_fx.base_class_cast_func = &detail::inheritance<T>::template type_cast_with<Bases...>;
+				for_each_fx.idx_call = &usertype_storage<T>::template index_call_with_bases<false, Bases...>;
+				for_each_fx.new_idx_call = &usertype_storage<T>::template index_call_with_bases<true, Bases...>;
+				for_each_fx.meta_idx_call = &usertype_storage<T>::template meta_index_call_with_bases<false, Bases...>;
+				for_each_fx.meta_new_idx_call = &usertype_storage<T>::template meta_index_call_with_bases<true, Bases...>;
+				for_each_fx.p_usb = this;
+				for_each_fx.p_derived_usb = derived_this;
+				for_each_fx.change_indexing = &usertype_storage_base::change_indexing;
+				for_each_fx.p_derived_usb = derived_this;
+				this->for_each_table(L, for_each_fx);
 			}
-
-			(void)detail::swallow { 0, ((weak_derive<Bases>::value = true), 0)... };
-
-			void* derived_this = static_cast<void*>(static_cast<usertype_storage<T>*>(this));
-
-			update_bases_func for_each_fx;
-			for_each_fx.base_class_check_func = &detail::inheritance<T>::template type_check_with<Bases...>;
-			for_each_fx.base_class_cast_func = &detail::inheritance<T>::template type_cast_with<Bases...>;
-			for_each_fx.idx_call = &usertype_storage<T>::template index_call_with_bases<false, Bases...>;
-			for_each_fx.new_idx_call = &usertype_storage<T>::template index_call_with_bases<true, Bases...>;
-			for_each_fx.meta_idx_call = &usertype_storage<T>::template meta_index_call_with_bases<false, Bases...>;
-			for_each_fx.meta_new_idx_call = &usertype_storage<T>::template meta_index_call_with_bases<true, Bases...>;
-			for_each_fx.p_usb = this;
-			for_each_fx.p_derived_usb = derived_this;
-			for_each_fx.change_indexing = &usertype_storage_base::change_indexing;
-			for_each_fx.p_derived_usb = derived_this;
-			this->for_each_table(L, for_each_fx);
 		}
 
 		void clear() {
@@ -26946,8 +26945,6 @@ namespace sol {
 
 #if SOL_IS_ON(SOL_COMPILER_GCC_I_)
 #pragma GCC diagnostic pop
-#elif SOL_IS_ON(SOL_COMPILER_CLANG_I_)
-#pragma clang diagnostic pop
 #elif SOL_IS_ON(SOL_COMPILER_VCXX_I_)
 #pragma warning(pop)
 #endif // g++

@@ -376,26 +376,24 @@ namespace sol { namespace u_detail {
 				"The size of this data pointer is too small to fit the inheritance checking function: Please file "
 				"a bug report.");
 			static_assert(!meta::any_same<T, Bases...>::value, "base classes cannot list the original class as part of the bases");
-			if constexpr (sizeof...(Bases) < 1) {
-				return;
+			if constexpr (sizeof...(Bases) > 0) {
+				(void)detail::swallow { 0, ((weak_derive<Bases>::value = true), 0)... };
+
+				void* derived_this = static_cast<void*>(static_cast<usertype_storage<T>*>(this));
+
+				update_bases_func for_each_fx;
+				for_each_fx.base_class_check_func = &detail::inheritance<T>::template type_check_with<Bases...>;
+				for_each_fx.base_class_cast_func = &detail::inheritance<T>::template type_cast_with<Bases...>;
+				for_each_fx.idx_call = &usertype_storage<T>::template index_call_with_bases<false, Bases...>;
+				for_each_fx.new_idx_call = &usertype_storage<T>::template index_call_with_bases<true, Bases...>;
+				for_each_fx.meta_idx_call = &usertype_storage<T>::template meta_index_call_with_bases<false, Bases...>;
+				for_each_fx.meta_new_idx_call = &usertype_storage<T>::template meta_index_call_with_bases<true, Bases...>;
+				for_each_fx.p_usb = this;
+				for_each_fx.p_derived_usb = derived_this;
+				for_each_fx.change_indexing = &usertype_storage_base::change_indexing;
+				for_each_fx.p_derived_usb = derived_this;
+				this->for_each_table(L, for_each_fx);
 			}
-
-			(void)detail::swallow { 0, ((weak_derive<Bases>::value = true), 0)... };
-
-			void* derived_this = static_cast<void*>(static_cast<usertype_storage<T>*>(this));
-
-			update_bases_func for_each_fx;
-			for_each_fx.base_class_check_func = &detail::inheritance<T>::template type_check_with<Bases...>;
-			for_each_fx.base_class_cast_func = &detail::inheritance<T>::template type_cast_with<Bases...>;
-			for_each_fx.idx_call = &usertype_storage<T>::template index_call_with_bases<false, Bases...>;
-			for_each_fx.new_idx_call = &usertype_storage<T>::template index_call_with_bases<true, Bases...>;
-			for_each_fx.meta_idx_call = &usertype_storage<T>::template meta_index_call_with_bases<false, Bases...>;
-			for_each_fx.meta_new_idx_call = &usertype_storage<T>::template meta_index_call_with_bases<true, Bases...>;
-			for_each_fx.p_usb = this;
-			for_each_fx.p_derived_usb = derived_this;
-			for_each_fx.change_indexing = &usertype_storage_base::change_indexing;
-			for_each_fx.p_derived_usb = derived_this;
-			this->for_each_table(L, for_each_fx);
 		}
 
 		void clear() {
