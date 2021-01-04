@@ -45,15 +45,21 @@
 #endif // variant shenanigans (thanks, Mac OSX)
 
 namespace sol {
+	namespace d {
+		// shortest possible hidden detail namespace
+		// when types are transcribed, this saves
+		// quite a bit of space, actually.
+		// it's a little unfortunate, but here we are?
+		template <typename T>
+		struct u { };
+	} // namespace d
+
 	namespace detail {
 #if SOL_IS_ON(SOL_USE_NOEXCEPT_FUNCTION_TYPE_I_)
 		typedef int (*lua_CFunction_noexcept)(lua_State* L) noexcept;
 #else
 		typedef int (*lua_CFunction_noexcept)(lua_State* L);
 #endif // noexcept function type for lua_CFunction
-
-		template <typename T>
-		struct unique_usertype { };
 
 		template <typename T>
 		struct implicit_wrapper {
@@ -1119,21 +1125,6 @@ namespace sol {
 	inline constexpr int lua_size_v = lua_size<T>::value;
 
 	namespace detail {
-		template <typename...>
-		struct void_ {
-			typedef void type;
-		};
-		template <typename T, typename = void>
-		struct has_internal_marker_impl : std::false_type { };
-		template <typename T>
-		struct has_internal_marker_impl<T, typename void_<typename T::SOL_INTERNAL_UNSPECIALIZED_MARKER_>::type> : std::true_type { };
-
-		template <typename T>
-		using has_internal_marker = has_internal_marker_impl<T>;
-
-		template <typename T>
-		constexpr inline bool has_internal_marker_v = has_internal_marker<T>::value;
-
 		// MSVC's decltype detection is broken, which breaks other
 		// parts of the code. So we add more workarounds. The moment it's fixed,
 		// we take it away and break everyone that doesn't upgrade.
@@ -1151,7 +1142,7 @@ namespace sol {
 	: std::integral_constant<bool,
 	       type::userdata
 	                 != lua_type_of_v<
-	                      T> || ((type::userdata == lua_type_of_v<T>)&&detail::has_internal_marker_v<lua_type_of<T>> && !detail::has_internal_marker_v<lua_size<T>>)
+	                      T> || ((type::userdata == lua_type_of_v<T>)&&meta::meta_detail::has_internal_marker_v<lua_type_of<T>> && !meta::meta_detail::has_internal_marker_v<lua_size<T>>)
 	            || is_lua_reference_or_proxy_v<T> || meta::is_specialization_of_v<T, std::tuple> || meta::is_specialization_of_v<T, std::pair>> { };
 
 	template <typename T>

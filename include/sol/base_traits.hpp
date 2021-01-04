@@ -36,7 +36,7 @@ namespace sol {
 		using sfinae_yes_t = std::true_type;
 		using sfinae_no_t = std::false_type;
 
-		template <typename T>
+		template <typename...>
 		using void_t = void;
 
 		template <typename T>
@@ -103,6 +103,19 @@ namespace sol {
 
 		template <typename T>
 		using is_builtin_type = std::integral_constant<bool, std::is_arithmetic<T>::value || std::is_pointer<T>::value || std::is_array<T>::value>;
+
+		namespace meta_detail {
+			template <typename T, typename = void>
+			struct has_internal_marker_impl : std::false_type { };
+			template <typename T>
+			struct has_internal_marker_impl<T, void_t<typename T::SOL_INTERNAL_UNSPECIALIZED_MARKER_>> : std::true_type { };
+
+			template <typename T>
+			using has_internal_marker = has_internal_marker_impl<T>;
+
+			template <typename T>
+			constexpr inline bool has_internal_marker_v = has_internal_marker<T>::value;
+		} // namespace meta_detail
 
 	} // namespace meta
 } // namespace sol

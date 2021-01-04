@@ -189,14 +189,13 @@ namespace sol { namespace stack {
 	namespace stack_detail {
 		template <typename T>
 		struct uu_pusher {
-			using u_traits = unique_usertype_traits<T>;
-			using P = typename u_traits::type;
-			using Real = typename u_traits::actual_type;
+			using element = unique_usertype_element_t<T>;
+			using actual = unique_usertype_actual_t<T>;
 
 			template <typename Arg, typename... Args>
 			static int push(lua_State* L, Arg&& arg, Args&&... args) {
-				if constexpr (std::is_base_of_v<Real, meta::unqualified_t<Arg>>) {
-					if (u_traits::is_null(arg)) {
+				if constexpr (std::is_base_of_v<actual, meta::unqualified_t<Arg>>) {
+					if (detail::unique_is_null(L, arg)) {
 						return stack::push(L, lua_nil);
 					}
 					return push_deep(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
@@ -211,23 +210,23 @@ namespace sol { namespace stack {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 				luaL_checkstack(L, 1, detail::not_enough_stack_space_userdata);
 #endif // make sure stack doesn't overflow
-				P** pref = nullptr;
+				element** pointer_to_memory = nullptr;
 				detail::unique_destructor* fx = nullptr;
 				detail::unique_tag* id = nullptr;
-				Real* mem = detail::usertype_unique_allocate<P, Real>(L, pref, fx, id);
-				if (luaL_newmetatable(L, &usertype_traits<detail::unique_usertype<std::remove_cv_t<P>>>::metatable()[0]) == 1) {
-					detail::lua_reg_table l {};
+				actual* typed_memory = detail::usertype_unique_allocate<element, actual>(L, pointer_to_memory, fx, id);
+				if (luaL_newmetatable(L, &usertype_traits<d::u<std::remove_cv_t<element>>>::metatable()[0]) == 1) {
+					detail::lua_reg_table registration_table {};
 					int index = 0;
-					detail::indexed_insert insert_fx(l, index);
-					detail::insert_default_registrations<P>(insert_fx, detail::property_always_true);
-					l[index] = { to_string(meta_function::garbage_collect).c_str(), detail::make_destructor<T>() };
-					luaL_setfuncs(L, l, 0);
+					detail::indexed_insert insert_callable(registration_table, index);
+					detail::insert_default_registrations<element>(insert_callable, detail::property_always_true);
+					registration_table[index] = { to_string(meta_function::garbage_collect).c_str(), detail::make_destructor<T>() };
+					luaL_setfuncs(L, registration_table, 0);
 				}
 				lua_setmetatable(L, -2);
-				*fx = detail::usertype_unique_alloc_destroy<P, Real>;
-				*id = &detail::inheritance<P>::template type_unique_cast<Real>;
-				detail::default_construct::construct(mem, std::forward<Args>(args)...);
-				*pref = unique_usertype_traits<T>::get(*mem);
+				*fx = detail::usertype_unique_alloc_destroy<element, actual>;
+				*id = &detail::inheritance<element>::template type_unique_cast<actual>;
+				detail::default_construct::construct(typed_memory, std::forward<Args>(args)...);
+				*pointer_to_memory = detail::unique_get<T>(L, *typed_memory);
 				return 1;
 			}
 		};

@@ -854,7 +854,7 @@ namespace sol { namespace u_detail {
 		using u_traits = usertype_traits<T>;
 #if 0
 		using u_const_traits = usertype_traits<const T>;
-		using u_unique_traits = usertype_traits<detail::unique_usertype<T>>;
+		using u_unique_traits = usertype_traits<d::u<T>>;
 		using u_ref_traits = usertype_traits<T*>;
 		using u_const_ref_traits = usertype_traits<T const*>;
 #endif
@@ -892,7 +892,7 @@ namespace sol { namespace u_detail {
 	inline int register_usertype(lua_State* L, automagic_enrollments enrollments = {}) {
 		using u_traits = usertype_traits<T>;
 		using u_const_traits = usertype_traits<const T>;
-		using u_unique_traits = usertype_traits<detail::unique_usertype<T>>;
+		using u_unique_traits = usertype_traits<d::u<T>>;
 		using u_ref_traits = usertype_traits<T*>;
 		using u_const_ref_traits = usertype_traits<T const*>;
 		using uts = usertype_storage<T>;

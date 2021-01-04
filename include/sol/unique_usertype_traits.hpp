@@ -31,94 +31,197 @@
 
 namespace sol {
 
-	template <typename T>
-	struct unique_usertype_traits {
-		typedef T type;
-		typedef T actual_type;
-		template <typename X>
-		using rebind_base = void;
+	namespace detail {
+		template <typename T>
+		struct unique_fallback {
+			using SOL_INTERNAL_UNSPECIALIZED_MARKER_ = int;
+		};
 
-		static const bool value = false;
+		template <typename T>
+		struct unique_fallback<std::shared_ptr<T>> {
+			// rebind is non-void
+			// if and only if unique usertype
+			// is cast-capable
+			template <typename X>
+			using rebind_actual_type = std::shared_ptr<X>;
 
-		template <typename U>
-		static bool is_null(U&&) {
-			return false;
-		}
+			static bool is_null(const std::shared_ptr<T>& p) noexcept {
+				return p == nullptr;
+			}
 
-		template <typename U>
-		static auto get(U&& value_) {
-			return std::addressof(detail::deref(value_));
-		}
-	};
+			static type* get(const std::shared_ptr<T>& p) noexcept {
+				return p.get();
+			}
+		};
 
-	template <typename T>
-	struct unique_usertype_traits<std::shared_ptr<T>> {
-		typedef T type;
-		typedef std::shared_ptr<T> actual_type;
-		// rebind is non-void
-		// if and only if unique usertype
-		// is cast-capable
-		template <typename X>
-		using rebind_base = std::shared_ptr<X>;
+		template <typename T, typename D>
+		struct unique_fallback<std::unique_ptr<T, D>> {
+			using element_type = typename std::pointer_traits<std::unique_ptr<T, D>>::element_type;
 
-		static const bool value = true;
+			static bool is_null(lua_State*, const std::unique_ptr<T, D>& p) noexcept {
+				return p == nullptr;
+			}
 
-		static bool is_null(const actual_type& p) {
-			return p == nullptr;
-		}
+			static auto get(lua_State*, const std::unique_ptr<T, D>& p) noexcept {
+				return p.get();
+			}
+		};
+	} // namespace detail
 
-		static type* get(const actual_type& p) {
-			return p.get();
-		}
-	};
+	namespace meta { namespace meta_detail {
+		template <typename T, typename = void>
+		struct unique_actual_type;
 
-	template <typename T, typename D>
-	struct unique_usertype_traits<std::unique_ptr<T, D>> {
-		using type = T;
-		using actual_type = std::unique_ptr<T, D>;
+		template <typename T>
+		struct unique_actual_type<T, meta::void_t<typename T::actual_type>> {
+			using type = typename T::actual_type;
+		};
 
-		static const bool value = true;
+		template <typename T, typename... Rest, template <typename...> class Templ>
+		struct unique_actual_type<Templ<T, Rest...>> {
+			using type = T;
+		};
 
-		static bool is_null(const actual_type& p) {
-			return p == nullptr;
-		}
-
-		static type* get(const actual_type& p) {
-			return p.get();
-		}
-	};
+	}} // namespace meta::meta_detail
 
 	template <typename T>
-	struct is_unique_usertype : std::integral_constant<bool, unique_usertype_traits<T>::value> { };
+	using unique_usertype_actual_t = typename meta::meta_detail::unique_actual_type<unique_usertype_traits<T>>::type;
+
+	namespace meta { namespace meta_detail {
+		template <typename T>
+		using value_test_t = decltype(T::value);
+
+		template <typename T>
+		using type_test_t = typename T::type;
+
+		template <typename T>
+		using type_element_type_t = typename T::element_type;
+
+		template <typename T, typename = void>
+		struct unique_element_type {
+			using type = typename std::pointer_traits<typename unique_actual_type<T>::type>::element_type;
+		};
+
+		template <typename T>
+		struct unique_element_type<T, std::enable_if_t<meta::is_detected_v<type_element_type_t, T>>> {
+			using type = typename T::element_type;
+		};
+
+		template <typename T>
+		struct unique_element_type<T, std::enable_if_t<meta::is_detected_v<type_test_t, T>>> {
+			using type = typename T::type;
+		};
+
+		template <typename T, typename = void>
+		struct unique_valid : std::integral_constant<bool, !has_internal_marker_v<T>> { };
+
+		template <typename T>
+		struct unique_valid<T, meta::void_t<decltype(T::value)>> : std::integral_constant<bool, T::value> { };
+	}} // namespace meta::meta_detail
+
+	template <typename T>
+	using unique_usertype_element_t = typename meta::meta_detail::unique_element_type<unique_usertype_traits<T>>::type;
+
+	template <typename T, typename Element = void>
+	using unique_usertype_rebind_actual_t = typename unique_usertype_traits<T>::template rebind_actual_type<Element>;
+
+	template <typename T>
+	struct unique_usertype_traits : public detail::unique_fallback<T> { };
+
+	template <typename T>
+	struct is_unique_usertype : std::integral_constant<bool, meta::meta_detail::unique_valid<unique_usertype_traits<T>>::value> { };
 
 	template <typename T>
 	inline constexpr bool is_unique_usertype_v = is_unique_usertype<T>::value;
 
-	namespace detail {
-		template <typename T, typename Rebind = void>
-		using is_base_rebindable_test = typename T::template rebind_base<Rebind>;
-	}
-
-	template <typename T>
-	using is_base_rebindable = meta::is_detected<detail::is_base_rebindable_test, T>;
-
-	template <typename T>
-	inline constexpr bool is_base_rebindable_v = is_base_rebindable<T>::value;
-
-	namespace detail {
-		template <typename T, typename = void>
-		struct is_base_rebindable_non_void_sfinae : std::false_type { };
+	namespace meta { namespace meta_detail {
+		template <typename T>
+		using adl_sol_lua_check_access_test_t
+			= decltype(sol_lua_check_access(types<T>(), static_cast<lua_State*>(nullptr), -1, std::declval<stack::record&>()));
 
 		template <typename T>
-		struct is_base_rebindable_non_void_sfinae<T, std::enable_if_t<is_base_rebindable_v<T>>>
-		: std::integral_constant<bool, !std::is_void_v<typename T::template rebind_base<void>>> { };
+		inline constexpr bool is_adl_sol_lua_check_access_v = meta::is_detected_v<adl_sol_lua_check_access_test_t, T>;
+
+		template <typename T>
+		using unique_usertype_get_with_state_test_t
+			= decltype(unique_usertype_traits<T>::get(static_cast<lua_State*>(nullptr), std::declval<unique_usertype_actual_t<T>>()));
+
+		template <typename T>
+		inline constexpr bool unique_usertype_get_with_state_v = meta::is_detected_v<unique_usertype_get_with_state_test_t, T>;
+
+		template <typename T>
+		using unique_usertype_is_null_with_state_test_t
+			= decltype(unique_usertype_traits<T>::is_null(static_cast<lua_State*>(nullptr), std::declval<unique_usertype_actual_t<T>>()));
+
+		template <typename T>
+		inline constexpr bool unique_usertype_is_null_with_state_v = meta::is_detected_v<unique_usertype_is_null_with_state_test_t, T>;
+	}} // namespace meta::meta_detail
+
+	namespace detail {
+		template <typename T>
+		constexpr bool unique_is_null_noexcept() noexcept {
+			if constexpr (meta::meta_detail::unique_usertype_is_null_with_state_v<T>) {
+				return noexcept(unique_usertype_traits<T>::is_null(static_cast<lua_State*>(nullptr), std::declval<unique_usertype_actual_t<T>>()));
+			}
+			else {
+				return noexcept(unique_usertype_traits<T>::is_null(std::declval<unique_usertype_actual_t<T>>()));
+			}
+		}
+
+		template <typename T>
+		bool unique_is_null(lua_State* L_, T& value_) noexcept(unique_is_null_noexcept<T>()) {
+			if constexpr (meta::meta_detail::unique_usertype_is_null_with_state_v<T>) {
+				return unique_usertype_traits<T>::is_null(L_, value_);
+			}
+			else {
+				return unique_usertype_traits<T>::is_null(value_);
+			}
+		}
+
+		template <typename T>
+		constexpr bool unique_get_noexcept() noexcept {
+			if constexpr (meta::meta_detail::unique_usertype_get_with_state_v<T>) {
+				return noexcept(unique_usertype_traits<T>::get(static_cast<lua_State*>(nullptr), std::declval<unique_usertype_actual_t<T>>()));
+			}
+			else {
+				return noexcept(unique_usertype_traits<T>::get(std::declval<unique_usertype_actual_t<T>>()));
+			}
+		}
+
+		template <typename T>
+		auto unique_get(lua_State* L_, T& value_) noexcept(unique_get_noexcept<T>()) {
+			if constexpr (meta::meta_detail::unique_usertype_get_with_state_v<T>) {
+				return unique_usertype_traits<T>::get(L_, value_);
+			}
+			else {
+				return unique_usertype_traits<T>::get(value_);
+			}
+		}
 	} // namespace detail
 
-	template <typename T>
-	using is_base_rebindable_non_void = meta::is_detected<detail::is_base_rebindable_test, T>;
+	namespace meta { namespace meta_detail {
+		template <typename T, typename Element = void>
+		using is_rebind_actual_type_test_t = typename T::template rebind_actual_type<Element>;
 
-	template <typename T>
-	inline constexpr bool is_base_rebindable_non_void_v = is_base_rebindable_non_void<T>::value;
+		template <typename T, typename Element = void>
+		using is_rebind_actual_type = meta::is_detected<is_rebind_actual_type_test_t, T, Element>;
+
+		template <typename T, typename Element = void>
+		inline constexpr bool is_rebind_actual_type_v = is_rebind_actual_type<T, Element>::value;
+
+		template <typename T, typename Element, bool = is_rebind_actual_type_v<T, Element>>
+		struct is_actual_type_rebindable_for_test : std::false_type { };
+
+		template <typename T, typename Element>
+		struct is_actual_type_rebindable_for_test<T, Element, true>
+		: std::integral_constant<bool, !std::is_void_v<typename T::template rebind_actual_type<Element>>> { };
+	}} // namespace meta::meta_detail
+
+	template <typename T, typename Element = void>
+	using is_actual_type_rebindable_for = typename meta::meta_detail::is_actual_type_rebindable_for_test<unique_usertype_traits<T>, Element>::type;
+
+	template <typename T, typename Element = void>
+	inline constexpr bool is_actual_type_rebindable_for_v = is_actual_type_rebindable_for<T, Element>::value;
 
 } // namespace sol
 

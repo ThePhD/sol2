@@ -220,7 +220,7 @@ namespace sol {
 							lua_pop(L, 1);
 							stack::push(L, new_table(0, 0));
 							stack::set_field<global, raw>(L, std::forward<Key>(key), stack_reference(L, -1), table_index);
-							if (stack::check<value_type>(L, lua_gettop(L), no_panic)) {
+							if (stack::check<value_type>(L, lua_gettop(L), &no_panic)) {
 								return stack::get<T>(L);
 							}
 						}

@@ -287,7 +287,7 @@ namespace sol {
 					}
 				}
 				else {
-					function_detail::select<is_yielding, true>(L, std::forward<Arg0>(arg0), std::forward<Args>(args)...);
+					function_detail::select<is_yielding, false>(L, std::forward<Arg0>(arg0), std::forward<Args>(args)...);
 					return 1;
 				}
 			}

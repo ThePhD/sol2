@@ -186,12 +186,18 @@ namespace sol {
 
 		template <typename F, F fx>
 		inline int typed_static_trampoline(lua_State* L) {
+#if 0
+			// TODO: you must evaluate the get/check_get of every
+			// argument, to ensure it doesn't throw
+			// (e.g., for the sol_lua_check_access extension point!)
+			// This incluudes properly noexcept-ing all the above
+			// trampolines / safety nets
 			if constexpr (meta::bind_traits<F>::is_noexcept) {
 				return static_trampoline_noexcept<fx>(L);
 			}
-			else {
-				return static_trampoline<fx>(L);
-			}
+			else
+#endif
+			{ return static_trampoline<fx>(L); }
 		}
 	} // namespace detail
 

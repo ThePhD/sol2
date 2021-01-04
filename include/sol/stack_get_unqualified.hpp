@@ -143,17 +143,17 @@ namespace sol { namespace stack {
 				return T(L, index);
 			}
 			else if constexpr (is_unique_usertype_v<T>) {
-				using Real = typename unique_usertype_traits<T>::actual_type;
+				using actual = unique_usertype_actual_t<T>;
 
 				tracking.use(1);
 				void* memory = lua_touserdata(L, index);
-				memory = detail::align_usertype_unique<Real>(memory);
-				Real* mem = static_cast<Real*>(memory);
-				return *mem;
+				void* aligned_memory = detail::align_usertype_unique<actual>(memory);
+				actual* typed_memory = static_cast<actual*>(aligned_memory);
+				return *typed_memory;
 			}
 			else if constexpr (meta::is_optional_v<T>) {
 				using ValueType = typename T::value_type;
-				return unqualified_check_getter<ValueType>::template get_using<T>(L, index, no_panic, tracking);
+				return unqualified_check_getter<ValueType>::template get_using<T>(L, index, &no_panic, tracking);
 			}
 			else if constexpr (std::is_same_v<T, luaL_Stream*>) {
 				luaL_Stream* pstream = static_cast<luaL_Stream*>(lua_touserdata(L, index));
@@ -189,34 +189,37 @@ namespace sol { namespace stack {
 					return stack_detail::unchecked_unqualified_get<sol::nested<Tu>>(L, index, tracking);
 				}
 			}
-			else if constexpr (!std::is_reference_v<X> && is_unique_usertype_v<Tu> && !is_base_rebindable_non_void_v<unique_usertype_traits<Tu>>) {
-				using u_traits = unique_usertype_traits<Tu>;
-				using T = typename u_traits::type;
-				using Real = typename u_traits::actual_type;
+			else if constexpr (!std::is_reference_v<X> && is_unique_usertype_v<Tu> && !is_actual_type_rebindable_for_v<Tu>) {
+				using element = unique_usertype_element_t<Tu>;
+				using actual = unique_usertype_actual_t<Tu>;
 				tracking.use(1);
 				void* memory = lua_touserdata(L, index);
 				memory = detail::align_usertype_unique_destructor(memory);
 				detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(memory);
-				if (&detail::usertype_unique_alloc_destroy<T, X> == pdx) {
+				if (&detail::usertype_unique_alloc_destroy<element, Tu> == pdx) {
 					memory = detail::align_usertype_unique_tag<true, false>(memory);
-					memory = detail::align_usertype_unique<Real, true, false>(memory);
-					Real* mem = static_cast<Real*>(memory);
-					return static_cast<Real>(*mem);
+					memory = detail::align_usertype_unique<actual, true, false>(memory);
+					actual* mem = static_cast<actual*>(memory);
+					return static_cast<actual>(*mem);
 				}
-				Real r(nullptr);
-				if constexpr (!derive<T>::value) {
-					// TODO: abort / terminate, maybe only in debug modes?
-					return static_cast<Real>(std::move(r));
+				actual r {};
+				if constexpr (!derive<element>::value) {
+#if SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+					// In debug mode we would rather abort you for this grave failure rather
+					// than let you deref a null pointer and fuck everything over
+					std::abort();
+#endif
+					return static_cast<actual>(std::move(r));
 				}
 				else {
 					memory = detail::align_usertype_unique_tag<true, false>(memory);
 					detail::unique_tag& ic = *reinterpret_cast<detail::unique_tag*>(memory);
-					memory = detail::align_usertype_unique<Real, true, false>(memory);
-					string_view ti = usertype_traits<T>::qualified_name();
+					memory = detail::align_usertype_unique<actual, true, false>(memory);
+					string_view ti = usertype_traits<element>::qualified_name();
 					int cast_operation;
-					if constexpr (is_base_rebindable_v<u_traits>) {
-						using rebind_t = typename u_traits::template rebind_base<void>;
-						string_view rebind_ti = usertype_traits<rebind_t>::qualified_name();
+					if constexpr (is_actual_type_rebindable_for_v<Tu>) {
+						using rebound_actual_type = unique_usertype_rebind_actual_t<Tu, void>;
+						string_view rebind_ti = usertype_traits<rebound_actual_type>::qualified_name();
 						cast_operation = ic(memory, &r, ti, rebind_ti);
 					}
 					else {
@@ -227,19 +230,23 @@ namespace sol { namespace stack {
 					case 1: {
 						// it's a perfect match,
 						// alias memory directly
-						Real* mem = static_cast<Real*>(memory);
-						return static_cast<Real>(*mem);
+						actual* mem = static_cast<actual*>(memory);
+						return static_cast<actual>(*mem);
 					}
 					case 2:
 						// it's a base match, return the
 						// aliased creation
-						return static_cast<Real>(std::move(r));
+						return static_cast<actual>(std::move(r));
 					default:
 						// uh oh..
 						break;
 					}
-					// TODO: abort / terminate, maybe only in debug modes?
-					return static_cast<Real>(r);
+#if SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+					// In debug mode we would rather abort you for this grave failure rather
+					// than let you deref a null pointer and fuck everything over
+					std::abort();
+#endif
+					return static_cast<actual>(r);
 				}
 			}
 			else {
@@ -1027,7 +1034,7 @@ namespace sol { namespace stack {
 		static V get_one(std::integral_constant<std::size_t, I>, lua_State* L, int index, record& tracking) {
 			typedef std::variant_alternative_t<I, V> T;
 			record temp_tracking = tracking;
-			if (stack::check<T>(L, index, no_panic, temp_tracking)) {
+			if (stack::check<T>(L, index, &no_panic, temp_tracking)) {
 				tracking = temp_tracking;
 				return V(std::in_place_index<I>, stack::get<T>(L, index));
 			}

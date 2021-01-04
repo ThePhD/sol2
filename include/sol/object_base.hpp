@@ -47,7 +47,7 @@ namespace sol {
 
 		template <typename T>
 		bool is_stack(std::true_type) const {
-			return stack::check<T>(base_t::lua_state(), base_t::stack_index(), no_panic);
+			return stack::check<T>(base_t::lua_state(), base_t::stack_index(), &no_panic);
 		}
 
 		template <typename T>
@@ -58,7 +58,7 @@ namespace sol {
 			if (r == LUA_NOREF)
 				return false;
 			auto pp = stack::push_pop(*this);
-			return stack::check<T>(base_t::lua_state(), -1, no_panic);
+			return stack::check<T>(base_t::lua_state(), -1, &no_panic);
 		}
 
 	public:

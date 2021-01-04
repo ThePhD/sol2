@@ -132,7 +132,7 @@ namespace sol {
 			if (r == LUA_NOREF)
 				return false;
 			auto pp = stack::push_pop(ref_value);
-			return stack::check<T>(ref_value.lua_state(), -1, no_panic);
+			return stack::check<T>(ref_value.lua_state(), -1, &no_panic);
 		}
 	};
 

@@ -477,7 +477,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		int usertype_alloc_destruct(lua_State* L) {
+		int usertype_alloc_destruct(lua_State* L) noexcept {
 			void* memory = lua_touserdata(L, 1);
 			memory = align_usertype_pointer(memory);
 			T** pdata = static_cast<T**>(memory);
@@ -488,7 +488,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		int unique_destruct(lua_State* L) {
+		int unique_destruct(lua_State* L) noexcept {
 			void* memory = lua_touserdata(L, 1);
 			memory = align_usertype_unique_destructor(memory);
 			unique_destructor& dx = *static_cast<unique_destructor*>(memory);
@@ -498,21 +498,21 @@ namespace sol {
 		}
 
 		template <typename T>
-		int user_alloc_destruct(lua_State* L) {
+		int user_alloc_destruct(lua_State* L) noexcept {
 			void* memory = lua_touserdata(L, 1);
-			memory = align_user<T>(memory);
-			T* data = static_cast<T*>(memory);
+			void* aligned_memory = align_user<T>(memory);
+			T* typed_memory = static_cast<T*>(aligned_memory);
 			std::allocator<T> alloc;
-			std::allocator_traits<std::allocator<T>>::destroy(alloc, data);
+			std::allocator_traits<std::allocator<T>>::destroy(alloc, typed_memory);
 			return 0;
 		}
 
 		template <typename T, typename Real>
 		void usertype_unique_alloc_destroy(void* memory) {
-			memory = align_usertype_unique<Real, true>(memory);
-			Real* target = static_cast<Real*>(memory);
+			void* aligned_memory = align_usertype_unique<Real, true>(memory);
+			Real* typed_memory = static_cast<Real*>(aligned_memory);
 			std::allocator<Real> alloc;
-			std::allocator_traits<std::allocator<Real>>::destroy(alloc, target);
+			std::allocator_traits<std::allocator<Real>>::destroy(alloc, typed_memory);
 		}
 
 		template <typename T>
@@ -577,13 +577,13 @@ namespace sol {
 		};
 
 		struct indexed_insert {
-			lua_reg_table& l;
+			lua_reg_table& registration_table;
 			int& index;
 
-			indexed_insert(lua_reg_table& cont, int& idx) : l(cont), index(idx) {
+			indexed_insert(lua_reg_table& registration_table_, int& index_ref_) : registration_table(registration_table_), index(index_ref_) {
 			}
-			void operator()(meta_function mf, lua_CFunction f) {
-				l[index] = luaL_Reg { to_string(mf).c_str(), f };
+			void operator()(meta_function meta_function_name_, lua_CFunction c_function_) {
+				registration_table[index] = luaL_Reg { to_string(meta_function_name_).c_str(), c_function_ };
 				++index;
 			}
 		};
@@ -659,7 +659,6 @@ namespace sol {
 	} // namespace stack
 
 	namespace meta { namespace meta_detail {
-
 		template <typename T>
 		using adl_sol_lua_get_test_t = decltype(sol_lua_get(types<T>(), static_cast<lua_State*>(nullptr), -1, std::declval<stack::record&>()));
 
@@ -668,15 +667,15 @@ namespace sol {
 			= decltype(sol_lua_interop_get(types<T>(), static_cast<lua_State*>(nullptr), -1, static_cast<void*>(nullptr), std::declval<stack::record&>()));
 
 		template <typename T>
-		using adl_sol_lua_check_test_t = decltype(sol_lua_check(types<T>(), static_cast<lua_State*>(nullptr), -1, no_panic, std::declval<stack::record&>()));
+		using adl_sol_lua_check_test_t = decltype(sol_lua_check(types<T>(), static_cast<lua_State*>(nullptr), -1, &no_panic, std::declval<stack::record&>()));
 
 		template <typename T>
 		using adl_sol_lua_interop_check_test_t
-			= decltype(sol_lua_interop_check(types<T>(), static_cast<lua_State*>(nullptr), -1, type::none, no_panic, std::declval<stack::record&>()));
+			= decltype(sol_lua_interop_check(types<T>(), static_cast<lua_State*>(nullptr), -1, type::none, &no_panic, std::declval<stack::record&>()));
 
 		template <typename T>
 		using adl_sol_lua_check_get_test_t
-			= decltype(sol_lua_check_get(types<T>(), static_cast<lua_State*>(nullptr), -1, no_panic, std::declval<stack::record&>()));
+			= decltype(sol_lua_check_get(types<T>(), static_cast<lua_State*>(nullptr), -1, &no_panic, std::declval<stack::record&>()));
 
 		template <typename... Args>
 		using adl_sol_lua_push_test_t = decltype(sol_lua_push(static_cast<lua_State*>(nullptr), std::declval<Args>()...));
@@ -1034,7 +1033,7 @@ namespace sol {
 
 		template <typename T>
 		bool unqualified_check(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
-			auto handler = no_panic;
+			auto handler = &no_panic;
 			return unqualified_check<T>(L, index, handler);
 		}
 
@@ -1060,7 +1059,7 @@ namespace sol {
 
 		template <typename T>
 		bool check(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
-			auto handler = no_panic;
+			auto handler = &no_panic;
 			return check<T>(L, index, handler);
 		}
 
@@ -1086,7 +1085,7 @@ namespace sol {
 
 		template <typename T>
 		bool check_usertype(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
-			auto handler = no_panic;
+			auto handler = &no_panic;
 			return check_usertype<T>(L, index, handler);
 		}
 
@@ -1114,7 +1113,7 @@ namespace sol {
 
 		template <typename T>
 		decltype(auto) unqualified_check_get(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
-			auto handler = no_panic;
+			auto handler = &no_panic;
 			return unqualified_check_get<T>(L, index, handler);
 		}
 
@@ -1138,7 +1137,7 @@ namespace sol {
 
 		template <typename T>
 		decltype(auto) check_get(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
-			auto handler = no_panic;
+			auto handler = &no_panic;
 			return check_get<T>(L, index, handler);
 		}
 
@@ -1236,7 +1235,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		decltype(auto) get_usertype(lua_State* L, int index = -lua_size<meta::unqualified_t<T>>::value) {
+		decltype(auto) get_usertype(lua_State* L, int index = -lua_size_v<meta::unqualified_t<T>>) {
 			record tracking {};
 			return get_usertype<T>(L, index, tracking);
 		}
@@ -1324,6 +1323,20 @@ namespace sol {
 			using Tu = meta::unqualified_t<T>;
 			modify_unique_usertype_as<Tu>(obj, std::forward<F>(f));
 		}
+
+		namespace stack_detail {
+			template <typename T, typename Handler>
+			decltype(auto) check_get_arg(lua_State* L_, int index_, Handler&& handler_, record& tracking_) {
+				sol_lua_check_access(types<meta::unqualified_t<T>>(), L_, index_, tracking_);
+				return check_get<T>(L_, index_, std::forward<Handler>(handler_), tracking_);
+			}
+
+			template <typename T>
+			decltype(auto) unchecked_get_arg(lua_State* L_, int index_, record& tracking_) {
+				sol_lua_check_access(types<meta::unqualified_t<T>>(), L_, index_, tracking_);
+				return unchecked_get<T>(L_, index_, tracking_);
+			}
+		} // namespace stack_detail
 
 	} // namespace stack
 
