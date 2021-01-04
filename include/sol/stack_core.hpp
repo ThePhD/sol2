@@ -1327,13 +1327,17 @@ namespace sol {
 		namespace stack_detail {
 			template <typename T, typename Handler>
 			decltype(auto) check_get_arg(lua_State* L_, int index_, Handler&& handler_, record& tracking_) {
-				sol_lua_check_access(types<meta::unqualified_t<T>>(), L_, index_, tracking_);
+				if constexpr (meta::meta_detail::is_adl_sol_lua_check_access_v<T>) {
+					sol_lua_check_access(types<meta::unqualified_t<T>>(), L_, index_, tracking_);
+				}
 				return check_get<T>(L_, index_, std::forward<Handler>(handler_), tracking_);
 			}
 
 			template <typename T>
 			decltype(auto) unchecked_get_arg(lua_State* L_, int index_, record& tracking_) {
-				sol_lua_check_access(types<meta::unqualified_t<T>>(), L_, index_, tracking_);
+				if constexpr (meta::meta_detail::is_adl_sol_lua_check_access_v<T>) {
+					sol_lua_check_access(types<meta::unqualified_t<T>>(), L_, index_, tracking_);
+				}
 				return unchecked_get<T>(L_, index_, tracking_);
 			}
 		} // namespace stack_detail

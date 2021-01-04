@@ -27,6 +27,8 @@
 #include <sol/base_traits.hpp>
 #include <sol/pointer_like.hpp>
 
+#include <sol/forward.hpp>
+
 #include <memory>
 
 namespace sol {
@@ -39,6 +41,10 @@ namespace sol {
 
 		template <typename T>
 		struct unique_fallback<std::shared_ptr<T>> {
+		private:
+			using pointer = typename std::pointer_traits<std::shared_ptr<T>>::element_type*;
+
+		public:
 			// rebind is non-void
 			// if and only if unique usertype
 			// is cast-capable
@@ -49,20 +55,22 @@ namespace sol {
 				return p == nullptr;
 			}
 
-			static type* get(const std::shared_ptr<T>& p) noexcept {
+			static pointer get(const std::shared_ptr<T>& p) noexcept {
 				return p.get();
 			}
 		};
 
 		template <typename T, typename D>
 		struct unique_fallback<std::unique_ptr<T, D>> {
-			using element_type = typename std::pointer_traits<std::unique_ptr<T, D>>::element_type;
+		private:
+			using pointer = typename std::unique_ptr<T, D>::pointer;
 
+		public:
 			static bool is_null(lua_State*, const std::unique_ptr<T, D>& p) noexcept {
 				return p == nullptr;
 			}
 
-			static auto get(lua_State*, const std::unique_ptr<T, D>& p) noexcept {
+			static pointer get(lua_State*, const std::unique_ptr<T, D>& p) noexcept {
 				return p.get();
 			}
 		};

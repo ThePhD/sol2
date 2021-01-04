@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2021-01-04 10:51:02.864489 UTC
-// This header was generated with sol v3.2.3 (revision 8f7d4dbb)
+// Generated 2021-01-04 19:01:58.078031 UTC
+// This header was generated with sol v3.2.3 (revision 955418fe)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -1820,11 +1820,11 @@ namespace sol { namespace meta {
 	template <typename T, typename... Args>
 	struct any<T, Args...> : std::conditional_t<T::value, boolean<true>, any<Args...>> { };
 
-	template <typename T, typename... Args>
-	constexpr inline bool all_v = all<T, Args...>::value;
+	template <typename... Args>
+	constexpr inline bool all_v = all<Args...>::value;
 
-	template <typename T, typename... Args>
-	constexpr inline bool any_v = any<T, Args...>::value;
+	template <typename... Args>
+	constexpr inline bool any_v = any<Args...>::value;
 
 	enum class enable_t { _ };
 
@@ -8468,6 +8468,10 @@ namespace sol {
 
 		template <typename T>
 		struct unique_fallback<std::shared_ptr<T>> {
+		private:
+			using pointer = typename std::pointer_traits<std::shared_ptr<T>>::element_type*;
+
+		public:
 			// rebind is non-void
 			// if and only if unique usertype
 			// is cast-capable
@@ -8478,20 +8482,22 @@ namespace sol {
 				return p == nullptr;
 			}
 
-			static type* get(const std::shared_ptr<T>& p) noexcept {
+			static pointer get(const std::shared_ptr<T>& p) noexcept {
 				return p.get();
 			}
 		};
 
 		template <typename T, typename D>
 		struct unique_fallback<std::unique_ptr<T, D>> {
-			using element_type = typename std::pointer_traits<std::unique_ptr<T, D>>::element_type;
+		private:
+			using pointer = typename std::unique_ptr<T, D>::pointer;
 
+		public:
 			static bool is_null(lua_State*, const std::unique_ptr<T, D>& p) noexcept {
 				return p == nullptr;
 			}
 
-			static auto get(lua_State*, const std::unique_ptr<T, D>& p) noexcept {
+			static pointer get(lua_State*, const std::unique_ptr<T, D>& p) noexcept {
 				return p.get();
 			}
 		};
@@ -8790,7 +8796,7 @@ namespace sol {
 				if constexpr (is_actual_type_rebindable_for_v<U>) {
 					using rebound_actual_type = unique_usertype_rebind_actual_t<U>;
 					using cond_bases_t = meta::conditional_t<std::is_void_v<rebound_actual_type>, types<>, uc_bases_t>;
-					string_view this_rebind_ti = usertype_traits<rebind_t>::qualified_name();
+					string_view this_rebind_ti = usertype_traits<rebound_actual_type>::qualified_name();
 					if (rebind_ti != this_rebind_ti) {
 						// this is not even of the same unique type
 						return 0;
@@ -11288,13 +11294,17 @@ namespace sol {
 		namespace stack_detail {
 			template <typename T, typename Handler>
 			decltype(auto) check_get_arg(lua_State* L_, int index_, Handler&& handler_, record& tracking_) {
-				sol_lua_check_access(types<meta::unqualified_t<T>>(), L_, index_, tracking_);
+				if constexpr (meta::meta_detail::is_adl_sol_lua_check_access_v<T>) {
+					sol_lua_check_access(types<meta::unqualified_t<T>>(), L_, index_, tracking_);
+				}
 				return check_get<T>(L_, index_, std::forward<Handler>(handler_), tracking_);
 			}
 
 			template <typename T>
 			decltype(auto) unchecked_get_arg(lua_State* L_, int index_, record& tracking_) {
-				sol_lua_check_access(types<meta::unqualified_t<T>>(), L_, index_, tracking_);
+				if constexpr (meta::meta_detail::is_adl_sol_lua_check_access_v<T>) {
+					sol_lua_check_access(types<meta::unqualified_t<T>>(), L_, index_, tracking_);
+				}
 				return unchecked_get<T>(L_, index_, tracking_);
 			}
 		} // namespace stack_detail

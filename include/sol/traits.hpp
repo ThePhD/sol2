@@ -117,11 +117,11 @@ namespace sol { namespace meta {
 	template <typename T, typename... Args>
 	struct any<T, Args...> : std::conditional_t<T::value, boolean<true>, any<Args...>> { };
 
-	template <typename T, typename... Args>
-	constexpr inline bool all_v = all<T, Args...>::value;
+	template <typename... Args>
+	constexpr inline bool all_v = all<Args...>::value;
 
-	template <typename T, typename... Args>
-	constexpr inline bool any_v = any<T, Args...>::value;
+	template <typename... Args>
+	constexpr inline bool any_v = any<Args...>::value;
 
 	enum class enable_t { _ };
 

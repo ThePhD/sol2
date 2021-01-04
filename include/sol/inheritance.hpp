@@ -162,7 +162,7 @@ namespace sol {
 				if constexpr (is_actual_type_rebindable_for_v<U>) {
 					using rebound_actual_type = unique_usertype_rebind_actual_t<U>;
 					using cond_bases_t = meta::conditional_t<std::is_void_v<rebound_actual_type>, types<>, uc_bases_t>;
-					string_view this_rebind_ti = usertype_traits<rebind_t>::qualified_name();
+					string_view this_rebind_ti = usertype_traits<rebound_actual_type>::qualified_name();
 					if (rebind_ti != this_rebind_ti) {
 						// this is not even of the same unique type
 						return 0;
