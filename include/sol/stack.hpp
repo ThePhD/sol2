@@ -141,39 +141,59 @@ namespace sol {
 				return std::pair<T, int>(*reinterpret_cast<T*>(static_cast<void*>(voiddata.data())), index);
 			}
 
-			template <typename Fx, typename... Args>
-			static decltype(auto) eval(types<>, std::index_sequence<>, lua_State*, int, record&, Fx&& fx, Args&&... args) {
+			template <bool checked, typename Handler, typename Fx, typename... Args>
+			static decltype(auto) eval(types<>, std::index_sequence<>, lua_State*, int, Handler&&, record&, Fx&& fx, Args&&... args) {
 				return std::forward<Fx>(fx)(std::forward<Args>(args)...);
 			}
 
-			template <typename Fx, typename Arg, typename... Args, std::size_t I, std::size_t... Is, typename... FxArgs>
-			static decltype(auto) eval(
-			     types<Arg, Args...>, std::index_sequence<I, Is...>, lua_State* L, int start, record& tracking, Fx&& fx, FxArgs&&... fxargs) {
-				return eval(types<Args...>(),
-				     std::index_sequence<Is...>(),
-				     L,
-				     start,
-				     tracking,
-				     std::forward<Fx>(fx),
-				     std::forward<FxArgs>(fxargs)...,
-				     stack_detail::unchecked_get<Arg>(L, start + tracking.used, tracking));
+			template <bool checked, typename Arg, typename... Args, std::size_t I, std::size_t... Is, typename Handler, typename Fx, typename... FxArgs>
+			static decltype(auto) eval(types<Arg, Args...>, std::index_sequence<I, Is...>, lua_State* L_, int start_index_, Handler&& handler_, record& tracking_, Fx&& fx_, FxArgs&&... fxargs_) {
+#if SOL_IS_ON(SOL_PROPAGATE_EXCEPTIONS_I_)
+				// We can save performance/time by letting errors unwind produced arguments
+				// rather than checking everything once, and then potentially re-doing work
+				if constexpr (checked) {
+					return eval<checked>(types<Args...>(),
+					     std::index_sequence<Is...>(),
+					     L_,
+					     start_index_,
+					     std::forward<Handler>(handler_),
+					     tracking_,
+					     std::forward<Fx>(fx_),
+					     std::forward<FxArgs>(fxargs_)...,
+					     *stack_detail::check_get_arg<Arg>(L_, start_index_ + tracking_.used, handler_, tracking_));
+				}
+				else
+#endif
+				{
+					return eval<checked>(types<Args...>(),
+					     std::index_sequence<Is...>(),
+					     L_,
+					     start_index_,
+					     std::forward<Handler>(handler_),
+					     tracking_,
+					     std::forward<Fx>(fx_),
+					     std::forward<FxArgs>(fxargs_)...,
+					     stack_detail::unchecked_get_arg<Arg>(L_, start_index_ + tracking_.used, tracking_));
+				}
 			}
 
 			template <bool checkargs = detail::default_safe_function_calls, std::size_t... I, typename R, typename... Args, typename Fx, typename... FxArgs>
-			inline decltype(auto) call(types<R>, types<Args...> ta, std::index_sequence<I...> tai, lua_State* L, int start, Fx&& fx, FxArgs&&... args) {
-				static_assert(meta::all<meta::is_not_move_only<Args>...>::value,
+			inline decltype(auto) call(types<R>, types<Args...> argument_types_, std::index_sequence<I...> argument_indices_, lua_State* L_, int start_index_, Fx&& fx_, FxArgs&&... args_) {
+				static_assert(meta::all_v<meta::is_not_move_only<Args>...>,
 				     "One of the arguments being bound is a move-only type, and it is not being taken by reference: this will break your code. Please take "
 				     "a reference and std::move it manually if this was your intention.");
-				if constexpr (checkargs) {
-					argument_handler<types<R, Args...>> handler {};
-					multi_check<Args...>(L, start, handler);
-				}
+				argument_handler<types<R, Args...>> handler {};
 				record tracking {};
+#if SOL_IS_OFF(SOL_PROPAGATE_EXCEPTIONS_I_)
+				if constexpr (checkargs) {
+					multi_check<Args...>(L_, start_index_, handler);
+				}
+#endif
 				if constexpr (std::is_void_v<R>) {
-					eval(ta, tai, L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
+					eval<checkargs>(argument_types_, argument_indices_, L_, start_index_, handler, tracking, std::forward<Fx>(fx_), std::forward<FxArgs>(args_)...);
 				}
 				else {
-					return eval(ta, tai, L, start, tracking, std::forward<Fx>(fx), std::forward<FxArgs>(args)...);
+					return eval<checkargs>(argument_types_, argument_indices_, L_, start_index_, handler, tracking, std::forward<Fx>(fx_), std::forward<FxArgs>(args_)...);
 				}
 			}
 		} // namespace stack_detail

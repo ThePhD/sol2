@@ -6,7 +6,7 @@ inline namespace sol2_regression_test_1087 {
 	};
 } // namespace sol2_regression_test_1087
 
-int regression_1087() {
+unsigned int regression_1087() {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base,
 	     sol::lib::package,

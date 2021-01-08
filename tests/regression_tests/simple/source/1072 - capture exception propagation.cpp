@@ -1,6 +1,6 @@
 #include <sol/sol.hpp>
 
-int regression_1072() {
+unsigned int regression_1072() {
 	auto st = sol::state {};
 	// If you remove the capture, the problem goes away.
 	st["foo"] = [&] { throw std::runtime_error(""); };

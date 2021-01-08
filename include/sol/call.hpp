@@ -172,7 +172,7 @@ namespace sol {
 						}
 					}
 					stack::record tracking {};
-					if (!stack::stack_detail::check_types(args_list(), L, start, no_panic, tracking)) {
+					if (!stack::stack_detail::check_types(args_list(), L, start, &no_panic, tracking)) {
 						return overload_match_arity(types<Fxs...>(),
 						     std::index_sequence<In...>(),
 						     std::index_sequence<M...>(),
@@ -265,7 +265,7 @@ namespace sol {
 						}
 					}
 					stack::record tracking {};
-					if (!stack::stack_detail::check_types(args_list(), L, start, no_panic, tracking)) {
+					if (!stack::stack_detail::check_types(args_list(), L, start, &no_panic, tracking)) {
 						return overload_match_arity(types<Fx1, Fxs...>(),
 						     std::index_sequence<I1, In...>(),
 						     std::index_sequence<M...>(),

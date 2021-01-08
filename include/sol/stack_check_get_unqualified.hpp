@@ -48,7 +48,7 @@ namespace sol { namespace stack {
 				if constexpr (is_lua_reference_v<T>) {
 					// actually check if it's none here, otherwise
 					// we'll have a none object inside an optional!
-					bool success = lua_isnoneornil(L, index) == 0 && stack::check<T>(L, index, no_panic);
+					bool success = lua_isnoneornil(L, index) == 0 && stack::check<T>(L, index, &no_panic);
 					if (!success) {
 						// expected type, actual type
 						tracking.use(static_cast<int>(success));
@@ -160,7 +160,7 @@ namespace sol { namespace stack {
 		template <std::size_t I, typename Handler>
 		static optional<V> get_one(std::integral_constant<std::size_t, I>, lua_State* L, int index, Handler&& handler, record& tracking) {
 			typedef std::variant_alternative_t<I - 1, V> T;
-			if (stack::check<T>(L, index, no_panic, tracking)) {
+			if (stack::check<T>(L, index, &no_panic, tracking)) {
 				return V(std::in_place_index<I - 1>, stack::get<T>(L, index));
 			}
 			return get_one(std::integral_constant<std::size_t, I - 1>(), L, index, std::forward<Handler>(handler), tracking);

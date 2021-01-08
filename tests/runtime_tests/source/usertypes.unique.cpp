@@ -27,59 +27,116 @@
 
 #include <catch.hpp>
 
-struct unique_user_Display {
-	int value = 5;
-};
+inline namespace sol2_test_usertype_unique {
+	template <typename Type, typename Deleter = std::default_delete<Type>>
+	class checked_ptr {
+	private:
+		using pointer = Type*;
+		pointer ptr;
+		Deleter del;
 
-std::vector<std::shared_ptr<unique_user_Display>> unique_user_foo() {
-	return { std::make_shared<unique_user_Display>(), std::make_shared<unique_user_Display>(), std::make_shared<unique_user_Display>() };
-}
+	public:
+		checked_ptr() noexcept : checked_ptr(nullptr) {
+		}
+		checked_ptr(std::nullptr_t) noexcept : ptr(nullptr), del() {
+		}
+		checked_ptr(pointer ptr_) noexcept : ptr(ptr_), del() {
+		}
 
-int unique_user_bar(std::shared_ptr<unique_user_Display> item) {
-	return item->value;
-}
+		pointer get() const noexcept {
+			return ptr;
+		}
 
-struct factory_test {
-private:
-	factory_test() {
-		a = true_a;
-	}
-	~factory_test() {
-		a = 0;
-	}
-
-public:
-	static int num_saved;
-	static int num_killed;
-
-	struct deleter {
-		void operator()(factory_test* f) {
-			f->~factory_test();
+		void reset() noexcept {
+			if (ptr != nullptr) {
+				del(ptr);
+				ptr = nullptr;
+			}
 		}
 	};
 
-	static const int true_a;
-	int a;
+	struct checked_class {
+		int value = 4645;
+	};
 
-	static std::unique_ptr<factory_test, deleter> make() {
-		return std::unique_ptr<factory_test, deleter>(new factory_test(), deleter());
+	struct unique_user_Display {
+		int value = 5;
+	};
+
+	std::vector<std::shared_ptr<unique_user_Display>> unique_user_foo() {
+		return { std::make_shared<unique_user_Display>(), std::make_shared<unique_user_Display>(), std::make_shared<unique_user_Display>() };
 	}
 
-	static void save(factory_test& f) {
-		new (&f) factory_test();
-		++num_saved;
+	int unique_user_bar(std::shared_ptr<unique_user_Display> item) {
+		return item->value;
 	}
 
-	static void kill(factory_test& f) {
-		f.~factory_test();
-		++num_killed;
+	struct factory_test {
+	private:
+		factory_test() {
+			a = true_a;
+		}
+		~factory_test() {
+			a = 0;
+		}
+
+	public:
+		static int num_saved;
+		static int num_killed;
+
+		struct deleter {
+			void operator()(factory_test* f) {
+				f->~factory_test();
+			}
+		};
+
+		static const int true_a;
+		int a;
+
+		static std::unique_ptr<factory_test, deleter> make() {
+			return std::unique_ptr<factory_test, deleter>(new factory_test(), deleter());
+		}
+
+		static void save(factory_test& f) {
+			new (&f) factory_test();
+			++num_saved;
+		}
+
+		static void kill(factory_test& f) {
+			f.~factory_test();
+			++num_killed;
+		}
+	};
+
+	int factory_test::num_saved = 0;
+	int factory_test::num_killed = 0;
+	const int factory_test::true_a = 156;
+} // namespace sol2_test_usertype_unique
+
+namespace sol {
+	template <>
+	struct unique_usertype_traits<checked_ptr<checked_class>> {
+		static checked_class* get(lua_State*, const checked_ptr<checked_class>& ptr) noexcept {
+			return ptr.get();
+		}
+
+		static bool is_null(lua_State*, const checked_ptr<checked_class>& ptr) noexcept {
+			return ptr.get() == nullptr;
+		}
+	};
+} // namespace sol
+
+void sol_lua_check_access(sol::types<checked_class>, lua_State* L, int index, sol::stack::record& tracking) {
+	sol::optional<checked_ptr<checked_class>&> maybe_checked = sol::stack::check_get<checked_ptr<checked_class>&>(L, index, sol::no_panic, tracking);
+	if (!maybe_checked.has_value()) {
+		return;
 	}
-};
-
-int factory_test::num_saved = 0;
-int factory_test::num_killed = 0;
-const int factory_test::true_a = 156;
-
+	checked_ptr<checked_class>& checked = *maybe_checked;
+	if (checked.get() == nullptr) {
+		// freak out in whatever way is appropriate, here
+		throw std::runtime_error("You dun goofed");
+	}
+}
 
 TEST_CASE("usertype/unique-shared-ptr", "manage the conversion and use of unique and shared pointers ('unique usertypes')") {
 	const int64_t unique_value = 0x7125679355635963;
@@ -193,4 +250,22 @@ TEST_CASE("usertype/unique containers", "copyable unique usertypes in containers
 	REQUIRE_FALSE(err0.has_value());
 	sol::optional<sol::error> err1 = lua.safe_script("assert(bar(v3[1]) == 5)");
 	REQUIRE_FALSE(err1.has_value());
+}
+
+TEST_CASE("usertype/unique_usertype checks", "Ensure that access to usertypes can be checked") {
+	sol::state lua;
+
+	lua["c"] = checked_ptr<checked_class>(new checked_class());
+	lua["c_nil"] = checked_ptr<checked_class>();
+
+	lua["f"] = [](checked_class cc) { std::cout << cc.value << std::endl; };
+
+	sol::optional<sol::error> maybe_error = lua.safe_script("f(c)", sol::script_pass_on_error);
+	REQUIRE_FALSE(maybe_error.has_value());
+
+	checked_ptr<checked_class>& c = lua["c"];
+	c.reset();
+
+	sol::optional<sol::error> should_error = lua.safe_script("f(c)", sol::script_pass_on_error);
+	REQUIRE(should_error.has_value());
 }

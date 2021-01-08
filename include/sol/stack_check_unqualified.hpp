@@ -195,7 +195,8 @@ namespace sol { namespace stack {
 				return true;
 			}
 			else if constexpr (is_unique_usertype_v<T>) {
-				using proper_T = typename unique_usertype_traits<T>::type;
+				using element = unique_usertype_element_t<T>;
+				using actual = unique_usertype_actual_t<T>;
 				const type indextype = type_of(L, index);
 				tracking.use(1);
 				if (indextype != type::userdata) {
@@ -206,15 +207,15 @@ namespace sol { namespace stack {
 					return true;
 				}
 				int metatableindex = lua_gettop(L);
-				if (stack_detail::check_metatable<detail::unique_usertype<proper_T>>(L, metatableindex)) {
+				if (stack_detail::check_metatable<d::u<element>>(L, metatableindex)) {
 					void* memory = lua_touserdata(L, index);
 					memory = detail::align_usertype_unique_destructor(memory);
 					detail::unique_destructor& pdx = *static_cast<detail::unique_destructor*>(memory);
-					bool success = &detail::usertype_unique_alloc_destroy<proper_T, T> == pdx;
+					bool success = &detail::usertype_unique_alloc_destroy<element, actual> == pdx;
 					if (!success) {
 						memory = detail::align_usertype_unique_tag<true>(memory);
 #if 0
-						// New version
+						// New version, one day
 #else
 						const char*& name_tag = *static_cast<const char**>(memory);
 						success = usertype_traits<T>::qualified_name() == name_tag;
@@ -346,7 +347,7 @@ namespace sol { namespace stack {
 					tracking.use(1);
 					return true;
 				}
-				return stack::unqualified_check<ValueType>(L, index, no_panic, tracking);
+				return stack::unqualified_check<ValueType>(L, index, &no_panic, tracking);
 			}
 #if SOL_IS_ON(SOL_GET_FUNCTION_POINTER_UNSAFE_I_)
 			else if constexpr (std::is_function_v<T> || (std::is_pointer_v<T> && std::is_function_v<std::remove_pointer_t<T>>)) {
@@ -512,7 +513,7 @@ namespace sol { namespace stack {
 					return true;
 				if (stack_detail::check_metatable<U*>(L, metatableindex))
 					return true;
-				if (stack_detail::check_metatable<detail::unique_usertype<U>>(L, metatableindex))
+				if (stack_detail::check_metatable<d::u<U>>(L, metatableindex))
 					return true;
 				if (stack_detail::check_metatable<as_container_t<U>>(L, metatableindex))
 					return true;
@@ -599,7 +600,7 @@ namespace sol { namespace stack {
 		static bool is_one(std::integral_constant<std::size_t, I>, lua_State* L, int index, Handler&& handler, record& tracking) {
 			typedef std::variant_alternative_t<I - 1, V> T;
 			record temp_tracking = tracking;
-			if (stack::check<T>(L, index, no_panic, temp_tracking)) {
+			if (stack::check<T>(L, index, &no_panic, temp_tracking)) {
 				tracking = temp_tracking;
 				return true;
 			}
