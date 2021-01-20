@@ -100,7 +100,15 @@ namespace sol { namespace stack {
 				}
 				return success;
 			}
-			else if constexpr (meta::any_same_v<T, char /* , char8_t*/, char16_t, char32_t>) {
+			else if constexpr (meta::any_same_v<T,
+				                   char
+#if SOL_IS_ON(SOL_CHAR8_T_I_)
+				                   ,
+				                   char8_t
+#endif
+				                   ,
+				                   char16_t,
+				                   char32_t>) {
 				return stack::check<std::basic_string<T>>(L, index, std::forward<Handler>(handler), tracking);
 			}
 			else if constexpr (std::is_integral_v<T> || std::is_same_v<T, lua_Integer>) {

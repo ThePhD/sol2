@@ -49,11 +49,9 @@ struct base2 {
 	int a2 = 500;
 };
 
-struct simple : base1 {
-};
+struct simple : base1 { };
 
-struct complex : base1, base2 {
-};
+struct complex : base1, base2 { };
 
 SOL_BASE_CLASSES(complex, base1, base2);
 SOL_BASE_CLASSES(simple, base1);
@@ -270,39 +268,36 @@ TEST_CASE("libraries", "Check if we can open libraries") {
 TEST_CASE("libraries2", "Check if we can open ALL the libraries") {
 	sol::state lua;
 	REQUIRE_NOTHROW(lua.open_libraries(sol::lib::base,
-		sol::lib::bit32,
-		sol::lib::coroutine,
-		sol::lib::debug,
-		sol::lib::ffi,
-		sol::lib::jit,
-		sol::lib::math,
-		sol::lib::os,
-		sol::lib::package,
-		sol::lib::string,
-		sol::lib::table));
+	     sol::lib::bit32,
+	     sol::lib::coroutine,
+	     sol::lib::debug,
+	     sol::lib::ffi,
+	     sol::lib::jit,
+	     sol::lib::math,
+	     sol::lib::os,
+	     sol::lib::package,
+	     sol::lib::string,
+	     sol::lib::table));
 }
 
-TEST_CASE("interop/null-to-nil-and-back", "nil should be the given type when a pointer from C++ is returned as nullptr, and nil should result in nullptr in connected C++ code") {
+TEST_CASE("interop/null-to-nil-and-back",
+     "nil should be the given type when a pointer from C++ is returned as nullptr, and nil should result in nullptr in connected C++ code") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.set_function("lol", []() -> int* {
-		return nullptr;
-	});
-	lua.set_function("rofl", [](int* x) {
-		INFO(x);
-	});
-	REQUIRE_NOTHROW(lua.safe_script(
-		"x = lol()\n"
-		"rofl(x)\n"
-		"assert(x == nil)"));
+	lua.set_function("lol", []() -> int* { return nullptr; });
+	lua.set_function("rofl", [](int* x) { INFO(x); });
+	REQUIRE_NOTHROW(
+	     lua.safe_script("x = lol()\n"
+	                     "rofl(x)\n"
+	                     "assert(x == nil)"));
 }
 
 TEST_CASE("object/conversions", "make sure all basic reference types can be made into objects") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	struct d {};
+	struct d { };
 
 	lua.safe_script("function f () print('bark') end");
 	lua["d"] = d {};
@@ -356,7 +351,7 @@ TEST_CASE("object/main_* conversions", "make sure all basic reference types can 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	struct d {};
+	struct d { };
 
 	lua.safe_script("function f () print('bark') end");
 	lua["d"] = d {};
@@ -441,7 +436,8 @@ TEST_CASE("feature/indexing overrides", "make sure index functions can be overri
 obj = DynamicObject:new()
 obj.props.name = 'test name'
 print('name = ' .. obj.props.name)
-)__", sol::script_pass_on_error);
+)__",
+	     sol::script_pass_on_error);
 	REQUIRE(result.valid());
 
 	std::string name = lua["obj"]["props"]["name"];
@@ -453,8 +449,7 @@ TEST_CASE("features/indexing numbers", "make sure indexing functions can be over
 	public:
 		double data[3];
 
-		vector()
-		: data { 0, 0, 0 } {
+		vector() : data { 0, 0, 0 } {
 		}
 
 		double& operator[](int i) {
@@ -472,14 +467,13 @@ TEST_CASE("features/indexing numbers", "make sure indexing functions can be over
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
-	lua.new_usertype<vector>("vector", sol::constructors<sol::types<>>(),
-		sol::meta_function::index, &vector::my_index,
-		sol::meta_function::new_index, &vector::my_new_index);
+	lua.new_usertype<vector>(
+	     "vector", sol::constructors<sol::types<>>(), sol::meta_function::index, &vector::my_index, sol::meta_function::new_index, &vector::my_new_index);
 	lua.safe_script(
-		"v = vector.new()\n"
-		"print(v[1])\n"
-		"v[2] = 3\n"
-		"print(v[2])\n");
+	     "v = vector.new()\n"
+	     "print(v[1])\n"
+	     "v[2] = 3\n"
+	     "print(v[2])\n");
 
 	vector& v = lua["v"];
 	REQUIRE(v[0] == 0.0);
@@ -490,22 +484,15 @@ TEST_CASE("features/indexing numbers", "make sure indexing functions can be over
 TEST_CASE("features/multiple inheritance", "Ensure that multiple inheritance works as advertised") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
-	lua.new_usertype<base1>("base1",
-		"a1", &base1::a1);
-	lua.new_usertype<base2>("base2",
-		"a2", &base2::a2);
-	lua.new_usertype<simple>("simple",
-		"a1", &simple::a1,
-		sol::base_classes, sol::bases<base1>());
-	lua.new_usertype<complex>("complex",
-		"a1", &complex::a1,
-		"a2", &complex::a2,
-		sol::base_classes, sol::bases<base1, base2>());
+	lua.new_usertype<base1>("base1", "a1", &base1::a1);
+	lua.new_usertype<base2>("base2", "a2", &base2::a2);
+	lua.new_usertype<simple>("simple", "a1", &simple::a1, sol::base_classes, sol::bases<base1>());
+	lua.new_usertype<complex>("complex", "a1", &complex::a1, "a2", &complex::a2, sol::base_classes, sol::bases<base1, base2>());
 	lua.safe_script(
-		"c = complex.new()\n"
-		"s = simple.new()\n"
-		"b1 = base1.new()\n"
-		"b2 = base1.new()\n");
+	     "c = complex.new()\n"
+	     "s = simple.new()\n"
+	     "b1 = base1.new()\n"
+	     "b2 = base1.new()\n");
 
 	base1* sb1 = lua["s"];
 	REQUIRE(sb1 != nullptr);
@@ -583,8 +570,7 @@ TEST_CASE("optional/engaged versus unengaged", "solidify semantics for an engage
 
 TEST_CASE("pusher/constness", "Make sure more types can handle being const and junk") {
 	struct Foo {
-		Foo(const sol::function& f)
-		: _f(f) {
+		Foo(const sol::function& f) : _f(f) {
 		}
 		const sol::function& _f;
 
@@ -595,9 +581,7 @@ TEST_CASE("pusher/constness", "Make sure more types can handle being const and j
 
 	sol::state lua;
 
-	lua.new_usertype<Foo>("Foo",
-		sol::call_constructor, sol::no_constructor,
-		"f", &Foo::f);
+	lua.new_usertype<Foo>("Foo", sol::call_constructor, sol::no_constructor, "f", &Foo::f);
 
 	lua["func"] = []() { return 20; };
 	sol::function f = lua["func"];
@@ -646,7 +630,7 @@ TEST_CASE("numbers/integers", "make sure integers are detectable on most platfor
 }
 
 TEST_CASE("object/is", "test whether or not the is abstraction works properly for a user-defined type") {
-	struct thing {};
+	struct thing { };
 
 	SECTION("stack_object") {
 		sol::state lua;
@@ -676,7 +660,7 @@ TEST_CASE("object/base_of_things", "make sure that object is the base of things 
 		sol::state lua;
 		lua.open_libraries(sol::lib::base, sol::lib::coroutine);
 
-		lua["ud"] = base1{};
+		lua["ud"] = base1 {};
 
 		lua["f1"] = [](sol::object o) -> sol::object { return o; };
 		lua["f2"] = [](sol::table o) -> sol::object { return o; };
@@ -701,7 +685,7 @@ TEST_CASE("object/base_of_things", "make sure that object is the base of things 
 		sol::state lua;
 		lua.open_libraries(sol::lib::base, sol::lib::coroutine);
 
-		lua["ud"] = base1{};
+		lua["ud"] = base1 {};
 
 		lua["f1"] = [](sol::stack_object o) -> sol::stack_object { return o; };
 		lua["f2"] = [](sol::stack_table o) -> sol::stack_object { return std::move(o); };

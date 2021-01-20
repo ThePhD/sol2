@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-int main () {
+int main() {
 
 	const auto& code = R"(
 	bark_power = 11;
@@ -29,19 +29,19 @@ int main () {
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
-	
+
 	lua.script(code);
 
 	sol::protected_function problematic_woof = lua["woof"];
-	problematic_woof.error_handler = lua["got_problems"];
+	problematic_woof.set_error_handler(lua["got_problems"]);
 
 	auto firstwoof = problematic_woof(20);
-	if ( firstwoof.valid() ) {
+	if (firstwoof.valid()) {
 		// Can work with contents
 		double numwoof = firstwoof;
 		std::cout << "Got value: " << numwoof << std::endl;
 	}
-	else{
+	else {
 		// An error has occured
 		sol::error err = firstwoof;
 		std::string what = err.what();

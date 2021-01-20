@@ -113,7 +113,7 @@ TEST_CASE("plain/indestructible", "test that we error for types that are innatel
 
 TEST_CASE("plain/constructors and destructors", "Make sure that constructors, destructors, deallocators and others work properly with the desired type") {
 	static int constructed = 0;
-	static int destructed = 0;
+	static int destroyed = 0;
 	static int copied = 0;
 	static int moved = 0;
 
@@ -136,7 +136,7 @@ TEST_CASE("plain/constructors and destructors", "Make sure that constructors, de
 
 		~st() {
 			value = 0;
-			++destructed;
+			++destroyed;
 		}
 	};
 
@@ -163,17 +163,17 @@ TEST_CASE("plain/constructors and destructors", "Make sure that constructors, de
 		st& v = lua["v"];
 		REQUIRE(v.value == 10);
 		REQUIRE(constructed == 1);
-		REQUIRE(destructed == 0);
+		REQUIRE(destroyed == 0);
 		{
 			std::unique_ptr<st, deallocate_only> unsafe(new st());
 			lua["unsafe"] = unsafe.get();
 			sol::protected_function_result result2 = lua.safe_script("d(unsafe)", &sol::script_pass_on_error);
 			REQUIRE(result2.valid());
 			REQUIRE(constructed == 2);
-			REQUIRE(destructed == 1);
+			REQUIRE(destroyed == 1);
 		}
 		REQUIRE(constructed == 2);
-		REQUIRE(destructed == 1);
+		REQUIRE(destroyed == 1);
 
 		{
 			sol::protected_function_result result3 = lua.safe_script("vg = g()", &sol::script_pass_on_error);
@@ -181,7 +181,7 @@ TEST_CASE("plain/constructors and destructors", "Make sure that constructors, de
 			st& vg = lua["vg"];
 			REQUIRE(vg.value == 10);
 			REQUIRE(constructed == 3);
-			REQUIRE(destructed == 1);
+			REQUIRE(destroyed == 1);
 		}
 
 		{
@@ -192,11 +192,11 @@ TEST_CASE("plain/constructors and destructors", "Make sure that constructors, de
 		}
 	}
 	int purely_constructed = constructed - moved - copied;
-	int purely_destructed = destructed - moved - copied;
-	REQUIRE(constructed == destructed);
-	REQUIRE(purely_constructed == purely_destructed);
+	int purely_destroyed = destroyed - moved - copied;
+	REQUIRE(constructed == destroyed);
+	REQUIRE(purely_constructed == purely_destroyed);
 	REQUIRE(purely_constructed == 4);
-	REQUIRE(purely_destructed == 4);
+	REQUIRE(purely_destroyed == 4);
 }
 
 TEST_CASE("plain/arrays", "make sure c-style arrays don't ruin everything and compile fine as usertype variables") {

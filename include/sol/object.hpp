@@ -48,8 +48,6 @@ namespace sol {
 		}
 		basic_object(detail::no_safety_tag, lua_State* L_, int index_) : base_t(L_, index_) {
 		}
-		basic_object(lua_State* L_, detail::global_tag t) : base_t(L_, t) {
-		}
 		basic_object(detail::no_safety_tag, lua_State* L_, ref_index index_) : base_t(L_, index_) {
 		}
 		template <typename T,
@@ -71,6 +69,8 @@ namespace sol {
 		}
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
 		basic_object(lua_State* L_, T&& r) : base_t(L_, std::forward<T>(r)) {
+		}
+		basic_object(lua_State* L_, global_tag_t t) : base_t(L_, t) {
 		}
 		basic_object(lua_nil_t r) : base_t(r) {
 		}

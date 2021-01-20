@@ -69,29 +69,32 @@ namespace sol {
 
 	template <typename base_type>
 	template <typename Key, typename Value>
-	void basic_metatable<base_type>::set(Key&& key, Value&& value) {
+	basic_metatable<base_type>& basic_metatable<base_type>::set(Key&& key, Value&& value) {
 		this->push();
 		lua_State* L = this->lua_state();
 		int target = lua_gettop(L);
-		optional<u_detail::usertype_storage_base&> maybe_uts = u_detail::maybe_get_usertype_storage_base(L, target);
-		lua_pop(L, 1);
+		optional<u_detail::usertype_storage_base&> maybe_uts = nullopt;
+		maybe_uts = u_detail::maybe_get_usertype_storage_base(L, target);
 		if (maybe_uts) {
 			u_detail::usertype_storage_base& uts = *maybe_uts;
 			uts.set(L, std::forward<Key>(key), std::forward<Value>(value));
+			return *this;
 		}
 		else {
 			base_t::set(std::forward<Key>(key), std::forward<Value>(value));
 		}
+		this->pop();
+		return *this;
 	}
 
 	namespace stack {
 		template <>
 		struct unqualified_getter<metatable_key_t> {
-			static table get(lua_State* L, int index = -1) {
+			static metatable get(lua_State* L, int index = -1) {
 				if (lua_getmetatable(L, index) == 0) {
-					return table(L, ref_index(LUA_REFNIL));
+					return metatable(L, ref_index(LUA_REFNIL));
 				}
-				return table(L, -1);
+				return metatable(L, -1);
 			}
 		};
 	} // namespace stack

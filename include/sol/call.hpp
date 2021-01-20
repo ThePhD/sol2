@@ -697,7 +697,7 @@ namespace sol {
 			template <typename F>
 			static int call(lua_State* L, F&& f) {
 				if constexpr (std::is_void_v<Fx>) {
-					return detail::usertype_alloc_destruct<T>(L);
+					return detail::usertype_alloc_destroy<T>(L);
 				}
 				else {
 					using uFx = meta::unqualified_t<Fx>;

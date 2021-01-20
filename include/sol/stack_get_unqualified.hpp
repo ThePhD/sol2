@@ -139,8 +139,14 @@ namespace sol { namespace stack {
 				return static_cast<T>(lua_tonumber(L, index));
 			}
 			else if constexpr (is_lua_reference_v<T>) {
-				tracking.use(1);
-				return T(L, index);
+				if constexpr (is_global_table_v<T>) {
+					tracking.use(1);
+					return T(L, global_tag);
+				}
+				else {
+					tracking.use(1);
+					return T(L, index);
+				}
 			}
 			else if constexpr (is_unique_usertype_v<T>) {
 				using actual = unique_usertype_actual_t<T>;

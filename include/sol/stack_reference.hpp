@@ -42,7 +42,7 @@ namespace sol {
 	private:
 		friend class stack_reference;
 
-		int index = 0;
+		int m_index = 0;
 
 		int registry_index() const noexcept {
 			return LUA_NOREF;
@@ -51,15 +51,15 @@ namespace sol {
 	public:
 		stateless_stack_reference() noexcept = default;
 		stateless_stack_reference(lua_nil_t) noexcept : stateless_stack_reference() {};
-		stateless_stack_reference(lua_State* L, int i) noexcept : stateless_stack_reference(absolute_index(L, i)) {
+		stateless_stack_reference(lua_State* L_, int index_) noexcept : stateless_stack_reference(absolute_index(L_, index_)) {
 		}
-		stateless_stack_reference(lua_State*, absolute_index i) noexcept : stateless_stack_reference(i) {
+		stateless_stack_reference(lua_State*, absolute_index index_) noexcept : stateless_stack_reference(index_) {
 		}
-		stateless_stack_reference(lua_State*, raw_index i) noexcept : stateless_stack_reference(i) {
+		stateless_stack_reference(lua_State*, raw_index index_) noexcept : stateless_stack_reference(index_) {
 		}
-		stateless_stack_reference(absolute_index i) noexcept : index(i) {
+		stateless_stack_reference(absolute_index index_) noexcept : m_index(index_) {
 		}
-		stateless_stack_reference(raw_index i) noexcept : index(i) {
+		stateless_stack_reference(raw_index index_) noexcept : m_index(index_) {
 		}
 		stateless_stack_reference(lua_State*, ref_index) noexcept = delete;
 		stateless_stack_reference(ref_index) noexcept = delete;
@@ -69,30 +69,30 @@ namespace sol {
 		stateless_stack_reference& operator=(stateless_stack_reference&&) noexcept = default;
 		stateless_stack_reference& operator=(const stateless_stack_reference&) noexcept = default;
 
-		int push(lua_State* L) const noexcept {
+		int push(lua_State* L_) const noexcept {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
-			luaL_checkstack(L, 1, "not enough Lua stack space to push a single reference value");
+			luaL_checkstack(L_, 1, "not enough Lua stack space to push a single reference value");
 #endif // make sure stack doesn't overflow
-			lua_pushvalue(L, index);
+			lua_pushvalue(L_, m_index);
 			return 1;
 		}
 
-		void pop(lua_State* L, int n = 1) const noexcept {
-			lua_pop(L, n);
+		void pop(lua_State* L_, int pop_count = 1) const noexcept {
+			lua_pop(L_, pop_count);
 		}
 
 		int stack_index() const noexcept {
-			return index;
+			return m_index;
 		}
 
-		const void* pointer(lua_State* L) const noexcept {
-			const void* vp = lua_topointer(L, stack_index());
-			return vp;
+		const void* pointer(lua_State* L_) const noexcept {
+			const void* pointer_id = lua_topointer(L_, stack_index());
+			return pointer_id;
 		}
 
-		type get_type(lua_State* L) const noexcept {
-			int result = lua_type(L, index);
-			return static_cast<type>(result);
+		type get_type(lua_State* L_) const noexcept {
+			int untyped_value = lua_type(L_, stack_index());
+			return static_cast<type>(untyped_value);
 		}
 
 		bool valid(lua_State* L) const noexcept {
@@ -100,8 +100,32 @@ namespace sol {
 			return t != type::lua_nil && t != type::none;
 		}
 
-		void abandon(lua_State* = nullptr) {
-			index = 0;
+		void reset(lua_State*) noexcept {
+			m_index = 0;
+		}
+
+		void reset(lua_State* L_, int index_) noexcept {
+			m_index = absolute_index(L_, index_);
+		}
+
+		void abandon(lua_State* = nullptr) noexcept {
+			m_index = 0;
+		}
+
+		stateless_stack_reference copy(lua_State* L_) const noexcept {
+			return stateless_stack_reference(L_, raw_index(m_index));
+		}
+
+		void copy_assign(lua_State*, const stateless_stack_reference& right) noexcept {
+			m_index = right.m_index;
+		}
+
+		bool equals(lua_State* L_, const stateless_stack_reference& r) const noexcept {
+			return lua_compare(L_, this->stack_index(), r.stack_index(), LUA_OPEQ) == 1;
+		}
+
+		bool equals(lua_State* L_, lua_nil_t) const noexcept {
+			return valid(L_);
 		}
 	};
 
@@ -124,7 +148,7 @@ namespace sol {
 		stack_reference(lua_State* L, const reference& r) noexcept = delete;
 		stack_reference(lua_State* L, const stack_reference& r) noexcept : luastate(L) {
 			if (!r.valid()) {
-				index = 0;
+				m_index = 0;
 				return;
 			}
 			int i = r.stack_index();
@@ -132,11 +156,11 @@ namespace sol {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 				luaL_checkstack(L, 1, "not enough Lua stack space to push a single reference value");
 #endif // make sure stack doesn't overflow
-				lua_pushvalue(r.lua_state(), r.index);
+				lua_pushvalue(r.lua_state(), r.stack_index());
 				lua_xmove(r.lua_state(), luastate, 1);
 				i = absolute_index(luastate, -1);
 			}
-			index = i;
+			m_index = i;
 		}
 		stack_reference(stack_reference&& o) noexcept = default;
 		stack_reference& operator=(stack_reference&&) noexcept = default;
@@ -147,16 +171,16 @@ namespace sol {
 			return push(lua_state());
 		}
 
-		int push(lua_State* Ls) const noexcept {
-			return stateless_stack_reference::push(Ls);
+		int push(lua_State* L_) const noexcept {
+			return stateless_stack_reference::push(L_);
 		}
 
 		void pop() const noexcept {
 			pop(lua_state());
 		}
 
-		void pop(lua_State* Ls, int n = 1) const noexcept {
-			stateless_stack_reference::pop(Ls, n);
+		void pop(lua_State* L_, int pop_count_ = 1) const noexcept {
+			stateless_stack_reference::pop(L_, pop_count_);
 		}
 
 		const void* pointer() const noexcept {
@@ -181,7 +205,7 @@ namespace sol {
 	};
 
 	inline bool operator==(const stack_reference& l, const stack_reference& r) {
-		return lua_compare(l.lua_state(), l.stack_index(), r.stack_index(), LUA_OPEQ) == 0;
+		return lua_compare(l.lua_state(), l.stack_index(), r.stack_index(), LUA_OPEQ) == 1;
 	}
 
 	inline bool operator!=(const stack_reference& l, const stack_reference& r) {
@@ -204,7 +228,43 @@ namespace sol {
 		return rhs.valid();
 	}
 
+	inline bool operator==(const stateless_stack_reference& l, const stateless_stack_reference& r) {
+		return l.stack_index() == r.stack_index();
+	}
+
+	inline bool operator!=(const stateless_stack_reference& l, const stateless_stack_reference& r) {
+		return l.stack_index() != r.stack_index();
+	}
+
+	struct stateless_stack_reference_equals {
+		using is_transparent = std::true_type;
+
+		stateless_stack_reference_equals(lua_State* L_) noexcept : m_L(L_) {
+		}
+
+		lua_State* lua_state() const noexcept {
+			return m_L;
+		}
+
+		bool operator()(const stateless_stack_reference& lhs, const stateless_stack_reference& rhs) const {
+			return lhs.equals(lua_state(), rhs);
+		}
+
+		bool operator()(lua_nil_t lhs, const stateless_stack_reference& rhs) const {
+			return rhs.equals(lua_state(), lhs);
+		}
+
+		bool operator()(const stateless_stack_reference& lhs, lua_nil_t rhs) const {
+			return lhs.equals(lua_state(), rhs);
+		}
+
+	private:
+		lua_State* m_L;
+	};
+
 	struct stack_reference_equals {
+		using is_transparent = std::true_type;
+
 		bool operator()(const lua_nil_t& lhs, const stack_reference& rhs) const {
 			return lhs == rhs;
 		}
@@ -218,11 +278,33 @@ namespace sol {
 		}
 	};
 
-	struct stack_reference_hash {
-		typedef stack_reference argument_type;
-		typedef std::size_t result_type;
+	struct stateless_stack_reference_hash {
+		using argument_type = stateless_stack_reference;
+		using result_type = std::size_t;
+		using is_transparent = std::true_type;
 
-		result_type operator()(const argument_type& lhs) const {
+		stateless_stack_reference_hash(lua_State* L_) noexcept : m_L(L_) {
+		}
+
+		lua_State* lua_state() const noexcept {
+			return m_L;
+		}
+
+		result_type operator()(const argument_type& lhs) const noexcept {
+			std::hash<const void*> h;
+			return h(lhs.pointer(lua_state()));
+		}
+
+	private:
+		lua_State* m_L;
+	};
+
+	struct stack_reference_hash {
+		using argument_type = stack_reference;
+		using result_type = std::size_t;
+		using is_transparent = std::true_type;
+
+		result_type operator()(const argument_type& lhs) const noexcept {
 			std::hash<const void*> h;
 			return h(lhs.pointer());
 		}

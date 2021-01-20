@@ -46,16 +46,25 @@ namespace sol { namespace stack {
 		static Optional get_using(lua_State* L, int index, Handler&& handler, record& tracking) {
 			if constexpr (!meta::meta_detail::is_adl_sol_lua_check_v<T> && !meta::meta_detail::is_adl_sol_lua_get_v<T>) {
 				if constexpr (is_lua_reference_v<T>) {
-					// actually check if it's none here, otherwise
-					// we'll have a none object inside an optional!
-					bool success = lua_isnoneornil(L, index) == 0 && stack::check<T>(L, index, &no_panic);
-					if (!success) {
-						// expected type, actual type
-						tracking.use(static_cast<int>(success));
-						handler(L, index, type::poly, type_of(L, index), "");
-						return detail::associated_nullopt_v<Optional>;
+					if constexpr (is_global_table_v<T>) {
+						(void)L;
+						(void)index;
+						(void)handler;
+						tracking.use(1);
+						return true;
 					}
-					return stack_detail::unchecked_get<T>(L, index, tracking);
+					else {
+						// actually check if it's none here, otherwise
+						// we'll have a none object inside an optional!
+						bool success = lua_isnoneornil(L, index) == 0 && stack::check<T>(L, index, &no_panic);
+						if (!success) {
+							// expected type, actual type
+							tracking.use(static_cast<int>(success));
+							handler(L, index, type::poly, type_of(L, index), "");
+							return detail::associated_nullopt_v<Optional>;
+						}
+						return stack_detail::unchecked_get<T>(L, index, tracking);
+					}
 				}
 				else if constexpr ((std::is_integral_v<T> || std::is_same_v<T, lua_Integer>)&&!std::is_same_v<T, bool>) {
 #if SOL_LUA_VESION_I_ >= 503

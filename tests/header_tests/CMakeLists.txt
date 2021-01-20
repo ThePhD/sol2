@@ -20,7 +20,7 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# # # # sol3 tests - compilation tests
+# # # # sol3 tests - header compilation tests
 
 file(GLOB_RECURSE SOL2_COMPILE_TEST_SOURCES source/*.cpp)
 source_group(compile_test_sources FILES "${SOL2_COMPILE_TEST_SOURCES}")

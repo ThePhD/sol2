@@ -60,7 +60,15 @@ namespace sol { namespace stack {
 
 		template <typename T>
 		int msvc_is_ass_with_if_constexpr_push_enum(std::true_type, lua_State* L, const T& value) {
-			if constexpr (meta::any_same_v<std::underlying_type_t<T>, char /*, char8_t*/, char16_t, char32_t>) {
+			if constexpr (meta::any_same_v<std::underlying_type_t<T>,
+				              char
+#if SOL_IS_ON(SOL_CHAR8_T_I_)
+				              ,
+				              char8_t
+#endif
+				              ,
+				              char16_t,
+				              char32_t>) {
 				if constexpr (std::is_signed_v<T>) {
 					return stack::push(L, static_cast<std::int_least32_t>(value));
 				}
@@ -630,7 +638,7 @@ namespace sol { namespace stack {
 				luaL_checkstack(L, 1, detail::not_enough_stack_space_generic);
 #endif // make sure stack doesn't overflow
 				if (luaL_newmetatable(L, name) != 0) {
-					lua_CFunction cdel = detail::user_alloc_destruct<T>;
+					lua_CFunction cdel = detail::user_alloc_destroy<T>;
 					lua_pushcclosure(L, cdel, 0);
 					lua_setfield(L, -2, "__gc");
 				}
@@ -769,6 +777,89 @@ namespace sol { namespace stack {
 			return stack::push(L, static_cast<const char*>(str), 1u);
 		}
 	};
+
+#if SOL_IS_ON(SOL_CHAR8_T_I_)
+	template <>
+	struct unqualified_pusher<const char8_t*> {
+		static int push_sized(lua_State* L, const char8_t* str, std::size_t len) {
+#if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
+			luaL_checkstack(L, 1, detail::not_enough_stack_space_string);
+#endif // make sure stack doesn't overflow
+			lua_pushlstring(L, reinterpret_cast<const char*>(str), len);
+			return 1;
+		}
+
+		static int push(lua_State* L, const char8_t* str) {
+			if (str == nullptr)
+				return stack::push(L, lua_nil);
+			return push_sized(L, str, std::char_traits<char>::length(reinterpret_cast<const char*>(str)));
+		}
+
+		static int push(lua_State* L, const char8_t* strb, const char8_t* stre) {
+			return push_sized(L, strb, static_cast<std::size_t>(stre - strb));
+		}
+
+		static int push(lua_State* L, const char8_t* str, std::size_t len) {
+			return push_sized(L, str, len);
+		}
+	};
+
+	template <>
+	struct unqualified_pusher<char8_t*> {
+		static int push_sized(lua_State* L, const char8_t* str, std::size_t len) {
+			unqualified_pusher<const char8_t*> p {};
+			(void)p;
+			return p.push_sized(L, str, len);
+		}
+
+		static int push(lua_State* L, const char8_t* str) {
+			unqualified_pusher<const char8_t*> p {};
+			(void)p;
+			return p.push(L, str);
+		}
+
+		static int push(lua_State* L, const char8_t* strb, const char8_t* stre) {
+			unqualified_pusher<const char8_t*> p {};
+			(void)p;
+			return p.push(L, strb, stre);
+		}
+
+		static int push(lua_State* L, const char8_t* str, std::size_t len) {
+			unqualified_pusher<const char8_t*> p {};
+			(void)p;
+			return p.push(L, str, len);
+		}
+	};
+
+	template <size_t N>
+	struct unqualified_pusher<char8_t[N]> {
+		static int push(lua_State* L, const char8_t (&str)[N]) {
+#if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
+			luaL_checkstack(L, 1, detail::not_enough_stack_space_string);
+#endif // make sure stack doesn't overflow
+			const char* str_as_char = reinterpret_cast<const char*>(static_cast<const char8_t*>(str));
+			lua_pushlstring(L, str_as_char, std::char_traits<char>::length(str_as_char));
+			return 1;
+		}
+
+		static int push(lua_State* L, const char8_t (&str)[N], std::size_t sz) {
+#if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
+			luaL_checkstack(L, 1, detail::not_enough_stack_space_string);
+#endif // make sure stack doesn't overflow
+			lua_pushlstring(L, str, sz);
+			return 1;
+		}
+	};
+
+	template <>
+	struct unqualified_pusher<char8_t> {
+		static int push(lua_State* L, char8_t c) {
+			const char8_t str[2] = { c, '\0' };
+			return stack::push(L, static_cast<const char8_t*>(str), 1u);
+		}
+	};
+#endif // char8_t
+
 
 	template <typename Ch, typename Traits, typename Al>
 	struct unqualified_pusher<std::basic_string<Ch, Traits, Al>> {

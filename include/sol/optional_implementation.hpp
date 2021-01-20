@@ -340,7 +340,7 @@ namespace sol {
 #endif
 
 		// The storage base manages the actual storage, and correctly propagates
-		// trivial destruction from T. This case is for when T is not trivially
+		// trivial destroyion from T. This case is for when T is not trivially
 		// destructible.
 		template <class T, bool = ::std::is_trivially_destructible<T>::value>
 		struct optional_storage_base {

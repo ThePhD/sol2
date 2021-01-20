@@ -477,7 +477,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		int usertype_alloc_destruct(lua_State* L) noexcept {
+		int usertype_alloc_destroy(lua_State* L) noexcept {
 			void* memory = lua_touserdata(L, 1);
 			memory = align_usertype_pointer(memory);
 			T** pdata = static_cast<T**>(memory);
@@ -488,7 +488,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		int unique_destruct(lua_State* L) noexcept {
+		int unique_destroy(lua_State* L) noexcept {
 			void* memory = lua_touserdata(L, 1);
 			memory = align_usertype_unique_destructor(memory);
 			unique_destructor& dx = *static_cast<unique_destructor*>(memory);
@@ -498,7 +498,7 @@ namespace sol {
 		}
 
 		template <typename T>
-		int user_alloc_destruct(lua_State* L) noexcept {
+		int user_alloc_destroy(lua_State* L) noexcept {
 			void* memory = lua_touserdata(L, 1);
 			void* aligned_memory = align_user<T>(memory);
 			T* typed_memory = static_cast<T*>(aligned_memory);
@@ -516,10 +516,10 @@ namespace sol {
 		}
 
 		template <typename T>
-		int cannot_destruct(lua_State* L) {
+		int cannot_destroy(lua_State* L) {
 			return luaL_error(L,
 			     "cannot call the destructor for '%s': it is either hidden (protected/private) or removed with '= "
-			     "delete' and thusly this type is being destroyed without properly destructing, invoking undefined "
+			     "delete' and thusly this type is being destroyed without properly destroying, invoking undefined "
 			     "behavior: please bind a usertype and specify a custom destructor to define the behavior properly",
 			     detail::demangle<T>().data());
 		}
@@ -896,6 +896,17 @@ namespace sol {
 
 		inline void clear(stack_reference& r) {
 			clear(r.lua_state(), r.stack_index());
+		}
+
+		inline void clear(lua_State* L_, stateless_reference& r) {
+			r.push(L_);
+			int stack_index = absolute_index(L_, -1);
+			clear(L_, stack_index);
+			r.pop(L_);
+		}
+
+		inline void clear(lua_State* L_, stateless_stack_reference& r) {
+			clear(L_, r.stack_index());
 		}
 
 		template <typename T, typename... Args>
@@ -1349,19 +1360,19 @@ namespace sol {
 		template <typename T>
 		lua_CFunction make_destructor(std::true_type) {
 			if constexpr (is_unique_usertype_v<T>) {
-				return &unique_destruct<T>;
+				return &unique_destroy<T>;
 			}
 			else if constexpr (!std::is_pointer_v<T>) {
-				return &usertype_alloc_destruct<T>;
+				return &usertype_alloc_destroy<T>;
 			}
 			else {
-				return &cannot_destruct<T>;
+				return &cannot_destroy<T>;
 			}
 		}
 
 		template <typename T>
 		lua_CFunction make_destructor(std::false_type) {
-			return &cannot_destruct<T>;
+			return &cannot_destroy<T>;
 		}
 
 		template <typename T>

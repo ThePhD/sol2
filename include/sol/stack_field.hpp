@@ -58,8 +58,9 @@ namespace sol { namespace stack {
 			|| (!global && !raw && (std::is_integral_v<T> && !std::is_same_v<T, bool>))
 #endif // integer keys 5.3 or better
 #if SOL_LUA_VESION_I_ >= 502
-			|| (!global && raw && (std::is_pointer_v<T> && std::is_void_v<std::remove_pointer_t<T>>));
+			|| (!global && raw && (std::is_pointer_v<T> && std::is_void_v<std::remove_pointer_t<T>>))
 #endif // void pointer keys 5.2 or better
+			;
 	} // namespace stack_detail
 
 	template <typename T, bool global, bool raw, typename>
@@ -114,6 +115,10 @@ namespace sol { namespace stack {
 					else {
 						lua_getfield(L, tableindex, &key[0]);
 					}
+				}
+				else if constexpr (std::is_same_v<T, meta_function>) {
+					const auto& real_key = to_string(key);
+					lua_getfield(L, tableindex, &real_key[0]);
 				}
 #if SOL_LUA_VESION_I_ >= 503
 				else if constexpr (std::is_integral_v<T> && !std::is_same_v<bool, T>) {

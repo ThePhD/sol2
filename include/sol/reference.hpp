@@ -99,18 +99,18 @@ namespace sol {
 		template <bool, typename T, typename = void>
 		struct push_popper {
 			using Tu = meta::unqualified_t<T>;
-			T object;
-			int index;
+			T m_object;
+			int m_index;
 
-			push_popper(T object_) : object(object_), index(lua_absindex(object.lua_state(), -object.push())) {
+			push_popper(T object_) noexcept : m_object(object_), m_index(lua_absindex(m_object.lua_state(), -m_object.push())) {
 			}
 
-			int index_of(const Tu&) const {
-				return index;
+			int index_of(const Tu&) const noexcept {
+				return m_index;
 			}
 
 			~push_popper() {
-				object.pop();
+				m_object.pop();
 			}
 		};
 
@@ -118,10 +118,10 @@ namespace sol {
 		struct push_popper<true, T, C> {
 			using Tu = meta::unqualified_t<T>;
 
-			push_popper(T) {
+			push_popper(T) noexcept {
 			}
 
-			int index_of(const Tu&) const {
+			int index_of(const Tu&) const noexcept {
 				return -1;
 			}
 
@@ -133,10 +133,10 @@ namespace sol {
 		struct push_popper<false, T, std::enable_if_t<is_stack_based_v<meta::unqualified_t<T>>>> {
 			using Tu = meta::unqualified_t<T>;
 
-			push_popper(T) {
+			push_popper(T) noexcept {
 			}
 
-			int index_of(const Tu& object_) const {
+			int index_of(const Tu& object_) const noexcept {
 				return object_.stack_index();
 			}
 
@@ -144,9 +144,64 @@ namespace sol {
 			}
 		};
 
+		template <bool, typename T, typename = void>
+		struct stateless_push_popper {
+			using Tu = meta::unqualified_t<T>;
+			lua_State* m_L;
+			T m_object;
+			int m_index;
+
+			stateless_push_popper(lua_State* L_, T object_) noexcept : m_L(L_), m_object(object_), m_index(lua_absindex(m_L, -m_object.push(m_L))) {
+			}
+
+			int index_of(const Tu&) const noexcept {
+				return m_index;
+			}
+
+			~stateless_push_popper() {
+				m_object.pop(m_L);
+			}
+		};
+
+		template <typename T, typename C>
+		struct stateless_push_popper<true, T, C> {
+			using Tu = meta::unqualified_t<T>;
+
+			stateless_push_popper(lua_State*, T) noexcept {
+			}
+
+			int index_of(lua_State*, const Tu&) const noexcept {
+				return -1;
+			}
+
+			~stateless_push_popper() {
+			}
+		};
+
+		template <typename T>
+		struct stateless_push_popper<false, T, std::enable_if_t<is_stack_based_v<meta::unqualified_t<T>>>> {
+			using Tu = meta::unqualified_t<T>;
+			lua_State* m_L;
+
+			stateless_push_popper(lua_State* L_, T) noexcept : m_L(L_) {
+			}
+
+			int index_of(const Tu& object_) const noexcept {
+				return object_.stack_index();
+			}
+
+			~stateless_push_popper() {
+			}
+		};
+
 		template <bool top_level = false, typename T>
 		push_popper<top_level, T> push_pop(T&& x) {
 			return push_popper<top_level, T>(std::forward<T>(x));
+		}
+
+		template <bool top_level = false, typename T>
+		stateless_push_popper<top_level, T> push_pop(lua_State* L_, T&& object_) {
+			return stateless_push_popper<top_level, T>(L_, std::forward<T>(object_));
 		}
 
 		template <typename T>
@@ -183,10 +238,8 @@ namespace sol {
 	}
 
 	namespace detail {
-		struct global_tag {
-		} const global_ {};
 		struct no_safety_tag {
-		} const no_safety {};
+		} inline constexpr no_safety {};
 
 		template <bool b>
 		inline lua_State* pick_main_thread(lua_State* L_, lua_State* backup_if_unsupported = nullptr) {
@@ -206,18 +259,18 @@ namespace sol {
 
 		int ref = LUA_NOREF;
 
-		int copy(lua_State* L_) const noexcept {
+		int copy_ref(lua_State* L_) const noexcept {
 			if (ref == LUA_NOREF)
 				return LUA_NOREF;
 			push(L_);
 			return luaL_ref(L_, LUA_REGISTRYINDEX);
 		}
 
-		lua_State* copy_assign(lua_State* L_, lua_State* rL, const stateless_reference& r) {
+		lua_State* copy_assign_ref(lua_State* L_, lua_State* rL, const stateless_reference& r) {
 			if (valid(L_)) {
 				deref(L_);
 			}
-			ref = r.copy(L_);
+			ref = r.copy_ref(L_);
 			return rL;
 		}
 
@@ -235,7 +288,7 @@ namespace sol {
 			return -1;
 		}
 
-		stateless_reference(lua_State* L_, detail::global_tag) noexcept {
+		stateless_reference(lua_State* L_, global_tag_t) noexcept {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L_, 1, "not enough Lua stack space to push this reference value");
 #endif // make sure stack doesn't overflow
@@ -263,7 +316,7 @@ namespace sol {
 				ref = LUA_NOREF;
 				return;
 			}
-			ref = r.copy(L_);
+			ref = r.copy_ref(L_);
 		}
 
 		stateless_reference(lua_State* L_, stateless_reference&& r) noexcept {
@@ -295,16 +348,20 @@ namespace sol {
 			ref = luaL_ref(L_, LUA_REGISTRYINDEX);
 		}
 
+		stateless_reference(lua_State* L_, const stateless_stack_reference& r) noexcept : stateless_reference(L_, r.stack_index()) {
+		}
+
 		stateless_reference(lua_State* L_, int index = -1) noexcept {
-			// use L_ to stick with that state's execution stack
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L_, 1, "not enough Lua stack space to push this reference value");
 #endif // make sure stack doesn't overflow
 			lua_pushvalue(L_, index);
 			ref = luaL_ref(L_, LUA_REGISTRYINDEX);
 		}
-		stateless_reference(lua_State* L_, ref_index index) noexcept {
-			lua_rawgeti(L_, LUA_REGISTRYINDEX, index.index);
+		stateless_reference(lua_State* L_, absolute_index index_) noexcept : stateless_reference(L_, index_.index) {
+		}
+		stateless_reference(lua_State* L_, ref_index index_) noexcept {
+			lua_rawgeti(L_, LUA_REGISTRYINDEX, index_.index);
 			ref = luaL_ref(L_, LUA_REGISTRYINDEX);
 		}
 		stateless_reference(lua_State*, lua_nil_t) noexcept {
@@ -325,7 +382,6 @@ namespace sol {
 			return *this;
 		}
 
-
 		int push(lua_State* L_) const noexcept {
 #if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
 			luaL_checkstack(L_, 1, "not enough Lua stack space to push this reference value");
@@ -340,6 +396,22 @@ namespace sol {
 
 		int registry_index() const noexcept {
 			return ref;
+		}
+
+		void reset(lua_State* L_) noexcept {
+			if (valid(L_)) {
+				deref(L_);
+			}
+			ref = LUA_NOREF;
+		}
+
+		void reset(lua_State* L_, int index_) noexcept {
+			reset(L_);
+#if SOL_IS_ON(SOL_SAFE_STACK_CHECK_I_)
+			luaL_checkstack(L_, 1, "not enough Lua stack space to push this reference value");
+#endif // make sure stack doesn't overflow
+			lua_pushvalue(L_, index_);
+			ref = luaL_ref(L_, LUA_REGISTRYINDEX);
 		}
 
 		bool valid(lua_State*) const noexcept {
@@ -367,6 +439,38 @@ namespace sol {
 		void deref(lua_State* L_) const noexcept {
 			luaL_unref(L_, LUA_REGISTRYINDEX, ref);
 		}
+
+		stateless_reference copy(lua_State* L_) const noexcept {
+			if (!valid(L_)) {
+				return {};
+			}
+			return stateless_reference(copy_ref(L_));
+		}
+
+		void copy_assign(lua_State* L_, const stateless_reference& right) noexcept {
+			if (valid(L_)) {
+				deref(L_);
+			}
+			if (!right.valid(L_)) {
+				return;
+			}
+			ref = right.copy_ref(L_);
+		}
+
+		bool equals(lua_State* L_, const stateless_reference& r) const noexcept {
+			auto ppl = stack::push_pop(L_, *this);
+			auto ppr = stack::push_pop(L_, r);
+			return lua_compare(L_, -1, -2, LUA_OPEQ) == 1;
+		}
+
+		bool equals(lua_State* L_, const stateless_stack_reference& r) const noexcept {
+			auto ppl = stack::push_pop(L_, *this);
+			return lua_compare(L_, -1, r.stack_index(), LUA_OPEQ) == 1;
+		}
+
+		bool equals(lua_State* L_, lua_nil_t) const noexcept {
+			return valid(L_);
+		}
 	};
 
 	template <bool main_only = false>
@@ -377,7 +481,7 @@ namespace sol {
 		lua_State* luastate = nullptr; // non-owning
 
 		template <bool r_main_only>
-		void copy_assign(const basic_reference<r_main_only>& r) {
+		void copy_assign_complex(const basic_reference<r_main_only>& r) {
 			if (valid()) {
 				deref();
 			}
@@ -397,7 +501,7 @@ namespace sol {
 				return;
 			}
 			luastate = detail::pick_main_thread < main_only && !r_main_only > (r.lua_state(), r.lua_state());
-			ref = r.copy();
+			ref = r.copy_ref();
 		}
 
 		template <bool r_main_only>
@@ -428,11 +532,10 @@ namespace sol {
 		}
 
 	protected:
-		basic_reference(lua_State* L_, detail::global_tag) noexcept
-		: basic_reference(detail::pick_main_thread<main_only>(L_, L_), detail::global_, detail::global_) {
+		basic_reference(lua_State* L_, global_tag_t) noexcept : basic_reference(detail::pick_main_thread<main_only>(L_, L_), global_tag, global_tag) {
 		}
 
-		basic_reference(lua_State* L_, detail::global_tag, detail::global_tag) noexcept : stateless_reference(L_, detail::global_), luastate(L_) {
+		basic_reference(lua_State* L_, global_tag_t, global_tag_t) noexcept : stateless_reference(L_, global_tag), luastate(L_) {
 		}
 
 		basic_reference(lua_State* oL, const basic_reference<!main_only>& o) noexcept : stateless_reference(oL, o), luastate(oL) {
@@ -442,12 +545,12 @@ namespace sol {
 			return stateless_reference::deref(lua_state());
 		}
 
-		int copy() const noexcept {
-			return copy(lua_state());
+		int copy_ref() const noexcept {
+			return copy_ref(lua_state());
 		}
 
-		int copy(lua_State* L_) const noexcept {
-			return stateless_reference::copy(L_);
+		int copy_ref(lua_State* L_) const noexcept {
+			return stateless_reference::copy_ref(L_);
 		}
 
 	public:
@@ -473,7 +576,7 @@ namespace sol {
 				ref = luaL_ref(lua_state(), LUA_REGISTRYINDEX);
 				return;
 			}
-			ref = r.copy();
+			ref = r.copy_ref();
 		}
 
 		template <bool r_main_only>
@@ -532,7 +635,7 @@ namespace sol {
 			deref();
 		}
 
-		basic_reference(const basic_reference& o) noexcept : stateless_reference(o.copy()), luastate(o.lua_state()) {
+		basic_reference(const basic_reference& o) noexcept : stateless_reference(o.copy_ref()), luastate(o.lua_state()) {
 		}
 
 		basic_reference(basic_reference&& o) noexcept : stateless_reference(std::move(o)), luastate(o.lua_state()) {
@@ -555,7 +658,7 @@ namespace sol {
 		}
 
 		basic_reference& operator=(const basic_reference& r) noexcept {
-			copy_assign(r);
+			copy_assign_complex(r);
 			return *this;
 		}
 
@@ -565,16 +668,12 @@ namespace sol {
 		}
 
 		basic_reference& operator=(const basic_reference<!main_only>& r) noexcept {
-			copy_assign(r);
+			copy_assign_complex(r);
 			return *this;
 		}
 
 		basic_reference& operator=(const lua_nil_t&) noexcept {
-			if (valid()) {
-				deref();
-			}
-			luastate = nullptr;
-			ref = LUA_NOREF;
+			reset();
 			return *this;
 		}
 
@@ -586,6 +685,11 @@ namespace sol {
 
 		int push() const noexcept {
 			return push(lua_state());
+		}
+
+		void reset() noexcept {
+			stateless_reference::reset(luastate);
+			luastate = nullptr;
 		}
 
 		int push(lua_State* L_) const noexcept {
@@ -619,6 +723,10 @@ namespace sol {
 			return stateless_reference::valid(lua_state());
 		}
 
+		bool valid(lua_State* L_) const noexcept {
+			return stateless_reference::valid(L_);
+		}
+
 		const void* pointer() const noexcept {
 			return stateless_reference::pointer(lua_state());
 		}
@@ -637,92 +745,152 @@ namespace sol {
 	};
 
 	template <bool lb, bool rb>
-	inline bool operator==(const basic_reference<lb>& l, const basic_reference<rb>& r) {
+	inline bool operator==(const basic_reference<lb>& l, const basic_reference<rb>& r) noexcept {
 		auto ppl = stack::push_pop(l);
 		auto ppr = stack::push_pop(r);
 		return lua_compare(l.lua_state(), -1, -2, LUA_OPEQ) == 1;
 	}
 
 	template <bool lb, bool rb>
-	inline bool operator!=(const basic_reference<lb>& l, const basic_reference<rb>& r) {
+	inline bool operator!=(const basic_reference<lb>& l, const basic_reference<rb>& r) noexcept {
 		return !operator==(l, r);
 	}
 
 	template <bool lb>
-	inline bool operator==(const basic_reference<lb>& l, const stack_reference& r) {
+	inline bool operator==(const basic_reference<lb>& l, const stack_reference& r) noexcept {
 		auto ppl = stack::push_pop(l);
 		return lua_compare(l.lua_state(), -1, r.stack_index(), LUA_OPEQ) == 1;
 	}
 
 	template <bool lb>
-	inline bool operator!=(const basic_reference<lb>& l, const stack_reference& r) {
+	inline bool operator!=(const basic_reference<lb>& l, const stack_reference& r) noexcept {
 		return !operator==(l, r);
 	}
 
 	template <bool rb>
-	inline bool operator==(const stack_reference& l, const basic_reference<rb>& r) {
+	inline bool operator==(const stack_reference& l, const basic_reference<rb>& r) noexcept {
 		auto ppr = stack::push_pop(r);
 		return lua_compare(l.lua_state(), -1, r.stack_index(), LUA_OPEQ) == 1;
 	}
 
 	template <bool rb>
-	inline bool operator!=(const stack_reference& l, const basic_reference<rb>& r) {
+	inline bool operator!=(const stack_reference& l, const basic_reference<rb>& r) noexcept {
 		return !operator==(l, r);
 	}
 
 	template <bool lb>
-	inline bool operator==(const basic_reference<lb>& lhs, const lua_nil_t&) {
+	inline bool operator==(const basic_reference<lb>& lhs, const lua_nil_t&) noexcept {
 		return !lhs.valid();
 	}
 
 	template <bool rb>
-	inline bool operator==(const lua_nil_t&, const basic_reference<rb>& rhs) {
+	inline bool operator==(const lua_nil_t&, const basic_reference<rb>& rhs) noexcept {
 		return !rhs.valid();
 	}
 
 	template <bool lb>
-	inline bool operator!=(const basic_reference<lb>& lhs, const lua_nil_t&) {
+	inline bool operator!=(const basic_reference<lb>& lhs, const lua_nil_t&) noexcept {
 		return lhs.valid();
 	}
 
 	template <bool rb>
-	inline bool operator!=(const lua_nil_t&, const basic_reference<rb>& rhs) {
+	inline bool operator!=(const lua_nil_t&, const basic_reference<rb>& rhs) noexcept {
 		return rhs.valid();
 	}
 
+	inline bool operator==(const stateless_reference& l, const stateless_reference& r) noexcept {
+		return l.registry_index() == r.registry_index();
+	}
+
+	inline bool operator!=(const stateless_reference& l, const stateless_reference& r) noexcept {
+		return l.registry_index() != r.registry_index();
+	}
+
+	inline bool operator==(const stateless_reference& lhs, const lua_nil_t&) noexcept {
+		return lhs.registry_index() == LUA_REFNIL;
+	}
+
+	inline bool operator==(const lua_nil_t&, const stateless_reference& rhs) noexcept {
+		return rhs.registry_index() == LUA_REFNIL;
+	}
+
+	inline bool operator!=(const stateless_reference& lhs, const lua_nil_t&) noexcept {
+		return lhs.registry_index() != LUA_REFNIL;
+	}
+
+	inline bool operator!=(const lua_nil_t&, const stateless_reference& rhs) noexcept {
+		return rhs.registry_index() != LUA_REFNIL;
+	}
+
+	struct stateless_reference_equals : public stateless_stack_reference_equals {
+		using is_transparent = std::true_type;
+
+		stateless_reference_equals(lua_State* L_) noexcept : stateless_stack_reference_equals(L_) {
+		}
+
+		bool operator()(const lua_nil_t& lhs, const stateless_reference& rhs) const noexcept {
+			return rhs.equals(lua_state(), lhs);
+		}
+
+		bool operator()(const stateless_reference& lhs, const lua_nil_t& rhs) const noexcept {
+			return lhs.equals(lua_state(), rhs);
+		}
+
+		bool operator()(const stateless_reference& lhs, const stateless_reference& rhs) const noexcept {
+			return lhs.equals(lua_state(), rhs);
+		}
+	};
+
 	struct reference_equals : public stack_reference_equals {
+		using is_transparent = std::true_type;
+
 		template <bool rb>
-		bool operator()(const lua_nil_t& lhs, const basic_reference<rb>& rhs) const {
+		bool operator()(const lua_nil_t& lhs, const basic_reference<rb>& rhs) const noexcept {
 			return lhs == rhs;
 		}
 
 		template <bool lb>
-		bool operator()(const basic_reference<lb>& lhs, const lua_nil_t& rhs) const {
+		bool operator()(const basic_reference<lb>& lhs, const lua_nil_t& rhs) const noexcept {
 			return lhs == rhs;
 		}
 
 		template <bool lb, bool rb>
-		bool operator()(const basic_reference<lb>& lhs, const basic_reference<rb>& rhs) const {
+		bool operator()(const basic_reference<lb>& lhs, const basic_reference<rb>& rhs) const noexcept {
 			return lhs == rhs;
 		}
 
 		template <bool lb>
-		bool operator()(const basic_reference<lb>& lhs, const stack_reference& rhs) const {
+		bool operator()(const basic_reference<lb>& lhs, const stack_reference& rhs) const noexcept {
 			return lhs == rhs;
 		}
 
 		template <bool rb>
-		bool operator()(const stack_reference& lhs, const basic_reference<rb>& rhs) const {
+		bool operator()(const stack_reference& lhs, const basic_reference<rb>& rhs) const noexcept {
 			return lhs == rhs;
 		}
 	};
 
+	struct stateless_reference_hash : public stateless_stack_reference_hash {
+		using argument_type = stateless_reference;
+		using result_type = std::size_t;
+		using is_transparent = std::true_type;
+
+		stateless_reference_hash(lua_State* L_) noexcept : stateless_stack_reference_hash(L_) {
+		}
+
+		result_type operator()(const stateless_reference& lhs) const noexcept {
+			std::hash<const void*> h;
+			return h(lhs.pointer(lua_state()));
+		}
+	};
+
 	struct reference_hash : public stack_reference_hash {
-		typedef reference argument_type;
-		typedef std::size_t result_type;
+		using argument_type = reference;
+		using result_type = std::size_t;
+		using is_transparent = std::true_type;
 
 		template <bool lb>
-		result_type operator()(const basic_reference<lb>& lhs) const {
+		result_type operator()(const basic_reference<lb>& lhs) const noexcept {
 			std::hash<const void*> h;
 			return h(lhs.pointer());
 		}

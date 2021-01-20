@@ -36,58 +36,58 @@ namespace sol { namespace detail {
 		return name;
 	}
 
-	template <bool b, typename target_t = reference>
+	template <bool ShouldPush, typename Target = reference>
 	struct protected_handler {
-		typedef is_stack_based<target_t> is_stack;
-		const target_t& target;
+		lua_State* m_L;
+		const Target& target;
 		int stack_index;
 
-		protected_handler(std::false_type, const target_t& target_) : target(target_), stack_index(0) {
-			if (b) {
-				stack_index = lua_gettop(target.lua_state()) + 1;
-				target.push();
+		protected_handler(std::false_type, lua_State* L_, const Target& target_) : m_L(L_), target(target_), stack_index(0) {
+			if (ShouldPush) {
+				stack_index = lua_gettop(L_) + 1;
+				target.push(L_);
 			}
 		}
 
-		protected_handler(std::true_type, const target_t& target_) : target(target_), stack_index(0) {
-			if (b) {
+		protected_handler(std::true_type, lua_State* L_, const Target& target_) : m_L(L_), target(target_), stack_index(0) {
+			if (ShouldPush) {
 				stack_index = target.stack_index();
 			}
 		}
 
-		protected_handler(const target_t& target_) : protected_handler(is_stack(), target_) {
+		protected_handler(lua_State* L_, const Target& target_) : protected_handler(meta::boolean<is_stack_based_v<Target>>(), L_, target_) {
 		}
 
 		bool valid() const noexcept {
-			return b;
+			return ShouldPush;
 		}
 
 		~protected_handler() {
-			if constexpr (!is_stack::value) {
+			if constexpr (!is_stack_based_v<Target>) {
 				if (stack_index != 0) {
-					lua_remove(target.lua_state(), stack_index);
+					lua_remove(m_L, stack_index);
 				}
 			}
 		}
 	};
 
-	template <typename base_t, typename T>
-	basic_function<base_t> force_cast(T& p) {
+	template <typename Base, typename T>
+	inline basic_function<Base> force_cast(T& p) {
 		return p;
 	}
 
-	template <typename Reference, bool is_main_ref = false>
-	static Reference get_default_handler(lua_State* L) {
-		if (is_stack_based<Reference>::value || L == nullptr)
-			return Reference(L, lua_nil);
-		L = is_main_ref ? main_thread(L, L) : L;
-		lua_getglobal(L, default_handler_name());
-		auto pp = stack::pop_n(L, 1);
-		return Reference(L, -1);
+	template <typename Reference, bool IsMainReference = false>
+	inline Reference get_default_handler(lua_State* L_) {
+		if (is_stack_based_v<Reference> || L_ == nullptr)
+			return Reference(L_, lua_nil);
+		L_ = IsMainReference ? main_thread(L_, L_) : L_;
+		lua_getglobal(L_, default_handler_name());
+		auto pp = stack::pop_n(L_, 1);
+		return Reference(L_, -1);
 	}
 
 	template <typename T>
-	static void set_default_handler(lua_State* L, const T& ref) {
+	inline void set_default_handler(lua_State* L, const T& ref) {
 		if (L == nullptr) {
 			return;
 		}

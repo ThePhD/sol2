@@ -81,7 +81,7 @@ namespace sol {
 		};
 
 		struct yield_tag_t { };
-		const yield_tag_t yield_tag = yield_tag_t {};
+		inline constexpr yield_tag_t yield_tag {};
 	} // namespace detail
 
 	struct lua_nil_t { };
@@ -102,13 +102,17 @@ namespace sol {
 	} // namespace detail
 
 	struct metatable_key_t { };
-	const metatable_key_t metatable_key = {};
+	inline constexpr metatable_key_t metatable_key {};
+
+	struct global_tag_t {
+	} inline constexpr global_tag {};
+
 
 	struct env_key_t { };
-	const env_key_t env_key = {};
+	inline constexpr env_key_t env_key {};
 
 	struct no_metatable_t { };
-	const no_metatable_t no_metatable = {};
+	inline constexpr no_metatable_t no_metatable {};
 
 	template <typename T>
 	struct yielding_t {
@@ -836,8 +840,20 @@ namespace sol {
 	}
 
 	template <typename T>
+	struct is_stateless_lua_reference
+	: std::integral_constant<bool,
+	       (std::is_base_of_v<stateless_stack_reference, T> || std::is_base_of_v<stateless_reference, T>)&&(
+	            !std::is_base_of_v<stack_reference, T> && !std::is_base_of_v<reference, T> && !std::is_base_of_v<main_reference, T>)> { };
+
+	template <typename T>
+	inline constexpr bool is_stateless_lua_reference_v = is_stateless_lua_reference<T>::value;
+
+	template <typename T>
 	struct is_lua_reference
-	: std::integral_constant<bool, std::is_base_of_v<reference, T> || std::is_base_of_v<main_reference, T> || std::is_base_of_v<stack_reference, T>> { };
+	: std::integral_constant<bool,
+	       std::is_base_of_v<reference,
+	            T> || std::is_base_of_v<main_reference, T> || std::is_base_of_v<stack_reference, T> || std::is_base_of_v<stateless_stack_reference, T> || std::is_base_of_v<stateless_reference, T>> {
+	};
 
 	template <typename T>
 	inline constexpr bool is_lua_reference_v = is_lua_reference<T>::value;
@@ -895,6 +911,11 @@ namespace sol {
 		template <std::size_t N>
 		struct lua_type_of<wchar_t[N]> : std::integral_constant<type, type::string> { };
 
+#if SOL_IS_ON(SOL_CHAR8_T_I_)
+		template <std::size_t N>
+		struct lua_type_of<char8_t[N]> : std::integral_constant<type, type::string> { };
+#endif
+
 		template <std::size_t N>
 		struct lua_type_of<char16_t[N]> : std::integral_constant<type, type::string> { };
 
@@ -907,6 +928,11 @@ namespace sol {
 		template <>
 		struct lua_type_of<wchar_t> : std::integral_constant<type, type::string> { };
 
+#if SOL_IS_ON(SOL_CHAR8_T_I_)
+		template <>
+		struct lua_type_of<char8_t> : std::integral_constant<type, type::string> { };
+#endif
+
 		template <>
 		struct lua_type_of<char16_t> : std::integral_constant<type, type::string> { };
 
@@ -915,6 +941,14 @@ namespace sol {
 
 		template <>
 		struct lua_type_of<const char*> : std::integral_constant<type, type::string> { };
+
+		template <>
+		struct lua_type_of<const wchar_t*> : std::integral_constant<type, type::string> { };
+
+#if SOL_IS_ON(SOL_CHAR8_T_I_)
+		template <>
+		struct lua_type_of<const char8_t*> : std::integral_constant<type, type::string> { };
+#endif
 
 		template <>
 		struct lua_type_of<const char16_t*> : std::integral_constant<type, type::string> { };
@@ -1165,6 +1199,9 @@ namespace sol {
 	struct is_main_threaded : std::is_base_of<main_reference, T> { };
 
 	template <typename T>
+	inline constexpr bool is_main_threaded_v = is_main_threaded<T>::value;
+
+	template <typename T>
 	struct is_stack_based : std::is_base_of<stack_reference, T> { };
 	template <>
 	struct is_stack_based<variadic_args> : std::true_type { };
@@ -1248,6 +1285,14 @@ namespace sol {
 
 	template <typename T>
 	inline constexpr bool is_table_v = is_table<T>::value;
+
+	template <typename T>
+	struct is_global_table : std::false_type { };
+	template <typename T>
+	struct is_global_table<basic_table_core<true, T>> : std::true_type { };
+
+	template <typename T>
+	inline constexpr bool is_global_table_v = is_global_table<T>::value;
 
 	template <typename T>
 	struct is_stack_table : std::false_type { };

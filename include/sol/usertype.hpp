@@ -50,6 +50,27 @@ namespace sol {
 			(void)detail::swallow { 0, (this->set(std::get<I * 2>(std::move(args)), std::get<I * 2 + 1>(std::move(args))), 0)... };
 		}
 
+		template <typename R, typename... Args, typename Fx, typename Key, typename = std::invoke_result_t<Fx, Args...>>
+		void set_fx(types<R(Args...)>, Key&& key, Fx&& fx) {
+			set_resolved_function<R(Args...)>(std::forward<Key>(key), std::forward<Fx>(fx));
+		}
+
+		template <typename Fx, typename Key, meta::enable<meta::is_specialization_of<meta::unqualified_t<Fx>, overload_set>> = meta::enabler>
+		void set_fx(types<>, Key&& key, Fx&& fx) {
+			set(std::forward<Key>(key), std::forward<Fx>(fx));
+		}
+
+		template <typename Fx, typename Key, typename... Args,
+		     meta::disable<meta::is_specialization_of<meta::unqualified_t<Fx>, overload_set>> = meta::enabler>
+		void set_fx(types<>, Key&& key, Fx&& fx, Args&&... args) {
+			set(std::forward<Key>(key), as_function_reference(std::forward<Fx>(fx), std::forward<Args>(args)...));
+		}
+
+		template <typename... Sig, typename... Args, typename Key>
+		void set_resolved_function(Key&& key, Args&&... args) {
+			set(std::forward<Key>(key), as_function_reference<function_sig<Sig...>>(std::forward<Args>(args)...));
+		}
+
 	public:
 		using base_t::base_t;
 
@@ -57,13 +78,12 @@ namespace sol {
 		using base_t::lua_state;
 		using base_t::pop;
 		using base_t::push;
-		using base_t::set_function;
 		using base_t::traverse_get;
 		using base_t::traverse_set;
 		using base_t::unregister;
 
 		template <typename Key, typename Value>
-		void set(Key&& key, Value&& value) {
+		basic_usertype& set(Key&& key, Value&& value) {
 			optional<u_detail::usertype_storage<T>&> maybe_uts = u_detail::maybe_get_usertype_storage<T>(this->lua_state());
 			if (maybe_uts) {
 				u_detail::usertype_storage<T>& uts = *maybe_uts;
@@ -80,6 +100,19 @@ namespace sol {
 					table_base_t::set(std::forward<Key>(key), std::forward<Value>(value));
 				}
 			}
+			return *this;
+		}
+
+		template <typename Sig, typename Key, typename... Args>
+		basic_usertype& set_function(Key&& key, Args&&... args) {
+			set_fx(types<Sig>(), std::forward<Key>(key), std::forward<Args>(args)...);
+			return *this;
+		}
+
+		template <typename Key, typename... Args>
+		basic_usertype& set_function(Key&& key, Args&&... args) {
+			set_fx(types<>(), std::forward<Key>(key), std::forward<Args>(args)...);
+			return *this;
 		}
 
 		template <typename Key>

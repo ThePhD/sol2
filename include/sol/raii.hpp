@@ -45,7 +45,7 @@ namespace sol {
 			}
 		};
 
-		struct default_destruct {
+		struct default_destroy {
 			template <typename T>
 			static void destroy(T&& obj) {
 				std::allocator<meta::unqualified_t<T>> alloc {};

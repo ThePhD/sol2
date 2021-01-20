@@ -31,26 +31,67 @@
 #include <list>
 #include <memory>
 
-struct self_test {
-	int bark;
+inline namespace sol2_tests_usertypes {
+	struct self_test {
+		int bark;
 
-	self_test()
-	: bark(100) {
-	}
+		self_test() : bark(100) {
+		}
 
-	void g(const std::string& str) {
-		std::cout << str << '\n';
-		bark += 1;
-	}
+		void g(const std::string& str) {
+			std::cout << str << '\n';
+			bark += 1;
+		}
 
-	void f(const self_test& t) {
-		std::cout << "got test" << '\n';
-		if (t.bark != bark)
-			throw sol::error("bark values are not the same for self_test f function");
-		if (&t != this)
-			throw sol::error("call does not reference self for self_test f function");
-	}
-};
+		void f(const self_test& t) {
+			std::cout << "got test" << '\n';
+			if (t.bark != bark)
+				throw sol::error("bark values are not the same for self_test f function");
+			if (&t != this)
+				throw sol::error("call does not reference self for self_test f function");
+		}
+	};
+
+	class Foobar {
+	public:
+		int GetValue(int index) const {
+			return 1234 + index;
+		}
+	};
+
+	class Doodah {
+	public:
+		int GetValue(int index) const {
+			return 2345 + index;
+		}
+	};
+
+	struct T {
+		static int noexcept_function() noexcept {
+			return 0x61;
+		}
+
+		int noexcept_method() noexcept {
+			return 0x62;
+		}
+	};
+
+	struct A {
+		double f = 25.5;
+
+		static void init(A& x, double f) {
+			x.f = f;
+		}
+	};
+
+	class B {
+	public:
+		int bvar = 24;
+	};
+
+	struct my_thing { };
+
+} // namespace sol2_tests_usertypes
 
 TEST_CASE("usertype/self-referential usertype", "usertype classes must play nice when C++ object types are requested for C++ code") {
 	sol::state lua;
@@ -60,10 +101,10 @@ TEST_CASE("usertype/self-referential usertype", "usertype classes must play nice
 	lua.new_usertype<self_test>("test", "g", &self_test::g, "f", &self_test::f);
 
 	auto result = lua.safe_script(
-		"local a = test.new()\n"
-		"a:g(\"woof\")\n"
-		"a:f(a)\n",
-		sol::script_pass_on_error);
+	     "local a = test.new()\n"
+	     "a:g(\"woof\")\n"
+	     "a:f(a)\n",
+	     sol::script_pass_on_error);
 	REQUIRE(result.valid());
 }
 
@@ -72,12 +113,8 @@ TEST_CASE("usertype/nonmember-functions", "let users set non-member functions th
 	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<giver>("giver",
-		   "gief_stuff", giver::gief_stuff,
-		   "gief", &giver::gief,
-		   "__tostring", [](const giver& t) {
-			   return std::to_string(t.a) + ": giving value";
-		   });
+	lua.new_usertype<giver>(
+	     "giver", "gief_stuff", giver::gief_stuff, "gief", &giver::gief, "__tostring", [](const giver& t) { return std::to_string(t.a) + ": giving value"; });
 	lua.get<sol::table>("giver").set_function("stuff", giver::stuff);
 
 	{
@@ -86,10 +123,11 @@ TEST_CASE("usertype/nonmember-functions", "let users set non-member functions th
 	}
 	{
 		auto result = lua.safe_script(
-			"t = giver.new()\n"
-			"print(tostring(t))\n"
-			"t:gief()\n"
-			"t:gief_stuff(20)\n", sol::script_pass_on_error);
+		     "t = giver.new()\n"
+		     "print(tostring(t))\n"
+		     "t:gief()\n"
+		     "t:gief_stuff(20)\n",
+		     sol::script_pass_on_error);
 		REQUIRE(result.valid());
 	}
 	giver& g = lua.get<giver>("t");
@@ -112,11 +150,6 @@ b:a()
 }
 
 TEST_CASE("usertype/as_function", "Ensure that variables can be turned into functions by as_function") {
-	class B {
-	public:
-		int bvar = 24;
-	};
-
 	sol::state lua;
 	sol::stack_guard luasg(lua);
 	lua.open_libraries();
@@ -134,20 +167,11 @@ TEST_CASE("usertype/as_function", "Ensure that variables can be turned into func
 }
 
 TEST_CASE("usertype/call-initializers", "Ensure call constructors with initializers work well") {
-	struct A {
-		double f = 25.5;
-
-		static void init(A& x, double f) {
-			x.f = f;
-		}
-	};
-
 	sol::state lua;
 	sol::stack_guard luasg(lua);
 	lua.open_libraries();
 
-	lua.new_usertype<A>("A",
-		sol::call_constructor, sol::initializers(&A::init));
+	lua.new_usertype<A>("A", sol::call_constructor, sol::initializers(&A::init));
 
 	lua.safe_script(R"(
 a = A(24.3)
@@ -157,8 +181,6 @@ a = A(24.3)
 }
 
 TEST_CASE("usertype/missing-key", "make sure a missing key returns nil") {
-	struct thing {};
-
 	sol::state lua;
 	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
@@ -174,8 +196,6 @@ TEST_CASE("usertype/missing-key", "make sure a missing key returns nil") {
 }
 
 TEST_CASE("usertype/basic type information", "check that we can query some basic type information") {
-	struct my_thing {};
-
 	sol::state lua;
 	sol::stack_guard luasg(lua);
 	lua.open_libraries(sol::lib::base);
@@ -208,16 +228,6 @@ TEST_CASE("usertype/basic type information", "check that we can query some basic
 #if !defined(_MSC_VER) || !(defined(_WIN32) && !defined(_WIN64))
 
 TEST_CASE("usertype/noexcept-methods", "make sure noexcept functions and methods can be bound to usertypes without issues") {
-	struct T {
-		static int noexcept_function() noexcept {
-			return 0x61;
-		}
-
-		int noexcept_method() noexcept {
-			return 0x62;
-		}
-	};
-
 	sol::state lua;
 	sol::stack_guard luasg(lua);
 	lua.new_usertype<T>("T", "nf", &T::noexcept_function, "nm", &T::noexcept_method);
@@ -232,3 +242,48 @@ TEST_CASE("usertype/noexcept-methods", "make sure noexcept functions and methods
 }
 
 #endif // VC++ or my path/compiler settings doing strange bullshit (but it happens on Appveyor too???)
+
+TEST_CASE("usertype/set_function and set parity", "Make sure set and set_function on metatable / usertype<T> have feature parity and do the right thing") {
+	SECTION("usertype<T>") {
+		sol::state L;
+		L.open_libraries(sol::lib::base);
+
+		// the index only works when set in the constructor?
+		auto foo = L.new_usertype<Foobar>("foo", sol::meta_function::index, &Foobar::GetValue);
+		foo.set_function("f", &Foobar::GetValue).set_function("g", &Foobar::GetValue);
+		sol::usertype<Doodah> bar = L.new_usertype<Doodah>("bar");
+		bar.set_function(sol::meta_function::index, &Doodah::GetValue).set_function("f", &Doodah::GetValue).set_function("g", &Doodah::GetValue);
+
+		sol::optional<sol::error> maybe_error = L.safe_script(
+		     "f = foo.new()\n"
+		     "b = bar.new()\n"
+		     "assert(f[3] == (f:f(3)))\n"
+		     "assert(f[3] == (f:g(3)))\n"
+		     "assert(b[6] == (b:f(6)))\n"
+		     "assert(b[6] == (b:g(6)))\n",
+		     &sol::script_pass_on_error);
+		REQUIRE_FALSE(maybe_error.has_value());
+	}
+	SECTION("metatable") {
+		sol::state L;
+		L.open_libraries(sol::lib::base);
+
+		// the index only works when set in the constructor?
+		L.new_usertype<Foobar>("foo");
+		L.new_usertype<Doodah>("bar");
+		sol::metatable foo = L["foo"];
+		sol::metatable bar = L["bar"];
+		foo.set_function(sol::meta_function::index, &Foobar::GetValue).set_function("f", &Foobar::GetValue).set_function("g", &Foobar::GetValue);
+		bar.set_function(sol::meta_function::index, &Doodah::GetValue).set_function("f", &Doodah::GetValue).set_function("g", &Doodah::GetValue);
+
+		sol::optional<sol::error> maybe_error = L.safe_script(
+		     "f = foo.new()\n"
+		     "b = bar.new()\n"
+		     "assert(f[3] == (f:f(3)))\n"
+		     "assert(f[3] == (f:g(3)))\n"
+		     "assert(b[6] == (b:f(6)))\n"
+		     "assert(b[6] == (b:g(6)))\n",
+		     &sol::script_pass_on_error);
+		REQUIRE_FALSE(maybe_error.has_value());
+	}
+}

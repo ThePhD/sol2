@@ -320,7 +320,7 @@ TEST_CASE("functions/function_result and protected_function_result",
 	sol::protected_function justfine = lua["bark"];
 	sol::protected_function justfinewithhandler = lua["bark"];
 
-	justfinewithhandler.error_handler = luahandler;
+	justfinewithhandler.set_error_handler(std::move(luahandler));
 	bool present = true;
 	{
 		sol::protected_function_result result = doom();
@@ -398,7 +398,7 @@ TEST_CASE("functions/safe protected_function_result handlers",
 
 	sol::function cpphandler = lua["cpphandler"];
 	sol::protected_function luadoom(lua["luadoom"]);
-	luadoom.error_handler = cpphandler;
+	luadoom.set_error_handler(cpphandler);
 
 	bool present = true;
 	{
@@ -439,7 +439,7 @@ TEST_CASE("functions/unsafe protected_function_result handlers",
 
 	sol::function cpphandler = lua["cpphandler"];
 	sol::protected_function nontrampoline = lua["nontrampoline"];
-	nontrampoline.error_handler = cpphandler;
+	nontrampoline.set_error_handler(std::move(cpphandler));
 
 	{
 		sol::protected_function_result result = nontrampoline();
@@ -934,7 +934,7 @@ TEST_CASE("functions/stack atomic", "make sure functions don't impede on the sta
 
 	// test protected_function
 	sol::protected_function Stringtest(lua["stringtest"]);
-	Stringtest.error_handler = lua["ErrorHandler"];
+	Stringtest.set_error_handler(lua["ErrorHandler"]);
 	sol::stack_guard luasg(lua);
 	{
 		sol::protected_function_result stringresult = Stringtest("protected test");

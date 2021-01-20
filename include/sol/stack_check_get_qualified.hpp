@@ -36,16 +36,25 @@ namespace sol { namespace stack {
 			using Tu = meta::unqualified_t<T>;
 
 			if constexpr (is_lua_reference_v<T>) {
-				// actually check if it's none here, otherwise
-				// we'll have a none object inside an optional!
-				bool success = lua_isnoneornil(L, index) == 0 && stack::check<T>(L, index, &no_panic);
-				if (!success) {
-					// expected type, actual type
-					tracking.use(static_cast<int>(success));
-					handler(L, index, type::poly, type_of(L, index), "");
-					return {};
+				if constexpr (is_global_table_v<Tu>) {
+					(void)L;
+					(void)index;
+					(void)handler;
+					tracking.use(1);
+					return true;
 				}
-				return OptionalType(stack_detail::unchecked_get<T>(L, index, tracking));
+				else {
+					// actually check if it's none here, otherwise
+					// we'll have a none object inside an optional!
+					bool success = lua_isnoneornil(L, index) == 0 && stack::check<T>(L, index, &no_panic);
+					if (!success) {
+						// expected type, actual type
+						tracking.use(static_cast<int>(success));
+						handler(L, index, type::poly, type_of(L, index), "");
+						return {};
+					}
+					return OptionalType(stack_detail::unchecked_get<T>(L, index, tracking));
+				}
 			}
 			else if constexpr (!std::is_reference_v<T> && is_unique_usertype_v<Tu> && !is_actual_type_rebindable_for_v<Tu>) {
 				// we can take shortcuts here to save on separate checking, and just return nullopt!

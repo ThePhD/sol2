@@ -85,7 +85,7 @@ TEST_CASE("gc/destructors", "test if destructors are fired properly through gc o
 	REQUIRE(nullptr != pt);
 }
 
-TEST_CASE("gc/virtual destructors", "ensure types with virtual destructions behave just fine") {
+TEST_CASE("gc/virtual destructors", "ensure types with virtual destroyions behave just fine") {
 	class B;
 	class A;
 	static std::vector<B*> bs;
@@ -193,7 +193,7 @@ end
 	}
 }
 
-TEST_CASE("gc/function storage", "show that proper copies / destruction happens for function storage (or not)") {
+TEST_CASE("gc/function storage", "show that proper copies / destroyion happens for function storage (or not)") {
 	static int created = 0;
 	static int destroyed = 0;
 	static void* last_call = nullptr;
@@ -307,7 +307,7 @@ TEST_CASE("gc/function storage", "show that proper copies / destruction happens 
 	}
 }
 
-TEST_CASE("gc/same type closures", "make sure destructions are per-object, not per-type, by destroying one type multiple times") {
+TEST_CASE("gc/same type closures", "make sure destroyions are per-object, not per-type, by destroying one type multiple times") {
 	static std::set<void*> last_my_closures;
 	static bool checking_closures = false;
 	static bool check_failed = false;
@@ -348,7 +348,7 @@ TEST_CASE("gc/same type closures", "make sure destructions are per-object, not p
 	REQUIRE(last_my_closures.size() == 2);
 }
 
-TEST_CASE("gc/usertypes", "show that proper copies / destruction happens for usertypes") {
+TEST_CASE("gc/usertypes", "show that proper copies / destroyion happens for usertypes") {
 	static int created = 0;
 	static int destroyed = 0;
 	struct x {
@@ -414,7 +414,7 @@ TEST_CASE("gc/usertypes", "show that proper copies / destruction happens for use
 	}
 }
 
-TEST_CASE("gc/double-deletion tests", "make sure usertypes are properly destructed and don't double-delete memory or segfault") {
+TEST_CASE("gc/double-deletion tests", "make sure usertypes are properly destroyed and don't double-delete memory or segfault") {
 	class crash_class {
 	public:
 		crash_class() {

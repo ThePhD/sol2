@@ -51,6 +51,27 @@ namespace sol {
 		basic_metatable(detail::no_safety_tag, lua_State* L, T&& r) noexcept : base_t(L, std::forward<T>(r)) {
 		}
 
+		template <typename R, typename... Args, typename Fx, typename Key, typename = std::invoke_result_t<Fx, Args...>>
+		void set_fx(types<R(Args...)>, Key&& key, Fx&& fx) {
+			set_resolved_function<R(Args...)>(std::forward<Key>(key), std::forward<Fx>(fx));
+		}
+
+		template <typename Fx, typename Key, meta::enable<meta::is_specialization_of<meta::unqualified_t<Fx>, overload_set>> = meta::enabler>
+		void set_fx(types<>, Key&& key, Fx&& fx) {
+			set(std::forward<Key>(key), std::forward<Fx>(fx));
+		}
+
+		template <typename Fx, typename Key, typename... Args,
+		     meta::disable<meta::is_specialization_of<meta::unqualified_t<Fx>, overload_set>> = meta::enabler>
+		void set_fx(types<>, Key&& key, Fx&& fx, Args&&... args) {
+			set(std::forward<Key>(key), as_function_reference(std::forward<Fx>(fx), std::forward<Args>(args)...));
+		}
+
+		template <typename... Sig, typename... Args, typename Key>
+		void set_resolved_function(Key&& key, Args&&... args) {
+			set(std::forward<Key>(key), as_function_reference<function_sig<Sig...>>(std::forward<Args>(args)...));
+		}
+
 	public:
 		using base_t::lua_state;
 
@@ -100,7 +121,19 @@ namespace sol {
 		}
 
 		template <typename Key, typename Value>
-		void set(Key&& key, Value&& value);
+		basic_metatable<base_type>& set(Key&& key, Value&& value);
+
+		template <typename Sig, typename Key, typename... Args>
+		basic_metatable& set_function(Key&& key, Args&&... args) {
+			set_fx(types<Sig>(), std::forward<Key>(key), std::forward<Args>(args)...);
+			return *this;
+		}
+
+		template <typename Key, typename... Args>
+		basic_metatable& set_function(Key&& key, Args&&... args) {
+			set_fx(types<>(), std::forward<Key>(key), std::forward<Args>(args)...);
+			return *this;
+		}
 
 		void unregister() {
 			using ustorage_base = u_detail::usertype_storage_base;
@@ -113,11 +146,13 @@ namespace sol {
 			stack_reference mt(L, -1);
 			stack::get_field(L, meta_function::gc_names, mt.stack_index());
 			if (type_of(L, -1) != type::table) {
+				lua_settop(L, top);
 				return;
 			}
 			stack_reference gc_names_table(L, -1);
 			stack::get_field(L, meta_function::storage, mt.stack_index());
 			if (type_of(L, -1) != type::lightuserdata) {
+				lua_settop(L, top);
 				return;
 			}
 			ustorage_base& base_storage = *static_cast<ustorage_base*>(stack::get<void*>(L, -1));
