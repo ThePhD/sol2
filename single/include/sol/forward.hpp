@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2021-01-04 19:01:58.992032 UTC
-// This header was generated with sol v3.2.3 (revision 955418fe)
+// Generated 2021-01-20 18:58:34.098440 UTC
+// This header was generated with sol v3.2.3 (revision 6fde9c3f)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -668,6 +668,20 @@
 	#define SOL_MINGW_CCTYPE_IS_POISONED_I_ SOL_ON
 #else
 	#define SOL_MINGW_CCTYPE_IS_POISONED_I_ SOL_DEFAULT_OFF
+#endif
+
+#if defined(SOL_CHAR8_T)
+	#if (SOL_CHAR8_T != 0)
+		#define SOL_CHAR8_T_I_ SOL_ON
+	#else
+		#define SOL_CHAR8_T_I_ SOL_OFF
+	#endif
+#else
+	#ifdef __cpp_char8_t
+		#define SOL_CHAR8_T_I_ SOL_DEFAULT_ON
+	#else
+		#define SOL_CHAR8_T_I_ SOL_DEFAULT_OFF
+	#endif
 #endif
 
 // end of sol/version.hpp
