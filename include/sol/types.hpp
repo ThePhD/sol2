@@ -1401,6 +1401,56 @@ namespace sol {
 	template <typename T>
 	inline constexpr bool is_lua_c_function_v = is_lua_c_function<T>::value;
 
+	enum class automagic_flags : unsigned {
+		none = 0x000u,
+		default_constructor = 0x001,
+		destructor = 0x002u,
+		pairs_operator = 0x004u,
+		to_string_operator = 0x008u,
+		call_operator = 0x010u,
+		less_than_operator = 0x020u,
+		less_than_or_equal_to_operator = 0x040u,
+		length_operator = 0x080u,
+		equal_to_operator = 0x100u,
+		all = default_constructor | destructor | pairs_operator | to_string_operator | call_operator | less_than_operator | less_than_or_equal_to_operator
+		     | length_operator | equal_to_operator
+	};
+
+	inline constexpr automagic_flags operator|(automagic_flags left, automagic_flags right) noexcept {
+		return static_cast<automagic_flags>(
+		     static_cast<std::underlying_type_t<automagic_flags>>(left) | static_cast<std::underlying_type_t<automagic_flags>>(right));
+	}
+
+	inline constexpr automagic_flags operator&(automagic_flags left, automagic_flags right) noexcept {
+		return static_cast<automagic_flags>(
+		     static_cast<std::underlying_type_t<automagic_flags>>(left) & static_cast<std::underlying_type_t<automagic_flags>>(right));
+	}
+
+	inline constexpr automagic_flags& operator|=(automagic_flags& left, automagic_flags right) noexcept {
+		left = left | right;
+		return left;
+	}
+
+	inline constexpr automagic_flags& operator&=(automagic_flags& left, automagic_flags right) noexcept {
+		left = left & right;
+		return left;
+	}
+
+	template <typename Left, typename Right>
+	constexpr bool has_flag(Left left, Right right) noexcept {
+		return (left & right) == right;
+	}
+
+	template <typename Left, typename Right>
+	constexpr bool has_any_flag(Left left, Right right) noexcept {
+		return (left & right) != static_cast<Left>(static_cast<std::underlying_type_t<Left>>(0));
+	}
+
+	template <typename Left, typename Right>
+	constexpr auto clear_flags(Left left, Right right) noexcept {
+		return static_cast<Left>(static_cast<std::underlying_type_t<Left>>(left) & ~static_cast<std::underlying_type_t<Right>>(right));
+	}
+
 	struct automagic_enrollments {
 		bool default_constructor = true;
 		bool destructor = true;
@@ -1413,6 +1463,8 @@ namespace sol {
 		bool equal_to_operator = true;
 	};
 
+	template <automagic_flags compile_time_defaults = automagic_flags::all>
+	struct constant_automagic_enrollments : public automagic_enrollments { };
 
 } // namespace sol
 

@@ -27,16 +27,58 @@
 
 #include <catch.hpp>
 
-struct overloading_test {
-	int print(int i) {
-		INFO("Integer print: " << i);
-		return 500 + i;
+inline namespace sol2_test_usertypes_overload {
+
+	struct overloading_test {
+		int print(int i) {
+			INFO("Integer print: " << i);
+			return 500 + i;
+		}
+		int print() {
+			INFO("No param print.");
+			return 500;
+		}
+	};
+
+	class TestClass1 {
+	public:
+		TestClass1(void) {
+		}
+		~TestClass1(void) {
+		}
+
+	public:
+		void* Get(const uint32_t) {
+			return this;
+		}
+		void* Get(const std::string_view&) {
+			return this;
+		}
+	};
+
+	class TestClass2 {
+	public:
+		TestClass2(void) {
+		}
+		~TestClass2(void) {
+		}
+
+	public:
+		void* Get(const uint32_t) {
+			return this;
+		}
+		void* Get(const std::string_view&) {
+			return this;
+		}
+	};
+
+	sol::object lua_TestClass2_GetByIndex(const sol::this_state& s, TestClass2* tc, const uint32_t index) {
+		return sol::make_object(s, tc);
 	}
-	int print() {
-		INFO("No param print.");
-		return 500;
+	sol::object lua_TestClass2_GetByName(const sol::this_state& s, TestClass2* tc, const std::string_view& name) {
+		return sol::make_object(s, tc);
 	}
-};
+} // namespace sol2_test_usertypes_overload
 
 TEST_CASE("usertype/overloading", "Check if overloading works properly for usertypes") {
 	sol::state lua;
@@ -88,4 +130,37 @@ TEST_CASE("usertype/overloading_values", "ensure overloads handle properly") {
 	REQUIRE(res3 == 524);
 	REQUIRE(res4 == 524);
 	std::cout << "----- end of 8" << std::endl;
+}
+
+TEST_CASE("usertypes/overloading with transparent arguments", "ensure transparent arguments bound with usertypes don't change arity counts in overloads") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	auto t1 = lua.new_usertype<TestClass1>(u8"TestClass1", sol::no_constructor);
+	t1.set_function(
+	     u8"Get", sol::overload(sol::resolve<void*(const uint32_t)>(&TestClass1::Get), sol::resolve<void*(const std::string_view&)>(&TestClass1::Get)));
+
+	auto t2 = lua.new_usertype<TestClass2>(u8"TestClass2", sol::no_constructor);
+	t2.set_function(u8"Get", sol::overload(lua_TestClass2_GetByIndex, lua_TestClass2_GetByName));
+
+	TestClass1 test1;
+	TestClass2 test2;
+	lua["testObj1"] = test1;
+	lua["testObj2"] = test2;
+
+	sol::optional<sol::error> maybe_error = lua.safe_script(R"(
+        local test1 = testObj1:Get(0);
+        local test2 = testObj1:Get('test');
+        assert(test1 ~= nil, 'test1 failed');
+        assert(test2 ~= nil, 'test2 failed');
+        print('test1 ok!');
+        
+        local test3 = testObj2:Get(0);
+        local test4 = testObj2:Get('test');
+        assert(test3 ~= nil, 'test3 failed');
+        assert(test4 ~= nil, 'test4 failed');
+        print('test2 ok!');
+	)",
+	     &sol::script_pass_on_error);
+	REQUIRE_FALSE(maybe_error.has_value());
 }

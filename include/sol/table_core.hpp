@@ -529,11 +529,14 @@ namespace sol {
 		template <typename Class, typename Key>
 		usertype<Class> new_usertype(Key&& key);
 
+		template <typename Class, typename Key, automagic_flags enrollment_flags>
+		usertype<Class> new_usertype(Key&& key, constant_automagic_enrollments<enrollment_flags> enrollment);
+
 		template <typename Class, typename Key>
 		usertype<Class> new_usertype(Key&& key, automagic_enrollments enrollment);
 
 		template <typename Class, typename Key, typename Arg, typename... Args,
-		     typename = std::enable_if_t<!std::is_same_v<meta::unqualified_t<Arg>, automagic_enrollments>>>
+		     typename = std::enable_if_t<!std::is_base_of_v<automagic_enrollments, meta::unqualified_t<Arg>>>>
 		usertype<Class> new_usertype(Key&& key, Arg&& arg, Args&&... args);
 
 		template <bool read_only = true, typename... Args>

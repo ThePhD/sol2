@@ -27,28 +27,39 @@
 
 #include <catch.hpp>
 
+inline namespace sol2_test_usertypes_constructors {
 
-struct matrix_xf {
-	float a, b;
+	struct matrix_xf {
+		float a, b;
 
-	static matrix_xf from_lua_table(sol::table t) {
-		matrix_xf m;
-		m.a = t[1][1];
-		m.b = t[1][2];
-		return m;
-	}
-};
+		static matrix_xf from_lua_table(sol::table t) {
+			matrix_xf m;
+			m.a = t[1][1];
+			m.b = t[1][2];
+			return m;
+		}
+	};
 
-struct matrix_xi {
-	int a, b;
+	struct matrix_xi {
+		int a, b;
 
-	static matrix_xi from_lua_table(sol::table t) {
-		matrix_xi m;
-		m.a = t[1][1];
-		m.b = t[1][2];
-		return m;
-	}
-};
+		static matrix_xi from_lua_table(sol::table t) {
+			matrix_xi m;
+			m.a = t[1][1];
+			m.b = t[1][2];
+			return m;
+		}
+	};
+
+	struct constructor_cheat {
+
+		int val;
+
+		constexpr constructor_cheat() noexcept;
+		constexpr constructor_cheat(int val_) noexcept : val(val_) {
+		}
+	};
+} // namespace sol2_test_usertypes_constructors
 
 TEST_CASE("usertype/call_constructor", "make sure lua types can be constructed with function call constructors") {
 	sol::state lua;
@@ -203,4 +214,17 @@ TEST_CASE("usertype/constructor list", "Show that we can create classes from use
 	sol::object z = lua.get<sol::object>("z");
 	REQUIRE((y.as<int>() == 7));
 	REQUIRE((z.as<int>() == 9));
+}
+
+TEST_CASE("usertype/no_constructor", "make sure if no constructor is present, do not fix anything") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	auto ut = lua.new_usertype<constructor_cheat>("constructor_cheat", sol::no_constructor);
+	ut["val"] = &constructor_cheat::val;
+
+	lua["heck"] = constructor_cheat(1);
+
+	sol::optional<sol::error> maybe_error = lua.safe_script("assert(heck.val == 1)", &sol::script_pass_on_error);
+	REQUIRE_FALSE(maybe_error.has_value());
 }

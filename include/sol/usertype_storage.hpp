@@ -940,7 +940,7 @@ namespace sol { namespace u_detail {
 		stack::set_field<true>(L, gcmetakey, lua_nil);
 	}
 
-	template <typename T>
+	template <typename T, automagic_flags enrollment_flags>
 	inline int register_usertype(lua_State* L_, automagic_enrollments enrollments_ = {}) {
 		using u_traits = usertype_traits<T>;
 		using u_const_traits = usertype_traits<const T>;
@@ -1144,7 +1144,7 @@ namespace sol { namespace u_detail {
 		storage.for_each_table(L_, for_each_backing_metatable);
 
 		// can only use set AFTER we initialize all the metatables
-		if constexpr (std::is_default_constructible_v<T>) {
+		if constexpr (std::is_default_constructible_v<T> && has_flag(enrollment_flags, automagic_flags::default_constructor)) {
 			if (enrollments_.default_constructor) {
 				storage.set(L_, meta_function::construct, constructors<T()>());
 			}

@@ -547,8 +547,8 @@ namespace sol {
 			std::bitset<64>& properties;
 			automagic_enrollments& enrollments;
 
-			properties_enrollment_allowed(int& times, std::bitset<64>& props, automagic_enrollments& enroll)
-			: times_through(times), properties(props), enrollments(enroll) {
+			properties_enrollment_allowed(int& times_through_, std::bitset<64>& properties_, automagic_enrollments& enrollments_)
+			: times_through(times_through_), properties(properties_), enrollments(enrollments_) {
 			}
 
 			bool operator()(meta_function mf) const {

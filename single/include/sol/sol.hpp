@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2021-01-21 07:19:49.610795 UTC
-// This header was generated with sol v3.2.3 (revision e892aa34)
+// Generated 2021-01-21 08:26:12.913504 UTC
+// This header was generated with sol v3.2.3 (revision f7d8e1e8)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -8102,6 +8102,56 @@ namespace sol {
 	template <typename T>
 	inline constexpr bool is_lua_c_function_v = is_lua_c_function<T>::value;
 
+	enum class automagic_flags : unsigned {
+		none = 0x000u,
+		default_constructor = 0x001,
+		destructor = 0x002u,
+		pairs_operator = 0x004u,
+		to_string_operator = 0x008u,
+		call_operator = 0x010u,
+		less_than_operator = 0x020u,
+		less_than_or_equal_to_operator = 0x040u,
+		length_operator = 0x080u,
+		equal_to_operator = 0x100u,
+		all = default_constructor | destructor | pairs_operator | to_string_operator | call_operator | less_than_operator | less_than_or_equal_to_operator
+		     | length_operator | equal_to_operator
+	};
+
+	inline constexpr automagic_flags operator|(automagic_flags left, automagic_flags right) noexcept {
+		return static_cast<automagic_flags>(
+		     static_cast<std::underlying_type_t<automagic_flags>>(left) | static_cast<std::underlying_type_t<automagic_flags>>(right));
+	}
+
+	inline constexpr automagic_flags operator&(automagic_flags left, automagic_flags right) noexcept {
+		return static_cast<automagic_flags>(
+		     static_cast<std::underlying_type_t<automagic_flags>>(left) & static_cast<std::underlying_type_t<automagic_flags>>(right));
+	}
+
+	inline constexpr automagic_flags& operator|=(automagic_flags& left, automagic_flags right) noexcept {
+		left = left | right;
+		return left;
+	}
+
+	inline constexpr automagic_flags& operator&=(automagic_flags& left, automagic_flags right) noexcept {
+		left = left & right;
+		return left;
+	}
+
+	template <typename Left, typename Right>
+	constexpr bool has_flag(Left left, Right right) noexcept {
+		return (left & right) == right;
+	}
+
+	template <typename Left, typename Right>
+	constexpr bool has_any_flag(Left left, Right right) noexcept {
+		return (left & right) != static_cast<Left>(static_cast<std::underlying_type_t<Left>>(0));
+	}
+
+	template <typename Left, typename Right>
+	constexpr auto clear_flags(Left left, Right right) noexcept {
+		return static_cast<Left>(static_cast<std::underlying_type_t<Left>>(left) & ~static_cast<std::underlying_type_t<Right>>(right));
+	}
+
 	struct automagic_enrollments {
 		bool default_constructor = true;
 		bool destructor = true;
@@ -8113,6 +8163,9 @@ namespace sol {
 		bool length_operator = true;
 		bool equal_to_operator = true;
 	};
+
+	template <automagic_flags compile_time_defaults = automagic_flags::all>
+	struct constant_automagic_enrollments : public automagic_enrollments { };
 
 } // namespace sol
 
@@ -10824,8 +10877,8 @@ namespace sol {
 			std::bitset<64>& properties;
 			automagic_enrollments& enrollments;
 
-			properties_enrollment_allowed(int& times, std::bitset<64>& props, automagic_enrollments& enroll)
-			: times_through(times), properties(props), enrollments(enroll) {
+			properties_enrollment_allowed(int& times_through_, std::bitset<64>& properties_, automagic_enrollments& enrollments_)
+			: times_through(times_through_), properties(properties_), enrollments(enrollments_) {
 			}
 
 			bool operator()(meta_function mf) const {
@@ -23614,7 +23667,7 @@ namespace sol { namespace u_detail {
 		stack::set_field<true>(L, gcmetakey, lua_nil);
 	}
 
-	template <typename T>
+	template <typename T, automagic_flags enrollment_flags>
 	inline int register_usertype(lua_State* L_, automagic_enrollments enrollments_ = {}) {
 		using u_traits = usertype_traits<T>;
 		using u_const_traits = usertype_traits<const T>;
@@ -23816,7 +23869,7 @@ namespace sol { namespace u_detail {
 		storage.for_each_table(L_, for_each_backing_metatable);
 
 		// can only use set AFTER we initialize all the metatables
-		if constexpr (std::is_default_constructible_v<T>) {
+		if constexpr (std::is_default_constructible_v<T> && has_flag(enrollment_flags, automagic_flags::default_constructor)) {
 			if (enrollments_.default_constructor) {
 				storage.set(L_, meta_function::construct, constructors<T()>());
 			}
@@ -25145,11 +25198,14 @@ namespace sol {
 		template <typename Class, typename Key>
 		usertype<Class> new_usertype(Key&& key);
 
+		template <typename Class, typename Key, automagic_flags enrollment_flags>
+		usertype<Class> new_usertype(Key&& key, constant_automagic_enrollments<enrollment_flags> enrollment);
+
 		template <typename Class, typename Key>
 		usertype<Class> new_usertype(Key&& key, automagic_enrollments enrollment);
 
 		template <typename Class, typename Key, typename Arg, typename... Args,
-		     typename = std::enable_if_t<!std::is_same_v<meta::unqualified_t<Arg>, automagic_enrollments>>>
+		     typename = std::enable_if_t<!std::is_base_of_v<automagic_enrollments, meta::unqualified_t<Arg>>>>
 		usertype<Class> new_usertype(Key&& key, Arg&& arg, Args&&... args);
 
 		template <bool read_only = true, typename... Args>
@@ -25696,14 +25752,24 @@ namespace sol {
 	template <bool is_global, typename base_type>
 	template <typename Class, typename Key>
 	usertype<Class> basic_table_core<is_global, base_type>::new_usertype(Key&& key) {
-		automagic_enrollments enrollments;
+		constant_automagic_enrollments<> enrollments {};
 		return this->new_usertype<Class>(std::forward<Key>(key), std::move(enrollments));
+	}
+
+	template <bool is_global, typename base_type>
+	template <typename Class, typename Key, automagic_flags enrollment_flags>
+	usertype<Class> basic_table_core<is_global, base_type>::new_usertype(Key&& key, constant_automagic_enrollments<enrollment_flags> enrollments) {
+		int mt_index = u_detail::register_usertype<Class, enrollment_flags>(this->lua_state(), std::move(enrollments));
+		usertype<Class> mt(this->lua_state(), -mt_index);
+		lua_pop(this->lua_state(), 1);
+		set(std::forward<Key>(key), mt);
+		return mt;
 	}
 
 	template <bool is_global, typename base_type>
 	template <typename Class, typename Key>
 	usertype<Class> basic_table_core<is_global, base_type>::new_usertype(Key&& key, automagic_enrollments enrollments) {
-		int mt_index = u_detail::register_usertype<Class>(this->lua_state(), std::move(enrollments));
+		int mt_index = u_detail::register_usertype<Class, automagic_flags::all>(this->lua_state(), std::move(enrollments));
 		usertype<Class> mt(this->lua_state(), -mt_index);
 		lua_pop(this->lua_state(), 1);
 		set(std::forward<Key>(key), mt);
@@ -25713,7 +25779,10 @@ namespace sol {
 	template <bool is_global, typename base_type>
 	template <typename Class, typename Key, typename Arg, typename... Args, typename>
 	usertype<Class> basic_table_core<is_global, base_type>::new_usertype(Key&& key, Arg&& arg, Args&&... args) {
-		automagic_enrollments enrollments;
+		constexpr automagic_flags enrollment_flags = meta::any_same_v<no_construction, meta::unqualified_t<Arg>, meta::unqualified_t<Args>...>
+		     ? clear_flags(automagic_flags::all, automagic_flags::default_constructor)
+		     : automagic_flags::all;
+		constant_automagic_enrollments<enrollment_flags> enrollments;
 		enrollments.default_constructor = !detail::any_is_constructor_v<Arg, Args...>;
 		enrollments.destructor = !detail::any_is_destructor_v<Arg, Args...>;
 		usertype<Class> ut = this->new_usertype<Class>(std::forward<Key>(key), std::move(enrollments));
