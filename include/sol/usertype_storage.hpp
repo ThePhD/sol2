@@ -657,12 +657,6 @@ namespace sol { namespace u_detail {
 		inline void set(lua_State* L, Key&& key, Value&& value);
 	};
 
-	template <typename T>
-	inline int destroy_usertype_storage(lua_State* L) noexcept {
-		clear_usertype_registry_names<T>(L);
-		return detail::user_alloc_destroy<usertype_storage<T>>(L);
-	}
-
 	template <typename T, typename Key, typename Value>
 	void usertype_storage_base::set(lua_State* L, Key&& key, Value&& value) {
 		using ValueU = meta::unwrap_unqualified_t<Value>;
@@ -804,38 +798,6 @@ namespace sol { namespace u_detail {
 		static_cast<usertype_storage_base&>(*this).set<T>(L, std::forward<Key>(key), std::forward<Value>(value));
 	}
 
-	template <typename T>
-	inline usertype_storage<T>& create_usertype_storage(lua_State* L) {
-		const char* gcmetakey = &usertype_traits<T>::gc_table()[0];
-
-		// Make sure userdata's memory is properly in lua first,
-		// otherwise all the light userdata we make later will become invalid
-		int usertype_storage_push_count = stack::push<user<usertype_storage<T>>>(L, no_metatable, L);
-		stack_reference usertype_storage_ref(L, -usertype_storage_push_count);
-
-		// create and push onto the stack a table to use as metatable for this GC
-		// we create a metatable to attach to the regular gc_table
-		// so that the destructor is called for the usertype storage
-		int usertype_storage_metatabe_count = stack::push(L, new_table(0, 1));
-		stack_reference usertype_storage_metatable(L, -usertype_storage_metatabe_count);
-		// set the destroyion routine on the metatable
-		stack::set_field(L, meta_function::garbage_collect, &destroy_usertype_storage<T>, usertype_storage_metatable.stack_index());
-		// set the metatable on the usertype storage userdata
-		stack::set_field(L, metatable_key, usertype_storage_metatable, usertype_storage_ref.stack_index());
-		usertype_storage_metatable.pop();
-
-		// set the usertype storage and its metatable
-		// into the global table...
-		stack::set_field<true>(L, gcmetakey, usertype_storage_ref);
-		usertype_storage_ref.pop();
-
-		// then retrieve the lua-stored version so we have a well-pinned
-		// reference that does not die
-		stack::get_field<true>(L, gcmetakey);
-		usertype_storage<T>& target_umt = stack::pop<user<usertype_storage<T>>>(L);
-		return target_umt;
-	}
-
 	inline optional<usertype_storage_base&> maybe_as_usertype_storage_base(lua_State* L, int index) {
 		if (type_of(L, index) != type::lightuserdata) {
 			return nullopt;
@@ -938,6 +900,44 @@ namespace sol { namespace u_detail {
 		clear_usertype_registry_names<T>(L);
 
 		stack::set_field<true>(L, gcmetakey, lua_nil);
+	}
+
+	template <typename T>
+	inline int destroy_usertype_storage(lua_State* L) noexcept {
+		clear_usertype_registry_names<T>(L);
+		return detail::user_alloc_destroy<usertype_storage<T>>(L);
+	}
+
+	template <typename T>
+	inline usertype_storage<T>& create_usertype_storage(lua_State* L) {
+		const char* gcmetakey = &usertype_traits<T>::gc_table()[0];
+
+		// Make sure userdata's memory is properly in lua first,
+		// otherwise all the light userdata we make later will become invalid
+		int usertype_storage_push_count = stack::push<user<usertype_storage<T>>>(L, no_metatable, L);
+		stack_reference usertype_storage_ref(L, -usertype_storage_push_count);
+
+		// create and push onto the stack a table to use as metatable for this GC
+		// we create a metatable to attach to the regular gc_table
+		// so that the destructor is called for the usertype storage
+		int usertype_storage_metatabe_count = stack::push(L, new_table(0, 1));
+		stack_reference usertype_storage_metatable(L, -usertype_storage_metatabe_count);
+		// set the destroyion routine on the metatable
+		stack::set_field(L, meta_function::garbage_collect, &destroy_usertype_storage<T>, usertype_storage_metatable.stack_index());
+		// set the metatable on the usertype storage userdata
+		stack::set_field(L, metatable_key, usertype_storage_metatable, usertype_storage_ref.stack_index());
+		usertype_storage_metatable.pop();
+
+		// set the usertype storage and its metatable
+		// into the global table...
+		stack::set_field<true>(L, gcmetakey, usertype_storage_ref);
+		usertype_storage_ref.pop();
+
+		// then retrieve the lua-stored version so we have a well-pinned
+		// reference that does not die
+		stack::get_field<true>(L, gcmetakey);
+		usertype_storage<T>& target_umt = stack::pop<user<usertype_storage<T>>>(L);
+		return target_umt;
 	}
 
 	template <typename T, automagic_flags enrollment_flags>
