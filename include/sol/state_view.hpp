@@ -772,8 +772,8 @@ namespace sol {
 		}
 
 		template <typename Class, typename... Args>
-		usertype<Class> new_usertype(const std::string& name, Args&&... args) {
-			return global.new_usertype<Class>(name, std::forward<Args>(args)...);
+		usertype<Class> new_usertype(Args&&... args) {
+			return global.new_usertype<Class>(std::forward<Args>(args)...);
 		}
 
 		template <bool read_only = true, typename... Args>

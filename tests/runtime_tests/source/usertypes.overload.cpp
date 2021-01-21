@@ -72,10 +72,10 @@ inline namespace sol2_test_usertypes_overload {
 		}
 	};
 
-	sol::object lua_TestClass2_GetByIndex(const sol::this_state& s, TestClass2* tc, const uint32_t index) {
+	sol::object lua_TestClass2_GetByIndex(const sol::this_state& s, TestClass2* tc, const uint32_t) {
 		return sol::make_object(s, tc);
 	}
-	sol::object lua_TestClass2_GetByName(const sol::this_state& s, TestClass2* tc, const std::string_view& name) {
+	sol::object lua_TestClass2_GetByName(const sol::this_state& s, TestClass2* tc, const std::string_view&) {
 		return sol::make_object(s, tc);
 	}
 } // namespace sol2_test_usertypes_overload

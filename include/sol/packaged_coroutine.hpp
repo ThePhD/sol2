@@ -149,9 +149,9 @@ namespace sol {
 		basic_packaged_coroutine(proxy_base<Super>&& p)
 		: basic_packaged_coroutine(std::move(p), detail::get_default_handler<reference, is_main_threaded<base_t>::value>(p.lua_state())) {
 		}
-		template <typename Proxy, typename Handler,
-		     meta::enable<std::is_base_of<proxy_base_tag, meta::unqualified_t<Proxy>>, meta::neg<is_lua_index<meta::unqualified_t<Handler>>>> = meta::enabler>
-		basic_packaged_coroutine(Proxy&& p, Handler&& eh) : basic_packaged_coroutine(detail::force_cast<base_t>(p), std::forward<Handler>(eh)) {
+		template <typename Proxy, typename HandlerReference,
+		     meta::enable<std::is_base_of<proxy_base_tag, meta::unqualified_t<Proxy>>, meta::neg<is_lua_index<meta::unqualified_t<HandlerReference>>>> = meta::enabler>
+		basic_packaged_coroutine(Proxy&& p, HandlerReference&& eh) : basic_packaged_coroutine(detail::force_cast<base_t>(p), std::forward<HandlerReference>(eh)) {
 		}
 
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>

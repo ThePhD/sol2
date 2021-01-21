@@ -198,27 +198,27 @@ namespace sol {
 			return m_cached_key_value_pair;
 		}
 
-		friend static bool operator==(const pairs_iterator& left, const pairs_iterator& right) noexcept {
+		friend bool operator==(const pairs_iterator& left, const pairs_iterator& right) noexcept {
 			return left.m_table_ref == right.m_table_ref && left.m_iteration_index == right.m_iteration_index;
 		}
 
-		friend static bool operator!=(const pairs_iterator& left, const pairs_iterator& right) noexcept {
+		friend bool operator!=(const pairs_iterator& left, const pairs_iterator& right) noexcept {
 			return left.m_table_ref != right.m_table_ref || left.m_iteration_index != right.m_iteration_index;
 		}
 
-		friend static bool operator==(const pairs_iterator& left, const pairs_sentinel&) noexcept {
+		friend bool operator==(const pairs_iterator& left, const pairs_sentinel&) noexcept {
 			return left.m_key_index == empty_key_index;
 		}
 
-		friend static bool operator!=(const pairs_iterator& left, const pairs_sentinel&) noexcept {
+		friend bool operator!=(const pairs_iterator& left, const pairs_sentinel&) noexcept {
 			return left.m_key_index != empty_key_index;
 		}
 
-		friend static bool operator==(const pairs_sentinel&, const pairs_iterator& left) noexcept {
+		friend bool operator==(const pairs_sentinel&, const pairs_iterator& left) noexcept {
 			return left.m_key_index == empty_key_index;
 		}
 
-		friend static bool operator!=(const pairs_sentinel&, const pairs_iterator& left) noexcept {
+		friend bool operator!=(const pairs_sentinel&, const pairs_iterator& left) noexcept {
 			return left.m_key_index != empty_key_index;
 		}
 

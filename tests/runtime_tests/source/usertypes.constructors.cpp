@@ -216,7 +216,7 @@ TEST_CASE("usertype/constructor list", "Show that we can create classes from use
 	REQUIRE((z.as<int>() == 9));
 }
 
-TEST_CASE("usertype/no_constructor", "make sure if no constructor is present, do not fix anything") {
+TEST_CASE("usertype/no_constructor linking time", "make sure if no constructor is present, do not fix anything") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 

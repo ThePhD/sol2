@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2021-01-21 08:26:12.913504 UTC
-// This header was generated with sol v3.2.3 (revision f7d8e1e8)
+// Generated 2021-01-21 20:56:49.214244 UTC
+// This header was generated with sol v3.2.3 (revision c032cda5)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -20275,10 +20275,11 @@ namespace sol {
 		template <typename Super>
 		basic_protected_function(proxy_base<Super>&& p) : basic_protected_function(std::move(p), get_default_handler(p.lua_state())) {
 		}
-		template <typename Proxy, typename Handler,
-		     meta::enable<std::is_base_of<proxy_base_tag, meta::unqualified_t<Proxy>>, meta::neg<is_lua_index<meta::unqualified_t<Handler>>>> = meta::enabler>
-		basic_protected_function(Proxy&& p, Handler&& eh)
-		: basic_protected_function(detail::force_cast<base_t>(p), make_reference<handler_t>(p.lua_state(), std::forward<Handler>(eh))) {
+		template <typename Proxy, typename HandlerReference,
+		     meta::enable<std::is_base_of<proxy_base_tag, meta::unqualified_t<Proxy>>,
+		          meta::neg<is_lua_index<meta::unqualified_t<HandlerReference>>>> = meta::enabler>
+		basic_protected_function(Proxy&& p, HandlerReference&& eh)
+		: basic_protected_function(detail::force_cast<base_t>(p), make_reference<handler_t>(p.lua_state(), std::forward<HandlerReference>(eh))) {
 		}
 
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
@@ -20431,7 +20432,7 @@ namespace sol {
 
 		auto get_error_handler() const noexcept {
 			if constexpr (is_stateless_lua_reference_v<handler_t>) {
-				if constexpr (is_stacked_based_v<handler_t>) {
+				if constexpr (is_stack_based_v<handler_t>) {
 					return stack_reference(lua_state(), m_error_handler.stack_index());
 				}
 				else {
@@ -22621,6 +22622,12 @@ namespace sol {
 			return s;
 		}
 
+#if SOL_IS_ON(SOL_CHAR8_T_I_)
+		inline auto make_string_view(const char8_t* s) {
+			return string_view(reinterpret_cast<const char*>(s));
+		}
+#endif
+
 		inline auto make_string_view(call_construction) {
 			return string_view(to_string(meta_function::call_function));
 		}
@@ -24619,27 +24626,27 @@ namespace sol {
 			return m_cached_key_value_pair;
 		}
 
-		friend static bool operator==(const pairs_iterator& left, const pairs_iterator& right) noexcept {
+		friend bool operator==(const pairs_iterator& left, const pairs_iterator& right) noexcept {
 			return left.m_table_ref == right.m_table_ref && left.m_iteration_index == right.m_iteration_index;
 		}
 
-		friend static bool operator!=(const pairs_iterator& left, const pairs_iterator& right) noexcept {
+		friend bool operator!=(const pairs_iterator& left, const pairs_iterator& right) noexcept {
 			return left.m_table_ref != right.m_table_ref || left.m_iteration_index != right.m_iteration_index;
 		}
 
-		friend static bool operator==(const pairs_iterator& left, const pairs_sentinel&) noexcept {
+		friend bool operator==(const pairs_iterator& left, const pairs_sentinel&) noexcept {
 			return left.m_key_index == empty_key_index;
 		}
 
-		friend static bool operator!=(const pairs_iterator& left, const pairs_sentinel&) noexcept {
+		friend bool operator!=(const pairs_iterator& left, const pairs_sentinel&) noexcept {
 			return left.m_key_index != empty_key_index;
 		}
 
-		friend static bool operator==(const pairs_sentinel&, const pairs_iterator& left) noexcept {
+		friend bool operator==(const pairs_sentinel&, const pairs_iterator& left) noexcept {
 			return left.m_key_index == empty_key_index;
 		}
 
-		friend static bool operator!=(const pairs_sentinel&, const pairs_iterator& left) noexcept {
+		friend bool operator!=(const pairs_sentinel&, const pairs_iterator& left) noexcept {
 			return left.m_key_index != empty_key_index;
 		}
 
@@ -27196,8 +27203,8 @@ namespace sol {
 		}
 
 		template <typename Class, typename... Args>
-		usertype<Class> new_usertype(const std::string& name, Args&&... args) {
-			return global.new_usertype<Class>(name, std::forward<Args>(args)...);
+		usertype<Class> new_usertype(Args&&... args) {
+			return global.new_usertype<Class>(std::forward<Args>(args)...);
 		}
 
 		template <bool read_only = true, typename... Args>
@@ -27599,9 +27606,10 @@ namespace sol {
 		basic_coroutine(proxy_base<Super>&& p)
 		: basic_coroutine(std::move(p), detail::get_default_handler<reference, is_main_threaded<base_t>::value>(p.lua_state())) {
 		}
-		template <typename Proxy, typename Handler,
-		     meta::enable<std::is_base_of<proxy_base_tag, meta::unqualified_t<Proxy>>, meta::neg<is_lua_index<meta::unqualified_t<Handler>>>> = meta::enabler>
-		basic_coroutine(Proxy&& p, Handler&& eh) : basic_coroutine(detail::force_cast<base_t>(p), std::forward<Handler>(eh)) {
+		template <typename Proxy, typename HandlerReference,
+		     meta::enable<std::is_base_of<proxy_base_tag, meta::unqualified_t<Proxy>>,
+		          meta::neg<is_lua_index<meta::unqualified_t<HandlerReference>>>> = meta::enabler>
+		basic_coroutine(Proxy&& p, HandlerReference&& eh) : basic_coroutine(detail::force_cast<base_t>(p), std::forward<HandlerReference>(eh)) {
 		}
 
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>

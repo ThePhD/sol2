@@ -121,10 +121,11 @@ namespace sol {
 		template <typename Super>
 		basic_protected_function(proxy_base<Super>&& p) : basic_protected_function(std::move(p), get_default_handler(p.lua_state())) {
 		}
-		template <typename Proxy, typename Handler,
-		     meta::enable<std::is_base_of<proxy_base_tag, meta::unqualified_t<Proxy>>, meta::neg<is_lua_index<meta::unqualified_t<Handler>>>> = meta::enabler>
-		basic_protected_function(Proxy&& p, Handler&& eh)
-		: basic_protected_function(detail::force_cast<base_t>(p), make_reference<handler_t>(p.lua_state(), std::forward<Handler>(eh))) {
+		template <typename Proxy, typename HandlerReference,
+		     meta::enable<std::is_base_of<proxy_base_tag, meta::unqualified_t<Proxy>>,
+		          meta::neg<is_lua_index<meta::unqualified_t<HandlerReference>>>> = meta::enabler>
+		basic_protected_function(Proxy&& p, HandlerReference&& eh)
+		: basic_protected_function(detail::force_cast<base_t>(p), make_reference<handler_t>(p.lua_state(), std::forward<HandlerReference>(eh))) {
 		}
 
 		template <typename T, meta::enable<is_lua_reference<meta::unqualified_t<T>>> = meta::enabler>
@@ -277,7 +278,7 @@ namespace sol {
 
 		auto get_error_handler() const noexcept {
 			if constexpr (is_stateless_lua_reference_v<handler_t>) {
-				if constexpr (is_stacked_based_v<handler_t>) {
+				if constexpr (is_stack_based_v<handler_t>) {
 					return stack_reference(lua_state(), m_error_handler.stack_index());
 				}
 				else {

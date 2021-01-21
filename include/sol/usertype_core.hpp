@@ -71,6 +71,12 @@ namespace sol {
 			return s;
 		}
 
+#if SOL_IS_ON(SOL_CHAR8_T_I_)
+		inline auto make_string_view(const char8_t* s) {
+			return string_view(reinterpret_cast<const char*>(s));
+		}
+#endif
+
 		inline auto make_string_view(call_construction) {
 			return string_view(to_string(meta_function::call_function));
 		}
