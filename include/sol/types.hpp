@@ -865,19 +865,15 @@ namespace sol {
 	inline constexpr bool is_lua_reference_or_proxy_v = is_lua_reference_or_proxy<T>::value;
 
 	template <typename T>
-	struct is_transparent_argument : std::false_type { };
+	struct is_transparent_argument
+	: std::integral_constant<bool,
+	       std::is_same_v<meta::unqualified_t<T>,
+	            this_state> || std::is_same_v<meta::unqualified_t<T>, this_main_state> || std::is_same_v<meta::unqualified_t<T>, this_environment> || std::is_same_v<meta::unqualified_t<T>, variadic_args>> {
+	};
 
 	template <typename T>
 	constexpr inline bool is_transparent_argument_v = is_transparent_argument<T>::value;
 
-	template <>
-	struct is_transparent_argument<this_state> : std::true_type { };
-	template <>
-	struct is_transparent_argument<this_main_state> : std::true_type { };
-	template <>
-	struct is_transparent_argument<this_environment> : std::true_type { };
-	template <>
-	struct is_transparent_argument<variadic_args> : std::true_type { };
 	template <typename T>
 	struct is_variadic_arguments : meta::any<std::is_same<T, variadic_args>, meta::is_optional<T>> { };
 
