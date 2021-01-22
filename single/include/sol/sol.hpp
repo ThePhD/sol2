@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2021-01-21 20:56:49.214244 UTC
-// This header was generated with sol v3.2.3 (revision c032cda5)
+// Generated 2021-01-22 06:17:28.072111 UTC
+// This header was generated with sol v3.2.3 (revision a9ff1d41)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -2118,16 +2118,28 @@ namespace sol { namespace meta {
 		};
 
 		template <typename T>
-		struct has_insert_test {
+		struct has_insert_with_iterator_test {
 		private:
 			template <typename C>
-			static sfinae_yes_t test(decltype(std::declval<C>().insert(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>(),
-				std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
+			static sfinae_yes_t test(decltype(std::declval<C>().insert(
+				std::declval<std::add_rvalue_reference_t<typename C::iterator>>(), std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
 			template <typename C>
 			static sfinae_no_t test(...);
 
 		public:
-			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), sfinae_yes_t>;
+			static constexpr bool value = !std::is_same_v<decltype(test<T>(0)), sfinae_no_t>;
+		};
+
+		template <typename T>
+		struct has_insert_test {
+		private:
+			template <typename C>
+			static sfinae_yes_t test(decltype(std::declval<C>().insert(std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
+			template <typename C>
+			static sfinae_no_t test(...);
+
+		public:
+			static constexpr bool value = !std::is_same_v<decltype(test<T>(0)), sfinae_no_t>;
 		};
 
 		template <typename T>
@@ -2278,6 +2290,9 @@ namespace sol { namespace meta {
 
 	template <typename T>
 	using has_insert = meta::boolean<meta_detail::has_insert_test<T>::value>;
+
+	template <typename T>
+	using has_insert_with_iterator = meta::boolean<meta_detail::has_insert_with_iterator_test<T>::value>;
 
 	template <typename T>
 	using has_insert_after = meta::boolean<meta_detail::has_insert_after_test<T>::value>;
@@ -21366,8 +21381,12 @@ namespace sol {
 
 			template <typename Iter>
 			static detail::error_result set_associative_insert(std::true_type, lua_State*, T& self, Iter& it, K& key, stack_object value) {
-				if constexpr (meta::has_insert<T>::value) {
+				if constexpr (meta::has_insert_with_iterator<T>::value) {
 					self.insert(it, value_type(key, value.as<V>()));
+					return {};
+				}
+				else if constexpr (meta::has_insert<T>::value) {
+					self.insert(value_type(key, value.as<V>()));
 					return {};
 				}
 				else {
@@ -21381,8 +21400,12 @@ namespace sol {
 
 			template <typename Iter>
 			static detail::error_result set_associative_insert(std::false_type, lua_State*, T& self, Iter& it, K& key, stack_object) {
-				if constexpr (meta::has_insert<T>::value) {
+				if constexpr (meta::has_insert_with_iterator<T>::value) {
 					self.insert(it, key);
+					return {};
+				}
+				else if constexpr (meta::has_insert<T>::value) {
+					self.insert(key);
 					return {};
 				}
 				else {
@@ -21564,17 +21587,23 @@ namespace sol {
 
 			template <typename Iter>
 			static detail::error_result add_push_back(std::false_type, lua_State* L, T& self, stack_object value, Iter& pos) {
-				return add_insert(meta::has_insert<T>(), L, self, value, pos);
+				return add_insert(
+				     std::integral_constant < bool, meta::has_insert<T>::value || meta::has_insert_with_iterator<T>::value > (), L, self, value, pos);
 			}
 
 			static detail::error_result add_push_back(std::false_type, lua_State* L, T& self, stack_object value) {
-				return add_insert(meta::has_insert<T>(), L, self, value);
+				return add_insert(
+				     std::integral_constant < bool, meta::has_insert<T>::value || meta::has_insert_with_iterator<T>::value > (), L, self, value);
 			}
 
 			template <typename Iter>
 			static detail::error_result add_associative(std::true_type, lua_State* L, T& self, stack_object key, Iter& pos) {
-				if constexpr (meta::has_insert<T>::value) {
+				if constexpr (meta::has_insert_with_iterator<T>::value) {
 					self.insert(pos, value_type(key.as<K>(), stack::unqualified_get<V>(L, 3)));
+					return {};
+				}
+				else if constexpr (meta::has_insert<T>::value) {
+					self.insert(value_type(key.as<K>(), stack::unqualified_get<V>(L, 3)));
 					return {};
 				}
 				else {
@@ -21663,7 +21692,12 @@ namespace sol {
 			}
 
 			static detail::error_result insert_copyable(std::true_type, lua_State* L, T& self, stack_object key, stack_object value) {
-				return insert_has(meta::has_insert<T>(), L, self, std::move(key), std::move(value));
+				return insert_has(std::integral_constant < bool,
+				     meta::has_insert<T>::value || meta::has_insert_with_iterator<T>::value > (),
+				     L,
+				     self,
+				     std::move(key),
+				     std::move(value));
 			}
 
 			static detail::error_result insert_copyable(std::false_type, lua_State*, T&, stack_object, stack_object) {
@@ -23392,12 +23426,6 @@ namespace sol { namespace u_detail {
 		inline void set(lua_State* L, Key&& key, Value&& value);
 	};
 
-	template <typename T>
-	inline int destroy_usertype_storage(lua_State* L) noexcept {
-		clear_usertype_registry_names<T>(L);
-		return detail::user_alloc_destroy<usertype_storage<T>>(L);
-	}
-
 	template <typename T, typename Key, typename Value>
 	void usertype_storage_base::set(lua_State* L, Key&& key, Value&& value) {
 		using ValueU = meta::unwrap_unqualified_t<Value>;
@@ -23540,6 +23568,34 @@ namespace sol { namespace u_detail {
 	}
 
 	template <typename T>
+	inline void clear_usertype_registry_names(lua_State* L) {
+		using u_traits = usertype_traits<T>;
+		using u_const_traits = usertype_traits<const T>;
+		using u_unique_traits = usertype_traits<d::u<T>>;
+		using u_ref_traits = usertype_traits<T*>;
+		using u_const_ref_traits = usertype_traits<T const*>;
+
+		stack_reference registry(L, raw_index(LUA_REGISTRYINDEX));
+		registry.push();
+		// eliminate all named entries for this usertype
+		// in the registry (luaL_newmetatable does
+		// [name] = new table
+		// in registry upon creation
+		stack::set_field(L, &u_traits::metatable()[0], lua_nil, registry.stack_index());
+		stack::set_field(L, &u_const_traits::metatable()[0], lua_nil, registry.stack_index());
+		stack::set_field(L, &u_const_ref_traits::metatable()[0], lua_nil, registry.stack_index());
+		stack::set_field(L, &u_ref_traits::metatable()[0], lua_nil, registry.stack_index());
+		stack::set_field(L, &u_unique_traits::metatable()[0], lua_nil, registry.stack_index());
+		registry.pop();
+	}
+
+	template <typename T>
+	inline int destroy_usertype_storage(lua_State* L) noexcept {
+		clear_usertype_registry_names<T>(L);
+		return detail::user_alloc_destroy<usertype_storage<T>>(L);
+	}
+
+	template <typename T>
 	inline usertype_storage<T>& create_usertype_storage(lua_State* L) {
 		const char* gcmetakey = &usertype_traits<T>::gc_table()[0];
 
@@ -23632,28 +23688,6 @@ namespace sol { namespace u_detail {
 		stack::get_field<true>(L, gcmetakey);
 		usertype_storage<T>& target_umt = stack::pop<user<usertype_storage<T>>>(L);
 		return target_umt;
-	}
-
-	template <typename T>
-	inline void clear_usertype_registry_names(lua_State* L) {
-		using u_traits = usertype_traits<T>;
-		using u_const_traits = usertype_traits<const T>;
-		using u_unique_traits = usertype_traits<d::u<T>>;
-		using u_ref_traits = usertype_traits<T*>;
-		using u_const_ref_traits = usertype_traits<T const*>;
-
-		stack_reference registry(L, raw_index(LUA_REGISTRYINDEX));
-		registry.push();
-		// eliminate all named entries for this usertype
-		// in the registry (luaL_newmetatable does
-		// [name] = new table
-		// in registry upon creation
-		stack::set_field(L, &u_traits::metatable()[0], lua_nil, registry.stack_index());
-		stack::set_field(L, &u_const_traits::metatable()[0], lua_nil, registry.stack_index());
-		stack::set_field(L, &u_const_ref_traits::metatable()[0], lua_nil, registry.stack_index());
-		stack::set_field(L, &u_ref_traits::metatable()[0], lua_nil, registry.stack_index());
-		stack::set_field(L, &u_unique_traits::metatable()[0], lua_nil, registry.stack_index());
-		registry.pop();
 	}
 
 	template <typename T>
@@ -24493,9 +24527,9 @@ namespace sol {
 		: m_L(nullptr)
 		, m_next_function_ref(lua_nil)
 		, m_table_ref(lua_nil)
+		, m_cached_key_value_pair({ lua_nil, lua_nil })
 		, m_key_index(empty_key_index)
-		, m_iteration_index(0)
-		, m_cached_key_value_pair({ lua_nil, lua_nil }) {
+		, m_iteration_index(0) {
 		}
 
 		pairs_iterator(const pairs_iterator&) = delete;
@@ -24505,9 +24539,9 @@ namespace sol {
 		: m_L(right.m_L)
 		, m_next_function_ref(std::move(right.m_next_function_ref))
 		, m_table_ref(std::move(right.m_table_ref))
+		, m_cached_key_value_pair(std::move(right.m_cached_key_value_pair))
 		, m_key_index(right.m_key_index)
-		, m_iteration_index(right.m_iteration_index)
-		, m_cached_key_value_pair(std::move(right.m_cached_key_value_pair)) {
+		, m_iteration_index(right.m_iteration_index) {
 			right.m_key_index = empty_key_index;
 		}
 
@@ -24515,10 +24549,11 @@ namespace sol {
 			m_L = right.m_L;
 			m_next_function_ref = std::move(right.m_next_function_ref);
 			m_table_ref = std::move(right.m_table_ref);
+			m_cached_key_value_pair = std::move(right.m_cached_key_value_pair);
 			m_key_index = right.m_key_index;
 			m_iteration_index = right.m_iteration_index;
-			m_cached_key_value_pair = std::move(right.m_cached_key_value_pair);
 			right.m_key_index = empty_key_index;
+			return *this;
 		}
 
 		template <typename Source>
@@ -24533,8 +24568,9 @@ namespace sol {
 			lua_remove(m_L, abs_source_index);
 			if (metatable_exists == 1) {
 				// just has a metatable, but does it have __pairs ?
-				stack_lua_table metatable(m_L, abs_source_index);
-				optional<protected_function> maybe_pairs_function = metatable.raw_get<optional<function>>(meta_function::pairs);
+				stack_reference metatable(m_L, raw_index(abs_source_index));
+				stack::get_field<is_global_table_v<Source>, true>(m_L, meta_function::pairs, metatable.stack_index());
+				optional<protected_function> maybe_pairs_function = stack::pop<optional<function>>(m_L);
 				if (maybe_pairs_function.has_value()) {
 					function& pairs_function = *maybe_pairs_function;
 					protected_function_result next_fn_and_table_and_first_key = pairs_function(source_);

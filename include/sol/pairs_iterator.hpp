@@ -65,9 +65,9 @@ namespace sol {
 		: m_L(nullptr)
 		, m_next_function_ref(lua_nil)
 		, m_table_ref(lua_nil)
+		, m_cached_key_value_pair({ lua_nil, lua_nil })
 		, m_key_index(empty_key_index)
-		, m_iteration_index(0)
-		, m_cached_key_value_pair({ lua_nil, lua_nil }) {
+		, m_iteration_index(0) {
 		}
 
 		pairs_iterator(const pairs_iterator&) = delete;
@@ -77,9 +77,9 @@ namespace sol {
 		: m_L(right.m_L)
 		, m_next_function_ref(std::move(right.m_next_function_ref))
 		, m_table_ref(std::move(right.m_table_ref))
+		, m_cached_key_value_pair(std::move(right.m_cached_key_value_pair))
 		, m_key_index(right.m_key_index)
-		, m_iteration_index(right.m_iteration_index)
-		, m_cached_key_value_pair(std::move(right.m_cached_key_value_pair)) {
+		, m_iteration_index(right.m_iteration_index) {
 			right.m_key_index = empty_key_index;
 		}
 
@@ -87,10 +87,11 @@ namespace sol {
 			m_L = right.m_L;
 			m_next_function_ref = std::move(right.m_next_function_ref);
 			m_table_ref = std::move(right.m_table_ref);
+			m_cached_key_value_pair = std::move(right.m_cached_key_value_pair);
 			m_key_index = right.m_key_index;
 			m_iteration_index = right.m_iteration_index;
-			m_cached_key_value_pair = std::move(right.m_cached_key_value_pair);
 			right.m_key_index = empty_key_index;
+			return *this;
 		}
 
 		template <typename Source>
@@ -105,8 +106,9 @@ namespace sol {
 			lua_remove(m_L, abs_source_index);
 			if (metatable_exists == 1) {
 				// just has a metatable, but does it have __pairs ?
-				stack_lua_table metatable(m_L, abs_source_index);
-				optional<protected_function> maybe_pairs_function = metatable.raw_get<optional<function>>(meta_function::pairs);
+				stack_reference metatable(m_L, raw_index(abs_source_index));
+				stack::get_field<is_global_table_v<Source>, true>(m_L, meta_function::pairs, metatable.stack_index());
+				optional<protected_function> maybe_pairs_function = stack::pop<optional<function>>(m_L);
 				if (maybe_pairs_function.has_value()) {
 					function& pairs_function = *maybe_pairs_function;
 					protected_function_result next_fn_and_table_and_first_key = pairs_function(source_);

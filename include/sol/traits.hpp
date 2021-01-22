@@ -401,16 +401,28 @@ namespace sol { namespace meta {
 		};
 
 		template <typename T>
-		struct has_insert_test {
+		struct has_insert_with_iterator_test {
 		private:
 			template <typename C>
-			static sfinae_yes_t test(decltype(std::declval<C>().insert(std::declval<std::add_rvalue_reference_t<typename C::const_iterator>>(),
-				std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
+			static sfinae_yes_t test(decltype(std::declval<C>().insert(
+				std::declval<std::add_rvalue_reference_t<typename C::iterator>>(), std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
 			template <typename C>
 			static sfinae_no_t test(...);
 
 		public:
-			static constexpr bool value = std::is_same_v<decltype(test<T>(0)), sfinae_yes_t>;
+			static constexpr bool value = !std::is_same_v<decltype(test<T>(0)), sfinae_no_t>;
+		};
+
+		template <typename T>
+		struct has_insert_test {
+		private:
+			template <typename C>
+			static sfinae_yes_t test(decltype(std::declval<C>().insert(std::declval<std::add_rvalue_reference_t<typename C::value_type>>()))*);
+			template <typename C>
+			static sfinae_no_t test(...);
+
+		public:
+			static constexpr bool value = !std::is_same_v<decltype(test<T>(0)), sfinae_no_t>;
 		};
 
 		template <typename T>
@@ -561,6 +573,9 @@ namespace sol { namespace meta {
 
 	template <typename T>
 	using has_insert = meta::boolean<meta_detail::has_insert_test<T>::value>;
+
+	template <typename T>
+	using has_insert_with_iterator = meta::boolean<meta_detail::has_insert_with_iterator_test<T>::value>;
 
 	template <typename T>
 	using has_insert_after = meta::boolean<meta_detail::has_insert_after_test<T>::value>;

@@ -719,8 +719,12 @@ namespace sol {
 
 			template <typename Iter>
 			static detail::error_result set_associative_insert(std::true_type, lua_State*, T& self, Iter& it, K& key, stack_object value) {
-				if constexpr (meta::has_insert<T>::value) {
+				if constexpr (meta::has_insert_with_iterator<T>::value) {
 					self.insert(it, value_type(key, value.as<V>()));
+					return {};
+				}
+				else if constexpr (meta::has_insert<T>::value) {
+					self.insert(value_type(key, value.as<V>()));
 					return {};
 				}
 				else {
@@ -734,8 +738,12 @@ namespace sol {
 
 			template <typename Iter>
 			static detail::error_result set_associative_insert(std::false_type, lua_State*, T& self, Iter& it, K& key, stack_object) {
-				if constexpr (meta::has_insert<T>::value) {
+				if constexpr (meta::has_insert_with_iterator<T>::value) {
 					self.insert(it, key);
+					return {};
+				}
+				else if constexpr (meta::has_insert<T>::value) {
+					self.insert(key);
 					return {};
 				}
 				else {
@@ -917,17 +925,23 @@ namespace sol {
 
 			template <typename Iter>
 			static detail::error_result add_push_back(std::false_type, lua_State* L, T& self, stack_object value, Iter& pos) {
-				return add_insert(meta::has_insert<T>(), L, self, value, pos);
+				return add_insert(
+				     std::integral_constant < bool, meta::has_insert<T>::value || meta::has_insert_with_iterator<T>::value > (), L, self, value, pos);
 			}
 
 			static detail::error_result add_push_back(std::false_type, lua_State* L, T& self, stack_object value) {
-				return add_insert(meta::has_insert<T>(), L, self, value);
+				return add_insert(
+				     std::integral_constant < bool, meta::has_insert<T>::value || meta::has_insert_with_iterator<T>::value > (), L, self, value);
 			}
 
 			template <typename Iter>
 			static detail::error_result add_associative(std::true_type, lua_State* L, T& self, stack_object key, Iter& pos) {
-				if constexpr (meta::has_insert<T>::value) {
+				if constexpr (meta::has_insert_with_iterator<T>::value) {
 					self.insert(pos, value_type(key.as<K>(), stack::unqualified_get<V>(L, 3)));
+					return {};
+				}
+				else if constexpr (meta::has_insert<T>::value) {
+					self.insert(value_type(key.as<K>(), stack::unqualified_get<V>(L, 3)));
 					return {};
 				}
 				else {
@@ -1016,7 +1030,12 @@ namespace sol {
 			}
 
 			static detail::error_result insert_copyable(std::true_type, lua_State* L, T& self, stack_object key, stack_object value) {
-				return insert_has(meta::has_insert<T>(), L, self, std::move(key), std::move(value));
+				return insert_has(std::integral_constant < bool,
+				     meta::has_insert<T>::value || meta::has_insert_with_iterator<T>::value > (),
+				     L,
+				     self,
+				     std::move(key),
+				     std::move(value));
 			}
 
 			static detail::error_result insert_copyable(std::false_type, lua_State*, T&, stack_object, stack_object) {

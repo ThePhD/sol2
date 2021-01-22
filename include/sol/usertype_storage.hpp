@@ -657,12 +657,6 @@ namespace sol { namespace u_detail {
 		inline void set(lua_State* L, Key&& key, Value&& value);
 	};
 
-	template <typename T>
-	inline int destroy_usertype_storage(lua_State* L) noexcept {
-		clear_usertype_registry_names<T>(L);
-		return detail::user_alloc_destroy<usertype_storage<T>>(L);
-	}
-
 	template <typename T, typename Key, typename Value>
 	void usertype_storage_base::set(lua_State* L, Key&& key, Value&& value) {
 		using ValueU = meta::unwrap_unqualified_t<Value>;
@@ -805,6 +799,34 @@ namespace sol { namespace u_detail {
 	}
 
 	template <typename T>
+	inline void clear_usertype_registry_names(lua_State* L) {
+		using u_traits = usertype_traits<T>;
+		using u_const_traits = usertype_traits<const T>;
+		using u_unique_traits = usertype_traits<d::u<T>>;
+		using u_ref_traits = usertype_traits<T*>;
+		using u_const_ref_traits = usertype_traits<T const*>;
+
+		stack_reference registry(L, raw_index(LUA_REGISTRYINDEX));
+		registry.push();
+		// eliminate all named entries for this usertype
+		// in the registry (luaL_newmetatable does
+		// [name] = new table
+		// in registry upon creation
+		stack::set_field(L, &u_traits::metatable()[0], lua_nil, registry.stack_index());
+		stack::set_field(L, &u_const_traits::metatable()[0], lua_nil, registry.stack_index());
+		stack::set_field(L, &u_const_ref_traits::metatable()[0], lua_nil, registry.stack_index());
+		stack::set_field(L, &u_ref_traits::metatable()[0], lua_nil, registry.stack_index());
+		stack::set_field(L, &u_unique_traits::metatable()[0], lua_nil, registry.stack_index());
+		registry.pop();
+	}
+
+	template <typename T>
+	inline int destroy_usertype_storage(lua_State* L) noexcept {
+		clear_usertype_registry_names<T>(L);
+		return detail::user_alloc_destroy<usertype_storage<T>>(L);
+	}
+
+	template <typename T>
 	inline usertype_storage<T>& create_usertype_storage(lua_State* L) {
 		const char* gcmetakey = &usertype_traits<T>::gc_table()[0];
 
@@ -898,28 +920,6 @@ namespace sol { namespace u_detail {
 		stack::get_field<true>(L, gcmetakey);
 		usertype_storage<T>& target_umt = stack::pop<user<usertype_storage<T>>>(L);
 		return target_umt;
-	}
-
-	template <typename T>
-	inline void clear_usertype_registry_names(lua_State* L) {
-		using u_traits = usertype_traits<T>;
-		using u_const_traits = usertype_traits<const T>;
-		using u_unique_traits = usertype_traits<d::u<T>>;
-		using u_ref_traits = usertype_traits<T*>;
-		using u_const_ref_traits = usertype_traits<T const*>;
-
-		stack_reference registry(L, raw_index(LUA_REGISTRYINDEX));
-		registry.push();
-		// eliminate all named entries for this usertype
-		// in the registry (luaL_newmetatable does
-		// [name] = new table
-		// in registry upon creation
-		stack::set_field(L, &u_traits::metatable()[0], lua_nil, registry.stack_index());
-		stack::set_field(L, &u_const_traits::metatable()[0], lua_nil, registry.stack_index());
-		stack::set_field(L, &u_const_ref_traits::metatable()[0], lua_nil, registry.stack_index());
-		stack::set_field(L, &u_ref_traits::metatable()[0], lua_nil, registry.stack_index());
-		stack::set_field(L, &u_unique_traits::metatable()[0], lua_nil, registry.stack_index());
-		registry.pop();
 	}
 
 	template <typename T>

@@ -36,110 +36,192 @@
 #include <set>
 #include <unordered_set>
 
-class int_shim {
-public:
-	int_shim() = default;
 
-	int_shim(int x) : x_(x) {
-	}
+inline namespace sol2_test_container_shims {
 
-	int val() const {
-		return x_;
-	}
+	class int_shim {
+	public:
+		int_shim() = default;
 
-private:
-	int x_ = -1;
-};
-
-class input_it {
-public:
-	typedef std::input_iterator_tag iterator_category;
-	typedef int_shim value_type;
-	typedef value_type& reference;
-	typedef const value_type& const_reference;
-	typedef value_type* pointer;
-	typedef std::ptrdiff_t difference_type;
-
-	input_it() = default;
-
-	input_it(int n, int m) : n_(n), m_(m), value_(n_) {
-		assert(n_ >= 0);
-		assert(m_ >= 0);
-		assert(n_ <= m_);
-
-		if (!n_ && !m_) {
-			n_ = -1;
-			m_ = -1;
-			value_ = -1;
+		int_shim(int x) : x_(x) {
 		}
-	}
 
-	const int_shim& operator*() const {
-		return value_;
-	}
-
-	const int_shim* operator->() const {
-		return &value_;
-	}
-
-	input_it& operator++() {
-		assert(n_ >= 0);
-		assert(m_ >= 0);
-		if (n_ == m_ - 1) {
-			n_ = m_ = -1;
+		int val() const {
+			return x_;
 		}
-		else {
-			++n_;
+
+	private:
+		int x_ = -1;
+	};
+
+	class input_it {
+	public:
+		typedef std::input_iterator_tag iterator_category;
+		typedef int_shim value_type;
+		typedef value_type& reference;
+		typedef const value_type& const_reference;
+		typedef value_type* pointer;
+		typedef std::ptrdiff_t difference_type;
+
+		input_it() = default;
+
+		input_it(int n, int m) : n_(n), m_(m), value_(n_) {
+			assert(n_ >= 0);
+			assert(m_ >= 0);
+			assert(n_ <= m_);
+
+			if (!n_ && !m_) {
+				n_ = -1;
+				m_ = -1;
+				value_ = -1;
+			}
 		}
-		value_ = n_;
-		return *this;
-	}
 
-	bool operator==(const input_it& i) const {
-		return n_ == i.n_ && m_ == i.m_;
-	}
+		const int_shim& operator*() const {
+			return value_;
+		}
 
-	bool operator!=(const input_it& i) const {
-		return !(*this == i);
-	}
+		const int_shim* operator->() const {
+			return &value_;
+		}
 
-private:
-	int n_ = -1;
-	int m_ = -1;
-	int_shim value_;
-};
+		input_it& operator++() {
+			assert(n_ >= 0);
+			assert(m_ >= 0);
+			if (n_ == m_ - 1) {
+				n_ = m_ = -1;
+			}
+			else {
+				++n_;
+			}
+			value_ = n_;
+			return *this;
+		}
 
-class not_really_a_container {
-public:
-	using value_type = int_shim;
-	using iterator = input_it;
-	using const_iterator = input_it;
+		bool operator==(const input_it& i) const {
+			return n_ == i.n_ && m_ == i.m_;
+		}
 
-	const_iterator begin() const {
-		return iterator(0, 100);
-	}
+		bool operator!=(const input_it& i) const {
+			return !(*this == i);
+		}
 
-	const_iterator end() const {
-		return iterator();
-	}
+	private:
+		int n_ = -1;
+		int m_ = -1;
+		int_shim value_;
+	};
 
-	value_type gcc_warning_block() {
-		return int_shim();
-	}
+	class not_really_a_container {
+	public:
+		using value_type = int_shim;
+		using iterator = input_it;
+		using const_iterator = input_it;
 
-	std::size_t size() const {
-		return 100;
-	}
-};
+		const_iterator begin() const {
+			return iterator(0, 100);
+		}
 
-struct my_vec : public std::vector<int> {
-	typedef std::vector<int> base_t;
-	using base_t::base_t;
-};
+		const_iterator end() const {
+			return iterator();
+		}
+
+		value_type gcc_warning_block() {
+			return int_shim();
+		}
+
+		std::size_t size() const {
+			return 100;
+		}
+	};
+
+	struct my_vec : public std::vector<int> {
+		typedef std::vector<int> base_t;
+		using base_t::base_t;
+	};
+
+	struct order_suit {
+		std::vector<std::pair<int, int64_t>> objs;
+		std::vector<std::pair<int64_t, int>> objs2;
+
+		order_suit(int pairs) {
+			objs.reserve(static_cast<std::size_t>(pairs));
+			objs2.reserve(static_cast<std::size_t>(pairs * 2));
+			for (int i = 0; i < pairs; ++i) {
+				objs.push_back({ i, i * 10 });
+				objs2.push_back({ (i + pairs) * 2, (i * 2) * 50 });
+				objs2.push_back({ ((i + pairs) * 2) + 1, (i * 2 + 1) * 50 });
+			}
+		}
+	};
+
+	class map_number_storage {
+
+	private:
+		std::unordered_map<std::string, int> data; // changed to map
+
+	public:
+		map_number_storage(int i) {
+			data[std::to_string(i)] = i;
+		}
+
+		int accumulate() const // changed for map
+		{
+			std::size_t sum = 0;
+			for (const auto& [k, v] : data) {
+				sum += v;
+			}
+			return static_cast<int>(sum);
+		}
+
+	public:
+		typedef std::string key_type;
+		typedef int mapped_type;
+		using value_type = decltype(data)::value_type;
+		using iterator = decltype(data)::iterator;
+		using const_iterator = decltype(data)::const_iterator;
+		using size_type = decltype(data)::size_type;
+
+		// ADDED
+		iterator find(const key_type& key) {
+			return data.find(key);
+		}
+		auto insert(value_type kv) {
+			return data.insert(kv);
+		}
+		auto insert(const key_type k, mapped_type v) {
+			return data.insert({ k, v });
+		}
+		mapped_type& set(key_type k, mapped_type v) {
+			return data[k] = v;
+		}
+
+		iterator begin() {
+			return iterator(data.begin());
+		}
+		iterator end() {
+			return iterator(data.end());
+		}
+		size_type size() const noexcept {
+			return data.size();
+		}
+		size_type max_size() const noexcept {
+			return data.max_size();
+		}
+		//   void push_back(int value) { data.push_back(value); }  NOT APPLICABLE TO MAP
+		bool empty() const noexcept {
+			return data.empty();
+		}
+	};
+
+} // namespace sol2_test_container_shims
 
 namespace sol {
 	template <>
 	struct is_container<my_vec> : std::true_type { };
+
+	template <>
+	struct is_container<map_number_storage> : std::false_type { };
 
 	template <>
 	struct usertype_container<my_vec> {
@@ -164,20 +246,6 @@ namespace sol {
 
 } // namespace sol
 
-struct order_suit {
-	std::vector<std::pair<int, int64_t>> objs;
-	std::vector<std::pair<int64_t, int>> objs2;
-
-	order_suit(int pairs) {
-		objs.reserve(static_cast<std::size_t>(pairs));
-		objs2.reserve(static_cast<std::size_t>(pairs * 2));
-		for (int i = 0; i < pairs; ++i) {
-			objs.push_back({ i, i * 10 });
-			objs2.push_back({ (i + pairs) * 2, (i * 2) * 50 });
-			objs2.push_back({ ((i + pairs) * 2) + 1, (i * 2 + 1) * 50 });
-		}
-	}
-};
 
 TEST_CASE("containers/input iterators", "test shitty input iterators that are all kinds of B L E H") {
 	sol::state lua;
@@ -318,4 +386,49 @@ TEST_CASE("containers/pair container in usertypes", "make sure containers that u
 	REQUIRE(pvec2[2].second == 100);
 	REQUIRE(pvec2[3].first == 13);
 	REQUIRE(pvec2[3].second == 150);
+}
+
+TEST_CASE("containers/as_container usertype", "A usertype should be able to mark itself as a container explicitly and work with BOTH kinds of insert types") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::base);
+
+	lua.new_usertype<map_number_storage>("map_number_storage",
+	     sol::constructors<map_number_storage(int)>(),
+	     "accumulate",
+	     &map_number_storage::accumulate,
+	     "iterable",
+	     [](map_number_storage& ns) {
+		     return sol::as_container(ns); // treat like a container, despite is_container specialization
+	     });
+
+	sol::optional<sol::error> maybe_error0 = lua.safe_script(R"(
+ns = map_number_storage.new(23)
+assert(ns:accumulate() == 23)
+
+-- reference original usertype like a container
+ns_container = ns:iterable()
+ns_container["24"]=24
+
+-- now print to show effect
+assert(ns:accumulate() == 47)
+assert(#ns == 2)
+    )",
+	     &sol::script_pass_on_error);
+	REQUIRE_FALSE(maybe_error0.has_value());
+
+	map_number_storage& ns = lua["ns"];
+	map_number_storage& ns_container = lua["ns_container"];
+
+	ns.insert({ "33", 33 });
+
+	sol::optional<sol::error> maybe_error1 = lua.safe_script(R"(
+assert(ns:accumulate() == 80)
+assert(#ns == 3)
+assert(ns_container['33'] == 33)
+    )",
+	     &sol::script_pass_on_error);
+	REQUIRE_FALSE(maybe_error1.has_value());
+
+	REQUIRE(&ns == &ns_container);
+	REQUIRE(ns.size() == 3);
 }
