@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2021-01-22 06:17:28.072111 UTC
-// This header was generated with sol v3.2.3 (revision a9ff1d41)
+// Generated 2021-01-24 17:38:13.604128 UTC
+// This header was generated with sol v3.2.3 (revision d363ccd7)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -24572,7 +24572,7 @@ namespace sol {
 				stack::get_field<is_global_table_v<Source>, true>(m_L, meta_function::pairs, metatable.stack_index());
 				optional<protected_function> maybe_pairs_function = stack::pop<optional<function>>(m_L);
 				if (maybe_pairs_function.has_value()) {
-					function& pairs_function = *maybe_pairs_function;
+					protected_function& pairs_function = *maybe_pairs_function;
 					protected_function_result next_fn_and_table_and_first_key = pairs_function(source_);
 					if (next_fn_and_table_and_first_key.valid()) {
 						m_next_function_ref = next_fn_and_table_and_first_key.get<protected_function>(0);

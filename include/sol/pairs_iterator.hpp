@@ -110,7 +110,7 @@ namespace sol {
 				stack::get_field<is_global_table_v<Source>, true>(m_L, meta_function::pairs, metatable.stack_index());
 				optional<protected_function> maybe_pairs_function = stack::pop<optional<function>>(m_L);
 				if (maybe_pairs_function.has_value()) {
-					function& pairs_function = *maybe_pairs_function;
+					protected_function& pairs_function = *maybe_pairs_function;
 					protected_function_result next_fn_and_table_and_first_key = pairs_function(source_);
 					if (next_fn_and_table_and_first_key.valid()) {
 						m_next_function_ref = next_fn_and_table_and_first_key.get<protected_function>(0);
