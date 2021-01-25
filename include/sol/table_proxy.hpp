@@ -85,7 +85,7 @@ namespace sol {
 
 		template <typename T>
 		table_proxy&& set(T&& item) && {
-			tuple_set(std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>(), std::forward<T>(item));
+			std::move(*this).tuple_set(std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>(), std::forward<T>(item));
 			return std::move(*this);
 		}
 

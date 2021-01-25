@@ -145,7 +145,7 @@ TEST_CASE("state/require_file", "opening files as 'requires'") {
 }
 
 TEST_CASE("state/require_script", "opening strings as 'requires' clauses") {
-	std::string code = "return { modfunc = function () return 221 end }";
+	const std::string code = "return { modfunc = function () return 221 end }";
 
 	sol::state lua;
 	sol::stack_guard luasg(lua);
@@ -158,6 +158,29 @@ TEST_CASE("state/require_script", "opening strings as 'requires' clauses") {
 	REQUIRE(val2 == 221);
 	// must have loaded the same table
 	REQUIRE((thingy1 == thingy2));
+}
+
+TEST_CASE("state/require_script empty", "opening strings as 'requires' clauses that return nothing insert a bogus value") {
+	sol::state lua;
+	lua.open_libraries(sol::lib::package, sol::lib::base);
+
+	lua.set_function("print_to_console", [](std::string const& message) { std::cout << message << std::endl; });
+
+	const std::string code = "print_to_console('hello from required file') i = 20";
+
+	{
+		int begintop = 0, endtop = 0;
+		test_stack_guard guard(lua, begintop, endtop);
+		lua.require_script("require_test", code, false);
+	}
+
+	sol::optional<sol::error> maybe_error = lua.safe_script(R"(
+require ("require_test")
+print_to_console("hello from script")
+assert(i == 20)
+)",
+	     sol::script_pass_on_error);
+	REQUIRE_FALSE(maybe_error.has_value());
 }
 
 TEST_CASE("state/require", "require using a function") {

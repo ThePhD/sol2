@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2021-01-24 17:38:13.604128 UTC
-// This header was generated with sol v3.2.3 (revision d363ccd7)
+// Generated 2021-01-25 02:52:07.000664 UTC
+// This header was generated with sol v3.2.3 (revision e1950b9a)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -24145,7 +24145,7 @@ namespace sol {
 
 		template <typename T>
 		table_proxy&& set(T&& item) && {
-			tuple_set(std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>(), std::forward<T>(item));
+			std::move(*this).tuple_set(std::make_index_sequence<std::tuple_size_v<meta::unqualified_t<key_type>>>(), std::forward<T>(item));
 			return std::move(*this);
 		}
 
@@ -26553,7 +26553,16 @@ namespace sol {
 			optional<object> loaded = is_loaded_package(key);
 			if (loaded && loaded->valid())
 				return std::move(*loaded);
+			int before = lua_gettop(L);
 			action();
+			int after = lua_gettop(L);
+			if (before == after) {
+				// I mean, you were supposed to return
+				// something, ANYTHING, from your requires script. I guess I'll just
+				// but some trash in here, it's on you after that?
+				ensure_package(key, static_cast<void*>(L));
+				return object(L, lua_nil);
+			}
 			stack_reference sr(L, -1);
 			if (create_global)
 				set(key, sr);

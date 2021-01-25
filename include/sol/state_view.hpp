@@ -86,7 +86,16 @@ namespace sol {
 			optional<object> loaded = is_loaded_package(key);
 			if (loaded && loaded->valid())
 				return std::move(*loaded);
+			int before = lua_gettop(L);
 			action();
+			int after = lua_gettop(L);
+			if (before == after) {
+				// I mean, you were supposed to return
+				// something, ANYTHING, from your requires script. I guess I'll just
+				// but some trash in here, it's on you after that?
+				ensure_package(key, static_cast<void*>(L));
+				return object(L, lua_nil);
+			}
 			stack_reference sr(L, -1);
 			if (create_global)
 				set(key, sr);
