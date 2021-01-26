@@ -142,10 +142,6 @@ If  the type is `default_constructible`_, sol will generate a ``"new"`` member o
 	- Specifically tells sol not to create a ``.new()`` if one is not specified and the type is default-constructible
 	- When the key ``{anything}`` is called on the table, it will result in an error. The error might be that the type is not-constructible. 
 	- *Use this plus some of the above to allow a factory function for your function type but prevent other types of constructor idioms in Lua*
-* ``{anything}, sol::no_constructor``
-	- Specifically tells sol not to create a ``.new()`` if one is not specified and the type is default-constructible
-	- When the key ``{anything}`` is called on the table, it will result in an error. The error might be that the type is not-constructible. 
-	- *Use this plus some of the above to allow a factory function for your function type but prevent other types of constructor idioms in Lua*
 
 usertype destructor options
 +++++++++++++++++++++++++++
