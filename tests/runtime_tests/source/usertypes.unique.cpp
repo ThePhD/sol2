@@ -111,6 +111,10 @@ inline namespace sol2_test_usertype_unique {
 	int factory_test::num_saved = 0;
 	int factory_test::num_killed = 0;
 	const int factory_test::true_a = 156;
+
+	void const_ptr_test(const std::shared_ptr<int> ptr) {
+		REQUIRE(*ptr.get() == 1);
+	}
 } // namespace sol2_test_usertype_unique
 
 namespace sol {
@@ -268,4 +272,14 @@ TEST_CASE("usertype/unique_usertype checks", "Ensure that access to usertypes ca
 
 	sol::optional<sol::error> should_error = lua.safe_script("f(c)", sol::script_pass_on_error);
 	REQUIRE(should_error.has_value());
+}
+
+TEST_CASE("usertype/unique_usertype const", "make sure const-qualified values don't trip the wrong template specializations") {
+	sol::state lua;
+
+	lua.set_function("f", &const_ptr_test);
+
+	sol::protected_function lua_f = lua["f"];
+	const std::shared_ptr<int> ptr = std::make_shared<int>(1);
+	lua_f(ptr);
 }

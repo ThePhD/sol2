@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2021-01-25 02:52:07.000664 UTC
-// This header was generated with sol v3.2.3 (revision e1950b9a)
+// Generated 2021-02-02 04:28:44.395065 UTC
+// This header was generated with sol v3.2.3 (revision 27c35214)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -8604,11 +8604,11 @@ namespace sol {
 			template <typename X>
 			using rebind_actual_type = std::shared_ptr<X>;
 
-			static bool is_null(const std::shared_ptr<T>& p) noexcept {
+			static bool is_null(lua_State*, const std::shared_ptr<T>& p) noexcept {
 				return p == nullptr;
 			}
 
-			static pointer get(const std::shared_ptr<T>& p) noexcept {
+			static pointer get(lua_State*, const std::shared_ptr<T>& p) noexcept {
 				return p.get();
 			}
 		};
@@ -8721,41 +8721,43 @@ namespace sol {
 	namespace detail {
 		template <typename T>
 		constexpr bool unique_is_null_noexcept() noexcept {
-			if constexpr (meta::meta_detail::unique_usertype_is_null_with_state_v<T>) {
-				return noexcept(unique_usertype_traits<T>::is_null(static_cast<lua_State*>(nullptr), std::declval<unique_usertype_actual_t<T>>()));
+			if constexpr (meta::meta_detail::unique_usertype_is_null_with_state_v<std::remove_cv_t<T>>) {
+				return noexcept(unique_usertype_traits<T>::is_null(static_cast<lua_State*>(nullptr), std::declval<unique_usertype_actual_t<std::remove_cv_t<T>>>()));
 			}
 			else {
-				return noexcept(unique_usertype_traits<T>::is_null(std::declval<unique_usertype_actual_t<T>>()));
+				return noexcept(unique_usertype_traits<T>::is_null(std::declval<unique_usertype_actual_t<std::remove_cv_t<T>>>()));
 			}
 		}
 
 		template <typename T>
-		bool unique_is_null(lua_State* L_, T& value_) noexcept(unique_is_null_noexcept<T>()) {
-			if constexpr (meta::meta_detail::unique_usertype_is_null_with_state_v<T>) {
-				return unique_usertype_traits<T>::is_null(L_, value_);
+		bool unique_is_null(lua_State* L_, T& value_) noexcept(unique_is_null_noexcept<std::remove_cv_t<T>>()) {
+			using Tu = std::remove_cv_t<T>;
+			if constexpr (meta::meta_detail::unique_usertype_is_null_with_state_v<Tu>) {
+				return unique_usertype_traits<Tu>::is_null(L_, value_);
 			}
 			else {
-				return unique_usertype_traits<T>::is_null(value_);
+				return unique_usertype_traits<Tu>::is_null(value_);
 			}
 		}
 
 		template <typename T>
 		constexpr bool unique_get_noexcept() noexcept {
-			if constexpr (meta::meta_detail::unique_usertype_get_with_state_v<T>) {
-				return noexcept(unique_usertype_traits<T>::get(static_cast<lua_State*>(nullptr), std::declval<unique_usertype_actual_t<T>>()));
+			if constexpr (meta::meta_detail::unique_usertype_get_with_state_v<std::remove_cv_t<T>>) {
+				return noexcept(unique_usertype_traits<T>::get(static_cast<lua_State*>(nullptr), std::declval<unique_usertype_actual_t<std::remove_cv_t<T>>>()));
 			}
 			else {
-				return noexcept(unique_usertype_traits<T>::get(std::declval<unique_usertype_actual_t<T>>()));
+				return noexcept(unique_usertype_traits<T>::get(std::declval<unique_usertype_actual_t<std::remove_cv_t<T>>>()));
 			}
 		}
 
 		template <typename T>
-		auto unique_get(lua_State* L_, T& value_) noexcept(unique_get_noexcept<T>()) {
-			if constexpr (meta::meta_detail::unique_usertype_get_with_state_v<T>) {
-				return unique_usertype_traits<T>::get(L_, value_);
+		auto unique_get(lua_State* L_, T& value_) noexcept(unique_get_noexcept<std::remove_cv_t<T>>()) {
+			using Tu = std::remove_cv_t<T>;
+			if constexpr (meta::meta_detail::unique_usertype_get_with_state_v<Tu>) {
+				return unique_usertype_traits<Tu>::get(L_, value_);
 			}
 			else {
-				return unique_usertype_traits<T>::get(value_);
+				return unique_usertype_traits<Tu>::get(value_);
 			}
 		}
 	} // namespace detail
