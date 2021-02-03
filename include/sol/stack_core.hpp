@@ -1253,7 +1253,7 @@ namespace sol {
 
 		template <typename T>
 		decltype(auto) pop(lua_State* L) {
-			return popper<meta::unqualified_t<T>> {}.pop(L);
+			return popper<T> {}.pop(L);
 		}
 
 		template <bool global = false, bool raw = false, typename Key>
@@ -1318,13 +1318,12 @@ namespace sol {
 
 		template <typename T, typename F>
 		void modify_unique_usertype_as(const stack_reference& obj, F&& f) {
-			using u_traits = unique_usertype_traits<T>;
 			void* raw = lua_touserdata(obj.lua_state(), obj.stack_index());
 			void* ptr_memory = detail::align_usertype_pointer(raw);
 			void* uu_memory = detail::align_usertype_unique<T>(raw);
 			T& uu = *static_cast<T*>(uu_memory);
 			f(uu);
-			*static_cast<void**>(ptr_memory) = static_cast<void*>(u_traits::get(uu));
+			*static_cast<void**>(ptr_memory) = static_cast<void*>(detail::unique_get(obj.lua_state(), uu));
 		}
 
 		template <typename F>

@@ -31,27 +31,36 @@
 #include <unordered_map>
 #include <vector>
 
-bool func_opt_ret_bool(sol::optional<int> i) {
-	if (i) {
-		INFO(i.value());
+inline namespace sol2_tests_basic {
+
+	bool func_opt_ret_bool(sol::optional<int> i) {
+		if (i) {
+			INFO(i.value());
+		}
+		else {
+			INFO("optional isn't set");
+		}
+		return true;
 	}
-	else {
-		INFO("optional isn't set");
-	}
-	return true;
-}
 
-struct base1 {
-	int a1 = 250;
-};
+	struct base1 {
+		int a1 = 250;
+	};
 
-struct base2 {
-	int a2 = 500;
-};
+	struct base2 {
+		int a2 = 500;
+	};
 
-struct simple : base1 { };
+	struct simple : base1 { };
 
-struct complex : base1, base2 { };
+	struct complex : base1, base2 { };
+
+	struct CardAction {
+		int value;
+	};
+
+
+} // namespace sol2_tests_basic
 
 SOL_BASE_CLASSES(complex, base1, base2);
 SOL_BASE_CLASSES(simple, base1);
@@ -706,4 +715,15 @@ TEST_CASE("object/base_of_things", "make sure that object is the base of things 
 		auto result6 = lua.safe_script("f6(ud)", sol::script_pass_on_error);
 		REQUIRE(result6.valid());
 	}
+}
+
+TEST_CASE("object/pop-based reference conversions", "Make sure conversions going through .as<T>() also have support for reference") {
+	sol::state lua;
+
+	lua["on_execute_impl"] = []() { return std::make_unique<CardAction>(CardAction { 5 }); };
+
+	sol::object obj = lua["on_execute_impl"]();
+	REQUIRE(obj.valid());
+	auto& ptr = obj.as<std::unique_ptr<CardAction>&>();
+	REQUIRE(ptr->value == 5);
 }
