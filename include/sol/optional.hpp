@@ -29,6 +29,14 @@
 #include <sol/traits.hpp>
 #if SOL_IS_ON(SOL_USE_BOOST_I_)
 #include <boost/optional.hpp>
+
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 107500 // Since Boost 1.75.0 boost::none is constexpr
+#define COULD_BE_CONSTEXPR constexpr
+#else
+#define COULD_BE_CONSTEXPR const
+#endif // BOOST_VERSION
+
 #else
 #include <sol/optional_implementation.hpp>
 #endif // Boost vs. Better optional
@@ -41,7 +49,7 @@ namespace sol {
 	template <typename T>
 	using optional = boost::optional<T>;
 	using nullopt_t = boost::none_t;
-	const nullopt_t nullopt = boost::none;
+	COULD_BE_CONSTEXPR nullopt_t nullopt = boost::none;
 #endif // Boost vs. Better optional
 
 	namespace meta {
@@ -61,18 +69,22 @@ namespace sol {
 #if SOL_IS_ON(SOL_USE_BOOST_I_)
 		template <typename T>
 		struct associated_nullopt<boost::optional<T>> {
-			inline static const boost::none_t value = boost::none;
+			inline static COULD_BE_CONSTEXPR boost::none_t value = boost::none;
 		};
 #endif // Boost nullopt
 
 #if SOL_IS_ON(SOL_USE_BOOST_I_)
 		template <typename T>
-		inline const auto associated_nullopt_v = associated_nullopt<T>::value;
+		inline COULD_BE_CONSTEXPR auto associated_nullopt_v = associated_nullopt<T>::value;
 #else
 		template <typename T>
 		inline constexpr auto associated_nullopt_v = associated_nullopt<T>::value;
 #endif // Boost continues to lag behind, to not many people's surprise...
 	} // namespace detail
 } // namespace sol
+
+#if SOL_IS_ON(SOL_USE_BOOST_I_)
+#undef COULD_BE_CONSTEXPR
+#endif
 
 #endif // SOL_OPTIONAL_HPP

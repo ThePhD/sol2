@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2021-02-03 01:36:36.756148 UTC
-// This header was generated with sol v3.2.3 (revision 22ecd349)
+// Generated 2021-02-10 17:29:50.610143 UTC
+// This header was generated with sol v3.2.3 (revision b77f1a21)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -4131,6 +4131,14 @@ namespace sol {
 
 #if SOL_IS_ON(SOL_USE_BOOST_I_)
 #include <boost/optional.hpp>
+
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 107500 // Since Boost 1.75.0 boost::none is constexpr
+#define COULD_BE_CONSTEXPR constexpr
+#else
+#define COULD_BE_CONSTEXPR const
+#endif // BOOST_VERSION
+
 #else
 // beginning of sol/optional_implementation.hpp
 
@@ -6373,7 +6381,7 @@ namespace sol {
 	template <typename T>
 	using optional = boost::optional<T>;
 	using nullopt_t = boost::none_t;
-	const nullopt_t nullopt = boost::none;
+	COULD_BE_CONSTEXPR nullopt_t nullopt = boost::none;
 #endif // Boost vs. Better optional
 
 	namespace meta {
@@ -6393,19 +6401,23 @@ namespace sol {
 #if SOL_IS_ON(SOL_USE_BOOST_I_)
 		template <typename T>
 		struct associated_nullopt<boost::optional<T>> {
-			inline static const boost::none_t value = boost::none;
+			inline static COULD_BE_CONSTEXPR boost::none_t value = boost::none;
 		};
 #endif // Boost nullopt
 
 #if SOL_IS_ON(SOL_USE_BOOST_I_)
 		template <typename T>
-		inline const auto associated_nullopt_v = associated_nullopt<T>::value;
+		inline COULD_BE_CONSTEXPR auto associated_nullopt_v = associated_nullopt<T>::value;
 #else
 		template <typename T>
 		inline constexpr auto associated_nullopt_v = associated_nullopt<T>::value;
 #endif // Boost continues to lag behind, to not many people's surprise...
 	} // namespace detail
 } // namespace sol
+
+#if SOL_IS_ON(SOL_USE_BOOST_I_)
+#undef COULD_BE_CONSTEXPR
+#endif
 
 // end of sol/optional.hpp
 
