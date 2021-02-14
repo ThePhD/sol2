@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2021-02-14 05:32:40.813170 UTC
-// This header was generated with sol v3.2.3 (revision 4e2ee29b)
+// Generated 2021-02-14 05:45:03.725363 UTC
+// This header was generated with sol v3.2.3 (revision 37d891fa)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -684,8 +684,9 @@
 	#endif
 #endif
 
-#if SOL_IS_ON (SOL_USE_BOOST_I)
+#if SOL_IS_ON(SOL_USE_BOOST_I_)
 	#include <boost/version.hpp>
+
 	#if BOOST_VERSION >= 107500 // Since Boost 1.75.0 boost::none is constexpr
 		#define SOL_BOOST_NONE_CONSTEXPR_I_ constexpr
 	#else

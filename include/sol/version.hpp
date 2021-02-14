@@ -678,8 +678,9 @@
 	#endif
 #endif
 
-#if SOL_IS_ON (SOL_USE_BOOST_I)
+#if SOL_IS_ON(SOL_USE_BOOST_I_)
 	#include <boost/version.hpp>
+
 	#if BOOST_VERSION >= 107500 // Since Boost 1.75.0 boost::none is constexpr
 		#define SOL_BOOST_NONE_CONSTEXPR_I_ constexpr
 	#else
