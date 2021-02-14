@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2021-02-14 05:27:31.429278 UTC
-// This header was generated with sol v3.2.3 (revision 810c96b9)
+// Generated 2021-02-14 05:32:40.369159 UTC
+// This header was generated with sol v3.2.3 (revision 4e2ee29b)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -682,6 +682,18 @@
 	#else
 		#define SOL_CHAR8_T_I_ SOL_DEFAULT_OFF
 	#endif
+#endif
+
+#if SOL_IS_ON (SOL_USE_BOOST_I)
+	#include <boost/version.hpp>
+	#if BOOST_VERSION >= 107500 // Since Boost 1.75.0 boost::none is constexpr
+		#define SOL_BOOST_NONE_CONSTEXPR_I_ constexpr
+	#else
+		#define SOL_BOOST_NONE_CONSTEXPR_I_ const
+	#endif // BOOST_VERSION
+#else
+	// assume boost isn't using a garbage version
+	#define SOL_BOOST_NONE_CONSTEXPR_I_ constexpr
 #endif
 
 // end of sol/version.hpp
@@ -4131,14 +4143,6 @@ namespace sol {
 
 #if SOL_IS_ON(SOL_USE_BOOST_I_)
 #include <boost/optional.hpp>
-
-#include <boost/version.hpp>
-#if BOOST_VERSION >= 107500 // Since Boost 1.75.0 boost::none is constexpr
-#define COULD_BE_CONSTEXPR constexpr
-#else
-#define COULD_BE_CONSTEXPR const
-#endif // BOOST_VERSION
-
 #else
 // beginning of sol/optional_implementation.hpp
 
@@ -6381,7 +6385,7 @@ namespace sol {
 	template <typename T>
 	using optional = boost::optional<T>;
 	using nullopt_t = boost::none_t;
-	COULD_BE_CONSTEXPR nullopt_t nullopt = boost::none;
+	SOL_BOOST_NONE_CONSTEXPR_I_ nullopt_t nullopt = boost::none;
 #endif // Boost vs. Better optional
 
 	namespace meta {
@@ -6401,13 +6405,13 @@ namespace sol {
 #if SOL_IS_ON(SOL_USE_BOOST_I_)
 		template <typename T>
 		struct associated_nullopt<boost::optional<T>> {
-			inline static COULD_BE_CONSTEXPR boost::none_t value = boost::none;
+			inline static SOL_BOOST_NONE_CONSTEXPR_I_ boost::none_t value = boost::none;
 		};
 #endif // Boost nullopt
 
 #if SOL_IS_ON(SOL_USE_BOOST_I_)
 		template <typename T>
-		inline COULD_BE_CONSTEXPR auto associated_nullopt_v = associated_nullopt<T>::value;
+		inline SOL_BOOST_NONE_CONSTEXPR_I_ auto associated_nullopt_v = associated_nullopt<T>::value;
 #else
 		template <typename T>
 		inline constexpr auto associated_nullopt_v = associated_nullopt<T>::value;
@@ -6416,7 +6420,7 @@ namespace sol {
 } // namespace sol
 
 #if SOL_IS_ON(SOL_USE_BOOST_I_)
-#undef COULD_BE_CONSTEXPR
+#undef SOL_BOOST_NONE_CONSTEXPR_I_
 #endif
 
 // end of sol/optional.hpp

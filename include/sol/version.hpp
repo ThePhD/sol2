@@ -677,6 +677,19 @@
 		#define SOL_CHAR8_T_I_ SOL_DEFAULT_OFF
 	#endif
 #endif
+
+#if SOL_IS_ON (SOL_USE_BOOST_I)
+	#include <boost/version.hpp>
+	#if BOOST_VERSION >= 107500 // Since Boost 1.75.0 boost::none is constexpr
+		#define SOL_BOOST_NONE_CONSTEXPR_I_ constexpr
+	#else
+		#define SOL_BOOST_NONE_CONSTEXPR_I_ const
+	#endif // BOOST_VERSION
+#else
+	// assume boost isn't using a garbage version
+	#define SOL_BOOST_NONE_CONSTEXPR_I_ constexpr
+#endif
+
 // clang-format on
 
 #endif // SOL_VERSION_HPP
