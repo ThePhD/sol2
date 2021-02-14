@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2021-02-10 17:29:50.610143 UTC
-// This header was generated with sol v3.2.3 (revision b77f1a21)
+// Generated 2021-02-14 05:27:31.429278 UTC
+// This header was generated with sol v3.2.3 (revision 810c96b9)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -10418,6 +10418,12 @@ namespace sol {
 		template <typename T>
 		struct as_table_tag { };
 
+		template <typename Tag>
+		inline constexpr bool is_tagged_v
+		     = meta::is_specialization_of_v<Tag,
+		            detail::
+		                 as_pointer_tag> || meta::is_specialization_of_v<Tag, as_value_tag> || meta::is_specialization_of_v<Tag, as_unique_tag> || meta::is_specialization_of_v<Tag, as_table_tag> || std::is_same_v<Tag, as_reference_tag> || std::is_same_v<Tag, with_function_tag>;
+
 		using lua_reg_table = luaL_Reg[64];
 
 		using unique_destructor = void (*)(void*);
@@ -11296,7 +11302,7 @@ namespace sol {
 			else if constexpr (meta::meta_detail::is_adl_sol_lua_push_exact_v<Tu, Arg, Args...>) {
 				return sol_lua_push(types<Tu>(), L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 			}
-			else if constexpr (meta::meta_detail::is_adl_sol_lua_push_v<Arg, Args...>) {
+			else if constexpr (meta::meta_detail::is_adl_sol_lua_push_v<Arg, Args...> && !detail::is_tagged_v<Tu>) {
 				return sol_lua_push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 			}
 			else {
@@ -16425,7 +16431,23 @@ namespace sol {
 			return super.lua_state();
 		}
 
-		SOL_PROXY_BASE_IMPL_MSVC_IS_TRASH_I_(Super);
+		operator std::string() const {
+			const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
+			return super.template get<std::string>();
+		}
+
+		template <typename T, meta::enable<meta::neg<meta::is_string_constructible<T>>, is_proxy_primitive<meta::unqualified_t<T>>> = meta::enabler>
+		operator T() const {
+			const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
+			return super.template get<T>();
+		}
+
+		template <typename T,
+		     meta::enable<meta::neg<meta::is_string_constructible<T>>, meta::neg<is_proxy_primitive<meta::unqualified_t<T>>>> = meta::enabler>
+		operator T&() const {
+			const Super& super = *static_cast<const Super*>(static_cast<const void*>(this));
+			return super.template get<T&>();
+		}
 	};
 
 } // namespace sol

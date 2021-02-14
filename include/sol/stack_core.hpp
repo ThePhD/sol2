@@ -59,6 +59,12 @@ namespace sol {
 		template <typename T>
 		struct as_table_tag { };
 
+		template <typename Tag>
+		inline constexpr bool is_tagged_v
+		     = meta::is_specialization_of_v<Tag,
+		            detail::
+		                 as_pointer_tag> || meta::is_specialization_of_v<Tag, as_value_tag> || meta::is_specialization_of_v<Tag, as_unique_tag> || meta::is_specialization_of_v<Tag, as_table_tag> || std::is_same_v<Tag, as_reference_tag> || std::is_same_v<Tag, with_function_tag>;
+
 		using lua_reg_table = luaL_Reg[64];
 
 		using unique_destructor = void (*)(void*);
@@ -938,7 +944,7 @@ namespace sol {
 			else if constexpr (meta::meta_detail::is_adl_sol_lua_push_exact_v<Tu, Arg, Args...>) {
 				return sol_lua_push(types<Tu>(), L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 			}
-			else if constexpr (meta::meta_detail::is_adl_sol_lua_push_v<Arg, Args...>) {
+			else if constexpr (meta::meta_detail::is_adl_sol_lua_push_v<Arg, Args...> && !detail::is_tagged_v<Tu>) {
 				return sol_lua_push(L, std::forward<Arg>(arg), std::forward<Args>(args)...);
 			}
 			else {
