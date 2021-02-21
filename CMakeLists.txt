@@ -115,7 +115,7 @@ set_target_properties(sol2
 	PROPERTIES
 	EXPORT_NAME sol2::sol2)
 
-target_include_directories(sol2 INTERFACE
+target_include_directories(sol2 SYSTEM INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<INSTALL_INTERFACE:include>)
 
