@@ -1,7 +1,7 @@
 # # # # sol3
 # The MIT License (MIT)
 #
-# Copyright (c) 2013-2020 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -65,7 +65,7 @@ set_target_properties(${toluapp_lib} PROPERTIES
 	POSITION_INDEPENDENT_CODE TRUE)
 target_include_directories(${toluapp_lib}
 	PUBLIC ${toluapp_include_dirs})
-target_link_libraries(${toluapp_lib} PRIVATE ${LUA_LIBRARIES})
+target_link_libraries(${toluapp_lib} PRIVATE ${LUA_LIBRARIES} ${CMAKE_DL_LIBS})
 if (MSVC)
 	target_compile_options(${toluapp_lib}
 		PRIVATE /W1)
@@ -76,9 +76,6 @@ else()
 		PRIVATE -w
 		INTERFACE -Wno-noexcept-type
 		PUBLIC -Wno-ignored-qualifiers -Wno-unused-parameter)
-endif()
-if (CMAKE_DL_LIBS)
-	target_link_libraries(${toluapp_lib} PRIVATE ${CMAKE_DL_LIBS})
 endif()
 # add compatibility define
 target_compile_definitions(${toluapp_lib}

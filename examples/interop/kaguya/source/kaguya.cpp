@@ -2,10 +2,7 @@
 #define SOL_ENABLE_INTEROP 1 // MUST be defined to use interop features
 #include <sol/sol.hpp>
 
-#include <kaguya/kaguya.hpp>
-
 #include <iostream>
-#include <assert.hpp>
 
 // kaguya code lifted from README.md,
 // written by satoren:
@@ -77,13 +74,13 @@ void register_sol_stuff(lua_State* L) {
 	lua["f"] = sol::overload(
 	     [](ABC& from_kaguya) {
 		     std::cout << "calling 1-argument version with kaguya-created ABC { " << from_kaguya.value() << " }" << std::endl;
-		     c_assert(from_kaguya.value() == 24);
+		     sol_c_assert(from_kaguya.value() == 24);
 	     },
 	     [](ABC& from_kaguya, int second_arg) {
 		     std::cout << "calling 2-argument version with kaguya-created ABC { " << from_kaguya.value() << " } and integer argument of " << second_arg
 		               << std::endl;
-		     c_assert(from_kaguya.value() == 24);
-		     c_assert(second_arg == 5);
+		     sol_c_assert(from_kaguya.value() == 24);
+		     sol_c_assert(second_arg == 5);
 	     });
 }
 
@@ -91,7 +88,7 @@ void check_with_sol(lua_State* L) {
 	sol::state_view lua(L);
 	ABC& obj = lua["obj"];
 	(void)obj;
-	c_assert(obj.value() == 24);
+	sol_c_assert(obj.value() == 24);
 }
 
 int main(int, char*[]) {

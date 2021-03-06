@@ -50,9 +50,7 @@ int main() {
 	GlobalResource instance;
 
 	// get GlobalResource
-	lua.set_function("f", [](GlobalResource* l, int value) {
-		return l->value + value;
-	});
+	lua.set_function("f", [](GlobalResource* l, int value) { return l->value + value; });
 	lua.set(script_key, &instance);
 
 	// note only 1 argument,

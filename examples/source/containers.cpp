@@ -21,13 +21,13 @@ function f (x)
 end
 	)");
 
-	// Have the function we 
+	// Have the function we
 	// just defined in Lua
 	sol::function f = lua["f"];
 
-	// Set a global variable called 
+	// Set a global variable called
 	// "arr" to be a vector of 5 lements
-	lua["arr"] = std::vector<int>{ 2, 4, 6, 8, 10 };
+	lua["arr"] = std::vector<int> { 2, 4, 6, 8, 10 };
 
 	// Call it, see 5 elements
 	// printed out
@@ -57,7 +57,7 @@ arr:clear()
 
 	// Now it's empty
 	f(lua["arr"]);
-	
+
 	std::cout << std::endl;
 
 	return 0;

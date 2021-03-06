@@ -1,18 +1,19 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
+int f1(int) {
+	return 32;
+}
 
-int f1(int) { return 32; }
-
-int f2(int, int) { return 1; }
+int f2(int, int) {
+	return 1;
+}
 
 struct fer {
 	double f3(int, int) {
 		return 2.5;
 	}
 };
-
 
 int main() {
 
@@ -36,15 +37,15 @@ int main() {
 	// get the results and see
 	// if it worked out
 	int r1 = lua["r1"];
-	c_assert(r1 == 32);
+	sol_c_assert(r1 == 32);
 	int r2 = lua["r2"];
-	c_assert(r2 == 1);
+	sol_c_assert(r2 == 1);
 	double r3 = lua["r3"];
-	c_assert(r3 == 2.5);
+	sol_c_assert(r3 == 2.5);
 	int r4 = lua["r4"];
-	c_assert(r4 == 32);
+	sol_c_assert(r4 == 32);
 	int r5 = lua["r5"];
-	c_assert(r5 == 1);
+	sol_c_assert(r5 == 1);
 
 	return 0;
 }

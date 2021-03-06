@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,7 @@
 
 #include "common_classes.hpp"
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 
 TEST_CASE("usertype/usertype", "Show that we can create classes from usertype and use them") {
@@ -242,8 +242,8 @@ TEST_CASE("usertype/get-set-references", "properly get and set with std::ref sem
 	sol::state lua;
 
 	lua.new_usertype<vars>("vars", "boop", &vars::boop);
-	vars var{};
-	vars rvar{};
+	vars var {};
+	vars rvar {};
 	std::cout << "setting beep" << std::endl;
 	lua.set("beep", var);
 	std::cout << "setting rbeep" << std::endl;

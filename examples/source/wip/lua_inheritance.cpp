@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include <assert.hpp>
 #include <iostream>
 
 int main(int, char*[]) {
@@ -11,7 +10,7 @@ int main(int, char*[]) {
 	lua.open_libraries(sol::lib::base);
 
 	/* This example is currently under construction.
-	For inheritance and classes within Lua, 
+	For inheritance and classes within Lua,
 	consider using kikito's middleclass
 	-- https://github.com/kikito/middleclass */
 

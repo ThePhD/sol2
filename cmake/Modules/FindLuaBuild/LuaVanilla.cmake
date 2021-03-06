@@ -1,7 +1,7 @@
 # # # # sol3
 # The MIT License (MIT)
 # 
-# Copyright (c) 2013-2020 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -360,9 +360,7 @@ endif()
 target_compile_options(${liblua}
 	PRIVATE ${LUA_VANILLA_LUALIB_COMPILER_OPTIONS})
 add_dependencies(${liblua} LUA_VANILLA)
-if (CMAKE_DL_LIBS)
-	target_link_libraries(${liblua} PRIVATE ${CMAKE_DL_LIBS})
-endif()
+target_link_libraries(${liblua} PRIVATE ${CMAKE_DL_LIBS})
 if (UNIX)
 	target_link_libraries(${liblua} PRIVATE m)
 endif()
@@ -399,10 +397,7 @@ if (LUA_BUILD_LUA_INTERPRETER)
 		target_compile_definitions(${luainterpreter} 
 			PRIVATE LUA_USE_LINUX)
 	endif()
-	target_link_libraries(${luainterpreter} PRIVATE ${liblua})
-	if (CMAKE_DL_LIBS)
-		target_link_libraries(${luainterpreter} PRIVATE ${CMAKE_DL_LIBS})
-	endif()
+	target_link_libraries(${luainterpreter} PRIVATE ${liblua} ${CMAKE_DL_LIBS})
 	if (UNIX)
 		target_link_libraries(${luainterpreter} PRIVATE m readline)
 	endif()
@@ -437,10 +432,7 @@ if (LUA_BUILD_LUA_COMPILER)
 		target_compile_definitions(${luacompiler} 
 			PRIVATE LUA_USE_LINUX)
 	endif()
-	target_link_libraries(${luacompiler} PRIVATE ${liblua})
-	if (CMAKE_DL_LIBS)
-		target_link_libraries(${luacompiler} PRIVATE ${CMAKE_DL_LIBS})
-	endif()
+	target_link_libraries(${luacompiler} PRIVATE ${liblua} ${CMAKE_DL_LIBS})
 	if (UNIX)
 		# TODO: make readline optional?
 		target_link_libraries(${luacompiler} PRIVATE m readline)

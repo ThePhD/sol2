@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 
 int main() {
 
@@ -27,14 +26,14 @@ int main() {
 
 	// retrivies value inside of lua table above
 	std::string value = z;
-	c_assert(value == "arf!");
+	sol_c_assert(value == "arf!");
 
 	// Can change the value later...
 	z = 20;
 
 	// Yay, lazy-evaluation!
 	int changed_value = z; // now it's 20!
-	c_assert(changed_value == 20);
+	sol_c_assert(changed_value == 20);
 	lua.script("assert(bark.woof[2] == 20)");
 
 	lua["a_new_value"] = 24;

@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-int main(int, char* []) {
+int main(int, char*[]) {
 	std::cout << "=== environment state 2 ===" << std::endl;
 
 	sol::state lua;

@@ -1,7 +1,7 @@
 # # # # sol3
 # The MIT License (MIT)
 # 
-# Copyright (c) 2013-2020 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -22,10 +22,10 @@
 
 # # # # sol3
 # # # Required minimum version statement
-cmake_minimum_required(VERSION 3.5.0)
+cmake_minimum_required(VERSION 3.15.0)
 
 # # # project declaration
-project(sol2 VERSION 3.2.3 LANGUAGES CXX C)
+project(sol2 VERSION 3.2.5 LANGUAGES CXX C)
 
 include(GNUInstallDirs)
 
@@ -36,13 +36,15 @@ include(GNUInstallDirs)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules" "${CMAKE_MODULE_PATH}")
 
 # Include standard modules
-include(CMakeDependentOption)
 include(CMakePackageConfigHelpers)
-
+include(CheckCXXCompilerFlag)
+include(CMakeDependentOption)
+include(GNUInstallDirs)
+include(FetchContent)
 
 # # # Configuration
 # # Cached defines, strings, paths and options
-set(SOL2_LUA_VERSION "5.3.5" CACHE STRING "The version of Lua needed. Can be 5.1, 5.2, 5.3, 5.4, LuaJIT, or a more specific 3-part version number for a specifc Lua (e.g., 5.3.4 or luajit-2.0.5)")
+set(SOL2_LUA_VERSION "5.3.5" CACHE STRING "The version of Lua needed. Can be 5.1, 5.2, 5.3, 5.4, LuaJIT, or a more specific 3-part version number for a specifc Lua (e.g., 5.3.5 or luajit-2.0.5)")
 set(SOL2_BUILD_LUA TRUE CACHE BOOL "Always build Lua, do not search for it in the system")
 set(SOL2_PLATFORM "x64" CACHE STRING "Target platform to compile for when building binaries (x86, x64)")
 option(SOL2_CI "Whether or not we are in continguous integration mode" OFF)
@@ -161,7 +163,7 @@ endif()
 # Generates the docs
 if (SOL2_DOCS)
 	message(STATUS "sol2 adding docs...")
-	add_subdirectory(docs)
+	add_subdirectory(documentation)
 endif()
 
 if(SOL2_ENABLE_INSTALL)
@@ -277,13 +279,9 @@ if (SOL2_IS_TOP_LEVEL AND (SOL2_DO_TESTS OR SOL2_DO_EXAMPLES))
 		set_target_properties(${lualib}
 			PROPERTIES 
 			INTERFACE_INCLUDE_DIRECTORIES ${LUA_INCLUDE_DIR}
-			INTERFACE_LINK_LIBRARIES ${LUA_SEARCH_DEPENDENCY_LIBS}
+			INTERFACE_LINK_LIBRARIES ${LUA_SEARCH_DEPENDENCY_LIBS} ${CMAKE_DL_LIBS}
 			IMPORTED_LINK_INTERFACE_LANGUAGES C
 			IMPORTED_LOCATION ${lualiblocation})
-		if (CMAKE_DL_LIBS)
-			set_property(TARGET ${lualib}
-				APPEND PROPERTY INTERFACE_LINK_LIBRARIES ${CMAKE_DL_LIBS})
-		endif()
 		set(LUA_LIBRARIES ${lualib})
 	endif()
 

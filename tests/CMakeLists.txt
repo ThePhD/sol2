@@ -1,7 +1,7 @@
 # # # # sol3
 # The MIT License (MIT)
 # 
-# Copyright (c) 2013-2020 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -21,6 +21,14 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # # # # sol3 tests
+
+# # Dependencies
+FetchContent_Declare(
+	Catch2
+	GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+	GIT_TAG        v2.13.4
+)
+FetchContent_MakeAvailable(Catch2)
 
 add_subdirectory(header_tests)
 add_subdirectory(runtime_tests)

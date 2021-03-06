@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2021-02-14 05:45:03.271116 UTC
-// This header was generated with sol v3.2.3 (revision 37d891fa)
+// Generated 2021-03-06 04:31:48.560338 UTC
+// This header was generated with sol v3.2.3 (revision d4b13ff8)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_HPP
@@ -695,6 +695,28 @@
 #else
 	// assume boost isn't using a garbage version
 	#define SOL_BOOST_NONE_CONSTEXPR_I_ constexpr
+#endif
+
+#if defined(SOL2_CI)
+	#if (SOL2_CI != 0)
+		#define SOL2_CI_I_ SOL_ON
+	#else
+		#define SOL2_CI_I_ SOL_OFF
+	#endif
+#else
+	#define SOL2_CI_I_ SOL_OFF
+#endif
+
+#if defined(SOL_C_ASSERT)
+	#define SOL_USER_C_ASSERT_I_ SOL_ON
+#else
+	#define SOL_USER_C_ASSERT_I_ SOL_DEFAULT_OFF
+#endif
+
+#if defined(SOL_M_ASSERT)
+	#define SOL_USER_M_ASSERT_I_ SOL_ON
+#else
+	#define SOL_USER_M_ASSERT_I_ SOL_DEFAULT_OFF
 #endif
 
 // end of sol/version.hpp
@@ -2464,6 +2486,73 @@ namespace sol {
 
 #endif // SOL_FORWARD_DETAIL_HPP
 // end of sol/forward_detail.hpp
+
+// beginning of sol/assert.hpp
+
+#if SOL_IS_ON(SOL2_CI_I_)
+
+struct pre_main {
+	pre_main() {
+#ifdef _MSC_VER
+		_set_abort_behavior(0, _WRITE_ABORT_MSG);
+#endif
+	}
+} pm;
+
+#endif // Prevent lockup when doing Continuous Integration
+
+#if SOL_IS_ON(SOL_USER_C_ASSERT_I_)
+	#define sol_c_assert(...) SOL_C_ASSERT(__VA_ARGS__)
+#else
+	#if SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+		#include <exception>
+		#include <iostream>
+		#include <cstdlib>
+
+			#define sol_c_assert(...)                                                                                               \
+				do {                                                                                                               \
+					if (!(__VA_ARGS__)) {                                                                                           \
+						std::cerr << "Assertion `" #__VA_ARGS__ "` failed in " << __FILE__ << " line " << __LINE__ << std::endl; \
+						std::terminate();                                                                                        \
+					}                                                                                                             \
+				} while (false)
+	#else
+		#define sol_c_assert(...)           \
+			do {                           \
+				if (false) {              \
+					(void)(__VA_ARGS__); \
+				}                         \
+			} while (false)
+	#endif
+#endif
+
+#if SOL_IS_ON(SOL_USER_M_ASSERT_I_)
+	#define sol_m_assert(message, ...) SOL_M_ASSERT(message, __VA_ARGS__)
+#else
+	#if SOL_IS_ON(SOL_DEBUG_BUILD_I_)
+		#include <exception>
+		#include <iostream>
+		#include <cstdlib>
+
+		#define sol_m_assert(message, ...)                                                                                                         \
+			do {                                                                                                                                  \
+				if (!(__VA_ARGS__)) {                                                                                                              \
+					std::cerr << "Assertion `" #__VA_ARGS__ "` failed in " << __FILE__ << " line " << __LINE__ << ": " << message << std::endl; \
+					std::terminate();                                                                                                           \
+				}                                                                                                                                \
+			} while (false)
+	#else
+		#define sol_m_assert(message, ...)    \
+			do {                             \
+				if (false) {                \
+					(void)(__VA_ARGS__);   \
+					(void)sizeof(message); \
+				}                           \
+			} while (false)
+	#endif
+#endif
+
+// end of sol/assert.hpp
 
 // beginning of sol/bytecode.hpp
 
@@ -6662,8 +6751,9 @@ namespace sol { namespace detail {
 			return *this;
 		};
 		template <typename Arg, typename... Args,
-			typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
-			                                 ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T> && (sizeof...(Args) > 0 || !std::is_convertible_v<Arg, T>)>>
+			typename = std::enable_if_t<
+			     !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
+			          ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T> && (sizeof...(Args) > 0 || !std::is_convertible_v<Arg, T>)>>
 		ebco(Arg&& arg, Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Arg, Args...>)
 		: m_value(std::forward<Arg>(arg), std::forward<Args>(args)...) {
 		}
@@ -6689,8 +6779,9 @@ namespace sol { namespace detail {
 		ebco(const T& v) noexcept(std::is_nothrow_copy_constructible_v<T>) : T(v) {};
 		ebco(T&& v) noexcept(std::is_nothrow_move_constructible_v<T>) : T(std::move(v)) {};
 		template <typename Arg, typename... Args,
-			typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
-			                                 ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T> && (sizeof...(Args) > 0 || !std::is_convertible_v<Arg, T>)>>
+			typename = std::enable_if_t<
+			     !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
+			          ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T> && (sizeof...(Args) > 0 || !std::is_convertible_v<Arg, T>)>>
 		ebco(Arg&& arg, Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Arg, Args...>) : T(std::forward<Arg>(arg), std::forward<Args>(args)...) {
 		}
 
@@ -8739,7 +8830,8 @@ namespace sol {
 		template <typename T>
 		constexpr bool unique_is_null_noexcept() noexcept {
 			if constexpr (meta::meta_detail::unique_usertype_is_null_with_state_v<std::remove_cv_t<T>>) {
-				return noexcept(unique_usertype_traits<T>::is_null(static_cast<lua_State*>(nullptr), std::declval<unique_usertype_actual_t<std::remove_cv_t<T>>>()));
+				return noexcept(
+				     unique_usertype_traits<T>::is_null(static_cast<lua_State*>(nullptr), std::declval<unique_usertype_actual_t<std::remove_cv_t<T>>>()));
 			}
 			else {
 				return noexcept(unique_usertype_traits<T>::is_null(std::declval<unique_usertype_actual_t<std::remove_cv_t<T>>>()));
@@ -8760,7 +8852,8 @@ namespace sol {
 		template <typename T>
 		constexpr bool unique_get_noexcept() noexcept {
 			if constexpr (meta::meta_detail::unique_usertype_get_with_state_v<std::remove_cv_t<T>>) {
-				return noexcept(unique_usertype_traits<T>::get(static_cast<lua_State*>(nullptr), std::declval<unique_usertype_actual_t<std::remove_cv_t<T>>>()));
+				return noexcept(
+				     unique_usertype_traits<T>::get(static_cast<lua_State*>(nullptr), std::declval<unique_usertype_actual_t<std::remove_cv_t<T>>>()));
 			}
 			else {
 				return noexcept(unique_usertype_traits<T>::get(std::declval<unique_usertype_actual_t<std::remove_cv_t<T>>>()));
@@ -12662,8 +12755,10 @@ namespace sol {
 			}
 
 			static constexpr int sequence_length(unsigned char b) {
-				return (b & start_2byte_mask) == 0 ? 1
-				                                   : (b & start_3byte_mask) != start_3byte_mask ? 2 : (b & start_4byte_mask) != start_4byte_mask ? 3 : 4;
+				return (b & start_2byte_mask) == 0                ? 1
+				     : (b & start_3byte_mask) != start_3byte_mask ? 2
+				     : (b & start_4byte_mask) != start_4byte_mask ? 3
+				                                                  : 4;
 			}
 
 			static constexpr char32_t decode(unsigned char b0, unsigned char b1) {
@@ -15962,7 +16057,8 @@ namespace sol {
 			}
 
 			template <bool checked, typename Arg, typename... Args, std::size_t I, std::size_t... Is, typename Handler, typename Fx, typename... FxArgs>
-			static decltype(auto) eval(types<Arg, Args...>, std::index_sequence<I, Is...>, lua_State* L_, int start_index_, Handler&& handler_, record& tracking_, Fx&& fx_, FxArgs&&... fxargs_) {
+			static decltype(auto) eval(types<Arg, Args...>, std::index_sequence<I, Is...>, lua_State* L_, int start_index_, Handler&& handler_,
+			     record& tracking_, Fx&& fx_, FxArgs&&... fxargs_) {
 #if SOL_IS_ON(SOL_PROPAGATE_EXCEPTIONS_I_)
 				// We can save performance/time by letting errors unwind produced arguments
 				// rather than checking everything once, and then potentially re-doing work
@@ -15993,7 +16089,8 @@ namespace sol {
 			}
 
 			template <bool checkargs = detail::default_safe_function_calls, std::size_t... I, typename R, typename... Args, typename Fx, typename... FxArgs>
-			inline decltype(auto) call(types<R>, types<Args...> argument_types_, std::index_sequence<I...> argument_indices_, lua_State* L_, int start_index_, Fx&& fx_, FxArgs&&... args_) {
+			inline decltype(auto) call(types<R>, types<Args...> argument_types_, std::index_sequence<I...> argument_indices_, lua_State* L_,
+			     int start_index_, Fx&& fx_, FxArgs&&... args_) {
 				static_assert(meta::all_v<meta::is_not_move_only<Args>...>,
 				     "One of the arguments being bound is a move-only type, and it is not being taken by reference: this will break your code. Please take "
 				     "a reference and std::move it manually if this was your intention.");
@@ -16005,10 +16102,12 @@ namespace sol {
 				}
 #endif
 				if constexpr (std::is_void_v<R>) {
-					eval<checkargs>(argument_types_, argument_indices_, L_, start_index_, handler, tracking, std::forward<Fx>(fx_), std::forward<FxArgs>(args_)...);
+					eval<checkargs>(
+					     argument_types_, argument_indices_, L_, start_index_, handler, tracking, std::forward<Fx>(fx_), std::forward<FxArgs>(args_)...);
 				}
 				else {
-					return eval<checkargs>(argument_types_, argument_indices_, L_, start_index_, handler, tracking, std::forward<Fx>(fx_), std::forward<FxArgs>(args_)...);
+					return eval<checkargs>(
+					     argument_types_, argument_indices_, L_, start_index_, handler, tracking, std::forward<Fx>(fx_), std::forward<FxArgs>(args_)...);
 				}
 			}
 		} // namespace stack_detail
@@ -19098,7 +19197,7 @@ namespace sol {
 
 	namespace detail {
 		template <typename R, typename... Args, typename F, typename = std::invoke_result_t<meta::unqualified_t<F>, Args...>>
-		inline constexpr auto resolve_i(types<R(Args...)>, F &&) -> R (meta::unqualified_t<F>::*)(Args...) {
+		inline constexpr auto resolve_i(types<R(Args...)>, F&&) -> R (meta::unqualified_t<F>::*)(Args...) {
 			using Sig = R(Args...);
 			typedef meta::unqualified_t<F> Fu;
 			return static_cast<Sig Fu::*>(&Fu::operator());
@@ -19167,7 +19266,7 @@ namespace sol {
 
 	namespace detail {
 		template <typename R, typename... Args, typename F, typename = std::invoke_result_t<meta::unqualified_t<F>, Args...>>
-		inline auto resolve_i(types<R(Args...)>, F &&) -> R (meta::unqualified_t<F>::*)(Args...) {
+		inline auto resolve_i(types<R(Args...)>, F&&) -> R (meta::unqualified_t<F>::*)(Args...) {
 			using Sig = R(Args...);
 			typedef meta::unqualified_t<F> Fu;
 			return static_cast<Sig Fu::*>(&Fu::operator());
@@ -26055,11 +26154,11 @@ namespace sol {
 			return static_cast<bool>(env);
 		}
 
-		operator optional<environment> &() {
+		operator optional<environment>&() {
 			return env;
 		}
 
-		operator const optional<environment> &() const {
+		operator const optional<environment>&() const {
 			return env;
 		}
 

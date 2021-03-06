@@ -3,7 +3,6 @@
 
 #include <fstream>
 #include <iostream>
-#include <assert.hpp>
 
 int main(int, char*[]) {
 	std::cout << "=== running lua code (safely) ===" << std::endl;
@@ -15,7 +14,7 @@ int main(int, char*[]) {
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
-	
+
 	// load and execute from string
 	auto result = lua.safe_script("a = 'test'", sol::script_pass_on_error);
 	if (!result.valid()) {
@@ -23,7 +22,7 @@ int main(int, char*[]) {
 		std::cerr << "The code has failed to run!\n" << err.what() << "\nPanicking and exiting..." << std::endl;
 		return 1;
 	}
-	
+
 	// load and execute from file
 	auto script_from_file_result = lua.safe_script_file("a_lua_script.lua", sol::script_pass_on_error);
 	if (!script_from_file_result.valid()) {
@@ -34,11 +33,11 @@ int main(int, char*[]) {
 
 	// run a script, get the result
 	sol::optional<int> maybe_value = lua.safe_script("return 54", sol::script_pass_on_error);
-	c_assert(maybe_value.has_value());
-	c_assert(*maybe_value == 54);
+	sol_c_assert(maybe_value.has_value());
+	sol_c_assert(*maybe_value == 54);
 
 	auto bad_code_result = lua.safe_script("123 herp.derp", sol::script_pass_on_error);
-	c_assert(!bad_code_result.valid());
+	sol_c_assert(!bad_code_result.valid());
 
 	// you can also specify a handler function, and it'll
 	// properly work here
@@ -49,17 +48,15 @@ int main(int, char*[]) {
 		return pfr;
 	});
 	// it did not work
-	c_assert(!bad_code_result2.valid());
+	sol_c_assert(!bad_code_result2.valid());
 
 	// the default handler panics or throws, depending on your settings
 	// uncomment for explosions:
-	//auto bad_code_result_2 = lua.script("bad.code", &sol::script_default_on_error);
+	// auto bad_code_result_2 = lua.script("bad.code", &sol::script_default_on_error);
 
 	std::cout << std::endl;
 
-	{
-		std::remove("a_lua_script.lua");
-	}
+	{ std::remove("a_lua_script.lua"); }
 
 	return 0;
 }

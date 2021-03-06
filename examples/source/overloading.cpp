@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 #include <iostream>
 
 inline int my_add(int x, int y) {
@@ -23,11 +22,7 @@ int main() {
 	// you want to pack into a single name:
 	// make SURE they take different types!
 
-	lua.set_function("func", sol::overload(
-		[](int x) { return x; }, 
-		make_string, 
-		my_add
-	));
+	lua.set_function("func", sol::overload([](int x) { return x; }, make_string, my_add));
 
 	// All these functions are now overloaded through "func"
 	lua.script(R"(

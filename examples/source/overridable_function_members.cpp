@@ -15,15 +15,12 @@ int main() {
 		void default_paint() {
 			std::cout << "p" << std::endl;
 		}
-
 	};
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<thingy>("thingy",
-		sol::constructors<thingy(sol::this_state)>(),
-		"paint", &thingy::paint);
+	lua.new_usertype<thingy>("thingy", sol::constructors<thingy(sol::this_state)>(), "paint", &thingy::paint);
 
 	sol::string_view code = R"(
 obj = thingy.new()

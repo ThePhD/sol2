@@ -2,7 +2,6 @@
 #include <sol/sol.hpp>
 
 #include <iostream>
-#include "assert.hpp"
 
 
 int main() {
@@ -21,7 +20,7 @@ int main() {
 	// load this code (but do not run)
 	sol::load_result lr = lua.load("a = function (v) print(v) return v end");
 	// check if it's sucessfully loaded
-	c_assert(lr.valid());
+	sol_c_assert(lr.valid());
 
 	// turn it into a function, then dump the bytecode
 	sol::protected_function target = lr.get<sol::protected_function>();
@@ -31,12 +30,12 @@ int main() {
 	// in the SECOND state
 	auto result2 = lua2.safe_script(target_bc.as_string_view(), sol::script_pass_on_error);
 	// check if it was done properly
-	c_assert(result2.valid());
+	sol_c_assert(result2.valid());
 
 	// check in the second state if it was valid
 	sol::protected_function pf = lua2["a"];
 	int v = pf(25557);
-	c_assert(v == 25557);
+	sol_c_assert(v == 25557);
 
 	return 0;
 }

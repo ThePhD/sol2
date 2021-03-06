@@ -29,7 +29,7 @@ what sol supports
  	- Pull out any Lua function with :doc:`sol::function<api/function>`: ``sol::function fx = table["socket_send"];``
  	- Can also set callables into :doc:`operator[] proxies<api/proxy>`: ``table["move_dude"] = &engine::move_dude;``
  	- Safety: use :doc:`sol::protected_function<api/protected_function>` to catch any kind of error
- 		+ ANY kind: C++ exception or Lua erors are trapped and run through the optional ``error_handler`` variable
+ 		+ ANY kind: C++ exception or Lua errors are trapped and run through the optional error handler stored in the protected function
  	- *Advanced:* :doc:`overloading of a single function name<api/overload>` so you don't need to do boring typechecks
  	- *Advanced:* :doc:`efficient handling and well-documented<functions>` way of dealing with arguments
 

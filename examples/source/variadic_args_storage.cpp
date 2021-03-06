@@ -10,17 +10,15 @@ int main() {
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
-	
+
 	std::function<void()> function_storage;
 
-	auto store_routine = [&function_storage] (sol::function f, sol::variadic_args va) {
-		function_storage = [f, args = std::vector<sol::object>(va.begin(), va.end())]() {
-			f(sol::as_args(args));
-		};
+	auto store_routine = [&function_storage](sol::function f, sol::variadic_args va) {
+		function_storage = [f, args = std::vector<sol::object>(va.begin(), va.end())]() { f(sol::as_args(args)); };
 	};
 
 	lua.set_function("store_routine", store_routine);
-	
+
 	lua.script(R"(
 function a(name)
 	print(name)

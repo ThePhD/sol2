@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -23,7 +23,7 @@
 
 #include "sol_test.hpp"
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 #include <unordered_map>
 #include <unordered_set>
@@ -203,7 +203,7 @@ TEST_CASE("containers/unordered lookup containers", "check ordered container typ
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		std::unordered_set<int> items{ 11, 12, 13, 14, 15 };
+		std::unordered_set<int> items { 11, 12, 13, 14, 15 };
 		lua["c"] = &items;
 		unordered_container_check(lua, items);
 	}
@@ -219,7 +219,7 @@ TEST_CASE("containers/unordered lookup containers", "check ordered container typ
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		std::unordered_multiset<int> items{ 11, 12, 13, 14, 15 };
+		std::unordered_multiset<int> items { 11, 12, 13, 14, 15 };
 		lua["c"] = &items;
 		unordered_container_check(lua, items);
 	}
@@ -238,7 +238,7 @@ TEST_CASE("containers/associative unordered containers", "check associative (map
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		std::unordered_map<short, int> items{ { (short)11, 21 }, { (short)12, 22 }, { (short)13, 23 }, { (short)14, 24 }, { (short)15, 25 } };
+		std::unordered_map<short, int> items { { (short)11, 21 }, { (short)12, 22 }, { (short)13, 23 }, { (short)14, 24 }, { (short)15, 25 } };
 		lua["c"] = &items;
 		associative_unordered_container_check(lua, items);
 	}
@@ -246,7 +246,7 @@ TEST_CASE("containers/associative unordered containers", "check associative (map
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		std::unordered_map<std::string, std::string> items{ { "a", "a" }, { "b", "b" }, { "c", "c" } };
+		std::unordered_map<std::string, std::string> items { { "a", "a" }, { "b", "b" }, { "c", "c" } };
 		lua["c"] = &items;
 		unordered_lookup_container_check(lua, items);
 	}
@@ -254,7 +254,7 @@ TEST_CASE("containers/associative unordered containers", "check associative (map
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		std::unordered_multimap<short, int> items{ { (short)11, 21 }, { (short)12, 22 }, { (short)13, 23 }, { (short)14, 24 }, { (short)15, 25 } };
+		std::unordered_multimap<short, int> items { { (short)11, 21 }, { (short)12, 22 }, { (short)13, 23 }, { (short)14, 24 }, { (short)15, 25 } };
 		lua["c"] = &items;
 		associative_unordered_container_check(lua, items);
 	}
@@ -262,7 +262,7 @@ TEST_CASE("containers/associative unordered containers", "check associative (map
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		std::unordered_multimap<std::string, std::string> items{ { "a", "a" }, { "b", "b" }, { "c", "c" } };
+		std::unordered_multimap<std::string, std::string> items { { "a", "a" }, { "b", "b" }, { "c", "c" } };
 		lua["c"] = &items;
 		unordered_lookup_container_check(lua, items);
 	}

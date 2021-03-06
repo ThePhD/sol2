@@ -1,7 +1,7 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-int main () {
+int main() {
 	class B {
 	public:
 		int bvar = 24;
@@ -9,12 +9,13 @@ int main () {
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
-	lua.new_usertype<B>("B", 
-		// bind as variable
-		"b", &B::bvar,
-		// bind as function
-		"f", sol::as_function(&B::bvar)
-	);
+	lua.new_usertype<B>("B",
+	     // bind as variable
+	     "b",
+	     &B::bvar,
+	     // bind as function
+	     "f",
+	     sol::as_function(&B::bvar));
 
 	B b;
 	lua.set("b", &b);

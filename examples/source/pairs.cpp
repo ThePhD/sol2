@@ -5,7 +5,7 @@
 #include <iostream>
 
 struct my_thing {
-	std::map<std::string, int> m{
+	std::map<std::string, int> m {
 		{ "bark", 20 },
 		{ "woof", 60 },
 		{ "borf", 30 },
@@ -13,7 +13,6 @@ struct my_thing {
 	};
 
 	my_thing() {
-
 	}
 };
 
@@ -22,26 +21,24 @@ struct lua_iterator_state {
 	it_t it;
 	it_t last;
 
-	lua_iterator_state(my_thing& mt) : it(mt.m.begin()), last(mt.m.end()) {}
+	lua_iterator_state(my_thing& mt) : it(mt.m.begin()), last(mt.m.end()) {
+	}
 };
 
 std::tuple<sol::object, sol::object> my_next(sol::user<lua_iterator_state&> user_it_state, sol::this_state l) {
-	// this gets called 
+	// this gets called
 	// to start the first iteration, and every
 	// iteration there after
 
 	// the state you passed in my_pairs is argument 1
-	// the key value is argument 2, but we do not 
+	// the key value is argument 2, but we do not
 	// care about the key value here
 	lua_iterator_state& it_state = user_it_state;
 	auto& it = it_state.it;
 	if (it == it_state.last) {
-		// return nil to signify that 
+		// return nil to signify that
 		// there's nothing more to work with.
-		return std::make_tuple(
-			sol::object(sol::lua_nil),
-			sol::object(sol::lua_nil)
-		);
+		return std::make_tuple(sol::object(sol::lua_nil), sol::object(sol::lua_nil));
 	}
 	auto itderef = *it;
 	// 2 values are returned (pushed onto the stack):
@@ -73,9 +70,7 @@ int main(int, char*[]) {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<my_thing>("my_thing",
-		sol::meta_function::pairs, my_pairs
-	);
+	lua.new_usertype<my_thing>("my_thing", sol::meta_function::pairs, my_pairs);
 
 #if SOL_LUA_VERSION > 501
 	lua.safe_script(R"(

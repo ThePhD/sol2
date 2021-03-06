@@ -5,7 +5,7 @@
 #include <iostream>
 
 struct my_thing {
-	std::map<std::string, int> m{
+	std::map<std::string, int> m {
 		{ "bark", 20 },
 		{ "woof", 60 },
 		{ "borf", 30 },
@@ -13,7 +13,6 @@ struct my_thing {
 	};
 
 	my_thing() {
-
 	}
 };
 
@@ -22,11 +21,12 @@ struct lua_iterator_state {
 	it_t it;
 	it_t last;
 
-	lua_iterator_state(my_thing& mt) : it(mt.m.begin()), last(mt.m.end()) {}
+	lua_iterator_state(my_thing& mt) : it(mt.m.begin()), last(mt.m.end()) {
+	}
 };
 
 int my_next(lua_State* L) {
-	// this gets called 
+	// this gets called
 	// to start the first iteration, and every
 	// iteration there after
 	// the state you passed in pairs is argument 1
@@ -54,7 +54,7 @@ int my_pairs(lua_State* L) {
 	// the "next" function on how to advance,
 	// the "table" itself or some state,
 	// and an initial key value (can be nil)
-	
+
 	// next function controls iteration
 	int pushed = sol::stack::push(L, my_next);
 	pushed += sol::stack::push<sol::user<lua_iterator_state>>(L, std::move(it_state));
@@ -68,9 +68,7 @@ int main(int, char*[]) {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<my_thing>("my_thing",
-		sol::meta_function::pairs, &my_pairs
-	);
+	lua.new_usertype<my_thing>("my_thing", sol::meta_function::pairs, &my_pairs);
 
 #if SOL_LUA_VERSION > 501
 	lua.safe_script(R"(

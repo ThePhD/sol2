@@ -1,7 +1,7 @@
 # # # # sol3
 # The MIT License (MIT)
 #
-# Copyright (c) 2013-2020 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -31,7 +31,7 @@ function (make_luwra_interop_example target_library example_suffix)
 	add_executable(${example_name} source/luwra.cpp)
 	target_link_libraries(${example_name} 
 		PRIVATE ${LUA_LIBRARIES} ${LUWRA_LIBRARIES} 
-		${target_library} sol2::assert)
+		${target_library} ${CMAKE_DL_LIBS})
 
 	if (MSVC)
 		target_compile_options(${example_name}
@@ -48,10 +48,6 @@ function (make_luwra_interop_example target_library example_suffix)
 			-Wno-unknown-warning -Wno-unknown-warning-option)
 	endif()
 
-	if (CMAKE_DL_LIBS)
-		target_link_libraries(${example_name} PRIVATE ${CMAKE_DL_LIBS})
-	endif()
-
 	if (SOL2_TESTS_INTEROP_EXAMPLES)
 		add_test(NAME ${example_name} COMMAND ${example_name})
 	endif()
@@ -61,8 +57,8 @@ if (SOL2_INTEROP_EXAMPLES)
 	make_luwra_interop_example(sol2::sol2 "")
 endif()
 if (SOL2_INTEROP_EXAMPLES_SINGLE)
-	make_luwra_interop_example(sol2::sol2_single ".single")
+	make_luwra_interop_example(sol2::sol2::single ".single")
 endif()
 if (SOL2_INTEROP_EXAMPLES_SINGLE_GENERATED)
-	make_luwra_interop_example(sol2::sol2_single_generated ".single.generated")
+	make_luwra_interop_example(sol2::sol2::single_generated ".single.generated")
 endif()

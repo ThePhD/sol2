@@ -7,7 +7,7 @@ struct ship {
 	int bullets = 20;
 	int life = 100;
 
-	bool shoot () {
+	bool shoot() {
 		if (bullets > 0) {
 			--bullets;
 			// successfully shot
@@ -17,7 +17,7 @@ struct ship {
 		return false;
 	}
 
-	bool hurt (int by) {
+	bool hurt(int by) {
 		life -= by;
 		// have we died?
 		return life < 1;
@@ -25,7 +25,7 @@ struct ship {
 };
 
 
-int main () {
+int main() {
 
 	std::cout << "=== usertype basics ===" << std::endl;
 
@@ -35,22 +35,25 @@ int main () {
 	lua.open_libraries(sol::lib::base);
 
 	if (way_1) {
-		lua.new_usertype<ship>( "ship", // the name of the class, as you want it to be used in lua
-			// List the member functions you wish to bind:
-			// "name_of_item", &class_name::function_or_variable
-			"shoot", &ship::shoot,
-			"hurt", &ship::hurt,
-			// bind variable types, too
-			"life", &ship::life,
-			// names in lua don't have to be the same as C++,
-			// but it probably helps if they're kept the same,
-			// here we change it just to show its possible
-			"bullet_count", &ship::bullets
-		);
+		lua.new_usertype<ship>("ship", // the name of the class, as you want it to be used in lua
+		                               // List the member functions you wish to bind:
+		                               // "name_of_item", &class_name::function_or_variable
+		     "shoot",
+		     &ship::shoot,
+		     "hurt",
+		     &ship::hurt,
+		     // bind variable types, too
+		     "life",
+		     &ship::life,
+		     // names in lua don't have to be the same as C++,
+		     // but it probably helps if they're kept the same,
+		     // here we change it just to show its possible
+		     "bullet_count",
+		     &ship::bullets);
 	}
 	else {
 		// set usertype explicitly, with the given name
-		sol::usertype<ship> usertype_table = lua.new_usertype<ship>( "ship");
+		sol::usertype<ship> usertype_table = lua.new_usertype<ship>("ship");
 		usertype_table["shoot"] = &ship::shoot;
 		usertype_table["hurt"] = &ship::hurt;
 		usertype_table["life"] = &ship::life;

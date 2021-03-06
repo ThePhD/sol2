@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 
 #include <iostream>
 
@@ -43,7 +42,7 @@ int main() {
 
 	sol::protected_function_result pfr = lua.safe_script("will_throw()", &sol::script_pass_on_error);
 
-	c_assert(!pfr.valid());
+	sol_c_assert(!pfr.valid());
 
 	sol::error err = pfr;
 	std::cout << err.what() << std::endl;

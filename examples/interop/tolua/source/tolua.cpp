@@ -9,7 +9,6 @@
 #include "tolua_Player.h"
 
 #include <iostream>
-#include <assert.hpp>
 
 // tolua code lifted from some blog, if the link dies
 // I don't know where else you're gonna find the reference,
@@ -29,7 +28,7 @@ inline bool sol_lua_interop_check(sol::types<T>, lua_State* L, int relindex, sol
 	(void)handler;
 	int index = lua_absindex(L, relindex);
 	std::string name = sol::detail::short_demangle<T>();
-	tolua_Error tolua_err{};
+	tolua_Error tolua_err {};
 	int r = tolua_isusertype(L, index, name.c_str(), 0, &tolua_err);
 	if (r == 0) {
 		// tolua seems to leave garbage on the stack
@@ -47,33 +46,34 @@ void register_sol_stuff(lua_State* L) {
 	sol::state_view lua(L);
 	// bind and set up your things: everything is entirely self-contained
 	lua["f"] = sol::overload(
-		[](Player& from_tolua) {
-			std::cout << "calling 1-argument version with tolua-created Player { health:" << from_tolua.getHealth() << " }" << std::endl;
-			c_assert(from_tolua.getHealth() == 4);
-		},
-		[](Player& from_tolua, int second_arg) {
-			std::cout << "calling 2-argument version with tolua-created Player { health: " << from_tolua.getHealth() << " } and integer argument of " << second_arg << std::endl;
-			c_assert(from_tolua.getHealth() == 4);
-			c_assert(second_arg == 5);
-		});
+	     [](Player& from_tolua) {
+		     std::cout << "calling 1-argument version with tolua-created Player { health:" << from_tolua.getHealth() << " }" << std::endl;
+		     sol_c_assert(from_tolua.getHealth() == 4);
+	     },
+	     [](Player& from_tolua, int second_arg) {
+		     std::cout << "calling 2-argument version with tolua-created Player { health: " << from_tolua.getHealth() << " } and integer argument of "
+		               << second_arg << std::endl;
+		     sol_c_assert(from_tolua.getHealth() == 4);
+		     sol_c_assert(second_arg == 5);
+	     });
 }
 
 void check_with_sol(lua_State* L) {
 	sol::state_view lua(L);
 	Player& obj = lua["obj"];
 	(void)obj;
-	c_assert(obj.getHealth() == 4);
+	sol_c_assert(obj.getHealth() == 4);
 }
 
-int main(int, char* []) {
+int main(int, char*[]) {
 
 	std::cout << "=== interop example (tolua) ===" << std::endl;
 	std::cout << "(code lifted from a sol2 user's use case: https://github.com/ThePhD/sol2/issues/511#issuecomment-331729884)" << std::endl;
 
 	lua_State* L = luaL_newstate();
 
-	luaL_openlibs(L);	// initalize all lua standard library functions
-	tolua_open(L);		  // initalize tolua
+	luaL_openlibs(L);     // initalize all lua standard library functions
+	tolua_open(L);        // initalize tolua
 	tolua_Player_open(L); // make Player class accessible from LUA
 
 

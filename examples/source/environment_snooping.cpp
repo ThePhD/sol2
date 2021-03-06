@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 #include <iostream>
 
 // Simple sol3 version of the below
@@ -48,12 +47,12 @@ void complicated(sol::this_state ts) {
 
 	// Okay, so all the calls worked.
 	// Print out some information about this "level"
-	std::cout << "manually -- [" << level << "] " << info.short_src << ":" << info.currentline
-		<< " -- " << (info.name ? info.name : "<unknown>") << "[" << info.what << "]" << std::endl;
+	std::cout << "manually -- [" << level << "] " << info.short_src << ":" << info.currentline << " -- " << (info.name ? info.name : "<unknown>") << "["
+	          << info.what << "]" << std::endl;
 
 	// Grab the function off the top of the stack
 	// remember: -1 means top, -2 means 1 below the top, and so on...
-	// 1 means the very bottom of the stack, 
+	// 1 means the very bottom of the stack,
 	// 2 means 1 more up, and so on to the top value...
 	sol::function f(L, -1);
 	// The environment can now be ripped out of the function

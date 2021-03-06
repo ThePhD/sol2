@@ -5,8 +5,10 @@
 
 struct ree {
 	int value = 1;
-	ree() {}
-	ree(int v) : value(v) {}
+	ree() {
+	}
+	ree(int v) : value(v) {
+	}
 };
 
 int main() {
@@ -17,9 +19,7 @@ int main() {
 
 	auto new_shared_ptr = [](sol::stack_reference obj) {
 		// works just fine
-		sol::stack::modify_unique_usertype(obj, [](std::shared_ptr<ree>& sptr) {
-			sptr = std::make_shared<ree>(sptr->value + 1);
-		});
+		sol::stack::modify_unique_usertype(obj, [](std::shared_ptr<ree>& sptr) { sptr = std::make_shared<ree>(sptr->value + 1); });
 	};
 
 	auto reset_shared_ptr = [](sol::stack_reference obj) {
@@ -35,9 +35,7 @@ int main() {
 
 	lua.set_function("f", new_shared_ptr);
 	lua.set_function("f2", reset_shared_ptr);
-	lua.set_function("g", [](ree* r) {
-		std::cout << r->value << std::endl;
-	});
+	lua.set_function("g", [](ree* r) { std::cout << r->value << std::endl; });
 
 	lua["p"] = std::make_shared<ree>();
 	lua.script("g(p) -- okay");
@@ -46,7 +44,7 @@ int main() {
 	// uncomment the below for
 	// segfault/read-access violation
 	lua.script("f2(p)");
-	//lua.script("g(p) -- kaboom");
+	// lua.script("g(p) -- kaboom");
 
 	return 0;
 }

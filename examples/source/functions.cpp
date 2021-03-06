@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 #include <iostream>
 
 inline int my_add(int x, int y) {
@@ -9,13 +8,13 @@ inline int my_add(int x, int y) {
 }
 
 struct multiplier {
-    int operator()(int x) {
-        return x * 10;
-    }
+	int operator()(int x) {
+		return x * 10;
+	}
 
-    static int by_five(int x) {
-        return x * 5;
-    }
+	static int by_five(int x) {
+		return x * 5;
+	}
 };
 
 int main() {
@@ -31,7 +30,7 @@ int main() {
 	lua.set_function("my_mul", [](double x, double y) { return x * y; });
 
 	// member function pointers and functors as well
-	lua.set_function("mult_by_ten", multiplier{});
+	lua.set_function("mult_by_ten", multiplier {});
 	lua.set_function("mult_by_five", &multiplier::by_five);
 
 	// assert that the functions work
@@ -46,7 +45,7 @@ int main() {
 
 	// calling a stateful lambda modifies the value
 	lua.script("inc()");
-	c_assert(x == 10);
+	sol_c_assert(x == 10);
 	if (x == 10) {
 		// Do something based on this information
 		std::cout << "Yahoo! x is " << x << std::endl;
@@ -58,7 +57,7 @@ inc()
 inc()
 inc()
 )");
-	c_assert(x == 40);
+	sol_c_assert(x == 40);
 	if (x == 40) {
 		// Do something based on this information
 		std::cout << "Yahoo! x is " << x << std::endl;
@@ -70,8 +69,8 @@ inc()
 	int value = add(10, 11);
 	// second way to call the function
 	int value2 = add.call<int>(10, 11);
-	c_assert(value == 21);
-	c_assert(value2 == 21);
+	sol_c_assert(value == 21);
+	sol_c_assert(value2 == 21);
 	if (value == 21 && value2 == 21) {
 		std::cout << "Woo, value is 21!" << std::endl;
 	}

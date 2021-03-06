@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -23,7 +23,7 @@
 
 #include "sol_test.hpp"
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 #include <iostream>
 #include <algorithm>
@@ -199,7 +199,8 @@ TEST_CASE("tables/add", "Basic test to make sure the 'add' feature works") {
 TEST_CASE("tables/raw set and raw get", "ensure raw setting and getting works through metatables") {
 	sol::state lua;
 	sol::table t = lua.create_table();
-	t[sol::metatable_key] = lua.create_table_with(sol::meta_function::new_index,
+	t[sol::metatable_key] = lua.create_table_with(
+	     sol::meta_function::new_index,
 	     [](lua_State* L) { return luaL_error(L, "nay"); },
 	     sol::meta_function::index,
 	     [](lua_State* L) { return luaL_error(L, "nay"); });
@@ -273,7 +274,7 @@ TEST_CASE("table/proxy call", "test proxy calls put the variable in the right pl
 	sol::stack_guard luasg(lua);
 	{
 		sol::stack_guard tsg(lua);
-		lua["t"] = std::initializer_list<std::pair<int, std::string_view>>{ { 1, "borf" }, { 2, "bjork" }, { 3, "waf" } };
+		lua["t"] = std::initializer_list<std::pair<int, std::string_view>> { { 1, "borf" }, { 2, "bjork" }, { 3, "waf" } };
 	}
 	{
 		sol::stack_guard fsg(lua);

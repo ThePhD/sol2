@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <map>
-#include "assert.hpp"
 #include <iostream>
 
 
@@ -15,13 +14,14 @@
 void demo(sol::nested<std::map<std::string, std::vector<std::string>>> src) {
 	std::cout << "demo, sol::nested<...>" << std::endl;
 	const auto& listmap = src.value();
-	c_assert(listmap.size() == 2);
+	sol_c_assert(listmap.size() == 2);
 	for (const auto& kvp : listmap) {
 		const std::vector<std::string>& strings = kvp.second;
-		c_assert(strings.size() == 3);
+		sol_c_assert(strings.size() == 3);
 		std::cout << "\t" << kvp.first << " = ";
 		for (const auto& s : strings) {
-			std::cout << "'" << s << "'" << " ";
+			std::cout << "'" << s << "'"
+			          << " ";
 		}
 		std::cout << std::endl;
 	}
@@ -30,23 +30,24 @@ void demo(sol::nested<std::map<std::string, std::vector<std::string>>> src) {
 
 // This second demo is equivalent to the first
 // Nota bene the signature here
-// Every container-type that's meant to be 
+// Every container-type that's meant to be
 // a table must be wrapped in `sol::as_table_t`
 // it's verbose, so feel free to use typedefs to make it easy on you
 // you can mix which parts are considered tables from Lua, and which parts
 // are considered other kinds of types, such as userdata and the like
-void demo_explicit (sol::as_table_t<std::map<std::string, sol::as_table_t<std::vector<std::string>>>> src) {
+void demo_explicit(sol::as_table_t<std::map<std::string, sol::as_table_t<std::vector<std::string>>>> src) {
 	std::cout << "demo, explicit sol::as_table_t<...>" << std::endl;
 	// Have to access the "source" member variable for as_table_t
 	const auto& listmap = src.value();
-	c_assert(listmap.size() == 2);
+	sol_c_assert(listmap.size() == 2);
 	for (const auto& kvp : listmap) {
 		// Have to access the internal "source" for the inner as_table_t, as well
 		const std::vector<std::string>& strings = kvp.second.value();
-		c_assert(strings.size() == 3);
+		sol_c_assert(strings.size() == 3);
 		std::cout << "\t" << kvp.first << " = ";
 		for (const auto& s : strings) {
-			std::cout << "'" << s << "'" << " ";
+			std::cout << "'" << s << "'"
+			          << " ";
 		}
 		std::cout << std::endl;
 	}
@@ -55,7 +56,7 @@ void demo_explicit (sol::as_table_t<std::map<std::string, sol::as_table_t<std::v
 
 int main(int, char**) {
 	std::cout << "=== containers retrieved from lua tables ===" << std::endl;
-	
+
 	sol::state lua;
 	// bind the function
 	lua.set_function("f", &demo);

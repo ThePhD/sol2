@@ -5,7 +5,6 @@
 #include <LuaBridge/LuaBridge.h>
 
 #include <iostream>
-#include <assert.hpp>
 
 // LuaBridge,
 // no longer maintained, by VinnieFalco:
@@ -13,8 +12,7 @@
 
 struct A {
 
-	A(int v)
-	: v_(v) {
+	A(int v) : v_(v) {
 	}
 
 	void print() {
@@ -57,25 +55,26 @@ void register_sol_stuff(lua_State* L) {
 	sol::state_view lua(L);
 	// bind and set up your things: everything is entirely self-contained
 	lua["f"] = sol::overload(
-		[](A& from_luabridge) {
-			std::cout << "calling 1-argument version with luabridge-created A { " << from_luabridge.value() << " }" << std::endl;
-			c_assert(from_luabridge.value() == 24);
-		},
-		[](A& from_luabridge, int second_arg) {
-			std::cout << "calling 2-argument version with luabridge-created A { " << from_luabridge.value() << " } and integer argument of " << second_arg << std::endl;
-			c_assert(from_luabridge.value() == 24);
-			c_assert(second_arg == 5);
-		});
+	     [](A& from_luabridge) {
+		     std::cout << "calling 1-argument version with luabridge-created A { " << from_luabridge.value() << " }" << std::endl;
+		     sol_c_assert(from_luabridge.value() == 24);
+	     },
+	     [](A& from_luabridge, int second_arg) {
+		     std::cout << "calling 2-argument version with luabridge-created A { " << from_luabridge.value() << " } and integer argument of " << second_arg
+		               << std::endl;
+		     sol_c_assert(from_luabridge.value() == 24);
+		     sol_c_assert(second_arg == 5);
+	     });
 }
 
 void check_with_sol(lua_State* L) {
 	sol::state_view lua(L);
 	A& obj = lua["obj"];
 	(void)obj;
-	c_assert(obj.value() == 24);
+	sol_c_assert(obj.value() == 24);
 }
 
-int main(int, char* []) {
+int main(int, char*[]) {
 
 	std::cout << "=== interop example (LuaBridge) ===" << std::endl;
 	std::cout << "code modified from LuaBridge's examples: https://github.com/vinniefalco/LuaBridge" << std::endl;
@@ -89,15 +88,15 @@ int main(int, char* []) {
 	std::unique_ptr<lua_State, closer> state(luaL_newstate());
 	lua_State* L = state.get();
 	luaL_openlibs(L);
-	
+
 	luabridge::getGlobalNamespace(L)
-		.beginNamespace("test")
-		.beginClass<A>("A")
-		.addConstructor<void (*)(int)>()
-		.addFunction("print", &A::print)
-		.addFunction("value", &A::value)
-		.endClass()
-		.endNamespace();
+	     .beginNamespace("test")
+	     .beginClass<A>("A")
+	     .addConstructor<void (*)(int)>()
+	     .addFunction("print", &A::print)
+	     .addFunction("value", &A::value)
+	     .endClass()
+	     .endNamespace();
 
 	register_sol_stuff(L);
 

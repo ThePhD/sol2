@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -23,7 +23,7 @@
 
 #include "sol_test.hpp"
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 #include <set>
 #include <map>
@@ -288,7 +288,7 @@ TEST_CASE("containers/ordered lookup containers", "check ordered container types
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		std::set<int> items{ 11, 12, 13, 14, 15 };
+		std::set<int> items { 11, 12, 13, 14, 15 };
 		lua["c"] = &items;
 		ordered_container_check(lua, items);
 	}
@@ -304,7 +304,7 @@ TEST_CASE("containers/ordered lookup containers", "check ordered container types
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		std::multiset<int> items{ 11, 12, 13, 14, 15 };
+		std::multiset<int> items { 11, 12, 13, 14, 15 };
 		lua["c"] = &items;
 		ordered_container_check(lua, items);
 	}
@@ -323,7 +323,7 @@ TEST_CASE("containers/associative ordered containers", "check associative (map) 
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		std::map<short, int> items{ { (short)11, 21 }, { (short)12, 22 }, { (short)13, 23 }, { (short)14, 24 }, { (short)15, 25 } };
+		std::map<short, int> items { { (short)11, 21 }, { (short)12, 22 }, { (short)13, 23 }, { (short)14, 24 }, { (short)15, 25 } };
 		lua["c"] = &items;
 		associative_ordered_container_check(lua, items);
 	}
@@ -331,7 +331,7 @@ TEST_CASE("containers/associative ordered containers", "check associative (map) 
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		std::map<std::string, std::string> items{ { "a", "a" }, { "b", "b" }, { "c", "c" } };
+		std::map<std::string, std::string> items { { "a", "a" }, { "b", "b" }, { "c", "c" } };
 		lua["c"] = &items;
 		ordered_lookup_container_check(lua, items);
 	}
@@ -339,7 +339,7 @@ TEST_CASE("containers/associative ordered containers", "check associative (map) 
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		std::multimap<short, int> items{ { (short)11, 21 }, { (short)12, 22 }, { (short)13, 23 }, { (short)14, 24 }, { (short)15, 25 } };
+		std::multimap<short, int> items { { (short)11, 21 }, { (short)12, 22 }, { (short)13, 23 }, { (short)14, 24 }, { (short)15, 25 } };
 		lua["c"] = &items;
 		associative_ordered_container_check(lua, items);
 	}
@@ -347,14 +347,14 @@ TEST_CASE("containers/associative ordered containers", "check associative (map) 
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		std::multimap<std::string, std::string> items{ { "a", "a" }, { "b", "b" }, { "c", "c" } };
+		std::multimap<std::string, std::string> items { { "a", "a" }, { "b", "b" }, { "c", "c" } };
 		lua["c"] = &items;
 		ordered_lookup_container_check(lua, items);
 	}
 }
 
 TEST_CASE("containers/associative ordered pairs", "check to make sure pairs works properly for key-value types") {
-	struct bar {};
+	struct bar { };
 	std::unique_ptr<bar> ua(new bar()), ub(new bar()), uc(new bar());
 	bar* a = ua.get();
 	bar* b = ub.get();

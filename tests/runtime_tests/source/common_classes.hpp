@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -144,7 +144,7 @@ public:
 
 struct Vec {
 	float x, y, z;
-	Vec(float x, float y, float z) : x{ x }, y{ y }, z{ z } {
+	Vec(float x, float y, float z) : x { x }, y { y }, z { z } {
 	}
 	float length() {
 		return sqrtf(x * x + y * y + z * z);

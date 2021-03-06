@@ -1,6 +1,5 @@
 #include <sol/sol.hpp>
 
-#include <assert.hpp>
 
 #include <iostream>
 
@@ -50,11 +49,11 @@ int main() {
 	int free_function_f_result = free_function_f(magic_value);
 	int callback_f_result = callback_f(&free_function);
 	int lua_callback_f_result = lua_callback_f(&free_function);
-	c_assert(lambda_f_result == expected_value);
-	c_assert(lambda_ptr_f_result == expected_value);
-	c_assert(free_function_f_result == expected_free_function_value);
-	c_assert(callback_f_result == expected_callback_value);
-	c_assert(lua_callback_f_result == expected_callback_value);
+	sol_c_assert(lambda_f_result == expected_value);
+	sol_c_assert(lambda_ptr_f_result == expected_value);
+	sol_c_assert(free_function_f_result == expected_free_function_value);
+	sol_c_assert(callback_f_result == expected_callback_value);
+	sol_c_assert(lua_callback_f_result == expected_callback_value);
 
 	const char code[] = R"(
 assert(lambda() == expected_value)
@@ -68,7 +67,7 @@ assert(callback(free_function) == expected_callback_value)
 		std::cerr << err.value().what() << std::endl;
 		return 1;
 	}
-	c_assert(!err.has_value());
+	sol_c_assert(!err.has_value());
 
 	return 0;
 }

@@ -1,15 +1,16 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 #include <cmath>
 
 struct vec {
 	double x;
 	double y;
 
-	vec() : x(0), y(0) {}
-	vec(double x, double y) : x(x), y(y) {}
+	vec() : x(0), y(0) {
+	}
+	vec(double x, double y) : x(x), y(y) {
+	}
 
 	vec operator-(const vec& right) const {
 		return vec(x - right.x, y - right.y);
@@ -28,15 +29,22 @@ int main() {
 	sol::state lua;
 	lua.open_libraries();
 
-	lua.new_usertype<vec>("vec", 
-		sol::constructors<vec(), vec(double, double)>(),
-		"dot", &dot,
-		"norm", [](const vec& self) { double len = std::sqrt(dot(self, self)); return vec(self.x / len, self.y / len); },
-		// we use `sol::resolve` because other operator+ can exist
-		// in the (global) namespace
-		sol::meta_function::addition, sol::resolve<vec(const vec&, const vec&)>(::operator+),
-		sol::meta_function::subtraction, &vec::operator-
-	);
+	lua.new_usertype<vec>(
+	     "vec",
+	     sol::constructors<vec(), vec(double, double)>(),
+	     "dot",
+	     &dot,
+	     "norm",
+	     [](const vec& self) {
+		     double len = std::sqrt(dot(self, self));
+		     return vec(self.x / len, self.y / len);
+	     },
+	     // we use `sol::resolve` because other operator+ can exist
+	     // in the (global) namespace
+	     sol::meta_function::addition,
+	     sol::resolve<vec(const vec&, const vec&)>(::operator+),
+	     sol::meta_function::subtraction,
+	     &vec::operator-);
 
 	lua.script(R"(
 		v1 = vec.new(1, 0)
@@ -57,8 +65,8 @@ int main() {
 	vec& a1 = lua["a1"];
 	vec& s1 = lua["s1"];
 
-	c_assert(a1.x == 1 && a1.y == 1);
-	c_assert(s1.x == 1 && s1.y == -1);
+	sol_c_assert(a1.x == 1 && a1.y == 1);
+	sol_c_assert(s1.x == 1 && s1.y == -1);
 
 	lua["a2"] = lua["a1"];
 

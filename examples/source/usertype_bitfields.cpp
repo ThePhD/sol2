@@ -56,7 +56,8 @@ namespace itsy_bitsy {
 		typedef bit_type_t<sizeof(Base) * CHAR_BIT> aligned_type;
 		static const std::size_t aligned_type_bit_size = sizeof(aligned_type) * CHAR_BIT;
 		static_assert(sizeof(Base) * CHAR_BIT >= (bit_target + size), "bit offset and size are too large for the desired structure.");
-		static_assert((bit_target % aligned_type_bit_size) <= ((bit_target + size) % aligned_type_bit_size), "bit offset and size cross beyond largest integral constant boundary.");
+		static_assert((bit_target % aligned_type_bit_size) <= ((bit_target + size) % aligned_type_bit_size),
+		     "bit offset and size cross beyond largest integral constant boundary.");
 
 		const std::size_t aligned_target = (bit_target + size) / aligned_type_bit_size;
 		const aligned_type bits_left = static_cast<aligned_type>(bit_target - aligned_target);
@@ -77,7 +78,8 @@ namespace itsy_bitsy {
 		typedef bit_type_t<size> field_type;
 		static const std::size_t aligned_type_bit_size = sizeof(aligned_type) * CHAR_BIT;
 		static_assert(sizeof(Base) * CHAR_BIT >= (bit_target + size), "bit offset and size are too large for the desired structure.");
-		static_assert((bit_target % aligned_type_bit_size) <= ((bit_target + size) % aligned_type_bit_size), "bit offset and size cross beyond largest integral constant boundary.");
+		static_assert((bit_target % aligned_type_bit_size) <= ((bit_target + size) % aligned_type_bit_size),
+		     "bit offset and size cross beyond largest integral constant boundary.");
 
 		const std::size_t aligned_target = (bit_target + size) / aligned_type_bit_size;
 		const aligned_type bits_left = static_cast<aligned_type>(bit_target - aligned_target);
@@ -92,10 +94,9 @@ namespace itsy_bitsy {
 		return bits;
 	}
 
-}
+} // namespace itsy_bitsy
 
 #include <iostream>
-#include "assert.hpp"
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #pragma pack(1)
@@ -112,7 +113,7 @@ struct __attribute__((packed, aligned(1))) flags_t {
 	uint8_t Z : 1;
 	uint8_t S : 1;
 	uint16_t D : 14;
-} flags{0, 0, 0, 0, 0, 0, 0, 0, 0};
+} flags { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 int main() {
 	std::cout << "=== usertype_bitfields ===" << std::endl;
@@ -123,10 +124,12 @@ int main() {
 	lua.open_libraries();
 
 	lua.new_usertype<flags_t>("flags_t",
-		"C", sol::property(itsy_bitsy::read<flags_t, 0>, itsy_bitsy::write<flags_t, 0>),
-		"N", sol::property(itsy_bitsy::read<flags_t, 1>, itsy_bitsy::write<flags_t, 1>),
-		"D", sol::property(itsy_bitsy::read<flags_t, 8, 14>, itsy_bitsy::write<flags_t, 8, 14>)
-	);
+	     "C",
+	     sol::property(itsy_bitsy::read<flags_t, 0>, itsy_bitsy::write<flags_t, 0>),
+	     "N",
+	     sol::property(itsy_bitsy::read<flags_t, 1>, itsy_bitsy::write<flags_t, 1>),
+	     "D",
+	     sol::property(itsy_bitsy::read<flags_t, 8, 14>, itsy_bitsy::write<flags_t, 8, 14>));
 
 	lua["f"] = std::ref(flags);
 
@@ -147,16 +150,16 @@ int main() {
 	bool C = flags.C;
 	bool N = flags.N;
 	uint16_t D = flags.D;
-	
+
 	std::cout << std::hex;
 	std::cout << "sizeof(flags): " << sizeof(flags) << std::endl;
 	std::cout << "C: " << C << std::endl;
 	std::cout << "N: " << N << std::endl;
 	std::cout << "D: " << D << std::endl;
 
-	c_assert(C);
-	c_assert(N);
-	c_assert(D == 0xDF);
+	sol_c_assert(C);
+	sol_c_assert(N);
+	sol_c_assert(D == 0xDF);
 
 	std::cout << std::endl;
 

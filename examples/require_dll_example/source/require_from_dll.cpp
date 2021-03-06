@@ -2,7 +2,6 @@
 #include <sol/sol.hpp>
 
 #include <my_object/my_object.hpp>
-#include <assert.hpp>
 
 #include <iostream>
 
@@ -25,9 +24,9 @@ print(obj.value))";
 		sol::error err = script_result;
 		std::cout << "Something bad happened: " << err.what() << std::endl;
 	}
-	c_assert(script_result.valid());
+	sol_c_assert(script_result.valid());
 	my_object::test& obj = lua["obj"];
-	c_assert(obj.value == 24);
+	sol_c_assert(obj.value == 24);
 
 	return 0;
 }

@@ -2,7 +2,6 @@
 #include <sol/sol.hpp>
 
 #include <iostream>
-#include "assert.hpp"
 
 // Uses some of the fancier bits of sol3, including the "transparent argument",
 // sol::this_state, which gets the current state and does not increment
@@ -27,18 +26,18 @@ int main() {
 
 	int result = lua["f"](1, 2);
 	// result == 3
-	c_assert(result == 3);
+	sol_c_assert(result == 3);
 	double result2 = lua["f"](false, 2.5);
 	// result2 == 2.5
-	c_assert(result2 == 2.5);
+	sol_c_assert(result2 == 2.5);
 
 	// call in Lua, get result
 	// notice we only need 2 arguments here, not 3 (sol::this_state is transparent)
 	lua.script("result3 = f(true, 5.5)");
 	double result3 = lua["result3"];
 	// result3 == 16.5
-	c_assert(result3 == 16.5);
-	
+	sol_c_assert(result3 == 16.5);
+
 	std::cout << "=== any_return ===" << std::endl;
 	std::cout << "result : " << result << std::endl;
 	std::cout << "result2: " << result2 << std::endl;

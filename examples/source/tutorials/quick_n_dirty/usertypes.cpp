@@ -9,8 +9,7 @@ struct Doge {
 	Doge() {
 	}
 
-	Doge(int wags)
-	: tailwag(wags) {
+	Doge(int wags) : tailwag(wags) {
 	}
 
 	~Doge() {
@@ -18,25 +17,22 @@ struct Doge {
 	}
 };
 
-int main(int, char* []) {
+int main(int, char*[]) {
 	std::cout << "=== usertypes ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	Doge dog{ 30 };
+	Doge dog { 30 };
 
-	lua["dog"] = Doge{};
+	lua["dog"] = Doge {};
 	lua["dog_copy"] = dog;
 	lua["dog_move"] = std::move(dog);
 	lua["dog_unique_ptr"] = std::make_unique<Doge>(21);
 	lua["dog_shared_ptr"] = std::make_shared<Doge>(51);
 
 	// now we can access these types in Lua
-	lua.new_usertype<Doge>( "Doge",
-		sol::constructors<Doge(), Doge(int)>(),
-		"tailwag", &Doge::tailwag
-	);
+	lua.new_usertype<Doge>("Doge", sol::constructors<Doge(), Doge(int)>(), "tailwag", &Doge::tailwag);
 	lua.script(R"(
 		function f (dog)
 			if dog == nil then

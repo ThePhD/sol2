@@ -3,13 +3,15 @@
 
 #include <memory>
 #include <iostream>
-#include "assert.hpp"
 
 struct holy {
 private:
-	holy() : data() {}
-	holy(int value) : data(value) {}
-	~holy() {}
+	holy() : data() {
+	}
+	holy(int value) : data(value) {
+	}
+	~holy() {
+	}
 
 public:
 	struct deleter {
@@ -47,11 +49,14 @@ int main() {
 		lua.open_libraries();
 
 		lua.new_usertype<holy>("holy",
-			"new", sol::initializers(&holy::initialize),
-			"create", sol::factories(&holy::create),
-			sol::meta_function::garbage_collect, sol::destructor(&holy::destroy),
-			"data", &holy::data
-		);
+		     "new",
+		     sol::initializers(&holy::initialize),
+		     "create",
+		     sol::factories(&holy::create),
+		     sol::meta_function::garbage_collect,
+		     sol::destructor(&holy::destroy),
+		     "data",
+		     &holy::data);
 
 		lua.script(R"(
 h1 = holy.create()
@@ -61,8 +66,8 @@ print('h2.data is ' .. h2.data)
 )");
 		holy& h1 = lua["h1"];
 		holy& h2 = lua["h2"];
-		c_assert(h1.data == 50);
-		c_assert(h2.data == 0);
+		sol_c_assert(h1.data == 50);
+		sol_c_assert(h2.data == 0);
 	}
 	std::cout << std::endl;
 }

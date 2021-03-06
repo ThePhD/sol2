@@ -2,7 +2,6 @@
 #include <sol/sol.hpp>
 
 #include <tuple>
-#include <assert.hpp>
 #include <utility> // for std::pair
 
 int main() {
@@ -17,11 +16,11 @@ config = {
 	resolution = { x = 1024, y = 768 }
 }
 	)");
-	// the type "sol::state" behaves 
+	// the type "sol::state" behaves
 	// exactly like a table!
 	bool isfullscreen = lua["config"]["fullscreen"]; // can get nested variables
 	sol::table config = lua["config"];
-	c_assert(!isfullscreen);
+	sol_c_assert(!isfullscreen);
 
 	// can also get it using the "get" member function
 	// auto replaces the unqualified type name
@@ -29,8 +28,8 @@ config = {
 
 	// table and state can have multiple things pulled out of it too
 	std::tuple<int, int> xyresolutiontuple = resolution.get<int, int>("x", "y");
-	c_assert(std::get<0>(xyresolutiontuple) == 1024);
-	c_assert(std::get<1>(xyresolutiontuple) == 768);
+	sol_c_assert(std::get<0>(xyresolutiontuple) == 1024);
+	sol_c_assert(std::get<1>(xyresolutiontuple) == 768);
 
 	// test variable
 	auto bark = lua["config"]["bark"];
@@ -61,11 +60,11 @@ config = {
 	// (it tries to get a number, and fullscreen is
 	// not a number
 	int is_defaulted = lua["config"]["fullscreen"].get_or(24);
-	c_assert(is_defaulted == 24);
+	sol_c_assert(is_defaulted == 24);
 
 	// This will result in the value of the config, which is 'false'
 	bool is_not_defaulted = lua["config"]["fullscreen"];
-	c_assert(!is_not_defaulted);
+	sol_c_assert(!is_not_defaulted);
 
 	return 0;
 }

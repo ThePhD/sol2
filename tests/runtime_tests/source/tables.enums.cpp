@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -23,7 +23,7 @@
 
 #include "sol_test.hpp"
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 enum weak_direction { up, down, left, right };
 enum class strong_direction { up, down, left, right };
@@ -64,7 +64,15 @@ TEST_CASE("tables/new_enum", "Making sure enums can be put in and gotten out as 
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		lua.new_enum("strong_direction", "up", strong_direction::up, "down", strong_direction::down, "left", strong_direction::left, "right", strong_direction::right);
+		lua.new_enum("strong_direction",
+		     "up",
+		     strong_direction::up,
+		     "down",
+		     strong_direction::down,
+		     "left",
+		     strong_direction::left,
+		     "right",
+		     strong_direction::right);
 
 		strong_direction d = lua["strong_direction"]["left"];
 		REQUIRE(d == strong_direction::left);
@@ -77,8 +85,11 @@ TEST_CASE("tables/new_enum", "Making sure enums can be put in and gotten out as 
 		sol::state lua;
 		lua.open_libraries(sol::lib::base);
 
-		lua.new_enum<strong_direction>(
-		     "strong_direction", { { "up", strong_direction::up }, { "down", strong_direction::down }, { "left", strong_direction::left }, { "right", strong_direction::right } });
+		lua.new_enum<strong_direction>("strong_direction",
+		     { { "up", strong_direction::up },
+		          { "down", strong_direction::down },
+		          { "left", strong_direction::left },
+		          { "right", strong_direction::right } });
 
 		strong_direction d = lua["strong_direction"]["left"];
 		REQUIRE(d == strong_direction::left);

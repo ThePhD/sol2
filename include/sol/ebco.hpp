@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -49,8 +49,9 @@ namespace sol { namespace detail {
 			return *this;
 		};
 		template <typename Arg, typename... Args,
-			typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
-			                                 ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T> && (sizeof...(Args) > 0 || !std::is_convertible_v<Arg, T>)>>
+			typename = std::enable_if_t<
+			     !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
+			          ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T> && (sizeof...(Args) > 0 || !std::is_convertible_v<Arg, T>)>>
 		ebco(Arg&& arg, Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Arg, Args...>)
 		: m_value(std::forward<Arg>(arg), std::forward<Args>(args)...) {
 		}
@@ -76,8 +77,9 @@ namespace sol { namespace detail {
 		ebco(const T& v) noexcept(std::is_nothrow_copy_constructible_v<T>) : T(v) {};
 		ebco(T&& v) noexcept(std::is_nothrow_move_constructible_v<T>) : T(std::move(v)) {};
 		template <typename Arg, typename... Args,
-			typename = std::enable_if_t<!std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
-			                                 ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T> && (sizeof...(Args) > 0 || !std::is_convertible_v<Arg, T>)>>
+			typename = std::enable_if_t<
+			     !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>,
+			          ebco> && !std::is_same_v<std::remove_reference_t<std::remove_cv_t<Arg>>, T> && (sizeof...(Args) > 0 || !std::is_convertible_v<Arg, T>)>>
 		ebco(Arg&& arg, Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Arg, Args...>) : T(std::forward<Arg>(arg), std::forward<Args>(args)...) {
 		}
 

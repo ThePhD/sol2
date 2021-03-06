@@ -5,18 +5,15 @@
 #include <luwra.hpp>
 
 #include <iostream>
-#include <assert.hpp>
 
 // luwra,
 // another C++ wrapper library:
 // https://github.com/vapourismo/luwra
 
 struct ABC {
-	ABC()
-	: v_(0) {
+	ABC() : v_(0) {
 	}
-	ABC(int value)
-	: v_(value) {
+	ABC(int value) : v_(value) {
 	}
 	int value() const {
 		return v_;
@@ -69,25 +66,26 @@ void register_sol_stuff(lua_State* L) {
 	sol::state_view lua(L);
 	// bind and set up your things: everything is entirely self-contained
 	lua["f"] = sol::overload(
-		[](ABC& from_luwra) {
-			std::cout << "calling 1-argument version with luwra-created ABC { " << from_luwra.value() << " }" << std::endl;
-			c_assert(from_luwra.value() == 24);
-		},
-		[](ABC& from_luwra, int second_arg) {
-			std::cout << "calling 2-argument version with luwra-created ABC { " << from_luwra.value() << " } and integer argument of " << second_arg << std::endl;
-			c_assert(from_luwra.value() == 24);
-			c_assert(second_arg == 5);
-		});
+	     [](ABC& from_luwra) {
+		     std::cout << "calling 1-argument version with luwra-created ABC { " << from_luwra.value() << " }" << std::endl;
+		     sol_c_assert(from_luwra.value() == 24);
+	     },
+	     [](ABC& from_luwra, int second_arg) {
+		     std::cout << "calling 2-argument version with luwra-created ABC { " << from_luwra.value() << " } and integer argument of " << second_arg
+		               << std::endl;
+		     sol_c_assert(from_luwra.value() == 24);
+		     sol_c_assert(second_arg == 5);
+	     });
 }
 
 void check_with_sol(lua_State* L) {
 	sol::state_view lua(L);
 	ABC& obj = lua["obj"];
 	(void)obj;
-	c_assert(obj.value() == 24);
+	sol_c_assert(obj.value() == 24);
 }
 
-int main(int, char* []) {
+int main(int, char*[]) {
 
 	std::cout << "=== interop example (luwra) ===" << std::endl;
 	std::cout << "code modified from luwra's documentation examples: https://github.com/vapourismo/luwra" << std::endl;

@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -23,9 +23,9 @@
 
 #include "sol_test.hpp"
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
-struct not_a_table_at_all {};
+struct not_a_table_at_all { };
 
 TEST_CASE("tables/lua_table", "check that lua_table accepts only lua-style tables, and not other types") {
 	sol::state lua;
@@ -33,13 +33,13 @@ TEST_CASE("tables/lua_table", "check that lua_table accepts only lua-style table
 		int x = lt["a"];
 		REQUIRE(x == 3);
 	};
-	lua["ud"] = not_a_table_at_all{};
+	lua["ud"] = not_a_table_at_all {};
 
 	auto result0 = lua.safe_script("t = { a = 3 }", sol::script_pass_on_error);
 	REQUIRE(result0.valid());
 	auto result1 = lua.safe_script("f(t)", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
-	
+
 	auto result2 = lua.safe_script("f(ud)", sol::script_pass_on_error);
 	REQUIRE_FALSE(result2.valid());
 	auto result3 = lua.safe_script("f(24)", sol::script_pass_on_error);

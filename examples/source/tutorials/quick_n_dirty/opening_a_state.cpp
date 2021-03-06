@@ -2,7 +2,6 @@
 #include <sol/sol.hpp>
 
 #include <iostream>
-#include <assert.hpp>
 
 int main(int, char*[]) {
 	std::cout << "=== opening a state ===" << std::endl;

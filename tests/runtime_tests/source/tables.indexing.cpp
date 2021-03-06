@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -23,7 +23,7 @@
 
 #include "sol_test.hpp"
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 int plop_xyz(int x, int y, std::string z) {
 	INFO(x << " " << y << " " << z);
@@ -148,4 +148,3 @@ TEST_CASE("tables/operator[] optional", "Test if proxies on tables can lazily ev
 	REQUIRE(non_nope3.value() == 35);
 	REQUIRE(non_nope4.value() == 35);
 }
-

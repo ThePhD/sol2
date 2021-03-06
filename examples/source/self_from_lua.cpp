@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 
 // NOTE:
 // There are TWO ways to retrieve the "this"
@@ -19,7 +18,7 @@ int main() {
 
 			// definitely the same
 			thing& self = selfobj.as<thing>();
-			c_assert(&self == this);
+			sol_c_assert(&self == this);
 		}
 
 		void func(sol::this_state ts) const {
@@ -32,7 +31,7 @@ int main() {
 			thing& self = selfobj.as<thing>();
 
 			// definitely the same
-			c_assert(&self == this);
+			sol_c_assert(&self == this);
 		}
 	};
 

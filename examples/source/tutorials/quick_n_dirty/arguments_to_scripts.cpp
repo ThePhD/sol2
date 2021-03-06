@@ -2,9 +2,8 @@
 #include <sol/sol.hpp>
 
 #include <iostream>
-#include <assert.hpp>
 
-int main(int, char* []) {
+int main(int, char*[]) {
 	std::cout << "=== passing arguments to scripts ===" << std::endl;
 
 	sol::state lua;
@@ -20,7 +19,7 @@ print(a,b,c)
 		sol::error err = fx;
 		std::cerr << "failed to load string-based script into the program" << err.what() << std::endl;
 	}
-	
+
 	// prints "your arguments here"
 	fx("your", "arguments", "here");
 

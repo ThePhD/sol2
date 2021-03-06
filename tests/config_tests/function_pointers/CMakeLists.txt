@@ -1,7 +1,7 @@
 # # # # sol3
 # The MIT License (MIT)
 # 
-# Copyright (c) 2013-2020 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -32,7 +32,7 @@ function(CREATE_TEST test_target_name test_name target_sol)
 		OUTPUT_NAME ${test_name}
 		EXPORT_NAME sol2::${test_name})
 	target_link_libraries(${test_target_name} 
-		PUBLIC Threads::Threads ${LUA_LIBRARIES} ${target_sol})
+		PUBLIC Threads::Threads ${LUA_LIBRARIES} ${target_sol} ${CMAKE_DL_LIBS})
 	target_compile_definitions(${test_target_name}
 		PRIVATE SOL_GET_FUNCTION_POINTER_UNSAFE=1 SOL_ALL_SAFETIES_ON=1)
 	target_include_directories(${test_target_name}
@@ -82,11 +82,6 @@ function(CREATE_TEST test_target_name test_name target_sol)
 		target_compile_definitions(${test_target_name} 
 			PRIVATE SOL2_CI)
 	endif()
-
-	if (CMAKE_DL_LIBS)
-		target_link_libraries(${test_target_name}
-			PRIVATE ${CMAKE_DL_LIBS})
-	endif()
 	
 	add_test(NAME ${test_name} COMMAND ${test_target_name})
 	if(SOL2_ENABLE_INSTALL)
@@ -98,8 +93,8 @@ if (SOL2_TESTS)
 	CREATE_TEST(config_function_pointers_tests "config_function_pointers_tests" sol2::sol2)
 endif()
 if (SOL2_TESTS_SINGLE)
-	CREATE_TEST(config_function_pointers_tests_single "config_function_pointers_tests.single" sol2::sol2_single)
+	CREATE_TEST(config_function_pointers_tests_single "config_function_pointers_tests.single" sol2::sol2::single)
 endif()
 if (SOL2_TESTS_SINGLE_GENERATED)
-	CREATE_TEST(config_function_pointers_tests_generated_single "config_function_pointers_tests.single.generated" sol2::sol2_single_generated)
+	CREATE_TEST(config_function_pointers_tests_generated_single "config_function_pointers_tests.single.generated" sol2::sol2::single_generated)
 endif()

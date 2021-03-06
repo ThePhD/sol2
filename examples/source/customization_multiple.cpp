@@ -2,7 +2,6 @@
 #include <sol/sol.hpp>
 
 #include <iostream>
-#include "assert.hpp"
 
 struct two_things {
 	int a;
@@ -57,8 +56,8 @@ int main() {
 	sol::function f = lua["f"];
 
 	two_things things = f(two_things { 24, false });
-	c_assert(things.a == 24);
-	c_assert(things.b == false);
+	sol_c_assert(things.a == 24);
+	sol_c_assert(things.b == false);
 	// things.a == 24
 	// things.b == true
 

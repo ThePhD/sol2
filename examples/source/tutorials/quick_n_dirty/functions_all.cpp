@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include <assert.hpp>
 #include <iostream>
 
 void some_function() {
@@ -22,7 +21,7 @@ struct some_class {
 
 int main(int, char*[]) {
 	std::cout << "=== functions (all) ===" << std::endl;
-	
+
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -40,13 +39,13 @@ int main(int, char*[]) {
 	lua["m1"] = &some_class::member_function;
 
 	// binds the class to the type
-	lua.set_function("m2", &some_class::member_function, some_class{});
+	lua.set_function("m2", &some_class::member_function, some_class {});
 
 	// binds just the member variable as a function
 	lua["v1"] = &some_class::variable;
 
 	// binds class with member variable as function
-	lua.set_function("v2", &some_class::variable, some_class{});
+	lua.set_function("v2", &some_class::variable, some_class {});
 
 	lua.script(R"(
 	f1() -- some function!

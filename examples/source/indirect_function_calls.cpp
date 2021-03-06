@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 #include <iostream>
 
 sol::variadic_results call_it(sol::object function_name, sol::variadic_args args, sol::this_environment env, sol::this_state L) {
@@ -33,7 +32,7 @@ sol::variadic_results call_it(sol::object function_name, sol::variadic_args args
 	return results;
 }
 
-int main(int, char* []) {
+int main(int, char*[]) {
 	std::cout << "=== indirect function calls ===" << std::endl;
 
 	sol::state lua;
@@ -67,8 +66,8 @@ end
 	int subtract_result = lua["subtract_result"];
 	int add_result = lua["add_result"];
 
-	c_assert(add_result == 6);
-	c_assert(subtract_result == 4);
+	sol_c_assert(add_result == 6);
+	sol_c_assert(subtract_result == 4);
 
 	std::cout << std::endl;
 	return 0;

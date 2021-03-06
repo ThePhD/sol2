@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 #include <memory>
 #include <iostream>
 
@@ -9,7 +8,7 @@ struct Shape {
 	virtual ~Shape() = default;
 };
 
-struct Box : Shape {};
+struct Box : Shape { };
 
 SOL_BASE_CLASSES(Box, Shape);
 SOL_DERIVED_CLASSES(Shape, Box);
@@ -40,7 +39,7 @@ int main() {
 	});
 
 	sol::protected_function_result result = lua.safe_script("inspect_shape_table({shape=Box.new()})");
-	c_assert(result.valid());
+	sol_c_assert(result.valid());
 
 	return 0;
 }

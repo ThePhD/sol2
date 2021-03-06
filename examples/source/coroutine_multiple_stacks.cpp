@@ -4,18 +4,14 @@
 #include <string>
 #include <iostream>
 
-int main () {
+int main() {
 	std::cout << "=== coroutine - multple threads ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::coroutine);
 
-	lua["print"] = [](sol::object v){
-		std::cout << v.as<std::string>() << std::endl;
-	};
-	lua["cyield"] = sol::yielding([](){
-		std::cout << "YIELDING" << std::endl;
-	});
+	lua["print"] = [](sol::object v) { std::cout << v.as<std::string>() << std::endl; };
+	lua["cyield"] = sol::yielding([]() { std::cout << "YIELDING" << std::endl; });
 
 	// notice the new threads!
 	sol::thread thread1 = sol::thread::create(lua);

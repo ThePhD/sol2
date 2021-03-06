@@ -2,7 +2,6 @@
 #include <sol/sol.hpp>
 
 #include <iostream>
-#include "assert.hpp"
 
 int main() {
 	std::cout << "=== basic ===" << std::endl;
@@ -14,7 +13,7 @@ int main() {
 	// the libraries reside in the sol::lib enum class
 	lua.open_libraries(sol::lib::base);
 	// you can open all libraries by passing no arguments
-	//lua.open_libraries();
+	// lua.open_libraries();
 
 	// call lua code directly
 	lua.script("print('hello world')");
@@ -32,25 +31,25 @@ int main() {
 	// the above lambda is identical to sol::simple_on_error, but it's
 	// shown here to show you can write whatever you like
 
-	// 
+	//
 	{
 		auto result = lua.script("print('hello hello again, world') \n return 24", simple_handler);
 		if (result.valid()) {
 			std::cout << "the third script worked, and a double-hello statement should appear above this one!" << std::endl;
 			int value = result;
-			c_assert(value == 24);
+			sol_c_assert(value == 24);
 		}
 		else {
 			std::cout << "the third script failed, check the result type for more information!" << std::endl;
 		}
 	}
 
-	{ 
+	{
 		auto result = lua.script("does.not.exist", simple_handler);
 		if (result.valid()) {
 			std::cout << "the fourth script worked, which it wasn't supposed to! Panic!" << std::endl;
 			int value = result;
-			c_assert(value == 24);
+			sol_c_assert(value == 24);
 		}
 		else {
 			sol::error err = result;
@@ -59,6 +58,6 @@ int main() {
 	}
 
 	std::cout << std::endl;
-	
+
 	return 0;
 }

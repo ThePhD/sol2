@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 
 struct Vector {
 	int x;
@@ -23,11 +22,11 @@ int main() {
 	lua.script("vectors = { Vector.new(3, 6), Vector.new(6, 3) }");
 	auto vectors = lua["vectors"].get<std::vector<Vector>>();
 
-	c_assert(vectors[0].x == 3);
-	c_assert(vectors[0].y == 6);
+	sol_c_assert(vectors[0].x == 3);
+	sol_c_assert(vectors[0].y == 6);
 
-	c_assert(vectors[1].x == 6);
-	c_assert(vectors[1].y == 3);
+	sol_c_assert(vectors[1].x == 6);
+	sol_c_assert(vectors[1].y == 3);
 
 	return 0;
 }

@@ -20,8 +20,8 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // This file was generated with a script.
-// Generated 2021-02-14 05:45:03.725363 UTC
-// This header was generated with sol v3.2.3 (revision 37d891fa)
+// Generated 2021-03-06 04:31:49.090519 UTC
+// This header was generated with sol v3.2.3 (revision d4b13ff8)
 // https://github.com/ThePhD/sol2
 
 #ifndef SOL_SINGLE_INCLUDE_FORWARD_HPP
@@ -695,6 +695,28 @@
 #else
 	// assume boost isn't using a garbage version
 	#define SOL_BOOST_NONE_CONSTEXPR_I_ constexpr
+#endif
+
+#if defined(SOL2_CI)
+	#if (SOL2_CI != 0)
+		#define SOL2_CI_I_ SOL_ON
+	#else
+		#define SOL2_CI_I_ SOL_OFF
+	#endif
+#else
+	#define SOL2_CI_I_ SOL_OFF
+#endif
+
+#if defined(SOL_C_ASSERT)
+	#define SOL_USER_C_ASSERT_I_ SOL_ON
+#else
+	#define SOL_USER_C_ASSERT_I_ SOL_DEFAULT_OFF
+#endif
+
+#if defined(SOL_M_ASSERT)
+	#define SOL_USER_M_ASSERT_I_ SOL_ON
+#else
+	#define SOL_USER_M_ASSERT_I_ SOL_DEFAULT_OFF
 #endif
 
 // end of sol/version.hpp

@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 #include <iostream>
 
 int main(int, char**) {
@@ -13,16 +12,16 @@ int main(int, char**) {
 
 	lua.script("f = function() return test end");
 	sol::function f = lua["f"];
-	
+
 	sol::environment env_f(lua, sol::create);
 	env_f["test"] = 31;
 	sol::set_environment(env_f, f);
 
 	// the function returns the value from the environment table
 	int result = f();
-	c_assert(result == 31);
+	sol_c_assert(result == 31);
 
-	
+
 	// You can also protect from variables
 	// being set without the 'local' specifier
 	lua.script("g = function() test = 5 end");
@@ -33,13 +32,13 @@ int main(int, char**) {
 	g();
 	// the value can be retrieved from the env table
 	int test = env_g["test"];
-	c_assert(test == 5);
+	sol_c_assert(test == 5);
 
 
 	// the global environment
 	// is not polluted at all, despite both functions being used and set
 	sol::object global_test = lua["test"];
-	c_assert(!global_test.valid());
+	sol_c_assert(!global_test.valid());
 
 
 	// You can retrieve environments in C++
@@ -49,31 +48,28 @@ int main(int, char**) {
 	// get the environment from any sol::reference-styled type,
 	// including sol::object, sol::function, sol::table, sol::userdata ...
 	lua.set_function("check_f_env",
-		// capture necessary variable in C++ lambda
-		[&env_f]( sol::object target ) {
-			// pull out the environment from func using
-			// sol::env_key constructor
-			sol::environment target_env(sol::env_key, target);
-			int test_env_f = env_f["test"];
-			int test_target_env = target_env["test"];
-			// the environment for f the one gotten from `target`
-			// are the same
-			c_assert(test_env_f == test_target_env);
-			c_assert(test_env_f == 31);
-			c_assert(env_f == target_env);
-		}
-	);
-	lua.set_function("check_g_env",
-		[&env_g](sol::function target) {
-			// equivalent:
-			sol::environment target_env = sol::get_environment(target);
-			int test_env_g = env_g["test"];
-			int test_target_env = target_env["test"];
-			c_assert(test_env_g == test_target_env);
-			c_assert(test_env_g == 5);
-			c_assert(env_g == target_env);
-		}
-	);
+	     // capture necessary variable in C++ lambda
+	     [&env_f](sol::object target) {
+		     // pull out the environment from func using
+		     // sol::env_key constructor
+		     sol::environment target_env(sol::env_key, target);
+		     int test_env_f = env_f["test"];
+		     int test_target_env = target_env["test"];
+		     // the environment for f the one gotten from `target`
+		     // are the same
+		     sol_c_assert(test_env_f == test_target_env);
+		     sol_c_assert(test_env_f == 31);
+		     sol_c_assert(env_f == target_env);
+	     });
+	lua.set_function("check_g_env", [&env_g](sol::function target) {
+		// equivalent:
+		sol::environment target_env = sol::get_environment(target);
+		int test_env_g = env_g["test"];
+		int test_target_env = target_env["test"];
+		sol_c_assert(test_env_g == test_target_env);
+		sol_c_assert(test_env_g == 5);
+		sol_c_assert(env_g == target_env);
+	});
 
 	lua.script("check_f_env(f)");
 	lua.script("check_g_env(g)");

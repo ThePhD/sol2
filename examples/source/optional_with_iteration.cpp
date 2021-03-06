@@ -17,9 +17,9 @@ struct super_thing : thing {
 	int b = 40;
 };
 
-struct unrelated {};
+struct unrelated { };
 
-int main(int, char* []) {
+int main(int, char*[]) {
 	std::cout << "=== optional with iteration ===" << std::endl;
 
 	sol::state lua;
@@ -31,11 +31,11 @@ int main(int, char* []) {
 	lua.new_usertype<super_thing>("super_thing", sol::base_classes, sol::bases<thing>());
 
 	// Make a few things
-	lua["t1"] = thing{};
-	lua["t2"] = super_thing{};
-	lua["t3"] = unrelated{};
+	lua["t1"] = thing {};
+	lua["t2"] = super_thing {};
+	lua["t3"] = unrelated {};
 	// And a table
-	lua["container"] = lua.create_table_with(0, thing{ 50 }, 1, unrelated{}, 4, super_thing{});
+	lua["container"] = lua.create_table_with(0, thing { 50 }, 1, unrelated {}, 4, super_thing {});
 
 
 	std::vector<std::reference_wrapper<thing>> things;

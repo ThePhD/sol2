@@ -21,22 +21,28 @@ public:
 	}
 
 	// automatically used for pairs(obj) [ __pairs ], 5.2+
-	iterator begin() const { return data.begin(); }
-	iterator end() const { return data.end(); }
+	iterator begin() const {
+		return data.begin();
+	}
+	iterator end() const {
+		return data.end();
+	}
 
 	// automatically bound to #obj [ __len ]
-	size_type size() const { return data.size(); }
+	size_type size() const {
+		return data.size();
+	}
 
 	// automatically bound for obj == obj [ __eq ]
-	bool operator== (const automatic& right) const {
+	bool operator==(const automatic& right) const {
 		return data == right.data;
 	}
 	// automatically bound for obj < obj [ __lt ]
-	bool operator< (const automatic& right) const {
+	bool operator<(const automatic& right) const {
 		return data < right.data;
 	}
 	// automatically bound for obj <= obj [ __le ]
-	bool operator<= (const automatic& right) const {
+	bool operator<=(const automatic& right) const {
 		return data <= right.data;
 	}
 	// other comparison operators are based off the above in Lua

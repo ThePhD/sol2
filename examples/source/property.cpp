@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 
 #include <iostream>
 
@@ -11,7 +10,7 @@ public:
 		return hp;
 	}
 
-	void set_hp( int value ) {
+	void set_hp(int value) {
 		hp = value;
 	}
 
@@ -19,7 +18,7 @@ public:
 		return hp;
 	}
 
-	void set_max_hp( int value ) {
+	void set_max_hp(int value) {
 		maxhp = value;
 	}
 
@@ -28,7 +27,7 @@ private:
 	int maxhp = 50;
 };
 
-int main (int, char*[]) {
+int main(int, char*[]) {
 
 	std::cout << "=== properties from C++ functions ===" << std::endl;
 
@@ -39,10 +38,8 @@ int main (int, char*[]) {
 
 	// Yes, you can register after you set a value and it will
 	// connect up the usertype automatically
-	lua.new_usertype<Player>( "Player",
-		"hp", sol::property(&Player::get_hp, &Player::set_hp),
-		"maxHp", sol::property(&Player::get_max_hp, &Player::set_max_hp)
-	);
+	lua.new_usertype<Player>(
+	     "Player", "hp", sol::property(&Player::get_hp, &Player::set_hp), "maxHp", sol::property(&Player::get_max_hp, &Player::set_max_hp));
 
 	const auto& code = R"(
 	-- variable syntax, calls functions

@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include <assert.hpp>
 #include <iostream>
 
 struct Doge {
@@ -10,8 +9,7 @@ struct Doge {
 	Doge() {
 	}
 
-	Doge(int wags)
-		: tailwag(wags) {
+	Doge(int wags) : tailwag(wags) {
 	}
 
 	~Doge() {
@@ -19,13 +17,13 @@ struct Doge {
 	}
 };
 
-int main(int, char* []) {
+int main(int, char*[]) {
 	std::cout << "=== userdata memory reference ===" << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	Doge dog{}; // Kept alive somehow
+	Doge dog {}; // Kept alive somehow
 
 	// Later...
 	// The following stores a reference, and does not copy/move
@@ -35,17 +33,15 @@ int main(int, char* []) {
 	// Same as above: respects std::reference_wrapper
 	lua["dog"] = std::ref(dog);
 	// These two are identical to above
-	lua.set( "dog", &dog );
-	lua.set( "dog", std::ref( dog ) );
+	lua.set("dog", &dog);
+	lua.set("dog", std::ref(dog));
 
 
-	Doge& dog_ref = lua["dog"]; // References Lua memory
+	Doge& dog_ref = lua["dog"];     // References Lua memory
 	Doge* dog_pointer = lua["dog"]; // References Lua memory
-	Doge dog_copy = lua["dog"]; // Copies, will not affect lua
+	Doge dog_copy = lua["dog"];     // Copies, will not affect lua
 
-	lua.new_usertype<Doge>("Doge",
-		"tailwag", &Doge::tailwag
-	);
+	lua.new_usertype<Doge>("Doge", "tailwag", &Doge::tailwag);
 
 	dog_copy.tailwag = 525;
 	// Still 50

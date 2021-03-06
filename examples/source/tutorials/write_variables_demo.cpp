@@ -7,7 +7,7 @@ int main() {
 
 	sol::state lua;
 
-	// open those basic lua libraries 
+	// open those basic lua libraries
 	// again, for print() and other basic utilities
 	lua.open_libraries(sol::lib::base);
 
@@ -15,14 +15,11 @@ int main() {
 	lua["bark"] = 50;
 
 	// a table being created in the global table
-	lua["some_table"] = lua.create_table_with(
-		"key0", 24,
-		"key1", 25,
-		lua["bark"], "the key is 50 and this string is its value!");
+	lua["some_table"] = lua.create_table_with("key0", 24, "key1", 25, lua["bark"], "the key is 50 and this string is its value!");
 
 	// Run a plain ol' string of lua code
 	// Note you can interact with things set through sol in C++ with lua!
-	// Using a "Raw String Literal" to have multi-line goodness: 
+	// Using a "Raw String Literal" to have multi-line goodness:
 	// http://en.cppreference.com/w/cpp/language/string_literal
 	lua.script(R"(
 		

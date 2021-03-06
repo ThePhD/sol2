@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <iomanip>
-#include "assert.hpp"
 
 struct number_shim {
 	double num = 0;
@@ -12,8 +11,7 @@ struct number_shim {
 template <typename Handler>
 bool sol_lua_check(sol::types<number_shim>, lua_State* L, int index, Handler&& handler, sol::stack::record& tracking) {
 	// check_usertype is a backdoor for directly checking sol3 usertypes
-	if (!sol::stack::check_usertype<number_shim>(L, index) 
-		&& !sol::stack::check<double>(L, index)) {
+	if (!sol::stack::check_usertype<number_shim>(L, index) && !sol::stack::check<double>(L, index)) {
 		handler(L, index, sol::type_of(L, index), sol::type::userdata, "expected a number_shim or a number");
 		return false;
 	}
@@ -26,7 +24,7 @@ number_shim sol_lua_get(sol::types<number_shim>, lua_State* L, int index, sol::s
 		number_shim& ns = sol::stack::get_usertype<number_shim>(L, index, tracking);
 		return ns;
 	}
-	number_shim ns{};
+	number_shim ns {};
 	ns.num = sol::stack::get<double>(L, index, tracking);
 	return ns;
 }
@@ -43,12 +41,12 @@ int main() {
 	});
 
 	lua.script("vf = f(25) vg = g(35)");
-	
+
 	number_shim thingsf = lua["vf"];
 	number_shim thingsg = lua["vg"];
 
-	c_assert(thingsf.num == 25);
-	c_assert(thingsg.num == 35);
+	sol_c_assert(thingsf.num == 25);
+	sol_c_assert(thingsg.num == 35);
 
 	return 0;
 }

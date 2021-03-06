@@ -28,16 +28,12 @@ int main(int, char*[]) {
 	sol::state lua;
 	lua.open_libraries();
 
-	lua.set_function("f", sol::overload(
-		func_1,
-		func_2,
-		fallback
-	));
+	lua.set_function("f", sol::overload(func_1, func_2, fallback));
 
-	lua.script("print(f(1))"); // func_1
-	lua.script("print(f('hi'))"); // func_2
+	lua.script("print(f(1))");      // func_1
+	lua.script("print(f('hi'))");   // func_2
 	lua.script("print(f(22, 11))"); // fallback
-	lua.script("print(f({}))"); // fallback
+	lua.script("print(f({}))");     // fallback
 
 	return 0;
 }

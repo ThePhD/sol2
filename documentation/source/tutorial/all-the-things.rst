@@ -22,7 +22,7 @@ You'll need to ``#include <sol/sol.hpp>`` somewhere in your code. sol is header-
 
 The implementation for ``assert.hpp`` with ``c_assert`` looks like so:
 
-.. literalinclude:: ../../../examples/include/assert.hpp
+.. literalinclude:: ../../../include/sol/assert.hpp
 	:linenos:
 	:lines: 1-3, 19-
 

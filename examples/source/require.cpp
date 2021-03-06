@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 #include <iostream>
 
 struct some_class {
@@ -12,16 +11,14 @@ sol::table open_mylib(sol::this_state s) {
 	sol::state_view lua(s);
 
 	sol::table module = lua.create_table();
-	module["func"] = []() { 
+	module["func"] = []() {
 		/* super cool function here */
 		return 2;
 	};
 	// register a class too
-	module.new_usertype<some_class>("some_class",
-		"bark", &some_class::bark
-	);
+	module.new_usertype<some_class>("some_class", "bark", &some_class::bark);
 
- 	return module;
+	return module;
 }
 
 int main() {
@@ -43,7 +40,7 @@ s.bark = 20
 )");
 
 	some_class& s = lua["s"];
-	c_assert(s.bark == 20);
+	sol_c_assert(s.bark == 20);
 	std::cout << "s.bark = " << s.bark << std::endl;
 
 	std::cout << std::endl;

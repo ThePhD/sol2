@@ -2,12 +2,12 @@
 
 #include <my_object/my_object_api.hpp>
 
-// forward declare as a C struct 
+// forward declare as a C struct
 // so a pointer to lua_State can be part of a signature
 extern "C" {
-	struct lua_State;
+struct lua_State;
 }
-// you can replace the above if you're fine with including 
+// you can replace the above if you're fine with including
 // <sol.hpp> earlier than absolutely necessary
 
 namespace my_object {
@@ -16,7 +16,8 @@ namespace my_object {
 		int value;
 
 		test() = default;
-		test(int val) : value(val) {}
+		test(int val) : value(val) {
+		}
 	};
 
 } // namespace my_object

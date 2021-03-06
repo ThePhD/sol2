@@ -1,12 +1,12 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-int main (int, char*[]) {
+int main(int, char*[]) {
 	sol::state lua;
 	lua.open_libraries();
 	sol::environment my_env(lua, sol::create);
-	// set value, and we need to explicitly allow for 
-	// access to "print", since a new environment hides 
+	// set value, and we need to explicitly allow for
+	// access to "print", since a new environment hides
 	// everything that's not defined inside of it
 	// NOTE: hiding also hides library functions (!!)
 	// BE WARNED
@@ -15,7 +15,7 @@ int main (int, char*[]) {
 
 	sol::environment my_other_env(lua, sol::create, lua.globals());
 	// do not need to explicitly allow access to "print",
-	// since we used the "Set a fallback" version 
+	// since we used the "Set a fallback" version
 	// of the sol::environment constructor
 	my_other_env["var"] = 443;
 

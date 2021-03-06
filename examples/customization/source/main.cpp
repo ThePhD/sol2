@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-int main(int, char* []) {
+int main(int, char*[]) {
 	std::cout << "=== customization: vec3 as table ===" << std::endl;
 
 	sol::state lua;

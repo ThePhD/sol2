@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -25,7 +25,7 @@
 
 #include "common_classes.hpp"
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 #include <iostream>
 
@@ -52,21 +52,31 @@ inline namespace sol2_test_usertypes_inheritance {
 
 	class A {
 	public:
-		void hello() { std::cout << "This is class A" << std::endl; }
-		virtual void vhello() { std::cout << "A::vhello" << std::endl; }
-		virtual ~A() {}
+		void hello() {
+			std::cout << "This is class A" << std::endl;
+		}
+		virtual void vhello() {
+			std::cout << "A::vhello" << std::endl;
+		}
+		virtual ~A() {
+		}
+
 	public:
 		int a = 1;
 	};
 
 	class B : public A {
 	public:
-		virtual void vhello() override { std::cout << "B::vhello" << std::endl; }
-		virtual ~B() override {}
+		virtual void vhello() override {
+			std::cout << "B::vhello" << std::endl;
+		}
+		virtual ~B() override {
+		}
+
 	public:
 		int b = 2;
 	};
-}
+} // namespace sol2_test_usertypes_inheritance
 
 SOL_BASE_CLASSES(inh_test_D, inh_test_C);
 SOL_BASE_CLASSES(inh_test_C, inh_test_B, inh_test_A);
@@ -105,7 +115,8 @@ TEST_CASE("inheritance/basic", "test that metatables are properly inherited") {
 	REQUIRE(a == 5);
 }
 
-TEST_CASE("inheritance/usertype derived non-hiding", "usertype classes must play nice when a derived class does not overload a publically visible base function") {
+TEST_CASE(
+     "inheritance/usertype derived non-hiding", "usertype classes must play nice when a derived class does not overload a publically visible base function") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 	sol::constructors<sol::types<int>> basector;
@@ -133,9 +144,18 @@ TEST_CASE("inheritance/usertype derived non-hiding", "usertype classes must play
 	REQUIRE((lua.get<int>("dgn") == 7));
 }
 
-TEST_CASE("inheritance/usertype metatable interference", "usertypes with overriden index/new_index methods (from e.g. base classes) were intercepting calls to the named metatable") {
+TEST_CASE("inheritance/usertype metatable interference",
+     "usertypes with overriden index/new_index methods (from e.g. base classes) were intercepting calls to the named metatable") {
 	sol::state lua;
-	lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::coroutine, sol::lib::string, sol::lib::os, sol::lib::math, sol::lib::table, sol::lib::io, sol::lib::debug);
+	lua.open_libraries(sol::lib::base,
+	     sol::lib::package,
+	     sol::lib::coroutine,
+	     sol::lib::string,
+	     sol::lib::os,
+	     sol::lib::math,
+	     sol::lib::table,
+	     sol::lib::io,
+	     sol::lib::debug);
 
 	sol::usertype<A> uta = lua.new_usertype<A>("A", sol::base_classes, sol::base_list<>());
 	uta.set(sol::call_constructor, sol::constructors<A()>());
@@ -151,18 +171,21 @@ TEST_CASE("inheritance/usertype metatable interference", "usertypes with overrid
 	sol::optional<sol::error> maybe_error0 = lua.safe_script(R"(
 	local aa = A()
 	aa:hello()
-	)", sol::script_pass_on_error);
+	)",
+	     sol::script_pass_on_error);
 	REQUIRE_FALSE(maybe_error0.has_value());
 
 	sol::optional<sol::error> maybe_error1 = lua.safe_script(R"(
 	local bb0 = B.new()
 	bb0:hello()
-	)", sol::script_pass_on_error);
+	)",
+	     sol::script_pass_on_error);
 	REQUIRE_FALSE(maybe_error1.has_value());
 
 	sol::optional<sol::error> maybe_error2 = lua.safe_script(R"(
 	local bb1 = B()
 	bb1:hello()
-	)", sol::script_pass_on_error);
+	)",
+	     sol::script_pass_on_error);
 	REQUIRE_FALSE(maybe_error2.has_value());
 }

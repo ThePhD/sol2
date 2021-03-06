@@ -5,7 +5,7 @@
 
 int main(int, char*[]) {
 	std::cout << "=== usertype call from C++ ===" << std::endl;
-	
+
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -23,15 +23,11 @@ int main(int, char*[]) {
 		}
 	};
 
-	lua.new_usertype<cpp_object>("test",
-		"value", &cpp_object::value
-		);
-	lua.new_usertype<test>("test",
-		"func", &test::func
-		);
+	lua.new_usertype<cpp_object>("test", "value", &cpp_object::value);
+	lua.new_usertype<test>("test", "func", &test::func);
 	lua.script("function test:lua_func(obj) print('lua_func', obj.value) end");
 
-	lua["obj"] = test{};
+	lua["obj"] = test {};
 	cpp_object cppobj;
 
 	lua["obj"]["func"](lua["obj"], cppobj);
@@ -41,12 +37,12 @@ int main(int, char*[]) {
 	lua["test"]["lua_func"](lua["obj"], cppobj);
 
 	// crashes
-	//lua["obj"]["func"](cppobj);
-	//lua["obj"]["lua_func"](cppobj);
+	// lua["obj"]["func"](cppobj);
+	// lua["obj"]["lua_func"](cppobj);
 
 	// crashes
-	//lua["test"]["func"](cppobj);
-	//lua["test"]["lua_func"](cppobj);
+	// lua["test"]["func"](cppobj);
+	// lua["test"]["lua_func"](cppobj);
 
 	return 0;
 }

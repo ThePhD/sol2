@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -24,7 +24,7 @@
 #include "sol_test.hpp"
 #include "common_classes.hpp"
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 #include <iterator>
 #include <vector>
@@ -39,19 +39,19 @@
 
 
 auto test_table_return_one() {
-	return sol::as_table(std::vector<int>{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
+	return sol::as_table(std::vector<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
 }
 
 auto test_table_return_two() {
-	return sol::as_table(std::vector<std::pair<std::string, int>>{ { "one", 1 }, { "two", 2 }, { "three", 3 } });
+	return sol::as_table(std::vector<std::pair<std::string, int>> { { "one", 1 }, { "two", 2 }, { "three", 3 } });
 }
 
 auto test_table_return_three() {
-	return sol::as_table(std::map<std::string, std::string>{ { "name", "Rapptz" }, { "friend", "ThePhD" }, { "project", "sol" } });
+	return sol::as_table(std::map<std::string, std::string> { { "name", "Rapptz" }, { "friend", "ThePhD" }, { "project", "sol" } });
 }
 
 auto test_table_return_four() {
-	return sol::as_table(std::array<std::pair<std::string, int>, 4>{ { { "one", 1 }, { "two", 2 }, { "three", 3 }, { "four", 4 } } });
+	return sol::as_table(std::array<std::pair<std::string, int>, 4> { { { "one", 1 }, { "two", 2 }, { "three", 3 }, { "four", 4 } } });
 }
 
 template <typename S, typename T>
@@ -160,12 +160,12 @@ TEST_CASE("containers/table serialization", "ensure types can be serialized as t
 	typedef std::vector<int> woof;
 	sol::state lua;
 	lua.open_libraries();
-	lua.set("b", sol::as_table(woof{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 }));
+	lua.set("b", sol::as_table(woof { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 }));
 	{
 		auto result = lua.safe_script("for k, v in ipairs(b) do assert(k == v) end", sol::script_pass_on_error);
 		REQUIRE(result.valid());
 	}
-	woof w{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
+	woof w { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
 	lua.set("b", sol::as_table(w));
 	{
 		auto result = lua.safe_script("for k, v in ipairs(b) do assert(k == v) end", sol::script_pass_on_error);
@@ -210,9 +210,9 @@ end
 	SECTION("map-like") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base, sol::lib::table);
-		std::pair<const std::string, int> src[5]{ { "a", 21 }, { "b", 22 }, { "c", 23 }, { "d", 24 }, { "e", 25 } };
+		std::pair<const std::string, int> src[5] { { "a", 21 }, { "b", 22 }, { "c", 23 }, { "d", 24 }, { "e", 25 } };
 
-		lua["c"] = std::initializer_list<std::pair<std::string, int>>{ { "a", 21 }, { "b", 22 }, { "c", 23 }, { "d", 24 }, { "e", 25 } };
+		lua["c"] = std::initializer_list<std::pair<std::string, int>> { { "a", 21 }, { "b", 22 }, { "c", 23 }, { "d", 24 }, { "e", 25 } };
 
 		sol::as_table_t<std::unordered_map<std::string, int>> t1umap = lua["c"];
 		sol::as_table_t<std::unordered_multimap<std::string, int>> t1ummap = lua["c"];
@@ -226,7 +226,8 @@ TEST_CASE("containers/as_table with pointers", "test to make sure pointers are r
 
 	struct Entity {
 	public:
-		Entity(EHandle) {}
+		Entity(EHandle) {
+		}
 		Entity(const Entity&) = default;
 		Entity(Entity&&) = default;
 		Entity& operator=(const Entity&) = default;
@@ -236,7 +237,7 @@ TEST_CASE("containers/as_table with pointers", "test to make sure pointers are r
 	auto test_func_vec = []() -> std::vector<Entity*> {
 		return { reinterpret_cast<Entity*>(0x01), reinterpret_cast<Entity*>(0x02), reinterpret_cast<Entity*>(0x03) };
 	};
-	
+
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 	lua.new_usertype<Entity>("Entity");

@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 #include <iostream>
 
 int main(int, char**) {
@@ -27,7 +26,7 @@ return 24
 			int value = lua.script(code, sol::script_default_on_error);
 			// This will never be reached
 			std::cout << value << std::endl;
-			c_assert(value == 24);
+			sol_c_assert(value == 24);
 		}
 		catch (const sol::error& err) {
 			std::cout << "Something went horribly wrong: thrown error"
@@ -42,7 +41,7 @@ return 24
 	// This will check code validity and also whether or not it runs well
 	{
 		sol::protected_function_result result = lua.script(code, sol::script_pass_on_error);
-		c_assert(!result.valid());
+		sol_c_assert(!result.valid());
 		if (!result.valid()) {
 			sol::error err = result;
 			sol::call_status status = result.status();
@@ -61,7 +60,7 @@ return 24
 	// The two previous approaches are recommended
 	{
 		sol::load_result loaded_chunk = lua.load(code);
-		c_assert(!loaded_chunk.valid());
+		sol_c_assert(!loaded_chunk.valid());
 		if (!loaded_chunk.valid()) {
 			sol::error err = loaded_chunk;
 			sol::load_status status = loaded_chunk.status();
@@ -70,7 +69,7 @@ return 24
 		}
 		else {
 			// Because the syntax is bad, this will never be reached
-			c_assert(false);
+			sol_c_assert(false);
 			// If there is a runtime error (lua GC memory error, nil access, etc.)
 			// it will be caught here
 			sol::protected_function script_func = loaded_chunk.get<sol::protected_function>();

@@ -16,7 +16,7 @@ zm::vec3 sol_lua_get(sol::types<zm::vec3>, lua_State* L, int index, sol::stack::
 	float x = vec3table["x"];
 	float y = vec3table["y"];
 	float z = vec3table["z"];
-	return zm::vec3{ x, y, z };
+	return zm::vec3 { x, y, z };
 }
 
 int sol_lua_push(sol::types<zm::vec3>, lua_State* L, const zm::vec3& v) {

@@ -1,9 +1,8 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include <assert.hpp>
 
-int main(int, char* []) {
+int main(int, char*[]) {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
@@ -14,19 +13,19 @@ int main(int, char* []) {
 
 	std::tuple<int, int, int> result = lua["f"](100, 200, 300);
 	const std::tuple<int, int, int> expected(100, 200, 300);
-	c_assert(result == expected);
+	sol_c_assert(result == expected);
 
 	std::tuple<int, int, std::string> result2;
 	result2 = lua["f"](100, 200, "BARK BARK BARK!");
 	const std::tuple<int, int, std::string> expected2(100, 200, "BARK BARK BARK!");
-	c_assert(result2 == expected2);
+	sol_c_assert(result2 == expected2);
 
 	int a, b;
 	std::string c;
 	sol::tie(a, b, c) = lua["f"](100, 200, "bark");
-	c_assert(a == 100);
-	c_assert(b == 200);
-	c_assert(c == "bark");
+	sol_c_assert(a == 100);
+	sol_c_assert(b == 200);
+	sol_c_assert(c == "bark");
 
 	lua.script(R"(
 		a, b, c = f(150, 250, "woofbark")

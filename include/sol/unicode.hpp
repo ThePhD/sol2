@@ -92,8 +92,10 @@ namespace sol {
 			}
 
 			static constexpr int sequence_length(unsigned char b) {
-				return (b & start_2byte_mask) == 0 ? 1
-				                                   : (b & start_3byte_mask) != start_3byte_mask ? 2 : (b & start_4byte_mask) != start_4byte_mask ? 3 : 4;
+				return (b & start_2byte_mask) == 0                ? 1
+				     : (b & start_3byte_mask) != start_3byte_mask ? 2
+				     : (b & start_4byte_mask) != start_4byte_mask ? 3
+				                                                  : 4;
 			}
 
 			static constexpr char32_t decode(unsigned char b0, unsigned char b1) {

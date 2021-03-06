@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 
 #include <unordered_set>
 #include <iostream>
@@ -23,9 +22,7 @@ int main() {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.set_function("f", []() {
-		return my_set{ { "key1", "value1" },{ "key2", "value2" },{ "key3", "value3" } };
-	});
+	lua.set_function("f", []() { return my_set { { "key1", "value1" }, { "key2", "value2" }, { "key3", "value3" } }; });
 
 	lua.safe_script("v = f()");
 	lua.safe_script("print('v:', v)");

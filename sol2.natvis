@@ -22,17 +22,17 @@
 		</Expand>
 	</Type>
 	<Type Name="sol::basic_coroutine&lt;*&gt;">
-		<DisplayString>ref={this->ref} status={stats} error_handler={error_handler}</DisplayString>
+		<DisplayString>ref={this->ref} status={stats} error handler={m_error_handler}</DisplayString>
 		<Expand>
 			<Item Name="status">stats</Item>
-			<Item Name="error_handler">error_handler</Item>
+			<Item Name="error handler">m_error_handler</Item>
 			<Item Name="reference">*($T1*)this</Item>
 		</Expand>
 	</Type>
 	<Type Name="sol::basic_protected_function&lt;*&gt;">
-		<DisplayString>status={stats} error_handler={error_handler} index={index} state={luastate}</DisplayString>
+		<DisplayString>status={stats} error handler={m_error_handler} index={index} state={luastate}</DisplayString>
 		<Expand>
-			<Item Name="error_handler">error_handler</Item>
+			<Item Name="error handler">m_error_handler</Item>
 			<Item Name="reference">*($T1*)this</Item>
 		</Expand>
 	</Type>

@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -24,7 +24,7 @@
 #include "sol_test.hpp"
 #include "common_classes.hpp"
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 #include <iterator>
 #include <vector>
@@ -39,7 +39,7 @@
 
 TEST_CASE("containers/vector roundtrip", "make sure vectors can be round-tripped") {
 	sol::state lua;
-	std::vector<int> v{ 1, 2, 3 };
+	std::vector<int> v { 1, 2, 3 };
 	lua.set_function("f", [&]() -> std::vector<int>& { return v; });
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
@@ -50,7 +50,7 @@ TEST_CASE("containers/vector roundtrip", "make sure vectors can be round-tripped
 
 TEST_CASE("containers/deque roundtrip", "make sure deques can be round-tripped") {
 	sol::state lua;
-	std::deque<int> v{ 1, 2, 3 };
+	std::deque<int> v { 1, 2, 3 };
 	lua.set_function("f", [&]() -> std::deque<int>& { return v; });
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
@@ -61,7 +61,7 @@ TEST_CASE("containers/deque roundtrip", "make sure deques can be round-tripped")
 
 TEST_CASE("containers/array roundtrip", "make sure arrays can be round-tripped") {
 	sol::state lua;
-	std::array<int, 3> v{ { 1, 2, 3 } };
+	std::array<int, 3> v { { 1, 2, 3 } };
 	lua.set_function("f", [&]() -> std::array<int, 3>& { return v; });
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
@@ -72,7 +72,7 @@ TEST_CASE("containers/array roundtrip", "make sure arrays can be round-tripped")
 
 TEST_CASE("containers/list roundtrip", "make sure lists can be round-tripped") {
 	sol::state lua;
-	std::list<int> v{ 1, 2, 3 };
+	std::list<int> v { 1, 2, 3 };
 	lua.set_function("f", [&]() -> std::list<int>& { return v; });
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
@@ -83,7 +83,7 @@ TEST_CASE("containers/list roundtrip", "make sure lists can be round-tripped") {
 
 TEST_CASE("containers/forward_list roundtrip", "make sure forward_lists can be round-tripped") {
 	sol::state lua;
-	std::forward_list<int> v{ 1, 2, 3 };
+	std::forward_list<int> v { 1, 2, 3 };
 	lua.set_function("f", [&]() -> std::forward_list<int>& { return v; });
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
@@ -94,7 +94,7 @@ TEST_CASE("containers/forward_list roundtrip", "make sure forward_lists can be r
 
 TEST_CASE("containers/map roundtrip", "make sure maps can be round-tripped") {
 	sol::state lua;
-	std::map<std::string, int> v{ { "a", 1 }, { "b", 2 }, { "c", 3 } };
+	std::map<std::string, int> v { { "a", 1 }, { "b", 2 }, { "c", 3 } };
 	lua.set_function("f", [&]() -> std::map<std::string, int>& { return v; });
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
@@ -105,7 +105,7 @@ TEST_CASE("containers/map roundtrip", "make sure maps can be round-tripped") {
 
 TEST_CASE("containers/unordered_map roundtrip", "make sure unordered_maps can be round-tripped") {
 	sol::state lua;
-	std::unordered_map<std::string, int> v{ { "a", 1 }, { "b", 2 }, { "c", 3 } };
+	std::unordered_map<std::string, int> v { { "a", 1 }, { "b", 2 }, { "c", 3 } };
 	lua.set_function("f", [&]() -> std::unordered_map<std::string, int>& { return v; });
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
@@ -116,7 +116,7 @@ TEST_CASE("containers/unordered_map roundtrip", "make sure unordered_maps can be
 
 TEST_CASE("containers/unordered_set roundtrip", "make sure unordered_sets can be round-tripped") {
 	sol::state lua;
-	std::unordered_set<int> v{ 1, 2, 3 };
+	std::unordered_set<int> v { 1, 2, 3 };
 	lua.set_function("f", [&]() -> std::unordered_set<int>& { return v; });
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
@@ -127,7 +127,7 @@ TEST_CASE("containers/unordered_set roundtrip", "make sure unordered_sets can be
 
 TEST_CASE("containers/set roundtrip", "make sure sets can be round-tripped") {
 	sol::state lua;
-	std::set<int> v{ 1, 2, 3 };
+	std::set<int> v { 1, 2, 3 };
 	lua.set_function("f", [&]() -> std::set<int>& { return v; });
 	auto result1 = lua.safe_script("x = f()", sol::script_pass_on_error);
 	REQUIRE(result1.valid());
@@ -140,7 +140,7 @@ TEST_CASE("containers/ipairs test", "ensure that abstractions roundtrip properly
 	struct thing {
 		int x = 20;
 	};
-	thing t{};
+	thing t {};
 	sol::state lua;
 	lua.open_libraries();
 

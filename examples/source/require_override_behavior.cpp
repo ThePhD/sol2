@@ -3,7 +3,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 
 #include <iostream>
 #include <exception>
@@ -42,26 +41,28 @@ int main() {
 	// need package for package/searchers/require
 	lua.open_libraries(sol::lib::base, sol::lib::package);
 
-	lua.clear_package_loaders( );
+	lua.clear_package_loaders();
 	lua.add_package_loader(LoadFileRequire);
 
-	// this will call our function for 
+	// this will call our function for
 	// the searcher and it will succeed
 	auto a_result = lua.safe_script(R"(
 		local a = require("a")
 		print(a)
 		print(test)
-	)", sol::script_pass_on_error);
-	c_assert(a_result.valid());
+	)",
+	     sol::script_pass_on_error);
+	sol_c_assert(a_result.valid());
 	try {
 		// this will always fail
 		auto b_result = lua.safe_script(R"(
 			local b = require("b")
 			print(b)
-		)", sol::script_throw_on_error);
+		)",
+		     sol::script_throw_on_error);
 		// this will not be executed because of the throw,
 		// but it better be true regardless!
-		c_assert(!b_result.valid());
+		sol_c_assert(!b_result.valid());
 	}
 	catch (const std::exception& ex) {
 		// Whenever sol3 throws an exception from panic,

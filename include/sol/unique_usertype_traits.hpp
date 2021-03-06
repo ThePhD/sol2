@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -169,7 +169,8 @@ namespace sol {
 		template <typename T>
 		constexpr bool unique_is_null_noexcept() noexcept {
 			if constexpr (meta::meta_detail::unique_usertype_is_null_with_state_v<std::remove_cv_t<T>>) {
-				return noexcept(unique_usertype_traits<T>::is_null(static_cast<lua_State*>(nullptr), std::declval<unique_usertype_actual_t<std::remove_cv_t<T>>>()));
+				return noexcept(
+				     unique_usertype_traits<T>::is_null(static_cast<lua_State*>(nullptr), std::declval<unique_usertype_actual_t<std::remove_cv_t<T>>>()));
 			}
 			else {
 				return noexcept(unique_usertype_traits<T>::is_null(std::declval<unique_usertype_actual_t<std::remove_cv_t<T>>>()));
@@ -190,7 +191,8 @@ namespace sol {
 		template <typename T>
 		constexpr bool unique_get_noexcept() noexcept {
 			if constexpr (meta::meta_detail::unique_usertype_get_with_state_v<std::remove_cv_t<T>>) {
-				return noexcept(unique_usertype_traits<T>::get(static_cast<lua_State*>(nullptr), std::declval<unique_usertype_actual_t<std::remove_cv_t<T>>>()));
+				return noexcept(
+				     unique_usertype_traits<T>::get(static_cast<lua_State*>(nullptr), std::declval<unique_usertype_actual_t<std::remove_cv_t<T>>>()));
 			}
 			else {
 				return noexcept(unique_usertype_traits<T>::get(std::declval<unique_usertype_actual_t<std::remove_cv_t<T>>>()));

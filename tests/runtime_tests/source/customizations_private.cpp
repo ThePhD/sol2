@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -23,7 +23,7 @@
 
 #include "sol_test.hpp"
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 #include <unordered_map>
 #include <vector>
@@ -49,13 +49,13 @@ struct number_shim {
 namespace sol {
 
 	template <>
-	struct lua_size<two_things> : std::integral_constant<int, 2> {};
+	struct lua_size<two_things> : std::integral_constant<int, 2> { };
 
 	template <>
-	struct lua_type_of<two_things> : std::integral_constant<sol::type, sol::type::poly> {};
+	struct lua_type_of<two_things> : std::integral_constant<sol::type, sol::type::poly> { };
 
 	template <>
-	struct lua_type_of<number_shim> : std::integral_constant<sol::type, sol::type::poly> {};
+	struct lua_type_of<number_shim> : std::integral_constant<sol::type, sol::type::poly> { };
 
 	namespace stack {
 
@@ -75,7 +75,7 @@ namespace sol {
 				int a = stack::get<int>(L, index);
 				bool b = stack::get<bool>(L, index + 1);
 				tracking.use(2);
-				return two_things{ a, b };
+				return two_things { a, b };
 			}
 		};
 
@@ -108,7 +108,7 @@ namespace sol {
 					number_shim& ns = get_usertype<number_shim>(L, index, tracking);
 					return ns;
 				}
-				number_shim ns{};
+				number_shim ns {};
 				ns.num = stack::get<double>(L, index, tracking);
 				return ns;
 			}
@@ -144,13 +144,13 @@ TEST_CASE("customization/split struct", "using the old customization points to h
 	sol::function f = lua["f"];
 	sol::function g = lua["g"];
 
-	two_things thingsf = f(two_things{ 24, true }, 1);
+	two_things thingsf = f(two_things { 24, true }, 1);
 	REQUIRE(thingsf.a == 25);
 	REQUIRE(thingsf.b);
 
 	two_things thingsg;
 	double d;
-	sol::tie(thingsg, d) = g(two_things{ 25, false }, 2, 34.0);
+	sol::tie(thingsg, d) = g(two_things { 25, false }, 2, 34.0);
 	REQUIRE(thingsg.a == 27);
 	REQUIRE_FALSE(thingsg.b);
 	REQUIRE(d == 36.5);

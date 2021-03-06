@@ -1,7 +1,7 @@
 # # # # sol3
 # The MIT License (MIT)
 # 
-# Copyright (c) 2013-2020 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -60,9 +60,9 @@ if (SOL2_EXAMPLES)
 endif()
 
 if (SOL2_EXAMPLES_SINGLE)
-	MAKE_CUSTOMIZATION_EXAMPLE(".single" sol2::sol2_single)
+	MAKE_CUSTOMIZATION_EXAMPLE(".single" sol2::sol2::single)
 endif()
 
 if (SOL2_EXAMPLES_SINGLE_GENERATED)
-	MAKE_CUSTOMIZATION_EXAMPLE(".single.generated" sol2::sol2_single_generated)
+	MAKE_CUSTOMIZATION_EXAMPLE(".single.generated" sol2::sol2::single_generated)
 endif()

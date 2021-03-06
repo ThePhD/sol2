@@ -1,7 +1,6 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 #include <iostream>
 
 struct object {
@@ -17,9 +16,9 @@ int main(int, char*[]) {
 	lua.new_usertype<object>("object");
 
 	// runtime additions: through the sol API
-	lua["object"]["func"] = [](object& o) { 
-		++o.value; 
-		return o.value; 
+	lua["object"]["func"] = [](object& o) {
+		++o.value;
+		return o.value;
 	};
 	// runtime additions: through a lua script
 	lua.script(R"(
@@ -35,7 +34,7 @@ obj:print()
 	)");
 
 	object& obj = lua["obj"];
-	c_assert(obj.value == 1);
+	sol_c_assert(obj.value == 1);
 
 	return 0;
 }

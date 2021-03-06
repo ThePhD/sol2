@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -24,7 +24,7 @@
 #include "sol_test.hpp"
 #include "common_classes.hpp"
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 #include <mutex>
 #include <thread>
@@ -116,7 +116,7 @@ namespace detail {
 		using type = Optional<U>;
 	};
 
-	struct dummy {};
+	struct dummy { };
 } // namespace detail
 
 #define Optional typename detail::optional_rebinder<TestType>::template type

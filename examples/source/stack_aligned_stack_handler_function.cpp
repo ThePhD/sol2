@@ -1,9 +1,8 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
 
-#include "assert.hpp"
 
-int main(int, char* []) {
+int main(int, char*[]) {
 	sol::state lua;
 	lua.script("function func (a, b) return (a + b) * 2 end");
 
@@ -38,8 +37,8 @@ int main(int, char* []) {
 	traceback_handler.pop();
 
 	// make sure everything is clean
-	c_assert(result == 22);
-	c_assert(lua.stack_top() == 0); // stack is empty/balanced
+	sol_c_assert(result == 22);
+	sol_c_assert(lua.stack_top() == 0); // stack is empty/balanced
 
 	return 0;
 }

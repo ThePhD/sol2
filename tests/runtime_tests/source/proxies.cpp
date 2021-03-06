@@ -1,8 +1,8 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -23,7 +23,7 @@
 
 #include "sol_test.hpp"
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 #include <iostream>
 
@@ -50,7 +50,7 @@ TEST_CASE("proxy/function results", "make sure that function results return prop
 }
 
 TEST_CASE("proxy/optional conversion", "make sure optional conversions out of a table work properly") {
-	sol::state state{};
+	sol::state state {};
 	sol::table table = state.create_table_with("func", 42);
 	sol::optional<sol::function> func = table["func"];
 	REQUIRE(func == sol::nullopt);
@@ -60,7 +60,7 @@ TEST_CASE("proxy/proper-pushing", "allow proxies to reference other proxies and 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::io);
 
-	class T {};
+	class T { };
 	lua.new_usertype<T>("T");
 
 	T t;

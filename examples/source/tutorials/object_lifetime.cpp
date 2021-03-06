@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 
-int main () {
+int main() {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 

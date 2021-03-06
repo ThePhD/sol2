@@ -1,8 +1,8 @@
-// sol3 
+// sol3
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -26,7 +26,7 @@
 
 #include <sol/sol.hpp>
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 TEST_CASE("storage/registry construction", "ensure entries from the registry can be retrieved") {
 	const auto& code = R"(

@@ -1,7 +1,7 @@
 # # # # sol3
 # The MIT License (MIT)
 #
-# Copyright (c) 2013-2020 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -45,9 +45,9 @@ function(make_require_from_dll_example target_lib example_lib_name_suffix)
 	target_compile_definitions(${example_lib_name} 
 		PUBLIC MY_OBJECT_DLL 
 		PRIVATE MY_OBJECT_BUILD)
-	target_link_libraries(${example_lib_name} 
-		PUBLIC ${target_lib} ${LUA_LIBRARIES} sol2::assert)
-	target_include_directories(${example_lib_name} 
+	target_link_libraries(${example_lib_name}
+		PUBLIC ${target_lib} ${LUA_LIBRARIES} ${CMAKE_DL_LIBS})
+	target_include_directories(${example_lib_name}
 		PUBLIC "${LUA_INCLUDE_DIRS}")
 	
 	if (MSVC)
@@ -80,15 +80,11 @@ function(make_require_from_dll_example target_lib example_lib_name_suffix)
 		endif()
 	endif()
 
-	if(CMAKE_DL_LIBS)
-		target_link_libraries(${example_lib_name} PUBLIC ${CMAKE_DL_LIBS})
-	endif()
-	
 	# add executable target that represents require_from_dll program
 	add_executable(${example_name} ${require_from_dll_sources})
-	target_link_libraries(${example_name} 
-		PRIVATE my_object ${LUA_LIBRARIES} ${target_lib})
-	target_include_directories(${example_name} 
+	target_link_libraries(${example_name}
+		PRIVATE my_object ${LUA_LIBRARIES} ${target_lib} ${CMAKE_DL_LIBS})
+	target_include_directories(${example_name}
 		PRIVATE ${LUA_INCLUDE_DIRS})
 
 	if (MSVC)
@@ -115,10 +111,6 @@ function(make_require_from_dll_example target_lib example_lib_name_suffix)
 			#	PRIVATE -Wcomma)		
 		endif()
 	endif()
-
-	if(CMAKE_DL_LIBS)
-		target_link_libraries(${example_name} PRIVATE ${CMAKE_DL_LIBS})
-	endif()
 	
 	if (SOL2_TESTS_DYNAMIC_LOADING_EXAMPLES)
 		get_target_property(example_working_dir ${example_name} RUNTIME_OUTPUT_DIRECTORY)
@@ -138,8 +130,8 @@ if (SOL2_DYNAMIC_LOADING_EXAMPLES)
 	make_require_from_dll_example(sol2::sol2 "")
 endif()
 if (SOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE)
-	make_require_from_dll_example(sol2::sol2_single ".single")
+	make_require_from_dll_example(sol2::sol2::single ".single")
 endif()
 if (SOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE_GENERATED)
-	make_require_from_dll_example(sol2::sol2_single_generated ".single.generated")
+	make_require_from_dll_example(sol2::sol2::single_generated ".single.generated")
 endif()

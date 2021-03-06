@@ -2,7 +2,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2013-2020 Rapptz, ThePhD and contributors
+// Copyright (c) 2013-2021 Rapptz, ThePhD and contributors
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -689,6 +689,28 @@
 #else
 	// assume boost isn't using a garbage version
 	#define SOL_BOOST_NONE_CONSTEXPR_I_ constexpr
+#endif
+
+#if defined(SOL2_CI)
+	#if (SOL2_CI != 0)
+		#define SOL2_CI_I_ SOL_ON
+	#else
+		#define SOL2_CI_I_ SOL_OFF
+	#endif
+#else
+	#define SOL2_CI_I_ SOL_OFF
+#endif
+
+#if defined(SOL_C_ASSERT)
+	#define SOL_USER_C_ASSERT_I_ SOL_ON
+#else
+	#define SOL_USER_C_ASSERT_I_ SOL_DEFAULT_OFF
+#endif
+
+#if defined(SOL_M_ASSERT)
+	#define SOL_USER_M_ASSERT_I_ SOL_ON
+#else
+	#define SOL_USER_M_ASSERT_I_ SOL_DEFAULT_OFF
 #endif
 
 // clang-format on

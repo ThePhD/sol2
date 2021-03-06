@@ -1,7 +1,7 @@
 # # # # sol3
 # The MIT License (MIT)
 # 
-# Copyright (c) 2013-2020 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -22,23 +22,17 @@
 
 # # # # sol3 tests - runtime tests
 
-if (CMAKE_GENERATOR MATCHES "Visual Studio 14 2015")
-	find_package(Catch 1.12.1 REQUIRED)
-else()
-	find_package(Catch REQUIRED)
-endif()
-
 file(GLOB SOL2_RUNTIME_TEST_SOURCES source/*.cpp)
 source_group(test_sources FILES ${SOL2_RUNTIME_TEST_SOURCES})
 
 function(CREATE_TEST test_target_name test_name target_sol)
+	set(test_target_name ${test_target_name})
 	add_executable(${test_target_name} ${SOL2_RUNTIME_TEST_SOURCES})
 	set_target_properties(${test_target_name}
 		PROPERTIES
-		OUTPUT_NAME ${test_name}
-		EXPORT_NAME sol2::${test_name})
+		OUTPUT_NAME ${test_name})
 	target_link_libraries(${test_target_name} 
-		PUBLIC Threads::Threads ${LUA_LIBRARIES} ${CATCH_LIBRARIES} ${target_sol})
+		PUBLIC Threads::Threads ${LUA_LIBRARIES} Catch2::Catch2 ${target_sol} ${CMAKE_DL_LIBS})
 	target_compile_definitions(${test_target_name}
 		PUBLIC SOL_ALL_SAFETIES_ON=1 SOL_PRINT_ERRORS=1 SOL_ENABLE_INTEROP=1)
 	if (MSVC)
@@ -86,11 +80,6 @@ function(CREATE_TEST test_target_name test_name target_sol)
 			PRIVATE SOL2_CI)
 	endif()
 	
-	if (CMAKE_DL_LIBS)
-		target_link_libraries(${test_target_name}
-			PRIVATE ${CMAKE_DL_LIBS})
-	endif()
-	
 	add_test(NAME ${test_name} COMMAND ${test_target_name})
 	if(SOL2_ENABLE_INSTALL)
 		install(TARGETS ${test_target_name} RUNTIME DESTINATION bin)
@@ -98,11 +87,11 @@ function(CREATE_TEST test_target_name test_name target_sol)
 endfunction(CREATE_TEST)
 
 if (SOL2_TESTS)
-	CREATE_TEST(runtime_tests "runtime_tests" sol2::sol2)
+	CREATE_TEST(runtime_tests "sol2.runtime_tests" sol2::sol2)
 endif()
 if (SOL2_TESTS_SINGLE)
-	CREATE_TEST(runtime_tests_single "runtime_tests.single" sol2::sol2_single)
+	CREATE_TEST(runtime_tests_single "sol2.single.runtime_tests" sol2::sol2::single)
 endif()
 if (SOL2_TESTS_SINGLE_GENERATED)
-	CREATE_TEST(runtime_tests_generated_single "runtime_tests.single.generated" sol2::sol2_single_generated)
+	CREATE_TEST(runtime_tests_generated_single "sol2.single.generated.runtime_tests" sol2::sol2::single_generated)
 endif()

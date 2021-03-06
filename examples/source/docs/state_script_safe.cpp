@@ -3,20 +3,20 @@
 
 #include <iostream>
 
-int main () {
+int main() {
 
 	std::cout << "=== safe_script usage ===" << std::endl;
 
 	sol::state lua;
-	// uses sol::script_default_on_error, which either panics or throws, 
+	// uses sol::script_default_on_error, which either panics or throws,
 	// depending on your configuration and compiler settings
 	try {
 		auto result1 = lua.safe_script("bad.code");
 	}
-	catch( const sol::error& e ) {
+	catch (const sol::error& e) {
 		std::cout << "an expected error has occurred: " << e.what() << std::endl;
 	}
-	
+
 	// a custom handler that you write yourself
 	// is only called when an error happens with loading or running the script
 	auto result2 = lua.safe_script("123 bad.code", [](lua_State*, sol::protected_function_result pfr) {

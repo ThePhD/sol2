@@ -2,7 +2,6 @@
 #include <sol/sol.hpp>
 
 #include <iostream>
-#include "assert.hpp"
 #include <cmath>
 
 // Note that this is a bunch of if/switch statements
@@ -17,9 +16,12 @@ struct vec {
 	double x;
 	double y;
 
-	vec() : x(0), y(0) {}
-	vec(double x) : vec(x, x) {}
-	vec(double x, double y) : x(x), y(y) {}
+	vec() : x(0), y(0) {
+	}
+	vec(double x) : vec(x, x) {
+	}
+	vec(double x, double y) : x(x), y(y) {
+	}
 
 	sol::object get(sol::stack_object key, sol::this_state L) {
 		// we use stack_object for the arguments because we know
@@ -103,17 +105,18 @@ int main() {
 	lua.open_libraries();
 
 	lua.new_usertype<vec>("vec",
-		sol::constructors<vec(), vec(double), vec(double, double)>(),
-		// index and newindex control what happens when a "key"
-		// is looked up that is not baked into the class itself
-		// it is called with the object and the key for index (get)s
-		// or it is called with the object, the key, and the index (set)
-		// we can use a member function to assume the "object" is of the `vec`
-		// type, and then just have a function that takes 
-		// the key (get) or the key + the value (set)
-		sol::meta_function::index, &vec::get,
-		sol::meta_function::new_index, &vec::set
-		);
+	     sol::constructors<vec(), vec(double), vec(double, double)>(),
+	     // index and newindex control what happens when a "key"
+	     // is looked up that is not baked into the class itself
+	     // it is called with the object and the key for index (get)s
+	     // or it is called with the object, the key, and the index (set)
+	     // we can use a member function to assume the "object" is of the `vec`
+	     // type, and then just have a function that takes
+	     // the key (get) or the key + the value (set)
+	     sol::meta_function::index,
+	     &vec::get,
+	     sol::meta_function::new_index,
+	     &vec::set);
 
 	lua.script(R"(
 		v1 = vec.new(1, 0)
@@ -149,8 +152,8 @@ int main() {
 	sol::userdata v1 = lua["v1"];
 	double v1x = v1["x"];
 	double v1y = v1["y"];
-	c_assert(v1x == 1.000);
-	c_assert(v1y == 0.000);
+	sol_c_assert(v1x == 1.000);
+	sol_c_assert(v1y == 0.000);
 	v1[0] = 2.000;
 
 	lua.script(R"(

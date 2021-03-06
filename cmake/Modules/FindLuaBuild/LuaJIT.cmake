@@ -1,7 +1,7 @@
 # # # # sol3
 # The MIT License (MIT)
 # 
-# Copyright (c) 2013-2020 Rapptz, ThePhD, and contributors
+# Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -415,6 +415,8 @@ add_library(${lualib} INTERFACE)
 add_dependencies(${lualib} LUA_JIT-move)
 target_include_directories(${lualib}
 	INTERFACE "${LUA_JIT_SOURCE_DIR}")
+target_link_libraries(${lualib}
+		INTERFACE ${CMAKE_DL_LIBS})
 if (BUILD_LUA_AS_DLL)
 	if (MSVC)
 		target_link_libraries(${lualib}
@@ -428,10 +430,6 @@ else()
 		INTERFACE "${LUA_JIT_DESTINATION_LUA_LIB}")
 endif()
 
-if (CMAKE_DL_LIBS)
-	target_link_libraries(${lualib}
-		INTERFACE ${CMAKE_DL_LIBS})
-endif()
 if (XCODE)
 	target_compile_options(${lualib}
 		INTERFACE -pagezero_size 10000 -image_base 100000000)
