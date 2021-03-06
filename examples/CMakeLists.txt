@@ -22,13 +22,13 @@
 
 # # # sol2 Examples
 
-if (SOL2_DYNAMIC_LOADING_EXAMPLES OR SOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE OR SOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE_GENERATED)
+if (SOL2_DYNAMIC_LOADING_EXAMPLES OR SOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE)
 	# # require_from_dll example
 	# just add the subdirectory
 	add_subdirectory(require_dll_example)
 endif()
 
-if (SOL2_INTEROP_EXAMPLES OR SOL2_INTEROP_EXAMPLES_SINGLE OR SOL2_INTEROP_EXAMPLES_SINGLE_GENERATED)
+if (SOL2_INTEROP_EXAMPLES OR SOL2_INTEROP_EXAMPLES_SINGLE)
 	# # interop examples
 	add_subdirectory(interop/kaguya)
 	add_subdirectory(interop/tolua)
@@ -107,11 +107,5 @@ endif()
 if (SOL2_EXAMPLES_SINGLE)
 	foreach(example_source_file ${sol2.examples.sources})
 		MAKE_EXAMPLE(${example_source_file} "sol2.single" sol2::sol2::single)
-	endforeach()
-endif()
-
-if (SOL2_EXAMPLES_SINGLE_GENERATED)
-	foreach(example_source_file ${sol2.examples.sources})
-		MAKE_EXAMPLE(${example_source_file} "sol2.single.generated" sol2::sol2::single_generated)
 	endforeach()
 endif()

@@ -52,27 +52,18 @@ option(SOL2_TESTS "Enable build of tests" OFF)
 option(SOL2_EXAMPLES "Enable build of examples" OFF)
 option(SOL2_INTEROP_EXAMPLES "Enable build of interop examples" OFF)
 option(SOL2_DYNAMIC_LOADING_EXAMPLES "Enable build of interop examples" OFF)
-option(SOL2_GENERATE_SINGLE "Enable generation and build of single header files" OFF)
-option(SOL2_SINGLE "Enable use of prepackaged single header files" OFF)
+option(SOL2_SINGLE "Enable generation and build of single header files" OFF)
 option(SOL2_DOCS "Enable build of documentation" OFF)
 option(SOL2_ENABLE_INSTALL "Enable installation of Sol2" ON)
 # Single tests and examples tests will only be turned on if both SINGLE and TESTS are defined
 CMAKE_DEPENDENT_OPTION(SOL2_TESTS_SINGLE "Enable build of tests using the premade single headers" ON
 	"SOL2_SINGLE;SOL2_TESTS" OFF)
-CMAKE_DEPENDENT_OPTION(SOL2_TESTS_SINGLE_GENERATED "Enable build of tests using the generated single headers" ON
-	"SOL2_GENERATE_SINGLE;SOL2_TESTS" OFF)
 CMAKE_DEPENDENT_OPTION(SOL2_EXAMPLES_SINGLE "Enable build of examples using the generated single headers" OFF
 	"SOL2_SINGLE;SOL2_EXAMPLES" OFF)
-CMAKE_DEPENDENT_OPTION(SOL2_EXAMPLES_SINGLE_GENERATED "Enable build of examples using the premade single headers" OFF
-	"SOL2_GENERATE_SINGLE;SOL2_EXAMPLES" OFF)
 CMAKE_DEPENDENT_OPTION(SOL2_INTEROP_EXAMPLES_SINGLE "Enable build of interop examples using the generated single headers" OFF
 	"SOL2_SINGLE;SOL2_INTEROP_EXAMPLES" OFF)
-CMAKE_DEPENDENT_OPTION(SOL2_INTEROP_EXAMPLES_SINGLE_GENERATED "Enable build of interop examples using the generated single headers" OFF
-	"SOL2_GENERATE_SINGLE;SOL2_INTEROP_EXAMPLES" OFF)
 CMAKE_DEPENDENT_OPTION(SOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE "Enable build of dynamic loading examples using the generated single headers" OFF
 	"SOL2_SINGLE;SOL2_DYNAMIC_LOADING_EXAMPLES" OFF)
-CMAKE_DEPENDENT_OPTION(SOL2_DYNAMIC_LOADING_EXAMPLES_SINGLE_GENERATED "Enable build of dynamic loading examples using the generated single headers" OFF
-	"SOL2_GENERATE_SINGLE;SOL2_DYNAMIC_LOADING_EXAMPLES" OFF)
 CMAKE_DEPENDENT_OPTION(SOL2_TESTS_EXAMPLES "Enable build of examples as tests" ON
 	"SOL2_EXAMPLES" OFF)
 CMAKE_DEPENDENT_OPTION(SOL2_TESTS_INTEROP_EXAMPLES "Enable build of interop examples as tests" ON
@@ -154,7 +145,7 @@ endif()
 
 # # # Single header target
 # Find Python3 for single header / forward header generation
-if (SOL2_GENERATE_SINGLE OR SOL2_SINGLE)
+if (SOL2_SINGLE)
 	message(STATUS "sol2 adding single...")
 	add_subdirectory(single)
 endif()
