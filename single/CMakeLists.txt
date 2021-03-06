@@ -42,7 +42,7 @@ add_custom_target(sol2_single_header_generator ALL
 
 # # # sol3 generated single header library
 add_library(sol2_single INTERFACE)
-add_library(sol2::sol2_single ALIAS sol2_single)
+add_library(sol2::sol2::single ALIAS sol2_single)
 set_target_properties(sol2_single
 	PROPERTIES
 	EXPORT_NAME sol2::sol2::single

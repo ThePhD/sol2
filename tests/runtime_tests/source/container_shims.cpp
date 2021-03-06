@@ -169,6 +169,7 @@ inline namespace sol2_test_container_shims {
 		{
 			std::size_t sum = 0;
 			for (const auto& [k, v] : data) {
+				(void)k;
 				sum += v;
 			}
 			return static_cast<int>(sum);
