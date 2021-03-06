@@ -36,7 +36,7 @@ struct pre_main {
 		_set_abort_behavior(0, _WRITE_ABORT_MSG);
 #endif
 	}
-} pm;
+} inline sol2_ci_dont_lock_ci_please = {};
 
 #endif // Prevent lockup when doing Continuous Integration
 
