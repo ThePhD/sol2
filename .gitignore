@@ -47,7 +47,7 @@ x86/
 .vscode/
 
 # scratch space
-main.cpp
+/main.cpp
 scratch/
 
 # CMake
