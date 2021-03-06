@@ -16,7 +16,8 @@ sol::table open_mylib(sol::this_state s) {
 		return 2;
 	};
 	// register a class too
-	module.new_usertype<some_class>("some_class", "bark", &some_class::bark);
+	module.new_usertype<some_class>(
+	     "some_class", "bark", &some_class::bark);
 
 	return module;
 }
@@ -28,9 +29,12 @@ int main() {
 	lua.open_libraries(sol::lib::package, sol::lib::base);
 	// sol::c_call takes functions at the template level
 	// and turns it into a lua_CFunction
-	// alternatively, one can use sol::c_call<sol::wrap<callable_struct, callable_struct{}>> to make the call
-	// if it's a constexpr struct
-	lua.require("my_lib", sol::c_call<decltype(&open_mylib), &open_mylib>);
+	// alternatively, one can use
+	// sol::c_call<sol::wrap<callable_struct,
+	// callable_struct{}>> to make the call if it's a constexpr
+	// struct
+	lua.require("my_lib",
+	     sol::c_call<decltype(&open_mylib), &open_mylib>);
 
 	// run some code against your require'd library
 	lua.safe_script(R"(

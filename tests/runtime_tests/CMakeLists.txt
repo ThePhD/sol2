@@ -1,4 +1,4 @@
-# # # # sol3
+# # # # sol2
 # The MIT License (MIT)
 # 
 # Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
@@ -20,7 +20,7 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# # # # sol3 tests - runtime tests
+# # # # sol2 tests - runtime tests
 
 file(GLOB SOL2_RUNTIME_TEST_SOURCES source/*.cpp)
 source_group(test_sources FILES ${SOL2_RUNTIME_TEST_SOURCES})

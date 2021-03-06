@@ -1,4 +1,4 @@
-# # # # sol3
+# # # # sol2
 # The MIT License (MIT)
 # 
 # Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
@@ -20,7 +20,7 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# # # # sol3 tests - simple regression tests
+# # # # sol2 tests - simple regression tests
 
 file(GLOB test_sources source/*.cpp)
 source_group(sources FILES ${test_sources})
@@ -29,14 +29,13 @@ function(CREATE_TEST test_target_name test_name target_sol)
 	add_executable(${test_target_name} ${test_sources})
 	set_target_properties(${test_target_name}
 		PROPERTIES
-		OUTPUT_NAME ${test_name}
-		EXPORT_NAME sol2::${test_name})
-	target_link_libraries(${test_target_name} 
-		PUBLIC Threads::Threads ${LUA_LIBRARIES} ${target_sol} ${CMAKE_DL_LIBS})
+		OUTPUT_NAME ${test_name})
+	target_link_libraries(${test_target_name}
+		PUBLIC Threads::Threads ${LUA_LIBRARIES} ${target_sol} Catch2::Catch2 ${CMAKE_DL_LIBS})
 	
 	if (MSVC)
 		if (NOT CMAKE_COMPILER_ID MATCHES "Clang")
-			target_compile_options(${test_target_name} 
+			target_compile_options(${test_target_name}
 				PRIVATE /bigobj /W4)
 		endif()
 	else()
@@ -66,11 +65,11 @@ function(CREATE_TEST test_target_name test_name target_sol)
 		target_compile_options(${test_target_name}
 			PRIVATE /EHsc /std:c++latest)
 		target_compile_definitions(${test_target_name}
-			PRIVATE UNICODE _UNICODE 
+			PRIVATE UNICODE _UNICODE
 			_CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
 	else()
 		target_compile_options(${test_target_name}
-			PRIVATE -std=c++1z -Wno-unknown-warning -Wno-unknown-warning-option 
+			PRIVATE -std=c++1z -Wno-unknown-warning -Wno-unknown-warning-option
 			-Wall -Wextra -Wpedantic -pedantic -pedantic-errors)
 	endif()
 

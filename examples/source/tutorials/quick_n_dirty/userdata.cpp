@@ -13,7 +13,8 @@ struct Doge {
 	}
 
 	~Doge() {
-		std::cout << "Dog at " << this << " is being destroyed..." << std::endl;
+		std::cout << "Dog at " << this
+		          << " is being destroyed..." << std::endl;
 	}
 };
 
@@ -26,10 +27,11 @@ int main(int, char*[]) {
 
 	// fresh one put into Lua
 	lua["dog"] = Doge {};
-	// Copy into lua: destroyed by Lua VM during garbage collection
+	// Copy into lua: destroyed by Lua VM during garbage
+	// collection
 	lua["dog_copy"] = dog;
-	// OR: move semantics - will call move constructor if present instead
-	// Again, owned by Lua
+	// OR: move semantics - will call move constructor if
+	// present instead Again, owned by Lua
 	lua["dog_move"] = std::move(dog);
 	lua["dog_unique_ptr"] = std::make_unique<Doge>(25);
 	lua["dog_shared_ptr"] = std::make_shared<Doge>(31);
@@ -39,8 +41,10 @@ int main(int, char*[]) {
 	lua.set("dog2", Doge {});
 	lua.set("dog2_copy", dog2);
 	lua.set("dog2_move", std::move(dog2));
-	lua.set("dog2_unique_ptr", std::unique_ptr<Doge>(new Doge(25)));
-	lua.set("dog2_shared_ptr", std::shared_ptr<Doge>(new Doge(31)));
+	lua.set("dog2_unique_ptr",
+	     std::unique_ptr<Doge>(new Doge(25)));
+	lua.set("dog2_shared_ptr",
+	     std::shared_ptr<Doge>(new Doge(31)));
 
 	// Note all of them can be retrieved the same way:
 	Doge& lua_dog = lua["dog"];
@@ -54,12 +58,16 @@ int main(int, char*[]) {
 	sol_c_assert(lua_dog_unique_ptr.tailwag == 25);
 	sol_c_assert(lua_dog_shared_ptr.tailwag == 31);
 
-	// lua will treat these types as opaque, and you will be able to pass them around
-	// to C++ functions and Lua functions alike
+	// lua will treat these types as opaque, and you will be
+	// able to pass them around to C++ functions and Lua
+	// functions alike
 
 	// Use a C++ reference to handle memory directly
 	// otherwise take by value, without '&'
-	lua["f"] = [](Doge& dog) { std::cout << "dog wags its tail " << dog.tailwag << " times!" << std::endl; };
+	lua["f"] = [](Doge& dog) {
+		std::cout << "dog wags its tail " << dog.tailwag
+		          << " times!" << std::endl;
+	};
 
 	// if you bind a function using a pointer,
 	// you can handle when `nil` is passed
@@ -68,7 +76,8 @@ int main(int, char*[]) {
 			std::cout << "dog was nil!" << std::endl;
 			return;
 		}
-		std::cout << "dog wags its tail " << dog->tailwag << " times!" << std::endl;
+		std::cout << "dog wags its tail " << dog->tailwag
+		          << " times!" << std::endl;
 	};
 
 	lua.script(R"(

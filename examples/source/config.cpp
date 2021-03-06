@@ -12,15 +12,17 @@ struct config {
 	int height;
 
 	void print() {
-		std::cout << "Name: " << name << '\n' << "Width: " << width << '\n' << "Height: " << height << '\n';
+		std::cout << "Name: " << name << '\n'
+		          << "Width: " << width << '\n'
+		          << "Height: " << height << '\n';
 	}
 };
 
 int main() {
 	sol::state lua;
 	config screen;
-	// To use the file, uncomment here and make sure it is in local dir
-	// lua.script_file("config.lua");
+	// To use the file, uncomment here and make sure it is in
+	// local dir lua.script_file("config.lua");
 	lua.script(R"(
 name = "Asus"
 width = 1920

@@ -54,9 +54,15 @@ int main(int, char*[]) {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<number_storage>(
-	     "number_storage", sol::constructors<number_storage(int)>(), "accumulate", &number_storage::accumulate, "iterable", [](number_storage& ns) {
-		     return sol::as_container(ns); // treat like a container, despite is_container specialization
+	lua.new_usertype<number_storage>("number_storage",
+	     sol::constructors<number_storage(int)>(),
+	     "accumulate",
+	     &number_storage::accumulate,
+	     "iterable",
+	     [](number_storage& ns) {
+		     return sol::as_container(
+		          ns); // treat like a container, despite
+		               // is_container specialization
 	     });
 
 	lua.script(R"(

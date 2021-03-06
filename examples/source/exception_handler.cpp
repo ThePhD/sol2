@@ -4,11 +4,16 @@
 
 #include <iostream>
 
-int my_exception_handler(lua_State* L, sol::optional<const std::exception&> maybe_exception, sol::string_view description) {
-	// L is the lua state, which you can wrap in a state_view if necessary
-	// maybe_exception will contain exception, if it exists
-	// description will either be the what() of the exception or a description saying that we hit the general-case catch(...)
-	std::cout << "An exception occurred in a function, here's what it says ";
+int my_exception_handler(lua_State* L,
+     sol::optional<const std::exception&> maybe_exception,
+     sol::string_view description) {
+	// L is the lua state, which you can wrap in a state_view if
+	// necessary maybe_exception will contain exception, if it
+	// exists description will either be the what() of the
+	// exception or a description saying that we hit the
+	// general-case catch(...)
+	std::cout << "An exception occurred in a function, here's "
+	             "what it says ";
 	if (maybe_exception) {
 		std::cout << "(straight from the exception): ";
 		const std::exception& ex = *maybe_exception;
@@ -16,14 +21,16 @@ int my_exception_handler(lua_State* L, sol::optional<const std::exception&> mayb
 	}
 	else {
 		std::cout << "(from the description parameter): ";
-		std::cout.write(description.data(), static_cast<std::streamsize>(description.size()));
+		std::cout.write(description.data(),
+		     static_cast<std::streamsize>(description.size()));
 		std::cout << std::endl;
 	}
 
 	// you must push 1 element onto the stack to be
 	// transported through as the error object in Lua
-	// note that Lua -- and 99.5% of all Lua users and libraries -- expects a string
-	// so we push a single string (in our case, the description of the error)
+	// note that Lua -- and 99.5% of all Lua users and libraries
+	// -- expects a string so we push a single string (in our
+	// case, the description of the error)
 	return sol::stack::push(L, description);
 }
 
@@ -40,7 +47,8 @@ int main() {
 
 	lua.set_function("will_throw", &will_throw);
 
-	sol::protected_function_result pfr = lua.safe_script("will_throw()", &sol::script_pass_on_error);
+	sol::protected_function_result pfr = lua.safe_script(
+	     "will_throw()", &sol::script_pass_on_error);
 
 	sol_c_assert(!pfr.valid());
 

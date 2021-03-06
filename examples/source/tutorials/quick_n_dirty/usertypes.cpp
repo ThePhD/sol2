@@ -13,7 +13,8 @@ struct Doge {
 	}
 
 	~Doge() {
-		std::cout << "Dog at " << this << " is being destroyed..." << std::endl;
+		std::cout << "Dog at " << this
+		          << " is being destroyed..." << std::endl;
 	}
 };
 
@@ -32,7 +33,10 @@ int main(int, char*[]) {
 	lua["dog_shared_ptr"] = std::make_shared<Doge>(51);
 
 	// now we can access these types in Lua
-	lua.new_usertype<Doge>("Doge", sol::constructors<Doge(), Doge(int)>(), "tailwag", &Doge::tailwag);
+	lua.new_usertype<Doge>("Doge",
+	     sol::constructors<Doge(), Doge(int)>(),
+	     "tailwag",
+	     &Doge::tailwag);
 	lua.script(R"(
 		function f (dog)
 			if dog == nil then

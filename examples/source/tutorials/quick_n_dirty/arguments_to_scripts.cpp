@@ -4,7 +4,8 @@
 #include <iostream>
 
 int main(int, char*[]) {
-	std::cout << "=== passing arguments to scripts ===" << std::endl;
+	std::cout << "=== passing arguments to scripts ==="
+	          << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
@@ -17,7 +18,9 @@ print(a,b,c)
 	sol::load_result fx = lua.load(my_script);
 	if (!fx.valid()) {
 		sol::error err = fx;
-		std::cerr << "failed to load string-based script into the program" << err.what() << std::endl;
+		std::cerr << "failed to load string-based script into "
+		             "the program"
+		          << err.what() << std::endl;
 	}
 
 	// prints "your arguments here"

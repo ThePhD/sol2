@@ -22,7 +22,11 @@ int main(int, char*[]) {
 
 	lua.new_usertype<B>("A", "call", &A::call);
 
-	lua.new_usertype<B>("B", "call", &B::call, sol::base_classes, sol::bases<A>());
+	lua.new_usertype<B>("B",
+	     "call",
+	     &B::call,
+	     sol::base_classes,
+	     sol::bases<A>());
 
 	return 0;
 }

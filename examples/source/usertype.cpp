@@ -58,7 +58,12 @@ int main() {
 
 	// you must make sure that the name of the function
 	// goes before the member function pointer
-	lua.new_usertype<foo>("foo", sol::constructors<foo(std::string)>(), "print", &foo::print, "test", &foo::test);
+	lua.new_usertype<foo>("foo",
+	     sol::constructors<foo(std::string)>(),
+	     "print",
+	     &foo::print,
+	     "test",
+	     &foo::test);
 
 	// making the class from lua is simple
 	// same with calling member functions
@@ -82,9 +87,13 @@ int main() {
 		// on the function-type doesn't exactly matter,
 		// which allows you to use a shorter class name/void
 		// if necessary
-		sol::constructors<vector(), vector(float), void(float, float)> ctor;
+		sol::constructors<vector(),
+		     vector(float),
+		     void(float, float)>
+		     ctor;
 		// then you must register it
-		sol::usertype<vector> utype = lua.new_usertype<vector>("vector", ctor);
+		sol::usertype<vector> utype
+		     = lua.new_usertype<vector>("vector", ctor);
 
 		// add to it as much as you like
 		utype["is_unit"] = &vector::is_unit;
@@ -103,8 +112,13 @@ int main() {
 	     "assert(not v:is_unit())\n");
 
 	// You can even have C++-like member-variable-access
-	// just pass is public member variables in the same style as functions
-	lua.new_usertype<variables>("variables", "low_gravity", &variables::low_gravity, "boost_level", &variables::boost_level);
+	// just pass is public member variables in the same style as
+	// functions
+	lua.new_usertype<variables>("variables",
+	     "low_gravity",
+	     &variables::low_gravity,
+	     "boost_level",
+	     &variables::boost_level);
 
 	// making the class from lua is simple
 	// same with calling member functions/variables

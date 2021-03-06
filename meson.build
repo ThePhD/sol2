@@ -1,4 +1,4 @@
-project('sol3', 'cpp')
+project('sol2', 'cpp')
 
 # Find lua dependency
 if get_option('lua_cpp')
@@ -41,7 +41,7 @@ if get_option('single')
 	cmd = run_command(python, 'list_headers.py')
 
 	if cmd.returncode() != 0
-		error('Could not list sol3 header files.')
+		error('Could not list sol2 header files.')
 	endif
 
 	# Create our custom target to generate the single header file.

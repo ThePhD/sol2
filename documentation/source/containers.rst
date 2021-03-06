@@ -1,8 +1,8 @@
 containers
 ==========
-*working with containers in sol3*
+*working with containers in sol2*
 
-Containers are objects that are meant to be inspected and iterated and whose job is to typically provide storage to a collection of items. The standard library has several containers of varying types, and all of them have ``begin()`` and ``end()`` methods which return iterators. C-style arrays are also containers, and sol3 will detect all of them for use and bestow upon them special properties and functions.
+Containers are objects that are meant to be inspected and iterated and whose job is to typically provide storage to a collection of items. The standard library has several containers of varying types, and all of them have ``begin()`` and ``end()`` methods which return iterators. C-style arrays are also containers, and sol2 will detect all of them for use and bestow upon them special properties and functions.
 
 * Containers from C++ are stored as ``userdata`` with special ``usertype`` metatables with :ref:`special operations<container-operations>`
 	- In Lua 5.1, this means containers pushed without wrappers like :doc:`as_table<api/as_table>` and :doc:`nested<api/nested>` will not work with ``pairs`` or other built-in iteration functions from Lua
@@ -28,7 +28,7 @@ Containers are objects that are meant to be inspected and iterated and whose job
 container detection
 -------------------
 
-containers are detected by the type trait ``sol::is_container<T>``. If that turns out to be true, sol3 will attempt to push a userdata into Lua for the specified type ``T``, and bestow it with some of the functions and properties listed below. These functions and properties are provided by a template struct ``sol::usertype_container<T>``, which has a number of static Lua C functions bound to a safety metatable. If you want to override the behavior for a specific container, you must first specialize ``sol::is_container<T>`` to drive from ``std::true_type``, then override the functions you want to change. Any function you do not override will call the default implementation or equivalent. The default implementation for unrecognized containers is simply errors.
+containers are detected by the type trait ``sol::is_container<T>``. If that turns out to be true, sol2 will attempt to push a userdata into Lua for the specified type ``T``, and bestow it with some of the functions and properties listed below. These functions and properties are provided by a template struct ``sol::usertype_container<T>``, which has a number of static Lua C functions bound to a safety metatable. If you want to override the behavior for a specific container, you must first specialize ``sol::is_container<T>`` to drive from ``std::true_type``, then override the functions you want to change. Any function you do not override will call the default implementation or equivalent. The default implementation for unrecognized containers is simply errors.
 
 You can also specialize ``sol::is_container<T>`` to turn off container detection, if you find it too eager for a type that just happens to have ``begin`` and ``end`` functions, like so:
 
@@ -95,7 +95,7 @@ The various operations provided by ``usertype_container<T>`` are expected to be 
 container classifications
 -------------------------
 
-When you push a container into sol3, the default container handler deals with the containers by inspecting various properties, functions, and type definitions on them. Here are the broad implications of containers sol3's defaults will recognize, and which already-known containers fall into their categories:
+When you push a container into sol2, the default container handler deals with the containers by inspecting various properties, functions, and type definitions on them. Here are the broad implications of containers sol2's defaults will recognize, and which already-known containers fall into their categories:
 
 +------------------------+----------------------------------------+-------------------------+-----------------------------------------------------------------------------------------------+
 | container type         | requirements                           | known containers        | notes/caveats                                                                                 |

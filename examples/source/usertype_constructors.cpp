@@ -21,14 +21,21 @@ int main() {
 	lua.new_usertype<MyClass>("MyClass",
 	     sol::meta_function::construct,
 	     sol::factories(
-	          // MyClass.new(...) -- dot syntax, no "self" value passed in
-	          [](const double& d) { return std::make_shared<MyClass>(d); },
-	          // MyClass:new(...) -- colon syntax, passes in the "self" value
-	          // as first argument implicitly
-	          [](sol::object, const double& d) { return std::make_shared<MyClass>(d); }),
+	          // MyClass.new(...) -- dot syntax, no "self" value
+	          // passed in
+	          [](const double& d) {
+		          return std::make_shared<MyClass>(d);
+	          },
+	          // MyClass:new(...) -- colon syntax, passes in the
+	          // "self" value as first argument implicitly
+	          [](sol::object, const double& d) {
+		          return std::make_shared<MyClass>(d);
+	          }),
 	     // MyClass(...) syntax, only
 	     sol::call_constructor,
-	     sol::factories([](const double& d) { return std::make_shared<MyClass>(d); }),
+	     sol::factories([](const double& d) {
+		     return std::make_shared<MyClass>(d);
+	     }),
 	     "data",
 	     &MyClass::data);
 
@@ -44,12 +51,16 @@ int main() {
 
 	if (maybe_error) {
 		// something went wrong!
-		std::cerr << "Something has gone horribly unexpected and wrong:\n" << maybe_error->what() << std::endl;
+		std::cerr << "Something has gone horribly unexpected "
+		             "and wrong:\n"
+		          << maybe_error->what() << std::endl;
 		return 1;
 	}
 
 	// everything is okay!
-	std::cout << "Everything went okay and all the asserts passed!" << std::endl;
+	std::cout
+	     << "Everything went okay and all the asserts passed!"
+	     << std::endl;
 
 	return 0;
 }

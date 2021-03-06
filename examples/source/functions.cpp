@@ -27,7 +27,8 @@ int main() {
 	lua.set_function("my_add", my_add);
 
 	// you could even use a lambda
-	lua.set_function("my_mul", [](double x, double y) { return x * y; });
+	lua.set_function(
+	     "my_mul", [](double x, double y) { return x * y; });
 
 	// member function pointers and functors as well
 	lua.set_function("mult_by_ten", multiplier {});

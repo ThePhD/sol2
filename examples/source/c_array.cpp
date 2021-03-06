@@ -13,12 +13,16 @@ struct something {
 
 int main() {
 
-	std::cout << "=== c arrays (works with Visual C++ too) ===" << std::endl;
+	std::cout << "=== c arrays (works with Visual C++ too) ==="
+	          << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<something>("something", "arr", sol::property([](something& s) { return std::ref(s.arr); }));
+	lua.new_usertype<something>(
+	     "something", "arr", sol::property([](something& s) {
+		     return std::ref(s.arr);
+	     }));
 	lua.script(R"(s = something.new() 
 		print(s.arr[3])
 		s.arr[3] = 40

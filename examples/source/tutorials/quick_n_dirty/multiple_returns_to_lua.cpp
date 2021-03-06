@@ -7,7 +7,8 @@ int main(int, char*[]) {
 	lua.open_libraries(sol::lib::base);
 
 	lua["f"] = [](int a, int b, sol::object c) {
-		// sol::object can be anything here: just pass it through
+		// sol::object can be anything here: just pass it
+		// through
 		return std::make_tuple(a, b, c);
 	};
 
@@ -17,7 +18,8 @@ int main(int, char*[]) {
 
 	std::tuple<int, int, std::string> result2;
 	result2 = lua["f"](100, 200, "BARK BARK BARK!");
-	const std::tuple<int, int, std::string> expected2(100, 200, "BARK BARK BARK!");
+	const std::tuple<int, int, std::string> expected2(
+	     100, 200, "BARK BARK BARK!");
 	sol_c_assert(result2 == expected2);
 
 	int a, b;

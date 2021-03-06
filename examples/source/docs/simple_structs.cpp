@@ -12,7 +12,8 @@ struct vars {
 
 int main() {
 	sol::state lua;
-	lua.new_usertype<vars>("vars", "boop", &vars::boop, "bop", &vars::bop);
+	lua.new_usertype<vars>(
+	     "vars", "boop", &vars::boop, "bop", &vars::bop);
 	lua.script(
 	     "beep = vars.new()\n"
 	     "beep.boop = 1\n"

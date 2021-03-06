@@ -19,7 +19,10 @@ int main() {
 
 	sol::state lua;
 	// overloaded function f
-	lua.set("f", sol::c_call<sol::wrap<decltype(&f1), &f1>, sol::wrap<decltype(&f2), &f2>, sol::wrap<decltype(&fer::f3), &fer::f3>>);
+	lua.set("f",
+	     sol::c_call<sol::wrap<decltype(&f1), &f1>,
+	          sol::wrap<decltype(&f2), &f2>,
+	          sol::wrap<decltype(&fer::f3), &fer::f3>>);
 	// singly-wrapped function
 	lua.set("g", sol::c_call<sol::wrap<decltype(&f1), &f1>>);
 	// without the 'sol::wrap' boilerplate

@@ -12,19 +12,23 @@ int main() {
 	// Function requires 2 arguments
 	// rest can be variadic, but:
 	// va will include everything after "a" argument,
-	// which means "b" will be part of the varaidic_args list too
-	// at position 0
-	lua.set_function("v", [](int a, sol::variadic_args va, int /*b*/) {
-		int r = 0;
-		for (auto v : va) {
-			int value = v; // get argument out (implicit conversion)
-			               // can also do int v = v.as<int>();
-			               // can also do int v = va.get<int>(i); with index i
-			r += value;
-		}
-		// Only have to add a, b was included from variadic_args and beyond
-		return r + a;
-	});
+	// which means "b" will be part of the varaidic_args list
+	// too at position 0
+	lua.set_function(
+	     "v", [](int a, sol::variadic_args va, int /*b*/) {
+		     int r = 0;
+		     for (auto v : va) {
+			     int value
+			          = v; // get argument out (implicit
+			               // conversion) can also do int v =
+			               // v.as<int>(); can also do int v =
+			               // va.get<int>(i); with index i
+			     r += value;
+		     }
+		     // Only have to add a, b was included from
+		     // variadic_args and beyond
+		     return r + a;
+	     });
 
 	lua.script("x = v(25, 25)");
 	lua.script("x2 = v(25, 25, 100, 50, 250, 150)");

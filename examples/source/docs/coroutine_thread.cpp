@@ -27,8 +27,10 @@ end
 	sol::coroutine loop_coroutine = runnerstate["loop"];
 	lua["counter"] = 20;
 
-	for (int counter = 0; counter < 10 && loop_coroutine; ++counter) {
-		// Call the coroutine, does the computation and then suspends
+	for (int counter = 0; counter < 10 && loop_coroutine;
+	     ++counter) {
+		// Call the coroutine, does the computation and then
+		// suspends
 		int value = loop_coroutine();
 		std::cout << "value is " << value << std::endl;
 	}

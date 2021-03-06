@@ -27,12 +27,15 @@ void picky_bark(pup& p, std::string s) {
 }
 
 int main() {
-	std::cout << "=== overloading with members ===" << std::endl;
+	std::cout << "=== overloading with members ==="
+	          << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.set_function("bark", sol::overload(ultra_bark, []() { return "the bark from nowhere"; }));
+	lua.set_function("bark", sol::overload(ultra_bark, []() {
+		return "the bark from nowhere";
+	}));
 
 	lua.new_usertype<pup>("pup",
 	     // regular function

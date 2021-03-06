@@ -3,10 +3,46 @@ supported compilers, binary size, compile time
 getting good final product out of sol
 -------------------------------------
 
+
+
 supported compilers
 -------------------
 
-GCC 7.x is now out alongside Visual Studio 2018. This means that `sol release v2.20.1`_ is the current version of the code targeted at the older compilers not listed below. Newer code will be targeted at working with the following compilers and leveraging their features, possibly taking advantage of whatever C++17 features are made available by the compilers and standard libraries bundled by-default with them.
+Newer features will be targeted at the following compilers:
+
+* VC++
+	- Visual Studio 2019, latest shipped compilers
+	- Visual Studio 2018, latest shipped compilers
+* GCC (includes MinGW)
+	- v11.x
+	- v10.x
+	- v9.x
+	- v8.x
+	- v7.x
+* Clang
+	- v11.x
+	- v10.x
+	- v9.x
+	- v8.x
+	- v7.x
+	- v6.x
+	- v5.x
+	- v4.x
+	- v3.9.x
+
+Note that Visual Studio's 2018 Community Edition is absolutely free now, and installs faster and easier than ever before. It also removes a lot of hacky work arounds and formally supports decltype SFINAE.
+
+MinGW's GCC version 7.x of the compiler fixes a long-standing derp in the ``<codecvt>`` header that swapped the endianness of utf16 and utf32 strings.
+
+Clang 3.4, 3.5 and 3.6 have many bugs we have run into when developing sol3 and that have negatively impacted users for a long time now.
+
+We encourage all users to upgrade immediately. If you need old code for some reason, use `sol2 release v2.20.1`_: otherwise, always grab sol2's latest.
+
+
+"I need older support"
+++++++++++++++++++++++
+
+GCC 7.x is now out alongside Visual Studio 2018. This means that `sol2 release v2.20.1`_ is the current version of the code targeted at the older compilers not listed above. Newer code will be targeted at C++17 and above.
 
 ``v2.20.1`` supports:
 
@@ -26,36 +62,16 @@ GCC 7.x is now out alongside Visual Studio 2018. This means that `sol release v2
 	- v3.6.x
 	- Note: this applies to XCode's Apple Clang as well, but that compiler packs its own deficiencies and problems as well
 
-**This does not mean we are immediately abandoning older compilers.** We will update this page as relevant bugfixes are backported to the v2.x.x releases. Remember that sol3 is feature-complete: there is nothing more we can add to the library at this time with C++11/C++14 compiler support, so your code will be covered for a long time to come.
+If you need someone to, explicitly, backport some functionality or feature from a newer version that you like, then you can reach out to `these folks here <https://soasis.org/contact/opensource>`_.
 
-Newer features will be targeted at the following compilers:
-
-* VC++
-	- Visual Studio vNext
-	- Visual Studio 2018
-* GCC (includes MinGW)
-	- v8.x
-	- v7.x
-* Clang
-	- v7.x
-	- v6.x
-	- v5.x
-	- v4.x
-	- v3.9.x
-
-Note that Visual Studio's 2018 Community Edition is absolutely free now, and installs faster and easier than ever before. It also removes a lot of hacky work arounds and formally supports decltype SFINAE.
-
-MinGW's GCC version 7.x of the compiler fixes a long-standing derp in the <codecvt> header that swapped the endianness of utf16 and utf32 strings.
-
-Clang 3.4, 3.5 and 3.6 have many bugs we have run into when developing sol3 and that have negatively impacted users for a long time now.
-
-We encourage all users to upgrade immediately. If you need old code for some reason, use `sol release v2.20.1`_: otherwise, always grab sol3's latest.
 
 
 feature support
 ---------------
 
-track future compiler and feature support in `this issue here`_.
+We support C++17. We have optional support for ``<variant>`` that is turned off by default for bad compilers like AppleClang with its missing implementation.
+
+
 
 supported Lua version
 ---------------------
@@ -69,10 +85,13 @@ We support:
 * LuaJIT 2.1.x-beta3+
 
 
+
 binary sizes
 ------------
 
 For individiauls who use :doc:`usertypes<api/usertype>` a lot, they can find their compilation times increase. This is due to C++11 and C++14 not having very good facilities for handling template parameters and variadic template parameters. There are a few things in cutting-edge C++17 and C++Next that sol can use, but the problem is many people cannot work with the latest and greatest: therefore, we have to use older techniques that result in a fair amount of redundant function specializations that can be subject to the pickiness of the compiler's inlining and other such techniques.
+
+
 
 compile speed improvemements
 ----------------------------
@@ -87,6 +106,7 @@ Here are some notes on achieving better compile times without sacrificing too mu
 * For people who already have a tool that retrieves function signatures and arguments, it might be in your best interest to hook into that tool or generator and dump out the information once using sol3's lower-level abstractions. An `issue describing preliminary steps can be found here`_.
 
 
+
 next steps
 ----------
 
@@ -95,6 +115,5 @@ The next step for sol from a developer standpoint is to formally make the librar
 Hopefully, as things progress, we move things forward.
 
 
-.. _sol release v2.20.1: https://github.com/ThePhD/sol2/releases/tag/v2.20.1
+.. _sol2 release v2.20.1: https://github.com/ThePhD/sol2/releases/tag/v2.20.1
 .. _issue describing preliminary steps can be found here: https://github.com/ThePhD/sol2/issues/436#issuecomment-312021508
-.. _this issue here: https://github.com/ThePhD/sol2/issues/426

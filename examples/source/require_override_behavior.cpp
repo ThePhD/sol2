@@ -11,7 +11,7 @@
 // -- this is called a "raw C function",
 // and matches the type for lua_CFunction
 int LoadFileRequire(lua_State* L) {
-	// use sol3 stack API to pull
+	// use sol2 stack API to pull
 	// "first argument"
 	std::string path = sol::stack::get<std::string>(L, 1);
 
@@ -22,19 +22,22 @@ int LoadFileRequire(lua_State* L) {
 			return "bananas"
 		)";
 		// load "module", but don't run it
-		luaL_loadbuffer(L, script.data(), script.size(), path.c_str());
+		luaL_loadbuffer(
+		     L, script.data(), script.size(), path.c_str());
 		// returning 1 object left on Lua stack:
 		// a function that, when called, executes the script
 		// (this is what lua_loadX/luaL_loadX functions return
 		return 1;
 	}
 
-	sol::stack::push(L, "This is not the module you're looking for!");
+	sol::stack::push(
+	     L, "This is not the module you're looking for!");
 	return 1;
 }
 
 int main() {
-	std::cout << "=== require override behavior ===" << std::endl;
+	std::cout << "=== require override behavior ==="
+	          << std::endl;
 
 	sol::state lua;
 	// need base for print,
@@ -65,9 +68,10 @@ int main() {
 		sol_c_assert(!b_result.valid());
 	}
 	catch (const std::exception& ex) {
-		// Whenever sol3 throws an exception from panic,
+		// Whenever sol2 throws an exception from panic,
 		// catch
-		std::cout << "Something went wrong, as expected:\n" << ex.what() << std::endl;
+		std::cout << "Something went wrong, as expected:\n"
+		          << ex.what() << std::endl;
 		// and CRASH / exit the application
 		return 0;
 	}

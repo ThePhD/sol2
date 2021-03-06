@@ -1,4 +1,4 @@
-// sol3
+// sol2
 
 // The MIT License (MIT)
 
@@ -610,7 +610,7 @@ end
 	REQUIRE(s5 == 0);
 }
 
-TEST_CASE("coroutines/yielding", "test that a sol3 bound function can yield when marked yieldable") {
+TEST_CASE("coroutines/yielding", "test that a sol2 bound function can yield when marked yieldable") {
 	SECTION("regular functions") {
 		sol::state lua;
 		lua.open_libraries(sol::lib::base, sol::lib::coroutine);
@@ -702,7 +702,7 @@ TEST_CASE("coroutines/yielding", "test that a sol3 bound function can yield when
 	}
 }
 
-TEST_CASE("coroutines/error_handler_state_transfer", "test that sol3 coroutines with their error handlers are properly sourced") {
+TEST_CASE("coroutines/error_handler_state_transfer", "test that sol2 coroutines with their error handlers are properly sourced") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::coroutine);
 

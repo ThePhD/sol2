@@ -7,12 +7,14 @@
 #include <iostream>
 
 int main(int, char*[]) {
-	std::cout << "=== customization: vec3 as table ===" << std::endl;
+	std::cout << "=== customization: vec3 as table ==="
+	          << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	std::cout << "registering entities into Lua ..." << std::endl;
+	std::cout << "registering entities into Lua ..."
+	          << std::endl;
 	register_lua(lua);
 	std::cout << "running script ..." << std::endl;
 
@@ -29,7 +31,8 @@ print("new_pos", new_pos.x, new_pos.y, new_pos.z)
 
 	sol::optional<sol::error> result = lua.safe_script(script);
 	if (result.has_value()) {
-		std::cerr << "Something went horribly wrong: " << result.value().what() << std::endl;
+		std::cerr << "Something went horribly wrong: "
+		          << result.value().what() << std::endl;
 	}
 
 	std::cout << "finishing ..." << std::endl;

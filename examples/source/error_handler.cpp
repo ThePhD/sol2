@@ -48,7 +48,8 @@ int main() {
 		std::cout << what << std::endl;
 	}
 
-	// errors, calls handler and then returns a string error from Lua at the top of the stack
+	// errors, calls handler and then returns a string error
+	// from Lua at the top of the stack
 	auto secondwoof = problematic_woof(19);
 	if (secondwoof.valid()) {
 		// Call succeeded
@@ -57,9 +58,9 @@ int main() {
 	}
 	else {
 		// Call failed
-		// Note that if the handler was successfully called, this will include
-		// the additional appended error message information of
-		// "got_problems handler: " ...
+		// Note that if the handler was successfully called,
+		// this will include the additional appended error
+		// message information of "got_problems handler: " ...
 		sol::error err = secondwoof;
 		std::string what = err.what();
 		std::cout << what << std::endl;

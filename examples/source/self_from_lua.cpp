@@ -4,8 +4,9 @@
 
 // NOTE:
 // There are TWO ways to retrieve the "this"
-// object from calls, when it comes to constructors and regular member functions
-// please pay attention to both: this is a low-level operation!
+// object from calls, when it comes to constructors and regular
+// member functions please pay attention to both: this is a
+// low-level operation!
 
 int main() {
 	struct thing {
@@ -38,7 +39,10 @@ int main() {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<thing>("thing", sol::constructors<thing(sol::this_state)>(), "func", &thing::func);
+	lua.new_usertype<thing>("thing",
+	     sol::constructors<thing(sol::this_state)>(),
+	     "func",
+	     &thing::func);
 
 	lua.script(R"(
 obj = thing.new()

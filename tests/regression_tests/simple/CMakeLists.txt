@@ -1,4 +1,4 @@
-# # # # sol3
+# # # # sol2
 # The MIT License (MIT)
 # 
 # Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
@@ -20,7 +20,7 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# # # # sol3 tests - simple regression tests
+# # # # sol2 tests - simple regression tests
 
 file(GLOB simple_test_sources source/*.cpp)
 source_group(test_sources FILES ${simple_test_sources})
@@ -29,11 +29,10 @@ function(CREATE_TEST test_target_name test_name target_sol)
 	add_executable(${test_target_name} ${simple_test_sources})
 	set_target_properties(${test_target_name}
 		PROPERTIES
-		OUTPUT_NAME ${test_name}
-		EXPORT_NAME sol2::${test_name})
+		OUTPUT_NAME ${test_name})
 	target_link_libraries(${test_target_name} 
-		PUBLIC Threads::Threads ${LUA_LIBRARIES} ${target_sol} ${CMAKE_DL_LIBS})
-	target_compile_definitions(${test_target_name} 
+		PUBLIC Threads::Threads ${LUA_LIBRARIES} ${target_sol} Catch2::Catch2 ${CMAKE_DL_LIBS})
+	target_compile_definitions(${test_target_name}
 			PRIVATE SOL_ALL_SAFETIES_ON)
 	if (MSVC)
 		target_compile_options(${test_target_name}

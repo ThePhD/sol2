@@ -1,4 +1,4 @@
-# # # # sol3
+# # # # sol2
 # The MIT License (MIT)
 # 
 # Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
@@ -20,7 +20,7 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# # # # sol3 tests - simple regression tests
+# # # # sol2 tests - simple regression tests
 
 file(GLOB test_sources source/*.cpp)
 source_group(sources FILES ${test_sources})

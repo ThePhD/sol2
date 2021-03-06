@@ -3,7 +3,7 @@
 import os
 import re
 
-description = "Lists all primary sol3 header files"
+description = "Lists all primary sol2 header files"
 
 script_path = os.path.normpath(os.path.dirname(os.path.realpath(__file__)))
 working_dir = os.getcwd()

@@ -3,7 +3,9 @@
 
 #include <iostream>
 
-sol::variadic_results call_it(sol::object function_name, sol::variadic_args args, sol::this_environment env, sol::this_state L) {
+sol::variadic_results call_it(sol::object function_name,
+     sol::variadic_args args, sol::this_environment env,
+     sol::this_state L) {
 	sol::state_view lua = L;
 	// default to global table as environment
 	sol::environment function_environment = lua.globals();
@@ -13,7 +15,8 @@ sol::variadic_results call_it(sol::object function_name, sol::variadic_args args
 	}
 
 	// get and call the function
-	sol::protected_function pf = function_environment[function_name];
+	sol::protected_function pf
+	     = function_environment[function_name];
 	sol::protected_function_result res = pf(args);
 
 	//

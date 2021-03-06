@@ -1,4 +1,4 @@
-# # # # sol3
+# # # # sol2
 # The MIT License (MIT)
 # 
 # Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
@@ -20,7 +20,7 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# # # # sol3 tests
+# # # # sol2 tests
 
 # # Dependencies
 FetchContent_Declare(
@@ -30,7 +30,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Catch2)
 
-add_subdirectory(header_tests)
+add_subdirectory(inclusion)
 add_subdirectory(runtime_tests)
 add_subdirectory(config_tests)
 add_subdirectory(regression_tests)

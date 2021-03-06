@@ -14,7 +14,13 @@ int main() {
 
 	sol::state lua;
 	lua.open_libraries();
-	lua.new_usertype<test>("test", "direct", sol::var(2), "global", sol::var(test::muh_variable), "ref_global", sol::var(std::ref(test::muh_variable)));
+	lua.new_usertype<test>("test",
+	     "direct",
+	     sol::var(2),
+	     "global",
+	     sol::var(test::muh_variable),
+	     "ref_global",
+	     sol::var(std::ref(test::muh_variable)));
 
 	int direct_value = lua["test"]["direct"];
 	// direct_value == 2

@@ -7,8 +7,8 @@ int main(int, char**) {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	// Environments can set on functions (scripts), userdata and threads
-	// let's look at functions
+	// Environments can set on functions (scripts), userdata and
+	// threads let's look at functions
 
 	lua.script("f = function() return test end");
 	sol::function f = lua["f"];
@@ -36,7 +36,8 @@ int main(int, char**) {
 
 
 	// the global environment
-	// is not polluted at all, despite both functions being used and set
+	// is not polluted at all, despite both functions being used
+	// and set
 	sol::object global_test = lua["test"];
 	sol_c_assert(!global_test.valid());
 
@@ -46,7 +47,8 @@ int main(int, char**) {
 	// gotten from Lua
 
 	// get the environment from any sol::reference-styled type,
-	// including sol::object, sol::function, sol::table, sol::userdata ...
+	// including sol::object, sol::function, sol::table,
+	// sol::userdata ...
 	lua.set_function("check_f_env",
 	     // capture necessary variable in C++ lambda
 	     [&env_f](sol::object target) {
@@ -55,21 +57,23 @@ int main(int, char**) {
 		     sol::environment target_env(sol::env_key, target);
 		     int test_env_f = env_f["test"];
 		     int test_target_env = target_env["test"];
-		     // the environment for f the one gotten from `target`
-		     // are the same
+		     // the environment for f the one gotten from
+		     // `target` are the same
 		     sol_c_assert(test_env_f == test_target_env);
 		     sol_c_assert(test_env_f == 31);
 		     sol_c_assert(env_f == target_env);
 	     });
-	lua.set_function("check_g_env", [&env_g](sol::function target) {
-		// equivalent:
-		sol::environment target_env = sol::get_environment(target);
-		int test_env_g = env_g["test"];
-		int test_target_env = target_env["test"];
-		sol_c_assert(test_env_g == test_target_env);
-		sol_c_assert(test_env_g == 5);
-		sol_c_assert(env_g == target_env);
-	});
+	lua.set_function(
+	     "check_g_env", [&env_g](sol::function target) {
+		     // equivalent:
+		     sol::environment target_env
+		          = sol::get_environment(target);
+		     int test_env_g = env_g["test"];
+		     int test_target_env = target_env["test"];
+		     sol_c_assert(test_env_g == test_target_env);
+		     sol_c_assert(test_env_g == 5);
+		     sol_c_assert(env_g == target_env);
+	     });
 
 	lua.script("check_f_env(f)");
 	lua.script("check_g_env(g)");

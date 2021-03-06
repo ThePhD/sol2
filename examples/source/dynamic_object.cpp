@@ -13,10 +13,12 @@ struct dynamic_object {
 	void dynamic_set(std::string key, sol::stack_object value) {
 		auto it = entries.find(key);
 		if (it == entries.cend()) {
-			entries.insert(it, { std::move(key), std::move(value) });
+			entries.insert(
+			     it, { std::move(key), std::move(value) });
 		}
 		else {
-			std::pair<const std::string, sol::object>& kvp = *it;
+			std::pair<const std::string, sol::object>& kvp
+			     = *it;
 			sol::object& entry = kvp.second;
 			entry = sol::object(std::move(value));
 		}
@@ -74,10 +76,12 @@ assert(value == 15)
 )");
 
 	// does not work on d1: 'run' wasn't added to d1, only d2
-	auto script_result = lua.safe_script("local value = d1:run(5)", sol::script_pass_on_error);
+	auto script_result = lua.safe_script(
+	     "local value = d1:run(5)", sol::script_pass_on_error);
 	sol_c_assert(!script_result.valid());
 	sol::error err = script_result;
-	std::cout << "received expected error: " << err.what() << std::endl;
+	std::cout << "received expected error: " << err.what()
+	          << std::endl;
 	std::cout << std::endl;
 
 	return 0;

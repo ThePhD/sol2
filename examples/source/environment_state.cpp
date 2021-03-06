@@ -17,7 +17,8 @@ int main(int, char*[]) {
 	my_env["var"] = 50;
 	my_env["print"] = lua["print"];
 
-	sol::environment my_other_env(lua, sol::create, lua.globals());
+	sol::environment my_other_env(
+	     lua, sol::create, lua.globals());
 	// do not need to explicitly allow access to "print",
 	// since we used the "Set a fallback" version
 	// of the sol::environment constructor

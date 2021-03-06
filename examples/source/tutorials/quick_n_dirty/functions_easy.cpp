@@ -14,7 +14,8 @@ int main(int, char*[]) {
 	sol::function fx = lua["f"];
 	// fixed signature std::function<...>
 	// can be used to tie a sol::function down
-	std::function<int(int, double, int, std::string)> stdfx = fx;
+	std::function<int(int, double, int, std::string)> stdfx
+	     = fx;
 
 	int is_one = stdfx(1, 34.5, 3, "bark");
 	sol_c_assert(is_one == 1);

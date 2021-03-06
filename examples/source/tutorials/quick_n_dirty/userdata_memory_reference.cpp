@@ -13,12 +13,14 @@ struct Doge {
 	}
 
 	~Doge() {
-		std::cout << "Dog at " << this << " is being destroyed..." << std::endl;
+		std::cout << "Dog at " << this
+		          << " is being destroyed..." << std::endl;
 	}
 };
 
 int main(int, char*[]) {
-	std::cout << "=== userdata memory reference ===" << std::endl;
+	std::cout << "=== userdata memory reference ==="
+	          << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
@@ -39,7 +41,7 @@ int main(int, char*[]) {
 
 	Doge& dog_ref = lua["dog"];     // References Lua memory
 	Doge* dog_pointer = lua["dog"]; // References Lua memory
-	Doge dog_copy = lua["dog"];     // Copies, will not affect lua
+	Doge dog_copy = lua["dog"]; // Copies, will not affect lua
 
 	lua.new_usertype<Doge>("Doge", "tailwag", &Doge::tailwag);
 

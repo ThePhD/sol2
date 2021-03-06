@@ -19,17 +19,20 @@ namespace itsy_bitsy {
 	};
 
 	template <std::size_t sz>
-	struct bit_type<sz, std::enable_if_t<(sz > 2 && sz <= 16)>> {
+	struct bit_type<sz,
+	     std::enable_if_t<(sz > 2 && sz <= 16)>> {
 		typedef uint16_t type;
 	};
 
 	template <std::size_t sz>
-	struct bit_type<sz, std::enable_if_t<(sz > 16 && sz <= 32)>> {
+	struct bit_type<sz,
+	     std::enable_if_t<(sz > 16 && sz <= 32)>> {
 		typedef uint32_t type;
 	};
 
 	template <std::size_t sz>
-	struct bit_type<sz, std::enable_if_t<(sz > 32 && sz <= 64)>> {
+	struct bit_type<sz,
+	     std::enable_if_t<(sz > 32 && sz <= 64)>> {
 		typedef uint64_t type;
 	};
 
@@ -48,49 +51,82 @@ namespace itsy_bitsy {
 
 	template <typename T, typename V>
 	auto vcxx_warning_crap(V val) {
-		return vcxx_warning_crap<T>(std::is_same<bool, T>(), val);
+		return vcxx_warning_crap<T>(
+		     std::is_same<bool, T>(), val);
 	}
 
-	template <typename Base, std::size_t bit_target = 0x0, std::size_t size = 0x1>
+	template <typename Base, std::size_t bit_target = 0x0,
+	     std::size_t size = 0x1>
 	void write(Base& b, bit_type_t<size> bits) {
-		typedef bit_type_t<sizeof(Base) * CHAR_BIT> aligned_type;
-		static const std::size_t aligned_type_bit_size = sizeof(aligned_type) * CHAR_BIT;
-		static_assert(sizeof(Base) * CHAR_BIT >= (bit_target + size), "bit offset and size are too large for the desired structure.");
-		static_assert((bit_target % aligned_type_bit_size) <= ((bit_target + size) % aligned_type_bit_size),
-		     "bit offset and size cross beyond largest integral constant boundary.");
+		typedef bit_type_t<sizeof(Base) * CHAR_BIT>
+		     aligned_type;
+		static const std::size_t aligned_type_bit_size
+		     = sizeof(aligned_type) * CHAR_BIT;
+		static_assert(
+		     sizeof(Base) * CHAR_BIT >= (bit_target + size),
+		     "bit offset and size are too large for the "
+		     "desired structure.");
+		static_assert((bit_target % aligned_type_bit_size)
+		          <= ((bit_target + size)
+		               % aligned_type_bit_size),
+		     "bit offset and size cross beyond largest "
+		     "integral constant boundary.");
 
-		const std::size_t aligned_target = (bit_target + size) / aligned_type_bit_size;
-		const aligned_type bits_left = static_cast<aligned_type>(bit_target - aligned_target);
-		const aligned_type shifted_mask = ((static_cast<aligned_type>(1) << size) - 1) << bits_left;
+		const std::size_t aligned_target
+		     = (bit_target + size) / aligned_type_bit_size;
+		const aligned_type bits_left
+		     = static_cast<aligned_type>(
+		          bit_target - aligned_target);
+		const aligned_type shifted_mask
+		     = ((static_cast<aligned_type>(1) << size) - 1)
+		     << bits_left;
 		const aligned_type compl_shifted_mask = ~shifted_mask;
 		// Jump by native size of a pointer to target
 		// then OR the bits
-		aligned_type* jumper = static_cast<aligned_type*>(static_cast<void*>(&b));
+		aligned_type* jumper = static_cast<aligned_type*>(
+		     static_cast<void*>(&b));
 		jumper += aligned_target;
 		aligned_type& aligned = *jumper;
 		aligned &= compl_shifted_mask;
-		aligned |= (static_cast<aligned_type>(bits) << bits_left);
+		aligned
+		     |= (static_cast<aligned_type>(bits) << bits_left);
 	}
 
-	template <typename Base, std::size_t bit_target = 0x0, std::size_t size = 0x1>
+	template <typename Base, std::size_t bit_target = 0x0,
+	     std::size_t size = 0x1>
 	bit_type_t<size> read(Base& b) {
-		typedef bit_type_t<sizeof(Base) * CHAR_BIT> aligned_type;
+		typedef bit_type_t<sizeof(Base) * CHAR_BIT>
+		     aligned_type;
 		typedef bit_type_t<size> field_type;
-		static const std::size_t aligned_type_bit_size = sizeof(aligned_type) * CHAR_BIT;
-		static_assert(sizeof(Base) * CHAR_BIT >= (bit_target + size), "bit offset and size are too large for the desired structure.");
-		static_assert((bit_target % aligned_type_bit_size) <= ((bit_target + size) % aligned_type_bit_size),
-		     "bit offset and size cross beyond largest integral constant boundary.");
+		static const std::size_t aligned_type_bit_size
+		     = sizeof(aligned_type) * CHAR_BIT;
+		static_assert(
+		     sizeof(Base) * CHAR_BIT >= (bit_target + size),
+		     "bit offset and size are too large for the "
+		     "desired structure.");
+		static_assert((bit_target % aligned_type_bit_size)
+		          <= ((bit_target + size)
+		               % aligned_type_bit_size),
+		     "bit offset and size cross beyond largest "
+		     "integral constant boundary.");
 
-		const std::size_t aligned_target = (bit_target + size) / aligned_type_bit_size;
-		const aligned_type bits_left = static_cast<aligned_type>(bit_target - aligned_target);
-		const aligned_type mask = (static_cast<aligned_type>(1) << size) - 1;
+		const std::size_t aligned_target
+		     = (bit_target + size) / aligned_type_bit_size;
+		const aligned_type bits_left
+		     = static_cast<aligned_type>(
+		          bit_target - aligned_target);
+		const aligned_type mask
+		     = (static_cast<aligned_type>(1) << size) - 1;
 		// Jump by native size of a pointer to target
 		// then OR the bits
-		aligned_type* jumper = static_cast<aligned_type*>(static_cast<void*>(&b));
+		aligned_type* jumper = static_cast<aligned_type*>(
+		     static_cast<void*>(&b));
 		jumper += aligned_target;
 		const aligned_type& aligned = *jumper;
-		aligned_type field_bits = (aligned >> bits_left) & mask;
-		field_type bits = vcxx_warning_crap<field_type>(field_bits);
+		aligned_type field_bits
+		     = (aligned >> bits_left) & mask;
+		field_type bits
+		     = vcxx_warning_crap<field_type>(field_bits);
 		return bits;
 	}
 
@@ -118,18 +154,23 @@ struct __attribute__((packed, aligned(1))) flags_t {
 int main() {
 	std::cout << "=== usertype_bitfields ===" << std::endl;
 #ifdef __MINGW32__
-	std::cout << "MinGW Detected, packing structs is broken in MinGW and this test may fail" << std::endl;
+	std::cout << "MinGW Detected, packing structs is broken in "
+	             "MinGW and this test may fail"
+	          << std::endl;
 #endif
 	sol::state lua;
 	lua.open_libraries();
 
 	lua.new_usertype<flags_t>("flags_t",
 	     "C",
-	     sol::property(itsy_bitsy::read<flags_t, 0>, itsy_bitsy::write<flags_t, 0>),
+	     sol::property(itsy_bitsy::read<flags_t, 0>,
+	          itsy_bitsy::write<flags_t, 0>),
 	     "N",
-	     sol::property(itsy_bitsy::read<flags_t, 1>, itsy_bitsy::write<flags_t, 1>),
+	     sol::property(itsy_bitsy::read<flags_t, 1>,
+	          itsy_bitsy::write<flags_t, 1>),
 	     "D",
-	     sol::property(itsy_bitsy::read<flags_t, 8, 14>, itsy_bitsy::write<flags_t, 8, 14>));
+	     sol::property(itsy_bitsy::read<flags_t, 8, 14>,
+	          itsy_bitsy::write<flags_t, 8, 14>));
 
 	lua["f"] = std::ref(flags);
 
@@ -152,7 +193,8 @@ int main() {
 	uint16_t D = flags.D;
 
 	std::cout << std::hex;
-	std::cout << "sizeof(flags): " << sizeof(flags) << std::endl;
+	std::cout << "sizeof(flags): " << sizeof(flags)
+	          << std::endl;
 	std::cout << "C: " << C << std::endl;
 	std::cout << "N: " << N << std::endl;
 	std::cout << "D: " << D << std::endl;

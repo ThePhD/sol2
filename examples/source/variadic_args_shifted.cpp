@@ -5,7 +5,8 @@
 
 int main() {
 
-	std::cout << "=== variadic_args shifting constructor ===" << std::endl;
+	std::cout << "=== variadic_args shifting constructor ==="
+	          << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

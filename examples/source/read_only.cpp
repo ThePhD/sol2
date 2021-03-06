@@ -23,7 +23,8 @@ int main(int, char*[]) {
 	sol::table obj_table = lua.create_named_table("object");
 
 	sol::table obj_metatable = lua.create_table_with();
-	obj_metatable.set_function("my_func", &object::my_func, &my_obj);
+	obj_metatable.set_function(
+	     "my_func", &object::my_func, &my_obj);
 	// Set whatever else you need to
 	// on the obj_metatable,
 	// not on the obj_table itself!
@@ -43,7 +44,8 @@ print(object.my_func)
         )");
 	}
 	catch (const std::exception& e) {
-		std::cout << "an expected error occurred: " << e.what() << std::endl;
+		std::cout << "an expected error occurred: " << e.what()
+		          << std::endl;
 	}
 	return 0;
 }

@@ -6,7 +6,8 @@
 #include <cstdio>
 
 int main(int, char*[]) {
-	std::cout << "=== running lua code (low level) ===" << std::endl;
+	std::cout << "=== running lua code (low level) ==="
+	          << std::endl;
 
 	{
 		std::ofstream out("a_lua_script.lua");
@@ -17,7 +18,8 @@ int main(int, char*[]) {
 	lua.open_libraries(sol::lib::base);
 
 	// load file without execute
-	sol::load_result script1 = lua.load_file("a_lua_script.lua");
+	sol::load_result script1
+	     = lua.load_file("a_lua_script.lua");
 	// execute
 	script1();
 

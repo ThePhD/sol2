@@ -18,11 +18,13 @@ struct custom_reader {
 	std::size_t current_size;
 	std::size_t read_count;
 
-	custom_reader(FILE* f_) : f(f_), buffer(), current_size(0), read_count(0) {
+	custom_reader(FILE* f_)
+	: f(f_), buffer(), current_size(0), read_count(0) {
 	}
 
 	bool read() {
-		std::cout << "custom read: read #" << ++read_count << std::endl;
+		std::cout << "custom read: read #" << ++read_count
+		          << std::endl;
 		current_size = fread(buffer, 1, 2, f);
 		return current_size > 0 && ferror(f) == 0;
 	}
@@ -34,8 +36,10 @@ struct custom_reader {
 
 // function must match signature found in type lua_Reader:
 // const char* ( lua_State*, void*, size_t* )
-const char* custom_reader_function(lua_State*, void* pointer_to_my_object, size_t* data_size) {
-	custom_reader& cr = *(static_cast<custom_reader*>(pointer_to_my_object));
+const char* custom_reader_function(
+     lua_State*, void* pointer_to_my_object, size_t* data_size) {
+	custom_reader& cr
+	     = *(static_cast<custom_reader*>(pointer_to_my_object));
 	if (cr.read()) {
 		*data_size = cr.current_size;
 		return cr.buffer;
@@ -68,20 +72,24 @@ int main() {
 	FILE* bjork_fp;
 #ifdef _MSC_VER
 	if (fopen_s(&bjork_fp, "bjork.lua", "r") != 0) {
-		std::cerr << "failed to open bjork.lua -- exiting" << std::endl;
+		std::cerr << "failed to open bjork.lua -- exiting"
+		          << std::endl;
 		return -1;
 	}
 #else
 	bjork_fp = fopen("bjork.lua", "r");
 #endif
 	if (bjork_fp == nullptr) {
-		std::cerr << "failed to open bjork.lua -- exiting" << std::endl;
+		std::cerr << "failed to open bjork.lua -- exiting"
+		          << std::endl;
 		return -1;
 	}
 	custom_reader reader(bjork_fp);
 
 	// load the code using our custom reader, then run it
-	auto result = lua.safe_script(custom_reader_function, &reader, sol::script_pass_on_error);
+	auto result = lua.safe_script(custom_reader_function,
+	     &reader,
+	     sol::script_pass_on_error);
 	// make sure we ran loaded and ran the code successfully
 	sol_c_assert(result.valid());
 

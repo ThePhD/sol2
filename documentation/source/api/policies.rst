@@ -2,7 +2,7 @@ policies
 ========
 *stack modification right before lua call returns*
 
-``sol::policies`` is an advanced, low-level modification feature allowing you to take advantage of sol3's abstractions before applying your own stack-based modifications at the last moment. They cover the same functionality as `luabind's "return reference to" and "dependency"`_ types. A few pre-rolled policies are defined for your use:
+``sol::policies`` is an advanced, low-level modification feature allowing you to take advantage of sol2's abstractions before applying your own stack-based modifications at the last moment. They cover the same functionality as `luabind's "return reference to" and "dependency"`_ types. A few pre-rolled policies are defined for your use:
 
 +------------------------------------+----------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | policy                             | usage                                                                                              | modification                                                                                                                                                                |

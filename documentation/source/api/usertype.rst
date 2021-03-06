@@ -163,7 +163,7 @@ If you don't specify anything at all and the type is `destructible`_, then a des
 usertype automatic (automagic) meta functions
 +++++++++++++++++++++++++++++++++++++++++++++
 
-If you don't specify a ``sol::meta_function`` name (or equivalent string metamethod name) and the type ``T`` supports certain operations, sol3 will generate the following operations provided it can find a good default implementation:
+If you don't specify a ``sol::meta_function`` name (or equivalent string metamethod name) and the type ``T`` supports certain operations, sol2 will generate the following operations provided it can find a good default implementation:
 
 * for ``to_string`` operations where ``std::ostream& operator<<( std::ostream&, const T& )``, ``obj.to_string()``, or ``to_string( const T& )`` (in the namespace) exists on the C++ type
 	- a ``sol::meta_function::to_string`` operator will be generated
@@ -229,7 +229,7 @@ Otherwise, the following is used to specify functions to bind on the specific us
 unregister
 ----------
 
-You can unlink and kill a usertype and its associated functionality by calling ``.unregister()`` on a ``sol::usertype<T>`` or ``sol::metatable`` pointed at a proper sol3 metatable. This will entirely unlink and clean out sol3's internal lookup structures and key information.
+You can unlink and kill a usertype and its associated functionality by calling ``.unregister()`` on a ``sol::usertype<T>`` or ``sol::metatable`` pointed at a proper sol2 metatable. This will entirely unlink and clean out sol2's internal lookup structures and key information.
 
 runtime functions
 -----------------

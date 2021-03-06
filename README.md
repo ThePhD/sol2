@@ -65,7 +65,7 @@ You can find [donation and sponorship options here](https://github.com/ThePhD/.g
 
 # Features
 
-- [Fastest in the land](http://sol2.readthedocs.io/en/latest/benchmarks.html) (see: sol3 bar in graph).
+- [Fastest in the land](http://sol2.readthedocs.io/en/latest/benchmarks.html) (see: sol2 bar in graph).
 - Supports retrieval and setting of multiple types including: 
   * `std::string`, `std::wstring`, `std::u16string` and `std::u32string` support (and for views).
   * understands and works with containers such as `std::map/unordered_map`, c-style arrays, vectors, non-standard custom containers and more.
@@ -98,7 +98,7 @@ Please make sure you use the `-std=c++2a`, `-std=c++1z`, `-std=c++17` or better 
 
 If you would like support for an older compiler (at the cost of some features), use the latest tagged sol2 branch. If you would like support for an even older compiler, feel free to contact me for a Custom Solution.
 
-sol3 is checked by-hand for other platforms as well, including Android-based builds with GCC and iOS-based builds out of XCode with Apple-clang. It should work on both of these platforms, so long as you have the proper standards flags. If something doesn't work or you need special options, you may need to look into the different ways to support the project to have it done for you!
+sol2 is checked by-hand for other platforms as well, including Android-based builds with GCC and iOS-based builds out of XCode with Apple-clang. It should work on both of these platforms, so long as you have the proper standards flags. If something doesn't work or you need special options, you may need to look into the different ways to support the project to have it done for you!
 
 
 
@@ -141,7 +141,7 @@ ThePhD
 C++Now 2018 - Hudson Commons, Aspen Physics Center, Aspen, Colorado  
 [Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/2018.05.10%20-%20ThePhD%20-%20Compile%20Fast%2C%20Run%20Faster%2C%20Scale%20Forever.pdf)
 
-"Scripting at the Speed of Thought: Using Lua in C++ with sol3"  
+"Scripting at the Speed of Thought: Using Lua in C++ with sol2"  
 ThePhD
 CppCon 2018 - 404 Keystone, Meydenbauer Center, Aspen, Colorado  
 [Deck](https://github.com/ThePhD/sol2/blob/develop/docs/presentations/2018.09.28%20-%20ThePhD%20-%20Scripting%20at%20the%20Speed%20of%20Thought.pdf)

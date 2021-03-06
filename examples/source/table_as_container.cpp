@@ -16,10 +16,15 @@ int main() {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<Vector>(
-	     "Vector", sol::constructors<Vector(), Vector(int, int)>(), "x", sol::property(&Vector::x, &Vector::x), "y", sol::property(&Vector::y, &Vector::y));
+	lua.new_usertype<Vector>("Vector",
+	     sol::constructors<Vector(), Vector(int, int)>(),
+	     "x",
+	     sol::property(&Vector::x, &Vector::x),
+	     "y",
+	     sol::property(&Vector::y, &Vector::y));
 
-	lua.script("vectors = { Vector.new(3, 6), Vector.new(6, 3) }");
+	lua.script(
+	     "vectors = { Vector.new(3, 6), Vector.new(6, 3) }");
 	auto vectors = lua["vectors"].get<std::vector<Vector>>();
 
 	sol_c_assert(vectors[0].x == 3);

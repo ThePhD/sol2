@@ -23,18 +23,24 @@ int main() {
 	*/
 
 	// :ok:
-	lua["my_func0"] = []() -> std::unique_ptr<my_type> { return std::make_unique<my_type>(); };
+	lua["my_func0"] = []() -> std::unique_ptr<my_type> {
+		return std::make_unique<my_type>();
+	};
 
 	// :ok:
-	lua["my_func1"] = []() -> std::shared_ptr<my_type> { return std::make_shared<my_type>(); };
+	lua["my_func1"] = []() -> std::shared_ptr<my_type> {
+		return std::make_shared<my_type>();
+	};
 
 	// :ok:
 	lua["my_func2"] = []() -> my_type { return my_type(); };
 
 	// :ok:
-	lua.set("something", std::unique_ptr<my_type>(new my_type()));
+	lua.set(
+	     "something", std::unique_ptr<my_type>(new my_type()));
 
-	std::shared_ptr<my_type> my_shared = std::make_shared<my_type>();
+	std::shared_ptr<my_type> my_shared
+	     = std::make_shared<my_type>();
 	// :ok:
 	lua.set("something_else", my_shared);
 
@@ -54,7 +60,8 @@ int main() {
 	lua["my_func6"] = []() -> my_type* { return nullptr; };
 
 	// :ok:
-	lua["my_func7"] = []() -> std::nullptr_t { return nullptr; };
+	lua["my_func7"]
+	     = []() -> std::nullptr_t { return nullptr; };
 
 	// :ok:
 	lua["my_func8"] = []() -> std::unique_ptr<my_type> {

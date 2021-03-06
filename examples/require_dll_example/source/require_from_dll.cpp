@@ -16,13 +16,16 @@ mo = require("my_object")
 
 obj = mo.test.new(24)
 print(obj.value))";
-	auto script_result = lua.safe_script(code, &sol::script_pass_on_error);
+	auto script_result
+	     = lua.safe_script(code, &sol::script_pass_on_error);
 	if (script_result.valid()) {
-		std::cout << "The DLL was require'd from successfully!" << std::endl;
+		std::cout << "The DLL was require'd from successfully!"
+		          << std::endl;
 	}
 	else {
 		sol::error err = script_result;
-		std::cout << "Something bad happened: " << err.what() << std::endl;
+		std::cout << "Something bad happened: " << err.what()
+		          << std::endl;
 	}
 	sol_c_assert(script_result.valid());
 	my_object::test& obj = lua["obj"];

@@ -1,4 +1,4 @@
-// sol3
+// sol2
 
 // The MIT License (MIT)
 
@@ -43,7 +43,7 @@ namespace sol {
 		constexpr const char* not_enough_stack_space_integral = "not enough space left on Lua stack for an integral number";
 		constexpr const char* not_enough_stack_space_string = "not enough space left on Lua stack for a string";
 		constexpr const char* not_enough_stack_space_meta_function_name = "not enough space left on Lua stack for the name of a meta_function";
-		constexpr const char* not_enough_stack_space_userdata = "not enough space left on Lua stack to create a sol3 userdata";
+		constexpr const char* not_enough_stack_space_userdata = "not enough space left on Lua stack to create a sol2 userdata";
 		constexpr const char* not_enough_stack_space_generic = "not enough space left on Lua stack to push valuees";
 		constexpr const char* not_enough_stack_space_environment = "not enough space left on Lua stack to retrieve environment";
 		constexpr const char* protected_function_error = "caught (...) unknown error during protected_function call";

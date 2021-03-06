@@ -13,7 +13,9 @@ int main(int, char*[]) {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<bark>("bark", sol::meta_function::call_function, &bark::operator());
+	lua.new_usertype<bark>("bark",
+	     sol::meta_function::call_function,
+	     &bark::operator());
 
 	bark b;
 	lua.set("b", &b);

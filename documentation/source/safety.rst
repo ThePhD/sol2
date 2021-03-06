@@ -10,7 +10,7 @@ config
 
 Note that you can obtain safety with regards to functions you bind by using the :doc:`protect<api/protect>` wrapper around function/variable bindings you set into Lua. Additionally, you can have basic boolean checks when using the API by just converting to a :doc:`sol::optional\<T><api/optional>` when necessary for getting things out of Lua and for function arguments.
 
-Also note that you can have your own states use sol3's safety panics and similar to protect your code from crashes. See :ref:`sol::state automatic handlers<state-automatic-handlers>` for more details.
+Also note that you can have your own states use sol2's safety panics and similar to protect your code from crashes. See :ref:`sol::state automatic handlers<state-automatic-handlers>` for more details.
 
 .. _config-safety:
 
@@ -69,7 +69,7 @@ Safety Config
 
 ``SOL_STRINGS_ARE_NUMBERS`` triggers the following changes:
 	* Allows automatic to-string conversions for numbers
-		- ``lua_tolstring`` conversions are not permitted on numbers through sol3 by default: only actual strings are allowed
+		- ``lua_tolstring`` conversions are not permitted on numbers through sol2 by default: only actual strings are allowed
 		- This is necessary to allow :doc:`sol::overload<api/overload>` to work properly
 	* ``sol::stack::get`` and ``sol::stack::check_get`` will allow anything that Lua thinks is number-worthy to be number-worthy
 	* This includes: integers, floating-point numbers, and strings
@@ -179,7 +179,7 @@ Memory safety can be tricky. Lua is handled by a garbage-collected runtime, mean
 
 The usertype memory layout for all Lua-instantiated userdata and for all objects pushed/set into the Lua Runtime is also described :doc:`here<api/usertype_memory>`. Things before or after that specified memory slot is implementation-defined and no assumptions are to be made about it.
 
-Please be wary of alignment issues. sol3 **aligns memory** by default. If you need to access underlying userdata memory from sol, please see the :doc:`usertype memory documentation<api/usertype_memory>`
+Please be wary of alignment issues. sol2 **aligns memory** by default. If you need to access underlying userdata memory from sol, please see the :doc:`usertype memory documentation<api/usertype_memory>`
 
 functions
 ---------

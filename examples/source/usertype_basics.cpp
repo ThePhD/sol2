@@ -35,9 +35,12 @@ int main() {
 	lua.open_libraries(sol::lib::base);
 
 	if (way_1) {
-		lua.new_usertype<ship>("ship", // the name of the class, as you want it to be used in lua
-		                               // List the member functions you wish to bind:
-		                               // "name_of_item", &class_name::function_or_variable
+		lua.new_usertype<ship>(
+		     "ship", // the name of the class, as you want it
+		             // to be used in lua List the member
+		             // functions you wish to bind:
+		             // "name_of_item",
+		             // &class_name::function_or_variable
 		     "shoot",
 		     &ship::shoot,
 		     "hurt",
@@ -53,7 +56,8 @@ int main() {
 	}
 	else {
 		// set usertype explicitly, with the given name
-		sol::usertype<ship> usertype_table = lua.new_usertype<ship>("ship");
+		sol::usertype<ship> usertype_table
+		     = lua.new_usertype<ship>("ship");
 		usertype_table["shoot"] = &ship::shoot;
 		usertype_table["hurt"] = &ship::hurt;
 		usertype_table["life"] = &ship::life;

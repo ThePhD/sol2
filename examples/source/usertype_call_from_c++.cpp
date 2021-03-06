@@ -23,9 +23,12 @@ int main(int, char*[]) {
 		}
 	};
 
-	lua.new_usertype<cpp_object>("test", "value", &cpp_object::value);
+	lua.new_usertype<cpp_object>(
+	     "test", "value", &cpp_object::value);
 	lua.new_usertype<test>("test", "func", &test::func);
-	lua.script("function test:lua_func(obj) print('lua_func', obj.value) end");
+	lua.script(
+	     "function test:lua_func(obj) print('lua_func', "
+	     "obj.value) end");
 
 	lua["obj"] = test {};
 	cpp_object cppobj;

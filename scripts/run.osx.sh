@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-# # # # sol3
+# # # # sol2
 # The MIT License (MIT)
 #
 # Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors

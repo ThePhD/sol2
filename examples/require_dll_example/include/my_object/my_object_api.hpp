@@ -16,7 +16,8 @@ namespace my_object {
 #define MY_OBJECT_API __declspec(dllexport)
 #else
 #define MY_OBJECT_API __declspec(dllexport)
-#endif // MY_OBJECT_BUILD - Building the Library vs. Using the Library
+#endif // MY_OBJECT_BUILD - Building the Library vs. Using the
+       // Library
 #else
 #define MY_OBJECT_API
 #endif // Building a DLL vs. Static Library

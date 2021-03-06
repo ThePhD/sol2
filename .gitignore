@@ -1,4 +1,4 @@
-# # # # sol3
+# # # # sol2
 # The MIT License (MIT)
 # 
 # Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
@@ -45,6 +45,10 @@ x86/
 
 # VSCode
 .vscode/
+
+# scratch space
+main.cpp
+scratch/
 
 # CMake
 build/
@@ -109,7 +113,6 @@ desktop.ini
 
 # Miscellaneous
 external/
-scratch/
 vendor/
 .idea/
 cmake-build-debug/

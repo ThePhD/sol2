@@ -15,11 +15,17 @@ int main() {
 	lua["bark"] = 50;
 
 	// a table being created in the global table
-	lua["some_table"] = lua.create_table_with("key0", 24, "key1", 25, lua["bark"], "the key is 50 and this string is its value!");
+	lua["some_table"] = lua.create_table_with("key0",
+	     24,
+	     "key1",
+	     25,
+	     lua["bark"],
+	     "the key is 50 and this string is its value!");
 
 	// Run a plain ol' string of lua code
-	// Note you can interact with things set through sol in C++ with lua!
-	// Using a "Raw String Literal" to have multi-line goodness:
+	// Note you can interact with things set through sol in C++
+	// with lua! Using a "Raw String Literal" to have multi-line
+	// goodness:
 	// http://en.cppreference.com/w/cpp/language/string_literal
 	lua.script(R"(
 		

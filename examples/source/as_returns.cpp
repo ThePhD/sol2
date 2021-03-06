@@ -9,7 +9,9 @@ int main() {
 	sol::state lua;
 
 	lua.set_function("f", []() {
-		std::set<std::string> results { "arf", "bark", "woof" };
+		std::set<std::string> results {
+			"arf", "bark", "woof"
+		};
 		return sol::as_returns(std::move(results));
 	});
 

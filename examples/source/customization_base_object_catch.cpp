@@ -31,10 +31,12 @@ public:
 
 	// helper function defined later after we define all the
 	// base classes we care about
-	sol::object getAsRetyped(lua_State* L, BaseObjectLifetime Lifetime) const;
+	sol::object getAsRetyped(
+	     lua_State* L, BaseObjectLifetime Lifetime) const;
 
 	// For convenience with the customization points below
-	int pushAsRetyped(lua_State* L, BaseObjectLifetime Lifetime) const {
+	int pushAsRetyped(
+	     lua_State* L, BaseObjectLifetime Lifetime) const {
 		return getAsRetyped(L, Lifetime).push(L);
 	}
 
@@ -67,30 +69,41 @@ public:
 // Get the most-derived type
 // that we care about from the base object,
 // obeying the lifetime type
-sol::object BaseObject::getAsRetyped(lua_State* L, BaseObjectLifetime Lifetime) const {
+sol::object BaseObject::getAsRetyped(
+     lua_State* L, BaseObjectLifetime Lifetime) const {
 	switch (objectType) {
 	case 1:
 		std::cout << "Retyping as armor." << std::endl;
 		switch (Lifetime) {
 		case BaseObjectLifetime::Value:
-			return sol::make_object(L, *static_cast<const Armor*>(this));
+			return sol::make_object(
+			     L, *static_cast<const Armor*>(this));
 		case BaseObjectLifetime::Pointer:
-			return sol::make_object(L, static_cast<const Armor*>(this));
+			return sol::make_object(
+			     L, static_cast<const Armor*>(this));
 		case BaseObjectLifetime::Shared:
-			return sol::make_object(L, std::make_shared<Armor>(*static_cast<const Armor*>(this)));
+			return sol::make_object(L,
+			     std::make_shared<Armor>(
+			          *static_cast<const Armor*>(this)));
 		}
 	case 2:
 		std::cout << "Retyping as weapon." << std::endl;
 		switch (Lifetime) {
 		case BaseObjectLifetime::Value:
-			return sol::make_object(L, *static_cast<const Weapon*>(this));
+			return sol::make_object(
+			     L, *static_cast<const Weapon*>(this));
 		case BaseObjectLifetime::Pointer:
-			return sol::make_object(L, static_cast<const Weapon*>(this));
+			return sol::make_object(
+			     L, static_cast<const Weapon*>(this));
 		case BaseObjectLifetime::Shared:
-			return sol::make_object(L, std::make_shared<Weapon>(*static_cast<const Weapon*>(this)));
+			return sol::make_object(L,
+			     std::make_shared<Weapon>(
+			          *static_cast<const Weapon*>(this)));
 		}
 	default:
-		std::cout << "Unknown type: falling back to base object." << std::endl;
+		std::cout
+		     << "Unknown type: falling back to base object."
+		     << std::endl;
 		// we have a normal type here, so that means we
 		// must bypass typical customization points by using
 		// sol::make_object_userdata/sol::make_reference_userdata
@@ -104,7 +117,8 @@ sol::object BaseObject::getAsRetyped(lua_State* L, BaseObjectLifetime Lifetime) 
 		case BaseObjectLifetime::Value:
 			return sol::make_object_userdata(L, *this);
 		case BaseObjectLifetime::Shared:
-			return sol::make_object_userdata(L, std::make_shared<BaseObject>(*this));
+			return sol::make_object_userdata(
+			     L, std::make_shared<BaseObject>(*this));
 		case BaseObjectLifetime::Pointer:
 		default:
 			return sol::make_object_userdata(L, this);
@@ -116,36 +130,47 @@ sol::object BaseObject::getAsRetyped(lua_State* L, BaseObjectLifetime Lifetime) 
 // sol customization points
 //
 
-// Defining a customization point that lets us put the correct object type on the stack.
-int sol_lua_push(sol::types<BaseObject>, lua_State* L, const BaseObject& obj) {
+// Defining a customization point that lets us put the correct
+// object type on the stack.
+int sol_lua_push(sol::types<BaseObject>, lua_State* L,
+     const BaseObject& obj) {
 	return obj.pushAsRetyped(L, BaseObjectLifetime::Value);
 }
-int sol_lua_push(sol::types<BaseObject*>, lua_State* L, const BaseObject* obj) {
+int sol_lua_push(sol::types<BaseObject*>, lua_State* L,
+     const BaseObject* obj) {
 	return obj->pushAsRetyped(L, BaseObjectLifetime::Pointer);
 }
-int sol_lua_push(sol::types<std::shared_ptr<BaseObject>>, lua_State* L, const std::shared_ptr<BaseObject>& obj) {
+int sol_lua_push(sol::types<std::shared_ptr<BaseObject>>,
+     lua_State* L, const std::shared_ptr<BaseObject>& obj) {
 	return obj->pushAsRetyped(L, BaseObjectLifetime::Shared);
 }
 
 int main() {
 	// test our customization points out
-	std::cout << "=== Base object customization points ===" << std::endl;
+	std::cout << "=== Base object customization points ==="
+	          << std::endl;
 
 	sol::state lua;
-	lua.open_libraries(sol::lib::base, sol::lib::string, sol::lib::table);
+	lua.open_libraries(
+	     sol::lib::base, sol::lib::string, sol::lib::table);
 
 	lua["objectCache"] = lua.create_table();
 
 	// Do basic type binding.
-	auto luaBaseObject = lua.new_usertype<BaseObject>("tes3baseObject");
-	luaBaseObject["objectType"] = sol::readonly_property(&BaseObject::getObjectType);
+	auto luaBaseObject
+	     = lua.new_usertype<BaseObject>("tes3baseObject");
+	luaBaseObject["objectType"]
+	     = sol::readonly_property(&BaseObject::getObjectType);
 	luaBaseObject["doArmorThing"] = &BaseObject::doArmorThing;
 	luaBaseObject["doWeaponThing"] = &BaseObject::doWeaponThing;
 	auto luaArmorObject = lua.new_usertype<Armor>("tes3armor");
-	luaArmorObject[sol::base_classes] = sol::bases<BaseObject>();
+	luaArmorObject[sol::base_classes]
+	     = sol::bases<BaseObject>();
 	luaArmorObject["doArmorThing"] = &Armor::doArmorThing;
-	auto luaWeaponObject = lua.new_usertype<Weapon>("tes3weapon");
-	luaWeaponObject[sol::base_classes] = sol::bases<BaseObject>();
+	auto luaWeaponObject
+	     = lua.new_usertype<Weapon>("tes3weapon");
+	luaWeaponObject[sol::base_classes]
+	     = sol::bases<BaseObject>();
 	luaWeaponObject["doWeaponThing"] = &Weapon::doWeaponThing;
 
 	// Objects we'll play with.
@@ -173,10 +198,14 @@ int main() {
 	lua["sharedArmor"] = std::make_shared<Weapon>();
 	std::cout << std::endl;
 
-	std::cout << "Smart pointers put as the base class..." << std::endl;
-	lua["sharedBaseAsBase"] = (std::shared_ptr<BaseObject>)std::make_shared<BaseObject>();
-	lua["sharedArmorAsBase"] = (std::shared_ptr<BaseObject>)std::make_shared<Armor>();
-	lua["sharedArmorAsBase"] = (std::shared_ptr<BaseObject>)std::make_shared<Weapon>();
+	std::cout << "Smart pointers put as the base class..."
+	          << std::endl;
+	lua["sharedBaseAsBase"] = (std::shared_ptr<BaseObject>)
+	     std::make_shared<BaseObject>();
+	lua["sharedArmorAsBase"] = (std::shared_ptr<BaseObject>)
+	     std::make_shared<Armor>();
+	lua["sharedArmorAsBase"] = (std::shared_ptr<BaseObject>)
+	     std::make_shared<Weapon>();
 	std::cout << std::endl;
 
 	return 0;

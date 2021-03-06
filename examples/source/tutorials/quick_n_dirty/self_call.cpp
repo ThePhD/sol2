@@ -7,7 +7,8 @@ int main() {
 	std::cout << "=== self_call ===" << std::endl;
 
 	sol::state lua;
-	lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::table);
+	lua.open_libraries(
+	     sol::lib::base, sol::lib::package, sol::lib::table);
 
 	// a small script using 'self' syntax
 	lua.script(R"(

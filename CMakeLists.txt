@@ -1,4 +1,4 @@
-# # # # sol3
+# # # # sol2
 # The MIT License (MIT)
 # 
 # Copyright (c) 2013-2021 Rapptz, ThePhD, and contributors
@@ -20,7 +20,7 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# # # # sol3
+# # # # sol2
 # # # Required minimum version statement
 cmake_minimum_required(VERSION 3.15.0)
 
@@ -310,5 +310,12 @@ if (SOL2_IS_TOP_LEVEL AND (SOL2_DO_TESTS OR SOL2_DO_EXAMPLES))
 		# add subdir to get going
 		message(STATUS "sol2 adding tests...")
 		add_subdirectory(tests "${CMAKE_BINARY_DIR}/tests")
+	endif()
+
+	# # # Scratch Space
+	# # Scratch space for diagnosing bugs and other shenanigans
+	if (SOL2_SCRATCH)
+		message(STATUS "sol2 adding scratch space...")
+		add_subdirectory(scratch)
 	endif()
 endif()

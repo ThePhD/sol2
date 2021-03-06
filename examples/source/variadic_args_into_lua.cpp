@@ -16,20 +16,23 @@ int main() {
 	// Function requires 2 arguments
 	// rest can be variadic, but:
 	// va will include everything after "a" argument,
-	// which means "b" will be part of the varaidic_args list too
-	// at position 0
-	lua.set_function("v", [doubler](int a, sol::variadic_args va, int /*b*/) {
-		int r = 0;
-		for (auto v : va) {
-			int value = doubler(v); // pass directly to Lua as well!
-			r += value;
-		}
-		// Only have to add a, b was included from variadic_args and beyond
-		// use explicit "call" syntax to return exactly an integer!
-		// this is useful for ambiguous operator overloads in C++
-		// and other shenanigans
-		return r + a;
-	});
+	// which means "b" will be part of the varaidic_args list
+	// too at position 0
+	lua.set_function("v",
+	     [doubler](int a, sol::variadic_args va, int /*b*/) {
+		     int r = 0;
+		     for (auto v : va) {
+			     int value = doubler(
+			          v); // pass directly to Lua as well!
+			     r += value;
+		     }
+		     // Only have to add a, b was included from
+		     // variadic_args and beyond use explicit "call"
+		     // syntax to return exactly an integer! this is
+		     // useful for ambiguous operator overloads in C++
+		     // and other shenanigans
+		     return r + a;
+	     });
 
 	lua.script("x = v(25, 25)");
 	lua.script("x2 = v(25, 25, 100, 50, 250, 150)");

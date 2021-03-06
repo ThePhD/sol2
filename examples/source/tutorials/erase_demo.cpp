@@ -10,7 +10,8 @@ int main() {
 	sol::optional<int> x = lua["bark"];
 	// x will have a value
 	if (x) {
-		std::cout << "x has no value, as expected" << std::endl;
+		std::cout << "x has no value, as expected"
+		          << std::endl;
 	}
 	else {
 		return -1;
@@ -23,7 +24,8 @@ int main() {
 		return -1;
 	}
 	else {
-		std::cout << "y has no value, as expected" << std::endl;
+		std::cout << "y has no value, as expected"
+		          << std::endl;
 	}
 
 	return 0;

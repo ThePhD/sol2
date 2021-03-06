@@ -10,7 +10,8 @@ int use_sol2(lua_State* L) {
 }
 
 int main(int, char*[]) {
-	std::cout << "=== opening sol::state_view on raw Lua ===" << std::endl;
+	std::cout << "=== opening sol::state_view on raw Lua ==="
+	          << std::endl;
 
 	lua_State* L = luaL_newstate();
 	luaL_openlibs(L);

@@ -48,7 +48,13 @@ int main(int, char*[]) {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<SomeLib>("SomeLib", "new", sol::no_constructor, "getInstance", &SomeLib::getInstance, "doSomething", &SomeLib::doSomething);
+	lua.new_usertype<SomeLib>("SomeLib",
+	     "new",
+	     sol::no_constructor,
+	     "getInstance",
+	     &SomeLib::getInstance,
+	     "doSomething",
+	     &SomeLib::doSomething);
 
 	lua.script(R"(
 

@@ -10,7 +10,8 @@ int main() {
 	auto barkkey = lua["bark"];
 	if (barkkey.valid()) {
 		// Branch not taken: doesn't exist yet
-		std::cout << "How did you get in here, arf?!" << std::endl;
+		std::cout << "How did you get in here, arf?!"
+		          << std::endl;
 	}
 
 	barkkey = 50;

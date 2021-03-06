@@ -19,8 +19,8 @@ int main() {
 	// lua scripts / code run on this state:
 	lua.script("some_str = my_func(1, 'Da')");
 
-	// Read out the global variable we stored in 'some_str' in the
-	// quick lua code we just executed
+	// Read out the global variable we stored in 'some_str' in
+	// the quick lua code we just executed
 	std::string some_str = lua["some_str"];
 	sol_c_assert(some_str == "DaD");
 

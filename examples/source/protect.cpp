@@ -12,7 +12,8 @@ int main(int, char*[]) {
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
-	lua.new_usertype<protect_me>("protect_me", "gen", sol::protect(&protect_me::gen));
+	lua.new_usertype<protect_me>(
+	     "protect_me", "gen", sol::protect(&protect_me::gen));
 
 	lua.script(R"__(
 	pm = protect_me.new()

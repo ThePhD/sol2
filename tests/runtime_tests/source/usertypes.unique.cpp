@@ -1,4 +1,4 @@
-// sol3
+// sol2
 
 // The MIT License (MIT)
 
@@ -231,7 +231,7 @@ TEST_CASE("usertype/unique_usertype-check", "make sure unique usertypes don't ge
 	}());
 }
 
-TEST_CASE("usertype/unique void pointers", "can compile shared_ptr<void> types and not trip the compiler or sol3's internals") {
+TEST_CASE("usertype/unique void pointers", "can compile shared_ptr<void> types and not trip the compiler or sol2's internals") {
 	sol::state lua;
 	lua.set_function("f", [](std::shared_ptr<void> d) {
 		int* pi = static_cast<int*>(d.get());

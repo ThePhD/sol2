@@ -17,8 +17,10 @@ namespace zm {
 #pragma GCC diagnostic ignored "-Wpedantic"
 #elif defined(_MSC_VER)
 #pragma warning(push)
-#pragma warning(disable : 4201) // nonstandard extension used : nameless struct/union
-#pragma warning(disable : 4324) // structure was padded due to alignment specifier
+#pragma warning(disable : 4201) // nonstandard extension used :
+                                // nameless struct/union
+#pragma warning(disable : 4324) // structure was padded due to
+                                // alignment specifier
 #endif
 		union {
 			float elements[3];
@@ -46,7 +48,8 @@ namespace zm {
 		vec3() : x(0), y(0), z(0) {
 		}
 
-		vec3(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {
+		vec3(float x_, float y_, float z_)
+		: x(x_), y(y_), z(z_) {
 		}
 
 		constexpr float* data() {
@@ -61,7 +64,8 @@ namespace zm {
 			return this->elements[i];
 		}
 
-		constexpr const float& operator[](std::size_t i) const {
+		constexpr const float& operator[](
+		     std::size_t i) const {
 			return this->elements[i];
 		}
 	};

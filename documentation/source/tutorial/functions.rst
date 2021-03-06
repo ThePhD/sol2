@@ -55,13 +55,13 @@ Notice here that we bind two separate functions. What if we wanted to bind only 
 
 This is useful for functions which can take multiple types and need to behave differently based on those types. You can set as many overloads as you want, and they can be of many different types.
 
-..note::
+.. note::
 
-	Binding functions with default parameters (``void func(int a = 1)``) does not magically bind multiple versions of the function to be called with the default parameters. You must instead use :doc:`sol::overload<../api/overload>` and bind the full version of the function, with lambdas or similar for the function calls one by one.
+	Binding functions with default parameters (``void func(int a = 1);``) does not magically bind multiple versions of the function to be called with the default parameters. You must instead use :doc:`sol::overload<../api/overload>` and bind the full version of the function, with lambdas or similar for the function calls one by one.
 
-..note::
+.. note::
 
-	please make sure to understand the :ref:`implications of binding a lambda/callable struct in the various ways<binding-callable-objects>` and what it means for your code!
+	please make sure to understand the :ref:`implications of binding a lambda/callable struct in the various ways <binding-callable-objects>` and what it means for your code!
 
 
 Getting a function from Lua
@@ -74,7 +74,7 @@ You can use them to retrieve callables from Lua and call the underlying function
 .. literalinclude:: ../../../examples/source/tutorials/reading_functions.cpp
 	:language: cpp
 	:linenos:
-	:caption: Retrieving a sol::(unsafe_/protected_)function
+	:caption: Retrieving a sol::(unsafe\ _/protected\ _)function
 	:name: reading-functions
 
 .. note::

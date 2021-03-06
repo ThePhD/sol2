@@ -4,12 +4,15 @@
 #include <iostream>
 
 int main() {
-	std::cout << "=== override-able member functions ===" << std::endl;
+	std::cout << "=== override-able member functions ==="
+	          << std::endl;
 
 	struct thingy {
 		sol::function paint;
 
-		thingy(sol::this_state L) : paint(sol::make_reference<sol::function>(L.lua_state(), &thingy::default_paint)) {
+		thingy(sol::this_state L)
+		: paint(sol::make_reference<sol::function>(
+		     L.lua_state(), &thingy::default_paint)) {
 		}
 
 		void default_paint() {
@@ -20,7 +23,10 @@ int main() {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
 
-	lua.new_usertype<thingy>("thingy", sol::constructors<thingy(sol::this_state)>(), "paint", &thingy::paint);
+	lua.new_usertype<thingy>("thingy",
+	     sol::constructors<thingy(sol::this_state)>(),
+	     "paint",
+	     &thingy::paint);
 
 	sol::string_view code = R"(
 obj = thingy.new()

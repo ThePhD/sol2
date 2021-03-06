@@ -14,7 +14,8 @@ int main() {
 	// std::tuple as the transfer type,
 	// sol::as_returns for containers,
 	// and sol::variadic_results for more special things
-	lua.set_function("multi_tuple", [] { return std::make_tuple(10, "goodbye"); });
+	lua.set_function("multi_tuple",
+	     [] { return std::make_tuple(10, "goodbye"); });
 	lua.script("print('calling multi_tuple')");
 	lua.script("print(multi_tuple())");
 	lua.script("x, y = multi_tuple()");
@@ -56,13 +57,16 @@ int main() {
 	// note that sol::this_state is a transparent
 	// argument: you don't need to pass
 	// that state through Lua
-	lua.set_function("multi_vars", [](int a, bool b, sol::this_state L) {
-		sol::variadic_results values;
-		values.push_back({ L, sol::in_place_type<int>, a });
-		values.push_back({ L, sol::in_place_type<bool>, b });
-		values.push_back({ L, sol::in_place, "awoo" });
-		return values;
-	});
+	lua.set_function(
+	     "multi_vars", [](int a, bool b, sol::this_state L) {
+		     sol::variadic_results values;
+		     values.push_back(
+		          { L, sol::in_place_type<int>, a });
+		     values.push_back(
+		          { L, sol::in_place_type<bool>, b });
+		     values.push_back({ L, sol::in_place, "awoo" });
+		     return values;
+	     });
 	lua.script("print('calling multi_vars')");
 	lua.script("print(multi_vars(2, false))");
 	lua.script("t, u, v = multi_vars(42, true)");

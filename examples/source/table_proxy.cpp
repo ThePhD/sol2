@@ -16,7 +16,8 @@ int main() {
 	lua.open_libraries(sol::lib::base);
 	lua.script(code);
 
-	// produces table_proxy, implicitly converts to std::string, quietly destroys table_proxy
+	// produces table_proxy, implicitly converts to std::string,
+	// quietly destroys table_proxy
 	std::string arf_string = lua["bark"]["woof"][2];
 
 	// lazy-evaluation of tables

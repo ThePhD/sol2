@@ -12,7 +12,13 @@ int test::number = 25;
 int main() {
 	sol::state lua;
 	lua.open_libraries();
-	lua.new_usertype<test>("test", "direct", sol::var(2), "number", sol::var(test::number), "ref_number", sol::var(std::ref(test::number)));
+	lua.new_usertype<test>("test",
+	     "direct",
+	     sol::var(2),
+	     "number",
+	     sol::var(test::number),
+	     "ref_number",
+	     sol::var(std::ref(test::number)));
 
 	int direct_value = lua["test"]["direct"];
 	sol_c_assert(direct_value == 2);

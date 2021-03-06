@@ -23,12 +23,16 @@ public:
 	const int data;
 
 	static std::unique_ptr<holy, deleter> create() {
-		std::cout << "creating 'holy' unique_ptr directly and letting sol/Lua handle it" << std::endl;
+		std::cout << "creating 'holy' unique_ptr directly and "
+		             "letting sol/Lua handle it"
+		          << std::endl;
 		return std::unique_ptr<holy, deleter>(new holy(50));
 	}
 
 	static void initialize(holy& uninitialized_memory) {
-		std::cout << "initializing 'holy' userdata at " << static_cast<void*>(&uninitialized_memory) << std::endl;
+		std::cout << "initializing 'holy' userdata at "
+		          << static_cast<void*>(&uninitialized_memory)
+		          << std::endl;
 		// receive uninitialized memory from Lua:
 		// properly set it by calling a constructor
 		// on it
@@ -37,7 +41,9 @@ public:
 	}
 
 	static void destroy(holy& memory_from_lua) {
-		std::cout << "destroying 'holy' userdata at " << static_cast<void*>(&memory_from_lua) << std::endl;
+		std::cout << "destroying 'holy' userdata at "
+		          << static_cast<void*>(&memory_from_lua)
+		          << std::endl;
 		memory_from_lua.~holy();
 	}
 };

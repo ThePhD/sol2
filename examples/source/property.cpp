@@ -29,7 +29,8 @@ private:
 
 int main(int, char*[]) {
 
-	std::cout << "=== properties from C++ functions ===" << std::endl;
+	std::cout << "=== properties from C++ functions ==="
+	          << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
@@ -38,8 +39,12 @@ int main(int, char*[]) {
 
 	// Yes, you can register after you set a value and it will
 	// connect up the usertype automatically
-	lua.new_usertype<Player>(
-	     "Player", "hp", sol::property(&Player::get_hp, &Player::set_hp), "maxHp", sol::property(&Player::get_max_hp, &Player::set_max_hp));
+	lua.new_usertype<Player>("Player",
+	     "hp",
+	     sol::property(&Player::get_hp, &Player::set_hp),
+	     "maxHp",
+	     sol::property(
+	          &Player::get_max_hp, &Player::set_max_hp));
 
 	const auto& code = R"(
 	-- variable syntax, calls functions

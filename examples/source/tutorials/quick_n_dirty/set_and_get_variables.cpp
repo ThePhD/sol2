@@ -12,7 +12,8 @@ int main(int, char*[]) {
 	lua["number2"] = 24.5;
 	// string types
 	lua["important_string"] = "woof woof";
-	// is callable, therefore gets stored as a function that can be called
+	// is callable, therefore gets stored as a function that can
+	// be called
 	lua["a_function"] = []() { return 100; };
 	// make a table
 	lua["some_table"] = lua.create_table_with("value", 24);

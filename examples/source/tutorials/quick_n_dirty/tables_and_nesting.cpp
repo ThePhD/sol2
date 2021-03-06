@@ -31,10 +31,12 @@ int main(int, char*[]) {
 	sol_c_assert(abcval1 == 24);
 	sol_c_assert(abcval2 == 24);
 
-	sol::optional<int> will_not_error = lua["abc"]["DOESNOTEXIST"]["ghi"];
+	sol::optional<int> will_not_error
+	     = lua["abc"]["DOESNOTEXIST"]["ghi"];
 	sol_c_assert(will_not_error == sol::nullopt);
 
-	int also_will_not_error = lua["abc"]["def"]["ghi"]["jklm"].get_or(25);
+	int also_will_not_error
+	     = lua["abc"]["def"]["ghi"]["jklm"].get_or(25);
 	sol_c_assert(also_will_not_error == 25);
 
 	// if you don't go safe,

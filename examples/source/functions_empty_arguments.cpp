@@ -10,7 +10,8 @@ int main(int, char*[]) {
 	// sol::object (and main_* types) can all be
 	// used to capture "nil", or "none" when a function
 	// leaves it off
-	auto my_defaulting_function = [](sol::object maybe_defaulted) -> int {
+	auto my_defaulting_function
+	     = [](sol::object maybe_defaulted) -> int {
 		// if it's nil, it's "unused" or "inactive"
 		bool inactive = maybe_defaulted == sol::lua_nil;
 		if (inactive) {
@@ -27,7 +28,8 @@ int main(int, char*[]) {
 	lua.open_libraries(sol::lib::base);
 
 	// copy function in (use std::ref to change this behavior)
-	lua.set_function("defaulting_function", my_defaulting_function);
+	lua.set_function(
+	     "defaulting_function", my_defaulting_function);
 
 	sol::string_view code = R"(
 		result = defaulting_function(24)

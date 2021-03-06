@@ -1,4 +1,4 @@
-// sol3
+// sol2
 
 // The MIT License (MIT)
 
@@ -40,7 +40,7 @@ struct number_shim {
 
 // HEY:
 // Don't do this.
-// The code below is for sol3 to specialize things,
+// The code below is for sol2 to specialize things,
 // not for YOU to specialize things.
 // If you customize things in this fashion,
 // I will break your code sometime in the future when fixing things.

@@ -17,7 +17,8 @@ public:
 
 	// automatically bound to obj( args... ) [ __call ]
 	void operator()() {
-		data.push_back(static_cast<value_type>(data.size() + 1) / 3.0);
+		data.push_back(
+		     static_cast<value_type>(data.size() + 1) / 3.0);
 	}
 
 	// automatically used for pairs(obj) [ __pairs ], 5.2+
@@ -50,7 +51,8 @@ public:
 };
 
 // automatically bound to tostring(obj) [ __tostring ]
-std::ostream& operator<<(std::ostream& os, const automatic& right) {
+std::ostream& operator<<(
+     std::ostream& os, const automatic& right) {
 	if (right.size() == 0) {
 		os << "{ empty }";
 		return os;
@@ -69,7 +71,8 @@ std::ostream& operator<<(std::ostream& os, const automatic& right) {
 }
 
 int main(int, char*[]) {
-	std::cout << "=== usertype automatic operators ===" << std::endl;
+	std::cout << "=== usertype automatic operators ==="
+	          << std::endl;
 
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);

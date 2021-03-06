@@ -26,8 +26,12 @@ public:
 int main() {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base);
-	lua.new_usertype<vector>(
-	     "vector", sol::constructors<sol::types<>>(), sol::meta_function::index, &vector::my_index, sol::meta_function::new_index, &vector::my_new_index);
+	lua.new_usertype<vector>("vector",
+	     sol::constructors<sol::types<>>(),
+	     sol::meta_function::index,
+	     &vector::my_index,
+	     sol::meta_function::new_index,
+	     &vector::my_new_index);
 	lua.script(
 	     "v = vector.new()\n"
 	     "print(v[1])\n"

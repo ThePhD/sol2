@@ -39,13 +39,15 @@ int main(int, char*[]) {
 	lua["m1"] = &some_class::member_function;
 
 	// binds the class to the type
-	lua.set_function("m2", &some_class::member_function, some_class {});
+	lua.set_function(
+	     "m2", &some_class::member_function, some_class {});
 
 	// binds just the member variable as a function
 	lua["v1"] = &some_class::variable;
 
 	// binds class with member variable as function
-	lua.set_function("v2", &some_class::variable, some_class {});
+	lua.set_function(
+	     "v2", &some_class::variable, some_class {});
 
 	lua.script(R"(
 	f1() -- some function!

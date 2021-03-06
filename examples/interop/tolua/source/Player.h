@@ -6,8 +6,7 @@ private:
 	int m_health;
 
 public:
-	Player()
-	: m_health(0) {
+	Player() : m_health(0) {
 	}
 	void setHealth(int health) {
 		m_health = health;
