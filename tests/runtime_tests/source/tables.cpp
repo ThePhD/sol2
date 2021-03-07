@@ -137,7 +137,10 @@ TEST_CASE("tables/create-with-local", "Check if creating a table is kosher") {
 TEST_CASE("tables/function variables", "Check if tables and function calls work as intended") {
 	sol::state lua;
 	lua.open_libraries(sol::lib::base, sol::lib::os);
-	auto run_script = [](sol::state& lua) -> void { lua.safe_script("assert(os.fun() == \"test\")"); };
+	auto run_script = [](sol::state& lua) -> void {
+		auto pf = lua.safe_script("assert(os.fun() == \"test\")");
+		REQUIRE(pf.valid());
+	};
 
 	lua.get<sol::table>("os").set_function("fun", []() {
 		INFO("stateless lambda()");

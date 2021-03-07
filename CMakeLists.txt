@@ -27,13 +27,16 @@ cmake_minimum_required(VERSION 3.15.0)
 # # # project declaration
 project(sol2 VERSION 3.2.5 LANGUAGES CXX C)
 
-include(GNUInstallDirs)
-
 # # # Modules
 # # Include modules useful to the project, whether locally made in our own cmake DIRECTORY
 # # our from the standard cmake libraries
 # Add home-rolled modules path to front of module path list
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules" "${CMAKE_MODULE_PATH}")
+
+if (PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+	set(SOL2_IS_TOP_LEVEL TRUE)
+	message(STATUS "sol2 is the top-level directory...")
+endif()
 
 # Include standard modules
 include(CMakePackageConfigHelpers)
@@ -87,11 +90,6 @@ elseif (SOL2_PLATFORM MATCHES "x86_64" OR SOL2_PLATFORM STREQUAL "x64")
 	set(IS_X64 TRUE)
 else()
 	set(IS_X64 TRUE)
-endif()
-
-if (PROJECT_SOURCE_DIR STREQUAL ${CMAKE_SOURCE_DIR})
-	set(SOL2_IS_TOP_LEVEL TRUE)
-	message(STATUS "sol2 is the top-level directory...")
 endif()
 
 # # # sol2 Source Groups

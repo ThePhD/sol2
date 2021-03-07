@@ -864,6 +864,11 @@ namespace sol {
 				return lcw.call(L, std::get<0>(f.arguments));
 			}
 
+			static int call(lua_State* L, function_arguments<Sig, P>& f) {
+				lua_call_wrapper<T, meta::unqualified_t<P>, is_index, is_variable, checked, boost, clean_stack> lcw {};
+				return lcw.call(L, std::get<0>(f.arguments));
+			}
+
 			static int call(lua_State* L, function_arguments<Sig, P>&& f) {
 				lua_call_wrapper<T, meta::unqualified_t<P>, is_index, is_variable, checked, boost, clean_stack> lcw {};
 				return lcw.call(L, std::get<0>(std::move(f.arguments)));
