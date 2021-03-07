@@ -25,7 +25,7 @@
 cmake_minimum_required(VERSION 3.15.0)
 
 # # # project declaration
-project(sol2 VERSION 3.2.5 LANGUAGES CXX C)
+project(sol2 VERSION 4.0.0 LANGUAGES CXX C)
 
 # # # Modules
 # # Include modules useful to the project, whether locally made in our own cmake DIRECTORY
@@ -51,6 +51,7 @@ set(SOL2_LUA_VERSION "5.3.5" CACHE STRING "The version of Lua needed. Can be 5.1
 set(SOL2_BUILD_LUA TRUE CACHE BOOL "Always build Lua, do not search for it in the system")
 set(SOL2_PLATFORM "x64" CACHE STRING "Target platform to compile for when building binaries (x86, x64)")
 option(SOL2_CI "Whether or not we are in continguous integration mode" OFF)
+option(SOL2_SYSTEM_INCLUDE "Whether or not sol2 should be considered a system include. This helps suppress errors for when the sol2 author is a big derp and doesn't fix every single warning, ever." ON)
 option(SOL2_TESTS "Enable build of tests" OFF)
 option(SOL2_EXAMPLES "Enable build of examples" OFF)
 option(SOL2_INTEROP_EXAMPLES "Enable build of interop examples" OFF)
@@ -92,6 +93,10 @@ else()
 	set(IS_X64 TRUE)
 endif()
 
+if (SOL2_SYSTEM_INCLUDE)
+	set(--sol2-system-include SYSTEM)
+endif()
+
 # # # sol2 Source Groups
 # # Sources everyone is going to need
 # Header files
@@ -107,7 +112,7 @@ set_target_properties(sol2
 	PROPERTIES
 	EXPORT_NAME sol2::sol2)
 
-target_include_directories(sol2 INTERFACE
+target_include_directories(sol2 ${--sol2-system-include} INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<INSTALL_INTERFACE:include>)
 
