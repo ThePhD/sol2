@@ -22,12 +22,15 @@
 
 # # # # sol2 tests - header compilation tests
 
-file(GLOB_RECURSE SOL2_COMPILE_TEST_SOURCES source/*.cpp)
+file(GLOB_RECURSE SOL2_COMPILE_TEST_SOURCES
+	LIST_DIRECTORIES FALSE
+	CONFIGURE_DEPENDS
+	source/*.cpp)
 source_group(compile_test_sources FILES "${SOL2_COMPILE_TEST_SOURCES}")
 
 function(CREATE_TEST test_target_name test_name target_sol)
 	if (test_name MATCHES ".single")
-		add_executable(${test_target_name} "source/main.cpp" "source/forward.cpp" "source/sol.cpp")
+		add_executable(${test_target_name} "source/main.cpp" "source/forward.cpp" "source/sol.cpp" "source/config.cpp")
 	else()
 		add_executable(${test_target_name} "${SOL2_COMPILE_TEST_SOURCES}")
 	endif()
@@ -37,7 +40,10 @@ function(CREATE_TEST test_target_name test_name target_sol)
 		EXPORT_NAME sol2::${test_name})
 	target_link_libraries(${test_target_name} 
 		PUBLIC Threads::Threads ${LUA_LIBRARIES} ${target_sol} ${CMAKE_DL_LIBS})
-	
+	target_compile_options(${test_target_name}
+		PRIVATE
+		SOL_ENABLE_INTEROP=1
+		SOL_ALL_SAFETIES_ON=1)
 	if (MSVC)
 		target_compile_options(${test_target_name}
 			PRIVATE /std:c++latest /EHsc "$<$<CONFIG:Debug>:/MDd>"

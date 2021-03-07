@@ -22,7 +22,10 @@
 
 # # # # sol2 tests - runtime tests
 
-file(GLOB SOL2_RUNTIME_TEST_SOURCES source/*.cpp)
+file(GLOB SOL2_RUNTIME_TEST_SOURCES
+	LIST_DIRECTORIES FALSE
+	CONFIGURE_DEPENDS
+	source/*.cpp)
 source_group(test_sources FILES ${SOL2_RUNTIME_TEST_SOURCES})
 
 function(CREATE_TEST test_target_name test_name target_sol)

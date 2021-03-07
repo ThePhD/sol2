@@ -22,7 +22,11 @@
 
 # # # # sol2 tests - simple regression tests
 
-file(GLOB simple_test_sources source/*.cpp)
+file(GLOB_RECURSE simple_test_sources
+	LIST_DIRECTORIES FALSE
+	CONFIGURE_DEPENDS
+	source/*.cpp)
+
 source_group(test_sources FILES ${simple_test_sources})
 
 function(CREATE_TEST test_target_name test_name target_sol)
