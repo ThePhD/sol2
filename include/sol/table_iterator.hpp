@@ -87,12 +87,8 @@ namespace sol {
 			return saved;
 		}
 
-		reference operator*() noexcept {
-			return kvp;
-		}
-
-		const_reference operator*() const noexcept {
-			return kvp;
+		reference operator*() const noexcept {
+			return const_cast<reference>(kvp);
 		}
 
 		bool operator==(const basic_table_iterator& right) const noexcept {
