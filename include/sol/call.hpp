@@ -125,9 +125,11 @@ namespace sol {
 		template <typename T, bool checked, bool clean_stack>
 		struct constructor_match {
 			T* obj_;
+			reference* obj_lua_ref_;
 			stack::stack_detail::undefined_metatable* p_umf_;
 
-			constructor_match(T* obj_ptr, stack::stack_detail::undefined_metatable& umf) : obj_(obj_ptr), p_umf_(&umf) {
+			constructor_match(T* obj_ptr, reference& obj_lua_ref, stack::stack_detail::undefined_metatable& umf)
+			: obj_(obj_ptr), obj_lua_ref_(&obj_lua_ref), p_umf_(&umf) {
 			}
 
 			template <typename Fx, std::size_t I, typename... R, typename... Args>
@@ -137,7 +139,14 @@ namespace sol {
 				// construct userdata table
 				// SPECIFICALLY, after we've created it successfully.
 				// If the constructor exits for any reason we have to break things down...
-				(*this->p_umf_)();
+				if constexpr (clean_stack) {
+					obj_lua_ref_->push();
+					(*this->p_umf_)();
+					obj_lua_ref_->pop();
+				}
+				else {
+					(*this->p_umf_)();
+				}
 				return result;
 			}
 		};
@@ -326,7 +335,7 @@ namespace sol {
 
 			// put userdata at the first index
 			lua_insert(L, 1);
-			construct_match<T, TypeLists...>(constructor_match<T, checked, clean_stack>(obj, umf), L, argcount, 1 + static_cast<int>(syntax));
+			construct_match<T, TypeLists...>(constructor_match<T, checked, clean_stack>(obj, userdataref, umf), L, argcount, 1 + static_cast<int>(syntax));
 
 			userdataref.push();
 			return 1;
@@ -654,7 +663,7 @@ namespace sol {
 				argcount -= static_cast<int>(syntax);
 
 				T* obj = detail::usertype_allocate<T>(L);
-				stack_reference userdataref(L, -1);
+				reference userdataref(L, -1);
 				stack::stack_detail::undefined_metatable umf(L, &meta[0], &stack::stack_detail::set_undefined_methods_on<T>);
 
 				// put userdata at the first index
@@ -663,7 +672,8 @@ namespace sol {
 				// we have to kill the data, but only if the cosntructor is successfulyl invoked...
 				// if it's not successfully invoked and we panic,
 				// we cannot actually deallcoate/delete the data.
-				construct_match<T, Args...>(constructor_match<T, checked, clean_stack>(obj, umf), L, argcount, boost + 1 + 1 + static_cast<int>(syntax));
+				construct_match<T, Args...>(
+				     constructor_match<T, checked, clean_stack>(obj, userdataref, umf), L, argcount, boost + 1 + 1 + static_cast<int>(syntax));
 
 				userdataref.push();
 				return 1;
